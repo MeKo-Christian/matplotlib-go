@@ -311,8 +311,8 @@ func DrawFigure(fig *Figure, r render.Renderer) {
 
 **Scope**
 
-* `core/line.go`: minimal polyline artist (stroke only).
-* `core/savepng.go`: convenience `SavePNG(fig, r, path)`.
+- `core/line.go`: minimal polyline artist (stroke only).
+- `core/savepng.go`: convenience `SavePNG(fig, r, path)`.
 
 **Key APIs**
 
@@ -339,8 +339,8 @@ func (l *Line2D) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
 
 **Checklist**
 
-* [ ] Add `Line2D` + unit test (doesn’t panic with empty/singleton data).
-* [ ] `SavePNG` helper delegates to a renderer that owns a surface and encodes it.
+- [ ] Add `Line2D` + unit test (doesn’t panic with empty/singleton data).
+- [ ] `SavePNG` helper delegates to a renderer that owns a surface and encodes it.
 
 ---
 
@@ -350,10 +350,10 @@ func (l *Line2D) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
 
 **Tech choices**
 
-* Surface: `image.RGBA`.
-* Rasterization: `golang.org/x/image/vector` (`vector.Rasterizer`) for fill/stroke.
-* Dashes: manual path decomposition (v1: none; v2: simple dash).
-* PNG: `image/png`.
+- Surface: `image.RGBA`.
+- Rasterization: `golang.org/x/image/vector` (`vector.Rasterizer`) for fill/stroke.
+- Dashes: manual path decomposition (v1: none; v2: simple dash).
+- PNG: `image/png`.
 
 **Package**
 
@@ -384,16 +384,16 @@ func (r *Renderer) MeasureText(text string, size float64, fontKey string) render
 
 **Stroke plan (v0)**
 
-* Use `vector.Stroke` with `vector.Path` conversion; map `LineCap`, `LineJoin`, `MiterLimit`.
-* If `Fill.A > 0`: rasterize fill (nonzero rule) then stroke.
-* No dash in v0; set expectation in tests (dash added in Phase E).
+- Use `vector.Stroke` with `vector.Path` conversion; map `LineCap`, `LineJoin`, `MiterLimit`.
+- If `Fill.A > 0`: rasterize fill (nonzero rule) then stroke.
+- No dash in v0; set expectation in tests (dash added in Phase E).
 
 **Checklist**
 
-* [ ] Implement surface + `Begin/End` + state stack and clip rect.
-* [ ] Convert `geom.Path` → `vector.Path`.
-* [ ] Implement fill + stroke (no dash yet).
-* [ ] `SavePNG(fig, gobasic.New(...), path)` renders a diagonal line.
+- [ ] Implement surface + `Begin/End` + state stack and clip rect.
+- [ ] Convert `geom.Path` → `vector.Path`.
+- [ ] Implement fill + stroke (no dash yet).
+- [ ] `SavePNG(fig, gobasic.New(...), path)` renders a diagonal line.
 
 ---
 
@@ -423,8 +423,8 @@ core.SavePNG(r, "out.png")
 
 **Checklist**
 
-* [ ] `examples/lines/basic.go` builds & produces `out.png`.
-* [ ] Background is uniform white; 640×360; no clipping artifacts.
+- [ ] `examples/lines/basic.go` builds & produces `out.png`.
+- [ ] Background is uniform white; 640×360; no clipping artifacts.
 
 ---
 
@@ -434,9 +434,9 @@ core.SavePNG(r, "out.png")
 
 **Design**
 
-* Baseline PNGs live under `testdata/golden/...`.
-* Compare with **pixel diff** (absolute RGBA tolerance), and compute **PSNR** (to detect non-obvious changes).
-* Optional mask to ignore text (not used in M2).
+- Baseline PNGs live under `testdata/golden/...`.
+- Compare with **pixel diff** (absolute RGBA tolerance), and compute **PSNR** (to detect non-obvious changes).
+- Optional mask to ignore text (not used in M2).
 
 **Helpers (`/test/imagecmp`)**
 
@@ -461,9 +461,9 @@ func TestBasicLine_Golden(t *testing.T) {
 
 **Checklist**
 
-* [ ] Implement `imagecmp` + unit tests on synthetic images.
-* [ ] Add `basic_line.png` baseline.
-* [ ] CI job uploads diff image on failure (store in `_artifacts/`).
+- [ ] Implement `imagecmp` + unit tests on synthetic images.
+- [ ] Add `basic_line.png` baseline.
+- [ ] CI job uploads diff image on failure (store in `_artifacts/`).
 
 ---
 
@@ -473,15 +473,15 @@ func TestBasicLine_Golden(t *testing.T) {
 
 **Tasks**
 
-* Add `LineJoin` (miter/round/bevel) and `LineCap` (butt/round/square) mapping to `vector.StrokeOptions`.
-* Implement **dash**: decompose each subpath into dash segments (user-space lengths).
-* Add table-driven tests that render the same path with each style and compare to golden images (`joins_caps.png`, `dashes.png`).
+- Add `LineJoin` (miter/round/bevel) and `LineCap` (butt/round/square) mapping to `vector.StrokeOptions`.
+- Implement **dash**: decompose each subpath into dash segments (user-space lengths).
+- Add table-driven tests that render the same path with each style and compare to golden images (`joins_caps.png`, `dashes.png`).
 
 **Checklist**
 
-* [ ] Join & cap styles match expected shapes (visual baselines).
-* [ ] Dash phase starts at subpath start; consistent across platforms.
-* [ ] Parity test: fill + stroke order produces identical result independent of internal batching.
+- [ ] Join & cap styles match expected shapes (visual baselines).
+- [ ] Dash phase starts at subpath start; consistent across platforms.
+- [ ] Parity test: fill + stroke order produces identical result independent of internal batching.
 
 ---
 
@@ -491,15 +491,15 @@ func TestBasicLine_Golden(t *testing.T) {
 
 **Actions**
 
-* Force **premultiplied alpha** consistently; ensure `vector` inputs premultiplied.
-* Disable any non-deterministic parallelism.
-* Pin Go toolchain in CI (e.g., 1.22.x) and pin `golang.org/x` commit SHAs.
-* Quantize float inputs before rasterization (e.g., snap to 1e-6) to avoid tiny stroke joins differences.
+- Force **premultiplied alpha** consistently; ensure `vector` inputs premultiplied.
+- Disable any non-deterministic parallelism.
+- Pin Go toolchain in CI (e.g., 1.22.x) and pin `golang.org/x` commit SHAs.
+- Quantize float inputs before rasterization (e.g., snap to 1e-6) to avoid tiny stroke joins differences.
 
 **Checklist**
 
-* [ ] Re-run CI on Linux/macOS → identical hashes for golden images.
-* [ ] Document determinism assumptions in `docs/determinism.md`.
+- [ ] Re-run CI on Linux/macOS → identical hashes for golden images.
+- [ ] Document determinism assumptions in `docs/determinism.md`.
 
 ---
 
@@ -518,17 +518,17 @@ func TestBasicLine_Golden(t *testing.T) {
 
 **Mapping `Renderer` → AGG**
 
-* Convert `geom.Path` to AGG path sink.
-* Map joins/caps/miter to AGG stroker.
-* ClipRect/ClipPath: start with rect only.
-* Image: nearest-neighbor blit (bilinear later).
-* GlyphRun: stub (no text yet in M2).
+- Convert `geom.Path` to AGG path sink.
+- Map joins/caps/miter to AGG stroker.
+- ClipRect/ClipPath: start with rect only.
+- Image: nearest-neighbor blit (bilinear later).
+- GlyphRun: stub (no text yet in M2).
 
 **Checklist**
 
-* [ ] `agg.New(width,height,bg)` returns a renderer with in-memory surface.
-* [ ] Implement `Path` fill + stroke with parity to GoBasic.
-* [ ] PNG export (via AGG or copy RGBA buffer → `image/png`).
+- [ ] `agg.New(width,height,bg)` returns a renderer with in-memory surface.
+- [ ] Implement `Path` fill + stroke with parity to GoBasic.
+- [ ] PNG export (via AGG or copy RGBA buffer → `image/png`).
 
 ---
 
@@ -538,10 +538,10 @@ func TestBasicLine_Golden(t *testing.T) {
 
 **Tests**
 
-* Reuse all M2 goldens; run twice (GoBasic and AGG) guarded by build tags/env var:
+- Reuse all M2 goldens; run twice (GoBasic and AGG) guarded by build tags/env var:
 
-  * Default CI: GoBasic (no cgo).
-  * Separate CI job with `-tags=agg` to test AGG.
+  - Default CI: GoBasic (no cgo).
+  - Separate CI job with `-tags=agg` to test AGG.
 
 ```bash
 go test ./...                          # GoBasic
@@ -550,8 +550,8 @@ go test -tags=agg ./...                # AGG
 
 **Checklist**
 
-* [ ] Parity: max pixel diff ≤1, PSNR ≥ 50 dB on all goldens.
-* [ ] If tiny differences, document per-backend tolerances and freeze goldens per backend (`golden/basic_line.agg.png` if needed).
+- [ ] Parity: max pixel diff ≤1, PSNR ≥ 50 dB on all goldens.
+- [ ] If tiny differences, document per-backend tolerances and freeze goldens per backend (`golden/basic_line.agg.png` if needed).
 
 ---
 
@@ -561,19 +561,19 @@ go test -tags=agg ./...                # AGG
 
 **CI Steps**
 
-* Job 1: Linux, Go 1.22.x, GoBasic tests + upload diffs if any.
-* Job 2: macOS, Go 1.22.x, GoBasic tests.
-* Job 3 (optional): Linux with `-tags=agg` if AGG is available in CI image.
-* Cache `go` build and `golangci-lint`.
+- Job 1: Linux, Go 1.22.x, GoBasic tests + upload diffs if any.
+- Job 2: macOS, Go 1.22.x, GoBasic tests.
+- Job 3 (optional): Linux with `-tags=agg` if AGG is available in CI image.
+- Cache `go` build and `golangci-lint`.
 
 **Artifacts**
 
-* On golden failure, upload: `got.png`, `want.png`, `diff.png`, and a small HTML report with PSNR/MaxDiff.
+- On golden failure, upload: `got.png`, `want.png`, `diff.png`, and a small HTML report with PSNR/MaxDiff.
 
 **Checklist**
 
-* [ ] GitHub Actions workflows committed.
-* [ ] Badges in README for build status.
+- [ ] GitHub Actions workflows committed.
+- [ ] Badges in README for build status.
 
 ---
 
@@ -581,23 +581,23 @@ go test -tags=agg ./...                # AGG
 
 **Goals:** provide 2–3 tiny examples using GoBasic and AGG.
 
-* `examples/lines/styles.go` – caps/joins comparison.
-* `examples/lines/dash.go` – simple dash pattern.
-* `examples/axes/basic.go` – same as Milestone 1 demo but with visible axes box (if you already have spines; if not, plot only).
+- `examples/lines/styles.go` – caps/joins comparison.
+- `examples/lines/dash.go` – simple dash pattern.
+- `examples/axes/basic.go` – same as Milestone 1 demo but with visible axes box (if you already have spines; if not, plot only).
 
 **Checklist**
 
-* [ ] Examples compile; `go run` produces PNGs to `examples/out/`.
-* [ ] Screenshots added to README.
+- [ ] Examples compile; `go run` produces PNGs to `examples/out/`.
+- [ ] Screenshots added to README.
 
 ---
 
 ## Tips & pitfalls (quick hits)
 
-* **Coordinate precision:** keep all math in float64 until the rasterizer; avoid early rounding.
-* **Clipping first:** always set `ClipRect` (axes pixel rect) before drawing—this stabilizes dash clipping at edges.
-* **Dashes & transforms:** compute dash segmentation **in user space** (post-transform) to match visual expectations.
-* **Gamma:** both GoBasic and AGG effectively assume sRGB-ish; don’t mix linear/sRGB without a plan. Keep everything in premultiplied sRGB for M2.
+- **Coordinate precision:** keep all math in float64 until the rasterizer; avoid early rounding.
+- **Clipping first:** always set `ClipRect` (axes pixel rect) before drawing—this stabilizes dash clipping at edges.
+- **Dashes & transforms:** compute dash segmentation **in user space** (post-transform) to match visual expectations.
+- **Gamma:** both GoBasic and AGG effectively assume sRGB-ish; don’t mix linear/sRGB without a plan. Keep everything in premultiplied sRGB for M2.
 
 ---
 
