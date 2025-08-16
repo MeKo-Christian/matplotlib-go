@@ -1,0 +1,29 @@
+name: fmt
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - name: Install formatters
+        run: |
+          npm install -g prettier
+          go install mvdan.cc/gofumpt@latest
+          go install github.com/daixiang0/gci@latest
+      - name: Check format
+        run: |
+          if [ -f treefmt.toml ]; then
+            curl -sSL https://github.com/treefmt/treefmt/releases/latest/download/treefmt-linux-amd64 -o /usr/local/bin/treefmt
+            chmod +x /usr/local/bin/treefmt
+            treefmt --fail-on-change --allow-missing-formatter
+          else
+            echo "treefmt.toml not found; skipping treefmt check"; exit 0
+          fi

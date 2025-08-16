@@ -1,0 +1,45 @@
+# run with treefmt --allow-missing-formatter
+
+[global]
+excludes = [
+  # txt files
+  "**/*.txt",
+  "version.txt",
+  # gitignore
+  "**/.gitignore",
+  # go.sum & go.mod
+  "go.sum",
+  "go.mod",
+  # pdf files
+  "**/*.pdf",
+  # ttf files
+  "**/*.ttf",
+]
+
+### Misc
+
+[formatter.prettier]
+command = "prettier"
+options = ["-w"]
+includes = ["*.html", "*.css", "*.yaml", "*.yml", "*.js", "*.json", "*.md"]
+excludes = [".release-please-manifest.json"]
+
+### Go
+
+[formatter.gofumpt]
+command = "gofumpt"
+options = ["-w"]
+includes = ["*.go"]
+
+[formatter.gci]
+command = "gci"
+options = ["-w"]
+includes = ["*.go"]
+priority = 1        # run after gofumpt
+
+### SVG
+
+[formatter.svgo]
+# HACK: fixes an known issue where the formatter changes the mtime of the file.
+command = "./tools/svgo-wrapper.sh"
+includes = ["*.svg"]

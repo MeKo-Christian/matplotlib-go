@@ -1,0 +1,14 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    uses: ./.github/workflows/test-lint.yml
+  fmt:
+    uses: ./.github/workflows/test-fmt.yml
+  unit:
+    uses: ./.github/workflows/test-unit.yml
