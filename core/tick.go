@@ -101,7 +101,7 @@ func (l LogLocator) Ticks(min, max float64, targetCount int) []float64 {
 	// Find exponent range
 	lb := math.Log(base)
 	kmin := math.Ceil(math.Log(min) / lb)
-	kmax := math.Floor(math.Log(max) / lb)
+	kmax := math.Floor(math.Log(max)/lb + 1e-10) // Add small epsilon to handle floating point precision
 	var ticks []float64
 	// Majors
 	for k := kmin; k <= kmax; k++ {
