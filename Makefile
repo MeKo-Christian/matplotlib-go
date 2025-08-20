@@ -1,4 +1,4 @@
-.PHONY: all fmt lint lint-fix build test cli
+.PHONY: all fmt lint lint-fix build build-skia test test-skia backend-info cli
 
 all: build
 
@@ -14,8 +14,17 @@ lint-fix:
 build:
 	go build ./...
 
+build-skia:
+	CGO_ENABLED=1 go build -tags skia ./...
+
 test:
 	go test ./...
+
+test-skia:
+	CGO_ENABLED=1 go test -tags skia ./...
+
+backend-info:
+	@go run -c 'import "matplotlib-go/backends"; import "fmt"; fmt.Print(backends.CapabilityMatrix())' || echo "Run 'go run ./examples/backends/info/main.go' for backend information"
 
 cli:
 	go run ./main.go --help

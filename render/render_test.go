@@ -39,7 +39,7 @@ func TestNullRenderer_NoPanicAndStackBalance(t *testing.T) {
 	p.LineTo(geom.Pt{X: 10, Y: 10})
 	r.ClipRect(vp)
 	r.ClipPath(p)
-	r.Path(p, Paint{})
+	r.Path(p, &Paint{})
 	r.Image(fakeImage{w: 10, h: 10}, vp)
 	r.GlyphRun(GlyphRun{}, Color{})
 	_ = r.MeasureText("hi", 12, "default")

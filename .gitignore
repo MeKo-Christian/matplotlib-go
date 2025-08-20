@@ -1,0 +1,16 @@
+# Test artifacts and debug images
+_artifacts/
+*.png
+!testdata/golden/*.png
+
+# Temporary files
+*.tmp
+*.temp
+
+# Build outputs
+matplotlib-go
+*.exe
+
+# OS specific files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-linux:
+    name: Test (Linux)
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go 1.24.0
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.0"
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Verify module integrity
+        run: go mod verify
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Run golden image tests
+        run: go test -v ./test/
+
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts-linux
+          path: _artifacts/
+          retention-days: 7
+
+      - name: Run linting
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+
+  test-macos:
+    name: Test (macOS)
+    runs-on: macos-13
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go 1.24.0
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.0"
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Verify module integrity
+        run: go mod verify
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Run golden image tests
+        run: go test -v ./test/
+
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts-macos
+          path: _artifacts/
+          retention-days: 7
+
+  cross-platform-verification:
+    name: Cross-platform Golden Verification
+    runs-on: ubuntu-22.04
+    needs: [test-linux, test-macos]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go 1.24.0
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.0"
+
+      - name: Generate golden images
+        run: |
+          go test -v ./test/ -update-golden
+          find testdata/golden -name "*.png" -exec sha256sum {} \; > golden-hashes.txt
+
+      - name: Upload golden image hashes
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-hashes
+          path: golden-hashes.txt
+          retention-days: 30
+
+  build:
+    name: Build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go 1.24.0
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.0"
+
+      - name: Build
+        run: make build
+
+      - name: Build CLI
+        run: go build -o matplotlib-go ./main.go
+
+      - name: Test CLI
+        run: ./matplotlib-go --help

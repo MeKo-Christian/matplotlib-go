@@ -43,4 +43,33 @@ When this repo is “done”, it should provide:
 
 ---
 
+## Testing
+
+This project uses golden image testing to ensure visual consistency across platforms and detect rendering regressions.
+
+### Running Tests
+
+```bash
+# Run all tests
+make test
+
+# Run only golden image tests
+go test ./test/
+
+# Update golden images when making intentional changes
+go test ./test/ -update-golden
+```
+
+### Golden Image Testing
+
+Golden tests compare rendered output against reference images stored in `testdata/golden/`. When tests fail, debug artifacts are saved to `_artifacts/` and uploaded by CI:
+
+- `*_got.png`: Actual rendered output
+- `*_want.png`: Expected golden reference
+- `*_diff.png`: Visual diff highlighting changes
+
+The comparison uses pixel-perfect RGBA matching with configurable tolerance (typically ±1 LSB) and reports PSNR metrics for quality assessment.
+
+---
+
 🚀 _Plotting for Go, without compromise._

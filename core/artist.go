@@ -40,6 +40,13 @@ type Transform2D struct {
 	AxesToPixel transform.AffineT
 }
 
+// Apply transforms a data-space point to pixel coordinates.
+func (t *Transform2D) Apply(p geom.Pt) geom.Pt {
+	u := t.XScale.Fwd(p.X)
+	v := t.YScale.Fwd(p.Y)
+	return t.AxesToPixel.Apply(geom.Pt{X: u, Y: v})
+}
+
 // Figure is the root of the Artist tree. It contains Axes children.
 type Figure struct {
 	SizePx   geom.Pt
@@ -65,6 +72,10 @@ type Axes struct {
 	YScale       transform.Scale
 	Artists      []Artist
 	zsorted      bool
+
+	// Axis control
+	XAxis *Axis // bottom x-axis
+	YAxis *Axis // left y-axis
 }
 
 // AddAxes appends an Axes to the Figure. If opts are provided, the Axes gets its
@@ -80,6 +91,8 @@ func (f *Figure) AddAxes(r geom.Rect, opts ...style.Option) *Axes {
 		RC:           rc,
 		XScale:       transform.NewLinear(0, 1),
 		YScale:       transform.NewLinear(0, 1),
+		XAxis:        NewXAxis(),
+		YAxis:        NewYAxis(),
 	}
 	f.Children = append(f.Children, ax)
 	return ax
@@ -87,6 +100,51 @@ func (f *Figure) AddAxes(r geom.Rect, opts ...style.Option) *Axes {
 
 // Add registers an Artist with the Axes.
 func (a *Axes) Add(art Artist) { a.Artists = append(a.Artists, art); a.zsorted = false }
+
+// SetXLim sets the x-axis limits.
+func (a *Axes) SetXLim(min, max float64) {
+	a.XScale = transform.NewLinear(min, max)
+}
+
+// SetYLim sets the y-axis limits.
+func (a *Axes) SetYLim(min, max float64) {
+	a.YScale = transform.NewLinear(min, max)
+}
+
+// SetXLimLog sets the x-axis to logarithmic scale with given limits.
+func (a *Axes) SetXLimLog(min, max, base float64) {
+	a.XScale = transform.NewLog(min, max, base)
+	if a.XAxis != nil {
+		a.XAxis.Locator = LogLocator{Base: base, Minor: false}
+		a.XAxis.Formatter = LogFormatter{Base: base}
+	}
+}
+
+// SetYLimLog sets the y-axis to logarithmic scale with given limits.
+func (a *Axes) SetYLimLog(min, max, base float64) {
+	a.YScale = transform.NewLog(min, max, base)
+	if a.YAxis != nil {
+		a.YAxis.Locator = LogLocator{Base: base, Minor: false}
+		a.YAxis.Formatter = LogFormatter{Base: base}
+	}
+}
+
+// AddGrid adds grid lines for the specified axis.
+func (a *Axes) AddGrid(axis AxisSide) *Grid {
+	grid := NewGrid(axis)
+	a.Add(grid)
+	return grid
+}
+
+// AddXGrid adds vertical grid lines based on x-axis ticks.
+func (a *Axes) AddXGrid() *Grid {
+	return a.AddGrid(AxisBottom)
+}
+
+// AddYGrid adds horizontal grid lines based on y-axis ticks.
+func (a *Axes) AddYGrid() *Grid {
+	return a.AddGrid(AxisLeft)
+}
 
 // layout computes the pixel rectangle for this Axes inside the Figure.
 func (a *Axes) layout(f *Figure) (pixelRect geom.Rect) {
@@ -136,8 +194,17 @@ func DrawFigure(fig *Figure, r render.Renderer) {
 			})
 			ax.zsorted = true
 		}
+		// Draw all artists (data) first
 		for _, art := range ax.Artists {
 			art.Draw(r, ctx)
+		}
+
+		// Draw axes on top of data
+		if ax.XAxis != nil {
+			ax.XAxis.Draw(r, ctx)
+		}
+		if ax.YAxis != nil {
+			ax.YAxis.Draw(r, ctx)
 		}
 		r.Restore()
 	}

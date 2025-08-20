@@ -38,6 +38,27 @@ const (
 // Color is a simple RGBA in linear [0..1].
 type Color struct{ R, G, B, A float64 }
 
+// Premultiply returns a color with RGB components premultiplied by alpha.
+// This ensures consistent blending behavior across backends.
+func (c Color) Premultiply() Color {
+	return Color{
+		R: c.R * c.A,
+		G: c.G * c.A,
+		B: c.B * c.A,
+		A: c.A,
+	}
+}
+
+// ToPremultipliedRGBA converts to image/color.RGBA with premultiplied alpha.
+// This is the preferred conversion for deterministic rendering.
+func (c Color) ToPremultipliedRGBA() (uint8, uint8, uint8, uint8) {
+	premul := c.Premultiply()
+	return uint8(premul.R*255 + 0.5),
+		uint8(premul.G*255 + 0.5),
+		uint8(premul.B*255 + 0.5),
+		uint8(premul.A*255 + 0.5)
+}
+
 // Glyph represents a single shaped glyph.
 type Glyph struct {
 	ID      uint32
@@ -75,7 +96,7 @@ type Renderer interface {
 	ClipPath(p geom.Path)
 
 	// Drawing
-	Path(p geom.Path, paint Paint)
+	Path(p geom.Path, paint *Paint)
 	Image(img Image, dst geom.Rect)
 	GlyphRun(run GlyphRun, color Color)
 	MeasureText(text string, size float64, fontKey string) TextMetrics
@@ -127,7 +148,7 @@ func (n *NullRenderer) ClipRect(_ geom.Rect) { n.cstack++ }
 func (n *NullRenderer) ClipPath(_ geom.Path) { n.cstack++ }
 
 // Path draws a path using the provided paint; no-op here.
-func (n *NullRenderer) Path(_ geom.Path, _ Paint) {}
+func (n *NullRenderer) Path(_ geom.Path, _ *Paint) {}
 
 // Image draws an image in the destination rectangle; no-op here.
 func (n *NullRenderer) Image(_ Image, _ geom.Rect) {}

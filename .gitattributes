@@ -1,0 +1,5 @@
+# Ensure PNG files are treated as binary in Git
+*.png binary
+
+# Golden test images should not have line ending conversions
+testdata/golden/*.png binary -diff
