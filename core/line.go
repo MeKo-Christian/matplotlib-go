@@ -11,6 +11,7 @@ type Line2D struct {
 	W      float64      // stroke width (px for now)
 	Col    render.Color // stroke color
 	Dashes []float64    // dash pattern (on/off pairs)
+	Label  string       // series label for legend
 	z      float64      // z-order
 }
 

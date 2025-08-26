@@ -113,8 +113,8 @@ func main() {
 
 	bars := &core.Bar2D{
 		X:           barX,
-		Y:           barY,
-		BarWidth:    0.3,
+		Heights:     barY,
+		Width:       0.3,
 		Color:       render.Color{R: 0.7, G: 0.3, B: 0.9, A: 0.7}, // purple
 		Baseline:    4.5,                                          // bars start from y=4.5
 		Orientation: core.BarVertical,
@@ -131,7 +131,7 @@ func main() {
 		return
 	}
 
-	// Create a second example with automatic color cycling
+	// Create a second example with automatic color cycling using new convenience methods
 	fig2 := core.NewFigure(1000, 700)
 	ax2 := fig2.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.1, Y: 0.1},
@@ -141,21 +141,12 @@ func main() {
 	ax2.XScale = transform.NewLinear(0, 2*math.Pi)
 	ax2.YScale = transform.NewLinear(-1.5, 1.5)
 
-	// Generate multiple sine waves with different frequencies and phases
+	// Generate multiple sine waves with different frequencies and phases using convenience methods
 	nWaves := 5
 	nPoints := 100
 	xWave := make([]float64, nPoints)
 	for i := 0; i < nPoints; i++ {
 		xWave[i] = 2 * math.Pi * float64(i) / float64(nPoints-1)
-	}
-
-	// Default color palette (similar to matplotlib's default colors)
-	colors := []render.Color{
-		{R: 0.12, G: 0.47, B: 0.71, A: 1}, // blue
-		{R: 1.00, G: 0.50, B: 0.05, A: 1}, // orange
-		{R: 0.17, G: 0.63, B: 0.17, A: 1}, // green
-		{R: 0.84, G: 0.15, B: 0.16, A: 1}, // red
-		{R: 0.58, G: 0.40, B: 0.74, A: 1}, // purple
 	}
 
 	for wave := 0; wave < nWaves; wave++ {
@@ -167,29 +158,22 @@ func main() {
 			yWave[i] = math.Sin(frequency*xWave[i] + phase)
 		}
 
-		// Create line for this wave
-		lineWave := &core.Line2D{
-			XY:  make([]geom.Pt, nPoints),
-			W:   2.0,
-			Col: colors[wave%len(colors)], // cycle through colors
-		}
-		for i := 0; i < nPoints; i++ {
-			lineWave.XY[i] = geom.Pt{X: xWave[i], Y: yWave[i]}
-		}
-		ax2.Add(lineWave)
+		// Create line using new convenience method with automatic color cycling
+		label := fmt.Sprintf("Wave %d", wave+1)
+		ax2.Plot(xWave, yWave, core.PlotOptions{
+			Label: label,
+		})
 
-		// Add some scatter points for each wave
-		scatterWave := &core.Scatter2D{
-			XY: []geom.Pt{
-				{X: math.Pi / 2, Y: math.Sin(frequency*math.Pi/2 + phase)},
-				{X: math.Pi, Y: math.Sin(frequency*math.Pi + phase)},
-				{X: 3 * math.Pi / 2, Y: math.Sin(frequency*3*math.Pi/2 + phase)},
-			},
-			Size:   8.0,
-			Color:  colors[wave%len(colors)],
-			Marker: core.MarkerCircle,
+		// Add some scatter points using convenience method
+		scatterX := []float64{math.Pi / 2, math.Pi, 3 * math.Pi / 2}
+		scatterY := make([]float64, len(scatterX))
+		for i, x := range scatterX {
+			scatterY[i] = math.Sin(frequency*x + phase)
 		}
-		ax2.Add(scatterWave)
+
+		ax2.Scatter(scatterX, scatterY, core.ScatterOptions{
+			Label: label + " points",
+		})
 	}
 
 	// Save the color cycling example
@@ -200,7 +184,60 @@ func main() {
 		return
 	}
 
+	// Create a third example showing convenience methods for different plot types
+	fig3 := core.NewFigure(1000, 700)
+	ax3 := fig3.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.1, Y: 0.1},
+		Max: geom.Pt{X: 0.9, Y: 0.9},
+	})
+
+	ax3.XScale = transform.NewLinear(0, 10)
+	ax3.YScale = transform.NewLinear(-2, 8)
+
+	// Sample data
+	xData := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	
+	// Line plot with automatic color cycling
+	yLine := []float64{2, 3.5, 2.8, 4.1, 3.2, 4.8, 4.2, 5.1, 4.9}
+	ax3.Plot(xData, yLine, core.PlotOptions{
+		Label: "Trend line",
+	})
+
+	// Scatter plot with automatic color cycling
+	xScatter := []float64{1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5}
+	yScatter := []float64{1.8, 2.9, 2.5, 3.8, 2.9, 4.5, 3.9, 4.8}
+	marker := core.MarkerSquare
+	ax3.Scatter(xScatter, yScatter, core.ScatterOptions{
+		Label:  "Data points",
+		Marker: &marker,
+	})
+
+	// Bar plot with automatic color cycling
+	xBars := []float64{0.8, 1.8, 2.8, 3.8, 4.8}
+	yBars := []float64{1.2, 1.8, 1.5, 2.1, 1.9}
+	width := 0.3
+	ax3.Bar(xBars, yBars, core.BarOptions{
+		Label: "Baseline data",
+		Width: &width,
+	})
+
+	// Fill area with automatic color cycling
+	xFill := []float64{6, 7, 8, 9, 10}
+	yFill := []float64{6, 7.2, 6.8, 7.5, 7.1}
+	ax3.FillToBaselinePlot(xFill, yFill, core.FillOptions{
+		Label: "Filled area",
+	})
+
+	// Save the convenience methods example
+	r3 := gobasic.New(1000, 700, render.Color{R: 1, G: 1, B: 1, A: 1})
+	err = core.SavePNG(fig3, r3, "multi_convenience_methods.png")
+	if err != nil {
+		fmt.Printf("Error saving convenience methods PNG: %v\n", err)
+		return
+	}
+
 	fmt.Println("Successfully created multi-series examples!")
-	fmt.Println("- multi_basic.png: Mixed plot types (lines, scatter, bars, fill)")
+	fmt.Println("- multi_basic.png: Mixed plot types (manual approach)")
 	fmt.Println("- multi_color_cycling.png: Multiple series with automatic color cycling")
+	fmt.Println("- multi_convenience_methods.png: Different plot types using convenience methods")
 }

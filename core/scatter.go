@@ -21,13 +21,18 @@ const (
 
 // Scatter2D renders points with configurable markers.
 type Scatter2D struct {
-	XY     []geom.Pt      // data space points
-	Sizes  []float64      // marker sizes (radius in pixels), if nil uses Size
-	Colors []render.Color // marker colors, if nil uses Color
-	Size   float64        // default marker size (radius in pixels)
-	Color  render.Color   // default marker color
-	Marker MarkerType     // marker shape
-	z      float64        // z-order
+	XY         []geom.Pt      // data space points
+	Sizes      []float64      // marker sizes (radius in pixels), if nil uses Size
+	Colors     []render.Color // marker colors, if nil uses Color
+	EdgeColors []render.Color // edge colors for marker outlines, if nil uses EdgeColor
+	Size       float64        // default marker size (radius in pixels)
+	Color      render.Color   // default marker color
+	EdgeColor  render.Color   // default edge color for marker outlines
+	EdgeWidth  float64        // edge width in pixels (0 means no edge)
+	Alpha      float64        // alpha transparency (0-1), applied to both fill and edge
+	Marker     MarkerType     // marker shape
+	Label      string         // series label for legend
+	z          float64        // z-order
 }
 
 // Draw renders scatter points by creating filled paths for each marker.
@@ -46,11 +51,30 @@ func (s *Scatter2D) Draw(r render.Renderer, ctx *DrawContext) {
 			size = s.Sizes[i]
 		}
 
-		// Get color for this point
-		color := s.Color
+		// Get fill color for this point
+		fillColor := s.Color
 		if s.Colors != nil && i < len(s.Colors) {
-			color = s.Colors[i]
+			fillColor = s.Colors[i]
 		}
+
+		// Get edge color for this point
+		edgeColor := s.EdgeColor
+		if s.EdgeColors != nil && i < len(s.EdgeColors) {
+			edgeColor = s.EdgeColors[i]
+		}
+
+		// Apply alpha transparency
+		alpha := s.Alpha
+		if alpha <= 0 {
+			alpha = 1.0 // default to fully opaque
+		}
+		if alpha > 1 {
+			alpha = 1.0 // clamp to maximum opacity
+		}
+
+		// Apply alpha to colors
+		fillColor.A *= alpha
+		edgeColor.A *= alpha
 
 		// Create marker path
 		markerPath := s.createMarkerPath(pixelPt, size)
@@ -58,10 +82,20 @@ func (s *Scatter2D) Draw(r render.Renderer, ctx *DrawContext) {
 			continue // skip invalid markers
 		}
 
-		// Draw filled marker
+		// Create paint for marker
 		paint := render.Paint{
-			Fill: color,
+			Fill: fillColor,
 		}
+
+		// Add stroke if edge width is specified
+		if s.EdgeWidth > 0 && edgeColor.A > 0 {
+			paint.Stroke = edgeColor
+			paint.LineWidth = s.EdgeWidth
+			paint.LineJoin = render.JoinRound
+			paint.LineCap = render.CapRound
+		}
+
+		// Draw marker
 		r.Path(markerPath, &paint)
 	}
 }
@@ -281,7 +315,52 @@ func (s *Scatter2D) Z() float64 {
 	return s.z
 }
 
-// Bounds returns an empty rect for now (will be enhanced in later phases).
+// Bounds returns the bounding box of all points, including marker size.
 func (s *Scatter2D) Bounds(*DrawContext) geom.Rect {
-	return geom.Rect{}
+	if len(s.XY) == 0 {
+		return geom.Rect{}
+	}
+
+	// Find the maximum size for bounds calculation
+	maxSize := s.Size
+	if s.Sizes != nil {
+		for _, size := range s.Sizes {
+			if size > maxSize {
+				maxSize = size
+			}
+		}
+	}
+
+	// Initialize bounds with first point
+	bounds := geom.Rect{
+		Min: s.XY[0],
+		Max: s.XY[0],
+	}
+
+	// Expand bounds to include all points
+	for _, pt := range s.XY[1:] {
+		if pt.X < bounds.Min.X {
+			bounds.Min.X = pt.X
+		}
+		if pt.Y < bounds.Min.Y {
+			bounds.Min.Y = pt.Y
+		}
+		if pt.X > bounds.Max.X {
+			bounds.Max.X = pt.X
+		}
+		if pt.Y > bounds.Max.Y {
+			bounds.Max.Y = pt.Y
+		}
+	}
+
+	// Expand bounds by marker size (in data space)
+	// Note: This is an approximation since marker size is in pixels
+	// A more accurate implementation would need the transform context
+	sizeInData := maxSize * 0.01 // rough approximation
+	bounds.Min.X -= sizeInData
+	bounds.Min.Y -= sizeInData
+	bounds.Max.X += sizeInData
+	bounds.Max.Y += sizeInData
+
+	return bounds
 }

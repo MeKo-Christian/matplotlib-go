@@ -361,12 +361,10 @@ func (r *Renderer) DrawText(text string, origin geom.Pt, size float64, textColor
 	origin = geom.Pt{X: quantize(origin.X), Y: quantize(origin.Y)}
 
 	// Convert to fixed.Point26_6 and set as drawer dot
-	// Note: font coordinates have Y increasing downward, but we expect Y increasing upward
-	// So we need to flip the Y coordinate
-	bounds := r.dst.Bounds()
+	// With the corrected coordinate system, origin.Y is already in screen coordinates
 	drawer.Dot = fixed.Point26_6{
 		X: fixed.Int26_6(origin.X * 64), // Convert to fixed point
-		Y: fixed.Int26_6((float64(bounds.Max.Y) - origin.Y) * 64), // Flip Y coordinate
+		Y: fixed.Int26_6(origin.Y * 64),  // Use Y coordinate directly
 	}
 
 	// Apply clipping if set

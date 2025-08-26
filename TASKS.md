@@ -35,31 +35,43 @@ ax.Add(line)
 
 ### 1.1 Scatter Plots
 
-- [ ] `Scatter2D` artist with point/marker rendering
-- [ ] Basic marker shapes: circle, square, triangle, diamond, plus, cross
-- [ ] Variable marker sizes and colors per point
-- [ ] Example: `examples/scatter/basic.go`
+- [x] `Scatter2D` artist with point/marker rendering
+- [x] Basic marker shapes: circle, square, triangle, diamond, plus, cross
+- [x] Variable marker sizes and colors per point
+- [x] Edge colors and stroke support for marker outlines
+- [x] Alpha transparency support
+- [x] Proper bounds calculation
+- [x] Comprehensive unit tests and golden tests
+- [x] Example: `examples/scatter/basic.go`
 
 ### 1.2 Bar Charts
 
-- [ ] `Bar2D` artist using rectangle patches
-- [ ] Vertical and horizontal bars
-- [ ] Grouped bars (multiple series)
-- [ ] Example: `examples/bar/basic.go`
+- [x] `Bar2D` artist using rectangle patches
+- [x] Vertical and horizontal bars
+- [x] Grouped bars (multiple series)
+- [x] Comprehensive unit tests and golden tests
+- [x] Edge colors and transparency support
+- [x] Variable bar widths and colors per bar
+- [x] Proper bounds calculation
+- [x] Example: `examples/bar/basic.go`
 
 ### 1.3 Fill Operations
 
-- [ ] `Fill2D` artist for area plots and fill_between
-- [ ] Alpha transparency support
-- [ ] Multiple fill regions on same axes
-- [ ] Example: `examples/fill/basic.go`
+- [x] `Fill2D` artist for area plots and fill_between
+- [x] Alpha transparency support
+- [x] Edge colors and stroke support for fill outlines
+- [x] Multiple fill regions on same axes
+- [x] Proper bounds calculation
+- [x] Comprehensive unit tests and golden tests
+- [x] Performance optimization for large datasets
+- [x] Example: `examples/fill/basic.go`
 
 ### 1.4 Multiple Series Support
 
-- [ ] Plot multiple lines/scatter/bars on same axes
-- [ ] Automatic color cycling for series
-- [ ] Series labels for legend preparation
-- [ ] Example: `examples/multi/basic.go`
+- [x] Plot multiple lines/scatter/bars on same axes
+- [x] Automatic color cycling for series
+- [x] Series labels for legend preparation
+- [x] Example: `examples/multi/basic.go`
 
 **Exit Criteria:**
 

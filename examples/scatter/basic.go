@@ -38,10 +38,13 @@ func main() {
 	}
 
 	scatter1 := &core.Scatter2D{
-		XY:     basicPoints,
-		Size:   8.0,
-		Color:  render.Color{R: 1, G: 0, B: 0, A: 1}, // red
-		Marker: core.MarkerCircle,
+		XY:        basicPoints,
+		Size:      8.0,
+		Color:     render.Color{R: 1, G: 0, B: 0, A: 1}, // red
+		EdgeColor: render.Color{R: 0.5, G: 0, B: 0, A: 1}, // dark red edge
+		EdgeWidth: 1.5,
+		Marker:    core.MarkerCircle,
+		Alpha:     1.0,
 	}
 	ax.Add(scatter1)
 
@@ -54,41 +57,52 @@ func main() {
 	for i, markerType := range markerTypes {
 		x := -1.5 + float64(i)*0.75
 		scatter := &core.Scatter2D{
-			XY:     []geom.Pt{{X: x, Y: -1.8}},
-			Size:   10.0,
-			Color:  render.Color{R: 0, G: 0, B: 1, A: 1}, // blue
-			Marker: markerType,
+			XY:        []geom.Pt{{X: x, Y: -1.8}},
+			Size:      10.0,
+			Color:     render.Color{R: 0, G: 0, B: 1, A: 1}, // blue
+			EdgeColor: render.Color{R: 0, G: 0, B: 0.5, A: 1}, // dark blue edge
+			EdgeWidth: 2.0,
+			Marker:    markerType,
+			Alpha:     1.0,
 		}
 		ax.Add(scatter)
 	}
 
-	// Example 3: Variable sizes and colors
-	rand.Seed(42) // for reproducible results
+	// Example 3: Variable sizes, colors, and transparency
+	rng := rand.New(rand.NewSource(42)) // for reproducible results
 	var variablePoints []geom.Pt
 	var variableSizes []float64
 	var variableColors []render.Color
+	var edgeColors []render.Color
 
 	for i := 0; i < 20; i++ {
 		// Random points in a circle
 		angle := 2 * math.Pi * float64(i) / 20
-		radius := 0.3 + 0.5*rand.Float64()
+		radius := 0.3 + 0.5*rng.Float64()
 		x := radius * math.Cos(angle)
 		y := radius * math.Sin(angle)
 
 		variablePoints = append(variablePoints, geom.Pt{X: x, Y: y})
-		variableSizes = append(variableSizes, 3.0+10.0*rand.Float64())
+		variableSizes = append(variableSizes, 3.0+10.0*rng.Float64())
 
 		// Color based on angle (rainbow effect)
 		hue := angle / (2 * math.Pi)
 		r, g, b := hsvToRgb(hue, 0.8, 0.9)
 		variableColors = append(variableColors, render.Color{R: r, G: g, B: b, A: 1})
+		
+		// Darker edge colors
+		rEdge, gEdge, bEdge := hsvToRgb(hue, 1.0, 0.6)
+		edgeColors = append(edgeColors, render.Color{R: rEdge, G: gEdge, B: bEdge, A: 1})
 	}
 
 	scatter3 := &core.Scatter2D{
-		XY:     variablePoints,
-		Sizes:  variableSizes,
-		Colors: variableColors,
-		Marker: core.MarkerCircle,
+		XY:         variablePoints,
+		Sizes:      variableSizes,
+		Colors:     variableColors,
+		EdgeColors: edgeColors,
+		EdgeWidth:  1.0,
+		Alpha:      0.7, // Semi-transparent
+		Marker:     core.MarkerCircle,
 	}
 	ax.Add(scatter3)
 
@@ -103,9 +117,9 @@ func main() {
 	}
 
 	fmt.Println("Successfully created scatter_basic.png with scatter plots!")
-	fmt.Println("- Red line of circles")
-	fmt.Println("- Blue shapes showing different marker types")
-	fmt.Println("- Colorful circle with variable sizes and colors")
+	fmt.Println("- Red circles with dark red edges")
+	fmt.Println("- Blue shapes showing different marker types with edges")
+	fmt.Println("- Colorful semi-transparent circle with variable sizes, colors, and edge colors")
 }
 
 // hsvToRgb converts HSV color space to RGB

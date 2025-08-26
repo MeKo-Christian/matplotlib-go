@@ -87,7 +87,10 @@ func (a *Axis) Draw(r render.Renderer, ctx *DrawContext) {
 		a.drawTicks(r, ctx, ticks, isXAxis)
 	}
 
-	// TODO: Draw tick labels (requires text rendering)
+	// Draw tick labels if supported by the renderer
+	if a.ShowLabels && len(ticks) > 0 {
+		a.drawTickLabels(r, ctx, ticks, isXAxis)
+	}
 }
 
 // drawSpine draws the main axis line.
@@ -147,13 +150,14 @@ func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue flo
 		spinePixel := ctx.DataToPixel.Apply(geom.Pt{X: tickX, Y: spineY})
 
 		// Calculate tick endpoints in pixel space
+		// Note: With Y-flipped coordinates, positive Y is up in data space but down in pixel space
 		switch a.Side {
 		case AxisBottom:
 			p1 = spinePixel
-			p2 = geom.Pt{X: spinePixel.X, Y: spinePixel.Y + a.TickSize}
+			p2 = geom.Pt{X: spinePixel.X, Y: spinePixel.Y - a.TickSize} // Ticks point down (more positive Y in screen coords)
 		case AxisTop:
 			p1 = spinePixel
-			p2 = geom.Pt{X: spinePixel.X, Y: spinePixel.Y - a.TickSize}
+			p2 = geom.Pt{X: spinePixel.X, Y: spinePixel.Y + a.TickSize} // Ticks point up (less Y in screen coords)
 		}
 	} else {
 		// Horizontal tick mark
@@ -220,4 +224,57 @@ func (a *Axis) Z() float64 {
 // Bounds returns an empty rect for now.
 func (a *Axis) Bounds(*DrawContext) geom.Rect {
 	return geom.Rect{}
+}
+
+// drawTickLabels draws text labels for the ticks if the renderer supports text.
+func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float64, isXAxis bool) {
+	// Check if renderer supports text drawing (gobasic.Renderer has DrawText method)
+	type textRenderer interface {
+		DrawText(text string, origin geom.Pt, size float64, textColor render.Color)
+	}
+	
+	textRen, ok := r.(textRenderer)
+	if !ok {
+		return // Renderer doesn't support text
+	}
+	
+	fontSize := 12.0 // Default font size
+	
+	for _, tickValue := range ticks {
+		// Format the tick value using the formatter
+		label := a.Formatter.Format(tickValue)
+		if label == "" {
+			continue
+		}
+		
+		// Calculate label position
+		var labelPos geom.Pt
+		
+		if isXAxis {
+			// X-axis labels go below the ticks
+			spineY := getSpinePosition(a.Side, ctx)
+			tickPos := ctx.DataToPixel.Apply(geom.Pt{X: tickValue, Y: spineY})
+			
+			switch a.Side {
+			case AxisBottom:
+				labelPos = geom.Pt{X: tickPos.X, Y: tickPos.Y - a.TickSize - 5} // Below tick
+			case AxisTop:
+				labelPos = geom.Pt{X: tickPos.X, Y: tickPos.Y + a.TickSize + fontSize + 5} // Above tick
+			}
+		} else {
+			// Y-axis labels go to the left of the ticks
+			spineX := getSpinePosition(a.Side, ctx)
+			tickPos := ctx.DataToPixel.Apply(geom.Pt{X: spineX, Y: tickValue})
+			
+			switch a.Side {
+			case AxisLeft:
+				labelPos = geom.Pt{X: tickPos.X - a.TickSize - 50, Y: tickPos.Y + fontSize/2} // Left of tick
+			case AxisRight:
+				labelPos = geom.Pt{X: tickPos.X + a.TickSize + 5, Y: tickPos.Y + fontSize/2} // Right of tick
+			}
+		}
+		
+		// Draw the label
+		textRen.DrawText(label, labelPos, fontSize, a.Color)
+	}
 }

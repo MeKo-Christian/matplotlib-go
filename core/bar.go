@@ -15,123 +15,182 @@ const (
 
 // Bar2D renders bar charts using filled rectangles.
 type Bar2D struct {
-	X           []float64      // x positions (centers of bars for vertical, left edges for horizontal)
-	Y           []float64      // y values (heights for vertical, x-extent for horizontal)
-	Width       []float64      // bar widths, if nil uses Width
-	Colors      []render.Color // bar colors, if nil uses Color
-	BarWidth    float64        // default bar width
-	Color       render.Color   // default bar color
+	X           []float64      // x positions (centers of bars for vertical, positions for horizontal)
+	Heights     []float64      // heights/lengths of bars (Y values for vertical, X values for horizontal)
+	Widths      []float64      // bar widths, if nil uses Width
+	Colors      []render.Color // bar fill colors, if nil uses Color
+	EdgeColors  []render.Color // edge colors for bar outlines, if nil uses EdgeColor
+	Width       float64        // default bar width in data units
+	Color       render.Color   // default bar fill color
+	EdgeColor   render.Color   // default edge color for bar outlines
+	EdgeWidth   float64        // edge width in pixels (0 means no edge)
+	Alpha       float64        // alpha transparency (0-1), applied to both fill and edge
 	Baseline    float64        // baseline value (0 for most cases)
 	Orientation BarOrientation // vertical or horizontal bars
+	Label       string         // series label for legend
 	z           float64        // z-order
 }
 
 // Draw renders bars by creating filled rectangles for each bar.
 func (b *Bar2D) Draw(r render.Renderer, ctx *DrawContext) {
-	if len(b.X) == 0 || len(b.Y) == 0 {
+	if len(b.X) == 0 || len(b.Heights) == 0 {
 		return // nothing to draw
 	}
 
-	// Use minimum of X and Y lengths
-	n := len(b.X)
-	if len(b.Y) < n {
-		n = len(b.Y)
+	// Determine the number of bars to draw
+	numBars := len(b.X)
+	if len(b.Heights) < numBars {
+		numBars = len(b.Heights)
 	}
 
-	for i := 0; i < n; i++ {
-		// Get width for this bar
-		width := b.BarWidth
-		if b.Width != nil && i < len(b.Width) {
-			width = b.Width[i]
+	for i := 0; i < numBars; i++ {
+		x := b.X[i]
+		height := b.Heights[i]
+
+		// Skip bars with zero or negative height
+		if height <= 0 {
+			continue
 		}
 
-		// Get color for this bar
-		color := b.Color
-		if b.Colors != nil && i < len(b.Colors) {
-			color = b.Colors[i]
+		// Get width for this bar
+		width := b.Width
+		if b.Widths != nil && i < len(b.Widths) {
+			width = b.Widths[i]
 		}
+
+		// Get fill color for this bar
+		fillColor := b.Color
+		if b.Colors != nil && i < len(b.Colors) {
+			fillColor = b.Colors[i]
+		}
+
+		// Get edge color for this bar
+		edgeColor := b.EdgeColor
+		if b.EdgeColors != nil && i < len(b.EdgeColors) {
+			edgeColor = b.EdgeColors[i]
+		}
+
+		// Apply alpha transparency
+		alpha := b.Alpha
+		if alpha <= 0 {
+			alpha = 1.0 // default to fully opaque
+		}
+		if alpha > 1 {
+			alpha = 1.0 // clamp to maximum opacity
+		}
+
+		// Apply alpha to colors
+		fillColor.A *= alpha
+		edgeColor.A *= alpha
 
 		// Create rectangle path based on orientation
 		var rectPath geom.Path
 		if b.Orientation == BarVertical {
-			rectPath = b.createVerticalBarPath(b.X[i], b.Y[i], width, ctx)
+			rectPath = b.createVerticalBarPath(x, height, width, ctx)
 		} else {
-			rectPath = b.createHorizontalBarPath(b.X[i], b.Y[i], width, ctx)
+			rectPath = b.createHorizontalBarPath(x, height, width, ctx)
 		}
 
 		if len(rectPath.C) == 0 {
 			continue // skip invalid bars
 		}
 
-		// Draw filled rectangle
+		// Create paint for bar
 		paint := render.Paint{
-			Fill: color,
+			Fill: fillColor,
 		}
+
+		// Add stroke if edge width is specified
+		if b.EdgeWidth > 0 && edgeColor.A > 0 {
+			paint.Stroke = edgeColor
+			paint.LineWidth = b.EdgeWidth
+			paint.LineJoin = render.JoinMiter
+			paint.LineCap = render.CapSquare
+		}
+
+		// Draw bar
 		r.Path(rectPath, &paint)
 	}
 }
 
 // createVerticalBarPath creates a rectangle for a vertical bar.
 func (b *Bar2D) createVerticalBarPath(x, height, width float64, ctx *DrawContext) geom.Path {
-	// Calculate rectangle corners in data space
-	left := x - width/2
-	right := x + width/2
-	bottom := b.Baseline
-	top := height
+	path := geom.Path{}
 
-	// Ensure correct order (bottom <= top)
-	if top < bottom {
-		bottom, top = top, bottom
+	// Calculate rectangle corners in data space
+	halfWidth := width / 2
+	left := x - halfWidth
+	right := x + halfWidth
+	bottom := b.Baseline
+	top := b.Baseline + height
+
+	// Handle negative heights (bars extending below baseline)
+	if height < 0 {
+		bottom = b.Baseline + height
+		top = b.Baseline
 	}
 
-	// Transform to pixel coordinates
-	bl := ctx.DataToPixel.Apply(geom.Pt{X: left, Y: bottom})  // bottom-left
-	br := ctx.DataToPixel.Apply(geom.Pt{X: right, Y: bottom}) // bottom-right
-	tr := ctx.DataToPixel.Apply(geom.Pt{X: right, Y: top})    // top-right
-	tl := ctx.DataToPixel.Apply(geom.Pt{X: left, Y: top})     // top-left
+	// Define rectangle corners
+	corners := []geom.Pt{
+		{X: left, Y: bottom},  // bottom-left
+		{X: right, Y: bottom}, // bottom-right
+		{X: right, Y: top},    // top-right
+		{X: left, Y: top},     // top-left
+	}
 
-	path := geom.Path{}
-	path.C = append(path.C, geom.MoveTo)
-	path.V = append(path.V, bl)
-	path.C = append(path.C, geom.LineTo)
-	path.V = append(path.V, br)
-	path.C = append(path.C, geom.LineTo)
-	path.V = append(path.V, tr)
-	path.C = append(path.C, geom.LineTo)
-	path.V = append(path.V, tl)
+	// Transform to pixel coordinates and create path
+	for i, corner := range corners {
+		pixelPt := ctx.DataToPixel.Apply(corner)
+		if i == 0 {
+			path.C = append(path.C, geom.MoveTo)
+		} else {
+			path.C = append(path.C, geom.LineTo)
+		}
+		path.V = append(path.V, pixelPt)
+	}
 	path.C = append(path.C, geom.ClosePath)
 
 	return path
 }
 
 // createHorizontalBarPath creates a rectangle for a horizontal bar.
-func (b *Bar2D) createHorizontalBarPath(y, width, height float64, ctx *DrawContext) geom.Path {
-	// Calculate rectangle corners in data space
-	left := b.Baseline
-	right := width
-	bottom := y - height/2
-	top := y + height/2
+func (b *Bar2D) createHorizontalBarPath(y, height, width float64, ctx *DrawContext) geom.Path {
+	path := geom.Path{}
 
-	// Ensure correct order (left <= right)
-	if right < left {
-		left, right = right, left
+	// For horizontal bars:
+	// y is the y-position (center)
+	// height is the length (width) of the bar
+	// width is the thickness (height) of the bar
+	halfWidth := width / 2
+	left := b.Baseline
+	right := b.Baseline + height
+	bottom := y - halfWidth
+	top := y + halfWidth
+
+	// Handle negative heights (bars extending left from baseline)
+	if height < 0 {
+		left = b.Baseline + height
+		right = b.Baseline
 	}
 
-	// Transform to pixel coordinates
-	bl := ctx.DataToPixel.Apply(geom.Pt{X: left, Y: bottom})  // bottom-left
-	br := ctx.DataToPixel.Apply(geom.Pt{X: right, Y: bottom}) // bottom-right
-	tr := ctx.DataToPixel.Apply(geom.Pt{X: right, Y: top})    // top-right
-	tl := ctx.DataToPixel.Apply(geom.Pt{X: left, Y: top})     // top-left
+	// Define rectangle corners
+	corners := []geom.Pt{
+		{X: left, Y: bottom},  // bottom-left
+		{X: right, Y: bottom}, // bottom-right
+		{X: right, Y: top},    // top-right
+		{X: left, Y: top},     // top-left
+	}
 
-	path := geom.Path{}
-	path.C = append(path.C, geom.MoveTo)
-	path.V = append(path.V, bl)
-	path.C = append(path.C, geom.LineTo)
-	path.V = append(path.V, br)
-	path.C = append(path.C, geom.LineTo)
-	path.V = append(path.V, tr)
-	path.C = append(path.C, geom.LineTo)
-	path.V = append(path.V, tl)
+	// Transform to pixel coordinates and create path
+	for i, corner := range corners {
+		pixelPt := ctx.DataToPixel.Apply(corner)
+		if i == 0 {
+			path.C = append(path.C, geom.MoveTo)
+		} else {
+			path.C = append(path.C, geom.LineTo)
+		}
+		path.V = append(path.V, pixelPt)
+	}
 	path.C = append(path.C, geom.ClosePath)
 
 	return path
@@ -142,7 +201,164 @@ func (b *Bar2D) Z() float64 {
 	return b.z
 }
 
-// Bounds returns an empty rect for now (will be enhanced in later phases).
+// Bounds returns the bounding box of all bars.
 func (b *Bar2D) Bounds(*DrawContext) geom.Rect {
-	return geom.Rect{}
+	if len(b.X) == 0 || len(b.Heights) == 0 {
+		return geom.Rect{}
+	}
+
+	// Determine the number of bars
+	numBars := len(b.X)
+	if len(b.Heights) < numBars {
+		numBars = len(b.Heights)
+	}
+
+	if numBars == 0 {
+		return geom.Rect{}
+	}
+
+	// Calculate bounds based on orientation
+	if b.Orientation == BarVertical {
+		return b.verticalBounds(numBars)
+	} else {
+		return b.horizontalBounds(numBars)
+	}
+}
+
+// verticalBounds calculates bounds for vertical bars.
+func (b *Bar2D) verticalBounds(numBars int) geom.Rect {
+	// Get maximum width for bounds calculation
+	maxWidth := b.Width
+	if b.Widths != nil {
+		for _, width := range b.Widths {
+			if width > maxWidth {
+				maxWidth = width
+			}
+		}
+	}
+	halfMaxWidth := maxWidth / 2
+
+	// Initialize bounds with first bar
+	x0 := b.X[0]
+	height0 := b.Heights[0]
+	minX := x0 - halfMaxWidth
+	maxX := x0 + halfMaxWidth
+	minY := b.Baseline
+	maxY := b.Baseline + height0
+
+	if height0 < 0 {
+		minY = b.Baseline + height0
+		maxY = b.Baseline
+	}
+
+	// Expand bounds to include all bars
+	for i := 1; i < numBars; i++ {
+		x := b.X[i]
+		height := b.Heights[i]
+
+		// X bounds (bar positions and width)
+		left := x - halfMaxWidth
+		right := x + halfMaxWidth
+		if left < minX {
+			minX = left
+		}
+		if right > maxX {
+			maxX = right
+		}
+
+		// Y bounds (bar heights)
+		if height >= 0 {
+			bottom := b.Baseline
+			top := b.Baseline + height
+			if bottom < minY {
+				minY = bottom
+			}
+			if top > maxY {
+				maxY = top
+			}
+		} else {
+			bottom := b.Baseline + height
+			top := b.Baseline
+			if bottom < minY {
+				minY = bottom
+			}
+			if top > maxY {
+				maxY = top
+			}
+		}
+	}
+
+	return geom.Rect{
+		Min: geom.Pt{X: minX, Y: minY},
+		Max: geom.Pt{X: maxX, Y: maxY},
+	}
+}
+
+// horizontalBounds calculates bounds for horizontal bars.
+func (b *Bar2D) horizontalBounds(numBars int) geom.Rect {
+	// Get maximum width for bounds calculation
+	maxWidth := b.Width
+	if b.Widths != nil {
+		for _, width := range b.Widths {
+			if width > maxWidth {
+				maxWidth = width
+			}
+		}
+	}
+	halfMaxWidth := maxWidth / 2
+
+	// Initialize bounds with first bar
+	y0 := b.X[0] // In horizontal bars, X represents Y positions
+	height0 := b.Heights[0]
+	minX := b.Baseline
+	maxX := b.Baseline + height0
+	minY := y0 - halfMaxWidth
+	maxY := y0 + halfMaxWidth
+
+	if height0 < 0 {
+		minX = b.Baseline + height0
+		maxX = b.Baseline
+	}
+
+	// Expand bounds to include all bars
+	for i := 1; i < numBars; i++ {
+		y := b.X[i] // In horizontal bars, X represents Y positions
+		height := b.Heights[i]
+
+		// X bounds (bar lengths)
+		if height >= 0 {
+			left := b.Baseline
+			right := b.Baseline + height
+			if left < minX {
+				minX = left
+			}
+			if right > maxX {
+				maxX = right
+			}
+		} else {
+			left := b.Baseline + height
+			right := b.Baseline
+			if left < minX {
+				minX = left
+			}
+			if right > maxX {
+				maxX = right
+			}
+		}
+
+		// Y bounds (bar positions and width)
+		bottom := y - halfMaxWidth
+		top := y + halfMaxWidth
+		if bottom < minY {
+			minY = bottom
+		}
+		if top > maxY {
+			maxY = top
+		}
+	}
+
+	return geom.Rect{
+		Min: geom.Pt{X: minX, Y: minY},
+		Max: geom.Pt{X: maxX, Y: maxY},
+	}
 }

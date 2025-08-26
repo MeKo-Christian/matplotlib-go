@@ -30,8 +30,8 @@ func main() {
 
 	verticalBars := &core.Bar2D{
 		X:           categories,
-		Y:           values,
-		BarWidth:    0.6,
+		Heights:     values,
+		Width:       0.6,
 		Color:       render.Color{R: 0.2, G: 0.6, B: 0.8, A: 1}, // blue
 		Baseline:    0,
 		Orientation: core.BarVertical,
@@ -61,9 +61,9 @@ func main() {
 
 	// Example 2: Horizontal bar chart
 	horizontalBars := &core.Bar2D{
-		X:           values,                                     // now represents bar lengths
-		Y:           categories,                                 // now represents y positions
-		BarWidth:    0.6,                                        // now represents bar height
+		X:           categories,                                  // Y positions for horizontal bars
+		Heights:     values,                                     // Bar lengths
+		Width:       0.6,                                        // Bar thickness
 		Color:       render.Color{R: 0.8, G: 0.4, B: 0.2, A: 1}, // orange
 		Baseline:    0,
 		Orientation: core.BarHorizontal,
@@ -101,10 +101,10 @@ func main() {
 
 	variableBars := &core.Bar2D{
 		X:           categories,
-		Y:           values,
-		Width:       varWidths,
+		Heights:     values,
+		Widths:      varWidths,
 		Colors:      varColors,
-		BarWidth:    0.6,                                        // fallback width
+		Width:       0.6,                                        // fallback width
 		Color:       render.Color{R: 0.5, G: 0.5, B: 0.5, A: 1}, // fallback color
 		Baseline:    0,
 		Orientation: core.BarVertical,

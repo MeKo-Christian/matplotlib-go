@@ -3,6 +3,7 @@ package core
 import (
 	"sort"
 
+	"matplotlib-go/color"
 	"matplotlib-go/internal/geom"
 	"matplotlib-go/render"
 	"matplotlib-go/style"
@@ -76,6 +77,9 @@ type Axes struct {
 	// Axis control
 	XAxis *Axis // bottom x-axis
 	YAxis *Axis // left y-axis
+	
+	// Color cycling for multiple series
+	ColorCycle *color.ColorCycle
 }
 
 // AddAxes appends an Axes to the Figure. If opts are provided, the Axes gets its
@@ -93,6 +97,7 @@ func (f *Figure) AddAxes(r geom.Rect, opts ...style.Option) *Axes {
 		YScale:       transform.NewLinear(0, 1),
 		XAxis:        NewXAxis(),
 		YAxis:        NewYAxis(),
+		ColorCycle:   color.NewDefaultColorCycle(),
 	}
 	f.Children = append(f.Children, ax)
 	return ax
@@ -144,6 +149,29 @@ func (a *Axes) AddXGrid() *Grid {
 // AddYGrid adds horizontal grid lines based on y-axis ticks.
 func (a *Axes) AddYGrid() *Grid {
 	return a.AddGrid(AxisLeft)
+}
+
+// NextColor returns the next color in the axes color cycle.
+func (a *Axes) NextColor() render.Color {
+	if a.ColorCycle == nil {
+		a.ColorCycle = color.NewDefaultColorCycle()
+	}
+	return a.ColorCycle.Next()
+}
+
+// PeekColor returns the current color without advancing the cycle.
+func (a *Axes) PeekColor() render.Color {
+	if a.ColorCycle == nil {
+		a.ColorCycle = color.NewDefaultColorCycle()
+	}
+	return a.ColorCycle.Peek()
+}
+
+// ResetColorCycle resets the color cycle to the first color.
+func (a *Axes) ResetColorCycle() {
+	if a.ColorCycle != nil {
+		a.ColorCycle.Reset()
+	}
 }
 
 // layout computes the pixel rectangle for this Axes inside the Figure.
@@ -211,10 +239,13 @@ func DrawFigure(fig *Figure, r render.Renderer) {
 }
 
 // axesToPixel returns an affine mapping [0..1]^2 (axes space) -> pixel rect.
+// This maps axes coordinates to pixel coordinates with Y-flip for mathematical orientation:
+// - axes (0,0) -> pixel (px.Min.X, px.Max.Y) [bottom-left]
+// - axes (1,1) -> pixel (px.Max.X, px.Min.Y) [top-right]
 func axesToPixel(px geom.Rect) geom.Affine {
 	sx := px.W()
-	sy := px.H()
+	sy := -px.H() // Negative to flip Y-axis
 	tx := px.Min.X
-	ty := px.Min.Y
+	ty := px.Max.Y // Start from bottom of pixel rect
 	return geom.Affine{A: sx, D: sy, E: tx, F: ty}
 }

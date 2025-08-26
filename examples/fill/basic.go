@@ -38,14 +38,19 @@ func main() {
 		y2[i] = math.Cos(t)
 	}
 
-	// Example 1: Fill between sine and cosine
+	// Example 1: Fill between sine and cosine with edge
 	fillBetween := core.FillBetween(x, y1, y2,
 		render.Color{R: 0.3, G: 0.7, B: 0.9, A: 0.6}) // semi-transparent blue
+	fillBetween.EdgeColor = render.Color{R: 0.1, G: 0.3, B: 0.5, A: 1.0} // darker blue edge
+	fillBetween.EdgeWidth = 1.5
 	ax.Add(fillBetween)
 
-	// Example 2: Fill sine curve to baseline
+	// Example 2: Fill sine curve to baseline with alpha override
 	fillSine := core.FillToBaseline(x, y1, 0,
-		render.Color{R: 1, G: 0.3, B: 0.3, A: 0.4}) // semi-transparent red
+		render.Color{R: 1, G: 0.3, B: 0.3, A: 1.0}) // red
+	fillSine.Alpha = 0.4                             // override with transparency
+	fillSine.EdgeColor = render.Color{R: 0.7, G: 0.1, B: 0.1, A: 1.0} // dark red edge
+	fillSine.EdgeWidth = 2.0
 	ax.Add(fillSine)
 
 	// Add the actual curves on top for reference
@@ -101,13 +106,21 @@ func main() {
 		area3[i] = area2[i] + 2.0 + 0.8*math.Cos(float64(i)*0.3)
 	}
 
-	// Create stacked fills
+	// Create stacked fills with edges for better definition
 	stack1 := core.FillToBaseline(xStack, area1, 0,
 		render.Color{R: 0.8, G: 0.3, B: 0.3, A: 0.8}) // red
+	stack1.EdgeColor = render.Color{R: 0.5, G: 0.1, B: 0.1, A: 1.0}
+	stack1.EdgeWidth = 1.0
+
 	stack2 := core.FillBetween(xStack, area1, area2,
 		render.Color{R: 0.3, G: 0.8, B: 0.3, A: 0.8}) // green
+	stack2.EdgeColor = render.Color{R: 0.1, G: 0.5, B: 0.1, A: 1.0}
+	stack2.EdgeWidth = 1.0
+
 	stack3 := core.FillBetween(xStack, area2, area3,
 		render.Color{R: 0.3, G: 0.3, B: 0.8, A: 0.8}) // blue
+	stack3.EdgeColor = render.Color{R: 0.1, G: 0.1, B: 0.5, A: 1.0}
+	stack3.EdgeWidth = 1.0
 
 	ax2.Add(stack1)
 	ax2.Add(stack2)
@@ -122,6 +135,6 @@ func main() {
 	}
 
 	fmt.Println("Successfully created fill examples!")
-	fmt.Println("- fill_basic.png: Fill between sine/cosine and sine to baseline")
-	fmt.Println("- fill_stacked.png: Stacked area chart")
+	fmt.Println("- fill_basic.png: Fill between sine/cosine with edges and alpha transparency")
+	fmt.Println("- fill_stacked.png: Stacked area chart with edge definition")
 }
