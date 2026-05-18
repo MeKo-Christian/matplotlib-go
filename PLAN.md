@@ -220,7 +220,8 @@ Current slice landed:
 
 - `backends/ps` package with `doc.go`, `init.go`, `ps.go`, and
   `registry_test.go`. Renderer implements `render.Renderer`,
-  `render.PSExporter`, `render.DPIAware`, and basic direct text interfaces.
+  `render.PSExporter`, `render.DPIAware`, `render.ImageTransformer`, and basic
+  direct text interfaces.
 - `backends.PS` backend constant and `backends.PSExport` capability with
   runtime-checked `PSExporter` interface mapping. `VectorOutput` now accepts
   SVG, PDF, or PS exporters.
@@ -231,6 +232,9 @@ Current slice landed:
 - RGBA raster image draws now emit deterministic inline Level-2 PostScript
   `colorimage` payloads. PostScript has no native alpha channel, so translucent
   image pixels are pre-composited over white for this initial image slice.
+- Transformed images now implement `render.ImageTransformer` by applying an
+  arbitrary PostScript `concat` matrix before the same inline `colorimage`
+  payload, covering rotated image placement from the core image artist.
 - Save dispatch routes `.ps` and `.eps` through `core.SaveFig`,
   `backends.SavePS`, and registry `SaveFormats`; `backends/all` side-imports
   the new package.
@@ -238,7 +242,7 @@ Current slice landed:
 Remaining PostScript work:
 
 - Match PDF's embedded-font, hatch, alpha, marker/path-collection batch,
-  JPEG passthrough, image reuse, and transformed-image semantics.
+  JPEG passthrough, and image reuse semantics.
 
 ### 1.3 Save Dispatch Cleanup
 

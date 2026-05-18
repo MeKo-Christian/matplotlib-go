@@ -46,3 +46,36 @@ func TestImageEmitsPostScriptColorImage(t *testing.T) {
 		t.Fatalf("missing deterministic RGB image payload in\n%s", r.document)
 	}
 }
+
+func TestImageTransformedEmitsConcatMatrix(t *testing.T) {
+	r := newTestRenderer(t)
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	transformer, ok := any(r).(render.ImageTransformer)
+	if !ok {
+		t.Fatal("PS renderer should implement render.ImageTransformer")
+	}
+	img := image.NewRGBA(image.Rect(0, 0, 2, 1))
+	img.SetRGBA(0, 0, color.RGBA{B: 0xff, A: 0xff})
+	img.SetRGBA(1, 0, color.RGBA{R: 0xff, G: 0xff, A: 0xff})
+
+	transformer.ImageTransformed(render.NewImageData(img), geom.Rect{
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 12, Y: 21},
+	}, geom.Affine{
+		A: 2, B: 0.5,
+		C: -0.25, D: 3,
+		E: 10, F: 20,
+	})
+
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	if !bytes.Contains(r.document, []byte("[4 1 -0.25 3 10 20] concat")) {
+		t.Fatalf("missing transformed image concat matrix in\n%s", r.document)
+	}
+	if !bytes.Contains(r.document, []byte("<0000ffffff00>")) {
+		t.Fatalf("missing transformed image payload in\n%s", r.document)
+	}
+}

@@ -38,6 +38,7 @@ var (
 	_ render.Renderer               = (*Renderer)(nil)
 	_ render.PSExporter             = (*Renderer)(nil)
 	_ render.DPIAware               = (*Renderer)(nil)
+	_ render.ImageTransformer       = (*Renderer)(nil)
 	_ render.FontTextDrawer         = (*Renderer)(nil)
 	_ render.FontRotatedTextDrawer  = (*Renderer)(nil)
 	_ render.FontVerticalTextDrawer = (*Renderer)(nil)
@@ -193,11 +194,46 @@ func (r *Renderer) Image(img render.Image, dst geom.Rect) {
 	if !ok {
 		return
 	}
-	fmt.Fprintf(&r.content, "gsave\n%s %s translate\n%s %s scale\n/DeviceRGB setcolorspace\n",
-		shortFloat(dst.Min.X),
-		shortFloat(dst.Min.Y),
-		shortFloat(dst.W()),
-		shortFloat(dst.H()),
+	r.writeImageWithMatrix(rgb, width, height, geom.Affine{
+		A: dst.W(),
+		D: dst.H(),
+		E: dst.Min.X,
+		F: dst.Min.Y,
+	})
+}
+
+// ImageTransformed draws a raster image through an arbitrary affine transform.
+// The affine maps source image pixels into display coordinates.
+func (r *Renderer) ImageTransformed(img render.Image, _ geom.Rect, transform geom.Affine) {
+	if !r.began || img == nil {
+		return
+	}
+	width, height := img.Size()
+	if width <= 0 || height <= 0 {
+		return
+	}
+	rgb, _, _, ok := encodePSImageRGB(img)
+	if !ok {
+		return
+	}
+	r.writeImageWithMatrix(rgb, width, height, geom.Affine{
+		A: transform.A * float64(width),
+		B: transform.B * float64(width),
+		C: transform.C * float64(height),
+		D: transform.D * float64(height),
+		E: transform.E,
+		F: transform.F,
+	})
+}
+
+func (r *Renderer) writeImageWithMatrix(rgb string, width, height int, matrix geom.Affine) {
+	fmt.Fprintf(&r.content, "gsave\n[%s %s %s %s %s %s] concat\n/DeviceRGB setcolorspace\n",
+		shortFloat(matrix.A),
+		shortFloat(matrix.B),
+		shortFloat(matrix.C),
+		shortFloat(matrix.D),
+		shortFloat(matrix.E),
+		shortFloat(matrix.F),
 	)
 	fmt.Fprintf(&r.content, "%d %d 8 [%d 0 0 -%d 0 %d]\n", width, height, width, height, height)
 	fmt.Fprintf(&r.content, "{<%s>} false 3 colorimage\ngrestore\n", rgb)

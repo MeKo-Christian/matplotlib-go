@@ -41,6 +41,20 @@ func TestPSBackend_AdvertisedCapabilitiesAreImplemented(t *testing.T) {
 	}
 }
 
+func TestPSBackendAdvertisesImageTransform(t *testing.T) {
+	r, err := backends.Create(backends.PS, backends.Config{
+		Width: 200, Height: 100,
+		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	status := backends.DefaultRegistry.RendererCapabilityStatus(backends.PS, r, backends.ImageTransform)
+	if status != backends.CapabilityNative {
+		t.Fatalf("ImageTransform status = %s, want %s", status, backends.CapabilityNative)
+	}
+}
+
 func TestSavePSViaRegistry(t *testing.T) {
 	dir := t.TempDir()
 	out := filepath.Join(dir, "registry.ps")
