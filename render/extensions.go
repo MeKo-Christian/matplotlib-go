@@ -272,7 +272,7 @@ const (
 	// require embedded font subsetting.
 	PDFFontPolicyPath PDFFontPolicy = "path"
 	// PDFFontPolicyEmbed embeds subsetted fonts and emits real PDF text
-	// objects. Currently reserved for future implementation.
+	// objects.
 	PDFFontPolicyEmbed PDFFontPolicy = "embed"
 )
 

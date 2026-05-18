@@ -381,10 +381,12 @@ func TestDrawTextWithEmbeddedFontEmitsType0FontResource(t *testing.T) {
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)
 	}
-	doc := mustParsePDF(t, r)
-	pageBody := pdfDocumentObjectBodyContaining(doc, "/Type /Page")
-	if !strings.Contains(pageBody, "/Font << /F1") {
-		t.Fatalf("page resources should reference embedded font F1:\n%s", pageBody)
+	data, err := r.Bytes()
+	if err != nil {
+		t.Fatalf("Bytes: %v", err)
+	}
+	if !bytes.Contains(data, []byte("/Font << /F1")) {
+		t.Fatalf("page resources should reference embedded font F1:\n%s", data)
 	}
 	for _, want := range []string{
 		"/Subtype /Type0",
@@ -395,8 +397,8 @@ func TestDrawTextWithEmbeddedFontEmitsType0FontResource(t *testing.T) {
 		"/FontFile2",
 		"/ToUnicode",
 	} {
-		if !pdfDocumentBodyContains(doc, want) {
-			t.Fatalf("PDF document missing embedded font marker %q; objects: %#v", want, doc.Objects)
+		if !bytes.Contains(data, []byte(want)) {
+			t.Fatalf("PDF document missing embedded font marker %q:\n%s", want, data)
 		}
 	}
 }

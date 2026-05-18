@@ -8,7 +8,7 @@ import (
 func init() {
 	backends.Register(backends.PDF, &backends.BackendInfo{
 		Name:        "PDF",
-		Description: "Pure Go PDF backend with deterministic serialization and text-as-path output",
+		Description: "Pure Go PDF backend with deterministic serialization and embedded-font text output",
 		Capabilities: []backends.Capability{
 			backends.AntiAliasing,
 			backends.VectorOutput,

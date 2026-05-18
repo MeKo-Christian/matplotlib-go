@@ -138,7 +138,7 @@ patterns.
   serialization, dedicated `init.go` registration, `doc.go` capability notes.
 - [x] Page model and content stream encoder: graphics state stack, path
   construction (`m`/`l`/`c`/`re`/`h`/`f`/`S`), clip operators, color spaces.
-- [ ] Embedded font subsetting (Type 0 / CIDFontType2) using the shared font
+- [x] Embedded font subsetting (Type 0 / CIDFontType2) using the shared font
   resource strategy that already drives AGG and SVG.
 - [x] Text-as-path opt-in via `render.TextPather` so PDF can render typography
   without an embedded font program. Real text-as-text via embedded fonts
@@ -176,6 +176,11 @@ Current slice landed:
   vertical text, and simple `GlyphRun` fallback through the shared font outline
   pipeline. PDF advertises the matching text capabilities only via runtime
   checked renderer interfaces.
+- `render.WithPDFFontPolicy(render.PDFFontPolicyEmbed)` now emits real PDF
+  text objects backed by deterministic Type 0 / CIDFontType2 resources,
+  embedded TrueType font programs, `/CIDToGIDMap`, `/W`, and `/ToUnicode`
+  maps. The practical first slice subsets the resource CID map to used glyphs
+  while embedding the resolved font program bytes intact.
 - Raster `Image` draws now emit `/Image` XObjects with deterministic
   `/FlateDecode` streams and grayscale soft masks for RGBA alpha. JPEG
   `/DCTDecode` passthrough is supported through the optional

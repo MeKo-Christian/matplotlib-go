@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	xfont "golang.org/x/image/font"
 	"hash/fnv"
 	"image"
 	"math"
@@ -18,6 +17,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	xfont "golang.org/x/image/font"
 	"golang.org/x/image/font/sfnt"
 	"golang.org/x/image/math/fixed"
 )
@@ -583,8 +583,7 @@ func (r *Renderer) registerImage(img pdfImage) string {
 }
 
 // GlyphRun draws shaped glyphs as filled outlines. GlyphRun only carries glyph
-// IDs, so this remains a practical fallback for simple code-point-shaped runs
-// until embedded font subsetting lands.
+// IDs, so this remains a practical fallback for simple code-point-shaped runs.
 func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
 	if len(run.Glyphs) == 0 {
 		return
@@ -636,8 +635,7 @@ func (r *Renderer) MeasureText(text string, size float64, fontKey string) render
 }
 
 // TextPath converts text to vector glyph outlines through the shared font
-// manager. This mirrors Matplotlib's text-as-path PDF mode until Type 0 font
-// subsetting is implemented.
+// manager. This backs Matplotlib-style text-as-path PDF output.
 func (r *Renderer) TextPath(text string, origin geom.Pt, size float64, fontKey string) (geom.Path, bool) {
 	if fontKey != "" {
 		r.lastFontKey = fontKey
@@ -647,13 +645,14 @@ func (r *Renderer) TextPath(text string, origin geom.Pt, size float64, fontKey s
 	return render.TextPath(text, origin, size, fontKey)
 }
 
-// DrawText renders text as filled glyph paths using the most recently resolved
-// font key when one has been primed by MeasureText or DrawTextWithFont.
+// DrawText renders text using the active PDF font policy and the most recently
+// resolved font key when one has been primed by MeasureText or DrawTextWithFont.
 func (r *Renderer) DrawText(text string, origin geom.Pt, size float64, textColor render.Color) {
 	r.DrawTextWithFont(text, origin, size, textColor, r.lastFontKey)
 }
 
-// DrawTextWithFont renders text as filled glyph paths using an explicit font.
+// DrawTextWithFont renders text using the active PDF font policy and an
+// explicit font key.
 func (r *Renderer) DrawTextWithFont(text string, origin geom.Pt, size float64, textColor render.Color, fontKey string) {
 	if !r.began || text == "" || size <= 0 || textColor.A <= 0 {
 		return
@@ -687,11 +686,11 @@ func (r *Renderer) DrawTextRotatedWithFont(text string, anchor geom.Pt, size, an
 		X: anchor.X - metrics.W/2,
 		Y: anchor.Y - metrics.Descent,
 	}
-	path, ok := r.TextPath(text, origin, size, fontKey)
-	if !ok {
+	if r.pdfOpts.FontPolicy == render.PDFFontPolicyEmbed && r.drawEmbeddedText(text, origin, size, textColor, fontKey, rotationAffine(angle, anchor)) {
 		return
 	}
-	if r.pdfOpts.FontPolicy == render.PDFFontPolicyEmbed && r.drawEmbeddedText(text, origin, size, textColor, fontKey, rotationAffine(angle, anchor)) {
+	path, ok := r.TextPath(text, origin, size, fontKey)
+	if !ok {
 		return
 	}
 	path = affinePath(path, rotationAffine(angle, anchor))
