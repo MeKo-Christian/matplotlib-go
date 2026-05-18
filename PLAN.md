@@ -228,14 +228,17 @@ Current slice landed:
   bounding boxes, top-left display-coordinate transform, background fills,
   graphics state stack, path construction, rectangular/path clipping, stroke
   state, RGB stroke/fill color, and simple Helvetica text output.
+- RGBA raster image draws now emit deterministic inline Level-2 PostScript
+  `colorimage` payloads. PostScript has no native alpha channel, so translucent
+  image pixels are pre-composited over white for this initial image slice.
 - Save dispatch routes `.ps` and `.eps` through `core.SaveFig`,
   `backends.SavePS`, and registry `SaveFormats`; `backends/all` side-imports
   the new package.
 
 Remaining PostScript work:
 
-- Match PDF's embedded-font, image, hatch, alpha, marker/path-collection batch,
-  and transformed-image semantics.
+- Match PDF's embedded-font, hatch, alpha, marker/path-collection batch,
+  JPEG passthrough, image reuse, and transformed-image semantics.
 
 ### 1.3 Save Dispatch Cleanup
 

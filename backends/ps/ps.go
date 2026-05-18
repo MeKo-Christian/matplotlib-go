@@ -182,8 +182,26 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 	r.content.WriteString("stroke\n")
 }
 
-// Image is currently a no-op. Raster image encoding is tracked in PLAN.md 1.2.
-func (r *Renderer) Image(_ render.Image, _ geom.Rect) {}
+// Image draws an RGBA raster image into the destination rectangle using a
+// Level-2 colorimage operator. PostScript has no native alpha channel, so
+// translucent image pixels are pre-composited over white for this first slice.
+func (r *Renderer) Image(img render.Image, dst geom.Rect) {
+	if !r.began || img == nil || dst.W() <= 0 || dst.H() <= 0 {
+		return
+	}
+	rgb, width, height, ok := encodePSImageRGB(img)
+	if !ok {
+		return
+	}
+	fmt.Fprintf(&r.content, "gsave\n%s %s translate\n%s %s scale\n/DeviceRGB setcolorspace\n",
+		shortFloat(dst.Min.X),
+		shortFloat(dst.Min.Y),
+		shortFloat(dst.W()),
+		shortFloat(dst.H()),
+	)
+	fmt.Fprintf(&r.content, "%d %d 8 [%d 0 0 -%d 0 %d]\n", width, height, width, height, height)
+	fmt.Fprintf(&r.content, "{<%s>} false 3 colorimage\ngrestore\n", rgb)
+}
 
 // GlyphRun draws a shaped run using glyph IDs as Unicode scalar values when
 // possible. Core text paths normally call DrawText directly.
@@ -504,4 +522,42 @@ func escapePSString(s string) string {
 		}
 	}
 	return b.String()
+}
+
+func imageAlphaMultiplier(img render.Image) float64 {
+	if alphaImage, ok := img.(render.ImageAlpha); ok {
+		return clamp01(alphaImage.Alpha())
+	}
+	return 1
+}
+
+func encodePSImageRGB(img render.Image) (string, int, int, bool) {
+	rgbaSource, ok := img.(render.RGBAImage)
+	if !ok || rgbaSource.RGBA() == nil {
+		return "", 0, 0, false
+	}
+	src := rgbaSource.RGBA()
+	bounds := src.Bounds()
+	width, height := bounds.Dx(), bounds.Dy()
+	if width <= 0 || height <= 0 {
+		return "", 0, 0, false
+	}
+	alphaMul := imageAlphaMultiplier(img)
+	var b strings.Builder
+	b.Grow(width * height * 6)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			c := src.RGBAAt(x, y)
+			r, g, blue := compositeImagePixelOverWhite(c.R, c.G, c.B, c.A, alphaMul)
+			fmt.Fprintf(&b, "%02x%02x%02x", r, g, blue)
+		}
+	}
+	return b.String(), width, height, true
+}
+
+func compositeImagePixelOverWhite(red, green, blue, alpha uint8, alphaMul float64) (uint8, uint8, uint8) {
+	a := clamp01(float64(alpha) / 255.0 * alphaMul)
+	return uint8(float64(red)*a + 255*(1-a) + 0.5),
+		uint8(float64(green)*a + 255*(1-a) + 0.5),
+		uint8(float64(blue)*a + 255*(1-a) + 0.5)
 }
