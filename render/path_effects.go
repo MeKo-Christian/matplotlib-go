@@ -1,7 +1,9 @@
 package render
 
 import (
+	"image"
 	"math"
+	"strings"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 )
@@ -9,7 +11,7 @@ import (
 // DrawPathWithEffects applies paint.PathEffects using renderer-neutral path
 // replay. It returns true when it consumed the draw; callers should otherwise
 // continue with their normal direct path drawing.
-func DrawPathWithEffects(_ Renderer, path geom.Path, paint *Paint, draw func(geom.Path, *Paint)) bool {
+func DrawPathWithEffects(renderer Renderer, path geom.Path, paint *Paint, draw func(geom.Path, *Paint)) bool {
 	if paint == nil || len(paint.PathEffects) == 0 || draw == nil {
 		return false
 	}
@@ -38,9 +40,15 @@ func DrawPathWithEffects(_ Renderer, path geom.Path, paint *Paint, draw func(geo
 			effectPaint := tickedStrokePaint(base, effect)
 			draw(ticks, &effectPaint)
 		case PathEffectFilter:
-			// Filter-backed effects require backend-specific capture/replay.
-			// Until a renderer consumes Filter natively, preserve the artist.
-			draw(path, &base)
+			effectPaint := patchEffectPaint(base, effect)
+			effectPath := offsetPath(path, effect.Offset)
+			if filter, ok := renderer.(FilterRenderer); ok {
+				filter.StartFilter()
+				draw(effectPath, &effectPaint)
+				filter.StopFilter(pathEffectPostProcess(effect))
+				continue
+			}
+			draw(effectPath, &effectPaint)
 		default:
 			draw(path, &base)
 		}
@@ -162,6 +170,87 @@ func shadowColor(base Color, effect PathEffect) Color {
 		B: base.B * rho,
 		A: alpha,
 	}
+}
+
+func pathEffectPostProcess(effect PathEffect) func(*image.RGBA, float64) (*image.RGBA, geom.Pt) {
+	filterName := strings.ToLower(strings.TrimSpace(effect.Filter))
+	return func(img *image.RGBA, _ float64) (*image.RGBA, geom.Pt) {
+		switch filterName {
+		case "", "none", "identity":
+			return cloneRGBA(img), geom.Pt{}
+		case "blur", "gaussian", "gaussian-blur", "shadow":
+			return blurRGBA(img, effect.FilterRadius), geom.Pt{}
+		default:
+			return cloneRGBA(img), geom.Pt{}
+		}
+	}
+}
+
+func cloneRGBA(img *image.RGBA) *image.RGBA {
+	if img == nil {
+		return nil
+	}
+	return &image.RGBA{
+		Pix:    append([]uint8(nil), img.Pix...),
+		Stride: img.Stride,
+		Rect:   img.Rect,
+	}
+}
+
+func blurRGBA(img *image.RGBA, radius float64) *image.RGBA {
+	src := cloneRGBA(img)
+	if src == nil {
+		return nil
+	}
+	r := int(math.Ceil(radius))
+	if r <= 0 {
+		return src
+	}
+	tmp := boxBlurRGBA(src, r, true)
+	return boxBlurRGBA(tmp, r, false)
+}
+
+func boxBlurRGBA(src *image.RGBA, radius int, horizontal bool) *image.RGBA {
+	if src == nil {
+		return nil
+	}
+	bounds := src.Bounds()
+	dst := image.NewRGBA(bounds)
+	if radius <= 0 {
+		return cloneRGBA(src)
+	}
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			var sum [4]int
+			count := 0
+			for d := -radius; d <= radius; d++ {
+				sx, sy := x, y
+				if horizontal {
+					sx += d
+				} else {
+					sy += d
+				}
+				if sx < bounds.Min.X || sx >= bounds.Max.X || sy < bounds.Min.Y || sy >= bounds.Max.Y {
+					continue
+				}
+				off := src.PixOffset(sx, sy)
+				sum[0] += int(src.Pix[off+0])
+				sum[1] += int(src.Pix[off+1])
+				sum[2] += int(src.Pix[off+2])
+				sum[3] += int(src.Pix[off+3])
+				count++
+			}
+			if count == 0 {
+				continue
+			}
+			off := dst.PixOffset(x, y)
+			dst.Pix[off+0] = uint8(sum[0] / count)
+			dst.Pix[off+1] = uint8(sum[1] / count)
+			dst.Pix[off+2] = uint8(sum[2] / count)
+			dst.Pix[off+3] = uint8(sum[3] / count)
+		}
+	}
+	return dst
 }
 
 func offsetPath(path geom.Path, offset geom.Pt) geom.Path {

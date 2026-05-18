@@ -460,6 +460,10 @@ Current slice landed:
 - `render.DrawPathWithEffects` provides a renderer-neutral replay pipeline:
   each pass clears nested effects, applies offsets / alternate paint, generates
   tick segments when requested, and replays into the parent renderer.
+- `PathEffectFilter` now routes through the shared `render.FilterRenderer`
+  hook when a backend supports offscreen capture. AGG uses its existing
+  `StartFilter` / `StopFilter` surface stack and supports deterministic
+  identity / blur filter passes before compositing back to the parent surface.
 - AGG, GoBasic, SVG, PDF, PS, PGF, and Skia now implement
   `render.PathEffectDrawer`; backend capability declarations advertise
   `PathEffects` through the runtime interface check.
@@ -471,6 +475,8 @@ Current slice landed:
 Remaining path-effects work:
 
 - Native filter/offscreen variants for blurred shadows and vector soft masks.
+  AGG has the first `FilterRenderer` replay path; SVG `<filter>` defs and PDF
+  transparency groups / soft masks still need native vector implementations.
 - Golden and Matplotlib-reference fixtures for text shadows, line halos,
   scatter marker shadows, and polygon effect stacks.
 

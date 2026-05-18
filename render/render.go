@@ -122,6 +122,7 @@ type PathEffect struct {
 	Dashes        []float64
 	CompositeMode CompositeMode
 	Filter        string
+	FilterRadius  float64
 	ShadowAlpha   float64
 	ShadowRho     float64
 	TickSpacing   float64
@@ -217,6 +218,21 @@ func TickedStrokePathEffect(stroke Color, linewidth, spacing, angle, length floa
 		TickSpacing: spacing,
 		TickAngle:   angle,
 		TickLength:  length,
+	}
+}
+
+// FilterPathEffect draws a repaint pass into an offscreen filter surface when
+// the backend supports render.FilterRenderer. Supported filter names are
+// "none", "identity", "blur", "gaussian", "gaussian-blur", and "shadow".
+func FilterPathEffect(fill, stroke Color, linewidth float64, filter string, radius float64, offset geom.Pt) PathEffect {
+	return PathEffect{
+		Kind:         PathEffectFilter,
+		Offset:       offset,
+		Fill:         fill,
+		Stroke:       stroke,
+		LineWidth:    linewidth,
+		Filter:       filter,
+		FilterRadius: radius,
 	}
 }
 

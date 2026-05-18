@@ -186,6 +186,32 @@ func TestFilterStackStartStop(t *testing.T) {
 	}
 }
 
+func TestPathEffectFilterUsesOffscreenSurface(t *testing.T) {
+	r := mustNew(t, 60, 60)
+	_ = r.Begin(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 60, Y: 60}})
+	r.Path(fullRectPath(60, 60), &render.Paint{Fill: render.Color{G: 1, A: 1}})
+
+	var p geom.Path
+	p.MoveTo(geom.Pt{X: 22, Y: 22})
+	p.LineTo(geom.Pt{X: 38, Y: 22})
+	p.LineTo(geom.Pt{X: 38, Y: 38})
+	p.LineTo(geom.Pt{X: 22, Y: 38})
+	p.Close()
+	r.Path(p, &render.Paint{
+		PathEffects: []render.PathEffect{
+			render.FilterPathEffect(render.Color{R: 1, A: 1}, render.Color{}, 0, "blur", 4, geom.Pt{}),
+		},
+	})
+	_ = r.End()
+
+	if got := r.GetImage().RGBAAt(30, 30); got.R == 0 {
+		t.Fatalf("expected filtered path center to contain red, got %+v", got)
+	}
+	if got := r.GetImage().RGBAAt(19, 30); got.R == 0 || got.G >= 255 {
+		t.Fatalf("expected blurred red edge over green background, got %+v", got)
+	}
+}
+
 func TestDrawTextWithFontDoesNotMutateLegacyFontState(t *testing.T) {
 	r := mustNew(t, 120, 80)
 	r.lastFontKey = "legacy-font"
