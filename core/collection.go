@@ -205,7 +205,7 @@ func (c *PathCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		paint.HatchColor = hatchColor
 		paint.HatchLineWidth = hatchWidth
 		paint.HatchSpacing = 32
-		if !c.Collection.antialiased() {
+		if !c.antialiased() {
 			paint.Antialias = render.AntialiasOff
 		}
 		r.Path(path, &paint)
@@ -567,7 +567,7 @@ func (c *PathCollection) drawMarkers(r render.Renderer, ctx *DrawContext) bool {
 			Offset:      offset,
 			Transform:   geom.Affine{A: scale, D: scale},
 			Paint:       collectionPaint(fill, edge, width, c.lineJoin(), c.lineCap(), nil),
-			Antialiased: c.Collection.antialiased(),
+			Antialiased: c.antialiased(),
 		})
 	}
 	if len(batch.Items) == 0 {
@@ -639,7 +639,7 @@ func (c *PathCollection) drawPathCollection(r render.Renderer, ctx *DrawContext)
 			HatchColor:   hatchColor,
 			HatchWidth:   hatchWidth,
 			HatchSpacing: 32,
-			Antialiased:  c.Collection.antialiased(),
+			Antialiased:  c.antialiased(),
 		})
 	}
 	if len(batch.Items) == 0 {
@@ -705,7 +705,7 @@ func (c *PatchCollection) drawPathCollection(r render.Renderer, ctx *DrawContext
 			HatchColor:   hatchColor,
 			HatchWidth:   hatchWidth,
 			HatchSpacing: 32,
-			Antialiased:  c.Collection.antialiased(),
+			Antialiased:  c.antialiased(),
 		})
 	}
 	if len(batch.Items) == 0 {
@@ -762,7 +762,7 @@ func (m *QuadMesh) drawQuadMesh(r render.Renderer, ctx *DrawContext) bool {
 					HatchColor:   hatchColor,
 					HatchWidth:   hatchWidth,
 					HatchSpacing: 32,
-					Antialiased:  m.Collection.antialiased(),
+					Antialiased:  m.antialiased(),
 				})
 			}
 			idx++
@@ -804,7 +804,7 @@ func (m *QuadMesh) drawGouraudMesh(r render.Renderer, ctx *DrawContext) bool {
 
 	batch := render.GouraudTriangleBatch{
 		Triangles:   make([]render.GouraudTriangle, 0, (rows-1)*(cols-1)*2),
-		Antialiased: m.Collection.antialiased(),
+		Antialiased: m.antialiased(),
 	}
 	for yi := 0; yi+1 < rows; yi++ {
 		for xi := 0; xi+1 < cols; xi++ {

@@ -902,7 +902,7 @@ func TestAxes3DPlotSurfaceGridHonorsSurfaceOptions(t *testing.T) {
 	if collection == nil {
 		t.Fatal("PlotSurfaceGrid returned nil")
 	}
-	if got, want := collection.Collection.Antialias, render.AntialiasOff; got != want {
+	if got, want := collection.Antialias, render.AntialiasOff; got != want {
 		t.Fatalf("plot surface grid antialias = %v, want %v", got, want)
 	}
 }
@@ -997,7 +997,7 @@ func TestAxes3DSurfaceHonorsAntialiasSetting(t *testing.T) {
 	if surface == nil {
 		t.Fatal("Surface returned nil")
 	}
-	if got, want := surface.Collection.Antialias, render.AntialiasOff; got != want {
+	if got, want := surface.Antialias, render.AntialiasOff; got != want {
 		t.Fatalf("surface antialias = %v, want %v", got, want)
 	}
 }
@@ -1067,7 +1067,7 @@ func TestAxes3DTrisurfHonorsAntialiasSetting(t *testing.T) {
 	if surface == nil {
 		t.Fatal("Trisurf returned nil")
 	}
-	if got, want := surface.Collection.Antialias, render.AntialiasOff; got != want {
+	if got, want := surface.Antialias, render.AntialiasOff; got != want {
 		t.Fatalf("trisurf antialias = %v, want %v", got, want)
 	}
 }
@@ -2039,7 +2039,7 @@ func TestAxes3DFrameTextDrawsBeforeDataCollectionsLikeMatplotlib(t *testing.T) {
 	if textAt < 0 || dataAt < 0 {
 		t.Fatalf("draw events = %v, want both 3D frame text and data collection draw events", r.events)
 	}
-	if !(textAt < dataAt) {
+	if textAt >= dataAt {
 		t.Fatalf("draw events = %v, want 3D axis/tick text before data collections like Matplotlib Axes3D.draw", r.events)
 	}
 }

@@ -726,7 +726,7 @@ func contourSaddleBandPolygons(points [4]geom.Pt, values [4]float64, low, high f
 		}
 		inBand[i] = value >= low && value <= high
 	}
-	if !(inBand[0] == inBand[2] && inBand[1] == inBand[3] && inBand[0] != inBand[1]) {
+	if inBand[0] != inBand[2] || inBand[1] != inBand[3] || inBand[0] == inBand[1] {
 		return nil
 	}
 

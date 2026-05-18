@@ -128,6 +128,13 @@ func (r *Registry) BackendComparisonReport(config Config) string {
 			nameWidth = n
 		}
 	}
+	saveWidth := len("SaveFormats")
+	for _, rw := range rows {
+		info, _ := r.Get(rw.backend)
+		if n := len(saveFormatsString(info)); n > saveWidth {
+			saveWidth = n
+		}
+	}
 	colWidth := 0
 	for _, capability := range AllCapabilities {
 		if n := len(capability); n > colWidth {
@@ -138,12 +145,14 @@ func (r *Registry) BackendComparisonReport(config Config) string {
 
 	var b strings.Builder
 	fmt.Fprintf(&b, "%-*s", nameWidth+2, "Backend")
+	fmt.Fprintf(&b, "%-*s", saveWidth+2, "SaveFormats")
 	for _, capability := range AllCapabilities {
 		fmt.Fprintf(&b, "%-*s", colWidth, string(capability))
 	}
 	b.WriteByte('\n')
 
 	fmt.Fprintf(&b, "%-*s", nameWidth+2, strings.Repeat("-", nameWidth))
+	fmt.Fprintf(&b, "%-*s", saveWidth+2, strings.Repeat("-", saveWidth))
 	for range AllCapabilities {
 		fmt.Fprintf(&b, "%-*s", colWidth, strings.Repeat("-", colWidth-2))
 	}
@@ -151,11 +160,12 @@ func (r *Registry) BackendComparisonReport(config Config) string {
 
 	for _, rw := range rows {
 		fmt.Fprintf(&b, "%-*s", nameWidth+2, string(rw.backend))
+		info, _ := r.Get(rw.backend)
+		fmt.Fprintf(&b, "%-*s", saveWidth+2, saveFormatsString(info))
 		if rw.instErr != nil {
 			fmt.Fprintf(&b, "instantiation error: %v\n", rw.instErr)
 			continue
 		}
-		info, _ := r.Get(rw.backend)
 		for _, capability := range AllCapabilities {
 			status := r.RendererCapabilityStatus(rw.backend, rw.renderer, capability)
 			marker := capabilityStatusMarker(status, info, capability)
@@ -165,6 +175,18 @@ func (r *Registry) BackendComparisonReport(config Config) string {
 	}
 
 	return b.String()
+}
+
+func saveFormatsString(info *BackendInfo) string {
+	if info == nil || len(info.SaveFormats) == 0 {
+		return "·"
+	}
+	formats := make([]string, 0, len(info.SaveFormats))
+	for ext := range info.SaveFormats {
+		formats = append(formats, normalizeSaveFormat(ext))
+	}
+	sort.Strings(formats)
+	return strings.Join(formats, ",")
 }
 
 // declaredCapabilityMarker renders a registry-only status (no live renderer):

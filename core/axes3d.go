@@ -3802,9 +3802,7 @@ func surfaceEdgeColors(faceColors []render.Color, opt PlotOptions) []render.Colo
 		return nil
 	}
 	edges := make([]render.Color, len(faceColors))
-	for i, color := range faceColors {
-		edges[i] = color
-	}
+	copy(edges, faceColors)
 	return edges
 }
 

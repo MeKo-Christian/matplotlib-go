@@ -156,20 +156,20 @@ func New(w, h int, bg render.Color) (*Renderer, error) {
 	}
 
 	return &Renderer{
-		width:        w,
-		height:       h,
-		background:   bg,
-		resolution:   72,
-		clipDefs:     map[string]string{},
-		clipPathDefs: map[string]string{},
-		markerDefs:   map[string]string{},
-		pathDefs:     map[string]string{},
+		width:           w,
+		height:          h,
+		background:      bg,
+		resolution:      72,
+		clipDefs:        map[string]string{},
+		clipPathDefs:    map[string]string{},
+		markerDefs:      map[string]string{},
+		pathDefs:        map[string]string{},
 		hatchDefs:       map[string]string{},
 		gradientDefs:    map[string]string{},
 		patternFillDefs: map[string]string{},
 		fontFaces:       map[string]fontFaceDef{},
-		texManager:   tex.NewManager(tex.ManagerConfig{}),
-		options:      render.DefaultSVGOptions(),
+		texManager:      tex.NewManager(tex.ManagerConfig{}),
+		options:         render.DefaultSVGOptions(),
 	}, nil
 }
 
@@ -856,11 +856,11 @@ func (r *Renderer) renderSVG() string {
 	var b strings.Builder
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>`)
 	b.WriteString("\n")
-	b.WriteString(fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`+"\n"+`width="%s" height="%s" viewBox="0 0 %d %d"`+"\n"+`preserveAspectRatio="xMidYMid meet">`+"\n",
+	fmt.Fprintf(&b, `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`+"\n"+`width="%s" height="%s" viewBox="0 0 %d %d"`+"\n"+`preserveAspectRatio="xMidYMid meet">`+"\n",
 		formatFloat(float64(r.width)),
 		formatFloat(float64(r.height)),
 		r.width,
-		r.height))
+		r.height)
 	writeMetadata(&b, r.options)
 
 	if len(r.clipOrder) > 0 || len(r.markerOrder) > 0 || len(r.pathOrder) > 0 || len(r.hatchOrder) > 0 || len(r.gradientOrder) > 0 || len(r.patternFillOrder) > 0 || len(r.fontFaceOrder) > 0 {

@@ -79,6 +79,14 @@ func TestBackendComparisonReportContainsEveryBackend(t *testing.T) {
 	if !strings.Contains(report, string(backends.PGFExport)) {
 		t.Errorf("report missing PGF export capability status\n%s", report)
 	}
+	if !strings.Contains(report, "SaveFormats") {
+		t.Errorf("report missing registered save format column\n%s", report)
+	}
+	for _, ext := range []string{".pdf", ".ps", ".eps"} {
+		if !strings.Contains(report, ext) {
+			t.Errorf("report missing registered save extension %s\n%s", ext, report)
+		}
+	}
 }
 
 // TestSelectBackendForExtensionRoutesByCapability verifies that the registry

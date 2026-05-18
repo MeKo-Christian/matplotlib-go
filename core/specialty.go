@@ -1599,9 +1599,10 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 			halfWidth := density[j] / maxDensity * width * 0.5
 			lowOffset := -halfWidth
 			highOffset := halfWidth
-			if side == "high" {
+			switch side {
+			case "high":
 				lowOffset = 0
-			} else if side == "low" {
+			case "low":
 				highOffset = 0
 			}
 			lowSide = append(lowSide, violinPoint(position+lowOffset, grid[j], orientation))
@@ -2382,9 +2383,10 @@ func violinPoint(posAxis, valueAxis float64, orientation string) geom.Pt {
 func violinPerpSegment(position, width, value float64, orientation, side string) []geom.Pt {
 	low := position - width*0.25
 	high := position + width*0.25
-	if side == "low" {
+	switch side {
+	case "low":
 		high = position
-	} else if side == "high" {
+	case "high":
 		low = position
 	}
 	return []geom.Pt{violinPoint(low, value, orientation), violinPoint(high, value, orientation)}

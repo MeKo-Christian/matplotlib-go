@@ -3,11 +3,10 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
-
 	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all" // register every built-in backend
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/spf13/cobra"
 )
 
 var backendsCmd = &cobra.Command{

@@ -1456,7 +1456,7 @@ func (s *StreamplotSet) ScalarMap() ScalarMapInfo {
 		}
 	}
 	if s.Lines != nil && len(s.Lines.Colors) > 0 {
-		if mapping := s.Lines.Collection.ScalarMap(); scalarMapConfigured(mapping) {
+		if mapping := s.Lines.ScalarMap(); scalarMapConfigured(mapping) {
 			return mapping
 		}
 	}

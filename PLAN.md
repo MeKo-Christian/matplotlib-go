@@ -135,25 +135,25 @@ patterns.
 ### 1.1 PDF Backend
 
 - [x] Scaffold `backends/pdf/` following the SVG layout: deterministic
-  serialization, dedicated `init.go` registration, `doc.go` capability notes.
+      serialization, dedicated `init.go` registration, `doc.go` capability notes.
 - [x] Page model and content stream encoder: graphics state stack, path
-  construction (`m`/`l`/`c`/`re`/`h`/`f`/`S`), clip operators, color spaces.
+      construction (`m`/`l`/`c`/`re`/`h`/`f`/`S`), clip operators, color spaces.
 - [x] Embedded font subsetting (Type 0 / CIDFontType2) using the shared font
-  resource strategy that already drives AGG and SVG.
+      resource strategy that already drives AGG and SVG.
 - [x] Text-as-path opt-in via `render.TextPather` so PDF can render typography
-  without an embedded font program. Real text-as-text via embedded fonts
-  becomes the default once subsetting lands.
+      without an embedded font program. Real text-as-text via embedded fonts
+      becomes the default once subsetting lands.
 - [x] Image XObjects with `/FlateDecode` and `/DCTDecode`, including direct
-  grayscale `/SMask` images for RGBA alpha.
+      grayscale `/SMask` images for RGBA alpha.
 - [x] Native hatch via tiling pattern color spaces.
 - [x] Native marker / path collection batches via form XObjects.
 - [x] Metadata, `SOURCE_DATE_EPOCH`, and reproducible-output options on par
-  with the SVG renderer (`render.PDFOptions`, `WithPDFFontPolicy`,
-  `WithPDFMetadata`, `WithPDFCreationDate`).
+      with the SVG renderer (`render.PDFOptions`, `WithPDFFontPolicy`,
+      `WithPDFMetadata`, `WithPDFCreationDate`).
 - [x] Structural test harness (analogous to `internal/svgcompare/`) for
-  whitespace-insensitive PDF object comparison.
+      whitespace-insensitive PDF object comparison.
 - [x] Golden fixtures for line, bar, scatter, hist, contour, imshow, polar,
-  hatch_bars, text_layout, clipped, and image_transformed cases.
+      hatch_bars, text_layout, clipped, and image_transformed cases.
 
 Current slice landed:
 
@@ -207,21 +207,22 @@ Current slice landed:
 ### 1.2 PostScript and PGF Export
 
 - [x] PostScript (`backends/ps/`) for journal submissions that still require
-  EPS. Scope limited to level-2 PS with the same font / image / hatch
-  semantics as PDF.
+      EPS. Scope limited to level-2 PS with the same font / image / hatch
+      semantics as PDF.
 - [ ] PGF / LaTeX export (`backends/pgf/`) for direct inclusion in LaTeX
-  documents. Decision required on whether to ship as a generator-only backend
-  or invoke `lualatex` for verification.
+      documents. Decision required on whether to ship as a generator-only backend
+      or invoke `lualatex` for verification.
 - [ ] Optionally vector / mixed-mode output: rasterized fallback for
-  effects PDF/PS cannot represent (driven by renderer capability checks, not
-  backend-name conditionals).
+      effects PDF/PS cannot represent (driven by renderer capability checks, not
+      backend-name conditionals).
 
 Current slice landed:
 
 - `backends/ps` package with `doc.go`, `init.go`, `ps.go`, and
   `registry_test.go`. Renderer implements `render.Renderer`,
   `render.PSExporter`, `render.DPIAware`, `render.ImageTransformer`,
-  `render.NativeHatcher`, and basic direct text interfaces.
+  `render.NativeHatcher`, `render.MarkerDrawer`,
+  `render.PathCollectionDrawer`, and basic direct text interfaces.
 - `backends.PS` backend constant and `backends.PSExport` capability with
   runtime-checked `PSExporter` interface mapping. `VectorOutput` now accepts
   SVG, PDF, or PS exporters.
@@ -238,23 +239,26 @@ Current slice landed:
 - Native hatch fills now implement `render.NativeHatcher` by filling the face
   color, clipping to the original path, and emitting deterministic PostScript
   hatch stroke lines for the same hatch symbols used by PDF / SVG.
+- Native marker and path-collection batches now emit reusable PostScript
+  procedures keyed by path geometry and paint, then invoke those procedures for
+  each marker offset or collection item.
 - Save dispatch routes `.ps` and `.eps` through `core.SaveFig`,
   `backends.SavePS`, and registry `SaveFormats`; `backends/all` side-imports
   the new package.
 
 Remaining PostScript work:
 
-- Match PDF's embedded-font, alpha, marker/path-collection batch, JPEG
-  passthrough, and image reuse semantics.
+- Match PDF's embedded-font, alpha, JPEG passthrough, and image reuse
+  semantics.
 
 ### 1.3 Save Dispatch Cleanup
 
 - [x] Remove the last hard-coded format paths in callers; every save route
-  through `backends.SelectBackendForExtension` and the `SaveFormats` map.
+      through `backends.SelectBackendForExtension` and the `SaveFormats` map.
 - [x] Expand `BackendComparisonReport` to enumerate PDF / PS / PGF capability
-  status alongside AGG / GoBasic / SVG / Skia.
+      status alongside AGG / GoBasic / SVG / Skia.
 - [x] Add `cmd/example -format pdf|ps|pgf` smoke coverage matching the
-  existing PNG / SVG runners.
+      existing PNG / SVG runners.
 
 Current slice landed:
 
@@ -275,60 +279,60 @@ Current slice landed:
 Open items / remaining gaps:
 
 - [x] PDF registry route: `.pdf` is registered in `SaveFormats`, selected by
-  `backends.SelectBackendForExtension`, and covered by `cmd/example -format
-  pdf` smoke output.
+      `backends.SelectBackendForExtension`, and covered by `cmd/example -format
+pdf` smoke output.
 - [x] PostScript registry route: `.ps` and `.eps` are registered in
-  `SaveFormats`, selected by `backends.SelectBackendForExtension`, and covered
-  by `cmd/example -format ps` smoke output.
+      `SaveFormats`, selected by `backends.SelectBackendForExtension`, and covered
+      by `cmd/example -format ps` smoke output.
 - [ ] PGF backend route: scaffold `backends/pgf`, implement
-  `render.PGFExporter`, register `.pgf` in `SaveFormats`, side-import it from
-  `backends/all`, and change the current `cmd/example -format pgf` smoke test
-  from "expected unsupported" to "writes non-empty PGF".
+      `render.PGFExporter`, register `.pgf` in `SaveFormats`, side-import it from
+      `backends/all`, and change the current `cmd/example -format pgf` smoke test
+      from "expected unsupported" to "writes non-empty PGF".
 - [ ] Save-option propagation: registry save dispatch currently carries SVG
-  options only (`...render.SVGOption`). Add a backend-neutral save-options
-  surface, or format-specific option routing, so PDF metadata / creation date /
-  font policy and future PGF options can flow through `pyplot`, canvas manager
-  saves, and `cmd/example` without backend-name checks.
+      options only (`...render.SVGOption`). Add a backend-neutral save-options
+      surface, or format-specific option routing, so PDF metadata / creation date /
+      font policy and future PGF options can flow through `pyplot`, canvas manager
+      saves, and `cmd/example` without backend-name checks.
 - [ ] Public save-route audit: keep `core.SaveFig` as the renderer-interface
-  helper, but verify every higher-level path that chooses a backend
-  (`pyplot.SaveFig`, headless canvas / manager save, `cmd/example`, future CLI
-  helpers) selects through `backends.SelectBackendForExtension` and writes
-  through `SaveFormats`.
+      helper, but verify every higher-level path that chooses a backend
+      (`pyplot.SaveFig`, headless canvas / manager save, `cmd/example`, future CLI
+      helpers) selects through `backends.SelectBackendForExtension` and writes
+      through `SaveFormats`.
 - [ ] Error and fallback policy: document and test what happens when
-  `MATPLOTLIB_BACKEND` is pinned to a backend that cannot write the requested
-  extension. `pyplot` and `cmd/example` currently fall back to auto selection;
-  decide whether canvas / manager saves should follow the same behavior or
-  remain pinned-backend strict.
+      `MATPLOTLIB_BACKEND` is pinned to a backend that cannot write the requested
+      extension. `pyplot` and `cmd/example` currently fall back to auto selection;
+      decide whether canvas / manager saves should follow the same behavior or
+      remain pinned-backend strict.
 - [ ] Vector semantics matrix: document per-format status for fonts, hatches,
-  alpha, raster images, transformed images, marker/path-collection batching,
-  metadata, and deterministic output across SVG / PDF / PS / PGF.
+      alpha, raster images, transformed images, marker/path-collection batching,
+      metadata, and deterministic output across SVG / PDF / PS / PGF.
 - [ ] Capability report usability: `BackendComparisonReport` now includes
-  `PGFExport`, but it still reports only capability markers. Add a compact save
-  format column or companion report so missing `.pgf` registration is visible
-  without scanning backend source.
+      `PGFExport`, but it still reports only capability markers. Add a compact save
+      format column or companion report so missing `.pgf` registration is visible
+      without scanning backend source.
 
 **Exit criteria:**
 
 - [x] `core.SaveFig(fig, r, "out.pdf")` draws and exports through
-  `render.PDFExporter`.
+      `render.PDFExporter`.
 - [x] `backends.SelectBackendForExtension("", ".pdf" | ".ps" | ".eps", nil)`
-  selects the PDF / PS backends and registry `SaveViaExtension` writes the
-  file through `SaveFormats`.
+      selects the PDF / PS backends and registry `SaveViaExtension` writes the
+      file through `SaveFormats`.
 - [x] `cmd/example -format png|svg|pdf|ps` writes non-empty files in smoke
-  tests.
+      tests.
 - [ ] `backends.SelectBackendForExtension("", ".pgf", nil)` selects a
-  registered PGF backend, and `cmd/example -format pgf` writes a non-empty PGF
-  file.
+      registered PGF backend, and `cmd/example -format pgf` writes a non-empty PGF
+      file.
 - [ ] `pyplot.SaveFig`, canvas / manager save, `cmd/example`, and any CLI save
-  helpers all choose the backend through `SelectBackendForExtension` and write
-  through `SaveFormats`; no caller outside renderer-interface helpers switches
-  directly on `.png` / `.svg` / `.pdf` / `.ps` / `.eps` / `.pgf`.
+      helpers all choose the backend through `SelectBackendForExtension` and write
+      through `SaveFormats`; no caller outside renderer-interface helpers switches
+      directly on `.png` / `.svg` / `.pdf` / `.ps` / `.eps` / `.pgf`.
 - [ ] Format-specific save options can be passed through the shared save
-  pipeline for SVG, PDF, PS, and PGF without adding backend-name conditionals.
+      pipeline for SVG, PDF, PS, and PGF without adding backend-name conditionals.
 - [ ] Backend comparison / capability output makes both export capabilities
-  and registered save extensions obvious for PNG, SVG, PDF, PS/EPS, and PGF.
+      and registered save extensions obvious for PNG, SVG, PDF, PS/EPS, and PGF.
 - [ ] Vector backend docs define the shared font / hatch / image / metadata /
-  determinism semantics and list remaining per-format limitations.
+      determinism semantics and list remaining per-format limitations.
 
 ---
 
@@ -345,27 +349,27 @@ without backend-name conditionals.
 ### 2.1 Pattern and Gradient Fills
 
 - [x] Renderer-neutral pattern fill API in `render/`: tile geometry, tile
-  transform, and tile color description that AGG, SVG, PDF, and Skia can each
-  implement natively. (`PatternFill` on `Paint` plus `PatternFiller` capability
-  interface; `GraphicsContext.WithFillPattern` propagates through alpha/forced
-  alpha just like solid fills.)
+      transform, and tile color description that AGG, SVG, PDF, and Skia can each
+      implement natively. (`PatternFill` on `Paint` plus `PatternFiller` capability
+      interface; `GraphicsContext.WithFillPattern` propagates through alpha/forced
+      alpha just like solid fills.)
 - [x] Linear and radial gradient fill description (stops, transform, spread
-  method) routed through the same capability interface. (`GradientFill` on
-  `Paint` plus `GradientFiller` capability interface; `GraphicsContext.WithFillGradient`
-  applies the same forced-alpha bookkeeping as patterns and solid fills.)
+      method) routed through the same capability interface. (`GradientFill` on
+      `Paint` plus `GradientFiller` capability interface; `GraphicsContext.WithFillGradient`
+      applies the same forced-alpha bookkeeping as patterns and solid fills.)
 - [x] AGG implementation using existing gradient span generators.
-  Two-stop linear and radial gradients route through Agg2D's gradient API; a
-  three-stop radial uses the multi-stop variant. `SupportsGradientFill`
-  advertises native support; `SupportsPatternFill` advertises `false` until
-  tile rasterization lands.
+      Two-stop linear and radial gradients route through Agg2D's gradient API; a
+      three-stop radial uses the multi-stop variant. `SupportsGradientFill`
+      advertises native support; `SupportsPatternFill` advertises `false` until
+      tile rasterization lands.
 - [x] SVG implementation via `<linearGradient>` / `<radialGradient>` /
-  `<pattern>` defs. Defs are deduplicated by content hash, honor the renderer's
-  hash-salted ID strategy, and emit in registration order so document output
-  remains deterministic. Hatch still wins precedence when both are set.
+      `<pattern>` defs. Defs are deduplicated by content hash, honor the renderer's
+      hash-salted ID strategy, and emit in registration order so document output
+      remains deterministic. Hatch still wins precedence when both are set.
 - [ ] PDF implementation via shading dictionaries (Type 2 / 3).
 - [ ] Skia implementation via `SkShader` types.
 - [ ] Golden fixtures: gradient fill bar, radial gradient pie wedge, pattern
-  fill polygon, gradient streamline plot.
+      fill polygon, gradient streamline plot.
 
 Current slice landed:
 
@@ -385,32 +389,32 @@ Current slice landed:
 ### 2.2 Path Effects Pipeline
 
 - [ ] Path effects model (`PathEffect` interface) covering Matplotlib's
-  `Normal`, `Stroke`, `withStroke`, `SimplePatchShadow`, `SimpleLineShadow`,
-  `PathPatchEffect`, `TickedStroke`.
+      `Normal`, `Stroke`, `withStroke`, `SimplePatchShadow`, `SimpleLineShadow`,
+      `PathPatchEffect`, `TickedStroke`.
 - [ ] Backend hook for offscreen capture / replay: AGG uses
-  `StartFilter` / `StopFilter`; SVG uses `<filter>` defs; PDF uses
-  transparency groups + soft masks.
+      `StartFilter` / `StopFilter`; SVG uses `<filter>` defs; PDF uses
+      transparency groups + soft masks.
 - [ ] Apply-time pipeline that walks the effects list and composes results
-  back into the parent renderer.
+      back into the parent renderer.
 - [ ] Golden fixtures: text with drop shadow, line with halo, scatter markers
-  with shadow, polygon outline + fill effect stack.
+      with shadow, polygon outline + fill effect stack.
 
 ### 2.3 Mixed Raster / Vector Output
 
 - [ ] Artist-level "rasterize" flag honored by every vector backend, gated by
-  renderer capability checks.
+      renderer capability checks.
 - [ ] DPI-aware rasterization at save time so dense scatter / image /
-  contour plots embed as raster tiles inside PDF / PS / SVG without losing
-  surrounding vector text and axes.
+      contour plots embed as raster tiles inside PDF / PS / SVG without losing
+      surrounding vector text and axes.
 - [ ] Golden fixtures verifying the rasterized region honors clip, transform,
-  and alpha state.
+      and alpha state.
 
 **Exit criteria:**
 
 - [ ] Pattern fills, gradients, and path effects work uniformly across AGG,
-  SVG, PDF, and Skia without backend-name conditionals.
+      SVG, PDF, and Skia without backend-name conditionals.
 - [ ] `Artist.SetRasterized(true)` produces correct mixed-mode output on
-  every vector backend.
+      every vector backend.
 - [ ] All effects have committed golden and Matplotlib-reference fixtures.
 
 ---
@@ -426,45 +430,45 @@ backends, and stabilize `internal/mathtext` for promotion.
 ### 3.1 MathText Pipeline Completion
 
 - [ ] Finish the shared shaping layer (carried over from prior backend work)
-  so AGG text draw, text measurement, text bounds, and text-path output all
-  consume the same shaped glyph runs.
+      so AGG text draw, text measurement, text bounds, and text-path output all
+      consume the same shaped glyph runs.
 - [ ] Complete the MathText grammar coverage gaps versus upstream: stacked
-  fractions, accents, big operators, integral limits, matrix environments.
+      fractions, accents, big operators, integral limits, matrix environments.
 - [ ] Cache stabilization: deterministic cache keys, eviction policy, and
-  cross-process safe storage so `internal/mathtext` can ship as its own
-  module.
+      cross-process safe storage so `internal/mathtext` can ship as its own
+      module.
 - [ ] MathText draw path through every backend: AGG (raster glyph composite),
-  SVG (paths or text-as-text where the font is available), PDF, Skia.
+      SVG (paths or text-as-text where the font is available), PDF, Skia.
 - [ ] Golden fixtures: mathtext_basic, mathtext_fractions, mathtext_integrals,
-  mathtext_matrices, mathtext_inline_labels.
+      mathtext_matrices, mathtext_inline_labels.
 
 ### 3.2 `usetex` Support
 
 - [ ] `usetex` import path that shells out to a system `latex` / `dvipng` /
-  `dvisvgm` pipeline, behind a build tag / rc switch so the default build
-  has no external dependency.
+      `dvisvgm` pipeline, behind a build tag / rc switch so the default build
+      has no external dependency.
 - [ ] DVI parser sufficient to read the geometry of the rasterized result
-  back into the renderer's text bounds API.
+      back into the renderer's text bounds API.
 - [ ] Shared clipping, alpha, and DPI semantics between MathText and `usetex`
-  paths so the artist-side API does not branch.
+      paths so the artist-side API does not branch.
 - [ ] Golden fixtures gated by the presence of a TeX installation; skip with
-  a clear diagnostic when missing.
+      a clear diagnostic when missing.
 
 ### 3.3 MathText Module Promotion
 
 - [ ] Stabilize the public API surface of `internal/mathtext` against the
-  needs of the AGG, SVG, PDF, and Skia text drawers.
+      needs of the AGG, SVG, PDF, and Skia text drawers.
 - [ ] Promote `internal/mathtext` to a top-level module / repo with its own
-  versioning, once the grammar coverage and cache contracts are firm.
+      versioning, once the grammar coverage and cache contracts are firm.
 
 **Exit criteria:**
 
 - [ ] MathText renders identically across all backends within documented
-  tolerances.
+      tolerances.
 - [ ] `usetex` is opt-in, dependency-free by default, and tested when the
-  external TeX toolchain is present.
+      external TeX toolchain is present.
 - [ ] `internal/mathtext` is either standalone or has a documented promotion
-  date.
+      date.
 
 ---
 
@@ -482,52 +486,52 @@ reference; current `core/events.go`, `internal/webdemo/`.
 ### 4.1 Navigation and Hit Testing
 
 - [ ] Pan, zoom-to-rect, and box-zoom interactions wired through the event
-  dispatcher and the existing draw-idle queue.
+      dispatcher and the existing draw-idle queue.
 - [ ] Picking / hit testing: `Artist.Contains(MouseEvent)` for every artist
-  family, with shared bounding-box and path-contains helpers.
+      family, with shared bounding-box and path-contains helpers.
 - [ ] Coordinate inspection: hover-driven formatter callbacks, cursor
-  rendering hook, and a default `format_coord` implementation.
+      rendering hook, and a default `format_coord` implementation.
 - [ ] Callback registration matching `mpl_connect` / `mpl_disconnect`
-  semantics; covered by event-lifecycle tests.
+      semantics; covered by event-lifecycle tests.
 
 ### 4.2 Desktop Interactive Backend
 
 - [ ] Decision and ADR on the desktop toolkit: Fyne, Ebiten, Gio, or a thin
-  SDL2 binding. Decision criteria: pure-Go preference, AGG framebuffer
-  embedding, keyboard / mouse event fidelity, and CI availability.
+      SDL2 binding. Decision criteria: pure-Go preference, AGG framebuffer
+      embedding, keyboard / mouse event fidelity, and CI availability.
 - [ ] Backend implementation that hosts an AGG renderer, drives the event
-  dispatcher, and supports the standard NavigationToolbar actions
-  (home / pan / zoom / save).
+      dispatcher, and supports the standard NavigationToolbar actions
+      (home / pan / zoom / save).
 - [ ] Toolbar abstraction generic enough for a future Qt or GTK binding.
 - [ ] Embedding example in `examples/embed/desktop/`.
 
 ### 4.3 Web Interactive Backend (WebAgg-style)
 
 - [ ] Server-side WebAgg implementation that broadcasts AGG diff regions
-  over WebSockets, mirroring upstream's protocol shape.
+      over WebSockets, mirroring upstream's protocol shape.
 - [ ] Browser-side JS shim handling event encoding, diff application, and
-  cursor rendering.
+      cursor rendering.
 - [ ] WASM interactive mode for the existing browser demo host so the
-  GitHub Pages gallery is clickable.
+      GitHub Pages gallery is clickable.
 - [ ] Embedding example in `examples/embed/web/`.
 
 ### 4.4 Real-Time Redraw
 
 - [ ] Blit / damage-region optimizations for animated artists, riding on the
-  existing AGG `CopyFromBBox` / `RestoreRegion` surface.
+      existing AGG `CopyFromBBox` / `RestoreRegion` surface.
 - [ ] `draw_idle` scheduling parity: coalesce redraw requests, drop stale
-  frames, honor the figure's `stale` propagation.
+      frames, honor the figure's `stale` propagation.
 - [ ] Tests that verify event-driven mutations produce exactly one redraw
-  per idle tick, not one per mutation.
+      per idle tick, not one per mutation.
 
 **Exit criteria:**
 
 - [ ] At least one desktop and one web interactive backend can drive pan /
-  zoom / pick across every plot category committed in earlier phases.
+      zoom / pick across every plot category committed in earlier phases.
 - [ ] Event lifecycle and redraw scheduling match upstream Matplotlib for
-  the documented event set.
+      the documented event set.
 - [ ] Interactive backends share the same artist / event / renderer surface
-  as the headless backends.
+      as the headless backends.
 
 ---
 
@@ -543,37 +547,37 @@ Phase 4.
 
 - [ ] `Button` click activation with hover, press, and disabled states.
 - [ ] `Slider` and `RangeSlider` with click-to-set, drag, keyboard nudging,
-  and value formatting.
+      and value formatting.
 - [ ] `CheckButtons` and `RadioButtons` with keyboard navigation and
-  value-change callbacks.
+      value-change callbacks.
 - [ ] `TextBox` with focus, caret, selection, copy / paste, and submit /
-  cancel callbacks.
+      cancel callbacks.
 
 ### 5.2 Selectors
 
 - [ ] `SpanSelector`, `RectangleSelector`, `EllipseSelector`,
-  `PolygonSelector`, and `LassoSelector` with mouse and keyboard editing.
+      `PolygonSelector`, and `LassoSelector` with mouse and keyboard editing.
 - [ ] Modifier-key behaviors (shift / ctrl / alt) matching upstream
-  defaults.
+      defaults.
 - [ ] `Cursor` and `MultiCursor` helpers driven by hover events.
 
 ### 5.3 Widget Composition
 
 - [ ] Widget z-order separate from artist z-order so widgets always sit on
-  top of plot data.
+      top of plot data.
 - [ ] Layout helpers for widget axes that compose with `GridSpec` and
-  `constrained_layout`.
+      `constrained_layout`.
 - [ ] Widget gallery example covering every widget, mirroring the upstream
-  `gallery/widgets/` family.
+      `gallery/widgets/` family.
 
 **Exit criteria:**
 
 - [ ] Every widget responds to mouse and keyboard events through the shared
-  event dispatcher.
+      event dispatcher.
 - [ ] Selectors emit semantic callbacks (with data-coordinate payloads) and
-  are usable for ROI selection workflows.
+      are usable for ROI selection workflows.
 - [ ] Widget examples render correctly in headless mode and remain
-  interactive in desktop and web backends.
+      interactive in desktop and web backends.
 
 ---
 
@@ -587,34 +591,34 @@ and the blit-friendly redraw paths from Phase 4.
 ### 6.1 Animation API
 
 - [ ] `FuncAnimation` and `ArtistAnimation` mirroring upstream signatures,
-  driven by the figure's draw-idle scheduler.
+      driven by the figure's draw-idle scheduler.
 - [ ] Frame timing / pacing controls (interval, repeat, repeat_delay,
-  blit toggle) with deterministic-frame mode for tests.
+      blit toggle) with deterministic-frame mode for tests.
 - [ ] Artist `set_animated(true)` flag honored by the AGG and Skia
-  backends via blit regions.
+      backends via blit regions.
 
 ### 6.2 Frame Writers
 
 - [ ] GIF writer (pure-Go encoder, no external dependency).
 - [ ] APNG writer for higher-quality web demos.
 - [ ] MP4 / WebM writers via optional `ffmpeg` shellout, gated by a build
-  tag and runtime detection.
+      tag and runtime detection.
 - [ ] HTML embedding writer producing self-contained
-  `<video>` / `<canvas>` snippets for the web demo host.
+      `<video>` / `<canvas>` snippets for the web demo host.
 
 ### 6.3 Animation Examples and Fixtures
 
 - [ ] Animated line plot, animated scatter / collection, animated imshow
-  (heatmap), animated subplot composition.
+      (heatmap), animated subplot composition.
 - [ ] Deterministic-frame golden fixtures verifying frame-N output matches
-  Matplotlib's frame-N output within tolerance.
+      Matplotlib's frame-N output within tolerance.
 
 **Exit criteria:**
 
 - [ ] `FuncAnimation` produces correct frames in headless mode and animates
-  smoothly in interactive backends.
+      smoothly in interactive backends.
 - [ ] At least one self-contained file format works without external
-  dependencies (GIF).
+      dependencies (GIF).
 - [ ] Animation examples appear in the WASM demo gallery.
 
 ---
@@ -627,55 +631,55 @@ backend parity program but is not yet complete.
 ### 7.1 AGG Native Capabilities
 
 - [ ] Complete the AGG MathText raster pipeline once Phase 3.1 lands so
-  raster glyph composition shares the same shaping pipeline as text-as-path.
+      raster glyph composition shares the same shaping pipeline as text-as-path.
 - [ ] Plumb `usetex` output through AGG using the DVI parser from Phase 3.2.
 - [ ] Expand AGG parity diagnostics for remaining non-text residuals: dense
-  path collections, repeated translucent overlaps, image interpolation modes,
-  hatch clipping, and mixed raster / vector fallbacks.
+      path collections, repeated translucent overlaps, image interpolation modes,
+      hatch clipping, and mixed raster / vector fallbacks.
 - [ ] Split AGG-native parity fixtures from renderer-neutral fallback
-  fixtures so missing native AGG behavior cannot be hidden by fallback
-  drawing.
+      fixtures so missing native AGG behavior cannot be hidden by fallback
+      drawing.
 
 ### 7.2 SVG Coverage Expansion
 
 - [ ] Expand the structural golden set to the remaining canonical plot
-  families: bar, errorbar, hist, collection, image, clipped polar,
-  hatch_bars, text_layout, mathtext.
+      families: bar, errorbar, hist, collection, image, clipped polar,
+      hatch_bars, text_layout, mathtext.
 - [ ] Wire the SVG-specific golden set into the catalog so the structural
-  diff harness runs alongside the rasterized golden / reference comparison.
+      diff harness runs alongside the rasterized golden / reference comparison.
 
 ### 7.3 Skia Native Paths
 
 - [ ] Native Skia marker batches, path collections, transformed images,
-  quad meshes, and Gouraud triangles wired through `SkCanvas::drawAtlas` and
-  `SkVertices`.
+      quad meshes, and Gouraud triangles wired through `SkCanvas::drawAtlas` and
+      `SkVertices`.
 - [ ] Skia native hatching via tiled `SkShader`s.
 - [ ] GPU mode (`SkSurface::MakeRenderTarget`) behind a separate build tag,
-  with deterministic CPU readback for golden tests.
+      with deterministic CPU readback for golden tests.
 - [ ] Capability reporting split between CPU and GPU configurations so the
-  comparison report shows truthful native / fallback / unavailable status
-  per mode.
+      comparison report shows truthful native / fallback / unavailable status
+      per mode.
 - [ ] Skia vs AGG semantic-fixture comparison; tolerances documented per
-  fixture where Skia is not expected to pixel-match.
+      fixture where Skia is not expected to pixel-match.
 
 ### 7.4 GoBasic Long Tail
 
 - [ ] GoBasic equivalents for the renderer-neutral path effect pipeline
-  introduced in Phase 2 so the fallback backend keeps full semantic coverage.
+      introduced in Phase 2 so the fallback backend keeps full semantic coverage.
 - [ ] GoBasic smoke coverage for any new plot family introduced in Phases
-  1-6 (PDF / interactive / animation paths excluded since GoBasic targets
-  static output).
+      1-6 (PDF / interactive / animation paths excluded since GoBasic targets
+      static output).
 
 **Exit criteria:**
 
 - [ ] AGG, SVG, and Skia all advertise truthful capability matrices for
-  every optional renderer interface, with no `✓!` drift markers in the
-  comparison report.
+      every optional renderer interface, with no `✓!` drift markers in the
+      comparison report.
 - [ ] Every committed plot family has at least one native and one
-  fallback-path fixture so silent fallbacks cannot pass for native
-  behavior.
+      fallback-path fixture so silent fallbacks cannot pass for native
+      behavior.
 - [ ] Skia is a viable secondary raster backend for users who need GPU
-  acceleration.
+      acceleration.
 
 ---
 
@@ -687,47 +691,47 @@ the development thread, and tag a stable v1.0.
 ### 8.1 API Documentation
 
 - [ ] Package-level GoDoc passes for every public package, with a worked
-  example per package.
+      example per package.
 - [ ] Hosted documentation site (pkg.go.dev plus a curated landing page
-  under the existing GitHub Pages deployment).
+      under the existing GitHub Pages deployment).
 - [ ] Migration guide from upstream Matplotlib: side-by-side Python / Go
-  snippets for every plot family covered by the catalog.
+      snippets for every plot family covered by the catalog.
 - [ ] Backend selection guide: when to use AGG / GoBasic / SVG / PDF /
-  Skia, with capability matrix excerpts.
+      Skia, with capability matrix excerpts.
 
 ### 8.2 Examples Gallery Polish
 
 - [ ] Review every `Showcase: true` catalog row for caption, description,
-  and runnable snippet quality.
+      and runnable snippet quality.
 - [ ] Add an "anti-gallery" of intentional Matplotlib-divergence cases with
-  the reasons documented (where the Go port chose different defaults).
+      the reasons documented (where the Go port chose different defaults).
 - [ ] Promote the WASM browser gallery to a first-class entry point on the
-  project README.
+      project README.
 
 ### 8.3 Performance Pass
 
 - [ ] Profiling sweep across the catalog: identify hotspots that exceed the
-  100k-point smoothness goal and the sub-second typical-plot goal.
+      100k-point smoothness goal and the sub-second typical-plot goal.
 - [ ] Reusable benchmark suite under `benchmarks/` with regression tracking
-  in CI.
+      in CI.
 - [ ] Documented memory-usage targets and a tuning guide for long-running
-  applications.
+      applications.
 
 ### 8.4 Release Readiness
 
 - [ ] Semantic version policy decision and `CHANGELOG.md` baseline.
 - [ ] Final golden / reference regeneration pass with explicit per-case
-  tolerances frozen for v1.0.
+      tolerances frozen for v1.0.
 - [ ] Public API stability audit: identify and either rename or hide any
-  symbol that is not intended to be part of the v1.0 surface.
+      symbol that is not intended to be part of the v1.0 surface.
 - [ ] CI gate: `just fmt && just lint && just test` plus catalog-driven
-  parity checks must all pass on the release branch.
+      parity checks must all pass on the release branch.
 - [ ] Tag v1.0.
 
 **Exit criteria:**
 
 - [ ] A new user can install the module, follow the documentation, and
-  reproduce every showcase plot.
+      reproduce every showcase plot.
 - [ ] The public API surface is documented, audited, and frozen for v1.0.
 - [ ] Performance and parity baselines are tracked in CI.
 
