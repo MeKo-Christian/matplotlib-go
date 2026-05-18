@@ -1,6 +1,7 @@
 package backends
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/canvas"
@@ -84,5 +85,48 @@ func TestHeadlessManagerHomeToolRestoresLimits(t *testing.T) {
 	}
 	if yMin != -5 || yMax != 5 {
 		t.Fatalf("y limits = (%v, %v), want (-5, 5)", yMin, yMax)
+	}
+}
+
+func TestHeadlessManagerSaveSelectsBackendForExtension(t *testing.T) {
+	pngRenderer := &contractRenderer{}
+	svgRenderer := &contractRenderer{}
+	reg := NewRegistry()
+	reg.Register(Backend("pngonly"), &BackendInfo{
+		Name:      "PNG Only",
+		Available: true,
+		SaveFormats: map[string]SaveHandler{
+			".png": SavePNG,
+		},
+		Factory: testRendererFactory(pngRenderer, nil),
+	})
+	reg.Register(Backend("svgonly"), &BackendInfo{
+		Name:      "SVG Only",
+		Available: true,
+		SaveFormats: map[string]SaveHandler{
+			".svg": SaveSVG,
+		},
+		Factory: testRendererFactory(svgRenderer, nil),
+	})
+	withDefaultRegistry(t, reg)
+
+	fig := core.NewFigure(200, 100)
+	manager, backend, err := NewManager("pngonly", SimpleConfig(200, 100, render.Color{A: 1}), fig, nil)
+	if err != nil {
+		t.Fatalf("NewManager() error = %v", err)
+	}
+	if backend != Backend("pngonly") {
+		t.Fatalf("backend = %q, want pngonly", backend)
+	}
+
+	path := filepath.Join(t.TempDir(), "plot.svg")
+	if err := manager.ToolManager().Execute("save", canvas.ToolArgs{Path: path}); err != nil {
+		t.Fatalf("save tool error = %v", err)
+	}
+	if svgRenderer.svgPath != path {
+		t.Fatalf("SVG renderer saved path %q, want %q", svgRenderer.svgPath, path)
+	}
+	if pngRenderer.pngPath != "" {
+		t.Fatalf("PNG renderer should not save SVG path, got %q", pngRenderer.pngPath)
 	}
 }

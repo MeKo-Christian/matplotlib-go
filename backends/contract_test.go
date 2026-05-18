@@ -10,6 +10,7 @@ import (
 type contractRenderer struct {
 	render.NullRenderer
 	pngPath string
+	svgPath string
 }
 
 func (r *contractRenderer) DrawText(string, geom.Pt, float64, render.Color) {}
@@ -19,7 +20,8 @@ func (r *contractRenderer) SavePNG(path string) error {
 	return nil
 }
 
-func (r *contractRenderer) SaveSVG(string) error {
+func (r *contractRenderer) SaveSVG(path string) error {
+	r.svgPath = path
 	return nil
 }
 

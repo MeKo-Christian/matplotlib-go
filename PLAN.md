@@ -275,64 +275,89 @@ Current slice landed:
 - `core.SaveFig(fig, r, "out.pdf")` now dispatches to `render.PDFExporter`.
   `core` remains renderer-interface based because importing `backends` there
   would create the existing `backends -> canvas -> core` cycle.
+- `BackendComparisonReport` now includes a `SaveFormats` column listing
+  registered extensions such as `.png`, `.svg`, `.pdf`, and `.eps,.ps`.
+- Headless canvas / manager saves now resolve the save backend by file
+  extension, so a manager created with a PNG-capable backend can still save
+  `.svg`, `.pdf`, or `.ps` through an automatically selected vector backend.
 
 Open items / remaining gaps:
 
 - [x] PDF registry route: `.pdf` is registered in `SaveFormats`, selected by
-      `backends.SelectBackendForExtension`, and covered by `cmd/example -format
-pdf` smoke output.
+  `backends.SelectBackendForExtension`, and covered by `cmd/example -format
+  pdf` smoke output.
 - [x] PostScript registry route: `.ps` and `.eps` are registered in
-      `SaveFormats`, selected by `backends.SelectBackendForExtension`, and covered
-      by `cmd/example -format ps` smoke output.
+  `SaveFormats`, selected by `backends.SelectBackendForExtension`, and covered
+  by `cmd/example -format ps` smoke output.
 - [ ] PGF backend route: scaffold `backends/pgf`, implement
-      `render.PGFExporter`, register `.pgf` in `SaveFormats`, side-import it from
-      `backends/all`, and change the current `cmd/example -format pgf` smoke test
-      from "expected unsupported" to "writes non-empty PGF".
+  `render.PGFExporter`, register `.pgf` in `SaveFormats`, side-import it from
+  `backends/all`, and change the current `cmd/example -format pgf` smoke test
+  from "expected unsupported" to "writes non-empty PGF".
 - [ ] Save-option propagation: registry save dispatch currently carries SVG
-      options only (`...render.SVGOption`). Add a backend-neutral save-options
-      surface, or format-specific option routing, so PDF metadata / creation date /
-      font policy and future PGF options can flow through `pyplot`, canvas manager
-      saves, and `cmd/example` without backend-name checks.
-- [ ] Public save-route audit: keep `core.SaveFig` as the renderer-interface
-      helper, but verify every higher-level path that chooses a backend
-      (`pyplot.SaveFig`, headless canvas / manager save, `cmd/example`, future CLI
-      helpers) selects through `backends.SelectBackendForExtension` and writes
-      through `SaveFormats`.
-- [ ] Error and fallback policy: document and test what happens when
-      `MATPLOTLIB_BACKEND` is pinned to a backend that cannot write the requested
-      extension. `pyplot` and `cmd/example` currently fall back to auto selection;
-      decide whether canvas / manager saves should follow the same behavior or
-      remain pinned-backend strict.
-- [ ] Vector semantics matrix: document per-format status for fonts, hatches,
-      alpha, raster images, transformed images, marker/path-collection batching,
-      metadata, and deterministic output across SVG / PDF / PS / PGF.
-- [ ] Capability report usability: `BackendComparisonReport` now includes
-      `PGFExport`, but it still reports only capability markers. Add a compact save
-      format column or companion report so missing `.pgf` registration is visible
-      without scanning backend source.
+  options only (`...render.SVGOption`). Add a backend-neutral save-options
+  surface, or format-specific option routing, so PDF metadata / creation date /
+  font policy and future PGF options can flow through `pyplot`, canvas manager
+  saves, and `cmd/example` without backend-name checks.
+- [x] Public save-route audit: keep `core.SaveFig` as the renderer-interface
+  helper, but verify every higher-level path that chooses a backend
+  (`pyplot.SaveFig`, headless canvas / manager save, `cmd/example`, future CLI
+  helpers) selects through `backends.SelectBackendForExtension` and writes
+  through `SaveFormats`. `pyplot.SaveFig`, `cmd/example`, and headless
+  canvas / manager save now follow that route.
+- [x] Error and fallback policy: document and test what happens when
+  `MATPLOTLIB_BACKEND` is pinned to a backend that cannot write the requested
+  extension. `pyplot` and `cmd/example` currently fall back to auto selection;
+  headless canvas / manager saves now follow the same fallback-to-auto
+  behavior for extension saves.
+- [x] Vector semantics matrix: document per-format status for fonts, hatches,
+  alpha, raster images, transformed images, marker/path-collection batching,
+  metadata, and deterministic output across SVG / PDF / PS / PGF.
+- [x] Capability report usability: `BackendComparisonReport` now includes
+  `PGFExport`, but it still reports only capability markers. Add a compact save
+  format column or companion report so missing `.pgf` registration is visible
+  without scanning backend source.
 
 **Exit criteria:**
 
 - [x] `core.SaveFig(fig, r, "out.pdf")` draws and exports through
-      `render.PDFExporter`.
+  `render.PDFExporter`.
 - [x] `backends.SelectBackendForExtension("", ".pdf" | ".ps" | ".eps", nil)`
-      selects the PDF / PS backends and registry `SaveViaExtension` writes the
-      file through `SaveFormats`.
+  selects the PDF / PS backends and registry `SaveViaExtension` writes the
+  file through `SaveFormats`.
 - [x] `cmd/example -format png|svg|pdf|ps` writes non-empty files in smoke
-      tests.
+  tests.
 - [ ] `backends.SelectBackendForExtension("", ".pgf", nil)` selects a
-      registered PGF backend, and `cmd/example -format pgf` writes a non-empty PGF
-      file.
-- [ ] `pyplot.SaveFig`, canvas / manager save, `cmd/example`, and any CLI save
-      helpers all choose the backend through `SelectBackendForExtension` and write
-      through `SaveFormats`; no caller outside renderer-interface helpers switches
-      directly on `.png` / `.svg` / `.pdf` / `.ps` / `.eps` / `.pgf`.
+  registered PGF backend, and `cmd/example -format pgf` writes a non-empty PGF
+  file.
+- [x] `pyplot.SaveFig`, canvas / manager save, `cmd/example`, and any CLI save
+  helpers all choose the backend through `SelectBackendForExtension` and write
+  through `SaveFormats`; no caller outside renderer-interface helpers switches
+  directly on `.png` / `.svg` / `.pdf` / `.ps` / `.eps` / `.pgf`.
 - [ ] Format-specific save options can be passed through the shared save
-      pipeline for SVG, PDF, PS, and PGF without adding backend-name conditionals.
-- [ ] Backend comparison / capability output makes both export capabilities
-      and registered save extensions obvious for PNG, SVG, PDF, PS/EPS, and PGF.
-- [ ] Vector backend docs define the shared font / hatch / image / metadata /
-      determinism semantics and list remaining per-format limitations.
+  pipeline for SVG, PDF, PS, and PGF without adding backend-name conditionals.
+- [x] Backend comparison / capability output makes both export capabilities
+  and registered save extensions obvious for PNG, SVG, PDF, PS/EPS, and PGF.
+- [x] Vector backend docs define the shared font / hatch / image / metadata /
+  determinism semantics and list remaining per-format limitations.
+
+Vector backend semantics matrix:
+
+| Capability / semantic | SVG | PDF | PS / EPS | PGF |
+| --- | --- | --- | --- | --- |
+| Registry extension(s) | `.svg` | `.pdf` | `.ps`, `.eps` | missing |
+| Deterministic output | native IDs / metadata policy | deterministic xref, metadata, `SOURCE_DATE_EPOCH` | deterministic document stream | missing |
+| Text policy | text-as-text plus path policy | embedded Type 0 / CIDFontType2 or text-as-path | basic direct text, no embedded fonts yet | missing |
+| Font subsetting / embedding | n/a for text-as-text, paths available | implemented | missing | missing |
+| Hatch fills | native SVG patterns | native PDF tiling patterns | native clipped hatch strokes | missing |
+| Stroke / fill alpha | native SVG opacity | PDF ExtGState | limited by PostScript semantics | missing |
+| Raster images | embedded image data | Image XObjects with alpha masks | inline colorimage, alpha precomposited | missing |
+| Transformed images | implemented | implemented | implemented | missing |
+| Marker / path collections | reusable native batches | Form XObjects | missing | missing |
+| Metadata options | `render.SVGOptions` | `render.PDFOptions` but not fully routed through shared save APIs | missing shared option surface | missing |
+
+Remaining shared-semantics work is concentrated in PGF scaffolding, PDF/PGF
+option routing through the registry save pipeline, and the PostScript parity
+items listed in Phase 1.2.
 
 ---
 

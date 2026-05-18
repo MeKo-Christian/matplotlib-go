@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -15,6 +16,7 @@ type headlessCanvas struct {
 	mu          sync.Mutex
 	figure      *canvas.Figure
 	backend     Backend
+	required    []Capability
 	config      Config
 	factory     Factory
 	renderer    render.Renderer
@@ -55,7 +57,7 @@ func NewCanvas(choice string, config Config, fig *canvas.Figure, required []Capa
 		out, err := info.CanvasFactory(config, fig)
 		return out, backend, err
 	}
-	return newHeadlessCanvas(fig, backend, config, info.Factory), backend, nil
+	return newHeadlessCanvas(fig, backend, config, info.Factory, required), backend, nil
 }
 
 func NewCanvasFromEnv(config Config, fig *canvas.Figure, required []Capability) (canvas.FigureCanvas, Backend, error) {
@@ -78,7 +80,7 @@ func NewManager(choice string, config Config, fig *canvas.Figure, required []Cap
 		}
 		return newDefaultManager(out, nil), backend, nil
 	}
-	headless := newHeadlessCanvas(fig, backend, config, info.Factory)
+	headless := newHeadlessCanvas(fig, backend, config, info.Factory, required)
 	return newDefaultManager(headless, headless.save), backend, nil
 }
 
@@ -98,12 +100,13 @@ func resolveBackendInfo(choice string, required []Capability) (Backend, *Backend
 	return backend, info, nil
 }
 
-func newHeadlessCanvas(fig *canvas.Figure, backend Backend, config Config, factory Factory) *headlessCanvas {
+func newHeadlessCanvas(fig *canvas.Figure, backend Backend, config Config, factory Factory, required []Capability) *headlessCanvas {
 	return &headlessCanvas{
-		figure:  fig,
-		backend: backend,
-		config:  config,
-		factory: factory,
+		figure:   fig,
+		backend:  backend,
+		required: append([]Capability(nil), required...),
+		config:   config,
+		factory:  factory,
 	}
 }
 
@@ -199,20 +202,66 @@ func (c *headlessCanvas) save(path string) error {
 	if strings.TrimSpace(path) == "" {
 		return errors.New("backends: save path is required")
 	}
-	_, err := c.draw(true)
+	ext := normalizeSaveFormat(filepath.Ext(path))
+	if ext == "" {
+		return fmt.Errorf("backends: unsupported save extension %q", filepath.Ext(path))
+	}
+
+	backend, factory, err := c.saveBackend(ext)
 	if err != nil {
 		return err
 	}
-
-	c.mu.Lock()
-	renderer := c.renderer
-	backend := c.backend
-	c.mu.Unlock()
+	renderer, err := c.drawWithFactory(factory)
+	if err != nil {
+		return err
+	}
 
 	if err := DefaultRegistry.SaveViaExtension(backend, renderer, path); err != nil {
 		return fmt.Errorf("backends: cannot save figure: %w", err)
 	}
 	return nil
+}
+
+func (c *headlessCanvas) saveBackend(ext string) (Backend, Factory, error) {
+	c.mu.Lock()
+	backend := c.backend
+	factory := c.factory
+	required := append([]Capability(nil), c.required...)
+	c.mu.Unlock()
+
+	if _, err := DefaultRegistry.SelectBackendForExtension(string(backend), ext, required); err == nil {
+		return backend, factory, nil
+	}
+
+	fallback, err := DefaultRegistry.SelectBackendForExtension("", ext, required)
+	if err != nil {
+		return "", nil, err
+	}
+	info, ok := DefaultRegistry.Get(fallback)
+	if !ok || info.Factory == nil {
+		return "", nil, fmt.Errorf("backends: selected backend %s has no renderer factory", fallback)
+	}
+	return fallback, info.Factory, nil
+}
+
+func (c *headlessCanvas) drawWithFactory(factory Factory) (render.Renderer, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.closed {
+		return nil, errors.New("backends: canvas is closed")
+	}
+	if factory == nil {
+		return nil, errors.New("backends: nil renderer factory")
+	}
+	renderer, err := factory(c.config)
+	if err != nil {
+		return nil, err
+	}
+	canvas.DrawFigure(c.figure, renderer)
+	c.renderer = renderer
+	c.pendingDraw = false
+	return renderer, nil
 }
 
 func (c *headlessCanvas) draw(skipEmit bool) (canvas.Event, error) {
