@@ -27,11 +27,12 @@ type Renderer struct {
 	background render.Color
 	resolution uint
 
-	began    bool
-	viewport geom.Rect
-	content  strings.Builder
-	document []byte
-	stack    []state
+	began     bool
+	viewport  geom.Rect
+	content   strings.Builder
+	document  []byte
+	stack     []state
+	markerIDs map[string]string
 }
 
 var (
@@ -39,7 +40,9 @@ var (
 	_ render.PSExporter             = (*Renderer)(nil)
 	_ render.DPIAware               = (*Renderer)(nil)
 	_ render.ImageTransformer       = (*Renderer)(nil)
+	_ render.MarkerDrawer           = (*Renderer)(nil)
 	_ render.NativeHatcher          = (*Renderer)(nil)
+	_ render.PathCollectionDrawer   = (*Renderer)(nil)
 	_ render.FontTextDrawer         = (*Renderer)(nil)
 	_ render.FontRotatedTextDrawer  = (*Renderer)(nil)
 	_ render.FontVerticalTextDrawer = (*Renderer)(nil)
@@ -82,6 +85,7 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.content.Reset()
 	r.document = nil
 	r.stack = r.stack[:0]
+	r.markerIDs = map[string]string{}
 
 	r.content.WriteString("gsave\n")
 	fmt.Fprintf(&r.content, "0 %s translate\n", shortFloat(float64(r.height)))
@@ -202,6 +206,84 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 // SupportsNativeHatch reports that the PS backend consumes hatch metadata
 // directly in Path.
 func (r *Renderer) SupportsNativeHatch() bool { return true }
+
+// DrawMarkers renders one marker path at many display-space offsets using a
+// reusable PostScript procedure for identical marker geometry and paint.
+func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
+	if !r.began || len(batch.Marker.C) == 0 || len(batch.Items) == 0 || !batch.Marker.Validate() {
+		return false
+	}
+	emitted := false
+	for i := range batch.Items {
+		item := batch.Items[i]
+		marker := affinePath(batch.Marker, normalizedAffine(item.Transform))
+		if !marker.Validate() || len(marker.C) == 0 || !paintVisible(&item.Paint) {
+			continue
+		}
+		name := r.registerMarkerProcedure(marker, &item.Paint)
+		if name == "" {
+			continue
+		}
+		fmt.Fprintf(&r.content, "gsave\n%s %s translate\n%s\ngrestore\n",
+			shortFloat(item.Offset.X),
+			shortFloat(item.Offset.Y),
+			name,
+		)
+		emitted = true
+	}
+	return emitted
+}
+
+// DrawPathCollection renders display-space paths through reusable PostScript
+// procedures keyed by path geometry and paint.
+func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
+	if !r.began || len(batch.Items) == 0 {
+		return false
+	}
+	emitted := false
+	for i := range batch.Items {
+		item := batch.Items[i]
+		if !item.Path.Validate() || len(item.Path.C) == 0 {
+			continue
+		}
+		paint := item.Paint
+		if item.Hatch != "" {
+			paint.Hatch = item.Hatch
+			paint.HatchColor = item.HatchColor
+			paint.HatchLineWidth = item.HatchWidth
+			paint.HatchSpacing = item.HatchSpacing
+		}
+		if !paintVisible(&paint) {
+			continue
+		}
+		name := r.registerPathProcedure("P", item.Path, &paint)
+		if name == "" {
+			continue
+		}
+		fmt.Fprintf(&r.content, "%s\n", name)
+		emitted = true
+	}
+	return emitted
+}
+
+func (r *Renderer) registerMarkerProcedure(marker geom.Path, paint *render.Paint) string {
+	return r.registerPathProcedure("M", marker, paint)
+}
+
+func (r *Renderer) registerPathProcedure(prefix string, path geom.Path, paint *render.Paint) string {
+	key := pathProcedureKey(prefix, path, paint)
+	if name, ok := r.markerIDs[key]; ok {
+		return name
+	}
+	var body strings.Builder
+	if !writePathOps(&body, path) || !writePathPaintOps(&body, path, paint) {
+		return ""
+	}
+	name := fmt.Sprintf("%s%d", prefix, len(r.markerIDs)+1)
+	r.markerIDs[key] = name
+	fmt.Fprintf(&r.content, "/%s {\n%s} bind def\n", name, body.String())
+	return name
+}
 
 func (r *Renderer) writeHatchFill(p geom.Path, paint *render.Paint) {
 	if paint == nil || paint.Hatch == "" || paint.HatchColor.A <= 0 {
@@ -493,6 +575,60 @@ func lastEndpoint(p geom.Path, vi int) geom.Pt {
 	return geom.Pt{}
 }
 
+func writePathPaintOps(w *strings.Builder, path geom.Path, paint *render.Paint) bool {
+	if paint == nil {
+		return false
+	}
+	hasHatch := paint.Hatch != "" && paint.HatchColor.A > 0
+	hasFill := paint.Fill.A > 0 || hasHatch
+	hasStroke := paint.Stroke.A > 0 && paint.LineWidth > 0
+	switch {
+	case hasHatch:
+		if paint.Fill.A > 0 {
+			writeFillColor(w, paint.Fill)
+			w.WriteString("gsave fill grestore\n")
+		}
+		writeStrokeColor(w, paint.HatchColor)
+		lineWidth := paint.HatchLineWidth
+		if lineWidth <= 0 {
+			lineWidth = 1
+		}
+		fmt.Fprintf(w, "%s setlinewidth\n", shortFloat(lineWidth))
+		w.WriteString("gsave clip newpath\n")
+		for _, line := range hatchPatternLines(paint.Hatch, paint.HatchSpacing) {
+			fmt.Fprintf(w, "newpath %s %s moveto %s %s lineto\nstroke\n",
+				shortFloat(line[0].X), shortFloat(line[0].Y),
+				shortFloat(line[1].X), shortFloat(line[1].Y),
+			)
+		}
+		w.WriteString("grestore\n")
+		if hasStroke {
+			if !writePathOps(w, path) {
+				return false
+			}
+			writeStrokeColor(w, paint.Stroke)
+			writeLineState(w, paint)
+			w.WriteString("stroke\n")
+		}
+	case hasFill && hasStroke:
+		writeFillColor(w, paint.Fill)
+		w.WriteString("gsave fill grestore\n")
+		writeStrokeColor(w, paint.Stroke)
+		writeLineState(w, paint)
+		w.WriteString("stroke\n")
+	case hasFill:
+		writeFillColor(w, paint.Fill)
+		w.WriteString("fill\n")
+	case hasStroke:
+		writeStrokeColor(w, paint.Stroke)
+		writeLineState(w, paint)
+		w.WriteString("stroke\n")
+	default:
+		return false
+	}
+	return true
+}
+
 func writeLineState(w *strings.Builder, paint *render.Paint) {
 	lineWidth := paint.LineWidth
 	if lineWidth <= 0 {
@@ -516,6 +652,84 @@ func writeLineState(w *strings.Builder, paint *render.Paint) {
 	} else {
 		w.WriteString("[] 0 setdash\n")
 	}
+}
+
+func paintVisible(paint *render.Paint) bool {
+	if paint == nil {
+		return false
+	}
+	return paint.Fill.A > 0 ||
+		(paint.Hatch != "" && paint.HatchColor.A > 0) ||
+		(paint.Stroke.A > 0 && paint.LineWidth > 0)
+}
+
+func normalizedAffine(affine geom.Affine) geom.Affine {
+	if affine == (geom.Affine{}) {
+		return geom.Identity()
+	}
+	return affine
+}
+
+func affinePath(path geom.Path, affine geom.Affine) geom.Path {
+	if len(path.V) == 0 {
+		return path
+	}
+	out := geom.Path{
+		V: make([]geom.Pt, len(path.V)),
+		C: append([]geom.Cmd(nil), path.C...),
+	}
+	for i, pt := range path.V {
+		out.V[i] = affine.Apply(pt)
+	}
+	return out
+}
+
+func pathProcedureKey(prefix string, path geom.Path, paint *render.Paint) string {
+	var b strings.Builder
+	b.WriteString(prefix)
+	b.WriteByte('|')
+	for _, cmd := range path.C {
+		fmt.Fprintf(&b, "%d;", cmd)
+	}
+	b.WriteByte('|')
+	for _, pt := range path.V {
+		b.WriteString(shortFloat(pt.X))
+		b.WriteByte(',')
+		b.WriteString(shortFloat(pt.Y))
+		b.WriteByte(';')
+	}
+	b.WriteByte('|')
+	writePaintKey(&b, paint)
+	return b.String()
+}
+
+func writePaintKey(b *strings.Builder, paint *render.Paint) {
+	if paint == nil {
+		return
+	}
+	writeColorKey(b, paint.Fill)
+	b.WriteByte('|')
+	writeColorKey(b, paint.Stroke)
+	b.WriteByte('|')
+	b.WriteString(shortFloat(paint.LineWidth))
+	b.WriteByte('|')
+	b.WriteString(paint.Hatch)
+	b.WriteByte('|')
+	writeColorKey(b, paint.HatchColor)
+	b.WriteByte('|')
+	b.WriteString(shortFloat(paint.HatchLineWidth))
+	b.WriteByte('|')
+	b.WriteString(shortFloat(paint.HatchSpacing))
+}
+
+func writeColorKey(b *strings.Builder, c render.Color) {
+	b.WriteString(shortFloat(c.R))
+	b.WriteByte(',')
+	b.WriteString(shortFloat(c.G))
+	b.WriteByte(',')
+	b.WriteString(shortFloat(c.B))
+	b.WriteByte(',')
+	b.WriteString(shortFloat(c.A))
 }
 
 func writeStrokeColor(w *strings.Builder, c render.Color) {

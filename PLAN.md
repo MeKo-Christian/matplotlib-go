@@ -272,14 +272,63 @@ Current slice landed:
   `core` remains renderer-interface based because importing `backends` there
   would create the existing `backends -> canvas -> core` cycle.
 
+Open items / remaining gaps:
+
+- [x] PDF registry route: `.pdf` is registered in `SaveFormats`, selected by
+  `backends.SelectBackendForExtension`, and covered by `cmd/example -format
+  pdf` smoke output.
+- [x] PostScript registry route: `.ps` and `.eps` are registered in
+  `SaveFormats`, selected by `backends.SelectBackendForExtension`, and covered
+  by `cmd/example -format ps` smoke output.
+- [ ] PGF backend route: scaffold `backends/pgf`, implement
+  `render.PGFExporter`, register `.pgf` in `SaveFormats`, side-import it from
+  `backends/all`, and change the current `cmd/example -format pgf` smoke test
+  from "expected unsupported" to "writes non-empty PGF".
+- [ ] Save-option propagation: registry save dispatch currently carries SVG
+  options only (`...render.SVGOption`). Add a backend-neutral save-options
+  surface, or format-specific option routing, so PDF metadata / creation date /
+  font policy and future PGF options can flow through `pyplot`, canvas manager
+  saves, and `cmd/example` without backend-name checks.
+- [ ] Public save-route audit: keep `core.SaveFig` as the renderer-interface
+  helper, but verify every higher-level path that chooses a backend
+  (`pyplot.SaveFig`, headless canvas / manager save, `cmd/example`, future CLI
+  helpers) selects through `backends.SelectBackendForExtension` and writes
+  through `SaveFormats`.
+- [ ] Error and fallback policy: document and test what happens when
+  `MATPLOTLIB_BACKEND` is pinned to a backend that cannot write the requested
+  extension. `pyplot` and `cmd/example` currently fall back to auto selection;
+  decide whether canvas / manager saves should follow the same behavior or
+  remain pinned-backend strict.
+- [ ] Vector semantics matrix: document per-format status for fonts, hatches,
+  alpha, raster images, transformed images, marker/path-collection batching,
+  metadata, and deterministic output across SVG / PDF / PS / PGF.
+- [ ] Capability report usability: `BackendComparisonReport` now includes
+  `PGFExport`, but it still reports only capability markers. Add a compact save
+  format column or companion report so missing `.pgf` registration is visible
+  without scanning backend source.
+
 **Exit criteria:**
 
-- [x] `core.SaveFig(fig, r, "out.pdf")` works end-to-end with deterministic
-  output and Matplotlib-comparable visual fidelity.
-- [ ] PDF, PS, and PGF backends are reachable through the registry without
-  any caller knowing about them.
-- [ ] Vector backends share a documented font / hatch / image semantics
-  surface so future formats are additions instead of rewrites.
+- [x] `core.SaveFig(fig, r, "out.pdf")` draws and exports through
+  `render.PDFExporter`.
+- [x] `backends.SelectBackendForExtension("", ".pdf" | ".ps" | ".eps", nil)`
+  selects the PDF / PS backends and registry `SaveViaExtension` writes the
+  file through `SaveFormats`.
+- [x] `cmd/example -format png|svg|pdf|ps` writes non-empty files in smoke
+  tests.
+- [ ] `backends.SelectBackendForExtension("", ".pgf", nil)` selects a
+  registered PGF backend, and `cmd/example -format pgf` writes a non-empty PGF
+  file.
+- [ ] `pyplot.SaveFig`, canvas / manager save, `cmd/example`, and any CLI save
+  helpers all choose the backend through `SelectBackendForExtension` and write
+  through `SaveFormats`; no caller outside renderer-interface helpers switches
+  directly on `.png` / `.svg` / `.pdf` / `.ps` / `.eps` / `.pgf`.
+- [ ] Format-specific save options can be passed through the shared save
+  pipeline for SVG, PDF, PS, and PGF without adding backend-name conditionals.
+- [ ] Backend comparison / capability output makes both export capabilities
+  and registered save extensions obvious for PNG, SVG, PDF, PS/EPS, and PGF.
+- [ ] Vector backend docs define the shared font / hatch / image / metadata /
+  determinism semantics and list remaining per-format limitations.
 
 ---
 

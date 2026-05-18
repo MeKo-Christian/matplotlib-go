@@ -69,6 +69,34 @@ func TestPSBackendAdvertisesNativeHatcher(t *testing.T) {
 	}
 }
 
+func TestPSBackendAdvertisesMarkerBatch(t *testing.T) {
+	r, err := backends.Create(backends.PS, backends.Config{
+		Width: 200, Height: 100,
+		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	status := backends.DefaultRegistry.RendererCapabilityStatus(backends.PS, r, backends.MarkerBatch)
+	if status != backends.CapabilityNative {
+		t.Fatalf("MarkerBatch status = %s, want %s", status, backends.CapabilityNative)
+	}
+}
+
+func TestPSBackendAdvertisesPathCollectionBatch(t *testing.T) {
+	r, err := backends.Create(backends.PS, backends.Config{
+		Width: 200, Height: 100,
+		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	status := backends.DefaultRegistry.RendererCapabilityStatus(backends.PS, r, backends.PathCollectionBatch)
+	if status != backends.CapabilityNative {
+		t.Fatalf("PathCollectionBatch status = %s, want %s", status, backends.CapabilityNative)
+	}
+}
+
 func TestSavePSViaRegistry(t *testing.T) {
 	dir := t.TempDir()
 	out := filepath.Join(dir, "registry.ps")

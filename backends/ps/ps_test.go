@@ -122,3 +122,92 @@ func TestPathWithHatchEmitsClippedHatchLines(t *testing.T) {
 		t.Fatalf("missing hatch stroke lines in\n%s", r.document)
 	}
 }
+
+func TestDrawMarkersEmitsReusableProcedure(t *testing.T) {
+	r := newTestRenderer(t)
+	drawer, ok := any(r).(render.MarkerDrawer)
+	if !ok {
+		t.Fatal("PS renderer should implement render.MarkerDrawer")
+	}
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+
+	var marker geom.Path
+	marker.MoveTo(geom.Pt{X: 0, Y: 0})
+	marker.LineTo(geom.Pt{X: 5, Y: 10})
+	marker.LineTo(geom.Pt{X: 10, Y: 0})
+	marker.Close()
+
+	ok = drawer.DrawMarkers(render.MarkerBatch{
+		Marker: marker,
+		Items: []render.MarkerItem{
+			{
+				Offset: geom.Pt{X: 20, Y: 30},
+				Paint:  render.Paint{Fill: render.Color{R: 1, A: 1}},
+			},
+			{
+				Offset: geom.Pt{X: 40, Y: 50},
+				Paint:  render.Paint{Fill: render.Color{R: 1, A: 1}},
+			},
+		},
+	})
+	if !ok {
+		t.Fatal("DrawMarkers returned false")
+	}
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	if got := bytes.Count(r.document, []byte("/M1 {")); got != 1 {
+		t.Fatalf("expected one marker procedure definition, got %d in\n%s", got, r.document)
+	}
+	if !bytes.Contains(r.document, []byte("20 30 translate\nM1")) ||
+		!bytes.Contains(r.document, []byte("40 50 translate\nM1")) {
+		t.Fatalf("missing translated marker invocations in\n%s", r.document)
+	}
+	if got := bytes.Count(r.document, []byte("\nM1\ngrestore")); got != 2 {
+		t.Fatalf("expected two marker procedure invocations, got %d in\n%s", got, r.document)
+	}
+}
+
+func TestDrawPathCollectionEmitsReusableProcedure(t *testing.T) {
+	r := newTestRenderer(t)
+	drawer, ok := any(r).(render.PathCollectionDrawer)
+	if !ok {
+		t.Fatal("PS renderer should implement render.PathCollectionDrawer")
+	}
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+
+	var path geom.Path
+	path.MoveTo(geom.Pt{X: 10, Y: 10})
+	path.LineTo(geom.Pt{X: 20, Y: 10})
+	path.LineTo(geom.Pt{X: 20, Y: 20})
+	path.Close()
+
+	ok = drawer.DrawPathCollection(render.PathCollectionBatch{
+		Items: []render.PathCollectionItem{
+			{
+				Path:  path,
+				Paint: render.Paint{Fill: render.Color{G: 1, A: 1}},
+			},
+			{
+				Path:  path,
+				Paint: render.Paint{Fill: render.Color{G: 1, A: 1}},
+			},
+		},
+	})
+	if !ok {
+		t.Fatal("DrawPathCollection returned false")
+	}
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	if got := bytes.Count(r.document, []byte("/P1 {")); got != 1 {
+		t.Fatalf("expected one path collection procedure definition, got %d in\n%s", got, r.document)
+	}
+	if got := bytes.Count(r.document, []byte("P1\n")); got != 2 {
+		t.Fatalf("expected two path collection procedure invocations, got %d in\n%s", got, r.document)
+	}
+}
