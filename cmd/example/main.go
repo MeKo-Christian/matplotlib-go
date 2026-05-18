@@ -13,7 +13,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
@@ -92,7 +94,8 @@ var registry = map[string]func() *core.Figure{
 
 func main() {
 	name := flag.String("name", "", "Catalog ID of the showcase to render")
-	out := flag.String("o", "", "Output PNG path (default: <name>.png)")
+	out := flag.String("o", "", "Output path (default: <name>.<format>)")
+	format := flag.String("format", "", "Output format: png, svg, pdf, ps, eps, or pgf (default: inferred from -o or png)")
 	list := flag.Bool("list", false, "List all available showcase IDs and exit")
 	flag.Parse()
 
@@ -113,26 +116,70 @@ func main() {
 	}
 
 	output := *out
+	ext, err := outputExtension(*name, output, *format)
+	if err != nil {
+		log.Fatalf("format: %v", err)
+	}
 	if output == "" {
-		output = *name + ".png"
+		output = *name + ext
+	} else if filepath.Ext(output) == "" {
+		output += ext
+	} else if strings.TrimSpace(*format) != "" && strings.ToLower(filepath.Ext(output)) != ext {
+		log.Fatalf("format: -format %s conflicts with output extension %s", *format, filepath.Ext(output))
 	}
 
 	fig := plot()
 	w := int(fig.SizePx.X)
 	h := int(fig.SizePx.Y)
-	r, _, err := backends.NewRendererFromEnv(backends.Config{
+	backend, err := selectExampleBackend(ext, exampleRequiredCapabilities())
+	if err != nil {
+		log.Fatalf("renderer: %v", err)
+	}
+	r, err := backends.Create(backend, backends.Config{
 		Width:      w,
 		Height:     h,
 		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
 		DPI:        fig.RC.DPI,
-	}, exampleRequiredCapabilities())
+	})
 	if err != nil {
 		log.Fatalf("renderer: %v", err)
 	}
-	if err := core.SavePNG(fig, r, output); err != nil {
+	core.DrawFigure(fig, r)
+	if err := backends.DefaultRegistry.SaveViaExtension(backend, r, output); err != nil {
 		log.Fatalf("save: %v", err)
 	}
 	log.Printf("saved %s", output)
+}
+
+func outputExtension(name, output, format string) (string, error) {
+	normalized := strings.ToLower(strings.TrimSpace(format))
+	if normalized != "" {
+		if strings.HasPrefix(normalized, ".") {
+			return normalized, nil
+		}
+		return "." + normalized, nil
+	}
+	if ext := strings.ToLower(filepath.Ext(output)); ext != "" {
+		return ext, nil
+	}
+	if strings.TrimSpace(name) == "" {
+		return "", fmt.Errorf("missing showcase name")
+	}
+	return ".png", nil
+}
+
+func selectExampleBackend(ext string, required []backends.Capability) (backends.Backend, error) {
+	choice := strings.TrimSpace(os.Getenv("MATPLOTLIB_BACKEND"))
+	backend, err := backends.SelectBackendForExtension(choice, ext, required)
+	if err == nil {
+		return backend, nil
+	}
+	if choice != "" {
+		if fallback, fallbackErr := backends.SelectBackendForExtension("", ext, required); fallbackErr == nil {
+			return fallback, nil
+		}
+	}
+	return "", err
 }
 
 func exampleRequiredCapabilities() []backends.Capability {

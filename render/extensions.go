@@ -268,6 +268,12 @@ type PSExporter interface {
 	SavePS(path string) error
 }
 
+// PGFExporter is implemented by renderers that can export their output to
+// PGF/TikZ for inclusion in LaTeX documents.
+type PGFExporter interface {
+	SavePGF(path string) error
+}
+
 // PDFFontPolicy controls whether PDF text is emitted using embedded fonts or
 // converted to filled glyph paths.
 type PDFFontPolicy string

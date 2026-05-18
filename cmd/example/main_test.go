@@ -1,8 +1,14 @@
 package main
 
 import (
+	"bytes"
+	"flag"
 	"image"
 	"image/color"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/backends"
@@ -73,4 +79,66 @@ func TestShowcaseRegistryCoversCatalogShowcases(t *testing.T) {
 			t.Fatalf("catalog showcase %q is missing from cmd/example registry", c.ID)
 		}
 	}
+}
+
+func TestExampleCommandSmokeFormats(t *testing.T) {
+	for _, format := range []string{"png", "svg", "pdf", "ps"} {
+		format := format
+		t.Run(format, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "basic_line."+format)
+			stderr, ok := runExampleCommand(t, "-name", "basic_line", "-format", format, "-o", path)
+			if !ok {
+				t.Fatalf("cmd/example -format %s failed:\n%s", format, stderr)
+			}
+			info, err := os.Stat(path)
+			if err != nil {
+				t.Fatalf("expected output %s: %v\nstderr:\n%s", path, err, stderr)
+			}
+			if info.Size() == 0 {
+				t.Fatalf("expected non-empty %s output", format)
+			}
+		})
+	}
+}
+
+func TestExampleCommandAcceptsPGFFormatButReportsUnsupportedBackend(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "basic_line.pgf")
+	stderr, ok := runExampleCommand(t, "-name", "basic_line", "-format", "pgf", "-o", path)
+	if ok {
+		t.Fatal("cmd/example -format pgf succeeded without a registered PGF backend")
+	}
+	if !strings.Contains(stderr, `.pgf`) {
+		t.Fatalf("PGF error should mention .pgf, got:\n%s", stderr)
+	}
+}
+
+func TestExampleCommandTestHelper(t *testing.T) {
+	if os.Getenv("MATPLOTLIB_GO_EXAMPLE_MAIN") != "1" {
+		return
+	}
+	args := os.Args
+	for i, arg := range os.Args {
+		if arg == "--" {
+			args = os.Args[i+1:]
+			break
+		}
+	}
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	os.Args = append([]string{os.Args[0]}, args...)
+	main()
+	os.Exit(0)
+}
+
+func runExampleCommand(t *testing.T, args ...string) (string, bool) {
+	t.Helper()
+	cmdArgs := append([]string{"-test.run=TestExampleCommandTestHelper", "--"}, args...)
+	cmd := exec.Command(os.Args[0], cmdArgs...)
+	cmd.Env = append(os.Environ(),
+		"MATPLOTLIB_GO_EXAMPLE_MAIN=1",
+		"MATPLOTLIB_BACKEND=",
+	)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	return stderr.String(), err == nil
 }

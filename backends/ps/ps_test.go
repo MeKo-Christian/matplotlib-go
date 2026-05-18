@@ -79,3 +79,46 @@ func TestImageTransformedEmitsConcatMatrix(t *testing.T) {
 		t.Fatalf("missing transformed image payload in\n%s", r.document)
 	}
 }
+
+func TestPathWithHatchEmitsClippedHatchLines(t *testing.T) {
+	r := newTestRenderer(t)
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	hatcher, ok := any(r).(render.NativeHatcher)
+	if !ok {
+		t.Fatal("PS renderer should implement render.NativeHatcher")
+	}
+	if !hatcher.SupportsNativeHatch() {
+		t.Fatal("SupportsNativeHatch returned false")
+	}
+
+	var p geom.Path
+	p.MoveTo(geom.Pt{X: 10, Y: 10})
+	p.LineTo(geom.Pt{X: 50, Y: 10})
+	p.LineTo(geom.Pt{X: 50, Y: 50})
+	p.Close()
+	r.Path(p, &render.Paint{
+		Fill:           render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1},
+		Hatch:          "/",
+		HatchColor:     render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1},
+		HatchLineWidth: 1.5,
+		HatchSpacing:   8,
+	})
+
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	if !bytes.Contains(r.document, []byte("clip newpath")) {
+		t.Fatalf("missing hatch clip in\n%s", r.document)
+	}
+	if !bytes.Contains(r.document, []byte("0.1 0.2 0.3 setrgbcolor")) {
+		t.Fatalf("missing hatch color in\n%s", r.document)
+	}
+	if !bytes.Contains(r.document, []byte("1.5 setlinewidth")) {
+		t.Fatalf("missing hatch linewidth in\n%s", r.document)
+	}
+	if !bytes.Contains(r.document, []byte("lineto\nstroke")) {
+		t.Fatalf("missing hatch stroke lines in\n%s", r.document)
+	}
+}

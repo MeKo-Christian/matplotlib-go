@@ -21,6 +21,7 @@ const (
 	SVG     Backend = "svg"
 	PDF     Backend = "pdf"
 	PS      Backend = "ps"
+	PGF     Backend = "pgf"
 )
 
 // Capability represents a backend feature capability.
@@ -58,6 +59,7 @@ const (
 	SVGExport         Capability = "svgexport"
 	PDFExport         Capability = "pdfexport"
 	PSExport          Capability = "psexport"
+	PGFExport         Capability = "pgfexport"
 
 	// Batch drawing capabilities
 	MarkerBatch          Capability = "markerbatch"
@@ -130,6 +132,10 @@ var capabilityRuntimeChecks = map[Capability]func(render.Renderer) bool{
 	},
 	PSExport: func(r render.Renderer) bool {
 		_, ok := r.(render.PSExporter)
+		return ok
+	},
+	PGFExport: func(r render.Renderer) bool {
+		_, ok := r.(render.PGFExporter)
 		return ok
 	},
 	TextBounds: func(r render.Renderer) bool {
@@ -347,6 +353,15 @@ func SavePS(renderer render.Renderer, path string, _ ...render.SVGOption) error 
 	return exporter.SavePS(path)
 }
 
+// SavePGF saves using the renderer PGF export interface.
+func SavePGF(renderer render.Renderer, path string, _ ...render.SVGOption) error {
+	exporter, ok := renderer.(render.PGFExporter)
+	if !ok {
+		return fmt.Errorf("backends: renderer does not implement PGF export")
+	}
+	return exporter.SavePGF(path)
+}
+
 // SaveSVG saves using the renderer SVG export interface.
 func SaveSVG(renderer render.Renderer, path string, opts ...render.SVGOption) error {
 	exporter, ok := renderer.(render.SVGExporter)
@@ -527,18 +542,7 @@ func (i *BackendInfo) saveViaExtension(renderer render.Renderer, path string, op
 		return fmt.Errorf("backends: backend does not support extension %q", ext)
 	}
 
-	switch ext {
-	case ".png":
-		return SavePNG(renderer, path, opts...)
-	case ".svg":
-		return SaveSVG(renderer, path, opts...)
-	case ".pdf":
-		return SavePDF(renderer, path, opts...)
-	case ".ps", ".eps":
-		return SavePS(renderer, path, opts...)
-	default:
-		return fmt.Errorf("backends: unsupported save extension %q", ext)
-	}
+	return fmt.Errorf("backends: backend has no registered save formats")
 }
 
 // DefaultRegistry is the global backend registry.

@@ -68,3 +68,20 @@ func TestRegistrySaveViaExtensionUsesBackendFormatHandlers(t *testing.T) {
 		t.Fatal("SaveViaExtension accepted unsupported format")
 	}
 }
+
+func TestRegistrySaveViaExtensionRequiresRegisteredSaveFormat(t *testing.T) {
+	registry := NewRegistry()
+	backend := Backend("implicit")
+	registry.Register(backend, &BackendInfo{
+		Name:      "Implicit",
+		Available: true,
+	})
+
+	renderer := &contractRenderer{}
+	if err := registry.SaveViaExtension(backend, renderer, "plot.png"); err == nil {
+		t.Fatal("SaveViaExtension should not fall back to hard-coded PNG handling")
+	}
+	if renderer.pngPath != "" {
+		t.Fatalf("SaveViaExtension invoked PNG exporter despite missing SaveFormats entry: %q", renderer.pngPath)
+	}
+}

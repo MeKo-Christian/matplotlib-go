@@ -19,6 +19,7 @@ func init() {
 			backends.FontKeyRotatedText,
 			backends.FontKeyVerticalText,
 			backends.ImageTransform,
+			backends.NativeHatcher,
 			backends.PSExport,
 			backends.DPIAware,
 		},

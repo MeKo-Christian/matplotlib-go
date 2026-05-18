@@ -76,6 +76,9 @@ func TestBackendComparisonReportContainsEveryBackend(t *testing.T) {
 			t.Errorf("report missing column for capability %s\n%s", cap, report)
 		}
 	}
+	if !strings.Contains(report, string(backends.PGFExport)) {
+		t.Errorf("report missing PGF export capability status\n%s", report)
+	}
 }
 
 // TestSelectBackendForExtensionRoutesByCapability verifies that the registry

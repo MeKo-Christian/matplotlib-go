@@ -17,9 +17,11 @@ type testPNGSVGRenderer struct {
 	render.NullRenderer
 	savedPNG   bool
 	savedSVG   bool
+	savedPDF   bool
 	savedPS    bool
 	pngPath    string
 	svgPath    string
+	pdfPath    string
 	psPath     string
 	svgOptions render.SVGOptions
 }
@@ -41,6 +43,12 @@ func (r *testPNGSVGRenderer) SaveSVG(path string) error {
 func (r *testPNGSVGRenderer) SaveSVGWithOptions(path string, opts render.SVGOptions) error {
 	r.svgOptions = opts
 	return r.SaveSVG(path)
+}
+
+func (r *testPNGSVGRenderer) SavePDF(path string) error {
+	r.savedPDF = true
+	r.pdfPath = path
+	return nil
 }
 
 func (r *testPNGSVGRenderer) SavePS(path string) error {
@@ -97,6 +105,28 @@ func TestSaveFig_DispatchesByExtension_SVG(t *testing.T) {
 	}
 	if r.svgPath != path {
 		t.Fatalf("SaveSVG received path %q, want %q", r.svgPath, path)
+	}
+}
+
+func TestSaveFig_DispatchesByExtension_PDF(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "out.pdf")
+
+	fig := NewFigure(100, 80)
+	fig.AddAxes(defaultAxesRect)
+
+	r := newTestPNGSVGRenderer()
+	if err := SaveFig(fig, r, path); err != nil {
+		t.Fatalf("SaveFig: %v", err)
+	}
+	if !r.savedPDF {
+		t.Fatal("expected PDF path to be exercised")
+	}
+	if r.savedPNG || r.savedSVG || r.savedPS {
+		t.Fatal("did not expect PNG, SVG, or PostScript path")
+	}
+	if r.pdfPath != path {
+		t.Fatalf("SavePDF received path %q, want %q", r.pdfPath, path)
 	}
 }
 
@@ -158,6 +188,7 @@ func TestSaveFig_RejectsUnknownExtension(t *testing.T) {
 		t.Fatalf("error should mention extension .tiff, got: %v", err)
 	}
 	if !strings.Contains(err.Error(), ".png") || !strings.Contains(err.Error(), ".svg") ||
+		!strings.Contains(err.Error(), ".pdf") ||
 		!strings.Contains(err.Error(), ".ps") || !strings.Contains(err.Error(), ".eps") {
 		t.Fatalf("error should list supported extensions, got: %v", err)
 	}

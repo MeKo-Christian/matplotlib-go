@@ -28,7 +28,7 @@ var AllCapabilities = []Capability{
 	ImageTransform, RGBABuffer, BufferRegion, OffscreenFilter,
 	NativeHatcher, MixedRasterVector,
 	// Export.
-	VectorOutput, PNGExport, SVGExport, SVGOptionExport, PDFExport, PSExport,
+	VectorOutput, PNGExport, SVGExport, SVGOptionExport, PDFExport, PSExport, PGFExport,
 	// Batches.
 	MarkerBatch, PathCollectionBatch, QuadMeshBatch, GouraudTriangleBatch,
 }

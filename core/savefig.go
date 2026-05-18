@@ -15,6 +15,7 @@ import (
 // implementing the corresponding render-side capability interface.
 var supportedSaveExtensions = map[string]func(*Figure, render.Renderer, string, ...render.SVGOption) error{
 	".eps": SavePS,
+	".pdf": SavePDF,
 	".png": SavePNG,
 	".ps":  SavePS,
 	".svg": SaveSVG,

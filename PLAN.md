@@ -220,8 +220,8 @@ Current slice landed:
 
 - `backends/ps` package with `doc.go`, `init.go`, `ps.go`, and
   `registry_test.go`. Renderer implements `render.Renderer`,
-  `render.PSExporter`, `render.DPIAware`, `render.ImageTransformer`, and basic
-  direct text interfaces.
+  `render.PSExporter`, `render.DPIAware`, `render.ImageTransformer`,
+  `render.NativeHatcher`, and basic direct text interfaces.
 - `backends.PS` backend constant and `backends.PSExport` capability with
   runtime-checked `PSExporter` interface mapping. `VectorOutput` now accepts
   SVG, PDF, or PS exporters.
@@ -235,27 +235,46 @@ Current slice landed:
 - Transformed images now implement `render.ImageTransformer` by applying an
   arbitrary PostScript `concat` matrix before the same inline `colorimage`
   payload, covering rotated image placement from the core image artist.
+- Native hatch fills now implement `render.NativeHatcher` by filling the face
+  color, clipping to the original path, and emitting deterministic PostScript
+  hatch stroke lines for the same hatch symbols used by PDF / SVG.
 - Save dispatch routes `.ps` and `.eps` through `core.SaveFig`,
   `backends.SavePS`, and registry `SaveFormats`; `backends/all` side-imports
   the new package.
 
 Remaining PostScript work:
 
-- Match PDF's embedded-font, hatch, alpha, marker/path-collection batch,
-  JPEG passthrough, and image reuse semantics.
+- Match PDF's embedded-font, alpha, marker/path-collection batch, JPEG
+  passthrough, and image reuse semantics.
 
 ### 1.3 Save Dispatch Cleanup
 
-- [ ] Remove the last hard-coded format paths in callers; every save route
+- [x] Remove the last hard-coded format paths in callers; every save route
   through `backends.SelectBackendForExtension` and the `SaveFormats` map.
-- [ ] Expand `BackendComparisonReport` to enumerate PDF / PS / PGF capability
+- [x] Expand `BackendComparisonReport` to enumerate PDF / PS / PGF capability
   status alongside AGG / GoBasic / SVG / Skia.
-- [ ] Add `cmd/example -format pdf|ps|pgf` smoke coverage matching the
+- [x] Add `cmd/example -format pdf|ps|pgf` smoke coverage matching the
   existing PNG / SVG runners.
+
+Current slice landed:
+
+- `backends.SaveViaExtension` now requires an explicit `SaveFormats` handler
+  and no longer falls back to hard-coded `.png` / `.svg` / `.pdf` / `.ps`
+  branches.
+- `cmd/example` accepts `-format png|svg|pdf|ps|eps|pgf`, selects an exporter
+  with `backends.SelectBackendForExtension`, and saves through the registry
+  `SaveFormats` map. PNG / SVG / PDF / PS have smoke tests; PGF is accepted as
+  a format and reports the expected unsupported-backend error until
+  `backends/pgf` lands.
+- `PGFExport` is now represented in the backend capability matrix and
+  comparison report, currently unsupported for all registered backends.
+- `core.SaveFig(fig, r, "out.pdf")` now dispatches to `render.PDFExporter`.
+  `core` remains renderer-interface based because importing `backends` there
+  would create the existing `backends -> canvas -> core` cycle.
 
 **Exit criteria:**
 
-- [ ] `core.SaveFig(fig, "out.pdf")` works end-to-end with deterministic
+- [x] `core.SaveFig(fig, r, "out.pdf")` works end-to-end with deterministic
   output and Matplotlib-comparable visual fidelity.
 - [ ] PDF, PS, and PGF backends are reachable through the registry without
   any caller knowing about them.
