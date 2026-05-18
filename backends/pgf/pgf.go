@@ -38,6 +38,7 @@ var (
 	_ render.DPIAware              = (*Renderer)(nil)
 	_ render.FontTextDrawer        = (*Renderer)(nil)
 	_ render.FontRotatedTextDrawer = (*Renderer)(nil)
+	_ render.NativeHatcher         = (*Renderer)(nil)
 )
 
 // New creates a PGF renderer with a point-sized canvas.
@@ -86,6 +87,7 @@ func (r *Renderer) Begin(_ geom.Rect) error {
 	r.content.WriteString("\\pgfusepath{use as bounding box}\n")
 	fmt.Fprintf(&r.content, "\\pgftransformcm{1}{0}{0}{-1}{\\pgfpoint{0pt}{%spt}}\n", shortFloat(float64(r.height)))
 	if r.background.A > 0 {
+		writeFillOpacity(&r.content, r.background.A)
 		writeFillColor(&r.content, r.colorName(r.background))
 		fmt.Fprintf(&r.content, "\\pgfpathrectangle{\\pgfpoint{0pt}{0pt}}{\\pgfpoint{%spt}{%spt}}\n",
 			shortFloat(float64(r.width)), shortFloat(float64(r.height)))
@@ -152,18 +154,55 @@ func (r *Renderer) Path(path geom.Path, paint *render.Paint) {
 	if !r.began || paint == nil {
 		return
 	}
-	hasFill := paint.Fill.A > 0
+	if render.DrawPathWithEffects(r, path, paint, r.Path) {
+		return
+	}
+	hasHatch := paint.Hatch != "" && paint.HatchColor.A > 0
+	hasFill := paint.Fill.A > 0 || hasHatch
 	hasStroke := paint.Stroke.A > 0 && paint.LineWidth > 0
 	if !hasFill && !hasStroke {
 		return
 	}
+
+	if hasHatch {
+		if paint.Fill.A > 0 {
+			if !writePathOps(&r.content, path) {
+				return
+			}
+			writeFillOpacity(&r.content, paint.Fill.A)
+			writeStrokeOpacity(&r.content, 1)
+			writeFillColor(&r.content, r.colorName(paint.Fill))
+			r.content.WriteString("\\pgfusepath{fill}\n")
+		}
+		r.writeHatchFill(path, paint)
+		if hasStroke {
+			if !writePathOps(&r.content, path) {
+				return
+			}
+			writeFillOpacity(&r.content, 1)
+			writeStrokeOpacity(&r.content, paint.Stroke.A)
+			writeStrokeColor(&r.content, r.colorName(paint.Stroke))
+			lineWidth := paint.LineWidth
+			if lineWidth <= 0 {
+				lineWidth = 1
+			}
+			fmt.Fprintf(&r.content, "\\pgfsetlinewidth{%spt}\n", shortFloat(lineWidth))
+			r.content.WriteString("\\pgfusepath{stroke}\n")
+		}
+		return
+	}
+
 	if !writePathOps(&r.content, path) {
 		return
 	}
-	if hasFill {
+	writeFillOpacity(&r.content, 1)
+	writeStrokeOpacity(&r.content, 1)
+	if paint.Fill.A > 0 {
+		writeFillOpacity(&r.content, paint.Fill.A)
 		writeFillColor(&r.content, r.colorName(paint.Fill))
 	}
 	if hasStroke {
+		writeStrokeOpacity(&r.content, paint.Stroke.A)
 		writeStrokeColor(&r.content, r.colorName(paint.Stroke))
 		lineWidth := paint.LineWidth
 		if lineWidth <= 0 {
@@ -179,6 +218,41 @@ func (r *Renderer) Path(path geom.Path, paint *render.Paint) {
 	case hasStroke:
 		r.content.WriteString("\\pgfusepath{stroke}\n")
 	}
+}
+
+// DrawPathWithEffects applies renderer-neutral path effect passes.
+func (r *Renderer) DrawPathWithEffects(path geom.Path, paint *render.Paint) bool {
+	return render.DrawPathWithEffects(r, path, paint, r.Path)
+}
+
+// SupportsNativeHatch reports that the PGF backend consumes hatch metadata
+// directly in Path.
+func (r *Renderer) SupportsNativeHatch() bool { return true }
+
+func (r *Renderer) writeHatchFill(path geom.Path, paint *render.Paint) {
+	if paint == nil || paint.Hatch == "" || paint.HatchColor.A <= 0 {
+		return
+	}
+	r.content.WriteString("\\pgfscope\n")
+	if !writePathOps(&r.content, path) {
+		r.content.WriteString("\\endpgfscope\n")
+		return
+	}
+	r.content.WriteString("\\pgfusepath{clip}\n")
+	writeFillOpacity(&r.content, 1)
+	writeStrokeOpacity(&r.content, paint.HatchColor.A)
+	writeStrokeColor(&r.content, r.colorName(paint.HatchColor))
+	lineWidth := paint.HatchLineWidth
+	if lineWidth <= 0 {
+		lineWidth = 1
+	}
+	fmt.Fprintf(&r.content, "\\pgfsetlinewidth{%spt}\n", shortFloat(lineWidth))
+	for _, line := range hatchPatternLines(paint.Hatch, paint.HatchSpacing) {
+		fmt.Fprintf(&r.content, "\\pgfpathmoveto{\\pgfpoint{%spt}{%spt}}\n", shortFloat(line[0].X), shortFloat(line[0].Y))
+		fmt.Fprintf(&r.content, "\\pgfpathlineto{\\pgfpoint{%spt}{%spt}}\n", shortFloat(line[1].X), shortFloat(line[1].Y))
+		r.content.WriteString("\\pgfusepath{stroke}\n")
+	}
+	r.content.WriteString("\\endpgfscope\n")
 }
 
 // Image is intentionally omitted in the first PGF generator slice.
@@ -240,6 +314,8 @@ func (r *Renderer) writeText(text string, origin geom.Pt, size, angle float64, t
 		return
 	}
 	colorName := r.colorName(textColor)
+	writeFillOpacity(&r.content, textColor.A)
+	writeStrokeOpacity(&r.content, textColor.A)
 	fmt.Fprintf(&r.content, "\\pgfsetstrokecolor{%s}\n\\pgfsetfillcolor{%s}\n", colorName, colorName)
 	rotate := ""
 	if angle != 0 && !math.IsNaN(angle) && !math.IsInf(angle, 0) {
@@ -349,6 +425,14 @@ func writeStrokeColor(w *strings.Builder, colorName string) {
 	fmt.Fprintf(w, "\\pgfsetstrokecolor{%s}\n", colorName)
 }
 
+func writeFillOpacity(w *strings.Builder, alpha float64) {
+	fmt.Fprintf(w, "\\pgfsetfillopacity{%s}\n", shortFloat(clamp01(alpha)))
+}
+
+func writeStrokeOpacity(w *strings.Builder, alpha float64) {
+	fmt.Fprintf(w, "\\pgfsetstrokeopacity{%s}\n", shortFloat(clamp01(alpha)))
+}
+
 func clamp01(v float64) float64 {
 	if v < 0 {
 		return 0
@@ -398,4 +482,33 @@ func escapeTeXText(s string) string {
 		}
 	}
 	return b.String()
+}
+
+func hatchPatternLines(hatch string, spacing float64) [][2]geom.Pt {
+	if spacing <= 0 {
+		spacing = 8
+	}
+	lines := make([][2]geom.Pt, 0)
+	writeHatchLines := func(count int, draw func(float64)) {
+		if count <= 0 {
+			return
+		}
+		step := math.Max(2, spacing/float64(count))
+		for v := -72.0; v <= 144; v += step {
+			draw(v)
+		}
+	}
+	add := func(x1, y1, x2, y2 float64) {
+		lines = append(lines, [2]geom.Pt{{X: x1, Y: y1}, {X: x2, Y: y2}})
+	}
+	verticalCount := strings.Count(hatch, "|") + strings.Count(hatch, "+")
+	horizontalCount := strings.Count(hatch, "-") + strings.Count(hatch, "+")
+	slashCount := strings.Count(hatch, "/") + strings.Count(hatch, "x") + strings.Count(hatch, "X")
+	backslashCount := strings.Count(hatch, `\`) + strings.Count(hatch, "x") + strings.Count(hatch, "X")
+
+	writeHatchLines(verticalCount, func(x float64) { add(x, 0, x, 72) })
+	writeHatchLines(horizontalCount, func(y float64) { add(0, y, 72, y) })
+	writeHatchLines(slashCount, func(x float64) { add(x, 72, x+72, 0) })
+	writeHatchLines(backslashCount, func(x float64) { add(x, 0, x+72, 72) })
+	return lines
 }

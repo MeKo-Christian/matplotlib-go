@@ -19,6 +19,7 @@ func init() {
 			backends.TextPathing,
 			backends.RotatedText,
 			backends.VerticalText,
+			backends.PathEffects,
 			backends.RGBABuffer,
 			backends.PNGExport,
 		}

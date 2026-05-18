@@ -12,15 +12,16 @@ import (
 // As with Patch, this is an embedded base in Go rather than a directly
 // instantiable artist.
 type Collection struct {
-	Coords    CoordinateSpec
-	Label     string
-	Alpha     float64
-	Antialias render.AntialiasMode
-	Colormap  string
-	Norm      ScalarNormalizer
-	VMin      float64
-	VMax      float64
-	z         float64
+	Coords      CoordinateSpec
+	Label       string
+	Alpha       float64
+	Antialias   render.AntialiasMode
+	Colormap    string
+	Norm        ScalarNormalizer
+	VMin        float64
+	VMax        float64
+	PathEffects []render.PathEffect
+	z           float64
 }
 
 // PathCollection draws repeated or per-item paths with per-item offsets and
@@ -201,6 +202,7 @@ func (c *PathCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 
 		paint := collectionPaint(fill, edge, width, c.lineJoin(), c.lineCap(), nil)
+		paint.PathEffects = cloneRenderPathEffects(c.PathEffects)
 		paint.Hatch = hatch
 		paint.HatchColor = hatchColor
 		paint.HatchLineWidth = hatchWidth
@@ -286,11 +288,12 @@ func (c *LineCollection) Draw(r render.Renderer, ctx *DrawContext) {
 			lineCap = render.CapButt
 		}
 		r.Path(path, &render.Paint{
-			Stroke:    color,
-			LineWidth: width,
-			LineJoin:  lineJoin,
-			LineCap:   lineCap,
-			Dashes:    dashes,
+			Stroke:      color,
+			LineWidth:   width,
+			LineJoin:    lineJoin,
+			LineCap:     lineCap,
+			Dashes:      dashes,
+			PathEffects: cloneRenderPathEffects(c.PathEffects),
 		})
 	}
 }
@@ -345,14 +348,15 @@ func (c *PatchCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 		path = buildDisplayPath(ctx, c.Coords, path, geom.Identity())
 		patch := Patch{
-			FaceColor:  patchAlphaColor(colorAt(c.FaceColor, c.FaceColors, i), c.alphaValue()),
-			EdgeColor:  patchAlphaColor(colorAt(c.EdgeColor, c.EdgeColors, i), c.alphaValue()),
-			EdgeWidth:  widthAt(c.EdgeWidth, c.EdgeWidths, i),
-			Hatch:      stringAt(c.Hatch, c.Hatches, i),
-			HatchColor: patchAlphaColor(colorAt(c.HatchColor, c.HatchColors, i), c.alphaValue()),
-			HatchWidth: widthAt(c.HatchWidth, c.HatchWidths, i),
-			LineJoin:   c.LineJoin,
-			LineCap:    c.LineCap,
+			FaceColor:   patchAlphaColor(colorAt(c.FaceColor, c.FaceColors, i), c.alphaValue()),
+			EdgeColor:   patchAlphaColor(colorAt(c.EdgeColor, c.EdgeColors, i), c.alphaValue()),
+			EdgeWidth:   widthAt(c.EdgeWidth, c.EdgeWidths, i),
+			Hatch:       stringAt(c.Hatch, c.Hatches, i),
+			HatchColor:  patchAlphaColor(colorAt(c.HatchColor, c.HatchColors, i), c.alphaValue()),
+			HatchWidth:  widthAt(c.HatchWidth, c.HatchWidths, i),
+			PathEffects: cloneRenderPathEffects(c.PathEffects),
+			LineJoin:    c.LineJoin,
+			LineCap:     c.LineCap,
 		}
 		if patch.LineJoin == 0 {
 			patch.LineJoin = render.JoinMiter
@@ -535,6 +539,9 @@ func (c *PathCollection) drawMarkers(r render.Renderer, ctx *DrawContext) bool {
 	if !ok || c == nil || ctx == nil || !c.singlePathMarkerOptimization() {
 		return false
 	}
+	if len(c.PathEffects) > 0 {
+		return false
+	}
 
 	count := c.itemCount()
 	if count == 0 {
@@ -592,6 +599,9 @@ func (c *PathCollection) singlePathMarkerOptimization() bool {
 func (c *PathCollection) drawPathCollection(r render.Renderer, ctx *DrawContext) bool {
 	drawer, ok := r.(render.PathCollectionDrawer)
 	if !ok || c == nil || ctx == nil {
+		return false
+	}
+	if len(c.PathEffects) > 0 {
 		return false
 	}
 	nativeHatch := false
@@ -665,6 +675,9 @@ func (c *PathCollection) lineCap() render.LineCap {
 func (c *PatchCollection) drawPathCollection(r render.Renderer, ctx *DrawContext) bool {
 	drawer, ok := r.(render.PathCollectionDrawer)
 	if !ok || c == nil || ctx == nil || len(c.Paths) == 0 {
+		return false
+	}
+	if len(c.PathEffects) > 0 {
 		return false
 	}
 	nativeHatch := false

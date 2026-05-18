@@ -432,6 +432,9 @@ func (r *Renderer) ClipPath(p geom.Path) {
 
 // Path draws a path with the given paint style.
 func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
+	if render.DrawPathWithEffects(r, p, paint, r.Path) {
+		return
+	}
 	if r.hasClipPath() {
 		bounds, haveBounds := pathDrawBounds(p, paint)
 		r.withClipPathMask(bounds, haveBounds, func() {
@@ -440,6 +443,11 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 		return
 	}
 	r.drawPathDirect(p, paint)
+}
+
+// DrawPathWithEffects applies renderer-neutral path effect passes.
+func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
+	return render.DrawPathWithEffects(r, p, paint, r.Path)
 }
 
 func (r *Renderer) drawPathDirect(p geom.Path, paint *render.Paint) {

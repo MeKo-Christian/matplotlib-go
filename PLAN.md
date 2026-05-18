@@ -258,6 +258,12 @@ Current slice landed:
   with paths, rectangular/path clips, simple direct LaTeX text, rotated text,
   graphics scopes, and the same top-left display-coordinate transform used by
   the other vector renderers. It deliberately does not invoke a TeX engine yet.
+- PGF paint semantics now include explicit `\pgfsetfillopacity` /
+  `\pgfsetstrokeopacity` commands for filled, stroked, hatched, and text
+  output, avoiding alpha leakage between draws.
+- Native PGF hatch fills now implement `render.NativeHatcher` by filling the
+  face color, clipping to the original path, and emitting deterministic PGF
+  hatch stroke lines for the same hatch symbols used by PDF / PS / SVG.
 - `cmd/example -format pgf` now writes a non-empty PGF file in smoke coverage.
 
 Remaining PostScript work:
@@ -271,9 +277,8 @@ Remaining PGF work:
   pure generator backend.
 - Add PGF-specific option / metadata routing once the shared save-option
   surface lands.
-- Implement native PGF hatches, opacity handling, raster image output /
-  mixed-mode fallback, reusable marker / path collection batches, and tighter
-  TeX/font metrics parity.
+- Implement PGF raster image output / mixed-mode fallback, reusable marker /
+  path collection batches, and tighter TeX/font metrics parity.
 
 ### 1.3 Save Dispatch Cleanup
 
@@ -371,8 +376,8 @@ Vector backend semantics matrix:
 | Deterministic output | native IDs / metadata policy | deterministic xref, metadata, `SOURCE_DATE_EPOCH` | deterministic document stream | deterministic `pgfpicture` stream |
 | Text policy | text-as-text plus path policy | embedded Type 0 / CIDFontType2 or text-as-path | basic direct text, no embedded fonts yet | LaTeX text via `\pgftext`, approximate layout metrics |
 | Font subsetting / embedding | n/a for text-as-text, paths available | implemented | missing | delegated to LaTeX, no subsetting |
-| Hatch fills | native SVG patterns | native PDF tiling patterns | native clipped hatch strokes | missing |
-| Stroke / fill alpha | native SVG opacity | PDF ExtGState | limited by PostScript semantics | transparent PGF paints skipped; native opacity missing |
+| Hatch fills | native SVG patterns | native PDF tiling patterns | native clipped hatch strokes | native clipped hatch strokes |
+| Stroke / fill alpha | native SVG opacity | PDF ExtGState | limited by PostScript semantics | PGF fill/stroke opacity commands |
 | Raster images | embedded image data | Image XObjects with alpha masks | inline colorimage, alpha precomposited | missing |
 | Transformed images | implemented | implemented | implemented | missing |
 | Marker / path collections | reusable native batches | Form XObjects | reusable procedures | renderer-neutral fallback only; no native batches |
@@ -436,16 +441,38 @@ Current slice landed:
 
 ### 2.2 Path Effects Pipeline
 
-- [ ] Path effects model (`PathEffect` interface) covering Matplotlib's
+- [x] Path effects model (`PathEffect` value type) covering Matplotlib's
       `Normal`, `Stroke`, `withStroke`, `SimplePatchShadow`, `SimpleLineShadow`,
       `PathPatchEffect`, `TickedStroke`.
 - [ ] Backend hook for offscreen capture / replay: AGG uses
       `StartFilter` / `StopFilter`; SVG uses `<filter>` defs; PDF uses
       transparency groups + soft masks.
-- [ ] Apply-time pipeline that walks the effects list and composes results
+- [x] Apply-time pipeline that walks the effects list and composes results
       back into the parent renderer.
 - [ ] Golden fixtures: text with drop shadow, line with halo, scatter markers
       with shadow, polygon outline + fill effect stack.
+
+Current slice landed:
+
+- `render.PathEffect` now covers normal replay, alternate stroke / with-stroke
+  stacks, simple line and patch shadows, path-patch repaint passes, and ticked
+  strokes. Convenience constructors mirror the Matplotlib path-effects names.
+- `render.DrawPathWithEffects` provides a renderer-neutral replay pipeline:
+  each pass clears nested effects, applies offsets / alternate paint, generates
+  tick segments when requested, and replays into the parent renderer.
+- AGG, GoBasic, SVG, PDF, PS, PGF, and Skia now implement
+  `render.PathEffectDrawer`; backend capability declarations advertise
+  `PathEffects` through the runtime interface check.
+- Core line, patch, text, scatter, and collection artists now carry
+  `PathEffects` through to path paints. Collection batch optimizations fall
+  back to per-path drawing when effects are present so pass ordering remains
+  correct.
+
+Remaining path-effects work:
+
+- Native filter/offscreen variants for blurred shadows and vector soft masks.
+- Golden and Matplotlib-reference fixtures for text shadows, line halos,
+  scatter marker shadows, and polygon effect stacks.
 
 ### 2.3 Mixed Raster / Vector Output
 

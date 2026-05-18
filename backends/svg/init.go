@@ -13,6 +13,7 @@ func init() {
 			backends.AntiAliasing,
 			backends.VectorOutput,
 			backends.PathClip,
+			backends.PathEffects,
 			backends.ClipPathTransform,
 			backends.TextShaping,
 			backends.RotatedText,

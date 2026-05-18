@@ -30,14 +30,15 @@ const (
 
 // Line2D is a minimal polyline artist (stroke only).
 type Line2D struct {
-	XY        []geom.Pt     // data space points
-	W         float64       // stroke width (px for now)
-	Col       render.Color  // stroke color
-	Dashes    []float64     // dash pattern (on/off pairs)
-	DashUnits DashUnits     // unit system for Dashes
-	DrawStyle LineDrawStyle // optional step-style connection mode
-	Label     string        // series label for legend
-	z         float64       // z-order
+	XY          []geom.Pt    // data space points
+	W           float64      // stroke width (px for now)
+	Col         render.Color // stroke color
+	Dashes      []float64    // dash pattern (on/off pairs)
+	DashUnits   DashUnits    // unit system for Dashes
+	PathEffects []render.PathEffect
+	DrawStyle   LineDrawStyle // optional step-style connection mode
+	Label       string        // series label for legend
+	z           float64       // z-order
 }
 
 // SetDashes sets the dash sequence using Matplotlib Line2D.set_dashes units.
@@ -70,14 +71,15 @@ func (l *Line2D) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 
 	paint := render.Paint{
-		LineWidth:  l.W,
-		LineJoin:   render.JoinRound, // Default to round joins
-		LineCap:    render.CapButt,   // Default to butt caps
-		MiterLimit: 10.0,             // Standard miter limit
-		Stroke:     l.Col,
-		Dashes:     lineDashesForPaint(l.Dashes, l.W, l.DashUnits),
-		Snap:       render.SnapAuto,
-		Simplify:   ctx != nil && ctx.RC.PathSimplify,
+		LineWidth:   l.W,
+		LineJoin:    render.JoinRound, // Default to round joins
+		LineCap:     render.CapButt,   // Default to butt caps
+		MiterLimit:  10.0,             // Standard miter limit
+		Stroke:      l.Col,
+		Dashes:      lineDashesForPaint(l.Dashes, l.W, l.DashUnits),
+		PathEffects: append([]render.PathEffect(nil), l.PathEffects...),
+		Snap:        render.SnapAuto,
+		Simplify:    ctx != nil && ctx.RC.PathSimplify,
 	}
 	if ctx != nil {
 		paint.SimplifyThreshold = ctx.RC.PathSimplifyThreshold

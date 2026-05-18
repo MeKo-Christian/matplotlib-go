@@ -37,6 +37,7 @@ type Patch struct {
 	HatchColor   render.Color
 	HatchWidth   float64
 	HatchSpacing float64
+	PathEffects  []render.PathEffect
 
 	LineJoin render.LineJoin
 	LineCap  render.LineCap
@@ -204,11 +205,12 @@ func patchAlphaColor(color render.Color, alpha float64) render.Color {
 
 func (p *Patch) strokePaint(color render.Color) render.Paint {
 	return render.Paint{
-		Stroke:    color,
-		LineWidth: p.EdgeWidth,
-		LineJoin:  p.LineJoin,
-		LineCap:   p.LineCap,
-		Dashes:    append([]float64(nil), p.Dashes...),
+		Stroke:      color,
+		LineWidth:   p.EdgeWidth,
+		LineJoin:    p.LineJoin,
+		LineCap:     p.LineCap,
+		Dashes:      append([]float64(nil), p.Dashes...),
+		PathEffects: cloneRenderPathEffects(p.PathEffects),
 	}
 }
 
@@ -230,6 +232,7 @@ func (p *Patch) drawStyledPath(r render.Renderer, fillPath, strokePath geom.Path
 
 	if len(fillPath.C) > 0 {
 		paint := render.Paint{Fill: faceColor}
+		paint.PathEffects = cloneRenderPathEffects(p.PathEffects)
 		if nativeHatch && p.Hatch != "" {
 			paint.Hatch = p.Hatch
 			paint.HatchColor = p.resolvedHatchColor()

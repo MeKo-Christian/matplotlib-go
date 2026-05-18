@@ -12,6 +12,7 @@ func init() {
 		Capabilities: []backends.Capability{
 			backends.VectorOutput,
 			backends.PathClip,
+			backends.PathEffects,
 			backends.TextShaping,
 			backends.RotatedText,
 			backends.VerticalText,

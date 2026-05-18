@@ -297,6 +297,9 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 	if !p.Validate() || paint == nil {
 		return
 	}
+	if render.DrawPathWithEffects(r, p, paint, r.Path) {
+		return
+	}
 
 	d := buildPathData(p)
 	if d == "" {
@@ -338,6 +341,11 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 		content: b.String(),
 		clipIDs: r.currentClipIDs(),
 	})
+}
+
+// DrawPathWithEffects applies renderer-neutral path effect passes.
+func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
+	return render.DrawPathWithEffects(r, p, paint, r.Path)
 }
 
 // Image draws an image within the destination rectangle.

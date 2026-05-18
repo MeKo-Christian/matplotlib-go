@@ -50,6 +50,10 @@ func (r *Renderer) Path(_ geom.Path, _ *render.Paint) {
 	// No-op
 }
 
+func (r *Renderer) DrawPathWithEffects(_ geom.Path, _ *render.Paint) bool {
+	return false
+}
+
 func (r *Renderer) Image(_ render.Image, _ geom.Rect) {
 	// No-op
 }

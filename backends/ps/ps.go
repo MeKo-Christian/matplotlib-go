@@ -162,6 +162,9 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 	if !r.began || paint == nil {
 		return
 	}
+	if render.DrawPathWithEffects(r, p, paint, r.Path) {
+		return
+	}
 	hasHatch := paint.Hatch != "" && paint.HatchColor.A > 0
 	hasFill := paint.Fill.A > 0 || hasHatch
 	hasStroke := paint.Stroke.A > 0 && paint.LineWidth > 0
@@ -201,6 +204,11 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 		writeLineState(&r.content, paint)
 		r.content.WriteString("stroke\n")
 	}
+}
+
+// DrawPathWithEffects applies renderer-neutral path effect passes.
+func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
+	return render.DrawPathWithEffects(r, p, paint, r.Path)
 }
 
 // SupportsNativeHatch reports that the PS backend consumes hatch metadata

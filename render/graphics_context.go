@@ -225,7 +225,11 @@ func clonePathEffects(effects []PathEffect) []PathEffect {
 	if len(effects) == 0 {
 		return nil
 	}
-	return append([]PathEffect(nil), effects...)
+	out := append([]PathEffect(nil), effects...)
+	for i := range out {
+		out[i].Dashes = cloneFloat64s(out[i].Dashes)
+	}
+	return out
 }
 
 func applyPaintAlpha(paint *Paint, alpha float64) {

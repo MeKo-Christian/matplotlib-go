@@ -199,6 +199,9 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 	if paint == nil {
 		return
 	}
+	if render.DrawPathWithEffects(r, p, paint, r.Path) {
+		return
+	}
 	if !p.Validate() {
 		return // Invalid path
 	}
@@ -231,6 +234,11 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 	if quantizedPaint.Stroke.A > 0 && quantizedPaint.LineWidth > 0 {
 		r.drawStroke(p, quantizedPaint)
 	}
+}
+
+// DrawPathWithEffects applies renderer-neutral path effect passes.
+func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
+	return render.DrawPathWithEffects(r, p, paint, r.Path)
 }
 
 // fillPath fills a path with the given color.

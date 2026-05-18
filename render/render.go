@@ -104,6 +104,8 @@ const (
 	PathEffectNormal PathEffectKind = iota
 	PathEffectStroke
 	PathEffectShadow
+	PathEffectPathPatch
+	PathEffectTickedStroke
 	PathEffectFilter
 )
 
@@ -114,8 +116,108 @@ type PathEffect struct {
 	Stroke        Color
 	Fill          Color
 	LineWidth     float64
+	LineJoin      LineJoin
+	LineCap       LineCap
+	MiterLimit    float64
+	Dashes        []float64
 	CompositeMode CompositeMode
 	Filter        string
+	ShadowAlpha   float64
+	ShadowRho     float64
+	TickSpacing   float64
+	TickAngle     float64
+	TickLength    float64
+}
+
+// NormalPathEffect draws the original path unchanged.
+func NormalPathEffect() PathEffect {
+	return PathEffect{Kind: PathEffectNormal}
+}
+
+// StrokePathEffect draws the path with an alternate stroke. Offset is in
+// display pixels, matching the display-space paths sent to renderers.
+func StrokePathEffect(stroke Color, linewidth float64, offset geom.Pt) PathEffect {
+	return PathEffect{
+		Kind:      PathEffectStroke,
+		Offset:    offset,
+		Stroke:    stroke,
+		LineWidth: linewidth,
+	}
+}
+
+// WithStrokePathEffects returns Stroke followed by Normal, matching
+// Matplotlib's patheffects.withStroke helper.
+func WithStrokePathEffects(stroke Color, linewidth float64, offset geom.Pt) []PathEffect {
+	return []PathEffect{
+		StrokePathEffect(stroke, linewidth, offset),
+		NormalPathEffect(),
+	}
+}
+
+// SimplePatchShadowPathEffect draws a filled shadow patch. If shadow has zero
+// alpha, the original fill color is darkened by rho and drawn at alpha.
+func SimplePatchShadowPathEffect(offset geom.Pt, shadow Color, alpha, rho float64) PathEffect {
+	if alpha <= 0 {
+		alpha = 0.3
+	}
+	if rho <= 0 {
+		rho = 0.3
+	}
+	if shadow.A > 0 {
+		shadow.A *= alpha
+	}
+	return PathEffect{
+		Kind:        PathEffectShadow,
+		Offset:      offset,
+		Fill:        shadow,
+		ShadowAlpha: alpha,
+		ShadowRho:   rho,
+	}
+}
+
+// SimpleLineShadowPathEffect draws a stroked shadow line. If shadow has zero
+// alpha, the original stroke color is darkened by rho and drawn at alpha.
+func SimpleLineShadowPathEffect(offset geom.Pt, shadow Color, alpha, rho float64) PathEffect {
+	if alpha <= 0 {
+		alpha = 0.3
+	}
+	if rho <= 0 {
+		rho = 0.3
+	}
+	if shadow.A > 0 {
+		shadow.A *= alpha
+	}
+	return PathEffect{
+		Kind:        PathEffectShadow,
+		Offset:      offset,
+		Stroke:      shadow,
+		ShadowAlpha: alpha,
+		ShadowRho:   rho,
+	}
+}
+
+// PathPatchPathEffect draws the original path with an alternate patch paint.
+func PathPatchPathEffect(fill, stroke Color, linewidth float64, offset geom.Pt) PathEffect {
+	return PathEffect{
+		Kind:      PathEffectPathPatch,
+		Offset:    offset,
+		Fill:      fill,
+		Stroke:    stroke,
+		LineWidth: linewidth,
+	}
+}
+
+// TickedStrokePathEffect draws short tick marks along the path.
+func TickedStrokePathEffect(stroke Color, linewidth, spacing, angle, length float64, offset geom.Pt) PathEffect {
+	return PathEffect{
+		Kind:        PathEffectTickedStroke,
+		Offset:      offset,
+		Stroke:      stroke,
+		LineWidth:   linewidth,
+		TickSpacing: spacing,
+		TickAngle:   angle,
+		TickLength:  length,
+	}
 }
 
 // RasterizationMode controls artist-level mixed raster/vector intent.

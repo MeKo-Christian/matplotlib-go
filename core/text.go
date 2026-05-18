@@ -30,16 +30,17 @@ const (
 
 // TextOptions configures a Text artist.
 type TextOptions struct {
-	FontSize float64
-	Color    render.Color
-	HAlign   TextAlign
-	VAlign   TextVerticalAlign
-	Angle    float64
-	Coords   CoordinateSpec
-	OffsetX  float64
-	OffsetY  float64
-	ClipOn   *bool
-	BBox     *TextBBoxOptions
+	FontSize    float64
+	Color       render.Color
+	HAlign      TextAlign
+	VAlign      TextVerticalAlign
+	Angle       float64
+	Coords      CoordinateSpec
+	OffsetX     float64
+	OffsetY     float64
+	ClipOn      *bool
+	BBox        *TextBBoxOptions
+	PathEffects []render.PathEffect
 }
 
 // TextBBoxOptions configures a rectangular background behind text.
@@ -70,17 +71,18 @@ type Text struct {
 	Position geom.Pt
 	Content  string
 
-	FontSize float64
-	Color    render.Color
-	HAlign   TextAlign
-	VAlign   TextVerticalAlign
-	Angle    float64
-	Coords   CoordinateSpec
-	OffsetX  float64
-	OffsetY  float64
-	ClipOn   bool
-	BBox     *TextBBoxOptions
-	z        float64
+	FontSize    float64
+	Color       render.Color
+	HAlign      TextAlign
+	VAlign      TextVerticalAlign
+	Angle       float64
+	Coords      CoordinateSpec
+	OffsetX     float64
+	OffsetY     float64
+	ClipOn      bool
+	BBox        *TextBBoxOptions
+	PathEffects []render.PathEffect
+	z           float64
 }
 
 // Annotation renders text offset from a data point with an arrow.
@@ -116,19 +118,20 @@ func (a *Axes) Text(x, y float64, text string, opts ...TextOptions) *Text {
 	}
 
 	artist := &Text{
-		Position: geom.Pt{X: x, Y: y},
-		Content:  text,
-		FontSize: opt.FontSize,
-		Color:    opt.Color,
-		HAlign:   opt.HAlign,
-		VAlign:   opt.VAlign,
-		Angle:    opt.Angle,
-		Coords:   opt.Coords,
-		OffsetX:  opt.OffsetX,
-		OffsetY:  opt.OffsetY,
-		ClipOn:   clipOn,
-		BBox:     cloneTextBBoxOptions(opt.BBox),
-		z:        500,
+		Position:    geom.Pt{X: x, Y: y},
+		Content:     text,
+		FontSize:    opt.FontSize,
+		Color:       opt.Color,
+		HAlign:      opt.HAlign,
+		VAlign:      opt.VAlign,
+		Angle:       opt.Angle,
+		Coords:      opt.Coords,
+		OffsetX:     opt.OffsetX,
+		OffsetY:     opt.OffsetY,
+		ClipOn:      clipOn,
+		BBox:        cloneTextBBoxOptions(opt.BBox),
+		PathEffects: cloneRenderPathEffects(opt.PathEffects),
+		z:           500,
 	}
 	a.Add(artist)
 	return artist
@@ -154,19 +157,20 @@ func (f *Figure) Text(x, y float64, text string, opts ...TextOptions) *Text {
 	}
 
 	artist := &Text{
-		Position: geom.Pt{X: x, Y: y},
-		Content:  text,
-		FontSize: opt.FontSize,
-		Color:    opt.Color,
-		HAlign:   opt.HAlign,
-		VAlign:   opt.VAlign,
-		Angle:    opt.Angle,
-		Coords:   opt.Coords,
-		OffsetX:  opt.OffsetX,
-		OffsetY:  opt.OffsetY,
-		ClipOn:   clipOn,
-		BBox:     cloneTextBBoxOptions(opt.BBox),
-		z:        500,
+		Position:    geom.Pt{X: x, Y: y},
+		Content:     text,
+		FontSize:    opt.FontSize,
+		Color:       opt.Color,
+		HAlign:      opt.HAlign,
+		VAlign:      opt.VAlign,
+		Angle:       opt.Angle,
+		Coords:      opt.Coords,
+		OffsetX:     opt.OffsetX,
+		OffsetY:     opt.OffsetY,
+		ClipOn:      clipOn,
+		BBox:        cloneTextBBoxOptions(opt.BBox),
+		PathEffects: cloneRenderPathEffects(opt.PathEffects),
+		z:           500,
 	}
 	f.Artists = append(f.Artists, artist)
 	f.zsorted = false
@@ -256,9 +260,15 @@ func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
 		if rotated, ok := r.(render.RotatedTextDrawer); ok {
 			angle := t.Angle * math.Pi / 180
 			rotAnchor := tickLabelRotationAnchor(origin, layout, t.HAlign, layoutVerticalAlign(t.VAlign, false), angle)
+			if len(t.PathEffects) > 0 && drawTextPathEffects(r, t.Content, origin, rotAnchor, fontSize, angle, resolvedTextColor(t.Color, ctx), ctx.RC.FontKey, ctx.RC.UseTeX, t.PathEffects) {
+				return
+			}
 			drawDisplayTextRotated(rotated, t.Content, rotAnchor, fontSize, angle, resolvedTextColor(t.Color, ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
 			return
 		}
+	}
+	if len(t.PathEffects) > 0 && drawTextPathEffects(r, t.Content, origin, origin, fontSize, 0, resolvedTextColor(t.Color, ctx), ctx.RC.FontKey, ctx.RC.UseTeX, t.PathEffects) {
+		return
 	}
 	drawDisplayText(textRen, t.Content, origin, fontSize, resolvedTextColor(t.Color, ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
 }
@@ -324,6 +334,55 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 		}
 		drawDisplayText(textRen, line, origin, fontSize, textColor, ctx.RC.FontKey, ctx.RC.UseTeX)
 	}
+}
+
+func drawTextPathEffects(r render.Renderer, text string, origin, pivot geom.Pt, size, angle float64, textColor render.Color, fontKey string, useTeX bool, effects []render.PathEffect) bool {
+	if r == nil || len(effects) == 0 || useTeX {
+		return false
+	}
+
+	paths, ok := displayTextPaths(r, text, origin, size, fontKey)
+	if !ok {
+		return false
+	}
+	if angle != 0 {
+		cos := math.Cos(angle)
+		sin := math.Sin(angle)
+		affine := translateAffine(pivot).
+			Mul(geom.Affine{A: cos, B: sin, C: -sin, D: cos}).
+			Mul(translateAffine(geom.Pt{X: -pivot.X, Y: -pivot.Y}))
+		for i := range paths {
+			paths[i] = applyAffinePath(paths[i], affine)
+		}
+	}
+
+	paint := render.Paint{
+		Fill:        textColor,
+		PathEffects: cloneRenderPathEffects(effects),
+	}
+	for _, path := range paths {
+		r.Path(path, &paint)
+	}
+	return true
+}
+
+func displayTextPaths(r render.Renderer, text string, origin geom.Pt, size float64, fontKey string) ([]geom.Path, bool) {
+	if layout, ok := layoutDisplayText(r, text, size, fontKey); ok {
+		return mathTextLayoutPaths(r, layout, origin, fontKey)
+	}
+	display := normalizeDisplayText(text)
+	if display == "" {
+		return nil, false
+	}
+	if pather, ok := r.(render.TextPather); ok {
+		if path, ok := pather.TextPath(display, origin, size, fontKey); ok {
+			return []geom.Path{path}, true
+		}
+	}
+	if path, ok := render.TextPath(display, origin, size, fontKey); ok {
+		return []geom.Path{path}, true
+	}
+	return nil, false
 }
 
 // Bounds returns an empty rect so labels do not affect autoscaling.

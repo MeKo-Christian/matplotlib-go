@@ -16,6 +16,8 @@ func init() {
 			backends.RotatedText,
 			backends.FontKeyText,
 			backends.FontKeyRotatedText,
+			backends.NativeHatcher,
+			backends.PathEffects,
 			backends.PGFExport,
 			backends.DPIAware,
 		},

@@ -18,6 +18,7 @@ func init() {
 			backends.TextPathing,
 			backends.RotatedText,
 			backends.VerticalText,
+			backends.PathEffects,
 			backends.PNGExport,
 		},
 		FallbackCapabilities: []backends.Capability{
