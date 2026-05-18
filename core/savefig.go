@@ -16,6 +16,7 @@ import (
 var supportedSaveExtensions = map[string]func(*Figure, render.Renderer, string, ...render.SVGOption) error{
 	".eps": SavePS,
 	".pdf": SavePDF,
+	".pgf": SavePGF,
 	".png": SavePNG,
 	".ps":  SavePS,
 	".svg": SaveSVG,

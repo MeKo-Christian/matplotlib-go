@@ -10,19 +10,20 @@ import (
 )
 
 // testPNGSVGRenderer is a minimal renderer that satisfies render.Renderer (via
-// the embedded NullRenderer), render.PNGExporter, render.SVGExporter, and
-// PostScript export. It records which export path was exercised so tests can
-// assert dispatch.
+// the embedded NullRenderer) plus the export interfaces covered by SaveFig. It
+// records which export path was exercised so tests can assert dispatch.
 type testPNGSVGRenderer struct {
 	render.NullRenderer
 	savedPNG   bool
 	savedSVG   bool
 	savedPDF   bool
 	savedPS    bool
+	savedPGF   bool
 	pngPath    string
 	svgPath    string
 	pdfPath    string
 	psPath     string
+	pgfPath    string
 	svgOptions render.SVGOptions
 }
 
@@ -54,6 +55,12 @@ func (r *testPNGSVGRenderer) SavePDF(path string) error {
 func (r *testPNGSVGRenderer) SavePS(path string) error {
 	r.savedPS = true
 	r.psPath = path
+	return nil
+}
+
+func (r *testPNGSVGRenderer) SavePGF(path string) error {
+	r.savedPGF = true
+	r.pgfPath = path
 	return nil
 }
 
@@ -156,6 +163,28 @@ func TestSaveFig_DispatchesByExtension_PSAndEPS(t *testing.T) {
 	}
 }
 
+func TestSaveFig_DispatchesByExtension_PGF(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "out.pgf")
+
+	fig := NewFigure(100, 80)
+	fig.AddAxes(defaultAxesRect)
+
+	r := newTestPNGSVGRenderer()
+	if err := SaveFig(fig, r, path); err != nil {
+		t.Fatalf("SaveFig: %v", err)
+	}
+	if !r.savedPGF {
+		t.Fatal("expected PGF path to be exercised")
+	}
+	if r.savedPNG || r.savedSVG || r.savedPDF || r.savedPS {
+		t.Fatal("did not expect PNG, SVG, PDF, or PostScript path")
+	}
+	if r.pgfPath != path {
+		t.Fatalf("SavePGF received path %q, want %q", r.pgfPath, path)
+	}
+}
+
 func TestSaveFig_ForwardsSVGOptions(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "out.svg")
@@ -189,10 +218,11 @@ func TestSaveFig_RejectsUnknownExtension(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), ".png") || !strings.Contains(err.Error(), ".svg") ||
 		!strings.Contains(err.Error(), ".pdf") ||
-		!strings.Contains(err.Error(), ".ps") || !strings.Contains(err.Error(), ".eps") {
+		!strings.Contains(err.Error(), ".ps") || !strings.Contains(err.Error(), ".eps") ||
+		!strings.Contains(err.Error(), ".pgf") {
 		t.Fatalf("error should list supported extensions, got: %v", err)
 	}
-	if r.savedPNG || r.savedSVG || r.savedPS {
+	if r.savedPNG || r.savedSVG || r.savedPDF || r.savedPS || r.savedPGF {
 		t.Fatal("no exporter should have been invoked for unknown extension")
 	}
 }
@@ -206,10 +236,12 @@ func TestSaveFig_NoExtensionRejected(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for missing extension")
 	}
-	if !strings.Contains(err.Error(), ".png") || !strings.Contains(err.Error(), ".svg") {
+	if !strings.Contains(err.Error(), ".png") || !strings.Contains(err.Error(), ".svg") ||
+		!strings.Contains(err.Error(), ".pdf") || !strings.Contains(err.Error(), ".ps") ||
+		!strings.Contains(err.Error(), ".eps") || !strings.Contains(err.Error(), ".pgf") {
 		t.Fatalf("error should list supported extensions, got: %v", err)
 	}
-	if r.savedPNG || r.savedSVG {
+	if r.savedPNG || r.savedSVG || r.savedPDF || r.savedPS || r.savedPGF {
 		t.Fatal("no exporter should have been invoked for missing extension")
 	}
 }

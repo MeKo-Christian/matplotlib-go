@@ -116,6 +116,9 @@ var capabilityRuntimeChecks = map[Capability]func(render.Renderer) bool{
 		if _, hasPS := r.(render.PSExporter); hasPS {
 			return true
 		}
+		if _, hasPGF := r.(render.PGFExporter); hasPGF {
+			return true
+		}
 		return false
 	},
 	PNGExport: func(r render.Renderer) bool {

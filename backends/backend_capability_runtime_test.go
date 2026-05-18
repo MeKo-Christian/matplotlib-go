@@ -82,7 +82,7 @@ func TestBackendComparisonReportContainsEveryBackend(t *testing.T) {
 	if !strings.Contains(report, "SaveFormats") {
 		t.Errorf("report missing registered save format column\n%s", report)
 	}
-	for _, ext := range []string{".pdf", ".ps", ".eps"} {
+	for _, ext := range []string{".pdf", ".ps", ".eps", ".pgf"} {
 		if !strings.Contains(report, ext) {
 			t.Errorf("report missing registered save extension %s\n%s", ext, report)
 		}
@@ -146,6 +146,16 @@ func TestSelectBackendForExtensionRoutesByCapability(t *testing.T) {
 		}
 		if backend != backends.PS {
 			t.Errorf("expected PS backend for .eps, got %s", backend)
+		}
+	})
+
+	t.Run("pgf picks a PGF-capable backend", func(t *testing.T) {
+		backend, err := backends.SelectBackendForExtension("", ".pgf", nil)
+		if err != nil {
+			t.Fatalf("SelectBackendForExtension(.pgf): %v", err)
+		}
+		if backend != backends.PGF {
+			t.Errorf("expected PGF backend for .pgf, got %s", backend)
 		}
 	})
 

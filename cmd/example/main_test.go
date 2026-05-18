@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/backends"
@@ -101,14 +100,18 @@ func TestExampleCommandSmokeFormats(t *testing.T) {
 	}
 }
 
-func TestExampleCommandAcceptsPGFFormatButReportsUnsupportedBackend(t *testing.T) {
+func TestExampleCommandWritesPGF(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "basic_line.pgf")
 	stderr, ok := runExampleCommand(t, "-name", "basic_line", "-format", "pgf", "-o", path)
-	if ok {
-		t.Fatal("cmd/example -format pgf succeeded without a registered PGF backend")
+	if !ok {
+		t.Fatalf("cmd/example -format pgf failed:\n%s", stderr)
 	}
-	if !strings.Contains(stderr, `.pgf`) {
-		t.Fatalf("PGF error should mention .pgf, got:\n%s", stderr)
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("PGF output missing: %v\nstderr:\n%s", err, stderr)
+	}
+	if info.Size() == 0 {
+		t.Fatal("expected non-empty PGF output")
 	}
 }
 

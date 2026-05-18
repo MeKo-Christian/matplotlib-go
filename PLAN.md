@@ -209,9 +209,11 @@ Current slice landed:
 - [x] PostScript (`backends/ps/`) for journal submissions that still require
       EPS. Scope limited to level-2 PS with the same font / image / hatch
       semantics as PDF.
-- [ ] PGF / LaTeX export (`backends/pgf/`) for direct inclusion in LaTeX
-      documents. Decision required on whether to ship as a generator-only backend
-      or invoke `lualatex` for verification.
+- [x] Generator-only PGF / LaTeX export (`backends/pgf/`) for direct inclusion
+      in LaTeX documents.
+- [ ] PGF verification / hardening decision: decide whether to invoke
+      `lualatex` for verification, and fill out the richer PGF image / hatch /
+      alpha / batching semantics.
 - [ ] Optionally vector / mixed-mode output: rasterized fallback for
       effects PDF/PS cannot represent (driven by renderer capability checks, not
       backend-name conditionals).
@@ -245,11 +247,33 @@ Current slice landed:
 - Save dispatch routes `.ps` and `.eps` through `core.SaveFig`,
   `backends.SavePS`, and registry `SaveFormats`; `backends/all` side-imports
   the new package.
+- `backends/pgf` package with `doc.go`, `init.go`, `pgf.go`, and
+  `registry_test.go`. Renderer implements `render.Renderer`,
+  `render.PGFExporter`, `render.DPIAware`, `render.FontTextDrawer`, and
+  `render.FontRotatedTextDrawer`.
+- `.pgf` is registered in the backend `SaveFormats` map, selected by
+  `backends.SelectBackendForExtension`, side-imported from `backends/all`, and
+  routed through `core.SaveFig` / `backends.SavePGF`.
+- The first PGF slice emits deterministic generator-only `pgfpicture` output
+  with paths, rectangular/path clips, simple direct LaTeX text, rotated text,
+  graphics scopes, and the same top-left display-coordinate transform used by
+  the other vector renderers. It deliberately does not invoke a TeX engine yet.
+- `cmd/example -format pgf` now writes a non-empty PGF file in smoke coverage.
 
 Remaining PostScript work:
 
 - Match PDF's embedded-font, alpha, JPEG passthrough, and image reuse
   semantics.
+
+Remaining PGF work:
+
+- Decide whether CI/dev verification should run `lualatex` or keep PGF as a
+  pure generator backend.
+- Add PGF-specific option / metadata routing once the shared save-option
+  surface lands.
+- Implement native PGF hatches, opacity handling, raster image output /
+  mixed-mode fallback, reusable marker / path collection batches, and tighter
+  TeX/font metrics parity.
 
 ### 1.3 Save Dispatch Cleanup
 
@@ -267,11 +291,10 @@ Current slice landed:
   branches.
 - `cmd/example` accepts `-format png|svg|pdf|ps|eps|pgf`, selects an exporter
   with `backends.SelectBackendForExtension`, and saves through the registry
-  `SaveFormats` map. PNG / SVG / PDF / PS have smoke tests; PGF is accepted as
-  a format and reports the expected unsupported-backend error until
-  `backends/pgf` lands.
+  `SaveFormats` map. PNG / SVG / PDF / PS / PGF have smoke coverage.
 - `PGFExport` is now represented in the backend capability matrix and
-  comparison report, currently unsupported for all registered backends.
+  comparison report, with `.pgf` registration visible in the save-format
+  column.
 - `core.SaveFig(fig, r, "out.pdf")` now dispatches to `render.PDFExporter`.
   `core` remains renderer-interface based because importing `backends` there
   would create the existing `backends -> canvas -> core` cycle.
@@ -289,7 +312,7 @@ Open items / remaining gaps:
 - [x] PostScript registry route: `.ps` and `.eps` are registered in
   `SaveFormats`, selected by `backends.SelectBackendForExtension`, and covered
   by `cmd/example -format ps` smoke output.
-- [ ] PGF backend route: scaffold `backends/pgf`, implement
+- [x] PGF backend route: scaffold `backends/pgf`, implement
   `render.PGFExporter`, register `.pgf` in `SaveFormats`, side-import it from
   `backends/all`, and change the current `cmd/example -format pgf` smoke test
   from "expected unsupported" to "writes non-empty PGF".
@@ -326,7 +349,7 @@ Open items / remaining gaps:
   file through `SaveFormats`.
 - [x] `cmd/example -format png|svg|pdf|ps` writes non-empty files in smoke
   tests.
-- [ ] `backends.SelectBackendForExtension("", ".pgf", nil)` selects a
+- [x] `backends.SelectBackendForExtension("", ".pgf", nil)` selects a
   registered PGF backend, and `cmd/example -format pgf` writes a non-empty PGF
   file.
 - [x] `pyplot.SaveFig`, canvas / manager save, `cmd/example`, and any CLI save
@@ -344,20 +367,20 @@ Vector backend semantics matrix:
 
 | Capability / semantic | SVG | PDF | PS / EPS | PGF |
 | --- | --- | --- | --- | --- |
-| Registry extension(s) | `.svg` | `.pdf` | `.ps`, `.eps` | missing |
-| Deterministic output | native IDs / metadata policy | deterministic xref, metadata, `SOURCE_DATE_EPOCH` | deterministic document stream | missing |
-| Text policy | text-as-text plus path policy | embedded Type 0 / CIDFontType2 or text-as-path | basic direct text, no embedded fonts yet | missing |
-| Font subsetting / embedding | n/a for text-as-text, paths available | implemented | missing | missing |
+| Registry extension(s) | `.svg` | `.pdf` | `.ps`, `.eps` | `.pgf` |
+| Deterministic output | native IDs / metadata policy | deterministic xref, metadata, `SOURCE_DATE_EPOCH` | deterministic document stream | deterministic `pgfpicture` stream |
+| Text policy | text-as-text plus path policy | embedded Type 0 / CIDFontType2 or text-as-path | basic direct text, no embedded fonts yet | LaTeX text via `\pgftext`, approximate layout metrics |
+| Font subsetting / embedding | n/a for text-as-text, paths available | implemented | missing | delegated to LaTeX, no subsetting |
 | Hatch fills | native SVG patterns | native PDF tiling patterns | native clipped hatch strokes | missing |
-| Stroke / fill alpha | native SVG opacity | PDF ExtGState | limited by PostScript semantics | missing |
+| Stroke / fill alpha | native SVG opacity | PDF ExtGState | limited by PostScript semantics | transparent PGF paints skipped; native opacity missing |
 | Raster images | embedded image data | Image XObjects with alpha masks | inline colorimage, alpha precomposited | missing |
 | Transformed images | implemented | implemented | implemented | missing |
-| Marker / path collections | reusable native batches | Form XObjects | missing | missing |
-| Metadata options | `render.SVGOptions` | `render.PDFOptions` but not fully routed through shared save APIs | missing shared option surface | missing |
+| Marker / path collections | reusable native batches | Form XObjects | reusable procedures | renderer-neutral fallback only; no native batches |
+| Metadata options | `render.SVGOptions` | `render.PDFOptions` but not fully routed through shared save APIs | missing shared option surface | missing shared option surface |
 
-Remaining shared-semantics work is concentrated in PGF scaffolding, PDF/PGF
-option routing through the registry save pipeline, and the PostScript parity
-items listed in Phase 1.2.
+Remaining shared-semantics work is concentrated in PGF hardening, PDF/PGF option
+routing through the registry save pipeline, and the PostScript parity items
+listed in Phase 1.2.
 
 ---
 
