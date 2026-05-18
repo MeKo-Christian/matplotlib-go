@@ -10,14 +10,17 @@ import (
 )
 
 // testPNGSVGRenderer is a minimal renderer that satisfies render.Renderer (via
-// the embedded NullRenderer), render.PNGExporter, and render.SVGExporter. It
-// records which export path was exercised so tests can assert dispatch.
+// the embedded NullRenderer), render.PNGExporter, render.SVGExporter, and
+// PostScript export. It records which export path was exercised so tests can
+// assert dispatch.
 type testPNGSVGRenderer struct {
 	render.NullRenderer
 	savedPNG   bool
 	savedSVG   bool
+	savedPS    bool
 	pngPath    string
 	svgPath    string
+	psPath     string
 	svgOptions render.SVGOptions
 }
 
@@ -38,6 +41,12 @@ func (r *testPNGSVGRenderer) SaveSVG(path string) error {
 func (r *testPNGSVGRenderer) SaveSVGWithOptions(path string, opts render.SVGOptions) error {
 	r.svgOptions = opts
 	return r.SaveSVG(path)
+}
+
+func (r *testPNGSVGRenderer) SavePS(path string) error {
+	r.savedPS = true
+	r.psPath = path
+	return nil
 }
 
 // defaultAxesRect is the unit-square rect used by SaveFig tests when adding
@@ -91,6 +100,32 @@ func TestSaveFig_DispatchesByExtension_SVG(t *testing.T) {
 	}
 }
 
+func TestSaveFig_DispatchesByExtension_PSAndEPS(t *testing.T) {
+	for _, ext := range []string{".ps", ".eps"} {
+		t.Run(ext, func(t *testing.T) {
+			dir := t.TempDir()
+			path := filepath.Join(dir, "out"+ext)
+
+			fig := NewFigure(100, 80)
+			fig.AddAxes(defaultAxesRect)
+
+			r := newTestPNGSVGRenderer()
+			if err := SaveFig(fig, r, path); err != nil {
+				t.Fatalf("SaveFig: %v", err)
+			}
+			if !r.savedPS {
+				t.Fatal("expected PostScript path to be exercised")
+			}
+			if r.savedPNG || r.savedSVG {
+				t.Fatal("did not expect PNG or SVG path")
+			}
+			if r.psPath != path {
+				t.Fatalf("SavePS received path %q, want %q", r.psPath, path)
+			}
+		})
+	}
+}
+
 func TestSaveFig_ForwardsSVGOptions(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "out.svg")
@@ -122,10 +157,11 @@ func TestSaveFig_RejectsUnknownExtension(t *testing.T) {
 	if !strings.Contains(err.Error(), ".tiff") {
 		t.Fatalf("error should mention extension .tiff, got: %v", err)
 	}
-	if !strings.Contains(err.Error(), ".png") || !strings.Contains(err.Error(), ".svg") {
+	if !strings.Contains(err.Error(), ".png") || !strings.Contains(err.Error(), ".svg") ||
+		!strings.Contains(err.Error(), ".ps") || !strings.Contains(err.Error(), ".eps") {
 		t.Fatalf("error should list supported extensions, got: %v", err)
 	}
-	if r.savedPNG || r.savedSVG {
+	if r.savedPNG || r.savedSVG || r.savedPS {
 		t.Fatal("no exporter should have been invoked for unknown extension")
 	}
 }

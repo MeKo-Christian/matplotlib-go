@@ -206,7 +206,7 @@ Current slice landed:
 
 ### 1.2 PostScript and PGF Export
 
-- [ ] PostScript (`backends/ps/`) for journal submissions that still require
+- [x] PostScript (`backends/ps/`) for journal submissions that still require
   EPS. Scope limited to level-2 PS with the same font / image / hatch
   semantics as PDF.
 - [ ] PGF / LaTeX export (`backends/pgf/`) for direct inclusion in LaTeX
@@ -215,6 +215,27 @@ Current slice landed:
 - [ ] Optionally vector / mixed-mode output: rasterized fallback for
   effects PDF/PS cannot represent (driven by renderer capability checks, not
   backend-name conditionals).
+
+Current slice landed:
+
+- `backends/ps` package with `doc.go`, `init.go`, `ps.go`, and
+  `registry_test.go`. Renderer implements `render.Renderer`,
+  `render.PSExporter`, `render.DPIAware`, and basic direct text interfaces.
+- `backends.PS` backend constant and `backends.PSExport` capability with
+  runtime-checked `PSExporter` interface mapping. `VectorOutput` now accepts
+  SVG, PDF, or PS exporters.
+- Deterministic Level-2 PostScript/EPS document writer with Adobe headers,
+  bounding boxes, top-left display-coordinate transform, background fills,
+  graphics state stack, path construction, rectangular/path clipping, stroke
+  state, RGB stroke/fill color, and simple Helvetica text output.
+- Save dispatch routes `.ps` and `.eps` through `core.SaveFig`,
+  `backends.SavePS`, and registry `SaveFormats`; `backends/all` side-imports
+  the new package.
+
+Remaining PostScript work:
+
+- Match PDF's embedded-font, image, hatch, alpha, marker/path-collection batch,
+  and transformed-image semantics.
 
 ### 1.3 Save Dispatch Cleanup
 

@@ -20,6 +20,7 @@ const (
 	Skia    Backend = "skia"
 	SVG     Backend = "svg"
 	PDF     Backend = "pdf"
+	PS      Backend = "ps"
 )
 
 // Capability represents a backend feature capability.
@@ -56,6 +57,7 @@ const (
 	PNGExport         Capability = "pngexport"
 	SVGExport         Capability = "svgexport"
 	PDFExport         Capability = "pdfexport"
+	PSExport          Capability = "psexport"
 
 	// Batch drawing capabilities
 	MarkerBatch          Capability = "markerbatch"
@@ -109,6 +111,9 @@ var capabilityRuntimeChecks = map[Capability]func(render.Renderer) bool{
 		if _, hasPDF := r.(render.PDFExporter); hasPDF {
 			return true
 		}
+		if _, hasPS := r.(render.PSExporter); hasPS {
+			return true
+		}
 		return false
 	},
 	PNGExport: func(r render.Renderer) bool {
@@ -121,6 +126,10 @@ var capabilityRuntimeChecks = map[Capability]func(render.Renderer) bool{
 	},
 	PDFExport: func(r render.Renderer) bool {
 		_, ok := r.(render.PDFExporter)
+		return ok
+	},
+	PSExport: func(r render.Renderer) bool {
+		_, ok := r.(render.PSExporter)
 		return ok
 	},
 	TextBounds: func(r render.Renderer) bool {
@@ -329,6 +338,15 @@ func SavePDF(renderer render.Renderer, path string, _ ...render.SVGOption) error
 	return exporter.SavePDF(path)
 }
 
+// SavePS saves using the renderer PostScript export interface.
+func SavePS(renderer render.Renderer, path string, _ ...render.SVGOption) error {
+	exporter, ok := renderer.(render.PSExporter)
+	if !ok {
+		return fmt.Errorf("backends: renderer does not implement PostScript export")
+	}
+	return exporter.SavePS(path)
+}
+
 // SaveSVG saves using the renderer SVG export interface.
 func SaveSVG(renderer render.Renderer, path string, opts ...render.SVGOption) error {
 	exporter, ok := renderer.(render.SVGExporter)
@@ -516,6 +534,8 @@ func (i *BackendInfo) saveViaExtension(renderer render.Renderer, path string, op
 		return SaveSVG(renderer, path, opts...)
 	case ".pdf":
 		return SavePDF(renderer, path, opts...)
+	case ".ps", ".eps":
+		return SavePS(renderer, path, opts...)
 	default:
 		return fmt.Errorf("backends: unsupported save extension %q", ext)
 	}

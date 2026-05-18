@@ -11,10 +11,12 @@ import (
 
 // supportedSaveExtensions is the registry of extensions handled by SaveFig.
 //
-// Adding a new exporter (e.g. PDF, PostScript) means appending to this map and
+// Adding a new exporter (e.g. PostScript) means appending to this map and
 // implementing the corresponding render-side capability interface.
 var supportedSaveExtensions = map[string]func(*Figure, render.Renderer, string, ...render.SVGOption) error{
+	".eps": SavePS,
 	".png": SavePNG,
+	".ps":  SavePS,
 	".svg": SaveSVG,
 }
 

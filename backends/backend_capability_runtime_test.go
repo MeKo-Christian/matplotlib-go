@@ -118,6 +118,26 @@ func TestSelectBackendForExtensionRoutesByCapability(t *testing.T) {
 		}
 	})
 
+	t.Run("ps picks a PostScript-capable backend", func(t *testing.T) {
+		backend, err := backends.SelectBackendForExtension("", ".ps", nil)
+		if err != nil {
+			t.Fatalf("SelectBackendForExtension(.ps): %v", err)
+		}
+		if backend != backends.PS {
+			t.Errorf("expected PS backend for .ps, got %s", backend)
+		}
+	})
+
+	t.Run("eps picks a PostScript-capable backend", func(t *testing.T) {
+		backend, err := backends.SelectBackendForExtension("", ".eps", nil)
+		if err != nil {
+			t.Fatalf("SelectBackendForExtension(.eps): %v", err)
+		}
+		if backend != backends.PS {
+			t.Errorf("expected PS backend for .eps, got %s", backend)
+		}
+	})
+
 	t.Run("unknown extension errors", func(t *testing.T) {
 		_, err := backends.SelectBackendForExtension("", ".bogus", nil)
 		if err == nil {

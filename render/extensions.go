@@ -262,6 +262,12 @@ type PDFExporter interface {
 	SavePDF(path string) error
 }
 
+// PSExporter is implemented by renderers that can export their output to
+// PostScript or EPS.
+type PSExporter interface {
+	SavePS(path string) error
+}
+
 // PDFFontPolicy controls whether PDF text is emitted using embedded fonts or
 // converted to filled glyph paths.
 type PDFFontPolicy string
