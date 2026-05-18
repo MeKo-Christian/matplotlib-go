@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/backends/agg"
+	mplcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -46,14 +47,16 @@ func Plot() *core.Figure {
 		z2[i] = z1[i]
 	}
 
+	width := 2.0
+	blue := mplcolor.Tab10[0]
+	ax.Plot3D(x1, y1, z1, core.PlotOptions{LineWidth: &width, Color: &blue})
+	ax.Plot3D(x2, y2, z2, core.PlotOptions{LineWidth: &width, Color: &blue})
+
 	alpha := 0.5
 	ax.FillBetween(x1, y1, z1, x2, y2, z2, core.FillBetween3DOptions{
+		Color: &blue,
 		Alpha: &alpha,
 	})
-
-	width := 2.0
-	ax.Plot3D(x1, y1, z1, core.PlotOptions{LineWidth: &width})
-	ax.Plot3D(x2, y2, z2, core.PlotOptions{LineWidth: &width})
 	return fig
 }
 

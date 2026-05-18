@@ -3,17 +3,23 @@ package pdf
 import (
 	"bytes"
 	"compress/zlib"
+	"encoding/binary"
 	"errors"
 	"fmt"
+	xfont "golang.org/x/image/font"
+	"hash/fnv"
 	"image"
 	"math"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf16"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"golang.org/x/image/font/sfnt"
+	"golang.org/x/image/math/fixed"
 )
 
 const (
@@ -81,6 +87,27 @@ type pdfAlphaState struct {
 	fillAlpha   float64
 }
 
+type pdfEmbeddedFont struct {
+	name      string
+	face      render.FontFace
+	data      []byte
+	baseName  string
+	cidByGID  map[sfnt.GlyphIndex]uint16
+	gidByCID  map[uint16]sfnt.GlyphIndex
+	runeByCID map[uint16]rune
+}
+
+type pdfEmbeddedFontObject struct {
+	pdfEmbeddedFont
+	type0ID      int
+	cidFontID    int
+	descriptorID int
+	fontFileID   int
+	cidToGIDID   int
+	widthsID     int
+	toUnicodeID  int
+}
+
 // Renderer implements render.Renderer by emitting a PDF document.
 //
 // The renderer buffers a single content stream. Calling End() finalizes the
@@ -107,6 +134,8 @@ type Renderer struct {
 	formIDs       map[string]string
 	alphaStates   []pdfAlphaState
 	alphaIDs      map[string]string
+	fonts         []pdfEmbeddedFont
+	fontIDs       map[string]string
 	// document is the fully serialized PDF bytes ready for write.
 	document []byte
 
@@ -184,6 +213,8 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.formIDs = map[string]string{}
 	r.alphaStates = r.alphaStates[:0]
 	r.alphaIDs = map[string]string{}
+	r.fonts = r.fonts[:0]
+	r.fontIDs = map[string]string{}
 	r.lastFontKey = ""
 
 	// PDF's coordinate origin is bottom-left with +Y up. matplotlib-go uses a
@@ -210,7 +241,7 @@ func (r *Renderer) End() error {
 		return errors.New("pdf: End called before Begin")
 	}
 	r.began = false
-	doc, err := buildDocument(r.width, r.height, r.content.Bytes(), r.images, r.hatchPatterns, r.forms, r.alphaStates, r.pdfOpts)
+	doc, err := buildDocument(r.width, r.height, r.content.Bytes(), r.images, r.hatchPatterns, r.forms, r.alphaStates, r.fonts, r.pdfOpts)
 	if err != nil {
 		return err
 	}
@@ -627,6 +658,9 @@ func (r *Renderer) DrawTextWithFont(text string, origin geom.Pt, size float64, t
 	if !r.began || text == "" || size <= 0 || textColor.A <= 0 {
 		return
 	}
+	if r.pdfOpts.FontPolicy == render.PDFFontPolicyEmbed && r.drawEmbeddedText(text, origin, size, textColor, fontKey, geom.Affine{A: 1, D: 1}) {
+		return
+	}
 	path, ok := r.TextPath(text, origin, size, fontKey)
 	if !ok {
 		return
@@ -655,6 +689,9 @@ func (r *Renderer) DrawTextRotatedWithFont(text string, anchor geom.Pt, size, an
 	}
 	path, ok := r.TextPath(text, origin, size, fontKey)
 	if !ok {
+		return
+	}
+	if r.pdfOpts.FontPolicy == render.PDFFontPolicyEmbed && r.drawEmbeddedText(text, origin, size, textColor, fontKey, rotationAffine(angle, anchor)) {
 		return
 	}
 	path = affinePath(path, rotationAffine(angle, anchor))
@@ -692,6 +729,100 @@ func (r *Renderer) DrawTextVerticalWithFont(text string, center geom.Pt, size fl
 	}
 }
 
+func (r *Renderer) drawEmbeddedText(text string, origin geom.Pt, size float64, textColor render.Color, fontKey string, transform geom.Affine) bool {
+	shaped, ok := render.ShapeText(text, origin, size, render.TextShapingOptions{FontKey: fontKey})
+	if !ok || len(shaped.Runs) == 0 {
+		return false
+	}
+	writeFillColor(&r.content, textColor)
+	r.writeAlphaState(&render.Paint{Fill: textColor})
+	for _, run := range shaped.Runs {
+		if len(run.Glyphs) == 0 {
+			continue
+		}
+		fontName, cids, ok := r.registerEmbeddedTextRun(run)
+		if !ok || len(cids) == 0 {
+			return false
+		}
+		start := transform.Apply(run.Glyphs[0].Origin)
+		a, b, c, d := transform.A, transform.B, transform.C, transform.D
+		if a == 0 && b == 0 && c == 0 && d == 0 {
+			a, d = 1, 1
+		}
+		fmt.Fprintf(&r.content, "BT\n/%s %s Tf\n%s %s %s %s %s %s Tm\n%s Tj\nET\n",
+			escapeName(fontName),
+			shortFloat(size),
+			shortFloat(a),
+			shortFloat(b),
+			shortFloat(-c),
+			shortFloat(-d),
+			shortFloat(start.X),
+			shortFloat(start.Y),
+			pdfCIDHexString(cids),
+		)
+	}
+	return true
+}
+
+func (r *Renderer) registerEmbeddedTextRun(run render.ShapedRun) (string, []uint16, bool) {
+	font, ok := r.registerEmbeddedFont(run.Face)
+	if !ok {
+		return "", nil, false
+	}
+	cids := make([]uint16, 0, len(run.Glyphs))
+	for _, glyph := range run.Glyphs {
+		cid := font.cidByGID[glyph.GlyphIndex]
+		if cid == 0 {
+			cid = uint16(len(font.cidByGID) + 1)
+			font.cidByGID[glyph.GlyphIndex] = cid
+			font.gidByCID[cid] = glyph.GlyphIndex
+		}
+		if glyph.Rune != 0 {
+			font.runeByCID[cid] = glyph.Rune
+		}
+		cids = append(cids, cid)
+	}
+	return font.name, cids, true
+}
+
+func (r *Renderer) registerEmbeddedFont(face render.FontFace) (*pdfEmbeddedFont, bool) {
+	if r.fontIDs == nil {
+		r.fontIDs = map[string]string{}
+	}
+	key := pdfFontFaceKey(face)
+	if key == "" {
+		return nil, false
+	}
+	if name, ok := r.fontIDs[key]; ok {
+		for i := range r.fonts {
+			if r.fonts[i].name == name {
+				return &r.fonts[i], true
+			}
+		}
+	}
+	data, ok := pdfFontFaceData(face)
+	if !ok {
+		return nil, false
+	}
+	parsed, err := sfnt.Parse(data)
+	if err != nil {
+		return nil, false
+	}
+	baseName := pdfFontPostScriptName(parsed, face)
+	name := fmt.Sprintf("F%d", len(r.fonts)+1)
+	r.fontIDs[key] = name
+	r.fonts = append(r.fonts, pdfEmbeddedFont{
+		name:      name,
+		face:      face,
+		data:      data,
+		baseName:  baseName,
+		cidByGID:  map[sfnt.GlyphIndex]uint16{},
+		gidByCID:  map[uint16]sfnt.GlyphIndex{},
+		runeByCID: map[uint16]rune{},
+	})
+	return &r.fonts[len(r.fonts)-1], true
+}
+
 // SavePDF writes the buffered document to path.
 func (r *Renderer) SavePDF(path string) error {
 	if len(r.document) == 0 {
@@ -706,7 +837,7 @@ func (r *Renderer) SavePDFWithOptions(path string, opts render.PDFOptions) error
 	if !r.began && len(r.document) == 0 {
 		return errors.New("pdf: SavePDFWithOptions called before End")
 	}
-	doc, err := buildDocument(r.width, r.height, r.content.Bytes(), r.images, r.hatchPatterns, r.forms, r.alphaStates, opts)
+	doc, err := buildDocument(r.width, r.height, r.content.Bytes(), r.images, r.hatchPatterns, r.forms, r.alphaStates, r.fonts, opts)
 	if err != nil {
 		return err
 	}
@@ -904,6 +1035,90 @@ func shortFloat(v float64) string {
 		return "0"
 	}
 	return s
+}
+
+func pdfCIDHexString(cids []uint16) string {
+	var b strings.Builder
+	b.WriteByte('<')
+	for _, cid := range cids {
+		fmt.Fprintf(&b, "%04X", cid)
+	}
+	b.WriteByte('>')
+	return b.String()
+}
+
+func pdfFontFaceKey(face render.FontFace) string {
+	if face.Path != "" {
+		return "path:" + face.Path
+	}
+	if face.Family != "" {
+		return "embedded:" + face.Family
+	}
+	return ""
+}
+
+func pdfFontFaceData(face render.FontFace) ([]byte, bool) {
+	if len(face.Data) > 0 {
+		return append([]byte(nil), face.Data...), true
+	}
+	if face.Path == "" {
+		return nil, false
+	}
+	data, err := os.ReadFile(face.Path)
+	if err != nil {
+		return nil, false
+	}
+	return data, true
+}
+
+func pdfFontPostScriptName(fontData *sfnt.Font, face render.FontFace) string {
+	if fontData != nil {
+		if name, err := fontData.Name(nil, sfnt.NameIDPostScript); err == nil {
+			if cleaned := cleanPDFFontName(name); cleaned != "" {
+				return cleaned
+			}
+		}
+	}
+	if cleaned := cleanPDFFontName(face.Family); cleaned != "" {
+		return cleaned
+	}
+	return "MatplotlibGoFont"
+}
+
+func cleanPDFFontName(name string) string {
+	var b strings.Builder
+	for _, r := range name {
+		switch {
+		case r >= 'A' && r <= 'Z':
+			b.WriteRune(r)
+		case r >= 'a' && r <= 'z':
+			b.WriteRune(r)
+		case r >= '0' && r <= '9':
+			b.WriteRune(r)
+		case r == '-' || r == '_' || r == '+':
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+func subsetFontName(font pdfEmbeddedFont) string {
+	h := fnv.New64a()
+	_, _ = h.Write([]byte(font.baseName))
+	cids := sortedFontCIDs(font.gidByCID)
+	for _, cid := range cids {
+		var buf [6]byte
+		binary.BigEndian.PutUint16(buf[0:2], cid)
+		binary.BigEndian.PutUint32(buf[2:6], uint32(font.gidByCID[cid]))
+		_, _ = h.Write(buf[:])
+	}
+	value := h.Sum64()
+	prefix := make([]byte, 6)
+	for i := range prefix {
+		prefix[i] = byte('A' + value%26)
+		value /= 26
+	}
+	return string(prefix) + "+" + font.baseName
 }
 
 func clamp01(v float64) float64 {
@@ -1204,10 +1419,11 @@ func hatchPatternLines(hatch string, spacing float64) [][2]geom.Pt {
 
 // buildDocument assembles the PDF bytes for one page given the encoded
 // content stream.
-func buildDocument(width, height int, contentStream []byte, images []pdfImage, hatches []pdfHatchPattern, forms []pdfFormXObject, alphaStates []pdfAlphaState, opts render.PDFOptions) ([]byte, error) {
+func buildDocument(width, height int, contentStream []byte, images []pdfImage, hatches []pdfHatchPattern, forms []pdfFormXObject, alphaStates []pdfAlphaState, fonts []pdfEmbeddedFont, opts render.PDFOptions) ([]byte, error) {
 	imageObjects := assignImageObjects(images, 6)
 	hatchObjects := assignHatchObjects(hatches, nextImageObjectID(imageObjects, 6))
 	formObjects := assignFormObjects(forms, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6)))
+	fontObjects := assignFontObjects(fonts, nextFormObjectID(formObjects, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6))))
 	// We emit five fixed indirect objects, followed by image XObjects:
 	//   1: /Catalog
 	//   2: /Pages
@@ -1227,7 +1443,7 @@ func buildDocument(width, height int, contentStream []byte, images []pdfImage, h
 
 	w.beginObject(3)
 	fmt.Fprintf(&w.buf, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %d %d] /Contents 4 0 R /Resources %s >>",
-		width, height, pageResources(imageObjects, hatchObjects, formObjects, alphaStates))
+		width, height, pageResources(imageObjects, hatchObjects, formObjects, alphaStates, fontObjects))
 	w.endObject()
 
 	// Compress the content stream with FlateDecode for determinism and size.
@@ -1262,6 +1478,11 @@ func buildDocument(width, height int, contentStream []byte, images []pdfImage, h
 	}
 	for _, form := range formObjects {
 		if err := w.writeFormXObject(form); err != nil {
+			return nil, err
+		}
+	}
+	for _, font := range fontObjects {
+		if err := w.writeEmbeddedFontObjects(font); err != nil {
 			return nil, err
 		}
 	}
@@ -1419,6 +1640,74 @@ func (w *pdfWriter) writeFormXObject(form pdfFormXObjectObject) error {
 	return nil
 }
 
+func (w *pdfWriter) writeEmbeddedFontObjects(fontObj pdfEmbeddedFontObject) error {
+	fontData, err := sfnt.Parse(fontObj.data)
+	if err != nil {
+		return fmt.Errorf("pdf: parse embedded font %s: %w", fontObj.name, err)
+	}
+	subsetName := subsetFontName(fontObj.pdfEmbeddedFont)
+
+	w.beginObject(fontObj.type0ID)
+	fmt.Fprintf(&w.buf,
+		"<< /Type /Font /Subtype /Type0 /BaseFont /%s /Encoding /Identity-H /DescendantFonts [%d 0 R] /ToUnicode %d 0 R >>",
+		escapeName(subsetName),
+		fontObj.cidFontID,
+		fontObj.toUnicodeID,
+	)
+	w.endObject()
+
+	w.beginObject(fontObj.cidFontID)
+	fmt.Fprintf(&w.buf,
+		"<< /Type /Font /Subtype /CIDFontType2 /BaseFont /%s /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor %d 0 R /W %d 0 R /CIDToGIDMap %d 0 R >>",
+		escapeName(subsetName),
+		fontObj.descriptorID,
+		fontObj.widthsID,
+		fontObj.cidToGIDID,
+	)
+	w.endObject()
+
+	descriptor := pdfFontDescriptor(fontObj, fontData, subsetName)
+	w.beginObject(fontObj.descriptorID)
+	w.writeString(descriptor)
+	w.endObject()
+
+	encodedFont, err := flateEncode(fontObj.data)
+	if err != nil {
+		return fmt.Errorf("pdf: flate encode font %s: %w", fontObj.name, err)
+	}
+	w.beginObject(fontObj.fontFileID)
+	fmt.Fprintf(&w.buf, "<< /Length %d /Length1 %d /Filter /FlateDecode >>\nstream\n", len(encodedFont), len(fontObj.data))
+	w.buf.Write(encodedFont)
+	w.writeString("\nendstream")
+	w.endObject()
+
+	cidMap := pdfCIDToGIDMap(fontObj.gidByCID)
+	encodedCIDMap, err := flateEncode(cidMap)
+	if err != nil {
+		return fmt.Errorf("pdf: flate encode CIDToGIDMap %s: %w", fontObj.name, err)
+	}
+	w.beginObject(fontObj.cidToGIDID)
+	fmt.Fprintf(&w.buf, "<< /Length %d /Filter /FlateDecode >>\nstream\n", len(encodedCIDMap))
+	w.buf.Write(encodedCIDMap)
+	w.writeString("\nendstream")
+	w.endObject()
+
+	w.beginObject(fontObj.widthsID)
+	w.writeString(pdfFontWidths(fontObj.gidByCID, fontData))
+	w.endObject()
+
+	toUnicode, err := flateEncode(pdfToUnicodeCMap(fontObj.runeByCID))
+	if err != nil {
+		return fmt.Errorf("pdf: flate encode ToUnicode %s: %w", fontObj.name, err)
+	}
+	w.beginObject(fontObj.toUnicodeID)
+	fmt.Fprintf(&w.buf, "<< /Length %d /Filter /FlateDecode >>\nstream\n", len(toUnicode))
+	w.buf.Write(toUnicode)
+	w.writeString("\nendstream")
+	w.endObject()
+	return nil
+}
+
 func (w *pdfWriter) writeXRef() {
 	w.buf.WriteString("xref\n")
 	fmt.Fprintf(&w.buf, "0 %d\n", len(w.offsets))
@@ -1467,6 +1756,159 @@ func sortedKeys(m map[string]string) []string {
 		}
 	}
 	return keys
+}
+
+func pdfFontDescriptor(fontObj pdfEmbeddedFontObject, fontData *sfnt.Font, subsetName string) string {
+	metrics, bounds := pdfFontMetrics(fontData)
+	return fmt.Sprintf("<< /Type /FontDescriptor /FontName /%s /Flags 32 /FontBBox [%d %d %d %d] /Ascent %d /Descent %d /CapHeight %d /ItalicAngle 0 /StemV 0 /FontFile2 %d 0 R >>",
+		escapeName(subsetName),
+		bounds[0], bounds[1], bounds[2], bounds[3],
+		metrics[0], metrics[1], metrics[2],
+		fontObj.fontFileID,
+	)
+}
+
+func pdfFontMetrics(fontData *sfnt.Font) ([3]int, [4]int) {
+	if fontData == nil {
+		return [3]int{800, -200, 700}, [4]int{-1000, -300, 2000, 1000}
+	}
+	ppem := fixed.I(1000)
+	var buf sfnt.Buffer
+	metrics, err := fontData.Metrics(&buf, ppem, xfont.HintingNone)
+	if err != nil {
+		return [3]int{800, -200, 700}, [4]int{-1000, -300, 2000, 1000}
+	}
+	bounds, err := fontData.Bounds(&buf, ppem, xfont.HintingNone)
+	if err != nil {
+		return [3]int{
+			roundFixed(metrics.Ascent),
+			roundFixed(-metrics.Descent),
+			roundFixed(metrics.Ascent),
+		}, [4]int{-1000, -300, 2000, 1000}
+	}
+	return [3]int{
+			roundFixed(metrics.Ascent),
+			roundFixed(-metrics.Descent),
+			roundFixed(metrics.Ascent),
+		}, [4]int{
+			roundFixed(bounds.Min.X),
+			roundFixed(bounds.Min.Y),
+			roundFixed(bounds.Max.X),
+			roundFixed(bounds.Max.Y),
+		}
+}
+
+func pdfCIDToGIDMap(gidByCID map[uint16]sfnt.GlyphIndex) []byte {
+	maxCID := uint16(0)
+	for cid := range gidByCID {
+		if cid > maxCID {
+			maxCID = cid
+		}
+	}
+	out := make([]byte, (int(maxCID)+1)*2)
+	for cid, gid := range gidByCID {
+		binary.BigEndian.PutUint16(out[int(cid)*2:int(cid)*2+2], uint16(gid))
+	}
+	return out
+}
+
+func pdfFontWidths(gidByCID map[uint16]sfnt.GlyphIndex, fontData *sfnt.Font) string {
+	cids := sortedFontCIDs(gidByCID)
+	if len(cids) == 0 || fontData == nil {
+		return "[]"
+	}
+	var b strings.Builder
+	var buf sfnt.Buffer
+	ppem := fixed.I(1000)
+	b.WriteString("[")
+	i := 0
+	for i < len(cids) {
+		start := cids[i]
+		b.WriteByte(' ')
+		b.WriteString(strconv.Itoa(int(start)))
+		b.WriteString(" [")
+		prev := start
+		for i < len(cids) {
+			cid := cids[i]
+			if cid != prev && cid != prev+1 {
+				break
+			}
+			width := 0
+			if advance, err := fontData.GlyphAdvance(&buf, gidByCID[cid], ppem, xfont.HintingNone); err == nil {
+				width = roundFixed(advance)
+			}
+			if cid != start {
+				b.WriteByte(' ')
+			}
+			b.WriteString(strconv.Itoa(width))
+			prev = cid
+			i++
+		}
+		b.WriteByte(']')
+	}
+	b.WriteString(" ]")
+	return b.String()
+}
+
+func pdfToUnicodeCMap(runeByCID map[uint16]rune) []byte {
+	cids := sortedRuneCIDs(runeByCID)
+	var b strings.Builder
+	b.WriteString("/CIDInit /ProcSet findresource begin\n")
+	b.WriteString("12 dict begin\nbegincmap\n")
+	b.WriteString("/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n")
+	b.WriteString("/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n")
+	b.WriteString("1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n")
+	fmt.Fprintf(&b, "%d beginbfchar\n", len(cids))
+	for _, cid := range cids {
+		fmt.Fprintf(&b, "<%04X> <%s>\n", cid, utf16BEHex(runeByCID[cid]))
+	}
+	b.WriteString("endbfchar\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n")
+	return []byte(b.String())
+}
+
+func utf16BEHex(r rune) string {
+	encoded := utf16.Encode([]rune{r})
+	var b strings.Builder
+	for _, v := range encoded {
+		fmt.Fprintf(&b, "%04X", v)
+	}
+	return b.String()
+}
+
+func sortedFontCIDs(gidByCID map[uint16]sfnt.GlyphIndex) []uint16 {
+	cids := make([]uint16, 0, len(gidByCID))
+	for cid := range gidByCID {
+		cids = append(cids, cid)
+	}
+	sortUint16s(cids)
+	return cids
+}
+
+func sortedRuneCIDs(runeByCID map[uint16]rune) []uint16 {
+	cids := make([]uint16, 0, len(runeByCID))
+	for cid := range runeByCID {
+		cids = append(cids, cid)
+	}
+	sortUint16s(cids)
+	return cids
+}
+
+func sortUint16s(values []uint16) {
+	for i := 1; i < len(values); i++ {
+		j := i
+		for j > 0 && values[j-1] > values[j] {
+			values[j-1], values[j] = values[j], values[j-1]
+			j--
+		}
+	}
+}
+
+func roundFixed(v fixed.Int26_6) int {
+	f := float64(v) / 64
+	if f < 0 {
+		return int(math.Ceil(f - 0.5))
+	}
+	return int(math.Floor(f + 0.5))
 }
 
 func assignImageObjects(images []pdfImage, firstID int) []pdfImageObject {
@@ -1540,12 +1982,51 @@ func assignFormObjects(forms []pdfFormXObject, firstID int) []pdfFormXObjectObje
 	return out
 }
 
-func pageResources(images []pdfImageObject, hatches []pdfHatchPatternObject, forms []pdfFormXObjectObject, alphaStates []pdfAlphaState) string {
-	if len(images) == 0 && len(hatches) == 0 && len(forms) == 0 && len(alphaStates) == 0 {
+func nextFormObjectID(forms []pdfFormXObjectObject, firstID int) int {
+	nextID := firstID
+	for _, form := range forms {
+		if form.objectID >= nextID {
+			nextID = form.objectID + 1
+		}
+	}
+	return nextID
+}
+
+func assignFontObjects(fonts []pdfEmbeddedFont, firstID int) []pdfEmbeddedFontObject {
+	if len(fonts) == 0 {
+		return nil
+	}
+	out := make([]pdfEmbeddedFontObject, len(fonts))
+	nextID := firstID
+	for i, font := range fonts {
+		out[i] = pdfEmbeddedFontObject{
+			pdfEmbeddedFont: font,
+			type0ID:         nextID,
+			cidFontID:       nextID + 1,
+			descriptorID:    nextID + 2,
+			fontFileID:      nextID + 3,
+			cidToGIDID:      nextID + 4,
+			widthsID:        nextID + 5,
+			toUnicodeID:     nextID + 6,
+		}
+		nextID += 7
+	}
+	return out
+}
+
+func pageResources(images []pdfImageObject, hatches []pdfHatchPatternObject, forms []pdfFormXObjectObject, alphaStates []pdfAlphaState, fonts []pdfEmbeddedFontObject) string {
+	if len(images) == 0 && len(hatches) == 0 && len(forms) == 0 && len(alphaStates) == 0 && len(fonts) == 0 {
 		return "<< >>"
 	}
 	var b strings.Builder
 	b.WriteString("<<")
+	if len(fonts) > 0 {
+		b.WriteString(" /Font <<")
+		for _, font := range fonts {
+			fmt.Fprintf(&b, " /%s %d 0 R", escapeName(font.name), font.type0ID)
+		}
+		b.WriteString(" >>")
+	}
 	if len(images) > 0 || len(forms) > 0 {
 		b.WriteString(" /XObject <<")
 		for _, img := range images {

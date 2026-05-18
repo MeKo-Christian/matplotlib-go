@@ -282,9 +282,10 @@ func Get3DWireframeTestData(delta float64) (x []float64, y []float64, z [][]floa
 		delta = 0.05
 	}
 
-	x = append(x, -3.0)
-	for x[len(x)-1] < 3.0-delta {
-		x = append(x, x[len(x)-1]+delta)
+	count := int(math.Ceil(6.0 / delta))
+	x = make([]float64, count)
+	for i := range x {
+		x[i] = -3.0 + delta*float64(i)
 	}
 	y = make([]float64, len(x))
 	copy(y, x)
@@ -295,13 +296,17 @@ func Get3DWireframeTestData(delta float64) (x []float64, y []float64, z [][]floa
 	for yi := range y {
 		yRow := make([]float64, xCount)
 		for xi := range x {
-			gridX := x[xi] * 10
-			gridY := y[yi] * 10
+			gridX := x[xi]
+			gridY := y[yi]
 			z1 := math.Exp(-(gridX*gridX+gridY*gridY)/2) / (2 * math.Pi)
 			z2 := (math.Exp(-(((gridX-1)/1.5)*((gridX-1)/1.5)+((gridY-1)/0.5)*((gridY-1)/0.5))/2) / (2 * math.Pi * 0.5 * 1.5))
 			yRow[xi] = (z2 - z1) * 500
 		}
 		z[yi] = yRow
+	}
+	for i := range x {
+		x[i] *= 10
+		y[i] *= 10
 	}
 
 	return x, y, z

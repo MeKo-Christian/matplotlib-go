@@ -35,6 +35,9 @@ milestones already achieved are:
   `PNGExporter`, `SVGExporter`, …).
 - Capability matrix and save dispatch driven by the backend registry rather
   than backend-name conditionals.
+- mplot3d parity fixtures now enforce `MaxRMSE < 18` against the Matplotlib
+  references, including z-axis autoscale behavior, pane/grid framing, exact
+  tab10 colors, and refreshed 3D golden images.
 
 **Backends**
 

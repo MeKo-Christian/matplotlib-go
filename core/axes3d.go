@@ -17,7 +17,6 @@ const (
 	default3DFocalLength     = 1
 	default3DRollDeg         = 0
 	default3DVerticalAxis    = 2
-	default3DDataMargin      = 0.05
 	default3DComputedZ       = 2.5
 	default3DSurfaceCount    = 50
 	default3DBoxAspectScale  = 1.8294640721620434
@@ -48,6 +47,7 @@ type Axes3D struct {
 	viewMin      vec3
 	viewMax      vec3
 	viewSet      [3]bool
+	zMargin      float64
 	reprojectors []func()
 }
 
@@ -324,6 +324,9 @@ func (a *Axes3D) Plot3D(x, y, z []float64, opts ...PlotOptions) *Line2D {
 // Scatter3D projects x/y/z values and draws markers through projected points.
 func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...ScatterOptions) *Scatter2D {
 	limitsChanged := a.observe3DData(x, y, z)
+	if a.ensure3DZMargin(0.05) {
+		limitsChanged = true
+	}
 	projected := a.projectedData(x, y, z)
 	if len(projected) == 0 {
 		return nil
@@ -765,7 +768,7 @@ func (a *Axes3D) Wireframe(x, y []float64, z [][]float64, opts ...PlotOptions) *
 	}
 
 	color := a.NextColor()
-	lineWidth := 1.0
+	lineWidth := 2.0
 	alpha := 1.0
 	label := ""
 	if len(opts) > 0 {
@@ -2307,47 +2310,7 @@ func (a *Axes3D) frameSegments(mins, maxs vec3) [][]geom.Pt {
 }
 
 func (a *Axes3D) frameSegmentsProjected(mins, maxs, projMins, projMaxs, tickMins, tickMaxs vec3) [][]geom.Pt {
-	project := func(x, y, z float64) geom.Pt {
-		return a.project3DPointWithState(x, y, z, projMins, projMaxs)
-	}
-	corner := func(xi, yi, zi int) geom.Pt {
-		x := mins[0]
-		if xi == 1 {
-			x = maxs[0]
-		}
-		y := mins[1]
-		if yi == 1 {
-			y = maxs[1]
-		}
-		z := mins[2]
-		if zi == 1 {
-			z = maxs[2]
-		}
-		return project(x, y, z)
-	}
-
-	edges := [][2][3]int{
-		{{0, 0, 0}, {1, 0, 0}},
-		{{1, 0, 0}, {1, 1, 0}},
-		{{1, 1, 0}, {0, 1, 0}},
-		{{0, 1, 0}, {0, 0, 0}},
-		{{0, 0, 1}, {1, 0, 1}},
-		{{1, 0, 1}, {1, 1, 1}},
-		{{1, 1, 1}, {0, 1, 1}},
-		{{0, 1, 1}, {0, 0, 1}},
-		{{0, 0, 0}, {0, 0, 1}},
-		{{1, 0, 0}, {1, 0, 1}},
-		{{1, 1, 0}, {1, 1, 1}},
-		{{0, 1, 0}, {0, 1, 1}},
-	}
-	segments := make([][]geom.Pt, 0, len(edges)+18)
-	for _, edge := range edges {
-		p0 := corner(edge[0][0], edge[0][1], edge[0][2])
-		p1 := corner(edge[1][0], edge[1][1], edge[1][2])
-		segments = append(segments, []geom.Pt{p0, p1})
-	}
-	segments = append(segments, a.frameGridSegmentsProjected(mins, maxs, projMins, projMaxs, tickMins, tickMaxs)...)
-	return segments
+	return a.frameGridSegmentsProjected(mins, maxs, projMins, projMaxs, tickMins, tickMaxs)
 }
 
 func (a *Axes3D) activePanePolygons(mins, maxs vec3) [][]geom.Pt {
@@ -2981,6 +2944,7 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *Lin
 	color := a.NextColor()
 	lineWidth := 1.0
 	alpha := 1.0
+	edgeAlpha := 0.0
 	label := ""
 	if len(opts) > 0 {
 		o := opts[0]
@@ -2989,9 +2953,13 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *Lin
 		}
 		if o.LineWidth != nil {
 			lineWidth = *o.LineWidth
+			edgeAlpha = alpha
 		}
 		if o.Alpha != nil && *o.Alpha >= 0 && *o.Alpha <= 1 {
 			alpha = *o.Alpha
+			if o.LineWidth != nil {
+				edgeAlpha = alpha
+			}
 		}
 		label = o.Label
 	}
@@ -3030,7 +2998,7 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *Lin
 		Collection: Collection{
 			Coords: Coords(CoordData),
 			Label:  label,
-			Alpha:  alpha,
+			Alpha:  edgeAlpha,
 			z:      barZ,
 		},
 		Segments:  segments,
@@ -3568,11 +3536,29 @@ func (a *Axes3D) projectionLimits() (vec3, vec3) {
 			mins[i] -= 0.5
 			maxs[i] += 0.5
 		}
-		margin := (maxs[i] - mins[i]) * default3DDataMargin
+		margin := (maxs[i] - mins[i]) * a.default3DDataMargin(i)
 		mins[i] -= margin
 		maxs[i] += margin
 	}
 	return mins, maxs
+}
+
+func (a *Axes3D) default3DDataMargin(axis int) float64 {
+	if axis == 2 {
+		if a != nil {
+			return a.zMargin
+		}
+		return 0
+	}
+	return 0.05
+}
+
+func (a *Axes3D) ensure3DZMargin(margin float64) bool {
+	if a == nil || margin <= a.zMargin {
+		return false
+	}
+	a.zMargin = margin
+	return true
 }
 
 func axes3DFrameLimits(mins, maxs vec3) (vec3, vec3) {

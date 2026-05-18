@@ -362,6 +362,45 @@ func TestDrawTextWithFontEmitsFilledGlyphPath(t *testing.T) {
 	}
 }
 
+func TestDrawTextWithEmbeddedFontEmitsType0FontResource(t *testing.T) {
+	r := newTestRenderer(t)
+	r.SetPDFOptions(render.ResolvePDFOptions(render.WithPDFFontPolicy(render.PDFFontPolicyEmbed)))
+	_ = r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}})
+
+	r.DrawTextWithFont("AB", geom.Pt{X: 20, Y: 40}, 16, render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1}, "DejaVu Sans")
+
+	raw := r.content.String()
+	for _, want := range []string{"BT\n", "/F1 16 Tf", "<00010002> Tj", "ET\n"} {
+		if !strings.Contains(raw, want) {
+			t.Fatalf("embedded text content missing %q:\n%s", want, raw)
+		}
+	}
+	if strings.Contains(raw, " m\n") {
+		t.Fatalf("embedded text should not emit glyph outline paths:\n%s", raw)
+	}
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	doc := mustParsePDF(t, r)
+	pageBody := pdfDocumentObjectBodyContaining(doc, "/Type /Page")
+	if !strings.Contains(pageBody, "/Font << /F1") {
+		t.Fatalf("page resources should reference embedded font F1:\n%s", pageBody)
+	}
+	for _, want := range []string{
+		"/Subtype /Type0",
+		"/Encoding /Identity-H",
+		"/DescendantFonts [",
+		"/Subtype /CIDFontType2",
+		"/CIDToGIDMap",
+		"/FontFile2",
+		"/ToUnicode",
+	} {
+		if !pdfDocumentBodyContains(doc, want) {
+			t.Fatalf("PDF document missing embedded font marker %q; objects: %#v", want, doc.Objects)
+		}
+	}
+}
+
 func TestImageEmitsXObjectResourceAndDrawOperator(t *testing.T) {
 	r := newTestRenderer(t)
 	_ = r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}})

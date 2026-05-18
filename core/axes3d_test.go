@@ -91,6 +91,40 @@ func TestAxes3DProjectPointMatchesMatplotlibBasicDataLimits(t *testing.T) {
 	}
 }
 
+func TestAxes3DProjectionLimitsUseMatplotlibZMargin(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	ax.Plot3D([]float64{0, 1}, []float64{-1, 1}, []float64{-2, 2})
+	mins, maxs := ax.projectionLimits()
+	if !approx(mins[0], -0.05, 1e-12) || !approx(maxs[0], 1.05, 1e-12) {
+		t.Fatalf("x projection limits = (%v, %v), want 5%% Matplotlib x margin", mins[0], maxs[0])
+	}
+	if !approx(mins[1], -1.1, 1e-12) || !approx(maxs[1], 1.1, 1e-12) {
+		t.Fatalf("y projection limits = (%v, %v), want 5%% Matplotlib y margin", mins[1], maxs[1])
+	}
+	if !approx(mins[2], -2, 1e-12) || !approx(maxs[2], 2, 1e-12) {
+		t.Fatalf("line z projection limits = (%v, %v), want Matplotlib line z margin 0", mins[2], maxs[2])
+	}
+}
+
+func TestAxes3DScatterProjectionLimitsUseMatplotlibZMargin(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	ax.Scatter3D([]float64{0, 1}, []float64{-1, 1}, []float64{-2, 2})
+	mins, maxs := ax.projectionLimits()
+	if !approx(mins[2], -2.2, 1e-12) || !approx(maxs[2], 2.2, 1e-12) {
+		t.Fatalf("scatter z projection limits = (%v, %v), want Matplotlib scatter z margin 5%%", mins[2], maxs[2])
+	}
+}
+
 func TestAxes3DScatterDefaultColorUsesShapeCycle(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -380,7 +414,7 @@ func artName(art Artist) string {
 	}
 }
 
-func TestAxes3DProjectionLimitsUseMatplotlibAutoscaleMargins(t *testing.T) {
+func TestAxes3DProjectionLimitsUseMatplotlibXYAutoscaleMargins(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
 	if err != nil {
@@ -391,8 +425,8 @@ func TestAxes3DProjectionLimitsUseMatplotlibAutoscaleMargins(t *testing.T) {
 	mins, maxs := ax.projectionLimits()
 	if !approx(mins[0], -0.05, 1e-12) || !approx(maxs[0], 1.05, 1e-12) ||
 		!approx(mins[1], -0.05, 1e-12) || !approx(maxs[1], 1.05, 1e-12) ||
-		!approx(mins[2], -0.1, 1e-12) || !approx(maxs[2], 2.1, 1e-12) {
-		t.Fatalf("projection limits = %v..%v, want Matplotlib autoscale margins [-0.05 -0.05 -0.1]..[1.05 1.05 2.1]", mins, maxs)
+		!approx(mins[2], 0, 1e-12) || !approx(maxs[2], 2, 1e-12) {
+		t.Fatalf("projection limits = %v..%v, want Matplotlib line autoscale margins [-0.05 -0.05 0]..[1.05 1.05 2]", mins, maxs)
 	}
 }
 
@@ -530,6 +564,23 @@ func TestAxes3DWireframeSupportsRowColumnCountsLikeMatplotlib(t *testing.T) {
 	}
 }
 
+func TestAxes3DWireframeDefaultLineWidthMatchesMatplotlib(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	x, y, z := testGrid3D(2, 2)
+	collection := ax.Wireframe(x, y, z)
+	if collection == nil {
+		t.Fatal("Wireframe returned nil")
+	}
+	if got, want := collection.LineWidth, 2.0; got != want {
+		t.Fatalf("wireframe default line width = %v, want Matplotlib default converted to Go pixels %v", got, want)
+	}
+}
+
 func TestAxes3DFrameSegmentsUseMatplotlibActiveGridPlanes(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -545,6 +596,23 @@ func TestAxes3DFrameSegmentsUseMatplotlibActiveGridPlanes(t *testing.T) {
 	}
 	if !contains3DSegment(segments, want, 1e-12) {
 		t.Fatalf("missing Matplotlib-style x gridline through active panes; want %+v in %+v", want, segments)
+	}
+}
+
+func TestAxes3DFrameSegmentsDoNotAddSeparateCubeBox(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	mins := vec3{-0.05, -0.05, -0.1}
+	maxs := vec3{1.05, 1.05, 2.1}
+	frameMins, frameMaxs := axes3DFrameLimits(mins, maxs)
+	segments := ax.frameSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs)
+	gridSegments := ax.frameGridSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs)
+	if got, want := len(segments), len(gridSegments); got != want {
+		t.Fatalf("frame segment count = %d, want grid-only Matplotlib frame count %d", got, want)
 	}
 }
 
@@ -1482,8 +1550,8 @@ func TestAxes3DContourfAutoscaleUsesFilledLevelMidpointsLikeMatplotlib(t *testin
 		t.Fatal("Contourf returned nil")
 	}
 	mins, maxs := ax.projectionLimits()
-	if !approx(mins[2], 0.45, 1e-12) || !approx(maxs[2], 1.55, 1e-12) {
-		t.Fatalf("Contourf projection z limits = %.12g..%.12g, want Matplotlib autoscale from filled midpoints 0.5..1.5 with margin", mins[2], maxs[2])
+	if !approx(mins[2], 0.5, 1e-12) || !approx(maxs[2], 1.5, 1e-12) {
+		t.Fatalf("Contourf projection z limits = %.12g..%.12g, want Matplotlib autoscale from filled midpoints 0.5..1.5", mins[2], maxs[2])
 	}
 }
 
@@ -2213,6 +2281,9 @@ func TestAxes3DBar3DCreatesSegments(t *testing.T) {
 	}
 	if got, want := len(collection.Segments), 16; got != want {
 		t.Fatalf("segment count = %d, want %d", got, want)
+	}
+	if got, want := collection.Alpha, 0.0; got != want {
+		t.Fatalf("default Bar3D edge alpha = %v, want Matplotlib default edgecolors-none alpha %v", got, want)
 	}
 	foundFaces := false
 	for _, artist := range ax.Artists {
