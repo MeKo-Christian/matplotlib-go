@@ -268,6 +268,63 @@ type PSExporter interface {
 	SavePS(path string) error
 }
 
+// PSFontPolicy controls whether PostScript text is emitted as filled glyph
+// outlines or through a built-in Base14 font.
+type PSFontPolicy string
+
+const (
+	// PSFontPolicyPath converts text to filled glyph outlines through the
+	// shared font manager. This mirrors the deterministic PDF default and
+	// avoids claiming font embedding/searchability that Level-2 PS cannot
+	// provide without a Type 3/Type 42 embedding layer.
+	PSFontPolicyPath PSFontPolicy = "path"
+	// PSFontPolicyBase14 emits direct PostScript text through Helvetica.
+	// Non-ASCII runes are replaced because no custom font is embedded.
+	PSFontPolicyBase14 PSFontPolicy = "base14"
+)
+
+// PSOptions carries PostScript-specific renderer behavior knobs.
+type PSOptions struct {
+	FontPolicy PSFontPolicy
+}
+
+// PSOption mutates PSOptions.
+type PSOption func(*PSOptions)
+
+// DefaultPSOptions returns deterministic PostScript defaults.
+func DefaultPSOptions() PSOptions {
+	return PSOptions{FontPolicy: PSFontPolicyPath}
+}
+
+// ResolvePSOptions applies opts onto deterministic PS defaults.
+func ResolvePSOptions(opts ...PSOption) PSOptions {
+	cfg := DefaultPSOptions()
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&cfg)
+		}
+	}
+	return cfg
+}
+
+// WithPSFontPolicy configures glyph-path versus Base14 direct text output.
+func WithPSFontPolicy(policy PSFontPolicy) PSOption {
+	return func(cfg *PSOptions) {
+		switch policy {
+		case PSFontPolicyBase14:
+			cfg.FontPolicy = PSFontPolicyBase14
+		default:
+			cfg.FontPolicy = PSFontPolicyPath
+		}
+	}
+}
+
+// PSOptionSetter is implemented by renderers whose draw-time behavior depends
+// on PSOptions, such as the text output policy.
+type PSOptionSetter interface {
+	SetPSOptions(opts PSOptions)
+}
+
 // PGFExporter is implemented by renderers that can export their output to
 // PGF/TikZ for inclusion in LaTeX documents.
 type PGFExporter interface {

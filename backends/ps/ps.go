@@ -27,12 +27,15 @@ type Renderer struct {
 	background render.Color
 	resolution uint
 
-	began     bool
-	viewport  geom.Rect
-	content   strings.Builder
-	document  []byte
-	stack     []state
-	markerIDs map[string]string
+	began       bool
+	viewport    geom.Rect
+	content     strings.Builder
+	document    []byte
+	stack       []state
+	markerIDs   map[string]string
+	imageIDs    map[string]string
+	psOpts      render.PSOptions
+	lastFontKey string
 }
 
 var (
@@ -43,9 +46,11 @@ var (
 	_ render.MarkerDrawer           = (*Renderer)(nil)
 	_ render.NativeHatcher          = (*Renderer)(nil)
 	_ render.PathCollectionDrawer   = (*Renderer)(nil)
+	_ render.TextPather             = (*Renderer)(nil)
 	_ render.FontTextDrawer         = (*Renderer)(nil)
 	_ render.FontRotatedTextDrawer  = (*Renderer)(nil)
 	_ render.FontVerticalTextDrawer = (*Renderer)(nil)
+	_ render.PSOptionSetter         = (*Renderer)(nil)
 )
 
 // New creates a PostScript renderer with a point-sized page.
@@ -64,6 +69,7 @@ func New(width, height int, background render.Color) (*Renderer, error) {
 		height:     height,
 		background: background,
 		resolution: 72,
+		psOpts:     render.DefaultPSOptions(),
 	}, nil
 }
 
@@ -73,6 +79,11 @@ func (r *Renderer) SetResolution(dpi uint) {
 		dpi = 72
 	}
 	r.resolution = dpi
+}
+
+// SetPSOptions implements render.PSOptionSetter.
+func (r *Renderer) SetPSOptions(opts render.PSOptions) {
+	r.psOpts = opts
 }
 
 // Begin starts a drawing session for the given viewport.
@@ -86,6 +97,8 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.document = nil
 	r.stack = r.stack[:0]
 	r.markerIDs = map[string]string{}
+	r.imageIDs = map[string]string{}
+	r.lastFontKey = ""
 
 	r.content.WriteString("gsave\n")
 	fmt.Fprintf(&r.content, "0 %s translate\n", shortFloat(float64(r.height)))
@@ -361,16 +374,35 @@ func (r *Renderer) ImageTransformed(img render.Image, _ geom.Rect, transform geo
 }
 
 func (r *Renderer) writeImageWithMatrix(rgb string, width, height int, matrix geom.Affine) {
-	fmt.Fprintf(&r.content, "gsave\n[%s %s %s %s %s %s] concat\n/DeviceRGB setcolorspace\n",
+	name := r.registerImageProcedure(rgb, width, height)
+	if name == "" {
+		return
+	}
+	fmt.Fprintf(&r.content, "gsave\n[%s %s %s %s %s %s] concat\n%s\ngrestore\n",
 		shortFloat(matrix.A),
 		shortFloat(matrix.B),
 		shortFloat(matrix.C),
 		shortFloat(matrix.D),
 		shortFloat(matrix.E),
 		shortFloat(matrix.F),
+		name,
 	)
+}
+
+func (r *Renderer) registerImageProcedure(rgb string, width, height int) string {
+	if width <= 0 || height <= 0 || rgb == "" {
+		return ""
+	}
+	key := fmt.Sprintf("%dx%d:%s", width, height, rgb)
+	if name, ok := r.imageIDs[key]; ok {
+		return name
+	}
+	name := fmt.Sprintf("I%d", len(r.imageIDs)+1)
+	r.imageIDs[key] = name
+	fmt.Fprintf(&r.content, "/%s {\n/DeviceRGB setcolorspace\n", name)
 	fmt.Fprintf(&r.content, "%d %d 8 [%d 0 0 -%d 0 %d]\n", width, height, width, height, height)
-	fmt.Fprintf(&r.content, "{<%s>} false 3 colorimage\ngrestore\n", rgb)
+	fmt.Fprintf(&r.content, "{<%s>} false 3 colorimage\n} bind def\n", rgb)
+	return name
 }
 
 // GlyphRun draws a shaped run using glyph IDs as Unicode scalar values when
@@ -397,7 +429,10 @@ func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
 }
 
 // MeasureText returns deterministic approximate text metrics for layout.
-func (r *Renderer) MeasureText(text string, size float64, _ string) render.TextMetrics {
+func (r *Renderer) MeasureText(text string, size float64, fontKey string) render.TextMetrics {
+	if fontKey != "" {
+		r.lastFontKey = fontKey
+	}
 	if size <= 0 {
 		size = defaultFontHeight
 	}
@@ -407,15 +442,34 @@ func (r *Renderer) MeasureText(text string, size float64, _ string) render.TextM
 	return render.TextMetrics{W: width, H: ascent + descent, Ascent: ascent, Descent: descent}
 }
 
-// DrawText draws text using a standard PostScript base font.
-func (r *Renderer) DrawText(text string, origin geom.Pt, size float64, textColor render.Color) {
-	r.DrawTextWithFont(text, origin, size, textColor, "")
+// TextPath converts text to vector glyph outlines through the shared font
+// manager. PS path text is drawn through a local Y reflection so glyphs remain
+// upright inside the backend's top-left display-coordinate transform.
+func (r *Renderer) TextPath(text string, origin geom.Pt, size float64, fontKey string) (geom.Path, bool) {
+	if fontKey != "" {
+		r.lastFontKey = fontKey
+	} else {
+		fontKey = r.lastFontKey
+	}
+	return render.TextPath(text, origin, size, fontKey)
 }
 
-// DrawTextWithFont draws text with an explicit font key. The first slice maps
-// every key to Helvetica so text remains searchable in PS without embedding.
-func (r *Renderer) DrawTextWithFont(text string, origin geom.Pt, size float64, textColor render.Color, _ string) {
+// DrawText draws text using a standard PostScript base font.
+func (r *Renderer) DrawText(text string, origin geom.Pt, size float64, textColor render.Color) {
+	r.DrawTextWithFont(text, origin, size, textColor, r.lastFontKey)
+}
+
+// DrawTextWithFont draws text with an explicit font key using the configured
+// PS font policy. The default mirrors PDF's deterministic glyph-path output;
+// PSFontPolicyBase14 keeps simple searchable Helvetica text with no embedding.
+func (r *Renderer) DrawTextWithFont(text string, origin geom.Pt, size float64, textColor render.Color, fontKey string) {
 	if !r.began || text == "" || size <= 0 || textColor.A <= 0 {
+		return
+	}
+	if fontKey != "" {
+		r.lastFontKey = fontKey
+	}
+	if r.psOpts.FontPolicy != render.PSFontPolicyBase14 && r.drawTextPath(text, size, textColor, fontKey, textPathAffine(origin)) {
 		return
 	}
 	r.writeTextAt(text, origin, size, 0, textColor)
@@ -423,33 +477,62 @@ func (r *Renderer) DrawTextWithFont(text string, origin geom.Pt, size float64, t
 
 // DrawTextRotated draws text around the supplied anchor point.
 func (r *Renderer) DrawTextRotated(text string, anchor geom.Pt, size, angle float64, textColor render.Color) {
-	r.DrawTextRotatedWithFont(text, anchor, size, angle, textColor, "")
+	r.DrawTextRotatedWithFont(text, anchor, size, angle, textColor, r.lastFontKey)
 }
 
 // DrawTextRotatedWithFont draws rotated text with an explicit font key.
-func (r *Renderer) DrawTextRotatedWithFont(text string, anchor geom.Pt, size, angle float64, textColor render.Color, _ string) {
+func (r *Renderer) DrawTextRotatedWithFont(text string, anchor geom.Pt, size, angle float64, textColor render.Color, fontKey string) {
 	if !r.began || text == "" || size <= 0 || textColor.A <= 0 {
 		return
+	}
+	if fontKey != "" {
+		r.lastFontKey = fontKey
+	}
+	if r.psOpts.FontPolicy != render.PSFontPolicyBase14 && !math.IsNaN(angle) && !math.IsInf(angle, 0) {
+		metrics := r.MeasureText(text, size, fontKey)
+		origin := geom.Pt{X: anchor.X - metrics.W/2, Y: anchor.Y - metrics.Descent}
+		transform := rotationAffine(angle, anchor).Mul(textPathAffine(origin))
+		if r.drawTextPath(text, size, textColor, fontKey, transform) {
+			return
+		}
 	}
 	r.writeTextAt(text, anchor, size, angle, textColor)
 }
 
 // DrawTextVertical draws vertical text centered on the supplied point.
 func (r *Renderer) DrawTextVertical(text string, center geom.Pt, size float64, textColor render.Color) {
-	r.DrawTextVerticalWithFont(text, center, size, textColor, "")
+	r.DrawTextVerticalWithFont(text, center, size, textColor, r.lastFontKey)
 }
 
 // DrawTextVerticalWithFont draws vertical text with an explicit font key.
-func (r *Renderer) DrawTextVerticalWithFont(text string, center geom.Pt, size float64, textColor render.Color, _ string) {
+func (r *Renderer) DrawTextVerticalWithFont(text string, center geom.Pt, size float64, textColor render.Color, fontKey string) {
 	if !r.began || text == "" || size <= 0 || textColor.A <= 0 {
 		return
 	}
+	if fontKey != "" {
+		r.lastFontKey = fontKey
+	}
 	runes := []rune(text)
-	lineHeight := r.MeasureText("M", size, "").H
+	lineHeight := r.MeasureText("M", size, fontKey).H
 	startY := center.Y - lineHeight*float64(len(runes)-1)/2
 	for i, ch := range runes {
-		r.writeTextAt(string(ch), geom.Pt{X: center.X, Y: startY + float64(i)*lineHeight}, size, 0, textColor)
+		s := string(ch)
+		metrics := r.MeasureText(s, size, fontKey)
+		origin := geom.Pt{X: center.X - metrics.W/2, Y: startY + float64(i)*lineHeight}
+		if r.psOpts.FontPolicy != render.PSFontPolicyBase14 && r.drawTextPath(s, size, textColor, fontKey, textPathAffine(origin)) {
+			continue
+		}
+		r.writeTextAt(s, origin, size, 0, textColor)
 	}
+}
+
+func (r *Renderer) drawTextPath(text string, size float64, textColor render.Color, fontKey string, transform geom.Affine) bool {
+	path, ok := render.TextPath(text, geom.Pt{}, size, fontKey)
+	if !ok || !path.Validate() || len(path.C) == 0 {
+		return false
+	}
+	r.Path(affinePath(path, transform), &render.Paint{Fill: textColor})
+	return true
 }
 
 func (r *Renderer) writeTextAt(text string, origin geom.Pt, size, angle float64, textColor render.Color) {
@@ -457,7 +540,7 @@ func (r *Renderer) writeTextAt(text string, origin geom.Pt, size, angle float64,
 	writeFillColor(&r.content, textColor)
 	fmt.Fprintf(&r.content, "%s %s translate\n", shortFloat(origin.X), shortFloat(origin.Y))
 	if angle != 0 && !math.IsNaN(angle) && !math.IsInf(angle, 0) {
-		fmt.Fprintf(&r.content, "%s rotate\n", shortFloat(angle))
+		fmt.Fprintf(&r.content, "%s rotate\n", shortFloat(angle*180/math.Pi))
 	}
 	r.content.WriteString("1 -1 scale\n")
 	fmt.Fprintf(&r.content, "/Helvetica findfont %s scalefont setfont\n", shortFloat(size))
@@ -676,6 +759,22 @@ func normalizedAffine(affine geom.Affine) geom.Affine {
 		return geom.Identity()
 	}
 	return affine
+}
+
+func textPathAffine(origin geom.Pt) geom.Affine {
+	return translateAffine(origin).Mul(geom.Affine{A: 1, D: -1})
+}
+
+func rotationAffine(angle float64, pivot geom.Pt) geom.Affine {
+	cos := math.Cos(angle)
+	sin := math.Sin(angle)
+	return translateAffine(pivot).
+		Mul(geom.Affine{A: cos, B: sin, C: -sin, D: cos}).
+		Mul(translateAffine(geom.Pt{X: -pivot.X, Y: -pivot.Y}))
+}
+
+func translateAffine(p geom.Pt) geom.Affine {
+	return geom.Affine{A: 1, D: 1, E: p.X, F: p.Y}
 }
 
 func affinePath(path geom.Path, affine geom.Affine) geom.Path {

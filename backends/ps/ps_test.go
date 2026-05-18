@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"image"
 	"image/color"
+	"math"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -80,6 +81,33 @@ func TestImageTransformedEmitsConcatMatrix(t *testing.T) {
 	}
 }
 
+func TestRepeatedImagesReusePostScriptProcedure(t *testing.T) {
+	r := newTestRenderer(t)
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	img := image.NewRGBA(image.Rect(0, 0, 2, 1))
+	img.SetRGBA(0, 0, color.RGBA{R: 0xff, A: 0xff})
+	img.SetRGBA(1, 0, color.RGBA{G: 0xff, A: 0xff})
+	data := render.NewImageData(img)
+
+	r.Image(data, geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 50, Y: 40}})
+	r.Image(data, geom.Rect{Min: geom.Pt{X: 60, Y: 20}, Max: geom.Pt{X: 100, Y: 40}})
+
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	if got := bytes.Count(r.document, []byte("/I1 {")); got != 1 {
+		t.Fatalf("expected one image procedure definition, got %d in\n%s", got, r.document)
+	}
+	if got := bytes.Count(r.document, []byte("<ff000000ff00>")); got != 1 {
+		t.Fatalf("expected one reused image payload, got %d in\n%s", got, r.document)
+	}
+	if got := bytes.Count(r.document, []byte("\nI1\ngrestore")); got != 2 {
+		t.Fatalf("expected two image procedure invocations, got %d in\n%s", got, r.document)
+	}
+}
+
 func TestPathWithHatchEmitsClippedHatchLines(t *testing.T) {
 	r := newTestRenderer(t)
 	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}}); err != nil {
@@ -120,6 +148,85 @@ func TestPathWithHatchEmitsClippedHatchLines(t *testing.T) {
 	}
 	if !bytes.Contains(r.document, []byte("lineto\nstroke")) {
 		t.Fatalf("missing hatch stroke lines in\n%s", r.document)
+	}
+}
+
+func TestPartialAlphaVectorPaintIsDocumentedOpaque(t *testing.T) {
+	r := newTestRenderer(t)
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	var p geom.Path
+	p.MoveTo(geom.Pt{X: 10, Y: 10})
+	p.LineTo(geom.Pt{X: 50, Y: 10})
+	p.LineTo(geom.Pt{X: 50, Y: 50})
+	p.Close()
+	r.Path(p, &render.Paint{
+		Fill:      render.Color{R: 0.2, G: 0.4, B: 0.6, A: 0.25},
+		Stroke:    render.Color{R: 0.8, G: 0.1, B: 0.1, A: 0.5},
+		LineWidth: 2,
+	})
+
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	if !bytes.Contains(r.document, []byte("0.2 0.4 0.6 setrgbcolor")) {
+		t.Fatalf("partial-alpha fill should be emitted as opaque RGB in\n%s", r.document)
+	}
+	if !bytes.Contains(r.document, []byte("0.8 0.1 0.1 setrgbcolor")) {
+		t.Fatalf("partial-alpha stroke should be emitted as opaque RGB in\n%s", r.document)
+	}
+	if bytes.Contains(r.document, []byte("opacity")) || bytes.Contains(r.document, []byte("alpha")) {
+		t.Fatalf("Level-2 PS should not claim native alpha state in\n%s", r.document)
+	}
+}
+
+func TestDefaultTextPolicyEmitsGlyphPaths(t *testing.T) {
+	r := newTestRenderer(t)
+	if _, ok := any(r).(render.TextPather); !ok {
+		t.Fatal("PS renderer should implement render.TextPather")
+	}
+	if _, ok := any(r).(render.PSOptionSetter); !ok {
+		t.Fatal("PS renderer should implement render.PSOptionSetter")
+	}
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+
+	r.DrawTextWithFont("Ag", geom.Pt{X: 20, Y: 50}, 18, render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1}, "DejaVu Sans")
+
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	if bytes.Contains(r.document, []byte("(Ag) show")) || bytes.Contains(r.document, []byte("/Helvetica findfont")) {
+		t.Fatalf("default PS text policy should not emit direct Base14 text in\n%s", r.document)
+	}
+	if !bytes.Contains(r.document, []byte("0.1 0.2 0.3 setrgbcolor")) ||
+		!bytes.Contains(r.document, []byte("fill")) {
+		t.Fatalf("glyph-path text should emit filled colored paths in\n%s", r.document)
+	}
+}
+
+func TestBase14TextPolicyEmitsDirectHelveticaText(t *testing.T) {
+	r := newTestRenderer(t)
+	r.SetPSOptions(render.ResolvePSOptions(render.WithPSFontPolicy(render.PSFontPolicyBase14)))
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+
+	r.DrawTextRotatedWithFont(`A()`, geom.Pt{X: 20, Y: 50}, 18, math.Pi/2, render.Color{A: 1}, "DejaVu Sans")
+
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	if !bytes.Contains(r.document, []byte("/Helvetica findfont 18 scalefont setfont")) {
+		t.Fatalf("Base14 policy should use Helvetica in\n%s", r.document)
+	}
+	if !bytes.Contains(r.document, []byte(`(A\(\)) show`)) {
+		t.Fatalf("Base14 policy should escape direct text in\n%s", r.document)
+	}
+	if !bytes.Contains(r.document, []byte("90 rotate")) {
+		t.Fatalf("Base14 rotated text should convert radians to PS degrees in\n%s", r.document)
 	}
 }
 

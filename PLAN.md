@@ -122,251 +122,298 @@ final backend deepening, and the documentation polish for v1.0.
 
 ---
 
-# Phase 1: PDF and Additional Vector Output
+# Phase 1A: PDF Publication Backend
 
-**Goal:** add the publication-quality vector formats that are still missing
-after SVG landed, and finish the save-dispatch story so all formats route
-through the same backend / canvas pipeline.
+**Goal:** make PDF a deterministic, publication-quality vector backend with
+text, image, hatch, alpha, metadata, and resource-reuse behavior close to
+Matplotlib.
 
 **Reference sources:** `third_party/matplotlib/lib/matplotlib/backends/backend_pdf.py`,
-`backend_ps.py`, `backend_pgf.py`, current `backends/svg/` for serialization
-patterns.
+current `backends/svg/` for serialization patterns.
 
-### 1.1 PDF Backend
+### 1A.1 PDF Backend Foundation
 
-- [x] Scaffold `backends/pdf/` following the SVG layout: deterministic
-      serialization, dedicated `init.go` registration, `doc.go` capability notes.
-- [x] Page model and content stream encoder: graphics state stack, path
-      construction (`m`/`l`/`c`/`re`/`h`/`f`/`S`), clip operators, color spaces.
-- [x] Embedded font subsetting (Type 0 / CIDFontType2) using the shared font
-      resource strategy that already drives AGG and SVG.
-- [x] Text-as-path opt-in via `render.TextPather` so PDF can render typography
-      without an embedded font program. Real text-as-text via embedded fonts
-      becomes the default once subsetting lands.
-- [x] Image XObjects with `/FlateDecode` and `/DCTDecode`, including direct
-      grayscale `/SMask` images for RGBA alpha.
-- [x] Native hatch via tiling pattern color spaces.
-- [x] Native marker / path collection batches via form XObjects.
-- [x] Metadata, `SOURCE_DATE_EPOCH`, and reproducible-output options on par
-      with the SVG renderer (`render.PDFOptions`, `WithPDFFontPolicy`,
-      `WithPDFMetadata`, `WithPDFCreationDate`).
-- [x] Structural test harness (analogous to `internal/svgcompare/`) for
-      whitespace-insensitive PDF object comparison.
-- [x] Golden fixtures for line, bar, scatter, hist, contour, imshow, polar,
-      hatch_bars, text_layout, clipped, and image_transformed cases.
+**Goal:** make PDF a deterministic first-class backend with enough renderer
+coverage to save common plots without raster fallbacks.
 
-Current slice landed:
+- [x] Scaffold `backends/pdf/` with `doc.go`, `init.go`, `pdf.go`,
+      `pdf_test.go`, and `registry_test.go`.
+- [x] Register `backends.PDF`, `backends.PDFExport`, `render.PDFExporter`,
+      `render.PDFOptionExporter`, `render.PDFOptionSetter`, and `render.DPIAware`.
+- [x] Add deterministic Catalog / Pages / Page / Contents / Info objects,
+      xref/trailer writing, compact float formatting, literal-string escaping,
+      and PDF name escaping.
+- [x] Add the page content stream encoder: graphics state stack, top-left
+      display-coordinate transform, path construction, fills, strokes, clips,
+      and RGB color spaces.
+- [x] Compress content streams with `/FlateDecode`.
+- [x] Honor `SOURCE_DATE_EPOCH` for deterministic `/CreationDate`.
+- [x] Route `.pdf` through `backends.SavePDF`, registry `SaveFormats`, and
+      `backends/all` side imports.
+- [x] Add `core.SaveFig(fig, r, "out.pdf")` dispatch through
+      `render.PDFExporter`.
 
-- `backends/pdf` package with `doc.go`, `init.go`, `pdf.go`, `pdf_test.go`,
-  `registry_test.go`. Renderer implements `render.Renderer`,
-  `render.PDFExporter`, `render.PDFOptionExporter`, `render.PDFOptionSetter`,
-  and `render.DPIAware`.
-- `backends.PDF` backend constant and `backends.PDFExport` capability with a
-  runtime-checked `PDFExporter` interface mapping. `VectorOutput` capability
-  now accepts either `SVGExporter` or `PDFExporter`.
-- PDF document writer with deterministic xref/trailer, single-page Catalog /
-  Pages / Page / Contents / Info object layout, FlateDecode-compressed content
-  stream, compact `shortFloat` formatter, quadratic-to-cubic curve promotion,
-  literal-string / name escaping, and `SOURCE_DATE_EPOCH`-aware
-  `/CreationDate`.
-- Save dispatch routes `.pdf` through `backends.SavePDF` and the registry
-  `saveViaExtension` fallback. `backends/all/all.go` side-imports the new
-  package.
-- Text-as-path output now routes `TextPath`, font-keyed text, rotated text,
-  vertical text, and simple `GlyphRun` fallback through the shared font outline
-  pipeline. PDF advertises the matching text capabilities only via runtime
-  checked renderer interfaces.
-- `render.WithPDFFontPolicy(render.PDFFontPolicyEmbed)` now emits real PDF
-  text objects backed by deterministic Type 0 / CIDFontType2 resources,
-  embedded TrueType font programs, `/CIDToGIDMap`, `/W`, and `/ToUnicode`
-  maps. The practical first slice subsets the resource CID map to used glyphs
-  while embedding the resolved font program bytes intact.
-- Raster `Image` draws now emit `/Image` XObjects with deterministic
-  `/FlateDecode` streams and grayscale soft masks for RGBA alpha. JPEG
-  `/DCTDecode` passthrough is supported through the optional
-  `render.JPEGImage` interface. Flate image streams include PNG predictor
-  `/DecodeParms`, matching Matplotlib's compressed image path.
-- New `internal/pdfcompare` structural comparison helper parses indirect
-  objects, ignores xref offset noise, normalizes object token whitespace, and
-  decodes `/FlateDecode` streams before comparison. PDF backend tests exercise
-  it against generated output.
-- Native hatch fills now emit reusable PDF tiling pattern resources
-  (`/PatternType 1`) with deterministic pattern names and decoded structural
-  coverage through `internal/pdfcompare`.
-- Marker and path collection batches now emit reusable Form XObjects,
-  registered in the page `/XObject` resource dictionary and invoked with
-  per-item paint state, matching Matplotlib's PDF batching strategy.
-- Transformed images now implement `render.ImageTransformer` by reusing image
-  XObjects with arbitrary PDF `cm` matrices, covering rotated image placement.
-- Stroke/fill alpha now follows Matplotlib's PDF ExtGState model: paint draws
-  register reusable `/ExtGState` resources with separate `CA` / `ca` values and
-  select them through the `gs` operator.
-- Repeated raster image draws reuse a single image XObject when the encoded
-  RGB/alpha payload matches, mirroring Matplotlib's image-object cache.
+### 1A.2 PDF Text, Images, and Reuse
 
-### 1.2 PostScript and PGF Export
+**Goal:** bring PDF output close to Matplotlib semantics for text, raster
+images, hatches, alpha, and repeated resources.
 
-- [x] PostScript (`backends/ps/`) for journal submissions that still require
-      EPS. Scope limited to level-2 PS with the same font / image / hatch
-      semantics as PDF.
-- [x] Generator-only PGF / LaTeX export (`backends/pgf/`) for direct inclusion
-      in LaTeX documents.
-- [ ] PGF verification / hardening decision: decide whether to invoke
-      `lualatex` for verification, and fill out the richer PGF image / hatch /
-      alpha / batching semantics.
-- [ ] Optionally vector / mixed-mode output: rasterized fallback for
-      effects PDF/PS cannot represent (driven by renderer capability checks, not
-      backend-name conditionals).
+- [x] Implement text-as-path output through `render.TextPather` for
+      `TextPath`, font-keyed text, rotated text, vertical text, and simple
+      `GlyphRun` fallback.
+- [x] Implement embedded Type 0 / CIDFontType2 text resources for
+      `render.WithPDFFontPolicy(render.PDFFontPolicyEmbed)`.
+- [x] Add deterministic embedded TrueType font programs, `/CIDToGIDMap`, `/W`,
+      and `/ToUnicode` maps.
+- [x] Subset the PDF resource CID map to used glyphs while embedding the
+      resolved font program bytes.
+- [x] Emit raster image XObjects with `/FlateDecode` RGB streams and grayscale
+      `/SMask` images for RGBA alpha.
+- [x] Add JPEG `/DCTDecode` passthrough through the optional
+      `render.JPEGImage` interface.
+- [x] Add PNG predictor `/DecodeParms` for Flate image streams.
+- [x] Reuse repeated raster image XObjects when encoded RGB/alpha payloads
+      match.
+- [x] Add transformed image support through `render.ImageTransformer` and PDF
+      `cm` matrices.
+- [x] Add native hatch fills through reusable PDF tiling pattern resources.
+- [x] Add native marker and path-collection batches through reusable Form
+      XObjects.
+- [x] Add stroke/fill alpha through reusable PDF `/ExtGState` resources with
+      separate `CA` / `ca` values.
 
-Current slice landed:
+### 1A.3 PDF Test and Fixture Hardening
 
-- `backends/ps` package with `doc.go`, `init.go`, `ps.go`, and
-  `registry_test.go`. Renderer implements `render.Renderer`,
-  `render.PSExporter`, `render.DPIAware`, `render.ImageTransformer`,
-  `render.NativeHatcher`, `render.MarkerDrawer`,
-  `render.PathCollectionDrawer`, and basic direct text interfaces.
-- `backends.PS` backend constant and `backends.PSExport` capability with
-  runtime-checked `PSExporter` interface mapping. `VectorOutput` now accepts
-  SVG, PDF, or PS exporters.
-- Deterministic Level-2 PostScript/EPS document writer with Adobe headers,
-  bounding boxes, top-left display-coordinate transform, background fills,
-  graphics state stack, path construction, rectangular/path clipping, stroke
-  state, RGB stroke/fill color, and simple Helvetica text output.
-- RGBA raster image draws now emit deterministic inline Level-2 PostScript
-  `colorimage` payloads. PostScript has no native alpha channel, so translucent
-  image pixels are pre-composited over white for this initial image slice.
-- Transformed images now implement `render.ImageTransformer` by applying an
-  arbitrary PostScript `concat` matrix before the same inline `colorimage`
-  payload, covering rotated image placement from the core image artist.
-- Native hatch fills now implement `render.NativeHatcher` by filling the face
-  color, clipping to the original path, and emitting deterministic PostScript
-  hatch stroke lines for the same hatch symbols used by PDF / SVG.
-- Native marker and path-collection batches now emit reusable PostScript
-  procedures keyed by path geometry and paint, then invoke those procedures for
-  each marker offset or collection item.
-- Save dispatch routes `.ps` and `.eps` through `core.SaveFig`,
-  `backends.SavePS`, and registry `SaveFormats`; `backends/all` side-imports
-  the new package.
-- `backends/pgf` package with `doc.go`, `init.go`, `pgf.go`, and
-  `registry_test.go`. Renderer implements `render.Renderer`,
-  `render.PGFExporter`, `render.DPIAware`, `render.FontTextDrawer`, and
-  `render.FontRotatedTextDrawer`.
-- `.pgf` is registered in the backend `SaveFormats` map, selected by
-  `backends.SelectBackendForExtension`, side-imported from `backends/all`, and
-  routed through `core.SaveFig` / `backends.SavePGF`.
-- The first PGF slice emits deterministic generator-only `pgfpicture` output
-  with paths, rectangular/path clips, simple direct LaTeX text, rotated text,
-  graphics scopes, and the same top-left display-coordinate transform used by
-  the other vector renderers. It deliberately does not invoke a TeX engine yet.
-- PGF paint semantics now include explicit `\pgfsetfillopacity` /
-  `\pgfsetstrokeopacity` commands for filled, stroked, hatched, and text
-  output, avoiding alpha leakage between draws.
-- Native PGF hatch fills now implement `render.NativeHatcher` by filling the
-  face color, clipping to the original path, and emitting deterministic PGF
-  hatch stroke lines for the same hatch symbols used by PDF / PS / SVG.
-- `cmd/example -format pgf` now writes a non-empty PGF file in smoke coverage.
+**Goal:** keep PDF output stable enough that regressions are caught without
+overfitting tests to object numbers or whitespace.
 
-Remaining PostScript work:
+- [x] Add `internal/pdfcompare` for structural PDF comparison.
+- [x] Parse indirect objects, ignore xref offset noise, normalize object token
+      whitespace, and decode `/FlateDecode` streams before comparison.
+- [x] Cover hatch pattern resources through decoded structural comparison.
+- [x] Add golden fixtures for line, bar, scatter, hist, contour, imshow,
+      polar, hatch_bars, text_layout, clipped, and image_transformed cases.
+- [x] Add registry tests for PDF extension selection and export.
 
-- Match PDF's embedded-font, alpha, JPEG passthrough, and image reuse
-  semantics.
-
-Remaining PGF work:
-
-- Decide whether CI/dev verification should run `lualatex` or keep PGF as a
-  pure generator backend.
-- Add PGF-specific option / metadata routing once the shared save-option
-  surface lands.
-- Implement PGF raster image output / mixed-mode fallback, reusable marker /
-  path collection batches, and tighter TeX/font metrics parity.
-
-### 1.3 Save Dispatch Cleanup
-
-- [x] Remove the last hard-coded format paths in callers; every save route
-      through `backends.SelectBackendForExtension` and the `SaveFormats` map.
-- [x] Expand `BackendComparisonReport` to enumerate PDF / PS / PGF capability
-      status alongside AGG / GoBasic / SVG / Skia.
-- [x] Add `cmd/example -format pdf|ps|pgf` smoke coverage matching the
-      existing PNG / SVG runners.
-
-Current slice landed:
-
-- `backends.SaveViaExtension` now requires an explicit `SaveFormats` handler
-  and no longer falls back to hard-coded `.png` / `.svg` / `.pdf` / `.ps`
-  branches.
-- `cmd/example` accepts `-format png|svg|pdf|ps|eps|pgf`, selects an exporter
-  with `backends.SelectBackendForExtension`, and saves through the registry
-  `SaveFormats` map. PNG / SVG / PDF / PS / PGF have smoke coverage.
-- `PGFExport` is now represented in the backend capability matrix and
-  comparison report, with `.pgf` registration visible in the save-format
-  column.
-- `core.SaveFig(fig, r, "out.pdf")` now dispatches to `render.PDFExporter`.
-  `core` remains renderer-interface based because importing `backends` there
-  would create the existing `backends -> canvas -> core` cycle.
-- `BackendComparisonReport` now includes a `SaveFormats` column listing
-  registered extensions such as `.png`, `.svg`, `.pdf`, and `.eps,.ps`.
-- Headless canvas / manager saves now resolve the save backend by file
-  extension, so a manager created with a PNG-capable backend can still save
-  `.svg`, `.pdf`, or `.ps` through an automatically selected vector backend.
-
-Open items / remaining gaps:
-
-- [x] PDF registry route: `.pdf` is registered in `SaveFormats`, selected by
-  `backends.SelectBackendForExtension`, and covered by `cmd/example -format
-  pdf` smoke output.
-- [x] PostScript registry route: `.ps` and `.eps` are registered in
-  `SaveFormats`, selected by `backends.SelectBackendForExtension`, and covered
-  by `cmd/example -format ps` smoke output.
-- [x] PGF backend route: scaffold `backends/pgf`, implement
-  `render.PGFExporter`, register `.pgf` in `SaveFormats`, side-import it from
-  `backends/all`, and change the current `cmd/example -format pgf` smoke test
-  from "expected unsupported" to "writes non-empty PGF".
-- [ ] Save-option propagation: registry save dispatch currently carries SVG
-  options only (`...render.SVGOption`). Add a backend-neutral save-options
-  surface, or format-specific option routing, so PDF metadata / creation date /
-  font policy and future PGF options can flow through `pyplot`, canvas manager
-  saves, and `cmd/example` without backend-name checks.
-- [x] Public save-route audit: keep `core.SaveFig` as the renderer-interface
-  helper, but verify every higher-level path that chooses a backend
-  (`pyplot.SaveFig`, headless canvas / manager save, `cmd/example`, future CLI
-  helpers) selects through `backends.SelectBackendForExtension` and writes
-  through `SaveFormats`. `pyplot.SaveFig`, `cmd/example`, and headless
-  canvas / manager save now follow that route.
-- [x] Error and fallback policy: document and test what happens when
-  `MATPLOTLIB_BACKEND` is pinned to a backend that cannot write the requested
-  extension. `pyplot` and `cmd/example` currently fall back to auto selection;
-  headless canvas / manager saves now follow the same fallback-to-auto
-  behavior for extension saves.
-- [x] Vector semantics matrix: document per-format status for fonts, hatches,
-  alpha, raster images, transformed images, marker/path-collection batching,
-  metadata, and deterministic output across SVG / PDF / PS / PGF.
-- [x] Capability report usability: `BackendComparisonReport` now includes
-  `PGFExport`, but it still reports only capability markers. Add a compact save
-  format column or companion report so missing `.pgf` registration is visible
-  without scanning backend source.
-
-**Exit criteria:**
+**PDF exit criteria:**
 
 - [x] `core.SaveFig(fig, r, "out.pdf")` draws and exports through
-  `render.PDFExporter`.
-- [x] `backends.SelectBackendForExtension("", ".pdf" | ".ps" | ".eps", nil)`
-  selects the PDF / PS backends and registry `SaveViaExtension` writes the
-  file through `SaveFormats`.
-- [x] `cmd/example -format png|svg|pdf|ps` writes non-empty files in smoke
-  tests.
+      `render.PDFExporter`.
+- [x] `.pdf` is registered in `SaveFormats`, selected by
+      `backends.SelectBackendForExtension`, and covered by
+      `cmd/example -format pdf` smoke output.
+- [x] PDF docs define font, image, hatch, metadata, and deterministic-output
+      semantics.
+
+---
+
+# Phase 1B: PostScript / EPS and PGF Backends
+
+**Goal:** add the remaining publication vector formats after PDF, with small
+backend-specific hardening tracks for the places PS/EPS and PGF differ from PDF.
+
+**Reference sources:** `third_party/matplotlib/lib/matplotlib/backends/backend_ps.py`,
+`backend_pgf.py`, current PDF / SVG backends for shared serialization patterns.
+
+### 1B.1 PostScript / EPS Backend Foundation
+
+**Goal:** support journal-style Level-2 PostScript/EPS output with clear,
+documented limitations where PS cannot match PDF semantics.
+
+- [x] Scaffold `backends/ps/` with `doc.go`, `init.go`, `ps.go`, and
+      `registry_test.go`.
+- [x] Register `backends.PS`, `backends.PSExport`, `render.PSExporter`, and
+      `render.DPIAware`.
+- [x] Include PS in `VectorOutput` through runtime-checked exporter
+      interfaces.
+- [x] Add deterministic Adobe headers, bounding boxes, document stream layout,
+      and top-left display-coordinate transform.
+- [x] Implement graphics state stack, path construction, rectangular/path
+      clipping, stroke state, RGB stroke/fill color, background fills, and
+      simple Helvetica text output.
+- [x] Emit deterministic inline Level-2 `colorimage` payloads for RGBA raster
+      images, pre-composited over white for the initial alpha slice.
+- [x] Implement transformed images with arbitrary PostScript `concat`
+      matrices.
+- [x] Implement native hatch fills as clipped deterministic hatch stroke
+      lines.
+- [x] Implement native marker and path-collection batches as reusable
+      PostScript procedures.
+- [x] Register `.ps` and `.eps` in `SaveFormats`, side-import from
+      `backends/all`, and route through `core.SaveFig` / `backends.SavePS`.
+- [x] Add `cmd/example -format ps` smoke coverage.
+
+### 1B.2 PostScript Parity Hardening
+
+**Goal:** close the PS-specific gaps that remain after the first useful backend
+slice.
+
+- [x] Decide the PostScript font policy: embedded fonts, Type 3 glyph paths,
+      or documented direct-text limitations.
+- [x] Match PDF's embedded-font behavior where feasible.
+- [x] Define alpha semantics for fills, strokes, images, and hatches in a way
+      that is honest about Level-2 PS limitations.
+- [x] Add JPEG passthrough or document why PS output always encodes raster
+      image data.
+- [x] Reuse repeated image payloads where the PostScript representation allows
+      it.
+- [x] Add PS structural or smoke fixtures for text, hatches, transformed
+      images, collections, and alpha-limit behavior.
+
+**PostScript exit criteria:**
+
+- [x] `backends.SelectBackendForExtension("", ".ps" | ".eps", nil)` selects
+      the PS backend and registry `SaveViaExtension` writes through
+      `SaveFormats`.
+- [x] `cmd/example -format ps` writes a non-empty file in smoke tests.
+- [x] PS font, alpha, JPEG/image-reuse, and fixture policy is implemented or
+      explicitly documented as a limitation.
+
+### 1B.3 PGF Backend Foundation
+
+**Goal:** provide generator-only PGF output for direct inclusion in LaTeX
+documents without requiring a TeX engine during ordinary saves.
+
+- [x] Scaffold `backends/pgf/` with `doc.go`, `init.go`, `pgf.go`, and
+      `registry_test.go`.
+- [x] Register `backends.PGF`, `backends.PGFExport`, `render.PGFExporter`,
+      `render.DPIAware`, `render.FontTextDrawer`, and
+      `render.FontRotatedTextDrawer`.
+- [x] Emit deterministic `pgfpicture` output with paths, rectangular/path
+      clips, graphics scopes, and the same top-left display-coordinate
+      transform used by the other vector renderers.
+- [x] Emit simple direct LaTeX text and rotated text through `\pgftext`.
+- [x] Add explicit `\pgfsetfillopacity` and `\pgfsetstrokeopacity` commands
+      for filled, stroked, hatched, and text output.
+- [x] Implement native PGF hatch fills as clipped deterministic hatch stroke
+      lines.
+- [x] Register `.pgf` in `SaveFormats`, side-import from `backends/all`, and
+      route through `core.SaveFig` / `backends.SavePGF`.
+- [x] Add `cmd/example -format pgf` smoke coverage that writes a non-empty PGF
+      file.
+
+### 1B.4 PGF Verification and Parity Hardening
+
+**Goal:** decide how far PGF should go as a pure generator backend, then fill
+the chosen gaps in small pieces.
+
+- [ ] Decide whether CI/dev verification invokes `lualatex`, uses optional
+      local TeX verification only, or keeps PGF as pure generator smoke output.
+- [ ] Add PGF-specific option and metadata routing after the shared save-option
+      surface lands.
+- [ ] Implement PGF raster image output.
+- [ ] Implement PGF transformed raster images or route them through the shared
+      mixed-mode fallback.
+- [ ] Implement reusable PGF marker batches.
+- [ ] Implement reusable PGF path-collection batches.
+- [ ] Tighten PGF TeX/font metrics parity against upstream Matplotlib.
+- [ ] Add PGF fixtures for text, alpha scopes, hatches, image output, and
+      collection batching.
+
+**PGF exit criteria:**
+
 - [x] `backends.SelectBackendForExtension("", ".pgf", nil)` selects a
-  registered PGF backend, and `cmd/example -format pgf` writes a non-empty PGF
-  file.
-- [x] `pyplot.SaveFig`, canvas / manager save, `cmd/example`, and any CLI save
-  helpers all choose the backend through `SelectBackendForExtension` and write
-  through `SaveFormats`; no caller outside renderer-interface helpers switches
-  directly on `.png` / `.svg` / `.pdf` / `.ps` / `.eps` / `.pgf`.
-- [ ] Format-specific save options can be passed through the shared save
-  pipeline for SVG, PDF, PS, and PGF without adding backend-name conditionals.
+      registered PGF backend.
+- [x] `cmd/example -format pgf` writes a non-empty PGF file.
+- [ ] PGF verification policy is documented and reflected in CI or optional
+      developer checks.
+- [ ] PGF image, batching, option, and text-metrics limitations are either
+      implemented or explicitly documented.
+
+---
+
+# Phase 1C: Shared Vector Save Pipeline
+
+**Goal:** keep SVG, PDF, PS/EPS, and PGF on one extension-driven save path,
+then add shared option routing and mixed raster/vector fallback without
+backend-name conditionals.
+
+**Reference sources:** `backends/`, `canvas/`, `core/`, `pyplot/`, `cmd/example/`,
+and Matplotlib's mixed-mode/vector save behavior in `third_party/matplotlib`.
+
+### 1C.1 Shared Save Dispatch and Capability Reporting
+
+**Goal:** keep all public save routes on the same extension-driven registry
+path, with capability reporting that makes missing formats obvious.
+
+- [x] Remove hard-coded format fallbacks from `backends.SaveViaExtension`; it
+      now requires an explicit `SaveFormats` handler.
+- [x] Register `.pdf`, `.ps`, `.eps`, and `.pgf` in `SaveFormats`.
+- [x] Select PDF / PS / PGF through `backends.SelectBackendForExtension`.
+- [x] Side-import PDF / PS / PGF from `backends/all`.
+- [x] Route `pyplot.SaveFig`, headless canvas / manager save, `cmd/example`,
+      and CLI save helpers through `SelectBackendForExtension` and
+      `SaveFormats`.
+- [x] Keep `core.SaveFig` as the renderer-interface helper to avoid the
+      existing `backends -> canvas -> core` cycle.
+- [x] Define and test fallback behavior when `MATPLOTLIB_BACKEND` is pinned to
+      a backend that cannot write the requested extension.
+- [x] Add `cmd/example -format png|svg|pdf|ps|eps|pgf` support.
+- [x] Add smoke coverage for PNG / SVG / PDF / PS / PGF.
+- [x] Add `PGFExport` to the backend capability matrix.
+- [x] Expand `BackendComparisonReport` with `PDFExport`, `PSExport`,
+      `PGFExport`, and a `SaveFormats` column.
+- [x] Document per-format status for fonts, hatches, alpha, raster images,
+      transformed images, marker/path-collection batching, metadata, and
+      deterministic output.
+
+### 1C.2 Shared Save Options
+
+**Goal:** let format-specific options flow through public save APIs without
+backend-name conditionals.
+
+- [ ] Inventory existing option types: `render.SVGOptions`,
+      `render.PDFOptions`, PS metadata needs, and future PGF options.
+- [ ] Choose one shared API shape: backend-neutral option bag,
+      typed per-format options, or both.
+- [ ] Route PDF metadata, creation date, and font policy through `pyplot`,
+      canvas manager saves, and `cmd/example`.
+- [ ] Preserve existing SVG option routing while moving it onto the shared
+      option surface.
+- [ ] Add PS option placeholders only where the backend supports meaningful
+      behavior.
+- [ ] Add PGF option placeholders for TeX preamble, metadata/comment policy,
+      and future verification mode.
+- [ ] Add tests proving unsupported options produce clear errors instead of
+      being silently ignored.
+
+**Save-pipeline exit criteria:**
+
+- [x] `pyplot.SaveFig`, canvas / manager save, `cmd/example`, and CLI helpers
+      choose backends through `SelectBackendForExtension` and write through
+      `SaveFormats`.
 - [x] Backend comparison / capability output makes both export capabilities
-  and registered save extensions obvious for PNG, SVG, PDF, PS/EPS, and PGF.
-- [x] Vector backend docs define the shared font / hatch / image / metadata /
-  determinism semantics and list remaining per-format limitations.
+      and registered save extensions obvious for PNG, SVG, PDF, PS/EPS, and
+      PGF.
+- [ ] Format-specific save options can be passed through the shared save
+      pipeline for SVG, PDF, PS, and PGF without backend-name conditionals.
+
+### 1C.3 Mixed Raster / Vector Fallback
+
+**Goal:** give vector backends a shared way to embed rasterized regions when an
+artist or effect cannot be represented natively.
+
+- [ ] Define renderer capability checks for mixed raster/vector embedding.
+- [ ] Add an artist-level rasterize flag that vector backends honor.
+- [ ] Add DPI-aware rasterization at save time for dense scatter, image,
+      contour, and unsupported-effect regions.
+- [ ] Embed raster tiles inside PDF without losing surrounding vector text and
+      axes.
+- [ ] Embed raster tiles inside PS/EPS with documented alpha behavior.
+- [ ] Embed raster tiles inside SVG using existing image support.
+- [ ] Embed raster tiles inside PGF or document the fallback through external
+      image files.
+- [ ] Add fixtures verifying clip, transform, alpha, and surrounding vector
+      content.
+
+**Mixed-output exit criteria:**
+
+- [ ] Rasterized fallback is driven by renderer capability checks, not
+      backend-name conditionals.
+- [ ] `Artist.SetRasterized(true)` produces correct mixed-mode output on PDF,
+      PS/EPS, SVG, and PGF where supported.
+- [ ] Unsupported vector effects have a deterministic raster fallback or a
+      documented error.
 
 Vector backend semantics matrix:
 
@@ -383,9 +430,9 @@ Vector backend semantics matrix:
 | Marker / path collections | reusable native batches | Form XObjects | reusable procedures | renderer-neutral fallback only; no native batches |
 | Metadata options | `render.SVGOptions` | `render.PDFOptions` but not fully routed through shared save APIs | missing shared option surface | missing shared option surface |
 
-Remaining shared-semantics work is concentrated in PGF hardening, PDF/PGF option
-routing through the registry save pipeline, and the PostScript parity items
-listed in Phase 1.2.
+Remaining shared-semantics work is concentrated in PostScript parity hardening
+(Phase 1B.2), PGF hardening (Phase 1B.4), shared option routing (Phase 1C.2),
+and mixed raster/vector fallback (Phase 1C.3).
 
 ---
 
@@ -525,6 +572,9 @@ backends, and stabilize `internal/mathtext` for promotion.
 
 ### 3.2 `usetex` Support
 
+- Current implementation status: AGG, SVG, and PDF have opt-in
+  `latex`+`dvipng` raster paths backed by `internal/tex`; PDF embeds cached TeX
+  PNGs as image XObjects and scales them from raster pixels to PDF points.
 - [ ] `usetex` import path that shells out to a system `latex` / `dvipng` /
       `dvisvgm` pipeline, behind a build tag / rc switch so the default build
       has no external dependency.
@@ -537,6 +587,9 @@ backends, and stabilize `internal/mathtext` for promotion.
 
 ### 3.3 MathText Module Promotion
 
+- Promotion target: document the final `internal/mathtext` API by
+  2026-07-31, then either move it to a top-level `mathtext` package in this
+  repository or split it into its own module before the v1.0 API freeze.
 - [ ] Stabilize the public API surface of `internal/mathtext` against the
       needs of the AGG, SVG, PDF, and Skia text drawers.
 - [ ] Promote `internal/mathtext` to a top-level module / repo with its own

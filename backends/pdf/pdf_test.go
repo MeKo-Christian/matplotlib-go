@@ -4,14 +4,17 @@ import (
 	"bytes"
 	"image"
 	"image/color"
+	"image/png"
 	"math"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/internal/pdfcompare"
+	tex "github.com/cwbudde/matplotlib-go/internal/tex"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -561,6 +564,69 @@ func TestImageTransformedEmitsAffineImageMatrix(t *testing.T) {
 	}
 }
 
+func TestDrawTeXEmbedsCachedPNGImage(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fake shell commands are POSIX-only")
+	}
+	dir := t.TempDir()
+	fixture := filepath.Join(dir, "fixture.png")
+	writePDFTestPNG(t, fixture, color.RGBA{A: 255})
+	latex := writePDFFakeCommand(t, dir, "latex", `#!/bin/sh
+touch file.dvi
+`)
+	dvipng := writePDFFakeCommand(t, dir, "dvipng", `#!/bin/sh
+out=""
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "-o" ]; then
+    shift
+    out="$1"
+  fi
+  shift
+done
+cp "$FAKE_TEX_PNG" "$out"
+`)
+	t.Setenv("FAKE_TEX_PNG", fixture)
+
+	r := newTestRenderer(t)
+	r.texManager = tex.NewManager(tex.ManagerConfig{
+		CacheDir:      filepath.Join(dir, "cache"),
+		LaTeXCommand:  latex,
+		DVIPNGCommand: dvipng,
+	})
+	if _, ok := any(r).(render.TeXMetricer); !ok {
+		t.Fatal("PDF renderer should implement render.TeXMetricer")
+	}
+	if _, ok := any(r).(render.TeXDrawer); !ok {
+		t.Fatal("PDF renderer should implement render.TeXDrawer")
+	}
+	if _, ok := any(r).(render.RotatedTeXDrawer); !ok {
+		t.Fatal("PDF renderer should implement render.RotatedTeXDrawer")
+	}
+
+	_ = r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}})
+	metrics, ok := r.MeasureTeX(`signal $\alpha$`, 12, "DejaVu Sans")
+	if !ok || metrics.W != 2 || metrics.H != 2 {
+		t.Fatalf("MeasureTeX = %+v, %v; want 2x2 metrics and ok", metrics, ok)
+	}
+	if !r.DrawTeX(`signal $\alpha$`, geom.Pt{X: 8, Y: 10}, 12, render.Color{R: 1, A: 1}, "DejaVu Sans") {
+		t.Fatal("DrawTeX returned false")
+	}
+	if !r.DrawTeXRotated(`x`, geom.Pt{X: 20, Y: 30}, 12, math.Pi/2, render.Color{B: 1, A: 1}, "DejaVu Sans") {
+		t.Fatal("DrawTeXRotated returned false")
+	}
+	raw := r.content.String()
+	if !strings.Contains(raw, "/Im1 Do") || !strings.Contains(raw, "/Im2 Do") || !strings.Contains(raw, "0 2 -2 0") {
+		t.Fatalf("expected normal and rotated TeX image invocations, got %q", raw)
+	}
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	doc := mustParsePDF(t, r)
+	if got := pdfDocumentObjectCountContaining(doc, "/Subtype /Image"); got < 2 {
+		t.Fatalf("expected TeX image XObjects and soft masks, got %d image objects; objects: %#v", got, doc.Objects)
+	}
+}
+
 func TestRendererClipRectEmitsRectangleClip(t *testing.T) {
 	r := newTestRenderer(t)
 	_ = r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}})
@@ -801,6 +867,32 @@ func pdfDocumentObjectBodyContaining(doc *pdfcompare.Document, needle string) st
 		}
 	}
 	return ""
+}
+
+func writePDFFakeCommand(t *testing.T, dir, name, body string) string {
+	t.Helper()
+	path := filepath.Join(dir, name)
+	if err := os.WriteFile(path, []byte(body), 0o755); err != nil {
+		t.Fatalf("write fake command: %v", err)
+	}
+	return path
+}
+
+func writePDFTestPNG(t *testing.T, path string, c color.RGBA) {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, 2, 2))
+	for y := 0; y < 2; y++ {
+		for x := 0; x < 2; x++ {
+			img.SetRGBA(x, y, c)
+		}
+	}
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		t.Fatalf("encode fixture PNG: %v", err)
+	}
+	if err := os.WriteFile(path, buf.Bytes(), 0o644); err != nil {
+		t.Fatalf("write fixture PNG: %v", err)
+	}
 }
 
 type jpegTestImage struct {

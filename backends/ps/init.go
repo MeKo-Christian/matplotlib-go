@@ -14,6 +14,7 @@ func init() {
 			backends.PathClip,
 			backends.PathEffects,
 			backends.TextShaping,
+			backends.TextPathing,
 			backends.RotatedText,
 			backends.VerticalText,
 			backends.FontKeyText,
