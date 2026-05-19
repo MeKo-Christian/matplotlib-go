@@ -60,6 +60,11 @@ import (
 	example_joins_caps "github.com/cwbudde/matplotlib-go/test/parity/joins_caps"
 	example_large_scatter "github.com/cwbudde/matplotlib-go/test/parity/large_scatter"
 	example_lognorm_imshow "github.com/cwbudde/matplotlib-go/test/parity/lognorm_imshow"
+	example_mathtext_basic "github.com/cwbudde/matplotlib-go/test/parity/mathtext_basic"
+	example_mathtext_fractions "github.com/cwbudde/matplotlib-go/test/parity/mathtext_fractions"
+	example_mathtext_inline_labels "github.com/cwbudde/matplotlib-go/test/parity/mathtext_inline_labels"
+	example_mathtext_integrals "github.com/cwbudde/matplotlib-go/test/parity/mathtext_integrals"
+	example_mathtext_matrices "github.com/cwbudde/matplotlib-go/test/parity/mathtext_matrices"
 	example_matshow_basic "github.com/cwbudde/matplotlib-go/test/parity/matshow_basic"
 	example_mesh_contour_tri "github.com/cwbudde/matplotlib-go/test/parity/mesh_contour_tri"
 	example_mixed_collection "github.com/cwbudde/matplotlib-go/test/parity/mixed_collection"
@@ -153,6 +158,11 @@ var renderByID = map[string]func() image.Image{
 	"matshow_basic":             example_matshow_basic.Render,
 	"spy_marker":                example_spy_marker.Render,
 	"spy_image":                 example_spy_image.Render,
+	"mathtext_basic":            example_mathtext_basic.Render,
+	"mathtext_fractions":        example_mathtext_fractions.Render,
+	"mathtext_integrals":        example_mathtext_integrals.Render,
+	"mathtext_matrices":         example_mathtext_matrices.Render,
+	"mathtext_inline_labels":    example_mathtext_inline_labels.Render,
 	"axes_top_right_inverted":   example_axes_top_right_inverted.Render,
 	"axes_control_surface":      example_axes_control_surface.Render,
 	"transform_coordinates":     example_transform_coordinates.Render,
@@ -213,17 +223,22 @@ var renderByID = map[string]func() image.Image{
 }
 
 var figureByID = map[string]func() *core.Figure{
-	"basic_line":         showcase_basic_line.Plot,
-	"bar_basic":          showcase_bar_basic.Plot,
-	"scatter_basic":      showcase_scatter_basic.Plot,
-	"hist_basic":         showcase_hist_basic.Plot,
-	"mesh_contour_tri":   showcase_mesh_contour_tri.Plot,
-	"image_heatmap":      showcase_image_heatmap.Plot,
-	"polar_axes":         showcase_polar_axes.Plot,
-	"patch_showcase":     example_patch_showcase.Plot,
-	"text_labels_strict": example_text_labels_strict.Plot,
-	"imshow_clipped":     example_imshow_clipped.Plot,
-	"imshow_transformed": example_imshow_transformed.Plot,
+	"basic_line":             showcase_basic_line.Plot,
+	"bar_basic":              showcase_bar_basic.Plot,
+	"scatter_basic":          showcase_scatter_basic.Plot,
+	"hist_basic":             showcase_hist_basic.Plot,
+	"mesh_contour_tri":       showcase_mesh_contour_tri.Plot,
+	"image_heatmap":          showcase_image_heatmap.Plot,
+	"polar_axes":             showcase_polar_axes.Plot,
+	"patch_showcase":         example_patch_showcase.Plot,
+	"text_labels_strict":     example_text_labels_strict.Plot,
+	"mathtext_basic":         example_mathtext_basic.Plot,
+	"mathtext_fractions":     example_mathtext_fractions.Plot,
+	"mathtext_integrals":     example_mathtext_integrals.Plot,
+	"mathtext_matrices":      example_mathtext_matrices.Plot,
+	"mathtext_inline_labels": example_mathtext_inline_labels.Plot,
+	"imshow_clipped":         example_imshow_clipped.Plot,
+	"imshow_transformed":     example_imshow_transformed.Plot,
 }
 
 // Cases returns the canonical parity examples in catalog order.

@@ -182,6 +182,39 @@ func TestLayoutMathTextStacksLargeOperatorLimits(t *testing.T) {
 	}
 }
 
+func TestLayoutMathTextSupportsIntegralLimits(t *testing.T) {
+	var r textRecordingRenderer
+	layout, ok := LayoutMathText(&r, `\int_0^\infty`, 20, "DejaVu Sans")
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+	if !containsMathRun(layout.Runs, "∫", 20) || !containsMathRun(layout.Runs, "0", 14) || !containsMathRun(layout.Runs, "∞", 14) {
+		t.Fatalf("missing expected integral runs: %+v", layout.Runs)
+	}
+
+	var intX, intW, subX, subY, superX, superY float64
+	for _, run := range layout.Runs {
+		switch run.Text {
+		case "∫":
+			intX = run.Offset.X
+			intW = r.MeasureText(run.Text, run.FontSize, run.FontKey).W
+		case "0":
+			subX = run.Offset.X
+			subY = run.Offset.Y
+		case "∞":
+			superX = run.Offset.X
+			superY = run.Offset.Y
+		}
+	}
+
+	if subY <= 0 || superY >= 0 {
+		t.Fatalf("integral scripts should sit below/above the baseline: sub=%v super=%v runs=%+v", subY, superY, layout.Runs)
+	}
+	if subX < intX+intW || superX < intX+intW {
+		t.Fatalf("integral scripts should be side scripts, not stacked limits: intX=%v intW=%v subX=%v superX=%v runs=%+v", intX, intW, subX, superX, layout.Runs)
+	}
+}
+
 func TestLayoutMathTextSupportsFencedDelimiters(t *testing.T) {
 	var r textRecordingRenderer
 	layout, ok := LayoutMathText(&r, `\left(\frac{1}{2}\right)`, 20, "DejaVu Sans")

@@ -15,12 +15,53 @@ import (
 
 var updatePDFGolden = flag.Bool("update-pdf-golden", false, "Update PDF golden fixtures instead of comparing")
 
+var phase3MathTextFixtureIDs = []string{
+	"mathtext_basic",
+	"mathtext_fractions",
+	"mathtext_integrals",
+	"mathtext_matrices",
+	"mathtext_inline_labels",
+}
+
 func TestPDFGolden(t *testing.T) {
 	for _, id := range pdfGoldenIDs() {
 		id := id
 		t.Run(id, func(t *testing.T) {
 			runPDFGoldenTest(t, id)
 		})
+	}
+}
+
+func TestPDFGoldenIncludesPhase3MathTextFixtures(t *testing.T) {
+	ids := map[string]bool{}
+	for _, id := range pdfGoldenIDs() {
+		ids[id] = true
+	}
+	for _, id := range phase3MathTextFixtureIDs {
+		if !ids[id] {
+			t.Fatalf("PDF golden set is missing Phase 3 MathText fixture %q", id)
+		}
+	}
+}
+
+func TestPhase3MathTextFixturesHaveToleranceCoverage(t *testing.T) {
+	pdfIDs := map[string]bool{}
+	for _, id := range pdfGoldenIDs() {
+		pdfIDs[id] = true
+	}
+	for _, id := range phase3MathTextFixtureIDs {
+		if !goldenExists(id) {
+			t.Fatalf("Phase 3 MathText fixture %q is missing AGG PNG golden coverage", id)
+		}
+		if !matplotlibRefExists(id) {
+			t.Fatalf("Phase 3 MathText fixture %q is missing Matplotlib reference coverage", id)
+		}
+		if !pdfIDs[id] {
+			t.Fatalf("Phase 3 MathText fixture %q is missing PDF golden coverage", id)
+		}
+		if _, _, err := parity.Figure(id); err != nil {
+			t.Fatalf("Phase 3 MathText fixture %q is not registered in parity registry: %v", id, err)
+		}
 	}
 }
 
@@ -35,6 +76,11 @@ func pdfGoldenIDs() []string {
 		"polar_axes",
 		"patch_showcase",
 		"text_labels_strict",
+		"mathtext_basic",
+		"mathtext_fractions",
+		"mathtext_integrals",
+		"mathtext_matrices",
+		"mathtext_inline_labels",
 		"imshow_clipped",
 		"imshow_transformed",
 	}

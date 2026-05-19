@@ -65,6 +65,21 @@ func TestCatalogIncludesPhase7ProjectionAndToolkitFixtures(t *testing.T) {
 	}
 }
 
+func TestCatalogIncludesPhase3MathTextFixtures(t *testing.T) {
+	want := []string{
+		"mathtext_basic",
+		"mathtext_fractions",
+		"mathtext_integrals",
+		"mathtext_matrices",
+		"mathtext_inline_labels",
+	}
+	for _, id := range want {
+		if _, ok := Lookup(id); !ok {
+			t.Fatalf("missing Phase 3 MathText parity catalog case %q", id)
+		}
+	}
+}
+
 func TestWebDemosAreParityCasesWithReferences(t *testing.T) {
 	root := repoRoot(t)
 	seen := map[string]bool{}

@@ -143,6 +143,53 @@ cp "$FAKE_TEX_PNG" "$out"
 	}
 }
 
+func TestAggDrawTeXAppliesAlphaAndClip(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fake shell commands are POSIX-only")
+	}
+	dir := t.TempDir()
+	fixture := filepath.Join(dir, "fixture.png")
+	writeSizedTestPNG(t, fixture, 4, 4, color.RGBA{A: 255})
+	latex := writeFakeCommand(t, dir, "latex", `#!/bin/sh
+touch file.dvi
+`)
+	dvipng := writeFakeCommand(t, dir, "dvipng", `#!/bin/sh
+out=""
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "-o" ]; then
+    shift
+    out="$1"
+  fi
+  shift
+done
+cp "$FAKE_TEX_PNG" "$out"
+`)
+	t.Setenv("FAKE_TEX_PNG", fixture)
+
+	r, err := New(24, 24, render.Color{})
+	if err != nil {
+		t.Fatalf("New renderer: %v", err)
+	}
+	r.texManager = tex.NewManager(tex.ManagerConfig{
+		CacheDir:      filepath.Join(dir, "cache"),
+		LaTeXCommand:  latex,
+		DVIPNGCommand: dvipng,
+	})
+	r.ClipRect(geom.Rect{Min: geom.Pt{X: 8, Y: 8}, Max: geom.Pt{X: 10, Y: 10}})
+
+	if !r.DrawTeX(`x`, geom.Pt{X: 8, Y: 12}, 12, render.Color{G: 1, A: 0.5}, "DejaVu Sans") {
+		t.Fatal("DrawTeX returned false")
+	}
+	inside := r.GetImage().RGBAAt(8, 8)
+	if inside.G < 120 || inside.A < 120 || inside.A > 136 || inside.R != 0 || inside.B != 0 {
+		t.Fatalf("clipped alpha TeX pixel = %+v, want half-alpha green", inside)
+	}
+	outside := r.GetImage().RGBAAt(11, 8)
+	if outside != (color.RGBA{}) {
+		t.Fatalf("TeX draw escaped clip: outside pixel = %+v", outside)
+	}
+}
+
 func TestAggDrawTeXRotatedCompositesCachedPNG(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("fake shell commands are POSIX-only")
@@ -209,9 +256,14 @@ func writeFakeCommand(t *testing.T, dir, name, body string) string {
 
 func writeTestPNG(t *testing.T, path string, c color.RGBA) {
 	t.Helper()
-	img := image.NewRGBA(image.Rect(0, 0, 2, 2))
-	for y := 0; y < 2; y++ {
-		for x := 0; x < 2; x++ {
+	writeSizedTestPNG(t, path, 2, 2, c)
+}
+
+func writeSizedTestPNG(t *testing.T, path string, w, h int, c color.RGBA) {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
 			img.SetRGBA(x, y, c)
 		}
 	}

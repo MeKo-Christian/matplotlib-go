@@ -11,8 +11,11 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/backends"
+	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/test/imagecmp"
+	"github.com/cwbudde/matplotlib-go/test/parity"
 )
 
 func TestSkiaTaggedRendererImplementsCPUBaseContract(t *testing.T) {
@@ -90,6 +93,91 @@ func TestSkiaTaggedRendererImplementsCPUBaseContract(t *testing.T) {
 	}
 }
 
+func TestSkiaTaggedRendererDrawsMathText(t *testing.T) {
+	fig := core.NewFigure(120, 80)
+	fig.Text(0.5, 0.5, `$\frac{1}{2}+\alpha_i$`, core.TextOptions{
+		HAlign:   core.TextAlignCenter,
+		VAlign:   core.TextVAlignMiddle,
+		FontSize: 16,
+	})
+
+	r, err := New(backends.Config{
+		Width:      120,
+		Height:     80,
+		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
+		Options:    backends.SkiaConfig{UseGPU: false},
+	})
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	core.DrawFigure(fig, r)
+	if got := nonWhitePixels(r.GetImage()); got == 0 {
+		t.Fatal("MathText rendered through Skia-tagged backend produced a blank image")
+	}
+}
+
+func TestSkiaTaggedRendererMatchesPhase3MathTextGoldens(t *testing.T) {
+	for _, id := range []string{
+		"mathtext_basic",
+		"mathtext_fractions",
+		"mathtext_integrals",
+		"mathtext_matrices",
+		"mathtext_inline_labels",
+	} {
+		id := id
+		t.Run(id, func(t *testing.T) {
+			fig, _, err := parity.Figure(id)
+			if err != nil {
+				t.Fatalf("parity figure %s: %v", id, err)
+			}
+			r, err := New(backends.Config{
+				Width:      int(fig.SizePx.X),
+				Height:     int(fig.SizePx.Y),
+				Background: render.Color{R: 1, G: 1, B: 1, A: 1},
+				Options:    backends.SkiaConfig{UseGPU: false},
+			})
+			if err != nil {
+				t.Fatalf("New() error = %v", err)
+			}
+			core.DrawFigure(fig, r)
+			got := r.GetImage()
+			if got == nil {
+				t.Fatal("Skia renderer returned nil image")
+			}
+			wantPath := filepath.Join("..", "..", "testdata", "golden", id+".png")
+			want, err := imagecmp.LoadPNG(wantPath)
+			if err != nil {
+				t.Fatalf("load AGG golden %s: %v", wantPath, err)
+			}
+			diff, err := imagecmp.ComparePNG(got, want, 255)
+			if err != nil {
+				t.Fatalf("compare Skia MathText against AGG golden: %v", err)
+			}
+			const (
+				minPSNR    = 35.0
+				maxMeanAbs = 3.0
+			)
+			if diff.PSNR < minPSNR || diff.MeanAbs > maxMeanAbs {
+				artifactsDir := filepath.Join("..", "..", "testdata", "_artifacts", "skia_mathtext")
+				if err := os.MkdirAll(artifactsDir, 0o755); err != nil {
+					t.Fatalf("create artifacts dir: %v", err)
+				}
+				if err := imagecmp.SavePNG(got, filepath.Join(artifactsDir, id+"_got.png")); err != nil {
+					t.Fatalf("save Skia artifact: %v", err)
+				}
+				if err := imagecmp.SavePNG(want, filepath.Join(artifactsDir, id+"_agg_golden.png")); err != nil {
+					t.Fatalf("save AGG golden artifact: %v", err)
+				}
+				if err := imagecmp.SaveDiffImage(got, want, 10, filepath.Join(artifactsDir, id+"_diff.png")); err != nil {
+					t.Fatalf("save diff artifact: %v", err)
+				}
+				t.Fatalf("Skia MathText mismatch for %s: PSNR=%.2f (min %.2f), MeanAbs=%.2f (max %.2f), MaxDiff=%d",
+					id, diff.PSNR, minPSNR, diff.MeanAbs, maxMeanAbs, diff.MaxDiff)
+			}
+		})
+	}
+}
+
 func TestSkiaTaggedRegistryAdvertisesImplementedCPUCapabilities(t *testing.T) {
 	info, ok := backends.DefaultRegistry.Get(backends.Skia)
 	if !ok {
@@ -128,4 +216,19 @@ func TestSkiaTaggedRegistryAdvertisesImplementedCPUCapabilities(t *testing.T) {
 	if backends.HasCapability(backends.Skia, backends.GPUAccel) {
 		t.Fatal("CPU skia backend should not advertise GPU acceleration")
 	}
+}
+
+func nonWhitePixels(img *image.RGBA) int {
+	if img == nil {
+		return 0
+	}
+	count := 0
+	for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
+		for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
+			if img.RGBAAt(x, y) != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
+				count++
+			}
+		}
+	}
+	return count
 }

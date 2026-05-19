@@ -2,6 +2,9 @@ package pgf
 
 import (
 	"bytes"
+	"image"
+	"image/color"
+	"strings"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -89,5 +92,123 @@ func TestPathWithHatchEmitsClippedHatchLines(t *testing.T) {
 		if !bytes.Contains(doc, want) {
 			t.Fatalf("missing %q in\n%s", want, doc)
 		}
+	}
+}
+
+func TestImageEmitsSelfContainedPixelRectangles(t *testing.T) {
+	doc := renderPGFDocument(t, func(r *Renderer) {
+		img := image.NewRGBA(image.Rect(0, 0, 2, 1))
+		img.SetRGBA(0, 0, color.RGBA{R: 255, A: 255})
+		img.SetRGBA(1, 0, color.RGBA{G: 128, A: 128})
+		data := render.NewImageData(img)
+		data.SetAlpha(0.5)
+
+		r.Image(data, geom.Rect{
+			Min: geom.Pt{X: 10, Y: 20},
+			Max: geom.Pt{X: 14, Y: 22},
+		})
+	})
+	for _, want := range [][]byte{
+		[]byte(`\pgftransformcm{2}{0}{0}{2}{\pgfpoint{10pt}{20pt}}`),
+		[]byte(`\pgfpathrectangle{\pgfpoint{0pt}{0pt}}{\pgfpoint{1pt}{1pt}}`),
+		[]byte(`\pgfpathrectangle{\pgfpoint{1pt}{0pt}}{\pgfpoint{1pt}{1pt}}`),
+		[]byte(`\pgfsetfillopacity{0.5}`),
+		[]byte(`\pgfsetfillopacity{0.25098}`),
+	} {
+		if !bytes.Contains(doc, want) {
+			t.Fatalf("missing %q in\n%s", want, doc)
+		}
+	}
+}
+
+func TestImageTransformedEmitsAffinePixelScope(t *testing.T) {
+	doc := renderPGFDocument(t, func(r *Renderer) {
+		img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+		img.SetRGBA(0, 0, color.RGBA{B: 255, A: 255})
+		r.ImageTransformed(render.NewImageData(img), geom.Rect{}, geom.Affine{
+			A: 3, B: 0.5, C: -0.25, D: 4, E: 7, F: 11,
+		})
+	})
+	if !bytes.Contains(doc, []byte(`\pgftransformcm{3}{0.5}{-0.25}{4}{\pgfpoint{7pt}{11pt}}`)) {
+		t.Fatalf("missing transformed image matrix in\n%s", doc)
+	}
+	if !bytes.Contains(doc, []byte(`\pgfpathrectangle{\pgfpoint{0pt}{0pt}}{\pgfpoint{1pt}{1pt}}`)) {
+		t.Fatalf("missing transformed image pixel in\n%s", doc)
+	}
+}
+
+func TestDrawMarkersEmitsReusableMacro(t *testing.T) {
+	r, err := New(120, 80, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if _, ok := any(r).(render.MarkerDrawer); !ok {
+		t.Fatal("PGF renderer should implement render.MarkerDrawer")
+	}
+
+	doc := renderPGFDocument(t, func(r *Renderer) {
+		ok := r.DrawMarkers(render.MarkerBatch{
+			Marker: testRectPath(),
+			Items: []render.MarkerItem{
+				{
+					Offset: geom.Pt{X: 10, Y: 20},
+					Paint:  render.Paint{Fill: render.Color{R: 1, A: 1}},
+				},
+				{
+					Offset:    geom.Pt{X: 30, Y: 40},
+					Transform: geom.Affine{A: 2, D: 2},
+					Paint:     render.Paint{Fill: render.Color{R: 1, A: 1}},
+				},
+			},
+		})
+		if !ok {
+			t.Fatal("DrawMarkers returned false")
+		}
+	})
+	if got := strings.Count(string(doc), `\expandafter\def\csname mplgpgfM1\endcsname`); got != 1 {
+		t.Fatalf("expected one marker macro definition, got %d in\n%s", got, doc)
+	}
+	for _, want := range [][]byte{
+		[]byte(`\pgftransformcm{1}{0}{0}{1}{\pgfpoint{10pt}{20pt}}`),
+		[]byte(`\pgftransformcm{2}{0}{0}{2}{\pgfpoint{30pt}{40pt}}`),
+		[]byte(`\csname mplgpgfM1\endcsname`),
+	} {
+		if !bytes.Contains(doc, want) {
+			t.Fatalf("missing %q in\n%s", want, doc)
+		}
+	}
+}
+
+func TestDrawPathCollectionEmitsReusableMacro(t *testing.T) {
+	r, err := New(120, 80, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if _, ok := any(r).(render.PathCollectionDrawer); !ok {
+		t.Fatal("PGF renderer should implement render.PathCollectionDrawer")
+	}
+
+	doc := renderPGFDocument(t, func(r *Renderer) {
+		ok := r.DrawPathCollection(render.PathCollectionBatch{
+			Items: []render.PathCollectionItem{
+				{
+					Path:  testRectPath(),
+					Paint: render.Paint{Stroke: render.Color{B: 1, A: 1}, LineWidth: 2},
+				},
+				{
+					Path:  testRectPath(),
+					Paint: render.Paint{Stroke: render.Color{B: 1, A: 1}, LineWidth: 2},
+				},
+			},
+		})
+		if !ok {
+			t.Fatal("DrawPathCollection returned false")
+		}
+	})
+	if got := strings.Count(string(doc), `\expandafter\def\csname mplgpgfP1\endcsname`); got != 1 {
+		t.Fatalf("expected one path collection macro definition, got %d in\n%s", got, doc)
+	}
+	if got := strings.Count(string(doc), `\csname mplgpgfP1\endcsname`); got != 3 {
+		t.Fatalf("expected one definition plus two path collection uses, got %d in\n%s", got, doc)
 	}
 }

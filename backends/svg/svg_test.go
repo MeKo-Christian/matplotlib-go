@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"codeberg.org/go-fonts/dejavu/dejavusans"
+	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	tex "github.com/cwbudde/matplotlib-go/internal/tex"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -198,6 +199,28 @@ func TestFontPolicyPathDrawsTextAsPath(t *testing.T) {
 	}
 	if !strings.Contains(content, `<path d="`) || !strings.Contains(content, `fill="rgb(0,0,0)"`) {
 		t.Fatalf("path font policy should emit filled glyph paths, got %q", content)
+	}
+}
+
+func TestRenderSVGDrawsMathTextRunsAndRules(t *testing.T) {
+	fig := core.NewFigure(180, 120)
+	fig.Text(0.5, 0.5, `$\frac{1}{2}+\alpha_i$`, core.TextOptions{
+		HAlign:   core.TextAlignCenter,
+		VAlign:   core.TextVAlignMiddle,
+		FontSize: 18,
+	})
+
+	r := mustNewRenderer(t)
+	core.DrawFigure(fig, r)
+	content := r.renderSVG()
+	if strings.Count(content, "<text") < 4 {
+		t.Fatalf("MathText should emit multiple SVG text runs, got %q", content)
+	}
+	if !strings.Contains(content, `<path d="`) || !strings.Contains(content, `fill="rgb(0,0,0)"`) {
+		t.Fatalf("MathText fraction rule should emit a filled SVG path, got %q", content)
+	}
+	if strings.Contains(content, `$\frac`) {
+		t.Fatalf("MathText should be laid out before SVG emission, got %q", content)
 	}
 }
 

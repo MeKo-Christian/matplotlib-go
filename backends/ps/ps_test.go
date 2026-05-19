@@ -5,8 +5,10 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"strings"
 	"testing"
 
+	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -45,6 +47,28 @@ func TestImageEmitsPostScriptColorImage(t *testing.T) {
 	}
 	if !bytes.Contains(r.document, []byte("<ff000000ff00>")) {
 		t.Fatalf("missing deterministic RGB image payload in\n%s", r.document)
+	}
+}
+
+func TestMathTextDrawsRunsAndRules(t *testing.T) {
+	fig := core.NewFigure(200, 100)
+	fig.Text(0.5, 0.5, `$\frac{1}{2}+\alpha_i$`, core.TextOptions{
+		HAlign:   core.TextAlignCenter,
+		VAlign:   core.TextVAlignMiddle,
+		FontSize: 18,
+	})
+
+	r := newTestRenderer(t)
+	core.DrawFigure(fig, r)
+	content := string(r.document)
+	if strings.Count(content, "fill\n") < 5 {
+		t.Fatalf("MathText should emit multiple filled PostScript paths, got\n%s", content)
+	}
+	if !strings.Contains(content, "closepath\n0 0 0 setrgbcolor\nfill\n") {
+		t.Fatalf("MathText fraction rule should emit a filled path, got\n%s", content)
+	}
+	if strings.Contains(content, `$\\frac`) {
+		t.Fatalf("MathText should be laid out before PS emission, got\n%s", content)
 	}
 }
 

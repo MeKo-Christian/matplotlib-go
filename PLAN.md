@@ -297,17 +297,17 @@ documents without requiring a TeX engine during ordinary saves.
 **Goal:** decide how far PGF should go as a pure generator backend, then fill
 the chosen gaps in small pieces.
 
-- [ ] Decide whether CI/dev verification invokes `lualatex`, uses optional
+- [x] Decide whether CI/dev verification invokes `lualatex`, uses optional
       local TeX verification only, or keeps PGF as pure generator smoke output.
 - [ ] Add PGF-specific option and metadata routing after the shared save-option
       surface lands.
-- [ ] Implement PGF raster image output.
-- [ ] Implement PGF transformed raster images or route them through the shared
+- [x] Implement PGF raster image output.
+- [x] Implement PGF transformed raster images or route them through the shared
       mixed-mode fallback.
-- [ ] Implement reusable PGF marker batches.
-- [ ] Implement reusable PGF path-collection batches.
+- [x] Implement reusable PGF marker batches.
+- [x] Implement reusable PGF path-collection batches.
 - [ ] Tighten PGF TeX/font metrics parity against upstream Matplotlib.
-- [ ] Add PGF fixtures for text, alpha scopes, hatches, image output, and
+- [x] Add PGF fixtures for text, alpha scopes, hatches, image output, and
       collection batching.
 
 **PGF exit criteria:**
@@ -315,7 +315,7 @@ the chosen gaps in small pieces.
 - [x] `backends.SelectBackendForExtension("", ".pgf", nil)` selects a
       registered PGF backend.
 - [x] `cmd/example -format pgf` writes a non-empty PGF file.
-- [ ] PGF verification policy is documented and reflected in CI or optional
+- [x] PGF verification policy is documented and reflected in CI or optional
       developer checks.
 - [ ] PGF image, batching, option, and text-metrics limitations are either
       implemented or explicitly documented.
@@ -425,9 +425,9 @@ Vector backend semantics matrix:
 | Font subsetting / embedding | n/a for text-as-text, paths available | implemented | missing | delegated to LaTeX, no subsetting |
 | Hatch fills | native SVG patterns | native PDF tiling patterns | native clipped hatch strokes | native clipped hatch strokes |
 | Stroke / fill alpha | native SVG opacity | PDF ExtGState | limited by PostScript semantics | PGF fill/stroke opacity commands |
-| Raster images | embedded image data | Image XObjects with alpha masks | inline colorimage, alpha precomposited | missing |
-| Transformed images | implemented | implemented | implemented | missing |
-| Marker / path collections | reusable native batches | Form XObjects | reusable procedures | renderer-neutral fallback only; no native batches |
+| Raster images | embedded image data | Image XObjects with alpha masks | inline colorimage, alpha precomposited | self-contained PGF pixel rectangles |
+| Transformed images | implemented | implemented | implemented | implemented through PGF transform scopes |
+| Marker / path collections | reusable native batches | Form XObjects | reusable procedures | reusable PGF macros |
 | Metadata options | `render.SVGOptions` | `render.PDFOptions` but not fully routed through shared save APIs | missing shared option surface | missing shared option surface |
 
 Remaining shared-semantics work is concentrated in PostScript parity hardening
@@ -557,17 +557,29 @@ backends, and stabilize `internal/mathtext` for promotion.
 
 ### 3.1 MathText Pipeline Completion
 
-- [ ] Finish the shared shaping layer (carried over from prior backend work)
+- [x] Finish the shared shaping layer (carried over from prior backend work)
       so AGG text draw, text measurement, text bounds, and text-path output all
       consume the same shaped glyph runs.
-- [ ] Complete the MathText grammar coverage gaps versus upstream: stacked
+- [x] Complete the MathText grammar coverage gaps versus upstream: stacked
       fractions, accents, big operators, integral limits, matrix environments.
-- [ ] Cache stabilization: deterministic cache keys, eviction policy, and
+      Unit coverage now exercises stacked operator limits, integral side
+      scripts, accents, matrix/array environments, fractions/genfrac, roots,
+      fences, and spacing; the Phase 3 parity fixtures cover the same areas
+      against Matplotlib references.
+- [x] Cache stabilization: deterministic cache keys, eviction policy, and
       cross-process safe storage so `internal/mathtext` can ship as its own
       module.
-- [ ] MathText draw path through every backend: AGG (raster glyph composite),
+      In-memory caches now support deterministic FIFO bounds via
+      `CacheConfig`; `Cache.SaveFile` / `Cache.LoadFile` provide deterministic
+      JSON snapshots with atomic writes for cross-process reuse.
+- [x] MathText draw path through every backend: AGG (raster glyph composite),
       SVG (paths or text-as-text where the font is available), PDF, Skia.
-- [ ] Golden fixtures: mathtext_basic, mathtext_fractions, mathtext_integrals,
+      AGG has Matplotlib reference PNG fixtures; SVG and PS have explicit
+      MathText vector-output smoke tests plus rasterized tolerance checks
+      against the AGG goldens; PDF has golden and rasterized tolerance coverage
+      for all Phase 3 MathText fixtures; Skia has build-tagged golden
+      comparison coverage.
+- [x] Golden fixtures: mathtext_basic, mathtext_fractions, mathtext_integrals,
       mathtext_matrices, mathtext_inline_labels.
 
 ### 3.2 `usetex` Support
@@ -575,33 +587,53 @@ backends, and stabilize `internal/mathtext` for promotion.
 - Current implementation status: AGG, SVG, and PDF have opt-in
   `latex`+`dvipng` raster paths backed by `internal/tex`; PDF embeds cached TeX
   PNGs as image XObjects and scales them from raster pixels to PDF points.
-- [ ] `usetex` import path that shells out to a system `latex` / `dvipng` /
+- DVI geometry status: `internal/tex` now parses DVI page extents with
+  Matplotlib-style width/height/descent semantics, including rules and glyphs
+  backed by TFM metrics found through configured directories or `kpsewhich`.
+  `Manager.Render` prefers those cached DVI metrics and falls back to PNG
+  dimensions when DVI/TFM geometry is unavailable.
+- System TeX integration status: `internal/tex` includes a toolchain-gated
+  integration test for the real `latex` + `dvipng` path. It skips with a clear
+  diagnostic when those commands are absent. The `test` package also has a
+  toolchain-gated `text.usetex` artist-pipeline smoke test through AGG and a
+  gated AGG PNG golden harness (`-update-usetex-golden`) for hosts with a TeX
+  toolchain.
+- [x] `usetex` import path that shells out to a system `latex` / `dvipng` /
       `dvisvgm` pipeline, behind a build tag / rc switch so the default build
       has no external dependency.
-- [ ] DVI parser sufficient to read the geometry of the rasterized result
+- [x] DVI parser sufficient to read the geometry of the rasterized result
       back into the renderer's text bounds API.
-- [ ] Shared clipping, alpha, and DPI semantics between MathText and `usetex`
+- [x] Shared clipping, alpha, and DPI semantics between MathText and `usetex`
       paths so the artist-side API does not branch.
 - [ ] Golden fixtures gated by the presence of a TeX installation; skip with
       a clear diagnostic when missing.
+      Harness exists, but committed TeX-generated PNG fixtures still need to
+      be produced on a host with `latex` + `dvipng`.
 
 ### 3.3 MathText Module Promotion
 
 - Promotion target: document the final `internal/mathtext` API by
   2026-07-31, then either move it to a top-level `mathtext` package in this
   repository or split it into its own module before the v1.0 API freeze.
-- [ ] Stabilize the public API surface of `internal/mathtext` against the
+- [x] Stabilize the public API surface of `internal/mathtext` against the
       needs of the AGG, SVG, PDF, and Skia text drawers.
+      `internal/mathtext/doc.go` documents the retained internal API:
+      normalization, display segmentation, layout-to-runs/rules, renderer font
+      resolution hooks, and cache/storage contracts.
 - [ ] Promote `internal/mathtext` to a top-level module / repo with its own
       versioning, once the grammar coverage and cache contracts are firm.
 
 **Exit criteria:**
 
-- [ ] MathText renders identically across all backends within documented
+- [x] MathText renders identically across all backends within documented
       tolerances.
-- [ ] `usetex` is opt-in, dependency-free by default, and tested when the
+      AGG PNG goldens are cross-checked against Matplotlib references with
+      catalog tolerances; PDF, PS, and SVG vector outputs are rasterized and
+      compared against the same AGG goldens; Skia has build-tagged PNG golden
+      comparisons for the Phase 3 fixture set.
+- [x] `usetex` is opt-in, dependency-free by default, and tested when the
       external TeX toolchain is present.
-- [ ] `internal/mathtext` is either standalone or has a documented promotion
+- [x] `internal/mathtext` is either standalone or has a documented promotion
       date.
 
 ---

@@ -23,6 +23,11 @@ hist_strategies
 boxplot_basic
 text_labels_strict
 title_strict
+mathtext_basic
+mathtext_fractions
+mathtext_integrals
+mathtext_matrices
+mathtext_inline_labels
 image_heatmap
 imshow_clipped
 imshow_transformed

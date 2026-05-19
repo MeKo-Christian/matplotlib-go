@@ -23,6 +23,7 @@ type ManagerConfig struct {
 	CacheDir      string
 	LaTeXCommand  string
 	DVIPNGCommand string
+	TFMDirs       []string
 }
 
 // Manager converts TeX strings to cached tight PNG artifacts.
@@ -31,6 +32,7 @@ type Manager struct {
 	cacheDir      string
 	latexCommand  string
 	dvipngCommand string
+	tfmDirs       []string
 }
 
 // RenderResult is one cached TeX raster artifact and its renderer metrics.
@@ -55,6 +57,7 @@ func NewManager(cfg ManagerConfig) *Manager {
 		cacheDir:      cfg.CacheDir,
 		latexCommand:  cfg.LaTeXCommand,
 		dvipngCommand: cfg.DVIPNGCommand,
+		tfmDirs:       append([]string(nil), cfg.TFMDirs...),
 	}
 }
 
@@ -90,15 +93,19 @@ func (m *Manager) Render(text string, size float64, dpi uint, fontKey string) (R
 		return RenderResult{}, err
 	}
 	w, h := img.Bounds().Dx(), img.Bounds().Dy()
+	metrics := render.TextMetrics{
+		W:       float64(w),
+		H:       float64(h),
+		Ascent:  float64(h),
+		Descent: 0,
+	}
+	if dviMetrics, ok := m.cachedDVIMetrics(text, size, dpi, fontKey); ok {
+		metrics = dviMetrics
+	}
 	return RenderResult{
 		PNGPath: pngPath,
 		Image:   img,
-		Metrics: render.TextMetrics{
-			W:       float64(w),
-			H:       float64(h),
-			Ascent:  float64(h),
-			Descent: 0,
-		},
+		Metrics: metrics,
 	}, nil
 }
 
@@ -189,6 +196,36 @@ func (m *Manager) basePath(source string, dpi uint) (string, error) {
 		return "", err
 	}
 	return filepath.Join(dir, hash), nil
+}
+
+func (m *Manager) cachedDVIMetrics(text string, size float64, dpi uint, fontKey string) (render.TextMetrics, bool) {
+	source := Source(text, size, fontKey)
+	base, err := m.basePath(source, 0)
+	if err != nil {
+		return render.TextMetrics{}, false
+	}
+	dviPath := base + ".dvi"
+	if !fileExists(dviPath) {
+		return render.TextMetrics{}, false
+	}
+	data, err := os.ReadFile(dviPath)
+	if err != nil {
+		return render.TextMetrics{}, false
+	}
+	pages, err := ParseDVI(data, float64(dpi), newTFMMetricProvider(m.tfmDirs))
+	if err != nil || len(pages) != 1 {
+		return render.TextMetrics{}, false
+	}
+	page := pages[0]
+	if page.Width <= 0 && page.Height <= 0 && page.Descent <= 0 {
+		return render.TextMetrics{}, false
+	}
+	return render.TextMetrics{
+		W:       page.Width,
+		H:       page.Height + page.Descent,
+		Ascent:  page.Height,
+		Descent: page.Descent,
+	}, true
 }
 
 func runCommand(command []string, text, cwd string) error {
