@@ -3,6 +3,7 @@ package render
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -82,6 +83,60 @@ func TestEmbeddedFontFaceProvidesDefaultFamilies(t *testing.T) {
 		if face.Path != "" {
 			t.Fatalf("embeddedFontFace(%q).Path = %q, want empty", tt.family, face.Path)
 		}
+	}
+}
+
+func TestFontManagerPrefersBundledComputerModernFont(t *testing.T) {
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
+	}
+	want := filepath.Clean(filepath.Join(filepath.Dir(file), "..", "third_party", "matplotlib", "lib", "matplotlib", "mpl-data", "fonts", "ttf", "cmex10.ttf"))
+
+	manager := NewFontManager()
+	face, ok := manager.FindFont(FontProperties{Families: []string{"cmex10"}})
+	if !ok || filepath.Clean(face.Path) != want {
+		t.Fatalf("FindFont(cmex10) = %+v, %v; want %q", face, ok, want)
+	}
+}
+
+func TestFontManagerPrefersBundledMatplotlibDejaVuFont(t *testing.T) {
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
+	}
+	fontDir := filepath.Join(filepath.Dir(file), "..", "third_party", "matplotlib", "lib", "matplotlib", "mpl-data", "fonts", "ttf")
+	tests := []struct {
+		name  string
+		props FontProperties
+		want  string
+	}{
+		{
+			name:  "regular sans",
+			props: FontProperties{Families: []string{"DejaVu Sans"}},
+			want:  "DejaVuSans.ttf",
+		},
+		{
+			name:  "italic sans",
+			props: FontProperties{Families: []string{"DejaVu Sans"}, Style: FontStyleItalic},
+			want:  "DejaVuSans-Oblique.ttf",
+		},
+		{
+			name:  "stix size font",
+			props: FontProperties{Families: []string{"STIXSizeOneSym"}},
+			want:  "STIXSizOneSymReg.ttf",
+		},
+	}
+
+	manager := NewFontManager()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			want := filepath.Clean(filepath.Join(fontDir, tt.want))
+			face, ok := manager.FindFont(tt.props)
+			if !ok || filepath.Clean(face.Path) != want {
+				t.Fatalf("FindFont(%+v) = %+v, %v; want %q", tt.props, face, ok, want)
+			}
+		})
 	}
 }
 

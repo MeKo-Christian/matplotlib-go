@@ -21,10 +21,10 @@ def mathtext_integrals(out_dir):
     ax.set_ylim(0, 1)
     ax.axis("off")
 
-    ax.text(0.50, 0.77, r"$\int_0^\infty e^{-x}\,dx = 1$", transform=ax.transAxes, ha="center", va="center", fontsize=24)
-    ax.text(0.50, 0.55, r"$\sum_{i=1}^{n} i^2$", transform=ax.transAxes, ha="center", va="center", fontsize=26)
-    ax.text(0.50, 0.34, r"$\prod_{k=1}^{m} k$", transform=ax.transAxes, ha="center", va="center", fontsize=26)
-    ax.text(0.50, 0.15, r"$\lim_{x\to 0} \frac{\sin x}{x} = 1$", transform=ax.transAxes, ha="center", va="center", fontsize=23)
+    ax.text(0.50, 0.80, r"$\int_0^\infty e^{-x}\,dx = 1$", transform=ax.transAxes, ha="center", va="center", fontsize=24)
+    ax.text(0.34, 0.50, r"$\sum_{i=1}^{n} i^2$", transform=ax.transAxes, ha="center", va="center", fontsize=26)
+    ax.text(0.66, 0.50, r"$\prod_{k=1}^{m} k$", transform=ax.transAxes, ha="center", va="center", fontsize=26)
+    ax.text(0.50, 0.16, r"$\lim_{x\to 0} \frac{\sin x}{x} = 1$", transform=ax.transAxes, ha="center", va="center", fontsize=23)
     save(fig, out_dir, "mathtext_integrals")
 
 

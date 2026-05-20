@@ -25,11 +25,19 @@ type mathTextMeasurer struct {
 
 func (m mathTextMeasurer) MeasureText(text string, size float64, fontKey string) mt.Metrics {
 	metrics := m.r.MeasureText(text, size, fontKey)
+	ascent := metrics.Ascent
+	descent := metrics.Descent
+	if bounder, ok := m.r.(render.TextBounder); ok {
+		if bounds, ok := bounder.MeasureTextBounds(text, size, fontKey); ok && bounds.W > 0 && bounds.H > 0 {
+			ascent = math.Max(0, -bounds.Y)
+			descent = math.Max(0, bounds.Y+bounds.H)
+		}
+	}
 	return mt.Metrics{
 		W:       metrics.W,
-		H:       metrics.H,
-		Ascent:  metrics.Ascent,
-		Descent: metrics.Descent,
+		H:       ascent + descent,
+		Ascent:  ascent,
+		Descent: descent,
 	}
 }
 

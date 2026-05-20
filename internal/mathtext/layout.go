@@ -82,7 +82,19 @@ const (
 	mathLayoutMatrix
 )
 
-const mathGlyphDelimiterScale = 0.45
+const (
+	mathGlyphDelimiterScale = 0.45
+	mathRuleDelimiterScale  = 0.76
+	mathSpaceScale          = 1.60
+	mathCMXHeightScale      = 0.43
+	mathSizedDelimAdvance   = 0.79
+	mathRulelessDelimScale  = 0.80
+)
+
+type mathDelimiterGlyph struct {
+	text    string
+	fontKey string
+}
 
 type mathLayoutNode struct {
 	kind     mathLayoutKind
@@ -626,8 +638,13 @@ func (p *mathLayoutParser) parseMatrixCell(envName string) mathLayoutNode {
 		case '~':
 			children = append(children, mathLayoutNode{kind: mathLayoutSpace, widthEm: 0.333})
 			p.pos++
+		case ' ', '\t', '\n', '\r':
+			if !p.implicitItalic {
+				appendText(" ")
+			}
+			p.pos++
 		default:
-			appendText(string(r))
+			children = appendMathAtom(children, r, p.implicitItalic)
 			p.pos++
 		}
 	}
@@ -674,8 +691,13 @@ func (p *mathLayoutParser) parseUntilFenceBoundary() mathLayoutNode {
 		case '~':
 			children = append(children, mathLayoutNode{kind: mathLayoutSpace, widthEm: 0.333})
 			p.pos++
+		case ' ', '\t', '\n', '\r':
+			if !p.implicitItalic {
+				appendText(" ")
+			}
+			p.pos++
 		default:
-			appendText(string(r))
+			children = appendMathAtom(children, r, p.implicitItalic)
 			p.pos++
 		}
 	}
@@ -965,7 +987,7 @@ func layoutMathNode(r Measurer, n mathLayoutNode, size float64, fontKey string, 
 	case mathLayoutSqrt:
 		return layoutMathSqrt(r, pointerNode(n.radicand), n.index, size, fontKey, opts)
 	case mathLayoutSpace:
-		return mathLayoutBox{Width: size * n.widthEm}
+		return mathLayoutBox{Width: size * mathSpaceScale * n.widthEm}
 	case mathLayoutStyled:
 		return layoutMathStyled(r, n, size, fontKey, opts)
 	case mathLayoutFence:
@@ -1063,12 +1085,82 @@ func layoutMathDelimiter(r Measurer, delim string, targetAscent, targetDescent, 
 	switch delim {
 	case "|", "‖":
 		return layoutMathVerticalRuleDelimiter(delim, targetAscent, targetDescent, size)
-	case "[", "]", "⌊", "⌋", "⌈", "⌉":
-		return layoutMathBracketDelimiter(delim, targetAscent, targetDescent, size)
 	default:
+		if candidates := mathSizedDelimiterGlyphs(delim); len(candidates) > 0 {
+			return layoutMathSizedDelimiter(r, candidates, targetAscent, targetDescent, size)
+		}
 		delimiterSize := maxFloat64(size*1.1, (targetAscent+targetDescent)*mathGlyphDelimiterScale)
 		return centerMathDelimiterBox(layoutMathTextRun(r, delim, delimiterSize, mathDelimiterFontKey()), targetAscent, targetDescent)
 	}
+}
+
+func layoutMathSizedDelimiter(r Measurer, candidates []mathDelimiterGlyph, targetAscent, targetDescent, size float64) mathLayoutBox {
+	targetTotal := targetAscent + targetDescent
+	if targetTotal <= 0 {
+		targetTotal = size
+	}
+	tolerance := size * mathCMXHeightScale * 0.2
+	selected := candidates[len(candidates)-1]
+	selectedTotal := 0.0
+	for _, candidate := range candidates {
+		box := layoutMathTextRun(r, candidate.text, size, candidate.fontKey)
+		total := box.Ascent + box.Descent
+		if total <= 0 {
+			continue
+		}
+		selected = candidate
+		selectedTotal = total
+		if total >= targetTotal-tolerance {
+			break
+		}
+	}
+	if selectedTotal <= 0 {
+		selectedTotal = size
+	}
+	delimiterSize := size * targetTotal / selectedTotal
+	if delimiterSize <= 0 {
+		delimiterSize = size
+	}
+	out := centerMathDelimiterBox(layoutMathTextRun(r, selected.text, delimiterSize, selected.fontKey), targetAscent, targetDescent)
+	if isMathSizedDelimiterFont(selected.fontKey) {
+		out.Width *= mathSizedDelimAdvance
+	}
+	return out
+}
+
+func mathSizedDelimiterGlyphs(delim string) []mathDelimiterGlyph {
+	switch delim {
+	case "(", ")", "[", "]", "{", "}", "⌊", "⌋", "⌈", "⌉", "⟨", "⟩":
+		return []mathDelimiterGlyph{
+			{text: delim, fontKey: "STIXGeneral"},
+			stixSizeGlyph(1, delim),
+			stixSizeGlyph(2, delim),
+			stixSizeGlyph(3, delim),
+			stixSizeGlyph(4, delim),
+			stixSizeGlyph(5, delim),
+		}
+	default:
+		return nil
+	}
+}
+
+func stixSizeGlyph(size int, text string) mathDelimiterGlyph {
+	switch size {
+	case 1:
+		return mathDelimiterGlyph{text: text, fontKey: "STIXSizeOneSym"}
+	case 2:
+		return mathDelimiterGlyph{text: text, fontKey: "STIXSizeTwoSym"}
+	case 3:
+		return mathDelimiterGlyph{text: text, fontKey: "STIXSizeThreeSym"}
+	case 4:
+		return mathDelimiterGlyph{text: text, fontKey: "STIXSizeFourSym"}
+	default:
+		return mathDelimiterGlyph{text: text, fontKey: "STIXSizeFiveSym"}
+	}
+}
+
+func isMathSizedDelimiterFont(fontKey string) bool {
+	return strings.HasPrefix(fontKey, "STIXSize") || fontKey == "STIXGeneral"
 }
 
 func centerMathDelimiterBox(box mathLayoutBox, targetAscent, targetDescent float64) mathLayoutBox {
@@ -1089,6 +1181,8 @@ func centerMathDelimiterBox(box mathLayoutBox, targetAscent, targetDescent float
 func layoutMathVerticalRuleDelimiter(delim string, targetAscent, targetDescent, size float64) mathLayoutBox {
 	thickness := maxFloat64(size*0.065, 1.0)
 	pad := size * 0.04
+	targetAscent *= mathRuleDelimiterScale
+	targetDescent *= mathRuleDelimiterScale
 	top := -targetAscent - pad
 	bottom := targetDescent + pad
 	width := maxFloat64(size*0.18, thickness*2)
@@ -1118,6 +1212,8 @@ func layoutMathVerticalRuleDelimiter(delim string, targetAscent, targetDescent, 
 func layoutMathBracketDelimiter(delim string, targetAscent, targetDescent, size float64) mathLayoutBox {
 	thickness := maxFloat64(size*0.065, 1.0)
 	pad := size * 0.04
+	targetAscent *= mathRuleDelimiterScale
+	targetDescent *= mathRuleDelimiterScale
 	top := -targetAscent - pad
 	bottom := targetDescent + pad
 	width := maxFloat64(size*0.28, thickness*4)
@@ -1218,10 +1314,8 @@ func layoutMathMatrix(r Measurer, n mathLayoutNode, size float64, fontKey string
 		}
 	}
 
-	delimiterSize := maxFloat64(size, bodyHeight*mathGlyphDelimiterScale)
-	delimiterFontKey := mathDelimiterFontKey()
-	left := layoutMathTextRun(r, n.left, delimiterSize, delimiterFontKey)
-	right := layoutMathTextRun(r, n.right, delimiterSize, delimiterFontKey)
+	left := layoutMathDelimiter(r, n.left, bodyHeight/2, bodyHeight/2, size, fontKey)
+	right := layoutMathDelimiter(r, n.right, bodyHeight/2, bodyHeight/2, size, fontKey)
 	leftGap := 0.0
 	rightGap := 0.0
 	if left.Width > 0 {
@@ -1300,7 +1394,11 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 		return layoutMathLimits(r, n, size, fontKey, opts)
 	}
 
-	base := layoutMathNode(r, pointerNode(n.base), size, fontKey, opts)
+	baseSize := size
+	if baseText := nodePlainText(pointerNode(n.base)); isMathTallSideScriptGlyph(baseText) {
+		baseSize *= 1.65
+	}
+	base := layoutMathNode(r, pointerNode(n.base), baseSize, fontKey, opts)
 	scriptSize := size * 0.7
 	x := base.Width
 	var out mathLayoutBox
@@ -1321,6 +1419,9 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 	if n.sub != nil {
 		sub := layoutMathNode(r, *n.sub, scriptSize, fontKey, opts)
 		y := maxFloat64(base.Descent*0.70, scriptSize*0.25)
+		if baseText := nodePlainText(pointerNode(n.base)); isMathTallSideScriptGlyph(baseText) {
+			y += size * 0.28
+		}
 		out.appendTranslated(sub, x, y)
 		scriptWidth = maxFloat64(scriptWidth, sub.Width)
 		out.Ascent = maxFloat64(out.Ascent, -y+sub.Ascent)
@@ -1333,7 +1434,7 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 func layoutMathLimits(r Measurer, n mathLayoutNode, size float64, fontKey string, opts Options) mathLayoutBox {
 	baseSize := size
 	if baseText := nodePlainText(pointerNode(n.base)); isMathLargeGlyph(baseText) {
-		baseSize *= 1.2
+		baseSize *= 1.45
 	}
 	base := layoutMathNode(r, pointerNode(n.base), baseSize, fontKey, opts)
 	scriptSize := size * 0.7
@@ -1393,6 +1494,15 @@ func isMathLargeGlyph(text string) bool {
 	}
 }
 
+func isMathTallSideScriptGlyph(text string) bool {
+	switch text {
+	case "∫", "∮":
+		return true
+	default:
+		return false
+	}
+}
+
 func isMathLimitText(text string) bool {
 	switch text {
 	case "∑", "∏", "lim", "lim inf", "lim sup", "max", "min", "sup", "inf":
@@ -1436,12 +1546,33 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	}
 	out.appendTranslated(numBox, numX, numY)
 	out.appendTranslated(denBox, denX, denY)
+	baselineLift := size * 0.34
+	var shifted mathLayoutBox
+	shifted.appendTranslated(out, 0, -baselineLift)
+	shifted.Width = out.Width
+	shifted.Ascent = out.Ascent + baselineLift
+	shifted.Descent = maxFloat64(0, out.Descent-baselineLift)
+	out = shifted
 	if leftDelim == "" && rightDelim == "" {
 		return out
 	}
 
-	left := layoutMathDelimiter(r, leftDelim, out.Ascent, out.Descent, size, fontKey)
-	right := layoutMathDelimiter(r, rightDelim, out.Ascent, out.Descent, size, fontKey)
+	delimAscent := out.Ascent
+	delimDescent := out.Descent
+	if !rule {
+		delimAscent *= mathRulelessDelimScale
+		delimDescent *= mathRulelessDelimScale
+	}
+	left := layoutMathDelimiter(r, leftDelim, delimAscent, delimDescent, size, fontKey)
+	right := layoutMathDelimiter(r, rightDelim, delimAscent, delimDescent, size, fontKey)
+	if !rule && display {
+		if left.Width > 0 {
+			left.Width /= mathRulelessDelimScale
+		}
+		if right.Width > 0 {
+			right.Width /= mathRulelessDelimScale
+		}
+	}
 	var delimited mathLayoutBox
 	x := 0.0
 	delimited.appendTranslated(left, x, 0)

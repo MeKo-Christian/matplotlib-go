@@ -261,10 +261,13 @@ func findFontFace(props FontProperties, dirs []string) (FontFace, bool) {
 	styled := styledFontRequested(props)
 	for _, family := range props.Families {
 		for _, candidate := range candidateFontFamilies(family) {
+			if path := findFontInDirs(candidate, dirs); path != "" {
+				return FontFace{Path: path, Family: candidate, Style: props.Style, Weight: props.Weight}, true
+			}
+			if path := bundledMatplotlibFontPath(candidate, props); path != "" {
+				return FontFace{Path: path, Family: candidate, Style: props.Style, Weight: props.Weight}, true
+			}
 			if !styled {
-				if path := findFontInDirs(candidate, dirs); path != "" {
-					return FontFace{Path: path, Family: candidate, Style: props.Style, Weight: props.Weight}, true
-				}
 				if face, ok := embeddedFontFace(candidate, props); ok {
 					return face, true
 				}
@@ -324,6 +327,113 @@ func embeddedFontFace(family string, props FontProperties) (FontFace, bool) {
 		Style:  props.Style,
 		Weight: props.Weight,
 	}, true
+}
+
+func bundledComputerModernFontPath(family string) string {
+	var filename string
+	switch normalizeFontFamilyName(family) {
+	case "cmb10":
+		filename = "cmb10.ttf"
+	case "cmex10":
+		filename = "cmex10.ttf"
+	case "cmmi10":
+		filename = "cmmi10.ttf"
+	case "cmr10":
+		filename = "cmr10.ttf"
+	case "cmss10":
+		filename = "cmss10.ttf"
+	case "cmsy10":
+		filename = "cmsy10.ttf"
+	case "cmti10":
+		filename = "cmti10.ttf"
+	case "cmtt10":
+		filename = "cmtt10.ttf"
+	default:
+		return ""
+	}
+	_, sourceFile, _, ok := runtime.Caller(0)
+	if !ok {
+		return ""
+	}
+	return existingFontPath(filepath.Join(filepath.Dir(sourceFile), "..", "third_party", "matplotlib", "lib", "matplotlib", "mpl-data", "fonts", "ttf", filename))
+}
+
+func bundledMatplotlibFontPath(family string, props FontProperties) string {
+	if path := bundledComputerModernFontPath(family); path != "" {
+		return path
+	}
+	filename := bundledDejaVuFontFilename(family, props)
+	if filename == "" {
+		return ""
+	}
+	_, sourceFile, _, ok := runtime.Caller(0)
+	if !ok {
+		return ""
+	}
+	return existingFontPath(filepath.Join(filepath.Dir(sourceFile), "..", "third_party", "matplotlib", "lib", "matplotlib", "mpl-data", "fonts", "ttf", filename))
+}
+
+func bundledDejaVuFontFilename(family string, props FontProperties) string {
+	bold := props.Weight >= 700
+	italic := props.Style == FontStyleItalic || props.Style == FontStyleOblique
+	switch normalizeFontFamilyName(family) {
+	case "dejavusans":
+		switch {
+		case bold && italic:
+			return "DejaVuSans-BoldOblique.ttf"
+		case bold:
+			return "DejaVuSans-Bold.ttf"
+		case italic:
+			return "DejaVuSans-Oblique.ttf"
+		default:
+			return "DejaVuSans.ttf"
+		}
+	case "dejavuserif":
+		switch {
+		case bold && italic:
+			return "DejaVuSerif-BoldItalic.ttf"
+		case bold:
+			return "DejaVuSerif-Bold.ttf"
+		case italic:
+			return "DejaVuSerif-Italic.ttf"
+		default:
+			return "DejaVuSerif.ttf"
+		}
+	case "dejavusansmono":
+		switch {
+		case bold && italic:
+			return "DejaVuSansMono-BoldOblique.ttf"
+		case bold:
+			return "DejaVuSansMono-Bold.ttf"
+		case italic:
+			return "DejaVuSansMono-Oblique.ttf"
+		default:
+			return "DejaVuSansMono.ttf"
+		}
+	case "stixgeneral":
+		switch {
+		case bold && italic:
+			return "STIXGeneralBolIta.ttf"
+		case bold:
+			return "STIXGeneralBol.ttf"
+		case italic:
+			return "STIXGeneralItalic.ttf"
+		default:
+			return "STIXGeneral.ttf"
+		}
+	case "stixsizeonesym":
+		return "STIXSizOneSymReg.ttf"
+	case "stixsizetwosym":
+		return "STIXSizTwoSymReg.ttf"
+	case "stixsizethreesym":
+		return "STIXSizThreeSymReg.ttf"
+	case "stixsizefoursym":
+		return "STIXSizFourSymReg.ttf"
+	case "stixsizefivesym":
+		return "STIXSizFiveSymReg.ttf"
+	default:
+		return ""
+	}
 }
 
 func fontFaceCacheKey(face FontFace) string {

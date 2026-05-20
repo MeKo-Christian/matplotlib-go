@@ -23,10 +23,10 @@ func Plot() *core.Figure {
 	ax.SetYLim(0, 1)
 	hideAxes(ax)
 
-	ax.Text(0.50, 0.77, `$\int_0^\infty e^{-x}\,dx = 1$`, centerText(24))
-	ax.Text(0.50, 0.55, `$\sum_{i=1}^{n} i^2$`, centerText(26))
-	ax.Text(0.50, 0.34, `$\prod_{k=1}^{m} k$`, centerText(26))
-	ax.Text(0.50, 0.15, `$\lim_{x\to 0} \frac{\sin x}{x} = 1$`, centerText(23))
+	ax.Text(0.50, 0.80, `$\int_0^\infty e^{-x}\,dx = 1$`, centerText(24))
+	ax.Text(0.34, 0.50, `$\sum_{i=1}^{n} i^2$`, centerText(26))
+	ax.Text(0.66, 0.50, `$\prod_{k=1}^{m} k$`, centerText(26))
+	ax.Text(0.50, 0.16, `$\lim_{x\to 0} \frac{\sin x}{x} = 1$`, centerText(23))
 	return fig
 }
 

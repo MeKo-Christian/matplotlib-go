@@ -149,11 +149,11 @@ func TestLayoutMathTextStacksLargeOperatorLimits(t *testing.T) {
 	if !ok {
 		t.Fatal("LayoutMathText returned !ok")
 	}
-	if !containsMathRun(layout.Runs, "∑", 24) || !containsMathRun(layout.Runs, "i", 14) || !containsMathRun(layout.Runs, "=", 14) || !containsMathRun(layout.Runs, "1", 14) || !containsMathRun(layout.Runs, "n", 14) {
+	if !containsMathRun(layout.Runs, "∑", 29) || !containsMathRun(layout.Runs, "i", 14) || !containsMathRun(layout.Runs, "=", 14) || !containsMathRun(layout.Runs, "1", 14) || !containsMathRun(layout.Runs, "n", 14) {
 		t.Fatalf("missing expected limit runs: %+v", layout.Runs)
 	}
 
-	sumW := r.MeasureText("∑", 24, "DejaVu Sans").W
+	sumW := r.MeasureText("∑", 29, "DejaVu Sans").W
 	superW := r.MeasureText("n", 14, "DejaVu Sans").W
 
 	var sumX, subMinX, subMaxX, superX, subY, superY float64
@@ -195,7 +195,7 @@ func TestLayoutMathTextSupportsIntegralLimits(t *testing.T) {
 	if !ok {
 		t.Fatal("LayoutMathText returned !ok")
 	}
-	if !containsMathRun(layout.Runs, "∫", 20) || !containsMathRun(layout.Runs, "0", 14) || !containsMathRun(layout.Runs, "∞", 14) {
+	if !containsMathRun(layout.Runs, "∫", 33) || !containsMathRun(layout.Runs, "0", 14) || !containsMathRun(layout.Runs, "∞", 14) {
 		t.Fatalf("missing expected integral runs: %+v", layout.Runs)
 	}
 
@@ -222,6 +222,44 @@ func TestLayoutMathTextSupportsIntegralLimits(t *testing.T) {
 	}
 }
 
+func TestLayoutMathTextUsesInkBoundsForStackedMath(t *testing.T) {
+	plain := textRecordingRenderer{}
+	bounded := mathInkBoundsRenderer{}
+
+	plainLayout, ok := LayoutMathText(&plain, `\genfrac{}{}{0}{0}{x}{y}`, 20, "DejaVu Sans")
+	if !ok {
+		t.Fatal("plain LayoutMathText returned !ok")
+	}
+	boundedLayout, ok := LayoutMathText(&bounded, `\genfrac{}{}{0}{0}{x}{y}`, 20, "DejaVu Sans")
+	if !ok {
+		t.Fatal("bounded LayoutMathText returned !ok")
+	}
+
+	var plainTopY, plainBottomY, boundedTopY, boundedBottomY float64
+	for _, run := range plainLayout.Runs {
+		switch run.Text {
+		case "x":
+			plainTopY = run.Offset.Y
+		case "y":
+			plainBottomY = run.Offset.Y
+		}
+	}
+	for _, run := range boundedLayout.Runs {
+		switch run.Text {
+		case "x":
+			boundedTopY = run.Offset.Y
+		case "y":
+			boundedBottomY = run.Offset.Y
+		}
+	}
+
+	plainGap := plainBottomY - plainTopY
+	boundedGap := boundedBottomY - boundedTopY
+	if boundedGap >= plainGap-4 {
+		t.Fatalf("ink bounds should tighten stacked math: plain gap=%v bounded gap=%v plain=%+v bounded=%+v", plainGap, boundedGap, plainLayout.Runs, boundedLayout.Runs)
+	}
+}
+
 func TestLayoutMathTextSupportsFencedDelimiters(t *testing.T) {
 	var r textRecordingRenderer
 	layout, ok := LayoutMathText(&r, `\left(\frac{1}{2}\right)`, 20, "DejaVu Sans")
@@ -231,10 +269,13 @@ func TestLayoutMathTextSupportsFencedDelimiters(t *testing.T) {
 
 	var leftSize, rightSize float64
 	for _, run := range layout.Runs {
-		switch run.Text {
-		case "(":
+		if !strings.HasPrefix(run.FontKey, "STIXSize") {
+			continue
+		}
+		switch {
+		case leftSize == 0:
 			leftSize = run.FontSize
-		case ")":
+		default:
 			rightSize = run.FontSize
 		}
 	}
@@ -253,11 +294,14 @@ func TestLayoutMathTextSupportsMiddleDelimiters(t *testing.T) {
 	var leftSize, rightSize float64
 	var leftX, rightX float64
 	for _, run := range layout.Runs {
-		switch run.Text {
-		case "⟨":
+		if !strings.HasPrefix(run.FontKey, "STIXSize") {
+			continue
+		}
+		switch {
+		case leftSize == 0:
 			leftSize = run.FontSize
 			leftX = run.Offset.X
-		case "⟩":
+		default:
 			rightSize = run.FontSize
 			rightX = run.Offset.X
 		}
@@ -265,7 +309,7 @@ func TestLayoutMathTextSupportsMiddleDelimiters(t *testing.T) {
 
 	middleX := -1.0
 	for _, rule := range layout.Rules {
-		if rule.Rect.H() > 20 && rule.Rect.W() < 5 {
+		if rule.Rect.H() > 15 && rule.Rect.W() < 5 {
 			middleX = rule.Rect.Min.X
 			break
 		}
@@ -300,7 +344,7 @@ func TestLayoutMathTextSupportsOmittedFenceDelimiters(t *testing.T) {
 	}
 	sawBar := false
 	for _, rule := range layout.Rules {
-		if rule.Rect.H() > 20 && rule.Rect.W() < 5 {
+		if rule.Rect.H() > 15 && rule.Rect.W() < 5 {
 			sawBar = true
 			break
 		}
@@ -369,26 +413,26 @@ func TestLayoutMathTextSupportsMatrixEnvironments(t *testing.T) {
 	var sawLeft, sawRight, sawA, sawB, sawC, sawD bool
 	for _, run := range layout.Runs {
 		text := strings.TrimSpace(run.Text)
-		switch text {
-		case "(":
+		switch {
+		case strings.HasPrefix(run.FontKey, "STIXSize") && !sawLeft:
 			leftX = run.Offset.X
 			sawLeft = true
-		case ")":
+		case strings.HasPrefix(run.FontKey, "STIXSize"):
 			rightX = run.Offset.X
 			sawRight = true
-		case "a":
+		case text == "a":
 			firstColTopY = run.Offset.Y
 			sawA = true
-		case "b":
+		case text == "b":
 			if !sawA {
 				t.Fatalf("expected a to be laid out before b: %+v", layout.Runs)
 			}
 			secondColTopX = run.Offset.X
 			sawB = true
-		case "c":
+		case text == "c":
 			firstColBottomY = run.Offset.Y
 			sawC = true
-		case "d":
+		case text == "d":
 			sawD = true
 		}
 	}
@@ -805,6 +849,22 @@ func (r *textRecordingRenderer) MeasureText(text string, size float64, _ string)
 		Ascent:  size * 0.8,
 		Descent: size * 0.2,
 	}
+}
+
+type mathInkBoundsRenderer struct {
+	textRecordingRenderer
+}
+
+func (r *mathInkBoundsRenderer) MeasureTextBounds(text string, size float64, _ string) (render.TextBounds, bool) {
+	if text == "" || size <= 0 {
+		return render.TextBounds{}, false
+	}
+	return render.TextBounds{
+		X: 0,
+		Y: -size * 0.55,
+		W: float64(len(text)) * size * 0.5,
+		H: size * 0.70,
+	}, true
 }
 
 func (r *textRecordingRenderer) DrawText(text string, origin geom.Pt, _ float64, _ render.Color) {

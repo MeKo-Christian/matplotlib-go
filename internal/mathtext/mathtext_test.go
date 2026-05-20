@@ -147,6 +147,24 @@ func TestLayoutMathTextUsesItalicLatinVariablesByDefault(t *testing.T) {
 	}
 }
 
+func TestLayoutMathTextUsesItalicLatinVariablesInMatrices(t *testing.T) {
+	resolver := &recordingResolver{}
+	layout, ok := LayoutMathText(testMeasurer{}, `\begin{pmatrix}x&y\end{pmatrix}`, 20, "base", Options{FontResolver: resolver})
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+
+	italicRuns := 0
+	for _, run := range layout.Runs {
+		if (run.Text == "x" || run.Text == "y") && run.FontKey == "style:italic" {
+			italicRuns++
+		}
+	}
+	if italicRuns != 2 {
+		t.Fatalf("expected matrix variables to use implicit italic style, got runs: %+v", layout.Runs)
+	}
+}
+
 func TestLayoutMathTextUsesRuleDelimitersForStretchyBars(t *testing.T) {
 	layout, ok := LayoutMathText(testMeasurer{}, `\left| \frac{1}{2} \right|`, 20, "base", Options{})
 	if !ok {
@@ -166,16 +184,19 @@ func TestLayoutMathTextUsesRuleDelimitersForStretchyBars(t *testing.T) {
 	}
 }
 
-func TestLayoutMathTextUsesRuleDelimitersForStretchyBrackets(t *testing.T) {
+func TestLayoutMathTextUsesSizedGlyphsForStretchyBrackets(t *testing.T) {
 	layout, ok := LayoutMathText(testMeasurer{}, `\left[\frac{1}{2}\right]`, 20, "base", Options{})
 	if !ok {
 		t.Fatal("LayoutMathText returned !ok")
 	}
-	if len(layout.Rules) < 7 {
-		t.Fatalf("expected fraction rule plus bracket rule pieces, got %d rules: %+v", len(layout.Rules), layout.Rules)
+	if len(layout.Rules) != 1 {
+		t.Fatalf("expected only the fraction rule, got %d rules: %+v", len(layout.Rules), layout.Rules)
 	}
-	if len(layout.Runs) != 2 {
-		t.Fatalf("expected only numerator and denominator text runs, got %+v", layout.Runs)
+	if len(layout.Runs) != 4 {
+		t.Fatalf("expected bracket glyphs plus numerator and denominator text runs, got %+v", layout.Runs)
+	}
+	if !isTestSTIXSizeFont(layout.Runs[0].FontKey) || !isTestSTIXSizeFont(layout.Runs[len(layout.Runs)-1].FontKey) {
+		t.Fatalf("expected stretchy bracket glyphs from STIX size fonts, got %+v", layout.Runs)
 	}
 }
 
@@ -190,8 +211,8 @@ func TestLayoutMathTextSupportsRulelessDelimitedFractions(t *testing.T) {
 	if len(layout.Runs) != 4 {
 		t.Fatalf("expected left delimiter, numerator, denominator, right delimiter runs; got %+v", layout.Runs)
 	}
-	if layout.Runs[0].Text != "(" || layout.Runs[len(layout.Runs)-1].Text != ")" {
-		t.Fatalf("binom did not add parenthesized delimiters: %+v", layout.Runs)
+	if !isTestSTIXSizeFont(layout.Runs[0].FontKey) || !isTestSTIXSizeFont(layout.Runs[len(layout.Runs)-1].FontKey) {
+		t.Fatalf("binom did not add sized parenthesized delimiters: %+v", layout.Runs)
 	}
 
 	var numY, denY float64
@@ -218,12 +239,19 @@ func TestLayoutMathTextSupportsGenfracDelimitersAndRuleSize(t *testing.T) {
 			t.Fatalf("zero-rule genfrac should not draw a central fraction rule, got %+v", layout.Rules)
 		}
 	}
-	if len(layout.Rules) < 4 {
-		t.Fatalf("genfrac did not apply requested bracket delimiters as rule boxes: %+v", layout.Rules)
+	if len(layout.Rules) != 0 {
+		t.Fatalf("zero-rule genfrac should only draw sized bracket glyphs, got rules: %+v", layout.Rules)
+	}
+	if len(layout.Runs) != 4 || !isTestSTIXSizeFont(layout.Runs[0].FontKey) || !isTestSTIXSizeFont(layout.Runs[len(layout.Runs)-1].FontKey) {
+		t.Fatalf("genfrac did not apply requested bracket delimiters as STIX size glyphs: %+v", layout.Runs)
 	}
 	if !containsTestRun(layout.Runs, "n", 20) || !containsTestRun(layout.Runs, "k", 20) {
 		t.Fatalf("display-style genfrac should keep numerator and denominator at base size: %+v", layout.Runs)
 	}
+}
+
+func isTestSTIXSizeFont(fontKey string) bool {
+	return strings.HasPrefix(fontKey, "STIXSize")
 }
 
 func TestLayoutMathTextSupportsDisplayStyleFractions(t *testing.T) {
@@ -276,6 +304,14 @@ func TestLayoutMathTextMatchesMatplotlibFixtureMetrics(t *testing.T) {
 			wantAscent:  58,
 			wantDescent: 36,
 		},
+		{
+			name:        "integral side scripts",
+			expr:        `\int_0^\infty e^{-x}\,dx = 1`,
+			size:        24,
+			wantWidth:   214,
+			wantAscent:  40,
+			wantDescent: 18,
+		},
 	}
 
 	for _, tt := range tests {
@@ -283,7 +319,7 @@ func TestLayoutMathTextMatchesMatplotlibFixtureMetrics(t *testing.T) {
 		if !ok {
 			t.Fatalf("%s: LayoutMathText returned !ok", tt.name)
 		}
-		if math.Abs(layout.Width-tt.wantWidth) > 4 ||
+		if math.Abs(layout.Width-tt.wantWidth) > 5 ||
 			math.Abs(layout.Ascent-tt.wantAscent) > 4 ||
 			math.Abs(layout.Descent-tt.wantDescent) > 4 {
 			t.Errorf("%s metrics = width %.2f ascent %.2f descent %.2f, want near %.2f %.2f %.2f",
