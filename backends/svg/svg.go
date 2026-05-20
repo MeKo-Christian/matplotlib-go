@@ -43,6 +43,8 @@ type svgNode struct {
 	// slice means the node is unclipped. The serializer wraps the content in
 	// nested <g clip-path="url(#…)"> groups, opening outer-most first.
 	clipIDs []string
+	// filterIDs lists active SVG filter defs in outer-to-inner order.
+	filterIDs []string
 }
 
 // clipDef describes one <clipPath> entry in the SVG <defs> block. Exactly one
@@ -87,6 +89,12 @@ type fontFaceDef struct {
 	format string
 }
 
+type filterDef struct {
+	id     string
+	name   string
+	radius float64
+}
+
 // Renderer implements render.Renderer using SVG path/text recording.
 type Renderer struct {
 	width      int
@@ -124,6 +132,11 @@ type Renderer struct {
 	fontFaces     map[string]fontFaceDef
 	fontFaceOrder []fontFaceDef
 
+	filterDefs      map[string]string // filter metadata → filterDef ID
+	filterOrder     []filterDef
+	filterIDCounter int
+	filterStack     []string
+
 	lastFontKey string
 	texManager  *tex.Manager
 	texErr      error
@@ -148,6 +161,7 @@ var (
 	_ render.NativeHatcher           = (*Renderer)(nil)
 	_ render.GradientFiller          = (*Renderer)(nil)
 	_ render.PatternFiller           = (*Renderer)(nil)
+	_ render.PathEffectFilterDrawer  = (*Renderer)(nil)
 	_ render.RasterizationController = (*Renderer)(nil)
 	_ render.SVGExporter             = (*Renderer)(nil)
 )
@@ -171,6 +185,7 @@ func New(w, h int, bg render.Color) (*Renderer, error) {
 		gradientDefs:    map[string]string{},
 		patternFillDefs: map[string]string{},
 		fontFaces:       map[string]fontFaceDef{},
+		filterDefs:      map[string]string{},
 		texManager:      tex.NewManager(tex.ManagerConfig{}),
 		options:         render.DefaultSVGOptions(),
 	}, nil
@@ -211,6 +226,10 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.hatchIDCounter = 0
 	r.fontFaces = map[string]fontFaceDef{}
 	r.fontFaceOrder = nil
+	r.filterDefs = map[string]string{}
+	r.filterOrder = nil
+	r.filterIDCounter = 0
+	r.filterStack = nil
 	r.lastFontKey = ""
 	return nil
 }
@@ -400,8 +419,9 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 	b.WriteString(" />")
 
 	r.nodes = append(r.nodes, svgNode{
-		content: b.String(),
-		clipIDs: r.currentClipIDs(),
+		content:   b.String(),
+		clipIDs:   r.currentClipIDs(),
+		filterIDs: r.currentFilterIDs(),
 	})
 }
 
@@ -415,6 +435,28 @@ func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
 		return true
 	}
 	return render.DrawPathWithEffects(r, p, paint, r.Path)
+}
+
+// DrawPathEffectFilter renders supported filter effects as native SVG filters.
+func (r *Renderer) DrawPathEffectFilter(path geom.Path, paint render.Paint, effect render.PathEffect, draw func(geom.Path, *render.Paint)) bool {
+	if r == nil || draw == nil {
+		return false
+	}
+	id, ok := r.registerPathEffectFilter(effect)
+	if !ok {
+		return false
+	}
+	r.filterStack = append(r.filterStack, id)
+	draw(path, &paint)
+	r.filterStack = r.filterStack[:len(r.filterStack)-1]
+	return true
+}
+
+// SupportsPathEffectFilter reports whether SVG can render the filter effect
+// without falling back to mixed raster output.
+func (r *Renderer) SupportsPathEffectFilter(effect render.PathEffect) bool {
+	_, ok := normalizePathEffectFilter(effect)
+	return ok
 }
 
 // Image draws an image within the destination rectangle.
@@ -503,8 +545,9 @@ func (r *Renderer) renderImageNode(rgba *image.RGBA, dst geom.Rect, transform st
 	b.WriteString(` />`)
 
 	r.nodes = append(r.nodes, svgNode{
-		content: b.String(),
-		clipIDs: r.currentClipIDs(),
+		content:   b.String(),
+		clipIDs:   r.currentClipIDs(),
+		filterIDs: r.currentFilterIDs(),
 	})
 }
 
@@ -578,8 +621,9 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 	}
 
 	r.nodes = append(r.nodes, svgNode{
-		content: b.String(),
-		clipIDs: r.currentClipIDs(),
+		content:   b.String(),
+		clipIDs:   r.currentClipIDs(),
+		filterIDs: r.currentFilterIDs(),
 	})
 	return true
 }
@@ -660,8 +704,9 @@ func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
 	}
 
 	r.nodes = append(r.nodes, svgNode{
-		content: b.String(),
-		clipIDs: r.currentClipIDs(),
+		content:   b.String(),
+		clipIDs:   r.currentClipIDs(),
+		filterIDs: r.currentFilterIDs(),
 	})
 	return true
 }
@@ -1006,7 +1051,7 @@ func (r *Renderer) renderSVG() string {
 		r.height)
 	writeMetadata(&b, r.options)
 
-	if len(r.clipOrder) > 0 || len(r.markerOrder) > 0 || len(r.pathOrder) > 0 || len(r.hatchOrder) > 0 || len(r.gradientOrder) > 0 || len(r.patternFillOrder) > 0 || len(r.fontFaceOrder) > 0 {
+	if len(r.clipOrder) > 0 || len(r.markerOrder) > 0 || len(r.pathOrder) > 0 || len(r.hatchOrder) > 0 || len(r.gradientOrder) > 0 || len(r.patternFillOrder) > 0 || len(r.fontFaceOrder) > 0 || len(r.filterOrder) > 0 {
 		b.WriteString("  <defs>\n")
 		if len(r.fontFaceOrder) > 0 {
 			b.WriteString("    <style type=\"text/css\"><![CDATA[\n")
@@ -1022,6 +1067,9 @@ func (r *Renderer) renderSVG() string {
 				b.WriteString("\"); }\n")
 			}
 			b.WriteString("    ]]></style>\n")
+		}
+		for _, filter := range r.filterOrder {
+			writeFilterDef(&b, filter)
 		}
 		for _, clip := range r.clipOrder {
 			b.WriteString("    <clipPath id=\"" + clip.id + "\" clipPathUnits=\"userSpaceOnUse\">")
@@ -1092,7 +1140,7 @@ func (r *Renderer) renderSVG() string {
 	}
 
 	for _, node := range r.nodes {
-		if len(node.clipIDs) == 0 {
+		if len(node.clipIDs) == 0 && len(node.filterIDs) == 0 {
 			b.WriteString("  ")
 			b.WriteString(node.content)
 			b.WriteString("\n")
@@ -1104,7 +1152,15 @@ func (r *Renderer) renderSVG() string {
 			b.WriteString(id)
 			b.WriteString(")\">")
 		}
+		for _, id := range node.filterIDs {
+			b.WriteString("<g filter=\"url(#")
+			b.WriteString(id)
+			b.WriteString(")\">")
+		}
 		b.WriteString(node.content)
+		for range node.filterIDs {
+			b.WriteString("</g>")
+		}
 		for range node.clipIDs {
 			b.WriteString("</g>")
 		}
@@ -1143,8 +1199,9 @@ func (r *Renderer) renderTextNode(text string, x, y, size float64, textColor ren
 	content.WriteString("</text>")
 
 	r.nodes = append(r.nodes, svgNode{
-		content: content.String(),
-		clipIDs: r.currentClipIDs(),
+		content:   content.String(),
+		clipIDs:   r.currentClipIDs(),
+		filterIDs: r.currentFilterIDs(),
 	})
 }
 
@@ -1178,6 +1235,15 @@ func (r *Renderer) currentClipIDs() []string {
 	return ids
 }
 
+func (r *Renderer) currentFilterIDs() []string {
+	if len(r.filterStack) == 0 {
+		return nil
+	}
+	out := make([]string, len(r.filterStack))
+	copy(out, r.filterStack)
+	return out
+}
+
 func (r *Renderer) registerClip(rect geom.Rect) string {
 	key := clipKey(rect)
 	if id, ok := r.clipDefs[key]; ok {
@@ -1190,6 +1256,37 @@ func (r *Renderer) registerClip(rect geom.Rect) string {
 	rectCopy := rect
 	r.clipOrder = append(r.clipOrder, clipDef{id: id, rect: &rectCopy})
 	return id
+}
+
+func (r *Renderer) registerPathEffectFilter(effect render.PathEffect) (string, bool) {
+	name, ok := normalizePathEffectFilter(effect)
+	if !ok {
+		return "", false
+	}
+	radius := effect.FilterRadius
+	if radius <= 0 {
+		radius = 1
+	}
+	key := filterKey(name, radius)
+	if id, ok := r.filterDefs[key]; ok {
+		return id, true
+	}
+
+	r.filterIDCounter++
+	id := r.defID("filter", key, r.filterIDCounter)
+	r.filterDefs[key] = id
+	r.filterOrder = append(r.filterOrder, filterDef{id: id, name: name, radius: radius})
+	return id, true
+}
+
+func normalizePathEffectFilter(effect render.PathEffect) (string, bool) {
+	name := strings.ToLower(strings.TrimSpace(effect.Filter))
+	switch name {
+	case "blur", "gaussian", "gaussian-blur", "shadow":
+		return "blur", true
+	default:
+		return "", false
+	}
 }
 
 func (r *Renderer) registerPathClip(d, transform string) string {
@@ -1519,6 +1616,25 @@ func writeHatchDef(b *strings.Builder, hatch hatchDef) {
 		}
 	}
 	b.WriteString("</pattern>\n")
+}
+
+func filterKey(name string, radius float64) string {
+	return strings.Join([]string{name, formatFloat(radius)}, "\x00")
+}
+
+func writeFilterDef(b *strings.Builder, filter filterDef) {
+	b.WriteString(`    <filter id="`)
+	b.WriteString(filter.id)
+	b.WriteString(`" x="-20%" y="-20%" width="140%" height="140%">`)
+	switch filter.name {
+	case "blur":
+		b.WriteString(`<feGaussianBlur`)
+		writeFloatAttr(b, "stdDeviation", filter.radius)
+		b.WriteString(` />`)
+	default:
+		b.WriteString(`<feComposite operator="over" />`)
+	}
+	b.WriteString("</filter>\n")
 }
 
 func hatchPathData(hatch string, spacing float64) string {

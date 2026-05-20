@@ -171,6 +171,44 @@ func TestRasterizedArtistEmbedsImageWhileKeepingTextVector(t *testing.T) {
 	}
 }
 
+func TestPathEffectFilterEmitsNativeSVGFilter(t *testing.T) {
+	content := renderSVGDocument(t, func(r *Renderer) {
+		var path geom.Path
+		path.MoveTo(geom.Pt{X: 20, Y: 70})
+		path.LineTo(geom.Pt{X: 160, Y: 70})
+		r.Path(path, &render.Paint{
+			Stroke:    render.Color{B: 1, A: 1},
+			LineWidth: 2,
+			PathEffects: []render.PathEffect{
+				render.FilterPathEffect(
+					render.Color{},
+					render.Color{R: 1, A: 0.6},
+					8,
+					"blur",
+					3,
+					geom.Pt{X: 2, Y: 2},
+				),
+				render.NormalPathEffect(),
+			},
+		})
+	})
+
+	if strings.Contains(content, "<image") {
+		t.Fatalf("native SVG filter path effect should stay vector, got %q", content)
+	}
+	for _, want := range []string{
+		`<filter id="filter1"`,
+		`<feGaussianBlur stdDeviation="3"`,
+		`filter="url(#filter1)"`,
+		`stroke="rgb(255,0,0)"`,
+		`stroke="rgb(0,0,255)"`,
+	} {
+		if !strings.Contains(content, want) {
+			t.Fatalf("expected SVG fragment %q in %q", want, content)
+		}
+	}
+}
+
 func TestRenderSVGEmitsDefaultEmptyMetadata(t *testing.T) {
 	content := renderSVGDocument(t, func(r *Renderer) {
 		r.DrawText("plain", geom.Pt{X: 10, Y: 20}, 12, render.Color{A: 1})

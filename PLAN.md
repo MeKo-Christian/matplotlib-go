@@ -519,6 +519,10 @@ Current slice landed:
   hook when a backend supports offscreen capture. AGG uses its existing
   `StartFilter` / `StopFilter` surface stack and supports deterministic
   identity / blur filter passes before compositing back to the parent surface.
+- SVG now implements a native path-effect filter hook for blurred filter
+  passes, registers deterministic `<filter>` / `<feGaussianBlur>` defs, and
+  wraps only the affected replay pass while leaving the normal pass as vector
+  path output.
 - AGG, GoBasic, SVG, PDF, PS, PGF, and Skia now implement
   `render.PathEffectDrawer`; backend capability declarations advertise
   `PathEffects` through the runtime interface check.
@@ -530,8 +534,9 @@ Current slice landed:
 Remaining path-effects work:
 
 - Native filter/offscreen variants for blurred shadows and vector soft masks.
-  AGG has the first `FilterRenderer` replay path; SVG `<filter>` defs and PDF
-  transparency groups / soft masks still need native vector implementations.
+  AGG has the first `FilterRenderer` replay path; SVG has native blur filter
+  defs; PDF transparency groups / soft masks still need native vector
+  implementations.
 - Golden and Matplotlib-reference fixtures for text shadows, line halos,
   scatter marker shadows, and polygon effect stacks.
 

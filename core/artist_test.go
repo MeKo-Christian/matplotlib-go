@@ -78,6 +78,28 @@ func (r *rasterizationFilterRecordingRenderer) Path(path geom.Path, paint *rende
 	render.DrawPathWithEffects(r, path, paint, func(geom.Path, *render.Paint) {})
 }
 
+type rasterizationNativeFilterRecordingRenderer struct {
+	rasterizationRecordingRenderer
+	nativeFilters int
+}
+
+func (r *rasterizationNativeFilterRecordingRenderer) SupportsPathEffectFilter(effect render.PathEffect) bool {
+	return effect.Filter == "blur"
+}
+
+func (r *rasterizationNativeFilterRecordingRenderer) DrawPathEffectFilter(path geom.Path, paint render.Paint, effect render.PathEffect, draw func(geom.Path, *render.Paint)) bool {
+	if effect.Filter != "blur" {
+		return false
+	}
+	r.nativeFilters++
+	draw(path, &paint)
+	return true
+}
+
+func (r *rasterizationNativeFilterRecordingRenderer) Path(path geom.Path, paint *render.Paint) {
+	render.DrawPathWithEffects(r, path, paint, func(geom.Path, *render.Paint) {})
+}
+
 func TestRasterizedArtistDrawIsBracketedWhenRendererSupportsMixedOutput(t *testing.T) {
 	fig := NewFigure(100, 100, style.WithDPI(144))
 	var order []int
@@ -245,6 +267,32 @@ func TestFilterCapableRendererKeepsFilterPathEffectVector(t *testing.T) {
 	}
 	if ren.filterStarts == 0 || ren.filterStops == 0 {
 		t.Fatalf("filter-capable renderer did not use filter path: starts=%d stops=%d", ren.filterStarts, ren.filterStops)
+	}
+}
+
+func TestUnsupportedNativeFilterPathEffectAutoRasterizes(t *testing.T) {
+	fig := NewFigure(100, 100, style.WithDPI(110))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line.PathEffects = []render.PathEffect{
+		render.FilterPathEffect(
+			render.Color{R: 1, A: 1},
+			render.Color{B: 1, A: 1},
+			2,
+			"emboss",
+			2,
+			geom.Pt{X: 1, Y: 1},
+		),
+	}
+
+	ren := &rasterizationNativeFilterRecordingRenderer{}
+	DrawFigure(fig, ren)
+
+	if len(ren.options) != 1 {
+		t.Fatalf("unsupported native filter raster option count = %d, want 1", len(ren.options))
+	}
+	if ren.nativeFilters != 0 {
+		t.Fatalf("unsupported filter should not use native filter hook, got %d calls", ren.nativeFilters)
 	}
 }
 

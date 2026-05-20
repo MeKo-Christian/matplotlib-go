@@ -131,6 +131,13 @@ type FilterRenderer interface {
 	StopFilter(postProcess func(img *image.RGBA, dpi float64) (*image.RGBA, geom.Pt))
 }
 
+// PathEffectFilterDrawer is implemented by vector renderers that can apply a
+// filter path effect without rasterizing the filtered pass.
+type PathEffectFilterDrawer interface {
+	SupportsPathEffectFilter(effect PathEffect) bool
+	DrawPathEffectFilter(path geom.Path, paint Paint, effect PathEffect, draw func(geom.Path, *Paint)) bool
+}
+
 // PatternFiller is implemented by renderers that consume Paint.FillPattern
 // natively instead of relying on renderer-neutral fallback expansion.
 type PatternFiller interface {

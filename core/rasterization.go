@@ -173,8 +173,12 @@ func hasUnsupportedFilterPathEffect(r render.Renderer, art Artist) bool {
 	if !ok {
 		return false
 	}
+	nativeFilter, hasNativeFilter := r.(render.PathEffectFilterDrawer)
 	for _, effect := range provider.rasterizationPathEffects() {
-		if effect.Kind == render.PathEffectFilter {
+		if effect.Kind != render.PathEffectFilter {
+			continue
+		}
+		if !hasNativeFilter || !nativeFilter.SupportsPathEffectFilter(effect) {
 			return true
 		}
 	}

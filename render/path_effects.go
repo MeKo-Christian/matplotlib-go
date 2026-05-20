@@ -42,6 +42,9 @@ func DrawPathWithEffects(renderer Renderer, path geom.Path, paint *Paint, draw f
 		case PathEffectFilter:
 			effectPaint := patchEffectPaint(base, effect)
 			effectPath := offsetPath(path, effect.Offset)
+			if filter, ok := renderer.(PathEffectFilterDrawer); ok && filter.SupportsPathEffectFilter(effect) && filter.DrawPathEffectFilter(effectPath, effectPaint, effect, draw) {
+				continue
+			}
 			if filter, ok := renderer.(FilterRenderer); ok {
 				filter.StartFilter()
 				draw(effectPath, &effectPaint)
