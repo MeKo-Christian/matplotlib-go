@@ -200,6 +200,57 @@ func TestRendererPathAlphaEmitsExtGState(t *testing.T) {
 	}
 }
 
+func TestPathEffectIdentityFilterEmitsTransparencyGroup(t *testing.T) {
+	r := newTestRenderer(t)
+	_ = r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}})
+
+	var p geom.Path
+	p.MoveTo(geom.Pt{X: 20, Y: 60})
+	p.LineTo(geom.Pt{X: 180, Y: 60})
+	r.Path(p, &render.Paint{
+		Stroke:    render.Color{B: 1, A: 1},
+		LineWidth: 2,
+		PathEffects: []render.PathEffect{
+			render.FilterPathEffect(
+				render.Color{},
+				render.Color{R: 1, A: 1},
+				8,
+				"identity",
+				0,
+				geom.Pt{X: 2, Y: 2},
+			),
+			render.NormalPathEffect(),
+		},
+	})
+
+	raw := r.content.String()
+	if !strings.Contains(raw, "/E1 Do") {
+		t.Fatalf("expected page content to invoke path-effect Form XObject, got %q", raw)
+	}
+	if strings.Contains(raw, "/Im") {
+		t.Fatalf("identity filter path effect should not rasterize to an image XObject, got %q", raw)
+	}
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	doc := mustParsePDF(t, r)
+	if !pdfDocumentBodyContains(doc, "/XObject << /E1") {
+		t.Fatalf("page resources should reference path-effect form E1; objects: %#v", doc.Objects)
+	}
+	formBody := pdfDocumentObjectBodyContaining(doc, "/Subtype /Form")
+	for _, want := range []string{
+		"/Subtype /Form",
+		"/Group << /S /Transparency",
+		"1 0 0 RG",
+		"8 w",
+		"S",
+	} {
+		if !strings.Contains(formBody, want) {
+			t.Fatalf("path-effect form object missing %q:\n%s", want, formBody)
+		}
+	}
+}
+
 func TestRendererNativeHatchEmitsTilingPattern(t *testing.T) {
 	r := newTestRenderer(t)
 	hatcher, ok := any(r).(render.NativeHatcher)

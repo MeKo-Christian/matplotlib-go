@@ -93,12 +93,15 @@ type pdfShadingObject struct {
 }
 
 type pdfFormXObject struct {
-	name     string
-	path     geom.Path
-	paintOp  string
-	bbox     geom.Rect
-	lineJoin render.LineJoin
-	lineCap  render.LineCap
+	name              string
+	path              geom.Path
+	paintOp           string
+	bbox              geom.Rect
+	lineJoin          render.LineJoin
+	lineCap           render.LineCap
+	content           []byte
+	hasContent        bool
+	transparencyGroup bool
 }
 
 type pdfFormXObjectObject struct {
@@ -196,6 +199,7 @@ var (
 	_ render.NativeHatcher           = (*Renderer)(nil)
 	_ render.PatternFiller           = (*Renderer)(nil)
 	_ render.GradientFiller          = (*Renderer)(nil)
+	_ render.PathEffectFilterDrawer  = (*Renderer)(nil)
 	_ render.MarkerDrawer            = (*Renderer)(nil)
 	_ render.PathCollectionDrawer    = (*Renderer)(nil)
 	_ render.RasterizationController = (*Renderer)(nil)
@@ -484,6 +488,26 @@ func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
 	return render.DrawPathWithEffects(r, p, paint, r.Path)
 }
 
+// SupportsPathEffectFilter reports whether PDF can render the filter effect as
+// vector output. Blur still needs the later soft-mask implementation.
+func (r *Renderer) SupportsPathEffectFilter(effect render.PathEffect) bool {
+	return isPDFIdentityPathEffectFilter(effect)
+}
+
+// DrawPathEffectFilter captures supported filter passes into a transparency
+// group Form XObject and replays that group into the page content stream.
+func (r *Renderer) DrawPathEffectFilter(path geom.Path, paint render.Paint, effect render.PathEffect, _ func(geom.Path, *render.Paint)) bool {
+	if r == nil || !r.began || !r.SupportsPathEffectFilter(effect) {
+		return false
+	}
+	name, ok := r.registerPathEffectForm(path, &paint)
+	if !ok {
+		return false
+	}
+	fmt.Fprintf(&r.content, "q\n/%s Do\nQ\n", escapeName(name))
+	return true
+}
+
 func (r *Renderer) writeAlphaState(paint *render.Paint) {
 	if paint == nil {
 		return
@@ -708,6 +732,48 @@ func (r *Renderer) registerFormXObject(prefix string, path geom.Path, paintOp st
 		lineCap:  paint.LineCap,
 	})
 	return name
+}
+
+func (r *Renderer) registerPathEffectForm(path geom.Path, paint *render.Paint) (string, bool) {
+	if paint == nil || !path.Validate() || len(path.C) == 0 {
+		return "", false
+	}
+	if r.formIDs == nil {
+		r.formIDs = map[string]string{}
+	}
+	content, ok := r.capturePathEffectFormContent(path, paint)
+	if !ok || len(content) == 0 {
+		return "", false
+	}
+	bbox, ok := pathBounds(path)
+	if !ok {
+		return "", false
+	}
+	padding := formPadding(paint)
+	bbox = bbox.Inflate(padding, padding)
+	key := pathEffectFormKey(content, bbox)
+	if id, ok := r.formIDs[key]; ok {
+		return id, true
+	}
+	name := fmt.Sprintf("E%d", len(r.forms)+1)
+	r.formIDs[key] = name
+	r.forms = append(r.forms, pdfFormXObject{
+		name:              name,
+		bbox:              bbox,
+		content:           append([]byte(nil), content...),
+		hasContent:        true,
+		transparencyGroup: true,
+	})
+	return name, true
+}
+
+func (r *Renderer) capturePathEffectFormContent(path geom.Path, paint *render.Paint) ([]byte, bool) {
+	outer := r.content
+	r.content = bytes.Buffer{}
+	r.Path(path, paint)
+	content := append([]byte(nil), r.content.Bytes()...)
+	r.content = outer
+	return content, len(content) > 0
 }
 
 // Image draws a raster image into the destination rectangle as a PDF image
@@ -1650,6 +1716,22 @@ func formXObjectKey(prefix string, path geom.Path, paintOp string, paint *render
 	return b.String()
 }
 
+func pathEffectFormKey(content []byte, bbox geom.Rect) string {
+	return strings.Join([]string{
+		"E",
+		string(content),
+		shortFloat(bbox.Min.X),
+		shortFloat(bbox.Min.Y),
+		shortFloat(bbox.Max.X),
+		shortFloat(bbox.Max.Y),
+	}, "\x00")
+}
+
+func isPDFIdentityPathEffectFilter(effect render.PathEffect) bool {
+	name := strings.ToLower(strings.TrimSpace(effect.Filter))
+	return name == "" || name == "none" || name == "identity"
+}
+
 func pathKey(path geom.Path) string {
 	var b strings.Builder
 	for _, cmd := range path.C {
@@ -2153,7 +2235,7 @@ func buildDocument(width, height int, contentStream []byte, images []pdfImage, h
 		w.writeShadingObject(shading)
 	}
 	for _, form := range formObjects {
-		if err := w.writeFormXObject(form); err != nil {
+		if err := w.writeFormXObject(form, alphaStates); err != nil {
 			return nil, err
 		}
 	}
@@ -2325,31 +2407,43 @@ func (w *pdfWriter) writeShadingObject(shading pdfShadingObject) {
 	w.endObject()
 }
 
-func (w *pdfWriter) writeFormXObject(form pdfFormXObjectObject) error {
+func (w *pdfWriter) writeFormXObject(form pdfFormXObjectObject, alphaStates []pdfAlphaState) error {
 	var stream bytes.Buffer
-	formPaint := render.Paint{
-		LineJoin: form.lineJoin,
-		LineCap:  form.lineCap,
+	if form.hasContent {
+		stream.Write(form.content)
+	} else {
+		formPaint := render.Paint{
+			LineJoin: form.lineJoin,
+			LineCap:  form.lineCap,
+		}
+		writeLineState(&stream, &formPaint)
+		if !writePathOps(&stream, form.path) {
+			return nil
+		}
+		stream.WriteString(form.paintOp)
+		stream.WriteByte('\n')
 	}
-	writeLineState(&stream, &formPaint)
-	if !writePathOps(&stream, form.path) {
-		return nil
-	}
-	stream.WriteString(form.paintOp)
-	stream.WriteByte('\n')
 	encoded, err := flateEncode(stream.Bytes())
 	if err != nil {
 		return fmt.Errorf("pdf: flate encode form %s: %w", form.name, err)
 	}
 	w.beginObject(form.objectID)
+	resources := "<< >>"
+	if form.hasContent && len(alphaStates) > 0 {
+		resources = pageResources(nil, nil, nil, nil, nil, alphaStates, nil)
+	}
 	fmt.Fprintf(&w.buf,
-		"<< /Type /XObject /Subtype /Form /BBox [%s %s %s %s] /Resources << >> /Length %d /Filter /FlateDecode >>\nstream\n",
+		"<< /Type /XObject /Subtype /Form /BBox [%s %s %s %s] /Resources %s",
 		shortFloat(form.bbox.Min.X),
 		shortFloat(form.bbox.Min.Y),
 		shortFloat(form.bbox.Max.X),
 		shortFloat(form.bbox.Max.Y),
-		len(encoded),
+		resources,
 	)
+	if form.transparencyGroup {
+		w.writeString(" /Group << /S /Transparency /CS /DeviceRGB >>")
+	}
+	fmt.Fprintf(&w.buf, " /Length %d /Filter /FlateDecode >>\nstream\n", len(encoded))
 	w.buf.Write(encoded)
 	w.writeString("\nendstream")
 	w.endObject()
