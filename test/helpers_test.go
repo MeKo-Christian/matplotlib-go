@@ -429,3 +429,25 @@ func normalData(seed1, seed2 uint64, n int, mean, stddev float64) []float64 {
 
 // allCases returns every catalog case (cheap; the catalog is small).
 func allCases() []examplecatalog.Case { return examplecatalog.Cases() }
+
+func rendererNeutralCases() []examplecatalog.Case {
+	all := allCases()
+	out := make([]examplecatalog.Case, 0, len(all))
+	for _, c := range all {
+		if c.NativeBackend == "" {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+func aggNativeCases() []examplecatalog.Case {
+	all := allCases()
+	out := make([]examplecatalog.Case, 0, len(all))
+	for _, c := range all {
+		if c.NativeBackend == "agg" {
+			out = append(out, c)
+		}
+	}
+	return out
+}

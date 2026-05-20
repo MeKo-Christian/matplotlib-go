@@ -31,6 +31,12 @@ type Case struct {
 	Showcase    bool
 	WebDemoID   string
 
+	// NativeBackend marks fixtures that intentionally exercise backend-native
+	// renderer capabilities rather than renderer-neutral fallback paths.
+	// NativeCapabilities names the backend capabilities the fixture covers.
+	NativeBackend      string
+	NativeCapabilities []string
+
 	// MinPSNR / MaxMeanAbs / MaxRMSE override the matplotlib reference-compare
 	// tolerance defaults for this case. Zero means "use the package default".
 	// Only consulted by tests in test/; harmless metadata otherwise.
@@ -137,11 +143,11 @@ var cases = []Case{
 	{ID: "lognorm_imshow", Topic: "colorbar", Title: "LogNorm Imshow", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
 	{ID: "twoslope_norm_image", Topic: "colorbar", Title: "TwoSlopeNorm Image", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
 	{ID: "colorbar_extensions", Topic: "colorbar", Title: "Colorbar Extensions", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
-	{ID: "large_scatter", Topic: "raster", Title: "Large Scatter Batch", FixtureOnly: true, MinPSNR: 55.0, MaxMeanAbs: 0.5, MaxRMSE: 4.0},
-	{ID: "mixed_collection", Topic: "raster", Title: "Mixed Path Collection", FixtureOnly: true, MinPSNR: 60.0, MaxMeanAbs: 0.5, MaxRMSE: 2.0},
-	{ID: "quad_mesh", Topic: "raster", Title: "Quad Mesh Batch", FixtureOnly: true, MinPSNR: 48.0, MaxMeanAbs: 1.0, MaxRMSE: 4.0},
-	{ID: "gouraud_triangles", Topic: "raster", Title: "Gouraud Triangles", FixtureOnly: true, MinPSNR: 25.0, MaxMeanAbs: 18.0},
-	{ID: "clip_path_batch", Topic: "raster", Title: "Clip Path Batch", FixtureOnly: true, MinPSNR: 45.0, MaxMeanAbs: 1.0, MaxRMSE: 6.0},
+	{ID: "large_scatter", Topic: "raster", Title: "Large Scatter Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, MinPSNR: 55.0, MaxMeanAbs: 0.5, MaxRMSE: 4.0},
+	{ID: "mixed_collection", Topic: "raster", Title: "Mixed Path Collection", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, MinPSNR: 60.0, MaxMeanAbs: 0.5, MaxRMSE: 2.0},
+	{ID: "quad_mesh", Topic: "raster", Title: "Quad Mesh Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"quadmeshbatch"}, MinPSNR: 48.0, MaxMeanAbs: 1.0, MaxRMSE: 4.0},
+	{ID: "gouraud_triangles", Topic: "raster", Title: "Gouraud Triangles", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"gouraudtrianglebatch"}, MinPSNR: 25.0, MaxMeanAbs: 18.0},
+	{ID: "clip_path_batch", Topic: "raster", Title: "Clip Path Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathclip", "quadmeshbatch"}, MinPSNR: 45.0, MaxMeanAbs: 1.0, MaxRMSE: 6.0},
 }
 
 // Cases returns every cataloged parity example/fixture.
@@ -149,6 +155,7 @@ func Cases() []Case {
 	out := make([]Case, len(cases))
 	copy(out, cases)
 	for i := range out {
+		out[i].NativeCapabilities = append([]string(nil), out[i].NativeCapabilities...)
 		applyDefaults(&out[i])
 	}
 	return out

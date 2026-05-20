@@ -812,13 +812,13 @@ backend parity program but is not yet complete.
 
 ### 7.1 AGG Native Capabilities
 
-- [ ] Complete the AGG MathText raster pipeline once Phase 3.1 lands so
+- [x] Complete the AGG MathText raster pipeline once Phase 3.1 lands so
       raster glyph composition shares the same shaping pipeline as text-as-path.
-- [ ] Plumb `usetex` output through AGG using the DVI parser from Phase 3.2.
+- [x] Plumb `usetex` output through AGG using the DVI parser from Phase 3.2.
 - [ ] Expand AGG parity diagnostics for remaining non-text residuals: dense
       path collections, repeated translucent overlaps, image interpolation modes,
       hatch clipping, and mixed raster / vector fallbacks.
-- [ ] Split AGG-native parity fixtures from renderer-neutral fallback
+- [x] Split AGG-native parity fixtures from renderer-neutral fallback
       fixtures so missing native AGG behavior cannot be hidden by fallback
       drawing.
 

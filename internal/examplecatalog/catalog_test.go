@@ -80,6 +80,28 @@ func TestCatalogIncludesPhase3MathTextFixtures(t *testing.T) {
 	}
 }
 
+func TestCatalogSplitsAGGNativeParityFixtures(t *testing.T) {
+	want := map[string][]string{
+		"large_scatter":     {"pathcollectionbatch"},
+		"mixed_collection":  {"pathcollectionbatch"},
+		"quad_mesh":         {"quadmeshbatch"},
+		"gouraud_triangles": {"gouraudtrianglebatch"},
+		"clip_path_batch":   {"pathclip", "quadmeshbatch"},
+	}
+	for id, capabilities := range want {
+		c, ok := Lookup(id)
+		if !ok {
+			t.Fatalf("missing AGG-native parity catalog case %q", id)
+		}
+		if c.NativeBackend != "agg" {
+			t.Fatalf("%s NativeBackend = %q, want agg", id, c.NativeBackend)
+		}
+		if !sameStrings(c.NativeCapabilities, capabilities) {
+			t.Fatalf("%s NativeCapabilities = %v, want %v", id, c.NativeCapabilities, capabilities)
+		}
+	}
+}
+
 func TestWebDemosAreParityCasesWithReferences(t *testing.T) {
 	root := repoRoot(t)
 	seen := map[string]bool{}
@@ -99,6 +121,18 @@ func TestWebDemosAreParityCasesWithReferences(t *testing.T) {
 	if len(seen) < 8 {
 		t.Fatalf("web demo catalog has %d entries, want a curated but varied set", len(seen))
 	}
+}
+
+func sameStrings(got, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for i := range got {
+		if got[i] != want[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func repoRoot(t *testing.T) string {

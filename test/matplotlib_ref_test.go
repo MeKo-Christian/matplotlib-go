@@ -33,7 +33,7 @@ import (
 // below mplMinPSNR (a fundamental rendering mismatch).
 func TestMatplotlibRef(t *testing.T) {
 	ensureRefs(t)
-	for _, c := range allCases() {
+	for _, c := range rendererNeutralCases() {
 		c := c
 		if !matplotlibRefExists(c.ID) {
 			continue
@@ -44,6 +44,19 @@ func TestMatplotlibRef(t *testing.T) {
 				runStrictMatplotlibRef(t, c.ID)
 				return
 			}
+			runMplTest(t, c.ID)
+		})
+	}
+}
+
+func TestAGGNativeMatplotlibRef(t *testing.T) {
+	ensureRefs(t)
+	for _, c := range aggNativeCases() {
+		c := c
+		if !matplotlibRefExists(c.ID) {
+			continue
+		}
+		t.Run(c.ID, func(t *testing.T) {
 			runMplTest(t, c.ID)
 		})
 	}

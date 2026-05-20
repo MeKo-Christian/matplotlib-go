@@ -23,7 +23,19 @@ import (
 // PNG and a matplotlib reference PNG, comparing them with case-specific
 // tolerances pulled from the catalog row.
 func TestReferenceCompare(t *testing.T) {
-	for _, c := range allCases() {
+	for _, c := range rendererNeutralCases() {
+		c := c
+		if !goldenExists(c.ID) || !matplotlibRefExists(c.ID) {
+			continue
+		}
+		t.Run(c.ID, func(t *testing.T) {
+			runReferenceCompareTest(t, &c)
+		})
+	}
+}
+
+func TestAGGNativeReferenceCompare(t *testing.T) {
+	for _, c := range aggNativeCases() {
 		c := c
 		if !goldenExists(c.ID) || !matplotlibRefExists(c.ID) {
 			continue

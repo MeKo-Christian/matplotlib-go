@@ -20,7 +20,7 @@ import "testing"
 // TestGolden runs a byte-identical golden comparison for every catalog case
 // that has a committed reference PNG.
 func TestGolden(t *testing.T) {
-	for _, c := range allCases() {
+	for _, c := range rendererNeutralCases() {
 		c := c
 		if !goldenExists(c.ID) {
 			continue
@@ -29,6 +29,18 @@ func TestGolden(t *testing.T) {
 			if optionalVisualGoldenIDs[c.ID] {
 				requireOptionalVisualTests(t)
 			}
+			runGoldenTest(t, c.ID)
+		})
+	}
+}
+
+func TestAGGNativeGolden(t *testing.T) {
+	for _, c := range aggNativeCases() {
+		c := c
+		if !goldenExists(c.ID) {
+			continue
+		}
+		t.Run(c.ID, func(t *testing.T) {
 			runGoldenTest(t, c.ID)
 		})
 	}
