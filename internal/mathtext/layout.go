@@ -82,6 +82,8 @@ const (
 	mathLayoutMatrix
 )
 
+const mathGlyphDelimiterScale = 0.45
+
 type mathLayoutNode struct {
 	kind     mathLayoutKind
 	text     string
@@ -108,8 +110,9 @@ type mathLayoutNode struct {
 }
 
 type mathLayoutParser struct {
-	input []rune
-	pos   int
+	input          []rune
+	pos            int
+	implicitItalic bool
 }
 
 // LayoutMathText parses and lays out one MathText expression without requiring
@@ -230,7 +233,7 @@ func parseMathLayoutNode(expr string, cache *Cache) mathLayoutNode {
 			return node
 		}
 	}
-	parser := mathLayoutParser{input: []rune(expr)}
+	parser := mathLayoutParser{input: []rune(expr), implicitItalic: true}
 	node := parser.parseUntil(0)
 	if cache != nil {
 		cache.storeParsedNode(expr, node)
@@ -241,15 +244,7 @@ func parseMathLayoutNode(expr string, cache *Cache) mathLayoutNode {
 func (p *mathLayoutParser) parseUntil(stop rune) mathLayoutNode {
 	var children []mathLayoutNode
 	appendText := func(text string) {
-		if text == "" {
-			return
-		}
-		n := len(children)
-		if n > 0 && children[n-1].kind == mathLayoutText {
-			children[n-1].text += text
-			return
-		}
-		children = append(children, mathLayoutNode{kind: mathLayoutText, text: text})
+		children = appendMathText(children, text)
 	}
 
 	for p.pos < len(p.input) {
@@ -283,8 +278,15 @@ func (p *mathLayoutParser) parseUntil(stop rune) mathLayoutNode {
 		case '~':
 			appendText(" ")
 			p.pos++
+		case '+', '-', '=':
+			children = p.appendMathOperator(children, r, stop)
+		case ' ', '\t', '\n', '\r':
+			if !p.implicitItalic {
+				appendText(" ")
+			}
+			p.pos++
 		default:
-			appendText(string(r))
+			children = appendMathAtom(children, r, p.implicitItalic)
 			p.pos++
 		}
 	}
@@ -309,7 +311,7 @@ func (p *mathLayoutParser) parseArgumentNode() mathLayoutNode {
 	default:
 		r := p.input[p.pos]
 		p.pos++
-		return mathLayoutNode{kind: mathLayoutText, text: string(r)}
+		return mathAtomNode(r, p.implicitItalic)
 	}
 }
 
@@ -426,7 +428,10 @@ func (p *mathLayoutParser) parseEnvironmentNode() mathLayoutNode {
 }
 
 func (p *mathLayoutParser) parseStyledArgumentNode(name string) mathLayoutNode {
+	implicitItalic := p.implicitItalic
+	p.implicitItalic = false
 	arg := p.parseArgumentNode()
+	p.implicitItalic = implicitItalic
 	node := mathLayoutNode{kind: mathLayoutStyled, child: &arg, style: FontStyleNormal, weight: 400}
 	switch name {
 	case "mathsf":
@@ -445,6 +450,87 @@ func (p *mathLayoutParser) parseStyledArgumentNode(name string) mathLayoutNode {
 		return arg
 	}
 	return node
+}
+
+func appendMathText(children []mathLayoutNode, text string) []mathLayoutNode {
+	if text == "" {
+		return children
+	}
+	n := len(children)
+	if n > 0 && children[n-1].kind == mathLayoutText {
+		children[n-1].text += text
+		return children
+	}
+	return append(children, mathLayoutNode{kind: mathLayoutText, text: text})
+}
+
+func appendMathAtom(children []mathLayoutNode, r rune, implicitItalic bool) []mathLayoutNode {
+	node := mathAtomNode(r, implicitItalic)
+	if node.kind == mathLayoutText {
+		return appendMathText(children, node.text)
+	}
+	return append(children, node)
+}
+
+func mathAtomNode(r rune, implicitItalic bool) mathLayoutNode {
+	if implicitItalic && isMathItalicLatin(r) {
+		text := mathLayoutNode{kind: mathLayoutText, text: string(r)}
+		return mathLayoutNode{kind: mathLayoutStyled, child: &text, style: FontStyleItalic}
+	}
+	return mathLayoutNode{kind: mathLayoutText, text: string(r)}
+}
+
+func isMathItalicLatin(r rune) bool {
+	return ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z')
+}
+
+func (p *mathLayoutParser) appendMathOperator(children []mathLayoutNode, op rune, stop rune) []mathLayoutNode {
+	text := string(op)
+	if op == '-' {
+		text = "−"
+	}
+	if p.implicitItalic && p.hasPreviousMathOperand(children) && p.hasNextMathOperand(stop) {
+		children = append(children, mathLayoutNode{kind: mathLayoutSpace, widthEm: 0.222})
+		children = appendMathText(children, text)
+		children = append(children, mathLayoutNode{kind: mathLayoutSpace, widthEm: 0.222})
+	} else {
+		children = appendMathText(children, text)
+	}
+	p.pos++
+	return children
+}
+
+func (p *mathLayoutParser) hasPreviousMathOperand(children []mathLayoutNode) bool {
+	for i := len(children) - 1; i >= 0; i-- {
+		child := children[i]
+		switch child.kind {
+		case mathLayoutSpace:
+			continue
+		case mathLayoutText:
+			return child.text != "" && child.text != "+" && child.text != "−" && child.text != "="
+		default:
+			return true
+		}
+	}
+	return false
+}
+
+func (p *mathLayoutParser) hasNextMathOperand(stop rune) bool {
+	for i := p.pos + 1; i < len(p.input); i++ {
+		r := p.input[i]
+		if stop != 0 && r == stop {
+			return false
+		}
+		switch r {
+		case ' ', '\t', '\n', '\r':
+			continue
+		case '+', '-', '=', '^', '_', '}':
+			return false
+		default:
+			return true
+		}
+	}
+	return false
 }
 
 func (p *mathLayoutParser) parseFenceNode() mathLayoutNode {
@@ -976,7 +1062,7 @@ func layoutMathDelimiter(r Measurer, delim string, targetAscent, targetDescent, 
 	case "[", "]", "⌊", "⌋", "⌈", "⌉":
 		return layoutMathBracketDelimiter(delim, targetAscent, targetDescent, size)
 	default:
-		delimiterSize := maxFloat64(size, (targetAscent+targetDescent)*0.9)
+		delimiterSize := maxFloat64(size*1.1, (targetAscent+targetDescent)*mathGlyphDelimiterScale)
 		return centerMathDelimiterBox(layoutMathTextRun(r, delim, delimiterSize, fontKey), targetAscent, targetDescent)
 	}
 }
@@ -997,8 +1083,8 @@ func centerMathDelimiterBox(box mathLayoutBox, targetAscent, targetDescent float
 }
 
 func layoutMathVerticalRuleDelimiter(delim string, targetAscent, targetDescent, size float64) mathLayoutBox {
-	thickness := maxFloat64(size*0.045, 0.75)
-	pad := size * 0.10
+	thickness := maxFloat64(size*0.065, 1.0)
+	pad := size * 0.04
 	top := -targetAscent - pad
 	bottom := targetDescent + pad
 	width := maxFloat64(size*0.18, thickness*2)
@@ -1026,8 +1112,8 @@ func layoutMathVerticalRuleDelimiter(delim string, targetAscent, targetDescent, 
 }
 
 func layoutMathBracketDelimiter(delim string, targetAscent, targetDescent, size float64) mathLayoutBox {
-	thickness := maxFloat64(size*0.045, 0.75)
-	pad := size * 0.10
+	thickness := maxFloat64(size*0.065, 1.0)
+	pad := size * 0.04
 	top := -targetAscent - pad
 	bottom := targetDescent + pad
 	width := maxFloat64(size*0.28, thickness*4)
@@ -1128,7 +1214,7 @@ func layoutMathMatrix(r Measurer, n mathLayoutNode, size float64, fontKey string
 		}
 	}
 
-	delimiterSize := maxFloat64(size, bodyHeight*0.9)
+	delimiterSize := maxFloat64(size, bodyHeight*mathGlyphDelimiterScale)
 	left := layoutMathTextRun(r, n.left, delimiterSize, fontKey)
 	right := layoutMathTextRun(r, n.right, delimiterSize, fontKey)
 	leftGap := 0.0

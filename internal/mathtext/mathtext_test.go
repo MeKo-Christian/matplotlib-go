@@ -42,6 +42,9 @@ func (r *recordingResolver) ResolveMathFontKey(_ string, request FontRequest) st
 	if len(request.Families) > 0 {
 		return "resolved:" + strings.Join(request.Families, ",")
 	}
+	if request.Style != "" {
+		return "style:" + string(request.Style)
+	}
 	return ""
 }
 
@@ -79,6 +82,43 @@ func TestLayoutMathTextDelegatesStyleFontResolution(t *testing.T) {
 	}
 	if len(layout.Runs) != 1 || !strings.HasPrefix(layout.Runs[0].FontKey, "resolved:") {
 		t.Fatalf("style font key was not applied to layout run: %+v", layout.Runs)
+	}
+}
+
+func TestLayoutMathTextUsesItalicLatinVariablesByDefault(t *testing.T) {
+	resolver := &recordingResolver{}
+	layout, ok := LayoutMathText(testMeasurer{}, `x+\mathrm{x}+\sin x`, 20, "base", Options{FontResolver: resolver})
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+
+	italicRuns := 0
+	romanRuns := 0
+	for _, run := range layout.Runs {
+		if run.Text != "x" {
+			continue
+		}
+		switch {
+		case strings.HasPrefix(run.FontKey, "resolved:"):
+			romanRuns++
+		case run.FontKey == "style:italic":
+			italicRuns++
+		default:
+			t.Fatalf("unexpected font key for x run %q in %+v", run.FontKey, layout.Runs)
+		}
+	}
+	if italicRuns != 2 || romanRuns != 1 {
+		t.Fatalf("unexpected variable styles: italic=%d roman=%d runs=%+v", italicRuns, romanRuns, layout.Runs)
+	}
+
+	var sawItalicRequest bool
+	for _, request := range resolver.requests {
+		if request.Style == FontStyleItalic {
+			sawItalicRequest = true
+		}
+	}
+	if !sawItalicRequest {
+		t.Fatalf("font resolver was not asked for an italic variable face: %+v", resolver.requests)
 	}
 }
 
@@ -200,6 +240,31 @@ func TestLayoutMathTextSupportsRicherSpacingCommands(t *testing.T) {
 	}
 	if tight.Width >= plain.Width {
 		t.Fatalf("negative spacing did not tighten expression: tight=%v plain=%v", tight.Width, plain.Width)
+	}
+}
+
+func TestLayoutMathTextAddsMathOperatorSpacing(t *testing.T) {
+	compact, ok := LayoutMathText(testMeasurer{}, `1+x`, 20, "base", Options{})
+	if !ok {
+		t.Fatal("compact LayoutMathText returned !ok")
+	}
+	spaced, ok := LayoutMathText(testMeasurer{}, `1 + x`, 20, "base", Options{})
+	if !ok {
+		t.Fatal("spaced LayoutMathText returned !ok")
+	}
+	if compact.Width != spaced.Width {
+		t.Fatalf("raw spaces should not change math-mode operator spacing: compact=%v spaced=%v", compact.Width, spaced.Width)
+	}
+	if compact.Width <= 30 {
+		t.Fatalf("binary operator spacing did not widen expression enough: %+v", compact)
+	}
+
+	unary, ok := LayoutMathText(testMeasurer{}, `-x`, 20, "base", Options{})
+	if !ok {
+		t.Fatal("unary LayoutMathText returned !ok")
+	}
+	if unary.Width >= compact.Width {
+		t.Fatalf("unary minus should not use binary spacing: unary=%v compact=%v", unary.Width, compact.Width)
 	}
 }
 

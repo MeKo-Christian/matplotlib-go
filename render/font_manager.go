@@ -258,36 +258,48 @@ func fontPropertiesCacheKey(props FontProperties) string {
 }
 
 func findFontFace(props FontProperties, dirs []string) (FontFace, bool) {
+	styled := styledFontRequested(props)
 	for _, family := range props.Families {
 		for _, candidate := range candidateFontFamilies(family) {
-			if path := findFontInDirs(candidate, dirs); path != "" {
-				return FontFace{Path: path, Family: candidate, Style: props.Style, Weight: props.Weight}, true
-			}
-			if face, ok := embeddedFontFace(candidate, props); ok {
-				return face, true
+			if !styled {
+				if path := findFontInDirs(candidate, dirs); path != "" {
+					return FontFace{Path: path, Family: candidate, Style: props.Style, Weight: props.Weight}, true
+				}
+				if face, ok := embeddedFontFace(candidate, props); ok {
+					return face, true
+				}
 			}
 			if path := resolveFontWithFCMatchExact(candidate, props); path != "" {
 				return FontFace{Path: path, Family: candidate, Style: props.Style, Weight: props.Weight}, true
 			}
 		}
-		for _, path := range fallbackFontPaths(family) {
-			if path := existingFontPath(path); path != "" {
-				return FontFace{Path: path, Family: family, Style: props.Style, Weight: props.Weight}, true
+		if !styled {
+			for _, path := range fallbackFontPaths(family) {
+				if path := existingFontPath(path); path != "" {
+					return FontFace{Path: path, Family: family, Style: props.Style, Weight: props.Weight}, true
+				}
 			}
-		}
-		for _, candidate := range candidateFontFamilies(family) {
-			if face, ok := embeddedFontFace(candidate, props); ok {
+			for _, candidate := range candidateFontFamilies(family) {
+				if face, ok := embeddedFontFace(candidate, props); ok {
+					return face, true
+				}
+			}
+			if face, ok := embeddedFontFace(family, props); ok {
 				return face, true
 			}
-		}
-		if face, ok := embeddedFontFace(family, props); ok {
-			return face, true
 		}
 	}
 	return FontFace{}, false
 }
 
+func styledFontRequested(props FontProperties) bool {
+	return props.Style != "" && props.Style != FontStyleNormal || props.Weight > 0 && props.Weight != 400
+}
+
 func embeddedFontFace(family string, props FontProperties) (FontFace, bool) {
+	if styledFontRequested(props) {
+		return FontFace{}, false
+	}
 	var data []byte
 	var canonical string
 	switch normalizeFontFamilyName(family) {
@@ -401,12 +413,12 @@ func resolveFontWithFCMatchExact(family string, props FontProperties) string {
 		return ""
 	}
 	for _, pattern := range fcMatchPatterns(family, props) {
-		out, err := exec.Command("fc-match", "-f", "%{family}\n%{file}\n", pattern).Output()
+		out, err := exec.Command("fc-match", "-f", "%{family}\n%{style}\n%{file}\n", pattern).Output()
 		if err != nil {
 			continue
 		}
-		families, path := parseFCMatchOutput(string(out))
-		if path == "" || !familyListMatchesRequested(families, family) {
+		families, style, path := parseFCMatchOutput(string(out))
+		if path == "" || !familyListMatchesRequested(families, family) || !fontStyleMatchesRequested(style, props.Style) {
 			continue
 		}
 		if path := existingFontPath(path); path != "" {
@@ -417,29 +429,35 @@ func resolveFontWithFCMatchExact(family string, props FontProperties) string {
 }
 
 func fcMatchPatterns(family string, props FontProperties) []string {
-	style := "Regular"
+	styles := []string{"Regular"}
 	switch props.Style {
 	case FontStyleItalic:
-		style = "Italic"
+		styles = []string{"Italic", "Oblique"}
 	case FontStyleOblique:
-		style = "Oblique"
+		styles = []string{"Oblique", "Italic"}
 	}
-	return []string{
-		family + ":style=" + style,
-		family + ":style=Book",
-		family + ":style=Roman",
-		family,
+	patterns := make([]string, 0, len(styles)+3)
+	for _, style := range styles {
+		patterns = append(patterns, family+":style="+style)
 	}
+	if props.Style == "" || props.Style == FontStyleNormal {
+		patterns = append(patterns,
+			family+":style=Book",
+			family+":style=Roman",
+			family,
+		)
+	}
+	return patterns
 }
 
-func parseFCMatchOutput(out string) ([]string, string) {
+func parseFCMatchOutput(out string) ([]string, string, string) {
 	lines := strings.Split(strings.TrimSpace(out), "\n")
 	if len(lines) == 0 {
-		return nil, ""
+		return nil, "", ""
 	}
 	path := strings.TrimSpace(lines[len(lines)-1])
 	if len(lines) == 1 {
-		return nil, path
+		return nil, "", path
 	}
 	var families []string
 	for _, family := range strings.Split(lines[0], ",") {
@@ -448,7 +466,25 @@ func parseFCMatchOutput(out string) ([]string, string) {
 			families = append(families, name)
 		}
 	}
-	return families, path
+	style := ""
+	if len(lines) > 2 {
+		style = strings.TrimSpace(lines[1])
+	}
+	return families, style, path
+}
+
+func fontStyleMatchesRequested(matched string, requested FontStyle) bool {
+	matched = strings.ToLower(strings.TrimSpace(matched))
+	switch requested {
+	case "", FontStyleNormal:
+		return true
+	case FontStyleItalic:
+		return strings.Contains(matched, "italic") || strings.Contains(matched, "oblique")
+	case FontStyleOblique:
+		return strings.Contains(matched, "oblique") || strings.Contains(matched, "italic")
+	default:
+		return true
+	}
 }
 
 func familyListMatchesRequested(families []string, requested string) bool {

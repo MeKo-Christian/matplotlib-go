@@ -85,6 +85,27 @@ func TestEmbeddedFontFaceProvidesDefaultFamilies(t *testing.T) {
 	}
 }
 
+func TestEmbeddedFontFaceDoesNotSatisfyStyledRequests(t *testing.T) {
+	if face, ok := embeddedFontFace("DejaVu Sans", FontProperties{Style: FontStyleItalic, Weight: 400}); ok {
+		t.Fatalf("embedded regular face satisfied italic request: %+v", face)
+	}
+	if face, ok := embeddedFontFace("DejaVu Sans", FontProperties{Style: FontStyleNormal, Weight: 700}); ok {
+		t.Fatalf("embedded regular face satisfied bold request: %+v", face)
+	}
+}
+
+func TestFontStyleMatchesRequestedRejectsRegularForItalic(t *testing.T) {
+	if fontStyleMatchesRequested("Book", FontStyleItalic) {
+		t.Fatal("regular Book style should not satisfy italic request")
+	}
+	if !fontStyleMatchesRequested("Oblique", FontStyleItalic) {
+		t.Fatal("oblique style should satisfy italic request")
+	}
+	if !fontStyleMatchesRequested("Italic", FontStyleOblique) {
+		t.Fatal("italic style should satisfy oblique request")
+	}
+}
+
 func TestCSSFontFamilyVariants(t *testing.T) {
 	tests := map[string]string{
 		"serif":       "DejaVu Serif, serif",

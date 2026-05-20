@@ -149,22 +149,29 @@ func TestLayoutMathTextStacksLargeOperatorLimits(t *testing.T) {
 	if !ok {
 		t.Fatal("LayoutMathText returned !ok")
 	}
-	if !containsMathRun(layout.Runs, "∑", 24) || !containsMathRun(layout.Runs, "i=1", 14) || !containsMathRun(layout.Runs, "n", 14) {
+	if !containsMathRun(layout.Runs, "∑", 24) || !containsMathRun(layout.Runs, "i", 14) || !containsMathRun(layout.Runs, "=", 14) || !containsMathRun(layout.Runs, "1", 14) || !containsMathRun(layout.Runs, "n", 14) {
 		t.Fatalf("missing expected limit runs: %+v", layout.Runs)
 	}
 
 	sumW := r.MeasureText("∑", 24, "DejaVu Sans").W
-	subW := r.MeasureText("i=1", 14, "DejaVu Sans").W
 	superW := r.MeasureText("n", 14, "DejaVu Sans").W
 
-	var sumX, subX, superX, subY, superY float64
+	var sumX, subMinX, subMaxX, superX, subY, superY float64
+	sawSub := false
 	for _, run := range layout.Runs {
 		switch run.Text {
 		case "∑":
 			sumX = run.Offset.X
-		case "i=1":
-			subX = run.Offset.X
+		case "i", "=", "1":
+			runW := r.MeasureText(run.Text, run.FontSize, run.FontKey).W
+			if !sawSub || run.Offset.X < subMinX {
+				subMinX = run.Offset.X
+			}
+			if run.Offset.X+runW > subMaxX {
+				subMaxX = run.Offset.X + runW
+			}
 			subY = run.Offset.Y
+			sawSub = true
 		case "n":
 			superX = run.Offset.X
 			superY = run.Offset.Y
@@ -175,7 +182,7 @@ func TestLayoutMathTextStacksLargeOperatorLimits(t *testing.T) {
 		t.Fatalf("large-operator limits not stacked vertically: sub=%v super=%v runs=%+v", subY, superY, layout.Runs)
 	}
 	sumCenter := sumX + sumW/2
-	subCenter := subX + subW/2
+	subCenter := (subMinX + subMaxX) / 2
 	superCenter := superX + superW/2
 	if math.Abs(subCenter-sumCenter) > 0.01 || math.Abs(superCenter-sumCenter) > 0.01 {
 		t.Fatalf("large-operator limits not centered over operator: sumCenter=%v subCenter=%v superCenter=%v runs=%+v", sumCenter, subCenter, superCenter, layout.Runs)
