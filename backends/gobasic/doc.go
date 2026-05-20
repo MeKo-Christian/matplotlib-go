@@ -14,6 +14,8 @@
 //   - Rectangular and path clipping with Save/Restore state isolation.
 //   - Basic text drawing, rotated text, vertical text, text measurement, and
 //     text-to-path conversion through pure-Go font paths.
+//   - Renderer-neutral path effects for strokes, shadows, patch effects,
+//     ticked strokes, and text-as-path effects.
 //   - DPI-aware text sizing via render.DPIAware.
 //   - Raster image drawing and PNG export via image/png.
 //   - Renderer-neutral fallbacks for marker, path-collection, quad-mesh, and
@@ -26,6 +28,8 @@
 //     per-path AntialiasOn/AntialiasOff switches are not fidelity controls.
 //   - Image transforms are not native; rotated images fall back to axis-aligned
 //     drawing in core.
+//   - Filter path effects do not use offscreen blur surfaces; unsupported
+//     filters deterministically repaint the requested effect pass.
 //   - Hatches and collection batches are handled by core fallbacks rather than
 //     by backend-native batched render paths.
 //   - Gouraud triangle shading, vector output, SVG export, GPU acceleration,

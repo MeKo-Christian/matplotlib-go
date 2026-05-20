@@ -846,11 +846,39 @@ backend parity program but is not yet complete.
 
 ### 7.4 GoBasic Long Tail
 
-- [ ] GoBasic equivalents for the renderer-neutral path effect pipeline
+- [x] GoBasic equivalents for the renderer-neutral path effect pipeline
       introduced in Phase 2 so the fallback backend keeps full semantic coverage.
-- [ ] GoBasic smoke coverage for any new plot family introduced in Phases
+  - [x] Add GoBasic semantic tests for `Normal`, `Stroke`, `PathPatch`,
+        `SimplePatchShadow`, `SimpleLineShadow`, and `TickedStroke` path
+        effects, proving each pass draws visible non-background pixels and
+        honors offset / stroke / fill semantics through `render.DrawPathWithEffects`.
+  - [x] Add GoBasic filter-effect fallback coverage documenting that unsupported
+        blur/filter effects degrade to a deterministic repaint pass unless the
+        renderer implements `render.FilterRenderer` or `render.PathEffectFilterDrawer`.
+  - [x] Add artist-level GoBasic path-effect smoke tests for line, patch,
+        scatter / path collection, and text-path effects so core artist routing
+        cannot bypass the renderer-neutral path-effect pipeline.
+  - [x] Update GoBasic docs and capability expectations to state which path
+        effects are semantic fallbacks and which filter effects are intentionally
+        approximate.
+- [x] GoBasic smoke coverage for any new plot family introduced in Phases
       1-6 (PDF / interactive / animation paths excluded since GoBasic targets
       static output).
+  - [x] Add a catalog-derived GoBasic smoke test that renders every static
+        catalog case opted into `GoBasicSmokeFamily` through `backends.GoBasic`
+        and asserts the image is non-empty.
+  - [x] Keep cases requiring unsupported external/runtime dependencies
+        (`usetex`, interactive, animation, vector export, or backend-native
+        AGG / Skia fixtures) out of the GoBasic smoke set by requiring explicit
+        `GoBasicSmokeFamily` opt-in metadata.
+  - [x] Ensure every Phase 1-6 plot family has at least one GoBasic-rendered
+        smoke case in the catalog-derived set, including path effects,
+        MathText, images, meshes, collections, hatches, statistical views,
+        specialty artists, projections, layouts, and other static catalog
+        surfaces.
+  - [x] Add a small summary test for coverage metadata so newly added static
+        plot families fail fast until they declare GoBasic smoke coverage or
+        an explicit skip reason.
 
 **Exit criteria:**
 

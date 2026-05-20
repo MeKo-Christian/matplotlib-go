@@ -23,6 +23,7 @@ func TestGoBasicRendererCapabilityStatus(t *testing.T) {
 		{backends.TextPathing, backends.CapabilityNative},
 		{backends.RotatedText, backends.CapabilityNative},
 		{backends.VerticalText, backends.CapabilityNative},
+		{backends.PathEffects, backends.CapabilityNative},
 		{backends.PNGExport, backends.CapabilityNative},
 		{backends.MarkerBatch, backends.CapabilityFallback},
 		{backends.PathCollectionBatch, backends.CapabilityFallback},
@@ -31,6 +32,8 @@ func TestGoBasicRendererCapabilityStatus(t *testing.T) {
 		{backends.FontHinting, backends.CapabilityUnsupported},
 		{backends.TextBounds, backends.CapabilityUnsupported},
 		{backends.ImageTransform, backends.CapabilityUnsupported},
+		{backends.PatternFill, backends.CapabilityUnsupported},
+		{backends.GradientFill, backends.CapabilityUnsupported},
 		{backends.GouraudTriangleBatch, backends.CapabilityUnsupported},
 		{backends.SVGExport, backends.CapabilityUnsupported},
 	}

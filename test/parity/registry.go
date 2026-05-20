@@ -8,14 +8,28 @@ import (
 	"path/filepath"
 
 	"github.com/cwbudde/matplotlib-go/core"
+	showcase_annotation_composition "github.com/cwbudde/matplotlib-go/examples/annotation_composition"
+	showcase_arrays_showcase "github.com/cwbudde/matplotlib-go/examples/arrays_showcase"
+	showcase_axes_control_surface "github.com/cwbudde/matplotlib-go/examples/axes_control_surface"
+	showcase_axes_grid1_showcase "github.com/cwbudde/matplotlib-go/examples/axes_grid1_showcase"
+	showcase_axisartist_showcase "github.com/cwbudde/matplotlib-go/examples/axisartist_showcase"
 	showcase_bar_basic "github.com/cwbudde/matplotlib-go/examples/bar_basic"
 	showcase_basic_line "github.com/cwbudde/matplotlib-go/examples/basic_line"
+	showcase_colorbar_composition "github.com/cwbudde/matplotlib-go/examples/colorbar_composition"
 	showcase_errorbar_basic "github.com/cwbudde/matplotlib-go/examples/errorbar_basic"
+	showcase_geo_mollweide_axes "github.com/cwbudde/matplotlib-go/examples/geo_mollweide_axes"
+	showcase_gridspec_composition "github.com/cwbudde/matplotlib-go/examples/gridspec_composition"
 	showcase_hist_basic "github.com/cwbudde/matplotlib-go/examples/hist_basic"
 	showcase_image_heatmap "github.com/cwbudde/matplotlib-go/examples/image_heatmap"
 	showcase_mesh_contour_tri "github.com/cwbudde/matplotlib-go/examples/mesh_contour_tri"
+	showcase_plot_variants "github.com/cwbudde/matplotlib-go/examples/plot_variants"
 	showcase_polar_axes "github.com/cwbudde/matplotlib-go/examples/polar_axes"
 	showcase_scatter_basic "github.com/cwbudde/matplotlib-go/examples/scatter_basic"
+	showcase_specialty_artists "github.com/cwbudde/matplotlib-go/examples/specialty_artists"
+	showcase_stat_variants "github.com/cwbudde/matplotlib-go/examples/stat_variants"
+	showcase_units_overview "github.com/cwbudde/matplotlib-go/examples/units_overview"
+	showcase_unstructured_showcase "github.com/cwbudde/matplotlib-go/examples/unstructured_showcase"
+	showcase_vector_fields "github.com/cwbudde/matplotlib-go/examples/vector_fields"
 	"github.com/cwbudde/matplotlib-go/internal/examplecatalog"
 	example_annotation_composition "github.com/cwbudde/matplotlib-go/test/parity/annotation_composition"
 	example_arrays_showcase "github.com/cwbudde/matplotlib-go/test/parity/arrays_showcase"
@@ -224,22 +238,39 @@ var renderByID = map[string]func() image.Image{
 }
 
 var figureByID = map[string]func() *core.Figure{
+	"annotation_composition": showcase_annotation_composition.Plot,
+	"arrays_showcase":        showcase_arrays_showcase.Plot,
+	"axes_grid1_showcase":    showcase_axes_grid1_showcase.Plot,
+	"axes_control_surface":   showcase_axes_control_surface.Plot,
+	"axisartist_showcase":    showcase_axisartist_showcase.Plot,
 	"basic_line":             showcase_basic_line.Plot,
 	"bar_basic":              showcase_bar_basic.Plot,
+	"colorbar_composition":   showcase_colorbar_composition.Plot,
 	"errorbar_basic":         showcase_errorbar_basic.Plot,
+	"fill_between":           example_fill_between.Plot,
+	"geo_mollweide_axes":     showcase_geo_mollweide_axes.Plot,
+	"gridspec_composition":   showcase_gridspec_composition.Plot,
 	"scatter_basic":          showcase_scatter_basic.Plot,
 	"hist_basic":             showcase_hist_basic.Plot,
 	"mesh_contour_tri":       showcase_mesh_contour_tri.Plot,
 	"image_heatmap":          showcase_image_heatmap.Plot,
+	"plot_variants":          showcase_plot_variants.Plot,
 	"polar_axes":             showcase_polar_axes.Plot,
 	"patch_showcase":         example_patch_showcase.Plot,
+	"specialty_artists":      showcase_specialty_artists.Plot,
+	"stat_variants":          showcase_stat_variants.Plot,
 	"text_labels_strict":     example_text_labels_strict.Plot,
+	"units_overview":         showcase_units_overview.Plot,
+	"vector_fields":          showcase_vector_fields.Plot,
 	"mathtext_basic":         example_mathtext_basic.Plot,
 	"mathtext_fractions":     example_mathtext_fractions.Plot,
 	"mathtext_integrals":     example_mathtext_integrals.Plot,
 	"mathtext_matrices":      example_mathtext_matrices.Plot,
 	"mathtext_inline_labels": example_mathtext_inline_labels.Plot,
+	"mplot3d_basic":          example_mplot3d_basic.Plot,
 	"mixed_collection":       example_mixed_collection.Plot,
+	"spectrum_variants":      example_spectrum_variants.Plot,
+	"unstructured_showcase":  showcase_unstructured_showcase.Plot,
 	"imshow_clipped":         example_imshow_clipped.Plot,
 	"imshow_transformed":     example_imshow_transformed.Plot,
 }

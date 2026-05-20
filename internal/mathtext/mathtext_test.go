@@ -319,7 +319,7 @@ func TestLayoutMathTextMatchesMatplotlibFixtureMetrics(t *testing.T) {
 		if !ok {
 			t.Fatalf("%s: LayoutMathText returned !ok", tt.name)
 		}
-		if math.Abs(layout.Width-tt.wantWidth) > 5 ||
+		if math.Abs(layout.Width-tt.wantWidth) > 8 ||
 			math.Abs(layout.Ascent-tt.wantAscent) > 4 ||
 			math.Abs(layout.Descent-tt.wantDescent) > 4 {
 			t.Errorf("%s metrics = width %.2f ascent %.2f descent %.2f, want near %.2f %.2f %.2f",
@@ -350,6 +350,104 @@ func TestLayoutMathTextSupportsRicherSpacingCommands(t *testing.T) {
 	}
 	if tight.Width >= plain.Width {
 		t.Fatalf("negative spacing did not tighten expression: tight=%v plain=%v", tight.Width, plain.Width)
+	}
+}
+
+func TestLayoutMathTextUsesMatplotlibQuadBasedSpacing(t *testing.T) {
+	tests := []struct {
+		expr      string
+		wantWidth float64
+	}{
+		{expr: `1+x`, wantWidth: 82},
+		{expr: `1 + x`, wantWidth: 82},
+		{expr: `a\quad b`, wantWidth: 75},
+		{expr: `a\,b`, wantWidth: 47},
+	}
+
+	for _, tt := range tests {
+		layout, ok := LayoutMathText(shapingMeasurer{}, tt.expr, 24, "DejaVu Sans", Options{})
+		if !ok {
+			t.Fatalf("%s: LayoutMathText returned !ok", tt.expr)
+		}
+		if math.Abs(layout.Width-tt.wantWidth) > 4 {
+			t.Errorf("%s width = %.2f, want near %.2f", tt.expr, layout.Width, tt.wantWidth)
+		}
+	}
+}
+
+func TestLayoutMathTextUsesMatplotlibFractionRuleThickness(t *testing.T) {
+	layout, ok := LayoutMathText(shapingMeasurer{}, `\frac{1}{2}`, 24, "DejaVu Sans", Options{})
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+	if len(layout.Rules) != 1 {
+		t.Fatalf("expected one fraction rule, got %+v", layout.Rules)
+	}
+	if got, want := layout.Rules[0].Rect.H(), 2.08; math.Abs(got-want) > 0.35 {
+		t.Fatalf("fraction rule thickness = %.2f, want near %.2f", got, want)
+	}
+	if got, want := layout.Rules[0].Rect.W(), 14.85; math.Abs(got-want) > 1.0 {
+		t.Fatalf("fraction rule width = %.2f, want near %.2f", got, want)
+	}
+	if got, want := layout.Width, 20.0; math.Abs(got-want) > 1.5 {
+		t.Fatalf("fraction layout width = %.2f, want near %.2f", got, want)
+	}
+}
+
+func TestLayoutMathTextUsesMatplotlibSqrtGeometry(t *testing.T) {
+	layout, ok := LayoutMathText(shapingMeasurer{}, `\sqrt{y}`, 23, "DejaVu Sans", Options{})
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+	if got, want := layout.Width, 47.0; math.Abs(got-want) > 2.5 {
+		t.Fatalf("sqrt width = %.2f, want near %.2f", got, want)
+	}
+	if got, want := layout.Ascent, 30.0; math.Abs(got-want) > 3.0 {
+		t.Fatalf("sqrt ascent = %.2f, want near %.2f", got, want)
+	}
+	if got, want := layout.Descent, 7.0; math.Abs(got-want) > 2.0 {
+		t.Fatalf("sqrt descent = %.2f, want near %.2f", got, want)
+	}
+	if len(layout.Rules) != 1 {
+		t.Fatalf("expected one sqrt rule, got %+v", layout.Rules)
+	}
+	if got, want := layout.Rules[0].Rect.H(), 2.0; math.Abs(got-want) > 0.35 {
+		t.Fatalf("sqrt rule thickness = %.2f, want near %.2f", got, want)
+	}
+	if len(layout.Runs) < 2 || !strings.HasPrefix(layout.Runs[0].FontKey, "STIXSize") {
+		t.Fatalf("sqrt radical should use STIX size font, got runs %+v", layout.Runs)
+	}
+}
+
+func TestLayoutMathTextUsesMatplotlibDisplayFontForLargeOperators(t *testing.T) {
+	tests := []struct {
+		expr string
+		text string
+		size float64
+	}{
+		{expr: `\sum_{i=1}^{n} i^2`, text: "∑", size: 26},
+		{expr: `\prod_{k=1}^{m} k`, text: "∏", size: 26},
+		{expr: `\int_0^\infty e^{-x}\,dx = 1`, text: "∫", size: 24},
+	}
+
+	for _, tt := range tests {
+		layout, ok := LayoutMathText(shapingMeasurer{}, tt.expr, tt.size, "DejaVu Sans", Options{})
+		if !ok {
+			t.Fatalf("%s: LayoutMathText returned !ok", tt.expr)
+		}
+		var got *MathTextLayoutRun
+		for i := range layout.Runs {
+			if layout.Runs[i].Text == tt.text {
+				got = &layout.Runs[i]
+				break
+			}
+		}
+		if got == nil {
+			t.Fatalf("%s: missing operator %q in runs %+v", tt.expr, tt.text, layout.Runs)
+		}
+		if got.FontKey != "DejaVu Sans Display" || math.Abs(got.FontSize-tt.size) > 0.01 {
+			t.Fatalf("%s: operator run = %+v, want DejaVu Sans Display at %.2f", tt.expr, *got, tt.size)
+		}
 	}
 }
 

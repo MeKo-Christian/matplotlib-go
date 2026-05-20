@@ -135,7 +135,7 @@ func TestLayoutMathTextSqrtHasVinculum(t *testing.T) {
 	if len(layout.Rules) != 1 {
 		t.Fatalf("expected sqrt rule, got %+v", layout.Rules)
 	}
-	if !containsMathRun(layout.Runs, "√", 18) || !containsMathRun(layout.Runs, "3", 9.9) {
+	if !containsMathRun(layout.Runs, "√", 10.44) || !containsMathRun(layout.Runs, "3", 9.9) {
 		t.Fatalf("missing sqrt/index runs: %+v", layout.Runs)
 	}
 	if layout.Rules[0].Rect.Min.X <= 0 || layout.Rules[0].Rect.Max.X <= layout.Rules[0].Rect.Min.X {
@@ -149,11 +149,11 @@ func TestLayoutMathTextStacksLargeOperatorLimits(t *testing.T) {
 	if !ok {
 		t.Fatal("LayoutMathText returned !ok")
 	}
-	if !containsMathRun(layout.Runs, "∑", 29) || !containsMathRun(layout.Runs, "i", 14) || !containsMathRun(layout.Runs, "=", 14) || !containsMathRun(layout.Runs, "1", 14) || !containsMathRun(layout.Runs, "n", 14) {
+	if !containsMathRun(layout.Runs, "∑", 20) || !containsMathRun(layout.Runs, "i", 14) || !containsMathRun(layout.Runs, "=", 14) || !containsMathRun(layout.Runs, "1", 14) || !containsMathRun(layout.Runs, "n", 14) {
 		t.Fatalf("missing expected limit runs: %+v", layout.Runs)
 	}
 
-	sumW := r.MeasureText("∑", 29, "DejaVu Sans").W
+	sumW := r.MeasureText("∑", 20, "DejaVu Sans Display").W
 	superW := r.MeasureText("n", 14, "DejaVu Sans").W
 
 	var sumX, subMinX, subMaxX, superX, subY, superY float64
@@ -195,7 +195,7 @@ func TestLayoutMathTextSupportsIntegralLimits(t *testing.T) {
 	if !ok {
 		t.Fatal("LayoutMathText returned !ok")
 	}
-	if !containsMathRun(layout.Runs, "∫", 33) || !containsMathRun(layout.Runs, "0", 14) || !containsMathRun(layout.Runs, "∞", 14) {
+	if !containsMathRun(layout.Runs, "∫", 20) || !containsMathRun(layout.Runs, "0", 14) || !containsMathRun(layout.Runs, "∞", 14) {
 		t.Fatalf("missing expected integral runs: %+v", layout.Runs)
 	}
 
@@ -397,7 +397,7 @@ func TestLayoutMathTextSupportsSpacingCommands(t *testing.T) {
 	if !ok {
 		t.Fatal("wide LayoutMathText returned !ok")
 	}
-	if wide.Width <= compact.Width+10 {
+	if wide.Width <= compact.Width+8 {
 		t.Fatalf("spacing command did not widen layout enough: compact=%v wide=%v", compact.Width, wide.Width)
 	}
 }

@@ -197,8 +197,12 @@ func normalizeFontFamily(family string) string {
 		return fontFamilyMonospace
 	case "dejavusans":
 		return "DejaVu Sans"
+	case "dejavusansdisplay":
+		return "DejaVu Sans Display"
 	case "dejavuserif":
 		return "DejaVu Serif"
+	case "dejavuserifdisplay":
+		return "DejaVu Serif Display"
 	case "dejavusansmono":
 		return "DejaVu Sans Mono"
 	default:
@@ -388,6 +392,8 @@ func bundledDejaVuFontFilename(family string, props FontProperties) string {
 		default:
 			return "DejaVuSans.ttf"
 		}
+	case "dejavusansdisplay":
+		return "DejaVuSansDisplay.ttf"
 	case "dejavuserif":
 		switch {
 		case bold && italic:
@@ -399,6 +405,8 @@ func bundledDejaVuFontFilename(family string, props FontProperties) string {
 		default:
 			return "DejaVuSerif.ttf"
 		}
+	case "dejavuserifdisplay":
+		return "DejaVuSerifDisplay.ttf"
 	case "dejavusansmono":
 		switch {
 		case bold && italic:

@@ -122,6 +122,11 @@ func TestFontManagerPrefersBundledMatplotlibDejaVuFont(t *testing.T) {
 			want:  "DejaVuSans-Oblique.ttf",
 		},
 		{
+			name:  "sans display",
+			props: FontProperties{Families: []string{"DejaVu Sans Display"}},
+			want:  "DejaVuSansDisplay.ttf",
+		},
+		{
 			name:  "stix size font",
 			props: FontProperties{Families: []string{"STIXSizeOneSym"}},
 			want:  "STIXSizOneSymReg.ttf",
