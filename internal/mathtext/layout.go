@@ -484,6 +484,10 @@ func isMathItalicLatin(r rune) bool {
 	return ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z')
 }
 
+func mathDelimiterFontKey() string {
+	return "DejaVu Serif"
+}
+
 func (p *mathLayoutParser) appendMathOperator(children []mathLayoutNode, op rune, stop rune) []mathLayoutNode {
 	text := string(op)
 	if op == '-' {
@@ -1063,7 +1067,7 @@ func layoutMathDelimiter(r Measurer, delim string, targetAscent, targetDescent, 
 		return layoutMathBracketDelimiter(delim, targetAscent, targetDescent, size)
 	default:
 		delimiterSize := maxFloat64(size*1.1, (targetAscent+targetDescent)*mathGlyphDelimiterScale)
-		return centerMathDelimiterBox(layoutMathTextRun(r, delim, delimiterSize, fontKey), targetAscent, targetDescent)
+		return centerMathDelimiterBox(layoutMathTextRun(r, delim, delimiterSize, mathDelimiterFontKey()), targetAscent, targetDescent)
 	}
 }
 
@@ -1215,8 +1219,9 @@ func layoutMathMatrix(r Measurer, n mathLayoutNode, size float64, fontKey string
 	}
 
 	delimiterSize := maxFloat64(size, bodyHeight*mathGlyphDelimiterScale)
-	left := layoutMathTextRun(r, n.left, delimiterSize, fontKey)
-	right := layoutMathTextRun(r, n.right, delimiterSize, fontKey)
+	delimiterFontKey := mathDelimiterFontKey()
+	left := layoutMathTextRun(r, n.left, delimiterSize, delimiterFontKey)
+	right := layoutMathTextRun(r, n.right, delimiterSize, delimiterFontKey)
 	leftGap := 0.0
 	rightGap := 0.0
 	if left.Width > 0 {
@@ -1398,7 +1403,7 @@ func isMathLimitText(text string) bool {
 }
 
 func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey string, opts Options, rule, display bool, leftDelim, rightDelim string) mathLayoutBox {
-	childSize := size * 0.75
+	childSize := size * 0.70
 	if display {
 		childSize = size
 	}

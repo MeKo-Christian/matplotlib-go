@@ -1,10 +1,14 @@
 package mathtext
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/render"
 )
 
 type testMeasurer struct{}
@@ -15,6 +19,27 @@ func (testMeasurer) MeasureText(text string, size float64, _ string) Metrics {
 		H:       size,
 		Ascent:  size * 0.8,
 		Descent: size * 0.2,
+	}
+}
+
+type shapingMeasurer struct{}
+
+func (shapingMeasurer) MeasureText(text string, size float64, fontKey string) Metrics {
+	shaped, ok := render.ShapeText(text, geom.Pt{}, size*100/72, render.TextShapingOptions{FontKey: fontKey})
+	if !ok {
+		return Metrics{}
+	}
+	ascent := 0.0
+	descent := 0.0
+	if shaped.Bounds.H > 0 {
+		ascent = math.Max(0, -shaped.Bounds.Y)
+		descent = math.Max(0, shaped.Bounds.Y+shaped.Bounds.H)
+	}
+	return Metrics{
+		W:       shaped.Advance.X,
+		H:       ascent + descent,
+		Ascent:  ascent,
+		Descent: descent,
 	}
 }
 
@@ -215,6 +240,55 @@ func TestLayoutMathTextSupportsDisplayStyleFractions(t *testing.T) {
 	}
 	if !containsTestRun(dfrac.Runs, "n", 20) || !containsTestRun(dfrac.Runs, "k", 20) {
 		t.Fatalf("dfrac should keep numerator and denominator at display size: %+v", dfrac.Runs)
+	}
+}
+
+func TestLayoutMathTextMatchesMatplotlibFixtureMetrics(t *testing.T) {
+	tests := []struct {
+		name        string
+		expr        string
+		size        float64
+		wantWidth   float64
+		wantAscent  float64
+		wantDescent float64
+	}{
+		{
+			name:        "binom",
+			expr:        `\binom{n}{k} = \frac{n!}{k!(n-k)!}`,
+			size:        23,
+			wantWidth:   202,
+			wantAscent:  31,
+			wantDescent: 16,
+		},
+		{
+			name:        "genfrac matrix",
+			expr:        `\genfrac{(}{)}{0}{0}{a\quad b}{c\quad d}`,
+			size:        25,
+			wantWidth:   122,
+			wantAscent:  40,
+			wantDescent: 23,
+		},
+		{
+			name:        "sum limits",
+			expr:        `\sum_{i=1}^{n} i^2`,
+			size:        26,
+			wantWidth:   84,
+			wantAscent:  58,
+			wantDescent: 36,
+		},
+	}
+
+	for _, tt := range tests {
+		layout, ok := LayoutMathText(shapingMeasurer{}, tt.expr, tt.size, "DejaVu Sans", Options{})
+		if !ok {
+			t.Fatalf("%s: LayoutMathText returned !ok", tt.name)
+		}
+		if math.Abs(layout.Width-tt.wantWidth) > 4 ||
+			math.Abs(layout.Ascent-tt.wantAscent) > 4 ||
+			math.Abs(layout.Descent-tt.wantDescent) > 4 {
+			t.Errorf("%s metrics = width %.2f ascent %.2f descent %.2f, want near %.2f %.2f %.2f",
+				tt.name, layout.Width, layout.Ascent, layout.Descent, tt.wantWidth, tt.wantAscent, tt.wantDescent)
+		}
 	}
 }
 
