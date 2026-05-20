@@ -8,8 +8,12 @@ import (
 
 // SaveSVG saves a figure to an SVG file using the provided renderer.
 // This function draws the figure using the renderer and then exports to SVG.
-func SaveSVG(fig *Figure, r render.Renderer, path string, opts ...render.SVGOption) error {
-	svgOptions := render.ResolveSVGOptions(opts...)
+func SaveSVG(fig *Figure, r render.Renderer, path string, opts ...render.SaveOption) error {
+	saveOptions := render.ResolveSaveOptions(opts...)
+	if err := saveOptions.ValidateForExtension(".svg"); err != nil {
+		return err
+	}
+	svgOptions := saveOptions.SVG
 	if setter, ok := r.(render.SVGOptionSetter); ok {
 		setter.SetSVGOptions(svgOptions)
 	}

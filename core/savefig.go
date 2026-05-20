@@ -13,7 +13,7 @@ import (
 //
 // Adding a new exporter (e.g. PostScript) means appending to this map and
 // implementing the corresponding render-side capability interface.
-var supportedSaveExtensions = map[string]func(*Figure, render.Renderer, string, ...render.SVGOption) error{
+var supportedSaveExtensions = map[string]func(*Figure, render.Renderer, string, ...render.SaveOption) error{
 	".eps": SavePS,
 	".pdf": SavePDF,
 	".pgf": SavePGF,
@@ -27,7 +27,7 @@ var supportedSaveExtensions = map[string]func(*Figure, render.Renderer, string, 
 //
 // The renderer must implement the corresponding capability interface
 // (render.PNGExporter for .png, render.SVGExporter for .svg).
-func SaveFig(fig *Figure, r render.Renderer, path string, opts ...render.SVGOption) error {
+func SaveFig(fig *Figure, r render.Renderer, path string, opts ...render.SaveOption) error {
 	ext := strings.ToLower(filepath.Ext(path))
 	if ext == "" {
 		supported := supportedExtensionsList()
@@ -37,6 +37,10 @@ func SaveFig(fig *Figure, r render.Renderer, path string, opts ...render.SVGOpti
 	if !ok {
 		supported := supportedExtensionsList()
 		return fmt.Errorf("savefig: unsupported extension %q for %q; supported: %s", ext, path, supported)
+	}
+	saveOptions := render.ResolveSaveOptions(opts...)
+	if err := saveOptions.ValidateForExtension(ext); err != nil {
+		return fmt.Errorf("savefig: %w", err)
 	}
 	return handler(fig, r, path, opts...)
 }

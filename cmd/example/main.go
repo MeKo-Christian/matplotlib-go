@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
@@ -96,6 +97,11 @@ func main() {
 	name := flag.String("name", "", "Catalog ID of the showcase to render")
 	out := flag.String("o", "", "Output path (default: <name>.<format>)")
 	format := flag.String("format", "", "Output format: png, svg, pdf, ps, eps, or pgf (default: inferred from -o or png)")
+	pdfTitle := flag.String("pdf-title", "", "PDF metadata Title entry")
+	pdfAuthor := flag.String("pdf-author", "", "PDF metadata Author entry")
+	pdfSubject := flag.String("pdf-subject", "", "PDF metadata Subject entry")
+	pdfCreationDate := flag.String("pdf-creation-date", "", "PDF CreationDate as RFC3339")
+	pdfFontPolicy := flag.String("pdf-font-policy", "", "PDF font policy: path or embed")
 	list := flag.Bool("list", false, "List all available showcase IDs and exit")
 	flag.Parse()
 
@@ -127,6 +133,10 @@ func main() {
 	} else if strings.TrimSpace(*format) != "" && strings.ToLower(filepath.Ext(output)) != ext {
 		log.Fatalf("format: -format %s conflicts with output extension %s", *format, filepath.Ext(output))
 	}
+	saveOptions, err := exampleSaveOptions(*pdfTitle, *pdfAuthor, *pdfSubject, *pdfCreationDate, *pdfFontPolicy)
+	if err != nil {
+		log.Fatalf("options: %v", err)
+	}
 
 	fig := plot()
 	w := int(fig.SizePx.X)
@@ -144,11 +154,61 @@ func main() {
 	if err != nil {
 		log.Fatalf("renderer: %v", err)
 	}
+	applyExampleSaveOptions(r, render.ResolveSaveOptions(saveOptions...))
 	core.DrawFigure(fig, r)
-	if err := backends.DefaultRegistry.SaveViaExtension(backend, r, output); err != nil {
+	if err := backends.DefaultRegistry.SaveViaExtension(backend, r, output, saveOptions...); err != nil {
 		log.Fatalf("save: %v", err)
 	}
 	log.Printf("saved %s", output)
+}
+
+func exampleSaveOptions(title, author, subject, creationDate, fontPolicy string) ([]render.SaveOption, error) {
+	var opts []render.SaveOption
+	metadata := map[string]string{}
+	if strings.TrimSpace(title) != "" {
+		metadata["Title"] = title
+	}
+	if strings.TrimSpace(author) != "" {
+		metadata["Author"] = author
+	}
+	if strings.TrimSpace(subject) != "" {
+		metadata["Subject"] = subject
+	}
+	if len(metadata) > 0 {
+		opts = append(opts, render.WithPDFMetadata(metadata))
+	}
+	if strings.TrimSpace(creationDate) != "" {
+		t, err := time.Parse(time.RFC3339, creationDate)
+		if err != nil {
+			return nil, fmt.Errorf("parse -pdf-creation-date: %w", err)
+		}
+		opts = append(opts, render.WithPDFCreationDate(t))
+	}
+	switch strings.ToLower(strings.TrimSpace(fontPolicy)) {
+	case "":
+	case string(render.PDFFontPolicyPath):
+		opts = append(opts, render.WithPDFFontPolicy(render.PDFFontPolicyPath))
+	case string(render.PDFFontPolicyEmbed):
+		opts = append(opts, render.WithPDFFontPolicy(render.PDFFontPolicyEmbed))
+	default:
+		return nil, fmt.Errorf("unknown -pdf-font-policy %q", fontPolicy)
+	}
+	return opts, nil
+}
+
+func applyExampleSaveOptions(renderer render.Renderer, opts render.SaveOptions) {
+	if setter, ok := renderer.(render.SVGOptionSetter); ok {
+		setter.SetSVGOptions(opts.SVG)
+	}
+	if setter, ok := renderer.(render.PDFOptionSetter); ok {
+		setter.SetPDFOptions(opts.PDF)
+	}
+	if setter, ok := renderer.(render.PSOptionSetter); ok {
+		setter.SetPSOptions(opts.PS)
+	}
+	if setter, ok := renderer.(render.PGFOptionSetter); ok {
+		setter.SetPGFOptions(opts.PGF)
+	}
 }
 
 func outputExtension(name, output, format string) (string, error) {

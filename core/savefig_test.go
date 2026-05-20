@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -25,6 +26,9 @@ type testPNGSVGRenderer struct {
 	psPath     string
 	pgfPath    string
 	svgOptions render.SVGOptions
+	pdfOptions render.PDFOptions
+	psOptions  render.PSOptions
+	pgfOptions render.PGFOptions
 }
 
 func newTestPNGSVGRenderer() *testPNGSVGRenderer { return &testPNGSVGRenderer{} }
@@ -52,16 +56,30 @@ func (r *testPNGSVGRenderer) SavePDF(path string) error {
 	return nil
 }
 
+func (r *testPNGSVGRenderer) SavePDFWithOptions(path string, opts render.PDFOptions) error {
+	r.pdfOptions = opts
+	return r.SavePDF(path)
+}
+
 func (r *testPNGSVGRenderer) SavePS(path string) error {
 	r.savedPS = true
 	r.psPath = path
 	return nil
 }
 
+func (r *testPNGSVGRenderer) SetPSOptions(opts render.PSOptions) {
+	r.psOptions = opts
+}
+
 func (r *testPNGSVGRenderer) SavePGF(path string) error {
 	r.savedPGF = true
 	r.pgfPath = path
 	return nil
+}
+
+func (r *testPNGSVGRenderer) SavePGFWithOptions(path string, opts render.PGFOptions) error {
+	r.pgfOptions = opts
+	return r.SavePGF(path)
 }
 
 // defaultAxesRect is the unit-square rect used by SaveFig tests when adding
@@ -201,6 +219,107 @@ func TestSaveFig_ForwardsSVGOptions(t *testing.T) {
 	}
 	if got := r.svgOptions.Metadata["Title"]; got != "From SaveFig" {
 		t.Fatalf("SaveFig did not forward SVG metadata option, got %q", got)
+	}
+}
+
+func TestSaveFig_ForwardsPDFOptions(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "out.pdf")
+
+	fig := NewFigure(100, 80)
+	fig.AddAxes(defaultAxesRect)
+
+	r := newTestPNGSVGRenderer()
+	creationDate := time.Date(2024, 5, 6, 7, 8, 9, 0, time.UTC)
+	if err := SaveFig(
+		fig,
+		r,
+		path,
+		render.WithPDFMetadata(map[string]string{"Title": "From SaveFig"}),
+		render.WithPDFCreationDate(creationDate),
+		render.WithPDFFontPolicy(render.PDFFontPolicyEmbed),
+	); err != nil {
+		t.Fatalf("SaveFig: %v", err)
+	}
+	if !r.savedPDF {
+		t.Fatal("expected PDF path to be exercised")
+	}
+	if got := r.pdfOptions.Metadata["Title"]; got != "From SaveFig" {
+		t.Fatalf("SaveFig did not forward PDF metadata option, got %q", got)
+	}
+	if !r.pdfOptions.CreationDate.Equal(creationDate) {
+		t.Fatalf("SaveFig did not forward PDF creation date, got %v", r.pdfOptions.CreationDate)
+	}
+	if r.pdfOptions.FontPolicy != render.PDFFontPolicyEmbed {
+		t.Fatalf("SaveFig did not forward PDF font policy, got %q", r.pdfOptions.FontPolicy)
+	}
+}
+
+func TestSaveFig_ForwardsPSOptions(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "out.ps")
+
+	fig := NewFigure(100, 80)
+	fig.AddAxes(defaultAxesRect)
+
+	r := newTestPNGSVGRenderer()
+	if err := SaveFig(fig, r, path, render.WithPSFontPolicy(render.PSFontPolicyBase14)); err != nil {
+		t.Fatalf("SaveFig: %v", err)
+	}
+	if !r.savedPS {
+		t.Fatal("expected PostScript path to be exercised")
+	}
+	if r.psOptions.FontPolicy != render.PSFontPolicyBase14 {
+		t.Fatalf("SaveFig did not forward PS font policy, got %q", r.psOptions.FontPolicy)
+	}
+}
+
+func TestSaveFig_ForwardsPGFOptions(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "out.pgf")
+
+	fig := NewFigure(100, 80)
+	fig.AddAxes(defaultAxesRect)
+
+	r := newTestPNGSVGRenderer()
+	if err := SaveFig(
+		fig,
+		r,
+		path,
+		render.WithPGFMetadata(map[string]string{"Title": "From SaveFig"}),
+		render.WithPGFPreamble("\\usepackage{amsmath}"),
+		render.WithPGFVerificationMode(render.PGFVerificationModeStrict),
+	); err != nil {
+		t.Fatalf("SaveFig: %v", err)
+	}
+	if !r.savedPGF {
+		t.Fatal("expected PGF path to be exercised")
+	}
+	if got := r.pgfOptions.Metadata["Title"]; got != "From SaveFig" {
+		t.Fatalf("SaveFig did not forward PGF metadata option, got %q", got)
+	}
+	if len(r.pgfOptions.Preamble) != 1 || r.pgfOptions.Preamble[0] != "\\usepackage{amsmath}" {
+		t.Fatalf("SaveFig did not forward PGF preamble, got %#v", r.pgfOptions.Preamble)
+	}
+	if r.pgfOptions.VerificationMode != render.PGFVerificationModeStrict {
+		t.Fatalf("SaveFig did not forward PGF verification mode, got %q", r.pgfOptions.VerificationMode)
+	}
+}
+
+func TestSaveFig_RejectsOptionsForDifferentFormat(t *testing.T) {
+	fig := NewFigure(100, 80)
+	fig.AddAxes(defaultAxesRect)
+
+	r := newTestPNGSVGRenderer()
+	err := SaveFig(fig, r, filepath.Join(t.TempDir(), "out.svg"), render.WithPDFMetadata(map[string]string{"Title": "Wrong"}))
+	if err == nil {
+		t.Fatal("expected mismatched option error")
+	}
+	if !strings.Contains(err.Error(), "PDF options") || !strings.Contains(err.Error(), ".svg") {
+		t.Fatalf("error should mention rejected PDF options and .svg, got: %v", err)
+	}
+	if r.savedSVG || r.savedPDF {
+		t.Fatal("no exporter should have been invoked for mismatched options")
 	}
 }
 

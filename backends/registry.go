@@ -316,7 +316,7 @@ type BackendInfo struct {
 }
 
 // SaveHandler writes output in a specific file format using the renderer.
-type SaveHandler func(render.Renderer, string, ...render.SVGOption) error
+type SaveHandler func(render.Renderer, string, ...render.SaveOption) error
 
 func normalizeSaveFormat(format string) string {
 	ext := strings.ToLower(strings.TrimSpace(format))
@@ -330,7 +330,11 @@ func normalizeSaveFormat(format string) string {
 }
 
 // SavePNG saves using the renderer PNG export interface.
-func SavePNG(renderer render.Renderer, path string, _ ...render.SVGOption) error {
+func SavePNG(renderer render.Renderer, path string, opts ...render.SaveOption) error {
+	saveOptions := render.ResolveSaveOptions(opts...)
+	if err := saveOptions.ValidateForExtension(".png"); err != nil {
+		return err
+	}
 	exporter, ok := renderer.(render.PNGExporter)
 	if !ok {
 		return fmt.Errorf("backends: renderer does not implement PNG export")
@@ -339,7 +343,17 @@ func SavePNG(renderer render.Renderer, path string, _ ...render.SVGOption) error
 }
 
 // SavePDF saves using the renderer PDF export interface.
-func SavePDF(renderer render.Renderer, path string, _ ...render.SVGOption) error {
+func SavePDF(renderer render.Renderer, path string, opts ...render.SaveOption) error {
+	saveOptions := render.ResolveSaveOptions(opts...)
+	if err := saveOptions.ValidateForExtension(".pdf"); err != nil {
+		return err
+	}
+	if setter, ok := renderer.(render.PDFOptionSetter); ok {
+		setter.SetPDFOptions(saveOptions.PDF)
+	}
+	if optionExporter, ok := renderer.(render.PDFOptionExporter); ok {
+		return optionExporter.SavePDFWithOptions(path, saveOptions.PDF)
+	}
 	exporter, ok := renderer.(render.PDFExporter)
 	if !ok {
 		return fmt.Errorf("backends: renderer does not implement PDF export")
@@ -348,7 +362,14 @@ func SavePDF(renderer render.Renderer, path string, _ ...render.SVGOption) error
 }
 
 // SavePS saves using the renderer PostScript export interface.
-func SavePS(renderer render.Renderer, path string, _ ...render.SVGOption) error {
+func SavePS(renderer render.Renderer, path string, opts ...render.SaveOption) error {
+	saveOptions := render.ResolveSaveOptions(opts...)
+	if err := saveOptions.ValidateForExtension(".ps"); err != nil {
+		return err
+	}
+	if setter, ok := renderer.(render.PSOptionSetter); ok {
+		setter.SetPSOptions(saveOptions.PS)
+	}
 	exporter, ok := renderer.(render.PSExporter)
 	if !ok {
 		return fmt.Errorf("backends: renderer does not implement PostScript export")
@@ -357,7 +378,17 @@ func SavePS(renderer render.Renderer, path string, _ ...render.SVGOption) error 
 }
 
 // SavePGF saves using the renderer PGF export interface.
-func SavePGF(renderer render.Renderer, path string, _ ...render.SVGOption) error {
+func SavePGF(renderer render.Renderer, path string, opts ...render.SaveOption) error {
+	saveOptions := render.ResolveSaveOptions(opts...)
+	if err := saveOptions.ValidateForExtension(".pgf"); err != nil {
+		return err
+	}
+	if setter, ok := renderer.(render.PGFOptionSetter); ok {
+		setter.SetPGFOptions(saveOptions.PGF)
+	}
+	if optionExporter, ok := renderer.(render.PGFOptionExporter); ok {
+		return optionExporter.SavePGFWithOptions(path, saveOptions.PGF)
+	}
 	exporter, ok := renderer.(render.PGFExporter)
 	if !ok {
 		return fmt.Errorf("backends: renderer does not implement PGF export")
@@ -366,18 +397,20 @@ func SavePGF(renderer render.Renderer, path string, _ ...render.SVGOption) error
 }
 
 // SaveSVG saves using the renderer SVG export interface.
-func SaveSVG(renderer render.Renderer, path string, opts ...render.SVGOption) error {
+func SaveSVG(renderer render.Renderer, path string, opts ...render.SaveOption) error {
+	saveOptions := render.ResolveSaveOptions(opts...)
+	if err := saveOptions.ValidateForExtension(".svg"); err != nil {
+		return err
+	}
 	exporter, ok := renderer.(render.SVGExporter)
 	if !ok {
 		return fmt.Errorf("backends: renderer does not implement SVG export")
 	}
-	if len(opts) > 0 {
-		if setter, ok := renderer.(render.SVGOptionSetter); ok {
-			setter.SetSVGOptions(render.ResolveSVGOptions(opts...))
-		}
+	if setter, ok := renderer.(render.SVGOptionSetter); ok {
+		setter.SetSVGOptions(saveOptions.SVG)
 	}
-	if optionExporter, ok := renderer.(render.SVGOptionExporter); ok && len(opts) > 0 {
-		return optionExporter.SaveSVGWithOptions(path, render.ResolveSVGOptions(opts...))
+	if optionExporter, ok := renderer.(render.SVGOptionExporter); ok {
+		return optionExporter.SaveSVGWithOptions(path, saveOptions.SVG)
 	}
 	return exporter.SaveSVG(path)
 }
@@ -520,7 +553,7 @@ func (r *Registry) VerifyRendererCapabilities(backend Backend, renderer render.R
 }
 
 // SaveViaExtension dispatches to the backend-specific save handler for extension.
-func (r *Registry) SaveViaExtension(backend Backend, renderer render.Renderer, path string, opts ...render.SVGOption) error {
+func (r *Registry) SaveViaExtension(backend Backend, renderer render.Renderer, path string, opts ...render.SaveOption) error {
 	info, ok := r.Get(backend)
 	if !ok {
 		return fmt.Errorf("unknown backend: %s", backend)
@@ -528,7 +561,7 @@ func (r *Registry) SaveViaExtension(backend Backend, renderer render.Renderer, p
 	return info.saveViaExtension(renderer, path, opts...)
 }
 
-func (i *BackendInfo) saveViaExtension(renderer render.Renderer, path string, opts ...render.SVGOption) error {
+func (i *BackendInfo) saveViaExtension(renderer render.Renderer, path string, opts ...render.SaveOption) error {
 	if i == nil {
 		return errors.New("backends: nil backend info")
 	}
@@ -536,6 +569,10 @@ func (i *BackendInfo) saveViaExtension(renderer render.Renderer, path string, op
 	ext := normalizeSaveFormat(filepath.Ext(path))
 	if ext == "" {
 		return fmt.Errorf("backends: unsupported save extension %q", filepath.Ext(path))
+	}
+	saveOptions := render.ResolveSaveOptions(opts...)
+	if err := saveOptions.ValidateForExtension(ext); err != nil {
+		return fmt.Errorf("backends: %w", err)
 	}
 
 	if i.SaveFormats != nil {

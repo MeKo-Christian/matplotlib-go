@@ -2,6 +2,7 @@ package render
 
 import (
 	"image"
+	"strings"
 	"time"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -252,6 +253,134 @@ type PNGExporter interface {
 	SavePNG(path string) error
 }
 
+// SaveOption is the shared public option surface for extension-driven save
+// APIs. Format-specific option functions such as WithSVGMetadata,
+// WithPDFMetadata, WithPSFontPolicy, and WithPGFPreamble implement this
+// interface directly, so callers can pass typed options through SaveFig and
+// registry save dispatch without backend-name conditionals.
+type SaveOption interface {
+	applySaveOptions(*SaveOptions)
+}
+
+// SaveOptions is a resolved bag of per-format save options.
+type SaveOptions struct {
+	SVG SVGOptions
+	PDF PDFOptions
+	PS  PSOptions
+	PGF PGFOptions
+
+	hasSVG bool
+	hasPDF bool
+	hasPS  bool
+	hasPGF bool
+}
+
+// ResolveSaveOptions applies shared save options onto deterministic per-format
+// defaults.
+func ResolveSaveOptions(opts ...SaveOption) SaveOptions {
+	cfg := SaveOptions{
+		SVG: DefaultSVGOptions(),
+		PDF: DefaultPDFOptions(),
+		PS:  DefaultPSOptions(),
+		PGF: DefaultPGFOptions(),
+	}
+	for _, opt := range opts {
+		if opt != nil {
+			opt.applySaveOptions(&cfg)
+		}
+	}
+	cfg.SVG.Metadata = cloneSVGMetadata(cfg.SVG.Metadata)
+	cfg.PDF.Metadata = clonePDFMetadata(cfg.PDF.Metadata)
+	cfg.PGF.Metadata = clonePGFMetadata(cfg.PGF.Metadata)
+	cfg.PGF.Preamble = cloneStrings(cfg.PGF.Preamble)
+	return cfg
+}
+
+// HasSVGOptions reports whether the caller supplied any SVG-specific option.
+func (opts SaveOptions) HasSVGOptions() bool { return opts.hasSVG }
+
+// HasPDFOptions reports whether the caller supplied any PDF-specific option.
+func (opts SaveOptions) HasPDFOptions() bool { return opts.hasPDF }
+
+// HasPSOptions reports whether the caller supplied any PostScript-specific option.
+func (opts SaveOptions) HasPSOptions() bool { return opts.hasPS }
+
+// HasPGFOptions reports whether the caller supplied any PGF-specific option.
+func (opts SaveOptions) HasPGFOptions() bool { return opts.hasPGF }
+
+// ValidateForExtension rejects format-specific options that do not match the
+// output extension. This keeps unsupported options from being silently ignored.
+func (opts SaveOptions) ValidateForExtension(ext string) error {
+	normalized := strings.ToLower(strings.TrimSpace(ext))
+	if normalized != "" && normalized[0] != '.' {
+		normalized = "." + normalized
+	}
+
+	var allowed string
+	switch normalized {
+	case ".svg":
+		allowed = "svg"
+	case ".pdf":
+		allowed = "pdf"
+	case ".ps", ".eps":
+		allowed = "ps"
+	case ".pgf":
+		allowed = "pgf"
+	case ".png":
+		allowed = "png"
+	}
+
+	if opts.hasSVG && allowed != "svg" {
+		return unsupportedSaveOptionError(normalized, "SVG")
+	}
+	if opts.hasPDF && allowed != "pdf" {
+		return unsupportedSaveOptionError(normalized, "PDF")
+	}
+	if opts.hasPS && allowed != "ps" {
+		return unsupportedSaveOptionError(normalized, "PostScript")
+	}
+	if opts.hasPGF && allowed != "pgf" {
+		return unsupportedSaveOptionError(normalized, "PGF")
+	}
+	return nil
+}
+
+func unsupportedSaveOptionError(ext, name string) error {
+	if ext == "" {
+		ext = "<none>"
+	}
+	return &SaveOptionError{Extension: ext, OptionSet: name}
+}
+
+// SaveOptionError reports a mismatched save option and target extension.
+type SaveOptionError struct {
+	Extension string
+	OptionSet string
+}
+
+func (e *SaveOptionError) Error() string {
+	return e.OptionSet + " options are not supported for " + e.Extension + " output"
+}
+
+func (opts SaveOptions) applySaveOptions(dst *SaveOptions) {
+	if opts.hasSVG {
+		dst.SVG = opts.SVG
+		dst.hasSVG = true
+	}
+	if opts.hasPDF {
+		dst.PDF = opts.PDF
+		dst.hasPDF = true
+	}
+	if opts.hasPS {
+		dst.PS = opts.PS
+		dst.hasPS = true
+	}
+	if opts.hasPGF {
+		dst.PGF = opts.PGF
+		dst.hasPGF = true
+	}
+}
+
 // SVGExporter is implemented by renderers that can export their output to SVG.
 type SVGExporter interface {
 	SaveSVG(path string) error
@@ -290,6 +419,13 @@ type PSOptions struct {
 
 // PSOption mutates PSOptions.
 type PSOption func(*PSOptions)
+
+func (opt PSOption) applySaveOptions(opts *SaveOptions) {
+	opts.hasPS = true
+	if opt != nil {
+		opt(&opts.PS)
+	}
+}
 
 // DefaultPSOptions returns deterministic PostScript defaults.
 func DefaultPSOptions() PSOptions {
@@ -331,6 +467,112 @@ type PGFExporter interface {
 	SavePGF(path string) error
 }
 
+// PGFCommentPolicy controls whether generator comments are retained.
+type PGFCommentPolicy string
+
+const (
+	PGFCommentPolicyKeep  PGFCommentPolicy = "keep"
+	PGFCommentPolicyStrip PGFCommentPolicy = "strip"
+)
+
+// PGFVerificationMode reserves a shared option for future TeX verification
+// checks while keeping the public save API stable.
+type PGFVerificationMode string
+
+const (
+	PGFVerificationModeNone   PGFVerificationMode = "none"
+	PGFVerificationModeStrict PGFVerificationMode = "strict"
+)
+
+// PGFOptions carries PGF/TikZ-specific export behavior knobs.
+type PGFOptions struct {
+	Metadata         map[string]string
+	Preamble         []string
+	CommentPolicy    PGFCommentPolicy
+	VerificationMode PGFVerificationMode
+}
+
+// PGFOption mutates PGFOptions.
+type PGFOption func(*PGFOptions)
+
+func (opt PGFOption) applySaveOptions(opts *SaveOptions) {
+	opts.hasPGF = true
+	if opt != nil {
+		opt(&opts.PGF)
+	}
+}
+
+// DefaultPGFOptions returns deterministic PGF defaults.
+func DefaultPGFOptions() PGFOptions {
+	return PGFOptions{
+		CommentPolicy:    PGFCommentPolicyKeep,
+		VerificationMode: PGFVerificationModeNone,
+	}
+}
+
+// ResolvePGFOptions applies opts onto deterministic PGF defaults.
+func ResolvePGFOptions(opts ...PGFOption) PGFOptions {
+	cfg := DefaultPGFOptions()
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&cfg)
+		}
+	}
+	cfg.Metadata = clonePGFMetadata(cfg.Metadata)
+	cfg.Preamble = cloneStrings(cfg.Preamble)
+	return cfg
+}
+
+// WithPGFMetadata adds deterministic metadata comments to the PGF document.
+func WithPGFMetadata(metadata map[string]string) PGFOption {
+	return func(cfg *PGFOptions) {
+		cfg.Metadata = clonePGFMetadata(metadata)
+	}
+}
+
+// WithPGFPreamble records TeX preamble lines needed by the PGF snippet.
+func WithPGFPreamble(lines ...string) PGFOption {
+	return func(cfg *PGFOptions) {
+		cfg.Preamble = cloneStrings(lines)
+	}
+}
+
+// WithPGFCommentPolicy configures whether PGF generator comments are emitted.
+func WithPGFCommentPolicy(policy PGFCommentPolicy) PGFOption {
+	return func(cfg *PGFOptions) {
+		switch policy {
+		case PGFCommentPolicyStrip:
+			cfg.CommentPolicy = PGFCommentPolicyStrip
+		default:
+			cfg.CommentPolicy = PGFCommentPolicyKeep
+		}
+	}
+}
+
+// WithPGFVerificationMode records the desired future TeX verification policy.
+func WithPGFVerificationMode(mode PGFVerificationMode) PGFOption {
+	return func(cfg *PGFOptions) {
+		switch mode {
+		case PGFVerificationModeStrict:
+			cfg.VerificationMode = PGFVerificationModeStrict
+		default:
+			cfg.VerificationMode = PGFVerificationModeNone
+		}
+	}
+}
+
+// PGFOptionExporter is implemented by PGF renderers that accept resolved
+// options at export time.
+type PGFOptionExporter interface {
+	SavePGFWithOptions(path string, opts PGFOptions) error
+}
+
+// PGFOptionSetter is implemented by renderers whose draw-time behavior depends
+// on PGFOptions, such as generator comment output.
+type PGFOptionSetter interface {
+	SetPGFOptions(opts PGFOptions)
+}
+
 // PDFFontPolicy controls whether PDF text is emitted using embedded fonts or
 // converted to filled glyph paths.
 type PDFFontPolicy string
@@ -359,6 +601,13 @@ type PDFOptions struct {
 
 // PDFOption mutates PDFOptions.
 type PDFOption func(*PDFOptions)
+
+func (opt PDFOption) applySaveOptions(opts *SaveOptions) {
+	opts.hasPDF = true
+	if opt != nil {
+		opt(&opts.PDF)
+	}
+}
 
 // DefaultPDFOptions returns deterministic PDF defaults.
 func DefaultPDFOptions() PDFOptions {
@@ -446,6 +695,13 @@ type SVGOptions struct {
 // SVGOption mutates SVGOptions.
 type SVGOption func(*SVGOptions)
 
+func (opt SVGOption) applySaveOptions(opts *SaveOptions) {
+	opts.hasSVG = true
+	if opt != nil {
+		opt(&opts.SVG)
+	}
+}
+
 // DefaultSVGOptions returns deterministic SVG defaults.
 func DefaultSVGOptions() SVGOptions {
 	return SVGOptions{FontPolicy: SVGFontPolicyNone}
@@ -509,5 +765,25 @@ func cloneSVGMetadata(in map[string]string) map[string]string {
 	for k, v := range in {
 		out[k] = v
 	}
+	return out
+}
+
+func clonePGFMetadata(in map[string]string) map[string]string {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(in))
+	for k, v := range in {
+		out[k] = v
+	}
+	return out
+}
+
+func cloneStrings(in []string) []string {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([]string, len(in))
+	copy(out, in)
 	return out
 }

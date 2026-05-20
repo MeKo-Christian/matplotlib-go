@@ -115,6 +115,32 @@ func TestExampleCommandWritesPGF(t *testing.T) {
 	}
 }
 
+func TestExampleCommandForwardsPDFOptions(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "basic_line.pdf")
+	stderr, ok := runExampleCommand(
+		t,
+		"-name", "basic_line",
+		"-format", "pdf",
+		"-o", path,
+		"-pdf-title", "Shared Options",
+		"-pdf-creation-date", "2024-05-06T07:08:09Z",
+		"-pdf-font-policy", "path",
+	)
+	if !ok {
+		t.Fatalf("cmd/example PDF options failed:\n%s", stderr)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read PDF output: %v", err)
+	}
+	if !bytes.Contains(data, []byte("/Title (Shared Options)")) {
+		t.Fatalf("PDF output missing title metadata:\n%s", data)
+	}
+	if !bytes.Contains(data, []byte("/CreationDate (D:20240506070809Z)")) {
+		t.Fatalf("PDF output missing creation date metadata:\n%s", data)
+	}
+}
+
 func TestExampleCommandTestHelper(t *testing.T) {
 	if os.Getenv("MATPLOTLIB_GO_EXAMPLE_MAIN") != "1" {
 		return

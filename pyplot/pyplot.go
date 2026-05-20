@@ -624,8 +624,8 @@ func LoadDefaultRCFile() (string, error) {
 }
 
 // Savefig renders the current figure to a file selected by extension.
-func Savefig(path string) error {
-	return saveFigure(GCF(), path)
+func Savefig(path string, opts ...render.SaveOption) error {
+	return saveFigure(GCF(), path, opts...)
 }
 
 // SetManagerFactory overrides how pyplot creates managers for Show and Pause.
@@ -745,7 +745,7 @@ func defaultManagerFactory(fig *core.Figure) (canvas.FigureManager, error) {
 	return manager, nil
 }
 
-func saveFigure(fig *core.Figure, path string) error {
+func saveFigure(fig *core.Figure, path string, opts ...render.SaveOption) error {
 	if fig == nil {
 		return errors.New("pyplot: nil figure")
 	}
@@ -775,12 +775,25 @@ func saveFigure(fig *core.Figure, path string) error {
 		return fmt.Errorf("pyplot: create %s renderer: %w", backend, err)
 	}
 
+	saveOptions := render.ResolveSaveOptions(opts...)
+	if err := saveOptions.ValidateForExtension(ext); err != nil {
+		return fmt.Errorf("pyplot: %w", err)
+	}
 	if setter, ok := renderer.(render.SVGOptionSetter); ok {
-		setter.SetSVGOptions(render.ResolveSVGOptions())
+		setter.SetSVGOptions(saveOptions.SVG)
+	}
+	if setter, ok := renderer.(render.PDFOptionSetter); ok {
+		setter.SetPDFOptions(saveOptions.PDF)
+	}
+	if setter, ok := renderer.(render.PSOptionSetter); ok {
+		setter.SetPSOptions(saveOptions.PS)
+	}
+	if setter, ok := renderer.(render.PGFOptionSetter); ok {
+		setter.SetPGFOptions(saveOptions.PGF)
 	}
 	core.DrawFigure(fig, renderer)
 
-	if err := backends.DefaultRegistry.SaveViaExtension(backend, renderer, path); err != nil {
+	if err := backends.DefaultRegistry.SaveViaExtension(backend, renderer, path, opts...); err != nil {
 		return fmt.Errorf("pyplot: %w", err)
 	}
 	return nil

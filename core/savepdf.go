@@ -7,11 +7,21 @@ import (
 )
 
 // SavePDF saves a figure to a PDF file using the provided renderer.
-func SavePDF(fig *Figure, r render.Renderer, path string, _ ...render.SVGOption) error {
+func SavePDF(fig *Figure, r render.Renderer, path string, opts ...render.SaveOption) error {
 	if fig == nil {
 		return errors.New("savepdf: nil figure")
 	}
+	saveOptions := render.ResolveSaveOptions(opts...)
+	if err := saveOptions.ValidateForExtension(".pdf"); err != nil {
+		return err
+	}
+	if setter, ok := r.(render.PDFOptionSetter); ok {
+		setter.SetPDFOptions(saveOptions.PDF)
+	}
 	DrawFigure(fig, r)
+	if exporter, ok := r.(render.PDFOptionExporter); ok {
+		return exporter.SavePDFWithOptions(path, saveOptions.PDF)
+	}
 	exporter, ok := r.(render.PDFExporter)
 	if !ok {
 		return errors.New("PDF export not supported for this renderer type")

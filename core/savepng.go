@@ -11,7 +11,11 @@ import (
 //
 // The renderer must implement render.PNGExporter; the same interface contract
 // used by the backends-registry SaveViaExtension dispatch.
-func SavePNG(fig *Figure, r render.Renderer, path string, _ ...render.SVGOption) error {
+func SavePNG(fig *Figure, r render.Renderer, path string, opts ...render.SaveOption) error {
+	saveOptions := render.ResolveSaveOptions(opts...)
+	if err := saveOptions.ValidateForExtension(".png"); err != nil {
+		return err
+	}
 	DrawFigure(fig, r)
 
 	exporter, ok := r.(render.PNGExporter)

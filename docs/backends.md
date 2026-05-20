@@ -68,8 +68,16 @@ err = core.SavePNG(fig, renderer, "output.png")
 // Or let SaveFig pick the exporter from the file extension:
 err = core.SaveFig(fig, renderer, "plot.png") // dispatches to SavePNG
 err = core.SaveFig(fig, renderer, "plot.svg") // dispatches to SaveSVG
-// Future formats (.pdf, .ps) will plug in via the same entry point.
+err = core.SaveFig(fig, renderer, "plot.pdf",
+    render.WithPDFMetadata(map[string]string{"Title": "Example"}),
+)
 ```
+
+Format-specific save options share the `render.SaveOption` surface. SVG, PDF,
+PostScript, and PGF options can be passed through `core.SaveFig`,
+`pyplot.Savefig`, the backend registry save dispatch, and headless manager save
+tools. Options are validated against the selected extension, so unsupported
+combinations fail explicitly instead of being ignored.
 
 ## Backend Capabilities
 

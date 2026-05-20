@@ -76,3 +76,45 @@ func TestSavePGFViaRegistry(t *testing.T) {
 		t.Errorf("missing line path command")
 	}
 }
+
+func TestSavePGFViaRegistryForwardsOptions(t *testing.T) {
+	dir := t.TempDir()
+	out := filepath.Join(dir, "registry-options.pgf")
+
+	r, err := backends.Create(backends.PGF, backends.Config{
+		Width: 200, Height: 100,
+		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	if err := backends.DefaultRegistry.SaveViaExtension(
+		backends.PGF,
+		r,
+		out,
+		render.WithPGFMetadata(map[string]string{"Title": "Registry"}),
+		render.WithPGFPreamble("\\usepackage{amsmath}"),
+		render.WithPGFVerificationMode(render.PGFVerificationModeStrict),
+	); err != nil {
+		t.Fatalf("SaveViaExtension: %v", err)
+	}
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	for _, want := range [][]byte{
+		[]byte(`% metadata Title: Registry`),
+		[]byte(`% preamble: \usepackage{amsmath}`),
+		[]byte(`% verification: strict`),
+	} {
+		if !bytes.Contains(data, want) {
+			t.Fatalf("missing %q in\n%s", want, data)
+		}
+	}
+}

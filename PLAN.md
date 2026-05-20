@@ -362,19 +362,19 @@ path, with capability reporting that makes missing formats obvious.
 **Goal:** let format-specific options flow through public save APIs without
 backend-name conditionals.
 
-- [ ] Inventory existing option types: `render.SVGOptions`,
+- [x] Inventory existing option types: `render.SVGOptions`,
       `render.PDFOptions`, PS metadata needs, and future PGF options.
-- [ ] Choose one shared API shape: backend-neutral option bag,
+- [x] Choose one shared API shape: backend-neutral option bag,
       typed per-format options, or both.
-- [ ] Route PDF metadata, creation date, and font policy through `pyplot`,
+- [x] Route PDF metadata, creation date, and font policy through `pyplot`,
       canvas manager saves, and `cmd/example`.
-- [ ] Preserve existing SVG option routing while moving it onto the shared
+- [x] Preserve existing SVG option routing while moving it onto the shared
       option surface.
-- [ ] Add PS option placeholders only where the backend supports meaningful
+- [x] Add PS option placeholders only where the backend supports meaningful
       behavior.
-- [ ] Add PGF option placeholders for TeX preamble, metadata/comment policy,
+- [x] Add PGF option placeholders for TeX preamble, metadata/comment policy,
       and future verification mode.
-- [ ] Add tests proving unsupported options produce clear errors instead of
+- [x] Add tests proving unsupported options produce clear errors instead of
       being silently ignored.
 
 **Save-pipeline exit criteria:**
@@ -385,7 +385,7 @@ backend-name conditionals.
 - [x] Backend comparison / capability output makes both export capabilities
       and registered save extensions obvious for PNG, SVG, PDF, PS/EPS, and
       PGF.
-- [ ] Format-specific save options can be passed through the shared save
+- [x] Format-specific save options can be passed through the shared save
       pipeline for SVG, PDF, PS, and PGF without backend-name conditionals.
 
 ### 1C.3 Mixed Raster / Vector Fallback

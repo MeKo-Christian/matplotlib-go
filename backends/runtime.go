@@ -30,7 +30,7 @@ type defaultManager struct {
 	tools   *canvas.ToolManager
 	title   string
 	home    figureHomeState
-	saveFn  func(string) error
+	saveFn  func(string, ...render.SaveOption) error
 	homeFn  func() error
 	drawFn  func() error
 	closeFn func() error
@@ -198,7 +198,7 @@ func (c *headlessCanvas) Close() error {
 	return c.dispatcher.Emit(event)
 }
 
-func (c *headlessCanvas) save(path string) error {
+func (c *headlessCanvas) save(path string, opts ...render.SaveOption) error {
 	if strings.TrimSpace(path) == "" {
 		return errors.New("backends: save path is required")
 	}
@@ -211,12 +211,16 @@ func (c *headlessCanvas) save(path string) error {
 	if err != nil {
 		return err
 	}
-	renderer, err := c.drawWithFactory(factory)
+	saveOptions := render.ResolveSaveOptions(opts...)
+	if err := saveOptions.ValidateForExtension(ext); err != nil {
+		return err
+	}
+	renderer, err := c.drawWithFactory(factory, opts...)
 	if err != nil {
 		return err
 	}
 
-	if err := DefaultRegistry.SaveViaExtension(backend, renderer, path); err != nil {
+	if err := DefaultRegistry.SaveViaExtension(backend, renderer, path, opts...); err != nil {
 		return fmt.Errorf("backends: cannot save figure: %w", err)
 	}
 	return nil
@@ -244,7 +248,7 @@ func (c *headlessCanvas) saveBackend(ext string) (Backend, Factory, error) {
 	return fallback, info.Factory, nil
 }
 
-func (c *headlessCanvas) drawWithFactory(factory Factory) (render.Renderer, error) {
+func (c *headlessCanvas) drawWithFactory(factory Factory, opts ...render.SaveOption) (render.Renderer, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -258,6 +262,7 @@ func (c *headlessCanvas) drawWithFactory(factory Factory) (render.Renderer, erro
 	if err != nil {
 		return nil, err
 	}
+	applySaveOptions(renderer, render.ResolveSaveOptions(opts...))
 	canvas.DrawFigure(c.figure, renderer)
 	c.renderer = renderer
 	c.pendingDraw = false
@@ -311,7 +316,7 @@ func (c *headlessCanvas) normalizeEvent(event canvas.Event) canvas.Event {
 	return event
 }
 
-func newDefaultManager(figCanvas canvas.FigureCanvas, saveFn func(string) error) canvas.FigureManager {
+func newDefaultManager(figCanvas canvas.FigureCanvas, saveFn func(string, ...render.SaveOption) error) canvas.FigureManager {
 	manager := &defaultManager{
 		canvas: figCanvas,
 		tools:  canvas.NewToolManager(),
@@ -341,10 +346,44 @@ func newDefaultManager(figCanvas canvas.FigureCanvas, saveFn func(string) error)
 			if manager.saveFn == nil {
 				return errors.New("backends: active canvas does not support save")
 			}
-			return manager.saveFn(args.Path)
+			opts, err := saveOptionsFromPayload(args.Payload)
+			if err != nil {
+				return err
+			}
+			return manager.saveFn(args.Path, opts...)
 		},
 	})
 	return manager
+}
+
+func applySaveOptions(renderer render.Renderer, opts render.SaveOptions) {
+	if setter, ok := renderer.(render.SVGOptionSetter); ok {
+		setter.SetSVGOptions(opts.SVG)
+	}
+	if setter, ok := renderer.(render.PDFOptionSetter); ok {
+		setter.SetPDFOptions(opts.PDF)
+	}
+	if setter, ok := renderer.(render.PSOptionSetter); ok {
+		setter.SetPSOptions(opts.PS)
+	}
+	if setter, ok := renderer.(render.PGFOptionSetter); ok {
+		setter.SetPGFOptions(opts.PGF)
+	}
+}
+
+func saveOptionsFromPayload(payload any) ([]render.SaveOption, error) {
+	switch v := payload.(type) {
+	case nil:
+		return nil, nil
+	case render.SaveOption:
+		return []render.SaveOption{v}, nil
+	case []render.SaveOption:
+		return v, nil
+	case render.SaveOptions:
+		return []render.SaveOption{v}, nil
+	default:
+		return nil, fmt.Errorf("backends: unsupported save tool payload %T", payload)
+	}
 }
 
 func (m *defaultManager) Canvas() canvas.FigureCanvas { return m.canvas }

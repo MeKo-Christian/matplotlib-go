@@ -130,3 +130,38 @@ func TestHeadlessManagerSaveSelectsBackendForExtension(t *testing.T) {
 		t.Fatalf("PNG renderer should not save SVG path, got %q", pngRenderer.pngPath)
 	}
 }
+
+func TestHeadlessManagerSaveForwardsOptionsFromPayload(t *testing.T) {
+	svgRenderer := &contractRenderer{}
+	reg := NewRegistry()
+	reg.Register(Backend("svgonly"), &BackendInfo{
+		Name:      "SVG Only",
+		Available: true,
+		SaveFormats: map[string]SaveHandler{
+			".svg": SaveSVG,
+		},
+		Factory: testRendererFactory(svgRenderer, nil),
+	})
+	withDefaultRegistry(t, reg)
+
+	fig := core.NewFigure(200, 100)
+	manager, _, err := NewManager("svgonly", SimpleConfig(200, 100, render.Color{A: 1}), fig, nil)
+	if err != nil {
+		t.Fatalf("NewManager() error = %v", err)
+	}
+
+	path := filepath.Join(t.TempDir(), "plot.svg")
+	err = manager.ToolManager().Execute("save", canvas.ToolArgs{
+		Path:    path,
+		Payload: render.WithSVGMetadata(map[string]string{"Title": "Manager"}),
+	})
+	if err != nil {
+		t.Fatalf("save tool error = %v", err)
+	}
+	if svgRenderer.svgPath != path {
+		t.Fatalf("SVG renderer saved path %q, want %q", svgRenderer.svgPath, path)
+	}
+	if got := svgRenderer.svgOptions.Metadata["Title"]; got != "Manager" {
+		t.Fatalf("SVG metadata = %q, want Manager", got)
+	}
+}
