@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -134,6 +135,28 @@ func TestImageTransformedEmitsAffinePixelScope(t *testing.T) {
 	}
 	if !bytes.Contains(doc, []byte(`\pgfpathrectangle{\pgfpoint{0pt}{0pt}}{\pgfpoint{1pt}{1pt}}`)) {
 		t.Fatalf("missing transformed image pixel in\n%s", doc)
+	}
+}
+
+func TestRasterizedArtistEmbedsPixelsAndKeepsVectorText(t *testing.T) {
+	fig := core.NewFigure(120, 80)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.2, Y: 0.2}, Max: geom.Pt{X: 0.8, Y: 0.75}})
+	line := ax.Plot([]float64{0, 0.5, 1}, []float64{0, 1, 0})
+	line.SetRasterized(true)
+	ax.SetTitle("Vector title")
+
+	r, err := New(120, 80, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	core.DrawFigure(fig, r)
+	doc := r.document
+
+	if !bytes.Contains(doc, []byte(`\pgfpathrectangle{\pgfpoint{`)) {
+		t.Fatalf("rasterized artist did not emit PGF pixel rectangles:\n%s", doc)
+	}
+	if !bytes.Contains(doc, []byte(`Vector title`)) {
+		t.Fatalf("surrounding title text was not preserved as PGF text:\n%s", doc)
 	}
 }
 

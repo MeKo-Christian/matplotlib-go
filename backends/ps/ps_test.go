@@ -105,6 +105,25 @@ func TestImageTransformedEmitsConcatMatrix(t *testing.T) {
 	}
 }
 
+func TestRasterizedArtistEmbedsImageAndKeepsVectorText(t *testing.T) {
+	fig := core.NewFigure(200, 100)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.2, Y: 0.2}, Max: geom.Pt{X: 0.8, Y: 0.75}})
+	line := ax.Plot([]float64{0, 0.5, 1}, []float64{0, 1, 0})
+	line.SetRasterized(true)
+	ax.SetTitle("Vector title")
+
+	r := newTestRenderer(t)
+	r.SetPSOptions(render.ResolvePSOptions(render.WithPSFontPolicy(render.PSFontPolicyBase14)))
+	core.DrawFigure(fig, r)
+
+	if !bytes.Contains(r.document, []byte("colorimage")) {
+		t.Fatalf("rasterized artist did not emit a PostScript image:\n%s", r.document)
+	}
+	if !bytes.Contains(r.document, []byte("(Vector title) show")) {
+		t.Fatalf("surrounding title text was not preserved as vector text:\n%s", r.document)
+	}
+}
+
 func TestRepeatedImagesReusePostScriptProcedure(t *testing.T) {
 	r := newTestRenderer(t)
 	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}}); err != nil {

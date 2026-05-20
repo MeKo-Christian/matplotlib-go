@@ -163,6 +163,9 @@ func TestRasterizedArtistEmbedsImageWhileKeepingTextVector(t *testing.T) {
 	if !strings.Contains(content, "<image") {
 		t.Fatalf("rasterized artist did not emit an SVG image: %s", content)
 	}
+	if !strings.Contains(content, `<g clip-path="url(#`) || !strings.Contains(content, `><image`) {
+		t.Fatalf("rasterized image should preserve the active axes clip: %s", content)
+	}
 	if !strings.Contains(content, "Vector title") {
 		t.Fatalf("surrounding title text was not preserved as vector SVG text: %s", content)
 	}

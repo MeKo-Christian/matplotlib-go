@@ -395,7 +395,7 @@ artist or effect cannot be represented natively.
 
 - [x] Define renderer capability checks for mixed raster/vector embedding.
 - [x] Add an artist-level rasterize flag that vector backends honor.
-- [ ] Add DPI-aware rasterization at save time for dense scatter, image,
+- [x] Add DPI-aware rasterization at save time for dense scatter, image,
       contour, and unsupported-effect regions.
 - [x] Embed raster tiles inside PDF without losing surrounding vector text and
       axes.
@@ -403,16 +403,16 @@ artist or effect cannot be represented natively.
 - [x] Embed raster tiles inside SVG using existing image support.
 - [x] Embed raster tiles inside PGF or document the fallback through external
       image files.
-- [ ] Add fixtures verifying clip, transform, alpha, and surrounding vector
+- [x] Add fixtures verifying clip, transform, alpha, and surrounding vector
       content.
 
 **Mixed-output exit criteria:**
 
-- [ ] Rasterized fallback is driven by renderer capability checks, not
+- [x] Rasterized fallback is driven by renderer capability checks, not
       backend-name conditionals.
-- [ ] `Artist.SetRasterized(true)` produces correct mixed-mode output on PDF,
+- [x] `Artist.SetRasterized(true)` produces correct mixed-mode output on PDF,
       PS/EPS, SVG, and PGF where supported.
-- [ ] Unsupported vector effects have a deterministic raster fallback or a
+- [x] Unsupported vector effects have a deterministic raster fallback or a
       documented error.
 
 Vector backend semantics matrix:

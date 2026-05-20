@@ -1,6 +1,7 @@
 package core
 
 import (
+	"image"
 	"math"
 	"testing"
 
@@ -53,6 +54,28 @@ func (r *rasterizationRecordingRenderer) StartRasterized(options render.Rasteriz
 func (r *rasterizationRecordingRenderer) StopRasterized() bool {
 	r.events = append(r.events, "stop")
 	return true
+}
+
+func (r *rasterizationRecordingRenderer) Path(path geom.Path, paint *render.Paint) {
+	render.DrawPathWithEffects(r, path, paint, func(geom.Path, *render.Paint) {})
+}
+
+type rasterizationFilterRecordingRenderer struct {
+	rasterizationRecordingRenderer
+	filterStarts int
+	filterStops  int
+}
+
+func (r *rasterizationFilterRecordingRenderer) StartFilter() {
+	r.filterStarts++
+}
+
+func (r *rasterizationFilterRecordingRenderer) StopFilter(func(*image.RGBA, float64) (*image.RGBA, geom.Pt)) {
+	r.filterStops++
+}
+
+func (r *rasterizationFilterRecordingRenderer) Path(path geom.Path, paint *render.Paint) {
+	render.DrawPathWithEffects(r, path, paint, func(geom.Path, *render.Paint) {})
 }
 
 func TestRasterizedArtistDrawIsBracketedWhenRendererSupportsMixedOutput(t *testing.T) {
@@ -109,6 +132,120 @@ func TestCommonArtistsExposeRasterizedFlag(t *testing.T) {
 	var _ rasterizable = (*Image2D)(nil)
 	var _ rasterizable = (*ContourSet)(nil)
 	var _ rasterizable = (*Collection)(nil)
+}
+
+func TestDenseScatterAutoRasterizesWithFigureDPI(t *testing.T) {
+	fig := NewFigure(100, 100, style.WithDPI(180))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	x := make([]float64, autoRasterizeScatterPointThreshold)
+	y := make([]float64, autoRasterizeScatterPointThreshold)
+	for i := range x {
+		x[i] = float64(i) / float64(len(x))
+		y[i] = float64(i%10) / 10
+	}
+	ax.Scatter(x, y)
+
+	ren := &rasterizationRecordingRenderer{}
+	DrawFigure(fig, ren)
+
+	if len(ren.options) != 1 {
+		t.Fatalf("raster option count = %d, want 1", len(ren.options))
+	}
+	if got := ren.options[0]; got.Mode != render.RasterizeAuto || got.DPI != 180 {
+		t.Fatalf("raster options = %+v, want auto at 180dpi", got)
+	}
+}
+
+func TestSmallScatterDoesNotAutoRasterize(t *testing.T) {
+	fig := NewFigure(100, 100)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	ax.Scatter([]float64{0, 1}, []float64{0, 1})
+
+	ren := &rasterizationRecordingRenderer{}
+	DrawFigure(fig, ren)
+
+	if len(ren.options) != 0 {
+		t.Fatalf("small scatter rasterized unexpectedly: %+v", ren.options)
+	}
+}
+
+func TestUnsupportedFilterPathEffectAutoRasterizes(t *testing.T) {
+	fig := NewFigure(100, 100, style.WithDPI(96))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line.PathEffects = []render.PathEffect{
+		render.FilterPathEffect(
+			render.Color{R: 1, A: 1},
+			render.Color{B: 1, A: 1},
+			2,
+			"blur",
+			2,
+			geom.Pt{X: 1, Y: 1},
+		),
+	}
+
+	ren := &rasterizationRecordingRenderer{}
+	DrawFigure(fig, ren)
+
+	if len(ren.options) != 1 {
+		t.Fatalf("filter path effect raster option count = %d, want 1", len(ren.options))
+	}
+	if got := ren.options[0]; got.Mode != render.RasterizeAuto || got.DPI != 96 {
+		t.Fatalf("filter path effect raster options = %+v, want auto at 96dpi", got)
+	}
+}
+
+func TestDenseContourAutoRasterizesWithFigureDPI(t *testing.T) {
+	fig := NewFigure(100, 100, style.WithDPI(150))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	segments := make([][]geom.Pt, autoRasterizeContourPathThreshold)
+	for i := range segments {
+		x := float64(i) / float64(len(segments))
+		segments[i] = []geom.Pt{{X: x, Y: 0}, {X: x, Y: 1}}
+	}
+	ax.Add(&ContourSet{
+		Lines: &LineCollection{
+			Segments:  segments,
+			Color:     render.Color{A: 1},
+			LineWidth: 1,
+		},
+	})
+
+	ren := &rasterizationRecordingRenderer{}
+	DrawFigure(fig, ren)
+
+	if len(ren.options) != 1 {
+		t.Fatalf("dense contour raster option count = %d, want 1", len(ren.options))
+	}
+	if got := ren.options[0]; got.Mode != render.RasterizeAuto || got.DPI != 150 {
+		t.Fatalf("dense contour raster options = %+v, want auto at 150dpi", got)
+	}
+}
+
+func TestFilterCapableRendererKeepsFilterPathEffectVector(t *testing.T) {
+	fig := NewFigure(100, 100)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line.PathEffects = []render.PathEffect{
+		render.FilterPathEffect(
+			render.Color{R: 1, A: 1},
+			render.Color{B: 1, A: 1},
+			2,
+			"blur",
+			2,
+			geom.Pt{X: 1, Y: 1},
+		),
+	}
+
+	ren := &rasterizationFilterRecordingRenderer{}
+	DrawFigure(fig, ren)
+
+	if len(ren.options) != 0 {
+		t.Fatalf("filter-capable renderer rasterized unexpectedly: %+v", ren.options)
+	}
+	if ren.filterStarts == 0 || ren.filterStops == 0 {
+		t.Fatalf("filter-capable renderer did not use filter path: starts=%d stops=%d", ren.filterStarts, ren.filterStops)
+	}
 }
 
 func TestZOrderStableSortAndTraversal(t *testing.T) {

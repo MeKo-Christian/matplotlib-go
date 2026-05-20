@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/internal/pdfcompare"
 	tex "github.com/cwbudde/matplotlib-go/internal/tex"
@@ -113,6 +114,31 @@ func TestRendererSaveRestoreEmitsBracketedQ(t *testing.T) {
 	}
 	if strings.Count(raw, "Q\n") != 2 {
 		t.Errorf("expected 2 Q lines, got %d in %q", strings.Count(raw, "Q\n"), raw)
+	}
+}
+
+func TestRasterizedArtistEmbedsImageAndKeepsVectorContent(t *testing.T) {
+	fig := core.NewFigure(200, 100)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.2, Y: 0.2}, Max: geom.Pt{X: 0.8, Y: 0.75}})
+	line := ax.Plot([]float64{0, 0.5, 1}, []float64{0, 1, 0})
+	line.SetRasterized(true)
+	ax.SetTitle("Vector title")
+
+	r := newTestRenderer(t)
+	core.DrawFigure(fig, r)
+
+	if !strings.Contains(r.content.String(), "/Im1 Do") {
+		t.Fatalf("rasterized artist did not invoke a PDF image XObject:\n%s", r.content.String())
+	}
+	data, err := r.Bytes()
+	if err != nil {
+		t.Fatalf("Bytes: %v", err)
+	}
+	if !bytes.Contains(data, []byte("/Subtype /Image")) {
+		t.Fatalf("rasterized artist did not serialize a PDF image XObject:\n%s", data)
+	}
+	if strings.Count(r.content.String(), " m\n") < 2 {
+		t.Fatalf("surrounding vector path content was not preserved:\n%s", r.content.String())
 	}
 }
 
