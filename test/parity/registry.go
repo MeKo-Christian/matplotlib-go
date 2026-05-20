@@ -10,6 +10,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	showcase_bar_basic "github.com/cwbudde/matplotlib-go/examples/bar_basic"
 	showcase_basic_line "github.com/cwbudde/matplotlib-go/examples/basic_line"
+	showcase_errorbar_basic "github.com/cwbudde/matplotlib-go/examples/errorbar_basic"
 	showcase_hist_basic "github.com/cwbudde/matplotlib-go/examples/hist_basic"
 	showcase_image_heatmap "github.com/cwbudde/matplotlib-go/examples/image_heatmap"
 	showcase_mesh_contour_tri "github.com/cwbudde/matplotlib-go/examples/mesh_contour_tri"
@@ -225,6 +226,7 @@ var renderByID = map[string]func() image.Image{
 var figureByID = map[string]func() *core.Figure{
 	"basic_line":             showcase_basic_line.Plot,
 	"bar_basic":              showcase_bar_basic.Plot,
+	"errorbar_basic":         showcase_errorbar_basic.Plot,
 	"scatter_basic":          showcase_scatter_basic.Plot,
 	"hist_basic":             showcase_hist_basic.Plot,
 	"mesh_contour_tri":       showcase_mesh_contour_tri.Plot,
@@ -237,6 +239,7 @@ var figureByID = map[string]func() *core.Figure{
 	"mathtext_integrals":     example_mathtext_integrals.Plot,
 	"mathtext_matrices":      example_mathtext_matrices.Plot,
 	"mathtext_inline_labels": example_mathtext_inline_labels.Plot,
+	"mixed_collection":       example_mixed_collection.Plot,
 	"imshow_clipped":         example_imshow_clipped.Plot,
 	"imshow_transformed":     example_imshow_transformed.Plot,
 }

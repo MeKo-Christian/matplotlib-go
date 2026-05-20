@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+width="640" height="360" viewBox="0 0 640 360"
+preserveAspectRatio="xMidYMid meet">
+  <metadata></metadata>
+  <defs>
+    <clipPath id="clip1" clipPathUnits="userSpaceOnUse"><rect x="76.8" y="36" width="531.2" height="280.8" /></clipPath>
+  </defs>
+  <rect x="0" y="0" width="100%" height="100%" fill="rgb(255,255,255)" />
+  <g clip-path="url(#clip1)"><path d="M 101 308 L 149 308 L 149 317 L 101 317 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 101.5 308.5 L 149.5 308.5 L 149.5 317.5 L 101.5 317.5 Z" fill="none" stroke="rgb(0,0,0)" stroke-width="0.8" stroke-linejoin="miter" stroke-linecap="square" /></g>
+  <g clip-path="url(#clip1)"><path d="M 149 269 L 198 269 L 198 317 L 149 317 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 149.5 269.5 L 198.5 269.5 L 198.5 317.5 L 149.5 317.5 Z" fill="none" stroke="rgb(0,0,0)" stroke-width="0.8" stroke-linejoin="miter" stroke-linecap="square" /></g>
+  <g clip-path="url(#clip1)"><path d="M 198 262 L 246 262 L 246 317 L 198 317 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 198.5 262.5 L 246.5 262.5 L 246.5 317.5 L 198.5 317.5 Z" fill="none" stroke="rgb(0,0,0)" stroke-width="0.8" stroke-linejoin="miter" stroke-linecap="square" /></g>
+  <g clip-path="url(#clip1)"><path d="M 246 194 L 294 194 L 294 317 L 246 317 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 246.5 194.5 L 294.5 194.5 L 294.5 317.5 L 246.5 317.5 Z" fill="none" stroke="rgb(0,0,0)" stroke-width="0.8" stroke-linejoin="miter" stroke-linecap="square" /></g>
+  <g clip-path="url(#clip1)"><path d="M 294 95 L 342 95 L 342 317 L 294 317 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 294.5 95.5 L 342.5 95.5 L 342.5 317.5 L 294.5 317.5 Z" fill="none" stroke="rgb(0,0,0)" stroke-width="0.8" stroke-linejoin="miter" stroke-linecap="square" /></g>
+  <g clip-path="url(#clip1)"><path d="M 342 49 L 391 49 L 391 317 L 342 317 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 342.5 49.5 L 391.5 49.5 L 391.5 317.5 L 342.5 317.5 Z" fill="none" stroke="rgb(0,0,0)" stroke-width="0.8" stroke-linejoin="miter" stroke-linecap="square" /></g>
+  <g clip-path="url(#clip1)"><path d="M 391 122 L 439 122 L 439 317 L 391 317 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 391.5 122.5 L 439.5 122.5 L 439.5 317.5 L 391.5 317.5 Z" fill="none" stroke="rgb(0,0,0)" stroke-width="0.8" stroke-linejoin="miter" stroke-linecap="square" /></g>
+  <g clip-path="url(#clip1)"><path d="M 439 203 L 487 203 L 487 317 L 439 317 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 439.5 203.5 L 487.5 203.5 L 487.5 317.5 L 439.5 317.5 Z" fill="none" stroke="rgb(0,0,0)" stroke-width="0.8" stroke-linejoin="miter" stroke-linecap="square" /></g>
+  <g clip-path="url(#clip1)"><path d="M 487 266 L 536 266 L 536 317 L 487 317 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 487.5 266.5 L 536.5 266.5 L 536.5 317.5 L 487.5 317.5 Z" fill="none" stroke="rgb(0,0,0)" stroke-width="0.8" stroke-linejoin="miter" stroke-linecap="square" /></g>
+  <g clip-path="url(#clip1)"><path d="M 536 304 L 584 304 L 584 317 L 536 317 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 536.5 304.5 L 584.5 304.5 L 584.5 317.5 L 536.5 317.5 Z" fill="none" stroke="rgb(0,0,0)" stroke-width="0.8" stroke-linejoin="miter" stroke-linecap="square" /></g>
+  <path d="M 181.5 317.5 L 181.5 322.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 296.5 317.5 L 296.5 322.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 411.5 317.5 L 411.5 322.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 527.5 317.5 L 527.5 322.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <text x="178.030991" y="334.98376" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2</text>
+  <text x="293.398921" y="334.98376" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4</text>
+  <text x="408.76685" y="334.98376" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
+  <text x="524.134779" y="334.98376" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">8</text>
+  <path d="M 77.5 317.5 L 72.5 317.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 77.5 273.5 L 72.5 273.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 77.5 229.5 L 72.5 229.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 77.5 185.5 L 72.5 185.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 77.5 141.5 L 72.5 141.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 77.5 98.5 L 72.5 98.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 77.5 54.5 L 72.5 54.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <text x="61.693163" y="321.030769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0</text>
+  <text x="56.308547" y="277.19002" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">20</text>
+  <text x="56.308547" y="233.34927" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">40</text>
+  <text x="56.308547" y="189.508521" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">60</text>
+  <text x="56.308547" y="145.667771" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">80</text>
+  <text x="50.923932" y="101.827022" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">100</text>
+  <text x="50.923932" y="57.986273" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">120</text>
+  <path d="M 77.5 317.5 L 608.5 317.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 77.5 36.5 L 77.5 317.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 77.5 36.5 L 608.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 608.5 36.5 L 608.5 317.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <text x="293.938462" y="27.666667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Basic Histogram</text>
+</svg>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+width="640" height="360" viewBox="0 0 640 360"
+preserveAspectRatio="xMidYMid meet">
+  <metadata></metadata>
+  <defs>
+    <clipPath id="clip1" clipPathUnits="userSpaceOnUse"><rect x="64" y="36" width="512" height="288" /></clipPath>
+    <path id="marker1" d="M 0 -0.5 C 0.132602 -0.5 0.25979 -0.447317 0.353553 -0.353553 C 0.447317 -0.25979 0.5 -0.132602 0.5 0 C 0.5 0.132602 0.447317 0.25979 0.353553 0.353553 C 0.25979 0.447317 0.132602 0.5 0 0.5 C -0.132602 0.5 -0.25979 0.447317 -0.353553 0.353553 C -0.447317 0.25979 -0.5 0.132602 -0.5 0 C -0.5 -0.132602 -0.447317 -0.25979 -0.353553 -0.353553 C -0.25979 -0.447317 -0.132602 -0.5 0 -0.5 Z" />
+  </defs>
+  <rect x="0" y="0" width="100%" height="100%" fill="rgb(255,255,255)" />
+  <g clip-path="url(#clip1)"><use href="#marker1" xlink:href="#marker1" transform="matrix(7.976042 0 0 7.976042 137.142857 237.6)" fill="rgb(43,161,43)" stroke="none" /><use href="#marker1" xlink:href="#marker1" transform="matrix(7.976042 0 0 7.976042 210.285714 204)" fill="rgb(43,161,43)" stroke="none" /><use href="#marker1" xlink:href="#marker1" transform="matrix(7.976042 0 0 7.976042 283.428571 218.4)" fill="rgb(43,161,43)" stroke="none" /><use href="#marker1" xlink:href="#marker1" transform="matrix(7.976042 0 0 7.976042 356.571429 175.2)" fill="rgb(43,161,43)" stroke="none" /><use href="#marker1" xlink:href="#marker1" transform="matrix(7.976042 0 0 7.976042 429.714286 189.6)" fill="rgb(43,161,43)" stroke="none" /><use href="#marker1" xlink:href="#marker1" transform="matrix(7.976042 0 0 7.976042 502.857143 146.4)" fill="rgb(43,161,43)" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 137.142857 237.6 L 210.285714 204 L 283.428571 218.4 L 356.571429 175.2 L 429.714286 189.6 L 502.857143 146.4" fill="none" stroke="rgb(31,120,181)" stroke-width="2" stroke-linejoin="round" stroke-linecap="butt" stroke-miterlimit="10" /></g>
+  <g clip-path="url(#clip1)"><path d="M 122.514286 237.6 L 151.771429 237.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 122.514286 234.6 L 122.514286 240.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 151.771429 234.6 L 151.771429 240.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 137.142857 251.04 L 137.142857 224.16" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 134.142857 251.04 L 140.142857 251.04" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 134.142857 224.16 L 140.142857 224.16" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 192 204 L 228.571429 204" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 192 201 L 192 207" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 228.571429 201 L 228.571429 207" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 210.285714 213.6 L 210.285714 194.4" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 207.285714 213.6 L 213.285714 213.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 207.285714 194.4 L 213.285714 194.4" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 272.457143 218.4 L 294.4 218.4" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 272.457143 215.4 L 272.457143 221.4" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 294.4 215.4 L 294.4 221.4" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 283.428571 235.2 L 283.428571 201.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 280.428571 235.2 L 286.428571 235.2" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 280.428571 201.6 L 286.428571 201.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 340.48 175.2 L 372.662857 175.2" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 340.48 172.2 L 340.48 178.2" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 372.662857 172.2 L 372.662857 178.2" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 356.571429 186.72 L 356.571429 163.68" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 353.571429 186.72 L 359.571429 186.72" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 353.571429 163.68 L 359.571429 163.68" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 407.771429 189.6 L 451.657143 189.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 407.771429 186.6 L 407.771429 192.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 451.657143 186.6 L 451.657143 192.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 429.714286 204 L 429.714286 175.2" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 426.714286 204 L 432.714286 204" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 426.714286 175.2 L 432.714286 175.2" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 489.691429 146.4 L 516.022857 146.4" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 489.691429 143.4 L 489.691429 149.4" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 516.022857 143.4 L 516.022857 149.4" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 502.857143 156.96 L 502.857143 135.84" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 499.857143 156.96 L 505.857143 156.96" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 499.857143 135.84 L 505.857143 135.84" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <path d="M 64.5 324.5 L 64.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 137.5 324.5 L 137.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 210.5 324.5 L 210.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 283.5 324.5 L 283.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 357.5 324.5 L 357.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 430.5 324.5 L 430.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 503.5 324.5 L 503.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 576.5 324.5 L 576.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <text x="61.307693" y="342.18376" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0</text>
+  <text x="134.45055" y="342.18376" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">1</text>
+  <text x="207.593407" y="342.18376" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2</text>
+  <text x="280.736264" y="342.18376" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3</text>
+  <text x="353.879121" y="342.18376" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4</text>
+  <text x="427.021978" y="342.18376" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">5</text>
+  <text x="500.164835" y="342.18376" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
+  <text x="573.307693" y="342.18376" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">7</text>
+  <path d="M 64.5 324.5 L 59.5 324.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 64.5 276.5 L 59.5 276.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 64.5 228.5 L 59.5 228.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 64.5 180.5 L 59.5 180.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 64.5 132.5 L 59.5 132.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 64.5 84.5 L 59.5 84.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 64.5 36.5 L 59.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <text x="48.893163" y="328.230769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0</text>
+  <text x="48.893163" y="280.230769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">1</text>
+  <text x="48.893163" y="232.230769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2</text>
+  <text x="48.893163" y="184.230769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3</text>
+  <text x="48.893163" y="136.230769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4</text>
+  <text x="48.893163" y="88.230769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">5</text>
+  <text x="48.893163" y="40.230769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
+  <path d="M 64.5 324.5 L 576.5 324.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 64.5 36.5 L 64.5 324.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 64.5 36.5 L 576.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 576.5 36.5 L 576.5 324.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <text x="287.692307" y="27.666667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Error Bars</text>
+</svg>

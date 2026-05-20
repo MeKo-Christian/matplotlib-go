@@ -824,10 +824,10 @@ backend parity program but is not yet complete.
 
 ### 7.2 SVG Coverage Expansion
 
-- [ ] Expand the structural golden set to the remaining canonical plot
+- [x] Expand the structural golden set to the remaining canonical plot
       families: bar, errorbar, hist, collection, image, clipped polar,
       hatch_bars, text_layout, mathtext.
-- [ ] Wire the SVG-specific golden set into the catalog so the structural
+- [x] Wire the SVG-specific golden set into the catalog so the structural
       diff harness runs alongside the rasterized golden / reference comparison.
 
 ### 7.3 Skia Native Paths

@@ -102,6 +102,31 @@ func TestCatalogSplitsAGGNativeParityFixtures(t *testing.T) {
 	}
 }
 
+func TestCatalogIncludesPhase72SVGStructuralFamilies(t *testing.T) {
+	want := map[string]string{
+		"bar":           "bar_basic",
+		"errorbar":      "errorbar_basic",
+		"hist":          "hist_basic",
+		"collection":    "mixed_collection",
+		"image":         "image_heatmap",
+		"clipped_polar": "polar_axes",
+		"hatch_bars":    "patch_showcase",
+		"text_layout":   "text_labels_strict",
+		"mathtext":      "mathtext_basic",
+	}
+	got := map[string]string{}
+	for _, c := range Cases() {
+		if c.SVGGoldenFamily != "" {
+			got[c.SVGGoldenFamily] = c.ID
+		}
+	}
+	for family, id := range want {
+		if got[family] != id {
+			t.Fatalf("SVG structural family %q = %q, want %q", family, got[family], id)
+		}
+	}
+}
+
 func TestWebDemosAreParityCasesWithReferences(t *testing.T) {
 	root := repoRoot(t)
 	seen := map[string]bool{}
