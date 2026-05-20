@@ -4,8 +4,9 @@
 // numbering and trailer offsets so byte-for-byte reproducibility is the
 // default. It covers the core renderer contract: paths with stroke/fill/clip,
 // raster images, mixed raster/vector artist groups, text-as-path output,
-// optional embedded Type 0 / CIDFontType2 text output, native hatch patterns,
-// and tiling pattern fills.
+// optional embedded Type 0 / CIDFontType2 text output, native hatch tiling
+// patterns, renderer-neutral pattern fills, axial/radial gradient fills, and
+// mixed raster/vector output.
 //
 // PDF-specific output options are carried by render.PDFOptions and can be
 // passed through core.SavePDF, core.SaveFig, or the backends.Registry save

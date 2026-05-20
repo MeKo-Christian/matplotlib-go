@@ -23,6 +23,8 @@ func init() {
 			backends.FontKeyVerticalText,
 			backends.ImageTransform,
 			backends.NativeHatcher,
+			backends.PatternFill,
+			backends.GradientFill,
 			backends.MarkerBatch,
 			backends.PathCollectionBatch,
 			backends.MixedRasterVector,

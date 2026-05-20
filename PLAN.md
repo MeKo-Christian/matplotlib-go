@@ -466,7 +466,7 @@ without backend-name conditionals.
       `<pattern>` defs. Defs are deduplicated by content hash, honor the renderer's
       hash-salted ID strategy, and emit in registration order so document output
       remains deterministic. Hatch still wins precedence when both are set.
-- [ ] PDF implementation via shading dictionaries (Type 2 / 3).
+- [x] PDF implementation via shading dictionaries (Type 2 / 3).
 - [ ] Skia implementation via `SkShader` types.
 - [ ] Golden fixtures: gradient fill bar, radial gradient pie wedge, pattern
       fill polygon, gradient streamline plot.
@@ -485,6 +485,14 @@ Current slice landed:
 - `render.GradientFiller` / `render.PatternFiller` capability interfaces are
   now implemented on AGG and SVG; the backend capability comparison report
   reflects native vs unsupported truthfully.
+- PDF now advertises `render.GradientFiller` / `backends.GradientFill` and
+  emits native axial/radial shading resources for linear and radial gradient
+  fills, including clipping the gradient to the path and preserving an
+  overlaid stroke pass.
+- PDF now also advertises `render.PatternFiller` / `backends.PatternFill` and
+  maps renderer-neutral `Paint.FillPattern` values to colored tiling pattern
+  resources, while keeping hatch-over-pattern and gradient-over-pattern
+  precedence aligned with SVG.
 
 ### 2.2 Path Effects Pipeline
 

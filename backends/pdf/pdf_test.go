@@ -254,6 +254,154 @@ func TestRendererNativeHatchEmitsTilingPattern(t *testing.T) {
 	}
 }
 
+func TestRendererPatternFillEmitsTilingPattern(t *testing.T) {
+	r := newTestRenderer(t)
+	filler, ok := any(r).(render.PatternFiller)
+	if !ok {
+		t.Fatal("PDF renderer should implement render.PatternFiller")
+	}
+	if !filler.SupportsPatternFill() {
+		t.Fatal("PDF renderer should report native pattern fill support")
+	}
+
+	var tile geom.Path
+	tile.MoveTo(geom.Pt{X: 4, Y: 4})
+	tile.LineTo(geom.Pt{X: 12, Y: 4})
+	tile.LineTo(geom.Pt{X: 12, Y: 12})
+	tile.LineTo(geom.Pt{X: 4, Y: 12})
+	tile.Close()
+
+	_ = r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}})
+	r.Path(pdfTestRectPath(20, 20, 90, 70), &render.Paint{
+		FillPattern: render.PatternFill{
+			ID:         "dots",
+			Cell:       geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 16, Y: 16}},
+			Path:       tile,
+			Foreground: render.Color{R: 0.2, G: 0.4, B: 0.8, A: 1},
+			Background: render.Color{R: 1, G: 1, B: 1, A: 1},
+			LineWidth:  1.25,
+		},
+	})
+
+	raw := r.content.String()
+	if !strings.Contains(raw, "/Pattern cs") || !strings.Contains(raw, "/Pf1 scn") {
+		t.Fatalf("expected page content to select pattern fill, got %q", raw)
+	}
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	doc := mustParsePDF(t, r)
+	if !pdfDocumentBodyContains(doc, "/Pattern << /Pf1") {
+		t.Fatalf("page resources should reference fill pattern Pf1; objects: %#v", doc.Objects)
+	}
+	patternBody := pdfDocumentObjectBodyContaining(doc, "/PatternType 1")
+	for _, want := range []string{
+		"/Type /Pattern",
+		"/PaintType 1",
+		"/BBox [ 0 0 16 16 ]",
+		"/XStep 16",
+		"/YStep 16",
+		"1 1 1 rg 0 0 16 16 re f",
+		"0.2 0.4 0.8 rg",
+		"1.25 w",
+		"f",
+	} {
+		if !strings.Contains(patternBody, want) {
+			t.Fatalf("fill pattern object missing %q:\n%s", want, patternBody)
+		}
+	}
+}
+
+func TestRendererLinearGradientEmitsAxialShading(t *testing.T) {
+	r := newTestRenderer(t)
+	filler, ok := any(r).(render.GradientFiller)
+	if !ok {
+		t.Fatal("PDF renderer should implement render.GradientFiller")
+	}
+	if !filler.SupportsGradientFill() {
+		t.Fatal("PDF renderer should report native gradient fill support")
+	}
+
+	_ = r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}})
+	r.Path(pdfTestRectPath(10, 10, 60, 50), &render.Paint{
+		FillGradient: render.GradientFill{
+			Kind:  render.LinearGradient,
+			Start: geom.Pt{X: 10, Y: 10},
+			End:   geom.Pt{X: 60, Y: 10},
+			Stops: []render.GradientStop{
+				{Offset: 0, Color: render.Color{R: 1, A: 1}},
+				{Offset: 1, Color: render.Color{B: 1, A: 1}},
+			},
+		},
+	})
+
+	raw := r.content.String()
+	for _, want := range []string{"W\nn\n", "/Sh1 sh"} {
+		if !strings.Contains(raw, want) {
+			t.Fatalf("linear gradient content missing %q:\n%s", want, raw)
+		}
+	}
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	doc := mustParsePDF(t, r)
+	if !pdfDocumentBodyContains(doc, "/Shading << /Sh1") {
+		t.Fatalf("page resources should reference shading Sh1; objects: %#v", doc.Objects)
+	}
+	shadingBody := pdfDocumentObjectBodyContaining(doc, "/ShadingType 2")
+	for _, want := range []string{
+		"/ShadingType 2",
+		"/ColorSpace /DeviceRGB",
+		"/Coords [ 10 10 60 10 ]",
+		"/C0 [ 1 0 0 ]",
+		"/C1 [ 0 0 1 ]",
+	} {
+		if !strings.Contains(shadingBody, want) {
+			t.Fatalf("linear shading object missing %q:\n%s", want, shadingBody)
+		}
+	}
+}
+
+func TestRendererRadialGradientEmitsRadialShadingAndStroke(t *testing.T) {
+	r := newTestRenderer(t)
+	_ = r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}})
+	r.Path(pdfTestRectPath(20, 15, 70, 65), &render.Paint{
+		Stroke:    render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1},
+		LineWidth: 2,
+		FillGradient: render.GradientFill{
+			Kind:   render.RadialGradient,
+			Center: geom.Pt{X: 45, Y: 40},
+			Radius: 30,
+			Stops: []render.GradientStop{
+				{Offset: 0, Color: render.Color{R: 1, G: 1, A: 1}},
+				{Offset: 1, Color: render.Color{A: 1}},
+			},
+		},
+	})
+
+	raw := r.content.String()
+	for _, want := range []string{"/Sh1 sh", "0.1 0.2 0.3 RG", "2 w", "S\n"} {
+		if !strings.Contains(raw, want) {
+			t.Fatalf("radial gradient content missing %q:\n%s", want, raw)
+		}
+	}
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	doc := mustParsePDF(t, r)
+	shadingBody := pdfDocumentObjectBodyContaining(doc, "/ShadingType 3")
+	for _, want := range []string{
+		"/ShadingType 3",
+		"/Coords [ 45 40 0 45 40 30 ]",
+		"/C0 [ 1 1 0 ]",
+		"/C1 [ 0 0 0 ]",
+	} {
+		if !strings.Contains(shadingBody, want) {
+			t.Fatalf("radial shading object missing %q:\n%s", want, shadingBody)
+		}
+	}
+}
+
 func TestDrawMarkersEmitsReusableFormXObject(t *testing.T) {
 	r := newTestRenderer(t)
 	drawer, ok := any(r).(render.MarkerDrawer)

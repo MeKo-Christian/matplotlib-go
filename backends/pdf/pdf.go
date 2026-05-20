@@ -11,6 +11,7 @@ import (
 	"image/color"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -68,6 +69,26 @@ type pdfHatchPattern struct {
 
 type pdfHatchPatternObject struct {
 	pdfHatchPattern
+	objectID int
+}
+
+type pdfFillPattern struct {
+	name    string
+	pattern render.PatternFill
+}
+
+type pdfFillPatternObject struct {
+	pdfFillPattern
+	objectID int
+}
+
+type pdfShading struct {
+	name     string
+	gradient render.GradientFill
+}
+
+type pdfShadingObject struct {
+	pdfShading
 	objectID int
 }
 
@@ -130,17 +151,21 @@ type Renderer struct {
 	clipRect *geom.Rect
 
 	// content is the page content stream under construction.
-	content       bytes.Buffer
-	images        []pdfImage
-	imageIDs      map[string]string
-	hatchPatterns []pdfHatchPattern
-	hatchIDs      map[string]string
-	forms         []pdfFormXObject
-	formIDs       map[string]string
-	alphaStates   []pdfAlphaState
-	alphaIDs      map[string]string
-	fonts         []pdfEmbeddedFont
-	fontIDs       map[string]string
+	content        bytes.Buffer
+	images         []pdfImage
+	imageIDs       map[string]string
+	hatchPatterns  []pdfHatchPattern
+	hatchIDs       map[string]string
+	fillPatterns   []pdfFillPattern
+	fillPatternIDs map[string]string
+	shadings       []pdfShading
+	shadingIDs     map[string]string
+	forms          []pdfFormXObject
+	formIDs        map[string]string
+	alphaStates    []pdfAlphaState
+	alphaIDs       map[string]string
+	fonts          []pdfEmbeddedFont
+	fontIDs        map[string]string
 	// document is the fully serialized PDF bytes ready for write.
 	document []byte
 
@@ -169,6 +194,8 @@ var (
 	_ render.TeXDrawer               = (*Renderer)(nil)
 	_ render.RotatedTeXDrawer        = (*Renderer)(nil)
 	_ render.NativeHatcher           = (*Renderer)(nil)
+	_ render.PatternFiller           = (*Renderer)(nil)
+	_ render.GradientFiller          = (*Renderer)(nil)
 	_ render.MarkerDrawer            = (*Renderer)(nil)
 	_ render.PathCollectionDrawer    = (*Renderer)(nil)
 	_ render.RasterizationController = (*Renderer)(nil)
@@ -224,6 +251,10 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.imageIDs = map[string]string{}
 	r.hatchPatterns = r.hatchPatterns[:0]
 	r.hatchIDs = map[string]string{}
+	r.fillPatterns = r.fillPatterns[:0]
+	r.fillPatternIDs = map[string]string{}
+	r.shadings = r.shadings[:0]
+	r.shadingIDs = map[string]string{}
 	r.forms = r.forms[:0]
 	r.formIDs = map[string]string{}
 	r.alphaStates = r.alphaStates[:0]
@@ -256,7 +287,7 @@ func (r *Renderer) End() error {
 		return errors.New("pdf: End called before Begin")
 	}
 	r.began = false
-	doc, err := buildDocument(r.width, r.height, r.content.Bytes(), r.images, r.hatchPatterns, r.forms, r.alphaStates, r.fonts, r.pdfOpts)
+	doc, err := buildDocument(r.width, r.height, r.content.Bytes(), r.images, r.hatchPatterns, r.fillPatterns, r.shadings, r.forms, r.alphaStates, r.fonts, r.pdfOpts)
 	if err != nil {
 		return err
 	}
@@ -371,6 +402,14 @@ func (r *Renderer) ClipPath(p geom.Path) {
 // native PDF tiling pattern resources.
 func (r *Renderer) SupportsNativeHatch() bool { return true }
 
+// SupportsPatternFill reports that the PDF backend renders Paint.FillPattern
+// natively through colored tiling pattern resources.
+func (r *Renderer) SupportsPatternFill() bool { return true }
+
+// SupportsGradientFill reports that the PDF backend renders Paint.FillGradient
+// natively through axial and radial shading resources.
+func (r *Renderer) SupportsGradientFill() bool { return true }
+
 // Path draws a path using the provided paint.
 func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 	if rr := r.activeRaster(); rr != nil {
@@ -384,9 +423,21 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 		return
 	}
 	hasHatch := paint.Hatch != "" && paint.HatchColor.A > 0
-	hasFill := paint.Fill.A > 0 || hasHatch
+	hasGradient := !hasHatch && paint.FillGradient.Kind != render.GradientNone && len(paint.FillGradient.Stops) > 0
+	hasPattern := !hasHatch && !hasGradient && (paint.FillPattern.ID != "" || len(paint.FillPattern.Path.V) > 0)
+	hasFill := paint.Fill.A > 0 || hasHatch || hasGradient || hasPattern
 	hasStroke := paint.Stroke.A > 0 && paint.LineWidth > 0
 	if !hasFill && !hasStroke {
+		return
+	}
+	if hasGradient {
+		r.writeGradientFill(p, paint)
+		if hasStroke && writePathOps(&r.content, p) {
+			r.writeAlphaState(paint)
+			writeStrokeColor(&r.content, paint.Stroke)
+			writeLineState(&r.content, paint)
+			r.content.WriteString("S\n")
+		}
 		return
 	}
 	if !writePathOps(&r.content, p) {
@@ -397,6 +448,8 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 		r.writeAlphaState(paint)
 		if hasHatch {
 			writePatternFill(&r.content, r.registerHatchPattern(*paint))
+		} else if hasPattern {
+			writePatternFill(&r.content, r.registerFillPattern(paint.FillPattern))
 		} else {
 			writeFillColor(&r.content, paint.Fill)
 		}
@@ -440,10 +493,14 @@ func (r *Renderer) writeAlphaState(paint *render.Paint) {
 		strokeAlpha = clamp01(paint.Stroke.A)
 	}
 	fillAlpha := 1.0
-	if paint.Fill.A > 0 || (paint.Hatch != "" && paint.HatchColor.A > 0) {
+	if paint.Fill.A > 0 || (paint.Hatch != "" && paint.HatchColor.A > 0) || (paint.FillGradient.Kind != render.GradientNone && len(paint.FillGradient.Stops) > 0) || (paint.FillPattern.ID != "" || len(paint.FillPattern.Path.V) > 0) {
 		fillAlpha = clamp01(paint.Fill.A)
 		if paint.Hatch != "" && paint.HatchColor.A > 0 {
 			fillAlpha = clamp01(paint.HatchColor.A)
+		} else if paint.FillGradient.Kind != render.GradientNone && len(paint.FillGradient.Stops) > 0 {
+			fillAlpha = gradientAlpha(paint.FillGradient.Stops)
+		} else if paint.FillPattern.ID != "" || len(paint.FillPattern.Path.V) > 0 {
+			fillAlpha = patternAlpha(paint.FillPattern)
 		}
 	}
 	if strokeAlpha >= 1 && fillAlpha >= 1 {
@@ -498,6 +555,57 @@ func (r *Renderer) registerHatchPattern(paint render.Paint) string {
 		lineColor: paint.HatchColor,
 		lineWidth: lineWidth,
 		spacing:   spacing,
+	})
+	return id
+}
+
+func (r *Renderer) registerFillPattern(pattern render.PatternFill) string {
+	if r.fillPatternIDs == nil {
+		r.fillPatternIDs = map[string]string{}
+	}
+	pattern.Path = clonePath(pattern.Path)
+	key := fillPatternKey(pattern)
+	if id, ok := r.fillPatternIDs[key]; ok {
+		return id
+	}
+	id := fmt.Sprintf("Pf%d", len(r.fillPatterns)+1)
+	r.fillPatternIDs[key] = id
+	r.fillPatterns = append(r.fillPatterns, pdfFillPattern{
+		name:    id,
+		pattern: pattern,
+	})
+	return id
+}
+
+func (r *Renderer) writeGradientFill(p geom.Path, paint *render.Paint) {
+	if paint == nil || paint.FillGradient.Kind == render.GradientNone || len(paint.FillGradient.Stops) == 0 {
+		return
+	}
+	name := r.registerShading(paint.FillGradient)
+	r.content.WriteString("q\n")
+	if !writePathOps(&r.content, p) {
+		r.content.WriteString("Q\n")
+		return
+	}
+	r.content.WriteString("W\nn\n")
+	r.writeAlphaState(paint)
+	fmt.Fprintf(&r.content, "/%s sh\nQ\n", escapeName(name))
+}
+
+func (r *Renderer) registerShading(gradient render.GradientFill) string {
+	if r.shadingIDs == nil {
+		r.shadingIDs = map[string]string{}
+	}
+	gradient.Stops = normalizeGradientStops(gradient.Stops)
+	key := shadingKey(gradient)
+	if id, ok := r.shadingIDs[key]; ok {
+		return id
+	}
+	id := fmt.Sprintf("Sh%d", len(r.shadings)+1)
+	r.shadingIDs[key] = id
+	r.shadings = append(r.shadings, pdfShading{
+		name:     id,
+		gradient: gradient,
 	})
 	return id
 }
@@ -1111,7 +1219,7 @@ func (r *Renderer) SavePDFWithOptions(path string, opts render.PDFOptions) error
 	if !r.began && len(r.document) == 0 {
 		return errors.New("pdf: SavePDFWithOptions called before End")
 	}
-	doc, err := buildDocument(r.width, r.height, r.content.Bytes(), r.images, r.hatchPatterns, r.forms, r.alphaStates, r.fonts, opts)
+	doc, err := buildDocument(r.width, r.height, r.content.Bytes(), r.images, r.hatchPatterns, r.fillPatterns, r.shadings, r.forms, r.alphaStates, r.fonts, opts)
 	if err != nil {
 		return err
 	}
@@ -1243,8 +1351,16 @@ func (r *Renderer) writePaintState(paint *render.Paint) {
 	}
 	r.writeAlphaState(paint)
 	hasHatch := paint.Hatch != "" && paint.HatchColor.A > 0
+	hasGradient := !hasHatch && paint.FillGradient.Kind != render.GradientNone && len(paint.FillGradient.Stops) > 0
+	hasPattern := !hasHatch && !hasGradient && (paint.FillPattern.ID != "" || len(paint.FillPattern.Path.V) > 0)
 	if hasHatch {
 		writePatternFill(&r.content, r.registerHatchPattern(*paint))
+	} else if hasPattern {
+		writePatternFill(&r.content, r.registerFillPattern(paint.FillPattern))
+	} else if hasGradient {
+		// Form XObjects cannot use the page path as a shading clip, so
+		// gradient-painted batches fall back to the main Path path before
+		// reaching writePaintState.
 	} else if paint.Fill.A > 0 {
 		writeFillColor(&r.content, paint.Fill)
 	}
@@ -1488,7 +1604,9 @@ func paintOperator(paint *render.Paint) string {
 	if paint == nil {
 		return ""
 	}
-	hasFill := paint.Fill.A > 0 || (paint.Hatch != "" && paint.HatchColor.A > 0)
+	hasFill := paint.Fill.A > 0 ||
+		(paint.Hatch != "" && paint.HatchColor.A > 0) ||
+		(paint.FillPattern.ID != "" || len(paint.FillPattern.Path.V) > 0)
 	hasStroke := paint.Stroke.A > 0 && paint.LineWidth > 0
 	switch {
 	case hasFill && hasStroke:
@@ -1528,6 +1646,12 @@ func formXObjectKey(prefix string, path geom.Path, paintOp string, paint *render
 		b.WriteByte('\x00')
 		b.WriteString(strconv.Itoa(int(paint.LineCap)))
 	}
+	b.WriteString(pathKey(path))
+	return b.String()
+}
+
+func pathKey(path geom.Path) string {
+	var b strings.Builder
 	for _, cmd := range path.C {
 		b.WriteByte(byte(cmd))
 	}
@@ -1683,6 +1807,70 @@ func hatchPatternStream(pattern pdfHatchPattern) []byte {
 	return buf.Bytes()
 }
 
+func fillPatternKey(pattern render.PatternFill) string {
+	parts := []string{
+		pattern.ID,
+		shortFloat(pattern.Cell.Min.X),
+		shortFloat(pattern.Cell.Min.Y),
+		shortFloat(pattern.Cell.Max.X),
+		shortFloat(pattern.Cell.Max.Y),
+		shortFloat(pattern.Foreground.R),
+		shortFloat(pattern.Foreground.G),
+		shortFloat(pattern.Foreground.B),
+		shortFloat(pattern.Foreground.A),
+		shortFloat(pattern.Background.R),
+		shortFloat(pattern.Background.G),
+		shortFloat(pattern.Background.B),
+		shortFloat(pattern.Background.A),
+		shortFloat(pattern.LineWidth),
+		strconv.FormatBool(pattern.HasTransform),
+		pathKey(pattern.Path),
+	}
+	if pattern.HasTransform {
+		parts = append(parts,
+			shortFloat(pattern.Transform.A),
+			shortFloat(pattern.Transform.B),
+			shortFloat(pattern.Transform.C),
+			shortFloat(pattern.Transform.D),
+			shortFloat(pattern.Transform.E),
+			shortFloat(pattern.Transform.F),
+		)
+	}
+	return strings.Join(parts, "\x00")
+}
+
+func fillPatternStream(pattern render.PatternFill) []byte {
+	cell := normalizedPatternCell(pattern.Cell)
+	var buf bytes.Buffer
+	if pattern.Background.A > 0 {
+		writeFillColor(&buf, pattern.Background)
+		fmt.Fprintf(&buf, "%s %s %s %s re f\n",
+			shortFloat(cell.Min.X),
+			shortFloat(cell.Min.Y),
+			shortFloat(cell.W()),
+			shortFloat(cell.H()),
+		)
+	}
+	if len(pattern.Path.C) > 0 && pattern.Foreground.A > 0 && writePathOps(&buf, pattern.Path) {
+		writeFillColor(&buf, pattern.Foreground)
+		if pattern.LineWidth > 0 {
+			writeStrokeColor(&buf, pattern.Foreground)
+			fmt.Fprintf(&buf, "%s w\n", shortFloat(pattern.LineWidth))
+			buf.WriteString("B\n")
+		} else {
+			buf.WriteString("f\n")
+		}
+	}
+	return buf.Bytes()
+}
+
+func normalizedPatternCell(cell geom.Rect) geom.Rect {
+	if cell.W() > 0 && cell.H() > 0 {
+		return cell
+	}
+	return geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 16, Y: 16}}
+}
+
 func hatchPatternLines(hatch string, spacing float64) [][2]geom.Pt {
 	if spacing <= 0 {
 		spacing = 8
@@ -1712,15 +1900,198 @@ func hatchPatternLines(hatch string, spacing float64) [][2]geom.Pt {
 	return lines
 }
 
+func shadingDictionary(gradient render.GradientFill) string {
+	gradient.Stops = normalizeGradientStops(gradient.Stops)
+	switch gradient.Kind {
+	case render.LinearGradient:
+		start := transformedGradientPoint(gradient.Start, gradient)
+		end := transformedGradientPoint(gradient.End, gradient)
+		return fmt.Sprintf(
+			"<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [%s %s %s %s] /Domain [0 1] /Function %s /Extend [true true] >>",
+			shortFloat(start.X), shortFloat(start.Y),
+			shortFloat(end.X), shortFloat(end.Y),
+			gradientFunctionDictionary(gradient.Stops),
+		)
+	case render.RadialGradient:
+		center := transformedGradientPoint(gradient.Center, gradient)
+		focal := center
+		if gradient.Focal != (geom.Pt{}) {
+			focal = transformedGradientPoint(gradient.Focal, gradient)
+		}
+		radius := transformedGradientRadius(gradient.Radius, gradient)
+		return fmt.Sprintf(
+			"<< /ShadingType 3 /ColorSpace /DeviceRGB /Coords [%s %s 0 %s %s %s] /Domain [0 1] /Function %s /Extend [true true] >>",
+			shortFloat(focal.X), shortFloat(focal.Y),
+			shortFloat(center.X), shortFloat(center.Y), shortFloat(radius),
+			gradientFunctionDictionary(gradient.Stops),
+		)
+	default:
+		stops := normalizeGradientStops(gradient.Stops)
+		return fmt.Sprintf("<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [0 0 1 0] /Domain [0 1] /Function %s /Extend [true true] >>",
+			gradientFunctionDictionary(stops))
+	}
+}
+
+func transformedGradientPoint(p geom.Pt, gradient render.GradientFill) geom.Pt {
+	if !gradient.HasTransform {
+		return p
+	}
+	return gradient.Transform.Apply(p)
+}
+
+func transformedGradientRadius(radius float64, gradient render.GradientFill) float64 {
+	if radius <= 0 {
+		return 1
+	}
+	if !gradient.HasTransform {
+		return radius
+	}
+	xScale := math.Hypot(gradient.Transform.A, gradient.Transform.B)
+	yScale := math.Hypot(gradient.Transform.C, gradient.Transform.D)
+	scale := (xScale + yScale) / 2
+	if scale <= 0 {
+		return radius
+	}
+	return radius * scale
+}
+
+func gradientFunctionDictionary(stops []render.GradientStop) string {
+	stops = normalizeGradientStops(stops)
+	if len(stops) == 0 {
+		stops = []render.GradientStop{
+			{Offset: 0, Color: render.Color{A: 1}},
+			{Offset: 1, Color: render.Color{A: 1}},
+		}
+	}
+	if len(stops) == 1 {
+		stops = []render.GradientStop{
+			{Offset: 0, Color: stops[0].Color},
+			{Offset: 1, Color: stops[0].Color},
+		}
+	}
+	if len(stops) == 2 {
+		return type2FunctionDictionary(stops[0].Color, stops[1].Color)
+	}
+
+	var functions strings.Builder
+	var bounds strings.Builder
+	var encode strings.Builder
+	for i := 0; i < len(stops)-1; i++ {
+		if i > 0 {
+			functions.WriteByte(' ')
+			encode.WriteByte(' ')
+		}
+		functions.WriteString(type2FunctionDictionary(stops[i].Color, stops[i+1].Color))
+		encode.WriteString("0 1")
+	}
+	for i := 1; i < len(stops)-1; i++ {
+		if i > 1 {
+			bounds.WriteByte(' ')
+		}
+		bounds.WriteString(shortFloat(stops[i].Offset))
+	}
+	return fmt.Sprintf("<< /FunctionType 3 /Domain [0 1] /Functions [%s] /Bounds [%s] /Encode [%s] >>",
+		functions.String(), bounds.String(), encode.String())
+}
+
+func type2FunctionDictionary(c0, c1 render.Color) string {
+	return fmt.Sprintf("<< /FunctionType 2 /Domain [0 1] /C0 %s /C1 %s /N 1 >>",
+		pdfColorArray(c0), pdfColorArray(c1))
+}
+
+func pdfColorArray(c render.Color) string {
+	return fmt.Sprintf("[%s %s %s]",
+		shortFloat(clamp01(c.R)),
+		shortFloat(clamp01(c.G)),
+		shortFloat(clamp01(c.B)),
+	)
+}
+
+func normalizeGradientStops(in []render.GradientStop) []render.GradientStop {
+	if len(in) == 0 {
+		return nil
+	}
+	out := append([]render.GradientStop(nil), in...)
+	for i := range out {
+		out[i].Offset = clamp01(out[i].Offset)
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		return out[i].Offset < out[j].Offset
+	})
+	if len(out) == 1 {
+		return out
+	}
+	for i := 1; i < len(out); i++ {
+		if out[i].Offset <= out[i-1].Offset {
+			out[i].Offset = math.Nextafter(out[i-1].Offset, 1)
+		}
+	}
+	return out
+}
+
+func gradientAlpha(stops []render.GradientStop) float64 {
+	if len(stops) == 0 {
+		return 1
+	}
+	alpha := clamp01(stops[0].Color.A)
+	for _, stop := range stops[1:] {
+		if a := clamp01(stop.Color.A); a > alpha {
+			alpha = a
+		}
+	}
+	return alpha
+}
+
+func patternAlpha(pattern render.PatternFill) float64 {
+	alpha := clamp01(pattern.Foreground.A)
+	if a := clamp01(pattern.Background.A); a > alpha {
+		alpha = a
+	}
+	if alpha <= 0 {
+		return 1
+	}
+	return alpha
+}
+
+func shadingKey(gradient render.GradientFill) string {
+	stops := normalizeGradientStops(gradient.Stops)
+	parts := []string{
+		strconv.Itoa(int(gradient.Kind)),
+		shortFloat(gradient.Start.X), shortFloat(gradient.Start.Y),
+		shortFloat(gradient.End.X), shortFloat(gradient.End.Y),
+		shortFloat(gradient.Center.X), shortFloat(gradient.Center.Y),
+		shortFloat(gradient.Focal.X), shortFloat(gradient.Focal.Y),
+		shortFloat(gradient.Radius),
+		strconv.FormatBool(gradient.HasTransform),
+	}
+	if gradient.HasTransform {
+		parts = append(parts,
+			shortFloat(gradient.Transform.A), shortFloat(gradient.Transform.B),
+			shortFloat(gradient.Transform.C), shortFloat(gradient.Transform.D),
+			shortFloat(gradient.Transform.E), shortFloat(gradient.Transform.F),
+		)
+	}
+	for _, stop := range stops {
+		parts = append(parts,
+			shortFloat(stop.Offset),
+			shortFloat(stop.Color.R), shortFloat(stop.Color.G),
+			shortFloat(stop.Color.B), shortFloat(stop.Color.A),
+		)
+	}
+	return strings.Join(parts, "\x00")
+}
+
 // --- PDF document assembly ---------------------------------------------------
 
 // buildDocument assembles the PDF bytes for one page given the encoded
 // content stream.
-func buildDocument(width, height int, contentStream []byte, images []pdfImage, hatches []pdfHatchPattern, forms []pdfFormXObject, alphaStates []pdfAlphaState, fonts []pdfEmbeddedFont, opts render.PDFOptions) ([]byte, error) {
+func buildDocument(width, height int, contentStream []byte, images []pdfImage, hatches []pdfHatchPattern, fillPatterns []pdfFillPattern, shadings []pdfShading, forms []pdfFormXObject, alphaStates []pdfAlphaState, fonts []pdfEmbeddedFont, opts render.PDFOptions) ([]byte, error) {
 	imageObjects := assignImageObjects(images, 6)
 	hatchObjects := assignHatchObjects(hatches, nextImageObjectID(imageObjects, 6))
-	formObjects := assignFormObjects(forms, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6)))
-	fontObjects := assignFontObjects(fonts, nextFormObjectID(formObjects, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6))))
+	fillPatternObjects := assignFillPatternObjects(fillPatterns, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6)))
+	shadingObjects := assignShadingObjects(shadings, nextFillPatternObjectID(fillPatternObjects, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6))))
+	formObjects := assignFormObjects(forms, nextShadingObjectID(shadingObjects, nextFillPatternObjectID(fillPatternObjects, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6)))))
+	fontObjects := assignFontObjects(fonts, nextFormObjectID(formObjects, nextShadingObjectID(shadingObjects, nextFillPatternObjectID(fillPatternObjects, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6))))))
 	// We emit five fixed indirect objects, followed by image XObjects:
 	//   1: /Catalog
 	//   2: /Pages
@@ -1740,7 +2111,7 @@ func buildDocument(width, height int, contentStream []byte, images []pdfImage, h
 
 	w.beginObject(3)
 	fmt.Fprintf(&w.buf, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %d %d] /Contents 4 0 R /Resources %s >>",
-		width, height, pageResources(imageObjects, hatchObjects, formObjects, alphaStates, fontObjects))
+		width, height, pageResources(imageObjects, hatchObjects, fillPatternObjects, shadingObjects, formObjects, alphaStates, fontObjects))
 	w.endObject()
 
 	// Compress the content stream with FlateDecode for determinism and size.
@@ -1772,6 +2143,14 @@ func buildDocument(width, height int, contentStream []byte, images []pdfImage, h
 		if err := w.writeHatchPatternObject(hatch); err != nil {
 			return nil, err
 		}
+	}
+	for _, pattern := range fillPatternObjects {
+		if err := w.writeFillPatternObject(pattern); err != nil {
+			return nil, err
+		}
+	}
+	for _, shading := range shadingObjects {
+		w.writeShadingObject(shading)
 	}
 	for _, form := range formObjects {
 		if err := w.writeFormXObject(form); err != nil {
@@ -1904,6 +2283,46 @@ func (w *pdfWriter) writeHatchPatternObject(hatch pdfHatchPatternObject) error {
 	w.writeString("\nendstream")
 	w.endObject()
 	return nil
+}
+
+func (w *pdfWriter) writeFillPatternObject(pattern pdfFillPatternObject) error {
+	stream := fillPatternStream(pattern.pattern)
+	encoded, err := flateEncode(stream)
+	if err != nil {
+		return fmt.Errorf("pdf: flate encode fill pattern %s: %w", pattern.name, err)
+	}
+	cell := normalizedPatternCell(pattern.pattern.Cell)
+	w.beginObject(pattern.objectID)
+	fmt.Fprintf(&w.buf,
+		"<< /Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 /BBox [%s %s %s %s] /XStep %s /YStep %s /Resources << >>",
+		shortFloat(cell.Min.X),
+		shortFloat(cell.Min.Y),
+		shortFloat(cell.Max.X),
+		shortFloat(cell.Max.Y),
+		shortFloat(cell.W()),
+		shortFloat(cell.H()),
+	)
+	if pattern.pattern.HasTransform {
+		fmt.Fprintf(&w.buf, " /Matrix [%s %s %s %s %s %s]",
+			shortFloat(pattern.pattern.Transform.A),
+			shortFloat(pattern.pattern.Transform.B),
+			shortFloat(pattern.pattern.Transform.C),
+			shortFloat(pattern.pattern.Transform.D),
+			shortFloat(pattern.pattern.Transform.E),
+			shortFloat(pattern.pattern.Transform.F),
+		)
+	}
+	fmt.Fprintf(&w.buf, " /Length %d /Filter /FlateDecode >>\nstream\n", len(encoded))
+	w.buf.Write(encoded)
+	w.writeString("\nendstream")
+	w.endObject()
+	return nil
+}
+
+func (w *pdfWriter) writeShadingObject(shading pdfShadingObject) {
+	w.beginObject(shading.objectID)
+	w.writeString(shadingDictionary(shading.gradient))
+	w.endObject()
 }
 
 func (w *pdfWriter) writeFormXObject(form pdfFormXObjectObject) error {
@@ -2265,6 +2684,54 @@ func nextHatchObjectID(hatches []pdfHatchPatternObject, firstID int) int {
 	return nextID
 }
 
+func assignFillPatternObjects(patterns []pdfFillPattern, firstID int) []pdfFillPatternObject {
+	if len(patterns) == 0 {
+		return nil
+	}
+	out := make([]pdfFillPatternObject, len(patterns))
+	for i, pattern := range patterns {
+		out[i] = pdfFillPatternObject{
+			pdfFillPattern: pattern,
+			objectID:       firstID + i,
+		}
+	}
+	return out
+}
+
+func nextFillPatternObjectID(patterns []pdfFillPatternObject, firstID int) int {
+	nextID := firstID
+	for _, pattern := range patterns {
+		if pattern.objectID >= nextID {
+			nextID = pattern.objectID + 1
+		}
+	}
+	return nextID
+}
+
+func assignShadingObjects(shadings []pdfShading, firstID int) []pdfShadingObject {
+	if len(shadings) == 0 {
+		return nil
+	}
+	out := make([]pdfShadingObject, len(shadings))
+	for i, shading := range shadings {
+		out[i] = pdfShadingObject{
+			pdfShading: shading,
+			objectID:   firstID + i,
+		}
+	}
+	return out
+}
+
+func nextShadingObjectID(shadings []pdfShadingObject, firstID int) int {
+	nextID := firstID
+	for _, shading := range shadings {
+		if shading.objectID >= nextID {
+			nextID = shading.objectID + 1
+		}
+	}
+	return nextID
+}
+
 func assignFormObjects(forms []pdfFormXObject, firstID int) []pdfFormXObjectObject {
 	if len(forms) == 0 {
 		return nil
@@ -2311,8 +2778,8 @@ func assignFontObjects(fonts []pdfEmbeddedFont, firstID int) []pdfEmbeddedFontOb
 	return out
 }
 
-func pageResources(images []pdfImageObject, hatches []pdfHatchPatternObject, forms []pdfFormXObjectObject, alphaStates []pdfAlphaState, fonts []pdfEmbeddedFontObject) string {
-	if len(images) == 0 && len(hatches) == 0 && len(forms) == 0 && len(alphaStates) == 0 && len(fonts) == 0 {
+func pageResources(images []pdfImageObject, hatches []pdfHatchPatternObject, fillPatterns []pdfFillPatternObject, shadings []pdfShadingObject, forms []pdfFormXObjectObject, alphaStates []pdfAlphaState, fonts []pdfEmbeddedFontObject) string {
+	if len(images) == 0 && len(hatches) == 0 && len(fillPatterns) == 0 && len(shadings) == 0 && len(forms) == 0 && len(alphaStates) == 0 && len(fonts) == 0 {
 		return "<< >>"
 	}
 	var b strings.Builder
@@ -2334,10 +2801,20 @@ func pageResources(images []pdfImageObject, hatches []pdfHatchPatternObject, for
 		}
 		b.WriteString(" >>")
 	}
-	if len(hatches) > 0 {
+	if len(hatches) > 0 || len(fillPatterns) > 0 {
 		b.WriteString(" /Pattern <<")
 		for _, hatch := range hatches {
 			fmt.Fprintf(&b, " /%s %d 0 R", escapeName(hatch.name), hatch.objectID)
+		}
+		for _, pattern := range fillPatterns {
+			fmt.Fprintf(&b, " /%s %d 0 R", escapeName(pattern.name), pattern.objectID)
+		}
+		b.WriteString(" >>")
+	}
+	if len(shadings) > 0 {
+		b.WriteString(" /Shading <<")
+		for _, shading := range shadings {
+			fmt.Fprintf(&b, " /%s %d 0 R", escapeName(shading.name), shading.objectID)
 		}
 		b.WriteString(" >>")
 	}
