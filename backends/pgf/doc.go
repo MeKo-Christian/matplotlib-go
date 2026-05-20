@@ -5,7 +5,8 @@
 // compilation is an optional developer check because TeX installations are too
 // environment-specific for the default test path.
 //
-// Raster images are emitted as self-contained PGF pixel rectangles so the
-// output does not depend on sidecar files. That is deterministic and portable,
-// but intentionally not compact for dense images.
+// Raster images and mixed raster/vector artist groups are emitted as
+// self-contained PGF pixel rectangles so the output does not depend on sidecar
+// files. That is deterministic and portable, but intentionally not compact for
+// dense images.
 package pgf

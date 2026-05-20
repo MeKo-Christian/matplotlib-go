@@ -59,6 +59,7 @@ type ImageOptions struct {
 
 // Image2D renders scalar matrix data as an image/heatmap.
 type Image2D struct {
+	ArtistRasterization
 	Data     [][]float64
 	Colormap string
 	Norm     ScalarNormalizer

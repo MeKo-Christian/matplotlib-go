@@ -393,15 +393,15 @@ backend-name conditionals.
 **Goal:** give vector backends a shared way to embed rasterized regions when an
 artist or effect cannot be represented natively.
 
-- [ ] Define renderer capability checks for mixed raster/vector embedding.
-- [ ] Add an artist-level rasterize flag that vector backends honor.
+- [x] Define renderer capability checks for mixed raster/vector embedding.
+- [x] Add an artist-level rasterize flag that vector backends honor.
 - [ ] Add DPI-aware rasterization at save time for dense scatter, image,
       contour, and unsupported-effect regions.
-- [ ] Embed raster tiles inside PDF without losing surrounding vector text and
+- [x] Embed raster tiles inside PDF without losing surrounding vector text and
       axes.
-- [ ] Embed raster tiles inside PS/EPS with documented alpha behavior.
-- [ ] Embed raster tiles inside SVG using existing image support.
-- [ ] Embed raster tiles inside PGF or document the fallback through external
+- [x] Embed raster tiles inside PS/EPS with documented alpha behavior.
+- [x] Embed raster tiles inside SVG using existing image support.
+- [x] Embed raster tiles inside PGF or document the fallback through external
       image files.
 - [ ] Add fixtures verifying clip, transform, alpha, and surrounding vector
       content.

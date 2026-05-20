@@ -21,6 +21,7 @@ func init() {
 			backends.MarkerBatch,
 			backends.PathCollectionBatch,
 			backends.PathEffects,
+			backends.MixedRasterVector,
 			backends.PGFExport,
 			backends.DPIAware,
 		},

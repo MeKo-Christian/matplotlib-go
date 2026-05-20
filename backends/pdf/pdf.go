@@ -16,6 +16,7 @@ import (
 	"time"
 	"unicode/utf16"
 
+	"github.com/cwbudde/matplotlib-go/backends/internal/mixedraster"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	tex "github.com/cwbudde/matplotlib-go/internal/tex"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -36,6 +37,7 @@ type state struct {
 	// Save before any draw call is permitted and behaves like the initial
 	// identity transform.
 	inContent bool
+	clipRect  *geom.Rect
 }
 
 type pdfImage struct {
@@ -123,8 +125,9 @@ type Renderer struct {
 	background render.Color
 	resolution uint
 
-	began bool
-	stack []state
+	began    bool
+	stack    []state
+	clipRect *geom.Rect
 
 	// content is the page content stream under construction.
 	content       bytes.Buffer
@@ -148,27 +151,29 @@ type Renderer struct {
 	lastFontKey string
 	texManager  *tex.Manager
 	texErr      error
+	raster      *mixedraster.Session
 }
 
 // Compile-time interface assertions.
 var (
-	_ render.Renderer               = (*Renderer)(nil)
-	_ render.PNGExporter            = nil // explicitly not implemented
-	_ render.PDFExporter            = (*Renderer)(nil)
-	_ render.DPIAware               = (*Renderer)(nil)
-	_ render.ImageTransformer       = (*Renderer)(nil)
-	_ render.TextPather             = (*Renderer)(nil)
-	_ render.FontTextDrawer         = (*Renderer)(nil)
-	_ render.FontRotatedTextDrawer  = (*Renderer)(nil)
-	_ render.FontVerticalTextDrawer = (*Renderer)(nil)
-	_ render.TeXMetricer            = (*Renderer)(nil)
-	_ render.TeXDrawer              = (*Renderer)(nil)
-	_ render.RotatedTeXDrawer       = (*Renderer)(nil)
-	_ render.NativeHatcher          = (*Renderer)(nil)
-	_ render.MarkerDrawer           = (*Renderer)(nil)
-	_ render.PathCollectionDrawer   = (*Renderer)(nil)
-	_ render.PDFOptionExporter      = (*Renderer)(nil)
-	_ render.PDFOptionSetter        = (*Renderer)(nil)
+	_ render.Renderer                = (*Renderer)(nil)
+	_ render.PNGExporter             = nil // explicitly not implemented
+	_ render.PDFExporter             = (*Renderer)(nil)
+	_ render.DPIAware                = (*Renderer)(nil)
+	_ render.ImageTransformer        = (*Renderer)(nil)
+	_ render.TextPather              = (*Renderer)(nil)
+	_ render.FontTextDrawer          = (*Renderer)(nil)
+	_ render.FontRotatedTextDrawer   = (*Renderer)(nil)
+	_ render.FontVerticalTextDrawer  = (*Renderer)(nil)
+	_ render.TeXMetricer             = (*Renderer)(nil)
+	_ render.TeXDrawer               = (*Renderer)(nil)
+	_ render.RotatedTeXDrawer        = (*Renderer)(nil)
+	_ render.NativeHatcher           = (*Renderer)(nil)
+	_ render.MarkerDrawer            = (*Renderer)(nil)
+	_ render.PathCollectionDrawer    = (*Renderer)(nil)
+	_ render.RasterizationController = (*Renderer)(nil)
+	_ render.PDFOptionExporter       = (*Renderer)(nil)
+	_ render.PDFOptionSetter         = (*Renderer)(nil)
 )
 
 // New constructs a PDF renderer that produces a single-page document of the
@@ -213,6 +218,8 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.content.Reset()
 	r.document = nil
 	r.stack = r.stack[:0]
+	r.clipRect = nil
+	r.raster = nil
 	r.images = r.images[:0]
 	r.imageIDs = map[string]string{}
 	r.hatchPatterns = r.hatchPatterns[:0]
@@ -257,9 +264,48 @@ func (r *Renderer) End() error {
 	return nil
 }
 
+// StartRasterized begins a transparent offscreen raster group for mixed output.
+func (r *Renderer) StartRasterized(options render.Rasterization) bool {
+	if r == nil || !r.began || r.raster != nil {
+		return false
+	}
+	session, ok := mixedraster.Start(r.width, r.height, r.viewport, options, r.resolution, r.clipRect)
+	if !ok {
+		return false
+	}
+	r.raster = session
+	return true
+}
+
+// StopRasterized embeds the active raster group as a PDF image XObject.
+func (r *Renderer) StopRasterized() bool {
+	if r == nil || r.raster == nil {
+		return false
+	}
+	session := r.raster
+	r.raster = nil
+	img, rect, ok := session.Stop()
+	if !ok {
+		return false
+	}
+	r.Image(img, rect)
+	return true
+}
+
+func (r *Renderer) activeRaster() render.Renderer {
+	if r == nil || r.raster == nil {
+		return nil
+	}
+	return r.raster.Renderer()
+}
+
 // Save pushes graphics state.
 func (r *Renderer) Save() {
-	r.stack = append(r.stack, state{inContent: r.began})
+	if rr := r.activeRaster(); rr != nil {
+		rr.Save()
+		return
+	}
+	r.stack = append(r.stack, state{inContent: r.began, clipRect: cloneRectPtr(r.clipRect)})
 	if r.began {
 		r.content.WriteString("q\n")
 	}
@@ -267,11 +313,16 @@ func (r *Renderer) Save() {
 
 // Restore pops graphics state.
 func (r *Renderer) Restore() {
+	if rr := r.activeRaster(); rr != nil {
+		rr.Restore()
+		return
+	}
 	if len(r.stack) == 0 {
 		return
 	}
 	top := r.stack[len(r.stack)-1]
 	r.stack = r.stack[:len(r.stack)-1]
+	r.clipRect = top.clipRect
 	if top.inContent && r.began {
 		r.content.WriteString("Q\n")
 	}
@@ -279,8 +330,19 @@ func (r *Renderer) Restore() {
 
 // ClipRect installs a rectangular clip.
 func (r *Renderer) ClipRect(rect geom.Rect) {
+	if rr := r.activeRaster(); rr != nil {
+		rr.ClipRect(rect)
+		return
+	}
 	if !r.began {
 		return
+	}
+	normalized := normalizeRect(rect)
+	if r.clipRect == nil {
+		r.clipRect = &normalized
+	} else {
+		intersected := r.clipRect.Intersect(normalized)
+		r.clipRect = &intersected
 	}
 	fmt.Fprintf(&r.content, "%s %s %s %s re W n\n",
 		shortFloat(rect.Min.X),
@@ -292,6 +354,10 @@ func (r *Renderer) ClipRect(rect geom.Rect) {
 
 // ClipPath installs an arbitrary path clip.
 func (r *Renderer) ClipPath(p geom.Path) {
+	if rr := r.activeRaster(); rr != nil {
+		rr.ClipPath(p)
+		return
+	}
 	if !r.began {
 		return
 	}
@@ -307,6 +373,10 @@ func (r *Renderer) SupportsNativeHatch() bool { return true }
 
 // Path draws a path using the provided paint.
 func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
+	if rr := r.activeRaster(); rr != nil {
+		rr.Path(p, paint)
+		return
+	}
 	if !r.began || paint == nil {
 		return
 	}
@@ -351,6 +421,13 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 
 // DrawPathWithEffects applies renderer-neutral path effect passes.
 func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
+	if rr := r.activeRaster(); rr != nil {
+		if effects, ok := rr.(render.PathEffectDrawer); ok {
+			return effects.DrawPathWithEffects(p, paint)
+		}
+		rr.Path(p, paint)
+		return true
+	}
 	return render.DrawPathWithEffects(r, p, paint, r.Path)
 }
 
@@ -428,6 +505,12 @@ func (r *Renderer) registerHatchPattern(paint render.Paint) string {
 // DrawMarkers renders one marker path at many display-space offsets using a
 // reusable Form XObject for the marker geometry.
 func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
+	if rr := r.activeRaster(); rr != nil {
+		if markers, ok := rr.(render.MarkerDrawer); ok {
+			return markers.DrawMarkers(batch)
+		}
+		return false
+	}
 	if !r.began || len(batch.Marker.C) == 0 || len(batch.Items) == 0 || !batch.Marker.Validate() {
 		return false
 	}
@@ -458,6 +541,12 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 // DrawPathCollection renders display-space paths through Form XObject
 // templates with per-item paint state applied at invocation time.
 func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
+	if rr := r.activeRaster(); rr != nil {
+		if paths, ok := rr.(render.PathCollectionDrawer); ok {
+			return paths.DrawPathCollection(batch)
+		}
+		return false
+	}
 	if !r.began || len(batch.Items) == 0 {
 		return false
 	}
@@ -516,6 +605,10 @@ func (r *Renderer) registerFormXObject(prefix string, path geom.Path, paintOp st
 // Image draws a raster image into the destination rectangle as a PDF image
 // XObject. RGBA images with alpha get a grayscale soft mask.
 func (r *Renderer) Image(img render.Image, dst geom.Rect) {
+	if rr := r.activeRaster(); rr != nil {
+		rr.Image(img, dst)
+		return
+	}
 	if !r.began || img == nil || dst.W() <= 0 || dst.H() <= 0 {
 		return
 	}
@@ -528,6 +621,12 @@ func (r *Renderer) Image(img render.Image, dst geom.Rect) {
 // XObjects paint a unit square, so the current transformation matrix includes
 // the source image dimensions.
 func (r *Renderer) ImageTransformed(img render.Image, _ geom.Rect, transform geom.Affine) {
+	if rr := r.activeRaster(); rr != nil {
+		if tr, ok := rr.(render.ImageTransformer); ok {
+			tr.ImageTransformed(img, geom.Rect{}, transform)
+		}
+		return
+	}
 	if !r.began || img == nil {
 		return
 	}
@@ -670,6 +769,12 @@ func (r *Renderer) DrawText(text string, origin geom.Pt, size float64, textColor
 // DrawTextWithFont renders text using the active PDF font policy and an
 // explicit font key.
 func (r *Renderer) DrawTextWithFont(text string, origin geom.Pt, size float64, textColor render.Color, fontKey string) {
+	if rr := r.activeRaster(); rr != nil {
+		if textRen, ok := rr.(render.TextDrawer); ok {
+			textRen.DrawText(text, origin, size, textColor)
+		}
+		return
+	}
 	if !r.began || text == "" || size <= 0 || textColor.A <= 0 {
 		return
 	}
@@ -691,6 +796,14 @@ func (r *Renderer) DrawTextRotated(text string, anchor geom.Pt, size, angle floa
 
 // DrawTextRotatedWithFont renders rotated text as filled glyph paths.
 func (r *Renderer) DrawTextRotatedWithFont(text string, anchor geom.Pt, size, angle float64, textColor render.Color, fontKey string) {
+	if rr := r.activeRaster(); rr != nil {
+		if textRen, ok := rr.(render.RotatedTextDrawer); ok {
+			textRen.DrawTextRotated(text, anchor, size, angle, textColor)
+		} else if textRen, ok := rr.(render.TextDrawer); ok {
+			textRen.DrawText(text, anchor, size, textColor)
+		}
+		return
+	}
 	if !r.began || text == "" || size <= 0 || textColor.A <= 0 || math.IsNaN(angle) || math.IsInf(angle, 0) {
 		return
 	}
@@ -720,6 +833,14 @@ func (r *Renderer) DrawTextVertical(text string, center geom.Pt, size float64, t
 
 // DrawTextVerticalWithFont renders vertical text with an explicit font key.
 func (r *Renderer) DrawTextVerticalWithFont(text string, center geom.Pt, size float64, textColor render.Color, fontKey string) {
+	if rr := r.activeRaster(); rr != nil {
+		if textRen, ok := rr.(render.VerticalTextDrawer); ok {
+			textRen.DrawTextVertical(text, center, size, textColor)
+		} else if textRen, ok := rr.(render.TextDrawer); ok {
+			textRen.DrawText(text, center, size, textColor)
+		}
+		return
+	}
 	if !r.began || text == "" || size <= 0 || textColor.A <= 0 {
 		return
 	}
@@ -765,6 +886,16 @@ func (r *Renderer) MeasureTeX(text string, size float64, fontKey string) (render
 
 // DrawTeX embeds a TeX-rendered PNG as a PDF image XObject.
 func (r *Renderer) DrawTeX(text string, origin geom.Pt, size float64, textColor render.Color, fontKey string) bool {
+	if rr := r.activeRaster(); rr != nil {
+		if texRen, ok := rr.(render.TeXDrawer); ok {
+			return texRen.DrawTeX(text, origin, size, textColor, fontKey)
+		}
+		if textRen, ok := rr.(render.TextDrawer); ok {
+			textRen.DrawText(text, origin, size, textColor)
+			return true
+		}
+		return false
+	}
 	if !r.began {
 		return false
 	}
@@ -788,6 +919,16 @@ func (r *Renderer) DrawTeX(text string, origin geom.Pt, size float64, textColor 
 // DrawTeXRotated embeds a TeX-rendered PNG and rotates it around the
 // Matplotlib-style text rotation anchor.
 func (r *Renderer) DrawTeXRotated(text string, anchor geom.Pt, size, angle float64, textColor render.Color, fontKey string) bool {
+	if rr := r.activeRaster(); rr != nil {
+		if texRen, ok := rr.(render.RotatedTeXDrawer); ok {
+			return texRen.DrawTeXRotated(text, anchor, size, angle, textColor, fontKey)
+		}
+		if textRen, ok := rr.(render.RotatedTextDrawer); ok {
+			textRen.DrawTextRotated(text, anchor, size, angle, textColor)
+			return true
+		}
+		return false
+	}
 	if !r.began || math.IsNaN(angle) || math.IsInf(angle, 0) {
 		return false
 	}
@@ -1294,6 +1435,29 @@ func clonePath(path geom.Path) geom.Path {
 	return geom.Path{
 		V: append([]geom.Pt(nil), path.V...),
 		C: append([]geom.Cmd(nil), path.C...),
+	}
+}
+
+func cloneRectPtr(rect *geom.Rect) *geom.Rect {
+	if rect == nil {
+		return nil
+	}
+	cloned := *rect
+	return &cloned
+}
+
+func normalizeRect(rect geom.Rect) geom.Rect {
+	minX, maxX := rect.Min.X, rect.Max.X
+	if minX > maxX {
+		minX, maxX = maxX, minX
+	}
+	minY, maxY := rect.Min.Y, rect.Max.Y
+	if minY > maxY {
+		minY, maxY = maxY, minY
+	}
+	return geom.Rect{
+		Min: geom.Pt{X: minX, Y: minY},
+		Max: geom.Pt{X: maxX, Y: maxY},
 	}
 }
 

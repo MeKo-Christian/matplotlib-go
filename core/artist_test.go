@@ -33,6 +33,84 @@ func (a zArtist) Draw(_ render.Renderer, _ *DrawContext) { *a.hit = append(*a.hi
 func (a zArtist) Z() float64                             { return a.z }
 func (a zArtist) Bounds(*DrawContext) geom.Rect          { return geom.Rect{} }
 
+type rasterizedTestArtist struct {
+	zArtist
+	ArtistRasterization
+}
+
+type rasterizationRecordingRenderer struct {
+	render.NullRenderer
+	events  []string
+	options []render.Rasterization
+}
+
+func (r *rasterizationRecordingRenderer) StartRasterized(options render.Rasterization) bool {
+	r.events = append(r.events, "start")
+	r.options = append(r.options, options)
+	return true
+}
+
+func (r *rasterizationRecordingRenderer) StopRasterized() bool {
+	r.events = append(r.events, "stop")
+	return true
+}
+
+func TestRasterizedArtistDrawIsBracketedWhenRendererSupportsMixedOutput(t *testing.T) {
+	fig := NewFigure(100, 100, style.WithDPI(144))
+	var order []int
+	vectorBefore := zArtist{z: 1, id: 1, hit: &order}
+	rasterized := &rasterizedTestArtist{
+		zArtist: zArtist{z: 2, id: 2, hit: &order},
+	}
+	vectorAfter := zArtist{z: 3, id: 3, hit: &order}
+	rasterized.SetRasterized(true)
+
+	fig.Add(vectorBefore)
+	fig.Add(rasterized)
+	fig.Add(vectorAfter)
+
+	ren := &rasterizationRecordingRenderer{}
+	DrawFigure(fig, ren)
+
+	wantOrder := []int{1, 2, 3}
+	for i := range wantOrder {
+		if order[i] != wantOrder[i] {
+			t.Fatalf("draw order = %v, want %v", order, wantOrder)
+		}
+	}
+	wantEvents := []string{"start", "stop"}
+	if len(ren.events) != len(wantEvents) {
+		t.Fatalf("raster events = %v, want %v", ren.events, wantEvents)
+	}
+	for i := range wantEvents {
+		if ren.events[i] != wantEvents[i] {
+			t.Fatalf("raster events = %v, want %v", ren.events, wantEvents)
+		}
+	}
+	if len(ren.options) != 1 {
+		t.Fatalf("raster options count = %d, want 1", len(ren.options))
+	}
+	if ren.options[0].Mode != render.RasterizeAlways {
+		t.Fatalf("raster mode = %v, want RasterizeAlways", ren.options[0].Mode)
+	}
+	if ren.options[0].DPI != 144 {
+		t.Fatalf("raster DPI = %v, want 144", ren.options[0].DPI)
+	}
+}
+
+func TestCommonArtistsExposeRasterizedFlag(t *testing.T) {
+	type rasterizable interface {
+		SetRasterized(bool)
+		Rasterization() render.Rasterization
+	}
+
+	var _ rasterizable = (*Line2D)(nil)
+	var _ rasterizable = (*Scatter2D)(nil)
+	var _ rasterizable = (*Image2D)(nil)
+	var _ rasterizable = (*ContourSet)(nil)
+	var _ rasterizable = (*Collection)(nil)
+}
+
 func TestZOrderStableSortAndTraversal(t *testing.T) {
 	fig := NewFigure(100, 100)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})

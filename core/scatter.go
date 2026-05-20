@@ -21,6 +21,7 @@ const (
 
 // Scatter2D renders points with configurable markers.
 type Scatter2D struct {
+	ArtistRasterization
 	XY          []geom.Pt      // data space points
 	Sizes       []float64      // marker areas in points^2, if nil uses Size
 	Colors      []render.Color // marker colors, if nil uses Color

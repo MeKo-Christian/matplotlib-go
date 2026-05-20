@@ -134,6 +134,40 @@ func TestSaveSVG(t *testing.T) {
 	}
 }
 
+func TestRasterizedArtistEmbedsImageWhileKeepingTextVector(t *testing.T) {
+	fig := core.NewFigure(180, 120)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.2, Y: 0.2}, Max: geom.Pt{X: 0.8, Y: 0.75}})
+	line := ax.Plot([]float64{0, 0.5, 1}, []float64{0, 1, 0})
+	line.SetRasterized(true)
+	ax.SetTitle("Vector title")
+
+	r := mustNewRenderer(t)
+	core.DrawFigure(fig, r)
+
+	tmp, err := os.CreateTemp("", "matplotlib-go-mixed-svg-*.svg")
+	if err != nil {
+		t.Fatalf("CreateTemp failed: %v", err)
+	}
+	tmpPath := tmp.Name()
+	tmp.Close()
+	t.Cleanup(func() { _ = os.Remove(tmpPath) })
+
+	if err := r.SaveSVG(tmpPath); err != nil {
+		t.Fatalf("SaveSVG failed: %v", err)
+	}
+	data, err := os.ReadFile(tmpPath)
+	if err != nil {
+		t.Fatalf("ReadFile failed: %v", err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "<image") {
+		t.Fatalf("rasterized artist did not emit an SVG image: %s", content)
+	}
+	if !strings.Contains(content, "Vector title") {
+		t.Fatalf("surrounding title text was not preserved as vector SVG text: %s", content)
+	}
+}
+
 func TestRenderSVGEmitsDefaultEmptyMetadata(t *testing.T) {
 	content := renderSVGDocument(t, func(r *Renderer) {
 		r.DrawText("plain", geom.Pt{X: 10, Y: 20}, 12, render.Color{A: 1})

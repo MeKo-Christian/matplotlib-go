@@ -38,6 +38,7 @@ type contourLabel struct {
 
 // ContourSet stores the artists created by contour/contourf calls.
 type ContourSet struct {
+	ArtistRasterization
 	Levels         []float64
 	Lines          *LineCollection
 	Fills          *PolyCollection

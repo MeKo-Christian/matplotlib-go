@@ -1708,14 +1708,14 @@ func DrawFigure(fig *Figure, r render.Renderer) {
 			ax.zsorted = true
 		}
 		for _, art := range ax.Artists {
-			art.Draw(r, ctx)
+			drawArtist(r, ctx, art)
 		}
 
 		r.Restore()
 
 		for _, art := range ax.Artists {
 			if overlay, ok := art.(OverlayArtist); ok {
-				overlay.DrawOverlay(r, ctx)
+				drawOverlayArtist(r, ctx, art, overlay)
 			}
 		}
 

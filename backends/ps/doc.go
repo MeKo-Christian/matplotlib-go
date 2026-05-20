@@ -2,8 +2,9 @@
 //
 // The backend emits vector paths, clips, background fills, hatches, text,
 // RGBA raster images, transformed raster images, marker batches, and
-// path-collection batches directly to Level-2 PostScript. It is reachable
-// through core.SaveFig and registry extension dispatch for .ps and .eps files.
+// path-collection batches, and mixed raster/vector artist groups directly to
+// Level-2 PostScript. It is reachable through core.SaveFig and registry
+// extension dispatch for .ps and .eps files.
 //
 // Text defaults to render.PSFontPolicyPath, which converts resolved glyphs to
 // filled outlines through the shared font manager. This mirrors the PDF
@@ -14,10 +15,10 @@
 //
 // Level-2 PostScript has no PDF-style alpha graphics state. Fully transparent
 // fills, strokes, hatches, and text are skipped; partially transparent vector
-// artists are emitted opaque using their RGB components. RGBA images are
-// pre-composited over white before encoding. Raster images are written as
-// deterministic RGB colorimage procedures and repeated identical payloads are
-// reused; JPEG passthrough is intentionally not exposed because PS colorimage
-// consumes decoded sample data rather than PDF-style image XObjects with a
-// DCTDecode filter.
+// artists are emitted opaque using their RGB components. RGBA images, including
+// mixed-mode rasterized artist groups, are pre-composited over white before
+// encoding. Raster images are written as deterministic RGB colorimage
+// procedures and repeated identical payloads are reused; JPEG passthrough is
+// intentionally not exposed because PS colorimage consumes decoded sample data
+// rather than PDF-style image XObjects with a DCTDecode filter.
 package ps

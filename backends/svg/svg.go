@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cwbudde/matplotlib-go/backends/internal/mixedraster"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	tex "github.com/cwbudde/matplotlib-go/internal/tex"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -127,26 +128,28 @@ type Renderer struct {
 	texManager  *tex.Manager
 	texErr      error
 	options     render.SVGOptions
+	raster      *mixedraster.Session
 }
 
 var (
-	_ render.Renderer             = (*Renderer)(nil)
-	_ render.DPIAware             = (*Renderer)(nil)
-	_ render.TextDrawer           = (*Renderer)(nil)
-	_ render.RotatedTextDrawer    = (*Renderer)(nil)
-	_ render.VerticalTextDrawer   = (*Renderer)(nil)
-	_ render.TextPather           = (*Renderer)(nil)
-	_ render.TeXMetricer          = (*Renderer)(nil)
-	_ render.TeXDrawer            = (*Renderer)(nil)
-	_ render.RotatedTeXDrawer     = (*Renderer)(nil)
-	_ render.ImageTransformer     = (*Renderer)(nil)
-	_ render.ClipPathTransformer  = (*Renderer)(nil)
-	_ render.MarkerDrawer         = (*Renderer)(nil)
-	_ render.PathCollectionDrawer = (*Renderer)(nil)
-	_ render.NativeHatcher        = (*Renderer)(nil)
-	_ render.GradientFiller       = (*Renderer)(nil)
-	_ render.PatternFiller        = (*Renderer)(nil)
-	_ render.SVGExporter          = (*Renderer)(nil)
+	_ render.Renderer                = (*Renderer)(nil)
+	_ render.DPIAware                = (*Renderer)(nil)
+	_ render.TextDrawer              = (*Renderer)(nil)
+	_ render.RotatedTextDrawer       = (*Renderer)(nil)
+	_ render.VerticalTextDrawer      = (*Renderer)(nil)
+	_ render.TextPather              = (*Renderer)(nil)
+	_ render.TeXMetricer             = (*Renderer)(nil)
+	_ render.TeXDrawer               = (*Renderer)(nil)
+	_ render.RotatedTeXDrawer        = (*Renderer)(nil)
+	_ render.ImageTransformer        = (*Renderer)(nil)
+	_ render.ClipPathTransformer     = (*Renderer)(nil)
+	_ render.MarkerDrawer            = (*Renderer)(nil)
+	_ render.PathCollectionDrawer    = (*Renderer)(nil)
+	_ render.NativeHatcher           = (*Renderer)(nil)
+	_ render.GradientFiller          = (*Renderer)(nil)
+	_ render.PatternFiller           = (*Renderer)(nil)
+	_ render.RasterizationController = (*Renderer)(nil)
+	_ render.SVGExporter             = (*Renderer)(nil)
 )
 
 // New creates a new SVG renderer with the specified dimensions and background color.
@@ -224,8 +227,47 @@ func (r *Renderer) End() error {
 	return nil
 }
 
+// StartRasterized begins a transparent offscreen raster group for mixed output.
+func (r *Renderer) StartRasterized(options render.Rasterization) bool {
+	if r == nil || !r.began || r.raster != nil {
+		return false
+	}
+	session, ok := mixedraster.Start(r.width, r.height, r.viewport, options, r.resolution, r.clipRect)
+	if !ok {
+		return false
+	}
+	r.raster = session
+	return true
+}
+
+// StopRasterized embeds the active raster group as an SVG image.
+func (r *Renderer) StopRasterized() bool {
+	if r == nil || r.raster == nil {
+		return false
+	}
+	session := r.raster
+	r.raster = nil
+	img, rect, ok := session.Stop()
+	if !ok {
+		return false
+	}
+	r.Image(img, rect)
+	return true
+}
+
+func (r *Renderer) activeRaster() render.Renderer {
+	if r == nil || r.raster == nil {
+		return nil
+	}
+	return r.raster.Renderer()
+}
+
 // Save pushes the current graphics state onto the stack.
 func (r *Renderer) Save() {
+	if rr := r.activeRaster(); rr != nil {
+		rr.Save()
+		return
+	}
 	var clipCopy *geom.Rect
 	if r.clipRect != nil {
 		copyRect := *r.clipRect
@@ -239,6 +281,10 @@ func (r *Renderer) Save() {
 
 // Restore pops the graphics state from the stack.
 func (r *Renderer) Restore() {
+	if rr := r.activeRaster(); rr != nil {
+		rr.Restore()
+		return
+	}
 	if len(r.stack) == 0 {
 		return
 	}
@@ -253,6 +299,10 @@ func (r *Renderer) Restore() {
 
 // ClipRect sets a rectangular clip region.
 func (r *Renderer) ClipRect(rect geom.Rect) {
+	if rr := r.activeRaster(); rr != nil {
+		rr.ClipRect(rect)
+		return
+	}
 	clipRect := normalizeRect(rect)
 	if r.clipRect == nil {
 		r.clipRect = &clipRect
@@ -268,6 +318,10 @@ func (r *Renderer) ClipRect(rect geom.Rect) {
 // wrapped in nested <g clip-path="…"> groups (outer-most first) so SVG's
 // natural clip-on-clip composition applies.
 func (r *Renderer) ClipPath(p geom.Path) {
+	if rr := r.activeRaster(); rr != nil {
+		rr.ClipPath(p)
+		return
+	}
 	r.clipPath(p, "")
 }
 
@@ -277,6 +331,10 @@ func (r *Renderer) ClipPath(p geom.Path) {
 // and images where applying clip-path directly to the element would transform
 // the clip again.
 func (r *Renderer) ClipPathTransformed(p geom.Path, transform geom.Affine) {
+	if rr := r.activeRaster(); rr != nil {
+		rr.ClipPath(mixedraster.ApplyAffine(p, transform))
+		return
+	}
 	r.clipPath(p, matrixTransform(transform))
 }
 
@@ -294,6 +352,10 @@ func (r *Renderer) clipPath(p geom.Path, transform string) {
 
 // Path draws a path with the given paint style.
 func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
+	if rr := r.activeRaster(); rr != nil {
+		rr.Path(p, paint)
+		return
+	}
 	if !p.Validate() || paint == nil {
 		return
 	}
@@ -345,11 +407,22 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 
 // DrawPathWithEffects applies renderer-neutral path effect passes.
 func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
+	if rr := r.activeRaster(); rr != nil {
+		if effects, ok := rr.(render.PathEffectDrawer); ok {
+			return effects.DrawPathWithEffects(p, paint)
+		}
+		rr.Path(p, paint)
+		return true
+	}
 	return render.DrawPathWithEffects(r, p, paint, r.Path)
 }
 
 // Image draws an image within the destination rectangle.
 func (r *Renderer) Image(img render.Image, dst geom.Rect) {
+	if rr := r.activeRaster(); rr != nil {
+		rr.Image(img, dst)
+		return
+	}
 	rgba := asRGBAImage(img)
 	if rgba == nil {
 		return
@@ -362,6 +435,14 @@ func (r *Renderer) Image(img render.Image, dst geom.Rect) {
 // matrix(a b c d e f) so viewers reproduce the placement and skew/rotation
 // exactly, without rasterizing the image first.
 func (r *Renderer) ImageTransformed(img render.Image, dst geom.Rect, transform geom.Affine) {
+	if rr := r.activeRaster(); rr != nil {
+		if tr, ok := rr.(render.ImageTransformer); ok {
+			tr.ImageTransformed(img, dst, transform)
+		} else {
+			rr.Image(img, dst)
+		}
+		return
+	}
 	rgba := asRGBAImage(img)
 	if rgba == nil {
 		return
@@ -433,6 +514,12 @@ func (r *Renderer) renderImageNode(rgba *image.RGBA, dst geom.Rect, transform st
 // with a circular marker emits one <path> def and 1000 short <use> tags), and
 // each `<use>` carries the per-item matrix transform plus paint attributes.
 func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
+	if rr := r.activeRaster(); rr != nil {
+		if markers, ok := rr.(render.MarkerDrawer); ok {
+			return markers.DrawMarkers(batch)
+		}
+		return false
+	}
 	if len(batch.Marker.C) == 0 || len(batch.Items) == 0 {
 		return false
 	}
@@ -513,6 +600,12 @@ func (r *Renderer) registerMarker(d string) string {
 // elements. Identical path geometry is registered once and reused with
 // per-item paint attributes.
 func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
+	if rr := r.activeRaster(); rr != nil {
+		if paths, ok := rr.(render.PathCollectionDrawer); ok {
+			return paths.DrawPathCollection(batch)
+		}
+		return false
+	}
 	if len(batch.Items) == 0 {
 		return false
 	}
@@ -687,6 +780,12 @@ func (r *Renderer) MeasureText(text string, size float64, fontKey string) render
 
 // DrawText renders text using an SVG <text> element.
 func (r *Renderer) DrawText(text string, origin geom.Pt, size float64, textColor render.Color) {
+	if rr := r.activeRaster(); rr != nil {
+		if textRen, ok := rr.(render.TextDrawer); ok {
+			textRen.DrawText(text, origin, size, textColor)
+		}
+		return
+	}
 	if text == "" || size <= 0 {
 		return
 	}
@@ -697,6 +796,14 @@ func (r *Renderer) DrawText(text string, origin geom.Pt, size float64, textColor
 // DrawTextRotated renders text using Matplotlib-like anchor rotation. The
 // anchor is the bottom-center of the unrotated text box.
 func (r *Renderer) DrawTextRotated(text string, anchor geom.Pt, size, angle float64, textColor render.Color) {
+	if rr := r.activeRaster(); rr != nil {
+		if textRen, ok := rr.(render.RotatedTextDrawer); ok {
+			textRen.DrawTextRotated(text, anchor, size, angle, textColor)
+		} else if textRen, ok := rr.(render.TextDrawer); ok {
+			textRen.DrawText(text, anchor, size, textColor)
+		}
+		return
+	}
 	if text == "" || size <= 0 || math.IsNaN(angle) || math.IsInf(angle, 0) {
 		return
 	}
@@ -716,6 +823,14 @@ func (r *Renderer) DrawTextRotated(text string, anchor geom.Pt, size, angle floa
 
 // DrawTextVertical renders one character per line.
 func (r *Renderer) DrawTextVertical(text string, center geom.Pt, size float64, textColor render.Color) {
+	if rr := r.activeRaster(); rr != nil {
+		if textRen, ok := rr.(render.VerticalTextDrawer); ok {
+			textRen.DrawTextVertical(text, center, size, textColor)
+		} else if textRen, ok := rr.(render.TextDrawer); ok {
+			textRen.DrawText(text, center, size, textColor)
+		}
+		return
+	}
 	if text == "" || size <= 0 {
 		return
 	}
@@ -772,6 +887,16 @@ func (r *Renderer) MeasureTeX(text string, size float64, fontKey string) (render
 
 // DrawTeX embeds a TeX-rendered PNG as an SVG image element.
 func (r *Renderer) DrawTeX(text string, origin geom.Pt, size float64, textColor render.Color, fontKey string) bool {
+	if rr := r.activeRaster(); rr != nil {
+		if texRen, ok := rr.(render.TeXDrawer); ok {
+			return texRen.DrawTeX(text, origin, size, textColor, fontKey)
+		}
+		if textRen, ok := rr.(render.TextDrawer); ok {
+			textRen.DrawText(text, origin, size, textColor)
+			return true
+		}
+		return false
+	}
 	result, ok := r.renderTeX(text, size, fontKey)
 	if !ok || result.Image == nil {
 		return false
@@ -791,6 +916,16 @@ func (r *Renderer) DrawTeX(text string, origin geom.Pt, size float64, textColor 
 // DrawTeXRotated embeds a TeX-rendered PNG and rotates it around the
 // Matplotlib-style text rotation anchor.
 func (r *Renderer) DrawTeXRotated(text string, anchor geom.Pt, size, angle float64, textColor render.Color, fontKey string) bool {
+	if rr := r.activeRaster(); rr != nil {
+		if texRen, ok := rr.(render.RotatedTeXDrawer); ok {
+			return texRen.DrawTeXRotated(text, anchor, size, angle, textColor, fontKey)
+		}
+		if textRen, ok := rr.(render.RotatedTextDrawer); ok {
+			textRen.DrawTextRotated(text, anchor, size, angle, textColor)
+			return true
+		}
+		return false
+	}
 	if math.IsNaN(angle) || math.IsInf(angle, 0) {
 		return false
 	}

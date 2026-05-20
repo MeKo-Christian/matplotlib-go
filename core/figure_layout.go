@@ -190,9 +190,9 @@ func drawFigureArtists(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 				stackOffsets[loc] = offset + box.H() + pointsToPixels(ctx.RC, 4)
 			}
 		}
-		art.Draw(r, &artCtx)
+		drawArtist(r, &artCtx, art)
 		if overlay, ok := art.(OverlayArtist); ok {
-			overlay.DrawOverlay(r, &artCtx)
+			drawOverlayArtist(r, &artCtx, art, overlay)
 		}
 	}
 }

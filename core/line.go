@@ -30,6 +30,7 @@ const (
 
 // Line2D is a minimal polyline artist (stroke only).
 type Line2D struct {
+	ArtistRasterization
 	XY          []geom.Pt    // data space points
 	W           float64      // stroke width (px for now)
 	Col         render.Color // stroke color

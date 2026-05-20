@@ -12,6 +12,7 @@ import (
 // As with Patch, this is an embedded base in Go rather than a directly
 // instantiable artist.
 type Collection struct {
+	ArtistRasterization
 	Coords      CoordinateSpec
 	Label       string
 	Alpha       float64

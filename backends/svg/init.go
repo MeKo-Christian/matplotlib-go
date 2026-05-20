@@ -23,6 +23,7 @@ func init() {
 			backends.MarkerBatch,
 			backends.PathCollectionBatch,
 			backends.NativeHatcher,
+			backends.MixedRasterVector,
 			backends.SVGExport,
 			backends.SVGOptionExport,
 			backends.TeXMetrics,
