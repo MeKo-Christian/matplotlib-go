@@ -22,7 +22,7 @@ func Plot() *core.Figure {
 
 	left := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.07, Y: 0.14},
-		Max: geom.Pt{X: 0.47, Y: 0.90},
+		Max: geom.Pt{X: 0.47, Y: 0.78},
 	})
 	left.SetTitle("Moved Axes + Aspect")
 	left.SetXLabel("Top X")
@@ -55,10 +55,14 @@ func Plot() *core.Figure {
 	if err := left.LocatorParams(core.LocatorParams{
 		Axis:       "both",
 		MajorCount: 6,
-		MinorCount: 24,
+		MinorCount: 6,
 	}); err != nil {
 		panic(err)
 	}
+	left.XAxis.MinorLocator = core.MultipleLocator{Base: 0.2}
+	left.XAxisTop.MinorLocator = core.MultipleLocator{Base: 0.2}
+	left.YAxis.MinorLocator = core.MultipleLocator{Base: 0.2}
+	left.YAxisRight.MinorLocator = core.MultipleLocator{Base: 0.2}
 	majorLen := 7.0
 	minorLen := 4.0
 	majorWidth := 1.2
@@ -109,7 +113,7 @@ func Plot() *core.Figure {
 
 	right := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.58, Y: 0.14},
-		Max: geom.Pt{X: 0.95, Y: 0.90},
+		Max: geom.Pt{X: 0.95, Y: 0.78},
 	})
 	right.SetTitle("Twin + Secondary")
 	right.SetXLim(0, 10)

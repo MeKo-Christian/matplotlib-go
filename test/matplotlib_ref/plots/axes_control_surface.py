@@ -7,6 +7,8 @@ from pathlib import Path
 import argparse
 import sys
 
+from matplotlib.ticker import MultipleLocator
+
 try:
     from test.matplotlib_ref.common import *  # noqa: F401,F403
 except ModuleNotFoundError:
@@ -16,7 +18,7 @@ except ModuleNotFoundError:
 def axes_control_surface(out_dir):
     fig = make_fig_px(760, 360)
 
-    left = fig.add_axes(go_rect(0.07, 0.14, 0.47, 0.90))
+    left = fig.add_axes(go_rect(0.07, 0.14, 0.47, 0.78))
     left.set_title("Moved Axes + Aspect")
     left.set_xlabel("Top X")
     left.set_ylabel("Right Y")
@@ -30,6 +32,8 @@ def axes_control_surface(out_dir):
     left.set_box_aspect(1)
     left.minorticks_on()
     left.locator_params(axis="both", nbins=6)
+    left.xaxis.set_minor_locator(MultipleLocator(0.2))
+    left.yaxis.set_minor_locator(MultipleLocator(0.2))
     tick_color = (0.18, 0.42, 0.55, 1.0)
     left.tick_params(
         axis="both",
@@ -60,7 +64,7 @@ def axes_control_surface(out_dir):
         linewidths=lw(1.0),
     )
 
-    right = fig.add_axes(go_rect(0.58, 0.14, 0.95, 0.90))
+    right = fig.add_axes(go_rect(0.58, 0.14, 0.95, 0.78))
     right.set_title("Twin + Secondary")
     right.set_xlim(0, 10)
     right.set_ylim(0, 20)
