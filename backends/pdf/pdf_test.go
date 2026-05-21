@@ -142,6 +142,51 @@ func TestRasterizedArtistEmbedsImageAndKeepsVectorContent(t *testing.T) {
 	}
 }
 
+func TestRasterizedGroupReplaysActivePathClip(t *testing.T) {
+	r := newTestRenderer(t)
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 20, Y: 20}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+
+	var clip geom.Path
+	clip.MoveTo(geom.Pt{X: 0, Y: 0})
+	clip.LineTo(geom.Pt{X: 10, Y: 0})
+	clip.LineTo(geom.Pt{X: 10, Y: 20})
+	clip.LineTo(geom.Pt{X: 0, Y: 20})
+	clip.Close()
+	r.ClipPath(clip)
+
+	if !r.StartRasterized(render.Rasterization{Mode: render.RasterizeAlways, DPI: 72}) {
+		t.Fatal("StartRasterized failed")
+	}
+	var fill geom.Path
+	fill.MoveTo(geom.Pt{X: 0, Y: 0})
+	fill.LineTo(geom.Pt{X: 20, Y: 0})
+	fill.LineTo(geom.Pt{X: 20, Y: 20})
+	fill.LineTo(geom.Pt{X: 0, Y: 20})
+	fill.Close()
+	r.Path(fill, &render.Paint{Fill: render.Color{R: 1, A: 1}})
+	if !r.StopRasterized() {
+		t.Fatal("StopRasterized failed")
+	}
+
+	if len(r.images) != 1 {
+		t.Fatalf("embedded images = %d, want 1", len(r.images))
+	}
+	img := r.images[0]
+	if !img.hasAlpha {
+		t.Fatal("rasterized image should carry an alpha mask")
+	}
+	left := img.alpha[10*img.width+5]
+	right := img.alpha[10*img.width+15]
+	if left == 0 {
+		t.Fatalf("pixel inside path clip is transparent: alpha=%d", left)
+	}
+	if right != 0 {
+		t.Fatalf("pixel outside path clip alpha=%d, want 0", right)
+	}
+}
+
 func TestRendererPathFillsAndStrokes(t *testing.T) {
 	r := newTestRenderer(t)
 	_ = r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}})

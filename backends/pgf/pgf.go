@@ -19,6 +19,7 @@ const defaultFontHeight = 13.0
 type state struct {
 	inContent bool
 	clipRect  *geom.Rect
+	clipPaths []geom.Path
 }
 
 // Renderer implements render.Renderer by emitting PGF/TikZ commands.
@@ -34,6 +35,7 @@ type Renderer struct {
 	document   []byte
 	stack      []state
 	clipRect   *geom.Rect
+	clipPaths  []geom.Path
 	raster     *mixedraster.Session
 	colorNames map[string]string
 	pathIDs    map[string]string
@@ -99,6 +101,7 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.document = nil
 	r.stack = r.stack[:0]
 	r.clipRect = nil
+	r.clipPaths = nil
 	r.raster = nil
 	r.colorNames = map[string]string{}
 	r.pathIDs = map[string]string{}
@@ -125,7 +128,7 @@ func (r *Renderer) StartRasterized(options render.Rasterization) bool {
 	if r == nil || !r.began || r.raster != nil {
 		return false
 	}
-	session, ok := mixedraster.Start(r.width, r.height, r.viewport, options, r.resolution, r.clipRect)
+	session, ok := mixedraster.Start(r.width, r.height, r.viewport, options, r.resolution, r.clipRect, r.clipPaths)
 	if !ok {
 		return false
 	}
@@ -173,7 +176,11 @@ func (r *Renderer) Save() {
 		rr.Save()
 		return
 	}
-	r.stack = append(r.stack, state{inContent: r.began, clipRect: cloneRectPtr(r.clipRect)})
+	r.stack = append(r.stack, state{
+		inContent: r.began,
+		clipRect:  cloneRectPtr(r.clipRect),
+		clipPaths: mixedraster.ClonePaths(r.clipPaths),
+	})
 	if r.began {
 		r.content.WriteString("\\pgfscope\n")
 	}
@@ -191,6 +198,7 @@ func (r *Renderer) Restore() {
 	top := r.stack[len(r.stack)-1]
 	r.stack = r.stack[:len(r.stack)-1]
 	r.clipRect = top.clipRect
+	r.clipPaths = mixedraster.ClonePaths(top.clipPaths)
 	if top.inContent && r.began {
 		r.content.WriteString("\\endpgfscope\n")
 	}
@@ -229,6 +237,7 @@ func (r *Renderer) ClipPath(path geom.Path) {
 	if !writePathOps(&r.content, path) {
 		return
 	}
+	r.clipPaths = append(r.clipPaths, mixedraster.ClonePath(path))
 	r.content.WriteString("\\pgfusepath{clip}\n")
 }
 

@@ -553,6 +553,13 @@ Remaining path-effects work:
 - [ ] Golden fixtures verifying the rasterized region honors clip, transform,
       and alpha state.
 
+Current slice landed:
+
+- Mixed raster sessions now replay active path clips, including transformed SVG
+  clip paths, into the offscreen raster surface before embedding the tile back
+  into SVG / PDF / PS / PGF output. A PDF regression test verifies that pixels
+  outside an active path clip remain transparent in the embedded raster image.
+
 **Exit criteria:**
 
 - [ ] Pattern fills, gradients, and path effects work uniformly across AGG,

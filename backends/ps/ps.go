@@ -19,6 +19,7 @@ const defaultFontHeight = 13.0
 type state struct {
 	inContent bool
 	clipRect  *geom.Rect
+	clipPaths []geom.Path
 }
 
 // Renderer implements render.Renderer by emitting deterministic Level-2
@@ -35,6 +36,7 @@ type Renderer struct {
 	document    []byte
 	stack       []state
 	clipRect    *geom.Rect
+	clipPaths   []geom.Path
 	raster      *mixedraster.Session
 	markerIDs   map[string]string
 	imageIDs    map[string]string
@@ -102,6 +104,7 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.document = nil
 	r.stack = r.stack[:0]
 	r.clipRect = nil
+	r.clipPaths = nil
 	r.raster = nil
 	r.markerIDs = map[string]string{}
 	r.imageIDs = map[string]string{}
@@ -127,7 +130,7 @@ func (r *Renderer) StartRasterized(options render.Rasterization) bool {
 	if r == nil || !r.began || r.raster != nil {
 		return false
 	}
-	session, ok := mixedraster.Start(r.width, r.height, r.viewport, options, r.resolution, r.clipRect)
+	session, ok := mixedraster.Start(r.width, r.height, r.viewport, options, r.resolution, r.clipRect, r.clipPaths)
 	if !ok {
 		return false
 	}
@@ -174,7 +177,11 @@ func (r *Renderer) Save() {
 		rr.Save()
 		return
 	}
-	r.stack = append(r.stack, state{inContent: r.began, clipRect: cloneRectPtr(r.clipRect)})
+	r.stack = append(r.stack, state{
+		inContent: r.began,
+		clipRect:  cloneRectPtr(r.clipRect),
+		clipPaths: mixedraster.ClonePaths(r.clipPaths),
+	})
 	if r.began {
 		r.content.WriteString("gsave\n")
 	}
@@ -192,6 +199,7 @@ func (r *Renderer) Restore() {
 	top := r.stack[len(r.stack)-1]
 	r.stack = r.stack[:len(r.stack)-1]
 	r.clipRect = top.clipRect
+	r.clipPaths = mixedraster.ClonePaths(top.clipPaths)
 	if top.inContent && r.began {
 		r.content.WriteString("grestore\n")
 	}
@@ -233,6 +241,7 @@ func (r *Renderer) ClipPath(p geom.Path) {
 	if !writePathOps(&r.content, p) {
 		return
 	}
+	r.clipPaths = append(r.clipPaths, mixedraster.ClonePath(p))
 	r.content.WriteString("clip newpath\n")
 }
 

@@ -111,6 +111,7 @@ type Renderer struct {
 	clipPathDefs    map[string]string // path data → clipDef ID
 	clipOrder       []clipDef         // registration-order defs (rects and paths interleaved)
 	clipPathStack   []string          // active path-clip IDs in outer-to-inner order
+	clipPaths       []geom.Path       // active path clips in display coordinates for mixed raster replay
 	clipIDCounter   int
 	markerDefs      map[string]string // marker path data → markerDef ID
 	markerOrder     []markerDef       // registration-order marker defs
@@ -214,6 +215,7 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.clipPathDefs = map[string]string{}
 	r.clipOrder = nil
 	r.clipPathStack = nil
+	r.clipPaths = nil
 	r.clipIDCounter = 0
 	r.markerDefs = map[string]string{}
 	r.markerOrder = nil
@@ -251,7 +253,7 @@ func (r *Renderer) StartRasterized(options render.Rasterization) bool {
 	if r == nil || !r.began || r.raster != nil {
 		return false
 	}
-	session, ok := mixedraster.Start(r.width, r.height, r.viewport, options, r.resolution, r.clipRect)
+	session, ok := mixedraster.Start(r.width, r.height, r.viewport, options, r.resolution, r.clipRect, r.clipPaths)
 	if !ok {
 		return false
 	}
@@ -314,6 +316,9 @@ func (r *Renderer) Restore() {
 	if s.clipPathDepth < len(r.clipPathStack) {
 		r.clipPathStack = r.clipPathStack[:s.clipPathDepth]
 	}
+	if s.clipPathDepth < len(r.clipPaths) {
+		r.clipPaths = r.clipPaths[:s.clipPathDepth]
+	}
 }
 
 // ClipRect sets a rectangular clip region.
@@ -341,7 +346,7 @@ func (r *Renderer) ClipPath(p geom.Path) {
 		rr.ClipPath(p)
 		return
 	}
-	r.clipPath(p, "")
+	r.clipPath(p, "", p)
 }
 
 // ClipPathTransformed pushes a path-based clip region with an affine transform
@@ -354,10 +359,10 @@ func (r *Renderer) ClipPathTransformed(p geom.Path, transform geom.Affine) {
 		rr.ClipPath(mixedraster.ApplyAffine(p, transform))
 		return
 	}
-	r.clipPath(p, matrixTransform(transform))
+	r.clipPath(p, matrixTransform(transform), mixedraster.ApplyAffine(p, transform))
 }
 
-func (r *Renderer) clipPath(p geom.Path, transform string) {
+func (r *Renderer) clipPath(p geom.Path, transform string, rasterPath geom.Path) {
 	if !p.Validate() {
 		return
 	}
@@ -367,6 +372,7 @@ func (r *Renderer) clipPath(p geom.Path, transform string) {
 	}
 	id := r.registerPathClip(d, transform)
 	r.clipPathStack = append(r.clipPathStack, id)
+	r.clipPaths = append(r.clipPaths, mixedraster.ClonePath(rasterPath))
 }
 
 // Path draws a path with the given paint style.

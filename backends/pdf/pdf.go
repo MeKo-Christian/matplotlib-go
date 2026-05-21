@@ -39,6 +39,7 @@ type state struct {
 	// identity transform.
 	inContent bool
 	clipRect  *geom.Rect
+	clipPaths []geom.Path
 }
 
 type pdfImage struct {
@@ -149,9 +150,10 @@ type Renderer struct {
 	background render.Color
 	resolution uint
 
-	began    bool
-	stack    []state
-	clipRect *geom.Rect
+	began     bool
+	stack     []state
+	clipRect  *geom.Rect
+	clipPaths []geom.Path
 
 	// content is the page content stream under construction.
 	content        bytes.Buffer
@@ -250,6 +252,7 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.document = nil
 	r.stack = r.stack[:0]
 	r.clipRect = nil
+	r.clipPaths = nil
 	r.raster = nil
 	r.images = r.images[:0]
 	r.imageIDs = map[string]string{}
@@ -304,7 +307,7 @@ func (r *Renderer) StartRasterized(options render.Rasterization) bool {
 	if r == nil || !r.began || r.raster != nil {
 		return false
 	}
-	session, ok := mixedraster.Start(r.width, r.height, r.viewport, options, r.resolution, r.clipRect)
+	session, ok := mixedraster.Start(r.width, r.height, r.viewport, options, r.resolution, r.clipRect, r.clipPaths)
 	if !ok {
 		return false
 	}
@@ -340,7 +343,11 @@ func (r *Renderer) Save() {
 		rr.Save()
 		return
 	}
-	r.stack = append(r.stack, state{inContent: r.began, clipRect: cloneRectPtr(r.clipRect)})
+	r.stack = append(r.stack, state{
+		inContent: r.began,
+		clipRect:  cloneRectPtr(r.clipRect),
+		clipPaths: mixedraster.ClonePaths(r.clipPaths),
+	})
 	if r.began {
 		r.content.WriteString("q\n")
 	}
@@ -358,6 +365,7 @@ func (r *Renderer) Restore() {
 	top := r.stack[len(r.stack)-1]
 	r.stack = r.stack[:len(r.stack)-1]
 	r.clipRect = top.clipRect
+	r.clipPaths = mixedraster.ClonePaths(top.clipPaths)
 	if top.inContent && r.began {
 		r.content.WriteString("Q\n")
 	}
@@ -399,6 +407,7 @@ func (r *Renderer) ClipPath(p geom.Path) {
 	if !writePathOps(&r.content, p) {
 		return
 	}
+	r.clipPaths = append(r.clipPaths, mixedraster.ClonePath(p))
 	r.content.WriteString("W n\n")
 }
 

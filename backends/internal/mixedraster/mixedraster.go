@@ -16,7 +16,7 @@ type Session struct {
 }
 
 // Start creates a transparent raster surface sized to the vector page.
-func Start(width, height int, viewport geom.Rect, options render.Rasterization, fallbackDPI uint, clipRect *geom.Rect) (*Session, bool) {
+func Start(width, height int, viewport geom.Rect, options render.Rasterization, fallbackDPI uint, clipRect *geom.Rect, clipPaths []geom.Path) (*Session, bool) {
 	if width <= 0 || height <= 0 {
 		return nil, false
 	}
@@ -35,6 +35,9 @@ func Start(width, height int, viewport geom.Rect, options render.Rasterization, 
 	}
 	if clipRect != nil {
 		r.ClipRect(*clipRect)
+	}
+	for _, clipPath := range clipPaths {
+		r.ClipPath(clipPath)
 	}
 	return &Session{
 		renderer: r,
@@ -62,16 +65,33 @@ func (s *Session) Stop() (*render.ImageData, geom.Rect, bool) {
 	return render.NewImageData(s.renderer.GetImage()), s.rect, true
 }
 
-// ApplyAffine returns a copy of path transformed by affine.
-func ApplyAffine(path geom.Path, affine geom.Affine) geom.Path {
+// ClonePaths returns a deep copy of paths suitable for renderer state stacks.
+func ClonePaths(paths []geom.Path) []geom.Path {
+	if len(paths) == 0 {
+		return nil
+	}
+	out := make([]geom.Path, len(paths))
+	for i, path := range paths {
+		out[i] = ClonePath(path)
+	}
+	return out
+}
+
+// ClonePath returns a deep copy of path.
+func ClonePath(path geom.Path) geom.Path {
 	if len(path.C) == 0 {
 		return geom.Path{}
 	}
-	out := geom.Path{
+	return geom.Path{
 		C: append([]geom.Cmd(nil), path.C...),
-		V: make([]geom.Pt, len(path.V)),
+		V: append([]geom.Pt(nil), path.V...),
 	}
-	for i, pt := range path.V {
+}
+
+// ApplyAffine returns a copy of path transformed by affine.
+func ApplyAffine(path geom.Path, affine geom.Affine) geom.Path {
+	out := ClonePath(path)
+	for i, pt := range out.V {
 		out.V[i] = affine.Apply(pt)
 	}
 	return out
