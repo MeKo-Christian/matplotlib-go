@@ -27,10 +27,14 @@ func (m mathTextMeasurer) MeasureText(text string, size float64, fontKey string)
 	metrics := m.r.MeasureText(text, size, fontKey)
 	ascent := metrics.Ascent
 	descent := metrics.Descent
+	boundsY := 0.0
+	boundsH := 0.0
 	if bounder, ok := m.r.(render.TextBounder); ok {
 		if bounds, ok := bounder.MeasureTextBounds(text, size, fontKey); ok && bounds.W > 0 && bounds.H > 0 {
 			ascent = math.Max(0, -bounds.Y)
 			descent = math.Max(0, bounds.Y+bounds.H)
+			boundsY = bounds.Y
+			boundsH = bounds.H
 		}
 	}
 	return mt.Metrics{
@@ -38,6 +42,8 @@ func (m mathTextMeasurer) MeasureText(text string, size float64, fontKey string)
 		H:       ascent + descent,
 		Ascent:  ascent,
 		Descent: descent,
+		BoundsY: boundsY,
+		BoundsH: boundsH,
 	}
 }
 

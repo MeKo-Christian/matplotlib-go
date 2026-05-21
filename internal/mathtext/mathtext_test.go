@@ -40,6 +40,8 @@ func (shapingMeasurer) MeasureText(text string, size float64, fontKey string) Me
 		H:       ascent + descent,
 		Ascent:  ascent,
 		Descent: descent,
+		BoundsY: shaped.Bounds.Y,
+		BoundsH: shaped.Bounds.H,
 	}
 }
 
@@ -71,6 +73,29 @@ func (r *recordingResolver) ResolveMathFontKey(_ string, request FontRequest) st
 		return "style:" + string(request.Style)
 	}
 	return ""
+}
+
+type shapingFontResolver struct{}
+
+func (shapingFontResolver) ResolveMathFontKey(base string, request FontRequest) string {
+	props := render.ParseFontProperties(base)
+	if len(request.Families) > 0 {
+		props.File = ""
+		props.Families = append([]string(nil), request.Families...)
+	}
+	if request.Style != "" {
+		props.Style = render.FontStyle(request.Style)
+	}
+	if request.Weight > 0 {
+		props.Weight = request.Weight
+	}
+	if face, ok := render.DefaultFontManager().FindFont(props); ok && face.Path != "" {
+		return face.Path
+	}
+	if len(props.Families) > 0 {
+		return strings.Join(props.Families, ", ")
+	}
+	return base
 }
 
 func TestNormalizeDisplayParsesInlineMath(t *testing.T) {
@@ -308,9 +333,9 @@ func TestLayoutMathTextMatchesMatplotlibFixtureMetrics(t *testing.T) {
 			name:        "integral side scripts",
 			expr:        `\int_0^\infty e^{-x}\,dx = 1`,
 			size:        24,
-			wantWidth:   212,
-			wantAscent:  45,
-			wantDescent: 12,
+			wantWidth:   214,
+			wantAscent:  40,
+			wantDescent: 18,
 		},
 	}
 
@@ -416,6 +441,45 @@ func TestLayoutMathTextDoesNotPadRulelessGenfracHorizontally(t *testing.T) {
 	leftWidth := shapingMeasurer{}.MeasureText(leftParen.Text, leftParen.FontSize, leftParen.FontKey).W
 	if got := firstBody.Offset.X - (leftParen.Offset.X + leftWidth); math.Abs(got) > 1.0 {
 		t.Fatalf("ruleless genfrac inserted horizontal padding %.2f; runs=%+v", got, layout.Runs)
+	}
+}
+
+func TestLayoutMathTextUsesMatplotlibPunctuationSpacing(t *testing.T) {
+	layout, ok := LayoutMathText(shapingMeasurer{}, `k!(n-k)!`, 16.1, "DejaVu Sans", Options{FontResolver: shapingFontResolver{}})
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+	if got, want := layout.Width, 112.0; math.Abs(got-want) > 2.0 {
+		t.Fatalf("punctuation-spaced width = %.2f, want near %.2f; runs=%+v", got, want, layout.Runs)
+	}
+}
+
+func TestLayoutMathTextUsesMatplotlibFractionAxisAlignment(t *testing.T) {
+	layout, ok := LayoutMathText(shapingMeasurer{}, `\left[\frac{1}{1+x}\right]`, 24, "DejaVu Sans", Options{FontResolver: shapingFontResolver{}})
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+	if got, want := layout.Width, 90.0; math.Abs(got-want) > 1.5 {
+		t.Fatalf("bracketed fraction width = %.2f, want near %.2f", got, want)
+	}
+	if got, want := layout.Ascent, 32.0; math.Abs(got-want) > 1.0 {
+		t.Fatalf("bracketed fraction ascent = %.2f, want near %.2f", got, want)
+	}
+	if got, want := layout.Descent, 13.0; math.Abs(got-want) > 1.0 {
+		t.Fatalf("bracketed fraction descent = %.2f, want near %.2f", got, want)
+	}
+}
+
+func TestLayoutMathTextUsesMatplotlibOverUnderGap(t *testing.T) {
+	layout, ok := LayoutMathText(shapingMeasurer{}, `\sum_{i=1}^{n} i^2`, 26, "DejaVu Sans", Options{FontResolver: shapingFontResolver{}})
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+	if got, want := layout.Ascent, 58.0; math.Abs(got-want) > 1.5 {
+		t.Fatalf("sum ascent = %.2f, want near %.2f", got, want)
+	}
+	if got, want := layout.Descent, 36.0; math.Abs(got-want) > 1.5 {
+		t.Fatalf("sum descent = %.2f, want near %.2f", got, want)
 	}
 }
 

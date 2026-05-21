@@ -9,8 +9,9 @@ import (
 )
 
 // Metrics is the renderer-neutral text measurement subset needed for MathText
-// layout.
-type Metrics struct{ W, H, Ascent, Descent float64 }
+// layout. BoundsY/BoundsH describe the signed ink bounds relative to the
+// baseline when the renderer can provide them.
+type Metrics struct{ W, H, Ascent, Descent, BoundsY, BoundsH float64 }
 
 // Measurer measures text for one font key and size.
 type Measurer interface {
@@ -291,6 +292,8 @@ func (p *mathLayoutParser) parseUntil(stop rune) mathLayoutNode {
 			p.pos++
 		case '+', '-', '=':
 			children = p.appendMathOperator(children, r, stop)
+		case ',', ';', '.', '!':
+			children = p.appendMathPunctuation(children, r, stop)
 		case ' ', '\t', '\n', '\r':
 			if !p.implicitItalic {
 				appendText(" ")
@@ -513,6 +516,43 @@ func (p *mathLayoutParser) appendMathOperator(children []mathLayoutNode, op rune
 	}
 	p.pos++
 	return children
+}
+
+func (p *mathLayoutParser) appendMathPunctuation(children []mathLayoutNode, punct rune, stop rune) []mathLayoutNode {
+	text := string(punct)
+	if punct == '.' && p.previousNonSpaceIsDigit() && p.nextNonSpaceIsDigit(stop) {
+		children = appendMathText(children, text)
+	} else {
+		children = appendMathText(children, text)
+		children = append(children, mathLayoutNode{kind: mathLayoutSpace, widthEm: 0.2})
+	}
+	p.pos++
+	return children
+}
+
+func (p *mathLayoutParser) previousNonSpaceIsDigit() bool {
+	for i := p.pos - 1; i >= 0; i-- {
+		r := p.input[i]
+		if r == ' ' || r == '\t' || r == '\n' || r == '\r' {
+			continue
+		}
+		return unicode.IsDigit(r)
+	}
+	return false
+}
+
+func (p *mathLayoutParser) nextNonSpaceIsDigit(stop rune) bool {
+	for i := p.pos + 1; i < len(p.input); i++ {
+		r := p.input[i]
+		if stop != 0 && r == stop {
+			return false
+		}
+		if r == ' ' || r == '\t' || r == '\n' || r == '\r' {
+			continue
+		}
+		return unicode.IsDigit(r)
+	}
+	return false
 }
 
 func (p *mathLayoutParser) hasPreviousMathOperand(children []mathLayoutNode) bool {
@@ -1142,7 +1182,7 @@ func layoutMathSizedDelimiter(r Measurer, candidates []mathDelimiterGlyph, targe
 	if targetTotal <= 0 {
 		targetTotal = size
 	}
-	tolerance := size * mathCMXHeightScale * 0.2
+	tolerance := mathXHeight(r, size, "DejaVu Sans") * 0.2
 	selected := candidates[len(candidates)-1]
 	selectedTotal := 0.0
 	for _, candidate := range candidates {
@@ -1508,7 +1548,7 @@ func layoutMathLimits(r Measurer, n mathLayoutNode, size float64, fontKey string
 	baseX := (width - base.Width) / 2
 	superX := (width - super.Width) / 2
 	subX := (width - sub.Width) / 2
-	gap := size * 0.14
+	gap := maxFloat64(mathQuadWidth(r, size, fontKey)/16, 0.5) * 3.0
 
 	var out mathLayoutBox
 	out.Width = width
@@ -1538,7 +1578,7 @@ func isMathLimitOperator(n mathLayoutNode) bool {
 const (
 	mathScriptDelta         = 0.025
 	mathScriptDeltaIntegral = 0.1
-	mathScriptSubdrop       = 102.4 / 1120.0
+	mathScriptSubdrop       = 0.4
 	mathDejaVuSansXHeight   = 1120.0 / 2048.0
 )
 
@@ -1571,7 +1611,6 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	}
 	numBox := layoutMathNode(r, num, childSize, fontKey, opts)
 	denBox := layoutMathNode(r, den, childSize, fontKey, opts)
-	gap := size * 0.14
 	sideThickness := maxFloat64(mathQuadWidth(r, size, fontKey)/16, 0.5)
 	ruleThickness := sideThickness
 	if !rule {
@@ -1583,31 +1622,43 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	padding := 0.0
 	numX := padding + (contentWidth-numBox.Width)/2
 	denX := padding + (contentWidth-denBox.Width)/2
-	numY := -(gap + ruleThickness/2 + numBox.Descent)
-	denY := gap + ruleThickness/2 + denBox.Ascent
+	space := sideThickness * 2
+	equalMetrics := r.MeasureText("=", size, fontKey)
+	equalCenter := (equalMetrics.Ascent + equalMetrics.Descent) / 2
+	if equalMetrics.BoundsH > 0 {
+		equalCenter = -(equalMetrics.BoundsY + equalMetrics.BoundsH/2)
+	}
+	shift := denBox.Ascent - (equalCenter - sideThickness*3)
+	denY := shift
+	ruleCenterY := shift - denBox.Ascent - space - ruleThickness/2
+	numY := ruleCenterY - ruleThickness/2 - space - numBox.Descent
+	vlistHeight := numBox.Ascent + numBox.Descent + space + ruleThickness + space + denBox.Ascent
+	ascent := vlistHeight - shift
+	descent := denBox.Descent + shift
+	if equalMetrics.Ascent <= 0 && equalMetrics.Descent <= 0 {
+		shift = denBox.Ascent - size*0.12
+		denY = shift
+		ruleCenterY = shift - denBox.Ascent - space - ruleThickness/2
+		numY = ruleCenterY - ruleThickness/2 - space - numBox.Descent
+		ascent = vlistHeight - shift
+		descent = denBox.Descent + shift
+	}
 
 	out := mathLayoutBox{
 		Width:   width,
-		Ascent:  -numY + numBox.Ascent,
-		Descent: denY + denBox.Descent,
+		Ascent:  ascent,
+		Descent: descent,
 	}
 	if rule {
 		out.rules = append(out.rules, MathTextLayoutRule{
 			Rect: geom.Rect{
-				Min: geom.Pt{X: 0, Y: -ruleThickness / 2},
-				Max: geom.Pt{X: ruleWidth, Y: ruleThickness / 2},
+				Min: geom.Pt{X: 0, Y: ruleCenterY - ruleThickness/2},
+				Max: geom.Pt{X: ruleWidth, Y: ruleCenterY + ruleThickness/2},
 			},
 		})
 	}
 	out.appendTranslated(numBox, numX, numY)
 	out.appendTranslated(denBox, denX, denY)
-	baselineLift := size * 0.34
-	var shifted mathLayoutBox
-	shifted.appendTranslated(out, 0, -baselineLift)
-	shifted.Width = out.Width
-	shifted.Ascent = out.Ascent + baselineLift
-	shifted.Descent = maxFloat64(0, out.Descent-baselineLift)
-	out = shifted
 	if leftDelim == "" && rightDelim == "" {
 		return out
 	}
