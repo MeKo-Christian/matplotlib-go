@@ -612,9 +612,12 @@ geometry remain native vector output.
       scaling.
 - [x] Add backend tests showing rasterized artists embed pixels/images while
       surrounding vector content remains vector in SVG, PDF, PS, and PGF.
-- [ ] Add catalog golden / Matplotlib-reference fixtures that exercise the full
+- [x] Add catalog golden / Matplotlib-reference fixtures that exercise the full
       save pipeline for clip, transform, and alpha state across mixed
-      raster/vector output.
+      raster/vector output. (`mixed_raster_vector` covers a DPI-rasterized
+      translucent scatter cloud inside a polar path clip, with vector axes,
+      labels, legend, and line output preserved in the SVG / PDF structural
+      goldens.)
 
 **Exit criteria:**
 
