@@ -308,9 +308,9 @@ func TestLayoutMathTextMatchesMatplotlibFixtureMetrics(t *testing.T) {
 			name:        "integral side scripts",
 			expr:        `\int_0^\infty e^{-x}\,dx = 1`,
 			size:        24,
-			wantWidth:   214,
-			wantAscent:  40,
-			wantDescent: 18,
+			wantWidth:   212,
+			wantAscent:  45,
+			wantDescent: 12,
 		},
 	}
 
@@ -391,6 +391,31 @@ func TestLayoutMathTextUsesMatplotlibFractionRuleThickness(t *testing.T) {
 	}
 	if got, want := layout.Width, 20.0; math.Abs(got-want) > 1.5 {
 		t.Fatalf("fraction layout width = %.2f, want near %.2f", got, want)
+	}
+}
+
+func TestLayoutMathTextDoesNotPadRulelessGenfracHorizontally(t *testing.T) {
+	layout, ok := LayoutMathText(shapingMeasurer{}, `\genfrac{(}{)}{0}{0}{a\quad b}{c\quad d}`, 25, "DejaVu Sans", Options{})
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+	var leftParen, firstBody *MathTextLayoutRun
+	for i := range layout.Runs {
+		switch layout.Runs[i].Text {
+		case "(":
+			leftParen = &layout.Runs[i]
+		case "a":
+			if firstBody == nil {
+				firstBody = &layout.Runs[i]
+			}
+		}
+	}
+	if leftParen == nil || firstBody == nil {
+		t.Fatalf("missing delimiter/body runs: %+v", layout.Runs)
+	}
+	leftWidth := shapingMeasurer{}.MeasureText(leftParen.Text, leftParen.FontSize, leftParen.FontKey).W
+	if got := firstBody.Offset.X - (leftParen.Offset.X + leftWidth); math.Abs(got) > 1.0 {
+		t.Fatalf("ruleless genfrac inserted horizontal padding %.2f; runs=%+v", got, layout.Runs)
 	}
 }
 

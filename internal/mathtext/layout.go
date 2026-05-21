@@ -1571,20 +1571,16 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	}
 	numBox := layoutMathNode(r, num, childSize, fontKey, opts)
 	denBox := layoutMathNode(r, den, childSize, fontKey, opts)
-	padding := size * 0.18
 	gap := size * 0.14
-	ruleThickness := maxFloat64(mathQuadWidth(r, size, fontKey)/16, 0.5)
+	sideThickness := maxFloat64(mathQuadWidth(r, size, fontKey)/16, 0.5)
+	ruleThickness := sideThickness
 	if !rule {
 		ruleThickness = 0
 	}
 	contentWidth := maxFloat64(numBox.Width, denBox.Width)
-	width := contentWidth + 2*padding
-	ruleWidth := width
-	if rule {
-		padding = 0
-		width = contentWidth + 2*ruleThickness
-		ruleWidth = contentWidth
-	}
+	width := contentWidth + 2*sideThickness
+	ruleWidth := contentWidth
+	padding := 0.0
 	numX := padding + (contentWidth-numBox.Width)/2
 	denX := padding + (contentWidth-denBox.Width)/2
 	numY := -(gap + ruleThickness/2 + numBox.Descent)

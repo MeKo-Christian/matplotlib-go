@@ -217,7 +217,10 @@ func TestLayoutMathTextSupportsIntegralLimits(t *testing.T) {
 	if subY <= 0 || superY >= 0 {
 		t.Fatalf("integral scripts should sit below/above the baseline: sub=%v super=%v runs=%+v", subY, superY, layout.Runs)
 	}
-	if subX < intX+intW || superX < intX+intW {
+	// Matplotlib applies a small negative kern for slanted drop-subscript
+	// operators such as integrals; the scripts still live at the side, but may
+	// begin just before the operator advance.
+	if subX < intX+intW-1 || superX < intX+intW-1 {
 		t.Fatalf("integral scripts should be side scripts, not stacked limits: intX=%v intW=%v subX=%v superX=%v runs=%+v", intX, intW, subX, superX, layout.Runs)
 	}
 }
