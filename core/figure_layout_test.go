@@ -166,7 +166,7 @@ func TestDrawFigure_AlignsXLabelsAcrossRow(t *testing.T) {
 	}
 }
 
-func TestDrawFigure_AlignsTitlesAcrossRow(t *testing.T) {
+func TestDrawFigure_AddAxesTitlesAreNotAlignedByDefault(t *testing.T) {
 	fig := NewFigure(800, 600)
 	left := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.10, Y: 0.18},
@@ -203,8 +203,46 @@ func TestDrawFigure_AlignsTitlesAcrossRow(t *testing.T) {
 	if !okLeft || !okRight {
 		t.Fatalf("missing title draws: %v", r.texts)
 	}
-	if leftOrigin.Y != rightOrigin.Y {
-		t.Fatalf("expected aligned title origins, got left=%+v right=%+v", leftOrigin, rightOrigin)
+	if leftOrigin.Y == rightOrigin.Y {
+		t.Fatalf("add_axes titles should use local top extents by default, got left=%+v right=%+v", leftOrigin, rightOrigin)
+	}
+}
+
+func TestDrawFigure_TitleClearsSecondaryXAxisTickLabels(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.20, Y: 0.20},
+		Max: geom.Pt{X: 0.80, Y: 0.75},
+	})
+	ax.SetTitle("Parent Title")
+	ax.SetXLim(0, 1)
+	ax.SetYLim(0, 1)
+
+	sec, err := ax.SecondaryXAxis(AxisTop,
+		func(x float64) float64 { return x * 100 },
+		func(x float64) (float64, bool) { return x / 100, true },
+	)
+	if err != nil {
+		t.Fatalf("SecondaryXAxis: %v", err)
+	}
+	if axis := sec.TopAxis(); axis != nil {
+		axis.Locator = staticLocator{100}
+		axis.Formatter = ScalarFormatter{Prec: 0}
+	}
+
+	r := figureLayoutRecordingRenderer{
+		bounds: map[string]render.TextBounds{
+			"100": {X: 1, Y: -8, W: 18, H: 10},
+		},
+	}
+	DrawFigure(fig, &r)
+
+	titleOrigin, ok := r.textOrigin("Parent Title")
+	if !ok {
+		t.Fatalf("missing title draw: %v", r.texts)
+	}
+	if titleOrigin.Y >= 55 {
+		t.Fatalf("title did not clear secondary top tick labels: origin=%+v", titleOrigin)
 	}
 }
 

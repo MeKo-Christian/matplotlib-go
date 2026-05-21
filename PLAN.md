@@ -545,33 +545,82 @@ Remaining path-effects work:
 
 ### 2.3 Mixed Raster / Vector Output
 
-- [ ] Artist-level "rasterize" flag honored by every vector backend, gated by
-      renderer capability checks.
-- [ ] DPI-aware rasterization at save time so dense scatter / image /
-      contour plots embed as raster tiles inside PDF / PS / SVG without losing
-      surrounding vector text and axes.
-- [ ] Golden fixtures verifying the rasterized region honors clip, transform,
-      and alpha state.
+**Goal:** match Matplotlib's mixed-mode output model: selected artists can be
+drawn into a DPI-aware raster tile while surrounding labels, axes, and simple
+geometry remain native vector output.
 
-Current slice landed:
+#### 2.3.1 Renderer contract and capability gating
 
-- Mixed raster sessions now replay active path clips, including transformed SVG
-  clip paths, into the offscreen raster surface before embedding the tile back
-  into SVG / PDF / PS / PGF output. A PDF regression test verifies that pixels
-  outside an active path clip remain transparent in the embedded raster image.
-- Mixed raster sessions now allocate their offscreen surface at the requested
-  rasterization DPI while preserving the original vector placement rectangle.
-  The shared helper scales paths, clips, images, and text into that high-DPI
-  tile before SVG / PDF / PS / PGF embed it.
-- Common filled and text artists (`Bar2D`, `Fill2D`, `Patch` derivatives,
-  `Text`, and `Annotation`) now expose `SetRasterized` / `Rasterization` like
-  line, scatter, image, contour, and collection artists.
+- [x] Add renderer-neutral rasterization policy plumbing:
+      `render.Rasterization`, `RasterizationMode`, `Paint.Rasterization`, and
+      `GraphicsContext.WithRasterization`.
+- [x] Add `render.RasterizationController` with `StartRasterized` /
+      `StopRasterized` so artists can request mixed output without backend-name
+      conditionals.
+- [x] Advertise mixed-mode support through the backend capability matrix as
+      `backends.MixedRasterVector`, gated by the runtime controller interface.
+
+#### 2.3.2 Artist opt-in and auto-rasterization
+
+- [x] Add reusable `core.ArtistRasterization` with `SetRasterized`,
+      `SetRasterization`, and `Rasterization` methods.
+- [x] Honor explicit artist-level rasterization only when the active renderer
+      supports `render.RasterizationController`; otherwise draw the artist
+      normally.
+- [x] Expose rasterization controls on common artist families: lines, scatter,
+      images, contours, collections, bars, fills, patches / rectangles, text,
+      and annotations.
+- [x] Auto-rasterize dense scatter, collection, and contour output at figure DPI,
+      with `RasterizeNever` preserving fully vector output for opt-out cases.
+- [x] Preserve vector-native path-effect filter output when a backend can draw
+      the effect natively, falling back to mixed raster output only when needed.
+
+#### 2.3.3 DPI-aware offscreen replay
+
+- [x] Add shared `backends/internal/mixedraster` session setup for transparent
+      offscreen raster groups.
+- [x] Allocate mixed-raster surfaces at the requested rasterization DPI while
+      preserving the original vector placement rectangle.
+- [x] Scale replayed paths, clips, images, and text into the high-DPI tile before
+      embedding it back into the vector output.
+
+#### 2.3.4 Vector backend embedding
+
+- [x] SVG embeds mixed-raster groups as `<image>` elements while keeping
+      unaffected text and axes as vector content.
+- [x] PDF embeds mixed-raster groups as image XObjects with alpha mask support
+      where needed.
+- [x] PostScript / EPS embeds mixed-raster groups through deterministic
+      `colorimage` output.
+- [x] PGF embeds mixed-raster groups as self-contained pixel rectangles.
+
+#### 2.3.5 Clip, transform, and alpha correctness
+
+- [x] Replay active rectangular clips into mixed-raster surfaces before embedding
+      the resulting tile.
+- [x] Replay active path clips, including transformed SVG clip paths, into the
+      offscreen surface.
+- [x] Preserve transparent pixels outside active path clips; PDF coverage asserts
+      pixels outside the clip remain transparent in the embedded image.
+
+#### 2.3.6 Fixture and regression coverage
+
+- [x] Add core tests for explicit rasterization bracketing, DPI propagation,
+      common artist API coverage, auto-rasterization thresholds, and
+      path-effect fallback behavior.
+- [x] Add shared mixed-raster helper tests for high-DPI surface sizing and path
+      scaling.
+- [x] Add backend tests showing rasterized artists embed pixels/images while
+      surrounding vector content remains vector in SVG, PDF, PS, and PGF.
+- [ ] Add catalog golden / Matplotlib-reference fixtures that exercise the full
+      save pipeline for clip, transform, and alpha state across mixed
+      raster/vector output.
 
 **Exit criteria:**
 
 - [ ] Pattern fills, gradients, and path effects work uniformly across AGG,
       SVG, PDF, and Skia without backend-name conditionals.
-- [ ] `Artist.SetRasterized(true)` produces correct mixed-mode output on
+- [x] `Artist.SetRasterized(true)` produces correct mixed-mode output on
       every vector backend.
 - [ ] All effects have committed golden and Matplotlib-reference fixtures.
 

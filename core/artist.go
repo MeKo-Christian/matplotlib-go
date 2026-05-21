@@ -373,6 +373,8 @@ type Axes struct {
 	axesLocator    AxesLocator
 	positionManual bool
 
+	childAxes []*Axes
+
 	colorbarParent  *Axes
 	colorbarWidth   float64
 	colorbarPadding float64
@@ -2126,6 +2128,7 @@ func (a *Axes) newOverlayAxes() *Axes {
 	overlay.aspectMode = a.aspectMode
 	overlay.aspectValue = a.aspectValue
 	overlay.boxAspect = a.boxAspect
+	a.childAxes = append(a.childAxes, overlay)
 	return overlay
 }
 

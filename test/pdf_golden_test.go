@@ -83,6 +83,7 @@ func pdfGoldenIDs() []string {
 		"mathtext_inline_labels",
 		"imshow_clipped",
 		"imshow_transformed",
+		"mixed_raster_vector",
 	}
 }
 

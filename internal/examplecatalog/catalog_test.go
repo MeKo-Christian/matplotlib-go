@@ -80,6 +80,19 @@ func TestCatalogIncludesPhase3MathTextFixtures(t *testing.T) {
 	}
 }
 
+func TestCatalogIncludesPhase23MixedRasterVectorFixture(t *testing.T) {
+	c, ok := Lookup("mixed_raster_vector")
+	if !ok {
+		t.Fatal("missing Phase 2.3 mixed raster/vector parity catalog case")
+	}
+	if c.Topic != "raster" {
+		t.Fatalf("mixed_raster_vector topic = %q, want raster", c.Topic)
+	}
+	if c.SVGGoldenFamily != "mixed_raster" {
+		t.Fatalf("mixed_raster_vector SVGGoldenFamily = %q, want mixed_raster", c.SVGGoldenFamily)
+	}
+}
+
 func TestCatalogSplitsAGGNativeParityFixtures(t *testing.T) {
 	want := map[string][]string{
 		"large_scatter":     {"pathcollectionbatch"},

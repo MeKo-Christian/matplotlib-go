@@ -71,14 +71,6 @@ func computeFigureTextAlignment(fig *Figure, r render.Renderer, figureRect geom.
 		px := ax.adjustedLayout(fig)
 		ctx := newAxesDrawContext(ax, fig, figureRect, px)
 
-		if ax.Title != "" {
-			key := alignmentKey(AxisTop, spinePixelY(AxisTop, px))
-			extent := titleTopExtent(ax, r, ctx, px)
-			if current, ok := alignment.titleExtents[key]; !ok || extent < current {
-				alignment.titleExtents[key] = extent
-			}
-		}
-
 		if ax.XLabel != "" {
 			side := ax.effectiveXLabelSide()
 			key := alignmentKey(side, spinePixelY(side, px))
@@ -117,6 +109,23 @@ func alignmentKey(side AxisSide, coord float64) axisAlignmentKey {
 }
 
 func titleTopExtent(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect) float64 {
+	extent := titleTopExtentForAxes(ax, r, ctx, px)
+	if ax == nil || ax.figure == nil || ctx == nil {
+		return extent
+	}
+	for _, child := range ax.childAxes {
+		if child == nil {
+			continue
+		}
+		childPx := child.adjustedLayout(ax.figure)
+		childCtx := newAxesDrawContext(child, ax.figure, ctx.FigureRect, childPx)
+		childExtent := titleTopExtentForAxes(child, r, childCtx, childPx)
+		extent = math.Min(extent, childExtent)
+	}
+	return extent
+}
+
+func titleTopExtentForAxes(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect) float64 {
 	extent := px.Min.Y
 	for _, candidate := range []*Axis{ax.effectiveXAxis(), ax.effectiveTopAxis()} {
 		if candidate == nil || !candidate.ShowLabels {

@@ -15,6 +15,7 @@ func TestFigureReturnsPDFGoldenSubset(t *testing.T) {
 		"text_labels_strict",
 		"imshow_clipped",
 		"imshow_transformed",
+		"mixed_raster_vector",
 	}
 	for _, id := range ids {
 		id := id

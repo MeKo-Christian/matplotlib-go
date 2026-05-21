@@ -83,6 +83,7 @@ import (
 	example_matshow_basic "github.com/cwbudde/matplotlib-go/test/parity/matshow_basic"
 	example_mesh_contour_tri "github.com/cwbudde/matplotlib-go/test/parity/mesh_contour_tri"
 	example_mixed_collection "github.com/cwbudde/matplotlib-go/test/parity/mixed_collection"
+	example_mixed_raster_vector "github.com/cwbudde/matplotlib-go/test/parity/mixed_raster_vector"
 	example_mplot3d_bar3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_bar3d"
 	example_mplot3d_basic "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_basic"
 	example_mplot3d_fill_between3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_fill_between3d"
@@ -232,6 +233,7 @@ var renderByID = map[string]func() image.Image{
 	"colorbar_extensions":       example_colorbar_extensions.Render,
 	"large_scatter":             example_large_scatter.Render,
 	"mixed_collection":          example_mixed_collection.Render,
+	"mixed_raster_vector":       example_mixed_raster_vector.Render,
 	"quad_mesh":                 example_quad_mesh.Render,
 	"gouraud_triangles":         example_gouraud_triangles.Render,
 	"clip_path_batch":           example_clip_path_batch.Render,
@@ -269,6 +271,7 @@ var figureByID = map[string]func() *core.Figure{
 	"mathtext_inline_labels": example_mathtext_inline_labels.Plot,
 	"mplot3d_basic":          example_mplot3d_basic.Plot,
 	"mixed_collection":       example_mixed_collection.Plot,
+	"mixed_raster_vector":    example_mixed_raster_vector.Plot,
 	"spectrum_variants":      example_spectrum_variants.Plot,
 	"unstructured_showcase":  showcase_unstructured_showcase.Plot,
 	"imshow_clipped":         example_imshow_clipped.Plot,
