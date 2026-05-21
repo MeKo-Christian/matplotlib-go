@@ -68,6 +68,7 @@ type AnnotationOptions struct {
 
 // Text renders arbitrary text at a data-space position.
 type Text struct {
+	ArtistRasterization
 	Position geom.Pt
 	Content  string
 
@@ -87,6 +88,7 @@ type Text struct {
 
 // Annotation renders text offset from a data point with an arrow.
 type Annotation struct {
+	ArtistRasterization
 	Point   geom.Pt
 	Content string
 

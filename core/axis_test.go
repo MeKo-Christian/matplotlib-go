@@ -499,6 +499,7 @@ func TestAxes_TickParamsLocatorParamsAndMinorTicks(t *testing.T) {
 
 	length := 11.0
 	width := 2.25
+	minorWidth := 1.25
 	showLabels := false
 	color := render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1}
 	if err := axes.TickParams(TickParams{
@@ -511,8 +512,37 @@ func TestAxes_TickParamsLocatorParamsAndMinorTicks(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("TickParams: %v", err)
 	}
-	if axes.YAxisRight.Color != color || axes.YAxisRight.TickSize != length || axes.YAxisRight.LineWidth != width || axes.YAxisRight.ShowLabels {
+	if err := axes.TickParams(TickParams{
+		Axis:  "right",
+		Which: "minor",
+		Width: &minorWidth,
+	}); err != nil {
+		t.Fatalf("TickParams(minor width): %v", err)
+	}
+	if axes.YAxisRight.TickSize != length || axes.YAxisRight.ShowLabels {
 		t.Fatalf("tick params not applied to right axis: %+v", axes.YAxisRight)
+	}
+	if axes.YAxisRight.Color == color {
+		t.Fatalf("TickParams color should not recolor spine: %+v", axes.YAxisRight.Color)
+	}
+
+	axes.YAxisRight.Locator = staticLocator{5}
+	axes.YAxisRight.MinorLocator = staticLocator{5.5}
+	ctx := createTestDrawContext()
+	r := &recordingRenderer{}
+	axes.YAxisRight.Draw(r, ctx)
+	axes.YAxisRight.DrawTicks(r, ctx)
+	if len(r.pathCalls) != 3 {
+		t.Fatalf("expected spine, minor tick, and major tick path calls, got %d", len(r.pathCalls))
+	}
+	if got := r.pathCalls[0].paint.LineWidth; got != defaultAxisLineWidth {
+		t.Fatalf("spine line width = %v, want default %v", got, defaultAxisLineWidth)
+	}
+	if got := r.pathCalls[1].paint.LineWidth; got != minorWidth {
+		t.Fatalf("minor tick line width = %v, want %v", got, minorWidth)
+	}
+	if got := r.pathCalls[2].paint.LineWidth; got != width {
+		t.Fatalf("major tick line width = %v, want %v", got, width)
 	}
 
 	if err := axes.MinorticksOff("x"); err != nil {
@@ -597,6 +627,44 @@ func TestAxes_TickParamsAppliesDirection(t *testing.T) {
 
 	if axes.YAxis.TickDirection != TickDirectionInOut {
 		t.Fatalf("tick direction = %v, want %v", axes.YAxis.TickDirection, TickDirectionInOut)
+	}
+}
+
+func TestAxes_TickParamsColorsTicksAndLabelsNotSpine(t *testing.T) {
+	axis := NewXAxis()
+	axis.Locator = staticLocator{5}
+	axis.Formatter = ScalarFormatter{Prec: 0}
+	axes := &Axes{XAxis: axis}
+
+	tickColor := render.Color{R: 0.18, G: 0.42, B: 0.55, A: 1}
+	if err := axes.TickParams(TickParams{
+		Axis:  "bottom",
+		Which: "major",
+		Color: &tickColor,
+	}); err != nil {
+		t.Fatalf("TickParams(color): %v", err)
+	}
+
+	ctx := createTestDrawContext()
+	r := &textRecordingRenderer{}
+	axis.Draw(r, ctx)
+	axis.DrawTicks(r, ctx)
+	axis.DrawTickLabels(r, ctx)
+
+	if len(r.pathCalls) != 2 {
+		t.Fatalf("expected spine and tick path calls, got %d", len(r.pathCalls))
+	}
+	if got := r.pathCalls[0].paint.Stroke; got != (render.Color{R: 0, G: 0, B: 0, A: 1}) {
+		t.Fatalf("spine color = %+v, want default black", got)
+	}
+	if got := r.pathCalls[1].paint.Stroke; got != tickColor {
+		t.Fatalf("tick color = %+v, want %+v", got, tickColor)
+	}
+	if len(r.textColors) != 1 {
+		t.Fatalf("tick label draw count = %d, want 1", len(r.textColors))
+	}
+	if got := r.textColors[0]; got != tickColor {
+		t.Fatalf("tick label color = %+v, want %+v", got, tickColor)
 	}
 }
 
@@ -764,6 +832,9 @@ func TestAxes_SecondaryAxesUseLinkedScale(t *testing.T) {
 	if secondaryX.XAxisTop == nil {
 		t.Fatal("SecondaryXAxis should expose a top x-axis")
 	}
+	if secondaryX.XAxisTop.ShowSpine {
+		t.Fatal("SecondaryXAxis should not draw an overlay spine over the parent frame")
+	}
 
 	secondaryY, err := ax.SecondaryYAxis(AxisRight,
 		func(v float64) float64 { return v * 1000 },
@@ -778,6 +849,9 @@ func TestAxes_SecondaryAxesUseLinkedScale(t *testing.T) {
 	}
 	if secondaryY.YAxisRight == nil {
 		t.Fatal("SecondaryYAxis should expose a right y-axis")
+	}
+	if secondaryY.YAxisRight.ShowSpine {
+		t.Fatal("SecondaryYAxis should not draw an overlay spine over the parent frame")
 	}
 }
 

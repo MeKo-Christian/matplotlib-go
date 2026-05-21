@@ -15,6 +15,7 @@ const (
 
 // Fill2D creates filled areas between curves or from curves to baselines.
 type Fill2D struct {
+	ArtistRasterization
 	X           []float64       // independent coordinates (x for vertical fills, y for horizontal fills)
 	Y1          []float64       // first dependent curve (y for vertical fills, x for horizontal fills)
 	Y2          []float64       // second dependent curve, if nil uses Baseline

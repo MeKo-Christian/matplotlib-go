@@ -26,6 +26,7 @@ const (
 // In Go this acts as the reusable embedded base for concrete patch artists
 // rather than a directly-instantiable drawable type.
 type Patch struct {
+	ArtistRasterization
 	FaceColor render.Color
 	EdgeColor render.Color
 	EdgeWidth float64

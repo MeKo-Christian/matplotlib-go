@@ -15,6 +15,7 @@ const (
 
 // Bar2D renders bar charts using filled rectangles.
 type Bar2D struct {
+	ArtistRasterization
 	X           []float64      // x positions (centers of bars for vertical, positions for horizontal)
 	Heights     []float64      // heights/lengths of bars (Y values for vertical, X values for horizontal)
 	Widths      []float64      // bar widths, if nil uses Width

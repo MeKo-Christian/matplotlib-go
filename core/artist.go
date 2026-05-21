@@ -1281,10 +1281,21 @@ func (a *Axes) TickParams(params TickParams) error {
 			continue
 		}
 		if params.Color != nil {
-			axis.Color = *params.Color
+			tickColor := *params.Color
+			labelColor := *params.Color
+			axis.TickColor = &tickColor
+			axis.TickLabelColor = &labelColor
 		}
 		if params.Width != nil {
-			axis.LineWidth = *params.Width
+			switch which {
+			case "major":
+				axis.TickLineWidth = *params.Width
+			case "minor":
+				axis.MinorTickLineWidth = *params.Width
+			case "both":
+				axis.TickLineWidth = *params.Width
+				axis.MinorTickLineWidth = *params.Width
+			}
 		}
 		if params.ShowTicks != nil {
 			axis.ShowTicks = *params.ShowTicks
@@ -2144,10 +2155,15 @@ func (a *Axes) newSecondaryAxes(isX bool, side AxisSide, forward func(float64) f
 			overlay.XAxis.ShowTicks = false
 			overlay.XAxis.ShowLabels = false
 		}
+		var secondaryAxis *Axis
 		if side == AxisTop {
-			overlay.TopAxis()
+			secondaryAxis = overlay.TopAxis()
 		} else {
 			overlay.XAxis = cloneAxisForSide(a.XAxis, AxisBottom)
+			secondaryAxis = overlay.XAxis
+		}
+		if secondaryAxis != nil {
+			secondaryAxis.ShowSpine = false
 		}
 	} else {
 		overlay.YScale = linkedSecondaryScale{parent: a, isX: false, forward: forward, inverse: inverse}
@@ -2162,10 +2178,15 @@ func (a *Axes) newSecondaryAxes(isX bool, side AxisSide, forward func(float64) f
 			overlay.YAxis.ShowTicks = false
 			overlay.YAxis.ShowLabels = false
 		}
+		var secondaryAxis *Axis
 		if side == AxisRight {
-			overlay.RightAxis()
+			secondaryAxis = overlay.RightAxis()
 		} else {
 			overlay.YAxis = cloneAxisForSide(a.YAxis, AxisLeft)
+			secondaryAxis = overlay.YAxis
+		}
+		if secondaryAxis != nil {
+			secondaryAxis.ShowSpine = false
 		}
 	}
 	return overlay, nil

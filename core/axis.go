@@ -68,33 +68,37 @@ const (
 
 // Axis renders axis spines, ticks, and labels for a single dimension.
 type Axis struct {
-	Side              AxisSide     // which side of the plot
-	Locator           Locator      // major tick position calculator
-	MinorLocator      Locator      // minor tick position calculator (nil = no minor ticks)
-	Formatter         Formatter    // major tick label formatter
-	MinorFormatter    Formatter    // optional minor tick label formatter
-	Color             render.Color // axis line and tick color
-	LineWidth         float64      // width of axis line and ticks
-	LineCap           render.LineCap
-	LineJoin          render.LineJoin
-	TickLineCap       render.LineCap
-	TickLineJoin      render.LineJoin
-	Dashes            []float64
-	TickSize          float64 // length of major tick marks (in pixels)
-	MinorTickSize     float64 // length of minor tick marks (in pixels); 0 uses TickSize*0.6
-	MajorTickCount    int     // target major tick count for automatic locators
-	MinorTickCount    int     // target minor tick count for automatic locators
-	TickDirection     TickDirection
-	SpinePositionMode AxisSpinePositionMode
-	SpinePosition     float64
-	ShowSpine         bool // whether to draw the axis line
-	ShowTicks         bool // whether to draw major/minor tick marks
-	ShowLabels        bool // whether to draw major tick labels
-	ShowMinorLabels   bool // whether to draw minor tick labels
-	MajorLabelStyle   TickLabelStyle
-	MinorLabelStyle   TickLabelStyle
-	ExtraTickLevels   []TickLevel
-	z                 float64 // z-order
+	Side               AxisSide     // which side of the plot
+	Locator            Locator      // major tick position calculator
+	MinorLocator       Locator      // minor tick position calculator (nil = no minor ticks)
+	Formatter          Formatter    // major tick label formatter
+	MinorFormatter     Formatter    // optional minor tick label formatter
+	Color              render.Color // axis spine color, and tick/label color unless overridden
+	TickColor          *render.Color
+	TickLabelColor     *render.Color
+	LineWidth          float64 // width of axis spine
+	LineCap            render.LineCap
+	LineJoin           render.LineJoin
+	TickLineCap        render.LineCap
+	TickLineJoin       render.LineJoin
+	TickLineWidth      float64
+	MinorTickLineWidth float64
+	Dashes             []float64
+	TickSize           float64 // length of major tick marks (in pixels)
+	MinorTickSize      float64 // length of minor tick marks (in pixels); 0 uses TickSize*0.6
+	MajorTickCount     int     // target major tick count for automatic locators
+	MinorTickCount     int     // target minor tick count for automatic locators
+	TickDirection      TickDirection
+	SpinePositionMode  AxisSpinePositionMode
+	SpinePosition      float64
+	ShowSpine          bool // whether to draw the axis line
+	ShowTicks          bool // whether to draw major/minor tick marks
+	ShowLabels         bool // whether to draw major tick labels
+	ShowMinorLabels    bool // whether to draw minor tick labels
+	MajorLabelStyle    TickLabelStyle
+	MinorLabelStyle    TickLabelStyle
+	ExtraTickLevels    []TickLevel
+	z                  float64 // z-order
 }
 
 // NewXAxis creates an axis for the bottom (x-axis).
@@ -210,7 +214,7 @@ func (a *Axis) DrawTicks(r render.Renderer, ctx *DrawContext) {
 		}
 		size := tickLevelSize(level, a.TickSize)
 		for _, tickValue := range ticks {
-			a.drawSingleTick(r, ctx, tickValue, size, isXAxis)
+			a.drawSingleTick(r, ctx, tickValue, size, a.tickLineWidth(), isXAxis)
 		}
 	}
 }
@@ -261,7 +265,7 @@ func spinePixelEndpoints(side AxisSide, px geom.Rect) (geom.Pt, geom.Pt) {
 // drawTicks draws tick marks at the specified positions.
 func (a *Axis) drawTicks(r render.Renderer, ctx *DrawContext, ticks []float64, isXAxis bool) {
 	for _, tickValue := range ticks {
-		a.drawSingleTick(r, ctx, tickValue, a.TickSize, isXAxis)
+		a.drawSingleTick(r, ctx, tickValue, a.TickSize, a.tickLineWidth(), isXAxis)
 	}
 }
 
@@ -272,12 +276,12 @@ func (a *Axis) drawMinorTicks(r render.Renderer, ctx *DrawContext, ticks []float
 		sz = a.TickSize * 0.6
 	}
 	for _, tickValue := range ticks {
-		a.drawSingleTick(r, ctx, tickValue, sz, isXAxis)
+		a.drawSingleTick(r, ctx, tickValue, sz, a.minorTickLineWidth(), isXAxis)
 	}
 }
 
 // drawSingleTick draws a single tick mark pointing outward from the plot area.
-func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, tickSize float64, isXAxis bool) {
+func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, tickSize, lineWidth float64, isXAxis bool) {
 	var p1, p2 geom.Pt
 
 	if isXAxis {
@@ -305,8 +309,8 @@ func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, ti
 
 	// Draw the tick
 	paint := render.Paint{
-		LineWidth: a.LineWidth,
-		Stroke:    a.Color,
+		LineWidth: lineWidth,
+		Stroke:    a.tickColor(),
 		LineCap:   a.TickLineCap,
 		LineJoin:  a.TickLineJoin,
 		Dashes:    styleCloneDashes(a.Dashes),
@@ -553,11 +557,11 @@ func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float
 		if style.Rotation != 0 && rotRen != nil {
 			hAlign, vAlign := resolvedTickLabelLayoutAlignments(a.Side, style, isXAxis)
 			angle := style.Rotation * math.Pi / 180.0
-			drawDisplayTextRotated(rotRen, label, tickLabelRotationAnchor(labelPos, layout, hAlign, vAlign, angle), fontSize, angle, a.Color, fontKey, ctx.RC.UseTeX)
+			drawDisplayTextRotated(rotRen, label, tickLabelRotationAnchor(labelPos, layout, hAlign, vAlign, angle), fontSize, angle, a.tickLabelColor(), fontKey, ctx.RC.UseTeX)
 			continue
 		}
 
-		drawDisplayText(textRen, label, labelPos, fontSize, a.Color, fontKey, ctx.RC.UseTeX)
+		drawDisplayText(textRen, label, labelPos, fontSize, a.tickLabelColor(), fontKey, ctx.RC.UseTeX)
 	}
 }
 
@@ -930,20 +934,21 @@ func (a *Axis) drawPolarTicks(r render.Renderer, ctx *DrawContext) {
 
 	switch a.Side {
 	case AxisBottom, AxisTop:
-		a.drawPolarThetaTicks(r, ctx, polarThetaTicks(a, ctx.DataToPixel.XScale, true), a.minorTickSize())
-		a.drawPolarThetaTicks(r, ctx, polarThetaTicks(a, ctx.DataToPixel.XScale, false), a.TickSize)
+		a.drawPolarThetaTicks(r, ctx, polarThetaTicks(a, ctx.DataToPixel.XScale, true), a.minorTickSize(), a.minorTickLineWidth())
+		a.drawPolarThetaTicks(r, ctx, polarThetaTicks(a, ctx.DataToPixel.XScale, false), a.TickSize, a.tickLineWidth())
 	case AxisLeft, AxisRight:
-		a.drawPolarRadialTicks(r, ctx, polarRadialTicks(a, ctx.DataToPixel.YScale, true), a.minorTickSize())
-		a.drawPolarRadialTicks(r, ctx, polarRadialTicks(a, ctx.DataToPixel.YScale, false), a.TickSize)
+		a.drawPolarRadialTicks(r, ctx, polarRadialTicks(a, ctx.DataToPixel.YScale, true), a.minorTickSize(), a.minorTickLineWidth())
+		a.drawPolarRadialTicks(r, ctx, polarRadialTicks(a, ctx.DataToPixel.YScale, false), a.TickSize, a.tickLineWidth())
 	}
 }
 
-func (a *Axis) drawPolarThetaTicks(r render.Renderer, ctx *DrawContext, ticks []float64, tickSize float64) {
+func (a *Axis) drawPolarThetaTicks(r render.Renderer, ctx *DrawContext, ticks []float64, tickSize, lineWidth float64) {
 	if len(ticks) == 0 || tickSize <= 0 {
 		return
 	}
 	center, radius := polarCenterAndRadius(ctx.Clip)
 	paint := axisStrokePaint(a, true)
+	paint.LineWidth = lineWidth
 
 	for _, tick := range ticks {
 		angle := polarAngleForTheta(ctx.Projection, ctx.DataToPixel.XScale, tick)
@@ -954,12 +959,13 @@ func (a *Axis) drawPolarThetaTicks(r render.Renderer, ctx *DrawContext, ticks []
 	}
 }
 
-func (a *Axis) drawPolarRadialTicks(r render.Renderer, ctx *DrawContext, ticks []float64, tickSize float64) {
+func (a *Axis) drawPolarRadialTicks(r render.Renderer, ctx *DrawContext, ticks []float64, tickSize, lineWidth float64) {
 	if len(ticks) == 0 || tickSize <= 0 {
 		return
 	}
 	center, outerRadius := polarCenterAndRadius(ctx.Clip)
 	paint := axisStrokePaint(a, true)
+	paint.LineWidth = lineWidth
 	labelAngle := polarRadialLabelAngleForProjection(ctx.Projection)
 
 	for _, tick := range ticks {
@@ -1008,17 +1014,59 @@ func axisStrokePaint(a *Axis, forTicks bool) render.Paint {
 	}
 	lineCap := a.LineCap
 	join := a.LineJoin
+	stroke := a.Color
 	if forTicks {
 		lineCap = a.TickLineCap
 		join = a.TickLineJoin
+		stroke = a.tickColor()
 	}
 	return render.Paint{
 		LineWidth: a.LineWidth,
-		Stroke:    a.Color,
+		Stroke:    stroke,
 		LineCap:   lineCap,
 		LineJoin:  join,
 		Dashes:    styleCloneDashes(a.Dashes),
 	}
+}
+
+func (a *Axis) tickColor() render.Color {
+	if a == nil {
+		return render.Color{}
+	}
+	if a.TickColor != nil {
+		return *a.TickColor
+	}
+	return a.Color
+}
+
+func (a *Axis) tickLabelColor() render.Color {
+	if a == nil {
+		return render.Color{}
+	}
+	if a.TickLabelColor != nil {
+		return *a.TickLabelColor
+	}
+	return a.tickColor()
+}
+
+func (a *Axis) tickLineWidth() float64 {
+	if a == nil {
+		return 0
+	}
+	if a.TickLineWidth > 0 {
+		return a.TickLineWidth
+	}
+	return a.LineWidth
+}
+
+func (a *Axis) minorTickLineWidth() float64 {
+	if a == nil {
+		return 0
+	}
+	if a.MinorTickLineWidth > 0 {
+		return a.MinorTickLineWidth
+	}
+	return a.tickLineWidth()
 }
 
 func (a *Axis) drawPolarThetaTickLabels(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64) {
@@ -1041,7 +1089,7 @@ func (a *Axis) drawPolarThetaTickLabels(textRen render.TextDrawer, r render.Rend
 		angle := polarAngleForTheta(ctx.Projection, ctx.DataToPixel.XScale, tick)
 		anchor := polarPixelPoint(center, radius+labelPadPx, angle)
 		hAlign, vAlign := polarTickLabelAlignments(angle)
-		drawDisplayText(textRen, label, alignedSingleLineOrigin(anchor, layout, hAlign, vAlign), fontSize, a.Color, fontKey, ctx.RC.UseTeX)
+		drawDisplayText(textRen, label, alignedSingleLineOrigin(anchor, layout, hAlign, vAlign), fontSize, a.tickLabelColor(), fontKey, ctx.RC.UseTeX)
 	}
 }
 
@@ -1066,7 +1114,7 @@ func (a *Axis) drawPolarRadialTickLabels(textRen render.TextDrawer, r render.Ren
 		radius := outerRadius * ctx.DataToPixel.YScale.Fwd(tick)
 		anchor := polarPixelPoint(center, radius+labelPadPx, labelAngle)
 		hAlign, vAlign := polarTickLabelAlignments(labelAngle)
-		drawDisplayText(textRen, label, alignedSingleLineOrigin(anchor, layout, hAlign, vAlign), fontSize, a.Color, fontKey, ctx.RC.UseTeX)
+		drawDisplayText(textRen, label, alignedSingleLineOrigin(anchor, layout, hAlign, vAlign), fontSize, a.tickLabelColor(), fontKey, ctx.RC.UseTeX)
 	}
 }
 

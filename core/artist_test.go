@@ -154,6 +154,12 @@ func TestCommonArtistsExposeRasterizedFlag(t *testing.T) {
 	var _ rasterizable = (*Image2D)(nil)
 	var _ rasterizable = (*ContourSet)(nil)
 	var _ rasterizable = (*Collection)(nil)
+	var _ rasterizable = (*Bar2D)(nil)
+	var _ rasterizable = (*Fill2D)(nil)
+	var _ rasterizable = (*Patch)(nil)
+	var _ rasterizable = (*Rectangle)(nil)
+	var _ rasterizable = (*Text)(nil)
+	var _ rasterizable = (*Annotation)(nil)
 }
 
 func TestDenseScatterAutoRasterizesWithFigureDPI(t *testing.T) {
