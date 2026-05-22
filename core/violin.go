@@ -177,13 +177,14 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 	}
 	a.AddCollection(container.Bodies)
 
+	summaryCap := violinSummaryLineCap(side)
 	if len(meanSegments) > 0 {
 		container.Means = &LineCollection{
 			Collection: Collection{Alpha: 1, z: 2.3},
 			Segments:   meanSegments,
 			Color:      lineColor,
 			LineWidth:  math.Max(cfg.EdgeWidth, 1.25),
-			LineCap:    render.CapRound,
+			LineCap:    summaryCap,
 		}
 		a.AddCollection(container.Means)
 	}
@@ -193,7 +194,7 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 			Segments:   medianSegments,
 			Color:      lineColor,
 			LineWidth:  math.Max(cfg.EdgeWidth, 1.5),
-			LineCap:    render.CapRound,
+			LineCap:    summaryCap,
 		}
 		a.AddCollection(container.Medians)
 	}
@@ -203,7 +204,7 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 			Segments:   quantileSegments,
 			Color:      lineColor,
 			LineWidth:  math.Max(cfg.EdgeWidth, 1.25),
-			LineCap:    render.CapRound,
+			LineCap:    summaryCap,
 		}
 		a.AddCollection(container.Quantiles)
 	}
@@ -213,7 +214,7 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 			Segments:   extremaSegments,
 			Color:      lineColor,
 			LineWidth:  math.Max(cfg.EdgeWidth*0.9, 1),
-			LineCap:    render.CapRound,
+			LineCap:    summaryCap,
 		}
 		a.AddCollection(container.Extrema)
 	}
@@ -348,6 +349,15 @@ func violinPerpSegment(position, width, value float64, orientation, side string)
 		low = position
 	}
 	return []geom.Pt{violinPoint(low, value, orientation), violinPoint(high, value, orientation)}
+}
+
+func violinSummaryLineCap(side string) render.LineCap {
+	if side == "low" || side == "high" {
+		// Matplotlib switches one-sided violins to capstyle='projecting'
+		// for the hlines/vlines summary artists in axes/_axes.py.
+		return render.CapSquare
+	}
+	return render.CapRound
 }
 
 func violinParallelSegment(position, minValue, maxValue float64, orientation string) []geom.Pt {

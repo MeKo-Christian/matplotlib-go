@@ -843,28 +843,32 @@ func horizontalHatchPath(bounds geom.Rect, spacing float64) geom.Path {
 
 func slashHatchPath(bounds geom.Rect, spacing float64) geom.Path {
 	var path geom.Path
-	width := bounds.W()
-	height := bounds.H()
-	extent := width + height + 2*spacing
-	start := bounds.Min.X - height - spacing
-	end := bounds.Max.X + spacing
-	for x := start; x <= end; x += spacing {
-		path.MoveTo(geom.Pt{X: x, Y: bounds.Max.Y + spacing})
-		path.LineTo(geom.Pt{X: x + extent, Y: bounds.Min.Y - spacing})
+	span := bounds.W() + bounds.H() + 2*spacing
+	x0 := bounds.Min.X - span
+	x1 := bounds.Max.X + span
+	// Matplotlib AGG draws the unit-square hatch into an origin-anchored
+	// DPI-sized tile and repeats that tile over the clipped patch.
+	minC := bounds.Min.X + bounds.Min.Y - span
+	maxC := bounds.Max.X + bounds.Max.Y + span
+	start := math.Floor(minC/spacing) * spacing
+	for c := start; c <= maxC; c += spacing {
+		path.MoveTo(geom.Pt{X: x0, Y: c - x0})
+		path.LineTo(geom.Pt{X: x1, Y: c - x1})
 	}
 	return path
 }
 
 func backslashHatchPath(bounds geom.Rect, spacing float64) geom.Path {
 	var path geom.Path
-	width := bounds.W()
-	height := bounds.H()
-	extent := width + height + 2*spacing
-	start := bounds.Min.X - height - spacing
-	end := bounds.Max.X + spacing
-	for x := start; x <= end; x += spacing {
-		path.MoveTo(geom.Pt{X: x, Y: bounds.Min.Y - spacing})
-		path.LineTo(geom.Pt{X: x + extent, Y: bounds.Max.Y + spacing})
+	span := bounds.W() + bounds.H() + 2*spacing
+	x0 := bounds.Min.X - span
+	x1 := bounds.Max.X + span
+	minC := bounds.Min.Y - bounds.Max.X - span
+	maxC := bounds.Max.Y - bounds.Min.X + span
+	start := math.Floor(minC/spacing) * spacing
+	for c := start; c <= maxC; c += spacing {
+		path.MoveTo(geom.Pt{X: x0, Y: x0 + c})
+		path.LineTo(geom.Pt{X: x1, Y: x1 + c})
 	}
 	return path
 }

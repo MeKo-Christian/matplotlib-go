@@ -401,10 +401,17 @@ func slashHatchPath(bounds geom.Rect, spacing float64) geom.Path {
 		return geom.Path{}
 	}
 	path := geom.Path{}
-	height := bounds.H()
-	for x := bounds.Min.X - height; x <= bounds.Max.X+spacing; x += spacing {
-		path.MoveTo(geom.Pt{X: x, Y: bounds.Max.Y})
-		path.LineTo(geom.Pt{X: x + height, Y: bounds.Min.Y})
+	span := bounds.W() + bounds.H() + 2*spacing
+	x0 := bounds.Min.X - span
+	x1 := bounds.Max.X + span
+	// Matplotlib AGG draws the hatch path into an origin-anchored DPI-sized
+	// tile and repeats it, so diagonal hatch phase is global, not patch-local.
+	minC := bounds.Min.X + bounds.Min.Y - span
+	maxC := bounds.Max.X + bounds.Max.Y + span
+	start := math.Floor(minC/spacing) * spacing
+	for c := start; c <= maxC; c += spacing {
+		path.MoveTo(geom.Pt{X: x0, Y: c - x0})
+		path.LineTo(geom.Pt{X: x1, Y: c - x1})
 	}
 	return path
 }
@@ -414,10 +421,15 @@ func backslashHatchPath(bounds geom.Rect, spacing float64) geom.Path {
 		return geom.Path{}
 	}
 	path := geom.Path{}
-	height := bounds.H()
-	for x := bounds.Min.X; x <= bounds.Max.X+height+spacing; x += spacing {
-		path.MoveTo(geom.Pt{X: x, Y: bounds.Min.Y})
-		path.LineTo(geom.Pt{X: x + height, Y: bounds.Max.Y})
+	span := bounds.W() + bounds.H() + 2*spacing
+	x0 := bounds.Min.X - span
+	x1 := bounds.Max.X + span
+	minC := bounds.Min.Y - bounds.Max.X - span
+	maxC := bounds.Max.Y - bounds.Min.X + span
+	start := math.Floor(minC/spacing) * spacing
+	for c := start; c <= maxC; c += spacing {
+		path.MoveTo(geom.Pt{X: x0, Y: x0 + c})
+		path.LineTo(geom.Pt{X: x1, Y: x1 + c})
 	}
 	return path
 }

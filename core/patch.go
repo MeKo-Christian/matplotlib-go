@@ -179,7 +179,7 @@ func (p *Patch) resolvedHatchColor() render.Color {
 
 func (p *Patch) resolvedHatchWidth() float64 {
 	if p == nil || p.HatchWidth <= 0 {
-		return 100.0 / 72.0
+		return 1
 	}
 	return p.HatchWidth
 }

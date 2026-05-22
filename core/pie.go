@@ -170,7 +170,10 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 			shadow := &Wedge{
 				Patch: Patch{
 					FaceColor: shadowColor,
-					EdgeColor: render.Color{},
+					// Matplotlib patches.Shadow updates both facecolor and
+					// edgecolor to the darkened patch color.
+					EdgeColor: shadowColor,
+					EdgeWidth: cfg.LineWidth,
 					Alpha:     1,
 					Label:     "_nolegend_",
 					z:         1.8,
