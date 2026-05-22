@@ -917,11 +917,13 @@ func (a *Axes) BoxPlots(datasets [][]float64, opts ...BoxPlotsOptions) []*BoxPlo
 	}
 
 	boxes := make([]*BoxPlot2D, 0, len(datasets))
+	positions := make([]float64, 0, len(datasets))
 	for i, data := range datasets {
 		position := float64(i + 1)
 		if i < len(opt.Positions) {
 			position = opt.Positions[i]
 		}
+		positions = append(positions, position)
 
 		boxOpt := BoxPlotOptions{
 			Position:           &position,
@@ -963,6 +965,11 @@ func (a *Axes) BoxPlots(datasets [][]float64, opts ...BoxPlotsOptions) []*BoxPlo
 		if box := a.BoxPlot(data, boxOpt); box != nil {
 			boxes = append(boxes, box)
 		}
+	}
+	if len(positions) > 0 && a.XAxis != nil {
+		// Matplotlib boxplot(..., manage_ticks=True) places x ticks at the box
+		// positions by default.
+		a.XAxis.Locator = FixedLocator{TicksList: positions}
 	}
 	return boxes
 }

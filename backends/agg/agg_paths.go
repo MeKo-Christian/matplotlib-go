@@ -767,7 +767,7 @@ func (r *Renderer) drawNativeHatch(clipPath geom.Path, paint *render.Paint) {
 			Stroke:    color,
 			LineWidth: paint.HatchLineWidth,
 			LineJoin:  render.JoinRound,
-			LineCap:   render.CapRound,
+			LineCap:   render.CapSquare,
 			Antialias: paint.Antialias,
 			Snap:      render.SnapOff,
 		}
