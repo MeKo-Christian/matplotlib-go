@@ -178,12 +178,13 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 	a.AddCollection(container.Bodies)
 
 	summaryCap := violinSummaryLineCap(side)
+	summaryLineWidth := pointsToPixels(a.figure.RC, 1.5)
 	if len(meanSegments) > 0 {
 		container.Means = &LineCollection{
 			Collection: Collection{Alpha: 1, z: 2.3},
 			Segments:   meanSegments,
 			Color:      lineColor,
-			LineWidth:  math.Max(cfg.EdgeWidth, 1.25),
+			LineWidth:  summaryLineWidth,
 			LineCap:    summaryCap,
 		}
 		a.AddCollection(container.Means)
@@ -193,7 +194,7 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 			Collection: Collection{Alpha: 1, z: 2.35},
 			Segments:   medianSegments,
 			Color:      lineColor,
-			LineWidth:  math.Max(cfg.EdgeWidth, 1.5),
+			LineWidth:  summaryLineWidth,
 			LineCap:    summaryCap,
 		}
 		a.AddCollection(container.Medians)
@@ -203,7 +204,7 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 			Collection: Collection{Alpha: 1, z: 2.32},
 			Segments:   quantileSegments,
 			Color:      lineColor,
-			LineWidth:  math.Max(cfg.EdgeWidth, 1.25),
+			LineWidth:  summaryLineWidth,
 			LineCap:    summaryCap,
 		}
 		a.AddCollection(container.Quantiles)
@@ -213,7 +214,7 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 			Collection: Collection{Alpha: 1, z: 2.1},
 			Segments:   extremaSegments,
 			Color:      lineColor,
-			LineWidth:  math.Max(cfg.EdgeWidth*0.9, 1),
+			LineWidth:  summaryLineWidth,
 			LineCap:    summaryCap,
 		}
 		a.AddCollection(container.Extrema)

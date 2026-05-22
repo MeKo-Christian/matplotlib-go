@@ -213,11 +213,13 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 		if label := stringAt("", cfg.Labels, i); label != "" {
 			labelPt := piePoint(wedge.Center, cfg.Radius*cfg.LabelDistance, mid)
 			clipOn := false
+			labelHAlign := pieAlign(mid)
+			labelVAlign := TextVAlignMiddle
 			container.LabelAngles = append(container.LabelAngles, pieLabelRotation(mid, cfg.RotateLabels))
 			container.Labels = append(container.Labels, a.Text(labelPt.X, labelPt.Y, label, TextOptions{
 				Coords: cfg.Coords,
-				HAlign: pieAlign(mid),
-				VAlign: TextVAlignMiddle,
+				HAlign: labelHAlign,
+				VAlign: labelVAlign,
 				Angle:  pieLabelRotation(mid, cfg.RotateLabels),
 				ClipOn: &clipOn,
 			}))
@@ -280,14 +282,23 @@ func (a *Axes) PieLabel(container *PieContainer, labels []string, opts ...PieLab
 		mid := (wedge.Theta1 + wedge.Theta2) / 2
 		pt := piePoint(wedge.Center, wedge.Radius*cfg.Distance, mid)
 		clipOn := false
-		align := pieAlign(mid)
-		if strings.EqualFold(cfg.Alignment, "center") {
-			align = TextAlignCenter
+		alignMode := strings.ToLower(strings.TrimSpace(cfg.Alignment))
+		if alignMode == "" || alignMode == "auto" {
+			if cfg.Distance > 1 {
+				alignMode = "outer"
+			} else {
+				alignMode = "center"
+			}
+		}
+		hAlign := TextAlignCenter
+		vAlign := TextVAlignMiddle
+		if alignMode == "outer" {
+			hAlign, vAlign = pieOuterLabelAlignment(pt, cfg.Rotate)
 		}
 		txt := a.Text(pt.X, pt.Y, label, TextOptions{
 			Coords: cfg.Coords,
-			HAlign: align,
-			VAlign: TextVAlignMiddle,
+			HAlign: hAlign,
+			VAlign: vAlign,
 			Angle:  pieLabelRotation(mid, cfg.Rotate),
 			ClipOn: &clipOn,
 		})
@@ -407,6 +418,23 @@ func pieAlign(angleDeg float64) TextAlign {
 	default:
 		return TextAlignCenter
 	}
+}
+
+func pieOuterLabelAlignment(pt geom.Pt, rotate bool) (TextAlign, TextVerticalAlign) {
+	// Matplotlib pie_label(alignment="outer") aligns horizontally away
+	// from x=0 and, when rotated, vertically away from y=0.
+	hAlign := TextAlignRight
+	if pt.X > 0 {
+		hAlign = TextAlignLeft
+	}
+	vAlign := TextVAlignMiddle
+	if rotate {
+		vAlign = TextVAlignTop
+		if pt.Y > 0 {
+			vAlign = TextVAlignBottom
+		}
+	}
+	return hAlign, vAlign
 }
 
 func pieLabelRotation(angleDeg float64, enabled bool) float64 {

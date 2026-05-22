@@ -763,6 +763,15 @@ func (r *Renderer) drawNativeHatch(clipPath geom.Path, paint *render.Paint) {
 		if paint.HatchSpacing > 0 {
 			spacing = math.Max(2, paint.HatchSpacing/float64(count))
 		}
+		if pattern == '/' || pattern == '\\' || pattern == 'x' || pattern == 'X' {
+			dpi := float64(r.resolution)
+			if dpi <= 0 {
+				dpi = 72
+			}
+			// Matplotlib hatch.py creates diagonal hatches with density lines
+			// in a DPI-sized unit tile; this is their display-space phase spacing.
+			spacing = math.Max(2, dpi/(3*float64(count)))
+		}
 		hatchPaint := render.Paint{
 			Stroke:    color,
 			LineWidth: paint.HatchLineWidth,
