@@ -76,9 +76,9 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	base := colorbarBaseRect(parent)
 	width := resolvedColorbarWidth(f, base, cfg.Width, cfg.Aspect)
 	padding := resolvedColorbarLayoutPadding(f, base, cfg.Padding)
-	outside := colorbarUsesConstrainedOutsideSlot(f, parent)
-	parent.RectFraction = colorbarParentRect(base, width, padding, outside)
-	slotLeft := colorbarSlotLeft(base, width, outside)
+	useResolvedSlot := colorbarUsesResolvedSlot(f, parent)
+	parent.RectFraction = colorbarParentRect(base, width, padding, useResolvedSlot)
+	slotLeft := colorbarSlotLeft(base, width, useResolvedSlot)
 	rect := geom.Rect{
 		Min: geom.Pt{
 			X: slotLeft,
@@ -144,7 +144,11 @@ func resolvedColorbarPadding(base geom.Rect, padding float64) float64 {
 }
 
 func resolvedColorbarLayoutPadding(fig *Figure, base geom.Rect, padding float64) float64 {
-	return resolvedColorbarPadding(base, padding)
+	resolved := resolvedColorbarPadding(base, padding)
+	if padding > 0 || fig == nil || fig.layoutEngine != LayoutEngineConstrained || fig.SizePx.X <= 0 {
+		return resolved
+	}
+	return resolved + layoutPadPx(fig, LayoutEngineConstrained)/fig.SizePx.X
 }
 
 func resolvedColorbarAspect(aspect float64) float64 {
@@ -169,20 +173,12 @@ func resolvedColorbarWidth(fig *Figure, base geom.Rect, width, aspect float64) f
 	return math.Min(fractionWidth, aspectWidth)
 }
 
-func colorbarParentRect(base geom.Rect, width, padding float64, outside bool) geom.Rect {
-	if outside {
-		shrunk := base
-		shrunk.Max.X = base.Max.X - width - padding
-		if shrunk.Max.X <= shrunk.Min.X {
-			return base
-		}
-		return shrunk
-	}
+func colorbarParentRect(base geom.Rect, width, padding float64, useResolvedSlot bool) geom.Rect {
 	if padding < 0 {
 		return base
 	}
 	shrunk := base
-	right := colorbarSlotLeft(base, width, false) - padding
+	right := colorbarSlotLeft(base, width, useResolvedSlot) - padding
 	if right <= base.Min.X {
 		return shrunk
 	}
@@ -190,14 +186,14 @@ func colorbarParentRect(base geom.Rect, width, padding float64, outside bool) ge
 	return shrunk
 }
 
-func colorbarSlotLeft(base geom.Rect, width float64, outside bool) float64 {
-	if outside {
-		return base.Max.X - width*0.5
+func colorbarSlotLeft(base geom.Rect, width float64, useResolvedSlot bool) float64 {
+	if !useResolvedSlot {
+		return base.Max.X - base.W()*defaultColorbarFraction
 	}
-	return base.Max.X - base.W()*defaultColorbarFraction
+	return base.Max.X - width
 }
 
-func colorbarUsesConstrainedOutsideSlot(fig *Figure, parent *Axes) bool {
+func colorbarUsesResolvedSlot(fig *Figure, parent *Axes) bool {
 	return fig != nil && fig.layoutEngine == LayoutEngineConstrained && parent != nil && parent.subplotSpec != nil
 }
 
