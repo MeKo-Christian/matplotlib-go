@@ -13,10 +13,19 @@ import (
 func main() {
 	outputDir := flag.String("output-dir", filepath.Join("testdata", "_artifacts", "webdemo", "go"), "Directory to write PNG files")
 	demos := flag.String("demos", "all", "Comma-separated demo IDs, or all")
+	backend := flag.String("backend", "", "Web demo backend ID to render; default uses the web demo default backend")
 	width := flag.Int("width", webdemo.DefaultWidth, "Rendered width in pixels")
 	height := flag.Int("height", webdemo.DefaultHeight, "Rendered height in pixels")
 	list := flag.Bool("list", false, "List available demo IDs and exit")
+	listBackends := flag.Bool("list-backends", false, "List available backend IDs and exit")
 	flag.Parse()
+
+	if *listBackends {
+		for _, descriptor := range webdemo.Backends() {
+			fmt.Println(descriptor.ID)
+		}
+		return
+	}
 
 	if *list {
 		for _, descriptor := range webdemo.Catalog() {
@@ -29,12 +38,16 @@ func main() {
 	if err != nil {
 		exitf("%v", err)
 	}
+	backendID, err := selectedBackendID(*backend)
+	if err != nil {
+		exitf("%v", err)
+	}
 	if err := os.MkdirAll(*outputDir, 0o755); err != nil {
 		exitf("create output dir %s: %v", *outputDir, err)
 	}
 
 	for _, id := range ids {
-		pngBytes, descriptor, err := webdemo.RenderPNG(id, *width, *height)
+		pngBytes, descriptor, err := webdemo.RenderPNGWithBackend(id, backendID, *width, *height)
 		if err != nil {
 			exitf("render %s: %v", id, err)
 		}
@@ -74,6 +87,17 @@ func selectedDemoIDs(raw string) ([]string, error) {
 		return nil, fmt.Errorf("no demos selected")
 	}
 	return ids, nil
+}
+
+func selectedBackendID(raw string) (string, error) {
+	id := strings.TrimSpace(raw)
+	if id == "" {
+		id = webdemo.DefaultBackendID()
+	}
+	if !webdemo.ValidBackendID(id) {
+		return "", fmt.Errorf("unknown web demo backend %q", id)
+	}
+	return id, nil
 }
 
 func exitf(format string, args ...any) {

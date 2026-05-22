@@ -637,6 +637,11 @@ uniform across the primary native targets: AGG, SVG, PDF, and Skia.
 - [x] Pin AGG Phase 2 capabilities in registry tests: `PatternFill`,
       `GradientFill`, `PathEffects`, and `OffscreenFilter` all report native
       support.
+- [x] Start Skia parity-viewer workflow plumbing: the `skia` build tag exposes
+      Skia as a selectable web-demo export backend, `cmd/webdemoexport` accepts
+      `--backend`, and `web-parity-update-skia` / `web-parity-viewer-skia`
+      compare Skia-tagged PNG artifacts against the Matplotlib web-demo
+      baselines.
 - [ ] Add Skia `PatternFiller` / `GradientFiller` implementations backed by
       Skia shader primitives, including linear gradients, radial gradients,
       transformed fills, stop opacity, and repeat/reflect/pad spread behavior

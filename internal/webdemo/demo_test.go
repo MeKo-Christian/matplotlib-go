@@ -80,6 +80,9 @@ func TestSourceUsesCanonicalParityExample(t *testing.T) {
 func TestBackendsStable(t *testing.T) {
 	got := Backends()
 	wantIDs := []string{"gobasic", "agg"}
+	if ValidBackendID("skia") {
+		wantIDs = append(wantIDs, "skia")
+	}
 	if len(got) != len(wantIDs) {
 		t.Fatalf("Backends() len = %d, want %d", len(got), len(wantIDs))
 	}

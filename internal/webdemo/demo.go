@@ -45,18 +45,7 @@ type BackendDescriptor struct {
 
 var descriptors = webDescriptorsFromCatalog()
 
-var backendDescriptors = []BackendDescriptor{
-	{
-		ID:          "gobasic",
-		Name:        "GoBasic",
-		Description: "Pure-Go raster backend available for browser rendering.",
-	},
-	{
-		ID:          "agg",
-		Name:        "AGG",
-		Description: "Anti-Grain Geometry raster backend via github.com/cwbudde/agg_go.",
-	},
-}
+var backendDescriptors = append(baseBackendDescriptors(), optionalBackendDescriptors()...)
 
 // showcaseBuilders maps a web-demo ID to the showcase package's Plot() function.
 // The Plot() functions are backend-agnostic and produce a *core.Figure with
@@ -218,6 +207,24 @@ func newRasterRenderer(backendID string, width, height int, bg render.Color) (ra
 		}
 		return r, nil
 	default:
+		if r, ok, err := newOptionalRasterRenderer(backendID, width, height, bg); ok || err != nil {
+			return r, err
+		}
 		return nil, fmt.Errorf("webdemo: unknown backend %q", backendID)
+	}
+}
+
+func baseBackendDescriptors() []BackendDescriptor {
+	return []BackendDescriptor{
+		{
+			ID:          "gobasic",
+			Name:        "GoBasic",
+			Description: "Pure-Go raster backend available for browser rendering.",
+		},
+		{
+			ID:          "agg",
+			Name:        "AGG",
+			Description: "Anti-Grain Geometry raster backend via github.com/cwbudde/agg_go.",
+		},
 	}
 }
