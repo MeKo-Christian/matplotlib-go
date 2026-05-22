@@ -78,6 +78,94 @@ func TestListedColormapRepresentativeBytes(t *testing.T) {
 	}
 }
 
+func TestMatplotlibPublicColormapCatalogRegistered(t *testing.T) {
+	expected := []string{
+		"magma", "inferno", "plasma", "viridis", "cividis",
+		"twilight", "twilight_shifted", "turbo",
+		"Blues", "BrBG", "BuGn", "BuPu", "CMRmap", "GnBu", "Greens", "Greys",
+		"OrRd", "Oranges", "PRGn", "PiYG", "PuBu", "PuBuGn", "PuOr", "PuRd",
+		"Purples", "RdBu", "RdGy", "RdPu", "RdYlBu", "RdYlGn", "Reds",
+		"Spectral", "Wistia", "YlGn", "YlGnBu", "YlOrBr", "YlOrRd",
+		"afmhot", "autumn", "binary", "bone", "brg", "bwr", "cool",
+		"coolwarm", "copper", "cubehelix", "flag", "gist_earth", "gist_gray",
+		"gist_heat", "gist_ncar", "gist_rainbow", "gist_stern", "gist_yarg",
+		"gnuplot", "gnuplot2", "gray", "hot", "hsv", "jet", "nipy_spectral",
+		"ocean", "pink", "prism", "rainbow", "seismic", "spring", "summer",
+		"terrain", "winter", "Accent", "Dark2", "Paired", "Pastel1", "Pastel2",
+		"Set1", "Set2", "Set3", "tab10", "tab20", "tab20b", "tab20c",
+		"grey", "gist_grey", "gist_yerg", "Grays",
+	}
+	if len(matplotlibListedColormapNames) != len(expected) {
+		t.Fatalf("Matplotlib colormap catalog length = %d, want %d", len(matplotlibListedColormapNames), len(expected))
+	}
+	for i, name := range expected {
+		if matplotlibListedColormapNames[i] != name {
+			t.Fatalf("Matplotlib colormap catalog[%d] = %q, want %q", i, matplotlibListedColormapNames[i], name)
+		}
+		cmap := GetColormap(name)
+		if cmap.Name() != normalizeColormapName(name) {
+			t.Fatalf("GetColormap(%q).Name() = %q, want %q", name, cmap.Name(), normalizeColormapName(name))
+		}
+	}
+}
+
+func TestGetColormap_ReversedVariantGeneratedFromBase(t *testing.T) {
+	base := GetColormap("RdBu")
+	reversed := GetColormap("RdBu_r")
+	if reversed.Name() != "rdbu_r" {
+		t.Fatalf("reversed colormap name = %q, want rdbu_r", reversed.Name())
+	}
+	if got, want := colorBytes(reversed.At(0)), colorBytes(base.At(1)); got != want {
+		t.Fatalf("RdBu_r low color = %v, want base high color %v", got, want)
+	}
+	if got, want := colorBytes(reversed.At(1)), colorBytes(base.At(0)); got != want {
+		t.Fatalf("RdBu_r high color = %v, want base low color %v", got, want)
+	}
+}
+
+func TestColormapResampledCreatesListedLookup(t *testing.T) {
+	base := GetColormap("viridis")
+	resampled := base.Resampled(3)
+	tests := []struct {
+		t    float64
+		want render.Color
+	}{
+		{t: 0, want: base.At(0)},
+		{t: 0.5, want: base.At(0.5)},
+		{t: 1, want: base.At(1)},
+	}
+	for _, tt := range tests {
+		if got := resampled.At(tt.t); got != tt.want {
+			t.Fatalf("resampled.At(%v) = %#v, want %#v", tt.t, got, tt.want)
+		}
+	}
+}
+
+func TestListedAndLinearSegmentedConstructors(t *testing.T) {
+	listed := NewListedColormap("Listed Test", []render.Color{
+		{R: 1, A: 1},
+		{G: 1, A: 1},
+		{B: 1, A: 1},
+	})
+	if listed.Name() != "listed test" {
+		t.Fatalf("listed colormap name = %q, want listed test", listed.Name())
+	}
+	if got := listed.At(0.8); got != (render.Color{B: 1, A: 1}) {
+		t.Fatalf("listed colormap high sample = %#v, want blue", got)
+	}
+
+	linear := NewLinearSegmentedColormap("Linear Test", []ColorStop{
+		{Pos: 1, Color: render.Color{R: 1, A: 1}},
+		{Pos: 0, Color: render.Color{B: 1, A: 1}},
+	})
+	if got := linear.At(0); got != (render.Color{B: 1, A: 1}) {
+		t.Fatalf("linear colormap sorts low stop = %#v, want blue", got)
+	}
+	if got := linear.At(1); got != (render.Color{R: 1, A: 1}) {
+		t.Fatalf("linear colormap sorts high stop = %#v, want red", got)
+	}
+}
+
 func TestBinaryColormapMatchesMatplotlibSpyDefaults(t *testing.T) {
 	cmap := GetColormap("binary")
 
