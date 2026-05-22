@@ -468,6 +468,7 @@ func (r *Renderer) drawPathDirect(p geom.Path, paint *render.Paint) {
 	// fills; the gradient endpoint colors carry their own alpha so a missing
 	// solid Fill.A is fine for gradient-only paints.
 	hasGradient := paint.FillGradient.Kind != render.GradientNone && len(paint.FillGradient.Stops) > 0
+	hasPattern := !hasGradient && paint.Hatch == "" && (paint.FillPattern.ID != "" || len(paint.FillPattern.Path.V) > 0)
 	if hasGradient {
 		if r.applyGradientFill(paint) {
 			r.buildPath(p)
@@ -477,6 +478,8 @@ func (r *Renderer) drawPathDirect(p geom.Path, paint *render.Paint) {
 			// painted through the gradient span generator.
 			r.ctx.SetFillColor(renderColorToAGG(colorWithForcedAlpha(paint.Fill, paint)))
 		}
+	} else if hasPattern {
+		r.drawPatternFill(p, paint)
 	} else if paint.Fill.A > 0 {
 		r.buildPath(p)
 		r.ctx.SetFillColor(renderColorToAGG(colorWithForcedAlpha(paint.Fill, paint)))

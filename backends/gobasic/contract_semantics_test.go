@@ -127,12 +127,12 @@ func TestTextMetricsContractsAndLimitations(t *testing.T) {
 	}
 }
 
-func TestRotatedImageFallsBackAxisAlignedWithGoBasic(t *testing.T) {
+func TestRotatedImageUsesGoBasicImageTransform(t *testing.T) {
 	r := newStartedSemanticRenderer(t, 80, 60)
 	defer r.End()
 
-	if _, ok := any(r).(render.ImageTransformer); ok {
-		t.Fatal("GoBasic should not expose native image transforms")
+	if _, ok := any(r).(render.ImageTransformer); !ok {
+		t.Fatal("GoBasic should expose image transforms for mixed-raster replay")
 	}
 
 	img := &core.Image2D{
@@ -150,7 +150,7 @@ func TestRotatedImageFallsBackAxisAlignedWithGoBasic(t *testing.T) {
 	img.Draw(r, &core.DrawContext{})
 
 	if !imageHasNonBackgroundPixel(r.GetImage(), semanticWhite) {
-		t.Fatal("rotated image fallback should still draw axis-aligned pixels")
+		t.Fatal("rotated image transform should draw pixels")
 	}
 }
 

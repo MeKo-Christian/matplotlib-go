@@ -87,6 +87,7 @@ type clipMaskKey struct {
 var (
 	_ render.Renderer           = (*Renderer)(nil)
 	_ render.DPIAware           = (*Renderer)(nil)
+	_ render.ImageTransformer   = (*Renderer)(nil)
 	_ render.TextDrawer         = (*Renderer)(nil)
 	_ render.TextPather         = (*Renderer)(nil)
 	_ render.RotatedTextDrawer  = (*Renderer)(nil)
@@ -416,6 +417,19 @@ func (r *Renderer) Image(img render.Image, dst geom.Rect) {
 	r.drawBitmapScaledWithAlpha(src, minX, minY, maxX-minX, maxY-minY, imageAlphaMultiplier(img))
 }
 
+// ImageTransformed draws a raster image through an arbitrary affine transform.
+// The affine maps source image pixels into display coordinates.
+func (r *Renderer) ImageTransformed(img render.Image, _ geom.Rect, transform geom.Affine) {
+	if img == nil {
+		return
+	}
+	src := asRGBAImage(img)
+	if src == nil {
+		return
+	}
+	r.drawBitmapTransformed(src, transform, imageAlphaMultiplier(img))
+}
+
 // GlyphRun renders glyph IDs as code points where available.
 // The mapping is a practical fallback for renderers that expose only glyph IDs.
 func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
@@ -628,6 +642,85 @@ func (r *Renderer) drawBitmapScaledWithAlpha(src *image.RGBA, dstX, dstY, dstW, 
 				G: srcRow[srcOffset+1],
 				B: srcRow[srcOffset+2],
 				A: srcRow[srcOffset+3],
+			}
+			if alpha < 1 {
+				srcColor.A = uint8(math.Round(float64(srcColor.A) * alpha))
+			}
+			r.blendPixel(x, y, srcColor)
+		}
+	}
+}
+
+func (r *Renderer) drawBitmapTransformed(src *image.RGBA, transform geom.Affine, alpha float64) {
+	if src == nil || alpha <= 0 {
+		return
+	}
+	if alpha > 1 {
+		alpha = 1
+	}
+
+	srcW := src.Bounds().Dx()
+	srcH := src.Bounds().Dy()
+	if srcW <= 0 || srcH <= 0 {
+		return
+	}
+	inv, ok := transform.Invert()
+	if !ok {
+		return
+	}
+
+	corners := []geom.Pt{
+		transform.Apply(geom.Pt{X: 0, Y: 0}),
+		transform.Apply(geom.Pt{X: float64(srcW), Y: 0}),
+		transform.Apply(geom.Pt{X: float64(srcW), Y: float64(srcH)}),
+		transform.Apply(geom.Pt{X: 0, Y: float64(srcH)}),
+	}
+	minX, minY := math.Inf(1), math.Inf(1)
+	maxX, maxY := math.Inf(-1), math.Inf(-1)
+	for _, corner := range corners {
+		if corner.X < minX {
+			minX = corner.X
+		}
+		if corner.X > maxX {
+			maxX = corner.X
+		}
+		if corner.Y < minY {
+			minY = corner.Y
+		}
+		if corner.Y > maxY {
+			maxY = corner.Y
+		}
+	}
+	if math.IsNaN(minX) || math.IsNaN(minY) || math.IsNaN(maxX) || math.IsNaN(maxY) ||
+		math.IsInf(minX, 0) || math.IsInf(minY, 0) || math.IsInf(maxX, 0) || math.IsInf(maxY, 0) {
+		return
+	}
+
+	dst, ok := r.drawTargetRect(
+		int(math.Floor(minX)),
+		int(math.Floor(minY)),
+		int(math.Ceil(maxX)),
+		int(math.Ceil(maxY)),
+	)
+	if !ok {
+		return
+	}
+
+	srcMin := src.Bounds().Min
+	for y := dst.Min.Y; y < dst.Max.Y; y++ {
+		for x := dst.Min.X; x < dst.Max.X; x++ {
+			sp := inv.Apply(geom.Pt{X: float64(x) + 0.5, Y: float64(y) + 0.5})
+			sx := int(math.Floor(sp.X))
+			sy := int(math.Floor(sp.Y))
+			if sx < 0 || sy < 0 || sx >= srcW || sy >= srcH {
+				continue
+			}
+			p := src.PixOffset(srcMin.X+sx, srcMin.Y+sy)
+			srcColor := color.RGBA{
+				R: src.Pix[p],
+				G: src.Pix[p+1],
+				B: src.Pix[p+2],
+				A: src.Pix[p+3],
 			}
 			if alpha < 1 {
 				srcColor.A = uint8(math.Round(float64(srcColor.A) * alpha))

@@ -8,7 +8,7 @@ Matplotlib-Go uses a pluggable backend architecture that allows different render
 
 - **Type**: AGG-backed raster renderer
 - **Status**: ✅ Implemented
-- **Capabilities**: Anti-aliasing, sub-pixel positioning, hinted text, transformed images
+- **Capabilities**: Anti-aliasing, sub-pixel positioning, hinted text, transformed images, gradient fills, pattern fills
 - **Dependencies**: Optional `agg_go`
 - **Use cases**: Publication-quality output and advanced text fidelity
 

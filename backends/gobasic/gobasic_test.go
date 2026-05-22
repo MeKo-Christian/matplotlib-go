@@ -80,6 +80,32 @@ func TestImageAppliesImageAlpha(t *testing.T) {
 	}
 }
 
+func TestImageTransformedAppliesAffineAndAlpha(t *testing.T) {
+	r := New(12, 12, render.Color{})
+	src := image.NewRGBA(image.Rect(0, 0, 2, 2))
+	src.SetRGBA(0, 0, color.RGBA{R: 255, A: 255})
+	src.SetRGBA(1, 0, color.RGBA{G: 255, A: 255})
+	src.SetRGBA(0, 1, color.RGBA{B: 255, A: 255})
+	src.SetRGBA(1, 1, color.RGBA{R: 255, G: 255, A: 255})
+
+	img := render.NewImageData(src)
+	img.SetAlpha(0.5)
+	r.ImageTransformed(img, geom.Rect{}, geom.Affine{
+		A: 2,
+		D: 2,
+		E: 3,
+		F: 4,
+	})
+
+	got := r.GetImage().RGBAAt(3, 4)
+	if got.A < 120 || got.A > 130 || got.R < 200 || got.G != 0 || got.B != 0 {
+		t.Fatalf("transformed alpha image pixel = %+v, want half-alpha red", got)
+	}
+	if c := r.GetImage().RGBAAt(2, 4); c.A != 0 {
+		t.Fatalf("pixel outside transformed image = %+v, want transparent", c)
+	}
+}
+
 func TestBeginEnd(t *testing.T) {
 	r := New(100, 50, render.Color{R: 0, G: 0, B: 0, A: 1})
 

@@ -482,6 +482,9 @@ Current slice landed:
   tests verify left-to-right linear color falloff, center-to-edge radial
   falloff, and that subsequent solid fills are not painted through the active
   gradient span generator.
+- AGG now also advertises `render.PatternFiller` / `backends.PatternFill` and
+  replays tiled `Paint.FillPattern` cells through AGG path drawing clipped to
+  the destination path.
 - `render.GradientFiller` / `render.PatternFiller` capability interfaces are
   now implemented on AGG and SVG; the backend capability comparison report
   reflects native vs unsupported truthfully.
@@ -583,6 +586,8 @@ geometry remain native vector output.
       preserving the original vector placement rectangle.
 - [x] Scale replayed paths, clips, images, and text into the high-DPI tile before
       embedding it back into the vector output.
+- [x] Scale and replay affine-transformed images into the high-DPI tile through
+      the shared GoBasic raster surface.
 
 #### 2.3.4 Vector backend embedding
 
@@ -618,6 +623,57 @@ geometry remain native vector output.
       translucent scatter cloud inside a polar path clip, with vector axes,
       labels, legend, and line output preserved in the SVG / PDF structural
       goldens.)
+
+No remaining Phase 2.3 work is currently known.
+
+### 2.4 Native Pattern / Gradient Backend Parity
+
+**Goal:** make the renderer-neutral pattern and gradient contracts genuinely
+uniform across the primary native targets: AGG, SVG, PDF, and Skia.
+
+- [x] Add AGG native or renderer-neutral tiled `PatternFill` support so
+      `backends/agg` advertises `SupportsPatternFill() == true` for the same
+      `render.PatternFill` values accepted by SVG and PDF.
+- [ ] Add Skia `PatternFiller` / `GradientFiller` implementations backed by
+      Skia shader primitives, including linear gradients, radial gradients,
+      transformed fills, stop opacity, and repeat/reflect/pad spread behavior
+      where the renderer-neutral model exposes it.
+- [ ] Add Skia unit tests matching the existing AGG/SVG/PDF gradient and
+      pattern coverage: linear falloff, radial falloff, transformed fill
+      geometry, pattern tile repetition, hatch-over-pattern precedence, and
+      solid-fill reset after gradient/pattern draws.
+- [ ] Add backend capability matrix tests that fail if AGG, SVG, PDF, or Skia
+      regress from native pattern/gradient/path-effect support once the work
+      above lands.
+
+### 2.5 Native Path-Effect Filter Parity
+
+**Goal:** make filtered path effects route through capability interfaces and
+produce equivalent native output where the backend can support it.
+
+- [ ] Complete native filtered path-effect behavior across vector backends:
+      AGG offscreen blur remains the raster reference, SVG keeps `<filter>`
+      output, PDF adds blurred transparency-group / soft-mask output, and Skia
+      renders the same filter passes without core knowing the backend name.
+- [ ] Define the intentional fallback semantics for PS, PGF, and GoBasic in
+      backend docs and capability declarations so the "uniform" contract is
+      explicit: AGG/SVG/PDF/Skia are native targets; fallback backends either
+      replay renderer-neutral effects or report unsupported truthfully.
+
+### 2.6 Phase 2 Routing and Regression Audit
+
+**Goal:** lock in the no-backend-name-conditionals requirement and keep it from
+regressing after native backend work lands.
+
+- [ ] Add a cross-backend semantic test that draws the same pattern, gradient,
+      and path-effect scene through AGG, SVG, PDF, and Skia and asserts only
+      capability interfaces (`render.PatternFiller`, `render.GradientFiller`,
+      `render.PathEffectDrawer`, `render.PathEffectFilterDrawer` /
+      `render.FilterRenderer`) are used for routing.
+- [ ] Audit Phase 2 routing code for backend-name conditionals in `core/`,
+      `render/`, and shared backend helpers; replace any remaining conditionals
+      with capability interfaces or document why they are save-format dispatch
+      rather than effect rendering logic.
 
 **Exit criteria:**
 

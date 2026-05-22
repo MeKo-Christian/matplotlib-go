@@ -91,6 +91,7 @@ type scaledRenderer struct {
 var (
 	_ render.Renderer           = (*scaledRenderer)(nil)
 	_ render.DPIAware           = (*scaledRenderer)(nil)
+	_ render.ImageTransformer   = (*scaledRenderer)(nil)
 	_ render.TextDrawer         = (*scaledRenderer)(nil)
 	_ render.TextPather         = (*scaledRenderer)(nil)
 	_ render.RotatedTextDrawer  = (*scaledRenderer)(nil)
@@ -117,6 +118,10 @@ func (r *scaledRenderer) Path(path geom.Path, paint *render.Paint) {
 
 func (r *scaledRenderer) Image(img render.Image, dst geom.Rect) {
 	r.inner.Image(img, r.scaleRect(dst))
+}
+
+func (r *scaledRenderer) ImageTransformed(img render.Image, dst geom.Rect, transform geom.Affine) {
+	r.inner.ImageTransformed(img, r.scaleRect(dst), geom.Affine{A: r.scale, D: r.scale}.Mul(transform))
 }
 
 func (r *scaledRenderer) GlyphRun(run render.GlyphRun, color render.Color) {

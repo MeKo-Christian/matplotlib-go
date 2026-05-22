@@ -11,6 +11,7 @@
 //
 // Native coverage currently implemented
 // - Path and marker drawing, including clip rect/path stacking
+// - Linear/radial gradient fills and tiled pattern fills
 // - Path collections, quad mesh, and Gouraud triangle rasterization
 // - Image drawing and affine image drawing
 // - Text raster and path rendering, text measurement, font metrics

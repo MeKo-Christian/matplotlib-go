@@ -41,6 +41,8 @@ func TestAGGRendererCapabilityStatus(t *testing.T) {
 		{backends.RGBABuffer, backends.CapabilityNative},
 		{backends.BufferRegion, backends.CapabilityNative},
 		{backends.OffscreenFilter, backends.CapabilityNative},
+		{backends.PatternFill, backends.CapabilityNative},
+		{backends.GradientFill, backends.CapabilityNative},
 		{backends.MarkerBatch, backends.CapabilityNative},
 		{backends.PathCollectionBatch, backends.CapabilityNative},
 		{backends.QuadMeshBatch, backends.CapabilityNative},

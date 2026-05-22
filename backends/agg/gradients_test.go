@@ -14,12 +14,10 @@ func TestSupportsGradientFillAdvertised(t *testing.T) {
 	}
 }
 
-func TestSupportsPatternFillNotAdvertised(t *testing.T) {
-	// The AGG backend does not yet consume Paint.FillPattern natively. The
-	// capability flag must reflect that so callers know to fall back.
+func TestSupportsPatternFillAdvertised(t *testing.T) {
 	r := mustNew(t, 10, 10)
-	if r.SupportsPatternFill() {
-		t.Fatal("AGG renderer should not advertise SupportsPatternFill yet")
+	if !r.SupportsPatternFill() {
+		t.Fatal("AGG renderer should advertise SupportsPatternFill")
 	}
 }
 
@@ -162,6 +160,55 @@ func TestSolidFillStillWorksAfterGradient(t *testing.T) {
 	rR, _, rB, _ := pixelAt(t, r, 30, 10)
 	if rB < 200 || rR > 60 {
 		t.Fatalf("right half should be solid blue, got (R=%d,B=%d)", rR, rB)
+	}
+}
+
+func TestPatternFillRepeatsTileAcrossPath(t *testing.T) {
+	r := mustNew(t, 24, 12)
+	viewport := geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 24, Y: 12}}
+	if err := r.Begin(viewport); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+
+	var rect geom.Path
+	rect.MoveTo(geom.Pt{X: 0, Y: 0})
+	rect.LineTo(geom.Pt{X: 24, Y: 0})
+	rect.LineTo(geom.Pt{X: 24, Y: 12})
+	rect.LineTo(geom.Pt{X: 0, Y: 12})
+	rect.Close()
+
+	var stripe geom.Path
+	stripe.MoveTo(geom.Pt{X: 0, Y: 0})
+	stripe.LineTo(geom.Pt{X: 4, Y: 0})
+	stripe.LineTo(geom.Pt{X: 4, Y: 12})
+	stripe.LineTo(geom.Pt{X: 0, Y: 12})
+	stripe.Close()
+
+	r.Path(rect, &render.Paint{
+		FillPattern: render.PatternFill{
+			ID:         "stripe",
+			Cell:       geom.Rect{Max: geom.Pt{X: 8, Y: 12}},
+			Path:       stripe,
+			Foreground: render.Color{R: 1, A: 1},
+			Background: render.Color{B: 1, A: 1},
+		},
+	})
+
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	leftR, _, leftB, _ := pixelAt(t, r, 2, 6)
+	gapR, _, gapB, _ := pixelAt(t, r, 6, 6)
+	repeatR, _, repeatB, _ := pixelAt(t, r, 10, 6)
+	if leftR < 200 || leftB > 80 {
+		t.Fatalf("first pattern stripe should be red, got R=%d B=%d", leftR, leftB)
+	}
+	if gapB < 200 || gapR > 80 {
+		t.Fatalf("pattern background should be blue, got R=%d B=%d", gapR, gapB)
+	}
+	if repeatR < 200 || repeatB > 80 {
+		t.Fatalf("repeated pattern stripe should be red, got R=%d B=%d", repeatR, repeatB)
 	}
 }
 

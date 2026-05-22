@@ -17,7 +17,8 @@
 //   - Renderer-neutral path effects for strokes, shadows, patch effects,
 //     ticked strokes, and text-as-path effects.
 //   - DPI-aware text sizing via render.DPIAware.
-//   - Raster image drawing and PNG export via image/png.
+//   - Raster image drawing, affine image transforms, and PNG export via
+//     image/png.
 //   - Renderer-neutral fallbacks for marker, path-collection, quad-mesh, and
 //     hatch rendering.
 //
@@ -26,8 +27,6 @@
 //     bounds interfaces.
 //   - Path rasterization uses the vector rasterizer's antialiasing behavior;
 //     per-path AntialiasOn/AntialiasOff switches are not fidelity controls.
-//   - Image transforms are not native; rotated images fall back to axis-aligned
-//     drawing in core.
 //   - Filter path effects do not use offscreen blur surfaces; unsupported
 //     filters deterministically repaint the requested effect pass.
 //   - Hatches and collection batches are handled by core fallbacks rather than

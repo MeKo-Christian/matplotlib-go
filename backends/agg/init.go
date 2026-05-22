@@ -27,6 +27,8 @@ func init() {
 			backends.RGBABuffer,
 			backends.BufferRegion,
 			backends.OffscreenFilter,
+			backends.PatternFill,
+			backends.GradientFill,
 			backends.PathEffects,
 			backends.NativeHatcher,
 			backends.PNGExport,
