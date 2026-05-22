@@ -1688,24 +1688,21 @@ patch that only makes one PNG pass.
       `TestParityFixValidationTargetsNameClusters` enforces complete coverage,
       valid cluster IDs, and cluster membership.
 
-**Open empirical corrections / renderer nudges:**
+**Resolved empirical corrections / renderer nudges:**
 
-- [ ] Owner: layout/text parity. `core/layout_engine.go` still carries
-      constrained-layout spacing constants (`0.02` default cell spacing,
-      `0.36 * AxisLineWidth` inter-row adjustment, `0.72 * AxisLineWidth`
-      bottom x-label line-height adjustment) that are currently validated by
-      layout tests and the `layout-text` cluster, but are not yet traced to
-      Matplotlib's layoutbox/compressed-layout calculations. Removal path:
-      replace with a source-backed constrained-layout model from
-      `third_party/matplotlib/lib/matplotlib/_constrained_layout.py` and
-      `_layoutgrid.py`, or convert each term into a named geometry invariant.
-- [ ] Owner: figure/text layout parity. `core/figure_layout.go` still uses
-      figure-artist/label padding based on 3-4 pt rc-derived gaps and an
-      `AxisLineWidth` y-anchor adjustment for rotated `SupYLabel`. These are
-      renderer-independent but remain nudges until cross-checked against
-      Matplotlib's figure-label and legend layout code. Removal path: derive
-      the pad/anchor terms from Matplotlib defaults or cover them with focused
-      figure-label geometry tests plus the `layout-text` validation cluster.
+- [x] Owner: layout/text parity. `core/layout_engine.go` now derives
+      constrained-layout padding and default inter-cell spacing from
+      Matplotlib's rc defaults (`figure.constrained_layout.{h_pad,w_pad}` =
+      3 pt; `{hspace,wspace}` = `0.02`) and its padding rule in
+      `third_party/matplotlib/lib/matplotlib/_constrained_layout.py`. The
+      previous `AxisLineWidth`-scaled row/x-label nudges were removed.
+- [x] Owner: figure/text layout parity. `core/figure_layout.go` now derives
+      figure-label autopositions from Matplotlib's `Figure.suptitle`,
+      `supxlabel`, and `supylabel` defaults (`y=0.98`, `y=0.01`, `x=0.02`),
+      constrained-layout figure-label pads from Matplotlib's constrained
+      layout pad, and figure-artist stacking separation from
+      `legend.borderaxespad = 0.5` font-size units. The previous fixed 4 pt
+      gaps and rotated `SupYLabel` `AxisLineWidth` y-anchor nudge were removed.
 
 **Exit criteria:**
 

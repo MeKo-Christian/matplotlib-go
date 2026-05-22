@@ -30,11 +30,23 @@ func TestDrawFigure_RendersFigureLevelLabels(t *testing.T) {
 	if !ok {
 		t.Fatalf("missing suptitle origin: %v", r.texts)
 	}
-	if titleOrigin.Y > 12 {
-		t.Fatalf("suptitle origin too low: %+v", titleOrigin)
+	ctx := newFigureDrawContext(fig, fig.DisplayRect())
+	titleLayout := measureSingleLineTextLayout(&r, "Overview", titleFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX)
+	wantY := fig.DisplayRect().Min.Y + figureLabelTopInsetPx(fig, ctx) + titleLayout.Ascent
+	if !floatApprox(titleOrigin.Y, wantY, 1e-12) {
+		t.Fatalf("suptitle origin Y = %v, want Matplotlib default y=0.98 position %v", titleOrigin.Y, wantY)
 	}
 	if !containsString(r.texts, "time") {
 		t.Fatalf("missing supxlabel draw: %v", r.texts)
+	}
+	xlabelOrigin, ok := r.textOrigin("time")
+	if !ok {
+		t.Fatalf("missing supxlabel origin: %v", r.texts)
+	}
+	xlabelLayout := measureSingleLineTextLayout(&r, "time", figureLabelFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX)
+	wantXLabelY := fig.DisplayRect().Max.Y - figureLabelBottomInsetPx(fig, ctx) - xlabelLayout.Descent
+	if !floatApprox(xlabelOrigin.Y, wantXLabelY, 1e-12) {
+		t.Fatalf("supxlabel origin Y = %v, want Matplotlib default y=0.01 position %v", xlabelOrigin.Y, wantXLabelY)
 	}
 	if !containsString(r.rotatedText, "value") {
 		t.Fatalf("missing supylabel draw: %v", r.rotatedText)
@@ -43,8 +55,13 @@ func TestDrawFigure_RendersFigureLevelLabels(t *testing.T) {
 	if !ok {
 		t.Fatalf("missing supylabel anchor: %v", r.rotatedText)
 	}
-	if anchor.X <= 10 {
-		t.Fatalf("supylabel anchor too close to figure edge: %+v", anchor)
+	ylabelLayout := measureSingleLineTextLayout(&r, "value", figureLabelFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX)
+	wantYLabelAnchor := geom.Pt{
+		X: fig.DisplayRect().Min.X + figureLabelLeftInsetPx(fig, ctx) + ylabelLayout.Height,
+		Y: fig.DisplayRect().Min.Y + fig.DisplayRect().H()/2,
+	}
+	if !floatApprox(anchor.X, wantYLabelAnchor.X, 1e-12) || !floatApprox(anchor.Y, wantYLabelAnchor.Y, 1e-12) {
+		t.Fatalf("supylabel anchor = %+v, want Matplotlib default x=0.02/y=0.5 anchor %+v", anchor, wantYLabelAnchor)
 	}
 }
 

@@ -41,6 +41,19 @@ type axesDecorationPadding struct {
 	bottom float64
 }
 
+const (
+	// Matplotlib rc defaults:
+	// figure.constrained_layout.{h_pad,w_pad}=3/72 inch and
+	// figure.constrained_layout.{hspace,wspace}=0.02.
+	// See third_party/matplotlib/lib/matplotlib/mpl-data/matplotlibrc.
+	matplotlibConstrainedLayoutPadPoints = 3.0
+	matplotlibConstrainedLayoutSpace     = 0.02
+
+	// Matplotlib Figure.tight_layout defaults to pad=1.08 font-size units.
+	// See third_party/matplotlib/lib/matplotlib/figure.py:tight_layout.
+	matplotlibTightLayoutPadFontSize = 1.08
+)
+
 // SetLayoutEngine selects the draw-time subplot layout engine.
 func (f *Figure) SetLayoutEngine(engine LayoutEngine) {
 	if f == nil {
@@ -175,7 +188,7 @@ func measuredGridOptions(fig *Figure, r render.Renderer, vp geom.Rect, grid *Gri
 	innerPadY := outerPadY
 	if fig.layoutEngine == LayoutEngineConstrained {
 		innerPadX = math.Max(constrainedLayoutDefaultSpacePx(parentPx.W(), grid.nCols), 2*outerPadX)
-		innerPadY = constrainedLayoutDefaultSpacePx(parentPx.H(), grid.nRows) + 0.36*fig.RC.AxisLineWidth
+		innerPadY = math.Max(constrainedLayoutDefaultSpacePx(parentPx.H(), grid.nRows), 2*outerPadY)
 	}
 	global := figureLayoutMarginsPx(fig, r, vp, fig.layoutEngine)
 	if !gridCoversWholeFigure(grid) {
@@ -273,9 +286,6 @@ func xLabelBounds(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, a
 	layout := measureSingleLineTextLayout(r, ax.XLabel, size, ctx.RC.FontKey, ctx.RC.UseTeX)
 	anchor, vAlign := xLabelAnchorPoint(ax, r, ctx, px, side, alignment)
 	lineHeight := math.Max(layout.Height, pointsToPixels(ctx.RC, size))
-	if side == AxisBottom {
-		lineHeight += 0.72 * ctx.RC.AxisLineWidth
-	}
 	return alignedTextLayoutRect(anchor, layout, TextAlignCenter, vAlign, lineHeight)
 }
 
@@ -373,9 +383,9 @@ func layoutPadPx(fig *Figure, engine LayoutEngine) float64 {
 	}
 	switch engine {
 	case LayoutEngineConstrained:
-		return pointsToPixels(rc, 3)
+		return pointsToPixels(rc, matplotlibConstrainedLayoutPadPoints)
 	case LayoutEngineTight:
-		return pointsToPixels(rc, 4)
+		return pointsToPixels(rc, matplotlibTightLayoutPadFontSize*rc.FontSize)
 	default:
 		return 0
 	}
@@ -389,14 +399,14 @@ func constrainedLayoutPadPx(fig *Figure) float64 {
 	if rc.DPI <= 0 {
 		rc = style.CurrentDefaults()
 	}
-	return pointsToPixels(rc, 3)
+	return pointsToPixels(rc, matplotlibConstrainedLayoutPadPoints)
 }
 
 func constrainedLayoutDefaultSpacePx(parentSpanPx float64, cells int) float64 {
 	if parentSpanPx <= 0 || cells <= 0 {
 		return 0
 	}
-	return parentSpanPx * 0.02 / float64(cells)
+	return parentSpanPx * matplotlibConstrainedLayoutSpace / float64(cells)
 }
 
 func capLayoutGap(gap, inner float64, count int) float64 {

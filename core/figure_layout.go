@@ -21,6 +21,19 @@ type figureTextAlignment struct {
 	yLabelExtents map[axisAlignmentKey]float64
 }
 
+const (
+	// Matplotlib figure-label defaults from Figure.suptitle/supxlabel/supylabel.
+	// See third_party/matplotlib/lib/matplotlib/figure.py:_suplabels.
+	matplotlibSuptitleY  = 0.98
+	matplotlibSupxlabelY = 0.01
+	matplotlibSupylabelX = 0.02
+
+	// Matplotlib rc default legend.borderaxespad, in legend font-size units.
+	// Used when stacking figure-level artists around automatically positioned
+	// figure labels.
+	matplotlibLegendBorderAxesPad = 0.5
+)
+
 func newAxesDrawContext(ax *Axes, fig *Figure, figureRect, clip geom.Rect) *DrawContext {
 	proj := cloneProjection(ax.projection)
 	if proj == nil {
@@ -196,7 +209,7 @@ func drawFigureArtists(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 			offset := stackOffsets[loc]
 			artCtx.Clip = insetFigureArtistClip(ctx.Clip, loc, offset)
 			if box, hasBox := figureArtistBoxRect(art, r, &artCtx); hasBox {
-				stackOffsets[loc] = offset + box.H() + pointsToPixels(ctx.RC, 4)
+				stackOffsets[loc] = offset + box.H() + figureArtistStackPadPx(ctx)
 			}
 		}
 		drawArtist(r, &artCtx, art)
@@ -226,18 +239,25 @@ func initialFigureArtistStackOffsets(fig *Figure, r render.Renderer, ctx *DrawCo
 	if fig == nil || ctx == nil {
 		return offsets
 	}
-	pad := pointsToPixels(ctx.RC, 4)
 	if fig.SupTitle != "" {
-		offset := figureLabelTightHeight(r, fig.SupTitle, titleFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX) + pad
+		offset := figureLabelTightHeight(r, fig.SupTitle, titleFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX) + figureLabelTopInsetPx(fig, ctx)
 		offsets[LegendUpperLeft] = offset
 		offsets[LegendUpperRight] = offset
 	}
 	if fig.SupXLabel != "" {
-		offset := figureLabelTightHeight(r, fig.SupXLabel, figureLabelFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX) + pad
+		offset := figureLabelTightHeight(r, fig.SupXLabel, figureLabelFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX) + figureLabelBottomInsetPx(fig, ctx)
 		offsets[LegendLowerLeft] = offset
 		offsets[LegendLowerRight] = offset
 	}
 	return offsets
+}
+
+func figureArtistStackPadPx(ctx *DrawContext) float64 {
+	if ctx == nil {
+		rc := style.CurrentDefaults()
+		return pointsToPixels(rc, matplotlibLegendBorderAxesPad*rc.LegendSize())
+	}
+	return pointsToPixels(ctx.RC, matplotlibLegendBorderAxesPad*ctx.RC.LegendSize())
 }
 
 func insetFigureArtistClip(clip geom.Rect, location LegendLocation, offset float64) geom.Rect {
@@ -295,10 +315,7 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 
 	if fig.SupTitle != "" {
 		layout := measureSingleLineTextLayout(r, fig.SupTitle, titleSize, fig.RC.FontKey, fig.RC.UseTeX)
-		y := figureRect.Min.Y
-		if fig.layoutEngine == LayoutEngineConstrained {
-			y += constrainedLayoutPadPx(fig)
-		}
+		y := figureRect.Min.Y + figureLabelTopInsetPx(fig, ctx)
 		anchor := geom.Pt{
 			X: centerX,
 			Y: y,
@@ -316,10 +333,7 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 
 	if fig.SupXLabel != "" {
 		layout := measureSingleLineTextLayout(r, fig.SupXLabel, labelSize, fig.RC.FontKey, fig.RC.UseTeX)
-		y := figureRect.Max.Y - pointsToPixels(fig.RC, 4)
-		if fig.layoutEngine == LayoutEngineConstrained {
-			y = figureRect.Max.Y - constrainedLayoutPadPx(fig)
-		}
+		y := figureRect.Max.Y - figureLabelBottomInsetPx(fig, ctx)
 		anchor := geom.Pt{
 			X: centerX,
 			Y: y,
@@ -337,13 +351,10 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 
 	if fig.SupYLabel != "" {
 		layout := measureSingleLineTextLayout(r, fig.SupYLabel, labelSize, fig.RC.FontKey, fig.RC.UseTeX)
-		leftPad := pointsToPixels(fig.RC, 4)
-		if fig.layoutEngine == LayoutEngineConstrained {
-			leftPad = constrainedLayoutPadPx(fig)
-		}
+		leftPad := figureLabelLeftInsetPx(fig, ctx)
 		anchor := geom.Pt{
 			X: figureRect.Min.X + leftPad + layout.Height,
-			Y: centerY + fig.RC.AxisLineWidth,
+			Y: centerY,
 		}
 		switch ren := r.(type) {
 		case render.RotatedTextDrawer:
@@ -362,6 +373,36 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 			)
 		}
 	}
+}
+
+func figureLabelTopInsetPx(fig *Figure, ctx *DrawContext) float64 {
+	if fig != nil && fig.layoutEngine == LayoutEngineConstrained {
+		return constrainedLayoutPadPx(fig)
+	}
+	if ctx == nil {
+		return 0
+	}
+	return (1 - matplotlibSuptitleY) * ctx.FigureRect.H()
+}
+
+func figureLabelBottomInsetPx(fig *Figure, ctx *DrawContext) float64 {
+	if fig != nil && fig.layoutEngine == LayoutEngineConstrained {
+		return constrainedLayoutPadPx(fig)
+	}
+	if ctx == nil {
+		return 0
+	}
+	return matplotlibSupxlabelY * ctx.FigureRect.H()
+}
+
+func figureLabelLeftInsetPx(fig *Figure, ctx *DrawContext) float64 {
+	if fig != nil && fig.layoutEngine == LayoutEngineConstrained {
+		return constrainedLayoutPadPx(fig)
+	}
+	if ctx == nil {
+		return 0
+	}
+	return matplotlibSupylabelX * ctx.FigureRect.W()
 }
 
 func pointsToPixels(rc style.RC, points float64) float64 {
