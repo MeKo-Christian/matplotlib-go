@@ -58,6 +58,44 @@ func TestRegisteredBackendsAdvertiseSupportedCapabilities(t *testing.T) {
 	}
 }
 
+// TestPhase24NativeEffectBackendsStayNative pins the Phase 2.4 contract: the
+// primary native targets must advertise and satisfy the renderer-neutral
+// pattern, gradient, and path-effect capabilities through runtime interfaces.
+func TestPhase24NativeEffectBackendsStayNative(t *testing.T) {
+	cfg := backends.TestDefaultConfig(64, 64)
+	for _, backend := range []backends.Backend{
+		backends.AGG,
+		backends.SVG,
+		backends.PDF,
+		backends.Skia,
+	} {
+		backend := backend
+		t.Run(string(backend), func(t *testing.T) {
+			info, ok := backends.DefaultRegistry.Get(backend)
+			if !ok {
+				t.Fatalf("backend %s not registered", backend)
+			}
+			if !info.Available {
+				t.Skipf("backend %s is not available in this build", backend)
+			}
+			renderer, err := backends.Create(backend, cfg)
+			if err != nil {
+				t.Fatalf("Create(%s): %v", backend, err)
+			}
+
+			for _, cap := range []backends.Capability{
+				backends.PatternFill,
+				backends.GradientFill,
+				backends.PathEffects,
+			} {
+				if status := backends.RendererCapabilityStatus(backend, renderer, cap); status != backends.CapabilityNative {
+					t.Fatalf("RendererCapabilityStatus(%s, %s) = %s, want %s", backend, cap, status, backends.CapabilityNative)
+				}
+			}
+		})
+	}
+}
+
 // TestBackendComparisonReportContainsEveryBackend ensures the comparison
 // helper introduced in 14.5 produces a row for each available backend and a
 // column for each capability advertised by AllCapabilities.

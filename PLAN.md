@@ -651,7 +651,7 @@ uniform across the primary native targets: AGG, SVG, PDF, and Skia.
       pattern coverage: linear falloff, radial falloff, transformed fill
       geometry, pattern tile repetition, hatch-over-pattern precedence, and
       solid-fill reset after gradient/pattern draws.
-- [ ] Add backend capability matrix tests that fail if AGG, SVG, PDF, or Skia
+- [x] Add backend capability matrix tests that fail if AGG, SVG, PDF, or Skia
       regress from native pattern/gradient/path-effect support once the work
       above lands.
 
