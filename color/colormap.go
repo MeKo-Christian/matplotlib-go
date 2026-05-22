@@ -2,6 +2,7 @@ package color
 
 import (
 	"math"
+	"sort"
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/render"
@@ -64,6 +65,24 @@ func (c Colormap) Reversed(name string) Colormap {
 			}
 		}
 		out.stops = rev
+	}
+	return out
+}
+
+// Resampled returns a listed colormap with n samples from this colormap.
+func (c Colormap) Resampled(n int) Colormap {
+	out := c.Copy(c.name)
+	if n <= 0 {
+		n = 1
+	}
+	out.stops = nil
+	out.listed = make([]render.Color, n)
+	if n == 1 {
+		out.listed[0] = c.At(0)
+		return out
+	}
+	for i := range out.listed {
+		out.listed[i] = c.At(float64(i) / float64(n-1))
 	}
 	return out
 }
@@ -200,8 +219,26 @@ func NewColormap(name string, stops []ColorStop) Colormap {
 			Color: stop.Color,
 		}
 	}
+	sort.SliceStable(normalized, func(i, j int) bool {
+		return normalized[i].Pos < normalized[j].Pos
+	})
 
 	return Colormap{name: norm, stops: normalized}
+}
+
+// NewLinearSegmentedColormap creates a piecewise-linear colormap from color stops.
+func NewLinearSegmentedColormap(name string, stops []ColorStop) Colormap {
+	return NewColormap(name, stops)
+}
+
+// NewListedColormap creates a colormap from a discrete color lookup table.
+func NewListedColormap(name string, colors []render.Color) Colormap {
+	norm := normalizeColormapName(name)
+	listed := append([]render.Color(nil), colors...)
+	if len(listed) == 0 {
+		listed = []render.Color{{R: 0, G: 0, B: 0, A: 1}}
+	}
+	return Colormap{name: norm, listed: listed}
 }
 
 var defaultColormapName = "viridis"
@@ -356,12 +393,27 @@ func GetColormap(name string) Colormap {
 	if cmap, ok := colormaps[key]; ok {
 		return cmap
 	}
+	if baseKey, ok := strings.CutSuffix(key, "_r"); ok {
+		if cmap, ok := colormaps[baseKey]; ok {
+			return cmap.Reversed(key)
+		}
+	}
 	return colormaps[defaultColormapName]
 }
 
 // DefaultColormap returns the configured default colormap.
 func DefaultColormap() Colormap {
 	return GetColormap(defaultColormapName)
+}
+
+// ColormapNames returns the registered base colormap names in sorted order.
+func ColormapNames() []string {
+	names := make([]string, 0, len(colormaps))
+	for name := range colormaps {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 func mixColor(a, b render.Color, t float64) render.Color {
