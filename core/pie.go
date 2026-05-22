@@ -158,11 +158,14 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 		if cfg.Shadow {
 			shadowOffset := cfg.ShadowOffset
 			if shadowOffset == (geom.Pt{}) {
-				shadowOffset = geom.Pt{X: -0.02 * cfg.Radius, Y: -0.02 * cfg.Radius}
+				offset := pointsToPixels(a.figure.RC, 0.02) * cfg.Radius
+				shadowOffset = geom.Pt{X: -offset, Y: -offset}
 			}
 			shadowColor := cfg.ShadowColor
 			if shadowColor == (render.Color{}) {
-				shadowColor = render.Color{R: 0, G: 0, B: 0, A: 0.25}
+				// Matplotlib patches.Shadow darkens the source patch facecolor
+				// with shade=0.7 and alpha=0.5.
+				shadowColor = render.Color{R: color.R * 0.3, G: color.G * 0.3, B: color.B * 0.3, A: 0.5}
 			}
 			shadow := &Wedge{
 				Patch: Patch{

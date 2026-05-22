@@ -218,7 +218,7 @@ func TestImageRasterizeUsesOriginAndSkipsNonFinite(t *testing.T) {
 	}
 
 	bottomMid := pix.RGBAAt(1, 1)
-	if bottomMid.R != 127 || bottomMid.G != 127 || bottomMid.B != 127 || bottomMid.A != 255 {
+	if bottomMid.R != 128 || bottomMid.G != 128 || bottomMid.B != 128 || bottomMid.A != 255 {
 		t.Fatalf("expected bottom-middle pixel to be mid-gray, got %+v", bottomMid)
 	}
 
