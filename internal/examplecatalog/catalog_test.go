@@ -3,6 +3,7 @@ package examplecatalog
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -45,6 +46,40 @@ func TestCatalogSourcePathsExistWhenRecorded(t *testing.T) {
 		if c.PythonPath != "" {
 			requireFile(t, filepath.Join(root, c.PythonPath))
 		}
+	}
+}
+
+func TestShowcaseRowsHaveGalleryMetadataAndRunnableSource(t *testing.T) {
+	root := repoRoot(t)
+	for _, c := range Cases() {
+		if !c.Showcase {
+			continue
+		}
+		t.Run(c.ID, func(t *testing.T) {
+			if c.Title == "" {
+				t.Fatal("showcase title is empty")
+			}
+			if strings.TrimSpace(c.Description) == "" || c.Description == c.Title {
+				t.Fatalf("showcase description = %q, want gallery-ready text", c.Description)
+			}
+			if !strings.HasPrefix(c.GoPath, "examples/"+c.ID+"/") {
+				t.Fatalf("showcase GoPath = %q, want examples/%s/...", c.GoPath, c.ID)
+			}
+			data, err := os.ReadFile(filepath.Join(root, c.GoPath))
+			if err != nil {
+				t.Fatalf("read showcase source %s: %v", c.GoPath, err)
+			}
+			source := string(data)
+			if strings.Contains(source, "package main") {
+				t.Fatalf("%s is a command package, want importable showcase package", c.GoPath)
+			}
+			if !strings.Contains(source, "func Plot() *core.Figure") {
+				t.Fatalf("%s missing canonical Plot() *core.Figure snippet", c.GoPath)
+			}
+			if !strings.Contains(source, "func Render() image.Image") {
+				t.Fatalf("%s missing runnable Render() image.Image snippet", c.GoPath)
+			}
+		})
 	}
 }
 

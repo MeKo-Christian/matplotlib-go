@@ -24,7 +24,9 @@ func Plot() *core.Figure {
 	ax.SetYLabel("Amplitude")
 	ax.SetXLim(0.5, 7.5)
 	ax.SetYLim(-0.2, 4.2)
-	ax.AddYGrid()
+	grid := ax.AddYGrid()
+	grid.Color = render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1}
+	grid.LineWidth = 0.5
 	stemColor := render.Color{R: 0.15, G: 0.42, B: 0.73, A: 1}
 	baseline := 0.3
 	markerSize := 7.0
@@ -35,7 +37,6 @@ func Plot() *core.Figure {
 			Color:         &stemColor,
 			Baseline:      &baseline,
 			MarkerSize:    &markerSize,
-			Label:         "samples",
 			BaselineColor: &render.Color{R: 0.32, G: 0.32, B: 0.32, A: 1},
 		},
 	)

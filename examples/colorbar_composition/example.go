@@ -36,17 +36,12 @@ func Plot() *core.Figure {
 	}
 
 	cmap := "inferno"
-	xMin := 0.0
-	xMax := float64(cols)
-	yMin := 0.0
-	yMax := float64(rows)
-	im := ax.Image(data, core.ImageOptions{
+	extent := [4]float64{0, float64(cols), 0, float64(rows)}
+	im := ax.ImShow(data, core.ImShowOptions{
 		Colormap: &cmap,
-		XMin:     &xMin,
-		XMax:     &xMax,
-		YMin:     &yMin,
-		YMax:     &yMax,
 		Origin:   core.ImageOriginLower,
+		Extent:   &extent,
+		Aspect:   "auto",
 	})
 
 	ax.SetTitle("Heatmap with Colorbar")

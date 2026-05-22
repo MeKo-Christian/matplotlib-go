@@ -48,7 +48,6 @@ func Plot() *core.Figure {
 	edgeWidth := 1.2
 	whiskerWidth := 1.2
 	medianWidth := 1.8
-	capWidth := 0.35
 	flierSize := 4.0
 	showFliers := true
 	ax.BoxPlots(datasets, core.BoxPlotsOptions{
@@ -63,13 +62,14 @@ func Plot() *core.Figure {
 		EdgeWidth:    &edgeWidth,
 		WhiskerWidth: &whiskerWidth,
 		MedianWidth:  &medianWidth,
-		CapWidth:     &capWidth,
 		FlierSize:    &flierSize,
 		Alpha:        &alpha,
 		ShowFliers:   &showFliers,
 	})
 
-	ax.AddYGrid()
+	grid := ax.AddYGrid()
+	grid.Color = render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1}
+	grid.LineWidth = 0.5
 	return fig
 }
 

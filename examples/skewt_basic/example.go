@@ -27,10 +27,6 @@ func Plot() *core.Figure {
 	ax.SetYLabel("Pressure (hPa)")
 	ax.SetXLim(-70, 35)
 	ax.SetYLim(1050, 180)
-	if top := ax.TopAxis(); top != nil {
-		top.ShowTicks = false
-		top.ShowLabels = false
-	}
 	gridColor := render.Color{R: 0.82, G: 0.84, B: 0.88, A: 1}
 	xGrid := ax.AddGrid(core.AxisBottom)
 	xGrid.Color = gridColor

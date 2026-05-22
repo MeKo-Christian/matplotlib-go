@@ -20,12 +20,8 @@ const (
 // Plot builds the showcase figure (backend-agnostic).
 func Plot() *core.Figure {
 	fig := core.NewFigure(1100, 720)
-	grid := fig.Subplots(
-		2,
-		2,
-		core.WithSubplotPadding(0.083, 0.996, 0.0986, 0.9333),
-		core.WithSubplotSpacing(0.067, 0.100),
-	)
+	fig.ConstrainedLayout()
+	grid := fig.Subplots(2, 2)
 	fig.SetSuptitle("Shared-Axis Figure Labels")
 	fig.SetSupXLabel("time [s]")
 	fig.SetSupYLabel("amplitude")

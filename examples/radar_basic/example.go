@@ -47,7 +47,7 @@ func Plot() *core.Figure {
 	lineColor := render.Color{R: 0.15, G: 0.35, B: 0.70, A: 1}
 	fillColor := render.Color{R: 0.18, G: 0.50, B: 0.82, A: 0.22}
 	lineWidth := 2.2
-	ax.FillToBaseline(closedAngles, closedValues, core.FillOptions{Color: &fillColor})
+	ax.Fill(closedAngles, closedValues, core.FillOptions{Color: &fillColor})
 	ax.Plot(closedAngles, closedValues, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth, Label: "model A"})
 	return fig
 }

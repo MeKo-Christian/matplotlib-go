@@ -73,7 +73,7 @@ func Plot() *core.Figure {
 	})
 	configureAxes(colorAx, "Tripcolor + Tricontour")
 	cmap := "viridis"
-	edgeColor := render.Color{R: 1, G: 1, B: 1, A: 0.55}
+	edgeColor := render.Color{R: 1, G: 1, B: 1, A: 1}
 	edgeWidth := 0.6
 	colorAx.TriColor(tri, values, core.TriColorOptions{
 		Colormap:  &cmap,

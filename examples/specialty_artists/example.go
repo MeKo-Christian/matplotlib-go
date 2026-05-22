@@ -54,18 +54,21 @@ func Plot() *core.Figure {
 			Extent:    &hexExtent,
 			C:         []float64{1, 2, 1.5, 2.3, 2.8, 3.1, 3.6, 2.1, 4.5, 4.9, 3.8, 5.2, 4.1},
 			Reduce:    "mean",
-			Label:     "clusters",
+			MinCount:  1,
 		},
 	)
 
 	pieAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.73, Y: 0.57}, Max: geom.Pt{X: 0.98, Y: 0.94}})
 	pieAx.SetTitle("Pie")
+	wedgeEdge := render.Color{R: 1, G: 1, B: 1, A: 1}
 	pie := pieAx.Pie([]float64{28, 22, 18, 32}, core.PieOptions{
 		Labels:        []string{"Core", "I/O", "Render", "Docs"},
 		AutoPct:       "%.0f%%",
 		StartAngle:    90,
 		LabelDistance: 1.08,
 		Explode:       []float64{0, 0.04, 0, 0.02},
+		EdgeColor:     &wedgeEdge,
+		LineWidth:     1.0,
 		Colors: []render.Color{
 			{R: 0.12, G: 0.47, B: 0.71, A: 1},
 			{R: 1.00, G: 0.50, B: 0.05, A: 1},
@@ -107,7 +110,6 @@ func Plot() *core.Figure {
 		ShowMeans:   &violinShowMeans,
 		ShowMedians: &violinShowMedians,
 		ShowExtrema: &violinShowExtrema,
-		Label:       "distribution",
 	})
 
 	tableAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.39, Y: 0.08}, Max: geom.Pt{X: 0.66, Y: 0.45}})
@@ -134,13 +136,8 @@ func Plot() *core.Figure {
 			Min: geom.Pt{X: 0.04, Y: 0.18},
 			Max: geom.Pt{X: 0.96, Y: 0.82},
 		},
-		FontSize:        10,
-		TextColor:       render.Color{R: 0, G: 0, B: 0, A: 1},
-		HeaderTextColor: render.Color{R: 0, G: 0, B: 0, A: 1},
-		HeaderFillColor: render.Color{R: 1, G: 1, B: 1, A: 1},
-		CellFillColor:   render.Color{R: 1, G: 1, B: 1, A: 1},
-		EdgeColor:       render.Color{R: 0, G: 0, B: 0, A: 1},
-		CellLoc:         "center",
+		FontSize: 10,
+		CellLoc:  "center",
 	})
 
 	sankeyAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.73, Y: 0.08}, Max: geom.Pt{X: 0.98, Y: 0.45}})

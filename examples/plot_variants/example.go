@@ -19,14 +19,8 @@ const (
 // Plot builds the showcase figure (backend-agnostic).
 func Plot() *core.Figure {
 	fig := core.NewFigure(840, 620)
-	grid := fig.Subplots(
-		2,
-		2,
-		core.WithSubplotPadding(0.08, 0.97, 0.10, 0.93),
-		core.WithSubplotSpacing(0.10, 0.14),
-	)
 
-	stepAx := grid[0][0]
+	stepAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.08, Y: 0.585}, Max: geom.Pt{X: 0.475, Y: 0.93}})
 	stepAx.SetTitle("Step + Stairs")
 	stepAx.SetXLim(0, 6)
 	stepAx.SetYLim(0, 5.2)
@@ -55,7 +49,7 @@ func Plot() *core.Figure {
 		},
 	)
 
-	fillAx := grid[0][1]
+	fillAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.575, Y: 0.585}, Max: geom.Pt{X: 0.97, Y: 0.93}})
 	fillAx.SetTitle("FillBetweenX + Refs")
 	fillAx.SetXLim(0, 7)
 	fillAx.SetYLim(0, 6)
@@ -93,33 +87,41 @@ func Plot() *core.Figure {
 		},
 	)
 
-	brokenAx := grid[1][0]
+	brokenAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.08, Y: 0.10}, Max: geom.Pt{X: 0.475, Y: 0.445}})
 	brokenAx.SetTitle("broken_barh")
 	brokenAx.SetXLim(0, 10)
 	brokenAx.SetYLim(0, 4.4)
 	brokenAx.AddXGrid()
-	firstTrack := brokenAx.BrokenBarH(
+	brokenAx.BrokenBarH(
 		[][2]float64{{0.8, 1.6}, {3.1, 2.2}, {6.5, 1.3}},
 		[2]float64{0.7, 0.9},
 		core.BarOptions{Color: &render.Color{R: 0.21, G: 0.51, B: 0.76, A: 1}},
 	)
-	secondTrack := brokenAx.BrokenBarH(
+	brokenAx.BrokenBarH(
 		[][2]float64{{1.6, 1.0}, {4.0, 1.4}, {7.1, 1.7}},
 		[2]float64{2.1, 0.9},
 		core.BarOptions{Color: &render.Color{R: 0.86, G: 0.38, B: 0.16, A: 1}},
 	)
-	brokenAx.BarLabel(firstTrack, []string{"prep", "run", "cool"}, core.BarLabelOptions{
-		Position: "center",
-		Color:    render.Color{R: 1, G: 1, B: 1, A: 1},
-		FontSize: 10,
-	})
-	brokenAx.BarLabel(secondTrack, []string{"IO", "fit", "ship"}, core.BarLabelOptions{
-		Position: "center",
-		Color:    render.Color{R: 1, G: 1, B: 1, A: 1},
-		FontSize: 10,
-	})
+	for _, label := range []struct {
+		x, y float64
+		text string
+	}{
+		{1.6, 1.15, "prep"},
+		{4.2, 1.15, "run"},
+		{7.15, 1.15, "cool"},
+		{2.1, 2.55, "IO"},
+		{4.7, 2.55, "fit"},
+		{7.95, 2.55, "ship"},
+	} {
+		brokenAx.Text(label.x, label.y, label.text, core.TextOptions{
+			HAlign:   core.TextAlignCenter,
+			VAlign:   core.TextVAlignMiddle,
+			FontSize: 10,
+			Color:    render.Color{R: 1, G: 1, B: 1, A: 1},
+		})
+	}
 
-	stackAx := grid[1][1]
+	stackAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.575, Y: 0.10}, Max: geom.Pt{X: 0.97, Y: 0.445}})
 	stackAx.SetTitle("Stacked Bars + Labels")
 	stackAx.SetXLim(0.4, 4.6)
 	stackAx.SetYLim(0, 7.6)
@@ -142,8 +144,10 @@ func Plot() *core.Figure {
 		FontSize: 10,
 	})
 	stackAx.BarLabel(top, nil, core.BarLabelOptions{
-		Format: "%.1f",
-		Color:  render.Color{R: 0.20, G: 0.20, B: 0.20, A: 1},
+		Format:   "%.1f",
+		Color:    render.Color{R: 0.20, G: 0.20, B: 0.20, A: 1},
+		FontSize: 10,
+		Padding:  4,
 	})
 	return fig
 }

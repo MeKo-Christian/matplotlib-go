@@ -33,18 +33,17 @@ func Plot() *core.Figure {
 	}
 
 	cmap := "viridis"
+	nearest := "nearest"
 	vmin, vmax := 0.0, 8.0
-	xmin, xmax := 0.0, 3.0
-	ymin, ymax := 0.0, 3.0
-	ax.Image(data, core.ImageOptions{
-		Colormap: &cmap,
-		VMin:     &vmin,
-		VMax:     &vmax,
-		XMin:     &xmin,
-		XMax:     &xmax,
-		YMin:     &ymin,
-		YMax:     &ymax,
-		Origin:   core.ImageOriginLower,
+	extent := [4]float64{0, 3, 0, 3}
+	ax.ImShow(data, core.ImShowOptions{
+		Colormap:      &cmap,
+		VMin:          &vmin,
+		VMax:          &vmax,
+		Origin:        core.ImageOriginLower,
+		Extent:        &extent,
+		Aspect:        "auto",
+		Interpolation: &nearest,
 	})
 	return fig
 }

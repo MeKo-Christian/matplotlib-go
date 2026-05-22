@@ -54,7 +54,6 @@ func Plot() *core.Figure {
 
 	alpha := 0.5
 	ax.FillBetween(x1, y1, z1, x2, y2, z2, core.FillBetween3DOptions{
-		Color: &blue,
 		Alpha: &alpha,
 	})
 	return fig

@@ -32,7 +32,9 @@ func Plot() *core.Figure {
 	host.SetYLabel("signal")
 	host.SetXLim(-3.5, 3.5)
 	host.SetYLim(-1.3, 1.3)
-	host.AddYGrid()
+	grid := host.AddYGrid()
+	grid.Color = render.Color{R: 0.78, G: 0.80, B: 0.84, A: 1}
+	grid.LineWidth = 0.8
 
 	x := make([]float64, 240)
 	sine := make([]float64, len(x))
@@ -50,20 +52,20 @@ func Plot() *core.Figure {
 		LineWidth: &hostWidth,
 		Label:     "sin(x)",
 	})
-
-	floatX := host.FloatingXAxis(0)
-	floatX.Axis.Color = render.Color{R: 0.26, G: 0.26, B: 0.30, A: 1}
-	floatX.Axis.SetLineStyle(render.CapRound, render.JoinRound, 5, 3)
-	floatX.Axis.ShowTicks = false
-	floatX.Axis.ShowLabels = false
-	_ = floatX.SetTickDirection("inout")
-
-	floatY := host.FloatingYAxis(0)
-	floatY.Axis.Color = render.Color{R: 0.26, G: 0.26, B: 0.30, A: 1}
-	floatY.Axis.SetLineStyle(render.CapRound, render.JoinRound, 5, 3)
-	floatY.Axis.ShowTicks = false
-	floatY.Axis.ShowLabels = false
-	_ = floatY.SetTickDirection("inout")
+	referenceColor := render.Color{R: 0.26, G: 0.26, B: 0.30, A: 1}
+	referenceWidth := 1.4
+	host.AxHLine(0, core.HLineOptions{
+		Color:     &referenceColor,
+		LineWidth: &referenceWidth,
+		Dashes:    []float64{5 * 36.0 / DPI, 3 * 36.0 / DPI},
+	})
+	host.AxVLine(0, core.VLineOptions{
+		Color:     &referenceColor,
+		LineWidth: &referenceWidth,
+		Dashes:    []float64{5 * 36.0 / DPI, 3 * 36.0 / DPI},
+	})
+	tickDirection := "inout"
+	_ = host.TickParams(core.TickParams{Direction: &tickDirection})
 
 	overlay := host.TwinX()
 	if overlay != nil {
@@ -89,8 +91,15 @@ func Plot() *core.Figure {
 		})
 	}
 
-	host.AddAnchoredText("floating axes at x=0 / y=0\nparasite right scale", core.AnchoredTextOptions{
-		Location: core.LegendUpperLeft,
+	host.Text(0.02, 0.98, "floating axes at x=0 / y=0\nparasite right scale", core.TextOptions{
+		Coords:   core.Coords(core.CoordAxes),
+		VAlign:   core.TextVAlignTop,
+		FontSize: 10,
+		BBox: &core.TextBBoxOptions{
+			FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
+			EdgeColor: render.Color{R: 0.75, G: 0.75, B: 0.75, A: 1},
+			Padding:   0.3,
+		},
 	})
 	legend := host.AddLegend()
 	legend.SetLocator(core.RelativeAnchoredBoxLocator{

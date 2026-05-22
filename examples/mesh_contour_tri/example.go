@@ -18,21 +18,11 @@ const (
 // Plot builds the showcase figure (backend-agnostic).
 func Plot() *core.Figure {
 	fig := core.NewFigure(980, 620)
-	halfTicks := func(ax *core.Axes) {
-		if ax == nil {
-			return
-		}
-		ax.XAxis.Locator = core.MultipleLocator{Base: 0.5}
-		ax.YAxis.Locator = core.MultipleLocator{Base: 0.5}
-		ax.XAxis.Formatter = core.FormatStrFormatter{Pattern: "%.1f"}
-		ax.YAxis.Formatter = core.FormatStrFormatter{Pattern: "%.1f"}
-	}
 
 	meshAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.07, Y: 0.57}, Max: geom.Pt{X: 0.46, Y: 0.93}})
 	meshAx.SetTitle("PColorMesh")
 	meshAx.SetXLim(0, 4)
 	meshAx.SetYLim(0, 3)
-	halfTicks(meshAx)
 	meshEdgeWidth := 0.8
 	meshEdgeColor := render.Color{R: 0.95, G: 0.95, B: 0.95, A: 1}
 	meshAx.PColorMesh([][]float64{
@@ -50,7 +40,6 @@ func Plot() *core.Figure {
 	contourAx.SetTitle("Contour + Contourf")
 	contourAx.SetXLim(0, 4)
 	contourAx.SetYLim(0, 4)
-	halfTicks(contourAx)
 	contourData := [][]float64{
 		{0.0, 0.4, 0.8, 0.4, 0.0},
 		{0.2, 0.8, 1.3, 0.8, 0.2},
@@ -72,7 +61,6 @@ func Plot() *core.Figure {
 	histAx.SetTitle("Hist2D")
 	histAx.SetXLim(0, 4)
 	histAx.SetYLim(0, 4)
-	halfTicks(histAx)
 	histAx.Hist2D(
 		[]float64{0.4, 0.7, 1.1, 1.4, 1.8, 2.1, 2.3, 2.6, 2.9, 3.2, 3.4, 3.6},
 		[]float64{0.6, 1.0, 1.2, 1.6, 1.4, 2.0, 2.3, 2.1, 2.8, 3.0, 3.2, 3.4},
@@ -88,7 +76,6 @@ func Plot() *core.Figure {
 	triAx.SetTitle("Triangulation")
 	triAx.SetXLim(0, 4)
 	triAx.SetYLim(0, 4)
-	halfTicks(triAx)
 	tri := core.Triangulation{
 		X:         []float64{0.4, 1.6, 3.0, 0.8, 2.1, 3.5},
 		Y:         []float64{0.5, 0.4, 0.7, 2.2, 2.8, 2.1},

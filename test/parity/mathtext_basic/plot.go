@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/render"
 )
 
 const (
@@ -41,13 +42,22 @@ func Plot() *core.Figure {
 		FontSize: 12,
 	})
 	ax.Annotate(`$\Delta y \approx \frac{1}{2}$`, 3.2, 0.35, core.AnnotationOptions{
-		OffsetX:  34,
-		OffsetY:  -26,
-		FontSize: 12,
+		OffsetX:    34,
+		OffsetY:    -26,
+		FontSize:   12,
+		ArrowColor: render.Color{R: 0, G: 0, B: 0, A: 1},
+		ArrowWidth: 1,
 	})
-	ax.AddAnchoredText(`$\omega_n = 2\pi f_n$`, core.AnchoredTextOptions{
-		Location: core.LegendUpperLeft,
+	ax.Text(0.03, 0.93, `$\omega_n = 2\pi f_n$`, core.TextOptions{
+		Coords:   core.Coords(core.CoordAxes),
+		HAlign:   core.TextAlignLeft,
+		VAlign:   core.TextVAlignTop,
 		FontSize: 11,
+		BBox: &core.TextBBoxOptions{
+			FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
+			EdgeColor: render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1},
+			Padding:   0.3,
+		},
 	})
 	return fig
 }

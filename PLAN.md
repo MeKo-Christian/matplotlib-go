@@ -1599,32 +1599,150 @@ before fixture tweaks. Baseline captured with
 
 ---
 
-# Phase 9: Documentation, Examples Polish, and v1.0 Release
+# Phase 9: Matplotlib API Coverage Audit
+
+**Goal:** close the *existence* gap, not just the *quality* gap. Phase 8's RMSE
+audit can only flag a case that already has a catalog example, so a feature
+that was never implemented produces no failing parity test and stays invisible.
+This phase enumerates Matplotlib's public catalogs (colormaps, markers, named
+colors, interpolation modes, arrow/connection styles, patch classes, hatch
+styles) and, for each missing entry, either implements it or records it as a
+documented intentional divergence — then adds a catalog case so it becomes
+visible to `TestReferenceCompare`.
+
+Logically this precedes Phase 8: a feature must exist before its render
+quality can be RMSE-audited.
+
+**Reference sources:** `third_party/matplotlib/lib/matplotlib/_cm.py`,
+`_cm_listed.py`, `markers.py`, `_color_data.py`, `colors.py`, `patches.py`,
+`hatch.py`, `image.py`; current `color/`, `core/patch*.go`, marker drawing in
+`core/`.
+
+### 9.1 Coverage inventory
+
+- [ ] Generate a machine-checked diff of the Matplotlib public surface against
+      the Go surface for each enumerable catalog below, committed under
+      `internal/parityutil` or `test/` so it can run in CI.
+- [ ] For every gap, record a decision: implement, or document as an
+      intentional divergence with a reason.
+- [ ] Add an `AGENTS.md` / `PLAN.md` note that any new enumerable catalog must
+      ship with a coverage check so this gap cannot silently reopen.
+
+### 9.2 Colormaps
+
+**Gap:** ~8 of Matplotlib's ~87 base colormaps are registered (`viridis`,
+`plasma`, `inferno`, `magma`, `cividis`, `gray`, `binary`, `blues`).
+
+- [ ] Add the remaining perceptually-uniform sequential, sequential,
+      diverging (`RdBu`, `coolwarm`, `seismic`, `bwr`, `PiYG`, …), cyclic
+      (`twilight`, `twilight_shifted`, `hsv`), qualitative (`tab10`, `tab20`,
+      `tab20b/c`, `Set1-3`, `Pastel1/2`, `Paired`, `Accent`, `Dark2`), and
+      miscellaneous (`jet`, `rainbow`, `terrain`, `gist_*`, `ocean`, `cubehelix`,
+      `nipy_spectral`, …) colormaps.
+- [ ] Support reversed `_r` variants and `Colormap.resampled` / `reversed`.
+- [ ] Confirm `ListedColormap` and `LinearSegmentedColormap` construction and
+      registration parity.
+- [ ] Add catalog cases exercising a diverging, a qualitative, and a cyclic
+      colormap end to end.
+
+### 9.3 Markers
+
+**Gap:** ~7 of Matplotlib's ~26 marker styles exist (circle, cross, diamond,
+plus, square, triangle, path).
+
+- [ ] Add the missing built-in markers: `,` pixel, `.` point, `v^<>` triangle
+      directions, `1234` tri markers, `8` octagon, `p` pentagon, `*` star,
+      `hH` hexagons, `X` filled-x, `P` filled-plus, `d` thin diamond,
+      `|_` vline/hline, and the caret markers (`TICKLEFT/RIGHT/UP/DOWN`,
+      `CARETLEFT/...`).
+- [ ] Support `MarkerStyle` with `fillstyle` (`full/left/right/bottom/top/none`).
+- [ ] Support mathtext markers and `(numsides, style, angle)` tuple markers.
+- [ ] Add catalog cases exercising the full marker grid.
+
+### 9.4 Named colors
+
+**Gap:** no CSS4/X11, xkcd, or tableau (`tab:`) color databases found.
+
+- [ ] Add the CSS4/X11 named-color table and base single-letter colors.
+- [ ] Add the `tab:` tableau cycle names and the `xkcd:` color survey table.
+- [ ] Provide a `to_rgba`-equivalent that resolves names, hex, shorthand,
+      grayscale strings, and `(r,g,b[,a])` tuples uniformly.
+
+### 9.5 Image interpolation modes
+
+**Gap:** ~5 of ~16 interpolation modes exist (nearest, bilinear, bicubic,
+hamming, hanning).
+
+- [ ] Add `lanczos`, `spline16`, `spline36`, `kaiser`, `quadric`, `catrom`,
+      `gaussian`, `bessel`, `mitchell`, `sinc`, `blackman`, `hermite`, and the
+      `antialiased`/`auto` resampling policy.
+- [ ] Route the modes through AGG and the shared image resampler with documented
+      fallbacks where a backend cannot match a filter.
+
+### 9.6 Arrow, connection, and patch classes
+
+**Gap:** only `FancyArrow` exists; the `ArrowStyle` / `ConnectionStyle`
+registries, `FancyArrowPatch`, and `ConnectionPatch` are absent. Patch classes
+`Shadow`, `RegularPolygon`, `CirclePolygon`, `Arc`, `Annulus`, and `StepPatch`
+are missing.
+
+- [ ] Add the `ArrowStyle` registry (`-`, `->`, `-[`, `]-[`, `|-|`, `<-`,
+      `<->`, `fancy`, `simple`, `wedge`, …) and the `ConnectionStyle` registry
+      (`arc3`, `arc`, `angle`, `angle3`, `bar`).
+- [ ] Add `FancyArrowPatch` and `ConnectionPatch` wired into `Annotate`.
+- [ ] Add the missing patch classes (`Shadow`, `RegularPolygon`,
+      `CirclePolygon`, `Arc`, `Annulus`, `StepPatch`).
+- [ ] Audit `FancyBboxPatch` box-style coverage against `BoxStyle._style_list`.
+
+### 9.7 Hatch styles and miscellaneous
+
+- [ ] Verify the full hatch character set (`/ \ | - + x o O . *`) and
+      repeat-density semantics against `hatch.py`.
+- [ ] Add `set_sketch_params` / `pyplot.xkcd()` sketch-style support, or
+      document the omission.
+- [ ] Decide on `figimage` and `pcolorfast`: implement or document as
+      intentional omissions.
+- [ ] Audit `rcParams` keys against upstream and record which keys are
+      unsupported.
+
+**Exit criteria:**
+
+- [ ] The committed coverage check reports every enumerable catalog as either
+      implemented or holding a documented intentional-divergence entry.
+- [ ] Newly implemented features each have at least one catalog case so they
+      surface in `TestGolden` / `TestReferenceCompare`.
+- [ ] A user calling `cmap="coolwarm"`, `marker="*"`, `color="xkcd:teal"`, or
+      `interpolation="lanczos"` gets correct output or a clear, documented
+      error — never a silent wrong default.
+
+---
+
+# Phase 10: Documentation, Examples Polish, and v1.0 Release
 
 **Goal:** make the project consumable by users who have not been following
 the development thread, and tag a stable v1.0.
 
-### 9.1 API Documentation
+### 10.1 API Documentation
 
 - [ ] Package-level GoDoc passes for every public package, with a worked
       example per package.
 - [ ] Hosted documentation site (pkg.go.dev plus a curated landing page
       under the existing GitHub Pages deployment).
-- [ ] Migration guide from upstream Matplotlib: side-by-side Python / Go
+- [x] Migration guide from upstream Matplotlib: side-by-side Python / Go
       snippets for every plot family covered by the catalog.
 - [ ] Backend selection guide: when to use AGG / GoBasic / SVG / PDF /
       Skia, with capability matrix excerpts.
 
-### 9.2 Examples Gallery Polish
+### 10.2 Examples Gallery Polish
 
-- [ ] Review every `Showcase: true` catalog row for caption, description,
+- [x] Review every `Showcase: true` catalog row for caption, description,
       and runnable snippet quality.
-- [ ] Add an "anti-gallery" of intentional Matplotlib-divergence cases with
+- [x] Add an "anti-gallery" of intentional Matplotlib-divergence cases with
       the reasons documented (where the Go port chose different defaults).
-- [ ] Promote the WASM browser gallery to a first-class entry point on the
+- [x] Promote the WASM browser gallery to a first-class entry point on the
       project README.
 
-### 9.3 Performance Pass
+### 10.3 Performance Pass
 
 - [ ] Profiling sweep across the catalog: identify hotspots that exceed the
       100k-point smoothness goal and the sub-second typical-plot goal.
@@ -1633,7 +1751,7 @@ the development thread, and tag a stable v1.0.
 - [ ] Documented memory-usage targets and a tuning guide for long-running
       applications.
 
-### 9.4 Release Readiness
+### 10.4 Release Readiness
 
 - [ ] Semantic version policy decision and `CHANGELOG.md` baseline.
 - [ ] Final golden / reference regeneration pass with explicit per-case

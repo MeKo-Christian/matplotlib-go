@@ -26,8 +26,11 @@ func Plot() *core.Figure {
 	ax.SetTitle("Text and Arrow Annotations")
 	ax.SetXLabel("phase")
 	ax.SetYLabel("response")
-	ax.AddXGrid()
-	ax.AddYGrid()
+	gridColor := render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1}
+	for _, grid := range []*core.Grid{ax.AddXGrid(), ax.AddYGrid()} {
+		grid.Color = gridColor
+		grid.LineWidth = 0.5
+	}
 
 	x := make([]float64, 240)
 	y := make([]float64, 240)
@@ -44,9 +47,11 @@ func Plot() *core.Figure {
 	peakX := math.Pi / 2
 	peakY := math.Sin(peakX)*math.Exp(-0.015*peakX) + 0.2*math.Cos(0.5*peakX)
 	ax.Annotate("Peak\n= 0.42", peakX, peakY, core.AnnotationOptions{
-		OffsetX:  48,
-		OffsetY:  -42,
-		FontSize: 12,
+		OffsetX:    48,
+		OffsetY:    -42,
+		FontSize:   12,
+		ArrowColor: render.Color{R: 0, G: 0, B: 0, A: 1},
+		ArrowWidth: 1.0,
 	})
 	ax.Text(0.20, 0.90, "m∫T  φ x =  λ/4", core.TextOptions{
 		Coords:   core.Coords(core.CoordAxes),

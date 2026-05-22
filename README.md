@@ -14,7 +14,7 @@ Deliver a Go-native, Matplotlib-like plotting system with:
 - **Renderer independence:** consistent outputs across CPU raster today, with room for GPU and vector backends later
 - **Deterministic results:** identical plots across machines and CI, great for testing
 - **Beautiful text:** robust font handling, fallback fonts, and precise metrics
-- **Comprehensive export:** PNG today, with SVG/PDF planned via future backends
+- **Comprehensive export:** PNG, SVG, PDF, PS/EPS, and PGF through registered backends
 - **Go-idiomatic API:** options-based configuration, no hidden global state; optional `pyplot` shim for scripting
 - **Cross-platform interactivity:** pan/zoom, picking, animations, WASM/web backends
 
@@ -76,7 +76,22 @@ To refresh the committed Matplotlib reference images intentionally:
 go test -tags freetype ./test/... -run TestMpl -update-matplotlib
 ```
 
-## Web Demo
+## Examples Gallery
+
+The curated examples gallery is the best starting point for seeing the current
+plot vocabulary. It is catalog-driven: the browser gallery, CLI renderer,
+golden tests, and Matplotlib reference comparisons all use the same showcase
+entries. See [`docs/examples-gallery.md`](docs/examples-gallery.md) for the
+gallery workflow and the anti-gallery of intentional Matplotlib divergences.
+
+List and render examples from the command line with:
+
+```bash
+go run ./cmd/example -list
+go run ./cmd/example -name basic_line -o basic_line.png
+```
+
+### Browser Gallery
 
 The repository now includes a browser demo under [`web/`](web) backed by Go
 compiled to WebAssembly from [`cmd/wasm`](cmd/wasm).

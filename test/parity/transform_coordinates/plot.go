@@ -29,8 +29,11 @@ func Plot() *core.Figure {
 	ax.SetYLabel("Y")
 	ax.SetXLim(0, 10)
 	ax.SetYLim(0, 10)
-	ax.AddXGrid()
-	ax.AddYGrid()
+	gridColor := render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1}
+	for _, grid := range []*core.Grid{ax.AddXGrid(), ax.AddYGrid()} {
+		grid.Color = gridColor
+		grid.LineWidth = 0.5
+	}
 
 	lineColor := render.Color{R: 0.14, G: 0.37, B: 0.74, A: 1}
 	pointColor := render.Color{R: 0.88, G: 0.42, B: 0.16, A: 0.92}
@@ -73,12 +76,11 @@ func Plot() *core.Figure {
 		VAlign:   core.TextVAlignTop,
 		Coords:   core.Coords(core.CoordAxes),
 	})
-	ax.Text(0.07, 0.08, "figure", core.TextOptions{
+	fig.Text(0.07, 0.08, "figure", core.TextOptions{
 		FontSize: 11,
 		Color:    textColor,
 		HAlign:   core.TextAlignLeft,
 		VAlign:   core.TextVAlignBottom,
-		Coords:   core.Coords(core.CoordFigure),
 	})
 	ax.Text(0.50, 0.22, "blend", core.TextOptions{
 		FontSize: 11,
@@ -86,14 +88,17 @@ func Plot() *core.Figure {
 		HAlign:   core.TextAlignCenter,
 		VAlign:   core.TextVAlignBottom,
 		Coords:   core.BlendCoords(core.CoordFigure, core.CoordAxes),
-		OffsetY:  6,
 	})
 	ax.Annotate("axes note", 0.82, 0.78, core.AnnotationOptions{
-		Coords:   core.Coords(core.CoordAxes),
-		OffsetX:  -48,
-		OffsetY:  -26,
-		FontSize: 10,
-		Color:    textColor,
+		Coords:     core.Coords(core.CoordAxes),
+		OffsetX:    -48,
+		OffsetY:    -26,
+		FontSize:   10,
+		Color:      textColor,
+		ArrowColor: textColor,
+		ArrowWidth: 1.25,
+		HAlign:     core.TextAlignRight,
+		VAlign:     core.TextVAlignTop,
 	})
 	return fig
 }

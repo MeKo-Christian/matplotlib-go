@@ -1,11 +1,13 @@
-Examples live here.
+Examples live here. The curated gallery workflow is documented in
+[`../docs/examples-gallery.md`](../docs/examples-gallery.md).
 
 Each cataloged example is a library package at `examples/<id>/example.go`
 exporting `func Render() image.Image`. The same `Render` is consumed by:
 
-- The web demo (browser source display via `internal/webdemo`).
+- The browser gallery (source display via `internal/webdemo`).
 - Parity testing — `test/parity/<id>/plot.go` is a thin wrapper that imports
   the showcase package, so golden tests share a single rendering body.
+- The unified CLI runner, `go run ./cmd/example -name <id> -o <file>`.
 
 Parity test fixtures (one folder per case, Go + Python) live in
 `test/parity/<id>/`. The matching Matplotlib reference Python plots live in

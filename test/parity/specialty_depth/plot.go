@@ -6,7 +6,6 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
-	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -47,10 +46,6 @@ func Plot() *core.Figure {
 			XUpLimits: []bool{false, false, true, false},
 		},
 	)
-	errAx.Scatter([]float64{1, 2, 3, 4}, []float64{1.2, 2.5, 3.1, 3.7}, core.ScatterOptions{
-		Color: &render.Color{R: 0.12, G: 0.35, B: 0.70, A: 1},
-		Size:  common.FloatPtr(18),
-	})
 
 	boxAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.39, Y: 0.60}, Max: geom.Pt{X: 0.66, Y: 0.94}})
 	boxAx.SetTitle("BoxPlot depth")
@@ -63,6 +58,7 @@ func Plot() *core.Figure {
 	ci2 := [2]float64{4.25, 5.00}
 	median1 := 2.8
 	median2 := 4.6
+	flierSize := 4.0
 	flierMarker := core.MarkerDiamond
 	boxes := boxAx.BoxPlots(
 		[][]float64{
@@ -75,6 +71,7 @@ func Plot() *core.Figure {
 			ConfidenceIntervals: [][2]float64{ci1, ci2},
 			CustomMedians:       []float64{median1, median2},
 			FlierMarker:         &flierMarker,
+			FlierSize:           &flierSize,
 			Colors: []render.Color{
 				{R: 0.45, G: 0.65, B: 0.90, A: 0.78},
 				{R: 0.90, G: 0.55, B: 0.28, A: 0.78},
@@ -92,6 +89,7 @@ func Plot() *core.Figure {
 	violinAx.AddXGrid()
 	showMedians := true
 	showExtrema := true
+	violinEdge := render.Color{R: 0.12, G: 0.12, B: 0.12, A: 0.9}
 	violinAx.Violinplot(
 		[][]float64{
 			{1.0, 1.3, 1.7, 2.2, 2.5, 3.1, 3.7, 4.1, 4.7},
@@ -102,6 +100,7 @@ func Plot() *core.Figure {
 			Side:            "high",
 			Quantiles:       [][]float64{{0.25, 0.75}, {0.25, 0.75}},
 			BandwidthMethod: "scott",
+			EdgeColor:       &violinEdge,
 			ShowMedians:     &showMedians,
 			ShowExtrema:     &showExtrema,
 			Colors: []render.Color{
@@ -114,6 +113,7 @@ func Plot() *core.Figure {
 	pieAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.08, Y: 0.10}, Max: geom.Pt{X: 0.34, Y: 0.45}})
 	pieAx.SetTitle("Pie labels")
 	normalize := false
+	wedgeEdge := render.Color{R: 1, G: 1, B: 1, A: 1}
 	pie := pieAx.Pie([]float64{0.22, 0.18, 0.30}, core.PieOptions{
 		Labels:       []string{"Alpha", "Beta", "Gamma"},
 		Normalize:    &normalize,
@@ -121,6 +121,8 @@ func Plot() *core.Figure {
 		Hatches:      []string{"/", "x", "\\"},
 		Shadow:       true,
 		StartAngle:   30,
+		EdgeColor:    &wedgeEdge,
+		LineWidth:    1.0,
 		Colors: []render.Color{
 			{R: 0.22, G: 0.55, B: 0.75, A: 1},
 			{R: 0.90, G: 0.45, B: 0.18, A: 1},
