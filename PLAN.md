@@ -642,11 +642,12 @@ uniform across the primary native targets: AGG, SVG, PDF, and Skia.
       `--backend`, and `web-parity-update-skia` / `web-parity-viewer-skia`
       compare Skia-tagged PNG artifacts against the Matplotlib web-demo
       baselines.
-- [ ] Add Skia `PatternFiller` / `GradientFiller` implementations backed by
-      Skia shader primitives, including linear gradients, radial gradients,
-      transformed fills, stop opacity, and repeat/reflect/pad spread behavior
-      where the renderer-neutral model exposes it.
-- [ ] Add Skia unit tests matching the existing AGG/SVG/PDF gradient and
+- [x] Add Skia `PatternFiller` / `GradientFiller` implementations behind the
+      Skia CPU surface bridge, including linear gradients, radial gradients,
+      transformed fills, stop opacity, and tiled pattern fills.
+- [ ] Swap the CPU bridge shader implementation to external Skia `SkShader`
+      primitives once the C ABI wrapper lands.
+- [x] Add Skia unit tests matching the existing AGG/SVG/PDF gradient and
       pattern coverage: linear falloff, radial falloff, transformed fill
       geometry, pattern tile repetition, hatch-over-pattern precedence, and
       solid-fill reset after gradient/pattern draws.

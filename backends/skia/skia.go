@@ -8,6 +8,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/backends"
 	"github.com/cwbudde/matplotlib-go/backends/gobasic"
+	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -22,6 +23,10 @@ type Renderer struct {
 	width       int
 	height      int
 	background  render.Color
+	bridge      surfaceBridge
+	stack       []trackedState
+	clipRect    *geom.Rect
+	clipPaths   []geom.Path
 	useGPU      bool
 	sampleCount int
 	colorType   string
@@ -36,6 +41,8 @@ var (
 	_ render.VerticalTextDrawer = (*Renderer)(nil)
 	_ render.RGBAExporter       = (*Renderer)(nil)
 	_ render.PNGExporter        = (*Renderer)(nil)
+	_ render.PatternFiller      = (*Renderer)(nil)
+	_ render.GradientFiller     = (*Renderer)(nil)
 )
 
 // New creates a new Skia renderer with the given configuration.
@@ -71,10 +78,141 @@ func New(config backends.Config) (*Renderer, error) {
 		width:       config.Width,
 		height:      config.Height,
 		background:  config.Background,
+		bridge:      newCPUSurfaceBridge(config.Width, config.Height),
 		useGPU:      false,
 		sampleCount: skiaConfig.SampleCount,
 		colorType:   skiaConfig.ColorType,
 	}, nil
+}
+
+// Begin starts a drawing session and resets Skia-side tracked graphics state.
+func (r *Renderer) Begin(viewport geom.Rect) error {
+	if r == nil || r.Renderer == nil {
+		return errors.New("skia renderer is not initialized")
+	}
+	if err := r.Renderer.Begin(viewport); err != nil {
+		return err
+	}
+	r.stack = r.stack[:0]
+	r.clipRect = nil
+	r.clipPaths = r.clipPaths[:0]
+	return nil
+}
+
+// End finishes a drawing session and clears Skia-side tracked graphics state.
+func (r *Renderer) End() error {
+	if r == nil || r.Renderer == nil {
+		return errors.New("skia renderer is not initialized")
+	}
+	if err := r.Renderer.End(); err != nil {
+		return err
+	}
+	r.stack = r.stack[:0]
+	r.clipRect = nil
+	r.clipPaths = r.clipPaths[:0]
+	return nil
+}
+
+// Save pushes the current graphics state.
+func (r *Renderer) Save() {
+	if r == nil || r.Renderer == nil {
+		return
+	}
+	r.Renderer.Save()
+	var clipCopy *geom.Rect
+	if r.clipRect != nil {
+		copied := *r.clipRect
+		clipCopy = &copied
+	}
+	r.stack = append(r.stack, trackedState{
+		clipRect:  clipCopy,
+		clipPaths: clonePaths(r.clipPaths),
+	})
+}
+
+// Restore pops the current graphics state.
+func (r *Renderer) Restore() {
+	if r == nil || r.Renderer == nil {
+		return
+	}
+	r.Renderer.Restore()
+	if len(r.stack) == 0 {
+		r.clipRect = nil
+		r.clipPaths = r.clipPaths[:0]
+		return
+	}
+	state := r.stack[len(r.stack)-1]
+	r.stack = r.stack[:len(r.stack)-1]
+	r.clipRect = state.clipRect
+	r.clipPaths = clonePaths(state.clipPaths)
+}
+
+// ClipRect intersects the current rectangular clip.
+func (r *Renderer) ClipRect(rect geom.Rect) {
+	if r == nil || r.Renderer == nil {
+		return
+	}
+	r.Renderer.ClipRect(rect)
+	if r.clipRect == nil {
+		copied := rect
+		r.clipRect = &copied
+		return
+	}
+	intersected := r.clipRect.Intersect(rect)
+	r.clipRect = &intersected
+}
+
+// ClipPath adds a path clip to the current graphics state.
+func (r *Renderer) ClipPath(p geom.Path) {
+	if r == nil || r.Renderer == nil {
+		return
+	}
+	r.Renderer.ClipPath(p)
+	if len(p.C) == 0 || !p.Validate() {
+		return
+	}
+	r.clipPaths = append(r.clipPaths, clonePath(p))
+}
+
+// Path draws a path. Shader fills are routed through the Skia bridge; all other
+// path behavior falls back to the shared CPU raster renderer.
+func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
+	if r == nil || r.Renderer == nil || paint == nil {
+		return
+	}
+	if render.DrawPathWithEffects(r, p, paint, r.Path) {
+		return
+	}
+	if r.drawShaderFill(p, paint) {
+		return
+	}
+	if r.drawHatchPrecedencePath(p, paint) {
+		return
+	}
+	r.Renderer.Path(p, paint)
+}
+
+// DrawPathWithEffects applies renderer-neutral path effect passes.
+func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
+	return render.DrawPathWithEffects(r, p, paint, r.Path)
+}
+
+// SupportsPatternFill reports whether the active bridge consumes pattern fills.
+func (r *Renderer) SupportsPatternFill() bool {
+	return r != nil && r.bridge != nil && r.bridge.SupportsShaders()
+}
+
+// SupportsGradientFill reports whether the active bridge consumes gradient fills.
+func (r *Renderer) SupportsGradientFill() bool {
+	return r != nil && r.bridge != nil && r.bridge.SupportsShaders()
+}
+
+// BridgeInfo returns the current Skia bridge mode and feature surface.
+func (r *Renderer) BridgeInfo() BridgeInfo {
+	if r == nil || r.bridge == nil {
+		return BridgeInfo{}
+	}
+	return r.bridge.Info()
 }
 
 // GetSurface returns the underlying Skia surface for advanced operations.

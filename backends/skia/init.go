@@ -13,6 +13,8 @@ func init() {
 	if available {
 		capabilities = []backends.Capability{
 			backends.AntiAliasing,
+			backends.PatternFill,
+			backends.GradientFill,
 			backends.PathClip,
 			backends.TextShaping,
 			backends.DPIAware,

@@ -36,7 +36,7 @@ Deliver a Go-native, Matplotlib-like plotting system with:
 When this repo is “done”, it should provide:
 
 - A stable core API for 2D plotting (lines, scatter, images, text, legends, colorbars, etc.)
-- Multiple renderers (AGG, GoBasic, and future Skia/SVG/PDF backends) with visual parity
+- Multiple renderers (AGG, GoBasic, SVG/PDF, and opt-in Skia) with visual parity
 - A gallery of reproducible, high-quality examples
 - Deterministic test suite with image baselines
 - Documentation and guides, including **“Matplotlib to Go”** migration notes

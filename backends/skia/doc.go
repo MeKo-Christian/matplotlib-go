@@ -2,20 +2,23 @@
 //
 // # Strategy
 //
-// Skia is developed under PLAN.md 14.4, not as a Phase 8 side task. The chosen
-// integration strategy is recorded by BackendStrategy:
+// Skia is developed under the backend-deepening and renderer-effects tracks in
+// PLAN.md. The chosen integration strategy is recorded by BackendStrategy:
 //   - build tag: skia
 //   - binding: a small external C ABI wrapper around Skia for future native work
-//   - first implementation target: CPU raster output through the shared raster
-//     contract surface
+//   - first implementation target: CPU raster output through a Skia-local
+//     bridge boundary, with the shared raster surface still used for fallback
+//     drawing paths
 //   - GPU mode: deferred until the CPU path and capability reporting are stable
 //   - default CI: non-Skia stub builds; skia-tagged tests are gated
 //
 // The package deliberately does not depend on an unstable Go Skia binding. The
-// current skia-tagged CPU renderer delegates to the shared pure-Go raster
-// surface for paths, images, clipping, text, RGBA access, and PNG export. Native
-// Skia drawing should call a narrow C ABI that this repository controls,
-// keeping build failures and platform policy localized to the skia package.
+// current skia-tagged CPU renderer delegates fallback drawing to the shared
+// pure-Go raster surface for paths, images, clipping, text, RGBA access, and
+// PNG export, while shader fills route through a Skia-local surface bridge. The
+// future external Skia integration should call a narrow C ABI that this
+// repository controls, keeping build failures and platform policy localized to
+// the skia package.
 //
 // # Dependencies
 //
@@ -29,8 +32,10 @@
 //
 // Default builds compile the unavailable stub in skia_stub.go and advertise no
 // capabilities or save formats. Builds with -tags skia register an available
-// CPU renderer for static raster output and PNG save dispatch. GPU mode and
-// Skia-native optional capabilities remain unavailable.
+// CPU renderer for static raster output and PNG save dispatch. The CPU bridge
+// consumes renderer-neutral pattern and gradient fills, including linear and
+// radial gradients, stop opacity, transformed fills, and tiled pattern fills.
+// GPU mode and external Skia-native batch drawing remain unavailable.
 //
 // # Configuration
 //

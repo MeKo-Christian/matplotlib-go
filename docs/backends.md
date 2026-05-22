@@ -20,13 +20,13 @@ Matplotlib-Go uses a pluggable backend architecture that allows different render
 - **Dependencies**: None (pure Go)
 - **Use cases**: Default backend and pure-Go compatibility
 
-### Skia (Future)
+### Skia (Opt-in CPU)
 
-- **Type**: High-quality renderer with GPU acceleration
-- **Status**: 🚧 Scaffold implemented, awaiting Skia bindings
-- **Capabilities**: Anti-aliasing, GPU acceleration, Advanced text shaping
-- **Dependencies**: Skia library, CGO
-- **Use cases**: High-quality output, interactive applications
+- **Type**: Build-tagged CPU raster renderer with a Skia-local bridge boundary
+- **Status**: 🚧 CPU compatibility renderer implemented; external Skia C ABI and GPU mode deferred
+- **Capabilities**: Anti-aliasing, text shaping, PNG export, pattern fills, gradient fills
+- **Dependencies**: None for the current `-tags skia` CPU renderer; future native paths require CGO, Skia, and the repository C ABI wrapper
+- **Use cases**: Skia parity development and static PNG comparisons
 
 ## Usage
 
@@ -81,11 +81,11 @@ combinations fail explicitly instead of being ignored.
 
 ## Backend Capabilities
 
-| Backend | Anti-aliasing | GPU Accel | Text Shaping | Vector Output |
-| ------- | ------------- | --------- | ------------ | ------------- |
-| AGG     | ✅            | ❌        | ✅           | ❌            |
-| GoBasic | ✅            | ❌        | ❌           | ❌            |
-| Skia    | ✅            | ✅        | ✅           | ✅            |
+| Backend | Anti-aliasing | GPU Accel | Text Shaping | Pattern/Gradient | Vector Output |
+| ------- | ------------- | --------- | ------------ | ---------------- | ------------- |
+| AGG     | ✅            | ❌        | ✅           | ✅               | ❌            |
+| GoBasic | ✅            | ❌        | basic        | fallback         | ❌            |
+| Skia    | ✅            | ❌        | ✅           | ✅               | ❌            |
 
 ## Adding New Backends
 

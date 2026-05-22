@@ -44,6 +44,15 @@ type Strategy struct {
 	RequiredLibraries []string
 }
 
+// BridgeInfo describes the concrete bridge used by one renderer instance.
+type BridgeInfo struct {
+	Binding         BindingStrategy
+	Mode            RenderMode
+	NativeSurface   bool
+	SupportsShaders bool
+	Description     string
+}
+
 // BackendStrategy returns the documented Skia integration strategy. It is kept
 // as code so tests and docs can agree on the same build/dependency contract.
 func BackendStrategy() Strategy {
