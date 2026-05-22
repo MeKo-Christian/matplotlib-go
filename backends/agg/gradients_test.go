@@ -212,6 +212,112 @@ func TestPatternFillRepeatsTileAcrossPath(t *testing.T) {
 	}
 }
 
+func TestPatternFillAppliesTileTransform(t *testing.T) {
+	r := mustNew(t, 24, 12)
+	viewport := geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 24, Y: 12}}
+	if err := r.Begin(viewport); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+
+	var rect geom.Path
+	rect.MoveTo(geom.Pt{X: 0, Y: 0})
+	rect.LineTo(geom.Pt{X: 24, Y: 0})
+	rect.LineTo(geom.Pt{X: 24, Y: 12})
+	rect.LineTo(geom.Pt{X: 0, Y: 12})
+	rect.Close()
+
+	var stripe geom.Path
+	stripe.MoveTo(geom.Pt{X: 0, Y: 0})
+	stripe.LineTo(geom.Pt{X: 4, Y: 0})
+	stripe.LineTo(geom.Pt{X: 4, Y: 12})
+	stripe.LineTo(geom.Pt{X: 0, Y: 12})
+	stripe.Close()
+
+	r.Path(rect, &render.Paint{
+		FillPattern: render.PatternFill{
+			ID:           "shifted-stripe",
+			Cell:         geom.Rect{Max: geom.Pt{X: 8, Y: 12}},
+			Path:         stripe,
+			Foreground:   render.Color{R: 1, A: 1},
+			Background:   render.Color{B: 1, A: 1},
+			Transform:    geom.Affine{A: 1, D: 1, E: 4},
+			HasTransform: true,
+		},
+	})
+
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	gapR, _, gapB, _ := pixelAt(t, r, 2, 6)
+	shiftR, _, shiftB, _ := pixelAt(t, r, 6, 6)
+	if gapB < 200 || gapR > 80 {
+		t.Fatalf("unshifted stripe location should be background blue, got R=%d B=%d", gapR, gapB)
+	}
+	if shiftR < 200 || shiftB > 80 {
+		t.Fatalf("transformed stripe location should be red, got R=%d B=%d", shiftR, shiftB)
+	}
+}
+
+func TestHatchTakesPrecedenceOverPatternFill(t *testing.T) {
+	r := mustNew(t, 24, 12)
+	viewport := geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 24, Y: 12}}
+	if err := r.Begin(viewport); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+
+	var rect geom.Path
+	rect.MoveTo(geom.Pt{X: 0, Y: 0})
+	rect.LineTo(geom.Pt{X: 24, Y: 0})
+	rect.LineTo(geom.Pt{X: 24, Y: 12})
+	rect.LineTo(geom.Pt{X: 0, Y: 12})
+	rect.Close()
+
+	var fullTile geom.Path
+	fullTile.MoveTo(geom.Pt{X: 0, Y: 0})
+	fullTile.LineTo(geom.Pt{X: 8, Y: 0})
+	fullTile.LineTo(geom.Pt{X: 8, Y: 12})
+	fullTile.LineTo(geom.Pt{X: 0, Y: 12})
+	fullTile.Close()
+
+	r.Path(rect, &render.Paint{
+		Hatch:          "|",
+		HatchColor:     render.Color{G: 1, A: 1},
+		HatchLineWidth: 2,
+		HatchSpacing:   6,
+		FillPattern: render.PatternFill{
+			ID:         "red-tile",
+			Cell:       geom.Rect{Max: geom.Pt{X: 8, Y: 12}},
+			Path:       fullTile,
+			Foreground: render.Color{R: 1, A: 1},
+		},
+	})
+
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	redFound := false
+	greenFound := false
+	for y := 1; y < 11; y++ {
+		for x := 1; x < 23; x++ {
+			rv, gv, bv, _ := pixelAt(t, r, x, y)
+			if rv > 180 && gv < 80 && bv < 80 {
+				redFound = true
+			}
+			if gv > 180 && rv < 120 && bv < 120 {
+				greenFound = true
+			}
+		}
+	}
+	if redFound {
+		t.Fatal("pattern fill painted red pixels even though hatch should take precedence")
+	}
+	if !greenFound {
+		t.Fatal("expected hatch to paint green pixels")
+	}
+}
+
 func pixelAt(t *testing.T, r *Renderer, x, y int) (uint8, uint8, uint8, uint8) {
 	t.Helper()
 	rgba := r.GetImage()

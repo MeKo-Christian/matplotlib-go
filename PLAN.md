@@ -459,9 +459,8 @@ without backend-name conditionals.
       applies the same forced-alpha bookkeeping as patterns and solid fills.)
 - [x] AGG implementation using existing gradient span generators.
       Two-stop linear and radial gradients route through Agg2D's gradient API; a
-      three-stop radial uses the multi-stop variant. `SupportsGradientFill`
-      advertises native support; `SupportsPatternFill` advertises `false` until
-      tile rasterization lands.
+      three-stop radial uses the multi-stop variant. `SupportsGradientFill` and
+      `SupportsPatternFill` advertise native support.
 - [x] SVG implementation via `<linearGradient>` / `<radialGradient>` /
       `<pattern>` defs. Defs are deduplicated by content hash, honor the renderer's
       hash-salted ID strategy, and emit in registration order so document output
@@ -484,7 +483,8 @@ Current slice landed:
   gradient span generator.
 - AGG now also advertises `render.PatternFiller` / `backends.PatternFill` and
   replays tiled `Paint.FillPattern` cells through AGG path drawing clipped to
-  the destination path.
+  the destination path. Unit tests cover tile repetition, tile transforms, and
+  hatch-over-pattern precedence.
 - `render.GradientFiller` / `render.PatternFiller` capability interfaces are
   now implemented on AGG and SVG; the backend capability comparison report
   reflects native vs unsupported truthfully.
@@ -634,6 +634,9 @@ uniform across the primary native targets: AGG, SVG, PDF, and Skia.
 - [x] Add AGG native or renderer-neutral tiled `PatternFill` support so
       `backends/agg` advertises `SupportsPatternFill() == true` for the same
       `render.PatternFill` values accepted by SVG and PDF.
+- [x] Pin AGG Phase 2 capabilities in registry tests: `PatternFill`,
+      `GradientFill`, `PathEffects`, and `OffscreenFilter` all report native
+      support.
 - [ ] Add Skia `PatternFiller` / `GradientFiller` implementations backed by
       Skia shader primitives, including linear gradients, radial gradients,
       transformed fills, stop opacity, and repeat/reflect/pad spread behavior
@@ -651,6 +654,9 @@ uniform across the primary native targets: AGG, SVG, PDF, and Skia.
 **Goal:** make filtered path effects route through capability interfaces and
 produce equivalent native output where the backend can support it.
 
+- [x] Keep AGG as the raster reference for filtered path effects through
+      `render.FilterRenderer`, with coverage for offscreen capture/replay and
+      blurred path-effect compositing.
 - [ ] Complete native filtered path-effect behavior across vector backends:
       AGG offscreen blur remains the raster reference, SVG keeps `<filter>`
       output, PDF adds blurred transparency-group / soft-mask output, and Skia
