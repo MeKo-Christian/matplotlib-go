@@ -175,6 +175,257 @@ func TestCatalogIncludesSVGStructuralFamilies(t *testing.T) {
 	}
 }
 
+func TestParityValidationClusters(t *testing.T) {
+	want := map[string][]string{
+		ValidationClusterLayoutText: {
+			"figure_labels_composition",
+			"text_labels_strict",
+			"axes_top_right_inverted",
+			"axes_control_surface",
+			"transform_coordinates",
+			"annotation_composition",
+			"colorbar_composition",
+		},
+		ValidationClusterImageMeshColorbar: {
+			"image_heatmap",
+			"imshow_clipped",
+			"imshow_transformed",
+			"spy_image",
+			"pcolor_flat",
+			"pcolormesh_gouraud",
+			"boundarynorm_pcolormesh",
+			"lognorm_imshow",
+			"twoslope_norm_image",
+			"colorbar_extensions",
+		},
+		ValidationClusterProjection3D: {
+			"mplot3d_basic",
+			"mplot3d_terrain",
+			"mplot3d_plot3d",
+			"mplot3d_scatter3d",
+			"mplot3d_surface3d",
+			"mplot3d_wire3d",
+			"mplot3d_trisurf3d",
+			"mplot3d_bar3d",
+			"mplot3d_voxels",
+			"mplot3d_quiver3d",
+			"mplot3d_stem3d",
+			"mplot3d_fill_between3d",
+			"polar_axes",
+			"geo_mollweide_axes",
+			"geo_aitoff_axes",
+			"geo_hammer_axes",
+			"geo_lambert_axes",
+			"radar_basic",
+			"skewt_basic",
+		},
+	}
+
+	for clusterID, caseIDs := range want {
+		cluster, ok := LookupValidationCluster(clusterID)
+		if !ok {
+			t.Fatalf("missing parity validation cluster %q", clusterID)
+		}
+		if strings.TrimSpace(cluster.Description) == "" {
+			t.Fatalf("validation cluster %q has empty description", clusterID)
+		}
+		for _, id := range caseIDs {
+			if !containsString(cluster.CaseIDs, id) {
+				t.Fatalf("validation cluster %q missing required case %q", clusterID, id)
+			}
+			if _, ok := Lookup(id); !ok {
+				t.Fatalf("validation cluster %q references missing catalog case %q", clusterID, id)
+			}
+		}
+	}
+}
+
+func TestValidationClustersReferenceArtifactsExist(t *testing.T) {
+	root := repoRoot(t)
+	for _, cluster := range ValidationClusters() {
+		cluster := cluster
+		t.Run(cluster.ID, func(t *testing.T) {
+			for _, id := range cluster.CaseIDs {
+				requireFile(t, filepath.Join(root, "testdata", "golden", id+".png"))
+				requireFile(t, filepath.Join(root, "testdata", "matplotlib_ref", id+".png"))
+			}
+		})
+	}
+}
+
+func TestValidationClustersHaveStableMembers(t *testing.T) {
+	seenClusters := map[string]bool{}
+	for _, cluster := range ValidationClusters() {
+		if cluster.ID == "" {
+			t.Fatal("validation cluster has empty ID")
+		}
+		if seenClusters[cluster.ID] {
+			t.Fatalf("duplicate validation cluster ID %q", cluster.ID)
+		}
+		seenClusters[cluster.ID] = true
+		if len(cluster.CaseIDs) == 0 {
+			t.Fatalf("validation cluster %q has no cases", cluster.ID)
+		}
+
+		seenCases := map[string]bool{}
+		for _, id := range cluster.CaseIDs {
+			if seenCases[id] {
+				t.Fatalf("validation cluster %q repeats case %q", cluster.ID, id)
+			}
+			seenCases[id] = true
+			if _, ok := Lookup(id); !ok {
+				t.Fatalf("validation cluster %q references missing catalog case %q", cluster.ID, id)
+			}
+		}
+	}
+}
+
+func TestParityFixValidationTargetsNameClusters(t *testing.T) {
+	wantCaseIDs := []string{
+		"fill_basic",
+		"fill_stacked",
+		"errorbar_basic",
+		"boxplot_basic",
+		"text_labels_strict",
+		"mathtext_basic",
+		"mathtext_fractions",
+		"mathtext_integrals",
+		"mathtext_matrices",
+		"mathtext_inline_labels",
+		"image_heatmap",
+		"imshow_clipped",
+		"imshow_transformed",
+		"spy_marker",
+		"spy_image",
+		"axes_top_right_inverted",
+		"axes_control_surface",
+		"transform_coordinates",
+		"figure_labels_composition",
+		"colorbar_composition",
+		"annotation_composition",
+		"patch_showcase",
+		"mesh_contour_tri",
+		"plot_variants",
+		"spectrum_variants",
+		"specialty_depth",
+		"stem_plot",
+		"specialty_artists",
+		"units_overview",
+		"units_dates",
+		"units_categories",
+		"units_custom_converter",
+		"vector_fields",
+		"polar_axes",
+		"geo_mollweide_axes",
+		"geo_aitoff_axes",
+		"geo_hammer_axes",
+		"geo_lambert_axes",
+		"radar_basic",
+		"skewt_basic",
+		"mplot3d_basic",
+		"mplot3d_terrain",
+		"mplot3d_plot3d",
+		"mplot3d_scatter3d",
+		"mplot3d_surface3d",
+		"mplot3d_wire3d",
+		"mplot3d_trisurf3d",
+		"mplot3d_bar3d",
+		"mplot3d_voxels",
+		"mplot3d_quiver3d",
+		"mplot3d_stem3d",
+		"mplot3d_fill_between3d",
+		"unstructured_showcase",
+		"arrays_showcase",
+		"axisartist_showcase",
+		"axes_grid1_showcase",
+		"pcolor_flat",
+		"pcolormesh_gouraud",
+		"hist2d_weighted_density",
+		"boundarynorm_pcolormesh",
+		"lognorm_imshow",
+		"twoslope_norm_image",
+		"colorbar_extensions",
+	}
+
+	clusterCases := map[string][]string{}
+	for _, cluster := range ValidationClusters() {
+		clusterCases[cluster.ID] = cluster.CaseIDs
+	}
+
+	got := map[string]ParityFixValidationTarget{}
+	for _, target := range ParityFixValidationTargets() {
+		if _, ok := Lookup(target.CaseID); !ok {
+			t.Fatalf("parity validation target references missing catalog case %q", target.CaseID)
+		}
+		if _, exists := got[target.CaseID]; exists {
+			t.Fatalf("duplicate parity validation target for %q", target.CaseID)
+		}
+		if len(target.ClusterIDs) == 0 {
+			t.Fatalf("parity validation target %q names no clusters", target.CaseID)
+		}
+		for _, clusterID := range target.ClusterIDs {
+			caseIDs, ok := clusterCases[clusterID]
+			if !ok {
+				t.Fatalf("parity validation target %q references missing cluster %q", target.CaseID, clusterID)
+			}
+			if !containsString(caseIDs, target.CaseID) {
+				t.Fatalf("parity validation target %q names cluster %q, but the cluster does not include that case", target.CaseID, clusterID)
+			}
+		}
+		got[target.CaseID] = target
+	}
+
+	for _, id := range wantCaseIDs {
+		if _, ok := got[id]; !ok {
+			t.Fatalf("parity case %q has no validation target cluster", id)
+		}
+	}
+	if len(got) != len(wantCaseIDs) {
+		t.Fatalf("parity validation target count = %d, want %d", len(got), len(wantCaseIDs))
+	}
+}
+
+func TestNoCatalogIDsInLibraryImplementation(t *testing.T) {
+	root := repoRoot(t)
+	scanDirs := []string{"core", "render", "backends"}
+	var quotedIDs []string
+	for _, c := range Cases() {
+		quotedIDs = append(quotedIDs, `"`+c.ID+`"`, "`"+c.ID+"`")
+	}
+
+	for _, dir := range scanDirs {
+		dir := dir
+		t.Run(dir, func(t *testing.T) {
+			err := filepath.Walk(filepath.Join(root, dir), func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if info.IsDir() || filepath.Ext(path) != ".go" || strings.HasSuffix(path, "_test.go") {
+					return nil
+				}
+				data, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				source := string(data)
+				for _, quotedID := range quotedIDs {
+					if strings.Contains(source, quotedID) {
+						rel, relErr := filepath.Rel(root, path)
+						if relErr != nil {
+							rel = path
+						}
+						t.Fatalf("%s contains catalog case ID %s; parity hardening forbids fixture-specific library logic", rel, quotedID)
+					}
+				}
+				return nil
+			})
+			if err != nil {
+				t.Fatalf("scan %s: %v", dir, err)
+			}
+		})
+	}
+}
+
 func TestWebDemosAreParityCasesWithReferences(t *testing.T) {
 	root := repoRoot(t)
 	seen := map[string]bool{}
@@ -206,6 +457,15 @@ func sameStrings(got, want []string) bool {
 		}
 	}
 	return true
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
 }
 
 func repoRoot(t *testing.T) string {

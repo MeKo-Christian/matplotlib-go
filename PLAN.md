@@ -1041,6 +1041,10 @@ before fixture tweaks. Baseline captured with
 Phase 8 subphases. Direct example/fixture mismatches were fixed where existing
 Go APIs could express the same Matplotlib call semantics. Remaining unchecked
 items are renderer/layout/core API parity work, not example-source workarounds.
+Do not make a fixture pass by adding per-example offsets, hidden special cases,
+or catalog-only hacks. If the Go example already expresses the same public
+Matplotlib semantics, the fix belongs in the core plotting model, layout code,
+renderer contract, backend implementation, or the AGG port itself.
 
 ### 8.1 `fill_basic` (RMSE 6.38)
 
@@ -1627,6 +1631,92 @@ items are renderer/layout/core API parity work, not example-source workarounds.
 
 ---
 
+# Phase 8A: Cross-Fixture Parity Hardening
+
+**Goal:** turn individual RMSE fixes into general Matplotlib parity fixes. A
+change that improves one catalog case is not complete until it is checked
+against a varied set of related fixtures and shown not to rely on example-local
+behavior.
+
+This phase exists because cases such as `figure_labels_composition` can expose
+real core issues in constrained layout, rotated labels, figure-level labels,
+text metrics, and AGG rasterization. The correct outcome is a reusable library
+fix that also improves or preserves the neighboring examples, not a narrow
+patch that only makes one PNG pass.
+
+**Policy:**
+
+- [x] No example-source workaround is acceptable unless the Go example was
+      demonstrably not equivalent to the Matplotlib reference source.
+- [x] No fixture-specific logic, magic offsets, or catalog-ID conditionals are
+      acceptable in core, layout, renderer, or backend code.
+- [x] Any empirical correction must either be replaced with a source-backed
+      model from `third_party/matplotlib`, converted into a renderer/geometry
+      invariant with tests, or explicitly tracked as unresolved before merge.
+- [x] Validate every parity fix against a fixture cluster, not just the first
+      failing case. For layout/text work this includes at least
+      `figure_labels_composition`, `text_labels_strict`,
+      `axes_top_right_inverted`, `axes_control_surface`,
+      `transform_coordinates`, `annotation_composition`, and
+      `colorbar_composition` when relevant.
+- [x] For image, mesh, colorbar, and rasterizer work, also check the related
+      image/mesh fixtures such as `image_heatmap`, `imshow_clipped`,
+      `imshow_transformed`, `spy_image`, `pcolor_flat`,
+      `pcolormesh_gouraud`, `boundarynorm_pcolormesh`, `lognorm_imshow`,
+      `twoslope_norm_image`, and `colorbar_extensions`.
+- [x] For 3D or projection fixes, check the corresponding `mplot3d_*`,
+      polar, geographic, radar, and skew fixtures so a local improvement does
+      not regress another coordinate system.
+- [x] If the residual points to a fundamental issue in the AGG Go port, it is
+      valid to modify `../agg_go` instead of compensating inside
+      `matplotlib-go`. Such changes must be treated as renderer fixes and
+      covered by AGG-level tests or cross-checked through parity fixtures.
+
+**Validation clusters:**
+
+- [x] `internal/examplecatalog.ValidationClusters` defines named Phase 8A
+      clusters for `layout-text`, `image-mesh-colorbar`, and `projection-3d`.
+- [x] Catalog tests enforce the required cluster members from this phase so
+      future parity fixes can cite a stable validation group instead of a
+      single fixture.
+- [x] `TestNoCatalogIDsInLibraryImplementation` scans non-test
+      `core/`, `render/`, and `backends/` implementation files for quoted
+      catalog IDs so library code cannot silently grow fixture-specific
+      branches.
+- [x] `internal/examplecatalog.ParityFixValidationTargets` maps every Phase 8
+      case to the named cluster(s) that must be used before accepting a fix.
+      `TestParityFixValidationTargetsNameClusters` enforces complete coverage,
+      valid cluster IDs, and cluster membership.
+
+**Open empirical corrections / renderer nudges:**
+
+- [ ] Owner: layout/text parity. `core/layout_engine.go` still carries
+      constrained-layout spacing constants (`0.02` default cell spacing,
+      `0.36 * AxisLineWidth` inter-row adjustment, `0.72 * AxisLineWidth`
+      bottom x-label line-height adjustment) that are currently validated by
+      layout tests and the `layout-text` cluster, but are not yet traced to
+      Matplotlib's layoutbox/compressed-layout calculations. Removal path:
+      replace with a source-backed constrained-layout model from
+      `third_party/matplotlib/lib/matplotlib/_constrained_layout.py` and
+      `_layoutgrid.py`, or convert each term into a named geometry invariant.
+- [ ] Owner: figure/text layout parity. `core/figure_layout.go` still uses
+      figure-artist/label padding based on 3-4 pt rc-derived gaps and an
+      `AxisLineWidth` y-anchor adjustment for rotated `SupYLabel`. These are
+      renderer-independent but remain nudges until cross-checked against
+      Matplotlib's figure-label and legend layout code. Removal path: derive
+      the pad/anchor terms from Matplotlib defaults or cover them with focused
+      figure-label geometry tests plus the `layout-text` validation cluster.
+
+**Exit criteria:**
+
+- [x] Every accepted Phase 8 fix names the fixture cluster used for validation.
+- [x] Any remaining empirical constants or renderer-specific nudges are listed
+      with an owner, rationale, and removal path.
+- [x] The catalog contains enough varied fixtures that a layout, text, image,
+      mesh, projection, or 3D fix cannot silently overfit one example.
+
+---
+
 # Phase 9: Matplotlib API Coverage Audit
 
 **Goal:** close the *existence* gap, not just the *quality* gap. Phase 8's RMSE
@@ -1808,6 +1898,9 @@ the development thread, and tag a stable v1.0.
 
 - **Primary raster backend:** AGG (`backends/agg/`) — anti-aliased,
   sub-pixel accurate, reference for parity fixtures.
+- **AGG port ownership:** if a parity failure is caused by a fundamental
+  rasterization, text, path, transform, or blending issue in the Go AGG port,
+  fix `../agg_go` rather than adding compensating behavior in this repository.
 - **Pure-Go fallback:** GoBasic (`backends/gobasic/`) — dependency-light
   correctness fallback.
 - **Primary vector backend:** SVG (`backends/svg/`) — deterministic,
