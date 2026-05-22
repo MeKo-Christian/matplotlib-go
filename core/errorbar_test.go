@@ -87,8 +87,8 @@ func TestErrorBarLimitCaretUsesEndpointAsBase(t *testing.T) {
 
 	errBar.Draw(r, ctx)
 
-	if len(r.pathCalls) != 2 {
-		t.Fatalf("path calls = %d, want stem and caret", len(r.pathCalls))
+	if len(r.pathCalls) != 3 {
+		t.Fatalf("path calls = %d, want stem, caret, and cap marker", len(r.pathCalls))
 	}
 	caret := r.pathCalls[1].path.V
 	if len(caret) != 3 {

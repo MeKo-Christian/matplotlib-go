@@ -24,7 +24,7 @@ type BoxPlot2D struct {
 	WhiskerWidth       float64 // whisker/cap line width in pixels
 	MedianWidth        float64 // median line width in pixels
 	CapWidth           float64 // cap length in data units
-	FlierSize          float64 // outlier marker radius in pixels
+	FlierSize          float64 // outlier marker size in points
 	FlierEdgeWidth     float64
 	Alpha              float64 // alpha transparency (0-1, 0 means 1.0)
 	ShowFliers         bool    // whether to draw outliers
@@ -125,8 +125,22 @@ func (b *BoxPlot2D) computeBoxPlotStats(sorted []float64) boxPlotStats {
 		hi := math.Max(b.WhiskerPercentiles[0], b.WhiskerPercentiles[1])
 		lo = math.Max(0, math.Min(100, lo))
 		hi = math.Max(0, math.Min(100, hi))
-		stats.lowerWhisker = percentileSorted(sorted, lo)
-		stats.upperWhisker = percentileSorted(sorted, hi)
+		lowerFence := percentileSorted(sorted, lo)
+		upperFence := percentileSorted(sorted, hi)
+		stats.lowerWhisker = stats.q1
+		for _, v := range sorted {
+			if v >= lowerFence {
+				stats.lowerWhisker = v
+				break
+			}
+		}
+		stats.upperWhisker = stats.q3
+		for i := len(sorted) - 1; i >= 0; i-- {
+			if sorted[i] <= upperFence {
+				stats.upperWhisker = sorted[i]
+				break
+			}
+		}
 		stats.outliers = stats.outliers[:0]
 		for _, v := range sorted {
 			if v < stats.lowerWhisker || v > stats.upperWhisker {
@@ -283,11 +297,17 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
 		}
-		r.Path(linePath(ctx, geom.Pt{X: xLeft, Y: b.stats.median}, geom.Pt{X: xRight, Y: b.stats.median}), &medianPaint)
+		medianLeft, medianRight := xLeft, xRight
+		if b.Notch {
+			notchInset := (xRight - xLeft) * 0.25
+			medianLeft = b.Position - notchInset
+			medianRight = b.Position + notchInset
+		}
+		r.Path(linePath(ctx, geom.Pt{X: medianLeft, Y: b.stats.median}, geom.Pt{X: medianRight, Y: b.stats.median}), &medianPaint)
 	}
 
 	if b.ShowFliers {
-		if flierColor.A <= 0 {
+		if flierColor.A <= 0 && flierEdgeColor.A <= 0 {
 			return
 		}
 		flierPaint := render.Paint{
@@ -302,9 +322,10 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 			marker = MarkerCircle
 		}
 		scatter := Scatter2D{Marker: marker}
+		flierSizePx := pointsToPixels(ctx.RC, flierSize)
 		for _, v := range b.stats.outliers {
 			pt := ctx.DataToPixel.Apply(geom.Pt{X: b.Position, Y: v})
-			r.Path(scatter.createMarkerPath(pt, flierSize), &flierPaint)
+			r.Path(scaleAndTranslatePath(scatter.markerPrototypePath(), flierSizePx, pt), &flierPaint)
 		}
 	}
 }

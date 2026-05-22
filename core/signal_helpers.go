@@ -427,14 +427,15 @@ func unwrapPhaseAngles(angles []float64) {
 	if len(angles) < 2 {
 		return
 	}
+	threshold := math.Pi + 1e-2
 	offset := 0.0
 	previousRaw := angles[0]
 	for i := 1; i < len(angles); i++ {
 		raw := angles[i]
 		delta := raw - previousRaw
-		if delta > math.Pi {
+		if delta > threshold {
 			offset -= 2 * math.Pi
-		} else if delta < -math.Pi {
+		} else if delta < -threshold {
 			offset += 2 * math.Pi
 		}
 		angles[i] = raw + offset

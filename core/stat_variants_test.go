@@ -123,6 +123,25 @@ func TestAxesBoxPlot_AdvancedStatOptions(t *testing.T) {
 	}
 }
 
+func TestAxesBoxPlot_PercentileWhiskersUseNearestInlier(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+	whis := [2]float64{5, 95}
+
+	box := ax.BoxPlot([]float64{1.1, 1.8, 2.2, 2.6, 2.9, 3.1, 3.7, 6.8}, BoxPlotOptions{
+		WhiskerPercentiles: &whis,
+	})
+	if box == nil {
+		t.Fatal("expected box plot")
+	}
+	box.ensureComputed()
+	if box.stats.lowerWhisker != 1.8 || box.stats.upperWhisker != 3.7 {
+		t.Fatalf("whiskers = %.3f, %.3f; want nearest inliers 1.8, 3.7", box.stats.lowerWhisker, box.stats.upperWhisker)
+	}
+	if len(box.stats.outliers) != 2 || box.stats.outliers[0] != 1.1 || box.stats.outliers[1] != 6.8 {
+		t.Fatalf("outliers = %v; want [1.1 6.8]", box.stats.outliers)
+	}
+}
+
 func TestAxesECDF_ComputesSortedStepData(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 

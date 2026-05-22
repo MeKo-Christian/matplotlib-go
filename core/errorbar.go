@@ -22,7 +22,7 @@ type ErrorBar struct {
 	XUpLimits  []bool       // x value is an upper limit
 	Color      render.Color // stroke color
 	LineWidth  float64      // stroke width in pixels
-	CapSize    float64      // cap size in pixels (full width/height)
+	CapSize    float64      // cap size in points, matching Matplotlib
 	Marker     MarkerType   // optional data marker, matching Matplotlib fmt markers
 	MarkerSet  bool
 	MarkerSize float64 // marker size in points
@@ -42,11 +42,12 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 		lineWidth = 1.0
 	}
 
-	capSize := e.CapSize
-	if capSize < 0 {
-		capSize = 0
+	capSizePt := e.CapSize
+	if capSizePt < 0 {
+		capSizePt = 0
 	}
-	capHalf := capSize * 0.5
+	markerSizePx := pointsToPixels(ctx.RC, 2*capSizePt)
+	capHalf := markerSizePx * 0.5
 
 	alpha := e.Alpha
 	if alpha <= 0 {
@@ -108,10 +109,12 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 					r.Path(linePath(ctx, rightTop, rightBottom), &paint)
 				}
 				if xLoLimit && xHigh > 0 {
-					drawLimitCaret(r, ctx, right, 1, 0, capHalf, &paint)
+					drawLimitCaret(r, ctx, right, 1, 0, markerSizePx, &paint)
+					drawErrorbarCapMarker(r, ctx, pt, true, capHalf, &paint)
 				}
 				if xUpLimit && xLow > 0 {
-					drawLimitCaret(r, ctx, left, -1, 0, capHalf, &paint)
+					drawLimitCaret(r, ctx, left, -1, 0, markerSizePx, &paint)
+					drawErrorbarCapMarker(r, ctx, pt, true, capHalf, &paint)
 				}
 			}
 		}
@@ -135,10 +138,12 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 					r.Path(linePath(ctx, upperLeft, upperRight), &paint)
 				}
 				if loLimit && yHigh > 0 {
-					drawLimitCaret(r, ctx, upper, 0, 1, capHalf, &paint)
+					drawLimitCaret(r, ctx, upper, 0, 1, markerSizePx, &paint)
+					drawErrorbarCapMarker(r, ctx, pt, false, capHalf, &paint)
 				}
 				if upLimit && yLow > 0 {
-					drawLimitCaret(r, ctx, lower, 0, -1, capHalf, &paint)
+					drawLimitCaret(r, ctx, lower, 0, -1, markerSizePx, &paint)
+					drawErrorbarCapMarker(r, ctx, pt, false, capHalf, &paint)
 				}
 			}
 		}
@@ -264,13 +269,13 @@ func resolveBool(values []bool, i int) bool {
 	return i < len(values) && values[i]
 }
 
-func drawLimitCaret(r render.Renderer, ctx *DrawContext, basePt geom.Pt, dirX, dirY, size float64, paint *render.Paint) {
-	if r == nil || ctx == nil || size <= 0 {
+func drawLimitCaret(r render.Renderer, ctx *DrawContext, basePt geom.Pt, dirX, dirY, markerSize float64, paint *render.Paint) {
+	if r == nil || ctx == nil || markerSize <= 0 {
 		return
 	}
 	base := ctx.DataToPixel.Apply(basePt)
-	length := size * 1.5
-	half := size
+	length := markerSize * 0.75
+	half := markerSize * 0.5
 	var p1, apex, p2 geom.Pt
 	switch {
 	case dirX > 0:
@@ -293,6 +298,25 @@ func drawLimitCaret(r render.Renderer, ctx *DrawContext, basePt geom.Pt, dirX, d
 	r.Path(geom.Path{
 		C: []geom.Cmd{geom.MoveTo, geom.LineTo, geom.LineTo},
 		V: []geom.Pt{p1, apex, p2},
+	}, paint)
+}
+
+func drawErrorbarCapMarker(r render.Renderer, ctx *DrawContext, dataPt geom.Pt, vertical bool, halfSize float64, paint *render.Paint) {
+	if r == nil || ctx == nil || halfSize <= 0 {
+		return
+	}
+	pt := ctx.DataToPixel.Apply(dataPt)
+	var p1, p2 geom.Pt
+	if vertical {
+		p1 = geom.Pt{X: pt.X, Y: pt.Y - halfSize}
+		p2 = geom.Pt{X: pt.X, Y: pt.Y + halfSize}
+	} else {
+		p1 = geom.Pt{X: pt.X - halfSize, Y: pt.Y}
+		p2 = geom.Pt{X: pt.X + halfSize, Y: pt.Y}
+	}
+	r.Path(geom.Path{
+		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+		V: []geom.Pt{p1, p2},
 	}, paint)
 }
 

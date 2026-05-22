@@ -1,0 +1,1170 @@
+package core
+
+import (
+	"math"
+	"sort"
+
+	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/render"
+)
+
+// Contour projects a structured z grid and emits a placeholder wireframe contour.
+func (a *Axes3D) Contour(x, y []float64, z [][]float64, opts ...PlotOptions) *LineCollection {
+	limitsChanged := a.observe3DGrid(x, y, z)
+	opt := firstPlotOptions(opts)
+	segments, segmentLevels, levels, values, zorder := a.projectedContourLineData(x, y, z, opt)
+	if len(segments) == 0 {
+		return nil
+	}
+
+	color := a.NextColor()
+	lineWidth := 1.0
+	alpha := 1.0
+	label := ""
+	colorOverride := false
+	if opt.Color != nil {
+		color = *opt.Color
+		colorOverride = true
+	}
+	if opt.LineWidth != nil {
+		lineWidth = *opt.LineWidth
+	}
+	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
+		alpha = *opt.Alpha
+	}
+	label = opt.Label
+
+	mapping := ScalarMapInfo{}
+	colors := []render.Color(nil)
+	collectionAlpha := alpha
+	if !colorOverride {
+		mapping = contourScalarMap(values, levels, opt)
+		colors = make([]render.Color, len(segmentLevels))
+		for i, level := range segmentLevels {
+			colors[i] = mapping.Color(level, alpha)
+		}
+		collectionAlpha = 1
+	}
+
+	collection := &LineCollection{
+		Collection: Collection{
+			Coords:   Coords(CoordData),
+			Label:    label,
+			Alpha:    collectionAlpha,
+			z:        zorder,
+			Colormap: mapping.Colormap,
+			Norm:     mapping.Norm,
+			VMin:     mapping.VMin,
+			VMax:     mapping.VMax,
+		},
+		Segments:  segments,
+		Color:     color,
+		Colors:    colors,
+		LineWidth: lineWidth,
+		LineJoin:  render.JoinRound,
+		LineCap:   render.CapRound,
+	}
+	a.Add(collection)
+	a.add3DReprojector(func() {
+		if collection != nil {
+			segments, segmentLevels, levels, values, zorder := a.projectedContourLineData(x, y, z, opt)
+			collection.Segments = segments
+			if !colorOverride {
+				mapping := contourScalarMap(values, levels, opt)
+				colors := make([]render.Color, len(segmentLevels))
+				for i, level := range segmentLevels {
+					colors[i] = mapping.Color(level, alpha)
+				}
+				collection.Colors = colors
+				collection.Colormap = mapping.Colormap
+				collection.Norm = mapping.Norm
+				collection.VMin = mapping.VMin
+				collection.VMax = mapping.VMax
+			} else {
+				collection.Colormap = ""
+				collection.Norm = nil
+				collection.VMin = 0
+				collection.VMax = 0
+				collection.Colors = nil
+			}
+			collection.z = zorder
+		}
+	}, limitsChanged)
+	return collection
+}
+
+// Contourf projects a structured z grid and emits filled contour bands.
+func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opts ...PlotOptions) *PolyCollection {
+	opt := firstPlotOptions(opts)
+	colorOverride := opt.Color != nil
+	alpha := 0.45
+	label := ""
+	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
+		alpha = *opt.Alpha
+	}
+	label = opt.Label
+	limitsChanged := a.observe3DContourf(x, y, z, opt)
+
+	paths, colors, zorder, mapping := a.projectedContourFillData(x, y, z, alpha, opt)
+	if len(paths) == 0 {
+		return nil
+	}
+	cmap := mapping.Colormap
+	norm := mapping.Norm
+	vMin := mapping.VMin
+	vMax := mapping.VMax
+	if colorOverride {
+		cmap = ""
+		norm = nil
+		vMin = 0
+		vMax = 0
+	}
+
+	collection := &PolyCollection{
+		PatchCollection: PatchCollection{
+			Collection: Collection{
+				Coords:   Coords(CoordData),
+				Label:    label,
+				Alpha:    1,
+				Colormap: cmap,
+				Norm:     norm,
+				VMin:     vMin,
+				VMax:     vMax,
+				z:        zorder,
+			},
+			Paths:      paths,
+			FaceColors: colors,
+			LineJoin:   render.JoinMiter,
+			LineCap:    render.CapButt,
+		},
+	}
+	a.Add(collection)
+	a.add3DReprojector(func() {
+		if collection != nil {
+			paths, colors, zorder, mapping := a.projectedContourFillData(x, y, z, alpha, opt)
+			collection.Polygons = nil
+			collection.Paths = paths
+			collection.FaceColors = colors
+			if colorOverride {
+				collection.Colormap = ""
+				collection.Norm = nil
+				collection.VMin = 0
+				collection.VMax = 0
+			} else {
+				collection.Colormap = mapping.Colormap
+				collection.Norm = mapping.Norm
+				collection.VMin = mapping.VMin
+				collection.VMax = mapping.VMax
+			}
+			collection.z = zorder
+		}
+	}, limitsChanged)
+	return collection
+}
+
+// Surface draws a structured surface as projected, z-sorted quadrilateral faces.
+func (a *Axes3D) Surface(x, y []float64, z [][]float64, opts ...PlotOptions) *PolyCollection {
+	limitsChanged := a.observe3DGrid(x, y, z)
+	polygons, faceColors, zorder, mapping := a.projectSurfacePolygons(x, y, z, opts...)
+	if len(polygons) == 0 {
+		return nil
+	}
+
+	alpha := 0.85
+	label := ""
+	edgeWidth := 1.0
+	edgeColor := render.Color{A: 0}
+	antialias := render.AntialiasDefault
+	if len(opts) > 0 {
+		opt := opts[0]
+		if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
+			alpha = *opt.Alpha
+		}
+		if opt.EdgeWidth != nil && *opt.EdgeWidth >= 0 {
+			edgeWidth = *opt.EdgeWidth
+		} else if opt.LineWidth != nil && *opt.LineWidth >= 0 {
+			edgeWidth = *opt.LineWidth
+		}
+		if opt.EdgeColor != nil {
+			edgeColor = *opt.EdgeColor
+		}
+		if opt.Antialiased != nil && !*opt.Antialiased {
+			antialias = render.AntialiasOff
+		}
+		label = opt.Label
+	}
+	for i := range faceColors {
+		faceColors[i].A *= alpha
+	}
+	edgeColor.A *= alpha
+	edgeColors := surfaceEdgeColors(faceColors, firstPlotOptions(opts))
+
+	collection := &PolyCollection{
+		Polygons: polygons,
+		PatchCollection: PatchCollection{
+			Collection: Collection{
+				Coords:    Coords(CoordData),
+				Label:     label,
+				Alpha:     1,
+				Antialias: antialias,
+				Colormap:  mapping.Colormap,
+				Norm:      mapping.Norm,
+				VMin:      mapping.VMin,
+				VMax:      mapping.VMax,
+				z:         zorder,
+			},
+			FaceColors: faceColors,
+			EdgeColor:  edgeColor,
+			EdgeColors: edgeColors,
+			EdgeWidth:  edgeWidth,
+			LineJoin:   render.JoinMiter,
+			LineCap:    render.CapButt,
+		},
+	}
+	a.Add(collection)
+	a.add3DReprojector(func() {
+		if collection != nil {
+			polygons, faceColors, zorder, mapping := a.projectSurfacePolygons(x, y, z, opts...)
+			for i := range faceColors {
+				faceColors[i].A *= alpha
+			}
+			collection.Polygons = polygons
+			collection.FaceColors = faceColors
+			collection.EdgeColors = surfaceEdgeColors(faceColors, firstPlotOptions(opts))
+			collection.Colormap = mapping.Colormap
+			collection.Norm = mapping.Norm
+			collection.VMin = mapping.VMin
+			collection.VMax = mapping.VMax
+			collection.z = zorder
+		}
+	}, limitsChanged)
+	return collection
+}
+
+func (a *Axes3D) projectedContourSegments(x, y []float64, z [][]float64, levelCount int) [][]geom.Pt {
+	segments, _, _, _, _ := a.projectedContourLineData(x, y, z, PlotOptions{LevelCount: levelCount})
+	return segments
+}
+
+func (a *Axes3D) projectedContourLineData(x, y []float64, z [][]float64, opt PlotOptions) ([][]geom.Pt, []float64, []float64, []float64, float64) {
+	if a == nil {
+		return nil, nil, nil, nil, defaultPatchZ
+	}
+	zdir := normalized3DDir(opt.ZDir)
+	rawLines, rawLevels, levels, values, ok := a.contourLines3D(x, y, z, opt, zdir)
+	if !ok || len(rawLines) == 0 {
+		return nil, nil, nil, nil, defaultPatchZ
+	}
+	segments := make([][]geom.Pt, 0, len(rawLines))
+	segmentLevels := make([]float64, 0, len(rawLines))
+	depth := math.Inf(1)
+	for i, polyline := range rawLines {
+		if len(polyline) < 2 {
+			continue
+		}
+		level := rawLevels[i]
+		planeLevel := contourPlaneLevel(level, opt.Offset)
+		runs := [][]vec3{contourPolyline3D(polyline, planeLevel, zdir)}
+		if opt.AxLimClip {
+			runs = a.clip3DPolylineRuns(runs[0])
+		}
+		for _, run := range runs {
+			if len(run) < 2 {
+				continue
+			}
+			projected := make([]geom.Pt, len(run))
+			for j, point3D := range run {
+				var zDepth float64
+				projected[j], zDepth = a.projectPointDepth(point3D[0], point3D[1], point3D[2])
+				if zDepth < depth {
+					depth = zDepth
+				}
+			}
+			segments = append(segments, projected)
+			segmentLevels = append(segmentLevels, level)
+		}
+	}
+	return segments, segmentLevels, levels, values, computed3DCollectionZ(depth)
+}
+
+type surfaceFace struct {
+	polygon []geom.Pt
+	value   float64
+	color   render.Color
+	normal  vec3
+	depth   float64
+}
+
+func contourPlaneLevel(level float64, offset *float64) float64 {
+	if offset != nil && isFinite(*offset) {
+		return *offset
+	}
+	return level
+}
+
+func contourPolyline3D(polyline []geom.Pt, planeLevel float64, zdir string) []vec3 {
+	points := make([]vec3, len(polyline))
+	for i, pt := range polyline {
+		points[i] = juggle3DPointSigned(pt.X, pt.Y, planeLevel, "-"+zdir)
+	}
+	return points
+}
+
+func contourScalarMap(values, levels []float64, opt PlotOptions) ScalarMapInfo {
+	mapping := resolvePlotScalarMap(values, opt)
+	if len(levels) >= 2 && opt.VMin == nil && opt.VMax == nil {
+		mapping.VMin = levels[0]
+		mapping.VMax = levels[len(levels)-1]
+		if mapping.Norm == nil {
+			mapping.Norm = Normalize{VMin: mapping.VMin, VMax: mapping.VMax}
+		}
+	}
+	return mapping
+}
+
+func (a *Axes3D) contourLines3D(x, y []float64, z [][]float64, opt PlotOptions, zdir string) ([][]geom.Pt, []float64, []float64, []float64, bool) {
+	rows, cols, ok := validate3DGridContourInput(x, y, z)
+	if !ok {
+		return nil, nil, nil, nil, false
+	}
+	values := flattenGridValues(z)
+	levels := contourLevels(values, opt.Levels, opt.LevelCount, false)
+	if len(levels) == 0 {
+		return nil, nil, nil, nil, false
+	}
+	if zdir == "z" {
+		lines, lineLevels := contourGridPolylines(x[:cols], y[:rows], z, levels)
+		return lines, lineLevels, levels, values, true
+	}
+
+	tri, rotatedValues, ok := rotatedContourTriangulation(x[:cols], y[:rows], z, zdir)
+	if !ok {
+		return nil, nil, nil, nil, false
+	}
+	lines, lineLevels := contourPolylines(tri, rotatedValues, levels)
+	return lines, lineLevels, levels, rotatedValues, true
+}
+
+func (a *Axes3D) projectedContourFillData(x, y []float64, z [][]float64, alpha float64, opt PlotOptions) ([]geom.Path, []render.Color, float64, ScalarMapInfo) {
+	rows, cols, ok := validate3DGridContourInput(x, y, z)
+	if !ok {
+		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+	}
+	values := flattenGridValues(z)
+	levels := contourLevels(values, opt.Levels, opt.LevelCount, true)
+	if len(levels) < 2 {
+		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+	}
+	zdir := normalized3DDir(opt.ZDir)
+	mapping := contourScalarMap(values, levels, opt)
+	collectionDepth := math.Inf(1)
+	paths := make([]geom.Path, 0, len(levels)-1)
+	colors := make([]render.Color, 0, len(levels)-1)
+
+	var tri Triangulation
+	var rotatedValues []float64
+	if zdir != "z" {
+		var ok bool
+		tri, rotatedValues, ok = rotatedContourTriangulation(x[:cols], y[:rows], z, zdir)
+		if !ok {
+			return nil, nil, defaultPatchZ, ScalarMapInfo{}
+		}
+	}
+
+	for levelIdx := 0; levelIdx+1 < len(levels); levelIdx++ {
+		low := levels[levelIdx]
+		high := levels[levelIdx+1]
+		bandLevel := 0.5 * (low + high)
+		planeLevel := contourPlaneLevel(bandLevel, opt.Offset)
+		var rawPolygons [][]geom.Pt
+		if zdir == "z" {
+			rawPolygons = contourGridBandPolygonsForLevel(x[:cols], y[:rows], z, low, high)
+		} else {
+			rawPolygons = contourTriBandPolygons(tri, rotatedValues, low, high)
+		}
+		if len(rawPolygons) == 0 {
+			continue
+		}
+
+		projectedPolygons := make([][]geom.Pt, 0, len(rawPolygons))
+		for _, polygon := range rawPolygons {
+			if len(polygon) < 3 {
+				continue
+			}
+			rawPolygon3D := contourPolyline3D(polygon, planeLevel, zdir)
+			if opt.AxLimClip && !a.polygonWithin3DViewLimits(rawPolygon3D) {
+				continue
+			}
+			projected := make([]geom.Pt, len(rawPolygon3D))
+			for i, point3D := range rawPolygon3D {
+				projectedPt, zDepth := a.projectPointDepth(point3D[0], point3D[1], point3D[2])
+				projected[i] = projectedPt
+				if zDepth < collectionDepth {
+					collectionDepth = zDepth
+				}
+			}
+			projectedPolygons = append(projectedPolygons, projected)
+		}
+		if len(projectedPolygons) == 0 {
+			continue
+		}
+		path := contourBoundaryPath(projectedPolygons)
+		if len(path.C) == 0 {
+			path = contourPolygonsPath(projectedPolygons)
+		}
+		if len(path.C) == 0 {
+			continue
+		}
+
+		color := mapping.Color(bandLevel, alpha)
+		if opt.Color != nil {
+			color = *opt.Color
+			color.A *= alpha
+		}
+		paths = append(paths, path)
+		colors = append(colors, color)
+	}
+	if len(paths) == 0 {
+		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+	}
+	return paths, colors, computed3DCollectionZ(collectionDepth), mapping
+}
+
+func validate3DGridContourInput(x, y []float64, z [][]float64) (rows, cols int, ok bool) {
+	if len(z) == 0 {
+		return 0, 0, false
+	}
+	rows = len(z)
+	cols = len(z[0])
+	if cols == 0 || len(x) < cols || len(y) < rows {
+		return 0, 0, false
+	}
+	for row := 1; row < rows; row++ {
+		if len(z[row]) != cols {
+			return 0, 0, false
+		}
+	}
+	return rows, cols, true
+}
+
+func contourGridBandPolygonsForLevel(x, y []float64, data [][]float64, low, high float64) [][]geom.Pt {
+	rows := len(data)
+	if rows < 2 || len(x) < 2 || len(y) < 2 {
+		return nil
+	}
+	cols := len(data[0])
+	polygons := make([][]geom.Pt, 0)
+	for row := 0; row+1 < rows; row++ {
+		for col := 0; col+1 < cols; col++ {
+			polygons = append(polygons, contourCellBandPolygons(
+				[4]geom.Pt{
+					{X: x[col], Y: y[row]},
+					{X: x[col+1], Y: y[row]},
+					{X: x[col+1], Y: y[row+1]},
+					{X: x[col], Y: y[row+1]},
+				},
+				[4]float64{
+					data[row][col],
+					data[row][col+1],
+					data[row+1][col+1],
+					data[row+1][col],
+				},
+				low,
+				high,
+			)...)
+		}
+	}
+	return polygons
+}
+
+func contourTriBandPolygons(tri Triangulation, values []float64, low, high float64) [][]geom.Pt {
+	polygons := make([][]geom.Pt, 0)
+	for triIdx, triangle := range tri.Triangles {
+		if tri.masked(triIdx) {
+			continue
+		}
+		polygon := triangleBandPolygon(
+			[3]geom.Pt{tri.point(triangle[0]), tri.point(triangle[1]), tri.point(triangle[2])},
+			[3]float64{values[triangle[0]], values[triangle[1]], values[triangle[2]]},
+			low,
+			high,
+		)
+		if len(polygon) >= 3 {
+			polygons = append(polygons, polygon)
+		}
+	}
+	return polygons
+}
+
+func rotatedContourTriangulation(x, y []float64, z [][]float64, zdir string) (Triangulation, []float64, bool) {
+	rows, cols, ok := validate3DGridContourInput(x, y, z)
+	if !ok {
+		return Triangulation{}, nil, false
+	}
+	pointsX := make([]float64, 0, rows*cols)
+	pointsY := make([]float64, 0, rows*cols)
+	values := make([]float64, 0, rows*cols)
+	triangles := make([][3]int, 0, (rows-1)*(cols-1)*2)
+	mask := make([]bool, 0, (rows-1)*(cols-1)*2)
+	index := func(row, col int) int { return row*cols + col }
+
+	for row := 0; row < rows; row++ {
+		for col := 0; col < cols; col++ {
+			p := rotate3DPointAxes(x[col], y[row], z[row][col], zdir)
+			pointsX = append(pointsX, p[0])
+			pointsY = append(pointsY, p[1])
+			values = append(values, p[2])
+		}
+	}
+	for row := 0; row+1 < rows; row++ {
+		for col := 0; col+1 < cols; col++ {
+			p00 := index(row, col)
+			p10 := index(row, col+1)
+			p01 := index(row+1, col)
+			p11 := index(row+1, col+1)
+			t0 := [3]int{p00, p10, p11}
+			t1 := [3]int{p00, p11, p01}
+			triangles = append(triangles, t0, t1)
+			mask = append(mask, !triangleFinite(values, t0), !triangleFinite(values, t1))
+		}
+	}
+	return Triangulation{X: pointsX, Y: pointsY, Triangles: triangles, Mask: mask}, values, true
+}
+
+func (a *Axes3D) projectSurfacePolygons(x, y []float64, z [][]float64, opts ...PlotOptions) ([][]geom.Pt, []render.Color, float64, ScalarMapInfo) {
+	if a == nil || len(z) == 0 {
+		return nil, nil, 0, ScalarMapInfo{}
+	}
+	rows := len(z)
+	cols := len(z[0])
+	if cols == 0 || len(x) < cols || len(y) < rows {
+		return nil, nil, 0, ScalarMapInfo{}
+	}
+	for row := 1; row < rows; row++ {
+		if len(z[row]) != cols {
+			return nil, nil, 0, ScalarMapInfo{}
+		}
+	}
+
+	opt := firstPlotOptions(opts)
+	faces := make([]surfaceFace, 0, (rows-1)*(cols-1))
+	values := make([]float64, 0, (rows-1)*(cols-1))
+	collectionDepth := math.Inf(1)
+	rowIndices, colIndices := surfaceSampleIndices(rows, cols, opt)
+	defaultColor := a.NextColor()
+	useMapping := opt.Colormap != nil && *opt.Colormap != ""
+	useExplicitFaceColors := len(opt.FaceColors) > 0
+	shade := surfaceShadeEnabled(opt, useMapping)
+	for rowIdx := 0; rowIdx+1 < len(rowIndices); rowIdx++ {
+		row0 := rowIndices[rowIdx]
+		row1 := rowIndices[rowIdx+1]
+		for colIdx := 0; colIdx+1 < len(colIndices); colIdx++ {
+			col0 := colIndices[colIdx]
+			col1 := colIndices[colIdx+1]
+			corners := [4]vec3{
+				{x[col0], y[row0], z[row0][col0]},
+				{x[col1], y[row0], z[row0][col1]},
+				{x[col1], y[row1], z[row1][col1]},
+				{x[col0], y[row1], z[row1][col0]},
+			}
+			normal := corners[0].sub(corners[1]).cross(corners[1].sub(corners[2]))
+			polygon := make([]geom.Pt, 0, 2*(row1-row0)+2*(col1-col0))
+			rawPolygon := make([]vec3, 0, 2*(row1-row0)+2*(col1-col0))
+			value := 0.0
+			depth := 0.0
+			valid := true
+			count := 0
+			surfacePatchPerimeter(row0, row1, col0, col1, func(row, col int) {
+				if !valid {
+					return
+				}
+				zVal := z[row][col]
+				if !isFinite3D(x[col], y[row], zVal) {
+					valid = false
+					return
+				}
+				rawPolygon = append(rawPolygon, vec3{x[col], y[row], zVal})
+				pt, zDepth := a.projectPointDepth(x[col], y[row], zVal)
+				polygon = append(polygon, pt)
+				value += zVal
+				depth += zDepth
+				if zDepth < collectionDepth {
+					collectionDepth = zDepth
+				}
+				count++
+			})
+			if !valid {
+				continue
+			}
+			if opt.AxLimClip && !a.polygonWithin3DViewLimits(rawPolygon) {
+				continue
+			}
+			value /= float64(count)
+			depth /= float64(count)
+			baseColor := defaultColor
+			switch {
+			case useExplicitFaceColors:
+				baseColor = faceColorAtIndex(opt.FaceColors, len(faces))
+			case opt.Color != nil:
+				baseColor = *opt.Color
+			}
+			if shade && !useMapping {
+				baseColor = shade3DFaceColor(baseColor, normal)
+			}
+			faces = append(faces, surfaceFace{
+				polygon: polygon,
+				value:   value,
+				color:   baseColor,
+				normal:  normal,
+				depth:   depth,
+			})
+			values = append(values, value)
+		}
+	}
+	if len(faces) == 0 {
+		return nil, nil, 0, ScalarMapInfo{}
+	}
+
+	sort.SliceStable(faces, func(i, j int) bool {
+		return faces[i].depth > faces[j].depth
+	})
+
+	mapping := ScalarMapInfo{}
+	if useMapping {
+		mapping = resolvePlotScalarMap(values, opt)
+	}
+	polygons := make([][]geom.Pt, len(faces))
+	colors := make([]render.Color, len(faces))
+	for i, face := range faces {
+		polygons[i] = face.polygon
+		if useMapping {
+			colors[i] = mapping.Color(face.value, 1)
+		} else {
+			colors[i] = face.color
+		}
+	}
+	return polygons, colors, computed3DCollectionZ(collectionDepth), mapping
+}
+
+func surfaceGridSampleIndices(length, count int) []int {
+	if length <= 0 {
+		return nil
+	}
+	if count <= 0 {
+		count = default3DSurfaceCount
+	}
+	stride := int(math.Ceil(float64(length) / float64(count)))
+	if stride < 1 {
+		stride = 1
+	}
+
+	indices := make([]int, 0, (length+stride-1)/stride+1)
+	if (length-1)%stride == 0 {
+		for i := 0; i < length; i += stride {
+			indices = append(indices, i)
+		}
+		return indices
+	}
+
+	for i := 0; i < length-1; i += stride {
+		indices = append(indices, i)
+	}
+	return append(indices, length-1)
+}
+
+func surfaceSampleIndices(rows, cols int, opt PlotOptions) ([]int, []int) {
+	hasStride := opt.RStride != nil || opt.CStride != nil
+	if hasStride {
+		rstride, cstride := 10, 10
+		if opt.RStride != nil {
+			rstride = *opt.RStride
+		}
+		if opt.CStride != nil {
+			cstride = *opt.CStride
+		}
+		return steppedSampleIndices(rows, rstride), steppedSampleIndices(cols, cstride)
+	}
+	rcount, ccount := default3DSurfaceCount, default3DSurfaceCount
+	if opt.RCount != nil {
+		rcount = *opt.RCount
+	}
+	if opt.CCount != nil {
+		ccount = *opt.CCount
+	}
+	return surfaceGridSampleIndices(rows, rcount), surfaceGridSampleIndices(cols, ccount)
+}
+
+func surfacePatchPerimeter(row0, row1, col0, col1 int, emit func(row, col int)) {
+	for col := col0; col < col1; col++ {
+		emit(row0, col)
+	}
+	for row := row0; row < row1; row++ {
+		emit(row, col1)
+	}
+	for col := col1; col > col0; col-- {
+		emit(row1, col)
+	}
+	for row := row1; row > row0; row-- {
+		emit(row, col0)
+	}
+}
+
+func (a *Axes3D) projectedContourFloorPolygons(x, y []float64, z [][]float64, alpha float64, colorOverride *render.Color, levelCount int, explicitLevels []float64, offset *float64) ([][]geom.Pt, []render.Color, float64) {
+	if a == nil || len(z) == 0 {
+		return nil, nil, defaultPatchZ
+	}
+	rows := len(z)
+	cols := len(z[0])
+	if cols == 0 || len(x) < cols || len(y) < rows {
+		return nil, nil, defaultPatchZ
+	}
+	for row := 1; row < rows; row++ {
+		if len(z[row]) != cols {
+			return nil, nil, defaultPatchZ
+		}
+	}
+
+	zMin, zMax := zGridRange(z)
+	if zMin == zMax {
+		zMin -= 0.5
+		zMax += 0.5
+	}
+	floorZ := zMin - 0.2*(zMax-zMin)
+	if offset != nil && isFinite(*offset) {
+		floorZ = *offset
+	}
+
+	values := flattenGridValues(z)
+	levels := contourLevels(values, explicitLevels, levelCount, true)
+	if len(levels) < 2 {
+		return nil, nil, defaultPatchZ
+	}
+
+	mapping := resolveScalarMapValues(values, "viridis", nil, nil)
+	mapping.VMin = levels[0]
+	mapping.VMax = levels[len(levels)-1]
+	opt := ContourOptions{}
+	if colorOverride != nil {
+		opt.Color = colorOverride
+	}
+	rawPolygons, colors := contourGridBandPolygons(x[:cols], y[:rows], z, levels, opt, mapping, alpha)
+	if len(rawPolygons) == 0 {
+		return nil, nil, defaultPatchZ
+	}
+
+	polygons := make([][]geom.Pt, 0, len(rawPolygons))
+	projectedColors := make([]render.Color, 0, len(colors))
+	collectionDepth := math.Inf(1)
+	for i, polygon := range rawPolygons {
+		if len(polygon) < 3 {
+			continue
+		}
+		projected := make([]geom.Pt, len(polygon))
+		for j, pt := range polygon {
+			projectedPt, zDepth := a.projectPointDepth(pt.X, pt.Y, floorZ)
+			projected[j] = projectedPt
+			if zDepth < collectionDepth {
+				collectionDepth = zDepth
+			}
+		}
+		polygons = append(polygons, projected)
+		if i < len(colors) {
+			projectedColors = append(projectedColors, colors[i])
+		} else if colorOverride != nil {
+			color := *colorOverride
+			color.A *= alpha
+			projectedColors = append(projectedColors, color)
+		} else {
+			projectedColors = append(projectedColors, mapping.Color(0, 1))
+		}
+	}
+	return polygons, projectedColors, computed3DCollectionZ(collectionDepth)
+}
+
+func zGridRange(z [][]float64) (float64, float64) {
+	minVal, maxVal := 0.0, 0.0
+	first := true
+	for _, row := range z {
+		for _, v := range row {
+			if math.IsNaN(v) || math.IsInf(v, 0) {
+				continue
+			}
+			if first {
+				minVal, maxVal = v, v
+				first = false
+				continue
+			}
+			if v < minVal {
+				minVal = v
+			}
+			if v > maxVal {
+				maxVal = v
+			}
+		}
+	}
+	return minVal, maxVal
+}
+
+func compoundContourPaths(polygons [][]geom.Pt, colors []render.Color) ([]geom.Path, []render.Color) {
+	paths := make([]geom.Path, 0)
+	pathColors := make([]render.Color, 0)
+	var current [][]geom.Pt
+	var currentColor render.Color
+	haveCurrent := false
+	flush := func() {
+		if !haveCurrent || len(current) == 0 {
+			return
+		}
+		path := contourBoundaryPath(current)
+		if len(path.C) == 0 {
+			path = contourPolygonsPath(current)
+		}
+		if len(path.C) > 0 {
+			paths = append(paths, path)
+			pathColors = append(pathColors, currentColor)
+		}
+		current = nil
+		haveCurrent = false
+	}
+	for i, polygon := range polygons {
+		if len(polygon) < 3 {
+			continue
+		}
+		color := render.Color{}
+		if i < len(colors) {
+			color = colors[i]
+		}
+		if haveCurrent && color != currentColor {
+			flush()
+		}
+		if !haveCurrent {
+			currentColor = color
+			haveCurrent = true
+		}
+		current = append(current, polygon)
+	}
+	flush()
+	return paths, pathColors
+}
+
+type contourPointKey struct {
+	x int64
+	y int64
+}
+
+type contourEdgeKey struct {
+	from contourPointKey
+	to   contourPointKey
+}
+
+type contourBoundaryEdge struct {
+	id      int
+	from    geom.Pt
+	to      geom.Pt
+	fromKey contourPointKey
+	toKey   contourPointKey
+}
+
+func contourPolygonsPath(polygons [][]geom.Pt) geom.Path {
+	var path geom.Path
+	for _, polygon := range polygons {
+		if len(polygon) < 3 {
+			continue
+		}
+		for i, pt := range polygon {
+			if i == 0 {
+				path.MoveTo(pt)
+			} else {
+				path.LineTo(pt)
+			}
+		}
+		path.Close()
+	}
+	return path
+}
+
+func contourBoundaryPath(polygons [][]geom.Pt) geom.Path {
+	edgesByKey := map[contourEdgeKey]contourBoundaryEdge{}
+	ordered := make([]contourEdgeKey, 0)
+	nextID := 0
+	for _, polygon := range polygons {
+		if len(polygon) < 3 {
+			continue
+		}
+		for i, from := range polygon {
+			to := polygon[(i+1)%len(polygon)]
+			fromKey := contourPathPointKey(from)
+			toKey := contourPathPointKey(to)
+			if fromKey == toKey {
+				continue
+			}
+			key := contourEdgeKey{from: fromKey, to: toKey}
+			reverse := contourEdgeKey{from: toKey, to: fromKey}
+			if _, ok := edgesByKey[reverse]; ok {
+				delete(edgesByKey, reverse)
+				continue
+			}
+			edgesByKey[key] = contourBoundaryEdge{
+				id:      nextID,
+				from:    from,
+				to:      to,
+				fromKey: fromKey,
+				toKey:   toKey,
+			}
+			ordered = append(ordered, key)
+			nextID++
+		}
+	}
+	if len(edgesByKey) == 0 {
+		return geom.Path{}
+	}
+
+	adjacent := map[contourPointKey][]contourBoundaryEdge{}
+	for _, edge := range edgesByKey {
+		adjacent[edge.fromKey] = append(adjacent[edge.fromKey], edge)
+	}
+
+	used := map[int]bool{}
+	var path geom.Path
+	for _, key := range ordered {
+		edge, ok := edgesByKey[key]
+		if !ok || used[edge.id] {
+			continue
+		}
+		loop := []geom.Pt{edge.from, edge.to}
+		used[edge.id] = true
+		startKey := edge.fromKey
+		currentKey := edge.toKey
+		closed := currentKey == startKey
+		for !closed {
+			next, ok := nextUnusedContourBoundaryEdge(adjacent[currentKey], used)
+			if !ok {
+				break
+			}
+			loop = append(loop, next.to)
+			used[next.id] = true
+			currentKey = next.toKey
+			closed = currentKey == startKey
+		}
+		if !closed || len(loop) < 4 {
+			continue
+		}
+		if contourPathPointKey(loop[len(loop)-1]) == contourPathPointKey(loop[0]) {
+			loop = loop[:len(loop)-1]
+		}
+		if len(loop) < 3 {
+			continue
+		}
+		for i, pt := range loop {
+			if i == 0 {
+				path.MoveTo(pt)
+			} else {
+				path.LineTo(pt)
+			}
+		}
+		path.Close()
+	}
+	return path
+}
+
+func nextUnusedContourBoundaryEdge(edges []contourBoundaryEdge, used map[int]bool) (contourBoundaryEdge, bool) {
+	for _, edge := range edges {
+		if !used[edge.id] {
+			return edge, true
+		}
+	}
+	return contourBoundaryEdge{}, false
+}
+
+func contourPathPointKey(pt geom.Pt) contourPointKey {
+	const scale = 1e9
+	return contourPointKey{
+		x: int64(math.Round(pt.X * scale)),
+		y: int64(math.Round(pt.Y * scale)),
+	}
+}
+
+func flattenGridValues(z [][]float64) []float64 {
+	values := make([]float64, 0)
+	for _, row := range z {
+		values = append(values, row...)
+	}
+	return values
+}
+
+func (a *Axes3D) projectedContourFillPolygons(x, y []float64, z [][]float64, opt ContourOptions, levelCount int) ([][]geom.Pt, []render.Color) {
+	tri, values, ok := a.projectedContourTriangulation(x, y, z)
+	if !ok {
+		return nil, nil
+	}
+	if levelCount <= 0 {
+		levelCount = 7
+	}
+
+	levels := contourLevels(values, nil, levelCount, true)
+	if len(levels) < 2 {
+		return nil, nil
+	}
+
+	mapping := resolveScalarMapValues(values, "", nil, nil)
+	mapping.VMin = levels[0]
+	mapping.VMax = levels[len(levels)-1]
+	polygons, polygonColors := contourBandPolygons(tri, values, levels, opt, mapping, 1.0)
+	if len(polygons) == 0 {
+		return nil, nil
+	}
+
+	filteredPolygons := make([][]geom.Pt, 0, len(polygons))
+	filteredColors := make([]render.Color, 0, len(polygonColors))
+	for i, polygon := range polygons {
+		if len(polygon) < 3 {
+			continue
+		}
+		if i < len(polygonColors) {
+			filteredColors = append(filteredColors, polygonColors[i])
+			filteredPolygons = append(filteredPolygons, polygon)
+		}
+	}
+	return filteredPolygons, filteredColors
+}
+
+func (a *Axes3D) projectedContourTriangulation(x, y []float64, z [][]float64) (Triangulation, []float64, bool) {
+	if a == nil || len(z) == 0 {
+		return Triangulation{}, nil, false
+	}
+	rows := len(z)
+	cols := len(z[0])
+	if cols == 0 || len(x) < cols || len(y) < rows {
+		return Triangulation{}, nil, false
+	}
+	for row := 1; row < rows; row++ {
+		if len(z[row]) != cols {
+			return Triangulation{}, nil, false
+		}
+	}
+
+	points := make([]geom.Pt, 0, rows*cols)
+	values := make([]float64, 0, rows*cols)
+	triangles := make([][3]int, 0, (rows-1)*(cols-1)*2)
+	mask := make([]bool, 0, (rows-1)*(cols-1)*2)
+	index := func(row, col int) int { return row*cols + col }
+
+	for row := 0; row < rows; row++ {
+		for col := 0; col < cols; col++ {
+			p := a.ProjectPoint(x[col], y[row], z[row][col])
+			points = append(points, p)
+			values = append(values, z[row][col])
+		}
+	}
+	for row := 0; row+1 < rows; row++ {
+		for col := 0; col+1 < cols; col++ {
+			p00 := index(row, col)
+			p10 := index(row, col+1)
+			p01 := index(row+1, col)
+			p11 := index(row+1, col+1)
+			triangles = append(triangles, [3]int{p00, p10, p11})
+			mask = append(mask, !triangleFinite(values, [3]int{p00, p10, p11}))
+			triangles = append(triangles, [3]int{p00, p11, p01})
+			mask = append(mask, !triangleFinite(values, [3]int{p00, p11, p01}))
+		}
+	}
+
+	tri := Triangulation{
+		X:         make([]float64, len(points)),
+		Y:         make([]float64, len(points)),
+		Triangles: triangles,
+		Mask:      mask,
+	}
+	for i, pt := range points {
+		tri.X[i] = pt.X
+		tri.Y[i] = pt.Y
+	}
+	return tri, values, true
+}
+
+// Trisurf projects a triangulated unstructured surface mesh as filled polygons.
+func (a *Axes3D) Trisurf(tri Triangulation, z []float64, opts ...PlotOptions) *PolyCollection {
+	if a == nil || len(tri.X) == 0 {
+		return nil
+	}
+	if err := tri.Validate(); err != nil || len(z) != len(tri.X) {
+		return nil
+	}
+	var ok bool
+	tri, ok = autoTriangulate(tri)
+	if !ok {
+		return nil
+	}
+	limitsChanged := a.observe3DTriangulation(tri, z)
+
+	color := a.NextColor()
+	lineWidth := 1.0
+	alpha := 1.0
+	label := ""
+	edgeColor := render.Color{A: 0}
+	antialias := render.AntialiasDefault
+	if len(opts) > 0 {
+		opt := opts[0]
+		if opt.Color != nil {
+			color = *opt.Color
+		}
+		if opt.EdgeWidth != nil {
+			lineWidth = *opt.EdgeWidth
+		} else if opt.LineWidth != nil {
+			lineWidth = *opt.LineWidth
+		}
+		if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
+			alpha = *opt.Alpha
+		}
+		if opt.EdgeColor != nil {
+			edgeColor = *opt.EdgeColor
+			edgeColor.A *= alpha
+		}
+		if opt.Antialiased != nil && !*opt.Antialiased {
+			antialias = render.AntialiasOff
+		}
+		label = opt.Label
+	}
+
+	faceColor := color
+	faceColor.A *= alpha
+	faces, faceColors, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, firstPlotOptions(opts))
+	if len(faces) == 0 {
+		return nil
+	}
+	collection := &PolyCollection{
+		Polygons: faces,
+		PatchCollection: PatchCollection{
+			Collection: Collection{
+				Coords:    Coords(CoordData),
+				Label:     label,
+				Alpha:     1,
+				Antialias: antialias,
+				Colormap:  mapping.Colormap,
+				Norm:      mapping.Norm,
+				VMin:      mapping.VMin,
+				VMax:      mapping.VMax,
+				z:         faceZ,
+			},
+			FaceColors: faceColors,
+			EdgeColor:  edgeColor,
+			EdgeWidth:  lineWidth,
+			LineJoin:   render.JoinMiter,
+			LineCap:    render.CapButt,
+		},
+	}
+	a.Add(collection)
+	a.add3DReprojector(func() {
+		if collection != nil {
+			faces, faceColors, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, firstPlotOptions(opts))
+			collection.Polygons = faces
+			collection.FaceColors = faceColors
+			collection.Colormap = mapping.Colormap
+			collection.Norm = mapping.Norm
+			collection.VMin = mapping.VMin
+			collection.VMax = mapping.VMax
+			collection.z = faceZ
+		}
+	}, limitsChanged)
+	return collection
+}

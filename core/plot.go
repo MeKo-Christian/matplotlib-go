@@ -718,7 +718,7 @@ type BoxPlotOptions struct {
 	WhiskerWidth *float64      // whisker line width in pixels
 	MedianWidth  *float64      // median line width in pixels
 	CapWidth     *float64      // cap length in data units
-	FlierSize    *float64      // outlier marker radius in pixels
+	FlierSize    *float64      // outlier marker size in points
 	Alpha        *float64      // alpha transparency
 	ShowFliers   *bool         // whether to draw outliers
 	Label        string        // series label for legend
@@ -747,7 +747,7 @@ type BoxPlotsOptions struct {
 	WhiskerWidth *float64       // whisker line width in pixels
 	MedianWidth  *float64       // median line width in pixels
 	CapWidth     *float64       // cap length in data units
-	FlierSize    *float64       // outlier marker radius in pixels
+	FlierSize    *float64       // outlier marker size in points
 	Alpha        *float64       // alpha transparency
 	ShowFliers   *bool          // whether to draw outliers
 	Labels       []string       // series labels for legend
@@ -808,7 +808,7 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		capColor = *opt.CapColor
 	}
 
-	flierColor := edgeColor
+	flierColor := render.Color{}
 	if opt.FlierColor != nil {
 		flierColor = *opt.FlierColor
 	}
@@ -855,7 +855,10 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 	if opt.FlierMarker != nil {
 		flierMarker = *opt.FlierMarker
 	}
-	flierEdgeColor := flierColor
+	flierEdgeColor := edgeColor
+	if opt.FlierColor != nil {
+		flierEdgeColor = flierColor
+	}
 	if opt.FlierEdgeColor != nil {
 		flierEdgeColor = *opt.FlierEdgeColor
 	}

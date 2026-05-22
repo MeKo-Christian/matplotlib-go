@@ -78,6 +78,7 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 	quantileSegments := make([][]geom.Pt, 0, len(data))
 	orientation := normalizeViolinOrientation(cfg.Orientation)
 	side := normalizeViolinSide(cfg.Side)
+	defaultLineColor := a.PeekColor()
 
 	for i, series := range data {
 		values := specialtyFiniteValues(series)
@@ -136,7 +137,7 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 			meanSegments = append(meanSegments, violinPerpSegment(position, width, stats.mean, orientation, side))
 		}
 		if specialtyBool(cfg.ShowMedians, true) {
-			medianSegments = append(medianSegments, violinPerpSegment(position, width*1.2, stats.median, orientation, side))
+			medianSegments = append(medianSegments, violinPerpSegment(position, width, stats.median, orientation, side))
 		}
 		for _, q := range violinQuantiles(cfg.Quantiles, i, values) {
 			quantileSegments = append(quantileSegments, violinPerpSegment(position, width, q, orientation, side))
@@ -158,7 +159,7 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 	if cfg.EdgeColor != nil {
 		edgeColor = *cfg.EdgeColor
 	}
-	lineColor := edgeColor
+	lineColor := defaultLineColor
 	if cfg.LineColor != nil {
 		lineColor = *cfg.LineColor
 	}
@@ -190,7 +191,7 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 		container.Medians = &LineCollection{
 			Collection: Collection{Alpha: 1, z: 2.35},
 			Segments:   medianSegments,
-			Color:      render.Color{R: 1, G: 1, B: 1, A: 0.95},
+			Color:      lineColor,
 			LineWidth:  math.Max(cfg.EdgeWidth, 1.5),
 			LineCap:    render.CapRound,
 		}
@@ -264,21 +265,27 @@ func specialtyKDE(values []float64, points int, bandwidth float64, methods ...st
 			diff := value - mean
 			variance += diff * diff
 		}
-		std := math.Sqrt(variance / float64(len(values)))
-		factor := 1.06
+		if len(values) > 1 {
+			variance /= float64(len(values) - 1)
+		} else {
+			variance = 0
+		}
+		std := math.Sqrt(variance)
+		n := float64(len(values))
+		factor := math.Pow(n, -0.2)
 		if len(methods) > 0 {
 			switch strings.ToLower(strings.TrimSpace(methods[0])) {
-			case "scott":
-				factor = 1
-			case "silverman", "":
-				factor = 1.06
+			case "", "scott":
+				factor = math.Pow(n, -0.2)
+			case "silverman":
+				factor = math.Pow(n*0.75, -0.2)
 			default:
 				if parsed, err := strconv.ParseFloat(methods[0], 64); err == nil && parsed > 0 {
 					factor = parsed
 				}
 			}
 		}
-		bandwidth = factor * std * math.Pow(float64(len(values)), -0.2)
+		bandwidth = factor * std
 		if bandwidth <= 0 || !isFinite(bandwidth) {
 			bandwidth = (maxValue - minValue) / 12
 		}

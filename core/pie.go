@@ -74,8 +74,8 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 		Center:        geom.Pt{},
 		Radius:        1,
 		StartAngle:    0,
-		LabelDistance: 1.15,
-		PctDistance:   0.62,
+		LabelDistance: 1.1,
+		PctDistance:   0.6,
 		LineWidth:     1,
 		Alpha:         1,
 		Coords:        Coords(CoordData),
@@ -86,10 +86,10 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 			cfg.Radius = 1
 		}
 		if cfg.LabelDistance <= 0 {
-			cfg.LabelDistance = 1.15
+			cfg.LabelDistance = 1.1
 		}
 		if cfg.PctDistance <= 0 {
-			cfg.PctDistance = 0.62
+			cfg.PctDistance = 0.6
 		}
 		if cfg.LineWidth <= 0 {
 			cfg.LineWidth = 1
@@ -311,39 +311,76 @@ func (w *Wedge) Bounds(*DrawContext) geom.Rect {
 }
 
 func (w *Wedge) localPath() geom.Path {
-	outer := specialtyArcPoints(w.Center, w.Radius, w.Theta1, w.Theta2)
-	if len(outer) == 0 {
+	if w.Width <= 0 || w.Width >= w.Radius {
+		path := matplotlibArcPath(w.Center, w.Radius, w.Theta1, w.Theta2)
+		if len(path.C) == 0 {
+			return geom.Path{}
+		}
+		path.LineTo(w.Center)
+		path.C = append(path.C, geom.ClosePath)
+		return path
+	}
+	path := matplotlibArcPath(w.Center, w.Radius, w.Theta1, w.Theta2)
+	if len(path.C) == 0 {
 		return geom.Path{}
 	}
-	if w.Width <= 0 || w.Width >= w.Radius {
-		points := make([]geom.Pt, 0, len(outer)+1)
-		points = append(points, w.Center)
-		points = append(points, outer...)
-		return polygonPath(points, true)
+	inner := matplotlibArcPath(w.Center, w.Radius-w.Width, w.Theta2, w.Theta1)
+	if len(inner.C) == 0 {
+		return path
 	}
-	inner := specialtyArcPoints(w.Center, w.Radius-w.Width, w.Theta2, w.Theta1)
-	points := make([]geom.Pt, 0, len(outer)+len(inner))
-	points = append(points, outer...)
-	points = append(points, inner...)
-	return polygonPath(points, true)
+	firstInner := inner.V[0]
+	path.LineTo(firstInner)
+	path.C = append(path.C, inner.C[1:]...)
+	path.V = append(path.V, inner.V[1:]...)
+	path.C = append(path.C, geom.ClosePath)
+	return path
 }
 
-func specialtyArcPoints(center geom.Pt, radius, theta1, theta2 float64) []geom.Pt {
+func matplotlibArcPath(center geom.Pt, radius, theta1, theta2 float64) geom.Path {
 	if radius <= 0 {
-		return nil
+		return geom.Path{}
 	}
-	span := theta2 - theta1
-	steps := max(24, int(math.Ceil(math.Abs(span)/3))+1)
-	points := make([]geom.Pt, 0, steps)
-	for i := range steps {
-		t := float64(i) / float64(max(steps-1, 1))
-		angle := (theta1 + span*t) * math.Pi / 180
-		points = append(points, geom.Pt{
-			X: center.X + radius*math.Cos(angle),
-			Y: center.Y + radius*math.Sin(angle),
-		})
+	eta1Deg := theta1
+	eta2Deg := theta2 - 360*math.Floor((theta2-theta1)/360)
+	if theta2 != theta1 && eta2Deg <= eta1Deg {
+		eta2Deg += 360
 	}
-	return points
+	eta1 := eta1Deg * math.Pi / 180
+	eta2 := eta2Deg * math.Pi / 180
+	n := int(math.Pow(2, math.Ceil((eta2-eta1)/(0.5*math.Pi))))
+	if n < 1 {
+		n = 1
+	}
+	deta := (eta2 - eta1) / float64(n)
+	t := math.Tan(0.5 * deta)
+	alpha := math.Sin(deta) * (math.Sqrt(4+3*t*t) - 1) / 3
+
+	path := geom.Path{}
+	start := geom.Pt{
+		X: center.X + radius*math.Cos(eta1),
+		Y: center.Y + radius*math.Sin(eta1),
+	}
+	path.MoveTo(start)
+	for i := 0; i < n; i++ {
+		a := eta1 + float64(i)*deta
+		b := a + deta
+		cosA, sinA := math.Cos(a), math.Sin(a)
+		cosB, sinB := math.Cos(b), math.Sin(b)
+		c1 := geom.Pt{
+			X: center.X + radius*(cosA-alpha*sinA),
+			Y: center.Y + radius*(sinA+alpha*cosA),
+		}
+		c2 := geom.Pt{
+			X: center.X + radius*(cosB+alpha*sinB),
+			Y: center.Y + radius*(sinB-alpha*cosB),
+		}
+		to := geom.Pt{
+			X: center.X + radius*cosB,
+			Y: center.Y + radius*sinB,
+		}
+		path.CubicTo(c1, c2, to)
+	}
+	return path
 }
 
 func piePoint(center geom.Pt, radius, angleDeg float64) geom.Pt {
