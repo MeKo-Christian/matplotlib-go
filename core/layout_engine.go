@@ -173,6 +173,10 @@ func measuredGridOptions(fig *Figure, r render.Renderer, vp geom.Rect, grid *Gri
 	}
 	innerPadX := outerPadX
 	innerPadY := outerPadY
+	if fig.layoutEngine == LayoutEngineConstrained {
+		innerPadX = constrainedLayoutDefaultSpacePx(parentPx.W(), grid.nCols)
+		innerPadY = constrainedLayoutDefaultSpacePx(parentPx.H(), grid.nRows)
+	}
 	global := figureLayoutMarginsPx(fig, r, vp, fig.layoutEngine)
 	if !gridCoversWholeFigure(grid) {
 		global = figureMargin{}
@@ -202,15 +206,9 @@ func measuredGridOptions(fig *Figure, r render.Renderer, vp geom.Rect, grid *Gri
 	for col := 0; col < len(leftMargins)-1; col++ {
 		maxGapX = math.Max(maxGapX, rightMargins[col]+leftMargins[col+1]+innerPadX)
 	}
-	if fig.layoutEngine == LayoutEngineConstrained && grid.nCols > 1 {
-		maxGapX = math.Max(maxGapX, constrainedLayoutDefaultSpacePx(parentPx.W(), grid.nCols))
-	}
 	maxGapY := 0.0
 	for row := 0; row < len(topMargins)-1; row++ {
 		maxGapY = math.Max(maxGapY, bottomMargins[row]+topMargins[row+1]+innerPadY)
-	}
-	if fig.layoutEngine == LayoutEngineConstrained && grid.nRows > 1 {
-		maxGapY = math.Max(maxGapY, constrainedLayoutDefaultSpacePx(parentPx.H(), grid.nRows))
 	}
 
 	if grid.nCols > 1 {
@@ -309,11 +307,11 @@ func figureLabelMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engine L
 	ctx := newFigureDrawContext(fig, vp)
 	if fig.SupTitle != "" {
 		layout := measureSingleLineTextLayout(r, fig.SupTitle, titleFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX)
-		margins.top += layout.Height + pad
+		margins.top += layout.Height + 2*pad
 	}
 	if fig.SupXLabel != "" {
 		layout := measureSingleLineTextLayout(r, fig.SupXLabel, axisLabelFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX)
-		margins.bottom += layout.Height + pad
+		margins.bottom += layout.Height + 2*pad
 	}
 	if fig.SupYLabel != "" {
 		layout := measureSingleLineTextLayout(r, fig.SupYLabel, axisLabelFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX)

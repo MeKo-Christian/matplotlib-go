@@ -297,9 +297,13 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 
 	if fig.SupTitle != "" {
 		layout := measureSingleLineTextLayout(r, fig.SupTitle, titleSize, fig.RC.FontKey, fig.RC.UseTeX)
+		y := figureRect.Min.Y
+		if fig.layoutEngine == LayoutEngineConstrained {
+			y += constrainedLayoutPadPx(fig)
+		}
 		anchor := geom.Pt{
 			X: centerX,
-			Y: figureRect.Min.Y,
+			Y: y,
 		}
 		drawDisplayText(
 			textRen,

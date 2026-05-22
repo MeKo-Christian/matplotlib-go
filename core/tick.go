@@ -264,7 +264,7 @@ func formatScalarTickLabel(f ScalarFormatter, x, step float64) string {
 		x = 0
 	}
 
-	return strconv.FormatFloat(x, 'f', prec, 64)
+	return scalarFixMinus(strconv.FormatFloat(x, 'f', prec, 64))
 }
 
 // MinorLinearLocator subdivides the intervals between major ticks.
@@ -471,7 +471,11 @@ func (f ScalarFormatter) Format(x float64) string {
 		s = strings.TrimRight(s, "0")
 		s = strings.TrimRight(s, ".")
 	}
-	return s
+	return scalarFixMinus(s)
+}
+
+func scalarFixMinus(s string) string {
+	return strings.ReplaceAll(s, "-", "\u2212")
 }
 
 // FixedFormatter returns labels by tick index.
