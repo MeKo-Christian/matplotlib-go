@@ -624,7 +624,6 @@ func plotSpectrumResult(a *Axes, x, y []float64, opts PlotOptions) *SpectrumResu
 	if line == nil {
 		return nil
 	}
-	setLineView(a, x, y)
 	return &SpectrumResult{
 		Line:        line,
 		Frequencies: append([]float64(nil), x...),

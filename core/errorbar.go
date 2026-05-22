@@ -9,23 +9,26 @@ import (
 
 // ErrorBar renders symmetric horizontal and/or vertical error bars for points.
 type ErrorBar struct {
-	XY        []geom.Pt    // data-space points
-	XErr      []float64    // symmetric x errors (same length as XY or broadcast scalar)
-	YErr      []float64    // symmetric y errors (same length as XY or broadcast scalar)
-	XErrLower []float64    // asymmetric lower x errors
-	XErrUpper []float64    // asymmetric upper x errors
-	YErrLower []float64    // asymmetric lower y errors
-	YErrUpper []float64    // asymmetric upper y errors
-	LoLimits  []bool       // y value is a lower limit
-	UpLimits  []bool       // y value is an upper limit
-	XLoLimits []bool       // x value is a lower limit
-	XUpLimits []bool       // x value is an upper limit
-	Color     render.Color // stroke color
-	LineWidth float64      // stroke width in pixels
-	CapSize   float64      // cap size in pixels (full width/height)
-	Alpha     float64      // alpha transparency (0-1), if 0 uses 1.0
-	Label     string       // series label for legend
-	z         float64      // z-order
+	XY         []geom.Pt    // data-space points
+	XErr       []float64    // symmetric x errors (same length as XY or broadcast scalar)
+	YErr       []float64    // symmetric y errors (same length as XY or broadcast scalar)
+	XErrLower  []float64    // asymmetric lower x errors
+	XErrUpper  []float64    // asymmetric upper x errors
+	YErrLower  []float64    // asymmetric lower y errors
+	YErrUpper  []float64    // asymmetric upper y errors
+	LoLimits   []bool       // y value is a lower limit
+	UpLimits   []bool       // y value is an upper limit
+	XLoLimits  []bool       // x value is a lower limit
+	XUpLimits  []bool       // x value is an upper limit
+	Color      render.Color // stroke color
+	LineWidth  float64      // stroke width in pixels
+	CapSize    float64      // cap size in pixels (full width/height)
+	Marker     MarkerType   // optional data marker, matching Matplotlib fmt markers
+	MarkerSet  bool
+	MarkerSize float64 // marker size in points
+	Alpha      float64 // alpha transparency (0-1), if 0 uses 1.0
+	Label      string  // series label for legend
+	z          float64 // z-order
 }
 
 // Draw renders each error bar from XY to XY with symmetric offsets.
@@ -139,6 +142,20 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 				}
 			}
 		}
+	}
+
+	if e.MarkerSet && e.MarkerSize > 0 {
+		scatter := &Scatter2D{
+			XY:        append([]geom.Pt(nil), e.XY...),
+			Size:      e.MarkerSize * e.MarkerSize,
+			Color:     color,
+			EdgeColor: color,
+			EdgeWidth: lineWidth,
+			Alpha:     alpha,
+			Marker:    e.Marker,
+			z:         e.Z() + 0.05,
+		}
+		scatter.Draw(r, ctx)
 	}
 }
 

@@ -247,7 +247,7 @@ func (a *Axes) Hexbin(x, y []float64, opts ...HexbinOptions) *HexbinCollection {
 		Counts:     counts,
 	}
 	if cfg.Marginals {
-		collection.HBar, collection.VBar = specialtyHexbinMarginals(x[:n], y[:n], cfg, mapping)
+		collection.HBar, collection.VBar = specialtyHexbinMarginals(x[:n], y[:n], cfg, xscale, yscale, mapping)
 		if collection.HBar != nil {
 			a.AddCollection(collection.HBar)
 		}
@@ -419,10 +419,11 @@ func applyHexbinBins(values []float64, cfg HexbinOptions) []float64 {
 	return out
 }
 
-func specialtyHexbinMarginals(x, y []float64, cfg HexbinOptions, mapping ScalarMapInfo) (*PolyCollection, *PolyCollection) {
+func specialtyHexbinMarginals(x, y []float64, cfg HexbinOptions, xscale, yscale string, mapping ScalarMapInfo) (*PolyCollection, *PolyCollection) {
 	extent := cfg.Extent
 	if extent == nil {
-		rect := finitePointRect(x, y)
+		tx, ty := specialtyHexbinScaledPoints(x, y, xscale, yscale)
+		rect := finitePointRect(tx, ty)
 		extent = &rect
 	}
 	gridX := max(1, cfg.GridSizeX)
@@ -430,62 +431,114 @@ func specialtyHexbinMarginals(x, y []float64, cfg HexbinOptions, mapping ScalarM
 	if gridY <= 0 {
 		gridY = max(1, int(float64(gridX)/math.Sqrt(3)))
 	}
-	hbar := specialtyMarginalBars(x, extent.Min.X, extent.Max.X, gridX, true, mapping, cfg.Alpha)
-	vbar := specialtyMarginalBars(y, extent.Min.Y, extent.Max.Y, gridY, false, mapping, cfg.Alpha)
+	xMin, xMax := extent.Min.X, extent.Max.X
+	yMin, yMax := extent.Min.Y, extent.Max.Y
+	if xscale == "log" {
+		xMin, xMax = math.Pow(10, xMin), math.Pow(10, xMax)
+	}
+	if yscale == "log" {
+		yMin, yMax = math.Pow(10, yMin), math.Pow(10, yMax)
+	}
+	hbar := specialtyMarginalBars(x, cfg.C, xMin, xMax, gridX, xscale, true, cfg.Reduce, mapping, cfg.Alpha)
+	vbar := specialtyMarginalBars(y, cfg.C, yMin, yMax, 2*gridY, yscale, false, cfg.Reduce, mapping, cfg.Alpha)
 	return hbar, vbar
 }
 
-func specialtyMarginalBars(values []float64, minValue, maxValue float64, bins int, horizontal bool, mapping ScalarMapInfo, alpha float64) *PolyCollection {
+func specialtyMarginalBars(values, cvalues []float64, minValue, maxValue float64, bins int, scale string, horizontal bool, reduce string, mapping ScalarMapInfo, alpha float64) *PolyCollection {
 	if bins <= 0 || minValue == maxValue {
 		return nil
 	}
-	counts := make([]float64, bins)
-	step := (maxValue - minValue) / float64(bins)
-	for _, value := range values {
-		if !isFinite(value) {
+	edges := marginalBinEdges(minValue, maxValue, bins, scale)
+	if len(edges) != bins+1 {
+		return nil
+	}
+	binned := make([][]float64, bins)
+	for i, value := range values {
+		if !isFinite(value) || (scale == "log" && value <= 0) {
 			continue
 		}
-		idx := int(math.Floor((value - minValue) / step))
+		idx := marginalBinIndex(edges, value)
 		if idx < 0 || idx >= bins {
 			continue
 		}
-		counts[idx]++
+		c := 1.0
+		if i < len(cvalues) && isFinite(cvalues[i]) {
+			c = cvalues[i]
+		}
+		binned[idx] = append(binned[idx], c)
 	}
 	polys := make([][]geom.Pt, 0, bins)
 	colors := make([]render.Color, 0, bins)
-	maxCount := 0.0
-	for _, count := range counts {
-		maxCount = math.Max(maxCount, count)
-	}
-	if maxCount == 0 {
-		return nil
-	}
-	for i, count := range counts {
-		if count == 0 {
+	for i, bucket := range binned {
+		if len(bucket) == 0 {
 			continue
 		}
-		a := minValue + float64(i)*step
-		b := a + step
-		thick := 0.05 * count / maxCount
+		value := reduceMarginalValues(bucket, reduce)
+		a := edges[i]
+		b := edges[i+1]
 		if horizontal {
-			polys = append(polys, []geom.Pt{{X: a, Y: 0}, {X: b, Y: 0}, {X: b, Y: thick}, {X: a, Y: thick}})
+			polys = append(polys, []geom.Pt{{X: a, Y: 0}, {X: b, Y: 0}, {X: b, Y: 0.05}, {X: a, Y: 0.05}})
 		} else {
-			polys = append(polys, []geom.Pt{{X: 0, Y: a}, {X: thick, Y: a}, {X: thick, Y: b}, {X: 0, Y: b}})
+			polys = append(polys, []geom.Pt{{X: 0, Y: a}, {X: 0.05, Y: a}, {X: 0.05, Y: b}, {X: 0, Y: b}})
 		}
-		colors = append(colors, mapping.Color(count, alpha))
+		colors = append(colors, mapping.Color(value, alpha))
 	}
 	if len(polys) == 0 {
 		return nil
 	}
+	coords := BlendCoords(CoordData, CoordAxes)
+	if !horizontal {
+		coords = BlendCoords(CoordAxes, CoordData)
+	}
 	return &PolyCollection{
 		PatchCollection: PatchCollection{
-			Collection: Collection{Alpha: 1, z: 1.9},
+			Collection: Collection{Coords: coords, Alpha: 1, z: 1.9},
 			FaceColors: colors,
-			EdgeColor:  render.Color{},
+			EdgeColors: colors,
 			EdgeWidth:  0,
 		},
 		Polygons: polys,
 	}
+}
+
+func marginalBinEdges(minValue, maxValue float64, bins int, scale string) []float64 {
+	edges := make([]float64, bins+1)
+	if scale == "log" {
+		if minValue <= 0 || maxValue <= 0 {
+			return nil
+		}
+		lo := math.Log10(minValue)
+		hi := math.Log10(maxValue)
+		for i := range edges {
+			edges[i] = math.Pow(10, lo+(hi-lo)*float64(i)/float64(bins))
+		}
+		return edges
+	}
+	for i := range edges {
+		edges[i] = minValue + (maxValue-minValue)*float64(i)/float64(bins)
+	}
+	return edges
+}
+
+func marginalBinIndex(edges []float64, value float64) int {
+	idx := slices.IndexFunc(edges, func(edge float64) bool {
+		return value < edge
+	}) - 1
+	if idx < 0 && len(edges) > 0 && value == edges[0] {
+		return 0
+	}
+	if idx == len(edges)-1 && value == edges[len(edges)-1] {
+		return idx - 1
+	}
+	return idx
+}
+
+func reduceMarginalValues(values []float64, reduce string) float64 {
+	entry := &hexbinBin{count: float64(len(values)), values: append([]float64(nil), values...)}
+	for _, value := range values {
+		entry.sum += value
+	}
+	return reduceHexbinValues(entry, reduce)
 }
 
 func finitePointRect(x, y []float64) geom.Rect {

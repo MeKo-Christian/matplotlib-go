@@ -2060,6 +2060,9 @@ func spinePixelY(side AxisSide, px geom.Rect) float64 {
 
 func (a *Axes) adjustedLayout(f *Figure) geom.Rect {
 	px := a.layout(f)
+	if a.colorbarParent != nil {
+		return a.adjustedColorbarLayout(f, px)
+	}
 	target := 0.0
 	if a.boxAspect > 0 {
 		target = a.boxAspect
@@ -2075,6 +2078,18 @@ func (a *Axes) adjustedLayout(f *Figure) geom.Rect {
 		return px
 	}
 	return rectWithAspect(px, target)
+}
+
+func (a *Axes) adjustedColorbarLayout(f *Figure, px geom.Rect) geom.Rect {
+	if a == nil || f == nil || f.SizePx.X <= 0 || f.SizePx.Y <= 0 {
+		return px
+	}
+	width := resolvedColorbarWidth(f, px, a.colorbarWidth, resolvedColorbarAspect(a.colorbarAspect))
+	if width <= 0 || width >= px.W() {
+		return px
+	}
+	px.Max.X = px.Min.X + width
+	return px
 }
 
 func (a *Axes) dataAspectTarget(aspect float64) float64 {

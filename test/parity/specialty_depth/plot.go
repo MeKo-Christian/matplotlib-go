@@ -27,23 +27,27 @@ func Plot() *core.Figure {
 	errColor := render.Color{R: 0.12, G: 0.35, B: 0.70, A: 1}
 	errWidth := 1.4
 	errCap := 8.0
+	errMarker := core.MarkerCircle
+	errMarkerSize := 4.0
 	errAx.ErrorBar(
 		[]float64{1, 2, 3, 4},
 		[]float64{1.2, 2.5, 3.1, 3.7},
 		nil,
 		nil,
 		core.ErrorBarOptions{
-			Color:     &errColor,
-			LineWidth: &errWidth,
-			CapSize:   &errCap,
-			XErrLower: []float64{0.25, 0.35, 0.20, 0.30},
-			XErrUpper: []float64{0.45, 0.25, 0.35, 0.20},
-			YErrLower: []float64{0.35, 0.50, 0.30, 0.60},
-			YErrUpper: []float64{0.55, 0.30, 0.65, 0.40},
-			LoLimits:  []bool{false, true, false, false},
-			UpLimits:  []bool{false, false, false, true},
-			XLoLimits: []bool{true, false, false, false},
-			XUpLimits: []bool{false, false, true, false},
+			Color:      &errColor,
+			LineWidth:  &errWidth,
+			CapSize:    &errCap,
+			Marker:     &errMarker,
+			MarkerSize: &errMarkerSize,
+			XErrLower:  []float64{0.25, 0.35, 0.20, 0.30},
+			XErrUpper:  []float64{0.45, 0.25, 0.35, 0.20},
+			YErrLower:  []float64{0.35, 0.50, 0.30, 0.60},
+			YErrUpper:  []float64{0.55, 0.30, 0.65, 0.40},
+			LoLimits:   []bool{false, true, false, false},
+			UpLimits:   []bool{false, false, false, true},
+			XLoLimits:  []bool{true, false, false, false},
+			XUpLimits:  []bool{false, false, true, false},
 		},
 	)
 
