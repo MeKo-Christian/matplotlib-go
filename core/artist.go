@@ -1857,6 +1857,10 @@ func drawAxesLabels(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect,
 	if ax.YLabel != "" && ax.ProjectionName() != "3d" {
 		side := ax.effectiveYLabelSide()
 		anchor := yLabelAnchorPoint(ax, r, ctx, px, side, alignment)
+		if side == AxisLeft {
+			anchor.X -= ctx.RC.AxisLineWidth
+			anchor.Y += ctx.RC.AxisLineWidth
+		}
 		angle := math.Pi / 2
 		if side == AxisRight {
 			angle = -math.Pi / 2

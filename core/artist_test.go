@@ -415,6 +415,8 @@ func TestDrawAxesLabels_YLabelUsesTickBoundsAndLabelPad(t *testing.T) {
 		X: math.Min(spinePixelX(AxisLeft, px), tickLabelMinX) - axisLabelPadPx(ctx),
 		Y: px.Min.Y + px.H()/2,
 	}
+	want.X -= ctx.RC.AxisLineWidth
+	want.Y += ctx.RC.AxisLineWidth
 	if r.rotatedAnchors[0] != want {
 		t.Fatalf("ylabel anchor = %+v, want %+v", r.rotatedAnchors[0], want)
 	}

@@ -1197,15 +1197,18 @@ items are renderer/layout/core API parity work, not example-source workarounds.
 - [ ] Likely core areas: coordinate transforms, blended figure/axes coords,
       annotation offset-pixel handling, arrow rendering.
 
-### 8.19 `figure_labels_composition` (RMSE 17.30)
+### 8.19 `figure_labels_composition` (RMSE 4.96)
 
 - [x] Code: switched from manual subplot padding/spacing to
       `ConstrainedLayout()` + `Subplots(2, 2)` to mirror Python
       `constrained_layout=True`; legend locator remains the direct
       `bbox_to_anchor` translation.
-- [ ] Visual: panels are close; suptitle/sup labels, legend, ticks, and text
-      placement drive the diff.
-- [ ] Likely core areas: constrained layout parity, figure-level labels, figure
+- [x] Code: tightened constrained-layout line-box measurement, figure-level
+      label auto-padding, rotated-label anchoring, text bbox stroke sizing, and
+      inter-column/inter-row spacing to match Matplotlib's layout model.
+- [x] Visual: focused `TestMatplotlibRef/figure_labels_composition` now reports
+      PSNR 51.9 dB / MeanAbs 0.21; direct artifact RMSE is 4.96.
+- [x] Likely core areas: constrained layout parity, figure-level labels, figure
       legend anchoring, text bbox sizing.
 
 ### 8.20 `colorbar_composition` (RMSE 18.60)

@@ -558,6 +558,9 @@ func resolvedTextBBoxOptions(opt TextBBoxOptions, ctx *DrawContext, fontSize flo
 	}
 	if opt.LineWidth <= 0 {
 		opt.LineWidth = 1
+		if ctx != nil {
+			opt.LineWidth = pointsToPixels(ctx.RC, 1)
+		}
 	}
 	if opt.Padding <= 0 {
 		opt.Padding = 4

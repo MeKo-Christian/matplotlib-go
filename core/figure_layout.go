@@ -316,9 +316,13 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 
 	if fig.SupXLabel != "" {
 		layout := measureSingleLineTextLayout(r, fig.SupXLabel, labelSize, fig.RC.FontKey, fig.RC.UseTeX)
+		y := figureRect.Max.Y - pointsToPixels(fig.RC, 4)
+		if fig.layoutEngine == LayoutEngineConstrained {
+			y = figureRect.Max.Y - constrainedLayoutPadPx(fig)
+		}
 		anchor := geom.Pt{
 			X: centerX,
-			Y: figureRect.Max.Y - pointsToPixels(fig.RC, 4),
+			Y: y,
 		}
 		drawDisplayText(
 			textRen,
@@ -334,9 +338,12 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 	if fig.SupYLabel != "" {
 		layout := measureSingleLineTextLayout(r, fig.SupYLabel, labelSize, fig.RC.FontKey, fig.RC.UseTeX)
 		leftPad := pointsToPixels(fig.RC, 4)
+		if fig.layoutEngine == LayoutEngineConstrained {
+			leftPad = constrainedLayoutPadPx(fig)
+		}
 		anchor := geom.Pt{
 			X: figureRect.Min.X + leftPad + layout.Height,
-			Y: centerY,
+			Y: centerY + fig.RC.AxisLineWidth,
 		}
 		switch ren := r.(type) {
 		case render.RotatedTextDrawer:

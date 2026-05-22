@@ -174,8 +174,8 @@ func measuredGridOptions(fig *Figure, r render.Renderer, vp geom.Rect, grid *Gri
 	innerPadX := outerPadX
 	innerPadY := outerPadY
 	if fig.layoutEngine == LayoutEngineConstrained {
-		innerPadX = constrainedLayoutDefaultSpacePx(parentPx.W(), grid.nCols)
-		innerPadY = constrainedLayoutDefaultSpacePx(parentPx.H(), grid.nRows)
+		innerPadX = math.Max(constrainedLayoutDefaultSpacePx(parentPx.W(), grid.nCols), 2*outerPadX)
+		innerPadY = constrainedLayoutDefaultSpacePx(parentPx.H(), grid.nRows) + 0.36*fig.RC.AxisLineWidth
 	}
 	global := figureLayoutMarginsPx(fig, r, vp, fig.layoutEngine)
 	if !gridCoversWholeFigure(grid) {
@@ -272,7 +272,11 @@ func xLabelBounds(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, a
 	size := axisLabelFontSize(ctx)
 	layout := measureSingleLineTextLayout(r, ax.XLabel, size, ctx.RC.FontKey, ctx.RC.UseTeX)
 	anchor, vAlign := xLabelAnchorPoint(ax, r, ctx, px, side, alignment)
-	return alignedTextLayoutRect(anchor, layout, TextAlignCenter, vAlign, pointsToPixels(ctx.RC, size))
+	lineHeight := math.Max(layout.Height, pointsToPixels(ctx.RC, size))
+	if side == AxisBottom {
+		lineHeight += 0.72 * ctx.RC.AxisLineWidth
+	}
+	return alignedTextLayoutRect(anchor, layout, TextAlignCenter, vAlign, lineHeight)
 }
 
 func yLabelBounds(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, alignment figureTextAlignment) (geom.Rect, bool) {
@@ -282,7 +286,7 @@ func yLabelBounds(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, a
 	side := ax.effectiveYLabelSide()
 	size := axisLabelFontSize(ctx)
 	layout := measureSingleLineTextLayout(r, ax.YLabel, size, ctx.RC.FontKey, ctx.RC.UseTeX)
-	lineHeight := pointsToPixels(ctx.RC, size)
+	lineHeight := math.Max(layout.Height, pointsToPixels(ctx.RC, size))
 	anchor := yLabelAnchorPoint(ax, r, ctx, px, side, alignment)
 	centerY := px.Min.Y + px.H()/2
 	if side == AxisRight {

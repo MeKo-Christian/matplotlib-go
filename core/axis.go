@@ -1274,7 +1274,7 @@ func tickLabelBoundsForLevel(a *Axis, r render.Renderer, ctx *DrawContext, ticks
 		if !ok {
 			continue
 		}
-		lineHeight := pointsToPixels(ctx.RC, fontSize)
+		lineHeight := math.Max(layout.Height, pointsToPixels(ctx.RC, fontSize))
 		inkRect, ok := tickLabelDisplayRect(a.Side, style, isXAxis, origin, layout, lineHeight)
 		if !ok {
 			continue

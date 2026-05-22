@@ -1312,13 +1312,6 @@ func (r *Renderer) drawEmergencyGSVText(text string, origin geom.Pt, size float6
 }
 
 func rotatedTextOrigin(anchor geom.Pt, metrics render.TextMetrics, bounds render.TextBounds, haveBounds bool) geom.Pt {
-	if haveBounds && bounds.W > 0 && bounds.H > 0 {
-		return geom.Pt{
-			X: anchor.X - (bounds.X + bounds.W/2),
-			Y: anchor.Y - (bounds.Y + bounds.H),
-		}
-	}
-
 	return geom.Pt{
 		X: anchor.X - metrics.W/2,
 		Y: anchor.Y - metrics.Descent,
