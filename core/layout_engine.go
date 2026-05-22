@@ -306,18 +306,24 @@ func figureLabelMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engine L
 
 	ctx := newFigureDrawContext(fig, vp)
 	if fig.SupTitle != "" {
-		layout := measureSingleLineTextLayout(r, fig.SupTitle, titleFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX)
-		margins.top += layout.Height + 2*pad
+		margins.top += figureLabelTightHeight(r, fig.SupTitle, titleFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX) + 2*pad
 	}
 	if fig.SupXLabel != "" {
-		layout := measureSingleLineTextLayout(r, fig.SupXLabel, axisLabelFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX)
-		margins.bottom += layout.Height + 2*pad
+		margins.bottom += figureLabelTightHeight(r, fig.SupXLabel, figureLabelFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX) + 2*pad
 	}
 	if fig.SupYLabel != "" {
-		layout := measureSingleLineTextLayout(r, fig.SupYLabel, axisLabelFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX)
-		margins.left += layout.Height + 2*pad
+		margins.left += figureLabelTightHeight(r, fig.SupYLabel, figureLabelFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX) + 2*pad
 	}
 	return margins
+}
+
+func figureLabelTightHeight(r render.Renderer, text string, size float64, fontKey string, useTeX bool) float64 {
+	if bounder, ok := r.(render.TextBounder); ok {
+		if bounds, ok := bounder.MeasureTextBounds(text, size, fontKey); ok && bounds.H > 0 {
+			return bounds.H
+		}
+	}
+	return measureSingleLineTextLayout(r, text, size, fontKey, useTeX).Height
 }
 
 func figureLayoutMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engine LayoutEngine) figureMargin {

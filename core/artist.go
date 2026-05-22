@@ -1908,6 +1908,13 @@ func axisLabelFontSize(ctx *DrawContext) float64 {
 	return ctx.RC.AxisLabelSize()
 }
 
+func figureLabelFontSize(ctx *DrawContext) float64 {
+	if ctx == nil {
+		return 12
+	}
+	return ctx.RC.TitleSize()
+}
+
 func titleAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, alignment figureTextAlignment) geom.Pt {
 	titlePadPx := pointsToPixels(ctx.RC, 6)
 	topExtent := titleTopExtent(ax, r, ctx, px)

@@ -53,8 +53,6 @@ func TestBBoxToAnchorLocatorUsesMatplotlibFigureFractions(t *testing.T) {
 		Location: LegendUpperRight,
 	}
 
-	// RectWithInset must ignore the external inset: OffsetX/OffsetY already
-	// encode positioning, so adding inset again would double-shift the box.
 	rect := locator.RectWithInset(
 		geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1100, Y: 720}},
 		104,
@@ -63,10 +61,10 @@ func TestBBoxToAnchorLocatorUsesMatplotlibFigureFractions(t *testing.T) {
 	)
 
 	// anchor: X=1100*0.99=1089, Y=720-720*0.90=72
-	// LegendUpperRight: minX=1089-104=985, minY=72
+	// LegendUpperRight with borderaxespad inset: minX=1089-104-7=978, minY=72+7=79
 	if rect != (geom.Rect{
-		Min: geom.Pt{X: 985, Y: 72},
-		Max: geom.Pt{X: 1089, Y: 160},
+		Min: geom.Pt{X: 978, Y: 79},
+		Max: geom.Pt{X: 1082, Y: 167},
 	}) {
 		t.Fatalf("bbox_to_anchor locator rect = %+v", rect)
 	}

@@ -228,14 +228,12 @@ func initialFigureArtistStackOffsets(fig *Figure, r render.Renderer, ctx *DrawCo
 	}
 	pad := pointsToPixels(ctx.RC, 4)
 	if fig.SupTitle != "" {
-		layout := measureSingleLineTextLayout(r, fig.SupTitle, titleFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
-		offset := layout.Height + pad
+		offset := figureLabelTightHeight(r, fig.SupTitle, titleFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX) + pad
 		offsets[LegendUpperLeft] = offset
 		offsets[LegendUpperRight] = offset
 	}
 	if fig.SupXLabel != "" {
-		layout := measureSingleLineTextLayout(r, fig.SupXLabel, axisLabelFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
-		offset := layout.Height + pad
+		offset := figureLabelTightHeight(r, fig.SupXLabel, figureLabelFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX) + pad
 		offsets[LegendLowerLeft] = offset
 		offsets[LegendLowerRight] = offset
 	}
@@ -291,7 +289,7 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 	titleColor := fig.RC.DefaultAxesTitleColor()
 	labelColor := fig.RC.DefaultAxesLabelColor()
 	titleSize := titleFontSize(ctx)
-	labelSize := axisLabelFontSize(ctx)
+	labelSize := figureLabelFontSize(ctx)
 	centerX := figureRect.Min.X + figureRect.W()/2
 	centerY := figureRect.Min.Y + figureRect.H()/2
 
