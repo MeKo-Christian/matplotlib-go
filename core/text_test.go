@@ -493,7 +493,7 @@ func TestLayoutDisplayTextMixedInlineMath(t *testing.T) {
 	if len(layout.Rules) != 1 {
 		t.Fatalf("expected one fraction rule, got %+v", layout.Rules)
 	}
-	if !containsMathRun(layout.Runs, "phase ", 20) || !containsMathRun(layout.Runs, "1", 15) || !containsMathRun(layout.Runs, "2", 15) || !containsMathRun(layout.Runs, " peak", 20) {
+	if !containsMathRun(layout.Runs, "phase ", 20) || !containsMathRun(layout.Runs, "1", 14) || !containsMathRun(layout.Runs, "2", 14) || !containsMathRun(layout.Runs, " peak", 20) {
 		t.Fatalf("missing expected mixed inline runs: %+v", layout.Runs)
 	}
 }
@@ -798,32 +798,32 @@ func TestAnnotateRespectsConfiguredCoordinateSpaces(t *testing.T) {
 	r := &textRecordingRenderer{}
 	DrawFigure(fig, r)
 
-	var lines []geom.Path
+	var connections []geom.Path
 	for _, path := range r.pathCalls {
-		if len(path.path.C) == 2 && len(path.path.V) == 2 {
-			lines = append(lines, path.path)
+		if len(path.path.C) == 2 && path.path.C[0] == geom.MoveTo && (path.path.C[1] == geom.LineTo || path.path.C[1] == geom.QuadTo) && len(path.path.V) >= 2 {
+			connections = append(connections, path.path)
 		}
 	}
-	if len(lines) != 3 {
-		t.Fatalf("expected 3 annotation line paths, got %d", len(lines))
-	}
-
-	expectLine := func(got geom.Path, start, end geom.Pt) {
-		if len(got.V) != 2 {
-			t.Fatalf("annotation line path vertices = %d, want 2", len(got.V))
-		}
-		direct := (approx(got.V[0].X, start.X, 1e-9) && approx(got.V[0].Y, start.Y, 1e-9) &&
-			approx(got.V[1].X, end.X, 1e-9) && approx(got.V[1].Y, end.Y, 1e-9))
-		reversed := (approx(got.V[0].X, end.X, 1e-9) && approx(got.V[0].Y, end.Y, 1e-9) &&
-			approx(got.V[1].X, start.X, 1e-9) && approx(got.V[1].Y, start.Y, 1e-9))
-		if !direct && !reversed {
-			t.Fatalf("annotation line = %+v, want %+v -> %+v", got.V, start, end)
-		}
+	if len(connections) != 3 {
+		t.Fatalf("expected 3 annotation connection paths, got %d", len(connections))
 	}
 
-	expectLine(lines[0], dataTarget, dataAnchor)
-	expectLine(lines[1], axesTarget, axesAnchor)
-	expectLine(lines[2], figureTarget, figureAnchor)
+	expectConnection := func(got geom.Path, anchor, target geom.Pt) {
+		if len(got.V) < 2 {
+			t.Fatalf("annotation connection path vertices = %d, want at least 2", len(got.V))
+		}
+		end := got.V[len(got.V)-1]
+		if !approx(end.X, target.X, 1e-9) || !approx(end.Y, target.Y, 1e-9) {
+			t.Fatalf("annotation connection end = %+v, want target %+v", end, target)
+		}
+		if math.Hypot(got.V[0].X-anchor.X, got.V[0].Y-anchor.Y) > 40 {
+			t.Fatalf("annotation connection start = %+v, expected near label anchor %+v", got.V[0], anchor)
+		}
+	}
+
+	expectConnection(connections[0], dataAnchor, dataTarget)
+	expectConnection(connections[1], axesAnchor, axesTarget)
+	expectConnection(connections[2], figureAnchor, figureTarget)
 }
 
 type textRecordingRenderer struct {

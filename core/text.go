@@ -54,16 +54,18 @@ type TextBBoxOptions struct {
 
 // AnnotationOptions configures an Annotation artist.
 type AnnotationOptions struct {
-	Coords        CoordinateSpec
-	OffsetX       float64
-	OffsetY       float64
-	FontSize      float64
-	Color         render.Color
-	ArrowColor    render.Color
-	ArrowWidth    float64
-	ArrowHeadSize float64
-	HAlign        TextAlign
-	VAlign        TextVerticalAlign
+	Coords          CoordinateSpec
+	OffsetX         float64
+	OffsetY         float64
+	FontSize        float64
+	Color           render.Color
+	ArrowColor      render.Color
+	ArrowWidth      float64
+	ArrowHeadSize   float64
+	ArrowStyle      ArrowStyle
+	ConnectionStyle ConnectionStyle
+	HAlign          TextAlign
+	VAlign          TextVerticalAlign
 }
 
 // Text renders arbitrary text at a data-space position.
@@ -92,17 +94,19 @@ type Annotation struct {
 	Point   geom.Pt
 	Content string
 
-	OffsetX       float64
-	OffsetY       float64
-	FontSize      float64
-	Color         render.Color
-	ArrowColor    render.Color
-	ArrowWidth    float64
-	ArrowHeadSize float64
-	HAlign        TextAlign
-	VAlign        TextVerticalAlign
-	Coords        CoordinateSpec
-	z             float64
+	OffsetX         float64
+	OffsetY         float64
+	FontSize        float64
+	Color           render.Color
+	ArrowColor      render.Color
+	ArrowWidth      float64
+	ArrowHeadSize   float64
+	ArrowStyle      ArrowStyle
+	ConnectionStyle ConnectionStyle
+	HAlign          TextAlign
+	VAlign          TextVerticalAlign
+	Coords          CoordinateSpec
+	z               float64
 }
 
 // Text adds arbitrary text positioned in data coordinates.
@@ -187,6 +191,9 @@ func (a *Axes) Annotate(text string, x, y float64, opts ...AnnotationOptions) *A
 		ArrowWidth:    1.25,
 		ArrowHeadSize: 8,
 	}
+	defaultArrowStyle, _ := ArrowStyleFromString("-|>")
+	defaultArrowStyle.HeadWidth = 0.36
+	defaultConnectionStyle, _ := ConnectionStyleFromString("arc3")
 	if len(opts) > 0 {
 		opt = opts[0]
 		if opt.OffsetX == 0 && opt.OffsetY == 0 {
@@ -200,21 +207,29 @@ func (a *Axes) Annotate(text string, x, y float64, opts ...AnnotationOptions) *A
 			opt.ArrowHeadSize = 8
 		}
 	}
+	if opt.ArrowStyle.Name == "" {
+		opt.ArrowStyle = defaultArrowStyle
+	}
+	if opt.ConnectionStyle.Name == "" {
+		opt.ConnectionStyle = defaultConnectionStyle
+	}
 
 	artist := &Annotation{
-		Point:         geom.Pt{X: x, Y: y},
-		Content:       text,
-		OffsetX:       opt.OffsetX,
-		OffsetY:       opt.OffsetY,
-		FontSize:      opt.FontSize,
-		Color:         opt.Color,
-		ArrowColor:    opt.ArrowColor,
-		ArrowWidth:    opt.ArrowWidth,
-		ArrowHeadSize: opt.ArrowHeadSize,
-		HAlign:        annotationHAlign(opt),
-		VAlign:        annotationVAlign(opt),
-		Coords:        opt.Coords,
-		z:             900,
+		Point:           geom.Pt{X: x, Y: y},
+		Content:         text,
+		OffsetX:         opt.OffsetX,
+		OffsetY:         opt.OffsetY,
+		FontSize:        opt.FontSize,
+		Color:           opt.Color,
+		ArrowColor:      opt.ArrowColor,
+		ArrowWidth:      opt.ArrowWidth,
+		ArrowHeadSize:   opt.ArrowHeadSize,
+		ArrowStyle:      opt.ArrowStyle,
+		ConnectionStyle: opt.ConnectionStyle,
+		HAlign:          annotationHAlign(opt),
+		VAlign:          annotationVAlign(opt),
+		Coords:          opt.Coords,
+		z:               900,
 	}
 	a.Add(artist)
 	return artist
@@ -425,24 +440,7 @@ func (a *Annotation) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	}
 	start := nearestPointOnRect(box, target)
 
-	linePaint := render.Paint{
-		Stroke:    defaultArrowColor(a.ArrowColor, a.Color),
-		LineWidth: a.ArrowWidth,
-		LineJoin:  render.JoinRound,
-		LineCap:   render.CapRound,
-	}
-	r.Path(pixelLinePath(start, target), &linePaint)
-
-	head := annotationHeadPath(start, target, a.ArrowHeadSize)
-	if len(head.C) > 0 {
-		r.Path(head, &render.Paint{
-			Fill:      defaultArrowColor(a.ArrowColor, a.Color),
-			Stroke:    resolvedArrowColor(a.ArrowColor, a.Color, ctx),
-			LineWidth: a.ArrowWidth,
-			LineJoin:  render.JoinRound,
-			LineCap:   render.CapRound,
-		})
-	}
+	a.drawArrow(r, ctx, start, target)
 
 	drawDisplayText(textRen, a.Content, origin, fontSize, resolvedTextColor(a.Color, ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
 }
@@ -452,6 +450,36 @@ func (a *Annotation) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
 
 // Z returns the annotation z-order.
 func (a *Annotation) Z() float64 { return a.z }
+
+func (a *Annotation) drawArrow(r render.Renderer, ctx *DrawContext, start, target geom.Pt) {
+	if a.ArrowWidth <= 0 || a.ArrowHeadSize <= 0 {
+		return
+	}
+	color := resolvedArrowColor(a.ArrowColor, a.Color, ctx)
+	patch := &FancyArrowPatch{
+		Patch: Patch{
+			FaceColor: color,
+			EdgeColor: color,
+			EdgeWidth: a.ArrowWidth,
+			LineJoin:  render.JoinRound,
+			LineCap:   render.CapRound,
+		},
+		ArrowStyle:      a.ArrowStyle,
+		ConnectionStyle: a.ConnectionStyle,
+		MutationScale:   a.ArrowHeadSize / 0.4,
+	}
+	path := a.ConnectionStyle.connect(start, target, 0, 0)
+	for _, part := range patch.displayParts(ctx, path) {
+		if len(part.path.C) == 0 {
+			continue
+		}
+		if part.fillable {
+			patch.drawStyledPath(r, part.path, geom.Path{})
+		} else {
+			patch.drawStyledPath(r, geom.Path{}, part.path)
+		}
+	}
+}
 
 func resolvedTextColor(c render.Color, ctx *DrawContext) render.Color {
 	if c == (render.Color{}) {
@@ -464,10 +492,6 @@ func resolvedTextColor(c render.Color, ctx *DrawContext) render.Color {
 		c.A = 1
 	}
 	return c
-}
-
-func defaultArrowColor(arrow, text render.Color) render.Color {
-	return resolvedArrowColor(arrow, text, nil)
 }
 
 func resolvedArrowColor(arrow, text render.Color, ctx *DrawContext) render.Color {
@@ -630,37 +654,6 @@ func nearestPointOnRect(rect geom.Rect, pt geom.Pt) geom.Pt {
 	}
 }
 
-func annotationHeadPath(start, tip geom.Pt, size float64) geom.Path {
-	dx := tip.X - start.X
-	dy := tip.Y - start.Y
-	length := math.Hypot(dx, dy)
-	if length == 0 || size <= 0 {
-		return geom.Path{}
-	}
-
-	ux := dx / length
-	uy := dy / length
-	base := geom.Pt{X: tip.X - ux*size, Y: tip.Y - uy*size}
-	perpX := -uy * size * 0.45
-	perpY := ux * size * 0.45
-
-	return geom.Path{
-		C: []geom.Cmd{geom.MoveTo, geom.LineTo, geom.LineTo, geom.ClosePath},
-		V: []geom.Pt{
-			tip,
-			{X: base.X + perpX, Y: base.Y + perpY},
-			{X: base.X - perpX, Y: base.Y - perpY},
-		},
-	}
-}
-
-func pixelLinePath(p1, p2 geom.Pt) geom.Path {
-	return geom.Path{
-		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
-		V: []geom.Pt{p1, p2},
-	}
-}
-
 func clampFloat(v, minVal, maxVal float64) float64 {
 	if v < minVal {
 		return minVal
@@ -669,6 +662,13 @@ func clampFloat(v, minVal, maxVal float64) float64 {
 		return maxVal
 	}
 	return v
+}
+
+func pixelLinePath(p1, p2 geom.Pt) geom.Path {
+	return geom.Path{
+		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+		V: []geom.Pt{p1, p2},
+	}
 }
 
 func transformedPoint(ctx *DrawContext, spec CoordinateSpec, p geom.Pt, dxPx, dyPx float64) geom.Pt {

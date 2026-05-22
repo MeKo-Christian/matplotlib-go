@@ -175,3 +175,192 @@ func TestFancyArrowBoundsAndClosedPath(t *testing.T) {
 		t.Fatalf("expected closed arrow polygon, got %v", path.C)
 	}
 }
+
+func TestArrowAndConnectionStyleRegistriesParseMatplotlibNames(t *testing.T) {
+	for _, name := range []string{"-", "->", "<-", "<->", "-[", "]-[", "|-|", "-|>", "<|-|>", "simple", "fancy", "wedge"} {
+		style, ok := ArrowStyleFromString(name)
+		if !ok {
+			t.Fatalf("ArrowStyleFromString(%q) returned !ok", name)
+		}
+		if style.Name == "" {
+			t.Fatalf("ArrowStyleFromString(%q) returned empty name", name)
+		}
+	}
+
+	style, ok := ArrowStyleFromString("->,head_length=0.8,head_width=0.4")
+	if !ok {
+		t.Fatal("ArrowStyleFromString with parameters returned !ok")
+	}
+	if style.HeadLength != 0.8 || style.HeadWidth != 0.4 {
+		t.Fatalf("style parameters not parsed: %+v", style)
+	}
+
+	for _, name := range []string{"arc3", "arc", "angle", "angle3", "bar"} {
+		style, ok := ConnectionStyleFromString(name)
+		if !ok {
+			t.Fatalf("ConnectionStyleFromString(%q) returned !ok", name)
+		}
+		if style.Name == "" {
+			t.Fatalf("ConnectionStyleFromString(%q) returned empty name", name)
+		}
+	}
+
+	conn, ok := ConnectionStyleFromString("arc3,rad=0.35")
+	if !ok {
+		t.Fatal("ConnectionStyleFromString with parameters returned !ok")
+	}
+	if conn.Rad != 0.35 {
+		t.Fatalf("connection parameters not parsed: %+v", conn)
+	}
+}
+
+func TestFancyArrowPatchDrawsConnectionAndArrowHead(t *testing.T) {
+	arrowStyle, ok := ArrowStyleFromString("-|>")
+	if !ok {
+		t.Fatal("missing -|> arrow style")
+	}
+	connectionStyle, ok := ConnectionStyleFromString("arc3,rad=0.2")
+	if !ok {
+		t.Fatal("missing arc3 connection style")
+	}
+	patch := &FancyArrowPatch{
+		Patch: Patch{
+			FaceColor: render.Color{R: 0.8, G: 0.2, B: 0.1, A: 1},
+			EdgeColor: render.Color{R: 0.1, G: 0.1, B: 0.1, A: 1},
+			EdgeWidth: 2,
+		},
+		PosA:            geom.Pt{X: 1, Y: 1},
+		PosB:            geom.Pt{X: 4, Y: 3},
+		ArrowStyle:      arrowStyle,
+		ConnectionStyle: connectionStyle,
+		MutationScale:   12,
+		Coords:          Coords(CoordData),
+	}
+
+	r := &recordingRenderer{}
+	patch.Draw(r, createTestDrawContext())
+
+	if len(r.pathCalls) < 2 {
+		t.Fatalf("expected connection path and arrow head, got %d paths", len(r.pathCalls))
+	}
+	if r.pathCalls[0].path.C[0] != geom.MoveTo || r.pathCalls[0].path.C[len(r.pathCalls[0].path.C)-1] != geom.QuadTo {
+		t.Fatalf("expected curved connection path, got commands %v", r.pathCalls[0].path.C)
+	}
+	if r.pathCalls[len(r.pathCalls)-1].path.C[len(r.pathCalls[len(r.pathCalls)-1].path.C)-1] != geom.ClosePath {
+		t.Fatalf("expected closed arrow-head path, got %v", r.pathCalls[len(r.pathCalls)-1].path.C)
+	}
+}
+
+func TestConnectionPatchResolvesIndependentCoordinateSpaces(t *testing.T) {
+	patch := &ConnectionPatch{
+		FancyArrowPatch: FancyArrowPatch{
+			Patch: Patch{
+				EdgeColor: render.Color{R: 0, G: 0, B: 0, A: 1},
+				EdgeWidth: 1,
+			},
+			ArrowStyle:      ArrowStyle{Name: "-", HeadLength: 0.2, HeadWidth: 0.1},
+			ConnectionStyle: ConnectionStyle{Name: "arc3"},
+		},
+		XYA:     geom.Pt{X: 0.25, Y: 0.75},
+		XYB:     geom.Pt{X: 0.5, Y: 0.5},
+		CoordsA: Coords(CoordData),
+		CoordsB: Coords(CoordAxes),
+	}
+
+	ctx := createTestDrawContext()
+	r := &recordingRenderer{}
+	patch.Draw(r, ctx)
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("expected one connection path, got %d", len(r.pathCalls))
+	}
+	got := r.pathCalls[0].path
+	wantA := ctx.TransformFor(Coords(CoordData)).Apply(patch.XYA)
+	wantB := ctx.TransformFor(Coords(CoordAxes)).Apply(patch.XYB)
+	if len(got.V) != 2 {
+		t.Fatalf("expected straight arc3 path vertices, got %d: %+v", len(got.V), got.V)
+	}
+	if !approx(got.V[0].X, wantA.X, 1e-9) || !approx(got.V[0].Y, wantA.Y, 1e-9) {
+		t.Fatalf("connection start = %+v, want %+v", got.V[0], wantA)
+	}
+	if !approx(got.V[1].X, wantB.X, 1e-9) || !approx(got.V[1].Y, wantB.Y, 1e-9) {
+		t.Fatalf("connection end = %+v, want %+v", got.V[1], wantB)
+	}
+}
+
+func TestAdditionalPatchClassesDrawExpectedPaths(t *testing.T) {
+	ctx := createTestDrawContext()
+	patches := []Artist{
+		&RegularPolygon{
+			Patch:       Patch{FaceColor: render.Color{A: 1}},
+			Center:      geom.Pt{X: 2, Y: 2},
+			NumVertices: 5,
+			Radius:      1,
+		},
+		&CirclePolygon{
+			Patch:      Patch{FaceColor: render.Color{A: 1}},
+			Center:     geom.Pt{X: 2, Y: 2},
+			Radius:     1,
+			Resolution: 12,
+		},
+		&Arc{
+			Patch:    Patch{EdgeColor: render.Color{A: 1}, EdgeWidth: 1},
+			Center:   geom.Pt{X: 2, Y: 2},
+			Width:    2,
+			Height:   1,
+			Theta1:   10,
+			Theta2:   220,
+			EdgeOnly: true,
+		},
+		&Annulus{
+			Patch:   Patch{FaceColor: render.Color{A: 1}},
+			Center:  geom.Pt{X: 2, Y: 2},
+			RadiusA: 1.5,
+			RadiusB: 1.0,
+			Width:   0.3,
+			Angle:   15,
+		},
+		&StepPatch{
+			Patch:    Patch{FaceColor: render.Color{A: 1}, EdgeColor: render.Color{A: 1}, EdgeWidth: 1},
+			Values:   []float64{1, 2, 1.5},
+			Edges:    []float64{0, 1, 2, 3},
+			Baseline: float64Ptr(0),
+		},
+	}
+
+	for _, patch := range patches {
+		r := &recordingRenderer{}
+		patch.Draw(r, ctx)
+		if len(r.pathCalls) == 0 {
+			t.Fatalf("%T did not draw a path", patch)
+		}
+	}
+}
+
+func TestShadowOffsetsAndDarkensSourcePatch(t *testing.T) {
+	source := &Rectangle{
+		Patch: Patch{
+			FaceColor: render.Color{R: 0.8, G: 0.4, B: 0.2, A: 1},
+			EdgeColor: render.Color{R: 0.2, G: 0.1, B: 0.1, A: 1},
+			EdgeWidth: 1,
+		},
+		XY:     geom.Pt{X: 1, Y: 2},
+		Width:  2,
+		Height: 1,
+	}
+	shadow := &Shadow{Patch: Patch{}, Source: source, Offset: geom.Pt{X: 0.5, Y: -0.25}, Shade: 0.7}
+
+	r := &recordingRenderer{}
+	shadow.Draw(r, createTestDrawContext())
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("expected one shadow path, got %d", len(r.pathCalls))
+	}
+	paint := r.pathCalls[0].paint
+	if paint.Fill.A != 0.5 {
+		t.Fatalf("shadow alpha = %v, want 0.5", paint.Fill.A)
+	}
+	if paint.Fill.R >= source.FaceColor.R {
+		t.Fatalf("shadow face color was not darkened: got %+v source %+v", paint.Fill, source.FaceColor)
+	}
+}

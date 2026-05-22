@@ -1804,11 +1804,11 @@ registries, `FancyArrowPatch`, and `ConnectionPatch` are absent. Patch classes
 `Shadow`, `RegularPolygon`, `CirclePolygon`, `Arc`, `Annulus`, and `StepPatch`
 are missing.
 
-- [ ] Add the `ArrowStyle` registry (`-`, `->`, `-[`, `]-[`, `|-|`, `<-`,
+- [x] Add the `ArrowStyle` registry (`-`, `->`, `-[`, `]-[`, `|-|`, `<-`,
       `<->`, `fancy`, `simple`, `wedge`, …) and the `ConnectionStyle` registry
       (`arc3`, `arc`, `angle`, `angle3`, `bar`).
-- [ ] Add `FancyArrowPatch` and `ConnectionPatch` wired into `Annotate`.
-- [ ] Add the missing patch classes (`Shadow`, `RegularPolygon`,
+- [x] Add `FancyArrowPatch` and `ConnectionPatch` wired into `Annotate`.
+- [x] Add the missing patch classes (`Shadow`, `RegularPolygon`,
       `CirclePolygon`, `Arc`, `Annulus`, `StepPatch`).
 - [ ] Audit `FancyBboxPatch` box-style coverage against `BoxStyle._style_list`.
 

@@ -8,7 +8,7 @@
 //
 // Artists:
 //   - Line2D: Polyline artist for stroke-only line plots
-//   - Patch family: Rectangle, Circle, Ellipse, Polygon, PathPatch, FancyArrow, FancyBboxPatch
+//   - Patch family: Rectangle, Circle, Ellipse, Polygon, PathPatch, FancyArrow, FancyArrowPatch, ConnectionPatch, FancyBboxPatch, Shadow, RegularPolygon, CirclePolygon, Arc, Annulus, StepPatch
 //   - Collection family: PathCollection, LineCollection, PatchCollection, PolyCollection, QuadMesh, FillBetweenPolyCollection
 //   - BoxPlot2D: Statistical box plot artist with quartiles, whiskers, and fliers
 //   - ErrorBar: Symmetric error bars with optional caps for x/y data uncertainty
