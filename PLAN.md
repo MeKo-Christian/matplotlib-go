@@ -1027,7 +1027,7 @@ backend parity program but is not yet complete.
 
 ---
 
-# Phase 7A: RMSE > 5 Example Parity Audit
+# Phase 8: RMSE > 5 Example Parity Audit
 
 **Goal:** close the current catalog cases whose committed Go golden differs
 from the Matplotlib reference by `RMSE > 5`, using core-library parity fixes
@@ -1037,7 +1037,7 @@ before fixture tweaks. Baseline captured with
 **Visual audit artifacts:** `testdata/_artifacts/reference_compare/*_golden.png`,
 `*_matplotlib_ref.png`, and `*_golden_vs_matplotlib_ref_diff.png`.
 
-### 7A.1 `fill_basic` (RMSE 6.38)
+### 8.1 `fill_basic` (RMSE 6.38)
 
 - [ ] Code: no material example mismatch found.
 - [ ] Visual: polygon shape matches; residuals sit on fill outline, baseline,
@@ -1045,7 +1045,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/fill.go`, AGG polygon stroke/fill antialiasing,
       text metrics.
 
-### 7A.2 `fill_stacked` (RMSE 9.32)
+### 8.2 `fill_stacked` (RMSE 9.32)
 
 - [ ] Code: no material example mismatch found.
 - [ ] Visual: stacked layer boundaries and outer fill edges differ; title/text
@@ -1053,7 +1053,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `FillBetween` / `FillToBaseline` stroke ordering,
       alpha compositing, path rasterization.
 
-### 7A.3 `errorbar_basic` (RMSE 6.95)
+### 8.3 `errorbar_basic` (RMSE 6.95)
 
 - [ ] Code: data, colors, and line widths are intentionally matched.
 - [ ] Visual: plot is close; caps, marker edges, line endpoints, and labels
@@ -1061,7 +1061,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/errorbar.go`, cap-size semantics, scatter marker
       rasterization, stroke antialiasing.
 
-### 7A.4 `boxplot_basic` (RMSE 10.72)
+### 8.4 `boxplot_basic` (RMSE 10.72)
 
 - [ ] Code: Go uses `CapWidth: 0.35`; Matplotlib default cap width is
       `0.5 * widths` (`0.275` here). Go grid styling also differs from the
@@ -1071,7 +1071,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: boxplot cap defaults, `core/grid.go` grid defaults,
       marker/stroke rendering.
 
-### 7A.5 `text_labels_strict` (RMSE 5.91)
+### 8.5 `text_labels_strict` (RMSE 5.91)
 
 - [ ] Code: no source mismatch found.
 - [ ] Visual: axes structure is identical; residuals are mostly title, axis,
@@ -1079,7 +1079,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/text.go`, AGG text measurement/baseline, axis
       label offsets.
 
-### 7A.6 `mathtext_basic` (RMSE 18.04)
+### 8.6 `mathtext_basic` (RMSE 18.04)
 
 - [ ] Code: data and math strings match; anchored text / annotation behavior is
       intended to mirror Python.
@@ -1088,7 +1088,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `internal/mathtext`, `core/mathtext.go`, AGG text
       bounds, annotation and anchored-box layout.
 
-### 7A.7 `mathtext_fractions` (RMSE 26.98)
+### 8.7 `mathtext_fractions` (RMSE 26.98)
 
 - [ ] Code: no source mismatch found.
 - [ ] Visual: fraction stacks, binomial layout, roots, and bracket sizing are
@@ -1096,7 +1096,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `internal/mathtext/layout.go`, fraction axis
       alignment, stretchy delimiters, square-root geometry, glyph metrics.
 
-### 7A.8 `mathtext_integrals` (RMSE 30.42)
+### 8.8 `mathtext_integrals` (RMSE 30.42)
 
 - [ ] Code: no source mismatch found.
 - [ ] Visual: integral/sum/product operator sizing and limit placement differ
@@ -1104,7 +1104,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: large-operator display fonts, over/under limit layout,
       math glyph metrics.
 
-### 7A.9 `mathtext_matrices` (RMSE 25.54)
+### 8.9 `mathtext_matrices` (RMSE 25.54)
 
 - [ ] Code: no source mismatch found.
 - [ ] Visual: matrix delimiters, row spacing, `\quad` spacing, and angle
@@ -1112,7 +1112,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `\genfrac` layout, delimiter sizing, matrix/stack ink
       bounds.
 
-### 7A.10 `mathtext_inline_labels` (RMSE 18.03)
+### 8.10 `mathtext_inline_labels` (RMSE 18.03)
 
 - [ ] Code: math sources match, but Go `LegendBest` placement differs from
       Matplotlib `legend()` best-location output.
@@ -1121,7 +1121,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/legend.go` best-placement badness,
       `internal/mathtext`, text metrics.
 
-### 7A.11 `image_heatmap` (RMSE 5.54)
+### 8.11 `image_heatmap` (RMSE 5.54)
 
 - [ ] Code: Go `ax.Image` lacks the Python explicit
       `interpolation="nearest", aspect="auto"` settings.
@@ -1130,7 +1130,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/image.go`, `core/image_api.go`, image pixel
       snapping and resampling defaults.
 
-### 7A.12 `imshow_clipped` (RMSE 8.19)
+### 8.12 `imshow_clipped` (RMSE 8.19)
 
 - [ ] Code: data helper matches; no material source mismatch found.
 - [ ] Visual: clipped image contents match, but row/column boundary residuals
@@ -1138,7 +1138,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/matrix_helpers.go`, `core/image.go`, nearest
       source-coordinate mapping, clip/pixel edge alignment.
 
-### 7A.13 `imshow_transformed` (RMSE 7.04)
+### 8.13 `imshow_transformed` (RMSE 7.04)
 
 - [ ] Code: both examples rotate 28 degrees around the image center.
 - [ ] Visual: transformed image is aligned, but interpolation gradients and
@@ -1146,7 +1146,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: transformed image affine, bilinear sampling, AGG
       `ImageTransformed` interpolation.
 
-### 7A.14 `spy_marker` (RMSE 12.26)
+### 8.14 `spy_marker` (RMSE 12.26)
 
 - [ ] Code: no source mismatch found.
 - [ ] Visual: marker positions match, but square marker edges/size and
@@ -1154,7 +1154,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/matrix_helpers.go` spy marker sizing,
       `PathCollection` square marker rasterization, matrix-axis presentation.
 
-### 7A.15 `spy_image` (RMSE 19.42)
+### 8.15 `spy_image` (RMSE 19.42)
 
 - [ ] Code: no source mismatch found.
 - [ ] Visual: sparsity image looks almost identical, but diff shows many
@@ -1162,7 +1162,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `MatShow` / `Spy` image extents, binary colormap
       rasterization, nearest interpolation and pixel boundary alignment.
 
-### 7A.16 `axes_top_right_inverted` (RMSE 5.06)
+### 8.16 `axes_top_right_inverted` (RMSE 5.06)
 
 - [ ] Code: mostly equivalent; Go inverts after normal limits and explicitly
       disables minors on mirror axes.
@@ -1171,7 +1171,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: inverted-axis tick layout, mirrored axis tick/label
       positioning, text metrics and antialiasing.
 
-### 7A.17 `axes_control_surface` (RMSE 11.87)
+### 8.17 `axes_control_surface` (RMSE 11.87)
 
 - [ ] Code: close, but Go manually models Matplotlib `tick_top`,
       `tick_right`, `set_aspect`, `set_box_aspect`, `twinx`, and
@@ -1181,7 +1181,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: box aspect adjustment, tick-param propagation,
       twin/secondary-axis transforms and spine layout.
 
-### 7A.18 `transform_coordinates` (RMSE 10.99)
+### 8.18 `transform_coordinates` (RMSE 10.99)
 
 - [ ] Code: Go adds `OffsetY: 6` to blended text; annotation lacks Matplotlib's
       explicit arrow props/alignment.
@@ -1190,7 +1190,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: coordinate transforms, blended figure/axes coords,
       annotation offset-pixel handling, arrow rendering.
 
-### 7A.19 `figure_labels_composition` (RMSE 17.30)
+### 8.19 `figure_labels_composition` (RMSE 17.30)
 
 - [ ] Code: Python uses `constrained_layout=True`; Go uses manual subplot
       padding/spacing and a figure legend locator.
@@ -1199,7 +1199,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: constrained layout parity, figure-level labels, figure
       legend anchoring, text bbox sizing.
 
-### 7A.20 `colorbar_composition` (RMSE 18.60)
+### 8.20 `colorbar_composition` (RMSE 18.60)
 
 - [ ] Code: close; Python uses `imshow(..., aspect="auto")` plus Matplotlib
       constrained layout/colorbar behavior.
@@ -1208,7 +1208,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: image extent/aspect handling, colormap
       interpolation/normalization, colorbar layout and ticks.
 
-### 7A.21 `annotation_composition` (RMSE 8.90)
+### 8.21 `annotation_composition` (RMSE 8.90)
 
 - [ ] Code: Go annotation omits explicit Python `arrowprops`; remaining source
       is close.
@@ -1217,7 +1217,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: annotation arrows, offset-pixel coords, default
       plot/legend styling, Unicode text metrics.
 
-### 7A.22 `patch_showcase` (RMSE 10.13)
+### 8.22 `patch_showcase` (RMSE 10.13)
 
 - [ ] Code: close, but Python `FancyArrow(..., length_includes_head=True)` is
       not clearly mirrored in Go.
@@ -1225,7 +1225,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: patch geometry, hatch fill/clipping, alpha
       compositing, `FancyArrow` and `FancyBboxPatch` semantics.
 
-### 7A.23 `mesh_contour_tri` (RMSE 7.94)
+### 8.23 `mesh_contour_tri` (RMSE 7.94)
 
 - [ ] Code: close; Go forces half-step tick locators while Python leaves
       Matplotlib defaults that land similarly.
@@ -1234,7 +1234,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: contour marching/fill bands, contour label placement,
       tripcolor flat shading, mesh edge strokes.
 
-### 7A.24 `plot_variants` (RMSE 7.11)
+### 8.24 `plot_variants` (RMSE 7.11)
 
 - [ ] Code: close; Go manual subplot grid approximates Python fixed axes, and
       dash values may not match Matplotlib point scaling exactly.
@@ -1243,7 +1243,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: stairs and fill-between polygon construction, axline
       clipping, dash scaling, bar label padding.
 
-### 7A.25 `spectrum_variants` (RMSE 32.57)
+### 8.25 `spectrum_variants` (RMSE 32.57)
 
 - [ ] Code: intent matches, but Python uses Matplotlib `mlab` spectrum helpers
       with explicit one-sided/two-sided handling and FFT normalization.
@@ -1251,7 +1251,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: FFT frequency ordering, one-sided/two-sided spectrum
       logic, dB normalization, phase unwrap, autoscale.
 
-### 7A.26 `specialty_depth` (RMSE 20.87)
+### 8.26 `specialty_depth` (RMSE 20.87)
 
 - [ ] Code: close, but Go separates errorbar markers via scatter and lacks some
       explicit Matplotlib wedge/edge styling.
@@ -1260,7 +1260,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: errorbar limit caps, boxplot statistics/notches/fliers,
       violin KDE/side option, pie wedge styling, hexbin log scales/marginals.
 
-### 7A.27 `stem_plot` (RMSE 10.02)
+### 8.27 `stem_plot` (RMSE 10.02)
 
 - [ ] Code: close; Python explicitly sets stem/baseline linewidths and marker
       size in Matplotlib units, while Go uses stem defaults plus marker size.
@@ -1269,7 +1269,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: stem linewidth defaults, marker-size unit conversion,
       baseline styling, grid `axisbelow` behavior.
 
-### 7A.28 `specialty_artists` (RMSE 12.93)
+### 8.28 `specialty_artists` (RMSE 12.93)
 
 - [ ] Code: close; Python hexbin uses `mincnt=1`, and pie has white wedge edges
       via `wedgeprops` not evident in Go.
@@ -1278,7 +1278,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: event collection widths, hexbin bin geometry/mincnt and
       color normalization, pie wedge/text placement, violin KDE, table layout.
 
-### 7A.29 `units_overview` (RMSE 6.45)
+### 8.29 `units_overview` (RMSE 6.45)
 
 - [ ] Code: no substantive data/layout mismatch; Go uses units converters while
       Python uses native datetime/category plus formatter.
@@ -1287,7 +1287,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: unit formatters/locators, text metrics, marker/bar
       stroke rasterization.
 
-### 7A.30 `units_dates` (RMSE 5.79)
+### 8.30 `units_dates` (RMSE 5.79)
 
 - [ ] Code: Go pre-converts dates to numeric seconds with fixed ticks; Python
       uses `mdates.DayLocator`.
@@ -1296,7 +1296,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: date units/date formatter parity, `FillBetween`
       edge/antialias behavior, text.
 
-### 7A.31 `units_categories` (RMSE 6.76)
+### 8.31 `units_categories` (RMSE 6.76)
 
 - [ ] Code: no major example mismatch; Go uses `BarUnits` including horizontal
       orientation, while Python uses `bar` / `barh`.
@@ -1304,7 +1304,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: categorical units, horizontal `Bar2D` geometry/strokes,
       grid draw ordering, text.
 
-### 7A.32 `units_custom_converter` (RMSE 5.25)
+### 8.32 `units_custom_converter` (RMSE 5.25)
 
 - [ ] Code: Go uses registered `TestDistanceKM` converter; Python uses floats
       plus `FuncFormatter`.
@@ -1313,7 +1313,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: custom unit `AxisInfo`, scatter marker area/edge
       linewidth, text metrics.
 
-### 7A.33 `vector_fields` (RMSE 7.99)
+### 8.33 `vector_fields` (RMSE 7.99)
 
 - [ ] Code: mostly matching parameters, but Go pre-scales barb length and sets
       explicit quiver-key label separation while Python uses Matplotlib
@@ -1323,7 +1323,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/vector_field.go` quiver scaling/arrow polygons,
       barb decomposition, streamplot integration/arrows, quiver-key layout.
 
-### 7A.34 `polar_axes` (RMSE 12.98)
+### 8.34 `polar_axes` (RMSE 12.98)
 
 - [ ] Code: close; Go uses `FillToBaseline`, Python uses
       `fill_between(..., 0)`.
@@ -1332,7 +1332,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: polar transforms, polar tick labels, polar grid paths,
       fill clipping/antialiasing.
 
-### 7A.35 `geo_mollweide_axes` (RMSE 7.98)
+### 8.35 `geo_mollweide_axes` (RMSE 7.98)
 
 - [ ] Code: Go helper relies on projection defaults; Python explicitly sets
       ticks/formatters, but values match.
@@ -1341,7 +1341,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/geo.go` Mollweide transform/frame/grid sampling,
       geo tick label transforms.
 
-### 7A.36 `geo_aitoff_axes` (RMSE 7.34)
+### 8.36 `geo_aitoff_axes` (RMSE 7.34)
 
 - [ ] Code: same projection-default versus explicit tick setup as Mollweide.
 - [ ] Visual: close overall; outer frame, meridians/parallels, and labels
@@ -1349,14 +1349,14 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: Aitoff projection transform, geo grid path sampling,
       label padding.
 
-### 7A.37 `geo_hammer_axes` (RMSE 6.98)
+### 8.37 `geo_hammer_axes` (RMSE 6.98)
 
 - [ ] Code: same projection-default versus explicit tick setup as Mollweide.
 - [ ] Visual: sine trace aligns; frame/grid and text dominate the diff.
 - [ ] Likely core areas: Hammer projection transform, geo frame/grid drawing,
       clipping.
 
-### 7A.38 `geo_lambert_axes` (RMSE 7.78)
+### 8.38 `geo_lambert_axes` (RMSE 7.78)
 
 - [ ] Code: Go sets Lambert x locator and relies on projection formatter /
       y-label hiding; Python explicitly formats x only.
@@ -1365,7 +1365,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `lambertDataTransform`, Lambert box aspect/frame, geo
       grid/text transforms.
 
-### 7A.39 `radar_basic` (RMSE 13.93)
+### 8.39 `radar_basic` (RMSE 13.93)
 
 - [ ] Code: Go uses built-in `AddRadarAxes`; Python defines a custom
       `RadarAxes` with polygon patch/spine and path interpolation. Data/styles
@@ -1375,7 +1375,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: radar projection configuration, polar grid
       interpolation, tick label padding, polygon fill/stroke rasterization.
 
-### 7A.40 `skewt_basic` (RMSE 13.74)
+### 8.40 `skewt_basic` (RMSE 13.74)
 
 - [ ] Code: Python custom `SkewXAxes` explicitly sets log y-scale, tick
       locators, and top-spine/tick visibility; Go relies on `AddSkewXAxes`
@@ -1385,7 +1385,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/skew.go` transform/spines, log y-axis
       grid/ticks, skewed tick visibility, legend/text layout.
 
-### 7A.41 `mplot3d_basic` (RMSE 13.64)
+### 8.41 `mplot3d_basic` (RMSE 13.64)
 
 - [ ] Code: Go omits Python `cmap="viridis"` on `plot_surface`; it calls
       `Surface(... Alpha)` only.
@@ -1394,7 +1394,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: fixture option mismatch first, then `Surface`,
       `Contour`, `Bar3D`, `Text3D`, 3D z-sort.
 
-### 7A.42 `mplot3d_terrain` (RMSE 8.65)
+### 8.42 `mplot3d_terrain` (RMSE 8.65)
 
 - [ ] Code: fixture bodies mostly match; Go axes-coordinates text corresponds
       to Python `text2D(..., transAxes)`.
@@ -1403,7 +1403,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: 3D `Contourf`, `Contour`, `Surface` z-sort/colormap,
       frame/pane/tick placement.
 
-### 7A.43 `mplot3d_plot3d` (RMSE 12.35)
+### 8.43 `mplot3d_plot3d` (RMSE 12.35)
 
 - [ ] Code: no obvious source mismatch found.
 - [ ] Visual: curve shape matches, but line and grid are consistently offset by
@@ -1411,7 +1411,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: projection matrix, autoscale/view limits,
       `LineCollection`/line antialiasing, 3D frame.
 
-### 7A.44 `mplot3d_scatter3d` (RMSE 17.92)
+### 8.44 `mplot3d_scatter3d` (RMSE 17.92)
 
 - [ ] Code: Python uses unseeded `np.random.default_rng()` despite
       `np.random.seed`; Go hardcodes point arrays.
@@ -1420,7 +1420,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `Scatter3D` depth sorting, depthshade alpha, marker
       sizing, projection/autoscale.
 
-### 7A.45 `mplot3d_surface3d` (RMSE 9.62)
+### 8.45 `mplot3d_surface3d` (RMSE 9.62)
 
 - [ ] Code: fixture data/options match, but Go core `Surface` defaults alpha to
       `0.85`; Matplotlib default surface alpha is opaque unless specified.
@@ -1428,7 +1428,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `Surface` default alpha, colormap normalization, face
       z-sort, projection.
 
-### 7A.46 `mplot3d_wire3d` (RMSE 9.89)
+### 8.46 `mplot3d_wire3d` (RMSE 9.89)
 
 - [ ] Code: no obvious mismatch; Go helper mirrors upstream
       `axes3d.get_test_data`.
@@ -1437,7 +1437,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `Wireframe` sampling/segment ordering, line style,
       projection/autoscale, frame ticks.
 
-### 7A.47 `mplot3d_trisurf3d` (RMSE 13.01)
+### 8.47 `mplot3d_trisurf3d` (RMSE 13.01)
 
 - [ ] Code: Python lets Matplotlib build the triangulation; Go manually
       constructs fan/ring triangles.
@@ -1445,14 +1445,14 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: triangulation parity, `Trisurf` face z-sort, cmap
       values, projection.
 
-### 7A.48 `mplot3d_bar3d` (RMSE 9.74)
+### 8.48 `mplot3d_bar3d` (RMSE 9.74)
 
 - [ ] Code: fixture values match.
 - [ ] Visual: cuboids align fairly well; face shade and edge placement differ.
 - [ ] Likely core areas: `Bar3D` face vertex order, Matplotlib
       `zsort="average"` behavior, LightSource shading, edge defaults.
 
-### 7A.49 `mplot3d_voxels` (RMSE 8.25)
+### 8.49 `mplot3d_voxels` (RMSE 8.25)
 
 - [ ] Code: fixture values/options match.
 - [ ] Visual: block positions are close; face shading and black edge rendering
@@ -1460,14 +1460,14 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `Voxels` face extraction/order, per-voxel collection
       z-order, `shade3DFaceColor`, edge width/color.
 
-### 7A.50 `mplot3d_quiver3d` (RMSE 14.81)
+### 8.50 `mplot3d_quiver3d` (RMSE 14.81)
 
 - [ ] Code: loop order appears to match NumPy `meshgrid` flattening.
 - [ ] Visual: arrow shafts are close; heads and line ordering differ.
 - [ ] Likely core areas: `Quiver` arrowhead geometry/order, `LineCollection`
       z-order, line caps/joins, projection.
 
-### 7A.51 `mplot3d_stem3d` (RMSE 14.96)
+### 8.51 `mplot3d_stem3d` (RMSE 14.96)
 
 - [ ] Code: Matplotlib default `basefmt='C3-'` gives a red baseline; Go
       `Stem3D` defaults baseline color to the stem color.
@@ -1476,7 +1476,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `Stem3D` default styles, baseline z-order, marker
       sizing, projection.
 
-### 7A.52 `mplot3d_fill_between3d` (RMSE 13.34)
+### 8.52 `mplot3d_fill_between3d` (RMSE 13.34)
 
 - [ ] Code: fixture is close; core mismatch is that Matplotlib auto mode uses
       shaded quads for non-coplanar curves while Go emits unshaded repeated-color
@@ -1486,7 +1486,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `FillBetween3D` quad shading, polygon z-sort, alpha
       handling, line-vs-fill z-order.
 
-### 7A.53 `unstructured_showcase` (RMSE 7.87)
+### 8.53 `unstructured_showcase` (RMSE 7.87)
 
 - [ ] Code: data/layout mostly align, but Go uses `EdgeColor` alpha `0.55` for
       `TriColor` while Python uses `edgecolors="white"`; larger mismatch is
@@ -1496,7 +1496,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/contour.go` tri contour/fill generation and
       inline labels, `core/triangulation.go` tripcolor edge/color handling.
 
-### 7A.54 `arrays_showcase` (RMSE 11.45)
+### 8.54 `arrays_showcase` (RMSE 11.45)
 
 - [ ] Code: heatmap, mesh, and spy data match; Go `Contour` triangulates
       rectilinear grids while Matplotlib uses `contourpy` on structured `x/y/z`.
@@ -1506,7 +1506,7 @@ before fixture tweaks. Baseline captured with
       `core/contour.go`, contour label placement/inline clipping, text and mesh
       antialiasing.
 
-### 7A.55 `axisartist_showcase` (RMSE 13.25)
+### 8.55 `axisartist_showcase` (RMSE 13.25)
 
 - [ ] Code: Python uses explicit `axhline` / `axvline` linewidth/dashes and
       light y-grid color; Go uses floating cloned axes and default y-grid
@@ -1516,7 +1516,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/axis_artist.go`, `core/axis.go` dash/line-width
       parity for data-position spines, `core/grid.go` grid style configuration.
 
-### 7A.56 `axes_grid1_showcase` (RMSE 10.73)
+### 8.56 `axes_grid1_showcase` (RMSE 10.73)
 
 - [ ] Code: Go approximates Matplotlib `ImageGrid(... axes_pad=(0.18, 0.20))`
       with fraction-based divider spacing and has slightly different anchored
@@ -1526,7 +1526,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/image_grid.go` inch-vs-fraction divider spacing,
       anchored text bbox padding, renderer text/line antialiasing.
 
-### 7A.57 `pcolor_flat` (RMSE 8.74)
+### 8.57 `pcolor_flat` (RMSE 8.74)
 
 - [ ] Code: Go `PColor` is currently `PColorMesh`; Matplotlib `pcolor` uses
       `PolyQuadMesh`.
@@ -1535,7 +1535,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/mesh.go`, `core/collection.go` pcolor versus
       pcolormesh semantics, quad edge antialias/snap.
 
-### 7A.58 `pcolormesh_gouraud` (RMSE 11.88)
+### 8.58 `pcolormesh_gouraud` (RMSE 11.88)
 
 - [ ] Code: fixture inputs match, but Matplotlib converts each quad into four
       center-point Gouraud triangles; Go splits each quad into two diagonal
@@ -1544,7 +1544,7 @@ before fixture tweaks. Baseline captured with
       triangle patterns/corners; colorbar/text also differs.
 - [ ] Likely core areas: `QuadMesh.drawGouraudMesh`, AGG Gouraud rasterization.
 
-### 7A.59 `hist2d_weighted_density` (RMSE 7.48)
+### 8.59 `hist2d_weighted_density` (RMSE 7.48)
 
 - [ ] Code: no obvious fixture/binning mismatch; weighted density setup matches
       Python.
@@ -1553,7 +1553,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: colorbar axis rendering, text metrics, quad mesh
       antialiasing.
 
-### 7A.60 `boundarynorm_pcolormesh` (RMSE 5.86)
+### 8.60 `boundarynorm_pcolormesh` (RMSE 5.86)
 
 - [ ] Code: data, boundaries, `BoundaryNorm`, and pcolormesh setup match.
 - [ ] Visual: discrete bands align; residual is mostly colorbar ticks/label,
@@ -1561,7 +1561,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/colorbar.go`, `core/norm.go` BoundaryNorm
       colorbar rendering, axis/text placement.
 
-### 7A.61 `lognorm_imshow` (RMSE 10.49)
+### 8.61 `lognorm_imshow` (RMSE 10.49)
 
 - [ ] Code: fixture values and `LogNorm(1,1000)` match; Go image rasterization
       / resampling differs from Matplotlib `imshow(..., aspect="auto")`.
@@ -1570,7 +1570,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/image.go` image resampling/source-coordinate
       mapping, `core/norm.go` / `core/colorbar.go` log colorbar ticks.
 
-### 7A.62 `twoslope_norm_image` (RMSE 11.75)
+### 8.62 `twoslope_norm_image` (RMSE 11.75)
 
 - [ ] Code: data, custom diverging colormap stops, and `TwoSlopeNorm(-3,0,6)`
       match; mismatch is likely image rasterization/color sampling.
@@ -1579,7 +1579,7 @@ before fixture tweaks. Baseline captured with
 - [ ] Likely core areas: `core/image.go`, colormap interpolation,
       `TwoSlopeNorm` colorbar rendering.
 
-### 7A.63 `colorbar_extensions` (RMSE 15.36)
+### 8.63 `colorbar_extensions` (RMSE 15.36)
 
 - [ ] Code: fixture requests `Extend: "both"` like Python `extend="both"`, but
       Go's extension triangles appear clipped or missing.
@@ -1599,12 +1599,12 @@ before fixture tweaks. Baseline captured with
 
 ---
 
-# Phase 8: Documentation, Examples Polish, and v1.0 Release
+# Phase 9: Documentation, Examples Polish, and v1.0 Release
 
 **Goal:** make the project consumable by users who have not been following
 the development thread, and tag a stable v1.0.
 
-### 8.1 API Documentation
+### 9.1 API Documentation
 
 - [ ] Package-level GoDoc passes for every public package, with a worked
       example per package.
@@ -1615,7 +1615,7 @@ the development thread, and tag a stable v1.0.
 - [ ] Backend selection guide: when to use AGG / GoBasic / SVG / PDF /
       Skia, with capability matrix excerpts.
 
-### 8.2 Examples Gallery Polish
+### 9.2 Examples Gallery Polish
 
 - [ ] Review every `Showcase: true` catalog row for caption, description,
       and runnable snippet quality.
@@ -1624,7 +1624,7 @@ the development thread, and tag a stable v1.0.
 - [ ] Promote the WASM browser gallery to a first-class entry point on the
       project README.
 
-### 8.3 Performance Pass
+### 9.3 Performance Pass
 
 - [ ] Profiling sweep across the catalog: identify hotspots that exceed the
       100k-point smoothness goal and the sub-second typical-plot goal.
@@ -1633,7 +1633,7 @@ the development thread, and tag a stable v1.0.
 - [ ] Documented memory-usage targets and a tuning guide for long-running
       applications.
 
-### 8.4 Release Readiness
+### 9.4 Release Readiness
 
 - [ ] Semantic version policy decision and `CHANGELOG.md` baseline.
 - [ ] Final golden / reference regeneration pass with explicit per-case

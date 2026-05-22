@@ -11,7 +11,7 @@
 //     entries must be isolated by MeasurementKey because renderer text metrics
 //     and font resolution affect final geometry.
 //
-// Promotion target: keep this internal API stable through the Phase 3 backend
+// Promotion target: keep this internal API stable through the MathText backend
 // work, document any remaining cache/storage decisions, and either promote it
 // to a top-level package or split it into its own module by 2026-07-31.
 package mathtext

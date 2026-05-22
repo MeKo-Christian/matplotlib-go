@@ -1,7 +1,7 @@
 // Package agg implements the AGG backend for matplotlib-go.
 //
-// Phase 8.1D task (AGG image/effects/buffer parity) status
-// ---------------------------------------------------------
+// AGG image/effects/buffer parity status
+// --------------------------------------
 //
 // This package is treated as the AGG reference backend and should track
 // parity against:
@@ -23,5 +23,5 @@
 // Intentionally unsupported for now
 //   - ARGB string export helpers such as Matplotlib's `tostring_argb`.
 //
-// These intentional gaps should be revisited as part of ongoing 8.1 sub-tasks.
+// These intentional gaps should be revisited as part of ongoing AGG parity work.
 package agg

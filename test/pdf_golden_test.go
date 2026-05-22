@@ -15,7 +15,7 @@ import (
 
 var updatePDFGolden = flag.Bool("update-pdf-golden", false, "Update PDF golden fixtures instead of comparing")
 
-var phase3MathTextFixtureIDs = []string{
+var mathTextFixtureIDs = []string{
 	"mathtext_basic",
 	"mathtext_fractions",
 	"mathtext_integrals",
@@ -32,35 +32,35 @@ func TestPDFGolden(t *testing.T) {
 	}
 }
 
-func TestPDFGoldenIncludesPhase3MathTextFixtures(t *testing.T) {
+func TestPDFGoldenIncludesMathTextFixtures(t *testing.T) {
 	ids := map[string]bool{}
 	for _, id := range pdfGoldenIDs() {
 		ids[id] = true
 	}
-	for _, id := range phase3MathTextFixtureIDs {
+	for _, id := range mathTextFixtureIDs {
 		if !ids[id] {
-			t.Fatalf("PDF golden set is missing Phase 3 MathText fixture %q", id)
+			t.Fatalf("PDF golden set is missing MathText fixture %q", id)
 		}
 	}
 }
 
-func TestPhase3MathTextFixturesHaveToleranceCoverage(t *testing.T) {
+func TestMathTextFixturesHaveToleranceCoverage(t *testing.T) {
 	pdfIDs := map[string]bool{}
 	for _, id := range pdfGoldenIDs() {
 		pdfIDs[id] = true
 	}
-	for _, id := range phase3MathTextFixtureIDs {
+	for _, id := range mathTextFixtureIDs {
 		if !goldenExists(id) {
-			t.Fatalf("Phase 3 MathText fixture %q is missing AGG PNG golden coverage", id)
+			t.Fatalf("MathText fixture %q is missing AGG PNG golden coverage", id)
 		}
 		if !matplotlibRefExists(id) {
-			t.Fatalf("Phase 3 MathText fixture %q is missing Matplotlib reference coverage", id)
+			t.Fatalf("MathText fixture %q is missing Matplotlib reference coverage", id)
 		}
 		if !pdfIDs[id] {
-			t.Fatalf("Phase 3 MathText fixture %q is missing PDF golden coverage", id)
+			t.Fatalf("MathText fixture %q is missing PDF golden coverage", id)
 		}
 		if _, _, err := parity.Figure(id); err != nil {
-			t.Fatalf("Phase 3 MathText fixture %q is not registered in parity registry: %v", id, err)
+			t.Fatalf("MathText fixture %q is not registered in parity registry: %v", id, err)
 		}
 	}
 }

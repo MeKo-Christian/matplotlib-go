@@ -116,7 +116,7 @@ func TestSkiaTaggedRendererDrawsMathText(t *testing.T) {
 	}
 }
 
-func TestSkiaTaggedRendererMatchesPhase3MathTextGoldens(t *testing.T) {
+func TestSkiaTaggedRendererMatchesMathTextGoldens(t *testing.T) {
 	for _, id := range []string{
 		"mathtext_basic",
 		"mathtext_fractions",

@@ -29,7 +29,7 @@ func TestGoBasicSmokeCasesRenderNonBlank(t *testing.T) {
 	}
 }
 
-func TestGoBasicSmokeFamiliesCoverPhase74StaticSurface(t *testing.T) {
+func TestGoBasicSmokeFamiliesCoverStaticArtistSurface(t *testing.T) {
 	want := []string{
 		"annotation",
 		"axes",

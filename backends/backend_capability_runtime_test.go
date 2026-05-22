@@ -58,10 +58,10 @@ func TestRegisteredBackendsAdvertiseSupportedCapabilities(t *testing.T) {
 	}
 }
 
-// TestPhase24NativeEffectBackendsStayNative pins the Phase 2.4 contract: the
+// TestNativeEffectBackendsStayNative pins the renderer capability contract: the
 // primary native targets must advertise and satisfy the renderer-neutral
 // pattern, gradient, and path-effect capabilities through runtime interfaces.
-func TestPhase24NativeEffectBackendsStayNative(t *testing.T) {
+func TestNativeEffectBackendsStayNative(t *testing.T) {
 	cfg := backends.TestDefaultConfig(64, 64)
 	for _, backend := range []backends.Backend{
 		backends.AGG,

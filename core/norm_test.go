@@ -128,7 +128,7 @@ func TestResolveScalarMapRejectsNormWithVMinVMax(t *testing.T) {
 }
 
 func TestScalarMapInfoRoutesBadUnderAndOverColorsThroughColormap(t *testing.T) {
-	cmapName := "phase11-test-bounds"
+	cmapName := "scalar-map-test-bounds"
 	bad := render.Color{R: 1, A: 1}
 	under := render.Color{G: 1, A: 1}
 	over := render.Color{B: 1, A: 1}

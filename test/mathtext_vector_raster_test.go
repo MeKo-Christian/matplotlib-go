@@ -17,7 +17,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/test/parity"
 )
 
-func TestPhase3MathTextVectorBackendsRasterizeCloseToAGGGoldens(t *testing.T) {
+func TestMathTextVectorBackendsRasterizeCloseToAGGGoldens(t *testing.T) {
 	backends := []struct {
 		name      string
 		ext       string
@@ -31,7 +31,7 @@ func TestPhase3MathTextVectorBackendsRasterizeCloseToAGGGoldens(t *testing.T) {
 		{name: "svg", ext: ".svg", render: renderMathTextSVG, rasterize: rasterizeSVG, minPSNR: 18, maxMean: 18},
 	}
 
-	for _, id := range phase3MathTextFixtureIDs {
+	for _, id := range mathTextFixtureIDs {
 		id := id
 		want, err := imagecmp.LoadPNG(filepath.Join("..", "testdata", "golden", id+".png"))
 		if err != nil {
@@ -65,7 +65,7 @@ func TestPhase3MathTextVectorBackendsRasterizeCloseToAGGGoldens(t *testing.T) {
 
 func renderMathTextPDF(t *testing.T, id, path string) {
 	t.Helper()
-	fig := phase3MathTextFigure(t, id)
+	fig := mathTextFigure(t, id)
 	r, err := pdf.New(int(fig.SizePx.X), int(fig.SizePx.Y), render.Color{R: 1, G: 1, B: 1, A: 1})
 	if err != nil {
 		t.Fatalf("pdf.New: %v", err)
@@ -78,7 +78,7 @@ func renderMathTextPDF(t *testing.T, id, path string) {
 
 func renderMathTextPS(t *testing.T, id, path string) {
 	t.Helper()
-	fig := phase3MathTextFigure(t, id)
+	fig := mathTextFigure(t, id)
 	r, err := ps.New(int(fig.SizePx.X), int(fig.SizePx.Y), render.Color{R: 1, G: 1, B: 1, A: 1})
 	if err != nil {
 		t.Fatalf("ps.New: %v", err)
@@ -91,7 +91,7 @@ func renderMathTextPS(t *testing.T, id, path string) {
 
 func renderMathTextSVG(t *testing.T, id, path string) {
 	t.Helper()
-	fig := phase3MathTextFigure(t, id)
+	fig := mathTextFigure(t, id)
 	r, err := svg.New(int(fig.SizePx.X), int(fig.SizePx.Y), render.Color{R: 1, G: 1, B: 1, A: 1})
 	if err != nil {
 		t.Fatalf("svg.New: %v", err)
@@ -102,7 +102,7 @@ func renderMathTextSVG(t *testing.T, id, path string) {
 	}
 }
 
-func phase3MathTextFigure(t *testing.T, id string) *core.Figure {
+func mathTextFigure(t *testing.T, id string) *core.Figure {
 	t.Helper()
 	fig, _, err := parity.Figure(id)
 	if err != nil {

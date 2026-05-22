@@ -48,7 +48,7 @@ func TestCatalogSourcePathsExistWhenRecorded(t *testing.T) {
 	}
 }
 
-func TestCatalogIncludesPhase7ProjectionAndToolkitFixtures(t *testing.T) {
+func TestCatalogIncludesProjectionAndToolkitFixtures(t *testing.T) {
 	want := []string{
 		"geo_aitoff_axes",
 		"geo_hammer_axes",
@@ -60,12 +60,12 @@ func TestCatalogIncludesPhase7ProjectionAndToolkitFixtures(t *testing.T) {
 	}
 	for _, id := range want {
 		if _, ok := Lookup(id); !ok {
-			t.Fatalf("missing Phase 7 parity catalog case %q", id)
+			t.Fatalf("missing projection/toolkit parity catalog case %q", id)
 		}
 	}
 }
 
-func TestCatalogIncludesPhase3MathTextFixtures(t *testing.T) {
+func TestCatalogIncludesMathTextFixtures(t *testing.T) {
 	want := []string{
 		"mathtext_basic",
 		"mathtext_fractions",
@@ -75,15 +75,15 @@ func TestCatalogIncludesPhase3MathTextFixtures(t *testing.T) {
 	}
 	for _, id := range want {
 		if _, ok := Lookup(id); !ok {
-			t.Fatalf("missing Phase 3 MathText parity catalog case %q", id)
+			t.Fatalf("missing MathText parity catalog case %q", id)
 		}
 	}
 }
 
-func TestCatalogIncludesPhase23MixedRasterVectorFixture(t *testing.T) {
+func TestCatalogIncludesMixedRasterVectorFixture(t *testing.T) {
 	c, ok := Lookup("mixed_raster_vector")
 	if !ok {
-		t.Fatal("missing Phase 2.3 mixed raster/vector parity catalog case")
+		t.Fatal("missing mixed raster/vector parity catalog case")
 	}
 	if c.Topic != "raster" {
 		t.Fatalf("mixed_raster_vector topic = %q, want raster", c.Topic)
@@ -115,7 +115,7 @@ func TestCatalogSplitsAGGNativeParityFixtures(t *testing.T) {
 	}
 }
 
-func TestCatalogIncludesPhase72SVGStructuralFamilies(t *testing.T) {
+func TestCatalogIncludesSVGStructuralFamilies(t *testing.T) {
 	want := map[string]string{
 		"bar":           "bar_basic",
 		"errorbar":      "errorbar_basic",
