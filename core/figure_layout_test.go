@@ -368,7 +368,7 @@ func TestConstrainedLayoutReservesColorbarSpaceAndTracksParent(t *testing.T) {
 		t.Fatalf("colorbar did not stay to the right of parent: parent=%+v colorbar=%+v", ax.RectFraction, cb.RectFraction)
 	}
 	base := cb.colorbarBase
-	if got, want := cb.RectFraction.Min.X-ax.RectFraction.Max.X, resolvedColorbarLayoutPadding(fig, base, cb.colorbarPadding); !floatApprox(got, want, 1e-9) {
+	if got, want := cb.RectFraction.Min.X-ax.RectFraction.Max.X, resolvedColorbarPadding(base, cb.colorbarPadding)+constrainedColorbarSlotOffset(fig, base); !floatApprox(got, want, 1e-9) {
 		t.Fatalf("colorbar did not track parent padding: got %v want %v", got, want)
 	}
 	if ax.RectFraction.Max.X >= 0.90 {

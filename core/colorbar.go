@@ -75,18 +75,32 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 
 	base := colorbarBaseRect(parent)
 	width := resolvedColorbarWidth(f, base, cfg.Width, cfg.Aspect)
+	slotWidth := width
 	padding := resolvedColorbarLayoutPadding(f, base, cfg.Padding)
 	useResolvedSlot := colorbarUsesResolvedSlot(f, parent)
-	parent.RectFraction = colorbarParentRect(base, width, padding, useResolvedSlot)
+	if useResolvedSlot {
+		padding = resolvedColorbarPadding(base, cfg.Padding)
+		slotWidth = resolvedColorbarSlotWidth(base, cfg.Width)
+	}
+	if !useResolvedSlot {
+		parent.RectFraction = colorbarParentRect(base, width, padding, useResolvedSlot)
+	}
 	slotLeft := colorbarSlotLeft(base, width, useResolvedSlot)
+	if useResolvedSlot {
+		slotLeft = base.Max.X + padding
+		slotLeft += constrainedColorbarSlotOffset(f, base)
+		if slotLeft+slotWidth > 1 {
+			slotWidth = math.Max(width, 1-slotLeft)
+		}
+	}
 	rect := geom.Rect{
 		Min: geom.Pt{
 			X: slotLeft,
-			Y: parent.RectFraction.Min.Y,
+			Y: base.Min.Y,
 		},
 		Max: geom.Pt{
-			X: slotLeft + width,
-			Y: parent.RectFraction.Max.Y,
+			X: slotLeft + slotWidth,
+			Y: base.Max.Y,
 		},
 	}
 	if rect.Min.X >= rect.Max.X {
@@ -171,6 +185,21 @@ func resolvedColorbarWidth(fig *Figure, base geom.Rect, width, aspect float64) f
 		return fractionWidth
 	}
 	return math.Min(fractionWidth, aspectWidth)
+}
+
+func resolvedColorbarSlotWidth(base geom.Rect, width float64) float64 {
+	if width > 0 {
+		return width
+	}
+	return base.W() * defaultColorbarFraction
+}
+
+func constrainedColorbarSlotOffset(fig *Figure, base geom.Rect) float64 {
+	if fig == nil || fig.SizePx.X <= 0 {
+		return 0
+	}
+	baseWidthPx := base.W() * fig.SizePx.X
+	return (constrainedLayoutPadPx(fig) + 0.5*constrainedLayoutDefaultSpacePx(baseWidthPx, 1)) / fig.SizePx.X
 }
 
 func colorbarParentRect(base geom.Rect, width, padding float64, useResolvedSlot bool) geom.Rect {

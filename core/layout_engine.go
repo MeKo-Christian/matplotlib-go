@@ -365,6 +365,18 @@ func figureColorbarMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engin
 		if ax == nil || ax.colorbarParent == nil {
 			continue
 		}
+		if engine == LayoutEngineConstrained && ax.colorbarParent.subplotSpec != nil {
+			base := ax.colorbarParent.RectFraction
+			width := resolvedColorbarWidth(fig, base, ax.colorbarWidth, resolvedColorbarAspect(ax.colorbarAspect))
+			if width <= 0 {
+				continue
+			}
+			padding := measureAxesDecorationPadding(ax, fig, r, vp, alignment)
+			padding.right += ax.effectiveRC(fig).AxisLineWidth
+			colorbarSpace := (width + resolvedColorbarPadding(base, ax.colorbarPadding)) * vp.W()
+			margin.right = math.Max(margin.right, colorbarSpace+padding.right)
+			continue
+		}
 		base := colorbarLayoutBase(ax.colorbarParent, ax)
 		if resolvedColorbarWidth(fig, base, ax.colorbarWidth, resolvedColorbarAspect(ax.colorbarAspect)) <= 0 {
 			continue
@@ -445,6 +457,29 @@ func syncColorbarAxes(fig *Figure) {
 		padding := resolvedColorbarLayoutPadding(fig, base, ax.colorbarPadding)
 		width := resolvedColorbarWidth(fig, base, ax.colorbarWidth, resolvedColorbarAspect(ax.colorbarAspect))
 		useResolvedSlot := colorbarUsesResolvedSlot(fig, parent)
+		if useResolvedSlot {
+			base = parent.RectFraction
+			ax.colorbarBase = base
+			padding = resolvedColorbarPadding(base, ax.colorbarPadding)
+			width = resolvedColorbarWidth(fig, base, ax.colorbarWidth, resolvedColorbarAspect(ax.colorbarAspect))
+			slotWidth := resolvedColorbarSlotWidth(base, ax.colorbarWidth)
+			slotLeft := base.Max.X + padding
+			slotLeft += constrainedColorbarSlotOffset(fig, base)
+			if slotLeft+slotWidth > 1 {
+				slotWidth = math.Max(width, 1-slotLeft)
+			}
+			ax.RectFraction = geom.Rect{
+				Min: geom.Pt{
+					X: slotLeft,
+					Y: base.Min.Y,
+				},
+				Max: geom.Pt{
+					X: slotLeft + slotWidth,
+					Y: base.Max.Y,
+				},
+			}
+			continue
+		}
 		parent.RectFraction = colorbarParentRect(base, width, padding, useResolvedSlot)
 		slotLeft := colorbarSlotLeft(base, width, useResolvedSlot)
 		ax.RectFraction = geom.Rect{

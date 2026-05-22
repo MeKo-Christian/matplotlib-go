@@ -2084,7 +2084,15 @@ func (a *Axes) adjustedColorbarLayout(f *Figure, px geom.Rect) geom.Rect {
 	if a == nil || f == nil || f.SizePx.X <= 0 || f.SizePx.Y <= 0 {
 		return px
 	}
-	width := resolvedColorbarWidth(f, px, a.colorbarWidth, resolvedColorbarAspect(a.colorbarAspect))
+	width := a.colorbarWidth
+	if width > 0 {
+		width *= f.SizePx.X
+	} else {
+		aspect := resolvedColorbarAspect(a.colorbarAspect)
+		if aspect > 0 {
+			width = px.H() / aspect
+		}
+	}
 	if width <= 0 || width >= px.W() {
 		return px
 	}

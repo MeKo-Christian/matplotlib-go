@@ -155,7 +155,7 @@ func scaledNearestIndex(index, targetSize, sourceSize int) int {
 	if index >= targetSize {
 		return sourceSize - 1
 	}
-	scaled := int(float64(index) * float64(sourceSize) / float64(targetSize))
+	scaled := int(math.Floor((float64(index) + 0.5) * float64(sourceSize) / float64(targetSize)))
 	if scaled < 0 {
 		return 0
 	}
