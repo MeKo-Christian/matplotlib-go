@@ -234,6 +234,43 @@ func TestQuiverKeyDrawOverlay(t *testing.T) {
 	}
 }
 
+func TestQuiverKeyDefaultLabelSeparationMatchesMatplotlib(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax := fig.AddAxes(unitRect())
+	q := ax.Quiver([]float64{0}, []float64{0}, []float64{1}, []float64{0})
+	if q == nil {
+		t.Fatal("expected quiver artist")
+	}
+
+	key := ax.QuiverKey(q, 0.8, 0.2, 1, "1 unit", QuiverKeyOptions{LabelPos: "E"})
+	if key == nil {
+		t.Fatal("expected quiver key")
+	}
+	if key.LabelSep != 10 {
+		t.Fatalf("default label separation = %v, want 10 px at 100 dpi", key.LabelSep)
+	}
+}
+
+func TestBarbsDefaultLengthUsesPoints(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax := fig.AddAxes(unitRect())
+	length := 6.0
+
+	barbs := ax.Barbs(
+		[]float64{0},
+		[]float64{0},
+		[]float64{10},
+		[]float64{0},
+		BarbsOptions{Length: &length},
+	)
+	if barbs == nil {
+		t.Fatal("expected barbs artist")
+	}
+	if barbs.Units != "points" {
+		t.Fatalf("barb units = %q, want points", barbs.Units)
+	}
+}
+
 func TestBarbsFindTailsAndFlip(t *testing.T) {
 	b := &Barbs{
 		U:          []float64{35},

@@ -2331,6 +2331,26 @@ func TestAxes3DTrisurfCreatesSinglePolyCollection(t *testing.T) {
 	}
 }
 
+func TestAxes3DTrisurfAutoTriangulatesWhenTrianglesAreOmitted(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	tri := Triangulation{
+		X: []float64{0, 1, 1, 0},
+		Y: []float64{0, 0, 1, 1},
+	}
+	collection := ax.Trisurf(tri, []float64{0, 1, 2, 3})
+	if collection == nil {
+		t.Fatal("Trisurf returned nil")
+	}
+	if len(collection.Polygons) != 2 {
+		t.Fatalf("auto-triangulated polygon count = %d, want 2", len(collection.Polygons))
+	}
+}
+
 func TestAxes3DTrisurfSkipsMaskedTriangles(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())

@@ -52,6 +52,73 @@ func (l DateLocator) location() *time.Location {
 	return time.UTC
 }
 
+type DayLocator struct {
+	ByMonthDay []int
+	Interval   int
+	Location   *time.Location
+}
+
+func (l DayLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
+	if math.IsNaN(minVal) || math.IsNaN(maxVal) || math.IsInf(minVal, 0) || math.IsInf(maxVal, 0) {
+		return nil
+	}
+	if minVal > maxVal {
+		minVal, maxVal = maxVal, minVal
+	}
+
+	loc := l.location()
+	minTime := dateNumberToTime(minVal, loc)
+	maxTime := dateNumberToTime(maxVal, loc)
+	if !maxTime.After(minTime) {
+		return []float64{minVal}
+	}
+
+	interval := l.Interval
+	if interval <= 0 {
+		interval = 1
+	}
+	monthDays := validMonthDays(l.ByMonthDay)
+	current := time.Date(minTime.Year(), minTime.Month(), minTime.Day(), 0, 0, 0, 0, loc)
+	if current.Before(minTime) {
+		current = current.AddDate(0, 0, 1)
+	}
+
+	guard := int(maxTime.Sub(minTime).Hours()/24) + 370
+	ticks := make([]float64, 0, targetCount+2)
+	startOrdinal := current.YearDay()
+	for i := 0; i < guard && !current.After(maxTime); i++ {
+		if len(monthDays) > 0 {
+			if monthDays[current.Day()] {
+				ticks = append(ticks, timeToDateNumber(current))
+			}
+		} else if (current.YearDay()-startOrdinal)%interval == 0 {
+			ticks = append(ticks, timeToDateNumber(current))
+		}
+		current = current.AddDate(0, 0, 1)
+	}
+	return dedupeTicks(ticks)
+}
+
+func (l DayLocator) location() *time.Location {
+	if l.Location != nil {
+		return l.Location
+	}
+	return time.UTC
+}
+
+func validMonthDays(days []int) map[int]bool {
+	if len(days) == 0 {
+		return nil
+	}
+	out := make(map[int]bool, len(days))
+	for _, day := range days {
+		if day >= 1 && day <= 31 {
+			out[day] = true
+		}
+	}
+	return out
+}
+
 type AutoDateFormatter struct {
 	Min      float64
 	Max      float64

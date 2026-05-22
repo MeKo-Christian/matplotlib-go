@@ -1303,9 +1303,9 @@ items are renderer/layout/core API parity work, not example-source workarounds.
 
 ### 8.30 `units_dates` (RMSE 5.79)
 
-- [ ] Code: Go pre-converts dates to numeric seconds with fixed ticks; Python
-      passes datetime values and uses `mdates.DayLocator`. This remains a core
-      date-unit/locator parity task before removing the conversion.
+- [x] Code: added a `DayLocator` and changed the Go example to pass
+      `time.Time` values through `FillBetweenUnits` / `PlotUnits`, matching the
+      Python datetime + `mdates.DayLocator` structure without pre-conversion.
 - [ ] Visual: line/fill positions align; diff follows fill polygon edges, line
       strokes, and labels.
 - [ ] Likely core areas: date units/date formatter parity, `FillBetween`
@@ -1331,10 +1331,9 @@ items are renderer/layout/core API parity work, not example-source workarounds.
 
 ### 8.33 `vector_fields` (RMSE 7.99)
 
-- [ ] Code: mostly matching parameters, but Go pre-scales barb length and sets
-      explicit quiver-key label separation while Python uses Matplotlib
-      semantic defaults. This remains a core barb/quiver-key unit parity task
-      before the example workaround can be removed.
+- [x] Code: changed barb length defaults to point units and quiver-key default
+      label separation to the Matplotlib-equivalent 0.1 inch at 100 DPI, then
+      removed the Go-only barb pre-scaling and explicit key label separation.
 - [ ] Visual: fields align, but quiver/barb/stream glyph shapes and strokes
       differ, especially barbs and stream arrows.
 - [ ] Likely core areas: `core/vector_field.go` quiver scaling/arrow polygons,
@@ -1432,10 +1431,9 @@ items are renderer/layout/core API parity work, not example-source workarounds.
 
 ### 8.44 `mplot3d_scatter3d` (RMSE 17.92)
 
-- [ ] Code: Python uses unseeded `np.random.default_rng()` despite
-      `np.random.seed`; Go hardcodes point arrays for deterministic parity.
-      Needs a deterministic source-parity decision rather than another example
-      workaround.
+- [x] Code: resolved the deterministic source-parity issue by using the shared
+      Go-compatible PCG stream in the Python reference and generating the Go
+      scatter values from the same stream instead of hardcoding point arrays.
 - [ ] Visual: points are close in the saved artifact, but marker depthshade,
       position, and axes differ.
 - [ ] Likely core areas: `Scatter3D` depth sorting, depthshade alpha, marker
@@ -1460,9 +1458,9 @@ items are renderer/layout/core API parity work, not example-source workarounds.
 
 ### 8.47 `mplot3d_trisurf3d` (RMSE 13.01)
 
-- [ ] Code: Python lets Matplotlib build the triangulation; Go manually
-      constructs fan/ring triangles. Needs core Matplotlib-style automatic
-      triangulation before the manual triangles can be removed.
+- [x] Code: added automatic Delaunay triangulation for `Trisurf` when triangles
+      are omitted, then removed the manual fan/ring triangle construction from
+      the example to match Python `plot_trisurf(x, y, z, ...)`.
 - [ ] Visual: same broad surface, but tessellation/facet color pattern differs.
 - [ ] Likely core areas: triangulation parity, `Trisurf` face z-sort, cmap
       values, projection.
@@ -1677,14 +1675,17 @@ quality can be RMSE-audited.
 **Gap:** ~7 of Matplotlib's ~26 marker styles exist (circle, cross, diamond,
 plus, square, triangle, path).
 
-- [ ] Add the missing built-in markers: `,` pixel, `.` point, `v^<>` triangle
+- [x] Add the missing built-in markers: `,` pixel, `.` point, `v^<>` triangle
       directions, `1234` tri markers, `8` octagon, `p` pentagon, `*` star,
       `hH` hexagons, `X` filled-x, `P` filled-plus, `d` thin diamond,
       `|_` vline/hline, and the caret markers (`TICKLEFT/RIGHT/UP/DOWN`,
       `CARETLEFT/...`).
 - [ ] Support `MarkerStyle` with `fillstyle` (`full/left/right/bottom/top/none`).
-- [ ] Support mathtext markers and `(numsides, style, angle)` tuple markers.
-- [ ] Add catalog cases exercising the full marker grid.
+      `MarkerStyle` exists and `full` / `none` are routed through scatter;
+      half-fill (`left/right/bottom/top`) still needs alternate-path drawing
+      rather than the current single-path collection model.
+- [x] Support mathtext markers and `(numsides, style, angle)` tuple markers.
+- [x] Add catalog cases exercising the full marker grid.
 
 ### 9.4 Named colors
 
@@ -1757,8 +1758,8 @@ the development thread, and tag a stable v1.0.
       under the existing GitHub Pages deployment).
 - [x] Migration guide from upstream Matplotlib: side-by-side Python / Go
       snippets for every plot family covered by the catalog.
-- [ ] Backend selection guide: when to use AGG / GoBasic / SVG / PDF /
-      Skia, with capability matrix excerpts.
+- [x] Backend selection guide: when to use AGG / GoBasic / SVG / PDF /
+      Skia, with capability matrix excerpts (`docs/backend-selection.md`).
 
 ### 10.2 Examples Gallery Polish
 

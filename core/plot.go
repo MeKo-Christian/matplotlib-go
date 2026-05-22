@@ -150,14 +150,15 @@ func setLogScaleFromData(ax *Axes, values []float64, isX bool) {
 
 // ScatterOptions holds optional parameters for scatter plots.
 type ScatterOptions struct {
-	Color      *render.Color // if nil, uses automatic color cycling
-	Size       *float64      // marker area in points^2
-	Marker     *MarkerType   // marker type
-	MarkerPath *geom.Path    // custom marker path (overrides Marker when non-nil)
-	EdgeColor  *render.Color // edge color
-	EdgeWidth  *float64      // edge width
-	Alpha      *float64      // alpha transparency
-	Label      string        // series label for legend
+	Color       *render.Color // if nil, uses automatic color cycling
+	Size        *float64      // marker area in points^2
+	Marker      *MarkerType   // marker type
+	MarkerStyle *MarkerStyle  // marker style; overrides Marker when non-nil
+	MarkerPath  *geom.Path    // custom marker path (overrides Marker when non-nil)
+	EdgeColor   *render.Color // edge color
+	EdgeWidth   *float64      // edge width
+	Alpha       *float64      // alpha transparency
+	Label       string        // series label for legend
 }
 
 // Scatter creates a scatter plot with automatic shape/fill color cycling if no color is specified.
@@ -228,6 +229,9 @@ func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 		Alpha:     alpha,
 		Marker:    marker,
 		Label:     opt.Label,
+	}
+	if opt.MarkerStyle != nil {
+		scatter.MarkerStyle = *opt.MarkerStyle
 	}
 	if opt.MarkerPath != nil {
 		scatter.MarkerPath = *opt.MarkerPath

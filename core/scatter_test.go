@@ -144,7 +144,7 @@ func TestScatter2D_SizeUsesMatplotlibAreaSemantics(t *testing.T) {
 		XY:   []geom.Pt{{X: 0, Y: 0}},
 		Size: 36,
 	}
-	pc := scatter.toPathCollection(ctx)
+	pc := scatter.toPathCollection(nil, ctx)
 	want := 6.0 * 144.0 / 72.0
 	if got := pc.Size; got != want {
 		t.Fatalf("scatter scale = %v, want sqrt(area)*dpi/72 = %v", got, want)
@@ -174,8 +174,14 @@ func TestScatterAreaFromRadius(t *testing.T) {
 
 func TestScatter2D_AllMarkerTypes(t *testing.T) {
 	markerTypes := []MarkerType{
-		MarkerCircle, MarkerSquare, MarkerTriangle,
-		MarkerDiamond, MarkerPlus, MarkerCross,
+		MarkerCircle, MarkerSquare, MarkerTriangle, MarkerDiamond, MarkerPlus, MarkerCross,
+		MarkerPixel, MarkerPoint, MarkerTriangleDown, MarkerTriangleLeft, MarkerTriangleRight,
+		MarkerTriDown, MarkerTriUp, MarkerTriLeft, MarkerTriRight, MarkerOctagon, MarkerPentagon,
+		MarkerStar, MarkerHexagon1, MarkerHexagon2, MarkerFilledX, MarkerFilledPlus,
+		MarkerThinDiamond, MarkerVLine, MarkerHLine, MarkerTickLeft, MarkerTickRight,
+		MarkerTickUp, MarkerTickDown, MarkerCaretLeft, MarkerCaretRight, MarkerCaretUp,
+		MarkerCaretDown, MarkerCaretLeftBase, MarkerCaretRightBase, MarkerCaretUpBase,
+		MarkerCaretDownBase, MarkerNone,
 	}
 
 	for _, markerType := range markerTypes {
@@ -201,6 +207,85 @@ func TestScatter2D_AllMarkerTypes(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to end rendering for marker %v: %v", markerType, err)
 		}
+	}
+}
+
+func TestMarkerTypeFromStringCoversMatplotlibAliases(t *testing.T) {
+	for marker, want := range map[string]MarkerType{
+		".":    MarkerPoint,
+		",":    MarkerPixel,
+		"o":    MarkerCircle,
+		"v":    MarkerTriangleDown,
+		"^":    MarkerTriangleUp,
+		"<":    MarkerTriangleLeft,
+		">":    MarkerTriangleRight,
+		"1":    MarkerTriDown,
+		"2":    MarkerTriUp,
+		"3":    MarkerTriLeft,
+		"4":    MarkerTriRight,
+		"8":    MarkerOctagon,
+		"s":    MarkerSquare,
+		"p":    MarkerPentagon,
+		"P":    MarkerFilledPlus,
+		"*":    MarkerStar,
+		"h":    MarkerHexagon1,
+		"H":    MarkerHexagon2,
+		"+":    MarkerPlus,
+		"x":    MarkerCross,
+		"X":    MarkerFilledX,
+		"D":    MarkerDiamond,
+		"d":    MarkerThinDiamond,
+		"|":    MarkerVLine,
+		"_":    MarkerHLine,
+		"":     MarkerNone,
+		" ":    MarkerNone,
+		"none": MarkerNone,
+		"None": MarkerNone,
+	} {
+		got, ok := MarkerTypeFromString(marker)
+		if !ok {
+			t.Fatalf("MarkerTypeFromString(%q) returned !ok", marker)
+		}
+		if got != want {
+			t.Fatalf("MarkerTypeFromString(%q) = %v, want %v", marker, got, want)
+		}
+	}
+	if _, ok := MarkerTypeFromString("not-a-marker"); ok {
+		t.Fatal("unknown marker unexpectedly resolved")
+	}
+}
+
+func TestMarkerStyleTupleMarkers(t *testing.T) {
+	styles := []MarkerStyle{
+		NewTupleMarkerStyle(5, MarkerTuplePolygon, 0),
+		NewTupleMarkerStyle(5, MarkerTupleStar, 15),
+		NewTupleMarkerStyle(6, MarkerTupleAsterisk, 30),
+	}
+	for _, style := range styles {
+		scatter := &Scatter2D{MarkerStyle: style}
+		path := scatter.markerPrototypePath()
+		if len(path.C) == 0 || !path.Validate() {
+			t.Fatalf("tuple style %+v produced invalid path: %+v", style, path)
+		}
+	}
+}
+
+func TestMarkerStyleFillNoneUsesFaceAsStrokeFallback(t *testing.T) {
+	scatter := &Scatter2D{
+		XY: []geom.Pt{{X: 1, Y: 1}},
+		MarkerStyle: MarkerStyle{
+			Type:      MarkerCircle,
+			FillStyle: MarkerFillNone,
+		},
+		Color: render.Color{R: 0.25, G: 0.5, B: 0.75, A: 1},
+		Size:  36,
+	}
+	pc := scatter.toPathCollection(&render.NullRenderer{}, createTestDrawContext())
+	if pc.FaceColor.A != 0 {
+		t.Fatalf("fillstyle none face alpha = %v, want 0", pc.FaceColor.A)
+	}
+	if pc.EdgeColor.A == 0 {
+		t.Fatal("fillstyle none should fall back to face color for the outline")
 	}
 }
 

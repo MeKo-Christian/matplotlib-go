@@ -314,7 +314,7 @@ func (a *Axes) Spy(data [][]float64, opts ...SpyOptions) *SpyResult {
 		alpha = clampOneToOne(*cfg.Alpha)
 	}
 	path := (&Scatter2D{Marker: marker}).markerPrototypePath()
-	lineOnly := marker == MarkerPlus || marker == MarkerCross
+	lineOnly := markerLineOnly(NewMarkerStyle(marker))
 	markerSizePx := cfg.MarkerSize * matrixMarkerDPI(a) / 72.0
 	pc := &PathCollection{
 		Collection: Collection{

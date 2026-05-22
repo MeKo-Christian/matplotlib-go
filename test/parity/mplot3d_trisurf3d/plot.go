@@ -56,29 +56,9 @@ func Plot() *core.Figure {
 		}
 	}
 
-	// Points are laid out as: 1 + angleIdx*nRadii + ring
-	triangles := make([][3]int, 0, nAngles+((nRadii-1)*nAngles*2))
-	// Center fan: connect origin to innermost ring
-	for angleIdx := 0; angleIdx < nAngles; angleIdx++ {
-		next := (angleIdx + 1) % nAngles
-		triangles = append(triangles, [3]int{0, 1 + angleIdx*nRadii, 1 + next*nRadii})
-	}
-	// Adjacent rings
-	for ring := 0; ring < nRadii-1; ring++ {
-		for angleIdx := 0; angleIdx < nAngles; angleIdx++ {
-			next := (angleIdx + 1) % nAngles
-			a := 1 + angleIdx*nRadii + ring
-			b := 1 + angleIdx*nRadii + (ring + 1)
-			c := 1 + next*nRadii + (ring + 1)
-			d := 1 + next*nRadii + ring
-			triangles = append(triangles, [3]int{a, b, c})
-			triangles = append(triangles, [3]int{a, c, d})
-		}
-	}
-
 	cmap := "Blues"
 	vmin := 2 * common.MinInSlice(z)
-	ax.Trisurf(core.Triangulation{X: x, Y: y, Triangles: triangles}, z, core.PlotOptions{
+	ax.Trisurf(core.Triangulation{X: x, Y: y}, z, core.PlotOptions{
 		Colormap: &cmap,
 		VMin:     &vmin,
 	})

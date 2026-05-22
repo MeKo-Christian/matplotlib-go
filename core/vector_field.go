@@ -395,7 +395,7 @@ func (a *Axes) QuiverKey(q *Quiver, x, y, u float64, label string, opts ...Quive
 	opt := QuiverKeyOptions{
 		Coords:   Coords(CoordAxes),
 		LabelPos: "N",
-		LabelSep: 8,
+		LabelSep: 10,
 	}
 	if len(opts) > 0 {
 		opt = opts[0]
@@ -403,7 +403,7 @@ func (a *Axes) QuiverKey(q *Quiver, x, y, u float64, label string, opts ...Quive
 			opt.LabelPos = "N"
 		}
 		if opt.LabelSep <= 0 {
-			opt.LabelSep = 8
+			opt.LabelSep = 10
 		}
 	}
 
@@ -474,8 +474,8 @@ func (a *Axes) Barbs(x, y, u, v []float64, opts ...BarbsOptions) *Barbs {
 		LineWidth:    optionFloat(opt.LineWidth, 1),
 		Alpha:        optionAlpha(opt.Alpha),
 		Pivot:        normalizeVectorPivot(opt.Pivot, vectorPivotTip),
-		Length:       optionFloat(opt.Length, 18),
-		Units:        normalizeVectorUnits(opt.Units, "dots"),
+		Length:       optionFloat(opt.Length, 7),
+		Units:        normalizeVectorUnits(opt.Units, "points"),
 		Sizes:        defaultBarbSizes(opt.Sizes),
 		Increments:   defaultBarbIncrements(opt.Increments),
 		FillEmpty:    optionBool(opt.FillEmpty, false),
@@ -543,8 +543,8 @@ func (a *Axes) BarbsGrid(x, y []float64, u, v [][]float64, opts ...BarbsOptions)
 		LineWidth:    optionFloat(opt.LineWidth, 1),
 		Alpha:        optionAlpha(opt.Alpha),
 		Pivot:        normalizeVectorPivot(opt.Pivot, vectorPivotTip),
-		Length:       optionFloat(opt.Length, 18),
-		Units:        normalizeVectorUnits(opt.Units, "dots"),
+		Length:       optionFloat(opt.Length, 7),
+		Units:        normalizeVectorUnits(opt.Units, "points"),
 		Sizes:        defaultBarbSizes(opt.Sizes),
 		Increments:   defaultBarbIncrements(opt.Increments),
 		FillEmpty:    optionBool(opt.FillEmpty, false),
@@ -1010,6 +1010,12 @@ func dotsPerUnit(ctx *DrawContext, units string) float64 {
 		return ctx.Clip.H()
 	case "dots":
 		return 1
+	case "points":
+		dpi := ctx.RC.DPI
+		if dpi <= 0 {
+			dpi = 100
+		}
+		return dpi / 72
 	case "inches":
 		dpi := ctx.RC.DPI
 		if dpi <= 0 {
@@ -2100,7 +2106,7 @@ func normalizeQuiverAngles(value string) string {
 
 func normalizeVectorUnits(value, fallback string) string {
 	switch strings.ToLower(value) {
-	case "height", "dots", "inches", "x", "y", "xy", "width":
+	case "height", "dots", "inches", "points", "x", "y", "xy", "width":
 		return strings.ToLower(value)
 	default:
 		return fallback

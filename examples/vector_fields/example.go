@@ -63,7 +63,6 @@ func Plot() *core.Figure {
 		quiverAx.QuiverKey(quiver, 0.78, 0.12, 0.5, "0.5", core.QuiverKeyOptions{
 			Coords:   core.Coords(core.CoordAxes),
 			LabelPos: "E",
-			LabelSep: 10,
 		})
 	}
 
@@ -83,14 +82,13 @@ func Plot() *core.Figure {
 			bv = append(bv, 8*math.Cos(x*0.7))
 		}
 	}
-	barbLen := 6.0 * (6.0 / 2.0) * fig.RC.DPI / 72.0
+	barbLen := 6.0
 	barbLineWidth := 1.0
 	barbAx.Barbs(bx, by, bu, bv, core.BarbsOptions{
 		BarbColor: &render.Color{R: 0.47, G: 0.23, B: 0.12, A: 1},
 		FlagColor: &render.Color{R: 0.86, G: 0.52, B: 0.24, A: 1},
 		LineWidth: &barbLineWidth,
 		Length:    &barbLen,
-		Units:     "dots",
 	})
 
 	streamAx := axes["stream"]

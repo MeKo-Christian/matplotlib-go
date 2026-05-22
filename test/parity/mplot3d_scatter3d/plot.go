@@ -2,11 +2,11 @@ package mplot3d_scatter3d
 
 import (
 	"image"
+	"math/rand/v2"
 
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
-	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -27,7 +27,18 @@ func Plot() *core.Figure {
 		panic(err)
 	}
 
-	x, y, z := common.Mplot3DScatter3DPoints()
+	rng := rand.New(rand.NewPCG(19680801, 0))
+	uniform := func(low, high float64, n int) []float64 {
+		values := make([]float64, n)
+		for i := range values {
+			values[i] = low + rng.Float64()*(high-low)
+		}
+		return values
+	}
+	const n = 100
+	x := uniform(23, 32, n)
+	y := uniform(0, 100, n)
+	z := uniform(-50, -25, n)
 	ax.Scatter3D(x, y, z)
 	return fig
 }

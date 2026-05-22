@@ -533,7 +533,7 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *StemContainer
 		FaceColor:     color,
 		EdgeColor:     markerEdgeColor,
 		EdgeWidth:     markerEdgeWidth,
-		LineOnly:      markerType == MarkerPlus || markerType == MarkerCross,
+		LineOnly:      markerLineOnly(NewMarkerStyle(markerType)),
 	}
 	baselineArtist := &Line2D{
 		XY:    baseline,
@@ -1888,6 +1888,11 @@ func (a *Axes3D) Trisurf(tri Triangulation, z []float64, opts ...PlotOptions) *P
 		return nil
 	}
 	if err := tri.Validate(); err != nil || len(z) != len(tri.X) {
+		return nil
+	}
+	var ok bool
+	tri, ok = autoTriangulate(tri)
+	if !ok {
 		return nil
 	}
 	limitsChanged := a.observe3DTriangulation(tri, z)

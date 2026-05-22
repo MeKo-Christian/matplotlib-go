@@ -193,3 +193,25 @@ func TestDateLocatorUsesDailyTicksForCompactDateRange(t *testing.T) {
 		}
 	}
 }
+
+func TestDayLocatorUsesRequestedMonthDays(t *testing.T) {
+	loc := DayLocator{ByMonthDay: []int{5, 12, 19}, Location: time.UTC}
+	minVal := timeToDateNumber(time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC))
+	maxVal := timeToDateNumber(time.Date(2024, time.February, 20, 0, 0, 0, 0, time.UTC))
+
+	ticks := loc.Ticks(minVal, maxVal, 6)
+	want := []time.Time{
+		time.Date(2024, time.February, 5, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.February, 12, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.February, 19, 0, 0, 0, 0, time.UTC),
+	}
+	if len(ticks) != len(want) {
+		t.Fatalf("tick count = %d, want %d: %v", len(ticks), len(want), ticks)
+	}
+	for i, tick := range ticks {
+		got := dateNumberToTime(tick, time.UTC)
+		if !got.Equal(want[i]) {
+			t.Fatalf("tick %d = %s, want %s", i, got, want[i])
+		}
+	}
+}

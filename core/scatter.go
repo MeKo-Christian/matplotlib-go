@@ -17,7 +17,162 @@ const (
 	MarkerDiamond
 	MarkerPlus
 	MarkerCross
+	MarkerPixel
+	MarkerPoint
+	MarkerTriangleDown
+	MarkerTriangleLeft
+	MarkerTriangleRight
+	MarkerTriDown
+	MarkerTriUp
+	MarkerTriLeft
+	MarkerTriRight
+	MarkerOctagon
+	MarkerPentagon
+	MarkerStar
+	MarkerHexagon1
+	MarkerHexagon2
+	MarkerFilledX
+	MarkerFilledPlus
+	MarkerThinDiamond
+	MarkerVLine
+	MarkerHLine
+	MarkerTickLeft
+	MarkerTickRight
+	MarkerTickUp
+	MarkerTickDown
+	MarkerCaretLeft
+	MarkerCaretRight
+	MarkerCaretUp
+	MarkerCaretDown
+	MarkerCaretLeftBase
+	MarkerCaretRightBase
+	MarkerCaretUpBase
+	MarkerCaretDownBase
+	MarkerNone
 )
+
+const MarkerTriangleUp = MarkerTriangle
+
+// MarkerFillStyle controls marker filling. Full and none are currently routed
+// through scatter; half-fill styles are reserved for alternate-path rendering.
+type MarkerFillStyle uint8
+
+const (
+	MarkerFillFull MarkerFillStyle = iota
+	MarkerFillLeft
+	MarkerFillRight
+	MarkerFillBottom
+	MarkerFillTop
+	MarkerFillNone
+)
+
+// MarkerTupleStyle mirrors Matplotlib's tuple marker style selector.
+type MarkerTupleStyle uint8
+
+const (
+	MarkerTuplePolygon MarkerTupleStyle = iota
+	MarkerTupleStar
+	MarkerTupleAsterisk
+)
+
+// MarkerStyle describes a marker independently from Scatter2D's legacy
+// MarkerType field. It supports built-in markers, mathtext/text markers, and
+// Matplotlib's (numsides, style, angle) tuple markers.
+type MarkerStyle struct {
+	Type      MarkerType
+	FillStyle MarkerFillStyle
+	MathText  string
+	Tuple     *MarkerTuple
+	Path      geom.Path
+}
+
+// MarkerTuple describes a Matplotlib tuple marker.
+type MarkerTuple struct {
+	NumSides int
+	Style    MarkerTupleStyle
+	AngleDeg float64
+}
+
+// NewMarkerStyle returns a full-fill built-in marker style.
+func NewMarkerStyle(marker MarkerType) MarkerStyle {
+	return MarkerStyle{Type: marker, FillStyle: MarkerFillFull}
+}
+
+// NewTupleMarkerStyle returns a tuple marker style equivalent to
+// (numsides, style, angle) in Matplotlib.
+func NewTupleMarkerStyle(numsides int, style MarkerTupleStyle, angleDeg float64) MarkerStyle {
+	return MarkerStyle{
+		FillStyle: MarkerFillFull,
+		Tuple:     &MarkerTuple{NumSides: numsides, Style: style, AngleDeg: angleDeg},
+	}
+}
+
+// NewMathTextMarkerStyle returns a marker style rendered from a text or
+// MathText expression. Dollar-delimited expressions use the MathText layout
+// pipeline when renderer metrics are available.
+func NewMathTextMarkerStyle(text string) MarkerStyle {
+	return MarkerStyle{FillStyle: MarkerFillFull, MathText: text}
+}
+
+// MarkerTypeFromString resolves Matplotlib's string marker aliases.
+func MarkerTypeFromString(marker string) (MarkerType, bool) {
+	switch marker {
+	case "o":
+		return MarkerCircle, true
+	case "s":
+		return MarkerSquare, true
+	case "^":
+		return MarkerTriangleUp, true
+	case "v":
+		return MarkerTriangleDown, true
+	case "<":
+		return MarkerTriangleLeft, true
+	case ">":
+		return MarkerTriangleRight, true
+	case "D":
+		return MarkerDiamond, true
+	case "d":
+		return MarkerThinDiamond, true
+	case "+":
+		return MarkerPlus, true
+	case "x":
+		return MarkerCross, true
+	case ",":
+		return MarkerPixel, true
+	case ".":
+		return MarkerPoint, true
+	case "1":
+		return MarkerTriDown, true
+	case "2":
+		return MarkerTriUp, true
+	case "3":
+		return MarkerTriLeft, true
+	case "4":
+		return MarkerTriRight, true
+	case "8":
+		return MarkerOctagon, true
+	case "p":
+		return MarkerPentagon, true
+	case "*":
+		return MarkerStar, true
+	case "h":
+		return MarkerHexagon1, true
+	case "H":
+		return MarkerHexagon2, true
+	case "X":
+		return MarkerFilledX, true
+	case "P":
+		return MarkerFilledPlus, true
+	case "|":
+		return MarkerVLine, true
+	case "_":
+		return MarkerHLine, true
+	case "", " ", "none", "None":
+		return MarkerNone, true
+	default:
+		return MarkerCircle, false
+	}
+}
 
 // Scatter2D renders points with configurable markers.
 type Scatter2D struct {
@@ -34,8 +189,9 @@ type Scatter2D struct {
 	Alpha       float64        // alpha transparency (0-1), applied to both fill and edge
 	PathEffects []render.PathEffect
 	Marker      MarkerType // marker shape
-	Label       string     // series label for legend
-	z           float64    // z-order
+	MarkerStyle MarkerStyle
+	Label       string  // series label for legend
+	z           float64 // z-order
 }
 
 var stemMarkerScale = math.Sqrt(math.Pi)
@@ -45,7 +201,7 @@ func (s *Scatter2D) Draw(r render.Renderer, ctx *DrawContext) {
 	if s == nil || len(s.XY) == 0 {
 		return
 	}
-	s.toPathCollection(ctx).Draw(r, ctx)
+	s.toPathCollection(r, ctx).Draw(r, ctx)
 }
 
 // createMarkerPath creates a filled path for the given marker type at the specified position and size.
@@ -57,35 +213,132 @@ func (s *Scatter2D) createMarkerPath(center geom.Pt, radius float64) geom.Path {
 }
 
 func (s *Scatter2D) markerPrototypePath() geom.Path {
+	return s.markerPrototypePathForContext(nil, nil)
+}
+
+func (s *Scatter2D) markerPrototypePathForContext(r render.Renderer, ctx *DrawContext) geom.Path {
 	if len(s.MarkerPath.C) > 0 {
 		return s.MarkerPath
 	}
 
-	switch s.Marker {
+	style := s.resolvedMarkerStyle()
+	if len(style.Path.C) > 0 {
+		return style.Path
+	}
+	if style.Tuple != nil {
+		return markerTuplePath(*style.Tuple)
+	}
+	if style.MathText != "" {
+		fontKey := "DejaVu Sans"
+		if ctx != nil && ctx.RC.FontKey != "" {
+			fontKey = ctx.RC.FontKey
+		}
+		if path, ok := mathTextMarkerPath(r, style.MathText, fontKey); ok {
+			return path
+		}
+	}
+
+	switch style.Type {
 	case MarkerCircle:
-		return s.createCirclePath(geom.Pt{}, 1)
+		return markerCirclePath(1)
+	case MarkerPoint:
+		return markerCirclePath(0.5)
+	case MarkerPixel:
+		return markerRectanglePath(-0.5, -0.5, 0.5, 0.5)
 	case MarkerSquare:
-		return s.createSquarePath(geom.Pt{}, 1)
+		return markerRectanglePath(-0.5, -0.5, 0.5, 0.5)
 	case MarkerTriangle:
-		return s.createTrianglePath(geom.Pt{}, 1)
+		return markerRegularPolygonPath(3, 90)
+	case MarkerTriangleDown:
+		return markerRegularPolygonPath(3, 270)
+	case MarkerTriangleLeft:
+		return markerRegularPolygonPath(3, 180)
+	case MarkerTriangleRight:
+		return markerRegularPolygonPath(3, 0)
 	case MarkerDiamond:
 		return s.createDiamondPath(geom.Pt{}, 1)
+	case MarkerThinDiamond:
+		return applyAffinePath(s.createDiamondPath(geom.Pt{}, 1), geom.Affine{A: 0.6, D: 1})
 	case MarkerPlus:
 		return s.createPlusPath(geom.Pt{}, 1)
 	case MarkerCross:
 		return s.createCrossPath(geom.Pt{}, 1)
+	case MarkerTriDown:
+		return markerTriPath(0)
+	case MarkerTriUp:
+		return markerTriPath(180)
+	case MarkerTriLeft:
+		return markerTriPath(270)
+	case MarkerTriRight:
+		return markerTriPath(90)
+	case MarkerOctagon:
+		return markerRegularPolygonPath(8, 90+22.5)
+	case MarkerPentagon:
+		return markerRegularPolygonPath(5, 90)
+	case MarkerStar:
+		return markerStarPath(5, 0.381966, 90, true)
+	case MarkerHexagon1:
+		return markerRegularPolygonPath(6, 90)
+	case MarkerHexagon2:
+		return markerRegularPolygonPath(6, 120)
+	case MarkerFilledX:
+		return markerFilledXPath()
+	case MarkerFilledPlus:
+		return markerFilledPlusPath()
+	case MarkerVLine:
+		return markerLinePath(0, -0.5, 0, 0.5)
+	case MarkerHLine:
+		return markerLinePath(-0.5, 0, 0.5, 0)
+	case MarkerTickLeft:
+		return markerLinePath(0, 0, -1, 0)
+	case MarkerTickRight:
+		return markerLinePath(0, 0, 1, 0)
+	case MarkerTickUp:
+		return markerLinePath(0, 0, 0, -1)
+	case MarkerTickDown:
+		return markerLinePath(0, 0, 0, 1)
+	case MarkerCaretLeft:
+		return markerCaretPath(270, false)
+	case MarkerCaretRight:
+		return markerCaretPath(90, false)
+	case MarkerCaretUp:
+		return markerCaretPath(180, false)
+	case MarkerCaretDown:
+		return markerCaretPath(0, false)
+	case MarkerCaretLeftBase:
+		return markerCaretPath(270, true)
+	case MarkerCaretRightBase:
+		return markerCaretPath(90, true)
+	case MarkerCaretUpBase:
+		return markerCaretPath(180, true)
+	case MarkerCaretDownBase:
+		return markerCaretPath(0, true)
+	case MarkerNone:
+		return geom.Path{}
 	default:
-		return s.createCirclePath(geom.Pt{}, 1)
+		return markerCirclePath(1)
 	}
 }
 
-func (s *Scatter2D) toPathCollection(ctx *DrawContext) *PathCollection {
+func (s *Scatter2D) resolvedMarkerStyle() MarkerStyle {
+	if s.MarkerStyle.Tuple != nil || s.MarkerStyle.MathText != "" || len(s.MarkerStyle.Path.C) > 0 || s.MarkerStyle.Type != 0 || s.MarkerStyle.FillStyle != 0 {
+		style := s.MarkerStyle
+		if style.FillStyle == 0 {
+			style.FillStyle = MarkerFillFull
+		}
+		return style
+	}
+	return MarkerStyle{Type: s.Marker, FillStyle: MarkerFillFull}
+}
+
+func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathCollection {
 	alpha := s.Alpha
 	if alpha <= 0 {
 		alpha = 1
 	}
 
-	lineOnly := s.Marker == MarkerPlus || s.Marker == MarkerCross
+	style := s.resolvedMarkerStyle()
+	lineOnly := markerLineOnly(style)
 	lineWidth := s.EdgeWidth
 	if lineOnly && lineWidth <= 0 && ctx != nil && ctx.RC.LineWidth > 0 {
 		lineWidth = ctx.RC.LineWidth
@@ -109,6 +362,12 @@ func (s *Scatter2D) toPathCollection(ctx *DrawContext) *PathCollection {
 	if lineOnly && edgeColor.A <= 0 {
 		edgeColor = faceColor
 	}
+	if style.FillStyle == MarkerFillNone {
+		if edgeColor.A <= 0 {
+			edgeColor = faceColor
+		}
+		faceColor.A = 0
+	}
 
 	return &PathCollection{
 		Collection: Collection{
@@ -117,7 +376,7 @@ func (s *Scatter2D) toPathCollection(ctx *DrawContext) *PathCollection {
 			z:           s.z,
 			PathEffects: cloneRenderPathEffects(s.PathEffects),
 		},
-		Path:          s.markerPrototypePath(),
+		Path:          s.markerPrototypePathForContext(r, ctx),
 		Offsets:       append([]geom.Pt(nil), s.XY...),
 		Size:          size,
 		Sizes:         sizes,
@@ -136,9 +395,20 @@ func (s *Scatter2D) toPathCollection(ctx *DrawContext) *PathCollection {
 }
 
 func (s *Scatter2D) markerLineJoin() render.LineJoin {
-	switch s.Marker {
-	case MarkerSquare, MarkerTriangle, MarkerDiamond:
+	style := s.resolvedMarkerStyle()
+	if style.Tuple != nil {
+		if style.Tuple.Style == MarkerTupleStar || style.Tuple.Style == MarkerTupleAsterisk {
+			return render.JoinBevel
+		}
 		return render.JoinMiter
+	}
+	switch style.Type {
+	case MarkerSquare, MarkerTriangle, MarkerTriangleDown, MarkerTriangleLeft, MarkerTriangleRight,
+		MarkerDiamond, MarkerThinDiamond, MarkerOctagon, MarkerPentagon, MarkerHexagon1, MarkerHexagon2,
+		MarkerFilledPlus, MarkerFilledX:
+		return render.JoinMiter
+	case MarkerStar:
+		return render.JoinBevel
 	default:
 		return render.JoinRound
 	}
@@ -146,6 +416,21 @@ func (s *Scatter2D) markerLineJoin() render.LineJoin {
 
 func (s *Scatter2D) markerLineCap() render.LineCap {
 	return render.CapButt
+}
+
+func markerLineOnly(style MarkerStyle) bool {
+	if style.Tuple != nil {
+		return style.Tuple.Style == MarkerTupleAsterisk
+	}
+	switch style.Type {
+	case MarkerPlus, MarkerCross, MarkerTriDown, MarkerTriUp, MarkerTriLeft, MarkerTriRight,
+		MarkerVLine, MarkerHLine, MarkerTickLeft, MarkerTickRight, MarkerTickUp, MarkerTickDown,
+		MarkerCaretLeft, MarkerCaretRight, MarkerCaretUp, MarkerCaretDown,
+		MarkerCaretLeftBase, MarkerCaretRightBase, MarkerCaretUpBase, MarkerCaretDownBase:
+		return true
+	default:
+		return false
+	}
 }
 
 func scatterAreaScale(area float64, ctx *DrawContext) float64 {
@@ -204,6 +489,192 @@ func (s *Scatter2D) createCirclePath(center geom.Pt, radius float64) geom.Path {
 	}
 	path.Close()
 	return path
+}
+
+func markerCirclePath(size float64) geom.Path {
+	return (&Scatter2D{}).createCirclePath(geom.Pt{}, size)
+}
+
+func markerRectanglePath(x0, y0, x1, y1 float64) geom.Path {
+	return polygonPath([]geom.Pt{
+		{X: x0, Y: y0},
+		{X: x1, Y: y0},
+		{X: x1, Y: y1},
+		{X: x0, Y: y1},
+	}, true)
+}
+
+func markerLinePath(x0, y0, x1, y1 float64) geom.Path {
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: x0, Y: y0})
+	path.LineTo(geom.Pt{X: x1, Y: y1})
+	return path
+}
+
+func markerRegularPolygonPath(numsides int, angleDeg float64) geom.Path {
+	if numsides < 3 {
+		return geom.Path{}
+	}
+	points := make([]geom.Pt, numsides)
+	angle := angleDeg * math.Pi / 180
+	step := 2 * math.Pi / float64(numsides)
+	for i := range points {
+		theta := angle + float64(i)*step
+		points[i] = geom.Pt{X: 0.5 * math.Cos(theta), Y: -0.5 * math.Sin(theta)}
+	}
+	return polygonPath(points, true)
+}
+
+func markerStarPath(numsides int, innerCircle float64, angleDeg float64, close bool) geom.Path {
+	if numsides < 3 {
+		return geom.Path{}
+	}
+	points := make([]geom.Pt, 0, numsides*2)
+	angle := angleDeg * math.Pi / 180
+	step := math.Pi / float64(numsides)
+	for i := 0; i < numsides*2; i++ {
+		radius := 0.5
+		if i%2 == 1 {
+			radius *= innerCircle
+		}
+		theta := angle + float64(i)*step
+		points = append(points, geom.Pt{X: radius * math.Cos(theta), Y: -radius * math.Sin(theta)})
+	}
+	return polygonPath(points, close)
+}
+
+func markerTriPath(angleDeg float64) geom.Path {
+	path := geom.Path{}
+	for _, seg := range [][2]geom.Pt{
+		{{X: 0, Y: 0}, {X: 0, Y: -0.5}},
+		{{X: 0, Y: 0}, {X: 0.4, Y: 0.25}},
+		{{X: 0, Y: 0}, {X: -0.4, Y: 0.25}},
+	} {
+		path.MoveTo(seg[0])
+		path.LineTo(seg[1])
+	}
+	return rotatePath(path, angleDeg)
+}
+
+func markerCaretPath(angleDeg float64, base bool) geom.Path {
+	path := geom.Path{}
+	if base {
+		path.MoveTo(geom.Pt{X: -0.5, Y: 0})
+		path.LineTo(geom.Pt{X: 0, Y: -0.75})
+		path.LineTo(geom.Pt{X: 0.5, Y: 0})
+	} else {
+		path.MoveTo(geom.Pt{X: -0.5, Y: 0.75})
+		path.LineTo(geom.Pt{X: 0, Y: 0})
+		path.LineTo(geom.Pt{X: 0.5, Y: 0.75})
+	}
+	return rotatePath(path, angleDeg)
+}
+
+func markerFilledPlusPath() geom.Path {
+	scale := 1.0 / 6.0
+	points := []geom.Pt{
+		{X: -1 * scale, Y: -3 * scale}, {X: 1 * scale, Y: -3 * scale},
+		{X: 1 * scale, Y: -1 * scale}, {X: 3 * scale, Y: -1 * scale},
+		{X: 3 * scale, Y: 1 * scale}, {X: 1 * scale, Y: 1 * scale},
+		{X: 1 * scale, Y: 3 * scale}, {X: -1 * scale, Y: 3 * scale},
+		{X: -1 * scale, Y: 1 * scale}, {X: -3 * scale, Y: 1 * scale},
+		{X: -3 * scale, Y: -1 * scale}, {X: -1 * scale, Y: -1 * scale},
+	}
+	return polygonPath(points, true)
+}
+
+func markerFilledXPath() geom.Path {
+	scale := 1.0 / 4.0
+	points := []geom.Pt{
+		{X: -1 * scale, Y: -2 * scale}, {X: 0, Y: -1 * scale},
+		{X: 1 * scale, Y: -2 * scale}, {X: 2 * scale, Y: -1 * scale},
+		{X: 1 * scale, Y: 0}, {X: 2 * scale, Y: 1 * scale},
+		{X: 1 * scale, Y: 2 * scale}, {X: 0, Y: 1 * scale},
+		{X: -1 * scale, Y: 2 * scale}, {X: -2 * scale, Y: 1 * scale},
+		{X: -1 * scale, Y: 0}, {X: -2 * scale, Y: -1 * scale},
+	}
+	return polygonPath(points, true)
+}
+
+func markerTuplePath(tuple MarkerTuple) geom.Path {
+	switch tuple.Style {
+	case MarkerTuplePolygon:
+		return markerRegularPolygonPath(tuple.NumSides, 90+tuple.AngleDeg)
+	case MarkerTupleStar:
+		return markerStarPath(tuple.NumSides, 0.5, 90+tuple.AngleDeg, true)
+	case MarkerTupleAsterisk:
+		path := geom.Path{}
+		if tuple.NumSides < 2 {
+			return path
+		}
+		angle := (90 + tuple.AngleDeg) * math.Pi / 180
+		step := math.Pi / float64(tuple.NumSides)
+		for i := 0; i < tuple.NumSides; i++ {
+			theta := angle + float64(i)*step
+			p := geom.Pt{X: 0.5 * math.Cos(theta), Y: -0.5 * math.Sin(theta)}
+			path.MoveTo(geom.Pt{X: -p.X, Y: -p.Y})
+			path.LineTo(p)
+		}
+		return path
+	default:
+		return geom.Path{}
+	}
+}
+
+func mathTextMarkerPath(r render.Renderer, text, fontKey string) (geom.Path, bool) {
+	if r != nil {
+		if layout, ok := layoutDisplayText(r, text, 1, fontKey); ok {
+			paths, ok := mathTextLayoutPaths(r, layout, geom.Pt{}, fontKey)
+			if ok {
+				if path, ok := combineAndNormalizeMarkerPaths(paths); ok {
+					return path, true
+				}
+			}
+		}
+	}
+	display := normalizeDisplayText(text)
+	if display == "" {
+		return geom.Path{}, false
+	}
+	path, ok := render.TextPath(display, geom.Pt{}, 1, fontKey)
+	if !ok {
+		return geom.Path{}, false
+	}
+	return normalizeMarkerPath(path)
+}
+
+func combineAndNormalizeMarkerPaths(paths []geom.Path) (geom.Path, bool) {
+	var combined geom.Path
+	for _, path := range paths {
+		combined.C = append(combined.C, path.C...)
+		combined.V = append(combined.V, path.V...)
+	}
+	return normalizeMarkerPath(combined)
+}
+
+func normalizeMarkerPath(path geom.Path) (geom.Path, bool) {
+	bounds, ok := pathBounds(path)
+	if !ok {
+		return geom.Path{}, false
+	}
+	maxDim := math.Max(bounds.Max.X-bounds.Min.X, bounds.Max.Y-bounds.Min.Y)
+	if maxDim <= 0 || math.IsNaN(maxDim) || math.IsInf(maxDim, 0) {
+		return geom.Path{}, false
+	}
+	affine := geom.Affine{
+		A: 1 / maxDim,
+		D: 1 / maxDim,
+		E: -(bounds.Min.X + 0.5*(bounds.Max.X-bounds.Min.X)) / maxDim,
+		F: -(bounds.Min.Y + 0.5*(bounds.Max.Y-bounds.Min.Y)) / maxDim,
+	}
+	return applyAffinePath(path, affine), true
+}
+
+func rotatePath(path geom.Path, angleDeg float64) geom.Path {
+	theta := angleDeg * math.Pi / 180
+	cos := math.Cos(theta)
+	sin := math.Sin(theta)
+	return applyAffinePath(path, geom.Affine{A: cos, B: sin, C: -sin, D: cos})
 }
 
 // createSquarePath creates a square marker centered at the given point.

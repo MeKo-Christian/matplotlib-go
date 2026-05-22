@@ -15,16 +15,33 @@ except ModuleNotFoundError:
 
 def scatter_marker_types(out_dir):
     fig = make_fig()
-    ax = fig.add_axes(go_rect(0.1, 0.1, 0.9, 0.9))
-    ax.set_title("Scatter Marker Types")
-    ax.set_xlim(0, 8)
-    ax.set_ylim(0, 8)
-    markers = ["o", "s", "^", "D", "+", "x"]
-    colors  = [(1,0,0), (0,1,0), (0,0,1), (1,1,0), (1,0,1), (0,1,1)]
-    for i, (marker, color) in enumerate(zip(markers, colors)):
-        # Plus (+) and cross (x) are line-only markers; use linewidths to make them visible
-        line_w = lw(2) if marker in ("+", "x") else 0
-        ax.scatter([i + 1], [4], s=ss(12), c=[color], marker=marker, linewidths=line_w)
+    ax = fig.add_axes(go_rect(0.06, 0.08, 0.98, 0.92))
+    ax.set_title("Marker Style Grid")
+    ax.set_xlim(0.5, 7.5)
+    ax.set_ylim(0.5, 6.5)
+    from matplotlib.markers import (
+        MarkerStyle,
+        TICKLEFT, TICKRIGHT, TICKUP, TICKDOWN,
+        CARETLEFT, CARETRIGHT, CARETUP, CARETDOWN,
+        CARETLEFTBASE, CARETRIGHTBASE, CARETUPBASE, CARETDOWNBASE,
+    )
+    markers = [
+        ".", ",", "o", "v", "^", "<", ">",
+        "1", "2", "3", "4", "8", "s", "p",
+        "P", "*", "h", "H", "+", "x", "X",
+        "D", "d", "|", "_", TICKLEFT, TICKRIGHT,
+        TICKUP, TICKDOWN, CARETLEFT, CARETRIGHT, CARETUP,
+        CARETDOWN, CARETLEFTBASE, CARETRIGHTBASE, CARETUPBASE,
+        CARETDOWNBASE, (5, 0, 18), (5, 1, 18), (6, 2, 0),
+        "$f$", MarkerStyle("o", fillstyle="none"),
+    ]
+    edge = (0.05, 0.05, 0.05)
+    for i, marker in enumerate(markers):
+        x = i % 7 + 1
+        y = 6 - i // 7
+        color = TAB10[i % len(TAB10)]
+        ax.scatter([x], [y], s=ss(8), c=[color], marker=marker,
+                   linewidths=lw(1.2), edgecolors=[edge])
     save(fig, out_dir, "scatter_marker_types")
 
 PLOT = scatter_marker_types

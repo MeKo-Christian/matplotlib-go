@@ -20,43 +20,96 @@ const (
 func Plot() *core.Figure {
 	fig := core.NewFigure(640, 360)
 	ax := fig.AddAxes(geom.Rect{
-		Min: geom.Pt{X: 0.1, Y: 0.1},
-		Max: geom.Pt{X: 0.9, Y: 0.9},
+		Min: geom.Pt{X: 0.06, Y: 0.08},
+		Max: geom.Pt{X: 0.98, Y: 0.92},
 	})
-	ax.SetTitle("Scatter Marker Types")
-	ax.SetXLim(0, 8)
-	ax.SetYLim(0, 8)
+	ax.SetTitle("Marker Style Grid")
+	ax.SetXLim(0.5, 7.5)
+	ax.SetYLim(0.5, 6.5)
 
-	markerTypes := []core.MarkerType{
-		core.MarkerCircle, core.MarkerSquare, core.MarkerTriangle,
-		core.MarkerDiamond, core.MarkerPlus, core.MarkerCross,
-	}
-	colors := []render.Color{
-		{R: 1, G: 0, B: 0, A: 1},
-		{R: 0, G: 1, B: 0, A: 1},
-		{R: 0, G: 0, B: 1, A: 1},
-		{R: 1, G: 1, B: 0, A: 1},
-		{R: 1, G: 0, B: 1, A: 1},
-		{R: 0, G: 1, B: 1, A: 1},
+	styles := []core.MarkerStyle{
+		core.NewMarkerStyle(core.MarkerPoint),
+		core.NewMarkerStyle(core.MarkerPixel),
+		core.NewMarkerStyle(core.MarkerCircle),
+		core.NewMarkerStyle(core.MarkerTriangleDown),
+		core.NewMarkerStyle(core.MarkerTriangleUp),
+		core.NewMarkerStyle(core.MarkerTriangleLeft),
+		core.NewMarkerStyle(core.MarkerTriangleRight),
+		core.NewMarkerStyle(core.MarkerTriDown),
+		core.NewMarkerStyle(core.MarkerTriUp),
+		core.NewMarkerStyle(core.MarkerTriLeft),
+		core.NewMarkerStyle(core.MarkerTriRight),
+		core.NewMarkerStyle(core.MarkerOctagon),
+		core.NewMarkerStyle(core.MarkerSquare),
+		core.NewMarkerStyle(core.MarkerPentagon),
+		core.NewMarkerStyle(core.MarkerFilledPlus),
+		core.NewMarkerStyle(core.MarkerStar),
+		core.NewMarkerStyle(core.MarkerHexagon1),
+		core.NewMarkerStyle(core.MarkerHexagon2),
+		core.NewMarkerStyle(core.MarkerPlus),
+		core.NewMarkerStyle(core.MarkerCross),
+		core.NewMarkerStyle(core.MarkerFilledX),
+		core.NewMarkerStyle(core.MarkerDiamond),
+		core.NewMarkerStyle(core.MarkerThinDiamond),
+		core.NewMarkerStyle(core.MarkerVLine),
+		core.NewMarkerStyle(core.MarkerHLine),
+		core.NewMarkerStyle(core.MarkerTickLeft),
+		core.NewMarkerStyle(core.MarkerTickRight),
+		core.NewMarkerStyle(core.MarkerTickUp),
+		core.NewMarkerStyle(core.MarkerTickDown),
+		core.NewMarkerStyle(core.MarkerCaretLeft),
+		core.NewMarkerStyle(core.MarkerCaretRight),
+		core.NewMarkerStyle(core.MarkerCaretUp),
+		core.NewMarkerStyle(core.MarkerCaretDown),
+		core.NewMarkerStyle(core.MarkerCaretLeftBase),
+		core.NewMarkerStyle(core.MarkerCaretRightBase),
+		core.NewMarkerStyle(core.MarkerCaretUpBase),
+		core.NewMarkerStyle(core.MarkerCaretDownBase),
+		core.NewTupleMarkerStyle(5, core.MarkerTuplePolygon, 18),
+		core.NewTupleMarkerStyle(5, core.MarkerTupleStar, 18),
+		core.NewTupleMarkerStyle(6, core.MarkerTupleAsterisk, 0),
+		core.NewMathTextMarkerStyle("$f$"),
+		{Type: core.MarkerCircle, FillStyle: core.MarkerFillNone},
 	}
 
-	for i, markerType := range markerTypes {
-		lineWidth := 0.0
-		if markerType == core.MarkerPlus || markerType == core.MarkerCross {
-			lineWidth = 2.0
+	palette := style.Default.Palette()
+	edge := render.Color{R: 0.05, G: 0.05, B: 0.05, A: 1}
+	edgeWidth := 1.2
+	for i, markerStyle := range styles {
+		x := float64(i%7) + 1
+		y := float64(6 - i/7)
+		color := palette[i%len(palette)]
+		markerEdge := edge
+		if markerGridLineOnly(markerStyle) || markerStyle.FillStyle == core.MarkerFillNone {
+			markerEdge = color
 		}
 		scatter := &core.Scatter2D{
-			XY:        []geom.Pt{{X: float64(1 + i), Y: 4}},
-			Size:      core.ScatterAreaFromRadius(12.0, style.Default.DPI),
-			Color:     colors[i],
-			EdgeColor: colors[i],
-			EdgeWidth: lineWidth,
-			Marker:    markerType,
-			Alpha:     1.0,
+			XY:          []geom.Pt{{X: x, Y: y}},
+			Size:        core.ScatterAreaFromRadius(8.0, style.Default.DPI),
+			Color:       color,
+			EdgeColor:   markerEdge,
+			EdgeWidth:   edgeWidth,
+			MarkerStyle: markerStyle,
+			Alpha:       1.0,
 		}
 		ax.Add(scatter)
 	}
 	return fig
+}
+
+func markerGridLineOnly(style core.MarkerStyle) bool {
+	if style.Tuple != nil {
+		return style.Tuple.Style == core.MarkerTupleAsterisk
+	}
+	switch style.Type {
+	case core.MarkerPlus, core.MarkerCross, core.MarkerTriDown, core.MarkerTriUp, core.MarkerTriLeft, core.MarkerTriRight,
+		core.MarkerVLine, core.MarkerHLine, core.MarkerTickLeft, core.MarkerTickRight, core.MarkerTickUp, core.MarkerTickDown,
+		core.MarkerCaretLeft, core.MarkerCaretRight, core.MarkerCaretUp, core.MarkerCaretDown,
+		core.MarkerCaretLeftBase, core.MarkerCaretRightBase, core.MarkerCaretUpBase, core.MarkerCaretDownBase:
+		return true
+	default:
+		return false
+	}
 }
 
 // Render is the AGG-rendered showcase image.

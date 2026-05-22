@@ -331,7 +331,7 @@ func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
 		FaceColor:     color,
 		EdgeColor:     markerEdgeColor,
 		EdgeWidth:     markerEdgeWidth,
-		LineOnly:      markerType == MarkerPlus || markerType == MarkerCross,
+		LineOnly:      markerLineOnly(NewMarkerStyle(markerType)),
 	}
 	baselineArtist := &Line2D{
 		XY: []geom.Pt{
