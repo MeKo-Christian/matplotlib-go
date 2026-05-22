@@ -40,6 +40,7 @@ spy_image
 colormap_diverging
 colormap_qualitative
 colormap_cyclic
+named_colors
 axes_top_right_inverted
 axes_control_surface
 transform_coordinates

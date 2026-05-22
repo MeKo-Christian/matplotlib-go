@@ -49,7 +49,7 @@ def demo_axes(out_dir, width, height):
     right.xaxis.set_major_locator(MultipleLocator(4))
     right.xaxis.set_major_formatter(ScalarFormatter())
     right.yaxis.set_major_formatter(ScalarFormatter())
-    right.yaxis.set_minor_locator(LogLocator(10, minor=True, subs=[2, 3, 4, 5, 6, 7, 8, 9]))
+    right.yaxis.set_minor_locator(LogLocator(10, subs=[2, 3, 4, 5, 6, 7, 8, 9]))
     right.grid(True)
     right.plot([0, 4, 8, 12, 16, 20, 24, 28], [1.5, 2.6, 4.8, 9.5, 18, 33, 61, 96], color=color(0.12, 0.45, 0.72), linewidth=lw(2))
 

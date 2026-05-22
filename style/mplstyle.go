@@ -905,123 +905,11 @@ func parseMPLColor(value string, rc RC) (render.Color, error) {
 		return render.Color{}, errors.New("empty color")
 	}
 
-	switch strings.ToLower(normalized) {
-	case "none":
-		return render.Color{A: 0}, nil
-	case "inherit":
+	if strings.EqualFold(normalized, "inherit") {
 		return render.Color{}, errors.New(`special value "inherit" requires contextual handling`)
 	}
 
-	if strings.HasPrefix(normalized, "(") && strings.HasSuffix(normalized, ")") {
-		return parseMPLColorTuple(normalized)
-	}
-
-	if looksLikeMPLHexColor(normalized) {
-		return parseMPLHexColor(normalized)
-	}
-
-	if grayscale, err := strconv.ParseFloat(normalized, 64); err == nil {
-		return render.Color{R: grayscale, G: grayscale, B: grayscale, A: 1}, nil
-	}
-
-	if strings.HasPrefix(strings.ToUpper(normalized), "C") && len(normalized) > 1 {
-		idx, err := strconv.Atoi(normalized[1:])
-		if err == nil {
-			palette := rc.Palette()
-			if len(palette) == 0 {
-				return render.Color{}, fmt.Errorf("color cycle index %q out of range", normalized)
-			}
-			return palette[idx%len(palette)], nil
-		}
-	}
-
-	if parsed, ok := mplNamedColors[strings.ToLower(normalized)]; ok {
-		return parsed, nil
-	}
-
-	return parseMPLHexColor(normalized)
-}
-
-func looksLikeMPLHexColor(value string) bool {
-	normalized := strings.TrimPrefix(value, "#")
-	switch len(normalized) {
-	case 3, 4, 6, 8:
-	default:
-		return false
-	}
-	for _, r := range normalized {
-		if !strings.ContainsRune("0123456789abcdefABCDEF", r) {
-			return false
-		}
-	}
-	return true
-}
-
-func parseMPLColorTuple(value string) (render.Color, error) {
-	parts := splitOutsideQuotes(strings.TrimSpace(value[1:len(value)-1]), ',')
-	if len(parts) != 3 && len(parts) != 4 {
-		return render.Color{}, fmt.Errorf("expected RGB or RGBA tuple, got %q", value)
-	}
-
-	channels := [4]float64{0, 0, 0, 1}
-	for i, part := range parts {
-		parsed, err := strconv.ParseFloat(strings.TrimSpace(part), 64)
-		if err != nil {
-			return render.Color{}, fmt.Errorf("invalid tuple component %q", part)
-		}
-		channels[i] = parsed
-	}
-
-	return render.Color{R: channels[0], G: channels[1], B: channels[2], A: channels[3]}, nil
-}
-
-func parseMPLHexColor(value string) (render.Color, error) {
-	normalized := strings.TrimPrefix(value, "#")
-	switch len(normalized) {
-	case 3:
-		normalized = strings.Repeat(string(normalized[0]), 2) +
-			strings.Repeat(string(normalized[1]), 2) +
-			strings.Repeat(string(normalized[2]), 2)
-	case 4:
-		normalized = strings.Repeat(string(normalized[0]), 2) +
-			strings.Repeat(string(normalized[1]), 2) +
-			strings.Repeat(string(normalized[2]), 2) +
-			strings.Repeat(string(normalized[3]), 2)
-	case 6, 8:
-		// already normalized
-	default:
-		return render.Color{}, fmt.Errorf("unsupported color %q", value)
-	}
-
-	parseByte := func(part string) (float64, error) {
-		n, err := strconv.ParseUint(part, 16, 8)
-		if err != nil {
-			return 0, err
-		}
-		return float64(n) / 255.0, nil
-	}
-
-	r, err := parseByte(normalized[0:2])
-	if err != nil {
-		return render.Color{}, fmt.Errorf("invalid color %q", value)
-	}
-	g, err := parseByte(normalized[2:4])
-	if err != nil {
-		return render.Color{}, fmt.Errorf("invalid color %q", value)
-	}
-	b, err := parseByte(normalized[4:6])
-	if err != nil {
-		return render.Color{}, fmt.Errorf("invalid color %q", value)
-	}
-	a := 1.0
-	if len(normalized) == 8 {
-		a, err = parseByte(normalized[6:8])
-		if err != nil {
-			return render.Color{}, fmt.Errorf("invalid color %q", value)
-		}
-	}
-
-	return render.Color{R: r, G: g, B: b, A: a}, nil
+	return color.ToRGBA(normalized, color.WithColorCycle(rc.Palette()), color.WithBareHex())
 }
 
 func parseMPLColorCycle(value string, rc RC) (color.Palette, error) {
@@ -1161,30 +1049,3 @@ func mplPointsToPixels(points, dpi float64) float64 {
 	}
 	return points * dpi / 72.0
 }
-
-var mplNamedColors = func() map[string]render.Color {
-	return map[string]render.Color{
-		"b":       {R: 0, G: 0, B: 1, A: 1},
-		"g":       {R: 0, G: 0.5, B: 0, A: 1},
-		"r":       {R: 1, G: 0, B: 0, A: 1},
-		"c":       {R: 0, G: 0.75, B: 0.75, A: 1},
-		"m":       {R: 0.75, G: 0, B: 0.75, A: 1},
-		"y":       {R: 0.75, G: 0.75, B: 0, A: 1},
-		"k":       {R: 0, G: 0, B: 0, A: 1},
-		"w":       {R: 1, G: 1, B: 1, A: 1},
-		"black":   {R: 0, G: 0, B: 0, A: 1},
-		"white":   {R: 1, G: 1, B: 1, A: 1},
-		"red":     {R: 1, G: 0, B: 0, A: 1},
-		"green":   {R: 0, G: 0.5, B: 0, A: 1},
-		"blue":    {R: 0, G: 0, B: 1, A: 1},
-		"cyan":    {R: 0, G: 1, B: 1, A: 1},
-		"magenta": {R: 1, G: 0, B: 1, A: 1},
-		"yellow":  {R: 1, G: 1, B: 0, A: 1},
-		"grey":    {R: 0.5, G: 0.5, B: 0.5, A: 1},
-		"gray":    {R: 0.5, G: 0.5, B: 0.5, A: 1},
-		"orange":  {R: 1, G: 0.647, B: 0, A: 1},
-		"purple":  {R: 0.5, G: 0, B: 0.5, A: 1},
-		"brown":   {R: 0.647, G: 0.165, B: 0.165, A: 1},
-		"pink":    {R: 1, G: 0.753, B: 0.796, A: 1},
-	}
-}()

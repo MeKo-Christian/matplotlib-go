@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Circle, Ellipse, FancyArrow, Polygon, Rectangle
 from matplotlib.sankey import Sankey
+from matplotlib.ticker import LogLocator, MultipleLocator, ScalarFormatter
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 
 DPI = 100

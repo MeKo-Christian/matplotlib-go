@@ -1691,9 +1691,9 @@ plus, square, triangle, path).
 
 **Gap:** no CSS4/X11, xkcd, or tableau (`tab:`) color databases found.
 
-- [ ] Add the CSS4/X11 named-color table and base single-letter colors.
-- [ ] Add the `tab:` tableau cycle names and the `xkcd:` color survey table.
-- [ ] Provide a `to_rgba`-equivalent that resolves names, hex, shorthand,
+- [x] Add the CSS4/X11 named-color table and base single-letter colors.
+- [x] Add the `tab:` tableau cycle names and the `xkcd:` color survey table.
+- [x] Provide a `to_rgba`-equivalent that resolves names, hex, shorthand,
       grayscale strings, and `(r,g,b[,a])` tuples uniformly.
 
 ### 9.5 Image interpolation modes

@@ -101,6 +101,7 @@ import (
 	example_mplot3d_wire3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_wire3d"
 	example_multi_series_basic "github.com/cwbudde/matplotlib-go/test/parity/multi_series_basic"
 	example_multi_series_color_cycle "github.com/cwbudde/matplotlib-go/test/parity/multi_series_color_cycle"
+	example_named_colors "github.com/cwbudde/matplotlib-go/test/parity/named_colors"
 	example_patch_showcase "github.com/cwbudde/matplotlib-go/test/parity/patch_showcase"
 	example_pcolor_flat "github.com/cwbudde/matplotlib-go/test/parity/pcolor_flat"
 	example_pcolormesh_gouraud "github.com/cwbudde/matplotlib-go/test/parity/pcolormesh_gouraud"
@@ -180,6 +181,7 @@ var renderByID = map[string]func() image.Image{
 	"colormap_diverging":        example_colormap_diverging.Render,
 	"colormap_qualitative":      example_colormap_qualitative.Render,
 	"colormap_cyclic":           example_colormap_cyclic.Render,
+	"named_colors":              example_named_colors.Render,
 	"mathtext_basic":            example_mathtext_basic.Render,
 	"mathtext_fractions":        example_mathtext_fractions.Render,
 	"mathtext_integrals":        example_mathtext_integrals.Render,

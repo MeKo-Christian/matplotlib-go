@@ -96,6 +96,7 @@ var cases = []Case{
 	{ID: "colormap_diverging", Topic: "colormap", Title: "Diverging Colormap", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
 	{ID: "colormap_qualitative", Topic: "colormap", Title: "Qualitative Colormap", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
 	{ID: "colormap_cyclic", Topic: "colormap", Title: "Cyclic Colormap", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
+	{ID: "named_colors", Topic: "color", Title: "Named Colors", FixtureOnly: true, MinPSNR: 35.0, MaxMeanAbs: 8.0},
 	{ID: "axes_top_right_inverted", Topic: "axes", Title: "Top/Right Inverted Axes", Optional: true},
 	{ID: "axes_control_surface", Topic: "axes", Title: "Axes, Scales, and Twins", Optional: true, WebDemoID: "axes", Description: "Minor ticks, top/right axes, aspect controls, log scale, twin axes, and secondary axes.", Showcase: true, GoBasicSmokeFamily: "axes", MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "transform_coordinates", Topic: "axes", Title: "Transform Coordinates", Optional: true, MinPSNR: 35.0, MaxMeanAbs: 6.5},
