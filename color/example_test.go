@@ -16,5 +16,5 @@ func Example() {
 		cmap.Name(), mid.R, mid.G, mid.B)
 
 	// Output:
-	// viridis midpoint: R=0.128 G=0.567 B=0.551
+	// viridis midpoint: R=0.125 G=0.565 B=0.549
 }

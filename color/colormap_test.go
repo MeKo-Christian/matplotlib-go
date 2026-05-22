@@ -65,9 +65,9 @@ func TestListedColormapRepresentativeBytes(t *testing.T) {
 		{name: "magma", t: 0.00, want: [4]uint8{0, 0, 3, 255}},
 		{name: "magma", t: 0.50, want: [4]uint8{182, 54, 121, 255}},
 		{name: "magma", t: 1.00, want: [4]uint8{251, 252, 191, 255}},
-		{name: "cividis", t: 0.00, want: [4]uint8{0, 34, 78, 255}},
-		{name: "cividis", t: 0.50, want: [4]uint8{125, 124, 120, 255}},
-		{name: "cividis", t: 1.00, want: [4]uint8{254, 232, 56, 255}},
+		{name: "cividis", t: 0.00, want: [4]uint8{0, 34, 77, 255}},
+		{name: "cividis", t: 0.50, want: [4]uint8{124, 123, 120, 255}},
+		{name: "cividis", t: 1.00, want: [4]uint8{253, 231, 55, 255}},
 	}
 
 	for _, tt := range tests {

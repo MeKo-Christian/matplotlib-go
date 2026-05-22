@@ -50,6 +50,9 @@ import (
 	example_clip_path_batch "github.com/cwbudde/matplotlib-go/test/parity/clip_path_batch"
 	example_colorbar_composition "github.com/cwbudde/matplotlib-go/test/parity/colorbar_composition"
 	example_colorbar_extensions "github.com/cwbudde/matplotlib-go/test/parity/colorbar_extensions"
+	example_colormap_cyclic "github.com/cwbudde/matplotlib-go/test/parity/colormap_cyclic"
+	example_colormap_diverging "github.com/cwbudde/matplotlib-go/test/parity/colormap_diverging"
+	example_colormap_qualitative "github.com/cwbudde/matplotlib-go/test/parity/colormap_qualitative"
 	example_dashes "github.com/cwbudde/matplotlib-go/test/parity/dashes"
 	example_errorbar_basic "github.com/cwbudde/matplotlib-go/test/parity/errorbar_basic"
 	example_figure_labels_composition "github.com/cwbudde/matplotlib-go/test/parity/figure_labels_composition"
@@ -174,6 +177,9 @@ var renderByID = map[string]func() image.Image{
 	"matshow_basic":             example_matshow_basic.Render,
 	"spy_marker":                example_spy_marker.Render,
 	"spy_image":                 example_spy_image.Render,
+	"colormap_diverging":        example_colormap_diverging.Render,
+	"colormap_qualitative":      example_colormap_qualitative.Render,
+	"colormap_cyclic":           example_colormap_cyclic.Render,
 	"mathtext_basic":            example_mathtext_basic.Render,
 	"mathtext_fractions":        example_mathtext_fractions.Render,
 	"mathtext_integrals":        example_mathtext_integrals.Render,

@@ -37,6 +37,9 @@ image_alpha
 matshow_basic
 spy_marker
 spy_image
+colormap_diverging
+colormap_qualitative
+colormap_cyclic
 axes_top_right_inverted
 axes_control_surface
 transform_coordinates
