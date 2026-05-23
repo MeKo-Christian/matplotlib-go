@@ -2048,18 +2048,33 @@ Current slice landed:
 
 ### 9A.2 Foundation API Gaps
 
-- [ ] Audit `artist.py`, `axis.py`, `ticker.py`, `scale.py`, `transforms.py`,
+- [x] Audit `artist.py`, `axis.py`, `ticker.py`, `scale.py`, `transforms.py`,
       `lines.py`, `collections.py`, `patches.py`, `text.py`, `image.py`,
       `colorbar.py`, `cm.py`, `colors.py`, `pyplot.py`, and
       `backend_bases.py` against the Go equivalents.
-- [ ] Track missing or thin fundamentals: artist property / stale / callback
+- [x] Track missing or thin fundamentals: artist property / stale / callback
       APIs, richer locator / formatter catalog, explicit tick-artist behavior,
       transform / BBox breadth, collection variants, patch and box / arrow
       style registries, advanced text / font behavior, image classes, colorbar
       orientation / tick behavior, advanced norms / LightSource, and high-value
       pyplot wrappers.
-- [ ] For each gap, decide: implement, expose through an idiomatic Go
+- [x] For each gap, decide: implement, expose through an idiomatic Go
       equivalent, or document as an intentional divergence.
+
+Current slice landed:
+
+- `internal/examplecatalog.FoundationAPIGapAudit` records stable Phase 9A.2
+  gap decisions across artist properties and per-artist clipping, ticker /
+  formatter / scale gaps, tick artist behavior, transform / BBox breadth,
+  Line2D marker and data semantics, collection variants and scalar-mappable
+  updates, patch style registries, text / font / annotation layout, image
+  classes and interpolation policy, colorbar placement / ticks, advanced
+  colors / norms / LightSource, pyplot wrappers, and backend canvas / manager
+  lifecycle.
+- Catalog tests now enforce coverage for every Phase 9A.2 upstream module,
+  stable required gap IDs, valid linked Phase 9A coverage rows, non-empty
+  current-equivalent / gap / decision / rationale text, and existing Go file
+  references for each gap row.
 
 ### 9A.3 Demo Breadth Gaps
 

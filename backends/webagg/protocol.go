@@ -107,10 +107,3 @@ type outboundEvent struct {
 	HistFwd *bool `json:"Forward,omitempty"`
 }
 
-// boolPtr returns a pointer to the literal — JSON omitempty needs a
-// pointer for distinguishing false from absent.
-func boolPtr(b bool) *bool { return &b }
-
-// floatPtr returns a pointer to the literal so that 0 doesn't get
-// dropped by omitempty in rubberband coordinates.
-func floatPtr(v float64) *float64 { return &v }

@@ -163,7 +163,7 @@ func (m *Manager) SetTitle(title string) {
 	m.mu.Lock()
 	m.windowTitle = title
 	m.mu.Unlock()
-	m.hub.broadcastJSON(outboundEvent{Type: MsgFigureLabel, Label: title})
+	m.hub.broadcastJSON(&outboundEvent{Type: MsgFigureLabel, Label: title})
 }
 
 // ToolManager satisfies canvas.FigureManager. WebAgg does not expose a
@@ -224,7 +224,7 @@ func (m *Manager) Resize(width, height int) error {
 	// Echo the new size back to clients so they can re-stretch their
 	// canvas element.
 	forwardFalse := false
-	m.hub.broadcastJSON(outboundEvent{
+	m.hub.broadcastJSON(&outboundEvent{
 		Type:      MsgResize,
 		Size:      []float64{float64(width), float64(height)},
 		ResizeFwd: &forwardFalse,
@@ -364,10 +364,10 @@ func packRGBA(img *image.RGBA, w, h int) []uint32 {
 	out := make([]uint32, w*h)
 	stride := img.Stride
 	base := img.Pix
-	for y := 0; y < h; y++ {
+	for y := range h {
 		row := base[y*stride : y*stride+w*4]
 		dst := out[y*w : y*w+w]
-		for x := 0; x < w; x++ {
+		for x := range w {
 			i := x * 4
 			dst[x] = uint32(row[i]) |
 				uint32(row[i+1])<<8 |
@@ -387,9 +387,9 @@ func imageHasTransparency(img *image.RGBA) bool {
 	w := img.Rect.Dx()
 	h := img.Rect.Dy()
 	base := img.Pix
-	for y := 0; y < h; y++ {
+	for y := range h {
 		row := base[y*stride : y*stride+w*4]
-		for x := 0; x < w; x++ {
+		for x := range w {
 			if row[x*4+3] != 0xff {
 				return true
 			}
@@ -402,17 +402,17 @@ func imageHasTransparency(img *image.RGBA) bool {
 // prior frame carry the new value and unchanged pixels are encoded as
 // fully transparent black. The client paints the diff over its prior
 // frame, so unchanged pixels remain visible.
-func diffImage(curr *image.RGBA, lastBuf []uint32, packed []uint32, w, h int) *image.RGBA {
+func diffImage(curr *image.RGBA, lastBuf, packed []uint32, w, h int) *image.RGBA {
 	out := image.NewRGBA(image.Rect(0, 0, w, h))
 	stride := curr.Stride
 	src := curr.Pix
 	dst := out.Pix
-	for y := 0; y < h; y++ {
+	for y := range h {
 		srow := src[y*stride : y*stride+w*4]
 		drow := dst[y*out.Stride : y*out.Stride+w*4]
 		prow := packed[y*w : y*w+w]
 		brow := lastBuf[y*w : y*w+w]
-		for x := 0; x < w; x++ {
+		for x := range w {
 			if prow[x] == brow[x] {
 				// Stays transparent black — i.e. "no change".
 				continue

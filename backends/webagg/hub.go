@@ -53,7 +53,7 @@ func (h *hub) register(sink clientSink) (uint64, error) {
 	h.mgr.mu.Unlock()
 
 	forwardFalse := false
-	resize := outboundEvent{
+	resize := &outboundEvent{
 		Type:      MsgResize,
 		Size:      []float64{w, hh},
 		ResizeFwd: &forwardFalse,
@@ -61,13 +61,13 @@ func (h *hub) register(sink clientSink) (uint64, error) {
 	if err := sendJSONTo(sink, resize); err != nil {
 		return id, err
 	}
-	if err := sendJSONTo(sink, outboundEvent{Type: MsgFigureLabel, Label: label}); err != nil {
+	if err := sendJSONTo(sink, &outboundEvent{Type: MsgFigureLabel, Label: label}); err != nil {
 		return id, err
 	}
-	if err := sendJSONTo(sink, outboundEvent{Type: MsgImageMode, Mode: mode}); err != nil {
+	if err := sendJSONTo(sink, &outboundEvent{Type: MsgImageMode, Mode: mode}); err != nil {
 		return id, err
 	}
-	if err := sendJSONTo(sink, outboundEvent{Type: MsgRefresh}); err != nil {
+	if err := sendJSONTo(sink, &outboundEvent{Type: MsgRefresh}); err != nil {
 		return id, err
 	}
 	// Push the first frame so the client has something to paint with.
@@ -110,7 +110,7 @@ func (h *hub) clientCount() int {
 // broadcastJSON marshals payload once and sends it to every client.
 // Errors are swallowed per-client because one slow client should not
 // stop the broadcast — upstream WebAgg has the same policy.
-func (h *hub) broadcastJSON(payload outboundEvent) {
+func (h *hub) broadcastJSON(payload *outboundEvent) {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return
@@ -139,7 +139,7 @@ func (h *hub) broadcastFrame() error {
 		return err
 	}
 	if mode != prevMode {
-		h.broadcastJSON(outboundEvent{Type: MsgImageMode, Mode: string(mode)})
+		h.broadcastJSON(&outboundEvent{Type: MsgImageMode, Mode: string(mode)})
 	}
 	clients := h.clientsSnapshot()
 	for _, c := range clients {
@@ -167,7 +167,7 @@ func (m *Manager) currentImageMode() imageMode {
 	return m.imageMode
 }
 
-func sendJSONTo(sink clientSink, payload outboundEvent) error {
+func sendJSONTo(sink clientSink, payload *outboundEvent) error {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return err

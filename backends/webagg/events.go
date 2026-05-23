@@ -20,10 +20,10 @@ func (m *Manager) HandleClientMessage(raw []byte) error {
 	if err := json.Unmarshal(raw, &ev); err != nil {
 		return err
 	}
-	return m.dispatchInbound(ev)
+	return m.dispatchInbound(&ev)
 }
 
-func (m *Manager) dispatchInbound(ev inboundEvent) error {
+func (m *Manager) dispatchInbound(ev *inboundEvent) error {
 	switch ev.Type {
 	case MsgAck:
 		// Upstream uses ack messages as a flow-control heartbeat; the
@@ -53,7 +53,7 @@ func (m *Manager) dispatchInbound(ev inboundEvent) error {
 		return m.Resize(int(ev.Width+0.5), int(ev.Height+0.5))
 	case MsgSendImageMode:
 		mode := m.currentImageMode()
-		m.hub.broadcastJSON(outboundEvent{Type: MsgImageMode, Mode: string(mode)})
+		m.hub.broadcastJSON(&outboundEvent{Type: MsgImageMode, Mode: string(mode)})
 		return nil
 	case MsgSetDevicePixelRatio:
 		return m.handleSetDPR(ev.DevicePixelRatio)
@@ -64,7 +64,7 @@ func (m *Manager) dispatchInbound(ev inboundEvent) error {
 	return nil
 }
 
-func (m *Manager) emitMouse(eventType plotcanvas.EventType, ev inboundEvent) error {
+func (m *Manager) emitMouse(eventType plotcanvas.EventType, ev *inboundEvent) error {
 	m.mu.Lock()
 	m.lastMouseX = ev.X
 	m.lastMouseY = ev.Y
@@ -78,7 +78,7 @@ func (m *Manager) emitMouse(eventType plotcanvas.EventType, ev inboundEvent) err
 	})
 }
 
-func (m *Manager) emitScroll(ev inboundEvent) error {
+func (m *Manager) emitScroll(ev *inboundEvent) error {
 	m.mu.Lock()
 	m.lastMouseX = ev.X
 	m.lastMouseY = ev.Y
@@ -96,7 +96,7 @@ func (m *Manager) emitScroll(ev inboundEvent) error {
 	})
 }
 
-func (m *Manager) emitKey(eventType plotcanvas.EventType, ev inboundEvent) error {
+func (m *Manager) emitKey(eventType plotcanvas.EventType, ev *inboundEvent) error {
 	return m.dispatch.Emit(plotcanvas.Event{
 		Type:      eventType,
 		Figure:    m.figure,
@@ -119,7 +119,7 @@ func (m *Manager) handleToolbarButton(name string) error {
 	// stay in sync.
 	if action == plotcanvas.ToolbarPan || action == plotcanvas.ToolbarZoom {
 		mode := navigateModeName(m.tb.Mode())
-		m.hub.broadcastJSON(outboundEvent{Type: MsgNavigateMode, Mode: mode})
+		m.hub.broadcastJSON(&outboundEvent{Type: MsgNavigateMode, Mode: mode})
 	}
 	return nil
 }
@@ -131,7 +131,7 @@ func (m *Manager) handleRefresh() error {
 	m.forceFull = true
 	label := m.windowTitle
 	m.mu.Unlock()
-	m.hub.broadcastJSON(outboundEvent{Type: MsgFigureLabel, Label: label})
+	m.hub.broadcastJSON(&outboundEvent{Type: MsgFigureLabel, Label: label})
 	return m.drawAndBroadcast()
 }
 

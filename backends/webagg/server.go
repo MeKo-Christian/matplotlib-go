@@ -27,8 +27,6 @@ import (
 type Server struct {
 	manager *Manager
 	logger  *log.Logger
-
-	mu      sync.Mutex
 	assets  http.FileSystem
 	wsRoute string
 }
