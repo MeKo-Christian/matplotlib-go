@@ -130,7 +130,6 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 		polygons = append(polygons, polygon)
 
 		color := colorAt(a.NextColor(), cfg.Colors, i)
-		color.A *= clampOneToOne(cfg.Alpha)
 		faceColors = append(faceColors, color)
 
 		if specialtyBool(cfg.ShowMeans, false) {
@@ -167,7 +166,7 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 	container := &ViolinContainer{
 		Bodies: &PolyCollection{
 			PatchCollection: PatchCollection{
-				Collection: Collection{Label: cfg.Label, Alpha: 1, z: 2},
+				Collection: Collection{Label: cfg.Label, Alpha: clampOneToOne(cfg.Alpha), z: 2},
 				FaceColors: faceColors,
 				EdgeColor:  edgeColor,
 				EdgeWidth:  cfg.EdgeWidth,
@@ -358,7 +357,7 @@ func violinSummaryLineCap(side string) render.LineCap {
 		// for the hlines/vlines summary artists in axes/_axes.py.
 		return render.CapSquare
 	}
-	return render.CapRound
+	return render.CapButt
 }
 
 func violinParallelSegment(position, minValue, maxValue float64, orientation string) []geom.Pt {

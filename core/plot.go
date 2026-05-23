@@ -3,6 +3,7 @@ package core
 import (
 	"math"
 
+	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/transform"
@@ -793,7 +794,7 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		edgeColor = *opt.EdgeColor
 	}
 
-	medianColor := edgeColor
+	medianColor := matcolor.Tab10[1]
 	if opt.MedianColor != nil {
 		medianColor = *opt.MedianColor
 	}
@@ -823,7 +824,7 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		whiskerWidth = *opt.WhiskerWidth
 	}
 
-	medianWidth := 1.5
+	medianWidth := 1.0
 	if opt.MedianWidth != nil {
 		medianWidth = *opt.MedianWidth
 	}

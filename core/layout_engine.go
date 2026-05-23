@@ -332,12 +332,13 @@ func figureLabelMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engine L
 }
 
 func figureLabelTightHeight(r render.Renderer, text string, size float64, fontKey string, useTeX bool) float64 {
+	lineHeight := measureSingleLineTextLayout(r, text, size, fontKey, useTeX).Height
 	if bounder, ok := r.(render.TextBounder); ok {
 		if bounds, ok := bounder.MeasureTextBounds(text, size, fontKey); ok && bounds.H > 0 {
-			return bounds.H
+			return math.Max(bounds.H, lineHeight)
 		}
 	}
-	return measureSingleLineTextLayout(r, text, size, fontKey, useTeX).Height
+	return lineHeight
 }
 
 func figureLayoutMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engine LayoutEngine) figureMargin {
@@ -478,6 +479,7 @@ func syncColorbarAxes(fig *Figure) {
 					Y: base.Max.Y,
 				},
 			}
+			ax.RectFraction = insetColorbarRectForExtensions(fig, ax.RectFraction, ax.colorbarExtend)
 			continue
 		}
 		parent.RectFraction = colorbarParentRect(base, width, padding, useResolvedSlot)
@@ -492,6 +494,7 @@ func syncColorbarAxes(fig *Figure) {
 				Y: parent.RectFraction.Max.Y,
 			},
 		}
+		ax.RectFraction = insetColorbarRectForExtensions(fig, ax.RectFraction, ax.colorbarExtend)
 	}
 }
 

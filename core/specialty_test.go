@@ -142,6 +142,9 @@ func TestAxesHexbinLogBinsReducersAndMarginals(t *testing.T) {
 	if hex.HBar == nil || hex.VBar == nil {
 		t.Fatal("expected marginal bar collections")
 	}
+	if !(hex.HBar.Z() > hex.Z() && hex.VBar.Z() > hex.Z()) {
+		t.Fatalf("marginal z orders h=%v v=%v hex=%v, want marginals above main hexbin like Matplotlib draw order", hex.HBar.Z(), hex.VBar.Z(), hex.Z())
+	}
 }
 
 func TestAxesHexbinLogScaleBuildsHexagonsInLogSpace(t *testing.T) {
@@ -261,6 +264,7 @@ func TestAxesViolinplotAddsCollections(t *testing.T) {
 		{2, 2.1, 2.2, 3.4, 3.6},
 	}, ViolinOptions{
 		ShowMeans: specialtyBoolPtr(true),
+		Alpha:     0.45,
 		Label:     "spread",
 	})
 	if violins == nil {
@@ -277,6 +281,15 @@ func TestAxesViolinplotAddsCollections(t *testing.T) {
 	}
 	if violins.Extrema == nil || len(violins.Extrema.Segments) != 6 {
 		t.Fatalf("expected extrema segments, got %d", len(violins.Extrema.Segments))
+	}
+	if got := violins.Extrema.LineCap; got != render.CapButt {
+		t.Fatalf("two-sided violin extrema line cap = %v, want Matplotlib LineCollection butt cap", got)
+	}
+	if got := violins.Bodies.Alpha; got != 0.45 {
+		t.Fatalf("violin body collection alpha = %v, want Matplotlib-style artist alpha", got)
+	}
+	if got := violins.Bodies.FaceColors[0].A; got != 1 {
+		t.Fatalf("violin face color alpha = %v, want unmodified color alpha before collection alpha", got)
 	}
 }
 
@@ -300,6 +313,9 @@ func TestAxesViolinplotSideOrientationQuantilesAndBandwidthMethod(t *testing.T) 
 	}
 	if violins.Quantiles == nil || len(violins.Quantiles.Segments) != 2 {
 		t.Fatalf("quantile segments = %#v, want 2", violins.Quantiles)
+	}
+	if got := violins.Extrema.LineCap; got != render.CapSquare {
+		t.Fatalf("one-sided violin extrema line cap = %v, want Matplotlib projecting cap", got)
 	}
 }
 
@@ -342,6 +358,31 @@ func TestAxesTableDrawsCellsAndText(t *testing.T) {
 	}
 }
 
+func TestAxesTableDrawsAsUnclippedOverlayByDefault(t *testing.T) {
+	table := (&Axes{}).Table(TableOptions{
+		CellText: [][]string{{"1"}},
+		BBox:     geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}},
+	})
+	if table == nil {
+		t.Fatal("expected table artist")
+	}
+
+	ctx := &DrawContext{
+		Clip: geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 100, Y: 100}},
+	}
+	var clipped specialtyRecordingRenderer
+	table.Draw(&clipped, ctx)
+	if clipped.pathCount != 0 {
+		t.Fatalf("Table.Draw path count = %d, want default table to defer to unclipped overlay draw", clipped.pathCount)
+	}
+
+	var overlay specialtyRecordingRenderer
+	table.DrawOverlay(&overlay, ctx)
+	if overlay.pathCount == 0 {
+		t.Fatal("Table.DrawOverlay drew no cell paths")
+	}
+}
+
 func TestAxesTableHonorsAlignmentPadding(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax := fig.AddAxes(geom.Rect{
@@ -373,7 +414,7 @@ func TestAxesTableHonorsAlignmentPadding(t *testing.T) {
 	}
 
 	var renderer specialtyRecordingRenderer
-	table.Draw(&renderer, &DrawContext{
+	table.DrawOverlay(&renderer, &DrawContext{
 		Clip: geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 100, Y: 100}},
 	})
 	origin, ok := renderer.textOrigins["L"]
@@ -382,6 +423,122 @@ func TestAxesTableHonorsAlignmentPadding(t *testing.T) {
 	}
 	if !floatApprox(origin.X, 5, 1e-12) {
 		t.Fatalf("left-aligned data text origin x = %v, want 10%% cell padding at 5px", origin.X)
+	}
+}
+
+func TestAxesTableCentersTextUsingInkBounds(t *testing.T) {
+	table := (&Axes{}).Table(TableOptions{
+		CellText: [][]string{{"ink"}},
+		BBox:     geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}},
+		FontSize: 10,
+		CellLoc:  "center",
+	})
+	if table == nil {
+		t.Fatal("expected table artist")
+	}
+
+	renderer := specialtyRecordingRenderer{
+		textBounds: map[string]render.TextBounds{
+			"ink": {X: 1, Y: -8, W: 40, H: 10},
+		},
+		textMetrics: map[string]render.TextMetrics{
+			"ink": {W: 38, H: 10, Ascent: 8, Descent: 2},
+		},
+	}
+	table.DrawOverlay(&renderer, &DrawContext{
+		Clip: geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 100, Y: 100}},
+	})
+
+	origin, ok := renderer.textOrigins["ink"]
+	if !ok {
+		t.Fatalf("expected table text draw, got %v", renderer.texts)
+	}
+	if got, want := origin.X, 29.0; !floatApprox(got, want, 1e-12) {
+		t.Fatalf("centered table text origin x = %v, want ink bounds centered at cell anchor: %v", got, want)
+	}
+}
+
+func TestAxesTableAutoSizesRowLabelsFromRendererTextBounds(t *testing.T) {
+	table := (&Axes{}).Table(TableOptions{
+		CellText:  [][]string{{"1"}},
+		RowLabels: []string{"R"},
+		BBox:      geom.Rect{Min: geom.Pt{X: 0.4, Y: 0}, Max: geom.Pt{X: 0.9, Y: 1}},
+		FontSize:  10,
+	})
+	if table == nil {
+		t.Fatal("expected table artist")
+	}
+
+	renderer := specialtyRecordingRenderer{
+		textBounds: map[string]render.TextBounds{
+			"R": {X: 1, Y: -8, W: 6, H: 10},
+		},
+		textMetrics: map[string]render.TextMetrics{
+			"R": {W: 10, H: 10, Ascent: 8, Descent: 2},
+		},
+	}
+	table.DrawOverlay(&renderer, &DrawContext{
+		Clip: geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 100, Y: 100}},
+	})
+	if len(renderer.paths) == 0 {
+		t.Fatal("expected row-label cell path")
+	}
+	bounds, ok := pathBounds(renderer.paths[0])
+	if !ok {
+		t.Fatal("expected row-label path bounds")
+	}
+	if got, want := bounds.Min.X, 28.0; !floatApprox(got, want, 1e-12) {
+		t.Fatalf("row-label left edge = %v, want bbox-scaled measured text width left of shifted grid", got)
+	}
+	if got, want := bounds.Max.X, 34.0; !floatApprox(got, want, 1e-12) {
+		t.Fatalf("row-label right edge = %v, want Matplotlib shifted data-grid left edge", got)
+	}
+	if len(renderer.paths) < 2 {
+		t.Fatal("expected data cell path")
+	}
+	dataBounds, ok := pathBounds(renderer.paths[1])
+	if !ok {
+		t.Fatal("expected data cell path bounds")
+	}
+	if got, want := dataBounds.Min.X, 34.0; !floatApprox(got, want, 1e-12) {
+		t.Fatalf("data-cell left edge = %v, want Matplotlib shifted data-grid left edge", got)
+	}
+}
+
+func TestAxesTableUsesMatplotlibPatchLineWidthDefault(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax := fig.AddAxes(geom.Rect{})
+
+	table := ax.Table(TableOptions{
+		CellText: [][]string{{"value"}},
+	})
+	if table == nil {
+		t.Fatal("expected table artist")
+	}
+
+	if got, want := table.LineWidth, fig.RC.DPI/72.0; !floatApprox(got, want, 1e-12) {
+		t.Fatalf("default table line width = %v, want matplotlib patch.linewidth 1pt at %v DPI = %v px", got, fig.RC.DPI, want)
+	}
+}
+
+func TestAxesTableCellsUseMatplotlibPatchSnapAuto(t *testing.T) {
+	table := (&Axes{}).Table(TableOptions{
+		CellText: [][]string{{"value"}},
+		BBox:     geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.2}, Max: geom.Pt{X: 0.9, Y: 0.8}},
+	})
+	if table == nil {
+		t.Fatal("expected table artist")
+	}
+
+	var renderer specialtyRecordingRenderer
+	table.DrawOverlay(&renderer, &DrawContext{
+		Clip: geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 100, Y: 100}},
+	})
+	if len(renderer.paints) == 0 {
+		t.Fatal("expected table cell paint")
+	}
+	if got := renderer.paints[0].Snap; got != render.SnapAuto {
+		t.Fatalf("table cell snap = %v, want Matplotlib patch snap auto", got)
 	}
 }
 
@@ -476,12 +633,20 @@ func TestSankeyMatchesMatplotlibSingleDiagramGeometry(t *testing.T) {
 type specialtyRecordingRenderer struct {
 	render.NullRenderer
 	pathCount   int
+	paths       []geom.Path
+	paints      []render.Paint
 	texts       []string
 	textOrigins map[string]geom.Pt
+	textBounds  map[string]render.TextBounds
+	textMetrics map[string]render.TextMetrics
 }
 
-func (r *specialtyRecordingRenderer) Path(_ geom.Path, _ *render.Paint) {
+func (r *specialtyRecordingRenderer) Path(path geom.Path, paint *render.Paint) {
 	r.pathCount++
+	r.paths = append(r.paths, path)
+	if paint != nil {
+		r.paints = append(r.paints, *paint)
+	}
 }
 
 func (r *specialtyRecordingRenderer) DrawText(text string, pt geom.Pt, _ float64, _ render.Color) {
@@ -493,12 +658,25 @@ func (r *specialtyRecordingRenderer) DrawText(text string, pt geom.Pt, _ float64
 }
 
 func (r *specialtyRecordingRenderer) MeasureText(text string, size float64, _ string) render.TextMetrics {
+	if r.textMetrics != nil {
+		if metrics, ok := r.textMetrics[text]; ok {
+			return metrics
+		}
+	}
 	return render.TextMetrics{
 		W:       float64(len(text)) * size * 0.55,
 		H:       size,
 		Ascent:  size * 0.8,
 		Descent: size * 0.2,
 	}
+}
+
+func (r *specialtyRecordingRenderer) MeasureTextBounds(text string, _ float64, _ string) (render.TextBounds, bool) {
+	if r.textBounds == nil {
+		return render.TextBounds{}, false
+	}
+	bounds, ok := r.textBounds[text]
+	return bounds, ok
 }
 
 func specialtyBoolPtr(v bool) *bool {

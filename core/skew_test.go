@@ -34,6 +34,27 @@ func TestAddSkewXAxesConfiguresProjection(t *testing.T) {
 	}
 }
 
+func TestSkewXTopAxisUsesSpineWithoutTickLabels(t *testing.T) {
+	fig := NewFigure(480, 360)
+	ax, err := fig.AddSkewXAxes(unitRect())
+	if err != nil {
+		t.Fatalf("AddSkewXAxes: %v", err)
+	}
+	if ax.XAxisTop == nil {
+		t.Fatal("skewx axes should configure a top spine axis")
+	}
+
+	if !ax.XAxisTop.ShowSpine {
+		t.Fatal("skewx top axis should keep the top spine visible")
+	}
+	if ax.XAxisTop.ShowTicks {
+		t.Fatal("skewx top axis should hide tick marks by default")
+	}
+	if ax.XAxisTop.ShowLabels {
+		t.Fatal("skewx top axis should hide tick labels by default")
+	}
+}
+
 func TestSkewXTransformRoundTrip(t *testing.T) {
 	fig := NewFigure(480, 360)
 	ax, err := fig.AddSkewXAxes(unitRect())
@@ -142,5 +163,50 @@ func TestSkewXGridUsesSampledProjectionPathsAndAxisLocators(t *testing.T) {
 		if got := len(call.path.V); got != geoGridSegments+1 {
 			t.Fatalf("grid path %d vertex count = %d, want %d", i, got, geoGridSegments+1)
 		}
+	}
+}
+
+func TestSkewXXGridUsesUpperViewInterval(t *testing.T) {
+	fig := NewFigure(480, 360)
+	ax, err := fig.AddSkewXAxes(unitRect())
+	if err != nil {
+		t.Fatalf("AddSkewXAxes: %v", err)
+	}
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+
+	grid := NewGrid(AxisBottom)
+	grid.Minor = false
+
+	r := &recordingRenderer{}
+	grid.Draw(r, ctx)
+
+	if got, want := len(r.pathCalls), 15; got != want {
+		t.Fatalf("skewx x-grid path count = %d, want %d including top-edge ticks", got, want)
+	}
+}
+
+func TestSkewXYTickLabelsStayOnLeftSpine(t *testing.T) {
+	fig := NewFigure(480, 360)
+	ax, err := fig.AddSkewXAxes(unitRect())
+	if err != nil {
+		t.Fatalf("AddSkewXAxes: %v", err)
+	}
+	ax.YAxis.Locator = FixedLocator{TicksList: []float64{200, 1000}}
+	ax.YAxis.Formatter = ScalarFormatter{Prec: 0}
+	ax.YAxis.MinorLocator = nil
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+
+	r := &polarTextRenderer{}
+	ax.YAxis.DrawTickLabels(r, ctx)
+
+	if got := len(r.origins); got != 2 {
+		t.Fatalf("skewx y tick labels = %d, want 2", got)
+	}
+	firstLayout := measureSingleLineTextLayout(r, r.texts[0], tickLabelFontSize(ax.YAxis, ctx), ctx.RC.FontKey)
+	secondLayout := measureSingleLineTextLayout(r, r.texts[1], tickLabelFontSize(ax.YAxis, ctx), ctx.RC.FontKey)
+	firstRight := r.origins[0].X + firstLayout.Width
+	secondRight := r.origins[1].X + secondLayout.Width
+	if !approx(firstRight, secondRight, 1e-9) {
+		t.Fatalf("skewx y tick label right edges = %v and %v, want same left spine column", firstRight, secondRight)
 	}
 }

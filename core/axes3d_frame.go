@@ -371,7 +371,7 @@ func (a *Axes3D) projectPointDepthWithProjectionLimits(x, y, z float64, mins, ma
 func (a *Axes3D) draw3DTickLabels(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, mins, maxs, tickMins, tickMaxs vec3) {
 	fontSize := ctx.RC.TickLabelSize("x")
 	textColor := render.Color{R: 0, G: 0, B: 0, A: 1}
-	centers, deltas := axes3DLabelCentersDeltas(ctx, tickMins, tickMaxs)
+	centers, deltas := axes3DLabelCentersDeltas(ctx, mins, maxs)
 	labelDeltas := vec3{}
 	for i := range 3 {
 		labelDeltas[i] = (defaultTickPadPt + 8) * deltas[i]
@@ -415,7 +415,7 @@ func (a *Axes3D) draw3DAxisLabels(textRen render.TextDrawer, r render.Renderer, 
 	fontSize := axisLabelFontSize(ctx)
 	textColor := ctx.RC.DefaultAxesLabelColor()
 	projMins, projMaxs := a.projectionLimits()
-	centers, deltas := axes3DLabelCentersDeltas(ctx, projMins, projMaxs)
+	centers, deltas := axes3DLabelCentersDeltas(ctx, mins, maxs)
 	labelDeltas := vec3{}
 	for i := range 3 {
 		labelDeltas[i] = (4 + 21) * deltas[i]

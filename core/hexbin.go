@@ -492,7 +492,7 @@ func specialtyMarginalBars(values, cvalues []float64, minValue, maxValue float64
 	}
 	return &PolyCollection{
 		PatchCollection: PatchCollection{
-			Collection: Collection{Coords: coords, Alpha: 1, z: 1.9},
+			Collection: Collection{Coords: coords, Alpha: 1, z: 2.1},
 			FaceColors: colors,
 			EdgeColors: colors,
 			EdgeWidth:  0,

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -28,11 +29,12 @@ type TableOptions struct {
 }
 
 type tableCell struct {
-	Text     string
-	Fill     render.Color
-	IsHeader bool
-	Rect     geom.Rect
-	HAlign   TextAlign
+	Text       string
+	Fill       render.Color
+	IsHeader   bool
+	IsRowLabel bool
+	Rect       geom.Rect
+	HAlign     TextAlign
 }
 
 // Table renders a simple grid of cells with optional row and column headers.
@@ -45,6 +47,7 @@ type Table struct {
 	HeaderTextColor render.Color
 	EdgeColor       render.Color
 	LineWidth       float64
+	ClipOn          bool
 	z               float64
 }
 
@@ -62,7 +65,7 @@ func (a *Axes) Table(opts ...TableOptions) *Table {
 		HeaderFillColor: render.Color{R: 1, G: 1, B: 1, A: 1},
 		CellFillColor:   render.Color{R: 1, G: 1, B: 1, A: 1},
 		EdgeColor:       render.Color{R: 0, G: 0, B: 0, A: 1},
-		LineWidth:       1,
+		LineWidth:       a.resolvedRC().DPI / 72.0,
 		CellLoc:         "right",
 		RowLoc:          "left",
 		ColLoc:          "center",
@@ -94,7 +97,7 @@ func (a *Axes) Table(opts ...TableOptions) *Table {
 			cfg.EdgeColor = render.Color{R: 0, G: 0, B: 0, A: 1}
 		}
 		if cfg.LineWidth <= 0 {
-			cfg.LineWidth = 1
+			cfg.LineWidth = a.resolvedRC().DPI / 72.0
 		}
 		if cfg.CellLoc == "" {
 			cfg.CellLoc = "right"
@@ -163,9 +166,10 @@ func (a *Axes) Table(opts ...TableOptions) *Table {
 		for r := 0; r < rows; r++ {
 			row := r + boolOffset(hasColLabels)
 			cells[row][0] = tableCell{
-				Text:     stringAt("", cfg.RowLabels, r),
-				Fill:     cfg.HeaderFillColor,
-				IsHeader: true,
+				Text:       stringAt("", cfg.RowLabels, r),
+				Fill:       cfg.HeaderFillColor,
+				IsHeader:   true,
+				IsRowLabel: true,
 				Rect: geom.Rect{
 					Min: geom.Pt{X: cfg.BBox.Min.X - rowLabelW, Y: cfg.BBox.Max.Y - float64(row+1)*cellH},
 					Max: geom.Pt{X: cfg.BBox.Min.X, Y: cfg.BBox.Max.Y - float64(row)*cellH},
@@ -282,6 +286,21 @@ func tableTextAnchor(rect geom.Rect, align TextAlign) geom.Pt {
 
 // Draw renders the table cells and text labels.
 func (t *Table) Draw(r render.Renderer, ctx *DrawContext) {
+	if t == nil || !t.ClipOn {
+		return
+	}
+	t.drawTable(r, ctx)
+}
+
+// DrawOverlay renders unclipped tables after the axes clip has been removed.
+func (t *Table) DrawOverlay(r render.Renderer, ctx *DrawContext) {
+	if t == nil || t.ClipOn {
+		return
+	}
+	t.drawTable(r, ctx)
+}
+
+func (t *Table) drawTable(r render.Renderer, ctx *DrawContext) {
 	if t == nil || ctx == nil || r == nil || len(t.Cells) == 0 || len(t.Cells[0]) == 0 {
 		return
 	}
@@ -289,10 +308,11 @@ func (t *Table) Draw(r render.Renderer, ctx *DrawContext) {
 	if !ok {
 		return
 	}
+	cells := t.layoutCells(r, ctx)
 
-	for row := range t.Cells {
-		for col := range t.Cells[row] {
-			cell := t.Cells[row][col]
+	for row := range cells {
+		for col := range cells[row] {
+			cell := cells[row][col]
 			if cell.Rect == (geom.Rect{}) {
 				continue
 			}
@@ -303,6 +323,7 @@ func (t *Table) Draw(r render.Renderer, ctx *DrawContext) {
 				LineWidth: t.LineWidth,
 				LineJoin:  render.JoinMiter,
 				LineCap:   render.CapButt,
+				Snap:      render.SnapAuto,
 			})
 
 			text := cell.Text
@@ -315,9 +336,97 @@ func (t *Table) Draw(r render.Renderer, ctx *DrawContext) {
 			if cell.IsHeader {
 				color = t.HeaderTextColor
 			}
-			drawDisplayText(textRen, text, alignedSingleLineOrigin(anchor, layout, cell.HAlign, textLayoutVAlignCenter), t.FontSize, color, ctx.RC.FontKey, ctx.RC.UseTeX)
+			drawDisplayText(textRen, text, alignedTableTextOrigin(anchor, layout, cell.HAlign), t.FontSize, color, ctx.RC.FontKey, ctx.RC.UseTeX)
 		}
 	}
+}
+
+func (t *Table) layoutCells(r render.Renderer, ctx *DrawContext) [][]tableCell {
+	cells := make([][]tableCell, len(t.Cells))
+	for row := range t.Cells {
+		cells[row] = make([]tableCell, len(t.Cells[row]))
+		copy(cells[row], t.Cells[row])
+	}
+
+	rowLabelW, ok := t.measuredRowLabelWidth(r, ctx)
+	if !ok {
+		return cells
+	}
+	scaleX := t.BBox.W()
+	if scaleX <= 0 {
+		return cells
+	}
+	finalRowLabelW := rowLabelW * scaleX
+	xShift := -rowLabelW * (1 - scaleX)
+	dataLeft := t.BBox.Min.X + xShift
+	for row := range cells {
+		for col := range cells[row] {
+			if cells[row][col].Rect == (geom.Rect{}) {
+				continue
+			}
+			cells[row][col].Rect.Min.X += xShift
+			cells[row][col].Rect.Max.X += xShift
+			if cells[row][col].IsRowLabel {
+				cells[row][col].Rect.Min.X = dataLeft - finalRowLabelW
+				cells[row][col].Rect.Max.X = dataLeft
+			}
+		}
+	}
+	return cells
+}
+
+func (t *Table) measuredRowLabelWidth(r render.Renderer, ctx *DrawContext) (float64, bool) {
+	if t == nil || r == nil || ctx == nil {
+		return 0, false
+	}
+	coordsToDisplay := ctx.TransformFor(t.Coords)
+	if coordsToDisplay == nil {
+		return 0, false
+	}
+	x0 := coordsToDisplay.Apply(geom.Pt{X: t.BBox.Min.X, Y: t.BBox.Min.Y}).X
+	x1 := coordsToDisplay.Apply(geom.Pt{X: t.BBox.Min.X + 1, Y: t.BBox.Min.Y}).X
+	displayPerCoord := math.Abs(x1 - x0)
+	if displayPerCoord <= 0 {
+		return 0, false
+	}
+
+	maxWidthPx := 0.0
+	for row := range t.Cells {
+		for col := range t.Cells[row] {
+			cell := t.Cells[row][col]
+			if !cell.IsRowLabel || displayTextIsEmpty(cell.Text) {
+				continue
+			}
+			layout := measureSingleLineTextLayout(r, cell.Text, t.FontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
+			widthPx := layout.Width
+			if widthPx > maxWidthPx {
+				maxWidthPx = widthPx
+			}
+		}
+	}
+	if maxWidthPx <= 0 {
+		return 0, false
+	}
+
+	const matplotlibCellPad = 0.1
+	return maxWidthPx * (1 + 2*matplotlibCellPad) / displayPerCoord, true
+}
+
+func alignedTableTextOrigin(anchor geom.Pt, layout singleLineTextLayout, hAlign TextAlign) geom.Pt {
+	origin := alignedSingleLineOrigin(anchor, layout, hAlign, textLayoutVAlignCenter)
+	if !layout.HaveInkBounds || layout.InkBounds.W <= 0 {
+		return origin
+	}
+
+	switch hAlign {
+	case TextAlignLeft:
+		origin.X = anchor.X - layout.InkBounds.X
+	case TextAlignRight:
+		origin.X = anchor.X - layout.InkBounds.X - layout.InkBounds.W
+	default:
+		origin.X = anchor.X - layout.InkBounds.X - layout.InkBounds.W/2
+	}
+	return origin
 }
 
 // Bounds returns an empty rect so table placement does not affect autoscaling.

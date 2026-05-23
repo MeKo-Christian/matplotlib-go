@@ -175,12 +175,19 @@ func (a *Axes) MagnitudeSpectrum(samples []float64, opts ...SignalSpectrumOption
 	samples = finiteSeries(samples)
 	freqs, values := computeMagnitudeSpectrum(samples, cfg)
 	a.SetXLabel("Frequency")
+	plotValues := values
 	if cfg.Scale == SignalSpectrumScaleDB {
 		a.SetYLabel("Magnitude (dB)")
+		plotValues = magnitudeSpectrumDBValues(values)
 	} else {
 		a.SetYLabel("Magnitude (energy)")
 	}
-	return plotSpectrumResult(a, freqs, values, cfg.PlotOptions)
+	result := plotSpectrumResult(a, freqs, plotValues, cfg.PlotOptions)
+	if result == nil {
+		return nil
+	}
+	result.Values = append([]float64(nil), values...)
+	return result
 }
 
 // AngleSpectrum computes a one-sided FFT phase angle spectrum in radians.
@@ -389,17 +396,21 @@ func computeMagnitudeSpectrum(samples []float64, opts SignalSpectrumOptions) ([]
 	scale := windowSum(window)
 	out := make([]float64, len(coeffs))
 	for i, coeff := range coeffs {
-		value := cmplx.Abs(coeff) / scale
-		if opts.Scale == SignalSpectrumScaleDB {
-			if value <= 0 {
-				value = -120
-			} else {
-				value = 20 * math.Log10(value)
-			}
-		}
-		out[i] = value
+		out[i] = cmplx.Abs(coeff) / scale
 	}
 	return freqs, out
+}
+
+func magnitudeSpectrumDBValues(values []float64) []float64 {
+	out := make([]float64, len(values))
+	for i, value := range values {
+		if value <= 0 {
+			out[i] = -120
+			continue
+		}
+		out[i] = 20 * math.Log10(value)
+	}
+	return out
 }
 
 func computeAngleSpectrum(samples []float64, opts SignalSpectrumOptions) ([]float64, []float64) {
@@ -427,7 +438,7 @@ func unwrapPhaseAngles(angles []float64) {
 	if len(angles) < 2 {
 		return
 	}
-	threshold := math.Pi + 1e-2
+	threshold := math.Pi
 	offset := 0.0
 	previousRaw := angles[0]
 	for i := 1; i < len(angles); i++ {

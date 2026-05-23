@@ -61,6 +61,30 @@ func TestAxesPlotDate_ConfiguresDateAxis(t *testing.T) {
 	}
 }
 
+func TestAxesDateUnitsPreserveExplicitAxisInfoAfterAutoscale(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	dates := []time.Time{
+		time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.February, 10, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.February, 20, 0, 0, 0, 0, time.UTC),
+	}
+	if _, err := ax.PlotUnits(dates, []float64{1, 3, 2}); err != nil {
+		t.Fatalf("PlotUnits returned error: %v", err)
+	}
+
+	ax.XAxis.Locator = DayLocator{ByMonthDay: []int{5, 12, 19}, Location: time.UTC}
+	ax.XAxis.Formatter = DateFormatter{Layout: "02 Jan", Location: time.UTC}
+	ax.AutoScale(0.06)
+
+	if _, ok := ax.XAxis.Locator.(DayLocator); !ok {
+		t.Fatalf("x-axis locator after AutoScale = %T, want DayLocator", ax.XAxis.Locator)
+	}
+	if _, ok := ax.XAxis.Formatter.(DateFormatter); !ok {
+		t.Fatalf("x-axis formatter after AutoScale = %T, want DateFormatter", ax.XAxis.Formatter)
+	}
+}
+
 func TestAxesBarUnits_ConfiguresCategoricalXAxis(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})

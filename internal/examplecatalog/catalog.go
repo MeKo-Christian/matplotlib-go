@@ -107,7 +107,7 @@ var cases = []Case{
 	{ID: "patch_showcase", Topic: "patches", Title: "Patch Showcase", Optional: true, SVGGoldenFamily: "hatch_bars", GoBasicSmokeFamily: "patch_hatch", MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "mesh_contour_tri", Topic: "mesh", Title: "Meshes and Contours", Optional: true, WebDemoID: "mesh", Description: "PColorMesh, contour/contourf, Hist2D, triplot, tripcolor, and tricontour.", Showcase: true, GoBasicSmokeFamily: "mesh", MinPSNR: 37.5, MaxMeanAbs: 7.5},
 	{ID: "plot_variants", Topic: "variants", Title: "Plot Variants", Optional: true, WebDemoID: "variants", Description: "Step, stairs, reference lines, spans, broken bars, and stacked bars.", Showcase: true, GoBasicSmokeFamily: "variants", MinPSNR: 35.0, MaxMeanAbs: 6.5},
-	{ID: "spectrum_variants", Topic: "signal", Title: "Spectrum Variants", FixtureOnly: true, GoBasicSmokeFamily: "signal", MinPSNR: 35.0, MaxMeanAbs: 6.5},
+	{ID: "spectrum_variants", Topic: "signal", Title: "Spectrum Variants", FixtureOnly: true, GoBasicSmokeFamily: "signal", MinPSNR: 35.0, MaxMeanAbs: 6.5, MaxRMSE: 10.0},
 	{ID: "stat_variants", Topic: "statistics", Title: "Statistical Views", Optional: true, WebDemoID: "statistics", Description: "Box plots, violin plots, empirical CDFs, and stack plots.", Showcase: true, GoBasicSmokeFamily: "statistics", MinPSNR: 32.0, MaxMeanAbs: 9.0},
 	{ID: "specialty_depth", Topic: "statistics", Title: "Specialty Depth", FixtureOnly: true, MinPSNR: 22.0, MaxMeanAbs: 20.0, MaxRMSE: 35.0},
 	{ID: "stem_plot", Topic: "specialty", Title: "Stem Plot", Optional: true},

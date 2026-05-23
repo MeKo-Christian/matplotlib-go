@@ -20,6 +20,9 @@ func TestAddRadarAxesConfiguresProjection(t *testing.T) {
 	if ax.ShowFrame {
 		t.Fatal("radar axes should disable rectangular frame fallback")
 	}
+	if !approx(ax.XAxis.TickSize, defaultTickSizePx, 1e-12) {
+		t.Fatalf("radar theta tick size = %v, want Matplotlib default %v even though tick marks are hidden", ax.XAxis.TickSize, defaultTickSizePx)
+	}
 
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 	center, radius := polarCenterAndRadius(ax.adjustedLayout(fig))
@@ -97,14 +100,50 @@ func TestRadarRadialLabelsUseMatplotlibDefaultOffsetFromNorth(t *testing.T) {
 
 	labelAngle := math.Pi/2 + defaultPolarRadialLabelAngle
 	fontSize := tickLabelFontSize(ax.YAxis, ctx)
-	labelPadPx := tickLabelPadForSize(ax.YAxis.TickSize, ax.YAxis.MajorLabelStyle, ctx)
 	layout := measureSingleLineTextLayout(r, "radial", fontSize, ctx.RC.FontKey)
-	anchor := polarPixelPoint(center, outerRadius*0.5+labelPadPx, labelAngle)
+	anchor := polarPixelPoint(center, outerRadius*0.5, labelAngle)
 	hAlign, vAlign := polarTickLabelAlignments(labelAngle)
 	wantOrigin := alignedSingleLineOrigin(anchor, layout, hAlign, vAlign)
 
 	if !approx(r.origins[0].X, wantOrigin.X, 1e-6) || !approx(r.origins[0].Y, wantOrigin.Y, 1e-6) {
 		t.Fatalf("radial tick label origin = %+v, want %+v", r.origins[0], wantOrigin)
+	}
+}
+
+func TestRadarThetaLabelsUseMatplotlibCenteredPadding(t *testing.T) {
+	fig := NewFigure(400, 400)
+	ax, err := fig.AddRadarAxes(unitRect(), []string{"Top", "Left", "Bottom", "Right"})
+	if err != nil {
+		t.Fatalf("AddRadarAxes: %v", err)
+	}
+
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	center, outerRadius := polarCenterAndRadius(ax.adjustedLayout(fig))
+	r := &polarTextRenderer{}
+
+	ax.XAxis.DrawTickLabels(r, ctx)
+
+	var origin geom.Pt
+	found := false
+	for i, label := range r.texts {
+		if label == "Left" {
+			origin = r.origins[i]
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected Left theta label, got %v", r.texts)
+	}
+
+	fontSize := tickLabelFontSize(ax.XAxis, ctx)
+	layout := measureSingleLineTextLayout(r, "Left", fontSize, ctx.RC.FontKey)
+	padPx := defaultTickSizePx + pointsToPixels(ctx.RC, defaultTickPadPt+7)
+	anchor := polarPixelPoint(center, outerRadius+padPx, math.Pi)
+	wantOrigin := alignedSingleLineOrigin(anchor, layout, TextAlignCenter, textLayoutVAlignCenter)
+
+	if !approx(origin.X, wantOrigin.X, 1e-6) || !approx(origin.Y, wantOrigin.Y, 1e-6) {
+		t.Fatalf("theta label origin = %+v, want centered Matplotlib padding origin %+v", origin, wantOrigin)
 	}
 }
 

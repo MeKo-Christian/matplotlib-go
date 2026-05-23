@@ -206,22 +206,21 @@ func (p *polarProjection) ConfigureAxes(ax *Axes) {
 	ax.ShowFrame = false
 
 	ax.XAxis.Locator = MultipleLocator{Base: math.Pi / 4}
-	ax.XAxis.MinorLocator = MultipleLocator{Base: math.Pi / 12}
+	ax.XAxis.MinorLocator = nil
 	ax.XAxis.Formatter = FuncFormatter(formatPolarThetaLabel)
 	ax.XAxis.ShowSpine = true
-	ax.XAxis.ShowTicks = true
+	ax.XAxis.ShowTicks = false
 	ax.XAxis.ShowLabels = true
 
 	ax.YAxis.Locator = LinearLocator{}
-	ax.YAxis.MinorLocator = MinorLinearLocator{N: 2}
+	ax.YAxis.MinorLocator = nil
 	ax.YAxis.Formatter = ScalarFormatter{Prec: 3}
-	ax.YAxis.ShowSpine = true
-	ax.YAxis.ShowTicks = true
+	ax.YAxis.ShowSpine = false
+	ax.YAxis.ShowTicks = false
 	ax.YAxis.ShowLabels = true
 
 	if p.isRadar() {
 		configureRadarThetaAxis(ax, p)
-		ax.YAxis.ShowSpine = false
 		ax.YAxis.ShowTicks = false
 	}
 }
@@ -276,8 +275,6 @@ func configureRadarThetaAxis(ax *Axes, p *polarProjection) {
 	ax.XAxis.Locator = FixedLocator{TicksList: RadarAngles(count)}
 	ax.XAxis.MinorLocator = nil
 	ax.XAxis.Formatter = radarThetaFormatter(p.radarLabels, count)
-	ax.XAxis.TickSize = 0
-	ax.XAxis.MinorTickSize = 0
 }
 
 func radarThetaFormatter(labels []string, count int) Formatter {

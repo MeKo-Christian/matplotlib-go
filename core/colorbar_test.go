@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 func TestFigureAddColorbarConfiguresAxes(t *testing.T) {
@@ -216,6 +217,81 @@ func TestFigureAddColorbarUsesBoundaryNormTicks(t *testing.T) {
 	}
 }
 
+func TestFigureAddColorbarUsesFunctionScaleForTwoSlopeNorm(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{
+		{-3, 0},
+		{0, 6},
+	}, ImageOptions{Norm: TwoSlopeNorm{VMin: -3, VCenter: 0, VMax: 6}})
+
+	cbAx := fig.AddColorbar(ax, img)
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	if _, ok := cbAx.YScale.(transform.FuncScale); !ok {
+		t.Fatalf("colorbar y scale = %T, want transform.FuncScale for TwoSlopeNorm", cbAx.YScale)
+	}
+	if got := cbAx.YScale.Fwd(0); got < 0.49 || got > 0.51 {
+		t.Fatalf("TwoSlopeNorm colorbar center maps to %v, want about 0.5", got)
+	}
+}
+
+func TestFigureAddColorbarShrinksAxesForExtensions(t *testing.T) {
+	fig := NewFigure(640, 360)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.12, Y: 0.16},
+		Max: geom.Pt{X: 0.90, Y: 0.88},
+	})
+	mesh := ax.PColorMesh([][]float64{{-1, 0, 2}}, MeshOptions{
+		XEdges: []float64{0, 1, 2, 3},
+		YEdges: []float64{0, 1},
+	})
+	base := colorbarBaseRect(ax)
+
+	cbAx := fig.AddColorbar(ax, mesh, ColorbarOptions{Extend: "both"})
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	if !(cbAx.RectFraction.Min.Y > base.Min.Y && cbAx.RectFraction.Max.Y < base.Max.Y) {
+		t.Fatalf("extended colorbar rect = %+v, want vertical inset within base %+v", cbAx.RectFraction, base)
+	}
+}
+
+func TestExtendedColorbarAdjustedLayoutKeepsMatplotlibWidth(t *testing.T) {
+	fig := NewFigure(640, 360)
+	gs := fig.GridSpec(
+		1,
+		1,
+		WithGridSpecPadding(0.125, 0.9, 0.11, 0.88),
+		WithGridSpecSpacing(0, 0),
+	)
+	ax := gs.Cell(0, 0).AddAxes()
+	ax.SetPosition(geom.Rect{
+		Min: geom.Pt{X: 0.12, Y: 0.16},
+		Max: geom.Pt{X: 0.90, Y: 0.88},
+	})
+	mesh := ax.PColorMesh([][]float64{{-1, 0, 2}}, MeshOptions{
+		XEdges: []float64{0, 1, 2, 3},
+		YEdges: []float64{0, 1},
+	})
+
+	cbAx := fig.AddColorbar(ax, mesh, ColorbarOptions{Extend: "both"})
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+
+	got := cbAx.adjustedLayout(fig)
+	base := colorbarBaseRect(ax)
+	wantWidth := resolvedColorbarWidth(fig, base, 0, defaultColorbarAspect) * fig.SizePx.X
+	if !floatApprox(got.W(), wantWidth, 1e-12) {
+		t.Fatalf("extended colorbar adjusted pixel width = %v, want Matplotlib non-shrunk width %v", got.W(), wantWidth)
+	}
+}
+
 func TestColorbarDrawAddsExtensionTriangles(t *testing.T) {
 	var r colorbarRecordingRenderer
 	clip := geom.Rect{
@@ -223,19 +299,55 @@ func TestColorbarDrawAddsExtensionTriangles(t *testing.T) {
 		Max: geom.Pt{X: 42, Y: 80},
 	}
 
-	(&Colorbar{
+	cb := &Colorbar{
 		Mapping:     ScalarMapInfo{Colormap: "gray", VMin: 0, VMax: 1}.Resolved(),
 		Extend:      "both",
 		Alpha:       1,
 		BorderColor: render.Color{A: 1},
 		BorderWidth: 1,
-	}).Draw(&r, &DrawContext{Clip: clip})
+	}
+	ctx := &DrawContext{Clip: clip}
+	cb.Draw(&r, ctx)
+	cb.DrawOverlay(&r, ctx)
 
 	if len(r.paths) != 259 {
 		t.Fatalf("path count = %d, want 256 cells plus 2 extensions plus outline", len(r.paths))
 	}
-	if len(r.paths[0].V) < 3 || len(r.paths[1].V) < 3 {
-		t.Fatalf("extension paths should be triangles, got first lens %d and %d", len(r.paths[0].V), len(r.paths[1].V))
+	if len(r.paths[256].V) < 3 || len(r.paths[257].V) < 3 {
+		t.Fatalf("extension paths should be triangles, got lens %d and %d", len(r.paths[256].V), len(r.paths[257].V))
+	}
+}
+
+func TestColorbarExtensionsDrawOutsideAxesClip(t *testing.T) {
+	var r clipTrackingRenderer
+	clip := geom.Rect{
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 42, Y: 80},
+	}
+	cb := &Colorbar{
+		Mapping:     ScalarMapInfo{Colormap: "gray", VMin: 0, VMax: 1}.Resolved(),
+		Extend:      "both",
+		Alpha:       1,
+		BorderColor: render.Color{A: 1},
+		BorderWidth: 1,
+	}
+	ctx := &DrawContext{Clip: clip}
+
+	r.Save()
+	r.ClipRect(clip)
+	cb.Draw(&r, ctx)
+	r.Restore()
+
+	if r.clippedOutsidePaths != 0 {
+		t.Fatalf("extension paths drawn while axes clip was active = %d, want 0", r.clippedOutsidePaths)
+	}
+	overlay, ok := any(cb).(OverlayArtist)
+	if !ok {
+		t.Fatal("colorbar with extensions should draw overlay outside the axes clip")
+	}
+	overlay.DrawOverlay(&r, ctx)
+	if r.unclippedOutsidePaths == 0 {
+		t.Fatal("expected colorbar extension overlay paths outside the axes clip")
 	}
 }
 
@@ -289,6 +401,7 @@ type colorbarRecordingRenderer struct {
 	texts      []string
 	imageRects []geom.Rect
 	paths      []geom.Path
+	fills      []render.Color
 }
 
 func (r *colorbarRecordingRenderer) Image(_ render.Image, dst geom.Rect) {
@@ -296,9 +409,12 @@ func (r *colorbarRecordingRenderer) Image(_ render.Image, dst geom.Rect) {
 	r.imageRects = append(r.imageRects, dst)
 }
 
-func (r *colorbarRecordingRenderer) Path(path geom.Path, _ *render.Paint) {
+func (r *colorbarRecordingRenderer) Path(path geom.Path, paint *render.Paint) {
 	r.pathCount++
 	r.paths = append(r.paths, path)
+	if paint != nil {
+		r.fills = append(r.fills, paint.Fill)
+	}
 }
 
 func (r *colorbarRecordingRenderer) MeasureText(text string, size float64, _ string) render.TextMetrics {
@@ -312,4 +428,45 @@ func (r *colorbarRecordingRenderer) MeasureText(text string, size float64, _ str
 
 func (r *colorbarRecordingRenderer) DrawText(text string, _ geom.Pt, _ float64, _ render.Color) {
 	r.texts = append(r.texts, text)
+}
+
+type clipTrackingRenderer struct {
+	render.NullRenderer
+	clipActive            bool
+	clip                  geom.Rect
+	clippedOutsidePaths   int
+	unclippedOutsidePaths int
+}
+
+func (r *clipTrackingRenderer) Save() {}
+
+func (r *clipTrackingRenderer) Restore() {
+	r.clipActive = false
+}
+
+func (r *clipTrackingRenderer) ClipRect(rect geom.Rect) {
+	r.clipActive = true
+	r.clip = rect
+}
+
+func (r *clipTrackingRenderer) Path(path geom.Path, _ *render.Paint) {
+	if !pathOutsideRect(path, r.clip) {
+		return
+	}
+	if r.clipActive {
+		r.clippedOutsidePaths++
+		return
+	}
+	r.unclippedOutsidePaths++
+}
+
+func pathOutsideRect(path geom.Path, rect geom.Rect) bool {
+	const snapTolerance = 1.1
+	for _, pt := range path.V {
+		if pt.X < rect.Min.X-snapTolerance || pt.X > rect.Max.X+snapTolerance ||
+			pt.Y < rect.Min.Y-snapTolerance || pt.Y > rect.Max.Y+snapTolerance {
+			return true
+		}
+	}
+	return false
 }

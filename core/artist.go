@@ -380,6 +380,7 @@ type Axes struct {
 	colorbarPadding float64
 	colorbarAspect  float64
 	colorbarBase    geom.Rect
+	colorbarExtend  string
 }
 
 // TickParams controls axis tick visibility and styling.
@@ -886,6 +887,9 @@ func (a *Axes) AddGrid(axis AxisSide) *Grid {
 	grid.MinorLineWidth = rc.MinorGridLineWidth
 	grid.Dashes = styleCloneDashes(rc.GridDashes)
 	grid.MinorDashes = styleCloneDashes(rc.MinorGridDashes)
+	if isPolarProjection(a.projection) {
+		grid.z = 1.5
+	}
 	a.Add(grid)
 	return grid
 }
@@ -2102,6 +2106,7 @@ func (a *Axes) adjustedColorbarLayout(f *Figure, px geom.Rect) geom.Rect {
 	} else {
 		aspect := resolvedColorbarAspect(a.colorbarAspect)
 		if aspect > 0 {
+			aspect *= colorbarExtensionShrink(a.colorbarExtend)
 			width = px.H() / aspect
 		}
 	}

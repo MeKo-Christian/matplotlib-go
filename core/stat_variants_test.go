@@ -3,6 +3,7 @@ package core
 import (
 	"testing"
 
+	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -86,6 +87,22 @@ func TestAxesBoxPlotsDefaultWidthMatchesMatplotlibPositions(t *testing.T) {
 		if box.Width != 0.15 {
 			t.Fatalf("box %d width = %v, want Matplotlib default 0.15", i, box.Width)
 		}
+	}
+}
+
+func TestAxesBoxPlotDefaultMedianStyleMatchesMatplotlib(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+
+	box := ax.BoxPlot([]float64{1, 2, 3, 4, 5})
+	if box == nil {
+		t.Fatal("expected box plot")
+	}
+	wantColor := matcolor.Tab10[1]
+	if box.MedianColor != wantColor {
+		t.Fatalf("median color = %+v, want Matplotlib boxplot.medianprops.color C1 %+v", box.MedianColor, wantColor)
+	}
+	if box.MedianWidth != 1.0 {
+		t.Fatalf("median width = %v, want Matplotlib boxplot.medianprops.linewidth 1.0", box.MedianWidth)
 	}
 }
 

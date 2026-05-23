@@ -295,10 +295,14 @@ func drawLimitCaret(r render.Renderer, ctx *DrawContext, basePt geom.Pt, dirX, d
 		apex = geom.Pt{X: base.X, Y: base.Y + length}
 		p2 = geom.Pt{X: base.X + half, Y: base.Y}
 	}
+	markerPaint := *paint
+	if markerPaint.Fill.A <= 0 {
+		markerPaint.Fill = markerPaint.Stroke
+	}
 	r.Path(geom.Path{
-		C: []geom.Cmd{geom.MoveTo, geom.LineTo, geom.LineTo},
+		C: []geom.Cmd{geom.MoveTo, geom.LineTo, geom.LineTo, geom.ClosePath},
 		V: []geom.Pt{p1, apex, p2},
-	}, paint)
+	}, &markerPaint)
 }
 
 func drawErrorbarCapMarker(r render.Renderer, ctx *DrawContext, dataPt geom.Pt, vertical bool, halfSize float64, paint *render.Paint) {

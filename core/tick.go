@@ -267,6 +267,17 @@ func formatScalarTickLabel(f ScalarFormatter, x, step float64) string {
 	return scalarFixMinus(strconv.FormatFloat(x, 'f', prec, 64))
 }
 
+func formatTickLabelForTicks(formatter Formatter, tick float64, index int, ticks []float64) string {
+	label := formatTickLabel(formatter, tick, index, ticks)
+	if scalarFormatter, ok := formatter.(ScalarFormatter); ok && len(ticks) >= 2 {
+		step := ticks[1] - ticks[0]
+		if step > 0 {
+			label = formatScalarTickLabel(scalarFormatter, tick, step)
+		}
+	}
+	return label
+}
+
 // MinorLinearLocator subdivides the intervals between major ticks.
 // N is the number of subdivisions per major interval (e.g. N=5 gives 4 minor ticks
 // between each pair of major ticks). If N <= 1, defaults to 5.

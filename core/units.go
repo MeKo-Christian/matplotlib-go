@@ -95,6 +95,7 @@ type axisUnitsState struct {
 	info       AxisInfo
 	location   *time.Location
 	categories categoryAxisState
+	applied    map[*Axis]AxisInfo
 }
 
 func (s *axisUnitsState) name() string {
@@ -422,7 +423,7 @@ func (a *Axes) refreshUnitAxis(isX bool) {
 		primary, secondary = root.YAxis, root.YAxisRight
 		minVal, maxVal = currentScaleDomain(root.YScale)
 	}
-	applyAxisInfo(primary, secondary, state.axisInfo(minVal, maxVal))
+	state.applyAxisInfo(primary, secondary, state.axisInfo(minVal, maxVal))
 }
 
 func (s *axisUnitsState) axisInfo(minVal, maxVal float64) AxisInfo {
@@ -443,23 +444,75 @@ func (s *axisUnitsState) axisInfo(minVal, maxVal float64) AxisInfo {
 	}
 }
 
-func applyAxisInfo(primary, secondary *Axis, info AxisInfo) {
-	applyAxisInfoToAxis(primary, info)
-	applyAxisInfoToAxis(secondary, info)
+func (s *axisUnitsState) applyAxisInfo(primary, secondary *Axis, info AxisInfo) {
+	s.applyAxisInfoToAxis(primary, info)
+	s.applyAxisInfoToAxis(secondary, info)
 }
 
-func applyAxisInfoToAxis(axis *Axis, info AxisInfo) {
+func (s *axisUnitsState) applyAxisInfoToAxis(axis *Axis, info AxisInfo) {
 	if axis == nil {
 		return
 	}
-	if info.Locator != nil {
+
+	if s.applied == nil {
+		s.applied = make(map[*Axis]AxisInfo)
+	}
+	previous, hadPrevious := s.applied[axis]
+	applied := previous
+
+	if info.Locator != nil && canApplyUnitAxisInfo(axis.Locator, previous.Locator, hadPrevious, isDefaultMajorLocator) {
 		axis.Locator = info.Locator
+		applied.Locator = info.Locator
 	}
-	if info.Formatter != nil {
+	if info.Formatter != nil && canApplyUnitAxisInfo(axis.Formatter, previous.Formatter, hadPrevious, isDefaultMajorFormatter) {
 		axis.Formatter = info.Formatter
+		applied.Formatter = info.Formatter
 	}
-	axis.MinorLocator = info.MinorLocator
-	axis.MinorFormatter = info.MinorFormatter
+	if canApplyUnitAxisInfo(axis.MinorLocator, previous.MinorLocator, hadPrevious, isDefaultMinorLocator) {
+		axis.MinorLocator = info.MinorLocator
+		applied.MinorLocator = info.MinorLocator
+	}
+	if canApplyUnitAxisInfo(axis.MinorFormatter, previous.MinorFormatter, hadPrevious, isDefaultMinorFormatter) {
+		axis.MinorFormatter = info.MinorFormatter
+		applied.MinorFormatter = info.MinorFormatter
+	}
+
+	if applied.Locator != nil || applied.Formatter != nil || applied.MinorLocator != nil || applied.MinorFormatter != nil {
+		s.applied[axis] = applied
+	}
+}
+
+func canApplyUnitAxisInfo[T any](current, previous T, hadPrevious bool, isDefault func(T) bool) bool {
+	if hadPrevious {
+		return reflect.DeepEqual(current, previous) || isDefault(current)
+	}
+	return isDefault(current)
+}
+
+func isDefaultMajorLocator(locator Locator) bool {
+	switch locator.(type) {
+	case nil, AutoLocator, LinearLocator:
+		return true
+	default:
+		return false
+	}
+}
+
+func isDefaultMajorFormatter(formatter Formatter) bool {
+	switch formatter.(type) {
+	case nil, ScalarFormatter:
+		return true
+	default:
+		return false
+	}
+}
+
+func isDefaultMinorLocator(locator Locator) bool {
+	return locator == nil
+}
+
+func isDefaultMinorFormatter(formatter Formatter) bool {
+	return formatter == nil
 }
 
 func sliceValue(values any) (reflect.Value, reflect.Type, error) {

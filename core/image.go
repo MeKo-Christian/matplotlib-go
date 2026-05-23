@@ -19,7 +19,7 @@ func (i *Image2D) Draw(r render.Renderer, ctx *DrawContext) {
 	if dst.W() <= 0 || dst.H() <= 0 {
 		return
 	}
-	dst = roundImageRectToPixelBorder(dst)
+	dst = matplotlibImageDrawRect(dst)
 
 	raster, ok := i.rasterizeForRect(dst)
 	if !ok {
@@ -43,17 +43,24 @@ func (i *Image2D) Draw(r render.Renderer, ctx *DrawContext) {
 	r.Image(raster, dst)
 }
 
-func roundImageRectToPixelBorder(dst geom.Rect) geom.Rect {
+func matplotlibImageDrawRect(dst geom.Rect) geom.Rect {
 	// Matplotlib's Image._make_image(..., round_to_pixel_border=True) rounds
-	// the display-space image bbox to output pixels before resampling.
+	// the resampled image buffer up to whole output pixels and keeps the
+	// original left/bottom anchor. In top-left display coordinates that means
+	// preserving left and bottom, then extending right/up by the ceiled size.
+	width := math.Ceil(math.Abs(dst.W()))
+	height := math.Ceil(math.Abs(dst.H()))
+	if width <= 0 || height <= 0 {
+		return dst
+	}
 	return geom.Rect{
 		Min: geom.Pt{
-			X: math.Floor(dst.Min.X + 0.5),
-			Y: math.Floor(dst.Min.Y + 0.5),
+			X: dst.Min.X,
+			Y: dst.Max.Y - height,
 		},
 		Max: geom.Pt{
-			X: math.Floor(dst.Max.X + 0.5 + 1e-8),
-			Y: math.Floor(dst.Max.Y + 0.5 + 1e-8),
+			X: dst.Min.X + width,
+			Y: dst.Max.Y,
 		},
 	}
 }

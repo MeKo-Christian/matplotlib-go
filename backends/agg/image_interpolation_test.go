@@ -112,6 +112,39 @@ func TestAggImage_AutoInterpolationUsesHanningForNonIntegerScale(t *testing.T) {
 	}
 }
 
+func TestAggImageExactSizeDrawPreservesBottomAndRightEdges(t *testing.T) {
+	r, err := New(12, 12, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	src := image.NewRGBA(image.Rect(0, 0, 4, 4))
+	black := color.RGBA{A: 255}
+	for x := 0; x < 4; x++ {
+		src.SetRGBA(x, 3, black)
+	}
+	for y := 0; y < 4; y++ {
+		src.SetRGBA(3, y, black)
+	}
+	data := render.NewImageData(src)
+	data.SetInterpolation("nearest")
+
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 12, Y: 12}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	r.Image(data, geom.Rect{Min: geom.Pt{X: 4, Y: 4}, Max: geom.Pt{X: 8, Y: 8}})
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	img := r.GetImage()
+	if got := img.RGBAAt(5, 7); got != black {
+		t.Fatalf("bottom edge pixel = %+v, want %+v", got, black)
+	}
+	if got := img.RGBAAt(7, 5); got != black {
+		t.Fatalf("right edge pixel = %+v, want %+v", got, black)
+	}
+}
+
 func TestImageTransformDisplaySpan(t *testing.T) {
 	raster := render.NewImageData(image.NewRGBA(image.Rect(0, 0, 2, 3)))
 	spanX, spanY := imageTransformDisplaySpan(raster, geom.Affine{

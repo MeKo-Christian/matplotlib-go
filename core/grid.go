@@ -176,6 +176,9 @@ func (g *Grid) drawCurvelinear(r render.Renderer, ctx *DrawContext) {
 	switch g.Axis {
 	case AxisBottom, AxisTop:
 		domainMin, domainMax = ctx.DataToPixel.XScale.Domain()
+		if minVal, maxVal, ok := skewXGridXTickDomain(ctx); ok {
+			domainMin, domainMax = minVal, maxVal
+		}
 	case AxisLeft, AxisRight:
 		domainMin, domainMax = ctx.DataToPixel.YScale.Domain()
 	}

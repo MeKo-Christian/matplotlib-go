@@ -7,6 +7,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 func TestAxesImage_DefaultOptions(t *testing.T) {
@@ -420,6 +421,54 @@ func TestImage2D_DrawPrefilteredBilinearUsesNearestRendererInterpolation(t *test
 	}
 	if rec.lastInterpolation != "nearest" {
 		t.Fatalf("lastInterpolation = %q, want nearest for prefiltered bilinear raster", rec.lastInterpolation)
+	}
+}
+
+func TestImage2D_DrawCeilsRasterSizeAndKeepsMatplotlibAnchor(t *testing.T) {
+	img := &Image2D{
+		Data: [][]float64{
+			{0, 1},
+			{1, 0},
+		},
+		Colormap:      "gray",
+		VMin:          0,
+		VMax:          1,
+		Alpha:         1,
+		XMax:          1,
+		YMax:          1,
+		Interpolation: "nearest",
+	}
+	rec := &imageSpyRenderer{}
+	ctx := &DrawContext{
+		DataToPixel: Transform2D{
+			XScale: transform.NewLinear(0, 1),
+			YScale: transform.NewLinear(0, 1),
+			AxesToPixel: transform.NewAffine(geom.Affine{
+				A: 273.6,
+				D: -273.6,
+				E: 183.2,
+				F: 309.6,
+			}),
+		},
+	}
+
+	if err := rec.Begin(geom.Rect{}); err != nil {
+		t.Fatalf("begin: %v", err)
+	}
+	img.Draw(rec, ctx)
+	if err := rec.End(); err != nil {
+		t.Fatalf("end: %v", err)
+	}
+
+	if rec.lastImageWidth != 274 || rec.lastImageHeight != 274 {
+		t.Fatalf("prefiltered image size = %dx%d, want 274x274", rec.lastImageWidth, rec.lastImageHeight)
+	}
+	want := geom.Rect{
+		Min: geom.Pt{X: 183.2, Y: 35.6},
+		Max: geom.Pt{X: 457.2, Y: 309.6},
+	}
+	if !rectsApprox(rec.lastDst, want, 1e-9) {
+		t.Fatalf("image destination = %+v, want %+v", rec.lastDst, want)
 	}
 }
 

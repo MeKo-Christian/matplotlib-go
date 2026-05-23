@@ -159,12 +159,37 @@ func TestMagnitudeSpectrumSidesScaleAndFrequencyOffset(t *testing.T) {
 		}
 	}
 
-	wantPeak := 20 * math.Log10(0.5)
+	wantPeak := 0.5
 	if math.Abs(values[3]-wantPeak) > 1e-10 {
-		t.Fatalf("negative peak magnitude dB = %v, want %v", values[3], wantPeak)
+		t.Fatalf("negative peak magnitude = %v, want Matplotlib-returned linear spectrum %v", values[3], wantPeak)
 	}
 	if math.Abs(values[5]-wantPeak) > 1e-10 {
-		t.Fatalf("positive peak magnitude dB = %v, want %v", values[5], wantPeak)
+		t.Fatalf("positive peak magnitude = %v, want Matplotlib-returned linear spectrum %v", values[5], wantPeak)
+	}
+}
+
+func TestAxesMagnitudeSpectrumPlotsDBButReturnsLinearValues(t *testing.T) {
+	samples := make([]float64, 8)
+	for i := range samples {
+		samples[i] = math.Cos(2 * math.Pi * float64(i) / float64(len(samples)))
+	}
+	fig := NewFigure(640, 480)
+	ax := fig.AddAxes(unitRect())
+
+	result := ax.MagnitudeSpectrum(samples, SignalSpectrumOptions{
+		Fs:     8,
+		Window: "none",
+		Scale:  SignalSpectrumScaleDB,
+	})
+
+	if result == nil || result.Line == nil {
+		t.Fatal("MagnitudeSpectrum returned nil result")
+	}
+	if got, want := result.Values[1], 0.5; math.Abs(got-want) > 1e-10 {
+		t.Fatalf("returned magnitude value = %v, want Matplotlib linear spec %v", got, want)
+	}
+	if got, want := result.Line.XY[1].Y, 20*math.Log10(0.5); math.Abs(got-want) > 1e-10 {
+		t.Fatalf("plotted magnitude value = %v, want dB plot value %v", got, want)
 	}
 }
 
@@ -194,6 +219,17 @@ func TestUnwrapPhaseAngles(t *testing.T) {
 		if math.Abs(angles[i]-want[i]) > 1e-12 {
 			t.Fatalf("unwrapped angle[%d] = %v, want %v", i, angles[i], want[i])
 		}
+	}
+}
+
+func TestUnwrapPhaseAnglesLeavesNearPiPositiveJumpWrapped(t *testing.T) {
+	angles := []float64{0, 0.2, 0.4, 0.6, 0.8, 0.9, 0, math.Pi - 0.1}
+
+	unwrapPhaseAngles(angles)
+
+	want := math.Pi - 0.1
+	if math.Abs(angles[7]-want) > 1e-12 {
+		t.Fatalf("unwrapped angle = %v, want NumPy unwrap value %v", angles[7], want)
 	}
 }
 

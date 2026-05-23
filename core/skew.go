@@ -57,6 +57,8 @@ func (p *skewXProjection) ConfigureAxes(ax *Axes) {
 	ax.XAxisTop.Locator = ax.XAxis.Locator
 	ax.XAxisTop.MinorLocator = ax.XAxis.MinorLocator
 	ax.XAxisTop.Formatter = ax.XAxis.Formatter
+	ax.XAxisTop.ShowTicks = false
+	ax.XAxisTop.ShowLabels = false
 
 	pressureTicks := []float64{100, 200, 300, 500, 700, 850, 1000}
 	ax.YAxis.Locator = FixedLocator{TicksList: pressureTicks}
@@ -124,4 +126,56 @@ func (t skewXDataTransform) Invert(p geom.Pt) (geom.Pt, bool) {
 	}
 
 	return geom.Pt{X: x, Y: y}, true
+}
+
+func skewXGridXTickDomain(ctx *DrawContext) (float64, float64, bool) {
+	if ctx == nil || ctx.Axes == nil || ctx.DataToPixel.XScale == nil {
+		return 0, 0, false
+	}
+	proj, ok := skewXProjectionForAxes(ctx.Axes)
+	if !ok {
+		return 0, 0, false
+	}
+	angle := defaultSkewXAngleDeg
+	if proj != nil {
+		angle = proj.angleDeg
+	}
+	factor := math.Tan(angle * math.Pi / 180)
+	topLeft, ok := ctx.DataToPixel.XScale.Inv(-factor)
+	if !ok {
+		return 0, 0, false
+	}
+	topRight, ok := ctx.DataToPixel.XScale.Inv(1 - factor)
+	if !ok {
+		return 0, 0, false
+	}
+	lowerLeft, lowerRight := ctx.DataToPixel.XScale.Domain()
+	minVal := math.Min(math.Min(lowerLeft, lowerRight), math.Min(topLeft, topRight))
+	maxVal := math.Max(math.Max(lowerLeft, lowerRight), math.Max(topLeft, topRight))
+	return minVal, maxVal, true
+}
+
+func skewYAxisDisplayPoint(axis *Axis, ctx *DrawContext, tickValue float64) (geom.Pt, bool) {
+	if axis == nil || ctx == nil || ctx.Axes == nil || ctx.DataToPixel.YScale == nil {
+		return geom.Pt{}, false
+	}
+	if axis.Side != AxisLeft && axis.Side != AxisRight {
+		return geom.Pt{}, false
+	}
+	if _, ok := skewXProjectionForAxes(ctx.Axes); !ok {
+		return geom.Pt{}, false
+	}
+	transAxes := ctx.TransAxes()
+	if transAxes == nil {
+		return geom.Pt{}, false
+	}
+	y := ctx.DataToPixel.YScale.Fwd(tickValue)
+	if math.IsNaN(y) || math.IsInf(y, 0) {
+		return geom.Pt{}, false
+	}
+	x := 0.0
+	if axis.Side == AxisRight {
+		x = 1
+	}
+	return transAxes.Apply(geom.Pt{X: x, Y: y}), true
 }

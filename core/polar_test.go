@@ -60,6 +60,40 @@ func TestAddPolarAxesConfiguresProjection(t *testing.T) {
 	}
 }
 
+func TestPolarAxesUseMatplotlibTickVisibilityDefaults(t *testing.T) {
+	fig := NewFigure(400, 400)
+	ax := fig.AddPolarAxes(unitRect())
+
+	if !ax.XAxis.ShowSpine {
+		t.Fatal("polar theta spine should draw the outer frame by default")
+	}
+	if ax.YAxis.ShowSpine {
+		t.Fatal("polar radial axis spine should be hidden by default")
+	}
+	if ax.XAxis.ShowTicks {
+		t.Fatal("polar theta tick marks should be hidden by default")
+	}
+	if ax.YAxis.ShowTicks {
+		t.Fatal("polar radial tick marks should be hidden by default")
+	}
+	if ax.XAxis.MinorLocator != nil {
+		t.Fatalf("polar theta minor locator = %T, want nil", ax.XAxis.MinorLocator)
+	}
+	if ax.YAxis.MinorLocator != nil {
+		t.Fatalf("polar radial minor locator = %T, want nil", ax.YAxis.MinorLocator)
+	}
+}
+
+func TestPolarGridZOrderMatchesMatplotlibAxisbelowLine(t *testing.T) {
+	fig := NewFigure(400, 400)
+	ax := fig.AddPolarAxes(unitRect())
+	grid := ax.AddGrid(AxisLeft)
+
+	if !(grid.Z() > defaultPatchZ && grid.Z() < defaultLineZ) {
+		t.Fatalf("polar grid z-order = %v, want between patch %v and line %v", grid.Z(), defaultPatchZ, defaultLineZ)
+	}
+}
+
 func TestPolarPlotKeepsProjectionDomain(t *testing.T) {
 	fig := NewFigure(400, 400)
 	ax := fig.AddPolarAxes(unitRect())
@@ -168,6 +202,27 @@ func TestPolarTickLabelsUseAngularFormatting(t *testing.T) {
 	}
 }
 
+func TestPolarRadialTickLabelsUseScalarStepPrecision(t *testing.T) {
+	fig := NewFigure(400, 400)
+	ax := fig.AddPolarAxes(unitRect())
+	ax.SetYLim(0, 1.1)
+	ax.XAxis.Locator = nil
+	ax.YAxis.Locator = FixedLocator{TicksList: []float64{0.8, 1.0}}
+	ax.YAxis.MinorLocator = nil
+
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	r := &polarTextRenderer{}
+
+	ax.YAxis.DrawTickLabels(r, ctx)
+
+	if len(r.texts) != 2 {
+		t.Fatalf("expected 2 radial tick labels, got %d (%v)", len(r.texts), r.texts)
+	}
+	if got, want := r.texts[1], "1.0"; got != want {
+		t.Fatalf("outer radial tick label = %q, want %q", got, want)
+	}
+}
+
 func TestPolarThetaConfigurationAffectsProjectionTransform(t *testing.T) {
 	fig := NewFigure(400, 400)
 	ax := fig.AddPolarAxes(unitRect())
@@ -223,26 +278,16 @@ func TestPolarRadialLabelPositionAffectsTicksAndLabels(t *testing.T) {
 	ax.YAxis.Draw(r, ctx)
 	ax.YAxis.DrawTickLabels(r, ctx)
 
-	if len(r.pathCalls) != 1 {
-		t.Fatalf("expected one radial spine path, got %d", len(r.pathCalls))
+	if len(r.pathCalls) != 0 {
+		t.Fatalf("radial label position should not draw a polar y-axis spine, got %d paths", len(r.pathCalls))
 	}
 	if len(r.texts) != 1 {
 		t.Fatalf("expected one radial tick label, got %d (%v)", len(r.texts), r.texts)
 	}
 
-	spine := r.pathCalls[0].path
-	if len(spine.V) != 2 {
-		t.Fatalf("radial spine path = %+v, want line segment", spine)
-	}
-	wantEnd := polarPixelPoint(center, outerRadius, math.Pi)
-	if !approx(spine.V[1].X, wantEnd.X, 1e-6) || !approx(spine.V[1].Y, wantEnd.Y, 1e-6) {
-		t.Fatalf("radial spine end = %+v, want %+v", spine.V[1], wantEnd)
-	}
-
 	fontSize := tickLabelFontSize(ax.YAxis, ctx)
-	labelPadPx := tickLabelPadForSize(ax.YAxis.TickSize, ax.YAxis.MajorLabelStyle, ctx)
 	layout := measureSingleLineTextLayout(r, "radial", fontSize, ctx.RC.FontKey)
-	anchor := polarPixelPoint(center, outerRadius*0.5+labelPadPx, math.Pi)
+	anchor := polarPixelPoint(center, outerRadius*0.5, math.Pi)
 	hAlign, vAlign := polarTickLabelAlignments(math.Pi)
 	wantOrigin := alignedSingleLineOrigin(anchor, layout, hAlign, vAlign)
 

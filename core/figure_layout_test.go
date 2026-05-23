@@ -402,6 +402,19 @@ func TestConstrainedLayoutMeasuresBottomXLabelLineBox(t *testing.T) {
 	}
 }
 
+func TestFigureLabelTightHeightUsesLineBoxWhenInkBoundsAreShort(t *testing.T) {
+	r := &figureLayoutRecordingRenderer{
+		bounds: map[string]render.TextBounds{
+			"time": {X: 0, Y: -4, W: 20, H: 6},
+		},
+	}
+
+	got := figureLabelTightHeight(r, "time", 12, "", false)
+	if !floatApprox(got, 12, 1e-9) {
+		t.Fatalf("figureLabelTightHeight = %v, want line-box height 12", got)
+	}
+}
+
 func newTightLayoutProbeFigure() *Figure {
 	fig := NewFigure(800, 600)
 	ax := fig.AddSubplot(1, 1, 1)

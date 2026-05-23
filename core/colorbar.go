@@ -6,6 +6,7 @@ import (
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 // ColorbarOptions configures figure-level colorbar placement.
@@ -49,6 +50,7 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 		cfg = opts[0]
 	}
 	cfg.Aspect = resolvedColorbarAspect(cfg.Aspect)
+	extend := normalizeColorbarExtend(cfg.Extend)
 
 	mapping := mappable.ScalarMap().Resolved()
 	cmap := mapping.Colormap
@@ -103,6 +105,7 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 			Y: base.Max.Y,
 		},
 	}
+	rect = insetColorbarRectForExtensions(f, rect, extend)
 	if rect.Min.X >= rect.Max.X {
 		return nil
 	}
@@ -113,6 +116,7 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	ax.colorbarPadding = cfg.Padding
 	ax.colorbarAspect = cfg.Aspect
 	ax.colorbarBase = base
+	ax.colorbarExtend = extend
 	ax.ShowFrame = false
 	ax.SetXLim(0, 1)
 	configureColorbarScale(ax, mapping)
@@ -140,7 +144,7 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	ax.Add(&Colorbar{
 		Mapping:     mapping,
 		Colormap:    cmap,
-		Extend:      normalizeColorbarExtend(cfg.Extend),
+		Extend:      extend,
 		Alpha:       1,
 		BorderColor: f.RC.AxesEdgeColor,
 		BorderWidth: f.RC.AxisLineWidth,
@@ -148,6 +152,45 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	})
 
 	return ax
+}
+
+func insetColorbarRectForExtensions(fig *Figure, rect geom.Rect, extend string) geom.Rect {
+	extend = normalizeColorbarExtend(extend)
+	if extend == "neither" || rect.W() <= 0 || rect.H() <= 0 {
+		return rect
+	}
+	extensionCount := colorbarExtensionCount(extend)
+	heightFrac := rect.H() * 0.05 / (1 + 0.05*extensionCount)
+	if extend == "min" || extend == "both" {
+		rect.Min.Y += heightFrac
+	}
+	if extend == "max" || extend == "both" {
+		rect.Max.Y -= heightFrac
+	}
+	if rect.Min.Y >= rect.Max.Y {
+		return geom.Rect{}
+	}
+	return rect
+}
+
+func colorbarExtensionShrink(extend string) float64 {
+	extensionCount := colorbarExtensionCount(extend)
+	if extensionCount <= 0 {
+		return 1
+	}
+	return 1 / (1 + 0.05*extensionCount)
+}
+
+func colorbarExtensionCount(extend string) float64 {
+	extend = normalizeColorbarExtend(extend)
+	extensionCount := 0.0
+	if extend == "min" || extend == "both" {
+		extensionCount++
+	}
+	if extend == "max" || extend == "both" {
+		extensionCount++
+	}
+	return extensionCount
 }
 
 func resolvedColorbarPadding(base geom.Rect, padding float64) float64 {
@@ -260,7 +303,23 @@ func configureColorbarScale(ax *Axes, mapping ScalarMapInfo) {
 			right.Formatter = ScalarFormatter{Prec: 6}
 		}
 	default:
+		if isNonlinearColorbarNorm(mapping.Norm) && isFinite(vmin) && isFinite(vmax) && vmin != vmax {
+			norm := mapping.Norm
+			ax.YScale = transform.NewFuncScale(vmin, vmax, norm.Map, norm.Inverse)
+			ax.yLimitsManual = true
+			configureScaleAxes(ax.YAxis, ax.YAxisRight, "function", transform.ResolveScaleOptions())
+			return
+		}
 		ax.SetYLim(vmin, vmax)
+	}
+}
+
+func isNonlinearColorbarNorm(norm ScalarNormalizer) bool {
+	switch norm.(type) {
+	case nil, Normalize, NoNorm:
+		return false
+	default:
+		return norm != nil
 	}
 }
 
@@ -283,7 +342,7 @@ func colorbarExtensionPaths(clip geom.Rect, extend string) []colorbarExtensionPa
 	if extend == "neither" || clip.W() <= 0 || clip.H() <= 0 {
 		return nil
 	}
-	height := math.Min(clip.H()*0.05, clip.W()*0.5)
+	height := clip.H() * 0.05
 	out := make([]colorbarExtensionPath, 0, 2)
 	if extend == "min" || extend == "both" {
 		out = append(out, colorbarExtensionPath{
@@ -332,26 +391,6 @@ func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 		alpha = 1
 	}
 
-	outlinePath := pixelRectPath(ctx.Clip)
-	if snapped := snappedStrokeRectPath(ctx.Clip); len(snapped.C) > 0 {
-		outlinePath = snapped
-	}
-
-	for _, ext := range colorbarExtensionPaths(ctx.Clip, c.Extend) {
-		t := -1.0
-		if ext.OverRange {
-			t = 2
-		}
-		col := cmap.AtValue(t)
-		col.A *= alpha
-		r.Path(ext.Path, &render.Paint{
-			Fill:      col,
-			LineJoin:  render.JoinMiter,
-			LineCap:   render.CapButt,
-			Antialias: render.AntialiasDefault,
-		})
-	}
-
 	if norm, ok := mapping.Norm.(BoundaryNorm); ok && len(norm.Boundaries) >= 2 {
 		vmin, vmax := mapping.VMin, mapping.VMax
 		span := vmax - vmin
@@ -396,12 +435,101 @@ func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 	}
 
-	r.Path(outlinePath, &render.Paint{
-		Stroke:    c.BorderColor,
-		LineWidth: c.BorderWidth,
-		LineJoin:  render.JoinMiter,
-		LineCap:   render.CapButt,
-	})
+	if normalizeColorbarExtend(c.Extend) == "neither" {
+		outlinePath := pixelRectPath(ctx.Clip)
+		if snapped := snappedStrokeRectPath(ctx.Clip); len(snapped.C) > 0 {
+			outlinePath = snapped
+		}
+		r.Path(outlinePath, &render.Paint{
+			Stroke:    c.BorderColor,
+			LineWidth: c.BorderWidth,
+			LineJoin:  render.JoinMiter,
+			LineCap:   render.CapButt,
+		})
+	}
+}
+
+// DrawOverlay renders colorbar extension patches outside the axes clip.
+func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
+	if c == nil || ctx == nil {
+		return
+	}
+	if normalizeColorbarExtend(c.Extend) == "neither" {
+		return
+	}
+
+	mapping := c.Mapping.Resolved()
+	if c.Colormap != "" {
+		mapping.Colormap = c.Colormap
+	}
+	cmap := matcolor.GetColormap(mapping.Colormap)
+	alpha := c.Alpha
+	if alpha <= 0 {
+		alpha = 1
+	}
+
+	for _, ext := range colorbarExtensionPaths(ctx.Clip, c.Extend) {
+		t := -1.0
+		if ext.OverRange {
+			t = 2
+		}
+		col := cmap.AtValue(t)
+		col.A *= alpha
+		r.Path(ext.Path, &render.Paint{
+			Fill:      col,
+			LineJoin:  render.JoinMiter,
+			LineCap:   render.CapButt,
+			Antialias: render.AntialiasOff,
+		})
+	}
+
+	outline := colorbarExtendedOutlinePath(ctx.Clip, c.Extend)
+	if len(outline.C) > 0 {
+		r.Path(outline, &render.Paint{
+			Stroke:    c.BorderColor,
+			LineWidth: c.BorderWidth,
+			LineJoin:  render.JoinMiter,
+			LineCap:   render.CapButt,
+		})
+	}
+}
+
+func colorbarExtendedOutlinePath(clip geom.Rect, extend string) geom.Path {
+	extend = normalizeColorbarExtend(extend)
+	if extend == "neither" || clip.W() <= 0 || clip.H() <= 0 {
+		return geom.Path{}
+	}
+	height := clip.H() * 0.05
+	bottom := clip.Max.Y
+	bottomTip := bottom
+	if extend == "min" || extend == "both" {
+		bottomTip += height
+	}
+	top := clip.Min.Y
+	topTip := top
+	if extend == "max" || extend == "both" {
+		topTip -= height
+	}
+	midX := (clip.Min.X + clip.Max.X) * 0.5
+	verts := []geom.Pt{{X: clip.Min.X, Y: bottom}}
+	if extend == "min" || extend == "both" {
+		verts = append(verts, geom.Pt{X: midX, Y: bottomTip})
+	}
+	verts = append(verts, geom.Pt{X: clip.Max.X, Y: bottom}, geom.Pt{X: clip.Max.X, Y: top})
+	if extend == "max" || extend == "both" {
+		verts = append(verts, geom.Pt{X: midX, Y: topTip})
+	}
+	verts = append(verts, geom.Pt{X: clip.Min.X, Y: top})
+	cmds := make([]geom.Cmd, len(verts))
+	for i := range cmds {
+		if i == 0 {
+			cmds[i] = geom.MoveTo
+		} else {
+			cmds[i] = geom.LineTo
+		}
+	}
+	cmds = append(cmds, geom.ClosePath)
+	return geom.Path{V: verts, C: cmds}
 }
 
 func colorbarCellRect(clip geom.Rect, index, count int) geom.Rect {

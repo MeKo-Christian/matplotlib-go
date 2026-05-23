@@ -219,6 +219,15 @@ func polarRadialTicks(axis *Axis, scale transform.Scale, minor bool) []float64 {
 	return out
 }
 
+func polarIsFullCircle(scale transform.Scale) bool {
+	if scale == nil {
+		return true
+	}
+	minVal, maxVal := scale.Domain()
+	span := math.Abs(maxVal - minVal)
+	return approx(span, 2*math.Pi, 1e-9*math.Max(1, span))
+}
+
 func polarTickPaint(color render.Color, width float64, dashes []float64) render.Paint {
 	return render.Paint{
 		LineWidth: width,

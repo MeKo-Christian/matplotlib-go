@@ -2195,6 +2195,9 @@ func TestAxes3DTickLabelsUseMatplotlibDataSpaceOffset(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
+	ax.SetTitle("3D Toolkit Scaffold")
+	ax.SetXLabel("x")
+	ax.SetYLabel("y")
 	ax.SetView(30, -60)
 	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
 	ax.Scatter3D([]float64{0.5, 0.7}, []float64{0.2, 0.9}, []float64{0.1, 0.3})
@@ -2223,6 +2226,67 @@ func TestAxes3DTickLabelsUseMatplotlibDataSpaceOffset(t *testing.T) {
 	want := alignedSingleLineOrigin(expectedAnchor, layout, TextAlignCenter, textLayoutVAlignTop)
 	if !approx(r.positions[0].X, want.X, 1e-9) || !approx(r.positions[0].Y, want.Y, 1e-9) {
 		t.Fatalf("first x tick label origin = %+v, want Matplotlib top-aligned data-space offset origin %+v", r.positions[0], want)
+	}
+}
+
+func TestAxes3DTickLabelAnchorsMatchMatplotlibBasicFixture(t *testing.T) {
+	fig := NewFigure(760, 560)
+	ax, err := fig.AddAxes3D(geom.Rect{
+		Min: geom.Pt{X: 0.12, Y: 0.14},
+		Max: geom.Pt{X: 0.88, Y: 0.88},
+	})
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetView(30, -60)
+	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
+	ax.Scatter3D([]float64{0.5, 0.7}, []float64{0.2, 0.9}, []float64{0.1, 0.3})
+	z := [][]float64{{0, 1}, {1, 2}}
+	ax.Wireframe([]float64{0, 1}, []float64{0, 1}, z)
+	ax.Surface([]float64{0, 1}, []float64{0, 1}, z)
+	ax.Contour([]float64{0, 1}, []float64{0, 1}, z)
+	ax.Bar3D([]float64{0.2}, []float64{0.3}, []float64{0.4}, []float64{0.2}, []float64{0.2}, []float64{0.3})
+	ax.Text3D(0.2, 0.8, 0.6, "demo point")
+
+	mins, maxs := ax.projectionLimits()
+	frameMins, frameMaxs := axes3DFrameLimits(mins, maxs)
+	ctx := newAxesDrawContext(ax.Axes, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	r := &axes3DTextRecorder{}
+
+	ax.draw3DTickLabels(r, r, ctx, frameMins, frameMaxs, mins, maxs)
+
+	fontSize := ctx.RC.TickLabelSize("x")
+	for _, tc := range []struct {
+		label      string
+		occurrence int
+		want       geom.Pt
+	}{
+		{label: "0.0", occurrence: 1, want: geom.Pt{X: 207.736, Y: 405.838}},
+		{label: "0.0", occurrence: 2, want: geom.Pt{X: 463.314, Y: 465.309}},
+		{label: "0.00", occurrence: 1, want: geom.Pt{X: 586.431, Y: 314.487}},
+	} {
+		idx := -1
+		count := 0
+		for i, label := range r.texts {
+			if label == tc.label {
+				count++
+				if count == tc.occurrence {
+					idx = i
+					break
+				}
+			}
+		}
+		if idx == -1 {
+			t.Fatalf("tick label %q was not drawn; got labels %v", tc.label, r.texts)
+		}
+		layout := measureSingleLineTextLayout(r, tc.label, fontSize, ctx.RC.FontKey)
+		got := geom.Pt{
+			X: r.positions[idx].X + textHorizontalOriginOffset(layout, TextAlignCenter),
+			Y: r.positions[idx].Y - textBaselineOffset(layout, textLayoutVAlignTop),
+		}
+		if !approx(got.X, tc.want.X, 0.01) || !approx(got.Y, tc.want.Y, 0.01) {
+			t.Errorf("%q occurrence %d tick label anchor = %+v, want Matplotlib %+v", tc.label, tc.occurrence, got, tc.want)
+		}
 	}
 }
 
@@ -2307,7 +2371,7 @@ func expectedMatplotlib3DTickLabelAnchor(ax *Axes3D, ctx *DrawContext, axis int,
 	tickDirs := [3]int{1, 0, 0}
 	pos[tickDirs[axis]] = pair[0][tickDirs[axis]]
 
-	centers, deltas := testAxes3DLabelCentersDeltas(ctx, projMins, projMaxs)
+	centers, deltas := testAxes3DLabelCentersDeltas(ctx, mins, maxs)
 	labelDeltas := vec3{}
 	for i := range 3 {
 		labelDeltas[i] = (defaultTickPadPt + 8) * deltas[i]

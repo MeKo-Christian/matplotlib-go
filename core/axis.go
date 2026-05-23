@@ -7,6 +7,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 // AxisSide specifies which side of the plot area an axis is on.
@@ -286,14 +287,14 @@ func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, ti
 
 	if isXAxis {
 		spineY := getSpinePosition(a, ctx)
-		spinePixel := ctx.DataToPixel.Apply(geom.Pt{X: tickValue, Y: spineY})
+		spinePixel := axisTickDisplayPoint(a, ctx, tickValue, true, spineY)
 		spinePixel.X = math.Round(spinePixel.X) + 0.5
 		spinePixel.Y = math.Round(spinePixel.Y) + 0.5
 
 		p1, p2 = axisTickSegment(a, spinePixel, tickSize, true)
 	} else {
 		spineX := getSpinePosition(a, ctx)
-		spinePixel := ctx.DataToPixel.Apply(geom.Pt{X: spineX, Y: tickValue})
+		spinePixel := axisTickDisplayPoint(a, ctx, tickValue, false, spineX)
 		spinePixel.X = math.Round(spinePixel.X) + 0.5
 		spinePixel.Y = math.Round(spinePixel.Y) + 0.5
 
@@ -632,7 +633,7 @@ func tickLabelOrigin(a *Axis, ctx *DrawContext, tickValue float64, layout single
 
 	if isXAxis {
 		spineY := getSpinePosition(a, ctx)
-		tickPos := ctx.DataToPixel.Apply(geom.Pt{X: tickValue, Y: spineY})
+		tickPos := axisTickDisplayPoint(a, ctx, tickValue, true, spineY)
 		hAlign, vAlign := resolvedTickLabelLayoutAlignments(a.Side, style, true)
 
 		switch a.Side {
@@ -654,7 +655,7 @@ func tickLabelOrigin(a *Axis, ctx *DrawContext, tickValue float64, layout single
 	}
 
 	spineX := getSpinePosition(a, ctx)
-	tickPos := ctx.DataToPixel.Apply(geom.Pt{X: spineX, Y: tickValue})
+	tickPos := axisTickDisplayPoint(a, ctx, tickValue, false, spineX)
 	hAlign, vAlign := resolvedTickLabelLayoutAlignments(a.Side, style, false)
 
 	switch a.Side {
@@ -673,6 +674,16 @@ func tickLabelOrigin(a *Axis, ctx *DrawContext, tickValue float64, layout single
 	default:
 		return geom.Pt{}, false
 	}
+}
+
+func axisTickDisplayPoint(a *Axis, ctx *DrawContext, tickValue float64, isXAxis bool, spineValue float64) geom.Pt {
+	if !isXAxis {
+		if pt, ok := skewYAxisDisplayPoint(a, ctx, tickValue); ok {
+			return pt
+		}
+		return ctx.DataToPixel.Apply(geom.Pt{X: spineValue, Y: tickValue})
+	}
+	return ctx.DataToPixel.Apply(geom.Pt{X: tickValue, Y: spineValue})
 }
 
 func axisSpinePixelEndpoints(axis *Axis, ctx *DrawContext, px geom.Rect) (geom.Pt, geom.Pt) {
@@ -1078,19 +1089,34 @@ func (a *Axis) drawPolarThetaTickLabels(textRen render.TextDrawer, r render.Rend
 	fontSize := tickLabelFontSize(a, ctx)
 	style = normalizeTickLabelStyle(style)
 	fontKey := tickLabelFontKey(style, ctx)
-	labelPadPx := tickLabelPadForAxisSize(a, tickSize, style, ctx)
+	labelPadPx := polarThetaTickLabelPadPx(a, tickSize, style, ctx)
 
 	for i, tick := range ticks {
-		label := formatTickLabel(formatter, tick, i, ticks)
+		label := formatTickLabelForTicks(formatter, tick, i, ticks)
 		if label == "" {
 			continue
 		}
 		layout := measureSingleLineTextLayout(r, label, fontSize, fontKey, ctx.RC.UseTeX)
 		angle := polarAngleForTheta(ctx.Projection, ctx.DataToPixel.XScale, tick)
 		anchor := polarPixelPoint(center, radius+labelPadPx, angle)
-		hAlign, vAlign := polarTickLabelAlignments(angle)
-		drawDisplayText(textRen, label, alignedSingleLineOrigin(anchor, layout, hAlign, vAlign), fontSize, a.tickLabelColor(), fontKey, ctx.RC.UseTeX)
+		drawDisplayText(textRen, label, alignedSingleLineOrigin(anchor, layout, TextAlignCenter, textLayoutVAlignCenter), fontSize, a.tickLabelColor(), fontKey, ctx.RC.UseTeX)
 	}
+}
+
+func polarThetaTickLabelPadPx(a *Axis, tickSize float64, style TickLabelStyle, ctx *DrawContext) float64 {
+	rc := styleOrCurrentRC(ctx)
+	padPx := tickSize*tickOutsidePaddingFactor(a) + pointsToPixels(rc, defaultTickPadPt)
+	if style.Pad > 0 {
+		padPx = tickSize*tickOutsidePaddingFactor(a) + style.Pad
+	}
+	return padPx + pointsToPixels(rc, 7)
+}
+
+func styleOrCurrentRC(ctx *DrawContext) style.RC {
+	if ctx != nil {
+		return ctx.RC
+	}
+	return style.CurrentDefaults()
 }
 
 func (a *Axis) drawPolarRadialTickLabels(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64) {
@@ -1103,10 +1129,13 @@ func (a *Axis) drawPolarRadialTickLabels(textRen render.TextDrawer, r render.Ren
 	style = normalizeTickLabelStyle(style)
 	fontKey := tickLabelFontKey(style, ctx)
 	labelPadPx := tickLabelPadForAxisSize(a, tickSize, style, ctx)
+	if polarIsFullCircle(ctx.DataToPixel.XScale) {
+		labelPadPx = 0
+	}
 	labelAngle := polarRadialLabelAngleForProjection(ctx.Projection)
 
 	for i, tick := range ticks {
-		label := formatTickLabel(formatter, tick, i, ticks)
+		label := formatTickLabelForTicks(formatter, tick, i, ticks)
 		if label == "" {
 			continue
 		}
@@ -1199,7 +1228,7 @@ func (a *Axis) polarTickLabelBoundsForLevel(r render.Renderer, ctx *DrawContext,
 	)
 
 	for i, tick := range ticks {
-		label := formatTickLabel(formatter, tick, i, ticks)
+		label := formatTickLabelForTicks(formatter, tick, i, ticks)
 		if label == "" {
 			continue
 		}
@@ -1213,11 +1242,15 @@ func (a *Axis) polarTickLabelBoundsForLevel(r render.Renderer, ctx *DrawContext,
 
 		if a.Side == AxisBottom || a.Side == AxisTop {
 			angle := polarAngleForTheta(ctx.Projection, ctx.DataToPixel.XScale, tick)
-			anchor = polarPixelPoint(center, outerRadius+labelPadPx, angle)
-			hAlign, vAlign = polarTickLabelAlignments(angle)
+			anchor = polarPixelPoint(center, outerRadius+polarThetaTickLabelPadPx(a, tickSize, style, ctx), angle)
+			hAlign, vAlign = TextAlignCenter, textLayoutVAlignCenter
 		} else {
+			radialLabelPadPx := labelPadPx
+			if polarIsFullCircle(ctx.DataToPixel.XScale) {
+				radialLabelPadPx = 0
+			}
 			radius := outerRadius * ctx.DataToPixel.YScale.Fwd(tick)
-			anchor = polarPixelPoint(center, radius+labelPadPx, labelAngle)
+			anchor = polarPixelPoint(center, radius+radialLabelPadPx, labelAngle)
 			hAlign, vAlign = polarTickLabelAlignments(labelAngle)
 		}
 
