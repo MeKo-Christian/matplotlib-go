@@ -1,0 +1,3575 @@
+{
+  "modules": [
+    "artist.py",
+    "axis.py",
+    "ticker.py",
+    "scale.py",
+    "transforms.py",
+    "lines.py",
+    "markers.py",
+    "collections.py",
+    "patches.py",
+    "text.py",
+    "legend.py",
+    "offsetbox.py",
+    "image.py",
+    "colorbar.py",
+    "cm.py",
+    "colors.py",
+    "pyplot.py",
+    "backend_bases.py",
+    "backend_tools.py",
+    "widgets.py",
+    "animation.py"
+  ],
+  "rows": [
+    {
+      "id": "animation.py:class:AbstractMovieWriter",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "AbstractMovieWriter"
+    },
+    {
+      "id": "animation.py:class:Animation",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "Animation"
+    },
+    {
+      "id": "animation.py:class:ArtistAnimation",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "ArtistAnimation"
+    },
+    {
+      "id": "animation.py:class:FFMpegBase",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "FFMpegBase"
+    },
+    {
+      "id": "animation.py:class:FFMpegFileWriter",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "FFMpegFileWriter"
+    },
+    {
+      "id": "animation.py:class:FFMpegWriter",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "FFMpegWriter"
+    },
+    {
+      "id": "animation.py:class:FileMovieWriter",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "FileMovieWriter"
+    },
+    {
+      "id": "animation.py:class:FuncAnimation",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "FuncAnimation"
+    },
+    {
+      "id": "animation.py:class:HTMLWriter",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "HTMLWriter"
+    },
+    {
+      "id": "animation.py:class:ImageMagickBase",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "ImageMagickBase"
+    },
+    {
+      "id": "animation.py:class:ImageMagickFileWriter",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "ImageMagickFileWriter"
+    },
+    {
+      "id": "animation.py:class:ImageMagickWriter",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "ImageMagickWriter"
+    },
+    {
+      "id": "animation.py:class:MovieWriter",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "MovieWriter"
+    },
+    {
+      "id": "animation.py:class:MovieWriterRegistry",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "MovieWriterRegistry"
+    },
+    {
+      "id": "animation.py:class:PillowWriter",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "PillowWriter"
+    },
+    {
+      "id": "animation.py:class:TimedAnimation",
+      "kind": "class",
+      "module": "animation.py",
+      "name": "TimedAnimation"
+    },
+    {
+      "id": "animation.py:function:adjusted_figsize",
+      "kind": "function",
+      "module": "animation.py",
+      "name": "adjusted_figsize"
+    },
+    {
+      "id": "artist.py:class:Artist",
+      "kind": "class",
+      "module": "artist.py",
+      "name": "Artist"
+    },
+    {
+      "id": "artist.py:class:ArtistInspector",
+      "kind": "class",
+      "module": "artist.py",
+      "name": "ArtistInspector"
+    },
+    {
+      "id": "artist.py:function:allow_rasterization",
+      "kind": "function",
+      "module": "artist.py",
+      "name": "allow_rasterization"
+    },
+    {
+      "id": "artist.py:function:getp",
+      "kind": "function",
+      "module": "artist.py",
+      "name": "getp"
+    },
+    {
+      "id": "artist.py:function:kwdoc",
+      "kind": "function",
+      "module": "artist.py",
+      "name": "kwdoc"
+    },
+    {
+      "id": "artist.py:function:setp",
+      "kind": "function",
+      "module": "artist.py",
+      "name": "setp"
+    },
+    {
+      "id": "axis.py:class:Axis",
+      "kind": "class",
+      "module": "axis.py",
+      "name": "Axis"
+    },
+    {
+      "id": "axis.py:class:Tick",
+      "kind": "class",
+      "module": "axis.py",
+      "name": "Tick"
+    },
+    {
+      "id": "axis.py:class:Ticker",
+      "kind": "class",
+      "module": "axis.py",
+      "name": "Ticker"
+    },
+    {
+      "id": "axis.py:class:XAxis",
+      "kind": "class",
+      "module": "axis.py",
+      "name": "XAxis"
+    },
+    {
+      "id": "axis.py:class:XTick",
+      "kind": "class",
+      "module": "axis.py",
+      "name": "XTick"
+    },
+    {
+      "id": "axis.py:class:YAxis",
+      "kind": "class",
+      "module": "axis.py",
+      "name": "YAxis"
+    },
+    {
+      "id": "axis.py:class:YTick",
+      "kind": "class",
+      "module": "axis.py",
+      "name": "YTick"
+    },
+    {
+      "id": "axis.py:constant:GRIDLINE_INTERPOLATION_STEPS",
+      "kind": "constant",
+      "module": "axis.py",
+      "name": "GRIDLINE_INTERPOLATION_STEPS"
+    },
+    {
+      "id": "backend_bases.py:class:CloseEvent",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "CloseEvent"
+    },
+    {
+      "id": "backend_bases.py:class:DrawEvent",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "DrawEvent"
+    },
+    {
+      "id": "backend_bases.py:class:Event",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "Event"
+    },
+    {
+      "id": "backend_bases.py:class:FigureCanvasBase",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "FigureCanvasBase"
+    },
+    {
+      "id": "backend_bases.py:class:FigureManagerBase",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "FigureManagerBase"
+    },
+    {
+      "id": "backend_bases.py:class:GraphicsContextBase",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "GraphicsContextBase"
+    },
+    {
+      "id": "backend_bases.py:class:KeyEvent",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "KeyEvent"
+    },
+    {
+      "id": "backend_bases.py:class:LocationEvent",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "LocationEvent"
+    },
+    {
+      "id": "backend_bases.py:class:MouseButton",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "MouseButton"
+    },
+    {
+      "id": "backend_bases.py:class:MouseEvent",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "MouseEvent"
+    },
+    {
+      "id": "backend_bases.py:class:NavigationToolbar2",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "NavigationToolbar2"
+    },
+    {
+      "id": "backend_bases.py:class:NonGuiException",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "NonGuiException"
+    },
+    {
+      "id": "backend_bases.py:class:PickEvent",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "PickEvent"
+    },
+    {
+      "id": "backend_bases.py:class:RendererBase",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "RendererBase"
+    },
+    {
+      "id": "backend_bases.py:class:ResizeEvent",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "ResizeEvent"
+    },
+    {
+      "id": "backend_bases.py:class:ShowBase",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "ShowBase"
+    },
+    {
+      "id": "backend_bases.py:class:TimerBase",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "TimerBase"
+    },
+    {
+      "id": "backend_bases.py:class:ToolContainerBase",
+      "kind": "class",
+      "module": "backend_bases.py",
+      "name": "ToolContainerBase"
+    },
+    {
+      "id": "backend_bases.py:function:button_press_handler",
+      "kind": "function",
+      "module": "backend_bases.py",
+      "name": "button_press_handler"
+    },
+    {
+      "id": "backend_bases.py:function:get_registered_canvas_class",
+      "kind": "function",
+      "module": "backend_bases.py",
+      "name": "get_registered_canvas_class"
+    },
+    {
+      "id": "backend_bases.py:function:key_press_handler",
+      "kind": "function",
+      "module": "backend_bases.py",
+      "name": "key_press_handler"
+    },
+    {
+      "id": "backend_bases.py:function:register_backend",
+      "kind": "function",
+      "module": "backend_bases.py",
+      "name": "register_backend"
+    },
+    {
+      "id": "backend_bases.py:function:scroll_handler",
+      "kind": "function",
+      "module": "backend_bases.py",
+      "name": "scroll_handler"
+    },
+    {
+      "id": "backend_tools.py:class:AxisScaleBase",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "AxisScaleBase"
+    },
+    {
+      "id": "backend_tools.py:class:ConfigureSubplotsBase",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ConfigureSubplotsBase"
+    },
+    {
+      "id": "backend_tools.py:class:Cursors",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "Cursors"
+    },
+    {
+      "id": "backend_tools.py:class:RubberbandBase",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "RubberbandBase"
+    },
+    {
+      "id": "backend_tools.py:class:SaveFigureBase",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "SaveFigureBase"
+    },
+    {
+      "id": "backend_tools.py:class:ToolBack",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolBack"
+    },
+    {
+      "id": "backend_tools.py:class:ToolBase",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolBase"
+    },
+    {
+      "id": "backend_tools.py:class:ToolCopyToClipboardBase",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolCopyToClipboardBase"
+    },
+    {
+      "id": "backend_tools.py:class:ToolCursorPosition",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolCursorPosition"
+    },
+    {
+      "id": "backend_tools.py:class:ToolForward",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolForward"
+    },
+    {
+      "id": "backend_tools.py:class:ToolFullScreen",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolFullScreen"
+    },
+    {
+      "id": "backend_tools.py:class:ToolGrid",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolGrid"
+    },
+    {
+      "id": "backend_tools.py:class:ToolHelpBase",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolHelpBase"
+    },
+    {
+      "id": "backend_tools.py:class:ToolHome",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolHome"
+    },
+    {
+      "id": "backend_tools.py:class:ToolMinorGrid",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolMinorGrid"
+    },
+    {
+      "id": "backend_tools.py:class:ToolPan",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolPan"
+    },
+    {
+      "id": "backend_tools.py:class:ToolQuit",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolQuit"
+    },
+    {
+      "id": "backend_tools.py:class:ToolQuitAll",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolQuitAll"
+    },
+    {
+      "id": "backend_tools.py:class:ToolSetCursor",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolSetCursor"
+    },
+    {
+      "id": "backend_tools.py:class:ToolToggleBase",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolToggleBase"
+    },
+    {
+      "id": "backend_tools.py:class:ToolViewsPositions",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolViewsPositions"
+    },
+    {
+      "id": "backend_tools.py:class:ToolXScale",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolXScale"
+    },
+    {
+      "id": "backend_tools.py:class:ToolYScale",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolYScale"
+    },
+    {
+      "id": "backend_tools.py:class:ToolZoom",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ToolZoom"
+    },
+    {
+      "id": "backend_tools.py:class:ViewsPositionsBase",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ViewsPositionsBase"
+    },
+    {
+      "id": "backend_tools.py:class:ZoomPanBase",
+      "kind": "class",
+      "module": "backend_tools.py",
+      "name": "ZoomPanBase"
+    },
+    {
+      "id": "backend_tools.py:function:add_tools_to_container",
+      "kind": "function",
+      "module": "backend_tools.py",
+      "name": "add_tools_to_container"
+    },
+    {
+      "id": "backend_tools.py:function:add_tools_to_manager",
+      "kind": "function",
+      "module": "backend_tools.py",
+      "name": "add_tools_to_manager"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:_views_positions",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "_views_positions"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:back",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "back"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:copy",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "copy"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:cursor",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "cursor"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:forward",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "forward"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:fullscreen",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "fullscreen"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:grid",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "grid"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:grid_minor",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "grid_minor"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:help",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "help"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:home",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "home"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:pan",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "pan"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:position",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "position"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:quit",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "quit"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:quit_all",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "quit_all"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:rubberband",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "rubberband"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:save",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "save"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:subplots",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "subplots"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:xscale",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "xscale"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:yscale",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "yscale"
+    },
+    {
+      "id": "backend_tools.py:registry:tool:zoom",
+      "kind": "registry:tool",
+      "module": "backend_tools.py",
+      "name": "zoom"
+    },
+    {
+      "id": "cm.py:class:ColormapRegistry",
+      "kind": "class",
+      "module": "cm.py",
+      "name": "ColormapRegistry"
+    },
+    {
+      "id": "collections.py:class:AsteriskPolygonCollection",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "AsteriskPolygonCollection"
+    },
+    {
+      "id": "collections.py:class:CircleCollection",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "CircleCollection"
+    },
+    {
+      "id": "collections.py:class:Collection",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "Collection"
+    },
+    {
+      "id": "collections.py:class:EllipseCollection",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "EllipseCollection"
+    },
+    {
+      "id": "collections.py:class:EventCollection",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "EventCollection"
+    },
+    {
+      "id": "collections.py:class:FillBetweenPolyCollection",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "FillBetweenPolyCollection"
+    },
+    {
+      "id": "collections.py:class:LineCollection",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "LineCollection"
+    },
+    {
+      "id": "collections.py:class:PatchCollection",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "PatchCollection"
+    },
+    {
+      "id": "collections.py:class:PathCollection",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "PathCollection"
+    },
+    {
+      "id": "collections.py:class:PolyCollection",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "PolyCollection"
+    },
+    {
+      "id": "collections.py:class:PolyQuadMesh",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "PolyQuadMesh"
+    },
+    {
+      "id": "collections.py:class:QuadMesh",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "QuadMesh"
+    },
+    {
+      "id": "collections.py:class:RegularPolyCollection",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "RegularPolyCollection"
+    },
+    {
+      "id": "collections.py:class:StarPolygonCollection",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "StarPolygonCollection"
+    },
+    {
+      "id": "collections.py:class:TriMesh",
+      "kind": "class",
+      "module": "collections.py",
+      "name": "TriMesh"
+    },
+    {
+      "id": "colorbar.py:class:Colorbar",
+      "kind": "class",
+      "module": "colorbar.py",
+      "name": "Colorbar"
+    },
+    {
+      "id": "colorbar.py:function:make_axes",
+      "kind": "function",
+      "module": "colorbar.py",
+      "name": "make_axes"
+    },
+    {
+      "id": "colorbar.py:function:make_axes_gridspec",
+      "kind": "function",
+      "module": "colorbar.py",
+      "name": "make_axes_gridspec"
+    },
+    {
+      "id": "colors.py:class:AsinhNorm",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "AsinhNorm"
+    },
+    {
+      "id": "colors.py:class:BivarColormap",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "BivarColormap"
+    },
+    {
+      "id": "colors.py:class:BivarColormapFromImage",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "BivarColormapFromImage"
+    },
+    {
+      "id": "colors.py:class:BoundaryNorm",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "BoundaryNorm"
+    },
+    {
+      "id": "colors.py:class:CenteredNorm",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "CenteredNorm"
+    },
+    {
+      "id": "colors.py:class:ColorConverter",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "ColorConverter"
+    },
+    {
+      "id": "colors.py:class:ColorSequenceRegistry",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "ColorSequenceRegistry"
+    },
+    {
+      "id": "colors.py:class:Colormap",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "Colormap"
+    },
+    {
+      "id": "colors.py:class:FuncNorm",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "FuncNorm"
+    },
+    {
+      "id": "colors.py:class:LightSource",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "LightSource"
+    },
+    {
+      "id": "colors.py:class:LinearSegmentedColormap",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "LinearSegmentedColormap"
+    },
+    {
+      "id": "colors.py:class:ListedColormap",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "ListedColormap"
+    },
+    {
+      "id": "colors.py:class:MultiNorm",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "MultiNorm"
+    },
+    {
+      "id": "colors.py:class:MultivarColormap",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "MultivarColormap"
+    },
+    {
+      "id": "colors.py:class:NoNorm",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "NoNorm"
+    },
+    {
+      "id": "colors.py:class:Norm",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "Norm"
+    },
+    {
+      "id": "colors.py:class:Normalize",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "Normalize"
+    },
+    {
+      "id": "colors.py:class:PowerNorm",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "PowerNorm"
+    },
+    {
+      "id": "colors.py:class:SegmentedBivarColormap",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "SegmentedBivarColormap"
+    },
+    {
+      "id": "colors.py:class:SymLogNorm",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "SymLogNorm"
+    },
+    {
+      "id": "colors.py:class:TwoSlopeNorm",
+      "kind": "class",
+      "module": "colors.py",
+      "name": "TwoSlopeNorm"
+    },
+    {
+      "id": "colors.py:function:from_levels_and_colors",
+      "kind": "function",
+      "module": "colors.py",
+      "name": "from_levels_and_colors"
+    },
+    {
+      "id": "colors.py:function:get_named_colors_mapping",
+      "kind": "function",
+      "module": "colors.py",
+      "name": "get_named_colors_mapping"
+    },
+    {
+      "id": "colors.py:function:hsv_to_rgb",
+      "kind": "function",
+      "module": "colors.py",
+      "name": "hsv_to_rgb"
+    },
+    {
+      "id": "colors.py:function:is_color_like",
+      "kind": "function",
+      "module": "colors.py",
+      "name": "is_color_like"
+    },
+    {
+      "id": "colors.py:function:make_norm_from_scale",
+      "kind": "function",
+      "module": "colors.py",
+      "name": "make_norm_from_scale"
+    },
+    {
+      "id": "colors.py:function:rgb_to_hsv",
+      "kind": "function",
+      "module": "colors.py",
+      "name": "rgb_to_hsv"
+    },
+    {
+      "id": "colors.py:function:same_color",
+      "kind": "function",
+      "module": "colors.py",
+      "name": "same_color"
+    },
+    {
+      "id": "colors.py:function:to_hex",
+      "kind": "function",
+      "module": "colors.py",
+      "name": "to_hex"
+    },
+    {
+      "id": "colors.py:function:to_rgb",
+      "kind": "function",
+      "module": "colors.py",
+      "name": "to_rgb"
+    },
+    {
+      "id": "colors.py:function:to_rgba",
+      "kind": "function",
+      "module": "colors.py",
+      "name": "to_rgba"
+    },
+    {
+      "id": "colors.py:function:to_rgba_array",
+      "kind": "function",
+      "module": "colors.py",
+      "name": "to_rgba_array"
+    },
+    {
+      "id": "image.py:class:AxesImage",
+      "kind": "class",
+      "module": "image.py",
+      "name": "AxesImage"
+    },
+    {
+      "id": "image.py:class:BboxImage",
+      "kind": "class",
+      "module": "image.py",
+      "name": "BboxImage"
+    },
+    {
+      "id": "image.py:class:FigureImage",
+      "kind": "class",
+      "module": "image.py",
+      "name": "FigureImage"
+    },
+    {
+      "id": "image.py:class:NonUniformImage",
+      "kind": "class",
+      "module": "image.py",
+      "name": "NonUniformImage"
+    },
+    {
+      "id": "image.py:class:PcolorImage",
+      "kind": "class",
+      "module": "image.py",
+      "name": "PcolorImage"
+    },
+    {
+      "id": "image.py:function:composite_images",
+      "kind": "function",
+      "module": "image.py",
+      "name": "composite_images"
+    },
+    {
+      "id": "image.py:function:imread",
+      "kind": "function",
+      "module": "image.py",
+      "name": "imread"
+    },
+    {
+      "id": "image.py:function:imsave",
+      "kind": "function",
+      "module": "image.py",
+      "name": "imsave"
+    },
+    {
+      "id": "image.py:function:pil_to_array",
+      "kind": "function",
+      "module": "image.py",
+      "name": "pil_to_array"
+    },
+    {
+      "id": "image.py:function:thumbnail",
+      "kind": "function",
+      "module": "image.py",
+      "name": "thumbnail"
+    },
+    {
+      "id": "image.py:registry:interpolation:antialiased",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "antialiased"
+    },
+    {
+      "id": "image.py:registry:interpolation:auto",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "auto"
+    },
+    {
+      "id": "image.py:registry:interpolation:bessel",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "bessel"
+    },
+    {
+      "id": "image.py:registry:interpolation:bicubic",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "bicubic"
+    },
+    {
+      "id": "image.py:registry:interpolation:bilinear",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "bilinear"
+    },
+    {
+      "id": "image.py:registry:interpolation:blackman",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "blackman"
+    },
+    {
+      "id": "image.py:registry:interpolation:catrom",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "catrom"
+    },
+    {
+      "id": "image.py:registry:interpolation:gaussian",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "gaussian"
+    },
+    {
+      "id": "image.py:registry:interpolation:hamming",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "hamming"
+    },
+    {
+      "id": "image.py:registry:interpolation:hanning",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "hanning"
+    },
+    {
+      "id": "image.py:registry:interpolation:hermite",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "hermite"
+    },
+    {
+      "id": "image.py:registry:interpolation:kaiser",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "kaiser"
+    },
+    {
+      "id": "image.py:registry:interpolation:lanczos",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "lanczos"
+    },
+    {
+      "id": "image.py:registry:interpolation:mitchell",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "mitchell"
+    },
+    {
+      "id": "image.py:registry:interpolation:nearest",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "nearest"
+    },
+    {
+      "id": "image.py:registry:interpolation:none",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "none"
+    },
+    {
+      "id": "image.py:registry:interpolation:quadric",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "quadric"
+    },
+    {
+      "id": "image.py:registry:interpolation:sinc",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "sinc"
+    },
+    {
+      "id": "image.py:registry:interpolation:spline16",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "spline16"
+    },
+    {
+      "id": "image.py:registry:interpolation:spline36",
+      "kind": "registry:interpolation",
+      "module": "image.py",
+      "name": "spline36"
+    },
+    {
+      "id": "legend.py:class:DraggableLegend",
+      "kind": "class",
+      "module": "legend.py",
+      "name": "DraggableLegend"
+    },
+    {
+      "id": "legend.py:class:Legend",
+      "kind": "class",
+      "module": "legend.py",
+      "name": "Legend"
+    },
+    {
+      "id": "lines.py:class:AxLine",
+      "kind": "class",
+      "module": "lines.py",
+      "name": "AxLine"
+    },
+    {
+      "id": "lines.py:class:Line2D",
+      "kind": "class",
+      "module": "lines.py",
+      "name": "Line2D"
+    },
+    {
+      "id": "lines.py:class:VertexSelector",
+      "kind": "class",
+      "module": "lines.py",
+      "name": "VertexSelector"
+    },
+    {
+      "id": "lines.py:constant:drawStyles",
+      "kind": "constant",
+      "module": "lines.py",
+      "name": "drawStyles"
+    },
+    {
+      "id": "lines.py:constant:lineStyles",
+      "kind": "constant",
+      "module": "lines.py",
+      "name": "lineStyles"
+    },
+    {
+      "id": "lines.py:function:segment_hits",
+      "kind": "function",
+      "module": "lines.py",
+      "name": "segment_hits"
+    },
+    {
+      "id": "lines.py:registry:linestyle: ",
+      "kind": "registry:linestyle",
+      "module": "lines.py",
+      "name": " "
+    },
+    {
+      "id": "lines.py:registry:linestyle:-",
+      "kind": "registry:linestyle",
+      "module": "lines.py",
+      "name": "-"
+    },
+    {
+      "id": "lines.py:registry:linestyle:--",
+      "kind": "registry:linestyle",
+      "module": "lines.py",
+      "name": "--"
+    },
+    {
+      "id": "lines.py:registry:linestyle:-.",
+      "kind": "registry:linestyle",
+      "module": "lines.py",
+      "name": "-."
+    },
+    {
+      "id": "lines.py:registry:linestyle::",
+      "kind": "registry:linestyle",
+      "module": "lines.py",
+      "name": ":"
+    },
+    {
+      "id": "lines.py:registry:linestyle:None",
+      "kind": "registry:linestyle",
+      "module": "lines.py",
+      "name": "None"
+    },
+    {
+      "id": "markers.py:class:MarkerStyle",
+      "kind": "class",
+      "module": "markers.py",
+      "name": "MarkerStyle"
+    },
+    {
+      "id": "markers.py:registry:fillstyle:bottom",
+      "kind": "registry:fillstyle",
+      "module": "markers.py",
+      "name": "bottom"
+    },
+    {
+      "id": "markers.py:registry:fillstyle:full",
+      "kind": "registry:fillstyle",
+      "module": "markers.py",
+      "name": "full"
+    },
+    {
+      "id": "markers.py:registry:fillstyle:left",
+      "kind": "registry:fillstyle",
+      "module": "markers.py",
+      "name": "left"
+    },
+    {
+      "id": "markers.py:registry:fillstyle:none",
+      "kind": "registry:fillstyle",
+      "module": "markers.py",
+      "name": "none"
+    },
+    {
+      "id": "markers.py:registry:fillstyle:right",
+      "kind": "registry:fillstyle",
+      "module": "markers.py",
+      "name": "right"
+    },
+    {
+      "id": "markers.py:registry:fillstyle:top",
+      "kind": "registry:fillstyle",
+      "module": "markers.py",
+      "name": "top"
+    },
+    {
+      "id": "markers.py:registry:marker: ",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": " "
+    },
+    {
+      "id": "markers.py:registry:marker:*",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "*"
+    },
+    {
+      "id": "markers.py:registry:marker:+",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "+"
+    },
+    {
+      "id": "markers.py:registry:marker:,",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": ","
+    },
+    {
+      "id": "markers.py:registry:marker:.",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "."
+    },
+    {
+      "id": "markers.py:registry:marker:1",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "1"
+    },
+    {
+      "id": "markers.py:registry:marker:2",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "2"
+    },
+    {
+      "id": "markers.py:registry:marker:3",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "3"
+    },
+    {
+      "id": "markers.py:registry:marker:4",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "4"
+    },
+    {
+      "id": "markers.py:registry:marker:8",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "8"
+    },
+    {
+      "id": "markers.py:registry:marker:<",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "<"
+    },
+    {
+      "id": "markers.py:registry:marker:>",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": ">"
+    },
+    {
+      "id": "markers.py:registry:marker:CARETDOWN",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "CARETDOWN"
+    },
+    {
+      "id": "markers.py:registry:marker:CARETDOWNBASE",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "CARETDOWNBASE"
+    },
+    {
+      "id": "markers.py:registry:marker:CARETLEFT",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "CARETLEFT"
+    },
+    {
+      "id": "markers.py:registry:marker:CARETLEFTBASE",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "CARETLEFTBASE"
+    },
+    {
+      "id": "markers.py:registry:marker:CARETRIGHT",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "CARETRIGHT"
+    },
+    {
+      "id": "markers.py:registry:marker:CARETRIGHTBASE",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "CARETRIGHTBASE"
+    },
+    {
+      "id": "markers.py:registry:marker:CARETUP",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "CARETUP"
+    },
+    {
+      "id": "markers.py:registry:marker:CARETUPBASE",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "CARETUPBASE"
+    },
+    {
+      "id": "markers.py:registry:marker:D",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "D"
+    },
+    {
+      "id": "markers.py:registry:marker:H",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "H"
+    },
+    {
+      "id": "markers.py:registry:marker:None",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "None"
+    },
+    {
+      "id": "markers.py:registry:marker:P",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "P"
+    },
+    {
+      "id": "markers.py:registry:marker:TICKDOWN",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "TICKDOWN"
+    },
+    {
+      "id": "markers.py:registry:marker:TICKLEFT",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "TICKLEFT"
+    },
+    {
+      "id": "markers.py:registry:marker:TICKRIGHT",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "TICKRIGHT"
+    },
+    {
+      "id": "markers.py:registry:marker:TICKUP",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "TICKUP"
+    },
+    {
+      "id": "markers.py:registry:marker:X",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "X"
+    },
+    {
+      "id": "markers.py:registry:marker:^",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "^"
+    },
+    {
+      "id": "markers.py:registry:marker:_",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "_"
+    },
+    {
+      "id": "markers.py:registry:marker:d",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "d"
+    },
+    {
+      "id": "markers.py:registry:marker:h",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "h"
+    },
+    {
+      "id": "markers.py:registry:marker:none",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "none"
+    },
+    {
+      "id": "markers.py:registry:marker:o",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "o"
+    },
+    {
+      "id": "markers.py:registry:marker:p",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "p"
+    },
+    {
+      "id": "markers.py:registry:marker:s",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "s"
+    },
+    {
+      "id": "markers.py:registry:marker:v",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "v"
+    },
+    {
+      "id": "markers.py:registry:marker:x",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "x"
+    },
+    {
+      "id": "markers.py:registry:marker:|",
+      "kind": "registry:marker",
+      "module": "markers.py",
+      "name": "|"
+    },
+    {
+      "id": "offsetbox.py:class:AnchoredOffsetbox",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "AnchoredOffsetbox"
+    },
+    {
+      "id": "offsetbox.py:class:AnchoredText",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "AnchoredText"
+    },
+    {
+      "id": "offsetbox.py:class:AnnotationBbox",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "AnnotationBbox"
+    },
+    {
+      "id": "offsetbox.py:class:AuxTransformBox",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "AuxTransformBox"
+    },
+    {
+      "id": "offsetbox.py:class:DraggableAnnotation",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "DraggableAnnotation"
+    },
+    {
+      "id": "offsetbox.py:class:DraggableBase",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "DraggableBase"
+    },
+    {
+      "id": "offsetbox.py:class:DraggableOffsetBox",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "DraggableOffsetBox"
+    },
+    {
+      "id": "offsetbox.py:class:DrawingArea",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "DrawingArea"
+    },
+    {
+      "id": "offsetbox.py:class:HPacker",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "HPacker"
+    },
+    {
+      "id": "offsetbox.py:class:OffsetBox",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "OffsetBox"
+    },
+    {
+      "id": "offsetbox.py:class:OffsetImage",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "OffsetImage"
+    },
+    {
+      "id": "offsetbox.py:class:PackerBase",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "PackerBase"
+    },
+    {
+      "id": "offsetbox.py:class:PaddedBox",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "PaddedBox"
+    },
+    {
+      "id": "offsetbox.py:class:TextArea",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "TextArea"
+    },
+    {
+      "id": "offsetbox.py:class:VPacker",
+      "kind": "class",
+      "module": "offsetbox.py",
+      "name": "VPacker"
+    },
+    {
+      "id": "offsetbox.py:constant:DEBUG",
+      "kind": "constant",
+      "module": "offsetbox.py",
+      "name": "DEBUG"
+    },
+    {
+      "id": "patches.py:class:Annulus",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "Annulus"
+    },
+    {
+      "id": "patches.py:class:Arc",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "Arc"
+    },
+    {
+      "id": "patches.py:class:Arrow",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "Arrow"
+    },
+    {
+      "id": "patches.py:class:ArrowStyle",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "ArrowStyle"
+    },
+    {
+      "id": "patches.py:class:BoxStyle",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "BoxStyle"
+    },
+    {
+      "id": "patches.py:class:Circle",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "Circle"
+    },
+    {
+      "id": "patches.py:class:CirclePolygon",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "CirclePolygon"
+    },
+    {
+      "id": "patches.py:class:ConnectionPatch",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "ConnectionPatch"
+    },
+    {
+      "id": "patches.py:class:ConnectionStyle",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "ConnectionStyle"
+    },
+    {
+      "id": "patches.py:class:Ellipse",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "Ellipse"
+    },
+    {
+      "id": "patches.py:class:FancyArrow",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "FancyArrow"
+    },
+    {
+      "id": "patches.py:class:FancyArrowPatch",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "FancyArrowPatch"
+    },
+    {
+      "id": "patches.py:class:FancyBboxPatch",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "FancyBboxPatch"
+    },
+    {
+      "id": "patches.py:class:Patch",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "Patch"
+    },
+    {
+      "id": "patches.py:class:PathPatch",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "PathPatch"
+    },
+    {
+      "id": "patches.py:class:Polygon",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "Polygon"
+    },
+    {
+      "id": "patches.py:class:Rectangle",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "Rectangle"
+    },
+    {
+      "id": "patches.py:class:RegularPolygon",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "RegularPolygon"
+    },
+    {
+      "id": "patches.py:class:Shadow",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "Shadow"
+    },
+    {
+      "id": "patches.py:class:StepPatch",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "StepPatch"
+    },
+    {
+      "id": "patches.py:class:Wedge",
+      "kind": "class",
+      "module": "patches.py",
+      "name": "Wedge"
+    },
+    {
+      "id": "patches.py:function:bbox_artist",
+      "kind": "function",
+      "module": "patches.py",
+      "name": "bbox_artist"
+    },
+    {
+      "id": "patches.py:function:draw_bbox",
+      "kind": "function",
+      "module": "patches.py",
+      "name": "draw_bbox"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:-",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "-"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:->",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "->"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:-[",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "-["
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:-|>",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "-|>"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:<-",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "<-"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:<->",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "<->"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:<-[",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "<-["
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:<|-",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "<|-"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:<|-|>",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "<|-|>"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:]-",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "]-"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:]->",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "]->"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:]-[",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "]-["
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:_base",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "_base"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:_curve",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "_curve"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:fancy",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "fancy"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:simple",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "simple"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:wedge",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "wedge"
+    },
+    {
+      "id": "patches.py:registry:arrowstyle:|-|",
+      "kind": "registry:arrowstyle",
+      "module": "patches.py",
+      "name": "|-|"
+    },
+    {
+      "id": "patches.py:registry:boxstyle:circle",
+      "kind": "registry:boxstyle",
+      "module": "patches.py",
+      "name": "circle"
+    },
+    {
+      "id": "patches.py:registry:boxstyle:darrow",
+      "kind": "registry:boxstyle",
+      "module": "patches.py",
+      "name": "darrow"
+    },
+    {
+      "id": "patches.py:registry:boxstyle:ellipse",
+      "kind": "registry:boxstyle",
+      "module": "patches.py",
+      "name": "ellipse"
+    },
+    {
+      "id": "patches.py:registry:boxstyle:larrow",
+      "kind": "registry:boxstyle",
+      "module": "patches.py",
+      "name": "larrow"
+    },
+    {
+      "id": "patches.py:registry:boxstyle:rarrow",
+      "kind": "registry:boxstyle",
+      "module": "patches.py",
+      "name": "rarrow"
+    },
+    {
+      "id": "patches.py:registry:boxstyle:round",
+      "kind": "registry:boxstyle",
+      "module": "patches.py",
+      "name": "round"
+    },
+    {
+      "id": "patches.py:registry:boxstyle:round4",
+      "kind": "registry:boxstyle",
+      "module": "patches.py",
+      "name": "round4"
+    },
+    {
+      "id": "patches.py:registry:boxstyle:roundtooth",
+      "kind": "registry:boxstyle",
+      "module": "patches.py",
+      "name": "roundtooth"
+    },
+    {
+      "id": "patches.py:registry:boxstyle:sawtooth",
+      "kind": "registry:boxstyle",
+      "module": "patches.py",
+      "name": "sawtooth"
+    },
+    {
+      "id": "patches.py:registry:boxstyle:square",
+      "kind": "registry:boxstyle",
+      "module": "patches.py",
+      "name": "square"
+    },
+    {
+      "id": "patches.py:registry:connectionstyle:_base",
+      "kind": "registry:connectionstyle",
+      "module": "patches.py",
+      "name": "_base"
+    },
+    {
+      "id": "patches.py:registry:connectionstyle:angle",
+      "kind": "registry:connectionstyle",
+      "module": "patches.py",
+      "name": "angle"
+    },
+    {
+      "id": "patches.py:registry:connectionstyle:angle3",
+      "kind": "registry:connectionstyle",
+      "module": "patches.py",
+      "name": "angle3"
+    },
+    {
+      "id": "patches.py:registry:connectionstyle:arc",
+      "kind": "registry:connectionstyle",
+      "module": "patches.py",
+      "name": "arc"
+    },
+    {
+      "id": "patches.py:registry:connectionstyle:arc3",
+      "kind": "registry:connectionstyle",
+      "module": "patches.py",
+      "name": "arc3"
+    },
+    {
+      "id": "patches.py:registry:connectionstyle:bar",
+      "kind": "registry:connectionstyle",
+      "module": "patches.py",
+      "name": "bar"
+    },
+    {
+      "id": "pyplot.py:function:acorr",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "acorr"
+    },
+    {
+      "id": "pyplot.py:function:angle_spectrum",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "angle_spectrum"
+    },
+    {
+      "id": "pyplot.py:function:annotate",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "annotate"
+    },
+    {
+      "id": "pyplot.py:function:arrow",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "arrow"
+    },
+    {
+      "id": "pyplot.py:function:autoscale",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "autoscale"
+    },
+    {
+      "id": "pyplot.py:function:autumn",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "autumn"
+    },
+    {
+      "id": "pyplot.py:function:axes",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "axes"
+    },
+    {
+      "id": "pyplot.py:function:axhline",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "axhline"
+    },
+    {
+      "id": "pyplot.py:function:axhspan",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "axhspan"
+    },
+    {
+      "id": "pyplot.py:function:axis",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "axis"
+    },
+    {
+      "id": "pyplot.py:function:axline",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "axline"
+    },
+    {
+      "id": "pyplot.py:function:axvline",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "axvline"
+    },
+    {
+      "id": "pyplot.py:function:axvspan",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "axvspan"
+    },
+    {
+      "id": "pyplot.py:function:bar",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "bar"
+    },
+    {
+      "id": "pyplot.py:function:bar_label",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "bar_label"
+    },
+    {
+      "id": "pyplot.py:function:barbs",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "barbs"
+    },
+    {
+      "id": "pyplot.py:function:barh",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "barh"
+    },
+    {
+      "id": "pyplot.py:function:bone",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "bone"
+    },
+    {
+      "id": "pyplot.py:function:box",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "box"
+    },
+    {
+      "id": "pyplot.py:function:boxplot",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "boxplot"
+    },
+    {
+      "id": "pyplot.py:function:broken_barh",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "broken_barh"
+    },
+    {
+      "id": "pyplot.py:function:cla",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "cla"
+    },
+    {
+      "id": "pyplot.py:function:clabel",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "clabel"
+    },
+    {
+      "id": "pyplot.py:function:clf",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "clf"
+    },
+    {
+      "id": "pyplot.py:function:clim",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "clim"
+    },
+    {
+      "id": "pyplot.py:function:close",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "close"
+    },
+    {
+      "id": "pyplot.py:function:cohere",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "cohere"
+    },
+    {
+      "id": "pyplot.py:function:colorbar",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "colorbar"
+    },
+    {
+      "id": "pyplot.py:function:connect",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "connect"
+    },
+    {
+      "id": "pyplot.py:function:contour",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "contour"
+    },
+    {
+      "id": "pyplot.py:function:contourf",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "contourf"
+    },
+    {
+      "id": "pyplot.py:function:cool",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "cool"
+    },
+    {
+      "id": "pyplot.py:function:copper",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "copper"
+    },
+    {
+      "id": "pyplot.py:function:csd",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "csd"
+    },
+    {
+      "id": "pyplot.py:function:delaxes",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "delaxes"
+    },
+    {
+      "id": "pyplot.py:function:disconnect",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "disconnect"
+    },
+    {
+      "id": "pyplot.py:function:draw",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "draw"
+    },
+    {
+      "id": "pyplot.py:function:draw_if_interactive",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "draw_if_interactive"
+    },
+    {
+      "id": "pyplot.py:function:ecdf",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "ecdf"
+    },
+    {
+      "id": "pyplot.py:function:errorbar",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "errorbar"
+    },
+    {
+      "id": "pyplot.py:function:eventplot",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "eventplot"
+    },
+    {
+      "id": "pyplot.py:function:figimage",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "figimage"
+    },
+    {
+      "id": "pyplot.py:function:figlegend",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "figlegend"
+    },
+    {
+      "id": "pyplot.py:function:fignum_exists",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "fignum_exists"
+    },
+    {
+      "id": "pyplot.py:function:figtext",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "figtext"
+    },
+    {
+      "id": "pyplot.py:function:figure",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "figure"
+    },
+    {
+      "id": "pyplot.py:function:fill",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "fill"
+    },
+    {
+      "id": "pyplot.py:function:fill_between",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "fill_between"
+    },
+    {
+      "id": "pyplot.py:function:fill_betweenx",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "fill_betweenx"
+    },
+    {
+      "id": "pyplot.py:function:findobj",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "findobj"
+    },
+    {
+      "id": "pyplot.py:function:flag",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "flag"
+    },
+    {
+      "id": "pyplot.py:function:gca",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "gca"
+    },
+    {
+      "id": "pyplot.py:function:gcf",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "gcf"
+    },
+    {
+      "id": "pyplot.py:function:gci",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "gci"
+    },
+    {
+      "id": "pyplot.py:function:get",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "get"
+    },
+    {
+      "id": "pyplot.py:function:get_cmap",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "get_cmap"
+    },
+    {
+      "id": "pyplot.py:function:get_current_fig_manager",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "get_current_fig_manager"
+    },
+    {
+      "id": "pyplot.py:function:get_figlabels",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "get_figlabels"
+    },
+    {
+      "id": "pyplot.py:function:get_fignums",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "get_fignums"
+    },
+    {
+      "id": "pyplot.py:function:get_plot_commands",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "get_plot_commands"
+    },
+    {
+      "id": "pyplot.py:function:getp",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "getp"
+    },
+    {
+      "id": "pyplot.py:function:ginput",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "ginput"
+    },
+    {
+      "id": "pyplot.py:function:gray",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "gray"
+    },
+    {
+      "id": "pyplot.py:function:grid",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "grid"
+    },
+    {
+      "id": "pyplot.py:function:grouped_bar",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "grouped_bar"
+    },
+    {
+      "id": "pyplot.py:function:hexbin",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "hexbin"
+    },
+    {
+      "id": "pyplot.py:function:hist",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "hist"
+    },
+    {
+      "id": "pyplot.py:function:hist2d",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "hist2d"
+    },
+    {
+      "id": "pyplot.py:function:hlines",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "hlines"
+    },
+    {
+      "id": "pyplot.py:function:hot",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "hot"
+    },
+    {
+      "id": "pyplot.py:function:hsv",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "hsv"
+    },
+    {
+      "id": "pyplot.py:function:imread",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "imread"
+    },
+    {
+      "id": "pyplot.py:function:imsave",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "imsave"
+    },
+    {
+      "id": "pyplot.py:function:imshow",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "imshow"
+    },
+    {
+      "id": "pyplot.py:function:inferno",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "inferno"
+    },
+    {
+      "id": "pyplot.py:function:install_repl_displayhook",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "install_repl_displayhook"
+    },
+    {
+      "id": "pyplot.py:function:ioff",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "ioff"
+    },
+    {
+      "id": "pyplot.py:function:ion",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "ion"
+    },
+    {
+      "id": "pyplot.py:function:isinteractive",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "isinteractive"
+    },
+    {
+      "id": "pyplot.py:function:jet",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "jet"
+    },
+    {
+      "id": "pyplot.py:function:legend",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "legend"
+    },
+    {
+      "id": "pyplot.py:function:locator_params",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "locator_params"
+    },
+    {
+      "id": "pyplot.py:function:loglog",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "loglog"
+    },
+    {
+      "id": "pyplot.py:function:magma",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "magma"
+    },
+    {
+      "id": "pyplot.py:function:magnitude_spectrum",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "magnitude_spectrum"
+    },
+    {
+      "id": "pyplot.py:function:margins",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "margins"
+    },
+    {
+      "id": "pyplot.py:function:matshow",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "matshow"
+    },
+    {
+      "id": "pyplot.py:function:minorticks_off",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "minorticks_off"
+    },
+    {
+      "id": "pyplot.py:function:minorticks_on",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "minorticks_on"
+    },
+    {
+      "id": "pyplot.py:function:new_figure_manager",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "new_figure_manager"
+    },
+    {
+      "id": "pyplot.py:function:nipy_spectral",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "nipy_spectral"
+    },
+    {
+      "id": "pyplot.py:function:pause",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "pause"
+    },
+    {
+      "id": "pyplot.py:function:pcolor",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "pcolor"
+    },
+    {
+      "id": "pyplot.py:function:pcolormesh",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "pcolormesh"
+    },
+    {
+      "id": "pyplot.py:function:phase_spectrum",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "phase_spectrum"
+    },
+    {
+      "id": "pyplot.py:function:pie",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "pie"
+    },
+    {
+      "id": "pyplot.py:function:pie_label",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "pie_label"
+    },
+    {
+      "id": "pyplot.py:function:pink",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "pink"
+    },
+    {
+      "id": "pyplot.py:function:plasma",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "plasma"
+    },
+    {
+      "id": "pyplot.py:function:plot",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "plot"
+    },
+    {
+      "id": "pyplot.py:function:polar",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "polar"
+    },
+    {
+      "id": "pyplot.py:function:prism",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "prism"
+    },
+    {
+      "id": "pyplot.py:function:psd",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "psd"
+    },
+    {
+      "id": "pyplot.py:function:quiver",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "quiver"
+    },
+    {
+      "id": "pyplot.py:function:quiverkey",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "quiverkey"
+    },
+    {
+      "id": "pyplot.py:function:rc",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "rc"
+    },
+    {
+      "id": "pyplot.py:function:rc_context",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "rc_context"
+    },
+    {
+      "id": "pyplot.py:function:rcdefaults",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "rcdefaults"
+    },
+    {
+      "id": "pyplot.py:function:rgrids",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "rgrids"
+    },
+    {
+      "id": "pyplot.py:function:savefig",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "savefig"
+    },
+    {
+      "id": "pyplot.py:function:sca",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "sca"
+    },
+    {
+      "id": "pyplot.py:function:scatter",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "scatter"
+    },
+    {
+      "id": "pyplot.py:function:sci",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "sci"
+    },
+    {
+      "id": "pyplot.py:function:semilogx",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "semilogx"
+    },
+    {
+      "id": "pyplot.py:function:semilogy",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "semilogy"
+    },
+    {
+      "id": "pyplot.py:function:set_cmap",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "set_cmap"
+    },
+    {
+      "id": "pyplot.py:function:set_loglevel",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "set_loglevel"
+    },
+    {
+      "id": "pyplot.py:function:setp",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "setp"
+    },
+    {
+      "id": "pyplot.py:function:show",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "show"
+    },
+    {
+      "id": "pyplot.py:function:specgram",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "specgram"
+    },
+    {
+      "id": "pyplot.py:function:spring",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "spring"
+    },
+    {
+      "id": "pyplot.py:function:spy",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "spy"
+    },
+    {
+      "id": "pyplot.py:function:stackplot",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "stackplot"
+    },
+    {
+      "id": "pyplot.py:function:stairs",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "stairs"
+    },
+    {
+      "id": "pyplot.py:function:stem",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "stem"
+    },
+    {
+      "id": "pyplot.py:function:step",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "step"
+    },
+    {
+      "id": "pyplot.py:function:streamplot",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "streamplot"
+    },
+    {
+      "id": "pyplot.py:function:subplot",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "subplot"
+    },
+    {
+      "id": "pyplot.py:function:subplot2grid",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "subplot2grid"
+    },
+    {
+      "id": "pyplot.py:function:subplot_mosaic",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "subplot_mosaic"
+    },
+    {
+      "id": "pyplot.py:function:subplot_tool",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "subplot_tool"
+    },
+    {
+      "id": "pyplot.py:function:subplots",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "subplots"
+    },
+    {
+      "id": "pyplot.py:function:subplots_adjust",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "subplots_adjust"
+    },
+    {
+      "id": "pyplot.py:function:summer",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "summer"
+    },
+    {
+      "id": "pyplot.py:function:suptitle",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "suptitle"
+    },
+    {
+      "id": "pyplot.py:function:switch_backend",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "switch_backend"
+    },
+    {
+      "id": "pyplot.py:function:table",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "table"
+    },
+    {
+      "id": "pyplot.py:function:text",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "text"
+    },
+    {
+      "id": "pyplot.py:function:thetagrids",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "thetagrids"
+    },
+    {
+      "id": "pyplot.py:function:tick_params",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "tick_params"
+    },
+    {
+      "id": "pyplot.py:function:ticklabel_format",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "ticklabel_format"
+    },
+    {
+      "id": "pyplot.py:function:tight_layout",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "tight_layout"
+    },
+    {
+      "id": "pyplot.py:function:title",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "title"
+    },
+    {
+      "id": "pyplot.py:function:tricontour",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "tricontour"
+    },
+    {
+      "id": "pyplot.py:function:tricontourf",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "tricontourf"
+    },
+    {
+      "id": "pyplot.py:function:tripcolor",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "tripcolor"
+    },
+    {
+      "id": "pyplot.py:function:triplot",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "triplot"
+    },
+    {
+      "id": "pyplot.py:function:twinx",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "twinx"
+    },
+    {
+      "id": "pyplot.py:function:twiny",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "twiny"
+    },
+    {
+      "id": "pyplot.py:function:uninstall_repl_displayhook",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "uninstall_repl_displayhook"
+    },
+    {
+      "id": "pyplot.py:function:violinplot",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "violinplot"
+    },
+    {
+      "id": "pyplot.py:function:viridis",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "viridis"
+    },
+    {
+      "id": "pyplot.py:function:vlines",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "vlines"
+    },
+    {
+      "id": "pyplot.py:function:waitforbuttonpress",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "waitforbuttonpress"
+    },
+    {
+      "id": "pyplot.py:function:winter",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "winter"
+    },
+    {
+      "id": "pyplot.py:function:xcorr",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "xcorr"
+    },
+    {
+      "id": "pyplot.py:function:xkcd",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "xkcd"
+    },
+    {
+      "id": "pyplot.py:function:xlabel",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "xlabel"
+    },
+    {
+      "id": "pyplot.py:function:xlim",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "xlim"
+    },
+    {
+      "id": "pyplot.py:function:xscale",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "xscale"
+    },
+    {
+      "id": "pyplot.py:function:xticks",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "xticks"
+    },
+    {
+      "id": "pyplot.py:function:ylabel",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "ylabel"
+    },
+    {
+      "id": "pyplot.py:function:ylim",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "ylim"
+    },
+    {
+      "id": "pyplot.py:function:yscale",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "yscale"
+    },
+    {
+      "id": "pyplot.py:function:yticks",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "yticks"
+    },
+    {
+      "id": "scale.py:class:AsinhScale",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "AsinhScale"
+    },
+    {
+      "id": "scale.py:class:AsinhTransform",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "AsinhTransform"
+    },
+    {
+      "id": "scale.py:class:FuncScale",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "FuncScale"
+    },
+    {
+      "id": "scale.py:class:FuncScaleLog",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "FuncScaleLog"
+    },
+    {
+      "id": "scale.py:class:FuncTransform",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "FuncTransform"
+    },
+    {
+      "id": "scale.py:class:InvertedAsinhTransform",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "InvertedAsinhTransform"
+    },
+    {
+      "id": "scale.py:class:InvertedLogTransform",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "InvertedLogTransform"
+    },
+    {
+      "id": "scale.py:class:InvertedSymmetricalLogTransform",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "InvertedSymmetricalLogTransform"
+    },
+    {
+      "id": "scale.py:class:LinearScale",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "LinearScale"
+    },
+    {
+      "id": "scale.py:class:LogScale",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "LogScale"
+    },
+    {
+      "id": "scale.py:class:LogTransform",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "LogTransform"
+    },
+    {
+      "id": "scale.py:class:LogisticTransform",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "LogisticTransform"
+    },
+    {
+      "id": "scale.py:class:LogitScale",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "LogitScale"
+    },
+    {
+      "id": "scale.py:class:LogitTransform",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "LogitTransform"
+    },
+    {
+      "id": "scale.py:class:ScaleBase",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "ScaleBase"
+    },
+    {
+      "id": "scale.py:class:SymmetricalLogScale",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "SymmetricalLogScale"
+    },
+    {
+      "id": "scale.py:class:SymmetricalLogTransform",
+      "kind": "class",
+      "module": "scale.py",
+      "name": "SymmetricalLogTransform"
+    },
+    {
+      "id": "scale.py:function:get_scale_names",
+      "kind": "function",
+      "module": "scale.py",
+      "name": "get_scale_names"
+    },
+    {
+      "id": "scale.py:function:register_scale",
+      "kind": "function",
+      "module": "scale.py",
+      "name": "register_scale"
+    },
+    {
+      "id": "scale.py:function:scale_factory",
+      "kind": "function",
+      "module": "scale.py",
+      "name": "scale_factory"
+    },
+    {
+      "id": "scale.py:registry:scale:asinh",
+      "kind": "registry:scale",
+      "module": "scale.py",
+      "name": "asinh"
+    },
+    {
+      "id": "scale.py:registry:scale:function",
+      "kind": "registry:scale",
+      "module": "scale.py",
+      "name": "function"
+    },
+    {
+      "id": "scale.py:registry:scale:functionlog",
+      "kind": "registry:scale",
+      "module": "scale.py",
+      "name": "functionlog"
+    },
+    {
+      "id": "scale.py:registry:scale:linear",
+      "kind": "registry:scale",
+      "module": "scale.py",
+      "name": "linear"
+    },
+    {
+      "id": "scale.py:registry:scale:log",
+      "kind": "registry:scale",
+      "module": "scale.py",
+      "name": "log"
+    },
+    {
+      "id": "scale.py:registry:scale:logit",
+      "kind": "registry:scale",
+      "module": "scale.py",
+      "name": "logit"
+    },
+    {
+      "id": "scale.py:registry:scale:symlog",
+      "kind": "registry:scale",
+      "module": "scale.py",
+      "name": "symlog"
+    },
+    {
+      "id": "text.py:class:Annotation",
+      "kind": "class",
+      "module": "text.py",
+      "name": "Annotation"
+    },
+    {
+      "id": "text.py:class:OffsetFrom",
+      "kind": "class",
+      "module": "text.py",
+      "name": "OffsetFrom"
+    },
+    {
+      "id": "text.py:class:Text",
+      "kind": "class",
+      "module": "text.py",
+      "name": "Text"
+    },
+    {
+      "id": "ticker.py:class:AsinhLocator",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "AsinhLocator"
+    },
+    {
+      "id": "ticker.py:class:AutoLocator",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "AutoLocator"
+    },
+    {
+      "id": "ticker.py:class:AutoMinorLocator",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "AutoMinorLocator"
+    },
+    {
+      "id": "ticker.py:class:EngFormatter",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "EngFormatter"
+    },
+    {
+      "id": "ticker.py:class:FixedFormatter",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "FixedFormatter"
+    },
+    {
+      "id": "ticker.py:class:FixedLocator",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "FixedLocator"
+    },
+    {
+      "id": "ticker.py:class:FormatStrFormatter",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "FormatStrFormatter"
+    },
+    {
+      "id": "ticker.py:class:Formatter",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "Formatter"
+    },
+    {
+      "id": "ticker.py:class:FuncFormatter",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "FuncFormatter"
+    },
+    {
+      "id": "ticker.py:class:IndexLocator",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "IndexLocator"
+    },
+    {
+      "id": "ticker.py:class:LinearLocator",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "LinearLocator"
+    },
+    {
+      "id": "ticker.py:class:Locator",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "Locator"
+    },
+    {
+      "id": "ticker.py:class:LogFormatter",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "LogFormatter"
+    },
+    {
+      "id": "ticker.py:class:LogFormatterExponent",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "LogFormatterExponent"
+    },
+    {
+      "id": "ticker.py:class:LogFormatterMathtext",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "LogFormatterMathtext"
+    },
+    {
+      "id": "ticker.py:class:LogFormatterSciNotation",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "LogFormatterSciNotation"
+    },
+    {
+      "id": "ticker.py:class:LogLocator",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "LogLocator"
+    },
+    {
+      "id": "ticker.py:class:LogitFormatter",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "LogitFormatter"
+    },
+    {
+      "id": "ticker.py:class:LogitLocator",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "LogitLocator"
+    },
+    {
+      "id": "ticker.py:class:MaxNLocator",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "MaxNLocator"
+    },
+    {
+      "id": "ticker.py:class:MultipleLocator",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "MultipleLocator"
+    },
+    {
+      "id": "ticker.py:class:NullFormatter",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "NullFormatter"
+    },
+    {
+      "id": "ticker.py:class:NullLocator",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "NullLocator"
+    },
+    {
+      "id": "ticker.py:class:PercentFormatter",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "PercentFormatter"
+    },
+    {
+      "id": "ticker.py:class:ScalarFormatter",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "ScalarFormatter"
+    },
+    {
+      "id": "ticker.py:class:StrMethodFormatter",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "StrMethodFormatter"
+    },
+    {
+      "id": "ticker.py:class:SymmetricalLogLocator",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "SymmetricalLogLocator"
+    },
+    {
+      "id": "ticker.py:class:TickHelper",
+      "kind": "class",
+      "module": "ticker.py",
+      "name": "TickHelper"
+    },
+    {
+      "id": "ticker.py:function:scale_range",
+      "kind": "function",
+      "module": "ticker.py",
+      "name": "scale_range"
+    },
+    {
+      "id": "transforms.py:class:Affine2D",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "Affine2D"
+    },
+    {
+      "id": "transforms.py:class:Affine2DBase",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "Affine2DBase"
+    },
+    {
+      "id": "transforms.py:class:AffineBase",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "AffineBase"
+    },
+    {
+      "id": "transforms.py:class:AffineDeltaTransform",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "AffineDeltaTransform"
+    },
+    {
+      "id": "transforms.py:class:Bbox",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "Bbox"
+    },
+    {
+      "id": "transforms.py:class:BboxBase",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "BboxBase"
+    },
+    {
+      "id": "transforms.py:class:BboxTransform",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "BboxTransform"
+    },
+    {
+      "id": "transforms.py:class:BboxTransformFrom",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "BboxTransformFrom"
+    },
+    {
+      "id": "transforms.py:class:BboxTransformTo",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "BboxTransformTo"
+    },
+    {
+      "id": "transforms.py:class:BlendedAffine2D",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "BlendedAffine2D"
+    },
+    {
+      "id": "transforms.py:class:BlendedGenericTransform",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "BlendedGenericTransform"
+    },
+    {
+      "id": "transforms.py:class:CompositeAffine2D",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "CompositeAffine2D"
+    },
+    {
+      "id": "transforms.py:class:CompositeGenericTransform",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "CompositeGenericTransform"
+    },
+    {
+      "id": "transforms.py:class:IdentityTransform",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "IdentityTransform"
+    },
+    {
+      "id": "transforms.py:class:LockableBbox",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "LockableBbox"
+    },
+    {
+      "id": "transforms.py:class:ScaledTranslation",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "ScaledTranslation"
+    },
+    {
+      "id": "transforms.py:class:Transform",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "Transform"
+    },
+    {
+      "id": "transforms.py:class:TransformNode",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "TransformNode"
+    },
+    {
+      "id": "transforms.py:class:TransformWrapper",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "TransformWrapper"
+    },
+    {
+      "id": "transforms.py:class:TransformedBbox",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "TransformedBbox"
+    },
+    {
+      "id": "transforms.py:class:TransformedPatchPath",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "TransformedPatchPath"
+    },
+    {
+      "id": "transforms.py:class:TransformedPath",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "TransformedPath"
+    },
+    {
+      "id": "transforms.py:constant:DEBUG",
+      "kind": "constant",
+      "module": "transforms.py",
+      "name": "DEBUG"
+    },
+    {
+      "id": "transforms.py:function:blended_transform_factory",
+      "kind": "function",
+      "module": "transforms.py",
+      "name": "blended_transform_factory"
+    },
+    {
+      "id": "transforms.py:function:composite_transform_factory",
+      "kind": "function",
+      "module": "transforms.py",
+      "name": "composite_transform_factory"
+    },
+    {
+      "id": "transforms.py:function:interval_contains",
+      "kind": "function",
+      "module": "transforms.py",
+      "name": "interval_contains"
+    },
+    {
+      "id": "transforms.py:function:interval_contains_open",
+      "kind": "function",
+      "module": "transforms.py",
+      "name": "interval_contains_open"
+    },
+    {
+      "id": "transforms.py:function:nonsingular",
+      "kind": "function",
+      "module": "transforms.py",
+      "name": "nonsingular"
+    },
+    {
+      "id": "transforms.py:function:offset_copy",
+      "kind": "function",
+      "module": "transforms.py",
+      "name": "offset_copy"
+    },
+    {
+      "id": "widgets.py:class:AxesWidget",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "AxesWidget"
+    },
+    {
+      "id": "widgets.py:class:Button",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "Button"
+    },
+    {
+      "id": "widgets.py:class:CheckButtons",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "CheckButtons"
+    },
+    {
+      "id": "widgets.py:class:Cursor",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "Cursor"
+    },
+    {
+      "id": "widgets.py:class:EllipseSelector",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "EllipseSelector"
+    },
+    {
+      "id": "widgets.py:class:Lasso",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "Lasso"
+    },
+    {
+      "id": "widgets.py:class:LassoSelector",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "LassoSelector"
+    },
+    {
+      "id": "widgets.py:class:LockDraw",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "LockDraw"
+    },
+    {
+      "id": "widgets.py:class:MultiCursor",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "MultiCursor"
+    },
+    {
+      "id": "widgets.py:class:PolygonSelector",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "PolygonSelector"
+    },
+    {
+      "id": "widgets.py:class:RadioButtons",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "RadioButtons"
+    },
+    {
+      "id": "widgets.py:class:RangeSlider",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "RangeSlider"
+    },
+    {
+      "id": "widgets.py:class:RectangleSelector",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "RectangleSelector"
+    },
+    {
+      "id": "widgets.py:class:Slider",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "Slider"
+    },
+    {
+      "id": "widgets.py:class:SliderBase",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "SliderBase"
+    },
+    {
+      "id": "widgets.py:class:SpanSelector",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "SpanSelector"
+    },
+    {
+      "id": "widgets.py:class:SubplotTool",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "SubplotTool"
+    },
+    {
+      "id": "widgets.py:class:TextBox",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "TextBox"
+    },
+    {
+      "id": "widgets.py:class:ToolHandles",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "ToolHandles"
+    },
+    {
+      "id": "widgets.py:class:ToolLineHandles",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "ToolLineHandles"
+    },
+    {
+      "id": "widgets.py:class:Widget",
+      "kind": "class",
+      "module": "widgets.py",
+      "name": "Widget"
+    }
+  ],
+  "schema_version": 1,
+  "source_root": "third_party/matplotlib/lib/matplotlib"
+}

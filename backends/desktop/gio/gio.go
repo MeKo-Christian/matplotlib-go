@@ -264,14 +264,17 @@ func (b *Backend) dispatchPointer(ev pointer.Event) {
 		evt := canvas.NewMouseEvent(canvas.EventMouseMove, b.opts.Figure, pt, btn)
 		evt.Modifiers = mods
 		b.cnv.emit(evt.Event)
+		b.cnv.hover.Update(evt.Event)
 	case pointer.Enter:
 		evt := canvas.NewMouseEvent(canvas.EventFigureEnter, b.opts.Figure, pt, btn)
 		evt.Modifiers = mods
 		b.cnv.emit(evt.Event)
+		b.cnv.hover.Update(evt.Event)
 	case pointer.Leave:
 		evt := canvas.NewMouseEvent(canvas.EventFigureLeave, b.opts.Figure, pt, btn)
 		evt.Modifiers = mods
 		b.cnv.emit(evt.Event)
+		b.cnv.hover.Update(evt.Event)
 	case pointer.Scroll:
 		evt := canvas.NewMouseEvent(canvas.EventScroll, b.opts.Figure, pt, btn)
 		evt.Modifiers = mods
@@ -312,20 +315,12 @@ func mapButtons(b pointer.Buttons) canvas.MouseButton {
 
 // mapModifiers projects Gio key modifiers to the canvas bitset.
 func mapModifiers(m key.Modifiers) canvas.Modifier {
-	var out canvas.Modifier
-	if m&key.ModShift != 0 {
-		out |= canvas.ModifierShift
-	}
-	if m&key.ModCtrl != 0 {
-		out |= canvas.ModifierControl
-	}
-	if m&key.ModAlt != 0 {
-		out |= canvas.ModifierAlt
-	}
-	if m&(key.ModSuper|key.ModCommand) != 0 {
-		out |= canvas.ModifierMeta
-	}
-	return out
+	return canvas.ModifierSet(
+		m&key.ModShift != 0,
+		m&key.ModCtrl != 0,
+		m&key.ModAlt != 0,
+		m&(key.ModSuper|key.ModCommand) != 0,
+	)
 }
 
 // colorNRGBA projects a render.Color into the color.NRGBA expected by
@@ -356,6 +351,7 @@ type gioCanvas struct {
 	w    *gioapp.Window
 
 	dispatcher *canvas.Dispatcher
+	hover      *canvas.AxesHoverTracker
 
 	mu     sync.Mutex
 	width  int
@@ -366,14 +362,17 @@ type gioCanvas struct {
 }
 
 func newGioCanvas(opts desktop.Options, w *gioapp.Window) *gioCanvas {
-	return &gioCanvas{
+	dispatcher := &canvas.Dispatcher{}
+	c := &gioCanvas{
 		opts:       opts,
 		w:          w,
-		dispatcher: &canvas.Dispatcher{},
+		dispatcher: dispatcher,
 		width:      opts.Width,
 		height:     opts.Height,
 		dirty:      true,
 	}
+	c.hover = canvas.NewAxesHoverTracker(opts.Figure, dispatcher)
+	return c
 }
 
 // Figure returns the rendered figure.

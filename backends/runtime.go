@@ -437,6 +437,11 @@ func snapshotFigureHome(fig *canvas.Figure) figureHomeState {
 	return state
 }
 
+var (
+	_ canvas.DrawIdleCanvas = (*headlessCanvas)(nil)
+	_ canvas.FigureManager  = (*defaultManager)(nil)
+)
+
 func restoreFigureHome(state figureHomeState, figCanvas canvas.FigureCanvas) error {
 	fig := figCanvas.Figure()
 	if fig == nil {

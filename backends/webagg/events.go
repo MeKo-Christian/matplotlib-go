@@ -2,7 +2,6 @@ package webagg
 
 import (
 	"encoding/json"
-	"strings"
 
 	plotcanvas "github.com/cwbudde/matplotlib-go/canvas"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -80,11 +79,18 @@ func (m *Manager) emitMouse(eventType plotcanvas.EventType, ev *inboundEvent) er
 		Button:    mouseButtonFromJS(ev.Button),
 		Modifiers: modifiersFromJS(ev.Modifiers),
 	}
+	if ev.Type == MsgDblClick {
+		event.DoubleClick = true
+	}
 	if err := m.dispatch.Emit(event); err != nil {
 		return err
 	}
 	if eventType == plotcanvas.EventMousePress {
 		plotcanvas.EmitPick(m.dispatch, m.figure, plotcanvas.MouseEvent{Event: event})
+	}
+	switch eventType {
+	case plotcanvas.EventMouseMove, plotcanvas.EventFigureEnter, plotcanvas.EventFigureLeave:
+		m.hover.Update(event)
 	}
 	return nil
 }
@@ -111,7 +117,7 @@ func (m *Manager) emitKey(eventType plotcanvas.EventType, ev *inboundEvent) erro
 	return m.dispatch.Emit(plotcanvas.Event{
 		Type:      eventType,
 		Figure:    m.figure,
-		Key:       normalizeKey(ev.Key),
+		Key:       plotcanvas.NormalizeKey(ev.Key),
 		Modifiers: modifiersFromJS(ev.Modifiers),
 	})
 }
@@ -198,40 +204,18 @@ func navigateModeName(mode plotcanvas.ToolbarMode) string {
 // mouseButtonFromJS maps the JS button index (left=0, middle=1,
 // right=2) to our canvas-side enum.
 func mouseButtonFromJS(b int) plotcanvas.MouseButton {
-	switch b {
-	case 1:
-		return plotcanvas.MouseButtonMiddle
-	case 2:
-		return plotcanvas.MouseButtonRight
-	}
-	return plotcanvas.MouseButtonLeft
+	return plotcanvas.MouseButtonFromJSIndex(b)
 }
 
 // modifiersFromJS converts the upstream string list (["ctrl", "shift",
 // "alt", "meta"]) to our bitfield. Case is normalized to lower.
 func modifiersFromJS(mods []string) plotcanvas.Modifier {
-	var out plotcanvas.Modifier
-	for _, m := range mods {
-		switch strings.ToLower(m) {
-		case "shift":
-			out |= plotcanvas.ModifierShift
-		case "control", "ctrl":
-			out |= plotcanvas.ModifierControl
-		case "alt":
-			out |= plotcanvas.ModifierAlt
-		case "meta", "super", "cmd":
-			out |= plotcanvas.ModifierMeta
-		}
-	}
-	return out
+	return plotcanvas.ModifiersFromNames(mods)
 }
 
 // normalizeKey strips the upstream "ctrl+", "shift+", "alt+" prefixes
 // (which our dispatcher carries via Modifiers) so the dispatched Key
 // field holds just the key value.
 func normalizeKey(key string) string {
-	for _, prefix := range []string{"ctrl+", "shift+", "alt+", "meta+", "super+"} {
-		key = strings.TrimPrefix(key, prefix)
-	}
-	return key
+	return plotcanvas.NormalizeKey(key)
 }

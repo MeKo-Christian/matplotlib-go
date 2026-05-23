@@ -25,6 +25,8 @@ const (
 	EventMouseMove    EventType = "mouse_move"
 	EventFigureEnter  EventType = "figure_enter"
 	EventFigureLeave  EventType = "figure_leave"
+	EventAxesEnter    EventType = "axes_enter"
+	EventAxesLeave    EventType = "axes_leave"
 	EventScroll       EventType = "scroll"
 	EventKeyPress     EventType = "key_press"
 	EventKeyRelease   EventType = "key_release"
@@ -66,6 +68,7 @@ type Event struct {
 	Modifiers       Modifier
 	DeltaX          float64
 	DeltaY          float64
+	DoubleClick     bool
 	Native          any
 }
 

@@ -211,6 +211,126 @@ func TestPointerEnterLeaveEmitsFigureLifecycleEvents(t *testing.T) {
 	}
 }
 
+func TestPointerMoveEmitsAxesEnterLeaveEvents(t *testing.T) {
+	opts := newTestOptions()
+	fig := opts.Figure
+	left := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 0.5, Y: 1}})
+	right := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.5, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+
+	b, err := New(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []canvas.Event
+	b.Canvas().Connect(canvas.EventAxesEnter, func(ev canvas.Event) error {
+		got = append(got, ev)
+		return nil
+	})
+	b.Canvas().Connect(canvas.EventAxesLeave, func(ev canvas.Event) error {
+		got = append(got, ev)
+		return nil
+	})
+
+	for _, ev := range []pointer.Event{
+		{Kind: pointer.Move, Position: f32.Pt(40, 120)},
+		{Kind: pointer.Move, Position: f32.Pt(120, 120)},
+		{Kind: pointer.Move, Position: f32.Pt(200, 120)},
+		{Kind: pointer.Leave, Position: f32.Pt(400, 120)},
+	} {
+		b.dispatchPointer(ev)
+	}
+
+	wantTypes := []canvas.EventType{
+		canvas.EventAxesEnter,
+		canvas.EventAxesLeave,
+		canvas.EventAxesEnter,
+		canvas.EventAxesLeave,
+	}
+	wantAxes := []*core.Axes{left, left, right, right}
+	if len(got) != len(wantTypes) {
+		t.Fatalf("events = %d, want %d", len(got), len(wantTypes))
+	}
+	for i := range wantTypes {
+		if got[i].Type != wantTypes[i] {
+			t.Fatalf("event %d type = %s, want %s", i, got[i].Type, wantTypes[i])
+		}
+		if got[i].Axes != wantAxes[i] {
+			t.Fatalf("event %d axes mismatch", i)
+		}
+	}
+}
+
+func TestPointerReleaseScrollAndKeyPayloads(t *testing.T) {
+	b, err := New(newTestOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var events []canvas.Event
+	for _, typ := range []canvas.EventType{
+		canvas.EventMouseRelease,
+		canvas.EventPick,
+		canvas.EventScroll,
+		canvas.EventKeyPress,
+		canvas.EventKeyRelease,
+	} {
+		typ := typ
+		b.Canvas().Connect(typ, func(ev canvas.Event) error {
+			events = append(events, ev)
+			return nil
+		})
+	}
+
+	b.dispatchPointer(pointer.Event{
+		Kind:      pointer.Release,
+		Position:  f32.Pt(1, 2),
+		Buttons:   pointer.ButtonSecondary,
+		Modifiers: key.ModCtrl,
+	})
+	b.dispatchPointer(pointer.Event{
+		Kind:      pointer.Scroll,
+		Position:  f32.Pt(3, 4),
+		Scroll:    f32.Pt(1, -2),
+		Modifiers: key.ModAlt,
+	})
+	b.dispatchKey(key.Event{
+		Name:      key.Name("A"),
+		State:     key.Press,
+		Modifiers: key.ModShift,
+	})
+	b.dispatchKey(key.Event{
+		Name:      key.NameEscape,
+		State:     key.Release,
+		Modifiers: key.ModCtrl,
+	})
+
+	wantTypes := []canvas.EventType{
+		canvas.EventMouseRelease,
+		canvas.EventScroll,
+		canvas.EventKeyPress,
+		canvas.EventKeyRelease,
+	}
+	if len(events) != len(wantTypes) {
+		t.Fatalf("events = %d, want %d: %+v", len(events), len(wantTypes), events)
+	}
+	for i, want := range wantTypes {
+		if events[i].Type != want {
+			t.Fatalf("event %d type = %s, want %s", i, events[i].Type, want)
+		}
+	}
+	if events[0].Button != canvas.MouseButtonRight || events[0].Modifiers != canvas.ModifierControl {
+		t.Fatalf("release payload = %+v, want right with ctrl", events[0])
+	}
+	if events[1].DeltaX != 1 || events[1].DeltaY != -2 || events[1].Modifiers != canvas.ModifierAlt {
+		t.Fatalf("scroll payload = %+v, want (1,-2) with alt", events[1])
+	}
+	if events[2].Key != "A" || events[2].Modifiers != canvas.ModifierShift {
+		t.Fatalf("key press payload = %+v, want shift+A", events[2])
+	}
+	if events[3].Key != string(key.NameEscape) || events[3].Modifiers != canvas.ModifierControl {
+		t.Fatalf("key release payload = %+v, want ctrl+escape", events[3])
+	}
+}
+
 func TestMapButtons(t *testing.T) {
 	cases := []struct {
 		in   pointer.Buttons

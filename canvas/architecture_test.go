@@ -29,6 +29,16 @@ func TestFirstClassEventWrappersPreserveCanonicalTypes(t *testing.T) {
 		t.Fatalf("figure leave event = %+v", leave.Event)
 	}
 
+	axesEnter := NewMouseEvent(EventAxesEnter, fig, geom.Pt{X: 90, Y: 12}, MouseButtonNone)
+	if axesEnter.Type != EventAxesEnter || axesEnter.Figure != fig || axesEnter.Position.X != 90 {
+		t.Fatalf("axes enter event = %+v", axesEnter.Event)
+	}
+
+	axesLeave := NewMouseEvent(EventAxesLeave, fig, geom.Pt{X: 91, Y: 13}, MouseButtonNone)
+	if axesLeave.Type != EventAxesLeave || axesLeave.Figure != fig || axesLeave.Position.Y != 13 {
+		t.Fatalf("axes leave event = %+v", axesLeave.Event)
+	}
+
 	key := NewKeyEvent(EventKeyPress, fig, "ctrl+s", ModifierControl)
 	if key.Type != EventKeyPress || key.Key != "ctrl+s" || key.Modifiers != ModifierControl {
 		t.Fatalf("key event = %+v", key.Event)

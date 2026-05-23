@@ -79,6 +79,10 @@ PostScript, and PGF options can be passed through `core.SaveFig`,
 tools. Options are validated against the selected extension, so unsupported
 combinations fail explicitly instead of being ignored.
 
+Interactive embedder contracts for `FigureCanvas`, `DrawIdleCanvas`, event
+payloads, picker behavior, and optional blitting are documented in
+[`interactive-backends.md`](interactive-backends.md).
+
 ## Backend Capabilities
 
 | Backend | Anti-aliasing | GPU Accel | Text Shaping | Pattern/Gradient | Vector Output |

@@ -933,9 +933,12 @@ reference; current `core/events.go`, `internal/webdemo/`.
 - [ ] Event lifecycle and redraw scheduling match upstream Matplotlib for
       the documented event set.
       Draw-idle coalescing and WebAgg stale redraw scheduling are in
-      place. This remains open until the lifecycle parity work in 4.6
-      covers enter / leave, double-click, key normalization, pick
-      ordering, and backend-to-backend ordering tests.
+      place. Figure and axes enter / leave, mouse press-before-pick,
+      release-without-pick, WebAgg double-click metadata, scroll steps,
+      key normalization, and modifier payloads are covered for the
+      touched WebAgg/Gio paths. This remains open until the lifecycle
+      parity table covers every backend and draw / resize / close /
+      error propagation path.
 - [ ] Interactive backends share the same artist / event / renderer surface
       as the headless backends.
       The common `FigureCanvas`, `DrawIdleCanvas`, `BlitCanvas`,
@@ -983,22 +986,30 @@ reference; current `core/events.go`, `internal/webdemo/`.
       `canvas.EventFigureEnter` / `EventFigureLeave` are covered by
       `canvas/architecture_test.go`; WebAgg and Gio dispatch tests
       assert backend mapping and payload positions.
-- [ ] Add axes enter / leave semantics on top of figure mouse motion.
-      This needs per-canvas hover state so backends can synthesize
-      Matplotlib-style axes enter / leave events when the resolved axes
-      under the cursor changes.
-- [ ] Add event-ordering tests against the documented Matplotlib flow:
+- [x] Add axes enter / leave semantics on top of figure mouse motion.
+      `canvas.AxesHoverTracker` keeps per-canvas hover state and
+      synthesizes `canvas.EventAxesEnter` / `EventAxesLeave` when the
+      resolved axes under the cursor changes. WebAgg and Gio dispatch
+      tests cover same-axes motion suppression, axes switching, and
+      leaving the figure.
+- [x] Add event-ordering tests against the documented Matplotlib flow:
       mouse press emits the button event then pick event; release emits
       release only; double-click preserves click count / double-click
       metadata; scroll uses upstream step semantics; key events preserve
       normalized key plus modifier bitfields.
-      WebAgg and Gio now assert mouse-press before pick-event ordering;
-      the remaining release / double-click / scroll / key ordering and
-      payload parity checks are still open.
+      WebAgg and Gio assert mouse-press before pick-event ordering and
+      release / scroll / key payload behavior. WebAgg `dblclick` now
+      dispatches `canvas.EventMousePress` with `DoubleClick=true`.
+      Gio's pointer event type does not expose double-click metadata.
 - [ ] Centralize backend event normalization helpers for mouse buttons,
       modifiers, scroll deltas, key strings, and double-click metadata so
       Gio, WebAgg, WASM, and headless simulations report the same
       canvas-level event payloads.
+      Shared helpers now live in `canvas/input.go` for modifier sets,
+      modifier names, browser mouse-button indices, and key
+      normalization. WebAgg and Gio use the shared modifier/key helpers
+      on the exercised paths; WASM alignment and a formal backend matrix
+      remain open.
 - [ ] Add lifecycle tests for draw, draw_idle, resize, close, stale artist
       redraw, and error propagation across headless, Gio, WebAgg, and
       WASM where applicable.
@@ -1016,15 +1027,24 @@ reference; current `core/events.go`, `internal/webdemo/`.
       `FigureCanvas`, `DrawIdleCanvas`, `Dispatcher` event flow,
       navigation, toolbar, and save hooks; `BlitCanvas` where the
       renderer supports buffer regions.
-- [ ] Decide whether desktop Gio should expose `canvas.BlitCanvas` by
+      Headless compile-time interface assertions now exist alongside
+      the existing WebAgg and Gio compile-time checks; runtime assertions
+      and WASM coverage remain open.
+- [x] Decide whether desktop Gio should expose `canvas.BlitCanvas` by
       reusing its retained renderer/image buffer, or document why full
       frame blits remain the desktop path until animation work in Phase 6.
+      Gio remains a full-frame redraw backend for now; the rationale is
+      documented in `docs/interactive-backends.md`.
 - [ ] Align WebAgg, Gio, and WASM hover status, cursor, rubber-band,
       toolbar history, and navigation-mode announcements through shared
       canvas-level APIs instead of backend-local conventions.
-- [ ] Add docs for embedders describing the common interactive contracts:
+- [x] Add docs for embedders describing the common interactive contracts:
       event registration, pick handling, draw idle, blit regions,
       toolbar actions, save handlers, and backend capability detection.
+      `docs/interactive-backends.md` documents the common canvas
+      surface, optional `DrawIdleCanvas` / `BlitCanvas` capabilities,
+      event payload mapping, picker behavior, backend notes, and Gio's
+      full-frame redraw decision.
 
 **Exit criteria:**
 
@@ -2335,7 +2355,7 @@ idiomatic equivalent, an intentional omission, or no implementation yet.
 
 ### 9B.1 Public API Inventory Generator
 
-- [ ] Add a small internal tool that scans upstream Python modules for public
+- [x] Add a small internal tool that scans upstream Python modules for public
       classes, functions, constants, and registries in the modules tracked by
       `FoundationAPIGapAudit`: `artist.py`, `axis.py`, `ticker.py`,
       `scale.py`, `transforms.py`, `lines.py`, `markers.py`,
@@ -2343,14 +2363,30 @@ idiomatic equivalent, an intentional omission, or no implementation yet.
       `offsetbox.py`, `image.py`, `colorbar.py`, `cm.py`, `colors.py`,
       `pyplot.py`, `backend_bases.py`, `backend_tools.py`, `widgets.py`, and
       `animation.py`.
-- [ ] Store the normalized inventory under `internal/examplecatalog` or
+- [x] Store the normalized inventory under `internal/examplecatalog` or
       `test/testdata/parity_surface/` so CI can diff upstream-visible
       additions.
-- [ ] Treat enumerable registries specially: markers, line styles, draw styles,
+- [x] Treat enumerable registries specially: markers, line styles, draw styles,
       cap/join styles, colormaps, named colors, norms, locators, formatters,
       scales, patch classes, box styles, arrow styles, connection styles,
       hatch patterns, projections, backends, toolbar tools, widgets, and image
       interpolation modes.
+
+Current slice landed:
+
+- `internal/examplecatalog/extract_public_surface.py` uses Python `ast` to
+  extract a stable upstream inventory for the Phase 9B tracked modules.
+- `test/testdata/parity_surface/upstream_public_surface.json` stores the
+  committed inventory: 21 modules and 591 public-surface rows covering public
+  classes, functions, constants, and selected registries such as markers,
+  line styles, patch styles, scales, toolbar tools, and image interpolation
+  modes.
+- Catalog tests now verify landmark upstream rows and fail when the committed
+  artifact differs from the extractor output.
+- `internal/examplecatalog.PublicSurfaceParityRows` seeds the Phase 9B.2
+  mapping with first-pass classifications for landmark rows including
+  `Artist`, `Line2D`, the `*` marker, `lanczos` interpolation, `pyplot.plot`,
+  `Button`, and `FuncAnimation`.
 
 Implementation notes:
 

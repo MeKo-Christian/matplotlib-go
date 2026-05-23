@@ -44,6 +44,7 @@ type Manager struct {
 	nav      *plotcanvas.Navigation
 	tb       *plotcanvas.ToolbarController
 	dispatch *plotcanvas.Dispatcher
+	hover    *plotcanvas.AxesHoverTracker
 
 	hub *hub
 
@@ -137,6 +138,7 @@ func NewManager(opts Options) (*Manager, error) {
 	m.hub = newHub(m)
 	m.nav = plotcanvas.NewNavigation(opts.Figure, m.DrawIdle)
 	m.nav.Attach(m.dispatch)
+	m.hover = plotcanvas.NewAxesHoverTracker(opts.Figure, m.dispatch)
 	m.tb = plotcanvas.NewToolbarController(m.nav)
 	if opts.SaveHandler != nil {
 		m.tb.SetHandler(plotcanvas.ToolbarSave, opts.SaveHandler)

@@ -477,6 +477,100 @@ func TestHandleClientMessageMouse(t *testing.T) {
 	}
 }
 
+func TestHandleClientMessageDoubleClickPayload(t *testing.T) {
+	mgr := newTestManager(t)
+	got := make(chan plotcanvas.Event, 1)
+	mgr.Connect(plotcanvas.EventMousePress, func(ev plotcanvas.Event) error {
+		got <- ev
+		return nil
+	})
+
+	if err := mgr.HandleClientMessage(mustJSON(t, map[string]any{
+		"type":      "dblclick",
+		"x":         12.0,
+		"y":         8.0,
+		"button":    2,
+		"modifiers": []string{"ctrl", "shift"},
+	})); err != nil {
+		t.Fatalf("HandleClientMessage: %v", err)
+	}
+
+	select {
+	case ev := <-got:
+		if ev.Type != plotcanvas.EventMousePress {
+			t.Fatalf("type = %s, want %s", ev.Type, plotcanvas.EventMousePress)
+		}
+		if !ev.DoubleClick {
+			t.Fatal("DoubleClick = false, want true")
+		}
+		if ev.Button != plotcanvas.MouseButtonRight {
+			t.Fatalf("button = %v, want right", ev.Button)
+		}
+		wantMods := plotcanvas.ModifierControl | plotcanvas.ModifierShift
+		if ev.Modifiers != wantMods {
+			t.Fatalf("modifiers = %v, want %v", ev.Modifiers, wantMods)
+		}
+	default:
+		t.Fatalf("expected double-click EventMousePress to be dispatched")
+	}
+}
+
+func TestHandleClientMessageReleaseScrollAndKeyPayloads(t *testing.T) {
+	mgr := newTestManager(t)
+	var events []plotcanvas.Event
+	for _, typ := range []plotcanvas.EventType{
+		plotcanvas.EventMouseRelease,
+		plotcanvas.EventPick,
+		plotcanvas.EventScroll,
+		plotcanvas.EventKeyPress,
+		plotcanvas.EventKeyRelease,
+	} {
+		typ := typ
+		mgr.Connect(typ, func(ev plotcanvas.Event) error {
+			events = append(events, ev)
+			return nil
+		})
+	}
+
+	for _, msg := range []map[string]any{
+		{"type": "button_release", "x": 1.0, "y": 2.0, "button": 1},
+		{"type": "scroll", "x": 3.0, "y": 4.0, "step": -2.0, "modifiers": []string{"alt"}},
+		{"type": "key_press", "key": "ctrl+a", "modifiers": []string{"ctrl"}},
+		{"type": "key_release", "key": "shift+escape", "modifiers": []string{"shift"}},
+	} {
+		if err := mgr.HandleClientMessage(mustJSON(t, msg)); err != nil {
+			t.Fatalf("HandleClientMessage %v: %v", msg, err)
+		}
+	}
+
+	wantTypes := []plotcanvas.EventType{
+		plotcanvas.EventMouseRelease,
+		plotcanvas.EventScroll,
+		plotcanvas.EventKeyPress,
+		plotcanvas.EventKeyRelease,
+	}
+	if len(events) != len(wantTypes) {
+		t.Fatalf("events = %d, want %d: %+v", len(events), len(wantTypes), events)
+	}
+	for i, want := range wantTypes {
+		if events[i].Type != want {
+			t.Fatalf("event %d type = %s, want %s", i, events[i].Type, want)
+		}
+	}
+	if events[0].Button != plotcanvas.MouseButtonMiddle {
+		t.Fatalf("release button = %v, want middle", events[0].Button)
+	}
+	if events[1].DeltaY != -2 || events[1].Modifiers != plotcanvas.ModifierAlt {
+		t.Fatalf("scroll payload = %+v, want step -2 with alt", events[1])
+	}
+	if events[2].Key != "a" || events[2].Modifiers != plotcanvas.ModifierControl {
+		t.Fatalf("key press payload = %+v, want ctrl+a normalized to a", events[2])
+	}
+	if events[3].Key != "escape" || events[3].Modifiers != plotcanvas.ModifierShift {
+		t.Fatalf("key release payload = %+v, want shift+escape normalized to escape", events[3])
+	}
+}
+
 func TestHandleClientMessagePressEmitsPick(t *testing.T) {
 	fig := core.NewFigure(100, 80)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
@@ -571,6 +665,63 @@ func TestHandleClientMessageFigureEnterLeave(t *testing.T) {
 			}
 		default:
 			t.Fatalf("missing event %d (%s)", i, typ)
+		}
+	}
+}
+
+func TestHandleClientMessageAxesEnterLeave(t *testing.T) {
+	fig := core.NewFigure(200, 100)
+	left := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 0.5, Y: 1}})
+	right := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.5, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	mgr, err := NewManager(Options{
+		Figure: fig,
+		Renderer: func(w, h int, bg render.Color) (RasterRenderer, error) {
+			return gobasic.New(w, h, bg), nil
+		},
+		HasBackground: true,
+		Background:    render.Color{R: 1, G: 1, B: 1, A: 1},
+	})
+	if err != nil {
+		t.Fatalf("NewManager: %v", err)
+	}
+
+	var got []plotcanvas.Event
+	mgr.Connect(plotcanvas.EventAxesEnter, func(ev plotcanvas.Event) error {
+		got = append(got, ev)
+		return nil
+	})
+	mgr.Connect(plotcanvas.EventAxesLeave, func(ev plotcanvas.Event) error {
+		got = append(got, ev)
+		return nil
+	})
+
+	for _, msg := range []map[string]any{
+		{"type": "motion_notify", "x": 25.0, "y": 50.0},
+		{"type": "motion_notify", "x": 75.0, "y": 50.0},
+		{"type": "motion_notify", "x": 125.0, "y": 50.0},
+		{"type": "motion_notify", "x": 250.0, "y": 50.0},
+	} {
+		if err := mgr.HandleClientMessage(mustJSON(t, msg)); err != nil {
+			t.Fatalf("HandleClientMessage %v: %v", msg, err)
+		}
+	}
+
+	wantTypes := []plotcanvas.EventType{
+		plotcanvas.EventAxesEnter,
+		plotcanvas.EventAxesLeave,
+		plotcanvas.EventAxesEnter,
+		plotcanvas.EventAxesLeave,
+	}
+	wantAxes := []*core.Axes{left, left, right, right}
+	if len(got) != len(wantTypes) {
+		t.Fatalf("events = %d, want %d", len(got), len(wantTypes))
+	}
+	for i := range wantTypes {
+		if got[i].Type != wantTypes[i] {
+			t.Fatalf("event %d type = %s, want %s", i, got[i].Type, wantTypes[i])
+		}
+		if got[i].Axes != wantAxes[i] {
+			t.Fatalf("event %d axes mismatch", i)
 		}
 	}
 }
