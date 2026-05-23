@@ -219,7 +219,7 @@ func (b *Backend) drainInput(src interface {
 }, tag event.Tag,
 ) {
 	const pointerKinds = pointer.Press | pointer.Release | pointer.Move |
-		pointer.Drag | pointer.Scroll
+		pointer.Drag | pointer.Enter | pointer.Leave | pointer.Scroll
 
 	for {
 		ev, ok := src.Event(
@@ -255,12 +255,21 @@ func (b *Backend) dispatchPointer(ev pointer.Event) {
 		evt := canvas.NewMouseEvent(canvas.EventMousePress, b.opts.Figure, pt, btn)
 		evt.Modifiers = mods
 		b.cnv.emit(evt.Event)
+		canvas.EmitPick(b.cnv.dispatcher, b.opts.Figure, evt)
 	case pointer.Release:
 		evt := canvas.NewMouseEvent(canvas.EventMouseRelease, b.opts.Figure, pt, btn)
 		evt.Modifiers = mods
 		b.cnv.emit(evt.Event)
 	case pointer.Move, pointer.Drag:
 		evt := canvas.NewMouseEvent(canvas.EventMouseMove, b.opts.Figure, pt, btn)
+		evt.Modifiers = mods
+		b.cnv.emit(evt.Event)
+	case pointer.Enter:
+		evt := canvas.NewMouseEvent(canvas.EventFigureEnter, b.opts.Figure, pt, btn)
+		evt.Modifiers = mods
+		b.cnv.emit(evt.Event)
+	case pointer.Leave:
+		evt := canvas.NewMouseEvent(canvas.EventFigureLeave, b.opts.Figure, pt, btn)
 		evt.Modifiers = mods
 		b.cnv.emit(evt.Event)
 	case pointer.Scroll:

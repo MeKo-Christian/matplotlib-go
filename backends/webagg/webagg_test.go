@@ -477,6 +477,104 @@ func TestHandleClientMessageMouse(t *testing.T) {
 	}
 }
 
+func TestHandleClientMessagePressEmitsPick(t *testing.T) {
+	fig := core.NewFigure(100, 80)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	ax.SetXLim(0, 10)
+	ax.SetYLim(0, 10)
+	rect := &core.Rectangle{XY: geom.Pt{X: 0, Y: 0}, Width: 10, Height: 10}
+	ax.Add(rect)
+	ctx := core.AxesDrawContext(ax, fig)
+	pos := (&ctx.DataToPixel).Apply(geom.Pt{X: 5, Y: 5})
+	mgr, err := NewManager(Options{
+		Figure: fig,
+		Renderer: func(w, h int, bg render.Color) (RasterRenderer, error) {
+			return gobasic.New(w, h, bg), nil
+		},
+		HasBackground: true,
+		Background:    render.Color{R: 1, G: 1, B: 1, A: 1},
+	})
+	if err != nil {
+		t.Fatalf("NewManager: %v", err)
+	}
+
+	got := make(chan plotcanvas.EventType, 2)
+	mgr.Connect(plotcanvas.EventMousePress, func(ev plotcanvas.Event) error {
+		got <- ev.Type
+		return nil
+	})
+	mgr.Connect(plotcanvas.EventPick, func(ev plotcanvas.Event) error {
+		got <- ev.Type
+		return nil
+	})
+	raw := mustJSON(t, map[string]any{
+		"type":   "button_press",
+		"x":      pos.X,
+		"y":      pos.Y,
+		"button": 0,
+	})
+	if err := mgr.HandleClientMessage(raw); err != nil {
+		t.Fatalf("HandleClientMessage: %v", err)
+	}
+	want := []plotcanvas.EventType{plotcanvas.EventMousePress, plotcanvas.EventPick}
+	for i, typ := range want {
+		select {
+		case gotType := <-got:
+			if gotType != typ {
+				t.Fatalf("event %d = %s, want %s", i, gotType, typ)
+			}
+		default:
+			t.Fatalf("missing event %d (%s)", i, typ)
+		}
+	}
+}
+
+func TestHandleClientMessageFigureEnterLeave(t *testing.T) {
+	mgr := newTestManager(t)
+	got := make(chan plotcanvas.EventType, 2)
+	mgr.Connect(plotcanvas.EventFigureEnter, func(ev plotcanvas.Event) error {
+		got <- ev.Type
+		if ev.Position.X != 12 || ev.Position.Y != 8 {
+			t.Fatalf("figure enter position = %+v, want (12,8)", ev.Position)
+		}
+		return nil
+	})
+	mgr.Connect(plotcanvas.EventFigureLeave, func(ev plotcanvas.Event) error {
+		got <- ev.Type
+		if ev.Position.X != 20 || ev.Position.Y != 30 {
+			t.Fatalf("figure leave position = %+v, want (20,30)", ev.Position)
+		}
+		return nil
+	})
+
+	if err := mgr.HandleClientMessage(mustJSON(t, map[string]any{
+		"type": "figure_enter",
+		"x":    12.0,
+		"y":    8.0,
+	})); err != nil {
+		t.Fatalf("HandleClientMessage enter: %v", err)
+	}
+	if err := mgr.HandleClientMessage(mustJSON(t, map[string]any{
+		"type": "figure_leave",
+		"x":    20.0,
+		"y":    30.0,
+	})); err != nil {
+		t.Fatalf("HandleClientMessage leave: %v", err)
+	}
+
+	want := []plotcanvas.EventType{plotcanvas.EventFigureEnter, plotcanvas.EventFigureLeave}
+	for i, typ := range want {
+		select {
+		case gotType := <-got:
+			if gotType != typ {
+				t.Fatalf("event %d = %s, want %s", i, gotType, typ)
+			}
+		default:
+			t.Fatalf("missing event %d (%s)", i, typ)
+		}
+	}
+}
+
 // TestToolbarPanEcho asserts that a toolbar_button:pan event flips the
 // controller into pan mode and broadcasts a navigate_mode message so
 // other clients can update their UI.

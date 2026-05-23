@@ -23,6 +23,8 @@ const (
 	EventMousePress   EventType = "mouse_press"
 	EventMouseRelease EventType = "mouse_release"
 	EventMouseMove    EventType = "mouse_move"
+	EventFigureEnter  EventType = "figure_enter"
+	EventFigureLeave  EventType = "figure_leave"
 	EventScroll       EventType = "scroll"
 	EventKeyPress     EventType = "key_press"
 	EventKeyRelease   EventType = "key_release"

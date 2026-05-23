@@ -4,6 +4,7 @@ import (
 	"image"
 	"testing"
 
+	"gioui.org/f32"
 	"gioui.org/io/key"
 	"gioui.org/io/pointer"
 	"github.com/cwbudde/matplotlib-go/backends/desktop"
@@ -121,6 +122,92 @@ func TestCanvasResizeEmitsEvent(t *testing.T) {
 	}
 	if b.Canvas().(*gioCanvas).Width() != 800 {
 		t.Fatal("width not updated after Resize")
+	}
+}
+
+func TestPointerPressEmitsPick(t *testing.T) {
+	opts := newTestOptions()
+	fig := opts.Figure
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	ax.SetXLim(0, 10)
+	ax.SetYLim(0, 10)
+	rect := &core.Rectangle{XY: geom.Pt{X: 0, Y: 0}, Width: 10, Height: 10}
+	ax.Add(rect)
+	ctx := core.AxesDrawContext(ax, fig)
+	pos := (&ctx.DataToPixel).Apply(geom.Pt{X: 5, Y: 5})
+
+	b, err := New(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := make(chan canvas.EventType, 2)
+	b.Canvas().Connect(canvas.EventMousePress, func(ev canvas.Event) error {
+		got <- ev.Type
+		return nil
+	})
+	b.Canvas().Connect(canvas.EventPick, func(ev canvas.Event) error {
+		got <- ev.Type
+		return nil
+	})
+	b.dispatchPointer(pointer.Event{
+		Kind:     pointer.Press,
+		Position: f32.Pt(float32(pos.X), float32(pos.Y)),
+		Buttons:  pointer.ButtonPrimary,
+	})
+
+	want := []canvas.EventType{canvas.EventMousePress, canvas.EventPick}
+	for i, typ := range want {
+		select {
+		case gotType := <-got:
+			if gotType != typ {
+				t.Fatalf("event %d = %s, want %s", i, gotType, typ)
+			}
+		default:
+			t.Fatalf("missing event %d (%s)", i, typ)
+		}
+	}
+}
+
+func TestPointerEnterLeaveEmitsFigureLifecycleEvents(t *testing.T) {
+	b, err := New(newTestOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := make(chan canvas.EventType, 2)
+	b.Canvas().Connect(canvas.EventFigureEnter, func(ev canvas.Event) error {
+		got <- ev.Type
+		if ev.Position.X != 12 || ev.Position.Y != 8 {
+			t.Fatalf("figure enter position = %+v, want (12,8)", ev.Position)
+		}
+		return nil
+	})
+	b.Canvas().Connect(canvas.EventFigureLeave, func(ev canvas.Event) error {
+		got <- ev.Type
+		if ev.Position.X != 20 || ev.Position.Y != 30 {
+			t.Fatalf("figure leave position = %+v, want (20,30)", ev.Position)
+		}
+		return nil
+	})
+
+	b.dispatchPointer(pointer.Event{
+		Kind:     pointer.Enter,
+		Position: f32.Pt(12, 8),
+	})
+	b.dispatchPointer(pointer.Event{
+		Kind:     pointer.Leave,
+		Position: f32.Pt(20, 30),
+	})
+
+	want := []canvas.EventType{canvas.EventFigureEnter, canvas.EventFigureLeave}
+	for i, typ := range want {
+		select {
+		case gotType := <-got:
+			if gotType != typ {
+				t.Fatalf("event %d = %s, want %s", i, gotType, typ)
+			}
+		default:
+			t.Fatalf("missing event %d (%s)", i, typ)
+		}
 	}
 }
 

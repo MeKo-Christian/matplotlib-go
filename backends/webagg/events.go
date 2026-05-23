@@ -37,8 +37,12 @@ func (m *Manager) dispatchInbound(ev *inboundEvent) error {
 		return m.emitMouse(plotcanvas.EventMouseRelease, ev)
 	case MsgDblClick:
 		return m.emitMouse(plotcanvas.EventMousePress, ev)
-	case MsgMotionNotify, MsgFigureEnter, MsgFigureLeave:
+	case MsgMotionNotify:
 		return m.emitMouse(plotcanvas.EventMouseMove, ev)
+	case MsgFigureEnter:
+		return m.emitMouse(plotcanvas.EventFigureEnter, ev)
+	case MsgFigureLeave:
+		return m.emitMouse(plotcanvas.EventFigureLeave, ev)
 	case MsgScroll:
 		return m.emitScroll(ev)
 	case MsgKeyPress:
@@ -69,13 +73,20 @@ func (m *Manager) emitMouse(eventType plotcanvas.EventType, ev *inboundEvent) er
 	m.lastMouseX = ev.X
 	m.lastMouseY = ev.Y
 	m.mu.Unlock()
-	return m.dispatch.Emit(plotcanvas.Event{
+	event := plotcanvas.Event{
 		Type:      eventType,
 		Figure:    m.figure,
 		Position:  geom.Pt{X: ev.X, Y: ev.Y},
 		Button:    mouseButtonFromJS(ev.Button),
 		Modifiers: modifiersFromJS(ev.Modifiers),
-	})
+	}
+	if err := m.dispatch.Emit(event); err != nil {
+		return err
+	}
+	if eventType == plotcanvas.EventMousePress {
+		plotcanvas.EmitPick(m.dispatch, m.figure, plotcanvas.MouseEvent{Event: event})
+	}
+	return nil
 }
 
 func (m *Manager) emitScroll(ev *inboundEvent) error {

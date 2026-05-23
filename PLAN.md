@@ -926,10 +926,112 @@ reference; current `core/events.go`, `internal/webdemo/`.
 
 - [ ] At least one desktop and one web interactive backend can drive pan /
       zoom / pick across every plot category committed in earlier phases.
+      Pan and zoom are wired for Gio, WebAgg, and WASM, and Gio/WebAgg
+      now emit `pick_event` on mouse press when an artist is hit. This
+      remains open until the catalog-driven interactive matrix in 4.5
+      proves every committed plot category.
 - [ ] Event lifecycle and redraw scheduling match upstream Matplotlib for
       the documented event set.
+      Draw-idle coalescing and WebAgg stale redraw scheduling are in
+      place. This remains open until the lifecycle parity work in 4.6
+      covers enter / leave, double-click, key normalization, pick
+      ordering, and backend-to-backend ordering tests.
 - [ ] Interactive backends share the same artist / event / renderer surface
       as the headless backends.
+      The common `FigureCanvas`, `DrawIdleCanvas`, `BlitCanvas`,
+      `Dispatcher`, `Navigation`, picker, and toolbar pieces exist, but
+      the backend capability assertions and WASM/desktop/web surface
+      alignment in 4.7 still need to close this formally.
+
+### 4.5 Interactive Coverage Matrix
+
+- [ ] Add a catalog-driven interactive smoke harness that drives at least
+      one desktop backend (Gio) and one web backend (WebAgg) across every
+      plot category committed in Phases 1–3.
+      The harness should live beside the existing backend tests, reuse
+      `internal/examplecatalog.Case`, synthesize pan drag, scroll zoom,
+      box zoom, and pick clicks, and assert semantic outcomes rather than
+      exact pixels: draw events fire, axis limits change when expected,
+      pick events fire for pickable cases, and the renderer does not
+      panic.
+- [ ] Extend `internal/examplecatalog.Case` with optional interactive
+      metadata: `PickPointData`, `PickPointPixel`, `Pickable` /
+      `NoPickReason`, and per-case pan/zoom skip flags for non-Cartesian
+      or intentionally static figures.
+      Existing catalog rows should default to the conservative path:
+      pan/zoom smoke runs where axes support pixel inversion; pick checks
+      run only when metadata identifies a pickable artist.
+- [ ] Add WebAgg protocol-level integration coverage for pan, zoom, and
+      pick using real `httptest` WebSocket clients, not only direct
+      `HandleClientMessage` calls.
+- [ ] Add a cgo-free Gio synthetic-input suite for pan, zoom, and pick
+      over representative catalog categories, plus a documented manual
+      command for visual Gio smoke checks.
+
+**Exit criteria:**
+
+- [ ] The Phase 4 first exit criterion is backed by automated coverage
+      listing every catalog category and whether it passed, skipped with
+      reason, or is explicitly unsupported.
+
+### 4.6 Event Lifecycle Parity Closure
+
+- [x] Add explicit figure enter / leave event types to `canvas.EventType`
+      and map WebAgg `figure_enter` / `figure_leave` plus Gio pointer
+      enter/leave into those events instead of collapsing them into
+      mouse move.
+      `canvas.EventFigureEnter` / `EventFigureLeave` are covered by
+      `canvas/architecture_test.go`; WebAgg and Gio dispatch tests
+      assert backend mapping and payload positions.
+- [ ] Add axes enter / leave semantics on top of figure mouse motion.
+      This needs per-canvas hover state so backends can synthesize
+      Matplotlib-style axes enter / leave events when the resolved axes
+      under the cursor changes.
+- [ ] Add event-ordering tests against the documented Matplotlib flow:
+      mouse press emits the button event then pick event; release emits
+      release only; double-click preserves click count / double-click
+      metadata; scroll uses upstream step semantics; key events preserve
+      normalized key plus modifier bitfields.
+      WebAgg and Gio now assert mouse-press before pick-event ordering;
+      the remaining release / double-click / scroll / key ordering and
+      payload parity checks are still open.
+- [ ] Centralize backend event normalization helpers for mouse buttons,
+      modifiers, scroll deltas, key strings, and double-click metadata so
+      Gio, WebAgg, WASM, and headless simulations report the same
+      canvas-level event payloads.
+- [ ] Add lifecycle tests for draw, draw_idle, resize, close, stale artist
+      redraw, and error propagation across headless, Gio, WebAgg, and
+      WASM where applicable.
+
+**Exit criteria:**
+
+- [ ] The Phase 4 second exit criterion has a parity table mapping each
+      documented Matplotlib event to the corresponding canvas event,
+      backend mappings, and tests.
+
+### 4.7 Shared Interactive Surface Hardening
+
+- [ ] Add compile-time and runtime assertions that every interactive
+      backend exposes the expected common surface:
+      `FigureCanvas`, `DrawIdleCanvas`, `Dispatcher` event flow,
+      navigation, toolbar, and save hooks; `BlitCanvas` where the
+      renderer supports buffer regions.
+- [ ] Decide whether desktop Gio should expose `canvas.BlitCanvas` by
+      reusing its retained renderer/image buffer, or document why full
+      frame blits remain the desktop path until animation work in Phase 6.
+- [ ] Align WebAgg, Gio, and WASM hover status, cursor, rubber-band,
+      toolbar history, and navigation-mode announcements through shared
+      canvas-level APIs instead of backend-local conventions.
+- [ ] Add docs for embedders describing the common interactive contracts:
+      event registration, pick handling, draw idle, blit regions,
+      toolbar actions, save handlers, and backend capability detection.
+
+**Exit criteria:**
+
+- [ ] The Phase 4 third exit criterion is backed by shared-interface
+      assertions, embedder docs, and at least one example that can switch
+      between headless, Gio, and WebAgg without changing artist/event
+      code.
 
 ---
 
@@ -2196,18 +2298,353 @@ Current slice landed:
   inventories, summarizes the current findings, and clarifies that the exit
   criteria are audit criteria unless later phases explicitly promote the
   discovered gaps into implementation work.
+- `internal/examplecatalog.CoverageAuditExitCriteria` makes that exit-criteria
+  interpretation testable, including which criteria are audit-satisfied and
+  which still expose follow-up implementation or browser-demo work.
+
+**Audit exit criteria:**
+
+- [x] Every fundamental Matplotlib feature area is classified as implemented,
+      partially implemented, intentionally omitted, or pending.
+- [x] Every implemented public feature has at least one parity fixture or a
+      documented reason why visual parity testing is not applicable.
+- [x] Every major user-facing feature family has an audit row explaining
+      whether showcase coverage is broad, thin, fixture-only, pending, or
+      intentionally omitted.
+- [x] Browser demo coverage is reconciled against the catalog so planned,
+      active, and reference-only browser work cannot drift silently.
+
+**Important:** Phase 9A answers "what is missing?" at audit granularity. It
+does not claim that every missing Matplotlib API or example has been
+implemented. The implementation work discovered by Phase 9A continues in
+Phases 9B-9E below.
+
+---
+
+# Phase 9B: Exhaustive Public Surface Parity Map
+
+**Goal:** turn the coarse Phase 9A audit into the detailed answer originally
+needed: for each relevant upstream Matplotlib public API, enumerable registry,
+and gallery family, state whether the Go port has a direct equivalent, an
+idiomatic equivalent, an intentional omission, or no implementation yet.
+
+**Reference sources:** `third_party/matplotlib/lib/matplotlib/`,
+`third_party/matplotlib/galleries/examples/`, `internal/examplecatalog/`,
+`core/`, `transform/`, `render/`, `color/`, `style/`, `pyplot/`, `canvas/`,
+`backends/`, `examples/`, and `test/parity/`.
+
+### 9B.1 Public API Inventory Generator
+
+- [ ] Add a small internal tool that scans upstream Python modules for public
+      classes, functions, constants, and registries in the modules tracked by
+      `FoundationAPIGapAudit`: `artist.py`, `axis.py`, `ticker.py`,
+      `scale.py`, `transforms.py`, `lines.py`, `markers.py`,
+      `collections.py`, `patches.py`, `text.py`, `legend.py`,
+      `offsetbox.py`, `image.py`, `colorbar.py`, `cm.py`, `colors.py`,
+      `pyplot.py`, `backend_bases.py`, `backend_tools.py`, `widgets.py`, and
+      `animation.py`.
+- [ ] Store the normalized inventory under `internal/examplecatalog` or
+      `test/testdata/parity_surface/` so CI can diff upstream-visible
+      additions.
+- [ ] Treat enumerable registries specially: markers, line styles, draw styles,
+      cap/join styles, colormaps, named colors, norms, locators, formatters,
+      scales, patch classes, box styles, arrow styles, connection styles,
+      hatch patterns, projections, backends, toolbar tools, widgets, and image
+      interpolation modes.
+
+Implementation notes:
+
+- Use Python `ast` for the upstream scan rather than regex so class/function
+  extraction is stable.
+- Keep private names out by default, but allow explicit include lists for
+  upstream registries whose public API is stored in underscored module data
+  such as `_cm.py`, `_cm_listed.py`, and `_color_data.py`.
+- Start with a generated JSON artifact and a Go test that verifies every
+  public upstream row has a local classification.
+
+### 9B.2 Go Equivalent Mapping
+
+- [ ] Add a `PublicSurfaceParityRows` inventory that maps each upstream row to
+      one of:
+      `direct-equivalent`, `idiomatic-equivalent`, `partial`, `not-started`,
+      `intentional-omission`.
+- [ ] For every row, record the local Go package/file, catalog IDs, demo IDs,
+      and implementation note.
+- [ ] Fail tests when a new upstream row appears without a classification.
+
+Implementation notes:
+
+- Seed the mapping from `FeatureCoverageMatrix` and `FoundationAPIGapAudit`,
+  then refine it row-by-row.
+- Keep the first pass conservative: if the Go port supports a concept but not
+  the full upstream behavior, mark it `partial`.
+- Prefer documenting an intentional omission over leaving behavior ambiguous.
+
+### 9B.3 Human Parity Status Report
+
+- [ ] Generate or maintain `docs/matplotlib-parity-status.md` from the
+      machine-readable inventories.
+- [ ] Include one table per upstream feature family with columns:
+      upstream API / registry item, Go status, local API, parity fixture,
+      user-facing example, browser demo, and remaining work.
+- [ ] Add a summary table that answers directly:
+      "ported", "partially ported", "not ported", "intentionally omitted",
+      "has parity fixture", "has user example", and "has browser demo".
+
+Implementation notes:
+
+- Do not hand-write status that duplicates data without a check. Either
+  generate the report or add tests that ensure the doc references every
+  inventory row.
+- Link every "missing" or "partial" row to a Phase 9C, 9D, or 9E task.
 
 **Exit criteria:**
 
-- [ ] Every fundamental Matplotlib feature area is classified as implemented,
-      partially implemented, intentionally omitted, or pending.
-- [ ] Every implemented public feature has at least one parity fixture or a
-      documented reason why visual parity testing is not applicable.
-- [ ] Every major user-facing feature family has a showcase demo, and broad
-      features have demos that exercise meaningful variants rather than only
-      the minimal path.
-- [ ] Browser demo coverage is aligned with the catalog instead of being a
-      separate, drifting subset.
+- [ ] A developer can open `docs/matplotlib-parity-status.md` and see a
+      detailed answer to whether each tracked upstream feature is ported and
+      whether it has examples.
+- [ ] CI fails when an upstream public row or enumerable registry item is
+      tracked but unclassified.
+- [ ] Every `partial`, `not-started`, and `intentional-omission` row has a
+      rationale and a next action.
+
+---
+
+# Phase 9C: Foundational API Parity Closure
+
+**Goal:** implement or explicitly omit the missing fundamental APIs surfaced by
+`FoundationAPIGapAudit`, prioritizing behavior that affects visual parity,
+Matplotlib migration examples, or broad public use.
+
+### 9C.1 Artist, Line2D, and Marker Semantics
+
+- [ ] Add shared artist metadata where it affects static rendering: visible,
+      alpha, label, clip box/path, custom transform, in-layout flag, and stale
+      invalidation hooks where useful.
+- [ ] Extend `Line2D` so lines and markers share Matplotlib-style semantics:
+      marker face/edge color, marker edge width, fill style, markevery,
+      gapcolor, data getters/setters, and legend interaction.
+- [ ] Finish half-filled marker styles (`left`, `right`, `top`, `bottom`) using
+      alternate marker paths rather than a single filled path collection.
+
+Implementation notes:
+
+- Compare against `third_party/matplotlib/lib/matplotlib/artist.py`,
+  `lines.py`, and `markers.py` before changing behavior.
+- Add focused catalog cases for marker fill styles, Line2D markers in legends,
+  clipping, alpha, and visibility.
+- Prefer adding shared Go option structs/mixins over copying Python's dynamic
+  setter model wholesale.
+
+### 9C.2 Axis, Ticker, Formatter, Scale, and Transform Breadth
+
+- [ ] Expand locator/formatter coverage for engineering, percent, index, null,
+      scalar, log-mathtext, minor ticks, multi-level date formatting, and
+      scale-specific formatting.
+- [ ] Expose tick styling through Go axis/tick options without requiring a full
+      Python-style `Tick` artist clone.
+- [ ] Add parity-driven transform/BBox/path helpers for frozen transforms,
+      transformed paths, invalidation, clipping, annotation coordinate modes,
+      and layout calculations.
+
+Implementation notes:
+
+- Compare against upstream `axis.py`, `ticker.py`, `scale.py`,
+  `transforms.py`, `path.py`, and `bezier.py`.
+- Add one catalog case per formatter/locator family instead of one enormous
+  fixture.
+- Keep the transform graph lean; add only helpers needed by rendering,
+  annotations, layout, and clipping parity.
+
+### 9C.3 Collections, Scalar Mapping, Meshes, and Colorbars
+
+- [ ] Complete collection scalar-mappable behavior: mutable arrays,
+      face/edge-color updates, norm/colormap updates, offset transforms, and
+      colorbar synchronization.
+- [ ] Expand colorbar orientation, placement, anchor/location, custom tick,
+      boundary, spacing, drawedges, extension, and multi-axes behavior.
+- [ ] Add or omit remaining advanced norms and color machinery: `FuncNorm`,
+      `AsinhNorm`, multivar/bivar colormaps, and `LightSource`.
+
+Implementation notes:
+
+- Compare against upstream `collections.py`, `cm.py`, `colors.py`,
+  `colorbar.py`, and `colorizer.py`.
+- Core behavior should be fixed in `core/collection.go`,
+  `core/scalar_mappable.go`, `core/norm.go`, and `core/colorbar.go`, not by
+  tweaking examples.
+- Add Matplotlib reference cases for mutable scalar-mapping and horizontal /
+  boundary colorbars.
+
+### 9C.4 Patches, Text, Annotation, Legend, and Offset Boxes
+
+- [ ] Audit `FancyBboxPatch` box-style coverage against
+      `BoxStyle._style_list` and implement or document every missing style.
+- [ ] Verify hatch pattern characters and repeat-density semantics against
+      `hatch.py`.
+- [ ] Expand text/font property support: family, style, weight, stretch,
+      variant, math font, parse-math behavior, font features, and per-text
+      font options.
+- [ ] Implement missing annotation coordinate modes, annotation clipping,
+      `AnnotationBbox`, offset-box families, legend handler maps, proxy-like
+      legend entries, and legend layout behavior.
+
+Implementation notes:
+
+- Compare against upstream `patches.py`, `hatch.py`, `text.py`,
+  `font_manager.py`, `legend.py`, `legend_handler.py`, and `offsetbox.py`.
+- Add small catalog fixtures for each style family; avoid a single giant patch
+  fixture that is hard to debug.
+- Keep API shapes Go-idiomatic, but the rendered output should follow
+  Matplotlib where behavior is visual.
+
+### 9C.5 Images, Pyplot, Backends, Widgets, and Animation
+
+- [ ] Add remaining image class decisions: `FigureImage`, `BboxImage`,
+      `NonUniformImage`, `PcolorImage`, `pcolorfast`, and `figimage`.
+- [ ] Complete interpolation policy for `lanczos`, `spline16`, `spline36`,
+      `kaiser`, `quadric`, `catrom`, `gaussian`, `bessel`, `mitchell`, `sinc`,
+      `blackman`, `hermite`, `antialiased`, and `auto`.
+- [ ] Expand high-value `pyplot` wrappers where they materially improve
+      migration, while keeping object-oriented Go APIs primary.
+- [ ] Complete backend canvas/manager/tool lifecycle semantics needed for
+      interactive backends.
+- [ ] Decide which widgets and animation APIs are in scope for v1.0, then add
+      fixtures/examples or intentional omissions.
+
+Implementation notes:
+
+- Compare against upstream `image.py`, `pyplot.py`, `_pylab_helpers.py`,
+  `backend_bases.py`, `backend_tools.py`, `widgets.py`, and `animation.py`.
+- Any unsupported interpolation or widget path must produce a clear error or
+  documented omission, never silently fall back to a wrong default.
+
+**Exit criteria:**
+
+- [ ] Every `GapDecisionImplement` row in `FoundationAPIGapAudit` is either
+      implemented with catalog coverage or deliberately reclassified with a
+      documented rationale.
+- [ ] Every `partial` core feature row in `FeatureCoverageMatrix` has moved to
+      `implemented`, `intentional-omission`, or a smaller remaining partial row
+      with a precise scope.
+- [ ] `go test ./test/...` parity failures caused by newly changed behavior are
+      resolved by core fixes or fixture updates that match Matplotlib output.
+
+---
+
+# Phase 9D: User-Facing Example Breadth
+
+**Goal:** ensure every major implemented public feature family has a
+user-facing Go example that demonstrates meaningful Matplotlib-equivalent
+variants, not just a parity fixture.
+
+### 9D.1 Core Plot Family Galleries
+
+- [ ] Add or expand examples for line/marker grids, advanced scatter, bar
+      variants, fill variants, histogram variants, and multi-series legend
+      behavior.
+- [ ] Each example should live under `examples/<id>/` and have a matching
+      `test/parity/<id>/plot.go`, `test/parity/<id>/plot.py`, and
+      `test/matplotlib_ref/plots/<id>.py` entry when it represents parity
+      behavior.
+- [ ] Update `internal/examplecatalog.Case` rows so examples are discoverable
+      through the catalog and golden/reference tests.
+
+Implementation notes:
+
+- Keep Go examples close to upstream Matplotlib examples. If output diverges,
+  fix the core library first.
+- Use `DemoBreadthGaps` as the checklist; do not close a gap until the demo
+  includes the target features listed there.
+
+### 9D.2 Color, Image, Text, and Annotation Galleries
+
+- [ ] Add named-color swatches and colormap family galleries.
+- [ ] Add image interpolation/alpha/matshow/spy galleries.
+- [ ] Add colorbar norm/extension galleries.
+- [ ] Add MathText, text layout, annotation, legend, and offset-box galleries.
+
+Implementation notes:
+
+- Prefer several focused examples over one overloaded gallery when visual
+  differences need inspection.
+- Include captions/descriptions in catalog metadata explaining what feature
+  breadth the example validates.
+
+### 9D.3 Toolkit, Projection, 3D, and Backend Output Galleries
+
+- [ ] Add a broad mplot3d gallery covering 3D line, scatter, surface,
+      wireframe, trisurf, bar3d, voxels, quiver3d, stem3d, and fill-between3d.
+- [ ] Expand projection/toolkit galleries for geographic projections, radar,
+      Skew-T, axisartist, and axes_grid1.
+- [ ] Add mixed raster/vector output examples for SVG/PDF behavior with dense
+      rasterized artists and vector text/axes.
+- [ ] Add or expand triangulation galleries covering triplot, tripcolor,
+      tricontour, tricontourf, and masked meshes.
+
+Implementation notes:
+
+- For 3D and projection examples, include both Python and Go sources even when
+  the Go implementation is intentionally approximate.
+- Backend-output examples should save and compare SVG/PDF artifacts, not just
+  PNG screenshots.
+
+**Exit criteria:**
+
+- [ ] Every high-priority `DemoBreadthGap` is closed by a user-facing example
+      or split into a precise implementation gap in Phase 9C.
+- [ ] Every medium-priority `DemoBreadthGap` has either a user-facing example
+      or a scheduled follow-up rationale.
+- [ ] `docs/matplotlib-parity-status.md` reports no `fixture-only` example
+      status for implemented public feature families unless it has an
+      intentional reason.
+
+---
+
+# Phase 9E: Browser Gallery Alignment
+
+**Goal:** make the browser gallery a catalog-backed inspection surface for the
+same feature families covered by parity fixtures and CLI examples.
+
+### 9E.1 Wire Planned Web Reference Modules
+
+- [ ] Wire `test/matplotlib_ref/webdemos/annotations.py`, `bars.py`,
+      `errorbars.py`, `fills.py`, `heatmap.py`, `histogram.py`, `lines.py`,
+      `patches.py`, `scatter.py`, and `subplots.py` into active browser demos
+      or fold them into existing catalog-backed browser families.
+- [ ] Keep `radialforce.py` reference-only until it is promoted to a catalog
+      case.
+- [ ] Add tests that every active web reference module maps to a catalog case
+      and every catalog-backed planned row either has an active browser demo or
+      remains explicitly planned.
+
+### 9E.2 Promote CLI-Only Showcases
+
+- [ ] Promote CLI-only showcases listed in `BrowserDemoCoverageRows` into
+      browser demos: basic lines, dashes, scatter, bars, fills, errorbars,
+      multi-series, histograms, boxplots, heatmaps, figure labels, colorbars,
+      annotations, projections, mplot3d, triangulation, axisartist, and
+      axes_grid1.
+- [ ] Browser demos must use the same catalog factories as parity tests or a
+      documented wrapper around them.
+- [ ] Add browser-demo smoke tests that render each promoted demo and verify it
+      has a non-empty image/artifact.
+
+### 9E.3 Browser Parity Status Reporting
+
+- [ ] Update `docs/matplotlib-parity-status.md` with active/planned/reference
+      browser status for each feature family.
+- [ ] Fail CI if a `Showcase: true` catalog row has no browser accounting row.
+- [ ] Fail CI if a browser demo references a feature family that is not present
+      in the catalog.
+
+**Exit criteria:**
+
+- [ ] Every `BrowserDemoPlanned` row is active, intentionally reference-only,
+      or tied to a later documented feature gap.
+- [ ] The browser gallery can be used to visually inspect the major parity
+      families without manually running parity tests.
+- [ ] Browser demo coverage is generated from or checked against the catalog.
 
 ---
 
