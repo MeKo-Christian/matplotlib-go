@@ -5,6 +5,8 @@ import (
 	"errors"
 	"io"
 	"sync"
+
+	"github.com/cwbudde/matplotlib-go/internal/geom"
 )
 
 // clientSink is the narrow contract a hub uses to push bytes to one
@@ -135,6 +137,25 @@ func (h *hub) broadcastFrame() error {
 	}
 	prevMode := h.mgr.currentImageMode()
 	mode, payload, err := h.mgr.renderFrame()
+	if err != nil {
+		return err
+	}
+	if mode != prevMode {
+		h.broadcastJSON(&outboundEvent{Type: MsgImageMode, Mode: string(mode)})
+	}
+	clients := h.clientsSnapshot()
+	for _, c := range clients {
+		_ = c.sendBinary(payload)
+	}
+	return nil
+}
+
+func (h *hub) broadcastBlitFrame(damage *geom.Rect) error {
+	if len(h.clientsSnapshot()) == 0 {
+		return nil
+	}
+	prevMode := h.mgr.currentImageMode()
+	mode, payload, err := h.mgr.renderCurrentFrame(damage)
 	if err != nil {
 		return err
 	}

@@ -7,6 +7,7 @@ import (
 	"image/png"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	plotcanvas "github.com/cwbudde/matplotlib-go/canvas"
 	"github.com/cwbudde/matplotlib-go/core"
@@ -58,6 +59,9 @@ type Manager struct {
 	devPxRatio  float64
 	lastMouseX  float64
 	lastMouseY  float64
+	eventLoop   plotcanvas.EventLoop
+	drawQueued  bool
+	staleRegs   []staleRegistration
 	closed      atomic.Bool
 	windowTitle string
 
@@ -74,7 +78,7 @@ type figureHome struct {
 }
 
 type axesHome struct {
-	axes               *core.Axes
+	axes                   *core.Axes
 	xMin, xMax, yMin, yMax float64
 }
 
@@ -95,6 +99,9 @@ type Options struct {
 	// toolbar Save button. The handler is free to write the PNG
 	// anywhere — to a file, an HTTP response, etc.
 	SaveHandler plotcanvas.ToolbarHandler
+	// EventLoop schedules draw_idle callbacks. If nil, WebAgg uses a
+	// small goroutine-backed loop that coalesces same-turn requests.
+	EventLoop plotcanvas.EventLoop
 }
 
 // NewManager builds a manager from the options. The figure's pixel
@@ -113,18 +120,22 @@ func NewManager(opts Options) (*Manager, error) {
 	}
 
 	m := &Manager{
-		figure:     opts.Figure,
-		factory:    opts.Renderer,
-		bg:         bg,
-		dispatch:   &plotcanvas.Dispatcher{},
-		imageMode:  imageModeFull,
-		forceFull:  true,
-		pngStale:   true,
-		devPxRatio: 1,
+		figure:      opts.Figure,
+		factory:     opts.Renderer,
+		bg:          bg,
+		dispatch:    &plotcanvas.Dispatcher{},
+		imageMode:   imageModeFull,
+		forceFull:   true,
+		pngStale:    true,
+		devPxRatio:  1,
+		eventLoop:   opts.EventLoop,
 		windowTitle: "matplotlib-go",
 	}
+	if m.eventLoop == nil {
+		m.eventLoop = webEventLoop{}
+	}
 	m.hub = newHub(m)
-	m.nav = plotcanvas.NewNavigation(opts.Figure, m.drawAndBroadcast)
+	m.nav = plotcanvas.NewNavigation(opts.Figure, m.DrawIdle)
 	m.nav.Attach(m.dispatch)
 	m.tb = plotcanvas.NewToolbarController(m.nav)
 	if opts.SaveHandler != nil {
@@ -132,6 +143,7 @@ func NewManager(opts Options) (*Manager, error) {
 	}
 	m.tb.SetHandler(plotcanvas.ToolbarHome, m.home_)
 	m.home = snapshotHome(opts.Figure)
+	m.attachStaleCallbacks()
 	return m, nil
 }
 
@@ -177,6 +189,7 @@ func (m *Manager) Close() error {
 	if !m.closed.CompareAndSwap(false, true) {
 		return nil
 	}
+	m.detachStaleCallbacks()
 	m.hub.closeAll()
 	return m.dispatch.Emit(plotcanvas.Event{
 		Type:   plotcanvas.EventClose,
@@ -197,6 +210,87 @@ func (m *Manager) Disconnect(id plotcanvas.ConnectionID) { m.dispatch.Disconnect
 // Draw repaints the figure and broadcasts the resulting PNG diff (or
 // full frame) to every connected client.
 func (m *Manager) Draw() error {
+	return m.drawAndBroadcast()
+}
+
+// DrawIdle schedules a redraw for the next idle turn. Repeated calls before the
+// idle callback runs collapse into one draw, matching Matplotlib's draw_idle
+// behavior for event storms.
+func (m *Manager) DrawIdle() error {
+	if m.closed.Load() {
+		return nil
+	}
+	m.mu.Lock()
+	if m.drawQueued {
+		m.mu.Unlock()
+		return nil
+	}
+	m.drawQueued = true
+	loop := m.eventLoop
+	m.mu.Unlock()
+	if loop == nil {
+		loop = webEventLoop{}
+	}
+	if err := loop.CallSoon(m.flushDrawIdle); err != nil {
+		m.mu.Lock()
+		m.drawQueued = false
+		m.mu.Unlock()
+		return err
+	}
+	return nil
+}
+
+// CopyFromBBox captures a renderer pixel region for blitting. It returns nil
+// until the first draw has created a renderer, or when the renderer does not
+// implement render.BufferRegioner.
+func (m *Manager) CopyFromBBox(bbox geom.Rect) *render.BufferRegion {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	regioner, ok := m.renderer.(render.BufferRegioner)
+	if !ok {
+		return nil
+	}
+	return regioner.CopyFromBBox(bbox)
+}
+
+// RestoreRegion restores a previously captured renderer pixel region. Call
+// Blit after restoring/drawing animated content to push the damaged pixels to
+// clients.
+func (m *Manager) RestoreRegion(region *render.BufferRegion, bbox *geom.Rect, offset geom.Pt) error {
+	if m.closed.Load() {
+		return nil
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	regioner, ok := m.renderer.(render.BufferRegioner)
+	if !ok {
+		return errors.New("webagg: renderer does not support buffer regions")
+	}
+	regioner.RestoreRegion(region, bbox, offset)
+	m.pngStale = true
+	return nil
+}
+
+// Blit broadcasts the current renderer buffer without redrawing the full
+// figure. The bbox bounds the damaged pixels for diff generation.
+func (m *Manager) Blit(bbox geom.Rect) error {
+	if m.closed.Load() {
+		return nil
+	}
+	m.mu.Lock()
+	m.pngStale = true
+	m.mu.Unlock()
+	return m.hub.broadcastBlitFrame(&bbox)
+}
+
+func (m *Manager) flushDrawIdle() error {
+	m.mu.Lock()
+	if !m.drawQueued {
+		m.mu.Unlock()
+		return nil
+	}
+	m.drawQueued = false
+	m.mu.Unlock()
 	return m.drawAndBroadcast()
 }
 
@@ -276,11 +370,34 @@ func (m *Manager) renderFrame() (imageMode, []byte, error) {
 	}
 
 	core.DrawFigure(m.figure, m.renderer)
+	clearStaleArtists(m.figure)
 	img := m.renderer.GetImage()
 	if img == nil {
 		return imageModeFull, nil, errors.New("webagg: renderer returned no image")
 	}
+	return m.encodeFrameLocked(img, w, h, nil)
+}
 
+func (m *Manager) renderCurrentFrame(damage *geom.Rect) (imageMode, []byte, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	w := int(m.figure.SizePx.X + 0.5)
+	h := int(m.figure.SizePx.Y + 0.5)
+	if w <= 0 || h <= 0 {
+		return imageModeFull, nil, errors.New("webagg: figure has zero pixel size")
+	}
+	if m.renderer == nil {
+		return imageModeFull, nil, errors.New("webagg: no renderer to blit")
+	}
+	img := m.renderer.GetImage()
+	if img == nil {
+		return imageModeFull, nil, errors.New("webagg: renderer returned no image")
+	}
+	return m.encodeFrameLocked(img, w, h, damage)
+}
+
+func (m *Manager) encodeFrameLocked(img *image.RGBA, w, h int, damage *geom.Rect) (imageMode, []byte, error) {
 	// Pack RGBA pixels into uint32 row-major buffer for fast diff.
 	packed := packRGBA(img, w, h)
 	mode := imageModeDiff
@@ -292,6 +409,9 @@ func (m *Manager) renderFrame() (imageMode, []byte, error) {
 	var payload *image.RGBA
 	if mode == imageModeFull {
 		payload = img
+		damage = nil
+	} else if damage != nil {
+		payload = diffImageInRect(img, m.lastBuf, packed, w, h, *damage)
 	} else {
 		payload = diffImage(img, m.lastBuf, packed, w, h)
 	}
@@ -302,7 +422,11 @@ func (m *Manager) renderFrame() (imageMode, []byte, error) {
 	} else {
 		m.lastBuf = make([]uint32, len(packed))
 	}
-	copy(m.lastBuf, packed)
+	if damage == nil {
+		copy(m.lastBuf, packed)
+	} else {
+		copyDamage(m.lastBuf, packed, w, h, *damage)
+	}
 	m.lastW = w
 	m.lastH = h
 	m.forceFull = false
@@ -327,7 +451,23 @@ func (m *Manager) home_() error {
 		ax.axes.SetXLim(ax.xMin, ax.xMax)
 		ax.axes.SetYLim(ax.yMin, ax.yMax)
 	}
-	return m.drawAndBroadcast()
+	return m.DrawIdle()
+}
+
+type webEventLoop struct{}
+
+func (webEventLoop) CallSoon(callback func() error) error {
+	if callback == nil {
+		return nil
+	}
+	time.AfterFunc(time.Millisecond, func() {
+		_ = callback()
+	})
+	return nil
+}
+
+func (webEventLoop) NewTimer(interval time.Duration, callback func() error) plotcanvas.Timer {
+	return plotcanvas.NewTimer(interval, callback)
 }
 
 // snapshotHome captures the figure's initial size and per-axes view
@@ -426,3 +566,66 @@ func diffImage(curr *image.RGBA, lastBuf, packed []uint32, w, h int) *image.RGBA
 	}
 	return out
 }
+
+func diffImageInRect(curr *image.RGBA, lastBuf, packed []uint32, w, h int, damage geom.Rect) *image.RGBA {
+	out := image.NewRGBA(image.Rect(0, 0, w, h))
+	minX, minY, maxX, maxY, ok := pixelBounds(damage, w, h)
+	if !ok {
+		return out
+	}
+	stride := curr.Stride
+	src := curr.Pix
+	dst := out.Pix
+	for y := minY; y < maxY; y++ {
+		srow := src[y*stride : y*stride+w*4]
+		drow := dst[y*out.Stride : y*out.Stride+w*4]
+		prow := packed[y*w : y*w+w]
+		brow := lastBuf[y*w : y*w+w]
+		for x := minX; x < maxX; x++ {
+			if prow[x] == brow[x] {
+				continue
+			}
+			i := x * 4
+			drow[i+0] = srow[i+0]
+			drow[i+1] = srow[i+1]
+			drow[i+2] = srow[i+2]
+			drow[i+3] = srow[i+3]
+		}
+	}
+	return out
+}
+
+func copyDamage(dst, src []uint32, w, h int, damage geom.Rect) {
+	minX, minY, maxX, maxY, ok := pixelBounds(damage, w, h)
+	if !ok {
+		return
+	}
+	for y := minY; y < maxY; y++ {
+		copy(dst[y*w+minX:y*w+maxX], src[y*w+minX:y*w+maxX])
+	}
+}
+
+func pixelBounds(rect geom.Rect, w, h int) (minX, minY, maxX, maxY int, ok bool) {
+	minX = int(rect.Min.X)
+	minY = int(rect.Min.Y)
+	maxX = int(rect.Max.X + 0.999999)
+	maxY = int(rect.Max.Y + 0.999999)
+	if minX < 0 {
+		minX = 0
+	}
+	if minY < 0 {
+		minY = 0
+	}
+	if maxX > w {
+		maxX = w
+	}
+	if maxY > h {
+		maxY = h
+	}
+	return minX, minY, maxX, maxY, minX < maxX && minY < maxY
+}
+
+var (
+	_ plotcanvas.DrawIdleCanvas = (*Manager)(nil)
+	_ plotcanvas.BlitCanvas     = (*Manager)(nil)
+)

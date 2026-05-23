@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestFoundationAPIGapAuditCoversPhase9A2Modules(t *testing.T) {
+func TestFoundationAPIGapAuditCoversRequiredModules(t *testing.T) {
 	want := []string{
 		"artist.py",
 		"axis.py",

@@ -2,7 +2,7 @@ package examplecatalog
 
 import "testing"
 
-func TestDemoBreadthAuditCoversPhase9A3Priorities(t *testing.T) {
+func TestDemoBreadthAuditCoversRequiredPriorities(t *testing.T) {
 	want := []string{
 		"marker-grid",
 		"advanced-scatter",

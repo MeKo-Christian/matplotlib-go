@@ -3,6 +3,9 @@ package canvas
 import (
 	"sync"
 	"time"
+
+	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/render"
 )
 
 // DrawIdleCanvas is an optional FigureCanvas extension for draw_idle-style
@@ -10,6 +13,15 @@ import (
 type DrawIdleCanvas interface {
 	FigureCanvas
 	DrawIdle() error
+}
+
+// BlitCanvas is an optional FigureCanvas extension for Matplotlib-style
+// copy_from_bbox / restore_region / blit redraw paths.
+type BlitCanvas interface {
+	FigureCanvas
+	CopyFromBBox(bbox geom.Rect) *render.BufferRegion
+	RestoreRegion(region *render.BufferRegion, bbox *geom.Rect, offset geom.Pt) error
+	Blit(bbox geom.Rect) error
 }
 
 // Timer represents a backend or event-loop timer.

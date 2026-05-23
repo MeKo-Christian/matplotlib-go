@@ -887,11 +887,17 @@ reference; current `core/events.go`, `internal/webdemo/`.
       mouse, scroll, key, dblclick, and toolbar events upstream-style.
       `static/index.html` ships a minimal toolbar; hosts can swap in
       their own page via `webagg.ServerOptions.Assets`.
-- [ ] WASM interactive mode for the existing browser demo host so the
-      GitHub Pages gallery is clickable. *(Deferred — orthogonal to the
-      WebSocket pipeline above; the existing `canvas/wasm.Manager`
-      already wires events into a `Dispatcher` but does not yet attach
-      a `canvas.Navigation`.)*
+- [x] WASM interactive mode for the existing browser demo host so the
+      GitHub Pages gallery is clickable.
+      `canvas/wasm.Manager` now attaches a `canvas.Navigation` to its
+      `Dispatcher` (pan, scroll-zoom, rubber-band zoom with an
+      on-canvas dashed overlay drawn after each `putImageData`) and a
+      `canvas.ToolbarController` wired to a home-view snapshot. The
+      WASM API exports `setNavigationMode` / `navigationMode` /
+      `triggerToolbar`; `web/index.html` ships Home / Pan / Zoom
+      toolbar buttons above the canvas and `web/main.js` mirrors the
+      active mode via `aria-pressed`. PNG export still goes through
+      the existing browser-side `canvas.toBlob` download path.
 - [x] Embedding example in `examples/embed/web/`.
       `examples/embed/web/main.go` mounts a `webagg.Server` at `/`,
       serves the `basic_line` figure, wires `Save` to a server-side
@@ -900,12 +906,21 @@ reference; current `core/events.go`, `internal/webdemo/`.
 
 ### 4.4 Real-Time Redraw
 
-- [ ] Blit / damage-region optimizations for animated artists, riding on the
+- [x] Blit / damage-region optimizations for animated artists, riding on the
       existing AGG `CopyFromBBox` / `RestoreRegion` surface.
-- [ ] `draw_idle` scheduling parity: coalesce redraw requests, drop stale
+      WebAgg managers now expose the shared `canvas.BlitCanvas`
+      surface (`CopyFromBBox` / `RestoreRegion` / `Blit`) and can
+      broadcast a damaged renderer buffer without a full figure draw.
+- [x] `draw_idle` scheduling parity: coalesce redraw requests, drop stale
       frames, honor the figure's `stale` propagation.
-- [ ] Tests that verify event-driven mutations produce exactly one redraw
+      `webagg.Manager.DrawIdle` schedules work through a backend event
+      loop, coalesces repeated requests before the idle callback runs,
+      and wires stale artist callbacks into idle redraws.
+- [x] Tests that verify event-driven mutations produce exactly one redraw
       per idle tick, not one per mutation.
+      `backends/webagg` covers coalesced draw-idle bursts, stale artist
+      redraw scheduling, and blit broadcasts that avoid a full
+      `DrawFigure` traversal.
 
 **Exit criteria:**
 
@@ -2159,12 +2174,28 @@ Current slice landed:
 
 ### 9A.5 Reference Consistency
 
-- [ ] Ensure every catalog case has matching Go and Python parity sources under
+- [x] Ensure every catalog case has matching Go and Python parity sources under
       `test/parity/<id>/`.
-- [ ] Add any missing Matplotlib reference plot modules for catalog IDs that
+- [x] Add any missing Matplotlib reference plot modules for catalog IDs that
       currently rely on generated images without a visible source counterpart.
-- [ ] Add a catalog test that reports cases with fixture-only coverage but no
+- [x] Add a catalog test that reports cases with fixture-only coverage but no
       user-facing showcase when the topic is considered public API.
+
+Current slice landed:
+
+- Catalog tests now enforce canonical `test/parity/<id>/plot.go` and
+  `test/parity/<id>/plot.py` source pairs for every catalog case.
+- Catalog tests now enforce a visible
+  `test/matplotlib_ref/plots/<id>.py` module for every catalog case; the
+  missing bilinear and bicubic imshow reference modules were added.
+- `internal/examplecatalog.ReferenceConsistencyClassifications` records
+  fixture-only public API cases that are intentionally backend-stress,
+  mesh-shading, signal-demo, or compound-statistics fixtures instead of
+  standalone user-facing showcases.
+- `docs/phase-9a-coverage-audit.md` explains how to read the Phase 9A
+  inventories, summarizes the current findings, and clarifies that the exit
+  criteria are audit criteria unless later phases explicitly promote the
+  discovered gaps into implementation work.
 
 **Exit criteria:**
 

@@ -30,7 +30,7 @@ func (m *Manager) dispatchInbound(ev *inboundEvent) error {
 		// server side does not need to act on them.
 		return nil
 	case MsgDrawCmd:
-		return m.drawAndBroadcast()
+		return m.DrawIdle()
 	case MsgButtonPress:
 		return m.emitMouse(plotcanvas.EventMousePress, ev)
 	case MsgButtonRelease:
@@ -132,7 +132,7 @@ func (m *Manager) handleRefresh() error {
 	label := m.windowTitle
 	m.mu.Unlock()
 	m.hub.broadcastJSON(&outboundEvent{Type: MsgFigureLabel, Label: label})
-	return m.drawAndBroadcast()
+	return m.DrawIdle()
 }
 
 func (m *Manager) handleSetDPR(ratio float64) error {
@@ -147,7 +147,7 @@ func (m *Manager) handleSetDPR(ratio float64) error {
 	m.devPxRatio = ratio
 	m.forceFull = true
 	m.mu.Unlock()
-	return m.drawAndBroadcast()
+	return m.DrawIdle()
 }
 
 // toolbarActionByName maps the upstream tool name to our action enum.

@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/cwbudde/matplotlib-go/backends/gobasic"
 	plotcanvas "github.com/cwbudde/matplotlib-go/canvas"
@@ -18,6 +19,11 @@ import (
 // newTestManager builds a manager backed by the GoBasic renderer at a
 // small fixed size so tests stay fast.
 func newTestManager(t *testing.T) *Manager {
+	t.Helper()
+	return newTestManagerWithLoop(t, nil)
+}
+
+func newTestManagerWithLoop(t *testing.T, loop plotcanvas.EventLoop) *Manager {
 	t.Helper()
 	fig := core.NewFigure(80, 60)
 	mgr, err := NewManager(Options{
@@ -31,6 +37,7 @@ func newTestManager(t *testing.T) *Manager {
 		},
 		HasBackground: true,
 		Background:    render.Color{R: 1, G: 1, B: 1, A: 1},
+		EventLoop:     loop,
 	})
 	if err != nil {
 		t.Fatalf("NewManager: %v", err)
@@ -46,6 +53,132 @@ type captureSink struct {
 	binMsgs  [][]byte
 	clientID uint64
 	closed   bool
+}
+
+type manualEventLoop struct {
+	mu    sync.Mutex
+	queue []func() error
+}
+
+func (l *manualEventLoop) CallSoon(callback func() error) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.queue = append(l.queue, callback)
+	return nil
+}
+
+func (l *manualEventLoop) NewTimer(time.Duration, func() error) plotcanvas.Timer {
+	return &manualTimer{}
+}
+
+func (l *manualEventLoop) RunAll() error {
+	for {
+		l.mu.Lock()
+		if len(l.queue) == 0 {
+			l.mu.Unlock()
+			return nil
+		}
+		callback := l.queue[0]
+		copy(l.queue, l.queue[1:])
+		l.queue = l.queue[:len(l.queue)-1]
+		l.mu.Unlock()
+		if callback != nil {
+			if err := callback(); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+type manualTimer struct{}
+
+func (*manualTimer) Start() error  { return nil }
+func (*manualTimer) Stop() error   { return nil }
+func (*manualTimer) Running() bool { return false }
+
+type testStaleArtist struct {
+	core.ArtistLifecycle
+}
+
+func newTestStaleArtist() *testStaleArtist {
+	artist := &testStaleArtist{}
+	artist.BindArtist(artist)
+	return artist
+}
+
+func (*testStaleArtist) Draw(render.Renderer, *core.DrawContext) {}
+func (*testStaleArtist) Z() float64                              { return 0 }
+func (*testStaleArtist) Bounds(*core.DrawContext) geom.Rect      { return geom.Rect{} }
+
+type blitTestRenderer struct {
+	img    *image.RGBA
+	begins int
+}
+
+func newBlitTestRenderer(w, h int, _ render.Color) (*blitTestRenderer, error) {
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	for y := range h {
+		for x := range w {
+			img.SetRGBA(x, y, color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff})
+		}
+	}
+	return &blitTestRenderer{img: img}, nil
+}
+
+func (r *blitTestRenderer) Begin(geom.Rect) error {
+	r.begins++
+	return nil
+}
+func (*blitTestRenderer) End() error                             { return nil }
+func (*blitTestRenderer) Save()                                  {}
+func (*blitTestRenderer) Restore()                               {}
+func (*blitTestRenderer) ClipRect(geom.Rect)                     {}
+func (*blitTestRenderer) ClipPath(geom.Path)                     {}
+func (*blitTestRenderer) Path(geom.Path, *render.Paint)          {}
+func (*blitTestRenderer) Image(render.Image, geom.Rect)          {}
+func (*blitTestRenderer) GlyphRun(render.GlyphRun, render.Color) {}
+func (*blitTestRenderer) MeasureText(string, float64, string) render.TextMetrics {
+	return render.TextMetrics{}
+}
+func (r *blitTestRenderer) GetImage() *image.RGBA { return r.img }
+func (r *blitTestRenderer) CopyFromBBox(bbox geom.Rect) *render.BufferRegion {
+	minX, minY := int(bbox.Min.X), int(bbox.Min.Y)
+	maxX, maxY := int(bbox.Max.X), int(bbox.Max.Y)
+	if minX < 0 {
+		minX = 0
+	}
+	if minY < 0 {
+		minY = 0
+	}
+	if maxX > r.img.Rect.Dx() {
+		maxX = r.img.Rect.Dx()
+	}
+	if maxY > r.img.Rect.Dy() {
+		maxY = r.img.Rect.Dy()
+	}
+	if minX >= maxX || minY >= maxY {
+		return nil
+	}
+	out := image.NewRGBA(image.Rect(0, 0, maxX-minX, maxY-minY))
+	for y := minY; y < maxY; y++ {
+		for x := minX; x < maxX; x++ {
+			out.SetRGBA(x-minX, y-minY, r.img.RGBAAt(x, y))
+		}
+	}
+	return &render.BufferRegion{
+		Image: out,
+		Rect:  geom.Rect{Min: geom.Pt{X: float64(minX), Y: float64(minY)}, Max: geom.Pt{X: float64(maxX), Y: float64(maxY)}},
+	}
+}
+func (r *blitTestRenderer) RestoreRegion(region *render.BufferRegion, _ *geom.Rect, offset geom.Pt) {
+	if region == nil || region.Image == nil {
+		return
+	}
+	for y := 0; y < region.Image.Rect.Dy(); y++ {
+		for x := 0; x < region.Image.Rect.Dx(); x++ {
+			r.img.SetRGBA(int(region.Rect.Min.X)+x+int(offset.X), int(region.Rect.Min.Y)+y+int(offset.Y), region.Image.RGBAAt(x, y))
+		}
+	}
 }
 
 func (s *captureSink) sendJSON(payload []byte) error {
@@ -166,6 +299,149 @@ func TestResizeForcesFullFrame(t *testing.T) {
 	}
 	if mgr.currentImageMode() != imageModeFull {
 		t.Errorf("expected full mode after resize, got %s", mgr.currentImageMode())
+	}
+}
+
+func TestDrawIdleCoalescesRequestsUntilIdleTick(t *testing.T) {
+	loop := &manualEventLoop{}
+	mgr := newTestManagerWithLoop(t, loop)
+	sink := &captureSink{}
+	if _, err := mgr.hub.register(sink); err != nil {
+		t.Fatalf("register: %v", err)
+	}
+
+	draws := 0
+	mgr.Connect(plotcanvas.EventDraw, func(plotcanvas.Event) error {
+		draws++
+		return nil
+	})
+	_, beforeBins := sink.snapshot()
+
+	for range 5 {
+		if err := mgr.DrawIdle(); err != nil {
+			t.Fatalf("DrawIdle: %v", err)
+		}
+	}
+	_, queuedBins := sink.snapshot()
+	if draws != 0 {
+		t.Fatalf("draw events before idle tick = %d, want 0", draws)
+	}
+	if len(queuedBins) != len(beforeBins) {
+		t.Fatalf("binary frames before idle tick = %d, want %d", len(queuedBins), len(beforeBins))
+	}
+
+	if err := loop.RunAll(); err != nil {
+		t.Fatalf("RunAll: %v", err)
+	}
+	_, afterBins := sink.snapshot()
+	if draws != 1 {
+		t.Fatalf("draw events after idle tick = %d, want 1", draws)
+	}
+	if len(afterBins) != len(beforeBins)+1 {
+		t.Fatalf("binary frames after idle tick = %d, want %d", len(afterBins), len(beforeBins)+1)
+	}
+
+	if err := loop.RunAll(); err != nil {
+		t.Fatalf("second RunAll: %v", err)
+	}
+	if draws != 1 {
+		t.Fatalf("draw events after empty idle tick = %d, want 1", draws)
+	}
+}
+
+func TestStaleArtistCallbackSchedulesOneIdleDraw(t *testing.T) {
+	loop := &manualEventLoop{}
+	fig := core.NewFigure(80, 60)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	artist := newTestStaleArtist()
+	ax.Add(artist)
+	mgr, err := NewManager(Options{
+		Figure: fig,
+		Renderer: func(w, h int, bg render.Color) (RasterRenderer, error) {
+			return gobasic.New(w, h, bg), nil
+		},
+		HasBackground: true,
+		Background:    render.Color{R: 1, G: 1, B: 1, A: 1},
+		EventLoop:     loop,
+	})
+	if err != nil {
+		t.Fatalf("NewManager: %v", err)
+	}
+	sink := &captureSink{}
+	if _, err := mgr.hub.register(sink); err != nil {
+		t.Fatalf("register: %v", err)
+	}
+
+	draws := 0
+	mgr.Connect(plotcanvas.EventDraw, func(plotcanvas.Event) error {
+		draws++
+		return nil
+	})
+	_, beforeBins := sink.snapshot()
+
+	artist.MarkStale()
+	artist.MarkStale()
+	if !artist.Stale() {
+		t.Fatalf("artist not stale after MarkStale")
+	}
+	if draws != 0 {
+		t.Fatalf("draw events before idle tick = %d, want 0", draws)
+	}
+	if err := loop.RunAll(); err != nil {
+		t.Fatalf("RunAll: %v", err)
+	}
+	_, afterBins := sink.snapshot()
+	if draws != 1 {
+		t.Fatalf("draw events after idle tick = %d, want 1", draws)
+	}
+	if len(afterBins) != len(beforeBins)+1 {
+		t.Fatalf("binary frames after idle tick = %d, want %d", len(afterBins), len(beforeBins)+1)
+	}
+	if artist.Stale() {
+		t.Fatalf("artist still stale after redraw")
+	}
+}
+
+func TestBlitBroadcastsRendererDamageWithoutFullDraw(t *testing.T) {
+	var renderer *blitTestRenderer
+	fig := core.NewFigure(16, 12)
+	mgr, err := NewManager(Options{
+		Figure: fig,
+		Renderer: func(w, h int, bg render.Color) (RasterRenderer, error) {
+			r, err := newBlitTestRenderer(w, h, bg)
+			renderer = r
+			return r, err
+		},
+		HasBackground: true,
+		Background:    render.Color{R: 1, G: 1, B: 1, A: 1},
+	})
+	if err != nil {
+		t.Fatalf("NewManager: %v", err)
+	}
+	sink := &captureSink{}
+	if _, err := mgr.hub.register(sink); err != nil {
+		t.Fatalf("register: %v", err)
+	}
+	if renderer == nil || renderer.begins != 1 {
+		t.Fatalf("initial draw begins = %d, want 1", renderer.begins)
+	}
+
+	damage := geom.Rect{Min: geom.Pt{X: 2, Y: 2}, Max: geom.Pt{X: 5, Y: 5}}
+	region := mgr.CopyFromBBox(damage)
+	if region == nil {
+		t.Fatalf("CopyFromBBox returned nil")
+	}
+	renderer.img.SetRGBA(3, 3, color.RGBA{R: 0xff, A: 0xff})
+	_, beforeBins := sink.snapshot()
+	if err := mgr.Blit(damage); err != nil {
+		t.Fatalf("Blit: %v", err)
+	}
+	_, afterBins := sink.snapshot()
+	if len(afterBins) != len(beforeBins)+1 {
+		t.Fatalf("binary frames after blit = %d, want %d", len(afterBins), len(beforeBins)+1)
+	}
+	if renderer.begins != 1 {
+		t.Fatalf("full draw begins after blit = %d, want 1", renderer.begins)
 	}
 }
 
