@@ -506,9 +506,11 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *StemContainer
 	if opt.MarkerEdgeWidth != nil {
 		markerEdgeWidth = *opt.MarkerEdgeWidth
 	}
-	baselineColor := color
+	baselineColor := a.colorCycleAt(3)
 	if opt.BaselineColor != nil {
 		baselineColor = *opt.BaselineColor
+		baselineColor.A *= alpha
+	} else {
 		baselineColor.A *= alpha
 	}
 	baselineWidth := lineWidth
@@ -531,13 +533,13 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *StemContainer
 		Color:      color,
 		LineWidth:  lineWidth,
 		LineJoin:   render.JoinRound,
-		LineCap:    render.CapRound,
+		LineCap:    render.CapButt,
 	}
 	markers := &PathCollection{
 		Collection:    Collection{Coords: Coords(CoordData), Label: opt.Label, Alpha: 1, z: zorder + 0.05},
 		Path:          markerPath,
 		Offsets:       offsets,
-		Size:          markerSize * stemMarkerScale,
+		Size:          pointsToPixels(a.resolvedRC(), markerSize),
 		PathInDisplay: true,
 		FaceColor:     color,
 		EdgeColor:     markerEdgeColor,

@@ -1037,6 +1037,18 @@ func (a *Axes) PeekColor() render.Color {
 	return a.ColorCycle.Peek()
 }
 
+func (a *Axes) colorCycleAt(index int) render.Color {
+	palette := a.resolvedRC().Palette()
+	if len(palette) == 0 {
+		return render.Color{A: 1}
+	}
+	idx := index % len(palette)
+	if idx < 0 {
+		idx += len(palette)
+	}
+	return palette[idx]
+}
+
 // NextPatchColor returns the next color in the shape/fill cycle.
 func (a *Axes) NextPatchColor() render.Color {
 	if a.PatchColorCycle == nil {

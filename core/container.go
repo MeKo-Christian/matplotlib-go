@@ -287,9 +287,11 @@ func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
 	if opt.Baseline != nil {
 		baseline = *opt.Baseline
 	}
-	baselineColor := color
+	baselineColor := a.colorCycleAt(3)
 	if opt.BaselineColor != nil {
 		baselineColor = *opt.BaselineColor
+		baselineColor.A *= alpha
+	} else {
 		baselineColor.A *= alpha
 	}
 	baselineWidth := lineWidth
@@ -326,7 +328,7 @@ func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
 		Collection:    Collection{Label: opt.Label, Alpha: alpha, z: 2.5},
 		Path:          markerPath,
 		Offsets:       offsets,
-		Size:          markerSize * stemMarkerScale,
+		Size:          pointsToPixels(a.resolvedRC(), markerSize),
 		PathInDisplay: true,
 		FaceColor:     color,
 		EdgeColor:     markerEdgeColor,
