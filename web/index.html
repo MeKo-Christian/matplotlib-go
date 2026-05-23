@@ -96,6 +96,45 @@
         </aside>
 
         <section class="canvas-panel">
+          <div
+            id="canvasToolbar"
+            class="canvas-toolbar"
+            role="toolbar"
+            aria-label="Plot navigation"
+          >
+            <button
+              id="navHomeBtn"
+              class="toolbar-button"
+              type="button"
+              title="Reset view"
+              disabled
+            >
+              <span aria-hidden="true">⌂</span> Home
+            </button>
+            <button
+              id="navPanBtn"
+              class="toolbar-button"
+              type="button"
+              title="Pan (drag to translate)"
+              aria-pressed="false"
+              disabled
+            >
+              <span aria-hidden="true">✥</span> Pan
+            </button>
+            <button
+              id="navZoomBtn"
+              class="toolbar-button"
+              type="button"
+              title="Zoom (drag rectangle)"
+              aria-pressed="false"
+              disabled
+            >
+              <span aria-hidden="true">⛶</span> Zoom
+            </button>
+            <span class="toolbar-hint" aria-hidden="true">
+              scroll to zoom · drag to pan / rubber-band zoom
+            </span>
+          </div>
           <div class="canvas-frame">
             <canvas
               id="plotCanvas"

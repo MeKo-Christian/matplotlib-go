@@ -16,7 +16,7 @@ import (
 
 var (
 	callbacks      []js.Func
-	currentManager plotcanvas.FigureManager
+	currentManager *wasmcanvas.Manager
 )
 
 type wasmCallback func(js.Value, []js.Value) any
@@ -32,6 +32,9 @@ func main() {
 		safeCallback("defaultBackendID", func(string) any { return webdemo.DefaultBackendID() }, defaultBackendID),
 		safeCallback("renderDemoPNG", errorResult, renderDemoPNG),
 		safeCallback("demoSource", errorResult, demoSource),
+		safeCallback("setNavigationMode", errorResult, setNavigationMode),
+		safeCallback("navigationMode", func(string) any { return "" }, navigationMode),
+		safeCallback("triggerToolbar", errorResult, triggerToolbar),
 	)
 
 	api := js.Global().Get("Object").New()
@@ -44,6 +47,9 @@ func main() {
 	api.Set("defaultBackendID", callbacks[6])
 	api.Set("renderDemoPNG", callbacks[7])
 	api.Set("demoSource", callbacks[8])
+	api.Set("setNavigationMode", callbacks[9])
+	api.Set("navigationMode", callbacks[10])
+	api.Set("triggerToolbar", callbacks[11])
 	js.Global().Set("matplotlibGoWASM", api)
 	js.Global().Get("console").Call("log", "matplotlib-go wasm ready")
 
@@ -232,6 +238,78 @@ func demoSource(_ js.Value, args []js.Value) any {
 	return result
 }
 
+// setNavigationMode switches the active interaction (pan / zoom / none)
+// on the current demo. Invalid mode strings return an error.
+func setNavigationMode(_ js.Value, args []js.Value) any {
+	result := js.Global().Get("Object").New()
+	if currentManager == nil {
+		result.Set("error", "no mounted demo")
+		return result
+	}
+	if len(args) == 0 || args[0].Type() != js.TypeString {
+		result.Set("error", "matplotlib-go wasm: setNavigationMode expects a mode string")
+		return result
+	}
+	mode := args[0].String()
+	tb := currentManager.Toolbar()
+	switch mode {
+	case "", "none":
+		tb.SetMode(plotcanvas.ToolbarModeNone)
+	case "pan":
+		tb.SetMode(plotcanvas.ToolbarModePan)
+	case "zoom":
+		tb.SetMode(plotcanvas.ToolbarModeZoom)
+	default:
+		result.Set("error", fmt.Sprintf("matplotlib-go wasm: unknown navigation mode %q", mode))
+		return result
+	}
+	result.Set("mode", toolbarModeString(tb.Mode()))
+	return result
+}
+
+// navigationMode returns the current interaction mode as one of "none",
+// "pan", or "zoom".
+func navigationMode(_ js.Value, _ []js.Value) any {
+	if currentManager == nil {
+		return ""
+	}
+	return toolbarModeString(currentManager.Toolbar().Mode())
+}
+
+// triggerToolbar fires a standard toolbar action by name. Supported
+// names are "home", "pan", "zoom", "back", "forward", and "save_figure"
+// (mirroring canvas.ToolbarAction values).
+func triggerToolbar(_ js.Value, args []js.Value) any {
+	result := js.Global().Get("Object").New()
+	if currentManager == nil {
+		result.Set("error", "no mounted demo")
+		return result
+	}
+	if len(args) == 0 || args[0].Type() != js.TypeString {
+		result.Set("error", "matplotlib-go wasm: triggerToolbar expects an action string")
+		return result
+	}
+	action := plotcanvas.ToolbarAction(args[0].String())
+	if err := currentManager.Toolbar().Trigger(action); err != nil {
+		result.Set("error", err.Error())
+		return result
+	}
+	result.Set("action", string(action))
+	result.Set("mode", toolbarModeString(currentManager.Toolbar().Mode()))
+	return result
+}
+
+func toolbarModeString(mode plotcanvas.ToolbarMode) string {
+	switch mode {
+	case plotcanvas.ToolbarModePan:
+		return "pan"
+	case plotcanvas.ToolbarModeZoom:
+		return "zoom"
+	default:
+		return "none"
+	}
+}
+
 func loadDemo(canvasID, id, backendID string, width, height int) any {
 	result := js.Global().Get("Object").New()
 
@@ -262,10 +340,11 @@ func loadDemo(canvasID, id, backendID string, width, height int) any {
 	result.Set("description", descriptor.Description)
 	result.Set("width", width)
 	result.Set("height", height)
+	result.Set("mode", toolbarModeString(manager.Toolbar().Mode()))
 	return result
 }
 
-func newManager(canvasID, backendID string, fig *core.Figure) (plotcanvas.FigureManager, error) {
+func newManager(canvasID, backendID string, fig *core.Figure) (*wasmcanvas.Manager, error) {
 	switch backendID {
 	case "agg":
 		return wasmcanvas.NewAggManager(canvasID, fig)

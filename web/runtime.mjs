@@ -8,6 +8,9 @@ export const REQUIRED_API_METHODS = Object.freeze([
   "defaultBackendID",
   "renderDemoPNG",
   "demoSource",
+  "setNavigationMode",
+  "navigationMode",
+  "triggerToolbar",
 ]);
 
 export function missingAPIMethods(api) {

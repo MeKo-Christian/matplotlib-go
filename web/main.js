@@ -145,6 +145,16 @@ async function init() {
       .getElementById("backendSelector")
       .addEventListener("change", () => scheduleRender());
 
+    document
+      .getElementById("navHomeBtn")
+      .addEventListener("click", () => triggerNavAction("home"));
+    document
+      .getElementById("navPanBtn")
+      .addEventListener("click", () => toggleNavMode("pan"));
+    document
+      .getElementById("navZoomBtn")
+      .addEventListener("click", () => toggleNavMode("zoom"));
+
     window.addEventListener("resize", () => scheduleRender());
 
     scheduleRender();
@@ -341,12 +351,61 @@ function mountSelectedDemo() {
   document.getElementById("demoDescription").textContent = result.description;
   setDownloadEnabled(true);
   setSourceEnabled(true);
+  setNavToolbarEnabled(true);
+  syncNavToolbar(result.mode || api.navigationMode());
   if (!document.getElementById("sourcePanel").hidden) {
     showSourceForDemo(currentDemoID, false);
   }
   updateStatus(
     `Rendered ${result.id} with ${backendName} in ${elapsedMs.toFixed(1)} ms at ${result.width}×${result.height}`,
   );
+}
+
+function triggerNavAction(action) {
+  if (runtimeExited || !api) {
+    return;
+  }
+  const result = api.triggerToolbar(action);
+  if (result && result.error) {
+    updateStatus(result.error);
+    return;
+  }
+  syncNavToolbar(result && result.mode);
+}
+
+function toggleNavMode(mode) {
+  if (runtimeExited || !api) {
+    return;
+  }
+  const current = api.navigationMode();
+  const next = current === mode ? "none" : mode;
+  const result = api.setNavigationMode(next);
+  if (result && result.error) {
+    updateStatus(result.error);
+    return;
+  }
+  syncNavToolbar(result && result.mode);
+}
+
+function syncNavToolbar(mode) {
+  const active = typeof mode === "string" ? mode : "none";
+  const panBtn = document.getElementById("navPanBtn");
+  const zoomBtn = document.getElementById("navZoomBtn");
+  if (panBtn) {
+    panBtn.setAttribute("aria-pressed", String(active === "pan"));
+  }
+  if (zoomBtn) {
+    zoomBtn.setAttribute("aria-pressed", String(active === "zoom"));
+  }
+}
+
+function setNavToolbarEnabled(enabled) {
+  for (const id of ["navHomeBtn", "navPanBtn", "navZoomBtn"]) {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.disabled = !enabled;
+    }
+  }
 }
 
 function scheduleRender() {

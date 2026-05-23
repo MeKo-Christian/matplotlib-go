@@ -30,9 +30,19 @@ type listener struct {
 	fn     js.Func
 }
 
-type manager struct {
+// Manager is the wasm figure manager. It hosts a renderer-backed canvas,
+// dispatches DOM events, and wires the standard [canvas.Navigation] and
+// [canvas.ToolbarController] so browser demos support pan, zoom-to-rect,
+// scroll-zoom, and home reset.
+//
+// Manager satisfies [canvas.FigureManager]; callers that need pan/zoom
+// programmatically can reach for [Manager.Navigation] or
+// [Manager.Toolbar].
+type Manager struct {
 	canvas *figureCanvas
 	tools  *plotcanvas.ToolManager
+	nav    *plotcanvas.Navigation
+	tb     *plotcanvas.ToolbarController
 	home   figureHomeState
 }
 
@@ -44,6 +54,7 @@ type figureCanvas struct {
 	dispatcher plotcanvas.Dispatcher
 	listeners  []listener
 	closed     bool
+	nav        *plotcanvas.Navigation
 }
 
 type figureHomeState struct {
@@ -58,15 +69,18 @@ type axesHomeState struct {
 	yMin, yMax float64
 }
 
-func NewGoBasicManager(elementID string, fig *core.Figure) (plotcanvas.FigureManager, error) {
+// NewGoBasicManager builds a wasm manager backed by the pure-Go gobasic
+// renderer.
+func NewGoBasicManager(elementID string, fig *core.Figure) (*Manager, error) {
 	return newManager(elementID, fig, newGoBasicRenderer)
 }
 
-func NewAggManager(elementID string, fig *core.Figure) (plotcanvas.FigureManager, error) {
+// NewAggManager builds a wasm manager backed by the AGG renderer.
+func NewAggManager(elementID string, fig *core.Figure) (*Manager, error) {
 	return newManager(elementID, fig, newAggRenderer)
 }
 
-func newManager(elementID string, fig *core.Figure, factory rasterRendererFactory) (plotcanvas.FigureManager, error) {
+func newManager(elementID string, fig *core.Figure, factory rasterRendererFactory) (*Manager, error) {
 	if fig == nil {
 		return nil, errors.New("canvas/wasm: nil figure")
 	}
@@ -96,17 +110,37 @@ func newManager(elementID string, fig *core.Figure, factory rasterRendererFactor
 	if tabIndex := element.Get("tabIndex"); tabIndex.IsUndefined() || tabIndex.Int() < 0 {
 		element.Set("tabIndex", 0)
 	}
-	c.installListeners()
 
-	m := &manager{
+	m := &Manager{
 		canvas: c,
 		tools:  plotcanvas.NewToolManager(),
 		home:   snapshotFigureHome(fig),
 	}
+
+	// Wire the standard pan / zoom-to-rect / scroll-zoom helper onto the
+	// dispatcher. After a navigation mutation the helper calls Draw,
+	// which both repaints the canvas and re-evaluates any zoom rubber
+	// band overlay.
+	m.nav = plotcanvas.NewNavigation(fig, c.Draw)
+	c.nav = m.nav
+	m.nav.Attach(&c.dispatcher)
+
+	// Toolbar wraps the helper with standard pan / zoom toggles and the
+	// home action. Save is intentionally left handler-less: the browser
+	// host downloads the canvas via toBlob, not through Go.
+	m.tb = plotcanvas.NewToolbarController(m.nav)
+	m.tb.SetHandler(plotcanvas.ToolbarHome, func() error {
+		return restoreFigureHome(m.home, c)
+	})
+
+	// Install DOM listeners after Navigation is attached so the helper
+	// observes the very first event.
+	c.installListeners()
+
 	m.tools.Register(plotcanvas.ToolFunc{
 		Name: "home",
 		Run: func(plotcanvas.ToolArgs) error {
-			return restoreFigureHome(m.home, c)
+			return m.tb.Trigger(plotcanvas.ToolbarHome)
 		},
 	})
 	m.tools.Register(plotcanvas.ToolFunc{
@@ -116,9 +150,21 @@ func newManager(elementID string, fig *core.Figure, factory rasterRendererFactor
 		},
 	})
 	m.tools.Register(plotcanvas.ToolFunc{
+		Name: "pan",
+		Run: func(plotcanvas.ToolArgs) error {
+			return m.tb.Trigger(plotcanvas.ToolbarPan)
+		},
+	})
+	m.tools.Register(plotcanvas.ToolFunc{
+		Name: "zoom",
+		Run: func(plotcanvas.ToolArgs) error {
+			return m.tb.Trigger(plotcanvas.ToolbarZoom)
+		},
+	})
+	m.tools.Register(plotcanvas.ToolFunc{
 		Name: "save",
 		Run: func(plotcanvas.ToolArgs) error {
-			return errors.New("canvas/wasm: save is not implemented for the browser host")
+			return m.tb.Trigger(plotcanvas.ToolbarSave)
 		},
 	})
 
@@ -141,13 +187,23 @@ func newAggRenderer(w, h int, bg render.Color) (rasterRenderer, error) {
 	return r, nil
 }
 
-func (m *manager) Canvas() plotcanvas.FigureCanvas { return m.canvas }
+// Canvas returns the canvas view of the manager.
+func (m *Manager) Canvas() plotcanvas.FigureCanvas { return m.canvas }
 
-func (m *manager) Show() error { return m.canvas.Draw() }
+// Show paints the figure once into the host canvas.
+func (m *Manager) Show() error { return m.canvas.Draw() }
 
-func (m *manager) Close() error { return m.canvas.Close() }
+// Close detaches DOM listeners, releases the navigation helper, and
+// emits the close lifecycle event.
+func (m *Manager) Close() error {
+	if m.nav != nil {
+		m.nav.Detach()
+	}
+	return m.canvas.Close()
+}
 
-func (m *manager) SetTitle(title string) {
+// SetTitle sets the browser document title.
+func (m *Manager) SetTitle(title string) {
 	document := js.Global().Get("document")
 	if document.IsUndefined() || document.IsNull() {
 		return
@@ -155,7 +211,17 @@ func (m *manager) SetTitle(title string) {
 	document.Set("title", title)
 }
 
-func (m *manager) ToolManager() *plotcanvas.ToolManager { return m.tools }
+// ToolManager returns the named-tool registry. Pan, zoom, home, save
+// tools are registered up front and delegate to the toolbar controller.
+func (m *Manager) ToolManager() *plotcanvas.ToolManager { return m.tools }
+
+// Navigation returns the navigation helper, so callers can change mode
+// or query an in-progress drag rectangle.
+func (m *Manager) Navigation() *plotcanvas.Navigation { return m.nav }
+
+// Toolbar returns the toolbar controller. Hosts can register a save
+// handler or override toolbar actions through it.
+func (m *Manager) Toolbar() *plotcanvas.ToolbarController { return m.tb }
 
 func (c *figureCanvas) Figure() *core.Figure { return c.figure }
 
@@ -191,6 +257,12 @@ func (c *figureCanvas) Draw() error {
 	js.CopyBytesToJS(pixels, img.Pix)
 	imageData := js.Global().Get("ImageData").New(pixels, backingWidth, backingHeight)
 	c.context.Call("putImageData", imageData, 0, 0)
+
+	// Overlay the in-progress zoom rubber band, if any, so users see the
+	// rectangle they are dragging. We stroke directly on the 2D context;
+	// since Draw is invoked on every mouse-move during a zoom drag, the
+	// rectangle tracks the cursor.
+	c.drawRubberband(pixelRatio)
 
 	return c.dispatcher.Emit(plotcanvas.Event{
 		Type:   plotcanvas.EventDraw,
@@ -260,11 +332,32 @@ func (c *figureCanvas) installListeners() {
 		return c.emit(c.mouseEvent(plotcanvas.EventMouseRelease, args[0]))
 	})
 	c.on(c.element, "mousemove", func(this js.Value, args []js.Value) any {
-		return c.emit(c.mouseEvent(plotcanvas.EventMouseMove, args[0]))
+		event := c.mouseEvent(plotcanvas.EventMouseMove, args[0])
+		result := c.emit(event)
+		// During a zoom rubber-band drag the navigation helper updates
+		// its rectangle without calling Draw — repaint here so the
+		// overlay tracks the cursor.
+		if c.nav != nil && c.nav.Mode() == plotcanvas.NavZoom {
+			if _, ok := c.nav.DragRect(); ok {
+				if err := c.Draw(); err != nil {
+					js.Global().Get("console").Call("error", err.Error())
+				}
+			}
+		}
+		return result
 	})
 	c.on(c.element, "wheel", func(this js.Value, args []js.Value) any {
 		args[0].Call("preventDefault")
 		return c.emit(c.scrollEvent(args[0]))
+	})
+	c.on(c.element, "contextmenu", func(this js.Value, args []js.Value) any {
+		// Right-click on the canvas pops the OS menu by default. When
+		// pan or zoom is active that would interrupt the gesture, so
+		// suppress it.
+		if c.nav != nil && c.nav.Mode() != plotcanvas.NavNone {
+			args[0].Call("preventDefault")
+		}
+		return nil
 	})
 
 	window := js.Global().Get("window")
@@ -323,11 +416,13 @@ func (c *figureCanvas) mouseEvent(eventType plotcanvas.EventType, domEvent js.Va
 
 func (c *figureCanvas) scrollEvent(domEvent js.Value) plotcanvas.Event {
 	position := elementPosition(c.element, domEvent)
+	// The Navigation helper inverts step direction internally; scroll
+	// up (negative deltaY in DOM coords) zooms in.
 	return plotcanvas.Event{
 		Type:      plotcanvas.EventScroll,
 		Position:  position,
 		DeltaX:    domEvent.Get("deltaX").Float(),
-		DeltaY:    domEvent.Get("deltaY").Float(),
+		DeltaY:    -domEvent.Get("deltaY").Float(),
 		Modifiers: modifiers(domEvent),
 		Native:    domEvent,
 	}
@@ -341,6 +436,42 @@ func (c *figureCanvas) keyEvent(eventType plotcanvas.EventType, domEvent js.Valu
 		Modifiers: modifiers(domEvent),
 		Native:    domEvent,
 	}
+}
+
+// drawRubberband strokes a dashed rectangle on top of the most recent
+// frame whenever the navigation helper reports an in-progress zoom
+// drag. The rectangle is in CSS-pixel space, so we scale by the device
+// pixel ratio to match the canvas backing buffer.
+func (c *figureCanvas) drawRubberband(pixelRatio float64) {
+	if c.nav == nil {
+		return
+	}
+	rect, ok := c.nav.DragRect()
+	if !ok {
+		return
+	}
+	if rect.W() < 1 || rect.H() < 1 {
+		return
+	}
+	ctx := c.context
+	if ctx.IsUndefined() || ctx.IsNull() {
+		return
+	}
+	x := rect.Min.X * pixelRatio
+	y := rect.Min.Y * pixelRatio
+	w := rect.W() * pixelRatio
+	h := rect.H() * pixelRatio
+	ctx.Call("save")
+	ctx.Set("strokeStyle", "#000")
+	ctx.Set("lineWidth", math.Max(1, pixelRatio))
+	if setLineDash := ctx.Get("setLineDash"); setLineDash.Type() == js.TypeFunction {
+		dashes := js.Global().Get("Array").New()
+		dashes.Call("push", 4*pixelRatio)
+		dashes.Call("push", 3*pixelRatio)
+		ctx.Call("setLineDash", dashes)
+	}
+	ctx.Call("strokeRect", x, y, w, h)
+	ctx.Call("restore")
 }
 
 func (c *figureCanvas) currentSize() (int, int) {

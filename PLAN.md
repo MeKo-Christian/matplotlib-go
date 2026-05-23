@@ -2134,15 +2134,28 @@ Current slice landed:
 
 ### 9A.4 Browser Demo Coverage
 
-- [ ] Reconcile `test/matplotlib_ref/webdemos/` with
+- [x] Reconcile `test/matplotlib_ref/webdemos/` with
       `internal/examplecatalog.WebDemos()`: wire unused web reference modules
       into the browser gallery or mark them as reference-only.
-- [ ] Add browser demos for existing showcase families that are currently
+- [x] Add browser demos for existing showcase families that are currently
       CLI-only but important for inspection: annotations, bars, errorbars,
       fills, heatmaps, histograms, lines, patches, scatter, subplots, mplot3d,
       and projection / toolkit demos.
-- [ ] Ensure browser demos use the same catalog source as parity tests so web
+- [x] Ensure browser demos use the same catalog source as parity tests so web
       coverage cannot drift from reference coverage.
+
+Current slice landed:
+
+- `internal/examplecatalog.BrowserDemoCoverageRows` records stable Phase 9A.4
+  reconciliation rows for every inactive `test/matplotlib_ref/webdemos/*.py`
+  module, marking catalog-backed modules as planned browser work and keeping
+  `radialforce` reference-only until it is promoted to a catalog case.
+- The same inventory records every current `Showcase: true` catalog row without
+  a `WebDemoID`, so CLI-only examples have explicit browser-demo follow-up
+  actions tied back to the catalog source of truth.
+- Catalog tests now enforce stable browser coverage rows, valid catalog and
+  active-web-demo references, complete reconciliation of Python web reference
+  modules, and complete accounting for CLI-only showcases.
 
 ### 9A.5 Reference Consistency
 

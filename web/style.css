@@ -246,6 +246,41 @@ button:disabled {
   padding: 18px;
 }
 
+.canvas-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.toolbar-button {
+  width: auto;
+  margin-top: 0;
+  padding: 8px 14px;
+  color: var(--accent-strong);
+  background: var(--button-secondary-bg);
+  border: 1px solid var(--control-border);
+  border-radius: 10px;
+  font-size: 0.92rem;
+}
+
+.toolbar-button[aria-pressed="true"] {
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    var(--accent) 0%,
+    var(--accent-strong) 100%
+  );
+  border-color: transparent;
+}
+
+.toolbar-hint {
+  margin-left: auto;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
 .canvas-frame {
   overflow: hidden;
   border-radius: 18px;
