@@ -34,10 +34,16 @@ type Case struct {
 	// NativeBackend marks fixtures that intentionally exercise backend-native
 	// renderer capabilities rather than renderer-neutral fallback paths.
 	// NativeCapabilities names the backend capabilities the fixture covers.
-	NativeBackend      string
-	NativeCapabilities []string
-	SVGGoldenFamily    string
-	GoBasicSmokeFamily string
+	NativeBackend       string
+	NativeCapabilities  []string
+	SVGGoldenFamily     string
+	GoBasicSmokeFamily  string
+	PickPointData       *[2]float64
+	PickPointPixel      *[2]float64
+	Pickable            bool
+	NoPickReason        string
+	SkipInteractivePan  bool
+	SkipInteractiveZoom bool
 
 	// MinPSNR / MaxMeanAbs / MaxRMSE override the matplotlib reference-compare
 	// tolerance defaults for this case. Zero means "use the package default".

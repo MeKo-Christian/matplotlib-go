@@ -52,6 +52,7 @@ type figureCanvas struct {
 	context    js.Value
 	factory    rasterRendererFactory
 	dispatcher plotcanvas.Dispatcher
+	hover      *plotcanvas.AxesHoverTracker
 	listeners  []listener
 	closed     bool
 	nav        *plotcanvas.Navigation
@@ -107,6 +108,7 @@ func newManager(elementID string, fig *core.Figure, factory rasterRendererFactor
 		context: context,
 		factory: factory,
 	}
+	c.hover = plotcanvas.NewAxesHoverTracker(fig, &c.dispatcher)
 	if tabIndex := element.Get("tabIndex"); tabIndex.IsUndefined() || tabIndex.Int() < 0 {
 		element.Set("tabIndex", 0)
 	}
@@ -326,10 +328,19 @@ func (c *figureCanvas) installListeners() {
 	c.on(c.element, "mousedown", func(this js.Value, args []js.Value) any {
 		event := c.mouseEvent(plotcanvas.EventMousePress, args[0])
 		c.focus()
-		return c.emit(event)
+		c.emit(event)
+		plotcanvas.EmitPick(&c.dispatcher, c.figure, plotcanvas.MouseEvent{Event: event})
+		return nil
 	})
 	c.on(c.element, "mouseup", func(this js.Value, args []js.Value) any {
 		return c.emit(c.mouseEvent(plotcanvas.EventMouseRelease, args[0]))
+	})
+	c.on(c.element, "dblclick", func(this js.Value, args []js.Value) any {
+		event := c.mouseEvent(plotcanvas.EventMousePress, args[0])
+		event.DoubleClick = true
+		c.emit(event)
+		plotcanvas.EmitPick(&c.dispatcher, c.figure, plotcanvas.MouseEvent{Event: event})
+		return nil
 	})
 	c.on(c.element, "mousemove", func(this js.Value, args []js.Value) any {
 		event := c.mouseEvent(plotcanvas.EventMouseMove, args[0])
@@ -345,6 +356,12 @@ func (c *figureCanvas) installListeners() {
 			}
 		}
 		return result
+	})
+	c.on(c.element, "mouseenter", func(this js.Value, args []js.Value) any {
+		return c.emit(c.mouseEvent(plotcanvas.EventFigureEnter, args[0]))
+	})
+	c.on(c.element, "mouseleave", func(this js.Value, args []js.Value) any {
+		return c.emit(c.mouseEvent(plotcanvas.EventFigureLeave, args[0]))
 	})
 	c.on(c.element, "wheel", func(this js.Value, args []js.Value) any {
 		args[0].Call("preventDefault")
@@ -400,6 +417,10 @@ func (c *figureCanvas) emit(event plotcanvas.Event) any {
 	if err := c.dispatcher.Emit(event); err != nil {
 		js.Global().Get("console").Call("error", err.Error())
 	}
+	switch event.Type {
+	case plotcanvas.EventMouseMove, plotcanvas.EventFigureEnter, plotcanvas.EventFigureLeave:
+		c.hover.Update(event)
+	}
 	return nil
 }
 
@@ -432,7 +453,7 @@ func (c *figureCanvas) keyEvent(eventType plotcanvas.EventType, domEvent js.Valu
 	return plotcanvas.Event{
 		Type:      eventType,
 		Figure:    c.figure,
-		Key:       domEvent.Get("key").String(),
+		Key:       plotcanvas.NormalizeKey(domEvent.Get("key").String()),
 		Modifiers: modifiers(domEvent),
 		Native:    domEvent,
 	}
@@ -517,31 +538,16 @@ func devicePixelRatio() float64 {
 }
 
 func mouseButton(button int) plotcanvas.MouseButton {
-	switch button {
-	case 1:
-		return plotcanvas.MouseButtonMiddle
-	case 2:
-		return plotcanvas.MouseButtonRight
-	default:
-		return plotcanvas.MouseButtonLeft
-	}
+	return plotcanvas.MouseButtonFromJSIndex(button)
 }
 
 func modifiers(event js.Value) plotcanvas.Modifier {
-	var out plotcanvas.Modifier
-	if event.Get("shiftKey").Bool() {
-		out |= plotcanvas.ModifierShift
-	}
-	if event.Get("ctrlKey").Bool() {
-		out |= plotcanvas.ModifierControl
-	}
-	if event.Get("altKey").Bool() {
-		out |= plotcanvas.ModifierAlt
-	}
-	if event.Get("metaKey").Bool() {
-		out |= plotcanvas.ModifierMeta
-	}
-	return out
+	return plotcanvas.ModifierSet(
+		event.Get("shiftKey").Bool(),
+		event.Get("ctrlKey").Bool(),
+		event.Get("altKey").Bool(),
+		event.Get("metaKey").Bool(),
+	)
 }
 
 func snapshotFigureHome(fig *core.Figure) figureHomeState {

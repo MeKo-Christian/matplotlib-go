@@ -1,5 +1,10 @@
 package examplecatalog
 
+import (
+	"strconv"
+	"strings"
+)
+
 // PublicSurfaceRow records one upstream Matplotlib public API or registry item.
 type PublicSurfaceRow struct {
 	ID     string `json:"id"`
@@ -33,7 +38,20 @@ type PublicSurfaceParity struct {
 	Note              string
 }
 
-var publicSurfaceParityRows = []PublicSurfaceParity{
+type publicSurfaceParityRule struct {
+	idPrefix          string
+	module            string
+	kind              string
+	name              string
+	featureCoverageID string
+	status            PublicSurfaceParityStatus
+	goFiles           []string
+	catalogIDs        []string
+	exampleIDs        []string
+	note              string
+}
+
+var publicSurfaceParityOverrides = []PublicSurfaceParity{
 	{
 		ID:                "artist-class",
 		UpstreamID:        "artist.py:class:Artist",
@@ -58,7 +76,7 @@ var publicSurfaceParityRows = []PublicSurfaceParity{
 		UpstreamID:        "markers.py:registry:marker:*",
 		FeatureCoverageID: "lines",
 		Status:            PublicSurfaceDirectEquivalent,
-		GoFiles:           []string{"core/marker.go", "core/scatter.go"},
+		GoFiles:           []string{"core/scatter.go"},
 		CatalogIDs:        []string{"scatter_marker_types"},
 		Note:              "Built-in marker registry parity includes the star marker and is covered by the marker grid fixture.",
 	},
@@ -66,10 +84,10 @@ var publicSurfaceParityRows = []PublicSurfaceParity{
 		ID:                "lanczos-interpolation",
 		UpstreamID:        "image.py:registry:interpolation:lanczos",
 		FeatureCoverageID: "image",
-		Status:            PublicSurfaceNotStarted,
+		Status:            PublicSurfaceDirectEquivalent,
 		GoFiles:           []string{"core/image.go", "backends/agg/interpolation.go"},
 		CatalogIDs:        []string{"image_heatmap", "imshow_bilinear", "imshow_bicubic"},
-		Note:              "Nearest, bilinear, bicubic, hamming, and hanning are represented; Lanczos and the remaining interpolation filters are Phase 9C work.",
+		Note:              "AGG interpolation name resolution maps Matplotlib's Lanczos filter directly.",
 	},
 	{
 		ID:                "pyplot-plot",
@@ -99,12 +117,318 @@ var publicSurfaceParityRows = []PublicSurfaceParity{
 	},
 }
 
+var publicSurfaceParityRules = []publicSurfaceParityRule{
+	{
+		idPrefix:          "artist",
+		module:            "artist.py",
+		featureCoverageID: "artist",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/artist.go", "core/lifecycle.go", "core/rasterization.go"},
+		catalogIDs:        []string{"basic_line", "patch_showcase", "mixed_raster_vector"},
+		note:              "Go keeps an interface-based Artist model; broad dynamic properties, inspection helpers, getp/setp, and callbacks remain partial.",
+	},
+	{
+		idPrefix:          "axis",
+		module:            "axis.py",
+		featureCoverageID: "axis-ticker-scale",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/axis.go", "core/tick.go", "core/grid.go"},
+		catalogIDs:        []string{"axes_control_surface", "units_dates", "units_categories", "skewt_basic"},
+		exampleIDs:        []string{"axes_control_surface", "units_overview", "skewt_basic"},
+		note:              "Axis, ticks, grid lines, mirrored axes, and labels exist; explicit Tick artist and setter parity is still incomplete.",
+	},
+	{
+		idPrefix:          "ticker",
+		module:            "ticker.py",
+		featureCoverageID: "axis-ticker-scale",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/tick.go", "core/date_tick.go", "core/units.go"},
+		catalogIDs:        []string{"axes_control_surface", "units_dates", "units_categories", "lognorm_imshow", "skewt_basic"},
+		exampleIDs:        []string{"axes_control_surface", "units_overview", "skewt_basic"},
+		note:              "Common locators and formatters exist, but the upstream ticker and formatter catalog is not exhaustively represented yet.",
+	},
+	{
+		idPrefix:          "scale-registry-functionlog",
+		module:            "scale.py",
+		kind:              "registry:scale",
+		name:              "functionlog",
+		featureCoverageID: "axis-ticker-scale",
+		status:            PublicSurfaceNotStarted,
+		goFiles:           []string{"transform/scale_registry.go"},
+		catalogIDs:        []string{"axes_control_surface"},
+		exampleIDs:        []string{"axes_control_surface"},
+		note:              "The Go scale registry has linear, log, symlog, asinh, logit, and function scales; Matplotlib's functionlog registry entry is not implemented.",
+	},
+	{
+		idPrefix:          "scale",
+		module:            "scale.py",
+		featureCoverageID: "axis-ticker-scale",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"transform/scale_registry.go", "transform/transform.go", "core/axis.go"},
+		catalogIDs:        []string{"axes_control_surface", "lognorm_imshow", "skewt_basic"},
+		exampleIDs:        []string{"axes_control_surface", "skewt_basic"},
+		note:              "Named scale construction and common scale transforms exist, with remaining parity work around upstream class hierarchy and edge semantics.",
+	},
+	{
+		idPrefix:          "transforms",
+		module:            "transforms.py",
+		featureCoverageID: "transforms",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"transform/transform.go", "transform/graph.go", "transform/node.go", "internal/geom/geom.go"},
+		catalogIDs:        []string{"transform_coordinates", "annotation_composition", "imshow_transformed"},
+		exampleIDs:        []string{"annotation_composition"},
+		note:              "Go has affine, scale, blended, chained, and graph-backed transforms; BBox wrappers, invalidation, and transformed-path helpers are partial.",
+	},
+	{
+		idPrefix:          "line-style-registry",
+		module:            "lines.py",
+		kind:              "registry:linestyle",
+		featureCoverageID: "lines",
+		status:            PublicSurfaceDirectEquivalent,
+		goFiles:           []string{"core/line.go"},
+		catalogIDs:        []string{"dashes", "joins_caps"},
+		exampleIDs:        []string{"dashes"},
+		note:              "Matplotlib line-style aliases are represented by Go stroke and dash options and covered by dash fixtures.",
+	},
+	{
+		idPrefix:          "lines",
+		module:            "lines.py",
+		featureCoverageID: "lines",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/line.go", "core/plot.go", "core/scatter.go"},
+		catalogIDs:        []string{"basic_line", "dashes", "joins_caps", "scatter_marker_types"},
+		exampleIDs:        []string{"basic_line", "dashes"},
+		note:              "Line drawing, dashes, joins, caps, and related fixtures exist; Line2D marker integration and mutable data semantics remain partial.",
+	},
+	{
+		idPrefix:          "marker-fillstyle-registry",
+		module:            "markers.py",
+		kind:              "registry:fillstyle",
+		featureCoverageID: "lines",
+		status:            PublicSurfaceDirectEquivalent,
+		goFiles:           []string{"core/scatter.go"},
+		catalogIDs:        []string{"scatter_marker_types"},
+		note:              "Marker fill styles are modeled by MarkerStyle and covered by the marker-type fixture family.",
+	},
+	{
+		idPrefix:          "marker-registry",
+		module:            "markers.py",
+		kind:              "registry:marker",
+		featureCoverageID: "lines",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/scatter.go"},
+		catalogIDs:        []string{"scatter_marker_types"},
+		note:              "Go has built-in marker constants, tuple markers, custom paths, and text markers; string-registry breadth and Line2D integration remain partial.",
+	},
+	{
+		idPrefix:          "markers",
+		module:            "markers.py",
+		featureCoverageID: "lines",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/scatter.go"},
+		catalogIDs:        []string{"scatter_marker_types"},
+		note:              "MarkerStyle has an idiomatic Go equivalent for common scatter workflows, but the upstream class surface is not cloned.",
+	},
+	{
+		idPrefix:          "collections",
+		module:            "collections.py",
+		featureCoverageID: "collections",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/collection.go", "core/mesh.go", "core/eventplot.go", "core/hexbin.go"},
+		catalogIDs:        []string{"mixed_collection", "large_scatter", "quad_mesh", "gouraud_triangles", "specialty_artists"},
+		exampleIDs:        []string{"specialty_artists"},
+		note:              "Path, line, patch, poly, quad, event, and hexbin collections exist; specialized variants and mutable setter parity remain incomplete.",
+	},
+	{
+		idPrefix:          "patch-style-registry",
+		module:            "patches.py",
+		kind:              "registry:",
+		featureCoverageID: "patches",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/patch.go", "core/patch_extra.go", "core/arrow_patch.go"},
+		catalogIDs:        []string{"patch_showcase"},
+		note:              "Common patch, arrow, box, connection, and hatch behavior exists, but the upstream style registries need row-by-row closure.",
+	},
+	{
+		idPrefix:          "patches",
+		module:            "patches.py",
+		featureCoverageID: "patches",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/patch.go", "core/patch_extra.go", "core/arrow_patch.go"},
+		catalogIDs:        []string{"patch_showcase"},
+		note:              "Core patch classes and extra shapes exist; full Python patch API and all specialized classes remain partial.",
+	},
+	{
+		idPrefix:          "text",
+		module:            "text.py",
+		featureCoverageID: "text-annotation-legend",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/text.go", "core/mathtext.go", "core/arrow_patch.go"},
+		catalogIDs:        []string{"text_labels_strict", "title_strict", "annotation_composition", "figure_labels_composition", "mathtext_inline_labels"},
+		exampleIDs:        []string{"annotation_composition", "figure_labels_composition"},
+		note:              "Text and annotation rendering exist, including rotation, MathText, arrows, and anchored labels; font property and coordinate model parity is partial.",
+	},
+	{
+		idPrefix:          "legend",
+		module:            "legend.py",
+		featureCoverageID: "text-annotation-legend",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/legend.go"},
+		catalogIDs:        []string{"multi_series_basic", "multi_series_color_cycle", "figure_labels_composition"},
+		exampleIDs:        []string{"figure_labels_composition"},
+		note:              "Static legend layout exists; draggable legends, handler maps, and broader proxy-artist parity remain partial.",
+	},
+	{
+		idPrefix:          "offsetbox",
+		module:            "offsetbox.py",
+		featureCoverageID: "text-annotation-legend",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/anchored_text.go", "core/text.go"},
+		catalogIDs:        []string{"annotation_composition", "figure_labels_composition"},
+		exampleIDs:        []string{"annotation_composition", "figure_labels_composition"},
+		note:              "Anchored text covers the main static offset-box use case; packing boxes, draggable boxes, offset images, and AnnotationBbox remain thin.",
+	},
+	{
+		idPrefix:          "image-interpolation-registry",
+		module:            "image.py",
+		kind:              "registry:interpolation",
+		featureCoverageID: "image",
+		status:            PublicSurfaceDirectEquivalent,
+		goFiles:           []string{"core/image.go", "backends/agg/interpolation.go"},
+		catalogIDs:        []string{"image_heatmap", "imshow_bilinear", "imshow_bicubic"},
+		exampleIDs:        []string{"image_heatmap"},
+		note:              "The AGG backend resolves Matplotlib interpolation names to AGG image filters, including adaptive auto/antialiased handling.",
+	},
+	{
+		idPrefix:          "image",
+		module:            "image.py",
+		featureCoverageID: "image",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/image.go", "core/image_api.go", "core/matrix_helpers.go"},
+		catalogIDs:        []string{"image_heatmap", "imshow_clipped", "imshow_transformed", "image_alpha", "matshow_basic", "spy_marker", "spy_image", "arrays_showcase"},
+		exampleIDs:        []string{"image_heatmap", "arrays_showcase"},
+		note:              "imshow, matshow, spy, alpha, origin, extent, and transformed images exist; FigureImage, BboxImage, NonUniformImage, and IO helpers are incomplete.",
+	},
+	{
+		idPrefix:          "colorbar",
+		module:            "colorbar.py",
+		featureCoverageID: "colorbar",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/colorbar.go", "core/scalar_mappable.go", "core/norm.go"},
+		catalogIDs:        []string{"colorbar_composition", "boundarynorm_pcolormesh", "lognorm_imshow", "twoslope_norm_image", "colorbar_extensions"},
+		exampleIDs:        []string{"colorbar_composition"},
+		note:              "Scalar mappables and vertical colorbars exist; horizontal placement, custom ticks, boundaries, and gridspec helpers remain partial.",
+	},
+	{
+		idPrefix:          "cm",
+		module:            "cm.py",
+		featureCoverageID: "colors-cm",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"color/colormap.go", "color/listed_colormaps.go"},
+		catalogIDs:        []string{"colormap_diverging", "colormap_qualitative", "colormap_cyclic", "image_heatmap"},
+		note:              "Colormap lookup, listed/segmented maps, reversals, and resampling exist; the Python ColormapRegistry surface is only partially mirrored.",
+	},
+	{
+		idPrefix:          "colors",
+		module:            "colors.py",
+		featureCoverageID: "colors-cm",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"color/colormap.go", "color/listed_colormaps.go", "color/named_colors.go", "core/norm.go"},
+		catalogIDs:        []string{"colormap_diverging", "colormap_qualitative", "colormap_cyclic", "named_colors", "lognorm_imshow", "twoslope_norm_image"},
+		note:              "Named colors, colormaps, and common norms exist; advanced norms, LightSource, bivar/multivar colormaps, and conversion edge cases remain partial.",
+	},
+	{
+		idPrefix:          "pyplot",
+		module:            "pyplot.py",
+		featureCoverageID: "pyplot-state",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
+		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
+		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
+		note:              "The Go pyplot package covers common stateful migration helpers but does not clone the full Python wrapper and overload surface.",
+	},
+	{
+		idPrefix:          "backend-base",
+		module:            "backend_bases.py",
+		featureCoverageID: "renderer-backends",
+		status:            PublicSurfaceIdiomaticEquivalent,
+		goFiles:           []string{"render/render.go", "render/graphics_context.go", "render/extensions.go", "backends/registry.go", "canvas/canvas.go", "canvas/dispatcher.go"},
+		catalogIDs:        []string{"basic_line", "mixed_raster_vector", "large_scatter", "clip_path_batch"},
+		exampleIDs:        []string{"basic_line"},
+		note:              "Renderer, canvas, events, and backend registration are split into Go packages rather than mirroring Matplotlib backend base classes directly.",
+	},
+	{
+		idPrefix:          "backend-tool-registry",
+		module:            "backend_tools.py",
+		kind:              "registry:tool",
+		featureCoverageID: "widgets-events-animation",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"canvas/tool.go", "canvas/navigation.go"},
+		note:              "Navigation and tool infrastructure exists, but the full Matplotlib tool registry is not complete.",
+	},
+	{
+		idPrefix:          "backend-tools",
+		module:            "backend_tools.py",
+		featureCoverageID: "widgets-events-animation",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"canvas/tool.go", "canvas/navigation.go", "canvas/dispatcher.go"},
+		note:              "Go has an idiomatic canvas/tool split; many concrete Matplotlib tools are still missing or backend-specific.",
+	},
+	{
+		idPrefix:          "widgets",
+		module:            "widgets.py",
+		featureCoverageID: "widgets-events-animation",
+		status:            PublicSurfacePartial,
+		goFiles:           []string{"core/widgets.go", "canvas/dispatcher.go", "canvas/picker.go"},
+		note:              "Static widget artists and event dispatch exist; interactive selectors, sliders, buttons, and callbacks remain partial.",
+	},
+	{
+		idPrefix:          "animation",
+		module:            "animation.py",
+		featureCoverageID: "widgets-events-animation",
+		status:            PublicSurfaceNotStarted,
+		goFiles:           []string{"canvas/scheduler.go"},
+		note:              "Canvas scheduling exists, but Matplotlib animation classes, movie writers, and animation demos are not implemented.",
+	},
+}
+
 // PublicSurfaceParityRows returns Phase 9B public-surface parity
 // classifications.
 func PublicSurfaceParityRows() []PublicSurfaceParity {
-	out := make([]PublicSurfaceParity, len(publicSurfaceParityRows))
-	copy(out, publicSurfaceParityRows)
+	out := make([]PublicSurfaceParity, len(publicSurfaceParityOverrides))
+	copy(out, publicSurfaceParityOverrides)
+	for i := range out {
+		out[i] = clonePublicSurfaceParity(out[i])
+	}
 	return out
+}
+
+// PublicSurfaceParityRowsForSurface classifies an upstream public-surface
+// inventory. Every returned row corresponds to one upstream row.
+func PublicSurfaceParityRowsForSurface(rows []PublicSurfaceRow) []PublicSurfaceParity {
+	out := make([]PublicSurfaceParity, 0, len(rows))
+	for _, surface := range rows {
+		row, ok := PublicSurfaceParityForRow(surface)
+		if !ok {
+			continue
+		}
+		out = append(out, row)
+	}
+	return out
+}
+
+// PublicSurfaceParityForRow classifies one upstream public-surface row.
+func PublicSurfaceParityForRow(surface PublicSurfaceRow) (PublicSurfaceParity, bool) {
+	if row, ok := LookupPublicSurfaceParityByUpstreamID(surface.ID); ok {
+		return row, true
+	}
+	for _, rule := range publicSurfaceParityRules {
+		if !rule.matches(surface) {
+			continue
+		}
+		return rule.classification(surface), true
+	}
+	return PublicSurfaceParity{}, false
 }
 
 // LookupPublicSurfaceParityByUpstreamID finds a classification by upstream
@@ -112,8 +436,92 @@ func PublicSurfaceParityRows() []PublicSurfaceParity {
 func LookupPublicSurfaceParityByUpstreamID(upstreamID string) (PublicSurfaceParity, bool) {
 	for _, row := range PublicSurfaceParityRows() {
 		if row.UpstreamID == upstreamID {
-			return row, true
+			return clonePublicSurfaceParity(row), true
 		}
 	}
 	return PublicSurfaceParity{}, false
+}
+
+func (r publicSurfaceParityRule) matches(surface PublicSurfaceRow) bool {
+	if surface.Module != r.module {
+		return false
+	}
+	if r.kind == "" {
+		return r.name == "" || surface.Name == r.name
+	}
+	if surface.Kind != r.kind && (!strings.HasSuffix(r.kind, ":") || !strings.HasPrefix(surface.Kind, r.kind)) {
+		return false
+	}
+	return r.name == "" || surface.Name == r.name
+}
+
+func (r publicSurfaceParityRule) classification(surface PublicSurfaceRow) PublicSurfaceParity {
+	id := r.idPrefix + "-" + publicSurfaceIDSlug(surface.Kind+"-"+surface.Name)
+	return PublicSurfaceParity{
+		ID:                id,
+		UpstreamID:        surface.ID,
+		FeatureCoverageID: r.featureCoverageID,
+		Status:            r.status,
+		GoFiles:           append([]string(nil), r.goFiles...),
+		CatalogIDs:        append([]string(nil), r.catalogIDs...),
+		ExampleIDs:        append([]string(nil), r.exampleIDs...),
+		Note:              r.note,
+	}
+}
+
+func clonePublicSurfaceParity(row PublicSurfaceParity) PublicSurfaceParity {
+	row.GoFiles = append([]string(nil), row.GoFiles...)
+	row.CatalogIDs = append([]string(nil), row.CatalogIDs...)
+	row.ExampleIDs = append([]string(nil), row.ExampleIDs...)
+	return row
+}
+
+func publicSurfaceIDSlug(value string) string {
+	original := value
+	var canonical strings.Builder
+	for _, r := range value {
+		switch {
+		case r >= 'A' && r <= 'Z':
+			canonical.WriteByte('u')
+			canonical.WriteRune(r + ('a' - 'A'))
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
+			canonical.WriteRune(r)
+		default:
+			canonical.WriteRune(r)
+		}
+	}
+	value = canonical.String()
+	value = strings.NewReplacer(
+		" ", "space",
+		":", "-",
+		"_", "-",
+		".", "dot",
+		"-", "dash",
+		">", "gt",
+		"<", "lt",
+		"[", "bracket",
+		"]", "bracket",
+		"|", "bar",
+		"+", "plus",
+		"*", "star",
+		",", "comma",
+		"(", "paren",
+		")", "paren",
+	).Replace(value)
+	fields := strings.FieldsFunc(value, func(r rune) bool {
+		return (r < 'a' || r > 'z') && (r < '0' || r > '9')
+	})
+	slug := strings.Join(fields, "-")
+	if slug == "" {
+		slug = "item"
+	}
+	return slug + "-" + publicSurfaceIDChecksum(original)
+}
+
+func publicSurfaceIDChecksum(value string) string {
+	var sum uint64
+	for i, r := range value {
+		sum += uint64(i+1) * uint64(r)
+	}
+	return strconv.FormatUint(sum, 36)
 }

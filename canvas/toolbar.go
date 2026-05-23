@@ -91,11 +91,13 @@ type ToolbarHandler func() error
 //
 // The zero value is unusable; call NewToolbarController.
 type ToolbarController struct {
-	mu       sync.Mutex
-	mode     ToolbarMode
-	enabled  map[ToolbarAction]bool
-	handlers map[ToolbarAction]ToolbarHandler
-	message  string
+	mu        sync.Mutex
+	mode      ToolbarMode
+	enabled   map[ToolbarAction]bool
+	handlers  map[ToolbarAction]ToolbarHandler
+	message   string
+	onMode    func(ToolbarMode)
+	onMessage func(string)
 
 	nav *Navigation
 }
@@ -141,6 +143,27 @@ func (c *ToolbarController) SetHandler(action ToolbarAction, handler ToolbarHand
 	c.handlers[action] = handler
 }
 
+// SetModeHandler registers a backend callback for mode announcements.
+func (c *ToolbarController) SetModeHandler(handler func(ToolbarMode)) {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.onMode = handler
+}
+
+// SetMessageHandler registers a backend callback for transient status
+// announcements.
+func (c *ToolbarController) SetMessageHandler(handler func(string)) {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.onMessage = handler
+}
+
 // Mode returns the active interaction mode.
 func (c *ToolbarController) Mode() ToolbarMode {
 	if c == nil {
@@ -160,8 +183,12 @@ func (c *ToolbarController) SetMode(mode ToolbarMode) {
 	c.mu.Lock()
 	c.mode = mode
 	nav := c.nav
+	onMode := c.onMode
 	c.mu.Unlock()
 	if nav == nil {
+		if onMode != nil {
+			onMode(mode)
+		}
 		return
 	}
 	switch mode {
@@ -171,6 +198,9 @@ func (c *ToolbarController) SetMode(mode ToolbarMode) {
 		nav.SetMode(NavZoom)
 	default:
 		nav.SetMode(NavNone)
+	}
+	if onMode != nil {
+		onMode(mode)
 	}
 }
 
@@ -202,8 +232,12 @@ func (c *ToolbarController) SetMessage(msg string) {
 		return
 	}
 	c.mu.Lock()
-	defer c.mu.Unlock()
 	c.message = msg
+	onMessage := c.onMessage
+	c.mu.Unlock()
+	if onMessage != nil {
+		onMessage(msg)
+	}
 }
 
 // Message returns the current status message.

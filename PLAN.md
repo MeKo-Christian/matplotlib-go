@@ -2400,13 +2400,27 @@ Implementation notes:
 
 ### 9B.2 Go Equivalent Mapping
 
-- [ ] Add a `PublicSurfaceParityRows` inventory that maps each upstream row to
+- [x] Add a `PublicSurfaceParityRows` inventory that maps each upstream row to
       one of:
       `direct-equivalent`, `idiomatic-equivalent`, `partial`, `not-started`,
       `intentional-omission`.
-- [ ] For every row, record the local Go package/file, catalog IDs, demo IDs,
+- [x] For every row, record the local Go package/file, catalog IDs, demo IDs,
       and implementation note.
-- [ ] Fail tests when a new upstream row appears without a classification.
+- [x] Fail tests when a new upstream row appears without a classification.
+
+Current slice landed:
+
+- `internal/examplecatalog.PublicSurfaceParityRowsForSurface` now classifies
+  the committed upstream inventory row-by-row, with exact overrides for
+  landmark APIs and conservative module/family rules for the remaining public
+  classes, functions, constants, and registries.
+- The committed 591-row upstream surface is covered by tests that require one
+  classification per row, stable status values, an existing `FeatureCoverage`
+  row, at least one local Go file reference, and valid catalog/showcase
+  references when present.
+- Exact overrides now capture high-signal parity answers such as `Artist`,
+  `Line2D`, `pyplot.plot`, `Button`, `FuncAnimation`, marker `*`, and AGG's
+  direct `lanczos` interpolation support.
 
 Implementation notes:
 

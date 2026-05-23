@@ -2,6 +2,7 @@ package webagg
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -346,6 +347,48 @@ func TestDrawIdleCoalescesRequestsUntilIdleTick(t *testing.T) {
 	}
 	if draws != 1 {
 		t.Fatalf("draw events after empty idle tick = %d, want 1", draws)
+	}
+}
+
+func TestCloseEmitsLifecycleEventAndRejectsLaterInput(t *testing.T) {
+	mgr := newTestManager(t)
+	closes := 0
+	mgr.Connect(plotcanvas.EventClose, func(ev plotcanvas.Event) error {
+		closes++
+		if ev.Figure != mgr.Figure() {
+			t.Fatalf("close figure mismatch")
+		}
+		return nil
+	})
+	if err := mgr.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	if err := mgr.Close(); err != nil {
+		t.Fatalf("second Close: %v", err)
+	}
+	if closes != 1 {
+		t.Fatalf("close events = %d, want 1", closes)
+	}
+	if err := mgr.HandleClientMessage(mustJSON(t, map[string]any{"type": "draw"})); !errors.Is(err, errClientClosed) {
+		t.Fatalf("HandleClientMessage after close = %v, want errClientClosed", err)
+	}
+}
+
+func TestClientRegistrationPropagatesRendererFactoryError(t *testing.T) {
+	want := errors.New("renderer failed")
+	mgr, err := NewManager(Options{
+		Figure: core.NewFigure(80, 60),
+		Renderer: func(int, int, render.Color) (RasterRenderer, error) {
+			return nil, want
+		},
+		HasBackground: true,
+		Background:    render.Color{R: 1, G: 1, B: 1, A: 1},
+	})
+	if err != nil {
+		t.Fatalf("NewManager: %v", err)
+	}
+	if _, err := mgr.hub.register(&captureSink{}); !errors.Is(err, want) {
+		t.Fatalf("register error = %v, want %v", err, want)
 	}
 }
 
@@ -749,6 +792,28 @@ func TestToolbarPanEcho(t *testing.T) {
 	if !containsType(jsonMsgs, "navigate_mode", "PAN") {
 		t.Errorf("expected navigate_mode=PAN broadcast; got %v", typesOf(jsonMsgs))
 	}
+}
+
+func TestToolbarMessageBroadcast(t *testing.T) {
+	mgr := newTestManager(t)
+	sink := &captureSink{}
+	if _, err := mgr.hub.register(sink); err != nil {
+		t.Fatalf("register: %v", err)
+	}
+
+	mgr.Toolbar().SetMessage("x=1, y=2")
+
+	jsonMsgs, _ := sink.snapshot()
+	for _, msg := range jsonMsgs {
+		var ev map[string]any
+		if err := json.Unmarshal(msg, &ev); err != nil {
+			continue
+		}
+		if ev["type"] == MsgMessage && ev["message"] == "x=1, y=2" {
+			return
+		}
+	}
+	t.Fatalf("missing message broadcast in %v", typesOf(jsonMsgs))
 }
 
 // TestPanShiftsAxes drives a pan drag through the HandleClientMessage

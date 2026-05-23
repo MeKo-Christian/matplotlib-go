@@ -132,12 +132,6 @@ func (m *Manager) handleToolbarButton(name string) error {
 	if err := m.tb.Trigger(action); err != nil {
 		return err
 	}
-	// Mirror the mode toggle back to clients so their toolbar UI can
-	// stay in sync.
-	if action == plotcanvas.ToolbarPan || action == plotcanvas.ToolbarZoom {
-		mode := navigateModeName(m.tb.Mode())
-		m.hub.broadcastJSON(&outboundEvent{Type: MsgNavigateMode, Mode: mode})
-	}
 	return nil
 }
 

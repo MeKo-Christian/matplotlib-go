@@ -94,9 +94,35 @@ func TestToolbarControllerPanZoomTogglesNavigationMode(t *testing.T) {
 
 func TestToolbarControllerSetMessage(t *testing.T) {
 	c := NewToolbarController(nil)
+	var announced []string
+	c.SetMessageHandler(func(msg string) {
+		announced = append(announced, msg)
+	})
 	c.SetMessage("x=1, y=2")
 	if got := c.Message(); got != "x=1, y=2" {
 		t.Fatalf("Message = %q, want %q", got, "x=1, y=2")
+	}
+	if len(announced) != 1 || announced[0] != "x=1, y=2" {
+		t.Fatalf("message announcements = %v, want [x=1, y=2]", announced)
+	}
+}
+
+func TestToolbarControllerSetModeAnnouncesMode(t *testing.T) {
+	c := NewToolbarController(nil)
+	var announced []ToolbarMode
+	c.SetModeHandler(func(mode ToolbarMode) {
+		announced = append(announced, mode)
+	})
+	c.SetMode(ToolbarModePan)
+	c.SetMode(ToolbarModeNone)
+	want := []ToolbarMode{ToolbarModePan, ToolbarModeNone}
+	if len(announced) != len(want) {
+		t.Fatalf("mode announcements = %v, want %v", announced, want)
+	}
+	for i := range want {
+		if announced[i] != want[i] {
+			t.Fatalf("announcement %d = %v, want %v", i, announced[i], want[i])
+		}
 	}
 }
 

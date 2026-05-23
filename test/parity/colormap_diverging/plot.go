@@ -7,7 +7,7 @@ import (
 	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
 )
 
-func Render() image.Image {
+func Plot() *core.Figure {
 	fig, ax := common.ColorNormFixtureFigure("Diverging Colormap")
 	cmap := "RdBu"
 	nearest := "nearest"
@@ -27,6 +27,11 @@ func Render() image.Image {
 	})
 	ax.SetXLim(0, 9)
 	ax.SetYLim(0, 5)
+	return fig
+}
+
+func Render() image.Image {
+	fig := Plot()
 	return common.RenderFixtureFigure(fig, 640, 360)
 }
 

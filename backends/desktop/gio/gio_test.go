@@ -1,6 +1,7 @@
 package gio
 
 import (
+	"errors"
 	"image"
 	"testing"
 
@@ -122,6 +123,45 @@ func TestCanvasResizeEmitsEvent(t *testing.T) {
 	}
 	if b.Canvas().(*gioCanvas).Width() != 800 {
 		t.Fatal("width not updated after Resize")
+	}
+}
+
+func TestDrawIdleMarksDirtyWithoutImmediateDrawEvent(t *testing.T) {
+	b, err := New(newTestOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := 0
+	b.Canvas().Connect(canvas.EventDraw, func(canvas.Event) error {
+		got++
+		return nil
+	})
+	if err := b.Canvas().DrawIdle(); err != nil {
+		t.Fatal(err)
+	}
+	if got != 0 {
+		t.Fatalf("draw events after DrawIdle = %d, want 0 before Gio frame draw", got)
+	}
+	if err := b.Canvas().Draw(); err != nil {
+		t.Fatal(err)
+	}
+	if got != 1 {
+		t.Fatalf("draw events after Draw = %d, want 1", got)
+	}
+}
+
+func TestDrawPropagatesRendererError(t *testing.T) {
+	want := errors.New("renderer failed")
+	opts := newTestOptions()
+	opts.Renderer = func(int, int, render.Color) (render.Renderer, error) {
+		return nil, want
+	}
+	b, err := New(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := b.Canvas().Draw(); !errors.Is(err, want) {
+		t.Fatalf("Draw error = %v, want %v", err, want)
 	}
 }
 
@@ -374,10 +414,18 @@ func TestCloseIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	closes := 0
+	b.Canvas().Connect(canvas.EventClose, func(canvas.Event) error {
+		closes++
+		return nil
+	})
 	if err := b.Close(); err != nil {
 		t.Fatal(err)
 	}
 	if err := b.Close(); err != nil {
 		t.Fatal(err)
+	}
+	if closes != 1 {
+		t.Fatalf("close events = %d, want 1", closes)
 	}
 }

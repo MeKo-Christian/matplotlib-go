@@ -144,6 +144,12 @@ func NewManager(opts Options) (*Manager, error) {
 		m.tb.SetHandler(plotcanvas.ToolbarSave, opts.SaveHandler)
 	}
 	m.tb.SetHandler(plotcanvas.ToolbarHome, m.home_)
+	m.tb.SetModeHandler(func(mode plotcanvas.ToolbarMode) {
+		m.hub.broadcastJSON(&outboundEvent{Type: MsgNavigateMode, Mode: navigateModeName(mode)})
+	})
+	m.tb.SetMessageHandler(func(message string) {
+		m.hub.broadcastJSON(&outboundEvent{Type: MsgMessage, Message: message})
+	})
 	m.home = snapshotHome(opts.Figure)
 	m.attachStaleCallbacks()
 	return m, nil

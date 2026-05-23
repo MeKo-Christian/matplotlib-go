@@ -132,6 +132,9 @@ func (b *Backend) Close() error {
 	if b.closed.Swap(true) {
 		return nil
 	}
+	if err := b.cnv.emitClose(); err != nil {
+		return err
+	}
 	// Triggering Invalidate plus setting closed.Load makes Run exit at
 	// the next event boundary; the underlying window will receive a
 	// DestroyEvent once the OS confirms.
@@ -163,8 +166,9 @@ func (b *Backend) runLoop() error {
 		e := b.window.Event()
 		switch e := e.(type) {
 		case gioapp.DestroyEvent:
-			b.closed.Store(true)
-			_ = b.cnv.emitClose()
+			if !b.closed.Swap(true) {
+				_ = b.cnv.emitClose()
+			}
 			return e.Err
 		case gioapp.FrameEvent:
 			gtx := gioapp.NewContext(&ops, e)

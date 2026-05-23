@@ -1,6 +1,7 @@
 package backends
 
 import (
+	"errors"
 	"path/filepath"
 	"testing"
 
@@ -50,6 +51,71 @@ func TestNewManagerFallsBackToHeadlessCanvas(t *testing.T) {
 	}
 	if len(events) != 2 || events[0] != canvas.EventResize || events[1] != canvas.EventDraw {
 		t.Fatalf("events = %v, want [resize draw]", events)
+	}
+}
+
+func TestHeadlessCanvasDrawIdleCloseAndErrors(t *testing.T) {
+	reg := NewRegistry()
+	want := errors.New("renderer failed")
+	reg.Register(Backend("runtime"), &BackendInfo{
+		Name:      "Runtime",
+		Available: true,
+		Factory:   testRendererFactory(&render.NullRenderer{}, nil),
+	})
+	reg.Register(Backend("broken"), &BackendInfo{
+		Name:      "Broken",
+		Available: true,
+		Factory:   testRendererFactory(nil, want),
+	})
+	withDefaultRegistry(t, reg)
+
+	fig := core.NewFigure(200, 100)
+	manager, _, err := NewManager("runtime", SimpleConfig(200, 100, render.Color{A: 1}), fig, nil)
+	if err != nil {
+		t.Fatalf("NewManager() error = %v", err)
+	}
+	var events []canvas.EventType
+	manager.Canvas().Connect(canvas.EventDraw, func(canvas.Event) error {
+		events = append(events, canvas.EventDraw)
+		return nil
+	})
+	manager.Canvas().Connect(canvas.EventClose, func(canvas.Event) error {
+		events = append(events, canvas.EventClose)
+		return nil
+	})
+
+	idle, ok := manager.Canvas().(canvas.DrawIdleCanvas)
+	if !ok {
+		t.Fatal("headless canvas does not implement DrawIdleCanvas")
+	}
+	if err := idle.DrawIdle(); err != nil {
+		t.Fatalf("DrawIdle() error = %v", err)
+	}
+	if err := manager.Close(); err != nil {
+		t.Fatalf("Close() error = %v", err)
+	}
+	if err := manager.Close(); err != nil {
+		t.Fatalf("second Close() error = %v", err)
+	}
+	wantEvents := []canvas.EventType{canvas.EventDraw, canvas.EventClose}
+	if len(events) != len(wantEvents) {
+		t.Fatalf("events = %v, want %v", events, wantEvents)
+	}
+	for i := range wantEvents {
+		if events[i] != wantEvents[i] {
+			t.Fatalf("event %d = %s, want %s", i, events[i], wantEvents[i])
+		}
+	}
+	if err := manager.Canvas().Draw(); err == nil {
+		t.Fatal("Draw after close succeeded, want error")
+	}
+
+	broken, _, err := NewManager("broken", SimpleConfig(200, 100, render.Color{A: 1}), core.NewFigure(200, 100), nil)
+	if err != nil {
+		t.Fatalf("NewManager(broken) error = %v", err)
+	}
+	if err := broken.Canvas().Draw(); !errors.Is(err, want) {
+		t.Fatalf("broken Draw error = %v, want %v", err, want)
 	}
 }
 

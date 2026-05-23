@@ -15,6 +15,7 @@ import (
 	showcase_axisartist_showcase "github.com/cwbudde/matplotlib-go/examples/axisartist_showcase"
 	showcase_bar_basic "github.com/cwbudde/matplotlib-go/examples/bar_basic"
 	showcase_basic_line "github.com/cwbudde/matplotlib-go/examples/basic_line"
+	showcase_boxplot_basic "github.com/cwbudde/matplotlib-go/examples/boxplot_basic"
 	showcase_colorbar_composition "github.com/cwbudde/matplotlib-go/examples/colorbar_composition"
 	showcase_errorbar_basic "github.com/cwbudde/matplotlib-go/examples/errorbar_basic"
 	showcase_geo_mollweide_axes "github.com/cwbudde/matplotlib-go/examples/geo_mollweide_axes"
@@ -22,9 +23,12 @@ import (
 	showcase_hist_basic "github.com/cwbudde/matplotlib-go/examples/hist_basic"
 	showcase_image_heatmap "github.com/cwbudde/matplotlib-go/examples/image_heatmap"
 	showcase_mesh_contour_tri "github.com/cwbudde/matplotlib-go/examples/mesh_contour_tri"
+	showcase_multi_series_basic "github.com/cwbudde/matplotlib-go/examples/multi_series_basic"
 	showcase_plot_variants "github.com/cwbudde/matplotlib-go/examples/plot_variants"
 	showcase_polar_axes "github.com/cwbudde/matplotlib-go/examples/polar_axes"
+	showcase_radar_basic "github.com/cwbudde/matplotlib-go/examples/radar_basic"
 	showcase_scatter_basic "github.com/cwbudde/matplotlib-go/examples/scatter_basic"
+	showcase_skewt_basic "github.com/cwbudde/matplotlib-go/examples/skewt_basic"
 	showcase_specialty_artists "github.com/cwbudde/matplotlib-go/examples/specialty_artists"
 	showcase_stat_variants "github.com/cwbudde/matplotlib-go/examples/stat_variants"
 	showcase_units_overview "github.com/cwbudde/matplotlib-go/examples/units_overview"
@@ -255,7 +259,9 @@ var figureByID = map[string]func() *core.Figure{
 	"axisartist_showcase":    showcase_axisartist_showcase.Plot,
 	"basic_line":             showcase_basic_line.Plot,
 	"bar_basic":              showcase_bar_basic.Plot,
+	"boxplot_basic":          showcase_boxplot_basic.Plot,
 	"colorbar_composition":   showcase_colorbar_composition.Plot,
+	"colormap_diverging":     example_colormap_diverging.Plot,
 	"errorbar_basic":         showcase_errorbar_basic.Plot,
 	"fill_between":           example_fill_between.Plot,
 	"geo_mollweide_axes":     showcase_geo_mollweide_axes.Plot,
@@ -264,9 +270,13 @@ var figureByID = map[string]func() *core.Figure{
 	"hist_basic":             showcase_hist_basic.Plot,
 	"mesh_contour_tri":       showcase_mesh_contour_tri.Plot,
 	"image_heatmap":          showcase_image_heatmap.Plot,
+	"multi_series_basic":     showcase_multi_series_basic.Plot,
+	"named_colors":           example_named_colors.Plot,
 	"plot_variants":          showcase_plot_variants.Plot,
 	"polar_axes":             showcase_polar_axes.Plot,
+	"radar_basic":            showcase_radar_basic.Plot,
 	"patch_showcase":         example_patch_showcase.Plot,
+	"skewt_basic":            showcase_skewt_basic.Plot,
 	"specialty_artists":      showcase_specialty_artists.Plot,
 	"stat_variants":          showcase_stat_variants.Plot,
 	"text_labels_strict":     example_text_labels_strict.Plot,

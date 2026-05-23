@@ -75,15 +75,7 @@ func TestPublicSurfaceInventoryMatchesExtractor(t *testing.T) {
 func TestPublicSurfaceParityRowsClassifyLandmarkRows(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	for _, row := range PublicSurfaceParityRows() {
-		if row.ID == "" || row.UpstreamID == "" || row.FeatureCoverageID == "" || row.Status == "" || row.Note == "" {
-			t.Fatalf("incomplete public surface parity row: %+v", row)
-		}
-		if !publicSurfaceArtifactHasRow(artifact, row.UpstreamID) {
-			t.Fatalf("%s references missing upstream public surface row %q", row.ID, row.UpstreamID)
-		}
-		if _, ok := LookupFeatureCoverage(row.FeatureCoverageID); !ok {
-			t.Fatalf("%s references missing feature coverage row %q", row.ID, row.FeatureCoverageID)
-		}
+		validatePublicSurfaceParityRow(t, artifact, row)
 	}
 	want := []string{
 		"artist.py:class:Artist",
@@ -97,6 +89,62 @@ func TestPublicSurfaceParityRowsClassifyLandmarkRows(t *testing.T) {
 	for _, upstreamID := range want {
 		if _, ok := LookupPublicSurfaceParityByUpstreamID(upstreamID); !ok {
 			t.Fatalf("missing public surface parity classification for %q", upstreamID)
+		}
+	}
+}
+
+func TestPublicSurfaceParityRowsCoverCommittedInventory(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	rows := PublicSurfaceParityRowsForSurface(artifact.Rows)
+	if len(rows) != len(artifact.Rows) {
+		classified := map[string]bool{}
+		for _, row := range rows {
+			classified[row.UpstreamID] = true
+		}
+		var missing []string
+		for _, surface := range artifact.Rows {
+			if !classified[surface.ID] {
+				missing = append(missing, surface.ID)
+			}
+		}
+		t.Fatalf("classified %d public-surface rows, want %d; missing: %v", len(rows), len(artifact.Rows), missing)
+	}
+
+	seenIDs := map[string]bool{}
+	seenUpstream := map[string]bool{}
+	for _, row := range rows {
+		validatePublicSurfaceParityRow(t, artifact, row)
+		if seenIDs[row.ID] {
+			t.Fatalf("duplicate public surface parity row ID %q", row.ID)
+		}
+		seenIDs[row.ID] = true
+		if seenUpstream[row.UpstreamID] {
+			t.Fatalf("duplicate public surface upstream classification for %q", row.UpstreamID)
+		}
+		seenUpstream[row.UpstreamID] = true
+	}
+}
+
+func TestPublicSurfaceParityRowsReferenceExistingLocalArtifacts(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	root := repoRoot(t)
+	for _, row := range PublicSurfaceParityRowsForSurface(artifact.Rows) {
+		for _, path := range row.GoFiles {
+			requireFile(t, filepath.Join(root, path))
+		}
+		for _, id := range row.CatalogIDs {
+			if _, ok := Lookup(id); !ok {
+				t.Fatalf("%s references missing catalog case %q", row.ID, id)
+			}
+		}
+		for _, id := range row.ExampleIDs {
+			c, ok := Lookup(id)
+			if !ok {
+				t.Fatalf("%s references missing example case %q", row.ID, id)
+			}
+			if !c.Showcase {
+				t.Fatalf("%s references non-showcase example %q", row.ID, id)
+			}
 		}
 	}
 }
@@ -122,4 +170,36 @@ func publicSurfaceArtifactHasRow(artifact publicSurfaceArtifact, id string) bool
 		}
 	}
 	return false
+}
+
+func validatePublicSurfaceParityRow(t *testing.T, artifact publicSurfaceArtifact, row PublicSurfaceParity) {
+	t.Helper()
+	if row.ID == "" || row.UpstreamID == "" || row.FeatureCoverageID == "" || row.Status == "" || row.Note == "" {
+		t.Fatalf("incomplete public surface parity row: %+v", row)
+	}
+	if !validPublicSurfaceParityStatus(row.Status) {
+		t.Fatalf("%s has invalid status %q", row.ID, row.Status)
+	}
+	if !publicSurfaceArtifactHasRow(artifact, row.UpstreamID) {
+		t.Fatalf("%s references missing upstream public surface row %q", row.ID, row.UpstreamID)
+	}
+	if _, ok := LookupFeatureCoverage(row.FeatureCoverageID); !ok {
+		t.Fatalf("%s references missing feature coverage row %q", row.ID, row.FeatureCoverageID)
+	}
+	if len(row.GoFiles) == 0 {
+		t.Fatalf("%s has no local Go file reference", row.ID)
+	}
+}
+
+func validPublicSurfaceParityStatus(status PublicSurfaceParityStatus) bool {
+	switch status {
+	case PublicSurfaceDirectEquivalent,
+		PublicSurfaceIdiomaticEquivalent,
+		PublicSurfacePartial,
+		PublicSurfaceNotStarted,
+		PublicSurfaceIntentionalOmission:
+		return true
+	default:
+		return false
+	}
 }
