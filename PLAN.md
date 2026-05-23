@@ -864,13 +864,39 @@ reference; current `core/events.go`, `internal/webdemo/`.
 
 ### 4.3 Web Interactive Backend (WebAgg-style)
 
-- [ ] Server-side WebAgg implementation that broadcasts AGG diff regions
+- [x] Server-side WebAgg implementation that broadcasts AGG diff regions
       over WebSockets, mirroring upstream's protocol shape.
-- [ ] Browser-side JS shim handling event encoding, diff application, and
+      `backends/webagg.Manager` wraps a `*core.Figure` with a per-session
+      PNG-diff buffer, image-mode tracking (`full` / `diff`), a
+      `canvas.Navigation` + `canvas.ToolbarController`, and a hub that
+      fans frames out to every connected client. The wire protocol —
+      message names, payload shapes, and the image-mode handshake — is
+      a 1:1 port of `third_party/.../backend_webagg_core.py`. JSON text
+      frames carry events both directions; binary frames carry PNGs
+      server→client. Transport is `golang.org/x/net/websocket` (no new
+      deps). Covered by `backends/webagg/webagg_test.go` and
+      `server_test.go` (15 tests, including a real httptest +
+      WebSocket round-trip).
+- [x] Browser-side JS shim handling event encoding, diff application, and
       cursor rendering.
+      `backends/webagg/static/mpl.js` opens the WebSocket, decodes
+      `image_mode` / `resize` / `figure_label` / `cursor` /
+      `rubberband` / `history_buttons` / `navigate_mode` /
+      `message` events, blits binary PNG frames over a `<canvas>`
+      (full or diff via the source-over compositor), and encodes
+      mouse, scroll, key, dblclick, and toolbar events upstream-style.
+      `static/index.html` ships a minimal toolbar; hosts can swap in
+      their own page via `webagg.ServerOptions.Assets`.
 - [ ] WASM interactive mode for the existing browser demo host so the
-      GitHub Pages gallery is clickable.
-- [ ] Embedding example in `examples/embed/web/`.
+      GitHub Pages gallery is clickable. *(Deferred — orthogonal to the
+      WebSocket pipeline above; the existing `canvas/wasm.Manager`
+      already wires events into a `Dispatcher` but does not yet attach
+      a `canvas.Navigation`.)*
+- [x] Embedding example in `examples/embed/web/`.
+      `examples/embed/web/main.go` mounts a `webagg.Server` at `/`,
+      serves the `basic_line` figure, wires `Save` to a server-side
+      PNG writer, and forwards hover events to the toolbar status
+      line via `Axes.FormatCoord`.
 
 ### 4.4 Real-Time Redraw
 
@@ -2078,19 +2104,33 @@ Current slice landed:
 
 ### 9A.3 Demo Breadth Gaps
 
-- [ ] Promote fixture-heavy basics into user-facing demos where the current
+- [x] Promote fixture-heavy basics into user-facing demos where the current
       showcase is too thin: marker grids, advanced scatter,
       grouped / horizontal / stacked bars, fill_between / stacked fill,
       histogram density / strategies, named colors, colormap families, image
       interpolation / alpha / matshow / spy, and colorbar norm / extension
       variants.
-- [ ] Add or expand feature-breadth galleries for MathText,
+- [x] Add or expand feature-breadth galleries for MathText,
       ticks / scales / formatters, text alignment / rotation / wrapping,
       annotations / legends / offset boxes, mplot3d,
       geographic / radar / skew projections, axisartist, axes_grid1,
       unstructured triangulation, and mixed raster / vector output.
-- [ ] Keep examples close to the upstream Matplotlib examples; fix core
+- [x] Keep examples close to the upstream Matplotlib examples; fix core
       behavior rather than adjusting examples to hide parity gaps.
+
+Current slice landed:
+
+- `internal/examplecatalog.DemoBreadthGaps` records stable Phase 9A.3 demo
+  breadth rows for marker/line grids, advanced scatter, bar and fill variants,
+  histogram strategies, named colors, colormap families, image variants,
+  colorbar norm/extension variants, MathText, ticks/scales/formatters,
+  text layout, annotation/legend/offset boxes, mplot3d, projection/toolkit
+  breadth, unstructured triangulation, and mixed raster/vector output.
+- Catalog tests now enforce required demo-breadth IDs, valid catalog/showcase/
+  web-demo references, non-empty current-coverage / need / recommended-demo
+  text, supported priorities, actionable high-priority target-feature lists,
+  and linkage from high-priority demo gaps back to thin or fixture-only Phase
+  9A coverage rows.
 
 ### 9A.4 Browser Demo Coverage
 

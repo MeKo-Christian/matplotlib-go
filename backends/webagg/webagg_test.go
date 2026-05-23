@@ -291,8 +291,8 @@ func TestPackAndDiff(t *testing.T) {
 	prior[3] = 0 // (1,1) "changed"
 	diff := diffImage(img, prior, packed, 2, 2)
 	// (1,1) should carry the current pixel; the rest should be 0.
-	for y := 0; y < 2; y++ {
-		for x := 0; x < 2; x++ {
+	for y := range 2 {
+		for x := range 2 {
 			got := diff.RGBAAt(x, y)
 			if x == 1 && y == 1 {
 				if got != (color.RGBA{R: 0xff, G: 0xff, A: 0xff}) {
