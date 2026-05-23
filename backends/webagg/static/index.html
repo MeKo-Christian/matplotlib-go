@@ -1,0 +1,51 @@
+<!doctype html>
+<!--
+  matplotlib-go WebAgg client. Mirrors the upstream Matplotlib WebAgg
+  page layout: a toolbar strip, a canvas that paints PNG frames pushed
+  by the server, and a status message area driven by hover events.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>matplotlib-go — WebAgg</title>
+    <link rel="stylesheet" href="mpl.css" />
+  </head>
+  <body>
+    <div id="mpl-root" class="mpl-figure">
+      <div class="mpl-toolbar" role="toolbar" aria-label="Figure tools">
+        <button type="button" data-action="home" title="Reset view">⟲</button>
+        <button type="button" data-action="back" title="Previous view">←</button>
+        <button type="button" data-action="forward" title="Next view">→</button>
+        <span class="mpl-spacer"></span>
+        <button type="button" data-action="pan" title="Pan (drag)">✥</button>
+        <button type="button" data-action="zoom" title="Zoom to rectangle">⌧</button>
+        <span class="mpl-spacer"></span>
+        <button type="button" data-action="download" title="Save PNG">⤓</button>
+      </div>
+      <div class="mpl-canvas-wrap">
+        <canvas id="mpl-canvas" tabindex="0" width="640" height="480"></canvas>
+        <canvas id="mpl-overlay" class="mpl-overlay"></canvas>
+      </div>
+      <div id="mpl-status" class="mpl-status" aria-live="polite"></div>
+    </div>
+    <script src="mpl.js"></script>
+    <script>
+      // Auto-connect to the same host that served this page. Hosts that
+      // wrap the server under a router can override window.MPL_WS_URL
+      // before this script runs.
+      const url =
+        window.MPL_WS_URL ||
+        (location.protocol === 'https:' ? 'wss://' : 'ws://') +
+          location.host +
+          '/ws';
+      window.mplFigure = new MPLFigure({
+        rootId: 'mpl-root',
+        canvasId: 'mpl-canvas',
+        overlayId: 'mpl-overlay',
+        statusId: 'mpl-status',
+        wsUrl: url,
+      });
+    </script>
+  </body>
+</html>

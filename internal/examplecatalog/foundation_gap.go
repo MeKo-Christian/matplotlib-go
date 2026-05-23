@@ -1,0 +1,315 @@
+package examplecatalog
+
+// GapDecision records how a Phase 9A.2 foundation API gap should be handled.
+type GapDecision string
+
+const (
+	// GapDecisionImplement means the gap should be closed with public Go API or
+	// core behavior changes.
+	GapDecisionImplement GapDecision = "implement"
+	// GapDecisionIdiomaticEquivalent means the Go port should expose equivalent
+	// behavior through existing Go-style types or options instead of copying the
+	// Python class shape.
+	GapDecisionIdiomaticEquivalent GapDecision = "idiomatic-equivalent"
+	// GapDecisionIntentionalOmission means the upstream surface is intentionally
+	// not planned for this port.
+	GapDecisionIntentionalOmission GapDecision = "intentional-omission"
+)
+
+// FoundationAPIGap records one Phase 9A.2 missing or thin foundational API area.
+type FoundationAPIGap struct {
+	ID                string
+	CoverageID        string
+	Title             string
+	UpstreamModules   []string
+	GoFiles           []string
+	CurrentEquivalent string
+	Gap               string
+	Decision          GapDecision
+	Rationale         string
+}
+
+var foundationAPIGaps = []FoundationAPIGap{
+	{
+		ID:              "artist-properties-callbacks",
+		CoverageID:      "artist",
+		Title:           "Artist properties, visibility, clipping, and callbacks",
+		UpstreamModules: []string{"artist.py"},
+		GoFiles:         []string{"core/artist.go", "core/lifecycle.go", "core/rasterization.go"},
+		CurrentEquivalent: "Go has an Artist interface plus draw order, bounds, lifecycle propagation, " +
+			"sticky edges, and rasterization helpers.",
+		Gap: "Matplotlib's Artist property surface is broader: visible / alpha / clip / " +
+			"transform / label setters, stale callbacks, inspector-style metadata, and " +
+			"uniform get/set behavior are only partially modeled.",
+		Decision: GapDecisionIdiomaticEquivalent,
+		Rationale: "Keep the Go interface-based artist model, but add high-value shared mixins/options where " +
+			"parity fixtures or user APIs need the behavior.",
+	},
+	{
+		ID:              "artist-clipping-transform",
+		CoverageID:      "artist",
+		Title:           "Per-artist clipping and transform metadata",
+		UpstreamModules: []string{"artist.py"},
+		GoFiles:         []string{"core/artist.go", "core/text.go", "core/picker.go"},
+		CurrentEquivalent: "Go generally applies axes-level clip rectangles / paths during traversal; " +
+			"some artists, such as Text, expose local clip behavior.",
+		Gap: "Most artists cannot carry Matplotlib-style custom clip boxes, clip paths, " +
+			"per-artist transforms, visible flags, alpha, animated state, or in-layout metadata " +
+			"independent of their owning axes.",
+		Decision: GapDecisionImplement,
+		Rationale: "Per-artist clipping and visibility affect rendering parity directly; add shared metadata " +
+			"where static artists need it instead of baking special cases into draw traversal.",
+	},
+	{
+		ID:              "ticker-formatter-catalog",
+		CoverageID:      "axis-ticker-scale",
+		Title:           "Locator and formatter catalog breadth",
+		UpstreamModules: []string{"axis.py", "ticker.py", "scale.py", "dates.py", "category.py"},
+		GoFiles:         []string{"core/axis.go", "core/tick.go", "core/date_tick.go", "core/units.go", "transform/scale_registry.go"},
+		CurrentEquivalent: "Go has Axis, fixed / auto / log / date / category locators, formatters, " +
+			"unit conversion hooks, and common scale transforms.",
+		Gap: "The upstream ticker / formatter catalog is not exhaustively represented: " +
+			"engineering, percent, index, null, scalar, log-mathtext, multi-level date, " +
+			"minor tick, and scale-specific formatter behaviors need a row-by-row audit.",
+		Decision: GapDecisionImplement,
+		Rationale: "Tick labels and scale semantics are user-visible parity surfaces; missing rows should " +
+			"be implemented or explicitly documented as omissions.",
+	},
+	{
+		ID:              "tick-artist-model",
+		CoverageID:      "axis-ticker-scale",
+		Title:           "Explicit tick artist behavior",
+		UpstreamModules: []string{"axis.py", "ticker.py"},
+		GoFiles:         []string{"core/axis.go", "core/tick.go", "core/grid.go"},
+		CurrentEquivalent: "Go draws ticks, minor ticks, grid lines, mirrored axes, and tick labels " +
+			"from Axis state.",
+		Gap: "Ticks are not modeled as separate artist objects with their own label, line, " +
+			"visibility, stale, and callback behavior like Matplotlib Tick instances.",
+		Decision: GapDecisionIdiomaticEquivalent,
+		Rationale: "A full Tick class clone is not required, but API-level tick styling and layout parity " +
+			"should be exposed through Go axis/tick option structs.",
+	},
+	{
+		ID:              "transform-bbox-paths",
+		CoverageID:      "transforms",
+		Title:           "Transform, BBox, and transformed-path breadth",
+		UpstreamModules: []string{"transforms.py", "path.py", "bezier.py"},
+		GoFiles:         []string{"transform/transform.go", "transform/graph.go", "transform/node.go", "internal/geom/geom.go"},
+		CurrentEquivalent: "Go has affine, separable, blended, chained, offset, and graph-backed " +
+			"transforms plus geometry rect/path primitives.",
+		Gap: "Matplotlib's transform hierarchy includes richer Bbox variants, frozen transforms, " +
+			"transformed paths, wrappers, invalidation semantics, and path simplification hooks.",
+		Decision: GapDecisionIdiomaticEquivalent,
+		Rationale: "Preserve the lean transform graph, adding only parity-driven BBox/path helpers needed " +
+			"by annotations, layout, clipping, and image transforms.",
+	},
+	{
+		ID:              "line2d-marker-data-semantics",
+		CoverageID:      "lines",
+		Title:           "Line2D marker, data, and transformed-path semantics",
+		UpstreamModules: []string{"lines.py", "markers.py"},
+		GoFiles:         []string{"core/line.go", "core/plot.go", "core/scatter.go"},
+		CurrentEquivalent: "Go Line2D draws stroked polylines with dashes and draw styles; marker-rich " +
+			"views are mostly represented by Scatter2D.",
+		Gap: "Matplotlib Line2D combines line and marker drawing, marker face / edge colors, " +
+			"fillstyle, markevery, gapcolor, data getters / setters, invalidation, transformed-path " +
+			"caching, and large sorted-data subslicing.",
+		Decision: GapDecisionImplement,
+		Rationale: "Integrated Line2D markers and marker styling are visible in legends, stem/spy plots, " +
+			"and migration examples; performance caches can remain idiomatic and demand-driven.",
+	},
+	{
+		ID:              "collection-variants-setters",
+		CoverageID:      "collections",
+		Title:           "Collection variants and setter surface",
+		UpstreamModules: []string{"collections.py"},
+		GoFiles:         []string{"core/collection.go", "core/mesh.go", "core/eventplot.go", "core/hexbin.go", "core/triangulation.go"},
+		CurrentEquivalent: "Go has PathCollection, LineCollection, PatchCollection, PolyCollection, " +
+			"QuadMesh, event collections, and hexbin collections.",
+		Gap: "Specialized upstream collection classes and the broad mutable setter / scalar-mapping " +
+			"surface are only partially represented.",
+		Decision: GapDecisionIdiomaticEquivalent,
+		Rationale: "Keep collection data structures compact, but add missing variants or setters when they " +
+			"are required for public examples, scalar mappables, or backend-native batching.",
+	},
+	{
+		ID:              "collection-scalar-mapping",
+		CoverageID:      "collections",
+		Title:           "Collection scalar-mappable updates and offset transforms",
+		UpstreamModules: []string{"collections.py", "cm.py", "colors.py"},
+		GoFiles:         []string{"core/collection.go", "core/scalar_mappable.go", "core/mesh.go", "core/scatter.go"},
+		CurrentEquivalent: "Go collections carry basic scalar-mappable metadata and route colormap / norm " +
+			"state through relevant artists.",
+		Gap: "Matplotlib collection setters such as set_array and draw-time scalar mapping can " +
+			"override face / edge colors; offset-transform and mutable collection update behavior " +
+			"are simplified.",
+		Decision: GapDecisionImplement,
+		Rationale: "Scalar-mappable collection updates are required for colorbar correctness and public " +
+			"collection parity; obscure mutable setters can stay Go-idiomatic.",
+	},
+	{
+		ID:              "patch-style-registries",
+		CoverageID:      "patches",
+		Title:           "Patch shapes, BoxStyle, ArrowStyle, and ConnectionStyle registries",
+		UpstreamModules: []string{"patches.py", "hatch.py"},
+		GoFiles:         []string{"core/patch.go", "core/patch_extra.go", "core/arrow_patch.go"},
+		CurrentEquivalent: "Go has common patch shapes, hatch routing, FancyBboxPatch, FancyArrowPatch, " +
+			"ConnectionPatch, and several extra patch classes.",
+		Gap: "Full box style, arrow style, connection style, hatch-density, and specialized patch " +
+			"catalog parity still needs enumeration against upstream registries.",
+		Decision: GapDecisionImplement,
+		Rationale: "These are enumerable public catalogs; missing entries should be implemented or tracked " +
+			"as explicit intentional divergences.",
+	},
+	{
+		ID:              "text-font-layout",
+		CoverageID:      "text-annotation-legend",
+		Title:           "Text font, layout, wrapping, and annotation breadth",
+		UpstreamModules: []string{"text.py", "textpath.py", "legend.py", "legend_handler.py", "offsetbox.py"},
+		GoFiles:         []string{"core/text.go", "core/mathtext.go", "core/legend.go", "core/anchored_text.go", "render/font_manager.go", "render/text_path.go"},
+		CurrentEquivalent: "Go supports text, rotated text, annotations, text paths, MathText, TeX paths, " +
+			"anchored text, legends, and renderer font resolution.",
+		Gap: "Font property breadth, wrapping, multiline layout, annotation coordinate modes, " +
+			"AnnotationBbox / OffsetBox families, legend handler maps, proxy artists, and draggable " +
+			"legend behavior are thin or absent.",
+		Decision: GapDecisionImplement,
+		Rationale: "Text and legend behavior is heavily visible in parity images and migration examples; " +
+			"missing surfaces should be implemented incrementally with fixture coverage.",
+	},
+	{
+		ID:              "text-font-properties",
+		CoverageID:      "text-annotation-legend",
+		Title:           "Text font property surface",
+		UpstreamModules: []string{"text.py", "font_manager.py", "textpath.py"},
+		GoFiles:         []string{"core/text.go", "render/font_manager.go", "render/text_shaping.go", "render/text_path.go"},
+		CurrentEquivalent: "Go text options expose size, color, MathText / TeX routing, and renderer-level " +
+			"font resolution / shaping.",
+		Gap: "Per-text font family, style, weight, stretch, variant, font features, language, " +
+			"math font, parse_math, and usetex-style setters are not modeled as a cohesive " +
+			"artist-level property set.",
+		Decision: GapDecisionIdiomaticEquivalent,
+		Rationale: "Expose a Go TextOptions font-property struct that maps to renderer font keys instead " +
+			"of mirroring Python's dynamic setter catalog.",
+	},
+	{
+		ID:              "annotation-coordinate-model",
+		CoverageID:      "text-annotation-legend",
+		Title:           "Annotation coordinate and clipping model",
+		UpstreamModules: []string{"text.py", "patches.py"},
+		GoFiles:         []string{"core/text.go", "core/arrow_patch.go", "transform/transform.go"},
+		CurrentEquivalent: "Go annotations support text, arrows, arrow styles, connection styles, and " +
+			"overlay drawing.",
+		Gap: "Matplotlib's separate xycoords / textcoords, annotation clipping policy, " +
+			"AnnotationBbox behavior, and tightbbox / window-extent interaction are only partially " +
+			"represented.",
+		Decision: GapDecisionImplement,
+		Rationale: "Common annotation coordinate modes are widely used in Matplotlib examples and should " +
+			"be implemented with transform-backed Go options.",
+	},
+	{
+		ID:              "image-class-breadth",
+		CoverageID:      "image",
+		Title:           "Image artist class breadth and interpolation semantics",
+		UpstreamModules: []string{"image.py"},
+		GoFiles:         []string{"core/image.go", "core/image_api.go", "core/matrix_helpers.go", "backends/agg/interpolation.go"},
+		CurrentEquivalent: "Go supports scalar matrix images, imshow-style options, matshow, spy, alpha, " +
+			"origin / extent, interpolation modes, and transformed images.",
+		Gap: "FigureImage, BboxImage, NonUniformImage, PcolorImage, pcolorfast, and the full " +
+			"Matplotlib interpolation / antialias policy are not fully represented.",
+		Decision: GapDecisionImplement,
+		Rationale: "Image class and interpolation gaps directly affect visual parity and should be closed " +
+			"where they map to real static rendering behavior.",
+	},
+	{
+		ID:              "colorbar-orientation-ticks",
+		CoverageID:      "colorbar",
+		Title:           "Colorbar orientation, placement, tick, and boundary behavior",
+		UpstreamModules: []string{"colorbar.py", "colorizer.py"},
+		GoFiles:         []string{"core/colorbar.go", "core/scalar_mappable.go", "core/norm.go"},
+		CurrentEquivalent: "Go has figure-level colorbars backed by ScalarMappable, colormap/norm routing, " +
+			"labels, and extension patches.",
+		Gap: "Horizontal colorbars, location / anchor combinations, custom tick locators/formatters, " +
+			"boundaries, spacing, drawedges, and multi-axes placement semantics remain thin.",
+		Decision: GapDecisionImplement,
+		Rationale: "Colorbar rendering is common and already covered by parity fixtures; missing public " +
+			"semantics should become catalog-visible work.",
+	},
+	{
+		ID:              "colors-norms-lightsource",
+		CoverageID:      "colors-cm",
+		Title:           "Advanced colors, norms, and LightSource",
+		UpstreamModules: []string{"colors.py", "cm.py", "_cm.py", "_cm_listed.py", "_color_data.py"},
+		GoFiles:         []string{"color/colormap.go", "color/listed_colormaps.go", "color/named_colors.go", "core/norm.go"},
+		CurrentEquivalent: "Go has named colors, listed and segmented colormaps, reversed/resampled " +
+			"colormaps, and common norms including LogNorm, SymLogNorm, PowerNorm, TwoSlopeNorm, " +
+			"CenteredNorm, BoundaryNorm, and NoNorm.",
+		Gap: "FuncNorm, AsinhNorm, multivar/bivar colormaps, LightSource, and edge-case color " +
+			"conversion behavior still need coverage decisions.",
+		Decision: GapDecisionImplement,
+		Rationale: "Most of this surface is static and testable; implement high-value norms and document " +
+			"less common color machinery if it does not fit the Go API.",
+	},
+	{
+		ID:              "pyplot-wrapper-surface",
+		CoverageID:      "pyplot-state",
+		Title:           "Pyplot wrapper and stateful migration surface",
+		UpstreamModules: []string{"pyplot.py", "_pylab_helpers.py"},
+		GoFiles:         []string{"pyplot/pyplot.go", "pyplot/pyplot_test.go", "canvas/canvas.go"},
+		CurrentEquivalent: "Go has a pyplot package with figure/current-axes state, common plot wrappers, " +
+			"rc helpers, savefig, show, and pause hooks.",
+		Gap: "The wrapper surface is much smaller than upstream pyplot, especially for overloads, " +
+			"state transitions, interactive mode, and many convenience functions.",
+		Decision: GapDecisionIdiomaticEquivalent,
+		Rationale: "Do not clone Python signatures wholesale; add high-value migration wrappers where they " +
+			"reduce friction and delegate to the object-oriented Go API.",
+	},
+	{
+		ID:              "backend-canvas-manager-lifecycle",
+		CoverageID:      "renderer-backends",
+		Title:           "Backend canvas, manager, tool, and event lifecycle",
+		UpstreamModules: []string{"backend_bases.py", "backend_tools.py"},
+		GoFiles:         []string{"render/render.go", "backends/registry.go", "canvas/canvas.go", "canvas/dispatcher.go", "canvas/tool.go"},
+		CurrentEquivalent: "Go separates renderer contracts, backend registry, figure canvas, managers, " +
+			"dispatchers, navigation, and tools across render/backends/canvas packages.",
+		Gap: "Matplotlib's FigureCanvasBase, FigureManagerBase, ToolManager, toolbar, timer, " +
+			"draw-event, and interactive lifecycle semantics are only partially mirrored.",
+		Decision: GapDecisionIdiomaticEquivalent,
+		Rationale: "Preserve the Go package split, while completing lifecycle semantics through the Phase 4 " +
+			"interactive backend and event-loop work.",
+	},
+}
+
+// FoundationAPIGapAudit returns the Phase 9A.2 foundational API gap decisions.
+func FoundationAPIGapAudit() []FoundationAPIGap {
+	out := make([]FoundationAPIGap, len(foundationAPIGaps))
+	copy(out, foundationAPIGaps)
+	for i := range out {
+		out[i].UpstreamModules = append([]string(nil), out[i].UpstreamModules...)
+		out[i].GoFiles = append([]string(nil), out[i].GoFiles...)
+	}
+	return out
+}
+
+// LookupFoundationAPIGap finds a Phase 9A.2 gap by stable ID.
+func LookupFoundationAPIGap(id string) (FoundationAPIGap, bool) {
+	for _, gap := range FoundationAPIGapAudit() {
+		if gap.ID == id {
+			return gap, true
+		}
+	}
+	return FoundationAPIGap{}, false
+}
+
+// FoundationGapsForUpstreamModule returns gap rows that cite an upstream module.
+func FoundationGapsForUpstreamModule(module string) []FoundationAPIGap {
+	var out []FoundationAPIGap
+	for _, gap := range FoundationAPIGapAudit() {
+		for _, upstream := range gap.UpstreamModules {
+			if upstream == module {
+				out = append(out, gap)
+				break
+			}
+		}
+	}
+	return out
+}

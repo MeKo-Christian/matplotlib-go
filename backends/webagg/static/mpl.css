@@ -1,0 +1,80 @@
+/* matplotlib-go WebAgg client styles. Intentionally minimal — hosts
+   that embed the figure into a richer page can override most of
+   these. */
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
+    Arial, sans-serif;
+  background: #f7f7f7;
+}
+
+.mpl-figure {
+  display: inline-flex;
+  flex-direction: column;
+  border: 1px solid #ccc;
+  background: #fff;
+  margin: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.mpl-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+.mpl-toolbar button {
+  width: 28px;
+  height: 28px;
+  font-size: 15px;
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.mpl-toolbar button[aria-pressed="true"] {
+  background: #d6e8ff;
+  border-color: #7aa9e6;
+}
+
+.mpl-toolbar button:hover {
+  background: #f0f0f0;
+}
+
+.mpl-spacer {
+  width: 8px;
+  border-left: 1px solid #e0e0e0;
+  height: 18px;
+}
+
+.mpl-canvas-wrap {
+  position: relative;
+  line-height: 0;
+}
+
+#mpl-canvas {
+  display: block;
+  cursor: default;
+  outline: none;
+}
+
+.mpl-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.mpl-status {
+  padding: 4px 8px;
+  border-top: 1px solid #e0e0e0;
+  font-family: monospace;
+  font-size: 12px;
+  color: #444;
+  min-height: 16px;
+  background: #fafafa;
+}

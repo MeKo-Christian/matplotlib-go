@@ -2013,6 +2013,105 @@ are missing.
 
 ---
 
+# Phase 9A: Feature and Demo Coverage Audit
+
+**Goal:** make missing Matplotlib parity coverage visible before v1.0 by
+auditing each fundamental Matplotlib feature area for three things: direct Go
+equivalent, catalog / demo coverage, and whether the demo actually exercises
+the feature breadth.
+
+**Reference sources:** `third_party/matplotlib/lib/matplotlib/`,
+`third_party/matplotlib/galleries/examples/`, `internal/examplecatalog/`,
+`examples/`, `test/parity/`, and `test/matplotlib_ref/`.
+
+### 9A.1 Coverage Matrix
+
+- [x] Add a machine-readable coverage inventory that maps upstream Matplotlib
+      modules / gallery families to local Go implementation files, catalog IDs,
+      user-facing examples, browser demos, and intentional omissions.
+- [x] For each row, record status for direct Go translation / equivalent,
+      parity fixture, user-facing showcase, browser demo, and breadth quality.
+- [x] Fail CI when a catalog topic or upstream gallery family is marked
+      implemented but has neither a fixture nor an intentional omission note.
+
+Current slice landed:
+
+- `internal/examplecatalog.FeatureCoverageMatrix` records the initial Phase 9A
+  inventory across foundational Matplotlib areas: artists, axes, figure/layout,
+  axis/ticker/scale, transforms, lines, collections, patches, text/annotation/
+  legend, images, colorbars, colors/colormaps/norms, pyplot, renderer/backends,
+  widgets/events/animation, and toolkit/projection families.
+- Catalog tests now enforce stable coverage row IDs, non-empty upstream
+  references and coverage statuses, valid catalog/showcase/web-demo references,
+  existing Go implementation file paths, and the implemented-row rule that each
+  implemented area must have parity fixtures or an explicit omission note.
+
+### 9A.2 Foundation API Gaps
+
+- [ ] Audit `artist.py`, `axis.py`, `ticker.py`, `scale.py`, `transforms.py`,
+      `lines.py`, `collections.py`, `patches.py`, `text.py`, `image.py`,
+      `colorbar.py`, `cm.py`, `colors.py`, `pyplot.py`, and
+      `backend_bases.py` against the Go equivalents.
+- [ ] Track missing or thin fundamentals: artist property / stale / callback
+      APIs, richer locator / formatter catalog, explicit tick-artist behavior,
+      transform / BBox breadth, collection variants, patch and box / arrow
+      style registries, advanced text / font behavior, image classes, colorbar
+      orientation / tick behavior, advanced norms / LightSource, and high-value
+      pyplot wrappers.
+- [ ] For each gap, decide: implement, expose through an idiomatic Go
+      equivalent, or document as an intentional divergence.
+
+### 9A.3 Demo Breadth Gaps
+
+- [ ] Promote fixture-heavy basics into user-facing demos where the current
+      showcase is too thin: marker grids, advanced scatter,
+      grouped / horizontal / stacked bars, fill_between / stacked fill,
+      histogram density / strategies, named colors, colormap families, image
+      interpolation / alpha / matshow / spy, and colorbar norm / extension
+      variants.
+- [ ] Add or expand feature-breadth galleries for MathText,
+      ticks / scales / formatters, text alignment / rotation / wrapping,
+      annotations / legends / offset boxes, mplot3d,
+      geographic / radar / skew projections, axisartist, axes_grid1,
+      unstructured triangulation, and mixed raster / vector output.
+- [ ] Keep examples close to the upstream Matplotlib examples; fix core
+      behavior rather than adjusting examples to hide parity gaps.
+
+### 9A.4 Browser Demo Coverage
+
+- [ ] Reconcile `test/matplotlib_ref/webdemos/` with
+      `internal/examplecatalog.WebDemos()`: wire unused web reference modules
+      into the browser gallery or mark them as reference-only.
+- [ ] Add browser demos for existing showcase families that are currently
+      CLI-only but important for inspection: annotations, bars, errorbars,
+      fills, heatmaps, histograms, lines, patches, scatter, subplots, mplot3d,
+      and projection / toolkit demos.
+- [ ] Ensure browser demos use the same catalog source as parity tests so web
+      coverage cannot drift from reference coverage.
+
+### 9A.5 Reference Consistency
+
+- [ ] Ensure every catalog case has matching Go and Python parity sources under
+      `test/parity/<id>/`.
+- [ ] Add any missing Matplotlib reference plot modules for catalog IDs that
+      currently rely on generated images without a visible source counterpart.
+- [ ] Add a catalog test that reports cases with fixture-only coverage but no
+      user-facing showcase when the topic is considered public API.
+
+**Exit criteria:**
+
+- [ ] Every fundamental Matplotlib feature area is classified as implemented,
+      partially implemented, intentionally omitted, or pending.
+- [ ] Every implemented public feature has at least one parity fixture or a
+      documented reason why visual parity testing is not applicable.
+- [ ] Every major user-facing feature family has a showcase demo, and broad
+      features have demos that exercise meaningful variants rather than only
+      the minimal path.
+- [ ] Browser demo coverage is aligned with the catalog instead of being a
+      separate, drifting subset.
+
+---
+
 # Phase 10: Documentation, Examples Polish, and v1.0 Release
 
 **Goal:** make the project consumable by users who have not been following
