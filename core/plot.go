@@ -202,13 +202,13 @@ func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 		marker = *opt.Marker
 	}
 
-	// Get edge properties
-	edgeColor := render.Color{R: 0, G: 0, B: 0, A: 0} // transparent by default
+	// Matplotlib defaults scatter marker edges to "face" with linewidth 1.
+	edgeColor := color
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
 	}
 
-	edgeWidth := 0.0
+	edgeWidth := 1.0
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
 	}

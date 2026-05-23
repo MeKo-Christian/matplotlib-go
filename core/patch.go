@@ -91,13 +91,14 @@ type PathPatch struct {
 // FancyArrow draws a filled arrow polygon between XY and XY+{DX,DY}.
 type FancyArrow struct {
 	Patch
-	XY         geom.Pt
-	DX         float64
-	DY         float64
-	Width      float64
-	HeadWidth  float64
-	HeadLength float64
-	Coords     CoordinateSpec
+	XY                 geom.Pt
+	DX                 float64
+	DY                 float64
+	Width              float64
+	HeadWidth          float64
+	HeadLength         float64
+	LengthIncludesHead bool
+	Coords             CoordinateSpec
 }
 
 // Arrow is a convenience alias for FancyArrow with the same behavior.
@@ -421,16 +422,21 @@ func (a *FancyArrow) localPath() geom.Path {
 	if headLength <= 0 {
 		headLength = math.Max(shaftWidth*2.5, length*0.25)
 	}
-	if headLength > length {
+	if a.LengthIncludesHead && headLength > length {
 		headLength = length
 	}
-	shaftLength := math.Max(0, length-headLength)
+	shaftLength := length
+	tipLength := length + headLength
+	if a.LengthIncludesHead {
+		shaftLength = math.Max(0, length-headLength)
+		tipLength = length
+	}
 
 	local := []geom.Pt{
 		{X: 0, Y: -shaftWidth / 2},
 		{X: shaftLength, Y: -shaftWidth / 2},
 		{X: shaftLength, Y: -headWidth / 2},
-		{X: length, Y: 0},
+		{X: tipLength, Y: 0},
 		{X: shaftLength, Y: headWidth / 2},
 		{X: shaftLength, Y: shaftWidth / 2},
 		{X: 0, Y: shaftWidth / 2},

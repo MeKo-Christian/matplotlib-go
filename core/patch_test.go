@@ -148,12 +148,13 @@ func TestFancyArrowBoundsAndClosedPath(t *testing.T) {
 			EdgeColor: render.Color{R: 0.2, G: 0.1, B: 0.1, A: 1},
 			EdgeWidth: 1,
 		},
-		XY:         geom.Pt{X: 1, Y: 1},
-		DX:         4,
-		DY:         0,
-		Width:      0.4,
-		HeadWidth:  1.2,
-		HeadLength: 1.1,
+		XY:                 geom.Pt{X: 1, Y: 1},
+		DX:                 4,
+		DY:                 0,
+		Width:              0.4,
+		HeadWidth:          1.2,
+		HeadLength:         1.1,
+		LengthIncludesHead: true,
 	}
 
 	bounds := arrow.Bounds(nil)
@@ -173,6 +174,27 @@ func TestFancyArrowBoundsAndClosedPath(t *testing.T) {
 	path := r.pathCalls[0].path
 	if len(path.C) == 0 || path.C[len(path.C)-1] != geom.ClosePath {
 		t.Fatalf("expected closed arrow polygon, got %v", path.C)
+	}
+}
+
+func TestFancyArrowLengthIncludesHeadMatchesMatplotlib(t *testing.T) {
+	arrow := &FancyArrow{
+		XY:         geom.Pt{X: 1, Y: 1},
+		DX:         4,
+		DY:         0,
+		Width:      0.4,
+		HeadWidth:  1.2,
+		HeadLength: 1.1,
+	}
+	bounds := arrow.Bounds(nil)
+	if bounds.Min.X != 1 || bounds.Max.X != 6.1 {
+		t.Fatalf("default x bounds = [%v, %v], want Matplotlib length_includes_head=False bounds [1, 6.1]", bounds.Min.X, bounds.Max.X)
+	}
+
+	arrow.LengthIncludesHead = true
+	bounds = arrow.Bounds(nil)
+	if bounds.Min.X != 1 || bounds.Max.X != 5 {
+		t.Fatalf("length-includes-head x bounds = [%v, %v], want [1, 5]", bounds.Min.X, bounds.Max.X)
 	}
 }
 

@@ -53,11 +53,75 @@ type ContourSet struct {
 
 // Contour draws isolines over a rectilinear scalar grid.
 func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
-	tri, values, ok := contourGridTriangulation(data, opts)
+	xCoords, yCoords, values, ok := contourGridCoordsValues(data, opts)
 	if !ok {
 		return nil
 	}
-	return a.buildContourSet(tri, values, false, opts...)
+
+	var opt ContourOptions
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	levels := contourLevels(values, opt.Levels, opt.LevelCount, false)
+	if len(levels) == 0 {
+		return nil
+	}
+
+	polylines, polylineLevels := contourGridPolylines(xCoords, yCoords, data, levels)
+	if len(polylines) == 0 {
+		return nil
+	}
+
+	alpha := meshAlpha(opt.Alpha)
+	lineWidth := 1.0
+	if opt.LineWidth != nil {
+		lineWidth = *opt.LineWidth
+	}
+	colorFallback := a.NextColor()
+	cmapName := ""
+	if opt.Colormap != nil {
+		cmapName = *opt.Colormap
+	}
+	mapping, err := ResolveScalarMapValues(values, ScalarMapConfig{
+		Colormap: cmapName,
+		Norm:     opt.Norm,
+	})
+	if err != nil {
+		return nil
+	}
+
+	set := &ContourSet{
+		Levels:         append([]float64(nil), levels...),
+		LabelFormatter: contourFormatter(opt.LabelFormatter),
+		LabelFontSize:  valueOrDefaultFloat(opt.LabelFontSize, 10),
+		z:              defaultLineZ,
+	}
+	if opt.LabelColor != nil {
+		set.LabelColor = *opt.LabelColor
+	}
+	colors := make([]render.Color, len(polylines))
+	for i, level := range polylineLevels {
+		colors[i] = contourLineColor(level, levels, opt, mapping, alpha, colorFallback)
+	}
+	set.Lines = &LineCollection{
+		Collection: Collection{
+			Coords: Coords(CoordData),
+			Label:  opt.Label,
+			Alpha:  1,
+		},
+		Segments:  polylines,
+		Colors:    colors,
+		LineWidth: lineWidth,
+		LineJoin:  render.JoinRound,
+		LineCap:   render.CapRound,
+	}
+	set.lineLevels = append([]float64(nil), polylineLevels...)
+	if opt.LabelLines {
+		set.inlineLabels = true
+		set.labels = contourLabels(polylines, polylineLevels, colors, set.LabelFormatter)
+	}
+	a.Add(set)
+	return set
 }
 
 // Contourf draws filled contour bands over a rectilinear scalar grid.
@@ -328,30 +392,19 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 }
 
 func contourGridTriangulation(data [][]float64, opts []ContourOptions) (Triangulation, []float64, bool) {
-	rows, cols, ok := finiteMatrixSize(data)
-	if !ok || rows < 2 || cols < 2 {
+	xCoords, yCoords, values, ok := contourGridCoordsValues(data, opts)
+	if !ok {
 		return Triangulation{}, nil, false
 	}
+	rows := len(data)
+	cols := len(data[0])
 
-	var opt ContourOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
-
-	xCoords := resolvedContourCoords(cols, opt.X, opt.XEdges)
-	yCoords := resolvedContourCoords(rows, opt.Y, opt.YEdges)
-	if len(xCoords) != cols || len(yCoords) != rows {
-		return Triangulation{}, nil, false
-	}
-
-	values := make([]float64, 0, rows*cols)
 	xPoints := make([]float64, 0, rows*cols)
 	yPoints := make([]float64, 0, rows*cols)
 	for yi := 0; yi < rows; yi++ {
 		for xi := 0; xi < cols; xi++ {
 			xPoints = append(xPoints, xCoords[xi])
 			yPoints = append(yPoints, yCoords[yi])
-			values = append(values, data[yi][xi])
 		}
 	}
 
@@ -378,6 +431,33 @@ func contourGridTriangulation(data [][]float64, opts []ContourOptions) (Triangul
 		Triangles: triangles,
 		Mask:      mask,
 	}, values, true
+}
+
+func contourGridCoordsValues(data [][]float64, opts []ContourOptions) ([]float64, []float64, []float64, bool) {
+	rows, cols, ok := finiteMatrixSize(data)
+	if !ok || rows < 2 || cols < 2 {
+		return nil, nil, nil, false
+	}
+
+	var opt ContourOptions
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+
+	xCoords := resolvedContourCoords(cols, opt.X, opt.XEdges)
+	yCoords := resolvedContourCoords(rows, opt.Y, opt.YEdges)
+	if len(xCoords) != cols || len(yCoords) != rows {
+		return nil, nil, nil, false
+	}
+
+	values := make([]float64, 0, rows*cols)
+	for yi := 0; yi < rows; yi++ {
+		if len(data[yi]) != cols {
+			return nil, nil, nil, false
+		}
+		values = append(values, data[yi]...)
+	}
+	return xCoords, yCoords, values, true
 }
 
 func triangleFinite(values []float64, tri [3]int) bool {

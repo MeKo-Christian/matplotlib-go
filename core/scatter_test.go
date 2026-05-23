@@ -76,6 +76,22 @@ func TestScatterUsesIndependentShapeColorCycle(t *testing.T) {
 	}
 }
 
+func TestScatterDefaultsUseMatplotlibFaceEdges(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+
+	scatter := ax.Scatter([]float64{0.5}, []float64{0.5})
+	if scatter == nil {
+		t.Fatal("Scatter returned nil")
+	}
+	if got, want := scatter.EdgeColor, scatter.Color; got != want {
+		t.Fatalf("scatter default edge color = %+v, want face color %+v", got, want)
+	}
+	if got, want := scatter.EdgeWidth, 1.0; got != want {
+		t.Fatalf("scatter default edge width = %v, want Matplotlib linewidth %v", got, want)
+	}
+}
+
 func TestScatter2D_EmptyData(t *testing.T) {
 	// Test with empty data
 	scatter := &Scatter2D{
@@ -148,6 +164,32 @@ func TestScatter2D_SizeUsesMatplotlibAreaSemantics(t *testing.T) {
 	want := 6.0 * 144.0 / 72.0
 	if got := pc.Size; got != want {
 		t.Fatalf("scatter scale = %v, want sqrt(area)*dpi/72 = %v", got, want)
+	}
+}
+
+func TestScatterCircleMarkerPrototypeMatchesMatplotlibUnitMarker(t *testing.T) {
+	circle := (&Scatter2D{Marker: MarkerCircle}).markerPrototypePath()
+	bounds, ok := pathBounds(circle)
+	if !ok {
+		t.Fatal("circle marker prototype has no bounds")
+	}
+	if !approx(bounds.Min.X, -0.5, 1e-12) ||
+		!approx(bounds.Min.Y, -0.5, 1e-12) ||
+		!approx(bounds.Max.X, 0.5, 1e-12) ||
+		!approx(bounds.Max.Y, 0.5, 1e-12) {
+		t.Fatalf("circle marker bounds = %+v, want Matplotlib unit circle scaled to [-0.5,0.5]", bounds)
+	}
+
+	point := (&Scatter2D{Marker: MarkerPoint}).markerPrototypePath()
+	bounds, ok = pathBounds(point)
+	if !ok {
+		t.Fatal("point marker prototype has no bounds")
+	}
+	if !approx(bounds.Min.X, -0.25, 1e-12) ||
+		!approx(bounds.Min.Y, -0.25, 1e-12) ||
+		!approx(bounds.Max.X, 0.25, 1e-12) ||
+		!approx(bounds.Max.Y, 0.25, 1e-12) {
+		t.Fatalf("point marker bounds = %+v, want Matplotlib point marker scaled to [-0.25,0.25]", bounds)
 	}
 }
 

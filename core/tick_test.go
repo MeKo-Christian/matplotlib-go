@@ -286,3 +286,21 @@ func TestExtraFormatters(t *testing.T) {
 		t.Fatalf("PercentFormatter = %q, want %q", got, "38%")
 	}
 }
+
+func TestLogFormatterFormatsBaseTenDecadesAsPowers(t *testing.T) {
+	formatter := LogFormatter{Base: 10}
+	cases := []struct {
+		value float64
+		want  string
+	}{
+		{value: 1000, want: "10³"},
+		{value: 1, want: "10⁰"},
+		{value: 0.1, want: "10⁻¹"},
+	}
+
+	for _, tc := range cases {
+		if got := formatter.Format(tc.value); got != tc.want {
+			t.Fatalf("LogFormatter.Format(%v) = %q, want %q", tc.value, got, tc.want)
+		}
+	}
+}

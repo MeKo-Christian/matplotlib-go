@@ -25,6 +25,7 @@ func reprojectScatter3D(scatter *Scatter2D, points []projectedScatterPoint) {
 		scatter.XY = append(scatter.XY, point.point)
 	}
 	scatter.Colors = depthShadedScatterColors(scatter.Color, points)
+	scatter.EdgeColors = depthShadedScatterColors(scatter.EdgeColor, points)
 }
 
 func reprojectLine3D(line *Line2D, points []geom.Pt) {

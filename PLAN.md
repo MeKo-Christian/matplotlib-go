@@ -1037,6 +1037,30 @@ before fixture tweaks. Baseline captured with
 **Visual audit artifacts:** `testdata/_artifacts/reference_compare/*_golden.png`,
 `*_matplotlib_ref.png`, and `*_golden_vs_matplotlib_ref_diff.png`.
 
+**Latest RMSE run:** `rtk proxy go test -v ./test -run TestReferenceCompare`
+on 2026-05-23 passes all committed catalog tolerances after refreshing the
+stale `mplot3d_scatter3d` Python reference and targeted Go goldens.
+`mplot3d_scatter3d` is now `RMSE 8.42` (down from 18.81),
+`patch_showcase` is `RMSE 6.39`, `lognorm_imshow` is `RMSE 9.42`
+after switching log tick labels to Matplotlib-style powers, `spy_marker`
+is `RMSE 2.50` after matching Line2D marker sizing, and a focused
+`TestReferenceCompare/arrays_showcase` run now reports `RMSE 8.73` after
+using structured-grid contour lines and Matplotlib-like contour z-order.
+The same structured contour fix moves `mesh_contour_tri` to `RMSE 7.52`.
+`pcolormesh_gouraud` is now `RMSE 4.78` after matching Matplotlib's
+four-triangle Gouraud quad conversion.
+Non-mathtext cases still
+above the temporary Phase 8 target of `RMSE < 10` are: `spy_image` 19.42,
+`figure_labels_composition` 15.77,
+`spectrum_variants` 21.43, `specialty_depth` 10.75,
+`specialty_artists` 12.93, `units_dates` 14.81, `polar_axes` 12.98,
+`radar_basic` 13.93, `skewt_basic` 18.03, `mplot3d_basic` 11.11,
+`mplot3d_plot3d` 12.35, `mplot3d_trisurf3d` 13.01,
+`mplot3d_quiver3d` 14.81, `mplot3d_stem3d` 14.96,
+`mplot3d_fill_between3d` 13.34, `twoslope_norm_image` 11.75,
+`colorbar_extensions` 15.36, and `mixed_raster_vector` 15.99. The mathtext
+cases remain excluded from this temporary threshold.
+
 **Source parity audit:** completed on 2026-05-22 with sub-agents across all
 Phase 8 subphases. Direct example/fixture mismatches were fixed where existing
 Go APIs could express the same Matplotlib call semantics. Remaining unchecked
@@ -1157,13 +1181,14 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: transformed image affine, bilinear sampling, AGG
       `ImageTransformed` interpolation.
 
-### 8.14 `spy_marker` (RMSE 12.26)
+### 8.14 `spy_marker` (RMSE 2.50)
 
-- [x] Code: source audited; no source mismatch found.
-- [ ] Visual: marker positions match, but square marker edges/size and
-      top-axis tick/text rendering differ.
-- [ ] Likely core areas: `core/matrix_helpers.go` spy marker sizing,
-      `PathCollection` square marker rasterization, matrix-axis presentation.
+- [x] Code: source audited; marker mode now matches Matplotlib Line2D marker
+      sizing by converting the marker edge width from points and rounding the
+      marker footprint to output pixels.
+- [x] Visual: focused `TestReferenceCompare/spy_marker` reports `RMSE 2.50`
+      after refreshing the Go golden.
+- [ ] Likely core areas: remaining residual is minor text/axis antialiasing.
 
 ### 8.15 `spy_image` (RMSE 19.42)
 
@@ -1238,16 +1263,23 @@ renderer contract, backend implementation, or the AGG port itself.
 - [x] Code: source audited; no direct example mismatch fixed. Remaining
       `FancyArrow(..., length_includes_head=True)` parity belongs in core patch
       semantics.
-- [ ] Visual: hatches, ellipse/star/fancy-arrow edges, and fancy boxes differ.
-- [ ] Likely core areas: patch geometry, hatch fill/clipping, alpha
-      compositing, `FancyArrow` and `FancyBboxPatch` semantics.
+- [x] Code: added `FancyArrow.LengthIncludesHead` to model Matplotlib's
+      `length_includes_head` option and set it explicitly in the translated
+      patch showcase call.
+- [x] Visual: refreshed `testdata/golden/patch_showcase.png`; focused
+      `TestReferenceCompare/patch_showcase` now reports `RMSE 6.39`.
+- [ ] Likely core areas: remaining residuals are hatches, ellipse/star/fancy
+      box antialiasing, and alpha compositing.
 
-### 8.23 `mesh_contour_tri` (RMSE 7.94)
+### 8.23 `mesh_contour_tri` (RMSE 7.52)
 
 - [x] Code: removed explicit half-step tick locator/formatter overrides so the
-      example relies on core locator defaults like the Python source.
-- [ ] Visual: contourf/contour labels and triangulation coloring/lines dominate;
-      pcolormesh/hist2d are closer.
+      example relies on core locator defaults like the Python source. Structured
+      `Axes.Contour` now uses quad-grid contour lines and line z-order above
+      filled contours.
+- [x] Visual: focused `TestReferenceCompare/mesh_contour_tri` now reports
+      `RMSE 7.52`; contourf/contour labels and triangulation coloring/lines
+      remain the dominant residuals.
 - [ ] Likely core areas: contour marching/fill bands, contour label placement,
       tripcolor flat shading, mesh edge strokes.
 
@@ -1441,10 +1473,14 @@ renderer contract, backend implementation, or the AGG port itself.
 - [x] Code: resolved the deterministic source-parity issue by using the shared
       Go-compatible PCG stream in the Python reference and generating the Go
       scatter values from the same stream instead of hardcoding point arrays.
-- [ ] Visual: points are close in the saved artifact, but marker depthshade,
-      position, and axes differ.
-- [ ] Likely core areas: `Scatter3D` depth sorting, depthshade alpha, marker
-      sizing, projection/autoscale.
+- [x] Code: matched Matplotlib `Axes3D.scatter` defaults by applying
+      `s=20` for 3D scatter calls and depth-shading/z-sorting edge colors along
+      with face colors.
+- [x] Visual: refreshed stale `testdata/matplotlib_ref/mplot3d_scatter3d.png`
+      and `testdata/golden/mplot3d_scatter3d.png`; latest
+      `TestReferenceCompare/mplot3d_scatter3d` reports `RMSE 8.42`.
+- [ ] Likely core areas: remaining residual is mostly 3D frame/grid/text
+      antialiasing and marker rasterization rather than source fixture drift.
 
 ### 8.45 `mplot3d_surface3d` (RMSE 9.62)
 
@@ -1524,15 +1560,16 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: `core/contour.go` tri contour/fill generation and
       inline labels, `core/triangulation.go` tripcolor edge/color handling.
 
-### 8.54 `arrays_showcase` (RMSE 11.45)
+### 8.54 `arrays_showcase` (RMSE 8.73)
 
-- [x] Code: source audited; heatmap, mesh, and spy data match. Remaining
-      contour mismatch is core structured-grid contour generation.
-- [ ] Visual: heatmap and spy are close; center contour panel has diagonal /
-      fragmented contour paths over matching pcolormesh cells.
-- [ ] Likely core areas: structured grid contour generation in
-      `core/contour.go`, contour label placement/inline clipping, text and mesh
-      antialiasing.
+- [x] Code: source audited; heatmap, mesh, and spy data match. Spy marker
+      panel picked up the Line2D marker sizing fix; contour lines now use
+      structured-grid cell clipping instead of triangulating quads.
+- [x] Visual: center contour paths now draw above the pcolormesh cells by
+      defaulting line contours to Matplotlib's line z-order. Focused
+      `TestReferenceCompare/arrays_showcase` now reports `RMSE 8.73`.
+- [ ] Likely remaining areas: contour label placement/inline clipping, text and
+      mesh antialiasing.
 
 ### 8.55 `axisartist_showcase` (RMSE 13.25)
 
@@ -1563,14 +1600,16 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: `core/mesh.go`, `core/collection.go` pcolor versus
       pcolormesh semantics, quad edge antialias/snap.
 
-### 8.58 `pcolormesh_gouraud` (RMSE 11.88)
+### 8.58 `pcolormesh_gouraud` (RMSE 4.78)
 
-- [x] Code: source audited; fixture inputs match. Remaining four-center
-      Gouraud triangles versus two diagonal triangles is core `QuadMesh`
-      behavior.
-- [ ] Visual: broad interpolation differences across the mesh, especially
-      triangle patterns/corners; colorbar/text also differs.
-- [ ] Likely core areas: `QuadMesh.drawGouraudMesh`, AGG Gouraud rasterization.
+- [x] Code: source audited; fixture inputs match. `QuadMesh.drawGouraudMesh`
+      now matches Matplotlib's `_convert_mesh_to_triangles` by splitting each
+      quad into four center-fan Gouraud triangles with averaged center RGBA.
+- [x] Visual: focused `TestReferenceCompare/pcolormesh_gouraud` now reports
+      `RMSE 4.78`; remaining residual is mostly colorbar/text and minor
+      rasterization drift.
+- [ ] Likely core areas: AGG Gouraud rasterization and colorbar/text
+      antialiasing.
 
 ### 8.59 `hist2d_weighted_density` (RMSE 7.48)
 
@@ -1590,14 +1629,15 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: `core/colorbar.go`, `core/norm.go` BoundaryNorm
       colorbar rendering, axis/text placement.
 
-### 8.61 `lognorm_imshow` (RMSE 10.49)
+### 8.61 `lognorm_imshow` (RMSE 9.42)
 
 - [x] Code: source audited; fixture values and `LogNorm(1,1000)` match.
-      Remaining difference is core image rasterization/resampling.
-- [ ] Visual: cells align, but color transitions and grid boundaries differ;
-      log colorbar tick/label rendering also contributes.
-- [ ] Likely core areas: `core/image.go` image resampling/source-coordinate
-      mapping, `core/norm.go` / `core/colorbar.go` log colorbar ticks.
+      `LogFormatter` now emits Matplotlib-style base-10 power labels instead
+      of `1eN` labels for exact decades.
+- [x] Visual: focused `TestReferenceCompare/lognorm_imshow` reports
+      `RMSE 9.42` after refreshing the Go golden.
+- [ ] Likely core areas: remaining residual is minor image/colorbar
+      rasterization and text antialiasing drift.
 
 ### 8.62 `twoslope_norm_image` (RMSE 11.75)
 

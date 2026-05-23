@@ -116,12 +116,31 @@ func TestPColorMeshGouraudDrawsNativeTriangles(t *testing.T) {
 	if len(r.gouraudBatches) != 1 {
 		t.Fatalf("gouraud batches = %d, want 1", len(r.gouraudBatches))
 	}
-	if got := len(r.gouraudBatches[0].Triangles); got != 2 {
-		t.Fatalf("gouraud triangles = %d, want 2", got)
+	triangles := r.gouraudBatches[0].Triangles
+	if got := len(triangles); got != 4 {
+		t.Fatalf("gouraud triangles = %d, want 4 Matplotlib center-fan triangles", got)
+	}
+	center := createTestDrawContext().DataToPixel.Apply(geom.Pt{X: 1, Y: 1.5})
+	cornerColors := meshValueColors(mesh.Values, mesh.ScalarMap().Resolved(), mesh.alphaValue())
+	wantCenter := averageColor4(cornerColors[0][0], cornerColors[0][1], cornerColors[1][1], cornerColors[1][0])
+	for i, tri := range triangles {
+		if !sameContourPoint(tri.P[2], center) {
+			t.Fatalf("gouraud triangle %d center = %+v, want %+v", i, tri.P[2], center)
+		}
+		if !colorsApproxEqual(tri.Color[2], wantCenter, 1e-12) {
+			t.Fatalf("gouraud triangle %d center color = %+v, want averaged corner color %+v", i, tri.Color[2], wantCenter)
+		}
 	}
 	if len(r.quadMeshBatches) != 0 || len(r.pathCalls) != 0 {
 		t.Fatalf("expected native gouraud only, quad batches=%d path calls=%d", len(r.quadMeshBatches), len(r.pathCalls))
 	}
+}
+
+func colorsApproxEqual(a, b render.Color, tol float64) bool {
+	return math.Abs(a.R-b.R) <= tol &&
+		math.Abs(a.G-b.G) <= tol &&
+		math.Abs(a.B-b.B) <= tol &&
+		math.Abs(a.A-b.A) <= tol
 }
 
 func TestPColorMeshBadCellsAreTransparent(t *testing.T) {
@@ -311,6 +330,9 @@ func TestAxesContourAndContourf(t *testing.T) {
 	if len(contours.labels) != 2 {
 		t.Fatalf("expected one label per contour level, got %d", len(contours.labels))
 	}
+	if got, want := contours.Z(), defaultLineZ; got != want {
+		t.Fatalf("contour default z = %v, want line z %v so isolines draw above patch collections", got, want)
+	}
 
 	filled := ax.Contourf(grid, ContourOptions{
 		Levels: []float64{0, 1, 2, 3, 4},
@@ -396,6 +418,32 @@ func TestStructuredContourLineClipsSingleSaddleQuadLikeMatplotlib(t *testing.T) 
 	}
 	if !pointsEqual(polylines[0], want, 1e-12) {
 		t.Fatalf("structured saddle contour = %+v, want Matplotlib path %+v", polylines[0], want)
+	}
+}
+
+func TestAxesContourUsesStructuredGridLinesLikeMatplotlib(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(unitRect())
+	grid := [][]float64{
+		{0, 1},
+		{1, 0},
+	}
+
+	contours := ax.Contour(grid, ContourOptions{Levels: []float64{0.5}})
+	if contours == nil || contours.Lines == nil {
+		t.Fatal("expected contour lines")
+	}
+	if got, want := len(contours.Lines.Segments), 1; got != want {
+		t.Fatalf("public contour segments = %d, want one structured saddle path: %+v", got, contours.Lines.Segments)
+	}
+	want := []geom.Pt{
+		{X: 0, Y: 0.5},
+		{X: 0.5, Y: 1},
+		{X: 1, Y: 0.5},
+		{X: 0.5, Y: 0},
+	}
+	if !pointsEqual(contours.Lines.Segments[0], want, 1e-12) {
+		t.Fatalf("public structured contour = %+v, want Matplotlib path %+v", contours.Lines.Segments[0], want)
 	}
 }
 

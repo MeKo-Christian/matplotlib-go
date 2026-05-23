@@ -125,6 +125,40 @@ func TestAxes3DScatterProjectionLimitsUseMatplotlibZMargin(t *testing.T) {
 	}
 }
 
+func TestAxes3DProjectPointMatchesMatplotlibScatterFixtureLimits(t *testing.T) {
+	fig := NewFigure(720, 560)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(22.5767530642105, 32.43415741224721)
+	ax.SetYLim(0.09104692778428092, 104.58776816008752)
+	ax.SetZLim(-51.007126259038195, -24.886181592223462)
+
+	got := ax.ProjectPoint(29.444073116538434, 91.3534531817269, -37.52903158779476)
+	if !approx(got.X, 0.039937290348120026, 1e-12) ||
+		!approx(got.Y, 0.013747177404714107, 1e-12) {
+		t.Fatalf("scatter fixture projection = %+v, want Matplotlib projection {0.039937290348120026 0.013747177404714107}", got)
+	}
+}
+
+func TestAxes3DProjectedDataMapsToMatplotlibDisplayCoordinates(t *testing.T) {
+	fig := NewFigure(720, 560)
+	ax, err := fig.AddAxes3D(geom.Rect{
+		Min: geom.Pt{X: 0.12, Y: 0.16},
+		Max: geom.Pt{X: 0.88, Y: 0.88},
+	})
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ctx := newAxesDrawContext(ax.Axes, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	got := ctx.DataToPixel.Apply(geom.Pt{X: 0.039937290348120026, Y: 0.013747177404714107})
+	if !approx(got.X, 452.49035388, 1e-8) ||
+		!approx(got.Y, 233.38993552, 1e-8) {
+		t.Fatalf("projected display point = %+v, want Matplotlib top-left pixel {452.49035388 233.38993552}", got)
+	}
+}
+
 func TestAxes3DScatterDefaultColorUsesShapeCycle(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -148,6 +182,36 @@ func TestAxes3DScatterDefaultColorUsesShapeCycle(t *testing.T) {
 	}
 }
 
+func TestAxes3DScatterUsesMatplotlibDefaultSize(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	scatter := ax.Scatter3D([]float64{0.5}, []float64{0.2}, []float64{0.1})
+	if scatter == nil {
+		t.Fatal("Scatter3D returned nil")
+	}
+	if got, want := scatter.Size, 20.0; got != want {
+		t.Fatalf("3D scatter default size = %v, want Matplotlib Axes3D.scatter s=%v", got, want)
+	}
+
+	explicit := 42.0
+	scatter = ax.Scatter3D(
+		[]float64{0.5},
+		[]float64{0.2},
+		[]float64{0.1},
+		ScatterOptions{Size: &explicit},
+	)
+	if scatter == nil {
+		t.Fatal("Scatter3D with explicit size returned nil")
+	}
+	if got := scatter.Size; got != explicit {
+		t.Fatalf("3D scatter explicit size = %v, want %v", got, explicit)
+	}
+}
+
 func TestAxes3DScatterDepthShadesAndSortsMarkersLikeMatplotlib(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -168,6 +232,12 @@ func TestAxes3DScatterDepthShadesAndSortsMarkersLikeMatplotlib(t *testing.T) {
 	}
 	if !approx(scatter.Colors[0].A, 0.3, 1e-12) || !approx(scatter.Colors[1].A, 1.0, 1e-12) {
 		t.Fatalf("3D scatter depth-shaded alphas = %.12g, %.12g; want Matplotlib z-sorted alpha range 0.3..1.0", scatter.Colors[0].A, scatter.Colors[1].A)
+	}
+	if got, want := len(scatter.EdgeColors), 2; got != want {
+		t.Fatalf("3D scatter per-marker edge colors = %d, want %d depth-shaded edge colors", got, want)
+	}
+	if !approx(scatter.EdgeColors[0].A, 0.3, 1e-12) || !approx(scatter.EdgeColors[1].A, 1.0, 1e-12) {
+		t.Fatalf("3D scatter depth-shaded edge alphas = %.12g, %.12g; want Matplotlib z-sorted alpha range 0.3..1.0", scatter.EdgeColors[0].A, scatter.EdgeColors[1].A)
 	}
 }
 
@@ -1110,6 +1180,16 @@ func TestAxes3DStemProjectsBaselineStemsAndMarkers(t *testing.T) {
 	}
 	if got, want := len(container.MarkerCollection.Offsets), 2; got != want {
 		t.Fatalf("stem marker count = %d, want %d", got, want)
+	}
+	palette := style.Default.Palette()
+	if got, want := container.StemLines.Color, palette[0]; got != want {
+		t.Fatalf("stem line color = %+v, want Matplotlib linefmt C0 %+v", got, want)
+	}
+	if got, want := container.MarkerCollection.FaceColor, palette[0]; got != want {
+		t.Fatalf("stem marker color = %+v, want Matplotlib markerfmt C0 %+v", got, want)
+	}
+	if got, want := container.Baseline.Col, palette[3]; got != want {
+		t.Fatalf("stem baseline color = %+v, want Matplotlib basefmt C3 %+v", got, want)
 	}
 }
 

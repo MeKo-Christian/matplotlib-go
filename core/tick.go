@@ -603,9 +603,9 @@ func (f PercentFormatter) Format(x float64) string {
 	return strconv.FormatFloat((x/xMax)*100, 'f', decimals, 64) + symbol
 }
 
-// LogFormatter formats tick labels on a log axis. For Base==10 it prefers
-// forms like 1e3, 2e3, 5e3 when values are exact multiples. Otherwise it
-// falls back to ScalarFormatter.
+// LogFormatter formats tick labels on a log axis. For Base==10, exact
+// decades use Matplotlib-style powers such as 10³. Otherwise it falls back to
+// ScalarFormatter.
 type LogFormatter struct{ Base float64 }
 
 func (f LogFormatter) Format(x float64) string {
@@ -613,22 +613,43 @@ func (f LogFormatter) Format(x float64) string {
 		if x <= 0 {
 			return ""
 		}
-		k := math.Floor(math.Log10(x))
+		k := math.Round(math.Log10(x))
 		pow := math.Pow(10, k)
 		m := x / pow
 		// Tolerate small rounding
 		if approx(m, 1, 1e-12) {
-			return "1e" + strconv.FormatFloat(k, 'f', 0, 64)
-		}
-		if approx(m, 2, 1e-12) {
-			return "2e" + strconv.FormatFloat(k, 'f', 0, 64)
-		}
-		if approx(m, 5, 1e-12) {
-			return "5e" + strconv.FormatFloat(k, 'f', 0, 64)
+			return "10" + superscriptInt(int(k))
 		}
 	}
 	// Fallback
 	return (ScalarFormatter{Prec: 6}).Format(x)
+}
+
+func superscriptInt(v int) string {
+	if v == 0 {
+		return "⁰"
+	}
+	if v < 0 {
+		return "⁻" + superscriptDigits(-v)
+	}
+	return superscriptDigits(v)
+}
+
+func superscriptDigits(v int) string {
+	const digits = "⁰¹²³⁴⁵⁶⁷⁸⁹"
+	if v == 0 {
+		return "⁰"
+	}
+	buf := make([]string, 0, 4)
+	for v > 0 {
+		d := v % 10
+		buf = append(buf, string([]rune(digits)[d]))
+		v /= 10
+	}
+	for left, right := 0, len(buf)-1; left < right; left, right = left+1, right-1 {
+		buf[left], buf[right] = buf[right], buf[left]
+	}
+	return strings.Join(buf, "")
 }
 
 func approx(a, b, eps float64) bool {

@@ -22,6 +22,7 @@ const (
 	default3DBoxAspectZoom25 = 25.0 / 24.0
 	default3DViewMin         = -0.095
 	default3DViewMax         = 0.09
+	default3DScatterSize     = 20.0
 )
 
 // Axes3D represents an Axes with basic 3D projection helpers.
@@ -337,8 +338,17 @@ func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...ScatterOptions) *Scatter2D
 		y2[i] = p.Y
 	}
 
+	opt := ScatterOptions{}
 	if len(opts) > 0 {
-		scatter := a.Scatter(x2, y2, opts[0])
+		opt = opts[0]
+	}
+	if opt.Size == nil {
+		size := default3DScatterSize
+		opt.Size = &size
+	}
+
+	if len(opts) > 0 {
+		scatter := a.Scatter(x2, y2, opt)
 		reprojectScatter3D(scatter, a.projectedScatterData(x, y, z))
 		scatter.z = a.points3DCollectionZ(x, y, z)
 		a.add3DReprojector(func() {
@@ -347,7 +357,7 @@ func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...ScatterOptions) *Scatter2D
 		}, limitsChanged)
 		return scatter
 	}
-	scatter := a.Scatter(x2, y2)
+	scatter := a.Scatter(x2, y2, opt)
 	reprojectScatter3D(scatter, a.projectedScatterData(x, y, z))
 	scatter.z = a.points3DCollectionZ(x, y, z)
 	a.add3DReprojector(func() {

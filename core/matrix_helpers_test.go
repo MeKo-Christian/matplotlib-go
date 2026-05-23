@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -171,6 +172,32 @@ func TestAxesSpyMarkerSizeUsesMatplotlibPointDiameter(t *testing.T) {
 	}
 	if got, want := large.Markers.Size/small.Markers.Size, 2.0; !almostEqualFloat(got, want) {
 		t.Fatalf("marker scale ratio = %v, want %v", got, want)
+	}
+}
+
+func TestAxesSpyMarkerSizeRoundsToPixelFootprintLikeLine2D(t *testing.T) {
+	data := [][]float64{{1}}
+
+	fig := NewFigure(400, 300)
+	result := fig.AddAxes(unitRect()).Spy(data, SpyOptions{MarkerSize: 8})
+	if result == nil || result.Markers == nil {
+		t.Fatal("Spy(marker size) should use marker mode")
+	}
+	if got, want := result.Markers.Size, math.Ceil(pointsToPixels(fig.RC, 8)); !almostEqualFloat(got, want) {
+		t.Fatalf("marker size = %v, want %v", got, want)
+	}
+}
+
+func TestAxesSpyMarkerEdgeWidthUsesMatplotlibPointWidth(t *testing.T) {
+	data := [][]float64{{1}}
+
+	fig := NewFigure(400, 300)
+	result := fig.AddAxes(unitRect()).Spy(data, SpyOptions{MarkerSize: 8})
+	if result == nil || result.Markers == nil {
+		t.Fatal("Spy(marker size) should use marker mode")
+	}
+	if got, want := result.Markers.EdgeWidth, pointsToPixels(fig.RC, 1); !almostEqualFloat(got, want) {
+		t.Fatalf("marker edge width = %v, want %v", got, want)
 	}
 }
 

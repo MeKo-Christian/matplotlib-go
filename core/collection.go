@@ -817,7 +817,7 @@ func (m *QuadMesh) drawGouraudMesh(r render.Renderer, ctx *DrawContext) bool {
 	}
 
 	batch := render.GouraudTriangleBatch{
-		Triangles:   make([]render.GouraudTriangle, 0, (rows-1)*(cols-1)*2),
+		Triangles:   make([]render.GouraudTriangle, 0, (rows-1)*(cols-1)*4),
 		Antialiased: m.antialiased(),
 	}
 	for yi := 0; yi+1 < rows; yi++ {
@@ -833,9 +833,13 @@ func (m *QuadMesh) drawGouraudMesh(r render.Renderer, ctx *DrawContext) bool {
 			if c00.A <= 0 || c10.A <= 0 || c11.A <= 0 || c01.A <= 0 {
 				continue
 			}
+			center := averagePoint4(p00, p10, p11, p01)
+			centerColor := averageColor4(c00, c10, c11, c01)
 			batch.Triangles = append(batch.Triangles,
-				render.GouraudTriangle{P: [3]geom.Pt{p00, p10, p11}, Color: [3]render.Color{c00, c10, c11}},
-				render.GouraudTriangle{P: [3]geom.Pt{p00, p11, p01}, Color: [3]render.Color{c00, c11, c01}},
+				render.GouraudTriangle{P: [3]geom.Pt{p00, p10, center}, Color: [3]render.Color{c00, c10, centerColor}},
+				render.GouraudTriangle{P: [3]geom.Pt{p10, p11, center}, Color: [3]render.Color{c10, c11, centerColor}},
+				render.GouraudTriangle{P: [3]geom.Pt{p11, p01, center}, Color: [3]render.Color{c11, c01, centerColor}},
+				render.GouraudTriangle{P: [3]geom.Pt{p01, p00, center}, Color: [3]render.Color{c01, c00, centerColor}},
 			)
 		}
 	}
@@ -843,6 +847,22 @@ func (m *QuadMesh) drawGouraudMesh(r render.Renderer, ctx *DrawContext) bool {
 		return false
 	}
 	return drawer.DrawGouraudTriangles(batch)
+}
+
+func averagePoint4(a, b, c, d geom.Pt) geom.Pt {
+	return geom.Pt{
+		X: (a.X + b.X + c.X + d.X) / 4,
+		Y: (a.Y + b.Y + c.Y + d.Y) / 4,
+	}
+}
+
+func averageColor4(a, b, c, d render.Color) render.Color {
+	return render.Color{
+		R: (a.R + b.R + c.R + d.R) / 4,
+		G: (a.G + b.G + c.G + d.G) / 4,
+		B: (a.B + b.B + c.B + d.B) / 4,
+		A: (a.A + b.A + c.A + d.A) / 4,
+	}
 }
 
 func (c *PatchCollection) hasHatches() bool {

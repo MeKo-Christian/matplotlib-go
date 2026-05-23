@@ -315,7 +315,9 @@ func (a *Axes) Spy(data [][]float64, opts ...SpyOptions) *SpyResult {
 	}
 	path := (&Scatter2D{Marker: marker}).markerPrototypePath()
 	lineOnly := markerLineOnly(NewMarkerStyle(marker))
-	markerSizePx := cfg.MarkerSize * matrixMarkerDPI(a) / 72.0
+	rc := a.resolvedRC()
+	markerSizePx := math.Ceil(cfg.MarkerSize * matrixMarkerDPI(a) / 72.0)
+	markerEdgeWidth := pointsToPixels(rc, 1)
 	pc := &PathCollection{
 		Collection: Collection{
 			Coords: Coords(CoordData),
@@ -328,7 +330,7 @@ func (a *Axes) Spy(data [][]float64, opts ...SpyOptions) *SpyResult {
 		PathInDisplay: true,
 		FaceColor:     color,
 		EdgeColor:     color,
-		EdgeWidth:     1,
+		EdgeWidth:     markerEdgeWidth,
 		LineOnly:      lineOnly,
 	}
 	a.AddCollection(pc)

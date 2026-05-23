@@ -77,12 +77,13 @@ func Plot() *core.Figure {
 			EdgeColor: render.Color{R: 0.58, G: 0.22, B: 0.10, A: 1},
 			EdgeWidth: 1.0,
 		},
-		XY:         geom.Pt{X: 0.9, Y: 3.2},
-		DX:         2.2,
-		DY:         -1.0,
-		Width:      0.18,
-		HeadWidth:  0.62,
-		HeadLength: 0.62,
+		XY:                 geom.Pt{X: 0.9, Y: 3.2},
+		DX:                 2.2,
+		DY:                 -1.0,
+		Width:              0.18,
+		HeadWidth:          0.62,
+		HeadLength:         0.62,
+		LengthIncludesHead: true,
 	})
 	star := geom.Path{}
 	star.MoveTo(geom.Pt{X: 4.15, Y: 0.95})
