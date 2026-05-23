@@ -828,14 +828,39 @@ reference; current `core/events.go`, `internal/webdemo/`.
 
 ### 4.2 Desktop Interactive Backend
 
-- [ ] Decision and ADR on the desktop toolkit: Fyne, Ebiten, Gio, or a thin
+- [x] Decision and ADR on the desktop toolkit: Fyne, Ebiten, Gio, or a thin
       SDL2 binding. Decision criteria: pure-Go preference, AGG framebuffer
       embedding, keyboard / mouse event fidelity, and CI availability.
-- [ ] Backend implementation that hosts an AGG renderer, drives the event
+      Decided **Gio** in `docs/adr/0001-desktop-interactive-backend.md`;
+      the only option that satisfies all five criteria simultaneously
+      (pure-Go end-to-end, headless test driver, direct `*image.RGBA`
+      blit via `paint.NewImageOp`, multi-window embeddability, CI
+      without system packages).
+- [x] Backend implementation that hosts an AGG renderer, drives the event
       dispatcher, and supports the standard NavigationToolbar actions
       (home / pan / zoom / save).
-- [ ] Toolbar abstraction generic enough for a future Qt or GTK binding.
-- [ ] Embedding example in `examples/embed/desktop/`.
+      `backends/desktop` defines the toolkit-agnostic `Backend` contract
+      and `Options` / `Constructor` / `Register` / `New` machinery.
+      `backends/desktop/gio` is the Gio (`gioui.org` v0.10.0)
+      implementation: one `app.Window` per figure, an event-pump that
+      maps `pointer.Event` / `key.Event` / `app.FrameEvent` /
+      `app.DestroyEvent` onto the canvas dispatcher, and an AGG bitmap
+      blit via `paint.NewImageOp` each frame. `desktop.New` returns a
+      ready-to-Run backend; the AGG renderer is supplied via
+      `Options.Renderer`. Covered by `backends/desktop/gio/gio_test.go`
+      (7 tests, cgo-free).
+- [x] Toolbar abstraction generic enough for a future Qt or GTK binding.
+      `canvas.NavigationToolbar` interface plus `canvas.ToolbarController`
+      reference implementation in `canvas/toolbar.go`; pan/zoom toggles
+      drive the existing `canvas.Navigation` helper, other actions go
+      through registered `ToolbarHandler`s. Covered by
+      `canvas/toolbar_test.go`.
+- [x] Embedding example in `examples/embed/desktop/`.
+      `examples/embed/desktop/main.go` opens the `basic_line` figure in
+      a Gio window, wires `p` / `z` / `r` / `s` / `q` keyboard
+      shortcuts to the toolbar actions, and streams hover coordinates
+      into the toolbar status line via `Axes.FormatCoord`.
+      `SaveHandler` writes `out.png` through `core.SavePNG`.
 
 ### 4.3 Web Interactive Backend (WebAgg-style)
 
