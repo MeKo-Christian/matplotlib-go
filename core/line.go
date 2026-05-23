@@ -40,6 +40,7 @@ type Line2D struct {
 	DrawStyle   LineDrawStyle // optional step-style connection mode
 	Label       string        // series label for legend
 	z           float64       // z-order
+	pickRadius  float64       // pick tolerance in pixels (0 = default)
 }
 
 // SetDashes sets the dash sequence using Matplotlib Line2D.set_dashes units.

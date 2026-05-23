@@ -381,6 +381,8 @@ type Axes struct {
 	colorbarAspect  float64
 	colorbarBase    geom.Rect
 	colorbarExtend  string
+
+	coordFormatter CoordFormatter
 }
 
 // TickParams controls axis tick visibility and styling.

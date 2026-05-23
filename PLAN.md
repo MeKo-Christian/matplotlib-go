@@ -801,14 +801,30 @@ reference; current `core/events.go`, `internal/webdemo/`.
 
 ### 4.1 Navigation and Hit Testing
 
-- [ ] Pan, zoom-to-rect, and box-zoom interactions wired through the event
+- [x] Pan, zoom-to-rect, and box-zoom interactions wired through the event
       dispatcher and the existing draw-idle queue.
-- [ ] Picking / hit testing: `Artist.Contains(MouseEvent)` for every artist
+      `canvas.Navigation` attaches to a `Dispatcher` and mutates axes view
+      limits through `PanAxesPixels` / `ZoomAxesToRect` /
+      `ZoomAxesByFactor`; mouse-press / move / release events drive pan and
+      rubber-band zoom, and scroll events trigger anchored zoom-in/out.
+- [x] Picking / hit testing: `Artist.Contains(MouseEvent)` for every artist
       family, with shared bounding-box and path-contains helpers.
-- [ ] Coordinate inspection: hover-driven formatter callbacks, cursor
+      `core.ArtistPicker` / `core.PickInfo` define the contract; Line2D,
+      Rectangle, Circle, Ellipse, Polygon, PathPatch, FancyBboxPatch,
+      FancyArrow, Image2D, and Text implement `Contains`. Shared
+      `distancePointToSegment` / `containsPath` helpers back the patch
+      family. `canvas.Pick` and `canvas.EmitPick` walk the figure tree and
+      emit `PickEvent`s.
+- [x] Coordinate inspection: hover-driven formatter callbacks, cursor
       rendering hook, and a default `format_coord` implementation.
-- [ ] Callback registration matching `mpl_connect` / `mpl_disconnect`
+      `Axes.FormatCoord` returns the data-space `x=…, y=…` string for a
+      figure-pixel cursor; `Axes.SetFormatCoord(CoordFormatter)` installs
+      custom formatters per axes.
+- [x] Callback registration matching `mpl_connect` / `mpl_disconnect`
       semantics; covered by event-lifecycle tests.
+      `canvas.Connect` / `canvas.Disconnect` wrap `FigureCanvas` with the
+      Matplotlib-style API; existing `Dispatcher` already supports the
+      multiplexing semantics. Lifecycle covered by `canvas/connect_test.go`.
 
 ### 4.2 Desktop Interactive Backend
 
@@ -969,12 +985,21 @@ backend parity program but is not yet complete.
 - [ ] Native Skia marker batches, path collections, transformed images,
       quad meshes, and Gouraud triangles wired through `SkCanvas::drawAtlas` and
       `SkVertices`.
+  - [x] CPU Skia renderer implements the renderer optional interfaces for
+        marker batches, path collections, transformed images, quad meshes, and
+        Gouraud triangles through the deterministic Skia bridge boundary; the
+        external `drawAtlas` / `SkVertices` ABI integration remains open.
 - [ ] Skia native hatching via tiled `SkShader`s.
+  - [x] CPU Skia consumes hatch metadata during path rendering and advertises
+        `NativeHatcher`; tiled external `SkShader` hatches remain open.
 - [ ] GPU mode (`SkSurface::MakeRenderTarget`) behind a separate build tag,
       with deterministic CPU readback for golden tests.
 - [ ] Capability reporting split between CPU and GPU configurations so the
       comparison report shows truthful native / fallback / unavailable status
       per mode.
+  - [x] CPU Skia capability reporting now marks implemented optional paths as
+        native instead of fallback; GPU-specific capability reporting remains
+        deferred until the GPU build tag exists.
 - [ ] Skia vs AGG semantic-fixture comparison; tolerances documented per
       fixture where Skia is not expected to pixel-match.
 

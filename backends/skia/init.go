@@ -21,15 +21,15 @@ func init() {
 			backends.TextPathing,
 			backends.RotatedText,
 			backends.VerticalText,
+			backends.ImageTransform,
 			backends.PathEffects,
 			backends.RGBABuffer,
 			backends.PNGExport,
-		}
-		fallbackCapabilities = []backends.Capability{
+			backends.NativeHatcher,
 			backends.MarkerBatch,
 			backends.PathCollectionBatch,
 			backends.QuadMeshBatch,
-			backends.NativeHatcher,
+			backends.GouraudTriangleBatch,
 		}
 		saveFormats = map[string]backends.SaveHandler{
 			".png": backends.SavePNG,

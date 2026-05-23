@@ -43,3 +43,23 @@ func (a *Axes) PixelToData(p geom.Pt) (geom.Pt, bool) {
 	ctx := newAxesDrawContext(a, a.figure, figureRect, clip)
 	return ctx.DataToPixel.Invert(p)
 }
+
+// AxesDrawContext builds the draw context an axes uses for rendering — exposed
+// for the canvas hit-testing and coordinate-inspection helpers.
+func AxesDrawContext(a *Axes, fig *Figure) *DrawContext {
+	if a == nil || fig == nil {
+		return nil
+	}
+	figureRect := fig.DisplayRect()
+	clip := a.adjustedLayout(fig)
+	return newAxesDrawContext(a, fig, figureRect, clip)
+}
+
+// FigureDrawContext builds the draw context figure-level artists use for
+// rendering. Useful when picking or inspecting non-axes children.
+func FigureDrawContext(fig *Figure) *DrawContext {
+	if fig == nil {
+		return nil
+	}
+	return newFigureDrawContext(fig, fig.DisplayRect())
+}

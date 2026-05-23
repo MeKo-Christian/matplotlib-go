@@ -189,6 +189,9 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 	if r.drawHatchPrecedencePath(p, paint) {
 		return
 	}
+	if r.drawNativeHatchPath(p, paint) {
+		return
+	}
 	r.Renderer.Path(p, paint)
 }
 

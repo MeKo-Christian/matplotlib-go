@@ -24,7 +24,7 @@ Matplotlib-Go uses a pluggable backend architecture that allows different render
 
 - **Type**: Build-tagged CPU raster renderer with a Skia-local bridge boundary
 - **Status**: 🚧 CPU compatibility renderer implemented; external Skia C ABI and GPU mode deferred
-- **Capabilities**: Anti-aliasing, text shaping, PNG export, pattern fills, gradient fills
+- **Capabilities**: Anti-aliasing, text shaping, PNG export, transformed images, pattern fills, gradient fills, native hatches, marker/path-collection batches, quad meshes, Gouraud triangles
 - **Dependencies**: None for the current `-tags skia` CPU renderer; future native paths require CGO, Skia, and the repository C ABI wrapper
 - **Use cases**: Skia parity development and static PNG comparisons
 
