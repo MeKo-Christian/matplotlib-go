@@ -111,7 +111,8 @@ var featureCoverageRows = []FeatureCoverage{
 		UserShowcase:            CoveragePartial,
 		BrowserDemo:             CoveragePartial,
 		Breadth:                 BreadthThin,
-		Notes:                   "Major/minor ticks, date/category units, and common scales exist; the full upstream locator/formatter catalog needs a dedicated audit.",
+		Notes: "Major/minor ticks, TickParams styling, date/category units, and linear/log/symlog/asinh/logit/function/functionlog scales exist. " +
+			"Remaining 12.2B/C/D/E scope is AutoLocator/MaxNLocator edge semantics, dense log minor behavior, formatter edge cases, upstream audit notes, and family-specific catalog fixtures.",
 	},
 	{
 		ID:                      "transforms",
@@ -127,6 +128,8 @@ var featureCoverageRows = []FeatureCoverage{
 		UserShowcase:            CoveragePartial,
 		BrowserDemo:             CoveragePartial,
 		Breadth:                 BreadthThin,
+		Notes: "Affine, separable, blended, chained, offset, display-rect, cached graph transforms, and BBox-style rect helpers exist. " +
+			"Remaining 12.2G scope is frozen snapshots, transformed-path cache helpers, anchored rect helpers, and path/bezier helpers tied to visible behavior.",
 	},
 	{
 		ID:                      "lines",

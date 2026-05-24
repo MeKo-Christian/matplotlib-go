@@ -68,14 +68,19 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Title:           "Locator and formatter catalog breadth",
 		UpstreamModules: []string{"axis.py", "ticker.py", "scale.py", "dates.py", "category.py"},
 		GoFiles:         []string{"core/axis.go", "core/tick.go", "core/date_tick.go", "core/units.go", "transform/scale_registry.go"},
-		CurrentEquivalent: "Go has Axis, fixed / auto / log / date / category locators, formatters, " +
-			"unit conversion hooks, and common scale transforms.",
-		Gap: "The upstream ticker / formatter catalog is not exhaustively represented: " +
-			"engineering, percent, index, null, scalar, log-mathtext, multi-level date, " +
-			"minor tick, and scale-specific formatter behaviors need a row-by-row audit.",
+		CurrentEquivalent: "Go has Axis, fixed / auto / log-family / symlog / asinh / logit / date / " +
+			"category locators, formatter families for scalar, fixed, function, printf, str-method, " +
+			"engineering, percent, log math text, logit, dates, categories, unit conversion hooks, " +
+			"and scale-specific defaults including functionlog.",
+		Gap: "The remaining 12.2 scope is split into concrete rows: 12.2B still tracks " +
+			"AutoLocator / MaxNLocator edge semantics, dense log minor ticks, and locator catalog " +
+			"fixture coverage; 12.2C still tracks ScalarFormatter offset/scientific behavior, " +
+			"log-family sparse minor labels, EngFormatter / PercentFormatter edge behavior, and " +
+			"formatter catalog fixtures; 12.2D/E still track date/category and scale-default " +
+			"catalog fixtures plus upstream audit notes.",
 		Decision: GapDecisionImplement,
-		Rationale: "Tick labels and scale semantics are user-visible parity surfaces; missing rows should " +
-			"be implemented or explicitly documented as omissions.",
+		Rationale: "Tick labels and scale semantics are user-visible parity surfaces; each remaining " +
+			"catalog gap is now tracked as an explicit 12.2 subtask rather than a broad audit bucket.",
 	},
 	{
 		ID:              "tick-artist-model",
@@ -84,12 +89,14 @@ var foundationAPIGaps = []FoundationAPIGap{
 		UpstreamModules: []string{"axis.py", "ticker.py"},
 		GoFiles:         []string{"core/axis.go", "core/tick.go", "core/grid.go"},
 		CurrentEquivalent: "Go draws ticks, minor ticks, grid lines, mirrored axes, and tick labels " +
-			"from Axis state.",
-		Gap: "Ticks are not modeled as separate artist objects with their own label, line, " +
-			"visibility, stale, and callback behavior like Matplotlib Tick instances.",
+			"from Axis state, with TickParams covering major/minor/both selection, axis selection, " +
+			"length, width, colors, label size/color/rotation/pad/alignment, side visibility, " +
+			"direction, reset, and grid styling.",
+		Gap: "A Python-style Tick artist clone remains an explicit non-goal for v1.0 unless a " +
+			"migration example needs per-tick object identity, callbacks, or artist-level stale state.",
 		Decision: GapDecisionIdiomaticEquivalent,
-		Rationale: "A full Tick class clone is not required, but API-level tick styling and layout parity " +
-			"should be exposed through Go axis/tick option structs.",
+		Rationale: "The visible static tick behavior is exposed through Go axis-owned state and option " +
+			"structs, which keeps the API typed while avoiding a dynamic Tick object hierarchy.",
 	},
 	{
 		ID:              "transform-bbox-paths",
@@ -97,13 +104,16 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Title:           "Transform, BBox, and transformed-path breadth",
 		UpstreamModules: []string{"transforms.py", "path.py", "bezier.py"},
 		GoFiles:         []string{"transform/transform.go", "transform/graph.go", "transform/node.go", "internal/geom/geom.go"},
-		CurrentEquivalent: "Go has affine, separable, blended, chained, offset, and graph-backed " +
-			"transforms plus geometry rect/path primitives.",
-		Gap: "Matplotlib's transform hierarchy includes richer Bbox variants, frozen transforms, " +
-			"transformed paths, wrappers, invalidation semantics, and path simplification hooks.",
+		CurrentEquivalent: "Go has affine, separable, blended, chained, offset, display-rect, scale, " +
+			"and graph-backed transforms plus rect/path primitives with BBox-style union, " +
+			"intersection, expansion/padding, point containment, affine transformed bounds, and " +
+			"inverse-transformed bounds.",
+		Gap: "The remaining 12.2G scope is split into frozen transform snapshots, transformed-path " +
+			"cache helpers with invalidation, anchored rect helpers for annotation/layout parity, " +
+			"and path/bezier helpers only when they affect visible clipping or layout behavior.",
 		Decision: GapDecisionIdiomaticEquivalent,
-		Rationale: "Preserve the lean transform graph, adding only parity-driven BBox/path helpers needed " +
-			"by annotations, layout, clipping, and image transforms.",
+		Rationale: "Preserve the lean transform graph, adding focused BBox/path helpers when annotation, " +
+			"layout, clipping, or image-transform parity needs them.",
 	},
 	{
 		ID:              "line2d-marker-data-semantics",

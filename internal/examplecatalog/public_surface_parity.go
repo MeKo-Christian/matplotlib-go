@@ -135,7 +135,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/axis.go", "core/tick.go", "core/grid.go"},
 		catalogIDs:        []string{"axes_control_surface", "units_dates", "units_categories", "skewt_basic"},
 		exampleIDs:        []string{"axes_control_surface", "units_overview", "skewt_basic"},
-		note:              "Axis, ticks, grid lines, mirrored axes, and labels exist; explicit Tick artist and setter parity is still incomplete.",
+		note:              "Axis, ticks, grid lines, mirrored axes, labels, scale defaults, and TickParams styling exist. Go intentionally keeps ticks axis-owned for v1.0; remaining partial scope is catalog fixture breadth and rare Python setter/callback surfaces.",
 	},
 	{
 		idPrefix:          "ticker",
@@ -145,7 +145,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/tick.go", "core/date_tick.go", "core/units.go"},
 		catalogIDs:        []string{"axes_control_surface", "units_dates", "units_categories", "lognorm_imshow", "skewt_basic"},
 		exampleIDs:        []string{"axes_control_surface", "units_overview", "skewt_basic"},
-		note:              "Common locators and formatters exist, but the upstream ticker and formatter catalog is not exhaustively represented yet.",
+		note:              "Common locators and formatters plus symlog/asinh/logit/date/category families exist. Remaining 12.2B/C scope is AutoLocator/MaxNLocator edge semantics, dense log minor labels, ScalarFormatter/EngFormatter/PercentFormatter edge behavior, and catalog fixture breadth.",
 	},
 	{
 		idPrefix:          "scale-registry-functionlog",
@@ -153,11 +153,11 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		kind:              "registry:scale",
 		name:              "functionlog",
 		featureCoverageID: "axis-ticker-scale",
-		status:            PublicSurfaceNotStarted,
+		status:            PublicSurfaceDirectEquivalent,
 		goFiles:           []string{"transform/scale_registry.go"},
 		catalogIDs:        []string{"axes_control_surface"},
 		exampleIDs:        []string{"axes_control_surface"},
-		note:              "The Go scale registry has linear, log, symlog, asinh, logit, and function scales; Matplotlib's functionlog registry entry is not implemented.",
+		note:              "The Go scale registry includes functionlog with caller-provided forward/inverse functions and log-family axis defaults.",
 	},
 	{
 		idPrefix:          "scale",
@@ -167,7 +167,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"transform/scale_registry.go", "transform/transform.go", "core/axis.go"},
 		catalogIDs:        []string{"axes_control_surface", "lognorm_imshow", "skewt_basic"},
 		exampleIDs:        []string{"axes_control_surface", "skewt_basic"},
-		note:              "Named scale construction and common scale transforms exist, with remaining parity work around upstream class hierarchy and edge semantics.",
+		note:              "Named scale construction covers linear, log, symlog, asinh, logit, function, and functionlog with scale-specific axis defaults and log-like non-positive handling. Remaining partial scope is upstream audit notes and catalog fixture breadth.",
 	},
 	{
 		idPrefix:          "transforms",
@@ -177,7 +177,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"transform/transform.go", "transform/graph.go", "transform/node.go", "internal/geom/geom.go"},
 		catalogIDs:        []string{"transform_coordinates", "annotation_composition", "imshow_transformed"},
 		exampleIDs:        []string{"annotation_composition"},
-		note:              "Go has affine, scale, blended, chained, and graph-backed transforms; BBox wrappers, invalidation, and transformed-path helpers are partial.",
+		note:              "Go has affine, scale, blended, chained, display-rect, offset, cached graph transforms, and BBox-style rect helpers. Remaining 12.2G scope is frozen snapshots, transformed-path cache helpers, anchored rect helpers, and visible path/bezier helpers.",
 	},
 	{
 		idPrefix:          "line-style-registry",
