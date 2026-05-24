@@ -34,6 +34,8 @@ type TextRotationMode string
 const (
 	TextRotationModeDefault TextRotationMode = ""
 	TextRotationModeAnchor  TextRotationMode = "anchor"
+	TextRotationModeXTick   TextRotationMode = "xtick"
+	TextRotationModeYTick   TextRotationMode = "ytick"
 )
 
 // TextOptions configures a Text artist.
@@ -345,12 +347,13 @@ func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
 		content = lines[0]
 	}
 	layout := measureSingleLineTextLayoutParseMath(r, content, fontSize, fontKey, parseMath, ctx.RC.UseTeX)
-	origin := alignedSingleLineOrigin(anchor, layout, t.HAlign, layoutVerticalAlign(t.VAlign, false))
+	hAlign, vAlign := textRotationLayoutAlignments(t.HAlign, t.VAlign, t.Angle, t.RotationMode)
+	origin := alignedSingleLineOrigin(anchor, layout, hAlign, vAlign)
 	textColor := t.ApplyArtistAlpha(resolvedTextColor(t.Color, ctx))
 	if t.Angle != 0 {
 		if rotated, ok := r.(render.RotatedTextDrawer); ok {
 			angle := t.Angle * math.Pi / 180
-			rotAnchor := textRotationAnchor(origin, layout, t.HAlign, layoutVerticalAlign(t.VAlign, false), angle, t.RotationMode)
+			rotAnchor := textRotationAnchor(origin, layout, hAlign, vAlign, angle, t.RotationMode)
 			drawTextBBoxRotated(r, origin, layout, t.BBox, ctx, fontSize, rotAnchor, t.Angle)
 			if len(t.PathEffects) > 0 && drawTextPathEffects(r, content, origin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
 				return
@@ -383,7 +386,8 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 	}
 
 	left := anchor.X
-	switch t.HAlign {
+	hAlign, vAlign := textRotationLayoutAlignments(t.HAlign, t.VAlign, t.Angle, t.RotationMode)
+	switch hAlign {
 	case TextAlignCenter:
 		left -= maxWidth / 2
 	case TextAlignRight:
@@ -391,7 +395,7 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 	}
 
 	top := anchor.Y
-	switch layoutVerticalAlign(t.VAlign, false) {
+	switch vAlign {
 	case textLayoutVAlignCenter:
 		top -= blockHeight / 2
 	case textLayoutVAlignBottom:
@@ -420,7 +424,7 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 	}
 
 	textColor := t.ApplyArtistAlpha(resolvedTextColor(t.Color, ctx))
-	lineAlign := t.HAlign
+	lineAlign := hAlign
 	if t.MultiAlignment != nil {
 		lineAlign = *t.MultiAlignment
 	}
@@ -450,6 +454,62 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 		}
 		drawDisplayTextParseMath(textRen, line, origin, fontSize, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 	}
+}
+
+func textRotationLayoutAlignments(hAlign TextAlign, vAlign TextVerticalAlign, angleDeg float64, mode TextRotationMode) (TextAlign, textLayoutVerticalAlign) {
+	layoutVAlign := layoutVerticalAlign(vAlign, false)
+	switch mode {
+	case TextRotationModeXTick:
+		return xTickRotationHAlign(angleDeg, vAlign), layoutVAlign
+	case TextRotationModeYTick:
+		return hAlign, yTickRotationVAlign(angleDeg, hAlign)
+	default:
+		return hAlign, layoutVAlign
+	}
+}
+
+func xTickRotationHAlign(angleDeg float64, vAlign TextVerticalAlign) TextAlign {
+	angle := normalizedTextRotationAngle(angleDeg)
+	anchorAtBottom := vAlign == TextVAlignBottom
+	if angle <= 10 || (85 <= angle && angle <= 95) || 350 <= angle || (170 <= angle && angle <= 190) || (265 <= angle && angle <= 275) {
+		return TextAlignCenter
+	}
+	if (10 < angle && angle < 85) || (190 < angle && angle < 265) {
+		if anchorAtBottom {
+			return TextAlignLeft
+		}
+		return TextAlignRight
+	}
+	if anchorAtBottom {
+		return TextAlignRight
+	}
+	return TextAlignLeft
+}
+
+func yTickRotationVAlign(angleDeg float64, hAlign TextAlign) textLayoutVerticalAlign {
+	angle := normalizedTextRotationAngle(angleDeg)
+	anchorAtLeft := hAlign == TextAlignLeft
+	if angle <= 10 || 350 <= angle || (170 <= angle && angle <= 190) || (80 <= angle && angle <= 100) || (260 <= angle && angle <= 280) {
+		return textLayoutVAlignCenter
+	}
+	if (190 < angle && angle < 260) || (10 < angle && angle < 80) {
+		if anchorAtLeft {
+			return textLayoutVAlignBaseline
+		}
+		return textLayoutVAlignTop
+	}
+	if anchorAtLeft {
+		return textLayoutVAlignTop
+	}
+	return textLayoutVAlignBaseline
+}
+
+func normalizedTextRotationAngle(angleDeg float64) float64 {
+	angle := math.Mod(angleDeg, 360)
+	if angle < 0 {
+		angle += 360
+	}
+	return angle
 }
 
 func textRotationAnchor(origin geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64, mode TextRotationMode) geom.Pt {

@@ -771,6 +771,64 @@ func TestTextRotationModeAnchorRotatesAroundAlignedTextBox(t *testing.T) {
 	}
 }
 
+func TestTextRotationModeXTickAdjustsHorizontalAlignment(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position:     geom.Pt{X: 1, Y: 1},
+		Content:      "tick",
+		FontSize:     10,
+		HAlign:       TextAlignCenter,
+		VAlign:       TextVAlignBottom,
+		Angle:        45,
+		RotationMode: TextRotationModeXTick,
+		ClipOn:       true,
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.fontRotatedCalls) != 1 {
+		t.Fatalf("expected one rotated text draw, got %+v", r.fontRotatedCalls)
+	}
+	anchor := transformedPoint(ctx, text.Coords, text.Position, text.OffsetX, text.OffsetY)
+	layout := measureSingleLineTextLayoutParseMath(r, text.Content, text.FontSize, text.FontKey, true, ctx.RC.UseTeX)
+	vAlign := layoutVerticalAlign(text.VAlign, false)
+	wantOrigin := alignedSingleLineOrigin(anchor, layout, TextAlignLeft, vAlign)
+	want := tickLabelRotationAnchor(wantOrigin, layout, TextAlignLeft, vAlign, text.Angle*math.Pi/180)
+	if !approx(r.fontRotatedCalls[0].anchor.X, want.X, 1e-9) || !approx(r.fontRotatedCalls[0].anchor.Y, want.Y, 1e-9) {
+		t.Fatalf("xtick rotation anchor = %+v, want left-aligned anchor %+v", r.fontRotatedCalls[0].anchor, want)
+	}
+}
+
+func TestTextRotationModeYTickAdjustsVerticalAlignment(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position:     geom.Pt{X: 1, Y: 1},
+		Content:      "tick",
+		FontSize:     10,
+		HAlign:       TextAlignLeft,
+		VAlign:       TextVAlignMiddle,
+		Angle:        45,
+		RotationMode: TextRotationModeYTick,
+		ClipOn:       true,
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.fontRotatedCalls) != 1 {
+		t.Fatalf("expected one rotated text draw, got %+v", r.fontRotatedCalls)
+	}
+	anchor := transformedPoint(ctx, text.Coords, text.Position, text.OffsetX, text.OffsetY)
+	layout := measureSingleLineTextLayoutParseMath(r, text.Content, text.FontSize, text.FontKey, true, ctx.RC.UseTeX)
+	wantVAlign := textLayoutVAlignBaseline
+	wantOrigin := alignedSingleLineOrigin(anchor, layout, TextAlignLeft, wantVAlign)
+	want := tickLabelRotationAnchor(wantOrigin, layout, TextAlignLeft, wantVAlign, text.Angle*math.Pi/180)
+	if !approx(r.fontRotatedCalls[0].anchor.X, want.X, 1e-9) || !approx(r.fontRotatedCalls[0].anchor.Y, want.Y, 1e-9) {
+		t.Fatalf("ytick rotation anchor = %+v, want baseline-aligned anchor %+v", r.fontRotatedCalls[0].anchor, want)
+	}
+}
+
 func TestTextArtistFontKeyOverridesRCFontKey(t *testing.T) {
 	ctx := createTestDrawContext()
 	ctx.RC.FontKey = "RC Font"

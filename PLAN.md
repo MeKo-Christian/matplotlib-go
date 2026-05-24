@@ -2359,8 +2359,11 @@ Current slice landed:
 - `TextOptions.RotationMode` now supports a Go-style
   `TextRotationModeAnchor` equivalent for Matplotlib's `rotation_mode='anchor'`,
   aligning the unrotated text box before rotation.
-- Renderer-neutral text tests cover anchor-mode rotated text anchors separately
-  from the default rotated-bbox alignment behavior.
+- `TextRotationModeXTick` and `TextRotationModeYTick` now apply Matplotlib's
+  source-backed angle bands for tick-style horizontal / vertical alignment.
+- Renderer-neutral text tests cover anchor-mode rotated text anchors and
+  xtick / ytick alignment separately from the default rotated-bbox alignment
+  behavior.
 
 #### 12.4D Annotation and Offset-Box Behavior
 
