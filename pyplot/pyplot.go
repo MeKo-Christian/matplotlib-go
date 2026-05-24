@@ -16,6 +16,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 const (
@@ -382,6 +383,26 @@ func AxHSpan(yMin, yMax float64, opts ...core.HSpanOptions) *core.Span2D {
 // AxVSpan delegates to the current axes.
 func AxVSpan(xMin, xMax float64, opts ...core.VSpanOptions) *core.Span2D {
 	return GCA().AxVSpan(xMin, xMax, opts...)
+}
+
+// XLim sets the current axes x-axis limits.
+func XLim(minVal, maxVal float64) {
+	GCA().SetXLim(minVal, maxVal)
+}
+
+// YLim sets the current axes y-axis limits.
+func YLim(minVal, maxVal float64) {
+	GCA().SetYLim(minVal, maxVal)
+}
+
+// XScale sets the current axes x-axis scale.
+func XScale(name string, opts ...transform.ScaleOption) error {
+	return GCA().SetXScale(name, opts...)
+}
+
+// YScale sets the current axes y-axis scale.
+func YScale(name string, opts ...transform.ScaleOption) error {
+	return GCA().SetYScale(name, opts...)
 }
 
 // Bar delegates to the current axes.

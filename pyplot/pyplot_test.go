@@ -159,6 +159,33 @@ func TestReferenceLineAndSpanHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 }
 
+func TestAxisLimitAndScaleHelpersDelegateToCurrentAxes(t *testing.T) {
+	resetForTests()
+
+	XLim(1, 100)
+	YLim(-9, 9)
+	if err := XScale("log", transform.WithScaleBase(10)); err != nil {
+		t.Fatalf("XScale(log): %v", err)
+	}
+	if err := YScale("symlog", transform.WithScaleLinThresh(2)); err != nil {
+		t.Fatalf("YScale(symlog): %v", err)
+	}
+
+	ax := GCA()
+	if xMin, xMax := ax.XScale.Domain(); xMin != 1 || xMax != 100 {
+		t.Fatalf("x domain = (%v, %v), want (1, 100)", xMin, xMax)
+	}
+	if yMin, yMax := ax.YScale.Domain(); yMin != -9 || yMax != 9 {
+		t.Fatalf("y domain = (%v, %v), want (-9, 9)", yMin, yMax)
+	}
+	if _, ok := ax.XScale.(transform.Log); !ok {
+		t.Fatalf("x scale = %T, want transform.Log", ax.XScale)
+	}
+	if _, ok := ax.YScale.(transform.SymLog); !ok {
+		t.Fatalf("y scale = %T, want transform.SymLog", ax.YScale)
+	}
+}
+
 func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 

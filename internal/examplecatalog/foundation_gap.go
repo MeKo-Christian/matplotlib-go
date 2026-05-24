@@ -321,7 +321,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		UpstreamModules: []string{"pyplot.py", "_pylab_helpers.py"},
 		GoFiles:         []string{"pyplot/pyplot.go", "pyplot/pyplot_test.go", "canvas/canvas.go"},
 		CurrentEquivalent: "Go has a pyplot package with figure/current-axes state, common plot wrappers, " +
-			"text, annotation, reference-line, and span wrappers, rc helpers, savefig, show, and pause hooks.",
+			"text, annotation, reference-line, span, axis-limit, and axis-scale wrappers, rc helpers, savefig, show, and pause hooks.",
 		Gap: "The wrapper surface is much smaller than upstream pyplot, especially for overloads, " +
 			"state transitions, interactive mode, and many convenience functions.",
 		Decision: GapDecisionIdiomaticEquivalent,

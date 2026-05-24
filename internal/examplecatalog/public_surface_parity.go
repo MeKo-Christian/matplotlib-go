@@ -896,7 +896,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
 		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
-		note:              "The Go pyplot package covers current figure/current axes state, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, labels, legends, colorbars, rc helpers, savefig, show, and pause. Remaining partial scope is specific missing wrapper families, Python overload breadth, interactive mode toggles, global reset helpers, and unsupported implicit manager behavior.",
+		note:              "The Go pyplot package covers current figure/current axes state, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, axis limit/scale wrappers, labels, legends, colorbars, rc helpers, savefig, show, and pause. Remaining partial scope is specific missing wrapper families, Python overload breadth, interactive mode toggles, global reset helpers, and unsupported implicit manager behavior.",
 	},
 	{
 		idPrefix:          "pylab-helpers",
