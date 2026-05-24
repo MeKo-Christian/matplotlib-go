@@ -111,6 +111,7 @@ var cases = []Case{
 	{ID: "transform_coordinates", Topic: "axes", Title: "Transform Coordinates", Optional: true, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "transform_annotation_modes", Topic: "axes", Title: "Annotation Coordinate Modes", FixtureOnly: true, Width: 720, Height: 420, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "path_clipped_transformed", Topic: "axes", Title: "Clipped Transformed Path", FixtureOnly: true, Width: 720, Height: 420, MinPSNR: 35.0, MaxMeanAbs: 6.5},
+	{ID: "layout_bbox_helpers", Topic: "axes", Title: "Layout BBox Helpers", FixtureOnly: true, Width: 720, Height: 420, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "formatter_engineering_labels", Topic: "axes", Title: "Engineering Formatter Labels", FixtureOnly: true, Width: 720, Height: 400, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "formatter_fixed_null_labels", Topic: "axes", Title: "Fixed and Null Formatter Labels", FixtureOnly: true, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "formatter_log_mathtext_labels", Topic: "axes", Title: "Log MathText Formatter Labels", FixtureOnly: true, MinPSNR: 35.0, MaxMeanAbs: 6.5},

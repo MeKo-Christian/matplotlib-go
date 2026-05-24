@@ -89,6 +89,7 @@ import (
 	example_imshow_transformed "github.com/cwbudde/matplotlib-go/test/parity/imshow_transformed"
 	example_joins_caps "github.com/cwbudde/matplotlib-go/test/parity/joins_caps"
 	example_large_scatter "github.com/cwbudde/matplotlib-go/test/parity/large_scatter"
+	example_layout_bbox_helpers "github.com/cwbudde/matplotlib-go/test/parity/layout_bbox_helpers"
 	example_line2d_markers "github.com/cwbudde/matplotlib-go/test/parity/line2d_markers"
 	example_line2d_semantics "github.com/cwbudde/matplotlib-go/test/parity/line2d_semantics"
 	example_locator_fixed_index_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_fixed_index_labels"
@@ -221,6 +222,7 @@ var renderByID = map[string]func() image.Image{
 	"transform_coordinates":              example_transform_coordinates.Render,
 	"transform_annotation_modes":         example_transform_annotation_modes.Render,
 	"path_clipped_transformed":           example_path_clipped_transformed.Render,
+	"layout_bbox_helpers":                example_layout_bbox_helpers.Render,
 	"formatter_engineering_labels":       example_formatter_engineering_labels.Render,
 	"formatter_fixed_null_labels":        example_formatter_fixed_null_labels.Render,
 	"formatter_log_mathtext_labels":      example_formatter_log_mathtext_labels.Render,
@@ -306,6 +308,7 @@ var figureByID = map[string]func() *core.Figure{
 	"axes_control_surface":               showcase_axes_control_surface.Plot,
 	"transform_annotation_modes":         example_transform_annotation_modes.Plot,
 	"path_clipped_transformed":           example_path_clipped_transformed.Plot,
+	"layout_bbox_helpers":                example_layout_bbox_helpers.Plot,
 	"formatter_engineering_labels":       example_formatter_engineering_labels.Plot,
 	"formatter_fixed_null_labels":        example_formatter_fixed_null_labels.Plot,
 	"formatter_log_mathtext_labels":      example_formatter_log_mathtext_labels.Plot,

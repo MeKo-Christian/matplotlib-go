@@ -49,6 +49,7 @@ axes_control_surface
 transform_coordinates
 transform_annotation_modes
 path_clipped_transformed
+layout_bbox_helpers
 formatter_engineering_labels
 formatter_fixed_null_labels
 formatter_log_mathtext_labels
