@@ -312,6 +312,76 @@ func TestPathInterpolatedSubdividesCurves(t *testing.T) {
 	}
 }
 
+func TestPathClippedToRectClipsLineSegments(t *testing.T) {
+	var path Path
+	path.MoveTo(Pt{-1, 0.5})
+	path.LineTo(Pt{0.5, 0.5})
+	path.LineTo(Pt{2, 0.5})
+	path.MoveTo(Pt{-1, -1})
+	path.LineTo(Pt{-2, -2})
+
+	rect := Rect{Min: Pt{0, 0}, Max: Pt{1, 1}}
+	clipped := path.ClippedToRect(rect, 2)
+	if !clipped.Validate() {
+		t.Fatalf("clipped path should validate: %+v", clipped)
+	}
+	if len(clipped.V) == 0 {
+		t.Fatal("clipped path should retain the segment crossing the rect")
+	}
+	for i, pt := range clipped.V {
+		if !rect.ContainsInclusive(pt) {
+			t.Fatalf("clipped vertex %d outside rect: %+v", i, pt)
+		}
+	}
+	if !pathContainsPt(clipped, Pt{0, 0.5}, 1e-12) {
+		t.Fatalf("clipped path should include left boundary intersection: %+v", clipped.V)
+	}
+	if !pathContainsPt(clipped, Pt{1, 0.5}, 1e-12) {
+		t.Fatalf("clipped path should include right boundary intersection: %+v", clipped.V)
+	}
+	if pathContainsPt(clipped, Pt{-1, -1}, 1e-12) || pathContainsPt(clipped, Pt{-2, -2}, 1e-12) {
+		t.Fatalf("clipped path should drop wholly outside segment: %+v", clipped.V)
+	}
+}
+
+func TestPathClippedToRectFlattensCurves(t *testing.T) {
+	var path Path
+	path.MoveTo(Pt{-1, -1})
+	path.CubicTo(Pt{0, 2}, Pt{1, 2}, Pt{2, -1})
+
+	rect := Rect{Min: Pt{0, 0}, Max: Pt{1, 1}}
+	clipped := path.ClippedToRect(rect, 8)
+	if !clipped.Validate() {
+		t.Fatalf("clipped curve path should validate: %+v", clipped)
+	}
+	if len(clipped.V) == 0 {
+		t.Fatal("clipped curve should produce visible line segments")
+	}
+	for i, cmd := range clipped.C {
+		if cmd != MoveTo && cmd != LineTo {
+			t.Fatalf("clipped flattened command %d = %v, want MoveTo/LineTo only", i, cmd)
+		}
+	}
+	for i, pt := range clipped.V {
+		if !rect.ContainsInclusive(pt) {
+			t.Fatalf("clipped curve vertex %d outside rect: %+v", i, pt)
+		}
+	}
+}
+
+func TestPathClippedToRectEmptyRect(t *testing.T) {
+	var path Path
+	path.MoveTo(Pt{0, 0})
+	path.LineTo(Pt{1, 1})
+
+	if clipped := path.ClippedToRect(Rect{}, 8); len(clipped.C) != 0 || len(clipped.V) != 0 {
+		t.Fatalf("empty rect clip = %+v, want empty path", clipped)
+	}
+	if clipped := path.ClippedToRect(NullRect(), 8); len(clipped.C) != 0 || len(clipped.V) != 0 {
+		t.Fatalf("null rect clip = %+v, want empty path", clipped)
+	}
+}
+
 func approxPt(a, b Pt, eps float64) bool {
 	dx := a.X - b.X
 	if dx < 0 {
@@ -322,4 +392,13 @@ func approxPt(a, b Pt, eps float64) bool {
 		dy = -dy
 	}
 	return dx <= eps && dy <= eps
+}
+
+func pathContainsPt(path Path, want Pt, eps float64) bool {
+	for _, got := range path.V {
+		if approxPt(got, want, eps) {
+			return true
+		}
+	}
+	return false
 }

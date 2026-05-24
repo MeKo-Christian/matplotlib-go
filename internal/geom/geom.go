@@ -410,6 +410,55 @@ func (p Path) Interpolated(steps int) Path {
 	return out
 }
 
+// ClippedToRect returns a path clipped to rect. Curves are first flattened with
+// curveSteps segments per curve; values < 2 default to 8.
+func (p Path) ClippedToRect(rect Rect, curveSteps int) Path {
+	if rect.Empty() {
+		return Path{}
+	}
+	if curveSteps < 2 {
+		curveSteps = 8
+	}
+	flat := p.Interpolated(curveSteps)
+	var out Path
+	vertex := 0
+	var current Pt
+	var subpathStart Pt
+	var lastOut Pt
+	hasCurrent := false
+	hasLastOut := false
+	for _, cmd := range flat.C {
+		switch cmd {
+		case MoveTo:
+			current = flat.V[vertex]
+			subpathStart = current
+			vertex++
+			hasCurrent = true
+			hasLastOut = false
+		case LineTo:
+			to := flat.V[vertex]
+			vertex++
+			if !hasCurrent {
+				current = to
+				subpathStart = to
+				hasCurrent = true
+				hasLastOut = false
+				continue
+			}
+			hasLastOut, lastOut = appendClippedLine(&out, rect, current, to, hasLastOut, lastOut)
+			current = to
+		case ClosePath:
+			if hasCurrent {
+				hasLastOut, lastOut = appendClippedLine(&out, rect, current, subpathStart, hasLastOut, lastOut)
+			}
+			current = subpathStart
+			hasCurrent = false
+			hasLastOut = false
+		}
+	}
+	return out
+}
+
 // Bounds returns the axis-aligned vertex bounds of the path.
 func (p Path) Bounds() (Rect, bool) {
 	return RectFromPoints(p.V...)
@@ -434,6 +483,79 @@ func cubicPoint(p0, p1, p2, p3 Pt, t F64) Pt {
 	a := quadPoint(p0, p1, p2, t)
 	b := quadPoint(p1, p2, p3, t)
 	return lerpPt(a, b, t)
+}
+
+func appendClippedLine(out *Path, rect Rect, from, to Pt, hasLast bool, last Pt) (bool, Pt) {
+	a, b, ok := clipSegmentToRect(rect, from, to)
+	if !ok {
+		return false, Pt{}
+	}
+	if !hasLast || !approxPtGeom(last, a, 1e-12) {
+		out.MoveTo(a)
+	}
+	out.LineTo(b)
+	return true, b
+}
+
+const (
+	clipLeft = 1 << iota
+	clipRight
+	clipBottom
+	clipTop
+)
+
+func clipSegmentToRect(rect Rect, a, b Pt) (Pt, Pt, bool) {
+	codeA := clipCode(rect, a)
+	codeB := clipCode(rect, b)
+	for {
+		if codeA|codeB == 0 {
+			return a, b, true
+		}
+		if codeA&codeB != 0 {
+			return Pt{}, Pt{}, false
+		}
+		code := codeA
+		if code == 0 {
+			code = codeB
+		}
+		var p Pt
+		switch {
+		case code&clipTop != 0:
+			p = Pt{X: a.X + (b.X-a.X)*(rect.Max.Y-a.Y)/(b.Y-a.Y), Y: rect.Max.Y}
+		case code&clipBottom != 0:
+			p = Pt{X: a.X + (b.X-a.X)*(rect.Min.Y-a.Y)/(b.Y-a.Y), Y: rect.Min.Y}
+		case code&clipRight != 0:
+			p = Pt{X: rect.Max.X, Y: a.Y + (b.Y-a.Y)*(rect.Max.X-a.X)/(b.X-a.X)}
+		default:
+			p = Pt{X: rect.Min.X, Y: a.Y + (b.Y-a.Y)*(rect.Min.X-a.X)/(b.X-a.X)}
+		}
+		if code == codeA {
+			a = p
+			codeA = clipCode(rect, a)
+		} else {
+			b = p
+			codeB = clipCode(rect, b)
+		}
+	}
+}
+
+func clipCode(rect Rect, p Pt) int {
+	code := 0
+	if p.X < rect.Min.X {
+		code |= clipLeft
+	} else if p.X > rect.Max.X {
+		code |= clipRight
+	}
+	if p.Y < rect.Min.Y {
+		code |= clipBottom
+	} else if p.Y > rect.Max.Y {
+		code |= clipTop
+	}
+	return code
+}
+
+func approxPtGeom(a, b Pt, eps F64) bool {
+	return math.Abs(float64(a.X-b.X)) <= float64(eps) && math.Abs(float64(a.Y-b.Y)) <= float64(eps)
 }
 
 // Affine is a 2x3 matrix representing a 2D affine transform.
