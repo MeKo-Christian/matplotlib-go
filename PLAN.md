@@ -1914,18 +1914,18 @@ Current slice landed:
 
 #### 9C.1F Exit Criteria
 
-- [ ] `FoundationAPIGapAudit` row `artist-clipping-transform` is either closed
+- [x] `FoundationAPIGapAudit` row `artist-clipping-transform` is either closed
       or split into smaller remaining rows with exact implementation scope.
-- [ ] `FoundationAPIGapAudit` row `line2d-marker-data-semantics` is either
+- [x] `FoundationAPIGapAudit` row `line2d-marker-data-semantics` is either
       closed or split into smaller remaining rows with exact implementation
       scope.
-- [ ] Public-surface parity rows for `Artist`, `Line2D`, `MarkerStyle`, marker
+- [x] Public-surface parity rows for `Artist`, `Line2D`, `MarkerStyle`, marker
       registries, and fillstyle registries are updated from `partial` to
       precise final statuses or linked to the remaining 9C.1 subtask.
-- [ ] 9C.1 has at least one catalog/parity case each for visibility, alpha,
+- [x] 9C.1 has at least one catalog/parity case each for visibility, alpha,
       clipping, Line2D markers in legends, invalid line data, `markevery`,
       `gapcolor`, and half-filled markers.
-- [ ] `go test ./core -count=1` and the relevant catalog cases under
+- [x] `go test ./core -count=1` and the relevant catalog cases under
       `go test ./test/ -run ...` pass after the behavior changes.
 
 Implementation notes:
