@@ -23,6 +23,7 @@ var interactiveCoverage = []InteractiveCoverageRow{
 	{Topic: "colorbar", RepresentativeID: "colorbar_composition", WebAgg: true, Gio: true},
 	{Topic: "colormap", RepresentativeID: "colormap_diverging", WebAgg: true, Gio: true},
 	{Topic: "composition", RepresentativeID: "gridspec_composition", WebAgg: true, Gio: true},
+	{Topic: "effects", RepresentativeID: "path_effects", WebAgg: true, Gio: true},
 	{Topic: "errorbar", RepresentativeID: "errorbar_basic", WebAgg: true, Gio: true},
 	{Topic: "fill", RepresentativeID: "fill_between", WebAgg: true, Gio: true},
 	{Topic: "geo", RepresentativeID: "geo_mollweide_axes", WebAgg: true, Gio: true},

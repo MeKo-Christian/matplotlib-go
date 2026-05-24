@@ -9,12 +9,10 @@
 // mixed raster/vector output.
 //
 // Path effects are emitted through the renderer-neutral replay pipeline. Normal
-// stroke/fill effects stay vector, and identity path-effect filters are captured
-// as transparency-group Form XObjects. Native blurred path-effect filters
-// intentionally
-// use the mixed raster/vector fallback: PDF has no standard Gaussian-blur graphics
-// operator, so claiming native vector support would be misleading and
-// viewer-dependent.
+// stroke/fill effects stay vector, identity path-effect filters are captured as
+// transparency-group Form XObjects, and blurred path-effect filters are emitted
+// as soft-mask image XObjects without routing through core mixed-raster
+// fallback.
 //
 // PDF-specific output options are carried by render.PDFOptions and can be
 // passed through core.SavePDF, core.SaveFig, or the backends.Registry save

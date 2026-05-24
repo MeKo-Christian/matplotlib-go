@@ -292,14 +292,14 @@ forms, PDF blur fallback policy, and visual/catalog fixtures are landed.
       baseline PDF has no standard Gaussian-blur graphics operator; a fake
       "native" implementation would either be viewer-specific or an
       approximation with misleading capability reporting.
+      Superseded in Phase 2.5: PDF now handles blurred path-effect filter
+      passes through backend-local soft-mask image XObjects, while still
+      avoiding any claim of pure vector Gaussian-blur operators.
 - [x] Preserve truthful capability reporting: PDF advertises native
       `PathEffects`, but `SupportsPathEffectFilter` returns true only for
       identity / no-op filters. Blur/shadow filters therefore auto-rasterize
       through the mixed raster/vector path when a PDF output needs them.
-- [x] Add PDF regression coverage for the policy:
-      - identity filters still emit transparency-group Form XObjects;
-      - blur filters do not claim native PDF support;
-      - package documentation records the fallback reason.
+- [x] Add PDF regression coverage for the policy: - identity filters still emit transparency-group Form XObjects; - blur filters do not claim native PDF support; - package documentation records the fallback reason.
 
 #### 2.2F Exit Criteria
 
@@ -433,17 +433,25 @@ uniform across the primary native targets: AGG, SVG, PDF, and Skia.
 
 ### 2.5 Native Path-Effect Filter Parity
 
+✅ **Completed.** Filtered path effects now route through capability interfaces
+on the native targets. AGG remains the raster offscreen reference, SVG emits
+native `<filter>` output, PDF emits backend-local soft-mask image XObjects for
+blurred passes and transparency-group Form XObjects for identity passes, and the
+Skia-tagged CPU bridge exposes `render.FilterRenderer` for the same
+renderer-neutral filter replay path. PS, PGF, and GoBasic keep documented
+fallback semantics and do not claim native filtered path-effect support.
+
 **Goal:** make filtered path effects route through capability interfaces and
 produce equivalent native output where the backend can support it.
 
 - [x] Keep AGG as the raster reference for filtered path effects through
       `render.FilterRenderer`, with coverage for offscreen capture/replay and
       blurred path-effect compositing.
-- [ ] Complete native filtered path-effect behavior across vector backends:
+- [x] Complete native filtered path-effect behavior across vector backends:
       AGG offscreen blur remains the raster reference, SVG keeps `<filter>`
       output, PDF adds blurred transparency-group / soft-mask output, and Skia
       renders the same filter passes without core knowing the backend name.
-- [ ] Define the intentional fallback semantics for PS, PGF, and GoBasic in
+- [x] Define the intentional fallback semantics for PS, PGF, and GoBasic in
       backend docs and capability declarations so the "uniform" contract is
       explicit: AGG/SVG/PDF/Skia are native targets; fallback backends either
       replay renderer-neutral effects or report unsupported truthfully.
@@ -906,7 +914,7 @@ renderer contract, backend implementation, or the AGG port itself.
 ### 8.11 `image_heatmap` (RMSE 5.54)
 
 - [x] Code: translated Python `imshow(..., interpolation="nearest",
-      aspect="auto", extent=...)` through `ax.ImShow`.
+    aspect="auto", extent=...)` through `ax.ImShow`.
 - [ ] Visual: cells align; residuals appear at cell boundaries and tick/text
       edges.
 - [ ] Likely core areas: `core/image.go`, `core/image_api.go`, image pixel
@@ -1499,7 +1507,7 @@ Completed scope:
 
 # Phase 9: Matplotlib API Coverage Audit
 
-**Goal:** close the *existence* gap, not just the *quality* gap. Phase 8's RMSE
+**Goal:** close the _existence_ gap, not just the _quality_ gap. Phase 8's RMSE
 audit can only flag a case that already has a catalog example, so a feature
 that was never implemented produces no failing parity test and stays invisible.
 This phase enumerates Matplotlib's public catalogs (colormaps, markers, named

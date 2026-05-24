@@ -21,4 +21,9 @@
 // procedures and repeated identical payloads are reused; JPEG passthrough is
 // intentionally not exposed because PS colorimage consumes decoded sample data
 // rather than PDF-style image XObjects with a DCTDecode filter.
+//
+// Filter path effects use the renderer-neutral fallback and repaint the
+// requested effect pass directly. This backend does not expose native filtered
+// path-effect support or offscreen filter support because Level-2 PostScript has
+// no portable blur/soft-mask operator matching the PDF and SVG native paths.
 package ps

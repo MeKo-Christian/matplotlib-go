@@ -296,18 +296,17 @@ func TestPathEffectIdentityFilterEmitsTransparencyGroup(t *testing.T) {
 	}
 }
 
-func TestPathEffectBlurFilterPolicyIsDocumented(t *testing.T) {
+func TestPathEffectBlurFilterSoftMaskPolicyIsDocumented(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join(".", "doc.go"))
 	if err != nil {
 		t.Fatalf("read doc.go: %v", err)
 	}
-	doc := string(data)
+	doc := strings.Join(strings.Fields(strings.ReplaceAll(string(data), "\n// ", " ")), " ")
 	for _, want := range []string{
 		"identity path-effect filters",
 		"blurred path-effect filters",
-		"mixed raster/vector fallback",
-		"PDF has no standard Gaussian-blur",
-		"operator, so claiming native vector support would be misleading",
+		"soft-mask image XObjects",
+		"without routing through core mixed-raster fallback",
 	} {
 		if !strings.Contains(doc, want) {
 			t.Fatalf("pdf doc.go missing path-effect blur policy phrase %q:\n%s", want, doc)
@@ -315,7 +314,7 @@ func TestPathEffectBlurFilterPolicyIsDocumented(t *testing.T) {
 	}
 }
 
-func TestPathEffectBlurFilterReportsMixedRasterFallback(t *testing.T) {
+func TestPathEffectBlurFilterEmitsSoftMaskImage(t *testing.T) {
 	r := newTestRenderer(t)
 	blur := render.FilterPathEffect(
 		render.Color{R: 1, A: 1},
@@ -325,8 +324,8 @@ func TestPathEffectBlurFilterReportsMixedRasterFallback(t *testing.T) {
 		4,
 		geom.Pt{X: 2, Y: 2},
 	)
-	if r.SupportsPathEffectFilter(blur) {
-		t.Fatal("PDF should not report native support for blurred path-effect filters")
+	if !r.SupportsPathEffectFilter(blur) {
+		t.Fatal("PDF should report native support for blurred path-effect soft masks")
 	}
 	identity := render.FilterPathEffect(
 		render.Color{R: 1, A: 1},
@@ -338,6 +337,36 @@ func TestPathEffectBlurFilterReportsMixedRasterFallback(t *testing.T) {
 	)
 	if !r.SupportsPathEffectFilter(identity) {
 		t.Fatal("PDF should keep identity path-effect filters in native transparency groups")
+	}
+
+	_ = r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}})
+	r.Path(pdfTestRectPath(40, 30, 50, 30), &render.Paint{
+		Fill: render.Color{B: 1, A: 1},
+		PathEffects: []render.PathEffect{
+			blur,
+			render.NormalPathEffect(),
+		},
+	})
+
+	raw := r.content.String()
+	if strings.Contains(raw, "StartRasterized") {
+		t.Fatalf("blurred path effect should not route through core mixed-raster fallback, got %q", raw)
+	}
+	if !strings.Contains(raw, "/Im1 Do") {
+		t.Fatalf("expected blurred filter pass to invoke an image XObject, got %q", raw)
+	}
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	doc := mustParsePDF(t, r)
+	imageBody := pdfDocumentObjectBodyContaining(doc, "/Subtype /Image")
+	for _, want := range []string{"/Subtype /Image", "/SMask"} {
+		if !strings.Contains(imageBody, want) {
+			t.Fatalf("blurred filter image object missing %q:\n%s", want, imageBody)
+		}
+	}
+	if !pdfDocumentBodyContains(doc, "/ColorSpace /DeviceGray") {
+		t.Fatalf("blurred filter image should emit a grayscale soft-mask object; objects: %#v", doc.Objects)
 	}
 }
 

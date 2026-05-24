@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"os"
 	"strings"
 	"testing"
 
@@ -47,6 +48,30 @@ func TestImageEmitsPostScriptColorImage(t *testing.T) {
 	}
 	if !bytes.Contains(r.document, []byte("<ff000000ff00>")) {
 		t.Fatalf("missing deterministic RGB image payload in\n%s", r.document)
+	}
+}
+
+func TestPathEffectFilterFallbackPolicyIsDocumented(t *testing.T) {
+	r := newTestRenderer(t)
+	if _, ok := any(r).(render.FilterRenderer); ok {
+		t.Fatal("PS should not expose offscreen filter support")
+	}
+	if _, ok := any(r).(render.PathEffectFilterDrawer); ok {
+		t.Fatal("PS should not expose native filtered path-effect support")
+	}
+	doc, err := os.ReadFile("doc.go")
+	if err != nil {
+		t.Fatalf("ReadFile doc.go: %v", err)
+	}
+	text := strings.Join(strings.Fields(strings.ReplaceAll(string(doc), "\n// ", " ")), " ")
+	for _, want := range []string{
+		"Filter path effects",
+		"renderer-neutral fallback",
+		"does not expose native filtered path-effect support",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("PS package docs should document %q fallback:\n%s", want, doc)
+		}
 	}
 }
 

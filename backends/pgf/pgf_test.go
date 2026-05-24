@@ -56,6 +56,33 @@ func TestDocumentationRecordsTextMetricsPolicy(t *testing.T) {
 	}
 }
 
+func TestPathEffectFilterFallbackPolicyIsDocumented(t *testing.T) {
+	r, err := New(120, 80, render.Color{})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if _, ok := any(r).(render.FilterRenderer); ok {
+		t.Fatal("PGF should not expose offscreen filter support")
+	}
+	if _, ok := any(r).(render.PathEffectFilterDrawer); ok {
+		t.Fatal("PGF should not expose native filtered path-effect support")
+	}
+	doc, err := os.ReadFile("doc.go")
+	if err != nil {
+		t.Fatalf("ReadFile doc.go: %v", err)
+	}
+	text := strings.Join(strings.Fields(strings.ReplaceAll(string(doc), "\n// ", " ")), " ")
+	for _, want := range []string{
+		"Filter path effects",
+		"renderer-neutral fallback",
+		"does not expose native filtered path-effect support",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("PGF package docs should document %q fallback:\n%s", want, doc)
+		}
+	}
+}
+
 func TestPathAlphaEmitsPGFOpacityCommands(t *testing.T) {
 	doc := renderPGFDocument(t, func(r *Renderer) {
 		r.Path(testRectPath(), &render.Paint{

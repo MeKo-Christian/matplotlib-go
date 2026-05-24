@@ -22,6 +22,7 @@ func init() {
 			backends.RotatedText,
 			backends.VerticalText,
 			backends.ImageTransform,
+			backends.OffscreenFilter,
 			backends.PathEffects,
 			backends.RGBABuffer,
 			backends.PNGExport,

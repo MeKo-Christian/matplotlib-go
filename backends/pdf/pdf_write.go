@@ -448,6 +448,16 @@ func isPDFIdentityPathEffectFilter(effect render.PathEffect) bool {
 	return name == "" || name == "none" || name == "identity"
 }
 
+func isPDFBlurPathEffectFilter(effect render.PathEffect) bool {
+	name := strings.ToLower(strings.TrimSpace(effect.Filter))
+	switch name {
+	case "blur", "gaussian", "gaussian-blur", "shadow":
+		return true
+	default:
+		return false
+	}
+}
+
 func pathKey(path geom.Path) string {
 	var b strings.Builder
 	for _, cmd := range path.C {

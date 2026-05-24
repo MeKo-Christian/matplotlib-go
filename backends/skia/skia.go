@@ -22,9 +22,12 @@ type Renderer struct {
 	*gobasic.Renderer
 	width       int
 	height      int
+	viewport    geom.Rect
+	resolution  uint
 	background  render.Color
 	bridge      surfaceBridge
 	stack       []trackedState
+	filterStack []filterState
 	clipRect    *geom.Rect
 	clipPaths   []geom.Path
 	useGPU      bool
@@ -32,9 +35,16 @@ type Renderer struct {
 	colorType   string
 }
 
+type filterState struct {
+	renderer  *gobasic.Renderer
+	clipRect  *geom.Rect
+	clipPaths []geom.Path
+}
+
 var (
 	_ render.Renderer           = (*Renderer)(nil)
 	_ render.DPIAware           = (*Renderer)(nil)
+	_ render.FilterRenderer     = (*Renderer)(nil)
 	_ render.TextDrawer         = (*Renderer)(nil)
 	_ render.TextPather         = (*Renderer)(nil)
 	_ render.RotatedTextDrawer  = (*Renderer)(nil)
@@ -73,16 +83,36 @@ func New(config backends.Config) (*Renderer, error) {
 	if config.DPI > 0 {
 		cpu.SetResolution(uint(config.DPI))
 	}
+	resolution := uint(72)
+	if config.DPI > 0 {
+		resolution = uint(config.DPI)
+	}
 	return &Renderer{
 		Renderer:    cpu,
 		width:       config.Width,
 		height:      config.Height,
+		resolution:  resolution,
 		background:  config.Background,
 		bridge:      newCPUSurfaceBridge(config.Width, config.Height),
 		useGPU:      false,
 		sampleCount: skiaConfig.SampleCount,
 		colorType:   skiaConfig.ColorType,
 	}, nil
+}
+
+// SetResolution implements render.DPIAware while keeping Skia-side filter
+// surfaces in sync with the embedded CPU renderer.
+func (r *Renderer) SetResolution(dpi uint) {
+	if dpi == 0 {
+		dpi = 72
+	}
+	if r == nil {
+		return
+	}
+	r.resolution = dpi
+	if r.Renderer != nil {
+		r.Renderer.SetResolution(dpi)
+	}
 }
 
 // Begin starts a drawing session and resets Skia-side tracked graphics state.
@@ -93,7 +123,9 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	if err := r.Renderer.Begin(viewport); err != nil {
 		return err
 	}
+	r.viewport = viewport
 	r.stack = r.stack[:0]
+	r.filterStack = r.filterStack[:0]
 	r.clipRect = nil
 	r.clipPaths = r.clipPaths[:0]
 	return nil
@@ -108,6 +140,7 @@ func (r *Renderer) End() error {
 		return err
 	}
 	r.stack = r.stack[:0]
+	r.filterStack = r.filterStack[:0]
 	r.clipRect = nil
 	r.clipPaths = r.clipPaths[:0]
 	return nil
@@ -198,6 +231,70 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 // DrawPathWithEffects applies renderer-neutral path effect passes.
 func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
 	return render.DrawPathWithEffects(r, p, paint, r.Path)
+}
+
+// StartFilter redirects subsequent drawing to a transparent offscreen CPU
+// surface so renderer-neutral filter passes can be post-processed before
+// compositing back into the Skia output buffer.
+func (r *Renderer) StartFilter() {
+	if r == nil || r.Renderer == nil {
+		return
+	}
+	r.filterStack = append(r.filterStack, filterState{
+		renderer:  r.Renderer,
+		clipRect:  cloneRectPtr(r.clipRect),
+		clipPaths: clonePaths(r.clipPaths),
+	})
+	filter := gobasic.New(r.width, r.height, render.Color{})
+	filter.SetResolution(r.resolution)
+	if err := filter.Begin(r.viewport); err != nil {
+		r.filterStack = r.filterStack[:len(r.filterStack)-1]
+		return
+	}
+	if r.clipRect != nil {
+		filter.ClipRect(*r.clipRect)
+	}
+	for _, clipPath := range r.clipPaths {
+		filter.ClipPath(clipPath)
+	}
+	r.Renderer = filter
+}
+
+// StopFilter restores the previous CPU surface and composites the processed
+// offscreen pass back into it.
+func (r *Renderer) StopFilter(postProcess func(*image.RGBA, float64) (*image.RGBA, geom.Pt)) {
+	if r == nil || r.Renderer == nil || len(r.filterStack) == 0 {
+		return
+	}
+	filtered := r.Renderer.GetImage()
+	_ = r.Renderer.End()
+	state := r.filterStack[len(r.filterStack)-1]
+	r.filterStack = r.filterStack[:len(r.filterStack)-1]
+	r.Renderer = state.renderer
+	r.clipRect = state.clipRect
+	r.clipPaths = clonePaths(state.clipPaths)
+	if r.Renderer == nil || filtered == nil {
+		return
+	}
+	offset := geom.Pt{}
+	if postProcess != nil {
+		filtered, offset = postProcess(filtered, float64(r.resolution))
+	}
+	if filtered == nil || filtered.Bounds().Dx() <= 0 || filtered.Bounds().Dy() <= 0 {
+		return
+	}
+	draw := &image.RGBA{
+		Pix:    append([]uint8(nil), filtered.Pix...),
+		Stride: filtered.Stride,
+		Rect:   filtered.Rect,
+	}
+	r.Renderer.Image(render.NewImageData(draw), geom.Rect{
+		Min: offset,
+		Max: geom.Pt{
+			X: offset.X + float64(filtered.Bounds().Dx()),
+			Y: offset.Y + float64(filtered.Bounds().Dy()),
+		},
+	})
 }
 
 // SupportsPatternFill reports whether the active bridge consumes pattern fills.

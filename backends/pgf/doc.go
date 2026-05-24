@@ -15,4 +15,9 @@
 // self-contained PGF pixel rectangles so the output does not depend on sidecar
 // files. That is deterministic and portable, but intentionally not compact for
 // dense images.
+//
+// Filter path effects use the renderer-neutral fallback and repaint the
+// requested effect pass directly. This backend does not expose native filtered
+// path-effect support or offscreen filter support because PGF generation has no
+// backend-local blur/soft-mask primitive that is portable across TeX drivers.
 package pgf

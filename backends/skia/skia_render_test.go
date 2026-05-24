@@ -218,6 +218,36 @@ func TestSkiaTaggedRegistryAdvertisesImplementedCPUCapabilities(t *testing.T) {
 	}
 }
 
+func TestSkiaTaggedPathEffectFilterUsesOffscreenSurface(t *testing.T) {
+	renderer, err := New(backends.TestDefaultConfig(80, 60))
+	if err != nil {
+		t.Fatalf("New(skia) error = %v", err)
+	}
+	if _, ok := any(renderer).(render.FilterRenderer); !ok {
+		t.Fatal("skia tagged renderer should expose render.FilterRenderer for filtered path effects")
+	}
+	if err := renderer.Begin(geom.Rect{Max: geom.Pt{X: 80, Y: 60}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	renderer.Path(skiaTestRectPath(25, 20, 20, 20), &render.Paint{
+		Fill: render.Color{G: 1, A: 1},
+		PathEffects: []render.PathEffect{
+			render.FilterPathEffect(render.Color{R: 1, A: 1}, render.Color{}, 0, "blur", 4, geom.Pt{}),
+			render.NormalPathEffect(),
+		},
+	})
+	if err := renderer.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	img := renderer.GetImage()
+	if got := img.RGBAAt(23, 30); got.R <= got.G {
+		t.Fatalf("expected blurred red filter pass outside normal green fill, got %+v", got)
+	}
+	if got := img.RGBAAt(35, 30); got.G == 0 {
+		t.Fatalf("expected normal green fill to remain after filter pass, got %+v", got)
+	}
+}
+
 func nonWhitePixels(img *image.RGBA) int {
 	if img == nil {
 		return 0
@@ -231,4 +261,14 @@ func nonWhitePixels(img *image.RGBA) int {
 		}
 	}
 	return count
+}
+
+func skiaTestRectPath(x, y, w, h float64) geom.Path {
+	var p geom.Path
+	p.MoveTo(geom.Pt{X: x, Y: y})
+	p.LineTo(geom.Pt{X: x + w, Y: y})
+	p.LineTo(geom.Pt{X: x + w, Y: y + h})
+	p.LineTo(geom.Pt{X: x, Y: y + h})
+	p.Close()
+	return p
 }

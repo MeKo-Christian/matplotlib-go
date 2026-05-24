@@ -88,9 +88,9 @@ images and uses deterministic approximate text metrics while LaTeX provides the
 final font and TeX layout at document compile time.
 
 PDF path effects are vector-native for normal stroke/fill effects and identity
-filter passes. Blurred path-effect filters intentionally use mixed raster/vector
-fallback output because baseline PDF does not define a portable Gaussian-blur
-graphics operator.
+filter passes. Blurred path-effect filters are emitted as backend-local image
+XObjects with soft masks, so core routing still goes through the path-effect
+filter capability rather than backend-name or mixed-raster fallback logic.
 
 Interactive embedder contracts for `FigureCanvas`, `DrawIdleCanvas`, event
 payloads, picker behavior, and optional blitting are documented in

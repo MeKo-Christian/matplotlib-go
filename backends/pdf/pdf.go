@@ -483,23 +483,59 @@ func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
 	return render.DrawPathWithEffects(r, p, paint, r.Path)
 }
 
-// SupportsPathEffectFilter reports whether PDF can render the filter effect as
-// vector output. Blur still needs the later soft-mask implementation.
+// SupportsPathEffectFilter reports whether PDF can render the filter effect
+// through backend-local PDF resources instead of core mixed-raster fallback.
 func (r *Renderer) SupportsPathEffectFilter(effect render.PathEffect) bool {
-	return isPDFIdentityPathEffectFilter(effect)
+	return isPDFIdentityPathEffectFilter(effect) || isPDFBlurPathEffectFilter(effect)
 }
 
-// DrawPathEffectFilter captures supported filter passes into a transparency
-// group Form XObject and replays that group into the page content stream.
+// DrawPathEffectFilter captures supported filter passes into PDF-native
+// resources: identity filters use transparency-group Form XObjects, while blur
+// filters repaint the pass to an isolated soft-mask image XObject.
 func (r *Renderer) DrawPathEffectFilter(path geom.Path, paint render.Paint, effect render.PathEffect, _ func(geom.Path, *render.Paint)) bool {
 	if r == nil || !r.began || !r.SupportsPathEffectFilter(effect) {
 		return false
+	}
+	if isPDFBlurPathEffectFilter(effect) {
+		return r.drawBlurredPathEffectFilter(path, paint, effect)
 	}
 	name, ok := r.registerPathEffectForm(path, &paint)
 	if !ok {
 		return false
 	}
 	fmt.Fprintf(&r.content, "q\n/%s Do\nQ\n", escapeName(name))
+	return true
+}
+
+func (r *Renderer) drawBlurredPathEffectFilter(path geom.Path, paint render.Paint, effect render.PathEffect) bool {
+	dpi := float64(r.resolution)
+	if dpi <= 0 {
+		dpi = 72
+	}
+	session, ok := mixedraster.Start(
+		r.width,
+		r.height,
+		r.viewport,
+		render.Rasterization{Mode: render.RasterizeAuto, DPI: dpi},
+		r.resolution,
+		r.clipRect,
+		r.clipPaths,
+	)
+	if !ok {
+		return false
+	}
+	session.Renderer().Path(path, &paint)
+	img, rect, ok := session.Stop()
+	if !ok || img == nil || img.RGBA() == nil {
+		return false
+	}
+	filterEffect := effect
+	filterEffect.FilterRadius *= dpi / 72.0
+	filtered, _ := render.ApplyPathEffectFilter(img.RGBA(), filterEffect, dpi)
+	if filtered == nil {
+		return false
+	}
+	r.Image(render.NewImageData(filtered), rect)
 	return true
 }
 

@@ -11,15 +11,15 @@ GoDoc for package `render`.
 
 ## TL;DR
 
-| You want…                                          | Use         |
-| --------------------------------------------------- | ----------- |
-| A PNG that looks like Matplotlib                    | **AGG**     |
-| A build with zero non-stdlib dependencies           | **GoBasic** |
-| A scalable figure for the web or further editing    | **SVG**     |
-| A print-ready document with embedded fonts          | **PDF**     |
-| EPS/PostScript for a legacy publishing pipeline     | **PS**      |
-| A figure typeset by LaTeX with document fonts       | **PGF**     |
-| Skia parity work / future GPU acceleration          | **Skia**    |
+| You want…                                        | Use         |
+| ------------------------------------------------ | ----------- |
+| A PNG that looks like Matplotlib                 | **AGG**     |
+| A build with zero non-stdlib dependencies        | **GoBasic** |
+| A scalable figure for the web or further editing | **SVG**     |
+| A print-ready document with embedded fonts       | **PDF**     |
+| EPS/PostScript for a legacy publishing pipeline  | **PS**      |
+| A figure typeset by LaTeX with document fonts    | **PGF**     |
+| Skia parity work / future GPU acceleration       | **Skia**    |
 
 If you do not care, do nothing: the registry auto-selects a backend, and
 `Savefig`/`SaveFig` pick one from the file extension.
@@ -81,8 +81,8 @@ Pure-Go PDF backend with deterministic serialization and **embedded fonts**,
 so a document renders identically anywhere. Supports pattern and gradient
 fills and image transforms; metadata can be set via `render.WithPDFMetadata`.
 Path effects stay vector for normal stroke/fill effects and identity filter
-passes; blurred path-effect filters use the mixed raster/vector fallback
-because PDF has no standard Gaussian-blur graphics operator.
+passes; blurred path-effect filters are emitted as backend-local image XObjects
+with soft masks, keeping the routing behind the path-effect filter capability.
 
 Use PDF for print-ready, self-contained documents and reports.
 
@@ -123,18 +123,18 @@ Excerpt from `go run ./examples/backends/demo/main.go --capabilities`
 (`✓` = supported, `~` = partial/fallback, blank = unsupported). Skia is omitted
 because it requires `-tags skia`.
 
-| Capability        | AGG | GoBasic | SVG | PDF | PS  | PGF |
-| ----------------- | --- | ------- | --- | --- | --- | --- |
-| Anti-aliasing     | ✓   | ✓       | ✓   | ✓   |     |     |
-| Sub-pixel         | ✓   |         |     |     |     |     |
-| Font hinting      | ✓   |         |     |     |     |     |
-| Text shaping      | ✓   | ✓       | ✓   | ✓   | ✓   | ✓   |
-| Pattern fill      | ✓   | ~       | ✓   | ✓   |     |     |
-| Gradient fill     | ✓   | ~       | ✓   | ✓   |     |     |
-| Image transform   | ✓   | ✓       | ✓   | ✓   | ✓   | ✓   |
-| Clip-path xform   |     |         | ✓   |     |     |     |
-| Vector output     |     |         | ✓   | ✓   | ✓   | ✓   |
-| GPU acceleration  |     |         |     |     |     |     |
+| Capability       | AGG | GoBasic | SVG | PDF | PS  | PGF |
+| ---------------- | --- | ------- | --- | --- | --- | --- |
+| Anti-aliasing    | ✓   | ✓       | ✓   | ✓   |     |     |
+| Sub-pixel        | ✓   |         |     |     |     |     |
+| Font hinting     | ✓   |         |     |     |     |     |
+| Text shaping     | ✓   | ✓       | ✓   | ✓   | ✓   | ✓   |
+| Pattern fill     | ✓   | ~       | ✓   | ✓   |     |     |
+| Gradient fill    | ✓   | ~       | ✓   | ✓   |     |     |
+| Image transform  | ✓   | ✓       | ✓   | ✓   | ✓   | ✓   |
+| Clip-path xform  |     |         | ✓   |     |     |     |
+| Vector output    |     |         | ✓   | ✓   | ✓   | ✓   |
+| GPU acceleration |     |         |     |     |     |     |
 
 Notes:
 

@@ -189,6 +189,14 @@ func pathEffectPostProcess(effect PathEffect) func(*image.RGBA, float64) (*image
 	}
 }
 
+// ApplyPathEffectFilter applies the raster post-processing filter for a
+// PathEffectFilter pass. Vector backends that implement PathEffectFilterDrawer
+// can use this helper when their native representation is a backend-local
+// soft mask or image group rather than render.FilterRenderer.
+func ApplyPathEffectFilter(img *image.RGBA, effect PathEffect, dpi float64) (*image.RGBA, geom.Pt) {
+	return pathEffectPostProcess(effect)(img, dpi)
+}
+
 func cloneRGBA(img *image.RGBA) *image.RGBA {
 	if img == nil {
 		return nil
