@@ -50,15 +50,17 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CoverageID:      "artist",
 		Title:           "Per-artist clipping and transform metadata",
 		UpstreamModules: []string{"artist.py"},
-		GoFiles:         []string{"core/artist.go", "core/text.go", "core/picker.go"},
-		CurrentEquivalent: "Go generally applies axes-level clip rectangles / paths during traversal; " +
-			"some artists, such as Text, expose local clip behavior.",
-		Gap: "Most artists cannot carry Matplotlib-style custom clip boxes, clip paths, " +
-			"per-artist transforms, visible flags, alpha, animated state, or in-layout metadata " +
-			"independent of their owning axes.",
-		Decision: GapDecisionImplement,
-		Rationale: "Per-artist clipping and visibility affect rendering parity directly; add shared metadata " +
-			"where static artists need it instead of baking special cases into draw traversal.",
+		GoFiles:         []string{"core/artist.go", "core/lifecycle.go", "core/rasterization.go", "core/text.go", "core/picker.go"},
+		CurrentEquivalent: "Shared artist metadata now carries visibility, alpha, labels, in-layout, " +
+			"local stale state, explicit clip boxes / paths, clip-on behavior, and common static " +
+			"coordinate/display transform overrides through draw traversal.",
+		Gap: "The remaining scope is intentionally narrower than Matplotlib's Artist base class: " +
+			"parent stale propagation, callback registries, animated draw integration, and the full " +
+			"dynamic getp/setp property surface are not modeled as shared v1.0 behavior.",
+		Decision: GapDecisionIdiomaticEquivalent,
+		Rationale: "Static rendering parity for visibility, alpha, clipping, and transforms is covered by " +
+			"shared metadata and catalog fixtures; lifecycle callbacks remain a separate interactive/API " +
+			"surface rather than part of the static artist draw contract.",
 	},
 	{
 		ID:              "ticker-formatter-catalog",
@@ -109,14 +111,16 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Title:           "Line2D marker, data, and transformed-path semantics",
 		UpstreamModules: []string{"lines.py", "markers.py"},
 		GoFiles:         []string{"core/line.go", "core/plot.go", "core/scatter.go"},
-		CurrentEquivalent: "Go Line2D draws stroked polylines with dashes and draw styles; marker-rich " +
-			"views are mostly represented by Scatter2D.",
-		Gap: "Matplotlib Line2D combines line and marker drawing, marker face / edge colors, " +
-			"fillstyle, markevery, gapcolor, data getters / setters, invalidation, transformed-path " +
-			"caching, and large sorted-data subslicing.",
-		Decision: GapDecisionImplement,
-		Rationale: "Integrated Line2D markers and marker styling are visible in legends, stem/spy plots, " +
-			"and migration examples; performance caches can remain idiomatic and demand-driven.",
+		CurrentEquivalent: "Go Line2D now combines stroked polylines with data markers, marker face / " +
+			"edge colors, explicit auto/none color sentinels, point-based marker edge widths, " +
+			"fillstyle and half-fill rendering, markevery forms, gapcolor, invalid-point line breaks, " +
+			"data accessors, stale invalidation, legends, and custom / tuple / mathtext marker paths.",
+		Gap: "The remaining scope is performance and Python-surface breadth rather than visible static " +
+			"marker semantics: Matplotlib's transformed-path cache, sorted-data subslicing, and broad " +
+			"dynamic setter/getter aliases are not cloned one-for-one.",
+		Decision: GapDecisionIdiomaticEquivalent,
+		Rationale: "Visible Line2D marker, data, and legend parity is now covered by focused fixtures; " +
+			"future work should add caches or aliases only when profiling or migration examples need them.",
 	},
 	{
 		ID:              "collection-variants-setters",
