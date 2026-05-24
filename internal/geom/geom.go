@@ -1,5 +1,7 @@
 package geom
 
+import "strings"
+
 // F64 is the canonical float type used across geometry.
 type F64 = float64
 
@@ -60,6 +62,44 @@ func (r Rect) Expanded(xScale, yScale F64) Rect {
 	hw := r.W() * xScale / 2
 	hh := r.H() * yScale / 2
 	return Rect{Min: Pt{cx - hw, cy - hh}, Max: Pt{cx + hw, cy + hh}}
+}
+
+// Anchored returns a child rectangle of size anchored within r.
+// Supported anchors are C, N, S, E, W, NE, NW, SE, and SW. Compass anchors are
+// interpreted in rectangle coordinates: S touches Min.Y, N touches Max.Y.
+func (r Rect) Anchored(size Pt, anchor string) (Rect, bool) {
+	ax, ay, ok := anchorFactors(anchor)
+	if !ok {
+		return Rect{}, false
+	}
+	x := r.Min.X + (r.W()-size.X)*ax
+	y := r.Min.Y + (r.H()-size.Y)*ay
+	return Rect{Min: Pt{x, y}, Max: Pt{x + size.X, y + size.Y}}, true
+}
+
+func anchorFactors(anchor string) (F64, F64, bool) {
+	switch strings.ToUpper(strings.TrimSpace(anchor)) {
+	case "C", "CENTER":
+		return 0.5, 0.5, true
+	case "S", "LOWER CENTER":
+		return 0.5, 0, true
+	case "N", "UPPER CENTER":
+		return 0.5, 1, true
+	case "W", "CENTER LEFT":
+		return 0, 0.5, true
+	case "E", "CENTER RIGHT":
+		return 1, 0.5, true
+	case "SW", "LOWER LEFT":
+		return 0, 0, true
+	case "SE", "LOWER RIGHT":
+		return 1, 0, true
+	case "NW", "UPPER LEFT":
+		return 0, 1, true
+	case "NE", "UPPER RIGHT":
+		return 1, 1, true
+	default:
+		return 0, 0, false
+	}
 }
 
 // Translated moves the rectangle by dx,dy.

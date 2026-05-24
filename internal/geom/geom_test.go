@@ -96,6 +96,30 @@ func TestRectUnionAndTransforms(t *testing.T) {
 	}
 }
 
+func TestRectAnchored(t *testing.T) {
+	container := Rect{Min: Pt{10, 20}, Max: Pt{110, 70}}
+	size := Pt{20, 10}
+	cases := []struct {
+		anchor string
+		want   Rect
+	}{
+		{anchor: "C", want: Rect{Min: Pt{50, 40}, Max: Pt{70, 50}}},
+		{anchor: "SW", want: Rect{Min: Pt{10, 20}, Max: Pt{30, 30}}},
+		{anchor: "NE", want: Rect{Min: Pt{90, 60}, Max: Pt{110, 70}}},
+		{anchor: "upper right", want: Rect{Min: Pt{90, 60}, Max: Pt{110, 70}}},
+		{anchor: "center left", want: Rect{Min: Pt{10, 40}, Max: Pt{30, 50}}},
+	}
+	for _, tc := range cases {
+		got, ok := container.Anchored(size, tc.anchor)
+		if !ok || got != tc.want {
+			t.Fatalf("Anchored(%q) = %+v ok=%v, want %+v", tc.anchor, got, ok, tc.want)
+		}
+	}
+	if _, ok := container.Anchored(size, "outside"); ok {
+		t.Fatal("unknown anchor should report ok=false")
+	}
+}
+
 func TestAffineBasicsAndInvert(t *testing.T) {
 	id := Identity()
 	p := Pt{3, 4}
