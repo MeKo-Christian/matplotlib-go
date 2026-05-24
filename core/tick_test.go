@@ -129,6 +129,42 @@ func TestLinearLocator_PresetOverridesNumTicks(t *testing.T) {
 	}
 }
 
+func TestMaxNLocatorOptionsMatchMatplotlibSemantics(t *testing.T) {
+	symmetric := (MaxNLocator{N: 4, Symmetric: true}).Ticks(1, 3, 0)
+	if len(symmetric) == 0 || symmetric[0] != -3 || symmetric[len(symmetric)-1] != 3 {
+		t.Fatalf("symmetric ticks = %v, want to cover [-3, 3]", symmetric)
+	}
+
+	integer := (MaxNLocator{N: 4, Integer: true}).Ticks(0.2, 3.8, 0)
+	for _, tick := range integer {
+		if tick != math.Round(tick) {
+			t.Fatalf("integer locator tick %v is not integral: %v", tick, integer)
+		}
+	}
+
+	relaxed := (MaxNLocator{N: 4, Integer: true, MinTicks: 3}).Ticks(0.2, 0.8, 0)
+	if len(relaxed) == 0 {
+		t.Fatal("integer locator should relax integer constraint when not enough integer ticks exist")
+	}
+	allInteger := true
+	for _, tick := range relaxed {
+		allInteger = allInteger && tick == math.Round(tick)
+	}
+	if allInteger {
+		t.Fatalf("integer locator did not relax integer constraint: %v", relaxed)
+	}
+
+	pruned := (MaxNLocator{N: 5, Prune: "both"}).Ticks(0, 10, 0)
+	if len(pruned) == 0 || pruned[0] <= 0 || pruned[len(pruned)-1] >= 10 {
+		t.Fatalf("pruned ticks = %v, want lower and upper ticks removed", pruned)
+	}
+
+	customSteps := (MaxNLocator{N: 4, Steps: []float64{2, 4}}).Ticks(0, 8, 0)
+	if len(customSteps) < 2 || customSteps[1]-customSteps[0] != 2 {
+		t.Fatalf("custom-step ticks = %v, want step 2", customSteps)
+	}
+}
+
 func TestIndexLocator_Basic(t *testing.T) {
 	ticks := (IndexLocator{Base: 3, Offset: 1}).Ticks(0, 10, 0)
 	want := []float64{1, 4, 7, 10}

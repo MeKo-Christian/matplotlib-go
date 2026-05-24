@@ -266,20 +266,29 @@ func (l MultipleLocator) Ticks(minVal, maxVal float64, _ int) []float64 {
 
 // MaxNLocator places up to N+1 nice ticks across the view limits.
 type MaxNLocator struct {
-	N       int
-	Integer bool
-	Steps   []float64
+	N         int
+	Integer   bool
+	Steps     []float64
+	Symmetric bool
+	Prune     string
+	MinTicks  int
 }
 
 func (l MaxNLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
-	if math.IsNaN(minVal) || math.IsNaN(maxVal) {
+	if math.IsNaN(minVal) || math.IsNaN(maxVal) || math.IsInf(minVal, 0) || math.IsInf(maxVal, 0) {
 		return nil
 	}
 	if minVal == maxVal {
-		return []float64{minVal}
+		expand := math.Max(1, math.Abs(minVal))*1e-13 + 1e-14
+		minVal -= expand
+		maxVal += expand
 	}
 	if minVal > maxVal {
 		minVal, maxVal = maxVal, minVal
+	}
+	if l.Symmetric {
+		bound := math.Max(math.Abs(minVal), math.Abs(maxVal))
+		minVal, maxVal = -bound, bound
 	}
 
 	maxIntervals := l.N
@@ -297,12 +306,14 @@ func (l MaxNLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 	}
 
 	step := niceStepCeil(raw, l.normalizedSteps())
-	if l.Integer && step < 1 {
+	integerCount := math.Floor(maxVal) - math.Ceil(minVal) + 1
+	integerMode := l.Integer && integerCount >= float64(l.minTicks())
+	if integerMode && step < 1 {
 		step = 1
 	}
 
 	ticks := generateBoundedTicks(minVal, maxVal, step)
-	if l.Integer {
+	if integerMode {
 		filtered := ticks[:0]
 		for _, tick := range ticks {
 			if approx(tick, math.Round(tick), 1e-9) {
@@ -311,7 +322,7 @@ func (l MaxNLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 		}
 		ticks = filtered
 	}
-	return dedupeTicks(ticks)
+	return l.pruneTicks(dedupeTicks(ticks))
 }
 
 func (l MaxNLocator) normalizedSteps() []float64 {
@@ -320,7 +331,7 @@ func (l MaxNLocator) normalizedSteps() []float64 {
 	}
 	out := make([]float64, 0, len(l.Steps))
 	for _, step := range l.Steps {
-		if step > 0 && !math.IsNaN(step) && !math.IsInf(step, 0) {
+		if step >= 1 && step <= 10 && !math.IsNaN(step) && !math.IsInf(step, 0) {
 			out = append(out, step)
 		}
 	}
@@ -328,7 +339,40 @@ func (l MaxNLocator) normalizedSteps() []float64 {
 		return []float64{1, 2, 2.5, 5, 10}
 	}
 	sort.Float64s(out)
-	return dedupeTicks(out)
+	out = dedupeTicks(out)
+	if out[0] != 1 {
+		out = append([]float64{1}, out...)
+	}
+	if out[len(out)-1] != 10 {
+		out = append(out, 10)
+	}
+	return out
+}
+
+func (l MaxNLocator) minTicks() int {
+	if l.MinTicks > 0 {
+		return l.MinTicks
+	}
+	return 2
+}
+
+func (l MaxNLocator) pruneTicks(ticks []float64) []float64 {
+	switch strings.ToLower(strings.TrimSpace(l.Prune)) {
+	case "lower":
+		if len(ticks) > 0 {
+			return ticks[1:]
+		}
+	case "upper":
+		if len(ticks) > 0 {
+			return ticks[:len(ticks)-1]
+		}
+	case "both":
+		if len(ticks) > 2 {
+			return ticks[1 : len(ticks)-1]
+		}
+		return nil
+	}
+	return ticks
 }
 
 // AutoLocator is a MaxNLocator tuned for general linear axes.
