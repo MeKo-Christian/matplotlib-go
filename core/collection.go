@@ -228,7 +228,7 @@ func (c *PathCollection) Draw(r render.Renderer, ctx *DrawContext) {
 
 // Bounds returns the path collection's data-space bounds when applicable.
 func (c *PathCollection) Bounds(*DrawContext) geom.Rect {
-	if c == nil || !isDataCoords(c.Coords) {
+	if c == nil || !artistUsesDataCoords(c, c.Coords) {
 		return geom.Rect{}
 	}
 
@@ -284,7 +284,7 @@ func (c *LineCollection) Draw(r render.Renderer, ctx *DrawContext) {
 			continue
 		}
 		path := polylinePath(segment)
-		path = buildDisplayPath(ctx, c.Coords, path, geom.Identity())
+		path = buildArtistDisplayPath(ctx, c, c.Coords, path, geom.Identity())
 		color := c.alphaColor(colorAt(c.Color, c.Colors, i))
 		width := widthAt(c.LineWidth, c.LineWidths, i)
 		if width <= 0 || color.A <= 0 {
@@ -312,7 +312,7 @@ func (c *LineCollection) Draw(r render.Renderer, ctx *DrawContext) {
 
 // Bounds returns the line collection's data-space bounds when applicable.
 func (c *LineCollection) Bounds(*DrawContext) geom.Rect {
-	if c == nil || !isDataCoords(c.Coords) || len(c.Segments) == 0 {
+	if c == nil || !artistUsesDataCoords(c, c.Coords) || len(c.Segments) == 0 {
 		return geom.Rect{}
 	}
 
@@ -358,7 +358,7 @@ func (c *PatchCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		if len(path.C) == 0 {
 			continue
 		}
-		path = buildDisplayPath(ctx, c.Coords, path, geom.Identity())
+		path = buildArtistDisplayPath(ctx, c, c.Coords, path, geom.Identity())
 		patch := Patch{
 			FaceColor:   c.alphaColor(colorAt(c.FaceColor, c.FaceColors, i)),
 			EdgeColor:   c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, i)),
@@ -382,7 +382,7 @@ func (c *PatchCollection) Draw(r render.Renderer, ctx *DrawContext) {
 
 // Bounds returns the patch collection's data-space bounds when applicable.
 func (c *PatchCollection) Bounds(*DrawContext) geom.Rect {
-	if c == nil || !isDataCoords(c.Coords) || len(c.Paths) == 0 {
+	if c == nil || !artistUsesDataCoords(c, c.Coords) || len(c.Paths) == 0 {
 		return geom.Rect{}
 	}
 	var bounds geom.Rect
@@ -459,7 +459,7 @@ func (m *QuadMesh) Draw(r render.Renderer, ctx *DrawContext) {
 
 // Bounds returns the quad mesh's data-space bounds when applicable.
 func (m *QuadMesh) Bounds(ctx *DrawContext) geom.Rect {
-	if m == nil || !isDataCoords(m.Coords) || len(m.XEdges) < 2 || len(m.YEdges) < 2 {
+	if m == nil || !artistUsesDataCoords(m, m.Coords) || len(m.XEdges) < 2 || len(m.YEdges) < 2 {
 		return geom.Rect{}
 	}
 	return geom.Rect{
@@ -563,7 +563,7 @@ func (c *PathCollection) drawMarkers(r render.Renderer, ctx *DrawContext) bool {
 		Marker: c.Path,
 		Items:  make([]render.MarkerItem, 0, count),
 	}
-	tr := ctx.TransformFor(c.Coords)
+	tr := artistTransformFor(ctx, c, c.Coords)
 	for i := 0; i < count; i++ {
 		fill := c.faceColorAt(i)
 		edge := c.edgeColorAt(i)
@@ -705,7 +705,7 @@ func (c *PatchCollection) drawPathCollection(r render.Renderer, ctx *DrawContext
 		if len(path.C) == 0 {
 			continue
 		}
-		path = buildDisplayPath(ctx, c.Coords, path, geom.Identity())
+		path = buildArtistDisplayPath(ctx, c, c.Coords, path, geom.Identity())
 		fill := c.alphaColor(colorAt(c.FaceColor, c.FaceColors, i))
 		edge := c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, i))
 		width := widthAt(c.EdgeWidth, c.EdgeWidths, i)
@@ -764,7 +764,7 @@ func (m *QuadMesh) drawQuadMesh(r render.Renderer, ctx *DrawContext) bool {
 				{X: m.XEdges[xi], Y: m.YEdges[yi+1]},
 			}
 			var quad [4]geom.Pt
-			tr := ctx.TransformFor(m.Coords)
+			tr := artistTransformFor(ctx, m, m.Coords)
 			for i, pt := range local {
 				if tr != nil {
 					pt = tr.Apply(pt)
@@ -818,7 +818,7 @@ func (m *QuadMesh) drawGouraudMesh(r render.Renderer, ctx *DrawContext) bool {
 	mapping := m.ScalarMap().Resolved()
 	alpha := m.alphaValue()
 	colors := meshValueColors(m.Values, mapping, alpha)
-	tr := ctx.TransformFor(m.Coords)
+	tr := artistTransformFor(ctx, m, m.Coords)
 	pointAt := func(xi, yi int) geom.Pt {
 		pt := geom.Pt{X: m.XEdges[xi], Y: m.YEdges[yi]}
 		if tr != nil {
@@ -1019,14 +1019,14 @@ func (c *PathCollection) displayPathAt(ctx *DrawContext, i int, base geom.Path) 
 	offset := c.offsetAt(i)
 	if c.PathInDisplay {
 		path := scaleAndTranslatePath(base, scale, geom.Pt{})
-		tr := ctx.TransformFor(c.Coords)
+		tr := artistTransformFor(ctx, c, c.Coords)
 		if tr != nil {
 			offset = tr.Apply(offset)
 		}
 		return applyAffinePath(path, translateAffine(offset))
 	}
 	path := scaleAndTranslatePath(base, scale, offset)
-	return buildDisplayPath(ctx, c.Coords, path, geom.Identity())
+	return buildArtistDisplayPath(ctx, c, c.Coords, path, geom.Identity())
 }
 
 func colorAt(fallback render.Color, colors []render.Color, i int) render.Color {

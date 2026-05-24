@@ -137,7 +137,7 @@ func (a *FancyArrowPatch) Draw(ren render.Renderer, ctx *DrawContext) {
 
 // Bounds returns the data-space bounds when the endpoints are in data coords.
 func (a *FancyArrowPatch) Bounds(*DrawContext) geom.Rect {
-	if a == nil || !isDataCoords(a.Coords) {
+	if a == nil || !artistUsesDataCoords(a, a.Coords) {
 		return geom.Rect{}
 	}
 	if len(a.Path.C) > 0 {
@@ -172,9 +172,9 @@ func (c *ConnectionPatch) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
 
 func (a *FancyArrowPatch) displayPath(ctx *DrawContext) geom.Path {
 	if len(a.Path.C) > 0 {
-		return buildDisplayPath(ctx, a.Coords, a.Path, geom.Identity())
+		return buildArtistDisplayPath(ctx, a, a.Coords, a.Path, geom.Identity())
 	}
-	tr := ctx.TransformFor(a.Coords)
+	tr := artistTransformFor(ctx, a, a.Coords)
 	if tr == nil {
 		tr = transform.NewAffine(geom.Identity())
 	}

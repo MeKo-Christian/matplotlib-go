@@ -1,6 +1,10 @@
 package core
 
-import "github.com/cwbudde/matplotlib-go/render"
+import (
+	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/transform"
+)
 
 const (
 	autoRasterizeScatterPointThreshold = 1000
@@ -19,7 +23,42 @@ type ArtistRasterization struct {
 	alphaSet      bool
 	inLayout      bool
 	inLayoutSet   bool
+	clipOn        bool
+	clipOnSet     bool
+	clipRect      geom.Rect
+	hasClipRect   bool
+	clipPath      geom.Path
+	hasClipPath   bool
+	clipPathTrans geom.Affine
+	hasClipTrans  bool
+	transform     transform.T
+	hasTransform  bool
+	transformSpec CoordinateSpec
+	hasTransSpec  bool
 	stale         bool
+}
+
+// ArtistClip stores explicit clipping metadata for an artist. ClipOn defaults
+// to true on zero-value ArtistRasterization, matching Matplotlib's Artist
+// metadata defaults.
+type ArtistClip struct {
+	ClipOn            bool
+	ClipRect          geom.Rect
+	HasClipRect       bool
+	ClipPath          geom.Path
+	HasClipPath       bool
+	ClipPathTransform geom.Affine
+	HasClipPathTrans  bool
+}
+
+// ArtistTransform stores explicit transform metadata for path-like artists.
+// Transform, when set, maps the artist's coordinates directly into display
+// space. Otherwise Coords selects one of the DrawContext coordinate transforms.
+type ArtistTransform struct {
+	Transform    transform.T
+	HasTransform bool
+	Coords       CoordinateSpec
+	HasCoords    bool
 }
 
 // SetVisible toggles whether the artist participates in drawing. The zero
@@ -106,6 +145,155 @@ func (a *ArtistRasterization) InLayout() bool {
 	return a == nil || !a.inLayoutSet || a.inLayout
 }
 
+// SetClipOn toggles whether explicit artist-level clipping is applied. The
+// zero value is true.
+func (a *ArtistRasterization) SetClipOn(clipOn bool) {
+	if a == nil {
+		return
+	}
+	a.clipOn = clipOn
+	a.clipOnSet = true
+	a.stale = true
+}
+
+// ClipOn reports whether explicit artist-level clipping is enabled.
+func (a *ArtistRasterization) ClipOn() bool {
+	return a == nil || !a.clipOnSet || a.clipOn
+}
+
+// SetClipRect stores an explicit rectangular clip in display coordinates.
+func (a *ArtistRasterization) SetClipRect(rect geom.Rect) {
+	if a == nil {
+		return
+	}
+	a.clipRect = rect
+	a.hasClipRect = true
+	a.stale = true
+}
+
+// ClearClipRect removes the explicit rectangular clip.
+func (a *ArtistRasterization) ClearClipRect() {
+	if a == nil {
+		return
+	}
+	a.clipRect = geom.Rect{}
+	a.hasClipRect = false
+	a.stale = true
+}
+
+// SetClipPath stores an explicit path clip in display coordinates.
+func (a *ArtistRasterization) SetClipPath(path geom.Path) {
+	if a == nil {
+		return
+	}
+	a.clipPath = cloneArtistClipPath(path)
+	a.hasClipPath = true
+	a.stale = true
+}
+
+// ClearClipPath removes the explicit path clip and any clip-path transform.
+func (a *ArtistRasterization) ClearClipPath() {
+	if a == nil {
+		return
+	}
+	a.clipPath = geom.Path{}
+	a.hasClipPath = false
+	a.clipPathTrans = geom.Affine{}
+	a.hasClipTrans = false
+	a.stale = true
+}
+
+// SetClipPathTransform stores an affine transform for the explicit path clip.
+func (a *ArtistRasterization) SetClipPathTransform(transform geom.Affine) {
+	if a == nil {
+		return
+	}
+	a.clipPathTrans = transform
+	a.hasClipTrans = true
+	a.stale = true
+}
+
+// ClearClipPathTransform removes the explicit path-clip transform.
+func (a *ArtistRasterization) ClearClipPathTransform() {
+	if a == nil {
+		return
+	}
+	a.clipPathTrans = geom.Affine{}
+	a.hasClipTrans = false
+	a.stale = true
+}
+
+// ArtistClip reports the explicit clipping metadata for this artist.
+func (a *ArtistRasterization) ArtistClip() ArtistClip {
+	if a == nil {
+		return ArtistClip{ClipOn: true}
+	}
+	return ArtistClip{
+		ClipOn:            a.ClipOn(),
+		ClipRect:          a.clipRect,
+		HasClipRect:       a.hasClipRect,
+		ClipPath:          cloneArtistClipPath(a.clipPath),
+		HasClipPath:       a.hasClipPath,
+		ClipPathTransform: a.clipPathTrans,
+		HasClipPathTrans:  a.hasClipTrans,
+	}
+}
+
+// SetTransform stores an explicit coordinate-to-display transform for the
+// artist. Passing nil clears the explicit transform.
+func (a *ArtistRasterization) SetTransform(tr transform.T) {
+	if a == nil {
+		return
+	}
+	a.transform = tr
+	a.hasTransform = tr != nil
+	a.stale = true
+}
+
+// ClearTransform removes the explicit coordinate-to-display transform.
+func (a *ArtistRasterization) ClearTransform() {
+	if a == nil {
+		return
+	}
+	a.transform = nil
+	a.hasTransform = false
+	a.stale = true
+}
+
+// SetTransformCoords stores the coordinate system used by this artist when no
+// explicit transform is configured.
+func (a *ArtistRasterization) SetTransformCoords(spec CoordinateSpec) {
+	if a == nil {
+		return
+	}
+	a.transformSpec = spec
+	a.hasTransSpec = true
+	a.stale = true
+}
+
+// ClearTransformCoords removes the coordinate-system override.
+func (a *ArtistRasterization) ClearTransformCoords() {
+	if a == nil {
+		return
+	}
+	a.transformSpec = CoordinateSpec{}
+	a.hasTransSpec = false
+	a.stale = true
+}
+
+// ArtistTransform reports the explicit transform metadata for this artist.
+func (a *ArtistRasterization) ArtistTransform() ArtistTransform {
+	if a == nil {
+		return ArtistTransform{}
+	}
+	return ArtistTransform{
+		Transform:    a.transform,
+		HasTransform: a.hasTransform,
+		Coords:       a.transformSpec,
+		HasCoords:    a.hasTransSpec,
+	}
+}
+
 // SetStale updates the artist stale flag.
 func (a *ArtistRasterization) SetStale(stale bool) {
 	if a == nil {
@@ -160,6 +348,46 @@ type visibilityProvider interface {
 	Visible() bool
 }
 
+type clipProvider interface {
+	ArtistClip() ArtistClip
+}
+
+type artistTransformProvider interface {
+	ArtistTransform() ArtistTransform
+}
+
+func artistTransformFor(ctx *DrawContext, art any, fallback CoordinateSpec) transform.T {
+	if provider, ok := art.(artistTransformProvider); ok {
+		options := provider.ArtistTransform()
+		if options.HasTransform {
+			return options.Transform
+		}
+		if options.HasCoords {
+			if ctx == nil {
+				return nil
+			}
+			return ctx.TransformFor(options.Coords)
+		}
+	}
+	if ctx == nil {
+		return nil
+	}
+	return ctx.TransformFor(fallback)
+}
+
+func artistUsesDataCoords(art any, fallback CoordinateSpec) bool {
+	if provider, ok := art.(artistTransformProvider); ok {
+		options := provider.ArtistTransform()
+		if options.HasTransform {
+			return false
+		}
+		if options.HasCoords {
+			return isDataCoords(options.Coords)
+		}
+	}
+	return isDataCoords(fallback)
+}
+
 func drawArtist(r render.Renderer, ctx *DrawContext, art Artist) {
 	if art == nil {
 		return
@@ -167,6 +395,13 @@ func drawArtist(r render.Renderer, ctx *DrawContext, art Artist) {
 	if provider, ok := art.(visibilityProvider); ok && !provider.Visible() {
 		return
 	}
+	draw := func() {
+		drawRasterizedArtist(r, ctx, art)
+	}
+	drawWithArtistClip(r, art, draw)
+}
+
+func drawRasterizedArtist(r render.Renderer, ctx *DrawContext, art Artist) {
 	options, ok := artistRasterizationOptions(r, art, ctx)
 	if !ok {
 		art.Draw(r, ctx)
@@ -188,6 +423,13 @@ func drawOverlayArtist(r render.Renderer, ctx *DrawContext, art Artist, overlay 
 	if provider, ok := art.(visibilityProvider); ok && !provider.Visible() {
 		return
 	}
+	draw := func() {
+		drawRasterizedOverlayArtist(r, ctx, art, overlay)
+	}
+	drawWithArtistClip(r, art, draw)
+}
+
+func drawRasterizedOverlayArtist(r render.Renderer, ctx *DrawContext, art Artist, overlay OverlayArtist) {
 	options, ok := explicitArtistRasterizationOptions(art, ctx)
 	if !ok {
 		overlay.DrawOverlay(r, ctx)
@@ -200,6 +442,53 @@ func drawOverlayArtist(r render.Renderer, ctx *DrawContext, art Artist, overlay 
 	}
 	defer controller.StopRasterized()
 	overlay.DrawOverlay(r, ctx)
+}
+
+func drawWithArtistClip(r render.Renderer, art Artist, draw func()) {
+	clip, ok := artistClipOptions(art)
+	if !ok {
+		draw()
+		return
+	}
+	r.Save()
+	if clip.HasClipRect {
+		r.ClipRect(clip.ClipRect)
+	}
+	if clip.HasClipPath {
+		if clip.HasClipPathTrans {
+			if transformer, ok := r.(render.ClipPathTransformer); ok {
+				transformer.ClipPathTransformed(clip.ClipPath, clip.ClipPathTransform)
+			} else {
+				r.ClipPath(applyAffinePath(clip.ClipPath, clip.ClipPathTransform))
+			}
+		} else {
+			r.ClipPath(clip.ClipPath)
+		}
+	}
+	draw()
+	r.Restore()
+}
+
+func artistClipOptions(art Artist) (ArtistClip, bool) {
+	provider, ok := art.(clipProvider)
+	if !ok {
+		return ArtistClip{}, false
+	}
+	clip := provider.ArtistClip()
+	if !clip.ClipOn || (!clip.HasClipRect && !clip.HasClipPath) {
+		return ArtistClip{}, false
+	}
+	return clip, true
+}
+
+func cloneArtistClipPath(path geom.Path) geom.Path {
+	if len(path.C) == 0 && len(path.V) == 0 {
+		return geom.Path{}
+	}
+	return geom.Path{
+		C: append([]geom.Cmd(nil), path.C...),
+		V: append([]geom.Pt(nil), path.V...),
+	}
 }
 
 func explicitArtistRasterizationOptions(art Artist, ctx *DrawContext) (render.Rasterization, bool) {

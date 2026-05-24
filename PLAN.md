@@ -1098,12 +1098,12 @@ Phase 4.
 
 ### 5.1 Interactive Widget Behaviors
 
-- [ ] `Button` click activation with hover, press, and disabled states.
-- [ ] `Slider` and `RangeSlider` with click-to-set, drag, keyboard nudging,
+- [x] `Button` click activation with hover, press, and disabled states.
+- [x] `Slider` and `RangeSlider` with click-to-set, drag, keyboard nudging,
       and value formatting.
-- [ ] `CheckButtons` and `RadioButtons` with keyboard navigation and
+- [x] `CheckButtons` and `RadioButtons` with keyboard navigation and
       value-change callbacks.
-- [ ] `TextBox` with focus, caret, selection, copy / paste, and submit /
+- [x] `TextBox` with focus, caret, selection, copy / paste, and submit /
       cancel callbacks.
 
 ### 5.2 Selectors
@@ -2501,14 +2501,125 @@ Matplotlib migration examples, or broad public use.
 
 ### 9C.1 Artist, Line2D, and Marker Semantics
 
-- [ ] Add shared artist metadata where it affects static rendering: visible,
-      alpha, label, clip box/path, custom transform, in-layout flag, and stale
-      invalidation hooks where useful.
-- [ ] Extend `Line2D` so lines and markers share Matplotlib-style semantics:
-      marker face/edge color, marker edge width, fill style, markevery,
-      gapcolor, data getters/setters, and legend interaction.
-- [ ] Finish half-filled marker styles (`left`, `right`, `top`, `bottom`) using
-      alternate marker paths rather than a single filled path collection.
+**Goal:** close the foundational `artist.py`, `lines.py`, and `markers.py`
+gaps that affect static rendering, legends, migration examples, and parity
+fixtures. Keep the Go API explicit and typed, but match Matplotlib behavior
+where the output is visible.
+
+#### 9C.1A Landed Baseline
+
+- [x] Common artists that embed `ArtistRasterization` now get shared
+      Matplotlib-style metadata for visibility, artist-level alpha, in-layout,
+      and stale state. The zero value remains visible, alpha=1, and
+      in-layout=true.
+- [x] Artist traversal skips invisible artists for both normal and overlay
+      draws.
+- [x] `Line2D` and collection-derived artists now combine artist-level alpha
+      with their existing stroke/fill/collection alpha behavior, preserving the
+      existing zero-value "alpha omitted" semantics.
+- [x] `Line2D` now supports optional data markers with marker style/path,
+      marker size, marker face color, marker edge color, marker edge width,
+      every-N `MarkEvery`, and combined line+marker legend samples.
+
+#### 9C.1B Shared Artist Metadata Remainder
+
+- [x] Add shared label accessors for artists that currently store labels in
+      concrete fields (`Line2D.Label`, `Scatter2D.Label`, `Collection.Label`,
+      `Patch.Label`, etc.) so legend and inspection code can use one path.
+- [x] Add per-artist clip metadata:
+      clip-on flag, clip rectangle, clip path, and clip transform where needed
+      for static rendering parity.
+- [x] Wire per-artist clipping into traversal without breaking existing axes
+      clip behavior. Required proof: an artist can render clipped differently
+      from the axes default, and overlay artists still respect their intended
+      unclipped behavior.
+- [x] Add custom per-artist transform support for the common static cases:
+      data transform override, axes/figure coordinate transform, and explicit
+      display transform for path-like artists.
+- [ ] Decide whether stale state needs parent propagation now. If yes, wire it
+      through `Axes`/`Figure`; if no, document the intentional v1.0 scope as
+      local artist state only.
+- [ ] Add focused catalog/parity coverage for visibility, alpha, custom clip,
+      and custom transform behavior.
+
+Current slice landed:
+
+- `core.ArtistLabel`, `core.SetArtistLabel`, `ArtistLabeler`, and
+  `ArtistLabelSetter` now provide a shared inspection/update path for common
+  labeled artists.
+- Legend collection now uses the shared label path and follows Matplotlib's
+  convention of skipping empty labels and labels beginning with `_`.
+- `ArtistRasterization` now carries explicit clip metadata: clip-on, clip rect,
+  clip path, and optional affine clip-path transform with clone-returning path
+  access.
+- Normal and overlay draw traversal now nests explicit artist clips around the
+  artist draw call, while overlay artists without explicit clip metadata remain
+  unclipped by this artist-level path.
+- `ArtistRasterization` now carries optional transform metadata:
+  coordinate-system overrides via `SetTransformCoords` and explicit
+  coordinate-to-display transforms via `SetTransform`.
+- Lines, scatter/path collections, line and patch collections, patch artists,
+  wedges, shadows, and fancy-arrow patches now resolve their display paths
+  through the shared artist transform helper.
+
+#### 9C.1C Line2D Data and Stroke Semantics
+
+- [ ] Add typed data getters/setters for `Line2D`: clone-returning `Data`,
+      `SetData`, `SetXData`, and `SetYData`, with stale invalidation.
+- [ ] Define and implement NaN / Inf segment splitting to match Matplotlib's
+      line-break behavior instead of drawing through invalid points.
+- [ ] Add `gapcolor` support for dashed lines where Matplotlib paints dash gaps
+      with an alternate color.
+- [ ] Expand `MarkEvery` beyond every-N integers:
+      start/step tuple, explicit index list, and slice-like range where that
+      maps cleanly to Go.
+- [ ] Add catalog/parity cases for data mutation, invalid-point line breaks,
+      dashed `gapcolor`, and at least two nontrivial `markevery` forms.
+
+#### 9C.1D Line2D Marker Completion
+
+- [ ] Verify current `Line2D` marker size conversion, marker face/edge fallback,
+      marker edge width, marker alpha, and legend samples against upstream
+      `lines.py` and `markers.py`.
+- [ ] Support marker face color `"none"` semantics through an explicit Go option
+      or sentinel that does not rely on ambiguous zero-alpha fallback.
+- [ ] Support marker edge color `"auto"` / face-color fallback semantics where
+      Matplotlib does so for common markers.
+- [ ] Ensure line-only markers (`+`, `x`, ticks, carets, etc.) use stroke-only
+      marker rendering in both plot output and legends.
+- [ ] Add catalog/parity cases for Line2D markers in plots and legends,
+      including filled, unfilled, line-only, custom path, tuple marker, and
+      mathtext marker variants.
+
+#### 9C.1E Half-Filled Marker Paths
+
+- [ ] Replace the current single filled marker path behavior for
+      `MarkerFillLeft`, `MarkerFillRight`, `MarkerFillTop`, and
+      `MarkerFillBottom` with split marker drawing: primary half uses
+      markerfacecolor, alternate half uses markerfacecoloralt / transparent
+      fallback, and edge drawing remains whole-marker.
+- [ ] Implement split paths for circle, square, diamond, triangle, and polygon
+      markers first; explicitly document or implement behavior for line-only,
+      tuple, custom path, and mathtext markers.
+- [ ] Add renderer-neutral tests that inspect the two fill paths and one edge
+      path for a half-filled marker.
+- [ ] Add catalog/parity fixture coverage for all four half-fill directions.
+
+#### 9C.1F Exit Criteria
+
+- [ ] `FoundationAPIGapAudit` row `artist-clipping-transform` is either closed
+      or split into smaller remaining rows with exact implementation scope.
+- [ ] `FoundationAPIGapAudit` row `line2d-marker-data-semantics` is either
+      closed or split into smaller remaining rows with exact implementation
+      scope.
+- [ ] Public-surface parity rows for `Artist`, `Line2D`, `MarkerStyle`, marker
+      registries, and fillstyle registries are updated from `partial` to
+      precise final statuses or linked to the remaining 9C.1 subtask.
+- [ ] 9C.1 has at least one catalog/parity case each for visibility, alpha,
+      clipping, Line2D markers in legends, invalid line data, `markevery`,
+      `gapcolor`, and half-filled markers.
+- [ ] `go test ./core -count=1` and the relevant catalog cases under
+      `go test ./test/ -run ...` pass after the behavior changes.
 
 Implementation notes:
 
@@ -2518,23 +2629,6 @@ Implementation notes:
   clipping, alpha, and visibility.
 - Prefer adding shared Go option structs/mixins over copying Python's dynamic
   setter model wholesale.
-
-Current slice landed:
-
-- [x] Common artists that embed `ArtistRasterization` now get shared
-  Matplotlib-style metadata for visibility, artist-level alpha, in-layout, and
-  stale state. The zero value remains visible, alpha=1, and in-layout=true.
-- [x] Artist traversal skips invisible artists for both normal and overlay
-  draws.
-- [x] `Line2D` and collection-derived artists now combine artist-level alpha with
-  their existing stroke/fill/collection alpha behavior, preserving the existing
-  zero-value "alpha omitted" semantics.
-- [x] `Line2D` now supports optional data markers with marker style/path,
-  marker size, marker face color, marker edge color, marker edge width,
-  every-N `MarkEvery`, and combined line+marker legend samples.
-- Remaining 9C.1 work: shared label access, clip box/path metadata, custom
-  per-artist transforms, Line2D gapcolor, richer markevery forms, data
-  getters/setters, and true alternate-path half-filled markers.
 
 ### 9C.2 Axis, Ticker, Formatter, Scale, and Transform Breadth
 

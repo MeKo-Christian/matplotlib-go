@@ -314,13 +314,13 @@ func (w *Wedge) Draw(ren render.Renderer, ctx *DrawContext) {
 	if w == nil || ctx == nil || ren == nil || w.Radius <= 0 {
 		return
 	}
-	path := buildDisplayPath(ctx, w.Coords, w.localPath(), geom.Identity())
+	path := buildArtistDisplayPath(ctx, w, w.Coords, w.localPath(), geom.Identity())
 	w.drawStyledPath(ren, path, geom.Path{})
 }
 
 // Bounds returns the wedge's data-space bounds when applicable.
 func (w *Wedge) Bounds(*DrawContext) geom.Rect {
-	if w == nil || w.Radius <= 0 || !isDataCoords(w.Coords) {
+	if w == nil || w.Radius <= 0 || !artistUsesDataCoords(w, w.Coords) {
 		return geom.Rect{}
 	}
 	bounds, _ := pathBounds(w.localPath())

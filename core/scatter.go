@@ -369,10 +369,11 @@ func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathC
 
 	return &PathCollection{
 		Collection: Collection{
-			Label:       s.Label,
-			Alpha:       alpha,
-			z:           s.z,
-			PathEffects: cloneRenderPathEffects(s.PathEffects),
+			ArtistRasterization: s.ArtistRasterization,
+			Label:               s.Label,
+			Alpha:               alpha,
+			z:                   s.z,
+			PathEffects:         cloneRenderPathEffects(s.PathEffects),
 		},
 		Path:          s.markerPrototypePathForContext(r, ctx),
 		Offsets:       append([]geom.Pt(nil), s.XY...),

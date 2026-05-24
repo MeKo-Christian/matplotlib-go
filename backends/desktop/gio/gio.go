@@ -70,6 +70,7 @@ type Backend struct {
 	opts desktop.Options
 	cnv  *gioCanvas
 	nav  *canvas.Navigation
+	wi   *canvas.WidgetInteraction
 	tb   *canvas.ToolbarController
 
 	window *gioapp.Window
@@ -99,6 +100,8 @@ func New(opts desktop.Options) (*Backend, error) {
 		nav = canvas.NewNavigation(opts.Figure, cnv.DrawIdle)
 	}
 	nav.Attach(cnv.dispatcher)
+	wi := canvas.NewWidgetInteraction(opts.Figure, cnv.DrawIdle)
+	wi.Attach(cnv.dispatcher)
 
 	tb := opts.Toolbar
 	if tb == nil {
@@ -112,6 +115,7 @@ func New(opts desktop.Options) (*Backend, error) {
 		opts:   opts,
 		cnv:    cnv,
 		nav:    nav,
+		wi:     wi,
 		tb:     tb,
 		window: w,
 	}, nil
@@ -131,6 +135,9 @@ func (b *Backend) Toolbar() canvas.NavigationToolbar { return b.tb }
 func (b *Backend) Close() error {
 	if b.closed.Swap(true) {
 		return nil
+	}
+	if b.wi != nil {
+		b.wi.Detach()
 	}
 	if err := b.cnv.emitClose(); err != nil {
 		return err

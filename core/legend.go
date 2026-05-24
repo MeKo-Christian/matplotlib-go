@@ -333,10 +333,15 @@ func collectLegendEntries(artists []Artist) []legendEntry {
 			if !ok {
 				continue
 			}
+			label := ArtistLabel(art)
+			if !legendLabelVisible(label) {
+				continue
+			}
 			entry, ok := provider.legendEntry()
 			if !ok {
 				continue
 			}
+			entry.Label = label
 			entries = append(entries, entry)
 		}
 	}

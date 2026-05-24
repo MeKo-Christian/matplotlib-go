@@ -112,13 +112,13 @@ func (p *RegularPolygon) Draw(ren render.Renderer, ctx *DrawContext) {
 	if p == nil || ren == nil || ctx == nil || p.NumVertices < 3 || p.Radius <= 0 {
 		return
 	}
-	path := buildDisplayPath(ctx, p.Coords, p.localPath(), geom.Identity())
+	path := buildArtistDisplayPath(ctx, p, p.Coords, p.localPath(), geom.Identity())
 	p.drawStyledPath(ren, path, geom.Path{})
 }
 
 // Bounds returns data-space bounds when applicable.
 func (p *RegularPolygon) Bounds(*DrawContext) geom.Rect {
-	if p == nil || p.NumVertices < 3 || p.Radius <= 0 || !isDataCoords(p.Coords) {
+	if p == nil || p.NumVertices < 3 || p.Radius <= 0 || !artistUsesDataCoords(p, p.Coords) {
 		return geom.Rect{}
 	}
 	bounds, _ := pathBounds(p.localPath())
@@ -134,13 +134,13 @@ func (c *CirclePolygon) Draw(ren render.Renderer, ctx *DrawContext) {
 	if c == nil || ren == nil || ctx == nil || c.Radius <= 0 {
 		return
 	}
-	path := buildDisplayPath(ctx, c.Coords, c.localPath(), geom.Identity())
+	path := buildArtistDisplayPath(ctx, c, c.Coords, c.localPath(), geom.Identity())
 	c.drawStyledPath(ren, path, geom.Path{})
 }
 
 // Bounds returns data-space bounds when applicable.
 func (c *CirclePolygon) Bounds(*DrawContext) geom.Rect {
-	if c == nil || c.Radius <= 0 || !isDataCoords(c.Coords) {
+	if c == nil || c.Radius <= 0 || !artistUsesDataCoords(c, c.Coords) {
 		return geom.Rect{}
 	}
 	return geom.Rect{
@@ -162,13 +162,13 @@ func (a *Arc) Draw(ren render.Renderer, ctx *DrawContext) {
 	if a == nil || ren == nil || ctx == nil || a.Width == 0 || a.Height == 0 {
 		return
 	}
-	path := buildDisplayPath(ctx, a.Coords, a.localPath(), geom.Identity())
+	path := buildArtistDisplayPath(ctx, a, a.Coords, a.localPath(), geom.Identity())
 	a.drawStyledPath(ren, geom.Path{}, path)
 }
 
 // Bounds returns data-space bounds when applicable.
 func (a *Arc) Bounds(*DrawContext) geom.Rect {
-	if a == nil || a.Width == 0 || a.Height == 0 || !isDataCoords(a.Coords) {
+	if a == nil || a.Width == 0 || a.Height == 0 || !artistUsesDataCoords(a, a.Coords) {
 		return geom.Rect{}
 	}
 	bounds, _ := pathBounds(a.localPath())
@@ -188,13 +188,13 @@ func (a *Annulus) Draw(ren render.Renderer, ctx *DrawContext) {
 	if a == nil || ren == nil || ctx == nil || a.RadiusA <= 0 || a.Width <= 0 {
 		return
 	}
-	path := buildDisplayPath(ctx, a.Coords, a.localPath(), geom.Identity())
+	path := buildArtistDisplayPath(ctx, a, a.Coords, a.localPath(), geom.Identity())
 	a.drawStyledPath(ren, path, geom.Path{})
 }
 
 // Bounds returns data-space bounds when applicable.
 func (a *Annulus) Bounds(*DrawContext) geom.Rect {
-	if a == nil || a.RadiusA <= 0 || !isDataCoords(a.Coords) {
+	if a == nil || a.RadiusA <= 0 || !artistUsesDataCoords(a, a.Coords) {
 		return geom.Rect{}
 	}
 	bounds, _ := pathBounds(a.localPath())
@@ -248,13 +248,13 @@ func (s *StepPatch) Draw(ren render.Renderer, ctx *DrawContext) {
 	if s == nil || ren == nil || ctx == nil || len(s.Values) == 0 || len(s.Edges) != len(s.Values)+1 {
 		return
 	}
-	path := buildDisplayPath(ctx, s.Coords, s.localPath(), geom.Identity())
+	path := buildArtistDisplayPath(ctx, s, s.Coords, s.localPath(), geom.Identity())
 	s.drawStyledPath(ren, path, geom.Path{})
 }
 
 // Bounds returns data-space bounds when applicable.
 func (s *StepPatch) Bounds(*DrawContext) geom.Rect {
-	if s == nil || len(s.Values) == 0 || len(s.Edges) != len(s.Values)+1 || !isDataCoords(s.Coords) {
+	if s == nil || len(s.Values) == 0 || len(s.Edges) != len(s.Values)+1 || !artistUsesDataCoords(s, s.Coords) {
 		return geom.Rect{}
 	}
 	bounds, _ := pathBounds(s.localPath())
@@ -295,27 +295,27 @@ func (s *StepPatch) localPath() geom.Path {
 func sourcePatchDisplayPath(source Artist, ctx *DrawContext) (geom.Path, bool) {
 	switch p := source.(type) {
 	case *Rectangle:
-		return buildDisplayPath(ctx, p.Coords, rectanglePath(p.Width, p.Height), patchAffine(p.XY, p.Angle)), true
+		return buildArtistDisplayPath(ctx, p, p.Coords, rectanglePath(p.Width, p.Height), patchAffine(p.XY, p.Angle)), true
 	case *Circle:
-		return buildDisplayPath(ctx, p.Coords, ellipsePath(p.Radius*2, p.Radius*2), translateAffine(p.Center)), true
+		return buildArtistDisplayPath(ctx, p, p.Coords, ellipsePath(p.Radius*2, p.Radius*2), translateAffine(p.Center)), true
 	case *Ellipse:
-		return buildDisplayPath(ctx, p.Coords, ellipsePath(p.Width, p.Height), patchAffine(p.Center, p.Angle)), true
+		return buildArtistDisplayPath(ctx, p, p.Coords, ellipsePath(p.Width, p.Height), patchAffine(p.Center, p.Angle)), true
 	case *Polygon:
-		return buildDisplayPath(ctx, p.Coords, polygonPath(p.XY, !p.Open), geom.Identity()), true
+		return buildArtistDisplayPath(ctx, p, p.Coords, polygonPath(p.XY, !p.Open), geom.Identity()), true
 	case *PathPatch:
-		return buildDisplayPath(ctx, p.Coords, p.Path, geom.Identity()), true
+		return buildArtistDisplayPath(ctx, p, p.Coords, p.Path, geom.Identity()), true
 	case *FancyBboxPatch:
-		return buildDisplayPath(ctx, p.Coords, p.localPath(), translateAffine(p.XY)), true
+		return buildArtistDisplayPath(ctx, p, p.Coords, p.localPath(), translateAffine(p.XY)), true
 	case *RegularPolygon:
-		return buildDisplayPath(ctx, p.Coords, p.localPath(), geom.Identity()), true
+		return buildArtistDisplayPath(ctx, p, p.Coords, p.localPath(), geom.Identity()), true
 	case *CirclePolygon:
-		return buildDisplayPath(ctx, p.Coords, p.localPath(), geom.Identity()), true
+		return buildArtistDisplayPath(ctx, p, p.Coords, p.localPath(), geom.Identity()), true
 	case *Annulus:
-		return buildDisplayPath(ctx, p.Coords, p.localPath(), geom.Identity()), true
+		return buildArtistDisplayPath(ctx, p, p.Coords, p.localPath(), geom.Identity()), true
 	case *StepPatch:
-		return buildDisplayPath(ctx, p.Coords, p.localPath(), geom.Identity()), true
+		return buildArtistDisplayPath(ctx, p, p.Coords, p.localPath(), geom.Identity()), true
 	case *Wedge:
-		return buildDisplayPath(ctx, p.Coords, p.localPath(), geom.Identity()), true
+		return buildArtistDisplayPath(ctx, p, p.Coords, p.localPath(), geom.Identity()), true
 	default:
 		return geom.Path{}, false
 	}

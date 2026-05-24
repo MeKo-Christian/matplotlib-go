@@ -72,8 +72,12 @@ func (l *Line2D) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 
 	p := geom.Path{}
+	tr := artistTransformFor(ctx, l, Coords(CoordData))
 	for i, v := range points {
-		q := (&ctx.DataToPixel).Apply(v)
+		q := v
+		if tr != nil {
+			q = tr.Apply(v)
+		}
 		if i == 0 {
 			p.C = append(p.C, geom.MoveTo)
 		} else {
@@ -121,7 +125,7 @@ func (l *Line2D) Z() float64 {
 
 // Bounds returns the bounding box of all points in data space.
 func (l *Line2D) Bounds(*DrawContext) geom.Rect {
-	if len(l.XY) == 0 {
+	if len(l.XY) == 0 || !artistUsesDataCoords(l, Coords(CoordData)) {
 		return geom.Rect{}
 	}
 	r := geom.Rect{Min: l.XY[0], Max: l.XY[0]}
@@ -204,9 +208,10 @@ func (l *Line2D) drawMarkers(r render.Renderer, ctx *DrawContext) {
 
 	markers := &PathCollection{
 		Collection: Collection{
-			Coords:      Coords(CoordData),
-			Alpha:       1,
-			PathEffects: cloneRenderPathEffects(l.PathEffects),
+			ArtistRasterization: l.ArtistRasterization,
+			Coords:              Coords(CoordData),
+			Alpha:               1,
+			PathEffects:         cloneRenderPathEffects(l.PathEffects),
 		},
 		Path:          markerPath,
 		Offsets:       points,

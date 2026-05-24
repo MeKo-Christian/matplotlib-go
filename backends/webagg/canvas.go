@@ -42,6 +42,7 @@ type Manager struct {
 	factory  RendererFactory
 	bg       render.Color
 	nav      *plotcanvas.Navigation
+	wi       *plotcanvas.WidgetInteraction
 	tb       *plotcanvas.ToolbarController
 	dispatch *plotcanvas.Dispatcher
 	hover    *plotcanvas.AxesHoverTracker
@@ -138,6 +139,8 @@ func NewManager(opts Options) (*Manager, error) {
 	m.hub = newHub(m)
 	m.nav = plotcanvas.NewNavigation(opts.Figure, m.DrawIdle)
 	m.nav.Attach(m.dispatch)
+	m.wi = plotcanvas.NewWidgetInteraction(opts.Figure, m.DrawIdle)
+	m.wi.Attach(m.dispatch)
 	m.hover = plotcanvas.NewAxesHoverTracker(opts.Figure, m.dispatch)
 	m.tb = plotcanvas.NewToolbarController(m.nav)
 	if opts.SaveHandler != nil {
@@ -196,6 +199,9 @@ func (m *Manager) ToolManager() *plotcanvas.ToolManager { return plotcanvas.NewT
 func (m *Manager) Close() error {
 	if !m.closed.CompareAndSwap(false, true) {
 		return nil
+	}
+	if m.wi != nil {
+		m.wi.Detach()
 	}
 	m.detachStaleCallbacks()
 	m.hub.closeAll()

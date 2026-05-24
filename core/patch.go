@@ -289,13 +289,13 @@ func (r *Rectangle) Draw(ren render.Renderer, ctx *DrawContext) {
 	if r == nil || ctx == nil || ren == nil || r.Width == 0 || r.Height == 0 {
 		return
 	}
-	path := buildDisplayPath(ctx, r.Coords, rectanglePath(r.Width, r.Height), patchAffine(r.XY, r.Angle))
+	path := buildArtistDisplayPath(ctx, r, r.Coords, rectanglePath(r.Width, r.Height), patchAffine(r.XY, r.Angle))
 	r.drawStyledPath(ren, path, geom.Path{})
 }
 
 // Bounds returns the rectangle's data-space bounding box when applicable.
 func (r *Rectangle) Bounds(*DrawContext) geom.Rect {
-	if r == nil || r.Width == 0 || r.Height == 0 || !isDataCoords(r.Coords) {
+	if r == nil || r.Width == 0 || r.Height == 0 || !artistUsesDataCoords(r, r.Coords) {
 		return geom.Rect{}
 	}
 	path := applyAffinePath(rectanglePath(r.Width, r.Height), patchAffine(r.XY, r.Angle))
@@ -309,13 +309,13 @@ func (c *Circle) Draw(ren render.Renderer, ctx *DrawContext) {
 		return
 	}
 	local := ellipsePath(c.Radius*2, c.Radius*2)
-	path := buildDisplayPath(ctx, c.Coords, local, translateAffine(c.Center))
+	path := buildArtistDisplayPath(ctx, c, c.Coords, local, translateAffine(c.Center))
 	c.drawStyledPath(ren, path, geom.Path{})
 }
 
 // Bounds returns the circle's data-space bounding box when applicable.
 func (c *Circle) Bounds(*DrawContext) geom.Rect {
-	if c == nil || c.Radius <= 0 || !isDataCoords(c.Coords) {
+	if c == nil || c.Radius <= 0 || !artistUsesDataCoords(c, c.Coords) {
 		return geom.Rect{}
 	}
 	return geom.Rect{
@@ -330,13 +330,13 @@ func (e *Ellipse) Draw(ren render.Renderer, ctx *DrawContext) {
 		return
 	}
 	local := ellipsePath(e.Width, e.Height)
-	path := buildDisplayPath(ctx, e.Coords, local, patchAffine(e.Center, e.Angle))
+	path := buildArtistDisplayPath(ctx, e, e.Coords, local, patchAffine(e.Center, e.Angle))
 	e.drawStyledPath(ren, path, geom.Path{})
 }
 
 // Bounds returns the ellipse's data-space bounding box when applicable.
 func (e *Ellipse) Bounds(*DrawContext) geom.Rect {
-	if e == nil || e.Width == 0 || e.Height == 0 || !isDataCoords(e.Coords) {
+	if e == nil || e.Width == 0 || e.Height == 0 || !artistUsesDataCoords(e, e.Coords) {
 		return geom.Rect{}
 	}
 	path := applyAffinePath(ellipsePath(e.Width, e.Height), patchAffine(e.Center, e.Angle))
@@ -349,13 +349,13 @@ func (p *Polygon) Draw(ren render.Renderer, ctx *DrawContext) {
 	if p == nil || ctx == nil || ren == nil || len(p.XY) < 2 {
 		return
 	}
-	path := buildDisplayPath(ctx, p.Coords, polygonPath(p.XY, !p.Open), geom.Identity())
+	path := buildArtistDisplayPath(ctx, p, p.Coords, polygonPath(p.XY, !p.Open), geom.Identity())
 	p.drawStyledPath(ren, path, geom.Path{})
 }
 
 // Bounds returns the polygon's data-space bounding box when applicable.
 func (p *Polygon) Bounds(*DrawContext) geom.Rect {
-	if p == nil || len(p.XY) == 0 || !isDataCoords(p.Coords) {
+	if p == nil || len(p.XY) == 0 || !artistUsesDataCoords(p, p.Coords) {
 		return geom.Rect{}
 	}
 	bounds := geom.Rect{Min: p.XY[0], Max: p.XY[0]}
@@ -370,13 +370,13 @@ func (p *PathPatch) Draw(ren render.Renderer, ctx *DrawContext) {
 	if p == nil || ctx == nil || ren == nil || len(p.Path.C) == 0 {
 		return
 	}
-	path := buildDisplayPath(ctx, p.Coords, p.Path, geom.Identity())
+	path := buildArtistDisplayPath(ctx, p, p.Coords, p.Path, geom.Identity())
 	p.drawStyledPath(ren, path, geom.Path{})
 }
 
 // Bounds returns the path's data-space bounding box when applicable.
 func (p *PathPatch) Bounds(*DrawContext) geom.Rect {
-	if p == nil || len(p.Path.C) == 0 || !isDataCoords(p.Coords) {
+	if p == nil || len(p.Path.C) == 0 || !artistUsesDataCoords(p, p.Coords) {
 		return geom.Rect{}
 	}
 	bounds, _ := pathBounds(p.Path)
@@ -388,13 +388,13 @@ func (a *FancyArrow) Draw(ren render.Renderer, ctx *DrawContext) {
 	if a == nil || ctx == nil || ren == nil {
 		return
 	}
-	path := buildDisplayPath(ctx, a.Coords, a.localPath(), geom.Identity())
+	path := buildArtistDisplayPath(ctx, a, a.Coords, a.localPath(), geom.Identity())
 	a.drawStyledPath(ren, path, geom.Path{})
 }
 
 // Bounds returns the arrow's data-space bounding box when applicable.
 func (a *FancyArrow) Bounds(*DrawContext) geom.Rect {
-	if a == nil || !isDataCoords(a.Coords) {
+	if a == nil || !artistUsesDataCoords(a, a.Coords) {
 		return geom.Rect{}
 	}
 	path := a.localPath()
@@ -451,13 +451,13 @@ func (b *FancyBboxPatch) Draw(ren render.Renderer, ctx *DrawContext) {
 	if b == nil || ctx == nil || ren == nil {
 		return
 	}
-	path := buildDisplayPath(ctx, b.Coords, b.localPath(), translateAffine(b.XY))
+	path := buildArtistDisplayPath(ctx, b, b.Coords, b.localPath(), translateAffine(b.XY))
 	b.drawStyledPath(ren, path, geom.Path{})
 }
 
 // Bounds returns the fancy bbox's data-space bounding box when applicable.
 func (b *FancyBboxPatch) Bounds(*DrawContext) geom.Rect {
-	if b == nil || !isDataCoords(b.Coords) {
+	if b == nil || !artistUsesDataCoords(b, b.Coords) {
 		return geom.Rect{}
 	}
 	path := applyAffinePath(b.localPath(), translateAffine(b.XY))
@@ -481,11 +481,15 @@ func (b *FancyBboxPatch) localPath() geom.Path {
 }
 
 func buildDisplayPath(ctx *DrawContext, coords CoordinateSpec, local geom.Path, localToCoords geom.Affine) geom.Path {
+	return buildArtistDisplayPath(ctx, nil, coords, local, localToCoords)
+}
+
+func buildArtistDisplayPath(ctx *DrawContext, art any, fallback CoordinateSpec, local geom.Path, localToCoords geom.Affine) geom.Path {
 	path := applyAffinePath(local, localToCoords)
 	if ctx == nil {
 		return path
 	}
-	tr := ctx.TransformFor(coords)
+	tr := artistTransformFor(ctx, art, fallback)
 	if tr == nil {
 		return path
 	}

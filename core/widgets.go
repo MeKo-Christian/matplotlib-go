@@ -3,10 +3,72 @@ package core
 import (
 	"fmt"
 	"math"
+	"strings"
+	"unicode"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
+
+// WidgetCallbackID identifies a registered interactive widget callback.
+type WidgetCallbackID int64
+
+type widgetCallbackRegistry[T any] struct {
+	next      WidgetCallbackID
+	callbacks map[WidgetCallbackID]T
+}
+
+func (r *widgetCallbackRegistry[T]) add(cb T) WidgetCallbackID {
+	if r == nil {
+		return 0
+	}
+	if r.next == 0 {
+		r.next = 1
+	} else {
+		r.next++
+	}
+	if r.callbacks == nil {
+		r.callbacks = make(map[WidgetCallbackID]T)
+	}
+	id := r.next
+	r.callbacks[id] = cb
+	return id
+}
+
+func (r *widgetCallbackRegistry[T]) remove(id WidgetCallbackID) {
+	if r == nil || id == 0 || r.callbacks == nil {
+		return
+	}
+	delete(r.callbacks, id)
+}
+
+func (r *widgetCallbackRegistry[T]) each(fn func(T)) {
+	if r == nil || fn == nil {
+		return
+	}
+	for _, cb := range r.callbacks {
+		fn(cb)
+	}
+}
+
+// ButtonCallback receives an active button widget.
+type ButtonCallback func(*Button)
+
+// SliderCallback receives the active slider and updated value.
+type SliderCallback func(*Slider, float64)
+
+// CheckButtonsCallback receives the active check button, changed index and
+// state after the change.
+type CheckButtonsCallback func(*CheckButtons, int, bool)
+
+// RadioButtonsCallback receives the active radio widget and selected index.
+type RadioButtonsCallback func(*RadioButtons, int)
+
+// TextBoxSubmitCallback receives the text after submit/cancel events.
+type TextBoxSubmitCallback func(*TextBox, string)
+
+// TextBoxChangeCallback receives the new text after each value change.
+type TextBoxChangeCallback func(*TextBox, string)
 
 // ButtonOptions configures a Button widget artist.
 type ButtonOptions struct {
@@ -14,6 +76,7 @@ type ButtonOptions struct {
 	EdgeColor render.Color
 	TextColor render.Color
 	Pressed   *bool
+	Disabled  *bool
 	FontSize  float64
 }
 
@@ -24,6 +87,8 @@ type SliderOptions struct {
 	FillColor   render.Color
 	HandleColor render.Color
 	TextColor   render.Color
+	ValueStep   *float64
+	ValueFormat *string
 	FontSize    float64
 }
 
@@ -62,7 +127,12 @@ type Button struct {
 	EdgeColor render.Color
 	TextColor render.Color
 	Pressed   bool
+	Enabled   bool
 	FontSize  float64
+	Hovered   bool
+
+	onClicked widgetCallbackRegistry[ButtonCallback]
+
 	z         float64
 }
 
@@ -71,13 +141,20 @@ type Slider struct {
 	Label       string
 	Min         float64
 	Max         float64
+	Enabled     bool
 	Value       float64
 	FaceColor   render.Color
 	TrackColor  render.Color
 	FillColor   render.Color
 	HandleColor render.Color
 	TextColor   render.Color
+	Step        float64
+	ValueFormat string
 	FontSize    float64
+	Dragging    bool
+
+	onChanged widgetCallbackRegistry[SliderCallback]
+
 	z           float64
 }
 
@@ -90,6 +167,10 @@ type CheckButtons struct {
 	TextColor  render.Color
 	CheckColor render.Color
 	FontSize   float64
+	focus      int
+
+	onChanged widgetCallbackRegistry[CheckButtonsCallback]
+
 	z          float64
 }
 
@@ -102,6 +183,10 @@ type RadioButtons struct {
 	TextColor render.Color
 	DotColor  render.Color
 	FontSize  float64
+	focus     int
+
+	onChanged widgetCallbackRegistry[RadioButtonsCallback]
+
 	z         float64
 }
 
@@ -115,6 +200,13 @@ type TextBox struct {
 	TextColor   render.Color
 	FontSize    float64
 	Active      bool
+	caret       int
+	selection   [2]int
+
+	onSubmit  widgetCallbackRegistry[TextBoxSubmitCallback]
+	onCancel  widgetCallbackRegistry[TextBoxSubmitCallback]
+	onChange  widgetCallbackRegistry[TextBoxChangeCallback]
+
 	z           float64
 }
 
@@ -132,12 +224,17 @@ func (a *Axes) Button(label string, opts ...ButtonOptions) *Button {
 		cfg = mergeButtonOptions(cfg, opts[0])
 	}
 	prepareWidgetAxes(a)
+	enabled := true
+	if cfg.Disabled != nil {
+		enabled = !*cfg.Disabled
+	}
 	w := &Button{
 		Label:     label,
 		FaceColor: cfg.FaceColor,
 		EdgeColor: cfg.EdgeColor,
 		TextColor: cfg.TextColor,
 		Pressed:   boolValue(cfg.Pressed, false),
+		Enabled:   enabled,
 		FontSize:  cfg.FontSize,
 		z:         1200,
 	}
@@ -160,17 +257,31 @@ func (a *Axes) Slider(label string, min, max, value float64, opts ...SliderOptio
 	if len(opts) > 0 {
 		cfg = mergeSliderOptions(cfg, opts[0])
 	}
+	step := (max - min) / 100
+	if cfg.ValueStep != nil && *cfg.ValueStep > 0 {
+		step = *cfg.ValueStep
+	}
+	if step == 0 {
+		step = 1
+	}
+	valueFormat := "%.2f"
+	if cfg.ValueFormat != nil && strings.TrimSpace(*cfg.ValueFormat) != "" {
+		valueFormat = *cfg.ValueFormat
+	}
 	prepareWidgetAxes(a)
 	w := &Slider{
 		Label:       label,
 		Min:         min,
 		Max:         max,
+		Enabled:     true,
 		Value:       clampSliderValue(min, max, value),
 		FaceColor:   cfg.FaceColor,
 		TrackColor:  cfg.TrackColor,
 		FillColor:   cfg.FillColor,
 		HandleColor: cfg.HandleColor,
 		TextColor:   cfg.TextColor,
+		Step:        math.Abs(step),
+		ValueFormat: valueFormat,
 		FontSize:    cfg.FontSize,
 		z:           1200,
 	}
@@ -202,6 +313,7 @@ func (a *Axes) CheckButtons(labels []string, active []bool, opts ...CheckButtons
 		EdgeColor:  cfg.EdgeColor,
 		TextColor:  cfg.TextColor,
 		CheckColor: cfg.CheckColor,
+		focus:      -1,
 		FontSize:   cfg.FontSize,
 		z:          1200,
 	}
@@ -231,6 +343,7 @@ func (a *Axes) RadioButtons(labels []string, active int, opts ...RadioButtonsOpt
 		EdgeColor: cfg.EdgeColor,
 		TextColor: cfg.TextColor,
 		DotColor:  cfg.DotColor,
+		focus:     clampInt(active, 0, len(labels)-1),
 		FontSize:  cfg.FontSize,
 		z:         1200,
 	}
@@ -260,11 +373,531 @@ func (a *Axes) TextBox(label, value string, opts ...TextBoxOptions) *TextBox {
 		EdgeColor:   cfg.EdgeColor,
 		TextColor:   cfg.TextColor,
 		FontSize:    cfg.FontSize,
+		selection:   [2]int{0, 0},
 		Active:      boolValue(cfg.Active, false),
 		z:           1200,
 	}
+	if value != "" {
+		w.caret = len([]rune(value))
+		w.selection[0] = w.caret
+		w.selection[1] = w.caret
+	}
 	a.Add(w)
 	return w
+}
+
+func (b *Button) OnClicked(cb ButtonCallback) WidgetCallbackID {
+	if b == nil || any(cb) == nil {
+		return 0
+	}
+	return b.onClicked.add(cb)
+}
+
+func (b *Button) RemoveOnClicked(id WidgetCallbackID) {
+	if b == nil {
+		return
+	}
+	b.onClicked.remove(id)
+}
+
+func (b *Button) triggerOnClicked() {
+	if b == nil {
+		return
+	}
+	b.onClicked.each(func(cb ButtonCallback) { cb(b) })
+}
+
+// Click triggers all registered click callbacks.
+func (b *Button) Click() {
+	if b == nil || !b.Enabled {
+		return
+	}
+	b.triggerOnClicked()
+}
+
+func (s *Slider) OnChanged(cb SliderCallback) WidgetCallbackID {
+	if s == nil || any(cb) == nil {
+		return 0
+	}
+	return s.onChanged.add(cb)
+}
+
+func (s *Slider) RemoveOnChanged(id WidgetCallbackID) {
+	if s == nil {
+		return
+	}
+	s.onChanged.remove(id)
+}
+
+func (s *Slider) triggerOnChanged() {
+	if s == nil {
+		return
+	}
+	s.onChanged.each(func(cb SliderCallback) { cb(s, s.Value) })
+}
+
+// SetValue updates the slider value and emits an on-changed event when the
+// value changes.
+func (s *Slider) SetValue(value float64) {
+	if s == nil {
+		return
+	}
+	clamped := normalizeSliderValue(s.Min, s.Max, s.Step, value)
+	if clamped == s.Value {
+		return
+	}
+	s.Value = clamped
+	s.triggerOnChanged()
+}
+
+func (c *CheckButtons) OnChanged(cb CheckButtonsCallback) WidgetCallbackID {
+	if c == nil || any(cb) == nil {
+		return 0
+	}
+	return c.onChanged.add(cb)
+}
+
+func (c *CheckButtons) RemoveOnChanged(id WidgetCallbackID) {
+	if c == nil {
+		return
+	}
+	c.onChanged.remove(id)
+}
+
+func (c *CheckButtons) triggerOnChanged(index int, value bool) {
+	if c == nil {
+		return
+	}
+	c.onChanged.each(func(cb CheckButtonsCallback) { cb(c, index, value) })
+}
+
+// SetValue updates one check-button state and emits an on-change event when
+// it mutates.
+func (c *CheckButtons) SetValue(index int, checked bool) {
+	if c == nil {
+		return
+	}
+	if index < 0 || index >= len(c.Values) {
+		return
+	}
+	if c.Values[index] == checked {
+		return
+	}
+	c.Values[index] = checked
+	c.triggerOnChanged(index, checked)
+}
+
+// Toggle flips one check-button state.
+func (c *CheckButtons) Toggle(index int) {
+	if c == nil || index < 0 || index >= len(c.Values) {
+		return
+	}
+	c.SetValue(index, !c.Values[index])
+}
+
+func (r *RadioButtons) OnChanged(cb RadioButtonsCallback) WidgetCallbackID {
+	if r == nil || any(cb) == nil {
+		return 0
+	}
+	return r.onChanged.add(cb)
+}
+
+func (r *RadioButtons) RemoveOnChanged(id WidgetCallbackID) {
+	if r == nil {
+		return
+	}
+	r.onChanged.remove(id)
+}
+
+func (r *RadioButtons) triggerOnChanged(active int) {
+	if r == nil {
+		return
+	}
+	r.onChanged.each(func(cb RadioButtonsCallback) { cb(r, active) })
+}
+
+// SetActive updates the selected radio index and emits an on-change event when
+// the value mutates.
+func (r *RadioButtons) SetActive(index int) {
+	if r == nil || len(r.Labels) == 0 {
+		return
+	}
+	index = clampInt(index, 0, len(r.Labels)-1)
+	if r.Active == index {
+		return
+	}
+	r.Active = index
+	r.triggerOnChanged(index)
+}
+
+// Next decrements or increments the active radio index by one and emits a
+// change event when the index changes.
+func (r *RadioButtons) Next(delta int) {
+	if r == nil || len(r.Labels) == 0 {
+		return
+	}
+	if delta == 0 {
+		return
+	}
+	r.SetActive(r.Active + delta)
+}
+
+func (t *TextBox) OnSubmit(cb TextBoxSubmitCallback) WidgetCallbackID {
+	if t == nil || any(cb) == nil {
+		return 0
+	}
+	return t.onSubmit.add(cb)
+}
+
+func (t *TextBox) OnCancel(cb TextBoxSubmitCallback) WidgetCallbackID {
+	if t == nil || any(cb) == nil {
+		return 0
+	}
+	return t.onCancel.add(cb)
+}
+
+func (t *TextBox) OnChange(cb TextBoxChangeCallback) WidgetCallbackID {
+	if t == nil || any(cb) == nil {
+		return 0
+	}
+	return t.onChange.add(cb)
+}
+
+func (t *TextBox) RemoveOnSubmit(id WidgetCallbackID) {
+	if t == nil {
+		return
+	}
+	t.onSubmit.remove(id)
+}
+
+func (t *TextBox) RemoveOnCancel(id WidgetCallbackID) {
+	if t == nil {
+		return
+	}
+	t.onCancel.remove(id)
+}
+
+func (t *TextBox) RemoveOnChange(id WidgetCallbackID) {
+	if t == nil {
+		return
+	}
+	t.onChange.remove(id)
+}
+
+func (t *TextBox) triggerSubmit() {
+	if t == nil {
+		return
+	}
+	t.onSubmit.each(func(cb TextBoxSubmitCallback) { cb(t, t.Value) })
+}
+
+func (t *TextBox) triggerCancel() {
+	if t == nil {
+		return
+	}
+	t.onCancel.each(func(cb TextBoxSubmitCallback) { cb(t, t.Value) })
+}
+
+func (t *TextBox) triggerChange() {
+	if t == nil {
+		return
+	}
+	t.onChange.each(func(cb TextBoxChangeCallback) { cb(t, t.Value) })
+}
+
+// Submit emits submit callbacks with the current text.
+func (t *TextBox) Submit() {
+	if t == nil {
+		return
+	}
+	t.triggerSubmit()
+}
+
+// Cancel emits cancel callbacks with the current text.
+func (t *TextBox) Cancel() {
+	if t == nil {
+		return
+	}
+	t.triggerCancel()
+}
+
+// Activate marks the text box as focused.
+func (t *TextBox) Activate(active bool) {
+	if t == nil {
+		return
+	}
+	t.Active = active
+}
+
+// SetValue updates the text content and places the caret at the end.
+func (t *TextBox) SetValue(value string) {
+	if t == nil {
+		return
+	}
+	if t.Value == value {
+		return
+	}
+	t.Value = value
+	count := runeCount(value)
+	t.caret = count
+	t.selection = [2]int{count, count}
+	t.triggerChange()
+}
+
+// SetCaret sets the insertion point and collapses the selection.
+func (t *TextBox) SetCaret(index int) {
+	if t == nil {
+		return
+	}
+	index = clampTextIndex(t.Value, index)
+	t.caret = index
+	t.selection = [2]int{index, index}
+}
+
+// SetSelection sets the highlighted range in rune offsets. Any order is
+// normalized so the first index is less than or equal to the second.
+func (t *TextBox) SetSelection(start, end int) {
+	if t == nil {
+		return
+	}
+	start = clampTextIndex(t.Value, start)
+	end = clampTextIndex(t.Value, end)
+	if start > end {
+		start, end = end, start
+	}
+	t.selection = [2]int{start, end}
+	t.caret = end
+}
+
+// SelectAll marks the entire value as selected.
+func (t *TextBox) SelectAll() {
+	if t == nil {
+		return
+	}
+	count := runeCount(t.Value)
+	t.selection = [2]int{0, count}
+	t.caret = count
+}
+
+// MoveCaretLeft moves the caret left by one rune or one word.
+func (t *TextBox) MoveCaretLeft(word, extend bool) {
+	if t == nil {
+		return
+	}
+	anchor := t.caret
+	if !extend {
+		anchor = -1
+	}
+	n := runeCount(t.Value)
+	if n == 0 {
+		return
+	}
+	next := t.caret
+	if word {
+		next = moveTextCaretWordLeft([]rune(t.Value), t.caret)
+	} else if next > 0 {
+		next--
+	}
+	t.SetCaret(next)
+	if extend {
+		start := t.caret
+		if anchor >= 0 {
+			start = anchor
+		}
+		t.selection = [2]int{start, t.caret}
+		if t.selection[0] > t.selection[1] {
+			t.selection[0], t.selection[1] = t.selection[1], t.selection[0]
+		}
+	}
+}
+
+// MoveCaretRight moves the caret right by one rune or one word.
+func (t *TextBox) MoveCaretRight(word, extend bool) {
+	if t == nil {
+		return
+	}
+	anchor := t.caret
+	if !extend {
+		anchor = -1
+	}
+	n := runeCount(t.Value)
+	next := t.caret
+	if word {
+		next = moveTextCaretWordRight([]rune(t.Value), t.caret)
+	} else if next < n {
+		next++
+	}
+	t.SetCaret(next)
+	if extend {
+		start := t.caret
+		if anchor >= 0 {
+			start = anchor
+		}
+		t.selection = [2]int{start, t.caret}
+		if t.selection[0] > t.selection[1] {
+			t.selection[0], t.selection[1] = t.selection[1], t.selection[0]
+		}
+	}
+}
+
+// MoveCaretToStart moves the caret to the beginning of the text.
+func (t *TextBox) MoveCaretToStart(extend bool) {
+	if t == nil {
+		return
+	}
+	anchor := t.caret
+	if !extend {
+		anchor = 0
+	}
+	t.SetCaret(0)
+	if extend {
+		t.selection = [2]int{anchor, 0}
+		if t.selection[0] > t.selection[1] {
+			t.selection[0], t.selection[1] = t.selection[1], t.selection[0]
+		}
+	}
+}
+
+// MoveCaretToEnd moves the caret to the end of the text.
+func (t *TextBox) MoveCaretToEnd(extend bool) {
+	if t == nil {
+		return
+	}
+	count := runeCount(t.Value)
+	anchor := t.caret
+	if !extend {
+		anchor = count
+	}
+	t.SetCaret(count)
+	if extend {
+		t.selection = [2]int{anchor, t.caret}
+		if t.selection[0] > t.selection[1] {
+			t.selection[0], t.selection[1] = t.selection[1], t.selection[0]
+		}
+	}
+}
+
+// InsertText replaces the current selection (or caret position) with text.
+func (t *TextBox) InsertText(value string) {
+	if t == nil {
+		return
+	}
+	if value == "" {
+		return
+	}
+	text := []rune(t.Value)
+	insert := []rune(value)
+	start, end := t.selection[0], t.selection[1]
+	if start > end {
+		start, end = end, start
+	}
+	next := make([]rune, 0, len(text)-maxInt(end-start, 0)+len(insert))
+	next = append(next, text[:start]...)
+	next = append(next, insert...)
+	next = append(next, text[end:]...)
+	t.Value = string(next)
+	n := start + len(insert)
+	t.caret = n
+	t.selection = [2]int{n, n}
+	t.triggerChange()
+}
+
+// Backspace deletes the previous selection or rune.
+func (t *TextBox) Backspace() {
+	if t == nil {
+		return
+	}
+	start, end := t.selection[0], t.selection[1]
+	if start > end {
+		start, end = end, start
+	}
+	text := []rune(t.Value)
+	if start != end {
+		text = append(text[:start], text[end:]...)
+		t.Value = string(text)
+		t.caret = start
+		t.selection = [2]int{start, start}
+		t.triggerChange()
+		return
+	}
+	if t.caret == 0 {
+		return
+	}
+	text = append(text[:t.caret-1], text[t.caret:]...)
+	t.Value = string(text)
+	t.caret--
+	t.selection = [2]int{t.caret, t.caret}
+	t.triggerChange()
+}
+
+// Delete removes the current selection or the rune after the caret.
+func (t *TextBox) Delete() {
+	if t == nil {
+		return
+	}
+	start, end := t.selection[0], t.selection[1]
+	if start > end {
+		start, end = end, start
+	}
+	text := []rune(t.Value)
+	if start != end {
+		text = append(text[:start], text[end:]...)
+		t.Value = string(text)
+		t.caret = start
+		t.selection = [2]int{start, start}
+		t.triggerChange()
+		return
+	}
+	if t.caret >= len(text) {
+		return
+	}
+	text = append(text[:t.caret], text[t.caret+1:]...)
+	t.Value = string(text)
+	t.selection = [2]int{t.caret, t.caret}
+	t.triggerChange()
+}
+
+// SelectedText returns the highlighted value as a substring.
+func (t *TextBox) SelectedText() string {
+	if t == nil {
+		return ""
+	}
+	start, end := t.selection[0], t.selection[1]
+	if start > end {
+		start, end = end, start
+	}
+	text := []rune(t.Value)
+	if start < 0 || end < 0 || start >= len(text) || end > len(text) || start >= end {
+		return ""
+	}
+	return string(text[start:end])
+}
+
+func (t *TextBox) Selection() (int, int) {
+	if t == nil {
+		return 0, 0
+	}
+	return t.selection[0], t.selection[1]
+}
+
+func (t *TextBox) Caret() int {
+	if t == nil {
+		return 0
+	}
+	return t.caret
+}
+
+func clampWidgetIndex(index, max int) int {
+	if max <= 0 {
+		return 0
+	}
+	if index < 0 {
+		return 0
+	}
+	if index >= max {
+		return max - 1
+	}
+	return index
 }
 
 func (b *Button) Draw(r render.Renderer, ctx *DrawContext) {
@@ -273,17 +906,52 @@ func (b *Button) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 	bounds := insetRect(ctx.Clip, 6)
 	fill := b.FaceColor
+	if !b.Enabled {
+		fill = mixColor(fill, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.45)
+		edge := mixColor(b.EdgeColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.6)
+		drawWidgetPanel(r, bounds, fill, edge, 1.25, 10)
+		drawCenteredWidgetText(r, ctx, geom.Pt{
+			X: bounds.Min.X + bounds.W()/2,
+			Y: bounds.Min.Y + bounds.H()/2,
+		}, b.Label, b.FontSize, mixColor(b.TextColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.35))
+		return
+	}
 	if b.Pressed {
 		fill = mixColor(fill, render.Color{R: 0, G: 0, B: 0, A: 1}, 0.12)
 	}
+	if b.Hovered && !b.Pressed {
+		fill = mixColor(fill, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.06)
+	}
 	drawWidgetPanel(r, bounds, fill, b.EdgeColor, 1.25, 10)
+	labelColor := b.TextColor
+	if b.Pressed {
+		labelColor = mixColor(b.TextColor, render.Color{R: 0, G: 0, B: 0, A: 1}, 0.3)
+	}
 	drawCenteredWidgetText(r, ctx, geom.Pt{
 		X: bounds.Min.X + bounds.W()/2,
 		Y: bounds.Min.Y + bounds.H()/2,
-	}, b.Label, b.FontSize, b.TextColor)
+	}, b.Label, b.FontSize, labelColor)
 }
 
-func (b *Button) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
+func (b *Button) Bounds(ctx *DrawContext) geom.Rect {
+	if b == nil || ctx == nil {
+		return geom.Rect{}
+	}
+	return insetRect(ctx.Clip, 6)
+}
+
+func (b *Button) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
+	if b == nil || ctx == nil {
+		return false, PickInfo{}
+	}
+	if !b.Enabled {
+		return false, PickInfo{}
+	}
+	if b.Bounds(ctx).Contains(p) {
+		return true, PickInfo{}
+	}
+	return false, PickInfo{}
+}
 func (b *Button) Z() float64                    { return b.z }
 
 func (s *Slider) Draw(r render.Renderer, ctx *DrawContext) {
@@ -295,7 +963,7 @@ func (s *Slider) Draw(r render.Renderer, ctx *DrawContext) {
 	textColor := s.TextColor
 	fontSize := resolvedFontSize(s.FontSize, ctx)
 	drawWidgetText(r, ctx, geom.Pt{X: panel.Min.X + 14, Y: panel.Min.Y + 22}, s.Label, fontSize, textColor, TextAlignLeft, textLayoutVAlignTop)
-	drawWidgetText(r, ctx, geom.Pt{X: panel.Max.X - 14, Y: panel.Min.Y + 22}, fmt.Sprintf("%.2f", s.Value), fontSize, textColor, TextAlignRight, textLayoutVAlignTop)
+	drawWidgetText(r, ctx, geom.Pt{X: panel.Max.X - 14, Y: panel.Min.Y + 22}, sliderDisplayValue(s), fontSize, textColor, TextAlignRight, textLayoutVAlignTop)
 
 	track := geom.Rect{
 		Min: geom.Pt{X: panel.Min.X + 14, Y: panel.Max.Y - 26},
@@ -318,8 +986,74 @@ func (s *Slider) Draw(r render.Renderer, ctx *DrawContext) {
 	})
 }
 
-func (s *Slider) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
+func (s *Slider) Bounds(ctx *DrawContext) geom.Rect {
+	if s == nil || ctx == nil {
+		return geom.Rect{}
+	}
+	return insetRect(ctx.Clip, 4)
+}
+
+func (s *Slider) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
+	if s == nil || ctx == nil {
+		return false, PickInfo{}
+	}
+	if s.Bounds(ctx).Contains(p) {
+		return true, PickInfo{}
+	}
+	return false, PickInfo{}
+}
 func (s *Slider) Z() float64                    { return s.z }
+
+func (c *CheckButtons) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
+	if c == nil || ctx == nil {
+		return false, PickInfo{}
+	}
+	if len(c.Labels) == 0 {
+		return false, PickInfo{}
+	}
+	panel := c.Bounds(ctx)
+	if !panel.Contains(p) {
+		return false, PickInfo{}
+	}
+	rowHeight := panel.H() / float64(len(c.Labels))
+	if rowHeight <= 0 {
+		return false, PickInfo{}
+	}
+	row := int((p.Y - panel.Min.Y) / rowHeight)
+	if row < 0 || row >= len(c.Labels) {
+		return false, PickInfo{}
+	}
+	return true, PickInfo{Index: row}
+}
+
+func (rdo *RadioButtons) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
+	if rdo == nil || ctx == nil {
+		return false, PickInfo{}
+	}
+	if len(rdo.Labels) == 0 {
+		return false, PickInfo{}
+	}
+	panel := rdo.Bounds(ctx)
+	if !panel.Contains(p) {
+		return false, PickInfo{}
+	}
+	rowHeight := panel.H() / float64(len(rdo.Labels))
+	if rowHeight <= 0 {
+		return false, PickInfo{}
+	}
+	row := int((p.Y - panel.Min.Y) / rowHeight)
+	if row < 0 || row >= len(rdo.Labels) {
+		return false, PickInfo{}
+	}
+	return true, PickInfo{Index: row}
+}
+
+func (t *TextBox) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
+	if t == nil || ctx == nil {
+		return false, PickInfo{}
+	}
+	return t.Bounds(ctx).Contains(p), PickInfo{}
+}
 
 func (c *CheckButtons) Draw(r render.Renderer, ctx *DrawContext) {
 	if c == nil || r == nil || ctx == nil {
@@ -357,7 +1091,12 @@ func (c *CheckButtons) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 }
 
-func (c *CheckButtons) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
+func (c *CheckButtons) Bounds(ctx *DrawContext) geom.Rect {
+	if c == nil || ctx == nil {
+		return geom.Rect{}
+	}
+	return insetRect(ctx.Clip, 4)
+}
 func (c *CheckButtons) Z() float64                    { return c.z }
 
 func (rdo *RadioButtons) Draw(r render.Renderer, ctx *DrawContext) {
@@ -391,7 +1130,12 @@ func (rdo *RadioButtons) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 }
 
-func (rdo *RadioButtons) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
+func (rdo *RadioButtons) Bounds(ctx *DrawContext) geom.Rect {
+	if rdo == nil || ctx == nil {
+		return geom.Rect{}
+	}
+	return insetRect(ctx.Clip, 4)
+}
 func (rdo *RadioButtons) Z() float64                    { return rdo.z }
 
 func (t *TextBox) Draw(r render.Renderer, ctx *DrawContext) {
@@ -421,7 +1165,14 @@ func (t *TextBox) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 	drawWidgetText(r, ctx, geom.Pt{X: input.Min.X + 12, Y: input.Min.Y + input.H()/2}, display, fontSize, displayColor, TextAlignLeft, textLayoutVAlignCenter)
 	if t.Active {
-		caretX := input.Min.X + 16 + math.Min(input.W()-24, float64(len(display))*fontSize*0.42)
+		caretIndex := clampInt(t.caret, 0, len([]rune(t.Value)))
+		caretX := input.Min.X + 12 + fontSize*0.42*float64(caretIndex)
+		if caretX > input.Max.X-12 {
+			caretX = input.Max.X - 12
+		}
+		if caretX < input.Min.X+12 {
+			caretX = input.Min.X + 12
+		}
 		r.Path(pixelLinePath(
 			geom.Pt{X: caretX, Y: input.Min.Y + 8},
 			geom.Pt{X: caretX, Y: input.Max.Y - 8},
@@ -433,8 +1184,16 @@ func (t *TextBox) Draw(r render.Renderer, ctx *DrawContext) {
 		})
 	}
 }
-
-func (t *TextBox) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
+func (t *TextBox) Bounds(ctx *DrawContext) geom.Rect {
+	if t == nil || ctx == nil {
+		return geom.Rect{}
+	}
+	panel := insetRect(ctx.Clip, 4)
+	return geom.Rect{
+		Min: geom.Pt{X: panel.Min.X, Y: panel.Min.Y + 26},
+		Max: geom.Pt{X: panel.Max.X, Y: panel.Max.Y},
+	}
+}
 func (t *TextBox) Z() float64                    { return t.z }
 
 func prepareWidgetAxes(a *Axes) {
@@ -492,11 +1251,93 @@ func sliderFraction(min, max, value float64) float64 {
 	return clampFloat((value-min)/(max-min), 0, 1)
 }
 
+func sliderDisplayValue(s *Slider) string {
+	if s == nil {
+		return ""
+	}
+	format := strings.TrimSpace(s.ValueFormat)
+	if format == "" {
+		format = "%.2f"
+	}
+	formatted := func() string {
+		defer func() {
+			if recover() != nil {
+				format = "%.2f"
+			}
+		}()
+		return fmt.Sprintf(format, s.Value)
+	}()
+	if strings.HasPrefix(formatted, "%!") {
+		return fmt.Sprintf("%.2f", s.Value)
+	}
+	return formatted
+}
+
 func clampSliderValue(min, max, value float64) float64 {
 	if max <= min {
 		return min
 	}
 	return math.Max(min, math.Min(max, value))
+}
+
+func normalizeSliderValue(min, max, step, value float64) float64 {
+	clamped := clampSliderValue(min, max, value)
+	if max <= min {
+		return clamped
+	}
+	if step == 0 {
+		return clamped
+	}
+	step = math.Abs(step)
+	if !isFinite(step) || step == 0 {
+		return clamped
+	}
+	based := (clamped - min) / step
+	return min + math.Round(based)*step
+}
+
+func clampTextIndex(s string, index int) int {
+	max := runeCount(s)
+	if index < 0 {
+		return 0
+	}
+	if index > max {
+		return max
+	}
+	return index
+}
+
+func runeCount(s string) int {
+	return len([]rune(s))
+}
+
+func isTextWhitespace(r rune) bool {
+	return unicode.IsSpace(r)
+}
+
+func moveTextCaretWordLeft(runes []rune, caret int) int {
+	if caret <= 0 {
+		return 0
+	}
+	i := caret
+	for i > 0 && isTextWhitespace(runes[i-1]) {
+		i--
+	}
+	for i > 0 && !isTextWhitespace(runes[i-1]) {
+		i--
+	}
+	return i
+}
+
+func moveTextCaretWordRight(runes []rune, caret int) int {
+	i := caret
+	for i < len(runes) && isTextWhitespace(runes[i]) {
+		i++
+	}
+	for i < len(runes) && !isTextWhitespace(runes[i]) {
+		i++
+	}
+	return i
 }
 
 func clampInt(v, minVal, maxVal int) int {

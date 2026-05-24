@@ -42,6 +42,7 @@ type Manager struct {
 	canvas *figureCanvas
 	tools  *plotcanvas.ToolManager
 	nav    *plotcanvas.Navigation
+	wi     *plotcanvas.WidgetInteraction
 	tb     *plotcanvas.ToolbarController
 	home   figureHomeState
 }
@@ -56,6 +57,7 @@ type figureCanvas struct {
 	listeners  []listener
 	closed     bool
 	nav        *plotcanvas.Navigation
+	wi         *plotcanvas.WidgetInteraction
 }
 
 type figureHomeState struct {
@@ -126,6 +128,9 @@ func newManager(elementID string, fig *core.Figure, factory rasterRendererFactor
 	m.nav = plotcanvas.NewNavigation(fig, c.Draw)
 	c.nav = m.nav
 	m.nav.Attach(&c.dispatcher)
+	m.wi = plotcanvas.NewWidgetInteraction(fig, c.Draw)
+	c.wi = m.wi
+	m.wi.Attach(&c.dispatcher)
 
 	// Toolbar wraps the helper with standard pan / zoom toggles and the
 	// home action. Save is intentionally left handler-less: the browser
@@ -200,6 +205,9 @@ func (m *Manager) Show() error { return m.canvas.Draw() }
 func (m *Manager) Close() error {
 	if m.nav != nil {
 		m.nav.Detach()
+	}
+	if m.wi != nil {
+		m.wi.Detach()
 	}
 	return m.canvas.Close()
 }
