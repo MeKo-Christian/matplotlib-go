@@ -126,6 +126,7 @@ import (
 	example_polar_axes "github.com/cwbudde/matplotlib-go/test/parity/polar_axes"
 	example_quad_mesh "github.com/cwbudde/matplotlib-go/test/parity/quad_mesh"
 	example_radar_basic "github.com/cwbudde/matplotlib-go/test/parity/radar_basic"
+	example_scale_logit_ticks "github.com/cwbudde/matplotlib-go/test/parity/scale_logit_ticks"
 	example_scale_symlog_ticks "github.com/cwbudde/matplotlib-go/test/parity/scale_symlog_ticks"
 	example_scatter_advanced "github.com/cwbudde/matplotlib-go/test/parity/scatter_advanced"
 	example_scatter_basic "github.com/cwbudde/matplotlib-go/test/parity/scatter_basic"
@@ -214,6 +215,7 @@ var renderByID = map[string]func() image.Image{
 	"formatter_log_mathtext_labels":      example_formatter_log_mathtext_labels.Render,
 	"formatter_percent_labels":           example_formatter_percent_labels.Render,
 	"formatter_scalar_scientific_labels": example_formatter_scalar_scientific_labels.Render,
+	"scale_logit_ticks":                  example_scale_logit_ticks.Render,
 	"scale_symlog_ticks":                 example_scale_symlog_ticks.Render,
 	"artist_metadata":                    example_artist_metadata.Render,
 	"gridspec_composition":               example_gridspec_composition.Render,
@@ -289,6 +291,7 @@ var figureByID = map[string]func() *core.Figure{
 	"formatter_log_mathtext_labels":      example_formatter_log_mathtext_labels.Plot,
 	"formatter_percent_labels":           example_formatter_percent_labels.Plot,
 	"formatter_scalar_scientific_labels": example_formatter_scalar_scientific_labels.Plot,
+	"scale_logit_ticks":                  example_scale_logit_ticks.Plot,
 	"scale_symlog_ticks":                 example_scale_symlog_ticks.Plot,
 	"axisartist_showcase":                showcase_axisartist_showcase.Plot,
 	"basic_line":                         showcase_basic_line.Plot,
