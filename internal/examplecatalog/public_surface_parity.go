@@ -267,7 +267,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go EngFormatter covers SI prefix scaling, fixed-minus, unicode micro opt-in, rounding rollover, extreme SI prefixes, MathText-style number wrapping, and format_eng-style aliasing. Remaining 12.2C scope is exact default separator/places compatibility and offset behavior.",
+		Note:              "Go EngFormatter covers SI prefix scaling, fixed-minus, Matplotlib-style zero-value separator/places defaults, unicode micro output, rounding rollover, extreme SI prefixes, MathText-style number wrapping, and format_eng-style aliasing. Remaining 12.2C scope is exact offset behavior.",
 	},
 	{
 		ID:                "ticker-percent-formatter",
@@ -276,7 +276,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go PercentFormatter covers explicit xmax, fixed decimals, configured display-range auto decimals, symbols, explicit no-symbol output, TeX symbol escaping, raw LaTeX symbols, and fixed-minus. Remaining 12.2C scope is exact zero-value defaults.",
+		Note:              "Go PercentFormatter covers Matplotlib-style zero-value xmax and auto-decimal defaults, explicit xmax, fixed decimals, configured display-range auto decimals, symbols, explicit no-symbol output, TeX symbol escaping, raw LaTeX symbols, and fixed-minus. Remaining 12.2C scope is catalog fixture coverage.",
 	},
 	{
 		ID:                "ticker-fixed-formatter",

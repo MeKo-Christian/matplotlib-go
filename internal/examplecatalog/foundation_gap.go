@@ -75,8 +75,8 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Gap: "The remaining 12.2 scope is split into concrete rows: 12.2B still tracks " +
 			"AutoLocator / MaxNLocator edge semantics, dense log minor ticks, and locator catalog " +
 			"fixture coverage; 12.2C still tracks ScalarFormatter offset/scientific behavior, " +
-			"log-family sparse minor labels, EngFormatter / PercentFormatter edge behavior, and " +
-			"formatter catalog fixtures; 12.2D/E still track date/category and scale-default " +
+			"log-family sparse minor labels, EngFormatter offset behavior, and formatter catalog " +
+			"fixtures; 12.2D/E still track date/category and scale-default " +
 			"catalog fixtures. The dates.py row-by-row audit is tracked in DateSurfaceAuditRows.",
 		Decision: GapDecisionImplement,
 		Rationale: "Tick labels and scale semantics are user-visible parity surfaces; each remaining " +
