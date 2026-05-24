@@ -2083,6 +2083,8 @@ catalog/parity fixture per behavior family.
       axis info; add regression tests for date and categorical axes.
 - [x] Add `date_concise_intraday_labels` catalog/parity fixture for intraday
       `HourLocator` ticks with concise date formatting.
+- [x] Add `date_month_year_labels` catalog/parity fixture for monthly/yearly
+      date locator and formatter behavior.
 - [ ] Add catalog/parity cases for daily, monthly/yearly, intraday, concise
       date, and categorical tick labels.
 
