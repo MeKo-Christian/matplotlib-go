@@ -71,6 +71,10 @@ err = core.SaveFig(fig, renderer, "plot.svg") // dispatches to SaveSVG
 err = core.SaveFig(fig, renderer, "plot.pdf",
     render.WithPDFMetadata(map[string]string{"Title": "Example"}),
 )
+err = core.SaveFig(fig, renderer, "plot.pgf",
+    render.WithPGFMetadata(map[string]string{"Title": "Example"}),
+    render.WithPGFPreamble(`\usepackage{amsmath}`),
+)
 ```
 
 Format-specific save options share the `render.SaveOption` surface. SVG, PDF,
@@ -78,6 +82,10 @@ PostScript, and PGF options can be passed through `core.SaveFig`,
 `pyplot.Savefig`, the backend registry save dispatch, and headless manager save
 tools. Options are validated against the selected extension, so unsupported
 combinations fail explicitly instead of being ignored.
+
+PGF is generator-only. It emits self-contained PGF pixel rectangles for raster
+images and uses deterministic approximate text metrics while LaTeX provides the
+final font and TeX layout at document compile time.
 
 Interactive embedder contracts for `FigureCanvas`, `DrawIdleCanvas`, event
 payloads, picker behavior, and optional blitting are documented in

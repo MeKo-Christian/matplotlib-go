@@ -147,116 +147,30 @@ Completed scope:
 
 # Phase 1B: PostScript / EPS and PGF Backends
 
-**Goal:** add the remaining publication vector formats after PDF, with small
-backend-specific hardening tracks for the places PS/EPS and PGF differ from PDF.
+✅ **Completed.** PostScript / EPS and PGF are registered publication-vector
+backends with deterministic output, shared save-option routing, documented
+limitations, and smoke / structural coverage.
 
-**Reference sources:** `third_party/matplotlib/lib/matplotlib/backends/backend_ps.py`,
-`backend_pgf.py`, current PDF / SVG backends for shared serialization patterns.
+Completed scope:
 
-### 1B.1 PostScript / EPS Backend Foundation
-
-**Goal:** support journal-style Level-2 PostScript/EPS output with clear,
-documented limitations where PS cannot match PDF semantics.
-
-- [x] Scaffold `backends/ps/` with `doc.go`, `init.go`, `ps.go`, and
-      `registry_test.go`.
-- [x] Register `backends.PS`, `backends.PSExport`, `render.PSExporter`, and
-      `render.DPIAware`.
-- [x] Include PS in `VectorOutput` through runtime-checked exporter
-      interfaces.
-- [x] Add deterministic Adobe headers, bounding boxes, document stream layout,
-      and top-left display-coordinate transform.
-- [x] Implement graphics state stack, path construction, rectangular/path
-      clipping, stroke state, RGB stroke/fill color, background fills, and
-      simple Helvetica text output.
-- [x] Emit deterministic inline Level-2 `colorimage` payloads for RGBA raster
-      images, pre-composited over white for the initial alpha slice.
-- [x] Implement transformed images with arbitrary PostScript `concat`
-      matrices.
-- [x] Implement native hatch fills as clipped deterministic hatch stroke
-      lines.
-- [x] Implement native marker and path-collection batches as reusable
-      PostScript procedures.
-- [x] Register `.ps` and `.eps` in `SaveFormats`, side-import from
-      `backends/all`, and route through `core.SaveFig` / `backends.SavePS`.
-- [x] Add `cmd/example -format ps` smoke coverage.
-
-### 1B.2 PostScript Parity Hardening
-
-**Goal:** close the PS-specific gaps that remain after the first useful backend
-slice.
-
-- [x] Decide the PostScript font policy: embedded fonts, Type 3 glyph paths,
-      or documented direct-text limitations.
-- [x] Match PDF's embedded-font behavior where feasible.
-- [x] Define alpha semantics for fills, strokes, images, and hatches in a way
-      that is honest about Level-2 PS limitations.
-- [x] Add JPEG passthrough or document why PS output always encodes raster
-      image data.
-- [x] Reuse repeated image payloads where the PostScript representation allows
-      it.
-- [x] Add PS structural or smoke fixtures for text, hatches, transformed
-      images, collections, and alpha-limit behavior.
-
-**PostScript exit criteria:**
-
-- [x] `backends.SelectBackendForExtension("", ".ps" | ".eps", nil)` selects
-      the PS backend and registry `SaveViaExtension` writes through
-      `SaveFormats`.
-- [x] `cmd/example -format ps` writes a non-empty file in smoke tests.
-- [x] PS font, alpha, JPEG/image-reuse, and fixture policy is implemented or
-      explicitly documented as a limitation.
-
-### 1B.3 PGF Backend Foundation
-
-**Goal:** provide generator-only PGF output for direct inclusion in LaTeX
-documents without requiring a TeX engine during ordinary saves.
-
-- [x] Scaffold `backends/pgf/` with `doc.go`, `init.go`, `pgf.go`, and
-      `registry_test.go`.
-- [x] Register `backends.PGF`, `backends.PGFExport`, `render.PGFExporter`,
-      `render.DPIAware`, `render.FontTextDrawer`, and
-      `render.FontRotatedTextDrawer`.
-- [x] Emit deterministic `pgfpicture` output with paths, rectangular/path
-      clips, graphics scopes, and the same top-left display-coordinate
-      transform used by the other vector renderers.
-- [x] Emit simple direct LaTeX text and rotated text through `\pgftext`.
-- [x] Add explicit `\pgfsetfillopacity` and `\pgfsetstrokeopacity` commands
-      for filled, stroked, hatched, and text output.
-- [x] Implement native PGF hatch fills as clipped deterministic hatch stroke
-      lines.
-- [x] Register `.pgf` in `SaveFormats`, side-import from `backends/all`, and
-      route through `core.SaveFig` / `backends.SavePGF`.
-- [x] Add `cmd/example -format pgf` smoke coverage that writes a non-empty PGF
-      file.
-
-### 1B.4 PGF Verification and Parity Hardening
-
-**Goal:** decide how far PGF should go as a pure generator backend, then fill
-the chosen gaps in small pieces.
-
-- [x] Decide whether CI/dev verification invokes `lualatex`, uses optional
-      local TeX verification only, or keeps PGF as pure generator smoke output.
-- [ ] Add PGF-specific option and metadata routing after the shared save-option
-      surface lands.
-- [x] Implement PGF raster image output.
-- [x] Implement PGF transformed raster images or route them through the shared
-      mixed-mode fallback.
-- [x] Implement reusable PGF marker batches.
-- [x] Implement reusable PGF path-collection batches.
-- [ ] Tighten PGF TeX/font metrics parity against upstream Matplotlib.
-- [x] Add PGF fixtures for text, alpha scopes, hatches, image output, and
-      collection batching.
-
-**PGF exit criteria:**
-
-- [x] `backends.SelectBackendForExtension("", ".pgf", nil)` selects a
-      registered PGF backend.
-- [x] `cmd/example -format pgf` writes a non-empty PGF file.
-- [x] PGF verification policy is documented and reflected in CI or optional
-      developer checks.
-- [ ] PGF image, batching, option, and text-metrics limitations are either
-      implemented or explicitly documented.
+- PS/EPS emits deterministic Level-2 PostScript with paths, clipping,
+  strokes/fills, transformed images, native hatch strokes, reusable
+  marker/path-collection procedures, extension registration, and smoke
+  fixtures.
+- PS font, alpha, image/JPEG, reuse, and fixture policies are implemented where
+  feasible or documented where Level-2 PostScript cannot match PDF semantics.
+- PGF emits deterministic generator-only `pgfpicture` output with paths, clips,
+  text, rotated text, opacity commands, native hatches, raster images,
+  transformed images, mixed-raster groups, and reusable marker/path-collection
+  macros.
+- PGF-specific save options route through the shared `render.SaveOption`
+  surface: metadata, preamble, comment policy, and verification mode are
+  forwarded by `core.SaveFig`, `pyplot.SaveFig`, registry saves, and renderer
+  export.
+- PGF CI remains pure generator smoke output; local TeX compilation is
+  optional. Draw-time text metrics are deterministic approximations, with exact
+  TeX/font metrics delegated to LaTeX and documented as an intentional
+  generator-only limitation.
 
 ---
 
@@ -1941,32 +1855,62 @@ Current slice landed:
 
 #### 9C.1D Line2D Marker Completion
 
-- [ ] Verify current `Line2D` marker size conversion, marker face/edge fallback,
+- [x] Verify current `Line2D` marker size conversion, marker face/edge fallback,
       marker edge width, marker alpha, and legend samples against upstream
       `lines.py` and `markers.py`.
-- [ ] Support marker face color `"none"` semantics through an explicit Go option
+- [x] Support marker face color `"none"` semantics through an explicit Go option
       or sentinel that does not rely on ambiguous zero-alpha fallback.
-- [ ] Support marker edge color `"auto"` / face-color fallback semantics where
+- [x] Support marker edge color `"auto"` / face-color fallback semantics where
       Matplotlib does so for common markers.
-- [ ] Ensure line-only markers (`+`, `x`, ticks, carets, etc.) use stroke-only
+- [x] Ensure line-only markers (`+`, `x`, ticks, carets, etc.) use stroke-only
       marker rendering in both plot output and legends.
-- [ ] Add catalog/parity cases for Line2D markers in plots and legends,
+- [x] Add catalog/parity cases for Line2D markers in plots and legends,
       including filled, unfilled, line-only, custom path, tuple marker, and
       mathtext marker variants.
 
+Current slice landed:
+
+- `Line2D` marker edge widths now resolve from points to display pixels, matching
+  upstream `set_markeredgewidth`; the existing direct field remains the public
+  typed knob.
+- `MarkerColorSpec` plus `ExplicitMarkerColor`, `AutoMarkerColor`, and
+  `NoMarkerColor` provide explicit Go sentinels for Matplotlib-style marker
+  face / edge color `"auto"` and `"none"` behavior.
+- `Line2D` marker edge `"auto"` follows upstream line-RGB behavior and inherits
+  face alpha when the face is filled; `MarkerFillNone` and `NoMarkerColor`
+  produce stroke-only markers without relying on zero-alpha ambiguity.
+- Line-only markers now draw stroke-only in both plot output and legend samples.
+- Added fixture-only `line2d_markers` parity coverage with plot and legend
+  samples for filled, unfilled, line-only, custom path, tuple, mathtext, and
+  half-filled markers.
+
 #### 9C.1E Half-Filled Marker Paths
 
-- [ ] Replace the current single filled marker path behavior for
+- [x] Replace the current single filled marker path behavior for
       `MarkerFillLeft`, `MarkerFillRight`, `MarkerFillTop`, and
       `MarkerFillBottom` with split marker drawing: primary half uses
       markerfacecolor, alternate half uses markerfacecoloralt / transparent
       fallback, and edge drawing remains whole-marker.
-- [ ] Implement split paths for circle, square, diamond, triangle, and polygon
+- [x] Implement split paths for circle, square, diamond, triangle, and polygon
       markers first; explicitly document or implement behavior for line-only,
       tuple, custom path, and mathtext markers.
-- [ ] Add renderer-neutral tests that inspect the two fill paths and one edge
+- [x] Add renderer-neutral tests that inspect the two fill paths and one edge
       path for a half-filled marker.
-- [ ] Add catalog/parity fixture coverage for all four half-fill directions.
+- [x] Add catalog/parity fixture coverage for all four half-fill directions.
+
+Current slice landed:
+
+- The shared marker split helper now produces primary / alternate half-fill
+  paths for circles and polygonal markers, including square, diamond, triangle,
+  regular polygon, tuple polygon/star, and polygonal custom paths. Line-only
+  markers stay stroke-only; non-polygon custom and mathtext paths remain whole
+  paths until a clipping-path marker fill implementation is warranted.
+- `Line2D` draws half-filled markers as primary fill, alternate fill, and a
+  separate whole-marker edge pass. `Scatter2D` uses the same split paths with a
+  transparent alternate fallback and whole-marker edge pass.
+- Renderer-neutral tests cover the Line2D two-fill / one-edge contract and the
+  Scatter2D split-fill / whole-edge fallback; the `line2d_markers` fixture
+  covers all four half-fill directions against Matplotlib.
 
 #### 9C.1F Exit Criteria
 

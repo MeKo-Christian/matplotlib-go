@@ -97,6 +97,12 @@ LaTeX document. It does **not** rasterize or anti-alias on its own — LaTeX doe
 the typesetting, so figure text uses the document's fonts and math.
 
 Use PGF when a figure must match the surrounding LaTeX document exactly.
+Matplotlib-Go keeps ordinary PGF saves dependency-free: draw-time text metrics
+are deterministic approximations, while exact TeX/font metrics are delegated to
+LaTeX at document compile time. PGF-specific save options are available through
+the shared `render.SaveOption` surface, including `render.WithPGFMetadata`,
+`render.WithPGFPreamble`, `render.WithPGFCommentPolicy`, and
+`render.WithPGFVerificationMode`.
 
 ### Skia — opt-in accelerated raster backend
 

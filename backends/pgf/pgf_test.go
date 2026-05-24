@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"image"
 	"image/color"
+	"os"
 	"strings"
 	"testing"
 
@@ -36,6 +37,23 @@ func testRectPath() geom.Path {
 	p.LineTo(geom.Pt{X: 10, Y: 40})
 	p.Close()
 	return p
+}
+
+func TestDocumentationRecordsTextMetricsPolicy(t *testing.T) {
+	doc, err := os.ReadFile("doc.go")
+	if err != nil {
+		t.Fatalf("ReadFile doc.go: %v", err)
+	}
+	text := strings.ReplaceAll(string(doc), "\n// ", " ")
+	for _, want := range []string{
+		"deterministic approximations",
+		"exact TeX/font metrics are delegated to LaTeX",
+		"does not implement TeX metric extraction",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("PGF package docs should document %q limitation:\n%s", want, doc)
+		}
+	}
 }
 
 func TestPathAlphaEmitsPGFOpacityCommands(t *testing.T) {
