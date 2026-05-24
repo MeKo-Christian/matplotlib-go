@@ -1990,7 +1990,7 @@ catalog/parity fixture per behavior family.
       surface, and split each missing locator into `implement`,
       `idiomatic-equivalent`, or `intentional-omission` in the Phase 11 public
       surface notes.
-- [ ] Tighten `AutoLocator` / `MaxNLocator` edge semantics against upstream:
+- [x] Tighten `AutoLocator` / `MaxNLocator` edge semantics against upstream:
       `nbins`, `steps`, integer-only mode, pruning, symmetric behavior,
       degenerate ranges, negative ranges, and very small / very large spans.
 - [x] Compare `MaxNLocator.view_limits` / `nonsingular` behavior against
@@ -2008,10 +2008,10 @@ catalog/parity fixture per behavior family.
 - [x] Audit `OldAutoLocator`: it is not present in the current vendored
       upstream `ticker.py`; no Go compatibility surface is required unless an
       older Matplotlib target is explicitly added.
-- [ ] Complete log-family locator behavior: dense minor ticks, `subs="auto"` /
+- [x] Complete log-family locator behavior: dense minor ticks, `subs="auto"` /
       `subs="all"` equivalents, minor threshold behavior, base changes, and
       safe behavior for non-positive or inverted domains.
-- [ ] Compare remaining `LogLocator` stride/offset decisions against upstream
+- [x] Compare remaining `LogLocator` stride/offset decisions against upstream
       for dense ranges and non-decimal bases; add unit cases for the exact
       ranges that still differ.
 - [x] Add a `locator_log_minor_threshold_labels` catalog/parity fixture for

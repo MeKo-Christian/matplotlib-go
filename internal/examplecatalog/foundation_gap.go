@@ -72,9 +72,8 @@ var foundationAPIGaps = []FoundationAPIGap{
 			"category locators, formatter families for scalar, fixed, function, printf, str-method, " +
 			"engineering, percent, log math text, logit, dates, categories, unit conversion hooks, " +
 			"and scale-specific defaults including functionlog.",
-		Gap: "The remaining 12.2 scope is split into concrete rows: 12.2B still tracks " +
-			"AutoLocator / MaxNLocator edge semantics, dense log minor ticks, and locator catalog " +
-			"fixture coverage; 12.2C still tracks ScalarFormatter offset/scientific behavior, " +
+		Gap: "The remaining 12.2 scope is split into concrete rows: 12.2B closed locator " +
+			"edge semantics and catalog fixture coverage; 12.2C still tracks ScalarFormatter offset/scientific behavior, " +
 			"log-family sparse minor labels, EngFormatter offset behavior, and formatter catalog " +
 			"fixtures; 12.2D/E still track date/category and scale-default " +
 			"catalog fixtures. The dates.py row-by-row audit is tracked in DateSurfaceAuditRows.",

@@ -96,7 +96,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface", "locator_linear_labels"},
-		Note:              "Go AutoLocator delegates to MaxNLocator with Matplotlib-style default steps; locator_linear_labels covers visible default linear tick output. Remaining 12.2B scope is exact upstream autolimit and very small/large span behavior.",
+		Note:              "Go AutoLocator delegates to MaxNLocator with Matplotlib-style default steps; locator_linear_labels covers visible default linear tick output and MaxN unit tests cover tiny, large-offset, negative, and degenerate domains.",
 	},
 	{
 		ID:                "ticker-auto-minor-locator",
@@ -105,7 +105,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go MinorLinearLocator covers the visible AutoMinorLocator subdivision path. Remaining 12.2B scope is exact rcParam-driven auto subdivision selection.",
+		Note:              "Go MinorLinearLocator covers the visible AutoMinorLocator subdivision path; exact rcParam-driven auto subdivision selection remains a partial compatibility difference.",
 	},
 	{
 		ID:                "ticker-asinh-locator",
@@ -114,7 +114,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface", "scale_asinh_ticks"},
-		Note:              "Go AsinhLocator is installed for asinh scales and covers symmetric linear/log-like tick placement plus minor subs; scale_asinh_ticks covers visible asinh tick output. Remaining 12.2B scope is exact upstream rounding preferences.",
+		Note:              "Go AsinhLocator is installed for asinh scales and covers symmetric linear/log-like tick placement plus minor subs; scale_asinh_ticks covers visible asinh tick output.",
 	},
 	{
 		ID:                "ticker-fixed-locator",
@@ -141,7 +141,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface", "locator_linear_labels"},
-		Note:              "Go LinearLocator covers exact-count linear ticks and preset expansion; locator_linear_labels covers visible exact-count tick output. Remaining 12.2B scope is Python mutable preset API compatibility.",
+		Note:              "Go LinearLocator covers exact-count linear ticks and preset expansion; locator_linear_labels covers visible exact-count tick output. Python mutable preset API compatibility remains intentionally outside the current Go value-style API.",
 	},
 	{
 		ID:                "ticker-max-n-locator",
@@ -150,7 +150,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface", "locator_maxn_edge_labels"},
-		Note:              "Go MaxNLocator covers nbins, custom steps, integer relaxation, symmetric ranges, pruning, degenerate ranges, tiny spans, and large-offset spans; locator_maxn_edge_labels covers degenerate linear-limit expansion, pruning, and large-offset tick placement. Remaining 12.2B scope is exact upstream autolimit edge behavior.",
+		Note:              "Go MaxNLocator covers nbins, custom steps, integer relaxation, symmetric ranges, pruning, degenerate ranges, negative ranges, tiny spans, and large-offset spans; locator_maxn_edge_labels covers visible degenerate expansion, pruning, and large-offset tick placement.",
 	},
 	{
 		ID:                "ticker-log-locator",
@@ -159,7 +159,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface", "lognorm_imshow", "locator_log_minor_threshold_labels"},
-		Note:              "Go LogLocator covers base changes, explicit subs, auto/all subs modes, numticks-driven major thinning, dense minor suppression, and safe non-positive/inverted ranges; locator_log_minor_threshold_labels covers visible base-10 minor-grid and base-2 major tick output. Remaining 12.2B scope is exact upstream stride-offset selection.",
+		Note:              "Go LogLocator covers base changes, explicit subs, auto/all subs modes, numticks-driven major thinning, dense minor suppression, safe non-positive/inverted ranges, and budgeted base-2/base-10 stride cases; locator_log_minor_threshold_labels covers visible base-10 minor-grid and base-2 major tick output.",
 	},
 	{
 		ID:                "ticker-logit-locator",
@@ -168,7 +168,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface", "scale_logit_ticks"},
-		Note:              "Go LogitLocator is installed for logit scales and covers major/minor probability ticks; scale_logit_ticks covers visible logit tick output. Remaining 12.2B scope is exact upstream minor pruning.",
+		Note:              "Go LogitLocator is installed for logit scales and covers major/minor probability ticks; scale_logit_ticks covers visible logit tick output.",
 	},
 	{
 		ID:                "ticker-multiple-locator",
@@ -195,7 +195,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface", "scale_symlog_ticks"},
-		Note:              "Go SymLogLocator is installed for symlog scales and covers negative, linear-threshold, and positive log regions; scale_symlog_ticks covers visible symlog tick output. Remaining 12.2B scope is exact upstream minor stride behavior.",
+		Note:              "Go SymLogLocator is installed for symlog scales and covers negative, linear-threshold, and positive log regions; scale_symlog_ticks covers visible symlog tick output.",
 	},
 	{
 		ID:                "ticker-log-formatter",
@@ -649,7 +649,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/tick.go", "core/date_tick.go", "core/units.go"},
 		catalogIDs:        []string{"axes_control_surface", "units_dates", "units_categories", "lognorm_imshow", "skewt_basic"},
 		exampleIDs:        []string{"axes_control_surface", "units_overview", "skewt_basic"},
-		note:              "Common locators and formatters plus symlog/asinh/logit/date/category families exist. Remaining 12.2B/C scope is AutoLocator/MaxNLocator edge semantics, dense log minor labels, ScalarFormatter/EngFormatter/PercentFormatter edge behavior, and catalog fixture breadth.",
+		note:              "Common locators and formatters plus symlog/asinh/logit/date/category families exist. Remaining 12.2C scope is formatter edge behavior and catalog fixture breadth.",
 	},
 	{
 		idPrefix:          "scale-registry-functionlog",

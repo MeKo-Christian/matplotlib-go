@@ -112,7 +112,7 @@ var featureCoverageRows = []FeatureCoverage{
 		BrowserDemo:             CoveragePartial,
 		Breadth:                 BreadthThin,
 		Notes: "Major/minor ticks, TickParams styling, date/category units, and linear/log/symlog/asinh/logit/function/functionlog scales exist. " +
-			"The dates.py surface audit is tracked in DateSurfaceAuditRows. Remaining 12.2B/C/D/E scope is AutoLocator/MaxNLocator autolimit edge semantics, formatter edge cases, and family-specific catalog fixtures.",
+			"The dates.py surface audit is tracked in DateSurfaceAuditRows. Remaining 12.2C/D/E scope is formatter edge cases and family-specific catalog fixtures.",
 	},
 	{
 		ID:                      "transforms",
