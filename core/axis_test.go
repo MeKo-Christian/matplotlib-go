@@ -807,6 +807,47 @@ func TestAxes_TickParamsSideVisibility(t *testing.T) {
 	}
 }
 
+func TestAxes_TickParamsGridStyling(t *testing.T) {
+	axes := &Axes{XAxis: NewXAxis(), YAxis: NewYAxis()}
+	xGrid := axes.AddXGrid()
+	yGrid := axes.AddYGrid()
+	xGrid.Minor = true
+	yGrid.Minor = true
+
+	visible := false
+	gridColor := render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1}
+	alpha := 0.35
+	width := 2.5
+	dashes := []float64{4, 2}
+	if err := axes.TickParams(TickParams{
+		Axis:          "x",
+		Which:         "both",
+		GridVisible:   &visible,
+		GridColor:     &gridColor,
+		GridAlpha:     &alpha,
+		GridLineWidth: &width,
+		GridDashes:    dashes,
+	}); err != nil {
+		t.Fatalf("TickParams(grid): %v", err)
+	}
+
+	if xGrid.Major || xGrid.Minor {
+		t.Fatalf("x grid visibility = major %v minor %v, want both false", xGrid.Major, xGrid.Minor)
+	}
+	if xGrid.Color != gridColor || xGrid.MinorColor.R != gridColor.R || xGrid.MinorColor.A != alpha {
+		t.Fatalf("x grid colors = major %+v minor %+v", xGrid.Color, xGrid.MinorColor)
+	}
+	if xGrid.Alpha != alpha || xGrid.LineWidth != width || xGrid.MinorLineWidth != width {
+		t.Fatalf("x grid style = alpha %v width %v minor width %v", xGrid.Alpha, xGrid.LineWidth, xGrid.MinorLineWidth)
+	}
+	if len(xGrid.Dashes) != 2 || xGrid.Dashes[0] != 4 || len(xGrid.MinorDashes) != 2 || xGrid.MinorDashes[1] != 2 {
+		t.Fatalf("x grid dashes = major %v minor %v", xGrid.Dashes, xGrid.MinorDashes)
+	}
+	if !yGrid.Major || !yGrid.Minor {
+		t.Fatalf("y grid should be unchanged, got major %v minor %v", yGrid.Major, yGrid.Minor)
+	}
+}
+
 func TestAxes_SetAxisLineStyleAppliesToSelectedAxes(t *testing.T) {
 	axes := &Axes{XAxis: NewXAxis(), XAxisTop: NewXAxis(), YAxis: NewYAxis()}
 

@@ -416,6 +416,11 @@ type TickParams struct {
 	LabelPad      *float64
 	LabelHAlign   *TextAlign
 	LabelVAlign   *TextVerticalAlign
+	GridVisible   *bool
+	GridColor     *render.Color
+	GridAlpha     *float64
+	GridLineWidth *float64
+	GridDashes    []float64
 }
 
 // LocatorParams controls the target tick density for automatic locators.
@@ -1394,6 +1399,7 @@ func (a *Axes) TickParams(params TickParams) error {
 		}
 	}
 	a.applyTickSideParams(params)
+	a.applyTickGridParams(params, which)
 	return nil
 }
 
@@ -1464,6 +1470,97 @@ func (a *Axes) applyTickSideParams(params TickParams) {
 				a.YAxisRight.ShowLabels = false
 			}
 		}
+	}
+}
+
+func (a *Axes) applyTickGridParams(params TickParams, which string) {
+	if a == nil || (params.GridVisible == nil && params.GridColor == nil && params.GridAlpha == nil && params.GridLineWidth == nil && params.GridDashes == nil) {
+		return
+	}
+	for _, artist := range a.Artists {
+		grid, ok := artist.(*Grid)
+		if !ok || !gridMatchesAxisSpec(grid, params.Axis) {
+			continue
+		}
+		if params.GridVisible != nil {
+			switch which {
+			case "major":
+				grid.Major = *params.GridVisible
+			case "minor":
+				grid.Minor = *params.GridVisible
+			case "both":
+				grid.Major = *params.GridVisible
+				grid.Minor = *params.GridVisible
+			}
+		}
+		if params.GridColor != nil {
+			switch which {
+			case "major":
+				grid.Color = *params.GridColor
+			case "minor":
+				grid.MinorColor = *params.GridColor
+			case "both":
+				grid.Color = *params.GridColor
+				grid.MinorColor = *params.GridColor
+			}
+		}
+		if params.GridAlpha != nil {
+			alpha := *params.GridAlpha
+			if alpha < 0 {
+				alpha = 0
+			}
+			if alpha > 1 {
+				alpha = 1
+			}
+			switch which {
+			case "major":
+				grid.Alpha = alpha
+			case "minor":
+				grid.MinorColor.A = alpha
+			case "both":
+				grid.Alpha = alpha
+				grid.MinorColor.A = alpha
+			}
+		}
+		if params.GridLineWidth != nil {
+			switch which {
+			case "major":
+				grid.LineWidth = *params.GridLineWidth
+			case "minor":
+				grid.MinorLineWidth = *params.GridLineWidth
+			case "both":
+				grid.LineWidth = *params.GridLineWidth
+				grid.MinorLineWidth = *params.GridLineWidth
+			}
+		}
+		if params.GridDashes != nil {
+			dashes := styleCloneDashes(params.GridDashes)
+			switch which {
+			case "major":
+				grid.Dashes = dashes
+			case "minor":
+				grid.MinorDashes = dashes
+			case "both":
+				grid.Dashes = styleCloneDashes(dashes)
+				grid.MinorDashes = styleCloneDashes(dashes)
+			}
+		}
+	}
+}
+
+func gridMatchesAxisSpec(grid *Grid, spec string) bool {
+	if grid == nil {
+		return false
+	}
+	switch normalizeAxisSpec(spec) {
+	case "both":
+		return true
+	case "x", "bottom", "top":
+		return grid.Axis == AxisBottom || grid.Axis == AxisTop
+	case "y", "left", "right":
+		return grid.Axis == AxisLeft || grid.Axis == AxisRight
+	default:
+		return false
 	}
 }
 
