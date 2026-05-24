@@ -766,6 +766,47 @@ func TestAxes_TickParamsColorsTicksAndLabelsNotSpine(t *testing.T) {
 	}
 }
 
+func TestAxes_TickParamsSideVisibility(t *testing.T) {
+	axes := &Axes{XAxis: NewXAxis(), YAxis: NewYAxis()}
+	show := true
+	hide := false
+
+	if err := axes.TickParams(TickParams{
+		Axis:        "x",
+		Top:         &show,
+		Bottom:      &hide,
+		LabelTop:    &show,
+		LabelBottom: &hide,
+	}); err != nil {
+		t.Fatalf("TickParams(x sides): %v", err)
+	}
+	if axes.XAxis == nil || axes.XAxis.ShowTicks || axes.XAxis.ShowLabels {
+		t.Fatalf("bottom x-axis visibility = %+v, want hidden ticks/labels", axes.XAxis)
+	}
+	if axes.XAxisTop == nil || !axes.XAxisTop.ShowTicks || !axes.XAxisTop.ShowLabels {
+		t.Fatalf("top x-axis visibility = %+v, want visible ticks/labels", axes.XAxisTop)
+	}
+	if axes.YAxis == nil || !axes.YAxis.ShowTicks || !axes.YAxis.ShowLabels {
+		t.Fatalf("y-axis should be unchanged, got %+v", axes.YAxis)
+	}
+
+	if err := axes.TickParams(TickParams{
+		Axis:       "y",
+		Right:      &show,
+		Left:       &hide,
+		LabelRight: &show,
+		LabelLeft:  &hide,
+	}); err != nil {
+		t.Fatalf("TickParams(y sides): %v", err)
+	}
+	if axes.YAxis == nil || axes.YAxis.ShowTicks || axes.YAxis.ShowLabels {
+		t.Fatalf("left y-axis visibility = %+v, want hidden ticks/labels", axes.YAxis)
+	}
+	if axes.YAxisRight == nil || !axes.YAxisRight.ShowTicks || !axes.YAxisRight.ShowLabels {
+		t.Fatalf("right y-axis visibility = %+v, want visible ticks/labels", axes.YAxisRight)
+	}
+}
+
 func TestAxes_SetAxisLineStyleAppliesToSelectedAxes(t *testing.T) {
 	axes := &Axes{XAxis: NewXAxis(), XAxisTop: NewXAxis(), YAxis: NewYAxis()}
 

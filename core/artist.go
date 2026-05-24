@@ -404,6 +404,14 @@ type TickParams struct {
 	Direction     *string
 	ShowTicks     *bool
 	ShowLabels    *bool
+	Top           *bool
+	Bottom        *bool
+	Left          *bool
+	Right         *bool
+	LabelTop      *bool
+	LabelBottom   *bool
+	LabelLeft     *bool
+	LabelRight    *bool
 	LabelRotation *float64
 	LabelPad      *float64
 	LabelHAlign   *TextAlign
@@ -1385,7 +1393,78 @@ func (a *Axes) TickParams(params TickParams) error {
 			applyTickLabelParams(&axis.MinorLabelStyle, params)
 		}
 	}
+	a.applyTickSideParams(params)
 	return nil
+}
+
+func (a *Axes) applyTickSideParams(params TickParams) {
+	if a == nil {
+		return
+	}
+	if axisAllowsX(params.Axis) {
+		if params.Bottom != nil {
+			if *params.Bottom && a.XAxis == nil {
+				a.XAxis = NewXAxis()
+			}
+			if a.XAxis != nil {
+				a.XAxis.ShowTicks = *params.Bottom
+			}
+		}
+		if params.Top != nil {
+			if *params.Top {
+				a.TopAxis().ShowTicks = true
+			} else if a.XAxisTop != nil {
+				a.XAxisTop.ShowTicks = false
+			}
+		}
+		if params.LabelBottom != nil {
+			if *params.LabelBottom && a.XAxis == nil {
+				a.XAxis = NewXAxis()
+			}
+			if a.XAxis != nil {
+				a.XAxis.ShowLabels = *params.LabelBottom
+			}
+		}
+		if params.LabelTop != nil {
+			if *params.LabelTop {
+				a.TopAxis().ShowLabels = true
+			} else if a.XAxisTop != nil {
+				a.XAxisTop.ShowLabels = false
+			}
+		}
+	}
+	if axisAllowsY(params.Axis) {
+		if params.Left != nil {
+			if *params.Left && a.YAxis == nil {
+				a.YAxis = NewYAxis()
+			}
+			if a.YAxis != nil {
+				a.YAxis.ShowTicks = *params.Left
+			}
+		}
+		if params.Right != nil {
+			if *params.Right {
+				a.RightAxis().ShowTicks = true
+			} else if a.YAxisRight != nil {
+				a.YAxisRight.ShowTicks = false
+			}
+		}
+		if params.LabelLeft != nil {
+			if *params.LabelLeft && a.YAxis == nil {
+				a.YAxis = NewYAxis()
+			}
+			if a.YAxis != nil {
+				a.YAxis.ShowLabels = *params.LabelLeft
+			}
+		}
+		if params.LabelRight != nil {
+			if *params.LabelRight {
+				a.RightAxis().ShowLabels = true
+			} else if a.YAxisRight != nil {
+				a.YAxisRight.ShowLabels = false
+			}
+		}
+	}
 }
 
 // SetAxisLineStyle applies cap/join/dash styling to the selected axes.
@@ -2360,6 +2439,24 @@ func normalizeAxisSpec(spec string) string {
 		return "both"
 	}
 	return spec
+}
+
+func axisAllowsX(spec string) bool {
+	switch normalizeAxisSpec(spec) {
+	case "both", "x", "bottom", "top":
+		return true
+	default:
+		return false
+	}
+}
+
+func axisAllowsY(spec string) bool {
+	switch normalizeAxisSpec(spec) {
+	case "both", "y", "left", "right":
+		return true
+	default:
+		return false
+	}
 }
 
 func normalizeTickWhich(which string) string {
