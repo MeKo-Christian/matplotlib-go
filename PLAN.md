@@ -2111,6 +2111,8 @@ catalog/parity fixture per behavior family.
 - [ ] Expand BBox/rect helpers needed by layout and annotation parity:
       union, intersection, expanded/padded, anchored, transformed, inverse
       transformed, empty/null handling, and point containment.
+- [x] Add shared `geom.Rect` anchored child-rectangle helper with compass and
+      location-string anchors.
 - [ ] Add path/bezier helpers only when visible behavior needs them:
       interpolation, clipping against BBoxes, extents under transforms,
       simplification decisions, and curve splitting.
