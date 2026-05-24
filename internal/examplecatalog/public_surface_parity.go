@@ -266,8 +266,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go EngFormatter covers SI prefix scaling, fixed-minus, Matplotlib-style zero-value separator/places defaults, unicode micro output, rounding rollover, extreme SI prefixes, MathText-style number wrapping, and format_eng-style aliasing. Remaining 12.2C scope is exact offset behavior.",
+		CatalogIDs:        []string{"axes_control_surface", "formatter_engineering_labels"},
+		Note:              "Go EngFormatter covers SI prefix scaling, fixed-minus, Matplotlib-style zero-value separator/places defaults including units, unicode micro output, rounding rollover, extreme SI prefixes, MathText-style number wrapping, and format_eng-style aliasing; formatter_engineering_labels covers visible tick output. Remaining 12.2C scope is exact offset behavior.",
 	},
 	{
 		ID:                "ticker-percent-formatter",

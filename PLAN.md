@@ -2035,6 +2035,8 @@ catalog/parity fixture per behavior family.
 - [x] Align `EngFormatter` zero-value defaults with upstream separator,
       auto-place formatting, unicode micro, and explicit zero-place escape
       hatches.
+- [x] Add `formatter_engineering_labels` catalog/parity fixture for visible
+      engineering tick labels, including zero-with-unit spacing.
 - [x] Tighten `PercentFormatter` behavior for xmax defaults, decimal auto
       selection, symbol escaping/no-escaping decision, and negative values.
 - [x] Add `PercentFormatter` auto-decimal support for configured display ranges

@@ -585,6 +585,12 @@ func TestEngFormatterMatplotlibStyleDefaults(t *testing.T) {
 	if got := (EngFormatter{}).Format(-1e-6); got != "\u22121 \u00b5" {
 		t.Fatalf("EngFormatter default micro prefix = %q, want %q", got, "\u22121 \u00b5")
 	}
+	if got := (EngFormatter{Unit: "Hz"}).Format(0); got != "0 Hz" {
+		t.Fatalf("EngFormatter zero with unit = %q, want %q", got, "0 Hz")
+	}
+	if got := (EngFormatter{Unit: "Hz", SepSet: true}).Format(0); got != "0Hz" {
+		t.Fatalf("EngFormatter explicit empty separator at zero = %q, want %q", got, "0Hz")
+	}
 	if got := (EngFormatter{Places: 0, PlacesSet: true}).Format(1234); got != "1 k" {
 		t.Fatalf("EngFormatter explicit zero places = %q, want %q", got, "1 k")
 	}

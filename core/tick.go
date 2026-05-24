@@ -1181,17 +1181,17 @@ type EngFormatter struct {
 }
 
 func (f EngFormatter) Format(x float64) string {
+	sep := f.Sep
+	if sep == "" && !f.SepSet {
+		sep = " "
+	}
 	if x == 0 {
-		return f.formatEngineeringValue("0", "", "")
+		return f.formatEngineeringValue("0", sep, "")
 	}
 	if math.IsNaN(x) || math.IsInf(x, 0) {
 		return (ScalarFormatter{Prec: 6}).Format(x)
 	}
 
-	sep := f.Sep
-	if sep == "" && !f.SepSet {
-		sep = " "
-	}
 	absX := math.Abs(x)
 	exp := int(math.Floor(math.Log10(absX)/3.0) * 3)
 	if exp > maxEngineeringExp {
