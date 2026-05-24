@@ -128,6 +128,7 @@ var cases = []Case{
 	{ID: "stem_plot", Topic: "specialty", Title: "Stem Plot", Optional: true},
 	{ID: "specialty_artists", Topic: "specialty", Title: "Specialty Artists", Optional: true, WebDemoID: "specialty", Description: "Event plots, hexbin, pie charts, stem plots, tables, and Sankey-style flows.", Showcase: true, GoBasicSmokeFamily: "specialty"},
 	{ID: "date_concise_intraday_labels", Topic: "units", Title: "Concise Intraday Date Labels", FixtureOnly: true, Width: 720, Height: 360, MinPSNR: 35.0, MaxMeanAbs: 6.5},
+	{ID: "date_month_year_labels", Topic: "units", Title: "Month and Year Date Labels", FixtureOnly: true, Width: 720, Height: 360, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "units_overview", Topic: "units", Title: "Dates and Categories", Optional: true, WebDemoID: "units", Description: "Time-aware axes, categorical bars, and horizontal categorical bars.", Showcase: true, GoBasicSmokeFamily: "units", MinPSNR: 43.5},
 	{ID: "units_dates", Topic: "units", Title: "Date Units", Optional: true, MinPSNR: 45.0, MaxMeanAbs: 1.6},
 	{ID: "units_categories", Topic: "units", Title: "Category Units", Optional: true, MinPSNR: 41.0, MaxMeanAbs: 3.2},
