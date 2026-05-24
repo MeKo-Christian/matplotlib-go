@@ -138,9 +138,12 @@ var foundationAPIGaps = []FoundationAPIGap{
 		UpstreamModules: []string{"collections.py"},
 		GoFiles:         []string{"core/collection.go", "core/mesh.go", "core/eventplot.go", "core/hexbin.go", "core/triangulation.go"},
 		CurrentEquivalent: "Go has PathCollection, LineCollection, PatchCollection, PolyCollection, " +
-			"QuadMesh, event collections, and hexbin collections.",
+			"QuadMesh, event collections, and hexbin collections; PColor uses the same rectilinear " +
+			"QuadMesh implementation as PColorMesh.",
 		Gap: "Specialized upstream collection classes and the broad mutable setter / scalar-mapping " +
-			"surface are only partially represented.",
+			"surface are only partially represented. Matplotlib's PolyQuadMesh-specific pcolor behavior, " +
+			"including masked-coordinate polygon dropping and per-cell hatch/linestyle flexibility, is " +
+			"intentionally omitted until a visible fixture needs it.",
 		Decision: GapDecisionIdiomaticEquivalent,
 		Rationale: "Keep collection data structures compact, but add missing variants or setters when they " +
 			"are required for public examples, scalar mappables, or backend-native batching.",

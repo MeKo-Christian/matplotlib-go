@@ -2112,10 +2112,10 @@ artist color state and colorbar state synchronized.
 
 #### 12.3C Mesh, PColor, and Scalar Grid Behavior
 
-- [ ] Compare `pcolor`, `pcolormesh`, `QuadMesh`, and `PolyQuadMesh` behavior
+- [x] Compare `pcolor`, `pcolormesh`, `QuadMesh`, and `PolyQuadMesh` behavior
       against upstream `collections.py` and `axes/_axes.py` for dimensionality,
       shading, masking, edge handling, and scalar array updates.
-- [ ] Tighten flat/nearest/Gouraud shape validation and edge inference only
+- [x] Tighten flat/nearest/Gouraud shape validation and edge inference only
       where current behavior diverges visibly from Matplotlib fixtures.
 - [x] Make `QuadMesh` scalar updates recompute flat cell colors and Gouraud
       corner colors consistently with its stored shading mode.
@@ -2186,6 +2186,14 @@ Implementation notes:
 
 - Compare against upstream `collections.py`, `cm.py`, `colors.py`,
   `colorbar.py`, and `colorizer.py`.
+- Phase 12.3C mesh audit: upstream `_pcolorargs` keeps flat meshes on
+  edge-shaped coordinates, expands nearest center coordinates to flat edges, and
+  requires Gouraud coordinate grids to match scalar grid shape. The Go
+  rectilinear mesh surface matches those visible 1-D coordinate rules. `PColor`
+  intentionally aliases the `QuadMesh`-backed `PColorMesh` path; Matplotlib's
+  distinct `PolyQuadMesh` return type, masked-coordinate polygon dropping, and
+  per-cell hatch/linestyle flexibility remain documented omissions rather than
+  cloned API surface.
 - Core behavior should be fixed in `core/collection.go`,
   `core/scalar_mappable.go`, `core/norm.go`, and `core/colorbar.go`, not by
   tweaking examples.
@@ -2194,39 +2202,296 @@ Implementation notes:
 
 ### 12.4 Patches, Text, Annotation, Legend, and Offset Boxes
 
-- [ ] Audit `FancyBboxPatch` box-style coverage against
-      `BoxStyle._style_list` and implement or document every missing style.
-- [ ] Verify hatch pattern characters and repeat-density semantics against
-      `hatch.py`.
-- [ ] Expand text/font property support: family, style, weight, stretch,
-      variant, math font, parse-math behavior, font features, and per-text
-      font options.
-- [ ] Implement missing annotation coordinate modes, annotation clipping,
-      `AnnotationBbox`, offset-box families, legend handler maps, proxy-like
-      legend entries, and legend layout behavior.
+**Goal:** close the remaining visible patch, hatch, text, annotation, legend,
+and offset-box gaps that still affect static parity output. Prefer focused
+typed option surfaces over Python-style dynamic handler registries, but keep the
+rendered layout, paths, clipping, and legend samples source-backed by
+Matplotlib.
+
+#### 12.4A Landed Baseline
+
+- [x] Common patch artists exist for rectangles, circles, ellipses, polygons,
+      paths, wedges, arrows, shadows, regular polygons, arcs, annuli, step
+      patches, fancy arrows, and connection patches.
+- [x] Hatch rendering is routed through renderer capabilities and covered by
+      the existing patch/hatch showcase path.
+- [x] Text artists support rotation, alignment, figure/axes/data coordinates,
+      bounding boxes, MathText routing, fallback shaping, and renderer text
+      metrics.
+- [x] Annotation and connection-patch basics exist, including arrow styles,
+      connection styles, offset coordinates used by current fixtures, and
+      annotation composition coverage.
+- [x] Legends exist for line, marker, patch, collection, and figure-level
+      samples, with shared artist-label discovery and underscore-label
+      filtering.
+- [x] Anchored text and axes-grid anchored layout helpers cover the main static
+      offset-box use case currently exercised by catalog fixtures.
+
+#### 12.4B Patch and Hatch Catalog Closure
+
+- [ ] Audit upstream `patches.py` patch classes, `BoxStyle._style_list`,
+      `ArrowStyle._style_list`, and `ConnectionStyle._style_list` against the
+      Go patch surface; update Phase 11 public-surface rows for direct
+      equivalents, Go-style equivalents, partial rows, and intentional
+      omissions.
+- [ ] Complete `FancyBboxPatch` box-style behavior for the common visible
+      styles: square, round, round4, sawtooth, roundtooth, circle, larrow,
+      rarrow, darrow, and the documented mutation-size / mutation-aspect
+      effects.
+- [ ] Verify `FancyArrowPatch` and `ConnectionPatch` geometry against upstream
+      for shrink points, mutation scale, cap/join style, clipping to patch
+      endpoints, and the visible arrow/connection styles already registered.
+- [ ] Verify hatch character coverage (`/`, `\`, `|`, `-`, `+`, `x`, `o`, `O`,
+      `.`, `*`) and repeat-density semantics against `hatch.py`, including
+      backend-native vector hatches and AGG raster hatches.
+- [ ] Add renderer-neutral path tests for each newly implemented box/arrow/
+      hatch behavior, with exact path bounds or segment-count assertions where
+      pixel output would be brittle.
+- [ ] Add focused catalog/parity cases for box styles, connection styles, and
+      hatch-density variants instead of expanding `patch_showcase` into an
+      overloaded fixture.
+
+#### 12.4C Text and Font Property Breadth
+
+- [ ] Audit upstream `text.py`, `font_manager.py`, and `textpath.py` against
+      `core.Text`, `render.TextShapingOptions`, and the renderer text
+      capability interfaces; classify every public-surface gap as implement,
+      Go-style equivalent, deferred, or intentional omission.
+- [ ] Expand per-text font options for family, style, weight, stretch, variant,
+      math font selection, parse-math behavior, and font-feature hooks where
+      the current shaping/font-manager layer can support them deterministically.
+- [ ] Define the deterministic Go policy for Matplotlib font fallback behavior:
+      which upstream fontconfig/font-manager features are implemented directly,
+      which are approximated by bundled/default fonts, and which require a
+      user-supplied font path or family registration.
+- [ ] Tighten text bounding-box, baseline, rotation-mode, multiline, wrapping,
+      and `bbox` patch behavior against upstream where current layout/text
+      validation fixtures still carry visible residuals.
+- [ ] Ensure text alpha, clipping, z-order, path effects, and rasterization
+      follow the shared artist metadata path rather than bespoke text-only
+      routing.
+- [ ] Add renderer-neutral tests for font option resolution and text bounds,
+      plus catalog/parity fixtures for font variants, multiline layout, rotated
+      anchored text, and text-with-bbox output.
+
+#### 12.4D Annotation and Offset-Box Behavior
+
+- [ ] Audit upstream annotation coordinate systems against `Annotate` and the
+      transform helpers: data, axes fraction, figure fraction, offset points,
+      offset pixels, blended coordinates, artist-relative coordinates, and
+      callable/custom coordinate providers.
+- [ ] Implement or explicitly omit missing annotation clipping semantics:
+      `annotation_clip`, clipping to the annotated point, clipping to text /
+      arrow patch paths, and interaction with axes clipping.
+- [ ] Add `AnnotationBbox` or a Go-style equivalent for image/text/box content
+      anchored to data or display coordinates, with arrow connection support.
+- [ ] Add the offset-box families needed for static parity:
+      anchored offset box, text area, drawing area, offset image, horizontal /
+      vertical packers, and anchored size-bar style layouts.
+- [ ] Keep draggable, GUI-only, and callback-heavy offset-box behavior out of
+      v1.0 unless a concrete interactive fixture requires it; record those
+      omissions in Phase 11 rows.
+- [ ] Add catalog/parity fixtures for annotation clipping, annotation box
+      content, packed offset boxes, and anchored size bars.
+
+#### 12.4E Legend Handler and Layout Closure
+
+- [ ] Audit upstream `legend.py` and `legend_handler.py` for location,
+      anchoring, column layout, title handling, frame styling, handle length,
+      handle text padding, label spacing, marker scaling, scatter-point
+      sampling, and handler-map behavior.
+- [ ] Add Go-style legend handler registration for custom samples and proxy-like
+      entries without exposing Python's arbitrary object-dispatch surface.
+- [ ] Tighten built-in legend samples for lines, markers, patches,
+      path/line/patch collections, error bars, stems, bars, filled bands, and
+      scalar-mapped collections.
+- [ ] Implement multi-column and figure-level legend layout behavior needed by
+      current catalog/showcase examples, including title placement and
+      constrained-layout participation.
+- [ ] Verify `"best"` placement badness against upstream for representative
+      line, scatter, image, and annotation cases; document any deliberate
+      simplification with a migration note.
+- [ ] Add renderer-neutral legend-layout tests and catalog/parity fixtures for
+      custom/proxy handlers, multi-column legends, scatter sample counts, and
+      figure legends.
+
+#### 12.4F Exit Criteria
+
+- [ ] `FoundationAPIGapAudit` rows for patch/hatch catalogs,
+      text/font-surface gaps, annotation/offset boxes, and legend-handler
+      behavior are closed or split into exact remaining rows.
+- [ ] Public-surface parity rows for `patches.py`, `hatch.py`, `text.py`,
+      `font_manager.py`, `legend.py`, `legend_handler.py`, and `offsetbox.py`
+      no longer contain broad "partial" notes without a precise remaining
+      task.
+- [ ] 12.4 has catalog/parity coverage for box styles, hatch density,
+      text/font variants, annotation clipping/boxes, offset boxes, and legend
+      handler/layout behavior.
+- [ ] `go test ./core ./render ./internal/examplecatalog -count=1` and the
+      relevant `go test ./test/ -run ...` catalog cases pass.
 
 Implementation notes:
 
 - Compare against upstream `patches.py`, `hatch.py`, `text.py`,
-  `font_manager.py`, `legend.py`, `legend_handler.py`, and `offsetbox.py`.
+  `font_manager.py`, `textpath.py`, `legend.py`, `legend_handler.py`, and
+  `offsetbox.py`.
 - Add small catalog fixtures for each style family; avoid a single giant patch
   fixture that is hard to debug.
 - Keep API shapes Go-idiomatic, but the rendered output should follow
   Matplotlib where behavior is visual.
+- Fix visible output through `core/patch*.go`, `core/text*.go`,
+  `core/annotation*.go`, `core/legend.go`, renderer text/path capabilities, and
+  shared geometry/transform helpers, not by tweaking examples.
 
 ### 12.5 Images, Pyplot, Backends, Widgets, and Animation
 
-- [ ] Add remaining image class decisions: `FigureImage`, `BboxImage`,
-      `NonUniformImage`, `PcolorImage`, `pcolorfast`, and `figimage`.
-- [ ] Complete interpolation policy for `lanczos`, `spline16`, `spline36`,
+**Goal:** finish the remaining high-value image, stateful wrapper, backend
+lifecycle, widget, and animation parity decisions so v1.0 users get either a
+working Go equivalent or a documented, explicit omission. Keep the
+object-oriented API primary; use pyplot, widgets, and animation as migration
+convenience layers over the core model.
+
+#### 12.5A Landed Baseline
+
+- [x] `Image2D`, `ImShow`, `MatShow`, and `Spy` cover matrix images with
+      scalar mapping, alpha, origin, extent, transformed images, and colorbar
+      integration.
+- [x] AGG routes Matplotlib interpolation names through image filters,
+      including `auto` / `antialiased` scale-dependent behavior and the current
+      high-value interpolation fixtures.
+- [x] `pyplot` provides current figure/current axes state, common plot wrappers,
+      labels, legends, colorbars, save/show helpers, rc/rc-context support, and
+      image/matrix helpers.
+- [x] The canvas layer has dispatcher, picker, hover, scheduler, draw-idle,
+      toolbar, manager, save, and backend capability contracts used by current
+      headless, desktop, and web backends.
+- [x] Static widget artists and interaction routing exist for buttons, sliders,
+      range sliders, check buttons, radio buttons, text boxes, span selectors,
+      and rectangle selectors.
+- [x] The `animation` package provides deterministic `FuncAnimation` /
+      `ArtistAnimation` style stepping, event-loop scheduling, animated artist
+      tracking, and blit-region hooks.
+
+#### 12.5B Image Class and Resampling Closure
+
+- [ ] Audit upstream `image.py` image artist classes and helper functions:
+      `AxesImage`, `FigureImage`, `BboxImage`, `NonUniformImage`,
+      `PcolorImage`, `imread`, `imsave`, `imresize`-style omissions,
+      `pcolorfast`, `figimage`, and image origin/extent/aspect defaults.
+- [ ] Decide which non-`AxesImage` classes belong in v1.0:
+      implement `FigureImage` / `figimage` and `BboxImage` if they improve
+      figure-level composition or annotation-box parity; implement
+      `NonUniformImage` / `PcolorImage` / `pcolorfast` only if a visible
+      fixture shows a meaningful difference from `Image2D` / `PColorMesh`.
+- [ ] Convert every unsupported image class/helper into either a typed Go
+      equivalent, a clear runtime error, or a Phase 11 intentional omission
+      with migration guidance.
+- [ ] Lock interpolation coverage for `nearest`, `none`, `bilinear`,
+      `bicubic`, `hanning`, `hamming`, `lanczos`, `spline16`, `spline36`,
       `kaiser`, `quadric`, `catrom`, `gaussian`, `bessel`, `mitchell`, `sinc`,
-      `blackman`, `hermite`, `antialiased`, and `auto`.
-- [ ] Expand high-value `pyplot` wrappers where they materially improve
-      migration, while keeping object-oriented Go APIs primary.
-- [ ] Complete backend canvas/manager/tool lifecycle semantics needed for
-      interactive backends.
-- [ ] Decide which widgets and animation APIs are in scope for v1.0, then add
-      fixtures/examples or intentional omissions.
+      `blackman`, `hermite`, `antialiased`, and `auto` with parser tests,
+      AGG-render tests, and at least one visible interpolation gallery case.
+- [ ] Verify transformed-image sampling, image alpha premultiplication, clipping,
+      resample threshold decisions, and backend fallbacks against upstream
+      `image.py` and AGG behavior.
+- [ ] Add catalog/parity fixtures for figure-level images or bbox images if
+      implemented, plus an image-interpolation matrix fixture that is small
+      enough to debug visually.
+
+#### 12.5C Pyplot and Stateful Wrapper Surface
+
+- [ ] Audit high-traffic upstream `pyplot.py` and `_pylab_helpers.py` functions
+      against the Go `pyplot` package; rank missing wrappers by migration value
+      rather than trying to clone every overload.
+- [ ] Add wrappers for implemented core features where the current absence is
+      a migration blocker: common axes creation, subplot/subplots variants,
+      plotting/image/stat helpers, axis/tick scale helpers, annotations,
+      legends, colorbars, rc/style helpers, and save/show helpers.
+- [ ] Preserve object-oriented APIs as the source of truth; pyplot wrappers
+      should delegate to `core` without maintaining duplicate rendering or
+      layout behavior.
+- [ ] Define clear error behavior for unsupported pyplot overloads, implicit
+      figure-manager behavior, interactive mode toggles, and global state reset
+      functions.
+- [ ] Add unit tests that pyplot wrappers delegate to the same core state as
+      the object-oriented calls, plus migration-style examples for common
+      pyplot workflows.
+- [ ] Update public-surface parity rows for `pyplot.py` and `_pylab_helpers.py`
+      so each broad wrapper gap is either implemented, scoped to a smaller
+      wrapper family, or intentionally omitted.
+
+#### 12.5D Backend Canvas, Manager, and Tool Lifecycle
+
+- [ ] Audit upstream `backend_bases.py`, `backend_tools.py`, and
+      `_pylab_helpers.py` against `canvas`, backend registry metadata, and the
+      interactive backend implementations.
+- [ ] Complete canvas/manager lifecycle semantics for figure creation,
+      current-manager tracking, draw vs draw-idle, resize, close/destroy,
+      toolbar attachment, save dispatch, and backend capability reporting.
+- [ ] Tighten event contracts for mouse, key, scroll, pick, figure enter/leave,
+      axes enter/leave, timer events, and callback connection/disconnection.
+- [ ] Complete toolbar/tool behavior needed by interactive backends: home,
+      back, forward, pan, zoom, configure, save, cursor/status messages, mode
+      state, and tool enablement.
+- [ ] Add backend-neutral lifecycle tests using fake canvases/managers and
+      smoke tests for WebAgg/Gio where the environment allows them.
+- [ ] Document backend-specific omissions, especially GUI toolkit behaviors
+      that cannot be represented in the current headless test environment.
+
+#### 12.5E Widgets and Interaction Scope
+
+- [ ] Audit upstream `widgets.py` classes and decide v1.0 status for each:
+      button, slider, range slider, check buttons, radio buttons, text box,
+      span selector, rectangle selector, lasso selector, polygon selector,
+      cursor/multi-cursor, annotated cursor, menu/tool widgets, and any
+      deprecated or GUI-specific widgets.
+- [ ] Tighten existing widget behavior for callback ordering, active/disabled
+      state, hover/press/release transitions, keyboard activation, value
+      clamping, snapping, dragging, redraw policy, and axes ownership.
+- [ ] Implement only selector/cursor widgets that can be expressed through the
+      current canvas event model; document GUI-only or callback-heavy widgets as
+      intentional omissions until an interactive fixture requires them.
+- [ ] Add catalog/browser-demo coverage for the supported widget set and
+      renderer-neutral tests for interaction state transitions.
+- [ ] Ensure widgets compose with artist picking, overlays, draw-idle, and
+      animation without stealing unrelated user events.
+
+#### 12.5F Animation Scope and Writers
+
+- [ ] Audit upstream `animation.py` for `Animation`, `TimedAnimation`,
+      `FuncAnimation`, `ArtistAnimation`, frame sequence behavior, repeat /
+      repeat-delay, blitting, save_count/cache behavior, HTML representation,
+      and movie writer APIs.
+- [ ] Tighten `FuncAnimation` and `ArtistAnimation` behavior against upstream
+      for initialization order, frame iteration, repeat semantics, event-source
+      lifecycle, animated artist visibility, and blit background restoration.
+- [ ] Decide v1.0 writer scope: implement a small explicit writer surface for
+      GIF/MP4 only if dependencies and backend output are deterministic, or
+      document animation saving as intentionally omitted while interactive
+      playback remains supported.
+- [ ] Add examples and browser demos for at least one timer-driven line update,
+      one artist-list animation, and one blit-capable animation path.
+- [ ] Add unit tests for frame sequencing, stop/start lifecycle, repeat-delay,
+      blit fallback, and error handling for unsupported writer paths.
+
+#### 12.5G Exit Criteria
+
+- [ ] `FoundationAPIGapAudit` rows for image class breadth, pyplot wrapper
+      surface, backend lifecycle, widgets, and animation are closed or split
+      into precise remaining rows.
+- [ ] Public-surface parity rows for `image.py`, `pyplot.py`,
+      `_pylab_helpers.py`, `backend_bases.py`, `backend_tools.py`,
+      `widgets.py`, and `animation.py` no longer contain broad "partial" notes
+      without a precise remaining task.
+- [ ] Every unsupported image interpolation, pyplot wrapper family, widget, or
+      animation writer path has a clear error or documented omission; none
+      silently fall back to an incorrect behavior.
+- [ ] 12.5 has catalog/parity, example, or browser-demo coverage for image
+      class/resampling decisions, pyplot migration workflows, backend
+      lifecycle semantics, supported widgets, and animation playback.
+- [ ] `go test ./core ./pyplot ./canvas ./animation ./backends/agg`
+      `./internal/examplecatalog -count=1` and relevant catalog/browser tests
+      pass.
 
 Implementation notes:
 
@@ -2234,6 +2499,11 @@ Implementation notes:
   `backend_bases.py`, `backend_tools.py`, `widgets.py`, and `animation.py`.
 - Any unsupported interpolation or widget path must produce a clear error or
   documented omission, never silently fall back to a wrong default.
+- Keep pyplot, widget, and animation APIs thin over `core`, `canvas`, and
+  backend contracts. If a wrapper needs bespoke behavior, first check whether
+  the object-oriented API is missing the shared capability.
+- Interactive and browser-facing examples belong in Phase 13 as user-facing
+  breadth once the Phase 12.5 API and behavior decisions are settled.
 
 **Exit criteria:**
 

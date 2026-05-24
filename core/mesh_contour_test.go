@@ -94,6 +94,40 @@ func TestPColorMeshFlatRejectsCenterCoordinateShape(t *testing.T) {
 	}
 }
 
+func TestPColorMeshNearestRejectsEdgeCoordinateShape(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+
+	mesh := ax.PColorMesh([][]float64{
+		{0, 1},
+		{2, 3},
+	}, MeshOptions{
+		XEdges:  []float64{0, 1, 2},
+		YEdges:  []float64{0, 1, 2},
+		Shading: MeshShadingNearest,
+	})
+	if mesh != nil {
+		t.Fatalf("expected nearest shading to reject edge-shaped coordinates, got %+v", mesh)
+	}
+}
+
+func TestPColorMeshGouraudRejectsEdgeCoordinateShape(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+
+	mesh := ax.PColorMesh([][]float64{
+		{0, 1},
+		{2, 3},
+	}, MeshOptions{
+		XEdges:  []float64{0, 1, 2},
+		YEdges:  []float64{0, 1, 2},
+		Shading: MeshShadingGouraud,
+	})
+	if mesh != nil {
+		t.Fatalf("expected Gouraud shading to reject edge-shaped coordinates, got %+v", mesh)
+	}
+}
+
 func TestPColorMeshGouraudDrawsNativeTriangles(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})

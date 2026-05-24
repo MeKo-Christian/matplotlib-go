@@ -741,7 +741,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/collection.go", "core/mesh.go", "core/eventplot.go", "core/hexbin.go"},
 		catalogIDs:        []string{"mixed_collection", "large_scatter", "quad_mesh", "gouraud_triangles", "collection_mutable_scalarmap", "specialty_artists"},
 		exampleIDs:        []string{"specialty_artists"},
-		note:              "Path, line, patch, poly, quad, event, and hexbin collections exist; path/line/patch collections and QuadMesh have Go-style scalar array, cmap, norm, clim, face-edge tracking, and path offset-coordinate setters; specialized variants and full mutable setter parity remain incomplete.",
+		note:              "Path, line, patch, poly, quad, event, and hexbin collections exist; path/line/patch collections and QuadMesh have Go-style scalar array, cmap, norm, clim, face-edge tracking, and path offset-coordinate setters. PColor intentionally aliases the rectilinear QuadMesh path used by PColorMesh; Matplotlib PolyQuadMesh-only behavior such as masked-coordinate polygon dropping, per-cell hatch/linestyle flexibility, and a distinct pcolor return type remains omitted until a visible fixture requires it.",
 	},
 	{
 		idPrefix:          "patch-style-registry",
