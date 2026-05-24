@@ -101,6 +101,64 @@ func TestStatefulHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 }
 
+func TestTextAndAnnotateDelegateToCurrentAxes(t *testing.T) {
+	resetForTests()
+
+	text := Text(0.2, 0.8, "note", core.TextOptions{
+		FontSize: 14,
+		HAlign:   core.TextAlignCenter,
+	})
+	annotation := Annotate("peak", 0.7, 0.3, core.AnnotationOptions{
+		OffsetX: 10,
+		OffsetY: -12,
+	})
+
+	if text == nil {
+		t.Fatal("Text() returned nil")
+	}
+	if annotation == nil {
+		t.Fatal("Annotate() returned nil")
+	}
+	ax := GCA()
+	if len(ax.Artists) != 2 {
+		t.Fatalf("len(ax.Artists) = %d, want 2", len(ax.Artists))
+	}
+	if text.Content != "note" || text.Position != (geom.Pt{X: 0.2, Y: 0.8}) {
+		t.Fatalf("Text() artist = %+v, want delegated core text", text)
+	}
+	if annotation.Content != "peak" || annotation.Point != (geom.Pt{X: 0.7, Y: 0.3}) {
+		t.Fatalf("Annotate() artist = %+v, want delegated core annotation", annotation)
+	}
+}
+
+func TestReferenceLineAndSpanHelpersDelegateToCurrentAxes(t *testing.T) {
+	resetForTests()
+
+	hLine := AxHLine(0.25)
+	vLine := AxVLine(0.75)
+	line := AxLine(geom.Pt{X: 0, Y: 0}, geom.Pt{X: 1, Y: 1})
+	slopeLine := AxLineSlope(geom.Pt{X: 0.5, Y: 0.5}, 2)
+	hSpan := AxHSpan(0.1, 0.2)
+	vSpan := AxVSpan(0.3, 0.4)
+
+	if hLine == nil || vLine == nil || line == nil || slopeLine == nil || hSpan == nil || vSpan == nil {
+		t.Fatalf("reference helpers returned nil: h=%v v=%v line=%v slope=%v hspan=%v vspan=%v", hLine, vLine, line, slopeLine, hSpan, vSpan)
+	}
+	ax := GCA()
+	if len(ax.Artists) != 6 {
+		t.Fatalf("len(ax.Artists) = %d, want 6", len(ax.Artists))
+	}
+	if hLine.Start.Y != 0.25 || vLine.Start.X != 0.75 {
+		t.Fatalf("line endpoints not delegated through core helpers: h=%+v v=%+v", hLine, vLine)
+	}
+	if line.Direction != (geom.Pt{X: 1, Y: 1}) || slopeLine.Direction != (geom.Pt{X: 1, Y: 2}) {
+		t.Fatalf("axline directions = %+v / %+v, want (1,1) / (1,2)", line.Direction, slopeLine.Direction)
+	}
+	if hSpan.Start.Y != 0.1 || hSpan.End.Y != 0.2 || vSpan.Start.X != 0.3 || vSpan.End.X != 0.4 {
+		t.Fatalf("span endpoints not delegated through core helpers: h=%+v v=%+v", hSpan, vSpan)
+	}
+}
+
 func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 

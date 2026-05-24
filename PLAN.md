@@ -2755,6 +2755,13 @@ Current slice landed:
 - Tightened 12.5 public-surface parity notes for image, pyplot,
   `_pylab_helpers`, backend bases/tools, widgets, and animation so each
   partial row names exact remaining families instead of broad catch-all gaps.
+- Added pyplot `Text` and `Annotate` wrappers that delegate directly to the
+  current axes, with a focused stateful-wrapper test covering returned core
+  artists and current-axes ownership.
+- Added pyplot `AxHLine`, `AxVLine`, `AxLine`, `AxLineSlope`, `AxHSpan`, and
+  `AxVSpan` wrappers for the existing core reference-line/span helpers, with a
+  focused delegation test covering returned core artists and current-axes
+  ownership.
 
 Implementation notes:
 

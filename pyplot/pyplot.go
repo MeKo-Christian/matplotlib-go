@@ -344,6 +344,46 @@ func Text3D(x, y, z float64, text string, opts ...core.TextOptions) *core.Text {
 	return ax.Text3D(x, y, z, text, opts...)
 }
 
+// Text delegates to the current axes.
+func Text(x, y float64, text string, opts ...core.TextOptions) *core.Text {
+	return GCA().Text(x, y, text, opts...)
+}
+
+// Annotate delegates to the current axes.
+func Annotate(text string, x, y float64, opts ...core.AnnotationOptions) *core.Annotation {
+	return GCA().Annotate(text, x, y, opts...)
+}
+
+// AxHLine delegates to the current axes.
+func AxHLine(y float64, opts ...core.HLineOptions) *core.Segment2D {
+	return GCA().AxHLine(y, opts...)
+}
+
+// AxVLine delegates to the current axes.
+func AxVLine(x float64, opts ...core.VLineOptions) *core.Segment2D {
+	return GCA().AxVLine(x, opts...)
+}
+
+// AxLine delegates to the current axes.
+func AxLine(p1, p2 geom.Pt, opts ...core.ReferenceLineOptions) *core.InfiniteLine2D {
+	return GCA().AxLine(p1, p2, opts...)
+}
+
+// AxLineSlope delegates to the current axes.
+func AxLineSlope(point geom.Pt, slope float64, opts ...core.ReferenceLineOptions) *core.InfiniteLine2D {
+	return GCA().AxLineSlope(point, slope, opts...)
+}
+
+// AxHSpan delegates to the current axes.
+func AxHSpan(yMin, yMax float64, opts ...core.HSpanOptions) *core.Span2D {
+	return GCA().AxHSpan(yMin, yMax, opts...)
+}
+
+// AxVSpan delegates to the current axes.
+func AxVSpan(xMin, xMax float64, opts ...core.VSpanOptions) *core.Span2D {
+	return GCA().AxVSpan(xMin, xMax, opts...)
+}
+
 // Bar delegates to the current axes.
 func Bar(x, heights []float64, opts ...core.BarOptions) *core.Bar2D {
 	return GCA().Bar(x, heights, opts...)
