@@ -7,6 +7,12 @@ import "github.com/cwbudde/matplotlib-go/internal/geom"
 // It mirrors the useful static-rendering part of Matplotlib's TransformedPath:
 // callers get clone-safe path access, and cache invalidation can be wired to
 // transform nodes without making geom.Path itself mutable or graph-aware.
+//
+// The current Go transform model applies every transform through a single T
+// interface. InvalidAffine and InvalidNonAffine are preserved as dependency
+// invalidation hints, but TransformedPath intentionally keeps one full-path
+// cache until a visible renderer path needs Matplotlib's affine/non-affine
+// split cache.
 type TransformedPath struct {
 	TransformNode
 	path          geom.Path
