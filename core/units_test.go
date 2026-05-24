@@ -143,6 +143,34 @@ func TestAxesBarUnits_HorizontalConfiguresCategoricalYAxis(t *testing.T) {
 	}
 }
 
+func TestAxesCategoryUnitsPreserveExplicitAxisInfoAfterRefresh(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	if _, err := ax.BarUnits([]string{"alpha", "beta"}, []float64{1, 2}); err != nil {
+		t.Fatalf("BarUnits returned error: %v", err)
+	}
+
+	ax.XAxis.Locator = FixedLocator{TicksList: []float64{10, 20}}
+	ax.XAxis.Formatter = FormatStrFormatter{Pattern: "manual %.0f"}
+	if _, err := ax.BarUnits([]string{"alpha", "beta", "gamma"}, []float64{1, 2, 3}); err != nil {
+		t.Fatalf("second BarUnits returned error: %v", err)
+	}
+
+	loc, ok := ax.XAxis.Locator.(FixedLocator)
+	if !ok {
+		t.Fatalf("x-axis locator after category refresh = %T, want FixedLocator", ax.XAxis.Locator)
+	}
+	if fmt.Sprint(loc.TicksList) != "[10 20]" {
+		t.Fatalf("x-axis locator ticks after category refresh = %v, want [10 20]", loc.TicksList)
+	}
+	if _, ok := ax.XAxis.Formatter.(FormatStrFormatter); !ok {
+		t.Fatalf("x-axis formatter after category refresh = %T, want FormatStrFormatter", ax.XAxis.Formatter)
+	}
+	if got := ax.XAxis.Formatter.Format(10); got != "manual 10" {
+		t.Fatalf("manual category formatter output = %q, want manual 10", got)
+	}
+}
+
 type tripDistance float64
 
 type tripDistanceConverter struct{}
