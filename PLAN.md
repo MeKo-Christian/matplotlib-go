@@ -2026,6 +2026,8 @@ catalog/parity fixture per behavior family.
       scientific-notation MathText labels.
 - [x] Add sparse minor-label behavior for log-family formatters where it is
       needed for visible parity.
+- [x] Add `formatter_log_mathtext_labels` catalog/parity fixture for visible
+      log MathText tick labels.
 - [x] Tighten `EngFormatter` behavior for separator defaults, unicode micro,
       places, sign handling, unit spacing, and extreme prefixes.
 - [x] Add `EngFormatter` coverage for unicode micro output, minus-sign fixing,

@@ -48,6 +48,7 @@ axes_top_right_inverted
 axes_control_surface
 transform_coordinates
 formatter_engineering_labels
+formatter_log_mathtext_labels
 formatter_percent_labels
 artist_metadata
 gridspec_composition

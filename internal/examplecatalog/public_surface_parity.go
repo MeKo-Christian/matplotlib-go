@@ -221,8 +221,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface", "lognorm_imshow"},
-		Note:              "Go LogFormatterMathText covers MathText powers, scientific notation, label-only-base behavior, and minor-label sparsity thresholds. Remaining 12.2C scope is formatter catalog fixtures.",
+		CatalogIDs:        []string{"axes_control_surface", "lognorm_imshow", "formatter_log_mathtext_labels"},
+		Note:              "Go LogFormatterMathText covers MathText powers, scientific notation, label-only-base behavior, and minor-label sparsity thresholds; formatter_log_mathtext_labels covers visible tick output.",
 	},
 	{
 		ID:                "ticker-log-formatter-sci-notation",
