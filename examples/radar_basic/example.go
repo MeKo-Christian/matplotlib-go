@@ -31,7 +31,7 @@ func Plot() *core.Figure {
 	ax.YScale = transform.NewLinear(0, 1)
 	ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{0.25, 0.5, 0.75, 1.0}}
 	ax.YAxis.MinorLocator = nil
-	ax.YAxis.Formatter = core.PercentFormatter{Decimals: 0}
+	ax.YAxis.Formatter = core.PercentFormatter{XMax: 1, Decimals: 0, DecimalsSet: true}
 
 	thetaGrid := ax.AddGrid(core.AxisBottom)
 	thetaGrid.Color = render.Color{R: 0.78, G: 0.80, B: 0.84, A: 1}

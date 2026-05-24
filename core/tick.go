@@ -1173,7 +1173,9 @@ func (f StrMethodFormatter) Format(x float64) string {
 type EngFormatter struct {
 	Unit            string
 	Places          int
+	PlacesSet       bool
 	Sep             string
+	SepSet          bool
 	UseUnicodeMicro bool
 	UseMathText     bool
 }
@@ -1187,6 +1189,9 @@ func (f EngFormatter) Format(x float64) string {
 	}
 
 	sep := f.Sep
+	if sep == "" && !f.SepSet {
+		sep = " "
+	}
 	absX := math.Abs(x)
 	exp := int(math.Floor(math.Log10(absX)/3.0) * 3)
 	if exp > maxEngineeringExp {
@@ -1201,7 +1206,8 @@ func (f EngFormatter) Format(x float64) string {
 	if f.UseUnicodeMicro && exp == -6 {
 		prefix = "\u00b5"
 	}
-	if f.Places >= 0 && math.Abs(parseFormattedFloat(strconv.FormatFloat(scaled, 'f', f.Places, 64))) >= 1000 && exp < maxEngineeringExp {
+	fixedPlaces := f.PlacesSet || f.Places > 0
+	if fixedPlaces && math.Abs(parseFormattedFloat(strconv.FormatFloat(scaled, 'f', f.Places, 64))) >= 1000 && exp < maxEngineeringExp {
 		scaled /= 1000
 		exp += 3
 		prefix = engineeringPrefix(exp)
@@ -1211,7 +1217,7 @@ func (f EngFormatter) Format(x float64) string {
 	}
 
 	var value string
-	if f.Places >= 0 {
+	if fixedPlaces {
 		value = strconv.FormatFloat(scaled, 'f', f.Places, 64)
 	} else {
 		value = strconv.FormatFloat(scaled, 'g', 6, 64)
@@ -1237,6 +1243,7 @@ func (f EngFormatter) formatEngineeringValue(value, sep, prefix string) string {
 type PercentFormatter struct {
 	XMax         float64
 	Decimals     int
+	DecimalsSet  bool
 	DisplayRange float64
 	Symbol       string
 	NoSymbol     bool
@@ -1247,7 +1254,7 @@ type PercentFormatter struct {
 func (f PercentFormatter) Format(x float64) string {
 	xMax := f.XMax
 	if xMax == 0 {
-		xMax = 1
+		xMax = 100
 	}
 	symbol := f.Symbol
 	if f.NoSymbol {
@@ -1259,7 +1266,7 @@ func (f PercentFormatter) Format(x float64) string {
 		symbol = escapeTeXSymbol(symbol)
 	}
 	decimals := f.Decimals
-	if decimals < 0 {
+	if decimals < 0 || (!f.DecimalsSet && decimals == 0) {
 		decimals = percentAutoDecimals((f.DisplayRange / xMax) * 100)
 	}
 	if decimals < 0 {
@@ -1752,7 +1759,7 @@ func engineeringPrefix(exp int) string {
 	case -9:
 		return "n"
 	case -6:
-		return "u"
+		return "\u00b5"
 	case -3:
 		return "m"
 	case 0:

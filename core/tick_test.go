@@ -570,11 +570,23 @@ func TestExtraFormatters(t *testing.T) {
 	if got := (StrMethodFormatter{Template: "{x:.2f} s"}).Format(1.234); got != "1.23 s" {
 		t.Fatalf("StrMethodFormatter = %q, want %q", got, "1.23 s")
 	}
-	if got := (EngFormatter{Unit: "Hz", Places: 1}).Format(1200); got != "1.2kHz" {
+	if got := (EngFormatter{Unit: "Hz", Places: 1, SepSet: true}).Format(1200); got != "1.2kHz" {
 		t.Fatalf("EngFormatter = %q, want %q", got, "1.2kHz")
 	}
 	if got := (PercentFormatter{XMax: 1, Decimals: 0}).Format(0.375); got != "38%" {
 		t.Fatalf("PercentFormatter = %q, want %q", got, "38%")
+	}
+}
+
+func TestEngFormatterMatplotlibStyleDefaults(t *testing.T) {
+	if got := (EngFormatter{}).Format(1200); got != "1.2 k" {
+		t.Fatalf("EngFormatter default separator/places = %q, want %q", got, "1.2 k")
+	}
+	if got := (EngFormatter{}).Format(-1e-6); got != "\u22121 \u00b5" {
+		t.Fatalf("EngFormatter default micro prefix = %q, want %q", got, "\u22121 \u00b5")
+	}
+	if got := (EngFormatter{Places: 0, PlacesSet: true}).Format(1234); got != "1 k" {
+		t.Fatalf("EngFormatter explicit zero places = %q, want %q", got, "1 k")
 	}
 }
 
@@ -593,6 +605,18 @@ func TestEngFormatterEdgeBehavior(t *testing.T) {
 	}
 	if got := (EngFormatter{Places: 1, Sep: " ", Unit: "Hz", UseMathText: true}).FormatEng(-1200); got != `$\mathdefault{−1.2}$ kHz` {
 		t.Fatalf("EngFormatter mathtext alias = %q", got)
+	}
+}
+
+func TestPercentFormatterMatplotlibStyleDefaults(t *testing.T) {
+	if got := (PercentFormatter{}).Format(50); got != "50%" {
+		t.Fatalf("PercentFormatter zero value = %q, want %q", got, "50%")
+	}
+	if got := (PercentFormatter{XMax: 1, DisplayRange: 0.01}).Format(-0.0035); got != "\u22120.35%" {
+		t.Fatalf("PercentFormatter default auto decimals = %q, want %q", got, "\u22120.35%")
+	}
+	if got := (PercentFormatter{XMax: 1, Decimals: 0, DecimalsSet: true, DisplayRange: 0.01}).Format(0.0035); got != "0%" {
+		t.Fatalf("PercentFormatter explicit zero decimals = %q, want %q", got, "0%")
 	}
 }
 
