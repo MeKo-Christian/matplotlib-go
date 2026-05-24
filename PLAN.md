@@ -461,19 +461,19 @@ produce equivalent native output where the backend can support it.
 **Goal:** lock in the no-backend-name-conditionals requirement and keep it from
 regressing after native backend work lands.
 
-- [ ] Add a cross-backend semantic test that draws the same pattern, gradient,
+- [x] Add a cross-backend semantic test that draws the same pattern, gradient,
       and path-effect scene through AGG, SVG, PDF, and Skia and asserts only
       capability interfaces (`render.PatternFiller`, `render.GradientFiller`,
       `render.PathEffectDrawer`, `render.PathEffectFilterDrawer` /
       `render.FilterRenderer`) are used for routing.
-- [ ] Audit Phase 2 routing code for backend-name conditionals in `core/`,
+- [x] Audit Phase 2 routing code for backend-name conditionals in `core/`,
       `render/`, and shared backend helpers; replace any remaining conditionals
       with capability interfaces or document why they are save-format dispatch
       rather than effect rendering logic.
 
 **Exit criteria:**
 
-- [ ] Pattern fills, gradients, and path effects work uniformly across AGG,
+- [x] Pattern fills, gradients, and path effects work uniformly across AGG,
       SVG, PDF, and Skia without backend-name conditionals.
 - [x] `Artist.SetRasterized(true)` produces correct mixed-mode output on
       every vector backend.
@@ -1993,10 +1993,10 @@ catalog/parity fixture per behavior family.
 - [ ] Tighten `AutoLocator` / `MaxNLocator` edge semantics against upstream:
       `nbins`, `steps`, integer-only mode, pruning, symmetric behavior,
       degenerate ranges, negative ranges, and very small / very large spans.
-- [ ] Compare `MaxNLocator.view_limits` / `nonsingular` behavior against
+- [x] Compare `MaxNLocator.view_limits` / `nonsingular` behavior against
       upstream for degenerate, negative, tiny-span, and large-offset domains;
       add focused unit cases for any remaining mismatches.
-- [ ] Add a `locator_maxn_edge_labels` catalog/parity fixture showing
+- [x] Add a `locator_maxn_edge_labels` catalog/parity fixture showing
       degenerate-range expansion, pruning, and large-offset tick labels.
 - [x] Add `MaxNLocator` option coverage for custom `steps`, integer-only
       relaxation via `MinTicks`, symmetric ranges, pruning, and degenerate
