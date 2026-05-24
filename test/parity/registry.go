@@ -121,6 +121,7 @@ import (
 	example_multi_series_color_cycle "github.com/cwbudde/matplotlib-go/test/parity/multi_series_color_cycle"
 	example_named_colors "github.com/cwbudde/matplotlib-go/test/parity/named_colors"
 	example_patch_showcase "github.com/cwbudde/matplotlib-go/test/parity/patch_showcase"
+	example_path_clipped_transformed "github.com/cwbudde/matplotlib-go/test/parity/path_clipped_transformed"
 	example_path_effects "github.com/cwbudde/matplotlib-go/test/parity/path_effects"
 	example_pcolor_flat "github.com/cwbudde/matplotlib-go/test/parity/pcolor_flat"
 	example_pcolormesh_gouraud "github.com/cwbudde/matplotlib-go/test/parity/pcolormesh_gouraud"
@@ -219,6 +220,7 @@ var renderByID = map[string]func() image.Image{
 	"axes_control_surface":               example_axes_control_surface.Render,
 	"transform_coordinates":              example_transform_coordinates.Render,
 	"transform_annotation_modes":         example_transform_annotation_modes.Render,
+	"path_clipped_transformed":           example_path_clipped_transformed.Render,
 	"formatter_engineering_labels":       example_formatter_engineering_labels.Render,
 	"formatter_fixed_null_labels":        example_formatter_fixed_null_labels.Render,
 	"formatter_log_mathtext_labels":      example_formatter_log_mathtext_labels.Render,
@@ -303,6 +305,7 @@ var figureByID = map[string]func() *core.Figure{
 	"axes_grid1_showcase":                showcase_axes_grid1_showcase.Plot,
 	"axes_control_surface":               showcase_axes_control_surface.Plot,
 	"transform_annotation_modes":         example_transform_annotation_modes.Plot,
+	"path_clipped_transformed":           example_path_clipped_transformed.Plot,
 	"formatter_engineering_labels":       example_formatter_engineering_labels.Plot,
 	"formatter_fixed_null_labels":        example_formatter_fixed_null_labels.Plot,
 	"formatter_log_mathtext_labels":      example_formatter_log_mathtext_labels.Plot,
