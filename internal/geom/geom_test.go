@@ -266,6 +266,52 @@ func TestPathCloneAndTransform(t *testing.T) {
 	}
 }
 
+func TestPathInterpolatedSubdividesCurves(t *testing.T) {
+	var path Path
+	path.MoveTo(Pt{0, 0})
+	path.LineTo(Pt{2, 0})
+	path.QuadTo(Pt{3, 2}, Pt{4, 0})
+	path.CubicTo(Pt{5, -2}, Pt{6, 2}, Pt{7, 0})
+	path.Close()
+
+	interp := path.Interpolated(2)
+	if !interp.Validate() {
+		t.Fatalf("interpolated path should validate: %+v", interp)
+	}
+	wantCmds := []Cmd{MoveTo, LineTo, LineTo, LineTo, LineTo, LineTo, LineTo, ClosePath}
+	if len(interp.C) != len(wantCmds) {
+		t.Fatalf("interpolated command count = %d, want %d (%v)", len(interp.C), len(wantCmds), interp.C)
+	}
+	for i, want := range wantCmds {
+		if interp.C[i] != want {
+			t.Fatalf("interpolated command %d = %v, want %v", i, interp.C[i], want)
+		}
+	}
+	wantPts := []Pt{
+		{0, 0},
+		{1, 0}, {2, 0},
+		{3, 1}, {4, 0},
+		{5.5, 0}, {7, 0},
+	}
+	if len(interp.V) != len(wantPts) {
+		t.Fatalf("interpolated vertex count = %d, want %d (%v)", len(interp.V), len(wantPts), interp.V)
+	}
+	for i, want := range wantPts {
+		if !approxPt(interp.V[i], want, 1e-12) {
+			t.Fatalf("interpolated vertex %d = %+v, want %+v", i, interp.V[i], want)
+		}
+	}
+
+	clone := path.Interpolated(1)
+	if len(clone.C) != len(path.C) || len(clone.V) != len(path.V) {
+		t.Fatalf("steps <= 1 should clone original path, got %+v", clone)
+	}
+	clone.V[0].X = 99
+	if path.V[0].X == 99 {
+		t.Fatal("Interpolated(1) should deep-copy vertices")
+	}
+}
+
 func approxPt(a, b Pt, eps float64) bool {
 	dx := a.X - b.X
 	if dx < 0 {

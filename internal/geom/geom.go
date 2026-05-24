@@ -333,6 +333,83 @@ func (p Path) Transformed(m Affine) Path {
 	return out
 }
 
+// Interpolated returns a path where line and curve segments are subdivided into
+// straight line segments. steps is the number of output line segments per input
+// segment; values <= 1 return a clone.
+func (p Path) Interpolated(steps int) Path {
+	if steps <= 1 {
+		return p.Clone()
+	}
+	var out Path
+	vertex := 0
+	var current Pt
+	var subpathStart Pt
+	hasCurrent := false
+	for _, cmd := range p.C {
+		switch cmd {
+		case MoveTo:
+			to := p.V[vertex]
+			vertex++
+			out.MoveTo(to)
+			current = to
+			subpathStart = to
+			hasCurrent = true
+		case LineTo:
+			to := p.V[vertex]
+			vertex++
+			if !hasCurrent {
+				out.MoveTo(to)
+				current = to
+				subpathStart = to
+				hasCurrent = true
+				continue
+			}
+			for i := 1; i <= steps; i++ {
+				t := F64(i) / F64(steps)
+				out.LineTo(lerpPt(current, to, t))
+			}
+			current = to
+		case QuadTo:
+			ctrl, to := p.V[vertex], p.V[vertex+1]
+			vertex += 2
+			if !hasCurrent {
+				out.MoveTo(to)
+				current = to
+				subpathStart = to
+				hasCurrent = true
+				continue
+			}
+			from := current
+			for i := 1; i <= steps; i++ {
+				t := F64(i) / F64(steps)
+				out.LineTo(quadPoint(from, ctrl, to, t))
+			}
+			current = to
+		case CubicTo:
+			c1, c2, to := p.V[vertex], p.V[vertex+1], p.V[vertex+2]
+			vertex += 3
+			if !hasCurrent {
+				out.MoveTo(to)
+				current = to
+				subpathStart = to
+				hasCurrent = true
+				continue
+			}
+			from := current
+			for i := 1; i <= steps; i++ {
+				t := F64(i) / F64(steps)
+				out.LineTo(cubicPoint(from, c1, c2, to, t))
+			}
+			current = to
+		case ClosePath:
+			out.Close()
+			current = subpathStart
+			hasCurrent = false
+		}
+	}
+	return out
+}
+
 // Bounds returns the axis-aligned vertex bounds of the path.
 func (p Path) Bounds() (Rect, bool) {
 	return RectFromPoints(p.V...)
@@ -341,6 +418,22 @@ func (p Path) Bounds() (Rect, bool) {
 // TransformedBounds returns the axis-aligned vertex bounds after applying m.
 func (p Path) TransformedBounds(m Affine) (Rect, bool) {
 	return p.Transformed(m).Bounds()
+}
+
+func lerpPt(a, b Pt, t F64) Pt {
+	return Pt{X: a.X + (b.X-a.X)*t, Y: a.Y + (b.Y-a.Y)*t}
+}
+
+func quadPoint(p0, p1, p2 Pt, t F64) Pt {
+	a := lerpPt(p0, p1, t)
+	b := lerpPt(p1, p2, t)
+	return lerpPt(a, b, t)
+}
+
+func cubicPoint(p0, p1, p2, p3 Pt, t F64) Pt {
+	a := quadPoint(p0, p1, p2, t)
+	b := quadPoint(p1, p2, p3, t)
+	return lerpPt(a, b, t)
 }
 
 // Affine is a 2x3 matrix representing a 2D affine transform.

@@ -109,8 +109,8 @@ var foundationAPIGaps = []FoundationAPIGap{
 			"intersection, expansion/padding, point containment, affine transformed bounds, and " +
 			"inverse-transformed bounds, plus null-rectangle accumulation helpers.",
 		Gap: "The remaining 12.2G scope is split into frozen transform snapshots, transformed-path " +
-			"cache helpers with invalidation, anchored rect helpers for annotation/layout parity, " +
-			"and path/bezier helpers only when they affect visible clipping or layout behavior.",
+			"cache helpers with invalidation, anchored/null rect helpers for annotation/layout parity, " +
+			"and remaining path/bezier helpers only when they affect visible clipping or layout behavior.",
 		Decision: GapDecisionIdiomaticEquivalent,
 		Rationale: "Preserve the lean transform graph, adding focused BBox/path helpers when annotation, " +
 			"layout, clipping, or image-transform parity needs them.",
