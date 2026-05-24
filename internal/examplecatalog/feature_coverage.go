@@ -120,7 +120,7 @@ var featureCoverageRows = []FeatureCoverage{
 		UpstreamModules:         []string{"transforms.py", "bezier.py", "path.py"},
 		UpstreamGalleryFamilies: []string{"subplots_axes_and_figures", "text_labels_and_annotations"},
 		GoFiles:                 []string{"transform/transform.go", "transform/graph.go", "transform/node.go", "internal/geom/geom.go"},
-		CatalogIDs:              []string{"transform_coordinates", "annotation_composition", "imshow_transformed"},
+		CatalogIDs:              []string{"transform_coordinates", "transform_annotation_modes", "annotation_composition", "imshow_transformed"},
 		ExampleIDs:              []string{"annotation_composition"},
 		WebDemoIDs:              []string{"axes"},
 		GoEquivalent:            CoveragePartial,

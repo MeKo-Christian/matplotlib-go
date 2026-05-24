@@ -2196,7 +2196,7 @@ catalog/parity fixture per behavior family.
 - [ ] Add tests that exercise transform invalidation propagation and transformed
       path cache invalidation, plus catalog/parity cases for annotation
       coordinate modes, clipped transformed paths, and layout BBox behavior.
-- [ ] Add `transform_annotation_modes` or extend `transform_coordinates` to
+- [x] Add `transform_annotation_modes` or extend `transform_coordinates` to
       explicitly cover data, axes, figure, and offset annotation coordinates.
 - [ ] Add `path_clipped_transformed` covering a transformed path clipped by a
       BBox/axes rectangle.

@@ -338,8 +338,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "transforms",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"transform/node.go"},
-		CatalogIDs:        []string{"transform_coordinates", "annotation_composition"},
-		Note:              "Go TransformNode provides explicit invalidation propagation and versioning instead of Matplotlib's broader parent/child invalidation graph.",
+		CatalogIDs:        []string{"transform_coordinates", "transform_annotation_modes", "annotation_composition"},
+		Note:              "Go TransformNode provides explicit invalidation propagation and versioning instead of Matplotlib's broader parent/child invalidation graph; transform_annotation_modes covers annotation coordinate and offset transform use.",
 	},
 	{
 		ID:                "transforms-transform-base",
@@ -347,8 +347,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "transforms",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"transform/transform.go", "transform/graph.go"},
-		CatalogIDs:        []string{"transform_coordinates", "annotation_composition"},
-		Note:              "Go uses a small transform interface with Apply/Invert behavior and concrete graph helpers rather than Matplotlib's dynamic Transform base class.",
+		CatalogIDs:        []string{"transform_coordinates", "transform_annotation_modes", "annotation_composition"},
+		Note:              "Go uses a small transform interface with Apply/Invert behavior and concrete graph helpers rather than Matplotlib's dynamic Transform base class; transform_annotation_modes covers data, axes, figure, and offset annotation coordinates.",
 	},
 	{
 		ID:                "transforms-affine-base",
