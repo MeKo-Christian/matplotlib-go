@@ -456,6 +456,34 @@ func TestLogFormatterFormatsBaseTenDecadesAsPowers(t *testing.T) {
 	}
 }
 
+func TestLogFormatterExponent(t *testing.T) {
+	formatter := LogFormatterExponent{Base: 10}
+	cases := []struct {
+		value float64
+		want  string
+	}{
+		{value: 1000, want: "3"},
+		{value: 0.1, want: "−1"},
+		{value: 0, want: "0"},
+	}
+	for _, tc := range cases {
+		if got := formatter.Format(tc.value); got != tc.want {
+			t.Fatalf("LogFormatterExponent.Format(%v) = %q, want %q", tc.value, got, tc.want)
+		}
+	}
+}
+
+func TestLogFormatterMathText(t *testing.T) {
+	formatter := LogFormatterMathText{Base: 10}
+	if got, want := formatter.Format(1000), `$\mathdefault{10^{3}}$`; got != want {
+		t.Fatalf("LogFormatterMathText.Format(1000) = %q, want %q", got, want)
+	}
+	sci := LogFormatterMathText{Base: 10, SciNotation: true}
+	if got, want := sci.Format(20), `$\mathdefault{2\times10^{1}}$`; got != want {
+		t.Fatalf("LogFormatterMathText scientific Format(20) = %q, want %q", got, want)
+	}
+}
+
 func TestLogitFormatter(t *testing.T) {
 	formatter := LogitFormatter{}
 	cases := []struct {

@@ -1091,6 +1091,73 @@ func (f LogFormatter) Format(x float64) string {
 	return (ScalarFormatter{Prec: 6}).Format(x)
 }
 
+// LogFormatterExponent formats log ticks as exponents in the selected base.
+type LogFormatterExponent struct{ Base float64 }
+
+func (f LogFormatterExponent) Format(x float64) string {
+	if x == 0 {
+		return "0"
+	}
+	base := f.Base
+	if base <= 1 || math.IsNaN(base) || math.IsInf(base, 0) {
+		base = 10
+	}
+	if x < 0 {
+		return ""
+	}
+	exponent := math.Log(x) / math.Log(base)
+	if approx(exponent, math.Round(exponent), 1e-10) {
+		exponent = math.Round(exponent)
+	}
+	return (ScalarFormatter{Prec: 6}).Format(exponent)
+}
+
+// LogFormatterMathText formats log ticks as MathText base/exponent labels.
+type LogFormatterMathText struct {
+	Base        float64
+	SciNotation bool
+}
+
+func (f LogFormatterMathText) Format(x float64) string {
+	if x == 0 {
+		return `$\mathdefault{0}$`
+	}
+	base := f.Base
+	if base <= 1 || math.IsNaN(base) || math.IsInf(base, 0) {
+		base = 10
+	}
+	sign := ""
+	if x < 0 {
+		sign = "-"
+		x = -x
+	}
+	exponent := math.Log(x) / math.Log(base)
+	isDecade := approx(exponent, math.Round(exponent), 1e-10)
+	if isDecade {
+		exponent = math.Round(exponent)
+	}
+	baseLabel := formatLogBase(base)
+	if f.SciNotation && !isDecade {
+		floorExp := math.Floor(exponent)
+		coeff := math.Pow(base, exponent-floorExp)
+		if approx(coeff, math.Round(coeff), 1e-10) {
+			coeff = math.Round(coeff)
+		}
+		return fmt.Sprintf(`$\mathdefault{%s%g\times%s^{%d}}$`, sign, coeff, baseLabel, int(floorExp))
+	}
+	if !isDecade {
+		return fmt.Sprintf(`$\mathdefault{%s%s^{%.2f}}$`, sign, baseLabel, exponent)
+	}
+	return fmt.Sprintf(`$\mathdefault{%s%s^{%d}}$`, sign, baseLabel, int(exponent))
+}
+
+func formatLogBase(base float64) string {
+	if approx(base, math.Round(base), 1e-12) {
+		return strconv.FormatInt(int64(math.Round(base)), 10)
+	}
+	return strconv.FormatFloat(base, 'g', -1, 64)
+}
+
 func superscriptInt(v int) string {
 	if v == 0 {
 		return "⁰"
