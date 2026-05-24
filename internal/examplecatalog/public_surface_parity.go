@@ -518,8 +518,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "transforms",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"internal/geom/geom.go"},
-		CatalogIDs:        []string{"transform_coordinates", "annotation_composition"},
-		Note:              "Go geom.Rect.Transformed and InverseTransformed cover transformed BBox extents without a live wrapper object.",
+		CatalogIDs:        []string{"transform_coordinates", "layout_bbox_helpers", "annotation_composition"},
+		Note:              "Go geom.Rect.Transformed and InverseTransformed cover transformed BBox extents without a live wrapper object; layout_bbox_helpers covers visible anchored, padded, and union BBox layout behavior.",
 	},
 	{
 		ID:                "transforms-lockable-bbox",
@@ -679,9 +679,9 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		featureCoverageID: "transforms",
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"transform/transform.go", "transform/graph.go", "transform/node.go", "internal/geom/geom.go"},
-		catalogIDs:        []string{"transform_coordinates", "transform_annotation_modes", "path_clipped_transformed", "annotation_composition", "imshow_transformed"},
+		catalogIDs:        []string{"transform_coordinates", "transform_annotation_modes", "path_clipped_transformed", "layout_bbox_helpers", "annotation_composition", "imshow_transformed"},
 		exampleIDs:        []string{"annotation_composition"},
-		note:              "Go has affine, scale, blended, chained, display-rect, offset, cached graph transforms, BBox-style rect helpers, annotation coordinate fixtures, and clipped transformed path coverage. Remaining 12.2G scope is transformed-path split documentation, anchored layout coverage, and visible path/bezier helper decisions.",
+		note:              "Go has affine, scale, blended, chained, display-rect, offset, cached graph transforms, BBox-style rect helpers, annotation coordinate fixtures, clipped transformed path coverage, and visible anchored/padded/union BBox layout coverage. Remaining 12.2G scope is transformed-path split documentation and visible path/bezier helper decisions.",
 	},
 	{
 		idPrefix:          "line-style-registry",

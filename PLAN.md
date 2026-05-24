@@ -2200,7 +2200,7 @@ catalog/parity fixture per behavior family.
       explicitly cover data, axes, figure, and offset annotation coordinates.
 - [x] Add `path_clipped_transformed` covering a transformed path clipped by a
       BBox/axes rectangle.
-- [ ] Add `layout_bbox_helpers` covering anchored/padded/union BBox behavior in
+- [x] Add `layout_bbox_helpers` covering anchored/padded/union BBox behavior in
       visible layout output.
 - [x] Add renderer-neutral unit tests for frozen transform snapshots and
       transformed-path cache invalidation.
