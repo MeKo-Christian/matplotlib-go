@@ -2032,12 +2032,17 @@ catalog/parity fixture per behavior family.
       engineering-prefix rollover after rounding, and extreme SI prefixes.
 - [x] Add `EngFormatter` MathText-style number wrapping, `FormatEng` aliasing,
       and zero-without-suffix handling.
+- [x] Align `EngFormatter` zero-value defaults with upstream separator,
+      auto-place formatting, unicode micro, and explicit zero-place escape
+      hatches.
 - [ ] Tighten `PercentFormatter` behavior for xmax defaults, decimal auto
       selection, symbol escaping/no-escaping decision, and negative values.
 - [x] Add `PercentFormatter` auto-decimal support for configured display ranges
       and fixed-minus handling for negative percentages.
 - [x] Add `PercentFormatter` no-symbol output and TeX / raw-LaTeX symbol
       handling.
+- [x] Align `PercentFormatter` zero-value defaults with upstream `xmax=100`
+      and auto-decimal behavior while preserving explicit zero decimals.
 - [x] Audit `IndexFormatter`: it is not present in the current vendored
       upstream `ticker.py`; no Go compatibility surface is required unless an
       older Matplotlib target is explicitly added.
