@@ -28,6 +28,14 @@ const (
 	TextVAlignTop
 )
 
+// TextRotationMode controls how alignment interacts with text rotation.
+type TextRotationMode string
+
+const (
+	TextRotationModeDefault TextRotationMode = ""
+	TextRotationModeAnchor  TextRotationMode = "anchor"
+)
+
 // TextOptions configures a Text artist.
 type TextOptions struct {
 	FontSize float64
@@ -35,9 +43,13 @@ type TextOptions struct {
 	HAlign   TextAlign
 	VAlign   TextVerticalAlign
 	Angle    float64
-	Coords   CoordinateSpec
-	OffsetX  float64
-	OffsetY  float64
+	// RotationModeAnchor aligns the unrotated text first, then rotates it around
+	// the text box anchor. The zero value keeps Matplotlib's default rotated-bbox
+	// alignment behavior.
+	RotationMode TextRotationMode
+	Coords       CoordinateSpec
+	OffsetX      float64
+	OffsetY      float64
 	// WrapWidth wraps text to this maximum display-pixel width when positive.
 	WrapWidth float64
 	// MultiAlignment controls per-line alignment within multiline or wrapped
@@ -96,9 +108,13 @@ type Text struct {
 	HAlign   TextAlign
 	VAlign   TextVerticalAlign
 	Angle    float64
-	Coords   CoordinateSpec
-	OffsetX  float64
-	OffsetY  float64
+	// RotationModeAnchor aligns the unrotated text first, then rotates it around
+	// the text box anchor. The zero value keeps Matplotlib's default rotated-bbox
+	// alignment behavior.
+	RotationMode TextRotationMode
+	Coords       CoordinateSpec
+	OffsetX      float64
+	OffsetY      float64
 	// WrapWidth wraps text to this maximum display-pixel width when positive.
 	WrapWidth float64
 	// MultiAlignment controls per-line alignment within multiline or wrapped
@@ -165,6 +181,7 @@ func (a *Axes) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		HAlign:         opt.HAlign,
 		VAlign:         opt.VAlign,
 		Angle:          opt.Angle,
+		RotationMode:   opt.RotationMode,
 		Coords:         opt.Coords,
 		OffsetX:        opt.OffsetX,
 		OffsetY:        opt.OffsetY,
@@ -209,6 +226,7 @@ func (f *Figure) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		HAlign:         opt.HAlign,
 		VAlign:         opt.VAlign,
 		Angle:          opt.Angle,
+		RotationMode:   opt.RotationMode,
 		Coords:         opt.Coords,
 		OffsetX:        opt.OffsetX,
 		OffsetY:        opt.OffsetY,
@@ -332,7 +350,7 @@ func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
 	if t.Angle != 0 {
 		if rotated, ok := r.(render.RotatedTextDrawer); ok {
 			angle := t.Angle * math.Pi / 180
-			rotAnchor := tickLabelRotationAnchor(origin, layout, t.HAlign, layoutVerticalAlign(t.VAlign, false), angle)
+			rotAnchor := textRotationAnchor(origin, layout, t.HAlign, layoutVerticalAlign(t.VAlign, false), angle, t.RotationMode)
 			drawTextBBoxRotated(r, origin, layout, t.BBox, ctx, fontSize, rotAnchor, t.Angle)
 			if len(t.PathEffects) > 0 && drawTextPathEffects(r, content, origin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
 				return
@@ -425,13 +443,24 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 		if t.Angle != 0 {
 			if rotated, ok := r.(render.RotatedTextDrawer); ok {
 				angle := t.Angle * math.Pi / 180
-				rotAnchor := tickLabelRotationAnchor(origin, layouts[i], lineAlign, textLayoutVAlignBaseline, angle)
+				rotAnchor := textRotationAnchor(origin, layouts[i], lineAlign, textLayoutVAlignBaseline, angle, t.RotationMode)
 				drawDisplayTextRotatedParseMath(rotated, line, rotAnchor, fontSize, angle, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 				continue
 			}
 		}
 		drawDisplayTextParseMath(textRen, line, origin, fontSize, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 	}
+}
+
+func textRotationAnchor(origin geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64, mode TextRotationMode) geom.Pt {
+	if mode == TextRotationModeAnchor {
+		pivot := tickLabelBottomCenterOffset(layout)
+		return geom.Pt{
+			X: origin.X + pivot.X,
+			Y: origin.Y + pivot.Y,
+		}
+	}
+	return tickLabelRotationAnchor(origin, layout, hAlign, vAlign, angle)
 }
 
 func wrappedTextLines(r render.Renderer, text string, fontSize float64, fontKey string, parseMath, useTeX bool, maxWidth float64) []string {

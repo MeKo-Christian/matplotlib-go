@@ -2356,6 +2356,11 @@ Current slice landed:
   text block bboxes follow the rotated text path instead of staying axis-aligned.
 - Renderer-neutral text tests cover rotated single-line and multiline bbox path
   geometry.
+- `TextOptions.RotationMode` now supports a Go-style
+  `TextRotationModeAnchor` equivalent for Matplotlib's `rotation_mode='anchor'`,
+  aligning the unrotated text box before rotation.
+- Renderer-neutral text tests cover anchor-mode rotated text anchors separately
+  from the default rotated-bbox alignment behavior.
 
 #### 12.4D Annotation and Offset-Box Behavior
 

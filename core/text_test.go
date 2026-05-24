@@ -736,6 +736,41 @@ func TestRotatedTextBBoxRotatesWithText(t *testing.T) {
 	}
 }
 
+func TestTextRotationModeAnchorRotatesAroundAlignedTextBox(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position:     geom.Pt{X: 1, Y: 1},
+		Content:      "tilt",
+		FontSize:     10,
+		HAlign:       TextAlignLeft,
+		VAlign:       TextVAlignTop,
+		Angle:        45,
+		RotationMode: TextRotationModeAnchor,
+		ClipOn:       true,
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.fontRotatedCalls) != 1 {
+		t.Fatalf("expected one rotated text draw, got %+v", r.fontRotatedCalls)
+	}
+	anchor := transformedPoint(ctx, text.Coords, text.Position, text.OffsetX, text.OffsetY)
+	layout := measureSingleLineTextLayoutParseMath(r, text.Content, text.FontSize, text.FontKey, true, ctx.RC.UseTeX)
+	origin := alignedSingleLineOrigin(anchor, layout, text.HAlign, layoutVerticalAlign(text.VAlign, false))
+	want := geom.Pt{
+		X: origin.X + layout.Width/2,
+		Y: origin.Y + layout.Descent,
+	}
+	if !approx(r.fontRotatedCalls[0].anchor.X, want.X, 1e-9) || !approx(r.fontRotatedCalls[0].anchor.Y, want.Y, 1e-9) {
+		t.Fatalf("rotation_mode anchor draw anchor = %+v, want pre-rotation bottom-center %+v", r.fontRotatedCalls[0].anchor, want)
+	}
+	defaultAnchor := tickLabelRotationAnchor(origin, layout, text.HAlign, layoutVerticalAlign(text.VAlign, false), text.Angle*math.Pi/180)
+	if approx(r.fontRotatedCalls[0].anchor.X, defaultAnchor.X, 1e-9) && approx(r.fontRotatedCalls[0].anchor.Y, defaultAnchor.Y, 1e-9) {
+		t.Fatalf("rotation_mode anchor unexpectedly matched default rotated-bbox anchor %+v", defaultAnchor)
+	}
+}
+
 func TestTextArtistFontKeyOverridesRCFontKey(t *testing.T) {
 	ctx := createTestDrawContext()
 	ctx.RC.FontKey = "RC Font"
@@ -1446,6 +1481,7 @@ func hasPaintAlpha(paints []render.Paint, alpha float64) bool {
 
 type recordedFontTextCall struct {
 	text    string
+	anchor  geom.Pt
 	fontKey string
 }
 
@@ -1466,8 +1502,8 @@ func (r *fontAwareTextRecordingRenderer) DrawTextRotated(text string, anchor geo
 	r.origins = append(r.origins, anchor)
 }
 
-func (r *fontAwareTextRecordingRenderer) DrawTextRotatedWithFont(text string, _ geom.Pt, _ float64, _ float64, _ render.Color, fontKey string) {
-	r.fontRotatedCalls = append(r.fontRotatedCalls, recordedFontTextCall{text: text, fontKey: fontKey})
+func (r *fontAwareTextRecordingRenderer) DrawTextRotatedWithFont(text string, anchor geom.Pt, _ float64, _ float64, _ render.Color, fontKey string) {
+	r.fontRotatedCalls = append(r.fontRotatedCalls, recordedFontTextCall{text: text, anchor: anchor, fontKey: fontKey})
 }
 
 func (r *fontAwareTextRecordingRenderer) DrawTextVertical(text string, _ geom.Pt, _ float64, _ render.Color) {
