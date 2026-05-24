@@ -2,6 +2,7 @@ package core
 
 import (
 	"math"
+	"strings"
 	"time"
 )
 
@@ -325,6 +326,56 @@ func (l SecondLocator) location() *time.Location {
 	return time.UTC
 }
 
+type MicrosecondLocator struct {
+	Interval int
+	Location *time.Location
+}
+
+func (l MicrosecondLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
+	if math.IsNaN(minVal) || math.IsNaN(maxVal) || math.IsInf(minVal, 0) || math.IsInf(maxVal, 0) {
+		return nil
+	}
+	if minVal > maxVal {
+		minVal, maxVal = maxVal, minVal
+	}
+	if minVal == maxVal {
+		return []float64{minVal}
+	}
+	interval := l.Interval
+	if interval <= 0 {
+		interval = 1
+	}
+
+	minUs := int64(math.Ceil(minVal * 1e6))
+	maxUs := int64(math.Floor(maxVal * 1e6))
+	step := int64(interval)
+	start := ceilDivInt64(minUs, step) * step
+	if start > maxUs {
+		return nil
+	}
+
+	estimated := int((maxUs-start)/step) + 1
+	guard := targetCount*4 + 16
+	if guard < 32 {
+		guard = 32
+	}
+	if estimated > guard {
+		estimated = guard
+	}
+	ticks := make([]float64, 0, estimated)
+	for value, i := start, 0; value <= maxUs && i < guard; value, i = value+step, i+1 {
+		ticks = append(ticks, float64(value)/1e6)
+	}
+	return dedupeTicks(ticks)
+}
+
+func (l MicrosecondLocator) location() *time.Location {
+	if l.Location != nil {
+		return l.Location
+	}
+	return time.UTC
+}
+
 func validMonthDays(days []int) map[int]bool {
 	if len(days) == 0 {
 		return nil
@@ -418,6 +469,127 @@ func (f DateFormatter) location() *time.Location {
 	return time.UTC
 }
 
+type ConciseDateFormatter struct {
+	Location    *time.Location
+	Formats     []string
+	ZeroFormats []string
+}
+
+func (f ConciseDateFormatter) Format(x float64) string {
+	return dateNumberToTime(x, f.location()).Format(f.formatForLevel(0))
+}
+
+func (f ConciseDateFormatter) FormatTick(x float64, index int, ticks []float64) string {
+	if len(ticks) == 0 {
+		return f.Format(x)
+	}
+	current := dateNumberToTime(x, f.location())
+	level := conciseDateCommonLevel(ticks, f.location())
+	layout := f.formatForLevel(level)
+	if zeroLayout := f.zeroFormatForLevel(level); conciseDateIsZero(current, level) && zeroLayout != "" {
+		layout = zeroLayout
+	}
+	label := current.Format(layout)
+	if level >= 5 {
+		label = trimConciseSubseconds(label)
+	}
+	return label
+}
+
+func (f ConciseDateFormatter) location() *time.Location {
+	if f.Location != nil {
+		return f.Location
+	}
+	return time.UTC
+}
+
+func (f ConciseDateFormatter) formatForLevel(level int) string {
+	defaults := []string{"2006", "Jan", "02", "15:04", "15:04", "05.000000"}
+	if level >= 0 && level < len(f.Formats) && f.Formats[level] != "" {
+		return f.Formats[level]
+	}
+	if level < 0 {
+		level = 0
+	}
+	if level >= len(defaults) {
+		level = len(defaults) - 1
+	}
+	return defaults[level]
+}
+
+func (f ConciseDateFormatter) zeroFormatForLevel(level int) string {
+	defaults := []string{"", "2006", "Jan", "Jan-02", "15:04", "15:04"}
+	if level < 0 {
+		level = 0
+	}
+	if level >= len(defaults) {
+		level = len(defaults) - 1
+	}
+	if level >= 0 && level < len(f.ZeroFormats) && f.ZeroFormats[level] != "" {
+		return f.ZeroFormats[level]
+	}
+	if len(f.Formats) > 0 && level > 0 && level-1 < len(f.Formats) && f.Formats[level-1] != "" {
+		return f.Formats[level-1]
+	}
+	return defaults[level]
+}
+
+func conciseDateCommonLevel(ticks []float64, loc *time.Location) int {
+	if len(ticks) == 0 {
+		return 0
+	}
+	for level := 5; level >= 0; level-- {
+		first := conciseDateField(dateNumberToTime(ticks[0], loc), level)
+		for _, tick := range ticks[1:] {
+			if conciseDateField(dateNumberToTime(tick, loc), level) != first {
+				return level
+			}
+		}
+	}
+	return 5
+}
+
+func conciseDateField(t time.Time, level int) int {
+	switch level {
+	case 0:
+		return t.Year()
+	case 1:
+		return int(t.Month())
+	case 2:
+		return t.Day()
+	case 3:
+		return t.Hour()
+	case 4:
+		return t.Minute()
+	default:
+		return t.Second()
+	}
+}
+
+func conciseDateIsZero(t time.Time, level int) bool {
+	switch {
+	case level == 1:
+		return t.Month() == time.January
+	case level == 2:
+		return t.Day() == 1
+	case level == 3:
+		return t.Hour() == 0
+	case level == 4:
+		return t.Minute() == 0
+	case level >= 5:
+		return t.Second() == 0 && t.Nanosecond() == 0
+	default:
+		return false
+	}
+}
+
+func trimConciseSubseconds(label string) string {
+	if !strings.Contains(label, ".") {
+		return label
+	}
+	return strings.TrimRight(strings.TrimRight(label, "0"), ".")
+}
+
 type dateTickInterval struct {
 	unit string
 	step int
@@ -445,15 +617,17 @@ func chooseDateTickInterval(minTime, maxTime time.Time, targetCount int) dateTic
 		{dateTickInterval{unit: "hour"}, int(maxTime.Sub(minTime).Hours()), 12},
 		{dateTickInterval{unit: "minute"}, int(maxTime.Sub(minTime).Minutes()), 11},
 		{dateTickInterval{unit: "second"}, int(maxTime.Sub(minTime).Seconds()), 11},
+		{dateTickInterval{unit: "microsecond"}, int(maxTime.Sub(minTime) / time.Microsecond), 8},
 	}
 
 	intervals := map[string][]int{
-		"year":   {1, 2, 4, 5, 10, 20, 40, 50, 100, 200, 400, 500, 1000, 2000, 4000, 5000, 10000},
-		"month":  {1, 2, 3, 4, 6},
-		"day":    {1, 2, 4, 7, 14},
-		"hour":   {1, 2, 3, 4, 6, 12},
-		"minute": {1, 5, 10, 15, 30},
-		"second": {1, 5, 10, 15, 30},
+		"year":        {1, 2, 4, 5, 10, 20, 40, 50, 100, 200, 400, 500, 1000, 2000, 4000, 5000, 10000},
+		"month":       {1, 2, 3, 4, 6},
+		"day":         {1, 2, 4, 7, 14},
+		"hour":        {1, 2, 3, 4, 6, 12},
+		"minute":      {1, 5, 10, 15, 30},
+		"second":      {1, 5, 10, 15, 30},
+		"microsecond": {1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000},
 	}
 
 	for _, candidate := range candidates {
@@ -471,11 +645,7 @@ func chooseDateTickInterval(minTime, maxTime time.Time, targetCount int) dateTic
 		return candidate.interval
 	}
 
-	span := maxTime.Sub(minTime)
-	if span >= time.Second {
-		return dateTickInterval{unit: "second", step: 1}
-	}
-	return dateTickInterval{unit: "second", step: 1}
+	return dateTickInterval{unit: "microsecond", step: 1}
 }
 
 func dateSpanYears(minTime, maxTime time.Time) int {
@@ -521,10 +691,14 @@ func (i dateTickInterval) align(t time.Time) time.Time {
 		y, m, d := t.Date()
 		minute := (t.Minute() / i.step) * i.step
 		return time.Date(y, m, d, t.Hour(), minute, 0, 0, t.Location())
-	default:
+	case "second":
 		y, m, d := t.Date()
 		second := (t.Second() / i.step) * i.step
 		return time.Date(y, m, d, t.Hour(), t.Minute(), second, 0, t.Location())
+	default:
+		y, m, d := t.Date()
+		us := (t.Nanosecond() / int(time.Microsecond)) / i.step * i.step
+		return time.Date(y, m, d, t.Hour(), t.Minute(), t.Second(), us*int(time.Microsecond), t.Location())
 	}
 }
 
@@ -540,9 +714,20 @@ func (i dateTickInterval) next(t time.Time) time.Time {
 		return t.Add(time.Duration(i.step) * time.Hour)
 	case "minute":
 		return t.Add(time.Duration(i.step) * time.Minute)
-	default:
+	case "second":
 		return t.Add(time.Duration(i.step) * time.Second)
+	default:
+		return t.Add(time.Duration(i.step) * time.Microsecond)
 	}
+}
+
+func ceilDivInt64(n, d int64) int64 {
+	q := n / d
+	r := n % d
+	if r != 0 && ((r > 0) == (d > 0)) {
+		q++
+	}
+	return q
 }
 
 func clockTicks(minVal, maxVal float64, loc *time.Location, unit string, allowed map[int]bool, interval, targetCount int) []float64 {

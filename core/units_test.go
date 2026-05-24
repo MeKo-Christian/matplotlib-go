@@ -318,6 +318,78 @@ func TestClockLocatorsUseRequestedFields(t *testing.T) {
 	}
 }
 
+func TestMicrosecondLocatorUsesRequestedInterval(t *testing.T) {
+	loc := MicrosecondLocator{Interval: 500}
+	minVal := timeToDateNumber(time.Unix(0, 100*time.Microsecond.Nanoseconds()).UTC())
+	maxVal := timeToDateNumber(time.Unix(0, 1400*time.Microsecond.Nanoseconds()).UTC())
+
+	ticks := loc.Ticks(minVal, maxVal, 6)
+	assertDateTicks(t, ticks, []time.Time{
+		time.Unix(0, 500*time.Microsecond.Nanoseconds()).UTC(),
+		time.Unix(0, 1000*time.Microsecond.Nanoseconds()).UTC(),
+	})
+}
+
+func TestDateLocatorUsesMicrosecondTicksForSubsecondRange(t *testing.T) {
+	loc := DateLocator{Location: time.UTC}
+	minVal := timeToDateNumber(time.Unix(0, 0).UTC())
+	maxVal := timeToDateNumber(time.Unix(0, 2500*time.Microsecond.Nanoseconds()).UTC())
+
+	ticks := loc.Ticks(minVal, maxVal, 4)
+	assertDateTicks(t, ticks, []time.Time{
+		time.Unix(0, 0).UTC(),
+		time.Unix(0, 500*time.Microsecond.Nanoseconds()).UTC(),
+		time.Unix(0, 1000*time.Microsecond.Nanoseconds()).UTC(),
+		time.Unix(0, 1500*time.Microsecond.Nanoseconds()).UTC(),
+		time.Unix(0, 2000*time.Microsecond.Nanoseconds()).UTC(),
+		time.Unix(0, 2500*time.Microsecond.Nanoseconds()).UTC(),
+	})
+}
+
+func TestDateLocatorsUseNonUTCLocation(t *testing.T) {
+	loc := time.FixedZone("UTC+2", 2*60*60)
+	dayLoc := DayLocator{Location: loc}
+	minVal := timeToDateNumber(time.Date(2024, time.January, 1, 21, 30, 0, 0, time.UTC))
+	maxVal := timeToDateNumber(time.Date(2024, time.January, 2, 23, 30, 0, 0, time.UTC))
+
+	ticks := dayLoc.Ticks(minVal, maxVal, 4)
+	assertDateTicks(t, ticks, []time.Time{
+		time.Date(2024, time.January, 2, 0, 0, 0, 0, loc),
+		time.Date(2024, time.January, 3, 0, 0, 0, 0, loc),
+	})
+}
+
+func TestConciseDateFormatterUsesSharedTickLevel(t *testing.T) {
+	formatter := ConciseDateFormatter{Location: time.UTC}
+
+	daily := []float64{
+		timeToDateNumber(time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)),
+		timeToDateNumber(time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC)),
+		timeToDateNumber(time.Date(2024, time.January, 3, 0, 0, 0, 0, time.UTC)),
+	}
+	if got := labelsForTicks(formatter, daily); fmt.Sprint(got) != "[Jan 02 03]" {
+		t.Fatalf("daily concise labels = %v, want [Jan 02 03]", got)
+	}
+
+	monthly := []float64{
+		timeToDateNumber(time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)),
+		timeToDateNumber(time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)),
+		timeToDateNumber(time.Date(2024, time.March, 1, 0, 0, 0, 0, time.UTC)),
+	}
+	if got := labelsForTicks(formatter, monthly); fmt.Sprint(got) != "[2024 Feb Mar]" {
+		t.Fatalf("monthly concise labels = %v, want [2024 Feb Mar]", got)
+	}
+
+	subsecond := []float64{
+		timeToDateNumber(time.Date(2024, time.January, 1, 12, 0, 0, 0, time.UTC)),
+		timeToDateNumber(time.Date(2024, time.January, 1, 12, 0, 0, int(500*time.Millisecond), time.UTC)),
+		timeToDateNumber(time.Date(2024, time.January, 1, 12, 0, 1, 0, time.UTC)),
+	}
+	if got := labelsForTicks(formatter, subsecond); fmt.Sprint(got) != "[12:00 00.5 01]" {
+		t.Fatalf("subsecond concise labels = %v, want [12:00 00.5 01]", got)
+	}
+}
+
 func assertDateTicks(t *testing.T, ticks []float64, want []time.Time) {
 	t.Helper()
 	if len(ticks) != len(want) {
@@ -329,4 +401,12 @@ func assertDateTicks(t *testing.T, ticks []float64, want []time.Time) {
 			t.Fatalf("tick %d = %s, want %s", i, got, want[i])
 		}
 	}
+}
+
+func labelsForTicks(formatter Formatter, ticks []float64) []string {
+	labels := make([]string, len(ticks))
+	for i, tick := range ticks {
+		labels[i] = formatTickLabel(formatter, tick, i, ticks)
+	}
+	return labels
 }
