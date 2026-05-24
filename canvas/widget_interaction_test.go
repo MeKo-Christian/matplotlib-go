@@ -481,10 +481,12 @@ func TestWidgetInteractionRectangleSelectorModifierMouseCreate(t *testing.T) {
 		t.Fatal("ctrl end pixelToData failed")
 	}
 
-	assertCloseEnough(t, rect.Min.X, 2*startData.X-endData.X)
-	assertCloseEnough(t, rect.Max.X, endData.X)
-	assertCloseEnough(t, rect.Min.Y, 2*startData.Y-endData.Y)
-	assertCloseEnough(t, rect.Max.Y, endData.Y)
+	expMin, expMax := selectorBoundsFromDrag(startData, endData, false, true)
+	assertCloseEnough(t, rect.Min.X, expMin.X)
+	assertCloseEnough(t, rect.Max.X, expMax.X)
+	assertCloseEnough(t, rect.Min.Y, expMin.Y)
+	assertCloseEnough(t, rect.Max.Y, expMax.Y)
+	rect.Clear()
 
 	startSquare := geom.Pt{X: 40, Y: 80}
 	endSquare := geom.Pt{X: 100, Y: 60}
@@ -498,9 +500,23 @@ func TestWidgetInteractionRectangleSelectorModifierMouseCreate(t *testing.T) {
 		t.Fatalf("shift release: %v", err)
 	}
 
+	startSquareData, ok := ax.PixelToData(startSquare)
+	if !ok {
+		t.Fatal("shift start pixelToData failed")
+	}
+	endSquareData, ok := ax.PixelToData(endSquare)
+	if !ok {
+		t.Fatal("shift end pixelToData failed")
+	}
+	expShiftMin, expShiftMax := selectorBoundsFromDrag(startSquareData, endSquareData, true, false)
 	if math.Abs((rect.Max.X-rect.Min.X)-(rect.Max.Y-rect.Min.Y)) > 1e-9 {
 		t.Fatalf("rectangle with shift should be square, got width=%g height=%g", rect.Max.X-rect.Min.X, rect.Max.Y-rect.Min.Y)
 	}
+	assertCloseEnough(t, rect.Min.X, expShiftMin.X)
+	assertCloseEnough(t, rect.Max.X, expShiftMax.X)
+	assertCloseEnough(t, rect.Min.Y, expShiftMin.Y)
+	assertCloseEnough(t, rect.Max.Y, expShiftMax.Y)
+	rect.Clear()
 
 	startSquareFromCenter := geom.Pt{X: 150, Y: 40}
 	endSquareFromCenter := geom.Pt{X: 170, Y: 100}
@@ -514,12 +530,21 @@ func TestWidgetInteractionRectangleSelectorModifierMouseCreate(t *testing.T) {
 		t.Fatalf("shift+ctrl release: %v", err)
 	}
 
-	startDC, ok := ax.PixelToData(startSquareFromCenter)
+	shiftCenterStart, ok := ax.PixelToData(startSquareFromCenter)
 	if !ok {
 		t.Fatal("shift+ctrl start pixelToData failed")
 	}
-	if math.Abs((rect.Min.X+rect.Max.X)/2-startDC.X) > 1e-9 {
-		t.Fatalf("rectangle with shift+ctrl should stay centered on press, got center x %g want %g", (rect.Min.X+rect.Max.X)/2, startDC.X)
+	shiftCenterEnd, ok := ax.PixelToData(endSquareFromCenter)
+	if !ok {
+		t.Fatal("shift+ctrl end pixelToData failed")
+	}
+	expCenterMin, expCenterMax := selectorBoundsFromDrag(shiftCenterStart, shiftCenterEnd, true, true)
+	assertCloseEnough(t, rect.Min.X, expCenterMin.X)
+	assertCloseEnough(t, rect.Max.X, expCenterMax.X)
+	assertCloseEnough(t, rect.Min.Y, expCenterMin.Y)
+	assertCloseEnough(t, rect.Max.Y, expCenterMax.Y)
+	if math.Abs((rect.Min.X+rect.Max.X)/2-shiftCenterStart.X) > 1e-9 {
+		t.Fatalf("rectangle with shift+ctrl should stay centered on press, got center x %g want %g", (rect.Min.X+rect.Max.X)/2, shiftCenterStart.X)
 	}
 	if math.Abs((rect.Max.X-rect.Min.X)-(rect.Max.Y-rect.Min.Y)) > 1e-9 {
 		t.Fatalf("rectangle with shift+ctrl should remain square, got width=%g height=%g", rect.Max.X-rect.Min.X, rect.Max.Y-rect.Min.Y)
@@ -612,67 +637,95 @@ func TestWidgetInteractionPolygonSelectorPreCompleteMoveModes(t *testing.T) {
 	wi.Attach(&dispatcher)
 	defer wi.Detach()
 
-	addPoint := func(pt geom.Pt) {
-		if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: pt, Button: MouseButtonLeft}); err != nil {
-			t.Fatalf("add press %v: %v", pt, err)
-		}
-		if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: pt, Button: MouseButtonLeft}); err != nil {
-			t.Fatalf("add release %v: %v", pt, err)
-		}
-	}
-
 	poly := ax.PolygonSelector()
-
-	addPoint(geom.Pt{X: 50, Y: 70})
-	addPoint(geom.Pt{X: 150, Y: 70})
+	p1ShiftPx := geom.Pt{X: 50, Y: 70}
+	p2ShiftPx := geom.Pt{X: 150, Y: 70}
+	p1ShiftData, ok := ax.PixelToData(p1ShiftPx)
+	if !ok {
+		t.Fatal("polygon shift pre-complete start pixelToData failed")
+	}
+	p2ShiftData, ok := ax.PixelToData(p2ShiftPx)
+	if !ok {
+		t.Fatal("polygon shift pre-complete second pixelToData failed")
+	}
+	poly.AppendPoint(p1ShiftData)
+	poly.AppendPoint(p2ShiftData)
 
 	// Move all vertices before completion (shift).
-	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: geom.Pt{X: 100, Y: 100}, Button: MouseButtonLeft, Modifiers: ModifierShift}); err != nil {
+	shiftPressPx := geom.Pt{X: 100, Y: 70}
+	shiftMovePx := geom.Pt{X: 100, Y: 120}
+	shiftPressData, ok := ax.PixelToData(shiftPressPx)
+	if !ok {
+		t.Fatal("polygon shift move press pixelToData failed")
+	}
+	shiftMoveData, ok := ax.PixelToData(shiftMovePx)
+	if !ok {
+		t.Fatal("polygon shift move pixelToData failed")
+	}
+	shiftDelta := geom.Pt{
+		X: shiftMoveData.X - shiftPressData.X,
+		Y: shiftMoveData.Y - shiftPressData.Y,
+	}
+	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: shiftPressPx, Button: MouseButtonLeft, Modifiers: ModifierShift}); err != nil {
 		t.Fatalf("polygon shift press: %v", err)
 	}
-	if err := dispatcher.Emit(Event{Type: EventMouseMove, Figure: fig, Axes: ax, Position: geom.Pt{X: 100, Y: 120}, Button: MouseButtonLeft, Modifiers: ModifierShift}); err != nil {
+	if err := dispatcher.Emit(Event{Type: EventMouseMove, Figure: fig, Axes: ax, Position: shiftMovePx, Button: MouseButtonLeft, Modifiers: ModifierShift}); err != nil {
 		t.Fatalf("polygon shift move: %v", err)
 	}
-	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: geom.Pt{X: 100, Y: 120}, Button: MouseButtonLeft, Modifiers: ModifierShift}); err != nil {
+	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: shiftMovePx, Button: MouseButtonLeft, Modifiers: ModifierShift}); err != nil {
 		t.Fatalf("polygon shift release: %v", err)
 	}
 
-	addPoint(geom.Pt{X: 50, Y: 100})
-	addPoint(geom.Pt{X: 50, Y: 70})
-
-	if got, ok := poly.Points[0], true; !ok {
-		_ = got
+	if len(poly.Points) != 2 {
+		t.Fatalf("polygon points = %d, want 2", len(poly.Points))
 	}
-	assertCloseEnough(t, poly.Points[0].Y, 90)
-	assertCloseEnough(t, poly.Points[1].Y, 90)
+	assertCloseEnough(t, poly.Points[0].X-p1ShiftData.X-shiftDelta.X, 0)
+	assertCloseEnough(t, poly.Points[0].Y-p1ShiftData.Y-shiftDelta.Y, 0)
+	assertCloseEnough(t, poly.Points[1].X-p2ShiftData.X-shiftDelta.X, 0)
+	assertCloseEnough(t, poly.Points[1].Y-p2ShiftData.Y-shiftDelta.Y, 0)
 
 	// Move a vertex before completion (control).
 	poly2 := ax.PolygonSelector()
-	addPoint = func(pt geom.Pt) {
-		if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: pt, Button: MouseButtonLeft}); err != nil {
-			t.Fatalf("add2 press %v: %v", pt, err)
-		}
-		if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: pt, Button: MouseButtonLeft}); err != nil {
-			t.Fatalf("add2 release %v: %v", pt, err)
-		}
+	ctrlV0 := geom.Pt{X: 20, Y: 20}
+	ctrlV1 := geom.Pt{X: 120, Y: 20}
+	ctrlV0Data, ok := ax.PixelToData(ctrlV0)
+	if !ok {
+		t.Fatal("polygon control point pixelToData failed")
 	}
-	addPoint(geom.Pt{X: 20, Y: 20})
-	addPoint(geom.Pt{X: 120, Y: 20})
+	ctrlV1Data, ok := ax.PixelToData(ctrlV1)
+	if !ok {
+		t.Fatal("polygon control second pixelToData failed")
+	}
+	poly2.AppendPoint(ctrlV0Data)
+	poly2.AppendPoint(ctrlV1Data)
 
-	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: geom.Pt{X: 20, Y: 20}, Button: MouseButtonLeft, Modifiers: ModifierControl}); err != nil {
+	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: ctrlV0, Button: MouseButtonLeft, Modifiers: ModifierControl}); err != nil {
 		t.Fatalf("polygon control press: %v", err)
 	}
-	if err := dispatcher.Emit(Event{Type: EventMouseMove, Figure: fig, Axes: ax, Position: geom.Pt{X: 30, Y: 20}, Button: MouseButtonLeft, Modifiers: ModifierControl}); err != nil {
+	ctrlMovePx := geom.Pt{X: 30, Y: 20}
+	ctrlMoveData, ok := ax.PixelToData(ctrlMovePx)
+	if !ok {
+		t.Fatal("polygon control move pixelToData failed")
+	}
+	ctrlDelta := geom.Pt{
+		X: ctrlMoveData.X - ctrlV0Data.X,
+		Y: ctrlMoveData.Y - ctrlV0Data.Y,
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseMove, Figure: fig, Axes: ax, Position: ctrlMovePx, Button: MouseButtonLeft, Modifiers: ModifierControl}); err != nil {
 		t.Fatalf("polygon control move: %v", err)
 	}
-	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: geom.Pt{X: 30, Y: 20}, Button: MouseButtonLeft, Modifiers: ModifierControl}); err != nil {
+	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: ctrlMovePx, Button: MouseButtonLeft, Modifiers: ModifierControl}); err != nil {
 		t.Fatalf("polygon control release: %v", err)
 	}
 
-	addPoint(geom.Pt{X: 20, Y: 120})
-	addPoint(geom.Pt{X: 30, Y: 20})
-
-	if poly2.Points[0].X != 30 {
+	if len(poly2.Points) != 2 {
+		t.Fatalf("polygon control points = %d, want 2", len(poly2.Points))
+	}
+	assertCloseEnough(t, poly2.Points[0].X-(ctrlV0Data.X+ctrlDelta.X), 0)
+	assertCloseEnough(t, poly2.Points[0].Y-(ctrlV0Data.Y+ctrlDelta.Y), 0)
+	assertCloseEnough(t, poly2.Points[1].X-ctrlV1Data.X, 0)
+	assertCloseEnough(t, poly2.Points[1].Y-ctrlV1Data.Y, 0)
+	if math.Abs((poly2.Points[0].X - (ctrlV0Data.X + ctrlDelta.X))) > 1e-9 {
 		t.Fatalf("polygon control move should shift first vertex x, got %g", poly2.Points[0].X)
 	}
 }
@@ -715,6 +768,145 @@ func TestWidgetInteractionEllipseSelectorMouse(t *testing.T) {
 	}
 }
 
+func TestWidgetInteractionEllipseSelectorKeyboard(t *testing.T) {
+	fig := core.NewFigure(160, 100)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	ax.SetXLim(0, 100)
+	ax.SetYLim(0, 100)
+	ellipse := ax.EllipseSelector()
+
+	var selected int
+	ellipse.OnSelect(func(_ *core.EllipseSelector, got geom.Rect) {
+		selected++
+		if got.Min.X == 0 && got.Min.Y == 0 && got.Max.X == 0 && got.Max.Y == 0 {
+			t.Fatalf("ellipse callback reported empty bounds")
+		}
+	})
+
+	var dispatcher Dispatcher
+	wi := NewWidgetInteraction(fig, func() error { return nil })
+	wi.Attach(&dispatcher)
+	defer wi.Detach()
+
+	press := geom.Pt{X: 80, Y: 40}
+	move := geom.Pt{X: 120, Y: 80}
+	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: press, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("ellipse press: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseMove, Figure: fig, Axes: ax, Position: move, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("ellipse drag: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: move, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("ellipse release: %v", err)
+	}
+	if !ellipse.Active {
+		t.Fatal("ellipse should be active after drag")
+	}
+	if selected != 1 {
+		t.Fatalf("ellipse callback count = %d, want 1", selected)
+	}
+
+	beforeMin := ellipse.Min
+	beforeMax := ellipse.Max
+	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: ax, Key: "left"}); err != nil {
+		t.Fatalf("ellipse left key: %v", err)
+	}
+	if selected != 2 {
+		t.Fatalf("ellipse callback count after left = %d, want 2", selected)
+	}
+	assertCloseEnough(t, ellipse.Min.X-beforeMin.X+5, 0)
+	assertCloseEnough(t, ellipse.Max.X-beforeMax.X+5, 0)
+	assertCloseEnough(t, ellipse.Min.Y-beforeMin.Y, 0)
+	assertCloseEnough(t, ellipse.Max.Y-beforeMax.Y, 0)
+
+	beforeMin = ellipse.Min
+	beforeMax = ellipse.Max
+	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: ax, Key: "right", Modifiers: ModifierControl}); err != nil {
+		t.Fatalf("ellipse ctrl right key: %v", err)
+	}
+	if selected != 3 {
+		t.Fatalf("ellipse callback count after ctrl-right = %d, want 3", selected)
+	}
+	assertCloseEnough(t, ellipse.Min.X-beforeMin.X-50, 0)
+	assertCloseEnough(t, ellipse.Max.X-beforeMax.X-50, 0)
+	assertCloseEnough(t, ellipse.Min.Y-beforeMin.Y, 0)
+	assertCloseEnough(t, ellipse.Max.Y-beforeMax.Y, 0)
+}
+
+func TestWidgetInteractionPolygonSelectorKeyboard(t *testing.T) {
+	fig := core.NewFigure(200, 120)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	ax.SetXLim(0, 200)
+	ax.SetYLim(0, 120)
+	poly := ax.PolygonSelector()
+
+	before := []geom.Pt{
+		{X: 30, Y: 30},
+		{X: 170, Y: 30},
+		{X: 100, Y: 90},
+	}
+	points := make([]geom.Pt, len(before))
+	for i, px := range before {
+		data, ok := ax.PixelToData(px)
+		if !ok {
+			t.Fatalf("polygon point pixelToData %v failed", px)
+		}
+		points[i] = data
+		poly.AppendPoint(data)
+	}
+	if !poly.Close() {
+		t.Fatal("polygon close should succeed")
+	}
+	if !poly.Closed {
+		t.Fatal("polygon should be closed")
+	}
+	if len(poly.Points) != len(points) {
+		t.Fatalf("polygon points = %d, want %d", len(poly.Points), len(points))
+	}
+
+	var callbacks int
+	poly.OnSelect(func(*core.PolygonSelector, []geom.Pt) {
+		callbacks++
+	})
+
+	var dispatcher Dispatcher
+	wi := NewWidgetInteraction(fig, func() error { return nil })
+	wi.Attach(&dispatcher)
+	defer wi.Detach()
+
+	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: geom.Pt{X: 100, Y: 50}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("polygon focus press: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: geom.Pt{X: 100, Y: 50}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("polygon focus release: %v", err)
+	}
+
+	beforeMove := make([]geom.Pt, len(poly.Points))
+	copy(beforeMove, poly.Points)
+	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: ax, Key: "right"}); err != nil {
+		t.Fatalf("polygon right key: %v", err)
+	}
+	if callbacks < 1 {
+		t.Fatalf("polygon callback count = %d, want >= 1 after move", callbacks)
+	}
+	for i := range poly.Points {
+		assertCloseEnough(t, poly.Points[i].X-beforeMove[i].X-10, 0)
+		assertCloseEnough(t, poly.Points[i].Y-beforeMove[i].Y, 0)
+	}
+
+	copy(beforeMove, poly.Points)
+	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: ax, Key: "down"}); err != nil {
+		t.Fatalf("polygon down key: %v", err)
+	}
+	if callbacks < 2 {
+		t.Fatalf("polygon callback count after move = %d, want >= 2 after two key moves", callbacks)
+	}
+	for i := range poly.Points {
+		assertCloseEnough(t, poly.Points[i].X-beforeMove[i].X, 0)
+		assertCloseEnough(t, poly.Points[i].Y-beforeMove[i].Y+6, 0)
+	}
+}
+
 func TestWidgetInteractionLassoSelectorMouse(t *testing.T) {
 	fig := core.NewFigure(160, 100)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
@@ -749,6 +941,45 @@ func TestWidgetInteractionLassoSelectorMouse(t *testing.T) {
 	}
 	if got < len(points) {
 		t.Fatalf("lasso onSelect points = %d, want >=%d", got, len(points))
+	}
+}
+
+func TestWidgetInteractionLassoSelectorKeyboardEscape(t *testing.T) {
+	fig := core.NewFigure(160, 100)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	ax.SetXLim(0, 100)
+	ax.SetYLim(0, 100)
+	lasso := ax.LassoSelector()
+
+	var dispatcher Dispatcher
+	wi := NewWidgetInteraction(fig, func() error { return nil })
+	wi.Attach(&dispatcher)
+	defer wi.Detach()
+
+	points := []geom.Pt{{X: 20, Y: 20}, {X: 60, Y: 20}, {X: 80, Y: 70}}
+	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: points[0], Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("lasso press: %v", err)
+	}
+	for _, point := range points[1:] {
+		if err := dispatcher.Emit(Event{Type: EventMouseMove, Figure: fig, Axes: ax, Position: point, Button: MouseButtonLeft}); err != nil {
+			t.Fatalf("lasso move: %v", err)
+		}
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: points[len(points)-1], Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("lasso release: %v", err)
+	}
+	if !lasso.Active {
+		t.Fatal("lasso should be active after release")
+	}
+
+	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: ax, Key: "escape"}); err != nil {
+		t.Fatalf("lasso escape key: %v", err)
+	}
+	if lasso.Active {
+		t.Fatal("lasso should clear on escape")
+	}
+	if lasso.Tracking {
+		t.Fatal("lasso should not keep tracking after escape")
 	}
 }
 

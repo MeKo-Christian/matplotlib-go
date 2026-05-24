@@ -1108,11 +1108,11 @@ Phase 4.
 
 ### 5.2 Selectors
 
-- [ ] `SpanSelector`, `RectangleSelector`, `EllipseSelector`,
+- [x] `SpanSelector`, `RectangleSelector`, `EllipseSelector`,
       `PolygonSelector`, and `LassoSelector` with mouse and keyboard editing.
-- [ ] Modifier-key behaviors (shift / ctrl / alt) matching upstream
+- [x] Modifier-key behaviors (shift / ctrl / alt) matching upstream
       defaults.
-- [ ] `Cursor` and `MultiCursor` helpers driven by hover events.
+- [x] `Cursor` and `MultiCursor` helpers driven by hover events.
 
 ### 5.3 Widget Composition
 
