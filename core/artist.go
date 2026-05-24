@@ -74,6 +74,35 @@ type DrawContext struct {
 	Clip geom.Rect
 	// FigureRect is the figure display rectangle in pixels.
 	FigureRect geom.Rect
+	// DrawOptions selects which artists participate in this draw pass. The
+	// zero value matches Matplotlib's default Artist.draw_wrapper behavior:
+	// animated artists are skipped, and the animation engine flips this
+	// during overlay/background passes.
+	DrawOptions DrawOptions
+}
+
+// AnimatedFilter selects which artists are drawn during a figure draw pass.
+type AnimatedFilter uint8
+
+const (
+	// AnimatedFilterExcludeAnimated draws non-animated artists only. This is
+	// the default and matches Matplotlib's per-frame figure draw.
+	AnimatedFilterExcludeAnimated AnimatedFilter = iota
+	// AnimatedFilterOnlyAnimated draws animated artists only. Used by the
+	// animation engine to redraw the animated overlay on top of a saved
+	// background region.
+	AnimatedFilterOnlyAnimated
+	// AnimatedFilterAll draws every artist regardless of animated state.
+	// Useful for one-shot saves where blit semantics do not apply.
+	AnimatedFilterAll
+)
+
+// DrawOptions controls what a figure draw pass renders. The zero value matches
+// Matplotlib's default Artist.draw_wrapper behavior: animated artists are
+// skipped so that the animation engine can manage them via a blit-style
+// overlay path.
+type DrawOptions struct {
+	AnimatedFilter AnimatedFilter
 }
 
 // Transform2D wires x/y scales with an axes->pixel affine transform.
@@ -1993,8 +2022,18 @@ func styleCloneDashes(dashes []float64) []float64 {
 	return cloned
 }
 
-// DrawFigure performs a traversal and draws the figure into the renderer.
+// DrawFigure performs a traversal and draws the figure into the renderer
+// using the zero DrawOptions. Animated artists are skipped, matching
+// Matplotlib's default per-frame draw behavior.
 func DrawFigure(fig *Figure, r render.Renderer) {
+	DrawFigureWithOptions(fig, r, DrawOptions{})
+}
+
+// DrawFigureWithOptions performs a traversal and draws the figure into the
+// renderer using the supplied DrawOptions. The animation engine flips the
+// AnimatedFilter to drive background and overlay passes through this entry
+// point.
+func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 	vp := geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: fig.SizePx.X, Y: fig.SizePx.Y}}
 	_ = r.Begin(vp)
 	defer r.End()
@@ -2015,7 +2054,37 @@ func DrawFigure(fig *Figure, r render.Renderer) {
 
 		// Build DrawContext with composed transform
 		ctx := newAxesDrawContext(ax, fig, vp, px)
+		ctx.DrawOptions = opts
 		setRendererResolution(r, ctx.RC.DPI)
+
+		// In an animated-overlay pass we only redraw the animated artists on
+		// top of a previously captured background, so skip backgrounds,
+		// chrome, axis ticks, spines, and labels.
+		if opts.AnimatedFilter == AnimatedFilterOnlyAnimated {
+			r.Save()
+			r.ClipRect(px)
+			if framePath, ok := projectionFramePath(ctx.Projection, px); ok {
+				r.ClipPath(framePath)
+			}
+			for _, art := range ax.Artists {
+				drawArtist(r, ctx, art)
+			}
+			for _, art := range ax.WidgetArtists {
+				drawArtist(r, ctx, art)
+			}
+			r.Restore()
+			for _, art := range ax.Artists {
+				if overlay, ok := art.(OverlayArtist); ok {
+					drawOverlayArtist(r, ctx, art, overlay)
+				}
+			}
+			for _, art := range ax.WidgetArtists {
+				if overlay, ok := art.(OverlayArtist); ok {
+					drawOverlayArtist(r, ctx, art, overlay)
+				}
+			}
+			continue
+		}
 
 		if ctx.RC.AxesBackground != fig.RC.FigureBackground() {
 			backgroundPath := pixelRectPath(px)
@@ -2126,8 +2195,10 @@ func DrawFigure(fig *Figure, r render.Renderer) {
 	}
 
 	setRendererResolution(r, fig.RC.DPI)
-	drawFigureArtists(fig, r, vp)
-	drawFigureLabels(fig, r, vp)
+	drawFigureArtistsWithOptions(fig, r, vp, opts)
+	if opts.AnimatedFilter != AnimatedFilterOnlyAnimated {
+		drawFigureLabels(fig, r, vp)
+	}
 }
 
 func setRendererResolution(r render.Renderer, dpi float64) {

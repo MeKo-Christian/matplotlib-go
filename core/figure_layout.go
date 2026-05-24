@@ -191,7 +191,7 @@ func yLabelExtent(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, s
 	return extent
 }
 
-func drawFigureArtists(fig *Figure, r render.Renderer, figureRect geom.Rect) {
+func drawFigureArtistsWithOptions(fig *Figure, r render.Renderer, figureRect geom.Rect, opts DrawOptions) {
 	if fig == nil || len(fig.Artists) == 0 {
 		return
 	}
@@ -202,6 +202,7 @@ func drawFigureArtists(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 	}
 
 	ctx := newFigureDrawContext(fig, figureRect)
+	ctx.DrawOptions = opts
 	stackOffsets := initialFigureArtistStackOffsets(fig, r, ctx)
 	for _, art := range fig.Artists {
 		artCtx := *ctx

@@ -19,6 +19,7 @@ const (
 type ArtistRasterization struct {
 	rasterization render.Rasterization
 	hidden        bool
+	animated      bool
 	alpha         float64
 	alphaSet      bool
 	inLayout      bool
@@ -74,6 +75,24 @@ func (a *ArtistRasterization) SetVisible(visible bool) {
 // Visible reports whether the artist should be drawn.
 func (a *ArtistRasterization) Visible() bool {
 	return a == nil || !a.hidden
+}
+
+// SetAnimated marks the artist as animated. Animated artists are skipped by
+// the default figure draw path and drawn only when the figure is rendered
+// with DrawOptions.IncludeAnimated true (typically by the animation engine
+// during a blit-style overlay pass). The zero value is non-animated, matching
+// Matplotlib's default Artist state.
+func (a *ArtistRasterization) SetAnimated(animated bool) {
+	if a == nil {
+		return
+	}
+	a.animated = animated
+	a.stale = true
+}
+
+// Animated reports whether the artist is in animated mode.
+func (a *ArtistRasterization) Animated() bool {
+	return a != nil && a.animated
 }
 
 // SetAlpha stores an artist-level alpha multiplier in the inclusive range
@@ -348,6 +367,10 @@ type visibilityProvider interface {
 	Visible() bool
 }
 
+type animatedProvider interface {
+	Animated() bool
+}
+
 type clipProvider interface {
 	ArtistClip() ArtistClip
 }
@@ -395,10 +418,39 @@ func drawArtist(r render.Renderer, ctx *DrawContext, art Artist) {
 	if provider, ok := art.(visibilityProvider); ok && !provider.Visible() {
 		return
 	}
+	if !drawSelectByAnimated(ctx, art) {
+		return
+	}
 	draw := func() {
 		drawRasterizedArtist(r, ctx, art)
 	}
 	drawWithArtistClip(r, art, draw)
+}
+
+// drawSelectByAnimated returns whether art should be drawn under the current
+// animation filter. The default (zero DrawOptions) draws non-animated artists
+// and skips animated ones, matching Matplotlib's Artist.draw_wrapper behavior.
+// During an animation overlay pass the engine flips DrawContext.DrawOptions to
+// include animated artists; during a background-snapshot pass it explicitly
+// excludes them.
+func drawSelectByAnimated(ctx *DrawContext, art Artist) bool {
+	if ctx == nil {
+		return true
+	}
+	mode := ctx.DrawOptions.AnimatedFilter
+	if mode == AnimatedFilterAll {
+		return true
+	}
+	provider, ok := art.(animatedProvider)
+	isAnimated := ok && provider.Animated()
+	switch mode {
+	case AnimatedFilterExcludeAnimated:
+		return !isAnimated
+	case AnimatedFilterOnlyAnimated:
+		return isAnimated
+	default:
+		return !isAnimated
+	}
 }
 
 func drawRasterizedArtist(r render.Renderer, ctx *DrawContext, art Artist) {
@@ -421,6 +473,9 @@ func drawOverlayArtist(r render.Renderer, ctx *DrawContext, art Artist, overlay 
 		return
 	}
 	if provider, ok := art.(visibilityProvider); ok && !provider.Visible() {
+		return
+	}
+	if !drawSelectByAnimated(ctx, art) {
 		return
 	}
 	draw := func() {

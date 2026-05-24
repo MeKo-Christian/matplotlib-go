@@ -197,6 +197,57 @@ func TestArtistMetadataVisibilitySkipsDrawing(t *testing.T) {
 	}
 }
 
+func TestDrawFigureSkipsAnimatedArtistsByDefault(t *testing.T) {
+	fig := NewFigure(100, 100)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	draws := 0
+	figArtist := &metadataTestArtist{draws: &draws}
+	axesArtist := &metadataTestArtist{draws: &draws}
+	figArtist.SetAnimated(true)
+	axesArtist.SetAnimated(true)
+	fig.Add(figArtist)
+	ax.Add(axesArtist)
+
+	DrawFigure(fig, &render.NullRenderer{})
+	if draws != 0 {
+		t.Fatalf("animated artists drew %d times under default options, want 0", draws)
+	}
+}
+
+func TestDrawFigureWithOptionsOnlyAnimatedDrawsAnimatedOnly(t *testing.T) {
+	fig := NewFigure(100, 100)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	animatedDraws := 0
+	staticDraws := 0
+	animated := &metadataTestArtist{draws: &animatedDraws}
+	static := &metadataTestArtist{draws: &staticDraws}
+	animated.SetAnimated(true)
+	ax.Add(animated)
+	ax.Add(static)
+
+	DrawFigureWithOptions(fig, &render.NullRenderer{}, DrawOptions{AnimatedFilter: AnimatedFilterOnlyAnimated})
+	if animatedDraws != 1 || staticDraws != 0 {
+		t.Fatalf("only-animated pass drew animated=%d static=%d, want 1/0", animatedDraws, staticDraws)
+	}
+}
+
+func TestDrawFigureWithOptionsAllDrawsBoth(t *testing.T) {
+	fig := NewFigure(100, 100)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	animatedDraws := 0
+	staticDraws := 0
+	animated := &metadataTestArtist{draws: &animatedDraws}
+	static := &metadataTestArtist{draws: &staticDraws}
+	animated.SetAnimated(true)
+	ax.Add(animated)
+	ax.Add(static)
+
+	DrawFigureWithOptions(fig, &render.NullRenderer{}, DrawOptions{AnimatedFilter: AnimatedFilterAll})
+	if animatedDraws != 1 || staticDraws != 1 {
+		t.Fatalf("all pass drew animated=%d static=%d, want 1/1", animatedDraws, staticDraws)
+	}
+}
+
 func TestArtistMetadataDefaults(t *testing.T) {
 	var metadata ArtistRasterization
 	if !metadata.Visible() {
