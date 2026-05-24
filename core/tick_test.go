@@ -165,6 +165,30 @@ func TestMaxNLocatorOptionsMatchMatplotlibSemantics(t *testing.T) {
 	}
 }
 
+func TestMaxNLocatorKeepsTinyAndOffsetTicksDistinct(t *testing.T) {
+	cases := []struct {
+		name   string
+		minVal float64
+		maxVal float64
+	}{
+		{name: "large-offset", minVal: 1e12 + 0.1, maxVal: 1e12 + 0.9},
+		{name: "tiny-positive", minVal: 1e-12, maxVal: 5e-12},
+		{name: "negative-offset", minVal: -1e12 - 0.9, maxVal: -1e12 - 0.1},
+	}
+	for _, tc := range cases {
+		ticks := (MaxNLocator{N: 4}).Ticks(tc.minVal, tc.maxVal, 0)
+		if len(ticks) < 3 {
+			t.Fatalf("%s ticks = %v, want at least three distinct ticks", tc.name, ticks)
+		}
+		if !strictlyIncreasing(ticks) {
+			t.Fatalf("%s ticks not strictly increasing: %v", tc.name, ticks)
+		}
+		if ticks[0] > tc.minVal || ticks[len(ticks)-1] < tc.maxVal {
+			t.Fatalf("%s ticks = %.17g, do not cover %.17g..%.17g", tc.name, ticks, tc.minVal, tc.maxVal)
+		}
+	}
+}
+
 func TestIndexLocator_Basic(t *testing.T) {
 	ticks := (IndexLocator{Base: 3, Offset: 1}).Ticks(0, 10, 0)
 	want := []float64{1, 4, 7, 10}

@@ -322,7 +322,7 @@ func (l MaxNLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 		}
 		ticks = filtered
 	}
-	return l.pruneTicks(dedupeTicks(ticks))
+	return l.pruneTicks(dedupeTicksByStep(ticks, step))
 }
 
 func (l MaxNLocator) normalizedSteps() []float64 {
@@ -1596,6 +1596,27 @@ func dedupeTicks(ticks []float64) []float64 {
 	return out
 }
 
+func dedupeTicksByStep(ticks []float64, step float64) []float64 {
+	if len(ticks) == 0 {
+		return nil
+	}
+	tol := 1e-9 * math.Abs(step)
+	if tol == 0 || math.IsNaN(tol) || math.IsInf(tol, 0) {
+		return dedupeTicks(ticks)
+	}
+	out := ticks[:0]
+	var last float64
+	first := true
+	for _, tick := range ticks {
+		if first || !approx(tick, last, tol) {
+			out = append(out, tick)
+			last = tick
+			first = false
+		}
+	}
+	return out
+}
+
 func dedupeTicksSorted(ticks []float64) []float64 {
 	if len(ticks) == 0 {
 		return nil
@@ -1625,8 +1646,9 @@ func generateBoundedTicks(minVal, maxVal, step float64) []float64 {
 	end := math.Ceil(maxVal/step) * step
 	nmax := int(math.Ceil((end-start)/step)) + 3
 	ticks := make([]float64, 0, nmax)
+	zeroTol := 1e-12 * math.Abs(step)
 	for v, i := start, 0; v <= end+0.5*step && i < nmax; v, i = v+step, i+1 {
-		if approx(v, 0, 1e-12*math.Max(1, math.Abs(step))) {
+		if approx(v, 0, zeroTol) {
 			v = 0
 		}
 		ticks = append(ticks, v)

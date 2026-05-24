@@ -150,7 +150,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go MaxNLocator covers nbins, custom steps, integer relaxation, symmetric ranges, pruning, and degenerate ranges. Remaining 12.2B scope is very small/large spans and exact upstream offset/autolimit edge behavior.",
+		Note:              "Go MaxNLocator covers nbins, custom steps, integer relaxation, symmetric ranges, pruning, degenerate ranges, tiny spans, and large-offset spans. Remaining 12.2B scope is exact upstream autolimit edge behavior.",
 	},
 	{
 		ID:                "ticker-log-locator",
