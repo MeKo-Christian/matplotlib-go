@@ -142,6 +142,7 @@ import (
 	example_stat_variants "github.com/cwbudde/matplotlib-go/test/parity/stat_variants"
 	example_stem_plot "github.com/cwbudde/matplotlib-go/test/parity/stem_plot"
 	example_text_labels_strict "github.com/cwbudde/matplotlib-go/test/parity/text_labels_strict"
+	example_ticks_styling_surface "github.com/cwbudde/matplotlib-go/test/parity/ticks_styling_surface"
 	example_title_strict "github.com/cwbudde/matplotlib-go/test/parity/title_strict"
 	example_transform_coordinates "github.com/cwbudde/matplotlib-go/test/parity/transform_coordinates"
 	example_twoslope_norm_image "github.com/cwbudde/matplotlib-go/test/parity/twoslope_norm_image"
@@ -221,6 +222,7 @@ var renderByID = map[string]func() image.Image{
 	"scale_function_defaults":            example_scale_function_defaults.Render,
 	"scale_logit_ticks":                  example_scale_logit_ticks.Render,
 	"scale_symlog_ticks":                 example_scale_symlog_ticks.Render,
+	"ticks_styling_surface":              example_ticks_styling_surface.Render,
 	"artist_metadata":                    example_artist_metadata.Render,
 	"gridspec_composition":               example_gridspec_composition.Render,
 	"figure_labels_composition":          example_figure_labels_composition.Render,
@@ -299,6 +301,7 @@ var figureByID = map[string]func() *core.Figure{
 	"scale_function_defaults":            example_scale_function_defaults.Plot,
 	"scale_logit_ticks":                  example_scale_logit_ticks.Plot,
 	"scale_symlog_ticks":                 example_scale_symlog_ticks.Plot,
+	"ticks_styling_surface":              example_ticks_styling_surface.Plot,
 	"axisartist_showcase":                showcase_axisartist_showcase.Plot,
 	"basic_line":                         showcase_basic_line.Plot,
 	"bar_basic":                          showcase_bar_basic.Plot,
