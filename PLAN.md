@@ -2029,7 +2029,7 @@ catalog/parity fixture per behavior family.
       named for each visible locator family rather than one combined fixture.
 - [x] Add `locator_linear_labels` covering `LinearLocator`, `MultipleLocator`,
       and default linear tick labels.
-- [ ] Add `locator_fixed_index_labels` covering `FixedLocator` subsampling and
+- [x] Add `locator_fixed_index_labels` covering `FixedLocator` subsampling and
       `IndexLocator` base/offset placement.
 - [ ] Close the locator catalog row only after the named linear, fixed/index,
       log, symlog, asinh, and logit fixture coverage is present and listed in

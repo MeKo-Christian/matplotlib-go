@@ -122,8 +122,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfaceDirectEquivalent,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface", "units_categories"},
-		Note:              "Go FixedLocator stores explicit tick locations and supports max-count subsampling around zero.",
+		CatalogIDs:        []string{"axes_control_surface", "units_categories", "locator_fixed_index_labels"},
+		Note:              "Go FixedLocator stores explicit tick locations and supports max-count subsampling around zero; locator_fixed_index_labels covers visible subsampled fixed tick output.",
 	},
 	{
 		ID:                "ticker-index-locator",
@@ -131,8 +131,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfaceDirectEquivalent,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go IndexLocator covers base-plus-offset indexed tick placement.",
+		CatalogIDs:        []string{"axes_control_surface", "locator_fixed_index_labels"},
+		Note:              "Go IndexLocator covers base-plus-offset indexed tick placement; locator_fixed_index_labels covers visible base/offset tick output.",
 	},
 	{
 		ID:                "ticker-linear-locator",
