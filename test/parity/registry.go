@@ -148,6 +148,7 @@ import (
 	example_text_labels_strict "github.com/cwbudde/matplotlib-go/test/parity/text_labels_strict"
 	example_ticks_styling_surface "github.com/cwbudde/matplotlib-go/test/parity/ticks_styling_surface"
 	example_title_strict "github.com/cwbudde/matplotlib-go/test/parity/title_strict"
+	example_transform_annotation_modes "github.com/cwbudde/matplotlib-go/test/parity/transform_annotation_modes"
 	example_transform_coordinates "github.com/cwbudde/matplotlib-go/test/parity/transform_coordinates"
 	example_twoslope_norm_image "github.com/cwbudde/matplotlib-go/test/parity/twoslope_norm_image"
 	example_units_categories "github.com/cwbudde/matplotlib-go/test/parity/units_categories"
@@ -217,6 +218,7 @@ var renderByID = map[string]func() image.Image{
 	"axes_top_right_inverted":            example_axes_top_right_inverted.Render,
 	"axes_control_surface":               example_axes_control_surface.Render,
 	"transform_coordinates":              example_transform_coordinates.Render,
+	"transform_annotation_modes":         example_transform_annotation_modes.Render,
 	"formatter_engineering_labels":       example_formatter_engineering_labels.Render,
 	"formatter_fixed_null_labels":        example_formatter_fixed_null_labels.Render,
 	"formatter_log_mathtext_labels":      example_formatter_log_mathtext_labels.Render,
@@ -300,6 +302,7 @@ var figureByID = map[string]func() *core.Figure{
 	"arrays_showcase":                    showcase_arrays_showcase.Plot,
 	"axes_grid1_showcase":                showcase_axes_grid1_showcase.Plot,
 	"axes_control_surface":               showcase_axes_control_surface.Plot,
+	"transform_annotation_modes":         example_transform_annotation_modes.Plot,
 	"formatter_engineering_labels":       example_formatter_engineering_labels.Plot,
 	"formatter_fixed_null_labels":        example_formatter_fixed_null_labels.Plot,
 	"formatter_log_mathtext_labels":      example_formatter_log_mathtext_labels.Plot,

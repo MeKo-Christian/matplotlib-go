@@ -47,6 +47,7 @@ named_colors
 axes_top_right_inverted
 axes_control_surface
 transform_coordinates
+transform_annotation_modes
 formatter_engineering_labels
 formatter_fixed_null_labels
 formatter_log_mathtext_labels
