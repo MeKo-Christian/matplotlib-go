@@ -296,6 +296,56 @@ func TestLogLocatorRespectsTickBudgetAndSuppressesDenseMinors(t *testing.T) {
 	}
 }
 
+func TestLogLocatorStrideAndInvalidDomains(t *testing.T) {
+	cases := []struct {
+		name   string
+		loc    LogLocator
+		minVal float64
+		maxVal float64
+		want   []float64
+	}{
+		{
+			name:   "base2-budgeted",
+			loc:    LogLocator{Base: 2, NumTicks: 4},
+			minVal: 1,
+			maxVal: 1024,
+			want:   []float64{1, 8, 64, 512},
+		},
+		{
+			name:   "base10-budgeted",
+			loc:    LogLocator{Base: 10, NumTicks: 4},
+			minVal: 1,
+			maxVal: 1e12,
+			want:   []float64{1, 1e3, 1e6, 1e9, 1e12},
+		},
+		{
+			name:   "inverted-domain",
+			loc:    LogLocator{Base: 10},
+			minVal: 100,
+			maxVal: 1,
+			want:   []float64{1, 10, 100},
+		},
+	}
+	for _, tc := range cases {
+		ticks := tc.loc.Ticks(tc.minVal, tc.maxVal, 0)
+		if len(ticks) != len(tc.want) {
+			t.Fatalf("%s ticks = %v, want %v", tc.name, ticks, tc.want)
+		}
+		for i, want := range tc.want {
+			if math.Abs(ticks[i]-want) > 1e-12*math.Max(1, math.Abs(want)) {
+				t.Fatalf("%s tick %d = %.17g, want %.17g (%v)", tc.name, i, ticks[i], want, ticks)
+			}
+		}
+	}
+
+	if got := (LogLocator{Base: 10}).Ticks(-1, 100, 0); len(got) != 0 {
+		t.Fatalf("non-positive log domain ticks = %v, want none", got)
+	}
+	if got := (LogLocator{Base: 1}).Ticks(1, 100, 0); len(got) != 0 {
+		t.Fatalf("invalid-base log ticks = %v, want none", got)
+	}
+}
+
 func hasTick(ticks []float64, want float64) bool {
 	for _, tick := range ticks {
 		if math.Abs(tick-want) <= 1e-12*math.Max(1, math.Abs(want)) {
