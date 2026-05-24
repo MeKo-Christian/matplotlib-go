@@ -1988,6 +1988,8 @@ catalog/parity fixture per behavior family.
 - [x] Add `MaxNLocator` option coverage for custom `steps`, integer-only
       relaxation via `MinTicks`, symmetric ranges, pruning, and degenerate
       range expansion.
+- [x] Preserve distinct `MaxNLocator` ticks for tiny spans and large-offset
+      spans by deduping generated ticks relative to the selected step.
 - [x] Add `IndexLocator`, `LinearLocator` exact-count / preset behavior, and
       `FixedLocator` subsampling behavior.
 - [x] Audit `OldAutoLocator`: it is not present in the current vendored
