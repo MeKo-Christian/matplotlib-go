@@ -833,6 +833,7 @@ type textRecordingRenderer struct {
 	pathCalls  []recordedPathCall
 	texts      []string
 	textColors []render.Color
+	textSizes  []float64
 	origins    []geom.Pt
 }
 
@@ -871,9 +872,10 @@ func (r *mathInkBoundsRenderer) MeasureTextBounds(text string, size float64, _ s
 	}, true
 }
 
-func (r *textRecordingRenderer) DrawText(text string, origin geom.Pt, _ float64, col render.Color) {
+func (r *textRecordingRenderer) DrawText(text string, origin geom.Pt, size float64, col render.Color) {
 	r.texts = append(r.texts, text)
 	r.textColors = append(r.textColors, col)
+	r.textSizes = append(r.textSizes, size)
 	r.origins = append(r.origins, origin)
 }
 

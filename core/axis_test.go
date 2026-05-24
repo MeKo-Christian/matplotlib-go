@@ -769,6 +769,7 @@ func TestAxes_TickParamsAppliesLabelStyle(t *testing.T) {
 	axes := &Axes{XAxis: NewXAxis()}
 
 	rotation := 45.0
+	labelSize := 13.0
 	pad := 9.0
 	hAlign := TextAlignRight
 	vAlign := TextVAlignTop
@@ -779,6 +780,7 @@ func TestAxes_TickParamsAppliesLabelStyle(t *testing.T) {
 		Which:         "minor",
 		ShowLabels:    &showMinorLabels,
 		LabelRotation: &rotation,
+		LabelSize:     &labelSize,
 		LabelPad:      &pad,
 		LabelHAlign:   &hAlign,
 		LabelVAlign:   &vAlign,
@@ -789,7 +791,7 @@ func TestAxes_TickParamsAppliesLabelStyle(t *testing.T) {
 	if !axes.XAxis.ShowMinorLabels {
 		t.Fatal("TickParams should enable minor labels for minor selection")
 	}
-	if axes.XAxis.MinorLabelStyle.Rotation != rotation || axes.XAxis.MinorLabelStyle.Pad != pad {
+	if axes.XAxis.MinorLabelStyle.Rotation != rotation || axes.XAxis.MinorLabelStyle.Pad != pad || axes.XAxis.MinorLabelStyle.FontSize != labelSize {
 		t.Fatalf("minor label style mismatch: %+v", axes.XAxis.MinorLabelStyle)
 	}
 	if axes.XAxis.MinorLabelStyle.HAlign != hAlign || axes.XAxis.MinorLabelStyle.VAlign != vAlign || axes.XAxis.MinorLabelStyle.AutoAlign {
@@ -814,6 +816,62 @@ func TestAxes_TickParamsAppliesDirection(t *testing.T) {
 	}
 }
 
+func TestAxes_TickParamsResetRestoresAxisOwnedDefaults(t *testing.T) {
+	axes := &Axes{XAxis: NewXAxis()}
+	color := render.Color{R: 0.7, G: 0.2, B: 0.1, A: 1}
+	length := 12.0
+	width := 2.0
+	rotation := 30.0
+	labelSize := 14.0
+	showLabels := true
+	direction := "inout"
+
+	if err := axes.TickParams(TickParams{
+		Axis:          "bottom",
+		Which:         "both",
+		Color:         &color,
+		Length:        &length,
+		Width:         &width,
+		Direction:     &direction,
+		ShowLabels:    &showLabels,
+		LabelRotation: &rotation,
+		LabelSize:     &labelSize,
+	}); err != nil {
+		t.Fatalf("TickParams(style): %v", err)
+	}
+	if axes.XAxis.TickColor == nil || axes.XAxis.TickSize != length || axes.XAxis.MinorTickLineWidth != width {
+		t.Fatalf("pre-reset tick params were not applied: %+v", axes.XAxis)
+	}
+
+	newLength := 6.0
+	if err := axes.TickParams(TickParams{
+		Axis:   "bottom",
+		Which:  "major",
+		Reset:  true,
+		Length: &newLength,
+	}); err != nil {
+		t.Fatalf("TickParams(reset): %v", err)
+	}
+	if axes.XAxis.TickColor != nil || axes.XAxis.TickLabelColor != nil {
+		t.Fatalf("reset tick colors = tick %+v label %+v, want nil overrides", axes.XAxis.TickColor, axes.XAxis.TickLabelColor)
+	}
+	if axes.XAxis.TickSize != newLength || axes.XAxis.MinorTickSize != 0 {
+		t.Fatalf("reset tick sizes = major %v minor %v, want major override %v and default minor", axes.XAxis.TickSize, axes.XAxis.MinorTickSize, newLength)
+	}
+	if axes.XAxis.TickLineWidth != 0 || axes.XAxis.MinorTickLineWidth != 0 {
+		t.Fatalf("reset tick widths = major %v minor %v, want defaults", axes.XAxis.TickLineWidth, axes.XAxis.MinorTickLineWidth)
+	}
+	if axes.XAxis.TickDirection != TickDirectionOut || !axes.XAxis.ShowLabels || axes.XAxis.ShowMinorLabels {
+		t.Fatalf("reset visibility/direction mismatch: %+v", axes.XAxis)
+	}
+	if !axes.XAxis.MajorLabelStyle.AutoAlign || axes.XAxis.MajorLabelStyle.Rotation != 0 {
+		t.Fatalf("reset major label style = %+v, want default auto alignment", axes.XAxis.MajorLabelStyle)
+	}
+	if axes.XAxis.MajorLabelStyle.FontSize != 0 {
+		t.Fatalf("reset major label font size = %v, want default 0", axes.XAxis.MajorLabelStyle.FontSize)
+	}
+}
+
 func TestAxes_TickParamsColorsTicksAndLabelsNotSpine(t *testing.T) {
 	axis := NewXAxis()
 	axis.Locator = staticLocator{5}
@@ -821,10 +879,12 @@ func TestAxes_TickParamsColorsTicksAndLabelsNotSpine(t *testing.T) {
 	axes := &Axes{XAxis: axis}
 
 	tickColor := render.Color{R: 0.18, G: 0.42, B: 0.55, A: 1}
+	labelSize := 15.0
 	if err := axes.TickParams(TickParams{
-		Axis:  "bottom",
-		Which: "major",
-		Color: &tickColor,
+		Axis:      "bottom",
+		Which:     "major",
+		Color:     &tickColor,
+		LabelSize: &labelSize,
 	}); err != nil {
 		t.Fatalf("TickParams(color): %v", err)
 	}
@@ -849,6 +909,9 @@ func TestAxes_TickParamsColorsTicksAndLabelsNotSpine(t *testing.T) {
 	}
 	if got := r.textColors[0]; got != tickColor {
 		t.Fatalf("tick label color = %+v, want %+v", got, tickColor)
+	}
+	if got := r.textSizes[0]; got != labelSize {
+		t.Fatalf("tick label size = %v, want %v", got, labelSize)
 	}
 }
 

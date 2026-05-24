@@ -396,6 +396,7 @@ type Axes struct {
 
 // TickParams controls axis tick visibility and styling.
 type TickParams struct {
+	Reset         bool
 	Axis          string
 	Which         string
 	Color         *render.Color
@@ -413,6 +414,7 @@ type TickParams struct {
 	LabelLeft     *bool
 	LabelRight    *bool
 	LabelRotation *float64
+	LabelSize     *float64
 	LabelPad      *float64
 	LabelHAlign   *TextAlign
 	LabelVAlign   *TextVerticalAlign
@@ -1341,6 +1343,9 @@ func (a *Axes) TickParams(params TickParams) error {
 		if axis == nil {
 			continue
 		}
+		if params.Reset {
+			resetAxisTickParams(axis)
+		}
 		if params.Color != nil {
 			tickColor := *params.Color
 			labelColor := *params.Color
@@ -1401,6 +1406,35 @@ func (a *Axes) TickParams(params TickParams) error {
 	a.applyTickSideParams(params)
 	a.applyTickGridParams(params, which)
 	return nil
+}
+
+func resetAxisTickParams(axis *Axis) {
+	if axis == nil {
+		return
+	}
+	var defaults *Axis
+	switch axis.Side {
+	case AxisLeft, AxisRight:
+		defaults = NewYAxis()
+	default:
+		defaults = NewXAxis()
+	}
+	axis.TickColor = nil
+	axis.TickLabelColor = nil
+	axis.TickLineCap = defaults.TickLineCap
+	axis.TickLineJoin = defaults.TickLineJoin
+	axis.TickLineWidth = defaults.TickLineWidth
+	axis.MinorTickLineWidth = defaults.MinorTickLineWidth
+	axis.TickSize = defaults.TickSize
+	axis.MinorTickSize = defaults.MinorTickSize
+	axis.MajorTickCount = defaults.MajorTickCount
+	axis.MinorTickCount = defaults.MinorTickCount
+	axis.TickDirection = defaults.TickDirection
+	axis.ShowTicks = defaults.ShowTicks
+	axis.ShowLabels = defaults.ShowLabels
+	axis.ShowMinorLabels = defaults.ShowMinorLabels
+	axis.MajorLabelStyle = defaults.MajorLabelStyle
+	axis.MinorLabelStyle = defaults.MinorLabelStyle
 }
 
 func (a *Axes) applyTickSideParams(params TickParams) {
@@ -2608,6 +2642,9 @@ func applyTickLabelParams(style *TickLabelStyle, params TickParams) {
 	*style = normalizeTickLabelStyle(*style)
 	if params.LabelRotation != nil {
 		style.Rotation = *params.LabelRotation
+	}
+	if params.LabelSize != nil {
+		style.FontSize = *params.LabelSize
 	}
 	if params.LabelPad != nil {
 		style.Pad = *params.LabelPad

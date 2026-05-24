@@ -36,6 +36,7 @@ type TickLabelStyle struct {
 	Pad       float64
 	HAlign    TextAlign
 	VAlign    TextVerticalAlign
+	FontSize  float64
 	FontKey   string
 	AutoAlign bool
 }
@@ -524,8 +525,8 @@ func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float
 		return
 	}
 
-	fontSize := tickLabelFontSize(a, ctx)
 	style = normalizeTickLabelStyle(style)
+	fontSize := tickLabelFontSizeForStyle(a, style, ctx)
 	fontKey := tickLabelFontKey(style, ctx)
 	labelPadPx := tickLabelPadForAxisSize(a, tickSize, style, ctx)
 
@@ -567,6 +568,13 @@ func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float
 }
 
 func tickLabelFontSize(a *Axis, ctx *DrawContext) float64 {
+	return tickLabelFontSizeForStyle(a, TickLabelStyle{}, ctx)
+}
+
+func tickLabelFontSizeForStyle(a *Axis, style TickLabelStyle, ctx *DrawContext) float64 {
+	if style.FontSize > 0 {
+		return style.FontSize
+	}
 	if ctx == nil {
 		return 8
 	}
@@ -1086,8 +1094,8 @@ func (a *Axis) drawPolarThetaTickLabels(textRen render.TextDrawer, r render.Rend
 	}
 
 	center, radius := polarCenterAndRadius(ctx.Clip)
-	fontSize := tickLabelFontSize(a, ctx)
 	style = normalizeTickLabelStyle(style)
+	fontSize := tickLabelFontSizeForStyle(a, style, ctx)
 	fontKey := tickLabelFontKey(style, ctx)
 	labelPadPx := polarThetaTickLabelPadPx(a, tickSize, style, ctx)
 
@@ -1125,8 +1133,8 @@ func (a *Axis) drawPolarRadialTickLabels(textRen render.TextDrawer, r render.Ren
 	}
 
 	center, outerRadius := polarCenterAndRadius(ctx.Clip)
-	fontSize := tickLabelFontSize(a, ctx)
 	style = normalizeTickLabelStyle(style)
+	fontSize := tickLabelFontSizeForStyle(a, style, ctx)
 	fontKey := tickLabelFontKey(style, ctx)
 	labelPadPx := tickLabelPadForAxisSize(a, tickSize, style, ctx)
 	if polarIsFullCircle(ctx.DataToPixel.XScale) {
@@ -1216,8 +1224,8 @@ func (a *Axis) polarTickLabelBounds(r render.Renderer, ctx *DrawContext) (geom.R
 
 func (a *Axis) polarTickLabelBoundsForLevel(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64) (geom.Rect, bool) {
 	center, outerRadius := polarCenterAndRadius(ctx.Clip)
-	fontSize := tickLabelFontSize(a, ctx)
 	style = normalizeTickLabelStyle(style)
+	fontSize := tickLabelFontSizeForStyle(a, style, ctx)
 	fontKey := tickLabelFontKey(style, ctx)
 	labelPadPx := tickLabelPadForAxisSize(a, tickSize, style, ctx)
 	labelAngle := polarRadialLabelAngleForProjection(ctx.Projection)
@@ -1278,8 +1286,8 @@ func tickLabelBoundsForLevel(a *Axis, r render.Renderer, ctx *DrawContext, ticks
 		return geom.Rect{}, false
 	}
 
-	fontSize := tickLabelFontSize(a, ctx)
 	style = normalizeTickLabelStyle(style)
+	fontSize := tickLabelFontSizeForStyle(a, style, ctx)
 	fontKey := tickLabelFontKey(style, ctx)
 	labelPadPx := tickLabelPadForAxisSize(a, tickSize, style, ctx)
 
