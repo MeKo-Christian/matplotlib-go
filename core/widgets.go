@@ -8,6 +8,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 // WidgetCallbackID identifies a registered interactive widget callback.
@@ -133,7 +134,7 @@ type Button struct {
 
 	onClicked widgetCallbackRegistry[ButtonCallback]
 
-	z         float64
+	z float64
 }
 
 // Slider draws a static slider control inside its owning axes.
@@ -155,7 +156,7 @@ type Slider struct {
 
 	onChanged widgetCallbackRegistry[SliderCallback]
 
-	z           float64
+	z float64
 }
 
 // CheckButtons draws a static checklist-style control.
@@ -171,7 +172,7 @@ type CheckButtons struct {
 
 	onChanged widgetCallbackRegistry[CheckButtonsCallback]
 
-	z          float64
+	z float64
 }
 
 // RadioButtons draws a static radio-button control.
@@ -187,7 +188,7 @@ type RadioButtons struct {
 
 	onChanged widgetCallbackRegistry[RadioButtonsCallback]
 
-	z         float64
+	z float64
 }
 
 // TextBox draws a static text-entry control.
@@ -203,11 +204,37 @@ type TextBox struct {
 	caret       int
 	selection   [2]int
 
-	onSubmit  widgetCallbackRegistry[TextBoxSubmitCallback]
-	onCancel  widgetCallbackRegistry[TextBoxSubmitCallback]
-	onChange  widgetCallbackRegistry[TextBoxChangeCallback]
+	onSubmit widgetCallbackRegistry[TextBoxSubmitCallback]
+	onCancel widgetCallbackRegistry[TextBoxSubmitCallback]
+	onChange widgetCallbackRegistry[TextBoxChangeCallback]
 
-	z           float64
+	z float64
+}
+
+// AddWidgetAxes appends an axes prepared for widget controls.
+func (f *Figure) AddWidgetAxes(r geom.Rect, opts ...style.Option) *Axes {
+	if f == nil {
+		return nil
+	}
+	ax := f.AddAxes(r, opts...)
+	prepareWidgetAxes(ax)
+	return ax
+}
+
+// AddWidgetAxes appends widget axes inside the subfigure rectangle.
+func (sf *SubFigure) AddWidgetAxes(r geom.Rect, opts ...style.Option) *Axes {
+	if sf == nil || sf.figure == nil {
+		return nil
+	}
+	ax := sf.figure.AddWidgetAxes(composeRect(sf.RectFraction, r), opts...)
+	return ax
+}
+
+// AddWidgetAxes creates widget axes covering this subplot span.
+func (spec SubplotSpec) AddWidgetAxes(opts ...SubplotAxesOption) *Axes {
+	ax := spec.AddAxes(opts...)
+	prepareWidgetAxes(ax)
+	return ax
 }
 
 // Button adds a button widget artist to the axes.
@@ -238,7 +265,7 @@ func (a *Axes) Button(label string, opts ...ButtonOptions) *Button {
 		FontSize:  cfg.FontSize,
 		z:         1200,
 	}
-	a.Add(w)
+	a.AddWidget(w)
 	return w
 }
 
@@ -285,7 +312,7 @@ func (a *Axes) Slider(label string, min, max, value float64, opts ...SliderOptio
 		FontSize:    cfg.FontSize,
 		z:           1200,
 	}
-	a.Add(w)
+	a.AddWidget(w)
 	return w
 }
 
@@ -317,7 +344,7 @@ func (a *Axes) CheckButtons(labels []string, active []bool, opts ...CheckButtons
 		FontSize:   cfg.FontSize,
 		z:          1200,
 	}
-	a.Add(w)
+	a.AddWidget(w)
 	return w
 }
 
@@ -347,7 +374,7 @@ func (a *Axes) RadioButtons(labels []string, active int, opts ...RadioButtonsOpt
 		FontSize:  cfg.FontSize,
 		z:         1200,
 	}
-	a.Add(w)
+	a.AddWidget(w)
 	return w
 }
 
@@ -382,7 +409,7 @@ func (a *Axes) TextBox(label, value string, opts ...TextBoxOptions) *TextBox {
 		w.selection[0] = w.caret
 		w.selection[1] = w.caret
 	}
-	a.Add(w)
+	a.AddWidget(w)
 	return w
 }
 
@@ -952,7 +979,8 @@ func (b *Button) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	}
 	return false, PickInfo{}
 }
-func (b *Button) Z() float64                    { return b.z }
+func (b *Button) Z() float64   { return b.z }
+func (b *Button) WidgetLayer() {}
 
 func (s *Slider) Draw(r render.Renderer, ctx *DrawContext) {
 	if s == nil || r == nil || ctx == nil {
@@ -1002,7 +1030,8 @@ func (s *Slider) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	}
 	return false, PickInfo{}
 }
-func (s *Slider) Z() float64                    { return s.z }
+func (s *Slider) Z() float64   { return s.z }
+func (s *Slider) WidgetLayer() {}
 
 func (c *CheckButtons) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	if c == nil || ctx == nil {
@@ -1097,7 +1126,8 @@ func (c *CheckButtons) Bounds(ctx *DrawContext) geom.Rect {
 	}
 	return insetRect(ctx.Clip, 4)
 }
-func (c *CheckButtons) Z() float64                    { return c.z }
+func (c *CheckButtons) Z() float64   { return c.z }
+func (c *CheckButtons) WidgetLayer() {}
 
 func (rdo *RadioButtons) Draw(r render.Renderer, ctx *DrawContext) {
 	if rdo == nil || r == nil || ctx == nil {
@@ -1136,7 +1166,8 @@ func (rdo *RadioButtons) Bounds(ctx *DrawContext) geom.Rect {
 	}
 	return insetRect(ctx.Clip, 4)
 }
-func (rdo *RadioButtons) Z() float64                    { return rdo.z }
+func (rdo *RadioButtons) Z() float64   { return rdo.z }
+func (rdo *RadioButtons) WidgetLayer() {}
 
 func (t *TextBox) Draw(r render.Renderer, ctx *DrawContext) {
 	if t == nil || r == nil || ctx == nil {
@@ -1194,15 +1225,42 @@ func (t *TextBox) Bounds(ctx *DrawContext) geom.Rect {
 		Max: geom.Pt{X: panel.Max.X, Y: panel.Max.Y},
 	}
 }
-func (t *TextBox) Z() float64                    { return t.z }
+func (t *TextBox) Z() float64   { return t.z }
+func (t *TextBox) WidgetLayer() {}
 
 func prepareWidgetAxes(a *Axes) {
-	a.XAxis.ShowSpine = false
-	a.XAxis.ShowTicks = false
-	a.XAxis.ShowLabels = false
-	a.YAxis.ShowSpine = false
-	a.YAxis.ShowTicks = false
-	a.YAxis.ShowLabels = false
+	if a == nil {
+		return
+	}
+	if a.XAxis != nil {
+		a.XAxis.ShowSpine = false
+		a.XAxis.ShowTicks = false
+		a.XAxis.ShowLabels = false
+	}
+	if a.YAxis != nil {
+		a.YAxis.ShowSpine = false
+		a.YAxis.ShowTicks = false
+		a.YAxis.ShowLabels = false
+	}
+	if a.XAxisTop != nil {
+		a.XAxisTop.ShowSpine = false
+		a.XAxisTop.ShowTicks = false
+		a.XAxisTop.ShowLabels = false
+	}
+	if a.YAxisRight != nil {
+		a.YAxisRight.ShowSpine = false
+		a.YAxisRight.ShowTicks = false
+		a.YAxisRight.ShowLabels = false
+	}
+	for _, axis := range a.ExtraAxes {
+		if axis == nil {
+			continue
+		}
+		axis.ShowSpine = false
+		axis.ShowTicks = false
+		axis.ShowLabels = false
+	}
+	a.ShowFrame = false
 	a.SetXLim(0, 1)
 	a.SetYLim(0, 1)
 }

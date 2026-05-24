@@ -87,7 +87,7 @@ type SpanSelector struct {
 	Active      bool
 
 	onSelect widgetCallbackRegistry[SpanSelectorCallback]
-	z       float64
+	z        float64
 }
 
 // RectangleSelector stores a selected rectangular region in data coordinates.
@@ -138,14 +138,14 @@ type LassoSelector struct {
 	Tracking  bool
 
 	onSelect widgetCallbackRegistry[LassoSelectorCallback]
-	z       float64
+	z        float64
 }
 
 // Cursor draws cursor cross-lines and is updated by hover events.
 type Cursor struct {
-	X, Y      float64
-	Color     render.Color
-	LineWidth float64
+	X, Y       float64
+	Color      render.Color
+	LineWidth  float64
 	Horizontal bool
 	Vertical   bool
 
@@ -157,14 +157,14 @@ type Cursor struct {
 
 // MultiCursor draws shared cross-lines across multiple axes.
 type MultiCursor struct {
-	Axes      []*Axes
-	Color     render.Color
-	LineWidth float64
+	Axes       []*Axes
+	Color      render.Color
+	LineWidth  float64
 	Horizontal bool
 	Vertical   bool
 
 	FigureX, FigureY float64
-	show            bool
+	show             bool
 
 	z float64
 }
@@ -176,9 +176,9 @@ func (a *Axes) SpanSelector(orientation string, opts ...SpanSelectorOptions) *Sp
 	}
 	config := SpanSelectorOptions{
 		Orientation: "horizontal",
-		Color:        render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1},
-		FillColor:    render.Color{R: 0.16, G: 0.42, B: 0.76, A: 0.18},
-		LineWidth:    1.2,
+		Color:       render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1},
+		FillColor:   render.Color{R: 0.16, G: 0.42, B: 0.76, A: 0.18},
+		LineWidth:   1.2,
 	}
 	if len(opts) > 0 {
 		config = mergeSpanSelectorOptions(config, opts[0])
@@ -201,7 +201,7 @@ func (a *Axes) SpanSelector(orientation string, opts ...SpanSelectorOptions) *Sp
 		}
 		sel.SetSpan(minV, maxV)
 	}
-	a.Add(sel)
+	a.AddWidget(sel)
 	return sel
 }
 
@@ -224,7 +224,7 @@ func (a *Axes) RectangleSelector(opts ...RectangleSelectorOptions) *RectangleSel
 		LineWidth: config.LineWidth,
 		z:         1200,
 	}
-	a.Add(sel)
+	a.AddWidget(sel)
 	return sel
 }
 
@@ -247,7 +247,7 @@ func (a *Axes) EllipseSelector(opts ...EllipseSelectorOptions) *EllipseSelector 
 		LineWidth: config.LineWidth,
 		z:         1200,
 	}
-	a.Add(sel)
+	a.AddWidget(sel)
 	return sel
 }
 
@@ -270,7 +270,7 @@ func (a *Axes) PolygonSelector(opts ...PolygonSelectorOptions) *PolygonSelector 
 		LineWidth: config.LineWidth,
 		z:         1200,
 	}
-	a.Add(sel)
+	a.AddWidget(sel)
 	return sel
 }
 
@@ -291,7 +291,7 @@ func (a *Axes) LassoSelector(opts ...LassoSelectorOptions) *LassoSelector {
 		LineWidth: config.LineWidth,
 		z:         1200,
 	}
-	a.Add(sel)
+	a.AddWidget(sel)
 	return sel
 }
 
@@ -317,7 +317,7 @@ func (a *Axes) Cursor(opts ...CursorOptions) *Cursor {
 		Vertical:   boolValue(config.VerticalOn, true),
 		z:          1200,
 	}
-	a.Add(c)
+	a.AddWidget(c)
 	return c
 }
 
@@ -340,7 +340,7 @@ func (a *Axes) MultiCursor(axes ...*Axes) *MultiCursor {
 		Vertical:   boolValue(config.VerticalOn, true),
 		z:          1200,
 	}
-	a.Add(selector)
+	a.AddWidget(selector)
 	return selector
 }
 
@@ -365,7 +365,7 @@ func (a *Axes) MultiCursorWithOptions(opts []MultiCursorOptions, axes ...*Axes) 
 		Vertical:   boolValue(config.VerticalOn, true),
 		z:          1200,
 	}
-	a.Add(mc)
+	a.AddWidget(mc)
 	return mc
 }
 
@@ -506,7 +506,8 @@ func (s *SpanSelector) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	return data.X >= minV && data.X <= maxV, PickInfo{}
 }
 
-func (s *SpanSelector) Z() float64 { return s.z }
+func (s *SpanSelector) Z() float64   { return s.z }
+func (s *SpanSelector) WidgetLayer() {}
 
 func (s *RectangleSelector) OnSelect(cb RectangleSelectorCallback) WidgetCallbackID {
 	if s == nil || cb == nil {
@@ -612,7 +613,8 @@ func (s *RectangleSelector) displayRectFromData(ctx *DrawContext) geom.Rect {
 	return geom.Rect{Min: geom.Pt{X: math.Min(p1.X, p2.X), Y: math.Min(p1.Y, p2.Y)}, Max: geom.Pt{X: math.Max(p1.X, p2.X), Y: math.Max(p1.Y, p2.Y)}}
 }
 
-func (s *RectangleSelector) Z() float64 { return s.z }
+func (s *RectangleSelector) Z() float64   { return s.z }
+func (s *RectangleSelector) WidgetLayer() {}
 
 func (e *EllipseSelector) OnSelect(cb EllipseSelectorCallback) WidgetCallbackID {
 	if e == nil || cb == nil {
@@ -685,8 +687,8 @@ func (e *EllipseSelector) Draw(r render.Renderer, ctx *DrawContext) {
 	p2 := ctx.DataToPixel.Apply(geom.Pt{X: max.X, Y: centerData.Y})
 	q1 := ctx.DataToPixel.Apply(geom.Pt{X: centerData.X, Y: min.Y})
 	q2 := ctx.DataToPixel.Apply(geom.Pt{X: centerData.X, Y: max.Y})
-	width := math.Abs(p2.X-p1.X)
-	height := math.Abs(q2.Y-q1.Y)
+	width := math.Abs(p2.X - p1.X)
+	height := math.Abs(q2.Y - q1.Y)
 	if width <= 0 || height <= 0 {
 		return
 	}
@@ -728,7 +730,8 @@ func (e *EllipseSelector) displayRect(ctx *DrawContext) geom.Rect {
 	return geom.Rect{Min: geom.Pt{X: math.Min(p1.X, p2.X), Y: math.Min(p1.Y, p2.Y)}, Max: geom.Pt{X: math.Max(p1.X, p2.X), Y: math.Max(p1.Y, p2.Y)}}
 }
 
-func (e *EllipseSelector) Z() float64 { return e.z }
+func (e *EllipseSelector) Z() float64   { return e.z }
+func (e *EllipseSelector) WidgetLayer() {}
 
 func (p *PolygonSelector) OnSelect(cb PolygonSelectorCallback) WidgetCallbackID {
 	if p == nil || cb == nil {
@@ -864,7 +867,8 @@ func (p *PolygonSelector) Contains(point geom.Pt, ctx *DrawContext) (bool, PickI
 	return false, PickInfo{}
 }
 
-func (p *PolygonSelector) Z() float64 { return p.z }
+func (p *PolygonSelector) Z() float64   { return p.z }
+func (p *PolygonSelector) WidgetLayer() {}
 
 func (l *LassoSelector) OnSelect(cb LassoSelectorCallback) WidgetCallbackID {
 	if l == nil || cb == nil {
@@ -961,7 +965,8 @@ func (l *LassoSelector) Contains(point geom.Pt, ctx *DrawContext) (bool, PickInf
 	return false, PickInfo{}
 }
 
-func (l *LassoSelector) Z() float64 { return l.z }
+func (l *LassoSelector) Z() float64   { return l.z }
+func (l *LassoSelector) WidgetLayer() {}
 
 func (c *Cursor) SetData(x, y float64) bool {
 	if c == nil || !isFinite(x) || !isFinite(y) {
@@ -1014,7 +1019,8 @@ func (c *Cursor) Contains(geom.Pt, *DrawContext) (bool, PickInfo) {
 	return false, PickInfo{}
 }
 
-func (c *Cursor) Z() float64 { return c.z }
+func (c *Cursor) Z() float64   { return c.z }
+func (c *Cursor) WidgetLayer() {}
 
 func (c *MultiCursor) SetFigurePoint(point geom.Pt) bool {
 	if c == nil || !isFinite(point.X) || !isFinite(point.Y) {
@@ -1084,7 +1090,8 @@ func (c *MultiCursor) Contains(geom.Pt, *DrawContext) (bool, PickInfo) {
 	return false, PickInfo{}
 }
 
-func (c *MultiCursor) Z() float64 { return c.z }
+func (c *MultiCursor) Z() float64   { return c.z }
+func (c *MultiCursor) WidgetLayer() {}
 
 func mergeSpanSelectorOptions(base, override SpanSelectorOptions) SpanSelectorOptions {
 	if override.Orientation != "" {

@@ -20,6 +20,13 @@ type Artist interface {
 	Bounds(ctx *DrawContext) geom.Rect
 }
 
+// WidgetArtist draws in the axes-local widget layer. Widget-layer artists are
+// rendered and picked above regular axes artists regardless of data z-order.
+type WidgetArtist interface {
+	Artist
+	WidgetLayer()
+}
+
 const (
 	defaultPatchZ = 1.0
 	defaultLineZ  = 2.0
@@ -326,13 +333,15 @@ func NewFigure(w, h int, opts ...style.Option) *Figure {
 
 // Axes represents an axes region inside a figure.
 type Axes struct {
-	RectFraction geom.Rect // [0..1] fraction in figure coords
-	RC           *style.RC // nil => inherit figure RC
-	XScale       transform.Scale
-	YScale       transform.Scale
-	projection   Projection
-	Artists      []Artist
-	zsorted      bool
+	RectFraction  geom.Rect // [0..1] fraction in figure coords
+	RC            *style.RC // nil => inherit figure RC
+	XScale        transform.Scale
+	YScale        transform.Scale
+	projection    Projection
+	Artists       []Artist
+	zsorted       bool
+	WidgetArtists []Artist
+	widgetZsorted bool
 
 	// Axis control
 	XAxis      *Axis // bottom x-axis
@@ -511,7 +520,26 @@ func (f *Figure) Add(art Artist) {
 }
 
 // Add registers an Artist with the Axes.
-func (a *Axes) Add(art Artist) { a.Artists = append(a.Artists, art); a.zsorted = false }
+func (a *Axes) Add(art Artist) {
+	if a == nil {
+		return
+	}
+	if _, ok := art.(WidgetArtist); ok {
+		a.AddWidget(art)
+		return
+	}
+	a.Artists = append(a.Artists, art)
+	a.zsorted = false
+}
+
+// AddWidget registers an Artist with the axes-local widget layer.
+func (a *Axes) AddWidget(art Artist) {
+	if a == nil {
+		return
+	}
+	a.WidgetArtists = append(a.WidgetArtists, art)
+	a.widgetZsorted = false
+}
 
 // SetPosition sets the active axes rectangle in figure-normalized
 // coordinates. For subplot-backed axes this mirrors Matplotlib's ability to
@@ -1729,22 +1757,28 @@ func DrawFigure(fig *Figure, r render.Renderer) {
 		}
 
 		if !ax.zsorted {
-			sort.SliceStable(ax.Artists, func(i, j int) bool {
-				zi, zj := ax.Artists[i].Z(), ax.Artists[j].Z()
-				if zi == zj {
-					return i < j
-				}
-				return zi < zj
-			})
+			sortArtists(ax.Artists)
 			ax.zsorted = true
 		}
 		for _, art := range ax.Artists {
+			drawArtist(r, ctx, art)
+		}
+		if !ax.widgetZsorted {
+			sortArtists(ax.WidgetArtists)
+			ax.widgetZsorted = true
+		}
+		for _, art := range ax.WidgetArtists {
 			drawArtist(r, ctx, art)
 		}
 
 		r.Restore()
 
 		for _, art := range ax.Artists {
+			if overlay, ok := art.(OverlayArtist); ok {
+				drawOverlayArtist(r, ctx, art, overlay)
+			}
+		}
+		for _, art := range ax.WidgetArtists {
 			if overlay, ok := art.(OverlayArtist); ok {
 				drawOverlayArtist(r, ctx, art, overlay)
 			}

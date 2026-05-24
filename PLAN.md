@@ -2571,17 +2571,33 @@ Current slice landed:
 
 #### 9C.1C Line2D Data and Stroke Semantics
 
-- [ ] Add typed data getters/setters for `Line2D`: clone-returning `Data`,
+- [x] Add typed data getters/setters for `Line2D`: clone-returning `Data`,
       `SetData`, `SetXData`, and `SetYData`, with stale invalidation.
-- [ ] Define and implement NaN / Inf segment splitting to match Matplotlib's
+- [x] Define and implement NaN / Inf segment splitting to match Matplotlib's
       line-break behavior instead of drawing through invalid points.
-- [ ] Add `gapcolor` support for dashed lines where Matplotlib paints dash gaps
+- [x] Add `gapcolor` support for dashed lines where Matplotlib paints dash gaps
       with an alternate color.
-- [ ] Expand `MarkEvery` beyond every-N integers:
+- [x] Expand `MarkEvery` beyond every-N integers:
       start/step tuple, explicit index list, and slice-like range where that
       maps cleanly to Go.
-- [ ] Add catalog/parity cases for data mutation, invalid-point line breaks,
+- [x] Add catalog/parity cases for data mutation, invalid-point line breaks,
       dashed `gapcolor`, and at least two nontrivial `markevery` forms.
+
+Current slice landed:
+
+- `Line2D` now exposes clone-returning `Data` plus `SetData`, `SetXData`, and
+  `SetYData`; setters replace internal point storage and mark the artist stale.
+- Line drawing and bounds now ignore NaN / Inf coordinates and split display
+  paths at invalid points instead of connecting across them.
+- Dashed `Line2D` artists can paint gap segments with `SetGapColor`; core
+  extracts the dash-gap display path so the behavior is not dependent on
+  backend dash-offset support.
+- `MarkEverySpec` and helpers (`EveryNMarkers`, `StartStepMarkers`,
+  `IndexedMarkers`, `SliceMarkers`) cover richer Matplotlib-style marker
+  subsampling while preserving the existing integer `MarkEvery` field.
+- Added fixture-only `line2d_semantics` parity coverage, with Go golden and
+  Matplotlib reference output for data mutation, invalid-point line breaks,
+  dashed gapcolor, and two nontrivial markevery forms.
 
 #### 9C.1D Line2D Marker Completion
 

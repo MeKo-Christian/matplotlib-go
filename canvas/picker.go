@@ -1,6 +1,8 @@
 package canvas
 
 import (
+	"sort"
+
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 )
@@ -39,15 +41,34 @@ func Pick(fig *Figure, p geom.Pt) []PickResult {
 			continue
 		}
 		ctx := core.AxesDrawContext(ax, fig)
-		artists := ax.Artists
-		for j := len(artists) - 1; j >= 0; j-- {
-			art := artists[j]
-			if hit, info, ok := pickArtist(art, p, ctx); ok {
-				hits = append(hits, PickResult{Axes: ax, Artist: hit, Info: info})
+		for _, layer := range [][]core.Artist{ax.WidgetArtists, ax.Artists} {
+			artists := artistsFrontToBack(layer)
+			for _, art := range artists {
+				if hit, info, ok := pickArtist(art, p, ctx); ok {
+					hits = append(hits, PickResult{Axes: ax, Artist: hit, Info: info})
+				}
 			}
 		}
 	}
 	return hits
+}
+
+func artistsFrontToBack(artists []core.Artist) []core.Artist {
+	if len(artists) == 0 {
+		return nil
+	}
+	ordered := append([]core.Artist(nil), artists...)
+	sort.SliceStable(ordered, func(i, j int) bool {
+		zi, zj := ordered[i].Z(), ordered[j].Z()
+		if zi == zj {
+			return i < j
+		}
+		return zi < zj
+	})
+	for i, j := 0, len(ordered)-1; i < j; i, j = i+1, j-1 {
+		ordered[i], ordered[j] = ordered[j], ordered[i]
+	}
+	return ordered
 }
 
 func pickArtist(art core.Artist, p geom.Pt, ctx *core.DrawContext) (core.Artist, core.PickInfo, bool) {

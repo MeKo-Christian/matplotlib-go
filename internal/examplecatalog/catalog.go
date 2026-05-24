@@ -63,6 +63,7 @@ var cases = []Case{
 	{ID: "basic_line", Topic: "lines", Title: "Basic Line", Description: "A minimal line plot with explicit limits, labels, and one Line2D artist.", Showcase: true, GoBasicSmokeFamily: "line"},
 	{ID: "joins_caps", Topic: "lines", Title: "Line Joins and Caps"},
 	{ID: "dashes", Topic: "lines", Title: "Dash Patterns", Description: "Multiple line styles showing dash arrays, cap styles, and legend labeling.", Showcase: true},
+	{ID: "line2d_semantics", Topic: "lines", Title: "Line2D Semantics", FixtureOnly: true, MinPSNR: 34.0, MaxMeanAbs: 8.0},
 	{ID: "scatter_basic", Topic: "scatter", Title: "Basic Scatter", Description: "A compact scatter plot with variable marker size, color, alpha, and axes labels.", Showcase: true, GoBasicSmokeFamily: "scatter"},
 	{ID: "scatter_marker_types", Topic: "scatter", Title: "Scatter Marker Types"},
 	{ID: "scatter_advanced", Topic: "scatter", Title: "Advanced Scatter"},

@@ -52,6 +52,7 @@ import (
 	units_overview "github.com/cwbudde/matplotlib-go/examples/units_overview"
 	unstructured_showcase "github.com/cwbudde/matplotlib-go/examples/unstructured_showcase"
 	vector_fields "github.com/cwbudde/matplotlib-go/examples/vector_fields"
+	widgets_gallery "github.com/cwbudde/matplotlib-go/examples/widgets_gallery"
 	"github.com/cwbudde/matplotlib-go/internal/examplecatalog"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -91,6 +92,7 @@ var registry = map[string]func() *core.Figure{
 	"units_overview":            units_overview.Plot,
 	"unstructured_showcase":     unstructured_showcase.Plot,
 	"vector_fields":             vector_fields.Plot,
+	"widgets_gallery":           widgets_gallery.Plot,
 }
 
 func main() {

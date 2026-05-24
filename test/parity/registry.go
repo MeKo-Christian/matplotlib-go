@@ -82,6 +82,7 @@ import (
 	example_imshow_transformed "github.com/cwbudde/matplotlib-go/test/parity/imshow_transformed"
 	example_joins_caps "github.com/cwbudde/matplotlib-go/test/parity/joins_caps"
 	example_large_scatter "github.com/cwbudde/matplotlib-go/test/parity/large_scatter"
+	example_line2d_semantics "github.com/cwbudde/matplotlib-go/test/parity/line2d_semantics"
 	example_lognorm_imshow "github.com/cwbudde/matplotlib-go/test/parity/lognorm_imshow"
 	example_mathtext_basic "github.com/cwbudde/matplotlib-go/test/parity/mathtext_basic"
 	example_mathtext_fractions "github.com/cwbudde/matplotlib-go/test/parity/mathtext_fractions"
@@ -152,6 +153,7 @@ var renderByID = map[string]func() image.Image{
 	"basic_line":                example_basic_line.Render,
 	"joins_caps":                example_joins_caps.Render,
 	"dashes":                    example_dashes.Render,
+	"line2d_semantics":          example_line2d_semantics.Render,
 	"scatter_basic":             example_scatter_basic.Render,
 	"scatter_marker_types":      example_scatter_marker_types.Render,
 	"scatter_advanced":          example_scatter_advanced.Render,
@@ -256,6 +258,7 @@ var renderByID = map[string]func() image.Image{
 var figureByID = map[string]func() *core.Figure{
 	"annotation_composition": showcase_annotation_composition.Plot,
 	"artist_metadata":        example_artist_metadata.Plot,
+	"line2d_semantics":       example_line2d_semantics.Plot,
 	"arrays_showcase":        showcase_arrays_showcase.Plot,
 	"axes_grid1_showcase":    showcase_axes_grid1_showcase.Plot,
 	"axes_control_surface":   showcase_axes_control_surface.Plot,

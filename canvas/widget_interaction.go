@@ -673,8 +673,9 @@ func (w *WidgetInteraction) findInactiveSelector(axes *Axes) any {
 	if axes == nil {
 		return nil
 	}
-	for i := len(axes.Artists) - 1; i >= 0; i-- {
-		switch sel := axes.Artists[i].(type) {
+	artists := axesInteractionArtists(axes)
+	for i := len(artists) - 1; i >= 0; i-- {
+		switch sel := artists[i].(type) {
 		case *core.SpanSelector:
 			if !sel.Active {
 				return sel
@@ -727,7 +728,7 @@ func (w *WidgetInteraction) updateCursorFromMouseLocked(mouse MouseEvent, axes *
 		if axis == nil {
 			continue
 		}
-		for _, art := range axis.Artists {
+		for _, art := range axesInteractionArtists(axis) {
 			switch selector := art.(type) {
 			case *core.Cursor:
 				if axes == axis {
@@ -1124,13 +1125,26 @@ func (w *WidgetInteraction) axesForSelectorLocked(selector any) *Axes {
 		if axes == nil {
 			continue
 		}
-		for _, artist := range axes.Artists {
+		for _, artist := range axesInteractionArtists(axes) {
 			if artist == selector {
 				return axes
 			}
 		}
 	}
 	return nil
+}
+
+func axesInteractionArtists(axes *core.Axes) []core.Artist {
+	if axes == nil {
+		return nil
+	}
+	if len(axes.WidgetArtists) == 0 {
+		return axes.Artists
+	}
+	out := make([]core.Artist, 0, len(axes.Artists)+len(axes.WidgetArtists))
+	out = append(out, axes.Artists...)
+	out = append(out, axes.WidgetArtists...)
+	return out
 }
 
 func selectorBoundsFromDrag(

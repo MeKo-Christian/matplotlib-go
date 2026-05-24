@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -200,6 +201,174 @@ func TestLine2DMarkEveryDrawsEveryNthMarker(t *testing.T) {
 
 	if len(r.pathCalls) != 4 {
 		t.Fatalf("path calls = %d, want line plus 3 markers", len(r.pathCalls))
+	}
+}
+
+func TestLine2DMarkerSizeUsesMatplotlibPointDiameter(t *testing.T) {
+	line := &Line2D{MarkerSize: 8}
+	ctx := &DrawContext{RC: style.Default}
+	ctx.RC.DPI = 144
+
+	got := line.resolvedMarkerSize(ctx)
+	want := 8.0 * 144.0 / 72.0
+	if got != want {
+		t.Fatalf("resolved marker scale = %v, want full Matplotlib point diameter %v", got, want)
+	}
+}
+
+func TestLine2DDataAccessorsCloneAndMarkStale(t *testing.T) {
+	line := &Line2D{}
+	x := []float64{0, 1, 2}
+	y := []float64{3, 4, 5}
+	line.SetData(x, y)
+
+	if !line.Stale() {
+		t.Fatal("SetData did not mark line stale")
+	}
+	x[0] = 99
+	y[1] = 88
+	gotX, gotY := line.Data()
+	if gotX[0] != 0 || gotY[1] != 4 {
+		t.Fatalf("SetData reused caller storage, got x=%v y=%v", gotX, gotY)
+	}
+
+	gotX[1] = 77
+	gotY[2] = 66
+	againX, againY := line.Data()
+	if againX[1] != 1 || againY[2] != 5 {
+		t.Fatalf("Data reused line storage, got x=%v y=%v", againX, againY)
+	}
+
+	line.SetStale(false)
+	line.SetXData([]float64{10, 11})
+	if !line.Stale() {
+		t.Fatal("SetXData did not mark line stale")
+	}
+	gotX, gotY = line.Data()
+	if len(gotX) != 2 || gotX[0] != 10 || gotX[1] != 11 || gotY[0] != 3 || gotY[1] != 4 {
+		t.Fatalf("SetXData result x=%v y=%v", gotX, gotY)
+	}
+
+	line.SetStale(false)
+	line.SetYData([]float64{20, 21, 22})
+	if !line.Stale() {
+		t.Fatal("SetYData did not mark line stale")
+	}
+	gotX, gotY = line.Data()
+	if len(gotY) != 2 || gotX[0] != 10 || gotX[1] != 11 || gotY[0] != 20 || gotY[1] != 21 {
+		t.Fatalf("SetYData result x=%v y=%v", gotX, gotY)
+	}
+}
+
+func TestLine2DInvalidPointsBreakPathAndBounds(t *testing.T) {
+	line := &Line2D{
+		XY: []geom.Pt{
+			{X: 0, Y: 0},
+			{X: 1, Y: 1},
+			{X: math.NaN(), Y: 0},
+			{X: 2, Y: -1},
+			{X: 3, Y: 0.5},
+			{X: math.Inf(1), Y: 2},
+			{X: 4, Y: 2},
+		},
+		W:   2,
+		Col: render.Color{A: 1},
+	}
+
+	bounds := line.Bounds(nil)
+	if bounds.Min.X != 0 || bounds.Min.Y != -1 || bounds.Max.X != 4 || bounds.Max.Y != 2 {
+		t.Fatalf("bounds = %+v, want finite data bounds", bounds)
+	}
+
+	r := &recordingRenderer{}
+	line.Draw(r, &DrawContext{
+		DataToPixel: Transform2D{
+			XScale:      transform.NewLinear(0, 4),
+			YScale:      transform.NewLinear(-1, 2),
+			AxesToPixel: transform.NewAffine(geom.Identity()),
+		},
+		RC: style.Default,
+	})
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("path calls = %d, want 1", len(r.pathCalls))
+	}
+	got := r.pathCalls[0].path.C
+	want := []geom.Cmd{geom.MoveTo, geom.LineTo, geom.MoveTo, geom.LineTo, geom.MoveTo}
+	if len(got) != len(want) {
+		t.Fatalf("path commands = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("path commands = %v, want %v", got, want)
+		}
+	}
+}
+
+func TestLine2DGapColorDrawsInverseDashPass(t *testing.T) {
+	line := &Line2D{
+		XY: []geom.Pt{
+			{X: 0, Y: 0},
+			{X: 1, Y: 0},
+		},
+		W:   2,
+		Col: render.Color{B: 1, A: 1},
+	}
+	line.SetDashes(4, 2, 1, 3)
+	line.SetGapColor(render.Color{R: 1, A: 0.5})
+
+	r := &recordingRenderer{}
+	line.Draw(r, &DrawContext{
+		DataToPixel: Transform2D{
+			XScale:      transform.NewLinear(0, 1),
+			YScale:      transform.NewLinear(0, 1),
+			AxesToPixel: transform.NewAffine(geom.Affine{A: 100, D: 100}),
+		},
+		RC: style.Default,
+	})
+
+	if len(r.pathCalls) != 2 {
+		t.Fatalf("path calls = %d, want gap pass plus line pass", len(r.pathCalls))
+	}
+	if got, want := r.pathCalls[0].paint.Stroke, (render.Color{R: 1, A: 0.5}); got != want {
+		t.Fatalf("gap stroke = %+v, want %+v", got, want)
+	}
+	if got := r.pathCalls[0].paint.Dashes; len(got) != 0 {
+		t.Fatalf("gap pass should draw extracted gap path without dashes, got %v", got)
+	}
+	if got := r.pathCalls[0].path.C; len(got) == 0 || got[0] != geom.MoveTo {
+		t.Fatalf("gap path commands = %v, want extracted path", got)
+	}
+	if got, want := r.pathCalls[1].paint.Dashes, []float64{8, 4, 2, 6}; len(got) != len(want) || got[0] != want[0] || got[1] != want[1] || got[2] != want[2] || got[3] != want[3] {
+		t.Fatalf("line dashes = %v, want %v", got, want)
+	}
+}
+
+func TestLine2DMarkEverySpecForms(t *testing.T) {
+	line := &Line2D{
+		XY: []geom.Pt{
+			{X: 0, Y: 0},
+			{X: 1, Y: 1},
+			{X: 2, Y: 0},
+			{X: 3, Y: 1},
+			{X: 4, Y: 0},
+			{X: 5, Y: 1},
+		},
+	}
+
+	line.SetMarkEvery(StartStepMarkers(1, 2))
+	if got := line.markerPoints(); len(got) != 3 || got[0].X != 1 || got[1].X != 3 || got[2].X != 5 {
+		t.Fatalf("start/step markers = %v", got)
+	}
+
+	line.SetMarkEvery(IndexedMarkers(0, -1, 99))
+	if got := line.markerPoints(); len(got) != 2 || got[0].X != 0 || got[1].X != 5 {
+		t.Fatalf("indexed markers = %v", got)
+	}
+
+	line.SetMarkEvery(SliceMarkers(2, 5, 2))
+	if got := line.markerPoints(); len(got) != 2 || got[0].X != 2 || got[1].X != 4 {
+		t.Fatalf("slice markers = %v", got)
 	}
 }
 

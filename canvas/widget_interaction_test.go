@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/render"
 )
 
 func assertCloseEnough(t *testing.T, got, want float64) {
@@ -21,6 +22,33 @@ func sortedPair(a, b float64) (float64, float64) {
 		return a, b
 	}
 	return b, a
+}
+
+type widgetPickDataArtist struct{}
+
+func (widgetPickDataArtist) Draw(render.Renderer, *core.DrawContext) {}
+
+func (widgetPickDataArtist) Z() float64 { return 10000 }
+
+func (widgetPickDataArtist) Bounds(*core.DrawContext) geom.Rect { return geom.Rect{} }
+
+func (widgetPickDataArtist) Contains(geom.Pt, *core.DrawContext) (bool, core.PickInfo) {
+	return true, core.PickInfo{}
+}
+
+func TestPickPrefersWidgetLayerOverLaterHighZDataArtist(t *testing.T) {
+	fig := core.NewFigure(120, 80)
+	ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
+	button := ax.Button("Run")
+	ax.Add(widgetPickDataArtist{})
+
+	hits := Pick(fig, geom.Pt{X: 60, Y: 40})
+	if len(hits) == 0 {
+		t.Fatal("expected pick hits")
+	}
+	if hits[0].Artist != button {
+		t.Fatalf("top pick = %T, want button widget", hits[0].Artist)
+	}
 }
 
 func TestWidgetInteractionButtonClick(t *testing.T) {

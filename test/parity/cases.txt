@@ -1,6 +1,7 @@
 basic_line
 joins_caps
 dashes
+line2d_semantics
 scatter_basic
 scatter_marker_types
 scatter_advanced

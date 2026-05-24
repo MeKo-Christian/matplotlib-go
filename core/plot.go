@@ -27,6 +27,7 @@ type PlotOptions struct {
 	MarkerEdgeColor *render.Color
 	MarkerEdgeWidth *float64
 	MarkEvery       int
+	MarkEverySpec   *MarkEverySpec
 	Label           string   // series label for legend
 	Alpha           *float64 // alpha transparency
 	LevelCount      int      // contour level count for contour-like plot types
@@ -118,6 +119,9 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 		line.MarkerEdgeWidth = *opt.MarkerEdgeWidth
 	}
 	line.MarkEvery = opt.MarkEvery
+	if opt.MarkEverySpec != nil {
+		line.SetMarkEvery(*opt.MarkEverySpec)
+	}
 
 	// Apply alpha if specified
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
