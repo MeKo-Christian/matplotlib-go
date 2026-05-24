@@ -356,7 +356,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "transforms",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"internal/geom/geom.go", "transform/transform.go"},
-		CatalogIDs:        []string{"transform_coordinates", "annotation_composition"},
+		CatalogIDs:        []string{"transform_coordinates", "path_clipped_transformed", "annotation_composition"},
 		Note:              "Go represents affine transforms as geom.Affine plus graph adapters instead of Python's AffineBase inheritance surface.",
 	},
 	{
@@ -509,8 +509,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "transforms",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"transform/transformed_path.go", "core/patch.go"},
-		CatalogIDs:        []string{"annotation_composition"},
-		Note:              "Go patch paths can use TransformedPath directly; a patch-specific subclass is intentionally omitted.",
+		CatalogIDs:        []string{"path_clipped_transformed", "annotation_composition"},
+		Note:              "Go patch paths can use TransformedPath directly; a patch-specific subclass is intentionally omitted. path_clipped_transformed covers visible path transform and axes clipping behavior.",
 	},
 	{
 		ID:                "transforms-transformed-bbox",
@@ -679,9 +679,9 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		featureCoverageID: "transforms",
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"transform/transform.go", "transform/graph.go", "transform/node.go", "internal/geom/geom.go"},
-		catalogIDs:        []string{"transform_coordinates", "annotation_composition", "imshow_transformed"},
+		catalogIDs:        []string{"transform_coordinates", "transform_annotation_modes", "path_clipped_transformed", "annotation_composition", "imshow_transformed"},
 		exampleIDs:        []string{"annotation_composition"},
-		note:              "Go has affine, scale, blended, chained, display-rect, offset, cached graph transforms, and BBox-style rect helpers. Remaining 12.2G scope is frozen snapshots, transformed-path cache helpers, anchored rect helpers, and visible path/bezier helpers.",
+		note:              "Go has affine, scale, blended, chained, display-rect, offset, cached graph transforms, BBox-style rect helpers, annotation coordinate fixtures, and clipped transformed path coverage. Remaining 12.2G scope is transformed-path split documentation, anchored layout coverage, and visible path/bezier helper decisions.",
 	},
 	{
 		idPrefix:          "line-style-registry",

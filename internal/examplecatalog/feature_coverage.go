@@ -120,7 +120,7 @@ var featureCoverageRows = []FeatureCoverage{
 		UpstreamModules:         []string{"transforms.py", "bezier.py", "path.py"},
 		UpstreamGalleryFamilies: []string{"subplots_axes_and_figures", "text_labels_and_annotations"},
 		GoFiles:                 []string{"transform/transform.go", "transform/graph.go", "transform/node.go", "internal/geom/geom.go"},
-		CatalogIDs:              []string{"transform_coordinates", "transform_annotation_modes", "annotation_composition", "imshow_transformed"},
+		CatalogIDs:              []string{"transform_coordinates", "transform_annotation_modes", "path_clipped_transformed", "annotation_composition", "imshow_transformed"},
 		ExampleIDs:              []string{"annotation_composition"},
 		WebDemoIDs:              []string{"axes"},
 		GoEquivalent:            CoveragePartial,
@@ -129,7 +129,7 @@ var featureCoverageRows = []FeatureCoverage{
 		BrowserDemo:             CoveragePartial,
 		Breadth:                 BreadthThin,
 		Notes: "Affine, separable, blended, chained, offset, display-rect, cached graph transforms, and BBox-style rect helpers exist. " +
-			"Remaining 12.2G scope is frozen snapshots, transformed-path cache helpers, anchored rect helpers, and path/bezier helpers tied to visible behavior.",
+			"Remaining 12.2G scope is transformed-path cache helpers, anchored rect helpers, and path/bezier helper decisions tied to visible behavior.",
 	},
 	{
 		ID:                      "lines",

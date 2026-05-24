@@ -2198,7 +2198,7 @@ catalog/parity fixture per behavior family.
       coordinate modes, clipped transformed paths, and layout BBox behavior.
 - [x] Add `transform_annotation_modes` or extend `transform_coordinates` to
       explicitly cover data, axes, figure, and offset annotation coordinates.
-- [ ] Add `path_clipped_transformed` covering a transformed path clipped by a
+- [x] Add `path_clipped_transformed` covering a transformed path clipped by a
       BBox/axes rectangle.
 - [ ] Add `layout_bbox_helpers` covering anchored/padded/union BBox behavior in
       visible layout output.
