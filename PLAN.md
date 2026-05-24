@@ -2128,6 +2128,8 @@ catalog/parity fixture per behavior family.
       simplification decisions, and curve splitting.
 - [x] Add shared `geom.Path` clone, affine transform, bounds, and transformed
       bounds helpers for visible path extent/layout use cases.
+- [x] Add shared `geom.Path` interpolation helper for line, quadratic, and
+      cubic segments.
 - [ ] Add tests that exercise transform invalidation propagation and transformed
       path cache invalidation, plus catalog/parity cases for annotation
       coordinate modes, clipped transformed paths, and layout BBox behavior.
