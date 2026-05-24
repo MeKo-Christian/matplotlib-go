@@ -2014,6 +2014,9 @@ catalog/parity fixture per behavior family.
 - [ ] Expand `ScalarFormatter` parity: offset text decision, scientific limits,
       power limits, math-text mode, fixed-minus behavior, locale/no-locale
       decision, and step-aware precision.
+- [x] Add `ScalarFormatter` option coverage for inclusive power limits,
+      MathText-style scientific labels, scientific suppression, and
+      step-aware precision.
 - [x] Split log formatting into explicit Go formatter types for the existing
       simple `LogFormatter`, exponent-only labels, MathText labels, and
       scientific-notation MathText labels.
@@ -2032,7 +2035,7 @@ catalog/parity fixture per behavior family.
       older Matplotlib target is explicitly added.
 - [x] Add `LogitFormatter` and install it as the default logit-axis formatter
       for major ticks, with minor ticks suppressed by default.
-- [ ] Add or explicitly omit `FixedFormatter` mismatch warnings,
+- [x] Add or explicitly omit `FixedFormatter` mismatch warnings,
       `NullFormatter`, `FuncFormatter`, `FormatStrFormatter`, and
       `StrMethodFormatter` edge behavior in the audit rows.
 - [ ] Add one catalog/parity case each for scalar offset/scientific labels, log
@@ -2124,7 +2127,7 @@ catalog/parity fixture per behavior family.
 - [x] `FoundationAPIGapAudit` rows `ticker-formatter-catalog`,
       `tick-artist-model`, and `transform-bbox-paths` are closed or split into
       precise remaining rows with exact scope.
-- [ ] Public-surface parity rows for the currently tracked `axis.py`,
+- [x] Public-surface parity rows for the currently tracked `axis.py`,
       `ticker.py`, `scale.py`, and `transforms.py` modules are updated from
       broad `partial` notes to either implemented, precise partial, Go-style
       equivalent, or intentional omission status; `dates.py`, `category.py`,
