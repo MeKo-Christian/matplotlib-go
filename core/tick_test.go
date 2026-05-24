@@ -455,3 +455,25 @@ func TestLogFormatterFormatsBaseTenDecadesAsPowers(t *testing.T) {
 		}
 	}
 }
+
+func TestLogitFormatter(t *testing.T) {
+	formatter := LogitFormatter{}
+	cases := []struct {
+		value float64
+		want  string
+	}{
+		{value: 0.001, want: "10⁻³"},
+		{value: 0.5, want: "1/2"},
+		{value: 0.9, want: "1-10⁻¹"},
+		{value: 0.25, want: "0.25"},
+	}
+
+	for _, tc := range cases {
+		if got := formatter.Format(tc.value); got != tc.want {
+			t.Fatalf("LogitFormatter.Format(%v) = %q, want %q", tc.value, got, tc.want)
+		}
+	}
+	if got := (LogitFormatter{Minor: true}).Format(0.2); got != "" {
+		t.Fatalf("minor LogitFormatter.Format = %q, want empty", got)
+	}
+}

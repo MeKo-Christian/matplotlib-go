@@ -1118,6 +1118,53 @@ func superscriptDigits(v int) string {
 	return strings.Join(buf, "")
 }
 
+// LogitFormatter formats probability ticks for logit axes.
+type LogitFormatter struct {
+	OneHalf     string
+	UseOverline bool
+	Minor       bool
+}
+
+func (f LogitFormatter) Format(x float64) string {
+	if f.Minor || x <= 0 || x >= 1 || math.IsNaN(x) {
+		return ""
+	}
+	if approx(2*x, 1, 1e-12) {
+		if f.OneHalf != "" {
+			return f.OneHalf
+		}
+		return "1/2"
+	}
+	if x < 0.5 && isPowerOfTen(x) {
+		return "10" + superscriptInt(int(math.Round(math.Log10(x))))
+	}
+	if x > 0.5 && isPowerOfTen(1-x) {
+		label := "10" + superscriptInt(int(math.Round(math.Log10(1-x))))
+		if f.UseOverline {
+			return "overline(" + label + ")"
+		}
+		return "1-" + label
+	}
+	if x < 0.1 {
+		return strconv.FormatFloat(x, 'g', -1, 64)
+	}
+	if x > 0.9 {
+		label := strconv.FormatFloat(1-x, 'g', -1, 64)
+		if f.UseOverline {
+			return "overline(" + label + ")"
+		}
+		return "1-" + label
+	}
+	return strconv.FormatFloat(x, 'g', -1, 64)
+}
+
+func isPowerOfTen(x float64) bool {
+	if x <= 0 || math.IsNaN(x) || math.IsInf(x, 0) {
+		return false
+	}
+	return approx(math.Log10(x), math.Round(math.Log10(x)), 1e-10)
+}
+
 func approx(a, b, eps float64) bool {
 	d := a - b
 	if d < 0 {

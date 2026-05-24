@@ -313,12 +313,18 @@ func TestAxes_SetScaleInstallsLogitLocatorDefaults(t *testing.T) {
 	if _, ok := axes.XAxis.Locator.(LogitLocator); !ok {
 		t.Fatalf("x locator = %T, want LogitLocator", axes.XAxis.Locator)
 	}
+	if _, ok := axes.XAxis.Formatter.(LogitFormatter); !ok {
+		t.Fatalf("x formatter = %T, want LogitFormatter", axes.XAxis.Formatter)
+	}
 	minor, ok := axes.XAxis.MinorLocator.(LogitLocator)
 	if !ok {
 		t.Fatalf("x minor locator = %T, want LogitLocator", axes.XAxis.MinorLocator)
 	}
 	if !minor.Minor {
 		t.Fatalf("x minor locator = %+v, want minor=true", minor)
+	}
+	if _, ok := axes.XAxis.MinorFormatter.(LogitFormatter); !ok {
+		t.Fatalf("x minor formatter = %T, want LogitFormatter", axes.XAxis.MinorFormatter)
 	}
 }
 

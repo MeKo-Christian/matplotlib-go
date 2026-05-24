@@ -1648,8 +1648,9 @@ func configureScaleAxis(axis *Axis, scaleName string, cfg transform.ScaleOptions
 		axis.MinorLocator = AsinhLocator{LinearWidth: cfg.LinearWidth, Base: cfg.Base, Subs: cfg.Subs}
 	case "logit":
 		axis.Locator = LogitLocator{}
-		axis.Formatter = ScalarFormatter{Prec: 3}
+		axis.Formatter = LogitFormatter{}
 		axis.MinorLocator = LogitLocator{Minor: true}
+		axis.MinorFormatter = LogitFormatter{Minor: true}
 	default:
 		axis.Locator = LinearLocator{}
 		axis.Formatter = ScalarFormatter{Prec: 3}
