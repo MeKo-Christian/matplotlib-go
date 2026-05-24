@@ -72,3 +72,32 @@ func TestOffsetTransformRoundTrip(t *testing.T) {
 		t.Fatalf("Invert(Apply(pt)) = %+v", inv)
 	}
 }
+
+func TestFrozenTransformSnapshotsCachedGraph(t *testing.T) {
+	var source TransformNode
+	builds := 0
+	cached := NewCachedTransform(func() T {
+		builds++
+		return NewOffset(
+			NewSeparable(
+				ScaleAxis{Scale: NewLinear(0, float64(builds))},
+				LinearAxis{Scale: float64(builds), Offset: 1},
+			),
+			geom.Pt{X: float64(builds), Y: 0},
+		)
+	}, &source)
+
+	frozen := Frozen(cached)
+	before := frozen.Apply(geom.Pt{X: 0.5, Y: 2})
+
+	source.Invalidate(InvalidAffine)
+	afterCached := cached.Apply(geom.Pt{X: 0.5, Y: 2})
+	afterFrozen := frozen.Apply(geom.Pt{X: 0.5, Y: 2})
+
+	if before != afterFrozen {
+		t.Fatalf("frozen transform changed after source invalidation: before=%+v after=%+v", before, afterFrozen)
+	}
+	if afterCached == afterFrozen {
+		t.Fatalf("cached transform did not diverge from frozen snapshot: cached=%+v frozen=%+v", afterCached, afterFrozen)
+	}
+}

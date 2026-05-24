@@ -178,6 +178,58 @@ func NewOffset(base T, delta geom.Pt) OffsetT {
 	return OffsetT{Base: base, Delta: delta}
 }
 
+// Frozen returns an immutable snapshot of the known Go transform graph.
+//
+// Value-style transforms are already immutable; dynamic cached transforms are
+// resolved to their current transform and separable/offset graphs are copied
+// recursively. Unknown transform implementations are returned as-is.
+func Frozen(t T) T {
+	switch v := t.(type) {
+	case nil:
+		return nil
+	case AffineT:
+		return v
+	case SeparableT:
+		return SeparableT{X: frozenAxis(v.X), Y: frozenAxis(v.Y)}
+	case OffsetT:
+		return OffsetT{Base: Frozen(v.Base), Delta: v.Delta}
+	case *CachedTransform:
+		return Frozen(v.Current())
+	default:
+		return t
+	}
+}
+
+func frozenAxis(axis AxisTransform) AxisTransform {
+	switch v := axis.(type) {
+	case nil:
+		return identityAxis{}
+	case identityAxis:
+		return v
+	case LinearAxis:
+		return v
+	case ScaleAxis:
+		return ScaleAxis{Scale: frozenScale(v.Scale)}
+	case OffsetAxis:
+		return OffsetAxis{Base: frozenAxis(v.Base), Delta: v.Delta}
+	case ComposedAxis:
+		return ComposedAxis{A: frozenAxis(v.A), B: frozenAxis(v.B)}
+	default:
+		return axis
+	}
+}
+
+func frozenScale(scale Scale) Scale {
+	if scale == nil {
+		return nil
+	}
+	if setter, ok := scale.(DomainSetter); ok {
+		minVal, maxVal := scale.Domain()
+		return setter.WithDomain(minVal, maxVal)
+	}
+	return scale
+}
+
 // OffsetT applies a fixed offset after the base transform.
 type OffsetT struct {
 	Base  T
