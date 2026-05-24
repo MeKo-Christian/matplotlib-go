@@ -115,95 +115,33 @@ milestones already achieved are:
   `TestReferenceCompare` discover cases by ID; per-case tolerances live on the
   catalog row.
 
-**What's left** is the focused work in the phases below: PDF / vector output
-beyond SVG, interactive backends and animation, widget interaction, MathText
-and TeX completion, renderer effects (patterns / gradients / path effects),
-final backend deepening, and the documentation polish for v1.0.
+**What's left** is the focused work in the phases below: remaining PS/PGF
+hardening, renderer effects (patterns / gradients / path effects), MathText /
+TeX promotion follow-through, animation, backend deepening, parity closure,
+example / browser-gallery breadth, and documentation polish for v1.0.
 
 ---
 
 # Phase 1A: PDF Publication Backend
 
-**Goal:** make PDF a deterministic, publication-quality vector backend with
-text, image, hatch, alpha, metadata, and resource-reuse behavior close to
-Matplotlib.
+✅ **Completed.** PDF is a deterministic, publication-quality vector backend
+registered through the shared save pipeline.
 
-**Reference sources:** `third_party/matplotlib/lib/matplotlib/backends/backend_pdf.py`,
-current `backends/svg/` for serialization patterns.
+Completed scope:
 
-### 1A.1 PDF Backend Foundation
-
-**Goal:** make PDF a deterministic first-class backend with enough renderer
-coverage to save common plots without raster fallbacks.
-
-- [x] Scaffold `backends/pdf/` with `doc.go`, `init.go`, `pdf.go`,
-      `pdf_test.go`, and `registry_test.go`.
-- [x] Register `backends.PDF`, `backends.PDFExport`, `render.PDFExporter`,
-      `render.PDFOptionExporter`, `render.PDFOptionSetter`, and `render.DPIAware`.
-- [x] Add deterministic Catalog / Pages / Page / Contents / Info objects,
-      xref/trailer writing, compact float formatting, literal-string escaping,
-      and PDF name escaping.
-- [x] Add the page content stream encoder: graphics state stack, top-left
-      display-coordinate transform, path construction, fills, strokes, clips,
-      and RGB color spaces.
-- [x] Compress content streams with `/FlateDecode`.
-- [x] Honor `SOURCE_DATE_EPOCH` for deterministic `/CreationDate`.
-- [x] Route `.pdf` through `backends.SavePDF`, registry `SaveFormats`, and
-      `backends/all` side imports.
-- [x] Add `core.SaveFig(fig, r, "out.pdf")` dispatch through
-      `render.PDFExporter`.
-
-### 1A.2 PDF Text, Images, and Reuse
-
-**Goal:** bring PDF output close to Matplotlib semantics for text, raster
-images, hatches, alpha, and repeated resources.
-
-- [x] Implement text-as-path output through `render.TextPather` for
-      `TextPath`, font-keyed text, rotated text, vertical text, and simple
-      `GlyphRun` fallback.
-- [x] Implement embedded Type 0 / CIDFontType2 text resources for
-      `render.WithPDFFontPolicy(render.PDFFontPolicyEmbed)`.
-- [x] Add deterministic embedded TrueType font programs, `/CIDToGIDMap`, `/W`,
-      and `/ToUnicode` maps.
-- [x] Subset the PDF resource CID map to used glyphs while embedding the
-      resolved font program bytes.
-- [x] Emit raster image XObjects with `/FlateDecode` RGB streams and grayscale
-      `/SMask` images for RGBA alpha.
-- [x] Add JPEG `/DCTDecode` passthrough through the optional
-      `render.JPEGImage` interface.
-- [x] Add PNG predictor `/DecodeParms` for Flate image streams.
-- [x] Reuse repeated raster image XObjects when encoded RGB/alpha payloads
-      match.
-- [x] Add transformed image support through `render.ImageTransformer` and PDF
-      `cm` matrices.
-- [x] Add native hatch fills through reusable PDF tiling pattern resources.
-- [x] Add native marker and path-collection batches through reusable Form
-      XObjects.
-- [x] Add stroke/fill alpha through reusable PDF `/ExtGState` resources with
-      separate `CA` / `ca` values.
-
-### 1A.3 PDF Test and Fixture Hardening
-
-**Goal:** keep PDF output stable enough that regressions are caught without
-overfitting tests to object numbers or whitespace.
-
-- [x] Add `internal/pdfcompare` for structural PDF comparison.
-- [x] Parse indirect objects, ignore xref offset noise, normalize object token
-      whitespace, and decode `/FlateDecode` streams before comparison.
-- [x] Cover hatch pattern resources through decoded structural comparison.
-- [x] Add golden fixtures for line, bar, scatter, hist, contour, imshow,
-      polar, hatch_bars, text_layout, clipped, and image_transformed cases.
-- [x] Add registry tests for PDF extension selection and export.
-
-**PDF exit criteria:**
-
-- [x] `core.SaveFig(fig, r, "out.pdf")` draws and exports through
-      `render.PDFExporter`.
-- [x] `.pdf` is registered in `SaveFormats`, selected by
-      `backends.SelectBackendForExtension`, and covered by
-      `cmd/example -format pdf` smoke output.
-- [x] PDF docs define font, image, hatch, metadata, and deterministic-output
-      semantics.
+- `backends/pdf` implements deterministic PDF object writing, compressed page
+  streams, metadata handling with `SOURCE_DATE_EPOCH`, path/fill/stroke/clip
+  drawing, and extension-driven save dispatch.
+- Text supports path output and embedded Type 0 / CIDFontType2 TrueType
+  resources with deterministic subsetting, `/CIDToGIDMap`, `/W`, and
+  `/ToUnicode` maps.
+- Raster images are emitted as reusable XObjects with Flate/JPEG handling, PNG
+  predictors, RGBA alpha masks, and transformed image matrices.
+- Hatches, marker batches, path collections, and stroke/fill alpha are native
+  reusable PDF resources.
+- Structural comparison and golden fixtures cover common plot families,
+  hatches, text layout, clipping, transformed images, registry selection, and
+  export behavior.
 
 ---
 
@@ -324,115 +262,25 @@ the chosen gaps in small pieces.
 
 # Phase 1C: Shared Vector Save Pipeline
 
-**Goal:** keep SVG, PDF, PS/EPS, and PGF on one extension-driven save path,
-then add shared option routing and mixed raster/vector fallback without
-backend-name conditionals.
+✅ **Completed.** PNG, SVG, PDF, PS/EPS, and PGF now share the same
+extension-driven save path, option routing surface, capability reporting, and
+mixed raster/vector fallback model.
 
-**Reference sources:** `backends/`, `canvas/`, `core/`, `pyplot/`, `cmd/example/`,
-and Matplotlib's mixed-mode/vector save behavior in `third_party/matplotlib`.
+Completed scope:
 
-### 1C.1 Shared Save Dispatch and Capability Reporting
-
-**Goal:** keep all public save routes on the same extension-driven registry
-path, with capability reporting that makes missing formats obvious.
-
-- [x] Remove hard-coded format fallbacks from `backends.SaveViaExtension`; it
-      now requires an explicit `SaveFormats` handler.
-- [x] Register `.pdf`, `.ps`, `.eps`, and `.pgf` in `SaveFormats`.
-- [x] Select PDF / PS / PGF through `backends.SelectBackendForExtension`.
-- [x] Side-import PDF / PS / PGF from `backends/all`.
-- [x] Route `pyplot.SaveFig`, headless canvas / manager save, `cmd/example`,
-      and CLI save helpers through `SelectBackendForExtension` and
-      `SaveFormats`.
-- [x] Keep `core.SaveFig` as the renderer-interface helper to avoid the
-      existing `backends -> canvas -> core` cycle.
-- [x] Define and test fallback behavior when `MATPLOTLIB_BACKEND` is pinned to
-      a backend that cannot write the requested extension.
-- [x] Add `cmd/example -format png|svg|pdf|ps|eps|pgf` support.
-- [x] Add smoke coverage for PNG / SVG / PDF / PS / PGF.
-- [x] Add `PGFExport` to the backend capability matrix.
-- [x] Expand `BackendComparisonReport` with `PDFExport`, `PSExport`,
-      `PGFExport`, and a `SaveFormats` column.
-- [x] Document per-format status for fonts, hatches, alpha, raster images,
-      transformed images, marker/path-collection batching, metadata, and
-      deterministic output.
-
-### 1C.2 Shared Save Options
-
-**Goal:** let format-specific options flow through public save APIs without
-backend-name conditionals.
-
-- [x] Inventory existing option types: `render.SVGOptions`,
-      `render.PDFOptions`, PS metadata needs, and future PGF options.
-- [x] Choose one shared API shape: backend-neutral option bag,
-      typed per-format options, or both.
-- [x] Route PDF metadata, creation date, and font policy through `pyplot`,
-      canvas manager saves, and `cmd/example`.
-- [x] Preserve existing SVG option routing while moving it onto the shared
-      option surface.
-- [x] Add PS option placeholders only where the backend supports meaningful
-      behavior.
-- [x] Add PGF option placeholders for TeX preamble, metadata/comment policy,
-      and future verification mode.
-- [x] Add tests proving unsupported options produce clear errors instead of
-      being silently ignored.
-
-**Save-pipeline exit criteria:**
-
-- [x] `pyplot.SaveFig`, canvas / manager save, `cmd/example`, and CLI helpers
-      choose backends through `SelectBackendForExtension` and write through
-      `SaveFormats`.
-- [x] Backend comparison / capability output makes both export capabilities
-      and registered save extensions obvious for PNG, SVG, PDF, PS/EPS, and
-      PGF.
-- [x] Format-specific save options can be passed through the shared save
-      pipeline for SVG, PDF, PS, and PGF without backend-name conditionals.
-
-### 1C.3 Mixed Raster / Vector Fallback
-
-**Goal:** give vector backends a shared way to embed rasterized regions when an
-artist or effect cannot be represented natively.
-
-- [x] Define renderer capability checks for mixed raster/vector embedding.
-- [x] Add an artist-level rasterize flag that vector backends honor.
-- [x] Add DPI-aware rasterization at save time for dense scatter, image,
-      contour, and unsupported-effect regions.
-- [x] Embed raster tiles inside PDF without losing surrounding vector text and
-      axes.
-- [x] Embed raster tiles inside PS/EPS with documented alpha behavior.
-- [x] Embed raster tiles inside SVG using existing image support.
-- [x] Embed raster tiles inside PGF or document the fallback through external
-      image files.
-- [x] Add fixtures verifying clip, transform, alpha, and surrounding vector
-      content.
-
-**Mixed-output exit criteria:**
-
-- [x] Rasterized fallback is driven by renderer capability checks, not
-      backend-name conditionals.
-- [x] `Artist.SetRasterized(true)` produces correct mixed-mode output on PDF,
-      PS/EPS, SVG, and PGF where supported.
-- [x] Unsupported vector effects have a deterministic raster fallback or a
-      documented error.
-
-Vector backend semantics matrix:
-
-| Capability / semantic | SVG | PDF | PS / EPS | PGF |
-| --- | --- | --- | --- | --- |
-| Registry extension(s) | `.svg` | `.pdf` | `.ps`, `.eps` | `.pgf` |
-| Deterministic output | native IDs / metadata policy | deterministic xref, metadata, `SOURCE_DATE_EPOCH` | deterministic document stream | deterministic `pgfpicture` stream |
-| Text policy | text-as-text plus path policy | embedded Type 0 / CIDFontType2 or text-as-path | basic direct text, no embedded fonts yet | LaTeX text via `\pgftext`, approximate layout metrics |
-| Font subsetting / embedding | n/a for text-as-text, paths available | implemented | missing | delegated to LaTeX, no subsetting |
-| Hatch fills | native SVG patterns | native PDF tiling patterns | native clipped hatch strokes | native clipped hatch strokes |
-| Stroke / fill alpha | native SVG opacity | PDF ExtGState | limited by PostScript semantics | PGF fill/stroke opacity commands |
-| Raster images | embedded image data | Image XObjects with alpha masks | inline colorimage, alpha precomposited | self-contained PGF pixel rectangles |
-| Transformed images | implemented | implemented | implemented | implemented through PGF transform scopes |
-| Marker / path collections | reusable native batches | Form XObjects | reusable procedures | reusable PGF macros |
-| Metadata options | `render.SVGOptions` | `render.PDFOptions` but not fully routed through shared save APIs | missing shared option surface | missing shared option surface |
-
-Remaining shared-semantics work is concentrated in PostScript parity hardening
-(Phase 1B.2), PGF hardening (Phase 1B.4), shared option routing (Phase 1C.2),
-and mixed raster/vector fallback (Phase 1C.3).
+- Public save routes (`pyplot.SaveFig`, canvas / manager save, `cmd/example`,
+  CLI helpers) select backends via `SelectBackendForExtension` and write
+  through `SaveFormats`.
+- Backend capability reporting includes export interfaces, registered save
+  extensions, and per-format status for fonts, hatches, alpha, images,
+  transformed images, collection batching, metadata, and deterministic output.
+- Shared save options route SVG, PDF, PS, and PGF behavior without
+  backend-name conditionals; unsupported options return clear errors.
+- Mixed raster/vector output is capability-driven through artist rasterization
+  and DPI-aware offscreen replay, with embedding support in SVG, PDF, PS/EPS,
+  and PGF.
+- Fixtures cover clip, transform, alpha, rasterized artists, and preservation
+  of surrounding vector content.
 
 ---
 
@@ -790,347 +638,43 @@ backends, and stabilize `internal/mathtext` for promotion.
 
 # Phase 4: Interactive Backends and Event Loop
 
-**Goal:** turn the existing headless canvas / event scaffolding into a
-working interactive runtime that supports pan, zoom, picking, and live
-updates.
+✅ **Completed.** The headless event scaffolding has been turned into shared
+interactive infrastructure with desktop, web, and WASM frontends.
 
-**Reference sources:** `third_party/matplotlib/lib/matplotlib/backend_bases.py`
-(NavigationToolbar2, FigureCanvasBase event flow), upstream `backend_qtagg.py`
-and `backend_tkagg.py` for desktop reference, `webagg_core.py` for web
-reference; current `core/events.go`, `internal/webdemo/`.
+Completed scope:
 
-### 4.1 Navigation and Hit Testing
-
-- [x] Pan, zoom-to-rect, and box-zoom interactions wired through the event
-      dispatcher and the existing draw-idle queue.
-      `canvas.Navigation` attaches to a `Dispatcher` and mutates axes view
-      limits through `PanAxesPixels` / `ZoomAxesToRect` /
-      `ZoomAxesByFactor`; mouse-press / move / release events drive pan and
-      rubber-band zoom, and scroll events trigger anchored zoom-in/out.
-- [x] Picking / hit testing: `Artist.Contains(MouseEvent)` for every artist
-      family, with shared bounding-box and path-contains helpers.
-      `core.ArtistPicker` / `core.PickInfo` define the contract; Line2D,
-      Rectangle, Circle, Ellipse, Polygon, PathPatch, FancyBboxPatch,
-      FancyArrow, Image2D, and Text implement `Contains`. Shared
-      `distancePointToSegment` / `containsPath` helpers back the patch
-      family. `canvas.Pick` and `canvas.EmitPick` walk the figure tree and
-      emit `PickEvent`s.
-- [x] Coordinate inspection: hover-driven formatter callbacks, cursor
-      rendering hook, and a default `format_coord` implementation.
-      `Axes.FormatCoord` returns the data-space `x=…, y=…` string for a
-      figure-pixel cursor; `Axes.SetFormatCoord(CoordFormatter)` installs
-      custom formatters per axes.
-- [x] Callback registration matching `mpl_connect` / `mpl_disconnect`
-      semantics; covered by event-lifecycle tests.
-      `canvas.Connect` / `canvas.Disconnect` wrap `FigureCanvas` with the
-      Matplotlib-style API; existing `Dispatcher` already supports the
-      multiplexing semantics. Lifecycle covered by `canvas/connect_test.go`.
-
-### 4.2 Desktop Interactive Backend
-
-- [x] Decision and ADR on the desktop toolkit: Fyne, Ebiten, Gio, or a thin
-      SDL2 binding. Decision criteria: pure-Go preference, AGG framebuffer
-      embedding, keyboard / mouse event fidelity, and CI availability.
-      Decided **Gio** in `docs/adr/0001-desktop-interactive-backend.md`;
-      the only option that satisfies all five criteria simultaneously
-      (pure-Go end-to-end, headless test driver, direct `*image.RGBA`
-      blit via `paint.NewImageOp`, multi-window embeddability, CI
-      without system packages).
-- [x] Backend implementation that hosts an AGG renderer, drives the event
-      dispatcher, and supports the standard NavigationToolbar actions
-      (home / pan / zoom / save).
-      `backends/desktop` defines the toolkit-agnostic `Backend` contract
-      and `Options` / `Constructor` / `Register` / `New` machinery.
-      `backends/desktop/gio` is the Gio (`gioui.org` v0.10.0)
-      implementation: one `app.Window` per figure, an event-pump that
-      maps `pointer.Event` / `key.Event` / `app.FrameEvent` /
-      `app.DestroyEvent` onto the canvas dispatcher, and an AGG bitmap
-      blit via `paint.NewImageOp` each frame. `desktop.New` returns a
-      ready-to-Run backend; the AGG renderer is supplied via
-      `Options.Renderer`. Covered by `backends/desktop/gio/gio_test.go`
-      (7 tests, cgo-free).
-- [x] Toolbar abstraction generic enough for a future Qt or GTK binding.
-      `canvas.NavigationToolbar` interface plus `canvas.ToolbarController`
-      reference implementation in `canvas/toolbar.go`; pan/zoom toggles
-      drive the existing `canvas.Navigation` helper, other actions go
-      through registered `ToolbarHandler`s. Covered by
-      `canvas/toolbar_test.go`.
-- [x] Embedding example in `examples/embed/desktop/`.
-      `examples/embed/desktop/main.go` opens the `basic_line` figure in
-      a Gio window, wires `p` / `z` / `r` / `s` / `q` keyboard
-      shortcuts to the toolbar actions, and streams hover coordinates
-      into the toolbar status line via `Axes.FormatCoord`.
-      `SaveHandler` writes `out.png` through `core.SavePNG`.
-
-### 4.3 Web Interactive Backend (WebAgg-style)
-
-- [x] Server-side WebAgg implementation that broadcasts AGG diff regions
-      over WebSockets, mirroring upstream's protocol shape.
-      `backends/webagg.Manager` wraps a `*core.Figure` with a per-session
-      PNG-diff buffer, image-mode tracking (`full` / `diff`), a
-      `canvas.Navigation` + `canvas.ToolbarController`, and a hub that
-      fans frames out to every connected client. The wire protocol —
-      message names, payload shapes, and the image-mode handshake — is
-      a 1:1 port of `third_party/.../backend_webagg_core.py`. JSON text
-      frames carry events both directions; binary frames carry PNGs
-      server→client. Transport is `golang.org/x/net/websocket` (no new
-      deps). Covered by `backends/webagg/webagg_test.go` and
-      `server_test.go` (15 tests, including a real httptest +
-      WebSocket round-trip).
-- [x] Browser-side JS shim handling event encoding, diff application, and
-      cursor rendering.
-      `backends/webagg/static/mpl.js` opens the WebSocket, decodes
-      `image_mode` / `resize` / `figure_label` / `cursor` /
-      `rubberband` / `history_buttons` / `navigate_mode` /
-      `message` events, blits binary PNG frames over a `<canvas>`
-      (full or diff via the source-over compositor), and encodes
-      mouse, scroll, key, dblclick, and toolbar events upstream-style.
-      `static/index.html` ships a minimal toolbar; hosts can swap in
-      their own page via `webagg.ServerOptions.Assets`.
-- [x] WASM interactive mode for the existing browser demo host so the
-      GitHub Pages gallery is clickable.
-      `canvas/wasm.Manager` now attaches a `canvas.Navigation` to its
-      `Dispatcher` (pan, scroll-zoom, rubber-band zoom with an
-      on-canvas dashed overlay drawn after each `putImageData`) and a
-      `canvas.ToolbarController` wired to a home-view snapshot. The
-      WASM API exports `setNavigationMode` / `navigationMode` /
-      `triggerToolbar`; `web/index.html` ships Home / Pan / Zoom
-      toolbar buttons above the canvas and `web/main.js` mirrors the
-      active mode via `aria-pressed`. PNG export still goes through
-      the existing browser-side `canvas.toBlob` download path.
-- [x] Embedding example in `examples/embed/web/`.
-      `examples/embed/web/main.go` mounts a `webagg.Server` at `/`,
-      serves the `basic_line` figure, wires `Save` to a server-side
-      PNG writer, and forwards hover events to the toolbar status
-      line via `Axes.FormatCoord`.
-
-### 4.4 Real-Time Redraw
-
-- [x] Blit / damage-region optimizations for animated artists, riding on the
-      existing AGG `CopyFromBBox` / `RestoreRegion` surface.
-      WebAgg managers now expose the shared `canvas.BlitCanvas`
-      surface (`CopyFromBBox` / `RestoreRegion` / `Blit`) and can
-      broadcast a damaged renderer buffer without a full figure draw.
-- [x] `draw_idle` scheduling parity: coalesce redraw requests, drop stale
-      frames, honor the figure's `stale` propagation.
-      `webagg.Manager.DrawIdle` schedules work through a backend event
-      loop, coalesces repeated requests before the idle callback runs,
-      and wires stale artist callbacks into idle redraws.
-- [x] Tests that verify event-driven mutations produce exactly one redraw
-      per idle tick, not one per mutation.
-      `backends/webagg` covers coalesced draw-idle bursts, stale artist
-      redraw scheduling, and blit broadcasts that avoid a full
-      `DrawFigure` traversal.
-
-**Exit criteria:**
-
-- [x] At least one desktop and one web interactive backend can drive pan /
-      zoom / pick across every plot category committed in earlier phases.
-      Pan and zoom are wired for Gio, WebAgg, and WASM, and Gio/WebAgg
-      now emit `pick_event` on mouse press when an artist is hit.
-      `internal/examplecatalog.InteractiveCoverageMatrix` lists every
-      catalog topic with a figure-backed representative, and WebAgg/Gio
-      matrix tests drive draw, pan drag, scroll zoom, and pick-click
-      input for every row.
-- [x] Event lifecycle and redraw scheduling match upstream Matplotlib for
-      the documented event set.
-      Draw-idle coalescing and WebAgg stale redraw scheduling are in
-      place. Figure and axes enter / leave, mouse press-before-pick,
-      release-without-pick, WebAgg double-click metadata, scroll steps,
-      key normalization, and modifier payloads are covered for the
-      touched WebAgg/Gio paths. Headless, Gio, WebAgg, and WASM now use
-      the shared normalization and lifecycle surface where applicable;
-      focused tests cover draw, draw_idle, resize, close, stale redraw,
-      and renderer-error propagation for the concrete backends.
-- [x] Interactive backends share the same artist / event / renderer surface
-      as the headless backends.
-      The common `FigureCanvas`, `DrawIdleCanvas`, `BlitCanvas`,
-      `Dispatcher`, `Navigation`, picker, and toolbar pieces are covered
-      by runtime assertions, WebAgg/Gio matrix tests, WASM compile
-      verification, embedder docs, and the switchable embed example.
-
-### 4.5 Interactive Coverage Matrix
-
-- [x] Add a catalog-driven interactive smoke harness that drives at least
-      one desktop backend (Gio) and one web backend (WebAgg) across every
-      plot category committed in Phases 1–3.
-      The harness should live beside the existing backend tests, reuse
-      `internal/examplecatalog.Case`, synthesize pan drag, scroll zoom,
-      box zoom, and pick clicks, and assert semantic outcomes rather than
-      exact pixels: draw events fire, axis limits change when expected,
-      pick events fire for pickable cases, and the renderer does not
-      panic.
-      `backends/webagg.TestInteractiveCoverageMatrixWebAgg` and
-      `backends/desktop/gio.TestInteractiveCoverageMatrixGio` drive each
-      `InteractiveCoverageMatrix` representative through draw, pan drag,
-      scroll zoom, and pick-click input.
-- [x] Extend `internal/examplecatalog.Case` with optional interactive
-      metadata: `PickPointData`, `PickPointPixel`, `Pickable` /
-      `NoPickReason`, and per-case pan/zoom skip flags for non-Cartesian
-      or intentionally static figures.
-      Existing catalog rows should default to the conservative path:
-      pan/zoom smoke runs where axes support pixel inversion; pick checks
-      run only when metadata identifies a pickable artist.
-      The fields are present on `Case`; the current matrix defaults to
-      conservative smoke checks and reserves exact pick assertions for
-      rows that later declare pick points.
-- [x] Add WebAgg protocol-level integration coverage for pan, zoom, and
-      pick using real `httptest` WebSocket clients, not only direct
-      `HandleClientMessage` calls.
-      `backends/webagg.TestWebSocketDrivesPanScrollAndPick` sends
-      toolbar, mouse, scroll, and pick-click JSON over a real
-      `httptest` WebSocket connection.
-- [x] Add a cgo-free Gio synthetic-input suite for pan, zoom, and pick
-      over representative catalog categories, plus a documented manual
-      command for visual Gio smoke checks.
-      Gio's matrix test uses synthetic `pointer.Event` input over every
-      catalog topic representative. `docs/interactive-backends.md`
-      documents switchable Gio/WebAgg/headless smoke commands.
-
-**Exit criteria:**
-
-- [x] The Phase 4 first exit criterion is backed by automated coverage
-      listing every catalog category and whether it passed, skipped with
-      reason, or is explicitly unsupported.
-      `backends.TestInteractiveMatrixCoversEveryCatalogTopic` and
-      `TestInteractiveMatrixHasFigureFactoryForEveryCatalogTopic` assert
-      coverage for every catalog topic.
-
-### 4.6 Event Lifecycle Parity Closure
-
-- [x] Add explicit figure enter / leave event types to `canvas.EventType`
-      and map WebAgg `figure_enter` / `figure_leave` plus Gio pointer
-      enter/leave into those events instead of collapsing them into
-      mouse move.
-      `canvas.EventFigureEnter` / `EventFigureLeave` are covered by
-      `canvas/architecture_test.go`; WebAgg and Gio dispatch tests
-      assert backend mapping and payload positions.
-- [x] Add axes enter / leave semantics on top of figure mouse motion.
-      `canvas.AxesHoverTracker` keeps per-canvas hover state and
-      synthesizes `canvas.EventAxesEnter` / `EventAxesLeave` when the
-      resolved axes under the cursor changes. WebAgg and Gio dispatch
-      tests cover same-axes motion suppression, axes switching, and
-      leaving the figure.
-- [x] Add event-ordering tests against the documented Matplotlib flow:
-      mouse press emits the button event then pick event; release emits
-      release only; double-click preserves click count / double-click
-      metadata; scroll uses upstream step semantics; key events preserve
-      normalized key plus modifier bitfields.
-      WebAgg and Gio assert mouse-press before pick-event ordering and
-      release / scroll / key payload behavior. WebAgg `dblclick` now
-      dispatches `canvas.EventMousePress` with `DoubleClick=true`.
-      Gio's pointer event type does not expose double-click metadata.
-- [x] Centralize backend event normalization helpers for mouse buttons,
-      modifiers, scroll deltas, key strings, and double-click metadata so
-      Gio, WebAgg, WASM, and headless simulations report the same
-      canvas-level event payloads.
-      Shared helpers now live in `canvas/input.go` for modifier sets,
-      modifier names, browser mouse-button indices, and key
-      normalization. WebAgg and Gio use the shared modifier/key helpers
-      on the exercised paths; WASM now uses the same helpers and emits
-      pick / enter / leave through the shared paths.
-- [x] Add lifecycle tests for draw, draw_idle, resize, close, stale artist
-      redraw, and error propagation across headless, Gio, WebAgg, and
-      WASM where applicable.
-      Headless, Gio, and WebAgg have focused lifecycle and error tests;
-      WASM compiles with the shared lifecycle path under `GOOS=js
-      GOARCH=wasm`.
-
-**Exit criteria:**
-
-- [x] The Phase 4 second exit criterion has a parity table mapping each
-      documented Matplotlib event to the corresponding canvas event,
-      backend mappings, and tests.
-      `docs/interactive-backends.md` contains the event parity table and
-      links the common payload contract to backend behavior.
-
-### 4.7 Shared Interactive Surface Hardening
-
-- [x] Add compile-time and runtime assertions that every interactive
-      backend exposes the expected common surface:
-      `FigureCanvas`, `DrawIdleCanvas`, `Dispatcher` event flow,
-      navigation, toolbar, and save hooks; `BlitCanvas` where the
-      renderer supports buffer regions.
-      Headless compile-time interface assertions now exist alongside
-      the existing WebAgg and Gio compile-time checks; runtime assertions
-      cover headless, WebAgg, and Gio. WASM is covered by compile
-      verification.
-- [x] Decide whether desktop Gio should expose `canvas.BlitCanvas` by
-      reusing its retained renderer/image buffer, or document why full
-      frame blits remain the desktop path until animation work in Phase 6.
-      Gio remains a full-frame redraw backend for now; the rationale is
-      documented in `docs/interactive-backends.md`.
-- [x] Align WebAgg, Gio, and WASM hover status, cursor, rubber-band,
-      toolbar history, and navigation-mode announcements through shared
-      canvas-level APIs instead of backend-local conventions.
-      `ToolbarController` now exposes shared mode/message announcement
-      callbacks; WebAgg broadcasts `navigate_mode` and `message` through
-      those callbacks, Gio keeps the same toolbar state locally, and
-      WASM shares the normalized hover/pick lifecycle.
-- [x] Add docs for embedders describing the common interactive contracts:
-      event registration, pick handling, draw idle, blit regions,
-      toolbar actions, save handlers, and backend capability detection.
-      `docs/interactive-backends.md` documents the common canvas
-      surface, optional `DrawIdleCanvas` / `BlitCanvas` capabilities,
-      event payload mapping, picker behavior, backend notes, and Gio's
-      full-frame redraw decision.
-
-**Exit criteria:**
-
-- [x] The Phase 4 third exit criterion is backed by shared-interface
-      assertions, embedder docs, and at least one example that can switch
-      between headless, Gio, and WebAgg without changing artist/event
-      code.
-      Runtime assertions live in `backends.TestInteractiveBackendsExposeCommonSurface`,
-      docs live in `docs/interactive-backends.md`, and
-      `examples/embed/switchable` uses one figure/event setup across the
-      three backend choices.
+- Navigation, picking, hover coordinate formatting, callback registration, and
+  Matplotlib-style event lifecycle semantics are implemented on the shared
+  canvas/event surface.
+- The Gio desktop backend hosts AGG rendering, maps toolkit input to canvas
+  events, supports toolbar actions, and ships desktop embedding examples.
+- The WebAgg backend implements server-side managers, WebSocket protocol
+  handling, browser canvas updates, toolbar state, binary PNG frames, and
+  embedding examples.
+- The WASM demo host supports pan, zoom, rubber-band selection, toolbar
+  actions, hover state, and shared input normalization.
+- Draw-idle coalescing, stale redraw propagation, blit/damage-region support,
+  lifecycle/error tests, and matrix smoke coverage exercise catalog
+  representatives across Gio and WebAgg.
+- `docs/interactive-backends.md` documents the common event, picker, toolbar,
+  draw-idle, save, and backend capability contracts.
 
 ---
 
 # Phase 5: Widgets and Selectors
 
-**Goal:** turn the static widget artist surface introduced in Phase 7 into
-fully interactive widgets that participate in the event dispatch from
-Phase 4.
+✅ **Completed.** Static widget artists are fully interactive through the
+shared Phase 4 event dispatcher.
 
-**Reference sources:** `third_party/matplotlib/lib/matplotlib/widgets.py`.
+Completed scope:
 
-### 5.1 Interactive Widget Behaviors
-
-- [x] `Button` click activation with hover, press, and disabled states.
-- [x] `Slider` and `RangeSlider` with click-to-set, drag, keyboard nudging,
-      and value formatting.
-- [x] `CheckButtons` and `RadioButtons` with keyboard navigation and
-      value-change callbacks.
-- [x] `TextBox` with focus, caret, selection, copy / paste, and submit /
-      cancel callbacks.
-
-### 5.2 Selectors
-
-- [x] `SpanSelector`, `RectangleSelector`, `EllipseSelector`,
-      `PolygonSelector`, and `LassoSelector` with mouse and keyboard editing.
-- [x] Modifier-key behaviors (shift / ctrl / alt) matching upstream
-      defaults.
-- [x] `Cursor` and `MultiCursor` helpers driven by hover events.
-
-### 5.3 Widget Composition
-
-- [x] Widget z-order separate from artist z-order so widgets always sit on
-      top of plot data.
-- [x] Layout helpers for widget axes that compose with `GridSpec` and
-      `constrained_layout`.
-- [x] Widget gallery example covering every widget, mirroring the upstream
-      `gallery/widgets/` family.
-
-**Exit criteria:**
-
-- [x] Every widget responds to mouse and keyboard events through the shared
-      event dispatcher.
-- [x] Selectors emit semantic callbacks (with data-coordinate payloads) and
-      are usable for ROI selection workflows.
-- [x] Widget examples render correctly in headless mode and remain
-      interactive in desktop and web backends.
+- Buttons, sliders, range sliders, check buttons, radio buttons, and text boxes
+  support pointer and keyboard interaction, state changes, and callbacks.
+- Span, rectangle, ellipse, polygon, and lasso selectors support mouse and
+  keyboard editing with upstream-style modifier behavior.
+- Cursor and multi-cursor helpers are driven by shared hover events.
+- Widget z-order, widget-axis layout helpers, and a complete widget gallery are
+  in place for headless, desktop, and web backends.
 
 ---
 
@@ -2007,84 +1551,21 @@ renderer contract, backend implementation, or the AGG port itself.
 
 # Phase 8A: Cross-Fixture Parity Hardening
 
-**Goal:** turn individual RMSE fixes into general Matplotlib parity fixes. A
-change that improves one catalog case is not complete until it is checked
-against a varied set of related fixtures and shown not to rely on example-local
-behavior.
+✅ **Completed.** Individual RMSE fixes are now governed by reusable
+cross-fixture validation rules so parity work cannot overfit one catalog case.
 
-This phase exists because cases such as `figure_labels_composition` can expose
-real core issues in constrained layout, rotated labels, figure-level labels,
-text metrics, and AGG rasterization. The correct outcome is a reusable library
-fix that also improves or preserves the neighboring examples, not a narrow
-patch that only makes one PNG pass.
+Completed scope:
 
-**Policy:**
-
-- [x] No example-source workaround is acceptable unless the Go example was
-      demonstrably not equivalent to the Matplotlib reference source.
-- [x] No fixture-specific logic, magic offsets, or catalog-ID conditionals are
-      acceptable in core, layout, renderer, or backend code.
-- [x] Any empirical correction must either be replaced with a source-backed
-      model from `third_party/matplotlib`, converted into a renderer/geometry
-      invariant with tests, or explicitly tracked as unresolved before merge.
-- [x] Validate every parity fix against a fixture cluster, not just the first
-      failing case. For layout/text work this includes at least
-      `figure_labels_composition`, `text_labels_strict`,
-      `axes_top_right_inverted`, `axes_control_surface`,
-      `transform_coordinates`, `annotation_composition`, and
-      `colorbar_composition` when relevant.
-- [x] For image, mesh, colorbar, and rasterizer work, also check the related
-      image/mesh fixtures such as `image_heatmap`, `imshow_clipped`,
-      `imshow_transformed`, `spy_image`, `pcolor_flat`,
-      `pcolormesh_gouraud`, `boundarynorm_pcolormesh`, `lognorm_imshow`,
-      `twoslope_norm_image`, and `colorbar_extensions`.
-- [x] For 3D or projection fixes, check the corresponding `mplot3d_*`,
-      polar, geographic, radar, and skew fixtures so a local improvement does
-      not regress another coordinate system.
-- [x] If the residual points to a fundamental issue in the AGG Go port, it is
-      valid to modify `../agg_go` instead of compensating inside
-      `matplotlib-go`. Such changes must be treated as renderer fixes and
-      covered by AGG-level tests or cross-checked through parity fixtures.
-
-**Validation clusters:**
-
-- [x] `internal/examplecatalog.ValidationClusters` defines named Phase 8A
-      clusters for `layout-text`, `image-mesh-colorbar`, and `projection-3d`.
-- [x] Catalog tests enforce the required cluster members from this phase so
-      future parity fixes can cite a stable validation group instead of a
-      single fixture.
-- [x] `TestNoCatalogIDsInLibraryImplementation` scans non-test
-      `core/`, `render/`, and `backends/` implementation files for quoted
-      catalog IDs so library code cannot silently grow fixture-specific
-      branches.
-- [x] `internal/examplecatalog.ParityFixValidationTargets` maps every Phase 8
-      case to the named cluster(s) that must be used before accepting a fix.
-      `TestParityFixValidationTargetsNameClusters` enforces complete coverage,
-      valid cluster IDs, and cluster membership.
-
-**Resolved empirical corrections / renderer nudges:**
-
-- [x] Owner: layout/text parity. `core/layout_engine.go` now derives
-      constrained-layout padding and default inter-cell spacing from
-      Matplotlib's rc defaults (`figure.constrained_layout.{h_pad,w_pad}` =
-      3 pt; `{hspace,wspace}` = `0.02`) and its padding rule in
-      `third_party/matplotlib/lib/matplotlib/_constrained_layout.py`. The
-      previous `AxisLineWidth`-scaled row/x-label nudges were removed.
-- [x] Owner: figure/text layout parity. `core/figure_layout.go` now derives
-      figure-label autopositions from Matplotlib's `Figure.suptitle`,
-      `supxlabel`, and `supylabel` defaults (`y=0.98`, `y=0.01`, `x=0.02`),
-      constrained-layout figure-label pads from Matplotlib's constrained
-      layout pad, and figure-artist stacking separation from
-      `legend.borderaxespad = 0.5` font-size units. The previous fixed 4 pt
-      gaps and rotated `SupYLabel` `AxisLineWidth` y-anchor nudge were removed.
-
-**Exit criteria:**
-
-- [x] Every accepted Phase 8 fix names the fixture cluster used for validation.
-- [x] Any remaining empirical constants or renderer-specific nudges are listed
-      with an owner, rationale, and removal path.
-- [x] The catalog contains enough varied fixtures that a layout, text, image,
-      mesh, projection, or 3D fix cannot silently overfit one example.
+- Parity-fix policy forbids example-source workarounds, fixture-specific core
+  branches, catalog-ID conditionals, and unexplained empirical constants.
+- `internal/examplecatalog.ValidationClusters` defines stable validation groups
+  for layout/text, image/mesh/colorbar, and projection/3D work.
+- Catalog tests enforce cluster membership, required validation targets, and
+  the absence of quoted catalog IDs in non-test implementation files.
+- Accepted layout/text empirical corrections were replaced with source-backed
+  Matplotlib models for constrained-layout padding, figure-label
+  autopositioning, and figure-artist spacing.
+- Remaining renderer nudges must carry owner, rationale, and removal path before acceptance.
 
 ---
 
@@ -2211,166 +1692,25 @@ are missing.
 
 # Phase 9A: Feature and Demo Coverage Audit
 
-**Goal:** make missing Matplotlib parity coverage visible before v1.0 by
-auditing each fundamental Matplotlib feature area for three things: direct Go
-equivalent, catalog / demo coverage, and whether the demo actually exercises
-the feature breadth.
+✅ **Completed.** The coarse feature/demo audit now makes missing Matplotlib
+parity coverage visible and testable before v1.0.
 
-**Reference sources:** `third_party/matplotlib/lib/matplotlib/`,
-`third_party/matplotlib/galleries/examples/`, `internal/examplecatalog/`,
-`examples/`, `test/parity/`, and `test/matplotlib_ref/`.
+Completed scope:
 
-### 9A.1 Coverage Matrix
-
-- [x] Add a machine-readable coverage inventory that maps upstream Matplotlib
-      modules / gallery families to local Go implementation files, catalog IDs,
-      user-facing examples, browser demos, and intentional omissions.
-- [x] For each row, record status for direct Go translation / equivalent,
-      parity fixture, user-facing showcase, browser demo, and breadth quality.
-- [x] Fail CI when a catalog topic or upstream gallery family is marked
-      implemented but has neither a fixture nor an intentional omission note.
-
-Current slice landed:
-
-- `internal/examplecatalog.FeatureCoverageMatrix` records the initial Phase 9A
-  inventory across foundational Matplotlib areas: artists, axes, figure/layout,
-  axis/ticker/scale, transforms, lines, collections, patches, text/annotation/
-  legend, images, colorbars, colors/colormaps/norms, pyplot, renderer/backends,
-  widgets/events/animation, and toolkit/projection families.
-- Catalog tests now enforce stable coverage row IDs, non-empty upstream
-  references and coverage statuses, valid catalog/showcase/web-demo references,
-  existing Go implementation file paths, and the implemented-row rule that each
-  implemented area must have parity fixtures or an explicit omission note.
-
-### 9A.2 Foundation API Gaps
-
-- [x] Audit `artist.py`, `axis.py`, `ticker.py`, `scale.py`, `transforms.py`,
-      `lines.py`, `collections.py`, `patches.py`, `text.py`, `image.py`,
-      `colorbar.py`, `cm.py`, `colors.py`, `pyplot.py`, and
-      `backend_bases.py` against the Go equivalents.
-- [x] Track missing or thin fundamentals: artist property / stale / callback
-      APIs, richer locator / formatter catalog, explicit tick-artist behavior,
-      transform / BBox breadth, collection variants, patch and box / arrow
-      style registries, advanced text / font behavior, image classes, colorbar
-      orientation / tick behavior, advanced norms / LightSource, and high-value
-      pyplot wrappers.
-- [x] For each gap, decide: implement, expose through an idiomatic Go
-      equivalent, or document as an intentional divergence.
-
-Current slice landed:
-
-- `internal/examplecatalog.FoundationAPIGapAudit` records stable Phase 9A.2
-  gap decisions across artist properties and per-artist clipping, ticker /
-  formatter / scale gaps, tick artist behavior, transform / BBox breadth,
-  Line2D marker and data semantics, collection variants and scalar-mappable
-  updates, patch style registries, text / font / annotation layout, image
-  classes and interpolation policy, colorbar placement / ticks, advanced
-  colors / norms / LightSource, pyplot wrappers, and backend canvas / manager
-  lifecycle.
-- Catalog tests now enforce coverage for every Phase 9A.2 upstream module,
-  stable required gap IDs, valid linked Phase 9A coverage rows, non-empty
-  current-equivalent / gap / decision / rationale text, and existing Go file
-  references for each gap row.
-
-### 9A.3 Demo Breadth Gaps
-
-- [x] Promote fixture-heavy basics into user-facing demos where the current
-      showcase is too thin: marker grids, advanced scatter,
-      grouped / horizontal / stacked bars, fill_between / stacked fill,
-      histogram density / strategies, named colors, colormap families, image
-      interpolation / alpha / matshow / spy, and colorbar norm / extension
-      variants.
-- [x] Add or expand feature-breadth galleries for MathText,
-      ticks / scales / formatters, text alignment / rotation / wrapping,
-      annotations / legends / offset boxes, mplot3d,
-      geographic / radar / skew projections, axisartist, axes_grid1,
-      unstructured triangulation, and mixed raster / vector output.
-- [x] Keep examples close to the upstream Matplotlib examples; fix core
-      behavior rather than adjusting examples to hide parity gaps.
-
-Current slice landed:
-
-- `internal/examplecatalog.DemoBreadthGaps` records stable Phase 9A.3 demo
-  breadth rows for marker/line grids, advanced scatter, bar and fill variants,
-  histogram strategies, named colors, colormap families, image variants,
-  colorbar norm/extension variants, MathText, ticks/scales/formatters,
-  text layout, annotation/legend/offset boxes, mplot3d, projection/toolkit
-  breadth, unstructured triangulation, and mixed raster/vector output.
-- Catalog tests now enforce required demo-breadth IDs, valid catalog/showcase/
-  web-demo references, non-empty current-coverage / need / recommended-demo
-  text, supported priorities, actionable high-priority target-feature lists,
-  and linkage from high-priority demo gaps back to thin or fixture-only Phase
-  9A coverage rows.
-
-### 9A.4 Browser Demo Coverage
-
-- [x] Reconcile `test/matplotlib_ref/webdemos/` with
-      `internal/examplecatalog.WebDemos()`: wire unused web reference modules
-      into the browser gallery or mark them as reference-only.
-- [x] Add browser demos for existing showcase families that are currently
-      CLI-only but important for inspection: annotations, bars, errorbars,
-      fills, heatmaps, histograms, lines, patches, scatter, subplots, mplot3d,
-      and projection / toolkit demos.
-- [x] Ensure browser demos use the same catalog source as parity tests so web
-      coverage cannot drift from reference coverage.
-
-Current slice landed:
-
-- `internal/examplecatalog.BrowserDemoCoverageRows` records stable Phase 9A.4
-  reconciliation rows for every inactive `test/matplotlib_ref/webdemos/*.py`
-  module, marking catalog-backed modules as planned browser work and keeping
-  `radialforce` reference-only until it is promoted to a catalog case.
-- The same inventory records every current `Showcase: true` catalog row without
-  a `WebDemoID`, so CLI-only examples have explicit browser-demo follow-up
-  actions tied back to the catalog source of truth.
-- Catalog tests now enforce stable browser coverage rows, valid catalog and
-  active-web-demo references, complete reconciliation of Python web reference
-  modules, and complete accounting for CLI-only showcases.
-
-### 9A.5 Reference Consistency
-
-- [x] Ensure every catalog case has matching Go and Python parity sources under
-      `test/parity/<id>/`.
-- [x] Add any missing Matplotlib reference plot modules for catalog IDs that
-      currently rely on generated images without a visible source counterpart.
-- [x] Add a catalog test that reports cases with fixture-only coverage but no
-      user-facing showcase when the topic is considered public API.
-
-Current slice landed:
-
-- Catalog tests now enforce canonical `test/parity/<id>/plot.go` and
-  `test/parity/<id>/plot.py` source pairs for every catalog case.
-- Catalog tests now enforce a visible
-  `test/matplotlib_ref/plots/<id>.py` module for every catalog case; the
-  missing bilinear and bicubic imshow reference modules were added.
-- `internal/examplecatalog.ReferenceConsistencyClassifications` records
-  fixture-only public API cases that are intentionally backend-stress,
-  mesh-shading, signal-demo, or compound-statistics fixtures instead of
-  standalone user-facing showcases.
-- `docs/phase-9a-coverage-audit.md` explains how to read the Phase 9A
-  inventories, summarizes the current findings, and clarifies that the exit
-  criteria are audit criteria unless later phases explicitly promote the
-  discovered gaps into implementation work.
-- `internal/examplecatalog.CoverageAuditExitCriteria` makes that exit-criteria
-  interpretation testable, including which criteria are audit-satisfied and
-  which still expose follow-up implementation or browser-demo work.
-
-**Audit exit criteria:**
-
-- [x] Every fundamental Matplotlib feature area is classified as implemented,
-      partially implemented, intentionally omitted, or pending.
-- [x] Every implemented public feature has at least one parity fixture or a
-      documented reason why visual parity testing is not applicable.
-- [x] Every major user-facing feature family has an audit row explaining
-      whether showcase coverage is broad, thin, fixture-only, pending, or
-      intentionally omitted.
-- [x] Browser demo coverage is reconciled against the catalog so planned,
-      active, and reference-only browser work cannot drift silently.
-
-**Important:** Phase 9A answers "what is missing?" at audit granularity. It
-does not claim that every missing Matplotlib API or example has been
-implemented. The implementation work discovered by Phase 9A continues in
-Phases 9B-9E below.
+- `FeatureCoverageMatrix` classifies foundational Matplotlib areas by
+  implementation, parity fixture, showcase, browser-demo, and breadth status.
+- `FoundationAPIGapAudit` records decisions for thin or missing fundamental
+  APIs across artists, axes, ticks, transforms, lines, collections, patches,
+  text, images, colorbars, colors, pyplot, and backends.
+- `DemoBreadthGaps` tracks fixture-heavy or thin user-facing examples and links
+  high-priority gaps to target feature families.
+- `BrowserDemoCoverageRows` reconciles inactive web reference modules and
+  CLI-only showcases against active, planned, or reference-only browser demo
+  status.
+- Reference-consistency tests enforce Go/Python parity source pairs and visible
+  Matplotlib reference modules for catalog cases.
+- `docs/phase-9a-coverage-audit.md` explains the audit inventories and
+  clarifies that implementation follow-up continues in Phases 9B-9E.
 
 ---
 
