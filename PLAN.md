@@ -477,7 +477,7 @@ regressing after native backend work lands.
       SVG, PDF, and Skia without backend-name conditionals.
 - [x] `Artist.SetRasterized(true)` produces correct mixed-mode output on
       every vector backend.
-- [ ] All effects have committed golden and Matplotlib-reference fixtures.
+- [x] All effects have committed golden and Matplotlib-reference fixtures.
 
 ---
 

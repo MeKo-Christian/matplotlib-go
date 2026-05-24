@@ -124,6 +124,7 @@ import (
 	example_patch_showcase "github.com/cwbudde/matplotlib-go/test/parity/patch_showcase"
 	example_path_clipped_transformed "github.com/cwbudde/matplotlib-go/test/parity/path_clipped_transformed"
 	example_path_effects "github.com/cwbudde/matplotlib-go/test/parity/path_effects"
+	example_pattern_gradient_effects "github.com/cwbudde/matplotlib-go/test/parity/pattern_gradient_effects"
 	example_pcolor_flat "github.com/cwbudde/matplotlib-go/test/parity/pcolor_flat"
 	example_pcolormesh_gouraud "github.com/cwbudde/matplotlib-go/test/parity/pcolormesh_gouraud"
 	example_pcolormesh_masked "github.com/cwbudde/matplotlib-go/test/parity/pcolormesh_masked"
@@ -177,6 +178,7 @@ var renderByID = map[string]func() image.Image{
 	"line2d_semantics":                   example_line2d_semantics.Render,
 	"line2d_markers":                     example_line2d_markers.Render,
 	"path_effects":                       example_path_effects.Render,
+	"pattern_gradient_effects":           example_pattern_gradient_effects.Render,
 	"scatter_basic":                      example_scatter_basic.Render,
 	"scatter_marker_types":               example_scatter_marker_types.Render,
 	"scatter_advanced":                   example_scatter_advanced.Render,
@@ -303,6 +305,7 @@ var figureByID = map[string]func() *core.Figure{
 	"line2d_markers":                     example_line2d_markers.Plot,
 	"line2d_semantics":                   example_line2d_semantics.Plot,
 	"path_effects":                       example_path_effects.Plot,
+	"pattern_gradient_effects":           example_pattern_gradient_effects.Plot,
 	"arrays_showcase":                    showcase_arrays_showcase.Plot,
 	"axes_grid1_showcase":                showcase_axes_grid1_showcase.Plot,
 	"axes_control_surface":               showcase_axes_control_surface.Plot,

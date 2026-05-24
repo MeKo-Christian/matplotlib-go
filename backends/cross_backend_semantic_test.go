@@ -1,12 +1,14 @@
 package backends_test
 
 import (
+	"image"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/backends"
-	_ "github.com/cwbudde/matplotlib-go/backends/agg" // register AGG backend
-	_ "github.com/cwbudde/matplotlib-go/backends/pdf" // register PDF backend
-	_ "github.com/cwbudde/matplotlib-go/backends/svg" // register SVG backend
+	_ "github.com/cwbudde/matplotlib-go/backends/agg"  // register AGG backend
+	_ "github.com/cwbudde/matplotlib-go/backends/pdf"  // register PDF backend
+	_ "github.com/cwbudde/matplotlib-go/backends/skia" // register Skia backend
+	_ "github.com/cwbudde/matplotlib-go/backends/svg"  // register SVG backend
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -58,14 +60,37 @@ func TestCrossBackendPatternGradientSemanticParity(t *testing.T) {
 	}
 
 	want := drawAndCount(t, backends.AGG, makeFigure())
-	if want.gradientPaint == 0 || want.patternPaint == 0 {
-		t.Fatalf("AGG semantic probe did not draw gradient/pattern paints: %+v", want)
+	assertEffectRoutingCounts(t, backends.AGG, want)
+	if want.filterStart == 0 || want.filterStop == 0 {
+		t.Fatalf("AGG semantic probe did not route filtered path effects through render.FilterRenderer: %+v", want)
 	}
-	for _, backend := range []backends.Backend{backends.SVG, backends.PDF} {
+	for _, backend := range []backends.Backend{backends.SVG, backends.PDF, backends.Skia} {
+		info, ok := backends.DefaultRegistry.Get(backend)
+		if !ok {
+			t.Fatalf("backend %s not registered", backend)
+		}
+		if !info.Available {
+			t.Run(string(backend), func(t *testing.T) {
+				t.Skipf("backend %s is not available in this build", backend)
+			})
+			continue
+		}
 		got := drawAndCount(t, backend, makeFigure())
+		assertEffectRoutingCounts(t, backend, got)
 		if got.gradientPaint != want.gradientPaint || got.patternPaint != want.patternPaint {
 			t.Fatalf("%s pattern/gradient semantic counts = gradient %d pattern %d, want gradient %d pattern %d",
 				backend, got.gradientPaint, got.patternPaint, want.gradientPaint, want.patternPaint)
+		}
+		if backend == backends.SVG || backend == backends.PDF {
+			if got.pathEffectFilterDraw == 0 || got.filterStart != 0 || got.filterStop != 0 {
+				t.Fatalf("%s filtered path-effect routing = native draws %d filter starts/stops %d/%d, want native filter drawer only",
+					backend, got.pathEffectFilterDraw, got.filterStart, got.filterStop)
+			}
+			continue
+		}
+		if got.pathEffectFilterDraw != 0 || got.filterStart == 0 || got.filterStop == 0 {
+			t.Fatalf("%s filtered path-effect routing = native draws %d filter starts/stops %d/%d, want render.FilterRenderer",
+				backend, got.pathEffectFilterDraw, got.filterStart, got.filterStop)
 		}
 	}
 }
@@ -122,6 +147,25 @@ func compareCounts(t *testing.T, agg, svg *semanticCounts) {
 	}
 }
 
+func assertEffectRoutingCounts(t *testing.T, backend backends.Backend, counts semanticCounts) {
+	t.Helper()
+	if counts.gradientPaint == 0 {
+		t.Fatalf("%s semantic probe did not draw a gradient paint: %+v", backend, counts)
+	}
+	if counts.patternPaint == 0 {
+		t.Fatalf("%s semantic probe did not draw a pattern paint: %+v", backend, counts)
+	}
+	if counts.pathEffectPaint == 0 {
+		t.Fatalf("%s semantic probe did not draw a path-effect paint: %+v", backend, counts)
+	}
+	if counts.pathEffectDrawer == 0 {
+		t.Fatalf("%s semantic probe did not route path effects through render.PathEffectDrawer: %+v", backend, counts)
+	}
+	if counts.pathEffectFilterSupports == 0 {
+		t.Fatalf("%s semantic probe did not query render.PathEffectFilterDrawer support: %+v", backend, counts)
+	}
+}
+
 type patternGradientSemanticArtist struct{}
 
 func (patternGradientSemanticArtist) Draw(r render.Renderer, ctx *core.DrawContext) {
@@ -156,6 +200,25 @@ func (patternGradientSemanticArtist) Draw(r render.Renderer, ctx *core.DrawConte
 		Stroke:    render.Color{A: 1},
 		LineWidth: 1,
 	})
+
+	effectPath := semanticRectPath(42, 104, 92, 132)
+	r.Path(effectPath, &render.Paint{
+		Fill:      render.Color{G: 0.45, B: 0.2, A: 1},
+		Stroke:    render.Color{A: 1},
+		LineWidth: 2,
+		PathEffects: []render.PathEffect{
+			render.StrokePathEffect(render.Color{R: 1, G: 0.55, A: 1}, 5, geom.Pt{X: 3, Y: -3}),
+			render.NormalPathEffect(),
+		},
+	})
+
+	filterPath := semanticRectPath(112, 108, 164, 136)
+	r.Path(filterPath, &render.Paint{
+		PathEffects: []render.PathEffect{
+			render.FilterPathEffect(render.Color{R: 0.15, B: 0.75, A: 0.8}, render.Color{}, 0, "blur", 3, geom.Pt{X: 3, Y: -2}),
+			render.NormalPathEffect(),
+		},
+	})
 	_ = ctx
 }
 
@@ -174,16 +237,18 @@ func semanticRectPath(x0, y0, x1, y1 float64) geom.Path {
 }
 
 type semanticCounts struct {
-	clipRect, clipPath          int
-	path, image                 int
-	gradientPaint, patternPaint int
-	imageTransformed            int
-	glyphRun, glyphTotal        int
-	drawText, drawTextRot       int
-	drawTextVert                int
-	drawMarkers, markerItems    int
-	drawPathColl, pathCollItems int
-	save, restore               int
+	clipRect, clipPath                            int
+	path, image                                   int
+	gradientPaint, patternPaint, pathEffectPaint  int
+	pathEffectDrawer, pathEffectFilterSupports    int
+	pathEffectFilterDraw, filterStart, filterStop int
+	imageTransformed                              int
+	glyphRun, glyphTotal                          int
+	drawText, drawTextRot                         int
+	drawTextVert                                  int
+	drawMarkers, markerItems                      int
+	drawPathColl, pathCollItems                   int
+	save, restore                                 int
 }
 
 // countingRenderer wraps a render.Renderer and counts the semantic verbs it
@@ -199,21 +264,24 @@ type countingRenderer struct {
 // capabilities AGG and SVG both implement, so type-assertion-based dispatch in
 // core code routes identically for both backends.
 var (
-	_ render.Renderer             = (*countingRenderer)(nil)
-	_ render.DPIAware             = (*countingRenderer)(nil)
-	_ render.TextDrawer           = (*countingRenderer)(nil)
-	_ render.RotatedTextDrawer    = (*countingRenderer)(nil)
-	_ render.VerticalTextDrawer   = (*countingRenderer)(nil)
-	_ render.TextPather           = (*countingRenderer)(nil)
-	_ render.TeXMetricer          = (*countingRenderer)(nil)
-	_ render.TeXDrawer            = (*countingRenderer)(nil)
-	_ render.RotatedTeXDrawer     = (*countingRenderer)(nil)
-	_ render.ImageTransformer     = (*countingRenderer)(nil)
-	_ render.MarkerDrawer         = (*countingRenderer)(nil)
-	_ render.PathCollectionDrawer = (*countingRenderer)(nil)
-	_ render.NativeHatcher        = (*countingRenderer)(nil)
-	_ render.PatternFiller        = (*countingRenderer)(nil)
-	_ render.GradientFiller       = (*countingRenderer)(nil)
+	_ render.Renderer               = (*countingRenderer)(nil)
+	_ render.DPIAware               = (*countingRenderer)(nil)
+	_ render.TextDrawer             = (*countingRenderer)(nil)
+	_ render.RotatedTextDrawer      = (*countingRenderer)(nil)
+	_ render.VerticalTextDrawer     = (*countingRenderer)(nil)
+	_ render.TextPather             = (*countingRenderer)(nil)
+	_ render.TeXMetricer            = (*countingRenderer)(nil)
+	_ render.TeXDrawer              = (*countingRenderer)(nil)
+	_ render.RotatedTeXDrawer       = (*countingRenderer)(nil)
+	_ render.ImageTransformer       = (*countingRenderer)(nil)
+	_ render.MarkerDrawer           = (*countingRenderer)(nil)
+	_ render.PathCollectionDrawer   = (*countingRenderer)(nil)
+	_ render.NativeHatcher          = (*countingRenderer)(nil)
+	_ render.PatternFiller          = (*countingRenderer)(nil)
+	_ render.GradientFiller         = (*countingRenderer)(nil)
+	_ render.PathEffectDrawer       = (*countingRenderer)(nil)
+	_ render.PathEffectFilterDrawer = (*countingRenderer)(nil)
+	_ render.FilterRenderer         = (*countingRenderer)(nil)
 )
 
 func (r *countingRenderer) Begin(vp geom.Rect) error { return r.inner.Begin(vp) }
@@ -247,6 +315,12 @@ func (r *countingRenderer) Path(p geom.Path, paint *render.Paint) {
 		}
 		if paint.FillPattern.ID != "" || len(paint.FillPattern.Path.V) > 0 {
 			r.counts.patternPaint++
+		}
+		if len(paint.PathEffects) > 0 {
+			r.counts.pathEffectPaint++
+			if r.DrawPathWithEffects(p, paint) {
+				return
+			}
 		}
 	}
 	r.inner.Path(p, paint)
@@ -366,4 +440,39 @@ func (r *countingRenderer) SupportsGradientFill() bool {
 		return d.SupportsGradientFill()
 	}
 	return false
+}
+
+func (r *countingRenderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
+	r.counts.pathEffectDrawer++
+	return render.DrawPathWithEffects(r, p, paint, r.Path)
+}
+
+func (r *countingRenderer) SupportsPathEffectFilter(effect render.PathEffect) bool {
+	r.counts.pathEffectFilterSupports++
+	if d, ok := r.inner.(render.PathEffectFilterDrawer); ok {
+		return d.SupportsPathEffectFilter(effect)
+	}
+	return false
+}
+
+func (r *countingRenderer) DrawPathEffectFilter(path geom.Path, paint render.Paint, effect render.PathEffect, draw func(geom.Path, *render.Paint)) bool {
+	r.counts.pathEffectFilterDraw++
+	if d, ok := r.inner.(render.PathEffectFilterDrawer); ok {
+		return d.DrawPathEffectFilter(path, paint, effect, draw)
+	}
+	return false
+}
+
+func (r *countingRenderer) StartFilter() {
+	r.counts.filterStart++
+	if d, ok := r.inner.(render.FilterRenderer); ok {
+		d.StartFilter()
+	}
+}
+
+func (r *countingRenderer) StopFilter(postProcess func(*image.RGBA, float64) (*image.RGBA, geom.Pt)) {
+	r.counts.filterStop++
+	if d, ok := r.inner.(render.FilterRenderer); ok {
+		d.StopFilter(postProcess)
+	}
 }
