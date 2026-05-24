@@ -220,6 +220,43 @@ func TestLogLocator_MinorsBetweenMajors(t *testing.T) {
 	}
 }
 
+func TestLogLocatorSubsAutoAndAllModes(t *testing.T) {
+	auto := (LogLocator{Base: 10, SubsMode: "auto"}).Ticks(1, 100, 0)
+	for _, major := range []float64{1, 10, 100} {
+		for _, tick := range auto {
+			if tick == major {
+				t.Fatalf("auto subs should omit integer powers, got %v", auto)
+			}
+		}
+	}
+	for _, want := range []float64{2, 3, 9, 20, 90} {
+		if !hasTick(auto, want) {
+			t.Fatalf("auto subs missing %v in %v", want, auto)
+		}
+	}
+
+	all := (LogLocator{Base: 10, SubsMode: "all"}).Ticks(1, 100, 0)
+	for _, want := range []float64{1, 2, 9, 10, 20, 90, 100} {
+		if !hasTick(all, want) {
+			t.Fatalf("all subs missing %v in %v", want, all)
+		}
+	}
+
+	denseMinor := (LogLocator{Base: 10, Minor: true, SubsMode: "auto"}).Ticks(1, 1e12, 0)
+	if len(denseMinor) != 0 {
+		t.Fatalf("dense auto minor locator = %v, want no ticks", denseMinor)
+	}
+}
+
+func hasTick(ticks []float64, want float64) bool {
+	for _, tick := range ticks {
+		if math.Abs(tick-want) <= 1e-12*math.Max(1, math.Abs(want)) {
+			return true
+		}
+	}
+	return false
+}
+
 func TestSymLogLocator_LinearRange(t *testing.T) {
 	ticks := (SymLogLocator{Base: 10, LinThresh: 1}).Ticks(-0.5, 0.5, 0)
 	want := []float64{-0.5, 0, 0.5}

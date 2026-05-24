@@ -531,9 +531,10 @@ func (l AutoMinorLocator) Ticks(minVal, maxVal float64, targetCount int) []float
 // at Base^k within [min,max]. If Minor is true, places minor ticks at
 // 2×Base^k and 5×Base^k where they lie within [min,max].
 type LogLocator struct {
-	Base  float64
-	Minor bool
-	Subs  []float64
+	Base     float64
+	Minor    bool
+	Subs     []float64
+	SubsMode string
 }
 
 func (l LogLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
@@ -551,15 +552,22 @@ func (l LogLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 	lb := math.Log(base)
 	kmin := math.Ceil(math.Log(minVal) / lb)
 	kmax := math.Floor(math.Log(maxVal)/lb + 1e-10) // Add small epsilon to handle floating point precision
+	nDecades := int(kmax-kmin) + 1
 	var ticks []float64
+	multipliers := l.minorMultipliers(nDecades)
+	includeMultipliers := l.Minor || l.SubsMode != "" || len(l.Subs) > 0
+	if l.Minor && includeMultipliers && len(multipliers) == 0 {
+		return nil
+	}
+	includeMajors := strings.ToLower(strings.TrimSpace(l.SubsMode)) != "auto"
 	// Majors
 	for k := kmin; k <= kmax; k++ {
 		v := math.Pow(base, k)
-		if v >= minVal && v <= maxVal {
+		if includeMajors && v >= minVal && v <= maxVal {
 			ticks = append(ticks, v)
 		}
-		if l.Minor {
-			for _, sub := range l.minorMultipliers() {
+		if includeMultipliers {
+			for _, sub := range multipliers {
 				mv := sub * math.Pow(base, k)
 				if mv > v && mv < math.Pow(base, k+1) && mv >= minVal && mv <= maxVal {
 					ticks = append(ticks, mv)
@@ -582,10 +590,32 @@ func (l LogLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 	return out
 }
 
-func (l LogLocator) minorMultipliers() []float64 {
+func (l LogLocator) minorMultipliers(nDecades int) []float64 {
 	subs := l.Subs
 	if len(subs) == 0 {
-		subs = []float64{2, 5}
+		switch strings.ToLower(strings.TrimSpace(l.SubsMode)) {
+		case "auto", "":
+			if l.Minor && (nDecades >= 10 || l.Base < 3) {
+				return nil
+			}
+			if l.SubsMode == "" && l.Minor {
+				subs = []float64{2, 5}
+			} else {
+				subs = logAutoSubs(l.Base, false)
+			}
+		case "all":
+			if nDecades >= 10 || l.Base < 3 {
+				subs = []float64{1}
+			} else {
+				subs = logAutoSubs(l.Base, true)
+			}
+		default:
+			if l.Minor {
+				subs = []float64{2, 5}
+			} else {
+				return nil
+			}
+		}
 	}
 
 	out := make([]float64, 0, len(subs))
@@ -608,6 +638,22 @@ func (l LogLocator) minorMultipliers() []float64 {
 		}
 	}
 	return deduped
+}
+
+func logAutoSubs(base float64, includeOne bool) []float64 {
+	if base <= 1 || math.IsNaN(base) || math.IsInf(base, 0) {
+		return nil
+	}
+	start := 2.0
+	if includeOne {
+		start = 1
+	}
+	limit := math.Ceil(base)
+	out := make([]float64, 0, int(math.Max(0, limit-start)))
+	for sub := start; sub < limit && sub < base; sub++ {
+		out = append(out, sub)
+	}
+	return out
 }
 
 // SymLogLocator places ticks linearly around zero and logarithmically outside
