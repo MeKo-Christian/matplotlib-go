@@ -197,6 +197,18 @@ func TestPathCloneAndTransform(t *testing.T) {
 	if !transformed.Validate() {
 		t.Fatal("transformed path should preserve command/vertex structure")
 	}
+
+	bounds, ok := path.Bounds()
+	if !ok || bounds != (Rect{Min: Pt{1, 2}, Max: Pt{3, 4}}) {
+		t.Fatalf("path bounds = %+v ok=%v", bounds, ok)
+	}
+	transformedBounds, ok := path.TransformedBounds(Affine{A: 2, D: -1, E: 1, F: 10})
+	if !ok || transformedBounds != (Rect{Min: Pt{3, 6}, Max: Pt{7, 8}}) {
+		t.Fatalf("transformed bounds = %+v ok=%v", transformedBounds, ok)
+	}
+	if _, ok := (Path{}).Bounds(); ok {
+		t.Fatal("empty path bounds should report ok=false")
+	}
 }
 
 func approxPt(a, b Pt, eps float64) bool {

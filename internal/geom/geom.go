@@ -240,6 +240,16 @@ func (p Path) Transformed(m Affine) Path {
 	return out
 }
 
+// Bounds returns the axis-aligned vertex bounds of the path.
+func (p Path) Bounds() (Rect, bool) {
+	return RectFromPoints(p.V...)
+}
+
+// TransformedBounds returns the axis-aligned vertex bounds after applying m.
+func (p Path) TransformedBounds(m Affine) (Rect, bool) {
+	return p.Transformed(m).Bounds()
+}
+
 // Affine is a 2x3 matrix representing a 2D affine transform.
 // Mapping: (x', y') = (A*x + C*y + E, B*x + D*y + F)
 type Affine struct{ A, B, C, D, E, F F64 }
