@@ -175,6 +175,30 @@ func TestPathValidate(t *testing.T) {
 	}
 }
 
+func TestPathCloneAndTransform(t *testing.T) {
+	var path Path
+	path.MoveTo(Pt{1, 2})
+	path.LineTo(Pt{3, 4})
+
+	clone := path.Clone()
+	clone.V[0].X = 99
+	if path.V[0].X == 99 {
+		t.Fatal("Path.Clone should deep-copy vertices")
+	}
+	clone.C[0] = LineTo
+	if path.C[0] == LineTo {
+		t.Fatal("Path.Clone should deep-copy commands")
+	}
+
+	transformed := path.Transformed(Affine{A: 2, D: 3, E: 5, F: -1})
+	if transformed.V[0] != (Pt{7, 5}) || transformed.V[1] != (Pt{11, 11}) {
+		t.Fatalf("transformed path vertices = %+v", transformed.V)
+	}
+	if !transformed.Validate() {
+		t.Fatal("transformed path should preserve command/vertex structure")
+	}
+}
+
 func approxPt(a, b Pt, eps float64) bool {
 	dx := a.X - b.X
 	if dx < 0 {

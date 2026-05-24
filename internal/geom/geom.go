@@ -184,6 +184,14 @@ type Path struct {
 	C []Cmd
 }
 
+// Clone returns a deep copy of the path.
+func (p Path) Clone() Path {
+	return Path{
+		V: append([]Pt(nil), p.V...),
+		C: append([]Cmd(nil), p.C...),
+	}
+}
+
 // Clear resets the path to empty slices.
 func (p *Path) Clear() { p.V = p.V[:0]; p.C = p.C[:0] }
 
@@ -221,6 +229,15 @@ func (p *Path) Validate() bool {
 		}
 	}
 	return need == len(p.V)
+}
+
+// Transformed returns a copy of the path with m applied to every vertex.
+func (p Path) Transformed(m Affine) Path {
+	out := p.Clone()
+	for i, v := range out.V {
+		out.V[i] = m.Apply(v)
+	}
+	return out
 }
 
 // Affine is a 2x3 matrix representing a 2D affine transform.
