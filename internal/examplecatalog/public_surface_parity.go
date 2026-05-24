@@ -257,8 +257,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go ScalarFormatter covers fixed-minus, step-aware precision, scientific suppression, inclusive power limits, and MathText-style scientific labels in tick rendering. Remaining 12.2C scope is offset text and locale/no-locale policy.",
+		CatalogIDs:        []string{"axes_control_surface", "formatter_scalar_scientific_labels"},
+		Note:              "Go ScalarFormatter covers fixed-minus, step-aware precision, scientific suppression, inclusive power limits, and MathText-style scientific labels in tick rendering; formatter_scalar_scientific_labels covers visible scientific tick output. Remaining 12.2C scope is offset text and locale/no-locale policy.",
 	},
 	{
 		ID:                "ticker-eng-formatter",

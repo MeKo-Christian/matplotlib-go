@@ -113,6 +113,7 @@ var cases = []Case{
 	{ID: "formatter_fixed_null_labels", Topic: "axes", Title: "Fixed and Null Formatter Labels", FixtureOnly: true, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "formatter_log_mathtext_labels", Topic: "axes", Title: "Log MathText Formatter Labels", FixtureOnly: true, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "formatter_percent_labels", Topic: "axes", Title: "Percent Formatter Labels", FixtureOnly: true, MinPSNR: 35.0, MaxMeanAbs: 6.5},
+	{ID: "formatter_scalar_scientific_labels", Topic: "axes", Title: "Scalar Scientific Formatter Labels", FixtureOnly: true, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "artist_metadata", Topic: "artist", Title: "Artist Metadata", FixtureOnly: true, MinPSNR: 40.0, MaxMeanAbs: 4.0},
 	{ID: "gridspec_composition", Topic: "composition", Title: "Figure Composition", WebDemoID: "composition", Description: "GridSpec spans, figure-level labels, figure legends, anchored text, and colorbars.", Showcase: true, GoBasicSmokeFamily: "layout", MinPSNR: 35.0, MaxMeanAbs: 8.0},
 	{ID: "figure_labels_composition", Topic: "composition", Title: "Figure Labels", Description: "A multi-axes figure with shared figure title, x label, y label, and legend placement.", Showcase: true, MinPSNR: 32.0, MaxMeanAbs: 9.0},

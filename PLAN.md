@@ -2021,6 +2021,8 @@ catalog/parity fixture per behavior family.
 - [x] Add `ScalarFormatter` option coverage for inclusive power limits,
       MathText-style scientific labels, scientific suppression, and
       step-aware precision.
+- [x] Add `formatter_scalar_scientific_labels` catalog/parity fixture for
+      visible scalar scientific MathText labels.
 - [x] Split log formatting into explicit Go formatter types for the existing
       simple `LogFormatter`, exponent-only labels, MathText labels, and
       scientific-notation MathText labels.
