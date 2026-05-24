@@ -433,6 +433,22 @@ func TestAxes_SetLimPreservesScaleType(t *testing.T) {
 	}
 }
 
+func TestAxes_SetLimExpandsSingularLinearDomains(t *testing.T) {
+	ax := &Axes{XScale: transform.NewLinear(0, 1), YScale: transform.NewLinear(0, 1)}
+
+	ax.SetXLim(2, 2)
+	xMin, xMax := ax.XScale.Domain()
+	if math.Abs(xMin-1.9) > 1e-12 || math.Abs(xMax-2.1) > 1e-12 {
+		t.Fatalf("singular x limits = (%v, %v), want (1.9, 2.1)", xMin, xMax)
+	}
+
+	ax.SetYLim(0, 0)
+	yMin, yMax := ax.YScale.Domain()
+	if math.Abs(yMin+0.05) > 1e-12 || math.Abs(yMax-0.05) > 1e-12 {
+		t.Fatalf("singular y limits = (%v, %v), want (-0.05, 0.05)", yMin, yMax)
+	}
+}
+
 func TestAxes_LogAutoscaleNormalizesNonPositiveData(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(unitRect())

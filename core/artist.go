@@ -1820,14 +1820,33 @@ func currentScaleDomain(s transform.Scale) (float64, float64) {
 func replaceScaleDomain(s transform.Scale, minVal, maxVal float64) transform.Scale {
 	switch v := s.(type) {
 	case nil:
+		minVal, maxVal = nonsingularLinearDomain(minVal, maxVal)
 		return transform.NewLinear(minVal, maxVal)
+	case transform.Linear:
+		minVal, maxVal = nonsingularLinearDomain(minVal, maxVal)
+		return v.WithDomain(minVal, maxVal)
 	case transform.DomainSetter:
 		return v.WithDomain(minVal, maxVal)
 	case invertedScale:
 		return replaceScaleDomain(v.base, minVal, maxVal)
 	default:
+		minVal, maxVal = nonsingularLinearDomain(minVal, maxVal)
 		return transform.NewLinear(minVal, maxVal)
 	}
+}
+
+func nonsingularLinearDomain(minVal, maxVal float64) (float64, float64) {
+	if math.IsNaN(minVal) || math.IsNaN(maxVal) || math.IsInf(minVal, 0) || math.IsInf(maxVal, 0) {
+		return minVal, maxVal
+	}
+	if minVal != maxVal {
+		return minVal, maxVal
+	}
+	expand := math.Abs(minVal) * 0.05
+	if expand == 0 {
+		expand = 0.05
+	}
+	return minVal - expand, maxVal + expand
 }
 
 func configureScaleAxes(primary, secondary *Axis, scaleName string, cfg transform.ScaleOptions) {
