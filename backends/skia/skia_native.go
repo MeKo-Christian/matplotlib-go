@@ -20,7 +20,9 @@ var (
 )
 
 // DrawMarkers renders one marker path at many display-space offsets through
-// the Skia CPU bridge path.
+// the Skia CPU bridge path. The implementation currently loops per item and
+// calls Path, so IsCapabilityBridged reports MarkerBatch as bridged until the
+// external Skia C ABI provides SkCanvas::drawAtlas.
 func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 	if r == nil || len(batch.Marker.C) == 0 || len(batch.Items) == 0 {
 		return false
@@ -40,8 +42,10 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 	return true
 }
 
-// DrawPathCollection renders a display-space path collection through one
-// backend-native collection call.
+// DrawPathCollection renders a display-space path collection through the CPU
+// bridge by looping per item and calling Path. IsCapabilityBridged reports
+// PathCollectionBatch as bridged until the external Skia C ABI provides a
+// real batched collection call.
 func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
 	if r == nil || len(batch.Items) == 0 {
 		return false
@@ -66,7 +70,10 @@ func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
 	return true
 }
 
-// DrawQuadMesh renders pcolor/pcolormesh-style quadrilateral cells.
+// DrawQuadMesh renders pcolor/pcolormesh-style quadrilateral cells through
+// the CPU bridge by constructing one Path per cell. IsCapabilityBridged
+// reports QuadMeshBatch as bridged until the external Skia C ABI provides
+// SkVertices-based mesh rasterization.
 func (r *Renderer) DrawQuadMesh(batch render.QuadMeshBatch) bool {
 	if r == nil || len(batch.Cells) == 0 {
 		return false
@@ -124,6 +131,10 @@ func (r *Renderer) DrawGouraudTriangles(batch render.GouraudTriangleBatch) bool 
 }
 
 // SupportsNativeHatch reports that Skia consumes hatch metadata during Path.
+// The actual hatch geometry is produced by the renderer-neutral
+// render.DrawHatchFallback helper, so IsCapabilityBridged reports
+// NativeHatcher as bridged until the external Skia C ABI provides tiled
+// SkShader hatches.
 func (r *Renderer) SupportsNativeHatch() bool { return r != nil }
 
 func (r *Renderer) drawNativeHatchPath(path geom.Path, paint *render.Paint) bool {

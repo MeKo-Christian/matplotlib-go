@@ -83,12 +83,14 @@ const (
 )
 
 // CapabilityStatus reports whether a backend capability is unavailable,
-// available only through renderer-neutral fallback, or implemented natively.
+// available only through renderer-neutral fallback, satisfied through a
+// documented intermediate bridge, or implemented natively.
 type CapabilityStatus string
 
 const (
 	CapabilityUnsupported CapabilityStatus = "unsupported"
 	CapabilityFallback    CapabilityStatus = "fallback"
+	CapabilityBridged     CapabilityStatus = "bridged"
 	CapabilityNative      CapabilityStatus = "native"
 )
 
@@ -517,14 +519,21 @@ func (r *Registry) SupportsRendererCapability(backend Backend, renderer render.R
 	return check(renderer)
 }
 
-// RendererCapabilityStatus reports unsupported/fallback/native support for a
-// capability on a concrete renderer.
+// RendererCapabilityStatus reports unsupported/fallback/bridged/native support
+// for a capability on a concrete renderer. A capability is reported as bridged
+// when the renderer satisfies the interface but also implements
+// render.CapabilityBridgeReporter and marks the capability as routed through
+// an intermediate bridge (for example, the Skia CPU surface bridge that stands
+// in for the future external Skia C ABI).
 func (r *Registry) RendererCapabilityStatus(backend Backend, renderer render.Renderer, capability Capability) CapabilityStatus {
 	info, ok := r.Get(backend)
 	if !ok || renderer == nil {
 		return CapabilityUnsupported
 	}
 	if r.SupportsRendererCapability(backend, renderer, capability) {
+		if reporter, ok := renderer.(render.CapabilityBridgeReporter); ok && reporter.IsCapabilityBridged(string(capability)) {
+			return CapabilityBridged
+		}
 		return CapabilityNative
 	}
 	if info.hasFallbackCapability(capability) {

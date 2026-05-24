@@ -255,6 +255,21 @@ type GouraudTriangleDrawer interface {
 	DrawGouraudTriangles(batch GouraudTriangleBatch) bool
 }
 
+// CapabilityBridgeReporter is implemented by renderers whose optional
+// capability interfaces are satisfied through a documented intermediate
+// bridge (for example, the CPU Skia surface bridge that stands in for the
+// future external Skia C ABI). The capability check still passes — the
+// interface is implemented and the call produces correct output — but the
+// underlying implementation is not the backend's truly-native code path.
+//
+// Name is the string form of the registered backends.Capability (for example
+// "MarkerBatch", "PathCollectionBatch", "NativeHatcher", "QuadMeshBatch").
+// Renderers that do not bridge any capability do not need to implement this
+// interface.
+type CapabilityBridgeReporter interface {
+	IsCapabilityBridged(name string) bool
+}
+
 // PNGExporter is implemented by renderers that can export their output to PNG.
 type PNGExporter interface {
 	SavePNG(path string) error

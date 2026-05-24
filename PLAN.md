@@ -200,288 +200,62 @@ Completed scope:
 
 # Phase 2: Renderer Effects, Patterns, and Compositing
 
-**Goal:** finish the renderer-depth cleanup deferred from earlier phases so
-artists can request pattern / gradient fills and post-render path effects
-without backend-name conditionals.
+✅ **Completed.** Phase 2 is fully closed. Artists can request pattern fills,
+gradient fills, path effects, filtered path-effect passes, and mixed
+raster/vector output through renderer-neutral capability interfaces, without
+backend-name conditionals in core effect routing.
 
 **Reference sources:** `third_party/matplotlib/lib/matplotlib/patheffects.py`,
-`third_party/matplotlib/lib/matplotlib/colors.py` (gradient stops),
-`backends/agg/` filter support, `backends/svg/` `<pattern>` / `<filter>` defs.
-
-### 2.1 Pattern and Gradient Fills
-
-✅ **Completed.** Renderer-neutral pattern and gradient fills are implemented
-across the current native targets, with committed AGG visual goldens.
+`third_party/matplotlib/lib/matplotlib/colors.py`, AGG filter behavior, SVG
+`<pattern>` / `<filter>` output, and PDF image/form resource behavior.
 
 Completed scope:
 
-- `render.PatternFill` / `render.GradientFill` live on `render.Paint`, with
-  `PatternFiller` / `GradientFiller` capability interfaces and
-  `GraphicsContext` alpha propagation.
-- AGG implements linear/radial gradients through Agg2D gradient generators and
-  tiled pattern fills by replaying pattern cells under the destination path.
-- SVG emits deterministic `<linearGradient>`, `<radialGradient>`, and
-  `<pattern>` defs with content deduplication and hatch-over-fill precedence.
-- PDF emits native axial/radial shading dictionaries and colored tiling
-  pattern resources.
-- Skia-tagged CPU builds consume pattern and gradient fills through the
-  Skia-local CPU surface bridge; the external `SkShader` C ABI swap remains
-  tracked in Phase 2.4.
-- AGG Phase 2 visual goldens cover `gradient_fill_bar`,
-  `radial_gradient_pie_wedge`, `pattern_fill_polygon`, and
-  `gradient_streamline_plot`.
-- Cross-backend semantic coverage verifies AGG, SVG, and PDF receive matching
-  renderer-neutral gradient and pattern paint operations for the same figure.
+- Pattern and gradient fills: `render.PatternFill` and `render.GradientFill`
+  live on `render.Paint`, with `render.PatternFiller` and
+  `render.GradientFiller` capability interfaces plus graphics-context alpha
+  propagation.
+- Native targets: AGG, SVG, PDF, and Skia-tagged CPU builds all advertise and
+  satisfy pattern/gradient/path-effect capabilities through runtime interfaces.
+- Backend output: AGG renders gradient spans and tiled pattern fills; SVG emits
+  deterministic gradient/pattern/filter defs; PDF emits axial/radial shadings,
+  tiling patterns, transparency-group forms, and soft-mask image XObjects;
+  Skia uses the CPU bridge for the same renderer-neutral contracts.
+- Path effects: `render.PathEffect` covers normal, stroke/halo, simple patch
+  and line shadows, patch effects, ticked strokes, and filtered repaint passes;
+  core line, patch, text, scatter, and collection artists carry effects through
+  to path paints.
+- Filter routing: SVG and PDF use `render.PathEffectFilterDrawer` where they
+  can produce backend-local output; AGG and Skia use `render.FilterRenderer`;
+  PS, PGF, and GoBasic document and report fallback semantics truthfully.
+- Mixed raster/vector output: `render.Rasterization` and
+  `render.RasterizationController` support explicit `Artist.SetRasterized(true)`
+  and auto-rasterization for dense output, with SVG/PDF/PS/PGF embedding
+  DPI-aware raster tiles while preserving surrounding vector content.
+- Regression coverage: cross-backend semantic tests assert effect routing uses
+  `render.PatternFiller`, `render.GradientFiller`, `render.PathEffectDrawer`,
+  `render.PathEffectFilterDrawer`, and `render.FilterRenderer`; backend
+  capability matrix tests pin truthful native/fallback declarations.
+- Fixture coverage: committed catalog fixtures cover path effects,
+  pattern/gradient/effect combinations, and mixed raster/vector output:
+  `path_effects`, `pattern_gradient_effects`, and `mixed_raster_vector`, each
+  with golden and Matplotlib-reference PNG coverage where applicable.
 
-### 2.2 Path Effects Pipeline
-
-✅ **Completed.** Renderer-neutral path-effect replay, artist
-plumbing, raster/offscreen filtering, SVG blur filters, PDF identity filter
-forms, PDF blur fallback policy, and visual/catalog fixtures are landed.
-
-#### 2.2A Path Effect Model and Replay
-
-- [x] Path effects model (`PathEffect` value type) covering Matplotlib's
-      `Normal`, `Stroke`, `withStroke`, `SimplePatchShadow`, `SimpleLineShadow`,
-      `PathPatchEffect`, `TickedStroke`, and renderer-filter repaint passes.
-- [x] Apply-time pipeline (`render.DrawPathWithEffects`) that walks the effects
-      list, clears nested effects, applies offsets / alternate paint, generates
-      tick segments, and replays each pass into the parent renderer.
-- [x] Convenience constructors mirror Matplotlib path-effects names where the
-      Go API already has an equivalent typed representation.
-
-#### 2.2B Artist Integration
-
-- [x] Core line, patch, text, scatter, and collection artists carry
-      `PathEffects` through to path paints.
-- [x] Collection batch optimizations fall back to per-path drawing when effects
-      are present so pass ordering stays correct.
-- [x] Unsupported filter effects auto-rasterize on mixed-output renderers, while
-      filter-capable renderers keep supported effects vector/native.
-
-#### 2.2C Backend Capability Coverage
-
-- [x] AGG, GoBasic, SVG, PDF, PS, PGF, and Skia implement
-      `render.PathEffectDrawer`; backend capability declarations advertise
-      `PathEffects` through the runtime interface check.
-- [x] AGG implements `render.FilterRenderer` using `StartFilter` /
-      `StopFilter`; identity and blur path-effect passes replay through an
-      offscreen raster surface and composite back onto the parent surface.
-- [x] SVG implements `render.PathEffectFilterDrawer` for blurred filter passes,
-      registers deterministic `<filter>` / `<feGaussianBlur>` defs, and wraps
-      only the affected pass while preserving normal vector path output.
-- [x] PDF implements `render.PathEffectFilterDrawer` for identity / no-op
-      filter passes by capturing replay into deterministic transparency-group
-      Form XObjects and invoking those groups from page content.
-- [x] PDF blur/shadow path-effect filters are explicitly classified as mixed
-      raster/vector fallback rather than native PDF support. Baseline PDF has
-      no standard Gaussian-blur graphics operator, so PDF reports support for
-      identity filters only.
-
-#### 2.2D Visual and Reference Coverage
-
-- [x] AGG Phase 2 path-effect goldens cover `text_drop_shadow`, `line_halo`,
-      `scatter_marker_shadow`, and `polygon_effect_stack`.
-- [x] Catalog case `path_effects` adds Matplotlib-reference coverage for text
-      shadow, line halo, scatter marker shadow, and polygon effect-stack output.
-
-#### 2.2E PDF Blur / Soft-Mask Decision
-
-- [x] Reclassify blurred PDF path-effect filters as intentional mixed-raster
-      fallback instead of native vector PDF. The documented rationale is that
-      baseline PDF has no standard Gaussian-blur graphics operator; a fake
-      "native" implementation would either be viewer-specific or an
-      approximation with misleading capability reporting.
-      Superseded in Phase 2.5: PDF now handles blurred path-effect filter
-      passes through backend-local soft-mask image XObjects, while still
-      avoiding any claim of pure vector Gaussian-blur operators.
-- [x] Preserve truthful capability reporting: PDF advertises native
-      `PathEffects`, but `SupportsPathEffectFilter` returns true only for
-      identity / no-op filters. Blur/shadow filters therefore auto-rasterize
-      through the mixed raster/vector path when a PDF output needs them.
-- [x] Add PDF regression coverage for the policy: - identity filters still emit transparency-group Form XObjects; - blur filters do not claim native PDF support; - package documentation records the fallback reason.
-
-#### 2.2F Exit Criteria
-
-- [x] The remaining PDF blur strategy is implemented or explicitly reclassified
-      as an intentional mixed-raster fallback with a documented reason in
-      backend docs and this plan.
-- [x] `go test ./render ./core ./backends/agg ./backends/svg ./backends/pdf -count=1`
-      passes.
-- [x] `go test ./test -run 'TestGolden/path_effects|TestMatplotlibRef/path_effects|TestReferenceCompare/path_effects' -count=1`
-      passes.
-- [x] If PDF blur remains raster-based by design, capability reporting must make
-      that truth clear: `PathEffects` remains native, but blur filter effects do
-      not report native PDF support.
-
-### 2.3 Mixed Raster / Vector Output
-
-**Goal:** match Matplotlib's mixed-mode output model: selected artists can be
-drawn into a DPI-aware raster tile while surrounding labels, axes, and simple
-geometry remain native vector output.
-
-#### 2.3.1 Renderer contract and capability gating
-
-- [x] Add renderer-neutral rasterization policy plumbing:
-      `render.Rasterization`, `RasterizationMode`, `Paint.Rasterization`, and
-      `GraphicsContext.WithRasterization`.
-- [x] Add `render.RasterizationController` with `StartRasterized` /
-      `StopRasterized` so artists can request mixed output without backend-name
-      conditionals.
-- [x] Advertise mixed-mode support through the backend capability matrix as
-      `backends.MixedRasterVector`, gated by the runtime controller interface.
-
-#### 2.3.2 Artist opt-in and auto-rasterization
-
-- [x] Add reusable `core.ArtistRasterization` with `SetRasterized`,
-      `SetRasterization`, and `Rasterization` methods.
-- [x] Honor explicit artist-level rasterization only when the active renderer
-      supports `render.RasterizationController`; otherwise draw the artist
-      normally.
-- [x] Expose rasterization controls on common artist families: lines, scatter,
-      images, contours, collections, bars, fills, patches / rectangles, text,
-      and annotations.
-- [x] Auto-rasterize dense scatter, collection, and contour output at figure DPI,
-      with `RasterizeNever` preserving fully vector output for opt-out cases.
-- [x] Preserve vector-native path-effect filter output when a backend can draw
-      the effect natively, falling back to mixed raster output only when needed.
-
-#### 2.3.3 DPI-aware offscreen replay
-
-- [x] Add shared `backends/internal/mixedraster` session setup for transparent
-      offscreen raster groups.
-- [x] Allocate mixed-raster surfaces at the requested rasterization DPI while
-      preserving the original vector placement rectangle.
-- [x] Scale replayed paths, clips, images, and text into the high-DPI tile before
-      embedding it back into the vector output.
-- [x] Scale and replay affine-transformed images into the high-DPI tile through
-      the shared GoBasic raster surface.
-
-#### 2.3.4 Vector backend embedding
-
-- [x] SVG embeds mixed-raster groups as `<image>` elements while keeping
-      unaffected text and axes as vector content.
-- [x] PDF embeds mixed-raster groups as image XObjects with alpha mask support
-      where needed.
-- [x] PostScript / EPS embeds mixed-raster groups through deterministic
-      `colorimage` output.
-- [x] PGF embeds mixed-raster groups as self-contained pixel rectangles.
-
-#### 2.3.5 Clip, transform, and alpha correctness
-
-- [x] Replay active rectangular clips into mixed-raster surfaces before embedding
-      the resulting tile.
-- [x] Replay active path clips, including transformed SVG clip paths, into the
-      offscreen surface.
-- [x] Preserve transparent pixels outside active path clips; PDF coverage asserts
-      pixels outside the clip remain transparent in the embedded image.
-
-#### 2.3.6 Fixture and regression coverage
-
-- [x] Add core tests for explicit rasterization bracketing, DPI propagation,
-      common artist API coverage, auto-rasterization thresholds, and
-      path-effect fallback behavior.
-- [x] Add shared mixed-raster helper tests for high-DPI surface sizing and path
-      scaling.
-- [x] Add backend tests showing rasterized artists embed pixels/images while
-      surrounding vector content remains vector in SVG, PDF, PS, and PGF.
-- [x] Add catalog golden / Matplotlib-reference fixtures that exercise the full
-      save pipeline for clip, transform, and alpha state across mixed
-      raster/vector output. (`mixed_raster_vector` covers a DPI-rasterized
-      translucent scatter cloud inside a polar path clip, with vector axes,
-      labels, legend, and line output preserved in the SVG / PDF structural
-      goldens.)
-
-No remaining Phase 2.3 work is currently known.
-
-### 2.4 Native Pattern / Gradient Backend Parity
-
-✅ **Completed.** Renderer-neutral pattern / gradient contracts are uniform
-across AGG, SVG, PDF, and the build-tagged Skia CPU bridge. The external
-Skia `SkShader` C ABI swap remains backend-deepening work for the native Skia
-track because the wrapper has not landed and is not required for this
-renderer-neutral contract.
-
-**Goal:** make the renderer-neutral pattern and gradient contracts genuinely
-uniform across the primary native targets: AGG, SVG, PDF, and Skia.
-
-- [x] Add AGG native or renderer-neutral tiled `PatternFill` support so
-      `backends/agg` advertises `SupportsPatternFill() == true` for the same
-      `render.PatternFill` values accepted by SVG and PDF.
-- [x] Pin AGG Phase 2 capabilities in registry tests: `PatternFill`,
-      `GradientFill`, `PathEffects`, and `OffscreenFilter` all report native
-      support.
-- [x] Start Skia parity-viewer workflow plumbing: the `skia` build tag exposes
-      Skia as a selectable web-demo export backend, `cmd/webdemoexport` accepts
-      `--backend`, and `web-parity-update-skia` / `web-parity-viewer-skia`
-      compare Skia-tagged PNG artifacts against the Matplotlib web-demo
-      baselines.
-- [x] Add Skia `PatternFiller` / `GradientFiller` implementations behind the
-      Skia CPU surface bridge, including linear gradients, radial gradients,
-      transformed fills, stop opacity, and tiled pattern fills.
-- [x] Keep the external Skia `SkShader` primitive swap out of this milestone
-      until the C ABI wrapper lands; the current Skia CPU bridge remains the
-      native target for renderer-neutral pattern / gradient fills, while
-      external `SkShader` primitives stay tracked under native Skia paths.
-- [x] Add Skia unit tests matching the existing AGG/SVG/PDF gradient and
-      pattern coverage: linear falloff, radial falloff, transformed fill
-      geometry, pattern tile repetition, hatch-over-pattern precedence, and
-      solid-fill reset after gradient/pattern draws.
-- [x] Add backend capability matrix tests that fail if AGG, SVG, PDF, or Skia
-      regress from native pattern/gradient/path-effect support once the work
-      above lands.
-
-### 2.5 Native Path-Effect Filter Parity
-
-✅ **Completed.** Filtered path effects now route through capability interfaces
-on the native targets. AGG remains the raster offscreen reference, SVG emits
-native `<filter>` output, PDF emits backend-local soft-mask image XObjects for
-blurred passes and transparency-group Form XObjects for identity passes, and the
-Skia-tagged CPU bridge exposes `render.FilterRenderer` for the same
-renderer-neutral filter replay path. PS, PGF, and GoBasic keep documented
-fallback semantics and do not claim native filtered path-effect support.
-
-**Goal:** make filtered path effects route through capability interfaces and
-produce equivalent native output where the backend can support it.
-
-- [x] Keep AGG as the raster reference for filtered path effects through
-      `render.FilterRenderer`, with coverage for offscreen capture/replay and
-      blurred path-effect compositing.
-- [x] Complete native filtered path-effect behavior across vector backends:
-      AGG offscreen blur remains the raster reference, SVG keeps `<filter>`
-      output, PDF adds blurred transparency-group / soft-mask output, and Skia
-      renders the same filter passes without core knowing the backend name.
-- [x] Define the intentional fallback semantics for PS, PGF, and GoBasic in
-      backend docs and capability declarations so the "uniform" contract is
-      explicit: AGG/SVG/PDF/Skia are native targets; fallback backends either
-      replay renderer-neutral effects or report unsupported truthfully.
-
-### 2.6 Phase 2 Routing and Regression Audit
-
-**Goal:** lock in the no-backend-name-conditionals requirement and keep it from
-regressing after native backend work lands.
-
-- [x] Add a cross-backend semantic test that draws the same pattern, gradient,
-      and path-effect scene through AGG, SVG, PDF, and Skia and asserts only
-      capability interfaces (`render.PatternFiller`, `render.GradientFiller`,
-      `render.PathEffectDrawer`, `render.PathEffectFilterDrawer` /
-      `render.FilterRenderer`) are used for routing.
-- [x] Audit Phase 2 routing code for backend-name conditionals in `core/`,
-      `render/`, and shared backend helpers; replace any remaining conditionals
-      with capability interfaces or document why they are save-format dispatch
-      rather than effect rendering logic.
-
-**Exit criteria:**
+Exit criteria:
 
 - [x] Pattern fills, gradients, and path effects work uniformly across AGG,
       SVG, PDF, and Skia without backend-name conditionals.
-- [x] `Artist.SetRasterized(true)` produces correct mixed-mode output on
-      every vector backend.
+- [x] `Artist.SetRasterized(true)` produces correct mixed-mode output on every
+      vector backend.
 - [x] All effects have committed golden and Matplotlib-reference fixtures.
 
 ---
 
 # Phase 3: Mathematical Text and TeX
+
+✅ **Completed.** MathText and `usetex` are first-class across the active
+raster/vector targets, with toolchain-gated TeX coverage and a documented
+promotion date for `internal/mathtext`.
 
 **Goal:** make MathText and `usetex` first-class across raster and vector
 backends, and stabilize `internal/mathtext` for promotion.
@@ -539,10 +313,11 @@ backends, and stabilize `internal/mathtext` for promotion.
       back into the renderer's text bounds API.
 - [x] Shared clipping, alpha, and DPI semantics between MathText and `usetex`
       paths so the artist-side API does not branch.
-- [ ] Golden fixtures gated by the presence of a TeX installation; skip with
+- [x] Golden fixtures gated by the presence of a TeX installation; skip with
       a clear diagnostic when missing.
-      Harness exists, but committed TeX-generated PNG fixtures still need to
-      be produced on a host with `latex` + `dvipng`.
+      The committed `testdata/usetex_golden/basic.png` fixture is regenerated
+      by `go test ./test -run TestUseTeXGoldenWithSystemToolchain
+      -update-usetex-golden` on hosts with `latex` + `dvipng`.
 
 ### 3.3 MathText Module Promotion
 
@@ -555,7 +330,8 @@ backends, and stabilize `internal/mathtext` for promotion.
       normalization, display segmentation, layout-to-runs/rules, renderer font
       resolution hooks, and cache/storage contracts.
 - [ ] Promote `internal/mathtext` to a top-level module / repo with its own
-      versioning, once the grammar coverage and cache contracts are firm.
+      versioning after the documented promotion date; this is v1.0 API-freeze
+      follow-through rather than a Phase 3 exit blocker.
 
 **Exit criteria:**
 
@@ -690,9 +466,18 @@ backend parity program but is not yet complete.
         marker batches, path collections, transformed images, quad meshes, and
         Gouraud triangles through the deterministic Skia bridge boundary; the
         external `drawAtlas` / `SkVertices` ABI integration remains open.
+  - [x] CPU Skia reports `MarkerBatch`, `PathCollectionBatch`, and
+        `QuadMeshBatch` as bridged (`≈`) via the new
+        `render.CapabilityBridgeReporter` interface, so the comparison report
+        distinguishes the CPU bridge stand-ins from the truly native
+        `GouraudTriangleBatch` path. The external batch ABI remains the open
+        path to flipping these back to native (`✓`).
 - [ ] Skia native hatching via tiled `SkShader`s.
   - [x] CPU Skia consumes hatch metadata during path rendering and advertises
         `NativeHatcher`; tiled external `SkShader` hatches remain open.
+  - [x] CPU Skia reports `NativeHatcher` as bridged (`≈`) until the external
+        tiled `SkShader` integration lands. Hatch geometry continues to route
+        through `render.DrawHatchFallback`.
 - [ ] GPU mode (`SkSurface::MakeRenderTarget`) behind a separate build tag,
       with deterministic CPU readback for golden tests.
 - [ ] Capability reporting split between CPU and GPU configurations so the
@@ -701,8 +486,22 @@ backend parity program but is not yet complete.
   - [x] CPU Skia capability reporting now marks implemented optional paths as
         native instead of fallback; GPU-specific capability reporting remains
         deferred until the GPU build tag exists.
-- [ ] Skia vs AGG semantic-fixture comparison; tolerances documented per
+  - [x] A fourth `CapabilityBridged` status (`≈` marker) sits between native
+        and fallback in `BackendComparisonReport` so the CPU bridge stand-ins
+        are visible. The CPU/GPU split itself is still deferred until a GPU
+        build tag exists; the bridged status is the only CPU-side distinction
+        the comparison report needs today.
+- [x] Skia vs AGG semantic-fixture comparison; tolerances documented per
       fixture where Skia is not expected to pixel-match.
+      `TestSkiaParityAgainstAGGGoldens` in `backends/skia/parity_test.go`
+      (build-tagged `skia`) iterates every catalog `Case` opted into the new
+      `SkiaParityFamily` field and compares Skia CPU output against the
+      committed AGG golden. Per-case `MinPSNR` / `MaxMeanAbs` overrides on
+      the catalog row take precedence over the harness defaults; failures emit
+      got / golden / diff artifacts under
+      `testdata/_artifacts/skia_parity/{id}/`. Covers line, scatter, bar,
+      fill, errorbar, histogram, text, MathText, image, mesh, hatch/patch,
+      polar, and path-effect / pattern-gradient families.
 
 ### 7.4 GoBasic Long Tail
 

@@ -216,6 +216,26 @@ func TestSkiaTaggedRegistryAdvertisesImplementedCPUCapabilities(t *testing.T) {
 	if backends.HasCapability(backends.Skia, backends.GPUAccel) {
 		t.Fatal("CPU skia backend should not advertise GPU acceleration")
 	}
+
+	// The CPU compatibility renderer satisfies the batch and hatch capability
+	// interfaces through the CPU surface bridge until the external Skia C ABI
+	// lands. The capability matrix must report those four as bridged so the
+	// difference between bridge stand-ins and truly native code paths stays
+	// visible. GouraudTriangleBatch performs custom CPU pixel interpolation
+	// directly and must stay native.
+	for _, cap := range []backends.Capability{
+		backends.MarkerBatch,
+		backends.PathCollectionBatch,
+		backends.QuadMeshBatch,
+		backends.NativeHatcher,
+	} {
+		if status := backends.RendererCapabilityStatus(backends.Skia, renderer, cap); status != backends.CapabilityBridged {
+			t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want %s", cap, status, backends.CapabilityBridged)
+		}
+	}
+	if status := backends.RendererCapabilityStatus(backends.Skia, renderer, backends.GouraudTriangleBatch); status != backends.CapabilityNative {
+		t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want %s", backends.GouraudTriangleBatch, status, backends.CapabilityNative)
+	}
 }
 
 func TestSkiaTaggedPathEffectFilterUsesOffscreenSurface(t *testing.T) {

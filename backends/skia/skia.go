@@ -42,17 +42,18 @@ type filterState struct {
 }
 
 var (
-	_ render.Renderer           = (*Renderer)(nil)
-	_ render.DPIAware           = (*Renderer)(nil)
-	_ render.FilterRenderer     = (*Renderer)(nil)
-	_ render.TextDrawer         = (*Renderer)(nil)
-	_ render.TextPather         = (*Renderer)(nil)
-	_ render.RotatedTextDrawer  = (*Renderer)(nil)
-	_ render.VerticalTextDrawer = (*Renderer)(nil)
-	_ render.RGBAExporter       = (*Renderer)(nil)
-	_ render.PNGExporter        = (*Renderer)(nil)
-	_ render.PatternFiller      = (*Renderer)(nil)
-	_ render.GradientFiller     = (*Renderer)(nil)
+	_ render.Renderer                 = (*Renderer)(nil)
+	_ render.DPIAware                 = (*Renderer)(nil)
+	_ render.FilterRenderer           = (*Renderer)(nil)
+	_ render.TextDrawer               = (*Renderer)(nil)
+	_ render.TextPather               = (*Renderer)(nil)
+	_ render.RotatedTextDrawer        = (*Renderer)(nil)
+	_ render.VerticalTextDrawer       = (*Renderer)(nil)
+	_ render.RGBAExporter             = (*Renderer)(nil)
+	_ render.PNGExporter              = (*Renderer)(nil)
+	_ render.PatternFiller            = (*Renderer)(nil)
+	_ render.GradientFiller           = (*Renderer)(nil)
+	_ render.CapabilityBridgeReporter = (*Renderer)(nil)
 )
 
 // New creates a new Skia renderer with the given configuration.
@@ -313,6 +314,24 @@ func (r *Renderer) BridgeInfo() BridgeInfo {
 		return BridgeInfo{}
 	}
 	return r.bridge.Info()
+}
+
+// IsCapabilityBridged reports whether the named backends.Capability is
+// satisfied through the CPU surface bridge rather than a truly batch-native
+// Skia code path. The CPU compatibility renderer implements the optional
+// batch interfaces (MarkerBatch, PathCollectionBatch, QuadMeshBatch) by
+// looping per item and calling Path, and consumes hatch metadata via the
+// renderer-neutral DrawHatchFallback helper. Until the external Skia C ABI
+// lands, those capabilities should report as bridged so the capability matrix
+// distinguishes them from the GouraudTriangleBatch path which performs custom
+// CPU pixel interpolation directly.
+func (r *Renderer) IsCapabilityBridged(name string) bool {
+	switch name {
+	case "markerbatch", "pathcollectionbatch", "quadmeshbatch", "nativehatcher":
+		return true
+	default:
+		return false
+	}
 }
 
 // GetSurface returns the underlying Skia surface for advanced operations.

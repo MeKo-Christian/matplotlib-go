@@ -22,14 +22,20 @@ func TestSkiaTaggedRendererImplementsNativeBatchInterfaces(t *testing.T) {
 
 	for _, cap := range []backends.Capability{
 		backends.ImageTransform,
-		backends.MarkerBatch,
-		backends.PathCollectionBatch,
-		backends.QuadMeshBatch,
 		backends.GouraudTriangleBatch,
-		backends.NativeHatcher,
 	} {
 		if status := backends.RendererCapabilityStatus(backends.Skia, r, cap); status != backends.CapabilityNative {
 			t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want native", cap, status)
+		}
+	}
+	for _, cap := range []backends.Capability{
+		backends.MarkerBatch,
+		backends.PathCollectionBatch,
+		backends.QuadMeshBatch,
+		backends.NativeHatcher,
+	} {
+		if status := backends.RendererCapabilityStatus(backends.Skia, r, cap); status != backends.CapabilityBridged {
+			t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want bridged", cap, status)
 		}
 	}
 }

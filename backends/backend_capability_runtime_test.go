@@ -125,6 +125,16 @@ func TestBackendComparisonReportContainsEveryBackend(t *testing.T) {
 			t.Errorf("report missing registered save extension %s\n%s", ext, report)
 		}
 	}
+
+	// When the Skia CPU compatibility renderer is available, its capability
+	// matrix must surface the bridged marker for the four batch/hatch
+	// capabilities whose implementations route through the CPU surface bridge
+	// instead of the future external Skia C ABI.
+	if info, ok := backends.DefaultRegistry.Get(backends.Skia); ok && info.Available {
+		if !strings.Contains(report, "≈") {
+			t.Errorf("expected bridged-status marker in report when Skia is available:\n%s", report)
+		}
+	}
 }
 
 // TestSelectBackendForExtensionRoutesByCapability verifies that the registry

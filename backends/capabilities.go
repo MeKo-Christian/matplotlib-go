@@ -35,10 +35,12 @@ var AllCapabilities = []Capability{
 
 // CapabilityMatrix returns a formatted table of backend capabilities.
 //
-// Each cell reports CapabilityStatus markers: ✓ native, ~ fallback, · unsupported.
-// Capabilities that require a live renderer (everything in the runtime-checks map)
-// are reported as declared by the registry; native verification happens through
-// VerifyRendererCapabilities and BackendComparisonReport.
+// Each cell reports CapabilityStatus markers: ✓ native, ≈ bridged through a
+// documented intermediate (for example the Skia CPU bridge), ~ renderer-neutral
+// fallback, · unsupported. Capabilities that require a live renderer
+// (everything in the runtime-checks map) are reported as declared by the
+// registry; native verification happens through VerifyRendererCapabilities and
+// BackendComparisonReport.
 func CapabilityMatrix() string {
 	available := Available()
 	if len(available) == 0 {
@@ -215,6 +217,8 @@ func capabilityStatusMarker(status CapabilityStatus, info *BackendInfo, capabili
 			return "✓!"
 		}
 		return "✓"
+	case CapabilityBridged:
+		return "≈"
 	case CapabilityFallback:
 		return "~"
 	default:
