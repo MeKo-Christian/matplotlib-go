@@ -90,6 +90,145 @@ func TestLine2D_DefaultsToButtCaps(t *testing.T) {
 	}
 }
 
+func TestLine2DArtistAlphaMultipliesStrokeAlpha(t *testing.T) {
+	line := &Line2D{
+		XY: []geom.Pt{
+			{X: 0, Y: 0},
+			{X: 1, Y: 1},
+		},
+		W:   2,
+		Col: render.Color{R: 1, G: 0, B: 0, A: 0.8},
+	}
+	line.SetAlpha(0.5)
+
+	r := &recordingRenderer{}
+	ctx := &DrawContext{
+		DataToPixel: Transform2D{
+			XScale:      transform.NewLinear(0, 1),
+			YScale:      transform.NewLinear(0, 1),
+			AxesToPixel: transform.NewAffine(geom.Identity()),
+		},
+		RC: style.Default,
+	}
+	line.Draw(r, ctx)
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("path calls = %d, want 1", len(r.pathCalls))
+	}
+	if got, want := r.pathCalls[0].paint.Stroke.A, 0.4; got != want {
+		t.Fatalf("stroke alpha = %v, want %v", got, want)
+	}
+
+	line.SetAlpha(0)
+	r.pathCalls = nil
+	line.Draw(r, ctx)
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("transparent path calls = %d, want 1", len(r.pathCalls))
+	}
+	if got := r.pathCalls[0].paint.Stroke.A; got != 0 {
+		t.Fatalf("transparent stroke alpha = %v, want 0", got)
+	}
+}
+
+func TestLine2DDrawsMarkersWithFaceEdgeStyles(t *testing.T) {
+	line := &Line2D{
+		XY: []geom.Pt{
+			{X: 0, Y: 0},
+			{X: 1, Y: 1},
+		},
+		W:               2,
+		Col:             render.Color{R: 1, A: 1},
+		Marker:          MarkerSquare,
+		MarkerSet:       true,
+		MarkerSize:      8,
+		MarkerFaceColor: render.Color{G: 1, A: 0.8},
+		MarkerEdgeColor: render.Color{B: 1, A: 0.6},
+		MarkerEdgeWidth: 3,
+	}
+
+	r := &recordingRenderer{}
+	ctx := &DrawContext{
+		DataToPixel: Transform2D{
+			XScale:      transform.NewLinear(0, 1),
+			YScale:      transform.NewLinear(0, 1),
+			AxesToPixel: transform.NewAffine(geom.Identity()),
+		},
+		RC: style.Default,
+	}
+	line.Draw(r, ctx)
+
+	if len(r.pathCalls) != 3 {
+		t.Fatalf("path calls = %d, want line plus two markers", len(r.pathCalls))
+	}
+	markerPaint := r.pathCalls[1].paint
+	if got, want := markerPaint.Fill, line.MarkerFaceColor; got != want {
+		t.Fatalf("marker fill = %+v, want %+v", got, want)
+	}
+	if got, want := markerPaint.Stroke, line.MarkerEdgeColor; got != want {
+		t.Fatalf("marker edge = %+v, want %+v", got, want)
+	}
+	if got, want := markerPaint.LineWidth, line.MarkerEdgeWidth; got != want {
+		t.Fatalf("marker edge width = %v, want %v", got, want)
+	}
+}
+
+func TestLine2DMarkEveryDrawsEveryNthMarker(t *testing.T) {
+	line := &Line2D{
+		XY: []geom.Pt{
+			{X: 0, Y: 0},
+			{X: 1, Y: 1},
+			{X: 2, Y: 0},
+			{X: 3, Y: 1},
+			{X: 4, Y: 0},
+		},
+		W:         2,
+		Col:       render.Color{A: 1},
+		Marker:    MarkerCircle,
+		MarkerSet: true,
+		MarkEvery: 2,
+	}
+
+	r := &recordingRenderer{}
+	line.Draw(r, &DrawContext{
+		DataToPixel: Transform2D{
+			XScale:      transform.NewLinear(0, 4),
+			YScale:      transform.NewLinear(0, 1),
+			AxesToPixel: transform.NewAffine(geom.Identity()),
+		},
+		RC: style.Default,
+	})
+
+	if len(r.pathCalls) != 4 {
+		t.Fatalf("path calls = %d, want line plus 3 markers", len(r.pathCalls))
+	}
+}
+
+func TestAxesPlotConfiguresLineMarkers(t *testing.T) {
+	fig := NewFigure(100, 100)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	marker := MarkerStar
+	size := 9.0
+	face := render.Color{R: 1, A: 0.8}
+	edge := render.Color{B: 1, A: 0.6}
+	edgeWidth := 2.0
+
+	line := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
+		Marker:          &marker,
+		MarkerSize:      &size,
+		MarkerFaceColor: &face,
+		MarkerEdgeColor: &edge,
+		MarkerEdgeWidth: &edgeWidth,
+		MarkEvery:       3,
+	})
+
+	if line == nil {
+		t.Fatal("Plot returned nil")
+	}
+	if !line.MarkerSet || line.Marker != marker || line.MarkerSize != size || line.MarkerFaceColor != face || line.MarkerEdgeColor != edge || line.MarkerEdgeWidth != edgeWidth || line.MarkEvery != 3 {
+		t.Fatalf("line marker config not applied: %+v", line)
+	}
+}
+
 func TestLine2D_UsesRCPathOptimizationSettings(t *testing.T) {
 	line := &Line2D{
 		XY: []geom.Pt{

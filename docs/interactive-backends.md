@@ -80,3 +80,14 @@ Headless:
   and save tool surface without GUI input.
 - Is useful for tests and embedders that want event registration without a
   native or browser event loop.
+
+## Switchable Embedding
+
+`examples/embed/switchable` builds one figure and wires event callbacks through
+`canvas.FigureCanvas`, then chooses `headless`, `gio`, or `webagg` at runtime:
+
+```bash
+go run ./examples/embed/switchable --backend=headless
+go run ./examples/embed/switchable --backend=gio
+go run ./examples/embed/switchable --backend=webagg --addr=:8080
+```

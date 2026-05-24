@@ -39,6 +39,19 @@ type rasterizedTestArtist struct {
 	ArtistRasterization
 }
 
+type metadataTestArtist struct {
+	ArtistRasterization
+	draws *int
+}
+
+func (a *metadataTestArtist) Draw(render.Renderer, *DrawContext) {
+	*a.draws++
+}
+
+func (a *metadataTestArtist) Z() float64 { return 0 }
+
+func (a *metadataTestArtist) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
+
 type rasterizationRecordingRenderer struct {
 	render.NullRenderer
 	events  []string
@@ -160,6 +173,41 @@ func TestCommonArtistsExposeRasterizedFlag(t *testing.T) {
 	var _ rasterizable = (*Rectangle)(nil)
 	var _ rasterizable = (*Text)(nil)
 	var _ rasterizable = (*Annotation)(nil)
+}
+
+func TestArtistMetadataVisibilitySkipsDrawing(t *testing.T) {
+	fig := NewFigure(100, 100)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	draws := 0
+
+	figArtist := &metadataTestArtist{draws: &draws}
+	axesArtist := &metadataTestArtist{draws: &draws}
+	figArtist.SetVisible(false)
+	axesArtist.SetVisible(false)
+
+	fig.Add(figArtist)
+	ax.Add(axesArtist)
+	DrawFigure(fig, &render.NullRenderer{})
+
+	if draws != 0 {
+		t.Fatalf("invisible artists drew %d times, want 0", draws)
+	}
+	if !figArtist.Stale() || !axesArtist.Stale() {
+		t.Fatal("metadata changes should mark artists stale")
+	}
+}
+
+func TestArtistMetadataDefaults(t *testing.T) {
+	var metadata ArtistRasterization
+	if !metadata.Visible() {
+		t.Fatal("zero-value artist metadata should be visible")
+	}
+	if got := metadata.EffectiveAlpha(0); got != 1 {
+		t.Fatalf("zero-value effective alpha = %v, want 1", got)
+	}
+	if !metadata.InLayout() {
+		t.Fatal("zero-value artist metadata should participate in layout")
+	}
 }
 
 func TestDenseScatterAutoRasterizesWithFigureDPI(t *testing.T) {

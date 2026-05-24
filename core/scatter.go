@@ -333,9 +333,7 @@ func (s *Scatter2D) resolvedMarkerStyle() MarkerStyle {
 
 func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathCollection {
 	alpha := s.Alpha
-	if alpha <= 0 {
-		alpha = 1
-	}
+	alpha = s.EffectiveAlpha(alpha)
 
 	style := s.resolvedMarkerStyle()
 	lineOnly := markerLineOnly(style)

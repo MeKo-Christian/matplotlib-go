@@ -8,9 +8,12 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cwbudde/matplotlib-go/backends/gobasic"
+	plotcanvas "github.com/cwbudde/matplotlib-go/canvas"
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"golang.org/x/net/websocket"
 )
@@ -122,6 +125,80 @@ func TestWebSocketHandshake(t *testing.T) {
 	}
 }
 
+func TestWebSocketDrivesPanScrollAndPick(t *testing.T) {
+	fig := core.NewFigure(100, 80)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	ax.SetXLim(0, 10)
+	ax.SetYLim(0, 10)
+	rect := &core.Rectangle{XY: geom.Pt{X: 0, Y: 0}, Width: 10, Height: 10}
+	ax.Add(rect)
+	mgr, err := NewManager(Options{
+		Figure: fig,
+		Renderer: func(w, h int, bg render.Color) (RasterRenderer, error) {
+			return gobasic.New(w, h, bg), nil
+		},
+		HasBackground: true,
+		Background:    render.Color{R: 1, G: 1, B: 1, A: 1},
+	})
+	if err != nil {
+		t.Fatalf("NewManager: %v", err)
+	}
+	srv, err := NewServer(ServerOptions{Manager: mgr})
+	if err != nil {
+		t.Fatalf("NewServer: %v", err)
+	}
+	ts := httptest.NewServer(srv)
+	t.Cleanup(ts.Close)
+
+	events := make(chan plotcanvas.EventType, 8)
+	for _, typ := range []plotcanvas.EventType{plotcanvas.EventMouseRelease, plotcanvas.EventScroll, plotcanvas.EventPick} {
+		typ := typ
+		mgr.Connect(typ, func(plotcanvas.Event) error {
+			events <- typ
+			return nil
+		})
+	}
+
+	wsURL := "ws://" + strings.TrimPrefix(ts.URL, "http://") + "/ws"
+	cfg, err := websocket.NewConfig(wsURL, ts.URL)
+	if err != nil {
+		t.Fatalf("ws config: %v", err)
+	}
+	conn, err := websocket.DialConfig(cfg)
+	if err != nil {
+		t.Fatalf("ws dial: %v", err)
+	}
+	defer conn.Close()
+	for range 5 {
+		var discard []byte
+		if err := websocket.Message.Receive(conn, &discard); err != nil {
+			t.Fatalf("initial receive: %v", err)
+		}
+	}
+
+	center := geom.Pt{X: 50, Y: 40}
+	for _, msg := range []map[string]any{
+		{"type": "toolbar_button", "name": "pan"},
+		{"type": "button_press", "x": center.X, "y": center.Y, "button": 0},
+		{"type": "motion_notify", "x": center.X + 20, "y": center.Y, "buttons": 1},
+		{"type": "button_release", "x": center.X + 20, "y": center.Y, "button": 0},
+		{"type": "scroll", "x": center.X, "y": center.Y, "step": 1.0},
+		{"type": "button_press", "x": center.X, "y": center.Y, "button": 0},
+	} {
+		if err := websocket.Message.Send(conn, mustJSON(t, msg)); err != nil {
+			t.Fatalf("send %v: %v", msg, err)
+		}
+	}
+
+	waitEvent(t, events, plotcanvas.EventMouseRelease)
+	waitEvent(t, events, plotcanvas.EventScroll)
+	waitEvent(t, events, plotcanvas.EventPick)
+	xMin, xMax := ax.XScale.Domain()
+	if xMin == 0 && xMax == 10 {
+		t.Fatalf("pan/scroll left x limits unchanged")
+	}
+}
+
 // TestUnknownAssetReturns404 exercises the fallback path of
 // serveAsset for paths that don't resolve in the asset FS.
 func TestUnknownAssetReturns404(t *testing.T) {
@@ -133,5 +210,20 @@ func TestUnknownAssetReturns404(t *testing.T) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusNotFound {
 		t.Errorf("status: want 404, got %d", resp.StatusCode)
+	}
+}
+
+func waitEvent(t *testing.T, events <-chan plotcanvas.EventType, want plotcanvas.EventType) {
+	t.Helper()
+	deadline := time.After(2 * time.Second)
+	for {
+		select {
+		case got := <-events:
+			if got == want {
+				return
+			}
+		case <-deadline:
+			t.Fatalf("timed out waiting for %s", want)
+		}
 	}
 }

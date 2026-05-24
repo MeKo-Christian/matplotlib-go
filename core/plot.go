@@ -13,30 +13,38 @@ const defaultAutoScaleMargin = 0.05
 
 // PlotOptions holds optional parameters for plotting functions.
 type PlotOptions struct {
-	Color       *render.Color // if nil, uses automatic color cycling
-	EdgeColor   *render.Color
-	LineWidth   *float64 // if nil, uses default
-	EdgeWidth   *float64
-	Dashes      []float64 // dash pattern
-	DrawStyle   *LineDrawStyle
-	Label       string   // series label for legend
-	Alpha       *float64 // alpha transparency
-	LevelCount  int      // contour level count for contour-like plot types
-	Levels      []float64
-	ZDir        string
-	Offset      *float64 // fixed projection offset for contour-like plot types
-	RStride     *int     // row stride for 3D surface/wireframe sampling
-	CStride     *int     // column stride for 3D surface/wireframe sampling
-	RCount      *int     // maximum sampled row count for 3D surface/wireframe sampling
-	CCount      *int     // maximum sampled column count for 3D surface/wireframe sampling
-	FaceColors  []render.Color
-	Shade       *bool
-	Antialiased *bool
-	Colormap    *string // scalar colormap for mappable plot types
-	Norm        ScalarNormalizer
-	VMin        *float64
-	VMax        *float64
-	AxLimClip   bool
+	Color           *render.Color // if nil, uses automatic color cycling
+	EdgeColor       *render.Color
+	LineWidth       *float64 // if nil, uses default
+	EdgeWidth       *float64
+	Dashes          []float64 // dash pattern
+	DrawStyle       *LineDrawStyle
+	Marker          *MarkerType
+	MarkerStyle     *MarkerStyle
+	MarkerPath      *geom.Path
+	MarkerSize      *float64
+	MarkerFaceColor *render.Color
+	MarkerEdgeColor *render.Color
+	MarkerEdgeWidth *float64
+	MarkEvery       int
+	Label           string   // series label for legend
+	Alpha           *float64 // alpha transparency
+	LevelCount      int      // contour level count for contour-like plot types
+	Levels          []float64
+	ZDir            string
+	Offset          *float64 // fixed projection offset for contour-like plot types
+	RStride         *int     // row stride for 3D surface/wireframe sampling
+	CStride         *int     // column stride for 3D surface/wireframe sampling
+	RCount          *int     // maximum sampled row count for 3D surface/wireframe sampling
+	CCount          *int     // maximum sampled column count for 3D surface/wireframe sampling
+	FaceColors      []render.Color
+	Shade           *bool
+	Antialiased     *bool
+	Colormap        *string // scalar colormap for mappable plot types
+	Norm            ScalarNormalizer
+	VMin            *float64
+	VMax            *float64
+	AxLimClip       bool
 }
 
 // Plot creates a line plot with automatic color cycling if no color is specified.
@@ -85,10 +93,41 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	if opt.DrawStyle != nil {
 		line.DrawStyle = *opt.DrawStyle
 	}
+	if opt.Marker != nil {
+		line.Marker = *opt.Marker
+		line.MarkerSet = true
+	}
+	if opt.MarkerStyle != nil {
+		line.MarkerStyle = *opt.MarkerStyle
+	}
+	if opt.MarkerPath != nil {
+		line.MarkerPath = *opt.MarkerPath
+	}
+	if opt.MarkerSize != nil {
+		line.MarkerSize = *opt.MarkerSize
+	}
+	line.MarkerFaceColor = color
+	if opt.MarkerFaceColor != nil {
+		line.MarkerFaceColor = *opt.MarkerFaceColor
+	}
+	line.MarkerEdgeColor = color
+	if opt.MarkerEdgeColor != nil {
+		line.MarkerEdgeColor = *opt.MarkerEdgeColor
+	}
+	if opt.MarkerEdgeWidth != nil {
+		line.MarkerEdgeWidth = *opt.MarkerEdgeWidth
+	}
+	line.MarkEvery = opt.MarkEvery
 
 	// Apply alpha if specified
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 		line.Col.A = *opt.Alpha
+		if opt.MarkerFaceColor == nil {
+			line.MarkerFaceColor.A = *opt.Alpha
+		}
+		if opt.MarkerEdgeColor == nil {
+			line.MarkerEdgeColor.A = *opt.Alpha
+		}
 	}
 
 	a.Add(line)

@@ -36,6 +36,38 @@ func TestLegendCollectEntries(t *testing.T) {
 	}
 }
 
+func TestLegendCollectsLineMarkers(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.1, Y: 0.1},
+		Max: geom.Pt{X: 0.9, Y: 0.9},
+	})
+
+	marker := MarkerDiamond
+	face := render.Color{R: 1, A: 0.7}
+	edge := render.Color{B: 1, A: 0.5}
+	edgeWidth := 2.0
+	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
+		Label:           "line markers",
+		Marker:          &marker,
+		MarkerFaceColor: &face,
+		MarkerEdgeColor: &edge,
+		MarkerEdgeWidth: &edgeWidth,
+	})
+
+	entries := ax.AddLegend().collectEntries()
+	if len(entries) != 1 {
+		t.Fatalf("entries = %d, want 1", len(entries))
+	}
+	entry := entries[0]
+	if entry.kind != legendEntryLine || !entry.lineMarkerSet {
+		t.Fatalf("legend entry should be combined line marker, got %+v", entry)
+	}
+	if entry.marker != marker || entry.markerFill != face || entry.markerEdge != edge || entry.markerEdgeWidth != edgeWidth {
+		t.Fatalf("legend marker metadata = %+v", entry)
+	}
+}
+
 func TestLegendDrawRendersLabelsAndSamples(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{

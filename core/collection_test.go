@@ -38,6 +38,39 @@ func TestPathCollectionDrawAndBounds(t *testing.T) {
 	}
 }
 
+func TestPathCollectionArtistAlphaMultipliesCollectionAlpha(t *testing.T) {
+	pc := &PathCollection{
+		Collection: Collection{Alpha: 0.5},
+		Path:       markerRectanglePath(-0.5, -0.5, 0.5, 0.5),
+		Offsets:    []geom.Pt{{X: 1, Y: 2}},
+		Size:       1,
+		FaceColor:  render.Color{R: 1, A: 0.8},
+		EdgeColor:  render.Color{B: 1, A: 0.6},
+		EdgeWidth:  1,
+	}
+	pc.SetAlpha(0.5)
+
+	r := &recordingRenderer{}
+	pc.Draw(r, createTestDrawContext())
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("path calls = %d, want 1", len(r.pathCalls))
+	}
+	if got, want := r.pathCalls[0].paint.Fill.A, 0.2; got != want {
+		t.Fatalf("fill alpha = %v, want %v", got, want)
+	}
+	if got, want := r.pathCalls[0].paint.Stroke.A, 0.15; got != want {
+		t.Fatalf("stroke alpha = %v, want %v", got, want)
+	}
+
+	pc.SetAlpha(0)
+	r.pathCalls = nil
+	pc.Draw(r, createTestDrawContext())
+	if len(r.pathCalls) != 0 {
+		t.Fatalf("transparent collection drew %d paths, want 0", len(r.pathCalls))
+	}
+}
+
 type batchRecordingRenderer struct {
 	recordingRenderer
 	markerBatches         []render.MarkerBatch

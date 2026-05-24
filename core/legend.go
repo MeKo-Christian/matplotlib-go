@@ -30,9 +30,10 @@ type legendEntry struct {
 
 	kind legendEntryKind
 
-	lineColor render.Color
-	lineWidth float64
-	dashes    []float64
+	lineColor     render.Color
+	lineWidth     float64
+	dashes        []float64
+	lineMarkerSet bool
 
 	marker          MarkerType
 	markerPath      geom.Path
@@ -448,20 +449,7 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 		}
 		patch.drawStyledPath(r, pixelRectPath(patchRect), geom.Path{})
 	case legendEntryMarker:
-		markerPath := entry.markerPath
-		if len(markerPath.C) == 0 {
-			sampleScatter := Scatter2D{Marker: entry.marker}
-			markerPath = sampleScatter.createMarkerPath(center, 5)
-		} else {
-			markerPath = scaleAndTranslatePath(markerPath, 5, center)
-		}
-		r.Path(markerPath, &render.Paint{
-			Fill:      entry.markerFill,
-			Stroke:    entry.markerEdge,
-			LineWidth: entry.markerEdgeWidth,
-			LineJoin:  render.JoinRound,
-			LineCap:   render.CapRound,
-		})
+		l.drawMarkerSample(r, entry, center, 5)
 	default:
 		lineWidth := entry.lineWidth
 		if lineWidth <= 0 {
@@ -481,7 +469,27 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 			LineCap:   render.CapRound,
 			Dashes:    entry.dashes,
 		})
+		if entry.lineMarkerSet {
+			l.drawMarkerSample(r, entry, center, 5)
+		}
 	}
+}
+
+func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center geom.Pt, radius float64) {
+	markerPath := entry.markerPath
+	if len(markerPath.C) == 0 {
+		sampleScatter := Scatter2D{Marker: entry.marker}
+		markerPath = sampleScatter.createMarkerPath(center, radius)
+	} else {
+		markerPath = scaleAndTranslatePath(markerPath, radius, center)
+	}
+	r.Path(markerPath, &render.Paint{
+		Fill:      entry.markerFill,
+		Stroke:    entry.markerEdge,
+		LineWidth: entry.markerEdgeWidth,
+		LineJoin:  render.JoinRound,
+		LineCap:   render.CapRound,
+	})
 }
 
 func pixelRectPath(r geom.Rect) geom.Path {

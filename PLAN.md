@@ -924,31 +924,34 @@ reference; current `core/events.go`, `internal/webdemo/`.
 
 **Exit criteria:**
 
-- [ ] At least one desktop and one web interactive backend can drive pan /
+- [x] At least one desktop and one web interactive backend can drive pan /
       zoom / pick across every plot category committed in earlier phases.
       Pan and zoom are wired for Gio, WebAgg, and WASM, and Gio/WebAgg
-      now emit `pick_event` on mouse press when an artist is hit. This
-      remains open until the catalog-driven interactive matrix in 4.5
-      proves every committed plot category.
-- [ ] Event lifecycle and redraw scheduling match upstream Matplotlib for
+      now emit `pick_event` on mouse press when an artist is hit.
+      `internal/examplecatalog.InteractiveCoverageMatrix` lists every
+      catalog topic with a figure-backed representative, and WebAgg/Gio
+      matrix tests drive draw, pan drag, scroll zoom, and pick-click
+      input for every row.
+- [x] Event lifecycle and redraw scheduling match upstream Matplotlib for
       the documented event set.
       Draw-idle coalescing and WebAgg stale redraw scheduling are in
       place. Figure and axes enter / leave, mouse press-before-pick,
       release-without-pick, WebAgg double-click metadata, scroll steps,
       key normalization, and modifier payloads are covered for the
-      touched WebAgg/Gio paths. This remains open until the lifecycle
-      parity table covers every backend and draw / resize / close /
-      error propagation path.
-- [ ] Interactive backends share the same artist / event / renderer surface
+      touched WebAgg/Gio paths. Headless, Gio, WebAgg, and WASM now use
+      the shared normalization and lifecycle surface where applicable;
+      focused tests cover draw, draw_idle, resize, close, stale redraw,
+      and renderer-error propagation for the concrete backends.
+- [x] Interactive backends share the same artist / event / renderer surface
       as the headless backends.
       The common `FigureCanvas`, `DrawIdleCanvas`, `BlitCanvas`,
-      `Dispatcher`, `Navigation`, picker, and toolbar pieces exist, but
-      the backend capability assertions and WASM/desktop/web surface
-      alignment in 4.7 still need to close this formally.
+      `Dispatcher`, `Navigation`, picker, and toolbar pieces are covered
+      by runtime assertions, WebAgg/Gio matrix tests, WASM compile
+      verification, embedder docs, and the switchable embed example.
 
 ### 4.5 Interactive Coverage Matrix
 
-- [ ] Add a catalog-driven interactive smoke harness that drives at least
+- [x] Add a catalog-driven interactive smoke harness that drives at least
       one desktop backend (Gio) and one web backend (WebAgg) across every
       plot category committed in Phases 1–3.
       The harness should live beside the existing backend tests, reuse
@@ -957,25 +960,41 @@ reference; current `core/events.go`, `internal/webdemo/`.
       exact pixels: draw events fire, axis limits change when expected,
       pick events fire for pickable cases, and the renderer does not
       panic.
-- [ ] Extend `internal/examplecatalog.Case` with optional interactive
+      `backends/webagg.TestInteractiveCoverageMatrixWebAgg` and
+      `backends/desktop/gio.TestInteractiveCoverageMatrixGio` drive each
+      `InteractiveCoverageMatrix` representative through draw, pan drag,
+      scroll zoom, and pick-click input.
+- [x] Extend `internal/examplecatalog.Case` with optional interactive
       metadata: `PickPointData`, `PickPointPixel`, `Pickable` /
       `NoPickReason`, and per-case pan/zoom skip flags for non-Cartesian
       or intentionally static figures.
       Existing catalog rows should default to the conservative path:
       pan/zoom smoke runs where axes support pixel inversion; pick checks
       run only when metadata identifies a pickable artist.
-- [ ] Add WebAgg protocol-level integration coverage for pan, zoom, and
+      The fields are present on `Case`; the current matrix defaults to
+      conservative smoke checks and reserves exact pick assertions for
+      rows that later declare pick points.
+- [x] Add WebAgg protocol-level integration coverage for pan, zoom, and
       pick using real `httptest` WebSocket clients, not only direct
       `HandleClientMessage` calls.
-- [ ] Add a cgo-free Gio synthetic-input suite for pan, zoom, and pick
+      `backends/webagg.TestWebSocketDrivesPanScrollAndPick` sends
+      toolbar, mouse, scroll, and pick-click JSON over a real
+      `httptest` WebSocket connection.
+- [x] Add a cgo-free Gio synthetic-input suite for pan, zoom, and pick
       over representative catalog categories, plus a documented manual
       command for visual Gio smoke checks.
+      Gio's matrix test uses synthetic `pointer.Event` input over every
+      catalog topic representative. `docs/interactive-backends.md`
+      documents switchable Gio/WebAgg/headless smoke commands.
 
 **Exit criteria:**
 
-- [ ] The Phase 4 first exit criterion is backed by automated coverage
+- [x] The Phase 4 first exit criterion is backed by automated coverage
       listing every catalog category and whether it passed, skipped with
       reason, or is explicitly unsupported.
+      `backends.TestInteractiveMatrixCoversEveryCatalogTopic` and
+      `TestInteractiveMatrixHasFigureFactoryForEveryCatalogTopic` assert
+      coverage for every catalog topic.
 
 ### 4.6 Event Lifecycle Parity Closure
 
@@ -1001,43 +1020,53 @@ reference; current `core/events.go`, `internal/webdemo/`.
       release / scroll / key payload behavior. WebAgg `dblclick` now
       dispatches `canvas.EventMousePress` with `DoubleClick=true`.
       Gio's pointer event type does not expose double-click metadata.
-- [ ] Centralize backend event normalization helpers for mouse buttons,
+- [x] Centralize backend event normalization helpers for mouse buttons,
       modifiers, scroll deltas, key strings, and double-click metadata so
       Gio, WebAgg, WASM, and headless simulations report the same
       canvas-level event payloads.
       Shared helpers now live in `canvas/input.go` for modifier sets,
       modifier names, browser mouse-button indices, and key
       normalization. WebAgg and Gio use the shared modifier/key helpers
-      on the exercised paths; WASM alignment and a formal backend matrix
-      remain open.
-- [ ] Add lifecycle tests for draw, draw_idle, resize, close, stale artist
+      on the exercised paths; WASM now uses the same helpers and emits
+      pick / enter / leave through the shared paths.
+- [x] Add lifecycle tests for draw, draw_idle, resize, close, stale artist
       redraw, and error propagation across headless, Gio, WebAgg, and
       WASM where applicable.
+      Headless, Gio, and WebAgg have focused lifecycle and error tests;
+      WASM compiles with the shared lifecycle path under `GOOS=js
+      GOARCH=wasm`.
 
 **Exit criteria:**
 
-- [ ] The Phase 4 second exit criterion has a parity table mapping each
+- [x] The Phase 4 second exit criterion has a parity table mapping each
       documented Matplotlib event to the corresponding canvas event,
       backend mappings, and tests.
+      `docs/interactive-backends.md` contains the event parity table and
+      links the common payload contract to backend behavior.
 
 ### 4.7 Shared Interactive Surface Hardening
 
-- [ ] Add compile-time and runtime assertions that every interactive
+- [x] Add compile-time and runtime assertions that every interactive
       backend exposes the expected common surface:
       `FigureCanvas`, `DrawIdleCanvas`, `Dispatcher` event flow,
       navigation, toolbar, and save hooks; `BlitCanvas` where the
       renderer supports buffer regions.
       Headless compile-time interface assertions now exist alongside
       the existing WebAgg and Gio compile-time checks; runtime assertions
-      and WASM coverage remain open.
+      cover headless, WebAgg, and Gio. WASM is covered by compile
+      verification.
 - [x] Decide whether desktop Gio should expose `canvas.BlitCanvas` by
       reusing its retained renderer/image buffer, or document why full
       frame blits remain the desktop path until animation work in Phase 6.
       Gio remains a full-frame redraw backend for now; the rationale is
       documented in `docs/interactive-backends.md`.
-- [ ] Align WebAgg, Gio, and WASM hover status, cursor, rubber-band,
+- [x] Align WebAgg, Gio, and WASM hover status, cursor, rubber-band,
       toolbar history, and navigation-mode announcements through shared
       canvas-level APIs instead of backend-local conventions.
+      `ToolbarController` now exposes shared mode/message announcement
+      callbacks; WebAgg broadcasts `navigate_mode` and `message` through
+      those callbacks, Gio keeps the same toolbar state locally, and
+      WASM shares the normalized hover/pick lifecycle.
 - [x] Add docs for embedders describing the common interactive contracts:
       event registration, pick handling, draw idle, blit regions,
       toolbar actions, save handlers, and backend capability detection.
@@ -1048,10 +1077,14 @@ reference; current `core/events.go`, `internal/webdemo/`.
 
 **Exit criteria:**
 
-- [ ] The Phase 4 third exit criterion is backed by shared-interface
+- [x] The Phase 4 third exit criterion is backed by shared-interface
       assertions, embedder docs, and at least one example that can switch
       between headless, Gio, and WebAgg without changing artist/event
       code.
+      Runtime assertions live in `backends.TestInteractiveBackendsExposeCommonSurface`,
+      docs live in `docs/interactive-backends.md`, and
+      `examples/embed/switchable` uses one figure/event setup across the
+      three backend choices.
 
 ---
 
@@ -2485,6 +2518,23 @@ Implementation notes:
   clipping, alpha, and visibility.
 - Prefer adding shared Go option structs/mixins over copying Python's dynamic
   setter model wholesale.
+
+Current slice landed:
+
+- [x] Common artists that embed `ArtistRasterization` now get shared
+  Matplotlib-style metadata for visibility, artist-level alpha, in-layout, and
+  stale state. The zero value remains visible, alpha=1, and in-layout=true.
+- [x] Artist traversal skips invisible artists for both normal and overlay
+  draws.
+- [x] `Line2D` and collection-derived artists now combine artist-level alpha with
+  their existing stroke/fill/collection alpha behavior, preserving the existing
+  zero-value "alpha omitted" semantics.
+- [x] `Line2D` now supports optional data markers with marker style/path,
+  marker size, marker face color, marker edge color, marker edge width,
+  every-N `MarkEvery`, and combined line+marker legend samples.
+- Remaining 9C.1 work: shared label access, clip box/path metadata, custom
+  per-artist transforms, Line2D gapcolor, richer markevery forms, data
+  getters/setters, and true alternate-path half-filled markers.
 
 ### 9C.2 Axis, Ticker, Formatter, Scale, and Transform Breadth
 

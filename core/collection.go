@@ -134,13 +134,24 @@ func (c *Collection) Z() float64 {
 }
 
 func (c *Collection) alphaValue() float64 {
-	if c == nil || c.Alpha <= 0 {
-		return 1
+	alpha := 1.0
+	if c != nil && c.Alpha > 0 && c.Alpha <= 1 {
+		alpha = c.Alpha
 	}
-	if c.Alpha > 1 {
-		return 1
+	return c.EffectiveAlpha(alpha)
+}
+
+func (c *Collection) alphaColor(color render.Color) render.Color {
+	alpha := 1.0
+	if c != nil && c.Alpha > 0 && c.Alpha <= 1 {
+		alpha = c.Alpha
 	}
-	return c.Alpha
+	color = patchAlphaColor(color, alpha)
+	if artistAlpha, ok := c.ArtistAlpha(); ok {
+		color.A *= artistAlpha
+	}
+	color.A = clampOneToOne(color.A)
+	return color
 }
 
 func (c *Collection) antialiased() bool {
@@ -190,7 +201,7 @@ func (c *PathCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		edge := c.edgeColorAt(i)
 		width := c.edgeWidthAt(i)
 		hatch := stringAt(c.Hatch, c.Hatches, i)
-		hatchColor := patchAlphaColor(colorAt(c.HatchColor, c.HatchColors, i), c.alphaValue())
+		hatchColor := c.alphaColor(colorAt(c.HatchColor, c.HatchColors, i))
 		hatchWidth := widthAt(c.HatchWidth, c.HatchWidths, i)
 		if c.LineOnly {
 			if edge.A <= 0 {
@@ -274,7 +285,7 @@ func (c *LineCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 		path := polylinePath(segment)
 		path = buildDisplayPath(ctx, c.Coords, path, geom.Identity())
-		color := patchAlphaColor(colorAt(c.Color, c.Colors, i), c.alphaValue())
+		color := c.alphaColor(colorAt(c.Color, c.Colors, i))
 		width := widthAt(c.LineWidth, c.LineWidths, i)
 		if width <= 0 || color.A <= 0 {
 			continue
@@ -332,7 +343,7 @@ func (c *LineCollection) legendEntry() (legendEntry, bool) {
 	if c == nil || c.label() == "" {
 		return legendEntry{}, false
 	}
-	return legendEntryFromLine(c.label(), patchAlphaColor(colorAt(c.Color, c.Colors, 0), c.alphaValue()), widthAt(c.LineWidth, c.LineWidths, 0), dashesAt(c.Dashes, c.DashPatterns, 0)), true
+	return legendEntryFromLine(c.label(), c.alphaColor(colorAt(c.Color, c.Colors, 0)), widthAt(c.LineWidth, c.LineWidths, 0), dashesAt(c.Dashes, c.DashPatterns, 0)), true
 }
 
 // Draw renders the patch collection.
@@ -349,11 +360,11 @@ func (c *PatchCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 		path = buildDisplayPath(ctx, c.Coords, path, geom.Identity())
 		patch := Patch{
-			FaceColor:   patchAlphaColor(colorAt(c.FaceColor, c.FaceColors, i), c.alphaValue()),
-			EdgeColor:   patchAlphaColor(colorAt(c.EdgeColor, c.EdgeColors, i), c.alphaValue()),
+			FaceColor:   c.alphaColor(colorAt(c.FaceColor, c.FaceColors, i)),
+			EdgeColor:   c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, i)),
 			EdgeWidth:   widthAt(c.EdgeWidth, c.EdgeWidths, i),
 			Hatch:       stringAt(c.Hatch, c.Hatches, i),
-			HatchColor:  patchAlphaColor(colorAt(c.HatchColor, c.HatchColors, i), c.alphaValue()),
+			HatchColor:  c.alphaColor(colorAt(c.HatchColor, c.HatchColors, i)),
 			HatchWidth:  widthAt(c.HatchWidth, c.HatchWidths, i),
 			PathEffects: cloneRenderPathEffects(c.PathEffects),
 			LineJoin:    c.LineJoin,
@@ -400,11 +411,11 @@ func (c *PatchCollection) legendEntry() (legendEntry, bool) {
 	}
 	return legendEntryFromPatchStyle(
 		c.label(),
-		patchAlphaColor(colorAt(c.FaceColor, c.FaceColors, 0), c.alphaValue()),
-		patchAlphaColor(colorAt(c.EdgeColor, c.EdgeColors, 0), c.alphaValue()),
+		c.alphaColor(colorAt(c.FaceColor, c.FaceColors, 0)),
+		c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, 0)),
 		widthAt(c.EdgeWidth, c.EdgeWidths, 0),
 		stringAt(c.Hatch, c.Hatches, 0),
-		patchAlphaColor(colorAt(c.HatchColor, c.HatchColors, 0), c.alphaValue()),
+		c.alphaColor(colorAt(c.HatchColor, c.HatchColors, 0)),
 		widthAt(c.HatchWidth, c.HatchWidths, 0),
 	), true
 }
@@ -632,7 +643,7 @@ func (c *PathCollection) drawPathCollection(r render.Renderer, ctx *DrawContext)
 		edge := c.edgeColorAt(i)
 		width := c.edgeWidthAt(i)
 		hatch := stringAt(c.Hatch, c.Hatches, i)
-		hatchColor := patchAlphaColor(colorAt(c.HatchColor, c.HatchColors, i), c.alphaValue())
+		hatchColor := c.alphaColor(colorAt(c.HatchColor, c.HatchColors, i))
 		hatchWidth := widthAt(c.HatchWidth, c.HatchWidths, i)
 		if c.LineOnly {
 			if edge.A <= 0 {
@@ -695,8 +706,8 @@ func (c *PatchCollection) drawPathCollection(r render.Renderer, ctx *DrawContext
 			continue
 		}
 		path = buildDisplayPath(ctx, c.Coords, path, geom.Identity())
-		fill := patchAlphaColor(colorAt(c.FaceColor, c.FaceColors, i), c.alphaValue())
-		edge := patchAlphaColor(colorAt(c.EdgeColor, c.EdgeColors, i), c.alphaValue())
+		fill := c.alphaColor(colorAt(c.FaceColor, c.FaceColors, i))
+		edge := c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, i))
 		width := widthAt(c.EdgeWidth, c.EdgeWidths, i)
 		lineJoin := c.LineJoin
 		if lineJoin == 0 {
@@ -707,7 +718,7 @@ func (c *PatchCollection) drawPathCollection(r render.Renderer, ctx *DrawContext
 			lineCap = render.CapButt
 		}
 		hatch := stringAt(c.Hatch, c.Hatches, i)
-		hatchColor := patchAlphaColor(colorAt(c.HatchColor, c.HatchColors, i), c.alphaValue())
+		hatchColor := c.alphaColor(colorAt(c.HatchColor, c.HatchColors, i))
 		hatchWidth := widthAt(c.HatchWidth, c.HatchWidths, i)
 		if fill.A <= 0 && (width <= 0 || edge.A <= 0) && (hatch == "" || hatchColor.A <= 0) {
 			continue
@@ -760,11 +771,11 @@ func (m *QuadMesh) drawQuadMesh(r render.Renderer, ctx *DrawContext) bool {
 				}
 				quad[i] = pt
 			}
-			face := patchAlphaColor(colorAt(m.FaceColor, m.FaceColors, idx), m.alphaValue())
-			edge := patchAlphaColor(colorAt(m.EdgeColor, m.EdgeColors, idx), m.alphaValue())
+			face := m.alphaColor(colorAt(m.FaceColor, m.FaceColors, idx))
+			edge := m.alphaColor(colorAt(m.EdgeColor, m.EdgeColors, idx))
 			width := widthAt(m.EdgeWidth, m.EdgeWidths, idx)
 			hatch := stringAt(m.Hatch, m.Hatches, idx)
-			hatchColor := patchAlphaColor(colorAt(m.HatchColor, m.HatchColors, idx), m.alphaValue())
+			hatchColor := m.alphaColor(colorAt(m.HatchColor, m.HatchColors, idx))
 			hatchWidth := widthAt(m.HatchWidth, m.HatchWidths, idx)
 			if face.A > 0 || (width > 0 && edge.A > 0) || (hatch != "" && hatchColor.A > 0) {
 				batch.Cells = append(batch.Cells, render.QuadMeshCell{
@@ -992,11 +1003,11 @@ func (c *PathCollection) sizeAt(i int) float64 {
 }
 
 func (c *PathCollection) faceColorAt(i int) render.Color {
-	return patchAlphaColor(colorAt(c.FaceColor, c.FaceColors, i), c.alphaValue())
+	return c.alphaColor(colorAt(c.FaceColor, c.FaceColors, i))
 }
 
 func (c *PathCollection) edgeColorAt(i int) render.Color {
-	return patchAlphaColor(colorAt(c.EdgeColor, c.EdgeColors, i), c.alphaValue())
+	return c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, i))
 }
 
 func (c *PathCollection) edgeWidthAt(i int) float64 {

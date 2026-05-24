@@ -700,7 +700,16 @@ func (l *Line2D) legendEntry() (legendEntry, bool) {
 	if l == nil || l.Label == "" {
 		return legendEntry{}, false
 	}
-	return legendEntryFromLine(l.Label, l.Col, l.W, l.Dashes), true
+	entry := legendEntryFromLine(l.Label, l.ApplyArtistAlpha(l.Col), l.W, l.Dashes)
+	if l.hasMarkers() {
+		entry.lineMarkerSet = true
+		entry.marker = l.Marker
+		entry.markerPath = l.markerPrototypePath(nil, nil)
+		entry.markerFill = l.resolvedMarkerFaceColor()
+		entry.markerEdge = l.resolvedMarkerEdgeColor()
+		entry.markerEdgeWidth = l.resolvedMarkerEdgeWidth()
+	}
+	return entry, true
 }
 
 func (s *Scatter2D) legendEntry() (legendEntry, bool) {

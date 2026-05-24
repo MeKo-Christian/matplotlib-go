@@ -5,6 +5,7 @@ testdata/_artifacts/
 !testdata/golden/*.png
 !testdata/golden_freetype/*.png
 !testdata/matplotlib_ref/*.png
+!testdata/usetex_golden/*.png
 
 # Temporary files
 *.tmp
