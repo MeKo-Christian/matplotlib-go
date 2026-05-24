@@ -2121,7 +2121,7 @@ catalog/parity fixture per behavior family.
       hooks, affine/non-affine split decisions, and clone-safe access.
 - [x] Add a Go-style `TransformedPath` helper with clone-safe source/output
       paths and transform-node invalidation-backed cache refresh.
-- [ ] Expand BBox/rect helpers needed by layout and annotation parity:
+- [x] Expand BBox/rect helpers needed by layout and annotation parity:
       union, intersection, expanded/padded, anchored, transformed, inverse
       transformed, empty/null handling, and point containment.
 - [x] Add shared `geom.Rect` anchored child-rectangle helper with compass and
