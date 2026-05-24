@@ -436,7 +436,7 @@ func (s ArrowStyle) transmute(path geom.Path, mutationSize, lineWidth float64) [
 	name := strings.ToLower(s.Name)
 	switch name {
 	case "wedge":
-		return []arrowPathPart{{path: wedgeArrowPath(pathStart(path), pathEnd(path), s.TailWidth*mutationSize, s.ShrinkFactor), fillable: true}}
+		return []arrowPathPart{{path: wedgeArrowPathForConnection(path, s.TailWidth*mutationSize, s.ShrinkFactor), fillable: true}}
 	case "simple", "fancy":
 		return []arrowPathPart{{path: filledArrowPath(pathStart(path), pathEnd(path), s.TailWidth*mutationSize, s.HeadWidth*mutationSize, s.HeadLength*mutationSize), fillable: true}}
 	}
@@ -546,6 +546,63 @@ func wedgeArrowPath(start, tip geom.Pt, tailWidth, shrinkFactor float64) geom.Pa
 		{X: start.X - px*tailHalf, Y: start.Y - py*tailHalf},
 	}
 	return polygonPath(points, true)
+}
+
+func wedgeArrowPathForConnection(path geom.Path, tailWidth, shrinkFactor float64) geom.Path {
+	start, ctrl, tip, ok := quadraticConnectionPoints(path)
+	if !ok {
+		return wedgeArrowPath(pathStart(path), pathEnd(path), tailWidth, shrinkFactor)
+	}
+	if tailWidth <= 0 {
+		tailWidth = math.Max(1, distance(start, tip)*0.04)
+	}
+	if shrinkFactor <= 0 {
+		shrinkFactor = 0.5
+	}
+
+	mid := quadraticPoint(start, ctrl, tip, 0.5)
+	startNormal := normalForVector(geom.Pt{X: ctrl.X - start.X, Y: ctrl.Y - start.Y})
+	midNormal := normalForVector(geom.Pt{X: tip.X - start.X, Y: tip.Y - start.Y})
+	if midNormal == (geom.Pt{}) {
+		midNormal = normalForVector(geom.Pt{X: tip.X - ctrl.X, Y: tip.Y - ctrl.Y})
+	}
+	if startNormal == (geom.Pt{}) || midNormal == (geom.Pt{}) {
+		return wedgeArrowPath(start, tip, tailWidth, shrinkFactor)
+	}
+
+	tailHalf := tailWidth / 2
+	midHalf := tailHalf * shrinkFactor
+	points := []geom.Pt{
+		{X: start.X + startNormal.X*tailHalf, Y: start.Y + startNormal.Y*tailHalf},
+		{X: mid.X + midNormal.X*midHalf, Y: mid.Y + midNormal.Y*midHalf},
+		tip,
+		{X: mid.X - midNormal.X*midHalf, Y: mid.Y - midNormal.Y*midHalf},
+		{X: start.X - startNormal.X*tailHalf, Y: start.Y - startNormal.Y*tailHalf},
+	}
+	return polygonPath(points, true)
+}
+
+func quadraticConnectionPoints(path geom.Path) (geom.Pt, geom.Pt, geom.Pt, bool) {
+	if len(path.C) < 2 || path.C[0] != geom.MoveTo || path.C[1] != geom.QuadTo || len(path.V) < 3 {
+		return geom.Pt{}, geom.Pt{}, geom.Pt{}, false
+	}
+	return path.V[0], path.V[1], path.V[2], true
+}
+
+func quadraticPoint(start, ctrl, end geom.Pt, t float64) geom.Pt {
+	mt := 1 - t
+	return geom.Pt{
+		X: mt*mt*start.X + 2*mt*t*ctrl.X + t*t*end.X,
+		Y: mt*mt*start.Y + 2*mt*t*ctrl.Y + t*t*end.Y,
+	}
+}
+
+func normalForVector(v geom.Pt) geom.Pt {
+	length := math.Hypot(v.X, v.Y)
+	if length == 0 {
+		return geom.Pt{}
+	}
+	return geom.Pt{X: -v.Y / length, Y: v.X / length}
 }
 
 func arrowHeadPath(from, tip geom.Pt, headLength, headWidth float64, fill bool, lineWidth float64) geom.Path {

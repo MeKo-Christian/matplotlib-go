@@ -612,6 +612,31 @@ func TestArrowStyleWedgeUsesShrinkFactor(t *testing.T) {
 	}
 }
 
+func TestArrowStyleWedgeFollowsQuadraticConnection(t *testing.T) {
+	style, ok := ArrowStyleFromString("wedge,tail_width=0.6,shrink_factor=0.25")
+	if !ok {
+		t.Fatal("ArrowStyleFromString(wedge) returned !ok")
+	}
+
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 0, Y: 0})
+	path.QuadTo(geom.Pt{X: 50, Y: 50}, geom.Pt{X: 100, Y: 0})
+	parts := style.transmute(path, 10, 1)
+	if len(parts) != 1 || !parts[0].fillable {
+		t.Fatalf("wedge parts = %+v, want one fillable path", parts)
+	}
+	got := parts[0].path
+	if len(got.V) != 5 {
+		t.Fatalf("wedge path vertices = %d, want tapered closed outline: %+v", len(got.V), got)
+	}
+	if got.V[1].Y < 20 || got.V[3].Y < 20 {
+		t.Fatalf("quadratic wedge ignored connection control point, got vertices %+v", got.V)
+	}
+	if got.V[2] != (geom.Pt{X: 100, Y: 0}) {
+		t.Fatalf("wedge should taper to the quadratic endpoint, got tip %+v", got.V[2])
+	}
+}
+
 func TestArrowStyleCurveShortensLineForArrowHeads(t *testing.T) {
 	style, ok := ArrowStyleFromString("->,head_length=0.4,head_width=0.2")
 	if !ok {
