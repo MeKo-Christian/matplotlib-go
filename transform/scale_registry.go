@@ -250,6 +250,15 @@ func registerBuiltInScales(r *ScaleRegistry) {
 	}
 	r.MustRegister("function", functionFactory)
 	r.MustRegister("func", functionFactory)
+	r.MustRegister("functionlog", func(opts ScaleOptions) (Scale, error) {
+		if opts.Forward == nil || opts.Inverse == nil {
+			return nil, errors.New("functionlog scale requires both forward and inverse functions")
+		}
+		if opts.Base <= 1 {
+			return nil, fmt.Errorf("functionlog scale base must be > 1")
+		}
+		return NewFuncLogScale(opts.DomainMin, opts.DomainMax, opts.Base, opts.Forward, opts.Inverse), nil
+	})
 }
 
 // SymLog applies a signed logarithmic transform with a linear region around zero.
@@ -486,6 +495,60 @@ func (s FuncScale) transform(x float64) (float64, bool) {
 		return 0, false
 	}
 	return y, true
+}
+
+// FuncLogScale applies caller-provided forward/inverse mappings on a log axis.
+type FuncLogScale struct {
+	Min, Max float64
+	Base     float64
+	Forward  func(float64) float64
+	Inverse  func(float64) (float64, bool)
+}
+
+func NewFuncLogScale(minVal, maxVal, base float64, forward func(float64) float64, inverse func(float64) (float64, bool)) FuncLogScale {
+	if base <= 1 {
+		base = 10
+	}
+	return FuncLogScale{Min: minVal, Max: maxVal, Base: base, Forward: forward, Inverse: inverse}
+}
+
+func (s FuncLogScale) Domain() (float64, float64) { return s.Min, s.Max }
+
+func (s FuncLogScale) WithDomain(min, max float64) Scale {
+	s.Min = min
+	s.Max = max
+	return s
+}
+
+func (s FuncLogScale) valid() bool {
+	return s.Min != s.Max && s.Base > 1 && s.Forward != nil && s.Inverse != nil
+}
+
+func (s FuncLogScale) Fwd(x float64) float64 {
+	if !s.valid() {
+		return 0
+	}
+	return normalizedMappedForward(s.Min, s.Max, s.transform, x)
+}
+
+func (s FuncLogScale) Inv(u float64) (float64, bool) {
+	if !s.valid() {
+		return s.Min, false
+	}
+	return normalizedMappedInverse(s.Min, s.Max, s.transform, s.inverse, u)
+}
+
+func (s FuncLogScale) transform(x float64) (float64, bool) {
+	y := s.Forward(x)
+	if !isFinite(y) || y <= 0 {
+		return 0, false
+	}
+	return math.Log(y) / math.Log(s.Base), true
+}
+
+func (s FuncLogScale) inverse(y float64) (float64, bool) {
+	x := math.Pow(s.Base, y)
+	return s.Inverse(x)
 }
 
 func normalizedMappedForward(minVal, maxVal float64, transform func(float64) (float64, bool), x float64) float64 {

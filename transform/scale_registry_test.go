@@ -8,7 +8,7 @@ import (
 
 func TestScaleRegistryBuiltins(t *testing.T) {
 	names := ScaleNames()
-	want := []string{"asinh", "func", "function", "linear", "log", "logit", "symlog"}
+	want := []string{"asinh", "func", "function", "functionlog", "linear", "log", "logit", "symlog"}
 	for _, name := range want {
 		found := false
 		for _, got := range names {
@@ -127,6 +127,34 @@ func TestFunctionScale(t *testing.T) {
 		}
 		if !approx(x, xr, 1e-9*(1+math.Abs(x))) {
 			t.Fatalf("function roundtrip mismatch: x=%v xr=%v", x, xr)
+		}
+	}
+}
+
+func TestFunctionLogScale(t *testing.T) {
+	scale, err := NewScale("functionlog",
+		WithScaleDomain(1, 100),
+		WithScaleBase(10),
+		WithScaleFunctions(
+			func(x float64) float64 { return x * x },
+			func(y float64) (float64, bool) { return math.Sqrt(y), true },
+		),
+	)
+	if err != nil {
+		t.Fatalf("NewScale(functionlog): %v", err)
+	}
+	if _, ok := scale.(FuncLogScale); !ok {
+		t.Fatalf("functionlog scale type = %T, want FuncLogScale", scale)
+	}
+
+	for _, x := range []float64{1, 2, 10, 100} {
+		u := scale.Fwd(x)
+		xr, ok := scale.Inv(u)
+		if !ok {
+			t.Fatalf("functionlog inverse failed for x=%v", x)
+		}
+		if !approx(x, xr, 1e-9*(1+math.Abs(x))) {
+			t.Fatalf("functionlog roundtrip mismatch: x=%v xr=%v", x, xr)
 		}
 	}
 }

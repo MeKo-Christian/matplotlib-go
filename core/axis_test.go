@@ -328,6 +328,35 @@ func TestAxes_SetScaleInstallsLogitLocatorDefaults(t *testing.T) {
 	}
 }
 
+func TestAxes_SetScaleInstallsFunctionLogLocatorDefaults(t *testing.T) {
+	axes := &Axes{
+		XScale: transform.NewLinear(1, 100),
+		XAxis:  NewXAxis(),
+	}
+
+	err := axes.SetXScale("functionlog",
+		transform.WithScaleBase(10),
+		transform.WithScaleFunctions(
+			func(x float64) float64 { return x * x },
+			func(y float64) (float64, bool) { return math.Sqrt(y), true },
+		),
+	)
+	if err != nil {
+		t.Fatalf("SetXScale(functionlog): %v", err)
+	}
+
+	locator, ok := axes.XAxis.Locator.(LogLocator)
+	if !ok {
+		t.Fatalf("x locator = %T, want LogLocator", axes.XAxis.Locator)
+	}
+	if locator.Base != 10 {
+		t.Fatalf("x locator base = %v, want 10", locator.Base)
+	}
+	if _, ok := axes.XAxis.Formatter.(LogFormatter); !ok {
+		t.Fatalf("x formatter = %T, want LogFormatter", axes.XAxis.Formatter)
+	}
+}
+
 func TestAxes_SetLimPreservesScaleType(t *testing.T) {
 	axes := &Axes{
 		XScale: transform.NewSymLog(-10, 10, 10, 1, 1),

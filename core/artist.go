@@ -1630,7 +1630,7 @@ func configureScaleAxis(axis *Axis, scaleName string, cfg transform.ScaleOptions
 	}
 
 	switch strings.ToLower(scaleName) {
-	case "log":
+	case "log", "functionlog":
 		axis.Locator = LogLocator{Base: cfg.Base, Minor: false}
 		axis.Formatter = LogFormatter{Base: cfg.Base}
 		if len(cfg.Subs) > 0 {
