@@ -597,6 +597,34 @@ func TestLogFormatterMathText(t *testing.T) {
 	}
 }
 
+func TestLogFormattersMinorThresholds(t *testing.T) {
+	denseTicks := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100}
+	dense := LogFormatterMathText{
+		Base:              10,
+		SciNotation:       true,
+		UseMinorThreshold: true,
+		MinorThresholds:   [2]float64{1, 0.4},
+	}
+	if got := dense.FormatTick(2, 1, denseTicks); got != "" {
+		t.Fatalf("dense minor label = %q, want empty", got)
+	}
+	if got, want := dense.FormatTick(10, 9, denseTicks), `$\mathdefault{10^{1}}$`; got != want {
+		t.Fatalf("dense decade label = %q, want %q", got, want)
+	}
+
+	sparseTicks := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	sparse := LogFormatter{Base: 10, UseMinorThreshold: true, MinorThresholds: [2]float64{2, 0.4}}
+	if got := sparse.FormatTick(5, 4, sparseTicks); got != "" {
+		t.Fatalf("sparse omitted minor label = %q, want empty", got)
+	}
+	if got, want := sparse.FormatTick(6, 5, sparseTicks), "6"; got != want {
+		t.Fatalf("sparse selected minor label = %q, want %q", got, want)
+	}
+	if got := (LogFormatterExponent{Base: 10, LabelOnlyBase: true}).FormatTick(20, 0, []float64{10, 20, 100}); got != "" {
+		t.Fatalf("label-only-base exponent formatter = %q, want empty", got)
+	}
+}
+
 func TestLogitFormatter(t *testing.T) {
 	formatter := LogitFormatter{}
 	cases := []struct {

@@ -1230,10 +1230,19 @@ func (f PercentFormatter) Format(x float64) string {
 // LogFormatter formats tick labels on a log axis. For Base==10, exact
 // decades use Matplotlib-style powers such as 10³. Otherwise it falls back to
 // ScalarFormatter.
-type LogFormatter struct{ Base float64 }
+type LogFormatter struct {
+	Base float64
+
+	LabelOnlyBase     bool
+	MinorThresholds   [2]float64
+	UseMinorThreshold bool
+}
 
 func (f LogFormatter) Format(x float64) string {
-	if f.Base == 10 {
+	if f.LabelOnlyBase && !logTickIsDecade(x, logFormatterBase(f.Base)) {
+		return ""
+	}
+	if logFormatterBase(f.Base) == 10 {
 		if x <= 0 {
 			return ""
 		}
@@ -1249,8 +1258,21 @@ func (f LogFormatter) Format(x float64) string {
 	return (ScalarFormatter{Prec: 6}).Format(x)
 }
 
+func (f LogFormatter) FormatTick(x float64, _ int, ticks []float64) string {
+	if !logFormatterShouldLabel(x, ticks, f.Base, f.LabelOnlyBase, f.UseMinorThreshold, f.MinorThresholds) {
+		return ""
+	}
+	return f.Format(x)
+}
+
 // LogFormatterExponent formats log ticks as exponents in the selected base.
-type LogFormatterExponent struct{ Base float64 }
+type LogFormatterExponent struct {
+	Base float64
+
+	LabelOnlyBase     bool
+	MinorThresholds   [2]float64
+	UseMinorThreshold bool
+}
 
 func (f LogFormatterExponent) Format(x float64) string {
 	if x == 0 {
@@ -1259,6 +1281,9 @@ func (f LogFormatterExponent) Format(x float64) string {
 	base := f.Base
 	if base <= 1 || math.IsNaN(base) || math.IsInf(base, 0) {
 		base = 10
+	}
+	if f.LabelOnlyBase && !logTickIsDecade(x, base) {
+		return ""
 	}
 	if x < 0 {
 		return ""
@@ -1270,10 +1295,21 @@ func (f LogFormatterExponent) Format(x float64) string {
 	return (ScalarFormatter{Prec: 6}).Format(exponent)
 }
 
+func (f LogFormatterExponent) FormatTick(x float64, _ int, ticks []float64) string {
+	if !logFormatterShouldLabel(x, ticks, f.Base, f.LabelOnlyBase, f.UseMinorThreshold, f.MinorThresholds) {
+		return ""
+	}
+	return f.Format(x)
+}
+
 // LogFormatterMathText formats log ticks as MathText base/exponent labels.
 type LogFormatterMathText struct {
 	Base        float64
 	SciNotation bool
+
+	LabelOnlyBase     bool
+	MinorThresholds   [2]float64
+	UseMinorThreshold bool
 }
 
 func (f LogFormatterMathText) Format(x float64) string {
@@ -1283,6 +1319,9 @@ func (f LogFormatterMathText) Format(x float64) string {
 	base := f.Base
 	if base <= 1 || math.IsNaN(base) || math.IsInf(base, 0) {
 		base = 10
+	}
+	if f.LabelOnlyBase && !logTickIsDecade(x, base) {
+		return ""
 	}
 	sign := ""
 	if x < 0 {
@@ -1309,11 +1348,104 @@ func (f LogFormatterMathText) Format(x float64) string {
 	return fmt.Sprintf(`$\mathdefault{%s%s^{%d}}$`, sign, baseLabel, int(exponent))
 }
 
+func (f LogFormatterMathText) FormatTick(x float64, _ int, ticks []float64) string {
+	if !logFormatterShouldLabel(x, ticks, f.Base, f.LabelOnlyBase, f.UseMinorThreshold, f.MinorThresholds) {
+		return ""
+	}
+	return f.Format(x)
+}
+
 func formatLogBase(base float64) string {
 	if approx(base, math.Round(base), 1e-12) {
 		return strconv.FormatInt(int64(math.Round(base)), 10)
 	}
 	return strconv.FormatFloat(base, 'g', -1, 64)
+}
+
+func logFormatterBase(base float64) float64 {
+	if base <= 1 || math.IsNaN(base) || math.IsInf(base, 0) {
+		return 10
+	}
+	return base
+}
+
+func logTickIsDecade(x, base float64) bool {
+	if x == 0 || math.IsNaN(x) || math.IsInf(x, 0) {
+		return false
+	}
+	exponent := math.Log(math.Abs(x)) / math.Log(base)
+	return approx(exponent, math.Round(exponent), 1e-10)
+}
+
+func logFormatterShouldLabel(x float64, ticks []float64, base float64, labelOnlyBase, useMinorThreshold bool, thresholds [2]float64) bool {
+	base = logFormatterBase(base)
+	isDecade := logTickIsDecade(x, base)
+	if labelOnlyBase && !isDecade {
+		return false
+	}
+	if !useMinorThreshold || isDecade {
+		return true
+	}
+	lo, hi, ok := positiveLogTickRange(ticks, base)
+	if !ok {
+		return true
+	}
+	numDecades := hi - lo
+	decadeTicks := countDecadeTicks(ticks, base)
+	if decadeTicks > int(thresholds[0]) {
+		return false
+	}
+	if numDecades > thresholds[1] {
+		return logTickMantissaInSparseSubset(x, base)
+	}
+	return true
+}
+
+func positiveLogTickRange(ticks []float64, base float64) (float64, float64, bool) {
+	have := false
+	lo, hi := 0.0, 0.0
+	for _, tick := range ticks {
+		if tick <= 0 || math.IsNaN(tick) || math.IsInf(tick, 0) {
+			continue
+		}
+		v := math.Log(tick) / math.Log(base)
+		if !have || v < lo {
+			lo = v
+		}
+		if !have || v > hi {
+			hi = v
+		}
+		have = true
+	}
+	return lo, hi, have
+}
+
+func countDecadeTicks(ticks []float64, base float64) int {
+	n := 0
+	for _, tick := range ticks {
+		if logTickIsDecade(tick, base) {
+			n++
+		}
+	}
+	return n
+}
+
+func logTickMantissaInSparseSubset(x, base float64) bool {
+	if x <= 0 {
+		return false
+	}
+	exp := math.Floor(math.Log(x) / math.Log(base))
+	mantissa := x / math.Pow(base, exp)
+	if approx(base, 10, 1e-12) {
+		for _, allowed := range []float64{1, 2, 3, 4, 6, 10} {
+			if approx(mantissa, allowed, 1e-10) {
+				return true
+			}
+		}
+		return false
+	}
+	rounded := math.Round(mantissa)
+	return rounded >= 1 && rounded <= base && approx(mantissa, rounded, 1e-10)
 }
 
 func superscriptInt(v int) string {
