@@ -93,6 +93,7 @@ import (
 	example_line2d_semantics "github.com/cwbudde/matplotlib-go/test/parity/line2d_semantics"
 	example_locator_fixed_index_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_fixed_index_labels"
 	example_locator_linear_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_linear_labels"
+	example_locator_log_minor_threshold_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_log_minor_threshold_labels"
 	example_lognorm_imshow "github.com/cwbudde/matplotlib-go/test/parity/lognorm_imshow"
 	example_mathtext_basic "github.com/cwbudde/matplotlib-go/test/parity/mathtext_basic"
 	example_mathtext_fractions "github.com/cwbudde/matplotlib-go/test/parity/mathtext_fractions"
@@ -222,6 +223,7 @@ var renderByID = map[string]func() image.Image{
 	"formatter_scalar_scientific_labels": example_formatter_scalar_scientific_labels.Render,
 	"locator_fixed_index_labels":         example_locator_fixed_index_labels.Render,
 	"locator_linear_labels":              example_locator_linear_labels.Render,
+	"locator_log_minor_threshold_labels": example_locator_log_minor_threshold_labels.Render,
 	"scale_asinh_ticks":                  example_scale_asinh_ticks.Render,
 	"scale_function_defaults":            example_scale_function_defaults.Render,
 	"scale_logit_ticks":                  example_scale_logit_ticks.Render,
@@ -303,6 +305,7 @@ var figureByID = map[string]func() *core.Figure{
 	"formatter_scalar_scientific_labels": example_formatter_scalar_scientific_labels.Plot,
 	"locator_fixed_index_labels":         example_locator_fixed_index_labels.Plot,
 	"locator_linear_labels":              example_locator_linear_labels.Plot,
+	"locator_log_minor_threshold_labels": example_locator_log_minor_threshold_labels.Plot,
 	"scale_asinh_ticks":                  example_scale_asinh_ticks.Plot,
 	"scale_function_defaults":            example_scale_function_defaults.Plot,
 	"scale_logit_ticks":                  example_scale_logit_ticks.Plot,

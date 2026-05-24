@@ -54,6 +54,7 @@ formatter_percent_labels
 formatter_scalar_scientific_labels
 locator_fixed_index_labels
 locator_linear_labels
+locator_log_minor_threshold_labels
 scale_asinh_ticks
 scale_function_defaults
 scale_logit_ticks
