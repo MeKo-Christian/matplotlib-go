@@ -555,6 +555,15 @@ func TestPercentFormatterAutoDecimals(t *testing.T) {
 	if got := (PercentFormatter{XMax: 1, Decimals: -1, DisplayRange: 0.01}).Format(-0.0035); got != "\u22120.35%" {
 		t.Fatalf("PercentFormatter narrow negative range = %q, want %q", got, "\u22120.35%")
 	}
+	if got := (PercentFormatter{XMax: 1, Decimals: 1, NoSymbol: true}).Format(0.125); got != "12.5" {
+		t.Fatalf("PercentFormatter no symbol = %q, want %q", got, "12.5")
+	}
+	if got := (PercentFormatter{XMax: 1, Decimals: 0, Symbol: "%_done", UseTeX: true}).Format(0.5); got != `50\%\_done` {
+		t.Fatalf("PercentFormatter TeX escaped symbol = %q", got)
+	}
+	if got := (PercentFormatter{XMax: 1, Decimals: 0, Symbol: `% raw`, UseTeX: true, IsLaTeX: true}).Format(0.5); got != `50% raw` {
+		t.Fatalf("PercentFormatter raw LaTeX symbol = %q", got)
+	}
 }
 
 func TestLogFormatterFormatsBaseTenDecadesAsPowers(t *testing.T) {

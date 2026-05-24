@@ -1221,6 +1221,9 @@ type PercentFormatter struct {
 	Decimals     int
 	DisplayRange float64
 	Symbol       string
+	NoSymbol     bool
+	UseTeX       bool
+	IsLaTeX      bool
 }
 
 func (f PercentFormatter) Format(x float64) string {
@@ -1229,8 +1232,13 @@ func (f PercentFormatter) Format(x float64) string {
 		xMax = 1
 	}
 	symbol := f.Symbol
-	if symbol == "" {
+	if f.NoSymbol {
+		symbol = ""
+	} else if symbol == "" {
 		symbol = "%"
+	}
+	if f.UseTeX && !f.IsLaTeX {
+		symbol = escapeTeXSymbol(symbol)
 	}
 	decimals := f.Decimals
 	if decimals < 0 {
@@ -1240,6 +1248,22 @@ func (f PercentFormatter) Format(x float64) string {
 		decimals = 0
 	}
 	return scalarFixMinus(strconv.FormatFloat((x/xMax)*100, 'f', decimals, 64) + symbol)
+}
+
+func escapeTeXSymbol(symbol string) string {
+	replacer := strings.NewReplacer(
+		"\\", `\textbackslash{}`,
+		"%", `\%`,
+		"$", `\$`,
+		"#", `\#`,
+		"_", `\_`,
+		"{", `\{`,
+		"}", `\}`,
+		"&", `\&`,
+		"~", `\textasciitilde{}`,
+		"^", `\textasciicircum{}`,
+	)
+	return replacer.Replace(symbol)
 }
 
 // LogFormatter formats tick labels on a log axis. For Base==10, exact
