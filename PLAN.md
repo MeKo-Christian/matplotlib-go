@@ -2352,8 +2352,10 @@ Current slice landed:
 - Renderer-neutral text tests cover left-aligned line placement inside a
   right-aligned multiline block.
 - Text bbox patches now rotate with rotated text around the same renderer
-  anchor as the text draw call instead of remaining axis-aligned.
-- Renderer-neutral text tests cover rotated bbox path geometry.
+  anchor as the text draw call instead of remaining axis-aligned; multiline
+  text block bboxes follow the rotated text path instead of staying axis-aligned.
+- Renderer-neutral text tests cover rotated single-line and multiline bbox path
+  geometry.
 
 #### 12.4D Annotation and Offset-Box Behavior
 

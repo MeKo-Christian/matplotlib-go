@@ -191,7 +191,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 			"text paths, MathText, TeX paths, per-text font routing, and renderer font resolution. " +
 			"Text and annotation drawing use shared artist-alpha metadata for visible text and arrow colors. " +
 			"TextOptions.WrapWidth provides explicit display-pixel word wrapping, TextOptions.MultiAlignment separates per-line multiline alignment from block anchoring, and multiline text routes angle-aware draws through rotated renderer capabilities. " +
-			"Text bbox patches rotate with rotated text. " +
+			"Text bbox patches, including multiline block bboxes, rotate with rotated text. " +
 			"The text_annotation_matrix fixture gives focused coverage for multiline text, rotated " +
 			"text, text bbox output, and structured font requests.",
 		Gap: "Remaining text layout scope is exact bounding-box / baseline edge behavior, " +

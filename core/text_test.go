@@ -1643,6 +1643,39 @@ func TestMultilineTextSplitsDrawsAndUsesBlockBBox(t *testing.T) {
 	}
 }
 
+func TestRotatedMultilineTextBBoxRotatesWithText(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 1},
+		Content:  "top\nbottom",
+		FontSize: 10,
+		Angle:    45,
+		ClipOn:   true,
+		BBox: &TextBBoxOptions{
+			FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
+			EdgeColor: render.Color{A: 1},
+			Padding:   1,
+		},
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.fontRotatedCalls) != 2 {
+		t.Fatalf("expected two rotated multiline text draws, got %+v", r.fontRotatedCalls)
+	}
+	if len(r.pathCalls) == 0 {
+		t.Fatal("expected rotated multiline text bbox path")
+	}
+	path := r.pathCalls[0].path
+	if len(path.V) < 4 {
+		t.Fatalf("bbox path vertices = %+v, want rotated rectangle vertices", path.V)
+	}
+	if approx(path.V[0].Y, path.V[1].Y, 1e-9) || approx(path.V[1].X, path.V[2].X, 1e-9) {
+		t.Fatalf("rotated multiline text bbox remained axis-aligned: %+v", path.V[:4])
+	}
+}
+
 func TestTextMultiAlignmentControlsLineAlignmentWithinBlock(t *testing.T) {
 	ctx := createTestDrawContext()
 	multiAlign := TextAlignLeft

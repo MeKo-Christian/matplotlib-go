@@ -383,10 +383,22 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 	}
 
 	if t.BBox != nil {
-		drawMultilineTextBBox(r, geom.Rect{
+		rect := geom.Rect{
 			Min: geom.Pt{X: left, Y: top},
 			Max: geom.Pt{X: left + maxWidth, Y: top + blockHeight},
-		}, t.BBox, ctx, fontSize)
+		}
+		if t.Angle != 0 {
+			if _, ok := r.(render.RotatedTextDrawer); ok {
+				drawMultilineTextBBoxRotated(r, rect, t.BBox, ctx, fontSize, geom.Pt{
+					X: left + maxWidth/2,
+					Y: top + blockHeight,
+				}, t.Angle)
+			} else {
+				drawMultilineTextBBox(r, rect, t.BBox, ctx, fontSize)
+			}
+		} else {
+			drawMultilineTextBBox(r, rect, t.BBox, ctx, fontSize)
+		}
 	}
 
 	textColor := t.ApplyArtistAlpha(resolvedTextColor(t.Color, ctx))
@@ -751,6 +763,27 @@ func drawMultilineTextBBox(r render.Renderer, rect geom.Rect, opt *TextBBoxOptio
 	if cfg.CornerRadius > 0 {
 		path = roundedRectPath(rect, cfg.CornerRadius)
 	}
+	r.Path(path, &render.Paint{
+		Fill:      cfg.FaceColor,
+		Stroke:    cfg.EdgeColor,
+		LineWidth: cfg.LineWidth,
+		LineJoin:  render.JoinMiter,
+		LineCap:   render.CapButt,
+	})
+}
+
+func drawMultilineTextBBoxRotated(r render.Renderer, rect geom.Rect, opt *TextBBoxOptions, ctx *DrawContext, fontSize float64, pivot geom.Pt, angleDeg float64) {
+	cfg := resolvedTextBBoxOptions(*opt, ctx, fontSize)
+	rect.Min.X -= cfg.Padding
+	rect.Min.Y -= cfg.Padding
+	rect.Max.X += cfg.Padding
+	rect.Max.Y += cfg.Padding
+
+	path := pixelRectPath(rect)
+	if cfg.CornerRadius > 0 {
+		path = roundedRectPath(rect, cfg.CornerRadius)
+	}
+	path = rotatePathAround(path, pivot, angleDeg)
 	r.Path(path, &render.Paint{
 		Fill:      cfg.FaceColor,
 		Stroke:    cfg.EdgeColor,
