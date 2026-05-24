@@ -1,0 +1,200 @@
+package core
+
+import (
+	"math"
+
+	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/render"
+)
+
+// CheckButtonsCallback receives the active check button, changed index and
+// state after the change.
+type CheckButtonsCallback func(*CheckButtons, int, bool)
+
+// CheckButtonsOptions configures a CheckButtons widget artist.
+type CheckButtonsOptions struct {
+	FaceColor  render.Color
+	EdgeColor  render.Color
+	TextColor  render.Color
+	CheckColor render.Color
+	FontSize   float64
+}
+
+// CheckButtons draws a static checklist-style control.
+type CheckButtons struct {
+	Labels     []string
+	Values     []bool
+	FaceColor  render.Color
+	EdgeColor  render.Color
+	TextColor  render.Color
+	CheckColor render.Color
+	FontSize   float64
+	focus      int
+
+	onChanged widgetCallbackRegistry[CheckButtonsCallback]
+
+	z float64
+}
+
+// CheckButtons adds a check-button widget artist to the axes.
+func (a *Axes) CheckButtons(labels []string, active []bool, opts ...CheckButtonsOptions) *CheckButtons {
+	if a == nil || len(labels) == 0 {
+		return nil
+	}
+	cfg := CheckButtonsOptions{
+		FaceColor:  render.Color{R: 0.96, G: 0.97, B: 0.98, A: 1},
+		EdgeColor:  render.Color{R: 0.74, G: 0.76, B: 0.80, A: 1},
+		TextColor:  render.Color{R: 0.12, G: 0.13, B: 0.16, A: 1},
+		CheckColor: render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1},
+	}
+	if len(opts) > 0 {
+		cfg = mergeCheckButtonsOptions(cfg, opts[0])
+	}
+	prepareWidgetAxes(a)
+	values := make([]bool, len(labels))
+	copy(values, active)
+	w := &CheckButtons{
+		Labels:     append([]string(nil), labels...),
+		Values:     values,
+		FaceColor:  cfg.FaceColor,
+		EdgeColor:  cfg.EdgeColor,
+		TextColor:  cfg.TextColor,
+		CheckColor: cfg.CheckColor,
+		focus:      -1,
+		FontSize:   cfg.FontSize,
+		z:          1200,
+	}
+	a.AddWidget(w)
+	return w
+}
+
+func (c *CheckButtons) OnChanged(cb CheckButtonsCallback) WidgetCallbackID {
+	if c == nil || any(cb) == nil {
+		return 0
+	}
+	return c.onChanged.add(cb)
+}
+
+func (c *CheckButtons) RemoveOnChanged(id WidgetCallbackID) {
+	if c == nil {
+		return
+	}
+	c.onChanged.remove(id)
+}
+
+func (c *CheckButtons) triggerOnChanged(index int, value bool) {
+	if c == nil {
+		return
+	}
+	c.onChanged.each(func(cb CheckButtonsCallback) { cb(c, index, value) })
+}
+
+// SetValue updates one check-button state and emits an on-change event when
+// it mutates.
+func (c *CheckButtons) SetValue(index int, checked bool) {
+	if c == nil {
+		return
+	}
+	if index < 0 || index >= len(c.Values) {
+		return
+	}
+	if c.Values[index] == checked {
+		return
+	}
+	c.Values[index] = checked
+	c.triggerOnChanged(index, checked)
+}
+
+// Toggle flips one check-button state.
+func (c *CheckButtons) Toggle(index int) {
+	if c == nil || index < 0 || index >= len(c.Values) {
+		return
+	}
+	c.SetValue(index, !c.Values[index])
+}
+
+func (c *CheckButtons) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
+	if c == nil || ctx == nil {
+		return false, PickInfo{}
+	}
+	if len(c.Labels) == 0 {
+		return false, PickInfo{}
+	}
+	panel := c.Bounds(ctx)
+	if !panel.Contains(p) {
+		return false, PickInfo{}
+	}
+	rowHeight := panel.H() / float64(len(c.Labels))
+	if rowHeight <= 0 {
+		return false, PickInfo{}
+	}
+	row := int((p.Y - panel.Min.Y) / rowHeight)
+	if row < 0 || row >= len(c.Labels) {
+		return false, PickInfo{}
+	}
+	return true, PickInfo{Index: row}
+}
+
+func (c *CheckButtons) Draw(r render.Renderer, ctx *DrawContext) {
+	if c == nil || r == nil || ctx == nil {
+		return
+	}
+	panel := insetRect(ctx.Clip, 4)
+	drawWidgetPanel(r, panel, c.FaceColor, c.EdgeColor, 1.1, 12)
+	if len(c.Labels) == 0 {
+		return
+	}
+	rowHeight := panel.H() / float64(len(c.Labels))
+	fontSize := resolvedFontSize(c.FontSize, ctx)
+	for i, label := range c.Labels {
+		rowMinY := panel.Min.Y + rowHeight*float64(i)
+		rowMaxY := rowMinY + rowHeight
+		boxSize := math.Min(16, rowHeight*0.42)
+		box := geom.Rect{
+			Min: geom.Pt{X: panel.Min.X + 14, Y: rowMinY + (rowHeight-boxSize)/2},
+			Max: geom.Pt{X: panel.Min.X + 14 + boxSize, Y: rowMaxY - (rowHeight-boxSize)/2},
+		}
+		drawWidgetPanel(r, box, render.Color{R: 1, G: 1, B: 1, A: 1}, c.EdgeColor, 1, 3)
+		if i < len(c.Values) && c.Values[i] {
+			path := geom.Path{}
+			path.MoveTo(geom.Pt{X: box.Min.X + box.W()*0.18, Y: box.Min.Y + box.H()*0.56})
+			path.LineTo(geom.Pt{X: box.Min.X + box.W()*0.42, Y: box.Max.Y - box.H()*0.20})
+			path.LineTo(geom.Pt{X: box.Max.X - box.W()*0.16, Y: box.Min.Y + box.H()*0.22})
+			r.Path(path, &render.Paint{
+				Stroke:    c.CheckColor,
+				LineWidth: 2,
+				LineJoin:  render.JoinRound,
+				LineCap:   render.CapRound,
+			})
+		}
+		drawWidgetText(r, ctx, geom.Pt{X: box.Max.X + 10, Y: rowMinY + rowHeight/2}, label, fontSize, c.TextColor, TextAlignLeft, textLayoutVAlignCenter)
+	}
+}
+
+func (c *CheckButtons) Bounds(ctx *DrawContext) geom.Rect {
+	if c == nil || ctx == nil {
+		return geom.Rect{}
+	}
+	return insetRect(ctx.Clip, 4)
+}
+func (c *CheckButtons) Z() float64   { return c.z }
+func (c *CheckButtons) WidgetLayer() {}
+
+func mergeCheckButtonsOptions(base, override CheckButtonsOptions) CheckButtonsOptions {
+	if override.FaceColor != (render.Color{}) {
+		base.FaceColor = override.FaceColor
+	}
+	if override.EdgeColor != (render.Color{}) {
+		base.EdgeColor = override.EdgeColor
+	}
+	if override.TextColor != (render.Color{}) {
+		base.TextColor = override.TextColor
+	}
+	if override.CheckColor != (render.Color{}) {
+		base.CheckColor = override.CheckColor
+	}
+	if override.FontSize > 0 {
+		base.FontSize = override.FontSize
+	}
+	return base
+}
