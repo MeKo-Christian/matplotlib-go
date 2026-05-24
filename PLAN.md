@@ -2050,7 +2050,7 @@ catalog/parity fixture per behavior family.
 
 #### 12.2D Date, Category, and Unit Tick Breadth
 
-- [ ] Audit upstream `dates.py` locator/formatter families separately from
+- [x] Audit upstream `dates.py` locator/formatter families separately from
       generic `ticker.py`, keeping the source-of-truth list in the Phase 12
       coverage notes unless those modules are later added to the Phase 11
       public-surface inventory.
