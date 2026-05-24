@@ -284,8 +284,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface", "units_categories"},
-		Note:              "Go FixedFormatter labels by tick index through IndexedFormatter. Python's runtime FixedFormatter/FixedLocator mismatch warning is intentionally omitted because Go callers wire typed locators/formatters explicitly.",
+		CatalogIDs:        []string{"axes_control_surface", "units_categories", "formatter_fixed_null_labels"},
+		Note:              "Go FixedFormatter labels by tick index through IndexedFormatter; formatter_fixed_null_labels covers visible fixed tick output. Python's runtime FixedFormatter/FixedLocator mismatch warning is intentionally omitted because Go callers wire typed locators/formatters explicitly.",
 	},
 	{
 		ID:                "ticker-null-formatter",
@@ -293,8 +293,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfaceDirectEquivalent,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go NullFormatter always returns an empty label.",
+		CatalogIDs:        []string{"axes_control_surface", "formatter_fixed_null_labels"},
+		Note:              "Go NullFormatter always returns an empty label; formatter_fixed_null_labels covers visible null-label suppression.",
 	},
 	{
 		ID:                "ticker-func-formatter",

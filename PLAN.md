@@ -2057,6 +2057,8 @@ catalog/parity fixture per behavior family.
 - [x] Add or explicitly omit `FixedFormatter` mismatch warnings,
       `NullFormatter`, `FuncFormatter`, `FormatStrFormatter`, and
       `StrMethodFormatter` edge behavior in the audit rows.
+- [x] Add `formatter_fixed_null_labels` catalog/parity fixture for visible
+      fixed tick labels and null-label suppression.
 - [ ] Add one catalog/parity case each for scalar offset/scientific labels, log
       math-text labels, engineering labels, percent labels, and index/fixed/null
       labels.

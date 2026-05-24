@@ -65,6 +65,7 @@ import (
 	example_fill_between "github.com/cwbudde/matplotlib-go/test/parity/fill_between"
 	example_fill_stacked "github.com/cwbudde/matplotlib-go/test/parity/fill_stacked"
 	example_formatter_engineering_labels "github.com/cwbudde/matplotlib-go/test/parity/formatter_engineering_labels"
+	example_formatter_fixed_null_labels "github.com/cwbudde/matplotlib-go/test/parity/formatter_fixed_null_labels"
 	example_formatter_log_mathtext_labels "github.com/cwbudde/matplotlib-go/test/parity/formatter_log_mathtext_labels"
 	example_formatter_percent_labels "github.com/cwbudde/matplotlib-go/test/parity/formatter_percent_labels"
 	example_geo_aitoff_axes "github.com/cwbudde/matplotlib-go/test/parity/geo_aitoff_axes"
@@ -205,6 +206,7 @@ var renderByID = map[string]func() image.Image{
 	"axes_control_surface":          example_axes_control_surface.Render,
 	"transform_coordinates":         example_transform_coordinates.Render,
 	"formatter_engineering_labels":  example_formatter_engineering_labels.Render,
+	"formatter_fixed_null_labels":   example_formatter_fixed_null_labels.Render,
 	"formatter_log_mathtext_labels": example_formatter_log_mathtext_labels.Render,
 	"formatter_percent_labels":      example_formatter_percent_labels.Render,
 	"artist_metadata":               example_artist_metadata.Render,
@@ -275,6 +277,7 @@ var figureByID = map[string]func() *core.Figure{
 	"axes_grid1_showcase":           showcase_axes_grid1_showcase.Plot,
 	"axes_control_surface":          showcase_axes_control_surface.Plot,
 	"formatter_engineering_labels":  example_formatter_engineering_labels.Plot,
+	"formatter_fixed_null_labels":   example_formatter_fixed_null_labels.Plot,
 	"formatter_log_mathtext_labels": example_formatter_log_mathtext_labels.Plot,
 	"formatter_percent_labels":      example_formatter_percent_labels.Plot,
 	"axisartist_showcase":           showcase_axisartist_showcase.Plot,
