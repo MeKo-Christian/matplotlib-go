@@ -10,6 +10,12 @@ func TestRectBasics(t *testing.T) {
 	if r.W() != 10 || r.H() != 5 {
 		t.Fatalf("W/H mismatch: got %v/%v", r.W(), r.H())
 	}
+	if r.Empty() {
+		t.Fatalf("rect should not be empty: %+v", r)
+	}
+	if !r.Intersect(Rect{Min: Pt{20, 20}, Max: Pt{21, 21}}).Empty() {
+		t.Fatal("disjoint intersection should be empty")
+	}
 
 	// Contains: max exclusive
 	if !r.Contains(Pt{0, 0}) || !r.Contains(Pt{9.999, 4.999}) {
@@ -18,11 +24,23 @@ func TestRectBasics(t *testing.T) {
 	if r.Contains(Pt{10, 0}) || r.Contains(Pt{0, 5}) {
 		t.Fatalf("max edge should be exclusive")
 	}
+	if !r.ContainsInclusive(Pt{10, 5}) {
+		t.Fatal("inclusive contains should include max corner")
+	}
 
 	// Inflate
 	r2 := r.Inflate(1, 2)
 	if r2.Min.X != -1 || r2.Min.Y != -2 || r2.Max.X != 11 || r2.Max.Y != 7 {
 		t.Fatalf("inflate mismatch: %+v", r2)
+	}
+	if padded := r.Padded(2); padded != (Rect{Min: Pt{-2, -2}, Max: Pt{12, 7}}) {
+		t.Fatalf("padded rect = %+v", padded)
+	}
+	if expanded := r.Expanded(2, 0.5); expanded != (Rect{Min: Pt{-5, 1.25}, Max: Pt{15, 3.75}}) {
+		t.Fatalf("expanded rect = %+v", expanded)
+	}
+	if translated := r.Translated(2, -3); translated != (Rect{Min: Pt{2, -3}, Max: Pt{12, 2}}) {
+		t.Fatalf("translated rect = %+v", translated)
 	}
 
 	// Intersect
@@ -39,6 +57,42 @@ func TestRectBasics(t *testing.T) {
 	e := a.Intersect(c)
 	if e.W() != 0 || e.H() != 0 {
 		t.Fatalf("expected empty intersection, got %+v", e)
+	}
+}
+
+func TestRectUnionAndTransforms(t *testing.T) {
+	a := Rect{Min: Pt{1, 2}, Max: Pt{3, 4}}
+	b := Rect{Min: Pt{-2, 3}, Max: Pt{2, 8}}
+	if got, want := a.Union(b), (Rect{Min: Pt{-2, 2}, Max: Pt{3, 8}}); got != want {
+		t.Fatalf("union = %+v, want %+v", got, want)
+	}
+
+	union, ok := UnionRects(Rect{}, a, b)
+	if !ok || union != (Rect{Min: Pt{-2, 2}, Max: Pt{3, 8}}) {
+		t.Fatalf("UnionRects = %+v ok=%v", union, ok)
+	}
+	if _, ok := UnionRects(Rect{}); ok {
+		t.Fatal("UnionRects of empty rectangles should report ok=false")
+	}
+
+	fromPoints, ok := RectFromPoints(Pt{3, 1}, Pt{-1, 4}, Pt{2, -2})
+	if !ok || fromPoints != (Rect{Min: Pt{-1, -2}, Max: Pt{3, 4}}) {
+		t.Fatalf("RectFromPoints = %+v ok=%v", fromPoints, ok)
+	}
+	if _, ok := RectFromPoints(); ok {
+		t.Fatal("RectFromPoints without points should report ok=false")
+	}
+
+	transformed := a.Transformed(Affine{A: 2, D: -1, E: 5, F: 10})
+	if transformed != (Rect{Min: Pt{7, 6}, Max: Pt{11, 8}}) {
+		t.Fatalf("transformed rect = %+v", transformed)
+	}
+	inverse, ok := transformed.InverseTransformed(Affine{A: 2, D: -1, E: 5, F: 10})
+	if !ok || inverse != a {
+		t.Fatalf("inverse transformed rect = %+v ok=%v, want %+v", inverse, ok, a)
+	}
+	if _, ok := a.InverseTransformed(Affine{}); ok {
+		t.Fatal("singular inverse transform should fail")
 	}
 }
 

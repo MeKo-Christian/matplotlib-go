@@ -10,11 +10,37 @@ type Pt struct{ X, Y F64 }
 // That is, a point p is inside r iff Min.X <= p.X < Max.X and Min.Y <= p.Y < Max.Y.
 type Rect struct{ Min, Max Pt }
 
+// RectFromPoints returns the bounding rectangle for points.
+func RectFromPoints(points ...Pt) (Rect, bool) {
+	if len(points) == 0 {
+		return Rect{}, false
+	}
+	r := Rect{Min: points[0], Max: points[0]}
+	for _, p := range points[1:] {
+		if p.X < r.Min.X {
+			r.Min.X = p.X
+		}
+		if p.Y < r.Min.Y {
+			r.Min.Y = p.Y
+		}
+		if p.X > r.Max.X {
+			r.Max.X = p.X
+		}
+		if p.Y > r.Max.Y {
+			r.Max.Y = p.Y
+		}
+	}
+	return r, true
+}
+
 // W returns the width (Max.X - Min.X).
 func (r Rect) W() F64 { return r.Max.X - r.Min.X }
 
 // H returns the height (Max.Y - Min.Y).
 func (r Rect) H() F64 { return r.Max.Y - r.Min.Y }
+
+// Empty reports whether the rectangle has no positive area.
+func (r Rect) Empty() bool { return r.W() <= 0 || r.H() <= 0 }
 
 // Inflate expands (or contracts if negative) the rectangle by dx,dy on all sides.
 func (r Rect) Inflate(dx, dy F64) Rect {
@@ -24,9 +50,34 @@ func (r Rect) Inflate(dx, dy F64) Rect {
 	}
 }
 
+// Padded expands or contracts the rectangle equally on all sides.
+func (r Rect) Padded(pad F64) Rect { return r.Inflate(pad, pad) }
+
+// Expanded scales the rectangle about its center.
+func (r Rect) Expanded(xScale, yScale F64) Rect {
+	cx := (r.Min.X + r.Max.X) / 2
+	cy := (r.Min.Y + r.Max.Y) / 2
+	hw := r.W() * xScale / 2
+	hh := r.H() * yScale / 2
+	return Rect{Min: Pt{cx - hw, cy - hh}, Max: Pt{cx + hw, cy + hh}}
+}
+
+// Translated moves the rectangle by dx,dy.
+func (r Rect) Translated(dx, dy F64) Rect {
+	return Rect{
+		Min: Pt{r.Min.X + dx, r.Min.Y + dy},
+		Max: Pt{r.Max.X + dx, r.Max.Y + dy},
+	}
+}
+
 // Contains returns true if point p lies within r using Max-exclusive semantics.
 func (r Rect) Contains(p Pt) bool {
 	return p.X >= r.Min.X && p.X < r.Max.X && p.Y >= r.Min.Y && p.Y < r.Max.Y
+}
+
+// ContainsInclusive returns true if point p lies inside r including Max edges.
+func (r Rect) ContainsInclusive(p Pt) bool {
+	return p.X >= r.Min.X && p.X <= r.Max.X && p.Y >= r.Min.Y && p.Y <= r.Max.Y
 }
 
 // Intersect returns the intersection of r and b with Max-exclusive semantics.
@@ -41,6 +92,58 @@ func (r Rect) Intersect(b Rect) Rect {
 		maxPt.Y = minPt.Y
 	}
 	return Rect{Min: minPt, Max: maxPt}
+}
+
+// Union returns the smallest rectangle covering r and b.
+func (r Rect) Union(b Rect) Rect {
+	if r.Empty() {
+		return b
+	}
+	if b.Empty() {
+		return r
+	}
+	return Rect{
+		Min: Pt{X: minf(r.Min.X, b.Min.X), Y: minf(r.Min.Y, b.Min.Y)},
+		Max: Pt{X: maxf(r.Max.X, b.Max.X), Y: maxf(r.Max.Y, b.Max.Y)},
+	}
+}
+
+// UnionRects returns the smallest non-empty rectangle covering rects.
+func UnionRects(rects ...Rect) (Rect, bool) {
+	var out Rect
+	have := false
+	for _, r := range rects {
+		if r.Empty() {
+			continue
+		}
+		if !have {
+			out = r
+			have = true
+			continue
+		}
+		out = out.Union(r)
+	}
+	return out, have
+}
+
+// Transformed returns the axis-aligned bounds of r after applying m.
+func (r Rect) Transformed(m Affine) Rect {
+	out, _ := RectFromPoints(
+		m.Apply(r.Min),
+		m.Apply(Pt{X: r.Max.X, Y: r.Min.Y}),
+		m.Apply(r.Max),
+		m.Apply(Pt{X: r.Min.X, Y: r.Max.Y}),
+	)
+	return out
+}
+
+// InverseTransformed returns the axis-aligned bounds after applying m's inverse.
+func (r Rect) InverseTransformed(m Affine) (Rect, bool) {
+	inv, ok := m.Invert()
+	if !ok {
+		return Rect{}, false
+	}
+	return r.Transformed(inv), true
 }
 
 func maxf(a, b F64) F64 {
