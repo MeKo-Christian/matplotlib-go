@@ -296,6 +296,51 @@ func TestPathEffectIdentityFilterEmitsTransparencyGroup(t *testing.T) {
 	}
 }
 
+func TestPathEffectBlurFilterPolicyIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(".", "doc.go"))
+	if err != nil {
+		t.Fatalf("read doc.go: %v", err)
+	}
+	doc := string(data)
+	for _, want := range []string{
+		"identity path-effect filters",
+		"blurred path-effect filters",
+		"mixed raster/vector fallback",
+		"PDF has no standard Gaussian-blur",
+		"operator, so claiming native vector support would be misleading",
+	} {
+		if !strings.Contains(doc, want) {
+			t.Fatalf("pdf doc.go missing path-effect blur policy phrase %q:\n%s", want, doc)
+		}
+	}
+}
+
+func TestPathEffectBlurFilterReportsMixedRasterFallback(t *testing.T) {
+	r := newTestRenderer(t)
+	blur := render.FilterPathEffect(
+		render.Color{R: 1, A: 1},
+		render.Color{},
+		0,
+		"blur",
+		4,
+		geom.Pt{X: 2, Y: 2},
+	)
+	if r.SupportsPathEffectFilter(blur) {
+		t.Fatal("PDF should not report native support for blurred path-effect filters")
+	}
+	identity := render.FilterPathEffect(
+		render.Color{R: 1, A: 1},
+		render.Color{},
+		0,
+		"identity",
+		0,
+		geom.Pt{X: 2, Y: 2},
+	)
+	if !r.SupportsPathEffectFilter(identity) {
+		t.Fatal("PDF should keep identity path-effect filters in native transparency groups")
+	}
+}
+
 func TestRendererNativeHatchEmitsTilingPattern(t *testing.T) {
 	r := newTestRenderer(t)
 	hatcher, ok := any(r).(render.NativeHatcher)

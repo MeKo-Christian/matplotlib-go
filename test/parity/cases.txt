@@ -3,6 +3,7 @@ joins_caps
 dashes
 line2d_semantics
 line2d_markers
+path_effects
 scatter_basic
 scatter_marker_types
 scatter_advanced

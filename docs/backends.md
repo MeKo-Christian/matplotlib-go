@@ -87,6 +87,11 @@ PGF is generator-only. It emits self-contained PGF pixel rectangles for raster
 images and uses deterministic approximate text metrics while LaTeX provides the
 final font and TeX layout at document compile time.
 
+PDF path effects are vector-native for normal stroke/fill effects and identity
+filter passes. Blurred path-effect filters intentionally use mixed raster/vector
+fallback output because baseline PDF does not define a portable Gaussian-blur
+graphics operator.
+
 Interactive embedder contracts for `FigureCanvas`, `DrawIdleCanvas`, event
 payloads, picker behavior, and optional blitting are documented in
 [`interactive-backends.md`](interactive-backends.md).

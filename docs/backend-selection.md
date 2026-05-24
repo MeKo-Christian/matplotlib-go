@@ -80,6 +80,9 @@ browser gallery.
 Pure-Go PDF backend with deterministic serialization and **embedded fonts**,
 so a document renders identically anywhere. Supports pattern and gradient
 fills and image transforms; metadata can be set via `render.WithPDFMetadata`.
+Path effects stay vector for normal stroke/fill effects and identity filter
+passes; blurred path-effect filters use the mixed raster/vector fallback
+because PDF has no standard Gaussian-blur graphics operator.
 
 Use PDF for print-ready, self-contained documents and reports.
 

@@ -210,103 +210,109 @@ without backend-name conditionals.
 
 ### 2.1 Pattern and Gradient Fills
 
-- [x] Renderer-neutral pattern fill API in `render/`: tile geometry, tile
-      transform, and tile color description that AGG, SVG, PDF, and Skia can each
-      implement natively. (`PatternFill` on `Paint` plus `PatternFiller` capability
-      interface; `GraphicsContext.WithFillPattern` propagates through alpha/forced
-      alpha just like solid fills.)
-- [x] Linear and radial gradient fill description (stops, transform, spread
-      method) routed through the same capability interface. (`GradientFill` on
-      `Paint` plus `GradientFiller` capability interface; `GraphicsContext.WithFillGradient`
-      applies the same forced-alpha bookkeeping as patterns and solid fills.)
-- [x] AGG implementation using existing gradient span generators.
-      Two-stop linear and radial gradients route through Agg2D's gradient API; a
-      three-stop radial uses the multi-stop variant. `SupportsGradientFill` and
-      `SupportsPatternFill` advertise native support.
-- [x] SVG implementation via `<linearGradient>` / `<radialGradient>` /
-      `<pattern>` defs. Defs are deduplicated by content hash, honor the renderer's
-      hash-salted ID strategy, and emit in registration order so document output
-      remains deterministic. Hatch still wins precedence when both are set.
-- [x] PDF implementation via shading dictionaries (Type 2 / 3).
-- [ ] Skia implementation via `SkShader` types.
-- [ ] Golden fixtures: gradient fill bar, radial gradient pie wedge, pattern
-      fill polygon, gradient streamline plot.
+✅ **Completed.** Renderer-neutral pattern and gradient fills are implemented
+across the current native targets, with committed AGG visual goldens.
 
-Current slice landed:
+Completed scope:
 
-- New `backends/svg/gradients.go` registers `<linearGradient>`,
-  `<radialGradient>`, and `<pattern>` defs from `Paint.FillGradient` and
-  `Paint.FillPattern`. Unit tests cover linear/radial emission, stop-opacity,
-  pattern emission, def deduplication, and hatch-over-gradient precedence.
-- New `backends/agg/gradients.go` wires AGG's `FillLinearGradient` /
-  `FillRadialGradient` / `FillRadialGradientMultiStop` into `Path()`. Unit
-  tests verify left-to-right linear color falloff, center-to-edge radial
-  falloff, and that subsequent solid fills are not painted through the active
-  gradient span generator.
-- AGG now also advertises `render.PatternFiller` / `backends.PatternFill` and
-  replays tiled `Paint.FillPattern` cells through AGG path drawing clipped to
-  the destination path. Unit tests cover tile repetition, tile transforms, and
-  hatch-over-pattern precedence.
-- `render.GradientFiller` / `render.PatternFiller` capability interfaces are
-  now implemented on AGG and SVG; the backend capability comparison report
-  reflects native vs unsupported truthfully.
-- PDF now advertises `render.GradientFiller` / `backends.GradientFill` and
-  emits native axial/radial shading resources for linear and radial gradient
-  fills, including clipping the gradient to the path and preserving an
-  overlaid stroke pass.
-- PDF now also advertises `render.PatternFiller` / `backends.PatternFill` and
-  maps renderer-neutral `Paint.FillPattern` values to colored tiling pattern
-  resources, while keeping hatch-over-pattern and gradient-over-pattern
-  precedence aligned with SVG.
+- `render.PatternFill` / `render.GradientFill` live on `render.Paint`, with
+  `PatternFiller` / `GradientFiller` capability interfaces and
+  `GraphicsContext` alpha propagation.
+- AGG implements linear/radial gradients through Agg2D gradient generators and
+  tiled pattern fills by replaying pattern cells under the destination path.
+- SVG emits deterministic `<linearGradient>`, `<radialGradient>`, and
+  `<pattern>` defs with content deduplication and hatch-over-fill precedence.
+- PDF emits native axial/radial shading dictionaries and colored tiling
+  pattern resources.
+- Skia-tagged CPU builds consume pattern and gradient fills through the
+  Skia-local CPU surface bridge; the external `SkShader` C ABI swap remains
+  tracked in Phase 2.4.
+- AGG Phase 2 visual goldens cover `gradient_fill_bar`,
+  `radial_gradient_pie_wedge`, `pattern_fill_polygon`, and
+  `gradient_streamline_plot`.
+- Cross-backend semantic coverage verifies AGG, SVG, and PDF receive matching
+  renderer-neutral gradient and pattern paint operations for the same figure.
 
 ### 2.2 Path Effects Pipeline
 
+✅ **Completed.** Renderer-neutral path-effect replay, artist
+plumbing, raster/offscreen filtering, SVG blur filters, PDF identity filter
+forms, PDF blur fallback policy, and visual/catalog fixtures are landed.
+
+#### 2.2A Path Effect Model and Replay
+
 - [x] Path effects model (`PathEffect` value type) covering Matplotlib's
       `Normal`, `Stroke`, `withStroke`, `SimplePatchShadow`, `SimpleLineShadow`,
-      `PathPatchEffect`, `TickedStroke`.
-- [ ] Backend hook for offscreen capture / replay: AGG uses
-      `StartFilter` / `StopFilter`; SVG uses `<filter>` defs; PDF uses
-      transparency groups + soft masks.
-- [x] Apply-time pipeline that walks the effects list and composes results
-      back into the parent renderer.
-- [ ] Golden fixtures: text with drop shadow, line with halo, scatter markers
-      with shadow, polygon outline + fill effect stack.
+      `PathPatchEffect`, `TickedStroke`, and renderer-filter repaint passes.
+- [x] Apply-time pipeline (`render.DrawPathWithEffects`) that walks the effects
+      list, clears nested effects, applies offsets / alternate paint, generates
+      tick segments, and replays each pass into the parent renderer.
+- [x] Convenience constructors mirror Matplotlib path-effects names where the
+      Go API already has an equivalent typed representation.
 
-Current slice landed:
+#### 2.2B Artist Integration
 
-- `render.PathEffect` now covers normal replay, alternate stroke / with-stroke
-  stacks, simple line and patch shadows, path-patch repaint passes, and ticked
-  strokes. Convenience constructors mirror the Matplotlib path-effects names.
-- `render.DrawPathWithEffects` provides a renderer-neutral replay pipeline:
-  each pass clears nested effects, applies offsets / alternate paint, generates
-  tick segments when requested, and replays into the parent renderer.
-- `PathEffectFilter` now routes through the shared `render.FilterRenderer`
-  hook when a backend supports offscreen capture. AGG uses its existing
-  `StartFilter` / `StopFilter` surface stack and supports deterministic
-  identity / blur filter passes before compositing back to the parent surface.
-- SVG now implements a native path-effect filter hook for blurred filter
-  passes, registers deterministic `<filter>` / `<feGaussianBlur>` defs, and
-  wraps only the affected replay pass while leaving the normal pass as vector
-  path output.
-- PDF now implements the native path-effect filter hook for identity / no-op
-  filter passes by capturing the replay into deterministic transparency-group
-  Form XObjects and invoking those groups from the page content stream.
-- AGG, GoBasic, SVG, PDF, PS, PGF, and Skia now implement
-  `render.PathEffectDrawer`; backend capability declarations advertise
-  `PathEffects` through the runtime interface check.
-- Core line, patch, text, scatter, and collection artists now carry
-  `PathEffects` through to path paints. Collection batch optimizations fall
-  back to per-path drawing when effects are present so pass ordering remains
-  correct.
+- [x] Core line, patch, text, scatter, and collection artists carry
+      `PathEffects` through to path paints.
+- [x] Collection batch optimizations fall back to per-path drawing when effects
+      are present so pass ordering stays correct.
+- [x] Unsupported filter effects auto-rasterize on mixed-output renderers, while
+      filter-capable renderers keep supported effects vector/native.
 
-Remaining path-effects work:
+#### 2.2C Backend Capability Coverage
 
-- Native filter/offscreen variants for blurred shadows and vector soft masks.
-  AGG has the first `FilterRenderer` replay path; SVG has native blur filter
-  defs; PDF has transparency-group replay for identity filters, but blurred
-  soft masks still need native vector implementations.
-- Golden and Matplotlib-reference fixtures for text shadows, line halos,
-  scatter marker shadows, and polygon effect stacks.
+- [x] AGG, GoBasic, SVG, PDF, PS, PGF, and Skia implement
+      `render.PathEffectDrawer`; backend capability declarations advertise
+      `PathEffects` through the runtime interface check.
+- [x] AGG implements `render.FilterRenderer` using `StartFilter` /
+      `StopFilter`; identity and blur path-effect passes replay through an
+      offscreen raster surface and composite back onto the parent surface.
+- [x] SVG implements `render.PathEffectFilterDrawer` for blurred filter passes,
+      registers deterministic `<filter>` / `<feGaussianBlur>` defs, and wraps
+      only the affected pass while preserving normal vector path output.
+- [x] PDF implements `render.PathEffectFilterDrawer` for identity / no-op
+      filter passes by capturing replay into deterministic transparency-group
+      Form XObjects and invoking those groups from page content.
+- [x] PDF blur/shadow path-effect filters are explicitly classified as mixed
+      raster/vector fallback rather than native PDF support. Baseline PDF has
+      no standard Gaussian-blur graphics operator, so PDF reports support for
+      identity filters only.
+
+#### 2.2D Visual and Reference Coverage
+
+- [x] AGG Phase 2 path-effect goldens cover `text_drop_shadow`, `line_halo`,
+      `scatter_marker_shadow`, and `polygon_effect_stack`.
+- [x] Catalog case `path_effects` adds Matplotlib-reference coverage for text
+      shadow, line halo, scatter marker shadow, and polygon effect-stack output.
+
+#### 2.2E PDF Blur / Soft-Mask Decision
+
+- [x] Reclassify blurred PDF path-effect filters as intentional mixed-raster
+      fallback instead of native vector PDF. The documented rationale is that
+      baseline PDF has no standard Gaussian-blur graphics operator; a fake
+      "native" implementation would either be viewer-specific or an
+      approximation with misleading capability reporting.
+- [x] Preserve truthful capability reporting: PDF advertises native
+      `PathEffects`, but `SupportsPathEffectFilter` returns true only for
+      identity / no-op filters. Blur/shadow filters therefore auto-rasterize
+      through the mixed raster/vector path when a PDF output needs them.
+- [x] Add PDF regression coverage for the policy:
+      - identity filters still emit transparency-group Form XObjects;
+      - blur filters do not claim native PDF support;
+      - package documentation records the fallback reason.
+
+#### 2.2F Exit Criteria
+
+- [x] The remaining PDF blur strategy is implemented or explicitly reclassified
+      as an intentional mixed-raster fallback with a documented reason in
+      backend docs and this plan.
+- [x] `go test ./render ./core ./backends/agg ./backends/svg ./backends/pdf -count=1`
+      passes.
+- [x] `go test ./test -run 'TestGolden/path_effects|TestMatplotlibRef/path_effects|TestReferenceCompare/path_effects' -count=1`
+      passes.
+- [x] If PDF blur remains raster-based by design, capability reporting must make
+      that truth clear: `PathEffects` remains native, but blur filter effects do
+      not report native PDF support.
 
 ### 2.3 Mixed Raster / Vector Output
 
@@ -1604,7 +1610,7 @@ are missing.
 
 ---
 
-# Phase 9A: Feature and Demo Coverage Audit
+# Phase 10: Feature and Demo Coverage Audit
 
 ✅ **Completed.** The coarse feature/demo audit now makes missing Matplotlib
 parity coverage visible and testable before v1.0.
@@ -1628,7 +1634,7 @@ Completed scope:
 
 ---
 
-# Phase 9B: Exhaustive Public Surface Parity Map
+# Phase 11: Exhaustive Public Surface Parity Map
 
 **Goal:** turn the coarse Phase 9A audit into the detailed answer originally
 needed: for each relevant upstream Matplotlib public API, enumerable registry,
@@ -1640,7 +1646,7 @@ idiomatic equivalent, an intentional omission, or no implementation yet.
 `core/`, `transform/`, `render/`, `color/`, `style/`, `pyplot/`, `canvas/`,
 `backends/`, `examples/`, and `test/parity/`.
 
-### 9B.1 Public API Inventory Generator
+### 11.1 Public API Inventory Generator
 
 - [x] Add a small internal tool that scans upstream Python modules for public
       classes, functions, constants, and registries in the modules tracked by
@@ -1685,7 +1691,7 @@ Implementation notes:
 - Start with a generated JSON artifact and a Go test that verifies every
   public upstream row has a local classification.
 
-### 9B.2 Go Equivalent Mapping
+### 11.2 Go Equivalent Mapping
 
 - [x] Add a `PublicSurfaceParityRows` inventory that maps each upstream row to
       one of:
@@ -1717,7 +1723,7 @@ Implementation notes:
   the full upstream behavior, mark it `partial`.
 - Prefer documenting an intentional omission over leaving behavior ambiguous.
 
-### 9B.3 Human Parity Status Report
+### 11.3 Human Parity Status Report
 
 - [ ] Generate or maintain `docs/matplotlib-parity-status.md` from the
       machine-readable inventories.
@@ -1747,20 +1753,20 @@ Implementation notes:
 
 ---
 
-# Phase 9C: Foundational API Parity Closure
+# Phase 12: Foundational API Parity Closure
 
 **Goal:** implement or explicitly omit the missing fundamental APIs surfaced by
 `FoundationAPIGapAudit`, prioritizing behavior that affects visual parity,
 Matplotlib migration examples, or broad public use.
 
-### 9C.1 Artist, Line2D, and Marker Semantics
+### 12.1 Artist, Line2D, and Marker Semantics
 
 **Goal:** close the foundational `artist.py`, `lines.py`, and `markers.py`
 gaps that affect static rendering, legends, migration examples, and parity
 fixtures. Keep the Go API explicit and typed, but match Matplotlib behavior
 where the output is visible.
 
-#### 9C.1A Landed Baseline
+#### 12.1A Landed Baseline
 
 - [x] Common artists that embed `ArtistRasterization` now get shared
       Matplotlib-style metadata for visibility, artist-level alpha, in-layout,
@@ -1775,7 +1781,7 @@ where the output is visible.
       marker size, marker face color, marker edge color, marker edge width,
       every-N `MarkEvery`, and combined line+marker legend samples.
 
-#### 9C.1B Shared Artist Metadata Remainder
+#### 12.1B Shared Artist Metadata Remainder
 
 - [x] Add shared label accessors for artists that currently store labels in
       concrete fields (`Line2D.Label`, `Scatter2D.Label`, `Collection.Label`,
@@ -1823,7 +1829,7 @@ Current slice landed:
   Matplotlib reference output covering hidden artists, artist-level alpha,
   explicit clip boxes, and artist transform coordinate overrides.
 
-#### 9C.1C Line2D Data and Stroke Semantics
+#### 12.1C Line2D Data and Stroke Semantics
 
 - [x] Add typed data getters/setters for `Line2D`: clone-returning `Data`,
       `SetData`, `SetXData`, and `SetYData`, with stale invalidation.
@@ -1853,7 +1859,7 @@ Current slice landed:
   Matplotlib reference output for data mutation, invalid-point line breaks,
   dashed gapcolor, and two nontrivial markevery forms.
 
-#### 9C.1D Line2D Marker Completion
+#### 12.1D Line2D Marker Completion
 
 - [x] Verify current `Line2D` marker size conversion, marker face/edge fallback,
       marker edge width, marker alpha, and legend samples against upstream
@@ -1884,7 +1890,7 @@ Current slice landed:
   samples for filled, unfilled, line-only, custom path, tuple, mathtext, and
   half-filled markers.
 
-#### 9C.1E Half-Filled Marker Paths
+#### 12.1E Half-Filled Marker Paths
 
 - [x] Replace the current single filled marker path behavior for
       `MarkerFillLeft`, `MarkerFillRight`, `MarkerFillTop`, and
@@ -1912,7 +1918,7 @@ Current slice landed:
   Scatter2D split-fill / whole-edge fallback; the `line2d_markers` fixture
   covers all four half-fill directions against Matplotlib.
 
-#### 9C.1F Exit Criteria
+#### 12.1F Exit Criteria
 
 - [x] `FoundationAPIGapAudit` row `artist-clipping-transform` is either closed
       or split into smaller remaining rows with exact implementation scope.
@@ -1937,27 +1943,192 @@ Implementation notes:
 - Prefer adding shared Go option structs/mixins over copying Python's dynamic
   setter model wholesale.
 
-### 9C.2 Axis, Ticker, Formatter, Scale, and Transform Breadth
+### 12.2 Axis, Ticker, Formatter, Scale, and Transform Breadth
 
-- [ ] Expand locator/formatter coverage for engineering, percent, index, null,
-      scalar, log-mathtext, minor ticks, multi-level date formatting, and
-      scale-specific formatting.
-- [ ] Expose tick styling through Go axis/tick options without requiring a full
-      Python-style `Tick` artist clone.
-- [ ] Add parity-driven transform/BBox/path helpers for frozen transforms,
-      transformed paths, invalidation, clipping, annotation coordinate modes,
-      and layout calculations.
+**Goal:** close the user-visible axis, ticker, formatter, scale, and transform
+gaps surfaced by Phases 10/11 without cloning Matplotlib's full dynamic class
+hierarchy. Prefer small Go option structs and focused helpers, with one
+catalog/parity fixture per behavior family.
+
+#### 12.2A Landed Baseline
+
+- [x] `Axis` owns major/minor locators, formatters, tick labels, mirrored
+      top/right axes, tick direction, tick line styling, label styling, and
+      extra tick-label levels.
+- [x] Common locator coverage exists for auto/max-N, linear, fixed, null,
+      multiple-with-offset, log major/minor, auto minor, date/day, and
+      categorical axes.
+- [x] Common formatter coverage exists for scalar, fixed, null, function,
+      printf-style, str-method subset, engineering, percent, log powers, date,
+      auto-date, and category labels.
+- [x] Scale construction exists for linear, log, symlog, asinh, logit,
+      function, custom registry entries, non-positive handling, and shared
+      primary/secondary axes.
+- [x] Transform infrastructure already covers affine, separable, blended,
+      chained, offset, axes/figure/data coordinate transforms, display-rect
+      transforms, and opt-in transform-node invalidation/caching.
+
+#### 12.2B Locator Catalog Closure
+
+- [ ] Audit upstream `ticker.py` locators row by row against the current Go
+      surface, and split each missing locator into `implement`,
+      `idiomatic-equivalent`, or `intentional-omission` in the Phase 11 public
+      surface notes.
+- [ ] Tighten `AutoLocator` / `MaxNLocator` edge semantics against upstream:
+      `nbins`, `steps`, integer-only mode, pruning, symmetric behavior,
+      degenerate ranges, negative ranges, and very small / very large spans.
+- [x] Add `IndexLocator`, `LinearLocator` exact-count / preset behavior, and
+      `FixedLocator` subsampling behavior.
+- [x] Audit `OldAutoLocator`: it is not present in the current vendored
+      upstream `ticker.py`; no Go compatibility surface is required unless an
+      older Matplotlib target is explicitly added.
+- [ ] Complete log-family locator behavior: dense minor ticks, `subs="auto"` /
+      `subs="all"` equivalents, minor threshold behavior, base changes, and
+      safe behavior for non-positive or inverted domains.
+- [x] Add a scale-specific `SymLogLocator` and install it as the default
+      major/minor locator for `symlog` axes.
+- [x] Add scale-specific `AsinhLocator` and `LogitLocator` implementations and
+      install them as default major/minor locators for `asinh` and `logit`
+      axes.
+- [ ] Add renderer-neutral unit tests for each new locator and a catalog case
+      named for each visible locator family rather than one combined fixture.
+
+#### 12.2C Formatter Catalog Closure
+
+- [ ] Audit upstream `ticker.py` formatters row by row and update public-surface
+      parity notes for direct equivalents, Go-style equivalents, and deliberate
+      omissions.
+- [ ] Expand `ScalarFormatter` parity: offset text decision, scientific limits,
+      power limits, math-text mode, fixed-minus behavior, locale/no-locale
+      decision, and step-aware precision.
+- [x] Split log formatting into explicit Go formatter types for the existing
+      simple `LogFormatter`, exponent-only labels, MathText labels, and
+      scientific-notation MathText labels.
+- [ ] Add sparse minor-label behavior for log-family formatters where it is
+      needed for visible parity.
+- [ ] Tighten `EngFormatter` behavior for separator defaults, unicode micro,
+      places, sign handling, unit spacing, and extreme prefixes.
+- [ ] Tighten `PercentFormatter` behavior for xmax defaults, decimal auto
+      selection, symbol escaping/no-escaping decision, and negative values.
+- [x] Audit `IndexFormatter`: it is not present in the current vendored
+      upstream `ticker.py`; no Go compatibility surface is required unless an
+      older Matplotlib target is explicitly added.
+- [x] Add `LogitFormatter` and install it as the default logit-axis formatter
+      for major ticks, with minor ticks suppressed by default.
+- [ ] Add or explicitly omit `FixedFormatter` mismatch warnings,
+      `NullFormatter`, `FuncFormatter`, `FormatStrFormatter`, and
+      `StrMethodFormatter` edge behavior in the audit rows.
+- [ ] Add one catalog/parity case each for scalar offset/scientific labels, log
+      math-text labels, engineering labels, percent labels, and index/fixed/null
+      labels.
+
+#### 12.2D Date, Category, and Unit Tick Breadth
+
+- [ ] Audit upstream `dates.py` locator/formatter families separately from
+      generic `ticker.py`, keeping the source-of-truth list in the Phase 12
+      coverage notes unless those modules are later added to the Phase 11
+      public-surface inventory.
+- [x] Expand date locators in small slices: year/month, weekday, day-of-month,
+      and hour/minute/second locators.
+- [x] Add microsecond locator support if practical, and finish interval
+      selection gaps for compact ranges.
+- [x] Add `AutoDateLocator`-style interval selection and `ConciseDateFormatter`
+      style multi-level label suppression where it affects visible parity.
+- [x] Tighten timezone handling and Matplotlib date-number conversion so date
+      ticks remain stable across UTC and non-UTC locations.
+- [x] Preserve explicit user locators/formatters when unit converters refresh
+      axis info; add regression tests for date and categorical axes.
+- [ ] Add catalog/parity cases for daily, monthly/yearly, intraday, concise
+      date, and categorical tick labels.
+
+#### 12.2E Scale-Specific Axis Defaults
+
+- [ ] Compare `scale.py` default locator/formatter setup for linear, log,
+      symlog, asinh, logit, function, and functionlog against
+      `configureScaleAxis`.
+- [x] Add named `functionlog` scale support through the Go scale registry.
+- [x] Ensure `SetXScale` / `SetYScale`, semilog helpers, colorbar axes, twin
+      axes, secondary axes, and shared axes all install the same scale-specific
+      locator/formatter defaults.
+- [x] Wire `SetXScale` / `SetYScale` symlog defaults to `SymLogLocator` for
+      major and minor ticks.
+- [x] Wire `SetXScale` / `SetYScale` asinh and logit defaults to
+      `AsinhLocator` / `LogitLocator` for major and minor ticks.
+- [x] Wire `SetXScale` / `SetYScale` functionlog defaults to the log
+      locator/formatter path.
+- [x] Verify non-positive handling for log-like scales: clip, mask/drop,
+      autoscale interaction, and readable error behavior for invalid domains.
+- [ ] Add catalog/parity cases for symlog ticks, logit ticks, asinh ticks, and
+      function/functionlog scale defaults.
+
+#### 12.2F Tick Styling and Axis Control Surface
+
+- [ ] Map Matplotlib `tick_params` behavior to Go axis/tick option structs:
+      major/minor/both selection, axis selection, length, width, color, pad,
+      label size, label color, rotation, direction, and reset behavior.
+- [x] Add side visibility controls for tick marks and labels:
+      top/bottom/left/right and labeltop/labelbottom/labelleft/labelright,
+      including mirrored and secondary axes.
+- [x] Add per-major/minor grid styling where upstream tick params affect grid
+      lines: color, alpha, width, style, and visibility.
+- [ ] Keep ticks axis-owned for v1.0, but document the explicit non-goal of a
+      Python-style `Tick` artist clone unless a migration example requires it.
+- [ ] Add unit tests for option propagation and a catalog/parity case covering
+      major/minor styling, side visibility, grid styling, and rotated labels.
+
+#### 12.2G Transform, BBox, and Path Helper Closure
+
+- [ ] Audit upstream `transforms.py`, `path.py`, and `bezier.py` rows against
+      Go transform/geometry helpers and classify missing rows as implemented,
+      Go-style equivalent, or intentional omission.
+- [ ] Add frozen transform helpers where callers need immutable snapshots of
+      dynamic axes/figure/data transforms for annotations, clipping, images, or
+      layout.
+- [ ] Add transformed-path helpers for path plus transform caching, invalidation
+      hooks, affine/non-affine split decisions, and clone-safe access.
+- [ ] Expand BBox/rect helpers needed by layout and annotation parity:
+      union, intersection, expanded/padded, anchored, transformed, inverse
+      transformed, empty/null handling, and point containment.
+- [ ] Add path/bezier helpers only when visible behavior needs them:
+      interpolation, clipping against BBoxes, extents under transforms,
+      simplification decisions, and curve splitting.
+- [ ] Add tests that exercise transform invalidation propagation and transformed
+      path cache invalidation, plus catalog/parity cases for annotation
+      coordinate modes, clipped transformed paths, and layout BBox behavior.
+
+#### 12.2H Exit Criteria
+
+- [ ] `FoundationAPIGapAudit` rows `ticker-formatter-catalog`,
+      `tick-artist-model`, and `transform-bbox-paths` are closed or split into
+      precise remaining rows with exact scope.
+- [ ] Public-surface parity rows for the currently tracked `axis.py`,
+      `ticker.py`, `scale.py`, and `transforms.py` modules are updated from
+      broad `partial` notes to either implemented, precise partial, Go-style
+      equivalent, or intentional omission status; `dates.py`, `category.py`,
+      `path.py`, and `bezier.py` gaps are either added to that inventory or
+      documented as supporting coverage notes.
+- [ ] `FeatureCoverageMatrix` rows `axis-ticker-scale` and `transforms` no
+      longer rely on broad "catalog incomplete" notes; each remaining gap links
+      to a specific 12.2 subtask.
+- [ ] 12.2 has catalog/parity coverage for locator, formatter, date/category,
+      scale-default, tick styling, and transform/BBox helper behavior.
+- [ ] `go test ./core ./transform ./internal/examplecatalog -count=1` and the
+      relevant `go test ./test/ -run ...` catalog cases pass.
 
 Implementation notes:
 
 - Compare against upstream `axis.py`, `ticker.py`, `scale.py`,
-  `transforms.py`, `path.py`, and `bezier.py`.
-- Add one catalog case per formatter/locator family instead of one enormous
-  fixture.
+  `dates.py`, `category.py`, `transforms.py`, `path.py`, and `bezier.py`
+  before changing behavior.
+- Add one catalog case per formatter, locator, scale, or transform helper family
+  instead of one enormous fixture.
 - Keep the transform graph lean; add only helpers needed by rendering,
   annotations, layout, and clipping parity.
+- Prefer Go option structs and typed helpers over Python-style dynamic setter
+  surfaces. If a Python surface is intentionally not modeled, record the
+  rationale in Phase 11 parity rows.
 
-### 9C.3 Collections, Scalar Mapping, Meshes, and Colorbars
+### 12.3 Collections, Scalar Mapping, Meshes, and Colorbars
 
 - [ ] Complete collection scalar-mappable behavior: mutable arrays,
       face/edge-color updates, norm/colormap updates, offset transforms, and
@@ -1977,7 +2148,7 @@ Implementation notes:
 - Add Matplotlib reference cases for mutable scalar-mapping and horizontal /
   boundary colorbars.
 
-### 9C.4 Patches, Text, Annotation, Legend, and Offset Boxes
+### 12.4 Patches, Text, Annotation, Legend, and Offset Boxes
 
 - [ ] Audit `FancyBboxPatch` box-style coverage against
       `BoxStyle._style_list` and implement or document every missing style.
@@ -1999,7 +2170,7 @@ Implementation notes:
 - Keep API shapes Go-idiomatic, but the rendered output should follow
   Matplotlib where behavior is visual.
 
-### 9C.5 Images, Pyplot, Backends, Widgets, and Animation
+### 12.5 Images, Pyplot, Backends, Widgets, and Animation
 
 - [ ] Add remaining image class decisions: `FigureImage`, `BboxImage`,
       `NonUniformImage`, `PcolorImage`, `pcolorfast`, and `figimage`.
@@ -2033,13 +2204,13 @@ Implementation notes:
 
 ---
 
-# Phase 9D: User-Facing Example Breadth
+# Phase 13: User-Facing Example Breadth
 
 **Goal:** ensure every major implemented public feature family has a
 user-facing Go example that demonstrates meaningful Matplotlib-equivalent
 variants, not just a parity fixture.
 
-### 9D.1 Core Plot Family Galleries
+### 13.1 Core Plot Family Galleries
 
 - [ ] Add or expand examples for line/marker grids, advanced scatter, bar
       variants, fill variants, histogram variants, and multi-series legend
@@ -2058,7 +2229,7 @@ Implementation notes:
 - Use `DemoBreadthGaps` as the checklist; do not close a gap until the demo
   includes the target features listed there.
 
-### 9D.2 Color, Image, Text, and Annotation Galleries
+### 13.2 Color, Image, Text, and Annotation Galleries
 
 - [ ] Add named-color swatches and colormap family galleries.
 - [ ] Add image interpolation/alpha/matshow/spy galleries.
@@ -2072,7 +2243,7 @@ Implementation notes:
 - Include captions/descriptions in catalog metadata explaining what feature
   breadth the example validates.
 
-### 9D.3 Toolkit, Projection, 3D, and Backend Output Galleries
+### 13.3 Toolkit, Projection, 3D, and Backend Output Galleries
 
 - [ ] Add a broad mplot3d gallery covering 3D line, scatter, surface,
       wireframe, trisurf, bar3d, voxels, quiver3d, stem3d, and fill-between3d.
@@ -2102,12 +2273,12 @@ Implementation notes:
 
 ---
 
-# Phase 9E: Browser Gallery Alignment
+# Phase 14: Browser Gallery Alignment
 
 **Goal:** make the browser gallery a catalog-backed inspection surface for the
 same feature families covered by parity fixtures and CLI examples.
 
-### 9E.1 Wire Planned Web Reference Modules
+### 14.1 Wire Planned Web Reference Modules
 
 - [ ] Wire `test/matplotlib_ref/webdemos/annotations.py`, `bars.py`,
       `errorbars.py`, `fills.py`, `heatmap.py`, `histogram.py`, `lines.py`,
@@ -2119,7 +2290,7 @@ same feature families covered by parity fixtures and CLI examples.
       and every catalog-backed planned row either has an active browser demo or
       remains explicitly planned.
 
-### 9E.2 Promote CLI-Only Showcases
+### 14.2 Promote CLI-Only Showcases
 
 - [ ] Promote CLI-only showcases listed in `BrowserDemoCoverageRows` into
       browser demos: basic lines, dashes, scatter, bars, fills, errorbars,
@@ -2131,7 +2302,7 @@ same feature families covered by parity fixtures and CLI examples.
 - [ ] Add browser-demo smoke tests that render each promoted demo and verify it
       has a non-empty image/artifact.
 
-### 9E.3 Browser Parity Status Reporting
+### 14.3 Browser Parity Status Reporting
 
 - [ ] Update `docs/matplotlib-parity-status.md` with active/planned/reference
       browser status for each feature family.
@@ -2149,12 +2320,12 @@ same feature families covered by parity fixtures and CLI examples.
 
 ---
 
-# Phase 10: Documentation, Examples Polish, and v1.0 Release
+# Phase 15: Documentation, Examples Polish, and v1.0 Release
 
 **Goal:** make the project consumable by users who have not been following
 the development thread, and tag a stable v1.0.
 
-### 10.1 API Documentation
+### 15.1 API Documentation
 
 - [ ] Package-level GoDoc passes for every public package, with a worked
       example per package.
@@ -2165,7 +2336,7 @@ the development thread, and tag a stable v1.0.
 - [x] Backend selection guide: when to use AGG / GoBasic / SVG / PDF /
       Skia, with capability matrix excerpts (`docs/backend-selection.md`).
 
-### 10.2 Examples Gallery Polish
+### 15.2 Examples Gallery Polish
 
 - [x] Review every `Showcase: true` catalog row for caption, description,
       and runnable snippet quality.
@@ -2174,7 +2345,7 @@ the development thread, and tag a stable v1.0.
 - [x] Promote the WASM browser gallery to a first-class entry point on the
       project README.
 
-### 10.3 Performance Pass
+### 15.3 Performance Pass
 
 - [ ] Profiling sweep across the catalog: identify hotspots that exceed the
       100k-point smoothness goal and the sub-second typical-plot goal.
@@ -2183,7 +2354,7 @@ the development thread, and tag a stable v1.0.
 - [ ] Documented memory-usage targets and a tuning guide for long-running
       applications.
 
-### 10.4 Release Readiness
+### 15.4 Release Readiness
 
 - [ ] Semantic version policy decision and `CHANGELOG.md` baseline.
 - [ ] Final golden / reference regeneration pass with explicit per-case
