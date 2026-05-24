@@ -54,6 +54,9 @@ type TextOptions struct {
 	OffsetY      float64
 	// WrapWidth wraps text to this maximum display-pixel width when positive.
 	WrapWidth float64
+	// Wrap computes a display-pixel wrap width from the figure box when
+	// WrapWidth is not set.
+	Wrap bool
 	// MultiAlignment controls per-line alignment within multiline or wrapped
 	// text. Nil follows HAlign, matching Matplotlib's multialignment=None.
 	MultiAlignment *TextAlign
@@ -119,6 +122,9 @@ type Text struct {
 	OffsetY      float64
 	// WrapWidth wraps text to this maximum display-pixel width when positive.
 	WrapWidth float64
+	// Wrap computes a display-pixel wrap width from the figure box when
+	// WrapWidth is not set.
+	Wrap bool
 	// MultiAlignment controls per-line alignment within multiline or wrapped
 	// text. Nil follows HAlign, matching Matplotlib's multialignment=None.
 	MultiAlignment *TextAlign
@@ -188,6 +194,7 @@ func (a *Axes) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		OffsetX:        opt.OffsetX,
 		OffsetY:        opt.OffsetY,
 		WrapWidth:      opt.WrapWidth,
+		Wrap:           opt.Wrap,
 		MultiAlignment: cloneTextAlign(opt.MultiAlignment),
 		ClipOn:         clipOn,
 		BBox:           cloneTextBBoxOptions(opt.BBox),
@@ -233,6 +240,7 @@ func (f *Figure) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		OffsetX:        opt.OffsetX,
 		OffsetY:        opt.OffsetY,
 		WrapWidth:      opt.WrapWidth,
+		Wrap:           opt.Wrap,
 		MultiAlignment: cloneTextAlign(opt.MultiAlignment),
 		ClipOn:         clipOn,
 		BBox:           cloneTextBBoxOptions(opt.BBox),
@@ -337,7 +345,11 @@ func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
 	fontKey := resolvedTextFontKey(t.FontKey, t.FontProperties, ctx)
 	parseMath := parseMathEnabled(t.ParseMath)
 	anchor := transformedPoint(ctx, t.Coords, t.Position, t.OffsetX, t.OffsetY)
-	lines := wrappedTextLines(r, t.Content, fontSize, fontKey, parseMath, ctx.RC.UseTeX, t.WrapWidth)
+	wrapWidth := t.WrapWidth
+	if wrapWidth <= 0 && t.Wrap && !ctx.RC.UseTeX {
+		wrapWidth = textAutoWrapWidth(ctx, anchor, t.HAlign, t.Angle)
+	}
+	lines := wrappedTextLines(r, t.Content, fontSize, fontKey, parseMath, ctx.RC.UseTeX, wrapWidth)
 	if len(lines) > 1 {
 		t.drawMultilineText(r, textRen, ctx, anchor, fontSize, fontKey, parseMath, lines)
 		return
@@ -510,6 +522,63 @@ func normalizedTextRotationAngle(angleDeg float64) float64 {
 		angle += 360
 	}
 	return angle
+}
+
+func textAutoWrapWidth(ctx *DrawContext, anchor geom.Pt, hAlign TextAlign, angleDeg float64) float64 {
+	if ctx == nil {
+		return 0
+	}
+	figureBox := ctx.FigureRect
+	if figureBox.W() <= 0 || figureBox.H() <= 0 {
+		figureBox = ctx.Clip
+	}
+	if figureBox.W() <= 0 || figureBox.H() <= 0 {
+		return 0
+	}
+	angle := normalizedTextRotationAngle(angleDeg)
+	left := textDistanceToBox(angle, anchor, figureBox)
+	right := textDistanceToBox(math.Mod(180+angle, 360), anchor, figureBox)
+	switch hAlign {
+	case TextAlignLeft:
+		return left
+	case TextAlignRight:
+		return right
+	default:
+		return 2 * math.Min(left, right)
+	}
+}
+
+func textDistanceToBox(rotation float64, anchor geom.Pt, box geom.Rect) float64 {
+	const epsilon = 1e-12
+	cosDeg := func(deg float64) float64 {
+		v := math.Cos(deg * math.Pi / 180)
+		if math.Abs(v) < epsilon {
+			if v < 0 {
+				return -epsilon
+			}
+			return epsilon
+		}
+		return v
+	}
+	var h1, h2 float64
+	switch {
+	case rotation > 270:
+		quad := rotation - 270
+		h1 = (anchor.Y - box.Min.Y) / cosDeg(quad)
+		h2 = (box.Max.X - anchor.X) / cosDeg(90-quad)
+	case rotation > 180:
+		quad := rotation - 180
+		h1 = (anchor.X - box.Min.X) / cosDeg(quad)
+		h2 = (anchor.Y - box.Min.Y) / cosDeg(90-quad)
+	case rotation > 90:
+		quad := rotation - 90
+		h1 = (box.Max.Y - anchor.Y) / cosDeg(quad)
+		h2 = (anchor.X - box.Min.X) / cosDeg(90-quad)
+	default:
+		h1 = (box.Max.X - anchor.X) / cosDeg(rotation)
+		h2 = (box.Max.Y - anchor.Y) / cosDeg(90-rotation)
+	}
+	return math.Min(h1, h2)
 }
 
 func textRotationAnchor(origin geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64, mode TextRotationMode) geom.Pt {

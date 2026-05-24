@@ -706,6 +706,27 @@ func TestTextArtistWrapWidthUsesMultilineLayoutAndBBox(t *testing.T) {
 	}
 }
 
+func TestTextArtistWrapUsesFigureBoxWidth(t *testing.T) {
+	ctx := createTestDrawContext()
+	ctx.FigureRect = geom.Rect{Max: geom.Pt{X: 100, Y: 100}}
+	text := &Text{
+		Position: geom.Pt{X: 0.4, Y: 0.5},
+		Coords:   Coords(CoordFigure),
+		Content:  "alpha beta gamma",
+		FontSize: 10,
+		HAlign:   TextAlignLeft,
+		Wrap:     true,
+		ClipOn:   true,
+	}
+	r := &textRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.texts) != 2 || r.texts[0] != "alpha beta" || r.texts[1] != "gamma" {
+		t.Fatalf("auto-wrapped text lines = %v, want [alpha beta] [gamma]", r.texts)
+	}
+}
+
 func TestRotatedTextBBoxRotatesWithText(t *testing.T) {
 	ctx := createTestDrawContext()
 	text := &Text{

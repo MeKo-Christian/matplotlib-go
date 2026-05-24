@@ -2348,8 +2348,11 @@ Current slice landed:
 - `TextOptions.WrapWidth` now provides explicit display-pixel word wrapping
   for text artists, reusing the multiline layout and text-bbox drawing path for
   wrapped output.
-- Renderer-neutral text tests cover wrapped line emission and wrapped text-bbox
-  width constraints.
+- `TextOptions.Wrap` now computes a Matplotlib-style wrap width from the figure
+  box when `WrapWidth` is unset, using alignment and rotation to choose the
+  available edge distance.
+- Renderer-neutral text tests cover explicit wrapped line emission, wrapped
+  text-bbox width constraints, and figure-box automatic wrapping.
 - `TextOptions.MultiAlignment` now mirrors Matplotlib's high-value
   `multialignment` behavior for multiline and wrapped text: nil follows
   `HAlign`, while an explicit value controls per-line placement inside the
