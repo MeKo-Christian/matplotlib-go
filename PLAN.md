@@ -2080,11 +2080,11 @@ artist color state and colorbar state synchronized.
 
 #### 12.3B Collection Scalar-Mappable State
 
-- [ ] Audit upstream `collections.py`, `cm.py`, and `colorizer.py` for
+- [x] Audit upstream `collections.py`, `cm.py`, and `colorizer.py` for
       `Collection` / `ScalarMappable` array, cmap, norm, clim, and changed-state
       behavior; record Go-style equivalents and intentional omissions in Phase
       11 public-surface notes.
-- [ ] Add mutable scalar arrays to collection-style mappables so callers can
+- [x] Add mutable scalar arrays to collection-style mappables so callers can
       update data values after artist creation without reconstructing the
       artist.
 - [x] Add the first Go-style mutable scalar-mapping slice for path, patch, and
@@ -2099,12 +2099,12 @@ artist color state and colorbar state synchronized.
 - [x] Support Matplotlib-like "edgecolors='face'" semantics for scalar-mapped
       collections so edge colors can track mapped face colors after scalar,
       norm, cmap, or clim updates.
-- [ ] Add collection offset-transform support needed by scatter/path
+- [x] Add collection offset-transform support needed by scatter/path
       collections without changing examples to compensate for transform gaps.
 - [x] Ensure colorbars derived from a mutable mappable observe updated mapping
       state, either through explicit synchronization or a documented Go-style
       refresh path.
-- [ ] Add renderer-neutral unit tests for mutable array updates, cmap/norm/clim
+- [x] Add renderer-neutral unit tests for mutable array updates, cmap/norm/clim
       changes, face/edge precedence, offset transforms, and colorbar mapping
       synchronization.
 - [x] Add a `collection_mutable_scalarmap` catalog/parity fixture that updates
@@ -2119,19 +2119,19 @@ artist color state and colorbar state synchronized.
       where current behavior diverges visibly from Matplotlib fixtures.
 - [x] Make `QuadMesh` scalar updates recompute flat cell colors and Gouraud
       corner colors consistently with its stored shading mode.
-- [ ] Verify masked and non-finite mesh values continue to route through
+- [x] Verify masked and non-finite mesh values continue to route through
       colormap bad/under/over colors after mutable mapping changes.
 - [x] Add small catalog/parity cases for mutable pcolormesh scalar data and any
       shape/shading mismatch discovered during the audit.
 
 #### 12.3D Colorbar Orientation, Ticks, and Layout Breadth
 
-- [ ] Audit upstream `colorbar.py` for orientation, location, anchor, shrink,
+- [x] Audit upstream `colorbar.py` for orientation, location, anchor, shrink,
       aspect, fraction, pad, ticklocation, boundaries, values, spacing,
       drawedges, extend, extendfrac, extendrect, and multi-axes behavior.
 - [x] Add horizontal colorbar placement with bottom/top tick and label defaults,
       parent-axes shrinking, extension geometry, and constrained-layout sync.
-- [ ] Add location and anchor support for left/right/top/bottom colorbars using
+- [x] Add location and anchor support for left/right/top/bottom colorbars using
       Go option fields rather than Python-style overloaded kwargs.
 - [x] Add custom tick locator/formatter or explicit tick-list support for
       colorbars, preserving log, boundary, and nonlinear defaults when custom
@@ -2139,46 +2139,47 @@ artist color state and colorbar state synchronized.
 - [x] Expand boundary colorbar rendering for proportional/uniform spacing,
       explicit boundaries/values, drawedges, extension shape variants, and
       visible outline behavior.
-- [ ] Support colorbars attached to multiple parent axes where layout can be
+- [x] Support colorbars attached to multiple parent axes where layout can be
       represented by the current figure/axes model; document any gridspec-only
       behavior intentionally omitted.
-- [ ] Add renderer-neutral unit tests for horizontal placement, location/anchor
+- [x] Add renderer-neutral unit tests for horizontal placement, location/anchor
       geometry, custom ticks, boundary spacing, drawedges, extensions, and
-      multi-axes layout.
-- [ ] Add catalog/parity fixtures for horizontal colorbars and boundary
+      document multi-axes layout as intentionally omitted for the current
+      figure/axes model.
+- [x] Add catalog/parity fixtures for horizontal colorbars and boundary
       colorbars with explicit ticks/boundaries.
 
 #### 12.3E Advanced Norms and Color Machinery
 
-- [ ] Audit upstream `colors.py` for missing norm families and classify each as
+- [x] Audit upstream `colors.py` for missing norm families and classify each as
       implement, Go-style equivalent, deferred, or intentional omission.
-- [ ] Add `AsinhNorm` to the scalar-normalizer catalog if it improves image,
+- [x] Add `AsinhNorm` to the scalar-normalizer catalog if it improves image,
       mesh, or colorbar parity beyond existing asinh axis-scale support.
-- [ ] Add `FuncNorm` only if a concrete fixture needs user-defined forward /
+- [x] Add `FuncNorm` only if a concrete fixture needs user-defined forward /
       inverse color normalization; otherwise document the Go-style alternative
       through custom `ScalarNormalizer` implementations.
-- [ ] Decide whether multivar/bivar colormaps belong in the v1.0 surface; add a
+- [x] Decide whether multivar/bivar colormaps belong in the v1.0 surface; add a
       narrow implementation only with a visible parity target.
-- [ ] Decide whether `LightSource` belongs with scalar color machinery or 3D
+- [x] Decide whether `LightSource` belongs with scalar color machinery or 3D
       surface shading; implement only the subset needed by surface/image parity
       or record an intentional omission.
-- [ ] Add unit tests for each implemented advanced norm/color helper and update
+- [x] Add unit tests for each implemented advanced norm/color helper and update
       public-surface parity rows for omitted helpers with rationale.
 
 #### 12.3F Exit Criteria
 
-- [ ] `FoundationAPIGapAudit` and public-surface parity rows for
+- [x] `FoundationAPIGapAudit` and public-surface parity rows for
       `collections.py`, `cm.py`, `colors.py`, `colorbar.py`, and `colorizer.py`
       are updated from broad partial notes to exact implemented, partial,
       Go-style equivalent, deferred, or intentional omission status.
-- [ ] Mutable scalar-mapped collections can update array, cmap, norm, and clim
+- [x] Mutable scalar-mapped collections can update array, cmap, norm, and clim
       state without reconstructing the artist, and colorbars reflect the
       resulting mapping state through the supported Go API.
-- [ ] Mesh and colorbar catalog/parity coverage includes mutable scalar mapping,
+- [x] Mesh and colorbar catalog/parity coverage includes mutable scalar mapping,
       horizontal colorbars, and explicit boundary/tick colorbars.
-- [ ] Remaining advanced norm/color gaps are implemented with tests or recorded
+- [x] Remaining advanced norm/color gaps are implemented with tests or recorded
       as intentional omissions with migration guidance.
-- [ ] `go test ./core ./color ./internal/examplecatalog -count=1` and the
+- [x] `go test ./core ./color ./internal/examplecatalog -count=1` and the
       relevant `go test ./test/ -run ...` catalog cases pass.
 
 Implementation notes:

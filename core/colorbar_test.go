@@ -184,6 +184,54 @@ func TestFigureAddHorizontalColorbarConfiguresTopAxes(t *testing.T) {
 	}
 }
 
+func TestFigureAddColorbarShrinkAnchorsVerticalLongAxis(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{{0, 1}, {2, 3}})
+	anchor := geom.Pt{X: 0, Y: 0}
+	base := colorbarBaseRect(ax)
+
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Location: "right", Shrink: 0.5, Anchor: &anchor})
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+
+	wantHeight := base.H() * 0.5
+	if got := cbAx.RectFraction.H(); !floatApprox(got, wantHeight, 1e-12) {
+		t.Fatalf("shrunk vertical colorbar height = %v, want %v", got, wantHeight)
+	}
+	if got := cbAx.RectFraction.Min.Y; !floatApprox(got, base.Min.Y, 1e-12) {
+		t.Fatalf("bottom-anchored colorbar min y = %v, want %v", got, base.Min.Y)
+	}
+}
+
+func TestFigureAddColorbarShrinkAnchorsHorizontalLongAxis(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{{0, 1}, {2, 3}})
+	anchor := geom.Pt{X: 1, Y: 1}
+	base := colorbarBaseRect(ax)
+
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Location: "bottom", Shrink: 0.5, Anchor: &anchor})
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+
+	wantWidth := base.W() * 0.5
+	if got := cbAx.RectFraction.W(); !floatApprox(got, wantWidth, 1e-12) {
+		t.Fatalf("shrunk horizontal colorbar width = %v, want %v", got, wantWidth)
+	}
+	if got := cbAx.RectFraction.Max.X; !floatApprox(got, base.Max.X, 1e-12) {
+		t.Fatalf("right-anchored horizontal colorbar max x = %v, want %v", got, base.Max.X)
+	}
+}
+
 func TestHorizontalColorbarDrawsGradientLeftToRight(t *testing.T) {
 	var r colorbarRecordingRenderer
 	clip := geom.Rect{

@@ -97,6 +97,40 @@ func TestSymLogNormMapsSymmetricallyAroundZero(t *testing.T) {
 	}
 }
 
+func TestAsinhNormMapsSmoothSymmetricDomain(t *testing.T) {
+	norm := AsinhNorm{LinearWidth: 2, VMin: -10, VMax: 10}
+	if got := norm.Map(-10); !floatApprox(got, 0, 1e-12) {
+		t.Fatalf("AsinhNorm.Map(-10) = %v, want 0", got)
+	}
+	if got := norm.Map(0); !floatApprox(got, 0.5, 1e-12) {
+		t.Fatalf("AsinhNorm.Map(0) = %v, want 0.5", got)
+	}
+	if got := norm.Map(10); !floatApprox(got, 1, 1e-12) {
+		t.Fatalf("AsinhNorm.Map(10) = %v, want 1", got)
+	}
+
+	value, ok := norm.Inverse(0.5)
+	if !ok {
+		t.Fatal("AsinhNorm.Inverse(0.5) returned !ok")
+	}
+	if !floatApprox(value, 0, 1e-12) {
+		t.Fatalf("AsinhNorm.Inverse(0.5) = %v, want 0", value)
+	}
+}
+
+func TestAsinhNormAutoscaleClipAndValidation(t *testing.T) {
+	norm := (AsinhNorm{LinearWidth: 0.5, VMin: math.NaN(), VMax: math.NaN()}).Autoscale([]float64{math.NaN(), -4, 9}).(AsinhNorm)
+	if norm.VMin != -4 || norm.VMax != 9 {
+		t.Fatalf("AsinhNorm autoscaled range = %v..%v, want -4..9", norm.VMin, norm.VMax)
+	}
+	if got := (AsinhNorm{VMin: -1, VMax: 1, Clip: true}).Map(10); got != 1 {
+		t.Fatalf("clipped AsinhNorm over value = %v, want 1", got)
+	}
+	if err := (AsinhNorm{LinearWidth: -1, VMin: -1, VMax: 1}).Validate(); err == nil {
+		t.Fatal("expected linear_width validation error")
+	}
+}
+
 func TestBoundaryNormReturnsDiscreteColorIndexes(t *testing.T) {
 	norm := BoundaryNorm{Boundaries: []float64{0, 10, 20}, NColors: 5}
 	if got := norm.Index(-1); got != -1 {

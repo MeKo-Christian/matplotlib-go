@@ -250,6 +250,75 @@ func inverseSymlogTransform(value float64, n SymLogNorm) float64 {
 	return math.Copysign(linthresh*math.Pow(base, absValue/linthresh-adj), value)
 }
 
+// AsinhNorm applies a smooth inverse-hyperbolic-sine transform before normalization.
+type AsinhNorm struct {
+	LinearWidth float64
+	VMin        float64
+	VMax        float64
+	Clip        bool
+}
+
+func (n AsinhNorm) Map(value float64) float64 {
+	if !isFinite(value) || !isFinite(n.VMin) || !isFinite(n.VMax) {
+		return math.NaN()
+	}
+	if n.VMin == n.VMax {
+		return 0
+	}
+	width := asinhNormLinearWidth(n.LinearWidth)
+	out := Normalize{
+		VMin: asinhNormTransform(n.VMin, width),
+		VMax: asinhNormTransform(n.VMax, width),
+		Clip: n.Clip,
+	}.Map(asinhNormTransform(value, width))
+	if math.IsInf(out, 0) {
+		return math.NaN()
+	}
+	return out
+}
+
+func (n AsinhNorm) Inverse(value float64) (float64, bool) {
+	if !isFinite(n.VMin) || !isFinite(n.VMax) {
+		return 0, false
+	}
+	width := asinhNormLinearWidth(n.LinearWidth)
+	tmin := asinhNormTransform(n.VMin, width)
+	tmax := asinhNormTransform(n.VMax, width)
+	return asinhNormInverse(tmin+value*(tmax-tmin), width), true
+}
+
+func (n AsinhNorm) Autoscale(values []float64) ScalarNormalizer {
+	linear := Normalize{VMin: n.VMin, VMax: n.VMax}.Autoscale(values).(Normalize)
+	n.VMin, n.VMax = linear.VMin, linear.VMax
+	return n
+}
+
+func (n AsinhNorm) Range() (float64, float64) { return n.VMin, n.VMax }
+
+func (n AsinhNorm) Validate() error {
+	if n.LinearWidth < 0 || math.IsInf(n.LinearWidth, 0) || math.IsNaN(n.LinearWidth) {
+		return fmt.Errorf("asinh norm linear_width must be positive")
+	}
+	return Normalize{VMin: n.VMin, VMax: n.VMax}.Validate()
+}
+
+func (n AsinhNorm) NormName() string { return "asinh" }
+
+func asinhNormLinearWidth(width float64) float64 {
+	if width <= 0 || math.IsNaN(width) || math.IsInf(width, 0) {
+		return 1
+	}
+	return width
+}
+
+func asinhNormTransform(value, width float64) float64 {
+	return width * math.Asinh(value/width)
+}
+
+func asinhNormInverse(value, width float64) float64 {
+	return width * math.Sinh(value/width)
+}
+
 // PowerNorm applies a power-law transform after linear normalization.
 type PowerNorm struct {
 	Gamma float64

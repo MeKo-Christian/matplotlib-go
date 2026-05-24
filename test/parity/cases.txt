@@ -113,8 +113,10 @@ pcolormesh_nearest
 pcolormesh_gouraud
 pcolormesh_masked
 hist2d_weighted_density
+asinh_norm_image
 boundarynorm_pcolormesh
 collection_mutable_scalarmap
+colorbar_boundary_values
 colorbar_horizontal_ticks
 lognorm_imshow
 twoslope_norm_image

@@ -142,6 +142,48 @@ func TestPathCollectionUsesMarkerBatchWhenAvailable(t *testing.T) {
 	}
 }
 
+func TestPathCollectionOffsetCoordsCanDifferFromPathTransform(t *testing.T) {
+	pc := &PathCollection{
+		Collection:    Collection{},
+		Path:          markerRectanglePath(-1, -1, 1, 1),
+		Offsets:       []geom.Pt{{X: 2, Y: 8}},
+		PathInDisplay: true,
+		FaceColor:     render.Color{A: 1},
+	}
+	pc.SetTransformCoords(Coords(CoordFigure))
+	pc.SetOffsetCoords(Coords(CoordData))
+
+	r := &recordingRenderer{}
+	pc.Draw(r, createTestDrawContext())
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("path call count = %d, want 1", len(r.pathCalls))
+	}
+	if got := r.pathCalls[0].path.V[0]; got != (geom.Pt{X: 69, Y: 369}) {
+		t.Fatalf("first display-path point = %+v, want data offset with display marker delta", got)
+	}
+}
+
+func TestPathCollectionOffsetCoordsControlBoundsForDisplayPaths(t *testing.T) {
+	pc := &PathCollection{
+		Collection:    Collection{},
+		Path:          markerRectanglePath(-1, -1, 1, 1),
+		Offsets:       []geom.Pt{{X: 2, Y: 8}},
+		PathInDisplay: true,
+		FaceColor:     render.Color{A: 1},
+	}
+	pc.SetTransformCoords(Coords(CoordFigure))
+	if got := pc.Bounds(createTestDrawContext()); got != (geom.Rect{}) {
+		t.Fatalf("figure-coordinate display-path bounds = %+v, want empty data bounds", got)
+	}
+
+	pc.SetOffsetCoords(Coords(CoordData))
+	want := geom.Rect{Min: geom.Pt{X: 2, Y: 8}, Max: geom.Pt{X: 2, Y: 8}}
+	if got := pc.Bounds(createTestDrawContext()); got != want {
+		t.Fatalf("data-offset display-path bounds = %+v, want %+v", got, want)
+	}
+}
+
 func TestPathCollectionUsesPathCollectionBatchForVaryingPerItemStyle(t *testing.T) {
 	pc := &PathCollection{
 		Collection:    Collection{Alpha: 0.5},
@@ -460,6 +502,49 @@ func TestLineCollectionLegendEntry(t *testing.T) {
 	}
 }
 
+func TestLineCollectionSetArrayRefreshesStrokeColors(t *testing.T) {
+	cmapName := "linecollection-scalar-array"
+	low := render.Color{R: 1, A: 1}
+	high := render.Color{B: 1, A: 1}
+	matcolor.RegisterColormap(cmapName, matcolor.NewColormap(cmapName, []matcolor.ColorStop{
+		{Pos: 0, Color: low},
+		{Pos: 1, Color: high},
+	}))
+
+	lines := &LineCollection{
+		Collection: Collection{
+			Colormap: cmapName,
+		},
+		Segments: [][]geom.Pt{
+			{{X: 0, Y: 0}, {X: 1, Y: 1}},
+			{{X: 1, Y: 0}, {X: 2, Y: 1}},
+		},
+		Color:     render.Color{G: 1, A: 1},
+		LineWidth: 1,
+	}
+
+	if err := lines.SetArray([]float64{0, 10}); err != nil {
+		t.Fatalf("SetArray: %v", err)
+	}
+	if got := lines.GetArray(); len(got) != 2 || got[0] != 0 || got[1] != 10 {
+		t.Fatalf("GetArray = %v, want copied scalar values", got)
+	}
+	if got, want := lines.Colors[0], low; got != want {
+		t.Fatalf("first line color = %+v, want %+v", got, want)
+	}
+	if got, want := lines.Colors[1], high; got != want {
+		t.Fatalf("last line color = %+v, want %+v", got, want)
+	}
+
+	lines.SetColormap("plasma")
+	if got := lines.ScalarMap().Colormap; got != "plasma" {
+		t.Fatalf("line collection colormap = %q, want plasma", got)
+	}
+	if lines.Colors[0] == low && lines.Colors[1] == high {
+		t.Fatal("line colors did not refresh after colormap update")
+	}
+}
+
 func TestQuadMeshDrawsEachCell(t *testing.T) {
 	mesh := &QuadMesh{
 		PatchCollection: PatchCollection{
@@ -650,6 +735,59 @@ func TestQuadMeshSetArrayRefreshesFlatColorsAndFaceEdges(t *testing.T) {
 	}
 	if got, want := mesh.EdgeColors[3], mesh.FaceColors[3]; got != want {
 		t.Fatalf("face-style edge after cmap = %+v, want mapped face %+v", got, want)
+	}
+}
+
+func TestQuadMeshSetArrayKeepsBadUnderOverColorsAfterMappingChanges(t *testing.T) {
+	cmapName := "quadmesh-flat-scalar-array-bounds"
+	bad := render.Color{R: 1, G: 0.2, A: 1}
+	under := render.Color{R: 0.2, G: 0.4, A: 1}
+	over := render.Color{R: 0.4, B: 1, A: 1}
+	low := render.Color{G: 1, A: 1}
+	high := render.Color{B: 1, A: 1}
+	matcolor.RegisterColormap(cmapName, matcolor.NewColormap(cmapName, []matcolor.ColorStop{
+		{Pos: 0, Color: low},
+		{Pos: 1, Color: high},
+	}).WithBad(bad).WithUnder(under).WithOver(over))
+
+	mesh := &QuadMesh{
+		PatchCollection: PatchCollection{
+			Collection: Collection{
+				Colormap: cmapName,
+			},
+		},
+		XEdges:  []float64{0, 1, 2},
+		YEdges:  []float64{0, 1, 2},
+		Shading: MeshShadingFlat,
+	}
+
+	if err := mesh.SetNorm(Normalize{VMin: 0, VMax: 1}); err != nil {
+		t.Fatalf("SetNorm: %v", err)
+	}
+	if err := mesh.SetArray([]float64{-1, math.NaN(), 0.5, 2}); err != nil {
+		t.Fatalf("SetArray: %v", err)
+	}
+	if got := mesh.FaceColors[0]; got != under {
+		t.Fatalf("under face color = %+v, want under color %+v", got, under)
+	}
+	if got := mesh.FaceColors[1]; got != bad {
+		t.Fatalf("NaN face color = %+v, want bad color %+v", got, bad)
+	}
+	if got := mesh.FaceColors[3]; got != over {
+		t.Fatalf("over face color = %+v, want over color %+v", got, over)
+	}
+
+	if err := mesh.SetCLim(0, 1); err != nil {
+		t.Fatalf("SetCLim: %v", err)
+	}
+	if got := mesh.FaceColors[0]; got != under {
+		t.Fatalf("under face after clim = %+v, want under color %+v", got, under)
+	}
+	if got := mesh.FaceColors[1]; got != bad {
+		t.Fatalf("NaN face after clim = %+v, want bad color %+v", got, bad)
+	}
+	if got := mesh.FaceColors[3]; got != over {
+		t.Fatalf("over face after clim = %+v, want over color %+v", got, over)
 	}
 }
 

@@ -15,6 +15,8 @@ type ColorbarOptions struct {
 	Width       float64
 	Padding     float64
 	Aspect      float64
+	Shrink      float64
+	Anchor      *geom.Pt
 	Label       string
 	Colormap    *string
 	VMin        *float64
@@ -122,6 +124,7 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	if rect.Min.Y >= rect.Max.Y {
 		return nil
 	}
+	rect = applyColorbarShrinkAnchor(rect, cfg.Shrink, cfg.Anchor, location)
 
 	ax := f.AddAxes(rect)
 	ax.colorbarParent = parent
@@ -435,6 +438,35 @@ func colorbarPlacementRect(fig *Figure, base geom.Rect, thickness, slotThickness
 		rect.Max.X = math.Min(slotLeft+thickness, base.Max.X)
 	}
 	return parent, rect
+}
+
+func applyColorbarShrinkAnchor(rect geom.Rect, shrink float64, anchor *geom.Pt, location string) geom.Rect {
+	if rect.W() <= 0 || rect.H() <= 0 {
+		return rect
+	}
+	if shrink <= 0 || shrink >= 1 {
+		return rect
+	}
+	if colorbarIsHorizontal(location) {
+		width := rect.W() * shrink
+		ax := 0.5
+		if anchor != nil {
+			ax = clamp01(anchor.X)
+		}
+		left := rect.Min.X + (rect.W()-width)*ax
+		rect.Min.X = left
+		rect.Max.X = left + width
+		return rect
+	}
+	height := rect.H() * shrink
+	ay := 0.5
+	if anchor != nil {
+		ay = clamp01(anchor.Y)
+	}
+	bottom := rect.Min.Y + (rect.H()-height)*ay
+	rect.Min.Y = bottom
+	rect.Max.Y = bottom + height
+	return rect
 }
 
 func colorbarUsesResolvedSlot(fig *Figure, parent *Axes) bool {

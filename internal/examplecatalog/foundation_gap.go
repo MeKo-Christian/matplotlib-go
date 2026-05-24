@@ -151,9 +151,9 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Title:           "Collection scalar-mappable updates and offset transforms",
 		UpstreamModules: []string{"collections.py", "cm.py", "colors.py"},
 		GoFiles:         []string{"core/collection.go", "core/scalar_mappable.go", "core/mesh.go", "core/scatter.go"},
-		CurrentEquivalent: "Go collections carry scalar-mappable metadata; PathCollection, " +
+		CurrentEquivalent: "Go collections carry scalar-mappable metadata; PathCollection, LineCollection, " +
 			"PatchCollection, and QuadMesh expose Go-style SetArray, SetColormap, SetNorm, SetCLim, and " +
-			"face-edge tracking helpers.",
+			"face-edge tracking helpers; PathCollection supports a separate offset coordinate transform.",
 		Gap: "Matplotlib's broader draw-time scalar-mapping callbacks, QuadMesh array shape " +
 			"variants beyond the supported flat/nearest cell and Gouraud vertex updates, and the full " +
 			"mutable collection setter surface are still only partially represented.",
@@ -241,9 +241,11 @@ var foundationAPIGaps = []FoundationAPIGap{
 		UpstreamModules: []string{"colorbar.py", "colorizer.py"},
 		GoFiles:         []string{"core/colorbar.go", "core/scalar_mappable.go", "core/norm.go"},
 		CurrentEquivalent: "Go has figure-level colorbars backed by ScalarMappable, colormap/norm routing, " +
-			"vertical and horizontal placement, labels, extension patches, and explicit tick lists.",
-		Gap: "Anchor combinations, custom formatter objects, boundaries, spacing, drawedges, and " +
-			"multi-axes placement semantics remain thin.",
+			"vertical and horizontal placement, labels, extension patches, explicit tick lists, explicit " +
+			"boundaries/values, uniform/proportional boundary spacing, drawedges, rectangular extensions, " +
+			"shrink/anchor options, and mutable mappable synchronization.",
+		Gap: "Custom formatter objects, gridspec-specific helpers, and " +
+			"multi-parent colorbar placement remain intentionally partial in the current figure/axes model.",
 		Decision: GapDecisionImplement,
 		Rationale: "Colorbar rendering is common and already covered by parity fixtures; missing public " +
 			"semantics should become catalog-visible work.",
@@ -256,12 +258,13 @@ var foundationAPIGaps = []FoundationAPIGap{
 		GoFiles:         []string{"color/colormap.go", "color/listed_colormaps.go", "color/named_colors.go", "core/norm.go"},
 		CurrentEquivalent: "Go has named colors, listed and segmented colormaps, reversed/resampled " +
 			"colormaps, and common norms including LogNorm, SymLogNorm, PowerNorm, TwoSlopeNorm, " +
-			"CenteredNorm, BoundaryNorm, and NoNorm.",
-		Gap: "FuncNorm, AsinhNorm, multivar/bivar colormaps, LightSource, and edge-case color " +
-			"conversion behavior still need coverage decisions.",
-		Decision: GapDecisionImplement,
-		Rationale: "Most of this surface is static and testable; implement high-value norms and document " +
-			"less common color machinery if it does not fit the Go API.",
+			"CenteredNorm, BoundaryNorm, AsinhNorm, and NoNorm.",
+		Gap: "FuncNorm is represented by custom ScalarNormalizer implementations; MultiNorm, " +
+			"multivar/bivar colormaps, LightSource, and edge-case color conversion behavior remain " +
+			"outside the narrow v1.0 surface until a visible fixture needs them.",
+		Decision: GapDecisionIdiomaticEquivalent,
+		Rationale: "AsinhNorm is implemented because it improves image and colorbar parity directly; " +
+			"less common multivariate color machinery does not fit the current single-scalar mapping API.",
 	},
 	{
 		ID:              "pyplot-wrapper-surface",

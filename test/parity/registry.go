@@ -38,6 +38,7 @@ import (
 	example_annotation_composition "github.com/cwbudde/matplotlib-go/test/parity/annotation_composition"
 	example_arrays_showcase "github.com/cwbudde/matplotlib-go/test/parity/arrays_showcase"
 	example_artist_metadata "github.com/cwbudde/matplotlib-go/test/parity/artist_metadata"
+	example_asinh_norm_image "github.com/cwbudde/matplotlib-go/test/parity/asinh_norm_image"
 	example_axes_control_surface "github.com/cwbudde/matplotlib-go/test/parity/axes_control_surface"
 	example_axes_grid1_showcase "github.com/cwbudde/matplotlib-go/test/parity/axes_grid1_showcase"
 	example_axes_top_right_inverted "github.com/cwbudde/matplotlib-go/test/parity/axes_top_right_inverted"
@@ -54,6 +55,7 @@ import (
 	example_boxplot_basic "github.com/cwbudde/matplotlib-go/test/parity/boxplot_basic"
 	example_clip_path_batch "github.com/cwbudde/matplotlib-go/test/parity/clip_path_batch"
 	example_collection_mutable_scalarmap "github.com/cwbudde/matplotlib-go/test/parity/collection_mutable_scalarmap"
+	example_colorbar_boundary_values "github.com/cwbudde/matplotlib-go/test/parity/colorbar_boundary_values"
 	example_colorbar_composition "github.com/cwbudde/matplotlib-go/test/parity/colorbar_composition"
 	example_colorbar_extensions "github.com/cwbudde/matplotlib-go/test/parity/colorbar_extensions"
 	example_colorbar_horizontal_ticks "github.com/cwbudde/matplotlib-go/test/parity/colorbar_horizontal_ticks"
@@ -289,8 +291,10 @@ var renderByID = map[string]func() image.Image{
 	"pcolormesh_gouraud":                 example_pcolormesh_gouraud.Render,
 	"pcolormesh_masked":                  example_pcolormesh_masked.Render,
 	"hist2d_weighted_density":            example_hist2d_weighted_density.Render,
+	"asinh_norm_image":                   example_asinh_norm_image.Render,
 	"boundarynorm_pcolormesh":            example_boundarynorm_pcolormesh.Render,
 	"collection_mutable_scalarmap":       example_collection_mutable_scalarmap.Render,
+	"colorbar_boundary_values":           example_colorbar_boundary_values.Render,
 	"colorbar_horizontal_ticks":          example_colorbar_horizontal_ticks.Render,
 	"lognorm_imshow":                     example_lognorm_imshow.Render,
 	"twoslope_norm_image":                example_twoslope_norm_image.Render,
@@ -331,10 +335,12 @@ var figureByID = map[string]func() *core.Figure{
 	"scale_symlog_ticks":                 example_scale_symlog_ticks.Plot,
 	"ticks_styling_surface":              example_ticks_styling_surface.Plot,
 	"axisartist_showcase":                showcase_axisartist_showcase.Plot,
+	"asinh_norm_image":                   example_asinh_norm_image.Plot,
 	"basic_line":                         showcase_basic_line.Plot,
 	"bar_basic":                          showcase_bar_basic.Plot,
 	"boxplot_basic":                      showcase_boxplot_basic.Plot,
 	"colorbar_composition":               showcase_colorbar_composition.Plot,
+	"colorbar_boundary_values":           example_colorbar_boundary_values.Plot,
 	"colorbar_horizontal_ticks":          example_colorbar_horizontal_ticks.Plot,
 	"colormap_diverging":                 example_colormap_diverging.Plot,
 	"collection_mutable_scalarmap":       example_collection_mutable_scalarmap.Plot,
