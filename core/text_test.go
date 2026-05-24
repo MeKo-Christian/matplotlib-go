@@ -1671,6 +1671,27 @@ func TestTextMultiAlignmentControlsLineAlignmentWithinBlock(t *testing.T) {
 	}
 }
 
+func TestMultilineTextAngleUsesRotatedTextDrawer(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 1},
+		Content:  "top\nbottom",
+		FontSize: 10,
+		Angle:    30,
+		ClipOn:   true,
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.fontRotatedCalls) != 2 {
+		t.Fatalf("expected two rotated multiline text draws, got %+v", r.fontRotatedCalls)
+	}
+	if len(r.fontTextCalls) != 0 || len(r.texts) != 0 {
+		t.Fatalf("multiline angle should not use unrotated text draws, font=%+v legacy=%+v", r.fontTextCalls, r.texts)
+	}
+}
+
 func TestAxesLabelsDrawMathTextAccordingToExpressionScope(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{

@@ -190,7 +190,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CurrentEquivalent: "Go supports text, rotated text, multiline drawing, text bbox patches, " +
 			"text paths, MathText, TeX paths, per-text font routing, and renderer font resolution. " +
 			"Text and annotation drawing use shared artist-alpha metadata for visible text and arrow colors. " +
-			"TextOptions.WrapWidth provides explicit display-pixel word wrapping, and TextOptions.MultiAlignment separates per-line multiline alignment from block anchoring. " +
+			"TextOptions.WrapWidth provides explicit display-pixel word wrapping, TextOptions.MultiAlignment separates per-line multiline alignment from block anchoring, and multiline text routes angle-aware draws through rotated renderer capabilities. " +
 			"Text bbox patches rotate with rotated text. " +
 			"The text_annotation_matrix fixture gives focused coverage for multiline text, rotated " +
 			"text, text bbox output, and structured font requests.",

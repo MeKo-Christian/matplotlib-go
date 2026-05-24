@@ -410,6 +410,14 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 				origin.X += maxWidth - layouts[i].Width
 			}
 		}
+		if t.Angle != 0 {
+			if rotated, ok := r.(render.RotatedTextDrawer); ok {
+				angle := t.Angle * math.Pi / 180
+				rotAnchor := tickLabelRotationAnchor(origin, layouts[i], lineAlign, textLayoutVAlignBaseline, angle)
+				drawDisplayTextRotatedParseMath(rotated, line, rotAnchor, fontSize, angle, textColor, fontKey, parseMath, ctx.RC.UseTeX)
+				continue
+			}
+		}
 		drawDisplayTextParseMath(textRen, line, origin, fontSize, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 	}
 }
