@@ -95,6 +95,28 @@ func TestLogScale_NonPositiveClip(t *testing.T) {
 	}
 }
 
+func TestLogScale_NormalizesNonPositiveDomain(t *testing.T) {
+	scale, err := NewScale("log",
+		WithScaleDomain(-5, 100),
+		WithScaleBase(10),
+		WithScaleNonPositive(NonPositiveClip),
+	)
+	if err != nil {
+		t.Fatalf("NewScale(log): %v", err)
+	}
+	logScale, ok := scale.(Log)
+	if !ok {
+		t.Fatalf("scale type = %T, want Log", scale)
+	}
+	minVal, maxVal := logScale.Domain()
+	if minVal <= 0 || maxVal <= minVal {
+		t.Fatalf("normalized log domain = (%v, %v), want positive increasing domain", minVal, maxVal)
+	}
+	if got := logScale.Fwd(10); math.IsNaN(got) || math.IsInf(got, 0) {
+		t.Fatalf("normalized log forward should stay finite, got %v", got)
+	}
+}
+
 func TestLogitScale_NonPositiveHandling(t *testing.T) {
 	mask := NewLogit(0.01, 0.99, NonPositiveMask, 1e-6)
 	if got := mask.Fwd(-0.5); !math.IsNaN(got) {

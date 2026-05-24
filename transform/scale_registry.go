@@ -631,14 +631,14 @@ func logClipFloor(minVal, maxVal, base float64) float64 {
 	if base <= 1 {
 		base = 10
 	}
-	floor := 1 / base * base * base
+	floor := 1 / (base * base)
 	if minVal > 0 {
 		floor = minVal
 	} else if maxVal > 0 {
-		floor = maxVal / base * base * base
+		floor = maxVal / (base * base)
 	}
 	if floor <= 0 || !isFinite(floor) {
-		floor = 1 / base * base * base
+		floor = 1 / (base * base)
 	}
 	return floor
 }

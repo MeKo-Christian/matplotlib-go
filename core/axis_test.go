@@ -424,6 +424,42 @@ func TestAxes_SetLimPreservesScaleType(t *testing.T) {
 	}
 }
 
+func TestAxes_LogAutoscaleNormalizesNonPositiveData(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(unitRect())
+	if err := ax.SetXScale("log",
+		transform.WithScaleBase(10),
+		transform.WithScaleNonPositive(transform.NonPositiveClip),
+	); err != nil {
+		t.Fatalf("SetXScale(log): %v", err)
+	}
+
+	ax.Plot([]float64{-10, 1, 100}, []float64{1, 2, 3})
+	ax.AutoScale(0)
+
+	logScale, ok := ax.XScale.(transform.Log)
+	if !ok {
+		t.Fatalf("x scale = %T, want transform.Log", ax.XScale)
+	}
+	minVal, maxVal := logScale.Domain()
+	if minVal <= 0 || maxVal <= minVal {
+		t.Fatalf("autoscaled log domain = (%v, %v), want positive increasing domain", minVal, maxVal)
+	}
+	if got := logScale.Fwd(-10); math.IsNaN(got) || math.IsInf(got, 0) {
+		t.Fatalf("clipped log forward after autoscale should stay finite, got %v", got)
+	}
+
+	if err := ax.SetXScale("log",
+		transform.WithScaleBase(10),
+		transform.WithScaleNonPositive(transform.NonPositiveMask),
+	); err != nil {
+		t.Fatalf("SetXScale(log mask): %v", err)
+	}
+	if got := ax.XScale.Fwd(-10); !math.IsNaN(got) {
+		t.Fatalf("masked log forward should be NaN for non-positive input, got %v", got)
+	}
+}
+
 func TestAxes_TopAxisCreatesExplicitAxis(t *testing.T) {
 	axes := &Axes{
 		XAxis: NewXAxis(),
