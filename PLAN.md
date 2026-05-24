@@ -2219,9 +2219,9 @@ catalog/parity fixture per behavior family.
 - [x] `FeatureCoverageMatrix` rows `axis-ticker-scale` and `transforms` no
       longer rely on broad "catalog incomplete" notes; each remaining gap links
       to a specific 12.2 subtask.
-- [ ] 12.2 has catalog/parity coverage for locator, formatter, date/category,
+- [x] 12.2 has catalog/parity coverage for locator, formatter, date/category,
       scale-default, tick styling, and transform/BBox helper behavior.
-- [ ] `go test ./core ./transform ./internal/examplecatalog -count=1` and the
+- [x] `go test ./core ./transform ./internal/examplecatalog -count=1` and the
       relevant `go test ./test/ -run ...` catalog cases pass.
 
 Implementation notes:
