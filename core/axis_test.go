@@ -269,6 +269,59 @@ func TestAxes_SetScaleUpdatesSharedRoot(t *testing.T) {
 	}
 }
 
+func TestAxes_SetScaleInstallsAsinhLocatorDefaults(t *testing.T) {
+	axes := &Axes{
+		XScale: transform.NewLinear(-5, 15),
+		XAxis:  NewXAxis(),
+	}
+
+	err := axes.SetXScale("asinh",
+		transform.WithScaleBase(10),
+		transform.WithScaleLinearWidth(2),
+		transform.WithScaleSubs(2, 5),
+	)
+	if err != nil {
+		t.Fatalf("SetXScale(asinh): %v", err)
+	}
+
+	locator, ok := axes.XAxis.Locator.(AsinhLocator)
+	if !ok {
+		t.Fatalf("x locator = %T, want AsinhLocator", axes.XAxis.Locator)
+	}
+	if locator.Base != 10 || locator.LinearWidth != 2 {
+		t.Fatalf("x locator = %+v, want base=10 linear_width=2", locator)
+	}
+	minor, ok := axes.XAxis.MinorLocator.(AsinhLocator)
+	if !ok {
+		t.Fatalf("x minor locator = %T, want AsinhLocator", axes.XAxis.MinorLocator)
+	}
+	if len(minor.Subs) != 2 || minor.Subs[0] != 2 || minor.Subs[1] != 5 {
+		t.Fatalf("x minor locator subs = %v, want [2 5]", minor.Subs)
+	}
+}
+
+func TestAxes_SetScaleInstallsLogitLocatorDefaults(t *testing.T) {
+	axes := &Axes{
+		XScale: transform.NewLinear(0.01, 0.99),
+		XAxis:  NewXAxis(),
+	}
+
+	if err := axes.SetXScale("logit"); err != nil {
+		t.Fatalf("SetXScale(logit): %v", err)
+	}
+
+	if _, ok := axes.XAxis.Locator.(LogitLocator); !ok {
+		t.Fatalf("x locator = %T, want LogitLocator", axes.XAxis.Locator)
+	}
+	minor, ok := axes.XAxis.MinorLocator.(LogitLocator)
+	if !ok {
+		t.Fatalf("x minor locator = %T, want LogitLocator", axes.XAxis.MinorLocator)
+	}
+	if !minor.Minor {
+		t.Fatalf("x minor locator = %+v, want minor=true", minor)
+	}
+}
+
 func TestAxes_SetLimPreservesScaleType(t *testing.T) {
 	axes := &Axes{
 		XScale: transform.NewSymLog(-10, 10, 10, 1, 1),

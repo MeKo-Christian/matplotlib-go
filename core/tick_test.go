@@ -210,6 +210,66 @@ func TestSymLogLocator_LogRanges(t *testing.T) {
 	}
 }
 
+func TestAsinhLocator_RoundsSymmetricTicks(t *testing.T) {
+	ticks := (AsinhLocator{LinearWidth: 1, Base: 10}).Ticks(-100, 100, 0)
+	want := []float64{-100, -10, -1, 0, 1, 10, 100}
+	if len(ticks) != len(want) {
+		t.Fatalf("AsinhLocator tick count = %d, want %d (%v)", len(ticks), len(want), ticks)
+	}
+	for i := range want {
+		if math.Abs(ticks[i]-want[i]) > 1e-12 {
+			t.Fatalf("AsinhLocator tick %d = %v, want %v", i, ticks[i], want[i])
+		}
+	}
+}
+
+func TestAsinhLocator_MinorSubs(t *testing.T) {
+	ticks := (AsinhLocator{LinearWidth: 1, Base: 10, Subs: []float64{2, 5}}).Ticks(1, 100, 0)
+	has := func(v float64) bool {
+		for _, tick := range ticks {
+			if math.Abs(tick-v) <= 1e-12 {
+				return true
+			}
+		}
+		return false
+	}
+	for _, want := range []float64{2, 5, 20, 50} {
+		if !has(want) {
+			t.Fatalf("AsinhLocator missing tick %v in %v", want, ticks)
+		}
+	}
+}
+
+func TestLogitLocator_MajorIdealTicks(t *testing.T) {
+	ticks := (LogitLocator{}).Ticks(0.001, 0.999, 0)
+	want := []float64{0.001, 0.01, 0.1, 0.5, 0.9, 0.99, 0.999}
+	if len(ticks) != len(want) {
+		t.Fatalf("LogitLocator tick count = %d, want %d (%v)", len(ticks), len(want), ticks)
+	}
+	for i := range want {
+		if math.Abs(ticks[i]-want[i]) > 1e-12 {
+			t.Fatalf("LogitLocator tick %d = %v, want %v", i, ticks[i], want[i])
+		}
+	}
+}
+
+func TestLogitLocator_MinorTicks(t *testing.T) {
+	ticks := (LogitLocator{Minor: true}).Ticks(0.01, 0.99, 0)
+	has := func(v float64) bool {
+		for _, tick := range ticks {
+			if math.Abs(tick-v) <= 1e-12 {
+				return true
+			}
+		}
+		return false
+	}
+	for _, want := range []float64{0.02, 0.2, 0.8, 0.98} {
+		if !has(want) {
+			t.Fatalf("LogitLocator missing minor tick %v in %v", want, ticks)
+		}
+	}
+}
+
 func TestMinorLinearLocator_SubdividesMajors(t *testing.T) {
 	minors := (MinorLinearLocator{N: 5}).Ticks(0, 10, 0)
 	if len(minors) == 0 {

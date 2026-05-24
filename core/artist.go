@@ -1642,6 +1642,14 @@ func configureScaleAxis(axis *Axis, scaleName string, cfg transform.ScaleOptions
 		axis.Locator = SymLogLocator{Base: cfg.Base, LinThresh: cfg.LinThresh}
 		axis.Formatter = ScalarFormatter{Prec: 3}
 		axis.MinorLocator = SymLogLocator{Base: cfg.Base, LinThresh: cfg.LinThresh, Subs: cfg.Subs}
+	case "asinh":
+		axis.Locator = AsinhLocator{LinearWidth: cfg.LinearWidth, Base: cfg.Base}
+		axis.Formatter = ScalarFormatter{Prec: 3}
+		axis.MinorLocator = AsinhLocator{LinearWidth: cfg.LinearWidth, Base: cfg.Base, Subs: cfg.Subs}
+	case "logit":
+		axis.Locator = LogitLocator{}
+		axis.Formatter = ScalarFormatter{Prec: 3}
+		axis.MinorLocator = LogitLocator{Minor: true}
 	default:
 		axis.Locator = LinearLocator{}
 		axis.Formatter = ScalarFormatter{Prec: 3}

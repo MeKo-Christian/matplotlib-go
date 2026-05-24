@@ -671,6 +671,234 @@ func symlogExponentRange(lo, hi, base float64) (int, int) {
 	return start, end
 }
 
+// AsinhLocator places ticks approximately evenly on an inverse-sinh scale.
+type AsinhLocator struct {
+	LinearWidth float64
+	NumTicks    int
+	SymThresh   float64
+	Base        float64
+	Subs        []float64
+}
+
+func (l AsinhLocator) Ticks(minVal, maxVal float64, _ int) []float64 {
+	if math.IsNaN(minVal) || math.IsNaN(maxVal) {
+		return nil
+	}
+	if minVal > maxVal {
+		minVal, maxVal = maxVal, minVal
+	}
+	if minVal*maxVal < 0 {
+		symThresh := l.SymThresh
+		if symThresh <= 0 {
+			symThresh = 0.2
+		}
+		if minVal != 0 && math.Abs(1+maxVal/minVal) < symThresh {
+			bound := math.Max(math.Abs(minVal), math.Abs(maxVal))
+			minVal, maxVal = -bound, bound
+		}
+	}
+
+	linearWidth := l.LinearWidth
+	if linearWidth <= 0 || math.IsNaN(linearWidth) || math.IsInf(linearWidth, 0) {
+		linearWidth = 1
+	}
+	numTicks := l.NumTicks
+	if numTicks <= 0 {
+		numTicks = 11
+	}
+
+	yMin := linearWidth * math.Asinh(minVal/linearWidth)
+	yMax := linearWidth * math.Asinh(maxVal/linearWidth)
+	if yMin == yMax {
+		return linearSpacedTicks(minVal, maxVal, numTicks)
+	}
+	ys := linearSpacedTicks(yMin, yMax, numTicks)
+	if yMin*yMax < 0 {
+		kept := ys[:0]
+		for _, y := range ys {
+			if math.Abs(y/(yMax-yMin)) > 0.5/float64(numTicks) {
+				kept = append(kept, y)
+			}
+		}
+		ys = append(kept, 0)
+	}
+
+	xs := make([]float64, 0, len(ys))
+	for _, y := range ys {
+		xs = append(xs, linearWidth*math.Sinh(y/linearWidth))
+	}
+
+	ticks := asinhRoundedTicks(xs, l.Base, l.Subs)
+	if len(ticks) >= 2 {
+		return ticks
+	}
+	return linearSpacedTicks(minVal, maxVal, numTicks)
+}
+
+func asinhRoundedTicks(xs []float64, base float64, subs []float64) []float64 {
+	if base == 0 {
+		base = 10
+	}
+	ticks := make([]float64, 0, len(xs)*tickMaxInt(1, len(subs)))
+	if base > 1 {
+		logBase := math.Log(base)
+		for _, x := range xs {
+			pow := 0.0
+			switch {
+			case x > 0:
+				pow = math.Pow(base, math.Floor(math.Log(x)/logBase))
+			case x < 0:
+				pow = -math.Pow(base, math.Floor(math.Log(-x)/logBase))
+			}
+			if len(subs) == 0 {
+				ticks = append(ticks, pow)
+				continue
+			}
+			for _, sub := range subs {
+				if sub <= 0 || math.IsNaN(sub) || math.IsInf(sub, 0) {
+					continue
+				}
+				ticks = append(ticks, pow*sub)
+			}
+		}
+		return dedupeTicksSorted(ticks)
+	}
+
+	for _, x := range xs {
+		pow := 1.0
+		if x != 0 {
+			pow = math.Pow(10, math.Floor(math.Log10(math.Abs(x))))
+		}
+		ticks = append(ticks, pow*math.Round(x/pow))
+	}
+	return dedupeTicksSorted(ticks)
+}
+
+// LogitLocator places ticks on probability axes in Matplotlib's logit pattern:
+// ..., 1e-2, 1e-1, 1/2, 1-1e-1, 1-1e-2, ...
+type LogitLocator struct {
+	Minor bool
+	Nbins int
+}
+
+func (l LogitLocator) Ticks(minVal, maxVal float64, _ int) []float64 {
+	minVal, maxVal = logitNonsingular(minVal, maxVal)
+	nbins := l.Nbins
+	if nbins <= 0 {
+		nbins = 9
+	}
+
+	bInf := logitLowerIdealIndex(minVal)
+	bSup := logitUpperIdealIndex(maxVal)
+	numIdeal := bSup - bInf - 1
+	if numIdeal >= 2 {
+		if numIdeal > nbins {
+			factor := int(math.Ceil(float64(numIdeal) / float64(nbins)))
+			ticks := make([]float64, 0, numIdeal/factor+2)
+			for b := bInf; b <= bSup; b++ {
+				isMajor := b%factor == 0
+				if l.Minor == isMajor {
+					continue
+				}
+				ticks = append(ticks, logitIdealTick(b))
+			}
+			return visibleTicks(dedupeTicksSorted(ticks), minVal, maxVal)
+		}
+		if l.Minor {
+			return visibleTicks(logitMinorTicks(bInf, bSup), minVal, maxVal)
+		}
+		ticks := make([]float64, 0, bSup-bInf+1)
+		for b := bInf; b <= bSup; b++ {
+			ticks = append(ticks, logitIdealTick(b))
+		}
+		return visibleTicks(dedupeTicksSorted(ticks), minVal, maxVal)
+	}
+	if l.Minor {
+		return nil
+	}
+	return (MaxNLocator{N: nbins, Steps: []float64{1, 2, 5, 10}}).Ticks(minVal, maxVal, nbins)
+}
+
+func logitNonsingular(minVal, maxVal float64) (float64, float64) {
+	const minPos = 1e-7
+	if minVal > maxVal {
+		minVal, maxVal = maxVal, minVal
+	}
+	if math.IsNaN(minVal) || math.IsNaN(maxVal) || math.IsInf(minVal, 0) || math.IsInf(maxVal, 0) || maxVal <= 0 || minVal >= 1 {
+		return minPos, 1 - minPos
+	}
+	if minVal <= 0 {
+		minVal = minPos
+	}
+	if maxVal >= 1 {
+		maxVal = 1 - minPos
+	}
+	if minVal == maxVal {
+		minVal, maxVal = 0.1*minVal, 1-0.1*minVal
+	}
+	return minVal, maxVal
+}
+
+func logitLowerIdealIndex(v float64) int {
+	switch {
+	case v < 0.5:
+		return int(math.Floor(math.Log10(v)))
+	case v < 0.9:
+		return 0
+	default:
+		return -int(math.Ceil(math.Log10(1 - v)))
+	}
+}
+
+func logitUpperIdealIndex(v float64) int {
+	switch {
+	case v <= 0.5:
+		return int(math.Ceil(math.Log10(v)))
+	case v <= 0.9:
+		return 1
+	default:
+		return -int(math.Floor(math.Log10(1 - v)))
+	}
+}
+
+func logitIdealTick(index int) float64 {
+	switch {
+	case index < 0:
+		return math.Pow10(index)
+	case index > 0:
+		return 1 - math.Pow10(-index)
+	default:
+		return 0.5
+	}
+}
+
+func logitMinorTicks(bInf, bSup int) []float64 {
+	ticks := make([]float64, 0, 8*tickMaxInt(0, bSup-bInf))
+	for b := bInf; b < bSup; b++ {
+		switch {
+		case b < -1:
+			base := math.Pow10(b)
+			for n := 2; n < 10; n++ {
+				ticks = append(ticks, float64(n)*base)
+			}
+		case b == -1:
+			for n := 2; n < 5; n++ {
+				ticks = append(ticks, float64(n)/10)
+			}
+		case b == 0:
+			for n := 6; n < 9; n++ {
+				ticks = append(ticks, float64(n)/10)
+			}
+		default:
+			base := math.Pow10(-b - 1)
+			for n := 9; n >= 2; n-- {
+				ticks = append(ticks, 1-float64(n)*base)
+			}
+		}
+	}
+	return dedupeTicksSorted(ticks)
+}
+
 // ScalarFormatter formats numbers with fixed precision and trims trailing zeros.
 // Uses scientific notation if |x| >= 1e6 or (0 < |x| <= 1e-4).
 type ScalarFormatter struct{ Prec int }
@@ -989,6 +1217,13 @@ func formatStrMethodValue(x float64, spec string) string {
 	default:
 		return (ScalarFormatter{Prec: 6}).Format(x)
 	}
+}
+
+func tickMaxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func engineeringPrefix(exp int) string {
