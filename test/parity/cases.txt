@@ -47,6 +47,7 @@ named_colors
 axes_top_right_inverted
 axes_control_surface
 transform_coordinates
+formatter_percent_labels
 artist_metadata
 gridspec_composition
 figure_labels_composition

@@ -275,8 +275,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go PercentFormatter covers Matplotlib-style zero-value xmax and auto-decimal defaults, explicit xmax, fixed decimals, configured display-range auto decimals, symbols, explicit no-symbol output, TeX symbol escaping, raw LaTeX symbols, and fixed-minus. Remaining 12.2C scope is catalog fixture coverage.",
+		CatalogIDs:        []string{"axes_control_surface", "formatter_percent_labels"},
+		Note:              "Go PercentFormatter covers Matplotlib-style zero-value xmax and auto-decimal defaults, explicit xmax, fixed decimals, configured display-range auto decimals, symbols, explicit no-symbol output, TeX symbol escaping, raw LaTeX symbols, and fixed-minus; formatter_percent_labels covers visible tick output.",
 	},
 	{
 		ID:                "ticker-fixed-formatter",

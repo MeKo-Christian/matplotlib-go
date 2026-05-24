@@ -2043,6 +2043,8 @@ catalog/parity fixture per behavior family.
       handling.
 - [x] Align `PercentFormatter` zero-value defaults with upstream `xmax=100`
       and auto-decimal behavior while preserving explicit zero decimals.
+- [x] Add `formatter_percent_labels` catalog/parity fixture for visible
+      percent tick labels.
 - [x] Audit `IndexFormatter`: it is not present in the current vendored
       upstream `ticker.py`; no Go compatibility surface is required unless an
       older Matplotlib target is explicitly added.
