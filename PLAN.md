@@ -2536,10 +2536,10 @@ where the output is visible.
 - [x] Add custom per-artist transform support for the common static cases:
       data transform override, axes/figure coordinate transform, and explicit
       display transform for path-like artists.
-- [ ] Decide whether stale state needs parent propagation now. If yes, wire it
+- [x] Decide whether stale state needs parent propagation now. If yes, wire it
       through `Axes`/`Figure`; if no, document the intentional v1.0 scope as
       local artist state only.
-- [ ] Add focused catalog/parity coverage for visibility, alpha, custom clip,
+- [x] Add focused catalog/parity coverage for visibility, alpha, custom clip,
       and custom transform behavior.
 
 Current slice landed:
@@ -2561,6 +2561,13 @@ Current slice landed:
 - Lines, scatter/path collections, line and patch collections, patch artists,
   wedges, shadows, and fancy-arrow patches now resolve their display paths
   through the shared artist transform helper.
+- Stale state is intentionally scoped to local artist metadata for v1.0.
+  Parent `Axes`/`Figure` propagation is deferred until those types own explicit
+  stale lifecycle semantics; see
+  `docs/adr/0002-artist-stale-state-scope.md`.
+- Added the fixture-only `artist_metadata` parity case with Go golden and
+  Matplotlib reference output covering hidden artists, artist-level alpha,
+  explicit clip boxes, and artist transform coordinate overrides.
 
 #### 9C.1C Line2D Data and Stroke Semantics
 

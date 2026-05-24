@@ -8,7 +8,8 @@ type ArtistCallback func(Artist)
 
 // ArtistLifecycle is an embeddable helper for Matplotlib-style stale state and
 // callbacks. Concrete artists can opt in without forcing every Artist to carry
-// mutable base-class state.
+// mutable base-class state. It intentionally does not wire parent Figure/Axes
+// propagation yet; see docs/adr/0002-artist-stale-state-scope.md.
 type ArtistLifecycle struct {
 	owner     Artist
 	stale     bool

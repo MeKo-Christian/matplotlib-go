@@ -25,12 +25,56 @@ type WidgetInteraction struct {
 	draggingSlider     *core.Slider
 	draggingSliderAxes *Axes
 
+	draggingSelector selectorDragState
+	focusedSelector  any
+
 	focusedText       *core.TextBox
 	focusedSlider     *core.Slider
 	focusedCheck      *core.CheckButtons
 	focusedCheckIndex int
 	focusedRadio      *core.RadioButtons
 	focusedRadioIndex int
+}
+
+type selectorDragKind uint8
+
+const (
+	selectorDragNone selectorDragKind = iota
+	selectorDragSpan
+	selectorDragRectangle
+	selectorDragEllipse
+	selectorDragPolygonDrawing
+	selectorDragPolygonMoveVertex
+	selectorDragPolygonMoveAll
+	selectorDragLasso
+)
+
+type selectorDragState struct {
+	kind selectorDragKind
+
+	axes    *Axes
+	span    *core.SpanSelector
+	rect    *core.RectangleSelector
+	ellipse *core.EllipseSelector
+	polygon *core.PolygonSelector
+	lasso   *core.LassoSelector
+
+	pressData geom.Pt
+
+	spanStart float64
+	spanEnd   float64
+	spanMove  bool
+
+	rectStartMin geom.Pt
+	rectStartMax geom.Pt
+	rectMove     bool
+
+	polygonStartPoints []geom.Pt
+	polygonVertexIdx   int
+	polygonPendingIdx  int
+
+	square bool
+	center bool
 }
 
 var (
@@ -65,6 +109,9 @@ func (w *WidgetInteraction) Attach(dispatcher *Dispatcher) {
 		dispatcher.Connect(EventMouseRelease, func(ev Event) error {
 			return w.handleMouseRelease(MouseEvent{Event: ev})
 		}),
+		dispatcher.Connect(EventFigureLeave, func(ev Event) error {
+			return w.handleMouseLeave(MouseEvent{Event: ev})
+		}),
 		dispatcher.Connect(EventKeyPress, func(ev Event) error {
 			return w.handleKeyPress(KeyEvent{Event: ev})
 		}),
@@ -94,9 +141,17 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 		return nil
 	}
 	hit := w.pickWidget(mouse.Event)
+	axes := w.resolveAxesForEvent(mouse)
+	if axes == nil {
+		axes = hit.axes
+	}
 
 	w.mu.Lock()
 	changed := false
+
+	if mouse.Button == MouseButtonLeft && hit.widget == nil && axes != nil {
+		hit.widget = w.findInactiveSelector(axes)
+	}
 
 	if w.pressedButton != nil {
 		w.pressedButton.Pressed = false
@@ -107,6 +162,10 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 		w.draggingSlider.Dragging = false
 		w.draggingSlider = nil
 		w.draggingSliderAxes = nil
+		changed = true
+	}
+	if w.draggingSelector.kind != selectorDragNone {
+		w.clearSelectorDragLocked()
 		changed = true
 	}
 
@@ -126,6 +185,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 		if w.blurFocusedTextLocked() {
 			changed = true
 		}
+		w.focusedSelector = nil
 		w.focusedSlider = nil
 		w.focusedCheck = nil
 		w.focusedCheckIndex = 0
@@ -145,6 +205,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 	w.focusedRadio = nil
 	w.focusedRadioIndex = 0
 	w.focusedText = nil
+	w.focusedSelector = nil
 
 	switch widget := hit.widget.(type) {
 	case *core.Button:
@@ -157,21 +218,22 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 		if w.blurFocusedTextLocked() {
 			changed = true
 		}
-		w.focusedText = nil
-		// click callback waits until release.
 	case *core.Slider:
-		w.focusedText = nil
 		w.focusedSlider = widget
 		if widget.Enabled {
 			w.draggingSlider = widget
-			w.draggingSliderAxes = hit.axes
+			w.draggingSliderAxes = axes
 			widget.Dragging = true
 			before := widget.Value
-			w.setSliderValueFromPointLocked(widget, hit.axes, mouse.Position)
-			changed = changed || widget.Value != before
+			w.setSliderValueFromPointLocked(widget, axes, mouse.Position)
+			if widget.Value != before {
+				changed = true
+			}
+		}
+		if w.blurFocusedTextLocked() {
+			changed = true
 		}
 	case *core.CheckButtons:
-		w.focusedText = nil
 		w.focusedCheck = widget
 		w.focusedCheckIndex = clampInt(hit.info.Index, 0, len(widget.Labels)-1)
 		if w.focusedCheckIndex < 0 {
@@ -184,13 +246,13 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 		}
 		before := widget.Values[w.focusedCheckIndex]
 		widget.Toggle(w.focusedCheckIndex)
-		changed = changed || widget.Values[w.focusedCheckIndex] != before
-		changed = true
+		if widget.Values[w.focusedCheckIndex] != before {
+			changed = true
+		}
 		if w.blurFocusedTextLocked() {
 			changed = true
 		}
 	case *core.RadioButtons:
-		w.focusedText = nil
 		w.focusedRadio = widget
 		w.focusedRadioIndex = clampInt(hit.info.Index, 0, len(widget.Labels)-1)
 		if w.focusedRadioIndex < 0 {
@@ -205,30 +267,164 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 			widget.SetActive(w.focusedRadioIndex)
 			changed = true
 		}
+		if w.blurFocusedTextLocked() {
+			changed = true
+		}
 	case *core.TextBox:
 		w.focusedText = widget
-		w.focusedSlider = nil
-		w.focusedCheck = nil
-		w.focusedCheckIndex = 0
-		w.focusedRadio = nil
-		w.focusedRadioIndex = 0
 		if !widget.Active {
 			w.blurFocusedTextLocked()
 			widget.Active = true
 			changed = true
 		}
-		if hit.axes != nil {
-			index := cursorIndexFromTextPoint(widget, hit.axes, w.figure, mouse.Position)
+		if axes != nil {
+			index := cursorIndexFromTextPoint(widget, axes, w.figure, mouse.Position)
 			beforeA, beforeB := widget.Selection()
 			widget.SetSelection(index, index)
 			if beforeA != index || beforeB != index {
 				changed = true
 			}
 		}
+	case *core.SpanSelector:
+		w.focusedSelector = widget
+		if data, ok := w.pixelToDataLocked(mouse, axes); ok {
+			selectorData := data.X
+			if widget.Orientation == "vertical" {
+				selectorData = data.Y
+			}
+			w.draggingSelector = selectorDragState{
+				kind:      selectorDragSpan,
+				axes:      axes,
+				span:      widget,
+				pressData: data,
+			}
+			w.draggingSelector.spanStart = selectorData
+			w.draggingSelector.spanEnd = selectorData
+			if widget.Active {
+				w.draggingSelector.spanMove = true
+				w.draggingSelector.spanStart = widget.Start
+				w.draggingSelector.spanEnd = widget.End
+			} else if widget.SetSpan(selectorData, selectorData) {
+				changed = true
+			}
+			changed = true
+		}
+	case *core.RectangleSelector:
+		w.focusedSelector = widget
+		if data, ok := w.pixelToDataLocked(mouse, axes); ok {
+			w.draggingSelector = selectorDragState{
+				kind:         selectorDragRectangle,
+				axes:         axes,
+				rect:         widget,
+				pressData:    data,
+				rectStartMin: widget.Min,
+				rectStartMax: widget.Max,
+				rectMove:     widget.Active,
+				square:       mouse.Modifiers&ModifierShift != 0,
+				center:       mouse.Modifiers&ModifierControl != 0,
+			}
+			if !widget.Active && widget.SetBounds(data, data) {
+				changed = true
+			}
+			changed = true
+		}
+	case *core.EllipseSelector:
+		w.focusedSelector = widget
+		if data, ok := w.pixelToDataLocked(mouse, axes); ok {
+			w.draggingSelector = selectorDragState{
+				kind:         selectorDragEllipse,
+				axes:         axes,
+				ellipse:      widget,
+				pressData:    data,
+				rectStartMin: widget.Min,
+				rectStartMax: widget.Max,
+				rectMove:     widget.Active,
+				square:       mouse.Modifiers&ModifierShift != 0,
+				center:       mouse.Modifiers&ModifierControl != 0,
+			}
+			if !widget.Active && widget.SetBounds(data, data) {
+				changed = true
+			}
+			changed = true
+		}
+	case *core.PolygonSelector:
+		w.focusedSelector = widget
+		if data, ok := w.pixelToDataLocked(mouse, axes); ok {
+			shift := mouse.Modifiers&ModifierShift != 0
+			control := mouse.Modifiers&ModifierControl != 0
+			ctrlOrShift := control || shift
+			state := selectorDragState{
+				kind:      selectorDragPolygonDrawing,
+				axes:      axes,
+				polygon:   widget,
+				pressData: data,
+			}
+			switch {
+			case widget.Active && !widget.Closed && ctrlOrShift && control && hit.info.Index >= 0:
+				state.kind = selectorDragPolygonMoveVertex
+				state.polygonVertexIdx = hit.info.Index
+				state.polygonStartPoints = append([]geom.Pt(nil), widget.Points...)
+			case widget.Active && !widget.Closed && shift:
+				state.kind = selectorDragPolygonMoveAll
+				state.polygonStartPoints = append([]geom.Pt(nil), widget.Points...)
+			case widget.Active && widget.Closed && (mouse.Modifiers&ModifierShift != 0):
+				state.kind = selectorDragPolygonMoveAll
+				state.polygonStartPoints = append([]geom.Pt(nil), widget.Points...)
+			case widget.Active && widget.Closed && (mouse.Modifiers&ModifierControl != 0) && hit.info.Index >= 0:
+				state.kind = selectorDragPolygonMoveVertex
+				state.polygonVertexIdx = hit.info.Index
+				state.polygonStartPoints = append([]geom.Pt(nil), widget.Points...)
+			case widget.Active && !widget.Closed && hit.info.Index >= 0 && hit.info.Index == 0 && len(widget.Points) > 2:
+				if widget.Close() {
+					changed = true
+				}
+				if widget.Closed {
+					widget.TriggerOnSelect()
+				}
+				state.kind = selectorDragNone
+			case widget.Active && !widget.Closed:
+				if widget.AppendPoint(data) {
+					state.kind = selectorDragPolygonDrawing
+					state.polygonPendingIdx = len(widget.Points) - 1
+					state.polygonStartPoints = append([]geom.Pt(nil), widget.Points...)
+					changed = true
+				}
+			default:
+				if !widget.Active {
+					widget.Clear()
+				}
+				if widget.AppendPoint(data) {
+					state.kind = selectorDragPolygonDrawing
+					state.polygonPendingIdx = len(widget.Points) - 1
+					state.polygonStartPoints = append([]geom.Pt(nil), widget.Points...)
+					changed = true
+				}
+			}
+			if state.kind != selectorDragNone {
+				w.draggingSelector = state
+				changed = true
+			}
+		}
+	case *core.LassoSelector:
+		w.focusedSelector = widget
+		if data, ok := w.pixelToDataLocked(mouse, axes); ok {
+			w.draggingSelector = selectorDragState{
+				kind:      selectorDragLasso,
+				axes:      axes,
+				lasso:     widget,
+				pressData: data,
+			}
+			widget.Clear()
+			if widget.Begin(data) {
+				changed = true
+			}
+			changed = true
+		}
 	default:
 		if w.blurFocusedTextLocked() {
 			changed = true
 		}
+		w.focusedSelector = nil
 	}
 	w.mu.Unlock()
 	if changed {
@@ -242,6 +438,10 @@ func (w *WidgetInteraction) handleMouseMove(mouse MouseEvent) error {
 		return nil
 	}
 	hit := w.pickWidget(mouse.Event)
+	axes := w.resolveAxesForEvent(mouse)
+	if axes == nil {
+		axes = hit.axes
+	}
 
 	w.mu.Lock()
 	changed := false
@@ -264,6 +464,15 @@ func (w *WidgetInteraction) handleMouseMove(mouse MouseEvent) error {
 			changed = true
 		}
 	}
+
+	if w.draggingSelector.kind != selectorDragNone {
+		if w.updateDraggingSelectorFromMouseLocked(mouse) {
+			changed = true
+		}
+	}
+	if w.updateCursorFromMouseLocked(mouse, axes) {
+		changed = true
+	}
 	w.mu.Unlock()
 	if changed {
 		return w.callDraw()
@@ -276,6 +485,10 @@ func (w *WidgetInteraction) handleMouseRelease(mouse MouseEvent) error {
 		return nil
 	}
 	hit := w.pickWidget(mouse.Event)
+	axes := w.resolveAxesForEvent(mouse)
+	if axes == nil {
+		axes = hit.axes
+	}
 
 	w.mu.Lock()
 	changed := false
@@ -295,6 +508,14 @@ func (w *WidgetInteraction) handleMouseRelease(mouse MouseEvent) error {
 		w.draggingSlider.Dragging = false
 		w.draggingSlider = nil
 		w.draggingSliderAxes = nil
+		changed = true
+	}
+	if w.draggingSelector.kind != selectorDragNone {
+		if w.finalizeDraggingSelectorLocked() {
+			changed = true
+		}
+	}
+	if w.updateCursorFromMouseLocked(mouse, axes) {
 		changed = true
 	}
 
@@ -361,8 +582,617 @@ func (w *WidgetInteraction) handleKeyPress(ev KeyEvent) error {
 		}
 		return nil
 	}
+	if w.focusedSelector != nil {
+		draw := w.handleSelectorKey(ev, key)
+		w.mu.Unlock()
+		if draw {
+			return w.callDraw()
+		}
+		return nil
+	}
 	w.mu.Unlock()
 	return nil
+}
+
+func (w *WidgetInteraction) handleMouseLeave(mouse MouseEvent) error {
+	if w == nil {
+		return nil
+	}
+
+	w.mu.Lock()
+	changed := false
+
+	if w.pressedButton != nil {
+		w.pressedButton.Pressed = false
+		w.pressedButton = nil
+		changed = true
+	}
+	if w.hoveredButton != nil {
+		w.hoveredButton.Hovered = false
+		w.hoveredButton = nil
+		changed = true
+	}
+	if w.draggingSlider != nil {
+		w.draggingSlider.Dragging = false
+		w.draggingSlider = nil
+		w.draggingSliderAxes = nil
+		changed = true
+	}
+	if w.draggingSelector.kind != selectorDragNone {
+		w.clearSelectorDragLocked()
+		changed = true
+	}
+	if w.blurFocusedTextLocked() {
+		changed = true
+	}
+	w.focusedSelector = nil
+	if w.updateCursorFromMouseLocked(mouse, nil) {
+		changed = true
+	}
+
+	w.mu.Unlock()
+	if changed {
+		return w.callDraw()
+	}
+	return nil
+}
+
+func (w *WidgetInteraction) resolveAxesForEvent(mouse MouseEvent) *Axes {
+	axes := mouse.Axes
+	if axes != nil {
+		return axes
+	}
+	fig := mouse.Figure
+	if fig == nil {
+		fig = w.figure
+	}
+	if fig == nil {
+		return nil
+	}
+	resolved, _, ok := ResolveEventTarget(fig, mouse.Position)
+	if !ok {
+		return nil
+	}
+	return resolved
+}
+
+func (w *WidgetInteraction) pixelToDataLocked(mouse MouseEvent, axes *Axes) (geom.Pt, bool) {
+	if axes == nil {
+		axes = w.resolveAxesForEvent(mouse)
+	}
+	if axes == nil {
+		return geom.Pt{}, false
+	}
+	if mouse.HasDataPosition {
+		return mouse.DataPosition, true
+	}
+	return axes.PixelToData(mouse.Position)
+}
+
+func (w *WidgetInteraction) findInactiveSelector(axes *Axes) any {
+	if axes == nil {
+		return nil
+	}
+	for i := len(axes.Artists) - 1; i >= 0; i-- {
+		switch sel := axes.Artists[i].(type) {
+		case *core.SpanSelector:
+			if !sel.Active {
+				return sel
+			}
+		case *core.RectangleSelector:
+			if !sel.Active {
+				return sel
+			}
+		case *core.EllipseSelector:
+			if !sel.Active {
+				return sel
+			}
+		case *core.PolygonSelector:
+			if !sel.Active {
+				return sel
+			}
+		case *core.LassoSelector:
+			if !sel.Active {
+				return sel
+			}
+		}
+	}
+	return nil
+}
+
+func (w *WidgetInteraction) clearSelectorDragLocked() {
+	switch {
+	case w.draggingSelector.kind == selectorDragLasso && w.draggingSelector.lasso != nil:
+		w.draggingSelector.lasso.Clear()
+	case w.draggingSelector.kind == selectorDragNone:
+	}
+	w.draggingSelector = selectorDragState{}
+}
+
+func (w *WidgetInteraction) updateCursorFromMouseLocked(mouse MouseEvent, axes *Axes) bool {
+	if w.figure == nil && mouse.Figure == nil {
+		return false
+	}
+	fig := w.figure
+	if fig == nil {
+		fig = mouse.Figure
+	}
+	if axes == nil {
+		axes = w.resolveAxesForEvent(mouse)
+	}
+
+	changed := false
+	seenMulti := map[*core.MultiCursor]bool{}
+	for _, axis := range fig.Children {
+		if axis == nil {
+			continue
+		}
+		for _, art := range axis.Artists {
+			switch selector := art.(type) {
+			case *core.Cursor:
+				if axes == axis {
+					data, ok := w.pixelToDataLocked(mouse, axis)
+					if !ok {
+						if selector.Hide() {
+							changed = true
+						}
+						break
+					}
+					changed = selector.SetData(data.X, data.Y) || changed
+				} else if selector.Hide() {
+					changed = true
+				}
+			case *core.MultiCursor:
+				if seenMulti[selector] {
+					continue
+				}
+				seenMulti[selector] = true
+				if axes != nil && axesInAxesList(selector.Axes, axes) {
+					changed = selector.SetFigurePoint(mouse.Position) || changed
+				} else {
+					changed = selector.Hide() || changed
+				}
+			}
+		}
+	}
+	return changed
+}
+
+func (w *WidgetInteraction) updateDraggingSelectorFromMouseLocked(mouse MouseEvent) bool {
+	state := w.draggingSelector
+	data, ok := w.pixelToDataLocked(mouse, state.axes)
+	if !ok {
+		return false
+	}
+	changed := false
+
+	switch state.kind {
+	case selectorDragSpan:
+		if state.span == nil {
+			return false
+		}
+		cursor := data.X
+		if state.span.Orientation == "vertical" {
+			cursor = data.Y
+		}
+		pressCursor := state.spanStart
+		if state.span.Orientation == "vertical" {
+			pressCursor = state.pressData.Y
+		}
+		if state.spanMove {
+			delta := cursor - pressCursor
+			changed = state.span.SetSpan(state.spanStart+delta, state.spanEnd+delta)
+		} else {
+			changed = state.span.SetSpan(pressCursor, cursor)
+		}
+	case selectorDragRectangle:
+		if state.rect == nil {
+			return false
+		}
+		delta := geom.Pt{
+			X: data.X - state.pressData.X,
+			Y: data.Y - state.pressData.Y,
+		}
+		if state.rectMove {
+			min := state.rectStartMin
+			max := state.rectStartMax
+			min = geom.Pt{X: min.X + delta.X, Y: min.Y + delta.Y}
+			max = geom.Pt{X: max.X + delta.X, Y: max.Y + delta.Y}
+			changed = state.rect.SetBounds(min, max)
+			break
+		} else {
+			min, max := selectorBoundsFromDrag(state.pressData, data, state.square, state.center)
+			changed = state.rect.SetBounds(min, max)
+		}
+	case selectorDragEllipse:
+		if state.ellipse == nil {
+			return false
+		}
+		delta := geom.Pt{
+			X: data.X - state.pressData.X,
+			Y: data.Y - state.pressData.Y,
+		}
+		if state.rectMove {
+			min := state.rectStartMin
+			max := state.rectStartMax
+			min = geom.Pt{X: min.X + delta.X, Y: min.Y + delta.Y}
+			max = geom.Pt{X: max.X + delta.X, Y: max.Y + delta.Y}
+			changed = state.ellipse.SetBounds(min, max)
+			break
+		} else {
+			min, max := selectorBoundsFromDrag(state.pressData, data, state.square, state.center)
+			changed = state.ellipse.SetBounds(min, max)
+		}
+	case selectorDragPolygonDrawing:
+		if state.polygon == nil {
+			return false
+		}
+		changed = state.polygon.SetPoint(state.polygonPendingIdx, data)
+	case selectorDragPolygonMoveAll:
+		if state.polygon == nil || len(state.polygonStartPoints) != len(state.polygon.Points) {
+			return false
+		}
+		delta := geom.Pt{
+			X: data.X - state.pressData.X,
+			Y: data.Y - state.pressData.Y,
+		}
+		for i, point := range state.polygonStartPoints {
+			if state.polygon.SetPoint(i, geom.Pt{X: point.X + delta.X, Y: point.Y + delta.Y}) {
+				changed = true
+			}
+		}
+	case selectorDragPolygonMoveVertex:
+		if state.polygon == nil || state.polygonVertexIdx < 0 || state.polygonVertexIdx >= len(state.polygonStartPoints) {
+			return false
+		}
+		base := state.polygonStartPoints[state.polygonVertexIdx]
+		changed = state.polygon.SetPoint(state.polygonVertexIdx, geom.Pt{
+			X: base.X + (data.X - state.pressData.X),
+			Y: base.Y + (data.Y - state.pressData.Y),
+		})
+	case selectorDragLasso:
+		if state.lasso == nil {
+			return false
+		}
+		changed = state.lasso.AddPoint(data)
+	}
+	return changed
+}
+
+func (w *WidgetInteraction) finalizeDraggingSelectorLocked() bool {
+	state := w.draggingSelector
+	changed := false
+
+	switch state.kind {
+	case selectorDragSpan:
+		if state.span != nil && state.span.Active {
+			state.span.TriggerOnSelect()
+			changed = true
+		}
+	case selectorDragRectangle:
+		if state.rect != nil && state.rect.Active {
+			state.rect.TriggerOnSelect()
+			changed = true
+		}
+	case selectorDragEllipse:
+		if state.ellipse != nil && state.ellipse.Active {
+			state.ellipse.TriggerOnSelect()
+			changed = true
+		}
+	case selectorDragPolygonDrawing, selectorDragPolygonMoveAll, selectorDragPolygonMoveVertex:
+		if state.polygon != nil && state.polygon.Active && state.polygon.Closed {
+			state.polygon.TriggerOnSelect()
+			changed = true
+		}
+	case selectorDragLasso:
+		if state.lasso != nil && state.lasso.Finish() {
+			changed = true
+		}
+	}
+	w.draggingSelector = selectorDragState{}
+	return changed
+}
+
+func (w *WidgetInteraction) handleSelectorKey(ev KeyEvent, key string) bool {
+	if w.focusedSelector == nil {
+		return false
+	}
+	axes := w.axesForSelectorLocked(w.focusedSelector)
+	command := strings.ToLower(key)
+	switch keyState := w.focusedSelector.(type) {
+	case *core.SpanSelector:
+		return w.handleSpanSelectorKey(ev, command, keyState, axes)
+	case *core.RectangleSelector:
+		return w.handleRectangleSelectorKey(ev, command, keyState, axes)
+	case *core.EllipseSelector:
+		return w.handleEllipseSelectorKey(ev, command, keyState, axes)
+	case *core.PolygonSelector:
+		return w.handlePolygonSelectorKey(ev, command, keyState, axes)
+	case *core.LassoSelector:
+		return w.handleLassoSelectorKey(ev, command, keyState)
+	default:
+		return false
+	}
+}
+
+func (w *WidgetInteraction) handleSpanSelectorKey(ev KeyEvent, key string, selector *core.SpanSelector, axes *Axes) bool {
+	if selector == nil || !selector.Active {
+		return false
+	}
+	if key == "escape" {
+		return selector.Clear()
+	}
+	if axes == nil || w.figure == nil {
+		return false
+	}
+	ctx := core.AxesDrawContext(axes, w.figure)
+	if ctx == nil || ctx.DataToPixel.XScale == nil || ctx.DataToPixel.YScale == nil {
+		return false
+	}
+	xMin, xMax := ctx.DataToPixel.XScale.Domain()
+	yMin, yMax := ctx.DataToPixel.YScale.Domain()
+	stepX := (xMax - xMin) / 20
+	stepY := (yMax - yMin) / 20
+	if stepX == 0 {
+		stepX = 1
+	}
+	if stepY == 0 {
+		stepY = 1
+	}
+	delta := 0.0
+	switch key {
+	case "left":
+		delta = -stepX
+	case "right":
+		delta = stepX
+	case "up":
+		delta = stepY
+	case "down":
+		delta = -stepY
+	default:
+		return false
+	}
+	if selector.Orientation == "vertical" {
+		delta = -delta
+	}
+	if ev.Modifiers&ModifierControl != 0 {
+		delta *= 10
+	}
+	changed := selector.Move(delta)
+	if changed {
+		selector.TriggerOnSelect()
+	}
+	return changed
+}
+
+func (w *WidgetInteraction) handleRectangleSelectorKey(ev KeyEvent, key string, selector *core.RectangleSelector, axes *Axes) bool {
+	if selector == nil {
+		return false
+	}
+	if key == "escape" {
+		return selector.Clear()
+	}
+	if !selector.Active {
+		return false
+	}
+	delta, ok := w.selectorMoveDeltaForKey(ev, key, axes)
+	if !ok {
+		return false
+	}
+	changed := selector.MoveBy(delta)
+	if changed {
+		selector.TriggerOnSelect()
+	}
+	return changed
+}
+
+func (w *WidgetInteraction) handleEllipseSelectorKey(ev KeyEvent, key string, selector *core.EllipseSelector, axes *Axes) bool {
+	if selector == nil {
+		return false
+	}
+	if key == "escape" {
+		return selector.Clear()
+	}
+	if !selector.Active {
+		return false
+	}
+	delta, ok := w.selectorMoveDeltaForKey(ev, key, axes)
+	if !ok {
+		return false
+	}
+	changed := selector.MoveBy(delta)
+	if changed {
+		selector.TriggerOnSelect()
+	}
+	return changed
+}
+
+func (w *WidgetInteraction) selectorMoveDeltaForKey(ev KeyEvent, key string, axes *Axes) (geom.Pt, bool) {
+	if axes == nil || w.figure == nil {
+		return geom.Pt{}, false
+	}
+	if key == "escape" {
+		return geom.Pt{}, false
+	}
+	if key != "left" && key != "right" && key != "up" && key != "down" {
+		return geom.Pt{}, false
+	}
+	ctx := core.AxesDrawContext(axes, w.figure)
+	if ctx == nil || ctx.DataToPixel.XScale == nil || ctx.DataToPixel.YScale == nil {
+		return geom.Pt{}, false
+	}
+	xMin, xMax := ctx.DataToPixel.XScale.Domain()
+	yMin, yMax := ctx.DataToPixel.YScale.Domain()
+	delta := geom.Pt{
+		X: (xMax - xMin) / 20,
+		Y: (yMax - yMin) / 20,
+	}
+	if delta.X == 0 {
+		delta.X = 1
+	}
+	if delta.Y == 0 {
+		delta.Y = 1
+	}
+	switch key {
+	case "left":
+		delta.X = -delta.X
+	case "right":
+	case "up":
+		delta.X = 0
+		delta.Y = delta.Y
+	case "down":
+		delta.X = 0
+		delta.Y = -delta.Y
+	}
+	if ev.Modifiers&ModifierControl != 0 {
+		delta.X *= 10
+		delta.Y *= 10
+	}
+	return delta, true
+}
+
+func (w *WidgetInteraction) handlePolygonSelectorKey(ev KeyEvent, key string, selector *core.PolygonSelector, axes *Axes) bool {
+	if selector == nil {
+		return false
+	}
+	if key == "escape" {
+		return selector.Clear()
+	}
+	if !selector.Active || !selector.Closed || axes == nil || w.figure == nil {
+		return false
+	}
+	ctx := core.AxesDrawContext(axes, w.figure)
+	if ctx == nil || ctx.DataToPixel.XScale == nil || ctx.DataToPixel.YScale == nil {
+		return false
+	}
+	xMin, xMax := ctx.DataToPixel.XScale.Domain()
+	yMin, yMax := ctx.DataToPixel.YScale.Domain()
+	step := geom.Pt{
+		X: (xMax - xMin) / 20,
+		Y: (yMax - yMin) / 20,
+	}
+	delta := geom.Pt{}
+	switch key {
+	case "left":
+		delta.X = -step.X
+	case "right":
+		delta.X = step.X
+	case "up":
+		delta.Y = step.Y
+	case "down":
+		delta.Y = -step.Y
+	default:
+		return false
+	}
+	if ev.Modifiers&ModifierControl != 0 {
+		delta.X *= 10
+		delta.Y *= 10
+	}
+	changed := false
+	for i, pt := range selector.Points {
+		if selector.SetPoint(i, geom.Pt{X: pt.X + delta.X, Y: pt.Y + delta.Y}) {
+			changed = true
+		}
+	}
+	if changed {
+		selector.TriggerOnSelect()
+	}
+	return changed
+}
+
+func (w *WidgetInteraction) handleLassoSelectorKey(_ KeyEvent, key string, selector *core.LassoSelector) bool {
+	if selector == nil {
+		return false
+	}
+	if key == "escape" {
+		return selector.Clear()
+	}
+	return false
+}
+
+func (w *WidgetInteraction) axesForSelectorLocked(selector any) *Axes {
+	if selector == nil {
+		return nil
+	}
+	fig := w.figure
+	if fig == nil {
+		return nil
+	}
+	for _, axes := range fig.Children {
+		if axes == nil {
+			continue
+		}
+		for _, artist := range axes.Artists {
+			if artist == selector {
+				return axes
+			}
+		}
+	}
+	return nil
+}
+
+func selectorBoundsFromDrag(
+	press, current geom.Pt,
+	square bool,
+	center bool,
+) (geom.Pt, geom.Pt) {
+	min := press
+	max := current
+	if center {
+		delta := geom.Pt{
+			X: current.X - press.X,
+			Y: current.Y - press.Y,
+		}
+		min = geom.Pt{X: press.X - delta.X, Y: press.Y - delta.Y}
+		max = geom.Pt{X: press.X + delta.X, Y: press.Y + delta.Y}
+	}
+	if square {
+		sideX := current.X - press.X
+		sideY := current.Y - press.Y
+		side := math.Abs(sideX)
+		if math.Abs(sideY) > side {
+			side = math.Abs(sideY)
+		}
+		if side == 0 {
+			return geom.Pt{X: press.X, Y: press.Y}, geom.Pt{X: press.X, Y: press.Y}
+		}
+		sx := sideX
+		if sx == 0 {
+			sx = 1
+		}
+		if sx > 0 {
+			sx = side
+		} else {
+			sx = -side
+		}
+		sy := sideY
+		if sy == 0 {
+			sy = 1
+		}
+		if sy > 0 {
+			sy = side
+		} else {
+			sy = -side
+		}
+		max = geom.Pt{
+			X: press.X + sx,
+			Y: press.Y + sy,
+		}
+		if center {
+			min = geom.Pt{
+				X: press.X - sx,
+				Y: press.Y - sy,
+			}
+		}
+	}
+	return normalizedMinMax(min, max)
+}
+
+func normalizedMinMax(min, max geom.Pt) (geom.Pt, geom.Pt) {
+	if min.X <= max.X && min.Y <= max.Y {
+		return min, max
+	}
+	return geom.Pt{X: math.Min(min.X, max.X), Y: math.Min(min.Y, max.Y)}, geom.Pt{X: math.Max(min.X, max.X), Y: math.Max(min.Y, max.Y)}
 }
 
 func (w *WidgetInteraction) handleTextKey(tb *core.TextBox, ev KeyEvent, key string) bool {
@@ -604,7 +1434,9 @@ func (w *WidgetInteraction) pickWidget(ev Event) widgetPick {
 	hits := Pick(fig, ev.Position)
 	for _, hit := range hits {
 		switch hit.Artist.(type) {
-		case *core.Button, *core.Slider, *core.CheckButtons, *core.RadioButtons, *core.TextBox:
+		case *core.Button, *core.Slider, *core.CheckButtons, *core.RadioButtons, *core.TextBox,
+			*core.SpanSelector, *core.RectangleSelector, *core.EllipseSelector, *core.PolygonSelector, *core.LassoSelector,
+			*core.Cursor, *core.MultiCursor:
 			return widgetPick{
 				axes:   hit.Axes,
 				widget: hit.Artist,
@@ -613,6 +1445,15 @@ func (w *WidgetInteraction) pickWidget(ev Event) widgetPick {
 		}
 	}
 	return widgetPick{}
+}
+
+func axesInAxesList(axesList []*Axes, axes *Axes) bool {
+	for _, candidate := range axesList {
+		if candidate == axes {
+			return true
+		}
+	}
+	return false
 }
 
 func widgetButton(v any) *core.Button {

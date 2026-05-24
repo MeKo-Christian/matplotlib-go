@@ -37,6 +37,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/internal/examplecatalog"
 	example_annotation_composition "github.com/cwbudde/matplotlib-go/test/parity/annotation_composition"
 	example_arrays_showcase "github.com/cwbudde/matplotlib-go/test/parity/arrays_showcase"
+	example_artist_metadata "github.com/cwbudde/matplotlib-go/test/parity/artist_metadata"
 	example_axes_control_surface "github.com/cwbudde/matplotlib-go/test/parity/axes_control_surface"
 	example_axes_grid1_showcase "github.com/cwbudde/matplotlib-go/test/parity/axes_grid1_showcase"
 	example_axes_top_right_inverted "github.com/cwbudde/matplotlib-go/test/parity/axes_top_right_inverted"
@@ -194,6 +195,7 @@ var renderByID = map[string]func() image.Image{
 	"axes_top_right_inverted":   example_axes_top_right_inverted.Render,
 	"axes_control_surface":      example_axes_control_surface.Render,
 	"transform_coordinates":     example_transform_coordinates.Render,
+	"artist_metadata":           example_artist_metadata.Render,
 	"gridspec_composition":      example_gridspec_composition.Render,
 	"figure_labels_composition": example_figure_labels_composition.Render,
 	"colorbar_composition":      example_colorbar_composition.Render,
@@ -253,6 +255,7 @@ var renderByID = map[string]func() image.Image{
 
 var figureByID = map[string]func() *core.Figure{
 	"annotation_composition": showcase_annotation_composition.Plot,
+	"artist_metadata":        example_artist_metadata.Plot,
 	"arrays_showcase":        showcase_arrays_showcase.Plot,
 	"axes_grid1_showcase":    showcase_axes_grid1_showcase.Plot,
 	"axes_control_surface":   showcase_axes_control_surface.Plot,
