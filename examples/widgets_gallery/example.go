@@ -92,7 +92,8 @@ func Plot() *core.Figure {
 
 	pressed := true
 	outer.Cell(1, 0).AddWidgetAxes().Button("Apply", core.ButtonOptions{Pressed: &pressed})
-	outer.Span(1, 1, 1, 2).AddWidgetAxes().Slider("gain", 0, 1, 0.68)
+	outer.Cell(1, 1).AddWidgetAxes().Slider("gain", 0, 1, 0.68)
+	outer.Cell(1, 2).AddWidgetAxes().RangeSlider("window", 0, 1, 0.22, 0.78)
 	active := true
 	outer.Cell(1, 3).AddWidgetAxes().TextBox("label", "phase scan", core.TextBoxOptions{Active: &active})
 	outer.Span(2, 0, 1, 2).AddWidgetAxes().CheckButtons([]string{"signal", "modulation", "grid"}, []bool{true, true, false})

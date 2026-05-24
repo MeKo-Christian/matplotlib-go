@@ -130,6 +130,39 @@ func TestWidgetInteractionButtonClick(t *testing.T) {
 	}
 }
 
+func TestWidgetInteractionButtonKeyboardActivation(t *testing.T) {
+	fig := core.NewFigure(120, 80)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+
+	button := ax.Button("Run")
+	clicks := 0
+	button.OnClicked(func(*core.Button) {
+		clicks++
+	})
+
+	wi := NewWidgetInteraction(fig, func() error { return nil })
+	var dispatcher Dispatcher
+	wi.Attach(&dispatcher)
+	defer wi.Detach()
+
+	point := geom.Pt{X: 60, Y: 40}
+	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: point, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("button focus press: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: point, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("button focus release: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: ax, Key: "enter"}); err != nil {
+		t.Fatalf("button enter: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: ax, Key: "space"}); err != nil {
+		t.Fatalf("button space: %v", err)
+	}
+	if clicks != 3 {
+		t.Fatalf("clicks = %d, want mouse click plus enter and space", clicks)
+	}
+}
+
 func TestWidgetInteractionSliderDragAndNudge(t *testing.T) {
 	fig := core.NewFigure(120, 80)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
@@ -192,6 +225,64 @@ func TestWidgetInteractionSliderDragAndNudge(t *testing.T) {
 	}
 	if draws == 0 {
 		t.Fatal("slider interactions should request draws")
+	}
+}
+
+func TestWidgetInteractionRangeSliderDragAndNudge(t *testing.T) {
+	fig := core.NewFigure(120, 80)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+
+	slider := ax.RangeSlider("window", 0, 10, 2, 8)
+	var ranges [][2]float64
+	slider.OnChanged(func(_ *core.RangeSlider, low, high float64) {
+		ranges = append(ranges, [2]float64{low, high})
+	})
+
+	var draws int
+	wi := NewWidgetInteraction(fig, func() error {
+		draws++
+		return nil
+	})
+	var dispatcher Dispatcher
+	wi.Attach(&dispatcher)
+	defer wi.Detach()
+
+	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: geom.Pt{X: 85, Y: 60}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("range slider high press: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseMove, Figure: fig, Axes: ax, Position: geom.Pt{X: 110, Y: 60}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("range slider high drag: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: geom.Pt{X: 110, Y: 60}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("range slider high release: %v", err)
+	}
+	if slider.High != 10 {
+		t.Fatalf("range slider high = %v, want 10", slider.High)
+	}
+
+	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: ax, Key: "left"}); err != nil {
+		t.Fatalf("range slider left key: %v", err)
+	}
+	if slider.High != 9.9 {
+		t.Fatalf("range slider high after left = %v, want 9.9", slider.High)
+	}
+	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: geom.Pt{X: 25, Y: 60}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("range slider low press: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseMove, Figure: fig, Axes: ax, Position: geom.Pt{X: 14, Y: 60}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("range slider low drag: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: geom.Pt{X: 14, Y: 60}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("range slider low release: %v", err)
+	}
+	if slider.Low != 0 {
+		t.Fatalf("range slider low = %v, want 0", slider.Low)
+	}
+	if len(ranges) == 0 {
+		t.Fatal("expected range slider callbacks")
+	}
+	if draws == 0 {
+		t.Fatal("range slider interactions should request draws")
 	}
 }
 

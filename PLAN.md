@@ -1116,20 +1116,20 @@ Phase 4.
 
 ### 5.3 Widget Composition
 
-- [ ] Widget z-order separate from artist z-order so widgets always sit on
+- [x] Widget z-order separate from artist z-order so widgets always sit on
       top of plot data.
-- [ ] Layout helpers for widget axes that compose with `GridSpec` and
+- [x] Layout helpers for widget axes that compose with `GridSpec` and
       `constrained_layout`.
-- [ ] Widget gallery example covering every widget, mirroring the upstream
+- [x] Widget gallery example covering every widget, mirroring the upstream
       `gallery/widgets/` family.
 
 **Exit criteria:**
 
-- [ ] Every widget responds to mouse and keyboard events through the shared
+- [x] Every widget responds to mouse and keyboard events through the shared
       event dispatcher.
-- [ ] Selectors emit semantic callbacks (with data-coordinate payloads) and
+- [x] Selectors emit semantic callbacks (with data-coordinate payloads) and
       are usable for ROI selection workflows.
-- [ ] Widget examples render correctly in headless mode and remain
+- [x] Widget examples render correctly in headless mode and remain
       interactive in desktop and web backends.
 
 ---

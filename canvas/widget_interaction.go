@@ -21,19 +21,25 @@ type WidgetInteraction struct {
 
 	hoveredButton *core.Button
 	pressedButton *core.Button
+	focusedButton *core.Button
 
-	draggingSlider     *core.Slider
-	draggingSliderAxes *Axes
+	draggingSlider            *core.Slider
+	draggingSliderAxes        *Axes
+	draggingRangeSlider       *core.RangeSlider
+	draggingRangeSliderAxes   *Axes
+	draggingRangeSliderHandle int
 
 	draggingSelector selectorDragState
 	focusedSelector  any
 
-	focusedText       *core.TextBox
-	focusedSlider     *core.Slider
-	focusedCheck      *core.CheckButtons
-	focusedCheckIndex int
-	focusedRadio      *core.RadioButtons
-	focusedRadioIndex int
+	focusedText              *core.TextBox
+	focusedSlider            *core.Slider
+	focusedRangeSlider       *core.RangeSlider
+	focusedRangeSliderHandle int
+	focusedCheck             *core.CheckButtons
+	focusedCheckIndex        int
+	focusedRadio             *core.RadioButtons
+	focusedRadioIndex        int
 }
 
 type selectorDragKind uint8
@@ -186,7 +192,10 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 			changed = true
 		}
 		w.focusedSelector = nil
+		w.focusedButton = nil
 		w.focusedSlider = nil
+		w.focusedRangeSlider = nil
+		w.focusedRangeSliderHandle = 0
 		w.focusedCheck = nil
 		w.focusedCheckIndex = 0
 		w.focusedRadio = nil
@@ -199,7 +208,10 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 		return nil
 	}
 
+	w.focusedButton = nil
 	w.focusedSlider = nil
+	w.focusedRangeSlider = nil
+	w.focusedRangeSliderHandle = 0
 	w.focusedCheck = nil
 	w.focusedCheckIndex = 0
 	w.focusedRadio = nil
@@ -209,6 +221,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 
 	switch widget := hit.widget.(type) {
 	case *core.Button:
+		w.focusedButton = widget
 		if widget.Enabled {
 			w.pressedButton = widget
 			widget.Pressed = true
@@ -227,6 +240,23 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 			before := widget.Value
 			w.setSliderValueFromPointLocked(widget, axes, mouse.Position)
 			if widget.Value != before {
+				changed = true
+			}
+		}
+		if w.blurFocusedTextLocked() {
+			changed = true
+		}
+	case *core.RangeSlider:
+		w.focusedRangeSlider = widget
+		w.focusedRangeSliderHandle = clampInt(hit.info.Index, 0, 1)
+		if widget.Enabled {
+			w.draggingRangeSlider = widget
+			w.draggingRangeSliderAxes = axes
+			w.draggingRangeSliderHandle = w.focusedRangeSliderHandle
+			widget.Dragging = true
+			beforeLow, beforeHigh := widget.Low, widget.High
+			w.setRangeSliderValueFromPointLocked(widget, axes, mouse.Position, w.draggingRangeSliderHandle)
+			if widget.Low != beforeLow || widget.High != beforeHigh {
 				changed = true
 			}
 		}
@@ -464,6 +494,13 @@ func (w *WidgetInteraction) handleMouseMove(mouse MouseEvent) error {
 			changed = true
 		}
 	}
+	if w.draggingRangeSlider != nil {
+		beforeLow, beforeHigh := w.draggingRangeSlider.Low, w.draggingRangeSlider.High
+		w.setRangeSliderValueFromPointLocked(w.draggingRangeSlider, w.draggingRangeSliderAxes, mouse.Position, w.draggingRangeSliderHandle)
+		if w.draggingRangeSlider.Low != beforeLow || w.draggingRangeSlider.High != beforeHigh {
+			changed = true
+		}
+	}
 
 	if w.draggingSelector.kind != selectorDragNone {
 		if w.updateDraggingSelectorFromMouseLocked(mouse) {
@@ -508,6 +545,13 @@ func (w *WidgetInteraction) handleMouseRelease(mouse MouseEvent) error {
 		w.draggingSlider.Dragging = false
 		w.draggingSlider = nil
 		w.draggingSliderAxes = nil
+		changed = true
+	}
+	if w.draggingRangeSlider != nil {
+		w.draggingRangeSlider.Dragging = false
+		w.draggingRangeSlider = nil
+		w.draggingRangeSliderAxes = nil
+		w.draggingRangeSliderHandle = 0
 		changed = true
 	}
 	if w.draggingSelector.kind != selectorDragNone {
@@ -558,9 +602,26 @@ func (w *WidgetInteraction) handleKeyPress(ev KeyEvent) error {
 		}
 		return nil
 	}
+	if w.focusedButton != nil {
+		button := w.focusedButton
+		w.mu.Unlock()
+		if key == "enter" || key == "space" {
+			button.Click()
+			return w.callDraw()
+		}
+		return nil
+	}
 	if w.focusedSlider != nil {
 		w.mu.Unlock()
 		draw := w.handleSliderKey(w.focusedSlider, ev, key)
+		if draw {
+			return w.callDraw()
+		}
+		return nil
+	}
+	if w.focusedRangeSlider != nil {
+		w.mu.Unlock()
+		draw := w.handleRangeSliderKey(w.focusedRangeSlider, w.focusedRangeSliderHandle, ev, key)
 		if draw {
 			return w.callDraw()
 		}
@@ -616,6 +677,13 @@ func (w *WidgetInteraction) handleMouseLeave(mouse MouseEvent) error {
 		w.draggingSlider.Dragging = false
 		w.draggingSlider = nil
 		w.draggingSliderAxes = nil
+		changed = true
+	}
+	if w.draggingRangeSlider != nil {
+		w.draggingRangeSlider.Dragging = false
+		w.draggingRangeSlider = nil
+		w.draggingRangeSliderAxes = nil
+		w.draggingRangeSliderHandle = 0
 		changed = true
 	}
 	if w.draggingSelector.kind != selectorDragNone {
@@ -1322,6 +1390,35 @@ func (w *WidgetInteraction) handleSliderKey(slider *core.Slider, ev KeyEvent, ke
 	return slider.Value != before
 }
 
+func (w *WidgetInteraction) handleRangeSliderKey(slider *core.RangeSlider, handle int, ev KeyEvent, key string) bool {
+	if slider == nil {
+		return false
+	}
+	step := slider.Step
+	if step <= 0 {
+		step = 1
+	}
+	delta := 0.0
+	switch key {
+	case "left", "down":
+		delta = -step
+	case "right", "up":
+		delta = step
+	default:
+		return false
+	}
+	if ev.Modifiers&ModifierControl != 0 {
+		delta *= 10
+	}
+	beforeLow, beforeHigh := slider.Low, slider.High
+	if handle <= 0 {
+		slider.SetLow(slider.Low + delta)
+	} else {
+		slider.SetHigh(slider.High + delta)
+	}
+	return slider.Low != beforeLow || slider.High != beforeHigh
+}
+
 func (w *WidgetInteraction) handleCheckKey(checks *core.CheckButtons, focusedIndex int, ev KeyEvent, key string) bool {
 	if checks == nil || len(checks.Labels) == 0 {
 		return false
@@ -1414,6 +1511,33 @@ func (w *WidgetInteraction) setSliderValueFromPointLocked(slider *core.Slider, a
 	slider.SetValue(v)
 }
 
+func (w *WidgetInteraction) setRangeSliderValueFromPointLocked(slider *core.RangeSlider, ax *Axes, position geom.Pt, handle int) {
+	if slider == nil || ax == nil {
+		return
+	}
+	ctx := core.AxesDrawContext(ax, w.figure)
+	if ctx == nil {
+		return
+	}
+	panel := widgetInsetRect(ctx.Clip, 4)
+	if panel.W() <= 0 {
+		return
+	}
+	track := geom.Rect{
+		Min: geom.Pt{X: panel.Min.X + 14, Y: panel.Max.Y - 26},
+		Max: geom.Pt{X: panel.Max.X - 14, Y: panel.Max.Y - 14},
+	}
+	if track.W() <= 0 {
+		return
+	}
+	v := slider.Min + (slider.Max-slider.Min)*((position.X-track.Min.X)/track.W())
+	if handle <= 0 {
+		slider.SetLow(v)
+		return
+	}
+	slider.SetHigh(v)
+}
+
 func (w *WidgetInteraction) callDraw() error {
 	w.mu.Lock()
 	draw := w.draw
@@ -1450,7 +1574,7 @@ func (w *WidgetInteraction) pickWidget(ev Event) widgetPick {
 	hits := Pick(fig, ev.Position)
 	for _, hit := range hits {
 		switch hit.Artist.(type) {
-		case *core.Button, *core.Slider, *core.CheckButtons, *core.RadioButtons, *core.TextBox,
+		case *core.Button, *core.Slider, *core.RangeSlider, *core.CheckButtons, *core.RadioButtons, *core.TextBox,
 			*core.SpanSelector, *core.RectangleSelector, *core.EllipseSelector, *core.PolygonSelector, *core.LassoSelector,
 			*core.Cursor, *core.MultiCursor:
 			return widgetPick{
