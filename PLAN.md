@@ -1993,6 +1993,11 @@ catalog/parity fixture per behavior family.
 - [ ] Tighten `AutoLocator` / `MaxNLocator` edge semantics against upstream:
       `nbins`, `steps`, integer-only mode, pruning, symmetric behavior,
       degenerate ranges, negative ranges, and very small / very large spans.
+- [ ] Compare `MaxNLocator.view_limits` / `nonsingular` behavior against
+      upstream for degenerate, negative, tiny-span, and large-offset domains;
+      add focused unit cases for any remaining mismatches.
+- [ ] Add a `locator_maxn_edge_labels` catalog/parity fixture showing
+      degenerate-range expansion, pruning, and large-offset tick labels.
 - [x] Add `MaxNLocator` option coverage for custom `steps`, integer-only
       relaxation via `MinTicks`, symmetric ranges, pruning, and degenerate
       range expansion.
@@ -2006,6 +2011,11 @@ catalog/parity fixture per behavior family.
 - [ ] Complete log-family locator behavior: dense minor ticks, `subs="auto"` /
       `subs="all"` equivalents, minor threshold behavior, base changes, and
       safe behavior for non-positive or inverted domains.
+- [ ] Compare remaining `LogLocator` stride/offset decisions against upstream
+      for dense ranges and non-decimal bases; add unit cases for the exact
+      ranges that still differ.
+- [ ] Add a `locator_log_minor_threshold_labels` catalog/parity fixture for
+      visible major/minor log-family locator behavior.
 - [x] Add `LogLocator` `SubsMode` support for `auto` / `all` equivalents and
       dense automatic minor-tick suppression.
 - [x] Add `LogLocator` numticks-driven major thinning and explicit minor
@@ -2017,6 +2027,13 @@ catalog/parity fixture per behavior family.
       axes.
 - [ ] Add renderer-neutral unit tests for each new locator and a catalog case
       named for each visible locator family rather than one combined fixture.
+- [ ] Add `locator_linear_labels` covering `LinearLocator`, `MultipleLocator`,
+      and default linear tick labels.
+- [ ] Add `locator_fixed_index_labels` covering `FixedLocator` subsampling and
+      `IndexLocator` base/offset placement.
+- [ ] Close the locator catalog row only after the named linear, fixed/index,
+      log, symlog, asinh, and logit fixture coverage is present and listed in
+      `PublicSurfaceParityRows`.
 
 #### 12.2C Formatter Catalog Closure
 
@@ -2026,6 +2043,11 @@ catalog/parity fixture per behavior family.
 - [ ] Expand `ScalarFormatter` parity: offset text decision, scientific limits,
       power limits, math-text mode, fixed-minus behavior, locale/no-locale
       decision, and step-aware precision.
+- [ ] Decide and document ScalarFormatter offset text policy: implement
+      axis-level offset text, or record a deliberate omission with a migration
+      note and parity-surface update.
+- [ ] Add locale/no-locale ScalarFormatter coverage matching the chosen Go
+      policy; keep labels deterministic under the default test locale.
 - [x] Add `ScalarFormatter` option coverage for inclusive power limits,
       MathText-style scientific labels, scientific suppression, and
       step-aware precision.
@@ -2072,6 +2094,9 @@ catalog/parity fixture per behavior family.
 - [ ] Add one catalog/parity case each for scalar offset/scientific labels, log
       math-text labels, engineering labels, percent labels, and index/fixed/null
       labels.
+- [ ] Close the formatter catalog row after scalar offset policy is resolved;
+      current fixture coverage already includes scientific, log MathText,
+      engineering, percent, and fixed/null labels.
 
 #### 12.2D Date, Category, and Unit Tick Breadth
 
@@ -2143,6 +2168,9 @@ catalog/parity fixture per behavior family.
       layout.
 - [ ] Add transformed-path helpers for path plus transform caching, invalidation
       hooks, affine/non-affine split decisions, and clone-safe access.
+- [ ] Audit affine/non-affine split behavior against the current Go transform
+      model; either add the split API or document why all current transforms
+      can use the Go-style cached `TransformedPath`.
 - [x] Add a Go-style `TransformedPath` helper with clone-safe source/output
       paths and transform-node invalidation-backed cache refresh.
 - [x] Expand BBox/rect helpers needed by layout and annotation parity:
@@ -2155,6 +2183,10 @@ catalog/parity fixture per behavior family.
 - [ ] Add path/bezier helpers only when visible behavior needs them:
       interpolation, clipping against BBoxes, extents under transforms,
       simplification decisions, and curve splitting.
+- [ ] Add or explicitly omit path simplification thresholds based on a visible
+      rendering case; do not add a generic simplifier without a parity target.
+- [ ] Add curve-splitting helpers only if a clipped curved-path fixture exposes
+      a mismatch after the current flattening/interpolation helpers are used.
 - [x] Add shared `geom.Path` clone, affine transform, bounds, and transformed
       bounds helpers for visible path extent/layout use cases.
 - [x] Add shared `geom.Path` interpolation helper for line, quadratic, and
@@ -2164,6 +2196,12 @@ catalog/parity fixture per behavior family.
 - [ ] Add tests that exercise transform invalidation propagation and transformed
       path cache invalidation, plus catalog/parity cases for annotation
       coordinate modes, clipped transformed paths, and layout BBox behavior.
+- [ ] Add `transform_annotation_modes` or extend `transform_coordinates` to
+      explicitly cover data, axes, figure, and offset annotation coordinates.
+- [ ] Add `path_clipped_transformed` covering a transformed path clipped by a
+      BBox/axes rectangle.
+- [ ] Add `layout_bbox_helpers` covering anchored/padded/union BBox behavior in
+      visible layout output.
 - [x] Add renderer-neutral unit tests for frozen transform snapshots and
       transformed-path cache invalidation.
 
