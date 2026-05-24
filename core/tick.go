@@ -399,6 +399,21 @@ func scalarUsesScientific(x float64) bool {
 	return (ax >= 1e6) || (ax > 0 && ax <= 1e-4)
 }
 
+func scalarFormatterUsesScientific(f ScalarFormatter, x float64) bool {
+	if f.DisableScientific {
+		return false
+	}
+	if !f.UsePowerLimits {
+		return scalarUsesScientific(x)
+	}
+	if x == 0 || math.IsNaN(x) || math.IsInf(x, 0) {
+		return false
+	}
+	ax := math.Abs(x)
+	exp := int(math.Floor(math.Log10(ax)))
+	return exp <= f.PowerLimits[0] || exp >= f.PowerLimits[1]
+}
+
 func scalarStepPrecision(step float64) int {
 	step = math.Abs(step)
 	if step == 0 || math.IsNaN(step) || math.IsInf(step, 0) {
@@ -417,7 +432,7 @@ func scalarStepPrecision(step float64) int {
 }
 
 func formatScalarTickLabel(f ScalarFormatter, x, step float64) string {
-	if scalarUsesScientific(x) {
+	if scalarFormatterUsesScientific(f, x) {
 		return f.Format(x)
 	}
 
@@ -990,8 +1005,20 @@ func logitMinorTicks(bInf, bSup int) []float64 {
 }
 
 // ScalarFormatter formats numbers with fixed precision and trims trailing zeros.
-// Uses scientific notation if |x| >= 1e6 or (0 < |x| <= 1e-4).
-type ScalarFormatter struct{ Prec int }
+// Uses scientific notation if |x| >= 1e6 or (0 < |x| <= 1e-4), unless
+// custom power limits or scientific suppression are configured.
+type ScalarFormatter struct {
+	Prec int
+
+	// PowerLimits follows Matplotlib's inclusive scientific-notation
+	// thresholds when UsePowerLimits is true: exponents <= min or >= max use
+	// scientific notation.
+	PowerLimits    [2]int
+	UsePowerLimits bool
+
+	DisableScientific bool
+	UseMathText       bool
+}
 
 func (f ScalarFormatter) Format(x float64) string {
 	if math.IsNaN(x) {
@@ -1007,27 +1034,48 @@ func (f ScalarFormatter) Format(x float64) string {
 	if p < 0 {
 		p = 0
 	}
-	var s string
-	if scalarUsesScientific(x) {
-		s = strconv.FormatFloat(x, 'e', p, 64)
-		// normalize exponent: remove leading zeros in e+00X
-		if i := strings.LastIndexByte(s, 'e'); i >= 0 && i+2 < len(s) {
-			sign := s[i+1]
-			exp := strings.TrimLeft(s[i+2:], "0")
-			if exp == "" {
-				exp = "0"
-			}
-			s = s[:i+2] + string(sign) + exp
-		}
-	} else {
-		s = strconv.FormatFloat(x, 'f', p, 64)
+	if scalarFormatterUsesScientific(f, x) {
+		return formatScalarScientific(x, p, f.UseMathText)
 	}
+	s := strconv.FormatFloat(x, 'f', p, 64)
 	// Trim trailing zeros and possible dot
 	if strings.ContainsAny(s, ".") {
 		s = strings.TrimRight(s, "0")
 		s = strings.TrimRight(s, ".")
 	}
 	return scalarFixMinus(s)
+}
+
+func formatScalarScientific(x float64, prec int, useMathText bool) string {
+	if x == 0 {
+		if useMathText {
+			return `$\mathdefault{0}$`
+		}
+		return "0"
+	}
+	sign := ""
+	if x < 0 {
+		sign = "-"
+		x = -x
+	}
+	exp := int(math.Floor(math.Log10(x)))
+	mantissa := x / math.Pow10(exp)
+	if approx(mantissa, 10, 1e-12) {
+		mantissa = 1
+		exp++
+	}
+	m := strconv.FormatFloat(mantissa, 'f', prec, 64)
+	if strings.ContainsAny(m, ".") {
+		m = strings.TrimRight(m, "0")
+		m = strings.TrimRight(m, ".")
+	}
+	if useMathText {
+		if m == "1" {
+			return scalarFixMinus(fmt.Sprintf(`$\mathdefault{%s10^{%d}}$`, sign, exp))
+		}
+		return scalarFixMinus(fmt.Sprintf(`$\mathdefault{%s%s\times10^{%d}}$`, sign, m, exp))
+	}
+	return scalarFixMinus(fmt.Sprintf("%s%se%+d", sign, m, exp))
 }
 
 func scalarFixMinus(s string) string {

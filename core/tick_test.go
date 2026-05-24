@@ -462,6 +462,25 @@ func TestScalarFormatter_TrimAndScientific(t *testing.T) {
 	}
 }
 
+func TestScalarFormatterPowerLimitsAndMathText(t *testing.T) {
+	f := ScalarFormatter{Prec: 2, UsePowerLimits: true, PowerLimits: [2]int{-3, 4}}
+	if got := f.Format(9999); got != "9999" {
+		t.Fatalf("below upper power limit = %q, want %q", got, "9999")
+	}
+	if got := f.Format(10000); got != "1e+4" {
+		t.Fatalf("at upper power limit = %q, want %q", got, "1e+4")
+	}
+	if got := f.Format(0.001); got != "1e−3" {
+		t.Fatalf("at lower power limit = %q, want %q", got, "1e−3")
+	}
+	if got := (ScalarFormatter{Prec: 1, UsePowerLimits: true, PowerLimits: [2]int{0, 0}, UseMathText: true}).Format(-1200); got != `$\mathdefault{−1.2\times10^{3}}$` {
+		t.Fatalf("mathtext scientific = %q", got)
+	}
+	if got := (ScalarFormatter{Prec: 2, DisableScientific: true}).Format(1e7); got != "10000000" {
+		t.Fatalf("disabled scientific = %q, want %q", got, "10000000")
+	}
+}
+
 func TestFormatScalarTickLabel_UsesStepPrecision(t *testing.T) {
 	f := ScalarFormatter{Prec: 3}
 	cases := []struct {
