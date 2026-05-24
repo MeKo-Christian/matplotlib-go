@@ -500,8 +500,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "transforms",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"transform/transformed_path.go", "internal/geom/geom.go"},
-		CatalogIDs:        []string{"transform_coordinates", "annotation_composition"},
-		Note:              "Go TransformedPath covers clone-safe transformed-path caching with dependency invalidation. Remaining 12.2G scope is affine/non-affine split behavior if a non-affine transform family is added.",
+		CatalogIDs:        []string{"transform_coordinates", "path_clipped_transformed", "annotation_composition"},
+		Note:              "Go TransformedPath covers clone-safe transformed-path caching with dependency invalidation. The affine/non-affine split is documented as a full-path cache until a visible non-affine renderer path needs partial caching.",
 	},
 	{
 		ID:                "transforms-transformed-patch-path",
@@ -681,7 +681,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"transform/transform.go", "transform/graph.go", "transform/node.go", "internal/geom/geom.go"},
 		catalogIDs:        []string{"transform_coordinates", "transform_annotation_modes", "path_clipped_transformed", "layout_bbox_helpers", "annotation_composition", "imshow_transformed"},
 		exampleIDs:        []string{"annotation_composition"},
-		note:              "Go has affine, scale, blended, chained, display-rect, offset, cached graph transforms, BBox-style rect helpers, annotation coordinate fixtures, clipped transformed path coverage, and visible anchored/padded/union BBox layout coverage. Remaining 12.2G scope is transformed-path split documentation and visible path/bezier helper decisions.",
+		note:              "Go has affine, scale, blended, chained, display-rect, offset, cached graph transforms, BBox-style rect helpers, annotation coordinate fixtures, clipped transformed path coverage, visible anchored/padded/union BBox layout coverage, and path interpolation/clipping/extents. Path simplification and curve splitting stay omitted until a visible parity target requires them.",
 	},
 	{
 		idPrefix:          "line-style-registry",

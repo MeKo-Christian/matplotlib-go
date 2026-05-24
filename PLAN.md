@@ -2166,9 +2166,9 @@ catalog/parity fixture per behavior family.
 - [x] Add frozen transform helpers where callers need immutable snapshots of
       dynamic axes/figure/data transforms for annotations, clipping, images, or
       layout.
-- [ ] Add transformed-path helpers for path plus transform caching, invalidation
+- [x] Add transformed-path helpers for path plus transform caching, invalidation
       hooks, affine/non-affine split decisions, and clone-safe access.
-- [ ] Audit affine/non-affine split behavior against the current Go transform
+- [x] Audit affine/non-affine split behavior against the current Go transform
       model; either add the split API or document why all current transforms
       can use the Go-style cached `TransformedPath`.
 - [x] Add a Go-style `TransformedPath` helper with clone-safe source/output
@@ -2180,12 +2180,12 @@ catalog/parity fixture per behavior family.
       location-string anchors.
 - [x] Add shared `geom.Rect` null sentinel and accumulation helpers for
       BBox-style extent building.
-- [ ] Add path/bezier helpers only when visible behavior needs them:
+- [x] Add path/bezier helpers only when visible behavior needs them:
       interpolation, clipping against BBoxes, extents under transforms,
       simplification decisions, and curve splitting.
-- [ ] Add or explicitly omit path simplification thresholds based on a visible
+- [x] Add or explicitly omit path simplification thresholds based on a visible
       rendering case; do not add a generic simplifier without a parity target.
-- [ ] Add curve-splitting helpers only if a clipped curved-path fixture exposes
+- [x] Add curve-splitting helpers only if a clipped curved-path fixture exposes
       a mismatch after the current flattening/interpolation helpers are used.
 - [x] Add shared `geom.Path` clone, affine transform, bounds, and transformed
       bounds helpers for visible path extent/layout use cases.
@@ -2193,7 +2193,7 @@ catalog/parity fixture per behavior family.
       cubic segments.
 - [x] Add shared `geom.Path` clipping helper against `geom.Rect` for flattened
       path segments.
-- [ ] Add tests that exercise transform invalidation propagation and transformed
+- [x] Add tests that exercise transform invalidation propagation and transformed
       path cache invalidation, plus catalog/parity cases for annotation
       coordinate modes, clipped transformed paths, and layout BBox behavior.
 - [x] Add `transform_annotation_modes` or extend `transform_coordinates` to

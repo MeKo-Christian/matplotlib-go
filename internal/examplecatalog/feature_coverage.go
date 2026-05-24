@@ -128,8 +128,8 @@ var featureCoverageRows = []FeatureCoverage{
 		UserShowcase:            CoveragePartial,
 		BrowserDemo:             CoveragePartial,
 		Breadth:                 BreadthThin,
-		Notes: "Affine, separable, blended, chained, offset, display-rect, cached graph transforms, and BBox-style rect helpers exist. " +
-			"Remaining 12.2G scope is transformed-path cache helpers and path/bezier helper decisions tied to visible behavior.",
+		Notes: "TransformedPath caching, annotation coordinates, clipped transformed paths, BBox layout, and visible path interpolation/clipping/extents are covered; " +
+			"simplification and curve splitting stay omitted until a visible parity target requires them.",
 	},
 	{
 		ID:                      "lines",
