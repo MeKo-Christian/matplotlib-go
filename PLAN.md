@@ -2130,7 +2130,7 @@ catalog/parity fixture per behavior family.
       lines: color, alpha, width, style, and visibility.
 - [x] Keep ticks axis-owned for v1.0, but document the explicit non-goal of a
       Python-style `Tick` artist clone unless a migration example requires it.
-- [ ] Add unit tests for option propagation and a catalog/parity case covering
+- [x] Add unit tests for option propagation and a catalog/parity case covering
       major/minor styling, side visibility, grid styling, and rotated labels.
 
 #### 12.2G Transform, BBox, and Path Helper Closure
