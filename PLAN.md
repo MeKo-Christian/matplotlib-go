@@ -2085,7 +2085,9 @@ catalog/parity fixture per behavior family.
       `HourLocator` ticks with concise date formatting.
 - [x] Add `date_month_year_labels` catalog/parity fixture for monthly/yearly
       date locator and formatter behavior.
-- [ ] Add catalog/parity cases for daily, monthly/yearly, intraday, concise
+- [x] Existing `units_dates` and `units_categories` catalog cases cover daily
+      date labels and categorical tick labels for this phase.
+- [x] Add catalog/parity cases for daily, monthly/yearly, intraday, concise
       date, and categorical tick labels.
 
 #### 12.2E Scale-Specific Axis Defaults
