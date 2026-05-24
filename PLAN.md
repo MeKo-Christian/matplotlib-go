@@ -2026,6 +2026,8 @@ catalog/parity fixture per behavior family.
       places, sign handling, unit spacing, and extreme prefixes.
 - [x] Add `EngFormatter` coverage for unicode micro output, minus-sign fixing,
       engineering-prefix rollover after rounding, and extreme SI prefixes.
+- [x] Add `EngFormatter` MathText-style number wrapping, `FormatEng` aliasing,
+      and zero-without-suffix handling.
 - [ ] Tighten `PercentFormatter` behavior for xmax defaults, decimal auto
       selection, symbol escaping/no-escaping decision, and negative values.
 - [x] Add `PercentFormatter` auto-decimal support for configured display ranges
