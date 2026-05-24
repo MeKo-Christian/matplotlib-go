@@ -64,6 +64,7 @@ var cases = []Case{
 	{ID: "joins_caps", Topic: "lines", Title: "Line Joins and Caps"},
 	{ID: "dashes", Topic: "lines", Title: "Dash Patterns", Description: "Multiple line styles showing dash arrays, cap styles, and legend labeling.", Showcase: true},
 	{ID: "line2d_semantics", Topic: "lines", Title: "Line2D Semantics", FixtureOnly: true, MinPSNR: 34.0, MaxMeanAbs: 8.0},
+	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, MinPSNR: 30.0, MaxMeanAbs: 10.0},
 	{ID: "scatter_basic", Topic: "scatter", Title: "Basic Scatter", Description: "A compact scatter plot with variable marker size, color, alpha, and axes labels.", Showcase: true, GoBasicSmokeFamily: "scatter"},
 	{ID: "scatter_marker_types", Topic: "scatter", Title: "Scatter Marker Types"},
 	{ID: "scatter_advanced", Topic: "scatter", Title: "Advanced Scatter"},

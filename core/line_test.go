@@ -168,8 +168,134 @@ func TestLine2DDrawsMarkersWithFaceEdgeStyles(t *testing.T) {
 	if got, want := markerPaint.Stroke, line.MarkerEdgeColor; got != want {
 		t.Fatalf("marker edge = %+v, want %+v", got, want)
 	}
-	if got, want := markerPaint.LineWidth, line.MarkerEdgeWidth; got != want {
+	if got, want := markerPaint.LineWidth, pointsToPixels(ctx.RC, line.MarkerEdgeWidth); got != want {
 		t.Fatalf("marker edge width = %v, want %v", got, want)
+	}
+}
+
+func TestLine2DMarkerColorSentinels(t *testing.T) {
+	line := &Line2D{
+		XY: []geom.Pt{
+			{X: 0, Y: 0},
+			{X: 1, Y: 1},
+		},
+		W:               2,
+		Col:             render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1},
+		Marker:          MarkerCircle,
+		MarkerSet:       true,
+		MarkerFaceColor: render.Color{R: 1, A: 0.25},
+	}
+	line.SetMarkerEdgeColorAuto()
+
+	r := &recordingRenderer{}
+	ctx := &DrawContext{
+		DataToPixel: Transform2D{
+			XScale:      transform.NewLinear(0, 1),
+			YScale:      transform.NewLinear(0, 1),
+			AxesToPixel: transform.NewAffine(geom.Identity()),
+		},
+		RC: style.Default,
+	}
+	line.Draw(r, ctx)
+
+	if len(r.pathCalls) != 3 {
+		t.Fatalf("path calls = %d, want line plus two markers", len(r.pathCalls))
+	}
+	if got, want := r.pathCalls[1].paint.Stroke, (render.Color{R: 0.2, G: 0.4, B: 0.6, A: 0.25}); got != want {
+		t.Fatalf("auto edge color = %+v, want line RGB with face alpha %+v", got, want)
+	}
+
+	line.SetMarkerFaceColorNone()
+	r.pathCalls = nil
+	line.Draw(r, ctx)
+	if got := r.pathCalls[1].paint.Fill.A; got != 0 {
+		t.Fatalf("marker face alpha = %v, want none", got)
+	}
+	if got, want := r.pathCalls[1].paint.Stroke.A, 1.0; got != want {
+		t.Fatalf("auto edge alpha with face none = %v, want %v", got, want)
+	}
+}
+
+func TestLine2DLineOnlyMarkerDrawsStrokeOnly(t *testing.T) {
+	line := &Line2D{
+		XY: []geom.Pt{
+			{X: 0, Y: 0},
+			{X: 1, Y: 1},
+		},
+		W:               2,
+		Col:             render.Color{R: 1, A: 1},
+		Marker:          MarkerPlus,
+		MarkerSet:       true,
+		MarkerFaceColor: render.Color{G: 1, A: 1},
+	}
+
+	r := &recordingRenderer{}
+	line.Draw(r, &DrawContext{
+		DataToPixel: Transform2D{
+			XScale:      transform.NewLinear(0, 1),
+			YScale:      transform.NewLinear(0, 1),
+			AxesToPixel: transform.NewAffine(geom.Identity()),
+		},
+		RC: style.Default,
+	})
+
+	if len(r.pathCalls) != 3 {
+		t.Fatalf("path calls = %d, want line plus two markers", len(r.pathCalls))
+	}
+	if got := r.pathCalls[1].paint.Fill.A; got != 0 {
+		t.Fatalf("line-only marker fill alpha = %v, want 0", got)
+	}
+	if got := r.pathCalls[1].paint.Stroke.A; got <= 0 {
+		t.Fatalf("line-only marker stroke alpha = %v, want visible stroke", got)
+	}
+}
+
+func TestLine2DHalfFilledMarkerDrawsSplitFillAndWholeEdge(t *testing.T) {
+	markerStyle := NewMarkerStyle(MarkerCircle)
+	markerStyle.FillStyle = MarkerFillLeft
+	line := &Line2D{
+		XY: []geom.Pt{
+			{X: 0, Y: 0},
+		},
+		Col:             render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1},
+		MarkerStyle:     markerStyle,
+		MarkerFaceColor: render.Color{R: 1, A: 1},
+		MarkerEdgeColor: render.Color{B: 1, A: 1},
+		MarkerEdgeWidth: 2,
+	}
+	line.SetMarkerFaceColorAlt(render.Color{G: 1, A: 0.75})
+
+	r := &recordingRenderer{}
+	ctx := &DrawContext{
+		DataToPixel: Transform2D{
+			XScale:      transform.NewLinear(0, 1),
+			YScale:      transform.NewLinear(0, 1),
+			AxesToPixel: transform.NewAffine(geom.Identity()),
+		},
+		RC: style.Default,
+	}
+	line.drawMarkers(r, ctx)
+
+	if len(r.pathCalls) != 3 {
+		t.Fatalf("path calls = %d, want primary fill, alternate fill, whole edge", len(r.pathCalls))
+	}
+	if got, want := r.pathCalls[0].paint.Fill, line.MarkerFaceColor; got != want {
+		t.Fatalf("primary half fill = %+v, want %+v", got, want)
+	}
+	if got, want := r.pathCalls[1].paint.Fill, (render.Color{G: 1, A: 0.75}); got != want {
+		t.Fatalf("alternate half fill = %+v, want %+v", got, want)
+	}
+	if got := r.pathCalls[0].paint.Stroke.A; got != 0 {
+		t.Fatalf("primary half stroke alpha = %v, want 0", got)
+	}
+	if got := r.pathCalls[2].paint.Fill.A; got != 0 {
+		t.Fatalf("edge pass fill alpha = %v, want 0", got)
+	}
+	if got, want := r.pathCalls[2].paint.Stroke, line.MarkerEdgeColor; got != want {
+		t.Fatalf("edge stroke = %+v, want %+v", got, want)
+	}
+	if got, want := len(r.pathCalls[2].path.C), len(line.markerPrototypePath(nil, nil).C); got != want {
+		t.Fatalf("edge path commands = %d, want whole marker command count %d", got, want)
 	}
 }
 

@@ -92,6 +92,46 @@ func TestScatterDefaultsUseMatplotlibFaceEdges(t *testing.T) {
 	}
 }
 
+func TestScatterHalfFilledMarkerDrawsSplitFillAndWholeEdge(t *testing.T) {
+	markerStyle := NewMarkerStyle(MarkerSquare)
+	markerStyle.FillStyle = MarkerFillTop
+	scatter := &Scatter2D{
+		XY:          []geom.Pt{{X: 0.5, Y: 0.5}},
+		Size:        9,
+		Color:       render.Color{R: 0.2, G: 0.7, B: 0.8, A: 1},
+		EdgeColor:   render.Color{R: 0.05, G: 0.2, B: 0.25, A: 1},
+		EdgeWidth:   2,
+		MarkerStyle: markerStyle,
+	}
+
+	r := &recordingRenderer{}
+	ctx := &DrawContext{
+		DataToPixel: Transform2D{
+			XScale:      transform.NewLinear(0, 1),
+			YScale:      transform.NewLinear(0, 1),
+			AxesToPixel: transform.NewAffine(geom.Identity()),
+		},
+		RC: style.Default,
+	}
+	scatter.Draw(r, ctx)
+
+	if len(r.pathCalls) != 2 {
+		t.Fatalf("path calls = %d, want primary half fill and whole edge", len(r.pathCalls))
+	}
+	if got, want := r.pathCalls[0].paint.Fill, scatter.Color; got != want {
+		t.Fatalf("primary half fill = %+v, want %+v", got, want)
+	}
+	if got := r.pathCalls[0].paint.Stroke.A; got != 0 {
+		t.Fatalf("primary half stroke alpha = %v, want 0", got)
+	}
+	if got := r.pathCalls[1].paint.Fill.A; got != 0 {
+		t.Fatalf("edge pass fill alpha = %v, want 0", got)
+	}
+	if got, want := r.pathCalls[1].paint.Stroke, scatter.EdgeColor; got != want {
+		t.Fatalf("edge stroke = %+v, want %+v", got, want)
+	}
+}
+
 func TestScatter2D_EmptyData(t *testing.T) {
 	// Test with empty data
 	scatter := &Scatter2D{

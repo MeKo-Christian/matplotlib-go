@@ -54,6 +54,38 @@ type MarkEverySpec struct {
 	Indices []int
 }
 
+// MarkerColorMode describes Matplotlib-style marker color sentinels.
+type MarkerColorMode uint8
+
+const (
+	MarkerColorDefault MarkerColorMode = iota
+	MarkerColorExplicit
+	MarkerColorAuto
+	MarkerColorNone
+)
+
+// MarkerColorSpec stores either an explicit marker color or a sentinel such as
+// Matplotlib's "auto" and "none" values.
+type MarkerColorSpec struct {
+	Mode  MarkerColorMode
+	Color render.Color
+}
+
+// ExplicitMarkerColor returns a marker color spec for an explicit RGBA color.
+func ExplicitMarkerColor(color render.Color) MarkerColorSpec {
+	return MarkerColorSpec{Mode: MarkerColorExplicit, Color: color}
+}
+
+// AutoMarkerColor returns a marker color spec that resolves from the line color.
+func AutoMarkerColor() MarkerColorSpec {
+	return MarkerColorSpec{Mode: MarkerColorAuto}
+}
+
+// NoMarkerColor returns a marker color spec equivalent to Matplotlib's "none".
+func NoMarkerColor() MarkerColorSpec {
+	return MarkerColorSpec{Mode: MarkerColorNone}
+}
+
 // EveryNMarkers returns a markevery spec that starts at the first point.
 func EveryNMarkers(step int) MarkEverySpec {
 	return StartStepMarkers(0, step)
@@ -94,7 +126,10 @@ type Line2D struct {
 	MarkerSize      float64       // marker size in points, 0 uses Matplotlib's 6 pt default
 	MarkerFaceColor render.Color  // marker fill, 0 alpha falls back to line color
 	MarkerEdgeColor render.Color  // marker edge, 0 alpha falls back to line color
-	MarkerEdgeWidth float64       // marker edge width in pixels, 0 uses 1 px
+	MarkerEdgeWidth float64       // marker edge width in points, 0 uses Matplotlib's 1 pt default
+	MarkerFaceSpec  MarkerColorSpec
+	MarkerEdgeSpec  MarkerColorSpec
+	MarkerFaceAlt   MarkerColorSpec
 	MarkEvery       int           // optional every-N marker subset; <=1 draws every point
 	MarkEverySpec   MarkEverySpec // optional richer marker subset; overrides MarkEvery when set
 	Label           string        // series label for legend
@@ -177,6 +212,81 @@ func (l *Line2D) SetGapColor(color render.Color) {
 	}
 	l.GapColor = color
 	l.GapColorSet = true
+	l.SetStale(true)
+}
+
+// SetMarkerFaceColor sets an explicit marker face color.
+func (l *Line2D) SetMarkerFaceColor(color render.Color) {
+	if l == nil {
+		return
+	}
+	l.MarkerFaceColor = color
+	l.MarkerFaceSpec = ExplicitMarkerColor(color)
+	l.SetStale(true)
+}
+
+// SetMarkerFaceColorAuto makes the marker face color follow the line color.
+func (l *Line2D) SetMarkerFaceColorAuto() {
+	if l == nil {
+		return
+	}
+	l.MarkerFaceSpec = AutoMarkerColor()
+	l.SetStale(true)
+}
+
+// SetMarkerFaceColorNone disables marker face filling.
+func (l *Line2D) SetMarkerFaceColorNone() {
+	if l == nil {
+		return
+	}
+	l.MarkerFaceSpec = NoMarkerColor()
+	l.SetStale(true)
+}
+
+// SetMarkerFaceColorAlt sets the alternate face color used by half-filled markers.
+func (l *Line2D) SetMarkerFaceColorAlt(color render.Color) {
+	if l == nil {
+		return
+	}
+	l.MarkerFaceAlt = ExplicitMarkerColor(color)
+	l.SetStale(true)
+}
+
+// SetMarkerFaceColorAltNone disables the alternate half fill.
+func (l *Line2D) SetMarkerFaceColorAltNone() {
+	if l == nil {
+		return
+	}
+	l.MarkerFaceAlt = NoMarkerColor()
+	l.SetStale(true)
+}
+
+// SetMarkerEdgeColor sets an explicit marker edge color.
+func (l *Line2D) SetMarkerEdgeColor(color render.Color) {
+	if l == nil {
+		return
+	}
+	l.MarkerEdgeColor = color
+	l.MarkerEdgeSpec = ExplicitMarkerColor(color)
+	l.SetStale(true)
+}
+
+// SetMarkerEdgeColorAuto makes the marker edge color follow Matplotlib's auto
+// behavior: line RGB, inheriting the face alpha when the face is filled.
+func (l *Line2D) SetMarkerEdgeColorAuto() {
+	if l == nil {
+		return
+	}
+	l.MarkerEdgeSpec = AutoMarkerColor()
+	l.SetStale(true)
+}
+
+// SetMarkerEdgeColorNone disables marker edge stroking.
+func (l *Line2D) SetMarkerEdgeColorNone() {
+	if l == nil {
+		return
+	}
+	l.MarkerEdgeSpec = NoMarkerColor()
 	l.SetStale(true)
 }
 
@@ -360,8 +470,8 @@ func (l *Line2D) drawMarkers(r render.Renderer, ctx *DrawContext) {
 	if len(points) == 0 {
 		return
 	}
-	markerPath := l.markerPrototypePath(r, ctx)
-	if len(markerPath.C) == 0 {
+	spec := l.markerPathSpec(r, ctx)
+	if len(spec.Path.C) == 0 {
 		return
 	}
 	markerSize := l.resolvedMarkerSize(ctx)
@@ -369,27 +479,67 @@ func (l *Line2D) drawMarkers(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 
-	markers := &PathCollection{
-		Collection: Collection{
-			ArtistRasterization: l.ArtistRasterization,
-			Coords:              Coords(CoordData),
-			Alpha:               1,
-			PathEffects:         cloneRenderPathEffects(l.PathEffects),
-		},
-		Path:          markerPath,
-		Offsets:       points,
-		Size:          markerSize,
-		PathInDisplay: true,
-		FaceColor:     l.resolvedMarkerFaceColor(),
-		EdgeColor:     l.resolvedMarkerEdgeColor(),
-		EdgeWidth:     l.resolvedMarkerEdgeWidth(),
-		LineJoin:      (&Scatter2D{Marker: l.Marker, MarkerStyle: l.MarkerStyle, MarkerPath: l.MarkerPath}).markerLineJoin(),
-		LineJoinSet:   true,
-		LineCap:       render.CapButt,
-		LineCapSet:    true,
-		LineOnly:      markerLineOnly(l.resolvedMarkerStyle()),
+	newCollection := func(path geom.Path, face, edge render.Color, edgeWidth float64, lineOnly bool) *PathCollection {
+		return &PathCollection{
+			Collection: Collection{
+				ArtistRasterization: l.ArtistRasterization,
+				Coords:              Coords(CoordData),
+				Alpha:               1,
+				PathEffects:         cloneRenderPathEffects(l.PathEffects),
+			},
+			Path:          path,
+			Offsets:       points,
+			Size:          markerSize,
+			PathInDisplay: true,
+			FaceColor:     face,
+			EdgeColor:     edge,
+			EdgeWidth:     edgeWidth,
+			LineJoin:      (&Scatter2D{Marker: l.Marker, MarkerStyle: l.MarkerStyle, MarkerPath: l.MarkerPath}).markerLineJoin(),
+			LineJoinSet:   true,
+			LineCap:       render.CapButt,
+			LineCapSet:    true,
+			LineOnly:      lineOnly,
+		}
 	}
+
+	if spec.HasAlt {
+		transparent := render.Color{}
+		newCollection(spec.Path, l.resolvedMarkerFaceColor(), transparent, 0, false).Draw(r, ctx)
+		newCollection(spec.AltPath, l.resolvedMarkerFaceColorAlt(), transparent, 0, false).Draw(r, ctx)
+		newCollection(spec.EdgePath, transparent, l.resolvedMarkerEdgeColor(), l.resolvedMarkerEdgeWidth(ctx), false).Draw(r, ctx)
+		return
+	}
+
+	markers := newCollection(
+		spec.Path,
+		l.resolvedMarkerFaceColor(),
+		l.resolvedMarkerEdgeColor(),
+		l.resolvedMarkerEdgeWidth(ctx),
+		markerLineOnly(l.resolvedMarkerStyle()),
+	)
 	markers.Draw(r, ctx)
+}
+
+type markerPathSpec struct {
+	Path     geom.Path
+	AltPath  geom.Path
+	EdgePath geom.Path
+	HasAlt   bool
+}
+
+func (l *Line2D) markerPathSpec(r render.Renderer, ctx *DrawContext) markerPathSpec {
+	base := l.markerPrototypePath(r, ctx)
+	spec := markerPathSpec{Path: base, EdgePath: base}
+	style := l.resolvedMarkerStyle()
+	if markerLineOnly(style) {
+		return spec
+	}
+	if primary, alt, ok := splitMarkerFillPaths(style, base); ok {
+		spec.Path = primary
+		spec.AltPath = alt
+		spec.HasAlt = len(primary.C) > 0 && len(alt.C) > 0
+	}
+	return spec
 }
 
 func (l *Line2D) hasMarkers() bool {
@@ -631,31 +781,89 @@ func (l *Line2D) resolvedMarkerSize(ctx *DrawContext) float64 {
 	return pointsToPixels(rc, size)
 }
 
+func (l *Line2D) markerFaceNone() bool {
+	if l == nil {
+		return true
+	}
+	return l.resolvedMarkerStyle().FillStyle == MarkerFillNone || l.MarkerFaceSpec.Mode == MarkerColorNone
+}
+
 func (l *Line2D) resolvedMarkerFaceColor() render.Color {
 	if l == nil {
 		return render.Color{}
 	}
-	color := l.MarkerFaceColor
-	if color.A <= 0 {
+	if l.resolvedMarkerStyle().FillStyle == MarkerFillNone {
+		return render.Color{}
+	}
+	var color render.Color
+	switch l.MarkerFaceSpec.Mode {
+	case MarkerColorExplicit:
+		color = l.MarkerFaceSpec.Color
+	case MarkerColorNone:
+		return render.Color{}
+	case MarkerColorAuto:
 		color = l.Col
+	default:
+		color = l.MarkerFaceColor
+		if color.A <= 0 {
+			color = l.Col
+		}
 	}
 	return l.ApplyArtistAlpha(color)
+}
+
+func (l *Line2D) resolvedMarkerFaceColorAlt() render.Color {
+	if l == nil {
+		return render.Color{}
+	}
+	if l.resolvedMarkerStyle().FillStyle == MarkerFillNone {
+		return render.Color{}
+	}
+	switch l.MarkerFaceAlt.Mode {
+	case MarkerColorExplicit:
+		return l.ApplyArtistAlpha(l.MarkerFaceAlt.Color)
+	case MarkerColorAuto:
+		return l.ApplyArtistAlpha(l.Col)
+	default:
+		return render.Color{}
+	}
 }
 
 func (l *Line2D) resolvedMarkerEdgeColor() render.Color {
 	if l == nil {
 		return render.Color{}
 	}
-	color := l.MarkerEdgeColor
-	if color.A <= 0 {
-		color = l.Col
+	switch l.MarkerEdgeSpec.Mode {
+	case MarkerColorExplicit:
+		return l.ApplyArtistAlpha(l.MarkerEdgeSpec.Color)
+	case MarkerColorNone:
+		return render.Color{}
+	case MarkerColorAuto:
+		edge := l.ApplyArtistAlpha(l.Col)
+		if !l.markerFaceNone() {
+			edge.A = l.resolvedMarkerFaceColor().A
+		}
+		return edge
+	default:
+		if l.MarkerEdgeColor.A > 0 {
+			return l.ApplyArtistAlpha(l.MarkerEdgeColor)
+		}
+		edge := l.ApplyArtistAlpha(l.Col)
+		if !l.markerFaceNone() {
+			edge.A = l.resolvedMarkerFaceColor().A
+		}
+		return edge
 	}
-	return l.ApplyArtistAlpha(color)
 }
 
-func (l *Line2D) resolvedMarkerEdgeWidth() float64 {
-	if l == nil || l.MarkerEdgeWidth <= 0 {
-		return 1
+func (l *Line2D) resolvedMarkerEdgeWidth(ctx *DrawContext) float64 {
+	width := 1.0
+	if l != nil && l.MarkerEdgeWidth > 0 {
+		width = l.MarkerEdgeWidth
 	}
-	return l.MarkerEdgeWidth
+	rc := style.Default
+	if ctx != nil {
+		rc = ctx.RC
+	}
+	return pointsToPixels(rc, width)
 }

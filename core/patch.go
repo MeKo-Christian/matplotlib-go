@@ -706,12 +706,18 @@ func (l *Line2D) legendEntry() (legendEntry, bool) {
 	}
 	entry := legendEntryFromLine(l.Label, l.ApplyArtistAlpha(l.Col), l.W, l.Dashes)
 	if l.hasMarkers() {
+		spec := l.markerPathSpec(nil, nil)
 		entry.lineMarkerSet = true
 		entry.marker = l.Marker
-		entry.markerPath = l.markerPrototypePath(nil, nil)
+		entry.markerPath = spec.Path
+		entry.markerAltPath = spec.AltPath
+		entry.markerEdgePath = spec.EdgePath
+		entry.markerHasAlt = spec.HasAlt
+		entry.markerLineOnly = markerLineOnly(l.resolvedMarkerStyle())
 		entry.markerFill = l.resolvedMarkerFaceColor()
+		entry.markerAltFill = l.resolvedMarkerFaceColorAlt()
 		entry.markerEdge = l.resolvedMarkerEdgeColor()
-		entry.markerEdgeWidth = l.resolvedMarkerEdgeWidth()
+		entry.markerEdgeWidth = l.resolvedMarkerEdgeWidth(nil)
 	}
 	return entry, true
 }
@@ -734,6 +740,12 @@ func (s *Scatter2D) legendEntry() (legendEntry, bool) {
 	}
 	fill.A *= alpha
 	edge.A *= alpha
+	if markerLineOnly(s.resolvedMarkerStyle()) {
+		if edge.A <= 0 {
+			edge = fill
+		}
+		fill.A = 0
+	}
 	return legendEntryFromMarker(s.Label, s.Marker, s.MarkerPath, fill, edge, s.EdgeWidth), true
 }
 

@@ -37,7 +37,12 @@ type legendEntry struct {
 
 	marker          MarkerType
 	markerPath      geom.Path
+	markerAltPath   geom.Path
+	markerEdgePath  geom.Path
+	markerHasAlt    bool
+	markerLineOnly  bool
 	markerFill      render.Color
+	markerAltFill   render.Color
 	markerEdge      render.Color
 	markerEdgeWidth float64
 
@@ -488,9 +493,44 @@ func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center g
 	} else {
 		markerPath = scaleAndTranslatePath(markerPath, radius, center)
 	}
+	if entry.markerHasAlt {
+		r.Path(markerPath, &render.Paint{
+			Fill:     entry.markerFill,
+			LineJoin: render.JoinRound,
+			LineCap:  render.CapRound,
+		})
+		if len(entry.markerAltPath.C) > 0 {
+			r.Path(scaleAndTranslatePath(entry.markerAltPath, radius, center), &render.Paint{
+				Fill:     entry.markerAltFill,
+				LineJoin: render.JoinRound,
+				LineCap:  render.CapRound,
+			})
+		}
+		edgePath := entry.markerEdgePath
+		if len(edgePath.C) == 0 {
+			edgePath = entry.markerPath
+		}
+		if len(edgePath.C) > 0 {
+			r.Path(scaleAndTranslatePath(edgePath, radius, center), &render.Paint{
+				Stroke:    entry.markerEdge,
+				LineWidth: entry.markerEdgeWidth,
+				LineJoin:  render.JoinRound,
+				LineCap:   render.CapRound,
+			})
+		}
+		return
+	}
+	fill := entry.markerFill
+	edge := entry.markerEdge
+	if entry.markerLineOnly {
+		if edge.A <= 0 {
+			edge = fill
+		}
+		fill.A = 0
+	}
 	r.Path(markerPath, &render.Paint{
-		Fill:      entry.markerFill,
-		Stroke:    entry.markerEdge,
+		Fill:      fill,
+		Stroke:    edge,
 		LineWidth: entry.markerEdgeWidth,
 		LineJoin:  render.JoinRound,
 		LineCap:   render.CapRound,

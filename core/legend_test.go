@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 func TestLegendCollectEntries(t *testing.T) {
@@ -63,7 +64,7 @@ func TestLegendCollectsLineMarkers(t *testing.T) {
 	if entry.kind != legendEntryLine || !entry.lineMarkerSet {
 		t.Fatalf("legend entry should be combined line marker, got %+v", entry)
 	}
-	if entry.marker != marker || entry.markerFill != face || entry.markerEdge != edge || entry.markerEdgeWidth != edgeWidth {
+	if entry.marker != marker || entry.markerFill != face || entry.markerEdge != edge || entry.markerEdgeWidth != pointsToPixels(style.Default, edgeWidth) {
 		t.Fatalf("legend marker metadata = %+v", entry)
 	}
 }

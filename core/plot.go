@@ -25,6 +25,9 @@ type PlotOptions struct {
 	MarkerSize      *float64
 	MarkerFaceColor *render.Color
 	MarkerEdgeColor *render.Color
+	MarkerFaceSpec  *MarkerColorSpec
+	MarkerEdgeSpec  *MarkerColorSpec
+	MarkerFaceAlt   *MarkerColorSpec
 	MarkerEdgeWidth *float64
 	MarkEvery       int
 	MarkEverySpec   *MarkEverySpec
@@ -114,6 +117,15 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	line.MarkerEdgeColor = color
 	if opt.MarkerEdgeColor != nil {
 		line.MarkerEdgeColor = *opt.MarkerEdgeColor
+	}
+	if opt.MarkerFaceSpec != nil {
+		line.MarkerFaceSpec = *opt.MarkerFaceSpec
+	}
+	if opt.MarkerEdgeSpec != nil {
+		line.MarkerEdgeSpec = *opt.MarkerEdgeSpec
+	}
+	if opt.MarkerFaceAlt != nil {
+		line.MarkerFaceAlt = *opt.MarkerFaceAlt
 	}
 	if opt.MarkerEdgeWidth != nil {
 		line.MarkerEdgeWidth = *opt.MarkerEdgeWidth

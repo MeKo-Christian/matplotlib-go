@@ -201,7 +201,51 @@ func (s *Scatter2D) Draw(r render.Renderer, ctx *DrawContext) {
 	if s == nil || len(s.XY) == 0 {
 		return
 	}
+	if s.drawHalfFilledMarkers(r, ctx) {
+		return
+	}
 	s.toPathCollection(r, ctx).Draw(r, ctx)
+}
+
+func (s *Scatter2D) drawHalfFilledMarkers(r render.Renderer, ctx *DrawContext) bool {
+	if s == nil || r == nil || ctx == nil {
+		return false
+	}
+	style := s.resolvedMarkerStyle()
+	if markerLineOnly(style) {
+		return false
+	}
+	basePath := s.markerPrototypePathForContext(r, ctx)
+	primaryPath, altPath, ok := splitMarkerFillPaths(style, basePath)
+	if !ok {
+		return false
+	}
+	transparent := render.Color{}
+
+	primary := s.toPathCollection(r, ctx)
+	primary.Path = primaryPath
+	primary.EdgeColor = transparent
+	primary.EdgeColors = nil
+	primary.EdgeWidth = 0
+	primary.EdgeWidths = nil
+	primary.Draw(r, ctx)
+
+	alt := s.toPathCollection(r, ctx)
+	alt.Path = altPath
+	alt.FaceColor = transparent
+	alt.FaceColors = nil
+	alt.EdgeColor = transparent
+	alt.EdgeColors = nil
+	alt.EdgeWidth = 0
+	alt.EdgeWidths = nil
+	alt.Draw(r, ctx)
+
+	edge := s.toPathCollection(r, ctx)
+	edge.Path = basePath
+	edge.FaceColor = transparent
+	edge.FaceColors = nil
+	edge.Draw(r, ctx)
+	return true
 }
 
 // createMarkerPath creates a filled path for the given marker type at the specified position and size.
@@ -430,6 +474,205 @@ func markerLineOnly(style MarkerStyle) bool {
 	default:
 		return false
 	}
+}
+
+func splitMarkerFillPaths(style MarkerStyle, full geom.Path) (geom.Path, geom.Path, bool) {
+	if !markerHalfFilled(style.FillStyle) || len(full.C) == 0 || markerLineOnly(style) {
+		return geom.Path{}, geom.Path{}, false
+	}
+	if style.Type == MarkerCircle || style.Type == MarkerPoint {
+		scale := 1.0
+		if style.Type == MarkerPoint {
+			scale = 0.5
+		}
+		return splitCircleMarkerPath(style.FillStyle, scale), splitCircleMarkerPath(oppositeMarkerFill(style.FillStyle), scale), true
+	}
+	points, ok := closedPathPolygon(full)
+	if !ok {
+		return geom.Path{}, geom.Path{}, false
+	}
+	primary := clipMarkerPolygon(points, style.FillStyle)
+	alt := clipMarkerPolygon(points, oppositeMarkerFill(style.FillStyle))
+	if len(primary) < 3 || len(alt) < 3 {
+		return geom.Path{}, geom.Path{}, false
+	}
+	return polygonPath(primary, true), polygonPath(alt, true), true
+}
+
+func markerHalfFilled(fill MarkerFillStyle) bool {
+	switch fill {
+	case MarkerFillLeft, MarkerFillRight, MarkerFillBottom, MarkerFillTop:
+		return true
+	default:
+		return false
+	}
+}
+
+func oppositeMarkerFill(fill MarkerFillStyle) MarkerFillStyle {
+	switch fill {
+	case MarkerFillLeft:
+		return MarkerFillRight
+	case MarkerFillRight:
+		return MarkerFillLeft
+	case MarkerFillBottom:
+		return MarkerFillTop
+	case MarkerFillTop:
+		return MarkerFillBottom
+	default:
+		return fill
+	}
+}
+
+func splitCircleMarkerPath(fill MarkerFillStyle, size float64) geom.Path {
+	r := 0.5 * size
+	if r <= 0 {
+		return geom.Path{}
+	}
+	const steps = 24
+	points := make([]geom.Pt, 0, steps+3)
+	switch fill {
+	case MarkerFillRight:
+		points = append(points, geom.Pt{})
+		for i := 0; i <= steps; i++ {
+			theta := -math.Pi/2 + math.Pi*float64(i)/steps
+			points = append(points, geom.Pt{X: r * math.Cos(theta), Y: r * math.Sin(theta)})
+		}
+	case MarkerFillLeft:
+		points = append(points, geom.Pt{})
+		for i := 0; i <= steps; i++ {
+			theta := math.Pi/2 + math.Pi*float64(i)/steps
+			points = append(points, geom.Pt{X: r * math.Cos(theta), Y: r * math.Sin(theta)})
+		}
+	case MarkerFillTop:
+		points = append(points, geom.Pt{})
+		for i := 0; i <= steps; i++ {
+			theta := math.Pi + math.Pi*float64(i)/steps
+			points = append(points, geom.Pt{X: r * math.Cos(theta), Y: r * math.Sin(theta)})
+		}
+	case MarkerFillBottom:
+		points = append(points, geom.Pt{})
+		for i := 0; i <= steps; i++ {
+			theta := math.Pi * float64(i) / steps
+			points = append(points, geom.Pt{X: r * math.Cos(theta), Y: r * math.Sin(theta)})
+		}
+	default:
+		return geom.Path{}
+	}
+	return polygonPath(points, true)
+}
+
+func closedPathPolygon(path geom.Path) ([]geom.Pt, bool) {
+	if len(path.C) == 0 || len(path.V) == 0 {
+		return nil, false
+	}
+	points := make([]geom.Pt, 0, len(path.V))
+	vi := 0
+	for _, cmd := range path.C {
+		switch cmd {
+		case geom.MoveTo:
+			if vi != 0 || vi >= len(path.V) {
+				return nil, false
+			}
+			points = append(points, path.V[vi])
+			vi++
+		case geom.LineTo:
+			if vi >= len(path.V) {
+				return nil, false
+			}
+			points = append(points, path.V[vi])
+			vi++
+		case geom.ClosePath:
+		default:
+			return nil, false
+		}
+	}
+	if len(points) > 1 && points[0] == points[len(points)-1] {
+		points = points[:len(points)-1]
+	}
+	return points, len(points) >= 3
+}
+
+func clipMarkerPolygon(points []geom.Pt, fill MarkerFillStyle) []geom.Pt {
+	if len(points) == 0 {
+		return nil
+	}
+	var bounds geom.Rect
+	for i, pt := range points {
+		if i == 0 {
+			bounds = geom.Rect{Min: pt, Max: pt}
+		} else {
+			bounds = expandRect(bounds, pt)
+		}
+	}
+	cx := (bounds.Min.X + bounds.Max.X) * 0.5
+	cy := (bounds.Min.Y + bounds.Max.Y) * 0.5
+	switch fill {
+	case MarkerFillLeft:
+		return clipPolygonAgainstLine(points, func(p geom.Pt) float64 { return cx - p.X })
+	case MarkerFillRight:
+		return clipPolygonAgainstLine(points, func(p geom.Pt) float64 { return p.X - cx })
+	case MarkerFillTop:
+		return clipPolygonAgainstLine(points, func(p geom.Pt) float64 { return cy - p.Y })
+	case MarkerFillBottom:
+		return clipPolygonAgainstLine(points, func(p geom.Pt) float64 { return p.Y - cy })
+	default:
+		return append([]geom.Pt(nil), points...)
+	}
+}
+
+func clipPolygonAgainstLine(points []geom.Pt, signedDistance func(geom.Pt) float64) []geom.Pt {
+	if len(points) == 0 {
+		return nil
+	}
+	out := make([]geom.Pt, 0, len(points)+2)
+	const eps = 1e-12
+	prev := points[len(points)-1]
+	prevD := signedDistance(prev)
+	prevInside := prevD >= -eps
+	for _, cur := range points {
+		curD := signedDistance(cur)
+		curInside := curD >= -eps
+		switch {
+		case curInside && prevInside:
+			out = append(out, cur)
+		case curInside && !prevInside:
+			out = append(out, markerClipIntersection(prev, cur, prevD, curD), cur)
+		case !curInside && prevInside:
+			out = append(out, markerClipIntersection(prev, cur, prevD, curD))
+		}
+		prev = cur
+		prevD = curD
+		prevInside = curInside
+	}
+	return dedupeAdjacentPoints(out)
+}
+
+func markerClipIntersection(a, b geom.Pt, da, db float64) geom.Pt {
+	denom := da - db
+	if math.Abs(denom) < 1e-12 {
+		return b
+	}
+	t := da / denom
+	return geom.Pt{
+		X: a.X + (b.X-a.X)*t,
+		Y: a.Y + (b.Y-a.Y)*t,
+	}
+}
+
+func dedupeAdjacentPoints(points []geom.Pt) []geom.Pt {
+	if len(points) == 0 {
+		return nil
+	}
+	out := points[:0]
+	for _, pt := range points {
+		if len(out) == 0 || pointDistance(out[len(out)-1], pt) > 1e-12 {
+			out = append(out, pt)
+		}
+	}
+	if len(out) > 1 && pointDistance(out[0], out[len(out)-1]) <= 1e-12 {
+		out = out[:len(out)-1]
+	}
+	return out
 }
 
 func scatterAreaScale(area float64, ctx *DrawContext) float64 {
