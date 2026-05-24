@@ -150,7 +150,7 @@ var featureCoverageRows = []FeatureCoverage{
 		Title:                   "Collections and Batched Drawing",
 		UpstreamModules:         []string{"collections.py"},
 		UpstreamGalleryFamilies: []string{"shapes_and_collections", "images_contours_and_fields"},
-		GoFiles:                 []string{"core/collection.go", "core/mesh.go", "core/eventplot.go", "core/hexbin.go"},
+		GoFiles:                 []string{"core/collection_common.go", "core/collection_path.go", "core/collection_line.go", "core/collection_patch.go", "core/collection_poly.go", "core/collection_quadmesh.go", "core/collection_fillbetween.go", "core/mesh.go", "core/eventplot.go", "core/hexbin.go"},
 		CatalogIDs:              []string{"mixed_collection", "large_scatter", "quad_mesh", "gouraud_triangles", "collection_mutable_scalarmap", "specialty_artists"},
 		ExampleIDs:              []string{"specialty_artists"},
 		WebDemoIDs:              []string{"specialty"},

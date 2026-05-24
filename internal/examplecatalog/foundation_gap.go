@@ -136,7 +136,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CoverageID:      "collections",
 		Title:           "Collection variants and setter surface",
 		UpstreamModules: []string{"collections.py"},
-		GoFiles:         []string{"core/collection.go", "core/mesh.go", "core/eventplot.go", "core/hexbin.go", "core/triangulation.go"},
+		GoFiles:         []string{"core/collection_common.go", "core/collection_path.go", "core/collection_line.go", "core/collection_patch.go", "core/collection_poly.go", "core/collection_quadmesh.go", "core/collection_fillbetween.go", "core/mesh.go", "core/eventplot.go", "core/hexbin.go", "core/triangulation.go"},
 		CurrentEquivalent: "Go has PathCollection, LineCollection, PatchCollection, PolyCollection, " +
 			"QuadMesh, event collections, and hexbin collections; PColor uses the same rectilinear " +
 			"QuadMesh implementation as PColorMesh.",
@@ -153,7 +153,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CoverageID:      "collections",
 		Title:           "Collection scalar-mappable updates and offset transforms",
 		UpstreamModules: []string{"collections.py", "cm.py", "colors.py"},
-		GoFiles:         []string{"core/collection.go", "core/scalar_mappable.go", "core/mesh.go", "core/scatter.go"},
+		GoFiles:         []string{"core/collection_common.go", "core/collection_path.go", "core/collection_line.go", "core/collection_patch.go", "core/collection_quadmesh.go", "core/scalar_mappable.go", "core/mesh.go", "core/scatter.go"},
 		CurrentEquivalent: "Go collections carry scalar-mappable metadata; PathCollection, LineCollection, " +
 			"PatchCollection, and QuadMesh expose Go-style SetArray, SetColormap, SetNorm, SetCLim, and " +
 			"face-edge tracking helpers; PathCollection supports a separate offset coordinate transform.",
