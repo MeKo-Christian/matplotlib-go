@@ -91,6 +91,7 @@ import (
 	example_large_scatter "github.com/cwbudde/matplotlib-go/test/parity/large_scatter"
 	example_line2d_markers "github.com/cwbudde/matplotlib-go/test/parity/line2d_markers"
 	example_line2d_semantics "github.com/cwbudde/matplotlib-go/test/parity/line2d_semantics"
+	example_locator_fixed_index_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_fixed_index_labels"
 	example_locator_linear_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_linear_labels"
 	example_lognorm_imshow "github.com/cwbudde/matplotlib-go/test/parity/lognorm_imshow"
 	example_mathtext_basic "github.com/cwbudde/matplotlib-go/test/parity/mathtext_basic"
@@ -219,6 +220,7 @@ var renderByID = map[string]func() image.Image{
 	"formatter_log_mathtext_labels":      example_formatter_log_mathtext_labels.Render,
 	"formatter_percent_labels":           example_formatter_percent_labels.Render,
 	"formatter_scalar_scientific_labels": example_formatter_scalar_scientific_labels.Render,
+	"locator_fixed_index_labels":         example_locator_fixed_index_labels.Render,
 	"locator_linear_labels":              example_locator_linear_labels.Render,
 	"scale_asinh_ticks":                  example_scale_asinh_ticks.Render,
 	"scale_function_defaults":            example_scale_function_defaults.Render,
@@ -299,6 +301,7 @@ var figureByID = map[string]func() *core.Figure{
 	"formatter_log_mathtext_labels":      example_formatter_log_mathtext_labels.Plot,
 	"formatter_percent_labels":           example_formatter_percent_labels.Plot,
 	"formatter_scalar_scientific_labels": example_formatter_scalar_scientific_labels.Plot,
+	"locator_fixed_index_labels":         example_locator_fixed_index_labels.Plot,
 	"locator_linear_labels":              example_locator_linear_labels.Plot,
 	"scale_asinh_ticks":                  example_scale_asinh_ticks.Plot,
 	"scale_function_defaults":            example_scale_function_defaults.Plot,
