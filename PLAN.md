@@ -2032,6 +2032,8 @@ catalog/parity fixture per behavior family.
       selection, symbol escaping/no-escaping decision, and negative values.
 - [x] Add `PercentFormatter` auto-decimal support for configured display ranges
       and fixed-minus handling for negative percentages.
+- [x] Add `PercentFormatter` no-symbol output and TeX / raw-LaTeX symbol
+      handling.
 - [x] Audit `IndexFormatter`: it is not present in the current vendored
       upstream `ticker.py`; no Go compatibility surface is required unless an
       older Matplotlib target is explicitly added.
