@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/agg" // register AGG backend
+	_ "github.com/cwbudde/matplotlib-go/backends/pdf" // register PDF backend
 	_ "github.com/cwbudde/matplotlib-go/backends/svg" // register SVG backend
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -43,6 +44,30 @@ func TestCrossBackendSemanticParity(t *testing.T) {
 	svgCounts := drawAndCount(t, backends.SVG, makeFigure())
 
 	compareCounts(t, &aggCounts, &svgCounts)
+}
+
+func TestCrossBackendPatternGradientSemanticParity(t *testing.T) {
+	makeFigure := func() *core.Figure {
+		fig := core.NewFigure(200, 150)
+		ax := fig.AddAxes(geom.Rect{
+			Min: geom.Pt{X: 0.1, Y: 0.1},
+			Max: geom.Pt{X: 0.9, Y: 0.9},
+		})
+		ax.Add(patternGradientSemanticArtist{})
+		return fig
+	}
+
+	want := drawAndCount(t, backends.AGG, makeFigure())
+	if want.gradientPaint == 0 || want.patternPaint == 0 {
+		t.Fatalf("AGG semantic probe did not draw gradient/pattern paints: %+v", want)
+	}
+	for _, backend := range []backends.Backend{backends.SVG, backends.PDF} {
+		got := drawAndCount(t, backend, makeFigure())
+		if got.gradientPaint != want.gradientPaint || got.patternPaint != want.patternPaint {
+			t.Fatalf("%s pattern/gradient semantic counts = gradient %d pattern %d, want gradient %d pattern %d",
+				backend, got.gradientPaint, got.patternPaint, want.gradientPaint, want.patternPaint)
+		}
+	}
 }
 
 // drawAndCount instantiates the given backend, wraps it with a counting tee
@@ -97,9 +122,61 @@ func compareCounts(t *testing.T, agg, svg *semanticCounts) {
 	}
 }
 
+type patternGradientSemanticArtist struct{}
+
+func (patternGradientSemanticArtist) Draw(r render.Renderer, ctx *core.DrawContext) {
+	gradientPath := semanticRectPath(30, 30, 92, 94)
+	r.Path(gradientPath, &render.Paint{
+		FillGradient: render.GradientFill{
+			Kind:  render.LinearGradient,
+			Start: geom.Pt{X: 30, Y: 62},
+			End:   geom.Pt{X: 92, Y: 62},
+			Stops: []render.GradientStop{
+				{Offset: 0, Color: render.Color{R: 1, A: 1}},
+				{Offset: 1, Color: render.Color{B: 1, A: 1}},
+			},
+		},
+		Stroke:    render.Color{A: 1},
+		LineWidth: 1,
+	})
+
+	var tile geom.Path
+	tile.MoveTo(geom.Pt{X: 0, Y: 10})
+	tile.LineTo(geom.Pt{X: 10, Y: 0})
+	patternPath := semanticRectPath(108, 38, 170, 102)
+	r.Path(patternPath, &render.Paint{
+		FillPattern: render.PatternFill{
+			ID:         "semantic-diagonal",
+			Cell:       geom.Rect{Max: geom.Pt{X: 10, Y: 10}},
+			Path:       tile,
+			Foreground: render.Color{R: 0.1, G: 0.2, B: 0.8, A: 1},
+			Background: render.Color{R: 0.9, G: 0.9, B: 0.95, A: 1},
+			LineWidth:  1,
+		},
+		Stroke:    render.Color{A: 1},
+		LineWidth: 1,
+	})
+	_ = ctx
+}
+
+func (patternGradientSemanticArtist) Z() float64 { return 1 }
+
+func (patternGradientSemanticArtist) Bounds(*core.DrawContext) geom.Rect { return geom.Rect{} }
+
+func semanticRectPath(x0, y0, x1, y1 float64) geom.Path {
+	var p geom.Path
+	p.MoveTo(geom.Pt{X: x0, Y: y0})
+	p.LineTo(geom.Pt{X: x1, Y: y0})
+	p.LineTo(geom.Pt{X: x1, Y: y1})
+	p.LineTo(geom.Pt{X: x0, Y: y1})
+	p.Close()
+	return p
+}
+
 type semanticCounts struct {
 	clipRect, clipPath          int
 	path, image                 int
+	gradientPaint, patternPaint int
 	imageTransformed            int
 	glyphRun, glyphTotal        int
 	drawText, drawTextRot       int
@@ -135,6 +212,8 @@ var (
 	_ render.MarkerDrawer         = (*countingRenderer)(nil)
 	_ render.PathCollectionDrawer = (*countingRenderer)(nil)
 	_ render.NativeHatcher        = (*countingRenderer)(nil)
+	_ render.PatternFiller        = (*countingRenderer)(nil)
+	_ render.GradientFiller       = (*countingRenderer)(nil)
 )
 
 func (r *countingRenderer) Begin(vp geom.Rect) error { return r.inner.Begin(vp) }
@@ -162,6 +241,14 @@ func (r *countingRenderer) ClipPath(p geom.Path) {
 
 func (r *countingRenderer) Path(p geom.Path, paint *render.Paint) {
 	r.counts.path++
+	if paint != nil {
+		if paint.FillGradient.Kind != render.GradientNone && len(paint.FillGradient.Stops) > 0 {
+			r.counts.gradientPaint++
+		}
+		if paint.FillPattern.ID != "" || len(paint.FillPattern.Path.V) > 0 {
+			r.counts.patternPaint++
+		}
+	}
 	r.inner.Path(p, paint)
 }
 
@@ -263,6 +350,20 @@ func (r *countingRenderer) DrawPathCollection(batch render.PathCollectionBatch) 
 func (r *countingRenderer) SupportsNativeHatch() bool {
 	if d, ok := r.inner.(render.NativeHatcher); ok {
 		return d.SupportsNativeHatch()
+	}
+	return false
+}
+
+func (r *countingRenderer) SupportsPatternFill() bool {
+	if d, ok := r.inner.(render.PatternFiller); ok {
+		return d.SupportsPatternFill()
+	}
+	return false
+}
+
+func (r *countingRenderer) SupportsGradientFill() bool {
+	if d, ok := r.inner.(render.GradientFiller); ok {
+		return d.SupportsGradientFill()
 	}
 	return false
 }

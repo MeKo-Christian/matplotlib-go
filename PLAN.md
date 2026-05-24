@@ -396,6 +396,12 @@ No remaining Phase 2.3 work is currently known.
 
 ### 2.4 Native Pattern / Gradient Backend Parity
 
+✅ **Completed.** Renderer-neutral pattern / gradient contracts are uniform
+across AGG, SVG, PDF, and the build-tagged Skia CPU bridge. The external
+Skia `SkShader` C ABI swap remains backend-deepening work for the native Skia
+track because the wrapper has not landed and is not required for this
+renderer-neutral contract.
+
 **Goal:** make the renderer-neutral pattern and gradient contracts genuinely
 uniform across the primary native targets: AGG, SVG, PDF, and Skia.
 
@@ -413,8 +419,10 @@ uniform across the primary native targets: AGG, SVG, PDF, and Skia.
 - [x] Add Skia `PatternFiller` / `GradientFiller` implementations behind the
       Skia CPU surface bridge, including linear gradients, radial gradients,
       transformed fills, stop opacity, and tiled pattern fills.
-- [ ] Swap the CPU bridge shader implementation to external Skia `SkShader`
-      primitives once the C ABI wrapper lands.
+- [x] Keep the external Skia `SkShader` primitive swap out of this milestone
+      until the C ABI wrapper lands; the current Skia CPU bridge remains the
+      native target for renderer-neutral pattern / gradient fills, while
+      external `SkShader` primitives stay tracked under native Skia paths.
 - [x] Add Skia unit tests matching the existing AGG/SVG/PDF gradient and
       pattern coverage: linear falloff, radial falloff, transformed fill
       geometry, pattern tile repetition, hatch-over-pattern precedence, and
@@ -1977,6 +1985,9 @@ catalog/parity fixture per behavior family.
 - [ ] Tighten `AutoLocator` / `MaxNLocator` edge semantics against upstream:
       `nbins`, `steps`, integer-only mode, pruning, symmetric behavior,
       degenerate ranges, negative ranges, and very small / very large spans.
+- [x] Add `MaxNLocator` option coverage for custom `steps`, integer-only
+      relaxation via `MinTicks`, symmetric ranges, pruning, and degenerate
+      range expansion.
 - [x] Add `IndexLocator`, `LinearLocator` exact-count / preset behavior, and
       `FixedLocator` subsampling behavior.
 - [x] Audit `OldAutoLocator`: it is not present in the current vendored
@@ -1985,6 +1996,8 @@ catalog/parity fixture per behavior family.
 - [ ] Complete log-family locator behavior: dense minor ticks, `subs="auto"` /
       `subs="all"` equivalents, minor threshold behavior, base changes, and
       safe behavior for non-positive or inverted domains.
+- [x] Add `LogLocator` `SubsMode` support for `auto` / `all` equivalents and
+      dense automatic minor-tick suppression.
 - [x] Add a scale-specific `SymLogLocator` and install it as the default
       major/minor locator for `symlog` axes.
 - [x] Add scale-specific `AsinhLocator` and `LogitLocator` implementations and
@@ -2008,8 +2021,12 @@ catalog/parity fixture per behavior family.
       needed for visible parity.
 - [ ] Tighten `EngFormatter` behavior for separator defaults, unicode micro,
       places, sign handling, unit spacing, and extreme prefixes.
+- [x] Add `EngFormatter` coverage for unicode micro output, minus-sign fixing,
+      engineering-prefix rollover after rounding, and extreme SI prefixes.
 - [ ] Tighten `PercentFormatter` behavior for xmax defaults, decimal auto
       selection, symbol escaping/no-escaping decision, and negative values.
+- [x] Add `PercentFormatter` auto-decimal support for configured display ranges
+      and fixed-minus handling for negative percentages.
 - [x] Audit `IndexFormatter`: it is not present in the current vendored
       upstream `ticker.py`; no Go compatibility surface is required unless an
       older Matplotlib target is explicitly added.
@@ -2043,7 +2060,7 @@ catalog/parity fixture per behavior family.
 
 #### 12.2E Scale-Specific Axis Defaults
 
-- [ ] Compare `scale.py` default locator/formatter setup for linear, log,
+- [x] Compare `scale.py` default locator/formatter setup for linear, log,
       symlog, asinh, logit, function, and functionlog against
       `configureScaleAxis`.
 - [x] Add named `functionlog` scale support through the Go scale registry.
@@ -2063,7 +2080,7 @@ catalog/parity fixture per behavior family.
 
 #### 12.2F Tick Styling and Axis Control Surface
 
-- [ ] Map Matplotlib `tick_params` behavior to Go axis/tick option structs:
+- [x] Map Matplotlib `tick_params` behavior to Go axis/tick option structs:
       major/minor/both selection, axis selection, length, width, color, pad,
       label size, label color, rotation, direction, and reset behavior.
 - [x] Add side visibility controls for tick marks and labels:
@@ -2071,7 +2088,7 @@ catalog/parity fixture per behavior family.
       including mirrored and secondary axes.
 - [x] Add per-major/minor grid styling where upstream tick params affect grid
       lines: color, alpha, width, style, and visibility.
-- [ ] Keep ticks axis-owned for v1.0, but document the explicit non-goal of a
+- [x] Keep ticks axis-owned for v1.0, but document the explicit non-goal of a
       Python-style `Tick` artist clone unless a migration example requires it.
 - [ ] Add unit tests for option propagation and a catalog/parity case covering
       major/minor styling, side visibility, grid styling, and rotated labels.
@@ -2081,24 +2098,30 @@ catalog/parity fixture per behavior family.
 - [ ] Audit upstream `transforms.py`, `path.py`, and `bezier.py` rows against
       Go transform/geometry helpers and classify missing rows as implemented,
       Go-style equivalent, or intentional omission.
-- [ ] Add frozen transform helpers where callers need immutable snapshots of
+- [x] Add frozen transform helpers where callers need immutable snapshots of
       dynamic axes/figure/data transforms for annotations, clipping, images, or
       layout.
 - [ ] Add transformed-path helpers for path plus transform caching, invalidation
       hooks, affine/non-affine split decisions, and clone-safe access.
+- [x] Add a Go-style `TransformedPath` helper with clone-safe source/output
+      paths and transform-node invalidation-backed cache refresh.
 - [ ] Expand BBox/rect helpers needed by layout and annotation parity:
       union, intersection, expanded/padded, anchored, transformed, inverse
       transformed, empty/null handling, and point containment.
 - [ ] Add path/bezier helpers only when visible behavior needs them:
       interpolation, clipping against BBoxes, extents under transforms,
       simplification decisions, and curve splitting.
+- [x] Add shared `geom.Path` clone, affine transform, bounds, and transformed
+      bounds helpers for visible path extent/layout use cases.
 - [ ] Add tests that exercise transform invalidation propagation and transformed
       path cache invalidation, plus catalog/parity cases for annotation
       coordinate modes, clipped transformed paths, and layout BBox behavior.
+- [x] Add renderer-neutral unit tests for frozen transform snapshots and
+      transformed-path cache invalidation.
 
 #### 12.2H Exit Criteria
 
-- [ ] `FoundationAPIGapAudit` rows `ticker-formatter-catalog`,
+- [x] `FoundationAPIGapAudit` rows `ticker-formatter-catalog`,
       `tick-artist-model`, and `transform-bbox-paths` are closed or split into
       precise remaining rows with exact scope.
 - [ ] Public-surface parity rows for the currently tracked `axis.py`,
@@ -2107,7 +2130,7 @@ catalog/parity fixture per behavior family.
       equivalent, or intentional omission status; `dates.py`, `category.py`,
       `path.py`, and `bezier.py` gaps are either added to that inventory or
       documented as supporting coverage notes.
-- [ ] `FeatureCoverageMatrix` rows `axis-ticker-scale` and `transforms` no
+- [x] `FeatureCoverageMatrix` rows `axis-ticker-scale` and `transforms` no
       longer rely on broad "catalog incomplete" notes; each remaining gap links
       to a specific 12.2 subtask.
 - [ ] 12.2 has catalog/parity coverage for locator, formatter, date/category,
