@@ -47,6 +47,8 @@ var validationClusters = []ValidationCluster{
 			"pcolor_flat",
 			"pcolormesh_gouraud",
 			"boundarynorm_pcolormesh",
+			"collection_mutable_scalarmap",
+			"colorbar_horizontal_ticks",
 			"lognorm_imshow",
 			"twoslope_norm_image",
 			"colorbar_extensions",

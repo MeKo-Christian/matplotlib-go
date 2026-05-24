@@ -151,12 +151,12 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Title:           "Collection scalar-mappable updates and offset transforms",
 		UpstreamModules: []string{"collections.py", "cm.py", "colors.py"},
 		GoFiles:         []string{"core/collection.go", "core/scalar_mappable.go", "core/mesh.go", "core/scatter.go"},
-		CurrentEquivalent: "Go collections carry scalar-mappable metadata; PathCollection and " +
-			"PatchCollection expose Go-style SetArray, SetColormap, SetNorm, SetCLim, and " +
+		CurrentEquivalent: "Go collections carry scalar-mappable metadata; PathCollection, " +
+			"PatchCollection, and QuadMesh expose Go-style SetArray, SetColormap, SetNorm, SetCLim, and " +
 			"face-edge tracking helpers.",
 		Gap: "Matplotlib's broader draw-time scalar-mapping callbacks, QuadMesh array shape " +
-			"updates, and the full mutable collection setter surface are still only partially " +
-			"represented.",
+			"variants beyond the supported flat/nearest cell and Gouraud vertex updates, and the full " +
+			"mutable collection setter surface are still only partially represented.",
 		Decision: GapDecisionImplement,
 		Rationale: "Scalar-mappable collection updates are required for colorbar correctness and public " +
 			"collection parity; obscure mutable setters can stay Go-idiomatic.",
@@ -241,9 +241,9 @@ var foundationAPIGaps = []FoundationAPIGap{
 		UpstreamModules: []string{"colorbar.py", "colorizer.py"},
 		GoFiles:         []string{"core/colorbar.go", "core/scalar_mappable.go", "core/norm.go"},
 		CurrentEquivalent: "Go has figure-level colorbars backed by ScalarMappable, colormap/norm routing, " +
-			"labels, and extension patches.",
-		Gap: "Horizontal colorbars, location / anchor combinations, custom tick locators/formatters, " +
-			"boundaries, spacing, drawedges, and multi-axes placement semantics remain thin.",
+			"vertical and horizontal placement, labels, extension patches, and explicit tick lists.",
+		Gap: "Anchor combinations, custom formatter objects, boundaries, spacing, drawedges, and " +
+			"multi-axes placement semantics remain thin.",
 		Decision: GapDecisionImplement,
 		Rationale: "Colorbar rendering is common and already covered by parity fixtures; missing public " +
 			"semantics should become catalog-visible work.",

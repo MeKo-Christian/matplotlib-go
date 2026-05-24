@@ -413,12 +413,15 @@ type Axes struct {
 
 	childAxes []*Axes
 
-	colorbarParent  *Axes
-	colorbarWidth   float64
-	colorbarPadding float64
-	colorbarAspect  float64
-	colorbarBase    geom.Rect
-	colorbarExtend  string
+	colorbarParent   *Axes
+	colorbarWidth    float64
+	colorbarPadding  float64
+	colorbarAspect   float64
+	colorbarBase     geom.Rect
+	colorbarExtend   string
+	colorbarLocation string
+	colorbarTicks    []float64
+	colorbarBounds   []float64
 
 	coordFormatter CoordFormatter
 }
@@ -2483,6 +2486,9 @@ func (a *Axes) adjustedLayout(f *Figure) geom.Rect {
 
 func (a *Axes) adjustedColorbarLayout(f *Figure, px geom.Rect) geom.Rect {
 	if a == nil || f == nil || f.SizePx.X <= 0 || f.SizePx.Y <= 0 {
+		return px
+	}
+	if colorbarIsHorizontal(a.colorbarLocation) {
 		return px
 	}
 	width := a.colorbarWidth

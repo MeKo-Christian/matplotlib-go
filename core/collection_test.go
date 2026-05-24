@@ -604,6 +604,89 @@ func TestQuadMeshUsesNativeBatchWhenAvailable(t *testing.T) {
 	}
 }
 
+func TestQuadMeshSetArrayRefreshesFlatColorsAndFaceEdges(t *testing.T) {
+	cmapName := "quadmesh-flat-scalar-array"
+	low := render.Color{R: 1, A: 1}
+	high := render.Color{B: 1, A: 1}
+	matcolor.RegisterColormap(cmapName, matcolor.NewColormap(cmapName, []matcolor.ColorStop{
+		{Pos: 0, Color: low},
+		{Pos: 1, Color: high},
+	}))
+
+	mesh := &QuadMesh{
+		PatchCollection: PatchCollection{
+			Collection: Collection{
+				Colormap: cmapName,
+			},
+			FaceColor: render.Color{G: 1, A: 1},
+			EdgeColor: render.Color{A: 1},
+			EdgeWidth: 1,
+		},
+		XEdges:  []float64{0, 1, 2},
+		YEdges:  []float64{0, 1, 2},
+		Shading: MeshShadingFlat,
+	}
+	mesh.SetEdgeColorFace()
+
+	if err := mesh.SetArray([]float64{0, 10, 5, 15}); err != nil {
+		t.Fatalf("SetArray: %v", err)
+	}
+	if got := mesh.GetArray(); len(got) != 4 || got[0] != 0 || got[3] != 15 {
+		t.Fatalf("GetArray = %v, want copied flattened mesh values", got)
+	}
+	if got, want := mesh.FaceColors[0], low; got != want {
+		t.Fatalf("first flat face = %+v, want %+v", got, want)
+	}
+	if got, want := mesh.FaceColors[3], high; got != want {
+		t.Fatalf("last flat face = %+v, want %+v", got, want)
+	}
+	if got, want := mesh.EdgeColors[3], mesh.FaceColors[3]; got != want {
+		t.Fatalf("face-style flat edge = %+v, want mapped face %+v", got, want)
+	}
+
+	mesh.SetColormap("plasma")
+	if got := mesh.ScalarMap().Colormap; got != "plasma" {
+		t.Fatalf("mesh colormap = %q, want plasma", got)
+	}
+	if got, want := mesh.EdgeColors[3], mesh.FaceColors[3]; got != want {
+		t.Fatalf("face-style edge after cmap = %+v, want mapped face %+v", got, want)
+	}
+}
+
+func TestQuadMeshSetArrayRefreshesGouraudValuesAndFallbackFaces(t *testing.T) {
+	cmapName := "quadmesh-gouraud-scalar-array"
+	low := render.Color{R: 1, A: 1}
+	high := render.Color{B: 1, A: 1}
+	matcolor.RegisterColormap(cmapName, matcolor.NewColormap(cmapName, []matcolor.ColorStop{
+		{Pos: 0, Color: low},
+		{Pos: 1, Color: high},
+	}))
+
+	mesh := &QuadMesh{
+		PatchCollection: PatchCollection{
+			Collection: Collection{
+				Colormap: cmapName,
+			},
+		},
+		XEdges:  []float64{0, 1},
+		YEdges:  []float64{0, 1},
+		Shading: MeshShadingGouraud,
+	}
+
+	if err := mesh.SetArray([]float64{0, 10, 10, 20}); err != nil {
+		t.Fatalf("SetArray: %v", err)
+	}
+	if len(mesh.Values) != 2 || len(mesh.Values[0]) != 2 || mesh.Values[1][1] != 20 {
+		t.Fatalf("gouraud values = %v, want updated 2x2 grid", mesh.Values)
+	}
+	if len(mesh.FaceColors) != 1 {
+		t.Fatalf("gouraud fallback faces = %d, want 1", len(mesh.FaceColors))
+	}
+	if got, want := mesh.FaceColors[0], mesh.ScalarMap().Color(10, 1); got != want {
+		t.Fatalf("gouraud fallback face = %+v, want average mapped face %+v", got, want)
+	}
+}
+
 func TestFillBetweenPolyCollectionBounds(t *testing.T) {
 	fill := &FillBetweenPolyCollection{
 		PatchCollection: PatchCollection{

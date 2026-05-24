@@ -1,0 +1,39 @@
+package colorbar_horizontal_ticks
+
+import (
+	"image"
+
+	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+)
+
+func Plot() *core.Figure {
+	fig, ax := common.ColorNormFixtureFigure("Horizontal Colorbar Ticks")
+	cmap := "viridis"
+	mesh := ax.PColorMesh([][]float64{
+		{-1.0, -0.5, 0.0, 0.5},
+		{-0.6, -0.1, 0.4, 0.9},
+		{-0.2, 0.3, 0.8, 1.2},
+	}, core.MeshOptions{
+		XEdges:   []float64{0, 1, 2, 3, 4},
+		YEdges:   []float64{0, 1, 2, 3},
+		Shading:  core.MeshShadingFlat,
+		Colormap: &cmap,
+		VMin:     common.FloatPtr(-1),
+		VMax:     common.FloatPtr(1.2),
+	})
+	if mesh != nil {
+		fig.AddColorbar(ax, mesh, core.ColorbarOptions{
+			Location: "bottom",
+			Label:    "horizontal",
+			Ticks:    []float64{-1, 0, 1},
+		})
+	}
+	ax.SetXLim(0, 4)
+	ax.SetYLim(0, 3)
+	return fig
+}
+
+func Render() image.Image {
+	return common.RenderFixtureFigure(Plot(), 640, 360)
+}

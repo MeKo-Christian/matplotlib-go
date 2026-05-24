@@ -141,13 +141,14 @@ func (a *Axes) PColorMesh(data [][]float64, opts ...MeshOptions) *QuadMesh {
 	mesh := &QuadMesh{
 		PatchCollection: PatchCollection{
 			Collection: Collection{
-				Coords:   Coords(CoordData),
-				Label:    opt.Label,
-				Alpha:    1,
-				Colormap: mapping.Colormap,
-				Norm:     mapping.Norm,
-				VMin:     mapping.VMin,
-				VMax:     mapping.VMax,
+				Coords:       Coords(CoordData),
+				Label:        opt.Label,
+				Alpha:        1,
+				Colormap:     mapping.Colormap,
+				Norm:         mapping.Norm,
+				VMin:         mapping.VMin,
+				VMax:         mapping.VMax,
+				ScalarValues: flattenMeshValues(values),
 			},
 			FaceColors: faceColors,
 			EdgeColors: edgeColors,

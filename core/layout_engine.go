@@ -366,25 +366,56 @@ func figureColorbarMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engin
 		if ax == nil || ax.colorbarParent == nil {
 			continue
 		}
+		location := ax.colorbarLocation
+		if location == "" {
+			location = "right"
+		}
 		if engine == LayoutEngineConstrained && ax.colorbarParent.subplotSpec != nil {
 			base := ax.colorbarParent.RectFraction
-			width := resolvedColorbarWidth(fig, base, ax.colorbarWidth, resolvedColorbarAspect(ax.colorbarAspect))
-			if width <= 0 {
+			thickness := resolvedColorbarThickness(fig, base, ax.colorbarWidth, resolvedColorbarAspect(ax.colorbarAspect), location)
+			if thickness <= 0 {
 				continue
 			}
 			padding := measureAxesDecorationPadding(ax, fig, r, vp, alignment)
-			padding.right += ax.effectiveRC(fig).AxisLineWidth
-			colorbarSpace := (width + resolvedColorbarPadding(base, ax.colorbarPadding)) * vp.W()
-			margin.right = math.Max(margin.right, colorbarSpace+padding.right)
+			colorbarPad := resolvedColorbarPadding(base, ax.colorbarPadding, location)
+			if colorbarIsHorizontal(location) {
+				padding.bottom += ax.effectiveRC(fig).AxisLineWidth
+				colorbarSpace := (thickness + colorbarPad) * vp.H()
+				if location == "top" {
+					margin.top = math.Max(margin.top, colorbarSpace+padding.top)
+				} else {
+					margin.bottom = math.Max(margin.bottom, colorbarSpace+padding.bottom)
+				}
+			} else {
+				padding.right += ax.effectiveRC(fig).AxisLineWidth
+				colorbarSpace := (thickness + colorbarPad) * vp.W()
+				if location == "left" {
+					margin.left = math.Max(margin.left, colorbarSpace+padding.left)
+				} else {
+					margin.right = math.Max(margin.right, colorbarSpace+padding.right)
+				}
+			}
 			continue
 		}
 		base := colorbarLayoutBase(ax.colorbarParent, ax)
-		if resolvedColorbarWidth(fig, base, ax.colorbarWidth, resolvedColorbarAspect(ax.colorbarAspect)) <= 0 {
+		if resolvedColorbarThickness(fig, base, ax.colorbarWidth, resolvedColorbarAspect(ax.colorbarAspect), location) <= 0 {
 			continue
 		}
 		padding := measureAxesDecorationPadding(ax, fig, r, vp, alignment)
-		padding.right += ax.effectiveRC(fig).AxisLineWidth
-		margin.right = math.Max(margin.right, padding.right)
+		if colorbarIsHorizontal(location) {
+			padding.bottom += ax.effectiveRC(fig).AxisLineWidth
+			if location == "top" {
+				margin.top = math.Max(margin.top, padding.top)
+			} else {
+				margin.bottom = math.Max(margin.bottom, padding.bottom)
+			}
+		} else if location == "left" {
+			padding.left += ax.effectiveRC(fig).AxisLineWidth
+			margin.left = math.Max(margin.left, padding.left)
+		} else {
+			padding.right += ax.effectiveRC(fig).AxisLineWidth
+			margin.right = math.Max(margin.right, padding.right)
+		}
 	}
 	return margin
 }
@@ -456,46 +487,26 @@ func syncColorbarAxes(fig *Figure) {
 		parent := ax.colorbarParent
 		base := colorbarLayoutBase(parent, ax)
 		ax.colorbarBase = base
-		padding := resolvedColorbarLayoutPadding(fig, base, ax.colorbarPadding)
-		width := resolvedColorbarWidth(fig, base, ax.colorbarWidth, resolvedColorbarAspect(ax.colorbarAspect))
+		location := ax.colorbarLocation
+		if location == "" {
+			location = "right"
+		}
+		padding := resolvedColorbarLayoutPadding(fig, base, ax.colorbarPadding, location)
+		thickness := resolvedColorbarThickness(fig, base, ax.colorbarWidth, resolvedColorbarAspect(ax.colorbarAspect), location)
+		slotThickness := resolvedColorbarSlotThickness(base, ax.colorbarWidth, location)
 		useResolvedSlot := colorbarUsesResolvedSlot(fig, parent)
 		if useResolvedSlot {
 			base = parent.RectFraction
 			ax.colorbarBase = base
-			padding = resolvedColorbarPadding(base, ax.colorbarPadding)
-			width = resolvedColorbarWidth(fig, base, ax.colorbarWidth, resolvedColorbarAspect(ax.colorbarAspect))
-			slotWidth := resolvedColorbarSlotWidth(base, ax.colorbarWidth)
-			slotLeft := base.Max.X + padding
-			slotLeft += constrainedColorbarSlotOffset(fig, base)
-			if slotLeft+slotWidth > 1 {
-				slotWidth = math.Max(width, 1-slotLeft)
-			}
-			ax.RectFraction = geom.Rect{
-				Min: geom.Pt{
-					X: slotLeft,
-					Y: base.Min.Y,
-				},
-				Max: geom.Pt{
-					X: slotLeft + slotWidth,
-					Y: base.Max.Y,
-				},
-			}
-			ax.RectFraction = insetColorbarRectForExtensions(fig, ax.RectFraction, ax.colorbarExtend)
+			padding = resolvedColorbarPadding(base, ax.colorbarPadding, location)
+			thickness = resolvedColorbarThickness(fig, base, ax.colorbarWidth, resolvedColorbarAspect(ax.colorbarAspect), location)
+			slotThickness = resolvedColorbarSlotThickness(base, ax.colorbarWidth, location)
+			_, ax.RectFraction = colorbarPlacementRect(fig, base, thickness, slotThickness, padding, location, useResolvedSlot)
+			ax.RectFraction = insetColorbarRectForExtensions(fig, ax.RectFraction, ax.colorbarExtend, location)
 			continue
 		}
-		parent.RectFraction = colorbarParentRect(base, width, padding, useResolvedSlot)
-		slotLeft := colorbarSlotLeft(base, width, useResolvedSlot)
-		ax.RectFraction = geom.Rect{
-			Min: geom.Pt{
-				X: slotLeft,
-				Y: parent.RectFraction.Min.Y,
-			},
-			Max: geom.Pt{
-				X: slotLeft + width,
-				Y: parent.RectFraction.Max.Y,
-			},
-		}
-		ax.RectFraction = insetColorbarRectForExtensions(fig, ax.RectFraction, ax.colorbarExtend)
+		parent.RectFraction, ax.RectFraction = colorbarPlacementRect(fig, base, thickness, slotThickness, padding, location, useResolvedSlot)
+		ax.RectFraction = insetColorbarRectForExtensions(fig, ax.RectFraction, ax.colorbarExtend, location)
 	}
 }
 

@@ -2090,24 +2090,24 @@ artist color state and colorbar state synchronized.
 - [x] Add the first Go-style mutable scalar-mapping slice for path, patch, and
       polygon collections: `SetArray`, `GetArray`, `SetColormap`, `SetNorm`,
       `SetCLim`, and face-edge tracking.
-- [ ] Add Go-style setters for colormap, norm, and clim updates that refresh
+- [x] Add Go-style setters for colormap, norm, and clim updates that refresh
       stored mapping metadata and recompute mapped face colors where the artist
       owns scalar-derived colors.
-- [ ] Preserve explicit face/edge colors when no scalar array is active, and
+- [x] Preserve explicit face/edge colors when no scalar array is active, and
       define the precedence between scalar-derived face colors, explicit face
       colors, and edge colors matching Matplotlib where visible.
-- [ ] Support Matplotlib-like "edgecolors='face'" semantics for scalar-mapped
+- [x] Support Matplotlib-like "edgecolors='face'" semantics for scalar-mapped
       collections so edge colors can track mapped face colors after scalar,
       norm, cmap, or clim updates.
 - [ ] Add collection offset-transform support needed by scatter/path
       collections without changing examples to compensate for transform gaps.
-- [ ] Ensure colorbars derived from a mutable mappable observe updated mapping
+- [x] Ensure colorbars derived from a mutable mappable observe updated mapping
       state, either through explicit synchronization or a documented Go-style
       refresh path.
 - [ ] Add renderer-neutral unit tests for mutable array updates, cmap/norm/clim
       changes, face/edge precedence, offset transforms, and colorbar mapping
       synchronization.
-- [ ] Add a `collection_mutable_scalarmap` catalog/parity fixture that updates
+- [x] Add a `collection_mutable_scalarmap` catalog/parity fixture that updates
       a collection's scalar data and colormap before rendering.
 
 #### 12.3C Mesh, PColor, and Scalar Grid Behavior
@@ -2117,11 +2117,11 @@ artist color state and colorbar state synchronized.
       shading, masking, edge handling, and scalar array updates.
 - [ ] Tighten flat/nearest/Gouraud shape validation and edge inference only
       where current behavior diverges visibly from Matplotlib fixtures.
-- [ ] Make `QuadMesh` scalar updates recompute flat cell colors and Gouraud
+- [x] Make `QuadMesh` scalar updates recompute flat cell colors and Gouraud
       corner colors consistently with its stored shading mode.
 - [ ] Verify masked and non-finite mesh values continue to route through
       colormap bad/under/over colors after mutable mapping changes.
-- [ ] Add small catalog/parity cases for mutable pcolormesh scalar data and any
+- [x] Add small catalog/parity cases for mutable pcolormesh scalar data and any
       shape/shading mismatch discovered during the audit.
 
 #### 12.3D Colorbar Orientation, Ticks, and Layout Breadth
@@ -2129,14 +2129,14 @@ artist color state and colorbar state synchronized.
 - [ ] Audit upstream `colorbar.py` for orientation, location, anchor, shrink,
       aspect, fraction, pad, ticklocation, boundaries, values, spacing,
       drawedges, extend, extendfrac, extendrect, and multi-axes behavior.
-- [ ] Add horizontal colorbar placement with bottom/top tick and label defaults,
+- [x] Add horizontal colorbar placement with bottom/top tick and label defaults,
       parent-axes shrinking, extension geometry, and constrained-layout sync.
 - [ ] Add location and anchor support for left/right/top/bottom colorbars using
       Go option fields rather than Python-style overloaded kwargs.
-- [ ] Add custom tick locator/formatter or explicit tick-list support for
+- [x] Add custom tick locator/formatter or explicit tick-list support for
       colorbars, preserving log, boundary, and nonlinear defaults when custom
       ticks are not supplied.
-- [ ] Expand boundary colorbar rendering for proportional/uniform spacing,
+- [x] Expand boundary colorbar rendering for proportional/uniform spacing,
       explicit boundaries/values, drawedges, extension shape variants, and
       visible outline behavior.
 - [ ] Support colorbars attached to multiple parent axes where layout can be

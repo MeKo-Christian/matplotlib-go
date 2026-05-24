@@ -79,6 +79,143 @@ func TestFigureAddColorbarConfiguresAxes(t *testing.T) {
 	}
 }
 
+func TestFigureAddHorizontalColorbarConfiguresBottomAxes(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{
+		{0, 1},
+		{2, 3},
+	})
+
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Location: "bottom", Label: "Intensity"})
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+
+	base := geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	}
+	wantHeight := resolvedColorbarThickness(fig, base, 0, defaultColorbarAspect, "bottom")
+	wantSlotHeight := resolvedColorbarSlotThickness(base, 0, "bottom")
+	wantPadding := resolvedColorbarPadding(base, 0, "bottom")
+	if got, want := ax.RectFraction.Min.Y, base.Min.Y+wantSlotHeight+wantPadding; !floatApprox(got, want, 1e-12) {
+		t.Fatalf("expected parent to reserve bottom colorbar space: got bottom=%v want %v", got, want)
+	}
+	if got, want := cbAx.RectFraction.H(), wantHeight; !floatApprox(got, want, 1e-12) {
+		t.Fatalf("expected colorbar height to follow default aspect: got %v want %v", got, want)
+	}
+	if got, want := cbAx.RectFraction.Min.Y, base.Min.Y; !floatApprox(got, want, 1e-12) {
+		t.Fatalf("expected bottom colorbar to start at base bottom: got %v want %v", got, want)
+	}
+	if cbAx.RectFraction.Max.Y >= ax.RectFraction.Min.Y {
+		t.Fatalf("expected colorbar below parent axes, got colorbar=%+v parent=%+v", cbAx.RectFraction, ax.RectFraction)
+	}
+	if cbAx.RectFraction.Min.X != ax.RectFraction.Min.X || cbAx.RectFraction.Max.X != ax.RectFraction.Max.X {
+		t.Fatalf("expected horizontal colorbar to share parent horizontal extent, got %+v", cbAx.RectFraction)
+	}
+	if cbAx.XAxis == nil || !cbAx.XAxis.ShowTicks || !cbAx.XAxis.ShowLabels {
+		t.Fatalf("expected visible bottom x-axis ticks and labels, got %+v", cbAx.XAxis)
+	}
+	if cbAx.YAxis.ShowSpine || cbAx.YAxis.ShowTicks || cbAx.YAxis.ShowLabels {
+		t.Fatalf("expected hidden horizontal colorbar y-axis, got %+v", cbAx.YAxis)
+	}
+	if cbAx.effectiveXLabelSide() != AxisBottom {
+		t.Fatalf("expected horizontal colorbar label on bottom side")
+	}
+	if cbAx.XLabel != "Intensity" {
+		t.Fatalf("unexpected colorbar x label %q", cbAx.XLabel)
+	}
+	xMin, xMax := cbAx.XScale.Domain()
+	if xMin != 0 || xMax != 3 {
+		t.Fatalf("unexpected horizontal colorbar limits %v..%v", xMin, xMax)
+	}
+	cb, ok := cbAx.Artists[0].(*Colorbar)
+	if !ok {
+		t.Fatalf("colorbar artist = %T, want *Colorbar", cbAx.Artists[0])
+	}
+	if cb.Orientation != "horizontal" {
+		t.Fatalf("colorbar orientation = %q, want horizontal", cb.Orientation)
+	}
+
+	gotLayout := cbAx.adjustedLayout(fig)
+	wantRect := cbAx.layout(fig)
+	if !floatApprox(gotLayout.W(), wantRect.W(), 1e-12) {
+		t.Fatalf("horizontal colorbar adjusted width = %v, want full slot width %v", gotLayout.W(), wantRect.W())
+	}
+	if !floatApprox(gotLayout.H(), wantRect.H(), 1e-12) {
+		t.Fatalf("horizontal colorbar adjusted height = %v, want slot height %v", gotLayout.H(), wantRect.H())
+	}
+}
+
+func TestFigureAddHorizontalColorbarConfiguresTopAxes(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{{0, 1}, {2, 3}})
+
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Location: "top", Label: "Intensity"})
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+
+	base := geom.Rect{Min: geom.Pt{X: 0.10, Y: 0.12}, Max: geom.Pt{X: 0.78, Y: 0.88}}
+	wantSlotHeight := resolvedColorbarSlotThickness(base, 0, "top")
+	wantPadding := resolvedColorbarPadding(base, 0, "top")
+	if got, want := ax.RectFraction.Max.Y, base.Max.Y-wantSlotHeight-wantPadding; !floatApprox(got, want, 1e-12) {
+		t.Fatalf("expected parent to reserve top colorbar space: got top=%v want %v", got, want)
+	}
+	if cbAx.RectFraction.Min.Y <= ax.RectFraction.Max.Y {
+		t.Fatalf("expected top colorbar above parent axes, got colorbar=%+v parent=%+v", cbAx.RectFraction, ax.RectFraction)
+	}
+	if cbAx.XAxisTop == nil || !cbAx.XAxisTop.ShowTicks || !cbAx.XAxisTop.ShowLabels {
+		t.Fatalf("expected visible top x-axis ticks and labels, got %+v", cbAx.XAxisTop)
+	}
+	if cbAx.XAxis.ShowTicks || cbAx.XAxis.ShowLabels {
+		t.Fatalf("expected hidden bottom x-axis ticks and labels, got %+v", cbAx.XAxis)
+	}
+	if cbAx.effectiveXLabelSide() != AxisTop {
+		t.Fatalf("expected horizontal top colorbar label on top side")
+	}
+}
+
+func TestHorizontalColorbarDrawsGradientLeftToRight(t *testing.T) {
+	var r colorbarRecordingRenderer
+	clip := geom.Rect{
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 42, Y: 80},
+	}
+
+	cb := &Colorbar{
+		Mapping:     ScalarMapInfo{Colormap: "gray", VMin: 0, VMax: 1}.Resolved(),
+		Orientation: "horizontal",
+		Alpha:       1,
+		BorderColor: render.Color{A: 1},
+		BorderWidth: 1,
+	}
+	cb.Draw(&r, &DrawContext{Clip: clip})
+
+	if len(r.paths) != 257 {
+		t.Fatalf("path count = %d, want 256 color cells plus outline", len(r.paths))
+	}
+	first := r.paths[0]
+	last := r.paths[255]
+	if len(first.V) < 4 || len(last.V) < 4 {
+		t.Fatalf("colorbar cell paths are malformed")
+	}
+	if first.V[0].X >= last.V[0].X {
+		t.Fatalf("horizontal colorbar cells should advance left-to-right: first=%+v last=%+v", first.V[0], last.V[0])
+	}
+	if first.V[0].Y != last.V[0].Y || first.V[2].Y != last.V[2].Y {
+		t.Fatalf("horizontal colorbar cells should share vertical span: first=%+v last=%+v", first.V, last.V)
+	}
+}
+
 func TestColorbarDrawRendersGradientAndTickLabels(t *testing.T) {
 	fig := NewFigure(900, 600)
 	ax := fig.AddAxes(geom.Rect{
@@ -217,6 +354,128 @@ func TestFigureAddColorbarUsesBoundaryNormTicks(t *testing.T) {
 	}
 }
 
+func TestFigureAddColorbarUsesExplicitBoundariesAsTicks(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{{0, 2}, {4, 5}})
+
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Boundaries: []float64{0, 2, 5}, Values: []float64{1, 4}})
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	loc, ok := cbAx.YAxisRight.Locator.(FixedLocator)
+	if !ok {
+		t.Fatalf("right colorbar locator = %T, want FixedLocator", cbAx.YAxisRight.Locator)
+	}
+	want := []float64{0, 2, 5}
+	if len(loc.TicksList) != len(want) {
+		t.Fatalf("explicit boundary ticks = %v, want %v", loc.TicksList, want)
+	}
+	for i := range want {
+		if loc.TicksList[i] != want[i] {
+			t.Fatalf("explicit boundary tick %d = %v, want %v", i, loc.TicksList[i], want[i])
+		}
+	}
+}
+
+func TestFigureAddLeftColorbarUsesLeftBoundaryTicks(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.20, Y: 0.12},
+		Max: geom.Pt{X: 0.88, Y: 0.88},
+	})
+	mesh := ax.PColorMesh([][]float64{{0.5, 1.5}}, MeshOptions{
+		Norm: BoundaryNorm{Boundaries: []float64{0, 1, 2}, NColors: 3},
+	})
+
+	cbAx := fig.AddColorbar(ax, mesh, ColorbarOptions{Location: "left", Label: "band"})
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	if cbAx.RectFraction.Max.X >= ax.RectFraction.Min.X {
+		t.Fatalf("expected left colorbar before parent axes, got colorbar=%+v parent=%+v", cbAx.RectFraction, ax.RectFraction)
+	}
+	if cbAx.YAxis == nil || !cbAx.YAxis.ShowTicks || !cbAx.YAxis.ShowLabels {
+		t.Fatalf("expected visible left colorbar y-axis, got %+v", cbAx.YAxis)
+	}
+	if cbAx.YAxisRight != nil && (cbAx.YAxisRight.ShowTicks || cbAx.YAxisRight.ShowLabels) {
+		t.Fatalf("expected hidden right y-axis for left colorbar, got %+v", cbAx.YAxisRight)
+	}
+	loc, ok := cbAx.YAxis.Locator.(FixedLocator)
+	if !ok {
+		t.Fatalf("left colorbar locator = %T, want FixedLocator", cbAx.YAxis.Locator)
+	}
+	want := []float64{0, 1, 2}
+	if len(loc.TicksList) != len(want) {
+		t.Fatalf("left boundary ticks = %v, want %v", loc.TicksList, want)
+	}
+	for i := range want {
+		if loc.TicksList[i] != want[i] {
+			t.Fatalf("left boundary tick %d = %v, want %v", i, loc.TicksList[i], want[i])
+		}
+	}
+	if cbAx.effectiveYLabelSide() != AxisLeft {
+		t.Fatalf("expected left colorbar label on left side")
+	}
+}
+
+func TestFigureAddColorbarUsesExplicitTicks(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{{-1, 0}, {0.5, 1}})
+
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Ticks: []float64{-1, 0, 1}})
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	loc, ok := cbAx.YAxisRight.Locator.(FixedLocator)
+	if !ok {
+		t.Fatalf("right colorbar locator = %T, want FixedLocator", cbAx.YAxisRight.Locator)
+	}
+	want := []float64{-1, 0, 1}
+	if len(loc.TicksList) != len(want) {
+		t.Fatalf("explicit ticks = %v, want %v", loc.TicksList, want)
+	}
+	for i := range want {
+		if loc.TicksList[i] != want[i] {
+			t.Fatalf("explicit tick %d = %v, want %v", i, loc.TicksList[i], want[i])
+		}
+	}
+}
+
+func TestHorizontalColorbarUsesExplicitTicks(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{{-1, 0}, {0.5, 1}})
+
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Location: "bottom", Ticks: []float64{-1, 0, 1}})
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	loc, ok := cbAx.XAxis.Locator.(FixedLocator)
+	if !ok {
+		t.Fatalf("bottom colorbar locator = %T, want FixedLocator", cbAx.XAxis.Locator)
+	}
+	want := []float64{-1, 0, 1}
+	if len(loc.TicksList) != len(want) {
+		t.Fatalf("explicit ticks = %v, want %v", loc.TicksList, want)
+	}
+	for i := range want {
+		if loc.TicksList[i] != want[i] {
+			t.Fatalf("explicit tick %d = %v, want %v", i, loc.TicksList[i], want[i])
+		}
+	}
+}
+
 func TestFigureAddColorbarUsesFunctionScaleForTwoSlopeNorm(t *testing.T) {
 	fig := NewFigure(900, 600)
 	ax := fig.AddAxes(geom.Rect{
@@ -264,6 +523,7 @@ func TestFigureColorbarSyncsMutableCollectionMapping(t *testing.T) {
 	if err := pc.SetCLim(-1, 2); err != nil {
 		t.Fatalf("SetCLim: %v", err)
 	}
+	pc.SetColormap("plasma")
 
 	DrawFigure(fig, &colorbarRecordingRenderer{})
 
@@ -277,6 +537,9 @@ func TestFigureColorbarSyncsMutableCollectionMapping(t *testing.T) {
 	}
 	if cb.Mapping.VMin != -1 || cb.Mapping.VMax != 2 {
 		t.Fatalf("synced colorbar mapping = %+v, want -1..2", cb.Mapping)
+	}
+	if cb.Mapping.Colormap != "plasma" {
+		t.Fatalf("synced colorbar colormap = %q, want plasma", cb.Mapping.Colormap)
 	}
 }
 
@@ -391,6 +654,122 @@ func TestColorbarExtensionsDrawOutsideAxesClip(t *testing.T) {
 	}
 }
 
+func TestBoundaryColorbarDrawUsesUniformSpacingByDefault(t *testing.T) {
+	var r colorbarRecordingRenderer
+	clip := geom.Rect{
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 30, Y: 80},
+	}
+	cb := &Colorbar{
+		Mapping: ScalarMapInfo{
+			Colormap: "viridis",
+			Norm:     BoundaryNorm{Boundaries: []float64{0, 1, 3}, NColors: 3},
+			VMin:     0,
+			VMax:     3,
+		}.Resolved(),
+		Alpha:       1,
+		BorderColor: render.Color{A: 1},
+		BorderWidth: 1,
+	}
+
+	cb.Draw(&r, &DrawContext{Clip: clip})
+
+	if len(r.paths) != 3 {
+		t.Fatalf("path count = %d, want 2 boundary cells plus outline", len(r.paths))
+	}
+	first, _ := pathBounds(r.paths[0])
+	if !floatApprox(first.Min.Y, 50, 1e-12) || !floatApprox(first.Max.Y, 80, 1e-12) {
+		t.Fatalf("first uniform boundary cell bounds = %+v, want y 50..80", first)
+	}
+}
+
+func TestBoundaryColorbarDrawCanUseProportionalSpacing(t *testing.T) {
+	var r colorbarRecordingRenderer
+	clip := geom.Rect{
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 30, Y: 80},
+	}
+	cb := &Colorbar{
+		Mapping: ScalarMapInfo{
+			Colormap: "viridis",
+			Norm:     BoundaryNorm{Boundaries: []float64{0, 1, 3}, NColors: 3},
+			VMin:     0,
+			VMax:     3,
+		}.Resolved(),
+		Spacing:     "proportional",
+		Alpha:       1,
+		BorderColor: render.Color{A: 1},
+		BorderWidth: 1,
+	}
+
+	cb.Draw(&r, &DrawContext{Clip: clip})
+
+	if len(r.paths) != 3 {
+		t.Fatalf("path count = %d, want 2 boundary cells plus outline", len(r.paths))
+	}
+	first, _ := pathBounds(r.paths[0])
+	if !floatApprox(first.Min.Y, 60, 1e-12) || !floatApprox(first.Max.Y, 80, 1e-12) {
+		t.Fatalf("first proportional boundary cell bounds = %+v, want y 60..80", first)
+	}
+}
+
+func TestBoundaryColorbarDrawEdgesAddsInternalDividers(t *testing.T) {
+	var r colorbarRecordingRenderer
+	clip := geom.Rect{
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 30, Y: 80},
+	}
+	cb := &Colorbar{
+		Mapping: ScalarMapInfo{
+			Colormap: "viridis",
+			Norm:     BoundaryNorm{Boundaries: []float64{0, 1, 3, 6}, NColors: 3},
+			VMin:     0,
+			VMax:     6,
+		}.Resolved(),
+		DrawEdges:   true,
+		Alpha:       1,
+		BorderColor: render.Color{A: 1},
+		BorderWidth: 1,
+	}
+
+	cb.Draw(&r, &DrawContext{Clip: clip})
+
+	if len(r.strokes) != 3 {
+		t.Fatalf("stroke count = %d, want 2 internal dividers plus outline", len(r.strokes))
+	}
+	firstDivider, _ := pathBounds(r.strokePaths[0])
+	if !floatApprox(firstDivider.Min.Y, 60.5, 1e-12) || !floatApprox(firstDivider.Max.Y, 60.5, 1e-12) {
+		t.Fatalf("first divider bounds = %+v, want y 60.5", firstDivider)
+	}
+}
+
+func TestColorbarExtendRectDrawsRectangularExtensions(t *testing.T) {
+	var r colorbarRecordingRenderer
+	clip := geom.Rect{
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 42, Y: 80},
+	}
+	cb := &Colorbar{
+		Mapping:     ScalarMapInfo{Colormap: "gray", VMin: 0, VMax: 1}.Resolved(),
+		Extend:      "both",
+		ExtendRect:  true,
+		Alpha:       1,
+		BorderColor: render.Color{A: 1},
+		BorderWidth: 1,
+	}
+	ctx := &DrawContext{Clip: clip}
+	cb.Draw(&r, ctx)
+	cb.DrawOverlay(&r, ctx)
+
+	if len(r.paths) != 259 {
+		t.Fatalf("path count = %d, want 256 cells plus 2 extensions plus outline", len(r.paths))
+	}
+	lower, _ := pathBounds(r.paths[256])
+	if !floatApprox(lower.Min.X, clip.Min.X, 1e-12) || !floatApprox(lower.Max.X, clip.Max.X, 1e-12) {
+		t.Fatalf("lower rectangular extension bounds = %+v, want full colorbar width", lower)
+	}
+}
+
 func TestColorbarDrawSnapsRangeLegendToPixels(t *testing.T) {
 	var r colorbarRecordingRenderer
 	clip := geom.Rect{
@@ -436,12 +815,14 @@ func TestColorbarDrawSnapsRangeLegendToPixels(t *testing.T) {
 
 type colorbarRecordingRenderer struct {
 	render.NullRenderer
-	imageCount int
-	pathCount  int
-	texts      []string
-	imageRects []geom.Rect
-	paths      []geom.Path
-	fills      []render.Color
+	imageCount  int
+	pathCount   int
+	texts       []string
+	imageRects  []geom.Rect
+	paths       []geom.Path
+	fills       []render.Color
+	strokes     []render.Color
+	strokePaths []geom.Path
 }
 
 func (r *colorbarRecordingRenderer) Image(_ render.Image, dst geom.Rect) {
@@ -454,6 +835,10 @@ func (r *colorbarRecordingRenderer) Path(path geom.Path, paint *render.Paint) {
 	r.paths = append(r.paths, path)
 	if paint != nil {
 		r.fills = append(r.fills, paint.Fill)
+		if paint.LineWidth > 0 {
+			r.strokes = append(r.strokes, paint.Stroke)
+			r.strokePaths = append(r.strokePaths, path)
+		}
 	}
 }
 

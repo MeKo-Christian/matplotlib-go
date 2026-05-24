@@ -34,10 +34,10 @@ type Case struct {
 	// NativeBackend marks fixtures that intentionally exercise backend-native
 	// renderer capabilities rather than renderer-neutral fallback paths.
 	// NativeCapabilities names the backend capabilities the fixture covers.
-	NativeBackend       string
-	NativeCapabilities  []string
-	SVGGoldenFamily     string
-	GoBasicSmokeFamily  string
+	NativeBackend      string
+	NativeCapabilities []string
+	SVGGoldenFamily    string
+	GoBasicSmokeFamily string
 	// SkiaParityFamily groups cases consumed by the Skia-vs-AGG parity harness
 	// (see backends/skia/parity_test.go). A non-empty value opts the case in;
 	// the per-case MinPSNR / MaxMeanAbs / MaxRMSE fields override the harness
@@ -182,6 +182,8 @@ var cases = []Case{
 	{ID: "pcolormesh_masked", Topic: "mesh", Title: "PColorMesh Masked", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 15.0},
 	{ID: "hist2d_weighted_density", Topic: "mesh", Title: "Hist2D Weighted Density", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0, MaxRMSE: 30.0},
 	{ID: "boundarynorm_pcolormesh", Topic: "colorbar", Title: "BoundaryNorm PColorMesh", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
+	{ID: "collection_mutable_scalarmap", Topic: "colorbar", Title: "Mutable Collection ScalarMap", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
+	{ID: "colorbar_horizontal_ticks", Topic: "colorbar", Title: "Horizontal Colorbar Ticks", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
 	{ID: "lognorm_imshow", Topic: "colorbar", Title: "LogNorm Imshow", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
 	{ID: "twoslope_norm_image", Topic: "colorbar", Title: "TwoSlopeNorm Image", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
 	{ID: "colorbar_extensions", Topic: "colorbar", Title: "Colorbar Extensions", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},

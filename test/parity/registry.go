@@ -53,8 +53,10 @@ import (
 	example_boundarynorm_pcolormesh "github.com/cwbudde/matplotlib-go/test/parity/boundarynorm_pcolormesh"
 	example_boxplot_basic "github.com/cwbudde/matplotlib-go/test/parity/boxplot_basic"
 	example_clip_path_batch "github.com/cwbudde/matplotlib-go/test/parity/clip_path_batch"
+	example_collection_mutable_scalarmap "github.com/cwbudde/matplotlib-go/test/parity/collection_mutable_scalarmap"
 	example_colorbar_composition "github.com/cwbudde/matplotlib-go/test/parity/colorbar_composition"
 	example_colorbar_extensions "github.com/cwbudde/matplotlib-go/test/parity/colorbar_extensions"
+	example_colorbar_horizontal_ticks "github.com/cwbudde/matplotlib-go/test/parity/colorbar_horizontal_ticks"
 	example_colormap_cyclic "github.com/cwbudde/matplotlib-go/test/parity/colormap_cyclic"
 	example_colormap_diverging "github.com/cwbudde/matplotlib-go/test/parity/colormap_diverging"
 	example_colormap_qualitative "github.com/cwbudde/matplotlib-go/test/parity/colormap_qualitative"
@@ -288,6 +290,8 @@ var renderByID = map[string]func() image.Image{
 	"pcolormesh_masked":                  example_pcolormesh_masked.Render,
 	"hist2d_weighted_density":            example_hist2d_weighted_density.Render,
 	"boundarynorm_pcolormesh":            example_boundarynorm_pcolormesh.Render,
+	"collection_mutable_scalarmap":       example_collection_mutable_scalarmap.Render,
+	"colorbar_horizontal_ticks":          example_colorbar_horizontal_ticks.Render,
 	"lognorm_imshow":                     example_lognorm_imshow.Render,
 	"twoslope_norm_image":                example_twoslope_norm_image.Render,
 	"colorbar_extensions":                example_colorbar_extensions.Render,
@@ -331,7 +335,9 @@ var figureByID = map[string]func() *core.Figure{
 	"bar_basic":                          showcase_bar_basic.Plot,
 	"boxplot_basic":                      showcase_boxplot_basic.Plot,
 	"colorbar_composition":               showcase_colorbar_composition.Plot,
+	"colorbar_horizontal_ticks":          example_colorbar_horizontal_ticks.Plot,
 	"colormap_diverging":                 example_colormap_diverging.Plot,
+	"collection_mutable_scalarmap":       example_collection_mutable_scalarmap.Plot,
 	"errorbar_basic":                     showcase_errorbar_basic.Plot,
 	"fill_between":                       example_fill_between.Plot,
 	"geo_mollweide_axes":                 showcase_geo_mollweide_axes.Plot,

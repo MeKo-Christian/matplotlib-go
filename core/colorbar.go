@@ -2,6 +2,7 @@ package core
 
 import (
 	"math"
+	"strings"
 
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -11,14 +12,22 @@ import (
 
 // ColorbarOptions configures figure-level colorbar placement.
 type ColorbarOptions struct {
-	Width    float64
-	Padding  float64
-	Aspect   float64
-	Label    string
-	Colormap *string
-	VMin     *float64
-	VMax     *float64
-	Extend   string
+	Width       float64
+	Padding     float64
+	Aspect      float64
+	Label       string
+	Colormap    *string
+	VMin        *float64
+	VMax        *float64
+	Extend      string
+	Location    string
+	Orientation string
+	Ticks       []float64
+	Boundaries  []float64
+	Values      []float64
+	Spacing     string
+	DrawEdges   bool
+	ExtendRect  bool
 }
 
 // Colorbar renders a vertical gradient keyed to a scalar colormap.
@@ -27,6 +36,12 @@ type Colorbar struct {
 	Mappable    ScalarMappable
 	Colormap    string
 	Extend      string
+	Orientation string
+	Boundaries  []float64
+	Values      []float64
+	Spacing     string
+	DrawEdges   bool
+	ExtendRect  bool
 	Alpha       float64
 	BorderColor render.Color
 	BorderWidth float64
@@ -34,9 +49,10 @@ type Colorbar struct {
 }
 
 const (
-	defaultColorbarFraction = 0.15
-	defaultColorbarPadding  = 0.05
-	defaultColorbarAspect   = 20.0
+	defaultColorbarFraction          = 0.15
+	defaultColorbarPadding           = 0.05
+	defaultHorizontalColorbarPadding = 0.15
+	defaultColorbarAspect            = 20.0
 )
 
 // AddColorbar creates a dedicated axes to the right of a plot and populates it
@@ -51,13 +67,14 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 		cfg = opts[0]
 	}
 	cfg.Aspect = resolvedColorbarAspect(cfg.Aspect)
+	location := normalizeColorbarLocation(cfg.Location, cfg.Orientation)
 	extend := normalizeColorbarExtend(cfg.Extend)
 
 	mapping := mappable.ScalarMap().Resolved()
-	cmap := mapping.Colormap
+	cmapOverride := ""
 	if cfg.Colormap != nil && *cfg.Colormap != "" {
-		cmap = *cfg.Colormap
-		mapping.Colormap = cmap
+		cmapOverride = *cfg.Colormap
+		mapping.Colormap = cmapOverride
 	}
 	vmin := mapping.VMin
 	if cfg.VMin != nil {
@@ -72,42 +89,37 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	}
 	mapping.VMin = vmin
 	mapping.VMax = vmax
+	boundaries := colorbarOptionBoundaries(cfg.Values, cfg.Boundaries)
+	if len(boundaries) >= 2 {
+		if cfg.VMin == nil {
+			mapping.VMin = boundaries[0]
+		}
+		if cfg.VMax == nil {
+			mapping.VMax = boundaries[len(boundaries)-1]
+		}
+	}
 	if _, ok := mapping.Norm.(Normalize); ok && mapping.Norm != nil {
-		mapping.Norm = Normalize{VMin: vmin, VMax: vmax}
+		mapping.Norm = Normalize{VMin: mapping.VMin, VMax: mapping.VMax}
 	}
 
 	base := colorbarBaseRect(parent)
-	width := resolvedColorbarWidth(f, base, cfg.Width, cfg.Aspect)
-	slotWidth := width
-	padding := resolvedColorbarLayoutPadding(f, base, cfg.Padding)
+	thickness := resolvedColorbarThickness(f, base, cfg.Width, cfg.Aspect, location)
+	slotThickness := resolvedColorbarSlotThickness(base, cfg.Width, location)
+	padding := resolvedColorbarLayoutPadding(f, base, cfg.Padding, location)
 	useResolvedSlot := colorbarUsesResolvedSlot(f, parent)
 	if useResolvedSlot {
-		padding = resolvedColorbarPadding(base, cfg.Padding)
-		slotWidth = resolvedColorbarSlotWidth(base, cfg.Width)
+		padding = resolvedColorbarPadding(base, cfg.Padding, location)
+		slotThickness = resolvedColorbarSlotThickness(base, cfg.Width, location)
 	}
+	parentRect, rect := colorbarPlacementRect(f, base, thickness, slotThickness, padding, location, useResolvedSlot)
 	if !useResolvedSlot {
-		parent.RectFraction = colorbarParentRect(base, width, padding, useResolvedSlot)
+		parent.RectFraction = parentRect
 	}
-	slotLeft := colorbarSlotLeft(base, width, useResolvedSlot)
-	if useResolvedSlot {
-		slotLeft = base.Max.X + padding
-		slotLeft += constrainedColorbarSlotOffset(f, base)
-		if slotLeft+slotWidth > 1 {
-			slotWidth = math.Max(width, 1-slotLeft)
-		}
-	}
-	rect := geom.Rect{
-		Min: geom.Pt{
-			X: slotLeft,
-			Y: base.Min.Y,
-		},
-		Max: geom.Pt{
-			X: slotLeft + slotWidth,
-			Y: base.Max.Y,
-		},
-	}
-	rect = insetColorbarRectForExtensions(f, rect, extend)
+	rect = insetColorbarRectForExtensions(f, rect, extend, location)
 	if rect.Min.X >= rect.Max.X {
+		return nil
+	}
+	if rect.Min.Y >= rect.Max.Y {
 		return nil
 	}
 
@@ -118,35 +130,24 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	ax.colorbarAspect = cfg.Aspect
 	ax.colorbarBase = base
 	ax.colorbarExtend = extend
+	ax.colorbarLocation = location
+	ax.colorbarTicks = cloneFloat64s(cfg.Ticks)
+	ax.colorbarBounds = cloneFloat64s(boundaries)
 	ax.ShowFrame = false
-	ax.SetXLim(0, 1)
-	configureColorbarScale(ax, mapping)
-
-	if ax.XAxis != nil {
-		ax.XAxis.ShowSpine = false
-		ax.XAxis.ShowTicks = false
-		ax.XAxis.ShowLabels = false
-	}
-	if ax.YAxis != nil {
-		ax.YAxis.ShowSpine = false
-		ax.YAxis.ShowTicks = false
-		ax.YAxis.ShowLabels = false
-		ax.YAxis.MinorLocator = nil
-	}
-	if right := ax.RightAxis(); right != nil {
-		right.MinorLocator = nil
-	}
-	_ = ax.SetYTickLabelPosition("right")
-	_ = ax.SetYLabelPosition("right")
-	if cfg.Label != "" {
-		ax.SetYLabel(cfg.Label)
-	}
+	configureColorbarAxes(ax, location, cfg.Label)
+	configureColorbarScale(ax, mapping, location, cfg.Ticks, boundaries)
 
 	ax.Add(&Colorbar{
 		Mapping:     mapping,
 		Mappable:    mappable,
-		Colormap:    cmap,
+		Colormap:    cmapOverride,
 		Extend:      extend,
+		Orientation: colorbarOrientation(location),
+		Boundaries:  cloneFloat64s(boundaries),
+		Values:      cloneFloat64s(cfg.Values),
+		Spacing:     normalizeColorbarSpacing(cfg.Spacing),
+		DrawEdges:   cfg.DrawEdges,
+		ExtendRect:  cfg.ExtendRect,
 		Alpha:       1,
 		BorderColor: f.RC.AxesEdgeColor,
 		BorderWidth: f.RC.AxisLineWidth,
@@ -167,16 +168,30 @@ func syncColorbarMapping(ax *Axes) {
 		}
 		mapping := cb.currentMapping()
 		cb.Mapping = mapping
-		configureColorbarScale(ax, mapping)
+		configureColorbarScale(ax, mapping, ax.colorbarLocation, ax.colorbarTicks, ax.colorbarBounds)
 	}
 }
 
-func insetColorbarRectForExtensions(fig *Figure, rect geom.Rect, extend string) geom.Rect {
+func insetColorbarRectForExtensions(fig *Figure, rect geom.Rect, extend, location string) geom.Rect {
 	extend = normalizeColorbarExtend(extend)
 	if extend == "neither" || rect.W() <= 0 || rect.H() <= 0 {
 		return rect
 	}
 	extensionCount := colorbarExtensionCount(extend)
+	if colorbarIsHorizontal(location) {
+		widthFrac := rect.W() * 0.05 / (1 + 0.05*extensionCount)
+		if extend == "min" || extend == "both" {
+			rect.Min.X += widthFrac
+		}
+		if extend == "max" || extend == "both" {
+			rect.Max.X -= widthFrac
+		}
+		if rect.Min.X >= rect.Max.X {
+			return geom.Rect{}
+		}
+		return rect
+	}
+
 	heightFrac := rect.H() * 0.05 / (1 + 0.05*extensionCount)
 	if extend == "min" || extend == "both" {
 		rect.Min.Y += heightFrac
@@ -210,17 +225,85 @@ func colorbarExtensionCount(extend string) float64 {
 	return extensionCount
 }
 
-func resolvedColorbarPadding(base geom.Rect, padding float64) float64 {
+func normalizeColorbarLocation(location, orientation string) string {
+	loc := strings.ToLower(strings.TrimSpace(location))
+	switch loc {
+	case "left", "right", "top", "bottom":
+		return loc
+	}
+	orient := strings.ToLower(strings.TrimSpace(orientation))
+	switch orient {
+	case "horizontal":
+		return "bottom"
+	case "vertical":
+		return "right"
+	default:
+		return "right"
+	}
+}
+
+func colorbarOptionBoundaries(values, boundaries []float64) []float64 {
+	if len(boundaries) >= 2 {
+		return cloneFloat64s(boundaries)
+	}
+	if len(values) < 2 {
+		return nil
+	}
+	out := make([]float64, len(values)+1)
+	for i := 0; i+1 < len(values); i++ {
+		out[i+1] = (values[i] + values[i+1]) * 0.5
+	}
+	out[0] = 2*out[1] - out[2]
+	last := len(out) - 1
+	out[last] = 2*out[last-1] - out[last-2]
+	return out
+}
+
+func normalizeColorbarSpacing(spacing string) string {
+	switch strings.ToLower(strings.TrimSpace(spacing)) {
+	case "proportional":
+		return "proportional"
+	default:
+		return "uniform"
+	}
+}
+
+func colorbarOrientation(location string) string {
+	if colorbarIsHorizontal(location) {
+		return "horizontal"
+	}
+	return "vertical"
+}
+
+func colorbarIsHorizontal(location string) bool {
+	location = strings.ToLower(strings.TrimSpace(location))
+	return location == "bottom" || location == "top"
+}
+
+func resolvedColorbarPadding(base geom.Rect, padding float64, location ...string) float64 {
+	horizontal := len(location) > 0 && colorbarIsHorizontal(location[0])
 	if padding > 0 {
+		if horizontal {
+			return base.H() * padding
+		}
 		return base.W() * padding
+	}
+	if horizontal {
+		return base.H() * defaultHorizontalColorbarPadding
 	}
 	return base.W() * defaultColorbarPadding
 }
 
-func resolvedColorbarLayoutPadding(fig *Figure, base geom.Rect, padding float64) float64 {
-	resolved := resolvedColorbarPadding(base, padding)
+func resolvedColorbarLayoutPadding(fig *Figure, base geom.Rect, padding float64, location ...string) float64 {
+	resolved := resolvedColorbarPadding(base, padding, location...)
 	if padding > 0 || fig == nil || fig.layoutEngine != LayoutEngineConstrained || fig.SizePx.X <= 0 {
 		return resolved
+	}
+	if len(location) > 0 && colorbarIsHorizontal(location[0]) {
+		if fig.SizePx.Y <= 0 {
+			return resolved
+		}
+		return resolved + layoutPadPx(fig, LayoutEngineConstrained)/fig.SizePx.Y
 	}
 	return resolved + layoutPadPx(fig, LayoutEngineConstrained)/fig.SizePx.X
 }
@@ -233,8 +316,23 @@ func resolvedColorbarAspect(aspect float64) float64 {
 }
 
 func resolvedColorbarWidth(fig *Figure, base geom.Rect, width, aspect float64) float64 {
+	return resolvedColorbarThickness(fig, base, width, aspect, "right")
+}
+
+func resolvedColorbarThickness(fig *Figure, base geom.Rect, width, aspect float64, location string) float64 {
 	if width > 0 {
 		return width
+	}
+	if colorbarIsHorizontal(location) {
+		fractionHeight := base.H() * defaultColorbarFraction
+		if fig == nil || fig.SizePx.X <= 0 || fig.SizePx.Y <= 0 || aspect <= 0 {
+			return fractionHeight
+		}
+		aspectHeight := base.W() * fig.SizePx.X / (aspect * fig.SizePx.Y)
+		if aspectHeight <= 0 {
+			return fractionHeight
+		}
+		return math.Min(fractionHeight, aspectHeight)
 	}
 	fractionWidth := base.W() * defaultColorbarFraction
 	if fig == nil || fig.SizePx.X <= 0 || fig.SizePx.Y <= 0 || aspect <= 0 {
@@ -248,8 +346,15 @@ func resolvedColorbarWidth(fig *Figure, base geom.Rect, width, aspect float64) f
 }
 
 func resolvedColorbarSlotWidth(base geom.Rect, width float64) float64 {
+	return resolvedColorbarSlotThickness(base, width, "right")
+}
+
+func resolvedColorbarSlotThickness(base geom.Rect, width float64, location string) float64 {
 	if width > 0 {
 		return width
+	}
+	if colorbarIsHorizontal(location) {
+		return base.H() * defaultColorbarFraction
 	}
 	return base.W() * defaultColorbarFraction
 }
@@ -263,16 +368,8 @@ func constrainedColorbarSlotOffset(fig *Figure, base geom.Rect) float64 {
 }
 
 func colorbarParentRect(base geom.Rect, width, padding float64, useResolvedSlot bool) geom.Rect {
-	if padding < 0 {
-		return base
-	}
-	shrunk := base
-	right := colorbarSlotLeft(base, width, useResolvedSlot) - padding
-	if right <= base.Min.X {
-		return shrunk
-	}
-	shrunk.Max.X = right
-	return shrunk
+	parent, _ := colorbarPlacementRect(nil, base, width, resolvedColorbarSlotWidth(base, width), padding, "right", useResolvedSlot)
+	return parent
 }
 
 func colorbarSlotLeft(base geom.Rect, width float64, useResolvedSlot bool) float64 {
@@ -280,6 +377,64 @@ func colorbarSlotLeft(base geom.Rect, width float64, useResolvedSlot bool) float
 		return base.Max.X - base.W()*defaultColorbarFraction
 	}
 	return base.Max.X - width
+}
+
+func colorbarPlacementRect(fig *Figure, base geom.Rect, thickness, slotThickness, padding float64, location string, useResolvedSlot bool) (geom.Rect, geom.Rect) {
+	parent := base
+	rect := base
+	if padding < 0 {
+		padding = 0
+	}
+	switch location {
+	case "left":
+		if !useResolvedSlot {
+			left := base.Min.X + slotThickness + padding
+			if left > base.Max.X {
+				left = base.Max.X
+			}
+			parent.Min.X = left
+		}
+		rect.Min.X = base.Min.X
+		rect.Max.X = math.Min(base.Min.X+thickness, base.Max.X)
+	case "top":
+		if !useResolvedSlot {
+			top := base.Max.Y - slotThickness - padding
+			if top < base.Min.Y {
+				top = base.Min.Y
+			}
+			parent.Max.Y = top
+		}
+		rect.Min.Y = math.Max(base.Max.Y-thickness, base.Min.Y)
+		rect.Max.Y = base.Max.Y
+	case "bottom":
+		if !useResolvedSlot {
+			bottom := base.Min.Y + slotThickness + padding
+			if bottom > base.Max.Y {
+				bottom = base.Max.Y
+			}
+			parent.Min.Y = bottom
+		}
+		rect.Min.Y = base.Min.Y
+		rect.Max.Y = math.Min(base.Min.Y+thickness, base.Max.Y)
+	default:
+		if useResolvedSlot {
+			slotLeft := base.Max.X + padding + constrainedColorbarSlotOffset(fig, base)
+			if slotLeft+slotThickness > 1 {
+				slotThickness = math.Max(thickness, 1-slotLeft)
+			}
+			rect.Min.X = slotLeft
+			rect.Max.X = slotLeft + slotThickness
+			return parent, rect
+		}
+		right := colorbarSlotLeft(base, thickness, useResolvedSlot) - padding
+		if right > base.Min.X {
+			parent.Max.X = right
+		}
+		slotLeft := colorbarSlotLeft(base, thickness, useResolvedSlot)
+		rect.Min.X = slotLeft
+		rect.Max.X = math.Min(slotLeft+thickness, base.Max.X)
+	}
+	return parent, rect
 }
 
 func colorbarUsesResolvedSlot(fig *Figure, parent *Axes) bool {
@@ -296,11 +451,25 @@ func colorbarBaseRect(parent *Axes) geom.Rect {
 	return parent.RectFraction
 }
 
-func configureColorbarScale(ax *Axes, mapping ScalarMapInfo) {
+func configureColorbarScale(ax *Axes, mapping ScalarMapInfo, location string, ticks, boundaries []float64) {
 	if ax == nil {
 		return
 	}
 	vmin, vmax := mapping.VMin, mapping.VMax
+	if colorbarIsHorizontal(location) {
+		configureHorizontalColorbarScale(ax, mapping, location, ticks, boundaries)
+		return
+	}
+	target := verticalColorbarAxis(ax, location)
+	if len(boundaries) >= 2 {
+		ax.SetYLim(boundaries[0], boundaries[len(boundaries)-1])
+		if target != nil {
+			target.Locator = FixedLocator{TicksList: cloneFloat64s(boundaries)}
+			target.Formatter = ScalarFormatter{Prec: 6}
+		}
+		applyExplicitColorbarTicks(ax, location, ticks)
+		return
+	}
 	switch norm := mapping.Norm.(type) {
 	case LogNorm:
 		base := 10.0
@@ -309,15 +478,15 @@ func configureColorbarScale(ax *Axes, mapping ScalarMapInfo) {
 		} else {
 			ax.SetYLim(vmin, vmax)
 		}
-		if right := ax.RightAxis(); right != nil {
-			right.Locator = LogLocator{Base: base}
-			right.Formatter = LogFormatter{Base: base}
+		if target != nil {
+			target.Locator = LogLocator{Base: base}
+			target.Formatter = LogFormatter{Base: base}
 		}
 	case BoundaryNorm:
 		ax.SetYLim(vmin, vmax)
-		if right := ax.RightAxis(); right != nil {
-			right.Locator = FixedLocator{TicksList: append([]float64(nil), norm.Boundaries...)}
-			right.Formatter = ScalarFormatter{Prec: 6}
+		if target != nil {
+			target.Locator = FixedLocator{TicksList: append([]float64(nil), norm.Boundaries...)}
+			target.Formatter = ScalarFormatter{Prec: 6}
 		}
 	default:
 		if isNonlinearColorbarNorm(mapping.Norm) && isFinite(vmin) && isFinite(vmax) && vmin != vmax {
@@ -325,9 +494,167 @@ func configureColorbarScale(ax *Axes, mapping ScalarMapInfo) {
 			ax.YScale = transform.NewFuncScale(vmin, vmax, norm.Map, norm.Inverse)
 			ax.yLimitsManual = true
 			configureScaleAxes(ax.YAxis, ax.YAxisRight, "function", transform.ResolveScaleOptions())
+			applyExplicitColorbarTicks(ax, location, ticks)
 			return
 		}
 		ax.SetYLim(vmin, vmax)
+	}
+	applyExplicitColorbarTicks(ax, location, ticks)
+}
+
+func verticalColorbarAxis(ax *Axes, location string) *Axis {
+	if ax == nil {
+		return nil
+	}
+	if location == "left" {
+		return ax.YAxis
+	}
+	return ax.RightAxis()
+}
+
+func configureHorizontalColorbarScale(ax *Axes, mapping ScalarMapInfo, location string, ticks, boundaries []float64) {
+	vmin, vmax := mapping.VMin, mapping.VMax
+	target := ax.XAxis
+	if location == "top" {
+		target = ax.TopAxis()
+	}
+	if len(boundaries) >= 2 {
+		ax.SetXLim(boundaries[0], boundaries[len(boundaries)-1])
+		if target != nil {
+			target.Locator = FixedLocator{TicksList: cloneFloat64s(boundaries)}
+			target.Formatter = ScalarFormatter{Prec: 6}
+		}
+		applyExplicitColorbarTicks(ax, location, ticks)
+		return
+	}
+	switch norm := mapping.Norm.(type) {
+	case LogNorm:
+		base := 10.0
+		if vmin > 0 && vmax > 0 {
+			ax.SetXLimLog(vmin, vmax, base)
+		} else {
+			ax.SetXLim(vmin, vmax)
+		}
+		if target != nil {
+			target.Locator = LogLocator{Base: base}
+			target.Formatter = LogFormatter{Base: base}
+		}
+	case BoundaryNorm:
+		ax.SetXLim(vmin, vmax)
+		if target != nil {
+			target.Locator = FixedLocator{TicksList: append([]float64(nil), norm.Boundaries...)}
+			target.Formatter = ScalarFormatter{Prec: 6}
+		}
+	default:
+		if isNonlinearColorbarNorm(mapping.Norm) && isFinite(vmin) && isFinite(vmax) && vmin != vmax {
+			norm := mapping.Norm
+			ax.XScale = transform.NewFuncScale(vmin, vmax, norm.Map, norm.Inverse)
+			ax.xLimitsManual = true
+			configureScaleAxes(ax.XAxis, ax.XAxisTop, "function", transform.ResolveScaleOptions())
+			applyExplicitColorbarTicks(ax, location, ticks)
+			return
+		}
+		ax.SetXLim(vmin, vmax)
+	}
+	applyExplicitColorbarTicks(ax, location, ticks)
+}
+
+func applyExplicitColorbarTicks(ax *Axes, location string, ticks []float64) {
+	if ax == nil || len(ticks) == 0 {
+		return
+	}
+	locator := FixedLocator{TicksList: cloneFloat64s(ticks)}
+	formatter := ScalarFormatter{Prec: 6}
+	switch location {
+	case "left":
+		if ax.YAxis != nil {
+			ax.YAxis.Locator = locator
+			ax.YAxis.Formatter = formatter
+		}
+	case "top":
+		top := ax.TopAxis()
+		top.Locator = locator
+		top.Formatter = formatter
+	case "bottom":
+		if ax.XAxis != nil {
+			ax.XAxis.Locator = locator
+			ax.XAxis.Formatter = formatter
+		}
+	default:
+		right := ax.RightAxis()
+		right.Locator = locator
+		right.Formatter = formatter
+	}
+}
+
+func configureColorbarAxes(ax *Axes, location, label string) {
+	if ax == nil {
+		return
+	}
+	if ax.XAxis != nil {
+		ax.XAxis.ShowSpine = false
+		ax.XAxis.ShowTicks = false
+		ax.XAxis.ShowLabels = false
+		ax.XAxis.MinorLocator = nil
+	}
+	if ax.XAxisTop != nil {
+		ax.XAxisTop.ShowSpine = false
+		ax.XAxisTop.ShowTicks = false
+		ax.XAxisTop.ShowLabels = false
+		ax.XAxisTop.MinorLocator = nil
+	}
+	if ax.YAxis != nil {
+		ax.YAxis.ShowSpine = false
+		ax.YAxis.ShowTicks = false
+		ax.YAxis.ShowLabels = false
+		ax.YAxis.MinorLocator = nil
+	}
+	if ax.YAxisRight != nil {
+		ax.YAxisRight.ShowSpine = false
+		ax.YAxisRight.ShowTicks = false
+		ax.YAxisRight.ShowLabels = false
+		ax.YAxisRight.MinorLocator = nil
+	}
+
+	switch location {
+	case "left":
+		if ax.YAxis != nil {
+			ax.YAxis.ShowTicks = true
+			ax.YAxis.ShowLabels = true
+		}
+		_ = ax.SetYLabelPosition("left")
+		if label != "" {
+			ax.SetYLabel(label)
+		}
+	case "top":
+		top := ax.TopAxis()
+		top.ShowSpine = false
+		top.ShowTicks = true
+		top.ShowLabels = true
+		top.MinorLocator = nil
+		_ = ax.SetXLabelPosition("top")
+		if label != "" {
+			ax.SetXLabel(label)
+		}
+	case "bottom":
+		if ax.XAxis != nil {
+			ax.XAxis.ShowTicks = true
+			ax.XAxis.ShowLabels = true
+		}
+		_ = ax.SetXLabelPosition("bottom")
+		if label != "" {
+			ax.SetXLabel(label)
+		}
+	default:
+		right := ax.RightAxis()
+		right.ShowSpine = true
+		right.ShowTicks = true
+		right.ShowLabels = true
+		right.MinorLocator = nil
+		_ = ax.SetYLabelPosition("right")
+		if label != "" {
+			ax.SetYLabel(label)
+		}
 	}
 }
 
@@ -369,43 +696,125 @@ type colorbarExtensionPath struct {
 	OverRange bool
 }
 
-func colorbarExtensionPaths(clip geom.Rect, extend string) []colorbarExtensionPath {
+func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRect bool) []colorbarExtensionPath {
 	extend = normalizeColorbarExtend(extend)
 	if extend == "neither" || clip.W() <= 0 || clip.H() <= 0 {
 		return nil
 	}
-	height := clip.H() * 0.05
 	out := make([]colorbarExtensionPath, 0, 2)
+	if orientation == "horizontal" {
+		width := clip.W() * 0.05
+		if extend == "min" || extend == "both" {
+			verts := []geom.Pt{
+				{X: clip.Min.X, Y: clip.Min.Y},
+				{X: clip.Min.X, Y: clip.Max.Y},
+				{X: clip.Min.X - width, Y: (clip.Min.Y + clip.Max.Y) * 0.5},
+			}
+			if extendRect {
+				verts = []geom.Pt{
+					{X: clip.Min.X, Y: clip.Min.Y},
+					{X: clip.Min.X, Y: clip.Max.Y},
+					{X: clip.Min.X - width, Y: clip.Max.Y},
+					{X: clip.Min.X - width, Y: clip.Min.Y},
+				}
+			}
+			out = append(out, colorbarExtensionPath{
+				OverRange: false,
+				Path: geom.Path{
+					V: verts,
+					C: closedPolygonCmds(len(verts)),
+				},
+			})
+		}
+		if extend == "max" || extend == "both" {
+			verts := []geom.Pt{
+				{X: clip.Max.X, Y: clip.Min.Y},
+				{X: clip.Max.X + width, Y: (clip.Min.Y + clip.Max.Y) * 0.5},
+				{X: clip.Max.X, Y: clip.Max.Y},
+			}
+			if extendRect {
+				verts = []geom.Pt{
+					{X: clip.Max.X, Y: clip.Min.Y},
+					{X: clip.Max.X + width, Y: clip.Min.Y},
+					{X: clip.Max.X + width, Y: clip.Max.Y},
+					{X: clip.Max.X, Y: clip.Max.Y},
+				}
+			}
+			out = append(out, colorbarExtensionPath{
+				OverRange: true,
+				Path: geom.Path{
+					V: verts,
+					C: closedPolygonCmds(len(verts)),
+				},
+			})
+		}
+		return out
+	}
+
+	height := clip.H() * 0.05
 	if extend == "min" || extend == "both" {
+		verts := []geom.Pt{
+			{X: clip.Min.X, Y: clip.Max.Y},
+			{X: clip.Max.X, Y: clip.Max.Y},
+			{X: (clip.Min.X + clip.Max.X) * 0.5, Y: clip.Max.Y + height},
+		}
+		if extendRect {
+			verts = []geom.Pt{
+				{X: clip.Min.X, Y: clip.Max.Y},
+				{X: clip.Max.X, Y: clip.Max.Y},
+				{X: clip.Max.X, Y: clip.Max.Y + height},
+				{X: clip.Min.X, Y: clip.Max.Y + height},
+			}
+		}
 		out = append(out, colorbarExtensionPath{
 			OverRange: false,
 			Path: geom.Path{
-				V: []geom.Pt{
-					{X: clip.Min.X, Y: clip.Max.Y},
-					{X: clip.Max.X, Y: clip.Max.Y},
-					{X: (clip.Min.X + clip.Max.X) * 0.5, Y: clip.Max.Y + height},
-				},
-				C: []geom.Cmd{geom.MoveTo, geom.LineTo, geom.LineTo, geom.ClosePath},
+				V: verts,
+				C: closedPolygonCmds(len(verts)),
 			},
 		})
 	}
 	if extend == "max" || extend == "both" {
+		verts := []geom.Pt{
+			{X: clip.Min.X, Y: clip.Min.Y},
+			{X: (clip.Min.X + clip.Max.X) * 0.5, Y: clip.Min.Y - height},
+			{X: clip.Max.X, Y: clip.Min.Y},
+		}
+		if extendRect {
+			verts = []geom.Pt{
+				{X: clip.Min.X, Y: clip.Min.Y - height},
+				{X: clip.Max.X, Y: clip.Min.Y - height},
+				{X: clip.Max.X, Y: clip.Min.Y},
+				{X: clip.Min.X, Y: clip.Min.Y},
+			}
+		}
 		out = append(out, colorbarExtensionPath{
 			OverRange: true,
 			Path: geom.Path{
-				V: []geom.Pt{
-					{X: clip.Min.X, Y: clip.Min.Y},
-					{X: (clip.Min.X + clip.Max.X) * 0.5, Y: clip.Min.Y - height},
-					{X: clip.Max.X, Y: clip.Min.Y},
-				},
-				C: []geom.Cmd{geom.MoveTo, geom.LineTo, geom.LineTo, geom.ClosePath},
+				V: verts,
+				C: closedPolygonCmds(len(verts)),
 			},
 		})
 	}
 	return out
 }
 
-// Draw renders a vertical gradient across the colorbar axes.
+func closedPolygonCmds(n int) []geom.Cmd {
+	if n <= 0 {
+		return nil
+	}
+	cmds := make([]geom.Cmd, n)
+	for i := range cmds {
+		if i == 0 {
+			cmds[i] = geom.MoveTo
+		} else {
+			cmds[i] = geom.LineTo
+		}
+	}
+	return append(cmds, geom.ClosePath)
+}
+
+// Draw renders a gradient across the colorbar axes.
 func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 	if c == nil || ctx == nil {
 		return
@@ -420,31 +829,26 @@ func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 	if alpha <= 0 {
 		alpha = 1
 	}
+	orientation := c.normalizedOrientation()
 
-	if norm, ok := mapping.Norm.(BoundaryNorm); ok && len(norm.Boundaries) >= 2 {
-		vmin, vmax := mapping.VMin, mapping.VMax
-		span := vmax - vmin
-		if span != 0 {
-			for i := 0; i+1 < len(norm.Boundaries); i++ {
-				low := norm.Boundaries[i]
-				high := norm.Boundaries[i+1]
-				y0 := ctx.Clip.Max.Y - ctx.Clip.H()*((high-vmin)/span)
-				y1 := ctx.Clip.Max.Y - ctx.Clip.H()*((low-vmin)/span)
-				path := snappedFillRectPath(geom.Rect{
-					Min: geom.Pt{X: ctx.Clip.Min.X, Y: y0},
-					Max: geom.Pt{X: ctx.Clip.Max.X, Y: y1},
-				})
-				if len(path.C) == 0 {
-					continue
-				}
-				col := mapping.Color((low+high)*0.5, alpha)
-				r.Path(path, &render.Paint{
-					Fill:      col,
-					LineJoin:  render.JoinMiter,
-					LineCap:   render.CapButt,
-					Antialias: render.AntialiasDefault,
-				})
+	if boundaries, values, ok := c.boundaryData(mapping); ok {
+		for i := 0; i+1 < len(boundaries); i++ {
+			rect := colorbarBoundaryCellRectAt(ctx.Clip, boundaries, i, c.Spacing, orientation)
+			path := snappedFillRectPath(rect)
+			if len(path.C) == 0 {
+				continue
 			}
+			value := values[i]
+			col := mapping.Color(value, alpha)
+			r.Path(path, &render.Paint{
+				Fill:      col,
+				LineJoin:  render.JoinMiter,
+				LineCap:   render.CapButt,
+				Antialias: render.AntialiasDefault,
+			})
+		}
+		if c.DrawEdges {
+			drawColorbarBoundaryDividers(r, ctx.Clip, boundaries, c.Spacing, orientation, c.BorderColor, c.BorderWidth)
 		}
 	} else {
 		for i := 0; i < gradientHeight; i++ {
@@ -452,7 +856,7 @@ func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 			col := cmap.AtValue(t)
 			col.A *= alpha
 
-			path := snappedFillRectPath(colorbarCellRect(ctx.Clip, i, gradientHeight))
+			path := snappedFillRectPath(colorbarCellRect(ctx.Clip, i, gradientHeight, orientation))
 			if len(path.C) == 0 {
 				continue
 			}
@@ -479,6 +883,83 @@ func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 }
 
+func (c *Colorbar) boundaryData(mapping ScalarMapInfo) ([]float64, []float64, bool) {
+	if c == nil {
+		return nil, nil, false
+	}
+	boundaries := cloneFloat64s(c.Boundaries)
+	if len(boundaries) < 2 {
+		if norm, ok := mapping.Norm.(BoundaryNorm); ok && len(norm.Boundaries) >= 2 {
+			boundaries = cloneFloat64s(norm.Boundaries)
+		}
+	}
+	if len(boundaries) < 2 {
+		return nil, nil, false
+	}
+	values := cloneFloat64s(c.Values)
+	if len(values) != len(boundaries)-1 {
+		values = make([]float64, len(boundaries)-1)
+		for i := range values {
+			values[i] = (boundaries[i] + boundaries[i+1]) * 0.5
+		}
+	}
+	return boundaries, values, true
+}
+
+func drawColorbarBoundaryDividers(r render.Renderer, clip geom.Rect, boundaries []float64, spacing, orientation string, color render.Color, width float64) {
+	if r == nil || len(boundaries) < 3 || clip.W() <= 0 || clip.H() <= 0 {
+		return
+	}
+	for i := 1; i+1 < len(boundaries); i++ {
+		var path geom.Path
+		if orientation == "horizontal" {
+			x := colorbarBoundaryCoord(clip.Min.X, clip.Max.X, boundaries, i, spacing)
+			x = math.Floor(x) + 0.5
+			path = geom.Path{
+				V: []geom.Pt{{X: x, Y: clip.Min.Y}, {X: x, Y: clip.Max.Y}},
+				C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+			}
+		} else {
+			y := colorbarBoundaryCoord(clip.Max.Y, clip.Min.Y, boundaries, i, spacing)
+			y = math.Floor(y) + 0.5
+			path = geom.Path{
+				V: []geom.Pt{{X: clip.Min.X, Y: y}, {X: clip.Max.X, Y: y}},
+				C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+			}
+		}
+		r.Path(path, &render.Paint{
+			Stroke:    color,
+			LineWidth: width,
+			LineJoin:  render.JoinMiter,
+			LineCap:   render.CapButt,
+		})
+	}
+}
+
+func colorbarBoundaryCoord(start, end float64, boundaries []float64, index int, spacing string) float64 {
+	if len(boundaries) < 2 {
+		return start
+	}
+	t := float64(index) / float64(len(boundaries)-1)
+	if normalizeColorbarSpacing(spacing) == "proportional" {
+		span := boundaries[len(boundaries)-1] - boundaries[0]
+		if span != 0 {
+			t = (boundaries[index] - boundaries[0]) / span
+		}
+	}
+	return start + (end-start)*t
+}
+
+func colorbarBoundaryCellRectAt(clip geom.Rect, boundaries []float64, index int, spacing, orientation string) geom.Rect {
+	if index < 0 || index+1 >= len(boundaries) {
+		return geom.Rect{}
+	}
+	if normalizeColorbarSpacing(spacing) == "proportional" {
+		return colorbarBoundaryCellRect(clip, boundaries[index], boundaries[index+1], boundaries[0], boundaries[len(boundaries)-1], orientation)
+	}
+	return colorbarCellRect(clip, index, len(boundaries)-1, orientation)
+}
+
 // DrawOverlay renders colorbar extension patches outside the axes clip.
 func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	if c == nil || ctx == nil {
@@ -496,7 +977,8 @@ func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 		alpha = 1
 	}
 
-	for _, ext := range colorbarExtensionPaths(ctx.Clip, c.Extend) {
+	orientation := c.normalizedOrientation()
+	for _, ext := range colorbarExtensionPaths(ctx.Clip, c.Extend, orientation, c.ExtendRect) {
 		t := -1.0
 		if ext.OverRange {
 			t = 2
@@ -511,7 +993,7 @@ func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 		})
 	}
 
-	outline := colorbarExtendedOutlinePath(ctx.Clip, c.Extend)
+	outline := colorbarExtendedOutlinePath(ctx.Clip, c.Extend, orientation, c.ExtendRect)
 	if len(outline.C) > 0 {
 		r.Path(outline, &render.Paint{
 			Stroke:    c.BorderColor,
@@ -522,11 +1004,47 @@ func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	}
 }
 
-func colorbarExtendedOutlinePath(clip geom.Rect, extend string) geom.Path {
+func colorbarExtendedOutlinePath(clip geom.Rect, extend, orientation string, extendRect bool) geom.Path {
 	extend = normalizeColorbarExtend(extend)
 	if extend == "neither" || clip.W() <= 0 || clip.H() <= 0 {
 		return geom.Path{}
 	}
+	if orientation == "horizontal" {
+		width := clip.W() * 0.05
+		left := clip.Min.X
+		leftTip := left
+		if extend == "min" || extend == "both" {
+			leftTip -= width
+		}
+		right := clip.Max.X
+		rightTip := right
+		if extend == "max" || extend == "both" {
+			rightTip += width
+		}
+		if extendRect {
+			return geom.Path{
+				V: []geom.Pt{
+					{X: leftTip, Y: clip.Min.Y},
+					{X: rightTip, Y: clip.Min.Y},
+					{X: rightTip, Y: clip.Max.Y},
+					{X: leftTip, Y: clip.Max.Y},
+				},
+				C: closedPolygonCmds(4),
+			}
+		}
+		midY := (clip.Min.Y + clip.Max.Y) * 0.5
+		verts := []geom.Pt{{X: left, Y: clip.Max.Y}}
+		if extend == "min" || extend == "both" {
+			verts = append(verts, geom.Pt{X: leftTip, Y: midY})
+		}
+		verts = append(verts, geom.Pt{X: left, Y: clip.Min.Y}, geom.Pt{X: right, Y: clip.Min.Y})
+		if extend == "max" || extend == "both" {
+			verts = append(verts, geom.Pt{X: rightTip, Y: midY})
+		}
+		verts = append(verts, geom.Pt{X: right, Y: clip.Max.Y})
+		return geom.Path{V: verts, C: closedPolygonCmds(len(verts))}
+	}
+
 	height := clip.H() * 0.05
 	bottom := clip.Max.Y
 	bottomTip := bottom
@@ -538,6 +1056,17 @@ func colorbarExtendedOutlinePath(clip geom.Rect, extend string) geom.Path {
 	if extend == "max" || extend == "both" {
 		topTip -= height
 	}
+	if extendRect {
+		return geom.Path{
+			V: []geom.Pt{
+				{X: clip.Min.X, Y: bottomTip},
+				{X: clip.Max.X, Y: bottomTip},
+				{X: clip.Max.X, Y: topTip},
+				{X: clip.Min.X, Y: topTip},
+			},
+			C: closedPolygonCmds(4),
+		}
+	}
 	midX := (clip.Min.X + clip.Max.X) * 0.5
 	verts := []geom.Pt{{X: clip.Min.X, Y: bottom}}
 	if extend == "min" || extend == "both" {
@@ -548,21 +1077,20 @@ func colorbarExtendedOutlinePath(clip geom.Rect, extend string) geom.Path {
 		verts = append(verts, geom.Pt{X: midX, Y: topTip})
 	}
 	verts = append(verts, geom.Pt{X: clip.Min.X, Y: top})
-	cmds := make([]geom.Cmd, len(verts))
-	for i := range cmds {
-		if i == 0 {
-			cmds[i] = geom.MoveTo
-		} else {
-			cmds[i] = geom.LineTo
-		}
-	}
-	cmds = append(cmds, geom.ClosePath)
-	return geom.Path{V: verts, C: cmds}
+	return geom.Path{V: verts, C: closedPolygonCmds(len(verts))}
 }
 
-func colorbarCellRect(clip geom.Rect, index, count int) geom.Rect {
+func colorbarCellRect(clip geom.Rect, index, count int, orientation string) geom.Rect {
 	if count <= 0 {
 		return geom.Rect{}
+	}
+	if orientation == "horizontal" {
+		x0 := clip.Min.X + clip.W()*float64(index)/float64(count)
+		x1 := clip.Min.X + clip.W()*float64(index+1)/float64(count)
+		return geom.Rect{
+			Min: geom.Pt{X: x0, Y: clip.Min.Y},
+			Max: geom.Pt{X: x1, Y: clip.Max.Y},
+		}
 	}
 	y0 := clip.Max.Y - clip.H()*float64(index+1)/float64(count)
 	y1 := clip.Max.Y - clip.H()*float64(index)/float64(count)
@@ -570,6 +1098,34 @@ func colorbarCellRect(clip geom.Rect, index, count int) geom.Rect {
 		Min: geom.Pt{X: clip.Min.X, Y: y0},
 		Max: geom.Pt{X: clip.Max.X, Y: y1},
 	}
+}
+
+func colorbarBoundaryCellRect(clip geom.Rect, low, high, vmin, vmax float64, orientation string) geom.Rect {
+	span := vmax - vmin
+	if span == 0 {
+		return geom.Rect{}
+	}
+	if orientation == "horizontal" {
+		x0 := clip.Min.X + clip.W()*((low-vmin)/span)
+		x1 := clip.Min.X + clip.W()*((high-vmin)/span)
+		return geom.Rect{
+			Min: geom.Pt{X: x0, Y: clip.Min.Y},
+			Max: geom.Pt{X: x1, Y: clip.Max.Y},
+		}
+	}
+	y0 := clip.Max.Y - clip.H()*((high-vmin)/span)
+	y1 := clip.Max.Y - clip.H()*((low-vmin)/span)
+	return geom.Rect{
+		Min: geom.Pt{X: clip.Min.X, Y: y0},
+		Max: geom.Pt{X: clip.Max.X, Y: y1},
+	}
+}
+
+func (c *Colorbar) normalizedOrientation() string {
+	if c != nil && strings.ToLower(strings.TrimSpace(c.Orientation)) == "horizontal" {
+		return "horizontal"
+	}
+	return "vertical"
 }
 
 // Bounds returns an empty rect so colorbars do not affect autoscaling.

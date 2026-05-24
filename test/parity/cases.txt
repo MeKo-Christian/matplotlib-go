@@ -114,6 +114,8 @@ pcolormesh_gouraud
 pcolormesh_masked
 hist2d_weighted_density
 boundarynorm_pcolormesh
+collection_mutable_scalarmap
+colorbar_horizontal_ticks
 lognorm_imshow
 twoslope_norm_image
 colorbar_extensions

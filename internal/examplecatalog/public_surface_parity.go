@@ -739,9 +739,9 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		featureCoverageID: "collections",
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"core/collection.go", "core/mesh.go", "core/eventplot.go", "core/hexbin.go"},
-		catalogIDs:        []string{"mixed_collection", "large_scatter", "quad_mesh", "gouraud_triangles", "specialty_artists"},
+		catalogIDs:        []string{"mixed_collection", "large_scatter", "quad_mesh", "gouraud_triangles", "collection_mutable_scalarmap", "specialty_artists"},
 		exampleIDs:        []string{"specialty_artists"},
-		note:              "Path, line, patch, poly, quad, event, and hexbin collections exist; path/patch collections have Go-style scalar array, cmap, norm, clim, and face-edge tracking setters; specialized variants and full mutable setter parity remain incomplete.",
+		note:              "Path, line, patch, poly, quad, event, and hexbin collections exist; path/patch collections and QuadMesh have Go-style scalar array, cmap, norm, clim, and face-edge tracking setters; specialized variants and full mutable setter parity remain incomplete.",
 	},
 	{
 		idPrefix:          "patch-style-registry",
@@ -819,9 +819,9 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		featureCoverageID: "colorbar",
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"core/colorbar.go", "core/scalar_mappable.go", "core/norm.go"},
-		catalogIDs:        []string{"colorbar_composition", "boundarynorm_pcolormesh", "lognorm_imshow", "twoslope_norm_image", "colorbar_extensions"},
+		catalogIDs:        []string{"colorbar_composition", "boundarynorm_pcolormesh", "collection_mutable_scalarmap", "colorbar_horizontal_ticks", "lognorm_imshow", "twoslope_norm_image", "colorbar_extensions"},
 		exampleIDs:        []string{"colorbar_composition"},
-		note:              "Scalar mappables and vertical colorbars exist; horizontal placement, custom ticks, boundaries, and gridspec helpers remain partial.",
+		note:              "Scalar mappables and vertical/horizontal colorbars exist, including synchronization with mutable mappable clim/colormap updates and explicit tick lists; boundary spacing variants and gridspec helpers remain partial.",
 	},
 	{
 		idPrefix:          "cm",

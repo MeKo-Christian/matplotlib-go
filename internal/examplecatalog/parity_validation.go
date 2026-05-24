@@ -68,6 +68,8 @@ var parityFixValidationTargets = []ParityFixValidationTarget{
 	{CaseID: "pcolormesh_gouraud", ClusterIDs: []string{ValidationClusterImageMeshColorbar, ValidationClusterContour}},
 	{CaseID: "hist2d_weighted_density", ClusterIDs: []string{ValidationClusterImageMeshColorbar}},
 	{CaseID: "boundarynorm_pcolormesh", ClusterIDs: []string{ValidationClusterImageMeshColorbar}},
+	{CaseID: "collection_mutable_scalarmap", ClusterIDs: []string{ValidationClusterImageMeshColorbar}},
+	{CaseID: "colorbar_horizontal_ticks", ClusterIDs: []string{ValidationClusterImageMeshColorbar}},
 	{CaseID: "lognorm_imshow", ClusterIDs: []string{ValidationClusterImageMeshColorbar}},
 	{CaseID: "twoslope_norm_image", ClusterIDs: []string{ValidationClusterImageMeshColorbar}},
 	{CaseID: "colorbar_extensions", ClusterIDs: []string{ValidationClusterImageMeshColorbar}},
