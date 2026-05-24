@@ -2014,7 +2014,7 @@ catalog/parity fixture per behavior family.
 - [ ] Compare remaining `LogLocator` stride/offset decisions against upstream
       for dense ranges and non-decimal bases; add unit cases for the exact
       ranges that still differ.
-- [ ] Add a `locator_log_minor_threshold_labels` catalog/parity fixture for
+- [x] Add a `locator_log_minor_threshold_labels` catalog/parity fixture for
       visible major/minor log-family locator behavior.
 - [x] Add `LogLocator` `SubsMode` support for `auto` / `all` equivalents and
       dense automatic minor-tick suppression.

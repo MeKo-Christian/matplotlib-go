@@ -158,8 +158,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface", "lognorm_imshow"},
-		Note:              "Go LogLocator covers base changes, explicit subs, auto/all subs modes, numticks-driven major thinning, dense minor suppression, and safe non-positive/inverted ranges. Remaining 12.2B scope is exact upstream stride-offset selection and catalog fixtures.",
+		CatalogIDs:        []string{"axes_control_surface", "lognorm_imshow", "locator_log_minor_threshold_labels"},
+		Note:              "Go LogLocator covers base changes, explicit subs, auto/all subs modes, numticks-driven major thinning, dense minor suppression, and safe non-positive/inverted ranges; locator_log_minor_threshold_labels covers visible base-10 minor-grid and base-2 major tick output. Remaining 12.2B scope is exact upstream stride-offset selection.",
 	},
 	{
 		ID:                "ticker-logit-locator",
