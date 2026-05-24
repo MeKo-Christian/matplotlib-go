@@ -2020,7 +2020,7 @@ catalog/parity fixture per behavior family.
 - [x] Split log formatting into explicit Go formatter types for the existing
       simple `LogFormatter`, exponent-only labels, MathText labels, and
       scientific-notation MathText labels.
-- [ ] Add sparse minor-label behavior for log-family formatters where it is
+- [x] Add sparse minor-label behavior for log-family formatters where it is
       needed for visible parity.
 - [ ] Tighten `EngFormatter` behavior for separator defaults, unicode micro,
       places, sign handling, unit spacing, and extreme prefixes.
