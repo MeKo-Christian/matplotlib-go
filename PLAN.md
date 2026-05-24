@@ -2098,7 +2098,7 @@ catalog/parity fixture per behavior family.
 
 #### 12.2G Transform, BBox, and Path Helper Closure
 
-- [ ] Audit upstream `transforms.py`, `path.py`, and `bezier.py` rows against
+- [x] Audit upstream `transforms.py`, `path.py`, and `bezier.py` rows against
       Go transform/geometry helpers and classify missing rows as implemented,
       Go-style equivalent, or intentional omission.
 - [x] Add frozen transform helpers where callers need immutable snapshots of
