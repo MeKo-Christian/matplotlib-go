@@ -2000,6 +2000,8 @@ catalog/parity fixture per behavior family.
       safe behavior for non-positive or inverted domains.
 - [x] Add `LogLocator` `SubsMode` support for `auto` / `all` equivalents and
       dense automatic minor-tick suppression.
+- [x] Add `LogLocator` numticks-driven major thinning and explicit minor
+      suppression when dense ranges require a major stride above one.
 - [x] Add a scale-specific `SymLogLocator` and install it as the default
       major/minor locator for `symlog` axes.
 - [x] Add scale-specific `AsinhLocator` and `LogitLocator` implementations and
