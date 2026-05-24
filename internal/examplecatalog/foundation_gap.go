@@ -107,7 +107,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CurrentEquivalent: "Go has affine, separable, blended, chained, offset, display-rect, scale, " +
 			"and graph-backed transforms plus rect/path primitives with BBox-style union, " +
 			"intersection, expansion/padding, point containment, affine transformed bounds, and " +
-			"inverse-transformed bounds.",
+			"inverse-transformed bounds, plus null-rectangle accumulation helpers.",
 		Gap: "The remaining 12.2G scope is split into frozen transform snapshots, transformed-path " +
 			"cache helpers with invalidation, anchored rect helpers for annotation/layout parity, " +
 			"and path/bezier helpers only when they affect visible clipping or layout behavior.",

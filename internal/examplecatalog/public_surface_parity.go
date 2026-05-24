@@ -402,7 +402,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"internal/geom/geom.go"},
 		CatalogIDs:        []string{"transform_coordinates", "annotation_composition"},
-		Note:              "Go geom.Rect provides BBox-style dimensions, containment, union, intersection, padding, expansion, anchoring, and transforms without Python's mutable base class.",
+		Note:              "Go geom.Rect provides BBox-style dimensions, containment, union, intersection, padding, expansion, anchoring, transforms, and null-rectangle accumulation without Python's mutable base class.",
 	},
 	{
 		ID:                "transforms-bbox",
@@ -411,7 +411,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"internal/geom/geom.go"},
 		CatalogIDs:        []string{"transform_coordinates", "annotation_composition"},
-		Note:              "Go geom.Rect covers static BBox geometry. Mutable point-array APIs, null extents, and live lockable BBox variants remain outside the current Go surface.",
+		Note:              "Go geom.Rect covers static BBox geometry and null-rectangle accumulation. Mutable point-array APIs and live lockable BBox variants remain outside the current Go surface.",
 	},
 	{
 		ID:                "transforms-bbox-transform",

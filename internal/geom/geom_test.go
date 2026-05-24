@@ -1,6 +1,7 @@
 package geom
 
 import (
+	"math"
 	"math/rand"
 	"testing"
 )
@@ -93,6 +94,36 @@ func TestRectUnionAndTransforms(t *testing.T) {
 	}
 	if _, ok := a.InverseTransformed(Affine{}); ok {
 		t.Fatal("singular inverse transform should fail")
+	}
+}
+
+func TestRectNullAccumulation(t *testing.T) {
+	null := NullRect()
+	if !null.Null() || !null.Empty() {
+		t.Fatalf("NullRect = %+v, want null and empty", null)
+	}
+	if !math.IsInf(float64(null.Min.X), 1) || !math.IsInf(float64(null.Max.X), -1) {
+		t.Fatalf("NullRect should use infinite sentinels, got %+v", null)
+	}
+
+	withPoint := null.AddPoint(Pt{3, -2})
+	if withPoint.Null() || withPoint != (Rect{Min: Pt{3, -2}, Max: Pt{3, -2}}) {
+		t.Fatalf("NullRect.AddPoint = %+v", withPoint)
+	}
+	grown := withPoint.AddPoint(Pt{-1, 5})
+	if grown != (Rect{Min: Pt{-1, -2}, Max: Pt{3, 5}}) {
+		t.Fatalf("AddPoint grown rect = %+v", grown)
+	}
+
+	rect := Rect{Min: Pt{10, 10}, Max: Pt{20, 20}}
+	if got := null.AddRect(rect); got != rect {
+		t.Fatalf("NullRect.AddRect = %+v, want %+v", got, rect)
+	}
+	if got := rect.AddRect(null); got != rect {
+		t.Fatalf("Rect.AddRect(NullRect) = %+v, want %+v", got, rect)
+	}
+	if got := null.Union(rect); got != rect {
+		t.Fatalf("NullRect.Union = %+v, want %+v", got, rect)
 	}
 }
 

@@ -1,6 +1,9 @@
 package geom
 
-import "strings"
+import (
+	"math"
+	"strings"
+)
 
 // F64 is the canonical float type used across geometry.
 type F64 = float64
@@ -11,6 +14,14 @@ type Pt struct{ X, Y F64 }
 // Rect is an axis-aligned rectangle with Max-exclusive semantics.
 // That is, a point p is inside r iff Min.X <= p.X < Max.X and Min.Y <= p.Y < Max.Y.
 type Rect struct{ Min, Max Pt }
+
+// NullRect returns a rectangle sentinel that expands to the first point or
+// non-empty rectangle added to it. It mirrors the useful accumulation behavior
+// of Matplotlib's Bbox.null without exposing mutable point arrays.
+func NullRect() Rect {
+	inf := F64(math.Inf(1))
+	return Rect{Min: Pt{inf, inf}, Max: Pt{-inf, -inf}}
+}
 
 // RectFromPoints returns the bounding rectangle for points.
 func RectFromPoints(points ...Pt) (Rect, bool) {
@@ -43,6 +54,42 @@ func (r Rect) H() F64 { return r.Max.Y - r.Min.Y }
 
 // Empty reports whether the rectangle has no positive area.
 func (r Rect) Empty() bool { return r.W() <= 0 || r.H() <= 0 }
+
+// Null reports whether r is a NullRect-style accumulation sentinel.
+func (r Rect) Null() bool {
+	return r.Min.X > r.Max.X || r.Min.Y > r.Max.Y
+}
+
+// AddPoint returns the smallest rectangle covering r and p.
+func (r Rect) AddPoint(p Pt) Rect {
+	if r.Null() {
+		return Rect{Min: p, Max: p}
+	}
+	if p.X < r.Min.X {
+		r.Min.X = p.X
+	}
+	if p.Y < r.Min.Y {
+		r.Min.Y = p.Y
+	}
+	if p.X > r.Max.X {
+		r.Max.X = p.X
+	}
+	if p.Y > r.Max.Y {
+		r.Max.Y = p.Y
+	}
+	return r
+}
+
+// AddRect returns the smallest rectangle covering r and b.
+func (r Rect) AddRect(b Rect) Rect {
+	if b.Null() {
+		return r
+	}
+	if r.Null() {
+		return b
+	}
+	return r.Union(b)
+}
 
 // Inflate expands (or contracts if negative) the rectangle by dx,dy on all sides.
 func (r Rect) Inflate(dx, dy F64) Rect {
@@ -136,6 +183,12 @@ func (r Rect) Intersect(b Rect) Rect {
 
 // Union returns the smallest rectangle covering r and b.
 func (r Rect) Union(b Rect) Rect {
+	if r.Null() {
+		return b
+	}
+	if b.Null() {
+		return r
+	}
 	if r.Empty() {
 		return b
 	}
