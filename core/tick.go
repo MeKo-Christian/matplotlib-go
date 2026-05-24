@@ -550,6 +550,7 @@ type LogLocator struct {
 	Minor    bool
 	Subs     []float64
 	SubsMode string
+	NumTicks int
 }
 
 func (l LogLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
@@ -568,15 +569,32 @@ func (l LogLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 	kmin := math.Ceil(math.Log(minVal) / lb)
 	kmax := math.Floor(math.Log(maxVal)/lb + 1e-10) // Add small epsilon to handle floating point precision
 	nDecades := int(kmax-kmin) + 1
+	numTicks := l.NumTicks
+	if numTicks <= 0 {
+		numTicks = targetCount
+	}
+	if numTicks <= 0 {
+		numTicks = 9
+	}
+	if numTicks < 2 {
+		numTicks = 2
+	}
+	stride := 1
+	if nDecades > 0 {
+		stride = nDecades/(numTicks+1) + 1
+	}
 	var ticks []float64
 	multipliers := l.minorMultipliers(nDecades)
 	includeMultipliers := l.Minor || l.SubsMode != "" || len(l.Subs) > 0
 	if l.Minor && includeMultipliers && len(multipliers) == 0 {
 		return nil
 	}
+	if includeMultipliers && len(multipliers) > 0 && stride > 1 && nDecades > 1 {
+		return nil
+	}
 	includeMajors := strings.ToLower(strings.TrimSpace(l.SubsMode)) != "auto"
 	// Majors
-	for k := kmin; k <= kmax; k++ {
+	for k := kmin; k <= kmax; k += float64(stride) {
 		v := math.Pow(base, k)
 		if includeMajors && v >= minVal && v <= maxVal {
 			ticks = append(ticks, v)

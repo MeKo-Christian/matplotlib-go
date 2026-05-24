@@ -159,7 +159,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface", "lognorm_imshow"},
-		Note:              "Go LogLocator covers base changes, explicit subs, auto/all subs modes, dense automatic minor suppression, and safe non-positive/inverted ranges. Remaining 12.2B scope is exact stride/numticks matching and catalog fixtures.",
+		Note:              "Go LogLocator covers base changes, explicit subs, auto/all subs modes, numticks-driven major thinning, dense minor suppression, and safe non-positive/inverted ranges. Remaining 12.2B scope is exact upstream stride-offset selection and catalog fixtures.",
 	},
 	{
 		ID:                "ticker-logit-locator",

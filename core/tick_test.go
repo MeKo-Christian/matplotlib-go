@@ -272,6 +272,30 @@ func TestLogLocatorSubsAutoAndAllModes(t *testing.T) {
 	}
 }
 
+func TestLogLocatorRespectsTickBudgetAndSuppressesDenseMinors(t *testing.T) {
+	majors := (LogLocator{Base: 10, NumTicks: 4}).Ticks(1, 1e12, 0)
+	if len(majors) > 6 {
+		t.Fatalf("budgeted log major ticks = %v, want a thinned set", majors)
+	}
+	if !strictlyIncreasing(majors) {
+		t.Fatalf("budgeted log major ticks not increasing: %v", majors)
+	}
+	for _, tick := range majors {
+		if !isPowerOfTen(tick) {
+			t.Fatalf("budgeted log major tick %v is not a power of ten: %v", tick, majors)
+		}
+	}
+
+	minors := (LogLocator{Base: 10, Subs: []float64{2, 5}, NumTicks: 4}).Ticks(1, 1e12, 0)
+	if len(minors) != 0 {
+		t.Fatalf("dense explicit minor ticks = %v, want suppressed when major stride is > 1", minors)
+	}
+	all := (LogLocator{Base: 10, SubsMode: "all", NumTicks: 4}).Ticks(1, 1e12, 0)
+	if len(all) == 0 || !strictlyIncreasing(all) {
+		t.Fatalf("dense all-sub mode should fall back to thinned major ticks, got %v", all)
+	}
+}
+
 func hasTick(ticks []float64, want float64) bool {
 	for _, tick := range ticks {
 		if math.Abs(tick-want) <= 1e-12*math.Max(1, math.Abs(want)) {
