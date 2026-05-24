@@ -1105,9 +1105,10 @@ func (f StrMethodFormatter) Format(x float64) string {
 
 // EngFormatter formats values with SI engineering prefixes.
 type EngFormatter struct {
-	Unit   string
-	Places int
-	Sep    string
+	Unit            string
+	Places          int
+	Sep             string
+	UseUnicodeMicro bool
 }
 
 func (f EngFormatter) Format(x float64) string {
@@ -1121,26 +1122,42 @@ func (f EngFormatter) Format(x float64) string {
 	sep := f.Sep
 	absX := math.Abs(x)
 	exp := int(math.Floor(math.Log10(absX)/3.0) * 3)
-	if exp > 24 {
-		exp = 24
+	if exp > maxEngineeringExp {
+		exp = maxEngineeringExp
 	}
-	if exp < -24 {
-		exp = -24
+	if exp < -30 {
+		exp = -30
 	}
 
 	prefix := engineeringPrefix(exp)
 	scaled := x / math.Pow(10, float64(exp))
-	if f.Places >= 0 {
-		return strconv.FormatFloat(scaled, 'f', f.Places, 64) + sep + prefix + f.Unit
+	if f.UseUnicodeMicro && exp == -6 {
+		prefix = "\u00b5"
 	}
-	return (ScalarFormatter{Prec: 6}).Format(scaled) + sep + prefix + f.Unit
+	if f.Places >= 0 && math.Abs(parseFormattedFloat(strconv.FormatFloat(scaled, 'f', f.Places, 64))) >= 1000 && exp < maxEngineeringExp {
+		scaled /= 1000
+		exp += 3
+		prefix = engineeringPrefix(exp)
+		if f.UseUnicodeMicro && exp == -6 {
+			prefix = "\u00b5"
+		}
+	}
+
+	var value string
+	if f.Places >= 0 {
+		value = strconv.FormatFloat(scaled, 'f', f.Places, 64)
+	} else {
+		value = strconv.FormatFloat(scaled, 'g', 6, 64)
+	}
+	return scalarFixMinus(value + sep + prefix + f.Unit)
 }
 
 // PercentFormatter formats values as percentages of XMax.
 type PercentFormatter struct {
-	XMax     float64
-	Decimals int
-	Symbol   string
+	XMax         float64
+	Decimals     int
+	DisplayRange float64
+	Symbol       string
 }
 
 func (f PercentFormatter) Format(x float64) string {
@@ -1154,9 +1171,12 @@ func (f PercentFormatter) Format(x float64) string {
 	}
 	decimals := f.Decimals
 	if decimals < 0 {
+		decimals = percentAutoDecimals((f.DisplayRange / xMax) * 100)
+	}
+	if decimals < 0 {
 		decimals = 0
 	}
-	return strconv.FormatFloat((x/xMax)*100, 'f', decimals, 64) + symbol
+	return scalarFixMinus(strconv.FormatFloat((x/xMax)*100, 'f', decimals, 64) + symbol)
 }
 
 // LogFormatter formats tick labels on a log axis. For Base==10, exact
@@ -1430,8 +1450,36 @@ func tickMaxInt(a, b int) int {
 	return b
 }
 
+const maxEngineeringExp = 30
+
+func parseFormattedFloat(s string) float64 {
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return math.NaN()
+	}
+	return v
+}
+
+func percentAutoDecimals(displayRange float64) int {
+	if displayRange <= 0 || math.IsNaN(displayRange) || math.IsInf(displayRange, 0) {
+		return 0
+	}
+	decimals := int(math.Ceil(2.0 - math.Log10(2.0*displayRange)))
+	if decimals > 5 {
+		return 5
+	}
+	if decimals < 0 {
+		return 0
+	}
+	return decimals
+}
+
 func engineeringPrefix(exp int) string {
 	switch exp {
+	case -30:
+		return "q"
+	case -27:
+		return "r"
 	case -24:
 		return "y"
 	case -21:
@@ -1466,6 +1514,10 @@ func engineeringPrefix(exp int) string {
 		return "Z"
 	case 24:
 		return "Y"
+	case 27:
+		return "R"
+	case 30:
+		return "Q"
 	default:
 		return ""
 	}

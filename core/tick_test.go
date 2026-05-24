@@ -511,6 +511,27 @@ func TestExtraFormatters(t *testing.T) {
 	}
 }
 
+func TestEngFormatterEdgeBehavior(t *testing.T) {
+	if got := (EngFormatter{Places: 2, Sep: " ", UseUnicodeMicro: true}).Format(-1e-6); got != "\u22121.00 \u00b5" {
+		t.Fatalf("EngFormatter unicode micro = %q, want %q", got, "\u22121.00 \u00b5")
+	}
+	if got := (EngFormatter{Places: 1, Sep: " "}).Format(999.95); got != "1.0 k" {
+		t.Fatalf("EngFormatter rounding rollover = %q, want %q", got, "1.0 k")
+	}
+	if got := (EngFormatter{Places: 1, Sep: " "}).Format(1e31); got != "10.0 Q" {
+		t.Fatalf("EngFormatter extreme prefix = %q, want %q", got, "10.0 Q")
+	}
+}
+
+func TestPercentFormatterAutoDecimals(t *testing.T) {
+	if got := (PercentFormatter{XMax: 1, Decimals: -1, DisplayRange: 1}).Format(0.345); got != "34%" {
+		t.Fatalf("PercentFormatter wide range = %q, want %q", got, "34%%")
+	}
+	if got := (PercentFormatter{XMax: 1, Decimals: -1, DisplayRange: 0.01}).Format(-0.0035); got != "\u22120.35%" {
+		t.Fatalf("PercentFormatter narrow negative range = %q, want %q", got, "\u22120.35%")
+	}
+}
+
 func TestLogFormatterFormatsBaseTenDecadesAsPowers(t *testing.T) {
 	formatter := LogFormatter{Base: 10}
 	cases := []struct {
