@@ -59,6 +59,7 @@ import (
 	example_colormap_diverging "github.com/cwbudde/matplotlib-go/test/parity/colormap_diverging"
 	example_colormap_qualitative "github.com/cwbudde/matplotlib-go/test/parity/colormap_qualitative"
 	example_dashes "github.com/cwbudde/matplotlib-go/test/parity/dashes"
+	example_date_concise_intraday_labels "github.com/cwbudde/matplotlib-go/test/parity/date_concise_intraday_labels"
 	example_errorbar_basic "github.com/cwbudde/matplotlib-go/test/parity/errorbar_basic"
 	example_figure_labels_composition "github.com/cwbudde/matplotlib-go/test/parity/figure_labels_composition"
 	example_fill_basic "github.com/cwbudde/matplotlib-go/test/parity/fill_basic"
@@ -224,6 +225,7 @@ var renderByID = map[string]func() image.Image{
 	"specialty_depth":                    example_specialty_depth.Render,
 	"stem_plot":                          example_stem_plot.Render,
 	"specialty_artists":                  example_specialty_artists.Render,
+	"date_concise_intraday_labels":       example_date_concise_intraday_labels.Render,
 	"units_overview":                     example_units_overview.Render,
 	"units_dates":                        example_units_dates.Render,
 	"units_categories":                   example_units_categories.Render,
@@ -307,6 +309,7 @@ var figureByID = map[string]func() *core.Figure{
 	"specialty_artists":                  showcase_specialty_artists.Plot,
 	"stat_variants":                      showcase_stat_variants.Plot,
 	"text_labels_strict":                 example_text_labels_strict.Plot,
+	"date_concise_intraday_labels":       example_date_concise_intraday_labels.Plot,
 	"units_overview":                     showcase_units_overview.Plot,
 	"vector_fields":                      showcase_vector_fields.Plot,
 	"mathtext_basic":                     example_mathtext_basic.Plot,

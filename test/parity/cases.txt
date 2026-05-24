@@ -65,6 +65,7 @@ stat_variants
 specialty_depth
 stem_plot
 specialty_artists
+date_concise_intraday_labels
 units_overview
 units_dates
 units_categories

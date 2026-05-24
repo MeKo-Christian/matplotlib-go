@@ -2081,6 +2081,8 @@ catalog/parity fixture per behavior family.
       ticks remain stable across UTC and non-UTC locations.
 - [x] Preserve explicit user locators/formatters when unit converters refresh
       axis info; add regression tests for date and categorical axes.
+- [x] Add `date_concise_intraday_labels` catalog/parity fixture for intraday
+      `HourLocator` ticks with concise date formatting.
 - [ ] Add catalog/parity cases for daily, monthly/yearly, intraday, concise
       date, and categorical tick labels.
 
