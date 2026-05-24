@@ -1157,11 +1157,12 @@ type EngFormatter struct {
 	Places          int
 	Sep             string
 	UseUnicodeMicro bool
+	UseMathText     bool
 }
 
 func (f EngFormatter) Format(x float64) string {
 	if x == 0 {
-		return "0" + f.Sep + f.Unit
+		return f.formatEngineeringValue("0", "", "")
 	}
 	if math.IsNaN(x) || math.IsInf(x, 0) {
 		return (ScalarFormatter{Prec: 6}).Format(x)
@@ -1197,7 +1198,21 @@ func (f EngFormatter) Format(x float64) string {
 	} else {
 		value = strconv.FormatFloat(scaled, 'g', 6, 64)
 	}
-	return scalarFixMinus(value + sep + prefix + f.Unit)
+	return f.formatEngineeringValue(value, sep, prefix)
+}
+
+// FormatEng is an alias for Format, matching Matplotlib's format_eng helper.
+func (f EngFormatter) FormatEng(x float64) string { return f.Format(x) }
+
+func (f EngFormatter) formatEngineeringValue(value, sep, prefix string) string {
+	suffix := ""
+	if prefix != "" || f.Unit != "" {
+		suffix = sep + prefix + f.Unit
+	}
+	if f.UseMathText {
+		return scalarFixMinus(`$\mathdefault{` + value + `}$` + suffix)
+	}
+	return scalarFixMinus(value + suffix)
 }
 
 // PercentFormatter formats values as percentages of XMax.

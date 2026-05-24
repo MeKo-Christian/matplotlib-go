@@ -267,7 +267,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go EngFormatter covers SI prefix scaling, fixed-minus, unicode micro opt-in, rounding rollover, and extreme SI prefixes. Remaining 12.2C scope is exact default separator/places compatibility and offset/mathtext behavior.",
+		Note:              "Go EngFormatter covers SI prefix scaling, fixed-minus, unicode micro opt-in, rounding rollover, extreme SI prefixes, MathText-style number wrapping, and format_eng-style aliasing. Remaining 12.2C scope is exact default separator/places compatibility and offset behavior.",
 	},
 	{
 		ID:                "ticker-percent-formatter",
