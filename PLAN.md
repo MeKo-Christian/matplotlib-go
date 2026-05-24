@@ -2026,7 +2026,7 @@ catalog/parity fixture per behavior family.
       scientific-notation MathText labels.
 - [x] Add sparse minor-label behavior for log-family formatters where it is
       needed for visible parity.
-- [ ] Tighten `EngFormatter` behavior for separator defaults, unicode micro,
+- [x] Tighten `EngFormatter` behavior for separator defaults, unicode micro,
       places, sign handling, unit spacing, and extreme prefixes.
 - [x] Add `EngFormatter` coverage for unicode micro output, minus-sign fixing,
       engineering-prefix rollover after rounding, and extreme SI prefixes.
@@ -2035,7 +2035,7 @@ catalog/parity fixture per behavior family.
 - [x] Align `EngFormatter` zero-value defaults with upstream separator,
       auto-place formatting, unicode micro, and explicit zero-place escape
       hatches.
-- [ ] Tighten `PercentFormatter` behavior for xmax defaults, decimal auto
+- [x] Tighten `PercentFormatter` behavior for xmax defaults, decimal auto
       selection, symbol escaping/no-escaping decision, and negative values.
 - [x] Add `PercentFormatter` auto-decimal support for configured display ranges
       and fixed-minus handling for negative percentages.
