@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cwbudde/matplotlib-go/backends/internal/vectorhatch"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"golang.org/x/image/font/sfnt"
@@ -611,6 +612,18 @@ func hatchPatternStream(pattern pdfHatchPattern) []byte {
 			shortFloat(line[0].X), shortFloat(line[0].Y),
 			shortFloat(line[1].X), shortFloat(line[1].Y),
 		)
+	}
+	for _, shape := range vectorhatch.ShapePaths(pattern.hatch, pattern.spacing) {
+		if !writePathOps(&buf, shape.Path) {
+			continue
+		}
+		if shape.Filled {
+			writeFillColor(&buf, pattern.lineColor)
+			buf.WriteString("f\n")
+			writeStrokeColor(&buf, pattern.lineColor)
+		} else {
+			buf.WriteString("S\n")
+		}
 	}
 	return buf.Bytes()
 }

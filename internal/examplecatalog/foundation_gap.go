@@ -170,10 +170,11 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Title:           "Patch shapes, BoxStyle, ArrowStyle, and ConnectionStyle registries",
 		UpstreamModules: []string{"patches.py", "hatch.py"},
 		GoFiles:         []string{"core/patch.go", "core/patch_extra.go", "core/arrow_patch.go"},
-		CurrentEquivalent: "Go has common patch shapes, hatch routing, FancyBboxPatch, FancyArrowPatch, " +
-			"ConnectionPatch, and several extra patch classes.",
-		Gap: "Full box style, arrow style, connection style, hatch-density, and specialized patch " +
-			"catalog parity still needs enumeration against upstream registries.",
+		CurrentEquivalent: "Go has common patch shapes, hatch routing, FancyBboxPatch with the upstream " +
+			"BoxStyle registry entries, renderer-neutral hatch geometry for the upstream hatch " +
+			"character set, AGG shape hatches, FancyArrowPatch, ConnectionPatch, and several extra patch classes.",
+		Gap: "Arrow style, connection style, vector-native shape hatch patterns, hatch-density fixtures, " +
+			"and specialized patch catalog parity still need enumeration against upstream registries.",
 		Decision: GapDecisionImplement,
 		Rationale: "These are enumerable public catalogs; missing entries should be implemented or tracked " +
 			"as explicit intentional divergences.",
@@ -199,11 +200,11 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Title:           "Text font property surface",
 		UpstreamModules: []string{"text.py", "font_manager.py", "textpath.py"},
 		GoFiles:         []string{"core/text.go", "render/font_manager.go", "render/text_shaping.go", "render/text_path.go"},
-		CurrentEquivalent: "Go text options expose size, color, MathText / TeX routing, and renderer-level " +
-			"font resolution / shaping.",
-		Gap: "Per-text font family, style, weight, stretch, variant, font features, language, " +
-			"math font, parse_math, and usetex-style setters are not modeled as a cohesive " +
-			"artist-level property set.",
+		CurrentEquivalent: "Go text and annotation options expose size, color, FontKey overrides, " +
+			"structured FontProperties for family/style/weight/file requests, MathText / TeX routing, " +
+			"and renderer-level font resolution / shaping.",
+		Gap: "Per-text stretch, variant, structured OpenType feature toggles, language, math font, " +
+			"parse_math, and usetex-style setters are not modeled as a cohesive artist-level property set.",
 		Decision: GapDecisionIdiomaticEquivalent,
 		Rationale: "Expose a Go TextOptions font-property struct that maps to renderer font keys instead " +
 			"of mirroring Python's dynamic setter catalog.",
@@ -214,11 +215,10 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Title:           "Annotation coordinate and clipping model",
 		UpstreamModules: []string{"text.py", "patches.py"},
 		GoFiles:         []string{"core/text.go", "core/arrow_patch.go", "transform/transform.go"},
-		CurrentEquivalent: "Go annotations support text, arrows, arrow styles, connection styles, and " +
-			"overlay drawing.",
-		Gap: "Matplotlib's separate xycoords / textcoords, annotation clipping policy, " +
-			"AnnotationBbox behavior, and tightbbox / window-extent interaction are only partially " +
-			"represented.",
+		CurrentEquivalent: "Go annotations support text, arrows, arrow styles, connection styles, " +
+			"explicit annotation_clip behavior, and overlay drawing.",
+		Gap: "Matplotlib's separate xycoords / textcoords, default annotation_clip=None policy, " +
+			"AnnotationBbox behavior, and tightbbox / window-extent interaction are only partially represented.",
 		Decision: GapDecisionImplement,
 		Rationale: "Common annotation coordinate modes are widely used in Matplotlib examples and should " +
 			"be implemented with transform-backed Go options.",

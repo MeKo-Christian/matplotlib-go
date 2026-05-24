@@ -747,6 +747,12 @@ func (r *Renderer) drawNativeHatch(clipPath geom.Path, paint *render.Paint) {
 	if !ok {
 		return
 	}
+	if hatchHasShapePattern(paint.Hatch) {
+		fallbackPaint := *paint
+		fallbackPaint.HatchColor = color
+		render.DrawHatchFallback(r, clipPath, fallbackPaint)
+		return
+	}
 	counts := hatchCounts(paint.Hatch)
 	if len(counts) == 0 {
 		return
@@ -790,6 +796,16 @@ func (r *Renderer) drawNativeHatch(clipPath geom.Path, paint *render.Paint) {
 			r.Path(hatchPath, &hatchPaint)
 		}
 	}
+}
+
+func hatchHasShapePattern(pattern string) bool {
+	for _, ch := range pattern {
+		switch ch {
+		case 'o', 'O', '.', '*':
+			return true
+		}
+	}
+	return false
 }
 
 func hatchCounts(pattern string) map[rune]int {

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/backends/internal/mixedraster"
+	"github.com/cwbudde/matplotlib-go/backends/internal/vectorhatch"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -425,6 +426,7 @@ func (r *Renderer) writeHatchFill(p geom.Path, paint *render.Paint) {
 			shortFloat(line[1].X), shortFloat(line[1].Y),
 		)
 	}
+	writeHatchShapeOps(&r.content, paint.Hatch, paint.HatchSpacing)
 	r.content.WriteString("grestore\n")
 }
 
@@ -771,6 +773,20 @@ func writePathOps(w *strings.Builder, p geom.Path) bool {
 	return true
 }
 
+func writeHatchShapeOps(w *strings.Builder, hatch string, spacing float64) {
+	for _, shape := range vectorhatch.ShapePaths(hatch, spacing) {
+		w.WriteString("newpath\n")
+		if !writePathOps(w, shape.Path) {
+			continue
+		}
+		if shape.Filled {
+			w.WriteString("fill\n")
+		} else {
+			w.WriteString("stroke\n")
+		}
+	}
+}
+
 func lastEndpoint(p geom.Path, vi int) geom.Pt {
 	consumed := 0
 	for _, cmd := range p.C {
@@ -822,6 +838,7 @@ func writePathPaintOps(w *strings.Builder, path geom.Path, paint *render.Paint) 
 				shortFloat(line[1].X), shortFloat(line[1].Y),
 			)
 		}
+		writeHatchShapeOps(w, paint.Hatch, paint.HatchSpacing)
 		w.WriteString("grestore\n")
 		if hasStroke {
 			if !writePathOps(w, path) {

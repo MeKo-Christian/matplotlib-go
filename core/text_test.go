@@ -602,6 +602,146 @@ func TestTextArtistUsesTeXRendererWhenRCUseTeX(t *testing.T) {
 	}
 }
 
+func TestTextArtistFontKeyOverridesRCFontKey(t *testing.T) {
+	ctx := createTestDrawContext()
+	ctx.RC.FontKey = "RC Font"
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 1},
+		Content:  "plain",
+		FontSize: 12,
+		FontKey:  "Artist Font",
+		ClipOn:   true,
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.fontTextCalls) != 1 {
+		t.Fatalf("expected one font-aware text draw, got %+v", r.fontTextCalls)
+	}
+	if got := r.fontTextCalls[0].fontKey; got != "Artist Font" {
+		t.Fatalf("text fontKey = %q, want artist override", got)
+	}
+}
+
+func TestTextArtistFontPropertiesOverrideRCFontKey(t *testing.T) {
+	ctx := createTestDrawContext()
+	ctx.RC.FontKey = "RC Font"
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 1},
+		Content:  "plain",
+		FontSize: 12,
+		FontProperties: &render.FontProperties{
+			Families: []string{"DejaVu Serif"},
+			Style:    render.FontStyleItalic,
+			Weight:   700,
+		},
+		ClipOn: true,
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.fontTextCalls) != 1 {
+		t.Fatalf("expected one font-aware text draw, got %+v", r.fontTextCalls)
+	}
+	props := render.ParseFontProperties(r.fontTextCalls[0].fontKey)
+	if props.Style != render.FontStyleItalic || props.Weight != 700 || len(props.Families) != 1 || props.Families[0] != "DejaVu Serif" {
+		t.Fatalf("text font properties = %+v, want DejaVu Serif italic 700", props)
+	}
+}
+
+func TestAnnotationFontKeyOverridesRCFontKey(t *testing.T) {
+	ctx := createTestDrawContext()
+	ctx.RC.FontKey = "RC Font"
+	annotation := &Annotation{
+		Point:    geom.Pt{X: 1, Y: 1},
+		Content:  "note",
+		OffsetX:  10,
+		OffsetY:  -8,
+		FontSize: 12,
+		FontKey:  "Annotation Font",
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	annotation.DrawOverlay(r, ctx)
+
+	if len(r.fontTextCalls) != 1 {
+		t.Fatalf("expected one font-aware annotation draw, got %+v", r.fontTextCalls)
+	}
+	if got := r.fontTextCalls[0].fontKey; got != "Annotation Font" {
+		t.Fatalf("annotation fontKey = %q, want annotation override", got)
+	}
+}
+
+func TestAnnotationFontPropertiesOverrideRCFontKey(t *testing.T) {
+	ctx := createTestDrawContext()
+	ctx.RC.FontKey = "RC Font"
+	annotation := &Annotation{
+		Point:    geom.Pt{X: 1, Y: 1},
+		Content:  "note",
+		OffsetX:  10,
+		OffsetY:  -8,
+		FontSize: 12,
+		FontProperties: &render.FontProperties{
+			Families: []string{"DejaVu Sans Mono"},
+			Style:    render.FontStyleOblique,
+			Weight:   600,
+		},
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	annotation.DrawOverlay(r, ctx)
+
+	if len(r.fontTextCalls) != 1 {
+		t.Fatalf("expected one font-aware annotation draw, got %+v", r.fontTextCalls)
+	}
+	props := render.ParseFontProperties(r.fontTextCalls[0].fontKey)
+	if props.Style != render.FontStyleOblique || props.Weight != 600 || len(props.Families) != 1 || props.Families[0] != "DejaVu Sans Mono" {
+		t.Fatalf("annotation font properties = %+v, want DejaVu Sans Mono oblique 600", props)
+	}
+}
+
+func TestAnnotationClipSkipsOutsideAnnotatedPoint(t *testing.T) {
+	ctx := createTestDrawContext()
+	clip := true
+	annotation := &Annotation{
+		Point:          geom.Pt{X: 100, Y: 100},
+		Content:        "outside",
+		OffsetX:        10,
+		OffsetY:        -8,
+		FontSize:       12,
+		AnnotationClip: &clip,
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	annotation.DrawOverlay(r, ctx)
+
+	if len(r.fontTextCalls) != 0 || len(r.texts) != 0 {
+		t.Fatalf("clipped annotation should not draw text, got font=%+v text=%+v", r.fontTextCalls, r.texts)
+	}
+}
+
+func TestAnnotationClipFalseDrawsOutsideAnnotatedPoint(t *testing.T) {
+	ctx := createTestDrawContext()
+	clip := false
+	annotation := &Annotation{
+		Point:          geom.Pt{X: 100, Y: 100},
+		Content:        "outside",
+		OffsetX:        10,
+		OffsetY:        -8,
+		FontSize:       12,
+		AnnotationClip: &clip,
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	annotation.DrawOverlay(r, ctx)
+
+	if len(r.fontTextCalls) != 1 {
+		t.Fatalf("annotation_clip=false should draw text, got %+v", r.fontTextCalls)
+	}
+}
+
 func TestAlignedTextOrigin(t *testing.T) {
 	anchor := geom.Pt{X: 100, Y: 50}
 	metrics := render.TextMetrics{W: 40, Ascent: 8, Descent: 2}

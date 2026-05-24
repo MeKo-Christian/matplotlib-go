@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/cwbudde/matplotlib-go/backends/internal/mixedraster"
+	"github.com/cwbudde/matplotlib-go/backends/internal/vectorhatch"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	tex "github.com/cwbudde/matplotlib-go/internal/tex"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -1620,8 +1621,30 @@ func writeHatchDef(b *strings.Builder, hatch hatchDef) {
 			writeAttr(b, "stroke-linecap", "butt")
 			b.WriteString(` />`)
 		}
+		writeHatchShapeDefs(b, hatch)
 	}
 	b.WriteString("</pattern>\n")
+}
+
+func writeHatchShapeDefs(b *strings.Builder, hatch hatchDef) {
+	for _, shape := range vectorhatch.ShapePaths(hatch.hatch, hatch.spacing) {
+		d := buildPathData(shape.Path)
+		if d == "" {
+			continue
+		}
+		b.WriteString(`<path`)
+		writeAttr(b, "d", d)
+		if shape.Filled {
+			writeColorAttrs(b, "fill", hatch.lineColor, hatch.forced)
+			writeAttr(b, "stroke", "none")
+		} else {
+			writeAttr(b, "fill", "none")
+			writeColorAttrs(b, "stroke", hatch.lineColor, hatch.forced)
+			writeFloatAttr(b, "stroke-width", hatch.lineWidth)
+			writeAttr(b, "stroke-linecap", "butt")
+		}
+		b.WriteString(` />`)
+	}
 }
 
 func filterKey(name string, radius float64) string {

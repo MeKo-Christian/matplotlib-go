@@ -797,6 +797,35 @@ func TestPathWithHatchEmitsPatternFill(t *testing.T) {
 	}
 }
 
+func TestPathWithShapeHatchEmitsPatternGeometry(t *testing.T) {
+	content := renderSVGDocument(t, func(r *Renderer) {
+		var path geom.Path
+		path.MoveTo(geom.Pt{X: 10, Y: 10})
+		path.LineTo(geom.Pt{X: 70, Y: 10})
+		path.LineTo(geom.Pt{X: 70, Y: 50})
+		path.Close()
+		r.Path(path, &render.Paint{
+			Hatch:          "oO.*",
+			HatchColor:     render.Color{A: 1},
+			HatchLineWidth: 1,
+			HatchSpacing:   12,
+		})
+	})
+
+	for _, want := range []string{
+		`<pattern id="hatch1" patternUnits="userSpaceOnUse" width="72" height="72">`,
+		` C `,
+		` Z`,
+		`fill="rgb(0,0,0)"`,
+		`stroke="rgb(0,0,0)"`,
+		`fill="url(#hatch1)"`,
+	} {
+		if !strings.Contains(content, want) {
+			t.Fatalf("expected shape hatch pattern fragment %q in %q", want, content)
+		}
+	}
+}
+
 func TestHatchPatternDefsAreReused(t *testing.T) {
 	content := renderSVGDocument(t, func(r *Renderer) {
 		var path geom.Path

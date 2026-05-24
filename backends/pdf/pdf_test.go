@@ -424,6 +424,34 @@ func TestRendererNativeHatchEmitsTilingPattern(t *testing.T) {
 	}
 }
 
+func TestRendererNativeShapeHatchEmitsPatternGeometry(t *testing.T) {
+	r := newTestRenderer(t)
+	_ = r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}})
+	r.Path(pdfTestRectPath(10, 10, 60, 50), &render.Paint{
+		Hatch:          "oO.*",
+		HatchColor:     render.Color{A: 1},
+		HatchLineWidth: 1,
+		HatchSpacing:   12,
+	})
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	data, err := r.Bytes()
+	if err != nil {
+		t.Fatalf("Bytes: %v", err)
+	}
+	doc, err := pdfcompare.Parse(data)
+	if err != nil {
+		t.Fatalf("pdfcompare.Parse: %v", err)
+	}
+	patternBody := pdfDocumentObjectBodyContaining(doc, "/PatternType 1")
+	for _, want := range []string{" c ", " h ", " S", " f "} {
+		if !strings.Contains(patternBody, want) {
+			t.Fatalf("shape hatch pattern object missing %q:\n%s", want, patternBody)
+		}
+	}
+}
+
 func TestRendererPatternFillEmitsTilingPattern(t *testing.T) {
 	r := newTestRenderer(t)
 	filler, ok := any(r).(render.PatternFiller)

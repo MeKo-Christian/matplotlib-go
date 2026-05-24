@@ -26,6 +26,25 @@ func TestParseFontPropertiesHandlesListsAndPaths(t *testing.T) {
 	}
 }
 
+func TestFontPropertiesKeyRoundTripsStructuredProperties(t *testing.T) {
+	key := FontPropertiesKey(FontProperties{
+		Families: []string{"DejaVu Serif", "serif"},
+		Style:    FontStyleItalic,
+		Weight:   700,
+	})
+
+	props := ParseFontProperties(key)
+	if got, want := props.Families, []string{"DejaVu Serif", "serif"}; len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Fatalf("families = %#v, want %#v", got, want)
+	}
+	if props.Style != FontStyleItalic {
+		t.Fatalf("style = %q, want italic", props.Style)
+	}
+	if props.Weight != 700 {
+		t.Fatalf("weight = %d, want 700", props.Weight)
+	}
+}
+
 func TestFontManagerResolvesDirectFontFileAndCaches(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "ExampleFont.ttf")

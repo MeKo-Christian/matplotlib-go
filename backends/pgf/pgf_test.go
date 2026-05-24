@@ -141,6 +141,27 @@ func TestPathWithHatchEmitsClippedHatchLines(t *testing.T) {
 	}
 }
 
+func TestPathWithShapeHatchEmitsClippedShapeGeometry(t *testing.T) {
+	doc := renderPGFDocument(t, func(r *Renderer) {
+		r.Path(testRectPath(), &render.Paint{
+			Hatch:          "oO.*",
+			HatchColor:     render.Color{A: 1},
+			HatchLineWidth: 1,
+			HatchSpacing:   12,
+		})
+	})
+	for _, want := range [][]byte{
+		[]byte(`\pgfusepath{clip}`),
+		[]byte(`\pgfpathcurveto`),
+		[]byte(`\pgfusepath{fill}`),
+		[]byte(`\pgfusepath{stroke}`),
+	} {
+		if !bytes.Contains(doc, want) {
+			t.Fatalf("missing shape hatch fragment %q in\n%s", want, doc)
+		}
+	}
+}
+
 func TestImageEmitsSelfContainedPixelRectangles(t *testing.T) {
 	doc := renderPGFDocument(t, func(r *Renderer) {
 		img := image.NewRGBA(image.Rect(0, 0, 2, 1))

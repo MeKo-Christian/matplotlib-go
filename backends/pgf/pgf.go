@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/backends/internal/mixedraster"
+	"github.com/cwbudde/matplotlib-go/backends/internal/vectorhatch"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -306,6 +307,7 @@ func (r *Renderer) writeHatchFillTo(w *strings.Builder, path geom.Path, paint *r
 		fmt.Fprintf(w, "\\pgfpathlineto{\\pgfpoint{%spt}{%spt}}\n", shortFloat(line[1].X), shortFloat(line[1].Y))
 		w.WriteString("\\pgfusepath{stroke}\n")
 	}
+	writeHatchShapeOps(w, paint.Hatch, paint.HatchSpacing)
 	w.WriteString("\\endpgfscope\n")
 }
 
@@ -682,6 +684,19 @@ func writePathOps(w *strings.Builder, path geom.Path) bool {
 		}
 	}
 	return true
+}
+
+func writeHatchShapeOps(w *strings.Builder, hatch string, spacing float64) {
+	for _, shape := range vectorhatch.ShapePaths(hatch, spacing) {
+		if !writePathOps(w, shape.Path) {
+			continue
+		}
+		if shape.Filled {
+			w.WriteString("\\pgfusepath{fill}\n")
+		} else {
+			w.WriteString("\\pgfusepath{stroke}\n")
+		}
+	}
 }
 
 func (r *Renderer) writePathPaintOps(w *strings.Builder, path geom.Path, paint *render.Paint) bool {

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -42,7 +43,7 @@ func TestRectangleDrawAndBounds(t *testing.T) {
 	}
 }
 
-func TestFancyBboxPatchRoundUsesCurvesAndHatch(t *testing.T) {
+func TestFancyBboxPatchRoundUsesQuadraticCornersAndHatch(t *testing.T) {
 	box := &FancyBboxPatch{
 		Patch: Patch{
 			FaceColor:    render.Color{R: 0.3, G: 0.6, B: 0.9, A: 0.7},
@@ -69,16 +70,204 @@ func TestFancyBboxPatchRoundUsesCurvesAndHatch(t *testing.T) {
 	if len(r.pathCalls[0].path.C) == 0 {
 		t.Fatal("expected rounded path commands")
 	}
-	hasCurve := false
+	hasQuad := false
 	for _, cmd := range r.pathCalls[0].path.C {
-		if cmd == geom.CubicTo {
-			hasCurve = true
+		if cmd == geom.QuadTo {
+			hasQuad = true
 			break
 		}
 	}
-	if !hasCurve {
-		t.Fatalf("expected rounded fancy box path to use cubic curves, got %v", r.pathCalls[0].path.C)
+	if !hasQuad {
+		t.Fatalf("expected rounded fancy box path to use quadratic curves, got %v", r.pathCalls[0].path.C)
 	}
+}
+
+func TestFancyBboxPatchRoundUsesMutationScaleAndAspect(t *testing.T) {
+	box := &FancyBboxPatch{
+		Width:          2,
+		Height:         1,
+		Pad:            0.3,
+		BoxStyle:       BoxStyleRound,
+		MutationSize:   2,
+		MutationAspect: 2,
+	}
+
+	path := box.localPath()
+	assertApproxPathBounds(t, path, geom.Rect{
+		Min: geom.Pt{X: -0.6, Y: -1.2},
+		Max: geom.Pt{X: 2.6, Y: 2.2},
+	})
+	if got := countPathCmd(path, geom.QuadTo); got != 4 {
+		t.Fatalf("round quadratic corners = %d, want 4; commands=%v", got, path.C)
+	}
+}
+
+func TestFancyBboxPatchAdditionalBoxStyles(t *testing.T) {
+	tests := []struct {
+		name      string
+		style     BoxStyle
+		width     float64
+		height    float64
+		pad       float64
+		want      geom.Rect
+		wantCmd   geom.Cmd
+		minCount  int
+		closePath bool
+	}{
+		{
+			name:      "circle",
+			style:     BoxStyleCircle,
+			width:     2,
+			height:    1,
+			pad:       0.5,
+			want:      geom.Rect{Min: geom.Pt{X: -1, Y: -1.5}, Max: geom.Pt{X: 3, Y: 2.5}},
+			wantCmd:   geom.CubicTo,
+			minCount:  4,
+			closePath: true,
+		},
+		{
+			name:      "ellipse",
+			style:     BoxStyleEllipse,
+			width:     2,
+			height:    1,
+			pad:       0.5,
+			want:      geom.Rect{Min: geom.Pt{X: 1 - 4/math.Sqrt2, Y: 0.5 - 3/math.Sqrt2}, Max: geom.Pt{X: 1 + 4/math.Sqrt2, Y: 0.5 + 3/math.Sqrt2}},
+			wantCmd:   geom.CubicTo,
+			minCount:  4,
+			closePath: true,
+		},
+		{
+			name:      "round4",
+			style:     BoxStyleRound4,
+			width:     2,
+			height:    1,
+			pad:       0.2,
+			want:      geom.Rect{Min: geom.Pt{X: -0.4, Y: -0.4}, Max: geom.Pt{X: 2.4, Y: 1.4}},
+			wantCmd:   geom.CubicTo,
+			minCount:  4,
+			closePath: true,
+		},
+		{
+			name:      "rarrow",
+			style:     BoxStyleRArrow,
+			width:     4,
+			height:    2,
+			want:      geom.Rect{Min: geom.Pt{X: 0, Y: -0.5}, Max: geom.Pt{X: 5, Y: 2.5}},
+			wantCmd:   geom.LineTo,
+			minCount:  6,
+			closePath: true,
+		},
+		{
+			name:      "larrow",
+			style:     BoxStyleLArrow,
+			width:     4,
+			height:    2,
+			want:      geom.Rect{Min: geom.Pt{X: -1, Y: -0.5}, Max: geom.Pt{X: 4, Y: 2.5}},
+			wantCmd:   geom.LineTo,
+			minCount:  6,
+			closePath: true,
+		},
+		{
+			name:      "darrow",
+			style:     BoxStyleDArrow,
+			width:     4,
+			height:    2,
+			want:      geom.Rect{Min: geom.Pt{X: -1, Y: -0.5}, Max: geom.Pt{X: 5, Y: 2.5}},
+			wantCmd:   geom.LineTo,
+			minCount:  8,
+			closePath: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			box := &FancyBboxPatch{
+				Width:        tt.width,
+				Height:       tt.height,
+				Pad:          tt.pad,
+				BoxStyle:     tt.style,
+				MutationSize: 2,
+			}
+			if tt.pad == 0 {
+				box.MutationSize = 1
+			}
+			path := box.localPath()
+			assertApproxPathBounds(t, path, tt.want)
+			if got := countPathCmd(path, tt.wantCmd); got < tt.minCount {
+				t.Fatalf("%s %v count = %d, want at least %d; commands=%v", tt.name, tt.wantCmd, got, tt.minCount, path.C)
+			}
+			if tt.closePath && (len(path.C) == 0 || path.C[len(path.C)-1] != geom.ClosePath) {
+				t.Fatalf("%s should close path, commands=%v", tt.name, path.C)
+			}
+		})
+	}
+}
+
+func TestFancyBboxPatchToothStyles(t *testing.T) {
+	saw := (&FancyBboxPatch{
+		Width:    4,
+		Height:   2,
+		Pad:      0.4,
+		BoxStyle: BoxStyleSawtooth,
+	}).localPath()
+	round := (&FancyBboxPatch{
+		Width:    4,
+		Height:   2,
+		Pad:      0.4,
+		BoxStyle: BoxStyleRoundtooth,
+	}).localPath()
+
+	if got := countPathCmd(saw, geom.LineTo); got < 20 {
+		t.Fatalf("sawtooth line count = %d, want detailed tooth outline; commands=%v", got, saw.C)
+	}
+	if got := countPathCmd(round, geom.QuadTo); got < 10 {
+		t.Fatalf("roundtooth quadratic count = %d, want rounded tooth outline; commands=%v", got, round.C)
+	}
+	if len(saw.C) == 0 || saw.C[len(saw.C)-1] != geom.ClosePath {
+		t.Fatalf("sawtooth should close path, commands=%v", saw.C)
+	}
+	if len(round.C) == 0 || round.C[len(round.C)-1] != geom.ClosePath {
+		t.Fatalf("roundtooth should close path, commands=%v", round.C)
+	}
+}
+
+func TestFancyBboxPatchLArrowReflectsAroundOriginalBoxWithPadding(t *testing.T) {
+	box := &FancyBboxPatch{
+		Width:        4,
+		Height:       2,
+		Pad:          0.5,
+		BoxStyle:     BoxStyleLArrow,
+		MutationSize: 2,
+	}
+
+	assertApproxPathBounds(t, box.localPath(), geom.Rect{
+		Min: geom.Pt{X: -3, Y: -2},
+		Max: geom.Pt{X: 5, Y: 4},
+	})
+}
+
+func countPathCmd(path geom.Path, want geom.Cmd) int {
+	count := 0
+	for _, cmd := range path.C {
+		if cmd == want {
+			count++
+		}
+	}
+	return count
+}
+
+func assertApproxPathBounds(t *testing.T, path geom.Path, want geom.Rect) {
+	t.Helper()
+	got, ok := pathBounds(path)
+	if !ok {
+		t.Fatal("path has no bounds")
+	}
+	if !approxPt(got.Min, want.Min, 1e-9) || !approxPt(got.Max, want.Max, 1e-9) {
+		t.Fatalf("bounds = %+v, want %+v", got, want)
+	}
+}
+
+func approxPt(a, b geom.Pt, tol float64) bool {
+	return math.Abs(a.X-b.X) <= tol && math.Abs(a.Y-b.Y) <= tol
 }
 
 func TestPatchAutoScaleIgnoresNonDataCoords(t *testing.T) {

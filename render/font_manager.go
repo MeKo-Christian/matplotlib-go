@@ -1,6 +1,7 @@
 package render
 
 import (
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,6 +19,8 @@ const (
 	fontFamilySansSerif = "sans-serif"
 	fontFamilySerif     = "serif"
 	fontFamilyMonospace = "monospace"
+
+	fontPropertiesKeyPrefix = "fontprops:"
 )
 
 // FontStyle describes a font posture in Matplotlib-style font properties.
@@ -86,12 +89,51 @@ func ParseFontProperties(fontKey string) FontProperties {
 	if fontKey == "" {
 		return props
 	}
+	if strings.HasPrefix(fontKey, fontPropertiesKeyPrefix) {
+		return parseStructuredFontPropertiesKey(fontKey)
+	}
 	if pathLooksLikeFontFile(fontKey) {
 		props.File = fontKey
 		return props
 	}
 	props.Families = parseFontFamilyList(fontKey)
 	return props
+}
+
+// FontPropertiesKey serializes font properties into a renderer font key that
+// preserves family, style, weight, and file fields across renderer interfaces.
+func FontPropertiesKey(props FontProperties) string {
+	props = normalizeFontProperties(props)
+	if props.File == "" && len(props.Families) == 0 {
+		return ""
+	}
+	return fontPropertiesKeyPrefix +
+		url.QueryEscape(strings.Join(props.Families, ",")) + "|" +
+		url.QueryEscape(string(props.Style)) + "|" +
+		strconv.Itoa(props.Weight) + "|" +
+		url.QueryEscape(props.File)
+}
+
+func parseStructuredFontPropertiesKey(fontKey string) FontProperties {
+	payload := strings.TrimPrefix(strings.TrimSpace(fontKey), fontPropertiesKeyPrefix)
+	parts := strings.SplitN(payload, "|", 4)
+	props := FontProperties{Style: FontStyleNormal, Weight: 400}
+	if len(parts) != 4 {
+		return props
+	}
+	if families, err := url.QueryUnescape(parts[0]); err == nil {
+		props.Families = parseFontFamilyList(families)
+	}
+	if style, err := url.QueryUnescape(parts[1]); err == nil && strings.TrimSpace(style) != "" {
+		props.Style = FontStyle(style)
+	}
+	if weight, err := strconv.Atoi(parts[2]); err == nil {
+		props.Weight = weight
+	}
+	if file, err := url.QueryUnescape(parts[3]); err == nil {
+		props.File = strings.TrimSpace(file)
+	}
+	return normalizeFontProperties(props)
 }
 
 // FindFontPath resolves a font key to a file path.

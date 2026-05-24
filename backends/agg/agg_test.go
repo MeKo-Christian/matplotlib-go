@@ -561,6 +561,37 @@ func TestNativeHatchDrawsWithinPathClip(t *testing.T) {
 	}
 }
 
+func TestNativeHatchDrawsShapePatterns(t *testing.T) {
+	for _, hatch := range []string{"o", "O", ".", "*"} {
+		t.Run(hatch, func(t *testing.T) {
+			r := mustNew(t, 80, 80)
+			_ = r.Begin(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 80, Y: 80}})
+
+			var rect geom.Path
+			rect.MoveTo(geom.Pt{X: 20, Y: 20})
+			rect.LineTo(geom.Pt{X: 60, Y: 20})
+			rect.LineTo(geom.Pt{X: 60, Y: 60})
+			rect.LineTo(geom.Pt{X: 20, Y: 60})
+			rect.Close()
+			r.Path(rect, &render.Paint{
+				Hatch:          hatch,
+				HatchColor:     render.Color{A: 1},
+				HatchLineWidth: 1,
+				HatchSpacing:   8,
+			})
+			_ = r.End()
+
+			bounds, pixels, ok := inkBounds(r.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
+			if !ok || pixels == 0 {
+				t.Fatalf("expected native hatch %q pixels to be drawn", hatch)
+			}
+			if bounds.Min.X < 19 || bounds.Min.Y < 19 || bounds.Max.X > 61 || bounds.Max.Y > 61 {
+				t.Fatalf("native hatch %q should be clipped to path bounds, got %+v", hatch, bounds)
+			}
+		})
+	}
+}
+
 func TestNativeHatchResidualAgainstFallbackDiagnostic(t *testing.T) {
 	clip := upperLeftTriangleClip()
 	paint := render.Paint{

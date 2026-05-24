@@ -2234,22 +2234,41 @@ Matplotlib.
       Go patch surface; update Phase 11 public-surface rows for direct
       equivalents, Go-style equivalents, partial rows, and intentional
       omissions.
-- [ ] Complete `FancyBboxPatch` box-style behavior for the common visible
+- [x] Complete `FancyBboxPatch` box-style behavior for the common visible
       styles: square, round, round4, sawtooth, roundtooth, circle, larrow,
-      rarrow, darrow, and the documented mutation-size / mutation-aspect
-      effects.
+      rarrow, darrow, ellipse, and the documented mutation-size /
+      mutation-aspect effects.
 - [ ] Verify `FancyArrowPatch` and `ConnectionPatch` geometry against upstream
       for shrink points, mutation scale, cap/join style, clipping to patch
       endpoints, and the visible arrow/connection styles already registered.
 - [ ] Verify hatch character coverage (`/`, `\`, `|`, `-`, `+`, `x`, `o`, `O`,
       `.`, `*`) and repeat-density semantics against `hatch.py`, including
       backend-native vector hatches and AGG raster hatches.
-- [ ] Add renderer-neutral path tests for each newly implemented box/arrow/
-      hatch behavior, with exact path bounds or segment-count assertions where
-      pixel output would be brittle.
+- [x] Add renderer-neutral path tests for the implemented box-style behavior,
+      with exact path bounds or segment-count assertions where pixel output
+      would be brittle.
 - [ ] Add focused catalog/parity cases for box styles, connection styles, and
       hatch-density variants instead of expanding `patch_showcase` into an
       overloaded fixture.
+
+Current slice landed:
+
+- `FancyBboxPatch` now supports every upstream `BoxStyle._style_list` entry
+  through Go constants: square, round, round4, sawtooth, roundtooth, circle,
+  ellipse, larrow, rarrow, and darrow.
+- Box-style path generation now applies Matplotlib-style `mutation_size` and
+  `mutation_aspect` scaling for padding, rounding, teeth, and arrow geometry.
+- Renderer-neutral core tests cover quadratic round corners, mutation
+  scale/aspect bounds, circle/ellipse/round4/arrow style bounds, sawtooth and
+  roundtooth command structure, and padded left-arrow reflection.
+- Renderer-neutral hatch fallback now recognizes the full upstream hatch
+  character set, including `o`, `O`, `.`, and `*`, applies repeat-density
+  semantics to shape glyphs, and uses the upstream shape-size ratios from
+  `hatch.py`.
+- AGG native hatching now draws the shape glyphs through the shared hatch
+  fallback so raster hatches cover the same character set. Native vector
+  pattern definitions for shape hatches remain the open part of the hatch
+  catalog checklist.
 
 #### 12.4C Text and Font Property Breadth
 
@@ -2274,6 +2293,20 @@ Matplotlib.
       plus catalog/parity fixtures for font variants, multiline layout, rotated
       anchored text, and text-with-bbox output.
 
+Current slice landed:
+
+- `TextOptions`, `Figure.Text`, and `AnnotationOptions` now carry an explicit
+  `FontKey` override that takes precedence over `ctx.RC.FontKey` for
+  measurement, drawing, multiline text, rotated text, path effects, and
+  annotations.
+- `TextOptions` and `AnnotationOptions` also accept structured
+  `render.FontProperties` for family, style, weight, and direct font-file
+  requests. The renderer-facing `render.FontPropertiesKey` preserves those
+  fields across existing font-key interfaces.
+- Renderer-neutral text tests cover per-text and per-annotation font-key
+  override routing, structured font-property round-tripping, and
+  font-property routing through font-aware renderer interfaces.
+
 #### 12.4D Annotation and Offset-Box Behavior
 
 - [ ] Audit upstream annotation coordinate systems against `Annotate` and the
@@ -2293,6 +2326,15 @@ Matplotlib.
       omissions in Phase 11 rows.
 - [ ] Add catalog/parity fixtures for annotation clipping, annotation box
       content, packed offset boxes, and anchored size bars.
+
+Current slice landed:
+
+- `AnnotationOptions` and `Annotation` now expose `AnnotationClip`, matching
+  Matplotlib's explicit `annotation_clip=True/False` control for suppressing
+  annotation text/arrow drawing when the annotated point lies outside the axes
+  clip.
+- Renderer-neutral annotation tests cover both clipped and explicitly unclipped
+  outside-point behavior.
 
 #### 12.4E Legend Handler and Layout Closure
 

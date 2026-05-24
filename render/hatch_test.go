@@ -1,6 +1,7 @@
 package render
 
 import (
+	"math"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -78,6 +79,110 @@ func TestDrawHatchFallbackRepeatedPatternTightensSpacing(t *testing.T) {
 	}
 }
 
+func TestDrawHatchFallbackSupportsShapePatterns(t *testing.T) {
+	var clip geom.Path
+	clip.MoveTo(geom.Pt{X: 0, Y: 0})
+	clip.LineTo(geom.Pt{X: 20, Y: 0})
+	clip.LineTo(geom.Pt{X: 20, Y: 20})
+	clip.LineTo(geom.Pt{X: 0, Y: 20})
+	clip.Close()
+
+	for _, hatch := range []string{"o", "O", ".", "*"} {
+		t.Run(hatch, func(t *testing.T) {
+			r := &hatchRecordingRenderer{}
+			if !DrawHatchFallback(r, clip, Paint{
+				Hatch:          hatch,
+				HatchColor:     Color{A: 1},
+				HatchLineWidth: 1,
+				HatchSpacing:   10,
+			}) {
+				t.Fatalf("DrawHatchFallback(%q) returned false", hatch)
+			}
+			if len(r.paths) == 0 {
+				t.Fatalf("expected shape hatch paths for %q", hatch)
+			}
+			if hatch == "*" {
+				if got := hatchSegmentCount(r.paths); got < 10 {
+					t.Fatalf("star hatch line segments = %d, want visible star geometry", got)
+				}
+			} else if got := hatchCurveCount(r.paths); got == 0 {
+				t.Fatalf("circle hatch %q had no curve commands: %+v", hatch, r.paths)
+			}
+			assertHatchPathsInsideRect(t, r.paths, geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 20, Y: 20}})
+		})
+	}
+}
+
+func TestDrawHatchFallbackRepeatedShapePatternIncreasesDensity(t *testing.T) {
+	var clip geom.Path
+	clip.MoveTo(geom.Pt{X: 0, Y: 0})
+	clip.LineTo(geom.Pt{X: 20, Y: 0})
+	clip.LineTo(geom.Pt{X: 20, Y: 20})
+	clip.LineTo(geom.Pt{X: 0, Y: 20})
+	clip.Close()
+
+	single := &hatchRecordingRenderer{}
+	if !DrawHatchFallback(single, clip, Paint{
+		Hatch:          "o",
+		HatchColor:     Color{A: 1},
+		HatchLineWidth: 1,
+		HatchSpacing:   10,
+	}) {
+		t.Fatal("single shape hatch fallback returned false")
+	}
+	repeated := &hatchRecordingRenderer{}
+	if !DrawHatchFallback(repeated, clip, Paint{
+		Hatch:          "oo",
+		HatchColor:     Color{A: 1},
+		HatchLineWidth: 1,
+		HatchSpacing:   10,
+	}) {
+		t.Fatal("repeated shape hatch fallback returned false")
+	}
+
+	if got, want := hatchCurveCount(repeated.paths), hatchCurveCount(single.paths); got <= want {
+		t.Fatalf("repeated shape curve count = %d, want more than %d", got, want)
+	}
+}
+
+func TestDrawHatchFallbackShapeSizesFollowMatplotlibRatios(t *testing.T) {
+	var clip geom.Path
+	clip.MoveTo(geom.Pt{X: 0, Y: 0})
+	clip.LineTo(geom.Pt{X: 20, Y: 0})
+	clip.LineTo(geom.Pt{X: 20, Y: 20})
+	clip.LineTo(geom.Pt{X: 0, Y: 20})
+	clip.Close()
+
+	for _, tc := range []struct {
+		hatch     string
+		wantWidth float64
+	}{
+		{hatch: ".", wantWidth: 2},
+		{hatch: "o", wantWidth: 4},
+		{hatch: "O", wantWidth: 7},
+		{hatch: "*", wantWidth: 6.3403767753},
+	} {
+		t.Run(tc.hatch, func(t *testing.T) {
+			r := &hatchRecordingRenderer{}
+			if !DrawHatchFallback(r, clip, Paint{
+				Hatch:          tc.hatch,
+				HatchColor:     Color{A: 1},
+				HatchLineWidth: 1,
+				HatchSpacing:   10,
+			}) {
+				t.Fatalf("DrawHatchFallback(%q) returned false", tc.hatch)
+			}
+			bounds, ok := pathBoundsForTest(r.paths[0])
+			if !ok {
+				t.Fatalf("missing hatch path bounds for %q", tc.hatch)
+			}
+			if math.Abs(bounds.W()-tc.wantWidth) > 1e-6 {
+				t.Fatalf("shape hatch %q width = %g, want %g", tc.hatch, bounds.W(), tc.wantWidth)
+			}
+		})
+	}
+}
+
 func hatchSegmentCount(paths []geom.Path) int {
 	count := 0
 	for _, path := range paths {
@@ -88,4 +193,50 @@ func hatchSegmentCount(paths []geom.Path) int {
 		}
 	}
 	return count
+}
+
+func hatchCurveCount(paths []geom.Path) int {
+	count := 0
+	for _, path := range paths {
+		for _, cmd := range path.C {
+			if cmd == geom.QuadTo || cmd == geom.CubicTo {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+func pathBoundsForTest(path geom.Path) (geom.Rect, bool) {
+	if len(path.V) == 0 {
+		return geom.Rect{}, false
+	}
+	minX, maxX := path.V[0].X, path.V[0].X
+	minY, maxY := path.V[0].Y, path.V[0].Y
+	for _, pt := range path.V[1:] {
+		if pt.X < minX {
+			minX = pt.X
+		}
+		if pt.X > maxX {
+			maxX = pt.X
+		}
+		if pt.Y < minY {
+			minY = pt.Y
+		}
+		if pt.Y > maxY {
+			maxY = pt.Y
+		}
+	}
+	return geom.Rect{Min: geom.Pt{X: minX, Y: minY}, Max: geom.Pt{X: maxX, Y: maxY}}, true
+}
+
+func assertHatchPathsInsideRect(t *testing.T, paths []geom.Path, rect geom.Rect) {
+	t.Helper()
+	for _, path := range paths {
+		for _, pt := range path.V {
+			if !rect.ContainsInclusive(pt) {
+				t.Fatalf("hatch point %+v escaped rect %+v in path %+v", pt, rect, path.V)
+			}
+		}
+	}
 }

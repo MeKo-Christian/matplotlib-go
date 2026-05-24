@@ -751,7 +751,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"core/patch.go", "core/patch_extra.go", "core/arrow_patch.go"},
 		catalogIDs:        []string{"patch_showcase"},
-		note:              "Common patch, arrow, box, connection, and hatch behavior exists, but the upstream style registries need row-by-row closure.",
+		note:              "The upstream BoxStyle registry has Go constants and source-backed path behavior, including mutation scaling/aspect. Renderer-neutral hatch geometry and AGG raster hatches cover the upstream hatch character set, including shape glyph repeat density. ArrowStyle, ConnectionStyle, vector-native shape hatches, and hatch-density fixture closure remain partial.",
 	},
 	{
 		idPrefix:          "patches",
@@ -770,7 +770,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/text.go", "core/mathtext.go", "core/arrow_patch.go"},
 		catalogIDs:        []string{"text_labels_strict", "title_strict", "annotation_composition", "figure_labels_composition", "mathtext_inline_labels"},
 		exampleIDs:        []string{"annotation_composition", "figure_labels_composition"},
-		note:              "Text and annotation rendering exist, including rotation, MathText, arrows, and anchored labels; font property and coordinate model parity is partial.",
+		note:              "Text and annotation rendering exist, including rotation, MathText, arrows, anchored labels, explicit annotation_clip, per-artist FontKey overrides, and structured family/style/weight/file FontProperties; stretch, variant, feature toggles, math-font controls, and the broader coordinate model remain partial.",
 	},
 	{
 		idPrefix:          "legend",

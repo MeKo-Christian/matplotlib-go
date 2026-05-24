@@ -30,17 +30,21 @@ const (
 
 // TextOptions configures a Text artist.
 type TextOptions struct {
-	FontSize    float64
-	Color       render.Color
-	HAlign      TextAlign
-	VAlign      TextVerticalAlign
-	Angle       float64
-	Coords      CoordinateSpec
-	OffsetX     float64
-	OffsetY     float64
-	ClipOn      *bool
-	BBox        *TextBBoxOptions
-	PathEffects []render.PathEffect
+	FontSize float64
+	Color    render.Color
+	HAlign   TextAlign
+	VAlign   TextVerticalAlign
+	Angle    float64
+	Coords   CoordinateSpec
+	OffsetX  float64
+	OffsetY  float64
+	ClipOn   *bool
+	BBox     *TextBBoxOptions
+	FontKey  string
+	// FontProperties is a structured alternative to FontKey. FontKey wins when
+	// both are set.
+	FontProperties *render.FontProperties
+	PathEffects    []render.PathEffect
 }
 
 // TextBBoxOptions configures a rectangular background behind text.
@@ -66,6 +70,11 @@ type AnnotationOptions struct {
 	ConnectionStyle ConnectionStyle
 	HAlign          TextAlign
 	VAlign          TextVerticalAlign
+	FontKey         string
+	// FontProperties is a structured alternative to FontKey. FontKey wins when
+	// both are set.
+	FontProperties *render.FontProperties
+	AnnotationClip *bool
 }
 
 // Text renders arbitrary text at a data-space position.
@@ -74,18 +83,22 @@ type Text struct {
 	Position geom.Pt
 	Content  string
 
-	FontSize    float64
-	Color       render.Color
-	HAlign      TextAlign
-	VAlign      TextVerticalAlign
-	Angle       float64
-	Coords      CoordinateSpec
-	OffsetX     float64
-	OffsetY     float64
-	ClipOn      bool
-	BBox        *TextBBoxOptions
-	PathEffects []render.PathEffect
-	z           float64
+	FontSize float64
+	Color    render.Color
+	HAlign   TextAlign
+	VAlign   TextVerticalAlign
+	Angle    float64
+	Coords   CoordinateSpec
+	OffsetX  float64
+	OffsetY  float64
+	ClipOn   bool
+	BBox     *TextBBoxOptions
+	FontKey  string
+	// FontProperties is a structured alternative to FontKey. FontKey wins when
+	// both are set.
+	FontProperties *render.FontProperties
+	PathEffects    []render.PathEffect
+	z              float64
 }
 
 // Annotation renders text offset from a data point with an arrow.
@@ -106,7 +119,12 @@ type Annotation struct {
 	HAlign          TextAlign
 	VAlign          TextVerticalAlign
 	Coords          CoordinateSpec
-	z               float64
+	FontKey         string
+	// FontProperties is a structured alternative to FontKey. FontKey wins when
+	// both are set.
+	FontProperties *render.FontProperties
+	AnnotationClip *bool
+	z              float64
 }
 
 // Text adds arbitrary text positioned in data coordinates.
@@ -124,20 +142,22 @@ func (a *Axes) Text(x, y float64, text string, opts ...TextOptions) *Text {
 	}
 
 	artist := &Text{
-		Position:    geom.Pt{X: x, Y: y},
-		Content:     text,
-		FontSize:    opt.FontSize,
-		Color:       opt.Color,
-		HAlign:      opt.HAlign,
-		VAlign:      opt.VAlign,
-		Angle:       opt.Angle,
-		Coords:      opt.Coords,
-		OffsetX:     opt.OffsetX,
-		OffsetY:     opt.OffsetY,
-		ClipOn:      clipOn,
-		BBox:        cloneTextBBoxOptions(opt.BBox),
-		PathEffects: cloneRenderPathEffects(opt.PathEffects),
-		z:           500,
+		Position:       geom.Pt{X: x, Y: y},
+		Content:        text,
+		FontSize:       opt.FontSize,
+		Color:          opt.Color,
+		HAlign:         opt.HAlign,
+		VAlign:         opt.VAlign,
+		Angle:          opt.Angle,
+		Coords:         opt.Coords,
+		OffsetX:        opt.OffsetX,
+		OffsetY:        opt.OffsetY,
+		ClipOn:         clipOn,
+		BBox:           cloneTextBBoxOptions(opt.BBox),
+		FontKey:        opt.FontKey,
+		FontProperties: cloneFontProperties(opt.FontProperties),
+		PathEffects:    cloneRenderPathEffects(opt.PathEffects),
+		z:              500,
 	}
 	a.Add(artist)
 	return artist
@@ -163,20 +183,22 @@ func (f *Figure) Text(x, y float64, text string, opts ...TextOptions) *Text {
 	}
 
 	artist := &Text{
-		Position:    geom.Pt{X: x, Y: y},
-		Content:     text,
-		FontSize:    opt.FontSize,
-		Color:       opt.Color,
-		HAlign:      opt.HAlign,
-		VAlign:      opt.VAlign,
-		Angle:       opt.Angle,
-		Coords:      opt.Coords,
-		OffsetX:     opt.OffsetX,
-		OffsetY:     opt.OffsetY,
-		ClipOn:      clipOn,
-		BBox:        cloneTextBBoxOptions(opt.BBox),
-		PathEffects: cloneRenderPathEffects(opt.PathEffects),
-		z:           500,
+		Position:       geom.Pt{X: x, Y: y},
+		Content:        text,
+		FontSize:       opt.FontSize,
+		Color:          opt.Color,
+		HAlign:         opt.HAlign,
+		VAlign:         opt.VAlign,
+		Angle:          opt.Angle,
+		Coords:         opt.Coords,
+		OffsetX:        opt.OffsetX,
+		OffsetY:        opt.OffsetY,
+		ClipOn:         clipOn,
+		BBox:           cloneTextBBoxOptions(opt.BBox),
+		FontKey:        opt.FontKey,
+		FontProperties: cloneFontProperties(opt.FontProperties),
+		PathEffects:    cloneRenderPathEffects(opt.PathEffects),
+		z:              500,
 	}
 	f.Artists = append(f.Artists, artist)
 	f.zsorted = false
@@ -229,6 +251,9 @@ func (a *Axes) Annotate(text string, x, y float64, opts ...AnnotationOptions) *A
 		HAlign:          annotationHAlign(opt),
 		VAlign:          annotationVAlign(opt),
 		Coords:          opt.Coords,
+		FontKey:         opt.FontKey,
+		FontProperties:  cloneFontProperties(opt.FontProperties),
+		AnnotationClip:  cloneBool(opt.AnnotationClip),
 		z:               900,
 	}
 	a.Add(artist)
@@ -265,37 +290,38 @@ func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
 	}
 
 	fontSize := resolvedFontSize(t.FontSize, ctx)
+	fontKey := resolvedTextFontKey(t.FontKey, t.FontProperties, ctx)
 	anchor := transformedPoint(ctx, t.Coords, t.Position, t.OffsetX, t.OffsetY)
 	if strings.Contains(t.Content, "\n") {
-		t.drawMultilineText(r, textRen, ctx, anchor, fontSize)
+		t.drawMultilineText(r, textRen, ctx, anchor, fontSize, fontKey)
 		return
 	}
-	layout := measureSingleLineTextLayout(r, t.Content, fontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
+	layout := measureSingleLineTextLayout(r, t.Content, fontSize, fontKey, ctx.RC.UseTeX)
 	origin := alignedSingleLineOrigin(anchor, layout, t.HAlign, layoutVerticalAlign(t.VAlign, false))
 	drawTextBBox(r, origin, layout, t.BBox, ctx, fontSize)
 	if t.Angle != 0 {
 		if rotated, ok := r.(render.RotatedTextDrawer); ok {
 			angle := t.Angle * math.Pi / 180
 			rotAnchor := tickLabelRotationAnchor(origin, layout, t.HAlign, layoutVerticalAlign(t.VAlign, false), angle)
-			if len(t.PathEffects) > 0 && drawTextPathEffects(r, t.Content, origin, rotAnchor, fontSize, angle, resolvedTextColor(t.Color, ctx), ctx.RC.FontKey, ctx.RC.UseTeX, t.PathEffects) {
+			if len(t.PathEffects) > 0 && drawTextPathEffects(r, t.Content, origin, rotAnchor, fontSize, angle, resolvedTextColor(t.Color, ctx), fontKey, ctx.RC.UseTeX, t.PathEffects) {
 				return
 			}
-			drawDisplayTextRotated(rotated, t.Content, rotAnchor, fontSize, angle, resolvedTextColor(t.Color, ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
+			drawDisplayTextRotated(rotated, t.Content, rotAnchor, fontSize, angle, resolvedTextColor(t.Color, ctx), fontKey, ctx.RC.UseTeX)
 			return
 		}
 	}
-	if len(t.PathEffects) > 0 && drawTextPathEffects(r, t.Content, origin, origin, fontSize, 0, resolvedTextColor(t.Color, ctx), ctx.RC.FontKey, ctx.RC.UseTeX, t.PathEffects) {
+	if len(t.PathEffects) > 0 && drawTextPathEffects(r, t.Content, origin, origin, fontSize, 0, resolvedTextColor(t.Color, ctx), fontKey, ctx.RC.UseTeX, t.PathEffects) {
 		return
 	}
-	drawDisplayText(textRen, t.Content, origin, fontSize, resolvedTextColor(t.Color, ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
+	drawDisplayText(textRen, t.Content, origin, fontSize, resolvedTextColor(t.Color, ctx), fontKey, ctx.RC.UseTeX)
 }
 
-func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, ctx *DrawContext, anchor geom.Pt, fontSize float64) {
+func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, ctx *DrawContext, anchor geom.Pt, fontSize float64, fontKey string) {
 	lines := strings.Split(t.Content, "\n")
 	layouts := make([]singleLineTextLayout, len(lines))
 	maxWidth := 0.0
 	for i, line := range lines {
-		layouts[i] = measureSingleLineTextLayout(r, line, fontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
+		layouts[i] = measureSingleLineTextLayout(r, line, fontSize, fontKey, ctx.RC.UseTeX)
 		maxWidth = math.Max(maxWidth, layouts[i].Width)
 	}
 
@@ -349,7 +375,7 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 				origin.X += maxWidth - layouts[i].Width
 			}
 		}
-		drawDisplayText(textRen, line, origin, fontSize, textColor, ctx.RC.FontKey, ctx.RC.UseTeX)
+		drawDisplayText(textRen, line, origin, fontSize, textColor, fontKey, ctx.RC.UseTeX)
 	}
 }
 
@@ -427,9 +453,13 @@ func (a *Annotation) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	}
 
 	fontSize := resolvedFontSize(a.FontSize, ctx)
+	fontKey := resolvedTextFontKey(a.FontKey, a.FontProperties, ctx)
 	target := transformedPoint(ctx, a.Coords, a.Point, 0, 0)
+	if a.AnnotationClip != nil && *a.AnnotationClip && !ctx.Clip.ContainsInclusive(target) {
+		return
+	}
 	anchor := transformedPoint(ctx, a.Coords, a.Point, a.OffsetX, a.OffsetY)
-	layout := measureSingleLineTextLayout(r, a.Content, fontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
+	layout := measureSingleLineTextLayout(r, a.Content, fontSize, fontKey, ctx.RC.UseTeX)
 	origin := alignedSingleLineOrigin(anchor, layout, a.HAlign, layoutVerticalAlign(a.VAlign, false))
 	box, ok := textInkRect(origin, layout)
 	if !ok {
@@ -442,7 +472,7 @@ func (a *Annotation) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 
 	a.drawArrow(r, ctx, start, target)
 
-	drawDisplayText(textRen, a.Content, origin, fontSize, resolvedTextColor(a.Color, ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
+	drawDisplayText(textRen, a.Content, origin, fontSize, resolvedTextColor(a.Color, ctx), fontKey, ctx.RC.UseTeX)
 }
 
 // Bounds returns an empty rect so annotations do not affect autoscaling.
@@ -512,6 +542,37 @@ func resolvedFontSize(size float64, ctx *DrawContext) float64 {
 		return ctx.RC.FontSize
 	}
 	return 12
+}
+
+func resolvedTextFontKey(fontKey string, props *render.FontProperties, ctx *DrawContext) string {
+	fontKey = strings.TrimSpace(fontKey)
+	if fontKey != "" {
+		return fontKey
+	}
+	if props != nil {
+		return render.FontPropertiesKey(*props)
+	}
+	if ctx != nil {
+		return ctx.RC.FontKey
+	}
+	return ""
+}
+
+func cloneFontProperties(props *render.FontProperties) *render.FontProperties {
+	if props == nil {
+		return nil
+	}
+	cloned := *props
+	cloned.Families = append([]string(nil), props.Families...)
+	return &cloned
+}
+
+func cloneBool(v *bool) *bool {
+	if v == nil {
+		return nil
+	}
+	cloned := *v
+	return &cloned
 }
 
 func cloneTextBBoxOptions(opt *TextBBoxOptions) *TextBBoxOptions {

@@ -219,6 +219,39 @@ func TestPathWithHatchEmitsClippedHatchLines(t *testing.T) {
 	}
 }
 
+func TestPathWithShapeHatchEmitsClippedShapeGeometry(t *testing.T) {
+	r := newTestRenderer(t)
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+
+	var p geom.Path
+	p.MoveTo(geom.Pt{X: 10, Y: 10})
+	p.LineTo(geom.Pt{X: 50, Y: 10})
+	p.LineTo(geom.Pt{X: 50, Y: 50})
+	p.Close()
+	r.Path(p, &render.Paint{
+		Hatch:          "oO.*",
+		HatchColor:     render.Color{A: 1},
+		HatchLineWidth: 1,
+		HatchSpacing:   12,
+	})
+
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	for _, want := range [][]byte{
+		[]byte("curveto"),
+		[]byte("closepath"),
+		[]byte("fill"),
+		[]byte("stroke"),
+	} {
+		if !bytes.Contains(r.document, want) {
+			t.Fatalf("missing shape hatch fragment %q in\n%s", want, r.document)
+		}
+	}
+}
+
 func TestPartialAlphaVectorPaintIsDocumentedOpaque(t *testing.T) {
 	r := newTestRenderer(t)
 	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}}); err != nil {
