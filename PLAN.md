@@ -2115,7 +2115,7 @@ catalog/parity fixture per behavior family.
       locator/formatter path.
 - [x] Verify non-positive handling for log-like scales: clip, mask/drop,
       autoscale interaction, and readable error behavior for invalid domains.
-- [ ] Add catalog/parity cases for symlog ticks, logit ticks, asinh ticks, and
+- [x] Add catalog/parity cases for symlog ticks, logit ticks, asinh ticks, and
       function/functionlog scale defaults.
 
 #### 12.2F Tick Styling and Axis Control Surface
