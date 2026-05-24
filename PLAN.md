@@ -1978,7 +1978,7 @@ catalog/parity fixture per behavior family.
 
 #### 12.2B Locator Catalog Closure
 
-- [ ] Audit upstream `ticker.py` locators row by row against the current Go
+- [x] Audit upstream `ticker.py` locators row by row against the current Go
       surface, and split each missing locator into `implement`,
       `idiomatic-equivalent`, or `intentional-omission` in the Phase 11 public
       surface notes.
@@ -2008,7 +2008,7 @@ catalog/parity fixture per behavior family.
 
 #### 12.2C Formatter Catalog Closure
 
-- [ ] Audit upstream `ticker.py` formatters row by row and update public-surface
+- [x] Audit upstream `ticker.py` formatters row by row and update public-surface
       parity notes for direct equivalents, Go-style equivalents, and deliberate
       omissions.
 - [ ] Expand `ScalarFormatter` parity: offset text decision, scientific limits,
