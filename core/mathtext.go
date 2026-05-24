@@ -54,6 +54,9 @@ func (mathTextFontResolver) ResolveMathFontKey(base string, request mt.FontReque
 	if len(request.Families) > 0 {
 		props.File = ""
 		props.Families = append([]string(nil), request.Families...)
+	} else if families := mathFontFamilyFallbacks(props.MathFontFamily); len(families) > 0 {
+		props.File = ""
+		props.Families = families
 	}
 	if request.Style != "" {
 		props.Style = render.FontStyle(request.Style)
@@ -71,6 +74,27 @@ func (mathTextFontResolver) ResolveMathFontKey(base string, request mt.FontReque
 		return props.File
 	}
 	return base
+}
+
+func mathFontFamilyFallbacks(family string) []string {
+	switch strings.ToLower(strings.TrimSpace(family)) {
+	case "":
+		return nil
+	case "dejavusans", "dejavu sans":
+		return []string{"DejaVu Sans"}
+	case "dejavuserif", "dejavu serif":
+		return []string{"DejaVu Serif"}
+	case "cm", "computer modern":
+		return []string{"cmmi10", "cmr10", "Computer Modern Roman"}
+	case "stix":
+		return []string{"STIXGeneral", "STIXSizeOneSym", "DejaVu Serif"}
+	case "stixsans":
+		return []string{"STIXNonUnicode", "DejaVu Sans"}
+	case "custom":
+		return nil
+	default:
+		return []string{family}
+	}
 }
 
 func mathTextOptions() mt.Options {
@@ -92,6 +116,13 @@ func displayTextIsEmpty(text string) bool {
 	return mt.DisplayTextIsEmpty(text)
 }
 
+func displayTextForMathParsing(text string, parseMath bool) string {
+	if parseMath {
+		return normalizeDisplayText(text)
+	}
+	return strings.ReplaceAll(text, `\$`, "$")
+}
+
 // LayoutMathText parses and lays out one MathText expression without requiring
 // dollar delimiters.
 func LayoutMathText(r render.Renderer, expr string, size float64, fontKey string) (MathTextLayout, bool) {
@@ -103,19 +134,25 @@ func layoutDisplayText(r render.Renderer, text string, size float64, fontKey str
 }
 
 func drawDisplayText(textRen render.TextDrawer, text string, origin geom.Pt, size float64, textColor render.Color, fontKey string, useTeX ...bool) {
+	drawDisplayTextParseMath(textRen, text, origin, size, textColor, fontKey, true, useTeX...)
+}
+
+func drawDisplayTextParseMath(textRen render.TextDrawer, text string, origin geom.Pt, size float64, textColor render.Color, fontKey string, parseMath bool, useTeX ...bool) {
 	if texEnabled(useTeX) {
 		if texRen, ok := textRen.(render.TeXDrawer); ok && texRen.DrawTeX(text, origin, size, textColor, fontKey) {
 			return
 		}
 	}
 
-	if ren, ok := textRen.(render.Renderer); ok {
-		if layout, ok := layoutDisplayText(ren, text, size, fontKey); ok {
-			drawMathTextLayout(ren, textRen, layout, origin, textColor, fontKey)
-			return
+	if parseMath {
+		if ren, ok := textRen.(render.Renderer); ok {
+			if layout, ok := layoutDisplayText(ren, text, size, fontKey); ok {
+				drawMathTextLayout(ren, textRen, layout, origin, textColor, fontKey)
+				return
+			}
 		}
 	}
-	display := normalizeDisplayText(text)
+	display := displayTextForMathParsing(text, parseMath)
 	if display == "" {
 		return
 	}
@@ -123,22 +160,28 @@ func drawDisplayText(textRen render.TextDrawer, text string, origin geom.Pt, siz
 }
 
 func drawDisplayTextRotated(textRen render.RotatedTextDrawer, text string, anchor geom.Pt, size, angle float64, textColor render.Color, fontKey string, useTeX ...bool) {
+	drawDisplayTextRotatedParseMath(textRen, text, anchor, size, angle, textColor, fontKey, true, useTeX...)
+}
+
+func drawDisplayTextRotatedParseMath(textRen render.RotatedTextDrawer, text string, anchor geom.Pt, size, angle float64, textColor render.Color, fontKey string, parseMath bool, useTeX ...bool) {
 	if texEnabled(useTeX) {
 		if texRen, ok := textRen.(render.RotatedTeXDrawer); ok && texRen.DrawTeXRotated(text, anchor, size, angle, textColor, fontKey) {
 			return
 		}
 	}
 
-	if expr, ok := fullMathExpression(text); ok {
-		if ren, ok := textRen.(render.Renderer); ok {
-			if layout, ok := LayoutMathText(ren, expr, size, fontKey); ok {
-				if drawMathTextLayoutRotated(ren, layout, anchor, angle, textColor, fontKey) {
-					return
+	if parseMath {
+		if expr, ok := fullMathExpression(text); ok {
+			if ren, ok := textRen.(render.Renderer); ok {
+				if layout, ok := LayoutMathText(ren, expr, size, fontKey); ok {
+					if drawMathTextLayoutRotated(ren, layout, anchor, angle, textColor, fontKey) {
+						return
+					}
 				}
 			}
 		}
 	}
-	display := normalizeDisplayText(text)
+	display := displayTextForMathParsing(text, parseMath)
 	if display == "" {
 		return
 	}

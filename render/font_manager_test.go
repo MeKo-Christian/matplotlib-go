@@ -28,9 +28,17 @@ func TestParseFontPropertiesHandlesListsAndPaths(t *testing.T) {
 
 func TestFontPropertiesKeyRoundTripsStructuredProperties(t *testing.T) {
 	key := FontPropertiesKey(FontProperties{
-		Families: []string{"DejaVu Serif", "serif"},
-		Style:    FontStyleItalic,
-		Weight:   700,
+		Families:       []string{"DejaVu Serif", "serif"},
+		Style:          FontStyleItalic,
+		Weight:         700,
+		Stretch:        "condensed",
+		Variant:        "small-caps",
+		Language:       "de",
+		MathFontFamily: "dejavuserif",
+		Features: []TextFeature{
+			{Tag: "liga", Value: 0},
+			{Tag: "kern", Value: 1},
+		},
 	})
 
 	props := ParseFontProperties(key)
@@ -42,6 +50,21 @@ func TestFontPropertiesKeyRoundTripsStructuredProperties(t *testing.T) {
 	}
 	if props.Weight != 700 {
 		t.Fatalf("weight = %d, want 700", props.Weight)
+	}
+	if props.Stretch != "condensed" {
+		t.Fatalf("stretch = %q, want condensed", props.Stretch)
+	}
+	if props.Variant != "small-caps" {
+		t.Fatalf("variant = %q, want small-caps", props.Variant)
+	}
+	if props.Language != "de" {
+		t.Fatalf("language = %q, want de", props.Language)
+	}
+	if props.MathFontFamily != "dejavuserif" {
+		t.Fatalf("math font family = %q, want dejavuserif", props.MathFontFamily)
+	}
+	if len(props.Features) != 2 || props.Features[0] != (TextFeature{Tag: "liga", Value: 0}) || props.Features[1] != (TextFeature{Tag: "kern", Value: 1}) {
+		t.Fatalf("features = %+v, want liga=0 kern=1", props.Features)
 	}
 }
 

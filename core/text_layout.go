@@ -21,6 +21,10 @@ type singleLineTextLayout struct {
 }
 
 func measureSingleLineTextLayout(r render.Renderer, text string, size float64, fontKey string, useTeX ...bool) singleLineTextLayout {
+	return measureSingleLineTextLayoutParseMath(r, text, size, fontKey, true, useTeX...)
+}
+
+func measureSingleLineTextLayoutParseMath(r render.Renderer, text string, size float64, fontKey string, parseMath bool, useTeX ...bool) singleLineTextLayout {
 	if texEnabled(useTeX) {
 		if metricer, ok := r.(render.TeXMetricer); ok {
 			if metrics, ok := metricer.MeasureTeX(text, size, fontKey); ok {
@@ -36,19 +40,21 @@ func measureSingleLineTextLayout(r render.Renderer, text string, size float64, f
 		}
 	}
 
-	if layout, ok := layoutDisplayText(r, text, size, fontKey); ok {
-		return singleLineTextLayout{
-			TextLineLayout: render.TextLineLayout{
-				Width:   layout.Width,
-				Ascent:  layout.Ascent,
-				Descent: layout.Descent,
-				Height:  layout.Height,
-			},
-			MathLayout: &layout,
+	if parseMath {
+		if layout, ok := layoutDisplayText(r, text, size, fontKey); ok {
+			return singleLineTextLayout{
+				TextLineLayout: render.TextLineLayout{
+					Width:   layout.Width,
+					Ascent:  layout.Ascent,
+					Descent: layout.Descent,
+					Height:  layout.Height,
+				},
+				MathLayout: &layout,
+			}
 		}
 	}
 
-	display := normalizeDisplayText(text)
+	display := displayTextForMathParsing(text, parseMath)
 	return singleLineTextLayout{
 		TextLineLayout: render.MeasureTextLineLayout(r, display, size, fontKey),
 	}

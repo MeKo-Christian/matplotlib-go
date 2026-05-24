@@ -75,15 +75,62 @@ func TestFoundationAPIGapsCoverRequiredFundamentals(t *testing.T) {
 		"text-font-layout",
 		"text-font-properties",
 		"annotation-coordinate-model",
+		"offsetbox-static-layout",
+		"legend-handler-layout",
 		"image-class-breadth",
 		"colorbar-orientation-ticks",
 		"colors-norms-lightsource",
 		"pyplot-wrapper-surface",
 		"backend-canvas-manager-lifecycle",
+		"widget-interaction-scope",
+		"animation-playback-writers",
 	}
 	for _, id := range want {
 		if _, ok := LookupFoundationAPIGap(id); !ok {
 			t.Fatalf("missing required foundation API gap %q", id)
+		}
+	}
+}
+
+func TestPhase124FoundationGapsAreSplitBySurface(t *testing.T) {
+	for _, tc := range []struct {
+		id      string
+		modules []string
+	}{
+		{"patch-style-registries", []string{"patches.py", "hatch.py"}},
+		{"text-font-layout", []string{"text.py", "textpath.py"}},
+		{"text-font-properties", []string{"text.py", "font_manager.py", "textpath.py"}},
+		{"annotation-coordinate-model", []string{"text.py", "patches.py"}},
+		{"offsetbox-static-layout", []string{"offsetbox.py"}},
+		{"legend-handler-layout", []string{"legend.py", "legend_handler.py"}},
+	} {
+		gap, ok := LookupFoundationAPIGap(tc.id)
+		if !ok {
+			t.Fatalf("missing Phase 12.4 foundation API gap %q", tc.id)
+		}
+		if !sameStrings(gap.UpstreamModules, tc.modules) {
+			t.Fatalf("%s UpstreamModules = %v, want %v", tc.id, gap.UpstreamModules, tc.modules)
+		}
+	}
+}
+
+func TestPhase125FoundationGapsAreSplitBySurface(t *testing.T) {
+	for _, tc := range []struct {
+		id      string
+		modules []string
+	}{
+		{"image-class-breadth", []string{"image.py"}},
+		{"pyplot-wrapper-surface", []string{"pyplot.py", "_pylab_helpers.py"}},
+		{"backend-canvas-manager-lifecycle", []string{"backend_bases.py", "backend_tools.py"}},
+		{"widget-interaction-scope", []string{"widgets.py"}},
+		{"animation-playback-writers", []string{"animation.py"}},
+	} {
+		gap, ok := LookupFoundationAPIGap(tc.id)
+		if !ok {
+			t.Fatalf("missing Phase 12.5 foundation API gap %q", tc.id)
+		}
+		if !sameStrings(gap.UpstreamModules, tc.modules) {
+			t.Fatalf("%s UpstreamModules = %v, want %v", tc.id, gap.UpstreamModules, tc.modules)
 		}
 	}
 }

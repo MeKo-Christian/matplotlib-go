@@ -90,6 +90,201 @@ func TestLegendDrawRendersLabelsAndSamples(t *testing.T) {
 	}
 }
 
+func TestLegendDrawSupportsMultipleColumns(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.1, Y: 0.1},
+		Max: geom.Pt{X: 0.9, Y: 0.9},
+	})
+	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "a"})
+	ax.Plot([]float64{0, 1}, []float64{1, 2}, PlotOptions{Label: "b"})
+	ax.Plot([]float64{0, 1}, []float64{2, 3}, PlotOptions{Label: "c"})
+	ax.Plot([]float64{0, 1}, []float64{3, 4}, PlotOptions{Label: "d"})
+	legend := ax.AddLegend()
+	legend.Location = LegendUpperLeft
+	legend.NumColumns = 2
+
+	var r legendRecordingRenderer
+	DrawFigure(fig, &r)
+
+	a := r.textOrigin("a")
+	b := r.textOrigin("b")
+	c := r.textOrigin("c")
+	d := r.textOrigin("d")
+	if !floatApprox(a.X, b.X, 1e-9) {
+		t.Fatalf("first column labels should share x origin, got a=%+v b=%+v", a, b)
+	}
+	if !floatApprox(c.X, d.X, 1e-9) || c.X <= a.X {
+		t.Fatalf("second column labels should share a later x origin, got a=%+v c=%+v d=%+v", a, c, d)
+	}
+	if !floatApprox(a.Y, c.Y, 1e-9) || !floatApprox(b.Y, d.Y, 1e-9) {
+		t.Fatalf("multi-column rows should align, got a=%+v b=%+v c=%+v d=%+v", a, b, c, d)
+	}
+}
+
+func TestLegendMarkerSampleScaleAndScatterPoints(t *testing.T) {
+	entry := legendEntryFromMarker("points", MarkerCircle, geom.Path{}, render.Color{A: 1}, render.Color{A: 1}, 1)
+	sample := geom.Rect{Min: geom.Pt{X: 10, Y: 10}, Max: geom.Pt{X: 70, Y: 30}}
+
+	var base legendRecordingRenderer
+	(&Legend{}).drawSample(&base, entry, sample)
+	if got := len(base.paths); got != 1 {
+		t.Fatalf("default marker legend sample paths = %d, want 1", got)
+	}
+	baseBounds := pathBoundsForLegendTest(base.paths[0])
+
+	var scaled legendRecordingRenderer
+	(&Legend{MarkerScale: 2, ScatterPoints: 3}).drawSample(&scaled, entry, sample)
+	if got := len(scaled.paths); got != 3 {
+		t.Fatalf("scaled scatter legend sample paths = %d, want 3", got)
+	}
+	scaledBounds := pathBoundsForLegendTest(scaled.paths[0])
+	if scaledBounds.W() <= baseBounds.W()*1.5 {
+		t.Fatalf("scaled marker width = %g, want larger than default width %g", scaledBounds.W(), baseBounds.W())
+	}
+	if !(pathCenterX(scaled.paths[0]) < pathCenterX(scaled.paths[1]) && pathCenterX(scaled.paths[1]) < pathCenterX(scaled.paths[2])) {
+		t.Fatalf("scatter sample marker centers should advance left-to-right: %+v", scaled.paths)
+	}
+}
+
+func TestLegendDrawsErrorBarSampleWithCaps(t *testing.T) {
+	entry, ok := (&ErrorBar{
+		Label:     "errs",
+		YErr:      []float64{0.2},
+		CapSize:   6,
+		Color:     render.Color{R: 0.1, G: 0.2, B: 0.7, A: 1},
+		LineWidth: 2,
+	}).legendEntry()
+	if !ok {
+		t.Fatal("ErrorBar legendEntry returned !ok")
+	}
+
+	var r legendRecordingRenderer
+	(&Legend{}).drawSample(&r, entry, geom.Rect{Min: geom.Pt{X: 10, Y: 10}, Max: geom.Pt{X: 70, Y: 30}})
+
+	if !containsVerticalLegendPath(r.paths) {
+		t.Fatalf("errorbar legend sample should include vertical error stem, got paths %+v", r.paths)
+	}
+	if countHorizontalLegendSegments(r.paths) < 3 {
+		t.Fatalf("errorbar legend sample should include line and two caps, got paths %+v", r.paths)
+	}
+}
+
+func TestLegendDrawSupportsTitle(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.1, Y: 0.1},
+		Max: geom.Pt{X: 0.9, Y: 0.9},
+	})
+	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	legend := ax.AddLegend()
+	legend.Location = LegendUpperLeft
+	legend.Title = "Series"
+
+	var r legendRecordingRenderer
+	DrawFigure(fig, &r)
+
+	if !containsString(r.texts, "Series") || !containsString(r.texts, "signal") {
+		t.Fatalf("legend title and label should be drawn, got %v", r.texts)
+	}
+	title := r.textOrigin("Series")
+	label := r.textOrigin("signal")
+	if title.Y >= label.Y {
+		t.Fatalf("legend title should be above first entry label, got title=%+v label=%+v", title, label)
+	}
+
+	withoutTitle := NewLegend(ax)
+	withTitle := NewLegend(ax)
+	withTitle.Title = "Series"
+	boxWithout, okWithout := withoutTitle.boxRect(&r, &DrawContext{RC: fig.RC, Clip: geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 400, Y: 300}}})
+	boxWith, okWith := withTitle.boxRect(&r, &DrawContext{RC: fig.RC, Clip: geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 400, Y: 300}}})
+	if !okWithout || !okWith {
+		t.Fatalf("expected legend boxes for titled and untitled legends, got %v %v", okWithout, okWith)
+	}
+	if boxWith.H() <= boxWithout.H() {
+		t.Fatalf("titled legend height = %g, want larger than untitled height %g", boxWith.H(), boxWithout.H())
+	}
+}
+
+func TestLegendFrameOnFalseSkipsFrameOnly(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.1, Y: 0.1},
+		Max: geom.Pt{X: 0.9, Y: 0.9},
+	})
+	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	legend := ax.AddLegend()
+	legend.Location = LegendUpperLeft
+	legend.FrameOn = false
+
+	var r legendRecordingRenderer
+	DrawFigure(fig, &r)
+
+	if !containsString(r.texts, "signal") {
+		t.Fatalf("legend label should still be drawn when frame is disabled, got %v", r.texts)
+	}
+	if r.hasLegendFramePaint(legend) {
+		t.Fatalf("legend frame paint should not be drawn when FrameOn is false")
+	}
+	if len(r.paths) == 0 {
+		t.Fatalf("legend samples should still be drawn when frame is disabled")
+	}
+}
+
+func TestLegendAddEntryDrawsProxyPatchSample(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.1, Y: 0.1},
+		Max: geom.Pt{X: 0.9, Y: 0.9},
+	})
+	legend := ax.AddLegend()
+	proxyFill := render.Color{R: 0.2, G: 0.4, B: 0.8, A: 1}
+	proxyEdge := render.Color{R: 0.05, G: 0.1, B: 0.2, A: 1}
+	legend.AddEntry("proxy", LegendEntryOptions{
+		Sample:    LegendSamplePatch,
+		FaceColor: proxyFill,
+		EdgeColor: proxyEdge,
+		EdgeWidth: 2,
+	})
+
+	var r legendRecordingRenderer
+	DrawFigure(fig, &r)
+
+	if !containsString(r.texts, "proxy") {
+		t.Fatalf("explicit proxy legend entry should be drawn, got labels %v", r.texts)
+	}
+	if !r.hasFillColor(proxyFill) {
+		t.Fatalf("explicit proxy legend patch sample should use fill color %+v, got paints %+v", proxyFill, r.paints)
+	}
+}
+
+func TestLegendSetHandlerOverridesCollectedArtistSample(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.1, Y: 0.1},
+		Max: geom.Pt{X: 0.9, Y: 0.9},
+	})
+	line := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "custom"})
+	legend := ax.AddLegend()
+	overrideFill := render.Color{R: 0.7, G: 0.2, B: 0.1, A: 1}
+	legend.SetHandler(line, LegendEntryOptions{
+		Sample:    LegendSamplePatch,
+		FaceColor: overrideFill,
+		EdgeColor: render.Color{A: 1},
+		EdgeWidth: 1,
+	})
+
+	var r legendRecordingRenderer
+	DrawFigure(fig, &r)
+
+	if !containsString(r.texts, "custom") {
+		t.Fatalf("legend should still collect the artist label, got labels %v", r.texts)
+	}
+	if !r.hasFillColor(overrideFill) {
+		t.Fatalf("custom legend handler sample should use fill color %+v, got paints %+v", overrideFill, r.paints)
+	}
+}
+
 func TestLegendDefaultsMatchMatplotlibSpacing(t *testing.T) {
 	fig := NewFigure(800, 600)
 	legend := fig.AddLegend()
@@ -114,12 +309,21 @@ func TestLegendDefaultsMatchMatplotlibSpacing(t *testing.T) {
 
 type legendRecordingRenderer struct {
 	render.NullRenderer
-	pathCount int
-	texts     []string
+	pathCount   int
+	paths       []geom.Path
+	paints      []render.Paint
+	texts       []string
+	textOrigins map[string]geom.Pt
 }
 
-func (r *legendRecordingRenderer) Path(_ geom.Path, _ *render.Paint) {
+func (r *legendRecordingRenderer) Path(path geom.Path, paint *render.Paint) {
 	r.pathCount++
+	r.paths = append(r.paths, path)
+	if paint == nil {
+		r.paints = append(r.paints, render.Paint{})
+		return
+	}
+	r.paints = append(r.paints, *paint)
 }
 
 func (r *legendRecordingRenderer) MeasureText(text string, size float64, _ string) render.TextMetrics {
@@ -131,8 +335,37 @@ func (r *legendRecordingRenderer) MeasureText(text string, size float64, _ strin
 	}
 }
 
-func (r *legendRecordingRenderer) DrawText(text string, _ geom.Pt, _ float64, _ render.Color) {
+func (r *legendRecordingRenderer) DrawText(text string, origin geom.Pt, _ float64, _ render.Color) {
 	r.texts = append(r.texts, text)
+	if r.textOrigins == nil {
+		r.textOrigins = map[string]geom.Pt{}
+	}
+	r.textOrigins[text] = origin
+}
+
+func (r *legendRecordingRenderer) textOrigin(text string) geom.Pt {
+	if r.textOrigins == nil {
+		return geom.Pt{}
+	}
+	return r.textOrigins[text]
+}
+
+func (r *legendRecordingRenderer) hasLegendFramePaint(legend *Legend) bool {
+	for _, paint := range r.paints {
+		if paint.Fill == legend.BackgroundColor && paint.Stroke == legend.BorderColor && paint.LineWidth == legend.BorderWidth {
+			return true
+		}
+	}
+	return false
+}
+
+func (r *legendRecordingRenderer) hasFillColor(color render.Color) bool {
+	for _, paint := range r.paints {
+		if paint.Fill == color {
+			return true
+		}
+	}
+	return false
 }
 
 func containsString(items []string, want string) bool {
@@ -142,4 +375,50 @@ func containsString(items []string, want string) bool {
 		}
 	}
 	return false
+}
+
+func pathBoundsForLegendTest(path geom.Path) geom.Rect {
+	if len(path.V) == 0 {
+		return geom.Rect{}
+	}
+	bounds := geom.Rect{Min: path.V[0], Max: path.V[0]}
+	for _, pt := range path.V[1:] {
+		if pt.X < bounds.Min.X {
+			bounds.Min.X = pt.X
+		}
+		if pt.Y < bounds.Min.Y {
+			bounds.Min.Y = pt.Y
+		}
+		if pt.X > bounds.Max.X {
+			bounds.Max.X = pt.X
+		}
+		if pt.Y > bounds.Max.Y {
+			bounds.Max.Y = pt.Y
+		}
+	}
+	return bounds
+}
+
+func pathCenterX(path geom.Path) float64 {
+	bounds := pathBoundsForLegendTest(path)
+	return (bounds.Min.X + bounds.Max.X) / 2
+}
+
+func containsVerticalLegendPath(paths []geom.Path) bool {
+	for _, path := range paths {
+		if len(path.V) == 2 && floatApprox(path.V[0].X, path.V[1].X, 1e-9) && !floatApprox(path.V[0].Y, path.V[1].Y, 1e-9) {
+			return true
+		}
+	}
+	return false
+}
+
+func countHorizontalLegendSegments(paths []geom.Path) int {
+	count := 0
+	for _, path := range paths {
+		if len(path.V) == 2 && floatApprox(path.V[0].Y, path.V[1].Y, 1e-9) && !floatApprox(path.V[0].X, path.V[1].X, 1e-9) {
+			count++
+		}
+	}
+	return count
 }

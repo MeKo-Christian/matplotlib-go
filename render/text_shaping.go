@@ -75,11 +75,26 @@ func ShapeText(text string, origin geom.Pt, size float64, opts TextShapingOption
 	if text == "" || size <= 0 {
 		return ShapedText{}, false
 	}
+	opts = mergeFontKeyShapingOptions(opts)
 	runs, ok := DefaultFontManager().ResolveTextRuns(text, opts.FontKey)
 	if !ok {
 		return ShapedText{}, false
 	}
 	return ShapeTextRuns(runs, origin, size, opts)
+}
+
+func mergeFontKeyShapingOptions(opts TextShapingOptions) TextShapingOptions {
+	props := ParseFontProperties(opts.FontKey)
+	if opts.Language == "" && props.Language != "" {
+		opts.Language = props.Language
+	}
+	if len(props.Features) > 0 {
+		merged := make([]TextFeature, 0, len(props.Features)+len(opts.Features))
+		merged = append(merged, props.Features...)
+		merged = append(merged, opts.Features...)
+		opts.Features = merged
+	}
+	return opts
 }
 
 // ShapeTextRuns shapes already-resolved font runs.

@@ -9,20 +9,31 @@
     "markers.py",
     "collections.py",
     "patches.py",
+    "hatch.py",
     "text.py",
+    "font_manager.py",
+    "textpath.py",
     "legend.py",
+    "legend_handler.py",
     "offsetbox.py",
     "image.py",
     "colorbar.py",
     "cm.py",
     "colors.py",
     "pyplot.py",
+    "_pylab_helpers.py",
     "backend_bases.py",
     "backend_tools.py",
     "widgets.py",
     "animation.py"
   ],
   "rows": [
+    {
+      "id": "_pylab_helpers.py:class:Gcf",
+      "kind": "class",
+      "module": "_pylab_helpers.py",
+      "name": "Gcf"
+    },
     {
       "id": "animation.py:class:AbstractMovieWriter",
       "kind": "class",
@@ -942,6 +953,162 @@
       "name": "to_rgba_array"
     },
     {
+      "id": "font_manager.py:class:FontEntry",
+      "kind": "class",
+      "module": "font_manager.py",
+      "name": "FontEntry"
+    },
+    {
+      "id": "font_manager.py:class:FontManager",
+      "kind": "class",
+      "module": "font_manager.py",
+      "name": "FontManager"
+    },
+    {
+      "id": "font_manager.py:class:FontPath",
+      "kind": "class",
+      "module": "font_manager.py",
+      "name": "FontPath"
+    },
+    {
+      "id": "font_manager.py:class:FontProperties",
+      "kind": "class",
+      "module": "font_manager.py",
+      "name": "FontProperties"
+    },
+    {
+      "id": "font_manager.py:function:afmFontProperty",
+      "kind": "function",
+      "module": "font_manager.py",
+      "name": "afmFontProperty"
+    },
+    {
+      "id": "font_manager.py:function:findSystemFonts",
+      "kind": "function",
+      "module": "font_manager.py",
+      "name": "findSystemFonts"
+    },
+    {
+      "id": "font_manager.py:function:get_font",
+      "kind": "function",
+      "module": "font_manager.py",
+      "name": "get_font"
+    },
+    {
+      "id": "font_manager.py:function:get_fontext_synonyms",
+      "kind": "function",
+      "module": "font_manager.py",
+      "name": "get_fontext_synonyms"
+    },
+    {
+      "id": "font_manager.py:function:is_opentype_cff_font",
+      "kind": "function",
+      "module": "font_manager.py",
+      "name": "is_opentype_cff_font"
+    },
+    {
+      "id": "font_manager.py:function:json_dump",
+      "kind": "function",
+      "module": "font_manager.py",
+      "name": "json_dump"
+    },
+    {
+      "id": "font_manager.py:function:json_load",
+      "kind": "function",
+      "module": "font_manager.py",
+      "name": "json_load"
+    },
+    {
+      "id": "font_manager.py:function:list_fonts",
+      "kind": "function",
+      "module": "font_manager.py",
+      "name": "list_fonts"
+    },
+    {
+      "id": "font_manager.py:function:ttfFontProperty",
+      "kind": "function",
+      "module": "font_manager.py",
+      "name": "ttfFontProperty"
+    },
+    {
+      "id": "font_manager.py:function:win32FontDirectory",
+      "kind": "function",
+      "module": "font_manager.py",
+      "name": "win32FontDirectory"
+    },
+    {
+      "id": "hatch.py:class:Circles",
+      "kind": "class",
+      "module": "hatch.py",
+      "name": "Circles"
+    },
+    {
+      "id": "hatch.py:class:HatchPatternBase",
+      "kind": "class",
+      "module": "hatch.py",
+      "name": "HatchPatternBase"
+    },
+    {
+      "id": "hatch.py:class:HorizontalHatch",
+      "kind": "class",
+      "module": "hatch.py",
+      "name": "HorizontalHatch"
+    },
+    {
+      "id": "hatch.py:class:LargeCircles",
+      "kind": "class",
+      "module": "hatch.py",
+      "name": "LargeCircles"
+    },
+    {
+      "id": "hatch.py:class:NorthEastHatch",
+      "kind": "class",
+      "module": "hatch.py",
+      "name": "NorthEastHatch"
+    },
+    {
+      "id": "hatch.py:class:Shapes",
+      "kind": "class",
+      "module": "hatch.py",
+      "name": "Shapes"
+    },
+    {
+      "id": "hatch.py:class:SmallCircles",
+      "kind": "class",
+      "module": "hatch.py",
+      "name": "SmallCircles"
+    },
+    {
+      "id": "hatch.py:class:SmallFilledCircles",
+      "kind": "class",
+      "module": "hatch.py",
+      "name": "SmallFilledCircles"
+    },
+    {
+      "id": "hatch.py:class:SouthEastHatch",
+      "kind": "class",
+      "module": "hatch.py",
+      "name": "SouthEastHatch"
+    },
+    {
+      "id": "hatch.py:class:Stars",
+      "kind": "class",
+      "module": "hatch.py",
+      "name": "Stars"
+    },
+    {
+      "id": "hatch.py:class:VerticalHatch",
+      "kind": "class",
+      "module": "hatch.py",
+      "name": "VerticalHatch"
+    },
+    {
+      "id": "hatch.py:function:get_path",
+      "kind": "function",
+      "module": "hatch.py",
+      "name": "get_path"
+    },
+    {
       "id": "image.py:class:AxesImage",
       "kind": "class",
       "module": "image.py",
@@ -1132,6 +1299,102 @@
       "kind": "class",
       "module": "legend.py",
       "name": "Legend"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerBase",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerBase"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerCircleCollection",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerCircleCollection"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerErrorbar",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerErrorbar"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerLine2D",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerLine2D"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerLine2DCompound",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerLine2DCompound"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerLineCollection",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerLineCollection"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerNpoints",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerNpoints"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerNpointsYoffsets",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerNpointsYoffsets"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerPatch",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerPatch"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerPathCollection",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerPathCollection"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerPolyCollection",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerPolyCollection"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerRegularPolyCollection",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerRegularPolyCollection"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerStem",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerStem"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerStepPatch",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerStepPatch"
+    },
+    {
+      "id": "legend_handler.py:class:HandlerTuple",
+      "kind": "class",
+      "module": "legend_handler.py",
+      "name": "HandlerTuple"
+    },
+    {
+      "id": "legend_handler.py:function:update_from_first_child",
+      "kind": "function",
+      "module": "legend_handler.py",
+      "name": "update_from_first_child"
     },
     {
       "id": "lines.py:class:AxLine",
@@ -3094,6 +3357,18 @@
       "kind": "class",
       "module": "text.py",
       "name": "Text"
+    },
+    {
+      "id": "textpath.py:class:TextPath",
+      "kind": "class",
+      "module": "textpath.py",
+      "name": "TextPath"
+    },
+    {
+      "id": "textpath.py:class:TextToPath",
+      "kind": "class",
+      "module": "textpath.py",
+      "name": "TextToPath"
     },
     {
       "id": "ticker.py:class:AsinhLocator",

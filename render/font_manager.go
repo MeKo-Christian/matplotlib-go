@@ -34,10 +34,15 @@ const (
 
 // FontProperties is the renderer-facing subset of Matplotlib's FontProperties.
 type FontProperties struct {
-	Families []string
-	Style    FontStyle
-	Weight   int
-	File     string
+	Families       []string
+	Style          FontStyle
+	Weight         int
+	Stretch        string
+	Variant        string
+	File           string
+	Language       string
+	MathFontFamily string
+	Features       []TextFeature
 }
 
 // FontFace describes a discovered font file.
@@ -101,7 +106,8 @@ func ParseFontProperties(fontKey string) FontProperties {
 }
 
 // FontPropertiesKey serializes font properties into a renderer font key that
-// preserves family, style, weight, and file fields across renderer interfaces.
+// preserves family, style, weight, stretch, variant, file, language, math font
+// family, and feature fields across renderer interfaces.
 func FontPropertiesKey(props FontProperties) string {
 	props = normalizeFontProperties(props)
 	if props.File == "" && len(props.Families) == 0 {
@@ -111,14 +117,19 @@ func FontPropertiesKey(props FontProperties) string {
 		url.QueryEscape(strings.Join(props.Families, ",")) + "|" +
 		url.QueryEscape(string(props.Style)) + "|" +
 		strconv.Itoa(props.Weight) + "|" +
-		url.QueryEscape(props.File)
+		url.QueryEscape(props.File) + "|" +
+		url.QueryEscape(props.Stretch) + "|" +
+		url.QueryEscape(props.Variant) + "|" +
+		url.QueryEscape(props.Language) + "|" +
+		url.QueryEscape(props.MathFontFamily) + "|" +
+		url.QueryEscape(fontFeaturesKey(props.Features))
 }
 
 func parseStructuredFontPropertiesKey(fontKey string) FontProperties {
 	payload := strings.TrimPrefix(strings.TrimSpace(fontKey), fontPropertiesKeyPrefix)
-	parts := strings.SplitN(payload, "|", 4)
+	parts := strings.Split(payload, "|")
 	props := FontProperties{Style: FontStyleNormal, Weight: 400}
-	if len(parts) != 4 {
+	if len(parts) != 4 && len(parts) != 8 && len(parts) != 9 {
 		return props
 	}
 	if families, err := url.QueryUnescape(parts[0]); err == nil {
@@ -132,6 +143,27 @@ func parseStructuredFontPropertiesKey(fontKey string) FontProperties {
 	}
 	if file, err := url.QueryUnescape(parts[3]); err == nil {
 		props.File = strings.TrimSpace(file)
+	}
+	if len(parts) >= 8 {
+		if stretch, err := url.QueryUnescape(parts[4]); err == nil {
+			props.Stretch = strings.TrimSpace(stretch)
+		}
+		if variant, err := url.QueryUnescape(parts[5]); err == nil {
+			props.Variant = strings.TrimSpace(variant)
+		}
+		if language, err := url.QueryUnescape(parts[6]); err == nil {
+			props.Language = strings.TrimSpace(language)
+		}
+		featureIndex := 7
+		if len(parts) == 9 {
+			if mathFontFamily, err := url.QueryUnescape(parts[7]); err == nil {
+				props.MathFontFamily = strings.TrimSpace(mathFontFamily)
+			}
+			featureIndex = 8
+		}
+		if features, err := url.QueryUnescape(parts[featureIndex]); err == nil {
+			props.Features = parseFontFeaturesKey(features)
+		}
 	}
 	return normalizeFontProperties(props)
 }
@@ -203,8 +235,13 @@ func normalizeFontProperties(props FontProperties) FontProperties {
 	if props.Weight <= 0 {
 		props.Weight = 400
 	}
+	props.Stretch = strings.TrimSpace(props.Stretch)
+	props.Variant = strings.TrimSpace(props.Variant)
+	props.Language = strings.TrimSpace(props.Language)
+	props.MathFontFamily = strings.TrimSpace(props.MathFontFamily)
 	props.File = strings.TrimSpace(props.File)
 	props.Families = normalizeFontFamilies(props.Families)
+	props.Features = normalizeTextFeatures(props.Features)
 	return props
 }
 
@@ -299,8 +336,67 @@ func splitFontFamilies(value string) []string {
 	return parts
 }
 
+func normalizeTextFeatures(features []TextFeature) []TextFeature {
+	out := make([]TextFeature, 0, len(features))
+	for _, feature := range features {
+		tag := strings.TrimSpace(feature.Tag)
+		if tag == "" {
+			continue
+		}
+		out = append(out, TextFeature{Tag: tag, Value: feature.Value})
+	}
+	return out
+}
+
+func fontFeaturesKey(features []TextFeature) string {
+	features = normalizeTextFeatures(features)
+	if len(features) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(features))
+	for _, feature := range features {
+		parts = append(parts, strings.TrimSpace(feature.Tag)+"="+strconv.Itoa(feature.Value))
+	}
+	return strings.Join(parts, ",")
+}
+
+func parseFontFeaturesKey(value string) []TextFeature {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	var out []TextFeature
+	for _, part := range strings.Split(value, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		tag, rawValue, ok := strings.Cut(part, "=")
+		tag = strings.TrimSpace(tag)
+		if tag == "" {
+			continue
+		}
+		feature := TextFeature{Tag: tag, Value: 1}
+		if ok {
+			if parsed, err := strconv.Atoi(strings.TrimSpace(rawValue)); err == nil {
+				feature.Value = parsed
+			}
+		}
+		out = append(out, feature)
+	}
+	return normalizeTextFeatures(out)
+}
+
 func fontPropertiesCacheKey(props FontProperties) string {
-	return strings.Join(props.Families, "\x00") + "|" + string(props.Style) + "|" + strconv.Itoa(props.Weight) + "|" + filepath.Clean(props.File)
+	return strings.Join(props.Families, "\x00") + "|" +
+		string(props.Style) + "|" +
+		strconv.Itoa(props.Weight) + "|" +
+		props.Stretch + "|" +
+		props.Variant + "|" +
+		props.Language + "|" +
+		props.MathFontFamily + "|" +
+		fontFeaturesKey(props.Features) + "|" +
+		filepath.Clean(props.File)
 }
 
 func findFontFace(props FontProperties, dirs []string) (FontFace, bool) {

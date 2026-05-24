@@ -1208,5 +1208,34 @@ func (e *ErrorBar) legendEntry() (legendEntry, bool) {
 	if e == nil || e.Label == "" {
 		return legendEntry{}, false
 	}
-	return legendEntryFromLine(e.Label, e.Color, e.LineWidth, nil), true
+	color := e.Color
+	alpha := e.Alpha
+	if alpha <= 0 {
+		alpha = 1
+	}
+	if alpha > 1 {
+		alpha = 1
+	}
+	color.A *= alpha
+	entry := legendEntryFromLine(e.Label, color, e.LineWidth, nil)
+	entry.kind = legendEntryErrorBar
+	entry.errorbarX = errorbarHasX(e)
+	entry.errorbarY = errorbarHasY(e)
+	entry.errorbarCapSize = e.CapSize
+	if e.MarkerSet {
+		entry.lineMarkerSet = true
+		entry.marker = e.Marker
+		entry.markerFill = color
+		entry.markerEdge = color
+		entry.markerEdgeWidth = e.LineWidth
+	}
+	return entry, true
+}
+
+func errorbarHasX(e *ErrorBar) bool {
+	return len(e.XErr) > 0 || len(e.XErrLower) > 0 || len(e.XErrUpper) > 0 || len(e.XLoLimits) > 0 || len(e.XUpLimits) > 0
+}
+
+func errorbarHasY(e *ErrorBar) bool {
+	return len(e.YErr) > 0 || len(e.YErrLower) > 0 || len(e.YErrUpper) > 0 || len(e.LoLimits) > 0 || len(e.UpLimits) > 0
 }

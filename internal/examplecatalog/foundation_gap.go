@@ -172,9 +172,11 @@ var foundationAPIGaps = []FoundationAPIGap{
 		GoFiles:         []string{"core/patch.go", "core/patch_extra.go", "core/arrow_patch.go"},
 		CurrentEquivalent: "Go has common patch shapes, hatch routing, FancyBboxPatch with the upstream " +
 			"BoxStyle registry entries, renderer-neutral hatch geometry for the upstream hatch " +
-			"character set, AGG shape hatches, FancyArrowPatch, ConnectionPatch, and several extra patch classes.",
-		Gap: "Arrow style, connection style, vector-native shape hatch patterns, hatch-density fixtures, " +
-			"and specialized patch catalog parity still need enumeration against upstream registries.",
+			"character set, AGG shape hatches, vector-native shape hatch patterns, FancyArrowPatch, " +
+			"Matplotlib-style FancyArrowPatch default endpoint shrinking, ArrowStyle Wedge shrink-factor behavior, ArrowStyle curve line shortening, ArrowStyle BarAB zero-length bracket defaults, ConnectionStyle Arc defaults, ConnectionStyle Bar angle projection, ConnectionPatch, and several extra patch classes.",
+		Gap: "Remaining patch scope is exact ArrowStyle / ConnectionStyle geometry edge cases, " +
+			"specialized patch class breadth, and broader visual fixture closure beyond the focused " +
+			"patch_style_matrix registry case.",
 		Decision: GapDecisionImplement,
 		Rationale: "These are enumerable public catalogs; missing entries should be implemented or tracked " +
 			"as explicit intentional divergences.",
@@ -182,14 +184,16 @@ var foundationAPIGaps = []FoundationAPIGap{
 	{
 		ID:              "text-font-layout",
 		CoverageID:      "text-annotation-legend",
-		Title:           "Text font, layout, wrapping, and annotation breadth",
-		UpstreamModules: []string{"text.py", "textpath.py", "legend.py", "legend_handler.py", "offsetbox.py"},
-		GoFiles:         []string{"core/text.go", "core/mathtext.go", "core/legend.go", "core/anchored_text.go", "render/font_manager.go", "render/text_path.go"},
-		CurrentEquivalent: "Go supports text, rotated text, annotations, text paths, MathText, TeX paths, " +
-			"anchored text, legends, and renderer font resolution.",
-		Gap: "Font property breadth, wrapping, multiline layout, annotation coordinate modes, " +
-			"AnnotationBbox / OffsetBox families, legend handler maps, proxy artists, and draggable " +
-			"legend behavior are thin or absent.",
+		Title:           "Text layout, wrapping, and bounds",
+		UpstreamModules: []string{"text.py", "textpath.py"},
+		GoFiles:         []string{"core/text.go", "core/mathtext.go", "render/text_path.go"},
+		CurrentEquivalent: "Go supports text, rotated text, multiline drawing, text bbox patches, " +
+			"text paths, MathText, TeX paths, per-text font routing, and renderer font resolution. " +
+			"The text_annotation_matrix fixture gives focused coverage for multiline text, rotated " +
+			"text, text bbox output, and structured font requests.",
+		Gap: "Remaining text layout scope is exact bounding-box / baseline edge behavior, wrapping, " +
+			"rotation-mode details, and text path effect / rasterization interactions where visible " +
+			"fixtures still show residuals.",
 		Decision: GapDecisionImplement,
 		Rationale: "Text and legend behavior is heavily visible in parity images and migration examples; " +
 			"missing surfaces should be implemented incrementally with fixture coverage.",
@@ -201,10 +205,10 @@ var foundationAPIGaps = []FoundationAPIGap{
 		UpstreamModules: []string{"text.py", "font_manager.py", "textpath.py"},
 		GoFiles:         []string{"core/text.go", "render/font_manager.go", "render/text_shaping.go", "render/text_path.go"},
 		CurrentEquivalent: "Go text and annotation options expose size, color, FontKey overrides, " +
-			"structured FontProperties for family/style/weight/file requests, MathText / TeX routing, " +
+			"structured FontProperties for family/style/weight/stretch/variant/file/language/math-font requests, " +
+			"OpenType feature toggles, MathText / TeX routing, per-artist ParseMath control, " +
 			"and renderer-level font resolution / shaping.",
-		Gap: "Per-text stretch, variant, structured OpenType feature toggles, language, math font, " +
-			"parse_math, and usetex-style setters are not modeled as a cohesive artist-level property set.",
+		Gap:      "Usetex-style per-artist setters and exact fontconfig stretch/variant scoring remain partial.",
 		Decision: GapDecisionIdiomaticEquivalent,
 		Rationale: "Expose a Go TextOptions font-property struct that maps to renderer font keys instead " +
 			"of mirroring Python's dynamic setter catalog.",
@@ -214,14 +218,50 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CoverageID:      "text-annotation-legend",
 		Title:           "Annotation coordinate and clipping model",
 		UpstreamModules: []string{"text.py", "patches.py"},
-		GoFiles:         []string{"core/text.go", "core/arrow_patch.go", "transform/transform.go"},
+		GoFiles:         []string{"core/text.go", "core/annotation_box.go", "core/arrow_patch.go", "transform/transform.go"},
 		CurrentEquivalent: "Go annotations support text, arrows, arrow styles, connection styles, " +
-			"explicit annotation_clip behavior, and overlay drawing.",
-		Gap: "Matplotlib's separate xycoords / textcoords, default annotation_clip=None policy, " +
-			"AnnotationBbox behavior, and tightbbox / window-extent interaction are only partially represented.",
+			"explicit annotation_clip behavior, Matplotlib's default data-only annotation_clip policy, " +
+			"text bbox patches, static AnnotationBbox-style text/image boxes, and overlay drawing.",
+		Gap: "Matplotlib's separate xycoords / textcoords aliases, non-text/non-image AnnotationBbox offsetbox " +
+			"content, and tightbbox / window-extent interaction are only partially represented.",
 		Decision: GapDecisionImplement,
 		Rationale: "Common annotation coordinate modes are widely used in Matplotlib examples and should " +
 			"be implemented with transform-backed Go options.",
+	},
+	{
+		ID:              "offsetbox-static-layout",
+		CoverageID:      "text-annotation-legend",
+		Title:           "Offset-box static layout",
+		UpstreamModules: []string{"offsetbox.py"},
+		GoFiles:         []string{"core/anchored_text.go", "core/anchored_drawing_area.go", "core/anchored_packer.go", "core/anchored_sizebar.go", "core/annotation_box.go", "core/text.go"},
+		CurrentEquivalent: "Go has static equivalents for AnchoredText, AnchoredDrawingArea, " +
+			"AnnotationBbox with TextArea / OffsetImage-style content, horizontal and vertical " +
+			"packers for text / drawing / image children, and AnchoredSizeBar. The " +
+			"text_annotation_matrix fixture gives focused coverage for those static offset-box " +
+			"paths.",
+		Gap: "Remaining offsetbox scope is richer non-text/non-image AnnotationBbox content, " +
+			"AuxTransformBox/PaddedBox-style composition where a visible fixture needs it, tightbbox " +
+			"interaction, and explicit omission of draggable GUI-only boxes from the static v1.0 surface.",
+		Decision: GapDecisionImplement,
+		Rationale: "Static offset boxes affect annotations, legends, and axes-grid style labels; GUI-only " +
+			"dragging should stay separate from renderer-neutral layout parity.",
+	},
+	{
+		ID:              "legend-handler-layout",
+		CoverageID:      "text-annotation-legend",
+		Title:           "Legend handlers and static layout",
+		UpstreamModules: []string{"legend.py", "legend_handler.py"},
+		GoFiles:         []string{"core/legend.go"},
+		CurrentEquivalent: "Go legends support static placement, titles, frame visibility, multi-column " +
+			"layout, marker scaling, scatter sample counts, explicit proxy entries, typed per-artist " +
+			"handler overrides, and errorbar samples. The legend_layout_matrix fixture gives focused " +
+			"coverage for those handler and layout paths.",
+		Gap: "Remaining legend scope is richer built-in samples for remaining collection / stem / bar / " +
+			"filled-band families, representative best-placement badness checks, figure-level layout " +
+			"participation, and explicit omission of draggable legend behavior from static parity.",
+		Decision: GapDecisionImplement,
+		Rationale: "Legend output is visible in many examples; handler parity should stay typed and " +
+			"Go-style while matching static rendered samples where feasible.",
 	},
 	{
 		ID:              "image-class-breadth",
@@ -296,6 +336,50 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Decision: GapDecisionIdiomaticEquivalent,
 		Rationale: "Preserve the Go package split, while completing lifecycle semantics through the Phase 4 " +
 			"interactive backend and event-loop work.",
+	},
+	{
+		ID:              "widget-interaction-scope",
+		CoverageID:      "widgets-events-animation",
+		Title:           "Widget and selector interaction scope",
+		UpstreamModules: []string{"widgets.py"},
+		GoFiles: []string{
+			"core/widget_button.go",
+			"core/widget_slider.go",
+			"core/widget_rangeslider.go",
+			"core/widget_checkbuttons.go",
+			"core/widget_radiobuttons.go",
+			"core/widget_textbox.go",
+			"core/selectors.go",
+			"core/widgets_common.go",
+			"canvas/widget_interaction.go",
+			"canvas/dispatcher.go",
+		},
+		CurrentEquivalent: "Go has static widget artists and canvas event routing for buttons, sliders, " +
+			"range sliders, check buttons, radio buttons, text boxes, span selectors, rectangle / ellipse " +
+			"selectors, polygon selectors, and lasso selectors, with focused interaction tests for mouse " +
+			"and keyboard workflows.",
+		Gap: "Remaining widget scope is exact upstream callback ordering and active-state edge cases, cursor " +
+			"/ multi-cursor helpers, menu/tool widgets, GUI-specific behaviors, and browser-demo coverage " +
+			"for supported interactions.",
+		Decision: GapDecisionImplement,
+		Rationale: "Widgets are useful only when event semantics are deterministic; unsupported GUI-only " +
+			"paths should be documented instead of silently approximated.",
+	},
+	{
+		ID:              "animation-playback-writers",
+		CoverageID:      "widgets-events-animation",
+		Title:           "Animation playback and writer scope",
+		UpstreamModules: []string{"animation.py"},
+		GoFiles:         []string{"animation/animation.go", "canvas/scheduler.go"},
+		CurrentEquivalent: "Go has FuncAnimation- and ArtistAnimation-style stepping on top of the " +
+			"canvas scheduler, including init callbacks, repeat handling, animated artist tracking, " +
+			"blit-region hooks, and event-loop start/stop behavior covered by unit tests.",
+		Gap: "Remaining animation scope is repeat-delay/cache edge behavior, HTML representation, " +
+			"movie writer APIs, deterministic GIF/MP4 writer decisions, and browser/example coverage " +
+			"for playback and blitting.",
+		Decision: GapDecisionImplement,
+		Rationale: "Interactive playback can stay dependency-light, while writer support should be added " +
+			"only where output dependencies and backend behavior are deterministic.",
 	},
 }
 

@@ -2247,7 +2247,7 @@ Matplotlib.
 - [x] Add renderer-neutral path tests for the implemented box-style behavior,
       with exact path bounds or segment-count assertions where pixel output
       would be brittle.
-- [ ] Add focused catalog/parity cases for box styles, connection styles, and
+- [x] Add focused catalog/parity cases for box styles, connection styles, and
       hatch-density variants instead of expanding `patch_showcase` into an
       overloaded fixture.
 
@@ -2267,8 +2267,43 @@ Current slice landed:
   `hatch.py`.
 - AGG native hatching now draws the shape glyphs through the shared hatch
   fallback so raster hatches cover the same character set. Native vector
-  pattern definitions for shape hatches remain the open part of the hatch
-  catalog checklist.
+  pattern definitions for SVG, PDF, PS, and PGF now emit the same shape glyph
+  families as vector paths; focused backend tests cover cubic circle geometry,
+  filled dot/star geometry, and clipped shape hatch emission.
+- `FancyArrowPatch` now applies Matplotlib's default `shrinkA=2` /
+  `shrinkB=2` behavior for endpoint-defined arrows, while `ConnectionPatch`
+  keeps its upstream zero-shrink default.
+- Renderer-neutral patch tests cover default FancyArrowPatch endpoint shrinking
+  and independent-coordinate ConnectionPatch endpoints.
+- `ArrowStyle("wedge")` now has source-backed `shrink_factor` parsing and a
+  wedge-specific tapered path, instead of reusing the generic filled-arrow
+  mutation.
+- Renderer-neutral patch tests cover Wedge tail width, midpoint shrink, and
+  endpoint tapering.
+- Curve-style arrow mutations now shorten the stroked connection line under
+  begin/end arrow heads while keeping the arrow head anchored at the original
+  endpoint, matching Matplotlib's `_Curve` line/head split.
+- Renderer-neutral patch tests cover line shortening for `->` without moving
+  the arrow-head tip.
+- `ConnectionStyle("arc")` now uses Matplotlib's style-specific defaults
+  (`angleA=0`, `angleB=0`) instead of inheriting the `Angle` / `Angle3`
+  `angleA=90` default.
+- Renderer-neutral patch tests cover the default horizontal start arm for
+  `arc,armA=...,armB=...`.
+- `ConnectionStyle("bar", angle=...)` now projects the intermediate endpoint
+  onto the requested connecting angle before constructing the second arm,
+  matching upstream `Bar.connect` behavior while preserving the original final
+  endpoint.
+- Renderer-neutral patch tests cover angled bar projection against the
+  source-derived horizontal-angle geometry.
+- `ArrowStyle("|-|")` now uses the upstream zero-length bar-bracket defaults
+  instead of inheriting the square-bracket protrusion length from the generic
+  curve style.
+- Renderer-neutral patch tests cover `|-|` parser defaults and non-protruding
+  endpoint bar geometry.
+- Added the focused `patch_style_matrix` parity fixture for Phase 12.4 patch
+  coverage. It separates box-style, hatch-density, ArrowStyle, and
+  ConnectionStyle visual coverage from the broader `patch_showcase` fixture.
 
 #### 12.4C Text and Font Property Breadth
 
@@ -2306,6 +2341,27 @@ Current slice landed:
 - Renderer-neutral text tests cover per-text and per-annotation font-key
   override routing, structured font-property round-tripping, and
   font-property routing through font-aware renderer interfaces.
+- Structured `render.FontProperties` now also preserves stretch, variant,
+  language, and OpenType feature toggles across renderer font-key interfaces.
+  The shared shaping layer merges encoded feature toggles into
+  `TextShapingOptions`, so per-text font properties can deterministically
+  disable features such as `liga`.
+- Renderer-neutral font/shaping tests cover extended FontProperties
+  round-tripping, structured feature routing through `Text` artists, and
+  `liga=0` shaping from an encoded font-properties key.
+- Structured `render.FontProperties` now includes `MathFontFamily`, matching
+  Matplotlib's high-value `Text.set_math_fontfamily` / `FontProperties`
+  control for MathText. The MathText resolver maps the requested font family
+  into the existing deterministic font manager path while preserving explicit
+  MathText style switches such as `\mathrm` and `\mathsf`.
+- Renderer-neutral MathText tests cover `MathFontFamily` round-tripping and
+  default MathText run routing through a requested DejaVu Serif math family.
+- `TextOptions` and `AnnotationOptions` now expose `ParseMath *bool`, matching
+  Matplotlib's high-value per-artist `parse_math=False` control. When disabled,
+  dollar-delimited text bypasses MathText preprocessing and is drawn as plain
+  text while TeX routing remains controlled by `RC.UseTeX`.
+- Renderer-neutral text tests cover `ParseMath=false` for both text artists and
+  annotations.
 
 #### 12.4D Annotation and Offset-Box Behavior
 
@@ -2324,7 +2380,7 @@ Current slice landed:
 - [ ] Keep draggable, GUI-only, and callback-heavy offset-box behavior out of
       v1.0 unless a concrete interactive fixture requires it; record those
       omissions in Phase 11 rows.
-- [ ] Add catalog/parity fixtures for annotation clipping, annotation box
+- [x] Add catalog/parity fixtures for annotation clipping, annotation box
       content, packed offset boxes, and anchored size bars.
 
 Current slice landed:
@@ -2333,8 +2389,54 @@ Current slice landed:
   Matplotlib's explicit `annotation_clip=True/False` control for suppressing
   annotation text/arrow drawing when the annotated point lies outside the axes
   clip.
-- Renderer-neutral annotation tests cover both clipped and explicitly unclipped
-  outside-point behavior.
+- The default `annotation_clip=None` policy now follows Matplotlib's data-only
+  rule: outside data-coordinate annotations are clipped by default, while
+  outside non-data annotations still draw unless explicitly clipped.
+- Renderer-neutral annotation tests cover default clipping, explicitly clipped,
+  and explicitly unclipped outside-point behavior.
+- `AnnotationOptions` now accepts `BBox`, reusing `TextBBoxOptions` so
+  annotation text can draw a styled background patch and route arrow start
+  points from the expanded bbox instead of the raw text ink bounds.
+- Renderer-neutral annotation tests cover bbox paint emission without backend
+  pixels.
+- `Axes.AnnotationBbox` now provides a static Go-style equivalent for the
+  common `AnnotationBbox(TextArea(...))` path: text-area content, separate
+  annotated-point and box coordinate systems, box alignment, frame visibility,
+  padding/styling, and optional arrow connection.
+- Renderer-neutral annotation-box tests cover text placement, frame paint, and
+  arrow endpoint routing without depending on backend pixels.
+- `Axes.AnnotationBbox` also supports `Image` plus `ImageZoom`, covering the
+  static `AnnotationBbox(OffsetImage(...))` path through the renderer-neutral
+  `render.Image` contract. Box alignment converts Matplotlib's lower-left
+  alignment semantics into the port's display coordinate convention.
+- Renderer-neutral annotation-box tests cover zoomed image destination
+  placement without backend pixels.
+- `Axes.AddAnchoredSizeBar` now covers the common axes-grid
+  `AnchoredSizeBar` static use case: data/axes/figure coordinate bar lengths,
+  center-aligned label placement, optional frame, label-top mode, vertical bar
+  thickness, and filled-bar behavior.
+- Renderer-neutral anchored-layout tests cover data-scaled bar length, label
+  placement, and frame paint.
+- `Axes.AddAnchoredDrawingArea` now covers the common static
+  `AnchoredDrawingArea` / `DrawingArea` path for fixed-size local path content,
+  including anchored placement, optional frame, padding, and lower-left local
+  coordinate mapping into display space. It also supports clipping children to
+  the drawing-area bounds, matching upstream `DrawingArea(clip=True)`.
+- Renderer-neutral anchored-layout tests cover local path coordinate mapping
+  and frame paint, plus child clipping to the drawing-area bounds.
+- `Axes.AddAnchoredPacker` now covers the common static `HPacker` / `VPacker`
+  shape for anchored offset boxes: fixed drawing-area children, text-area
+  children, and zoomed image children can be packed horizontally or vertically
+  with explicit separation, padding, frame styling, and start/center/end
+  cross-axis alignment.
+- Renderer-neutral anchored-layout tests cover horizontal drawing/text packing,
+  text placement, vertical child stacking, cross-axis alignment, and zoomed
+  image child placement.
+- Added the focused `text_annotation_matrix` parity fixture for Phase 12.4 text
+  and annotation coverage. It exercises structured font properties, multiline
+  text, rotated text, text bbox output, explicit annotation clipping,
+  AnnotationBbox text/image content, anchored text, anchored drawing areas,
+  packed offset boxes, and anchored size bars.
 
 #### 12.4E Legend Handler and Layout Closure
 
@@ -2353,24 +2455,81 @@ Current slice landed:
 - [ ] Verify `"best"` placement badness against upstream for representative
       line, scatter, image, and annotation cases; document any deliberate
       simplification with a migration note.
-- [ ] Add renderer-neutral legend-layout tests and catalog/parity fixtures for
+- [x] Add renderer-neutral legend-layout tests and catalog/parity fixtures for
       custom/proxy handlers, multi-column legends, scatter sample counts, and
       figure legends.
 
+Current slice landed:
+
+- `Legend` now exposes `NumColumns` and `ColumnSpacing` for Go-style
+  multi-column static layout. Entries are split across columns using the same
+  contiguous-column distribution as Matplotlib's `ncols` packing, and the
+  shared layout calculation drives both drawing and `boxRect` placement.
+- Renderer-neutral legend tests cover multi-column label origins and row
+  alignment without depending on backend pixels.
+- `Legend` also exposes `MarkerScale` and `ScatterPoints` for static marker
+  legend samples, covering the high-value `markerscale` and `scatterpoints`
+  controls from upstream legend handlers.
+- Renderer-neutral legend tests cover scaled marker bounds and multiple
+  left-to-right scatter sample positions.
+- `Legend` now supports `Title` and `TitleFontSize`, drawing the title above
+  entries and accounting for title width/height in the shared layout and
+  `boxRect` placement path.
+- Renderer-neutral legend tests cover title drawing, title placement above the
+  first entry, and increased legend box height.
+- `Legend` now exposes `FrameOn`, mirroring the high-value upstream `frameon`
+  control for suppressing only the legend frame while preserving samples, text,
+  and the shared layout/placement calculation.
+- Renderer-neutral legend tests cover frame suppression without dropping legend
+  content.
+- `Legend.AddEntry` now provides a typed Go proxy-entry surface through
+  `LegendEntryOptions` and `LegendSampleLine` / `LegendSampleMarker` /
+  `LegendSamplePatch`, reusing the same internal sample rendering path as
+  collected artists.
+- Renderer-neutral legend tests cover explicit proxy patch entries drawn
+  without a backing artist.
+- `Legend.SetHandler` now provides a typed per-artist handler override for
+  collected artists, using `LegendEntryOptions` instead of Python's arbitrary
+  object-dispatch handler maps. `Legend.ClearHandler` removes the override.
+- Renderer-neutral legend tests cover a collected line artist rendered through a
+  custom patch sample while preserving the artist label.
+- Built-in `ErrorBar` legend entries now draw an errorbar-specific sample with
+  a center line, x/y error stems as applicable, caps, and optional markers
+  instead of degrading to a plain line-only sample.
+- Renderer-neutral legend tests cover y-error stems and caps in the legend
+  sample path output.
+- Added the focused `legend_layout_matrix` parity fixture for Phase 12.4 legend
+  coverage. It exercises multi-column layout, title drawing, scatter sample
+  counts, marker scaling, errorbar samples, proxy entries, frame suppression,
+  and typed handler overrides separately from broad composition examples.
+
 #### 12.4F Exit Criteria
 
-- [ ] `FoundationAPIGapAudit` rows for patch/hatch catalogs,
+- [x] `FoundationAPIGapAudit` rows for patch/hatch catalogs,
       text/font-surface gaps, annotation/offset boxes, and legend-handler
       behavior are closed or split into exact remaining rows.
-- [ ] Public-surface parity rows for `patches.py`, `hatch.py`, `text.py`,
+- [x] Public-surface parity rows for `patches.py`, `hatch.py`, `text.py`,
       `font_manager.py`, `legend.py`, `legend_handler.py`, and `offsetbox.py`
       no longer contain broad "partial" notes without a precise remaining
       task.
-- [ ] 12.4 has catalog/parity coverage for box styles, hatch density,
+- [x] 12.4 has catalog/parity coverage for box styles, hatch density,
       text/font variants, annotation clipping/boxes, offset boxes, and legend
       handler/layout behavior.
-- [ ] `go test ./core ./render ./internal/examplecatalog -count=1` and the
+- [x] `go test ./core ./render ./internal/examplecatalog -count=1` and the
       relevant `go test ./test/ -run ...` catalog cases pass.
+
+Current slice landed:
+
+- Split the Phase 12.4 foundation audit into exact patch/hatch,
+  text/font-layout, font-property, annotation-coordinate, offset-box, and
+  legend-handler rows so remaining work is no longer hidden in a broad
+  text/legend/offsetbox bucket.
+- Expanded the committed public-surface inventory to include `hatch.py`,
+  `font_manager.py`, `textpath.py`, and `legend_handler.py`, with explicit
+  parity classifications for hatch geometry, font-manager policy, text paths,
+  and legend-handler behavior.
+- Added focused tests that keep those 12.4 audit and inventory rows from
+  regressing back into broad untracked gaps.
 
 Implementation notes:
 
@@ -2518,10 +2677,10 @@ convenience layers over the core model.
 
 #### 12.5G Exit Criteria
 
-- [ ] `FoundationAPIGapAudit` rows for image class breadth, pyplot wrapper
+- [x] `FoundationAPIGapAudit` rows for image class breadth, pyplot wrapper
       surface, backend lifecycle, widgets, and animation are closed or split
       into precise remaining rows.
-- [ ] Public-surface parity rows for `image.py`, `pyplot.py`,
+- [x] Public-surface parity rows for `image.py`, `pyplot.py`,
       `_pylab_helpers.py`, `backend_bases.py`, `backend_tools.py`,
       `widgets.py`, and `animation.py` no longer contain broad "partial" notes
       without a precise remaining task.
@@ -2534,6 +2693,18 @@ convenience layers over the core model.
 - [ ] `go test ./core ./pyplot ./canvas ./animation ./backends/agg`
       `./internal/examplecatalog -count=1` and relevant catalog/browser tests
       pass.
+
+Current slice landed:
+
+- Added explicit Phase 12.5 foundation audit rows for widget/selector
+  interaction scope and animation playback/writer scope, complementing the
+  existing image, pyplot, and backend lifecycle rows.
+- Expanded the committed public-surface inventory to include
+  `_pylab_helpers.py` so pyplot state-management parity is tracked alongside
+  `pyplot.py`.
+- Tightened 12.5 public-surface parity notes for image, pyplot,
+  `_pylab_helpers`, backend bases/tools, widgets, and animation so each
+  partial row names exact remaining families instead of broad catch-all gaps.
 
 Implementation notes:
 

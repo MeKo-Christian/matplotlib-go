@@ -270,6 +270,15 @@ func approxPt(a, b geom.Pt, tol float64) bool {
 	return math.Abs(a.X-b.X) <= tol && math.Abs(a.Y-b.Y) <= tol
 }
 
+func containsPointForPatchTest(path geom.Path, want geom.Pt) bool {
+	for _, pt := range path.V {
+		if approx(pt.X, want.X, 1e-9) && approx(pt.Y, want.Y, 1e-9) {
+			return true
+		}
+	}
+	return false
+}
+
 func TestPatchAutoScaleIgnoresNonDataCoords(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
@@ -425,6 +434,46 @@ func TestArrowAndConnectionStyleRegistriesParseMatplotlibNames(t *testing.T) {
 	}
 }
 
+func TestConnectionStyleArcUsesMatplotlibDefaultAngles(t *testing.T) {
+	style, ok := ConnectionStyleFromString("arc,armA=10,armB=5")
+	if !ok {
+		t.Fatal("ConnectionStyleFromString(arc) returned !ok")
+	}
+	if style.AngleA != 0 || style.AngleB != 0 {
+		t.Fatalf("arc defaults = angleA %v angleB %v, want 0/0", style.AngleA, style.AngleB)
+	}
+
+	path := style.connect(geom.Pt{X: 0, Y: 0}, geom.Pt{X: 100, Y: 0}, 0, 0)
+	if len(path.V) < 3 {
+		t.Fatalf("arc path vertices = %+v, want start arm and end arm", path.V)
+	}
+	if !approx(path.V[1].X, 10, 1e-9) || !approx(path.V[1].Y, 0, 1e-9) {
+		t.Fatalf("arc start arm = %+v, want horizontal +x arm at {10,0}", path.V[1])
+	}
+}
+
+func TestConnectionStyleBarAngleProjectsEndpointLikeMatplotlib(t *testing.T) {
+	style, ok := ConnectionStyleFromString("bar,angle=0,fraction=0.3")
+	if !ok {
+		t.Fatal("ConnectionStyleFromString(bar) returned !ok")
+	}
+
+	path := style.connect(geom.Pt{X: 0, Y: 0}, geom.Pt{X: 100, Y: 100}, 0, 0)
+	if len(path.V) != 4 {
+		t.Fatalf("bar path vertices = %+v, want 4 vertices", path.V)
+	}
+	wantY := -0.3 * math.Hypot(100, 100)
+	if !approx(path.V[1].X, 0, 1e-9) || !approx(path.V[1].Y, wantY, 1e-9) {
+		t.Fatalf("bar first arm = %+v, want {0,%v}", path.V[1], wantY)
+	}
+	if !approx(path.V[2].X, 100, 1e-9) || !approx(path.V[2].Y, wantY, 1e-9) {
+		t.Fatalf("bar projected second arm = %+v, want {100,%v}", path.V[2], wantY)
+	}
+	if path.V[3] != (geom.Pt{X: 100, Y: 100}) {
+		t.Fatalf("bar final endpoint = %+v, want original endpoint", path.V[3])
+	}
+}
+
 func TestFancyArrowPatchDrawsConnectionAndArrowHead(t *testing.T) {
 	arrowStyle, ok := ArrowStyleFromString("-|>")
 	if !ok {
@@ -459,6 +508,119 @@ func TestFancyArrowPatchDrawsConnectionAndArrowHead(t *testing.T) {
 	}
 	if r.pathCalls[len(r.pathCalls)-1].path.C[len(r.pathCalls[len(r.pathCalls)-1].path.C)-1] != geom.ClosePath {
 		t.Fatalf("expected closed arrow-head path, got %v", r.pathCalls[len(r.pathCalls)-1].path.C)
+	}
+}
+
+func TestArrowStyleWedgeUsesShrinkFactor(t *testing.T) {
+	style, ok := ArrowStyleFromString("wedge,tail_width=0.6,shrink_factor=0.25")
+	if !ok {
+		t.Fatal("ArrowStyleFromString(wedge) returned !ok")
+	}
+	if !approx(style.ShrinkFactor, 0.25, 1e-12) {
+		t.Fatalf("wedge shrink factor = %v, want 0.25", style.ShrinkFactor)
+	}
+
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 0, Y: 0})
+	path.LineTo(geom.Pt{X: 100, Y: 0})
+	parts := style.transmute(path, 10, 1)
+	if len(parts) != 1 || !parts[0].fillable {
+		t.Fatalf("wedge parts = %+v, want one fillable path", parts)
+	}
+	got := parts[0].path
+	if len(got.V) != 5 {
+		t.Fatalf("wedge path vertices = %d, want tapered closed outline: %+v", len(got.V), got)
+	}
+
+	tailWidth := got.V[0].Y - got.V[4].Y
+	midWidth := got.V[1].Y - got.V[3].Y
+	if !approx(tailWidth, 6, 1e-9) {
+		t.Fatalf("wedge tail width = %v, want 6", tailWidth)
+	}
+	if !approx(midWidth, 1.5, 1e-9) {
+		t.Fatalf("wedge middle width = %v, want 1.5 from shrink_factor", midWidth)
+	}
+	if got.V[2] != (geom.Pt{X: 100, Y: 0}) {
+		t.Fatalf("wedge should taper to the arrow endpoint, got tip %+v", got.V[2])
+	}
+}
+
+func TestArrowStyleCurveShortensLineForArrowHeads(t *testing.T) {
+	style, ok := ArrowStyleFromString("->,head_length=0.4,head_width=0.2")
+	if !ok {
+		t.Fatal("ArrowStyleFromString(->) returned !ok")
+	}
+
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 0, Y: 0})
+	path.LineTo(geom.Pt{X: 100, Y: 0})
+	parts := style.transmute(path, 10, 1)
+	if len(parts) != 2 {
+		t.Fatalf("curve arrow parts = %d, want line plus head", len(parts))
+	}
+	line := parts[0].path
+	if len(line.V) != 2 {
+		t.Fatalf("curve line vertices = %+v, want straight shortened line", line.V)
+	}
+	if !approx(line.V[1].X, 96, 1e-9) || !approx(line.V[1].Y, 0, 1e-9) {
+		t.Fatalf("curve line end = %+v, want shortened to x=96", line.V[1])
+	}
+	head := parts[1].path
+	if !containsPointForPatchTest(head, geom.Pt{X: 100, Y: 0}) {
+		t.Fatalf("arrow head should still reach original tip, got %+v", head.V)
+	}
+}
+
+func TestArrowStyleBarABUsesZeroBracketLength(t *testing.T) {
+	style, ok := ArrowStyleFromString("|-|")
+	if !ok {
+		t.Fatal("ArrowStyleFromString(|-|) returned !ok")
+	}
+	if style.LengthA != 0 || style.LengthB != 0 {
+		t.Fatalf("|-| bracket lengths = %v/%v, want zero-length bars", style.LengthA, style.LengthB)
+	}
+
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 0, Y: 0})
+	path.LineTo(geom.Pt{X: 100, Y: 0})
+	parts := style.transmute(path, 10, 1)
+	if len(parts) != 3 {
+		t.Fatalf("|-| parts = %d, want line plus two bar brackets", len(parts))
+	}
+	begin := parts[1].path
+	end := parts[2].path
+	for _, pt := range begin.V {
+		if !approx(pt.X, 0, 1e-9) {
+			t.Fatalf("begin bar protrudes from anchor: %+v", begin.V)
+		}
+	}
+	for _, pt := range end.V {
+		if !approx(pt.X, 100, 1e-9) {
+			t.Fatalf("end bar protrudes from anchor: %+v", end.V)
+		}
+	}
+}
+
+func TestFancyArrowPatchDefaultShrinkMatchesMatplotlib(t *testing.T) {
+	patch := &FancyArrowPatch{
+		PosA:            geom.Pt{X: 0.25, Y: 0.5},
+		PosB:            geom.Pt{X: 0.75, Y: 0.5},
+		ConnectionStyle: ConnectionStyle{Name: "arc3"},
+		Coords:          Coords(CoordAxes),
+	}
+	ctx := createTestDrawContext()
+	path := patch.displayPath(ctx)
+	if len(path.V) != 2 {
+		t.Fatalf("default arc3 path vertices = %d, want 2: %+v", len(path.V), path.V)
+	}
+
+	start := ctx.TransformFor(Coords(CoordAxes)).Apply(patch.PosA)
+	end := ctx.TransformFor(Coords(CoordAxes)).Apply(patch.PosB)
+	if !approx(path.V[0].X, start.X+2, 1e-9) || !approx(path.V[0].Y, start.Y, 1e-9) {
+		t.Fatalf("default-shrunk start = %+v, want %+v", path.V[0], geom.Pt{X: start.X + 2, Y: start.Y})
+	}
+	if !approx(path.V[1].X, end.X-2, 1e-9) || !approx(path.V[1].Y, end.Y, 1e-9) {
+		t.Fatalf("default-shrunk end = %+v, want %+v", path.V[1], geom.Pt{X: end.X - 2, Y: end.Y})
 	}
 }
 

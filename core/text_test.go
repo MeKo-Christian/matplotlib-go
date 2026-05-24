@@ -1,6 +1,7 @@
 package core
 
 import (
+	"image"
 	"math"
 	"strings"
 	"testing"
@@ -390,6 +391,32 @@ func TestLayoutMathTextSupportsStyleSwitches(t *testing.T) {
 	}
 }
 
+func TestLayoutMathTextUsesFontPropertiesMathFontFamily(t *testing.T) {
+	var r textRecordingRenderer
+	fontKey := render.FontPropertiesKey(render.FontProperties{
+		Families:       []string{"DejaVu Sans"},
+		MathFontFamily: "dejavuserif",
+	})
+	layout, ok := LayoutMathText(&r, `x + y`, 20, fontKey)
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+
+	var xKey string
+	for _, run := range layout.Runs {
+		if strings.TrimSpace(run.Text) == "x" {
+			xKey = strings.ToLower(run.FontKey)
+			break
+		}
+	}
+	if xKey == "" {
+		t.Fatalf("missing x run: %+v", layout.Runs)
+	}
+	if !strings.Contains(xKey, "dejavuserif") && !strings.Contains(xKey, "dejavu serif") {
+		t.Fatalf("math font family did not route default math through DejaVu Serif: %q", xKey)
+	}
+}
+
 func TestLayoutMathTextSupportsSpacingCommands(t *testing.T) {
 	var r textRecordingRenderer
 	compact, ok := LayoutMathText(&r, `ab`, 20, "DejaVu Sans")
@@ -602,6 +629,28 @@ func TestTextArtistUsesTeXRendererWhenRCUseTeX(t *testing.T) {
 	}
 }
 
+func TestTextArtistCanDisableMathParsing(t *testing.T) {
+	ctx := createTestDrawContext()
+	parseMath := false
+	text := &Text{
+		Position:  geom.Pt{X: 1, Y: 1},
+		Content:   `signal $\alpha$`,
+		FontSize:  12,
+		ParseMath: &parseMath,
+		ClipOn:    true,
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.fontTextCalls) != 1 {
+		t.Fatalf("expected one plain text draw, got %+v", r.fontTextCalls)
+	}
+	if got, want := r.fontTextCalls[0].text, `signal $\alpha$`; got != want {
+		t.Fatalf("parse_math disabled text = %q, want %q", got, want)
+	}
+}
+
 func TestTextArtistFontKeyOverridesRCFontKey(t *testing.T) {
 	ctx := createTestDrawContext()
 	ctx.RC.FontKey = "RC Font"
@@ -648,6 +697,38 @@ func TestTextArtistFontPropertiesOverrideRCFontKey(t *testing.T) {
 	props := render.ParseFontProperties(r.fontTextCalls[0].fontKey)
 	if props.Style != render.FontStyleItalic || props.Weight != 700 || len(props.Families) != 1 || props.Families[0] != "DejaVu Serif" {
 		t.Fatalf("text font properties = %+v, want DejaVu Serif italic 700", props)
+	}
+}
+
+func TestTextArtistFontPropertiesRouteFeatureOptions(t *testing.T) {
+	ctx := createTestDrawContext()
+	ctx.RC.FontKey = "RC Font"
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 1},
+		Content:  "fi",
+		FontSize: 12,
+		FontProperties: &render.FontProperties{
+			Families: []string{"DejaVu Sans"},
+			Stretch:  "condensed",
+			Variant:  "small-caps",
+			Language: "de",
+			Features: []render.TextFeature{{Tag: "liga", Value: 0}},
+		},
+		ClipOn: true,
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.fontTextCalls) != 1 {
+		t.Fatalf("expected one font-aware text draw, got %+v", r.fontTextCalls)
+	}
+	props := render.ParseFontProperties(r.fontTextCalls[0].fontKey)
+	if props.Stretch != "condensed" || props.Variant != "small-caps" || props.Language != "de" {
+		t.Fatalf("text extended font properties = %+v, want condensed small-caps de", props)
+	}
+	if len(props.Features) != 1 || props.Features[0] != (render.TextFeature{Tag: "liga", Value: 0}) {
+		t.Fatalf("text font features = %+v, want liga=0", props.Features)
 	}
 }
 
@@ -702,6 +783,29 @@ func TestAnnotationFontPropertiesOverrideRCFontKey(t *testing.T) {
 	}
 }
 
+func TestAnnotationCanDisableMathParsing(t *testing.T) {
+	ctx := createTestDrawContext()
+	parseMath := false
+	annotation := &Annotation{
+		Point:     geom.Pt{X: 1, Y: 1},
+		Content:   `note $\beta$`,
+		OffsetX:   10,
+		OffsetY:   -8,
+		FontSize:  12,
+		ParseMath: &parseMath,
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	annotation.DrawOverlay(r, ctx)
+
+	if len(r.fontTextCalls) != 1 {
+		t.Fatalf("expected one plain annotation draw, got %+v", r.fontTextCalls)
+	}
+	if got, want := r.fontTextCalls[0].text, `note $\beta$`; got != want {
+		t.Fatalf("parse_math disabled annotation = %q, want %q", got, want)
+	}
+}
+
 func TestAnnotationClipSkipsOutsideAnnotatedPoint(t *testing.T) {
 	ctx := createTestDrawContext()
 	clip := true
@@ -739,6 +843,37 @@ func TestAnnotationClipFalseDrawsOutsideAnnotatedPoint(t *testing.T) {
 
 	if len(r.fontTextCalls) != 1 {
 		t.Fatalf("annotation_clip=false should draw text, got %+v", r.fontTextCalls)
+	}
+}
+
+func TestAnnotationClipDefaultMatchesMatplotlibDataOnlyPolicy(t *testing.T) {
+	ctx := createTestDrawContext()
+	dataAnnotation := &Annotation{
+		Point:    geom.Pt{X: 100, Y: 100},
+		Content:  "outside data",
+		OffsetX:  10,
+		OffsetY:  -8,
+		FontSize: 12,
+		Coords:   Coords(CoordData),
+	}
+	axesAnnotation := &Annotation{
+		Point:    geom.Pt{X: 1.5, Y: 1.5},
+		Content:  "outside axes",
+		OffsetX:  10,
+		OffsetY:  -8,
+		FontSize: 12,
+		Coords:   Coords(CoordAxes),
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	dataAnnotation.DrawOverlay(r, ctx)
+	axesAnnotation.DrawOverlay(r, ctx)
+
+	if containsFontTextCall(r.fontTextCalls, "outside data") || containsTextString(r.texts, "outside data") {
+		t.Fatalf("annotation_clip default should clip outside data-coordinate annotations, got font=%+v text=%+v", r.fontTextCalls, r.texts)
+	}
+	if !containsFontTextCall(r.fontTextCalls, "outside axes") && !containsTextString(r.texts, "outside axes") {
+		t.Fatalf("annotation_clip default should draw outside non-data annotations, got font=%+v text=%+v", r.fontTextCalls, r.texts)
 	}
 }
 
@@ -893,6 +1028,42 @@ func TestAnnotationDrawOverlayRendersArrowAndText(t *testing.T) {
 	}
 }
 
+func TestAnnotationDrawsTextBBox(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(unitRect())
+	ax.XAxis.ShowSpine = false
+	ax.XAxis.ShowTicks = false
+	ax.XAxis.ShowLabels = false
+	ax.YAxis.ShowSpine = false
+	ax.YAxis.ShowTicks = false
+	ax.YAxis.ShowLabels = false
+	ax.ShowFrame = false
+
+	face := render.Color{R: 1, G: 0.95, B: 0.8, A: 1}
+	edge := render.Color{R: 0.2, G: 0.1, B: 0.05, A: 1}
+	ax.Annotate("boxed", 0.5, 0.5, AnnotationOptions{
+		OffsetX: 10,
+		OffsetY: -8,
+		BBox: &TextBBoxOptions{
+			FaceColor:    face,
+			EdgeColor:    edge,
+			LineWidth:    2,
+			Padding:      3,
+			CornerRadius: 4,
+		},
+	})
+
+	r := &textRecordingRenderer{}
+	DrawFigure(fig, r)
+
+	if !containsTextString(r.texts, "boxed") {
+		t.Fatalf("expected annotation text to draw, got %v", r.texts)
+	}
+	if !hasPathPaint(r.pathPaints, face, edge, 2) {
+		t.Fatalf("annotation bbox paint not found in %+v", r.pathPaints)
+	}
+}
+
 func TestAnnotateRespectsConfiguredCoordinateSpaces(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(unitRect())
@@ -953,17 +1124,130 @@ func TestAnnotateRespectsConfiguredCoordinateSpaces(t *testing.T) {
 			t.Fatalf("annotation connection path vertices = %d, want at least 2", len(got.V))
 		}
 		end := got.V[len(got.V)-1]
-		if !approx(end.X, target.X, 1e-9) || !approx(end.Y, target.Y, 1e-9) {
-			t.Fatalf("annotation connection end = %+v, want target %+v", end, target)
+		if math.Hypot(end.X-target.X, end.Y-target.Y) > 12 {
+			t.Fatalf("annotation connection end = %+v, want near target %+v", end, target)
 		}
 		if math.Hypot(got.V[0].X-anchor.X, got.V[0].Y-anchor.Y) > 40 {
 			t.Fatalf("annotation connection start = %+v, expected near label anchor %+v", got.V[0], anchor)
+		}
+		if !containsPathPointForTextTest(r.pathCalls, target) {
+			t.Fatalf("annotation arrow head should include target %+v, got paths %+v", target, r.pathCalls)
 		}
 	}
 
 	expectConnection(connections[0], dataAnchor, dataTarget)
 	expectConnection(connections[1], axesAnchor, axesTarget)
 	expectConnection(connections[2], figureAnchor, figureTarget)
+}
+
+func TestAnnotationBboxDrawsTextFrameAndArrow(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(unitRect())
+	ax.XAxis.ShowSpine = false
+	ax.XAxis.ShowTicks = false
+	ax.XAxis.ShowLabels = false
+	ax.YAxis.ShowSpine = false
+	ax.YAxis.ShowTicks = false
+	ax.YAxis.ShowLabels = false
+	ax.ShowFrame = false
+
+	boxPos := geom.Pt{X: 0.7, Y: 0.25}
+	align := geom.Pt{X: 0.5, Y: 0.5}
+	frameOn := true
+	frameFill := render.Color{R: 1, G: 1, B: 1, A: 1}
+	frameEdge := render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1}
+	textColor := render.Color{R: 0.9, G: 0.1, B: 0.2, A: 1}
+	arrowColor := render.Color{R: 0.2, G: 0.3, B: 0.4, A: 1}
+
+	if got := ax.AnnotationBbox("box", 0.25, 0.75, AnnotationBboxOptions{
+		XYCoords:      Coords(CoordData),
+		BoxCoords:     Coords(CoordAxes),
+		BoxPosition:   &boxPos,
+		BoxAlignment:  &align,
+		FrameOn:       &frameOn,
+		Padding:       4,
+		FaceColor:     frameFill,
+		EdgeColor:     frameEdge,
+		LineWidth:     1.5,
+		TextColor:     textColor,
+		Arrow:         true,
+		ArrowColor:    arrowColor,
+		ArrowWidth:    1.25,
+		ArrowHeadSize: 8,
+	}); got == nil {
+		t.Fatal("AnnotationBbox returned nil")
+	}
+
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	target := ctx.TransformFor(Coords(CoordData)).Apply(geom.Pt{X: 0.25, Y: 0.75})
+	boxAnchor := ctx.TransformFor(Coords(CoordAxes)).Apply(boxPos)
+
+	r := &textRecordingRenderer{}
+	DrawFigure(fig, r)
+
+	if len(r.texts) != 1 || r.texts[0] != "box" {
+		t.Fatalf("unexpected annotation-box texts: %v", r.texts)
+	}
+	layout := measureSingleLineTextLayout(r, "box", resolvedFontSize(0, ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
+	wantOrigin := alignedSingleLineOrigin(boxAnchor, layout, TextAlignCenter, textLayoutVAlignCenter)
+	if !approx(r.origins[0].X, wantOrigin.X, 1e-9) || !approx(r.origins[0].Y, wantOrigin.Y, 1e-9) {
+		t.Fatalf("annotation-box text origin = %+v, want %+v", r.origins[0], wantOrigin)
+	}
+	if !hasPathPaint(r.pathPaints, frameFill, frameEdge, 1.5) {
+		t.Fatalf("annotation-box frame paint not found in %+v", r.pathPaints)
+	}
+
+	foundArrowToTarget := false
+	for _, call := range r.pathCalls {
+		if pathHasPointForTextTest(call.path, target) {
+			foundArrowToTarget = true
+			break
+		}
+	}
+	if !foundArrowToTarget {
+		t.Fatalf("annotation-box arrow should end at annotated point %+v, got paths %+v", target, r.pathCalls)
+	}
+}
+
+func TestAnnotationBboxDrawsImageContent(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(unitRect())
+	ax.XAxis.ShowSpine = false
+	ax.XAxis.ShowTicks = false
+	ax.XAxis.ShowLabels = false
+	ax.YAxis.ShowSpine = false
+	ax.YAxis.ShowTicks = false
+	ax.YAxis.ShowLabels = false
+	ax.ShowFrame = false
+
+	img := render.NewImageData(image.NewRGBA(image.Rect(0, 0, 10, 6)))
+	boxPos := geom.Pt{X: 0.4, Y: 0.6}
+	align := geom.Pt{X: 0, Y: 1}
+	ax.AnnotationBbox("", 0.1, 0.2, AnnotationBboxOptions{
+		BoxCoords:    Coords(CoordAxes),
+		BoxPosition:  &boxPos,
+		BoxAlignment: &align,
+		Image:        img,
+		ImageZoom:    2,
+		Padding:      3,
+	})
+
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	anchor := ctx.TransformFor(Coords(CoordAxes)).Apply(boxPos)
+
+	r := &textRecordingRenderer{}
+	DrawFigure(fig, r)
+
+	if got := len(r.imageDsts); got != 1 {
+		t.Fatalf("annotation image draw count = %d, want 1", got)
+	}
+	wantDst := geom.Rect{
+		Min: anchor,
+		Max: geom.Pt{X: anchor.X + 20, Y: anchor.Y + 12},
+	}
+	if !approxRect(r.imageDsts[0], wantDst, 1e-9) {
+		t.Fatalf("annotation image dst = %+v, want %+v", r.imageDsts[0], wantDst)
+	}
 }
 
 type textRecordingRenderer struct {
@@ -975,6 +1259,7 @@ type textRecordingRenderer struct {
 	textColors []render.Color
 	textSizes  []float64
 	origins    []geom.Pt
+	imageDsts  []geom.Rect
 }
 
 func (r *textRecordingRenderer) Path(p geom.Path, paint *render.Paint) {
@@ -985,6 +1270,10 @@ func (r *textRecordingRenderer) Path(p geom.Path, paint *render.Paint) {
 		r.pathPaints = append(r.pathPaints, call.paint)
 	}
 	r.pathCalls = append(r.pathCalls, call)
+}
+
+func (r *textRecordingRenderer) Image(_ render.Image, dst geom.Rect) {
+	r.imageDsts = append(r.imageDsts, dst)
 }
 
 func (r *textRecordingRenderer) MeasureText(text string, size float64, _ string) render.TextMetrics {
@@ -1017,6 +1306,15 @@ func (r *textRecordingRenderer) DrawText(text string, origin geom.Pt, size float
 	r.textColors = append(r.textColors, col)
 	r.textSizes = append(r.textSizes, size)
 	r.origins = append(r.origins, origin)
+}
+
+func hasPathPaint(paints []render.Paint, fill, stroke render.Color, lineWidth float64) bool {
+	for _, paint := range paints {
+		if paint.Fill == fill && paint.Stroke == stroke && approx(paint.LineWidth, lineWidth, 1e-12) {
+			return true
+		}
+	}
+	return false
 }
 
 type recordedFontTextCall struct {
@@ -1258,6 +1556,40 @@ func containsTextString(values []string, want string) bool {
 		}
 	}
 	return false
+}
+
+func containsFontTextCall(calls []recordedFontTextCall, want string) bool {
+	for _, call := range calls {
+		if call.text == want {
+			return true
+		}
+	}
+	return false
+}
+
+func containsPathPointForTextTest(calls []recordedPathCall, want geom.Pt) bool {
+	for _, call := range calls {
+		if pathHasPointForTextTest(call.path, want) {
+			return true
+		}
+	}
+	return false
+}
+
+func pathHasPointForTextTest(path geom.Path, want geom.Pt) bool {
+	for _, pt := range path.V {
+		if approx(pt.X, want.X, 1e-9) && approx(pt.Y, want.Y, 1e-9) {
+			return true
+		}
+	}
+	return false
+}
+
+func approxRect(got, want geom.Rect, tol float64) bool {
+	return approx(got.Min.X, want.Min.X, tol) &&
+		approx(got.Min.Y, want.Min.Y, tol) &&
+		approx(got.Max.X, want.Max.X, tol) &&
+		approx(got.Max.Y, want.Max.Y, tol)
 }
 
 func containsMathRun(runs []MathTextLayoutRun, text string, size float64) bool {

@@ -94,6 +94,7 @@ import (
 	example_joins_caps "github.com/cwbudde/matplotlib-go/test/parity/joins_caps"
 	example_large_scatter "github.com/cwbudde/matplotlib-go/test/parity/large_scatter"
 	example_layout_bbox_helpers "github.com/cwbudde/matplotlib-go/test/parity/layout_bbox_helpers"
+	example_legend_layout_matrix "github.com/cwbudde/matplotlib-go/test/parity/legend_layout_matrix"
 	example_line2d_markers "github.com/cwbudde/matplotlib-go/test/parity/line2d_markers"
 	example_line2d_semantics "github.com/cwbudde/matplotlib-go/test/parity/line2d_semantics"
 	example_locator_fixed_index_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_fixed_index_labels"
@@ -126,6 +127,7 @@ import (
 	example_multi_series_color_cycle "github.com/cwbudde/matplotlib-go/test/parity/multi_series_color_cycle"
 	example_named_colors "github.com/cwbudde/matplotlib-go/test/parity/named_colors"
 	example_patch_showcase "github.com/cwbudde/matplotlib-go/test/parity/patch_showcase"
+	example_patch_style_matrix "github.com/cwbudde/matplotlib-go/test/parity/patch_style_matrix"
 	example_path_clipped_transformed "github.com/cwbudde/matplotlib-go/test/parity/path_clipped_transformed"
 	example_path_effects "github.com/cwbudde/matplotlib-go/test/parity/path_effects"
 	example_pattern_gradient_effects "github.com/cwbudde/matplotlib-go/test/parity/pattern_gradient_effects"
@@ -152,6 +154,7 @@ import (
 	example_spy_marker "github.com/cwbudde/matplotlib-go/test/parity/spy_marker"
 	example_stat_variants "github.com/cwbudde/matplotlib-go/test/parity/stat_variants"
 	example_stem_plot "github.com/cwbudde/matplotlib-go/test/parity/stem_plot"
+	example_text_annotation_matrix "github.com/cwbudde/matplotlib-go/test/parity/text_annotation_matrix"
 	example_text_labels_strict "github.com/cwbudde/matplotlib-go/test/parity/text_labels_strict"
 	example_ticks_styling_surface "github.com/cwbudde/matplotlib-go/test/parity/ticks_styling_surface"
 	example_title_strict "github.com/cwbudde/matplotlib-go/test/parity/title_strict"
@@ -199,6 +202,8 @@ var renderByID = map[string]func() image.Image{
 	"errorbar_basic":                     example_errorbar_basic.Render,
 	"multi_series_basic":                 example_multi_series_basic.Render,
 	"multi_series_color_cycle":           example_multi_series_color_cycle.Render,
+	"legend_layout_matrix":               example_legend_layout_matrix.Render,
+	"text_annotation_matrix":             example_text_annotation_matrix.Render,
 	"hist_basic":                         example_hist_basic.Render,
 	"hist_density":                       example_hist_density.Render,
 	"hist_strategies":                    example_hist_strategies.Render,
@@ -249,6 +254,7 @@ var renderByID = map[string]func() image.Image{
 	"colorbar_composition":               example_colorbar_composition.Render,
 	"annotation_composition":             example_annotation_composition.Render,
 	"patch_showcase":                     example_patch_showcase.Render,
+	"patch_style_matrix":                 example_patch_style_matrix.Render,
 	"mesh_contour_tri":                   example_mesh_contour_tri.Render,
 	"plot_variants":                      example_plot_variants.Render,
 	"spectrum_variants":                  example_spectrum_variants.Render,
@@ -353,11 +359,14 @@ var figureByID = map[string]func() *core.Figure{
 	"mesh_contour_tri":                   showcase_mesh_contour_tri.Plot,
 	"image_heatmap":                      showcase_image_heatmap.Plot,
 	"multi_series_basic":                 showcase_multi_series_basic.Plot,
+	"legend_layout_matrix":               example_legend_layout_matrix.Plot,
+	"text_annotation_matrix":             example_text_annotation_matrix.Plot,
 	"named_colors":                       example_named_colors.Plot,
 	"plot_variants":                      showcase_plot_variants.Plot,
 	"polar_axes":                         showcase_polar_axes.Plot,
 	"radar_basic":                        showcase_radar_basic.Plot,
 	"patch_showcase":                     example_patch_showcase.Plot,
+	"patch_style_matrix":                 example_patch_style_matrix.Plot,
 	"skewt_basic":                        showcase_skewt_basic.Plot,
 	"specialty_artists":                  showcase_specialty_artists.Plot,
 	"stat_variants":                      showcase_stat_variants.Plot,

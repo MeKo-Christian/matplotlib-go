@@ -44,6 +44,7 @@ type TextOptions struct {
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
 	FontProperties *render.FontProperties
+	ParseMath      *bool
 	PathEffects    []render.PathEffect
 }
 
@@ -71,9 +72,11 @@ type AnnotationOptions struct {
 	HAlign          TextAlign
 	VAlign          TextVerticalAlign
 	FontKey         string
+	BBox            *TextBBoxOptions
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
 	FontProperties *render.FontProperties
+	ParseMath      *bool
 	AnnotationClip *bool
 }
 
@@ -97,6 +100,7 @@ type Text struct {
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
 	FontProperties *render.FontProperties
+	ParseMath      *bool
 	PathEffects    []render.PathEffect
 	z              float64
 }
@@ -120,9 +124,11 @@ type Annotation struct {
 	VAlign          TextVerticalAlign
 	Coords          CoordinateSpec
 	FontKey         string
+	BBox            *TextBBoxOptions
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
 	FontProperties *render.FontProperties
+	ParseMath      *bool
 	AnnotationClip *bool
 	z              float64
 }
@@ -156,6 +162,7 @@ func (a *Axes) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		BBox:           cloneTextBBoxOptions(opt.BBox),
 		FontKey:        opt.FontKey,
 		FontProperties: cloneFontProperties(opt.FontProperties),
+		ParseMath:      cloneBool(opt.ParseMath),
 		PathEffects:    cloneRenderPathEffects(opt.PathEffects),
 		z:              500,
 	}
@@ -197,6 +204,7 @@ func (f *Figure) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		BBox:           cloneTextBBoxOptions(opt.BBox),
 		FontKey:        opt.FontKey,
 		FontProperties: cloneFontProperties(opt.FontProperties),
+		ParseMath:      cloneBool(opt.ParseMath),
 		PathEffects:    cloneRenderPathEffects(opt.PathEffects),
 		z:              500,
 	}
@@ -252,7 +260,9 @@ func (a *Axes) Annotate(text string, x, y float64, opts ...AnnotationOptions) *A
 		VAlign:          annotationVAlign(opt),
 		Coords:          opt.Coords,
 		FontKey:         opt.FontKey,
+		BBox:            cloneTextBBoxOptions(opt.BBox),
 		FontProperties:  cloneFontProperties(opt.FontProperties),
+		ParseMath:       cloneBool(opt.ParseMath),
 		AnnotationClip:  cloneBool(opt.AnnotationClip),
 		z:               900,
 	}
@@ -291,12 +301,13 @@ func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
 
 	fontSize := resolvedFontSize(t.FontSize, ctx)
 	fontKey := resolvedTextFontKey(t.FontKey, t.FontProperties, ctx)
+	parseMath := parseMathEnabled(t.ParseMath)
 	anchor := transformedPoint(ctx, t.Coords, t.Position, t.OffsetX, t.OffsetY)
 	if strings.Contains(t.Content, "\n") {
-		t.drawMultilineText(r, textRen, ctx, anchor, fontSize, fontKey)
+		t.drawMultilineText(r, textRen, ctx, anchor, fontSize, fontKey, parseMath)
 		return
 	}
-	layout := measureSingleLineTextLayout(r, t.Content, fontSize, fontKey, ctx.RC.UseTeX)
+	layout := measureSingleLineTextLayoutParseMath(r, t.Content, fontSize, fontKey, parseMath, ctx.RC.UseTeX)
 	origin := alignedSingleLineOrigin(anchor, layout, t.HAlign, layoutVerticalAlign(t.VAlign, false))
 	drawTextBBox(r, origin, layout, t.BBox, ctx, fontSize)
 	if t.Angle != 0 {
@@ -306,22 +317,22 @@ func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
 			if len(t.PathEffects) > 0 && drawTextPathEffects(r, t.Content, origin, rotAnchor, fontSize, angle, resolvedTextColor(t.Color, ctx), fontKey, ctx.RC.UseTeX, t.PathEffects) {
 				return
 			}
-			drawDisplayTextRotated(rotated, t.Content, rotAnchor, fontSize, angle, resolvedTextColor(t.Color, ctx), fontKey, ctx.RC.UseTeX)
+			drawDisplayTextRotatedParseMath(rotated, t.Content, rotAnchor, fontSize, angle, resolvedTextColor(t.Color, ctx), fontKey, parseMath, ctx.RC.UseTeX)
 			return
 		}
 	}
 	if len(t.PathEffects) > 0 && drawTextPathEffects(r, t.Content, origin, origin, fontSize, 0, resolvedTextColor(t.Color, ctx), fontKey, ctx.RC.UseTeX, t.PathEffects) {
 		return
 	}
-	drawDisplayText(textRen, t.Content, origin, fontSize, resolvedTextColor(t.Color, ctx), fontKey, ctx.RC.UseTeX)
+	drawDisplayTextParseMath(textRen, t.Content, origin, fontSize, resolvedTextColor(t.Color, ctx), fontKey, parseMath, ctx.RC.UseTeX)
 }
 
-func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, ctx *DrawContext, anchor geom.Pt, fontSize float64, fontKey string) {
+func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, ctx *DrawContext, anchor geom.Pt, fontSize float64, fontKey string, parseMath bool) {
 	lines := strings.Split(t.Content, "\n")
 	layouts := make([]singleLineTextLayout, len(lines))
 	maxWidth := 0.0
 	for i, line := range lines {
-		layouts[i] = measureSingleLineTextLayout(r, line, fontSize, fontKey, ctx.RC.UseTeX)
+		layouts[i] = measureSingleLineTextLayoutParseMath(r, line, fontSize, fontKey, parseMath, ctx.RC.UseTeX)
 		maxWidth = math.Max(maxWidth, layouts[i].Width)
 	}
 
@@ -375,7 +386,7 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 				origin.X += maxWidth - layouts[i].Width
 			}
 		}
-		drawDisplayText(textRen, line, origin, fontSize, textColor, fontKey, ctx.RC.UseTeX)
+		drawDisplayTextParseMath(textRen, line, origin, fontSize, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 	}
 }
 
@@ -454,12 +465,13 @@ func (a *Annotation) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 
 	fontSize := resolvedFontSize(a.FontSize, ctx)
 	fontKey := resolvedTextFontKey(a.FontKey, a.FontProperties, ctx)
+	parseMath := parseMathEnabled(a.ParseMath)
 	target := transformedPoint(ctx, a.Coords, a.Point, 0, 0)
-	if a.AnnotationClip != nil && *a.AnnotationClip && !ctx.Clip.ContainsInclusive(target) {
+	if annotationPointClipped(a.AnnotationClip, a.Coords, target, ctx.Clip) {
 		return
 	}
 	anchor := transformedPoint(ctx, a.Coords, a.Point, a.OffsetX, a.OffsetY)
-	layout := measureSingleLineTextLayout(r, a.Content, fontSize, fontKey, ctx.RC.UseTeX)
+	layout := measureSingleLineTextLayoutParseMath(r, a.Content, fontSize, fontKey, parseMath, ctx.RC.UseTeX)
 	origin := alignedSingleLineOrigin(anchor, layout, a.HAlign, layoutVerticalAlign(a.VAlign, false))
 	box, ok := textInkRect(origin, layout)
 	if !ok {
@@ -468,11 +480,15 @@ func (a *Annotation) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 			Max: geom.Pt{X: origin.X + layout.Width, Y: origin.Y + layout.Descent},
 		}
 	}
+	if bbox, ok := textBBoxRect(origin, layout, a.BBox, ctx, fontSize); ok {
+		box = bbox
+	}
 	start := nearestPointOnRect(box, target)
 
 	a.drawArrow(r, ctx, start, target)
+	drawTextBBox(r, origin, layout, a.BBox, ctx, fontSize)
 
-	drawDisplayText(textRen, a.Content, origin, fontSize, resolvedTextColor(a.Color, ctx), fontKey, ctx.RC.UseTeX)
+	drawDisplayTextParseMath(textRen, a.Content, origin, fontSize, resolvedTextColor(a.Color, ctx), fontKey, parseMath, ctx.RC.UseTeX)
 }
 
 // Bounds returns an empty rect so annotations do not affect autoscaling.
@@ -558,12 +574,24 @@ func resolvedTextFontKey(fontKey string, props *render.FontProperties, ctx *Draw
 	return ""
 }
 
+func parseMathEnabled(parseMath *bool) bool {
+	return parseMath == nil || *parseMath
+}
+
+func annotationPointClipped(annotationClip *bool, coords CoordinateSpec, target geom.Pt, clip geom.Rect) bool {
+	if annotationClip != nil {
+		return *annotationClip && !clip.ContainsInclusive(target)
+	}
+	return coords == Coords(CoordData) && !clip.ContainsInclusive(target)
+}
+
 func cloneFontProperties(props *render.FontProperties) *render.FontProperties {
 	if props == nil {
 		return nil
 	}
 	cloned := *props
 	cloned.Families = append([]string(nil), props.Families...)
+	cloned.Features = append([]render.TextFeature(nil), props.Features...)
 	return &cloned
 }
 
@@ -584,18 +612,11 @@ func cloneTextBBoxOptions(opt *TextBBoxOptions) *TextBBoxOptions {
 }
 
 func drawTextBBox(r render.Renderer, origin geom.Pt, layout singleLineTextLayout, opt *TextBBoxOptions, ctx *DrawContext, fontSize float64) {
-	if opt == nil {
-		return
-	}
-	rect, ok := textInkRect(origin, layout)
+	rect, ok := textBBoxRect(origin, layout, opt, ctx, fontSize)
 	if !ok {
 		return
 	}
 	cfg := resolvedTextBBoxOptions(*opt, ctx, fontSize)
-	rect.Min.X -= cfg.Padding
-	rect.Min.Y -= cfg.Padding
-	rect.Max.X += cfg.Padding
-	rect.Max.Y += cfg.Padding
 
 	path := pixelRectPath(rect)
 	if cfg.CornerRadius > 0 {
@@ -608,6 +629,22 @@ func drawTextBBox(r render.Renderer, origin geom.Pt, layout singleLineTextLayout
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
 	})
+}
+
+func textBBoxRect(origin geom.Pt, layout singleLineTextLayout, opt *TextBBoxOptions, ctx *DrawContext, fontSize float64) (geom.Rect, bool) {
+	if opt == nil {
+		return geom.Rect{}, false
+	}
+	rect, ok := textInkRect(origin, layout)
+	if !ok {
+		return geom.Rect{}, false
+	}
+	cfg := resolvedTextBBoxOptions(*opt, ctx, fontSize)
+	rect.Min.X -= cfg.Padding
+	rect.Min.Y -= cfg.Padding
+	rect.Max.X += cfg.Padding
+	rect.Max.Y += cfg.Padding
+	return rect, true
 }
 
 func drawMultilineTextBBox(r render.Renderer, rect geom.Rect, opt *TextBBoxOptions, ctx *DrawContext, fontSize float64) {

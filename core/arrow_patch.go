@@ -12,16 +12,17 @@ import (
 
 // ArrowStyle describes a Matplotlib-style arrow mutation.
 type ArrowStyle struct {
-	Name       string
-	HeadLength float64
-	HeadWidth  float64
-	TailWidth  float64
-	WidthA     float64
-	WidthB     float64
-	LengthA    float64
-	LengthB    float64
-	AngleA     float64
-	AngleB     float64
+	Name         string
+	HeadLength   float64
+	HeadWidth    float64
+	TailWidth    float64
+	WidthA       float64
+	WidthB       float64
+	LengthA      float64
+	LengthB      float64
+	AngleA       float64
+	AngleB       float64
+	ShrinkFactor float64
 }
 
 // ConnectionStyle describes how FancyArrowPatch connects two positions.
@@ -83,7 +84,10 @@ func ArrowStyleFromString(style string) (ArrowStyle, bool) {
 		LengthB:    0.2,
 	}
 	switch normalized {
-	case "-", "->", "<-", "<->", "<|-", "-|>", "<|-|>", "]-", "-[", "]-[", "|-|", "]->", "<-[":
+	case "-", "->", "<-", "<->", "<|-", "-|>", "<|-|>", "]-", "-[", "]-[", "]->", "<-[":
+	case "|-|":
+		out.LengthA = 0
+		out.LengthB = 0
 	case "simple":
 		out.HeadLength = 0.5
 		out.HeadWidth = 0.5
@@ -93,6 +97,7 @@ func ArrowStyleFromString(style string) (ArrowStyle, bool) {
 		out.TailWidth = 0.4
 	case "wedge":
 		out.TailWidth = 0.3
+		out.ShrinkFactor = 0.5
 	default:
 		return ArrowStyle{}, false
 	}
@@ -107,9 +112,14 @@ func ConnectionStyleFromString(style string) (ConnectionStyle, bool) {
 		name = "arc3"
 	}
 	normalized := strings.ToLower(name)
-	out := ConnectionStyle{Name: normalized, Fraction: 0.3, AngleA: 90}
+	out := ConnectionStyle{Name: normalized}
 	switch normalized {
-	case "arc3", "arc", "angle", "angle3", "bar":
+	case "arc3":
+	case "arc":
+	case "angle", "angle3":
+		out.AngleA = 90
+	case "bar":
+		out.Fraction = 0.3
 	default:
 		return ConnectionStyle{}, false
 	}
@@ -184,7 +194,7 @@ func (a *FancyArrowPatch) displayPath(ctx *DrawContext) geom.Path {
 	if style.Name == "" {
 		style, _ = ConnectionStyleFromString("arc3")
 	}
-	return style.connect(posA, posB, a.ShrinkA, a.ShrinkB)
+	return style.connect(posA, posB, a.effectiveShrinkA(), a.effectiveShrinkB())
 }
 
 func (c *ConnectionPatch) connectionDisplayPath(ctx *DrawContext) geom.Path {
@@ -217,6 +227,20 @@ func (a *FancyArrowPatch) displayParts(_ *DrawContext, path geom.Path) []arrowPa
 		lineWidth = 1
 	}
 	return style.transmute(path, scale, lineWidth)
+}
+
+func (a *FancyArrowPatch) effectiveShrinkA() float64 {
+	if a == nil || a.ShrinkA <= 0 {
+		return 2
+	}
+	return a.ShrinkA
+}
+
+func (a *FancyArrowPatch) effectiveShrinkB() float64 {
+	if a == nil || a.ShrinkB <= 0 {
+		return 2
+	}
+	return a.ShrinkB
 }
 
 func (s ConnectionStyle) connect(posA, posB geom.Pt, shrinkA, shrinkB float64) geom.Path {
@@ -326,14 +350,30 @@ func connectionBarPath(posA, posB geom.Pt, armA, armB, fraction float64, angle *
 		return geom.Path{}
 	}
 	ux, uy := dx/length, dy/length
+	projectedB := posB
 	if angle != nil {
-		dir := angleUnit(*angle)
-		ux, uy = dir.X, dir.Y
+		theta := *angle * math.Pi / 180
+		targetTheta := math.Atan2(dy, dx)
+		dtheta := targetTheta - theta
+		offAxis := length * math.Sin(dtheta)
+		onAxis := length * math.Cos(dtheta)
+		projectedB = geom.Pt{
+			X: posA.X + onAxis*math.Cos(theta),
+			Y: posA.Y + onAxis*math.Sin(theta),
+		}
+		armB -= offAxis
+
+		dx, dy = projectedB.X-posA.X, projectedB.Y-posA.Y
+		projectedLength := math.Hypot(dx, dy)
+		if projectedLength == 0 {
+			return geom.Path{}
+		}
+		ux, uy = dx/projectedLength, dy/projectedLength
 	}
 	perp := geom.Pt{X: uy, Y: -ux}
 	arm := math.Max(armA, armB) + fraction*length
 	c1 := geom.Pt{X: posA.X + perp.X*arm, Y: posA.Y + perp.Y*arm}
-	c2 := geom.Pt{X: posB.X + perp.X*arm, Y: posB.Y + perp.Y*arm}
+	c2 := geom.Pt{X: projectedB.X + perp.X*arm, Y: projectedB.Y + perp.Y*arm}
 	path := geom.Path{}
 	path.MoveTo(posA)
 	path.LineTo(c1)
@@ -348,31 +388,60 @@ func (s ArrowStyle) transmute(path geom.Path, mutationSize, lineWidth float64) [
 	}
 	name := strings.ToLower(s.Name)
 	switch name {
-	case "simple", "fancy", "wedge":
+	case "wedge":
+		return []arrowPathPart{{path: wedgeArrowPath(pathStart(path), pathEnd(path), s.TailWidth*mutationSize, s.ShrinkFactor), fillable: true}}
+	case "simple", "fancy":
 		return []arrowPathPart{{path: filledArrowPath(pathStart(path), pathEnd(path), s.TailWidth*mutationSize, s.HeadWidth*mutationSize, s.HeadLength*mutationSize), fillable: true}}
 	}
 
-	parts := []arrowPathPart{{path: path, fillable: false}}
 	beginHead := strings.HasPrefix(name, "<")
 	endHead := strings.HasSuffix(name, ">")
 	fillBegin := strings.HasPrefix(name, "<|")
 	fillEnd := strings.HasSuffix(name, "|>")
 	beginBracket := strings.HasPrefix(name, "]") || strings.HasPrefix(name, "|")
 	endBracket := strings.HasSuffix(name, "[") || strings.HasSuffix(name, "|")
+	headLength := curveArrowHeadLength(s, mutationSize)
+	linePath := shortenedCurveLinePath(path, beginHead, endHead, headLength)
+	parts := []arrowPathPart{{path: linePath, fillable: false}}
 
 	if beginHead {
-		head := arrowHeadPath(pathSecond(path), pathStart(path), s.HeadLength*mutationSize, s.HeadWidth*mutationSize, fillBegin, lineWidth)
+		head := arrowHeadPath(pathSecond(path), pathStart(path), headLength, s.HeadWidth*mutationSize, fillBegin, lineWidth)
 		parts = append(parts, arrowPathPart{path: head, fillable: fillBegin})
 	} else if beginBracket {
 		parts = append(parts, arrowPathPart{path: bracketPath(pathStart(path), pathSecond(path), s.WidthA*mutationSize, s.LengthA*mutationSize, s.AngleA), fillable: false})
 	}
 	if endHead {
-		head := arrowHeadPath(pathPenultimate(path), pathEnd(path), s.HeadLength*mutationSize, s.HeadWidth*mutationSize, fillEnd, lineWidth)
+		head := arrowHeadPath(pathPenultimate(path), pathEnd(path), headLength, s.HeadWidth*mutationSize, fillEnd, lineWidth)
 		parts = append(parts, arrowPathPart{path: head, fillable: fillEnd})
 	} else if endBracket {
 		parts = append(parts, arrowPathPart{path: bracketPath(pathEnd(path), pathPenultimate(path), s.WidthB*mutationSize, s.LengthB*mutationSize, s.AngleB), fillable: false})
 	}
 	return parts
+}
+
+func curveArrowHeadLength(style ArrowStyle, mutationSize float64) float64 {
+	if style.HeadLength > 0 {
+		return style.HeadLength * mutationSize
+	}
+	return 4
+}
+
+func shortenedCurveLinePath(path geom.Path, beginHead, endHead bool, headLength float64) geom.Path {
+	out := geom.Path{
+		C: append([]geom.Cmd(nil), path.C...),
+		V: append([]geom.Pt(nil), path.V...),
+	}
+	if len(out.V) < 2 || headLength <= 0 {
+		return out
+	}
+	if beginHead {
+		out.V[0] = pointToward(pathStart(path), pathSecond(path), headLength)
+	}
+	if endHead {
+		last := len(out.V) - 1
+		out.V[last] = pointToward(pathEnd(path), pathPenultimate(path), headLength)
+	}
+	return out
 }
 
 func filledArrowPath(start, tip geom.Pt, tailWidth, headWidth, headLength float64) geom.Path {
@@ -401,6 +470,33 @@ func filledArrowPath(start, tip geom.Pt, tailWidth, headWidth, headLength float6
 		{X: base.X - px*headWidth/2, Y: base.Y - py*headWidth/2},
 		{X: base.X - px*tailWidth/2, Y: base.Y - py*tailWidth/2},
 		{X: start.X - px*tailWidth/2, Y: start.Y - py*tailWidth/2},
+	}
+	return polygonPath(points, true)
+}
+
+func wedgeArrowPath(start, tip geom.Pt, tailWidth, shrinkFactor float64) geom.Path {
+	dx, dy := tip.X-start.X, tip.Y-start.Y
+	length := math.Hypot(dx, dy)
+	if length == 0 {
+		return geom.Path{}
+	}
+	if tailWidth <= 0 {
+		tailWidth = math.Max(1, length*0.04)
+	}
+	if shrinkFactor <= 0 {
+		shrinkFactor = 0.5
+	}
+	ux, uy := dx/length, dy/length
+	px, py := -uy, ux
+	mid := geom.Pt{X: (start.X + tip.X) / 2, Y: (start.Y + tip.Y) / 2}
+	tailHalf := tailWidth / 2
+	midHalf := tailHalf * shrinkFactor
+	points := []geom.Pt{
+		{X: start.X + px*tailHalf, Y: start.Y + py*tailHalf},
+		{X: mid.X + px*midHalf, Y: mid.Y + py*midHalf},
+		tip,
+		{X: mid.X - px*midHalf, Y: mid.Y - py*midHalf},
+		{X: start.X - px*tailHalf, Y: start.Y - py*tailHalf},
 	}
 	return polygonPath(points, true)
 }
@@ -496,6 +592,8 @@ func applyArrowStyleParams(style *ArrowStyle, params map[string]float64) {
 			style.AngleA = value
 		case "angleb":
 			style.AngleB = value
+		case "shrink_factor":
+			style.ShrinkFactor = value
 		}
 	}
 }

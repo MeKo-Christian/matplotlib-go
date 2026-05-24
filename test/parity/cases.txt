@@ -21,6 +21,8 @@ fill_stacked
 errorbar_basic
 multi_series_basic
 multi_series_color_cycle
+legend_layout_matrix
+text_annotation_matrix
 hist_basic
 hist_density
 hist_strategies
@@ -71,6 +73,7 @@ figure_labels_composition
 colorbar_composition
 annotation_composition
 patch_showcase
+patch_style_matrix
 mesh_contour_tri
 plot_variants
 spectrum_variants

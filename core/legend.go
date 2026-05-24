@@ -1,6 +1,8 @@
 package core
 
 import (
+	"reflect"
+
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
@@ -23,7 +25,43 @@ const (
 	legendEntryLine legendEntryKind = iota
 	legendEntryMarker
 	legendEntryPatch
+	legendEntryErrorBar
 )
+
+// LegendSample selects the sample style for an explicit legend entry.
+type LegendSample uint8
+
+const (
+	// LegendSampleLine draws a line sample for an explicit legend entry.
+	LegendSampleLine LegendSample = iota
+	// LegendSampleMarker draws marker samples for an explicit legend entry.
+	LegendSampleMarker
+	// LegendSamplePatch draws a filled patch sample for an explicit legend entry.
+	LegendSamplePatch
+)
+
+// LegendEntryOptions configures an explicit legend entry, useful for proxy-like
+// entries that are not collected from an artist.
+type LegendEntryOptions struct {
+	Sample LegendSample
+
+	Color     render.Color
+	LineWidth float64
+	Dashes    []float64
+
+	Marker          MarkerType
+	MarkerPath      geom.Path
+	MarkerFaceColor render.Color
+	MarkerEdgeColor render.Color
+	MarkerEdgeWidth float64
+
+	FaceColor  render.Color
+	EdgeColor  render.Color
+	EdgeWidth  float64
+	Hatch      string
+	HatchColor render.Color
+	HatchWidth float64
+}
 
 type legendEntry struct {
 	Label string
@@ -52,10 +90,19 @@ type legendEntry struct {
 	patchHatch      string
 	patchHatchColor render.Color
 	patchHatchWidth float64
+
+	errorbarX       bool
+	errorbarY       bool
+	errorbarCapSize float64
 }
 
 type legendEntryProvider interface {
 	legendEntry() (legendEntry, bool)
+}
+
+type legendHandlerOverride struct {
+	artist Artist
+	entry  legendEntry
 }
 
 // Legend renders a styled legend box inside an axes.
@@ -64,7 +111,8 @@ type Legend struct {
 	Axes   *Axes
 	Figure *Figure
 
-	entries []legendEntry
+	entries  []legendEntry
+	handlers []legendHandlerOverride
 
 	Location        LegendLocation
 	Locator         AnchoredBoxLocator
@@ -73,6 +121,13 @@ type Legend struct {
 	RowGap          float64
 	SampleWidth     float64
 	SampleTextGap   float64
+	ColumnSpacing   float64
+	NumColumns      int
+	MarkerScale     float64
+	ScatterPoints   int
+	Title           string
+	TitleFontSize   float64
+	FrameOn         bool
 	CornerRadius    float64
 	BackgroundColor render.Color
 	BorderColor     render.Color
@@ -99,6 +154,11 @@ func NewLegend(ax *Axes) *Legend {
 		RowGap:          0.5 * fontPx,
 		SampleWidth:     2.0 * fontPx,
 		SampleTextGap:   0.8 * fontPx,
+		ColumnSpacing:   2.0 * fontPx,
+		NumColumns:      1,
+		MarkerScale:     1,
+		ScatterPoints:   1,
+		FrameOn:         true,
 		CornerRadius:    0.2 * fontPx,
 		BackgroundColor: rc.LegendBackground,
 		BorderColor:     rc.LegendBorderColor,
@@ -126,6 +186,11 @@ func NewFigureLegend(fig *Figure) *Legend {
 		RowGap:          0.5 * fontPx,
 		SampleWidth:     2.0 * fontPx,
 		SampleTextGap:   0.8 * fontPx,
+		ColumnSpacing:   2.0 * fontPx,
+		NumColumns:      1,
+		MarkerScale:     1,
+		ScatterPoints:   1,
+		FrameOn:         true,
 		CornerRadius:    0.2 * fontPx,
 		BackgroundColor: rc.LegendBackground,
 		BorderColor:     rc.LegendBorderColor,
@@ -148,6 +213,46 @@ func (f *Figure) AddLegend() *Legend {
 	legend := NewFigureLegend(f)
 	f.Add(legend)
 	return legend
+}
+
+// AddEntry appends an explicit proxy-like entry to the legend.
+func (l *Legend) AddEntry(label string, opts LegendEntryOptions) *Legend {
+	if l == nil || !legendLabelVisible(label) {
+		return l
+	}
+	l.entries = append(l.entries, legendEntryFromOptions(label, opts))
+	return l
+}
+
+// SetHandler overrides the legend sample for a collected artist using the same
+// typed sample options as explicit proxy entries.
+func (l *Legend) SetHandler(art Artist, opts LegendEntryOptions) *Legend {
+	if l == nil || art == nil {
+		return l
+	}
+	entry := legendEntryFromOptions("", opts)
+	for i := range l.handlers {
+		if sameLegendArtist(l.handlers[i].artist, art) {
+			l.handlers[i].entry = entry
+			return l
+		}
+	}
+	l.handlers = append(l.handlers, legendHandlerOverride{artist: art, entry: entry})
+	return l
+}
+
+// ClearHandler removes a custom legend sample override for a collected artist.
+func (l *Legend) ClearHandler(art Artist) *Legend {
+	if l == nil || art == nil {
+		return l
+	}
+	for i := range l.handlers {
+		if sameLegendArtist(l.handlers[i].artist, art) {
+			l.handlers = append(l.handlers[:i], l.handlers[i+1:]...)
+			return l
+		}
+	}
+	return l
 }
 
 // Draw renders the legend box and entries.
@@ -173,69 +278,93 @@ func (l *Legend) Draw(r render.Renderer, ctx *DrawContext) {
 		fontSize = 8
 	}
 
-	maxLabelWidth := 0.0
 	rowHeights := make([]float64, len(entries))
 	labelLayouts := make([]singleLineTextLayout, len(entries))
 	for i, entry := range entries {
 		layout := measureSingleLineTextLayout(r, entry.Label, fontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
 		labelLayouts[i] = layout
-		if layout.Width > maxLabelWidth {
-			maxLabelWidth = layout.Width
-		}
 		rowHeights[i] = legendRowHeight(layout, fontSize, ctx)
 	}
 
-	contentHeight := 0.0
-	for _, h := range rowHeights {
-		contentHeight += h
+	layout := l.layoutEntries(labelLayouts, rowHeights, ctx, fontSize)
+	titleLayout, titleHeight, titleFontSize := l.titleLayout(r, ctx, fontSize)
+	contentWidth := layout.Width
+	if titleLayout.Width > contentWidth {
+		contentWidth = titleLayout.Width
 	}
-	if len(rowHeights) > 1 {
-		contentHeight += l.RowGap * float64(len(rowHeights)-1)
+	contentHeight := layout.Height
+	if l.Title != "" {
+		contentHeight += titleHeight + l.RowGap
 	}
-
-	boxWidth := l.Padding*2 + l.SampleWidth + l.SampleTextGap + maxLabelWidth
+	boxWidth := l.Padding*2 + contentWidth
 	boxHeight := l.Padding*2 + contentHeight
 	box := l.legendBoxRect(ctx, boxWidth, boxHeight)
 
-	boxPath := pixelRectPath(box)
-	if l.CornerRadius > 0 {
-		boxPath = roundedRectPath(box, l.CornerRadius)
+	if l.FrameOn {
+		boxPath := pixelRectPath(box)
+		if l.CornerRadius > 0 {
+			boxPath = roundedRectPath(box, l.CornerRadius)
+		}
+		r.Path(boxPath, &render.Paint{
+			Fill:      l.BackgroundColor,
+			Stroke:    l.BorderColor,
+			LineWidth: l.BorderWidth,
+			LineJoin:  render.JoinMiter,
+			LineCap:   render.CapButt,
+		})
 	}
-	r.Path(boxPath, &render.Paint{
-		Fill:      l.BackgroundColor,
-		Stroke:    l.BorderColor,
-		LineWidth: l.BorderWidth,
-		LineJoin:  render.JoinMiter,
-		LineCap:   render.CapButt,
-	})
 
 	y := box.Min.Y + l.Padding
-	for i, entry := range entries {
-		rowHeight := rowHeights[i]
-		centerY := y + rowHeight/2
-		labelLayout := labelLayouts[i]
-
-		l.drawSample(r, entry, geom.Rect{
-			Min: geom.Pt{X: box.Min.X + l.Padding, Y: centerY - rowHeight/2},
-			Max: geom.Pt{X: box.Min.X + l.Padding + l.SampleWidth, Y: centerY + rowHeight/2},
-		})
-
+	if l.Title != "" {
 		drawDisplayText(
 			textRen,
-			entry.Label,
+			l.Title,
 			alignedSingleLineOrigin(
-				geom.Pt{X: box.Min.X + l.Padding + l.SampleWidth + l.SampleTextGap, Y: centerY},
-				labelLayout,
-				TextAlignLeft,
+				geom.Pt{X: box.Min.X + l.Padding + contentWidth/2, Y: y + titleHeight/2},
+				titleLayout,
+				TextAlignCenter,
 				textLayoutVAlignCenter,
 			),
-			fontSize,
+			titleFontSize,
 			l.TextColor,
 			ctx.RC.FontKey,
 			ctx.RC.UseTeX,
 		)
+		y += titleHeight + l.RowGap
+	}
 
-		y += rowHeight + l.RowGap
+	x := box.Min.X + l.Padding
+	for _, col := range layout.Columns {
+		columnY := y
+		for i := col.Start; i < col.End; i++ {
+			entry := entries[i]
+			rowHeight := rowHeights[i]
+			centerY := columnY + rowHeight/2
+			labelLayout := labelLayouts[i]
+
+			l.drawSample(r, entry, geom.Rect{
+				Min: geom.Pt{X: x, Y: centerY - rowHeight/2},
+				Max: geom.Pt{X: x + l.SampleWidth, Y: centerY + rowHeight/2},
+			})
+
+			drawDisplayText(
+				textRen,
+				entry.Label,
+				alignedSingleLineOrigin(
+					geom.Pt{X: x + l.SampleWidth + l.SampleTextGap, Y: centerY},
+					labelLayout,
+					TextAlignLeft,
+					textLayoutVAlignCenter,
+				),
+				fontSize,
+				l.TextColor,
+				ctx.RC.FontKey,
+				ctx.RC.UseTeX,
+			)
+
+			columnY += rowHeight + l.RowGap
+		}
+		x += col.Width + layout.ColumnSpacing
 	}
 }
 
@@ -278,22 +407,115 @@ func (l *Legend) boxRect(r render.Renderer, ctx *DrawContext) (geom.Rect, bool) 
 		fontSize = 8
 	}
 
-	maxLabelWidth := 0.0
-	contentHeight := 0.0
-	for _, entry := range entries {
+	rowHeights := make([]float64, len(entries))
+	labelLayouts := make([]singleLineTextLayout, len(entries))
+	for i, entry := range entries {
 		layout := measureSingleLineTextLayout(r, entry.Label, fontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
-		if layout.Width > maxLabelWidth {
-			maxLabelWidth = layout.Width
-		}
-		contentHeight += legendRowHeight(layout, fontSize, ctx)
-	}
-	if len(entries) > 1 {
-		contentHeight += l.RowGap * float64(len(entries)-1)
+		labelLayouts[i] = layout
+		rowHeights[i] = legendRowHeight(layout, fontSize, ctx)
 	}
 
-	boxWidth := l.Padding*2 + l.SampleWidth + l.SampleTextGap + maxLabelWidth
+	layout := l.layoutEntries(labelLayouts, rowHeights, ctx, fontSize)
+	titleLayout, titleHeight, _ := l.titleLayout(r, ctx, fontSize)
+	contentWidth := layout.Width
+	if titleLayout.Width > contentWidth {
+		contentWidth = titleLayout.Width
+	}
+	contentHeight := layout.Height
+	if l.Title != "" {
+		contentHeight += titleHeight + l.RowGap
+	}
+	boxWidth := l.Padding*2 + contentWidth
 	boxHeight := l.Padding*2 + contentHeight
 	return l.legendBoxRect(ctx, boxWidth, boxHeight), true
+}
+
+func (l *Legend) titleLayout(r render.Renderer, ctx *DrawContext, fallbackFontSize float64) (singleLineTextLayout, float64, float64) {
+	if l == nil || l.Title == "" {
+		return singleLineTextLayout{}, 0, fallbackFontSize
+	}
+	fontSize := l.TitleFontSize
+	if fontSize <= 0 {
+		fontSize = fallbackFontSize
+	}
+	layout := measureSingleLineTextLayout(r, l.Title, fontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
+	return layout, legendRowHeight(layout, fontSize, ctx), fontSize
+}
+
+type legendLayout struct {
+	Columns       []legendColumnLayout
+	Width         float64
+	Height        float64
+	ColumnSpacing float64
+}
+
+type legendColumnLayout struct {
+	Start int
+	End   int
+	Width float64
+}
+
+func (l *Legend) layoutEntries(labelLayouts []singleLineTextLayout, rowHeights []float64, ctx *DrawContext, fontSize float64) legendLayout {
+	count := len(labelLayouts)
+	columns := l.effectiveNumColumns(count)
+	if columns <= 0 {
+		return legendLayout{}
+	}
+	columnSpacing := l.ColumnSpacing
+	if columnSpacing <= 0 && ctx != nil {
+		columnSpacing = 2.0 * pointsToPixels(ctx.RC, fontSize)
+	}
+	layout := legendLayout{
+		Columns:       make([]legendColumnLayout, 0, columns),
+		ColumnSpacing: columnSpacing,
+	}
+	start := 0
+	for col := 0; col < columns; col++ {
+		size := count / columns
+		if col < count%columns {
+			size++
+		}
+		if size <= 0 {
+			continue
+		}
+		end := start + size
+		maxLabelWidth := 0.0
+		columnHeight := 0.0
+		for i := start; i < end; i++ {
+			if labelLayouts[i].Width > maxLabelWidth {
+				maxLabelWidth = labelLayouts[i].Width
+			}
+			columnHeight += rowHeights[i]
+		}
+		if size > 1 {
+			columnHeight += l.RowGap * float64(size-1)
+		}
+		columnWidth := l.SampleWidth + l.SampleTextGap + maxLabelWidth
+		layout.Columns = append(layout.Columns, legendColumnLayout{Start: start, End: end, Width: columnWidth})
+		layout.Width += columnWidth
+		if columnHeight > layout.Height {
+			layout.Height = columnHeight
+		}
+		start = end
+	}
+	if len(layout.Columns) > 1 {
+		layout.Width += columnSpacing * float64(len(layout.Columns)-1)
+	}
+	return layout
+}
+
+func (l *Legend) effectiveNumColumns(entryCount int) int {
+	if entryCount <= 0 {
+		return 0
+	}
+	columns := l.NumColumns
+	if columns <= 0 {
+		columns = 1
+	}
+	if columns > entryCount {
+		columns = entryCount
+	}
+	return columns
 }
 
 func legendRowHeight(layout singleLineTextLayout, fontSize float64, ctx *DrawContext) float64 {
@@ -315,11 +537,11 @@ func (l *Legend) collectEntries() []legendEntry {
 
 	switch {
 	case l.Axes != nil:
-		return collectLegendEntries(l.Axes.Artists)
+		return l.collectLegendEntries(l.Axes.Artists)
 	case l.Figure != nil:
 		var entries []legendEntry
 		for _, ax := range l.Figure.Children {
-			entries = append(entries, collectLegendEntries(ax.Artists)...)
+			entries = append(entries, l.collectLegendEntries(ax.Artists)...)
 		}
 		return entries
 	default:
@@ -328,6 +550,10 @@ func (l *Legend) collectEntries() []legendEntry {
 }
 
 func collectLegendEntries(artists []Artist) []legendEntry {
+	return (*Legend)(nil).collectLegendEntries(artists)
+}
+
+func (l *Legend) collectLegendEntries(artists []Artist) []legendEntry {
 	entries := make([]legendEntry, 0, len(artists))
 	for _, art := range artists {
 		switch art.(type) {
@@ -342,6 +568,10 @@ func collectLegendEntries(artists []Artist) []legendEntry {
 			if !legendLabelVisible(label) {
 				continue
 			}
+			if entry, ok := l.handlerEntryFor(art, label); ok {
+				entries = append(entries, entry)
+				continue
+			}
 			entry, ok := provider.legendEntry()
 			if !ok {
 				continue
@@ -351,6 +581,32 @@ func collectLegendEntries(artists []Artist) []legendEntry {
 		}
 	}
 	return entries
+}
+
+func (l *Legend) handlerEntryFor(art Artist, label string) (legendEntry, bool) {
+	if l == nil || art == nil {
+		return legendEntry{}, false
+	}
+	for _, handler := range l.handlers {
+		if sameLegendArtist(handler.artist, art) {
+			entry := handler.entry
+			entry.Label = label
+			return entry, true
+		}
+	}
+	return legendEntry{}, false
+}
+
+func sameLegendArtist(a, b Artist) bool {
+	if a == nil || b == nil {
+		return false
+	}
+	av := reflect.ValueOf(a)
+	bv := reflect.ValueOf(b)
+	if av.Kind() != reflect.Pointer || bv.Kind() != reflect.Pointer || av.Type() != bv.Type() {
+		return false
+	}
+	return av.Pointer() == bv.Pointer()
 }
 
 func (l *Legend) legendBoxRect(ctx *DrawContext, width, height float64) geom.Rect {
@@ -435,6 +691,39 @@ func pointInRect(pt geom.Pt, rect geom.Rect) bool {
 	return pt.X >= rect.Min.X && pt.X <= rect.Max.X && pt.Y >= rect.Min.Y && pt.Y <= rect.Max.Y
 }
 
+func legendEntryFromOptions(label string, opts LegendEntryOptions) legendEntry {
+	switch opts.Sample {
+	case LegendSampleMarker:
+		return legendEntryFromMarker(
+			label,
+			opts.Marker,
+			opts.MarkerPath,
+			defaultVisibleColor(opts.MarkerFaceColor),
+			defaultVisibleColor(opts.MarkerEdgeColor),
+			opts.MarkerEdgeWidth,
+		)
+	case LegendSamplePatch:
+		return legendEntryFromPatchStyle(
+			label,
+			opts.FaceColor,
+			opts.EdgeColor,
+			opts.EdgeWidth,
+			opts.Hatch,
+			opts.HatchColor,
+			opts.HatchWidth,
+		)
+	default:
+		return legendEntryFromLine(label, defaultVisibleColor(opts.Color), opts.LineWidth, opts.Dashes)
+	}
+}
+
+func defaultVisibleColor(color render.Color) render.Color {
+	if color == (render.Color{}) {
+		return render.Color{A: 1}
+	}
+	return color
+}
+
 func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Rect) {
 	center := geom.Pt{
 		X: sample.Min.X + sample.W()/2,
@@ -442,6 +731,8 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 	}
 
 	switch entry.kind {
+	case legendEntryErrorBar:
+		l.drawErrorBarSample(r, entry, sample, center)
 	case legendEntryPatch:
 		patchRect := geom.Rect{
 			Min: geom.Pt{X: sample.Min.X + 2, Y: center.Y - 5},
@@ -459,7 +750,9 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 		}
 		patch.drawStyledPath(r, pixelRectPath(patchRect), geom.Path{})
 	case legendEntryMarker:
-		l.drawMarkerSample(r, entry, center, 5)
+		for _, pt := range l.markerSampleCenters(sample, center) {
+			l.drawMarkerSample(r, entry, pt, l.markerSampleRadius(5))
+		}
 	default:
 		lineWidth := entry.lineWidth
 		if lineWidth <= 0 {
@@ -480,9 +773,94 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 			Dashes:    entry.dashes,
 		})
 		if entry.lineMarkerSet {
-			l.drawMarkerSample(r, entry, center, 5)
+			l.drawMarkerSample(r, entry, center, l.markerSampleRadius(5))
 		}
 	}
+}
+
+func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample geom.Rect, center geom.Pt) {
+	lineWidth := entry.lineWidth
+	if lineWidth <= 0 {
+		lineWidth = 1.5
+	}
+	paint := render.Paint{
+		Stroke:    entry.lineColor,
+		LineWidth: lineWidth,
+		LineJoin:  render.JoinMiter,
+		LineCap:   render.CapButt,
+		Dashes:    entry.dashes,
+	}
+	r.Path(geom.Path{
+		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+		V: []geom.Pt{{X: sample.Min.X + 1, Y: center.Y}, {X: sample.Max.X - 1, Y: center.Y}},
+	}, &paint)
+
+	capHalf := entry.errorbarCapSize / 2
+	if capHalf <= 0 {
+		capHalf = 3
+	}
+	if entry.errorbarY {
+		top := geom.Pt{X: center.X, Y: sample.Min.Y + sample.H()*0.2}
+		bottom := geom.Pt{X: center.X, Y: sample.Max.Y - sample.H()*0.2}
+		r.Path(geom.Path{
+			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+			V: []geom.Pt{top, bottom},
+		}, &paint)
+		r.Path(geom.Path{
+			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+			V: []geom.Pt{{X: top.X - capHalf, Y: top.Y}, {X: top.X + capHalf, Y: top.Y}},
+		}, &paint)
+		r.Path(geom.Path{
+			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+			V: []geom.Pt{{X: bottom.X - capHalf, Y: bottom.Y}, {X: bottom.X + capHalf, Y: bottom.Y}},
+		}, &paint)
+	}
+	if entry.errorbarX {
+		left := geom.Pt{X: sample.Min.X + sample.W()*0.25, Y: center.Y}
+		right := geom.Pt{X: sample.Max.X - sample.W()*0.25, Y: center.Y}
+		r.Path(geom.Path{
+			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+			V: []geom.Pt{left, right},
+		}, &paint)
+		r.Path(geom.Path{
+			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+			V: []geom.Pt{{X: left.X, Y: left.Y - capHalf}, {X: left.X, Y: left.Y + capHalf}},
+		}, &paint)
+		r.Path(geom.Path{
+			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+			V: []geom.Pt{{X: right.X, Y: right.Y - capHalf}, {X: right.X, Y: right.Y + capHalf}},
+		}, &paint)
+	}
+	if entry.lineMarkerSet {
+		l.drawMarkerSample(r, entry, center, l.markerSampleRadius(5))
+	}
+}
+
+func (l *Legend) markerSampleRadius(base float64) float64 {
+	scale := 1.0
+	if l != nil && l.MarkerScale > 0 {
+		scale = l.MarkerScale
+	}
+	return base * scale
+}
+
+func (l *Legend) markerSampleCenters(sample geom.Rect, center geom.Pt) []geom.Pt {
+	points := 1
+	if l != nil && l.ScatterPoints > 0 {
+		points = l.ScatterPoints
+	}
+	if points <= 1 {
+		return []geom.Pt{center}
+	}
+	centers := make([]geom.Pt, points)
+	step := sample.W() / float64(points+1)
+	for i := 0; i < points; i++ {
+		centers[i] = geom.Pt{
+			X: sample.Min.X + step*float64(i+1),
+			Y: center.Y,
+		}
+	}
+	return centers
 }
 
 func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center geom.Pt, radius float64) {

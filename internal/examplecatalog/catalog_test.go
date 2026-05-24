@@ -128,6 +128,45 @@ func TestCatalogIncludesMixedRasterVectorFixture(t *testing.T) {
 	}
 }
 
+func TestCatalogIncludesPhase124PatchStyleFixture(t *testing.T) {
+	c, ok := Lookup("patch_style_matrix")
+	if !ok {
+		t.Fatal("missing Phase 12.4 focused patch style parity catalog case")
+	}
+	if c.Topic != "patches" {
+		t.Fatalf("patch_style_matrix topic = %q, want patches", c.Topic)
+	}
+	if !c.FixtureOnly {
+		t.Fatal("patch_style_matrix should be fixture-only, not a gallery showcase")
+	}
+}
+
+func TestCatalogIncludesPhase124LegendLayoutFixture(t *testing.T) {
+	c, ok := Lookup("legend_layout_matrix")
+	if !ok {
+		t.Fatal("missing Phase 12.4 focused legend layout parity catalog case")
+	}
+	if c.Topic != "legend" {
+		t.Fatalf("legend_layout_matrix topic = %q, want legend", c.Topic)
+	}
+	if !c.FixtureOnly {
+		t.Fatal("legend_layout_matrix should be fixture-only, not a gallery showcase")
+	}
+}
+
+func TestCatalogIncludesPhase124TextAnnotationFixture(t *testing.T) {
+	c, ok := Lookup("text_annotation_matrix")
+	if !ok {
+		t.Fatal("missing Phase 12.4 focused text/annotation parity catalog case")
+	}
+	if c.Topic != "annotation" {
+		t.Fatalf("text_annotation_matrix topic = %q, want annotation", c.Topic)
+	}
+	if !c.FixtureOnly {
+		t.Fatal("text_annotation_matrix should be fixture-only, not a gallery showcase")
+	}
+}
+
 func TestCatalogSplitsAGGNativeParityFixtures(t *testing.T) {
 	want := map[string][]string{
 		"large_scatter":     {"pathcollectionbatch"},
@@ -307,7 +346,10 @@ func TestParityFixValidationTargetsNameClusters(t *testing.T) {
 		"figure_labels_composition",
 		"colorbar_composition",
 		"annotation_composition",
+		"legend_layout_matrix",
+		"text_annotation_matrix",
 		"patch_showcase",
+		"patch_style_matrix",
 		"mesh_contour_tri",
 		"plot_variants",
 		"spectrum_variants",

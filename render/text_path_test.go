@@ -116,6 +116,27 @@ func TestShapeTextAppliesAndDisablesStandardLigatures(t *testing.T) {
 	}
 }
 
+func TestShapeTextHonorsFeaturesFromStructuredFontPropertiesKey(t *testing.T) {
+	withDejaVuFontManager(t)
+
+	fontKey := FontPropertiesKey(FontProperties{
+		Families: []string{"DejaVu Sans"},
+		Features: []TextFeature{
+			{Tag: "liga", Value: 0},
+		},
+	})
+	shaped, ok := ShapeText("fi", geom.Pt{}, 72, TextShapingOptions{FontKey: fontKey})
+	if !ok {
+		t.Fatal("ShapeText with structured font features failed")
+	}
+	if len(shaped.Glyphs) != 2 {
+		t.Fatalf("structured liga=0 glyph count = %d, want separate f and i glyphs: %+v", len(shaped.Glyphs), shaped.Glyphs)
+	}
+	if len(shaped.Runs) != 1 || len(shaped.Runs[0].Features) != 1 || shaped.Runs[0].Features[0] != (TextFeature{Tag: "liga", Value: 0}) {
+		t.Fatalf("structured font features were not preserved on shaped run: %+v", shaped.Runs)
+	}
+}
+
 func TestShapeTextHonorsKernFeatureDisable(t *testing.T) {
 	withDejaVuFontManager(t)
 
