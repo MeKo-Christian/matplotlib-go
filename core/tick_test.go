@@ -93,6 +93,55 @@ func TestLinearLocator_TargetIsMaximumDensity(t *testing.T) {
 	}
 }
 
+func TestLinearLocator_NumTicksUsesMatplotlibEvenSpacing(t *testing.T) {
+	ticks := (LinearLocator{NumTicks: 5}).Ticks(2, 10, 0)
+	want := []float64{2, 4, 6, 8, 10}
+	if len(ticks) != len(want) {
+		t.Fatalf("tick count mismatch: got %v want %v", ticks, want)
+	}
+	for i := range want {
+		if math.Abs(ticks[i]-want[i]) > 1e-12 {
+			t.Fatalf("tick %d mismatch: got %.17g want %.17g", i, ticks[i], want[i])
+		}
+	}
+}
+
+func TestLinearLocator_PresetOverridesNumTicks(t *testing.T) {
+	locator := LinearLocator{
+		NumTicks: 4,
+		Presets: map[[2]float64][]float64{
+			{0, 1}: {0.2, 0.4, 0.8},
+		},
+	}
+	ticks := locator.Ticks(0, 1, 0)
+	want := []float64{0.2, 0.4, 0.8}
+	if len(ticks) != len(want) {
+		t.Fatalf("tick count mismatch: got %v want %v", ticks, want)
+	}
+	for i := range want {
+		if math.Abs(ticks[i]-want[i]) > 1e-12 {
+			t.Fatalf("tick %d mismatch: got %.17g want %.17g", i, ticks[i], want[i])
+		}
+	}
+	ticks[0] = 99
+	if locator.Presets[[2]float64{0, 1}][0] == 99 {
+		t.Fatal("LinearLocator preset ticks should be cloned")
+	}
+}
+
+func TestIndexLocator_Basic(t *testing.T) {
+	ticks := (IndexLocator{Base: 3, Offset: 1}).Ticks(0, 10, 0)
+	want := []float64{1, 4, 7, 10}
+	if len(ticks) != len(want) {
+		t.Fatalf("IndexLocator tick count = %d, want %d (%v)", len(ticks), len(want), ticks)
+	}
+	for i := range want {
+		if math.Abs(ticks[i]-want[i]) > 1e-12 {
+			t.Fatalf("IndexLocator tick %d = %v, want %v", i, ticks[i], want[i])
+		}
+	}
+}
+
 func TestLogLocator_MajorsMonotone(t *testing.T) {
 	bases := []float64{2, 10}
 	for _, b := range bases {
@@ -131,6 +180,32 @@ func TestLogLocator_MinorsBetweenMajors(t *testing.T) {
 	for _, v := range want {
 		if !has(v) {
 			t.Fatalf("missing expected tick %v in %+v", v, ticks)
+		}
+	}
+}
+
+func TestSymLogLocator_LinearRange(t *testing.T) {
+	ticks := (SymLogLocator{Base: 10, LinThresh: 1}).Ticks(-0.5, 0.5, 0)
+	want := []float64{-0.5, 0, 0.5}
+	if len(ticks) != len(want) {
+		t.Fatalf("SymLogLocator tick count = %d, want %d (%v)", len(ticks), len(want), ticks)
+	}
+	for i := range want {
+		if math.Abs(ticks[i]-want[i]) > 1e-12 {
+			t.Fatalf("SymLogLocator tick %d = %v, want %v", i, ticks[i], want[i])
+		}
+	}
+}
+
+func TestSymLogLocator_LogRanges(t *testing.T) {
+	ticks := (SymLogLocator{Base: 10, LinThresh: 1}).Ticks(-1000, 1000, 0)
+	want := []float64{-1000, -100, -10, -1, 0, 1, 10, 100, 1000}
+	if len(ticks) != len(want) {
+		t.Fatalf("SymLogLocator tick count = %d, want %d (%v)", len(ticks), len(want), ticks)
+	}
+	for i := range want {
+		if math.Abs(ticks[i]-want[i]) > 1e-12 {
+			t.Fatalf("SymLogLocator tick %d = %v, want %v", i, ticks[i], want[i])
 		}
 	}
 }
@@ -177,6 +252,22 @@ func TestFixedLocator_SortsAndDedupes(t *testing.T) {
 	for i := range want {
 		if ticks[i] != want[i] {
 			t.Fatalf("FixedLocator tick %d = %v, want %v", i, ticks[i], want[i])
+		}
+	}
+}
+
+func TestFixedLocator_NbinsSubsamplesIncludingSmallestAbs(t *testing.T) {
+	ticks := (FixedLocator{
+		TicksList: []float64{-4, -2, 0, 2, 4, 6},
+		Nbins:     2,
+	}).Ticks(0, 10, 0)
+	want := []float64{0, 6}
+	if len(ticks) != len(want) {
+		t.Fatalf("FixedLocator subsampled tick count = %d, want %d (%v)", len(ticks), len(want), ticks)
+	}
+	for i := range want {
+		if ticks[i] != want[i] {
+			t.Fatalf("FixedLocator subsampled tick %d = %v, want %v", i, ticks[i], want[i])
 		}
 	}
 }

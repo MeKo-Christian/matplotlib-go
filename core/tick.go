@@ -23,13 +23,34 @@ type IndexedFormatter interface {
 	FormatTick(x float64, index int, ticks []float64) string
 }
 
-// LinearLocator places ticks at nice multiples of 1,2,2.5,5×10^k.
-type LinearLocator struct{}
+// LinearLocator places ticks at nice multiples of 1,2,2.5,5×10^k by default.
+//
+// If NumTicks is positive, it mirrors Matplotlib's LinearLocator by returning
+// exactly NumTicks evenly spaced ticks across the view interval. If Presets
+// contains an exact [min,max] key, that preset wins.
+type LinearLocator struct {
+	NumTicks int
+	Presets  map[[2]float64][]float64
+}
 
 // Ticks returns a strictly increasing slice of ticks that cover [min,max]
 // using the smallest step from {1,2,2.5,5,10}×10^k that does not exceed
 // the requested tick density.
-func (LinearLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
+func (l LinearLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
+	if ticks, ok := l.Presets[[2]float64{minVal, maxVal}]; ok {
+		return append([]float64(nil), ticks...)
+	}
+	if l.NumTicks > 0 {
+		switch l.NumTicks {
+		case 1:
+			if math.IsNaN(minVal) || math.IsNaN(maxVal) {
+				return nil
+			}
+			return []float64{minVal}
+		default:
+			return linearSpacedTicks(minVal, maxVal, l.NumTicks)
+		}
+	}
 	if targetCount <= 0 {
 		targetCount = 1
 	}
@@ -85,9 +106,64 @@ func (LinearLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 	return out
 }
 
+func linearSpacedTicks(minVal, maxVal float64, count int) []float64 {
+	if count <= 0 || math.IsNaN(minVal) || math.IsNaN(maxVal) {
+		return nil
+	}
+	if count == 1 || minVal == maxVal {
+		return []float64{minVal}
+	}
+	ticks := make([]float64, count)
+	step := (maxVal - minVal) / float64(count-1)
+	for i := range ticks {
+		v := minVal + step*float64(i)
+		if approx(v, 0, 1e-12*math.Max(1, math.Abs(step))) {
+			v = 0
+		}
+		ticks[i] = v
+	}
+	ticks[count-1] = maxVal
+	return ticks
+}
+
+// IndexLocator places ticks every Base units starting at Offset. It mirrors
+// Matplotlib's IndexLocator for index-style plots.
+type IndexLocator struct {
+	Base   float64
+	Offset float64
+}
+
+func (l IndexLocator) Ticks(minVal, maxVal float64, _ int) []float64 {
+	if l.Base <= 0 || math.IsNaN(l.Base) || math.IsInf(l.Base, 0) {
+		return nil
+	}
+	if math.IsNaN(minVal) || math.IsNaN(maxVal) {
+		return nil
+	}
+	if minVal > maxVal {
+		minVal, maxVal = maxVal, minVal
+	}
+
+	start := minVal + l.Offset
+	tol := 1e-12 * math.Max(1, math.Abs(maxVal))
+	nmax := int(math.Ceil((maxVal-start)/l.Base)) + 2
+	if nmax < 1 {
+		return nil
+	}
+	ticks := make([]float64, 0, nmax)
+	for v, i := start, 0; v <= maxVal+tol && i < nmax; v, i = v+l.Base, i+1 {
+		if approx(v, 0, 1e-12*math.Max(1, math.Abs(l.Base))) {
+			v = 0
+		}
+		ticks = append(ticks, v)
+	}
+	return dedupeTicks(ticks)
+}
+
 // FixedLocator returns a predefined set of tick positions.
 type FixedLocator struct {
 	TicksList []float64
+	Nbins     int
 }
 
 func (l FixedLocator) Ticks(minVal, maxVal float64, _ int) []float64 {
@@ -96,7 +172,53 @@ func (l FixedLocator) Ticks(minVal, maxVal float64, _ int) []float64 {
 	}
 	ticks := append([]float64(nil), l.TicksList...)
 	sort.Float64s(ticks)
-	return dedupeTicks(ticks)
+	ticks = dedupeTicks(ticks)
+	if l.Nbins <= 0 {
+		return ticks
+	}
+	nbins := l.Nbins
+	if nbins < 2 {
+		nbins = 2
+	}
+	step := int(math.Ceil(float64(len(ticks)) / float64(nbins)))
+	if step < 1 {
+		step = 1
+	}
+	best := everyNthTick(ticks, 0, step)
+	for offset := 1; offset < step; offset++ {
+		candidate := everyNthTick(ticks, offset, step)
+		if len(candidate) == 0 {
+			continue
+		}
+		if minAbs(candidate) < minAbs(best) {
+			best = candidate
+		}
+	}
+	return append([]float64(nil), best...)
+}
+
+func everyNthTick(ticks []float64, offset, step int) []float64 {
+	if step <= 0 || offset < 0 || offset >= len(ticks) {
+		return nil
+	}
+	out := make([]float64, 0, (len(ticks)-offset+step-1)/step)
+	for i := offset; i < len(ticks); i += step {
+		out = append(out, ticks[i])
+	}
+	return out
+}
+
+func minAbs(xs []float64) float64 {
+	if len(xs) == 0 {
+		return math.Inf(1)
+	}
+	minVal := math.Abs(xs[0])
+	for _, x := range xs[1:] {
+		if ax := math.Abs(x); ax < minVal {
+			minVal = ax
+		}
+	}
+	return minVal
 }
 
 // NullLocator suppresses ticks entirely.
@@ -444,6 +566,111 @@ func (l LogLocator) minorMultipliers() []float64 {
 	return deduped
 }
 
+// SymLogLocator places ticks linearly around zero and logarithmically outside
+// the linear threshold, matching Matplotlib's SymmetricalLogLocator.
+type SymLogLocator struct {
+	Base      float64
+	LinThresh float64
+	Subs      []float64
+	NumTicks  int
+}
+
+func (l SymLogLocator) Ticks(minVal, maxVal float64, _ int) []float64 {
+	if math.IsNaN(minVal) || math.IsNaN(maxVal) {
+		return nil
+	}
+	if minVal > maxVal {
+		minVal, maxVal = maxVal, minVal
+	}
+
+	base := l.Base
+	if base <= 1 || math.IsNaN(base) || math.IsInf(base, 0) {
+		base = 10
+	}
+	linThresh := l.LinThresh
+	if linThresh <= 0 || math.IsNaN(linThresh) || math.IsInf(linThresh, 0) {
+		linThresh = 1
+	}
+	if minVal >= -linThresh && maxVal <= linThresh {
+		return dedupeTicksSorted([]float64{minVal, 0, maxVal})
+	}
+
+	hasLower := minVal < -linThresh
+	hasUpper := maxVal > linThresh
+	hasLinear := (hasLower && maxVal > -linThresh) || (hasUpper && minVal < linThresh)
+
+	lowerStart, lowerEnd := 0, 0
+	if hasLower {
+		upperLimit := math.Min(-linThresh, maxVal)
+		lowerStart, lowerEnd = symlogExponentRange(math.Abs(upperLimit), math.Abs(minVal)+1, base)
+	}
+	upperStart, upperEnd := 0, 0
+	if hasUpper {
+		lowerLimit := math.Max(linThresh, minVal)
+		upperStart, upperEnd = symlogExponentRange(lowerLimit, maxVal+1, base)
+	}
+
+	totalTicks := (lowerEnd - lowerStart) + (upperEnd - upperStart)
+	if hasLinear {
+		totalTicks++
+	}
+	numTicks := l.NumTicks
+	if numTicks <= 1 {
+		numTicks = 15
+	}
+	stride := totalTicks / (numTicks - 1)
+	if stride < 1 {
+		stride = 1
+	}
+
+	decades := make([]float64, 0, totalTicks)
+	if hasLower {
+		for exp := lowerEnd - 1; exp >= lowerStart; exp -= stride {
+			decades = append(decades, -math.Pow(base, float64(exp)))
+		}
+	}
+	if hasLinear {
+		decades = append(decades, 0)
+	}
+	if hasUpper {
+		for exp := upperStart; exp < upperEnd; exp += stride {
+			decades = append(decades, math.Pow(base, float64(exp)))
+		}
+	}
+
+	subs := l.Subs
+	if len(subs) == 0 {
+		subs = []float64{1}
+	}
+	ticks := make([]float64, 0, len(decades)*len(subs))
+	for _, decade := range decades {
+		if decade == 0 {
+			ticks = append(ticks, 0)
+			continue
+		}
+		for _, sub := range subs {
+			if sub <= 0 || math.IsNaN(sub) || math.IsInf(sub, 0) {
+				continue
+			}
+			tick := sub * decade
+			if tick >= minVal && tick <= maxVal {
+				ticks = append(ticks, tick)
+			}
+		}
+	}
+	return dedupeTicksSorted(ticks)
+}
+
+func symlogExponentRange(lo, hi, base float64) (int, int) {
+	if lo <= 0 || hi <= 0 || hi < lo {
+		return 0, 0
+	}
+	logBase := math.Log(base)
+	start := int(math.Floor(math.Log(lo) / logBase))
+	end := int(math.Ceil(math.Log(hi) / logBase))
+	return start, end
+}
+
 // ScalarFormatter formats numbers with fixed precision and trims trailing zeros.
 // Uses scientific notation if |x| >= 1e6 or (0 < |x| <= 1e-4).
 type ScalarFormatter struct{ Prec int }
@@ -696,6 +923,15 @@ func dedupeTicks(ticks []float64) []float64 {
 		}
 	}
 	return out
+}
+
+func dedupeTicksSorted(ticks []float64) []float64 {
+	if len(ticks) == 0 {
+		return nil
+	}
+	out := append([]float64(nil), ticks...)
+	sort.Float64s(out)
+	return dedupeTicks(out)
 }
 
 func niceStepCeil(raw float64, steps []float64) float64 {

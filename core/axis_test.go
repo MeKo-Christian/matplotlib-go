@@ -253,6 +253,16 @@ func TestAxes_SetScaleUpdatesSharedRoot(t *testing.T) {
 	if _, ok := root.XScale.(transform.SymLog); !ok {
 		t.Fatalf("shared root x scale type = %T, want transform.SymLog", root.XScale)
 	}
+	locator, ok := root.XAxis.Locator.(SymLogLocator)
+	if !ok {
+		t.Fatalf("shared root x locator = %T, want SymLogLocator", root.XAxis.Locator)
+	}
+	if locator.Base != 10 || locator.LinThresh != 2 {
+		t.Fatalf("shared root x locator = %+v, want base=10 linthresh=2", locator)
+	}
+	if _, ok := root.XAxis.MinorLocator.(SymLogLocator); !ok {
+		t.Fatalf("shared root x minor locator = %T, want SymLogLocator", root.XAxis.MinorLocator)
+	}
 	xMin, xMax := root.XScale.Domain()
 	if xMin != -5 || xMax != 15 {
 		t.Fatalf("shared root x domain = (%v, %v), want (-5, 15)", xMin, xMax)
