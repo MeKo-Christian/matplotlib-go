@@ -2025,13 +2025,13 @@ catalog/parity fixture per behavior family.
 - [x] Add scale-specific `AsinhLocator` and `LogitLocator` implementations and
       install them as default major/minor locators for `asinh` and `logit`
       axes.
-- [ ] Add renderer-neutral unit tests for each new locator and a catalog case
+- [x] Add renderer-neutral unit tests for each new locator and a catalog case
       named for each visible locator family rather than one combined fixture.
 - [x] Add `locator_linear_labels` covering `LinearLocator`, `MultipleLocator`,
       and default linear tick labels.
 - [x] Add `locator_fixed_index_labels` covering `FixedLocator` subsampling and
       `IndexLocator` base/offset placement.
-- [ ] Close the locator catalog row only after the named linear, fixed/index,
+- [x] Close the locator catalog row only after the named linear, fixed/index,
       log, symlog, asinh, and logit fixture coverage is present and listed in
       `PublicSurfaceParityRows`.
 

@@ -113,8 +113,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go AsinhLocator is installed for asinh scales and covers symmetric linear/log-like tick placement plus minor subs. Remaining 12.2B scope is exact upstream rounding preferences and catalog fixtures.",
+		CatalogIDs:        []string{"axes_control_surface", "scale_asinh_ticks"},
+		Note:              "Go AsinhLocator is installed for asinh scales and covers symmetric linear/log-like tick placement plus minor subs; scale_asinh_ticks covers visible asinh tick output. Remaining 12.2B scope is exact upstream rounding preferences.",
 	},
 	{
 		ID:                "ticker-fixed-locator",
@@ -167,8 +167,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go LogitLocator is installed for logit scales and covers major/minor probability ticks. Remaining 12.2B scope is exact upstream minor pruning and catalog fixtures.",
+		CatalogIDs:        []string{"axes_control_surface", "scale_logit_ticks"},
+		Note:              "Go LogitLocator is installed for logit scales and covers major/minor probability ticks; scale_logit_ticks covers visible logit tick output. Remaining 12.2B scope is exact upstream minor pruning.",
 	},
 	{
 		ID:                "ticker-multiple-locator",
@@ -194,8 +194,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go SymLogLocator is installed for symlog scales and covers negative, linear-threshold, and positive log regions. Remaining 12.2B scope is exact upstream minor stride behavior and catalog fixtures.",
+		CatalogIDs:        []string{"axes_control_surface", "scale_symlog_ticks"},
+		Note:              "Go SymLogLocator is installed for symlog scales and covers negative, linear-threshold, and positive log regions; scale_symlog_ticks covers visible symlog tick output. Remaining 12.2B scope is exact upstream minor stride behavior.",
 	},
 	{
 		ID:                "ticker-log-formatter",
