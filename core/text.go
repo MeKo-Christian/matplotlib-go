@@ -40,9 +40,12 @@ type TextOptions struct {
 	OffsetY  float64
 	// WrapWidth wraps text to this maximum display-pixel width when positive.
 	WrapWidth float64
-	ClipOn    *bool
-	BBox      *TextBBoxOptions
-	FontKey   string
+	// MultiAlignment controls per-line alignment within multiline or wrapped
+	// text. Nil follows HAlign, matching Matplotlib's multialignment=None.
+	MultiAlignment *TextAlign
+	ClipOn         *bool
+	BBox           *TextBBoxOptions
+	FontKey        string
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
 	FontProperties *render.FontProperties
@@ -98,9 +101,12 @@ type Text struct {
 	OffsetY  float64
 	// WrapWidth wraps text to this maximum display-pixel width when positive.
 	WrapWidth float64
-	ClipOn    bool
-	BBox      *TextBBoxOptions
-	FontKey   string
+	// MultiAlignment controls per-line alignment within multiline or wrapped
+	// text. Nil follows HAlign, matching Matplotlib's multialignment=None.
+	MultiAlignment *TextAlign
+	ClipOn         bool
+	BBox           *TextBBoxOptions
+	FontKey        string
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
 	FontProperties *render.FontProperties
@@ -163,6 +169,7 @@ func (a *Axes) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		OffsetX:        opt.OffsetX,
 		OffsetY:        opt.OffsetY,
 		WrapWidth:      opt.WrapWidth,
+		MultiAlignment: cloneTextAlign(opt.MultiAlignment),
 		ClipOn:         clipOn,
 		BBox:           cloneTextBBoxOptions(opt.BBox),
 		FontKey:        opt.FontKey,
@@ -206,6 +213,7 @@ func (f *Figure) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		OffsetX:        opt.OffsetX,
 		OffsetY:        opt.OffsetY,
 		WrapWidth:      opt.WrapWidth,
+		MultiAlignment: cloneTextAlign(opt.MultiAlignment),
 		ClipOn:         clipOn,
 		BBox:           cloneTextBBoxOptions(opt.BBox),
 		FontKey:        opt.FontKey,
@@ -382,6 +390,10 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 	}
 
 	textColor := t.ApplyArtistAlpha(resolvedTextColor(t.Color, ctx))
+	lineAlign := t.HAlign
+	if t.MultiAlignment != nil {
+		lineAlign = *t.MultiAlignment
+	}
 	for i, line := range lines {
 		if line == "" {
 			continue
@@ -391,7 +403,7 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 			Y: top + lineAdvance*float64(i) + layouts[i].Ascent,
 		}
 		if layouts[i].Width < maxWidth {
-			switch t.HAlign {
+			switch lineAlign {
 			case TextAlignCenter:
 				origin.X += (maxWidth - layouts[i].Width) / 2
 			case TextAlignRight:
@@ -652,6 +664,14 @@ func cloneTextBBoxOptions(opt *TextBBoxOptions) *TextBBoxOptions {
 		return nil
 	}
 	cloned := *opt
+	return &cloned
+}
+
+func cloneTextAlign(align *TextAlign) *TextAlign {
+	if align == nil {
+		return nil
+	}
+	cloned := *align
 	return &cloned
 }
 

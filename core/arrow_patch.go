@@ -208,7 +208,7 @@ func (a *FancyArrowPatch) displayPath(ctx *DrawContext) geom.Path {
 	if style.Name == "" {
 		style, _ = ConnectionStyleFromString("arc3")
 	}
-	return style.connect(posA, posB, a.effectiveShrinkA(), a.effectiveShrinkB())
+	return style.connect(posA, posB, arrowShrinkPixels(ctx, a.effectiveShrinkA()), arrowShrinkPixels(ctx, a.effectiveShrinkB()))
 }
 
 func (c *ConnectionPatch) connectionDisplayPath(ctx *DrawContext) geom.Path {
@@ -224,7 +224,7 @@ func (c *ConnectionPatch) connectionDisplayPath(ctx *DrawContext) geom.Path {
 	if style.Name == "" {
 		style, _ = ConnectionStyleFromString("arc3")
 	}
-	return style.connect(aTrans.Apply(c.XYA), bTrans.Apply(c.XYB), c.ShrinkA, c.ShrinkB)
+	return style.connect(aTrans.Apply(c.XYA), bTrans.Apply(c.XYB), arrowShrinkPixels(ctx, c.ShrinkA), arrowShrinkPixels(ctx, c.ShrinkB))
 }
 
 func (a *FancyArrowPatch) displayParts(_ *DrawContext, path geom.Path) []arrowPathPart {
@@ -266,6 +266,16 @@ func (a *FancyArrowPatch) effectiveShrinkB() float64 {
 		return 2
 	}
 	return a.ShrinkB
+}
+
+func arrowShrinkPixels(ctx *DrawContext, points float64) float64 {
+	if points <= 0 {
+		return 0
+	}
+	if ctx == nil {
+		return points
+	}
+	return pointsToPixels(ctx.RC, points)
 }
 
 func scalePathY(path geom.Path, scale float64) geom.Path {

@@ -1643,6 +1643,34 @@ func TestMultilineTextSplitsDrawsAndUsesBlockBBox(t *testing.T) {
 	}
 }
 
+func TestTextMultiAlignmentControlsLineAlignmentWithinBlock(t *testing.T) {
+	ctx := createTestDrawContext()
+	multiAlign := TextAlignLeft
+	text := &Text{
+		Position:       geom.Pt{X: 1, Y: 1},
+		Content:        "narrow\nmuch wider",
+		FontSize:       10,
+		HAlign:         TextAlignRight,
+		VAlign:         TextVAlignTop,
+		MultiAlignment: &multiAlign,
+		ClipOn:         true,
+	}
+	r := &textRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.origins) != 2 {
+		t.Fatalf("expected two multiline origins, got %d: %+v", len(r.origins), r.origins)
+	}
+	if !approx(r.origins[0].X, r.origins[1].X, 1e-12) {
+		t.Fatalf("left multialignment should keep line origins equal inside right-aligned block, got %+v", r.origins)
+	}
+	blockRight := transformedPoint(ctx, text.Coords, text.Position, text.OffsetX, text.OffsetY).X
+	if !approx(r.origins[1].X+float64(len("much wider"))*text.FontSize*0.5, blockRight, 1e-12) {
+		t.Fatalf("right-aligned multiline block no longer ends at anchor: origins=%+v anchorX=%v", r.origins, blockRight)
+	}
+}
+
 func TestAxesLabelsDrawMathTextAccordingToExpressionScope(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{

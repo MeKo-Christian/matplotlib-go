@@ -173,7 +173,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CurrentEquivalent: "Go has common patch shapes, hatch routing, FancyBboxPatch with the upstream " +
 			"BoxStyle registry entries, renderer-neutral hatch geometry for the upstream hatch " +
 			"character set, AGG shape hatches, vector-native shape hatch patterns, FancyArrowPatch, " +
-			"Matplotlib-style FancyArrowPatch default endpoint shrinking, FancyArrowPatch / ConnectionPatch round cap/join defaults, FancyArrowPatch mutation-aspect arrow transmutation, ArrowStyle Wedge shrink-factor behavior, ArrowStyle curve line shortening, ArrowStyle BarAB zero-length bracket defaults, ConnectionStyle Arc defaults, ConnectionStyle Bar angle projection, ConnectionPatch, and several extra patch classes.",
+			"DPI-correct Matplotlib-style FancyArrowPatch endpoint shrinking, explicit ConnectionPatch shrink conversion, FancyArrowPatch / ConnectionPatch round cap/join defaults, FancyArrowPatch mutation-aspect arrow transmutation, ArrowStyle Wedge shrink-factor behavior, ArrowStyle curve line shortening, ArrowStyle BarAB zero-length bracket defaults, ConnectionStyle Arc defaults, ConnectionStyle Bar angle projection, ConnectionPatch, and several extra patch classes.",
 		Gap: "Remaining patch scope is exact ArrowStyle / ConnectionStyle geometry edge cases, " +
 			"specialized patch class breadth, and broader visual fixture closure beyond the focused " +
 			"patch_style_matrix registry case.",
@@ -190,7 +190,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CurrentEquivalent: "Go supports text, rotated text, multiline drawing, text bbox patches, " +
 			"text paths, MathText, TeX paths, per-text font routing, and renderer font resolution. " +
 			"Text and annotation drawing use shared artist-alpha metadata for visible text and arrow colors. " +
-			"TextOptions.WrapWidth provides explicit display-pixel word wrapping. " +
+			"TextOptions.WrapWidth provides explicit display-pixel word wrapping, and TextOptions.MultiAlignment separates per-line multiline alignment from block anchoring. " +
 			"Text bbox patches rotate with rotated text. " +
 			"The text_annotation_matrix fixture gives focused coverage for multiline text, rotated " +
 			"text, text bbox output, and structured font requests.",

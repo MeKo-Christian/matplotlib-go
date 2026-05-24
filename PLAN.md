@@ -2271,10 +2271,13 @@ Current slice landed:
   families as vector paths; focused backend tests cover cubic circle geometry,
   filled dot/star geometry, and clipped shape hatch emission.
 - `FancyArrowPatch` now applies Matplotlib's default `shrinkA=2` /
-  `shrinkB=2` behavior for endpoint-defined arrows, while `ConnectionPatch`
-  keeps its upstream zero-shrink default.
-- Renderer-neutral patch tests cover default FancyArrowPatch endpoint shrinking
-  and independent-coordinate ConnectionPatch endpoints.
+  `shrinkB=2` behavior for endpoint-defined arrows, with shrink distances
+  converted from points to display pixels through the active figure DPI;
+  `ConnectionPatch` keeps its upstream zero-shrink default and explicit
+  shrink values use the same point-unit conversion.
+- Renderer-neutral patch tests cover DPI-correct default FancyArrowPatch
+  endpoint shrinking, explicit ConnectionPatch shrink values, and
+  independent-coordinate ConnectionPatch endpoints.
 - `FancyArrowPatch` and `ConnectionPatch` draw paths now use Matplotlib's
   default round cap / round join styling when no explicit patch cap/join style
   is set.
@@ -2382,6 +2385,12 @@ Current slice landed:
   wrapped output.
 - Renderer-neutral text tests cover wrapped line emission and wrapped text-bbox
   width constraints.
+- `TextOptions.MultiAlignment` now mirrors Matplotlib's high-value
+  `multialignment` behavior for multiline and wrapped text: nil follows
+  `HAlign`, while an explicit value controls per-line placement inside the
+  already aligned text block.
+- Renderer-neutral text tests cover left-aligned line placement inside a
+  right-aligned multiline block.
 - Text bbox patches now rotate with rotated text around the same renderer
   anchor as the text draw call instead of remaining axis-aligned.
 - Renderer-neutral text tests cover rotated bbox path geometry.

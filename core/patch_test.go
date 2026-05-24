@@ -676,6 +676,7 @@ func TestFancyArrowPatchDefaultShrinkMatchesMatplotlib(t *testing.T) {
 		Coords:          Coords(CoordAxes),
 	}
 	ctx := createTestDrawContext()
+	ctx.RC.DPI = 144
 	path := patch.displayPath(ctx)
 	if len(path.V) != 2 {
 		t.Fatalf("default arc3 path vertices = %d, want 2: %+v", len(path.V), path.V)
@@ -683,11 +684,44 @@ func TestFancyArrowPatchDefaultShrinkMatchesMatplotlib(t *testing.T) {
 
 	start := ctx.TransformFor(Coords(CoordAxes)).Apply(patch.PosA)
 	end := ctx.TransformFor(Coords(CoordAxes)).Apply(patch.PosB)
-	if !approx(path.V[0].X, start.X+2, 1e-9) || !approx(path.V[0].Y, start.Y, 1e-9) {
-		t.Fatalf("default-shrunk start = %+v, want %+v", path.V[0], geom.Pt{X: start.X + 2, Y: start.Y})
+	shrink := pointsToPixels(ctx.RC, 2)
+	if !approx(path.V[0].X, start.X+shrink, 1e-9) || !approx(path.V[0].Y, start.Y, 1e-9) {
+		t.Fatalf("default-shrunk start = %+v, want %+v", path.V[0], geom.Pt{X: start.X + shrink, Y: start.Y})
 	}
-	if !approx(path.V[1].X, end.X-2, 1e-9) || !approx(path.V[1].Y, end.Y, 1e-9) {
-		t.Fatalf("default-shrunk end = %+v, want %+v", path.V[1], geom.Pt{X: end.X - 2, Y: end.Y})
+	if !approx(path.V[1].X, end.X-shrink, 1e-9) || !approx(path.V[1].Y, end.Y, 1e-9) {
+		t.Fatalf("default-shrunk end = %+v, want %+v", path.V[1], geom.Pt{X: end.X - shrink, Y: end.Y})
+	}
+}
+
+func TestConnectionPatchShrinkUsesPointUnits(t *testing.T) {
+	patch := &ConnectionPatch{
+		FancyArrowPatch: FancyArrowPatch{
+			ArrowStyle:      ArrowStyle{Name: "-", HeadLength: 0.2, HeadWidth: 0.1},
+			ConnectionStyle: ConnectionStyle{Name: "arc3"},
+			ShrinkA:         1.5,
+			ShrinkB:         3,
+		},
+		XYA:     geom.Pt{X: 0.25, Y: 0.5},
+		XYB:     geom.Pt{X: 0.75, Y: 0.5},
+		CoordsA: Coords(CoordAxes),
+		CoordsB: Coords(CoordAxes),
+	}
+	ctx := createTestDrawContext()
+	ctx.RC.DPI = 144
+
+	path := patch.connectionDisplayPath(ctx)
+	if len(path.V) != 2 {
+		t.Fatalf("connection path vertices = %d, want 2: %+v", len(path.V), path.V)
+	}
+	start := ctx.TransformFor(Coords(CoordAxes)).Apply(patch.XYA)
+	end := ctx.TransformFor(Coords(CoordAxes)).Apply(patch.XYB)
+	shrinkA := pointsToPixels(ctx.RC, patch.ShrinkA)
+	shrinkB := pointsToPixels(ctx.RC, patch.ShrinkB)
+	if !approx(path.V[0].X, start.X+shrinkA, 1e-9) || !approx(path.V[0].Y, start.Y, 1e-9) {
+		t.Fatalf("connection start = %+v, want %+v", path.V[0], geom.Pt{X: start.X + shrinkA, Y: start.Y})
+	}
+	if !approx(path.V[1].X, end.X-shrinkB, 1e-9) || !approx(path.V[1].Y, end.Y, 1e-9) {
+		t.Fatalf("connection end = %+v, want %+v", path.V[1], geom.Pt{X: end.X - shrinkB, Y: end.Y})
 	}
 }
 
