@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 func TestLegendCollectEntries(t *testing.T) {
@@ -170,6 +171,24 @@ func TestLegendDrawsErrorBarSampleWithCaps(t *testing.T) {
 	}
 }
 
+func TestLegendCollectsStemAsSingleCombinedSample(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.1, Y: 0.1},
+		Max: geom.Pt{X: 0.9, Y: 0.9},
+	})
+	ax.Stem([]float64{0, 1, 2}, []float64{1, 3, 2}, StemOptions{Label: "stem"})
+
+	entries := ax.AddLegend().collectEntries()
+	if len(entries) != 1 {
+		t.Fatalf("stem legend entries = %d, want one combined sample: %+v", len(entries), entries)
+	}
+	entry := entries[0]
+	if entry.Label != "stem" || entry.kind != legendEntryErrorBar || !entry.errorbarY || !entry.lineMarkerSet {
+		t.Fatalf("stem legend entry = %+v, want combined stem line+marker sample", entry)
+	}
+}
+
 func TestLegendDrawSupportsTitle(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{
@@ -285,6 +304,72 @@ func TestLegendSetHandlerOverridesCollectedArtistSample(t *testing.T) {
 	}
 }
 
+func TestLegendBestPlacementAvoidsLineAndScatterPoints(t *testing.T) {
+	ax := &Axes{}
+	legend := NewLegend(ax)
+	line := &Line2D{
+		XY:    []geom.Pt{{X: 0.86, Y: 0.94}, {X: 0.96, Y: 0.94}},
+		Label: "line",
+	}
+	scatter := &Scatter2D{
+		XY:    []geom.Pt{{X: 0.9, Y: 0.95}},
+		Label: "scatter",
+	}
+	ax.Artists = []Artist{line, scatter, legend}
+
+	ctx := legendBestPlacementTestContext()
+	box := legend.bestLegendBoxRect(ctx, 80, 40)
+	want := anchoredBoxRect(ctx.Clip, 80, 40, LegendUpperLeft, legend.Inset)
+	if box != want {
+		t.Fatalf("best legend box = %+v, want upper-left %+v when line/scatter occupy upper-right", box, want)
+	}
+}
+
+func TestLegendBestPlacementAvoidsImageExtent(t *testing.T) {
+	ax := &Axes{}
+	legend := NewLegend(ax)
+	image := &Image2D{
+		XMin: 0.85,
+		XMax: 0.95,
+		YMin: 0.85,
+		YMax: 0.95,
+	}
+	ax.Artists = []Artist{image, legend}
+
+	ctx := legendBestPlacementTestContext()
+	box := legend.bestLegendBoxRect(ctx, 80, 40)
+	want := anchoredBoxRect(ctx.Clip, 80, 40, LegendUpperLeft, legend.Inset)
+	if box != want {
+		t.Fatalf("best legend box = %+v, want upper-left %+v when image occupies upper-right", box, want)
+	}
+}
+
+func TestLegendBestPlacementAvoidsAnnotationAnchors(t *testing.T) {
+	ax := &Axes{}
+	legend := NewLegend(ax)
+	annotation := &Annotation{
+		Point:   geom.Pt{X: 0.9, Y: 0.95},
+		Coords:  Coords(CoordData),
+		OffsetX: 8,
+		OffsetY: 8,
+	}
+	boxPosition := geom.Pt{X: 0.9, Y: 0.95}
+	annotationBox := &AnnotationBbox{
+		Point:       geom.Pt{X: 0.88, Y: 0.92},
+		XYCoords:    Coords(CoordData),
+		BoxCoords:   Coords(CoordData),
+		BoxPosition: &boxPosition,
+	}
+	ax.Artists = []Artist{annotation, annotationBox, legend}
+
+	ctx := legendBestPlacementTestContext()
+	box := legend.bestLegendBoxRect(ctx, 80, 40)
+	want := anchoredBoxRect(ctx.Clip, 80, 40, LegendUpperLeft, legend.Inset)
+	if box != want {
+		t.Fatalf("best legend box = %+v, want upper-left %+v when annotations occupy upper-right", box, want)
+	}
+}
+
 func TestLegendDefaultsMatchMatplotlibSpacing(t *testing.T) {
 	fig := NewFigure(800, 600)
 	legend := fig.AddLegend()
@@ -304,6 +389,18 @@ func TestLegendDefaultsMatchMatplotlibSpacing(t *testing.T) {
 	}
 	if legend.CornerRadius <= 0 {
 		t.Fatalf("legend corner radius = %v, want rounded Matplotlib fancybox", legend.CornerRadius)
+	}
+}
+
+func legendBestPlacementTestContext() *DrawContext {
+	return &DrawContext{
+		DataToPixel: Transform2D{
+			XScale:      transform.NewLinear(0, 1),
+			YScale:      transform.NewLinear(0, 1),
+			AxesToPixel: transform.NewAffine(geom.Affine{A: 500, D: -500, F: 500}),
+		},
+		RC:   style.Default,
+		Clip: geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 500, Y: 500}},
 	}
 }
 

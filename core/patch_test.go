@@ -511,6 +511,73 @@ func TestFancyArrowPatchDrawsConnectionAndArrowHead(t *testing.T) {
 	}
 }
 
+func TestFancyArrowPatchDefaultCapAndJoinMatchMatplotlib(t *testing.T) {
+	arrowStyle, ok := ArrowStyleFromString("->")
+	if !ok {
+		t.Fatal("missing -> arrow style")
+	}
+	patch := &FancyArrowPatch{
+		Patch: Patch{
+			EdgeColor: render.Color{A: 1},
+			EdgeWidth: 1,
+		},
+		PosA:       geom.Pt{X: 1, Y: 1},
+		PosB:       geom.Pt{X: 4, Y: 3},
+		ArrowStyle: arrowStyle,
+		Coords:     Coords(CoordData),
+	}
+	r := &recordingRenderer{}
+
+	patch.Draw(r, createTestDrawContext())
+
+	if len(r.pathCalls) == 0 {
+		t.Fatal("expected fancy arrow paths")
+	}
+	for _, call := range r.pathCalls {
+		if call.paint.LineJoin != render.JoinRound || call.paint.LineCap != render.CapRound {
+			t.Fatalf("fancy arrow paint cap/join = %v/%v, want round/round", call.paint.LineCap, call.paint.LineJoin)
+		}
+	}
+}
+
+func TestFancyArrowPatchMutationAspectScalesArrowMutation(t *testing.T) {
+	arrowStyle, ok := ArrowStyleFromString("-|>")
+	if !ok {
+		t.Fatal("missing -|> arrow style")
+	}
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 0, Y: 0})
+	path.LineTo(geom.Pt{X: 0, Y: 100})
+
+	base := (&FancyArrowPatch{
+		ArrowStyle:    arrowStyle,
+		MutationScale: 10,
+	}).displayParts(nil, path)
+	stretched := (&FancyArrowPatch{
+		ArrowStyle:     arrowStyle,
+		MutationScale:  10,
+		MutationAspect: 2,
+	}).displayParts(nil, path)
+
+	if len(base) < 2 || len(stretched) < 2 {
+		t.Fatalf("expected line and arrow head parts, got base=%+v stretched=%+v", base, stretched)
+	}
+	baseHead, ok := pathBounds(base[len(base)-1].path)
+	if !ok {
+		t.Fatalf("missing base arrow head bounds: %+v", base[len(base)-1].path)
+	}
+	stretchedHead, ok := pathBounds(stretched[len(stretched)-1].path)
+	if !ok {
+		t.Fatalf("missing stretched arrow head bounds: %+v", stretched[len(stretched)-1].path)
+	}
+	if stretchedHead.H() <= baseHead.H()*1.5 {
+		t.Fatalf("mutation aspect did not stretch arrow head height: base=%+v stretched=%+v", baseHead, stretchedHead)
+	}
+	if !approx(stretchedHead.Max.Y, 100, 1e-9) {
+		t.Fatalf("mutation aspect moved arrow tip to y=%v, want 100", stretchedHead.Max.Y)
+	}
+}
+
 func TestArrowStyleWedgeUsesShrinkFactor(t *testing.T) {
 	style, ok := ArrowStyleFromString("wedge,tail_width=0.6,shrink_factor=0.25")
 	if !ok {

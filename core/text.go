@@ -38,9 +38,11 @@ type TextOptions struct {
 	Coords   CoordinateSpec
 	OffsetX  float64
 	OffsetY  float64
-	ClipOn   *bool
-	BBox     *TextBBoxOptions
-	FontKey  string
+	// WrapWidth wraps text to this maximum display-pixel width when positive.
+	WrapWidth float64
+	ClipOn    *bool
+	BBox      *TextBBoxOptions
+	FontKey   string
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
 	FontProperties *render.FontProperties
@@ -94,9 +96,11 @@ type Text struct {
 	Coords   CoordinateSpec
 	OffsetX  float64
 	OffsetY  float64
-	ClipOn   bool
-	BBox     *TextBBoxOptions
-	FontKey  string
+	// WrapWidth wraps text to this maximum display-pixel width when positive.
+	WrapWidth float64
+	ClipOn    bool
+	BBox      *TextBBoxOptions
+	FontKey   string
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
 	FontProperties *render.FontProperties
@@ -158,6 +162,7 @@ func (a *Axes) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		Coords:         opt.Coords,
 		OffsetX:        opt.OffsetX,
 		OffsetY:        opt.OffsetY,
+		WrapWidth:      opt.WrapWidth,
 		ClipOn:         clipOn,
 		BBox:           cloneTextBBoxOptions(opt.BBox),
 		FontKey:        opt.FontKey,
@@ -200,6 +205,7 @@ func (f *Figure) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		Coords:         opt.Coords,
 		OffsetX:        opt.OffsetX,
 		OffsetY:        opt.OffsetY,
+		WrapWidth:      opt.WrapWidth,
 		ClipOn:         clipOn,
 		BBox:           cloneTextBBoxOptions(opt.BBox),
 		FontKey:        opt.FontKey,
@@ -303,32 +309,38 @@ func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
 	fontKey := resolvedTextFontKey(t.FontKey, t.FontProperties, ctx)
 	parseMath := parseMathEnabled(t.ParseMath)
 	anchor := transformedPoint(ctx, t.Coords, t.Position, t.OffsetX, t.OffsetY)
-	if strings.Contains(t.Content, "\n") {
-		t.drawMultilineText(r, textRen, ctx, anchor, fontSize, fontKey, parseMath)
+	lines := wrappedTextLines(r, t.Content, fontSize, fontKey, parseMath, ctx.RC.UseTeX, t.WrapWidth)
+	if len(lines) > 1 {
+		t.drawMultilineText(r, textRen, ctx, anchor, fontSize, fontKey, parseMath, lines)
 		return
 	}
-	layout := measureSingleLineTextLayoutParseMath(r, t.Content, fontSize, fontKey, parseMath, ctx.RC.UseTeX)
+	content := t.Content
+	if len(lines) == 1 {
+		content = lines[0]
+	}
+	layout := measureSingleLineTextLayoutParseMath(r, content, fontSize, fontKey, parseMath, ctx.RC.UseTeX)
 	origin := alignedSingleLineOrigin(anchor, layout, t.HAlign, layoutVerticalAlign(t.VAlign, false))
-	drawTextBBox(r, origin, layout, t.BBox, ctx, fontSize)
+	textColor := t.ApplyArtistAlpha(resolvedTextColor(t.Color, ctx))
 	if t.Angle != 0 {
 		if rotated, ok := r.(render.RotatedTextDrawer); ok {
 			angle := t.Angle * math.Pi / 180
 			rotAnchor := tickLabelRotationAnchor(origin, layout, t.HAlign, layoutVerticalAlign(t.VAlign, false), angle)
-			if len(t.PathEffects) > 0 && drawTextPathEffects(r, t.Content, origin, rotAnchor, fontSize, angle, resolvedTextColor(t.Color, ctx), fontKey, ctx.RC.UseTeX, t.PathEffects) {
+			drawTextBBoxRotated(r, origin, layout, t.BBox, ctx, fontSize, rotAnchor, t.Angle)
+			if len(t.PathEffects) > 0 && drawTextPathEffects(r, content, origin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
 				return
 			}
-			drawDisplayTextRotatedParseMath(rotated, t.Content, rotAnchor, fontSize, angle, resolvedTextColor(t.Color, ctx), fontKey, parseMath, ctx.RC.UseTeX)
+			drawDisplayTextRotatedParseMath(rotated, content, rotAnchor, fontSize, angle, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 			return
 		}
 	}
-	if len(t.PathEffects) > 0 && drawTextPathEffects(r, t.Content, origin, origin, fontSize, 0, resolvedTextColor(t.Color, ctx), fontKey, ctx.RC.UseTeX, t.PathEffects) {
+	drawTextBBox(r, origin, layout, t.BBox, ctx, fontSize)
+	if len(t.PathEffects) > 0 && drawTextPathEffects(r, content, origin, origin, fontSize, 0, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
 		return
 	}
-	drawDisplayTextParseMath(textRen, t.Content, origin, fontSize, resolvedTextColor(t.Color, ctx), fontKey, parseMath, ctx.RC.UseTeX)
+	drawDisplayTextParseMath(textRen, content, origin, fontSize, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 }
 
-func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, ctx *DrawContext, anchor geom.Pt, fontSize float64, fontKey string, parseMath bool) {
-	lines := strings.Split(t.Content, "\n")
+func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, ctx *DrawContext, anchor geom.Pt, fontSize float64, fontKey string, parseMath bool, lines []string) {
 	layouts := make([]singleLineTextLayout, len(lines))
 	maxWidth := 0.0
 	for i, line := range lines {
@@ -369,7 +381,7 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 		}, t.BBox, ctx, fontSize)
 	}
 
-	textColor := resolvedTextColor(t.Color, ctx)
+	textColor := t.ApplyArtistAlpha(resolvedTextColor(t.Color, ctx))
 	for i, line := range lines {
 		if line == "" {
 			continue
@@ -388,6 +400,37 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 		}
 		drawDisplayTextParseMath(textRen, line, origin, fontSize, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 	}
+}
+
+func wrappedTextLines(r render.Renderer, text string, fontSize float64, fontKey string, parseMath, useTeX bool, maxWidth float64) []string {
+	paragraphs := strings.Split(text, "\n")
+	if maxWidth <= 0 {
+		return paragraphs
+	}
+	lines := make([]string, 0, len(paragraphs))
+	for _, paragraph := range paragraphs {
+		if paragraph == "" {
+			lines = append(lines, "")
+			continue
+		}
+		words := strings.Fields(paragraph)
+		if len(words) == 0 {
+			lines = append(lines, "")
+			continue
+		}
+		current := words[0]
+		for _, word := range words[1:] {
+			candidate := current + " " + word
+			if measureSingleLineTextLayoutParseMath(r, candidate, fontSize, fontKey, parseMath, useTeX).Width <= maxWidth {
+				current = candidate
+				continue
+			}
+			lines = append(lines, current)
+			current = word
+		}
+		lines = append(lines, current)
+	}
+	return lines
 }
 
 func drawTextPathEffects(r render.Renderer, text string, origin, pivot geom.Pt, size, angle float64, textColor render.Color, fontKey string, useTeX bool, effects []render.PathEffect) bool {
@@ -488,7 +531,8 @@ func (a *Annotation) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	a.drawArrow(r, ctx, start, target)
 	drawTextBBox(r, origin, layout, a.BBox, ctx, fontSize)
 
-	drawDisplayTextParseMath(textRen, a.Content, origin, fontSize, resolvedTextColor(a.Color, ctx), fontKey, parseMath, ctx.RC.UseTeX)
+	textColor := a.ApplyArtistAlpha(resolvedTextColor(a.Color, ctx))
+	drawDisplayTextParseMath(textRen, a.Content, origin, fontSize, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 }
 
 // Bounds returns an empty rect so annotations do not affect autoscaling.
@@ -501,7 +545,7 @@ func (a *Annotation) drawArrow(r render.Renderer, ctx *DrawContext, start, targe
 	if a.ArrowWidth <= 0 || a.ArrowHeadSize <= 0 {
 		return
 	}
-	color := resolvedArrowColor(a.ArrowColor, a.Color, ctx)
+	color := a.ApplyArtistAlpha(resolvedArrowColor(a.ArrowColor, a.Color, ctx))
 	patch := &FancyArrowPatch{
 		Patch: Patch{
 			FaceColor: color,
@@ -622,6 +666,27 @@ func drawTextBBox(r render.Renderer, origin geom.Pt, layout singleLineTextLayout
 	if cfg.CornerRadius > 0 {
 		path = roundedRectPath(rect, cfg.CornerRadius)
 	}
+	r.Path(path, &render.Paint{
+		Fill:      cfg.FaceColor,
+		Stroke:    cfg.EdgeColor,
+		LineWidth: cfg.LineWidth,
+		LineJoin:  render.JoinMiter,
+		LineCap:   render.CapButt,
+	})
+}
+
+func drawTextBBoxRotated(r render.Renderer, origin geom.Pt, layout singleLineTextLayout, opt *TextBBoxOptions, ctx *DrawContext, fontSize float64, pivot geom.Pt, angleDeg float64) {
+	rect, ok := textBBoxRect(origin, layout, opt, ctx, fontSize)
+	if !ok {
+		return
+	}
+	cfg := resolvedTextBBoxOptions(*opt, ctx, fontSize)
+
+	path := pixelRectPath(rect)
+	if cfg.CornerRadius > 0 {
+		path = roundedRectPath(rect, cfg.CornerRadius)
+	}
+	path = rotatePathAround(path, pivot, angleDeg)
 	r.Path(path, &render.Paint{
 		Fill:      cfg.FaceColor,
 		Stroke:    cfg.EdgeColor,

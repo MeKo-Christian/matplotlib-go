@@ -263,7 +263,7 @@ var featureCoverageRows = []FeatureCoverage{
 		Title:                   "Widgets, Events, and Animation",
 		UpstreamModules:         []string{"widgets.py", "backend_bases.py", "backend_tools.py", "animation.py"},
 		UpstreamGalleryFamilies: []string{"widgets", "event_handling", "animation", "user_interfaces"},
-		GoFiles:                 []string{"core/widget_button.go", "core/widget_slider.go", "core/widget_rangeslider.go", "core/widget_checkbuttons.go", "core/widget_radiobuttons.go", "core/widget_textbox.go", "core/selectors.go", "core/widgets_common.go", "canvas/widget_interaction.go", "canvas/dispatcher.go", "canvas/navigation.go", "canvas/picker.go", "canvas/scheduler.go", "animation/animation.go"},
+		GoFiles:                 []string{"core/widget_button.go", "core/widget_slider.go", "core/widget_rangeslider.go", "core/widget_checkbuttons.go", "core/widget_radiobuttons.go", "core/widget_textbox.go", "core/selectors_common.go", "core/widgets_common.go", "canvas/widget_interaction.go", "canvas/dispatcher.go", "canvas/navigation.go", "canvas/picker.go", "canvas/scheduler.go", "animation/animation.go"},
 		GoEquivalent:            CoveragePartial,
 		ParityFixture:           CoveragePending,
 		UserShowcase:            CoveragePending,

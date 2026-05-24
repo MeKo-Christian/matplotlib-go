@@ -751,7 +751,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"core/patch.go", "core/patch_extra.go", "core/arrow_patch.go"},
 		catalogIDs:        []string{"patch_showcase", "patch_style_matrix"},
-		note:              "The upstream BoxStyle registry has Go constants and source-backed path behavior, including mutation scaling/aspect. Renderer-neutral hatch geometry, AGG raster hatches, and SVG/PDF/PS/PGF vector hatches cover the upstream hatch character set, including shape glyph repeat density. ArrowStyle covers the registered names, source-backed Wedge shrink-factor behavior, curve line shortening under arrow heads, and BarAB zero-length bracket defaults; ConnectionStyle covers registered names, style-specific Arc defaults, and Bar angle projection. The patch_style_matrix fixture gives focused visual coverage for box styles, hatch-density variants, ArrowStyle, and ConnectionStyle; remaining ArrowStyle geometry, ConnectionStyle geometry, and broader fixture closure remain partial.",
+		note:              "The upstream BoxStyle registry has Go constants and source-backed path behavior, including mutation scaling/aspect. Renderer-neutral hatch geometry, AGG raster hatches, and SVG/PDF/PS/PGF vector hatches cover the upstream hatch character set, including shape glyph repeat density. ArrowStyle covers the registered names, source-backed Wedge shrink-factor behavior, curve line shortening under arrow heads, BarAB zero-length bracket defaults, FancyArrowPatch mutation-aspect transmutation, and FancyArrowPatch/ConnectionPatch round cap/join defaults; ConnectionStyle covers registered names, style-specific Arc defaults, and Bar angle projection. The patch_style_matrix fixture gives focused visual coverage for box styles, hatch-density variants, ArrowStyle, and ConnectionStyle; remaining ArrowStyle geometry, ConnectionStyle geometry, and broader fixture closure remain partial.",
 	},
 	{
 		idPrefix:          "patches",
@@ -779,7 +779,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/text.go", "core/annotation_box.go", "core/mathtext.go", "core/arrow_patch.go"},
 		catalogIDs:        []string{"text_labels_strict", "title_strict", "annotation_composition", "figure_labels_composition", "mathtext_inline_labels", "text_annotation_matrix"},
 		exampleIDs:        []string{"annotation_composition", "figure_labels_composition"},
-		note:              "Text and annotation rendering exist, including rotation, MathText with per-text MathFontFamily routing, per-artist ParseMath control, arrows, text/annotation bbox patches, anchored labels, explicit annotation_clip plus Matplotlib's default data-only clipping policy, AnnotationBbox-style text/image boxes, per-artist FontKey overrides, and structured family/style/weight/stretch/variant/file/language FontProperties with OpenType feature toggles. The text_annotation_matrix fixture gives focused coverage for font variants, multiline and rotated text, text bbox output, annotation clipping, annotation bboxes, and offset-box content; the broader coordinate model remains partial.",
+		note:              "Text and annotation rendering exist, including rotation, rotated text bbox patches, explicit WrapWidth word wrapping, MathText with per-text MathFontFamily routing, per-artist ParseMath control, artist-level alpha routing for text and annotation arrows, arrows, text/annotation bbox patches, anchored labels, explicit annotation_clip plus Matplotlib's default data-only clipping policy, AnnotationBbox-style text/image boxes, per-artist FontKey overrides, and structured family/style/weight/stretch/variant/file/language FontProperties with OpenType feature toggles. The text_annotation_matrix fixture gives focused coverage for font variants, multiline and rotated text, text bbox output, annotation clipping, annotation bboxes, and offset-box content; the broader coordinate model remains partial.",
 	},
 	{
 		idPrefix:          "font-manager",
@@ -808,7 +808,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/legend.go"},
 		catalogIDs:        []string{"multi_series_basic", "multi_series_color_cycle", "figure_labels_composition", "legend_layout_matrix"},
 		exampleIDs:        []string{"figure_labels_composition"},
-		note:              "Static legend layout exists, including title drawing through Title/TitleFontSize, frame visibility through FrameOn, Go-style multi-column layout through NumColumns and ColumnSpacing, marker scaling / scatter sample controls through MarkerScale and ScatterPoints, explicit proxy entries through AddEntry / LegendEntryOptions, typed per-artist handler overrides through SetHandler / ClearHandler, and built-in errorbar samples with stems/caps. The legend_layout_matrix fixture gives focused coverage for multi-column legends, titles, scatter sample counts, marker scaling, errorbar samples, proxy entries, and handler overrides; draggable legends and richer custom handler parity remain partial.",
+		note:              "Static legend layout exists, including title drawing through Title/TitleFontSize, frame visibility through FrameOn, Go-style multi-column layout through NumColumns and ColumnSpacing, figure-level legend collection/stacking, marker scaling / scatter sample controls through MarkerScale and ScatterPoints, explicit proxy entries through AddEntry / LegendEntryOptions, typed per-artist handler overrides through SetHandler / ClearHandler, built-in errorbar samples with stems/caps, combined stem samples, and representative LegendBest avoidance for line, scatter, image, and annotation anchors. The legend_layout_matrix fixture gives focused coverage for multi-column legends, titles, scatter sample counts, marker scaling, errorbar samples, proxy entries, and handler overrides; draggable legends, full bbox/path-intersection best-location scoring, and richer custom handler parity remain partial.",
 	},
 	{
 		idPrefix:          "legend-handler",
@@ -818,7 +818,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/legend.go"},
 		catalogIDs:        []string{"multi_series_basic", "multi_series_color_cycle", "legend_layout_matrix"},
 		exampleIDs:        []string{"figure_labels_composition"},
-		note:              "Go exposes typed legend samples and per-artist handler overrides through LegendEntryOptions rather than Python's arbitrary handler-map dispatch. The legend_layout_matrix fixture covers proxy entries, typed handler overrides, marker scaling, scatter sample counts, and errorbar samples; remaining handler scope is precise built-in sample breadth for collection, stem, bar, and filled-band families.",
+		note:              "Go exposes typed legend samples and per-artist handler overrides through LegendEntryOptions rather than Python's arbitrary handler-map dispatch. The legend_layout_matrix fixture covers proxy entries, typed handler overrides, marker scaling, scatter sample counts, and errorbar samples; built-in line, marker, patch, collection, errorbar, stem, bar, and filled-band samples are represented through static Go legend entries. Remaining handler scope is exact scalar-mapped collection sample normalization and rare custom handler behavior.",
 	},
 	{
 		idPrefix:          "offsetbox",
@@ -940,7 +940,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		module:            "widgets.py",
 		featureCoverageID: "widgets-events-animation",
 		status:            PublicSurfacePartial,
-		goFiles:           []string{"core/widget_button.go", "core/widget_slider.go", "core/widget_rangeslider.go", "core/widget_checkbuttons.go", "core/widget_radiobuttons.go", "core/widget_textbox.go", "core/selectors.go", "core/widgets_common.go", "canvas/widget_interaction.go", "canvas/dispatcher.go", "canvas/picker.go"},
+		goFiles:           []string{"core/widget_button.go", "core/widget_slider.go", "core/widget_rangeslider.go", "core/widget_checkbuttons.go", "core/widget_radiobuttons.go", "core/widget_textbox.go", "core/selectors_common.go", "core/widgets_common.go", "canvas/widget_interaction.go", "canvas/dispatcher.go", "canvas/picker.go"},
 		note:              "Static widget artists and event dispatch exist for buttons, sliders, range sliders, check buttons, radio buttons, text boxes, and common selectors including span, rectangle, ellipse, polygon, and lasso workflows. Remaining widget partial scope is exact upstream callback ordering/active-state edge behavior, cursor/multi-cursor helpers, menu/tool widgets, GUI-specific behavior, and browser-demo coverage.",
 	},
 	{

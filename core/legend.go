@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"reflect"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -555,7 +556,13 @@ func collectLegendEntries(artists []Artist) []legendEntry {
 
 func (l *Legend) collectLegendEntries(artists []Artist) []legendEntry {
 	entries := make([]legendEntry, 0, len(artists))
-	for _, art := range artists {
+	for i := 0; i < len(artists); i++ {
+		art := artists[i]
+		if entry, ok := l.stemLegendEntryAt(artists, i); ok {
+			entries = append(entries, entry)
+			i++
+			continue
+		}
 		switch art.(type) {
 		case *Legend:
 			continue
@@ -581,6 +588,79 @@ func (l *Legend) collectLegendEntries(artists []Artist) []legendEntry {
 		}
 	}
 	return entries
+}
+
+func (l *Legend) stemLegendEntryAt(artists []Artist, i int) (legendEntry, bool) {
+	if i+1 >= len(artists) {
+		return legendEntry{}, false
+	}
+	stems, ok := artists[i].(*LineCollection)
+	if !ok || !lineCollectionLooksLikeStems(stems) {
+		return legendEntry{}, false
+	}
+	markers, ok := artists[i+1].(*PathCollection)
+	if !ok {
+		return legendEntry{}, false
+	}
+	label := stems.label()
+	if label == "" || label != markers.label() || !legendLabelVisible(label) {
+		return legendEntry{}, false
+	}
+	if _, ok := l.handlerEntryFor(stems, label); ok {
+		return legendEntry{}, false
+	}
+	if _, ok := l.handlerEntryFor(markers, label); ok {
+		return legendEntry{}, false
+	}
+
+	lineEntry, ok := stems.legendEntry()
+	if !ok {
+		return legendEntry{}, false
+	}
+	markerEntry, ok := markers.legendEntry()
+	if !ok {
+		return legendEntry{}, false
+	}
+
+	entry := lineEntry
+	entry.kind = legendEntryErrorBar
+	entry.errorbarY = true
+	entry.lineMarkerSet = true
+	entry.marker = markerEntry.marker
+	entry.markerPath = markerEntry.markerPath
+	entry.markerAltPath = markerEntry.markerAltPath
+	entry.markerEdgePath = markerEntry.markerEdgePath
+	entry.markerHasAlt = markerEntry.markerHasAlt
+	entry.markerLineOnly = markerEntry.markerLineOnly
+	entry.markerFill = markerEntry.markerFill
+	entry.markerAltFill = markerEntry.markerAltFill
+	entry.markerEdge = markerEntry.markerEdge
+	entry.markerEdgeWidth = markerEntry.markerEdgeWidth
+	return entry, true
+}
+
+func lineCollectionLooksLikeStems(stems *LineCollection) bool {
+	if stems == nil || len(stems.Segments) == 0 {
+		return false
+	}
+	vertical := 0
+	horizontal := 0
+	for _, segment := range stems.Segments {
+		if len(segment) != 2 {
+			return false
+		}
+		dx := math.Abs(segment[1].X - segment[0].X)
+		dy := math.Abs(segment[1].Y - segment[0].Y)
+		switch {
+		case dx <= 1e-12 && dy > 1e-12:
+			vertical++
+		case dy <= 1e-12 && dx > 1e-12:
+			horizontal++
+		default:
+			return false
+		}
+	}
+	return vertical == len(stems.Segments) || horizontal == len(stems.Segments)
 }
 
 func (l *Legend) handlerEntryFor(art Artist, label string) (legendEntry, bool) {
@@ -657,6 +737,17 @@ func (l *Legend) legendAvoidancePoints(ctx *DrawContext) []geom.Pt {
 			points = append(points, pt)
 		}
 	}
+	appendRectCorners := func(spec CoordinateSpec, rect geom.Rect) {
+		if rect == (geom.Rect{}) {
+			return
+		}
+		appendPoints(spec, []geom.Pt{
+			rect.Min,
+			{X: rect.Max.X, Y: rect.Min.Y},
+			rect.Max,
+			{X: rect.Min.X, Y: rect.Max.Y},
+		})
+	}
 
 	for _, art := range l.Axes.Artists {
 		switch a := art.(type) {
@@ -672,6 +763,19 @@ func (l *Legend) legendAvoidancePoints(ctx *DrawContext) []geom.Pt {
 			for _, segment := range a.Segments {
 				appendPoints(a.Coords, segment)
 			}
+		case *Image2D:
+			appendRectCorners(Coords(CoordData), a.Bounds(ctx))
+		case *Annotation:
+			target := transformedPoint(ctx, a.Coords, a.Point, 0, 0)
+			text := transformedPoint(ctx, a.Coords, a.Point, a.OffsetX, a.OffsetY)
+			points = append(points, target, text)
+		case *AnnotationBbox:
+			target := transformedPoint(ctx, a.XYCoords, a.Point, 0, 0)
+			box := target
+			if a.BoxPosition != nil {
+				box = transformedPoint(ctx, a.BoxCoords, *a.BoxPosition, 0, 0)
+			}
+			points = append(points, target, box)
 		}
 	}
 	return points

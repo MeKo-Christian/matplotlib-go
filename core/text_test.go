@@ -651,6 +651,91 @@ func TestTextArtistCanDisableMathParsing(t *testing.T) {
 	}
 }
 
+func TestTextArtistAlphaAppliesToDrawnText(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 1},
+		Content:  "plain",
+		FontSize: 12,
+		Color:    render.Color{R: 0.2, G: 0.4, B: 0.6, A: 0.8},
+		ClipOn:   true,
+	}
+	text.SetAlpha(0.5)
+	r := &textRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.textColors) != 1 {
+		t.Fatalf("expected one drawn text color, got %+v", r.textColors)
+	}
+	if !approx(r.textColors[0].A, 0.4, 1e-12) {
+		t.Fatalf("text alpha = %v, want local alpha multiplied by artist alpha", r.textColors[0].A)
+	}
+}
+
+func TestTextArtistWrapWidthUsesMultilineLayoutAndBBox(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position:  geom.Pt{X: 1, Y: 1},
+		Content:   "alpha beta gamma",
+		FontSize:  10,
+		WrapWidth: 52,
+		ClipOn:    true,
+		BBox: &TextBBoxOptions{
+			FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
+			EdgeColor: render.Color{A: 1},
+			Padding:   1,
+		},
+	}
+	r := &textRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.texts) != 2 || r.texts[0] != "alpha beta" || r.texts[1] != "gamma" {
+		t.Fatalf("wrapped text lines = %v, want [alpha beta] [gamma]", r.texts)
+	}
+	if len(r.pathCalls) == 0 {
+		t.Fatal("expected wrapped text bbox path")
+	}
+	bounds, ok := pathBounds(r.pathCalls[0].path)
+	if !ok {
+		t.Fatalf("missing bbox path bounds: %+v", r.pathCalls[0].path)
+	}
+	if bounds.W() > text.WrapWidth {
+		t.Fatalf("wrapped bbox width = %v, want <= wrap width %v", bounds.W(), text.WrapWidth)
+	}
+}
+
+func TestRotatedTextBBoxRotatesWithText(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 1},
+		Content:  "tilt",
+		FontSize: 10,
+		Angle:    45,
+		ClipOn:   true,
+		BBox: &TextBBoxOptions{
+			FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
+			EdgeColor: render.Color{A: 1},
+			Padding:   1,
+		},
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.pathCalls) == 0 {
+		t.Fatal("expected rotated text bbox path")
+	}
+	path := r.pathCalls[0].path
+	if len(path.V) < 4 {
+		t.Fatalf("bbox path vertices = %+v, want rotated rectangle vertices", path.V)
+	}
+	if approx(path.V[0].Y, path.V[1].Y, 1e-9) || approx(path.V[1].X, path.V[2].X, 1e-9) {
+		t.Fatalf("rotated text bbox remained axis-aligned: %+v", path.V[:4])
+	}
+}
+
 func TestTextArtistFontKeyOverridesRCFontKey(t *testing.T) {
 	ctx := createTestDrawContext()
 	ctx.RC.FontKey = "RC Font"
@@ -803,6 +888,39 @@ func TestAnnotationCanDisableMathParsing(t *testing.T) {
 	}
 	if got, want := r.fontTextCalls[0].text, `note $\beta$`; got != want {
 		t.Fatalf("parse_math disabled annotation = %q, want %q", got, want)
+	}
+}
+
+func TestAnnotationAlphaAppliesToTextAndArrow(t *testing.T) {
+	ctx := createTestDrawContext()
+	arrowStyle, _ := ArrowStyleFromString("-|>")
+	connectionStyle, _ := ConnectionStyleFromString("arc3")
+	annotation := &Annotation{
+		Point:           geom.Pt{X: 1, Y: 1},
+		Content:         "note",
+		OffsetX:         10,
+		OffsetY:         -8,
+		FontSize:        12,
+		Color:           render.Color{R: 0.2, G: 0.4, B: 0.6, A: 0.6},
+		ArrowColor:      render.Color{R: 0.8, G: 0.1, B: 0.1, A: 0.8},
+		ArrowWidth:      1.25,
+		ArrowHeadSize:   8,
+		ArrowStyle:      arrowStyle,
+		ConnectionStyle: connectionStyle,
+	}
+	annotation.SetAlpha(0.5)
+	r := &textRecordingRenderer{}
+
+	annotation.DrawOverlay(r, ctx)
+
+	if len(r.textColors) != 1 {
+		t.Fatalf("expected one annotation text color, got %+v", r.textColors)
+	}
+	if !approx(r.textColors[0].A, 0.3, 1e-12) {
+		t.Fatalf("annotation text alpha = %v, want local alpha multiplied by artist alpha", r.textColors[0].A)
+	}
+	if !hasPaintAlpha(r.pathPaints, 0.4) {
+		t.Fatalf("annotation arrow paints should include artist-multiplied alpha 0.4, got %+v", r.pathPaints)
 	}
 }
 
@@ -1311,6 +1429,15 @@ func (r *textRecordingRenderer) DrawText(text string, origin geom.Pt, size float
 func hasPathPaint(paints []render.Paint, fill, stroke render.Color, lineWidth float64) bool {
 	for _, paint := range paints {
 		if paint.Fill == fill && paint.Stroke == stroke && approx(paint.LineWidth, lineWidth, 1e-12) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasPaintAlpha(paints []render.Paint, alpha float64) bool {
+	for _, paint := range paints {
+		if approx(paint.Fill.A, alpha, 1e-12) || approx(paint.Stroke.A, alpha, 1e-12) {
 			return true
 		}
 	}

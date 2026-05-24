@@ -2229,7 +2229,7 @@ Matplotlib.
 
 #### 12.4B Patch and Hatch Catalog Closure
 
-- [ ] Audit upstream `patches.py` patch classes, `BoxStyle._style_list`,
+- [x] Audit upstream `patches.py` patch classes, `BoxStyle._style_list`,
       `ArrowStyle._style_list`, and `ConnectionStyle._style_list` against the
       Go patch surface; update Phase 11 public-surface rows for direct
       equivalents, Go-style equivalents, partial rows, and intentional
@@ -2241,7 +2241,7 @@ Matplotlib.
 - [ ] Verify `FancyArrowPatch` and `ConnectionPatch` geometry against upstream
       for shrink points, mutation scale, cap/join style, clipping to patch
       endpoints, and the visible arrow/connection styles already registered.
-- [ ] Verify hatch character coverage (`/`, `\`, `|`, `-`, `+`, `x`, `o`, `O`,
+- [x] Verify hatch character coverage (`/`, `\`, `|`, `-`, `+`, `x`, `o`, `O`,
       `.`, `*`) and repeat-density semantics against `hatch.py`, including
       backend-native vector hatches and AGG raster hatches.
 - [x] Add renderer-neutral path tests for the implemented box-style behavior,
@@ -2275,6 +2275,16 @@ Current slice landed:
   keeps its upstream zero-shrink default.
 - Renderer-neutral patch tests cover default FancyArrowPatch endpoint shrinking
   and independent-coordinate ConnectionPatch endpoints.
+- `FancyArrowPatch` and `ConnectionPatch` draw paths now use Matplotlib's
+  default round cap / round join styling when no explicit patch cap/join style
+  is set.
+- Renderer-neutral patch tests cover default FancyArrowPatch cap/join paint
+  routing.
+- `FancyArrowPatch.MutationAspect` now follows upstream ArrowStyle mutation
+  semantics by squeezing display-space Y before arrow transmutation and
+  restoring it afterward.
+- Renderer-neutral patch tests cover mutation-aspect scaling without moving
+  the arrow tip.
 - `ArrowStyle("wedge")` now has source-backed `shrink_factor` parsing and a
   wedge-specific tapered path, instead of reusing the generic filled-arrow
   mutation.
@@ -2307,24 +2317,24 @@ Current slice landed:
 
 #### 12.4C Text and Font Property Breadth
 
-- [ ] Audit upstream `text.py`, `font_manager.py`, and `textpath.py` against
+- [x] Audit upstream `text.py`, `font_manager.py`, and `textpath.py` against
       `core.Text`, `render.TextShapingOptions`, and the renderer text
       capability interfaces; classify every public-surface gap as implement,
       Go-style equivalent, deferred, or intentional omission.
-- [ ] Expand per-text font options for family, style, weight, stretch, variant,
+- [x] Expand per-text font options for family, style, weight, stretch, variant,
       math font selection, parse-math behavior, and font-feature hooks where
       the current shaping/font-manager layer can support them deterministically.
-- [ ] Define the deterministic Go policy for Matplotlib font fallback behavior:
+- [x] Define the deterministic Go policy for Matplotlib font fallback behavior:
       which upstream fontconfig/font-manager features are implemented directly,
       which are approximated by bundled/default fonts, and which require a
       user-supplied font path or family registration.
 - [ ] Tighten text bounding-box, baseline, rotation-mode, multiline, wrapping,
       and `bbox` patch behavior against upstream where current layout/text
       validation fixtures still carry visible residuals.
-- [ ] Ensure text alpha, clipping, z-order, path effects, and rasterization
+- [x] Ensure text alpha, clipping, z-order, path effects, and rasterization
       follow the shared artist metadata path rather than bespoke text-only
       routing.
-- [ ] Add renderer-neutral tests for font option resolution and text bounds,
+- [x] Add renderer-neutral tests for font option resolution and text bounds,
       plus catalog/parity fixtures for font variants, multiline layout, rotated
       anchored text, and text-with-bbox output.
 
@@ -2362,22 +2372,35 @@ Current slice landed:
   text while TeX routing remains controlled by `RC.UseTeX`.
 - Renderer-neutral text tests cover `ParseMath=false` for both text artists and
   annotations.
+- Artist-level `SetAlpha` now participates in text rendering: text artists
+  multiply local text color alpha by shared artist metadata, and annotations
+  apply the same multiplier to both annotation text and arrow colors.
+- Renderer-neutral text tests cover artist-alpha routing for standalone text
+  and annotation text/arrow output.
+- `TextOptions.WrapWidth` now provides explicit display-pixel word wrapping
+  for text artists, reusing the multiline layout and text-bbox drawing path for
+  wrapped output.
+- Renderer-neutral text tests cover wrapped line emission and wrapped text-bbox
+  width constraints.
+- Text bbox patches now rotate with rotated text around the same renderer
+  anchor as the text draw call instead of remaining axis-aligned.
+- Renderer-neutral text tests cover rotated bbox path geometry.
 
 #### 12.4D Annotation and Offset-Box Behavior
 
-- [ ] Audit upstream annotation coordinate systems against `Annotate` and the
+- [x] Audit upstream annotation coordinate systems against `Annotate` and the
       transform helpers: data, axes fraction, figure fraction, offset points,
       offset pixels, blended coordinates, artist-relative coordinates, and
       callable/custom coordinate providers.
-- [ ] Implement or explicitly omit missing annotation clipping semantics:
+- [x] Implement or explicitly omit missing annotation clipping semantics:
       `annotation_clip`, clipping to the annotated point, clipping to text /
       arrow patch paths, and interaction with axes clipping.
-- [ ] Add `AnnotationBbox` or a Go-style equivalent for image/text/box content
+- [x] Add `AnnotationBbox` or a Go-style equivalent for image/text/box content
       anchored to data or display coordinates, with arrow connection support.
-- [ ] Add the offset-box families needed for static parity:
+- [x] Add the offset-box families needed for static parity:
       anchored offset box, text area, drawing area, offset image, horizontal /
       vertical packers, and anchored size-bar style layouts.
-- [ ] Keep draggable, GUI-only, and callback-heavy offset-box behavior out of
+- [x] Keep draggable, GUI-only, and callback-heavy offset-box behavior out of
       v1.0 unless a concrete interactive fixture requires it; record those
       omissions in Phase 11 rows.
 - [x] Add catalog/parity fixtures for annotation clipping, annotation box
@@ -2440,19 +2463,19 @@ Current slice landed:
 
 #### 12.4E Legend Handler and Layout Closure
 
-- [ ] Audit upstream `legend.py` and `legend_handler.py` for location,
+- [x] Audit upstream `legend.py` and `legend_handler.py` for location,
       anchoring, column layout, title handling, frame styling, handle length,
       handle text padding, label spacing, marker scaling, scatter-point
       sampling, and handler-map behavior.
-- [ ] Add Go-style legend handler registration for custom samples and proxy-like
+- [x] Add Go-style legend handler registration for custom samples and proxy-like
       entries without exposing Python's arbitrary object-dispatch surface.
-- [ ] Tighten built-in legend samples for lines, markers, patches,
+- [x] Tighten built-in legend samples for lines, markers, patches,
       path/line/patch collections, error bars, stems, bars, filled bands, and
       scalar-mapped collections.
-- [ ] Implement multi-column and figure-level legend layout behavior needed by
+- [x] Implement multi-column and figure-level legend layout behavior needed by
       current catalog/showcase examples, including title placement and
       constrained-layout participation.
-- [ ] Verify `"best"` placement badness against upstream for representative
+- [x] Verify `"best"` placement badness against upstream for representative
       line, scatter, image, and annotation cases; document any deliberate
       simplification with a migration note.
 - [x] Add renderer-neutral legend-layout tests and catalog/parity fixtures for
@@ -2477,6 +2500,11 @@ Current slice landed:
   `boxRect` placement path.
 - Renderer-neutral legend tests cover title drawing, title placement above the
   first entry, and increased legend box height.
+- Figure-level legends collect labeled artists across axes and participate in
+  the figure-artist stacking path used for suptitle / supxlabel / supylabel
+  composition.
+- Renderer-neutral figure-layout tests cover figure legend collection and
+  suptitle stacking.
 - `Legend` now exposes `FrameOn`, mirroring the high-value upstream `frameon`
   control for suppressing only the legend frame while preserving samples, text,
   and the shared layout/placement calculation.
@@ -2498,6 +2526,19 @@ Current slice landed:
   instead of degrading to a plain line-only sample.
 - Renderer-neutral legend tests cover y-error stems and caps in the legend
   sample path output.
+- Stem plots now collect as a single combined legend sample when the adjacent
+  stem line collection and marker collection share a label, instead of drawing
+  duplicate line-only and marker-only legend entries.
+- Renderer-neutral legend tests cover combined stem legend collection.
+- `LegendBest` placement now uses a Matplotlib-style static badness heuristic
+  over display-space artist samples. It avoids line vertices, scatter /
+  collection offsets, image extent corners, and annotation / AnnotationBbox
+  anchors, then preserves Matplotlib's lower-location-code tie break. The Go
+  heuristic intentionally stays point/anchor based for v1.0 instead of cloning
+  Matplotlib's full bbox/path-intersection scoring and renderer-dependent text
+  window extents.
+- Renderer-neutral legend tests cover representative best-placement avoidance
+  for line, scatter, image, and annotation cases.
 - Added the focused `legend_layout_matrix` parity fixture for Phase 12.4 legend
   coverage. It exercises multi-column layout, title drawing, scatter sample
   counts, marker scaling, errorbar samples, proxy entries, frame suppression,

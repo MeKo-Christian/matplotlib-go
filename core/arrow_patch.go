@@ -132,15 +132,16 @@ func (a *FancyArrowPatch) Draw(ren render.Renderer, ctx *DrawContext) {
 	if a == nil || ren == nil || ctx == nil {
 		return
 	}
+	patch := a.arrowDrawPatch()
 	parts := a.displayParts(ctx, a.displayPath(ctx))
 	for _, part := range parts {
 		if len(part.path.C) == 0 {
 			continue
 		}
 		if part.fillable {
-			a.drawStyledPath(ren, part.path, geom.Path{})
+			patch.drawStyledPath(ren, part.path, geom.Path{})
 		} else {
-			a.drawStyledPath(ren, geom.Path{}, part.path)
+			patch.drawStyledPath(ren, geom.Path{}, part.path)
 		}
 	}
 }
@@ -163,6 +164,7 @@ func (c *ConnectionPatch) Draw(ren render.Renderer, ctx *DrawContext) {
 	if c == nil || ren == nil || ctx == nil {
 		return
 	}
+	patch := c.arrowDrawPatch()
 	path := c.connectionDisplayPath(ctx)
 	parts := c.displayParts(ctx, path)
 	for _, part := range parts {
@@ -170,15 +172,27 @@ func (c *ConnectionPatch) Draw(ren render.Renderer, ctx *DrawContext) {
 			continue
 		}
 		if part.fillable {
-			c.drawStyledPath(ren, part.path, geom.Path{})
+			patch.drawStyledPath(ren, part.path, geom.Path{})
 		} else {
-			c.drawStyledPath(ren, geom.Path{}, part.path)
+			patch.drawStyledPath(ren, geom.Path{}, part.path)
 		}
 	}
 }
 
 // Bounds returns an empty rect because a connection may span multiple spaces.
 func (c *ConnectionPatch) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
+
+func (a *FancyArrowPatch) arrowDrawPatch() *Patch {
+	if a == nil {
+		return &Patch{}
+	}
+	patch := a.Patch
+	if patch.LineJoin == render.JoinMiter && patch.LineCap == render.CapButt {
+		patch.LineJoin = render.JoinRound
+		patch.LineCap = render.CapRound
+	}
+	return &patch
+}
 
 func (a *FancyArrowPatch) displayPath(ctx *DrawContext) geom.Path {
 	if len(a.Path.C) > 0 {
@@ -226,7 +240,18 @@ func (a *FancyArrowPatch) displayParts(_ *DrawContext, path geom.Path) []arrowPa
 	if lineWidth <= 0 {
 		lineWidth = 1
 	}
-	return style.transmute(path, scale, lineWidth)
+	aspect := 1.0
+	if a != nil && a.MutationAspect > 0 {
+		aspect = a.MutationAspect
+	}
+	if aspect == 1 {
+		return style.transmute(path, scale, lineWidth)
+	}
+	parts := style.transmute(scalePathY(path, 1/aspect), scale, lineWidth)
+	for i := range parts {
+		parts[i].path = scalePathY(parts[i].path, aspect)
+	}
+	return parts
 }
 
 func (a *FancyArrowPatch) effectiveShrinkA() float64 {
@@ -241,6 +266,18 @@ func (a *FancyArrowPatch) effectiveShrinkB() float64 {
 		return 2
 	}
 	return a.ShrinkB
+}
+
+func scalePathY(path geom.Path, scale float64) geom.Path {
+	if scale == 1 || len(path.V) == 0 {
+		return path
+	}
+	out := path
+	out.V = append([]geom.Pt(nil), path.V...)
+	for i := range out.V {
+		out.V[i].Y *= scale
+	}
+	return out
 }
 
 func (s ConnectionStyle) connect(posA, posB geom.Pt, shrinkA, shrinkB float64) geom.Path {

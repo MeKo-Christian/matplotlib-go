@@ -173,7 +173,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CurrentEquivalent: "Go has common patch shapes, hatch routing, FancyBboxPatch with the upstream " +
 			"BoxStyle registry entries, renderer-neutral hatch geometry for the upstream hatch " +
 			"character set, AGG shape hatches, vector-native shape hatch patterns, FancyArrowPatch, " +
-			"Matplotlib-style FancyArrowPatch default endpoint shrinking, ArrowStyle Wedge shrink-factor behavior, ArrowStyle curve line shortening, ArrowStyle BarAB zero-length bracket defaults, ConnectionStyle Arc defaults, ConnectionStyle Bar angle projection, ConnectionPatch, and several extra patch classes.",
+			"Matplotlib-style FancyArrowPatch default endpoint shrinking, FancyArrowPatch / ConnectionPatch round cap/join defaults, FancyArrowPatch mutation-aspect arrow transmutation, ArrowStyle Wedge shrink-factor behavior, ArrowStyle curve line shortening, ArrowStyle BarAB zero-length bracket defaults, ConnectionStyle Arc defaults, ConnectionStyle Bar angle projection, ConnectionPatch, and several extra patch classes.",
 		Gap: "Remaining patch scope is exact ArrowStyle / ConnectionStyle geometry edge cases, " +
 			"specialized patch class breadth, and broader visual fixture closure beyond the focused " +
 			"patch_style_matrix registry case.",
@@ -189,10 +189,13 @@ var foundationAPIGaps = []FoundationAPIGap{
 		GoFiles:         []string{"core/text.go", "core/mathtext.go", "render/text_path.go"},
 		CurrentEquivalent: "Go supports text, rotated text, multiline drawing, text bbox patches, " +
 			"text paths, MathText, TeX paths, per-text font routing, and renderer font resolution. " +
+			"Text and annotation drawing use shared artist-alpha metadata for visible text and arrow colors. " +
+			"TextOptions.WrapWidth provides explicit display-pixel word wrapping. " +
+			"Text bbox patches rotate with rotated text. " +
 			"The text_annotation_matrix fixture gives focused coverage for multiline text, rotated " +
 			"text, text bbox output, and structured font requests.",
-		Gap: "Remaining text layout scope is exact bounding-box / baseline edge behavior, wrapping, " +
-			"rotation-mode details, and text path effect / rasterization interactions where visible " +
+		Gap: "Remaining text layout scope is exact bounding-box / baseline edge behavior, " +
+			"rotation-mode anchor semantics, automatic Matplotlib edge-based wrapping policy, and text path effect / rasterization interactions where visible " +
 			"fixtures still show residuals.",
 		Decision: GapDecisionImplement,
 		Rationale: "Text and legend behavior is heavily visible in parity images and migration examples; " +
@@ -254,11 +257,13 @@ var foundationAPIGaps = []FoundationAPIGap{
 		GoFiles:         []string{"core/legend.go"},
 		CurrentEquivalent: "Go legends support static placement, titles, frame visibility, multi-column " +
 			"layout, marker scaling, scatter sample counts, explicit proxy entries, typed per-artist " +
-			"handler overrides, and errorbar samples. The legend_layout_matrix fixture gives focused " +
+			"handler overrides, errorbar samples, combined stem samples, and representative LegendBest " +
+			"avoidance for line, scatter, image, and annotation anchors. Figure-level legends collect " +
+			"across axes and stack with figure labels. The legend_layout_matrix fixture gives focused " +
 			"coverage for those handler and layout paths.",
-		Gap: "Remaining legend scope is richer built-in samples for remaining collection / stem / bar / " +
-			"filled-band families, representative best-placement badness checks, figure-level layout " +
-			"participation, and explicit omission of draggable legend behavior from static parity.",
+		Gap: "Remaining legend scope is exact scalar-mapped collection sample normalization, full " +
+			"bbox/path-intersection best-placement scoring, and explicit omission of draggable legend " +
+			"behavior from static parity.",
 		Decision: GapDecisionImplement,
 		Rationale: "Legend output is visible in many examples; handler parity should stay typed and " +
 			"Go-style while matching static rendered samples where feasible.",
@@ -349,7 +354,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 			"core/widget_checkbuttons.go",
 			"core/widget_radiobuttons.go",
 			"core/widget_textbox.go",
-			"core/selectors.go",
+			"core/selectors_common.go",
 			"core/widgets_common.go",
 			"canvas/widget_interaction.go",
 			"canvas/dispatcher.go",

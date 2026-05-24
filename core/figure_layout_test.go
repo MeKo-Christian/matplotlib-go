@@ -91,6 +91,32 @@ func TestFigureLegendCollectsAcrossAxes(t *testing.T) {
 	}
 }
 
+func TestFigureLegendStacksBelowSuptitle(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.15},
+		Max: geom.Pt{X: 0.90, Y: 0.85},
+	})
+	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	fig.SetSuptitle("Figure Title")
+	fig.AddLegend()
+
+	var r figureLayoutRecordingRenderer
+	DrawFigure(fig, &r)
+
+	title, ok := r.textOrigin("Figure Title")
+	if !ok {
+		t.Fatalf("missing suptitle draw, texts=%v", r.texts)
+	}
+	label, ok := r.textOrigin("signal")
+	if !ok {
+		t.Fatalf("missing figure legend label draw, texts=%v", r.texts)
+	}
+	if label.Y <= title.Y {
+		t.Fatalf("figure legend should stack below suptitle, got title=%+v legend=%+v", title, label)
+	}
+}
+
 func TestAnchoredTextBoxDrawsFigureAndAxesBoxes(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{
