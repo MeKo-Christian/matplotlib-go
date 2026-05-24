@@ -122,79 +122,36 @@ example / browser-gallery breadth, and documentation polish for v1.0.
 
 ---
 
-# Phase 1A: PDF Publication Backend
+# Phase 1: Publication Backends and Shared Save Pipeline
 
-✅ **Completed.** PDF is a deterministic, publication-quality vector backend
-registered through the shared save pipeline.
-
-Completed scope:
-
-- `backends/pdf` implements deterministic PDF object writing, compressed page
-  streams, metadata handling with `SOURCE_DATE_EPOCH`, path/fill/stroke/clip
-  drawing, and extension-driven save dispatch.
-- Text supports path output and embedded Type 0 / CIDFontType2 TrueType
-  resources with deterministic subsetting, `/CIDToGIDMap`, `/W`, and
-  `/ToUnicode` maps.
-- Raster images are emitted as reusable XObjects with Flate/JPEG handling, PNG
-  predictors, RGBA alpha masks, and transformed image matrices.
-- Hatches, marker batches, path collections, and stroke/fill alpha are native
-  reusable PDF resources.
-- Structural comparison and golden fixtures cover common plot families,
-  hatches, text layout, clipping, transformed images, registry selection, and
-  export behavior.
-
----
-
-# Phase 1B: PostScript / EPS and PGF Backends
-
-✅ **Completed.** PostScript / EPS and PGF are registered publication-vector
-backends with deterministic output, shared save-option routing, documented
-limitations, and smoke / structural coverage.
+✅ **Completed.** PDF, PS/EPS, and PGF are now deterministic publication-vector
+backends integrated into one shared, extension-driven save pipeline across PNG,
+SVG, PDF, PS/EPS, and PGF.
 
 Completed scope:
 
-- PS/EPS emits deterministic Level-2 PostScript with paths, clipping,
-  strokes/fills, transformed images, native hatch strokes, reusable
-  marker/path-collection procedures, extension registration, and smoke
-  fixtures.
-- PS font, alpha, image/JPEG, reuse, and fixture policies are implemented where
-  feasible or documented where Level-2 PostScript cannot match PDF semantics.
-- PGF emits deterministic generator-only `pgfpicture` output with paths, clips,
-  text, rotated text, opacity commands, native hatches, raster images,
-  transformed images, mixed-raster groups, and reusable marker/path-collection
-  macros.
-- PGF-specific save options route through the shared `render.SaveOption`
-  surface: metadata, preamble, comment policy, and verification mode are
-  forwarded by `core.SaveFig`, `pyplot.SaveFig`, registry saves, and renderer
-  export.
-- PGF CI remains pure generator smoke output; local TeX compilation is
-  optional. Draw-time text metrics are deterministic approximations, with exact
-  TeX/font metrics delegated to LaTeX and documented as an intentional
-  generator-only limitation.
-
----
-
-# Phase 1C: Shared Vector Save Pipeline
-
-✅ **Completed.** PNG, SVG, PDF, PS/EPS, and PGF now share the same
-extension-driven save path, option routing surface, capability reporting, and
-mixed raster/vector fallback model.
-
-Completed scope:
-
-- Public save routes (`pyplot.SaveFig`, canvas / manager save, `cmd/example`,
-  CLI helpers) select backends via `SelectBackendForExtension` and write
-  through `SaveFormats`.
-- Backend capability reporting includes export interfaces, registered save
-  extensions, and per-format status for fonts, hatches, alpha, images,
-  transformed images, collection batching, metadata, and deterministic output.
-- Shared save options route SVG, PDF, PS, and PGF behavior without
-  backend-name conditionals; unsupported options return clear errors.
-- Mixed raster/vector output is capability-driven through artist rasterization
-  and DPI-aware offscreen replay, with embedding support in SVG, PDF, PS/EPS,
-  and PGF.
-- Fixtures cover clip, transform, alpha, rasterized artists, and preservation
-  of surrounding vector content.
+- PDF (`backends/pdf`) supports deterministic object/page-stream writing,
+  `SOURCE_DATE_EPOCH` metadata, full path/fill/stroke/clip drawing, embedded
+  Type 0/CIDFontType2 subsets with deterministic maps, and reusable native
+  resources for images, hatches, marker/path collections, alpha, and
+  transformed images.
+- PS/EPS provides deterministic Level-2 output for paths, clips,
+  strokes/fills, transformed images, native hatches, and reusable
+  marker/path-collection procedures; unavoidable Level-2 limitations versus PDF
+  are implemented where possible and clearly documented otherwise.
+- PGF provides deterministic generator-only `pgfpicture` output for paths,
+  clips, text/rotated text, opacity, hatches, raster/transformed images,
+  mixed-raster groups, and reusable marker/path-collection macros, with TeX
+  compilation optional and generator-smoke CI coverage.
+- Shared save routing uses `SelectBackendForExtension` + `SaveFormats` across
+  public entry points (`pyplot`, canvas/manager, CLI, examples), with unified
+  `render.SaveOption` plumbing (including PGF metadata/preamble/comment/
+  verification controls), capability reporting, explicit unsupported-option
+  errors, and consistent mixed raster/vector behavior via DPI-aware offscreen
+  replay.
+- Structural/smoke/golden fixtures cover backend selection, export stability,
+  text/clipping/transforms, alpha, rasterized artists, and vector-surround
+  preservation.
 
 ---
 
@@ -2291,8 +2248,11 @@ Current slice landed:
 - `ArrowStyle("wedge")` now has source-backed `shrink_factor` parsing and a
   wedge-specific tapered path, instead of reusing the generic filled-arrow
   mutation.
-- Renderer-neutral patch tests cover Wedge tail width, midpoint shrink, and
-  endpoint tapering.
+- Wedge arrow mutation now follows quadratic connection control points for
+  curved `arc3`-style paths instead of collapsing the connection to a straight
+  start/end segment.
+- Renderer-neutral patch tests cover Wedge tail width, midpoint shrink,
+  endpoint tapering, and quadratic-connection geometry.
 - Curve-style arrow mutations now shorten the stroked connection line under
   begin/end arrow heads while keeping the arrow head anchored at the original
   endpoint, matching Matplotlib's `_Curve` line/head split.
@@ -2762,7 +2722,6 @@ Current slice landed:
   `AxVSpan` wrappers for the existing core reference-line/span helpers, with a
   focused delegation test covering returned core artists and current-axes
   ownership.
-
 Implementation notes:
 
 - Compare against upstream `image.py`, `pyplot.py`, `_pylab_helpers.py`,
