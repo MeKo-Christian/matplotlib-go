@@ -2040,13 +2040,13 @@ catalog/parity fixture per behavior family.
 - [x] Audit upstream `ticker.py` formatters row by row and update public-surface
       parity notes for direct equivalents, Go-style equivalents, and deliberate
       omissions.
-- [ ] Expand `ScalarFormatter` parity: offset text decision, scientific limits,
+- [x] Expand `ScalarFormatter` parity: offset text decision, scientific limits,
       power limits, math-text mode, fixed-minus behavior, locale/no-locale
       decision, and step-aware precision.
-- [ ] Decide and document ScalarFormatter offset text policy: implement
+- [x] Decide and document ScalarFormatter offset text policy: implement
       axis-level offset text, or record a deliberate omission with a migration
       note and parity-surface update.
-- [ ] Add locale/no-locale ScalarFormatter coverage matching the chosen Go
+- [x] Add locale/no-locale ScalarFormatter coverage matching the chosen Go
       policy; keep labels deterministic under the default test locale.
 - [x] Add `ScalarFormatter` option coverage for inclusive power limits,
       MathText-style scientific labels, scientific suppression, and
@@ -2091,10 +2091,10 @@ catalog/parity fixture per behavior family.
       `StrMethodFormatter` edge behavior in the audit rows.
 - [x] Add `formatter_fixed_null_labels` catalog/parity fixture for visible
       fixed tick labels and null-label suppression.
-- [ ] Add one catalog/parity case each for scalar offset/scientific labels, log
+- [x] Add one catalog/parity case each for scalar offset/scientific labels, log
       math-text labels, engineering labels, percent labels, and index/fixed/null
       labels.
-- [ ] Close the formatter catalog row after scalar offset policy is resolved;
+- [x] Close the formatter catalog row after scalar offset policy is resolved;
       current fixture coverage already includes scientific, log MathText,
       engineering, percent, and fixed/null labels.
 

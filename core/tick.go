@@ -1024,7 +1024,9 @@ func logitMinorTicks(bInf, bSup int) []float64 {
 
 // ScalarFormatter formats numbers with fixed precision and trims trailing zeros.
 // Uses scientific notation if |x| >= 1e6 or (0 < |x| <= 1e-4), unless
-// custom power limits or scientific suppression are configured.
+// custom power limits or scientific suppression are configured. Formatting is
+// locale-independent and does not emit Matplotlib-style axis offset text; use a
+// FuncFormatter when a plot needs explicit offset labels.
 type ScalarFormatter struct {
 	Prec int
 

@@ -529,6 +529,15 @@ func TestScalarFormatterPowerLimitsAndMathText(t *testing.T) {
 	}
 }
 
+func TestScalarFormatterLocaleIndependentPolicy(t *testing.T) {
+	t.Setenv("LC_NUMERIC", "de_DE.UTF-8")
+
+	f := ScalarFormatter{Prec: 2, DisableScientific: true}
+	if got := f.Format(-1234.5); got != "−1234.5" {
+		t.Fatalf("locale-independent scalar label = %q, want %q", got, "−1234.5")
+	}
+}
+
 func TestFormatScalarTickLabel_UsesStepPrecision(t *testing.T) {
 	f := ScalarFormatter{Prec: 3}
 	cases := []struct {
