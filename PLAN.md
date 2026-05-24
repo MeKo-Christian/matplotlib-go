@@ -2027,7 +2027,7 @@ catalog/parity fixture per behavior family.
       axes.
 - [ ] Add renderer-neutral unit tests for each new locator and a catalog case
       named for each visible locator family rather than one combined fixture.
-- [ ] Add `locator_linear_labels` covering `LinearLocator`, `MultipleLocator`,
+- [x] Add `locator_linear_labels` covering `LinearLocator`, `MultipleLocator`,
       and default linear tick labels.
 - [ ] Add `locator_fixed_index_labels` covering `FixedLocator` subsampling and
       `IndexLocator` base/offset placement.

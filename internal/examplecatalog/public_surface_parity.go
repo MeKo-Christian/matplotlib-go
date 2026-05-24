@@ -95,8 +95,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go AutoLocator delegates to MaxNLocator with Matplotlib-style default steps. Remaining 12.2B scope is exact upstream autolimit and very small/large span behavior.",
+		CatalogIDs:        []string{"axes_control_surface", "locator_linear_labels"},
+		Note:              "Go AutoLocator delegates to MaxNLocator with Matplotlib-style default steps; locator_linear_labels covers visible default linear tick output. Remaining 12.2B scope is exact upstream autolimit and very small/large span behavior.",
 	},
 	{
 		ID:                "ticker-auto-minor-locator",
@@ -140,8 +140,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go LinearLocator covers exact-count linear ticks and preset expansion. Remaining 12.2B scope is Python mutable preset API compatibility.",
+		CatalogIDs:        []string{"axes_control_surface", "locator_linear_labels"},
+		Note:              "Go LinearLocator covers exact-count linear ticks and preset expansion; locator_linear_labels covers visible exact-count tick output. Remaining 12.2B scope is Python mutable preset API compatibility.",
 	},
 	{
 		ID:                "ticker-max-n-locator",
@@ -176,8 +176,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "axis-ticker-scale",
 		Status:            PublicSurfaceDirectEquivalent,
 		GoFiles:           []string{"core/tick.go"},
-		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Go MultipleLocator covers regular ticks with an optional offset.",
+		CatalogIDs:        []string{"axes_control_surface", "locator_linear_labels"},
+		Note:              "Go MultipleLocator covers regular ticks with an optional offset; locator_linear_labels covers visible regular linear tick output.",
 	},
 	{
 		ID:                "ticker-null-locator",
