@@ -1750,6 +1750,7 @@ func (a *Axes) setScale(isX bool, name string, opts ...transform.ScaleOption) er
 		target.YScale = scale
 	}
 	configureScaleAxes(primary, secondary, name, cfg)
+	configureChildScaleAxes(target, isX, name, cfg)
 	target.refreshUnitAxis(isX)
 	return nil
 }
@@ -1798,6 +1799,37 @@ func replaceScaleDomain(s transform.Scale, minVal, maxVal float64) transform.Sca
 func configureScaleAxes(primary, secondary *Axis, scaleName string, cfg transform.ScaleOptions) {
 	configureScaleAxis(primary, scaleName, cfg)
 	configureScaleAxis(secondary, scaleName, cfg)
+}
+
+func configureChildScaleAxes(root *Axes, isX bool, scaleName string, cfg transform.ScaleOptions) {
+	if root == nil {
+		return
+	}
+	for _, child := range root.childAxes {
+		if child == nil {
+			continue
+		}
+		if isX {
+			if child.shareX == root || childLinkedSecondaryScale(child.XScale, root, true) {
+				configureScaleAxes(child.XAxis, child.XAxisTop, scaleName, cfg)
+			}
+			continue
+		}
+		if child.shareY == root || childLinkedSecondaryScale(child.YScale, root, false) {
+			configureScaleAxes(child.YAxis, child.YAxisRight, scaleName, cfg)
+		}
+	}
+}
+
+func childLinkedSecondaryScale(scale transform.Scale, root *Axes, isX bool) bool {
+	linked, ok := scale.(linkedSecondaryScale)
+	if !ok || linked.parent == nil || linked.isX != isX {
+		return false
+	}
+	if isX {
+		return linked.parent.xScaleRoot() == root
+	}
+	return linked.parent.yScaleRoot() == root
 }
 
 func configureScaleAxis(axis *Axis, scaleName string, cfg transform.ScaleOptions) {

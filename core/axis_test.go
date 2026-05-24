@@ -269,6 +269,56 @@ func TestAxes_SetScaleUpdatesSharedRoot(t *testing.T) {
 	}
 }
 
+func TestAxes_SetScaleUpdatesOverlayAxisDefaults(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(unitRect())
+	twinX := ax.TwinX()
+	secondaryX, err := ax.SecondaryXAxis(AxisTop,
+		func(x float64) float64 { return x * 2 },
+		func(x float64) (float64, bool) { return x / 2, true },
+	)
+	if err != nil {
+		t.Fatalf("SecondaryXAxis: %v", err)
+	}
+
+	if err := ax.SetXScale("log", transform.WithScaleBase(10), transform.WithScaleSubs(2, 5)); err != nil {
+		t.Fatalf("SetXScale(log): %v", err)
+	}
+
+	if loc, ok := twinX.XAxis.Locator.(LogLocator); !ok || loc.Base != 10 {
+		t.Fatalf("twin x locator = %#v, want log base 10", twinX.XAxis.Locator)
+	}
+	if loc, ok := secondaryX.XAxisTop.Locator.(LogLocator); !ok || loc.Base != 10 {
+		t.Fatalf("secondary x top locator = %#v, want log base 10", secondaryX.XAxisTop.Locator)
+	}
+	if minor, ok := secondaryX.XAxisTop.MinorLocator.(LogLocator); !ok || len(minor.Subs) != 2 {
+		t.Fatalf("secondary x top minor locator = %#v, want log minor subs", secondaryX.XAxisTop.MinorLocator)
+	}
+
+	twinY := ax.TwinY()
+	secondaryY, err := ax.SecondaryYAxis(AxisRight,
+		func(y float64) float64 { return y + 1 },
+		func(y float64) (float64, bool) { return y - 1, true },
+	)
+	if err != nil {
+		t.Fatalf("SecondaryYAxis: %v", err)
+	}
+
+	if err := ax.SetYScale("logit"); err != nil {
+		t.Fatalf("SetYScale(logit): %v", err)
+	}
+
+	if _, ok := twinY.YAxis.Locator.(LogitLocator); !ok {
+		t.Fatalf("twin y locator = %T, want LogitLocator", twinY.YAxis.Locator)
+	}
+	if _, ok := secondaryY.YAxisRight.Locator.(LogitLocator); !ok {
+		t.Fatalf("secondary y right locator = %T, want LogitLocator", secondaryY.YAxisRight.Locator)
+	}
+	if formatter, ok := secondaryY.YAxisRight.MinorFormatter.(LogitFormatter); !ok || !formatter.Minor {
+		t.Fatalf("secondary y right minor formatter = %#v, want minor LogitFormatter", secondaryY.YAxisRight.MinorFormatter)
+	}
+}
+
 func TestAxes_SetScaleInstallsAsinhLocatorDefaults(t *testing.T) {
 	axes := &Axes{
 		XScale: transform.NewLinear(-5, 15),
