@@ -77,7 +77,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 			"fixture coverage; 12.2C still tracks ScalarFormatter offset/scientific behavior, " +
 			"log-family sparse minor labels, EngFormatter / PercentFormatter edge behavior, and " +
 			"formatter catalog fixtures; 12.2D/E still track date/category and scale-default " +
-			"catalog fixtures plus upstream audit notes.",
+			"catalog fixtures. The dates.py row-by-row audit is tracked in DateSurfaceAuditRows.",
 		Decision: GapDecisionImplement,
 		Rationale: "Tick labels and scale semantics are user-visible parity surfaces; each remaining " +
 			"catalog gap is now tracked as an explicit 12.2 subtask rather than a broad audit bucket.",
