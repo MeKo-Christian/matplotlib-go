@@ -741,7 +741,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/collection.go", "core/mesh.go", "core/eventplot.go", "core/hexbin.go"},
 		catalogIDs:        []string{"mixed_collection", "large_scatter", "quad_mesh", "gouraud_triangles", "specialty_artists"},
 		exampleIDs:        []string{"specialty_artists"},
-		note:              "Path, line, patch, poly, quad, event, and hexbin collections exist; specialized variants and mutable setter parity remain incomplete.",
+		note:              "Path, line, patch, poly, quad, event, and hexbin collections exist; path/patch collections have Go-style scalar array, cmap, norm, clim, and face-edge tracking setters; specialized variants and full mutable setter parity remain incomplete.",
 	},
 	{
 		idPrefix:          "patch-style-registry",

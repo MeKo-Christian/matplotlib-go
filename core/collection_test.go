@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -291,6 +292,55 @@ func TestPathCollectionEdgeColorsFaceStyleUsesFaceColorsForStroke(t *testing.T) 
 		if item.Paint.Stroke != item.Paint.Fill {
 			t.Fatalf("item %d stroke = %+v, want face-colored edge %+v", i, item.Paint.Stroke, item.Paint.Fill)
 		}
+	}
+}
+
+func TestPathCollectionSetArrayRefreshesMappedFacesAndFaceEdges(t *testing.T) {
+	cmapName := "path-collection-scalar-array"
+	low := render.Color{R: 1, A: 1}
+	high := render.Color{B: 1, A: 1}
+	matcolor.RegisterColormap(cmapName, matcolor.NewColormap(cmapName, []matcolor.ColorStop{
+		{Pos: 0, Color: low},
+		{Pos: 1, Color: high},
+	}))
+
+	pc := &PathCollection{
+		Collection: Collection{
+			Colormap: cmapName,
+		},
+		Path:          polygonPath([]geom.Pt{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: 1}}, true),
+		Offsets:       []geom.Pt{{X: 1, Y: 2}, {X: 4, Y: 5}},
+		PathInDisplay: true,
+		FaceColor:     render.Color{G: 1, A: 1},
+		EdgeColor:     render.Color{A: 1},
+		EdgeWidth:     1,
+	}
+	pc.SetEdgeColorFace()
+	if err := pc.SetArray([]float64{0, 10}); err != nil {
+		t.Fatalf("SetArray: %v", err)
+	}
+
+	if got := pc.GetArray(); len(got) != 2 || got[0] != 0 || got[1] != 10 {
+		t.Fatalf("GetArray = %v, want copied scalar values", got)
+	}
+	if got, want := pc.FaceColors[0], low; got != want {
+		t.Fatalf("first mapped face = %+v, want %+v", got, want)
+	}
+	if got, want := pc.FaceColors[1], high; got != want {
+		t.Fatalf("second mapped face = %+v, want %+v", got, want)
+	}
+	if got, want := pc.EdgeColors[1], pc.FaceColors[1]; got != want {
+		t.Fatalf("face-style edge = %+v, want mapped face %+v", got, want)
+	}
+
+	if err := pc.SetCLim(0, 20); err != nil {
+		t.Fatalf("SetCLim: %v", err)
+	}
+	if pc.FaceColors[1] == high {
+		t.Fatalf("SetCLim did not refresh mapped face colors: %+v", pc.FaceColors)
+	}
+	if got, want := pc.EdgeColors[1], pc.FaceColors[1]; got != want {
+		t.Fatalf("face-style edge after clim = %+v, want mapped face %+v", got, want)
 	}
 }
 

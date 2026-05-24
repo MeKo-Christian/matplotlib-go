@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -13,16 +14,19 @@ import (
 // instantiable artist.
 type Collection struct {
 	ArtistRasterization
-	Coords      CoordinateSpec
-	Label       string
-	Alpha       float64
-	Antialias   render.AntialiasMode
-	Colormap    string
-	Norm        ScalarNormalizer
-	VMin        float64
-	VMax        float64
-	PathEffects []render.PathEffect
-	z           float64
+	Coords         CoordinateSpec
+	Label          string
+	Alpha          float64
+	Antialias      render.AntialiasMode
+	Colormap       string
+	Norm           ScalarNormalizer
+	VMin           float64
+	VMax           float64
+	ScalarValues   []float64
+	EdgeColorsFace bool
+	PathEffects    []render.PathEffect
+	z              float64
+	scalarCLimSet  bool
 }
 
 // PathCollection draws repeated or per-item paths with per-item offsets and
@@ -176,6 +180,153 @@ func (c Collection) ScalarMap() ScalarMapInfo {
 	}
 }
 
+// GetArray returns a copy of the scalar array mapped through the collection's
+// colormap, matching Matplotlib's scalar-mappable collection concept.
+func (c *Collection) GetArray() []float64 {
+	if c == nil || len(c.ScalarValues) == 0 {
+		return nil
+	}
+	return append([]float64(nil), c.ScalarValues...)
+}
+
+func (c *Collection) setArray(values []float64) error {
+	if c == nil {
+		return nil
+	}
+	c.ScalarValues = cloneFloat64s(values)
+	if len(values) == 0 {
+		c.SetStale(true)
+		return nil
+	}
+	cfg := ScalarMapConfig{Colormap: c.Colormap}
+	if c.Norm != nil {
+		cfg.Norm = c.Norm
+	} else if c.scalarCLimSet {
+		vmin, vmax := c.VMin, c.VMax
+		cfg.VMin = &vmin
+		cfg.VMax = &vmax
+	}
+	mapping, err := ResolveScalarMapValues(c.ScalarValues, cfg)
+	if err != nil {
+		return err
+	}
+	c.applyScalarMap(mapping)
+	return nil
+}
+
+func (c *Collection) setColormap(name string) {
+	if c == nil {
+		return
+	}
+	c.Colormap = resolvedColormapName(name)
+	c.SetStale(true)
+}
+
+func (c *Collection) setNorm(norm ScalarNormalizer) error {
+	if c == nil {
+		return nil
+	}
+	if norm != nil {
+		if len(c.ScalarValues) > 0 {
+			norm = norm.Autoscale(c.ScalarValues)
+		}
+		if err := norm.Validate(); err != nil {
+			return err
+		}
+	}
+	c.Norm = norm
+	if norm != nil {
+		c.VMin, c.VMax = norm.Range()
+	}
+	c.SetStale(true)
+	return nil
+}
+
+func (c *Collection) setCLim(vmin, vmax float64) error {
+	if c == nil {
+		return nil
+	}
+	if !isFinite(vmin) || !isFinite(vmax) {
+		return fmt.Errorf("color limits must be finite")
+	}
+	norm := scalarNormWithRange(c.Norm, vmin, vmax)
+	if err := norm.Validate(); err != nil {
+		return err
+	}
+	c.Norm = norm
+	c.VMin = vmin
+	c.VMax = vmax
+	c.scalarCLimSet = true
+	c.SetStale(true)
+	return nil
+}
+
+func (c *Collection) applyScalarMap(mapping ScalarMapInfo) {
+	if c == nil {
+		return
+	}
+	mapping = mapping.Resolved()
+	c.Colormap = mapping.Colormap
+	c.Norm = mapping.Norm
+	c.VMin = mapping.VMin
+	c.VMax = mapping.VMax
+	c.SetStale(true)
+}
+
+func (c *Collection) mappedScalarColors() []render.Color {
+	if c == nil || len(c.ScalarValues) == 0 {
+		return nil
+	}
+	mapping := c.ScalarMap().Resolved()
+	colors := make([]render.Color, len(c.ScalarValues))
+	for i, value := range c.ScalarValues {
+		colors[i] = mapping.Color(value, 1)
+	}
+	return colors
+}
+
+func scalarNormWithRange(norm ScalarNormalizer, vmin, vmax float64) ScalarNormalizer {
+	switch n := norm.(type) {
+	case Normalize:
+		n.VMin, n.VMax = vmin, vmax
+		return n
+	case LogNorm:
+		n.VMin, n.VMax = vmin, vmax
+		return n
+	case SymLogNorm:
+		n.VMin, n.VMax = vmin, vmax
+		return n
+	case PowerNorm:
+		n.VMin, n.VMax = vmin, vmax
+		return n
+	case TwoSlopeNorm:
+		n.VMin, n.VMax = vmin, vmax
+		return n
+	case CenteredNorm:
+		n.VCenter = (vmin + vmax) * 0.5
+		n.HalfRange = math.Abs(vmax-vmin) * 0.5
+		return n
+	case BoundaryNorm:
+		return n
+	default:
+		return Normalize{VMin: vmin, VMax: vmax}
+	}
+}
+
+func cloneRenderColors(colors []render.Color) []render.Color {
+	if len(colors) == 0 {
+		return nil
+	}
+	return append([]render.Color(nil), colors...)
+}
+
+func cloneFloat64s(values []float64) []float64 {
+	if len(values) == 0 {
+		return nil
+	}
+	return append([]float64(nil), values...)
+}
+
 // Draw renders the path collection.
 func (c *PathCollection) Draw(r render.Renderer, ctx *DrawContext) {
 	if c == nil || r == nil || ctx == nil {
@@ -272,6 +423,66 @@ func (c *PathCollection) legendEntry() (legendEntry, bool) {
 		markerEdge:      c.edgeColorAt(0),
 		markerEdgeWidth: c.edgeWidthAt(0),
 	}, true
+}
+
+// SetArray stores scalar values and refreshes mapped path-collection face
+// colors. When SetEdgeColorFace is active, edge colors follow the mapped faces.
+func (c *PathCollection) SetArray(values []float64) error {
+	if c == nil {
+		return nil
+	}
+	if err := c.Collection.setArray(values); err != nil {
+		return err
+	}
+	c.refreshScalarMappedColors()
+	return nil
+}
+
+// SetColormap updates the collection colormap and refreshes scalar-derived
+// colors when a scalar array is active.
+func (c *PathCollection) SetColormap(name string) {
+	if c == nil {
+		return
+	}
+	c.Collection.setColormap(name)
+	c.refreshScalarMappedColors()
+}
+
+// SetNorm updates the collection normalizer and refreshes scalar-derived
+// colors when a scalar array is active.
+func (c *PathCollection) SetNorm(norm ScalarNormalizer) error {
+	if c == nil {
+		return nil
+	}
+	if err := c.Collection.setNorm(norm); err != nil {
+		return err
+	}
+	c.refreshScalarMappedColors()
+	return nil
+}
+
+// SetCLim updates color limits and refreshes scalar-derived colors.
+func (c *PathCollection) SetCLim(vmin, vmax float64) error {
+	if c == nil {
+		return nil
+	}
+	if err := c.Collection.setCLim(vmin, vmax); err != nil {
+		return err
+	}
+	c.refreshScalarMappedColors()
+	return nil
+}
+
+// SetEdgeColorFace makes collection edges track the resolved face colors.
+func (c *PathCollection) SetEdgeColorFace() {
+	if c == nil {
+		return
+	}
+	c.EdgeColorsFace = true
+	if len(c.FaceColors) > 0 {
+		c.EdgeColors = cloneRenderColors(c.FaceColors)
+	}
+	c.SetStale(true)
 }
 
 // Draw renders the line collection.
@@ -418,6 +629,66 @@ func (c *PatchCollection) legendEntry() (legendEntry, bool) {
 		c.alphaColor(colorAt(c.HatchColor, c.HatchColors, 0)),
 		widthAt(c.HatchWidth, c.HatchWidths, 0),
 	), true
+}
+
+// SetArray stores scalar values and refreshes mapped patch-collection face
+// colors. When SetEdgeColorFace is active, edge colors follow the mapped faces.
+func (c *PatchCollection) SetArray(values []float64) error {
+	if c == nil {
+		return nil
+	}
+	if err := c.Collection.setArray(values); err != nil {
+		return err
+	}
+	c.refreshScalarMappedColors()
+	return nil
+}
+
+// SetColormap updates the collection colormap and refreshes scalar-derived
+// colors when a scalar array is active.
+func (c *PatchCollection) SetColormap(name string) {
+	if c == nil {
+		return
+	}
+	c.Collection.setColormap(name)
+	c.refreshScalarMappedColors()
+}
+
+// SetNorm updates the collection normalizer and refreshes scalar-derived
+// colors when a scalar array is active.
+func (c *PatchCollection) SetNorm(norm ScalarNormalizer) error {
+	if c == nil {
+		return nil
+	}
+	if err := c.Collection.setNorm(norm); err != nil {
+		return err
+	}
+	c.refreshScalarMappedColors()
+	return nil
+}
+
+// SetCLim updates color limits and refreshes scalar-derived colors.
+func (c *PatchCollection) SetCLim(vmin, vmax float64) error {
+	if c == nil {
+		return nil
+	}
+	if err := c.Collection.setCLim(vmin, vmax); err != nil {
+		return err
+	}
+	c.refreshScalarMappedColors()
+	return nil
+}
+
+// SetEdgeColorFace makes collection edges track the resolved face colors.
+func (c *PatchCollection) SetEdgeColorFace() {
+	if c == nil {
+		return
+	}
+	c.EdgeColorsFace = true
+	if len(c.FaceColors) > 0 {
+		c.EdgeColors = cloneRenderColors(c.FaceColors)
+	}
+	c.SetStale(true)
 }
 
 // Draw renders the polygon collection.
@@ -957,6 +1228,9 @@ func (c *PathCollection) itemCount() int {
 	if count == 0 && len(c.Path.C) > 0 {
 		count = 1
 	}
+	if count == 0 && len(c.ScalarValues) > 0 {
+		count = len(c.ScalarValues)
+	}
 	if count == 0 && len(c.FaceColors) > 0 {
 		count = len(c.FaceColors)
 	}
@@ -1027,6 +1301,30 @@ func (c *PathCollection) displayPathAt(ctx *DrawContext, i int, base geom.Path) 
 	}
 	path := scaleAndTranslatePath(base, scale, offset)
 	return buildArtistDisplayPath(ctx, c, c.Coords, path, geom.Identity())
+}
+
+func (c *PathCollection) refreshScalarMappedColors() {
+	if c == nil || len(c.ScalarValues) == 0 {
+		return
+	}
+	colors := c.mappedScalarColors()
+	c.FaceColors = colors
+	if c.EdgeColorsFace {
+		c.EdgeColors = cloneRenderColors(colors)
+	}
+	c.SetStale(true)
+}
+
+func (c *PatchCollection) refreshScalarMappedColors() {
+	if c == nil || len(c.ScalarValues) == 0 {
+		return
+	}
+	colors := c.mappedScalarColors()
+	c.FaceColors = colors
+	if c.EdgeColorsFace {
+		c.EdgeColors = cloneRenderColors(colors)
+	}
+	c.SetStale(true)
 }
 
 func colorAt(fallback render.Color, colors []render.Color, i int) render.Color {

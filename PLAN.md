@@ -2087,6 +2087,9 @@ artist color state and colorbar state synchronized.
 - [ ] Add mutable scalar arrays to collection-style mappables so callers can
       update data values after artist creation without reconstructing the
       artist.
+- [x] Add the first Go-style mutable scalar-mapping slice for path, patch, and
+      polygon collections: `SetArray`, `GetArray`, `SetColormap`, `SetNorm`,
+      `SetCLim`, and face-edge tracking.
 - [ ] Add Go-style setters for colormap, norm, and clim updates that refresh
       stored mapping metadata and recompute mapped face colors where the artist
       owns scalar-derived colors.

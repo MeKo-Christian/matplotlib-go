@@ -240,6 +240,46 @@ func TestFigureAddColorbarUsesFunctionScaleForTwoSlopeNorm(t *testing.T) {
 	}
 }
 
+func TestFigureColorbarSyncsMutableCollectionMapping(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	pc := &PathCollection{
+		Collection: Collection{Colormap: "viridis"},
+		Path:       polygonPath([]geom.Pt{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: 1}}, true),
+		Offsets:    []geom.Pt{{X: 0, Y: 0}, {X: 1, Y: 1}},
+		FaceColor:  render.Color{A: 1},
+	}
+	if err := pc.SetArray([]float64{0, 1}); err != nil {
+		t.Fatalf("SetArray: %v", err)
+	}
+	ax.Add(pc)
+
+	cbAx := fig.AddColorbar(ax, pc)
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	if err := pc.SetCLim(-1, 2); err != nil {
+		t.Fatalf("SetCLim: %v", err)
+	}
+
+	DrawFigure(fig, &colorbarRecordingRenderer{})
+
+	yMin, yMax := cbAx.YScale.Domain()
+	if yMin != -1 || yMax != 2 {
+		t.Fatalf("synced colorbar limits = %v..%v, want -1..2", yMin, yMax)
+	}
+	cb, ok := cbAx.Artists[0].(*Colorbar)
+	if !ok {
+		t.Fatalf("colorbar artist = %T, want *Colorbar", cbAx.Artists[0])
+	}
+	if cb.Mapping.VMin != -1 || cb.Mapping.VMax != 2 {
+		t.Fatalf("synced colorbar mapping = %+v, want -1..2", cb.Mapping)
+	}
+}
+
 func TestFigureAddColorbarShrinksAxesForExtensions(t *testing.T) {
 	fig := NewFigure(640, 360)
 	ax := fig.AddAxes(geom.Rect{

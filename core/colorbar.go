@@ -24,6 +24,7 @@ type ColorbarOptions struct {
 // Colorbar renders a vertical gradient keyed to a scalar colormap.
 type Colorbar struct {
 	Mapping     ScalarMapInfo
+	Mappable    ScalarMappable
 	Colormap    string
 	Extend      string
 	Alpha       float64
@@ -143,6 +144,7 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 
 	ax.Add(&Colorbar{
 		Mapping:     mapping,
+		Mappable:    mappable,
 		Colormap:    cmap,
 		Extend:      extend,
 		Alpha:       1,
@@ -152,6 +154,21 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	})
 
 	return ax
+}
+
+func syncColorbarMapping(ax *Axes) {
+	if ax == nil {
+		return
+	}
+	for _, art := range ax.Artists {
+		cb, ok := art.(*Colorbar)
+		if !ok || cb == nil {
+			continue
+		}
+		mapping := cb.currentMapping()
+		cb.Mapping = mapping
+		configureColorbarScale(ax, mapping)
+	}
 }
 
 func insetColorbarRectForExtensions(fig *Figure, rect geom.Rect, extend string) geom.Rect {
@@ -314,6 +331,21 @@ func configureColorbarScale(ax *Axes, mapping ScalarMapInfo) {
 	}
 }
 
+func (c *Colorbar) currentMapping() ScalarMapInfo {
+	if c == nil {
+		return ScalarMapInfo{}.Resolved()
+	}
+	mapping := c.Mapping
+	if c.Mappable != nil {
+		mapping = c.Mappable.ScalarMap()
+	}
+	mapping = mapping.Resolved()
+	if c.Colormap != "" {
+		mapping.Colormap = c.Colormap
+	}
+	return mapping
+}
+
 func isNonlinearColorbarNorm(norm ScalarNormalizer) bool {
 	switch norm.(type) {
 	case nil, Normalize, NoNorm:
@@ -381,10 +413,8 @@ func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 
 	const gradientHeight = 256
 
-	mapping := c.Mapping.Resolved()
-	if c.Colormap != "" {
-		mapping.Colormap = c.Colormap
-	}
+	mapping := c.currentMapping()
+	c.Mapping = mapping
 	cmap := matcolor.GetColormap(mapping.Colormap)
 	alpha := c.Alpha
 	if alpha <= 0 {
@@ -458,10 +488,8 @@ func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 
-	mapping := c.Mapping.Resolved()
-	if c.Colormap != "" {
-		mapping.Colormap = c.Colormap
-	}
+	mapping := c.currentMapping()
+	c.Mapping = mapping
 	cmap := matcolor.GetColormap(mapping.Colormap)
 	alpha := c.Alpha
 	if alpha <= 0 {

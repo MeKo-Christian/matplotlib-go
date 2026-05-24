@@ -452,6 +452,7 @@ func syncColorbarAxes(fig *Figure) {
 		if ax == nil || ax.colorbarParent == nil {
 			continue
 		}
+		syncColorbarMapping(ax)
 		parent := ax.colorbarParent
 		base := colorbarLayoutBase(parent, ax)
 		ax.colorbarBase = base

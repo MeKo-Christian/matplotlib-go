@@ -151,11 +151,12 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Title:           "Collection scalar-mappable updates and offset transforms",
 		UpstreamModules: []string{"collections.py", "cm.py", "colors.py"},
 		GoFiles:         []string{"core/collection.go", "core/scalar_mappable.go", "core/mesh.go", "core/scatter.go"},
-		CurrentEquivalent: "Go collections carry basic scalar-mappable metadata and route colormap / norm " +
-			"state through relevant artists.",
-		Gap: "Matplotlib collection setters such as set_array and draw-time scalar mapping can " +
-			"override face / edge colors; offset-transform and mutable collection update behavior " +
-			"are simplified.",
+		CurrentEquivalent: "Go collections carry scalar-mappable metadata; PathCollection and " +
+			"PatchCollection expose Go-style SetArray, SetColormap, SetNorm, SetCLim, and " +
+			"face-edge tracking helpers.",
+		Gap: "Matplotlib's broader draw-time scalar-mapping callbacks, QuadMesh array shape " +
+			"updates, and the full mutable collection setter surface are still only partially " +
+			"represented.",
 		Decision: GapDecisionImplement,
 		Rationale: "Scalar-mappable collection updates are required for colorbar correctness and public " +
 			"collection parity; obscure mutable setters can stay Go-idiomatic.",
