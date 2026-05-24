@@ -437,8 +437,10 @@ func (s ArrowStyle) transmute(path geom.Path, mutationSize, lineWidth float64) [
 	switch name {
 	case "wedge":
 		return []arrowPathPart{{path: wedgeArrowPathForConnection(path, s.TailWidth*mutationSize, s.ShrinkFactor), fillable: true}}
-	case "simple", "fancy":
-		return []arrowPathPart{{path: filledArrowPath(pathStart(path), pathEnd(path), s.TailWidth*mutationSize, s.HeadWidth*mutationSize, s.HeadLength*mutationSize), fillable: true}}
+	case "simple":
+		return []arrowPathPart{{path: filledArrowPathForConnection(path, s.TailWidth*mutationSize, s.HeadWidth*mutationSize, s.HeadLength*mutationSize), fillable: true}}
+	case "fancy":
+		return []arrowPathPart{{path: filledArrowPathForConnection(path, s.TailWidth*mutationSize, s.HeadWidth*mutationSize, s.HeadLength*mutationSize), fillable: true}}
 	}
 
 	beginHead := strings.HasPrefix(name, "<")
@@ -521,6 +523,55 @@ func filledArrowPath(start, tip geom.Pt, tailWidth, headWidth, headLength float6
 	return polygonPath(points, true)
 }
 
+func filledArrowPathForConnection(path geom.Path, tailWidth, headWidth, headLength float64) geom.Path {
+	start, ctrl, tip, ok := quadraticConnectionPoints(path)
+	if !ok {
+		return filledArrowPath(pathStart(path), pathEnd(path), tailWidth, headWidth, headLength)
+	}
+	if tailWidth <= 0 {
+		tailWidth = math.Max(1, distance(start, tip)*0.04)
+	}
+	if headWidth <= 0 {
+		headWidth = tailWidth * 2.5
+	}
+	if headLength <= 0 {
+		headLength = headWidth
+	}
+
+	totalLength := approximateQuadraticLength(start, ctrl, tip)
+	if totalLength <= 0 {
+		return geom.Path{}
+	}
+	headT := quadraticTAtDistanceFromEnd(start, ctrl, tip, math.Min(headLength, totalLength))
+	headBase := quadraticPoint(start, ctrl, tip, headT)
+	midT := headT / 2
+	mid := quadraticPoint(start, ctrl, tip, midT)
+
+	startNormal := normalForVector(quadraticDerivative(start, ctrl, tip, 0))
+	midNormal := normalForVector(quadraticDerivative(start, ctrl, tip, midT))
+	headNormal := normalForVector(quadraticDerivative(start, ctrl, tip, headT))
+	if startNormal == (geom.Pt{}) || midNormal == (geom.Pt{}) || headNormal == (geom.Pt{}) {
+		return filledArrowPath(start, tip, tailWidth, headWidth, headLength)
+	}
+
+	tailHalf := tailWidth / 2
+	midHalf := tailHalf
+	startInset := start
+	headHalf := headWidth / 2
+	points := []geom.Pt{
+		{X: startInset.X + startNormal.X*tailHalf, Y: startInset.Y + startNormal.Y*tailHalf},
+		{X: mid.X + midNormal.X*midHalf, Y: mid.Y + midNormal.Y*midHalf},
+		{X: headBase.X + headNormal.X*tailWidth/2, Y: headBase.Y + headNormal.Y*tailWidth/2},
+		{X: headBase.X + headNormal.X*headHalf, Y: headBase.Y + headNormal.Y*headHalf},
+		tip,
+		{X: headBase.X - headNormal.X*headHalf, Y: headBase.Y - headNormal.Y*headHalf},
+		{X: headBase.X - headNormal.X*tailWidth/2, Y: headBase.Y - headNormal.Y*tailWidth/2},
+		{X: mid.X - midNormal.X*midHalf, Y: mid.Y - midNormal.Y*midHalf},
+		{X: startInset.X - startNormal.X*tailHalf, Y: startInset.Y - startNormal.Y*tailHalf},
+	}
+	return polygonPath(points, true)
+}
+
 func wedgeArrowPath(start, tip geom.Pt, tailWidth, shrinkFactor float64) geom.Path {
 	dx, dy := tip.X-start.X, tip.Y-start.Y
 	length := math.Hypot(dx, dy)
@@ -595,6 +646,49 @@ func quadraticPoint(start, ctrl, end geom.Pt, t float64) geom.Pt {
 		X: mt*mt*start.X + 2*mt*t*ctrl.X + t*t*end.X,
 		Y: mt*mt*start.Y + 2*mt*t*ctrl.Y + t*t*end.Y,
 	}
+}
+
+func quadraticDerivative(start, ctrl, end geom.Pt, t float64) geom.Pt {
+	return geom.Pt{
+		X: 2*(1-t)*(ctrl.X-start.X) + 2*t*(end.X-ctrl.X),
+		Y: 2*(1-t)*(ctrl.Y-start.Y) + 2*t*(end.Y-ctrl.Y),
+	}
+}
+
+func approximateQuadraticLength(start, ctrl, end geom.Pt) float64 {
+	const steps = 24
+	length := 0.0
+	prev := start
+	for i := 1; i <= steps; i++ {
+		pt := quadraticPoint(start, ctrl, end, float64(i)/steps)
+		length += distance(prev, pt)
+		prev = pt
+	}
+	return length
+}
+
+func quadraticTAtDistanceFromEnd(start, ctrl, end geom.Pt, target float64) float64 {
+	const steps = 48
+	if target <= 0 {
+		return 1
+	}
+	accum := 0.0
+	prev := end
+	for i := steps - 1; i >= 0; i-- {
+		t := float64(i) / steps
+		pt := quadraticPoint(start, ctrl, end, t)
+		seg := distance(prev, pt)
+		if accum+seg >= target {
+			if seg == 0 {
+				return t
+			}
+			f := (target - accum) / seg
+			return (float64(i) + 1 - f) / steps
+		}
+		accum += seg
+		prev = pt
+	}
+	return 0
 }
 
 func normalForVector(v geom.Pt) geom.Pt {

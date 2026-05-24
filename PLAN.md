@@ -2253,6 +2253,11 @@ Current slice landed:
   start/end segment.
 - Renderer-neutral patch tests cover Wedge tail width, midpoint shrink,
   endpoint tapering, and quadratic-connection geometry.
+- `ArrowStyle("simple")` and `ArrowStyle("fancy")` now also follow quadratic
+  connection control points for curved paths instead of collapsing filled
+  arrows to a straight start/end segment.
+- Renderer-neutral patch tests cover simple and fancy filled-arrow geometry on
+  quadratic connections.
 - Curve-style arrow mutations now shorten the stroked connection line under
   begin/end arrow heads while keeping the arrow head anchored at the original
   endpoint, matching Matplotlib's `_Curve` line/head split.

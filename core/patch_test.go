@@ -279,6 +279,14 @@ func containsPointForPatchTest(path geom.Path, want geom.Pt) bool {
 	return false
 }
 
+func maxPathYForPatchTest(path geom.Path) float64 {
+	maxY := math.Inf(-1)
+	for _, pt := range path.V {
+		maxY = math.Max(maxY, pt.Y)
+	}
+	return maxY
+}
+
 func TestPatchAutoScaleIgnoresNonDataCoords(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
@@ -634,6 +642,56 @@ func TestArrowStyleWedgeFollowsQuadraticConnection(t *testing.T) {
 	}
 	if got.V[2] != (geom.Pt{X: 100, Y: 0}) {
 		t.Fatalf("wedge should taper to the quadratic endpoint, got tip %+v", got.V[2])
+	}
+}
+
+func TestArrowStyleSimpleFollowsQuadraticConnection(t *testing.T) {
+	style, ok := ArrowStyleFromString("simple,tail_width=0.3,head_width=0.8,head_length=0.4")
+	if !ok {
+		t.Fatal("ArrowStyleFromString(simple) returned !ok")
+	}
+
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 0, Y: 0})
+	path.QuadTo(geom.Pt{X: 50, Y: 60}, geom.Pt{X: 100, Y: 0})
+	parts := style.transmute(path, 10, 1)
+	if len(parts) != 1 || !parts[0].fillable {
+		t.Fatalf("simple parts = %+v, want one fillable path", parts)
+	}
+	got := parts[0].path
+	if len(got.V) < 7 {
+		t.Fatalf("simple path vertices = %d, want curved outline vertices: %+v", len(got.V), got)
+	}
+	if maxPathYForPatchTest(got) < 20 {
+		t.Fatalf("simple arrow ignored quadratic connection control point, got vertices %+v", got.V)
+	}
+	if !containsPointForPatchTest(got, geom.Pt{X: 100, Y: 0}) {
+		t.Fatalf("simple arrow should keep the quadratic endpoint as tip, got %+v", got.V)
+	}
+}
+
+func TestArrowStyleFancyFollowsQuadraticConnection(t *testing.T) {
+	style, ok := ArrowStyleFromString("fancy,tail_width=0.4,head_width=0.8,head_length=0.4")
+	if !ok {
+		t.Fatal("ArrowStyleFromString(fancy) returned !ok")
+	}
+
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 0, Y: 0})
+	path.QuadTo(geom.Pt{X: 50, Y: 60}, geom.Pt{X: 100, Y: 0})
+	parts := style.transmute(path, 10, 1)
+	if len(parts) != 1 || !parts[0].fillable {
+		t.Fatalf("fancy parts = %+v, want one fillable path", parts)
+	}
+	got := parts[0].path
+	if len(got.V) < 7 {
+		t.Fatalf("fancy path vertices = %d, want curved outline vertices: %+v", len(got.V), got)
+	}
+	if maxPathYForPatchTest(got) < 20 {
+		t.Fatalf("fancy arrow ignored quadratic connection control point, got vertices %+v", got.V)
+	}
+	if !containsPointForPatchTest(got, geom.Pt{X: 100, Y: 0}) {
+		t.Fatalf("fancy arrow should keep the quadratic endpoint as tip, got %+v", got.V)
 	}
 }
 
