@@ -106,6 +106,225 @@ func (l DayLocator) location() *time.Location {
 	return time.UTC
 }
 
+type YearLocator struct {
+	Base     int
+	Month    time.Month
+	Day      int
+	Location *time.Location
+}
+
+func (l YearLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
+	if math.IsNaN(minVal) || math.IsNaN(maxVal) || math.IsInf(minVal, 0) || math.IsInf(maxVal, 0) {
+		return nil
+	}
+	if minVal > maxVal {
+		minVal, maxVal = maxVal, minVal
+	}
+	loc := l.location()
+	minTime := dateNumberToTime(minVal, loc)
+	maxTime := dateNumberToTime(maxVal, loc)
+	if !maxTime.After(minTime) {
+		return []float64{minVal}
+	}
+
+	base := l.Base
+	if base <= 0 {
+		base = 1
+	}
+	month := l.Month
+	if month < time.January || month > time.December {
+		month = time.January
+	}
+	day := l.Day
+	if day <= 0 {
+		day = 1
+	}
+	year := (minTime.Year() / base) * base
+	current := safeDate(year, month, day, loc)
+	for current.Before(minTime) {
+		current = safeDate(current.Year()+base, month, day, loc)
+	}
+
+	guard := dateSpanYears(minTime, maxTime)/base + targetCount + 8
+	if guard < 16 {
+		guard = 16
+	}
+	ticks := make([]float64, 0, targetCount+2)
+	for i := 0; i < guard && !current.After(maxTime); i++ {
+		ticks = append(ticks, timeToDateNumber(current))
+		current = safeDate(current.Year()+base, month, day, loc)
+	}
+	return dedupeTicks(ticks)
+}
+
+func (l YearLocator) location() *time.Location {
+	if l.Location != nil {
+		return l.Location
+	}
+	return time.UTC
+}
+
+type MonthLocator struct {
+	ByMonth    []time.Month
+	ByMonthDay int
+	Interval   int
+	Location   *time.Location
+}
+
+func (l MonthLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
+	if math.IsNaN(minVal) || math.IsNaN(maxVal) || math.IsInf(minVal, 0) || math.IsInf(maxVal, 0) {
+		return nil
+	}
+	if minVal > maxVal {
+		minVal, maxVal = maxVal, minVal
+	}
+	loc := l.location()
+	minTime := dateNumberToTime(minVal, loc)
+	maxTime := dateNumberToTime(maxVal, loc)
+	if !maxTime.After(minTime) {
+		return []float64{minVal}
+	}
+
+	interval := l.Interval
+	if interval <= 0 {
+		interval = 1
+	}
+	day := l.ByMonthDay
+	if day <= 0 {
+		day = 1
+	}
+	months := validMonths(l.ByMonth)
+	current := time.Date(minTime.Year(), minTime.Month(), 1, 0, 0, 0, 0, loc)
+	if current.Before(minTime) {
+		current = current.AddDate(0, 1, 0)
+	}
+	startIndex := current.Year()*12 + int(current.Month()) - 1
+	guard := dateSpanMonths(minTime, maxTime) + targetCount + 16
+	if guard < 24 {
+		guard = 24
+	}
+	ticks := make([]float64, 0, targetCount+2)
+	for i := 0; i < guard && !current.After(maxTime); i++ {
+		monthIndex := current.Year()*12 + int(current.Month()) - 1
+		if (monthIndex-startIndex)%interval == 0 && (len(months) == 0 || months[current.Month()]) {
+			tick := safeDate(current.Year(), current.Month(), day, loc)
+			if !tick.Before(minTime) && !tick.After(maxTime) {
+				ticks = append(ticks, timeToDateNumber(tick))
+			}
+		}
+		current = current.AddDate(0, 1, 0)
+	}
+	return dedupeTicks(ticks)
+}
+
+func (l MonthLocator) location() *time.Location {
+	if l.Location != nil {
+		return l.Location
+	}
+	return time.UTC
+}
+
+type WeekdayLocator struct {
+	ByWeekday []time.Weekday
+	Interval  int
+	Location  *time.Location
+}
+
+func (l WeekdayLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
+	if math.IsNaN(minVal) || math.IsNaN(maxVal) || math.IsInf(minVal, 0) || math.IsInf(maxVal, 0) {
+		return nil
+	}
+	if minVal > maxVal {
+		minVal, maxVal = maxVal, minVal
+	}
+	loc := l.location()
+	minTime := dateNumberToTime(minVal, loc)
+	maxTime := dateNumberToTime(maxVal, loc)
+	if !maxTime.After(minTime) {
+		return []float64{minVal}
+	}
+	interval := l.Interval
+	if interval <= 0 {
+		interval = 1
+	}
+	weekdays := validWeekdays(l.ByWeekday)
+	current := time.Date(minTime.Year(), minTime.Month(), minTime.Day(), 0, 0, 0, 0, loc)
+	if current.Before(minTime) {
+		current = current.AddDate(0, 0, 1)
+	}
+	startISOYear, startISOWeek := current.ISOWeek()
+	guard := int(maxTime.Sub(minTime).Hours()/24) + 14
+	ticks := make([]float64, 0, targetCount+2)
+	for i := 0; i < guard && !current.After(maxTime); i++ {
+		if weekdays[current.Weekday()] {
+			isoYear, isoWeek := current.ISOWeek()
+			if weeksBetween(startISOYear, startISOWeek, isoYear, isoWeek)%interval == 0 {
+				ticks = append(ticks, timeToDateNumber(current))
+			}
+		}
+		current = current.AddDate(0, 0, 1)
+	}
+	return dedupeTicks(ticks)
+}
+
+func (l WeekdayLocator) location() *time.Location {
+	if l.Location != nil {
+		return l.Location
+	}
+	return time.UTC
+}
+
+type HourLocator struct {
+	ByHour   []int
+	Interval int
+	Location *time.Location
+}
+
+func (l HourLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
+	return clockTicks(minVal, maxVal, l.location(), "hour", validClockValues(l.ByHour, 0, 23), l.Interval, targetCount)
+}
+
+func (l HourLocator) location() *time.Location {
+	if l.Location != nil {
+		return l.Location
+	}
+	return time.UTC
+}
+
+type MinuteLocator struct {
+	ByMinute []int
+	Interval int
+	Location *time.Location
+}
+
+func (l MinuteLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
+	return clockTicks(minVal, maxVal, l.location(), "minute", validClockValues(l.ByMinute, 0, 59), l.Interval, targetCount)
+}
+
+func (l MinuteLocator) location() *time.Location {
+	if l.Location != nil {
+		return l.Location
+	}
+	return time.UTC
+}
+
+type SecondLocator struct {
+	BySecond []int
+	Interval int
+	Location *time.Location
+}
+
+func (l SecondLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
+	return clockTicks(minVal, maxVal, l.location(), "second", validClockValues(l.BySecond, 0, 59), l.Interval, targetCount)
+}
+
+func (l SecondLocator) location() *time.Location {
+	if l.Location != nil {
+		return l.Location
+	}
+	return time.UTC
+}
+
 func validMonthDays(days []int) map[int]bool {
 	if len(days) == 0 {
 		return nil
@@ -114,6 +333,48 @@ func validMonthDays(days []int) map[int]bool {
 	for _, day := range days {
 		if day >= 1 && day <= 31 {
 			out[day] = true
+		}
+	}
+	return out
+}
+
+func validMonths(months []time.Month) map[time.Month]bool {
+	if len(months) == 0 {
+		return nil
+	}
+	out := make(map[time.Month]bool, len(months))
+	for _, month := range months {
+		if month >= time.January && month <= time.December {
+			out[month] = true
+		}
+	}
+	return out
+}
+
+func validWeekdays(days []time.Weekday) map[time.Weekday]bool {
+	out := make(map[time.Weekday]bool, len(days))
+	if len(days) == 0 {
+		for day := time.Sunday; day <= time.Saturday; day++ {
+			out[day] = true
+		}
+		return out
+	}
+	for _, day := range days {
+		if day >= time.Sunday && day <= time.Saturday {
+			out[day] = true
+		}
+	}
+	return out
+}
+
+func validClockValues(values []int, minVal, maxVal int) map[int]bool {
+	if len(values) == 0 {
+		return nil
+	}
+	out := make(map[int]bool, len(values))
+	for _, value := range values {
+		if value >= minVal && value <= maxVal {
+			out[value] = true
 		}
 	}
 	return out
@@ -282,6 +543,124 @@ func (i dateTickInterval) next(t time.Time) time.Time {
 	default:
 		return t.Add(time.Duration(i.step) * time.Second)
 	}
+}
+
+func clockTicks(minVal, maxVal float64, loc *time.Location, unit string, allowed map[int]bool, interval, targetCount int) []float64 {
+	if math.IsNaN(minVal) || math.IsNaN(maxVal) || math.IsInf(minVal, 0) || math.IsInf(maxVal, 0) {
+		return nil
+	}
+	if minVal > maxVal {
+		minVal, maxVal = maxVal, minVal
+	}
+	minTime := dateNumberToTime(minVal, loc)
+	maxTime := dateNumberToTime(maxVal, loc)
+	if !maxTime.After(minTime) {
+		return []float64{minVal}
+	}
+	if interval <= 0 {
+		interval = 1
+	}
+	current := truncateDateTime(minTime, unit)
+	if current.Before(minTime) {
+		current = addDateUnit(current, unit, 1)
+	}
+	startOrdinal := clockOrdinal(current, unit)
+	guard := clockGuard(minTime, maxTime, unit) + targetCount + 16
+	ticks := make([]float64, 0, targetCount+2)
+	for i := 0; i < guard && !current.After(maxTime); i++ {
+		if (clockOrdinal(current, unit)-startOrdinal)%interval == 0 && clockValueAllowed(current, unit, allowed) {
+			ticks = append(ticks, timeToDateNumber(current))
+		}
+		current = addDateUnit(current, unit, 1)
+	}
+	return dedupeTicks(ticks)
+}
+
+func truncateDateTime(t time.Time, unit string) time.Time {
+	y, m, d := t.Date()
+	switch unit {
+	case "hour":
+		return time.Date(y, m, d, t.Hour(), 0, 0, 0, t.Location())
+	case "minute":
+		return time.Date(y, m, d, t.Hour(), t.Minute(), 0, 0, t.Location())
+	default:
+		return time.Date(y, m, d, t.Hour(), t.Minute(), t.Second(), 0, t.Location())
+	}
+}
+
+func addDateUnit(t time.Time, unit string, step int) time.Time {
+	switch unit {
+	case "hour":
+		return t.Add(time.Duration(step) * time.Hour)
+	case "minute":
+		return t.Add(time.Duration(step) * time.Minute)
+	default:
+		return t.Add(time.Duration(step) * time.Second)
+	}
+}
+
+func clockOrdinal(t time.Time, unit string) int {
+	switch unit {
+	case "hour":
+		return int(t.Unix() / int64(time.Hour/time.Second))
+	case "minute":
+		return int(t.Unix() / int64(time.Minute/time.Second))
+	default:
+		return int(t.Unix())
+	}
+}
+
+func clockGuard(minTime, maxTime time.Time, unit string) int {
+	switch unit {
+	case "hour":
+		return int(maxTime.Sub(minTime).Hours()) + 4
+	case "minute":
+		return int(maxTime.Sub(minTime).Minutes()) + 4
+	default:
+		return int(maxTime.Sub(minTime).Seconds()) + 4
+	}
+}
+
+func clockValueAllowed(t time.Time, unit string, allowed map[int]bool) bool {
+	if len(allowed) == 0 {
+		return true
+	}
+	switch unit {
+	case "hour":
+		return allowed[t.Hour()]
+	case "minute":
+		return allowed[t.Minute()]
+	default:
+		return allowed[t.Second()]
+	}
+}
+
+func safeDate(year int, month time.Month, day int, loc *time.Location) time.Time {
+	if day <= 0 {
+		day = 1
+	}
+	last := daysInMonth(year, month, loc)
+	if day > last {
+		day = last
+	}
+	return time.Date(year, month, day, 0, 0, 0, 0, loc)
+}
+
+func daysInMonth(year int, month time.Month, loc *time.Location) int {
+	return time.Date(year, month+1, 0, 0, 0, 0, 0, loc).Day()
+}
+
+func weeksBetween(startYear, startWeek, endYear, endWeek int) int {
+	start := isoWeekStart(startYear, startWeek)
+	end := isoWeekStart(endYear, endWeek)
+	return int(end.Sub(start).Hours() / (24 * 7))
+}
+
+func isoWeekStart(year, week int) time.Time {
+	jan4 := time.Date(year, time.January, 4, 0, 0, 0, 0, time.UTC)
+	offset := (int(jan4.Weekday()) + 6) % 7
+	week1 := jan4.AddDate(0, 0, -offset)
+	return week1.AddDate(0, 0, (week-1)*7)
 }
 
 func chooseDateLabelLayout(minVal, maxVal float64) string {

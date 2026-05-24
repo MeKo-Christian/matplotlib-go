@@ -239,3 +239,94 @@ func TestDayLocatorUsesRequestedMonthDays(t *testing.T) {
 		}
 	}
 }
+
+func TestYearLocatorUsesBaseMonthAndDay(t *testing.T) {
+	loc := YearLocator{Base: 2, Month: time.July, Day: 4, Location: time.UTC}
+	minVal := timeToDateNumber(time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC))
+	maxVal := timeToDateNumber(time.Date(2026, time.December, 31, 0, 0, 0, 0, time.UTC))
+
+	ticks := loc.Ticks(minVal, maxVal, 4)
+	want := []time.Time{
+		time.Date(2020, time.July, 4, 0, 0, 0, 0, time.UTC),
+		time.Date(2022, time.July, 4, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.July, 4, 0, 0, 0, 0, time.UTC),
+		time.Date(2026, time.July, 4, 0, 0, 0, 0, time.UTC),
+	}
+	assertDateTicks(t, ticks, want)
+}
+
+func TestMonthLocatorUsesRequestedMonths(t *testing.T) {
+	loc := MonthLocator{ByMonth: []time.Month{time.January, time.April, time.July, time.October}, ByMonthDay: 15, Location: time.UTC}
+	minVal := timeToDateNumber(time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC))
+	maxVal := timeToDateNumber(time.Date(2024, time.December, 31, 0, 0, 0, 0, time.UTC))
+
+	ticks := loc.Ticks(minVal, maxVal, 6)
+	want := []time.Time{
+		time.Date(2024, time.January, 15, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.April, 15, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.July, 15, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.October, 15, 0, 0, 0, 0, time.UTC),
+	}
+	assertDateTicks(t, ticks, want)
+}
+
+func TestWeekdayLocatorUsesRequestedWeekdays(t *testing.T) {
+	loc := WeekdayLocator{ByWeekday: []time.Weekday{time.Monday, time.Wednesday}, Location: time.UTC}
+	minVal := timeToDateNumber(time.Date(2024, time.January, 1, 12, 0, 0, 0, time.UTC))
+	maxVal := timeToDateNumber(time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC))
+
+	ticks := loc.Ticks(minVal, maxVal, 6)
+	want := []time.Time{
+		time.Date(2024, time.January, 3, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.January, 8, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.January, 10, 0, 0, 0, 0, time.UTC),
+	}
+	assertDateTicks(t, ticks, want)
+}
+
+func TestClockLocatorsUseRequestedFields(t *testing.T) {
+	minVal := timeToDateNumber(time.Date(2024, time.January, 1, 1, 15, 30, 0, time.UTC))
+	maxVal := timeToDateNumber(time.Date(2024, time.January, 1, 6, 45, 30, 0, time.UTC))
+
+	hours := (HourLocator{ByHour: []int{2, 4, 6}, Location: time.UTC}).Ticks(minVal, maxVal, 6)
+	assertDateTicks(t, hours, []time.Time{
+		time.Date(2024, time.January, 1, 2, 0, 0, 0, time.UTC),
+		time.Date(2024, time.January, 1, 4, 0, 0, 0, time.UTC),
+		time.Date(2024, time.January, 1, 6, 0, 0, 0, time.UTC),
+	})
+
+	minutes := (MinuteLocator{ByMinute: []int{20, 40}, Location: time.UTC}).Ticks(minVal, maxVal, 6)
+	if len(minutes) == 0 {
+		t.Fatal("MinuteLocator should produce ticks")
+	}
+	for _, tick := range minutes {
+		minute := dateNumberToTime(tick, time.UTC).Minute()
+		if minute != 20 && minute != 40 {
+			t.Fatalf("minute tick = %d, want 20 or 40", minute)
+		}
+	}
+
+	seconds := (SecondLocator{BySecond: []int{0, 30}, Interval: 30, Location: time.UTC}).Ticks(minVal, maxVal, 6)
+	if len(seconds) == 0 {
+		t.Fatal("SecondLocator should produce ticks")
+	}
+	for _, tick := range seconds[:min(4, len(seconds))] {
+		second := dateNumberToTime(tick, time.UTC).Second()
+		if second != 0 && second != 30 {
+			t.Fatalf("second tick = %d, want 0 or 30", second)
+		}
+	}
+}
+
+func assertDateTicks(t *testing.T, ticks []float64, want []time.Time) {
+	t.Helper()
+	if len(ticks) != len(want) {
+		t.Fatalf("tick count = %d, want %d: %v", len(ticks), len(want), ticks)
+	}
+	for i, tick := range ticks {
+		got := dateNumberToTime(tick, want[i].Location())
+		if !got.Equal(want[i]) {
+			t.Fatalf("tick %d = %s, want %s", i, got, want[i])
+		}
+	}
+}
