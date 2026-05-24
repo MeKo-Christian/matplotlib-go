@@ -263,6 +263,9 @@ func TestAxes_SetScaleUpdatesSharedRoot(t *testing.T) {
 	if _, ok := root.XAxis.MinorLocator.(SymLogLocator); !ok {
 		t.Fatalf("shared root x minor locator = %T, want SymLogLocator", root.XAxis.MinorLocator)
 	}
+	if formatter, ok := root.XAxis.Formatter.(LogFormatterMathText); !ok || !formatter.SciNotation {
+		t.Fatalf("shared root x formatter = %#v, want scientific LogFormatterMathText", root.XAxis.Formatter)
+	}
 	xMin, xMax := root.XScale.Domain()
 	if xMin != -5 || xMax != 15 {
 		t.Fatalf("shared root x domain = (%v, %v), want (-5, 15)", xMin, xMax)
@@ -293,6 +296,9 @@ func TestAxes_SetScaleUpdatesOverlayAxisDefaults(t *testing.T) {
 	}
 	if minor, ok := secondaryX.XAxisTop.MinorLocator.(LogLocator); !ok || len(minor.Subs) != 2 {
 		t.Fatalf("secondary x top minor locator = %#v, want log minor subs", secondaryX.XAxisTop.MinorLocator)
+	}
+	if formatter, ok := secondaryX.XAxisTop.Formatter.(LogFormatterMathText); !ok || !formatter.SciNotation {
+		t.Fatalf("secondary x top formatter = %#v, want scientific LogFormatterMathText", secondaryX.XAxisTop.Formatter)
 	}
 
 	twinY := ax.TwinY()
@@ -348,6 +354,9 @@ func TestAxes_SetScaleInstallsAsinhLocatorDefaults(t *testing.T) {
 	if len(minor.Subs) != 2 || minor.Subs[0] != 2 || minor.Subs[1] != 5 {
 		t.Fatalf("x minor locator subs = %v, want [2 5]", minor.Subs)
 	}
+	if formatter, ok := axes.XAxis.Formatter.(LogFormatterMathText); !ok || !formatter.SciNotation {
+		t.Fatalf("x formatter = %#v, want scientific LogFormatterMathText", axes.XAxis.Formatter)
+	}
 }
 
 func TestAxes_SetScaleInstallsLogitLocatorDefaults(t *testing.T) {
@@ -402,8 +411,8 @@ func TestAxes_SetScaleInstallsFunctionLogLocatorDefaults(t *testing.T) {
 	if locator.Base != 10 {
 		t.Fatalf("x locator base = %v, want 10", locator.Base)
 	}
-	if _, ok := axes.XAxis.Formatter.(LogFormatter); !ok {
-		t.Fatalf("x formatter = %T, want LogFormatter", axes.XAxis.Formatter)
+	if formatter, ok := axes.XAxis.Formatter.(LogFormatterMathText); !ok || !formatter.SciNotation {
+		t.Fatalf("x formatter = %#v, want scientific LogFormatterMathText", axes.XAxis.Formatter)
 	}
 }
 

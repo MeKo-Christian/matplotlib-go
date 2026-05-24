@@ -1874,7 +1874,7 @@ func configureScaleAxis(axis *Axis, scaleName string, cfg transform.ScaleOptions
 	switch strings.ToLower(scaleName) {
 	case "log", "functionlog":
 		axis.Locator = LogLocator{Base: cfg.Base, Minor: false}
-		axis.Formatter = LogFormatter{Base: cfg.Base}
+		axis.Formatter = LogFormatterMathText{Base: cfg.Base, SciNotation: true}
 		if len(cfg.Subs) > 0 {
 			axis.MinorLocator = LogLocator{Base: cfg.Base, Minor: true, Subs: cfg.Subs}
 		} else {
@@ -1882,11 +1882,15 @@ func configureScaleAxis(axis *Axis, scaleName string, cfg transform.ScaleOptions
 		}
 	case "symlog":
 		axis.Locator = SymLogLocator{Base: cfg.Base, LinThresh: cfg.LinThresh}
-		axis.Formatter = ScalarFormatter{Prec: 3}
+		axis.Formatter = LogFormatterMathText{Base: cfg.Base, SciNotation: true}
 		axis.MinorLocator = SymLogLocator{Base: cfg.Base, LinThresh: cfg.LinThresh, Subs: cfg.Subs}
 	case "asinh":
 		axis.Locator = AsinhLocator{LinearWidth: cfg.LinearWidth, Base: cfg.Base}
-		axis.Formatter = ScalarFormatter{Prec: 3}
+		if cfg.Base > 1 {
+			axis.Formatter = LogFormatterMathText{Base: cfg.Base, SciNotation: true}
+		} else {
+			axis.Formatter = StrMethodFormatter{Template: "{x:.3g}"}
+		}
 		axis.MinorLocator = AsinhLocator{LinearWidth: cfg.LinearWidth, Base: cfg.Base, Subs: cfg.Subs}
 	case "logit":
 		axis.Locator = LogitLocator{}
