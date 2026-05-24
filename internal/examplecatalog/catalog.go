@@ -114,6 +114,7 @@ var cases = []Case{
 	{ID: "formatter_log_mathtext_labels", Topic: "axes", Title: "Log MathText Formatter Labels", FixtureOnly: true, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "formatter_percent_labels", Topic: "axes", Title: "Percent Formatter Labels", FixtureOnly: true, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "formatter_scalar_scientific_labels", Topic: "axes", Title: "Scalar Scientific Formatter Labels", FixtureOnly: true, MinPSNR: 35.0, MaxMeanAbs: 6.5},
+	{ID: "locator_linear_labels", Topic: "axes", Title: "Linear Locator Labels", FixtureOnly: true, Width: 720, Height: 540, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "scale_asinh_ticks", Topic: "axes", Title: "Asinh Scale Ticks", FixtureOnly: true, Width: 720, Height: 400, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "scale_function_defaults", Topic: "axes", Title: "Function Scale Defaults", FixtureOnly: true, Width: 720, Height: 480, MinPSNR: 35.0, MaxMeanAbs: 6.5},
 	{ID: "scale_logit_ticks", Topic: "axes", Title: "Logit Scale Ticks", FixtureOnly: true, Width: 720, Height: 400, MinPSNR: 35.0, MaxMeanAbs: 6.5},
