@@ -176,7 +176,7 @@ func TestImageEmitsSelfContainedPixelRectangles(t *testing.T) {
 		})
 	})
 	for _, want := range [][]byte{
-		[]byte(`\pgftransformcm{2}{0}{0}{2}{\pgfpoint{10pt}{20pt}}`),
+		[]byte(`\pgftransformcm{2}{0}{0}{-2}{\pgfpoint{10pt}{22pt}}`),
 		[]byte(`\pgfpathrectangle{\pgfpoint{0pt}{0pt}}{\pgfpoint{1pt}{1pt}}`),
 		[]byte(`\pgfpathrectangle{\pgfpoint{1pt}{0pt}}{\pgfpoint{1pt}{1pt}}`),
 		[]byte(`\pgfsetfillopacity{0.5}`),

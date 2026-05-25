@@ -111,9 +111,11 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.imageIDs = map[string]string{}
 	r.lastFontKey = ""
 
+	// PostScript is natively y-up (origin bottom-left), matching the matplotlib-go
+	// y-up display space exactly. Like Matplotlib's PS backend (flipy() is False),
+	// no device flip is emitted; draws use display coordinates directly. The
+	// gsave/grestore pair brackets the page content.
 	r.content.WriteString("gsave\n")
-	fmt.Fprintf(&r.content, "0 %s translate\n", shortFloat(float64(r.height)))
-	r.content.WriteString("1 -1 scale\n")
 	if r.background.A > 0 {
 		writeFillColor(&r.content, r.background)
 		fmt.Fprintf(
@@ -558,8 +560,9 @@ func (r *Renderer) MeasureText(text string, size float64, fontKey string) render
 }
 
 // TextPath converts text to vector glyph outlines through the shared font
-// manager. PS path text is drawn through a local Y reflection so glyphs remain
-// upright inside the backend's top-left display-coordinate transform.
+// manager. render.TextPath emits y-down glyph outlines; textPathAffine reflects
+// them about the baseline into the y-up display frame so glyphs render upright
+// without a global device flip.
 func (r *Renderer) TextPath(text string, origin geom.Pt, size float64, fontKey string) (geom.Path, bool) {
 	if fontKey != "" {
 		r.lastFontKey = fontKey
@@ -679,7 +682,6 @@ func (r *Renderer) writeTextAt(text string, origin geom.Pt, size, angle float64,
 	if angle != 0 && !math.IsNaN(angle) && !math.IsInf(angle, 0) {
 		fmt.Fprintf(&r.content, "%s rotate\n", shortFloat(angle*180/math.Pi))
 	}
-	r.content.WriteString("1 -1 scale\n")
 	fmt.Fprintf(&r.content, "/Helvetica findfont %s scalefont setfont\n", shortFloat(size))
 	fmt.Fprintf(&r.content, "0 0 moveto (%s) show\n", escapePSString(text))
 	r.content.WriteString("grestore\n")

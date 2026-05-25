@@ -113,7 +113,9 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	fmt.Fprintf(&r.content, "\\pgfpathrectangle{\\pgfpoint{0pt}{0pt}}{\\pgfpoint{%spt}{%spt}}\n",
 		shortFloat(float64(r.width)), shortFloat(float64(r.height)))
 	r.content.WriteString("\\pgfusepath{use as bounding box}\n")
-	fmt.Fprintf(&r.content, "\\pgftransformcm{1}{0}{0}{-1}{\\pgfpoint{0pt}{%spt}}\n", shortFloat(float64(r.height)))
+	// PGF/TeX is natively y-up (origin bottom-left), matching the matplotlib-go
+	// y-up display space exactly. Like Matplotlib's PGF backend (flipy() is
+	// False), no device flip is emitted; draws use display coordinates directly.
 	if r.background.A > 0 {
 		writeFillOpacity(&r.content, r.background.A)
 		writeFillColor(&r.content, r.colorName(r.background))
@@ -413,11 +415,15 @@ func (r *Renderer) Image(img render.Image, dst geom.Rect) {
 	if width <= 0 || height <= 0 {
 		return
 	}
+	// Display space is y-up and the raster's row 0 is its top row, so map row 0
+	// to the top edge dst.Max.Y with rows advancing downward (negative D). This
+	// matches core's imageTransform convention and the rotated ImageTransformed
+	// path, keeping images upright without a global device flip.
 	r.writeImagePixels(img, geom.Affine{
 		A: dst.W() / float64(width),
-		D: dst.H() / float64(height),
+		D: -dst.H() / float64(height),
 		E: dst.Min.X,
-		F: dst.Min.Y,
+		F: dst.Max.Y,
 	})
 }
 
