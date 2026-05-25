@@ -271,6 +271,7 @@ func (a *Animation) Stop() error {
 	a.running = false
 	timer := a.timer
 	a.timer = nil
+	a.awaitingRepeat = false
 	a.mu.Unlock()
 	if timer == nil {
 		return nil

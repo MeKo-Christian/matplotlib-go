@@ -490,6 +490,42 @@ func TestRepeatDelayInsertsSkipTick(t *testing.T) {
 	}
 }
 
+func TestStopDuringRepeatDelayLetsRestartDrawImmediately(t *testing.T) {
+	cnv := newFakeCanvas()
+	loop := &recordingEventLoop{}
+	anim, err := NewFuncAnimation(Config{
+		Canvas:      cnv,
+		Frames:      1,
+		Repeat:      true,
+		RepeatDelay: 250 * time.Millisecond,
+		EventLoop:   loop,
+	}, func(int) ([]core.Artist, error) { return nil, nil }, nil)
+	if err != nil {
+		t.Fatalf("NewFuncAnimation: %v", err)
+	}
+	if err := anim.Start(); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	if err := loop.current().fire(); err != nil {
+		t.Fatalf("first tick: %v", err)
+	}
+	if cnv.drawCount != 1 {
+		t.Fatalf("draw count after first tick = %d, want 1", cnv.drawCount)
+	}
+	if err := anim.Stop(); err != nil {
+		t.Fatalf("Stop during repeat delay: %v", err)
+	}
+	if err := anim.Start(); err != nil {
+		t.Fatalf("restart: %v", err)
+	}
+	if err := loop.current().fire(); err != nil {
+		t.Fatalf("first tick after restart: %v", err)
+	}
+	if cnv.drawCount != 2 {
+		t.Fatalf("draw count after restart tick = %d, want immediate draw 2", cnv.drawCount)
+	}
+}
+
 func TestStopBeforeStartIsNoop(t *testing.T) {
 	cnv := newFakeCanvas()
 	anim, err := NewFuncAnimation(Config{Canvas: cnv, Frames: 1},

@@ -2921,6 +2921,8 @@ Current slice landed:
 - Tightened `Animation.Start` lifecycle error handling so a timer start failure
   returns the backend/event-loop error without leaving the animation marked
   running or holding a stale timer.
+- Tightened `Animation.Stop` during repeat-delay windows so a later `Start`
+  resumes with an immediate frame tick instead of inheriting a stale skip.
 - Fixed `ButtonOptions.Disabled` propagation so constructor-specified disabled
   state participates in the same interaction/picking behavior as runtime
   `Button.Enabled=false`.
