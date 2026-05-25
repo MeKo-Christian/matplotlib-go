@@ -1716,6 +1716,49 @@ Exit criteria (remaining open):
 
 ---
 
+# Phase 17.5: Widget Visual Parity and Theme Split
+
+**Goal:** preserve the improved Go widget appearance while providing a
+source-backed Matplotlib-compatible widget visual mode for parity testing and
+migration-sensitive users.
+
+**Reference sources:** `third_party/matplotlib/lib/matplotlib/widgets.py`,
+`test/parity/widgets_gallery/plot.py`, `examples/widgets_gallery/example.go`,
+`core/widget_*.go`, `core/widgets_common.go`, and
+`canvas/widget_interaction.go`.
+
+- [ ] Audit `widgets_gallery` differences against the Python reference and
+      classify them as layout, widget chrome, selector geometry, text metrics,
+      cursor/multi-cursor behavior, or renderer-boundary bugs.
+- [ ] Add an explicit widget visual-style switch that keeps the current Go
+      visuals as the default and exposes a Matplotlib-compatible style for
+      parity fixtures.
+- [ ] Move widget colors, padding, corner radius, stroke widths, slider handle
+      geometry, check/radio markers, text-box chrome, and selector chrome behind
+      that visual-style policy instead of hard-coding one appearance.
+- [ ] Update `widgets_gallery` parity rendering to use the Matplotlib-compatible
+      widget style while keeping the user-facing example on the Go default
+      style unless the example is explicitly demonstrating compatibility mode.
+- [ ] Add focused tests for the style split so interaction hit-testing remains
+      stable when visual styling changes.
+- [ ] Rebaseline `widgets_gallery` parity metrics only after mismatches are
+      source-backed and visually inspected against the original Matplotlib
+      rendering.
+
+Exit criteria:
+
+- [ ] `widgets_gallery` has a documented Matplotlib-compatible rendering path
+      with meaningfully improved parity metrics.
+- [ ] The current Go widget appearance remains available and remains the
+      default for normal examples.
+- [ ] Widget interaction tests pass under both visual styles where geometry or
+      hit regions are affected.
+- [ ] Any remaining widget-gallery residuals are classified as intentional Go
+      visual choices, upstream GUI/backend differences, or concrete follow-up
+      bugs.
+
+---
+
 # Phase 18: User-Facing Example Breadth
 
 **Goal:** ensure every major implemented public feature family has a
