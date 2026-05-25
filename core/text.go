@@ -26,6 +26,7 @@ const (
 	TextVAlignBottom
 	TextVAlignMiddle
 	TextVAlignTop
+	TextVAlignCenterBaseline
 )
 
 // TextRotationMode controls how alignment interacts with text rotation.
@@ -417,6 +418,8 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 		top -= blockHeight
 	case textLayoutVAlignBaseline:
 		top -= layouts[0].Ascent
+	case textLayoutVAlignCenterBaseline:
+		top -= layouts[0].Ascent / 2
 	}
 
 	if t.BBox != nil {
@@ -808,6 +811,8 @@ func multilineTextBlockRect(r render.Renderer, ctx *DrawContext, anchor geom.Pt,
 		top -= blockHeight
 	case textLayoutVAlignBaseline:
 		top -= layouts[0].Ascent
+	case textLayoutVAlignCenterBaseline:
+		top -= layouts[0].Ascent / 2
 	}
 	return geom.Rect{
 		Min: geom.Pt{X: left, Y: top},
@@ -1114,6 +1119,8 @@ func alignedTextOrigin(anchor geom.Pt, metrics render.TextMetrics, hAlign TextAl
 		origin.Y += (metrics.Ascent - metrics.Descent) / 2
 	case TextVAlignBottom:
 		origin.Y -= metrics.Descent
+	case TextVAlignCenterBaseline:
+		origin.Y += metrics.Ascent / 2
 	}
 
 	return origin

@@ -2395,6 +2395,11 @@ Current slice landed:
 - Renderer-neutral text tests cover anchor-mode rotated text anchors and
   xtick / ytick alignment separately from the default rotated-bbox alignment
   behavior.
+- `TextVerticalAlign` now exposes `TextVAlignCenterBaseline`, matching
+  Matplotlib's `verticalalignment="center_baseline"` for text and annotation
+  layout.
+- Renderer-neutral text tests cover single-line center-baseline origin
+  placement against measured ascent.
 
 #### 12.4D Annotation and Offset-Box Behavior
 

@@ -850,6 +850,32 @@ func TestTextRotationModeYTickAdjustsVerticalAlignment(t *testing.T) {
 	}
 }
 
+func TestTextCenterBaselineVerticalAlignment(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 2},
+		Content:  "center",
+		FontSize: 10,
+		HAlign:   TextAlignLeft,
+		VAlign:   TextVAlignCenterBaseline,
+		Coords:   Coords(CoordData),
+		ClipOn:   true,
+	}
+	r := &textRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.origins) != 1 {
+		t.Fatalf("text draws = %d, want 1", len(r.origins))
+	}
+	anchor := ctx.DataToPixel.Apply(text.Position)
+	layout := measureSingleLineTextLayout(r, text.Content, text.FontSize, "")
+	want := geom.Pt{X: anchor.X, Y: anchor.Y + layout.Ascent/2}
+	if !approx(r.origins[0].X, want.X, 1e-9) || !approx(r.origins[0].Y, want.Y, 1e-9) {
+		t.Fatalf("center-baseline origin = %+v, want %+v", r.origins[0], want)
+	}
+}
+
 func TestTextArtistFontKeyOverridesRCFontKey(t *testing.T) {
 	ctx := createTestDrawContext()
 	ctx.RC.FontKey = "RC Font"

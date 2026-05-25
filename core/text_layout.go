@@ -105,6 +105,8 @@ func layoutVerticalAlign(vAlign TextVerticalAlign, preferCenterBaseline bool) te
 		return textLayoutVAlignBottom
 	case TextVAlignBaseline:
 		return textLayoutVAlignBaseline
+	case TextVAlignCenterBaseline:
+		return textLayoutVAlignCenterBaseline
 	case TextVAlignMiddle:
 		if preferCenterBaseline {
 			return textLayoutVAlignCenterBaseline
