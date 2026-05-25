@@ -291,6 +291,16 @@ func Subplots(nRows, nCols int, opts ...core.SubplotOption) (*core.Figure, [][]*
 	return fig, grid
 }
 
+// Subplot2Grid creates a spanning subplot inside a logical grid on the current figure.
+func Subplot2Grid(shape, loc [2]int, rowSpan, colSpan int, opts ...core.SubplotAxesOption) *core.Axes {
+	fig := GCF()
+	ax := fig.Subplot2Grid(shape, loc, rowSpan, colSpan, opts...)
+	registry.mu.Lock()
+	registry.rememberAxesLocked(fig, ax, "")
+	registry.mu.Unlock()
+	return ax
+}
+
 // Plot delegates to the current axes.
 func Plot(x, y []float64, opts ...core.PlotOptions) *core.Line2D {
 	return GCA().Plot(x, y, opts...)

@@ -690,6 +690,15 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Note:              "Stateful pyplot Subplots creates a new current figure and grid of core axes, preserving the first axes as current. Remaining partial scope is Matplotlib's squeeze, subplot_kw, gridspec_kw, and richer share-axis overload breadth.",
 	},
 	{
+		ID:                "pyplot-subplot2grid",
+		UpstreamID:        "pyplot.py:function:subplot2grid",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "core/gridspec.go"},
+		CatalogIDs:        []string{"gridspec_composition"},
+		Note:              "Stateful pyplot Subplot2Grid delegates to the current figure's spanning GridSpec helper and marks the created axes current. Remaining partial scope is Matplotlib's fig keyword, rowspan/colspan defaults, projection kwargs breadth, and compatibility with constrained layout internals.",
+	},
+	{
 		ID:                "pyplot-axes",
 		UpstreamID:        "pyplot.py:function:axes",
 		FeatureCoverageID: "pyplot-state",
@@ -1831,7 +1840,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
 		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
-		note:              "The Go pyplot package covers current figure/current axes state, common axes/subplot creation, sca/delaxes axes registry updates, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, axis mode/limit/scale/grid/tick-param/locator/minor-tick/fixed-tick wrappers, axes-frame box toggling, labels, legends, colorbars, rc helpers, savefig, show, pause, draw, close/close-all cleanup, clf/cla reset helpers, and interactive-mode state toggles. Remaining partial scope is specific missing wrapper families, Python overload breadth, automatic interactive redraw side effects, and unsupported implicit manager behavior.",
+		note:              "The Go pyplot package covers current figure/current axes state, common axes/subplot/subplot2grid creation, sca/delaxes axes registry updates, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, axis mode/limit/scale/grid/tick-param/locator/minor-tick/fixed-tick wrappers, axes-frame box toggling, labels, legends, colorbars, rc helpers, savefig, show, pause, draw, close/close-all cleanup, clf/cla reset helpers, and interactive-mode state toggles. Remaining partial scope is specific missing wrapper families, Python overload breadth, automatic interactive redraw side effects, and unsupported implicit manager behavior.",
 	},
 	{
 		idPrefix:          "pylab-helpers",

@@ -78,6 +78,28 @@ func TestSubplotsCreatesNewFigureAndCurrentAxes(t *testing.T) {
 	}
 }
 
+func TestSubplot2GridAddsCurrentSpanningAxes(t *testing.T) {
+	resetForTests()
+
+	fig := Figure()
+	ax := Subplot2Grid([2]int{3, 3}, [2]int{1, 1}, 2, 2)
+	if ax == nil {
+		t.Fatal("Subplot2Grid() returned nil")
+	}
+	if got := GCA(); got != ax {
+		t.Fatalf("GCA() = %p, want %p", got, ax)
+	}
+	if got := GCF(); got != fig {
+		t.Fatalf("GCF() = %p, want %p", got, fig)
+	}
+	if len(fig.Children) != 1 || fig.Children[0] != ax {
+		t.Fatalf("figure children = %+v, want subplot2grid axes", fig.Children)
+	}
+	if ax.RectFraction.Min.X <= 0.1 || ax.RectFraction.Max.X <= 0.8 {
+		t.Fatalf("subplot2grid rect = %+v, want spanning right-side axes", ax.RectFraction)
+	}
+}
+
 func TestAxesAddsCurrentAxesToCurrentFigure(t *testing.T) {
 	resetForTests()
 
