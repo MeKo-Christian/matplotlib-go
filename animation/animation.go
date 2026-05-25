@@ -16,12 +16,13 @@ const DefaultInterval = 200 * time.Millisecond
 
 // Errors returned by the animation engine.
 var (
-	ErrNilCanvas       = errors.New("animation: canvas is required")
-	ErrNilUpdate       = errors.New("animation: update function is required")
-	ErrAlreadyRunning  = errors.New("animation: already running")
-	ErrNotRunning      = errors.New("animation: not running")
-	ErrNoFramesToRun   = errors.New("animation: no frames remain to step")
-	ErrEmptyFrameSet   = errors.New("animation: artist animation needs at least one frame")
+	ErrNilCanvas         = errors.New("animation: canvas is required")
+	ErrNilUpdate         = errors.New("animation: update function is required")
+	ErrAlreadyRunning    = errors.New("animation: already running")
+	ErrNotRunning        = errors.New("animation: not running")
+	ErrNoFramesToRun     = errors.New("animation: no frames remain to step")
+	ErrEmptyFrameSet     = errors.New("animation: artist animation needs at least one frame")
+	ErrWriterUnsupported = errors.New("animation: movie writers are not supported")
 )
 
 // UpdateFunc returns the animated artists for the given frame index. Artists
@@ -172,6 +173,14 @@ func (a *Animation) Running() bool {
 // Config returns the normalized configuration in effect.
 func (a *Animation) Config() Config {
 	return a.cfg
+}
+
+// Save reports that file writer support is intentionally outside the current
+// animation surface. Interactive playback and deterministic Step rendering are
+// supported; callers that need files should render frames explicitly and encode
+// them with a chosen image/video package.
+func (a *Animation) Save(_ string) error {
+	return ErrWriterUnsupported
 }
 
 // Step advances the animation by one frame deterministically. It performs the

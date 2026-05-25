@@ -31,10 +31,10 @@ func (f *fakeCanvas) Draw() error {
 	f.drawCount++
 	return f.drawErr
 }
-func (f *fakeCanvas) Resize(_, _ int) error                                      { return nil }
+func (f *fakeCanvas) Resize(_, _ int) error                                            { return nil }
 func (f *fakeCanvas) Connect(_ canvas.EventType, _ canvas.Handler) canvas.ConnectionID { return 0 }
-func (f *fakeCanvas) Disconnect(_ canvas.ConnectionID)                          {}
-func (f *fakeCanvas) Close() error                                              { return nil }
+func (f *fakeCanvas) Disconnect(_ canvas.ConnectionID)                                 {}
+func (f *fakeCanvas) Close() error                                                     { return nil }
 
 // blitFakeCanvas adds blit capability and records overlay calls.
 type blitFakeCanvas struct {
@@ -78,7 +78,7 @@ func (a *fakeArtist) Draw(_ render.Renderer, _ *core.DrawContext) {
 	a.drawCalls++
 	a.mu.Unlock()
 }
-func (a *fakeArtist) Z() float64                            { return a.zOrder }
+func (a *fakeArtist) Z() float64                           { return a.zOrder }
 func (a *fakeArtist) Bounds(_ *core.DrawContext) geom.Rect { return geom.Rect{} }
 
 func TestNewFuncAnimationRejectsBadConfig(t *testing.T) {
@@ -228,6 +228,21 @@ func TestArtistAnimationRejectsEmptyFrames(t *testing.T) {
 	cnv := newFakeCanvas()
 	if _, err := NewArtistAnimation(Config{Canvas: cnv}, nil); !errors.Is(err, ErrEmptyFrameSet) {
 		t.Fatalf("expected ErrEmptyFrameSet, got %v", err)
+	}
+}
+
+func TestAnimationSaveReturnsUnsupportedWriterError(t *testing.T) {
+	cnv := newFakeCanvas()
+	anim, err := NewFuncAnimation(Config{Canvas: cnv, Frames: 1}, func(int) ([]core.Artist, error) {
+		return nil, nil
+	}, nil)
+	if err != nil {
+		t.Fatalf("NewFuncAnimation: %v", err)
+	}
+
+	err = anim.Save("out.gif")
+	if !errors.Is(err, ErrWriterUnsupported) {
+		t.Fatalf("Save error = %v, want ErrWriterUnsupported", err)
 	}
 }
 

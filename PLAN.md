@@ -2747,7 +2747,7 @@ convenience layers over the core model.
       playback remains supported.
 - [ ] Add examples and browser demos for at least one timer-driven line update,
       one artist-list animation, and one blit-capable animation path.
-- [ ] Add unit tests for frame sequencing, stop/start lifecycle, repeat-delay,
+- [x] Add unit tests for frame sequencing, stop/start lifecycle, repeat-delay,
       blit fallback, and error handling for unsupported writer paths.
 
 #### 12.5G Exit Criteria
@@ -2821,6 +2821,9 @@ Current slice landed:
   HTMLWriter, external encoder families, writer registries, and writer-only
   helpers are documented omissions until a deterministic writer surface is
   chosen.
+- Added `Animation.Save` as an explicit unsupported-writer path returning
+  `ErrWriterUnsupported`, with unit coverage. This keeps writer export out of
+  v1.0 while avoiding silent no-op behavior for users who look for a save path.
 - Added explicit public-surface classifications for the high-value backend
   lifecycle/tool rows: `_pylab_helpers.Gcf`, canvas/manager/event/timer
   classes, backend registry lookup/registration, and home/back/forward/pan/
