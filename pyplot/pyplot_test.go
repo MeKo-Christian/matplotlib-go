@@ -225,6 +225,37 @@ func TestAxisLimitAndScaleHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 }
 
+func TestAxisModeHelperDelegatesToCurrentAxes(t *testing.T) {
+	resetForTests()
+
+	ax := GCA()
+	if err := Axis("off"); err != nil {
+		t.Fatalf("Axis(off) error = %v", err)
+	}
+	if ax.ShowFrame || ax.XAxis.ShowTicks || ax.YAxis.ShowTicks || ax.XAxis.ShowLabels || ax.YAxis.ShowLabels {
+		t.Fatalf("Axis(off) left visible frame/ticks/labels: frame=%v xTicks=%v yTicks=%v xLabels=%v yLabels=%v",
+			ax.ShowFrame, ax.XAxis.ShowTicks, ax.YAxis.ShowTicks, ax.XAxis.ShowLabels, ax.YAxis.ShowLabels)
+	}
+
+	if err := Axis("on"); err != nil {
+		t.Fatalf("Axis(on) error = %v", err)
+	}
+	if !ax.ShowFrame || !ax.XAxis.ShowTicks || !ax.YAxis.ShowTicks || !ax.XAxis.ShowLabels || !ax.YAxis.ShowLabels {
+		t.Fatalf("Axis(on) did not restore frame/ticks/labels: frame=%v xTicks=%v yTicks=%v xLabels=%v yLabels=%v",
+			ax.ShowFrame, ax.XAxis.ShowTicks, ax.YAxis.ShowTicks, ax.XAxis.ShowLabels, ax.YAxis.ShowLabels)
+	}
+
+	if err := Axis("equal"); err != nil {
+		t.Fatalf("Axis(equal) error = %v", err)
+	}
+	if err := Axis("auto"); err != nil {
+		t.Fatalf("Axis(auto) error = %v", err)
+	}
+	if err := Axis("image"); err == nil {
+		t.Fatal("Axis(image) returned nil error, want unsupported mode error")
+	}
+}
+
 func TestGridAndTickParamsDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 

@@ -416,6 +416,35 @@ func YScale(name string, opts ...transform.ScaleOption) error {
 	return GCA().SetYScale(name, opts...)
 }
 
+// Axis applies a supported Matplotlib-style axis mode to the current axes.
+func Axis(mode string) error {
+	ax := GCA()
+	switch strings.ToLower(strings.TrimSpace(mode)) {
+	case "off":
+		show := false
+		ax.ShowFrame = false
+		return ax.TickParams(core.TickParams{
+			Axis:       "both",
+			ShowTicks:  &show,
+			ShowLabels: &show,
+		})
+	case "on":
+		show := true
+		ax.ShowFrame = true
+		return ax.TickParams(core.TickParams{
+			Axis:       "both",
+			ShowTicks:  &show,
+			ShowLabels: &show,
+		})
+	case "equal":
+		return ax.SetAspect("equal")
+	case "", "auto":
+		return ax.SetAspect("auto")
+	default:
+		return fmt.Errorf("pyplot: unsupported axis mode %q", mode)
+	}
+}
+
 // Grid shows or hides grid lines on the current axes, creating grid artists as needed.
 func Grid(visible bool, params ...core.TickParams) ([]*core.Grid, error) {
 	ax := GCA()
