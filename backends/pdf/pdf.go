@@ -256,15 +256,13 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.fontIDs = map[string]string{}
 	r.lastFontKey = ""
 
-	// PDF's coordinate origin is bottom-left with +Y up. matplotlib-go uses a
-	// top-left origin with +Y down. Flip Y once at the top of the content
-	// stream so all subsequent draws can use the matplotlib coordinate frame
-	// unchanged.
-	fmt.Fprintf(&r.content, "1 0 0 -1 0 %s cm\n", shortFloat(float64(r.height)))
+	// PDF's coordinate origin is bottom-left with +Y up, which matches the
+	// matplotlib-go y-up display space exactly (mirroring Matplotlib's PDF
+	// backend, whose flipy() is False). No device flip is emitted; draws use
+	// display coordinates directly.
 
 	if r.background.A > 0 {
-		// Paint the page background as a filled rectangle in the now-flipped
-		// frame.
+		// Paint the page background as a filled rectangle covering the page.
 		writeFillColor(&r.content, r.background)
 		fmt.Fprintf(
 			&r.content, "0 0 %s %s re f\n",
