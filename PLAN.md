@@ -1428,7 +1428,7 @@ Completed scope:
 
 # Phase 11: Exhaustive Public Surface Parity Map
 
-**Goal:** turn the coarse Phase 9A audit into the detailed answer originally
+**Goal:** turn the coarse Phase 10 audit into the detailed answer originally
 needed: for each relevant upstream Matplotlib public API, enumerable registry,
 and gallery family, state whether the Go port has a direct equivalent, an
 idiomatic equivalent, an intentional omission, or no implementation yet.
@@ -1460,7 +1460,7 @@ idiomatic equivalent, an intentional omission, or no implementation yet.
 Current slice landed:
 
 - `internal/examplecatalog/extract_public_surface.py` uses Python `ast` to
-  extract a stable upstream inventory for the Phase 9B tracked modules.
+  extract a stable upstream inventory.
 - `test/testdata/parity_surface/upstream_public_surface.json` stores the
   committed inventory: 21 modules and 591 public-surface rows covering public
   classes, functions, constants, and selected registries such as markers,
@@ -1468,7 +1468,7 @@ Current slice landed:
   modes.
 - Catalog tests now verify landmark upstream rows and fail when the committed
   artifact differs from the extractor output.
-- `internal/examplecatalog.PublicSurfaceParityRows` seeds the Phase 9B.2
+- `internal/examplecatalog.PublicSurfaceParityRows` seeds the
   mapping with first-pass classifications for landmark rows including
   `Artist`, `Line2D`, the `*` marker, `lanczos` interpolation, `pyplot.plot`,
   `Button`, and `FuncAnimation`.
@@ -1650,14 +1650,22 @@ Status: [x] done · [~] in progress · [ ] todo.
 - [x] G1 Contract & core pivot.
 - [x] G2 AGG backend owns device flip.
 - [x] G3 Core positioning/text helpers y-up conversion.
-- [~] G4 AGG parity validation. (parity suite validated — only 4 fixtures >2
-  MeanAbs, all classified; AGG backend unit/golden tests still need y-up
-  reconciliation: transformed-image/TeX pixel expectations, path-effect and
-  pattern-gradient backend goldens.)
+- [x] G4 AGG parity validation. (`go test ./core/... ./backends/...` green and
+  `./test/` PNG parity — TestGolden, TestMatplotlibRef, TestReferenceCompare,
+  UseTeX — green. Reconciled ~59 core + AGG renderer-neutral unit tests to y-up
+  and fixed three real y-up code bugs they surfaced: DrawTeX baseline placement,
+  `localDrawingAreaPath` content orientation, and `AnchoredPacker` vertical
+  stacking / cross-axis alignment. Regenerated AGG path-effect / pattern-gradient
+  backend goldens and the system-TeX golden. NOTE: `TestSVGGolden` structural
+  goldens still fail under y-up — tracked under G6.)
 - [~] G5 Example 1:1 port sweep. (`text_annotation_matrix`,
   `pattern_gradient_effects` ported; broader sweep pending.)
-- [ ] G6 Vector/other backend inversion ownership. (pdf/ps/pgf/svg/gobasic
-      backend tests currently pass under y-up — verify output correctness.)
+- [~] G6 Vector/other backend inversion ownership. (`./backends/{svg,pdf,ps,pgf,
+  gobasic}` unit tests pass, but `test/TestSVGGolden` structural goldens FAIL
+  under y-up: most cases differ only in flipped coordinates (stale goldens →
+  regen), but `polar_axes` (80→36) and `mixed_raster_vector` (82→39) drop ~half
+  their child elements — investigate for a real SVG y-up bug before regenerating.
+  PDF/PS structural goldens still to be checked.)
 - [ ] G7 Full-suite regen and revalidation.
 - [ ] G8 Renderer-neutral signed-geometry regression set.
 
