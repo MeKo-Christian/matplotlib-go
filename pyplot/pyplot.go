@@ -301,6 +301,38 @@ func Subplot2Grid(shape, loc [2]int, rowSpan, colSpan int, opts ...core.SubplotA
 	return ax
 }
 
+// SubplotMosaic creates named subplot areas on the current figure.
+func SubplotMosaic(layout [][]string, opts ...core.GridSpecOption) (map[string]*core.Axes, error) {
+	fig := GCF()
+	axes, err := fig.SubplotMosaic(layout, opts...)
+	if err != nil {
+		return nil, err
+	}
+	registry.mu.Lock()
+	var firstAxes *core.Axes
+	for row := range layout {
+		for _, label := range layout[row] {
+			if label == "" || label == "." {
+				continue
+			}
+			ax := axes[label]
+			if ax == nil {
+				continue
+			}
+			registry.rememberAxesLocked(fig, ax, "")
+			if firstAxes == nil {
+				firstAxes = ax
+			}
+		}
+	}
+	if firstAxes != nil {
+		registry.current = fig
+		registry.currentAxes[fig] = firstAxes
+	}
+	registry.mu.Unlock()
+	return axes, nil
+}
+
 // Plot delegates to the current axes.
 func Plot(x, y []float64, opts ...core.PlotOptions) *core.Line2D {
 	return GCA().Plot(x, y, opts...)

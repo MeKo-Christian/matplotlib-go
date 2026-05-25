@@ -100,6 +100,37 @@ func TestSubplot2GridAddsCurrentSpanningAxes(t *testing.T) {
 	}
 }
 
+func TestSubplotMosaicAddsNamedAxesAndSetsCurrent(t *testing.T) {
+	resetForTests()
+
+	fig := Figure()
+	axes, err := SubplotMosaic([][]string{
+		{"A", "A", "B"},
+		{"C", ".", "B"},
+	})
+	if err != nil {
+		t.Fatalf("SubplotMosaic() error = %v", err)
+	}
+	if len(axes) != 3 {
+		t.Fatalf("mosaic axes count = %d, want 3", len(axes))
+	}
+	if axes["A"] == nil || axes["B"] == nil || axes["C"] == nil {
+		t.Fatalf("mosaic axes = %+v, want A/B/C", axes)
+	}
+	if got := GCF(); got != fig {
+		t.Fatalf("GCF() = %p, want %p", got, fig)
+	}
+	if got := GCA(); got != axes["A"] {
+		t.Fatalf("GCA() = %p, want first mosaic axes %p", got, axes["A"])
+	}
+	if len(fig.Children) != 3 {
+		t.Fatalf("figure children = %d, want 3", len(fig.Children))
+	}
+	if _, err := SubplotMosaic([][]string{{"A", "B"}, {"C", "A"}}); err == nil {
+		t.Fatal("SubplotMosaic() with non-rectangular region returned nil error")
+	}
+}
+
 func TestAxesAddsCurrentAxesToCurrentFigure(t *testing.T) {
 	resetForTests()
 

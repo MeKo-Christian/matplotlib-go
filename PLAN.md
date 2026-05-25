@@ -2843,6 +2843,9 @@ Current slice landed:
   scoped remaining Matplotlib overload behavior.
 - Added pyplot `Subplot2Grid` over the current figure's spanning GridSpec
   helper, marking the new axes current.
+- Added pyplot `SubplotMosaic` over the current figure's named GridSpec mosaic
+  helper, registering returned axes and preserving the first visible axes as
+  current.
 - Added core `ImRead` / `ImSave` image IO helpers for Go-supported file
   decoding and PNG `render.RGBAImage` output, including straight-alpha PNG
   round-trip tests and explicit unsupported-input errors.
