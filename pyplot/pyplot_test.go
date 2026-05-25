@@ -674,6 +674,34 @@ func TestCLAClearsCurrentAxesButKeepsItCurrent(t *testing.T) {
 	}
 }
 
+func TestDrawUsesCurrentFigureManagerCanvas(t *testing.T) {
+	resetForTests()
+
+	fig := Figure()
+	drawCalls := 0
+	SetManagerFactory(func(got *core.Figure) (canvas.FigureManager, error) {
+		if got != fig {
+			t.Fatalf("manager figure = %p, want %p", got, fig)
+		}
+		return &testFigureManager{
+			canvas: &testFigureCanvas{
+				figure: got,
+				onDraw: func() {
+					drawCalls++
+				},
+			},
+			tools: canvas.NewToolManager(),
+		}, nil
+	})
+
+	if err := Draw(); err != nil {
+		t.Fatalf("Draw() error = %v", err)
+	}
+	if drawCalls != 1 {
+		t.Fatalf("draw calls = %d, want 1", drawCalls)
+	}
+}
+
 func TestRCUpdatesActiveDefaultsForNewFigures(t *testing.T) {
 	resetForTests()
 
@@ -789,11 +817,17 @@ func (m *testFigureManager) ToolManager() *canvas.ToolManager { return m.tools }
 
 type testFigureCanvas struct {
 	figure *core.Figure
+	onDraw func()
 }
 
 func (c *testFigureCanvas) Figure() *core.Figure { return c.figure }
 
-func (c *testFigureCanvas) Draw() error { return nil }
+func (c *testFigureCanvas) Draw() error {
+	if c.onDraw != nil {
+		c.onDraw()
+	}
+	return nil
+}
 
 func (c *testFigureCanvas) Resize(width, height int) error {
 	if c.figure != nil {

@@ -709,6 +709,14 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Note:              "Stateful pyplot Close and CloseAll remove figures from the Go registry and close cached managers. Remaining partial scope is Python's numeric/name overloads and exact interactive current-manager ordering.",
 	},
 	{
+		ID:                "pyplot-draw",
+		UpstreamID:        "pyplot.py:function:draw",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
+		Note:              "Stateful pyplot Draw delegates to the current figure manager canvas, preferring DrawIdle when available. Remaining partial scope is exact interactive stale/draw scheduling parity.",
+	},
+	{
 		ID:                "pyplot-clf",
 		UpstreamID:        "pyplot.py:function:clf",
 		FeatureCoverageID: "pyplot-state",
@@ -1521,7 +1529,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
 		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
-		note:              "The Go pyplot package covers current figure/current axes state, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, axis limit/scale wrappers, labels, legends, colorbars, rc helpers, savefig, show, pause, close/close-all cleanup, and clf/cla reset helpers. Remaining partial scope is specific missing wrapper families, Python overload breadth, interactive mode toggles, and unsupported implicit manager behavior.",
+		note:              "The Go pyplot package covers current figure/current axes state, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, axis limit/scale wrappers, labels, legends, colorbars, rc helpers, savefig, show, pause, draw, close/close-all cleanup, and clf/cla reset helpers. Remaining partial scope is specific missing wrapper families, Python overload breadth, interactive mode toggles, and unsupported implicit manager behavior.",
 	},
 	{
 		idPrefix:          "pylab-helpers",

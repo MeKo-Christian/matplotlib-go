@@ -747,6 +747,22 @@ func Show() error {
 	return nil
 }
 
+// Draw redraws the current figure through its manager canvas.
+func Draw() error {
+	manager, err := ensureManager(GCF())
+	if err != nil {
+		return err
+	}
+	c := manager.Canvas()
+	if c == nil {
+		return nil
+	}
+	if idle, ok := c.(canvas.DrawIdleCanvas); ok {
+		return idle.DrawIdle()
+	}
+	return c.Draw()
+}
+
 // Close removes the given figures from pyplot state and closes their cached
 // managers. With no arguments, Close closes the current figure.
 func Close(figs ...*core.Figure) error {

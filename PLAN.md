@@ -2809,6 +2809,9 @@ Current slice landed:
 - Added pyplot `Close` / `CloseAll` registry lifecycle helpers so stateful
   figures can be removed and cached managers closed deterministically, with
   public-surface notes for the implemented `pyplot.close` subset.
+- Added pyplot `Draw` as a current-figure manager/canvas redraw wrapper,
+  preferring draw-idle capable canvases and documenting the implemented
+  `pyplot.draw` subset.
 - Added pyplot `CLF` / `CLA` reset helpers for clearing the current figure or
   current axes without destroying the figure/axes registry entry, with
   public-surface notes for the implemented `clf` / `cla` subset.
