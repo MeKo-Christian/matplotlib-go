@@ -608,6 +608,72 @@ func TestCloseAllRemovesEveryFigure(t *testing.T) {
 	}
 }
 
+func TestCLFClearsCurrentFigureAndAxesRegistry(t *testing.T) {
+	resetForTests()
+
+	fig := Figure()
+	ax := GCA()
+	Plot([]float64{0, 1}, []float64{0, 1})
+	fig.Add(&core.Text{Position: geom.Pt{X: 0.5, Y: 0.5}, Content: "figure note"})
+
+	CLF()
+
+	if GCF() != fig {
+		t.Fatal("CLF should keep the same current figure")
+	}
+	if len(fig.Children) != 0 || len(fig.Artists) != 0 {
+		t.Fatalf("figure after CLF = %d axes, %d artists; want empty", len(fig.Children), len(fig.Artists))
+	}
+	registry.mu.Lock()
+	currentAxes := registry.currentAxes[fig]
+	subplots := len(registry.subplotAxes[fig])
+	registry.mu.Unlock()
+	if currentAxes != nil || subplots != 0 {
+		t.Fatalf("registry after CLF = current axes %p subplots %d, want nil/0", currentAxes, subplots)
+	}
+
+	next := GCA()
+	if next == nil || next == ax {
+		t.Fatalf("GCA after CLF = %p, want new axes", next)
+	}
+	if len(fig.Children) != 1 || fig.Children[0] != next {
+		t.Fatalf("figure axes after new GCA = %d, want one new current axes", len(fig.Children))
+	}
+}
+
+func TestCLAClearsCurrentAxesButKeepsItCurrent(t *testing.T) {
+	resetForTests()
+
+	ax := GCA()
+	Plot([]float64{0, 1}, []float64{0, 1})
+	button := ax.Button("Run")
+	if button == nil {
+		t.Fatal("button constructor returned nil")
+	}
+	Title("old title")
+	XLabel("old x")
+	YLabel("old y")
+	XLim(2, 3)
+	YLim(4, 5)
+
+	CLA()
+
+	if GCA() != ax {
+		t.Fatal("CLA should keep the same current axes")
+	}
+	if len(ax.Artists) != 0 || len(ax.WidgetArtists) != 0 {
+		t.Fatalf("axes after CLA = %d artists, %d widgets; want empty", len(ax.Artists), len(ax.WidgetArtists))
+	}
+	if ax.Title != "" || ax.XLabel != "" || ax.YLabel != "" {
+		t.Fatalf("labels after CLA = %q/%q/%q, want empty", ax.Title, ax.XLabel, ax.YLabel)
+	}
+	x0, x1 := ax.XScale.Domain()
+	y0, y1 := ax.YScale.Domain()
+	if x0 != 0 || x1 != 1 || y0 != 0 || y1 != 1 {
+		t.Fatalf("limits after CLA = x[%v,%v] y[%v,%v], want [0,1]/[0,1]", x0, x1, y0, y1)
+	}
+}
+
 func TestRCUpdatesActiveDefaultsForNewFigures(t *testing.T) {
 	resetForTests()
 

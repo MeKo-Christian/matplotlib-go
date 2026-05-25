@@ -812,6 +812,31 @@ func CloseAll() error {
 	return Close(figures...)
 }
 
+// CLF clears the current figure while keeping it registered and current.
+func CLF() {
+	fig := GCF()
+	if fig == nil {
+		return
+	}
+
+	fig.Children = nil
+	fig.Artists = nil
+	fig.SupTitle = ""
+	fig.SupXLabel = ""
+	fig.SupYLabel = ""
+
+	registry.mu.Lock()
+	delete(registry.currentAxes, fig)
+	delete(registry.subplotAxes, fig)
+	registry.current = fig
+	registry.mu.Unlock()
+}
+
+// CLA clears the current axes while keeping it current.
+func CLA() {
+	clearAxes(GCA())
+}
+
 // Pause renders open figures and then blocks for the requested interval.
 func Pause(interval time.Duration) error {
 	if err := Show(); err != nil {
@@ -821,6 +846,25 @@ func Pause(interval time.Duration) error {
 		time.Sleep(interval)
 	}
 	return nil
+}
+
+func clearAxes(ax *core.Axes) {
+	if ax == nil {
+		return
+	}
+	ax.Artists = nil
+	ax.WidgetArtists = nil
+	ax.Title = ""
+	ax.XLabel = ""
+	ax.YLabel = ""
+	ax.XScale = transform.NewLinear(0, 1)
+	ax.YScale = transform.NewLinear(0, 1)
+	ax.XAxis = core.NewXAxis()
+	ax.YAxis = core.NewYAxis()
+	ax.XAxisTop = nil
+	ax.YAxisRight = nil
+	ax.ExtraAxes = nil
+	ax.ShowFrame = true
 }
 
 func ensureDefaultAxes(fig *core.Figure) *core.Axes {
