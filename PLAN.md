@@ -2830,6 +2830,9 @@ Current slice landed:
 - Tightened disabled slider interaction handling so focused `Slider` and
   `RangeSlider` widgets ignore keyboard nudges without firing callbacks or
   requesting redraws, matching the mouse-drag disabled path.
+- Tightened slider value snapping so `Slider` and `RangeSlider` initial values
+  honor `ValueStep`, sort range endpoints after snapping, and keep rounded
+  values inside the configured bounds.
 - Added explicit public-surface classifications for the high-value backend
   lifecycle/tool rows: `_pylab_helpers.Gcf`, canvas/manager/event/timer
   classes, backend registry lookup/registration, and home/back/forward/pan/

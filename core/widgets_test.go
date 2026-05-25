@@ -55,6 +55,23 @@ func TestWidgetConstructorsPrepareAxesAndStoreState(t *testing.T) {
 	}
 }
 
+func TestSliderConstructorsSnapInitialValuesToStep(t *testing.T) {
+	fig := NewFigure(800, 600)
+	axSlider := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.8, Y: 0.2}})
+	axRange := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.3}, Max: geom.Pt{X: 0.8, Y: 0.4}})
+
+	step := 0.5
+	slider := axSlider.Slider("gain", 0, 10, 5.26, SliderOptions{ValueStep: &step})
+	if slider.Value != 5.5 {
+		t.Fatalf("slider initial value = %v, want snapped 5.5", slider.Value)
+	}
+
+	rangeSlider := axRange.RangeSlider("window", 0, 10, 7.76, 2.24, RangeSliderOptions{ValueStep: &step})
+	if rangeSlider.Low != 2 || rangeSlider.High != 8 {
+		t.Fatalf("range slider initial range = [%v, %v], want snapped [2, 8]", rangeSlider.Low, rangeSlider.High)
+	}
+}
+
 type widgetLayerRecordingRenderer struct {
 	render.NullRenderer
 	events []string

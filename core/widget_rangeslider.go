@@ -64,8 +64,8 @@ func (a *Axes) RangeSlider(label string, min, max, low, high float64, opts ...Ra
 	if cfg.ValueFormat != nil && strings.TrimSpace(*cfg.ValueFormat) != "" {
 		valueFormat = *cfg.ValueFormat
 	}
-	low = clampSliderValue(min, max, low)
-	high = clampSliderValue(min, max, high)
+	low = normalizeSliderValue(min, max, math.Abs(step), low)
+	high = normalizeSliderValue(min, max, math.Abs(step), high)
 	if low > high {
 		low, high = high, low
 	}

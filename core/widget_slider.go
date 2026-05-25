@@ -78,7 +78,7 @@ func (a *Axes) Slider(label string, min, max, value float64, opts ...SliderOptio
 		Min:         min,
 		Max:         max,
 		Enabled:     true,
-		Value:       clampSliderValue(min, max, value),
+		Value:       normalizeSliderValue(min, max, math.Abs(step), value),
 		FaceColor:   cfg.FaceColor,
 		TrackColor:  cfg.TrackColor,
 		FillColor:   cfg.FillColor,
@@ -235,7 +235,7 @@ func normalizeSliderValue(min, max, step, value float64) float64 {
 		return clamped
 	}
 	based := (clamped - min) / step
-	return min + math.Round(based)*step
+	return clampSliderValue(min, max, min+math.Round(based)*step)
 }
 
 func mergeSliderOptions(base, override SliderOptions) SliderOptions {
