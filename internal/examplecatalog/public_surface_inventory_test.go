@@ -137,6 +137,22 @@ func TestPhase125PyplotImageHelpersHaveExplicitRows(t *testing.T) {
 	}
 }
 
+func TestPhase125WidgetClassesHaveExplicitRows(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	for _, surface := range artifact.Rows {
+		if surface.Module != "widgets.py" || surface.Kind != "class" {
+			continue
+		}
+		row, ok := LookupPublicSurfaceParityByUpstreamID(surface.ID)
+		if !ok {
+			t.Fatalf("missing explicit Phase 12.5 widget classification for %q", surface.ID)
+		}
+		if row.Status == PublicSurfaceNotStarted {
+			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", surface.ID, row.Status)
+		}
+	}
+}
+
 func TestPublicSurfaceParityRowsCoverCommittedInventory(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	rows := PublicSurfaceParityRowsForSurface(artifact.Rows)

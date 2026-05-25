@@ -2809,6 +2809,12 @@ Current slice landed:
 - Added explicit pyplot image-helper rows for `matshow`, `spy`, and the
   intentionally omitted `figimage`, so the migration status of the high-traffic
   image wrapper family is concrete.
+- Added explicit public-surface classifications for every upstream
+  `widgets.py` class. Supported Go widgets/selectors/cursors are mapped to
+  their typed core/canvas equivalents, base/helper classes are documented as
+  idiomatic equivalents, and GUI-only/internal helpers such as `LockDraw`,
+  `SubplotTool`, `ToolHandles`, and `ToolLineHandles` are documented omissions
+  with migration guidance.
 Implementation notes:
 
 - Compare against upstream `image.py`, `pyplot.py`, `_pylab_helpers.py`,
