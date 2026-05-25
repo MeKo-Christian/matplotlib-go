@@ -747,6 +747,71 @@ func Show() error {
 	return nil
 }
 
+// Close removes the given figures from pyplot state and closes their cached
+// managers. With no arguments, Close closes the current figure.
+func Close(figs ...*core.Figure) error {
+	registry.mu.Lock()
+	if len(figs) == 0 {
+		if registry.current == nil {
+			registry.mu.Unlock()
+			return nil
+		}
+		figs = []*core.Figure{registry.current}
+	}
+
+	targets := make(map[*core.Figure]struct{}, len(figs))
+	managers := make([]canvas.FigureManager, 0, len(figs))
+	for _, fig := range figs {
+		if fig == nil {
+			continue
+		}
+		if _, seen := targets[fig]; seen {
+			continue
+		}
+		targets[fig] = struct{}{}
+		if manager := registry.managers[fig]; manager != nil {
+			managers = append(managers, manager)
+		}
+		delete(registry.managers, fig)
+		delete(registry.currentAxes, fig)
+		delete(registry.subplotAxes, fig)
+	}
+	if len(targets) > 0 {
+		filtered := registry.figures[:0]
+		for _, fig := range registry.figures {
+			if _, closeFig := targets[fig]; closeFig {
+				continue
+			}
+			filtered = append(filtered, fig)
+		}
+		registry.figures = filtered
+		if _, closedCurrent := targets[registry.current]; closedCurrent {
+			registry.current = nil
+			if len(registry.figures) > 0 {
+				registry.current = registry.figures[len(registry.figures)-1]
+			}
+		}
+	}
+	registry.mu.Unlock()
+
+	var err error
+	for _, manager := range managers {
+		if manager == nil {
+			continue
+		}
+		err = errors.Join(err, manager.Close())
+	}
+	return err
+}
+
+// CloseAll removes every registered pyplot figure and closes cached managers.
+func CloseAll() error {
+	registry.mu.Lock()
+	figures := append([]*core.Figure(nil), registry.figures...)
+	registry.mu.Unlock()
+	return Close(figures...)
+}
+
 // Pause renders open figures and then blocks for the requested interval.
 func Pause(interval time.Duration) error {
 	if err := Show(); err != nil {

@@ -701,12 +701,20 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Note:              "Stateful pyplot figimage is intentionally omitted with FigureImage: use a frameless full-figure axes plus ImShow/Image for visible composition until a dedicated figure-image artist is justified.",
 	},
 	{
+		ID:                "pyplot-close",
+		UpstreamID:        "pyplot.py:function:close",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
+		Note:              "Stateful pyplot Close and CloseAll remove figures from the Go registry and close cached managers. Remaining partial scope is Python's numeric/name overloads and exact interactive current-manager ordering.",
+	},
+	{
 		ID:                "pylab-gcf",
 		UpstreamID:        "_pylab_helpers.py:class:Gcf",
 		FeatureCoverageID: "pyplot-state",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"pyplot/pyplot.go", "backends/runtime.go", "canvas/canvas.go"},
-		Note:              "Go pyplot tracks current figures and caches per-figure managers through typed package state. Remaining Gcf parity is exact global manager ordering, destroy-all semantics, and interactive-mode edge behavior.",
+		Note:              "Go pyplot tracks current figures, caches per-figure managers, and exposes Close / CloseAll lifecycle cleanup through typed package state. Remaining Gcf parity is exact global manager ordering and interactive-mode edge behavior.",
 	},
 	{
 		ID:                "backend-event-base",
@@ -1497,7 +1505,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
 		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
-		note:              "The Go pyplot package covers current figure/current axes state, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, axis limit/scale wrappers, labels, legends, colorbars, rc helpers, savefig, show, and pause. Remaining partial scope is specific missing wrapper families, Python overload breadth, interactive mode toggles, global reset helpers, and unsupported implicit manager behavior.",
+		note:              "The Go pyplot package covers current figure/current axes state, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, axis limit/scale wrappers, labels, legends, colorbars, rc helpers, savefig, show, pause, and close/close-all cleanup. Remaining partial scope is specific missing wrapper families, Python overload breadth, interactive mode toggles, clf/cla reset helpers, and unsupported implicit manager behavior.",
 	},
 	{
 		idPrefix:          "pylab-helpers",
@@ -1507,7 +1515,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
 		catalogIDs:        []string{"basic_line", "figure_labels_composition"},
 		exampleIDs:        []string{"basic_line"},
-		note:              "Go pyplot tracks current figure/current axes state and save/show helpers through typed package state rather than Matplotlib's global Gcf manager registry. Remaining scope is precise interactive figure-manager lifecycle behavior, current-manager transitions, and unsupported global reset/interactive-mode overloads.",
+		note:              "Go pyplot tracks current figure/current axes state, save/show helpers, and close/close-all cleanup through typed package state rather than Matplotlib's global Gcf manager registry. Remaining scope is precise interactive figure-manager lifecycle behavior, current-manager transitions, and unsupported clf/cla reset or interactive-mode overloads.",
 	},
 	{
 		idPrefix:          "backend-base",

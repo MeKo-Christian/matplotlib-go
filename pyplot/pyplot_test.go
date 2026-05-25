@@ -516,6 +516,98 @@ func TestSetManagerFactoryCachesManagerPerFigure(t *testing.T) {
 	}
 }
 
+func TestCloseRemovesFiguresAndClosesManagers(t *testing.T) {
+	resetForTests()
+
+	fig1 := Figure()
+	fig2 := Figure()
+	showCalls := map[*core.Figure]int{}
+	closeCalls := map[*core.Figure]int{}
+
+	SetManagerFactory(func(fig *core.Figure) (canvas.FigureManager, error) {
+		return &testFigureManager{
+			canvas: &testFigureCanvas{figure: fig},
+			onShow: func() { showCalls[fig]++ },
+			onClose: func() {
+				closeCalls[fig]++
+			},
+			tools: canvas.NewToolManager(),
+		}, nil
+	})
+
+	if err := Show(); err != nil {
+		t.Fatalf("Show() error = %v", err)
+	}
+	if err := Close(fig1); err != nil {
+		t.Fatalf("Close(fig1) error = %v", err)
+	}
+	if closeCalls[fig1] != 1 {
+		t.Fatalf("fig1 close calls = %d, want 1", closeCalls[fig1])
+	}
+	if GCF() != fig2 {
+		t.Fatal("closing fig1 should leave fig2 current")
+	}
+
+	showCalls = map[*core.Figure]int{}
+	if err := Show(); err != nil {
+		t.Fatalf("Show() after Close(fig1) error = %v", err)
+	}
+	if showCalls[fig1] != 0 || showCalls[fig2] != 1 {
+		t.Fatalf("show calls after Close(fig1) = fig1:%d fig2:%d, want 0/1", showCalls[fig1], showCalls[fig2])
+	}
+
+	if err := Close(); err != nil {
+		t.Fatalf("Close() current error = %v", err)
+	}
+	if closeCalls[fig2] != 1 {
+		t.Fatalf("fig2 close calls = %d, want 1", closeCalls[fig2])
+	}
+
+	registry.mu.Lock()
+	remaining := len(registry.figures)
+	current := registry.current
+	registry.mu.Unlock()
+	if remaining != 0 || current != nil {
+		t.Fatalf("registry after Close() = remaining %d current %p, want empty/nil", remaining, current)
+	}
+}
+
+func TestCloseAllRemovesEveryFigure(t *testing.T) {
+	resetForTests()
+
+	fig1 := Figure()
+	fig2 := Figure()
+	closeCalls := map[*core.Figure]int{}
+	SetManagerFactory(func(fig *core.Figure) (canvas.FigureManager, error) {
+		return &testFigureManager{
+			canvas: &testFigureCanvas{figure: fig},
+			onClose: func() {
+				closeCalls[fig]++
+			},
+			tools: canvas.NewToolManager(),
+		}, nil
+	})
+	if err := Show(); err != nil {
+		t.Fatalf("Show() error = %v", err)
+	}
+
+	if err := CloseAll(); err != nil {
+		t.Fatalf("CloseAll() error = %v", err)
+	}
+	if closeCalls[fig1] != 1 || closeCalls[fig2] != 1 {
+		t.Fatalf("close calls = fig1:%d fig2:%d, want 1/1", closeCalls[fig1], closeCalls[fig2])
+	}
+
+	registry.mu.Lock()
+	remaining := len(registry.figures)
+	managers := len(registry.managers)
+	current := registry.current
+	registry.mu.Unlock()
+	if remaining != 0 || managers != 0 || current != nil {
+		t.Fatalf("registry after CloseAll = figures:%d managers:%d current:%p, want empty", remaining, managers, current)
+	}
+}
+
 func TestRCUpdatesActiveDefaultsForNewFigures(t *testing.T) {
 	resetForTests()
 
@@ -603,9 +695,10 @@ func TestFigureUsesConfiguredFigureSize(t *testing.T) {
 }
 
 type testFigureManager struct {
-	canvas canvas.FigureCanvas
-	onShow func()
-	tools  *canvas.ToolManager
+	canvas  canvas.FigureCanvas
+	onShow  func()
+	onClose func()
+	tools   *canvas.ToolManager
 }
 
 func (m *testFigureManager) Canvas() canvas.FigureCanvas { return m.canvas }
@@ -617,7 +710,12 @@ func (m *testFigureManager) Show() error {
 	return nil
 }
 
-func (m *testFigureManager) Close() error { return nil }
+func (m *testFigureManager) Close() error {
+	if m.onClose != nil {
+		m.onClose()
+	}
+	return nil
+}
 
 func (m *testFigureManager) SetTitle(string) {}
 
