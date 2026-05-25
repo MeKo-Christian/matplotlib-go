@@ -285,6 +285,14 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		Rationale:  "Axes grid helpers are layout-heavy and benefit from browser inspection.",
 		CatalogIDs: []string{"axes_grid1_showcase"},
 	},
+	{
+		ID:         "showcase-widgets_gallery",
+		Title:      "Widgets Gallery Browser Coverage",
+		Status:     BrowserDemoPlanned,
+		Action:     "include in a widgets or interactive-controls browser demo",
+		Rationale:  "The widgets gallery is catalog-visible for static widget/selector coverage, but browser event-loop and interaction coverage should be promoted separately.",
+		CatalogIDs: []string{"widgets_gallery"},
+	},
 }
 
 // BrowserDemoCoverageRows returns the Phase 9A.4 browser coverage reconciliation rows.

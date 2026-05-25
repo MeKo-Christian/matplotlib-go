@@ -49,6 +49,7 @@ var interactiveCoverage = []InteractiveCoverageRow{
 	{Topic: "unstructured", RepresentativeID: "unstructured_showcase", WebAgg: true, Gio: true},
 	{Topic: "variants", RepresentativeID: "plot_variants", WebAgg: true, Gio: true},
 	{Topic: "vectors", RepresentativeID: "vector_fields", WebAgg: true, Gio: true},
+	{Topic: "widgets", RepresentativeID: "widgets_gallery", WebAgg: true, Gio: true},
 }
 
 // InteractiveCoverageMatrix returns a copy of the Phase 4 interactive

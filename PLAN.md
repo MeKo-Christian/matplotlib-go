@@ -2903,6 +2903,10 @@ Current slice landed:
   multi-cursor support, deterministic widget callback ordering, disabled-state
   handling, and repeat-delay playback are described as existing tested scope
   rather than remaining work.
+- Promoted `widgets_gallery` into the catalog/parity matrix as Phase 12.5
+  widget coverage, tying the existing widget/selector/cursor showcase to
+  golden, Matplotlib-reference, public-surface, feature-coverage, demo-breadth,
+  and interactive-coverage inventories.
 - Added `Animation.Save` as an explicit unsupported-writer path returning
   `ErrWriterUnsupported`, with unit coverage. This keeps writer export out of
   v1.0 while avoiding silent no-op behavior for users who look for a save path.

@@ -1677,6 +1677,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/widget_button.go", "core/widgets_common.go", "canvas/widget_interaction.go", "canvas/dispatcher.go"},
+		CatalogIDs:        []string{"widgets_gallery"},
 		Note:              "Button has a static artist, callback registration/removal, click triggering, mouse press/release routing, keyboard activation, and widget-layer picking. Remaining partial scope is exact hover/disabled styling parity and GUI-backend cursor/status behavior.",
 	},
 	{
@@ -1693,6 +1694,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/widget_slider.go", "core/widgets_common.go", "canvas/widget_interaction.go"},
+		CatalogIDs:        []string{"widgets_gallery"},
 		Note:              "Slider supports static drawing, callback registration/removal, clamping, step snapping, pointer dragging, and keyboard adjustment. Remaining partial scope is exact upstream formatting, orientation breadth, and GUI-specific styling behavior.",
 	},
 	{
@@ -1701,6 +1703,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/widget_rangeslider.go", "core/widget_slider.go", "canvas/widget_interaction.go"},
+		CatalogIDs:        []string{"widgets_gallery"},
 		Note:              "RangeSlider supports two-handle state, callbacks, clamped/stepped range updates, pointer dragging, and keyboard adjustment. Remaining partial scope is exact handle selection/styling parity and less common upstream formatting options.",
 	},
 	{
@@ -1709,6 +1712,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/widget_checkbuttons.go", "core/widgets_common.go", "canvas/widget_interaction.go"},
+		CatalogIDs:        []string{"widgets_gallery"},
 		Note:              "CheckButtons supports static drawing, per-index state changes, callbacks, pointer toggles, and keyboard activation. Remaining partial scope is exact upstream marker styling and disabled-state visual parity.",
 	},
 	{
@@ -1717,6 +1721,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/widget_radiobuttons.go", "core/widgets_common.go", "canvas/widget_interaction.go"},
+		CatalogIDs:        []string{"widgets_gallery"},
 		Note:              "RadioButtons supports static drawing, active-index changes, callbacks, pointer selection, and keyboard cycling. Remaining partial scope is exact upstream styling and disabled-state behavior.",
 	},
 	{
@@ -1725,6 +1730,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/widget_textbox.go", "core/widgets_common.go", "canvas/widget_interaction.go"},
+		CatalogIDs:        []string{"widgets_gallery"},
 		Note:              "TextBox supports static drawing, submit/change callbacks, focus, text editing, cursor movement, selection, and keyboard input through canvas events. Remaining partial scope is exact upstream text editing shortcuts and GUI input-method behavior.",
 	},
 	{
@@ -1733,6 +1739,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/selector_span.go", "core/selectors_common.go", "canvas/widget_interaction.go"},
+		CatalogIDs:        []string{"widgets_gallery"},
 		Note:              "SpanSelector supports static selection state, callbacks, pointer drag creation/move, keyboard movement, and clearing. Remaining partial scope is exact handle artist parity and advanced upstream props.",
 	},
 	{
@@ -1741,6 +1748,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/selector_rectangle.go", "core/selectors_common.go", "canvas/widget_interaction.go"},
+		CatalogIDs:        []string{"widgets_gallery"},
 		Note:              "RectangleSelector supports static bounds, callbacks, drag creation/move, keyboard movement, clearing, and widget-layer picking. Remaining partial scope is exact handle/resizing parity and advanced upstream props.",
 	},
 	{
@@ -1749,6 +1757,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/selector_ellipse.go", "core/selector_rectangle.go", "canvas/widget_interaction.go"},
+		CatalogIDs:        []string{"widgets_gallery"},
 		Note:              "EllipseSelector follows the rectangle selector interaction model with ellipse drawing and movement. Remaining partial scope is exact handle/resizing parity and advanced upstream props.",
 	},
 	{
@@ -1757,6 +1766,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/selector_polygon.go", "core/selectors_common.go", "canvas/widget_interaction.go"},
+		CatalogIDs:        []string{"widgets_gallery"},
 		Note:              "PolygonSelector supports point append/close, callbacks, point movement, whole-polygon movement, keyboard movement, and clearing. Remaining partial scope is exact handle artist parity and advanced modifier behavior.",
 	},
 	{
@@ -1765,6 +1775,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/selector_lasso.go", "core/selectors_common.go", "canvas/widget_interaction.go"},
+		CatalogIDs:        []string{"widgets_gallery"},
 		Note:              "LassoSelector supports freehand selection paths, callbacks, pointer drag capture, keyboard clearing, and widget-layer picking. Remaining partial scope is exact event timing and GUI backend cursor behavior.",
 	},
 	{
@@ -1781,6 +1792,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/cursor.go", "canvas/widget_interaction.go"},
+		CatalogIDs:        []string{"widgets_gallery"},
 		Note:              "Cursor supports hover-driven crosshair updates and visibility through shared canvas motion events. Remaining partial scope is exact useblit behavior and GUI cursor/status integration.",
 	},
 	{
@@ -1789,6 +1801,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/multicursor.go", "canvas/widget_interaction.go"},
+		CatalogIDs:        []string{"widgets_gallery"},
 		Note:              "MultiCursor supports synchronized hover lines across axes in a figure. Remaining partial scope is exact useblit behavior and multi-canvas GUI integration.",
 	},
 	{
@@ -2281,6 +2294,8 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		featureCoverageID: "widgets-events-animation",
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"core/widget_button.go", "core/widget_slider.go", "core/widget_rangeslider.go", "core/widget_checkbuttons.go", "core/widget_radiobuttons.go", "core/widget_textbox.go", "core/selectors_common.go", "core/widgets_common.go", "canvas/widget_interaction.go", "canvas/dispatcher.go", "canvas/picker.go"},
+		catalogIDs:        []string{"widgets_gallery"},
+		exampleIDs:        []string{"widgets_gallery"},
 		note:              "Static widget artists and event dispatch exist for buttons, sliders, range sliders, check buttons, radio buttons, text boxes, cursor, multi-cursor, and common selectors including span, rectangle, ellipse, polygon, and lasso workflows. Remaining widget partial scope is exact upstream active-state and styling edge behavior, advanced selector handles, menu/tool widgets, GUI-specific behavior, and browser-demo coverage.",
 	},
 	{

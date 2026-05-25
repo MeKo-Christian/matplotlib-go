@@ -110,6 +110,7 @@ mplot3d_stem3d
 mplot3d_fill_between3d
 unstructured_showcase
 arrays_showcase
+widgets_gallery
 axisartist_showcase
 axes_grid1_showcase
 pcolor_flat

@@ -183,6 +183,19 @@ func TestCatalogIncludesPhase125InterpolationMatrixFixture(t *testing.T) {
 	}
 }
 
+func TestCatalogIncludesPhase125WidgetsGalleryShowcase(t *testing.T) {
+	c, ok := Lookup("widgets_gallery")
+	if !ok {
+		t.Fatal("missing Phase 12.5 widgets gallery catalog case")
+	}
+	if c.Topic != "widgets" {
+		t.Fatalf("widgets_gallery topic = %q, want widgets", c.Topic)
+	}
+	if !c.Showcase {
+		t.Fatal("widgets_gallery should be a user-facing showcase")
+	}
+}
+
 func TestCatalogSplitsAGGNativeParityFixtures(t *testing.T) {
 	want := map[string][]string{
 		"large_scatter":     {"pathcollectionbatch"},
