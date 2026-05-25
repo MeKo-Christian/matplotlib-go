@@ -769,6 +769,15 @@ func TestImageIOWrappersDelegateToCoreHelpers(t *testing.T) {
 	}
 }
 
+func TestGetCMapDelegatesToColorRegistry(t *testing.T) {
+	if got := GetCMap("plasma").Name(); got != "plasma" {
+		t.Fatalf("GetCMap(plasma).Name() = %q, want plasma", got)
+	}
+	if got := GetCMap("does-not-exist").Name(); got != "viridis" {
+		t.Fatalf("GetCMap(unknown).Name() = %q, want viridis fallback", got)
+	}
+}
+
 func TestVectorFieldHelpersDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 

@@ -12,6 +12,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/canvas"
+	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -770,6 +771,11 @@ func ImRead(path string) (*render.ImageData, error) {
 // ImSave writes image data to disk through the core image IO helper.
 func ImSave(path string, img render.Image) error {
 	return core.ImSave(path, img)
+}
+
+// GetCMap returns a registered colormap by name.
+func GetCMap(name string) matcolor.Colormap {
+	return matcolor.GetColormap(name)
 }
 
 // Image delegates to the current axes.

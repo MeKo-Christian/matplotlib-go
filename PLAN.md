@@ -2868,6 +2868,9 @@ Current slice landed:
 - Added pyplot manager/event wrappers for `GetCurrentFigManager`, `Connect`,
   `Disconnect`, and `DrawIfInteractive`, delegating through the existing
   figure-manager/canvas contracts with focused fake-manager coverage.
+- Added pyplot `GetCMap` over the existing color registry, with focused
+  colormap lookup/fallback coverage and a public-surface row for
+  `pyplot.get_cmap`.
 - Added pyplot `ImRead` / `ImSave` wrappers over the core image IO helpers,
   with a focused PNG round-trip delegation test and explicit public-surface
   rows for `pyplot.imread` / `pyplot.imsave`.
