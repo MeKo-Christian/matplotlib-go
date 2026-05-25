@@ -100,6 +100,14 @@ func TestStatefulHelpersDelegateToCurrentAxes(t *testing.T) {
 	if ax.XLabel != "time" || ax.YLabel != "value" {
 		t.Fatalf("axis labels = (%q, %q), want (%q, %q)", ax.XLabel, ax.YLabel, "time", "value")
 	}
+	Box(false)
+	if ax.ShowFrame {
+		t.Fatal("Box(false) did not hide the current axes frame")
+	}
+	Box(true)
+	if !ax.ShowFrame {
+		t.Fatal("Box(true) did not show the current axes frame")
+	}
 	fig := GCF()
 	if fig.SupTitle != "Figure Demo" || fig.SupXLabel != "shared time" || fig.SupYLabel != "shared value" {
 		t.Fatalf("figure labels = (%q, %q, %q)", fig.SupTitle, fig.SupXLabel, fig.SupYLabel)

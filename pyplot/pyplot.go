@@ -684,6 +684,11 @@ func SupYLabel(label string) {
 	GCF().SetSupYLabel(label)
 }
 
+// Box toggles the current axes frame.
+func Box(on bool) {
+	GCA().ShowFrame = on
+}
+
 // Legend adds a legend to the current axes.
 func Legend() *core.Legend {
 	return GCA().AddLegend()

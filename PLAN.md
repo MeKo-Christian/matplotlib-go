@@ -2824,6 +2824,7 @@ Current slice landed:
   `core.TickParams`, with explicit unsupported-axis errors.
 - Added pyplot `Suptitle` / `SupXLabel` / `SupYLabel` wrappers over the
   current figure-level label layout path.
+- Added pyplot `Box` as the stateful current-axes frame visibility toggle.
 - Added core `ImRead` / `ImSave` image IO helpers for Go-supported file
   decoding and PNG `render.RGBAImage` output, including straight-alpha PNG
   round-trip tests and explicit unsupported-input errors.
