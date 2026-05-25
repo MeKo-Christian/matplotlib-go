@@ -2716,7 +2716,7 @@ convenience layers over the core model.
 
 #### 12.5E Widgets and Interaction Scope
 
-- [ ] Audit upstream `widgets.py` classes and decide v1.0 status for each:
+- [x] Audit upstream `widgets.py` classes and decide v1.0 status for each:
       button, slider, range slider, check buttons, radio buttons, text box,
       span selector, rectangle selector, lasso selector, polygon selector,
       cursor/multi-cursor, annotated cursor, menu/tool widgets, and any
@@ -2724,7 +2724,7 @@ convenience layers over the core model.
 - [ ] Tighten existing widget behavior for callback ordering, active/disabled
       state, hover/press/release transitions, keyboard activation, value
       clamping, snapping, dragging, redraw policy, and axes ownership.
-- [ ] Implement only selector/cursor widgets that can be expressed through the
+- [x] Implement only selector/cursor widgets that can be expressed through the
       current canvas event model; document GUI-only or callback-heavy widgets as
       intentional omissions until an interactive fixture requires them.
 - [ ] Add catalog/browser-demo coverage for the supported widget set and
@@ -2734,14 +2734,14 @@ convenience layers over the core model.
 
 #### 12.5F Animation Scope and Writers
 
-- [ ] Audit upstream `animation.py` for `Animation`, `TimedAnimation`,
+- [x] Audit upstream `animation.py` for `Animation`, `TimedAnimation`,
       `FuncAnimation`, `ArtistAnimation`, frame sequence behavior, repeat /
       repeat-delay, blitting, save_count/cache behavior, HTML representation,
       and movie writer APIs.
 - [ ] Tighten `FuncAnimation` and `ArtistAnimation` behavior against upstream
       for initialization order, frame iteration, repeat semantics, event-source
       lifecycle, animated artist visibility, and blit background restoration.
-- [ ] Decide v1.0 writer scope: implement a small explicit writer surface for
+- [x] Decide v1.0 writer scope: implement a small explicit writer surface for
       GIF/MP4 only if dependencies and backend output are deterministic, or
       document animation saving as intentionally omitted while interactive
       playback remains supported.
