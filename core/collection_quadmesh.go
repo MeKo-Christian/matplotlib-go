@@ -237,7 +237,8 @@ func (m *QuadMesh) drawGouraudMesh(r render.Renderer, ctx *DrawContext) bool {
 			}
 			center := averagePoint4(p00, p10, p11, p01)
 			centerColor := averageColor4(c00, c10, c11, c01)
-			batch.Triangles = append(batch.Triangles,
+			batch.Triangles = append(
+				batch.Triangles,
 				render.GouraudTriangle{P: [3]geom.Pt{p00, p10, center}, Color: [3]render.Color{c00, c10, centerColor}},
 				render.GouraudTriangle{P: [3]geom.Pt{p10, p11, center}, Color: [3]render.Color{c10, c11, centerColor}},
 				render.GouraudTriangle{P: [3]geom.Pt{p11, p01, center}, Color: [3]render.Color{c11, c01, centerColor}},

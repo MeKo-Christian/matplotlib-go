@@ -151,7 +151,8 @@ func Plot() *core.Figure {
 		Col: twinLineColor,
 	})
 
-	sec, err := right.SecondaryXAxis(core.AxisTop,
+	sec, err := right.SecondaryXAxis(
+		core.AxisTop,
 		func(x float64) float64 { return x * 10 },
 		func(x float64) (float64, bool) { return x / 10, true },
 	)

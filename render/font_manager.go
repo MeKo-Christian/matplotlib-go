@@ -697,7 +697,8 @@ func fcMatchPatterns(family string, props FontProperties) []string {
 		patterns = append(patterns, family+":style="+style)
 	}
 	if props.Style == "" || props.Style == FontStyleNormal {
-		patterns = append(patterns,
+		patterns = append(
+			patterns,
 			family+":style=Book",
 			family+":style=Roman",
 			family,

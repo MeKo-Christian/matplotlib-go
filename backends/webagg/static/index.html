@@ -15,11 +15,15 @@
     <div id="mpl-root" class="mpl-figure">
       <div class="mpl-toolbar" role="toolbar" aria-label="Figure tools">
         <button type="button" data-action="home" title="Reset view">⟲</button>
-        <button type="button" data-action="back" title="Previous view">←</button>
+        <button type="button" data-action="back" title="Previous view">
+          ←
+        </button>
         <button type="button" data-action="forward" title="Next view">→</button>
         <span class="mpl-spacer"></span>
         <button type="button" data-action="pan" title="Pan (drag)">✥</button>
-        <button type="button" data-action="zoom" title="Zoom to rectangle">⌧</button>
+        <button type="button" data-action="zoom" title="Zoom to rectangle">
+          ⌧
+        </button>
         <span class="mpl-spacer"></span>
         <button type="button" data-action="download" title="Save PNG">⤓</button>
       </div>
@@ -36,14 +40,14 @@
       // before this script runs.
       const url =
         window.MPL_WS_URL ||
-        (location.protocol === 'https:' ? 'wss://' : 'ws://') +
+        (location.protocol === "https:" ? "wss://" : "ws://") +
           location.host +
-          '/ws';
+          "/ws";
       window.mplFigure = new MPLFigure({
-        rootId: 'mpl-root',
-        canvasId: 'mpl-canvas',
-        overlayId: 'mpl-overlay',
-        statusId: 'mpl-status',
+        rootId: "mpl-root",
+        canvasId: "mpl-canvas",
+        overlayId: "mpl-overlay",
+        statusId: "mpl-status",
         wsUrl: url,
       });
     </script>

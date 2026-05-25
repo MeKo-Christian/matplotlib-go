@@ -116,7 +116,8 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.content.WriteString("1 -1 scale\n")
 	if r.background.A > 0 {
 		writeFillColor(&r.content, r.background)
-		fmt.Fprintf(&r.content, "newpath 0 0 moveto %s 0 lineto %s %s lineto 0 %s lineto closepath fill\n",
+		fmt.Fprintf(
+			&r.content, "newpath 0 0 moveto %s 0 lineto %s %s lineto 0 %s lineto closepath fill\n",
 			shortFloat(float64(r.width)),
 			shortFloat(float64(r.width)),
 			shortFloat(float64(r.height)),
@@ -222,7 +223,8 @@ func (r *Renderer) ClipRect(rect geom.Rect) {
 		intersected := r.clipRect.Intersect(normalized)
 		r.clipRect = &intersected
 	}
-	fmt.Fprintf(&r.content, "newpath %s %s moveto %s %s lineto %s %s lineto %s %s lineto closepath clip newpath\n",
+	fmt.Fprintf(
+		&r.content, "newpath %s %s moveto %s %s lineto %s %s lineto %s %s lineto closepath clip newpath\n",
 		shortFloat(rect.Min.X), shortFloat(rect.Min.Y),
 		shortFloat(rect.Max.X), shortFloat(rect.Min.Y),
 		shortFloat(rect.Max.X), shortFloat(rect.Max.Y),
@@ -338,7 +340,8 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 		if name == "" {
 			continue
 		}
-		fmt.Fprintf(&r.content, "gsave\n%s %s translate\n%s\ngrestore\n",
+		fmt.Fprintf(
+			&r.content, "gsave\n%s %s translate\n%s\ngrestore\n",
 			shortFloat(item.Offset.X),
 			shortFloat(item.Offset.Y),
 			name,
@@ -421,7 +424,8 @@ func (r *Renderer) writeHatchFill(p geom.Path, paint *render.Paint) {
 	fmt.Fprintf(&r.content, "%s setlinewidth\n", shortFloat(lineWidth))
 	r.content.WriteString("0 setlinecap\n")
 	for _, line := range hatchPatternLines(paint.Hatch, paint.HatchSpacing) {
-		fmt.Fprintf(&r.content, "newpath %s %s moveto %s %s lineto\nstroke\n",
+		fmt.Fprintf(
+			&r.content, "newpath %s %s moveto %s %s lineto\nstroke\n",
 			shortFloat(line[0].X), shortFloat(line[0].Y),
 			shortFloat(line[1].X), shortFloat(line[1].Y),
 		)
@@ -488,7 +492,8 @@ func (r *Renderer) writeImageWithMatrix(rgb string, width, height int, matrix ge
 	if name == "" {
 		return
 	}
-	fmt.Fprintf(&r.content, "gsave\n[%s %s %s %s %s %s] concat\n%s\ngrestore\n",
+	fmt.Fprintf(
+		&r.content, "gsave\n[%s %s %s %s %s %s] concat\n%s\ngrestore\n",
 		shortFloat(matrix.A),
 		shortFloat(matrix.B),
 		shortFloat(matrix.C),
@@ -751,7 +756,8 @@ func writePathOps(w *strings.Builder, p geom.Path) bool {
 				X: end.X + (2.0/3.0)*(ctrl.X-end.X),
 				Y: end.Y + (2.0/3.0)*(ctrl.Y-end.Y),
 			}
-			fmt.Fprintf(w, "%s %s %s %s %s %s curveto\n",
+			fmt.Fprintf(
+				w, "%s %s %s %s %s %s curveto\n",
 				shortFloat(c1.X), shortFloat(c1.Y),
 				shortFloat(c2.X), shortFloat(c2.Y),
 				shortFloat(end.X), shortFloat(end.Y),
@@ -761,7 +767,8 @@ func writePathOps(w *strings.Builder, p geom.Path) bool {
 			c2 := p.V[vi+1]
 			end := p.V[vi+2]
 			vi += 3
-			fmt.Fprintf(w, "%s %s %s %s %s %s curveto\n",
+			fmt.Fprintf(
+				w, "%s %s %s %s %s %s curveto\n",
 				shortFloat(c1.X), shortFloat(c1.Y),
 				shortFloat(c2.X), shortFloat(c2.Y),
 				shortFloat(end.X), shortFloat(end.Y),
@@ -833,7 +840,8 @@ func writePathPaintOps(w *strings.Builder, path geom.Path, paint *render.Paint) 
 		fmt.Fprintf(w, "%s setlinewidth\n", shortFloat(lineWidth))
 		w.WriteString("gsave clip newpath\n")
 		for _, line := range hatchPatternLines(paint.Hatch, paint.HatchSpacing) {
-			fmt.Fprintf(w, "newpath %s %s moveto %s %s lineto\nstroke\n",
+			fmt.Fprintf(
+				w, "newpath %s %s moveto %s %s lineto\nstroke\n",
 				shortFloat(line[0].X), shortFloat(line[0].Y),
 				shortFloat(line[1].X), shortFloat(line[1].Y),
 			)

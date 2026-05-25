@@ -462,7 +462,7 @@ func TestConnectionStyleArc3ZeroRadKeepsQuadraticPath(t *testing.T) {
 	}
 }
 
-func TestConnectionStyleArc3RadUsesDisplayYDownCoordinates(t *testing.T) {
+func TestConnectionStyleArc3RadUsesDisplayYUpCoordinates(t *testing.T) {
 	style, ok := ConnectionStyleFromString("arc3,rad=0.25")
 	if !ok {
 		t.Fatal("ConnectionStyleFromString(arc3,rad=0.25) returned !ok")
@@ -472,12 +472,14 @@ func TestConnectionStyleArc3RadUsesDisplayYDownCoordinates(t *testing.T) {
 	end := geom.Pt{X: 200, Y: 170}
 	path := style.connect(start, end, 0, 0)
 
+	// Display space is y-up, so connect() uses the verbatim Matplotlib formula
+	// (Arc3.connect): cx = x12 + rad*dy, cy = y12 - rad*dx.
 	wantCtrl := geom.Pt{
-		X: (start.X+end.X)/2 - style.Rad*(end.Y-start.Y),
-		Y: (start.Y+end.Y)/2 + style.Rad*(end.X-start.X),
+		X: (start.X+end.X)/2 + style.Rad*(end.Y-start.Y),
+		Y: (start.Y+end.Y)/2 - style.Rad*(end.X-start.X),
 	}
 	if len(path.V) != 3 || !approxPt(path.V[1], wantCtrl, 1e-9) {
-		t.Fatalf("arc3 control = %+v, want y-down Matplotlib-equivalent control %+v", path.V, wantCtrl)
+		t.Fatalf("arc3 control = %+v, want y-up Matplotlib-equivalent control %+v", path.V, wantCtrl)
 	}
 }
 

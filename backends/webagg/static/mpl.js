@@ -17,18 +17,18 @@
 // protocol is compatible.
 
 (function (global) {
-  'use strict';
+  "use strict";
 
   function MPLFigure(opts) {
     this.root = document.getElementById(opts.rootId);
     this.canvas = document.getElementById(opts.canvasId);
     this.overlay = document.getElementById(opts.overlayId);
     this.status = document.getElementById(opts.statusId);
-    this.ctx = this.canvas.getContext('2d');
-    this.octx = this.overlay.getContext('2d');
+    this.ctx = this.canvas.getContext("2d");
+    this.octx = this.overlay.getContext("2d");
     this.wsUrl = opts.wsUrl;
 
-    this.imageMode = 'full';
+    this.imageMode = "full";
     this.imageObj = new Image();
     this.imageObj.onload = this._applyImage.bind(this);
     this.devicePixelRatio = window.devicePixelRatio || 1;
@@ -43,23 +43,23 @@
   MPLFigure.prototype._connect = function () {
     var self = this;
     var ws = new WebSocket(this.wsUrl);
-    ws.binaryType = 'blob';
+    ws.binaryType = "blob";
     this.ws = ws;
 
     ws.onopen = function () {
-      self.send({ type: 'send_image_mode' });
+      self.send({ type: "send_image_mode" });
       self.send({
-        type: 'set_device_pixel_ratio',
+        type: "set_device_pixel_ratio",
         device_pixel_ratio: self.devicePixelRatio,
       });
     };
 
     ws.onmessage = function (evt) {
-      if (typeof evt.data === 'string') {
+      if (typeof evt.data === "string") {
         try {
           self._handleJSON(JSON.parse(evt.data));
         } catch (e) {
-          console.error('matplotlib-go webagg: bad JSON', e, evt.data);
+          console.error("matplotlib-go webagg: bad JSON", e, evt.data);
         }
         return;
       }
@@ -83,7 +83,7 @@
     };
 
     ws.onerror = function (e) {
-      console.error('matplotlib-go webagg: ws error', e);
+      console.error("matplotlib-go webagg: ws error", e);
     };
   };
 
@@ -97,36 +97,36 @@
 
   MPLFigure.prototype._handleJSON = function (msg) {
     switch (msg.type) {
-      case 'image_mode':
+      case "image_mode":
         this.imageMode = msg.mode;
         return;
-      case 'resize':
+      case "resize":
         this._handleResize(msg.size);
         return;
-      case 'figure_label':
+      case "figure_label":
         document.title = msg.label || document.title;
         return;
-      case 'cursor':
-        this.canvas.style.cursor = msg.cursor || 'default';
+      case "cursor":
+        this.canvas.style.cursor = msg.cursor || "default";
         return;
-      case 'rubberband':
+      case "rubberband":
         this._drawRubberband(msg.x0, msg.y0, msg.x1, msg.y1);
         return;
-      case 'message':
-        if (this.status) this.status.textContent = msg.message || '';
+      case "message":
+        if (this.status) this.status.textContent = msg.message || "";
         return;
-      case 'history_buttons':
-        this._setToolbarEnabled('back', !!msg.Back);
-        this._setToolbarEnabled('forward', !!msg.Forward);
+      case "history_buttons":
+        this._setToolbarEnabled("back", !!msg.Back);
+        this._setToolbarEnabled("forward", !!msg.Forward);
         return;
-      case 'navigate_mode':
+      case "navigate_mode":
         this._reflectMode(msg.mode);
         return;
-      case 'refresh':
-      case 'draw':
+      case "refresh":
+      case "draw":
         // Server-side bookkeeping; nothing to do client-side.
         return;
-      case 'save':
+      case "save":
         // The server fired the save handler; nothing to do here unless
         // we eventually receive a download URL alongside.
         return;
@@ -139,12 +139,12 @@
       h = size[1];
     this.canvas.width = w;
     this.canvas.height = h;
-    this.canvas.style.width = w + 'px';
-    this.canvas.style.height = h + 'px';
+    this.canvas.style.width = w + "px";
+    this.canvas.style.height = h + "px";
     this.overlay.width = w;
     this.overlay.height = h;
-    this.overlay.style.width = w + 'px';
-    this.overlay.style.height = h + 'px';
+    this.overlay.style.width = w + "px";
+    this.overlay.style.height = h + "px";
   };
 
   // ---- Image painting --------------------------------------------------
@@ -152,30 +152,32 @@
   MPLFigure.prototype._applyImage = function () {
     var img = this.imageObj;
     if (!img.width || !img.height) return;
-    if (this.imageMode === 'full') {
+    if (this.imageMode === "full") {
       this.ctx.drawImage(img, 0, 0);
     } else {
       // Diff: composite-source-over by default already only paints
       // non-transparent pixels, which is exactly what the diff mode
       // encodes. Reset any prior compositeOperation just in case.
-      this.ctx.globalCompositeOperation = 'source-over';
+      this.ctx.globalCompositeOperation = "source-over";
       this.ctx.drawImage(img, 0, 0);
     }
     // Acknowledge — keeps the server's flow control happy.
-    this.send({ type: 'ack' });
+    this.send({ type: "ack" });
   };
 
   // ---- Toolbar ---------------------------------------------------------
 
   MPLFigure.prototype._installToolbar = function () {
     var self = this;
-    var buttons = this.root.querySelectorAll('.mpl-toolbar button[data-action]');
+    var buttons = this.root.querySelectorAll(
+      ".mpl-toolbar button[data-action]",
+    );
     this.toolbar = {};
     buttons.forEach(function (btn) {
-      var action = btn.getAttribute('data-action');
+      var action = btn.getAttribute("data-action");
       self.toolbar[action] = btn;
-      btn.addEventListener('click', function () {
-        self.send({ type: 'toolbar_button', name: action });
+      btn.addEventListener("click", function () {
+        self.send({ type: "toolbar_button", name: action });
       });
     });
   };
@@ -187,10 +189,10 @@
   };
 
   MPLFigure.prototype._reflectMode = function (mode) {
-    var panBtn = this.toolbar['pan'];
-    var zoomBtn = this.toolbar['zoom'];
-    if (panBtn) panBtn.setAttribute('aria-pressed', mode === 'PAN');
-    if (zoomBtn) zoomBtn.setAttribute('aria-pressed', mode === 'ZOOM');
+    var panBtn = this.toolbar["pan"];
+    var zoomBtn = this.toolbar["zoom"];
+    if (panBtn) panBtn.setAttribute("aria-pressed", mode === "PAN");
+    if (zoomBtn) zoomBtn.setAttribute("aria-pressed", mode === "ZOOM");
   };
 
   // ---- Canvas events ---------------------------------------------------
@@ -199,39 +201,39 @@
     var self = this;
     var canvas = this.canvas;
 
-    canvas.addEventListener('mousedown', function (e) {
-      self._sendMouse('button_press', e);
+    canvas.addEventListener("mousedown", function (e) {
+      self._sendMouse("button_press", e);
       canvas.focus();
     });
-    canvas.addEventListener('mouseup', function (e) {
-      self._sendMouse('button_release', e);
+    canvas.addEventListener("mouseup", function (e) {
+      self._sendMouse("button_release", e);
     });
-    canvas.addEventListener('mousemove', function (e) {
-      self._sendMouse('motion_notify', e);
+    canvas.addEventListener("mousemove", function (e) {
+      self._sendMouse("motion_notify", e);
     });
-    canvas.addEventListener('mouseenter', function (e) {
-      self._sendMouse('figure_enter', e);
+    canvas.addEventListener("mouseenter", function (e) {
+      self._sendMouse("figure_enter", e);
     });
-    canvas.addEventListener('mouseleave', function (e) {
-      self._sendMouse('figure_leave', e);
+    canvas.addEventListener("mouseleave", function (e) {
+      self._sendMouse("figure_leave", e);
     });
-    canvas.addEventListener('dblclick', function (e) {
-      self._sendMouse('dblclick', e);
+    canvas.addEventListener("dblclick", function (e) {
+      self._sendMouse("dblclick", e);
     });
     canvas.addEventListener(
-      'wheel',
+      "wheel",
       function (e) {
         e.preventDefault();
         self._sendScroll(e);
       },
-      { passive: false }
+      { passive: false },
     );
 
-    canvas.addEventListener('keydown', function (e) {
-      self._sendKey('key_press', e);
+    canvas.addEventListener("keydown", function (e) {
+      self._sendKey("key_press", e);
     });
-    canvas.addEventListener('keyup', function (e) {
-      self._sendKey('key_release', e);
+    canvas.addEventListener("keyup", function (e) {
+      self._sendKey("key_release", e);
     });
   };
 
@@ -254,7 +256,7 @@
     // Match upstream convention: positive step zooms in.
     var step = e.deltaY < 0 ? 1 : -1;
     this.send({
-      type: 'scroll',
+      type: "scroll",
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
       step: step,
@@ -276,7 +278,7 @@
     var c = this.octx;
     c.clearRect(0, 0, this.overlay.width, this.overlay.height);
     if (x0 < 0 || y0 < 0 || x1 < 0 || y1 < 0) return;
-    c.strokeStyle = '#000';
+    c.strokeStyle = "#000";
     c.lineWidth = 1;
     c.setLineDash([4, 3]);
     c.strokeRect(x0, y0, x1 - x0, y1 - y0);
@@ -286,10 +288,10 @@
 
   function collectModifiers(e) {
     var out = [];
-    if (e.shiftKey) out.push('shift');
-    if (e.ctrlKey) out.push('ctrl');
-    if (e.altKey) out.push('alt');
-    if (e.metaKey) out.push('meta');
+    if (e.shiftKey) out.push("shift");
+    if (e.ctrlKey) out.push("ctrl");
+    if (e.altKey) out.push("alt");
+    if (e.metaKey) out.push("meta");
     return out;
   }
 

@@ -142,7 +142,8 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 			quantileSegments = append(quantileSegments, violinPerpSegment(position, width, q, orientation, side))
 		}
 		if specialtyBool(cfg.ShowExtrema, true) {
-			extremaSegments = append(extremaSegments,
+			extremaSegments = append(
+				extremaSegments,
 				violinParallelSegment(position, stats.min, stats.max, orientation),
 				violinPerpSegment(position, width, stats.min, orientation, side),
 				violinPerpSegment(position, width, stats.max, orientation, side),

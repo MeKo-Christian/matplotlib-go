@@ -261,7 +261,8 @@ func TestDrawFigure_TitleClearsSecondaryXAxisTickLabels(t *testing.T) {
 	ax.SetXLim(0, 1)
 	ax.SetYLim(0, 1)
 
-	sec, err := ax.SecondaryXAxis(AxisTop,
+	sec, err := ax.SecondaryXAxis(
+		AxisTop,
 		func(x float64) float64 { return x * 100 },
 		func(x float64) (float64, bool) { return x / 100, true },
 	)

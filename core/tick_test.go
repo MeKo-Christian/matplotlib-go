@@ -620,7 +620,7 @@ func TestExtraFormatters(t *testing.T) {
 	if got := (NullFormatter{}).Format(12); got != "" {
 		t.Fatalf("NullFormatter = %q, want empty", got)
 	}
-	if got := (FuncFormatter(func(v float64) string { return strings.ToUpper((ScalarFormatter{Prec: 0}).Format(v)) })).Format(12); got != "12" {
+	if got := FuncFormatter(func(v float64) string { return strings.ToUpper((ScalarFormatter{Prec: 0}).Format(v)) }).Format(12); got != "12" {
 		t.Fatalf("FuncFormatter = %q, want %q", got, "12")
 	}
 	if got := (FormatStrFormatter{Pattern: "%.1f m"}).Format(2.25); got != "2.2 m" {

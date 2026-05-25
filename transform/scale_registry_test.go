@@ -96,7 +96,8 @@ func TestLogScale_NonPositiveClip(t *testing.T) {
 }
 
 func TestLogScale_NormalizesNonPositiveDomain(t *testing.T) {
-	scale, err := NewScale("log",
+	scale, err := NewScale(
+		"log",
 		WithScaleDomain(-5, 100),
 		WithScaleBase(10),
 		WithScaleNonPositive(NonPositiveClip),
@@ -130,7 +131,8 @@ func TestLogitScale_NonPositiveHandling(t *testing.T) {
 }
 
 func TestFunctionScale(t *testing.T) {
-	scale, err := NewScale("function",
+	scale, err := NewScale(
+		"function",
 		WithScaleDomain(-3, 3),
 		WithScaleFunctions(
 			func(x float64) float64 { return x * x * x },
@@ -154,7 +156,8 @@ func TestFunctionScale(t *testing.T) {
 }
 
 func TestFunctionLogScale(t *testing.T) {
-	scale, err := NewScale("functionlog",
+	scale, err := NewScale(
+		"functionlog",
 		WithScaleDomain(1, 100),
 		WithScaleBase(10),
 		WithScaleFunctions(

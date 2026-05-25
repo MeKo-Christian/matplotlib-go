@@ -853,7 +853,8 @@ func normalizeRect(rect geom.Rect) geom.Rect {
 }
 
 func writeTransform(w *strings.Builder, transform geom.Affine) {
-	fmt.Fprintf(w, "\\pgftransformcm{%s}{%s}{%s}{%s}{\\pgfpoint{%spt}{%spt}}\n",
+	fmt.Fprintf(
+		w, "\\pgftransformcm{%s}{%s}{%s}{%s}{\\pgfpoint{%spt}{%spt}}\n",
 		shortFloat(transform.A),
 		shortFloat(transform.B),
 		shortFloat(transform.C),

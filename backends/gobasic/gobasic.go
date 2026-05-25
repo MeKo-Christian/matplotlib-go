@@ -294,7 +294,8 @@ func (r *Renderer) fillPath(p geom.Path, fillColor render.Color) {
 			to := p.V[vi+1]
 			r.rasterizer.QuadTo(
 				float32(math.Round((ctrl.X-offsetX)*1e6)/1e6), float32(math.Round((ctrl.Y-offsetY)*1e6)/1e6),
-				float32(math.Round((to.X-offsetX)*1e6)/1e6), float32(math.Round((to.Y-offsetY)*1e6)/1e6))
+				float32(math.Round((to.X-offsetX)*1e6)/1e6), float32(math.Round((to.Y-offsetY)*1e6)/1e6),
+			)
 			vi += 2
 		case geom.CubicTo:
 			c1 := p.V[vi]
@@ -303,7 +304,8 @@ func (r *Renderer) fillPath(p geom.Path, fillColor render.Color) {
 			r.rasterizer.CubeTo(
 				float32(math.Round((c1.X-offsetX)*1e6)/1e6), float32(math.Round((c1.Y-offsetY)*1e6)/1e6),
 				float32(math.Round((c2.X-offsetX)*1e6)/1e6), float32(math.Round((c2.Y-offsetY)*1e6)/1e6),
-				float32(math.Round((to.X-offsetX)*1e6)/1e6), float32(math.Round((to.Y-offsetY)*1e6)/1e6))
+				float32(math.Round((to.X-offsetX)*1e6)/1e6), float32(math.Round((to.Y-offsetY)*1e6)/1e6),
+			)
 			vi += 3
 		case geom.ClosePath:
 			r.rasterizer.ClosePath()

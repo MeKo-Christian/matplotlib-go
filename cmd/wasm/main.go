@@ -6,12 +6,12 @@ import (
 	"encoding/base64"
 	"fmt"
 	"runtime/debug"
-	"syscall/js"
 
 	plotcanvas "github.com/cwbudde/matplotlib-go/canvas"
 	wasmcanvas "github.com/cwbudde/matplotlib-go/canvas/wasm"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/webdemo"
+	"syscall/js"
 )
 
 var (
@@ -22,7 +22,8 @@ var (
 type wasmCallback func(js.Value, []js.Value) any
 
 func main() {
-	callbacks = append(callbacks,
+	callbacks = append(
+		callbacks,
 		safeCallback("listDemos", func(string) any { return js.Global().Get("Array").New() }, listDemos),
 		safeCallback("listBackends", func(string) any { return js.Global().Get("Array").New() }, listBackends),
 		safeCallback("mountDemo", errorResult, mountDemo),

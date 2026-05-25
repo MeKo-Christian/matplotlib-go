@@ -35,22 +35,22 @@ avoids promising retained-buffer behavior before the animation phase hardens it.
 
 Backends normalize GUI input into `canvas.Event`:
 
-| Matplotlib event | Canvas event | Notes |
-| --- | --- | --- |
-| `draw_event` | `canvas.EventDraw` | Carries width and height. |
-| `resize_event` | `canvas.EventResize` | Carries width and height. |
-| `close_event` | `canvas.EventClose` | Emitted once per close path. |
-| `button_press_event` | `canvas.EventMousePress` | Emits before `canvas.EventPick`; WebAgg preserves `DoubleClick`. |
-| `button_release_event` | `canvas.EventMouseRelease` | Does not emit pick. |
-| `motion_notify_event` | `canvas.EventMouseMove` | Used by navigation and axes hover tracking. |
-| `figure_enter_event` | `canvas.EventFigureEnter` | WebAgg and Gio preserve position. |
-| `figure_leave_event` | `canvas.EventFigureLeave` | Also clears axes hover state. |
-| `axes_enter_event` | `canvas.EventAxesEnter` | Synthesized by `canvas.AxesHoverTracker`. |
-| `axes_leave_event` | `canvas.EventAxesLeave` | Synthesized when the resolved axes changes or figure leaves. |
-| `scroll_event` | `canvas.EventScroll` | `DeltaY` carries upstream scroll step for WebAgg. |
-| `key_press_event` | `canvas.EventKeyPress` | Modifier prefixes are stripped from `Key` and carried in `Modifiers`. |
-| `key_release_event` | `canvas.EventKeyRelease` | Same key normalization as press events. |
-| `pick_event` | `canvas.EventPick` | Carries the original mouse payload plus selected artist metadata. |
+| Matplotlib event       | Canvas event               | Notes                                                                 |
+| ---------------------- | -------------------------- | --------------------------------------------------------------------- |
+| `draw_event`           | `canvas.EventDraw`         | Carries width and height.                                             |
+| `resize_event`         | `canvas.EventResize`       | Carries width and height.                                             |
+| `close_event`          | `canvas.EventClose`        | Emitted once per close path.                                          |
+| `button_press_event`   | `canvas.EventMousePress`   | Emits before `canvas.EventPick`; WebAgg preserves `DoubleClick`.      |
+| `button_release_event` | `canvas.EventMouseRelease` | Does not emit pick.                                                   |
+| `motion_notify_event`  | `canvas.EventMouseMove`    | Used by navigation and axes hover tracking.                           |
+| `figure_enter_event`   | `canvas.EventFigureEnter`  | WebAgg and Gio preserve position.                                     |
+| `figure_leave_event`   | `canvas.EventFigureLeave`  | Also clears axes hover state.                                         |
+| `axes_enter_event`     | `canvas.EventAxesEnter`    | Synthesized by `canvas.AxesHoverTracker`.                             |
+| `axes_leave_event`     | `canvas.EventAxesLeave`    | Synthesized when the resolved axes changes or figure leaves.          |
+| `scroll_event`         | `canvas.EventScroll`       | `DeltaY` carries upstream scroll step for WebAgg.                     |
+| `key_press_event`      | `canvas.EventKeyPress`     | Modifier prefixes are stripped from `Key` and carried in `Modifiers`. |
+| `key_release_event`    | `canvas.EventKeyRelease`   | Same key normalization as press events.                               |
+| `pick_event`           | `canvas.EventPick`         | Carries the original mouse payload plus selected artist metadata.     |
 
 Use `canvas.ResolveEventTarget(fig, position)` when synthesizing events outside
 a backend. It returns the topmost axes under a display-pixel position and the

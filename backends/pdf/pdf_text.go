@@ -340,7 +340,8 @@ func (r *Renderer) drawEmbeddedText(text string, origin geom.Pt, size float64, t
 		if a == 0 && b == 0 && c == 0 && d == 0 {
 			a, d = 1, 1
 		}
-		fmt.Fprintf(&r.content, "BT\n/%s %s Tf\n%s %s %s %s %s %s Tm\n%s Tj\nET\n",
+		fmt.Fprintf(
+			&r.content, "BT\n/%s %s Tf\n%s %s %s %s %s %s Tm\n%s Tj\nET\n",
 			escapeName(fontName),
 			shortFloat(size),
 			shortFloat(a),

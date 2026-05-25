@@ -31,6 +31,7 @@ func (f *fakeCanvas) Draw() error {
 	f.drawCount++
 	return f.drawErr
 }
+
 func (f *fakeCanvas) Resize(_, _ int) error                                            { return nil }
 func (f *fakeCanvas) Connect(_ canvas.EventType, _ canvas.Handler) canvas.ConnectionID { return 0 }
 func (f *fakeCanvas) Disconnect(_ canvas.ConnectionID)                                 {}
@@ -54,10 +55,12 @@ func (b *blitFakeCanvas) CopyFromBBox(bbox geom.Rect) *render.BufferRegion {
 	b.region = &render.BufferRegion{Rect: bbox}
 	return b.region
 }
+
 func (b *blitFakeCanvas) RestoreRegion(_ *render.BufferRegion, _ *geom.Rect, _ geom.Pt) error {
 	b.restoreCount++
 	return nil
 }
+
 func (b *blitFakeCanvas) Blit(_ geom.Rect) error {
 	b.blitCount++
 	return nil
@@ -339,17 +342,20 @@ func (t *recordingTimer) Start() error {
 	t.mu.Unlock()
 	return nil
 }
+
 func (t *recordingTimer) Stop() error {
 	t.mu.Lock()
 	t.started = false
 	t.mu.Unlock()
 	return nil
 }
+
 func (t *recordingTimer) Running() bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.started
 }
+
 func (t *recordingTimer) fire() error {
 	t.mu.Lock()
 	cb := t.cb
@@ -375,6 +381,7 @@ func (l *recordingEventLoop) CallSoon(cb func() error) error {
 	}
 	return cb()
 }
+
 func (l *recordingEventLoop) NewTimer(interval time.Duration, callback func() error) canvas.Timer {
 	t := &recordingTimer{cb: callback, interval: interval}
 	l.mu.Lock()
@@ -382,6 +389,7 @@ func (l *recordingEventLoop) NewTimer(interval time.Duration, callback func() er
 	l.mu.Unlock()
 	return t
 }
+
 func (l *recordingEventLoop) current() *recordingTimer {
 	l.mu.Lock()
 	defer l.mu.Unlock()

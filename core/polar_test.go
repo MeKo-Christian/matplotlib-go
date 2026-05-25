@@ -120,7 +120,7 @@ func TestPolarAxesPixelToDataRoundTrip(t *testing.T) {
 
 	got := ctx.DataToPixel.Apply(geom.Pt{X: math.Pi / 2, Y: 1})
 	center, radius := polarCenterAndRadius(ax.adjustedLayout(fig))
-	want := geom.Pt{X: center.X, Y: center.Y - radius}
+	want := geom.Pt{X: center.X, Y: center.Y + radius}
 	if !approx(got.X, want.X, 1e-6) || !approx(got.Y, want.Y, 1e-6) {
 		t.Fatalf("polar top point = %+v, want %+v", got, want)
 	}
@@ -241,7 +241,7 @@ func TestPolarThetaConfigurationAffectsProjectionTransform(t *testing.T) {
 	}
 
 	north := ctx.DataToPixel.Apply(geom.Pt{X: 0, Y: 1})
-	wantNorth := geom.Pt{X: center.X, Y: center.Y - radius}
+	wantNorth := geom.Pt{X: center.X, Y: center.Y + radius}
 	if !approx(north.X, wantNorth.X, 1e-6) || !approx(north.Y, wantNorth.Y, 1e-6) {
 		t.Fatalf("theta=0 point = %+v, want %+v", north, wantNorth)
 	}

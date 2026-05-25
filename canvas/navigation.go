@@ -128,7 +128,8 @@ func (n *Navigation) Attach(dispatcher *Dispatcher) {
 	n.Detach()
 	n.mu.Lock()
 	n.dispatch = dispatcher
-	n.connects = append(n.connects,
+	n.connects = append(
+		n.connects,
 		dispatcher.Connect(EventMousePress, func(ev Event) error {
 			n.handlePress(MouseEvent{Event: ev})
 			return nil

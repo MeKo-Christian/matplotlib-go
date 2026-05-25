@@ -167,7 +167,8 @@ func (w *pdfWriter) writeImageObject(img pdfImageObject) error {
 		}
 	}
 	w.beginObject(img.objectID)
-	fmt.Fprintf(&w.buf,
+	fmt.Fprintf(
+		&w.buf,
 		"<< /Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace /DeviceRGB /BitsPerComponent 8",
 		img.width, img.height,
 	)
@@ -192,7 +193,8 @@ func (w *pdfWriter) writeSoftMaskObject(img pdfImageObject) error {
 		return fmt.Errorf("pdf: flate encode image soft mask %s: %w", img.name, err)
 	}
 	w.beginObject(img.smaskID)
-	fmt.Fprintf(&w.buf,
+	fmt.Fprintf(
+		&w.buf,
 		"<< /Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace /DeviceGray /BitsPerComponent 8 /Length %d /Filter /FlateDecode /DecodeParms << /Predictor 10 /Colors 1 /Columns %d /BitsPerComponent 8 >> >>\nstream\n",
 		img.width, img.height, len(encoded),
 		img.width,
@@ -210,7 +212,8 @@ func (w *pdfWriter) writeHatchPatternObject(hatch pdfHatchPatternObject) error {
 		return fmt.Errorf("pdf: flate encode hatch pattern %s: %w", hatch.name, err)
 	}
 	w.beginObject(hatch.objectID)
-	fmt.Fprintf(&w.buf,
+	fmt.Fprintf(
+		&w.buf,
 		"<< /Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 /BBox [0 0 72 72] /XStep 72 /YStep 72 /Resources << >> /Length %d /Filter /FlateDecode >>\nstream\n",
 		len(encoded),
 	)
@@ -228,7 +231,8 @@ func (w *pdfWriter) writeFillPatternObject(pattern pdfFillPatternObject) error {
 	}
 	cell := normalizedPatternCell(pattern.pattern.Cell)
 	w.beginObject(pattern.objectID)
-	fmt.Fprintf(&w.buf,
+	fmt.Fprintf(
+		&w.buf,
 		"<< /Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 /BBox [%s %s %s %s] /XStep %s /YStep %s /Resources << >>",
 		shortFloat(cell.Min.X),
 		shortFloat(cell.Min.Y),
@@ -238,7 +242,8 @@ func (w *pdfWriter) writeFillPatternObject(pattern pdfFillPatternObject) error {
 		shortFloat(cell.H()),
 	)
 	if pattern.pattern.HasTransform {
-		fmt.Fprintf(&w.buf, " /Matrix [%s %s %s %s %s %s]",
+		fmt.Fprintf(
+			&w.buf, " /Matrix [%s %s %s %s %s %s]",
 			shortFloat(pattern.pattern.Transform.A),
 			shortFloat(pattern.pattern.Transform.B),
 			shortFloat(pattern.pattern.Transform.C),
@@ -285,7 +290,8 @@ func (w *pdfWriter) writeFormXObject(form pdfFormXObjectObject, alphaStates []pd
 	if form.hasContent && len(alphaStates) > 0 {
 		resources = pageResources(nil, nil, nil, nil, nil, alphaStates, nil)
 	}
-	fmt.Fprintf(&w.buf,
+	fmt.Fprintf(
+		&w.buf,
 		"<< /Type /XObject /Subtype /Form /BBox [%s %s %s %s] /Resources %s",
 		shortFloat(form.bbox.Min.X),
 		shortFloat(form.bbox.Min.Y),
@@ -311,7 +317,8 @@ func (w *pdfWriter) writeEmbeddedFontObjects(fontObj pdfEmbeddedFontObject) erro
 	subsetName := subsetFontName(fontObj.pdfEmbeddedFont)
 
 	w.beginObject(fontObj.type0ID)
-	fmt.Fprintf(&w.buf,
+	fmt.Fprintf(
+		&w.buf,
 		"<< /Type /Font /Subtype /Type0 /BaseFont /%s /Encoding /Identity-H /DescendantFonts [%d 0 R] /ToUnicode %d 0 R >>",
 		escapeName(subsetName),
 		fontObj.cidFontID,
@@ -320,7 +327,8 @@ func (w *pdfWriter) writeEmbeddedFontObjects(fontObj pdfEmbeddedFontObject) erro
 	w.endObject()
 
 	w.beginObject(fontObj.cidFontID)
-	fmt.Fprintf(&w.buf,
+	fmt.Fprintf(
+		&w.buf,
 		"<< /Type /Font /Subtype /CIDFontType2 /BaseFont /%s /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor %d 0 R /W %d 0 R /CIDToGIDMap %d 0 R >>",
 		escapeName(subsetName),
 		fontObj.descriptorID,
@@ -382,7 +390,8 @@ func (w *pdfWriter) writeXRef() {
 }
 
 func (w *pdfWriter) writeTrailer(xrefOffset int) {
-	fmt.Fprintf(&w.buf,
+	fmt.Fprintf(
+		&w.buf,
 		"trailer\n<< /Size %d /Root 1 0 R /Info 5 0 R >>\nstartxref\n%d\n%%%%EOF\n",
 		len(w.offsets), xrefOffset,
 	)
@@ -423,7 +432,8 @@ func sortedKeys(m map[string]string) []string {
 
 func pdfFontDescriptor(fontObj pdfEmbeddedFontObject, fontData *sfnt.Font, subsetName string) string {
 	metrics, bounds := pdfFontMetrics(fontData)
-	return fmt.Sprintf("<< /Type /FontDescriptor /FontName /%s /Flags 32 /FontBBox [%d %d %d %d] /Ascent %d /Descent %d /CapHeight %d /ItalicAngle 0 /StemV 0 /FontFile2 %d 0 R >>",
+	return fmt.Sprintf(
+		"<< /Type /FontDescriptor /FontName /%s /Flags 32 /FontBBox [%d %d %d %d] /Ascent %d /Descent %d /CapHeight %d /ItalicAngle 0 /StemV 0 /FontFile2 %d 0 R >>",
 		escapeName(subsetName),
 		bounds[0], bounds[1], bounds[2], bounds[3],
 		metrics[0], metrics[1], metrics[2],
@@ -768,7 +778,8 @@ func pageResources(images []pdfImageObject, hatches []pdfHatchPatternObject, fil
 	if len(alphaStates) > 0 {
 		b.WriteString(" /ExtGState <<")
 		for _, state := range alphaStates {
-			fmt.Fprintf(&b, " /%s << /Type /ExtGState /CA %s /ca %s >>",
+			fmt.Fprintf(
+				&b, " /%s << /Type /ExtGState /CA %s /ca %s >>",
 				escapeName(state.name),
 				shortFloat(state.strokeAlpha),
 				shortFloat(state.fillAlpha),
@@ -842,7 +853,8 @@ func resolveCreationDate(explicit time.Time) time.Time {
 // pdfDateString formats t per ISO 32000-1 §7.9.4 as `(D:YYYYMMDDHHmmSSZ)`.
 func pdfDateString(t time.Time) string {
 	t = t.UTC()
-	return fmt.Sprintf("(D:%04d%02d%02d%02d%02d%02dZ)",
+	return fmt.Sprintf(
+		"(D:%04d%02d%02d%02d%02d%02dZ)",
 		t.Year(), t.Month(), t.Day(),
 		t.Hour(), t.Minute(), t.Second(),
 	)

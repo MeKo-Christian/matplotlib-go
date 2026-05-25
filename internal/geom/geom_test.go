@@ -289,9 +289,12 @@ func TestPathInterpolatedSubdividesCurves(t *testing.T) {
 	}
 	wantPts := []Pt{
 		{0, 0},
-		{1, 0}, {2, 0},
-		{3, 1}, {4, 0},
-		{5.5, 0}, {7, 0},
+		{1, 0},
+		{2, 0},
+		{3, 1},
+		{4, 0},
+		{5.5, 0},
+		{7, 0},
 	}
 	if len(interp.V) != len(wantPts) {
 		t.Fatalf("interpolated vertex count = %d, want %d (%v)", len(interp.V), len(wantPts), interp.V)

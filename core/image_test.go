@@ -597,7 +597,9 @@ func (r *imageSpyNoTransformRenderer) ClipRect(geom.Rect)    {}
 func (r *imageSpyNoTransformRenderer) ClipPath(geom.Path)    {}
 func (r *imageSpyNoTransformRenderer) Path(geom.Path, *render.Paint) {
 }
+
 func (r *imageSpyNoTransformRenderer) Image(_ render.Image, dst geom.Rect) { r.imageCalls++; _ = dst }
+
 func (r *imageSpyNoTransformRenderer) GlyphRun(render.GlyphRun, render.Color) {
 }
 

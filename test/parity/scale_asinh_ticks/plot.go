@@ -33,7 +33,8 @@ func Plot() *core.Figure {
 
 	ax.SetXLim(-1000, 1000)
 	ax.SetYLim(0, 1)
-	_ = ax.SetXScale("asinh",
+	_ = ax.SetXScale(
+		"asinh",
 		transform.WithScaleBase(10),
 		transform.WithScaleLinearWidth(1),
 	)

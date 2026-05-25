@@ -54,7 +54,8 @@ func writePathOps(w *bytes.Buffer, p geom.Path) bool {
 				X: end.X + (2.0/3.0)*(ctrl.X-end.X),
 				Y: end.Y + (2.0/3.0)*(ctrl.Y-end.Y),
 			}
-			fmt.Fprintf(w, "%s %s %s %s %s %s c\n",
+			fmt.Fprintf(
+				w, "%s %s %s %s %s %s c\n",
 				shortFloat(c1.X), shortFloat(c1.Y),
 				shortFloat(c2.X), shortFloat(c2.Y),
 				shortFloat(end.X), shortFloat(end.Y),
@@ -64,7 +65,8 @@ func writePathOps(w *bytes.Buffer, p geom.Path) bool {
 			c2 := p.V[vi+1]
 			end := p.V[vi+2]
 			vi += 3
-			fmt.Fprintf(w, "%s %s %s %s %s %s c\n",
+			fmt.Fprintf(
+				w, "%s %s %s %s %s %s c\n",
 				shortFloat(c1.X), shortFloat(c1.Y),
 				shortFloat(c2.X), shortFloat(c2.Y),
 				shortFloat(end.X), shortFloat(end.Y),
@@ -109,7 +111,8 @@ func lastEndpoint(p geom.Path, vi int) geom.Pt {
 }
 
 func writeFillColor(w *bytes.Buffer, c render.Color) {
-	fmt.Fprintf(w, "%s %s %s rg\n",
+	fmt.Fprintf(
+		w, "%s %s %s rg\n",
 		shortFloat(clamp01(c.R)),
 		shortFloat(clamp01(c.G)),
 		shortFloat(clamp01(c.B)),
@@ -117,7 +120,8 @@ func writeFillColor(w *bytes.Buffer, c render.Color) {
 }
 
 func writeStrokeColor(w *bytes.Buffer, c render.Color) {
-	fmt.Fprintf(w, "%s %s %s RG\n",
+	fmt.Fprintf(
+		w, "%s %s %s RG\n",
 		shortFloat(clamp01(c.R)),
 		shortFloat(clamp01(c.G)),
 		shortFloat(clamp01(c.B)),
@@ -608,7 +612,8 @@ func hatchPatternStream(pattern pdfHatchPattern) []byte {
 	fmt.Fprintf(&buf, "%s w\n", shortFloat(pattern.lineWidth))
 	buf.WriteString("0 J\n")
 	for _, line := range hatchPatternLines(pattern.hatch, pattern.spacing) {
-		fmt.Fprintf(&buf, "%s %s m\n%s %s l\nS\n",
+		fmt.Fprintf(
+			&buf, "%s %s m\n%s %s l\nS\n",
 			shortFloat(line[0].X), shortFloat(line[0].Y),
 			shortFloat(line[1].X), shortFloat(line[1].Y),
 		)
@@ -648,7 +653,8 @@ func fillPatternKey(pattern render.PatternFill) string {
 		pathKey(pattern.Path),
 	}
 	if pattern.HasTransform {
-		parts = append(parts,
+		parts = append(
+			parts,
 			shortFloat(pattern.Transform.A),
 			shortFloat(pattern.Transform.B),
 			shortFloat(pattern.Transform.C),
@@ -665,7 +671,8 @@ func fillPatternStream(pattern render.PatternFill) []byte {
 	var buf bytes.Buffer
 	if pattern.Background.A > 0 {
 		writeFillColor(&buf, pattern.Background)
-		fmt.Fprintf(&buf, "%s %s %s %s re f\n",
+		fmt.Fprintf(
+			&buf, "%s %s %s %s re f\n",
 			shortFloat(cell.Min.X),
 			shortFloat(cell.Min.Y),
 			shortFloat(cell.W()),
@@ -821,7 +828,8 @@ func type2FunctionDictionary(c0, c1 render.Color) string {
 }
 
 func pdfColorArray(c render.Color) string {
-	return fmt.Sprintf("[%s %s %s]",
+	return fmt.Sprintf(
+		"[%s %s %s]",
 		shortFloat(clamp01(c.R)),
 		shortFloat(clamp01(c.G)),
 		shortFloat(clamp01(c.B)),
@@ -886,14 +894,16 @@ func shadingKey(gradient render.GradientFill) string {
 		strconv.FormatBool(gradient.HasTransform),
 	}
 	if gradient.HasTransform {
-		parts = append(parts,
+		parts = append(
+			parts,
 			shortFloat(gradient.Transform.A), shortFloat(gradient.Transform.B),
 			shortFloat(gradient.Transform.C), shortFloat(gradient.Transform.D),
 			shortFloat(gradient.Transform.E), shortFloat(gradient.Transform.F),
 		)
 	}
 	for _, stop := range stops {
-		parts = append(parts,
+		parts = append(
+			parts,
 			shortFloat(stop.Offset),
 			shortFloat(stop.Color.R), shortFloat(stop.Color.G),
 			shortFloat(stop.Color.B), shortFloat(stop.Color.A),

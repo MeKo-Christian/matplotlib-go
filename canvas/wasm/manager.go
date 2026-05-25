@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"image"
 	"math"
-	"syscall/js"
 
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/backends/gobasic"
@@ -15,6 +14,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"syscall/js"
 )
 
 type rasterRenderer interface {

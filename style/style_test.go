@@ -55,7 +55,8 @@ func TestDefaultFontSizesMatchMatplotlib(t *testing.T) {
 }
 
 func TestOptionsApplyAndOrder(t *testing.T) {
-	rc := Apply(Default,
+	rc := Apply(
+		Default,
 		WithDPI(144),
 		WithFont("TestFont", 14),
 		WithLineWidth(2.0),

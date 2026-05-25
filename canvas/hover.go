@@ -31,8 +31,8 @@ func (t *AxesHoverTracker) Update(event Event) {
 		fig = t.figure
 	}
 	var next *Axes
-	var dataPosition = event.DataPosition
-	var hasDataPosition = event.HasDataPosition
+	dataPosition := event.DataPosition
+	hasDataPosition := event.HasDataPosition
 	if event.Type != EventFigureLeave {
 		next, dataPosition, hasDataPosition = ResolveEventTarget(fig, event.Position)
 	}

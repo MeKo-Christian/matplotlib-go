@@ -366,7 +366,8 @@ func connectionArcPath(posA, posB geom.Pt, angleA, angleB, armA, armB, rad float
 	rounded := []geom.Pt{}
 	if armA != 0 {
 		dir := angleUnit(angleA)
-		rounded = append(rounded,
+		rounded = append(
+			rounded,
 			geom.Pt{X: posA.X + (armA-rad)*dir.X, Y: posA.Y + (armA-rad)*dir.Y},
 			geom.Pt{X: posA.X + armA*dir.X, Y: posA.Y + armA*dir.Y},
 		)

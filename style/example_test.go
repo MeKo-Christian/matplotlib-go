@@ -11,7 +11,8 @@ import (
 func Example() {
 	base := style.CurrentDefaults()
 
-	rc := style.Apply(base,
+	rc := style.Apply(
+		base,
 		style.WithDPI(150),
 		style.WithLineWidth(2.5),
 	)

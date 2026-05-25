@@ -266,7 +266,8 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 		// Paint the page background as a filled rectangle in the now-flipped
 		// frame.
 		writeFillColor(&r.content, r.background)
-		fmt.Fprintf(&r.content, "0 0 %s %s re f\n",
+		fmt.Fprintf(
+			&r.content, "0 0 %s %s re f\n",
 			shortFloat(float64(r.width)),
 			shortFloat(float64(r.height)),
 		)
@@ -373,7 +374,8 @@ func (r *Renderer) ClipRect(rect geom.Rect) {
 		intersected := r.clipRect.Intersect(normalized)
 		r.clipRect = &intersected
 	}
-	fmt.Fprintf(&r.content, "%s %s %s %s re W n\n",
+	fmt.Fprintf(
+		&r.content, "%s %s %s %s re W n\n",
 		shortFloat(rect.Min.X),
 		shortFloat(rect.Min.Y),
 		shortFloat(rect.W()),
@@ -691,7 +693,8 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 		}
 		name := r.registerFormXObject("M", marker, paintOp, &paint)
 		r.writePaintState(&paint)
-		fmt.Fprintf(&r.content, "q\n1 0 0 1 %s %s cm\n/%s Do\nQ\n",
+		fmt.Fprintf(
+			&r.content, "q\n1 0 0 1 %s %s cm\n/%s Do\nQ\n",
 			shortFloat(item.Offset.X),
 			shortFloat(item.Offset.Y),
 			name,
@@ -877,7 +880,8 @@ func (r *Renderer) drawImageWithMatrix(img render.Image, matrix geom.Affine) {
 }
 
 func (r *Renderer) writeImageInvocation(matrix geom.Affine, name string) {
-	fmt.Fprintf(&r.content, "q\n%s %s %s %s %s %s cm\n/%s Do\nQ\n",
+	fmt.Fprintf(
+		&r.content, "q\n%s %s %s %s %s %s cm\n/%s Do\nQ\n",
 		shortFloat(matrix.A),
 		shortFloat(matrix.B),
 		shortFloat(matrix.C),

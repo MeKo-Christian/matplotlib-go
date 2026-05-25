@@ -169,7 +169,8 @@ func TestAxes_SetScalePreservesDomainAndConfiguresLogDefaults(t *testing.T) {
 		XAxisTop: &Axis{Side: AxisTop},
 	}
 
-	err := axes.SetXScale("LOG",
+	err := axes.SetXScale(
+		"LOG",
 		transform.WithScaleBase(10),
 		transform.WithScaleSubs(2, 4, 5),
 	)
@@ -242,7 +243,8 @@ func TestAxes_SetScaleUpdatesSharedRoot(t *testing.T) {
 	}
 	shared := &Axes{shareX: root}
 
-	err := shared.SetXScale("symlog",
+	err := shared.SetXScale(
+		"symlog",
 		transform.WithScaleBase(10),
 		transform.WithScaleLinThresh(2),
 	)
@@ -276,7 +278,8 @@ func TestAxes_SetScaleUpdatesOverlayAxisDefaults(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(unitRect())
 	twinX := ax.TwinX()
-	secondaryX, err := ax.SecondaryXAxis(AxisTop,
+	secondaryX, err := ax.SecondaryXAxis(
+		AxisTop,
 		func(x float64) float64 { return x * 2 },
 		func(x float64) (float64, bool) { return x / 2, true },
 	)
@@ -302,7 +305,8 @@ func TestAxes_SetScaleUpdatesOverlayAxisDefaults(t *testing.T) {
 	}
 
 	twinY := ax.TwinY()
-	secondaryY, err := ax.SecondaryYAxis(AxisRight,
+	secondaryY, err := ax.SecondaryYAxis(
+		AxisRight,
 		func(y float64) float64 { return y + 1 },
 		func(y float64) (float64, bool) { return y - 1, true },
 	)
@@ -331,7 +335,8 @@ func TestAxes_SetScaleInstallsAsinhLocatorDefaults(t *testing.T) {
 		XAxis:  NewXAxis(),
 	}
 
-	err := axes.SetXScale("asinh",
+	err := axes.SetXScale(
+		"asinh",
 		transform.WithScaleBase(10),
 		transform.WithScaleLinearWidth(2),
 		transform.WithScaleSubs(2, 5),
@@ -393,7 +398,8 @@ func TestAxes_SetScaleInstallsFunctionLogLocatorDefaults(t *testing.T) {
 		XAxis:  NewXAxis(),
 	}
 
-	err := axes.SetXScale("functionlog",
+	err := axes.SetXScale(
+		"functionlog",
 		transform.WithScaleBase(10),
 		transform.WithScaleFunctions(
 			func(x float64) float64 { return x * x },
@@ -452,7 +458,8 @@ func TestAxes_SetLimExpandsSingularLinearDomains(t *testing.T) {
 func TestAxes_LogAutoscaleNormalizesNonPositiveData(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(unitRect())
-	if err := ax.SetXScale("log",
+	if err := ax.SetXScale(
+		"log",
 		transform.WithScaleBase(10),
 		transform.WithScaleNonPositive(transform.NonPositiveClip),
 	); err != nil {
@@ -474,7 +481,8 @@ func TestAxes_LogAutoscaleNormalizesNonPositiveData(t *testing.T) {
 		t.Fatalf("clipped log forward after autoscale should stay finite, got %v", got)
 	}
 
-	if err := ax.SetXScale("log",
+	if err := ax.SetXScale(
+		"log",
 		transform.WithScaleBase(10),
 		transform.WithScaleNonPositive(transform.NonPositiveMask),
 	); err != nil {
@@ -1169,7 +1177,8 @@ func TestAxes_SecondaryAxesUseLinkedScale(t *testing.T) {
 	ax.SetXLim(0, 100)
 	ax.SetYLim(0, 10)
 
-	secondaryX, err := ax.SecondaryXAxis(AxisTop,
+	secondaryX, err := ax.SecondaryXAxis(
+		AxisTop,
 		func(v float64) float64 { return v*1.8 + 32 },
 		func(v float64) (float64, bool) { return (v - 32) / 1.8, true },
 	)
@@ -1190,7 +1199,8 @@ func TestAxes_SecondaryAxesUseLinkedScale(t *testing.T) {
 		t.Fatal("SecondaryXAxis should not draw an overlay spine over the parent frame")
 	}
 
-	secondaryY, err := ax.SecondaryYAxis(AxisRight,
+	secondaryY, err := ax.SecondaryYAxis(
+		AxisRight,
 		func(v float64) float64 { return v * 1000 },
 		func(v float64) (float64, bool) { return v / 1000, true },
 	)

@@ -18,12 +18,14 @@ const (
 // Plot builds a formatter-focused engineering-label parity fixture.
 func Plot() *core.Figure {
 	fig := core.NewFigure(Width, Height)
-	addPanel(fig, geom.Rect{Min: geom.Pt{X: 0.12, Y: 0.58}, Max: geom.Pt{X: 0.94, Y: 0.88}},
+	addPanel(
+		fig, geom.Rect{Min: geom.Pt{X: 0.12, Y: 0.58}, Max: geom.Pt{X: 0.94, Y: 0.88}},
 		"Micro Engineering Labels",
 		[]float64{-2e-6, -1e-6, 0, 1e-6, 2e-6},
 		core.EngFormatter{Unit: "V"},
 	)
-	addPanel(fig, geom.Rect{Min: geom.Pt{X: 0.12, Y: 0.16}, Max: geom.Pt{X: 0.94, Y: 0.46}},
+	addPanel(
+		fig, geom.Rect{Min: geom.Pt{X: 0.12, Y: 0.16}, Max: geom.Pt{X: 0.94, Y: 0.46}},
 		"Kilohertz Engineering Labels",
 		[]float64{0, 1000, 1500, 2000},
 		core.EngFormatter{Unit: "Hz", Places: 1},

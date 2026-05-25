@@ -274,7 +274,7 @@ backends, and stabilize `internal/mathtext` for promotion.
       a clear diagnostic when missing.
       The committed `testdata/usetex_golden/basic.png` fixture is regenerated
       by `go test ./test -run TestUseTeXGoldenWithSystemToolchain
-      -update-usetex-golden` on hosts with `latex` + `dvipng`.
+    -update-usetex-golden` on hosts with `latex` + `dvipng`.
 
 ### 3.3 MathText Module Promotion
 
@@ -690,7 +690,7 @@ renderer contract, backend implementation, or the AGG port itself.
 ### 8.11 `image_heatmap` (RMSE 5.54)
 
 - [x] Code: translated Python `imshow(..., interpolation="nearest",
-    aspect="auto", extent=...)` through `ax.ImShow`.
+  aspect="auto", extent=...)` through `ax.ImShow`.
 - [ ] Visual: cells align; residuals appear at cell boundaries and tick/text
       edges.
 - [ ] Likely core areas: `core/image.go`, `core/image_api.go`, image pixel
@@ -1651,11 +1651,11 @@ Status: [x] done · [~] in progress · [ ] todo.
 - [x] G2 AGG backend owns device flip.
 - [x] G3 Core positioning/text helpers y-up conversion.
 - [~] G4 AGG parity validation. (parity suite validated — only 4 fixtures >2
-      MeanAbs, all classified; AGG backend unit/golden tests still need y-up
-      reconciliation: transformed-image/TeX pixel expectations, path-effect and
-      pattern-gradient backend goldens.)
+  MeanAbs, all classified; AGG backend unit/golden tests still need y-up
+  reconciliation: transformed-image/TeX pixel expectations, path-effect and
+  pattern-gradient backend goldens.)
 - [~] G5 Example 1:1 port sweep. (`text_annotation_matrix`,
-      `pattern_gradient_effects` ported; broader sweep pending.)
+  `pattern_gradient_effects` ported; broader sweep pending.)
 - [ ] G6 Vector/other backend inversion ownership. (pdf/ps/pgf/svg/gobasic
       backend tests currently pass under y-up — verify output correctness.)
 - [ ] G7 Full-suite regen and revalidation.
@@ -1674,8 +1674,8 @@ Exit criteria:
 - [x] `TestMatplotlibRef/text_annotation_matrix` reports `RMSE < 10` without
       regressions in related fixtures.
 - [~] Remaining mismatch is classified with evidence as core, renderer
-      boundary, AGG-port, or upstream limitation. (4 residual fixtures listed
-      above; AGG backend golden/unit failures pending classification.)
+  boundary, AGG-port, or upstream limitation. (4 residual fixtures listed
+  above; AGG backend golden/unit failures pending classification.)
 
 ---
 

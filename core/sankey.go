@@ -493,7 +493,8 @@ func (s *Sankey) sankeyAddInput(path *[]sankeyPathStep, angle int, flow, length 
 	if angle == sankeyRight {
 		x -= length
 		dip := geom.Pt{X: x + dipDepth, Y: y + flow/2}
-		*path = append(*path,
+		*path = append(
+			*path,
 			sankeyPathStep{cmd: sankeyLineTo, pt: geom.Pt{X: x, Y: y}},
 			sankeyPathStep{cmd: sankeyLineTo, pt: dip},
 			sankeyPathStep{cmd: sankeyLineTo, pt: geom.Pt{X: x, Y: y + flow}},
@@ -515,7 +516,8 @@ func (s *Sankey) sankeyAddInput(path *[]sankeyPathStep, angle int, flow, length 
 	} else {
 		*path = append(*path, sankeyPathStep{cmd: sankeyLineTo, pt: geom.Pt{X: x, Y: y}})
 	}
-	*path = append(*path,
+	*path = append(
+		*path,
 		sankeyPathStep{cmd: sankeyLineTo, pt: geom.Pt{X: x, Y: y - sign*length}},
 		sankeyPathStep{cmd: sankeyLineTo, pt: dip},
 		sankeyPathStep{cmd: sankeyLineTo, pt: geom.Pt{X: x - flow, Y: y - sign*length}},
@@ -534,7 +536,8 @@ func (s *Sankey) sankeyAddOutput(path *[]sankeyPathStep, angle int, flow, length
 	if angle == sankeyRight {
 		x += length
 		tip := geom.Pt{X: x + tipHeight, Y: y + flow/2}
-		*path = append(*path,
+		*path = append(
+			*path,
 			sankeyPathStep{cmd: sankeyLineTo, pt: geom.Pt{X: x, Y: y}},
 			sankeyPathStep{cmd: sankeyLineTo, pt: geom.Pt{X: x, Y: y + s.opts.Shoulder}},
 			sankeyPathStep{cmd: sankeyLineTo, pt: tip},
@@ -558,7 +561,8 @@ func (s *Sankey) sankeyAddOutput(path *[]sankeyPathStep, angle int, flow, length
 	} else {
 		*path = append(*path, sankeyPathStep{cmd: sankeyLineTo, pt: geom.Pt{X: x, Y: y}})
 	}
-	*path = append(*path,
+	*path = append(
+		*path,
 		sankeyPathStep{cmd: sankeyLineTo, pt: geom.Pt{X: x, Y: y + sign*length}},
 		sankeyPathStep{cmd: sankeyLineTo, pt: geom.Pt{X: x - s.opts.Shoulder, Y: y + sign*length}},
 		sankeyPathStep{cmd: sankeyLineTo, pt: tip},

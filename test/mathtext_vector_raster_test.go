@@ -123,7 +123,8 @@ func rasterizePS(t *testing.T, path string, size image.Point) image.Image {
 	t.Helper()
 	gs := requireRasterizer(t, "gs")
 	outPath := filepath.Join(t.TempDir(), "page.png")
-	runRasterizer(t, gs,
+	runRasterizer(
+		t, gs,
 		"-dSAFER",
 		"-dBATCH",
 		"-dNOPAUSE",

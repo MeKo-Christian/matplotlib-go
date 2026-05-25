@@ -34,23 +34,23 @@ const (
 
 // Inbound message types — client → server.
 const (
-	MsgAck                  = "ack"
-	MsgDrawCmd              = "draw"
-	MsgButtonPress          = "button_press"
-	MsgButtonRelease        = "button_release"
-	MsgDblClick             = "dblclick"
-	MsgMotionNotify         = "motion_notify"
-	MsgFigureEnter          = "figure_enter"
-	MsgFigureLeave          = "figure_leave"
-	MsgScroll               = "scroll"
-	MsgKeyPress             = "key_press"
-	MsgKeyRelease           = "key_release"
-	MsgToolbarButton        = "toolbar_button"
-	MsgRefreshCmd           = "refresh"
-	MsgResizeCmd            = "resize"
-	MsgSendImageMode        = "send_image_mode"
-	MsgSetDevicePixelRatio  = "set_device_pixel_ratio"
-	MsgSetDPIRatio          = "set_dpi_ratio"
+	MsgAck                 = "ack"
+	MsgDrawCmd             = "draw"
+	MsgButtonPress         = "button_press"
+	MsgButtonRelease       = "button_release"
+	MsgDblClick            = "dblclick"
+	MsgMotionNotify        = "motion_notify"
+	MsgFigureEnter         = "figure_enter"
+	MsgFigureLeave         = "figure_leave"
+	MsgScroll              = "scroll"
+	MsgKeyPress            = "key_press"
+	MsgKeyRelease          = "key_release"
+	MsgToolbarButton       = "toolbar_button"
+	MsgRefreshCmd          = "refresh"
+	MsgResizeCmd           = "resize"
+	MsgSendImageMode       = "send_image_mode"
+	MsgSetDevicePixelRatio = "set_device_pixel_ratio"
+	MsgSetDPIRatio         = "set_dpi_ratio"
 )
 
 // imageMode names the active server → client image transport mode.
@@ -67,19 +67,19 @@ const (
 // JSON has no integer type and a single decoded form keeps the dispatch
 // branches readable.
 type inboundEvent struct {
-	Type             string  `json:"type"`
-	X                float64 `json:"x"`
-	Y                float64 `json:"y"`
-	Button           int     `json:"button"`
-	Buttons          int     `json:"buttons"`
-	Step             float64 `json:"step"`
-	Key              string  `json:"key"`
+	Type             string   `json:"type"`
+	X                float64  `json:"x"`
+	Y                float64  `json:"y"`
+	Button           int      `json:"button"`
+	Buttons          int      `json:"buttons"`
+	Step             float64  `json:"step"`
+	Key              string   `json:"key"`
 	Modifiers        []string `json:"modifiers"`
-	Name             string  `json:"name"`
-	Width            float64 `json:"width"`
-	Height           float64 `json:"height"`
-	DevicePixelRatio float64 `json:"device_pixel_ratio"`
-	DPIRatio         float64 `json:"dpi_ratio"`
+	Name             string   `json:"name"`
+	Width            float64  `json:"width"`
+	Height           float64  `json:"height"`
+	DevicePixelRatio float64  `json:"device_pixel_ratio"`
+	DPIRatio         float64  `json:"dpi_ratio"`
 }
 
 // outboundEvent is the structural form we marshal for every server →
@@ -93,8 +93,8 @@ type outboundEvent struct {
 	Label   string `json:"label,omitempty"`
 	// Size carries the {resize} payload — pixel width/height the client
 	// should set on its canvas element.
-	Size       []float64 `json:"size,omitempty"`
-	ResizeFwd  *bool     `json:"forward,omitempty"`
+	Size      []float64 `json:"size,omitempty"`
+	ResizeFwd *bool     `json:"forward,omitempty"`
 	// Rubberband corners. The upstream contract uses -1 for "remove".
 	X0 *float64 `json:"x0,omitempty"`
 	Y0 *float64 `json:"y0,omitempty"`
@@ -106,4 +106,3 @@ type outboundEvent struct {
 	Back    *bool `json:"Back,omitempty"`
 	HistFwd *bool `json:"Forward,omitempty"`
 }
-

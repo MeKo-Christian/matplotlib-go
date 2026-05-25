@@ -120,7 +120,8 @@ func normalizeStops(in []render.GradientStop) []render.GradientStop {
 
 func gradientKey(g *render.GradientFill, stops []render.GradientStop) string {
 	parts := make([]string, 0, 8+len(stops)*5)
-	parts = append(parts,
+	parts = append(
+		parts,
 		strconv.Itoa(int(g.Kind)),
 		formatFloat(g.Start.X), formatFloat(g.Start.Y),
 		formatFloat(g.End.X), formatFloat(g.End.Y),
@@ -130,14 +131,16 @@ func gradientKey(g *render.GradientFill, stops []render.GradientStop) string {
 		strconv.FormatBool(g.HasTransform),
 	)
 	if g.HasTransform {
-		parts = append(parts,
+		parts = append(
+			parts,
 			formatFloat(g.Transform.A), formatFloat(g.Transform.B),
 			formatFloat(g.Transform.C), formatFloat(g.Transform.D),
 			formatFloat(g.Transform.E), formatFloat(g.Transform.F),
 		)
 	}
 	for _, s := range stops {
-		parts = append(parts,
+		parts = append(
+			parts,
 			formatFloat(s.Offset),
 			formatFloat(s.Color.R), formatFloat(s.Color.G),
 			formatFloat(s.Color.B), formatFloat(s.Color.A),
@@ -160,7 +163,8 @@ func patternFillKey(p *render.PatternFill, pathData string) string {
 		strconv.FormatBool(p.HasTransform),
 	}
 	if p.HasTransform {
-		parts = append(parts,
+		parts = append(
+			parts,
 			formatFloat(p.Transform.A), formatFloat(p.Transform.B),
 			formatFloat(p.Transform.C), formatFloat(p.Transform.D),
 			formatFloat(p.Transform.E), formatFloat(p.Transform.F),

@@ -15,9 +15,9 @@ type fakeCanvas struct {
 	closed     bool
 }
 
-func (c *fakeCanvas) Figure() *Figure                    { return c.fig }
-func (c *fakeCanvas) Draw() error                        { return c.dispatcher.Emit(Event{Type: EventDraw, Figure: c.fig}) }
-func (c *fakeCanvas) Resize(_, _ int) error              { return nil }
+func (c *fakeCanvas) Figure() *Figure       { return c.fig }
+func (c *fakeCanvas) Draw() error           { return c.dispatcher.Emit(Event{Type: EventDraw, Figure: c.fig}) }
+func (c *fakeCanvas) Resize(_, _ int) error { return nil }
 func (c *fakeCanvas) Connect(t EventType, h Handler) ConnectionID {
 	if c.closed {
 		return 0

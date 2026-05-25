@@ -1314,7 +1314,8 @@ func (r *Renderer) registerPathClip(d, transform string) string {
 
 func clipKey(rect geom.Rect) string {
 	q := normalizeRect(rect)
-	return fmt.Sprintf("%s,%s,%s,%s",
+	return fmt.Sprintf(
+		"%s,%s,%s,%s",
 		formatFloat(q.Min.X),
 		formatFloat(q.Min.Y),
 		formatFloat(q.Max.X),
@@ -1484,7 +1485,8 @@ func mapLineCap(v render.LineCap) string {
 }
 
 func colorToHex(c render.Color) string {
-	return fmt.Sprintf("rgb(%d,%d,%d)",
+	return fmt.Sprintf(
+		"rgb(%d,%d,%d)",
 		toByte(c.R),
 		toByte(c.G),
 		toByte(c.B),

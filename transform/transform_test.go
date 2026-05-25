@@ -56,7 +56,7 @@ func TestLogScale_RoundTrip(t *testing.T) {
 				t.Fatalf("log inv failed")
 			}
 			ur := s.Fwd(x)
-			if !(math.IsNaN(ur)) && !approx(u, ur, 1e-9) {
+			if !math.IsNaN(ur) && !approx(u, ur, 1e-9) {
 				t.Fatalf("log roundtrip mismatch: u=%v ur=%v", u, ur)
 			}
 		}

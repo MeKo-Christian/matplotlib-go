@@ -6,14 +6,14 @@ Accepted (Phase 12.4G).
 
 ## Context
 
-Matplotlib computes all *signed* display-space geometry — connection-style
+Matplotlib computes all _signed_ display-space geometry — connection-style
 curvature (`arc3`), arrow-head normals, text rotation, annotation offsets — in a
 **y-up display space** (origin at the bottom-left, +Y increases upward). Its Agg
 backend converts that display space to the y-down device buffer only at
 rasterization, by appending a flip affine to the path transform
 (`src/_backend_agg.h::draw_path`: `trans *= scaling(1,-1); trans *=
 translation(0,height)`). `backend_bases.RendererBase.flipy()` returns `True`,
-which signals that *positions* flip but glyph and image *bitmaps* stay upright.
+which signals that _positions_ flip but glyph and image _bitmaps_ stay upright.
 
 Historically this port baked the y-inversion into the data→pixel transform
 (`transform.NewDisplayRectTransform` plus the `1 - frac.Y` flip in
@@ -45,7 +45,7 @@ Matplotlib. Concretely:
 
 ## Consequences
 
-- **Net-neutral invariant.** The flip only *moves* from the transform layer to
+- **Net-neutral invariant.** The flip only _moves_ from the transform layer to
   the backend. Ordinary (unsigned) content must rasterize byte-identically; only
   signed display geometry changes. This is the regression guard: golden diffs on
   unsigned content indicate a y-down assumption that still needs converting.

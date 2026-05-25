@@ -815,12 +815,18 @@ func markerCaretPath(angleDeg float64, base bool) geom.Path {
 func markerFilledPlusPath() geom.Path {
 	scale := 1.0 / 6.0
 	points := []geom.Pt{
-		{X: -1 * scale, Y: -3 * scale}, {X: 1 * scale, Y: -3 * scale},
-		{X: 1 * scale, Y: -1 * scale}, {X: 3 * scale, Y: -1 * scale},
-		{X: 3 * scale, Y: 1 * scale}, {X: 1 * scale, Y: 1 * scale},
-		{X: 1 * scale, Y: 3 * scale}, {X: -1 * scale, Y: 3 * scale},
-		{X: -1 * scale, Y: 1 * scale}, {X: -3 * scale, Y: 1 * scale},
-		{X: -3 * scale, Y: -1 * scale}, {X: -1 * scale, Y: -1 * scale},
+		{X: -1 * scale, Y: -3 * scale},
+		{X: 1 * scale, Y: -3 * scale},
+		{X: 1 * scale, Y: -1 * scale},
+		{X: 3 * scale, Y: -1 * scale},
+		{X: 3 * scale, Y: 1 * scale},
+		{X: 1 * scale, Y: 1 * scale},
+		{X: 1 * scale, Y: 3 * scale},
+		{X: -1 * scale, Y: 3 * scale},
+		{X: -1 * scale, Y: 1 * scale},
+		{X: -3 * scale, Y: 1 * scale},
+		{X: -3 * scale, Y: -1 * scale},
+		{X: -1 * scale, Y: -1 * scale},
 	}
 	return polygonPath(points, true)
 }
@@ -828,12 +834,18 @@ func markerFilledPlusPath() geom.Path {
 func markerFilledXPath() geom.Path {
 	scale := 1.0 / 4.0
 	points := []geom.Pt{
-		{X: -1 * scale, Y: -2 * scale}, {X: 0, Y: -1 * scale},
-		{X: 1 * scale, Y: -2 * scale}, {X: 2 * scale, Y: -1 * scale},
-		{X: 1 * scale, Y: 0}, {X: 2 * scale, Y: 1 * scale},
-		{X: 1 * scale, Y: 2 * scale}, {X: 0, Y: 1 * scale},
-		{X: -1 * scale, Y: 2 * scale}, {X: -2 * scale, Y: 1 * scale},
-		{X: -1 * scale, Y: 0}, {X: -2 * scale, Y: -1 * scale},
+		{X: -1 * scale, Y: -2 * scale},
+		{X: 0, Y: -1 * scale},
+		{X: 1 * scale, Y: -2 * scale},
+		{X: 2 * scale, Y: -1 * scale},
+		{X: 1 * scale, Y: 0},
+		{X: 2 * scale, Y: 1 * scale},
+		{X: 1 * scale, Y: 2 * scale},
+		{X: 0, Y: 1 * scale},
+		{X: -1 * scale, Y: 2 * scale},
+		{X: -2 * scale, Y: 1 * scale},
+		{X: -1 * scale, Y: 0},
+		{X: -2 * scale, Y: -1 * scale},
 	}
 	return polygonPath(points, true)
 }

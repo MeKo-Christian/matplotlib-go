@@ -34,7 +34,8 @@ func Plot() *core.Figure {
 	top.Plot(x, y, core.PlotOptions{Color: &color, LineWidth: &width})
 	top.SetXLim(0, 100)
 	top.SetYLim(0, 1)
-	_ = top.SetXScale("function",
+	_ = top.SetXScale(
+		"function",
 		transform.WithScaleFunctions(
 			func(v float64) float64 { return math.Sqrt(v) },
 			func(v float64) (float64, bool) { return v * v, true },
@@ -51,7 +52,8 @@ func Plot() *core.Figure {
 	bottom.Plot(x, y, core.PlotOptions{Color: &color, LineWidth: &width})
 	bottom.SetXLim(1, 10000)
 	bottom.SetYLim(0, 1)
-	_ = bottom.SetXScale("functionlog",
+	_ = bottom.SetXScale(
+		"functionlog",
 		transform.WithScaleBase(10),
 		transform.WithScaleFunctions(
 			func(v float64) float64 { return math.Sqrt(v) },

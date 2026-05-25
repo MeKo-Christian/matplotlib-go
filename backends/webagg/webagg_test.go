@@ -171,6 +171,7 @@ func (r *blitTestRenderer) CopyFromBBox(bbox geom.Rect) *render.BufferRegion {
 		Rect:  geom.Rect{Min: geom.Pt{X: float64(minX), Y: float64(minY)}, Max: geom.Pt{X: float64(maxX), Y: float64(maxY)}},
 	}
 }
+
 func (r *blitTestRenderer) RestoreRegion(region *render.BufferRegion, _ *geom.Rect, offset geom.Pt) {
 	if region == nil || region.Image == nil {
 		return

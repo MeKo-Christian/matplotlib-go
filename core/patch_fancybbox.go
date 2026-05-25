@@ -227,22 +227,30 @@ func boxStyleArrowPath(x0, y0, width, height, pad, headWidth, headAngle float64,
 			tipX1 := x1 + cot*math.Min(dy, headDY)/2
 			shaftX1 := tipX1 - cot*headDY/2
 			points = []geom.Pt{
-				{X: shaftX0, Y: y1}, {X: shaftX0, Y: shaftY1},
+				{X: shaftX0, Y: y1},
+				{X: shaftX0, Y: shaftY1},
 				{X: tipX0, Y: midY},
-				{X: shaftX0, Y: shaftY0}, {X: shaftX0, Y: y0},
-				{X: shaftX1, Y: y0}, {X: shaftX1, Y: shaftY0},
+				{X: shaftX0, Y: shaftY0},
+				{X: shaftX0, Y: y0},
+				{X: shaftX1, Y: y0},
+				{X: shaftX1, Y: shaftY0},
 				{X: tipX1, Y: midY},
-				{X: shaftX1, Y: shaftY1}, {X: shaftX1, Y: y1},
+				{X: shaftX1, Y: shaftY1},
+				{X: shaftX1, Y: y1},
 			}
 		} else {
 			shift := math.Min(-cot*math.Max(headDY-dy, 0)/2, dx/2)
 			midY0 := math.Min(shaftY0, y0) - shift/cot
 			midY1 := math.Max(shaftY1, y1) + shift/cot
 			points = []geom.Pt{
-				{X: x0, Y: shaftY0}, {X: x0 + shift, Y: midY0},
-				{X: x1 - shift, Y: midY0}, {X: x1, Y: shaftY0},
-				{X: x1, Y: shaftY1}, {X: x1 - shift, Y: midY1},
-				{X: x0 + shift, Y: midY1}, {X: x0, Y: shaftY1},
+				{X: x0, Y: shaftY0},
+				{X: x0 + shift, Y: midY0},
+				{X: x1 - shift, Y: midY0},
+				{X: x1, Y: shaftY0},
+				{X: x1, Y: shaftY1},
+				{X: x1 - shift, Y: midY1},
+				{X: x0 + shift, Y: midY1},
+				{X: x0, Y: shaftY1},
 			}
 		}
 		return polygonPath(points, true)
@@ -252,17 +260,25 @@ func boxStyleArrowPath(x0, y0, width, height, pad, headWidth, headAngle float64,
 		tipX := x1 + cot*math.Min(dy, headDY)/2
 		shaftX := tipX - cot*headDY/2
 		points = []geom.Pt{
-			{X: x0, Y: y0}, {X: shaftX, Y: y0}, {X: shaftX, Y: shaftY0},
+			{X: x0, Y: y0},
+			{X: shaftX, Y: y0},
+			{X: shaftX, Y: shaftY0},
 			{X: tipX, Y: midY},
-			{X: shaftX, Y: shaftY1}, {X: shaftX, Y: y1}, {X: x0, Y: y1},
+			{X: shaftX, Y: shaftY1},
+			{X: shaftX, Y: y1},
+			{X: x0, Y: y1},
 		}
 	} else {
 		shift := math.Min(-cot*math.Max(headDY-dy, 0)/2, dx)
 		midY0 := math.Min(shaftY0, y0) - shift/cot
 		midY1 := math.Max(shaftY1, y1) + shift/cot
 		points = []geom.Pt{
-			{X: x0, Y: y0}, {X: x1 - shift, Y: midY0}, {X: x1, Y: shaftY0},
-			{X: x1, Y: shaftY1}, {X: x1 - shift, Y: midY1}, {X: x0, Y: y1},
+			{X: x0, Y: y0},
+			{X: x1 - shift, Y: midY0},
+			{X: x1, Y: shaftY0},
+			{X: x1, Y: shaftY1},
+			{X: x1 - shift, Y: midY1},
+			{X: x0, Y: y1},
 		}
 	}
 	if left {

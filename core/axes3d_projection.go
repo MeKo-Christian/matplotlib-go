@@ -232,7 +232,8 @@ func (a *Axes3D) projectBar3DSegments(x, y, z, dx, dy, dz []float64) [][]geom.Pt
 		q11 := a.ProjectPoint(x1, y1, bottom)
 		q01 := a.ProjectPoint(x0, y1, bottom)
 
-		segments = append(segments,
+		segments = append(
+			segments,
 			[]geom.Pt{p00, p10},
 			[]geom.Pt{p10, p11},
 			[]geom.Pt{p11, p01},

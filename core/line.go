@@ -397,7 +397,8 @@ func (l *Line2D) pathPoints() []geom.Pt {
 		out := make([]geom.Pt, 0, 2*len(l.XY)-1)
 		out = append(out, l.XY[0])
 		for i := 1; i < len(l.XY); i++ {
-			out = append(out,
+			out = append(
+				out,
 				geom.Pt{X: l.XY[i-1].X, Y: l.XY[i].Y},
 				l.XY[i],
 			)
@@ -408,7 +409,8 @@ func (l *Line2D) pathPoints() []geom.Pt {
 		out = append(out, l.XY[0])
 		for i := 1; i < len(l.XY); i++ {
 			midX := (l.XY[i-1].X + l.XY[i].X) / 2
-			out = append(out,
+			out = append(
+				out,
 				geom.Pt{X: midX, Y: l.XY[i-1].Y},
 				geom.Pt{X: midX, Y: l.XY[i].Y},
 				l.XY[i],
@@ -419,7 +421,8 @@ func (l *Line2D) pathPoints() []geom.Pt {
 		out := make([]geom.Pt, 0, 2*len(l.XY)-1)
 		out = append(out, l.XY[0])
 		for i := 1; i < len(l.XY); i++ {
-			out = append(out,
+			out = append(
+				out,
 				geom.Pt{X: l.XY[i].X, Y: l.XY[i-1].Y},
 				l.XY[i],
 			)

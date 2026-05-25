@@ -27,7 +27,7 @@ func TestAddRadarAxesConfiguresProjection(t *testing.T) {
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 	center, radius := polarCenterAndRadius(ax.adjustedLayout(fig))
 	top := ctx.DataToPixel.Apply(geom.Pt{X: 0, Y: 1})
-	wantTop := geom.Pt{X: center.X, Y: center.Y - radius}
+	wantTop := geom.Pt{X: center.X, Y: center.Y + radius}
 	if !approx(top.X, wantTop.X, 1e-6) || !approx(top.Y, wantTop.Y, 1e-6) {
 		t.Fatalf("theta=0 point = %+v, want %+v", top, wantTop)
 	}
@@ -64,7 +64,7 @@ func TestRadarFrameAndGridUsePolygonGeometry(t *testing.T) {
 	ax.XAxis.Draw(r, ctx)
 
 	center, radius := polarCenterAndRadius(ax.adjustedLayout(fig))
-	wantTop := geom.Pt{X: center.X, Y: center.Y - radius}
+	wantTop := geom.Pt{X: center.X, Y: center.Y + radius}
 	var foundOuterPentagon bool
 	for _, call := range r.pathCalls {
 		if len(call.path.C) == 6 && call.path.C[len(call.path.C)-1] == geom.ClosePath && len(call.path.V) == 5 {
@@ -190,7 +190,9 @@ func TestRadarTitleClearsTopThetaLabel(t *testing.T) {
 	if !ok {
 		t.Fatal("expected theta tick label bounds")
 	}
-	if titleBounds.Max.Y > thetaBounds.Min.Y {
+	// Display space is y-up: the title clears the top theta label when its bottom
+	// edge (Min.Y) sits at or above the theta labels' top edge (Max.Y).
+	if titleBounds.Min.Y < thetaBounds.Max.Y {
 		t.Fatalf("title overlaps top theta label: title=%+v theta=%+v", titleBounds, thetaBounds)
 	}
 }

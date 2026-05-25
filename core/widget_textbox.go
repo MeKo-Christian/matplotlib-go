@@ -476,6 +476,7 @@ func (t *TextBox) Draw(r render.Renderer, ctx *DrawContext) {
 		})
 	}
 }
+
 func (t *TextBox) Bounds(ctx *DrawContext) geom.Rect {
 	if t == nil || ctx == nil {
 		return geom.Rect{}

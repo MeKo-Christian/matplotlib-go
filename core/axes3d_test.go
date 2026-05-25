@@ -2133,7 +2133,8 @@ func TestAxes3DFrameTextDrawsBeforeDataCollectionsLikeMatplotlib(t *testing.T) {
 func TestAxes3DFrameUsesRCLineWidthsLikeMatplotlib(t *testing.T) {
 	gridWidth := 2.2
 	axisWidth := 1.7
-	fig := NewFigure(420, 320,
+	fig := NewFigure(
+		420, 320,
 		style.WithGridLineWidths(gridWidth, gridWidth),
 		style.WithAxisLineWidth(axisWidth),
 	)
@@ -2161,7 +2162,8 @@ func TestAxes3DFrameUsesRCLineWidthsLikeMatplotlib(t *testing.T) {
 func TestAxes3DFrameUsesRCColorsLikeMatplotlib(t *testing.T) {
 	gridColor := render.Color{R: 0.2, G: 0.3, B: 0.4, A: 1}
 	axisColor := render.Color{R: 0.6, G: 0.1, B: 0.2, A: 1}
-	fig := NewFigure(420, 320,
+	fig := NewFigure(
+		420, 320,
 		style.WithGridColors(gridColor, gridColor),
 		style.WithAxesEdgeColor(axisColor),
 	)

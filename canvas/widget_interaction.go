@@ -105,7 +105,8 @@ func (w *WidgetInteraction) Attach(dispatcher *Dispatcher) {
 
 	w.mu.Lock()
 	w.dispatch = dispatcher
-	w.connects = append(w.connects,
+	w.connects = append(
+		w.connects,
 		dispatcher.Connect(EventMousePress, func(ev Event) error {
 			return w.handleMousePress(MouseEvent{Event: ev})
 		}),

@@ -162,7 +162,8 @@ func runExampleCommand(t *testing.T, args ...string) (string, bool) {
 	t.Helper()
 	cmdArgs := append([]string{"-test.run=TestExampleCommandTestHelper", "--"}, args...)
 	cmd := exec.Command(os.Args[0], cmdArgs...)
-	cmd.Env = append(os.Environ(),
+	cmd.Env = append(
+		os.Environ(),
 		"MATPLOTLIB_GO_EXAMPLE_MAIN=1",
 		"MATPLOTLIB_BACKEND=",
 	)
