@@ -2875,6 +2875,9 @@ Current slice landed:
 - Added pyplot manager/event wrappers for `GetCurrentFigManager`, `Connect`,
   `Disconnect`, and `DrawIfInteractive`, delegating through the existing
   figure-manager/canvas contracts with focused fake-manager coverage.
+- Added a typed `SwitchBackend` subset that validates a named backend, clears
+  cached managers, and recreates future pyplot managers through the selected
+  backend, leaving Matplotlib's GUI side effects as documented partial scope.
 - Added pyplot `GetCMap` over the existing color registry, with focused
   colormap lookup/fallback coverage and a public-surface row for
   `pyplot.get_cmap`.

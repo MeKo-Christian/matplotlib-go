@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cwbudde/matplotlib-go/backends"
 	"github.com/cwbudde/matplotlib-go/canvas"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -1036,6 +1037,56 @@ func TestSetManagerFactoryCachesManagerPerFigure(t *testing.T) {
 	}
 	if showCalls != 2 {
 		t.Fatalf("show calls = %d, want 2", showCalls)
+	}
+}
+
+func TestSwitchBackendClearsCachedManagersAndUsesNamedBackend(t *testing.T) {
+	resetForTests()
+
+	fig := Figure()
+	oldCloseCalls := 0
+	SetManagerFactory(func(got *core.Figure) (canvas.FigureManager, error) {
+		return &testFigureManager{
+			canvas:  &testFigureCanvas{figure: got},
+			onClose: func() { oldCloseCalls++ },
+			tools:   canvas.NewToolManager(),
+		}, nil
+	})
+	if _, err := GetCurrentFigManager(); err != nil {
+		t.Fatalf("GetCurrentFigManager before switch: %v", err)
+	}
+
+	newManagerCalls := 0
+	backends.Register(backends.Backend("pyplot-switch-test"), &backends.BackendInfo{
+		Name:      "Pyplot Switch Test",
+		Available: true,
+		Capabilities: []backends.Capability{
+			backends.TextShaping,
+			backends.FontHinting,
+		},
+		ManagerFactory: func(_ backends.Config, got *core.Figure) (canvas.FigureManager, error) {
+			newManagerCalls++
+			if got != fig {
+				t.Fatalf("backend manager figure = %p, want %p", got, fig)
+			}
+			return &testFigureManager{
+				canvas: &testFigureCanvas{figure: got},
+				tools:  canvas.NewToolManager(),
+			}, nil
+		},
+	})
+
+	if err := SwitchBackend("pyplot-switch-test"); err != nil {
+		t.Fatalf("SwitchBackend() error = %v", err)
+	}
+	if oldCloseCalls != 1 {
+		t.Fatalf("old manager close calls = %d, want 1", oldCloseCalls)
+	}
+	if _, err := GetCurrentFigManager(); err != nil {
+		t.Fatalf("GetCurrentFigManager after switch: %v", err)
+	}
+	if newManagerCalls != 1 {
+		t.Fatalf("new backend manager calls = %d, want 1", newManagerCalls)
 	}
 }
 

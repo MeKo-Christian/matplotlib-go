@@ -1107,7 +1107,25 @@ func SetManagerFactory(factory ManagerFactory) {
 	if factory == nil {
 		factory = defaultManagerFactory
 	}
+	closeCachedManagersAndSetFactory(factory)
+}
 
+// SwitchBackend selects the backend used for future pyplot figure managers.
+// Cached managers are closed so existing figures will be recreated through the
+// selected backend when next shown or drawn.
+func SwitchBackend(choice string) error {
+	backend, err := backends.ResolveBackend(choice, backends.TextCapabilities)
+	if err != nil {
+		return fmt.Errorf("pyplot: switch_backend %q: %w", choice, err)
+	}
+	closeCachedManagersAndSetFactory(func(fig *core.Figure) (canvas.FigureManager, error) {
+		manager, _, err := backends.NewManager(string(backend), rendererConfig(fig), fig, backends.TextCapabilities)
+		return manager, err
+	})
+	return nil
+}
+
+func closeCachedManagersAndSetFactory(factory ManagerFactory) {
 	registry.mu.Lock()
 	existing := registry.managers
 	registry.managers = make(map[*core.Figure]canvas.FigureManager)

@@ -1455,7 +1455,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "pyplot-state",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"pyplot/pyplot.go", "backends/registry.go", "backends/runtime.go"},
-		Note:              "Backend selection is available through the typed backend registry, environment-driven runtime selection, and manager factory hooks. Matplotlib's runtime pyplot switch_backend behavior, including existing-figure migration and interactive backend side effects, remains partial.",
+		Note:              "Stateful pyplot SwitchBackend validates a named backend, clears cached managers, and recreates future managers through the selected backend. Matplotlib's existing-figure migration and interactive backend side effects remain partial.",
 	},
 	{
 		ID:                "pylab-gcf",
