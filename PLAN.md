@@ -2824,6 +2824,9 @@ Current slice landed:
 - Added `Animation.Save` as an explicit unsupported-writer path returning
   `ErrWriterUnsupported`, with unit coverage. This keeps writer export out of
   v1.0 while avoiding silent no-op behavior for users who look for a save path.
+- Fixed `ButtonOptions.Disabled` propagation so constructor-specified disabled
+  state participates in the same interaction/picking behavior as runtime
+  `Button.Enabled=false`.
 - Added explicit public-surface classifications for the high-value backend
   lifecycle/tool rows: `_pylab_helpers.Gcf`, canvas/manager/event/timer
   classes, backend registry lookup/registration, and home/back/forward/pan/

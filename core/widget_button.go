@@ -163,6 +163,9 @@ func mergeButtonOptions(base, override ButtonOptions) ButtonOptions {
 	if override.Pressed != nil {
 		base.Pressed = override.Pressed
 	}
+	if override.Disabled != nil {
+		base.Disabled = override.Disabled
+	}
 	if override.FontSize > 0 {
 		base.FontSize = override.FontSize
 	}

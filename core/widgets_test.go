@@ -31,6 +31,11 @@ func TestWidgetConstructorsPrepareAxesAndStoreState(t *testing.T) {
 	if !button.Pressed {
 		t.Fatal("button should store pressed state")
 	}
+	disabled := true
+	disabledButton := axButton.Button("Stop", ButtonOptions{Disabled: &disabled})
+	if disabledButton.Enabled {
+		t.Fatal("button should honor Disabled option")
+	}
 	if slider.Value != 10 {
 		t.Fatalf("slider value = %v, want clamped max 10", slider.Value)
 	}
