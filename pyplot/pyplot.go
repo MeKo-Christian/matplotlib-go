@@ -846,6 +846,11 @@ func Legend() *core.Legend {
 	return GCA().AddLegend()
 }
 
+// FigLegend adds a figure-level legend to the current figure.
+func FigLegend() *core.Legend {
+	return GCF().AddLegend()
+}
+
 // Colorbar adds a figure-level colorbar for the current axes.
 func Colorbar(mappable core.ScalarMappable, opts ...core.ColorbarOptions) *core.Axes {
 	ax := GCA()

@@ -205,6 +205,10 @@ func TestStatefulHelpersDelegateToCurrentAxes(t *testing.T) {
 	if legend == nil {
 		t.Fatal("Legend() returned nil")
 	}
+	figLegend := FigLegend()
+	if figLegend == nil {
+		t.Fatal("FigLegend() returned nil")
+	}
 
 	ax := GCA()
 	if ax.Title != "Demo" {
@@ -224,6 +228,12 @@ func TestStatefulHelpersDelegateToCurrentAxes(t *testing.T) {
 	fig := GCF()
 	if fig.SupTitle != "Figure Demo" || fig.SupXLabel != "shared time" || fig.SupYLabel != "shared value" {
 		t.Fatalf("figure labels = (%q, %q, %q)", fig.SupTitle, fig.SupXLabel, fig.SupYLabel)
+	}
+	if figLegend.Figure != fig || figLegend.Axes != nil {
+		t.Fatalf("figure legend ownership = figure %p axes %p, want figure %p axes nil", figLegend.Figure, figLegend.Axes, fig)
+	}
+	if len(fig.Artists) != 1 || fig.Artists[0] != figLegend {
+		t.Fatalf("figure artists = %+v, want fig legend", fig.Artists)
 	}
 	if len(ax.Artists) != 2 {
 		t.Fatalf("len(ax.Artists) = %d, want 2", len(ax.Artists))
