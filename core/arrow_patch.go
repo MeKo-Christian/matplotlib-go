@@ -45,6 +45,8 @@ type FancyArrowPatch struct {
 	PosA            geom.Pt
 	PosB            geom.Pt
 	Path            geom.Path
+	PatchA          Artist
+	PatchB          Artist
 	ArrowStyle      ArrowStyle
 	ConnectionStyle ConnectionStyle
 	ShrinkA         float64
@@ -210,7 +212,10 @@ func (a *FancyArrowPatch) displayPath(ctx *DrawContext) geom.Path {
 	if style.Name == "" {
 		style, _ = ConnectionStyleFromString("arc3")
 	}
-	return style.connect(posA, posB, arrowShrinkPixels(ctx, a.effectiveShrinkA()), arrowShrinkPixels(ctx, a.effectiveShrinkB()))
+	path := style.connect(posA, posB, 0, 0)
+	path = clipConnectionPathToPatch(ctx, path, a.PatchA, true)
+	path = clipConnectionPathToPatch(ctx, path, a.PatchB, false)
+	return shrinkPathEndpoints(path, arrowShrinkPixels(ctx, a.effectiveShrinkA()), arrowShrinkPixels(ctx, a.effectiveShrinkB()))
 }
 
 func (c *ConnectionPatch) connectionDisplayPath(ctx *DrawContext) geom.Path {
@@ -226,7 +231,10 @@ func (c *ConnectionPatch) connectionDisplayPath(ctx *DrawContext) geom.Path {
 	if style.Name == "" {
 		style, _ = ConnectionStyleFromString("arc3")
 	}
-	return style.connect(aTrans.Apply(c.XYA), bTrans.Apply(c.XYB), arrowShrinkPixels(ctx, c.ShrinkA), arrowShrinkPixels(ctx, c.ShrinkB))
+	path := style.connect(aTrans.Apply(c.XYA), bTrans.Apply(c.XYB), 0, 0)
+	path = clipConnectionPathToPatch(ctx, path, c.PatchA, true)
+	path = clipConnectionPathToPatch(ctx, path, c.PatchB, false)
+	return shrinkPathEndpoints(path, arrowShrinkPixels(ctx, c.ShrinkA), arrowShrinkPixels(ctx, c.ShrinkB))
 }
 
 func (a *FancyArrowPatch) displayParts(_ *DrawContext, path geom.Path) []arrowPathPart {
@@ -486,6 +494,79 @@ func bracketScale(scale *float64, mutationSize float64) float64 {
 		return *scale
 	}
 	return mutationSize
+}
+
+func clipConnectionPathToPatch(ctx *DrawContext, path geom.Path, patch Artist, start bool) geom.Path {
+	if patch == nil || len(path.V) < 2 {
+		return path
+	}
+	patchPath, ok := sourcePatchDisplayPath(patch, ctx)
+	if !ok {
+		return path
+	}
+	polygon := patchPath.Interpolated(8).V
+	if len(polygon) < 3 {
+		return path
+	}
+	var endpoint geom.Pt
+	if start {
+		endpoint = pathStart(path)
+	} else {
+		endpoint = pathEnd(path)
+	}
+	if !pointInPolygon(endpoint, polygon) {
+		return path
+	}
+	boundary, ok := connectionPatchBoundaryPoint(path, polygon, start)
+	if !ok {
+		return path
+	}
+	out := path
+	out.V = append([]geom.Pt(nil), path.V...)
+	if start {
+		out.V[0] = boundary
+	} else {
+		out.V[len(out.V)-1] = boundary
+	}
+	return out
+}
+
+func connectionPatchBoundaryPoint(path geom.Path, polygon []geom.Pt, start bool) (geom.Pt, bool) {
+	pts := path.Interpolated(64).V
+	if len(pts) < 2 {
+		return geom.Pt{}, false
+	}
+	if !start {
+		for i, j := 0, len(pts)-1; i < j; i, j = i+1, j-1 {
+			pts[i], pts[j] = pts[j], pts[i]
+		}
+	}
+	inside := pts[0]
+	if !pointInPolygon(inside, polygon) {
+		return geom.Pt{}, false
+	}
+	for _, outside := range pts[1:] {
+		if pointInPolygon(outside, polygon) {
+			inside = outside
+			continue
+		}
+		return refinePatchBoundaryPoint(inside, outside, polygon), true
+	}
+	return geom.Pt{}, false
+}
+
+func refinePatchBoundaryPoint(inside, outside geom.Pt, polygon []geom.Pt) geom.Pt {
+	lo := inside
+	hi := outside
+	for i := 0; i < 32; i++ {
+		mid := geom.Pt{X: (lo.X + hi.X) / 2, Y: (lo.Y + hi.Y) / 2}
+		if pointInPolygon(mid, polygon) {
+			lo = mid
+		} else {
+			hi = mid
+		}
+	}
+	return lo
 }
 
 func curveArrowHeadLength(style ArrowStyle, mutationSize float64) float64 {

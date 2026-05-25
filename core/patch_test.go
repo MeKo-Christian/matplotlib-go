@@ -884,6 +884,47 @@ func TestConnectionPatchShrinkUsesPointUnits(t *testing.T) {
 	}
 }
 
+func TestConnectionPatchClipsEndpointsToPatches(t *testing.T) {
+	patchA := &Rectangle{
+		XY:     geom.Pt{X: 0.5, Y: 4.5},
+		Width:  1,
+		Height: 1,
+		Coords: Coords(CoordData),
+	}
+	patchB := &Rectangle{
+		XY:     geom.Pt{X: 8.5, Y: 4.5},
+		Width:  1,
+		Height: 1,
+		Coords: Coords(CoordData),
+	}
+	patch := &ConnectionPatch{
+		FancyArrowPatch: FancyArrowPatch{
+			ArrowStyle:      ArrowStyle{Name: "-", HeadLength: 0.2, HeadWidth: 0.1},
+			ConnectionStyle: ConnectionStyle{Name: "arc3"},
+			PatchA:          patchA,
+			PatchB:          patchB,
+		},
+		XYA:     geom.Pt{X: 1, Y: 5},
+		XYB:     geom.Pt{X: 9, Y: 5},
+		CoordsA: Coords(CoordData),
+		CoordsB: Coords(CoordData),
+	}
+	ctx := createTestDrawContext()
+
+	path := patch.connectionDisplayPath(ctx)
+	if len(path.C) != 2 || path.C[0] != geom.MoveTo || path.C[1] != geom.QuadTo || len(path.V) != 3 {
+		t.Fatalf("connection path = commands %+v vertices %+v, want quadratic path", path.C, path.V)
+	}
+	wantStart := ctx.TransformFor(Coords(CoordData)).Apply(geom.Pt{X: 1.5, Y: 5})
+	wantEnd := ctx.TransformFor(Coords(CoordData)).Apply(geom.Pt{X: 8.5, Y: 5})
+	if !approxPt(path.V[0], wantStart, 1e-9) {
+		t.Fatalf("patch-clipped start = %+v, want %+v", path.V[0], wantStart)
+	}
+	if !approxPt(path.V[2], wantEnd, 1e-9) {
+		t.Fatalf("patch-clipped end = %+v, want %+v", path.V[2], wantEnd)
+	}
+}
+
 func TestConnectionPatchResolvesIndependentCoordinateSpaces(t *testing.T) {
 	patch := &ConnectionPatch{
 		FancyArrowPatch: FancyArrowPatch{
