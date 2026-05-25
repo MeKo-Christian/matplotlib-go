@@ -63,6 +63,11 @@ func (a *Axes) PColor(data [][]float64, opts ...MeshOptions) *QuadMesh {
 	return a.PColorMesh(data, opts...)
 }
 
+// PColorFast renders a scalar matrix through the rectilinear quad mesh path.
+func (a *Axes) PColorFast(data [][]float64, opts ...MeshOptions) *QuadMesh {
+	return a.PColorMesh(data, opts...)
+}
+
 // PColorMesh renders a scalar matrix as a rectilinear quad mesh.
 func (a *Axes) PColorMesh(data [][]float64, opts ...MeshOptions) *QuadMesh {
 	rows, cols, ok := finiteMatrixSize(data)

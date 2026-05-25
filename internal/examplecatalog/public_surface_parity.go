@@ -366,7 +366,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/mesh.go", "core/collection_quadmesh.go"},
 		CatalogIDs:        []string{"pcolor_flat", "pcolormesh_nearest", "pcolormesh_masked"},
-		Note:              "Go exposes pseudocolor image behavior as PColor / PColorMesh with explicit mesh shading, keeping it out of the image artist hierarchy.",
+		Note:              "Go exposes pseudocolor image behavior as PColor / PColorFast / PColorMesh with explicit mesh shading, keeping it out of the image artist hierarchy.",
 	},
 	{
 		ID:                "image-imread",
@@ -2206,7 +2206,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/image.go", "core/image_api.go", "core/matrix_helpers.go"},
 		catalogIDs:        []string{"image_heatmap", "imshow_clipped", "imshow_transformed", "imshow_interpolation_matrix", "image_alpha", "matshow_basic", "spy_marker", "spy_image", "arrays_showcase"},
 		exampleIDs:        []string{"image_heatmap", "arrays_showcase"},
-		note:              "imshow, matshow, spy, alpha, origin, extent, interpolation, colorbar integration, and transformed images exist. Specific image.py class and IO helper omissions now have explicit rows; remaining image partial scope is pcolorfast / axes-level fast-path decisions and exact transformed-image resampling edge behavior.",
+		note:              "imshow, matshow, spy, alpha, origin, extent, interpolation, colorbar integration, transformed images, and the PColorFast-to-PColorMesh fast pseudocolor mapping exist. Specific image.py class and IO helper omissions now have explicit rows; remaining image partial scope is exact transformed-image resampling edge behavior.",
 	},
 	{
 		idPrefix:          "colorbar",

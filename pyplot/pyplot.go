@@ -803,6 +803,11 @@ func PColor(data [][]float64, opts ...core.MeshOptions) *core.QuadMesh {
 	return GCA().PColor(data, opts...)
 }
 
+// PColorFast delegates to the current axes.
+func PColorFast(data [][]float64, opts ...core.MeshOptions) *core.QuadMesh {
+	return GCA().PColorFast(data, opts...)
+}
+
 // PColorMesh delegates to the current axes.
 func PColorMesh(data [][]float64, opts ...core.MeshOptions) *core.QuadMesh {
 	return GCA().PColorMesh(data, opts...)

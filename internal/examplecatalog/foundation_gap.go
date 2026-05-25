@@ -276,10 +276,11 @@ var foundationAPIGaps = []FoundationAPIGap{
 		GoFiles:         []string{"core/image.go", "core/image_api.go", "core/matrix_helpers.go", "backends/agg/interpolation.go"},
 		CurrentEquivalent: "Go supports scalar matrix images, imshow-style options, matshow, spy, alpha, " +
 			"origin / extent, the full Matplotlib interpolation registry in AGG, a focused " +
-			"interpolation matrix fixture, and transformed images.",
+			"interpolation matrix fixture, transformed images, and a typed PColorFast alias " +
+			"through the QuadMesh-backed PColorMesh path.",
 		Gap: "FigureImage, BboxImage, NonUniformImage, PcolorImage, and image IO helpers now " +
-			"have explicit public-surface classifications; remaining image breadth is pcolorfast / " +
-			"axes-level fast-path decisions and exact transformed-image resampling edge behavior.",
+			"have explicit public-surface classifications; remaining image breadth is exact " +
+			"transformed-image resampling edge behavior.",
 		Decision: GapDecisionImplement,
 		Rationale: "Image class and interpolation gaps directly affect visual parity and should be closed " +
 			"where they map to real static rendering behavior.",

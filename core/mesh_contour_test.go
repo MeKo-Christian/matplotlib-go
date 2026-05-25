@@ -52,6 +52,35 @@ func TestAxesPColorMeshAndColorbar(t *testing.T) {
 	}
 }
 
+func TestAxesPColorFastUsesQuadMeshPath(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+
+	mesh := ax.PColorFast([][]float64{
+		{0, 1},
+		{2, 3},
+	}, MeshOptions{
+		XEdges: []float64{-1, 0, 2},
+		YEdges: []float64{10, 12, 15},
+		Label:  "fast",
+	})
+	if mesh == nil {
+		t.Fatal("expected quad mesh")
+	}
+	if mesh.Label != "fast" {
+		t.Fatalf("mesh label = %q, want fast", mesh.Label)
+	}
+	if !reflect.DeepEqual(mesh.XEdges, []float64{-1, 0, 2}) {
+		t.Fatalf("XEdges = %v", mesh.XEdges)
+	}
+	if !reflect.DeepEqual(mesh.YEdges, []float64{10, 12, 15}) {
+		t.Fatalf("YEdges = %v", mesh.YEdges)
+	}
+	if len(ax.Artists) != 1 || ax.Artists[0] != mesh {
+		t.Fatalf("PColorFast did not add the returned mesh to the axes")
+	}
+}
+
 func TestPColorMeshShadingAutoUsesCenterCoordinates(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})

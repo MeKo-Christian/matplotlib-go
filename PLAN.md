@@ -1385,8 +1385,8 @@ are missing.
       repeat-density semantics against `hatch.py`.
 - [ ] Add `set_sketch_params` / `pyplot.xkcd()` sketch-style support, or
       document the omission.
-- [ ] Decide on `figimage` and `pcolorfast`: implement or document as
-      intentional omissions.
+- [ ] Decide on `figimage`: implement or document as an intentional omission.
+      (`pcolorfast` now maps to the typed `PColorFast` / `PColorMesh` path.)
 - [ ] Audit `rcParams` keys against upstream and record which keys are
       unsupported.
 
@@ -2653,12 +2653,13 @@ convenience layers over the core model.
 - [ ] Audit upstream `image.py` image artist classes and helper functions:
       `AxesImage`, `FigureImage`, `BboxImage`, `NonUniformImage`,
       `PcolorImage`, `imread`, `imsave`, `imresize`-style omissions,
-      `pcolorfast`, `figimage`, and image origin/extent/aspect defaults.
+      `figimage`, and image origin/extent/aspect defaults.
 - [ ] Decide which non-`AxesImage` classes belong in v1.0:
       implement `FigureImage` / `figimage` and `BboxImage` if they improve
       figure-level composition or annotation-box parity; implement
-      `NonUniformImage` / `PcolorImage` / `pcolorfast` only if a visible
-      fixture shows a meaningful difference from `Image2D` / `PColorMesh`.
+      `NonUniformImage` / `PcolorImage` as existing `PColor` / `PColorFast` /
+      `PColorMesh` equivalents unless a visible fixture shows a meaningful
+      difference from `Image2D` / `PColorMesh`.
 - [ ] Convert every unsupported image class/helper into either a typed Go
       equivalent, a clear runtime error, or a Phase 11 intentional omission
       with migration guidance.
@@ -2802,8 +2803,11 @@ Current slice landed:
   image composition, NonUniformImage / PcolorImage map to PColor/PColorMesh,
   FigureImage and thumbnail are documented omissions with migration guidance,
   and imread / imsave now have explicit partial Go helpers. The broad image.py
-  row now only carries pcolorfast / transformed-resampling edge behavior as
-  remaining partial scope.
+  row now only carries transformed-resampling edge behavior as remaining
+  partial scope.
+- Added typed `PColorFast` aliases on `Axes` and `pyplot` so Matplotlib's
+  axes-level fast pseudocolor entry point maps to the existing QuadMesh-backed
+  `PColorMesh` path instead of remaining an unresolved image fast-path.
 - Added pyplot `ImShow` as a stateful wrapper over `Axes.ImShow`, including
   interpolation option delegation, and gave `pyplot.py:function:imshow` its own
   public-surface row instead of relying on the broad pyplot module note.

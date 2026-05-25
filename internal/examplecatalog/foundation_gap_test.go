@@ -2,6 +2,7 @@ package examplecatalog
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -132,6 +133,19 @@ func TestPhase125FoundationGapsAreSplitBySurface(t *testing.T) {
 		if !sameStrings(gap.UpstreamModules, tc.modules) {
 			t.Fatalf("%s UpstreamModules = %v, want %v", tc.id, gap.UpstreamModules, tc.modules)
 		}
+	}
+}
+
+func TestPhase125ImageGapClassifiesPColorFast(t *testing.T) {
+	gap, ok := LookupFoundationAPIGap("image-class-breadth")
+	if !ok {
+		t.Fatal("missing image-class-breadth foundation gap")
+	}
+	if !strings.Contains(gap.CurrentEquivalent, "PColorFast") {
+		t.Fatalf("image-class-breadth CurrentEquivalent = %q, want PColorFast classification", gap.CurrentEquivalent)
+	}
+	if strings.Contains(gap.Gap, "pcolorfast") {
+		t.Fatalf("image-class-breadth Gap still treats pcolorfast as unresolved: %q", gap.Gap)
 	}
 }
 
