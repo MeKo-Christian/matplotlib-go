@@ -838,8 +838,14 @@ func TestMatrixAndSignalHelpersDelegateToCurrentAxes(t *testing.T) {
 	if spy := Spy(mat); spy == nil {
 		t.Fatal("Spy() returned nil")
 	}
+	if mesh := PColor(mat, core.MeshOptions{Label: "pcolor"}); mesh == nil || mesh.Label != "pcolor" {
+		t.Fatalf("PColor() = %#v, want labelled mesh", mesh)
+	}
 	if mesh := PColorFast(mat, core.MeshOptions{Label: "fast"}); mesh == nil || mesh.Label != "fast" {
 		t.Fatalf("PColorFast() = %#v, want labelled mesh", mesh)
+	}
+	if mesh := PColorMesh(mat, core.MeshOptions{Label: "mesh"}); mesh == nil || mesh.Label != "mesh" {
+		t.Fatalf("PColorMesh() = %#v, want labelled mesh", mesh)
 	}
 	if spec := Specgram([]float64{0, 1, 0, -1, 0, 1, 0, -1}, core.SpecgramOptions{NFFT: 4}); spec == nil {
 		t.Fatal("Specgram() returned nil")

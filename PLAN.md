@@ -2808,6 +2808,9 @@ Current slice landed:
 - Added typed `PColorFast` aliases on `Axes` and `pyplot` so Matplotlib's
   axes-level fast pseudocolor entry point maps to the existing QuadMesh-backed
   `PColorMesh` path instead of remaining an unresolved image fast-path.
+- Added explicit public-surface rows and pyplot delegation coverage for
+  `pyplot.pcolor` and `pyplot.pcolormesh`, tying the stateful pseudocolor
+  wrappers to the existing mesh parity fixtures.
 - Added pyplot `ImShow` as a stateful wrapper over `Axes.ImShow`, including
   interpolation option delegation, and gave `pyplot.py:function:imshow` its own
   public-surface row instead of relying on the broad pyplot module note.

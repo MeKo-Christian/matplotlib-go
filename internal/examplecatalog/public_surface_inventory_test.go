@@ -124,6 +124,8 @@ func TestPhase125PyplotImageHelpersHaveExplicitRows(t *testing.T) {
 		"pyplot.py:function:figimage",
 		"pyplot.py:function:imshow",
 		"pyplot.py:function:matshow",
+		"pyplot.py:function:pcolor",
+		"pyplot.py:function:pcolormesh",
 		"pyplot.py:function:spy",
 	}
 	for _, upstreamID := range want {
