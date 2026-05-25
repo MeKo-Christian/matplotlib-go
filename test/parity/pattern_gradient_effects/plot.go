@@ -2,7 +2,9 @@ package pattern_gradient_effects
 
 import (
 	"image"
+	"math"
 
+	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
@@ -13,6 +15,18 @@ const (
 	Width  = 640
 	Height = 360
 )
+
+func init() {
+	matcolor.RegisterColormap("pattern-gradient-linear", matcolor.NewLinearSegmentedColormap("pattern-gradient-linear", []matcolor.ColorStop{
+		{Pos: 0, Color: render.Color{R: 0.90, G: 0.16, B: 0.18, A: 1}},
+		{Pos: 0.5, Color: render.Color{R: 0.96, G: 0.78, B: 0.20, A: 1}},
+		{Pos: 1, Color: render.Color{R: 0.10, G: 0.30, B: 0.78, A: 1}},
+	}))
+	matcolor.RegisterColormap("pattern-gradient-radial", matcolor.NewLinearSegmentedColormap("pattern-gradient-radial", []matcolor.ColorStop{
+		{Pos: 0, Color: render.Color{R: 0.98, G: 0.98, B: 0.86, A: 1}},
+		{Pos: 1, Color: render.Color{R: 0.08, G: 0.50, B: 0.36, A: 1}},
+	}))
+}
 
 func Plot() *core.Figure {
 	fig := core.NewFigure(Width, Height)
@@ -26,7 +40,12 @@ func Plot() *core.Figure {
 	ax.YAxis.ShowLabels = false
 	ax.YAxis.ShowSpine = false
 	ax.ShowFrame = false
-	ax.Add(effectPaintArtist{})
+
+	linearGradient(ax)
+	radialGradient(ax)
+	pattern(ax)
+	patchEffects(ax)
+
 	return fig
 }
 
@@ -34,96 +53,147 @@ func Render() image.Image {
 	return common.RenderFixtureFigure(Plot(), Width, Height)
 }
 
-type effectPaintArtist struct{}
-
-func (effectPaintArtist) Draw(r render.Renderer, _ *core.DrawContext) {
-	linear := rectPath(42, 318, 205, 218)
-	r.Path(linear, &render.Paint{
-		FillGradient: render.GradientFill{
-			Kind:  render.LinearGradient,
-			Start: geom.Pt{X: 42, Y: 268},
-			End:   geom.Pt{X: 205, Y: 268},
-			Stops: []render.GradientStop{
-				{Offset: 0, Color: render.Color{R: 0.90, G: 0.16, B: 0.18, A: 1}},
-				{Offset: 0.52, Color: render.Color{R: 0.96, G: 0.78, B: 0.20, A: 1}},
-				{Offset: 1, Color: render.Color{R: 0.10, G: 0.30, B: 0.78, A: 1}},
-			},
-		},
-		Stroke:    render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1},
-		LineWidth: 1.8,
+func linearGradient(ax *core.Axes) {
+	const width = 164
+	left := linspace(0, 0.5, width/2)
+	right := linspace(0.5, 1, width-width/2)
+	row := append(left, right...)
+	img := repeatRow(row, 100)
+	interp := "bilinear"
+	cmap := "pattern-gradient-linear"
+	x0, x1, y0, y1 := 42.0, 205.0, 142.0, 42.0
+	ax.Image(img, core.ImageOptions{
+		XMin:          &x0,
+		XMax:          &x1,
+		YMin:          &y0,
+		YMax:          &y1,
+		Colormap:      &cmap,
+		Interpolation: &interp,
 	})
-
-	radial := rectPath(235, 318, 398, 218)
-	r.Path(radial, &render.Paint{
-		FillGradient: render.GradientFill{
-			Kind:   render.RadialGradient,
-			Center: geom.Pt{X: 316, Y: 268},
-			Radius: 82,
-			Stops: []render.GradientStop{
-				{Offset: 0, Color: render.Color{R: 0.98, G: 0.98, B: 0.86, A: 1}},
-				{Offset: 1, Color: render.Color{R: 0.08, G: 0.50, B: 0.36, A: 1}},
-			},
-		},
-		Stroke:    render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1},
-		LineWidth: 1.8,
-	})
-
-	tile := geom.Path{}
-	tile.MoveTo(geom.Pt{X: 0, Y: 14})
-	tile.LineTo(geom.Pt{X: 14, Y: 0})
-	tile.MoveTo(geom.Pt{X: -4, Y: 6})
-	tile.LineTo(geom.Pt{X: 6, Y: -4})
-	pattern := geom.Path{}
-	pattern.MoveTo(geom.Pt{X: 455, Y: 316})
-	pattern.LineTo(geom.Pt{X: 594, Y: 306})
-	pattern.LineTo(geom.Pt{X: 570, Y: 215})
-	pattern.LineTo(geom.Pt{X: 430, Y: 232})
-	pattern.Close()
-	r.Path(pattern, &render.Paint{
-		FillPattern: render.PatternFill{
-			ID:         "phase2-diagonal",
-			Cell:       geom.Rect{Max: geom.Pt{X: 14, Y: 14}},
-			Path:       tile,
-			Foreground: render.Color{R: 0.10, G: 0.20, B: 0.72, A: 1},
-			Background: render.Color{R: 0.93, G: 0.94, B: 0.98, A: 1},
-			LineWidth:  1.2,
-		},
-		Stroke:    render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1},
-		LineWidth: 1.8,
-	})
-
-	stroked := rectPath(86, 150, 228, 62)
-	r.Path(stroked, &render.Paint{
-		Fill:      render.Color{R: 0.12, G: 0.56, B: 0.40, A: 1},
-		Stroke:    render.Color{R: 0.02, G: 0.09, B: 0.16, A: 1},
-		LineWidth: 2.2,
-		LineJoin:  render.JoinRound,
-		PathEffects: []render.PathEffect{
-			render.StrokePathEffect(render.Color{R: 1, G: 0.92, B: 0.58, A: 0.95}, 9, geom.Pt{X: 4, Y: -4}),
-			render.NormalPathEffect(),
-		},
-	})
-
-	filtered := rectPath(362, 150, 506, 62)
-	r.Path(filtered, &render.Paint{
-		Fill: render.Color{R: 0.10, G: 0.28, B: 0.74, A: 1},
-		PathEffects: []render.PathEffect{
-			render.FilterPathEffect(render.Color{R: 0.08, G: 0.12, B: 0.24, A: 0.45}, render.Color{}, 0, "blur", 5, geom.Pt{X: 8, Y: 8}),
-			render.NormalPathEffect(),
+	ax.AddPatch(&core.Rectangle{
+		XY:     geom.Pt{X: 42, Y: 42},
+		Width:  163,
+		Height: 100,
+		Patch: core.Patch{
+			FaceColor: render.Color{},
+			EdgeColor: render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1},
+			EdgeWidth: 1.8,
 		},
 	})
 }
 
-func (effectPaintArtist) Z() float64 { return 1 }
+func radialGradient(ax *core.Axes) {
+	const (
+		w = 164
+		h = 100
+	)
+	img := make([][]float64, h)
+	for y := range img {
+		img[y] = make([]float64, w)
+		for x := range img[y] {
+			dist := math.Sqrt(math.Pow((float64(x)-w/2.0)/82, 2) + math.Pow((float64(y)-h/2.0)/82, 2))
+			img[y][x] = clamp01(dist)
+		}
+	}
+	interp := "bilinear"
+	cmap := "pattern-gradient-radial"
+	x0, x1, y0, y1 := 235.0, 398.0, 142.0, 42.0
+	ax.Image(img, core.ImageOptions{
+		XMin:          &x0,
+		XMax:          &x1,
+		YMin:          &y0,
+		YMax:          &y1,
+		Colormap:      &cmap,
+		Interpolation: &interp,
+	})
+	ax.AddPatch(&core.Rectangle{
+		XY:     geom.Pt{X: 235, Y: 42},
+		Width:  163,
+		Height: 100,
+		Patch: core.Patch{
+			FaceColor: render.Color{},
+			EdgeColor: render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1},
+			EdgeWidth: 1.8,
+		},
+	})
+}
 
-func (effectPaintArtist) Bounds(*core.DrawContext) geom.Rect { return geom.Rect{} }
+func pattern(ax *core.Axes) {
+	ax.AddPatch(&core.Polygon{
+		XY: []geom.Pt{
+			{X: 455, Y: 44},
+			{X: 594, Y: 54},
+			{X: 570, Y: 145},
+			{X: 430, Y: 128},
+		},
+		Patch: core.Patch{
+			FaceColor: render.Color{R: 0.93, G: 0.94, B: 0.98, A: 1},
+			EdgeColor: render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1},
+			EdgeWidth: 1.8,
+			Hatch:     "///",
+		},
+	})
+}
 
-func rectPath(x0, y0, x1, y1 float64) geom.Path {
-	path := geom.Path{}
-	path.MoveTo(geom.Pt{X: x0, Y: y0})
-	path.LineTo(geom.Pt{X: x1, Y: y0})
-	path.LineTo(geom.Pt{X: x1, Y: y1})
-	path.LineTo(geom.Pt{X: x0, Y: y1})
-	path.Close()
-	return path
+func patchEffects(ax *core.Axes) {
+	ax.AddPatch(&core.Rectangle{
+		XY:     geom.Pt{X: 86, Y: 210},
+		Width:  142,
+		Height: 88,
+		Patch: core.Patch{
+			FaceColor: render.Color{R: 0.12, G: 0.56, B: 0.40, A: 1},
+			EdgeColor: render.Color{R: 0.02, G: 0.09, B: 0.16, A: 1},
+			EdgeWidth: 2.2,
+			LineJoin:  render.JoinRound,
+			PathEffects: []render.PathEffect{
+				render.StrokePathEffect(render.Color{R: 1, G: 0.92, B: 0.58, A: 0.95}, 9, geom.Pt{X: 4, Y: -4}),
+				render.NormalPathEffect(),
+			},
+		},
+	})
+
+	ax.AddPatch(&core.Rectangle{
+		XY:     geom.Pt{X: 362, Y: 210},
+		Width:  144,
+		Height: 88,
+		Patch: core.Patch{
+			FaceColor: render.Color{R: 0.10, G: 0.28, B: 0.74, A: 1},
+			PathEffects: []render.PathEffect{
+				render.SimplePatchShadowPathEffect(geom.Pt{X: 8, Y: 8}, render.Color{R: 0.08, G: 0.12, B: 0.24, A: 0.45}, 0.45, 0.35),
+				render.NormalPathEffect(),
+			},
+		},
+	})
+}
+
+func linspace(start, stop float64, n int) []float64 {
+	if n <= 0 {
+		return nil
+	}
+	if n == 1 {
+		return []float64{start}
+	}
+	out := make([]float64, n)
+	for i := range out {
+		out[i] = start + (stop-start)*float64(i)/float64(n-1)
+	}
+	return out
+}
+
+func repeatRow(row []float64, n int) [][]float64 {
+	img := make([][]float64, n)
+	for i := range img {
+		img[i] = append([]float64(nil), row...)
+	}
+	return img
+}
+
+func clamp01(v float64) float64 {
+	if v < 0 {
+		return 0
+	}
+	if v > 1 {
+		return 1
+	}
+	return v
 }

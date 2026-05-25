@@ -1614,94 +1614,57 @@ Status: completed and compacted.
 
 # Phase 16: Display Coordinate and Backend Boundary Parity (Dedicated Former 12.4G)
 
-**Goal:** remove y-orientation and renderer-boundary mismatches so signed
-geometry follows upstream Matplotlib semantics.
+**Status: COMPLETE (G1–G8).** Core display space is now y-up (origin
+bottom-left, +Y up, mirroring matplotlib `flipy()==True`); each backend owns
+device y-inversion at rasterization. Contract: ADR
+`docs/adr/0003-display-coordinate-contract.md`.
 
-**Reference sources:** `third_party/matplotlib/lib/matplotlib/transforms.py`,
-`patches.py`, `text.py`, `backend_bases.py`, `_backend_agg.cpp`, local
-`core/artist.go`, `core/arrow_patch.go`, `core/text.go`, `backends/agg/`, and
-when needed `../agg_go` vs `../agg_2.4`.
+**Delivered:** core pivot to y-up with AGG/SVG/PDF/PS/PGF/gobasic owning their
+device flip; verbatim matplotlib signed-geometry formulas (`Arc3.connect`,
+arrow-head normals, text rotation, annotation offsets) render correctly without
+compensation; examples are 1:1 ports (no y-sign hacks); renderer-neutral
+signed-geometry regressions in `core/patch_test.go`; full golden suite
+regenerated.
 
-- [x] Define and document the coordinate contract between core display-space
-      geometry and renderer backends. (ADR `docs/adr/0003-display-coordinate-contract.md`)
-- [ ] Add renderer-neutral regressions for signed display-space geometry:
-      `ConnectionStyle("arc3", rad=...)`, arrow shrink/clip on curves,
-      arrow-head normals, rotated-text bbox orientation, annotation arrow start
-      after bbox clipping. (G8, pending)
-- [x] Audit and remove non-source-backed y-sign compensations in core,
-      transforms, and fixtures. (core gradients/colorbar/image/layout/legend/
-      widgets converted; `text_annotation_matrix` `OffsetY` hack removed → 1:1)
-- [x] Reconcile `text_annotation_matrix` bbox-arrow behavior against upstream
-      `Annotation.update_positions` and
-      `FancyArrowPatch._get_path_in_displaycoord`. (MeanAbs 1.39, PSNR 45.9 dB)
-- [x] Validate boundary fixes across `patch_style_matrix` (1.15),
-      `annotation_composition` (<0.7), and `transform_coordinates` (<0.7).
-- [ ] If residuals are AGG-port specific, fix `../agg_go` directly instead of
-      compensating in this repository. (pending: rotated vertical-label glyph
-      orientation; widgets selector shapes)
-- [x] Track before/after metrics; immediate target:
-      `text_annotation_matrix` `RMSE < 10` against Matplotlib reference with
-      1:1 example sources. (achieved: PSNR 45.9 dB ≈ RMSE 1.3, was 14.94)
+**Verification:** `TestMatplotlibRef` 128/128; `TestReferenceCompare` 129/130
+(only `spectrum_variants`, documented skip); `TestGolden`/`TestSVGGolden`/
+`TestPDFGolden` green. `text_annotation_matrix` RMSE 14.94 → ~1.3 with 1:1
+example sources.
 
-Execution track (kept from former 12.4G):
+**Notable finding:** the `mixed_raster_vector` SVG/PDF golden churn was a
+_pre-existing_ gobasic-offscreen scatter flip fixed by commit 854c250 (old
+golden enshrined the bug), proven via matplotlib-ref coverage correlation — not
+a new regression.
 
-Status: [x] done · [~] in progress · [ ] todo.
+Residual offenders carried forward to Phase 16.5.
 
-- [x] G1 Contract & core pivot.
-- [x] G2 AGG backend owns device flip.
-- [x] G3 Core positioning/text helpers y-up conversion.
-- [x] G4 AGG parity validation. (`go test ./core/... ./backends/...` green and
-  `./test/` PNG parity — TestGolden, TestMatplotlibRef, TestReferenceCompare,
-  UseTeX — green. Reconciled ~59 core + AGG renderer-neutral unit tests to y-up
-  and fixed three real y-up code bugs they surfaced: DrawTeX baseline placement,
-  `localDrawingAreaPath` content orientation, and `AnchoredPacker` vertical
-  stacking / cross-axis alignment. Regenerated AGG path-effect / pattern-gradient
-  backend goldens and the system-TeX golden. NOTE: `TestSVGGolden` structural
-  goldens still fail under y-up — tracked under G6.)
-- [x] G5 Example 1:1 port sweep. (Swept `test/parity/*` and `examples/*`: every
-  matplotlib-parity offset matches its `.py` `xytext` 1:1 under y-up
-  (`mathtext_basic` (34,-26), `transform_annotation_modes` (34,-30)/(-46,28)/(42,24),
-  `transform_coordinates` (-48,-26), `text_annotation_matrix` (72,-40),
-  `annotation_composition` (48,-42)); no manual height-minus-y / flip
-  compensation remains. `TestMatplotlibRef` 128/128 confirms faithful ports.)
-- [x] G6 Vector/other backend inversion ownership. (`polar_axes` now passes; the
-  only structural-golden failure was `mixed_raster_vector` (SVG + PDF), and the
-  diff is solely the embedded base64 raster — no element drop. Proved via
-  matplotlib ref + coverage correlation that the current gobasic-offscreen raster
-  matches matplotlib (0.988) and the AGG golden (0.990), while the OLD committed
-  golden was vertically flipped (0.332; 0.983 flipped): commit 854c250 FIXED a
-  pre-existing gobasic-offscreen scatter flip; the old golden enshrined the bug.
-  No PS/PGF structural golden tests exist. No coordinate code bug. NOTE:
-  SVG-embedded scatter renders more saturated than mpl's alpha=0.56 — pre-existing
-  alpha-compositing issue, orthogonal to coordinates.)
-- [x] G7 Full-suite regen and revalidation. (Regenerated 51 stale AGG `TestGolden`
-  snapshots + SVG + PDF `mixed_raster_vector` goldens — explicit IDs only,
-  `widgets_gallery` untouched. Justified by `TestMatplotlibRef` 128/128 green
-  (ground truth). Post-regen: `TestGolden`/`TestSVGGolden`/`TestPDFGolden` green;
-  `TestReferenceCompare` 129 pass with only `spectrum_variants` (documented skip,
-  RMSE 10.96); all package unit tests green.)
-- [x] G8 Renderer-neutral signed-geometry regression set. (Added arrow-head
-  normal + head-orientation and rotated-bbox CCW-orientation y-up regressions in
-  `core/patch_test.go`; arc3 control-point, shrink/clip-on-curves, and
-  annotation-arrow-start-after-bbox-clip were already covered.)
+---
 
-Residual parity offenders (TestMatplotlibRef MeanAbs, 2026-05-25):
-`colorbar_horizontal_ticks` 7.28, `widgets_gallery` 6.41,
-`imshow_interpolation_matrix` 4.31, `pattern_gradient_effects` 3.09. All other
-fixtures <2.0.
+# Phase 16.5: Residual y-up / Backend Parity Offenders
+
+**Goal:** close the parity residuals surfaced by Phase 16. Each is isolated and
+non-blocking; fix at the true layer (AGG-port / backend) rather than
+compensating in core.
+
+- [ ] AGG-port rotated-text glyph orientation: vertical / rotated axis labels
+      render upside-down under y-up. Fix in `../agg_go` directly, not via a core
+      compensation. Revisit widgets selector shapes at the same time.
+- [ ] `colorbar_horizontal_ticks` and `imshow_interpolation_matrix` — highest
+      remaining `TestMatplotlibRef` residuals (MeanAbs 7.28 / 4.31, 2026-05-25).
+- [ ] skia shader / gradient / pattern / hatch fills bypass the gobasic device
+      y-flip (blocked on the skia build).
+- [x] `pattern_gradient_effects` — fixture port reconciled to Matplotlib-style
+      image, patch, hatch, and `SimplePatchShadow` calls (MeanAbs 3.09 → 1.14,
+      2026-05-25).
+
+(`widgets_gallery` residual is owned by Phase 17.5. `spectrum_variants` RMSE
+10.96 is a documented skip.)
 
 Exit criteria:
 
-- [x] Signed display-space paths/annotations/text bboxes/arrow geometry are
-      source-backed under the documented coordinate contract.
-- [x] No `text_annotation_matrix`-specific sign hacks exist in example or core.
-- [x] `TestMatplotlibRef/text_annotation_matrix` reports `RMSE < 10` without
-      regressions in related fixtures.
-- [~] Remaining mismatch is classified with evidence as core, renderer
-  boundary, AGG-port, or upstream limitation. (G1–G8 done; AGG/SVG/PDF golden
-  suites green after G7 regen. Remaining residuals tracked separately: AGG-port
-  rotated vertical-label glyph orientation, `colorbar_horizontal_ticks` /
-  `imshow_interpolation_matrix`, and skia gradient/pattern/hatch device-flip.)
+- [ ] Each residual fixed at its source layer, or documented as an
+      upstream / AGG-port limitation with evidence.
+- [ ] `TestMatplotlibRef` MeanAbs < 2.0 across all non-skipped fixtures.
 
 ---
 
