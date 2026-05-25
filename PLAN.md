@@ -2862,6 +2862,9 @@ Current slice landed:
 - Added pyplot `FillBetweenX` and `Arrow` wrappers over existing core
   horizontal-fill and FancyArrow artists, with focused current-axes delegation
   coverage and public-surface rows.
+- Added pyplot `HLines` / `VLines` wrappers that build current-axes
+  data-coordinate `LineCollection` segment artists with focused delegation
+  coverage and public-surface rows.
 - Added pyplot `ImRead` / `ImSave` wrappers over the core image IO helpers,
   with a focused PNG round-trip delegation test and explicit public-surface
   rows for `pyplot.imread` / `pyplot.imsave`.

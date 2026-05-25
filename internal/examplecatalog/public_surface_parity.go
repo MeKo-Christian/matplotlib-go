@@ -918,6 +918,24 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Note:              "Stateful pyplot FillBetweenX delegates horizontal fill-between creation to the current axes. Remaining partial scope is Matplotlib's where/interpolate/step semantics and full kwargs alias breadth.",
 	},
 	{
+		ID:                "pyplot-hlines",
+		UpstreamID:        "pyplot.py:function:hlines",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "core/collection_line.go"},
+		CatalogIDs:        []string{"plot_variants"},
+		Note:              "Stateful pyplot HLines creates a data-coordinate LineCollection on the current axes for typed y/xmin/xmax slices. Remaining partial scope is Matplotlib's scalar broadcasting, color/linestyle kwargs aliases, and label handling.",
+	},
+	{
+		ID:                "pyplot-vlines",
+		UpstreamID:        "pyplot.py:function:vlines",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "core/collection_line.go"},
+		CatalogIDs:        []string{"plot_variants"},
+		Note:              "Stateful pyplot VLines creates a data-coordinate LineCollection on the current axes for typed x/ymin/ymax slices. Remaining partial scope is Matplotlib's scalar broadcasting, color/linestyle kwargs aliases, and label handling.",
+	},
+	{
 		ID:                "pyplot-bar-label",
 		UpstreamID:        "pyplot.py:function:bar_label",
 		FeatureCoverageID: "pyplot-state",
@@ -2041,7 +2059,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
 		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
-		note:              "The Go pyplot package covers current figure/current axes state, common axes/subplot/subplot2grid/subplot-mosaic creation and subplot/tight layout, sca/delaxes axes registry updates, common plot/image/stat wrappers including step/stairs, fill-between-x, boxplot, stackplot, ecdf, and bar-label/broken-bar helpers, text/figtext and annotation wrappers, arrow and reference-line/span wrappers, twin axes, autoscale, axis mode/limit/scale/grid/tick-param/locator/minor-tick/fixed-tick wrappers, axes-frame box toggling, labels, axes/figure legends, colorbars, rc helpers, savefig, show, pause, draw, close/close-all cleanup, clf/cla reset helpers, and interactive-mode state toggles. Remaining partial scope is specific missing wrapper families, Python overload breadth, automatic interactive redraw side effects, and unsupported implicit manager behavior.",
+		note:              "The Go pyplot package covers current figure/current axes state, common axes/subplot/subplot2grid/subplot-mosaic creation and subplot/tight layout, sca/delaxes axes registry updates, common plot/image/stat wrappers including step/stairs, fill-between-x, boxplot, stackplot, ecdf, and bar-label/broken-bar helpers, text/figtext and annotation wrappers, arrow, hlines/vlines, and reference-line/span wrappers, twin axes, autoscale, axis mode/limit/scale/grid/tick-param/locator/minor-tick/fixed-tick wrappers, axes-frame box toggling, labels, axes/figure legends, colorbars, rc helpers, savefig, show, pause, draw, close/close-all cleanup, clf/cla reset helpers, and interactive-mode state toggles. Remaining partial scope is specific missing wrapper families, Python overload breadth, automatic interactive redraw side effects, and unsupported implicit manager behavior.",
 	},
 	{
 		idPrefix:          "pylab-helpers",

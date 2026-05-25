@@ -622,6 +622,20 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	if arrow.XY != (geom.Pt{X: 0.2, Y: 0.3}) || arrow.DX != 1.5 || arrow.DY != -0.5 {
 		t.Fatalf("Arrow geometry = xy=%+v dx=%v dy=%v", arrow.XY, arrow.DX, arrow.DY)
 	}
+	hLines := HLines([]float64{1, 2}, []float64{0, 0.5}, []float64{3, 3.5})
+	if hLines == nil || len(hLines.Segments) != 2 {
+		t.Fatalf("HLines() = %#v, want two segments", hLines)
+	}
+	if hLines.Segments[1][0] != (geom.Pt{X: 0.5, Y: 2}) || hLines.Segments[1][1] != (geom.Pt{X: 3.5, Y: 2}) {
+		t.Fatalf("HLines second segment = %+v", hLines.Segments[1])
+	}
+	vLines := VLines([]float64{1, 2}, []float64{-1, -2}, []float64{1, 2})
+	if vLines == nil || len(vLines.Segments) != 2 {
+		t.Fatalf("VLines() = %#v, want two segments", vLines)
+	}
+	if vLines.Segments[0][0] != (geom.Pt{X: 1, Y: -1}) || vLines.Segments[0][1] != (geom.Pt{X: 1, Y: 1}) {
+		t.Fatalf("VLines first segment = %+v", vLines.Segments[0])
+	}
 	if step := Step([]float64{0, 1, 2}, []float64{1, 3, 2}); step == nil {
 		t.Fatal("Step() returned nil")
 	}

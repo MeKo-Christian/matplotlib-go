@@ -727,6 +727,36 @@ func Arrow(x, y, dx, dy float64, opts ...core.Arrow) *core.Arrow {
 	return &arrow
 }
 
+// HLines adds horizontal line segments to the current axes.
+func HLines(y, xMin, xMax []float64, opts ...core.LineCollection) *core.LineCollection {
+	if len(y) == 0 || len(y) != len(xMin) || len(y) != len(xMax) {
+		return nil
+	}
+	segments := make([][]geom.Pt, len(y))
+	for i := range y {
+		segments[i] = []geom.Pt{
+			{X: xMin[i], Y: y[i]},
+			{X: xMax[i], Y: y[i]},
+		}
+	}
+	return addLineCollection(segments, opts...)
+}
+
+// VLines adds vertical line segments to the current axes.
+func VLines(x, yMin, yMax []float64, opts ...core.LineCollection) *core.LineCollection {
+	if len(x) == 0 || len(x) != len(yMin) || len(x) != len(yMax) {
+		return nil
+	}
+	segments := make([][]geom.Pt, len(x))
+	for i := range x {
+		segments[i] = []geom.Pt{
+			{X: x[i], Y: yMin[i]},
+			{X: x[i], Y: yMax[i]},
+		}
+	}
+	return addLineCollection(segments, opts...)
+}
+
 // Stem delegates to the current axes.
 func Stem(x, y []float64, opts ...core.StemOptions) *core.StemContainer {
 	return GCA().Stem(x, y, opts...)
@@ -1347,6 +1377,37 @@ func setCurrentAxes(ax *core.Axes) *core.Axes {
 	}
 	registry.mu.Unlock()
 	return ax
+}
+
+func addLineCollection(segments [][]geom.Pt, opts ...core.LineCollection) *core.LineCollection {
+	ax := GCA()
+	collection := core.LineCollection{
+		Collection: core.Collection{
+			Coords: core.Coords(core.CoordData),
+			Alpha:  1,
+		},
+		Segments:  segments,
+		Color:     ax.NextColor(),
+		LineWidth: 1,
+	}
+	if len(opts) > 0 {
+		collection = opts[0]
+		collection.Segments = segments
+		if collection.Coords == (core.CoordinateSpec{}) {
+			collection.Coords = core.Coords(core.CoordData)
+		}
+		if collection.Alpha == 0 {
+			collection.Alpha = 1
+		}
+		if collection.Color.A == 0 && len(collection.Colors) == 0 {
+			collection.Color = ax.NextColor()
+		}
+		if collection.LineWidth == 0 && len(collection.LineWidths) == 0 {
+			collection.LineWidth = 1
+		}
+	}
+	ax.Add(&collection)
+	return &collection
 }
 
 func setFixedTicks(axis *core.Axis, name string, ticks []float64, labels ...[]string) error {
