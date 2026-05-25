@@ -439,15 +439,19 @@ func (t *TextBox) Draw(r render.Renderer, ctx *DrawContext) {
 	panel := widgetStyledPanelRect(ctx.Clip, defaults.TextBoxPanelPad)
 	drawWidgetPanel(r, panel, render.Color{A: 0}, render.Color{A: 0}, 0, 0)
 	fontSize := resolvedFontSize(t.FontSize, ctx)
-	drawWidgetText(r, ctx, geom.Pt{X: panel.Min.X + 4, Y: panel.Min.Y + 20}, t.Label, fontSize, t.TextColor, TextAlignLeft, textLayoutVAlignTop)
+	labelAnchor := geom.Pt{
+		X: widgetResolvedCoord(panel.Min.X, panel.Max.X, defaults.TextBoxLabelX),
+		Y: widgetResolvedCoord(panel.Min.Y, panel.Max.Y, defaults.TextBoxLabelY),
+	}
+	drawWidgetText(r, ctx, labelAnchor, t.Label, fontSize, t.TextColor, defaults.TextBoxLabelAlign, defaults.TextBoxLabelVAlign)
 
 	input := geom.Rect{
 		Min: geom.Pt{X: panel.Min.X + defaults.TextBoxInputXPad, Y: widgetStyleCoord(panel.Min.Y, panel.Max.Y, defaults.TextBoxInputYMin)},
 		Max: geom.Pt{X: panel.Max.X - defaults.TextBoxInputXPad, Y: widgetStyleCoord(panel.Min.Y, panel.Max.Y, defaults.TextBoxInputYMax)},
 	}
 	edge := t.EdgeColor
-	if t.Active {
-		edge = mixColor(edge, render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1}, 0.65)
+	if t.Active && defaults.TextBoxActiveEdgeBlend > 0 {
+		edge = mixColor(edge, render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1}, defaults.TextBoxActiveEdgeBlend)
 	}
 	drawWidgetPanel(r, input, t.FaceColor, edge, defaults.TextBoxLineWidth, defaults.TextBoxRadius)
 
@@ -457,19 +461,23 @@ func (t *TextBox) Draw(r render.Renderer, ctx *DrawContext) {
 		display = t.Placeholder
 		displayColor = mixColor(t.TextColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.45)
 	}
-	drawWidgetText(r, ctx, geom.Pt{X: input.Min.X + 12, Y: input.Min.Y + input.H()/2}, display, fontSize, displayColor, TextAlignLeft, textLayoutVAlignCenter)
+	textAnchor := geom.Pt{
+		X: widgetResolvedCoord(input.Min.X, input.Max.X, defaults.TextBoxTextX),
+		Y: widgetResolvedCoord(input.Min.Y, input.Max.Y, defaults.TextBoxTextY),
+	}
+	drawWidgetText(r, ctx, textAnchor, display, fontSize, displayColor, defaults.TextBoxTextAlign, defaults.TextBoxTextVAlign)
 	if t.Active {
 		caretIndex := clampInt(t.caret, 0, len([]rune(t.Value)))
-		caretX := input.Min.X + 12 + fontSize*0.42*float64(caretIndex)
-		if caretX > input.Max.X-12 {
-			caretX = input.Max.X - 12
+		caretX := textAnchor.X + fontSize*0.42*float64(caretIndex)
+		if caretX > input.Max.X {
+			caretX = input.Max.X
 		}
-		if caretX < input.Min.X+12 {
-			caretX = input.Min.X + 12
+		if caretX < input.Min.X {
+			caretX = input.Min.X
 		}
 		r.Path(pixelLinePath(
-			geom.Pt{X: caretX, Y: input.Min.Y + 8},
-			geom.Pt{X: caretX, Y: input.Max.Y - 8},
+			geom.Pt{X: caretX, Y: widgetResolvedCoord(input.Min.Y, input.Max.Y, defaults.TextBoxCaretYMin)},
+			geom.Pt{X: caretX, Y: widgetResolvedCoord(input.Min.Y, input.Max.Y, defaults.TextBoxCaretYMax)},
 		), &render.Paint{
 			Stroke:    edge,
 			LineWidth: 1.2,
@@ -483,8 +491,8 @@ func (t *TextBox) Bounds(ctx *DrawContext) geom.Rect {
 	if t == nil || ctx == nil {
 		return geom.Rect{}
 	}
-	panel := insetRect(ctx.Clip, 4)
-	return geom.Rect{Min: panel.Min, Max: panel.Max}
+	defaults := widgetDefaultsForRC(ctx.RC)
+	return widgetStyledPanelRect(ctx.Clip, defaults.TextBoxPanelPad)
 }
 func (t *TextBox) Z() float64   { return t.z }
 func (t *TextBox) WidgetLayer() {}

@@ -114,10 +114,14 @@ func (b *Button) Draw(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 	if b.Pressed {
-		fill = mixColor(fill, render.Color{R: 0, G: 0, B: 0, A: 1}, 0.12)
+		fill = mixColor(fill, render.Color{R: 0, G: 0, B: 0, A: 1}, defaults.ButtonPressedBlend)
 	}
 	if b.Hovered && !b.Pressed {
-		fill = mixColor(fill, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.06)
+		if defaults.ButtonHoverFace.A > 0 {
+			fill = defaults.ButtonHoverFace
+		} else {
+			fill = mixColor(fill, render.Color{R: 1, G: 1, B: 1, A: 1}, defaults.ButtonHoverBlend)
+		}
 	}
 	drawWidgetPanel(r, bounds, fill, b.EdgeColor, defaults.ButtonLineWidth, defaults.ButtonRadius)
 	labelColor := b.TextColor

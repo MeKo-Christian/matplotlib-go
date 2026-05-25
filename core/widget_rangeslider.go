@@ -159,8 +159,16 @@ func (s *RangeSlider) Draw(r render.Renderer, ctx *DrawContext) {
 	drawWidgetPanel(r, panel, s.FaceColor, render.Color{A: 0}, 0, defaults.SliderRadius)
 	textColor := s.TextColor
 	fontSize := resolvedFontSize(s.FontSize, ctx)
-	drawWidgetText(r, ctx, geom.Pt{X: panel.Min.X + 14, Y: panel.Min.Y + 22}, s.Label, fontSize, textColor, TextAlignLeft, textLayoutVAlignTop)
-	drawWidgetText(r, ctx, geom.Pt{X: panel.Max.X - 14, Y: panel.Min.Y + 22}, rangeSliderDisplayValue(s), fontSize, textColor, TextAlignRight, textLayoutVAlignTop)
+	labelAnchor := geom.Pt{
+		X: widgetResolvedCoord(panel.Min.X, panel.Max.X, defaults.SliderLabelX),
+		Y: widgetResolvedCoord(panel.Min.Y, panel.Max.Y, defaults.SliderLabelY),
+	}
+	valueAnchor := geom.Pt{
+		X: widgetResolvedCoord(panel.Min.X, panel.Max.X, defaults.SliderValueX),
+		Y: widgetResolvedCoord(panel.Min.Y, panel.Max.Y, defaults.SliderValueY),
+	}
+	drawWidgetText(r, ctx, labelAnchor, s.Label, fontSize, textColor, defaults.SliderLabelAlign, defaults.SliderTextVAlign)
+	drawWidgetText(r, ctx, valueAnchor, rangeSliderDisplayValue(s, defaults), fontSize, textColor, defaults.SliderValueAlign, defaults.SliderTextVAlign)
 
 	track := widgetStyledSliderTrack(panel, defaults)
 	drawWidgetPanel(r, track, s.TrackColor, render.Color{A: 0}, 0, track.H()/2)
@@ -223,7 +231,7 @@ func (s *RangeSlider) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 func (s *RangeSlider) Z() float64   { return s.z }
 func (s *RangeSlider) WidgetLayer() {}
 
-func rangeSliderDisplayValue(s *RangeSlider) string {
+func rangeSliderDisplayValue(s *RangeSlider, defaults widgetVisualDefaults) string {
 	if s == nil {
 		return ""
 	}
@@ -242,6 +250,9 @@ func rangeSliderDisplayValue(s *RangeSlider) string {
 			out = fmt.Sprintf("%.2f", value)
 		}
 		return out
+	}
+	if defaults.RangeTupleText {
+		return "(" + formatOne(s.Low) + ", " + formatOne(s.High) + ")"
 	}
 	return formatOne(s.Low) + " - " + formatOne(s.High)
 }

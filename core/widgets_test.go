@@ -162,6 +162,172 @@ func TestStyledWidgetGeometryUsesVisualPolicy(t *testing.T) {
 	}
 }
 
+func TestMatplotlibSliderTextAnchorsMatchAxesLayout(t *testing.T) {
+	rc := style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
+	ctx := &DrawContext{
+		RC:   rc,
+		Clip: geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 110, Y: 60}},
+	}
+	slider := &Slider{
+		Label:       "gain",
+		Min:         0,
+		Max:         1,
+		Value:       0.5,
+		Enabled:     true,
+		FaceColor:   render.Color{R: 1, G: 1, B: 1, A: 1},
+		TrackColor:  render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1},
+		FillColor:   render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1},
+		HandleColor: render.Color{R: 1, G: 1, B: 1, A: 1},
+		TextColor:   render.Color{A: 1},
+		ValueFormat: "%.2f",
+	}
+	rec := &widgetChromeRecordingRenderer{}
+
+	slider.Draw(rec, ctx)
+
+	label := rec.textCall("gain")
+	value := rec.textCall("0.50")
+	if label.origin.X >= ctx.Clip.Min.X {
+		t.Fatalf("Matplotlib slider label origin X = %.2f, want left of axes min %.2f", label.origin.X, ctx.Clip.Min.X)
+	}
+	if value.origin.X <= ctx.Clip.Max.X {
+		t.Fatalf("Matplotlib slider value origin X = %.2f, want right of axes max %.2f", value.origin.X, ctx.Clip.Max.X)
+	}
+	if label.origin.Y < ctx.Clip.Min.Y || label.origin.Y > ctx.Clip.Max.Y {
+		t.Fatalf("Matplotlib slider label origin Y = %.2f, want vertically centered in axes %+v", label.origin.Y, ctx.Clip)
+	}
+}
+
+func TestGoSliderTextAnchorsStayInsidePanel(t *testing.T) {
+	rc := style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualGo))
+	ctx := &DrawContext{
+		RC:   rc,
+		Clip: geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 110, Y: 60}},
+	}
+	slider := &Slider{
+		Label:       "gain",
+		Min:         0,
+		Max:         1,
+		Value:       0.5,
+		Enabled:     true,
+		FaceColor:   render.Color{R: 1, G: 1, B: 1, A: 1},
+		TrackColor:  render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1},
+		FillColor:   render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1},
+		HandleColor: render.Color{R: 1, G: 1, B: 1, A: 1},
+		TextColor:   render.Color{A: 1},
+		ValueFormat: "%.2f",
+	}
+	rec := &widgetChromeRecordingRenderer{}
+
+	slider.Draw(rec, ctx)
+
+	label := rec.textCall("gain")
+	value := rec.textCall("0.50")
+	if label.origin.X <= ctx.Clip.Min.X || value.origin.X >= ctx.Clip.Max.X {
+		t.Fatalf("Go slider text should remain inside panel, got label X %.2f value X %.2f clip %+v", label.origin.X, value.origin.X, ctx.Clip)
+	}
+}
+
+func TestMatplotlibTextBoxTextAnchorsMatchAxesLayout(t *testing.T) {
+	rc := style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
+	ctx := &DrawContext{
+		RC:   rc,
+		Clip: geom.Rect{Min: geom.Pt{X: 20, Y: 30}, Max: geom.Pt{X: 120, Y: 70}},
+	}
+	textBox := &TextBox{
+		Label:     "label",
+		Value:     "phase",
+		Active:    true,
+		FaceColor: render.Color{R: 0.95, G: 0.95, B: 0.95, A: 1},
+		EdgeColor: render.Color{A: 1},
+		TextColor: render.Color{A: 1},
+	}
+	rec := &widgetChromeRecordingRenderer{}
+
+	textBox.Draw(rec, ctx)
+
+	label := rec.textCall("label")
+	value := rec.textCall("phase")
+	if label.origin.X >= ctx.Clip.Min.X {
+		t.Fatalf("Matplotlib textbox label origin X = %.2f, want outside left of %.2f", label.origin.X, ctx.Clip.Min.X)
+	}
+	wantValueX := ctx.Clip.Min.X + ctx.Clip.W()*0.05
+	if value.origin.X < wantValueX-2 || value.origin.X > wantValueX+2 {
+		t.Fatalf("Matplotlib textbox value origin X = %.2f, want near %.2f", value.origin.X, wantValueX)
+	}
+}
+
+func TestMatplotlibButtonHoverUsesPolicyFaceColor(t *testing.T) {
+	rc := style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
+	ctx := &DrawContext{
+		RC:   rc,
+		Clip: geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 100, Y: 40}},
+	}
+	button := &Button{
+		Label:     "Apply",
+		FaceColor: render.Color{R: 0.85, G: 0.85, B: 0.85, A: 1},
+		EdgeColor: render.Color{A: 1},
+		TextColor: render.Color{A: 1},
+		Enabled:   true,
+		Hovered:   true,
+	}
+	rec := &widgetChromeRecordingRenderer{}
+
+	button.Draw(rec, ctx)
+
+	if len(rec.paths) == 0 {
+		t.Fatal("button draw emitted no paths")
+	}
+	want := render.Color{R: 0.95, G: 0.95, B: 0.95, A: 1}
+	if got := rec.paths[0].paint.Fill; got != want {
+		t.Fatalf("Matplotlib button hover fill = %+v, want %+v", got, want)
+	}
+}
+
+func TestMatplotlibCheckAndRadioUseFilledActiveMarkers(t *testing.T) {
+	rc := style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
+	ctx := &DrawContext{
+		RC:   rc,
+		Clip: geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 120, Y: 90}},
+	}
+
+	checks := &CheckButtons{
+		Labels:     []string{"signal", "grid"},
+		Values:     []bool{true, false},
+		Enabled:    true,
+		FaceColor:  render.Color{R: 1, G: 1, B: 1, A: 1},
+		EdgeColor:  render.Color{A: 1},
+		TextColor:  render.Color{A: 1},
+		CheckColor: render.Color{A: 1},
+	}
+	checkRec := &widgetChromeRecordingRenderer{}
+	checks.Draw(checkRec, ctx)
+	if checkRec.smallWhiteFilledPaths() != 0 {
+		t.Fatalf("Matplotlib check buttons should use unfilled square frames, got %d small white filled paths", checkRec.smallWhiteFilledPaths())
+	}
+	if checkRec.smallStrokeOnlyLineMarkers() == 0 {
+		t.Fatal("Matplotlib check buttons should draw an active x marker")
+	}
+
+	radios := &RadioButtons{
+		Labels:    []string{"blue", "amber"},
+		Active:    1,
+		Enabled:   true,
+		FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
+		EdgeColor: render.Color{A: 1},
+		TextColor: render.Color{A: 1},
+		DotColor:  render.Color{B: 1, A: 1},
+	}
+	radioRec := &widgetChromeRecordingRenderer{}
+	radios.Draw(radioRec, ctx)
+	if radioRec.smallWhiteFilledPaths() != 0 {
+		t.Fatalf("Matplotlib radio buttons should use unfilled inactive markers, got %d small white filled paths", radioRec.smallWhiteFilledPaths())
+	}
+	if radioRec.smallFilledPaths(radios.DotColor) != 1 {
+		t.Fatalf("Matplotlib radio buttons should draw one active filled marker, got %d", radioRec.smallFilledPaths(radios.DotColor))
+	}
+}
+
 func TestWidgetCallbackRegistryPreservesRegistrationOrder(t *testing.T) {
 	var got []int
 	var ordered widgetCallbackRegistry[func()]
@@ -194,6 +360,80 @@ type widgetLayerRecordingRenderer struct {
 
 func (r *widgetLayerRecordingRenderer) Path(_ geom.Path, _ *render.Paint) {
 	r.events = append(r.events, "widget")
+}
+
+type widgetChromeTextCall struct {
+	text   string
+	origin geom.Pt
+	size   float64
+}
+
+type widgetChromePathCall struct {
+	path  geom.Path
+	paint render.Paint
+}
+
+type widgetChromeRecordingRenderer struct {
+	render.NullRenderer
+	texts []widgetChromeTextCall
+	paths []widgetChromePathCall
+}
+
+func (r *widgetChromeRecordingRenderer) DrawText(text string, origin geom.Pt, size float64, _ render.Color) {
+	r.texts = append(r.texts, widgetChromeTextCall{text: text, origin: origin, size: size})
+}
+
+func (r *widgetChromeRecordingRenderer) MeasureText(text string, size float64, _ string) render.TextMetrics {
+	return render.TextMetrics{W: float64(len([]rune(text))) * size * 0.5, H: size}
+}
+
+func (r *widgetChromeRecordingRenderer) Path(path geom.Path, paint *render.Paint) {
+	call := widgetChromePathCall{path: path}
+	if paint != nil {
+		call.paint = *paint
+	}
+	r.paths = append(r.paths, call)
+}
+
+func (r *widgetChromeRecordingRenderer) textCall(text string) widgetChromeTextCall {
+	for _, call := range r.texts {
+		if call.text == text {
+			return call
+		}
+	}
+	return widgetChromeTextCall{}
+}
+
+func (r *widgetChromeRecordingRenderer) smallWhiteFilledPaths() int {
+	return r.smallFilledPaths(render.Color{R: 1, G: 1, B: 1, A: 1})
+}
+
+func (r *widgetChromeRecordingRenderer) smallFilledPaths(color render.Color) int {
+	n := 0
+	for _, call := range r.paths {
+		bounds, ok := call.path.Bounds()
+		if !ok || bounds.W() > 24 || bounds.H() > 24 {
+			continue
+		}
+		if call.paint.Fill == color {
+			n++
+		}
+	}
+	return n
+}
+
+func (r *widgetChromeRecordingRenderer) smallStrokeOnlyLineMarkers() int {
+	n := 0
+	for _, call := range r.paths {
+		bounds, ok := call.path.Bounds()
+		if !ok || bounds.W() > 24 || bounds.H() > 24 {
+			continue
+		}
+		if call.paint.Fill.A == 0 && call.paint.Stroke.A > 0 && len(call.path.C) >= 4 {
+			n++
+		}
+	}
+	return n
 }
 
 type widgetLayerDataArtist struct {

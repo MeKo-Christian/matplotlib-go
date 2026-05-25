@@ -1765,19 +1765,16 @@ migration-sensitive users.
 - [x] Move hard-coded padding, corner radius, stroke widths, slider
       handle geometry, check/radio marker geometry, and text-box chrome behind
       the visual-style policy.
-- [ ] Match Matplotlib-compatible slider layout more closely: label/value text
+- [x] Match Matplotlib-compatible slider layout more closely: label/value text
       anchors, track rectangle, selection rectangle, init line, and circular
-      handle size/edge defaults. Track/selection/handle geometry is now
-      style-driven; label/value anchors and init line remain open.
-- [ ] Match Matplotlib-compatible button and text-box layout more closely:
+      handle size/edge defaults.
+- [x] Match Matplotlib-compatible button and text-box layout more closely:
       square panel option, face/hover colors, label position, input text anchor,
-      and caret line behavior where applicable. Button panel and text-box input
-      chrome are now style-driven; label/caret refinements remain open.
-- [ ] Match Matplotlib-compatible CheckButtons and RadioButtons geometry:
+      and caret line behavior where applicable.
+- [x] Match Matplotlib-compatible CheckButtons and RadioButtons geometry:
       legacy vertical positions, marker sizes, frame/check/radio stroke widths,
-      active fill semantics, and label offsets. Marker sizes, strokes, and label
-      offsets are now style-driven; active fill/check glyph parity remains open.
-- [ ] Keep the Go-default style visually unchanged except where a change is
+      active fill semantics, and label offsets.
+- [x] Keep the Go-default style visually unchanged except where a change is
       explicitly required for shared hit-testing correctness.
 
 ### 17.5.5 Interaction and Hit-Testing

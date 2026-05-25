@@ -173,14 +173,19 @@ func (rdo *RadioButtons) Draw(r render.Renderer, ctx *DrawContext) {
 		center := geom.Pt{X: panel.Min.X + defaults.RadioCenterXPad, Y: panel.Max.Y - rowHeight*float64(i) - rowHeight/2}
 		outer := ellipsePath(defaults.RadioOuterSize, defaults.RadioOuterSize)
 		outerPath := applyAffinePath(outer, patchAffine(center, 0))
+		markerFace := defaults.RadioInactiveFace
+		active := i == clampInt(rdo.Active, 0, len(rdo.Labels)-1)
+		if active && defaults.RadioActiveOuter {
+			markerFace = dotColor
+		}
 		r.Path(outerPath, &render.Paint{
-			Fill:      render.Color{R: 1, G: 1, B: 1, A: 1},
+			Fill:      markerFace,
 			Stroke:    edge,
 			LineWidth: defaults.RadioLineWidth,
 			LineJoin:  render.JoinRound,
 			LineCap:   render.CapRound,
 		})
-		if i == clampInt(rdo.Active, 0, len(rdo.Labels)-1) {
+		if active && !defaults.RadioActiveOuter && defaults.RadioInnerSize > 0 {
 			inner := ellipsePath(defaults.RadioInnerSize, defaults.RadioInnerSize)
 			innerPath := applyAffinePath(inner, patchAffine(center, 0))
 			r.Path(innerPath, &render.Paint{Fill: dotColor})

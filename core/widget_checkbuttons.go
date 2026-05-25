@@ -181,12 +181,9 @@ func (c *CheckButtons) Draw(r render.Renderer, ctx *DrawContext) {
 			Min: geom.Pt{X: panel.Min.X + defaults.CheckBoxXPad, Y: rowMinY + (rowHeight-boxSize)/2},
 			Max: geom.Pt{X: panel.Min.X + defaults.CheckBoxXPad + boxSize, Y: rowMaxY - (rowHeight-boxSize)/2},
 		}
-		drawWidgetPanel(r, box, render.Color{R: 1, G: 1, B: 1, A: 1}, edge, defaults.CheckBoxLineWidth, defaults.CheckBoxRadius)
+		drawWidgetPanel(r, box, defaults.CheckBoxFace, edge, defaults.CheckBoxLineWidth, defaults.CheckBoxRadius)
 		if i < len(c.Values) && c.Values[i] {
-			path := geom.Path{}
-			path.MoveTo(geom.Pt{X: box.Min.X + box.W()*0.18, Y: box.Min.Y + box.H()*0.56})
-			path.LineTo(geom.Pt{X: box.Min.X + box.W()*0.42, Y: box.Max.Y - box.H()*0.20})
-			path.LineTo(geom.Pt{X: box.Max.X - box.W()*0.16, Y: box.Min.Y + box.H()*0.22})
+			path := checkButtonMarkPath(box, defaults.CheckMarkStyle)
 			r.Path(path, &render.Paint{
 				Stroke:    checkColor,
 				LineWidth: defaults.CheckMarkWidth,
@@ -207,6 +204,22 @@ func (c *CheckButtons) Bounds(ctx *DrawContext) geom.Rect {
 }
 func (c *CheckButtons) Z() float64   { return c.z }
 func (c *CheckButtons) WidgetLayer() {}
+
+func checkButtonMarkPath(box geom.Rect, style widgetCheckMarkStyle) geom.Path {
+	path := geom.Path{}
+	switch style {
+	case widgetCheckMarkX:
+		path.MoveTo(geom.Pt{X: box.Min.X + box.W()*0.20, Y: box.Min.Y + box.H()*0.20})
+		path.LineTo(geom.Pt{X: box.Max.X - box.W()*0.20, Y: box.Max.Y - box.H()*0.20})
+		path.MoveTo(geom.Pt{X: box.Min.X + box.W()*0.20, Y: box.Max.Y - box.H()*0.20})
+		path.LineTo(geom.Pt{X: box.Max.X - box.W()*0.20, Y: box.Min.Y + box.H()*0.20})
+	default:
+		path.MoveTo(geom.Pt{X: box.Min.X + box.W()*0.18, Y: box.Min.Y + box.H()*0.56})
+		path.LineTo(geom.Pt{X: box.Min.X + box.W()*0.42, Y: box.Max.Y - box.H()*0.20})
+		path.LineTo(geom.Pt{X: box.Max.X - box.W()*0.16, Y: box.Min.Y + box.H()*0.22})
+	}
+	return path
+}
 
 func mergeCheckButtonsOptions(base, override CheckButtonsOptions) CheckButtonsOptions {
 	if override.FaceColor != (render.Color{}) {

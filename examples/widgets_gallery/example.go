@@ -19,7 +19,11 @@ const (
 )
 
 // Plot builds the showcase figure (backend-agnostic).
-func Plot(opts ...style.Option) *core.Figure {
+func Plot() *core.Figure {
+	return plot()
+}
+
+func plot(opts ...style.Option) *core.Figure {
 	fig := core.NewFigure(Width, Height, opts...)
 	fig.ConstrainedLayout()
 
@@ -104,8 +108,13 @@ func Plot(opts ...style.Option) *core.Figure {
 }
 
 // Render is the AGG-rendered showcase image.
-func Render(opts ...style.Option) image.Image {
-	fig := Plot(opts...)
+func Render() image.Image {
+	return RenderWithOptions()
+}
+
+// RenderWithOptions is the AGG-rendered showcase image with extra style options.
+func RenderWithOptions(opts ...style.Option) image.Image {
+	fig := plot(opts...)
 	r, err := agg.New(Width, Height, render.Color{R: 1, G: 1, B: 1, A: 1})
 	if err != nil {
 		panic(err)

@@ -32,6 +32,7 @@ type Slider struct {
 	Max         float64
 	Enabled     bool
 	Value       float64
+	Initial     float64
 	FaceColor   render.Color
 	TrackColor  render.Color
 	FillColor   render.Color
@@ -91,6 +92,7 @@ func (a *Axes) Slider(label string, min, max, value float64, opts ...SliderOptio
 		FontSize:    cfg.FontSize,
 		z:           1200,
 	}
+	w.Initial = w.Value
 	a.AddWidget(w)
 	return w
 }
@@ -139,8 +141,16 @@ func (s *Slider) Draw(r render.Renderer, ctx *DrawContext) {
 	drawWidgetPanel(r, panel, s.FaceColor, render.Color{A: 0}, 0, defaults.SliderRadius)
 	textColor := s.TextColor
 	fontSize := resolvedFontSize(s.FontSize, ctx)
-	drawWidgetText(r, ctx, geom.Pt{X: panel.Min.X + 14, Y: panel.Min.Y + 22}, s.Label, fontSize, textColor, TextAlignLeft, textLayoutVAlignTop)
-	drawWidgetText(r, ctx, geom.Pt{X: panel.Max.X - 14, Y: panel.Min.Y + 22}, sliderDisplayValue(s), fontSize, textColor, TextAlignRight, textLayoutVAlignTop)
+	labelAnchor := geom.Pt{
+		X: widgetResolvedCoord(panel.Min.X, panel.Max.X, defaults.SliderLabelX),
+		Y: widgetResolvedCoord(panel.Min.Y, panel.Max.Y, defaults.SliderLabelY),
+	}
+	valueAnchor := geom.Pt{
+		X: widgetResolvedCoord(panel.Min.X, panel.Max.X, defaults.SliderValueX),
+		Y: widgetResolvedCoord(panel.Min.Y, panel.Max.Y, defaults.SliderValueY),
+	}
+	drawWidgetText(r, ctx, labelAnchor, s.Label, fontSize, textColor, defaults.SliderLabelAlign, defaults.SliderTextVAlign)
+	drawWidgetText(r, ctx, valueAnchor, sliderDisplayValue(s), fontSize, textColor, defaults.SliderValueAlign, defaults.SliderTextVAlign)
 
 	track := widgetStyledSliderTrack(panel, defaults)
 	drawWidgetPanel(r, track, s.TrackColor, render.Color{A: 0}, 0, track.H()/2)
@@ -148,6 +158,16 @@ func (s *Slider) Draw(r render.Renderer, ctx *DrawContext) {
 	fill := track
 	fill.Max.X = fill.Min.X + track.W()*fraction
 	drawWidgetPanel(r, fill, s.FillColor, render.Color{A: 0}, 0, fill.H()/2)
+	if defaults.SliderInitColor.A > 0 && defaults.SliderInitLine > 0 {
+		initX := track.Min.X + track.W()*sliderFraction(s.Min, s.Max, s.Initial)
+		r.Path(pixelLinePath(
+			geom.Pt{X: initX, Y: track.Min.Y},
+			geom.Pt{X: initX, Y: track.Max.Y},
+		), &render.Paint{
+			Stroke:    defaults.SliderInitColor,
+			LineWidth: defaults.SliderInitLine,
+		})
+	}
 	handleX := track.Min.X + track.W()*fraction
 	handleSize := defaults.SliderHandleSize
 	if handleSize <= 0 {
