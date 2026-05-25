@@ -39,9 +39,11 @@ func TestAnchoredOffsetLocatorAppliesCornerAndPixelOffset(t *testing.T) {
 		10,
 	)
 
+	// Display space is y-up: the upper-left corner is at high Y (bounds Max.Y),
+	// so the offset box lands near the top at y 85..95.
 	if rect != (geom.Rect{
-		Min: geom.Pt{X: 23, Y: 31},
-		Max: geom.Pt{X: 43, Y: 41},
+		Min: geom.Pt{X: 23, Y: 85},
+		Max: geom.Pt{X: 43, Y: 95},
 	}) {
 		t.Fatalf("offset locator rect = %+v", rect)
 	}

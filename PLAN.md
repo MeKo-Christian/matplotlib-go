@@ -1421,7 +1421,7 @@ Completed scope:
   status.
 - Reference-consistency tests enforce Go/Python parity source pairs and visible
   Matplotlib reference modules for catalog cases.
-- `docs/phase-9a-coverage-audit.md` explains the audit inventories and
+- `docs/phase-10-coverage-audit.md` explains the audit inventories and
   clarifies that implementation follow-up continues in Phases 9B-9E.
 
 ---
