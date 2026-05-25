@@ -20,8 +20,10 @@ func TestAxisSetTickDirectionControlsTickSegment(t *testing.T) {
 		t.Fatalf("expected one outward tick path, got %d", len(r.pathCalls))
 	}
 	snappedTickSize := math.Round(axis.TickSize)
+	// Display space is y-up: the bottom spine snaps to 449.5 and outward ticks
+	// point away from the plot (downward = smaller Y).
 	outward := r.pathCalls[0].path.V
-	if !floatApprox(outward[0].Y, 450.5, 1e-9) || !floatApprox(outward[1].Y, 450.5+snappedTickSize, 1e-9) {
+	if !floatApprox(outward[0].Y, 449.5, 1e-9) || !floatApprox(outward[1].Y, 449.5-snappedTickSize, 1e-9) {
 		t.Fatalf("outward tick = %+v", outward)
 	}
 
@@ -31,7 +33,7 @@ func TestAxisSetTickDirectionControlsTickSegment(t *testing.T) {
 	}
 	axis.DrawTicks(&r, ctx)
 	inward := r.pathCalls[0].path.V
-	if !floatApprox(inward[0].Y, 450.5, 1e-9) || !floatApprox(inward[1].Y, 450.5-snappedTickSize, 1e-9) {
+	if !floatApprox(inward[0].Y, 449.5, 1e-9) || !floatApprox(inward[1].Y, 449.5+snappedTickSize, 1e-9) {
 		t.Fatalf("inward tick = %+v", inward)
 	}
 
@@ -41,7 +43,7 @@ func TestAxisSetTickDirectionControlsTickSegment(t *testing.T) {
 	}
 	axis.DrawTicks(&r, ctx)
 	inout := r.pathCalls[0].path.V
-	if !floatApprox(inout[0].Y, 450.5-snappedTickSize/2, 1e-9) || !floatApprox(inout[1].Y, 450.5+snappedTickSize/2, 1e-9) {
+	if !floatApprox(inout[0].Y, 449.5+snappedTickSize/2, 1e-9) || !floatApprox(inout[1].Y, 449.5-snappedTickSize/2, 1e-9) {
 		t.Fatalf("inout tick = %+v", inout)
 	}
 }
@@ -61,7 +63,8 @@ func TestAxisSpinePositionDataMovesXAxisSpine(t *testing.T) {
 	}
 	spine := r.pathCalls[0].path.V
 	wantY := ctx.DataToPixel.Apply(geom.Pt{X: 0, Y: 3}).Y
-	wantY = math.Round(wantY) + 0.5
+	// Display space is y-up: spine endpoints snap to round(y) - 0.5.
+	wantY = math.Round(wantY) - 0.5
 	if !floatApprox(spine[0].Y, wantY, 1e-9) || !floatApprox(spine[1].Y, wantY, 1e-9) {
 		t.Fatalf("floating x spine = %+v", spine)
 	}
@@ -94,8 +97,9 @@ func TestAxesFloatingAxisArtistRendersThroughDrawFigure(t *testing.T) {
 	if len(ax.ExtraAxes) != 1 {
 		t.Fatalf("len(ExtraAxes) = %d, want 1", len(ax.ExtraAxes))
 	}
-	if !hasHorizontalPathAtY(r.pathCalls, 330.5) {
-		t.Fatalf("expected floating axis spine around y=330.5, got %+v", r.pathCalls)
+	// Display space is y-up: data y=3 maps to 169.5 (the flip of the y-down 330.5).
+	if !hasHorizontalPathAtY(r.pathCalls, 169.5) {
+		t.Fatalf("expected floating axis spine around y=169.5, got %+v", r.pathCalls)
 	}
 }
 

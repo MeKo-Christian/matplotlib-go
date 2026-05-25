@@ -32,7 +32,9 @@ func TestDrawFigure_RendersFigureLevelLabels(t *testing.T) {
 	}
 	ctx := newFigureDrawContext(fig, fig.DisplayRect())
 	titleLayout := measureSingleLineTextLayout(&r, "Overview", titleFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX)
-	wantY := fig.DisplayRect().Min.Y + figureLabelTopInsetPx(fig, ctx) + titleLayout.Ascent
+	// Display space is y-up: the suptitle sits near the top edge (Max.Y), its
+	// baseline dropping below the top inset by the ascent.
+	wantY := fig.DisplayRect().Max.Y - figureLabelTopInsetPx(fig, ctx) - titleLayout.Ascent
 	if !floatApprox(titleOrigin.Y, wantY, 1e-12) {
 		t.Fatalf("suptitle origin Y = %v, want Matplotlib default y=0.98 position %v", titleOrigin.Y, wantY)
 	}
@@ -44,7 +46,9 @@ func TestDrawFigure_RendersFigureLevelLabels(t *testing.T) {
 		t.Fatalf("missing supxlabel origin: %v", r.texts)
 	}
 	xlabelLayout := measureSingleLineTextLayout(&r, "time", figureLabelFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX)
-	wantXLabelY := fig.DisplayRect().Max.Y - figureLabelBottomInsetPx(fig, ctx) - xlabelLayout.Descent
+	// Display space is y-up: the supxlabel sits near the bottom edge (Min.Y), its
+	// baseline rising above the bottom inset by the descent.
+	wantXLabelY := fig.DisplayRect().Min.Y + figureLabelBottomInsetPx(fig, ctx) + xlabelLayout.Descent
 	if !floatApprox(xlabelOrigin.Y, wantXLabelY, 1e-12) {
 		t.Fatalf("supxlabel origin Y = %v, want Matplotlib default y=0.01 position %v", xlabelOrigin.Y, wantXLabelY)
 	}
@@ -112,7 +116,8 @@ func TestFigureLegendStacksBelowSuptitle(t *testing.T) {
 	if !ok {
 		t.Fatalf("missing figure legend label draw, texts=%v", r.texts)
 	}
-	if label.Y <= title.Y {
+	// Display space is y-up: the legend stacks below the suptitle at a smaller Y.
+	if label.Y >= title.Y {
 		t.Fatalf("figure legend should stack below suptitle, got title=%+v legend=%+v", title, label)
 	}
 }
@@ -285,7 +290,9 @@ func TestDrawFigure_TitleClearsSecondaryXAxisTickLabels(t *testing.T) {
 	if !ok {
 		t.Fatalf("missing title draw: %v", r.texts)
 	}
-	if titleOrigin.Y >= 55 {
+	// Display space is y-up: the title clears the secondary top labels by sitting
+	// near the top edge (high Y), i.e. above 245 on the 300px figure.
+	if titleOrigin.Y <= 245 {
 		t.Fatalf("title did not clear secondary top tick labels: origin=%+v", titleOrigin)
 	}
 }
@@ -423,7 +430,9 @@ func TestConstrainedLayoutMeasuresBottomXLabelLineBox(t *testing.T) {
 		pointsToPixels(ctx.RC, tickLabelFontSize(ax.XAxis, ctx)) +
 		axisLabelPadPx(ctx) +
 		pointsToPixels(ctx.RC, axisLabelFontSize(ctx))
-	gotBottom := fig.SizePx.Y - px.Max.Y
+	// Display space is y-up: the bottom margin (where the x-label stack lives) is
+	// the axes' lower edge px.Min.Y above the figure bottom.
+	gotBottom := px.Min.Y
 	if gotBottom+0.25 < wantMinBottom {
 		t.Fatalf("bottom margin = %v, want at least full x-label line-box stack %v", gotBottom, wantMinBottom)
 	}

@@ -208,7 +208,8 @@ func TestLegendDrawSupportsTitle(t *testing.T) {
 	}
 	title := r.textOrigin("Series")
 	label := r.textOrigin("signal")
-	if title.Y >= label.Y {
+	// Display space is y-up: the title sits above the first entry at a larger Y.
+	if title.Y <= label.Y {
 		t.Fatalf("legend title should be above first entry label, got title=%+v label=%+v", title, label)
 	}
 
@@ -395,9 +396,11 @@ func TestLegendDefaultsMatchMatplotlibSpacing(t *testing.T) {
 func legendBestPlacementTestContext() *DrawContext {
 	return &DrawContext{
 		DataToPixel: Transform2D{
-			XScale:      transform.NewLinear(0, 1),
-			YScale:      transform.NewLinear(0, 1),
-			AxesToPixel: transform.NewAffine(geom.Affine{A: 500, D: -500, F: 500}),
+			XScale: transform.NewLinear(0, 1),
+			YScale: transform.NewLinear(0, 1),
+			// Display space is y-up: data y grows upward (no device flip here; the
+			// backend owns that), so data (0.9,0.95) lands at the upper-right corner.
+			AxesToPixel: transform.NewAffine(geom.Affine{A: 500, D: 500, F: 0}),
 		},
 		RC:   style.Default,
 		Clip: geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 500, Y: 500}},
