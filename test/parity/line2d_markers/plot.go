@@ -106,22 +106,24 @@ func Plot() *core.Figure {
 		{5.4, core.MarkerFillTop, "top"},
 		{7.4, core.MarkerFillBottom, "bottom"},
 	}
+	altFace := core.ExplicitMarkerColor(render.Color{R: 0.95, G: 0.78, B: 0.18, A: 1})
 	for _, spec := range halfSpecs {
 		style := core.NewMarkerStyle(core.MarkerCircle)
 		style.FillStyle = spec.fill
-		line := ax.Plot([]float64{spec.x - 0.4, spec.x, spec.x + 0.4}, []float64{2.0, 2.32, 2.0}, core.PlotOptions{
+		ax.Plot([]float64{spec.x - 0.4, spec.x, spec.x + 0.4}, []float64{2.0, 2.32, 2.0}, core.PlotOptions{
 			Color:           colorPtr(render.Color{R: 0.09, G: 0.75, B: 0.81, A: 1}),
 			LineWidth:       floatPtr(1.2),
 			MarkerStyle:     &style,
 			MarkerSize:      floatPtr(12),
 			MarkerFaceColor: colorPtr(render.Color{R: 0.09, G: 0.75, B: 0.81, A: 1}),
+			MarkerFaceAlt:   &altFace,
 			MarkerEdgeColor: colorPtr(render.Color{R: 0.05, G: 0.25, B: 0.28, A: 1}),
 			Label:           "half " + spec.label,
 		})
-		line.SetMarkerFaceColorAlt(render.Color{R: 0.95, G: 0.78, B: 0.18, A: 1})
 	}
 
-	ax.AddLegend()
+	legend := ax.AddLegend()
+	legend.Location = core.LegendUpperLeft
 	return fig
 }
 

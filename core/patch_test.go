@@ -1087,3 +1087,73 @@ func TestShadowOffsetsAndDarkensSourcePatch(t *testing.T) {
 		t.Fatalf("shadow face color was not darkened: got %+v source %+v", paint.Fill, source.FaceColor)
 	}
 }
+
+// TestNormalForVectorIsYUpCounterClockwisePerpendicular locks the arrow-head
+// normal to Matplotlib's y-up convention: the perpendicular is the +90° (CCW)
+// rotation of the direction, so a rightward shaft (+x) yields an upward (+y)
+// normal. Under the old y-down display space this normal pointed the opposite
+// way and arrow heads splayed on the wrong side.
+func TestNormalForVectorIsYUpCounterClockwisePerpendicular(t *testing.T) {
+	cases := []struct {
+		v, want geom.Pt
+	}{
+		{geom.Pt{X: 1, Y: 0}, geom.Pt{X: 0, Y: 1}},   // +x -> +y (up)
+		{geom.Pt{X: 0, Y: 1}, geom.Pt{X: -1, Y: 0}},  // +y -> -x
+		{geom.Pt{X: -1, Y: 0}, geom.Pt{X: 0, Y: -1}}, // -x -> -y
+		{geom.Pt{X: 3, Y: 4}, geom.Pt{X: -4.0 / 5, Y: 3.0 / 5}},
+		{geom.Pt{X: 0, Y: 0}, geom.Pt{X: 0, Y: 0}}, // degenerate
+	}
+	for _, c := range cases {
+		if got := normalForVector(c.v); !approxPt(got, c.want, 1e-9) {
+			t.Fatalf("normalForVector(%+v) = %+v, want CCW perpendicular %+v", c.v, got, c.want)
+		}
+	}
+}
+
+// TestArrowHeadPathPlacesBaseCornersPerpendicularInYUp asserts that a rightward
+// arrow head keeps its base behind the tip along the shaft and straddles the
+// shaft with the left corner above (+y) and the right corner below (-y), the
+// y-up orientation Matplotlib draws.
+func TestArrowHeadPathPlacesBaseCornersPerpendicularInYUp(t *testing.T) {
+	const headLength, headWidth = 4.0, 4.0
+	path := arrowHeadPath(geom.Pt{X: 0, Y: 0}, geom.Pt{X: 10, Y: 0}, headLength, headWidth, true, 0)
+	if len(path.V) < 3 {
+		t.Fatalf("arrow head path vertices = %+v, want at least tip/left/right", path.V)
+	}
+	tip, left, right := path.V[0], path.V[1], path.V[2]
+	if !approxPt(tip, geom.Pt{X: 10, Y: 0}, 1e-9) {
+		t.Fatalf("arrow head tip = %+v, want {10,0}", tip)
+	}
+	if !approxPt(left, geom.Pt{X: 6, Y: 2}, 1e-9) {
+		t.Fatalf("arrow head left base = %+v, want {6,2} (behind tip, above shaft)", left)
+	}
+	if !approxPt(right, geom.Pt{X: 6, Y: -2}, 1e-9) {
+		t.Fatalf("arrow head right base = %+v, want {6,-2} (behind tip, below shaft)", right)
+	}
+}
+
+// TestRotationAffineRotatesCounterClockwiseInYUp pins the rotation used for
+// rotated text and its bbox to Matplotlib's CCW-positive convention in y-up
+// display space: a positive angle moves a point on a box's right edge toward
+// the top edge. Under y-down this rotation ran clockwise and rotated labels
+// tilted the wrong way.
+func TestRotationAffineRotatesCounterClockwiseInYUp(t *testing.T) {
+	rot := rotationAffine(90)
+	if got := rot.Apply(geom.Pt{X: 1, Y: 0}); !approxPt(got, geom.Pt{X: 0, Y: 1}, 1e-9) {
+		t.Fatalf("rotationAffine(90).Apply({1,0}) = %+v, want {0,1} (CCW: right -> up)", got)
+	}
+
+	// Rotate the corners of a unit box about its center by +90°. The corner on
+	// the right edge must land on the top edge (CCW), not the bottom.
+	box := geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 2, Y: 2}}
+	center := rectCenter(box)
+	toCenter := translateAffine(geom.Pt{X: -center.X, Y: -center.Y})
+	fromCenter := translateAffine(center)
+	aboutCenter := fromCenter.Mul(rotationAffine(90)).Mul(toCenter)
+
+	rightEdgeMid := geom.Pt{X: box.Max.X, Y: center.Y}   // {2,1}
+	wantTopEdgeMid := geom.Pt{X: center.X, Y: box.Max.Y} // {1,2}
+	if got := aboutCenter.Apply(rightEdgeMid); !approxPt(got, wantTopEdgeMid, 1e-9) {
+		t.Fatalf("CCW box rotation mapped right edge %+v to %+v, want top edge %+v", rightEdgeMid, got, wantTopEdgeMid)
+	}
+}

@@ -1658,16 +1658,32 @@ Status: [x] done · [~] in progress · [ ] todo.
   stacking / cross-axis alignment. Regenerated AGG path-effect / pattern-gradient
   backend goldens and the system-TeX golden. NOTE: `TestSVGGolden` structural
   goldens still fail under y-up — tracked under G6.)
-- [~] G5 Example 1:1 port sweep. (`text_annotation_matrix`,
-  `pattern_gradient_effects` ported; broader sweep pending.)
-- [~] G6 Vector/other backend inversion ownership. (`./backends/{svg,pdf,ps,pgf,
-  gobasic}` unit tests pass, but `test/TestSVGGolden` structural goldens FAIL
-  under y-up: most cases differ only in flipped coordinates (stale goldens →
-  regen), but `polar_axes` (80→36) and `mixed_raster_vector` (82→39) drop ~half
-  their child elements — investigate for a real SVG y-up bug before regenerating.
-  PDF/PS structural goldens still to be checked.)
-- [ ] G7 Full-suite regen and revalidation.
-- [ ] G8 Renderer-neutral signed-geometry regression set.
+- [x] G5 Example 1:1 port sweep. (Swept `test/parity/*` and `examples/*`: every
+  matplotlib-parity offset matches its `.py` `xytext` 1:1 under y-up
+  (`mathtext_basic` (34,-26), `transform_annotation_modes` (34,-30)/(-46,28)/(42,24),
+  `transform_coordinates` (-48,-26), `text_annotation_matrix` (72,-40),
+  `annotation_composition` (48,-42)); no manual height-minus-y / flip
+  compensation remains. `TestMatplotlibRef` 128/128 confirms faithful ports.)
+- [x] G6 Vector/other backend inversion ownership. (`polar_axes` now passes; the
+  only structural-golden failure was `mixed_raster_vector` (SVG + PDF), and the
+  diff is solely the embedded base64 raster — no element drop. Proved via
+  matplotlib ref + coverage correlation that the current gobasic-offscreen raster
+  matches matplotlib (0.988) and the AGG golden (0.990), while the OLD committed
+  golden was vertically flipped (0.332; 0.983 flipped): commit 854c250 FIXED a
+  pre-existing gobasic-offscreen scatter flip; the old golden enshrined the bug.
+  No PS/PGF structural golden tests exist. No coordinate code bug. NOTE:
+  SVG-embedded scatter renders more saturated than mpl's alpha=0.56 — pre-existing
+  alpha-compositing issue, orthogonal to coordinates.)
+- [x] G7 Full-suite regen and revalidation. (Regenerated 51 stale AGG `TestGolden`
+  snapshots + SVG + PDF `mixed_raster_vector` goldens — explicit IDs only,
+  `widgets_gallery` untouched. Justified by `TestMatplotlibRef` 128/128 green
+  (ground truth). Post-regen: `TestGolden`/`TestSVGGolden`/`TestPDFGolden` green;
+  `TestReferenceCompare` 129 pass with only `spectrum_variants` (documented skip,
+  RMSE 10.96); all package unit tests green.)
+- [x] G8 Renderer-neutral signed-geometry regression set. (Added arrow-head
+  normal + head-orientation and rotated-bbox CCW-orientation y-up regressions in
+  `core/patch_test.go`; arc3 control-point, shrink/clip-on-curves, and
+  annotation-arrow-start-after-bbox-clip were already covered.)
 
 Residual parity offenders (TestMatplotlibRef MeanAbs, 2026-05-25):
 `colorbar_horizontal_ticks` 7.28, `widgets_gallery` 6.41,
@@ -1682,8 +1698,10 @@ Exit criteria:
 - [x] `TestMatplotlibRef/text_annotation_matrix` reports `RMSE < 10` without
       regressions in related fixtures.
 - [~] Remaining mismatch is classified with evidence as core, renderer
-  boundary, AGG-port, or upstream limitation. (4 residual fixtures listed
-  above; AGG backend golden/unit failures pending classification.)
+  boundary, AGG-port, or upstream limitation. (G1–G8 done; AGG/SVG/PDF golden
+  suites green after G7 regen. Remaining residuals tracked separately: AGG-port
+  rotated vertical-label glyph orientation, `colorbar_horizontal_ticks` /
+  `imshow_interpolation_matrix`, and skia gradient/pattern/hatch device-flip.)
 
 ---
 
