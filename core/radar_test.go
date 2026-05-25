@@ -64,7 +64,7 @@ func TestRadarFrameAndGridUsePolygonGeometry(t *testing.T) {
 	ax.XAxis.Draw(r, ctx)
 
 	center, radius := polarCenterAndRadius(ax.adjustedLayout(fig))
-	wantTop := geom.Pt{X: center.X, Y: center.Y - radius}
+	wantTop := geom.Pt{X: center.X, Y: center.Y + radius}
 	var foundOuterPentagon bool
 	for _, call := range r.pathCalls {
 		if len(call.path.C) == 6 && call.path.C[len(call.path.C)-1] == geom.ClosePath && len(call.path.V) == 5 {

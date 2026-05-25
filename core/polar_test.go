@@ -163,7 +163,7 @@ func TestPolarGridAndTicksUseCurvedGeometry(t *testing.T) {
 		if len(call.path.C) == 2 && len(call.path.V) == 2 {
 			p1, p2 := call.path.V[0], call.path.V[1]
 			if approx(p1.X, center.X, 1e-6) && approx(p1.Y, center.Y, 1e-6) &&
-				approx(p2.X, center.X, 1e-6) && approx(p2.Y, center.Y-radius, 1e-6) {
+				approx(p2.X, center.X, 1e-6) && approx(p2.Y, center.Y+radius, 1e-6) {
 				foundSpoke = true
 			}
 		}

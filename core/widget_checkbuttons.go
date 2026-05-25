@@ -43,11 +43,12 @@ func (a *Axes) CheckButtons(labels []string, active []bool, opts ...CheckButtons
 	if a == nil || len(labels) == 0 {
 		return nil
 	}
+	defaults := widgetDefaultsForAxes(a)
 	cfg := CheckButtonsOptions{
-		FaceColor:  render.Color{R: 0.96, G: 0.97, B: 0.98, A: 1},
-		EdgeColor:  render.Color{R: 0.74, G: 0.76, B: 0.80, A: 1},
-		TextColor:  render.Color{R: 0.12, G: 0.13, B: 0.16, A: 1},
-		CheckColor: render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1},
+		FaceColor:  defaults.PanelFace,
+		EdgeColor:  defaults.PanelEdge,
+		TextColor:  defaults.Text,
+		CheckColor: defaults.Check,
 	}
 	if len(opts) > 0 {
 		cfg = mergeCheckButtonsOptions(cfg, opts[0])

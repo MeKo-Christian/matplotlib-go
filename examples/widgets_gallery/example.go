@@ -9,6 +9,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 const (
@@ -18,8 +19,8 @@ const (
 )
 
 // Plot builds the showcase figure (backend-agnostic).
-func Plot() *core.Figure {
-	fig := core.NewFigure(Width, Height)
+func Plot(opts ...style.Option) *core.Figure {
+	fig := core.NewFigure(Width, Height, opts...)
 	fig.ConstrainedLayout()
 
 	outer := fig.GridSpec(
@@ -103,8 +104,8 @@ func Plot() *core.Figure {
 }
 
 // Render is the AGG-rendered showcase image.
-func Render() image.Image {
-	fig := Plot()
+func Render(opts ...style.Option) image.Image {
+	fig := Plot(opts...)
 	r, err := agg.New(Width, Height, render.Color{R: 1, G: 1, B: 1, A: 1})
 	if err != nil {
 		panic(err)

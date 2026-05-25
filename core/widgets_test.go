@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 func TestWidgetConstructorsPrepareAxesAndStoreState(t *testing.T) {
@@ -77,6 +78,44 @@ func TestSliderConstructorsSnapInitialValuesToStep(t *testing.T) {
 	rangeSlider := axRange.RangeSlider("window", 0, 10, 7.76, 2.24, RangeSliderOptions{ValueStep: &step})
 	if rangeSlider.Low != 2 || rangeSlider.High != 8 {
 		t.Fatalf("range slider initial range = [%v, %v], want snapped [2, 8]", rangeSlider.Low, rangeSlider.High)
+	}
+}
+
+func TestWidgetConstructorsUseConfiguredVisualStyle(t *testing.T) {
+	goFig := NewFigure(800, 600)
+	goAx := goFig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.2}})
+	goButton := goAx.Button("Apply")
+	goSlider := goAx.Slider("gain", 0, 1, 0.5)
+
+	mplFig := NewFigure(800, 600, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
+	mplAx := mplFig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.2}})
+	mplButton := mplAx.Button("Apply")
+	mplSlider := mplAx.Slider("gain", 0, 1, 0.5)
+	mplRange := mplAx.RangeSlider("window", 0, 1, 0.25, 0.75)
+	mplText := mplAx.TextBox("label", "phase scan")
+	mplChecks := mplAx.CheckButtons([]string{"signal"}, []bool{true})
+	mplRadios := mplAx.RadioButtons([]string{"blue", "amber"}, 1)
+
+	if goButton.FaceColor == mplButton.FaceColor {
+		t.Fatal("Matplotlib widget visual style should not replace the Go default style")
+	}
+	if goSlider.TrackColor == mplSlider.TrackColor {
+		t.Fatal("Matplotlib slider visual style should differ from the Go default style")
+	}
+	assertColorEqual(t, mplButton.FaceColor, render.Color{R: 0.85, G: 0.85, B: 0.85, A: 1}, "Matplotlib button face")
+	assertColorEqual(t, mplSlider.TrackColor, render.Color{R: 211.0 / 255.0, G: 211.0 / 255.0, B: 211.0 / 255.0, A: 1}, "Matplotlib slider track")
+	assertColorEqual(t, mplSlider.FillColor, render.Color{R: 31.0 / 255.0, G: 119.0 / 255.0, B: 180.0 / 255.0, A: 1}, "Matplotlib slider fill")
+	assertColorEqual(t, mplSlider.HandleColor, render.Color{R: 1, G: 1, B: 1, A: 1}, "Matplotlib slider handle")
+	assertColorEqual(t, mplRange.TrackColor, mplSlider.TrackColor, "Matplotlib range slider track")
+	assertColorEqual(t, mplText.FaceColor, render.Color{R: 0.95, G: 0.95, B: 0.95, A: 1}, "Matplotlib text box face")
+	assertColorEqual(t, mplChecks.CheckColor, render.Color{R: 0, G: 0, B: 0, A: 1}, "Matplotlib check mark")
+	assertColorEqual(t, mplRadios.DotColor, render.Color{R: 0, G: 0, B: 1, A: 1}, "Matplotlib radio active dot")
+}
+
+func assertColorEqual(t *testing.T, got, want render.Color, label string) {
+	t.Helper()
+	if got != want {
+		t.Fatalf("%s color = %+v, want %+v", label, got, want)
 	}
 }
 

@@ -39,10 +39,11 @@ func (a *Axes) Button(label string, opts ...ButtonOptions) *Button {
 	if a == nil {
 		return nil
 	}
+	defaults := widgetDefaultsForAxes(a)
 	cfg := ButtonOptions{
-		FaceColor: render.Color{R: 0.94, G: 0.95, B: 0.97, A: 1},
-		EdgeColor: render.Color{R: 0.74, G: 0.76, B: 0.80, A: 1},
-		TextColor: render.Color{R: 0.12, G: 0.13, B: 0.16, A: 1},
+		FaceColor: defaults.ButtonFace,
+		EdgeColor: defaults.ButtonEdge,
+		TextColor: defaults.ButtonText,
 	}
 	if len(opts) > 0 {
 		cfg = mergeButtonOptions(cfg, opts[0])

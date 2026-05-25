@@ -54,7 +54,18 @@ type RC struct {
 	LegendFrameAlpha   float64
 	LegendFrameOn      bool
 	ColorCycle         color.Palette
+	WidgetVisualStyle  WidgetVisualStyle
 }
+
+// WidgetVisualStyle selects the visual defaults used by widget artists.
+type WidgetVisualStyle string
+
+const (
+	// WidgetVisualGo uses matplotlib-go's native widget appearance.
+	WidgetVisualGo WidgetVisualStyle = "go"
+	// WidgetVisualMatplotlib uses source-backed Matplotlib-like widget defaults.
+	WidgetVisualMatplotlib WidgetVisualStyle = "matplotlib"
+)
 
 // Default contains the library defaults. Copy and apply options to customize.
 var Default = RC{
@@ -98,6 +109,7 @@ var Default = RC{
 	LegendFrameAlpha:      0.8,
 	LegendFrameOn:         true,
 	ColorCycle:            color.Tab10,
+	WidgetVisualStyle:     WidgetVisualGo,
 }
 
 // Option mutates an RC. Options should be applied on a copy derived from Default.
@@ -213,6 +225,18 @@ func WithColorCycle(palette color.Palette) Option {
 // WithTheme replaces the current RC with the named theme preset.
 func WithTheme(theme Theme) Option {
 	return func(rc *RC) { *rc = Apply(theme.RC) }
+}
+
+// WithWidgetVisualStyle sets the default visual style for widget artists.
+func WithWidgetVisualStyle(widgetStyle WidgetVisualStyle) Option {
+	return func(rc *RC) {
+		switch widgetStyle {
+		case WidgetVisualMatplotlib:
+			rc.WidgetVisualStyle = widgetStyle
+		default:
+			rc.WidgetVisualStyle = WidgetVisualGo
+		}
+	}
 }
 
 // FigureBackground returns the figure face color as a renderer color.

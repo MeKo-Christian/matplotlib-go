@@ -48,10 +48,11 @@ func (a *Axes) TextBox(label, value string, opts ...TextBoxOptions) *TextBox {
 	if a == nil {
 		return nil
 	}
+	defaults := widgetDefaultsForAxes(a)
 	cfg := TextBoxOptions{
-		FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
-		EdgeColor: render.Color{R: 0.74, G: 0.76, B: 0.80, A: 1},
-		TextColor: render.Color{R: 0.12, G: 0.13, B: 0.16, A: 1},
+		FaceColor: defaults.TextBoxFace,
+		EdgeColor: defaults.TextBoxEdge,
+		TextColor: defaults.Text,
 	}
 	if len(opts) > 0 {
 		cfg = mergeTextBoxOptions(cfg, opts[0])

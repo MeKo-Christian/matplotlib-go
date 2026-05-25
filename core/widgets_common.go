@@ -18,6 +18,66 @@ type widgetCallbackRegistry[T any] struct {
 	callbacks map[WidgetCallbackID]T
 }
 
+type widgetVisualDefaults struct {
+	ButtonFace  render.Color
+	ButtonEdge  render.Color
+	ButtonText  render.Color
+	PanelFace   render.Color
+	PanelEdge   render.Color
+	Track       render.Color
+	Fill        render.Color
+	Handle      render.Color
+	Text        render.Color
+	Check       render.Color
+	RadioDot    render.Color
+	TextBoxFace render.Color
+	TextBoxEdge render.Color
+}
+
+func widgetDefaultsForAxes(a *Axes) widgetVisualDefaults {
+	if a == nil {
+		return widgetDefaultsForRC(style.Default)
+	}
+	return widgetDefaultsForRC(a.resolvedRC())
+}
+
+func widgetDefaultsForRC(rc style.RC) widgetVisualDefaults {
+	switch rc.WidgetVisualStyle {
+	case style.WidgetVisualMatplotlib:
+		return widgetVisualDefaults{
+			ButtonFace:  render.Color{R: 0.85, G: 0.85, B: 0.85, A: 1},
+			ButtonEdge:  render.Color{R: 0, G: 0, B: 0, A: 1},
+			ButtonText:  render.Color{R: 0, G: 0, B: 0, A: 1},
+			PanelFace:   render.Color{R: 1, G: 1, B: 1, A: 1},
+			PanelEdge:   render.Color{R: 0, G: 0, B: 0, A: 1},
+			Track:       render.Color{R: 211.0 / 255.0, G: 211.0 / 255.0, B: 211.0 / 255.0, A: 1},
+			Fill:        render.Color{R: 31.0 / 255.0, G: 119.0 / 255.0, B: 180.0 / 255.0, A: 1},
+			Handle:      render.Color{R: 1, G: 1, B: 1, A: 1},
+			Text:        render.Color{R: 0, G: 0, B: 0, A: 1},
+			Check:       render.Color{R: 0, G: 0, B: 0, A: 1},
+			RadioDot:    render.Color{R: 0, G: 0, B: 1, A: 1},
+			TextBoxFace: render.Color{R: 0.95, G: 0.95, B: 0.95, A: 1},
+			TextBoxEdge: render.Color{R: 0, G: 0, B: 0, A: 1},
+		}
+	default:
+		return widgetVisualDefaults{
+			ButtonFace:  render.Color{R: 0.94, G: 0.95, B: 0.97, A: 1},
+			ButtonEdge:  render.Color{R: 0.74, G: 0.76, B: 0.80, A: 1},
+			ButtonText:  render.Color{R: 0.12, G: 0.13, B: 0.16, A: 1},
+			PanelFace:   render.Color{R: 0.96, G: 0.97, B: 0.98, A: 1},
+			PanelEdge:   render.Color{R: 0.74, G: 0.76, B: 0.80, A: 1},
+			Track:       render.Color{R: 0.83, G: 0.85, B: 0.89, A: 1},
+			Fill:        render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1},
+			Handle:      render.Color{R: 0.09, G: 0.18, B: 0.34, A: 1},
+			Text:        render.Color{R: 0.12, G: 0.13, B: 0.16, A: 1},
+			Check:       render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1},
+			RadioDot:    render.Color{R: 0.85, G: 0.32, B: 0.17, A: 1},
+			TextBoxFace: render.Color{R: 1, G: 1, B: 1, A: 1},
+			TextBoxEdge: render.Color{R: 0.74, G: 0.76, B: 0.80, A: 1},
+		}
+	}
+}
+
 func (r *widgetCallbackRegistry[T]) add(cb T) WidgetCallbackID {
 	if r == nil {
 		return 0

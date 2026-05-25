@@ -35,7 +35,6 @@ import (
 	showcase_units_overview "github.com/cwbudde/matplotlib-go/examples/units_overview"
 	showcase_unstructured_showcase "github.com/cwbudde/matplotlib-go/examples/unstructured_showcase"
 	showcase_vector_fields "github.com/cwbudde/matplotlib-go/examples/vector_fields"
-	showcase_widgets_gallery "github.com/cwbudde/matplotlib-go/examples/widgets_gallery"
 	"github.com/cwbudde/matplotlib-go/internal/examplecatalog"
 	example_annotation_composition "github.com/cwbudde/matplotlib-go/test/parity/annotation_composition"
 	example_arrays_showcase "github.com/cwbudde/matplotlib-go/test/parity/arrays_showcase"
@@ -170,6 +169,7 @@ import (
 	example_units_overview "github.com/cwbudde/matplotlib-go/test/parity/units_overview"
 	example_unstructured_showcase "github.com/cwbudde/matplotlib-go/test/parity/unstructured_showcase"
 	example_vector_fields "github.com/cwbudde/matplotlib-go/test/parity/vector_fields"
+	example_widgets_gallery "github.com/cwbudde/matplotlib-go/test/parity/widgets_gallery"
 )
 
 // Case describes a runnable Go/Python parity example.
@@ -295,7 +295,7 @@ var renderByID = map[string]func() image.Image{
 	"mplot3d_fill_between3d":             example_mplot3d_fill_between3d.Render,
 	"unstructured_showcase":              example_unstructured_showcase.Render,
 	"arrays_showcase":                    example_arrays_showcase.Render,
-	"widgets_gallery":                    showcase_widgets_gallery.Render,
+	"widgets_gallery":                    example_widgets_gallery.Render,
 	"axisartist_showcase":                example_axisartist_showcase.Render,
 	"axes_grid1_showcase":                example_axes_grid1_showcase.Render,
 	"pcolor_flat":                        example_pcolor_flat.Render,
@@ -392,7 +392,7 @@ var figureByID = map[string]func() *core.Figure{
 	"mixed_raster_vector":                example_mixed_raster_vector.Plot,
 	"spectrum_variants":                  example_spectrum_variants.Plot,
 	"unstructured_showcase":              showcase_unstructured_showcase.Plot,
-	"widgets_gallery":                    showcase_widgets_gallery.Plot,
+	"widgets_gallery":                    example_widgets_gallery.Plot,
 	"imshow_clipped":                     example_imshow_clipped.Plot,
 	"imshow_transformed":                 example_imshow_transformed.Plot,
 	"imshow_interpolation_matrix":        example_imshow_interpolation_matrix.Plot,

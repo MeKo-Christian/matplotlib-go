@@ -140,7 +140,7 @@ func polarArcPath(center geom.Pt, radius, start, end float64, segments int, clos
 func polarPixelPoint(center geom.Pt, radius, angle float64) geom.Pt {
 	return geom.Pt{
 		X: center.X + radius*math.Cos(angle),
-		Y: center.Y - radius*math.Sin(angle),
+		Y: center.Y + radius*math.Sin(angle),
 	}
 }
 

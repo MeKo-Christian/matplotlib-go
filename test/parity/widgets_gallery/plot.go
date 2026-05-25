@@ -5,10 +5,17 @@ package widgets_gallery
 import (
 	"image"
 
+	"github.com/cwbudde/matplotlib-go/core"
 	showcase "github.com/cwbudde/matplotlib-go/examples/widgets_gallery"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
-// Render returns the parity image, identical to the showcase output.
+// Plot returns the parity figure with Matplotlib-compatible widget visuals.
+func Plot() *core.Figure {
+	return showcase.Plot(style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
+}
+
+// Render returns the parity image with Matplotlib-compatible widget visuals.
 func Render() image.Image {
-	return showcase.Render()
+	return showcase.Render(style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
 }

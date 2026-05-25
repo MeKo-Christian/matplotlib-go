@@ -43,12 +43,13 @@ func (a *Axes) RangeSlider(label string, min, max, low, high float64, opts ...Ra
 	if a == nil {
 		return nil
 	}
+	defaults := widgetDefaultsForAxes(a)
 	cfg := RangeSliderOptions{
-		FaceColor:   render.Color{R: 0.96, G: 0.97, B: 0.98, A: 1},
-		TrackColor:  render.Color{R: 0.83, G: 0.85, B: 0.89, A: 1},
-		FillColor:   render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1},
-		HandleColor: render.Color{R: 0.09, G: 0.18, B: 0.34, A: 1},
-		TextColor:   render.Color{R: 0.12, G: 0.13, B: 0.16, A: 1},
+		FaceColor:   defaults.PanelFace,
+		TrackColor:  defaults.Track,
+		FillColor:   defaults.Fill,
+		HandleColor: defaults.Handle,
+		TextColor:   defaults.Text,
 	}
 	if len(opts) > 0 {
 		cfg = mergeSliderOptions(cfg, opts[0])
