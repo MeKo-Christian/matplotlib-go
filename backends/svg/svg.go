@@ -347,7 +347,7 @@ func (r *Renderer) ClipPath(p geom.Path) {
 		rr.ClipPath(p)
 		return
 	}
-	r.clipPath(p, "", p)
+	r.clipPath(affinePath(p, r.deviceFlip()), "", p)
 }
 
 // ClipPathTransformed pushes a path-based clip region with an affine transform
@@ -360,7 +360,10 @@ func (r *Renderer) ClipPathTransformed(p geom.Path, transform geom.Affine) {
 		rr.ClipPath(mixedraster.ApplyAffine(p, transform))
 		return
 	}
-	r.clipPath(p, matrixTransform(transform), mixedraster.ApplyAffine(p, transform))
+	// Keep the path in its untransformed form and carry the affine on the
+	// <clipPath> def, composing the device y-flip so the clip region lands in
+	// SVG device space: clip = (flip ∘ transform)(p).
+	r.clipPath(p, matrixTransform(r.deviceFlip().Mul(transform)), mixedraster.ApplyAffine(p, transform))
 }
 
 func (r *Renderer) clipPath(p geom.Path, transform string, rasterPath geom.Path) {
@@ -389,7 +392,7 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 		return
 	}
 
-	d := buildPathData(p)
+	d := buildPathData(affinePath(p, r.deviceFlip()))
 	if d == "" {
 		return
 	}
@@ -476,7 +479,14 @@ func (r *Renderer) Image(img render.Image, dst geom.Rect) {
 	if rgba == nil {
 		return
 	}
-	r.renderImageNode(rgba, dst, "")
+	// dst arrives in y-up display space. Flip to device space so row 0 lands at
+	// the device-top edge and the image stays upright, mirroring the AGG
+	// backend (devRect placement, no row reversal).
+	flipped := geom.Rect{
+		Min: geom.Pt{X: dst.Min.X, Y: r.flipY(dst.Max.Y)},
+		Max: geom.Pt{X: dst.Max.X, Y: r.flipY(dst.Min.Y)},
+	}
+	r.renderImageNode(rgba, flipped, "")
 }
 
 // ImageTransformed draws an image with an arbitrary affine transform applied
@@ -496,7 +506,9 @@ func (r *Renderer) ImageTransformed(img render.Image, dst geom.Rect, transform g
 	if rgba == nil {
 		return
 	}
-	r.renderImageNode(rgba, dst, matrixTransform(transform))
+	// Compose the device y-flip so the placement maps image space -> y-down
+	// device space, mirroring the AGG backend (deviceFlipAffine().Mul(affine)).
+	r.renderImageNode(rgba, dst, matrixTransform(r.deviceFlip().Mul(transform)))
 }
 
 // matrixTransform formats a geom.Affine as an SVG matrix(a b c d e f) string.
@@ -608,7 +620,7 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 		b.WriteString(`" xlink:href="#`)
 		b.WriteString(markerID)
 		b.WriteString(`"`)
-		writeAttr(&b, "transform", matrixTransform(t))
+		writeAttr(&b, "transform", matrixTransform(r.deviceFlip().Mul(t)))
 		writeForcedOpacity(&b, paint)
 
 		if hasFill {
@@ -668,7 +680,7 @@ func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
 		if !item.Path.Validate() {
 			continue
 		}
-		d := buildPathData(item.Path)
+		d := buildPathData(affinePath(item.Path, r.deviceFlip()))
 		if d == "" {
 			continue
 		}
@@ -1086,7 +1098,7 @@ func (r *Renderer) renderSVG() string {
 				b.WriteString("<rect x=\"")
 				b.WriteString(formatFloat(clip.rect.Min.X))
 				b.WriteString(`" y="`)
-				b.WriteString(formatFloat(clip.rect.Min.Y))
+				b.WriteString(formatFloat(r.flipY(clip.rect.Max.Y)))
 				b.WriteString(`" width="`)
 				b.WriteString(formatFloat(w))
 				b.WriteString(`" height="`)
@@ -1190,7 +1202,7 @@ func (r *Renderer) renderTextNode(text string, x, y, size float64, textColor ren
 	var content strings.Builder
 	content.WriteString(`<text`)
 	writeFloatAttr(&content, "x", x)
-	writeFloatAttr(&content, "y", y)
+	writeFloatAttr(&content, "y", r.flipY(y))
 	writeFloatAttr(&content, "font-size", size)
 	writeAttr(&content, "font-family", r.svgFontFamily(r.lastFontKey))
 	writeAttr(&content, "fill", colorToHex(textColor))
@@ -1198,7 +1210,16 @@ func (r *Renderer) renderTextNode(text string, x, y, size float64, textColor ren
 	if alpha < 1 {
 		writeFloatAttr(&content, "fill-opacity", alpha)
 	}
-	if transform != "" {
+	// Position is emitted in device space (y flipped). Any rotation affine is
+	// expressed in y-up display space, so conjugate it by the device flip
+	// (flip ∘ affine ∘ flip) to apply the same rotation about the flipped
+	// anchor while keeping glyphs upright (the flip has no net vertical scale
+	// after conjugation). Mirrors Matplotlib positioning text at height-y with
+	// rotate(-angle) rather than flipping the glyph bitmap.
+	if hasAffine {
+		svgAffine := r.deviceFlip().Mul(affine).Mul(r.deviceFlip())
+		writeAttr(&content, "transform", matrixTransform(svgAffine))
+	} else if transform != "" {
 		writeAttr(&content, "transform", transform)
 	}
 	content.WriteString(">")
@@ -1810,6 +1831,19 @@ func rotationAffine(angleDeg, cx, cy float64) geom.Affine {
 		E: cx - cos*cx + sin*cy,
 		F: cy - sin*cx - cos*cy,
 	}
+}
+
+// deviceFlip returns the affine that maps y-up display coordinates to SVG's
+// native y-down device space: (x, y) → (x, height - y). It mirrors Matplotlib's
+// RendererSVG._make_flip_transform (scale(1,-1).translate(0, height)), composed
+// into path/marker/clip geometry at emission.
+func (r *Renderer) deviceFlip() geom.Affine {
+	return geom.Affine{A: 1, D: -1, F: float64(r.height)}
+}
+
+// flipY maps a single y-up display y coordinate to SVG device space.
+func (r *Renderer) flipY(y float64) float64 {
+	return float64(r.height) - y
 }
 
 func affinePath(path geom.Path, affine geom.Affine) geom.Path {

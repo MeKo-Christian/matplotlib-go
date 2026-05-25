@@ -1730,26 +1730,27 @@ migration-sensitive users.
 - [ ] Audit `widgets_gallery` differences against the Python reference and
       classify them as layout, widget chrome, selector geometry, text metrics,
       cursor/multi-cursor behavior, or renderer-boundary bugs.
-- [ ] Add an explicit widget visual-style switch that keeps the current Go
+- [x] Add an explicit widget visual-style switch that keeps the current Go
       visuals as the default and exposes a Matplotlib-compatible style for
       parity fixtures.
-- [ ] Move widget colors, padding, corner radius, stroke widths, slider handle
+- [ ] Move remaining widget padding, corner radius, stroke widths, slider handle
       geometry, check/radio markers, text-box chrome, and selector chrome behind
-      that visual-style policy instead of hard-coding one appearance.
-- [ ] Update `widgets_gallery` parity rendering to use the Matplotlib-compatible
+      that visual-style policy instead of hard-coding one appearance. Widget
+      constructor colors now route through the visual-style policy.
+- [x] Update `widgets_gallery` parity rendering to use the Matplotlib-compatible
       widget style while keeping the user-facing example on the Go default
       style unless the example is explicitly demonstrating compatibility mode.
-- [ ] Add focused tests for the style split so interaction hit-testing remains
+- [x] Add focused tests for the style split so interaction hit-testing remains
       stable when visual styling changes.
-- [ ] Rebaseline `widgets_gallery` parity metrics only after mismatches are
+- [x] Rebaseline `widgets_gallery` parity metrics only after mismatches are
       source-backed and visually inspected against the original Matplotlib
       rendering.
 
 Exit criteria:
 
-- [ ] `widgets_gallery` has a documented Matplotlib-compatible rendering path
+- [x] `widgets_gallery` has a documented Matplotlib-compatible rendering path
       with meaningfully improved parity metrics.
-- [ ] The current Go widget appearance remains available and remains the
+- [x] The current Go widget appearance remains available and remains the
       default for normal examples.
 - [ ] Widget interaction tests pass under both visual styles where geometry or
       hit regions are affected.

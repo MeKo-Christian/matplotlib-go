@@ -7,9 +7,9 @@ preserveAspectRatio="xMidYMid meet">
     <clipPath id="clip1" clipPathUnits="userSpaceOnUse"><rect x="46.5" y="40.8" width="241.8" height="244.8" /></clipPath>
     <clipPath id="clip2" clipPathUnits="userSpaceOnUse"><rect x="344.1" y="40.8" width="241.8" height="244.8" /></clipPath>
     <clipPath id="clip3" clipPathUnits="userSpaceOnUse"><rect x="641.7" y="40.8" width="241.8" height="244.8" /></clipPath>
-    <pattern id="hatch1" patternUnits="userSpaceOnUse" width="72" height="72"><rect x="0" y="0" width="72" height="72" fill="rgb(242,179,59)" fill-opacity="0.86" /><path d="M -72 72 L 0 0 M -40 72 L 32 0 M -8 72 L 64 0 M 24 72 L 96 0 M 56 72 L 128 0 M 88 72 L 160 0 M 120 72 L 192 0" fill="none" stroke="rgb(122,69,20)" stroke-width="1" stroke-linecap="butt" /></pattern>
-    <pattern id="hatch2" patternUnits="userSpaceOnUse" width="72" height="72"><rect x="0" y="0" width="72" height="72" fill="rgb(194,194,219)" fill-opacity="0.72" /><path d="M -72 72 L 0 0 M -40 72 L 32 0 M -8 72 L 64 0 M 24 72 L 96 0 M 56 72 L 128 0 M 88 72 L 160 0 M 120 72 L 192 0 M -72 0 L 0 72 M -40 0 L 32 72 M -8 0 L 64 72 M 24 0 L 96 72 M 56 0 L 128 72 M 88 0 L 160 72 M 120 0 L 192 72" fill="none" stroke="rgb(74,74,115)" stroke-width="1" stroke-linecap="butt" /></pattern>
-    <pattern id="hatch3" patternUnits="userSpaceOnUse" width="72" height="72"><rect x="0" y="0" width="72" height="72" fill="rgb(74,171,199)" fill-opacity="0.28" /><path d="M -72 72 L 0 0 M -40 72 L 32 0 M -8 72 L 64 0 M 24 72 L 96 0 M 56 72 L 128 0 M 88 72 L 160 0 M 120 72 L 192 0" fill="none" stroke="rgb(26,94,115)" stroke-width="1" stroke-linecap="butt" /></pattern>
+    <pattern id="hatch1" patternUnits="userSpaceOnUse" width="72" height="72"><rect x="0" y="0" width="72" height="72" fill="rgb(242,179,59)" fill-opacity="0.86" /><path d="M -72 72 L 0 0 M -40 72 L 32 0 M -8 72 L 64 0 M 24 72 L 96 0 M 56 72 L 128 0 M 88 72 L 160 0 M 120 72 L 192 0" fill="none" stroke="rgb(122,69,20)" stroke-width="1.388889" stroke-linecap="butt" /></pattern>
+    <pattern id="hatch2" patternUnits="userSpaceOnUse" width="72" height="72"><rect x="0" y="0" width="72" height="72" fill="rgb(194,194,219)" fill-opacity="0.72" /><path d="M -72 72 L 0 0 M -40 72 L 32 0 M -8 72 L 64 0 M 24 72 L 96 0 M 56 72 L 128 0 M 88 72 L 160 0 M 120 72 L 192 0 M -72 0 L 0 72 M -40 0 L 32 72 M -8 0 L 64 72 M 24 0 L 96 72 M 56 0 L 128 72 M 88 0 L 160 72 M 120 0 L 192 72" fill="none" stroke="rgb(74,74,115)" stroke-width="1.388889" stroke-linecap="butt" /></pattern>
+    <pattern id="hatch3" patternUnits="userSpaceOnUse" width="72" height="72"><rect x="0" y="0" width="72" height="72" fill="rgb(74,171,199)" fill-opacity="0.28" /><path d="M -72 72 L 0 0 M -40 72 L 32 0 M -8 72 L 64 0 M 24 72 L 96 0 M 56 72 L 128 0 M 88 72 L 160 0 M 120 72 L 192 0" fill="none" stroke="rgb(26,94,115)" stroke-width="1.388889" stroke-linecap="butt" /></pattern>
   </defs>
   <rect x="0" y="0" width="100%" height="100%" fill="rgb(255,255,255)" />
   <g clip-path="url(#clip1)"><path d="M 70.68 242.76 L 131.13 242.76 L 131.13 181.56 L 70.68 181.56 Z" fill="url(#hatch1)" stroke="rgb(122,69,20)" stroke-width="1.1" stroke-linejoin="miter" stroke-linecap="butt" /></g>
@@ -42,10 +42,10 @@ preserveAspectRatio="xMidYMid meet">
   <text x="20.623932" y="106.230769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3.0</text>
   <text x="20.623932" y="75.630769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3.5</text>
   <text x="20.623932" y="45.030769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4.0</text>
-  <path d="M 47.5 286.5 L 288.5 286.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 47.5 41.5 L 47.5 286.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <path d="M 47.5 41.5 L 288.5 41.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 288.5 41.5 L 288.5 286.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 47.5 286.5 L 47.5 41.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 47.5 286.5 L 288.5 286.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 288.5 286.5 L 288.5 41.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <text x="115.707693" y="32.466667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Patch Primitives</text>
   <g clip-path="url(#clip2)"><path d="M 378.869137 94.774299 L 444.78272 140.27296 L 441.113943 152.530134 L 469.03 150.96 L 451.453223 117.987188 L 447.784446 130.244363 L 381.870863 84.745701 Z" fill="rgb(232,107,56)" fill-opacity="0.88" stroke="rgb(148,56,26)" stroke-width="1" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <g clip-path="url(#clip2)"><path d="M 511.345 227.46 L 523.435 181.56 L 554.466 178.5 L 530.689 149.736 L 539.152 104.448 L 511.345 130.152 L 483.538 104.448 L 492.001 149.736 L 468.224 178.5 L 499.255 181.56 Z" fill="url(#hatch2)" stroke="rgb(74,74,115)" stroke-width="1" stroke-linejoin="miter" stroke-linecap="butt" /></g>
@@ -75,12 +75,12 @@ preserveAspectRatio="xMidYMid meet">
   <text x="318.223932" y="106.230769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3.0</text>
   <text x="318.223932" y="75.630769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3.5</text>
   <text x="318.223932" y="45.030769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4.0</text>
-  <path d="M 344.5 286.5 L 586.5 286.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 344.5 41.5 L 344.5 286.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <path d="M 344.5 41.5 L 586.5 41.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 586.5 41.5 L 586.5 286.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 344.5 286.5 L 344.5 41.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 344.5 286.5 L 586.5 286.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 586.5 286.5 L 586.5 41.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <text x="406.846154" y="32.466667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Fancy Arrow + Path</text>
-  <g clip-path="url(#clip3)"><path d="M 682 245.208 L 758.57 245.208 C 763.911698 245.208 768.242 238.631958 768.242 230.52 L 768.242 166.26 C 768.242 158.148042 763.911698 151.572 758.57 151.572 L 682 151.572 C 676.658302 151.572 672.328 158.148042 672.328 166.26 L 672.328 230.52 C 672.328 238.631958 676.658302 245.208 682 245.208 Z" fill="url(#hatch3)" stroke="rgb(26,94,115)" stroke-width="1" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip3)"><path d="M 682 245.208 L 758.57 245.208 Q 768.242 245.208 768.242 230.52 L 768.242 166.26 Q 768.242 151.572 758.57 151.572 L 682 151.572 Q 672.328 151.572 672.328 166.26 L 672.328 230.52 Q 672.328 245.208 682 245.208 Z" fill="url(#hatch3)" stroke="rgb(26,94,115)" stroke-width="1" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <g clip-path="url(#clip3)"><path d="M 772.675 196.86 L 847.23 196.86 L 847.23 120.36 L 772.675 120.36 Z" fill="rgb(245,222,153)" fill-opacity="0.82" stroke="rgb(128,99,31)" stroke-width="1" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <path d="M 642.5 286.5 L 642.5 291.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
   <path d="M 722.5 286.5 L 722.5 291.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
@@ -108,9 +108,9 @@ preserveAspectRatio="xMidYMid meet">
   <text x="615.823932" y="106.230769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3.0</text>
   <text x="615.823932" y="75.630769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3.5</text>
   <text x="615.823932" y="45.030769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4.0</text>
-  <path d="M 642.5 286.5 L 884.5 286.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 642.5 41.5 L 642.5 286.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <path d="M 642.5 41.5 L 884.5 41.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 884.5 41.5 L 884.5 286.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 642.5 286.5 L 642.5 41.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 642.5 286.5 L 884.5 286.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 884.5 286.5 L 884.5 41.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <text x="727.061538" y="32.466667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Fancy Boxes</text>
 </svg>

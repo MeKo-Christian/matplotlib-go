@@ -473,10 +473,10 @@ func TestGlyphRunUsesFontKeyAndOffsetsWithoutAccumulatingOffset(t *testing.T) {
 	if !strings.Contains(content, `font-family="DejaVu Sans, Arial, sans-serif"`) {
 		t.Fatalf("glyph run should honor sans-serif font selection, got %q", content)
 	}
-	if !strings.Contains(content, `<text x="12" y="23"`) {
+	if !strings.Contains(content, `<text x="12" y="97"`) {
 		t.Fatalf("first glyph should render at origin plus its offset, got %q", content)
 	}
-	if !strings.Contains(content, `<text x="19" y="19"`) {
+	if !strings.Contains(content, `<text x="19" y="101"`) {
 		t.Fatalf("second glyph should advance from origin without accumulating prior offsets, got %q", content)
 	}
 }
@@ -530,10 +530,10 @@ func TestRenderSVGPreservesClipStackAcrossSaveRestore(t *testing.T) {
 	if strings.Count(content, "<clipPath") != 2 {
 		t.Fatalf("expected two clip path definitions after nested clipping, got %q", content)
 	}
-	if !strings.Contains(content, `<rect x="5" y="5" width="45" height="55" />`) {
+	if !strings.Contains(content, `<rect x="5" y="60" width="45" height="55" />`) {
 		t.Fatalf("missing outer clip rect in SVG defs: %q", content)
 	}
-	if !strings.Contains(content, `<rect x="10" y="20" width="20" height="20" />`) {
+	if !strings.Contains(content, `<rect x="10" y="80" width="20" height="20" />`) {
 		t.Fatalf("missing intersected inner clip rect in SVG defs: %q", content)
 	}
 
@@ -620,10 +620,10 @@ func TestDrawMarkersEmitsDefAndUseElements(t *testing.T) {
 	if got := strings.Count(content, `<use href="#marker1"`); got != 2 {
 		t.Fatalf("expected 2 use references, got %d in %q", got, content)
 	}
-	if !strings.Contains(content, `transform="matrix(1 0 0 1 10 20)"`) {
+	if !strings.Contains(content, `transform="matrix(1 0 0 -1 10 100)"`) {
 		t.Fatalf("expected first item transform, got %q", content)
 	}
-	if !strings.Contains(content, `transform="matrix(1 0 0 1 50 60)"`) {
+	if !strings.Contains(content, `transform="matrix(1 0 0 -1 50 60)"`) {
 		t.Fatalf("expected second item transform, got %q", content)
 	}
 	if !strings.Contains(content, `fill="rgb(255,0,0)"`) || !strings.Contains(content, `fill="rgb(0,0,255)"`) {
@@ -732,7 +732,7 @@ func TestDrawPathCollectionEmitsDefsAndUseElements(t *testing.T) {
 		}
 	})
 
-	if !strings.Contains(content, `<path id="pathcoll1" d="M -1 0 L 1 0 L 0 1 Z" />`) {
+	if !strings.Contains(content, `<path id="pathcoll1" d="M -1 120 L 1 120 L 0 119 Z" />`) {
 		t.Fatalf("expected path collection path def, got %q", content)
 	}
 	if got := strings.Count(content, `<use href="#pathcoll1"`); got != 2 {
@@ -896,7 +896,7 @@ func TestImageTransformedEmitsMatrixAttribute(t *testing.T) {
 	for _, want := range []string{
 		`<image x="0" y="0" width="2" height="2"`,
 		`href="data:image/png;base64,`,
-		`transform="matrix(1.5 0.5 -0.25 1 10 20)"`,
+		`transform="matrix(1.5 -0.5 -0.25 -1 10 100)"`,
 	} {
 		if !strings.Contains(content, want) {
 			t.Fatalf("expected serialized transformed-image attribute %q in %q", want, content)
@@ -955,7 +955,7 @@ func TestImageSerializesEmbeddedPNGAndNormalizesDestinationRect(t *testing.T) {
 	})
 
 	for _, want := range []string{
-		`<image x="10" y="20" width="20" height="20"`,
+		`<image x="10" y="80" width="20" height="20"`,
 		`preserveAspectRatio="none"`,
 		`href="data:image/png;base64,`,
 		`xlink:href="data:image/png;base64,`,
@@ -972,7 +972,7 @@ func TestTextEscapingAndRotationSerialization(t *testing.T) {
 	})
 
 	for _, want := range []string{
-		`transform="matrix(0.877583 -0.479426 0.479426 0.877583 -22.542218 51.717519)"`,
+		`transform="matrix(0.877583 0.479426 -0.479426 0.877583 34.988846 -37.027427)"`,
 		`fill="rgb(51,102,153)"`,
 		`fill-opacity="0.75"`,
 		`A&lt;&amp;&#34;B`,
@@ -1016,10 +1016,10 @@ func TestClipPathNestsInsideActiveRectClip(t *testing.T) {
 	if got := strings.Count(content, "<clipPath"); got != 2 {
 		t.Fatalf("expected two clip defs (rect + path), got %d in %q", got, content)
 	}
-	if !strings.Contains(content, `<rect x="10" y="15" width="60" height="60" />`) {
+	if !strings.Contains(content, `<rect x="10" y="45" width="60" height="60" />`) {
 		t.Fatalf("expected rect clip def, got %q", content)
 	}
-	if !strings.Contains(content, `<path d="M 0 0 L 30 0 L 30 30 Z" />`) {
+	if !strings.Contains(content, `<path d="M 0 120 L 30 120 L 30 90 Z" />`) {
 		t.Fatalf("expected path clip def, got %q", content)
 	}
 
@@ -1144,8 +1144,8 @@ func TestClipPathTransformedEmitsPathTransformAndDedupesByTransform(t *testing.T
 		t.Fatalf("path clips should dedupe by path plus transform, got %d defs in %q", got, content)
 	}
 	for _, want := range []string{
-		`<path d="M 0 0 L 20 0 L 20 20 Z" transform="matrix(1 0 0 1 10 15)" />`,
-		`<path d="M 0 0 L 20 0 L 20 20 Z" transform="matrix(2 0 0 2 0 0)" />`,
+		`<path d="M 0 0 L 20 0 L 20 20 Z" transform="matrix(1 0 0 -1 10 105)" />`,
+		`<path d="M 0 0 L 20 0 L 20 20 Z" transform="matrix(2 0 0 -2 0 120)" />`,
 	} {
 		if !strings.Contains(content, want) {
 			t.Fatalf("expected transformed clip def %q in %q", want, content)
@@ -1325,7 +1325,7 @@ func TestGlyphRunSkipsMissingGlyphsAndFallsBackToMeasuredAdvance(t *testing.T) {
 	if strings.Count(content, "<text") != 2 {
 		t.Fatalf("expected only visible glyphs to emit text nodes, got %q", content)
 	}
-	if !strings.Contains(content, `<text x="15" y="20"`) {
+	if !strings.Contains(content, `<text x="15" y="100"`) {
 		t.Fatalf("expected skipped glyph advance to shift first visible glyph, got %q", content)
 	}
 	secondX := `x="` + formatFloat(15+expectedAdvance) + `"`
