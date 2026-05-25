@@ -664,6 +664,14 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Note:              "Stateful pyplot plot delegates to the core Line2D path for common x/y and style-string migration cases. Remaining partial scope is Python's full variadic overload grammar, data= indirection breadth, and dynamic getp/setp-style property aliases.",
 	},
 	{
+		ID:                "pyplot-axes",
+		UpstreamID:        "pyplot.py:function:axes",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "core/artist.go"},
+		Note:              "Stateful pyplot Axes appends a rectangle axes to the current figure and marks it current. Remaining partial scope is Matplotlib's kwargs projection/share/label overload breadth and reuse semantics.",
+	},
+	{
 		ID:                "pyplot-imshow",
 		UpstreamID:        "pyplot.py:function:imshow",
 		FeatureCoverageID: "pyplot-state",
@@ -1586,7 +1594,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
 		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
-		note:              "The Go pyplot package covers current figure/current axes state, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, axis limit/scale/grid/tick-param wrappers, axes-frame box toggling, labels, legends, colorbars, rc helpers, savefig, show, pause, draw, close/close-all cleanup, clf/cla reset helpers, and interactive-mode state toggles. Remaining partial scope is specific missing wrapper families, Python overload breadth, automatic interactive redraw side effects, and unsupported implicit manager behavior.",
+		note:              "The Go pyplot package covers current figure/current axes state, common axes/subplot creation, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, axis limit/scale/grid/tick-param wrappers, axes-frame box toggling, labels, legends, colorbars, rc helpers, savefig, show, pause, draw, close/close-all cleanup, clf/cla reset helpers, and interactive-mode state toggles. Remaining partial scope is specific missing wrapper families, Python overload breadth, automatic interactive redraw side effects, and unsupported implicit manager behavior.",
 	},
 	{
 		idPrefix:          "pylab-helpers",

@@ -78,6 +78,29 @@ func TestSubplotsCreatesNewFigureAndCurrentAxes(t *testing.T) {
 	}
 }
 
+func TestAxesAddsCurrentAxesToCurrentFigure(t *testing.T) {
+	resetForTests()
+
+	fig := Figure()
+	rect := geom.Rect{Min: geom.Pt{X: 0.2, Y: 0.3}, Max: geom.Pt{X: 0.8, Y: 0.9}}
+	ax := Axes(rect)
+	if ax == nil {
+		t.Fatal("Axes() returned nil")
+	}
+	if got := GCA(); got != ax {
+		t.Fatalf("GCA() = %p, want %p", got, ax)
+	}
+	if got := GCF(); got != fig {
+		t.Fatalf("GCF() = %p, want %p", got, fig)
+	}
+	if len(fig.Children) != 1 || fig.Children[0] != ax {
+		t.Fatalf("figure children = %+v, want added axes", fig.Children)
+	}
+	if ax.RectFraction != rect {
+		t.Fatalf("axes rect = %+v, want %+v", ax.RectFraction, rect)
+	}
+}
+
 func TestStatefulHelpersDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 

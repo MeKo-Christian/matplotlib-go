@@ -2825,6 +2825,8 @@ Current slice landed:
 - Added pyplot `Suptitle` / `SupXLabel` / `SupYLabel` wrappers over the
   current figure-level label layout path.
 - Added pyplot `Box` as the stateful current-axes frame visibility toggle.
+- Added pyplot `Axes` for stateful rectangle axes creation on the current
+  figure, marking the new axes current.
 - Added core `ImRead` / `ImSave` image IO helpers for Go-supported file
   decoding and PNG `render.RGBAImage` output, including straight-alpha PNG
   round-trip tests and explicit unsupported-input errors.

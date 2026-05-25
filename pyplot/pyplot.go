@@ -100,6 +100,16 @@ func GCA() *core.Axes {
 	return ensureDefaultAxes(fig)
 }
 
+// Axes appends an axes rectangle to the current figure and marks it current.
+func Axes(r geom.Rect, opts ...style.Option) *core.Axes {
+	fig := GCF()
+	ax := fig.AddAxes(r, opts...)
+	registry.mu.Lock()
+	registry.rememberAxesLocked(fig, ax, "")
+	registry.mu.Unlock()
+	return ax
+}
+
 // AddAxes3D appends an Axes3D to the current figure and marks it current.
 func AddAxes3D(r geom.Rect, opts ...style.Option) *core.Axes3D {
 	fig := GCF()
