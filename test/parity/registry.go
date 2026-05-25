@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/cwbudde/matplotlib-go/core"
+	showcase_animation_gallery "github.com/cwbudde/matplotlib-go/examples/animation_gallery"
 	showcase_annotation_composition "github.com/cwbudde/matplotlib-go/examples/annotation_composition"
 	showcase_arrays_showcase "github.com/cwbudde/matplotlib-go/examples/arrays_showcase"
 	showcase_axes_control_surface "github.com/cwbudde/matplotlib-go/examples/axes_control_surface"
@@ -181,6 +182,7 @@ type Case struct {
 }
 
 var renderByID = map[string]func() image.Image{
+	"animation_gallery":                  showcase_animation_gallery.Render,
 	"basic_line":                         example_basic_line.Render,
 	"joins_caps":                         example_joins_caps.Render,
 	"dashes":                             example_dashes.Render,
@@ -318,6 +320,7 @@ var renderByID = map[string]func() image.Image{
 }
 
 var figureByID = map[string]func() *core.Figure{
+	"animation_gallery":                  showcase_animation_gallery.Plot,
 	"annotation_composition":             showcase_annotation_composition.Plot,
 	"artist_metadata":                    example_artist_metadata.Plot,
 	"line2d_markers":                     example_line2d_markers.Plot,

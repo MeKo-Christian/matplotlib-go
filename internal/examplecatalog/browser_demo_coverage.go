@@ -293,6 +293,14 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		Rationale:  "The widgets gallery is catalog-visible for static widget/selector coverage, but browser event-loop and interaction coverage should be promoted separately.",
 		CatalogIDs: []string{"widgets_gallery"},
 	},
+	{
+		ID:         "showcase-animation_gallery",
+		Title:      "Animation Gallery Browser Coverage",
+		Status:     BrowserDemoPlanned,
+		Action:     "include in a widgets or animation browser demo once timer playback is deterministic in the web host",
+		Rationale:  "The animation gallery is catalog-visible for setup and deterministic stepping, but browser playback should be validated with real timer/event-loop behavior.",
+		CatalogIDs: []string{"animation_gallery"},
+	},
 }
 
 // BrowserDemoCoverageRows returns the Phase 9A.4 browser coverage reconciliation rows.

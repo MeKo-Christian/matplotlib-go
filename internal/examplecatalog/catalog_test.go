@@ -196,6 +196,19 @@ func TestCatalogIncludesPhase125WidgetsGalleryShowcase(t *testing.T) {
 	}
 }
 
+func TestCatalogIncludesPhase125AnimationGalleryShowcase(t *testing.T) {
+	c, ok := Lookup("animation_gallery")
+	if !ok {
+		t.Fatal("missing Phase 12.5 animation gallery catalog case")
+	}
+	if c.Topic != "animation" {
+		t.Fatalf("animation_gallery topic = %q, want animation", c.Topic)
+	}
+	if !c.Showcase {
+		t.Fatal("animation_gallery should be a user-facing showcase")
+	}
+}
+
 func TestCatalogSplitsAGGNativeParityFixtures(t *testing.T) {
 	want := map[string][]string{
 		"large_scatter":     {"pathcollectionbatch"},

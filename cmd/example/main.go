@@ -21,6 +21,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
+	animation_gallery "github.com/cwbudde/matplotlib-go/examples/animation_gallery"
 	annotation_composition "github.com/cwbudde/matplotlib-go/examples/annotation_composition"
 	arrays_showcase "github.com/cwbudde/matplotlib-go/examples/arrays_showcase"
 	axes_control_surface "github.com/cwbudde/matplotlib-go/examples/axes_control_surface"
@@ -61,6 +62,7 @@ import (
 // corresponding *core.Figure. Keep in sync with the Showcase: true rows in
 // internal/examplecatalog/catalog.go.
 var registry = map[string]func() *core.Figure{
+	"animation_gallery":         animation_gallery.Plot,
 	"annotation_composition":    annotation_composition.Plot,
 	"arrays_showcase":           arrays_showcase.Plot,
 	"axes_control_surface":      axes_control_surface.Plot,

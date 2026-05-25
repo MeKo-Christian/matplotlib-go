@@ -1842,6 +1842,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"animation/animation.go", "canvas/scheduler.go"},
+		CatalogIDs:        []string{"animation_gallery"},
 		Note:              "Go Animation provides frame stepping, start/stop event-loop integration, repeat handling, animated artist tracking, and blit fallback hooks. Remaining partial scope is HTML representation, save/cache semantics, and movie writer integration.",
 	},
 	{
@@ -1850,6 +1851,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"animation/animation.go", "canvas/scheduler.go"},
+		CatalogIDs:        []string{"animation_gallery"},
 		Note:              "Go folds TimedAnimation behavior into Animation Config interval/repeat/repeat-delay fields and the canvas scheduler rather than exposing a subclass.",
 	},
 	{
@@ -1858,6 +1860,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"animation/animation.go", "canvas/scheduler.go"},
+		CatalogIDs:        []string{"animation_gallery"},
 		Note:              "Go FuncAnimation-style playback supports frame stepping, init callbacks, repeat and repeat-delay handling, animated artist tracking, blit-region hooks, and event-loop start/stop behavior. Remaining partial scope is cache/save-count edge behavior, HTML representation, movie writer APIs, and browser/example coverage.",
 	},
 	{
@@ -1866,6 +1869,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"animation/animation.go", "canvas/scheduler.go"},
+		CatalogIDs:        []string{"animation_gallery"},
 		Note:              "Go ArtistAnimation-style playback toggles per-frame artist visibility and uses the same stepping, repeat, and blit infrastructure as FuncAnimation. Remaining partial scope is save/cache behavior, HTML representation, and movie writer integration.",
 	},
 	{
@@ -2304,7 +2308,9 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		featureCoverageID: "widgets-events-animation",
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"animation/animation.go", "canvas/scheduler.go"},
-		note:              "Go has FuncAnimation- and ArtistAnimation-style stepping on top of the canvas scheduler, including init callbacks, repeat and repeat-delay handling, animated artist tracking, blit-region hooks, and event-loop start/stop behavior. Remaining animation scope is cache/save-count edge behavior, HTML representation, movie writer APIs, deterministic GIF/MP4 writer decisions, and browser/example coverage.",
+		catalogIDs:        []string{"animation_gallery"},
+		exampleIDs:        []string{"animation_gallery"},
+		note:              "Go has FuncAnimation- and ArtistAnimation-style stepping on top of the canvas scheduler, including init callbacks, repeat and repeat-delay handling, animated artist tracking, blit-region hooks, and event-loop start/stop behavior. animation_gallery gives catalog-visible setup and deterministic stepping coverage. Remaining animation scope is cache/save-count edge behavior, HTML representation, movie writer APIs, deterministic GIF/MP4 writer decisions, and browser playback coverage.",
 	},
 }
 

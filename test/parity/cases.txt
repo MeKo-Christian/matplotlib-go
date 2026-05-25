@@ -111,6 +111,7 @@ mplot3d_fill_between3d
 unstructured_showcase
 arrays_showcase
 widgets_gallery
+animation_gallery
 axisartist_showcase
 axes_grid1_showcase
 pcolor_flat

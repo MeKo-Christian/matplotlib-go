@@ -12,6 +12,7 @@ type InteractiveCoverageRow struct {
 
 var interactiveCoverage = []InteractiveCoverageRow{
 	{Topic: "annotation", RepresentativeID: "annotation_composition", WebAgg: true, Gio: true},
+	{Topic: "animation", RepresentativeID: "animation_gallery", WebAgg: true, Gio: true},
 	{Topic: "arrays", RepresentativeID: "arrays_showcase", WebAgg: true, Gio: true},
 	{Topic: "artist", RepresentativeID: "artist_metadata", WebAgg: true, Gio: true},
 	{Topic: "axes", RepresentativeID: "axes_control_surface", WebAgg: true, Gio: true},

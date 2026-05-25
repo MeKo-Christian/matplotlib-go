@@ -2907,6 +2907,10 @@ Current slice landed:
   widget coverage, tying the existing widget/selector/cursor showcase to
   golden, Matplotlib-reference, public-surface, feature-coverage, demo-breadth,
   and interactive-coverage inventories.
+- Added an `animation_gallery` showcase with deterministic FuncAnimation and
+  ArtistAnimation constructors, static preview rendering, focused example
+  tests, and catalog/parity coverage for the Phase 12.5 animation playback
+  surface.
 - Added `Animation.Save` as an explicit unsupported-writer path returning
   `ErrWriterUnsupported`, with unit coverage. This keeps writer export out of
   v1.0 while avoiding silent no-op behavior for users who look for a save path.

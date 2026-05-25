@@ -300,8 +300,8 @@ var demoBreadthGaps = []DemoBreadthGap{
 		Topic:       "widgets",
 		Title:       "Widgets and Animation Gallery",
 		Priority:    DemoBreadthMedium,
-		CatalogIDs:  []string{"widgets_gallery"},
-		ShowcaseIDs: []string{"widgets_gallery"},
+		CatalogIDs:  []string{"widgets_gallery", "animation_gallery"},
+		ShowcaseIDs: []string{"widgets_gallery", "animation_gallery"},
 		TargetFeatures: []string{
 			"buttons",
 			"sliders",
@@ -312,9 +312,9 @@ var demoBreadthGaps = []DemoBreadthGap{
 			"ArtistAnimation",
 			"blit playback",
 		},
-		CurrentCoverage: "widgets_gallery now covers static widgets, selectors, cursor, and multi-cursor in the catalog.",
-		Need:            "Animation playback still needs a user-facing example and browser-facing coverage once the demo host can exercise timers deterministically.",
-		RecommendedDemo: "Expand the widgets gallery or add a sibling animation gallery with timer-driven line, artist-list, and blit-capable examples.",
+		CurrentCoverage: "widgets_gallery covers static widgets, selectors, cursor, and multi-cursor in the catalog; animation_gallery covers FuncAnimation and ArtistAnimation setup with deterministic stepping.",
+		Need:            "Browser-facing coverage still needs promotion once the demo host can exercise timers deterministically.",
+		RecommendedDemo: "Promote the widgets and animation galleries into an interactive browser demo with timer-driven line, artist-list, and blit-capable examples.",
 	},
 	{
 		ID:              "mixed-raster-vector-output",
