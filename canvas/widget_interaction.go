@@ -1423,6 +1423,9 @@ func (w *WidgetInteraction) handleCheckKey(checks *core.CheckButtons, focusedInd
 	if checks == nil || len(checks.Labels) == 0 {
 		return false
 	}
+	if !checks.Enabled {
+		return false
+	}
 	command := strings.ToLower(key)
 	focusedIndex = clampInt(focusedIndex, 0, len(checks.Labels)-1)
 	switch command {
@@ -1457,6 +1460,9 @@ func (w *WidgetInteraction) handleCheckKey(checks *core.CheckButtons, focusedInd
 
 func (w *WidgetInteraction) handleRadioKey(radios *core.RadioButtons, focusedIndex int, key string) bool {
 	if radios == nil || len(radios.Labels) == 0 {
+		return false
+	}
+	if !radios.Enabled {
 		return false
 	}
 	focusedIndex = clampInt(focusedIndex, 0, len(radios.Labels)-1)

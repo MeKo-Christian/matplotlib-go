@@ -15,12 +15,14 @@ type RadioButtonsOptions struct {
 	TextColor render.Color
 	DotColor  render.Color
 	FontSize  float64
+	Disabled  *bool
 }
 
 // RadioButtons draws a static radio-button control.
 type RadioButtons struct {
 	Labels    []string
 	Active    int
+	Enabled   bool
 	FaceColor render.Color
 	EdgeColor render.Color
 	TextColor render.Color
@@ -48,9 +50,14 @@ func (a *Axes) RadioButtons(labels []string, active int, opts ...RadioButtonsOpt
 		cfg = mergeRadioButtonsOptions(cfg, opts[0])
 	}
 	prepareWidgetAxes(a)
+	enabled := true
+	if cfg.Disabled != nil {
+		enabled = !*cfg.Disabled
+	}
 	w := &RadioButtons{
 		Labels:    append([]string(nil), labels...),
 		Active:    clampInt(active, 0, len(labels)-1),
+		Enabled:   enabled,
 		FaceColor: cfg.FaceColor,
 		EdgeColor: cfg.EdgeColor,
 		TextColor: cfg.TextColor,
@@ -90,6 +97,9 @@ func (r *RadioButtons) SetActive(index int) {
 	if r == nil || len(r.Labels) == 0 {
 		return
 	}
+	if !r.Enabled {
+		return
+	}
 	index = clampInt(index, 0, len(r.Labels)-1)
 	if r.Active == index {
 		return
@@ -112,6 +122,9 @@ func (r *RadioButtons) Next(delta int) {
 
 func (rdo *RadioButtons) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	if rdo == nil || ctx == nil {
+		return false, PickInfo{}
+	}
+	if !rdo.Enabled {
 		return false, PickInfo{}
 	}
 	if len(rdo.Labels) == 0 {
@@ -137,7 +150,17 @@ func (rdo *RadioButtons) Draw(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 	panel := insetRect(ctx.Clip, 4)
-	drawWidgetPanel(r, panel, rdo.FaceColor, rdo.EdgeColor, 1.1, 12)
+	face := rdo.FaceColor
+	edge := rdo.EdgeColor
+	textColor := rdo.TextColor
+	dotColor := rdo.DotColor
+	if !rdo.Enabled {
+		face = mixColor(face, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.45)
+		edge = mixColor(edge, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.6)
+		textColor = mixColor(textColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.35)
+		dotColor = mixColor(dotColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.35)
+	}
+	drawWidgetPanel(r, panel, face, edge, 1.1, 12)
 	if len(rdo.Labels) == 0 {
 		return
 	}
@@ -149,7 +172,7 @@ func (rdo *RadioButtons) Draw(r render.Renderer, ctx *DrawContext) {
 		outerPath := applyAffinePath(outer, patchAffine(center, 0))
 		r.Path(outerPath, &render.Paint{
 			Fill:      render.Color{R: 1, G: 1, B: 1, A: 1},
-			Stroke:    rdo.EdgeColor,
+			Stroke:    edge,
 			LineWidth: 1,
 			LineJoin:  render.JoinRound,
 			LineCap:   render.CapRound,
@@ -157,9 +180,9 @@ func (rdo *RadioButtons) Draw(r render.Renderer, ctx *DrawContext) {
 		if i == clampInt(rdo.Active, 0, len(rdo.Labels)-1) {
 			inner := ellipsePath(8, 8)
 			innerPath := applyAffinePath(inner, patchAffine(center, 0))
-			r.Path(innerPath, &render.Paint{Fill: rdo.DotColor})
+			r.Path(innerPath, &render.Paint{Fill: dotColor})
 		}
-		drawWidgetText(r, ctx, geom.Pt{X: center.X + 16, Y: center.Y}, label, fontSize, rdo.TextColor, TextAlignLeft, textLayoutVAlignCenter)
+		drawWidgetText(r, ctx, geom.Pt{X: center.X + 16, Y: center.Y}, label, fontSize, textColor, TextAlignLeft, textLayoutVAlignCenter)
 	}
 }
 
@@ -187,6 +210,9 @@ func mergeRadioButtonsOptions(base, override RadioButtonsOptions) RadioButtonsOp
 	}
 	if override.FontSize > 0 {
 		base.FontSize = override.FontSize
+	}
+	if override.Disabled != nil {
+		base.Disabled = override.Disabled
 	}
 	return base
 }

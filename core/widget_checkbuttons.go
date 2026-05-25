@@ -18,12 +18,14 @@ type CheckButtonsOptions struct {
 	TextColor  render.Color
 	CheckColor render.Color
 	FontSize   float64
+	Disabled   *bool
 }
 
 // CheckButtons draws a static checklist-style control.
 type CheckButtons struct {
 	Labels     []string
 	Values     []bool
+	Enabled    bool
 	FaceColor  render.Color
 	EdgeColor  render.Color
 	TextColor  render.Color
@@ -51,11 +53,16 @@ func (a *Axes) CheckButtons(labels []string, active []bool, opts ...CheckButtons
 		cfg = mergeCheckButtonsOptions(cfg, opts[0])
 	}
 	prepareWidgetAxes(a)
+	enabled := true
+	if cfg.Disabled != nil {
+		enabled = !*cfg.Disabled
+	}
 	values := make([]bool, len(labels))
 	copy(values, active)
 	w := &CheckButtons{
 		Labels:     append([]string(nil), labels...),
 		Values:     values,
+		Enabled:    enabled,
 		FaceColor:  cfg.FaceColor,
 		EdgeColor:  cfg.EdgeColor,
 		TextColor:  cfg.TextColor,
@@ -95,6 +102,9 @@ func (c *CheckButtons) SetValue(index int, checked bool) {
 	if c == nil {
 		return
 	}
+	if !c.Enabled {
+		return
+	}
 	if index < 0 || index >= len(c.Values) {
 		return
 	}
@@ -115,6 +125,9 @@ func (c *CheckButtons) Toggle(index int) {
 
 func (c *CheckButtons) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	if c == nil || ctx == nil {
+		return false, PickInfo{}
+	}
+	if !c.Enabled {
 		return false, PickInfo{}
 	}
 	if len(c.Labels) == 0 {
@@ -140,7 +153,17 @@ func (c *CheckButtons) Draw(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 	panel := insetRect(ctx.Clip, 4)
-	drawWidgetPanel(r, panel, c.FaceColor, c.EdgeColor, 1.1, 12)
+	face := c.FaceColor
+	edge := c.EdgeColor
+	textColor := c.TextColor
+	checkColor := c.CheckColor
+	if !c.Enabled {
+		face = mixColor(face, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.45)
+		edge = mixColor(edge, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.6)
+		textColor = mixColor(textColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.35)
+		checkColor = mixColor(checkColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.35)
+	}
+	drawWidgetPanel(r, panel, face, edge, 1.1, 12)
 	if len(c.Labels) == 0 {
 		return
 	}
@@ -154,20 +177,20 @@ func (c *CheckButtons) Draw(r render.Renderer, ctx *DrawContext) {
 			Min: geom.Pt{X: panel.Min.X + 14, Y: rowMinY + (rowHeight-boxSize)/2},
 			Max: geom.Pt{X: panel.Min.X + 14 + boxSize, Y: rowMaxY - (rowHeight-boxSize)/2},
 		}
-		drawWidgetPanel(r, box, render.Color{R: 1, G: 1, B: 1, A: 1}, c.EdgeColor, 1, 3)
+		drawWidgetPanel(r, box, render.Color{R: 1, G: 1, B: 1, A: 1}, edge, 1, 3)
 		if i < len(c.Values) && c.Values[i] {
 			path := geom.Path{}
 			path.MoveTo(geom.Pt{X: box.Min.X + box.W()*0.18, Y: box.Min.Y + box.H()*0.56})
 			path.LineTo(geom.Pt{X: box.Min.X + box.W()*0.42, Y: box.Max.Y - box.H()*0.20})
 			path.LineTo(geom.Pt{X: box.Max.X - box.W()*0.16, Y: box.Min.Y + box.H()*0.22})
 			r.Path(path, &render.Paint{
-				Stroke:    c.CheckColor,
+				Stroke:    checkColor,
 				LineWidth: 2,
 				LineJoin:  render.JoinRound,
 				LineCap:   render.CapRound,
 			})
 		}
-		drawWidgetText(r, ctx, geom.Pt{X: box.Max.X + 10, Y: rowMinY + rowHeight/2}, label, fontSize, c.TextColor, TextAlignLeft, textLayoutVAlignCenter)
+		drawWidgetText(r, ctx, geom.Pt{X: box.Max.X + 10, Y: rowMinY + rowHeight/2}, label, fontSize, textColor, TextAlignLeft, textLayoutVAlignCenter)
 	}
 }
 
@@ -195,6 +218,9 @@ func mergeCheckButtonsOptions(base, override CheckButtonsOptions) CheckButtonsOp
 	}
 	if override.FontSize > 0 {
 		base.FontSize = override.FontSize
+	}
+	if override.Disabled != nil {
+		base.Disabled = override.Disabled
 	}
 	return base
 }

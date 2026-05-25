@@ -2927,6 +2927,9 @@ Current slice landed:
 - Tightened disabled slider interaction handling so focused `Slider` and
   `RangeSlider` widgets ignore keyboard nudges without firing callbacks or
   requesting redraws, matching the mouse-drag disabled path.
+- Added disabled-state support for `CheckButtons` and `RadioButtons`, including
+  constructor options, disabled visual dimming, and mouse/keyboard suppression
+  without callbacks or redraw requests.
 - Tightened slider value snapping so `Slider` and `RangeSlider` initial values
   honor `ValueStep`, sort range endpoints after snapping, and keep rounded
   values inside the configured bounds.

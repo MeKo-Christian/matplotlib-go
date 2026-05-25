@@ -36,6 +36,14 @@ func TestWidgetConstructorsPrepareAxesAndStoreState(t *testing.T) {
 	if disabledButton.Enabled {
 		t.Fatal("button should honor Disabled option")
 	}
+	disabledChecks := axCheck.CheckButtons([]string{"C"}, []bool{false}, CheckButtonsOptions{Disabled: &disabled})
+	if disabledChecks.Enabled {
+		t.Fatal("check buttons should honor Disabled option")
+	}
+	disabledRadios := axRadio.RadioButtons([]string{"m", "n"}, 0, RadioButtonsOptions{Disabled: &disabled})
+	if disabledRadios.Enabled {
+		t.Fatal("radio buttons should honor Disabled option")
+	}
 	if slider.Value != 10 {
 		t.Fatalf("slider value = %v, want clamped max 10", slider.Value)
 	}

@@ -1713,7 +1713,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/widget_checkbuttons.go", "core/widgets_common.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "CheckButtons supports static drawing, per-index state changes, callbacks, pointer toggles, and keyboard activation. Remaining partial scope is exact upstream marker styling and disabled-state visual parity.",
+		Note:              "CheckButtons supports static drawing, per-index state changes, callbacks, pointer toggles, keyboard activation, and disabled input suppression. Remaining partial scope is exact upstream marker styling and disabled-state visual parity.",
 	},
 	{
 		ID:                "widgets-radio-buttons",
@@ -1722,7 +1722,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/widget_radiobuttons.go", "core/widgets_common.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "RadioButtons supports static drawing, active-index changes, callbacks, pointer selection, and keyboard cycling. Remaining partial scope is exact upstream styling and disabled-state behavior.",
+		Note:              "RadioButtons supports static drawing, active-index changes, callbacks, pointer selection, keyboard cycling, and disabled input suppression. Remaining partial scope is exact upstream styling and disabled-state visual parity.",
 	},
 	{
 		ID:                "widgets-text-box",

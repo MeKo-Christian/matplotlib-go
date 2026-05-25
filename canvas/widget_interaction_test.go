@@ -418,6 +418,66 @@ func TestWidgetInteractionCheckAndRadioKeyboardNavigation(t *testing.T) {
 	}
 }
 
+func TestWidgetInteractionDisabledCheckAndRadioIgnoreInput(t *testing.T) {
+	fig := core.NewFigure(120, 80)
+	axChecks := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 0.45}})
+	axRadio := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0.55}, Max: geom.Pt{X: 1, Y: 1}})
+
+	disabled := true
+	checks := axChecks.CheckButtons([]string{"A", "B"}, []bool{false, false}, core.CheckButtonsOptions{Disabled: &disabled})
+	radios := axRadio.RadioButtons([]string{"x", "y"}, 0, core.RadioButtonsOptions{Disabled: &disabled})
+
+	var checkEvents int
+	var radioEvents int
+	checks.OnChanged(func(*core.CheckButtons, int, bool) {
+		checkEvents++
+	})
+	radios.OnChanged(func(*core.RadioButtons, int) {
+		radioEvents++
+	})
+
+	var draws int
+	var dispatcher Dispatcher
+	wi := NewWidgetInteraction(fig, func() error {
+		draws++
+		return nil
+	})
+	wi.Attach(&dispatcher)
+	defer wi.Detach()
+
+	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: axChecks, Position: geom.Pt{X: 20, Y: 50}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("disabled check press: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: axChecks, Position: geom.Pt{X: 20, Y: 50}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("disabled check release: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: axChecks, Key: "space"}); err != nil {
+		t.Fatalf("disabled check space: %v", err)
+	}
+	if checks.Values[0] || checks.Values[1] {
+		t.Fatalf("disabled checks changed to %v, want all false", checks.Values)
+	}
+
+	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: axRadio, Position: geom.Pt{X: 20, Y: 10}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("disabled radio press: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: axRadio, Position: geom.Pt{X: 20, Y: 10}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("disabled radio release: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: axRadio, Key: "right"}); err != nil {
+		t.Fatalf("disabled radio right: %v", err)
+	}
+	if radios.Active != 0 {
+		t.Fatalf("disabled radio active = %d, want 0", radios.Active)
+	}
+	if checkEvents != 0 || radioEvents != 0 {
+		t.Fatalf("disabled widget callbacks = %d/%d, want 0/0", checkEvents, radioEvents)
+	}
+	if draws != 0 {
+		t.Fatalf("disabled check/radio requested %d draws, want 0", draws)
+	}
+}
+
 func TestWidgetInteractionTextBoxEditing(t *testing.T) {
 	setClipboard("")
 	fig := core.NewFigure(120, 80)
