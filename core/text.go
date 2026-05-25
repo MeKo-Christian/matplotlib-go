@@ -889,9 +889,9 @@ func (a *Annotation) drawArrow(r render.Renderer, ctx *DrawContext, start, targe
 		},
 		ArrowStyle:      a.ArrowStyle,
 		ConnectionStyle: a.ConnectionStyle,
-		MutationScale:   a.ArrowHeadSize / 0.4,
+		MutationScale:   pointsToPixels(ctx.RC, a.ArrowHeadSize),
 	}
-	path := a.ConnectionStyle.connect(start, target, 0, 0)
+	path := a.ConnectionStyle.connect(start, target, arrowShrinkPixels(ctx, 2), arrowShrinkPixels(ctx, 2))
 	for _, part := range patch.displayParts(ctx, path) {
 		if len(part.path.C) == 0 {
 			continue

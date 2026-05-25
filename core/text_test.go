@@ -1353,6 +1353,65 @@ func TestAnnotationDrawsTextBBox(t *testing.T) {
 	}
 }
 
+func TestAnnotationArrowHeadSizeUsesPointMutationScale(t *testing.T) {
+	ctx := createTestDrawContext()
+	arrow, _ := ArrowStyleFromString("-|>,head_length=0.35,head_width=0.20")
+	annotation := &Annotation{
+		ArrowWidth:      1.2,
+		ArrowHeadSize:   9,
+		ArrowStyle:      arrow,
+		ConnectionStyle: ConnectionStyle{Name: "arc3"},
+	}
+	r := &textRecordingRenderer{}
+
+	annotation.drawArrow(r, ctx, geom.Pt{X: 100, Y: 100}, geom.Pt{X: 200, Y: 100})
+
+	if len(r.pathCalls) < 2 {
+		t.Fatalf("expected line and arrow head paths, got %+v", r.pathCalls)
+	}
+	headBounds, ok := pathBounds(r.pathCalls[len(r.pathCalls)-1].path)
+	if !ok {
+		t.Fatalf("arrow head path has no bounds: %+v", r.pathCalls[len(r.pathCalls)-1].path)
+	}
+	scale := pointsToPixels(ctx.RC, 9)
+	wantWidth := 0.35 * scale
+	wantHeight := 0.20 * scale
+	if !approx(headBounds.Max.X-headBounds.Min.X, wantWidth, 1e-9) ||
+		!approx(headBounds.Max.Y-headBounds.Min.Y, wantHeight, 1e-9) {
+		t.Fatalf("arrow head bounds = %+v, want width %.12g height %.12g from point mutation scale", headBounds, wantWidth, wantHeight)
+	}
+}
+
+func TestAnnotationArrowDefaultShrinkUsesPointUnits(t *testing.T) {
+	ctx := createTestDrawContext()
+	annotation := &Annotation{
+		ArrowWidth:      1,
+		ArrowHeadSize:   9,
+		ArrowStyle:      ArrowStyle{Name: "-"},
+		ConnectionStyle: ConnectionStyle{Name: "arc3"},
+	}
+	r := &textRecordingRenderer{}
+	start := geom.Pt{X: 100, Y: 100}
+	target := geom.Pt{X: 200, Y: 100}
+
+	annotation.drawArrow(r, ctx, start, target)
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("expected one plain connection path, got %+v", r.pathCalls)
+	}
+	path := r.pathCalls[0].path
+	if len(path.V) != 3 {
+		t.Fatalf("connection path vertices = %+v, want quadratic path", path.V)
+	}
+	shrink := pointsToPixels(ctx.RC, 2)
+	if !approx(path.V[0].X, start.X+shrink, 1e-9) || !approx(path.V[0].Y, start.Y, 1e-9) {
+		t.Fatalf("shrunk start = %+v, want %+v", path.V[0], geom.Pt{X: start.X + shrink, Y: start.Y})
+	}
+	if !approx(path.V[2].X, target.X-shrink, 1e-9) || !approx(path.V[2].Y, target.Y, 1e-9) {
+		t.Fatalf("shrunk end = %+v, want %+v", path.V[2], geom.Pt{X: target.X - shrink, Y: target.Y})
+	}
+}
+
 func TestAnnotationAngleUsesRotatedTextDrawer(t *testing.T) {
 	ctx := createTestDrawContext()
 	annotation := &Annotation{
