@@ -141,7 +141,8 @@ func (c *CheckButtons) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	if rowHeight <= 0 {
 		return false, PickInfo{}
 	}
-	row := int((p.Y - panel.Min.Y) / rowHeight)
+	// Display space is y-up: row 0 is drawn at the top (panel.Max.Y).
+	row := int((panel.Max.Y - p.Y) / rowHeight)
 	if row < 0 || row >= len(c.Labels) {
 		return false, PickInfo{}
 	}
@@ -170,8 +171,9 @@ func (c *CheckButtons) Draw(r render.Renderer, ctx *DrawContext) {
 	rowHeight := panel.H() / float64(len(c.Labels))
 	fontSize := resolvedFontSize(c.FontSize, ctx)
 	for i, label := range c.Labels {
-		rowMinY := panel.Min.Y + rowHeight*float64(i)
-		rowMaxY := rowMinY + rowHeight
+		// y-up: stack row 0 at the top (panel.Max.Y) downward.
+		rowMaxY := panel.Max.Y - rowHeight*float64(i)
+		rowMinY := rowMaxY - rowHeight
 		boxSize := math.Min(16, rowHeight*0.42)
 		box := geom.Rect{
 			Min: geom.Pt{X: panel.Min.X + 14, Y: rowMinY + (rowHeight-boxSize)/2},

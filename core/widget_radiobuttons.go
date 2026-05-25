@@ -138,7 +138,8 @@ func (rdo *RadioButtons) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) 
 	if rowHeight <= 0 {
 		return false, PickInfo{}
 	}
-	row := int((p.Y - panel.Min.Y) / rowHeight)
+	// Display space is y-up: row 0 is drawn at the top (panel.Max.Y).
+	row := int((panel.Max.Y - p.Y) / rowHeight)
 	if row < 0 || row >= len(rdo.Labels) {
 		return false, PickInfo{}
 	}
@@ -167,7 +168,7 @@ func (rdo *RadioButtons) Draw(r render.Renderer, ctx *DrawContext) {
 	rowHeight := panel.H() / float64(len(rdo.Labels))
 	fontSize := resolvedFontSize(rdo.FontSize, ctx)
 	for i, label := range rdo.Labels {
-		center := geom.Pt{X: panel.Min.X + 24, Y: panel.Min.Y + rowHeight*float64(i) + rowHeight/2}
+		center := geom.Pt{X: panel.Min.X + 24, Y: panel.Max.Y - rowHeight*float64(i) - rowHeight/2}
 		outer := ellipsePath(16, 16)
 		outerPath := applyAffinePath(outer, patchAffine(center, 0))
 		r.Path(outerPath, &render.Paint{
