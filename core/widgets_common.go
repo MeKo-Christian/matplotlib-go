@@ -12,7 +12,9 @@ import (
 type WidgetCallbackID int64
 
 type widgetCallbackRegistry[T any] struct {
-	next      WidgetCallbackID
+	next  WidgetCallbackID
+	order []WidgetCallbackID
+
 	callbacks map[WidgetCallbackID]T
 }
 
@@ -30,6 +32,7 @@ func (r *widgetCallbackRegistry[T]) add(cb T) WidgetCallbackID {
 	}
 	id := r.next
 	r.callbacks[id] = cb
+	r.order = append(r.order, id)
 	return id
 }
 
@@ -38,13 +41,23 @@ func (r *widgetCallbackRegistry[T]) remove(id WidgetCallbackID) {
 		return
 	}
 	delete(r.callbacks, id)
+	for i, existing := range r.order {
+		if existing == id {
+			r.order = append(r.order[:i], r.order[i+1:]...)
+			return
+		}
+	}
 }
 
 func (r *widgetCallbackRegistry[T]) each(fn func(T)) {
 	if r == nil || fn == nil {
 		return
 	}
-	for _, cb := range r.callbacks {
+	for _, id := range r.order {
+		cb, ok := r.callbacks[id]
+		if !ok {
+			continue
+		}
 		fn(cb)
 	}
 }

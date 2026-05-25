@@ -2836,6 +2836,8 @@ Current slice landed:
 - Tightened slider value snapping so `Slider` and `RangeSlider` initial values
   honor `ValueStep`, sort range endpoints after snapping, and keep rounded
   values inside the configured bounds.
+- Tightened widget callback dispatch so callbacks fire in registration order
+  after removals instead of depending on Go map iteration order.
 - Added explicit public-surface classifications for the high-value backend
   lifecycle/tool rows: `_pylab_helpers.Gcf`, canvas/manager/event/timer
   classes, backend registry lookup/registration, and home/back/forward/pan/

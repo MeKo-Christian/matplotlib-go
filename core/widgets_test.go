@@ -72,6 +72,31 @@ func TestSliderConstructorsSnapInitialValuesToStep(t *testing.T) {
 	}
 }
 
+func TestWidgetCallbackRegistryPreservesRegistrationOrder(t *testing.T) {
+	var got []int
+	var ordered widgetCallbackRegistry[func()]
+	for i := 0; i < 24; i++ {
+		value := i
+		id := ordered.add(func() {
+			got = append(got, value)
+		})
+		if i%5 == 0 {
+			ordered.remove(id)
+		}
+	}
+	ordered.each(func(cb func()) { cb() })
+
+	want := []int{1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23}
+	if len(got) != len(want) {
+		t.Fatalf("callback order length = %d, want %d: %v", len(got), len(want), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("callback order = %v, want %v", got, want)
+		}
+	}
+}
+
 type widgetLayerRecordingRenderer struct {
 	render.NullRenderer
 	events []string
