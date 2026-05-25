@@ -1706,10 +1706,11 @@ func (a *Axes) SecondaryYAxis(side AxisSide, forward func(float64) float64, inve
 
 // layout computes the pixel rectangle for this Axes inside the Figure.
 func (a *Axes) layout(f *Figure) (pixelRect geom.Rect) {
-	// Figure fractions use a bottom-left origin, but display pixels use a
-	// top-left origin. Flip Y so subplot rows land in the expected order.
-	minPt := geom.Pt{X: f.SizePx.X * a.RectFraction.Min.X, Y: f.SizePx.Y * (1 - a.RectFraction.Max.Y)}
-	maxPt := geom.Pt{X: f.SizePx.X * a.RectFraction.Max.X, Y: f.SizePx.Y * (1 - a.RectFraction.Min.Y)}
+	// Display space is y-up with a bottom-left origin (Matplotlib convention).
+	// Figure fractions map directly to display pixels without a Y flip; the
+	// device y-inversion is owned by the backend at rasterization.
+	minPt := geom.Pt{X: f.SizePx.X * a.RectFraction.Min.X, Y: f.SizePx.Y * a.RectFraction.Min.Y}
+	maxPt := geom.Pt{X: f.SizePx.X * a.RectFraction.Max.X, Y: f.SizePx.Y * a.RectFraction.Max.Y}
 	return geom.Rect{Min: minPt, Max: maxPt}
 }
 
@@ -2265,9 +2266,9 @@ func drawAxesLabels(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect,
 			anchor.X -= ctx.RC.AxisLineWidth
 			anchor.Y += ctx.RC.AxisLineWidth
 		}
-		angle := math.Pi / 2
+		angle := -math.Pi / 2
 		if side == AxisRight {
-			angle = -math.Pi / 2
+			angle = math.Pi / 2
 		}
 		switch ren := r.(type) {
 		case render.RotatedTextDrawer:
@@ -2331,7 +2332,7 @@ func titleAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rec
 	}
 	return geom.Pt{
 		X: ctx.TransAxes().Apply(geom.Pt{X: 0.5, Y: 1}).X,
-		Y: topExtent - titlePadPx,
+		Y: topExtent + titlePadPx,
 	}
 }
 
@@ -2343,26 +2344,26 @@ func xLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 		topExtent := spinePixelY(AxisTop, px)
 		if xAxis != nil {
 			if tickBounds, ok := axisTickLabelBounds(xAxis, r, ctx); ok {
-				topExtent = math.Min(topExtent, tickBounds.Min.Y)
+				topExtent = math.Max(topExtent, tickBounds.Max.Y)
 			}
 		}
 		if aligned, ok := alignment.xLabelExtents[alignmentKey(side, spinePixelY(side, px))]; ok {
 			topExtent = aligned
 		}
-		anchor.Y = topExtent - axisLabelPadPx(ctx)
+		anchor.Y = topExtent + axisLabelPadPx(ctx)
 		return anchor, textLayoutVAlignBaseline
 	}
 
 	bottomExtent := spinePixelY(AxisBottom, px)
 	if xAxis != nil {
 		if tickBounds, ok := axisTickLabelBounds(xAxis, r, ctx); ok {
-			bottomExtent = math.Max(bottomExtent, tickBounds.Max.Y)
+			bottomExtent = math.Min(bottomExtent, tickBounds.Min.Y)
 		}
 	}
 	if aligned, ok := alignment.xLabelExtents[alignmentKey(side, spinePixelY(side, px))]; ok {
 		bottomExtent = aligned
 	}
-	anchor.Y = bottomExtent + axisLabelPadPx(ctx)
+	anchor.Y = bottomExtent - axisLabelPadPx(ctx)
 	return anchor, textLayoutVAlignTop
 }
 

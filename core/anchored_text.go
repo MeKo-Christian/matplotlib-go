@@ -313,16 +313,16 @@ func anchoredBoxRect(clip geom.Rect, width, height float64, location LegendLocat
 	switch location {
 	case LegendUpperLeft:
 		minX = clip.Min.X + inset
-		minY = clip.Min.Y + inset
+		minY = clip.Max.Y - inset - height
 	case LegendLowerRight:
 		minX = clip.Max.X - inset - width
-		minY = clip.Max.Y - inset - height
+		minY = clip.Min.Y + inset
 	case LegendLowerLeft:
 		minX = clip.Min.X + inset
-		minY = clip.Max.Y - inset - height
+		minY = clip.Min.Y + inset
 	default:
 		minX = clip.Max.X - inset - width
-		minY = clip.Min.Y + inset
+		minY = clip.Max.Y - inset - height
 	}
 	return geom.Rect{
 		Min: geom.Pt{X: minX, Y: minY},

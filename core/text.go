@@ -502,20 +502,20 @@ func measureMultilineTextBlock(r render.Renderer, ctx *DrawContext, anchor geom.
 	top := anchor.Y
 	switch vAlign {
 	case textLayoutVAlignCenter:
-		top -= block.Height / 2
+		top += block.Height / 2
 	case textLayoutVAlignBottom:
-		top -= block.Height
+		top += block.Height
 	case textLayoutVAlignBaseline:
-		top -= block.LineAscents[0]
+		top += block.LineAscents[0]
 	case textLayoutVAlignCenterBaseline:
-		top -= block.LineAscents[0] / 2
+		top += block.LineAscents[0] / 2
 	}
 	for i, offset := range baselineOffsets {
-		block.BaselineYs[i] = top + offset
+		block.BaselineYs[i] = top - offset
 	}
 	block.Rect = geom.Rect{
-		Min: geom.Pt{X: left, Y: top},
-		Max: geom.Pt{X: left + block.Width, Y: top + block.Height},
+		Min: geom.Pt{X: left, Y: top - block.Height},
+		Max: geom.Pt{X: left + block.Width, Y: top},
 	}
 	return block, true
 }
@@ -1206,10 +1206,10 @@ func annotationVAlign(opt AnnotationOptions) TextVerticalAlign {
 		return opt.VAlign
 	}
 	if opt.OffsetY > 0 {
-		return TextVAlignTop
+		return TextVAlignBottom
 	}
 	if opt.OffsetY < 0 {
-		return TextVAlignBottom
+		return TextVAlignTop
 	}
 	return TextVAlignMiddle
 }
@@ -1226,13 +1226,13 @@ func alignedTextOrigin(anchor geom.Pt, metrics render.TextMetrics, hAlign TextAl
 
 	switch vAlign {
 	case TextVAlignTop:
-		origin.Y += metrics.Ascent
+		origin.Y -= metrics.Ascent
 	case TextVAlignMiddle:
-		origin.Y += (metrics.Ascent - metrics.Descent) / 2
+		origin.Y -= (metrics.Ascent - metrics.Descent) / 2
 	case TextVAlignBottom:
-		origin.Y -= metrics.Descent
+		origin.Y += metrics.Descent
 	case TextVAlignCenterBaseline:
-		origin.Y += metrics.Ascent / 2
+		origin.Y -= metrics.Ascent / 2
 	}
 
 	return origin

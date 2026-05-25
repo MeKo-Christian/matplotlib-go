@@ -37,8 +37,11 @@ func snappedRectPath(rect geom.Rect, centerOnPixels bool) geom.Path {
 }
 
 func snapPixelRect(rect geom.Rect, centerOnPixels bool) (geom.Rect, bool) {
-	minX, maxX, okX := snapRectAxis(rect.Min.X, rect.Max.X, centerOnPixels)
-	minY, maxY, okY := snapRectAxis(rect.Min.Y, rect.Max.Y, centerOnPixels)
+	minX, maxX, okX := snapRectAxis(rect.Min.X, rect.Max.X, centerOnPixels, 1)
+	// Display space is y-up; the backend flips at the device boundary. The
+	// half-pixel centering offset must point the opposite way for Y so stroked
+	// rectangle edges land on the same device pixel after the flip.
+	minY, maxY, okY := snapRectAxis(rect.Min.Y, rect.Max.Y, centerOnPixels, -1)
 	if !okX || !okY {
 		return geom.Rect{}, false
 	}
@@ -48,7 +51,7 @@ func snapPixelRect(rect geom.Rect, centerOnPixels bool) (geom.Rect, bool) {
 	}, true
 }
 
-func snapRectAxis(minVal, maxVal float64, centerOnPixels bool) (float64, float64, bool) {
+func snapRectAxis(minVal, maxVal float64, centerOnPixels bool, offsetSign float64) (float64, float64, bool) {
 	if maxVal <= minVal {
 		return 0, 0, false
 	}
@@ -56,7 +59,7 @@ func snapRectAxis(minVal, maxVal float64, centerOnPixels bool) (float64, float64
 	snap := math.Round
 	offset := 0.0
 	if centerOnPixels {
-		offset = 0.5
+		offset = 0.5 * offsetSign
 	}
 
 	minSnap := snap(minVal) + offset

@@ -8,9 +8,16 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-// Path draws a path with the given paint style.
+// Path draws a path with the given paint style. The incoming path is in y-up
+// display coordinates; it is flipped to the y-down device buffer once here, then
+// the device-space pipeline runs unchanged.
 func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
-	if render.DrawPathWithEffects(r, p, paint, r.Path) {
+	r.pathDevice(r.devPath(p), paint)
+}
+
+// pathDevice draws a path that is already in y-down device coordinates.
+func (r *Renderer) pathDevice(p geom.Path, paint *render.Paint) {
+	if render.DrawPathWithEffects(r, p, paint, r.pathDevice) {
 		return
 	}
 	if r.hasClipPath() {
@@ -25,7 +32,7 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 
 // DrawPathWithEffects applies renderer-neutral path effect passes.
 func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
-	return render.DrawPathWithEffects(r, p, paint, r.Path)
+	return render.DrawPathWithEffects(r, r.devPath(p), paint, r.pathDevice)
 }
 
 func (r *Renderer) drawPathDirect(p geom.Path, paint *render.Paint) {
@@ -161,6 +168,10 @@ func (r *Renderer) buildPath(p geom.Path) {
 }
 
 func (r *Renderer) Image(img render.Image, dst geom.Rect) {
+	// dst arrives in y-up display space; flip to the y-down device buffer.
+	// drawImageDirect places image row 0 at dst.Min.Y (device top), keeping the
+	// image upright.
+	dst = r.devRect(dst)
 	if r.hasClipPath() {
 		bounds, haveBounds := imageDrawBounds(dst)
 		r.withClipPathMaskPremultiplied(bounds, haveBounds, func() {
@@ -211,6 +222,11 @@ func (r *Renderer) drawImageDirect(img render.Image, dst geom.Rect) {
 // ImageTransformed draws an image using the provided affine transformation.
 // Used by core.Image2D when rotation is requested.
 func (r *Renderer) ImageTransformed(img render.Image, _ geom.Rect, affine geom.Affine) {
+	// affine maps image space -> y-up display. Compose the device y-flip
+	// F(y -> H - y) so the final affine maps image space -> y-down device. With
+	// Mul being m∘n (apply n then m), F.Mul(affine) applies affine then F, i.e.
+	// deviceAffine(p) = F(affine(p)). Image rows stay upright.
+	affine = r.deviceFlipAffine().Mul(affine)
 	if r.hasClipPath() {
 		bounds, haveBounds := transformedImageDrawBounds(img, affine)
 		r.withClipPathMaskPremultiplied(bounds, haveBounds, func() {
@@ -219,6 +235,12 @@ func (r *Renderer) ImageTransformed(img render.Image, _ geom.Rect, affine geom.A
 		return
 	}
 	r.drawImageTransformedDirect(img, affine)
+}
+
+// deviceFlipAffine returns the affine F that maps a y-up display point to the
+// y-down device buffer: (x, y) -> (x, H - y).
+func (r *Renderer) deviceFlipAffine() geom.Affine {
+	return geom.Affine{A: 1, B: 0, C: 0, D: -1, E: 0, F: float64(r.height)}
 }
 
 func (r *Renderer) drawImageTransformedDirect(img render.Image, affine geom.Affine) {
@@ -269,22 +291,34 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 	}
 	for i := range batch.Items {
 		item := &batch.Items[i]
-		offset := item.Offset
 		markerPaint := item.Paint
 		markerPaint.Snap = render.SnapAuto
-		if !shouldSnapPath(batch.Marker, &markerPaint) {
-			offset.X = math.Floor(offset.X+0.5) + 0.5
-			offset.Y = math.Floor(offset.Y+0.5) + 0.5
-		}
-		path := transformMarkerPath(batch.Marker, item.Transform, offset)
+		// Build the marker at its y-up display offset, then flip to device.
+		path := transformMarkerPath(batch.Marker, item.Transform, item.Offset)
 		if len(path.C) == 0 {
 			continue
+		}
+		path = r.devPath(path)
+		// Snapping does not commute with the y-flip, so apply pixel-centering in
+		// device space against the device-space offset to stay net-neutral.
+		if !shouldSnapPath(batch.Marker, &markerPaint) {
+			offDev := r.devPt(item.Offset)
+			snapped := geom.Pt{
+				X: math.Floor(offDev.X+0.5) + 0.5,
+				Y: math.Floor(offDev.Y+0.5) + 0.5,
+			}
+			delta := geom.Pt{X: snapped.X - offDev.X, Y: snapped.Y - offDev.Y}
+			for vi := range path.V {
+				path.V[vi].X += delta.X
+				path.V[vi].Y += delta.Y
+			}
 		}
 		paint := markerPaint
 		if !item.Antialiased {
 			paint.Antialias = render.AntialiasOff
 		}
-		r.Path(path, &paint)
+		// path is already in device space; call pathDevice to avoid double-flip.
+		r.pathDevice(path, &paint)
 	}
 	return true
 }
@@ -364,13 +398,26 @@ func (r *Renderer) DrawGouraudTriangles(batch render.GouraudTriangleBatch) bool 
 	if len(batch.Triangles) == 0 || r.ctx == nil || r.ctx.image == nil {
 		return false
 	}
+	// drawGouraudTriangle writes directly into the device buffer, so flip each
+	// triangle's vertices to device space first. The clip-mask bounds are then
+	// derived from the flipped triangles to match.
+	devBatch := render.GouraudTriangleBatch{
+		Triangles: make([]render.GouraudTriangle, len(batch.Triangles)),
+	}
+	for i := range batch.Triangles {
+		tri := batch.Triangles[i]
+		for j := range tri.P {
+			tri.P[j] = r.devPt(tri.P[j])
+		}
+		devBatch.Triangles[i] = tri
+	}
 	draw := func() {
-		for i := range batch.Triangles {
-			r.drawGouraudTriangle(&batch.Triangles[i])
+		for i := range devBatch.Triangles {
+			r.drawGouraudTriangle(&devBatch.Triangles[i])
 		}
 	}
 	if r.hasClipPath() {
-		bounds, haveBounds := gouraudTriangleBatchBounds(batch)
+		bounds, haveBounds := gouraudTriangleBatchBounds(devBatch)
 		r.withClipPathMask(bounds, haveBounds, draw)
 	} else {
 		draw()

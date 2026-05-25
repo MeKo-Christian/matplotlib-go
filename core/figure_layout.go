@@ -133,13 +133,13 @@ func titleTopExtent(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect)
 		childPx := child.adjustedLayout(ax.figure)
 		childCtx := newAxesDrawContext(child, ax.figure, ctx.FigureRect, childPx)
 		childExtent := titleTopExtentForAxes(child, r, childCtx, childPx)
-		extent = math.Min(extent, childExtent)
+		extent = math.Max(extent, childExtent)
 	}
 	return extent
 }
 
 func titleTopExtentForAxes(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect) float64 {
-	extent := px.Min.Y
+	extent := px.Max.Y
 	for _, candidate := range []*Axis{ax.effectiveXAxis(), ax.effectiveTopAxis()} {
 		if candidate == nil || !candidate.ShowLabels {
 			continue
@@ -148,14 +148,14 @@ func titleTopExtentForAxes(ax *Axes, r render.Renderer, ctx *DrawContext, px geo
 			continue
 		}
 		if tickBounds, ok := axisTickLabelBounds(candidate, r, ctx); ok {
-			extent = math.Min(extent, tickBounds.Min.Y)
+			extent = math.Max(extent, tickBounds.Max.Y)
 		}
 	}
 	if ax.XLabel != "" && ax.effectiveXLabelSide() == AxisTop {
 		layout := measureSingleLineTextLayout(r, ax.XLabel, axisLabelFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
 		anchor, vAlign := xLabelAnchorPoint(ax, r, ctx, px, AxisTop, figureTextAlignment{})
 		if bounds, ok := textInkRect(alignedSingleLineOrigin(anchor, layout, TextAlignCenter, vAlign), layout); ok {
-			extent = math.Min(extent, bounds.Min.Y)
+			extent = math.Max(extent, bounds.Max.Y)
 		}
 	}
 	return extent
@@ -169,9 +169,9 @@ func xLabelExtent(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, s
 	}
 	if tickBounds, ok := axisTickLabelBounds(xAxis, r, ctx); ok {
 		if side == AxisTop {
-			return math.Min(extent, tickBounds.Min.Y)
+			return math.Max(extent, tickBounds.Max.Y)
 		}
-		return math.Max(extent, tickBounds.Max.Y)
+		return math.Min(extent, tickBounds.Min.Y)
 	}
 	return extent
 }
@@ -267,9 +267,9 @@ func insetFigureArtistClip(clip geom.Rect, location LegendLocation, offset float
 	}
 	switch location {
 	case LegendLowerLeft, LegendLowerRight:
-		clip.Max.Y -= offset
-	default:
 		clip.Min.Y += offset
+	default:
+		clip.Max.Y -= offset
 	}
 	return clip
 }
@@ -316,7 +316,7 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 
 	if fig.SupTitle != "" {
 		layout := measureSingleLineTextLayout(r, fig.SupTitle, titleSize, fig.RC.FontKey, fig.RC.UseTeX)
-		y := figureRect.Min.Y + figureLabelTopInsetPx(fig, ctx)
+		y := figureRect.Max.Y - figureLabelTopInsetPx(fig, ctx)
 		anchor := geom.Pt{
 			X: centerX,
 			Y: y,
@@ -334,7 +334,7 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 
 	if fig.SupXLabel != "" {
 		layout := measureSingleLineTextLayout(r, fig.SupXLabel, labelSize, fig.RC.FontKey, fig.RC.UseTeX)
-		y := figureRect.Max.Y - figureLabelBottomInsetPx(fig, ctx)
+		y := figureRect.Min.Y + figureLabelBottomInsetPx(fig, ctx)
 		anchor := geom.Pt{
 			X: centerX,
 			Y: y,

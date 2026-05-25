@@ -386,6 +386,8 @@ func (r *Renderer) drawTextDirect(text string, origin geom.Pt, size float64, tex
 
 	switch font.backend {
 	case textBackendRaster:
+		// drawRasterText flips the origin to device internally; drawTextPathFallback
+		// routes through r.Path which flips itself. Both receive the display origin.
 		if r.drawRasterText(text, font.face, origin, font.size, textColor) {
 			return
 		}
@@ -393,14 +395,15 @@ func (r *Renderer) drawTextDirect(text string, origin geom.Pt, size float64, tex
 		if r.drawTextPathFallback(text, origin, sizePx, textColor, font.fontPath) {
 			return
 		}
-		if r.drawEmergencyGSVText(text, origin, font.size, textColor) {
+		// drawEmergencyGSVText draws directly through the painter (device space).
+		if r.drawEmergencyGSVText(text, r.devPt(origin), font.size, textColor) {
 			return
 		}
 		return
 	case textBackendGSV:
-		_ = r.drawEmergencyGSVText(text, origin, font.size, textColor)
+		_ = r.drawEmergencyGSVText(text, r.devPt(origin), font.size, textColor)
 	default:
-		_ = r.drawEmergencyGSVText(text, origin, size, textColor)
+		_ = r.drawEmergencyGSVText(text, r.devPt(origin), size, textColor)
 		return
 	}
 }
@@ -443,16 +446,26 @@ func (r *Renderer) drawTextRotatedDirect(text string, anchor geom.Pt, size, angl
 	origin := rotatedTextOrigin(anchor, metrics, bounds, haveBounds)
 	font := r.configureTextFont(size, fontKey)
 
+	// The painter transform operates in y-down device space. The geometry it
+	// receives is flipped to device (path fallback flips via r.Path; the direct
+	// outline/GSV draws below use a device origin). Rotate about the DEVICE
+	// anchor; the rotation sign stays -angle so a positive display-space (CCW)
+	// rotation still renders CCW visually, matching the pre-y-flip behavior.
+	devAnchor := r.devPt(anchor)
+	devOrigin := r.devPt(origin)
+
 	r.ctx.PushTransform()
 	defer r.ctx.PopTransform()
 
-	r.ctx.Translate(-anchor.X, -anchor.Y)
+	r.ctx.Translate(-devAnchor.X, -devAnchor.Y)
 	r.ctx.Rotate(-angle)
-	r.ctx.Translate(anchor.X, anchor.Y)
+	r.ctx.Translate(devAnchor.X, devAnchor.Y)
 
 	if fontReference(font.face) != "" {
 		sizePx := r.fontPixelSize(font.size)
 		fontKey := fontReference(font.face)
+		// drawTextPathFallback routes through r.Path, which flips the display
+		// origin to device itself, so pass the un-flipped display origin here.
 		if r.drawTextPathFallback(text, origin, sizePx, textColor, fontKey) {
 			return
 		}
@@ -460,7 +473,9 @@ func (r *Renderer) drawTextRotatedDirect(text string, anchor geom.Pt, size, angl
 			if face, err := r.configureOutlineFont(font.fontPath, sizePx); err == nil {
 				r.ctx.SetFillColor(renderColorToAGG(textColor))
 				r.ctx.SetStrokeColor(renderColorToAGG(textColor))
-				if drawTrueTypeOutlineText(r.ctx, face, origin.X, origin.Y, text) {
+				// drawTrueTypeOutlineText draws directly through the painter, so
+				// it needs the device-space origin.
+				if drawTrueTypeOutlineText(r.ctx, face, devOrigin.X, devOrigin.Y, text) {
 					return
 				}
 			}
@@ -468,10 +483,11 @@ func (r *Renderer) drawTextRotatedDirect(text string, anchor geom.Pt, size, angl
 	}
 
 	if font.backend == textBackendGSV {
-		_ = r.drawEmergencyGSVText(text, origin, font.size, textColor)
+		// drawEmergencyGSVText draws directly through the painter (device space).
+		_ = r.drawEmergencyGSVText(text, devOrigin, font.size, textColor)
 		return
 	}
-	_ = r.drawEmergencyGSVText(text, origin, size, textColor)
+	_ = r.drawEmergencyGSVText(text, devOrigin, size, textColor)
 }
 
 func (r *Renderer) fontPixelSize(size float64) float64 {
@@ -620,11 +636,16 @@ func (r *Renderer) drawTextVerticalWithFontContext(text string, center geom.Pt, 
 		if metrics.W <= 0 || metrics.H <= 0 {
 			return
 		}
+		// drawTextDirect flips the baseline origin to device itself, so the
+		// painter transform must rotate about the DEVICE center. The angle sign
+		// is negated (Rotate(+π/2) = Rotate(-(-π/2))) to match drawTextRotatedDirect's
+		// device-space convention, keeping the visual orientation unchanged.
+		devCenter := r.devPt(center)
 		r.ctx.PushTransform()
 		defer r.ctx.PopTransform()
-		r.ctx.Translate(center.X, center.Y)
-		r.ctx.Rotate(-math.Pi / 2)
-		r.ctx.Translate(-center.X, -center.Y)
+		r.ctx.Translate(devCenter.X, devCenter.Y)
+		r.ctx.Rotate(math.Pi / 2)
+		r.ctx.Translate(-devCenter.X, -devCenter.Y)
 		r.drawTextDirect(text, geom.Pt{X: center.X + metrics.Descent, Y: center.Y}, size, textColor, fontKey)
 		return
 	}

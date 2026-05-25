@@ -247,9 +247,9 @@ func (a *Axis) drawSpine(r render.Renderer, ctx *DrawContext) {
 // so boundaries are shifted by 0.5 px instead of landing on pixel edges.
 func spinePixelEndpoints(side AxisSide, px geom.Rect) (geom.Pt, geom.Pt) {
 	x1 := math.Round(px.Min.X) + 0.5
-	y1 := math.Round(px.Min.Y) + 0.5
+	y1 := math.Round(px.Min.Y) - 0.5
 	x2 := math.Round(px.Max.X) + 0.5
-	y2 := math.Round(px.Max.Y) + 0.5
+	y2 := math.Round(px.Max.Y) - 0.5
 
 	switch side {
 	case AxisBottom:
@@ -290,14 +290,14 @@ func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, ti
 		spineY := getSpinePosition(a, ctx)
 		spinePixel := axisTickDisplayPoint(a, ctx, tickValue, true, spineY)
 		spinePixel.X = math.Round(spinePixel.X) + 0.5
-		spinePixel.Y = math.Round(spinePixel.Y) + 0.5
+		spinePixel.Y = math.Round(spinePixel.Y) - 0.5
 
 		p1, p2 = axisTickSegment(a, spinePixel, tickSize, true)
 	} else {
 		spineX := getSpinePosition(a, ctx)
 		spinePixel := axisTickDisplayPoint(a, ctx, tickValue, false, spineX)
 		spinePixel.X = math.Round(spinePixel.X) + 0.5
-		spinePixel.Y = math.Round(spinePixel.Y) + 0.5
+		spinePixel.Y = math.Round(spinePixel.Y) - 0.5
 
 		p1, p2 = axisTickSegment(a, spinePixel, tickSize, false)
 	}
@@ -646,13 +646,13 @@ func tickLabelOrigin(a *Axis, ctx *DrawContext, tickValue float64, layout single
 
 		switch a.Side {
 		case AxisBottom:
-			anchor := geom.Pt{X: tickPos.X, Y: tickPos.Y + labelPadPx}
+			anchor := geom.Pt{X: tickPos.X, Y: tickPos.Y - labelPadPx}
 			return geom.Pt{
 				X: anchor.X - tickLabelLeftOffset(hAlign, layout),
 				Y: anchor.Y + textBaselineOffset(layout, vAlign),
 			}, true
 		case AxisTop:
-			anchor := geom.Pt{X: tickPos.X, Y: tickPos.Y - labelPadPx}
+			anchor := geom.Pt{X: tickPos.X, Y: tickPos.Y + labelPadPx}
 			return geom.Pt{
 				X: anchor.X - tickLabelLeftOffset(hAlign, layout),
 				Y: anchor.Y + textBaselineOffset(layout, vAlign),
@@ -710,8 +710,8 @@ func axisSpinePixelEndpoints(axis *Axis, ctx *DrawContext, px geom.Rect) (geom.P
 		p2 := ctx.DataToPixel.Apply(geom.Pt{X: xMax, Y: y})
 		p1.X = math.Round(p1.X) + 0.5
 		p2.X = math.Round(p2.X) + 0.5
-		p1.Y = math.Round(p1.Y) + 0.5
-		p2.Y = math.Round(p2.Y) + 0.5
+		p1.Y = math.Round(p1.Y) - 0.5
+		p2.Y = math.Round(p2.Y) - 0.5
 		return p1, p2
 	case AxisLeft, AxisRight:
 		yMin, yMax := ctx.DataToPixel.YScale.Domain()
@@ -720,8 +720,8 @@ func axisSpinePixelEndpoints(axis *Axis, ctx *DrawContext, px geom.Rect) (geom.P
 		p2 := ctx.DataToPixel.Apply(geom.Pt{X: x, Y: yMax})
 		p1.X = math.Round(p1.X) + 0.5
 		p2.X = math.Round(p2.X) + 0.5
-		p1.Y = math.Round(p1.Y) + 0.5
-		p2.Y = math.Round(p2.Y) + 0.5
+		p1.Y = math.Round(p1.Y) - 0.5
+		p2.Y = math.Round(p2.Y) - 0.5
 		return p1, p2
 	default:
 		return geom.Pt{}, geom.Pt{}
@@ -751,17 +751,17 @@ func axisTickSegment(axis *Axis, spine geom.Pt, tickSize float64, isXAxis bool) 
 	switch axis.TickDirection {
 	case TickDirectionIn:
 		if isXAxis {
-			return spine, geom.Pt{X: spine.X, Y: spine.Y + inward}
+			return spine, geom.Pt{X: spine.X, Y: spine.Y - inward}
 		}
 		return spine, geom.Pt{X: spine.X + inward, Y: spine.Y}
 	case TickDirectionInOut:
 		if isXAxis {
-			return geom.Pt{X: spine.X, Y: spine.Y - outward/2}, geom.Pt{X: spine.X, Y: spine.Y + outward/2}
+			return geom.Pt{X: spine.X, Y: spine.Y + outward/2}, geom.Pt{X: spine.X, Y: spine.Y - outward/2}
 		}
 		return geom.Pt{X: spine.X - outward/2, Y: spine.Y}, geom.Pt{X: spine.X + outward/2, Y: spine.Y}
 	default:
 		if isXAxis {
-			return spine, geom.Pt{X: spine.X, Y: spine.Y + outward}
+			return spine, geom.Pt{X: spine.X, Y: spine.Y - outward}
 		}
 		return spine, geom.Pt{X: spine.X + outward, Y: spine.Y}
 	}
@@ -818,16 +818,16 @@ func (a *Axis) ResetSpinePosition() {
 func textInkRect(origin geom.Pt, layout singleLineTextLayout) (geom.Rect, bool) {
 	if layout.HaveInkBounds && layout.InkBounds.W > 0 && layout.InkBounds.H > 0 {
 		return geom.Rect{
-			Min: geom.Pt{X: origin.X + layout.InkBounds.X, Y: origin.Y + layout.InkBounds.Y},
-			Max: geom.Pt{X: origin.X + layout.InkBounds.X + layout.InkBounds.W, Y: origin.Y + layout.InkBounds.Y + layout.InkBounds.H},
+			Min: geom.Pt{X: origin.X + layout.InkBounds.X, Y: origin.Y - (layout.InkBounds.Y + layout.InkBounds.H)},
+			Max: geom.Pt{X: origin.X + layout.InkBounds.X + layout.InkBounds.W, Y: origin.Y - layout.InkBounds.Y},
 		}, true
 	}
 	if layout.Width <= 0 || layout.Height <= 0 {
 		return geom.Rect{}, false
 	}
 	return geom.Rect{
-		Min: geom.Pt{X: origin.X, Y: origin.Y - layout.Ascent},
-		Max: geom.Pt{X: origin.X + layout.Width, Y: origin.Y - layout.Ascent + layout.Height},
+		Min: geom.Pt{X: origin.X, Y: origin.Y - layout.Descent},
+		Max: geom.Pt{X: origin.X + layout.Width, Y: origin.Y + layout.Ascent},
 	}, true
 }
 
@@ -1390,13 +1390,13 @@ func alignedTextLayoutRect(anchor geom.Pt, layout singleLineTextLayout, hAlign T
 	var minY float64
 	switch vAlign {
 	case textLayoutVAlignTop:
-		minY = anchor.Y
-	case textLayoutVAlignBottom:
 		minY = anchor.Y - height
+	case textLayoutVAlignBottom:
+		minY = anchor.Y
 	case textLayoutVAlignCenter, textLayoutVAlignCenterBaseline:
 		minY = anchor.Y - height/2
 	default:
-		minY = anchor.Y - layout.Ascent
+		minY = anchor.Y - layout.Descent
 	}
 
 	return geom.Rect{

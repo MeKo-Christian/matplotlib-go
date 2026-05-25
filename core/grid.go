@@ -416,7 +416,7 @@ func (g *Grid) drawLine(r render.Renderer, ctx *DrawContext, tickValue float64, 
 		xMin, xMax := ctx.DataToPixel.XScale.Domain()
 		p1 = ctx.DataToPixel.Apply(geom.Pt{X: xMin, Y: tickValue})
 		p2 = ctx.DataToPixel.Apply(geom.Pt{X: xMax, Y: tickValue})
-		y := math.Round(p1.Y) + 0.5
+		y := math.Round(p1.Y) - 0.5
 		p1.Y = y
 		p2.Y = y
 	}

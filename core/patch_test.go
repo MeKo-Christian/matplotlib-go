@@ -462,6 +462,25 @@ func TestConnectionStyleArc3ZeroRadKeepsQuadraticPath(t *testing.T) {
 	}
 }
 
+func TestConnectionStyleArc3RadUsesDisplayYDownCoordinates(t *testing.T) {
+	style, ok := ConnectionStyleFromString("arc3,rad=0.25")
+	if !ok {
+		t.Fatal("ConnectionStyleFromString(arc3,rad=0.25) returned !ok")
+	}
+
+	start := geom.Pt{X: 100, Y: 120}
+	end := geom.Pt{X: 200, Y: 170}
+	path := style.connect(start, end, 0, 0)
+
+	wantCtrl := geom.Pt{
+		X: (start.X+end.X)/2 - style.Rad*(end.Y-start.Y),
+		Y: (start.Y+end.Y)/2 + style.Rad*(end.X-start.X),
+	}
+	if len(path.V) != 3 || !approxPt(path.V[1], wantCtrl, 1e-9) {
+		t.Fatalf("arc3 control = %+v, want y-down Matplotlib-equivalent control %+v", path.V, wantCtrl)
+	}
+}
+
 func TestConnectionStyleArcUsesMatplotlibDefaultAngles(t *testing.T) {
 	style, ok := ConnectionStyleFromString("arc,armA=10,armB=5")
 	if !ok {

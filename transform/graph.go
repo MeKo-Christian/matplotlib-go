@@ -151,12 +151,15 @@ func NewUnitRectTransform(dst geom.Rect) SeparableT {
 	)
 }
 
-// NewDisplayRectTransform maps Matplotlib-style fraction coordinates (origin at bottom-left)
-// into display-space pixels (origin at top-left).
+// NewDisplayRectTransform maps Matplotlib-style fraction coordinates into
+// display-space pixels. Display space is y-up with the origin at the
+// bottom-left, exactly like Matplotlib: fraction 0 lands at dst.Min.Y (bottom)
+// and fraction 1 at dst.Max.Y (top). Backends own the device y-inversion at
+// rasterization (see docs/adr/0003-display-coordinate-contract.md).
 func NewDisplayRectTransform(dst geom.Rect) SeparableT {
 	return NewSeparable(
 		NewLinearAxis(0, 1, dst.Min.X, dst.Max.X),
-		NewLinearAxis(0, 1, dst.Max.Y, dst.Min.Y),
+		NewLinearAxis(0, 1, dst.Min.Y, dst.Max.Y),
 	)
 }
 

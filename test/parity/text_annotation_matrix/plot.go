@@ -73,7 +73,7 @@ func addAnnotationMatrix(ax *core.Axes) {
 	arrow, _ := core.ArrowStyleFromString("-|>,head_length=0.35,head_width=0.20")
 	ax.Annotate("bbox arrow", 2.1, 2.15, core.AnnotationOptions{
 		OffsetX:         pt(72),
-		OffsetY:         pt(40),
+		OffsetY:         pt(-40),
 		FontSize:        11,
 		Color:           render.Color{R: 0.15, G: 0.18, B: 0.22, A: 1},
 		ArrowColor:      render.Color{R: 0.18, G: 0.39, B: 0.70, A: 1},
@@ -94,7 +94,7 @@ func addAnnotationMatrix(ax *core.Axes) {
 	clip := true
 	ax.Annotate("clipped", -0.4, 4.7, core.AnnotationOptions{
 		OffsetX:         pt(40),
-		OffsetY:         pt(20),
+		OffsetY:         pt(-20),
 		AnnotationClip:  &clip,
 		ArrowColor:      render.Color{R: 0.7, G: 0.1, B: 0.1, A: 1},
 		ConnectionStyle: arc,

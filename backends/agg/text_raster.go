@@ -132,6 +132,11 @@ func (r *Renderer) drawRasterText(text string, face render.FontFace, origin geom
 		return false
 	}
 
+	// origin arrives in y-up display space. Flip the baseline to the y-down
+	// device buffer (matplotlib flipy()==True: glyph positions flip, the glyph
+	// bitmaps stay upright). The upright bitmap rasterization below is unchanged.
+	origin = r.devPt(origin)
+
 	shaped, ok := render.ShapeText(text, geom.Pt{}, r.fontPixelSize(size), render.TextShapingOptions{FontKey: fontKey})
 	if !ok {
 		return false

@@ -67,13 +67,13 @@ func texEnabled(useTeX []bool) bool {
 func textBaselineOffset(layout singleLineTextLayout, align textLayoutVerticalAlign) float64 {
 	switch align {
 	case textLayoutVAlignTop:
-		return layout.Ascent
+		return -layout.Ascent
 	case textLayoutVAlignBottom:
-		return -layout.Descent
+		return layout.Descent
 	case textLayoutVAlignCenter:
-		return (layout.Ascent - layout.Descent) / 2
+		return -(layout.Ascent - layout.Descent) / 2
 	case textLayoutVAlignCenterBaseline:
-		return layout.Ascent / 2
+		return -layout.Ascent / 2
 	default:
 		return 0
 	}

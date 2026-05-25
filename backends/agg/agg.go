@@ -285,6 +285,10 @@ func (r *Renderer) CopyFromBBox(bbox geom.Rect) *BufferRegion {
 		return nil
 	}
 
+	// bbox arrives in y-up display space; flip to the y-down device buffer so
+	// the captured rows match matplotlib's copy_from_bbox (height - y).
+	bbox = r.devRect(bbox)
+
 	minX := int(math.Floor(bbox.Min.X))
 	minY := int(math.Floor(bbox.Min.Y))
 	maxX := int(math.Ceil(bbox.Max.X))
@@ -329,6 +333,12 @@ func (r *Renderer) CopyFromBBox(bbox geom.Rect) *BufferRegion {
 
 // RestoreRegion composits a previously captured buffer region back onto the
 // current surface. A nil bbox restores the full region.
+//
+// TODO(y-flip): region.Rect is captured in y-down device space by CopyFromBbox,
+// and the crop/offset arithmetic below operates in device/image-local space. If
+// callers ever pass bbox/offset in y-up display coordinates they must be flipped
+// here. This path is not exercised by the static PNG goldens, so it is left
+// device-space for now.
 func (r *Renderer) RestoreRegion(region *BufferRegion, bbox *geom.Rect, offset geom.Pt) {
 	if r == nil || region == nil || region.Image == nil || r.ctx == nil {
 		return
@@ -406,6 +416,9 @@ func (r *Renderer) Restore() {
 
 // ClipRect sets a rectangular clip region.
 func (r *Renderer) ClipRect(rect geom.Rect) {
+	// rect arrives in y-up display space; flip to the y-down device buffer so
+	// the intersect/applyClipRect logic stays in device space, unchanged.
+	rect = r.devRect(rect)
 	if r.clipRect == nil {
 		r.clipRect = &rect
 	} else {
@@ -420,5 +433,7 @@ func (r *Renderer) ClipPath(p geom.Path) {
 	if len(p.C) == 0 || !p.Validate() {
 		return
 	}
-	r.clipPaths = append(r.clipPaths, clonePath(p))
+	// Store the clip path in y-down device space so it matches the device-space
+	// geometry handed to the clip-mask pipeline.
+	r.clipPaths = append(r.clipPaths, clonePath(r.devPath(p)))
 }
