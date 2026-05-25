@@ -1124,8 +1124,11 @@ func colorbarCellRect(clip geom.Rect, index, count int, orientation string) geom
 			Max: geom.Pt{X: x1, Y: clip.Max.Y},
 		}
 	}
-	y0 := clip.Max.Y - clip.H()*float64(index+1)/float64(count)
-	y1 := clip.Max.Y - clip.H()*float64(index)/float64(count)
+	// Display space is y-up: index 0 (the lowest scalar value) belongs at the
+	// bottom of the bar (clip.Min.Y) and the last index at the top (clip.Max.Y),
+	// matching the tick labels the axis system now lays out y-up.
+	y0 := clip.Min.Y + clip.H()*float64(index)/float64(count)
+	y1 := clip.Min.Y + clip.H()*float64(index+1)/float64(count)
 	return geom.Rect{
 		Min: geom.Pt{X: clip.Min.X, Y: y0},
 		Max: geom.Pt{X: clip.Max.X, Y: y1},
@@ -1145,8 +1148,10 @@ func colorbarBoundaryCellRect(clip geom.Rect, low, high, vmin, vmax float64, ori
 			Max: geom.Pt{X: x1, Y: clip.Max.Y},
 		}
 	}
-	y0 := clip.Max.Y - clip.H()*((high-vmin)/span)
-	y1 := clip.Max.Y - clip.H()*((low-vmin)/span)
+	// y-up: the low boundary maps to the bottom (clip.Min.Y), the high boundary
+	// to the top (clip.Max.Y).
+	y0 := clip.Min.Y + clip.H()*((low-vmin)/span)
+	y1 := clip.Min.Y + clip.H()*((high-vmin)/span)
 	return geom.Rect{
 		Min: geom.Pt{X: clip.Min.X, Y: y0},
 		Max: geom.Pt{X: clip.Max.X, Y: y1},

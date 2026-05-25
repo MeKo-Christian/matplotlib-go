@@ -261,11 +261,14 @@ func measureAxesDecorationPadding(ax *Axes, fig *Figure, r render.Renderer, vp g
 		union = unionRect(union, bounds)
 	}
 
+	// Display space is y-up: the visual top edge is px.Max.Y and the bottom edge
+	// is px.Min.Y. Decorations above the axes (title, top ticks) extend past
+	// px.Max.Y; decorations below (x-label, bottom ticks) extend past px.Min.Y.
 	return axesDecorationPadding{
 		left:   math.Max(0, px.Min.X-union.Min.X),
 		right:  math.Max(0, union.Max.X-px.Max.X),
-		top:    math.Max(0, px.Min.Y-union.Min.Y),
-		bottom: math.Max(0, union.Max.Y-px.Max.Y),
+		top:    math.Max(0, union.Max.Y-px.Max.Y),
+		bottom: math.Max(0, px.Min.Y-union.Min.Y),
 	}
 }
 

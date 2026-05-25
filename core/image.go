@@ -46,8 +46,8 @@ func (i *Image2D) Draw(r render.Renderer, ctx *DrawContext) {
 func matplotlibImageDrawRect(dst geom.Rect) geom.Rect {
 	// Matplotlib's Image._make_image(..., round_to_pixel_border=True) rounds
 	// the resampled image buffer up to whole output pixels and keeps the
-	// original left/bottom anchor. In top-left display coordinates that means
-	// preserving left and bottom, then extending right/up by the ceiled size.
+	// original left/bottom anchor. Display space is y-up, so the bottom anchor is
+	// dst.Min.Y: preserve left/bottom and extend right/up by the ceiled size.
 	width := math.Ceil(math.Abs(dst.W()))
 	height := math.Ceil(math.Abs(dst.H()))
 	if width <= 0 || height <= 0 {
@@ -56,11 +56,11 @@ func matplotlibImageDrawRect(dst geom.Rect) geom.Rect {
 	return geom.Rect{
 		Min: geom.Pt{
 			X: dst.Min.X,
-			Y: dst.Max.Y - height,
+			Y: dst.Min.Y,
 		},
 		Max: geom.Pt{
 			X: dst.Min.X + width,
-			Y: dst.Max.Y,
+			Y: dst.Min.Y + height,
 		},
 	}
 }
@@ -291,19 +291,23 @@ func imageTransform(dst geom.Rect, raster render.Image, anchor geom.Pt, angle fl
 
 	sx := dst.W() / float64(srcW)
 	sy := dst.H() / float64(srcH)
+	// Display space is y-up. The raster's row 0 is its top row (origin handling
+	// already baked into the bitmap), so it must map to the top edge dst.Max.Y
+	// and rows advance downward to dst.Min.Y. This keeps the rotated path's
+	// orientation identical to the axis-aligned drawImageDirect path at angle 0.
 	scale := geom.Affine{
 		A: sx,
-		D: sy,
+		D: -sy,
 		E: dst.Min.X,
-		F: dst.Min.Y,
+		F: dst.Max.Y,
 	}
 
 	cos := math.Cos(angle)
 	sin := math.Sin(angle)
 	rot := geom.Affine{
 		A: cos,
-		B: -sin,
-		C: sin,
+		B: sin,
+		C: -sin,
 		D: cos,
 		E: anchor.X,
 		F: anchor.Y,

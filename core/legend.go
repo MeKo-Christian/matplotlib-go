@@ -315,13 +315,13 @@ func (l *Legend) Draw(r render.Renderer, ctx *DrawContext) {
 		})
 	}
 
-	y := box.Min.Y + l.Padding
+	y := box.Max.Y - l.Padding
 	if l.Title != "" {
 		drawDisplayText(
 			textRen,
 			l.Title,
 			alignedSingleLineOrigin(
-				geom.Pt{X: box.Min.X + l.Padding + contentWidth/2, Y: y + titleHeight/2},
+				geom.Pt{X: box.Min.X + l.Padding + contentWidth/2, Y: y - titleHeight/2},
 				titleLayout,
 				TextAlignCenter,
 				textLayoutVAlignCenter,
@@ -331,7 +331,7 @@ func (l *Legend) Draw(r render.Renderer, ctx *DrawContext) {
 			ctx.RC.FontKey,
 			ctx.RC.UseTeX,
 		)
-		y += titleHeight + l.RowGap
+		y -= titleHeight + l.RowGap
 	}
 
 	x := box.Min.X + l.Padding
@@ -340,7 +340,7 @@ func (l *Legend) Draw(r render.Renderer, ctx *DrawContext) {
 		for i := col.Start; i < col.End; i++ {
 			entry := entries[i]
 			rowHeight := rowHeights[i]
-			centerY := columnY + rowHeight/2
+			centerY := columnY - rowHeight/2
 			labelLayout := labelLayouts[i]
 
 			l.drawSample(r, entry, geom.Rect{
@@ -363,7 +363,7 @@ func (l *Legend) Draw(r render.Renderer, ctx *DrawContext) {
 				ctx.RC.UseTeX,
 			)
 
-			columnY += rowHeight + l.RowGap
+			columnY -= rowHeight + l.RowGap
 		}
 		x += col.Width + layout.ColumnSpacing
 	}

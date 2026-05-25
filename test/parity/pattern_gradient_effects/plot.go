@@ -37,12 +37,12 @@ func Render() image.Image {
 type effectPaintArtist struct{}
 
 func (effectPaintArtist) Draw(r render.Renderer, _ *core.DrawContext) {
-	linear := rectPath(42, 42, 205, 142)
+	linear := rectPath(42, 318, 205, 218)
 	r.Path(linear, &render.Paint{
 		FillGradient: render.GradientFill{
 			Kind:  render.LinearGradient,
-			Start: geom.Pt{X: 42, Y: 92},
-			End:   geom.Pt{X: 205, Y: 92},
+			Start: geom.Pt{X: 42, Y: 268},
+			End:   geom.Pt{X: 205, Y: 268},
 			Stops: []render.GradientStop{
 				{Offset: 0, Color: render.Color{R: 0.90, G: 0.16, B: 0.18, A: 1}},
 				{Offset: 0.52, Color: render.Color{R: 0.96, G: 0.78, B: 0.20, A: 1}},
@@ -53,11 +53,11 @@ func (effectPaintArtist) Draw(r render.Renderer, _ *core.DrawContext) {
 		LineWidth: 1.8,
 	})
 
-	radial := rectPath(235, 42, 398, 142)
+	radial := rectPath(235, 318, 398, 218)
 	r.Path(radial, &render.Paint{
 		FillGradient: render.GradientFill{
 			Kind:   render.RadialGradient,
-			Center: geom.Pt{X: 316, Y: 92},
+			Center: geom.Pt{X: 316, Y: 268},
 			Radius: 82,
 			Stops: []render.GradientStop{
 				{Offset: 0, Color: render.Color{R: 0.98, G: 0.98, B: 0.86, A: 1}},
@@ -74,10 +74,10 @@ func (effectPaintArtist) Draw(r render.Renderer, _ *core.DrawContext) {
 	tile.MoveTo(geom.Pt{X: -4, Y: 6})
 	tile.LineTo(geom.Pt{X: 6, Y: -4})
 	pattern := geom.Path{}
-	pattern.MoveTo(geom.Pt{X: 455, Y: 44})
-	pattern.LineTo(geom.Pt{X: 594, Y: 54})
-	pattern.LineTo(geom.Pt{X: 570, Y: 145})
-	pattern.LineTo(geom.Pt{X: 430, Y: 128})
+	pattern.MoveTo(geom.Pt{X: 455, Y: 316})
+	pattern.LineTo(geom.Pt{X: 594, Y: 306})
+	pattern.LineTo(geom.Pt{X: 570, Y: 215})
+	pattern.LineTo(geom.Pt{X: 430, Y: 232})
 	pattern.Close()
 	r.Path(pattern, &render.Paint{
 		FillPattern: render.PatternFill{
@@ -92,7 +92,7 @@ func (effectPaintArtist) Draw(r render.Renderer, _ *core.DrawContext) {
 		LineWidth: 1.8,
 	})
 
-	stroked := rectPath(86, 210, 228, 298)
+	stroked := rectPath(86, 150, 228, 62)
 	r.Path(stroked, &render.Paint{
 		Fill:      render.Color{R: 0.12, G: 0.56, B: 0.40, A: 1},
 		Stroke:    render.Color{R: 0.02, G: 0.09, B: 0.16, A: 1},
@@ -104,7 +104,7 @@ func (effectPaintArtist) Draw(r render.Renderer, _ *core.DrawContext) {
 		},
 	})
 
-	filtered := rectPath(362, 210, 506, 298)
+	filtered := rectPath(362, 150, 506, 62)
 	r.Path(filtered, &render.Paint{
 		Fill: render.Color{R: 0.10, G: 0.28, B: 0.74, A: 1},
 		PathEffects: []render.PathEffect{

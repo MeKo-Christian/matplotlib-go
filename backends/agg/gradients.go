@@ -37,11 +37,15 @@ func (r *Renderer) applyGradientFill(paint *render.Paint) bool {
 	first = colorWithForcedAlpha(first, paint)
 	last = colorWithForcedAlpha(last, paint)
 
+	// Gradient endpoints arrive in y-up display space, but applyGradientFill
+	// runs inside the device-space fill pipeline (the path is already flipped to
+	// the y-down buffer). Flip the gradient Y coordinates to device space so the
+	// span generator is aligned with the rasterized path. Radius is unsigned.
 	switch g.Kind {
 	case render.LinearGradient:
 		r.ctx.SetFillLinearGradient(
-			g.Start.X, g.Start.Y,
-			g.End.X, g.End.Y,
+			g.Start.X, r.devY(g.Start.Y),
+			g.End.X, r.devY(g.End.Y),
 			renderColorToAGG(first), renderColorToAGG(last),
 			1.0,
 		)
@@ -50,7 +54,7 @@ func (r *Renderer) applyGradientFill(paint *render.Paint) bool {
 		if len(stops) >= 3 {
 			mid := colorWithForcedAlpha(stops[len(stops)/2].Color, paint)
 			r.ctx.SetFillRadialGradientMultiStop(
-				g.Center.X, g.Center.Y, g.Radius,
+				g.Center.X, r.devY(g.Center.Y), g.Radius,
 				renderColorToAGG(first),
 				renderColorToAGG(mid),
 				renderColorToAGG(last),
@@ -58,7 +62,7 @@ func (r *Renderer) applyGradientFill(paint *render.Paint) bool {
 			return true
 		}
 		r.ctx.SetFillRadialGradient(
-			g.Center.X, g.Center.Y, g.Radius,
+			g.Center.X, r.devY(g.Center.Y), g.Radius,
 			renderColorToAGG(first), renderColorToAGG(last),
 			1.0,
 		)
@@ -108,12 +112,16 @@ func (r *Renderer) drawPatternFill(clipPath geom.Path, paint *render.Paint) bool
 	startY := cell.Min.Y + math.Floor((bounds.Min.Y-cell.Min.Y)/cellH-1)*cellH
 	endY := bounds.Max.Y + cellH
 
+	// drawPatternFill runs inside the device-space pipeline: clipPath, bounds and
+	// the tiling loop are all computed in y-down device coordinates. Emit the
+	// tiles via pathDevice (no further flip); the public Path would re-flip them
+	// out of the device clip region, leaving the fill empty.
 	bg := colorWithForcedAlpha(pattern.Background, paint)
 	fg := colorWithForcedAlpha(pattern.Foreground, paint)
 	for y := startY; y <= endY; y += cellH {
 		for x := startX; x <= endX; x += cellW {
 			if bg.A > 0 {
-				r.Path(patternCellRect(x, y, cellW, cellH), &render.Paint{
+				r.pathDevice(patternCellRect(x, y, cellW, cellH), &render.Paint{
 					Fill:      bg,
 					Antialias: paint.Antialias,
 					Snap:      paint.Snap,
@@ -135,7 +143,7 @@ func (r *Renderer) drawPatternFill(clipPath geom.Path, paint *render.Paint) bool
 			} else {
 				tilePaint.Fill = fg
 			}
-			r.Path(tilePath, &tilePaint)
+			r.pathDevice(tilePath, &tilePaint)
 		}
 	}
 	return true
