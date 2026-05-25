@@ -61,9 +61,12 @@ type TextOptions struct {
 	// MultiAlignment controls per-line alignment within multiline or wrapped
 	// text. Nil follows HAlign, matching Matplotlib's multialignment=None.
 	MultiAlignment *TextAlign
-	ClipOn         *bool
-	BBox           *TextBBoxOptions
-	FontKey        string
+	// Linespacing controls multiline baseline advance as a multiple of the font
+	// size in display pixels. Zero uses Matplotlib's normal 1.2 spacing.
+	Linespacing float64
+	ClipOn      *bool
+	BBox        *TextBBoxOptions
+	FontKey     string
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
 	FontProperties *render.FontProperties
@@ -97,6 +100,7 @@ type AnnotationOptions struct {
 	Angle           float64
 	FontKey         string
 	BBox            *TextBBoxOptions
+	Linespacing     float64
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
 	FontProperties *render.FontProperties
@@ -130,9 +134,12 @@ type Text struct {
 	// MultiAlignment controls per-line alignment within multiline or wrapped
 	// text. Nil follows HAlign, matching Matplotlib's multialignment=None.
 	MultiAlignment *TextAlign
-	ClipOn         bool
-	BBox           *TextBBoxOptions
-	FontKey        string
+	// Linespacing controls multiline baseline advance as a multiple of the font
+	// size in display pixels. Zero uses Matplotlib's normal 1.2 spacing.
+	Linespacing float64
+	ClipOn      bool
+	BBox        *TextBBoxOptions
+	FontKey     string
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
 	FontProperties *render.FontProperties
@@ -162,6 +169,7 @@ type Annotation struct {
 	Coords          CoordinateSpec
 	FontKey         string
 	BBox            *TextBBoxOptions
+	Linespacing     float64
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
 	FontProperties *render.FontProperties
@@ -199,6 +207,7 @@ func (a *Axes) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		WrapWidth:      opt.WrapWidth,
 		Wrap:           opt.Wrap,
 		MultiAlignment: cloneTextAlign(opt.MultiAlignment),
+		Linespacing:    opt.Linespacing,
 		ClipOn:         clipOn,
 		BBox:           cloneTextBBoxOptions(opt.BBox),
 		FontKey:        opt.FontKey,
@@ -245,6 +254,7 @@ func (f *Figure) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		WrapWidth:      opt.WrapWidth,
 		Wrap:           opt.Wrap,
 		MultiAlignment: cloneTextAlign(opt.MultiAlignment),
+		Linespacing:    opt.Linespacing,
 		ClipOn:         clipOn,
 		BBox:           cloneTextBBoxOptions(opt.BBox),
 		FontKey:        opt.FontKey,
@@ -307,6 +317,7 @@ func (a *Axes) Annotate(text string, x, y float64, opts ...AnnotationOptions) *A
 		Coords:          opt.Coords,
 		FontKey:         opt.FontKey,
 		BBox:            cloneTextBBoxOptions(opt.BBox),
+		Linespacing:     opt.Linespacing,
 		FontProperties:  cloneFontProperties(opt.FontProperties),
 		ParseMath:       cloneBool(opt.ParseMath),
 		AnnotationClip:  cloneBool(opt.AnnotationClip),
@@ -394,8 +405,7 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 	}
 
 	lineHeight := pointsToPixels(ctx.RC, fontSize)
-	lineGap := lineHeight * 0.2
-	lineAdvance := lineHeight + lineGap
+	lineAdvance := lineHeight * resolvedTextLinespacing(t.Linespacing)
 	blockHeight := lineHeight
 	if len(lines) > 1 {
 		blockHeight += lineAdvance * float64(len(lines)-1)
@@ -753,7 +763,7 @@ func (a *Annotation) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 }
 
 func (a *Annotation) drawMultilineAnnotation(r render.Renderer, textRen render.TextDrawer, ctx *DrawContext, target, anchor geom.Pt, fontSize float64, fontKey string, parseMath bool, lines []string) {
-	rect, ok := multilineTextBlockRect(r, ctx, anchor, fontSize, fontKey, parseMath, lines, a.HAlign, a.VAlign)
+	rect, ok := multilineTextBlockRect(r, ctx, anchor, fontSize, fontKey, parseMath, lines, a.Linespacing, a.HAlign, a.VAlign)
 	if !ok {
 		return
 	}
@@ -774,13 +784,14 @@ func (a *Annotation) drawMultilineAnnotation(r render.Renderer, textRen render.T
 		VAlign:              a.VAlign,
 		Angle:               a.Angle,
 		BBox:                a.BBox,
+		Linespacing:         a.Linespacing,
 		Color:               a.Color,
 		ParseMath:           a.ParseMath,
 	}
 	text.drawMultilineText(r, textRen, ctx, anchor, fontSize, fontKey, parseMath, lines)
 }
 
-func multilineTextBlockRect(r render.Renderer, ctx *DrawContext, anchor geom.Pt, fontSize float64, fontKey string, parseMath bool, lines []string, hAlign TextAlign, vAlign TextVerticalAlign) (geom.Rect, bool) {
+func multilineTextBlockRect(r render.Renderer, ctx *DrawContext, anchor geom.Pt, fontSize float64, fontKey string, parseMath bool, lines []string, linespacing float64, hAlign TextAlign, vAlign TextVerticalAlign) (geom.Rect, bool) {
 	if len(lines) == 0 {
 		return geom.Rect{}, false
 	}
@@ -791,10 +802,10 @@ func multilineTextBlockRect(r render.Renderer, ctx *DrawContext, anchor geom.Pt,
 		maxWidth = math.Max(maxWidth, layouts[i].Width)
 	}
 	lineHeight := pointsToPixels(ctx.RC, fontSize)
-	lineGap := lineHeight * 0.2
+	lineAdvance := lineHeight * resolvedTextLinespacing(linespacing)
 	blockHeight := lineHeight
 	if len(lines) > 1 {
-		blockHeight += (lineHeight + lineGap) * float64(len(lines)-1)
+		blockHeight += lineAdvance * float64(len(lines)-1)
 	}
 	left := anchor.X
 	switch hAlign {
@@ -946,6 +957,13 @@ func cloneTextAlign(align *TextAlign) *TextAlign {
 	}
 	cloned := *align
 	return &cloned
+}
+
+func resolvedTextLinespacing(linespacing float64) float64 {
+	if linespacing > 0 {
+		return linespacing
+	}
+	return 1.2
 }
 
 func drawTextBBox(r render.Renderer, origin geom.Pt, layout singleLineTextLayout, opt *TextBBoxOptions, ctx *DrawContext, fontSize float64) {

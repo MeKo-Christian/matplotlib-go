@@ -2377,6 +2377,11 @@ Current slice landed:
   already aligned text block.
 - Renderer-neutral text tests cover left-aligned line placement inside a
   right-aligned multiline block.
+- `TextOptions` and `AnnotationOptions` now expose `Linespacing`, matching the
+  high-value numeric form of Matplotlib's multiline `linespacing` control while
+  keeping the zero value on normal 1.2 spacing.
+- Renderer-neutral text tests cover explicit baseline advance for multiline
+  text.
 - Multiline text now routes per-line glyph paths through `PathEffects` before
   falling back to normal text draws, matching the single-line text path-effect
   behavior.

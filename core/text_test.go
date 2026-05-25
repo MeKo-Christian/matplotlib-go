@@ -1920,6 +1920,29 @@ func TestTextMultiAlignmentControlsLineAlignmentWithinBlock(t *testing.T) {
 	}
 }
 
+func TestMultilineTextLinespacingControlsBaselineAdvance(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position:    geom.Pt{X: 1, Y: 1},
+		Content:     "first\nsecond",
+		FontSize:    10,
+		Linespacing: 2,
+		ClipOn:      true,
+	}
+	r := &textRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.origins) != 2 {
+		t.Fatalf("multiline draw origins = %d, want 2", len(r.origins))
+	}
+	wantAdvance := pointsToPixels(ctx.RC, text.FontSize) * text.Linespacing
+	gotAdvance := r.origins[1].Y - r.origins[0].Y
+	if !approx(gotAdvance, wantAdvance, 1e-9) {
+		t.Fatalf("multiline baseline advance = %v, want %v", gotAdvance, wantAdvance)
+	}
+}
+
 func TestMultilineTextAngleUsesRotatedTextDrawer(t *testing.T) {
 	ctx := createTestDrawContext()
 	text := &Text{
