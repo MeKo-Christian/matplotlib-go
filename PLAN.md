@@ -2859,6 +2859,9 @@ Current slice landed:
   `Stairs`, `BrokenBarH`, `BarLabel`, `BoxPlot`, `StackPlot`, `ECDF`,
   `AutoScale`, `FigText`, `TightLayout`, `TwinX`, and `TwinY`, with focused
   stateful delegation tests and public-surface rows.
+- Added pyplot `FillBetweenX` and `Arrow` wrappers over existing core
+  horizontal-fill and FancyArrow artists, with focused current-axes delegation
+  coverage and public-surface rows.
 - Added pyplot `ImRead` / `ImSave` wrappers over the core image IO helpers,
   with a focused PNG round-trip delegation test and explicit public-surface
   rows for `pyplot.imread` / `pyplot.imsave`.

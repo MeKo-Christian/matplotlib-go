@@ -671,6 +671,11 @@ func FillBetween(x, y1, y2 []float64, opts ...core.FillOptions) *core.Fill2D {
 	return GCA().FillBetween(x, y1, y2, opts...)
 }
 
+// FillBetweenX delegates to the current axes.
+func FillBetweenX(y, x1, x2 []float64, opts ...core.FillOptions) *core.Fill2D {
+	return GCA().FillBetweenX(y, x1, x2, opts...)
+}
+
 // Fill delegates to the current axes.
 func Fill(x, y []float64, opts ...core.FillOptions) *core.PolyCollection {
 	return GCA().Fill(x, y, opts...)
@@ -699,6 +704,27 @@ func ECDF(data []float64, opts ...core.ECDFOptions) *core.Line2D {
 // ErrorBar delegates to the current axes.
 func ErrorBar(x, y, xErr, yErr []float64, opts ...core.ErrorBarOptions) *core.ErrorBar {
 	return GCA().ErrorBar(x, y, xErr, yErr, opts...)
+}
+
+// Arrow adds a FancyArrow artist to the current axes.
+func Arrow(x, y, dx, dy float64, opts ...core.Arrow) *core.Arrow {
+	arrow := core.Arrow{
+		XY:     geom.Pt{X: x, Y: y},
+		DX:     dx,
+		DY:     dy,
+		Coords: core.Coords(core.CoordData),
+	}
+	if len(opts) > 0 {
+		arrow = opts[0]
+		arrow.XY = geom.Pt{X: x, Y: y}
+		arrow.DX = dx
+		arrow.DY = dy
+		if arrow.Coords == (core.CoordinateSpec{}) {
+			arrow.Coords = core.Coords(core.CoordData)
+		}
+	}
+	GCA().Add(&arrow)
+	return &arrow
 }
 
 // Stem delegates to the current axes.

@@ -682,6 +682,15 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Note:              "Stateful pyplot Stairs delegates to the current axes' typed stairs artist helper. Remaining partial scope is Matplotlib's baseline/fill keyword breadth and patch property aliases.",
 	},
 	{
+		ID:                "pyplot-arrow",
+		UpstreamID:        "pyplot.py:function:arrow",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "core/patch_fancyarrow.go"},
+		CatalogIDs:        []string{"patch_showcase", "plot_variants"},
+		Note:              "Stateful pyplot Arrow creates a core FancyArrow artist on the current axes in data coordinates. Remaining partial scope is Matplotlib's full Patch kwargs alias grammar and default style tuning.",
+	},
+	{
 		ID:                "pyplot-figure",
 		UpstreamID:        "pyplot.py:function:figure",
 		FeatureCoverageID: "pyplot-state",
@@ -898,6 +907,15 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		GoFiles:           []string{"pyplot/pyplot.go", "core/plot_variants.go"},
 		CatalogIDs:        []string{"plot_variants"},
 		Note:              "Stateful pyplot BrokenBarH delegates to the current axes' typed horizontal broken-bar helper. Remaining partial scope is Matplotlib's full PolyCollection property alias surface.",
+	},
+	{
+		ID:                "pyplot-fill-betweenx",
+		UpstreamID:        "pyplot.py:function:fill_betweenx",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "core/plot.go", "core/fill.go"},
+		CatalogIDs:        []string{"fill_between", "plot_variants"},
+		Note:              "Stateful pyplot FillBetweenX delegates horizontal fill-between creation to the current axes. Remaining partial scope is Matplotlib's where/interpolate/step semantics and full kwargs alias breadth.",
 	},
 	{
 		ID:                "pyplot-bar-label",
@@ -2023,7 +2041,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
 		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
-		note:              "The Go pyplot package covers current figure/current axes state, common axes/subplot/subplot2grid/subplot-mosaic creation and subplot/tight layout, sca/delaxes axes registry updates, common plot/image/stat wrappers including step/stairs, boxplot, stackplot, ecdf, and bar-label/broken-bar helpers, text/figtext and annotation wrappers, reference-line/span wrappers, twin axes, autoscale, axis mode/limit/scale/grid/tick-param/locator/minor-tick/fixed-tick wrappers, axes-frame box toggling, labels, axes/figure legends, colorbars, rc helpers, savefig, show, pause, draw, close/close-all cleanup, clf/cla reset helpers, and interactive-mode state toggles. Remaining partial scope is specific missing wrapper families, Python overload breadth, automatic interactive redraw side effects, and unsupported implicit manager behavior.",
+		note:              "The Go pyplot package covers current figure/current axes state, common axes/subplot/subplot2grid/subplot-mosaic creation and subplot/tight layout, sca/delaxes axes registry updates, common plot/image/stat wrappers including step/stairs, fill-between-x, boxplot, stackplot, ecdf, and bar-label/broken-bar helpers, text/figtext and annotation wrappers, arrow and reference-line/span wrappers, twin axes, autoscale, axis mode/limit/scale/grid/tick-param/locator/minor-tick/fixed-tick wrappers, axes-frame box toggling, labels, axes/figure legends, colorbars, rc helpers, savefig, show, pause, draw, close/close-all cleanup, clf/cla reset helpers, and interactive-mode state toggles. Remaining partial scope is specific missing wrapper families, Python overload breadth, automatic interactive redraw side effects, and unsupported implicit manager behavior.",
 	},
 	{
 		idPrefix:          "pylab-helpers",

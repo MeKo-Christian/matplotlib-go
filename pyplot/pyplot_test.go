@@ -612,6 +612,16 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	if fill := Fill([]float64{0, 1, 0}, []float64{0, 0, 1}); fill == nil {
 		t.Fatal("Fill() returned nil")
 	}
+	if fill := FillBetweenX([]float64{0, 1, 2}, []float64{0, 1, 0}, []float64{1, 2, 1}); fill == nil || fill.Orientation != core.FillHorizontal {
+		t.Fatalf("FillBetweenX() = %#v, want horizontal fill", fill)
+	}
+	arrow := Arrow(0.2, 0.3, 1.5, -0.5)
+	if arrow == nil {
+		t.Fatal("Arrow() returned nil")
+	}
+	if arrow.XY != (geom.Pt{X: 0.2, Y: 0.3}) || arrow.DX != 1.5 || arrow.DY != -0.5 {
+		t.Fatalf("Arrow geometry = xy=%+v dx=%v dy=%v", arrow.XY, arrow.DX, arrow.DY)
+	}
 	if step := Step([]float64{0, 1, 2}, []float64{1, 3, 2}); step == nil {
 		t.Fatal("Step() returned nil")
 	}
