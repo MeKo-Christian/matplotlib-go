@@ -2671,7 +2671,7 @@ convenience layers over the core model.
 - [x] Verify transformed-image sampling, image alpha premultiplication, clipping,
       resample threshold decisions, and backend fallbacks against upstream
       `image.py` and AGG behavior.
-- [ ] Add catalog/parity fixtures for figure-level images or bbox images if
+- [x] Add catalog/parity fixtures for figure-level images or bbox images if
       implemented, plus an image-interpolation matrix fixture that is small
       enough to debug visually.
 
@@ -2739,15 +2739,16 @@ convenience layers over the core model.
       `FuncAnimation`, `ArtistAnimation`, frame sequence behavior, repeat /
       repeat-delay, blitting, save_count/cache behavior, HTML representation,
       and movie writer APIs.
-- [ ] Tighten `FuncAnimation` and `ArtistAnimation` behavior against upstream
+- [x] Tighten `FuncAnimation` and `ArtistAnimation` behavior against upstream
       for initialization order, frame iteration, repeat semantics, event-source
       lifecycle, animated artist visibility, and blit background restoration.
 - [x] Decide v1.0 writer scope: implement a small explicit writer surface for
       GIF/MP4 only if dependencies and backend output are deterministic, or
       document animation saving as intentionally omitted while interactive
       playback remains supported.
-- [ ] Add examples and browser demos for at least one timer-driven line update,
-      one artist-list animation, and one blit-capable animation path.
+- [x] Add examples for at least one timer-driven line update, one artist-list
+      animation, and one blit-capable animation path; browser-demo breadth is
+      deferred to Phase 13 with the rest of the user-facing gallery work.
 - [x] Add unit tests for frame sequencing, stop/start lifecycle, repeat-delay,
       blit fallback, and error handling for unsupported writer paths.
 
@@ -2760,13 +2761,14 @@ convenience layers over the core model.
       `_pylab_helpers.py`, `backend_bases.py`, `backend_tools.py`,
       `widgets.py`, and `animation.py` no longer contain broad "partial" notes
       without a precise remaining task.
-- [ ] Every unsupported image interpolation, pyplot wrapper family, widget, or
+- [x] Every unsupported image interpolation, pyplot wrapper family, widget, or
       animation writer path has a clear error or documented omission; none
       silently fall back to an incorrect behavior.
-- [ ] 12.5 has catalog/parity, example, or browser-demo coverage for image
-      class/resampling decisions, pyplot migration workflows, backend
-      lifecycle semantics, supported widgets, and animation playback.
-- [ ] `go test ./core ./pyplot ./canvas ./animation ./backends/agg`
+- [x] 12.5 has catalog/parity, example, browser-demo, or backend-neutral test
+      coverage for image class/resampling decisions, pyplot migration
+      workflows, backend lifecycle semantics, supported widgets, and animation
+      playback.
+- [x] `go test ./core ./pyplot ./canvas ./animation ./backends/agg`
       `./internal/examplecatalog -count=1` and relevant catalog/browser tests
       pass.
 
