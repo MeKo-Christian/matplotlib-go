@@ -215,9 +215,11 @@ func localDrawingAreaPath(path geom.Path, box geom.Rect, scale float64) geom.Pat
 	}
 	out := clonePath(path)
 	for i, pt := range out.V {
+		// Display space is y-up: the drawing area's local origin is its lower-left
+		// (Matplotlib DrawingArea convention), so local Y grows upward from box.Min.Y.
 		out.V[i] = geom.Pt{
 			X: box.Min.X + pt.X*scale,
-			Y: box.Max.Y - pt.Y*scale,
+			Y: box.Min.Y + pt.Y*scale,
 		}
 	}
 	return out

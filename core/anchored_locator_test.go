@@ -202,10 +202,12 @@ func TestAnchoredDrawingAreaDrawsLocalPath(t *testing.T) {
 	if len(child.V) != 2 {
 		t.Fatalf("anchored drawing area child path not found in %+v", r.pathCalls)
 	}
-	if got, want := child.V[0], (geom.Pt{X: 5, Y: 5 + 20*scale}); !pointsApprox(got, want, 1e-9) {
+	// Display space is y-up: the UpperLeft area sits near the top edge (495), with
+	// its local lower-left at the bottom of the box and upper-right at the top.
+	if got, want := child.V[0], (geom.Pt{X: 5, Y: 495 - 20*scale}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("local lower-left point mapped to %+v, want %+v", got, want)
 	}
-	if got, want := child.V[1], (geom.Pt{X: 5 + 40*scale, Y: 5}); !pointsApprox(got, want, 1e-9) {
+	if got, want := child.V[1], (geom.Pt{X: 5 + 40*scale, Y: 495}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("local upper-right point mapped to %+v, want %+v", got, want)
 	}
 }
@@ -232,10 +234,12 @@ func TestAnchoredDrawingAreaScalesLocalCoordinatesByDPI(t *testing.T) {
 	if len(child.V) != 2 {
 		t.Fatalf("anchored drawing area child path not found in %+v", r.pathCalls)
 	}
-	if got, want := child.V[0], (geom.Pt{X: 0, Y: 40}); !pointsApprox(got, want, 1e-9) {
+	// Display space is y-up: the UpperLeft area (inset 0) sits at the top edge
+	// (500), so local lower-left is at 500-40=460 and upper-right at 500.
+	if got, want := child.V[0], (geom.Pt{X: 0, Y: 460}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("local lower-left point mapped to %+v, want %+v", got, want)
 	}
-	if got, want := child.V[1], (geom.Pt{X: 80, Y: 0}); !pointsApprox(got, want, 1e-9) {
+	if got, want := child.V[1], (geom.Pt{X: 80, Y: 500}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("local upper-right point mapped to %+v, want %+v", got, want)
 	}
 }
@@ -258,7 +262,8 @@ func TestAnchoredDrawingAreaCanClipChildren(t *testing.T) {
 	r := &clipRecordingRenderer{}
 	area.Draw(r, ctx)
 
-	wantClip := geom.Rect{Min: geom.Pt{X: 5, Y: 5}, Max: geom.Pt{X: 5 + 40*scale, Y: 5 + 20*scale}}
+	// Display space is y-up: the UpperLeft content box sits near the top (495).
+	wantClip := geom.Rect{Min: geom.Pt{X: 5, Y: 495 - 20*scale}, Max: geom.Pt{X: 5 + 40*scale, Y: 495}}
 	if len(r.rects) != 1 || !approxRect(r.rects[0], wantClip, 1e-9) {
 		t.Fatalf("drawing area clip rects = %+v, want [%+v]", r.rects, wantClip)
 	}
@@ -310,16 +315,17 @@ func TestAnchoredPackerPacksDrawingAreaAndTextHorizontally(t *testing.T) {
 	if len(child.V) != 2 {
 		t.Fatalf("packed drawing area path not found in %+v", r.pathCalls)
 	}
-	if got, want := child.V[0], (geom.Pt{X: 5, Y: 5 + 10*scale}); !pointsApprox(got, want, 1e-9) {
+	// Display space is y-up: the UpperLeft packer sits near the top edge (495).
+	if got, want := child.V[0], (geom.Pt{X: 5, Y: 495 - 10*scale}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("drawing child lower-left mapped to %+v, want %+v", got, want)
 	}
-	if got, want := child.V[1], (geom.Pt{X: 5 + 20*scale, Y: 5}); !pointsApprox(got, want, 1e-9) {
+	if got, want := child.V[1], (geom.Pt{X: 5 + 20*scale, Y: 495}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("drawing child upper-right mapped to %+v, want %+v", got, want)
 	}
 	if len(r.origins) != 1 {
 		t.Fatalf("packed text origins = %v, want one", r.origins)
 	}
-	wantOrigin := geom.Pt{X: 5 + 20*scale + 4, Y: 5 + 10*scale/2 + 3}
+	wantOrigin := geom.Pt{X: 5 + 20*scale + 4, Y: 500 - (5 + 10*scale/2 + 3)}
 	if got := r.origins[0]; !floatApprox(got.X, wantOrigin.X, 1e-9) || !floatApprox(got.Y, wantOrigin.Y, 1e-9) {
 		t.Fatalf("packed text origin = %+v, want %+v", got, wantOrigin)
 	}
@@ -355,10 +361,12 @@ func TestAnchoredPackerPacksChildrenVertically(t *testing.T) {
 	if len(top.V) != 2 || len(bottom.V) != 2 {
 		t.Fatalf("packed vertical child paths not found: top=%+v bottom=%+v calls=%+v", top, bottom, r.pathCalls)
 	}
-	if got, want := top.V[0], (geom.Pt{X: 5, Y: 5 + 10*scale}); !pointsApprox(got, want, 1e-9) {
+	// Display space is y-up: vertical packing runs top-to-bottom from 495, so the
+	// first (top) child sits highest and the second stacks below it.
+	if got, want := top.V[0], (geom.Pt{X: 5, Y: 495 - 10*scale}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("top child lower-left mapped to %+v, want %+v", got, want)
 	}
-	if got, want := bottom.V[0], (geom.Pt{X: 5 + 20*scale - 10*scale, Y: 5 + 10*scale + 3 + 6*scale}); !pointsApprox(got, want, 1e-9) {
+	if got, want := bottom.V[0], (geom.Pt{X: 5 + 20*scale - 10*scale, Y: 495 - 10*scale - 3 - 6*scale}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("bottom child lower-left mapped to %+v, want %+v", got, want)
 	}
 }
@@ -388,7 +396,8 @@ func TestAnchoredPackerPacksImageChildren(t *testing.T) {
 	if len(r.imageDsts) != 1 {
 		t.Fatalf("packed image destinations = %+v, want one", r.imageDsts)
 	}
-	wantImageDst := geom.Rect{Min: geom.Pt{X: 5, Y: 5}, Max: geom.Pt{X: 5 + 8*scale, Y: 5 + 6*scale}}
+	// Display space is y-up: Align Start aligns to the top edge (495).
+	wantImageDst := geom.Rect{Min: geom.Pt{X: 5, Y: 495 - 6*scale}, Max: geom.Pt{X: 5 + 8*scale, Y: 495}}
 	if !approxRect(r.imageDsts[0], wantImageDst, 1e-9) {
 		t.Fatalf("packed image dst = %+v, want %+v", r.imageDsts[0], wantImageDst)
 	}
@@ -396,7 +405,7 @@ func TestAnchoredPackerPacksImageChildren(t *testing.T) {
 	if len(path.V) != 2 {
 		t.Fatalf("packed drawing path not found in %+v", r.pathCalls)
 	}
-	if got, want := path.V[0], (geom.Pt{X: 5 + 8*scale + 2, Y: 5 + 4*scale}); !pointsApprox(got, want, 1e-9) {
+	if got, want := path.V[0], (geom.Pt{X: 5 + 8*scale + 2, Y: 495 - 4*scale}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("drawing child lower-left after image mapped to %+v, want %+v", got, want)
 	}
 }
@@ -423,7 +432,8 @@ func TestAnchoredPackerImageAndDrawingAreaScaleByDPI(t *testing.T) {
 	r := &textRecordingRenderer{}
 	packer.Draw(r, ctx)
 
-	wantImageDst := geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 16, Y: 12}}
+	// Display space is y-up: Align Start aligns to the top edge (500, inset 0).
+	wantImageDst := geom.Rect{Min: geom.Pt{X: 0, Y: 500 - 12}, Max: geom.Pt{X: 16, Y: 500}}
 	if len(r.imageDsts) != 1 || !approxRect(r.imageDsts[0], wantImageDst, 1e-9) {
 		t.Fatalf("packed image destinations = %+v, want [%+v]", r.imageDsts, wantImageDst)
 	}
@@ -431,10 +441,10 @@ func TestAnchoredPackerImageAndDrawingAreaScaleByDPI(t *testing.T) {
 	if len(path.V) != 2 {
 		t.Fatalf("packed drawing path not found in %+v", r.pathCalls)
 	}
-	if got, want := path.V[0], (geom.Pt{X: 16, Y: 8}); !pointsApprox(got, want, 1e-9) {
+	if got, want := path.V[0], (geom.Pt{X: 16, Y: 500 - 8}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("drawing child lower-left after image mapped to %+v, want %+v", got, want)
 	}
-	if got, want := path.V[1], (geom.Pt{X: 24, Y: 0}); !pointsApprox(got, want, 1e-9) {
+	if got, want := path.V[1], (geom.Pt{X: 24, Y: 500}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("drawing child upper-right after image mapped to %+v, want %+v", got, want)
 	}
 }

@@ -315,14 +315,18 @@ func (a *AnchoredPacker) childRects(content geom.Rect, sizes []geom.Pt, ctx *Dra
 	rects := make([]geom.Rect, 0, len(sizes))
 	sep := a.resolvedSep(ctx)
 	cursorX := content.Min.X
-	cursorY := content.Min.Y
+	// Display space is y-up: vertical packing runs top-to-bottom, so the first
+	// child starts at the top edge (content.Max.Y) and the cursor moves downward.
+	cursorY := content.Max.Y
 	for _, size := range sizes {
 		var min geom.Pt
 		if a.Orientation == PackVertical {
-			min = geom.Pt{X: alignedPackMin(content.Min.X, content.W(), size.X, a.Align), Y: cursorY}
-			cursorY += size.Y + sep
+			// Cross axis is X: Start=left, End=right (no y-flip).
+			min = geom.Pt{X: alignedPackMin(content.Min.X, content.W(), size.X, a.Align), Y: cursorY - size.Y}
+			cursorY -= size.Y + sep
 		} else {
-			min = geom.Pt{X: cursorX, Y: alignedPackMin(content.Min.Y, content.H(), size.Y, a.Align)}
+			// Cross axis is Y under y-up: Start=top, End=bottom (flipped).
+			min = geom.Pt{X: cursorX, Y: alignedPackMinY(content.Min.Y, content.H(), size.Y, a.Align)}
 			cursorX += size.X + sep
 		}
 		rects = append(rects, geom.Rect{
@@ -333,6 +337,8 @@ func (a *AnchoredPacker) childRects(content geom.Rect, sizes []geom.Pt, ctx *Dra
 	return rects
 }
 
+// alignedPackMin positions a child along an axis where Start is the low edge
+// (left, or bottom under y-up).
 func alignedPackMin(start, span, childSpan float64, align PackAlignment) float64 {
 	switch align {
 	case PackAlignEnd:
@@ -341,6 +347,19 @@ func alignedPackMin(start, span, childSpan float64, align PackAlignment) float64
 		return start + (span-childSpan)/2
 	default:
 		return start
+	}
+}
+
+// alignedPackMinY positions a child on the vertical cross axis where, under the
+// y-up contract, Start means the top (high Y) and End means the bottom.
+func alignedPackMinY(start, span, childSpan float64, align PackAlignment) float64 {
+	switch align {
+	case PackAlignEnd:
+		return start
+	case PackAlignCenter:
+		return start + (span-childSpan)/2
+	default: // PackAlignStart -> top
+		return start + span - childSpan
 	}
 }
 
