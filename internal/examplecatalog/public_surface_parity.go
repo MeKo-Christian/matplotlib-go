@@ -717,6 +717,30 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Note:              "Stateful pyplot Draw delegates to the current figure manager canvas, preferring DrawIdle when available. Remaining partial scope is exact interactive stale/draw scheduling parity.",
 	},
 	{
+		ID:                "pyplot-ion",
+		UpstreamID:        "pyplot.py:function:ion",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go"},
+		Note:              "Stateful pyplot Ion enables package-level interactive mode and returns a restore function for scoped use. Remaining partial scope is Python context-manager integration and automatic GUI redraw/show side effects.",
+	},
+	{
+		ID:                "pyplot-ioff",
+		UpstreamID:        "pyplot.py:function:ioff",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go"},
+		Note:              "Stateful pyplot Ioff disables package-level interactive mode and returns a restore function for scoped use. Remaining partial scope is Python context-manager integration and automatic GUI redraw/show side effects.",
+	},
+	{
+		ID:                "pyplot-isinteractive",
+		UpstreamID:        "pyplot.py:function:isinteractive",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go"},
+		Note:              "Stateful pyplot IsInteractive reports the Go package-level interactive mode flag. Remaining partial scope is Matplotlib's rcParam integration and backend-specific automatic display behavior.",
+	},
+	{
 		ID:                "pyplot-clf",
 		UpstreamID:        "pyplot.py:function:clf",
 		FeatureCoverageID: "pyplot-state",
@@ -1529,7 +1553,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
 		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
-		note:              "The Go pyplot package covers current figure/current axes state, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, axis limit/scale wrappers, labels, legends, colorbars, rc helpers, savefig, show, pause, draw, close/close-all cleanup, and clf/cla reset helpers. Remaining partial scope is specific missing wrapper families, Python overload breadth, interactive mode toggles, and unsupported implicit manager behavior.",
+		note:              "The Go pyplot package covers current figure/current axes state, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, axis limit/scale wrappers, labels, legends, colorbars, rc helpers, savefig, show, pause, draw, close/close-all cleanup, clf/cla reset helpers, and interactive-mode state toggles. Remaining partial scope is specific missing wrapper families, Python overload breadth, automatic interactive redraw side effects, and unsupported implicit manager behavior.",
 	},
 	{
 		idPrefix:          "pylab-helpers",
@@ -1539,7 +1563,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
 		catalogIDs:        []string{"basic_line", "figure_labels_composition"},
 		exampleIDs:        []string{"basic_line"},
-		note:              "Go pyplot tracks current figure/current axes state, save/show helpers, close/close-all cleanup, and clf/cla reset helpers through typed package state rather than Matplotlib's global Gcf manager registry. Remaining scope is precise interactive figure-manager lifecycle behavior, current-manager transitions, and unsupported interactive-mode overloads.",
+		note:              "Go pyplot tracks current figure/current axes state, save/show helpers, close/close-all cleanup, clf/cla reset helpers, and interactive-mode state through typed package state rather than Matplotlib's global Gcf manager registry. Remaining scope is precise interactive figure-manager lifecycle behavior, current-manager transitions, and automatic interactive redraw/display side effects.",
 	},
 	{
 		idPrefix:          "backend-base",

@@ -702,6 +702,32 @@ func TestDrawUsesCurrentFigureManagerCanvas(t *testing.T) {
 	}
 }
 
+func TestInteractiveModeTogglesAndRestores(t *testing.T) {
+	resetForTests()
+
+	if IsInteractive() {
+		t.Fatal("interactive mode should be disabled by default")
+	}
+
+	restoreOff := Ion()
+	if !IsInteractive() {
+		t.Fatal("Ion should enable interactive mode")
+	}
+
+	restoreOn := Ioff()
+	if IsInteractive() {
+		t.Fatal("Ioff should disable interactive mode")
+	}
+	restoreOn()
+	if !IsInteractive() {
+		t.Fatal("Ioff restore should restore previous enabled state")
+	}
+	restoreOff()
+	if IsInteractive() {
+		t.Fatal("Ion restore should restore previous disabled state")
+	}
+}
+
 func TestRCUpdatesActiveDefaultsForNewFigures(t *testing.T) {
 	resetForTests()
 

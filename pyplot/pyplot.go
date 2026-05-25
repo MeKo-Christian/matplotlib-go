@@ -42,6 +42,7 @@ type registryState struct {
 	subplotAxes    map[*core.Figure]map[string]*core.Axes
 	managers       map[*core.Figure]canvas.FigureManager
 	managerFactory ManagerFactory
+	interactive    bool
 }
 
 var registry = registryState{
@@ -694,6 +695,25 @@ func Savefig(path string, opts ...render.SaveOption) error {
 	return saveFigure(GCF(), path, opts...)
 }
 
+// IsInteractive reports whether pyplot interactive mode is enabled.
+func IsInteractive() bool {
+	registry.mu.Lock()
+	defer registry.mu.Unlock()
+	return registry.interactive
+}
+
+// Ion enables pyplot interactive mode and returns a restore function for the
+// previous state.
+func Ion() func() {
+	return setInteractive(true)
+}
+
+// Ioff disables pyplot interactive mode and returns a restore function for the
+// previous state.
+func Ioff() func() {
+	return setInteractive(false)
+}
+
 // SetManagerFactory overrides how pyplot creates managers for Show and Pause.
 // Passing nil restores the default backend-driven manager selection.
 func SetManagerFactory(factory ManagerFactory) {
@@ -1049,8 +1069,21 @@ func resetForTests() {
 	registry.subplotAxes = make(map[*core.Figure]map[string]*core.Axes)
 	registry.managers = make(map[*core.Figure]canvas.FigureManager)
 	registry.managerFactory = defaultManagerFactory
+	registry.interactive = false
 	registry.mu.Unlock()
 	style.ResetDefaults()
+}
+
+func setInteractive(enabled bool) func() {
+	registry.mu.Lock()
+	previous := registry.interactive
+	registry.interactive = enabled
+	registry.mu.Unlock()
+	return func() {
+		registry.mu.Lock()
+		registry.interactive = previous
+		registry.mu.Unlock()
+	}
 }
 
 func ensureManager(fig *core.Figure) (canvas.FigureManager, error) {

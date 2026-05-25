@@ -2812,6 +2812,9 @@ Current slice landed:
 - Added pyplot `Draw` as a current-figure manager/canvas redraw wrapper,
   preferring draw-idle capable canvases and documenting the implemented
   `pyplot.draw` subset.
+- Added pyplot `Ion` / `Ioff` / `IsInteractive` as package-level interactive
+  mode state helpers with restore callbacks, and documented the implemented
+  `ion` / `ioff` / `isinteractive` subset.
 - Added pyplot `CLF` / `CLA` reset helpers for clearing the current figure or
   current axes without destroying the figure/axes registry entry, with
   public-surface notes for the implemented `clf` / `cla` subset.
