@@ -2722,15 +2722,15 @@ convenience layers over the core model.
       span selector, rectangle selector, lasso selector, polygon selector,
       cursor/multi-cursor, annotated cursor, menu/tool widgets, and any
       deprecated or GUI-specific widgets.
-- [ ] Tighten existing widget behavior for callback ordering, active/disabled
+- [x] Tighten existing widget behavior for callback ordering, active/disabled
       state, hover/press/release transitions, keyboard activation, value
       clamping, snapping, dragging, redraw policy, and axes ownership.
 - [x] Implement only selector/cursor widgets that can be expressed through the
       current canvas event model; document GUI-only or callback-heavy widgets as
       intentional omissions until an interactive fixture requires them.
-- [ ] Add catalog/browser-demo coverage for the supported widget set and
+- [x] Add catalog/browser-demo coverage for the supported widget set and
       renderer-neutral tests for interaction state transitions.
-- [ ] Ensure widgets compose with artist picking, overlays, draw-idle, and
+- [x] Ensure widgets compose with artist picking, overlays, draw-idle, and
       animation without stealing unrelated user events.
 
 #### 12.5F Animation Scope and Writers
@@ -2947,6 +2947,10 @@ Current slice landed:
 - Added disabled-state support for `CheckButtons` and `RadioButtons`, including
   constructor options, disabled visual dimming, and mouse/keyboard suppression
   without callbacks or redraw requests.
+- Added widget composition guards for draw-idle callback wiring and animation
+  coexistence: widget-layer picking still wins after an animation marks a
+  high-z data artist animated, and non-widget events continue through user
+  handlers.
 - Tightened slider value snapping so `Slider` and `RangeSlider` initial values
   honor `ValueStep`, sort range endpoints after snapping, and keep rounded
   values inside the configured bounds.

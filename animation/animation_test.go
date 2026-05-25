@@ -81,6 +81,14 @@ func (a *fakeArtist) Draw(_ render.Renderer, _ *core.DrawContext) {
 func (a *fakeArtist) Z() float64                           { return a.zOrder }
 func (a *fakeArtist) Bounds(_ *core.DrawContext) geom.Rect { return geom.Rect{} }
 
+type pickableFakeArtist struct {
+	fakeArtist
+}
+
+func (a *pickableFakeArtist) Contains(geom.Pt, *core.DrawContext) (bool, core.PickInfo) {
+	return true, core.PickInfo{}
+}
+
 func TestNewFuncAnimationRejectsBadConfig(t *testing.T) {
 	if _, err := NewFuncAnimation(Config{}, func(int) ([]core.Artist, error) { return nil, nil }, nil); !errors.Is(err, ErrNilCanvas) {
 		t.Fatalf("expected ErrNilCanvas, got %v", err)
@@ -172,6 +180,35 @@ func TestFuncAnimationRegistersAnimatedArtists(t *testing.T) {
 	}
 	if !art.Animated() {
 		t.Fatal("artist returned from update should be marked animated")
+	}
+}
+
+func TestFuncAnimationDoesNotStealWidgetPickLayer(t *testing.T) {
+	cnv := newFakeCanvas()
+	cnv.fig = core.NewFigure(120, 80)
+	ax := cnv.fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
+	button := ax.Button("Run")
+	art := &pickableFakeArtist{fakeArtist: fakeArtist{zOrder: 10000}}
+	ax.Add(art)
+
+	anim, err := NewFuncAnimation(Config{Canvas: cnv, Frames: 1},
+		func(int) ([]core.Artist, error) { return []core.Artist{art}, nil }, nil)
+	if err != nil {
+		t.Fatalf("NewFuncAnimation: %v", err)
+	}
+	if _, err := anim.Step(); err != nil {
+		t.Fatalf("Step: %v", err)
+	}
+	if !art.Animated() {
+		t.Fatal("animated data artist should be marked animated")
+	}
+
+	hits := canvas.Pick(cnv.fig, geom.Pt{X: 60, Y: 40})
+	if len(hits) == 0 {
+		t.Fatal("expected pick hits")
+	}
+	if hits[0].Artist != button {
+		t.Fatalf("top pick = %T, want button widget", hits[0].Artist)
 	}
 }
 

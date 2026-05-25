@@ -130,6 +130,36 @@ func TestWidgetInteractionButtonClick(t *testing.T) {
 	}
 }
 
+func TestWidgetInteractionCanUseDrawIdleCallback(t *testing.T) {
+	fig := core.NewFigure(120, 80)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+	button := ax.Button("Run")
+
+	var drawIdleCalls int
+	wi := NewWidgetInteraction(fig, func() error {
+		drawIdleCalls++
+		return nil
+	})
+	var dispatcher Dispatcher
+	wi.Attach(&dispatcher)
+	defer wi.Detach()
+
+	point := geom.Pt{X: 60, Y: 40}
+	if err := dispatcher.Emit(Event{
+		Type:     EventMouseMove,
+		Figure:   fig,
+		Position: point,
+	}); err != nil {
+		t.Fatalf("hover: %v", err)
+	}
+	if !button.Hovered {
+		t.Fatal("button should enter hovered state")
+	}
+	if drawIdleCalls != 1 {
+		t.Fatalf("draw-idle callback calls = %d, want 1", drawIdleCalls)
+	}
+}
+
 func TestWidgetInteractionButtonKeyboardActivation(t *testing.T) {
 	fig := core.NewFigure(120, 80)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
