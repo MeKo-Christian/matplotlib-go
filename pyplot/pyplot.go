@@ -478,6 +478,21 @@ func TickParams(params core.TickParams) error {
 	return GCA().TickParams(params)
 }
 
+// LocatorParams applies tick locator density options to the current axes.
+func LocatorParams(params core.LocatorParams) error {
+	return GCA().LocatorParams(params)
+}
+
+// MinorTicksOn enables minor ticks on the selected current-axes side.
+func MinorTicksOn(axis string) error {
+	return GCA().MinorticksOn(axis)
+}
+
+// MinorTicksOff disables minor ticks on the selected current-axes side.
+func MinorTicksOff(axis string) error {
+	return GCA().MinorticksOff(axis)
+}
+
 // Bar delegates to the current axes.
 func Bar(x, heights []float64, opts ...core.BarOptions) *core.Bar2D {
 	return GCA().Bar(x, heights, opts...)

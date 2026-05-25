@@ -311,6 +311,44 @@ func TestGridAndTickParamsDelegateToCurrentAxes(t *testing.T) {
 	}
 }
 
+func TestMinorTickAndLocatorWrappersDelegateToCurrentAxes(t *testing.T) {
+	resetForTests()
+
+	if err := MinorTicksOn("x"); err != nil {
+		t.Fatalf("MinorTicksOn(x) error = %v", err)
+	}
+	ax := GCA()
+	if ax.XAxis.MinorLocator == nil {
+		t.Fatal("MinorTicksOn(x) did not enable x minor locator")
+	}
+	if ax.YAxis.MinorLocator != nil {
+		t.Fatal("MinorTicksOn(x) unexpectedly enabled y minor locator")
+	}
+
+	if err := LocatorParams(core.LocatorParams{Axis: "x", MajorCount: 6, MinorCount: 24}); err != nil {
+		t.Fatalf("LocatorParams(x) error = %v", err)
+	}
+	if ax.XAxis.MajorTickCount != 6 || ax.XAxis.MinorTickCount != 24 {
+		t.Fatalf("x locator counts = major:%d minor:%d, want 6/24", ax.XAxis.MajorTickCount, ax.XAxis.MinorTickCount)
+	}
+	if ax.YAxis.MajorTickCount == 6 || ax.YAxis.MinorTickCount == 24 {
+		t.Fatalf("LocatorParams(x) unexpectedly changed y locator counts: major:%d minor:%d", ax.YAxis.MajorTickCount, ax.YAxis.MinorTickCount)
+	}
+
+	if err := MinorTicksOff("x"); err != nil {
+		t.Fatalf("MinorTicksOff(x) error = %v", err)
+	}
+	if ax.XAxis.MinorLocator != nil {
+		t.Fatal("MinorTicksOff(x) did not clear x minor locator")
+	}
+	if err := MinorTicksOn("diagonal"); err == nil {
+		t.Fatal("MinorTicksOn(diagonal) returned nil error")
+	}
+	if err := LocatorParams(core.LocatorParams{Axis: "diagonal"}); err == nil {
+		t.Fatal("LocatorParams(diagonal) returned nil error")
+	}
+}
+
 func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 
