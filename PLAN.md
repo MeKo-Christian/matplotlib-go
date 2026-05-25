@@ -2899,6 +2899,10 @@ Current slice landed:
   HTMLWriter, external encoder families, writer registries, and writer-only
   helpers are documented omissions until a deterministic writer surface is
   chosen.
+- Tightened broad 12.5 widget and animation audit notes so cursor /
+  multi-cursor support, deterministic widget callback ordering, disabled-state
+  handling, and repeat-delay playback are described as existing tested scope
+  rather than remaining work.
 - Added `Animation.Save` as an explicit unsupported-writer path returning
   `ErrWriterUnsupported`, with unit coverage. This keeps writer export out of
   v1.0 while avoiding silent no-op behavior for users who look for a save path.

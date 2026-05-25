@@ -1845,7 +1845,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"animation/animation.go", "canvas/scheduler.go"},
-		Note:              "Go FuncAnimation-style playback supports frame stepping, init callbacks, repeat handling, animated artist tracking, blit-region hooks, and event-loop start/stop behavior. Remaining partial scope is repeat-delay/cache edge behavior, HTML representation, movie writer APIs, and browser/example coverage.",
+		Note:              "Go FuncAnimation-style playback supports frame stepping, init callbacks, repeat and repeat-delay handling, animated artist tracking, blit-region hooks, and event-loop start/stop behavior. Remaining partial scope is cache/save-count edge behavior, HTML representation, movie writer APIs, and browser/example coverage.",
 	},
 	{
 		ID:                "animation-artist-animation",
@@ -2281,7 +2281,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		featureCoverageID: "widgets-events-animation",
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"core/widget_button.go", "core/widget_slider.go", "core/widget_rangeslider.go", "core/widget_checkbuttons.go", "core/widget_radiobuttons.go", "core/widget_textbox.go", "core/selectors_common.go", "core/widgets_common.go", "canvas/widget_interaction.go", "canvas/dispatcher.go", "canvas/picker.go"},
-		note:              "Static widget artists and event dispatch exist for buttons, sliders, range sliders, check buttons, radio buttons, text boxes, and common selectors including span, rectangle, ellipse, polygon, and lasso workflows. Remaining widget partial scope is exact upstream callback ordering/active-state edge behavior, cursor/multi-cursor helpers, menu/tool widgets, GUI-specific behavior, and browser-demo coverage.",
+		note:              "Static widget artists and event dispatch exist for buttons, sliders, range sliders, check buttons, radio buttons, text boxes, cursor, multi-cursor, and common selectors including span, rectangle, ellipse, polygon, and lasso workflows. Remaining widget partial scope is exact upstream active-state and styling edge behavior, advanced selector handles, menu/tool widgets, GUI-specific behavior, and browser-demo coverage.",
 	},
 	{
 		idPrefix:          "animation",
@@ -2289,7 +2289,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		featureCoverageID: "widgets-events-animation",
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"animation/animation.go", "canvas/scheduler.go"},
-		note:              "Go has FuncAnimation- and ArtistAnimation-style stepping on top of the canvas scheduler, including init callbacks, repeat handling, animated artist tracking, blit-region hooks, and event-loop start/stop behavior. Remaining animation scope is repeat-delay/cache edge behavior, HTML representation, movie writer APIs, deterministic GIF/MP4 writer decisions, and browser/example coverage.",
+		note:              "Go has FuncAnimation- and ArtistAnimation-style stepping on top of the canvas scheduler, including init callbacks, repeat and repeat-delay handling, animated artist tracking, blit-region hooks, and event-loop start/stop behavior. Remaining animation scope is cache/save-count edge behavior, HTML representation, movie writer APIs, deterministic GIF/MP4 writer decisions, and browser/example coverage.",
 	},
 }
 

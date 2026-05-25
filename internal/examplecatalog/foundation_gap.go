@@ -363,10 +363,10 @@ var foundationAPIGaps = []FoundationAPIGap{
 		},
 		CurrentEquivalent: "Go has static widget artists and canvas event routing for buttons, sliders, " +
 			"range sliders, check buttons, radio buttons, text boxes, span selectors, rectangle / ellipse " +
-			"selectors, polygon selectors, and lasso selectors, with focused interaction tests for mouse " +
-			"and keyboard workflows.",
-		Gap: "Remaining widget scope is exact upstream callback ordering and active-state edge cases, cursor " +
-			"/ multi-cursor helpers, menu/tool widgets, GUI-specific behaviors, and browser-demo coverage " +
+			"selectors, polygon selectors, lasso selectors, cursor, and multi-cursor helpers, with focused " +
+			"interaction tests for mouse, keyboard, hover, callback ordering, and disabled-state workflows.",
+		Gap: "Remaining widget scope is exact upstream active-state and styling edge cases, advanced " +
+			"selector handle behavior, menu/tool widgets, GUI-specific behaviors, and browser-demo coverage " +
 			"for supported interactions.",
 		Decision: GapDecisionImplement,
 		Rationale: "Widgets are useful only when event semantics are deterministic; unsupported GUI-only " +
@@ -379,9 +379,9 @@ var foundationAPIGaps = []FoundationAPIGap{
 		UpstreamModules: []string{"animation.py"},
 		GoFiles:         []string{"animation/animation.go", "canvas/scheduler.go"},
 		CurrentEquivalent: "Go has FuncAnimation- and ArtistAnimation-style stepping on top of the " +
-			"canvas scheduler, including init callbacks, repeat handling, animated artist tracking, " +
-			"blit-region hooks, and event-loop start/stop behavior covered by unit tests.",
-		Gap: "Remaining animation scope is repeat-delay/cache edge behavior, HTML representation, " +
+			"canvas scheduler, including init callbacks, repeat handling, repeat-delay ticks, animated " +
+			"artist tracking, blit-region hooks, and event-loop start/stop behavior covered by unit tests.",
+		Gap: "Remaining animation scope is cache/save-count edge behavior, HTML representation, " +
 			"movie writer APIs, deterministic GIF/MP4 writer decisions, and browser/example coverage " +
 			"for playback and blitting.",
 		Decision: GapDecisionImplement,
