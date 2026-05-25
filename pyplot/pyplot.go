@@ -291,6 +291,11 @@ func Subplots(nRows, nCols int, opts ...core.SubplotOption) (*core.Figure, [][]*
 	return fig, grid
 }
 
+// SubplotsAdjust applies persistent subplot layout adjustments to the current figure.
+func SubplotsAdjust(cfg core.SubplotAdjust) {
+	GCF().SubplotsAdjust(cfg)
+}
+
 // Subplot2Grid creates a spanning subplot inside a logical grid on the current figure.
 func Subplot2Grid(shape, loc [2]int, rowSpan, colSpan int, opts ...core.SubplotAxesOption) *core.Axes {
 	fig := GCF()

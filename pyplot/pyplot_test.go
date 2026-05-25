@@ -1,6 +1,7 @@
 package pyplot
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -75,6 +76,23 @@ func TestSubplotsCreatesNewFigureAndCurrentAxes(t *testing.T) {
 	}
 	if got := GCA(); got != grid[0][0] {
 		t.Fatalf("GCA() = %p, want %p", got, grid[0][0])
+	}
+
+	left := 0.2
+	right := 0.85
+	bottom := 0.15
+	top := 0.88
+	SubplotsAdjust(core.SubplotAdjust{
+		Left:   &left,
+		Right:  &right,
+		Bottom: &bottom,
+		Top:    &top,
+	})
+	if !approxFloat(grid[0][0].RectFraction.Min.X, left, 1e-12) || !approxFloat(grid[0][0].RectFraction.Max.Y, top, 1e-12) {
+		t.Fatalf("top-left subplot rect after adjust = %+v", grid[0][0].RectFraction)
+	}
+	if !approxFloat(grid[1][1].RectFraction.Max.X, right, 1e-12) || !approxFloat(grid[1][1].RectFraction.Min.Y, bottom, 1e-12) {
+		t.Fatalf("bottom-right subplot rect after adjust = %+v", grid[1][1].RectFraction)
 	}
 }
 
@@ -1176,3 +1194,7 @@ func (c *testFigureCanvas) Connect(canvas.EventType, canvas.Handler) canvas.Conn
 func (c *testFigureCanvas) Disconnect(canvas.ConnectionID) {}
 
 func (c *testFigureCanvas) Close() error { return nil }
+
+func approxFloat(a, b, tol float64) bool {
+	return math.Abs(a-b) <= tol
+}
