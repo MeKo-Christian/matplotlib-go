@@ -85,6 +85,9 @@ func TestStatefulHelpersDelegateToCurrentAxes(t *testing.T) {
 	Title("Demo")
 	XLabel("time")
 	YLabel("value")
+	Suptitle("Figure Demo")
+	SupXLabel("shared time")
+	SupYLabel("shared value")
 	legend := Legend()
 	if legend == nil {
 		t.Fatal("Legend() returned nil")
@@ -96,6 +99,10 @@ func TestStatefulHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 	if ax.XLabel != "time" || ax.YLabel != "value" {
 		t.Fatalf("axis labels = (%q, %q), want (%q, %q)", ax.XLabel, ax.YLabel, "time", "value")
+	}
+	fig := GCF()
+	if fig.SupTitle != "Figure Demo" || fig.SupXLabel != "shared time" || fig.SupYLabel != "shared value" {
+		t.Fatalf("figure labels = (%q, %q, %q)", fig.SupTitle, fig.SupXLabel, fig.SupYLabel)
 	}
 	if len(ax.Artists) != 2 {
 		t.Fatalf("len(ax.Artists) = %d, want 2", len(ax.Artists))

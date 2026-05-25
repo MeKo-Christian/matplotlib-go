@@ -669,6 +669,21 @@ func YLabel(label string) {
 	GCA().SetYLabel(label)
 }
 
+// Suptitle sets the current figure-level title.
+func Suptitle(label string) {
+	GCF().SetSuptitle(label)
+}
+
+// SupXLabel sets the current figure-level x label.
+func SupXLabel(label string) {
+	GCF().SetSupXLabel(label)
+}
+
+// SupYLabel sets the current figure-level y label.
+func SupYLabel(label string) {
+	GCF().SetSupYLabel(label)
+}
+
 // Legend adds a legend to the current axes.
 func Legend() *core.Legend {
 	return GCA().AddLegend()

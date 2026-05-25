@@ -773,6 +773,15 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Note:              "Stateful pyplot TickParams delegates the typed core.TickParams struct to the current axes, including axis/which selection, tick visibility, label placement, grid styling, and unsupported-axis errors. Remaining partial scope is Python's keyword alias grammar.",
 	},
 	{
+		ID:                "pyplot-suptitle",
+		UpstreamID:        "pyplot.py:function:suptitle",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "core/artist.go", "core/figure_layout.go"},
+		CatalogIDs:        []string{"figure_labels_composition"},
+		Note:              "Stateful pyplot Suptitle delegates to the current figure's figure-level title layout path, and the Go package also exposes SupXLabel / SupYLabel for the existing figure shared-label layout helpers. Remaining partial scope is Matplotlib's full Text kwargs and automatic stale/draw behavior.",
+	},
+	{
 		ID:                "pylab-gcf",
 		UpstreamID:        "_pylab_helpers.py:class:Gcf",
 		FeatureCoverageID: "pyplot-state",
