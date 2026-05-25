@@ -2838,6 +2838,9 @@ Current slice landed:
   rows with scoped remaining overload behavior.
 - Added pyplot `SCA` / `DelAxes` wrappers for current-axes selection and
   registered axes removal, including errors for unregistered axes.
+- Split implemented pyplot figure/subplot, show/pause, legend/colorbar,
+  savefig, and rc helper functions into explicit public-surface rows with
+  scoped remaining Matplotlib overload behavior.
 - Added core `ImRead` / `ImSave` image IO helpers for Go-supported file
   decoding and PNG `render.RGBAImage` output, including straight-alpha PNG
   round-trip tests and explicit unsupported-input errors.
