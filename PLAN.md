@@ -2876,6 +2876,8 @@ Current slice landed:
   `clim` / `sci` / `set_cmap`, blocking GUI input waits, `clabel`, polar grid
   shortcuts, backend switching, and manager factory behavior now map to typed
   Go APIs, partials, or intentional omissions.
+- Added a focused Phase 12.5 inventory test so those remaining pyplot
+  dynamic/global shortcut classifications stay explicit.
 - Added pyplot `ImRead` / `ImSave` wrappers over the core image IO helpers,
   with a focused PNG round-trip delegation test and explicit public-surface
   rows for `pyplot.imread` / `pyplot.imsave`.

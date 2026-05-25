@@ -137,6 +137,36 @@ func TestPhase125PyplotImageHelpersHaveExplicitRows(t *testing.T) {
 	}
 }
 
+func TestPhase125PyplotDynamicShortcutsHaveExplicitRows(t *testing.T) {
+	want := []string{
+		"pyplot.py:function:clabel",
+		"pyplot.py:function:clim",
+		"pyplot.py:function:fignum_exists",
+		"pyplot.py:function:findobj",
+		"pyplot.py:function:get_figlabels",
+		"pyplot.py:function:get_fignums",
+		"pyplot.py:function:ginput",
+		"pyplot.py:function:margins",
+		"pyplot.py:function:new_figure_manager",
+		"pyplot.py:function:polar",
+		"pyplot.py:function:rgrids",
+		"pyplot.py:function:sci",
+		"pyplot.py:function:set_cmap",
+		"pyplot.py:function:switch_backend",
+		"pyplot.py:function:thetagrids",
+		"pyplot.py:function:waitforbuttonpress",
+	}
+	for _, upstreamID := range want {
+		row, ok := LookupPublicSurfaceParityByUpstreamID(upstreamID)
+		if !ok {
+			t.Fatalf("missing explicit Phase 12.5 pyplot dynamic/global shortcut classification for %q", upstreamID)
+		}
+		if row.Status == PublicSurfaceNotStarted {
+			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", upstreamID, row.Status)
+		}
+	}
+}
+
 func TestPhase125WidgetClassesHaveExplicitRows(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	for _, surface := range artifact.Rows {
