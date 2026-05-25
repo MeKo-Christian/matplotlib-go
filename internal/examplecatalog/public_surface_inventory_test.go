@@ -98,6 +98,27 @@ func TestPublicSurfaceParityRowsClassifyLandmarkRows(t *testing.T) {
 	}
 }
 
+func TestPhase125ImageClassAndIOOmissionsHaveExplicitRows(t *testing.T) {
+	want := []string{
+		"image.py:class:BboxImage",
+		"image.py:class:FigureImage",
+		"image.py:class:NonUniformImage",
+		"image.py:class:PcolorImage",
+		"image.py:function:imread",
+		"image.py:function:imsave",
+		"image.py:function:thumbnail",
+	}
+	for _, upstreamID := range want {
+		row, ok := LookupPublicSurfaceParityByUpstreamID(upstreamID)
+		if !ok {
+			t.Fatalf("missing explicit Phase 12.5 image public-surface classification for %q", upstreamID)
+		}
+		if row.Status == PublicSurfaceNotStarted {
+			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", upstreamID, row.Status)
+		}
+	}
+}
+
 func TestPublicSurfaceParityRowsCoverCommittedInventory(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	rows := PublicSurfaceParityRowsForSurface(artifact.Rows)

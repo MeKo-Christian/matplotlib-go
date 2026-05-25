@@ -2797,6 +2797,12 @@ Current slice landed:
 - Added `MatShowOptions.Interpolation` so matrix-style `matshow` helpers can
   select the same renderer interpolation filters as `imshow` / `Image2D`
   instead of silently being limited to the renderer default.
+- Added explicit public-surface classifications for image.py's remaining
+  image classes and IO helpers: BboxImage maps to existing annotation/anchored
+  image composition, NonUniformImage / PcolorImage map to PColor/PColorMesh,
+  and FigureImage, imread, imsave, and thumbnail are documented omissions with
+  migration guidance. The broad image.py row now only carries pcolorfast /
+  transformed-resampling edge behavior as remaining partial scope.
 Implementation notes:
 
 - Compare against upstream `image.py`, `pyplot.py`, `_pylab_helpers.py`,
