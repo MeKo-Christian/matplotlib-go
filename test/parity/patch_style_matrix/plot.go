@@ -20,19 +20,6 @@ func Plot() *core.Figure {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.03, Y: 0.06}, Max: geom.Pt{X: 0.97, Y: 0.96}})
 	ax.SetXLim(0, 12)
 	ax.SetYLim(0, 8)
-	hidePatchMatrixAxes(ax)
-
-	addBoxStyleMatrix(ax)
-	addHatchDensityMatrix(ax)
-	addConnectionStyleMatrix(ax)
-	return fig
-}
-
-func Render() image.Image {
-	return common.RenderFixtureFigure(Plot(), Width, Height)
-}
-
-func hidePatchMatrixAxes(ax *core.Axes) {
 	ax.ShowFrame = false
 	ax.XAxis.ShowSpine = false
 	ax.XAxis.ShowTicks = false
@@ -40,20 +27,23 @@ func hidePatchMatrixAxes(ax *core.Axes) {
 	ax.YAxis.ShowSpine = false
 	ax.YAxis.ShowTicks = false
 	ax.YAxis.ShowLabels = false
-}
 
-func addBoxStyleMatrix(ax *core.Axes) {
-	styles := []core.BoxStyle{
-		core.BoxStyleSquare,
-		core.BoxStyleRound,
-		core.BoxStyleRound4,
-		core.BoxStyleSawtooth,
-		core.BoxStyleRoundtooth,
-		core.BoxStyleCircle,
-		core.BoxStyleEllipse,
-		core.BoxStyleLArrow,
-		core.BoxStyleRArrow,
-		core.BoxStyleDArrow,
+	styles := []struct {
+		style        core.BoxStyle
+		pad          float64
+		roundingSize float64
+		toothSize    float64
+	}{
+		{style: core.BoxStyleSquare, pad: 0.10},
+		{style: core.BoxStyleRound, pad: 0.10, roundingSize: 0.16},
+		{style: core.BoxStyleRound4, pad: 0.10, roundingSize: 0.16},
+		{style: core.BoxStyleSawtooth, pad: 0.10, toothSize: 0.12},
+		{style: core.BoxStyleRoundtooth, pad: 0.10, toothSize: 0.12},
+		{style: core.BoxStyleCircle, pad: 0.10},
+		{style: core.BoxStyleEllipse, pad: 0.10},
+		{style: core.BoxStyleLArrow, pad: 0.10},
+		{style: core.BoxStyleRArrow, pad: 0.10},
+		{style: core.BoxStyleDArrow, pad: 0.10},
 	}
 	colors := []render.Color{
 		{R: 0.34, G: 0.66, B: 0.82, A: 0.82},
@@ -71,30 +61,24 @@ func addBoxStyleMatrix(ax *core.Axes) {
 				EdgeColor: render.Color{R: 0.13, G: 0.15, B: 0.18, A: 1},
 				EdgeWidth: 1.0,
 			},
-			XY:             geom.Pt{X: 0.65 + float64(col)*2.25, Y: 6.55 - float64(row)*1.15},
-			Width:          1.35,
-			Height:         0.62,
-			Pad:            0.10,
-			BoxStyle:       style,
-			RoundingSize:   0.16,
-			ToothSize:      0.12,
-			ArrowHeadWidth: 0.55,
-			MutationSize:   1.0,
+			XY:           geom.Pt{X: 0.65 + float64(col)*2.25, Y: 6.55 - float64(row)*1.15},
+			Width:        1.35,
+			Height:       0.62,
+			Pad:          style.pad,
+			BoxStyle:     style.style,
+			RoundingSize: style.roundingSize,
+			ToothSize:    style.toothSize,
+			MutationSize: 1.0,
 		})
 	}
-}
 
-func addHatchDensityMatrix(ax *core.Axes) {
-	hatches := []string{"/", "//", "o", "oo", ".", "..", "*", "**"}
-	for i, hatch := range hatches {
+	for i, hatch := range []string{"/", "//", "o", "oo", ".", "..", "*", "**"} {
 		ax.AddPatch(&core.Rectangle{
 			Patch: core.Patch{
-				FaceColor:  render.Color{R: 0.92, G: 0.91, B: 0.84, A: 1},
-				EdgeColor:  render.Color{R: 0.18, G: 0.22, B: 0.25, A: 1},
-				EdgeWidth:  0.85,
-				Hatch:      hatch,
-				HatchColor: render.Color{R: 0.13, G: 0.20, B: 0.24, A: 1},
-				HatchWidth: 0.75,
+				FaceColor: render.Color{R: 0.92, G: 0.91, B: 0.84, A: 1},
+				EdgeColor: render.Color{R: 0.18, G: 0.22, B: 0.25, A: 1},
+				EdgeWidth: 0.85,
+				Hatch:     hatch,
 			},
 			XY:     geom.Pt{X: 0.75 + float64(i)*1.38, Y: 3.58},
 			Width:  0.9,
@@ -102,47 +86,44 @@ func addHatchDensityMatrix(ax *core.Axes) {
 			Coords: core.Coords(core.CoordData),
 		})
 	}
-}
 
-func addConnectionStyleMatrix(ax *core.Axes) {
-	arrowStyle, _ := core.ArrowStyleFromString("->,head_length=0.35,head_width=0.22")
-	barStyle, _ := core.ArrowStyleFromString("|-|")
-	wedgeStyle, _ := core.ArrowStyleFromString("wedge,tail_width=0.26,shrink_factor=0.35")
-	arcStyle, _ := core.ConnectionStyleFromString("arc,armA=0.9,armB=0.65,rad=0.18")
-	barConnAngle := 0.0
-	barConn := core.ConnectionStyle{Name: "bar", Fraction: 0.25, Angle: &barConnAngle}
-	arc3Style, _ := core.ConnectionStyleFromString("arc3,rad=0.22")
+	arrowStyleA, _ := core.ArrowStyleFromString("->,head_length=0.35,head_width=0.22")
+	arrowStyleB, _ := core.ArrowStyleFromString("|-|")
+	arrowStyleC, _ := core.ArrowStyleFromString("wedge,tail_width=0.26,shrink_factor=0.35")
+	connectionStyleA, _ := core.ConnectionStyleFromString("arc,armA=0.9,armB=0.65,rad=0.18")
+	connectionStyleB, _ := core.ConnectionStyleFromString("bar,fraction=0.25,angle=0")
+	connectionStyleC, _ := core.ConnectionStyleFromString("arc3,rad=0.22")
 
 	arrows := []struct {
-		a, b geom.Pt
-		as   core.ArrowStyle
-		cs   core.ConnectionStyle
-		face render.Color
-		edge render.Color
+		a, b            geom.Pt
+		arrowStyle      core.ArrowStyle
+		connectionStyle core.ConnectionStyle
+		face            render.Color
+		edge            render.Color
 	}{
 		{
-			a:    geom.Pt{X: 0.9, Y: 2.25},
-			b:    geom.Pt{X: 3.1, Y: 2.6},
-			as:   arrowStyle,
-			cs:   arcStyle,
-			face: render.Color{R: 0.28, G: 0.48, B: 0.82, A: 1},
-			edge: render.Color{R: 0.12, G: 0.24, B: 0.47, A: 1},
+			a:               geom.Pt{X: 0.9, Y: 2.25},
+			b:               geom.Pt{X: 3.1, Y: 2.6},
+			arrowStyle:      arrowStyleA,
+			connectionStyle: connectionStyleA,
+			face:            render.Color{R: 0.28, G: 0.48, B: 0.82, A: 1},
+			edge:            render.Color{R: 0.12, G: 0.24, B: 0.47, A: 1},
 		},
 		{
-			a:    geom.Pt{X: 4.0, Y: 2.62},
-			b:    geom.Pt{X: 6.25, Y: 1.88},
-			as:   barStyle,
-			cs:   barConn,
-			face: render.Color{A: 0},
-			edge: render.Color{R: 0.66, G: 0.28, B: 0.23, A: 1},
+			a:               geom.Pt{X: 4.0, Y: 2.62},
+			b:               geom.Pt{X: 6.25, Y: 1.88},
+			arrowStyle:      arrowStyleB,
+			connectionStyle: connectionStyleB,
+			face:            render.Color{A: 0},
+			edge:            render.Color{R: 0.66, G: 0.28, B: 0.23, A: 1},
 		},
 		{
-			a:    geom.Pt{X: 7.05, Y: 2.08},
-			b:    geom.Pt{X: 10.8, Y: 2.58},
-			as:   wedgeStyle,
-			cs:   arc3Style,
-			face: render.Color{R: 0.40, G: 0.66, B: 0.35, A: 0.82},
-			edge: render.Color{R: 0.20, G: 0.38, B: 0.18, A: 1},
+			a:               geom.Pt{X: 7.05, Y: 2.08},
+			b:               geom.Pt{X: 10.8, Y: 2.58},
+			arrowStyle:      arrowStyleC,
+			connectionStyle: connectionStyleC,
+			face:            render.Color{R: 0.40, G: 0.66, B: 0.35, A: 0.82},
+			edge:            render.Color{R: 0.20, G: 0.38, B: 0.18, A: 1},
 		},
 	}
 	for _, item := range arrows {
@@ -154,10 +135,15 @@ func addConnectionStyleMatrix(ax *core.Axes) {
 			},
 			PosA:            item.a,
 			PosB:            item.b,
-			ArrowStyle:      item.as,
-			ConnectionStyle: item.cs,
+			ArrowStyle:      item.arrowStyle,
+			ConnectionStyle: item.connectionStyle,
 			MutationScale:   15,
 			Coords:          core.Coords(core.CoordData),
 		})
 	}
+	return fig
+}
+
+func Render() image.Image {
+	return common.RenderFixtureFigure(Plot(), Width, Height)
 }
