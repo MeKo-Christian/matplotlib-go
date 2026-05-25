@@ -778,6 +778,32 @@ func TestArrowStyleBarABUsesZeroBracketLength(t *testing.T) {
 	}
 }
 
+func TestArrowStyleBracketScaleOverridesMutationSize(t *testing.T) {
+	style, ok := ArrowStyleFromString("]-,widthA=2,lengthA=1,scaleA=3")
+	if !ok {
+		t.Fatal("ArrowStyleFromString(]-) returned !ok")
+	}
+
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 0, Y: 0})
+	path.LineTo(geom.Pt{X: 100, Y: 0})
+	parts := style.transmute(path, 10, 1)
+	if len(parts) != 2 {
+		t.Fatalf("]- parts = %d, want line plus bracket", len(parts))
+	}
+	bounds, ok := pathBounds(parts[1].path)
+	if !ok {
+		t.Fatal("bracket has no bounds")
+	}
+	want := geom.Rect{
+		Min: geom.Pt{X: -3, Y: -3},
+		Max: geom.Pt{X: 0, Y: 3},
+	}
+	if !approxRect(bounds, want, 1e-9) {
+		t.Fatalf("scaled bracket bounds = %+v, want %+v", bounds, want)
+	}
+}
+
 func TestFancyArrowPatchDefaultShrinkMatchesMatplotlib(t *testing.T) {
 	patch := &FancyArrowPatch{
 		PosA:            geom.Pt{X: 0.25, Y: 0.5},

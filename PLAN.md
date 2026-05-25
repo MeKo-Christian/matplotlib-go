@@ -2282,6 +2282,10 @@ Current slice landed:
   curve style.
 - Renderer-neutral patch tests cover `|-|` parser defaults and non-protruding
   endpoint bar geometry.
+- Curve-style bracket arrows now parse and apply Matplotlib's `scaleA` /
+  `scaleB` overrides, so bracket width/length can be scaled independently from
+  the arrow mutation size.
+- Renderer-neutral patch tests cover source-backed bracket scaling.
 - Added the focused `patch_style_matrix` parity fixture for Phase 12.4 patch
   coverage. It separates box-style, hatch-density, ArrowStyle, and
   ConnectionStyle visual coverage from the broader `patch_showcase` fixture.

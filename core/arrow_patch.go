@@ -22,6 +22,8 @@ type ArrowStyle struct {
 	LengthB      float64
 	AngleA       float64
 	AngleB       float64
+	ScaleA       *float64
+	ScaleB       *float64
 	ShrinkFactor float64
 }
 
@@ -472,15 +474,24 @@ func (s ArrowStyle) transmute(path geom.Path, mutationSize, lineWidth float64) [
 		head := arrowHeadPath(pathSecond(path), pathStart(path), headLength, s.HeadWidth*mutationSize, fillBegin, lineWidth)
 		parts = append(parts, arrowPathPart{path: head, fillable: fillBegin})
 	} else if beginBracket {
-		parts = append(parts, arrowPathPart{path: bracketPath(pathStart(path), pathSecond(path), s.WidthA*mutationSize, s.LengthA*mutationSize, s.AngleA), fillable: false})
+		scale := bracketScale(s.ScaleA, mutationSize)
+		parts = append(parts, arrowPathPart{path: bracketPath(pathStart(path), pathSecond(path), s.WidthA*scale, s.LengthA*scale, s.AngleA), fillable: false})
 	}
 	if endHead {
 		head := arrowHeadPath(pathPenultimate(path), pathEnd(path), headLength, s.HeadWidth*mutationSize, fillEnd, lineWidth)
 		parts = append(parts, arrowPathPart{path: head, fillable: fillEnd})
 	} else if endBracket {
-		parts = append(parts, arrowPathPart{path: bracketPath(pathEnd(path), pathPenultimate(path), s.WidthB*mutationSize, s.LengthB*mutationSize, s.AngleB), fillable: false})
+		scale := bracketScale(s.ScaleB, mutationSize)
+		parts = append(parts, arrowPathPart{path: bracketPath(pathEnd(path), pathPenultimate(path), s.WidthB*scale, s.LengthB*scale, s.AngleB), fillable: false})
 	}
 	return parts
+}
+
+func bracketScale(scale *float64, mutationSize float64) float64 {
+	if scale != nil {
+		return *scale
+	}
+	return mutationSize
 }
 
 func curveArrowHeadLength(style ArrowStyle, mutationSize float64) float64 {
@@ -805,6 +816,12 @@ func applyArrowStyleParams(style *ArrowStyle, params map[string]float64) {
 			style.AngleA = value
 		case "angleb":
 			style.AngleB = value
+		case "scalea":
+			v := value
+			style.ScaleA = &v
+		case "scaleb":
+			v := value
+			style.ScaleB = &v
 		case "shrink_factor":
 			style.ShrinkFactor = value
 		}

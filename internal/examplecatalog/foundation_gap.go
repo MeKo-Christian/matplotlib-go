@@ -173,7 +173,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CurrentEquivalent: "Go has common patch shapes, hatch routing, FancyBboxPatch with the upstream " +
 			"BoxStyle registry entries, renderer-neutral hatch geometry for the upstream hatch " +
 			"character set, AGG shape hatches, vector-native shape hatch patterns, FancyArrowPatch, " +
-			"DPI-correct Matplotlib-style FancyArrowPatch endpoint shrinking, explicit ConnectionPatch shrink conversion, FancyArrowPatch / ConnectionPatch round cap/join defaults, FancyArrowPatch mutation-aspect arrow transmutation, ArrowStyle Simple / Fancy / Wedge quadratic-connection geometry, ArrowStyle Wedge shrink-factor behavior, ArrowStyle curve line shortening, ArrowStyle BarAB zero-length bracket defaults, ConnectionStyle Arc defaults and rounded arm geometry, ConnectionStyle Bar angle projection, ConnectionPatch, and several extra patch classes.",
+			"DPI-correct Matplotlib-style FancyArrowPatch endpoint shrinking, explicit ConnectionPatch shrink conversion, FancyArrowPatch / ConnectionPatch round cap/join defaults, FancyArrowPatch mutation-aspect arrow transmutation, ArrowStyle Simple / Fancy / Wedge quadratic-connection geometry, ArrowStyle Wedge shrink-factor behavior, ArrowStyle curve line shortening and bracket scale overrides, ArrowStyle BarAB zero-length bracket defaults, ConnectionStyle Arc defaults and rounded arm geometry, ConnectionStyle Bar angle projection, ConnectionPatch, and several extra patch classes.",
 		Gap: "Remaining patch scope is exact ArrowStyle / ConnectionStyle geometry edge cases, " +
 			"specialized patch class breadth, and broader visual fixture closure beyond the focused " +
 			"patch_style_matrix registry case.",
