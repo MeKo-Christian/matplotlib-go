@@ -63,6 +63,20 @@ func TestAxesMatShowAcceptsSharedNorm(t *testing.T) {
 	}
 }
 
+func TestAxesMatShowInterpolationPropagatesToImage(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(unitRect())
+	bicubic := "bicubic"
+
+	img := ax.MatShow([][]float64{{0, 1}}, MatShowOptions{Interpolation: &bicubic})
+	if img == nil {
+		t.Fatal("MatShow() returned nil")
+	}
+	if img.Interpolation != "bicubic" {
+		t.Fatalf("MatShow interpolation = %q, want bicubic", img.Interpolation)
+	}
+}
+
 func TestAxesImShowKeepsBottomXAxis(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(unitRect())

@@ -2794,6 +2794,9 @@ Current slice landed:
   from `auto` to `antialiased` only when the installed Matplotlib predates the
   vendored upstream `auto` registry name; Go behavior remains tested against
   the vendored upstream list.
+- Added `MatShowOptions.Interpolation` so matrix-style `matshow` helpers can
+  select the same renderer interpolation filters as `imshow` / `Image2D`
+  instead of silently being limited to the renderer default.
 Implementation notes:
 
 - Compare against upstream `image.py`, `pyplot.py`, `_pylab_helpers.py`,

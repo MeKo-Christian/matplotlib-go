@@ -17,6 +17,9 @@ type MatShowOptions struct {
 	Aspect       string
 	IntegerTicks *bool
 	Label        string
+	// Interpolation selects the image resampling filter. Empty defers to the
+	// renderer default.
+	Interpolation *string
 }
 
 // ImShowOptions configures Axes.ImShow.
@@ -113,6 +116,7 @@ func (a *Axes) MatShow(data [][]float64, opts ...MatShowOptions) *Image2D {
 		if opt.Label != "" {
 			cfg.Label = opt.Label
 		}
+		cfg.Interpolation = opt.Interpolation
 	}
 
 	xMin := -0.5
@@ -120,17 +124,18 @@ func (a *Axes) MatShow(data [][]float64, opts ...MatShowOptions) *Image2D {
 	yMin := -0.5
 	yMax := float64(rows) - 0.5
 	img := a.Image(data, ImageOptions{
-		Colormap: cfg.Colormap,
-		Norm:     cfg.Norm,
-		VMin:     cfg.VMin,
-		VMax:     cfg.VMax,
-		Alpha:    cfg.Alpha,
-		XMin:     &xMin,
-		XMax:     &xMax,
-		YMin:     &yMin,
-		YMax:     &yMax,
-		Origin:   ImageOriginUpper,
-		Label:    cfg.Label,
+		Colormap:      cfg.Colormap,
+		Norm:          cfg.Norm,
+		VMin:          cfg.VMin,
+		VMax:          cfg.VMax,
+		Alpha:         cfg.Alpha,
+		XMin:          &xMin,
+		XMax:          &xMax,
+		YMin:          &yMin,
+		YMax:          &yMax,
+		Origin:        ImageOriginUpper,
+		Label:         cfg.Label,
+		Interpolation: cfg.Interpolation,
 	})
 	if img == nil {
 		return nil
