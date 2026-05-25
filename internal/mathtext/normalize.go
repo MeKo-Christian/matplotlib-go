@@ -177,6 +177,7 @@ var mathTextAccentMarks = map[string]rune{
 var mathTextPassthroughCommands = map[string]struct{}{
 	"mathrm":       {},
 	"mathit":       {},
+	"mathdefault":  {},
 	"mathbf":       {},
 	"mathsf":       {},
 	"mathtt":       {},

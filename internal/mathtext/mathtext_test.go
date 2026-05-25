@@ -135,6 +135,19 @@ func TestLayoutMathTextDelegatesStyleFontResolution(t *testing.T) {
 	}
 }
 
+func TestLayoutMathTextTreatsMathDefaultAsTransparentStyle(t *testing.T) {
+	layout, ok := LayoutMathText(testMeasurer{}, `\mathdefault{10^{3}}`, 20, "base", Options{})
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+	if containsTestRun(layout.Runs, `\mathdefault`, 20) {
+		t.Fatalf("mathdefault rendered as literal text: %+v", layout.Runs)
+	}
+	if !containsTestRun(layout.Runs, "10", 20) || !containsTestRun(layout.Runs, "3", 14) {
+		t.Fatalf("mathdefault did not lay out grouped contents: %+v", layout.Runs)
+	}
+}
+
 func TestLayoutMathTextUsesItalicLatinVariablesByDefault(t *testing.T) {
 	resolver := &recordingResolver{}
 	layout, ok := LayoutMathText(testMeasurer{}, `x+\mathrm{x}+\sin x`, 20, "base", Options{FontResolver: resolver})

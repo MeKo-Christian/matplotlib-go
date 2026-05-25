@@ -466,7 +466,7 @@ func (r *Renderer) drawTextRotatedDirect(text string, anchor geom.Pt, size, angl
 		fontKey := fontReference(font.face)
 		// drawTextPathFallback routes through r.Path, which flips the display
 		// origin to device itself, so pass the un-flipped display origin here.
-		if os.Getenv("AGG_FORCE_OUTLINE_TEXT") == "" && r.drawTextPathFallback(text, origin, sizePx, textColor, fontKey) {
+		if r.drawTextPathFallback(text, origin, sizePx, textColor, fontKey) {
 			return
 		}
 		if font.fontPath != "" {
