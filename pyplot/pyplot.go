@@ -110,6 +110,52 @@ func Axes(r geom.Rect, opts ...style.Option) *core.Axes {
 	return ax
 }
 
+// SCA sets the provided registered axes as current.
+func SCA(ax *core.Axes) error {
+	registry.mu.Lock()
+	defer registry.mu.Unlock()
+
+	fig := registry.figureForAxesLocked(ax)
+	if fig == nil {
+		return errors.New("pyplot: axes is not registered")
+	}
+	registry.current = fig
+	registry.currentAxes[fig] = ax
+	return nil
+}
+
+// DelAxes removes the provided axes from its registered figure.
+func DelAxes(ax *core.Axes) error {
+	registry.mu.Lock()
+	defer registry.mu.Unlock()
+
+	fig := registry.figureForAxesLocked(ax)
+	if fig == nil {
+		return errors.New("pyplot: axes is not registered")
+	}
+
+	filtered := fig.Children[:0]
+	for _, child := range fig.Children {
+		if child != ax {
+			filtered = append(filtered, child)
+		}
+	}
+	fig.Children = filtered
+	for key, subplot := range registry.subplotAxes[fig] {
+		if subplot == ax {
+			delete(registry.subplotAxes[fig], key)
+		}
+	}
+	if registry.currentAxes[fig] == ax {
+		delete(registry.currentAxes, fig)
+		if len(fig.Children) > 0 {
+			registry.currentAxes[fig] = fig.Children[len(fig.Children)-1]
+		}
+	}
+	registry.current = fig
+	return nil
+}
+
 // AddAxes3D appends an Axes3D to the current figure and marks it current.
 func AddAxes3D(r geom.Rect, opts ...style.Option) *core.Axes3D {
 	fig := GCF()
@@ -1129,6 +1175,20 @@ func (r *registryState) rememberAxesLocked(fig *core.Figure, ax *core.Axes, key 
 	}
 	r.current = fig
 	r.currentAxes[fig] = ax
+}
+
+func (r *registryState) figureForAxesLocked(ax *core.Axes) *core.Figure {
+	if ax == nil {
+		return nil
+	}
+	for _, fig := range r.figures {
+		for _, child := range fig.Children {
+			if child == ax {
+				return fig
+			}
+		}
+	}
+	return nil
 }
 
 func defaultManagerFactory(fig *core.Figure) (canvas.FigureManager, error) {

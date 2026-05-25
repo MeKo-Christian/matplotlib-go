@@ -2836,6 +2836,8 @@ Current slice landed:
 - Split already-implemented pyplot basics (`gcf`, `gca`, `title`, `xlabel`,
   `ylabel`, `xlim`, `ylim`, `xscale`, `yscale`) into explicit public-surface
   rows with scoped remaining overload behavior.
+- Added pyplot `SCA` / `DelAxes` wrappers for current-axes selection and
+  registered axes removal, including errors for unregistered axes.
 - Added core `ImRead` / `ImSave` image IO helpers for Go-supported file
   decoding and PNG `render.RGBAImage` output, including straight-alpha PNG
   round-trip tests and explicit unsupported-input errors.

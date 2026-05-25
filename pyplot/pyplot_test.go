@@ -101,6 +101,43 @@ func TestAxesAddsCurrentAxesToCurrentFigure(t *testing.T) {
 	}
 }
 
+func TestSCAAndDelAxesUpdateCurrentAxesRegistry(t *testing.T) {
+	resetForTests()
+
+	fig, grid := Subplots(1, 2)
+	left := grid[0][0]
+	right := grid[0][1]
+
+	if err := SCA(right); err != nil {
+		t.Fatalf("SCA(right) error = %v", err)
+	}
+	if got := GCA(); got != right {
+		t.Fatalf("GCA() after SCA = %p, want right %p", got, right)
+	}
+	if got := GCF(); got != fig {
+		t.Fatalf("GCF() after SCA = %p, want fig %p", got, fig)
+	}
+
+	if err := DelAxes(right); err != nil {
+		t.Fatalf("DelAxes(right) error = %v", err)
+	}
+	if len(fig.Children) != 1 || fig.Children[0] != left {
+		t.Fatalf("figure children after DelAxes = %+v, want only left", fig.Children)
+	}
+	if got := GCA(); got != left {
+		t.Fatalf("GCA() after deleting current axes = %p, want left %p", got, left)
+	}
+
+	otherFig := core.NewFigure(100, 100)
+	foreign := otherFig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
+	if err := SCA(foreign); err == nil {
+		t.Fatal("SCA(foreign) returned nil error")
+	}
+	if err := DelAxes(foreign); err == nil {
+		t.Fatal("DelAxes(foreign) returned nil error")
+	}
+}
+
 func TestStatefulHelpersDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 
