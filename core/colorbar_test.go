@@ -725,9 +725,10 @@ func TestBoundaryColorbarDrawUsesUniformSpacingByDefault(t *testing.T) {
 	if len(r.paths) != 3 {
 		t.Fatalf("path count = %d, want 2 boundary cells plus outline", len(r.paths))
 	}
+	// Display space is y-up: cell 0 (vmin) sits at the bottom = low Y (20..50).
 	first, _ := pathBounds(r.paths[0])
-	if !floatApprox(first.Min.Y, 50, 1e-12) || !floatApprox(first.Max.Y, 80, 1e-12) {
-		t.Fatalf("first uniform boundary cell bounds = %+v, want y 50..80", first)
+	if !floatApprox(first.Min.Y, 20, 1e-12) || !floatApprox(first.Max.Y, 50, 1e-12) {
+		t.Fatalf("first uniform boundary cell bounds = %+v, want y 20..50", first)
 	}
 }
 
@@ -755,9 +756,10 @@ func TestBoundaryColorbarDrawCanUseProportionalSpacing(t *testing.T) {
 	if len(r.paths) != 3 {
 		t.Fatalf("path count = %d, want 2 boundary cells plus outline", len(r.paths))
 	}
+	// Display space is y-up: cell 0 ([0,1] of span 3) sits at the bottom (20..40).
 	first, _ := pathBounds(r.paths[0])
-	if !floatApprox(first.Min.Y, 60, 1e-12) || !floatApprox(first.Max.Y, 80, 1e-12) {
-		t.Fatalf("first proportional boundary cell bounds = %+v, want y 60..80", first)
+	if !floatApprox(first.Min.Y, 20, 1e-12) || !floatApprox(first.Max.Y, 40, 1e-12) {
+		t.Fatalf("first proportional boundary cell bounds = %+v, want y 20..40", first)
 	}
 }
 
@@ -833,11 +835,12 @@ func TestColorbarDrawSnapsRangeLegendToPixels(t *testing.T) {
 	if len(r.paths) != 257 {
 		t.Fatalf("path count = %d, want 256 color cells plus outline", len(r.paths))
 	}
+	// Display space is y-up: cell 0 (vmin) sits at the bottom (low Y).
 	wantFirstCell := []geom.Pt{
-		{X: 10, Y: 80},
-		{X: 43, Y: 80},
-		{X: 43, Y: 81},
-		{X: 10, Y: 81},
+		{X: 10, Y: 21},
+		{X: 43, Y: 21},
+		{X: 43, Y: 22},
+		{X: 10, Y: 22},
 	}
 	for i, want := range wantFirstCell {
 		if !floatApprox(r.paths[0].V[i].X, want.X, 1e-12) || !floatApprox(r.paths[0].V[i].Y, want.Y, 1e-12) {
@@ -845,10 +848,10 @@ func TestColorbarDrawSnapsRangeLegendToPixels(t *testing.T) {
 		}
 	}
 	wantOutline := []geom.Pt{
-		{X: 10.5, Y: 21.5},
-		{X: 43.5, Y: 21.5},
-		{X: 43.5, Y: 80.5},
-		{X: 10.5, Y: 80.5},
+		{X: 10.5, Y: 20.5},
+		{X: 43.5, Y: 20.5},
+		{X: 43.5, Y: 79.5},
+		{X: 10.5, Y: 79.5},
 	}
 	outline := r.paths[len(r.paths)-1]
 	if len(outline.V) < len(wantOutline) {

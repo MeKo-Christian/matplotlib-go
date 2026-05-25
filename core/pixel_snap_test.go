@@ -40,7 +40,9 @@ func TestSnapPixelRect(t *testing.T) {
 	if !ok {
 		t.Fatal("expected snapped stroke rect")
 	}
-	if strokeRect.Min.X != 107.5 || strokeRect.Max.X != 184.5 || strokeRect.Min.Y != 230.5 || strokeRect.Max.Y != 450.5 {
+	// Display space is y-up: the stroke half-pixel offset points the opposite way
+	// in Y (round - 0.5), so the snapped Y edges are 1px lower than the X form.
+	if strokeRect.Min.X != 107.5 || strokeRect.Max.X != 184.5 || strokeRect.Min.Y != 229.5 || strokeRect.Max.Y != 449.5 {
 		t.Fatalf("unexpected snapped stroke rect: %+v", strokeRect)
 	}
 }
@@ -75,7 +77,8 @@ func TestBar2D_Draw_SnapsFillAndStrokeRects(t *testing.T) {
 	if len(stroke) != 4 {
 		t.Fatalf("expected 4 stroke vertices, got %d", len(stroke))
 	}
-	if stroke[0] != (geom.Pt{X: 56.5, Y: 428.5}) || stroke[2] != (geom.Pt{X: 64.5, Y: 450.5}) {
+	// y-up stroke snap offsets Y by -0.5 (round - 0.5).
+	if stroke[0] != (geom.Pt{X: 56.5, Y: 427.5}) || stroke[2] != (geom.Pt{X: 64.5, Y: 449.5}) {
 		t.Fatalf("unexpected snapped stroke vertices: %+v", stroke)
 	}
 }
@@ -108,7 +111,8 @@ func TestHist2D_Draw_SnapsFillAndStrokeRects(t *testing.T) {
 	if len(stroke) != 4 {
 		t.Fatalf("expected 4 stroke vertices, got %d", len(stroke))
 	}
-	if stroke[0] != (geom.Pt{X: 50.5, Y: 430.5}) || stroke[2] != (geom.Pt{X: 69.5, Y: 450.5}) {
+	// y-up stroke snap offsets Y by -0.5 (round - 0.5).
+	if stroke[0] != (geom.Pt{X: 50.5, Y: 429.5}) || stroke[2] != (geom.Pt{X: 69.5, Y: 449.5}) {
 		t.Fatalf("unexpected snapped histogram stroke vertices: %+v", stroke)
 	}
 }
