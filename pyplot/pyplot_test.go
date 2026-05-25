@@ -349,6 +349,51 @@ func TestMinorTickAndLocatorWrappersDelegateToCurrentAxes(t *testing.T) {
 	}
 }
 
+func TestTickLocationWrappersDelegateToCurrentAxes(t *testing.T) {
+	resetForTests()
+
+	if err := XTicks([]float64{3, 1, 2}, []string{"three", "one", "two"}); err != nil {
+		t.Fatalf("XTicks() error = %v", err)
+	}
+	if err := YTicks([]float64{-1, 1}); err != nil {
+		t.Fatalf("YTicks() error = %v", err)
+	}
+
+	ax := GCA()
+	xLoc, ok := ax.XAxis.Locator.(core.FixedLocator)
+	if !ok {
+		t.Fatalf("x locator = %T, want core.FixedLocator", ax.XAxis.Locator)
+	}
+	if got := xLoc.TicksList; len(got) != 3 || got[0] != 3 || got[1] != 1 || got[2] != 2 {
+		t.Fatalf("x ticks = %v, want [3 1 2]", got)
+	}
+	xFmt, ok := ax.XAxis.Formatter.(core.FixedFormatter)
+	if !ok {
+		t.Fatalf("x formatter = %T, want core.FixedFormatter", ax.XAxis.Formatter)
+	}
+	if got := xFmt.Labels; len(got) != 3 || got[0] != "three" || got[1] != "one" || got[2] != "two" {
+		t.Fatalf("x labels = %v, want [three one two]", got)
+	}
+
+	yLoc, ok := ax.YAxis.Locator.(core.FixedLocator)
+	if !ok {
+		t.Fatalf("y locator = %T, want core.FixedLocator", ax.YAxis.Locator)
+	}
+	if got := yLoc.TicksList; len(got) != 2 || got[0] != -1 || got[1] != 1 {
+		t.Fatalf("y ticks = %v, want [-1 1]", got)
+	}
+	if _, ok := ax.YAxis.Formatter.(core.FixedFormatter); ok {
+		t.Fatal("YTicks without labels unexpectedly installed FixedFormatter")
+	}
+
+	if err := XTicks([]float64{1}, []string{"one"}, []string{"extra"}); err == nil {
+		t.Fatal("XTicks with multiple label sets returned nil error")
+	}
+	if err := YTicks([]float64{1, 2}, []string{"one"}); err == nil {
+		t.Fatal("YTicks with mismatched labels returned nil error")
+	}
+}
+
 func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 

@@ -813,6 +813,24 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Note:              "Stateful pyplot MinorTicksOff disables current-axes minor locators for the selected axis and returns core unsupported-axis errors. Remaining partial scope is exact Matplotlib scale-specific minor-tick restoration behavior.",
 	},
 	{
+		ID:                "pyplot-xticks",
+		UpstreamID:        "pyplot.py:function:xticks",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "core/tick_locators.go", "core/tick_formatters.go"},
+		CatalogIDs:        []string{"locator_fixed_index_labels"},
+		Note:              "Stateful pyplot XTicks installs a FixedLocator and optional FixedFormatter on the current x-axis with explicit label-count validation. Remaining partial scope is Matplotlib's getter mode, Text property kwargs, and label object returns.",
+	},
+	{
+		ID:                "pyplot-yticks",
+		UpstreamID:        "pyplot.py:function:yticks",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "core/tick_locators.go", "core/tick_formatters.go"},
+		CatalogIDs:        []string{"locator_fixed_index_labels"},
+		Note:              "Stateful pyplot YTicks installs a FixedLocator and optional FixedFormatter on the current y-axis with explicit label-count validation. Remaining partial scope is Matplotlib's getter mode, Text property kwargs, and label object returns.",
+	},
+	{
 		ID:                "pyplot-suptitle",
 		UpstreamID:        "pyplot.py:function:suptitle",
 		FeatureCoverageID: "pyplot-state",
@@ -1626,7 +1644,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"pyplot/pyplot.go", "canvas/canvas.go"},
 		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic"},
-		note:              "The Go pyplot package covers current figure/current axes state, common axes/subplot creation, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, axis mode/limit/scale/grid/tick-param/locator/minor-tick wrappers, axes-frame box toggling, labels, legends, colorbars, rc helpers, savefig, show, pause, draw, close/close-all cleanup, clf/cla reset helpers, and interactive-mode state toggles. Remaining partial scope is specific missing wrapper families, Python overload breadth, automatic interactive redraw side effects, and unsupported implicit manager behavior.",
+		note:              "The Go pyplot package covers current figure/current axes state, common axes/subplot creation, common plot/image/stat wrappers, text and annotation wrappers, reference-line/span wrappers, axis mode/limit/scale/grid/tick-param/locator/minor-tick/fixed-tick wrappers, axes-frame box toggling, labels, legends, colorbars, rc helpers, savefig, show, pause, draw, close/close-all cleanup, clf/cla reset helpers, and interactive-mode state toggles. Remaining partial scope is specific missing wrapper families, Python overload breadth, automatic interactive redraw side effects, and unsupported implicit manager behavior.",
 	},
 	{
 		idPrefix:          "pylab-helpers",

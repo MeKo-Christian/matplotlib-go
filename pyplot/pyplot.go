@@ -493,6 +493,16 @@ func MinorTicksOff(axis string) error {
 	return GCA().MinorticksOff(axis)
 }
 
+// XTicks sets fixed x-axis tick locations and optional labels on the current axes.
+func XTicks(ticks []float64, labels ...[]string) error {
+	return setFixedTicks(GCA().XAxis, "x", ticks, labels...)
+}
+
+// YTicks sets fixed y-axis tick locations and optional labels on the current axes.
+func YTicks(ticks []float64, labels ...[]string) error {
+	return setFixedTicks(GCA().YAxis, "y", ticks, labels...)
+}
+
 // Bar delegates to the current axes.
 func Bar(x, heights []float64, opts ...core.BarOptions) *core.Bar2D {
 	return GCA().Bar(x, heights, opts...)
@@ -1055,6 +1065,25 @@ func gridAxisSides(axisSpec string) ([]core.AxisSide, error) {
 	default:
 		return nil, fmt.Errorf("pyplot: unsupported grid axis %q", axisSpec)
 	}
+}
+
+func setFixedTicks(axis *core.Axis, name string, ticks []float64, labels ...[]string) error {
+	if axis == nil {
+		return fmt.Errorf("pyplot: nil %s axis", name)
+	}
+	if len(labels) > 1 {
+		return fmt.Errorf("pyplot: %sticks accepts at most one label set", name)
+	}
+	copiedTicks := append([]float64(nil), ticks...)
+	axis.Locator = core.FixedLocator{TicksList: copiedTicks}
+	if len(labels) == 0 {
+		return nil
+	}
+	if len(labels[0]) != len(ticks) {
+		return fmt.Errorf("pyplot: %sticks label count %d does not match tick count %d", name, len(labels[0]), len(ticks))
+	}
+	axis.Formatter = core.FixedFormatter{Labels: append([]string(nil), labels[0]...)}
+	return nil
 }
 
 func ensureDefaultAxes(fig *core.Figure) *core.Axes {
