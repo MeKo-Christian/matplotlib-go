@@ -2650,17 +2650,17 @@ convenience layers over the core model.
 
 #### 12.5B Image Class and Resampling Closure
 
-- [ ] Audit upstream `image.py` image artist classes and helper functions:
+- [x] Audit upstream `image.py` image artist classes and helper functions:
       `AxesImage`, `FigureImage`, `BboxImage`, `NonUniformImage`,
       `PcolorImage`, `imread`, `imsave`, `imresize`-style omissions,
       `figimage`, and image origin/extent/aspect defaults.
-- [ ] Decide which non-`AxesImage` classes belong in v1.0:
+- [x] Decide which non-`AxesImage` classes belong in v1.0:
       implement `FigureImage` / `figimage` and `BboxImage` if they improve
       figure-level composition or annotation-box parity; implement
       `NonUniformImage` / `PcolorImage` as existing `PColor` / `PColorFast` /
       `PColorMesh` equivalents unless a visible fixture shows a meaningful
       difference from `Image2D` / `PColorMesh`.
-- [ ] Convert every unsupported image class/helper into either a typed Go
+- [x] Convert every unsupported image class/helper into either a typed Go
       equivalent, a clear runtime error, or a Phase 11 intentional omission
       with migration guidance.
 - [x] Lock interpolation coverage for `nearest`, `none`, `bilinear`,
