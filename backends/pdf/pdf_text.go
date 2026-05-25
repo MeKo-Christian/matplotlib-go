@@ -102,10 +102,8 @@ func (r *Renderer) DrawTextWithFont(text string, origin geom.Pt, size float64, t
 	if !ok {
 		return
 	}
-	// render.TextPath emits glyph outlines in y-down font/screen space (ascenders
-	// below the baseline in value). PDF and the matplotlib-go display frame are
-	// y-up, so reflect the glyph shape about its baseline to render upright.
-	path = affinePath(path, geom.Affine{A: 1, D: -1, F: 2 * origin.Y})
+	// render.TextPath already emits y-up display outlines, matching the y-up PDF
+	// page; no baseline reflection is needed.
 	r.Path(path, &render.Paint{Fill: textColor})
 }
 
@@ -143,9 +141,8 @@ func (r *Renderer) DrawTextRotatedWithFont(text string, anchor geom.Pt, size, an
 	if !ok {
 		return
 	}
-	// Reflect the y-down glyph outline about its baseline into the y-up frame
-	// before rotating about the anchor.
-	path = affinePath(path, geom.Affine{A: 1, D: -1, F: 2 * origin.Y})
+	// render.TextPath already emits y-up display outlines; rotate about the
+	// anchor directly.
 	path = affinePath(path, rotationAffine(angle, anchor))
 	r.Path(path, &render.Paint{Fill: textColor})
 }

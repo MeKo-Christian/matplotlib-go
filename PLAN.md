@@ -1727,24 +1727,75 @@ migration-sensitive users.
 `core/widget_*.go`, `core/widgets_common.go`, and
 `canvas/widget_interaction.go`.
 
-- [ ] Audit `widgets_gallery` differences against the Python reference and
-      classify them as layout, widget chrome, selector geometry, text metrics,
-      cursor/multi-cursor behavior, or renderer-boundary bugs.
+### 17.5.1 Compatibility Style Foundation
+
 - [x] Add an explicit widget visual-style switch that keeps the current Go
       visuals as the default and exposes a Matplotlib-compatible style for
       parity fixtures.
-- [ ] Move remaining widget padding, corner radius, stroke widths, slider handle
-      geometry, check/radio markers, text-box chrome, and selector chrome behind
-      that visual-style policy instead of hard-coding one appearance. Widget
-      constructor colors now route through the visual-style policy.
+- [x] Route widget constructor colors through the visual-style policy for
+      Button, Slider, RangeSlider, TextBox, CheckButtons, and RadioButtons.
+- [x] Add focused tests proving the Matplotlib-compatible widget style differs
+      from the Go default and keeps the Go default unchanged.
+
+### 17.5.2 Parity Gallery Source Alignment
+
 - [x] Update `widgets_gallery` parity rendering to use the Matplotlib-compatible
       widget style while keeping the user-facing example on the Go default
       style unless the example is explicitly demonstrating compatibility mode.
-- [x] Add focused tests for the style split so interaction hit-testing remains
-      stable when visual styling changes.
-- [x] Rebaseline `widgets_gallery` parity metrics only after mismatches are
-      source-backed and visually inspected against the original Matplotlib
-      rendering.
+- [x] Split the parity wrapper from the showcase layout so
+      `test/parity/widgets_gallery` mirrors the Python reference's fixed
+      `fig.add_axes` rectangles and static selector patches.
+- [x] Rebaseline `widgets_gallery` golden output after visual inspection against
+      the original Matplotlib reference.
+
+### 17.5.3 Residual Difference Audit
+
+- [x] Produce a short residual audit for `widgets_gallery` that classifies
+      remaining differences as layout, widget chrome, selector geometry, text
+      metrics, cursor/multi-cursor behavior, or renderer-boundary bugs.
+      See `docs/phase-17.5-widget-residual-audit.md`.
+- [x] Record before/after image metrics for the compatibility path:
+      `TestMatplotlibRef/widgets_gallery`, `TestReferenceCompare/widgets_gallery`,
+      and `TestGolden/widgets_gallery`.
+- [x] Decide which residuals are worth core widget changes and which are
+      acceptable Matplotlib GUI/backend differences.
+
+### 17.5.4 Widget Chrome Policy Completion
+
+- [ ] Move remaining hard-coded padding, corner radius, stroke widths, slider
+      handle geometry, check/radio marker geometry, and text-box chrome behind
+      the visual-style policy.
+- [ ] Match Matplotlib-compatible slider layout more closely: label/value text
+      anchors, track rectangle, selection rectangle, init line, and circular
+      handle size/edge defaults.
+- [ ] Match Matplotlib-compatible button and text-box layout more closely:
+      square panel option, face/hover colors, label position, input text anchor,
+      and caret line behavior where applicable.
+- [ ] Match Matplotlib-compatible CheckButtons and RadioButtons geometry:
+      legacy vertical positions, marker sizes, frame/check/radio stroke widths,
+      active fill semantics, and label offsets.
+- [ ] Keep the Go-default style visually unchanged except where a change is
+      explicitly required for shared hit-testing correctness.
+
+### 17.5.5 Interaction and Hit-Testing
+
+- [ ] Add style-parameterized interaction tests for button click, slider drag,
+      range-slider handle selection, check/radio activation, and text-box
+      focus/caret behavior under both Go and Matplotlib-compatible styles.
+- [ ] Ensure style changes do not alter widget hit regions unless the visual
+      geometry also changes and the interaction test documents that behavior.
+- [ ] Add renderer-neutral unit tests for helper geometry used by styled widget
+      panels, tracks, handles, and markers.
+
+### 17.5.6 Validation and Closure
+
+- [ ] Run and record focused verification:
+      `rtk go test ./style ./core ./canvas ./test/parity/widgets_gallery ./test/parity ./examples/widgets_gallery`.
+- [ ] Run and record image verification:
+      `rtk go test ./test/ -run 'TestGolden/widgets_gallery|TestMatplotlibRef/widgets_gallery|TestReferenceCompare/widgets_gallery'`.
+- [ ] Visually inspect Go-default showcase, Matplotlib-compatible parity render,
+      Matplotlib reference, and diff artifact before accepting any new golden
+      update.
 
 Exit criteria:
 
@@ -1757,6 +1808,9 @@ Exit criteria:
 - [ ] Any remaining widget-gallery residuals are classified as intentional Go
       visual choices, upstream GUI/backend differences, or concrete follow-up
       bugs.
+- [ ] All Matplotlib-compatible widget chrome values that affect rendered output
+      are sourced from the visual-style policy rather than duplicated in
+      individual widget draw methods.
 
 ---
 

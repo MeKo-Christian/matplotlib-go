@@ -356,8 +356,13 @@ func TestTextPathBoundsUseSharedGlyphLayout(t *testing.T) {
 			if !ok {
 				t.Fatalf("TextPath(%q, %v) has no bounds", text, size)
 			}
+			// TextPath outlines are y-up; ShapeText reports y-down glyph-metric
+			// bounds. They describe the same ink box reflected about the
+			// baseline, so X/W/H match and the y-up min corner equals the
+			// negated y-down bottom edge.
+			wantY := -(layout.Bounds.Y + layout.Bounds.H)
 			if math.Abs(bounds.X-layout.Bounds.X) > 1e-6 ||
-				math.Abs(bounds.Y-layout.Bounds.Y) > 1e-6 ||
+				math.Abs(bounds.Y-wantY) > 1e-6 ||
 				math.Abs(bounds.W-layout.Bounds.W) > 1e-6 ||
 				math.Abs(bounds.H-layout.Bounds.H) > 1e-6 {
 				t.Fatalf("path/layout bounds mismatch for %q at %vpx: path=%+v layout=%+v", text, size, bounds, layout.Bounds)

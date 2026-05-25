@@ -18,6 +18,13 @@ var (
 )
 
 // TextPath converts text to filled glyph outline paths at a baseline origin.
+//
+// Outlines are emitted in y-up display space: a glyph's ascenders sit at larger
+// Y than the baseline, matching the rest of the display coordinate system. The
+// sfnt loader reports glyph vectors y-down (ascenders negative), so sfntPoint
+// negates the font-space Y. Backends that own a device y-inversion (AGG, SVG,
+// gobasic) hand the result straight to Path; natively y-up backends (PDF, PS,
+// PGF) emit it verbatim. No backend needs to reflect glyphs about the baseline.
 func TextPath(text string, origin geom.Pt, size float64, fontKey string) (geom.Path, bool) {
 	if text == "" || size <= 0 {
 		return geom.Path{}, false
@@ -138,9 +145,12 @@ func appendGlyphSegments(path *geom.Path, segments sfnt.Segments, origin geom.Pt
 }
 
 func sfntPoint(p fixed.Point26_6, origin geom.Pt) geom.Pt {
+	// sfnt reports glyph vectors y-down (it negates the font's native y-up
+	// units). Negate again so the outline is y-up display space: ascenders sit
+	// above the baseline at larger Y.
 	return geom.Pt{
 		X: origin.X + fixedToFloat(p.X),
-		Y: origin.Y + fixedToFloat(p.Y),
+		Y: origin.Y - fixedToFloat(p.Y),
 	}
 }
 

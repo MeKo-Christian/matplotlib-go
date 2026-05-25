@@ -125,7 +125,11 @@ func measureTextPathBounds(text string, size float64, fontPath string) (x, y, wi
 		maxX = math.Max(maxX, pt.X)
 		maxY = math.Max(maxY, pt.Y)
 	}
-	return minX, minY, maxX - minX, maxY - minY, true
+	// render.TextPath outlines are y-up (ascender at larger Y), but callers here
+	// expect the y-down font-metric convention where the returned y is the top of
+	// the ink box (so ascent = -y, descent = y+height). Reflect the vertical
+	// extent back to y-down to preserve that contract.
+	return minX, -maxY, maxX - minX, maxY - minY, true
 }
 
 func (r *Renderer) configureOutlineFont(fontPath string, size float64) (*agglib.FreeTypeOutlineText, error) {

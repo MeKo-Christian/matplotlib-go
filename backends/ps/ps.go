@@ -560,9 +560,8 @@ func (r *Renderer) MeasureText(text string, size float64, fontKey string) render
 }
 
 // TextPath converts text to vector glyph outlines through the shared font
-// manager. render.TextPath emits y-down glyph outlines; textPathAffine reflects
-// them about the baseline into the y-up display frame so glyphs render upright
-// without a global device flip.
+// manager. render.TextPath emits y-up display outlines that the y-up PostScript
+// page consumes directly, so no baseline reflection is applied.
 func (r *Renderer) TextPath(text string, origin geom.Pt, size float64, fontKey string) (geom.Path, bool) {
 	if fontKey != "" {
 		r.lastFontKey = fontKey
@@ -919,7 +918,9 @@ func normalizedAffine(affine geom.Affine) geom.Affine {
 }
 
 func textPathAffine(origin geom.Pt) geom.Affine {
-	return translateAffine(origin).Mul(geom.Affine{A: 1, D: -1})
+	// render.TextPath emits y-up display outlines, so positioning is a plain
+	// translation to the baseline origin (no baseline reflection).
+	return translateAffine(origin)
 }
 
 func rotationAffine(angle float64, pivot geom.Pt) geom.Affine {
