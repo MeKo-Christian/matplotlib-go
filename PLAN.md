@@ -2409,6 +2409,11 @@ Current slice landed:
   points from the expanded bbox instead of the raw text ink bounds.
 - Renderer-neutral annotation tests cover bbox paint emission without backend
   pixels.
+- `AnnotationOptions.Angle` now routes annotation text through the same rotated
+  text renderer and rotated bbox path as `Text`, matching Matplotlib's
+  annotation-as-text rotation behavior for static output.
+- Renderer-neutral annotation tests cover rotated annotation text routing
+  without backend pixels.
 - `Axes.AnnotationBbox` now provides a static Go-style equivalent for the
   common `AnnotationBbox(TextArea(...))` path: text-area content, separate
   annotated-point and box coordinate systems, box alignment, frame visibility,

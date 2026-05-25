@@ -93,6 +93,7 @@ type AnnotationOptions struct {
 	ConnectionStyle ConnectionStyle
 	HAlign          TextAlign
 	VAlign          TextVerticalAlign
+	Angle           float64
 	FontKey         string
 	BBox            *TextBBoxOptions
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
@@ -156,6 +157,7 @@ type Annotation struct {
 	ConnectionStyle ConnectionStyle
 	HAlign          TextAlign
 	VAlign          TextVerticalAlign
+	Angle           float64
 	Coords          CoordinateSpec
 	FontKey         string
 	BBox            *TextBBoxOptions
@@ -300,6 +302,7 @@ func (a *Axes) Annotate(text string, x, y float64, opts ...AnnotationOptions) *A
 		ConnectionStyle: opt.ConnectionStyle,
 		HAlign:          annotationHAlign(opt),
 		VAlign:          annotationVAlign(opt),
+		Angle:           opt.Angle,
 		Coords:          opt.Coords,
 		FontKey:         opt.FontKey,
 		BBox:            cloneTextBBoxOptions(opt.BBox),
@@ -719,9 +722,19 @@ func (a *Annotation) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	start := nearestPointOnRect(box, target)
 
 	a.drawArrow(r, ctx, start, target)
-	drawTextBBox(r, origin, layout, a.BBox, ctx, fontSize)
 
 	textColor := a.ApplyArtistAlpha(resolvedTextColor(a.Color, ctx))
+	if a.Angle != 0 {
+		if rotated, ok := r.(render.RotatedTextDrawer); ok {
+			angle := a.Angle * math.Pi / 180
+			vAlign := layoutVerticalAlign(a.VAlign, false)
+			rotAnchor := textRotationAnchor(origin, layout, a.HAlign, vAlign, angle, TextRotationModeDefault)
+			drawTextBBoxRotated(r, origin, layout, a.BBox, ctx, fontSize, rotAnchor, a.Angle)
+			drawDisplayTextRotatedParseMath(rotated, a.Content, rotAnchor, fontSize, angle, textColor, fontKey, parseMath, ctx.RC.UseTeX)
+			return
+		}
+	}
+	drawTextBBox(r, origin, layout, a.BBox, ctx, fontSize)
 	drawDisplayTextParseMath(textRen, a.Content, origin, fontSize, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 }
 

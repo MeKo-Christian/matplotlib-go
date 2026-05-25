@@ -1296,6 +1296,28 @@ func TestAnnotationDrawsTextBBox(t *testing.T) {
 	}
 }
 
+func TestAnnotationAngleUsesRotatedTextDrawer(t *testing.T) {
+	ctx := createTestDrawContext()
+	annotation := &Annotation{
+		Point:    geom.Pt{X: 1, Y: 1},
+		Content:  "tilt",
+		OffsetX:  10,
+		FontSize: 10,
+		Angle:    35,
+		Coords:   Coords(CoordData),
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	annotation.DrawOverlay(r, ctx)
+
+	if len(r.fontRotatedCalls) != 1 {
+		t.Fatalf("expected one rotated annotation text draw, got %+v", r.fontRotatedCalls)
+	}
+	if len(r.fontTextCalls) != 0 || len(r.texts) != 0 {
+		t.Fatalf("rotated annotation should not use unrotated text draws, font=%+v legacy=%+v", r.fontTextCalls, r.texts)
+	}
+}
+
 func TestAnnotateRespectsConfiguredCoordinateSpaces(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(unitRect())

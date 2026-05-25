@@ -224,7 +224,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		GoFiles:         []string{"core/text.go", "core/annotation_box.go", "core/arrow_patch.go", "transform/transform.go"},
 		CurrentEquivalent: "Go annotations support text, arrows, arrow styles, connection styles, " +
 			"explicit annotation_clip behavior, Matplotlib's default data-only annotation_clip policy, " +
-			"text bbox patches, static AnnotationBbox-style text/image boxes, and overlay drawing.",
+			"text bbox patches, rotated annotation text, static AnnotationBbox-style text/image boxes, and overlay drawing.",
 		Gap: "Matplotlib's separate xycoords / textcoords aliases, non-text/non-image AnnotationBbox offsetbox " +
 			"content, and tightbbox / window-extent interaction are only partially represented.",
 		Decision: GapDecisionImplement,
