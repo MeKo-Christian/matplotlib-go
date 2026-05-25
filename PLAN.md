@@ -2815,6 +2815,12 @@ Current slice landed:
   idiomatic equivalents, and GUI-only/internal helpers such as `LockDraw`,
   `SubplotTool`, `ToolHandles`, and `ToolLineHandles` are documented omissions
   with migration guidance.
+- Added explicit public-surface classifications for every upstream
+  `animation.py` row. Playback classes map to the current Animation /
+  FuncAnimation / ArtistAnimation scheduler model, while movie writers,
+  HTMLWriter, external encoder families, writer registries, and writer-only
+  helpers are documented omissions until a deterministic writer surface is
+  chosen.
 Implementation notes:
 
 - Compare against upstream `image.py`, `pyplot.py`, `_pylab_helpers.py`,
