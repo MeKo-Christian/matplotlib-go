@@ -2318,7 +2318,7 @@ Current slice landed:
       which upstream fontconfig/font-manager features are implemented directly,
       which are approximated by bundled/default fonts, and which require a
       user-supplied font path or family registration.
-- [ ] Tighten text bounding-box, baseline, rotation-mode, multiline, wrapping,
+- [x] Tighten text bounding-box, baseline, rotation-mode, multiline, wrapping,
       and `bbox` patch behavior against upstream where current layout/text
       validation fixtures still carry visible residuals.
 - [x] Ensure text alpha, clipping, z-order, path effects, and rasterization
@@ -2409,6 +2409,13 @@ Current slice landed:
   layout.
 - Renderer-neutral text tests cover single-line center-baseline origin
   placement against measured ascent.
+- Multiline text and annotation block layout now use renderer font metrics
+  (`MinAscent`, `MinDescent`, and `LineGap`) for normal line spacing and
+  numeric `Linespacing`, matching upstream `text.py`'s font-metric line-box
+  policy instead of deriving baseline advances from raw point size.
+- Renderer-neutral text tests cover normal multiline baseline advance from
+  font height plus line gap and numeric multiline baseline advance from
+  `linespacing * font height`.
 
 #### 12.4D Annotation and Offset-Box Behavior
 

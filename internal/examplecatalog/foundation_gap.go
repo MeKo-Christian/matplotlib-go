@@ -190,13 +190,13 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CurrentEquivalent: "Go supports text, rotated text, multiline drawing, text bbox patches, " +
 			"text paths, MathText, TeX paths, per-text font routing, and renderer font resolution. " +
 			"Text and annotation drawing use shared artist-alpha metadata for visible text and arrow colors. " +
-			"TextOptions.WrapWidth provides explicit display-pixel word wrapping, TextOptions.Wrap computes Matplotlib-style figure-box wrap widths, TextOptions.MultiAlignment separates per-line multiline alignment from block anchoring, TextOptions/AnnotationOptions.Linespacing controls multiline baseline advance, and multiline text routes angle-aware draws through rotated renderer capabilities. " +
+			"TextOptions.WrapWidth provides explicit display-pixel word wrapping, TextOptions.Wrap computes Matplotlib-style figure-box wrap widths, TextOptions.MultiAlignment separates per-line multiline alignment from block anchoring, TextOptions/AnnotationOptions.Linespacing controls multiline baseline advance from renderer font metrics and line gaps, and multiline text routes angle-aware draws through rotated renderer capabilities. " +
 			"Multiline text also routes glyph paths through path effects. TextOptions.RotationMode supports Matplotlib-style anchor, xtick, and ytick rotation modes, TextVerticalAlign includes center_baseline, and text bbox patches, including multiline block bboxes, rotate with rotated text. " +
 			"The text_annotation_matrix fixture gives focused coverage for multiline text, rotated " +
 			"text, text bbox output, and structured font requests.",
-		Gap: "Remaining text layout scope is exact bounding-box / baseline edge behavior, " +
-			"and text rasterization interactions where visible " +
-			"fixtures still show residuals.",
+		Gap: "After Phase 12.4C, remaining text layout scope is limited to fixture-specific " +
+			"pixel residuals and text rasterization interactions rather than known broad " +
+			"bounding-box, baseline, rotation-mode, multiline, wrapping, or bbox-patch gaps.",
 		Decision: GapDecisionImplement,
 		Rationale: "Text and legend behavior is heavily visible in parity images and migration examples; " +
 			"missing surfaces should be implemented incrementally with fixture coverage.",

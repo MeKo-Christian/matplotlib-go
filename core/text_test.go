@@ -1605,6 +1605,15 @@ func (r *mathInkBoundsRenderer) MeasureTextBounds(text string, size float64, _ s
 	}, true
 }
 
+type fontMetricTextRecordingRenderer struct {
+	textRecordingRenderer
+	fontHeights render.FontHeightMetrics
+}
+
+func (r *fontMetricTextRecordingRenderer) MeasureFontHeights(float64, string) (render.FontHeightMetrics, bool) {
+	return r.fontHeights, true
+}
+
 func (r *textRecordingRenderer) DrawText(text string, origin geom.Pt, size float64, col render.Color) {
 	r.texts = append(r.texts, text)
 	r.textColors = append(r.textColors, col)
@@ -1936,10 +1945,59 @@ func TestMultilineTextLinespacingControlsBaselineAdvance(t *testing.T) {
 	if len(r.origins) != 2 {
 		t.Fatalf("multiline draw origins = %d, want 2", len(r.origins))
 	}
-	wantAdvance := pointsToPixels(ctx.RC, text.FontSize) * text.Linespacing
+	wantAdvance := text.FontSize * text.Linespacing
 	gotAdvance := r.origins[1].Y - r.origins[0].Y
 	if !approx(gotAdvance, wantAdvance, 1e-9) {
 		t.Fatalf("multiline baseline advance = %v, want %v", gotAdvance, wantAdvance)
+	}
+}
+
+func TestMultilineTextNormalLinespacingUsesFontLineGap(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 1},
+		Content:  "first\nsecond",
+		FontSize: 10,
+		ClipOn:   true,
+	}
+	r := &fontMetricTextRecordingRenderer{
+		fontHeights: render.FontHeightMetrics{Ascent: 12, Descent: 4, LineGap: 3},
+	}
+
+	text.Draw(r, ctx)
+
+	if len(r.origins) != 2 {
+		t.Fatalf("multiline draw origins = %d, want 2", len(r.origins))
+	}
+	wantAdvance := r.fontHeights.Ascent + r.fontHeights.Descent + r.fontHeights.LineGap
+	gotAdvance := r.origins[1].Y - r.origins[0].Y
+	if !approx(gotAdvance, wantAdvance, 1e-9) {
+		t.Fatalf("normal multiline baseline advance = %v, want font height + gap %v", gotAdvance, wantAdvance)
+	}
+}
+
+func TestMultilineTextNumericLinespacingUsesFontHeight(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position:    geom.Pt{X: 1, Y: 1},
+		Content:     "first\nsecond",
+		FontSize:    10,
+		Linespacing: 1.5,
+		ClipOn:      true,
+	}
+	r := &fontMetricTextRecordingRenderer{
+		fontHeights: render.FontHeightMetrics{Ascent: 12, Descent: 4, LineGap: 3},
+	}
+
+	text.Draw(r, ctx)
+
+	if len(r.origins) != 2 {
+		t.Fatalf("multiline draw origins = %d, want 2", len(r.origins))
+	}
+	wantAdvance := text.Linespacing * (r.fontHeights.Ascent + r.fontHeights.Descent)
+	gotAdvance := r.origins[1].Y - r.origins[0].Y
+	if !approx(gotAdvance, wantAdvance, 1e-9) {
+		t.Fatalf("numeric multiline baseline advance = %v, want linespacing * font height %v", gotAdvance, wantAdvance)
 	}
 }
 

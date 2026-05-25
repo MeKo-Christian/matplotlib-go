@@ -397,57 +397,24 @@ func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
 }
 
 func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, ctx *DrawContext, anchor geom.Pt, fontSize float64, fontKey string, parseMath bool, lines []string) {
-	layouts := make([]singleLineTextLayout, len(lines))
-	maxWidth := 0.0
-	for i, line := range lines {
-		layouts[i] = measureSingleLineTextLayoutParseMath(r, line, fontSize, fontKey, parseMath, ctx.RC.UseTeX)
-		maxWidth = math.Max(maxWidth, layouts[i].Width)
-	}
-
-	lineHeight := pointsToPixels(ctx.RC, fontSize)
-	lineAdvance := lineHeight * resolvedTextLinespacing(t.Linespacing)
-	blockHeight := lineHeight
-	if len(lines) > 1 {
-		blockHeight += lineAdvance * float64(len(lines)-1)
-	}
-
-	left := anchor.X
 	hAlign, vAlign := textRotationLayoutAlignments(t.HAlign, t.VAlign, t.Angle, t.RotationMode)
-	switch hAlign {
-	case TextAlignCenter:
-		left -= maxWidth / 2
-	case TextAlignRight:
-		left -= maxWidth
-	}
-
-	top := anchor.Y
-	switch vAlign {
-	case textLayoutVAlignCenter:
-		top -= blockHeight / 2
-	case textLayoutVAlignBottom:
-		top -= blockHeight
-	case textLayoutVAlignBaseline:
-		top -= layouts[0].Ascent
-	case textLayoutVAlignCenterBaseline:
-		top -= layouts[0].Ascent / 2
+	block, ok := measureMultilineTextBlock(r, ctx, anchor, fontSize, fontKey, parseMath, ctx.RC.UseTeX, lines, t.Linespacing, hAlign, vAlign)
+	if !ok {
+		return
 	}
 
 	if t.BBox != nil {
-		rect := geom.Rect{
-			Min: geom.Pt{X: left, Y: top},
-			Max: geom.Pt{X: left + maxWidth, Y: top + blockHeight},
-		}
 		if t.Angle != 0 {
 			if _, ok := r.(render.RotatedTextDrawer); ok {
-				drawMultilineTextBBoxRotated(r, rect, t.BBox, ctx, fontSize, geom.Pt{
-					X: left + maxWidth/2,
-					Y: top + blockHeight,
+				drawMultilineTextBBoxRotated(r, block.Rect, t.BBox, ctx, fontSize, geom.Pt{
+					X: block.Rect.Min.X + block.Width/2,
+					Y: block.Rect.Min.Y + block.Height,
 				}, t.Angle)
 			} else {
-				drawMultilineTextBBox(r, rect, t.BBox, ctx, fontSize)
+				drawMultilineTextBBox(r, block.Rect, t.BBox, ctx, fontSize)
 			}
 		} else {
-			drawMultilineTextBBox(r, rect, t.BBox, ctx, fontSize)
+			drawMultilineTextBBox(r, block.Rect, t.BBox, ctx, fontSize)
 		}
 	}
 
@@ -461,21 +428,21 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 			continue
 		}
 		origin := geom.Pt{
-			X: left,
-			Y: top + lineAdvance*float64(i) + layouts[i].Ascent,
+			X: block.Rect.Min.X,
+			Y: block.BaselineYs[i],
 		}
-		if layouts[i].Width < maxWidth {
+		if block.Layouts[i].Width < block.Width {
 			switch lineAlign {
 			case TextAlignCenter:
-				origin.X += (maxWidth - layouts[i].Width) / 2
+				origin.X += (block.Width - block.Layouts[i].Width) / 2
 			case TextAlignRight:
-				origin.X += maxWidth - layouts[i].Width
+				origin.X += block.Width - block.Layouts[i].Width
 			}
 		}
 		if t.Angle != 0 {
 			if rotated, ok := r.(render.RotatedTextDrawer); ok {
 				angle := t.Angle * math.Pi / 180
-				rotAnchor := textRotationAnchor(origin, layouts[i], lineAlign, textLayoutVAlignBaseline, angle, t.RotationMode)
+				rotAnchor := textRotationAnchor(origin, block.Layouts[i], lineAlign, textLayoutVAlignBaseline, angle, t.RotationMode)
 				if len(t.PathEffects) > 0 && drawTextPathEffects(r, line, origin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
 					continue
 				}
@@ -488,6 +455,108 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 		}
 		drawDisplayTextParseMath(textRen, line, origin, fontSize, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 	}
+}
+
+type multilineTextBlockLayout struct {
+	Layouts      []singleLineTextLayout
+	BaselineYs   []float64
+	Rect         geom.Rect
+	Width        float64
+	Height       float64
+	LineAscents  []float64
+	LineDescents []float64
+}
+
+func measureMultilineTextBlock(r render.Renderer, ctx *DrawContext, anchor geom.Pt, fontSize float64, fontKey string, parseMath, useTeX bool, lines []string, linespacing float64, hAlign TextAlign, vAlign textLayoutVerticalAlign) (multilineTextBlockLayout, bool) {
+	if len(lines) == 0 {
+		return multilineTextBlockLayout{}, false
+	}
+
+	block := multilineTextBlockLayout{
+		Layouts:      make([]singleLineTextLayout, len(lines)),
+		BaselineYs:   make([]float64, len(lines)),
+		LineAscents:  make([]float64, len(lines)),
+		LineDescents: make([]float64, len(lines)),
+	}
+	for i, line := range lines {
+		block.Layouts[i] = measureMultilineLineLayout(r, line, fontSize, fontKey, parseMath, useTeX)
+		block.Width = math.Max(block.Width, block.Layouts[i].Width)
+		block.LineAscents[i], block.LineDescents[i] = multilineLineExtents(block.Layouts[i], linespacing)
+	}
+
+	baselineOffsets := make([]float64, len(lines))
+	baselineOffsets[0] = block.LineAscents[0]
+	for i := 1; i < len(lines); i++ {
+		baselineOffsets[i] = baselineOffsets[i-1] + block.LineDescents[i-1] + block.LineAscents[i]
+	}
+	block.Height = baselineOffsets[len(lines)-1] + block.LineDescents[len(lines)-1]
+
+	left := anchor.X
+	switch hAlign {
+	case TextAlignCenter:
+		left -= block.Width / 2
+	case TextAlignRight:
+		left -= block.Width
+	}
+
+	top := anchor.Y
+	switch vAlign {
+	case textLayoutVAlignCenter:
+		top -= block.Height / 2
+	case textLayoutVAlignBottom:
+		top -= block.Height
+	case textLayoutVAlignBaseline:
+		top -= block.LineAscents[0]
+	case textLayoutVAlignCenterBaseline:
+		top -= block.LineAscents[0] / 2
+	}
+	for i, offset := range baselineOffsets {
+		block.BaselineYs[i] = top + offset
+	}
+	block.Rect = geom.Rect{
+		Min: geom.Pt{X: left, Y: top},
+		Max: geom.Pt{X: left + block.Width, Y: top + block.Height},
+	}
+	return block, true
+}
+
+func measureMultilineLineLayout(r render.Renderer, line string, fontSize float64, fontKey string, parseMath, useTeX bool) singleLineTextLayout {
+	if line != "" {
+		return measureSingleLineTextLayoutParseMath(r, line, fontSize, fontKey, parseMath, useTeX)
+	}
+	layout := measureSingleLineTextLayoutParseMath(r, "lp", fontSize, fontKey, false, useTeX)
+	layout.Width = 0
+	return layout
+}
+
+func multilineLineExtents(layout singleLineTextLayout, linespacing float64) (float64, float64) {
+	runAscent := layout.RunAscent
+	runDescent := layout.RunDescent
+	if runAscent+runDescent <= 0 {
+		runAscent = layout.Ascent
+		runDescent = layout.Descent
+	}
+
+	fontHeight := layout.MinAscent + layout.MinDescent
+	if fontHeight <= 0 {
+		fontHeight = layout.Ascent + layout.Descent
+	}
+	if fontHeight <= 0 {
+		fontHeight = runAscent + runDescent
+	}
+
+	if linespacing > 0 {
+		lineHeight := linespacing * fontHeight
+		leading := lineHeight - (runAscent + runDescent)
+		return runAscent + leading/2, runDescent + leading/2
+	}
+
+	ascent := math.Max(runAscent, layout.MinAscent) + layout.LineGap/2
+	descent := math.Max(runDescent, layout.MinDescent) + layout.LineGap/2
+	if ascent+descent <= 0 {
+		return layout.Ascent, layout.Descent
+	}
+	return ascent, descent
 }
 
 func textRotationLayoutAlignments(hAlign TextAlign, vAlign TextVerticalAlign, angleDeg float64, mode TextRotationMode) (TextAlign, textLayoutVerticalAlign) {
@@ -792,43 +861,11 @@ func (a *Annotation) drawMultilineAnnotation(r render.Renderer, textRen render.T
 }
 
 func multilineTextBlockRect(r render.Renderer, ctx *DrawContext, anchor geom.Pt, fontSize float64, fontKey string, parseMath bool, lines []string, linespacing float64, hAlign TextAlign, vAlign TextVerticalAlign) (geom.Rect, bool) {
-	if len(lines) == 0 {
+	block, ok := measureMultilineTextBlock(r, ctx, anchor, fontSize, fontKey, parseMath, ctx.RC.UseTeX, lines, linespacing, hAlign, layoutVerticalAlign(vAlign, false))
+	if !ok {
 		return geom.Rect{}, false
 	}
-	maxWidth := 0.0
-	layouts := make([]singleLineTextLayout, len(lines))
-	for i, line := range lines {
-		layouts[i] = measureSingleLineTextLayoutParseMath(r, line, fontSize, fontKey, parseMath, ctx.RC.UseTeX)
-		maxWidth = math.Max(maxWidth, layouts[i].Width)
-	}
-	lineHeight := pointsToPixels(ctx.RC, fontSize)
-	lineAdvance := lineHeight * resolvedTextLinespacing(linespacing)
-	blockHeight := lineHeight
-	if len(lines) > 1 {
-		blockHeight += lineAdvance * float64(len(lines)-1)
-	}
-	left := anchor.X
-	switch hAlign {
-	case TextAlignCenter:
-		left -= maxWidth / 2
-	case TextAlignRight:
-		left -= maxWidth
-	}
-	top := anchor.Y
-	switch layoutVerticalAlign(vAlign, false) {
-	case textLayoutVAlignCenter:
-		top -= blockHeight / 2
-	case textLayoutVAlignBottom:
-		top -= blockHeight
-	case textLayoutVAlignBaseline:
-		top -= layouts[0].Ascent
-	case textLayoutVAlignCenterBaseline:
-		top -= layouts[0].Ascent / 2
-	}
-	return geom.Rect{
-		Min: geom.Pt{X: left, Y: top},
-		Max: geom.Pt{X: left + maxWidth, Y: top + blockHeight},
-	}, true
+	return block.Rect, true
 }
 
 // Bounds returns an empty rect so annotations do not affect autoscaling.
