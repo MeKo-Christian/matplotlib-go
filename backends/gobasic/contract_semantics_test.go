@@ -65,8 +65,10 @@ func TestPathPaintStateSemantics(t *testing.T) {
 		bevel := renderLineJoin(render.JoinBevel)
 		miter := renderLineJoin(render.JoinMiter)
 
-		bevelPixels := countNonBackgroundPixels(bevel, image.Rect(42, 4, 59, 22), semanticWhite)
-		miterPixels := countNonBackgroundPixels(miter, image.Rect(42, 4, 59, 22), semanticWhite)
+		// Display space is y-up (H=70): the chevron apex at display (50,15) maps to
+		// device (50,55), so the outer-corner region [4,22) flips to [48,66).
+		bevelPixels := countNonBackgroundPixels(bevel, image.Rect(42, 48, 59, 66), semanticWhite)
+		miterPixels := countNonBackgroundPixels(miter, image.Rect(42, 48, 59, 66), semanticWhite)
 		if miterPixels <= bevelPixels {
 			t.Fatalf("expected miter join to occupy more outer-corner pixels than bevel, got miter=%d bevel=%d", miterPixels, bevelPixels)
 		}
@@ -100,7 +102,9 @@ func TestClipRectStackIntersectsAndRestoresSemantically(t *testing.T) {
 	if got := img.RGBAAt(95, 30); got != semanticWhite {
 		t.Fatalf("outer clip should still reject pixels outside it, got %+v", got)
 	}
-	if got := img.RGBAAt(4, 4); got.G <= 200 || got.R >= 80 || got.B >= 80 {
+	// Display space is y-up (H=70): the green rect(0,0,8,8) maps to device rows
+	// [62,70), so sample the green fill at device (4,65).
+	if got := img.RGBAAt(4, 65); got.G <= 200 || got.R >= 80 || got.B >= 80 {
 		t.Fatalf("final restore should remove all clip rects, got %+v", got)
 	}
 }

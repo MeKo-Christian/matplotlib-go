@@ -17,6 +17,10 @@ import (
 
 const defaultFontHeight = 13.0
 
+// colorDefsPlaceholder marks where collected \definecolor declarations are
+// injected at the pgfpicture's outermost group. It is always substituted in End.
+const colorDefsPlaceholder = "%mplgpgf-color-defs\n"
+
 type state struct {
 	inContent bool
 	clipRect  *geom.Rect
@@ -33,6 +37,7 @@ type Renderer struct {
 	began      bool
 	viewport   geom.Rect
 	content    strings.Builder
+	colorDefs  strings.Builder
 	document   []byte
 	stack      []state
 	clipRect   *geom.Rect
@@ -99,6 +104,7 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.began = true
 	r.viewport = viewport
 	r.content.Reset()
+	r.colorDefs.Reset()
 	r.document = nil
 	r.stack = r.stack[:0]
 	r.clipRect = nil
@@ -113,6 +119,9 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	fmt.Fprintf(&r.content, "\\pgfpathrectangle{\\pgfpoint{0pt}{0pt}}{\\pgfpoint{%spt}{%spt}}\n",
 		shortFloat(float64(r.width)), shortFloat(float64(r.height)))
 	r.content.WriteString("\\pgfusepath{use as bounding box}\n")
+	// All \definecolor declarations are injected here, at the pgfpicture's
+	// outermost group, so every nested \pgfscope can see them.
+	r.content.WriteString(colorDefsPlaceholder)
 	// PGF/TeX is natively y-up (origin bottom-left), matching the matplotlib-go
 	// y-up display space exactly. Like Matplotlib's PGF backend (flipy() is
 	// False), no device flip is emitted; draws use display coordinates directly.
@@ -169,7 +178,8 @@ func (r *Renderer) End() error {
 	r.began = false
 	r.content.WriteString("\\end{pgfpicture}\n")
 	r.content.WriteString("\\endgroup\n")
-	r.document = []byte(r.content.String())
+	doc := strings.Replace(r.content.String(), colorDefsPlaceholder, r.colorDefs.String(), 1)
+	r.document = []byte(doc)
 	return nil
 }
 
@@ -933,7 +943,11 @@ func (r *Renderer) colorName(c render.Color) string {
 	}
 	name := fmt.Sprintf("mplgpgfcolor%d", len(r.colorNames)+1)
 	r.colorNames[key] = name
-	fmt.Fprintf(&r.content, "\\definecolor{%s}{rgb}{%s,%s,%s}\n", name, shortFloat(c.R), shortFloat(c.G), shortFloat(c.B))
+	// Color definitions are collected separately and injected at the pgfpicture's
+	// outermost group (see Begin/End). Emitting \definecolor inline would scope it
+	// to whatever \pgfscope happens to be active, so later references to the same
+	// cached name would hit an undefined color once that scope closes.
+	fmt.Fprintf(&r.colorDefs, "\\definecolor{%s}{rgb}{%s,%s,%s}\n", name, shortFloat(c.R), shortFloat(c.G), shortFloat(c.B))
 	return name
 }
 

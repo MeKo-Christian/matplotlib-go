@@ -176,8 +176,11 @@ func (r *Renderer) Restore() {
 	r.clipPaths = clonePaths(s.clipPaths)
 }
 
-// ClipRect sets a rectangular clip region.
+// ClipRect sets a rectangular clip region. The incoming rect is in y-up display
+// space; it is flipped to the y-down device buffer so it matches the device-space
+// pixel comparisons in fillPath/drawTargetRect.
 func (r *Renderer) ClipRect(rect geom.Rect) {
+	rect = r.devRect(rect)
 	if r.clipRect == nil {
 		r.clipRect = &rect
 	} else {
@@ -187,20 +190,29 @@ func (r *Renderer) ClipRect(rect geom.Rect) {
 	}
 }
 
-// ClipPath adds a path-based clip region to the current graphics state.
+// ClipPath adds a path-based clip region to the current graphics state. The
+// incoming path is in y-up display space; it is flipped to device space so the
+// rasterized clip mask aligns with device pixels.
 func (r *Renderer) ClipPath(p geom.Path) {
 	if len(p.C) == 0 || !p.Validate() {
 		return
 	}
-	r.clipPaths = append(r.clipPaths, clonePath(p))
+	r.clipPaths = append(r.clipPaths, clonePath(r.devPath(p)))
 }
 
-// Path draws a path with the given paint style.
+// Path draws a path with the given paint style. The incoming path is in y-up
+// display coordinates; it is flipped to the y-down device buffer once here, then
+// the device-space pipeline runs unchanged.
 func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
+	r.pathDevice(r.devPath(p), paint)
+}
+
+// pathDevice draws a path that is already in y-down device coordinates.
+func (r *Renderer) pathDevice(p geom.Path, paint *render.Paint) {
 	if paint == nil {
 		return
 	}
-	if render.DrawPathWithEffects(r, p, paint, r.Path) {
+	if render.DrawPathWithEffects(r, p, paint, r.pathDevice) {
 		return
 	}
 	if !p.Validate() {
@@ -239,7 +251,7 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 
 // DrawPathWithEffects applies renderer-neutral path effect passes.
 func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
-	return render.DrawPathWithEffects(r, p, paint, r.Path)
+	return render.DrawPathWithEffects(r, r.devPath(p), paint, r.pathDevice)
 }
 
 // fillPath fills a path with the given color.
@@ -407,6 +419,11 @@ func (r *Renderer) Image(img render.Image, dst geom.Rect) {
 		return
 	}
 
+	// dst arrives in y-up display space; flip to the y-down device buffer.
+	// drawBitmapScaledWithAlpha places image row 0 at the device-top row
+	// (dst.Min.Y after the flip), keeping the image upright.
+	dst = r.devRect(dst)
+
 	// Destination rectangle in integer coordinates.
 	minX := int(math.Floor(dst.Min.X))
 	minY := int(math.Floor(dst.Min.Y))
@@ -429,6 +446,11 @@ func (r *Renderer) ImageTransformed(img render.Image, _ geom.Rect, transform geo
 	if src == nil {
 		return
 	}
+	// transform maps image space -> y-up display. Compose the device y-flip so
+	// the final affine maps image space -> y-down device. Mul is m∘n (apply n
+	// then m), so deviceFlipAffine().Mul(transform)(p) = F(transform(p)); image
+	// rows stay upright. This matches core/image.go's imageTransform convention.
+	transform = r.deviceFlipAffine().Mul(transform)
 	r.drawBitmapTransformed(src, transform, imageAlphaMultiplier(img))
 }
 
@@ -516,8 +538,10 @@ func (r *Renderer) DrawText(text string, origin geom.Pt, size float64, textColor
 		return
 	}
 
+	// origin.Y is the y-up display baseline; flip it to the device baseline and
+	// place the upright bitmap with its top ascent above that baseline.
 	x := int(math.Round(origin.X))
-	y := int(math.Round(origin.Y - metrics.Ascent))
+	y := int(math.Round(r.devY(origin.Y) - metrics.Ascent))
 	r.drawBitmapScaled(src, x, y, src.Bounds().Dx(), src.Bounds().Dy())
 }
 
@@ -536,14 +560,19 @@ func (r *Renderer) DrawTextRotated(text string, anchor geom.Pt, size, angle floa
 	const epsilon = 1e-12
 	pivotX := float64(src.Bounds().Dx()) / 2
 	pivotY := float64(src.Bounds().Dy())
+	// anchor is the bottom-center of the unrotated box in y-up display space;
+	// flip it to the device buffer. The bitmap pivot (bottom-center) is placed at
+	// the device anchor. The rotation sign stays -angle so a positive display
+	// (CCW) rotation still renders CCW visually, matching the pre-y-flip behavior.
+	devAnchor := r.devPt(anchor)
 	if math.Abs(angle) <= epsilon {
-		x := int(math.Round(anchor.X - pivotX))
-		y := int(math.Round(anchor.Y - pivotY))
+		x := int(math.Round(devAnchor.X - pivotX))
+		y := int(math.Round(devAnchor.Y - pivotY))
 		r.drawBitmapScaled(src, x, y, src.Bounds().Dx(), src.Bounds().Dy())
 		return
 	}
 
-	r.drawBitmapRotated(src, anchor, geom.Pt{X: pivotX, Y: pivotY}, -angle)
+	r.drawBitmapRotated(src, devAnchor, geom.Pt{X: pivotX, Y: pivotY}, -angle)
 }
 
 // DrawTextVertical renders one character per line.
@@ -559,7 +588,10 @@ func (r *Renderer) DrawTextVertical(text string, center geom.Pt, size float64, t
 	}
 
 	totalHeight := lineHeight * float64(len(runes))
-	y := center.Y - totalHeight/2
+	// DrawText flips each baseline to the device buffer, so the per-character
+	// layout is expressed in y-up display space: start at the top of the stack
+	// (highest Y) and step downward by lineHeight per character.
+	y := center.Y + totalHeight/2
 	for i, ch := range runes {
 		chMetrics := r.MeasureText(string(ch), size, r.lastFontKey)
 		if chMetrics.W <= 0 || chMetrics.H <= 0 {
@@ -569,7 +601,7 @@ func (r *Renderer) DrawTextVertical(text string, center geom.Pt, size float64, t
 		x := center.X - chMetrics.W/2
 		r.DrawText(string(ch), geom.Pt{
 			X: x,
-			Y: y + float64(i)*lineHeight + chMetrics.Ascent,
+			Y: y - float64(i)*lineHeight - chMetrics.Ascent,
 		}, size, textColor)
 	}
 }

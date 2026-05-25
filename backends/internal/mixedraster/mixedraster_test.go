@@ -88,7 +88,10 @@ func TestScaledRendererTransformsImagesAtRasterDPI(t *testing.T) {
 	if got.Bounds().Dx() != 40 || got.Bounds().Dy() != 40 {
 		t.Fatalf("raster image size = %dx%d, want 40x40", got.Bounds().Dx(), got.Bounds().Dy())
 	}
-	if c := got.RGBAAt(9, 13); c.A == 0 || c.R < 200 {
+	// Display space is y-up: the backend composes a device y-flip into the
+	// transform, so src row 0 (red) lands in the bottom band of the 40x40 surface
+	// (device y about [19,28]) rather than near the top.
+	if c := got.RGBAAt(9, 27); c.A == 0 || c.R < 200 {
 		t.Fatalf("transformed image was not scaled into high-DPI raster surface; pixel = %+v", c)
 	}
 	if c := got.RGBAAt(4, 6); c.A != 0 {

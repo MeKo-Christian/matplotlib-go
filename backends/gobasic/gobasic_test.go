@@ -97,11 +97,14 @@ func TestImageTransformedAppliesAffineAndAlpha(t *testing.T) {
 		F: 4,
 	})
 
-	got := r.GetImage().RGBAAt(3, 4)
+	// Display space is y-up: the backend composes a device y-flip into the
+	// affine, so src row 0 (red) lands at the bottom of the placed image
+	// (device y in {6,7}) rather than the top.
+	got := r.GetImage().RGBAAt(3, 7)
 	if got.A < 120 || got.A > 130 || got.R < 200 || got.G != 0 || got.B != 0 {
 		t.Fatalf("transformed alpha image pixel = %+v, want half-alpha red", got)
 	}
-	if c := r.GetImage().RGBAAt(2, 4); c.A != 0 {
+	if c := r.GetImage().RGBAAt(2, 7); c.A != 0 {
 		t.Fatalf("pixel outside transformed image = %+v, want transparent", c)
 	}
 }
@@ -218,7 +221,10 @@ func TestClipPathMasksPathDrawing(t *testing.T) {
 		Fill: render.Color{R: 1, G: 0, B: 0, A: 1},
 	})
 
-	if got := r.GetImage().RGBAAt(10, 10); got.R <= 200 || got.G >= 80 || got.B >= 80 {
+	// Display space is y-up, so the clip triangle (display verts (0,0),(70,0),
+	// (0,70)) flips to the device buffer's lower-left; the clipped-in sample is
+	// therefore near device (10,90) and the clipped-out corner stays at (90,90).
+	if got := r.GetImage().RGBAAt(10, 90); got.R <= 200 || got.G >= 80 || got.B >= 80 {
 		t.Fatalf("expected clipped-in pixel to be red, got %+v", got)
 	}
 	if got := r.GetImage().RGBAAt(90, 90); got != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {

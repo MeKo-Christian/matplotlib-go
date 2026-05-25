@@ -177,8 +177,11 @@ func TestRasterizedGroupReplaysActivePathClip(t *testing.T) {
 	if !img.hasAlpha {
 		t.Fatal("rasterized image should carry an alpha mask")
 	}
-	left := img.alpha[10*img.width+5]
-	right := img.alpha[10*img.width+15]
+	// Display space is y-up: the rasterized surface is the full 200x100 page, so
+	// content drawn at display y in [0,20] (bottom-left) lands at device rows
+	// [80,100). Sample a row inside that band; the clip keeps cols [0,10].
+	left := img.alpha[90*img.width+5]
+	right := img.alpha[90*img.width+15]
 	if left == 0 {
 		t.Fatalf("pixel inside path clip is transparent: alpha=%d", left)
 	}
