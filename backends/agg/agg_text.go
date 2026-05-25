@@ -645,12 +645,21 @@ func (r *Renderer) GetImage() *image.RGBA {
 }
 
 // SavePNG saves the rendered image to a PNG file.
+//
+// The AGG render buffer holds straight (non-premultiplied) alpha, so GetImage
+// returns straight RGBA bytes in an image.RGBA (whose channels are
+// premultiplied by Go's contract). Encoding that directly makes png.Encode
+// apply an unclamped premultiplied->straight conversion that overflows for any
+// channel where value>alpha, corrupting semi-transparent fills over a
+// transparent surface. Reinterpret the identical byte layout as NRGBA so the
+// straight values are written verbatim.
 func (r *Renderer) SavePNG(path string) error {
 	img := r.GetImage()
+	nrgba := &image.NRGBA{Pix: img.Pix, Stride: img.Stride, Rect: img.Rect}
 	file, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	return png.Encode(file, img)
+	return png.Encode(file, nrgba)
 }

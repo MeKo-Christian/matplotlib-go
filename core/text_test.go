@@ -1412,6 +1412,54 @@ func TestAnnotationArrowDefaultShrinkUsesPointUnits(t *testing.T) {
 	}
 }
 
+func TestAnnotationArrowStartsFromTextBoxRelposBeforePatchClip(t *testing.T) {
+	ctx := createTestDrawContext()
+	annotation := &Annotation{
+		Point:           geom.Pt{X: 0.2, Y: 0.8},
+		Content:         "box",
+		OffsetX:         120,
+		OffsetY:         80,
+		FontSize:        10,
+		Coords:          Coords(CoordFigure),
+		ArrowWidth:      1,
+		ArrowHeadSize:   9,
+		ArrowStyle:      ArrowStyle{Name: "-"},
+		ConnectionStyle: ConnectionStyle{Name: "arc3"},
+		HAlign:          TextAlignCenter,
+		VAlign:          TextVAlignMiddle,
+		BBox: &TextBBoxOptions{
+			Padding:   4,
+			LineWidth: 1,
+		},
+	}
+	r := &textRecordingRenderer{}
+
+	annotation.DrawOverlay(r, ctx)
+
+	if len(r.pathCalls) == 0 {
+		t.Fatal("expected annotation arrow path")
+	}
+	target := transformedPoint(ctx, annotation.Coords, annotation.Point, 0, 0)
+	anchor := transformedPoint(ctx, annotation.Coords, annotation.Point, annotation.OffsetX, annotation.OffsetY)
+	layout := measureSingleLineTextLayout(r, annotation.Content, annotation.FontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
+	origin := alignedSingleLineOrigin(anchor, layout, annotation.HAlign, layoutVerticalAlign(annotation.VAlign, false))
+	box, ok := textBBoxRect(origin, layout, annotation.BBox, ctx, annotation.FontSize)
+	if !ok {
+		t.Fatal("expected annotation text bbox")
+	}
+	raw := annotation.ConnectionStyle.connect(rectCenter(box), target, 0, 0)
+	boundary, ok := connectionPatchBoundaryPoint(raw, pixelRectPath(box).Interpolated(8).V, true)
+	if !ok {
+		t.Fatalf("expected center-to-target path to leave bbox: box=%+v path=%+v", box, raw)
+	}
+	raw.V[0] = boundary
+	want := shrinkPathEndpoints(raw, arrowShrinkPixels(ctx, 2), arrowShrinkPixels(ctx, 2))
+	got := r.pathCalls[0].path
+	if len(got.V) != len(want.V) || distance(got.V[0], want.V[0]) > 1e-9 {
+		t.Fatalf("annotation arrow start = %+v, want clipped relpos start %+v (box=%+v target=%+v)", got.V, want.V, box, target)
+	}
+}
+
 func TestAnnotationAngleUsesRotatedTextDrawer(t *testing.T) {
 	ctx := createTestDrawContext()
 	annotation := &Annotation{
@@ -1600,6 +1648,50 @@ func TestAnnotationBboxDrawsTextFrameAndArrow(t *testing.T) {
 	}
 	if !foundArrowToTarget {
 		t.Fatalf("annotation-box arrow should land near annotated point %+v, got paths %+v", target, r.pathCalls)
+	}
+}
+
+func TestAnnotationBboxArrowStartsFromBoxRelposBeforePatchClip(t *testing.T) {
+	ctx := createTestDrawContext()
+	boxPos := geom.Pt{X: 0.44, Y: 0.64}
+	box := &AnnotationBbox{
+		Point:           geom.Pt{X: 0.2, Y: 0.8},
+		Content:         "box",
+		XYCoords:        Coords(CoordFigure),
+		BoxCoords:       Coords(CoordFigure),
+		BoxPosition:     &boxPos,
+		BoxAlignment:    geom.Pt{X: 0.5, Y: 0.5},
+		FrameOn:         true,
+		Padding:         4,
+		FontSize:        10,
+		Arrow:           true,
+		ArrowWidth:      1,
+		ArrowHeadSize:   9,
+		ArrowStyle:      ArrowStyle{Name: "-"},
+		ConnectionStyle: ConnectionStyle{Name: "arc3"},
+	}
+	r := &textRecordingRenderer{}
+
+	box.DrawOverlay(r, ctx)
+
+	if len(r.pathCalls) == 0 {
+		t.Fatal("expected annotation-box arrow path")
+	}
+	target := transformedPoint(ctx, box.XYCoords, box.Point, 0, 0)
+	layout := measureSingleLineTextLayout(r, box.Content, box.FontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
+	boxAnchor := box.boxAnchor(ctx)
+	contentBox := annotationBoxRect(boxAnchor, box.contentSize(layout, ctx), box.BoxAlignment)
+	frame := expandAnchoredRect(contentBox, box.resolvedPadding(box.FontSize, ctx))
+	raw := box.ConnectionStyle.connect(rectCenter(frame), target, 0, 0)
+	boundary, ok := connectionPatchBoundaryPoint(raw, pixelRectPath(frame).Interpolated(8).V, true)
+	if !ok {
+		t.Fatalf("expected center-to-target path to leave annotation box: box=%+v path=%+v", frame, raw)
+	}
+	raw.V[0] = boundary
+	want := shrinkPathEndpoints(raw, arrowShrinkPixels(ctx, 2), arrowShrinkPixels(ctx, 2))
+	got := r.pathCalls[0].path
+	if len(got.V) != len(want.V) || distance(got.V[0], want.V[0]) > 1e-9 {
+		t.Fatalf("annotation-box arrow start = %+v, want clipped relpos start %+v (box=%+v target=%+v)", got.V, want.V, frame, target)
 	}
 }
 

@@ -940,6 +940,16 @@ func shrinkPathEndpoints(path geom.Path, shrinkA, shrinkB float64) geom.Path {
 	if len(path.V) < 2 || (shrinkA <= 0 && shrinkB <= 0) {
 		return path
 	}
+	if path.C[0] == geom.MoveTo && len(path.C) == 2 && path.C[1] == geom.QuadTo && len(path.V) == 3 {
+		out := path
+		if shrinkA > 0 {
+			out = shrinkQuadraticStart(out, shrinkA)
+		}
+		if shrinkB > 0 {
+			out = shrinkQuadraticEnd(out, shrinkB)
+		}
+		return out
+	}
 	out := path
 	out.V = append([]geom.Pt(nil), path.V...)
 	if shrinkA > 0 {
@@ -950,6 +960,73 @@ func shrinkPathEndpoints(path geom.Path, shrinkA, shrinkB float64) geom.Path {
 		out.V[last] = pointToward(out.V[last], pathPenultimate(out), shrinkB)
 	}
 	return out
+}
+
+func shrinkQuadraticStart(path geom.Path, shrink float64) geom.Path {
+	start, ctrl, end, ok := quadraticConnectionPoints(path)
+	if !ok || shrink <= 0 {
+		return path
+	}
+	if distance(start, end) <= shrink {
+		return path
+	}
+	t := quadraticDistanceT(start, ctrl, end, start, shrink, true)
+	newStart := quadraticPoint(start, ctrl, end, t)
+	newCtrl := lerpPoint(ctrl, end, t)
+	out := path
+	out.V = []geom.Pt{newStart, newCtrl, end}
+	return out
+}
+
+func shrinkQuadraticEnd(path geom.Path, shrink float64) geom.Path {
+	start, ctrl, end, ok := quadraticConnectionPoints(path)
+	if !ok || shrink <= 0 {
+		return path
+	}
+	if distance(start, end) <= shrink {
+		return path
+	}
+	t := quadraticDistanceT(start, ctrl, end, end, shrink, false)
+	newCtrl := lerpPoint(start, ctrl, t)
+	newEnd := quadraticPoint(start, ctrl, end, t)
+	out := path
+	out.V = []geom.Pt{start, newCtrl, newEnd}
+	return out
+}
+
+func quadraticDistanceT(start, ctrl, end, center geom.Pt, radius float64, fromStart bool) float64 {
+	if radius <= 0 {
+		if fromStart {
+			return 0
+		}
+		return 1
+	}
+	low, high := 0.0, 1.0
+	for i := 0; i < 64; i++ {
+		mid := (low + high) / 2
+		d := distance(quadraticPoint(start, ctrl, end, mid), center)
+		if fromStart {
+			if d < radius {
+				low = mid
+			} else {
+				high = mid
+			}
+			continue
+		}
+		if d > radius {
+			low = mid
+		} else {
+			high = mid
+		}
+	}
+	return high
+}
+
+func lerpPoint(a, b geom.Pt, t float64) geom.Pt {
+	return geom.Pt{
+		X: a.X + (b.X-a.X)*t,
+		Y: a.Y + (b.Y-a.Y)*t,
+	}
 }
 
 func pathStart(path geom.Path) geom.Pt {

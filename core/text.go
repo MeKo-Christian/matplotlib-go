@@ -812,9 +812,7 @@ func (a *Annotation) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	if bbox, ok := textBBoxRect(origin, layout, a.BBox, ctx, fontSize); ok {
 		box = bbox
 	}
-	start := nearestPointOnRect(box, target)
-
-	a.drawArrow(r, ctx, start, target)
+	a.drawArrowFromBox(r, ctx, box, target)
 
 	textColor := a.ApplyArtistAlpha(resolvedTextColor(a.Color, ctx))
 	if a.Angle != 0 {
@@ -844,8 +842,7 @@ func (a *Annotation) drawMultilineAnnotation(r render.Renderer, textRen render.T
 		box.Max.X += cfg.Padding
 		box.Max.Y += cfg.Padding
 	}
-	start := nearestPointOnRect(box, target)
-	a.drawArrow(r, ctx, start, target)
+	a.drawArrowFromBox(r, ctx, box, target)
 	text := &Text{
 		ArtistRasterization: a.ArtistRasterization,
 		Content:             strings.Join(lines, "\n"),
@@ -875,6 +872,31 @@ func (a *Annotation) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
 func (a *Annotation) Z() float64 { return a.z }
 
 func (a *Annotation) drawArrow(r render.Renderer, ctx *DrawContext, start, target geom.Pt) {
+	path := a.ConnectionStyle.connect(start, target, arrowShrinkPixels(ctx, 2), arrowShrinkPixels(ctx, 2))
+	a.drawArrowPath(r, ctx, path)
+}
+
+func (a *Annotation) drawArrowFromBox(r render.Renderer, ctx *DrawContext, box geom.Rect, target geom.Pt) {
+	clipBox := box
+	if a.BBox == nil {
+		pad := arrowPlainTextPatchPadding(ctx)
+		clipBox.Min.X -= pad
+		clipBox.Min.Y -= pad
+		clipBox.Max.X += pad
+		clipBox.Max.Y += pad
+	}
+	a.drawArrowFromPatchBox(r, ctx, box, clipBox, target)
+}
+
+func (a *Annotation) drawArrowFromPatchBox(r render.Renderer, ctx *DrawContext, relposBox, clipBox geom.Rect, target geom.Pt) {
+	start := rectCenter(relposBox)
+	path := a.ConnectionStyle.connect(start, target, 0, 0)
+	path = clipConnectionPathToRect(path, clipBox, true)
+	path = shrinkPathEndpoints(path, arrowShrinkPixels(ctx, 2), arrowShrinkPixels(ctx, 2))
+	a.drawArrowPath(r, ctx, path)
+}
+
+func (a *Annotation) drawArrowPath(r render.Renderer, ctx *DrawContext, path geom.Path) {
 	if a.ArrowWidth <= 0 || a.ArrowHeadSize <= 0 {
 		return
 	}
@@ -891,7 +913,6 @@ func (a *Annotation) drawArrow(r render.Renderer, ctx *DrawContext, start, targe
 		ConnectionStyle: a.ConnectionStyle,
 		MutationScale:   pointsToPixels(ctx.RC, a.ArrowHeadSize),
 	}
-	path := a.ConnectionStyle.connect(start, target, arrowShrinkPixels(ctx, 2), arrowShrinkPixels(ctx, 2))
 	for _, part := range patch.displayParts(ctx, path) {
 		if len(part.path.C) == 0 {
 			continue
@@ -902,6 +923,42 @@ func (a *Annotation) drawArrow(r render.Renderer, ctx *DrawContext, start, targe
 			patch.drawStyledPath(r, geom.Path{}, part.path)
 		}
 	}
+}
+
+func arrowPlainTextPatchPadding(ctx *DrawContext) float64 {
+	if ctx == nil {
+		return 2
+	}
+	return pointsToPixels(ctx.RC, 4) / 2
+}
+
+func clipConnectionPathToRect(path geom.Path, rect geom.Rect, start bool) geom.Path {
+	if len(path.V) < 2 {
+		return path
+	}
+	polygon := pixelRectPath(rect).Interpolated(8).V
+	if len(polygon) < 3 {
+		return path
+	}
+	endpoint := pathEnd(path)
+	if start {
+		endpoint = pathStart(path)
+	}
+	if !pointInPolygon(endpoint, polygon) {
+		return path
+	}
+	boundary, ok := connectionPatchBoundaryPoint(path, polygon, start)
+	if !ok {
+		return path
+	}
+	out := path
+	out.V = append([]geom.Pt(nil), path.V...)
+	if start {
+		out.V[0] = boundary
+	} else {
+		out.V[len(out.V)-1] = boundary
+	}
+	return out
 }
 
 func resolvedTextColor(c render.Color, ctx *DrawContext) render.Color {

@@ -862,6 +862,24 @@ func TestFancyArrowPatchDefaultShrinkMatchesMatplotlib(t *testing.T) {
 	}
 }
 
+func TestShrinkPathEndpointsSplitsQuadraticSegment(t *testing.T) {
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 0, Y: 0})
+	path.QuadTo(geom.Pt{X: 50, Y: 80}, geom.Pt{X: 100, Y: 0})
+
+	got := shrinkPathEndpoints(path, 10, 0)
+
+	if len(got.V) != 3 {
+		t.Fatalf("shrunk quadratic vertices = %+v, want 3 vertices", got.V)
+	}
+	t0 := quadraticDistanceT(path.V[0], path.V[1], path.V[2], path.V[0], 10, true)
+	wantStart := quadraticPoint(path.V[0], path.V[1], path.V[2], t0)
+	wantCtrl := lerpPoint(path.V[1], path.V[2], t0)
+	if distance(got.V[0], wantStart) > 1e-9 || distance(got.V[1], wantCtrl) > 1e-9 {
+		t.Fatalf("shrunk quadratic = %+v, want start %+v control %+v", got.V, wantStart, wantCtrl)
+	}
+}
+
 func TestConnectionPatchShrinkUsesPointUnits(t *testing.T) {
 	patch := &ConnectionPatch{
 		FancyArrowPatch: FancyArrowPatch{

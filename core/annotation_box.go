@@ -204,7 +204,7 @@ func (a *AnnotationBbox) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	box := expandAnchoredRect(contentBox, a.resolvedPadding(fontSize, ctx))
 
 	if a.Arrow {
-		a.drawArrow(r, ctx, nearestPointOnRect(box, target), target)
+		a.drawArrowFromBox(r, ctx, box, target)
 	}
 	if a.FrameOn {
 		r.Path(pixelRectPath(box), &render.Paint{
@@ -271,6 +271,18 @@ func (a *AnnotationBbox) drawArrow(r render.Renderer, ctx *DrawContext, start, t
 		ConnectionStyle: a.ConnectionStyle,
 	}
 	annotation.drawArrow(r, ctx, start, target)
+}
+
+func (a *AnnotationBbox) drawArrowFromBox(r render.Renderer, ctx *DrawContext, box geom.Rect, target geom.Pt) {
+	annotation := Annotation{
+		Color:           a.TextColor,
+		ArrowColor:      a.ArrowColor,
+		ArrowWidth:      a.ArrowWidth,
+		ArrowHeadSize:   a.ArrowHeadSize,
+		ArrowStyle:      a.ArrowStyle,
+		ConnectionStyle: a.ConnectionStyle,
+	}
+	annotation.drawArrowFromPatchBox(r, ctx, box, box, target)
 }
 
 func annotationTextBoxSize(layout singleLineTextLayout) geom.Pt {
