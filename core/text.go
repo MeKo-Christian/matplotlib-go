@@ -713,6 +713,11 @@ func (a *Annotation) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 	anchor := transformedPoint(ctx, a.Coords, a.Point, a.OffsetX, a.OffsetY)
+	lines := strings.Split(a.Content, "\n")
+	if len(lines) > 1 {
+		a.drawMultilineAnnotation(r, textRen, ctx, target, anchor, fontSize, fontKey, parseMath, lines)
+		return
+	}
 	layout := measureSingleLineTextLayoutParseMath(r, a.Content, fontSize, fontKey, parseMath, ctx.RC.UseTeX)
 	origin := alignedSingleLineOrigin(anchor, layout, a.HAlign, layoutVerticalAlign(a.VAlign, false))
 	box, ok := textInkRect(origin, layout)
@@ -742,6 +747,72 @@ func (a *Annotation) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	}
 	drawTextBBox(r, origin, layout, a.BBox, ctx, fontSize)
 	drawDisplayTextParseMath(textRen, a.Content, origin, fontSize, textColor, fontKey, parseMath, ctx.RC.UseTeX)
+}
+
+func (a *Annotation) drawMultilineAnnotation(r render.Renderer, textRen render.TextDrawer, ctx *DrawContext, target, anchor geom.Pt, fontSize float64, fontKey string, parseMath bool, lines []string) {
+	rect, ok := multilineTextBlockRect(r, ctx, anchor, fontSize, fontKey, parseMath, lines, a.HAlign, a.VAlign)
+	if !ok {
+		return
+	}
+	box := rect
+	if a.BBox != nil {
+		cfg := resolvedTextBBoxOptions(*a.BBox, ctx, fontSize)
+		box.Min.X -= cfg.Padding
+		box.Min.Y -= cfg.Padding
+		box.Max.X += cfg.Padding
+		box.Max.Y += cfg.Padding
+	}
+	start := nearestPointOnRect(box, target)
+	a.drawArrow(r, ctx, start, target)
+	text := &Text{
+		ArtistRasterization: a.ArtistRasterization,
+		Content:             strings.Join(lines, "\n"),
+		HAlign:              a.HAlign,
+		VAlign:              a.VAlign,
+		Angle:               a.Angle,
+		BBox:                a.BBox,
+		Color:               a.Color,
+		ParseMath:           a.ParseMath,
+	}
+	text.drawMultilineText(r, textRen, ctx, anchor, fontSize, fontKey, parseMath, lines)
+}
+
+func multilineTextBlockRect(r render.Renderer, ctx *DrawContext, anchor geom.Pt, fontSize float64, fontKey string, parseMath bool, lines []string, hAlign TextAlign, vAlign TextVerticalAlign) (geom.Rect, bool) {
+	if len(lines) == 0 {
+		return geom.Rect{}, false
+	}
+	maxWidth := 0.0
+	layouts := make([]singleLineTextLayout, len(lines))
+	for i, line := range lines {
+		layouts[i] = measureSingleLineTextLayoutParseMath(r, line, fontSize, fontKey, parseMath, ctx.RC.UseTeX)
+		maxWidth = math.Max(maxWidth, layouts[i].Width)
+	}
+	lineHeight := pointsToPixels(ctx.RC, fontSize)
+	lineGap := lineHeight * 0.2
+	blockHeight := lineHeight
+	if len(lines) > 1 {
+		blockHeight += (lineHeight + lineGap) * float64(len(lines)-1)
+	}
+	left := anchor.X
+	switch hAlign {
+	case TextAlignCenter:
+		left -= maxWidth / 2
+	case TextAlignRight:
+		left -= maxWidth
+	}
+	top := anchor.Y
+	switch layoutVerticalAlign(vAlign, false) {
+	case textLayoutVAlignCenter:
+		top -= blockHeight / 2
+	case textLayoutVAlignBottom:
+		top -= blockHeight
+	case textLayoutVAlignBaseline:
+		top -= layouts[0].Ascent
+	}
+	return geom.Rect{
+		Min: geom.Pt{X: left, Y: top},
+		Max: geom.Pt{X: left + maxWidth, Y: top + blockHeight},
+	}, true
 }
 
 // Bounds returns an empty rect so annotations do not affect autoscaling.

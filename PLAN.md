@@ -2422,6 +2422,11 @@ Current slice landed:
   annotation-as-text rotation behavior for static output.
 - Renderer-neutral annotation tests cover rotated annotation text routing
   without backend pixels.
+- `Annotation` now reuses multiline text layout for newline-separated
+  annotation text, including bbox / arrow-start block geometry and
+  artist-alpha routing through the shared text path.
+- Renderer-neutral annotation tests cover multiline annotation text splitting
+  without backend pixels.
 - `Axes.AnnotationBbox` now provides a static Go-style equivalent for the
   common `AnnotationBbox(TextArea(...))` path: text-area content, separate
   annotated-point and box coordinate systems, box alignment, frame visibility,

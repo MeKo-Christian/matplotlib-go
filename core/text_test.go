@@ -1318,6 +1318,30 @@ func TestAnnotationAngleUsesRotatedTextDrawer(t *testing.T) {
 	}
 }
 
+func TestAnnotationMultilineSplitsTextDraws(t *testing.T) {
+	ctx := createTestDrawContext()
+	annotation := &Annotation{
+		Point:    geom.Pt{X: 1, Y: 1},
+		Content:  "top\nbottom",
+		OffsetX:  10,
+		FontSize: 10,
+		Coords:   Coords(CoordData),
+	}
+	annotation.SetAlpha(0.5)
+	r := &textRecordingRenderer{}
+
+	annotation.DrawOverlay(r, ctx)
+
+	if len(r.texts) != 2 || r.texts[0] != "top" || r.texts[1] != "bottom" {
+		t.Fatalf("annotation multiline draws = %v, want [top bottom]", r.texts)
+	}
+	for i, col := range r.textColors {
+		if !approx(col.A, 0.5, 1e-12) {
+			t.Fatalf("annotation multiline text alpha[%d] = %g, want 0.5", i, col.A)
+		}
+	}
+}
+
 func TestAnnotateRespectsConfiguredCoordinateSpaces(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(unitRect())
