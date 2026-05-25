@@ -1434,8 +1434,8 @@ func TestAnnotateRespectsConfiguredCoordinateSpaces(t *testing.T) {
 		if math.Hypot(got.V[0].X-anchor.X, got.V[0].Y-anchor.Y) > 40 {
 			t.Fatalf("annotation connection start = %+v, expected near label anchor %+v", got.V[0], anchor)
 		}
-		if !containsPathPointForTextTest(r.pathCalls, target) {
-			t.Fatalf("annotation arrow head should include target %+v, got paths %+v", target, r.pathCalls)
+		if !containsPathPointNearForTextTest(r.pathCalls, target, 12) {
+			t.Fatalf("annotation arrow head should land near target %+v, got paths %+v", target, r.pathCalls)
 		}
 	}
 
@@ -1503,13 +1503,13 @@ func TestAnnotationBboxDrawsTextFrameAndArrow(t *testing.T) {
 
 	foundArrowToTarget := false
 	for _, call := range r.pathCalls {
-		if pathHasPointForTextTest(call.path, target) {
+		if pathHasPointNearForTextTest(call.path, target, 12) {
 			foundArrowToTarget = true
 			break
 		}
 	}
 	if !foundArrowToTarget {
-		t.Fatalf("annotation-box arrow should end at annotated point %+v, got paths %+v", target, r.pathCalls)
+		t.Fatalf("annotation-box arrow should land near annotated point %+v, got paths %+v", target, r.pathCalls)
 	}
 }
 
@@ -2024,9 +2024,27 @@ func containsPathPointForTextTest(calls []recordedPathCall, want geom.Pt) bool {
 	return false
 }
 
+func containsPathPointNearForTextTest(calls []recordedPathCall, want geom.Pt, tol float64) bool {
+	for _, call := range calls {
+		if pathHasPointNearForTextTest(call.path, want, tol) {
+			return true
+		}
+	}
+	return false
+}
+
 func pathHasPointForTextTest(path geom.Path, want geom.Pt) bool {
 	for _, pt := range path.V {
 		if approx(pt.X, want.X, 1e-9) && approx(pt.Y, want.Y, 1e-9) {
+			return true
+		}
+	}
+	return false
+}
+
+func pathHasPointNearForTextTest(path geom.Path, want geom.Pt, tol float64) bool {
+	for _, pt := range path.V {
+		if math.Hypot(pt.X-want.X, pt.Y-want.Y) <= tol {
 			return true
 		}
 	}

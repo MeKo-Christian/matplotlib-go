@@ -468,19 +468,21 @@ func (s ArrowStyle) transmute(path geom.Path, mutationSize, lineWidth float64) [
 	fillEnd := strings.HasSuffix(name, "|>")
 	beginBracket := strings.HasPrefix(name, "]") || strings.HasPrefix(name, "|")
 	endBracket := strings.HasSuffix(name, "[") || strings.HasSuffix(name, "|")
-	headLength := curveArrowHeadLength(s, mutationSize)
-	linePath := shortenedCurveLinePath(path, beginHead, endHead, headLength)
+	headLength, headWidth, headPad := curveArrowHeadGeometry(s, mutationSize, lineWidth)
+	linePath := shortenedCurveLinePath(path, beginHead, endHead, headPad)
 	parts := []arrowPathPart{{path: linePath, fillable: false}}
 
 	if beginHead {
-		head := arrowHeadPath(pathSecond(path), pathStart(path), headLength, s.HeadWidth*mutationSize, fillBegin, lineWidth)
+		tip := pointToward(pathStart(path), pathSecond(path), headPad)
+		head := arrowHeadPath(pathSecond(path), tip, headLength, headWidth, fillBegin, lineWidth)
 		parts = append(parts, arrowPathPart{path: head, fillable: fillBegin})
 	} else if beginBracket {
 		scale := bracketScale(s.ScaleA, mutationSize)
 		parts = append(parts, arrowPathPart{path: bracketPath(pathStart(path), pathSecond(path), s.WidthA*scale, s.LengthA*scale, s.AngleA), fillable: false})
 	}
 	if endHead {
-		head := arrowHeadPath(pathPenultimate(path), pathEnd(path), headLength, s.HeadWidth*mutationSize, fillEnd, lineWidth)
+		tip := pointToward(pathEnd(path), pathPenultimate(path), headPad)
+		head := arrowHeadPath(pathPenultimate(path), tip, headLength, headWidth, fillEnd, lineWidth)
 		parts = append(parts, arrowPathPart{path: head, fillable: fillEnd})
 	} else if endBracket {
 		scale := bracketScale(s.ScaleB, mutationSize)
@@ -569,27 +571,36 @@ func refinePatchBoundaryPoint(inside, outside geom.Pt, polygon []geom.Pt) geom.P
 	return lo
 }
 
-func curveArrowHeadLength(style ArrowStyle, mutationSize float64) float64 {
-	if style.HeadLength > 0 {
-		return style.HeadLength * mutationSize
+func curveArrowHeadGeometry(style ArrowStyle, mutationSize, lineWidth float64) (headLength, headWidth, projectedPad float64) {
+	headLength = style.HeadLength * mutationSize
+	if headLength <= 0 {
+		headLength = 4
 	}
-	return 4
+	headWidth = style.HeadWidth * mutationSize
+	if headWidth <= 0 {
+		headWidth = headLength / 2
+	}
+	headDist := math.Hypot(headLength, headWidth)
+	if headDist > 0 && headWidth > 0 && lineWidth > 0 {
+		projectedPad = 0.5 * lineWidth / (headWidth / headDist)
+	}
+	return headLength, headWidth, projectedPad
 }
 
-func shortenedCurveLinePath(path geom.Path, beginHead, endHead bool, headLength float64) geom.Path {
+func shortenedCurveLinePath(path geom.Path, beginHead, endHead bool, projectedPad float64) geom.Path {
 	out := geom.Path{
 		C: append([]geom.Cmd(nil), path.C...),
 		V: append([]geom.Pt(nil), path.V...),
 	}
-	if len(out.V) < 2 || headLength <= 0 {
+	if len(out.V) < 2 || projectedPad <= 0 {
 		return out
 	}
 	if beginHead {
-		out.V[0] = pointToward(pathStart(path), pathSecond(path), headLength)
+		out.V[0] = pointToward(pathStart(path), pathSecond(path), projectedPad)
 	}
 	if endHead {
 		last := len(out.V) - 1
-		out.V[last] = pointToward(pathEnd(path), pathPenultimate(path), headLength)
+		out.V[last] = pointToward(pathEnd(path), pathPenultimate(path), projectedPad)
 	}
 	return out
 }

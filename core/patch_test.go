@@ -628,8 +628,13 @@ func TestFancyArrowPatchMutationAspectScalesArrowMutation(t *testing.T) {
 	if stretchedHead.H() <= baseHead.H()*1.5 {
 		t.Fatalf("mutation aspect did not stretch arrow head height: base=%+v stretched=%+v", baseHead, stretchedHead)
 	}
-	if !approx(stretchedHead.Max.Y, 100, 1e-9) {
-		t.Fatalf("mutation aspect moved arrow tip to y=%v, want 100", stretchedHead.Max.Y)
+	headLength := arrowStyle.HeadLength * 10
+	headWidth := arrowStyle.HeadWidth * 10
+	headDist := math.Hypot(headLength, headWidth)
+	padProjected := 0.5 * 1 / (headWidth / headDist)
+	wantTipY := 100 - padProjected*2
+	if !approx(stretchedHead.Max.Y, wantTipY, 1e-9) {
+		t.Fatalf("mutation aspect arrow tip y = %v, want linewidth-projected tip %v", stretchedHead.Max.Y, wantTipY)
 	}
 }
 
@@ -759,12 +764,17 @@ func TestArrowStyleCurveShortensLineForArrowHeads(t *testing.T) {
 	if len(line.V) != 2 {
 		t.Fatalf("curve line vertices = %+v, want straight shortened line", line.V)
 	}
-	if !approx(line.V[1].X, 96, 1e-9) || !approx(line.V[1].Y, 0, 1e-9) {
-		t.Fatalf("curve line end = %+v, want shortened to x=96", line.V[1])
+	headLength := style.HeadLength * 10
+	headWidth := style.HeadWidth * 10
+	headDist := math.Hypot(headLength, headWidth)
+	padProjected := 0.5 * 1 / (headWidth / headDist)
+	wantTip := geom.Pt{X: 100 - padProjected, Y: 0}
+	if !approx(line.V[1].X, wantTip.X, 1e-9) || !approx(line.V[1].Y, wantTip.Y, 1e-9) {
+		t.Fatalf("curve line end = %+v, want linewidth-projected end %+v", line.V[1], wantTip)
 	}
 	head := parts[1].path
-	if !containsPointForPatchTest(head, geom.Pt{X: 100, Y: 0}) {
-		t.Fatalf("arrow head should still reach original tip, got %+v", head.V)
+	if !containsPointForPatchTest(head, wantTip) {
+		t.Fatalf("arrow head should use linewidth-projected tip %+v, got %+v", wantTip, head.V)
 	}
 }
 

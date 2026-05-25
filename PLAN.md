@@ -2274,6 +2274,10 @@ Current slice landed:
   endpoint, matching Matplotlib's `_Curve` line/head split.
 - Renderer-neutral patch tests cover line shortening for `->` without moving
   the arrow-head tip.
+- Curve-style arrow-head line shortening now uses Matplotlib's linewidth
+  projection pad instead of the full arrow-head length, matching `_Curve`'s
+  `_get_arrow_wedge` geometry.
+- Renderer-neutral patch tests cover source-derived projected line/head tips.
 - `ConnectionStyle("arc")` now uses Matplotlib's style-specific defaults
   (`angleA=0`, `angleB=0`) instead of inheriting the `Angle` / `Angle3`
   `angleA=90` default.
