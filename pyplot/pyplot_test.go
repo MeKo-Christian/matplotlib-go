@@ -1021,6 +1021,75 @@ func TestSetManagerFactoryCachesManagerPerFigure(t *testing.T) {
 	}
 }
 
+func TestManagerEventWrappersUseCurrentFigureManager(t *testing.T) {
+	resetForTests()
+
+	fig := Figure()
+	testCanvas := &testFigureCanvas{figure: fig}
+	drawCalls := 0
+	testCanvas.onDraw = func() { drawCalls++ }
+	manager := &testFigureManager{
+		canvas: testCanvas,
+		tools:  canvas.NewToolManager(),
+	}
+	SetManagerFactory(func(got *core.Figure) (canvas.FigureManager, error) {
+		if got != fig {
+			t.Fatalf("factory figure = %p, want %p", got, fig)
+		}
+		return manager, nil
+	})
+
+	gotManager, err := GetCurrentFigManager()
+	if err != nil {
+		t.Fatalf("GetCurrentFigManager() error = %v", err)
+	}
+	if gotManager != manager {
+		t.Fatalf("GetCurrentFigManager() = %p, want %p", gotManager, manager)
+	}
+
+	received := 0
+	id, err := Connect(canvas.EventDraw, func(canvas.Event) error {
+		received++
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("Connect() error = %v", err)
+	}
+	if id == 0 {
+		t.Fatal("Connect() returned zero id")
+	}
+	if err := testCanvas.dispatch(canvas.Event{Type: canvas.EventDraw}); err != nil {
+		t.Fatalf("dispatch before disconnect: %v", err)
+	}
+	if received != 1 {
+		t.Fatalf("received events before disconnect = %d, want 1", received)
+	}
+	if err := Disconnect(id); err != nil {
+		t.Fatalf("Disconnect() error = %v", err)
+	}
+	if err := testCanvas.dispatch(canvas.Event{Type: canvas.EventDraw}); err != nil {
+		t.Fatalf("dispatch after disconnect: %v", err)
+	}
+	if received != 1 {
+		t.Fatalf("received events after disconnect = %d, want still 1", received)
+	}
+
+	if err := DrawIfInteractive(); err != nil {
+		t.Fatalf("DrawIfInteractive() while off error = %v", err)
+	}
+	if drawCalls != 0 {
+		t.Fatalf("draw calls while interactive off = %d, want 0", drawCalls)
+	}
+	restore := Ion()
+	if err := DrawIfInteractive(); err != nil {
+		t.Fatalf("DrawIfInteractive() while on error = %v", err)
+	}
+	restore()
+	if drawCalls != 1 {
+		t.Fatalf("draw calls while interactive on = %d, want 1", drawCalls)
+	}
+}
+
 func TestCloseRemovesFiguresAndClosesManagers(t *testing.T) {
 	resetForTests()
 
@@ -1347,8 +1416,9 @@ func (m *testFigureManager) SetTitle(string) {}
 func (m *testFigureManager) ToolManager() *canvas.ToolManager { return m.tools }
 
 type testFigureCanvas struct {
-	figure *core.Figure
-	onDraw func()
+	figure     *core.Figure
+	onDraw     func()
+	dispatcher canvas.Dispatcher
 }
 
 func (c *testFigureCanvas) Figure() *core.Figure { return c.figure }
@@ -1368,9 +1438,17 @@ func (c *testFigureCanvas) Resize(width, height int) error {
 	return nil
 }
 
-func (c *testFigureCanvas) Connect(canvas.EventType, canvas.Handler) canvas.ConnectionID { return 0 }
+func (c *testFigureCanvas) Connect(t canvas.EventType, h canvas.Handler) canvas.ConnectionID {
+	return c.dispatcher.Connect(t, h)
+}
 
-func (c *testFigureCanvas) Disconnect(canvas.ConnectionID) {}
+func (c *testFigureCanvas) Disconnect(id canvas.ConnectionID) {
+	c.dispatcher.Disconnect(id)
+}
+
+func (c *testFigureCanvas) dispatch(ev canvas.Event) error {
+	return c.dispatcher.Emit(ev)
+}
 
 func (c *testFigureCanvas) Close() error { return nil }
 

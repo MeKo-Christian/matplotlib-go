@@ -2865,6 +2865,9 @@ Current slice landed:
 - Added pyplot `HLines` / `VLines` wrappers that build current-axes
   data-coordinate `LineCollection` segment artists with focused delegation
   coverage and public-surface rows.
+- Added pyplot manager/event wrappers for `GetCurrentFigManager`, `Connect`,
+  `Disconnect`, and `DrawIfInteractive`, delegating through the existing
+  figure-manager/canvas contracts with focused fake-manager coverage.
 - Added pyplot `ImRead` / `ImSave` wrappers over the core image IO helpers,
   with a focused PNG round-trip delegation test and explicit public-surface
   rows for `pyplot.imread` / `pyplot.imsave`.

@@ -1143,6 +1143,11 @@ func Show() error {
 	return nil
 }
 
+// GetCurrentFigManager returns the cached or newly-created manager for the current figure.
+func GetCurrentFigManager() (canvas.FigureManager, error) {
+	return ensureManager(GCF())
+}
+
 // Draw redraws the current figure through its manager canvas.
 func Draw() error {
 	manager, err := ensureManager(GCF())
@@ -1157,6 +1162,33 @@ func Draw() error {
 		return idle.DrawIdle()
 	}
 	return c.Draw()
+}
+
+// DrawIfInteractive redraws the current figure only when interactive mode is enabled.
+func DrawIfInteractive() error {
+	if !IsInteractive() {
+		return nil
+	}
+	return Draw()
+}
+
+// Connect registers an event handler on the current figure canvas.
+func Connect(eventType canvas.EventType, handler canvas.Handler) (canvas.ConnectionID, error) {
+	manager, err := ensureManager(GCF())
+	if err != nil {
+		return 0, err
+	}
+	return canvas.Connect(manager.Canvas(), eventType, handler), nil
+}
+
+// Disconnect removes an event handler from the current figure canvas.
+func Disconnect(id canvas.ConnectionID) error {
+	manager, err := ensureManager(GCF())
+	if err != nil {
+		return err
+	}
+	canvas.Disconnect(manager.Canvas(), id)
+	return nil
 }
 
 // Close removes the given figures from pyplot state and closes their cached
