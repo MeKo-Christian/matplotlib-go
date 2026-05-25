@@ -2824,6 +2824,9 @@ Current slice landed:
 - Added `Animation.Save` as an explicit unsupported-writer path returning
   `ErrWriterUnsupported`, with unit coverage. This keeps writer export out of
   v1.0 while avoiding silent no-op behavior for users who look for a save path.
+- Tightened `Animation.Start` lifecycle error handling so a timer start failure
+  returns the backend/event-loop error without leaving the animation marked
+  running or holding a stale timer.
 - Fixed `ButtonOptions.Disabled` propagation so constructor-specified disabled
   state participates in the same interaction/picking behavior as runtime
   `Button.Enabled=false`.

@@ -247,7 +247,18 @@ func (a *Animation) Start() error {
 	a.mu.Lock()
 	a.timer = timer
 	a.mu.Unlock()
-	return timer.Start()
+	if err := timer.Start(); err != nil {
+		a.mu.Lock()
+		if a.timer == timer {
+			a.timer = nil
+			a.running = false
+			a.awaitingRepeat = false
+		}
+		a.mu.Unlock()
+		_ = timer.Stop()
+		return err
+	}
+	return nil
 }
 
 // Stop halts a running animation. It is a no-op when not running.

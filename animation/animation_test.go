@@ -351,6 +351,31 @@ func (l *recordingEventLoop) current() *recordingTimer {
 	return l.lastTimer
 }
 
+type failingStartTimer struct {
+	err error
+}
+
+func (t failingStartTimer) Start() error { return t.err }
+func (t failingStartTimer) Stop() error  { return nil }
+func (t failingStartTimer) Running() bool {
+	return false
+}
+
+type failingStartEventLoop struct {
+	err error
+}
+
+func (l failingStartEventLoop) CallSoon(cb func() error) error {
+	if cb == nil {
+		return nil
+	}
+	return cb()
+}
+
+func (l failingStartEventLoop) NewTimer(time.Duration, func() error) canvas.Timer {
+	return failingStartTimer{err: l.err}
+}
+
 func TestStartStopUsesEventLoopTimer(t *testing.T) {
 	cnv := newFakeCanvas()
 	loop := &recordingEventLoop{}
@@ -390,6 +415,29 @@ func TestStartStopUsesEventLoopTimer(t *testing.T) {
 	}
 	if err := anim.Stop(); err != nil {
 		t.Fatalf("Stop after auto-stop: %v", err)
+	}
+}
+
+func TestStartRollsBackRunningStateWhenTimerStartFails(t *testing.T) {
+	cnv := newFakeCanvas()
+	startErr := errors.New("timer start failed")
+	anim, err := NewFuncAnimation(Config{
+		Canvas:    cnv,
+		Frames:    1,
+		EventLoop: failingStartEventLoop{err: startErr},
+	}, func(int) ([]core.Artist, error) { return nil, nil }, nil)
+	if err != nil {
+		t.Fatalf("NewFuncAnimation: %v", err)
+	}
+
+	if err := anim.Start(); !errors.Is(err, startErr) {
+		t.Fatalf("Start error = %v, want %v", err, startErr)
+	}
+	if anim.Running() {
+		t.Fatal("animation should not remain running after timer start failure")
+	}
+	if err := anim.Stop(); err != nil {
+		t.Fatalf("Stop after failed Start: %v", err)
 	}
 }
 
