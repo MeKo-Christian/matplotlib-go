@@ -2827,6 +2827,9 @@ Current slice landed:
 - Fixed `ButtonOptions.Disabled` propagation so constructor-specified disabled
   state participates in the same interaction/picking behavior as runtime
   `Button.Enabled=false`.
+- Tightened disabled slider interaction handling so focused `Slider` and
+  `RangeSlider` widgets ignore keyboard nudges without firing callbacks or
+  requesting redraws, matching the mouse-drag disabled path.
 - Added explicit public-surface classifications for the high-value backend
   lifecycle/tool rows: `_pylab_helpers.Gcf`, canvas/manager/event/timer
   classes, backend registry lookup/registration, and home/back/forward/pan/

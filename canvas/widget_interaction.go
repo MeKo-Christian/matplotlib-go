@@ -1366,7 +1366,7 @@ func (w *WidgetInteraction) handleTextKey(tb *core.TextBox, ev KeyEvent, key str
 }
 
 func (w *WidgetInteraction) handleSliderKey(slider *core.Slider, ev KeyEvent, key string) bool {
-	if slider == nil {
+	if slider == nil || !slider.Enabled {
 		return false
 	}
 	step := slider.Step
@@ -1391,7 +1391,7 @@ func (w *WidgetInteraction) handleSliderKey(slider *core.Slider, ev KeyEvent, ke
 }
 
 func (w *WidgetInteraction) handleRangeSliderKey(slider *core.RangeSlider, handle int, ev KeyEvent, key string) bool {
-	if slider == nil {
+	if slider == nil || !slider.Enabled {
 		return false
 	}
 	step := slider.Step

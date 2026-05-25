@@ -286,6 +286,67 @@ func TestWidgetInteractionRangeSliderDragAndNudge(t *testing.T) {
 	}
 }
 
+func TestWidgetInteractionDisabledSlidersIgnoreKeyboardNudges(t *testing.T) {
+	fig := core.NewFigure(120, 80)
+	axSlider := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 0.45}})
+	axRange := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0.55}, Max: geom.Pt{X: 1, Y: 1}})
+
+	slider := axSlider.Slider("gain", 0, 10, 5)
+	slider.Enabled = false
+	rangeSlider := axRange.RangeSlider("window", 0, 10, 2, 8)
+	rangeSlider.Enabled = false
+
+	var sliderEvents int
+	var rangeEvents int
+	slider.OnChanged(func(_ *core.Slider, _ float64) {
+		sliderEvents++
+	})
+	rangeSlider.OnChanged(func(_ *core.RangeSlider, _, _ float64) {
+		rangeEvents++
+	})
+
+	var draws int
+	wi := NewWidgetInteraction(fig, func() error {
+		draws++
+		return nil
+	})
+	var dispatcher Dispatcher
+	wi.Attach(&dispatcher)
+	defer wi.Detach()
+
+	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: axSlider, Position: geom.Pt{X: 90, Y: 30}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("disabled slider press: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: axSlider, Position: geom.Pt{X: 90, Y: 30}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("disabled slider release: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: axSlider, Key: "right"}); err != nil {
+		t.Fatalf("disabled slider right key: %v", err)
+	}
+	if slider.Value != 5 {
+		t.Fatalf("disabled slider value = %v, want unchanged 5", slider.Value)
+	}
+
+	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: axRange, Position: geom.Pt{X: 85, Y: 60}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("disabled range slider press: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: axRange, Position: geom.Pt{X: 85, Y: 60}, Button: MouseButtonLeft}); err != nil {
+		t.Fatalf("disabled range slider release: %v", err)
+	}
+	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: axRange, Key: "left"}); err != nil {
+		t.Fatalf("disabled range slider left key: %v", err)
+	}
+	if rangeSlider.Low != 2 || rangeSlider.High != 8 {
+		t.Fatalf("disabled range slider = [%v, %v], want unchanged [2, 8]", rangeSlider.Low, rangeSlider.High)
+	}
+	if sliderEvents != 0 || rangeEvents != 0 {
+		t.Fatalf("disabled slider callbacks = %d/%d, want 0/0", sliderEvents, rangeEvents)
+	}
+	if draws != 0 {
+		t.Fatalf("disabled slider interactions requested %d draws, want 0", draws)
+	}
+}
+
 func TestWidgetInteractionCheckAndRadioKeyboardNavigation(t *testing.T) {
 	fig := core.NewFigure(120, 80)
 	axChecks := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 0.45}})
