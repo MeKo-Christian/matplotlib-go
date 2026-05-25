@@ -1472,9 +1472,11 @@ func TestTickLabelPositionUsesBoundsForBottomXAxis(t *testing.T) {
 
 	tickPos := ctx.DataToPixel.Apply(geom.Pt{X: 2, Y: getSpinePosition(axis, ctx)})
 	labelPad := tickLabelPadPx(axis, ctx)
+	// Display space is y-up: the bottom label sits below the tick (anchor
+	// tickPos.Y-labelPad) with a Top vAlign baseline offset of -Ascent.
 	want := geom.Pt{
 		X: tickPos.X - 5.0/2.0,
-		Y: tickPos.Y + labelPad + 8,
+		Y: tickPos.Y - labelPad - 8,
 	}
 	if r.origins[0] != want {
 		t.Fatalf("bottom x tick origin = %+v, want %+v", r.origins[0], want)
@@ -1533,9 +1535,11 @@ func TestTickLabelPositionUsesBoundsForLeftYAxis(t *testing.T) {
 
 	tickPos := ctx.DataToPixel.Apply(geom.Pt{X: getSpinePosition(axis, ctx), Y: 4})
 	labelPad := tickLabelPadPx(axis, ctx)
+	// Display space is y-up: the y-axis label is center-baseline aligned, so the
+	// baseline offset is -Ascent/2 = -4.
 	want := geom.Pt{
 		X: tickPos.X - labelPad - 5.0,
-		Y: tickPos.Y + 4,
+		Y: tickPos.Y - 4,
 	}
 	if r.origins[0] != want {
 		t.Fatalf("left y tick origin = %+v, want %+v", r.origins[0], want)
@@ -1569,9 +1573,10 @@ func TestTickLabelPositionUsesFontHeightMetricsForBottomXAxis(t *testing.T) {
 	tickPos := ctx.DataToPixel.Apply(geom.Pt{X: 2, Y: getSpinePosition(axis, ctx)})
 	labelPad := tickLabelPadPx(axis, ctx)
 	layout := measureSingleLineTextLayout(&r, "2", tickLabelFontSize(axis, ctx), ctx.RC.FontKey)
+	// Display space is y-up: bottom label below the tick with Top vAlign (-Ascent).
 	want := geom.Pt{
 		X: tickPos.X - layout.Width/2,
-		Y: tickPos.Y + labelPad + 8,
+		Y: tickPos.Y - labelPad - 8,
 	}
 	if r.origins[0] != want {
 		t.Fatalf("bottom x tick origin = %+v, want %+v", r.origins[0], want)
@@ -1609,9 +1614,11 @@ func TestTickLabelPositionUsesBottomAlignmentForTopXAxis(t *testing.T) {
 
 	tickPos := ctx.DataToPixel.Apply(geom.Pt{X: 2, Y: getSpinePosition(axis, ctx)})
 	labelPad := tickLabelPadPx(axis, ctx)
+	// Display space is y-up: the top label sits above the tick (anchor
+	// tickPos.Y+labelPad) with a Bottom vAlign baseline offset of +Descent.
 	want := geom.Pt{
 		X: tickPos.X - 5.0/2.0,
-		Y: tickPos.Y - labelPad - 2,
+		Y: tickPos.Y + labelPad + 2,
 	}
 	if r.origins[0] != want {
 		t.Fatalf("top x tick origin = %+v, want %+v", r.origins[0], want)
@@ -1649,9 +1656,10 @@ func TestTickLabelPositionUsesCenterBaselineForRightYAxis(t *testing.T) {
 
 	tickPos := ctx.DataToPixel.Apply(geom.Pt{X: getSpinePosition(axis, ctx), Y: 4})
 	labelPad := tickLabelPadPx(axis, ctx)
+	// Display space is y-up: center-baseline y label baseline offset is -Ascent/2 = -4.
 	want := geom.Pt{
 		X: tickPos.X + labelPad,
-		Y: tickPos.Y + 4,
+		Y: tickPos.Y - 4,
 	}
 	if r.origins[0] != want {
 		t.Fatalf("right y tick origin = %+v, want %+v", r.origins[0], want)
@@ -1690,9 +1698,10 @@ func TestAxis_DrawTickLabels_UsesRotatedDrawerWhenRequested(t *testing.T) {
 
 	tickPos := ctx.DataToPixel.Apply(geom.Pt{X: 2, Y: getSpinePosition(axis, ctx)})
 	labelPad := tickLabelPadPx(axis, ctx)
+	// Display space is y-up: bottom label below the tick with Top vAlign (-Ascent).
 	origin := geom.Pt{
 		X: tickPos.X - 5.0/2.0,
-		Y: tickPos.Y + labelPad + 8,
+		Y: tickPos.Y - labelPad - 8,
 	}
 	layout := measureSingleLineTextLayout(&r, "2", tickLabelFontSize(axis, ctx), ctx.RC.FontKey)
 	want := tickLabelRotationAnchor(origin, layout, TextAlignCenter, textLayoutVAlignTop, math.Pi/4)
@@ -1802,7 +1811,9 @@ func TestAxis_ExtraTickLevelsDrawAdditionalLabels(t *testing.T) {
 	if r.texts[0] != "major" || r.texts[1] != "minor row" {
 		t.Fatalf("unexpected tick label sequence: %v", r.texts)
 	}
-	if !(r.origins[1].Y > r.origins[0].Y) {
+	// Display space is y-up: a bottom-axis extra level farther below sits at a
+	// smaller Y than the major level.
+	if !(r.origins[1].Y < r.origins[0].Y) {
 		t.Fatalf("expected extra tick level to be farther from the axis: major=%+v extra=%+v", r.origins[0], r.origins[1])
 	}
 }

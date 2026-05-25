@@ -901,7 +901,9 @@ func TestTextCenterBaselineVerticalAlignment(t *testing.T) {
 	}
 	anchor := ctx.DataToPixel.Apply(text.Position)
 	layout := measureSingleLineTextLayout(r, text.Content, text.FontSize, "")
-	want := geom.Pt{X: anchor.X, Y: anchor.Y + layout.Ascent/2}
+	// Display space is y-up: centering the baseline lowers the origin by half the
+	// ascent (smaller Y), so the offset is subtracted.
+	want := geom.Pt{X: anchor.X, Y: anchor.Y - layout.Ascent/2}
 	if !approx(r.origins[0].X, want.X, 1e-9) || !approx(r.origins[0].Y, want.Y, 1e-9) {
 		t.Fatalf("center-baseline origin = %+v, want %+v", r.origins[0], want)
 	}
@@ -1170,8 +1172,10 @@ func TestAlignedTextOrigin(t *testing.T) {
 	anchor := geom.Pt{X: 100, Y: 50}
 	metrics := render.TextMetrics{W: 40, Ascent: 8, Descent: 2}
 
+	// Display space is y-up: top alignment puts the text top at the anchor, so the
+	// baseline drops by the ascent (smaller Y): 50 - 8 = 42.
 	got := alignedTextOrigin(anchor, metrics, TextAlignCenter, TextVAlignTop)
-	if got.X != 80 || got.Y != 58 {
+	if got.X != 80 || got.Y != 42 {
 		t.Fatalf("unexpected text origin: %+v", got)
 	}
 }
@@ -1961,12 +1965,13 @@ func TestAxesTextSupportsAxesAndBlendedCoordinates(t *testing.T) {
 		t.Fatalf("expected 2 text draws, got %d", len(r.texts))
 	}
 
-	wantAxes := geom.Pt{X: 245, Y: 173}
+	// Display space is y-up: axes y=0.75 -> 60+0.75*480=420, plus OffsetY=-7 = 413.
+	wantAxes := geom.Pt{X: 245, Y: 413}
 	if r.origins[0] != wantAxes {
 		t.Fatalf("axes coords origin = %+v, want %+v", r.origins[0], wantAxes)
 	}
 
-	wantBlend := geom.Pt{X: 200, Y: 180}
+	wantBlend := geom.Pt{X: 200, Y: 420}
 	if r.origins[1] != wantBlend {
 		t.Fatalf("blended coords origin = %+v, want %+v", r.origins[1], wantBlend)
 	}
@@ -2048,7 +2053,8 @@ func TestMultilineTextSplitsDrawsAndUsesBlockBBox(t *testing.T) {
 	if r.pathCount != 1 {
 		t.Fatalf("expected one multiline bbox path, got %d", r.pathCount)
 	}
-	if !(r.origins[1].Y > r.origins[0].Y) {
+	// Display space is y-up: the second line sits below the first at a smaller Y.
+	if !(r.origins[1].Y < r.origins[0].Y) {
 		t.Fatalf("expected second line below first, got origins %v", r.origins)
 	}
 }
@@ -2160,7 +2166,7 @@ func TestMultilineTextLinespacingControlsBaselineAdvance(t *testing.T) {
 		t.Fatalf("multiline draw origins = %d, want 2", len(r.origins))
 	}
 	wantAdvance := text.FontSize * text.Linespacing
-	gotAdvance := r.origins[1].Y - r.origins[0].Y
+	gotAdvance := r.origins[0].Y - r.origins[1].Y // y-up: next line is below at smaller Y
 	if !approx(gotAdvance, wantAdvance, 1e-9) {
 		t.Fatalf("multiline baseline advance = %v, want %v", gotAdvance, wantAdvance)
 	}
@@ -2184,7 +2190,7 @@ func TestMultilineTextNormalLinespacingUsesFontLineGap(t *testing.T) {
 		t.Fatalf("multiline draw origins = %d, want 2", len(r.origins))
 	}
 	wantAdvance := r.fontHeights.Ascent + r.fontHeights.Descent + r.fontHeights.LineGap
-	gotAdvance := r.origins[1].Y - r.origins[0].Y
+	gotAdvance := r.origins[0].Y - r.origins[1].Y // y-up: next line is below at smaller Y
 	if !approx(gotAdvance, wantAdvance, 1e-9) {
 		t.Fatalf("normal multiline baseline advance = %v, want font height + gap %v", gotAdvance, wantAdvance)
 	}
@@ -2209,7 +2215,7 @@ func TestMultilineTextNumericLinespacingUsesFontHeight(t *testing.T) {
 		t.Fatalf("multiline draw origins = %d, want 2", len(r.origins))
 	}
 	wantAdvance := text.Linespacing * (r.fontHeights.Ascent + r.fontHeights.Descent)
-	gotAdvance := r.origins[1].Y - r.origins[0].Y
+	gotAdvance := r.origins[0].Y - r.origins[1].Y // y-up: next line is below at smaller Y
 	if !approx(gotAdvance, wantAdvance, 1e-9) {
 		t.Fatalf("numeric multiline baseline advance = %v, want linespacing * font height %v", gotAdvance, wantAdvance)
 	}
