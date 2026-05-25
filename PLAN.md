@@ -2806,6 +2806,9 @@ Current slice landed:
 - Added pyplot `ImShow` as a stateful wrapper over `Axes.ImShow`, including
   interpolation option delegation, and gave `pyplot.py:function:imshow` its own
   public-surface row instead of relying on the broad pyplot module note.
+- Added explicit pyplot image-helper rows for `matshow`, `spy`, and the
+  intentionally omitted `figimage`, so the migration status of the high-traffic
+  image wrapper family is concrete.
 Implementation notes:
 
 - Compare against upstream `image.py`, `pyplot.py`, `_pylab_helpers.py`,

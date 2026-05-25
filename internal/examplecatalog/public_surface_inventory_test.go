@@ -119,6 +119,24 @@ func TestPhase125ImageClassAndIOOmissionsHaveExplicitRows(t *testing.T) {
 	}
 }
 
+func TestPhase125PyplotImageHelpersHaveExplicitRows(t *testing.T) {
+	want := []string{
+		"pyplot.py:function:figimage",
+		"pyplot.py:function:imshow",
+		"pyplot.py:function:matshow",
+		"pyplot.py:function:spy",
+	}
+	for _, upstreamID := range want {
+		row, ok := LookupPublicSurfaceParityByUpstreamID(upstreamID)
+		if !ok {
+			t.Fatalf("missing explicit Phase 12.5 pyplot image-helper classification for %q", upstreamID)
+		}
+		if row.Status == PublicSurfaceNotStarted {
+			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", upstreamID, row.Status)
+		}
+	}
+}
+
 func TestPublicSurfaceParityRowsCoverCommittedInventory(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	rows := PublicSurfaceParityRowsForSurface(artifact.Rows)
