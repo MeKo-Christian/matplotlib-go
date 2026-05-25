@@ -151,7 +151,8 @@ func (rdo *RadioButtons) Draw(r render.Renderer, ctx *DrawContext) {
 	if rdo == nil || r == nil || ctx == nil {
 		return
 	}
-	panel := insetRect(ctx.Clip, 4)
+	defaults := widgetDefaultsForRC(ctx.RC)
+	panel := widgetStyledPanelRect(ctx.Clip, defaults.PanelPad)
 	face := rdo.FaceColor
 	edge := rdo.EdgeColor
 	textColor := rdo.TextColor
@@ -162,29 +163,29 @@ func (rdo *RadioButtons) Draw(r render.Renderer, ctx *DrawContext) {
 		textColor = mixColor(textColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.35)
 		dotColor = mixColor(dotColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.35)
 	}
-	drawWidgetPanel(r, panel, face, edge, 1.1, 12)
+	drawWidgetPanel(r, panel, face, edge, defaults.PanelLineWidth, defaults.PanelRadius)
 	if len(rdo.Labels) == 0 {
 		return
 	}
 	rowHeight := panel.H() / float64(len(rdo.Labels))
 	fontSize := resolvedFontSize(rdo.FontSize, ctx)
 	for i, label := range rdo.Labels {
-		center := geom.Pt{X: panel.Min.X + 24, Y: panel.Max.Y - rowHeight*float64(i) - rowHeight/2}
-		outer := ellipsePath(16, 16)
+		center := geom.Pt{X: panel.Min.X + defaults.RadioCenterXPad, Y: panel.Max.Y - rowHeight*float64(i) - rowHeight/2}
+		outer := ellipsePath(defaults.RadioOuterSize, defaults.RadioOuterSize)
 		outerPath := applyAffinePath(outer, patchAffine(center, 0))
 		r.Path(outerPath, &render.Paint{
 			Fill:      render.Color{R: 1, G: 1, B: 1, A: 1},
 			Stroke:    edge,
-			LineWidth: 1,
+			LineWidth: defaults.RadioLineWidth,
 			LineJoin:  render.JoinRound,
 			LineCap:   render.CapRound,
 		})
 		if i == clampInt(rdo.Active, 0, len(rdo.Labels)-1) {
-			inner := ellipsePath(8, 8)
+			inner := ellipsePath(defaults.RadioInnerSize, defaults.RadioInnerSize)
 			innerPath := applyAffinePath(inner, patchAffine(center, 0))
 			r.Path(innerPath, &render.Paint{Fill: dotColor})
 		}
-		drawWidgetText(r, ctx, geom.Pt{X: center.X + 16, Y: center.Y}, label, fontSize, textColor, TextAlignLeft, textLayoutVAlignCenter)
+		drawWidgetText(r, ctx, geom.Pt{X: center.X + defaults.RadioLabelGap, Y: center.Y}, label, fontSize, textColor, TextAlignLeft, textLayoutVAlignCenter)
 	}
 }
 
@@ -192,7 +193,8 @@ func (rdo *RadioButtons) Bounds(ctx *DrawContext) geom.Rect {
 	if rdo == nil || ctx == nil {
 		return geom.Rect{}
 	}
-	return insetRect(ctx.Clip, 4)
+	defaults := widgetDefaultsForRC(ctx.RC)
+	return widgetStyledPanelRect(ctx.Clip, defaults.PanelPad)
 }
 func (rdo *RadioButtons) Z() float64   { return rdo.z }
 func (rdo *RadioButtons) WidgetLayer() {}

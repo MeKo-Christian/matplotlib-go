@@ -119,6 +119,49 @@ func assertColorEqual(t *testing.T, got, want render.Color, label string) {
 	}
 }
 
+func TestWidgetVisualStyleProvidesGeometryDefaults(t *testing.T) {
+	goDefaults := widgetDefaultsForRC(style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualGo)))
+	mplDefaults := widgetDefaultsForRC(style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib)))
+
+	if goDefaults.ButtonRadius <= 0 {
+		t.Fatalf("Go button radius = %v, want rounded native button chrome", goDefaults.ButtonRadius)
+	}
+	if mplDefaults.ButtonRadius != 0 {
+		t.Fatalf("Matplotlib button radius = %v, want square panel chrome", mplDefaults.ButtonRadius)
+	}
+	if goDefaults.SliderPanelPad == mplDefaults.SliderPanelPad {
+		t.Fatalf("slider panel padding should differ by visual style: go=%v mpl=%v", goDefaults.SliderPanelPad, mplDefaults.SliderPanelPad)
+	}
+	if mplDefaults.SliderTrackYMin != 0.25 || mplDefaults.SliderTrackYMax != 0.75 {
+		t.Fatalf("Matplotlib slider track fractions = [%v, %v], want [0.25, 0.75]", mplDefaults.SliderTrackYMin, mplDefaults.SliderTrackYMax)
+	}
+	if mplDefaults.RadioOuterSize >= goDefaults.RadioOuterSize {
+		t.Fatalf("Matplotlib radio size = %v, want smaller than Go native %v", mplDefaults.RadioOuterSize, goDefaults.RadioOuterSize)
+	}
+}
+
+func TestStyledWidgetGeometryUsesVisualPolicy(t *testing.T) {
+	clip := geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 210, Y: 80}}
+	mplDefaults := widgetDefaultsForRC(style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib)))
+
+	panel := widgetStyledPanelRect(clip, mplDefaults.SliderPanelPad)
+	if panel != clip {
+		t.Fatalf("Matplotlib slider panel = %+v, want full clip %+v", panel, clip)
+	}
+	track := widgetStyledSliderTrack(panel, mplDefaults)
+	wantTrack := geom.Rect{Min: geom.Pt{X: 10, Y: 35}, Max: geom.Pt{X: 210, Y: 65}}
+	if track != wantTrack {
+		t.Fatalf("Matplotlib slider track = %+v, want %+v", track, wantTrack)
+	}
+
+	goDefaults := widgetDefaultsForRC(style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualGo)))
+	goPanel := widgetStyledPanelRect(clip, goDefaults.SliderPanelPad)
+	goTrack := widgetStyledSliderTrack(goPanel, goDefaults)
+	if goTrack == track {
+		t.Fatalf("Go and Matplotlib slider tracks should differ: %+v", track)
+	}
+}
+
 func TestWidgetCallbackRegistryPreservesRegistrationOrder(t *testing.T) {
 	var got []int
 	var ordered widgetCallbackRegistry[func()]

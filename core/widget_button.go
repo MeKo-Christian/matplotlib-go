@@ -100,12 +100,13 @@ func (b *Button) Draw(r render.Renderer, ctx *DrawContext) {
 	if b == nil || r == nil || ctx == nil {
 		return
 	}
-	bounds := insetRect(ctx.Clip, 6)
+	defaults := widgetDefaultsForRC(ctx.RC)
+	bounds := widgetStyledPanelRect(ctx.Clip, defaults.ButtonPad)
 	fill := b.FaceColor
 	if !b.Enabled {
 		fill = mixColor(fill, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.45)
 		edge := mixColor(b.EdgeColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.6)
-		drawWidgetPanel(r, bounds, fill, edge, 1.25, 10)
+		drawWidgetPanel(r, bounds, fill, edge, defaults.ButtonLineWidth, defaults.ButtonRadius)
 		drawCenteredWidgetText(r, ctx, geom.Pt{
 			X: bounds.Min.X + bounds.W()/2,
 			Y: bounds.Min.Y + bounds.H()/2,
@@ -118,7 +119,7 @@ func (b *Button) Draw(r render.Renderer, ctx *DrawContext) {
 	if b.Hovered && !b.Pressed {
 		fill = mixColor(fill, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.06)
 	}
-	drawWidgetPanel(r, bounds, fill, b.EdgeColor, 1.25, 10)
+	drawWidgetPanel(r, bounds, fill, b.EdgeColor, defaults.ButtonLineWidth, defaults.ButtonRadius)
 	labelColor := b.TextColor
 	if b.Pressed {
 		labelColor = mixColor(b.TextColor, render.Color{R: 0, G: 0, B: 0, A: 1}, 0.3)
@@ -133,7 +134,8 @@ func (b *Button) Bounds(ctx *DrawContext) geom.Rect {
 	if b == nil || ctx == nil {
 		return geom.Rect{}
 	}
-	return insetRect(ctx.Clip, 6)
+	defaults := widgetDefaultsForRC(ctx.RC)
+	return widgetStyledPanelRect(ctx.Clip, defaults.ButtonPad)
 }
 
 func (b *Button) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {

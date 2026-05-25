@@ -19,19 +19,51 @@ type widgetCallbackRegistry[T any] struct {
 }
 
 type widgetVisualDefaults struct {
-	ButtonFace  render.Color
-	ButtonEdge  render.Color
-	ButtonText  render.Color
-	PanelFace   render.Color
-	PanelEdge   render.Color
-	Track       render.Color
-	Fill        render.Color
-	Handle      render.Color
-	Text        render.Color
-	Check       render.Color
-	RadioDot    render.Color
-	TextBoxFace render.Color
-	TextBoxEdge render.Color
+	ButtonFace        render.Color
+	ButtonEdge        render.Color
+	ButtonText        render.Color
+	ButtonPad         float64
+	ButtonRadius      float64
+	ButtonLineWidth   float64
+	PanelFace         render.Color
+	PanelEdge         render.Color
+	PanelPad          float64
+	PanelRadius       float64
+	PanelLineWidth    float64
+	Track             render.Color
+	Fill              render.Color
+	Handle            render.Color
+	HandleEdge        render.Color
+	Text              render.Color
+	Check             render.Color
+	RadioDot          render.Color
+	TextBoxFace       render.Color
+	TextBoxEdge       render.Color
+	SliderPanelPad    float64
+	SliderRadius      float64
+	SliderTrackXPad   float64
+	SliderTrackYMin   float64
+	SliderTrackYMax   float64
+	SliderHandleSize  float64
+	SliderHandleLine  float64
+	TextBoxPanelPad   float64
+	TextBoxInputXPad  float64
+	TextBoxInputYMin  float64
+	TextBoxInputYMax  float64
+	TextBoxRadius     float64
+	TextBoxLineWidth  float64
+	CheckBoxMaxSize   float64
+	CheckBoxScale     float64
+	CheckBoxXPad      float64
+	CheckLabelGap     float64
+	CheckBoxRadius    float64
+	CheckBoxLineWidth float64
+	CheckMarkWidth    float64
+	RadioCenterXPad   float64
+	RadioOuterSize    float64
+	RadioInnerSize    float64
+	RadioLineWidth    float64
+	RadioLabelGap     float64
 }
 
 func widgetDefaultsForAxes(a *Axes) widgetVisualDefaults {
@@ -45,35 +77,99 @@ func widgetDefaultsForRC(rc style.RC) widgetVisualDefaults {
 	switch rc.WidgetVisualStyle {
 	case style.WidgetVisualMatplotlib:
 		return widgetVisualDefaults{
-			ButtonFace:  render.Color{R: 0.85, G: 0.85, B: 0.85, A: 1},
-			ButtonEdge:  render.Color{R: 0, G: 0, B: 0, A: 1},
-			ButtonText:  render.Color{R: 0, G: 0, B: 0, A: 1},
-			PanelFace:   render.Color{R: 1, G: 1, B: 1, A: 1},
-			PanelEdge:   render.Color{R: 0, G: 0, B: 0, A: 1},
-			Track:       render.Color{R: 211.0 / 255.0, G: 211.0 / 255.0, B: 211.0 / 255.0, A: 1},
-			Fill:        render.Color{R: 31.0 / 255.0, G: 119.0 / 255.0, B: 180.0 / 255.0, A: 1},
-			Handle:      render.Color{R: 1, G: 1, B: 1, A: 1},
-			Text:        render.Color{R: 0, G: 0, B: 0, A: 1},
-			Check:       render.Color{R: 0, G: 0, B: 0, A: 1},
-			RadioDot:    render.Color{R: 0, G: 0, B: 1, A: 1},
-			TextBoxFace: render.Color{R: 0.95, G: 0.95, B: 0.95, A: 1},
-			TextBoxEdge: render.Color{R: 0, G: 0, B: 0, A: 1},
+			ButtonFace:        render.Color{R: 0.85, G: 0.85, B: 0.85, A: 1},
+			ButtonEdge:        render.Color{R: 0, G: 0, B: 0, A: 1},
+			ButtonText:        render.Color{R: 0, G: 0, B: 0, A: 1},
+			ButtonPad:         0,
+			ButtonRadius:      0,
+			ButtonLineWidth:   1,
+			PanelFace:         render.Color{R: 1, G: 1, B: 1, A: 1},
+			PanelEdge:         render.Color{R: 0, G: 0, B: 0, A: 1},
+			PanelPad:          0,
+			PanelRadius:       0,
+			PanelLineWidth:    1,
+			Track:             render.Color{R: 211.0 / 255.0, G: 211.0 / 255.0, B: 211.0 / 255.0, A: 1},
+			Fill:              render.Color{R: 31.0 / 255.0, G: 119.0 / 255.0, B: 180.0 / 255.0, A: 1},
+			Handle:            render.Color{R: 1, G: 1, B: 1, A: 1},
+			HandleEdge:        render.Color{R: 0.75, G: 0.75, B: 0.75, A: 1},
+			Text:              render.Color{R: 0, G: 0, B: 0, A: 1},
+			Check:             render.Color{R: 0, G: 0, B: 0, A: 1},
+			RadioDot:          render.Color{R: 0, G: 0, B: 1, A: 1},
+			TextBoxFace:       render.Color{R: 0.95, G: 0.95, B: 0.95, A: 1},
+			TextBoxEdge:       render.Color{R: 0, G: 0, B: 0, A: 1},
+			SliderPanelPad:    0,
+			SliderRadius:      0,
+			SliderTrackXPad:   0,
+			SliderTrackYMin:   0.25,
+			SliderTrackYMax:   0.75,
+			SliderHandleSize:  10,
+			SliderHandleLine:  1,
+			TextBoxPanelPad:   0,
+			TextBoxInputXPad:  0,
+			TextBoxInputYMin:  0,
+			TextBoxInputYMax:  1,
+			TextBoxRadius:     0,
+			TextBoxLineWidth:  1,
+			CheckBoxMaxSize:   8,
+			CheckBoxScale:     0.50,
+			CheckBoxXPad:      18,
+			CheckLabelGap:     34,
+			CheckBoxRadius:    0,
+			CheckBoxLineWidth: 1,
+			CheckMarkWidth:    1,
+			RadioCenterXPad:   18,
+			RadioOuterSize:    8,
+			RadioInnerSize:    4,
+			RadioLineWidth:    1,
+			RadioLabelGap:     34,
 		}
 	default:
 		return widgetVisualDefaults{
-			ButtonFace:  render.Color{R: 0.94, G: 0.95, B: 0.97, A: 1},
-			ButtonEdge:  render.Color{R: 0.74, G: 0.76, B: 0.80, A: 1},
-			ButtonText:  render.Color{R: 0.12, G: 0.13, B: 0.16, A: 1},
-			PanelFace:   render.Color{R: 0.96, G: 0.97, B: 0.98, A: 1},
-			PanelEdge:   render.Color{R: 0.74, G: 0.76, B: 0.80, A: 1},
-			Track:       render.Color{R: 0.83, G: 0.85, B: 0.89, A: 1},
-			Fill:        render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1},
-			Handle:      render.Color{R: 0.09, G: 0.18, B: 0.34, A: 1},
-			Text:        render.Color{R: 0.12, G: 0.13, B: 0.16, A: 1},
-			Check:       render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1},
-			RadioDot:    render.Color{R: 0.85, G: 0.32, B: 0.17, A: 1},
-			TextBoxFace: render.Color{R: 1, G: 1, B: 1, A: 1},
-			TextBoxEdge: render.Color{R: 0.74, G: 0.76, B: 0.80, A: 1},
+			ButtonFace:        render.Color{R: 0.94, G: 0.95, B: 0.97, A: 1},
+			ButtonEdge:        render.Color{R: 0.74, G: 0.76, B: 0.80, A: 1},
+			ButtonText:        render.Color{R: 0.12, G: 0.13, B: 0.16, A: 1},
+			ButtonPad:         6,
+			ButtonRadius:      10,
+			ButtonLineWidth:   1.25,
+			PanelFace:         render.Color{R: 0.96, G: 0.97, B: 0.98, A: 1},
+			PanelEdge:         render.Color{R: 0.74, G: 0.76, B: 0.80, A: 1},
+			PanelPad:          4,
+			PanelRadius:       12,
+			PanelLineWidth:    1.1,
+			Track:             render.Color{R: 0.83, G: 0.85, B: 0.89, A: 1},
+			Fill:              render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1},
+			Handle:            render.Color{R: 0.09, G: 0.18, B: 0.34, A: 1},
+			HandleEdge:        render.Color{R: 0.272, G: 0.344, B: 0.472, A: 1},
+			Text:              render.Color{R: 0.12, G: 0.13, B: 0.16, A: 1},
+			Check:             render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1},
+			RadioDot:          render.Color{R: 0.85, G: 0.32, B: 0.17, A: 1},
+			TextBoxFace:       render.Color{R: 1, G: 1, B: 1, A: 1},
+			TextBoxEdge:       render.Color{R: 0.74, G: 0.76, B: 0.80, A: 1},
+			SliderPanelPad:    4,
+			SliderRadius:      12,
+			SliderTrackXPad:   14,
+			SliderTrackYMin:   -26,
+			SliderTrackYMax:   -14,
+			SliderHandleSize:  1.9,
+			SliderHandleLine:  1,
+			TextBoxPanelPad:   4,
+			TextBoxInputXPad:  4,
+			TextBoxInputYMin:  30,
+			TextBoxInputYMax:  -8,
+			TextBoxRadius:     8,
+			TextBoxLineWidth:  1.2,
+			CheckBoxMaxSize:   16,
+			CheckBoxScale:     0.42,
+			CheckBoxXPad:      14,
+			CheckLabelGap:     10,
+			CheckBoxRadius:    3,
+			CheckBoxLineWidth: 1,
+			CheckMarkWidth:    2,
+			RadioCenterXPad:   24,
+			RadioOuterSize:    16,
+			RadioInnerSize:    8,
+			RadioLineWidth:    1,
+			RadioLabelGap:     16,
 		}
 	}
 }
@@ -183,6 +279,32 @@ func prepareWidgetAxes(a *Axes) {
 	a.ShowFrame = false
 	a.SetXLim(0, 1)
 	a.SetYLim(0, 1)
+}
+
+func widgetStyledPanelRect(rect geom.Rect, pad float64) geom.Rect {
+	return insetRect(rect, pad)
+}
+
+func widgetStyledSliderTrack(panel geom.Rect, defaults widgetVisualDefaults) geom.Rect {
+	yMin := widgetStyleCoord(panel.Min.Y, panel.Max.Y, defaults.SliderTrackYMin)
+	yMax := widgetStyleCoord(panel.Min.Y, panel.Max.Y, defaults.SliderTrackYMax)
+	if yMin > yMax {
+		yMin, yMax = yMax, yMin
+	}
+	return geom.Rect{
+		Min: geom.Pt{X: panel.Min.X + defaults.SliderTrackXPad, Y: yMin},
+		Max: geom.Pt{X: panel.Max.X - defaults.SliderTrackXPad, Y: yMax},
+	}
+}
+
+func widgetStyleCoord(minV, maxV, value float64) float64 {
+	if value >= 0 && value <= 1 {
+		return minV + (maxV-minV)*value
+	}
+	if value < 0 {
+		return maxV + value
+	}
+	return minV + value
 }
 
 func drawWidgetPanel(r render.Renderer, rect geom.Rect, fill, edge render.Color, width, radius float64) {

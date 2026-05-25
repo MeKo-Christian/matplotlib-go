@@ -7,6 +7,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 // SliderCallback receives the active slider and updated value.
@@ -133,29 +134,33 @@ func (s *Slider) Draw(r render.Renderer, ctx *DrawContext) {
 	if s == nil || r == nil || ctx == nil {
 		return
 	}
-	panel := insetRect(ctx.Clip, 4)
-	drawWidgetPanel(r, panel, s.FaceColor, render.Color{A: 0}, 0, 12)
+	defaults := widgetDefaultsForRC(ctx.RC)
+	panel := widgetStyledPanelRect(ctx.Clip, defaults.SliderPanelPad)
+	drawWidgetPanel(r, panel, s.FaceColor, render.Color{A: 0}, 0, defaults.SliderRadius)
 	textColor := s.TextColor
 	fontSize := resolvedFontSize(s.FontSize, ctx)
 	drawWidgetText(r, ctx, geom.Pt{X: panel.Min.X + 14, Y: panel.Min.Y + 22}, s.Label, fontSize, textColor, TextAlignLeft, textLayoutVAlignTop)
 	drawWidgetText(r, ctx, geom.Pt{X: panel.Max.X - 14, Y: panel.Min.Y + 22}, sliderDisplayValue(s), fontSize, textColor, TextAlignRight, textLayoutVAlignTop)
 
-	track := geom.Rect{
-		Min: geom.Pt{X: panel.Min.X + 14, Y: panel.Max.Y - 26},
-		Max: geom.Pt{X: panel.Max.X - 14, Y: panel.Max.Y - 14},
-	}
+	track := widgetStyledSliderTrack(panel, defaults)
 	drawWidgetPanel(r, track, s.TrackColor, render.Color{A: 0}, 0, track.H()/2)
 	fraction := sliderFraction(s.Min, s.Max, s.Value)
 	fill := track
 	fill.Max.X = fill.Min.X + track.W()*fraction
 	drawWidgetPanel(r, fill, s.FillColor, render.Color{A: 0}, 0, fill.H()/2)
 	handleX := track.Min.X + track.W()*fraction
-	handle := ellipsePath(track.H()*1.9, track.H()*1.9)
+	handleSize := defaults.SliderHandleSize
+	if handleSize <= 0 {
+		handleSize = track.H()
+	} else if handleSize < 5 {
+		handleSize *= track.H()
+	}
+	handle := ellipsePath(handleSize, handleSize)
 	handlePath := applyAffinePath(handle, patchAffine(geom.Pt{X: handleX, Y: track.Min.Y + track.H()/2}, 0))
 	r.Path(handlePath, &render.Paint{
 		Fill:      s.HandleColor,
-		Stroke:    mixColor(s.HandleColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.2),
-		LineWidth: 1,
+		Stroke:    defaults.HandleEdge,
+		LineWidth: defaults.SliderHandleLine,
 		LineJoin:  render.JoinRound,
 		LineCap:   render.CapRound,
 	})
@@ -165,7 +170,8 @@ func (s *Slider) Bounds(ctx *DrawContext) geom.Rect {
 	if s == nil || ctx == nil {
 		return geom.Rect{}
 	}
-	return insetRect(ctx.Clip, 4)
+	defaults := widgetDefaultsForRC(ctx.RC)
+	return widgetStyledPanelRect(ctx.Clip, defaults.SliderPanelPad)
 }
 
 func (s *Slider) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
@@ -188,10 +194,7 @@ func sliderFraction(min, max, value float64) float64 {
 }
 
 func widgetSliderTrack(panel geom.Rect) geom.Rect {
-	return geom.Rect{
-		Min: geom.Pt{X: panel.Min.X + 14, Y: panel.Max.Y - 26},
-		Max: geom.Pt{X: panel.Max.X - 14, Y: panel.Max.Y - 14},
-	}
+	return widgetStyledSliderTrack(panel, widgetDefaultsForRC(style.Default))
 }
 
 func sliderDisplayValue(s *Slider) string {

@@ -154,7 +154,8 @@ func (c *CheckButtons) Draw(r render.Renderer, ctx *DrawContext) {
 	if c == nil || r == nil || ctx == nil {
 		return
 	}
-	panel := insetRect(ctx.Clip, 4)
+	defaults := widgetDefaultsForRC(ctx.RC)
+	panel := widgetStyledPanelRect(ctx.Clip, defaults.PanelPad)
 	face := c.FaceColor
 	edge := c.EdgeColor
 	textColor := c.TextColor
@@ -165,7 +166,7 @@ func (c *CheckButtons) Draw(r render.Renderer, ctx *DrawContext) {
 		textColor = mixColor(textColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.35)
 		checkColor = mixColor(checkColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.35)
 	}
-	drawWidgetPanel(r, panel, face, edge, 1.1, 12)
+	drawWidgetPanel(r, panel, face, edge, defaults.PanelLineWidth, defaults.PanelRadius)
 	if len(c.Labels) == 0 {
 		return
 	}
@@ -175,12 +176,12 @@ func (c *CheckButtons) Draw(r render.Renderer, ctx *DrawContext) {
 		// y-up: stack row 0 at the top (panel.Max.Y) downward.
 		rowMaxY := panel.Max.Y - rowHeight*float64(i)
 		rowMinY := rowMaxY - rowHeight
-		boxSize := math.Min(16, rowHeight*0.42)
+		boxSize := math.Min(defaults.CheckBoxMaxSize, rowHeight*defaults.CheckBoxScale)
 		box := geom.Rect{
-			Min: geom.Pt{X: panel.Min.X + 14, Y: rowMinY + (rowHeight-boxSize)/2},
-			Max: geom.Pt{X: panel.Min.X + 14 + boxSize, Y: rowMaxY - (rowHeight-boxSize)/2},
+			Min: geom.Pt{X: panel.Min.X + defaults.CheckBoxXPad, Y: rowMinY + (rowHeight-boxSize)/2},
+			Max: geom.Pt{X: panel.Min.X + defaults.CheckBoxXPad + boxSize, Y: rowMaxY - (rowHeight-boxSize)/2},
 		}
-		drawWidgetPanel(r, box, render.Color{R: 1, G: 1, B: 1, A: 1}, edge, 1, 3)
+		drawWidgetPanel(r, box, render.Color{R: 1, G: 1, B: 1, A: 1}, edge, defaults.CheckBoxLineWidth, defaults.CheckBoxRadius)
 		if i < len(c.Values) && c.Values[i] {
 			path := geom.Path{}
 			path.MoveTo(geom.Pt{X: box.Min.X + box.W()*0.18, Y: box.Min.Y + box.H()*0.56})
@@ -188,12 +189,12 @@ func (c *CheckButtons) Draw(r render.Renderer, ctx *DrawContext) {
 			path.LineTo(geom.Pt{X: box.Max.X - box.W()*0.16, Y: box.Min.Y + box.H()*0.22})
 			r.Path(path, &render.Paint{
 				Stroke:    checkColor,
-				LineWidth: 2,
+				LineWidth: defaults.CheckMarkWidth,
 				LineJoin:  render.JoinRound,
 				LineCap:   render.CapRound,
 			})
 		}
-		drawWidgetText(r, ctx, geom.Pt{X: box.Max.X + 10, Y: rowMinY + rowHeight/2}, label, fontSize, textColor, TextAlignLeft, textLayoutVAlignCenter)
+		drawWidgetText(r, ctx, geom.Pt{X: box.Max.X + defaults.CheckLabelGap, Y: rowMinY + rowHeight/2}, label, fontSize, textColor, TextAlignLeft, textLayoutVAlignCenter)
 	}
 }
 
@@ -201,7 +202,8 @@ func (c *CheckButtons) Bounds(ctx *DrawContext) geom.Rect {
 	if c == nil || ctx == nil {
 		return geom.Rect{}
 	}
-	return insetRect(ctx.Clip, 4)
+	defaults := widgetDefaultsForRC(ctx.RC)
+	return widgetStyledPanelRect(ctx.Clip, defaults.PanelPad)
 }
 func (c *CheckButtons) Z() float64   { return c.z }
 func (c *CheckButtons) WidgetLayer() {}

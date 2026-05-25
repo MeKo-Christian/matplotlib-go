@@ -435,20 +435,21 @@ func (t *TextBox) Draw(r render.Renderer, ctx *DrawContext) {
 	if t == nil || r == nil || ctx == nil {
 		return
 	}
-	panel := insetRect(ctx.Clip, 4)
+	defaults := widgetDefaultsForRC(ctx.RC)
+	panel := widgetStyledPanelRect(ctx.Clip, defaults.TextBoxPanelPad)
 	drawWidgetPanel(r, panel, render.Color{A: 0}, render.Color{A: 0}, 0, 0)
 	fontSize := resolvedFontSize(t.FontSize, ctx)
 	drawWidgetText(r, ctx, geom.Pt{X: panel.Min.X + 4, Y: panel.Min.Y + 20}, t.Label, fontSize, t.TextColor, TextAlignLeft, textLayoutVAlignTop)
 
 	input := geom.Rect{
-		Min: geom.Pt{X: panel.Min.X + 4, Y: panel.Min.Y + 30},
-		Max: geom.Pt{X: panel.Max.X - 4, Y: panel.Max.Y - 8},
+		Min: geom.Pt{X: panel.Min.X + defaults.TextBoxInputXPad, Y: widgetStyleCoord(panel.Min.Y, panel.Max.Y, defaults.TextBoxInputYMin)},
+		Max: geom.Pt{X: panel.Max.X - defaults.TextBoxInputXPad, Y: widgetStyleCoord(panel.Min.Y, panel.Max.Y, defaults.TextBoxInputYMax)},
 	}
 	edge := t.EdgeColor
 	if t.Active {
 		edge = mixColor(edge, render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1}, 0.65)
 	}
-	drawWidgetPanel(r, input, t.FaceColor, edge, 1.2, 8)
+	drawWidgetPanel(r, input, t.FaceColor, edge, defaults.TextBoxLineWidth, defaults.TextBoxRadius)
 
 	display := t.Value
 	displayColor := t.TextColor
@@ -483,10 +484,7 @@ func (t *TextBox) Bounds(ctx *DrawContext) geom.Rect {
 		return geom.Rect{}
 	}
 	panel := insetRect(ctx.Clip, 4)
-	return geom.Rect{
-		Min: geom.Pt{X: panel.Min.X, Y: panel.Min.Y + 26},
-		Max: geom.Pt{X: panel.Max.X, Y: panel.Max.Y},
-	}
+	return geom.Rect{Min: panel.Min, Max: panel.Max}
 }
 func (t *TextBox) Z() float64   { return t.z }
 func (t *TextBox) WidgetLayer() {}
