@@ -386,20 +386,22 @@ func (a *PackedDrawingArea) AddPath(path geom.Path, paint render.Paint) *PackedD
 	return a
 }
 
-func (a *PackedDrawingArea) size(render.Renderer, *DrawContext, *AnchoredPacker) (geom.Pt, bool) {
+func (a *PackedDrawingArea) size(_ render.Renderer, ctx *DrawContext, _ *AnchoredPacker) (geom.Pt, bool) {
 	if a == nil || a.Width < 0 || a.Height < 0 {
 		return geom.Pt{}, false
 	}
-	return geom.Pt{X: a.Width, Y: a.Height}, true
+	scale := drawingAreaScale(ctx)
+	return geom.Pt{X: a.Width * scale, Y: a.Height * scale}, true
 }
 
-func (a *PackedDrawingArea) draw(r render.Renderer, _ *DrawContext, box geom.Rect, _ *AnchoredPacker) {
+func (a *PackedDrawingArea) draw(r render.Renderer, ctx *DrawContext, box geom.Rect, _ *AnchoredPacker) {
 	if a == nil {
 		return
 	}
+	scale := drawingAreaScale(ctx)
 	for _, child := range a.paths {
 		paint := child.paint
-		r.Path(localDrawingAreaPath(child.path, box), &paint)
+		r.Path(localDrawingAreaPath(child.path, box, scale), &paint)
 	}
 }
 
@@ -408,13 +410,14 @@ type packedImage struct {
 	Zoom  float64
 }
 
-func (i *packedImage) size(render.Renderer, *DrawContext, *AnchoredPacker) (geom.Pt, bool) {
+func (i *packedImage) size(_ render.Renderer, ctx *DrawContext, _ *AnchoredPacker) (geom.Pt, bool) {
 	if i == nil || i.Image == nil {
 		return geom.Pt{}, false
 	}
 	width, height := i.Image.Size()
 	zoom := i.resolvedZoom()
-	return geom.Pt{X: float64(width) * zoom, Y: float64(height) * zoom}, true
+	scale := drawingAreaScale(ctx)
+	return geom.Pt{X: float64(width) * zoom * scale, Y: float64(height) * zoom * scale}, true
 }
 
 func (i *packedImage) draw(r render.Renderer, _ *DrawContext, box geom.Rect, _ *AnchoredPacker) {
@@ -429,6 +432,17 @@ func (i *packedImage) resolvedZoom() float64 {
 		return i.Zoom
 	}
 	return 1
+}
+
+func drawingAreaScale(ctx *DrawContext) float64 {
+	if ctx == nil {
+		return 1
+	}
+	scale := pointsToPixels(ctx.RC, 1)
+	if scale <= 0 {
+		return 1
+	}
+	return scale
 }
 
 type packedText struct {

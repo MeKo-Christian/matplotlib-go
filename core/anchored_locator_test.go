@@ -183,6 +183,7 @@ func TestAnchoredDrawingAreaDrawsLocalPath(t *testing.T) {
 	}, render.Paint{Stroke: stroke, LineWidth: 2})
 
 	ctx := createTestDrawContext()
+	scale := pointsToPixels(ctx.RC, 1)
 	r := &recordingRenderer{}
 	area.Draw(r, ctx)
 
@@ -199,10 +200,40 @@ func TestAnchoredDrawingAreaDrawsLocalPath(t *testing.T) {
 	if len(child.V) != 2 {
 		t.Fatalf("anchored drawing area child path not found in %+v", r.pathCalls)
 	}
-	if got, want := child.V[0], (geom.Pt{X: 5, Y: 25}); got != want {
+	if got, want := child.V[0], (geom.Pt{X: 5, Y: 5 + 20*scale}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("local lower-left point mapped to %+v, want %+v", got, want)
 	}
-	if got, want := child.V[1], (geom.Pt{X: 45, Y: 5}); got != want {
+	if got, want := child.V[1], (geom.Pt{X: 5 + 40*scale, Y: 5}); !pointsApprox(got, want, 1e-9) {
+		t.Fatalf("local upper-right point mapped to %+v, want %+v", got, want)
+	}
+}
+
+func TestAnchoredDrawingAreaScalesLocalCoordinatesByDPI(t *testing.T) {
+	stroke := render.Color{R: 0.8, G: 0.1, B: 0.2, A: 1}
+	area := (&Axes{}).AddAnchoredDrawingArea(40, 20, AnchoredDrawingAreaOptions{
+		Location: LegendUpperLeft,
+		Padding:  0,
+		Inset:    0,
+		FrameOn:  boolPtr(false),
+	})
+	area.AddPath(geom.Path{
+		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+		V: []geom.Pt{{X: 0, Y: 0}, {X: 40, Y: 20}},
+	}, render.Paint{Stroke: stroke, LineWidth: 2})
+
+	ctx := createTestDrawContext()
+	ctx.RC = style.Apply(ctx.RC, style.WithDPI(144))
+	r := &recordingRenderer{}
+	area.Draw(r, ctx)
+
+	child := recordedStrokePath(r.pathCalls, stroke)
+	if len(child.V) != 2 {
+		t.Fatalf("anchored drawing area child path not found in %+v", r.pathCalls)
+	}
+	if got, want := child.V[0], (geom.Pt{X: 0, Y: 40}); !pointsApprox(got, want, 1e-9) {
+		t.Fatalf("local lower-left point mapped to %+v, want %+v", got, want)
+	}
+	if got, want := child.V[1], (geom.Pt{X: 80, Y: 0}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("local upper-right point mapped to %+v, want %+v", got, want)
 	}
 }
@@ -221,11 +252,12 @@ func TestAnchoredDrawingAreaCanClipChildren(t *testing.T) {
 	}, render.Paint{Stroke: render.Color{A: 1}, LineWidth: 1})
 
 	ctx := createTestDrawContext()
+	scale := pointsToPixels(ctx.RC, 1)
 	r := &clipRecordingRenderer{}
 	area.Draw(r, ctx)
 
-	wantClip := geom.Rect{Min: geom.Pt{X: 5, Y: 5}, Max: geom.Pt{X: 45, Y: 25}}
-	if len(r.rects) != 1 || r.rects[0] != wantClip {
+	wantClip := geom.Rect{Min: geom.Pt{X: 5, Y: 5}, Max: geom.Pt{X: 5 + 40*scale, Y: 5 + 20*scale}}
+	if len(r.rects) != 1 || !approxRect(r.rects[0], wantClip, 1e-9) {
 		t.Fatalf("drawing area clip rects = %+v, want [%+v]", r.rects, wantClip)
 	}
 	wantEvents := []string{"save", "clipRect", "restore"}
@@ -259,6 +291,7 @@ func TestAnchoredPackerPacksDrawingAreaAndTextHorizontally(t *testing.T) {
 	packer.AddText("Go")
 
 	ctx := createTestDrawContext()
+	scale := pointsToPixels(ctx.RC, 1)
 	r := &textRecordingRenderer{}
 	packer.Draw(r, ctx)
 
@@ -275,16 +308,16 @@ func TestAnchoredPackerPacksDrawingAreaAndTextHorizontally(t *testing.T) {
 	if len(child.V) != 2 {
 		t.Fatalf("packed drawing area path not found in %+v", r.pathCalls)
 	}
-	if got, want := child.V[0], (geom.Pt{X: 5, Y: 15}); got != want {
+	if got, want := child.V[0], (geom.Pt{X: 5, Y: 5 + 10*scale}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("drawing child lower-left mapped to %+v, want %+v", got, want)
 	}
-	if got, want := child.V[1], (geom.Pt{X: 25, Y: 5}); got != want {
+	if got, want := child.V[1], (geom.Pt{X: 5 + 20*scale, Y: 5}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("drawing child upper-right mapped to %+v, want %+v", got, want)
 	}
 	if len(r.origins) != 1 {
 		t.Fatalf("packed text origins = %v, want one", r.origins)
 	}
-	wantOrigin := geom.Pt{X: 29, Y: 13}
+	wantOrigin := geom.Pt{X: 5 + 20*scale + 4, Y: 5 + 10*scale/2 + 3}
 	if got := r.origins[0]; !floatApprox(got.X, wantOrigin.X, 1e-9) || !floatApprox(got.Y, wantOrigin.Y, 1e-9) {
 		t.Fatalf("packed text origin = %+v, want %+v", got, wantOrigin)
 	}
@@ -311,6 +344,7 @@ func TestAnchoredPackerPacksChildrenVertically(t *testing.T) {
 	}, render.Paint{Stroke: bottomStroke, LineWidth: 1})
 
 	ctx := createTestDrawContext()
+	scale := pointsToPixels(ctx.RC, 1)
 	r := &recordingRenderer{}
 	packer.Draw(r, ctx)
 
@@ -319,10 +353,10 @@ func TestAnchoredPackerPacksChildrenVertically(t *testing.T) {
 	if len(top.V) != 2 || len(bottom.V) != 2 {
 		t.Fatalf("packed vertical child paths not found: top=%+v bottom=%+v calls=%+v", top, bottom, r.pathCalls)
 	}
-	if got, want := top.V[0], (geom.Pt{X: 5, Y: 15}); got != want {
+	if got, want := top.V[0], (geom.Pt{X: 5, Y: 5 + 10*scale}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("top child lower-left mapped to %+v, want %+v", got, want)
 	}
-	if got, want := bottom.V[0], (geom.Pt{X: 15, Y: 24}); got != want {
+	if got, want := bottom.V[0], (geom.Pt{X: 5 + 20*scale - 10*scale, Y: 5 + 10*scale + 3 + 6*scale}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("bottom child lower-left mapped to %+v, want %+v", got, want)
 	}
 }
@@ -345,13 +379,14 @@ func TestAnchoredPackerPacksImageChildren(t *testing.T) {
 	}, render.Paint{Stroke: stroke, LineWidth: 1})
 
 	ctx := createTestDrawContext()
+	scale := pointsToPixels(ctx.RC, 1)
 	r := &textRecordingRenderer{}
 	packer.Draw(r, ctx)
 
 	if len(r.imageDsts) != 1 {
 		t.Fatalf("packed image destinations = %+v, want one", r.imageDsts)
 	}
-	wantImageDst := geom.Rect{Min: geom.Pt{X: 5, Y: 5}, Max: geom.Pt{X: 13, Y: 11}}
+	wantImageDst := geom.Rect{Min: geom.Pt{X: 5, Y: 5}, Max: geom.Pt{X: 5 + 8*scale, Y: 5 + 6*scale}}
 	if !approxRect(r.imageDsts[0], wantImageDst, 1e-9) {
 		t.Fatalf("packed image dst = %+v, want %+v", r.imageDsts[0], wantImageDst)
 	}
@@ -359,8 +394,46 @@ func TestAnchoredPackerPacksImageChildren(t *testing.T) {
 	if len(path.V) != 2 {
 		t.Fatalf("packed drawing path not found in %+v", r.pathCalls)
 	}
-	if got, want := path.V[0], (geom.Pt{X: 15, Y: 9}); got != want {
+	if got, want := path.V[0], (geom.Pt{X: 5 + 8*scale + 2, Y: 5 + 4*scale}); !pointsApprox(got, want, 1e-9) {
 		t.Fatalf("drawing child lower-left after image mapped to %+v, want %+v", got, want)
+	}
+}
+
+func TestAnchoredPackerImageAndDrawingAreaScaleByDPI(t *testing.T) {
+	stroke := render.Color{R: 0.8, G: 0.2, B: 0.1, A: 1}
+	img := render.NewImageData(image.NewRGBA(image.Rect(0, 0, 4, 3)))
+	packer := (&Axes{}).AddAnchoredPacker(PackHorizontal, AnchoredPackerOptions{
+		Location: LegendUpperLeft,
+		Padding:  0,
+		Inset:    0,
+		Sep:      0,
+		FrameOn:  boolPtr(false),
+		Align:    PackAlignStart,
+	})
+	packer.AddImage(img, 2)
+	packer.AddDrawingArea(4, 4).AddPath(geom.Path{
+		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+		V: []geom.Pt{{X: 0, Y: 0}, {X: 4, Y: 4}},
+	}, render.Paint{Stroke: stroke, LineWidth: 1})
+
+	ctx := createTestDrawContext()
+	ctx.RC = style.Apply(ctx.RC, style.WithDPI(144))
+	r := &textRecordingRenderer{}
+	packer.Draw(r, ctx)
+
+	wantImageDst := geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 16, Y: 12}}
+	if len(r.imageDsts) != 1 || !approxRect(r.imageDsts[0], wantImageDst, 1e-9) {
+		t.Fatalf("packed image destinations = %+v, want [%+v]", r.imageDsts, wantImageDst)
+	}
+	path := recordedStrokePath(r.pathCalls, stroke)
+	if len(path.V) != 2 {
+		t.Fatalf("packed drawing path not found in %+v", r.pathCalls)
+	}
+	if got, want := path.V[0], (geom.Pt{X: 16, Y: 8}); !pointsApprox(got, want, 1e-9) {
+		t.Fatalf("drawing child lower-left after image mapped to %+v, want %+v", got, want)
+	}
+	if got, want := path.V[1], (geom.Pt{X: 24, Y: 0}); !pointsApprox(got, want, 1e-9) {
+		t.Fatalf("drawing child upper-right after image mapped to %+v, want %+v", got, want)
 	}
 }
 
@@ -371,6 +444,10 @@ func recordedPaintExists(calls []recordedPathCall, fill, stroke render.Color, li
 		}
 	}
 	return false
+}
+
+func pointsApprox(got, want geom.Pt, tol float64) bool {
+	return floatApprox(got.X, want.X, tol) && floatApprox(got.Y, want.Y, tol)
 }
 
 func recordedStrokePath(calls []recordedPathCall, stroke render.Color) geom.Path {

@@ -49,7 +49,7 @@ func addTextMatrix(ax *core.Axes) {
 			FaceColor:    render.Color{R: 0.88, G: 0.92, B: 1.00, A: 0.85},
 			EdgeColor:    render.Color{R: 0.20, G: 0.32, B: 0.68, A: 1},
 			LineWidth:    1,
-			Padding:      4,
+			Padding:      fontPad(13, 0.3),
 			CornerRadius: 5,
 		},
 	})
@@ -63,7 +63,7 @@ func addTextMatrix(ax *core.Axes) {
 			FaceColor: render.Color{R: 1.00, G: 0.90, B: 0.78, A: 0.72},
 			EdgeColor: render.Color{R: 0.65, G: 0.35, B: 0.12, A: 1},
 			LineWidth: 0.8,
-			Padding:   3,
+			Padding:   fontPad(12, 0.25),
 		},
 	})
 }
@@ -72,8 +72,8 @@ func addAnnotationMatrix(ax *core.Axes) {
 	arc, _ := core.ConnectionStyleFromString("arc3,rad=0.25")
 	arrow, _ := core.ArrowStyleFromString("-|>,head_length=0.35,head_width=0.20")
 	ax.Annotate("bbox arrow", 2.1, 2.15, core.AnnotationOptions{
-		OffsetX:         72,
-		OffsetY:         -40,
+		OffsetX:         pt(72),
+		OffsetY:         pt(40),
 		FontSize:        11,
 		Color:           render.Color{R: 0.15, G: 0.18, B: 0.22, A: 1},
 		ArrowColor:      render.Color{R: 0.18, G: 0.39, B: 0.70, A: 1},
@@ -87,14 +87,14 @@ func addAnnotationMatrix(ax *core.Axes) {
 			FaceColor: render.Color{R: 0.92, G: 0.97, B: 0.92, A: 0.92},
 			EdgeColor: render.Color{R: 0.23, G: 0.48, B: 0.20, A: 1},
 			LineWidth: 1,
-			Padding:   4,
+			Padding:   fontPad(11, 0.25),
 		},
 	})
 
 	clip := true
 	ax.Annotate("clipped", -0.4, 4.7, core.AnnotationOptions{
-		OffsetX:         40,
-		OffsetY:         -20,
+		OffsetX:         pt(40),
+		OffsetY:         pt(20),
 		AnnotationClip:  &clip,
 		ArrowColor:      render.Color{R: 0.7, G: 0.1, B: 0.1, A: 1},
 		ConnectionStyle: arc,
@@ -105,7 +105,7 @@ func addAnnotationMatrix(ax *core.Axes) {
 	ax.AnnotationBbox("TextArea box", 3.75, 3.05, core.AnnotationBboxOptions{
 		BoxPosition:  &boxPos,
 		BoxAlignment: &align,
-		Padding:      5,
+		Padding:      fontPad(10, 0.35),
 		FaceColor:    render.Color{R: 0.96, G: 0.90, B: 1.00, A: 0.92},
 		EdgeColor:    render.Color{R: 0.45, G: 0.24, B: 0.62, A: 1},
 		TextColor:    render.Color{R: 0.23, G: 0.15, B: 0.35, A: 1},
@@ -118,10 +118,10 @@ func addAnnotationMatrix(ax *core.Axes) {
 func addOffsetBoxMatrix(ax *core.Axes) {
 	ax.AddAnchoredText("anchored\ntext", core.AnchoredTextOptions{
 		Location:        core.LegendUpperLeft,
-		Padding:         4,
-		Inset:           8,
+		Padding:         fontPad(9, 0.35),
+		Inset:           fontPad(9, 0.6),
 		RowGap:          2,
-		BoxPadding:      0.35,
+		BoxPadding:      0,
 		CornerRadius:    4,
 		BackgroundColor: render.Color{R: 0.98, G: 0.98, B: 0.94, A: 0.92},
 		BorderColor:     render.Color{R: 0.45, G: 0.45, B: 0.24, A: 1},
@@ -135,7 +135,7 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 		BoxPosition: &imgPos,
 		Image:       img,
 		ImageZoom:   2.4,
-		Padding:     3,
+		Padding:     fontPad(10, 0.25),
 		FaceColor:   render.Color{R: 1, G: 1, B: 1, A: 0.95},
 		EdgeColor:   render.Color{R: 0.25, G: 0.25, B: 0.25, A: 1},
 		Arrow:       true,
@@ -144,8 +144,8 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 
 	area := ax.AddAnchoredDrawingArea(46, 28, core.AnchoredDrawingAreaOptions{
 		Location:        core.LegendUpperRight,
-		Padding:         4,
-		Inset:           10,
+		Padding:         fontPad(10, 0.4),
+		Inset:           fontPad(10, 0.7),
 		BackgroundColor: render.Color{R: 0.98, G: 0.96, B: 0.88, A: 0.92},
 		BorderColor:     render.Color{R: 0.45, G: 0.36, B: 0.14, A: 1},
 	})
@@ -157,9 +157,9 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 
 	packer := ax.AddAnchoredPacker(core.PackHorizontal, core.AnchoredPackerOptions{
 		Location:        core.LegendLowerLeft,
-		Padding:         5,
-		Inset:           8,
-		Sep:             5,
+		Padding:         fontPad(10, 0.4),
+		Inset:           fontPad(10, 0.6),
+		Sep:             pt(5),
 		BackgroundColor: render.Color{R: 0.93, G: 0.97, B: 1.00, A: 0.92},
 		BorderColor:     render.Color{R: 0.16, G: 0.37, B: 0.54, A: 1},
 		FontSize:        9,
@@ -175,9 +175,9 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 	fill := true
 	ax.AddAnchoredSizeBar(1.25, "1.25 data", core.AnchoredSizeBarOptions{
 		Location:        core.LegendLowerRight,
-		Padding:         4,
-		Inset:           8,
-		Sep:             4,
+		Padding:         fontPad(9, 0.4),
+		Inset:           fontPad(9, 0.6),
+		Sep:             pt(4),
 		SizeVertical:    0.09,
 		FillBar:         &fill,
 		BackgroundColor: render.Color{R: 1, G: 1, B: 1, A: 0.82},
@@ -218,4 +218,12 @@ func localDiamondPath() geom.Path {
 	p.LineTo(geom.Pt{X: 1, Y: 9})
 	p.Close()
 	return p
+}
+
+func pt(points float64) float64 {
+	return common.ReferencePointsToPixels(points)
+}
+
+func fontPad(fontSize, fraction float64) float64 {
+	return pt(fontSize * fraction)
 }

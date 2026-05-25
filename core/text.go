@@ -1034,7 +1034,7 @@ func drawTextBBoxRotated(r render.Renderer, origin geom.Pt, layout singleLineTex
 	if cfg.CornerRadius > 0 {
 		path = roundedRectPath(rect, cfg.CornerRadius)
 	}
-	path = rotatePathAround(path, pivot, angleDeg)
+	path = rotatePathAround(path, pivot, -angleDeg)
 	r.Path(path, &render.Paint{
 		Fill:      cfg.FaceColor,
 		Stroke:    cfg.EdgeColor,
@@ -1091,7 +1091,7 @@ func drawMultilineTextBBoxRotated(r render.Renderer, rect geom.Rect, opt *TextBB
 	if cfg.CornerRadius > 0 {
 		path = roundedRectPath(rect, cfg.CornerRadius)
 	}
-	path = rotatePathAround(path, pivot, angleDeg)
+	path = rotatePathAround(path, pivot, -angleDeg)
 	r.Path(path, &render.Paint{
 		Fill:      cfg.FaceColor,
 		Stroke:    cfg.EdgeColor,

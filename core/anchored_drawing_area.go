@@ -142,7 +142,7 @@ func (a *AnchoredDrawingArea) Draw(r render.Renderer, ctx *DrawContext) {
 	drawChildren := func() {
 		for _, child := range a.paths {
 			paint := child.paint
-			r.Path(localDrawingAreaPath(child.path, layout.content), &paint)
+			r.Path(localDrawingAreaPath(child.path, layout.content, layout.scale), &paint)
 		}
 	}
 	if a.Clip {
@@ -172,6 +172,7 @@ func (a *AnchoredDrawingArea) boxRect(_ render.Renderer, ctx *DrawContext) (geom
 type anchoredDrawingAreaLayout struct {
 	frame   geom.Rect
 	content geom.Rect
+	scale   float64
 	empty   bool
 }
 
@@ -180,13 +181,17 @@ func (a *AnchoredDrawingArea) layout(ctx *DrawContext) anchoredDrawingAreaLayout
 		return anchoredDrawingAreaLayout{empty: true}
 	}
 	padding := a.resolvedPadding(ctx)
-	frame := resolveAnchoredBoxRect(a.Locator, ctx.Clip, a.Width+padding*2, a.Height+padding*2, a.Location, a.resolvedInset(ctx))
+	scale := pointsToPixels(ctx.RC, 1)
+	width := a.Width * scale
+	height := a.Height * scale
+	frame := resolveAnchoredBoxRect(a.Locator, ctx.Clip, width+padding*2, height+padding*2, a.Location, a.resolvedInset(ctx))
 	return anchoredDrawingAreaLayout{
 		frame: frame,
 		content: geom.Rect{
 			Min: geom.Pt{X: frame.Min.X + padding, Y: frame.Min.Y + padding},
 			Max: geom.Pt{X: frame.Max.X - padding, Y: frame.Max.Y - padding},
 		},
+		scale: scale,
 	}
 }
 
@@ -204,12 +209,15 @@ func (a *AnchoredDrawingArea) resolvedInset(ctx *DrawContext) float64 {
 	return pointsToPixels(ctx.RC, 0.1*ctx.RC.LegendSize())
 }
 
-func localDrawingAreaPath(path geom.Path, box geom.Rect) geom.Path {
+func localDrawingAreaPath(path geom.Path, box geom.Rect, scale float64) geom.Path {
+	if scale <= 0 {
+		scale = 1
+	}
 	out := clonePath(path)
 	for i, pt := range out.V {
 		out.V[i] = geom.Pt{
-			X: box.Min.X + pt.X,
-			Y: box.Max.Y - pt.Y,
+			X: box.Min.X + pt.X*scale,
+			Y: box.Max.Y - pt.Y*scale,
 		}
 	}
 	return out

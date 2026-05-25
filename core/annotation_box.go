@@ -200,7 +200,7 @@ func (a *AnnotationBbox) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 		layout = measureSingleLineTextLayout(r, a.Content, fontSize, fontKey, ctx.RC.UseTeX)
 	}
 	boxAnchor := a.boxAnchor(ctx)
-	contentBox := annotationBoxRect(boxAnchor, a.contentSize(layout), a.BoxAlignment)
+	contentBox := annotationBoxRect(boxAnchor, a.contentSize(layout, ctx), a.BoxAlignment)
 	box := expandAnchoredRect(contentBox, a.resolvedPadding(fontSize, ctx))
 
 	if a.Arrow {
@@ -248,14 +248,15 @@ func (a *AnnotationBbox) resolvedPadding(fontSize float64, ctx *DrawContext) flo
 	return pointsToPixels(ctx.RC, 0.4*fontSize)
 }
 
-func (a *AnnotationBbox) contentSize(layout singleLineTextLayout) geom.Pt {
+func (a *AnnotationBbox) contentSize(layout singleLineTextLayout, ctx *DrawContext) geom.Pt {
 	if a != nil && a.Image != nil {
 		width, height := a.Image.Size()
 		zoom := a.ImageZoom
 		if zoom <= 0 {
 			zoom = 1
 		}
-		return geom.Pt{X: float64(width) * zoom, Y: float64(height) * zoom}
+		scale := drawingAreaScale(ctx)
+		return geom.Pt{X: float64(width) * zoom * scale, Y: float64(height) * zoom * scale}
 	}
 	return annotationTextBoxSize(layout)
 }

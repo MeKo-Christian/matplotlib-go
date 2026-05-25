@@ -8,6 +8,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -754,6 +755,36 @@ func TestRotatedTextBBoxRotatesWithText(t *testing.T) {
 	}
 	if approx(path.V[0].Y, path.V[1].Y, 1e-9) || approx(path.V[1].X, path.V[2].X, 1e-9) {
 		t.Fatalf("rotated text bbox remained axis-aligned: %+v", path.V[:4])
+	}
+}
+
+func TestRotatedTextBBoxUsesDisplayRotationSign(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 1},
+		Content:  "tilt",
+		FontSize: 10,
+		Angle:    45,
+		ClipOn:   true,
+		BBox: &TextBBoxOptions{
+			FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
+			EdgeColor: render.Color{A: 1},
+			Padding:   1,
+		},
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.pathCalls) == 0 || len(r.pathCalls[0].path.V) < 2 {
+		t.Fatalf("expected rotated bbox path, got %+v", r.pathCalls)
+	}
+	edge := geom.Pt{
+		X: r.pathCalls[0].path.V[1].X - r.pathCalls[0].path.V[0].X,
+		Y: r.pathCalls[0].path.V[1].Y - r.pathCalls[0].path.V[0].Y,
+	}
+	if edge.X <= 0 || edge.Y >= 0 {
+		t.Fatalf("positive text rotation should tilt bbox upward in display coordinates, edge=%+v path=%+v", edge, r.pathCalls[0].path.V[:4])
 	}
 }
 
@@ -1545,12 +1576,44 @@ func TestAnnotationBboxDrawsImageContent(t *testing.T) {
 	if got := len(r.imageDsts); got != 1 {
 		t.Fatalf("annotation image draw count = %d, want 1", got)
 	}
+	scale := pointsToPixels(fig.RC, 1)
 	wantDst := geom.Rect{
 		Min: anchor,
-		Max: geom.Pt{X: anchor.X + 20, Y: anchor.Y + 12},
+		Max: geom.Pt{X: anchor.X + 20*scale, Y: anchor.Y + 12*scale},
 	}
 	if !approxRect(r.imageDsts[0], wantDst, 1e-9) {
 		t.Fatalf("annotation image dst = %+v, want %+v", r.imageDsts[0], wantDst)
+	}
+}
+
+func TestAnnotationBboxImageZoomScalesByDPI(t *testing.T) {
+	fig := NewFigure(800, 600)
+	fig.RC = style.Apply(fig.RC, style.WithDPI(144))
+	ax := fig.AddAxes(unitRect())
+	img := render.NewImageData(image.NewRGBA(image.Rect(0, 0, 10, 6)))
+	boxPos := geom.Pt{X: 0.4, Y: 0.6}
+	align := geom.Pt{X: 0, Y: 1}
+	ax.AnnotationBbox("", 0.1, 0.2, AnnotationBboxOptions{
+		BoxCoords:    Coords(CoordAxes),
+		BoxPosition:  &boxPos,
+		BoxAlignment: &align,
+		Image:        img,
+		ImageZoom:    2,
+		Padding:      0,
+	})
+
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	anchor := ctx.TransformFor(Coords(CoordAxes)).Apply(boxPos)
+
+	r := &textRecordingRenderer{}
+	DrawFigure(fig, r)
+
+	wantDst := geom.Rect{
+		Min: anchor,
+		Max: geom.Pt{X: anchor.X + 40, Y: anchor.Y + 24},
+	}
+	if len(r.imageDsts) != 1 || !approxRect(r.imageDsts[0], wantDst, 1e-9) {
+		t.Fatalf("annotation image dst = %+v, want [%+v]", r.imageDsts, wantDst)
 	}
 }
 
