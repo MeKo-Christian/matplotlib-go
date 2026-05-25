@@ -29,6 +29,7 @@ var interactiveCoverage = []InteractiveCoverageRow{
 	{Topic: "geo", RepresentativeID: "geo_mollweide_axes", WebAgg: true, Gio: true},
 	{Topic: "histogram", RepresentativeID: "hist_basic", WebAgg: true, Gio: true},
 	{Topic: "image", RepresentativeID: "image_heatmap", WebAgg: true, Gio: true},
+	{Topic: "legend", RepresentativeID: "legend_layout_matrix", WebAgg: true, Gio: true},
 	{Topic: "lines", RepresentativeID: "basic_line", WebAgg: true, Gio: true},
 	{Topic: "mathtext", RepresentativeID: "mathtext_basic", WebAgg: true, Gio: true},
 	{Topic: "mesh", RepresentativeID: "mesh_contour_tri", WebAgg: true, Gio: true},

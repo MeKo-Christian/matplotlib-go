@@ -2821,6 +2821,12 @@ Current slice landed:
   HTMLWriter, external encoder families, writer registries, and writer-only
   helpers are documented omissions until a deterministic writer surface is
   chosen.
+- Added explicit public-surface classifications for the high-value backend
+  lifecycle/tool rows: `_pylab_helpers.Gcf`, canvas/manager/event/timer
+  classes, backend registry lookup/registration, and home/back/forward/pan/
+  zoom/save tool classes and registry entries. Remaining backend scope is now
+  centered on lower-value GUI presentation, cursor/status, configure/help/copy,
+  and exact toolkit lifecycle edge behavior.
 Implementation notes:
 
 - Compare against upstream `image.py`, `pyplot.py`, `_pylab_helpers.py`,

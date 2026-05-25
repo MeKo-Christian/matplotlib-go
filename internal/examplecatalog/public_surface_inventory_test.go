@@ -169,6 +169,47 @@ func TestPhase125AnimationSurfaceHasExplicitRows(t *testing.T) {
 	}
 }
 
+func TestPhase125BackendLifecycleAndToolRowsAreExplicit(t *testing.T) {
+	want := []string{
+		"_pylab_helpers.py:class:Gcf",
+		"backend_bases.py:class:Event",
+		"backend_bases.py:class:DrawEvent",
+		"backend_bases.py:class:KeyEvent",
+		"backend_bases.py:class:MouseEvent",
+		"backend_bases.py:class:PickEvent",
+		"backend_bases.py:class:ResizeEvent",
+		"backend_bases.py:class:CloseEvent",
+		"backend_bases.py:class:FigureCanvasBase",
+		"backend_bases.py:class:FigureManagerBase",
+		"backend_bases.py:class:NavigationToolbar2",
+		"backend_bases.py:class:TimerBase",
+		"backend_bases.py:function:get_registered_canvas_class",
+		"backend_bases.py:function:register_backend",
+		"backend_tools.py:class:ToolBase",
+		"backend_tools.py:class:ToolHome",
+		"backend_tools.py:class:ToolBack",
+		"backend_tools.py:class:ToolForward",
+		"backend_tools.py:class:ToolPan",
+		"backend_tools.py:class:ToolZoom",
+		"backend_tools.py:class:SaveFigureBase",
+		"backend_tools.py:registry:tool:home",
+		"backend_tools.py:registry:tool:back",
+		"backend_tools.py:registry:tool:forward",
+		"backend_tools.py:registry:tool:pan",
+		"backend_tools.py:registry:tool:zoom",
+		"backend_tools.py:registry:tool:save",
+	}
+	for _, upstreamID := range want {
+		row, ok := LookupPublicSurfaceParityByUpstreamID(upstreamID)
+		if !ok {
+			t.Fatalf("missing explicit Phase 12.5 backend/tool classification for %q", upstreamID)
+		}
+		if row.Status == PublicSurfaceNotStarted {
+			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", upstreamID, row.Status)
+		}
+	}
+}
+
 func TestPublicSurfaceParityRowsCoverCommittedInventory(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	rows := PublicSurfaceParityRowsForSurface(artifact.Rows)
