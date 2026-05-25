@@ -308,12 +308,6 @@ func (s ConnectionStyle) connect(posA, posB geom.Pt, shrinkA, shrinkB float64) g
 }
 
 func connectionArc3Path(posA, posB geom.Pt, rad float64) geom.Path {
-	if rad == 0 {
-		path := geom.Path{}
-		path.MoveTo(posA)
-		path.LineTo(posB)
-		return path
-	}
 	mid := geom.Pt{X: (posA.X + posB.X) / 2, Y: (posA.Y + posB.Y) / 2}
 	dx, dy := posB.X-posA.X, posB.Y-posA.Y
 	ctrl := geom.Pt{X: mid.X + rad*dy, Y: mid.Y - rad*dx}

@@ -442,6 +442,26 @@ func TestArrowAndConnectionStyleRegistriesParseMatplotlibNames(t *testing.T) {
 	}
 }
 
+func TestConnectionStyleArc3ZeroRadKeepsQuadraticPath(t *testing.T) {
+	style, ok := ConnectionStyleFromString("arc3")
+	if !ok {
+		t.Fatal("ConnectionStyleFromString(arc3) returned !ok")
+	}
+	path := style.connect(geom.Pt{X: 0, Y: 0}, geom.Pt{X: 100, Y: 0}, 0, 0)
+	if len(path.C) != 2 || path.C[0] != geom.MoveTo || path.C[1] != geom.QuadTo {
+		t.Fatalf("arc3 zero-rad commands = %+v, want MoveTo/QuadTo", path.C)
+	}
+	want := []geom.Pt{{X: 0, Y: 0}, {X: 50, Y: 0}, {X: 100, Y: 0}}
+	if len(path.V) != len(want) {
+		t.Fatalf("arc3 zero-rad vertices = %+v, want %+v", path.V, want)
+	}
+	for i := range want {
+		if !approxPt(path.V[i], want[i], 1e-9) {
+			t.Fatalf("arc3 zero-rad vertex[%d] = %+v, want %+v", i, path.V[i], want[i])
+		}
+	}
+}
+
 func TestConnectionStyleArcUsesMatplotlibDefaultAngles(t *testing.T) {
 	style, ok := ConnectionStyleFromString("arc,armA=10,armB=5")
 	if !ok {
@@ -814,8 +834,8 @@ func TestFancyArrowPatchDefaultShrinkMatchesMatplotlib(t *testing.T) {
 	ctx := createTestDrawContext()
 	ctx.RC.DPI = 144
 	path := patch.displayPath(ctx)
-	if len(path.V) != 2 {
-		t.Fatalf("default arc3 path vertices = %d, want 2: %+v", len(path.V), path.V)
+	if len(path.C) != 2 || path.C[0] != geom.MoveTo || path.C[1] != geom.QuadTo || len(path.V) != 3 {
+		t.Fatalf("default arc3 path = commands %+v vertices %+v, want quadratic path", path.C, path.V)
 	}
 
 	start := ctx.TransformFor(Coords(CoordAxes)).Apply(patch.PosA)
@@ -824,8 +844,11 @@ func TestFancyArrowPatchDefaultShrinkMatchesMatplotlib(t *testing.T) {
 	if !approx(path.V[0].X, start.X+shrink, 1e-9) || !approx(path.V[0].Y, start.Y, 1e-9) {
 		t.Fatalf("default-shrunk start = %+v, want %+v", path.V[0], geom.Pt{X: start.X + shrink, Y: start.Y})
 	}
-	if !approx(path.V[1].X, end.X-shrink, 1e-9) || !approx(path.V[1].Y, end.Y, 1e-9) {
-		t.Fatalf("default-shrunk end = %+v, want %+v", path.V[1], geom.Pt{X: end.X - shrink, Y: end.Y})
+	if !approx(path.V[1].X, (start.X+end.X)/2, 1e-9) || !approx(path.V[1].Y, start.Y, 1e-9) {
+		t.Fatalf("default arc3 control = %+v, want midpoint", path.V[1])
+	}
+	if !approx(path.V[2].X, end.X-shrink, 1e-9) || !approx(path.V[2].Y, end.Y, 1e-9) {
+		t.Fatalf("default-shrunk end = %+v, want %+v", path.V[2], geom.Pt{X: end.X - shrink, Y: end.Y})
 	}
 }
 
@@ -846,8 +869,8 @@ func TestConnectionPatchShrinkUsesPointUnits(t *testing.T) {
 	ctx.RC.DPI = 144
 
 	path := patch.connectionDisplayPath(ctx)
-	if len(path.V) != 2 {
-		t.Fatalf("connection path vertices = %d, want 2: %+v", len(path.V), path.V)
+	if len(path.C) != 2 || path.C[0] != geom.MoveTo || path.C[1] != geom.QuadTo || len(path.V) != 3 {
+		t.Fatalf("connection path = commands %+v vertices %+v, want quadratic path", path.C, path.V)
 	}
 	start := ctx.TransformFor(Coords(CoordAxes)).Apply(patch.XYA)
 	end := ctx.TransformFor(Coords(CoordAxes)).Apply(patch.XYB)
@@ -856,8 +879,8 @@ func TestConnectionPatchShrinkUsesPointUnits(t *testing.T) {
 	if !approx(path.V[0].X, start.X+shrinkA, 1e-9) || !approx(path.V[0].Y, start.Y, 1e-9) {
 		t.Fatalf("connection start = %+v, want %+v", path.V[0], geom.Pt{X: start.X + shrinkA, Y: start.Y})
 	}
-	if !approx(path.V[1].X, end.X-shrinkB, 1e-9) || !approx(path.V[1].Y, end.Y, 1e-9) {
-		t.Fatalf("connection end = %+v, want %+v", path.V[1], geom.Pt{X: end.X - shrinkB, Y: end.Y})
+	if !approx(path.V[2].X, end.X-shrinkB, 1e-9) || !approx(path.V[2].Y, end.Y, 1e-9) {
+		t.Fatalf("connection end = %+v, want %+v", path.V[2], geom.Pt{X: end.X - shrinkB, Y: end.Y})
 	}
 }
 
@@ -887,14 +910,14 @@ func TestConnectionPatchResolvesIndependentCoordinateSpaces(t *testing.T) {
 	got := r.pathCalls[0].path
 	wantA := ctx.TransformFor(Coords(CoordData)).Apply(patch.XYA)
 	wantB := ctx.TransformFor(Coords(CoordAxes)).Apply(patch.XYB)
-	if len(got.V) != 2 {
-		t.Fatalf("expected straight arc3 path vertices, got %d: %+v", len(got.V), got.V)
+	if len(got.C) != 2 || got.C[0] != geom.MoveTo || got.C[1] != geom.QuadTo || len(got.V) != 3 {
+		t.Fatalf("expected straight quadratic arc3 path, got commands %+v vertices %+v", got.C, got.V)
 	}
 	if !approx(got.V[0].X, wantA.X, 1e-9) || !approx(got.V[0].Y, wantA.Y, 1e-9) {
 		t.Fatalf("connection start = %+v, want %+v", got.V[0], wantA)
 	}
-	if !approx(got.V[1].X, wantB.X, 1e-9) || !approx(got.V[1].Y, wantB.Y, 1e-9) {
-		t.Fatalf("connection end = %+v, want %+v", got.V[1], wantB)
+	if !approx(got.V[2].X, wantB.X, 1e-9) || !approx(got.V[2].Y, wantB.Y, 1e-9) {
+		t.Fatalf("connection end = %+v, want %+v", got.V[2], wantB)
 	}
 }
 

@@ -2235,6 +2235,11 @@ Current slice landed:
 - Renderer-neutral patch tests cover DPI-correct default FancyArrowPatch
   endpoint shrinking, explicit ConnectionPatch shrink values, and
   independent-coordinate ConnectionPatch endpoints.
+- `ConnectionStyle("arc3", rad=0)` now preserves Matplotlib's quadratic
+  Bezier path form, with the control point on the midpoint instead of
+  collapsing to a line segment.
+- Renderer-neutral patch tests cover zero-rad Arc3 command structure and
+  default FancyArrowPatch shrink on the quadratic path.
 - `FancyArrowPatch` and `ConnectionPatch` draw paths now use Matplotlib's
   default round cap / round join styling when no explicit patch cap/join style
   is set.
