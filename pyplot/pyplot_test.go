@@ -1,6 +1,8 @@
 package pyplot
 
 import (
+	"image"
+	"image/color"
 	"math"
 	"os"
 	"path/filepath"
@@ -713,6 +715,33 @@ func TestColorbarUsesCurrentAxesAndFigure(t *testing.T) {
 	}
 	if cb.YLabel != "Intensity" {
 		t.Fatalf("colorbar label = %q, want %q", cb.YLabel, "Intensity")
+	}
+}
+
+func TestImageIOWrappersDelegateToCoreHelpers(t *testing.T) {
+	resetForTests()
+
+	src := image.NewRGBA(image.Rect(0, 0, 2, 1))
+	src.SetRGBA(0, 0, color.RGBA{R: 0x20, G: 0x40, B: 0x60, A: 0xff})
+	src.SetRGBA(1, 0, color.RGBA{R: 0x80, G: 0xa0, B: 0xc0, A: 0xff})
+
+	path := filepath.Join(t.TempDir(), "pyplot-image.png")
+	if err := ImSave(path, render.NewImageData(src)); err != nil {
+		t.Fatalf("ImSave() error = %v", err)
+	}
+
+	got, err := ImRead(path)
+	if err != nil {
+		t.Fatalf("ImRead() error = %v", err)
+	}
+	if got == nil || got.RGBA() == nil {
+		t.Fatal("ImRead() returned nil image data")
+	}
+	if bounds := got.RGBA().Bounds(); bounds.Dx() != 2 || bounds.Dy() != 1 {
+		t.Fatalf("read bounds = %v, want 2x1", bounds)
+	}
+	if px := got.RGBA().RGBAAt(1, 0); px.R != 0x80 || px.G != 0xa0 || px.B != 0xc0 || px.A != 0xff {
+		t.Fatalf("read pixel = %#v, want source pixel", px)
 	}
 }
 

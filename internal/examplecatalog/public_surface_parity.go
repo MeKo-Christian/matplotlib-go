@@ -936,6 +936,22 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Note:              "Stateful pyplot ECDF delegates empirical cumulative distribution line creation to the current axes. Remaining partial scope is Matplotlib's complementary/orientation overloads and kwargs alias breadth.",
 	},
 	{
+		ID:                "pyplot-imread",
+		UpstreamID:        "pyplot.py:function:imread",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "core/image_io.go"},
+		Note:              "Stateful pyplot ImRead delegates to core image decoding and returns renderer-facing RGBA data. Remaining partial scope is Matplotlib's URL/file-like input handling, PIL passthrough behavior, and float-array dtype conversions.",
+	},
+	{
+		ID:                "pyplot-imsave",
+		UpstreamID:        "pyplot.py:function:imsave",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "core/image_io.go"},
+		Note:              "Stateful pyplot ImSave delegates to core PNG output for RGBA-backed renderer images with explicit unsupported-format errors. Remaining partial scope is Matplotlib's array-to-image normalization, metadata, cmap/norm, and multi-format writer behavior.",
+	},
+	{
 		ID:                "pyplot-imshow",
 		UpstreamID:        "pyplot.py:function:imshow",
 		FeatureCoverageID: "pyplot-state",

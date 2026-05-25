@@ -706,6 +706,16 @@ func Stem(x, y []float64, opts ...core.StemOptions) *core.StemContainer {
 	return GCA().Stem(x, y, opts...)
 }
 
+// ImRead decodes an image file into renderer-facing image data.
+func ImRead(path string) (*render.ImageData, error) {
+	return core.ImRead(path)
+}
+
+// ImSave writes image data to disk through the core image IO helper.
+func ImSave(path string, img render.Image) error {
+	return core.ImSave(path, img)
+}
+
 // Image delegates to the current axes.
 func Image(data [][]float64, opts ...core.ImageOptions) *core.Image2D {
 	return GCA().Image(data, opts...)

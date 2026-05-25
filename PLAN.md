@@ -2859,6 +2859,9 @@ Current slice landed:
   `Stairs`, `BrokenBarH`, `BarLabel`, `BoxPlot`, `StackPlot`, `ECDF`,
   `AutoScale`, `FigText`, `TightLayout`, `TwinX`, and `TwinY`, with focused
   stateful delegation tests and public-surface rows.
+- Added pyplot `ImRead` / `ImSave` wrappers over the core image IO helpers,
+  with a focused PNG round-trip delegation test and explicit public-surface
+  rows for `pyplot.imread` / `pyplot.imsave`.
 - Added core `ImRead` / `ImSave` image IO helpers for Go-supported file
   decoding and PNG `render.RGBAImage` output, including straight-alpha PNG
   round-trip tests and explicit unsupported-input errors.
