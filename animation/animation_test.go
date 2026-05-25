@@ -376,6 +376,55 @@ func (l failingStartEventLoop) NewTimer(time.Duration, func() error) canvas.Time
 	return failingStartTimer{err: l.err}
 }
 
+type sequenceStartTimer struct {
+	recordingTimer
+	err error
+}
+
+func (t *sequenceStartTimer) Start() error {
+	if t.err != nil {
+		return t.err
+	}
+	return t.recordingTimer.Start()
+}
+
+type sequenceStartEventLoop struct {
+	mu     sync.Mutex
+	timers []*sequenceStartTimer
+	errs   []error
+}
+
+func (l *sequenceStartEventLoop) CallSoon(cb func() error) error {
+	if cb == nil {
+		return nil
+	}
+	return cb()
+}
+
+func (l *sequenceStartEventLoop) NewTimer(interval time.Duration, callback func() error) canvas.Timer {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	var err error
+	if len(l.errs) > len(l.timers) {
+		err = l.errs[len(l.timers)]
+	}
+	t := &sequenceStartTimer{
+		recordingTimer: recordingTimer{cb: callback, interval: interval},
+		err:            err,
+	}
+	l.timers = append(l.timers, t)
+	return t
+}
+
+func (l *sequenceStartEventLoop) timer(index int) *sequenceStartTimer {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if index < 0 || index >= len(l.timers) {
+		return nil
+	}
+	return l.timers[index]
+}
+
 func TestStartStopUsesEventLoopTimer(t *testing.T) {
 	cnv := newFakeCanvas()
 	loop := &recordingEventLoop{}
@@ -523,6 +572,50 @@ func TestStopDuringRepeatDelayLetsRestartDrawImmediately(t *testing.T) {
 	}
 	if cnv.drawCount != 2 {
 		t.Fatalf("draw count after restart tick = %d, want immediate draw 2", cnv.drawCount)
+	}
+}
+
+func TestRepeatDelayRestartFailureStopsAnimation(t *testing.T) {
+	cnv := newFakeCanvas()
+	restartErr := errors.New("restart failed")
+	loop := &sequenceStartEventLoop{
+		errs: []error{nil, nil, restartErr},
+	}
+	anim, err := NewFuncAnimation(Config{
+		Canvas:      cnv,
+		Frames:      1,
+		Repeat:      true,
+		RepeatDelay: 250 * time.Millisecond,
+		EventLoop:   loop,
+	}, func(int) ([]core.Artist, error) { return nil, nil }, nil)
+	if err != nil {
+		t.Fatalf("NewFuncAnimation: %v", err)
+	}
+	if err := anim.Start(); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	intervalTimer := loop.timer(0)
+	if intervalTimer == nil {
+		t.Fatal("missing initial interval timer")
+	}
+	if err := intervalTimer.fire(); err != nil {
+		t.Fatalf("first tick: %v", err)
+	}
+	if err := intervalTimer.fire(); err != nil {
+		t.Fatalf("repeat-delay scheduling tick: %v", err)
+	}
+	delayTimer := loop.timer(1)
+	if delayTimer == nil {
+		t.Fatal("missing repeat-delay timer")
+	}
+	if err := delayTimer.fire(); !errors.Is(err, restartErr) {
+		t.Fatalf("delay timer fire error = %v, want %v", err, restartErr)
+	}
+	if anim.Running() {
+		t.Fatal("animation should stop after interval restart failure")
+	}
+	if err := anim.Stop(); err != nil {
+		t.Fatalf("Stop after restart failure: %v", err)
 	}
 }
 

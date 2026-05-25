@@ -2926,6 +2926,8 @@ Current slice landed:
   running or holding a stale timer.
 - Tightened `Animation.Stop` during repeat-delay windows so a later `Start`
   resumes with an immediate frame tick instead of inheriting a stale skip.
+- Tightened repeat-delay timer rescheduling so a failure to restart the regular
+  interval timer propagates and clears the running/stale-timer state.
 - Fixed `ButtonOptions.Disabled` propagation so constructor-specified disabled
   state participates in the same interaction/picking behavior as runtime
   `Button.Enabled=false`.

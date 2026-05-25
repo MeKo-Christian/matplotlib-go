@@ -349,7 +349,18 @@ func (a *Animation) rescheduleAfterRepeatDelay(delay time.Duration) error {
 		a.mu.Lock()
 		a.timer = next
 		a.mu.Unlock()
-		return next.Start()
+		if err := next.Start(); err != nil {
+			a.mu.Lock()
+			if a.timer == next {
+				a.timer = nil
+				a.running = false
+				a.awaitingRepeat = false
+			}
+			a.mu.Unlock()
+			_ = next.Stop()
+			return err
+		}
+		return nil
 	})
 
 	a.mu.Lock()
