@@ -39,6 +39,7 @@ imshow_clipped
 imshow_transformed
 imshow_bilinear
 imshow_bicubic
+imshow_interpolation_matrix
 image_alpha
 matshow_basic
 spy_marker

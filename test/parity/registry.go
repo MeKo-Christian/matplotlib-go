@@ -90,6 +90,7 @@ import (
 	example_imshow_bicubic "github.com/cwbudde/matplotlib-go/test/parity/imshow_bicubic"
 	example_imshow_bilinear "github.com/cwbudde/matplotlib-go/test/parity/imshow_bilinear"
 	example_imshow_clipped "github.com/cwbudde/matplotlib-go/test/parity/imshow_clipped"
+	example_imshow_interpolation_matrix "github.com/cwbudde/matplotlib-go/test/parity/imshow_interpolation_matrix"
 	example_imshow_transformed "github.com/cwbudde/matplotlib-go/test/parity/imshow_transformed"
 	example_joins_caps "github.com/cwbudde/matplotlib-go/test/parity/joins_caps"
 	example_large_scatter "github.com/cwbudde/matplotlib-go/test/parity/large_scatter"
@@ -215,6 +216,7 @@ var renderByID = map[string]func() image.Image{
 	"imshow_transformed":                 example_imshow_transformed.Render,
 	"imshow_bilinear":                    example_imshow_bilinear.Render,
 	"imshow_bicubic":                     example_imshow_bicubic.Render,
+	"imshow_interpolation_matrix":        example_imshow_interpolation_matrix.Render,
 	"image_alpha":                        example_image_alpha.Render,
 	"matshow_basic":                      example_matshow_basic.Render,
 	"spy_marker":                         example_spy_marker.Render,
@@ -387,6 +389,7 @@ var figureByID = map[string]func() *core.Figure{
 	"unstructured_showcase":              showcase_unstructured_showcase.Plot,
 	"imshow_clipped":                     example_imshow_clipped.Plot,
 	"imshow_transformed":                 example_imshow_transformed.Plot,
+	"imshow_interpolation_matrix":        example_imshow_interpolation_matrix.Plot,
 }
 
 // Cases returns the canonical parity examples in catalog order.

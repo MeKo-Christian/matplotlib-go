@@ -107,6 +107,7 @@ var cases = []Case{
 	{ID: "imshow_transformed", Topic: "image", Title: "Transformed Imshow", FixtureOnly: true, Width: 420, Height: 420, MinPSNR: 24.0, MaxMeanAbs: 18.0, MaxRMSE: 30.0},
 	{ID: "imshow_bilinear", Topic: "image", Title: "Bilinear Imshow", FixtureOnly: true, Width: 256, Height: 256, MinPSNR: 30.0, MaxMeanAbs: 16.0},
 	{ID: "imshow_bicubic", Topic: "image", Title: "Bicubic Imshow", FixtureOnly: true, Width: 256, Height: 256, MinPSNR: 30.0, MaxMeanAbs: 16.0},
+	{ID: "imshow_interpolation_matrix", Topic: "image", Title: "Imshow Interpolation Matrix", FixtureOnly: true, Width: 800, Height: 480, MinPSNR: 22.0, MaxMeanAbs: 24.0, MaxRMSE: 40.0},
 	{ID: "image_alpha", Topic: "image", Title: "Image Alpha", FixtureOnly: true, MinPSNR: 30.0, MaxMeanAbs: 16.0, MaxRMSE: 10.0},
 	{ID: "matshow_basic", Topic: "image", Title: "Matshow", FixtureOnly: true, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 10.0},
 	{ID: "spy_marker", Topic: "image", Title: "Spy Marker Mode", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 12.0},

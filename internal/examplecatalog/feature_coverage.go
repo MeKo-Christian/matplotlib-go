@@ -194,7 +194,7 @@ var featureCoverageRows = []FeatureCoverage{
 		UpstreamModules:         []string{"image.py"},
 		UpstreamGalleryFamilies: []string{"images_contours_and_fields"},
 		GoFiles:                 []string{"core/image.go", "core/image_api.go", "core/matrix_helpers.go"},
-		CatalogIDs:              []string{"image_heatmap", "imshow_clipped", "imshow_transformed", "imshow_bilinear", "imshow_bicubic", "image_alpha", "matshow_basic", "spy_marker", "spy_image", "arrays_showcase"},
+		CatalogIDs:              []string{"image_heatmap", "imshow_clipped", "imshow_transformed", "imshow_bilinear", "imshow_bicubic", "imshow_interpolation_matrix", "image_alpha", "matshow_basic", "spy_marker", "spy_image", "arrays_showcase"},
 		ExampleIDs:              []string{"image_heatmap", "arrays_showcase"},
 		WebDemoIDs:              []string{"matrix"},
 		GoEquivalent:            CoverageImplemented,

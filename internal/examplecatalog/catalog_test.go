@@ -167,6 +167,22 @@ func TestCatalogIncludesPhase124TextAnnotationFixture(t *testing.T) {
 	}
 }
 
+func TestCatalogIncludesPhase125InterpolationMatrixFixture(t *testing.T) {
+	c, ok := Lookup("imshow_interpolation_matrix")
+	if !ok {
+		t.Fatal("missing Phase 12.5 focused interpolation matrix parity catalog case")
+	}
+	if c.Topic != "image" {
+		t.Fatalf("imshow_interpolation_matrix topic = %q, want image", c.Topic)
+	}
+	if !c.FixtureOnly {
+		t.Fatal("imshow_interpolation_matrix should be fixture-only, not a gallery showcase")
+	}
+	if c.Width < 600 || c.Height < 300 {
+		t.Fatalf("imshow_interpolation_matrix dimensions = %dx%d, want compact gallery coverage", c.Width, c.Height)
+	}
+}
+
 func TestCatalogSplitsAGGNativeParityFixtures(t *testing.T) {
 	want := map[string][]string{
 		"large_scatter":     {"pathcollectionbatch"},

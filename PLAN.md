@@ -2662,7 +2662,7 @@ convenience layers over the core model.
 - [ ] Convert every unsupported image class/helper into either a typed Go
       equivalent, a clear runtime error, or a Phase 11 intentional omission
       with migration guidance.
-- [ ] Lock interpolation coverage for `nearest`, `none`, `bilinear`,
+- [x] Lock interpolation coverage for `nearest`, `none`, `bilinear`,
       `bicubic`, `hanning`, `hamming`, `lanczos`, `spline16`, `spline36`,
       `kaiser`, `quadric`, `catrom`, `gaussian`, `bessel`, `mitchell`, `sinc`,
       `blackman`, `hermite`, `antialiased`, and `auto` with parser tests,
@@ -2787,6 +2787,13 @@ Current slice landed:
   `AxVSpan` wrappers for the existing core reference-line/span helpers, with a
   focused delegation test covering returned core artists and current-axes
   ownership.
+- Added `imshow_interpolation_matrix` as the focused Phase 12.5 image fixture:
+  the AGG parser and render tests enumerate every Matplotlib interpolation
+  registry name, and committed Go / Matplotlib PNGs make the full resampling
+  matrix visually inspectable. The local Matplotlib reference script falls back
+  from `auto` to `antialiased` only when the installed Matplotlib predates the
+  vendored upstream `auto` registry name; Go behavior remains tested against
+  the vendored upstream list.
 Implementation notes:
 
 - Compare against upstream `image.py`, `pyplot.py`, `_pylab_helpers.py`,

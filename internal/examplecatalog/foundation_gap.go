@@ -275,7 +275,8 @@ var foundationAPIGaps = []FoundationAPIGap{
 		UpstreamModules: []string{"image.py"},
 		GoFiles:         []string{"core/image.go", "core/image_api.go", "core/matrix_helpers.go", "backends/agg/interpolation.go"},
 		CurrentEquivalent: "Go supports scalar matrix images, imshow-style options, matshow, spy, alpha, " +
-			"origin / extent, interpolation modes, and transformed images.",
+			"origin / extent, the full Matplotlib interpolation registry in AGG, a focused " +
+			"interpolation matrix fixture, and transformed images.",
 		Gap: "FigureImage, BboxImage, NonUniformImage, PcolorImage, pcolorfast, and the full " +
 			"Matplotlib interpolation / antialias policy are not fully represented.",
 		Decision: GapDecisionImplement,

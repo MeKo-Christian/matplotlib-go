@@ -112,6 +112,23 @@ func TestAggImage_AutoInterpolationUsesHanningForNonIntegerScale(t *testing.T) {
 	}
 }
 
+func TestAggImage_AllMatplotlibInterpolationNamesRender(t *testing.T) {
+	names := []string{
+		"nearest", "none", "bilinear", "bicubic", "hanning",
+		"hamming", "lanczos", "spline16", "spline36", "kaiser",
+		"quadric", "catrom", "gaussian", "bessel", "mitchell",
+		"sinc", "blackman", "hermite", "antialiased", "auto",
+	}
+	for _, name := range names {
+		t.Run(name, func(t *testing.T) {
+			pngData := renderUpscaledImage(t, name, 17, 19)
+			if _, err := png.Decode(bytes.NewReader(pngData)); err != nil {
+				t.Fatalf("decode rendered PNG for %q: %v", name, err)
+			}
+		})
+	}
+}
+
 func TestAggImageExactSizeDrawPreservesBottomAndRightEdges(t *testing.T) {
 	r, err := New(12, 12, render.Color{R: 1, G: 1, B: 1, A: 1})
 	if err != nil {
