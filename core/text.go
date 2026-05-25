@@ -463,9 +463,15 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 			if rotated, ok := r.(render.RotatedTextDrawer); ok {
 				angle := t.Angle * math.Pi / 180
 				rotAnchor := textRotationAnchor(origin, layouts[i], lineAlign, textLayoutVAlignBaseline, angle, t.RotationMode)
+				if len(t.PathEffects) > 0 && drawTextPathEffects(r, line, origin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
+					continue
+				}
 				drawDisplayTextRotatedParseMath(rotated, line, rotAnchor, fontSize, angle, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 				continue
 			}
+		}
+		if len(t.PathEffects) > 0 && drawTextPathEffects(r, line, origin, origin, fontSize, 0, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
+			continue
 		}
 		drawDisplayTextParseMath(textRen, line, origin, fontSize, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 	}

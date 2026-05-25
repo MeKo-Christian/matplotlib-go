@@ -2362,6 +2362,11 @@ Current slice landed:
   already aligned text block.
 - Renderer-neutral text tests cover left-aligned line placement inside a
   right-aligned multiline block.
+- Multiline text now routes per-line glyph paths through `PathEffects` before
+  falling back to normal text draws, matching the single-line text path-effect
+  behavior.
+- Renderer-neutral text tests cover path-effect glyph-path routing for
+  multiline text.
 - Text bbox patches now rotate with rotated text around the same renderer
   anchor as the text draw call instead of remaining axis-aligned; multiline
   text block bboxes follow the rotated text path instead of staying axis-aligned.

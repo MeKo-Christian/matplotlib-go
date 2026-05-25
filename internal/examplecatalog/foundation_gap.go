@@ -191,11 +191,11 @@ var foundationAPIGaps = []FoundationAPIGap{
 			"text paths, MathText, TeX paths, per-text font routing, and renderer font resolution. " +
 			"Text and annotation drawing use shared artist-alpha metadata for visible text and arrow colors. " +
 			"TextOptions.WrapWidth provides explicit display-pixel word wrapping, TextOptions.Wrap computes Matplotlib-style figure-box wrap widths, TextOptions.MultiAlignment separates per-line multiline alignment from block anchoring, and multiline text routes angle-aware draws through rotated renderer capabilities. " +
-			"TextOptions.RotationMode supports Matplotlib-style anchor, xtick, and ytick rotation modes, and text bbox patches, including multiline block bboxes, rotate with rotated text. " +
+			"Multiline text also routes glyph paths through path effects. TextOptions.RotationMode supports Matplotlib-style anchor, xtick, and ytick rotation modes, and text bbox patches, including multiline block bboxes, rotate with rotated text. " +
 			"The text_annotation_matrix fixture gives focused coverage for multiline text, rotated " +
 			"text, text bbox output, and structured font requests.",
 		Gap: "Remaining text layout scope is exact bounding-box / baseline edge behavior, " +
-			"and text path effect / rasterization interactions where visible " +
+			"and text rasterization interactions where visible " +
 			"fixtures still show residuals.",
 		Decision: GapDecisionImplement,
 		Rationale: "Text and legend behavior is heavily visible in parity images and migration examples; " +

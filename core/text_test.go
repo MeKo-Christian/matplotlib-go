@@ -1780,6 +1780,35 @@ func TestMultilineTextSplitsDrawsAndUsesBlockBBox(t *testing.T) {
 	}
 }
 
+func TestMultilineTextPathEffectsUseGlyphPaths(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 1},
+		Content:  "top\nbottom",
+		FontSize: 10,
+		ClipOn:   true,
+		PathEffects: []render.PathEffect{
+			render.StrokePathEffect(render.Color{R: 1, A: 1}, 2, geom.Pt{}),
+			render.NormalPathEffect(),
+		},
+	}
+	r := &textRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.texts) != 0 {
+		t.Fatalf("path-effect multiline text should draw glyph paths, got text draws %v", r.texts)
+	}
+	if len(r.pathPaints) < 2 {
+		t.Fatalf("expected one effect-painted glyph path per line, got %d path paints", len(r.pathPaints))
+	}
+	for i, paint := range r.pathPaints {
+		if len(paint.PathEffects) != 2 {
+			t.Fatalf("path paint %d effects = %+v, want stroke + normal effects", i, paint.PathEffects)
+		}
+	}
+}
+
 func TestRotatedMultilineTextBBoxRotatesWithText(t *testing.T) {
 	ctx := createTestDrawContext()
 	text := &Text{
