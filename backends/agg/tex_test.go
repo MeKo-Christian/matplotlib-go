@@ -137,7 +137,9 @@ cp "$FAKE_TEX_PNG" "$out"
 	if !r.DrawTeX(`x`, geom.Pt{X: 8, Y: 10}, 12, render.Color{R: 1, A: 1}, "DejaVu Sans") {
 		t.Fatal("DrawTeX returned false")
 	}
-	got := r.GetImage().RGBAAt(8, 8)
+	// Display space is y-up: baseline display y=10 maps to device y=H-10=14, so
+	// the 2x2 image ascends into device rows 12-13.
+	got := r.GetImage().RGBAAt(8, 12)
 	if got.R < 200 || got.G != 0 || got.B != 0 || got.A < 200 {
 		t.Fatalf("DrawTeX pixel = %+v, want opaque red text image", got)
 	}
@@ -175,7 +177,11 @@ cp "$FAKE_TEX_PNG" "$out"
 		LaTeXCommand:  latex,
 		DVIPNGCommand: dvipng,
 	})
-	r.ClipRect(geom.Rect{Min: geom.Pt{X: 8, Y: 8}, Max: geom.Pt{X: 10, Y: 10}})
+	// Display space is y-up: baseline display y=12 maps to device y=H-12=12, so
+	// the 4x4 image ascends into device rows 8-11 (cols 8-11). The clip rect in
+	// display coords {(8,14)-(10,16)} device-flips to device cols[8,10] rows[8,10],
+	// keeping the image's top-left while masking the right column.
+	r.ClipRect(geom.Rect{Min: geom.Pt{X: 8, Y: 14}, Max: geom.Pt{X: 10, Y: 16}})
 
 	if !r.DrawTeX(`x`, geom.Pt{X: 8, Y: 12}, 12, render.Color{G: 1, A: 0.5}, "DejaVu Sans") {
 		t.Fatal("DrawTeX returned false")

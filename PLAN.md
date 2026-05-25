@@ -1622,24 +1622,26 @@ geometry follows upstream Matplotlib semantics.
 `core/artist.go`, `core/arrow_patch.go`, `core/text.go`, `backends/agg/`, and
 when needed `../agg_go` vs `../agg_2.4`.
 
-- [ ] Define and document the coordinate contract between core display-space
-      geometry and renderer backends.
+- [x] Define and document the coordinate contract between core display-space
+      geometry and renderer backends. (ADR `docs/adr/0003-display-coordinate-contract.md`)
 - [ ] Add renderer-neutral regressions for signed display-space geometry:
       `ConnectionStyle("arc3", rad=...)`, arrow shrink/clip on curves,
       arrow-head normals, rotated-text bbox orientation, annotation arrow start
-      after bbox clipping.
-- [ ] Audit and remove non-source-backed y-sign compensations in core,
-      transforms, and fixtures.
-- [ ] Reconcile `text_annotation_matrix` bbox-arrow behavior against upstream
+      after bbox clipping. (G8, pending)
+- [x] Audit and remove non-source-backed y-sign compensations in core,
+      transforms, and fixtures. (core gradients/colorbar/image/layout/legend/
+      widgets converted; `text_annotation_matrix` `OffsetY` hack removed → 1:1)
+- [x] Reconcile `text_annotation_matrix` bbox-arrow behavior against upstream
       `Annotation.update_positions` and
-      `FancyArrowPatch._get_path_in_displaycoord`.
-- [ ] Validate boundary fixes across `patch_style_matrix`,
-      `annotation_composition`, and `transform_coordinates`.
+      `FancyArrowPatch._get_path_in_displaycoord`. (MeanAbs 1.39, PSNR 45.9 dB)
+- [x] Validate boundary fixes across `patch_style_matrix` (1.15),
+      `annotation_composition` (<0.7), and `transform_coordinates` (<0.7).
 - [ ] If residuals are AGG-port specific, fix `../agg_go` directly instead of
-      compensating in this repository.
-- [ ] Track before/after metrics; immediate target:
+      compensating in this repository. (pending: rotated vertical-label glyph
+      orientation; widgets selector shapes)
+- [x] Track before/after metrics; immediate target:
       `text_annotation_matrix` `RMSE < 10` against Matplotlib reference with
-      1:1 example sources.
+      1:1 example sources. (achieved: PSNR 45.9 dB ≈ RMSE 1.3, was 14.94)
 
 Execution track (kept from former 12.4G):
 
@@ -1647,22 +1649,33 @@ Status: [x] done · [~] in progress · [ ] todo.
 
 - [x] G1 Contract & core pivot.
 - [x] G2 AGG backend owns device flip.
-- [~] G3 Core positioning/text helpers y-up conversion.
-- [ ] G4 AGG parity validation.
-- [ ] G5 Example 1:1 port sweep.
-- [ ] G6 Vector/other backend inversion ownership.
+- [x] G3 Core positioning/text helpers y-up conversion.
+- [~] G4 AGG parity validation. (parity suite validated — only 4 fixtures >2
+      MeanAbs, all classified; AGG backend unit/golden tests still need y-up
+      reconciliation: transformed-image/TeX pixel expectations, path-effect and
+      pattern-gradient backend goldens.)
+- [~] G5 Example 1:1 port sweep. (`text_annotation_matrix`,
+      `pattern_gradient_effects` ported; broader sweep pending.)
+- [ ] G6 Vector/other backend inversion ownership. (pdf/ps/pgf/svg/gobasic
+      backend tests currently pass under y-up — verify output correctness.)
 - [ ] G7 Full-suite regen and revalidation.
 - [ ] G8 Renderer-neutral signed-geometry regression set.
 
+Residual parity offenders (TestMatplotlibRef MeanAbs, 2026-05-25):
+`colorbar_horizontal_ticks` 7.28, `widgets_gallery` 6.41,
+`imshow_interpolation_matrix` 4.31, `pattern_gradient_effects` 3.09. All other
+fixtures <2.0.
+
 Exit criteria:
 
-- [ ] Signed display-space paths/annotations/text bboxes/arrow geometry are
+- [x] Signed display-space paths/annotations/text bboxes/arrow geometry are
       source-backed under the documented coordinate contract.
-- [ ] No `text_annotation_matrix`-specific sign hacks exist in example or core.
-- [ ] `TestMatplotlibRef/text_annotation_matrix` reports `RMSE < 10` without
+- [x] No `text_annotation_matrix`-specific sign hacks exist in example or core.
+- [x] `TestMatplotlibRef/text_annotation_matrix` reports `RMSE < 10` without
       regressions in related fixtures.
-- [ ] Remaining mismatch is classified with evidence as core, renderer
-      boundary, AGG-port, or upstream limitation.
+- [~] Remaining mismatch is classified with evidence as core, renderer
+      boundary, AGG-port, or upstream limitation. (4 residual fixtures listed
+      above; AGG backend golden/unit failures pending classification.)
 
 ---
 

@@ -108,7 +108,9 @@ func TestCopyFromBBoxAndRestoreRegion(t *testing.T) {
 	r.RestoreRegion(region, nil, geom.Pt{})
 	_ = r.End()
 
-	if got := r.GetImage().RGBAAt(20, 20); got != (color.RGBA{R: 255, G: 0, B: 0, A: 255}) {
+	// Display space is y-up: the red rect at display (10,10)-(40,40) occupies
+	// device rows 40-70 (H-y), and the captured region restores there.
+	if got := r.GetImage().RGBAAt(20, 55); got != (color.RGBA{R: 255, G: 0, B: 0, A: 255}) {
 		t.Fatalf("expected restored center pixel to be red, got %+v", got)
 	}
 	if got := r.GetImage().RGBAAt(5, 5); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
@@ -142,7 +144,10 @@ func TestRestoreRegionWithBBoxAndOffset(t *testing.T) {
 	}, geom.Pt{X: 20, Y: 20})
 	_ = r.End()
 
-	if got := r.GetImage().RGBAAt(35, 35); got != (color.RGBA{R: 255, G: 0, B: 0, A: 255}) {
+	// Display space is y-up: the captured region sits at device rows 60-80, and
+	// the cropped top-left 10x10 restored at device offset (20,20) lands at
+	// device cols 30-40, rows 80-90.
+	if got := r.GetImage().RGBAAt(35, 85); got != (color.RGBA{R: 255, G: 0, B: 0, A: 255}) {
 		t.Fatalf("expected partial restored pixel to be red, got %+v", got)
 	}
 	if got := r.GetImage().RGBAAt(5, 5); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
@@ -178,7 +183,10 @@ func TestFilterStackStartStop(t *testing.T) {
 	})
 	_ = r.End()
 
-	if got := r.GetImage().RGBAAt(15, 15); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
+	// Display space is y-up: the filtered rect at display (0,0)-(30,30) occupies
+	// device rows 30-60, composited back at device offset (5,5) -> cols 5-35,
+	// rows 35-60.
+	if got := r.GetImage().RGBAAt(15, 45); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
 		t.Fatalf("expected filtered-stop pixel to be blue, got %+v", got)
 	}
 	if got := r.GetImage().RGBAAt(2, 2); got != (color.RGBA{R: 0, G: 255, B: 0, A: 255}) {
@@ -931,7 +939,9 @@ func TestDrawGouraudTrianglesInterpolatesVertexColors(t *testing.T) {
 		t.Fatalf("End failed: %v", err)
 	}
 
-	got := r.GetImage().RGBAAt(10, 10)
+	// Display space is y-up: the triangle's red vertex at display (5,5) maps to
+	// device (5,55), so sample near it in device space (display (10,10)).
+	got := r.GetImage().RGBAAt(10, 50)
 	if got == (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
 		t.Fatal("triangle sample remained background white")
 	}

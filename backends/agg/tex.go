@@ -35,7 +35,10 @@ func (r *Renderer) DrawTeX(text string, origin geom.Pt, size float64, textColor 
 	if !ok || result.Image == nil {
 		return false
 	}
-	r.drawTeXImage(result, geom.Pt{X: origin.X, Y: origin.Y - result.Metrics.Ascent}, textColor)
+	// Display space is y-up: the baseline sits at origin.Y, ascent extends up
+	// (+Y) and descent down (-Y). The rect's bottom edge (Min.Y) is therefore
+	// origin.Y - Descent; drawTeXImage extends up by the image height to the top.
+	r.drawTeXImage(result, geom.Pt{X: origin.X, Y: origin.Y - result.Metrics.Descent}, textColor)
 	return true
 }
 

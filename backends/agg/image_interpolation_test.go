@@ -378,9 +378,13 @@ func TestAggTransformedImagePreservesSourceOrientation(t *testing.T) {
 	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 20, Y: 20}}); err != nil {
 		t.Fatalf("Begin: %v", err)
 	}
+	// Display space is y-up: an upright placement maps image row 0 to the top
+	// edge (display Max.Y), so the affine uses D=-sy with F=dst height. This
+	// mirrors the matrix core.imageTransform builds for axis-aligned images.
 	r.ImageTransformed(data, geom.Rect{Max: geom.Pt{X: 20, Y: 20}}, geom.Affine{
 		A: 10,
-		D: 10,
+		D: -10,
+		F: 20,
 	})
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)
@@ -437,11 +441,14 @@ func TestAggTransformedImageRespectsClipPathAndAlpha(t *testing.T) {
 	}
 
 	img := r.GetImage()
-	inside := img.RGBAAt(4, 4)
+	// Display space is y-up: the clip triangle (0,0)->(20,0)->(0,20) device-flips
+	// to (0,20),(20,20),(0,0), so the kept region is y>=x. Sample inside (y>x) and
+	// outside (y<x) accordingly.
+	inside := img.RGBAAt(4, 15)
 	if inside.R != 255 || math.Abs(float64(inside.G)-128) > 2 || math.Abs(float64(inside.B)-128) > 2 || inside.A != 255 {
 		t.Fatalf("clipped transformed image inside pixel = %+v, want half-alpha red over white", inside)
 	}
-	outside := img.RGBAAt(17, 17)
+	outside := img.RGBAAt(15, 4)
 	if outside != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
 		t.Fatalf("transformed image escaped clip path: outside pixel = %+v", outside)
 	}
