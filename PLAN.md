@@ -2849,6 +2849,12 @@ Current slice landed:
 - Added pyplot `SubplotsAdjust` over the current figure's managed GridSpec
   subplot margin/spacing adjustment path.
 - Added pyplot `FigLegend` over the current figure-level legend path.
+- Added pyplot `TickLabelFormat` over current-axes `ScalarFormatter` style,
+  scientific-limit, and mathtext controls, with explicit unsupported-axis,
+  unsupported-style, and non-scalar-formatter errors.
+- Documented `pyplot.getp`, `pyplot.setp`, and `pyplot.subplot_tool` as
+  intentional omissions; Go uses typed artist APIs and layout controls instead
+  of dynamic property strings or GUI-only adjustment dialogs.
 - Added core `ImRead` / `ImSave` image IO helpers for Go-supported file
   decoding and PNG `render.RGBAImage` output, including straight-alpha PNG
   round-trip tests and explicit unsupported-input errors.

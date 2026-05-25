@@ -34,6 +34,17 @@ type ShowHandler func(*core.Figure) error
 // ManagerFactory creates a figure manager for pyplot Show/Pause lifecycle calls.
 type ManagerFactory func(*core.Figure) (canvas.FigureManager, error)
 
+// TickLabelFormatOptions configures ScalarFormatter behavior on the current axes.
+//
+// Axis accepts "", "both", "x", or "y". Style accepts "", "sci",
+// "scientific", or "plain". SciLimits and UseMathText only apply when non-nil.
+type TickLabelFormatOptions struct {
+	Axis        string
+	Style       string
+	SciLimits   *[2]int
+	UseMathText *bool
+}
+
 type registryState struct {
 	mu             sync.Mutex
 	current        *core.Figure
@@ -594,6 +605,30 @@ func XTicks(ticks []float64, labels ...[]string) error {
 // YTicks sets fixed y-axis tick locations and optional labels on the current axes.
 func YTicks(ticks []float64, labels ...[]string) error {
 	return setFixedTicks(GCA().YAxis, "y", ticks, labels...)
+}
+
+// TickLabelFormat applies ScalarFormatter options to current axes tick labels.
+func TickLabelFormat(opts TickLabelFormatOptions) error {
+	axes, err := tickLabelFormatAxes(GCA(), opts.Axis)
+	if err != nil {
+		return err
+	}
+	formatters := make([]core.ScalarFormatter, len(axes))
+	for i, target := range axes {
+		formatter, ok := target.axis.Formatter.(core.ScalarFormatter)
+		if !ok {
+			return fmt.Errorf("pyplot: %s-axis formatter is %T, want core.ScalarFormatter", target.name, target.axis.Formatter)
+		}
+		formatter, err = applyTickLabelFormat(formatter, opts)
+		if err != nil {
+			return err
+		}
+		formatters[i] = formatter
+	}
+	for i, target := range axes {
+		target.axis.Formatter = formatters[i]
+	}
+	return nil
 }
 
 // Bar delegates to the current axes.
@@ -1163,6 +1198,47 @@ func gridAxisSides(axisSpec string) ([]core.AxisSide, error) {
 	default:
 		return nil, fmt.Errorf("pyplot: unsupported grid axis %q", axisSpec)
 	}
+}
+
+type tickLabelFormatTarget struct {
+	name string
+	axis *core.Axis
+}
+
+func tickLabelFormatAxes(ax *core.Axes, axisSpec string) ([]tickLabelFormatTarget, error) {
+	switch strings.ToLower(strings.TrimSpace(axisSpec)) {
+	case "", "both":
+		return []tickLabelFormatTarget{
+			{name: "x", axis: ax.XAxis},
+			{name: "y", axis: ax.YAxis},
+		}, nil
+	case "x":
+		return []tickLabelFormatTarget{{name: "x", axis: ax.XAxis}}, nil
+	case "y":
+		return []tickLabelFormatTarget{{name: "y", axis: ax.YAxis}}, nil
+	default:
+		return nil, fmt.Errorf("pyplot: unsupported ticklabel_format axis %q", axisSpec)
+	}
+}
+
+func applyTickLabelFormat(formatter core.ScalarFormatter, opts TickLabelFormatOptions) (core.ScalarFormatter, error) {
+	switch strings.ToLower(strings.TrimSpace(opts.Style)) {
+	case "":
+	case "sci", "scientific":
+		formatter.DisableScientific = false
+	case "plain":
+		formatter.DisableScientific = true
+	default:
+		return formatter, fmt.Errorf("pyplot: unsupported ticklabel_format style %q", opts.Style)
+	}
+	if opts.SciLimits != nil {
+		formatter.UsePowerLimits = true
+		formatter.PowerLimits = *opts.SciLimits
+	}
+	if opts.UseMathText != nil {
+		formatter.UseMathText = *opts.UseMathText
+	}
+	return formatter, nil
 }
 
 func setFixedTicks(axis *core.Axis, name string, ticks []float64, labels ...[]string) error {

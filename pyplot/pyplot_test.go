@@ -512,6 +512,56 @@ func TestTickLocationWrappersDelegateToCurrentAxes(t *testing.T) {
 	}
 }
 
+func TestTickLabelFormatUpdatesCurrentScalarFormatters(t *testing.T) {
+	resetForTests()
+
+	ax := GCA()
+	useMathText := true
+	sciLimits := [2]int{-2, 3}
+	if err := TickLabelFormat(TickLabelFormatOptions{
+		Axis:        "x",
+		Style:       "plain",
+		SciLimits:   &sciLimits,
+		UseMathText: &useMathText,
+	}); err != nil {
+		t.Fatalf("TickLabelFormat(x/plain) error = %v", err)
+	}
+
+	xFmt, ok := ax.XAxis.Formatter.(core.ScalarFormatter)
+	if !ok {
+		t.Fatalf("x formatter = %T, want core.ScalarFormatter", ax.XAxis.Formatter)
+	}
+	if !xFmt.DisableScientific || !xFmt.UseMathText || !xFmt.UsePowerLimits || xFmt.PowerLimits != sciLimits {
+		t.Fatalf("x scalar formatter = %+v, want plain mathtext with limits %+v", xFmt, sciLimits)
+	}
+
+	yFmt, ok := ax.YAxis.Formatter.(core.ScalarFormatter)
+	if !ok {
+		t.Fatalf("y formatter = %T, want core.ScalarFormatter", ax.YAxis.Formatter)
+	}
+	if yFmt.DisableScientific || yFmt.UseMathText || yFmt.UsePowerLimits {
+		t.Fatalf("TickLabelFormat(x) unexpectedly changed y scalar formatter: %+v", yFmt)
+	}
+
+	if err := TickLabelFormat(TickLabelFormatOptions{Axis: "both", Style: "scientific"}); err != nil {
+		t.Fatalf("TickLabelFormat(both/scientific) error = %v", err)
+	}
+	xFmt = ax.XAxis.Formatter.(core.ScalarFormatter)
+	yFmt = ax.YAxis.Formatter.(core.ScalarFormatter)
+	if xFmt.DisableScientific || yFmt.DisableScientific {
+		t.Fatalf("scientific style did not re-enable scientific formatting: x=%+v y=%+v", xFmt, yFmt)
+	}
+
+	if err := TickLabelFormat(TickLabelFormatOptions{Axis: "z"}); err == nil {
+		t.Fatal("TickLabelFormat(z) returned nil error")
+	}
+
+	ax.XAxis.Formatter = core.FixedFormatter{Labels: []string{"fixed"}}
+	if err := TickLabelFormat(TickLabelFormatOptions{Axis: "x", Style: "plain"}); err == nil {
+		t.Fatal("TickLabelFormat on FixedFormatter returned nil error")
+	}
+}
+
 func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 
