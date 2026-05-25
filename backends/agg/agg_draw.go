@@ -163,7 +163,7 @@ func (r *Renderer) buildPath(p geom.Path) {
 func (r *Renderer) Image(img render.Image, dst geom.Rect) {
 	if r.hasClipPath() {
 		bounds, haveBounds := imageDrawBounds(dst)
-		r.withClipPathMask(bounds, haveBounds, func() {
+		r.withClipPathMaskPremultiplied(bounds, haveBounds, func() {
 			r.drawImageDirect(img, dst)
 		})
 		return
@@ -213,7 +213,7 @@ func (r *Renderer) drawImageDirect(img render.Image, dst geom.Rect) {
 func (r *Renderer) ImageTransformed(img render.Image, _ geom.Rect, affine geom.Affine) {
 	if r.hasClipPath() {
 		bounds, haveBounds := transformedImageDrawBounds(img, affine)
-		r.withClipPathMask(bounds, haveBounds, func() {
+		r.withClipPathMaskPremultiplied(bounds, haveBounds, func() {
 			r.drawImageTransformedDirect(img, affine)
 		})
 		return

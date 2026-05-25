@@ -2668,7 +2668,7 @@ convenience layers over the core model.
       `kaiser`, `quadric`, `catrom`, `gaussian`, `bessel`, `mitchell`, `sinc`,
       `blackman`, `hermite`, `antialiased`, and `auto` with parser tests,
       AGG-render tests, and at least one visible interpolation gallery case.
-- [ ] Verify transformed-image sampling, image alpha premultiplication, clipping,
+- [x] Verify transformed-image sampling, image alpha premultiplication, clipping,
       resample threshold decisions, and backend fallbacks against upstream
       `image.py` and AGG behavior.
 - [ ] Add catalog/parity fixtures for figure-level images or bbox images if
@@ -2931,6 +2931,10 @@ Current slice landed:
   resumes with an immediate frame tick instead of inheriting a stale skip.
 - Tightened repeat-delay timer rescheduling so a failure to restart the regular
   interval timer propagates and clears the running/stale-timer state.
+- Tightened clipped AGG image compositing so transformed and scaled images keep
+  premultiplied-alpha semantics when rendered through path masks, with focused
+  coverage for transformed-image clipping plus image alpha and existing
+  straight-alpha clipped path/pattern regressions.
 - Fixed `ButtonOptions.Disabled` propagation so constructor-specified disabled
   state participates in the same interaction/picking behavior as runtime
   `Button.Enabled=false`.

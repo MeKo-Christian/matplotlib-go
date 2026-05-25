@@ -403,3 +403,46 @@ func TestAggTransformedImagePreservesSourceOrientation(t *testing.T) {
 		}
 	}
 }
+
+func TestAggTransformedImageRespectsClipPathAndAlpha(t *testing.T) {
+	r, err := New(20, 20, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	src := image.NewRGBA(image.Rect(0, 0, 2, 2))
+	for y := 0; y < 2; y++ {
+		for x := 0; x < 2; x++ {
+			src.SetRGBA(x, y, color.RGBA{R: 255, A: 255})
+		}
+	}
+	data := render.NewImageData(src)
+	data.SetAlpha(0.5)
+
+	var clip geom.Path
+	clip.MoveTo(geom.Pt{X: 0, Y: 0})
+	clip.LineTo(geom.Pt{X: 20, Y: 0})
+	clip.LineTo(geom.Pt{X: 0, Y: 20})
+	clip.Close()
+
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 20, Y: 20}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	r.ClipPath(clip)
+	r.ImageTransformed(data, geom.Rect{Max: geom.Pt{X: 20, Y: 20}}, geom.Affine{
+		A: 10,
+		D: 10,
+	})
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	img := r.GetImage()
+	inside := img.RGBAAt(4, 4)
+	if inside.R != 255 || math.Abs(float64(inside.G)-128) > 2 || math.Abs(float64(inside.B)-128) > 2 || inside.A != 255 {
+		t.Fatalf("clipped transformed image inside pixel = %+v, want half-alpha red over white", inside)
+	}
+	outside := img.RGBAAt(17, 17)
+	if outside != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
+		t.Fatalf("transformed image escaped clip path: outside pixel = %+v", outside)
+	}
+}

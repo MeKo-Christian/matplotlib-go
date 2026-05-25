@@ -24,6 +24,14 @@ type pixelRegion struct {
 }
 
 func (r *Renderer) withClipPathMask(bounds geom.Rect, haveBounds bool, draw func()) {
+	r.withClipPathMaskComposite(bounds, haveBounds, false, draw)
+}
+
+func (r *Renderer) withClipPathMaskPremultiplied(bounds geom.Rect, haveBounds bool, draw func()) {
+	r.withClipPathMaskComposite(bounds, haveBounds, true, draw)
+}
+
+func (r *Renderer) withClipPathMaskComposite(bounds geom.Rect, haveBounds bool, premultiplied bool, draw func()) {
 	paths := clonePaths(r.clipPaths)
 	if len(paths) == 0 || r.ctx == nil || r.ctx.image == nil {
 		draw()
@@ -54,7 +62,7 @@ func (r *Renderer) withClipPathMask(bounds geom.Rect, haveBounds bool, draw func
 	r.ctx = target
 	r.applyClipRect()
 
-	r.compositeClipSurface(temp.image, masks, region)
+	r.compositeClipSurface(temp.image, masks, region, premultiplied)
 }
 
 func (r *Renderer) clipTempSurface() *aggSurface {
@@ -195,7 +203,7 @@ func parallelRowRanges(region pixelRegion, workers int) []pixelRegion {
 	return ranges
 }
 
-func (r *Renderer) compositeClipSurface(src *agglib.Image, masks [][]uint8, region pixelRegion) {
+func (r *Renderer) compositeClipSurface(src *agglib.Image, masks [][]uint8, region pixelRegion, premultiplied bool) {
 	dst := r.ctx.image
 	if src == nil || dst == nil {
 		return
@@ -226,16 +234,38 @@ func (r *Renderer) compositeClipSurface(src *agglib.Image, masks [][]uint8, regi
 				if sa == 0 {
 					continue
 				}
+				sr := src.Data[srcOff]
+				sg := src.Data[srcOff+1]
+				sb := src.Data[srcOff+2]
+				if premultiplied {
+					sr = unpremultiplyAlphaByte(sr, sa)
+					sg = unpremultiplyAlphaByte(sg, sa)
+					sb = unpremultiplyAlphaByte(sb, sa)
+				}
 				blendPixelRGBA(dst.Data[dstOff:dstOff+4], render.Color{
-					R: float64(src.Data[srcOff]) / 255,
-					G: float64(src.Data[srcOff+1]) / 255,
-					B: float64(src.Data[srcOff+2]) / 255,
+					R: float64(sr) / 255,
+					G: float64(sg) / 255,
+					B: float64(sb) / 255,
 					A: (float64(sa) / 255) * (float64(maskA) / 255),
 				})
 			}
 		}
 	}
 	runRowWorkers(region, compositeRows)
+}
+
+func unpremultiplyAlphaByte(channel, alpha uint8) uint8 {
+	if alpha == 0 {
+		return 0
+	}
+	if alpha == 255 || channel == 0 {
+		return channel
+	}
+	v := int(channel) * 255 / int(alpha)
+	if v > 255 {
+		return 255
+	}
+	return uint8(v)
 }
 
 func clipMaskAlpha(masks [][]uint8, width, x, y int) uint8 {
