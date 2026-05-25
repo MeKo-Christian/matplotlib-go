@@ -62,17 +62,18 @@ func TestFigureSubplotsLayoutMapsTopRowToTopPixels(t *testing.T) {
 		WithSubplotSpacing(0.1, 0.1),
 	)
 
+	// Display space is y-up: the top row maps to the high-Y (top) region.
 	topLeft := grid[0][0].layout(fig)
 	if !floatApprox(topLeft.Min.X, 100, 1e-12) ||
 		!floatApprox(topLeft.Max.X, 450, 1e-12) ||
-		!floatApprox(topLeft.Min.Y, 80, 1e-12) ||
-		!floatApprox(topLeft.Max.Y, 360, 1e-12) {
+		!floatApprox(topLeft.Min.Y, 440, 1e-12) ||
+		!floatApprox(topLeft.Max.Y, 720, 1e-12) {
 		t.Fatalf("unexpected top-left pixel rect: %+v", topLeft)
 	}
 
 	bottomLeft := grid[1][0].layout(fig)
-	if !floatApprox(bottomLeft.Min.Y, 440, 1e-12) ||
-		!floatApprox(bottomLeft.Max.Y, 720, 1e-12) {
+	if !floatApprox(bottomLeft.Min.Y, 80, 1e-12) ||
+		!floatApprox(bottomLeft.Max.Y, 360, 1e-12) {
 		t.Fatalf("unexpected bottom-left pixel rect: %+v", bottomLeft)
 	}
 }

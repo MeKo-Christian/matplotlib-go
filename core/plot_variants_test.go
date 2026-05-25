@@ -200,7 +200,7 @@ func TestAxesAxHLine_UsesBlendedCoordinates(t *testing.T) {
 		t.Fatalf("expected one path call, got %d", len(r.pathCalls))
 	}
 	got := r.pathCalls[0].path.V
-	want := []geom.Pt{{X: 50, Y: 430}, {X: 150, Y: 430}}
+	want := []geom.Pt{{X: 50, Y: 370}, {X: 150, Y: 370}}
 	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
 		t.Fatalf("path = %+v, want %+v", got, want)
 	}

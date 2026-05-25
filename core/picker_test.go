@@ -28,13 +28,14 @@ func TestLine2DContainsPickRadius(t *testing.T) {
 	if hit, _ := line.Contains(pxMid, ctx); !hit {
 		t.Fatalf("expected hit at midpoint %v", pxMid)
 	}
-	offset := geom.Pt{X: pxMid.X + 4, Y: pxMid.Y - 4}
+	// Display space is y-up, so a data slope +1 stays slope +1 in pixels. Step
+	// along the line (+X,+Y) to stay within the pick radius.
+	offset := geom.Pt{X: pxMid.X + 4, Y: pxMid.Y + 4}
 	if hit, _ := line.Contains(offset, ctx); !hit {
 		t.Fatalf("expected hit within default pick radius at %v", offset)
 	}
-	// Perpendicular to the diagonal (slope -1 in data => slope +1 in pixels
-	// once Y flips). Step both X and Y by the same sign to leave the line.
-	farAway := geom.Pt{X: pxMid.X + 30, Y: pxMid.Y + 30}
+	// Step perpendicular to the diagonal (+X,-Y) to leave the line.
+	farAway := geom.Pt{X: pxMid.X + 30, Y: pxMid.Y - 30}
 	if hit, _ := line.Contains(farAway, ctx); hit {
 		t.Fatalf("did not expect hit far from line at %v", farAway)
 	}

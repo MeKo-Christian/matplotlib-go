@@ -33,9 +33,11 @@ func TestDrawContextCoordinateHelpersSupportBlendedNestedProjectionTransforms(t 
 		},
 	}
 
+	// Display space is y-up: NewDisplayRectTransform maps fraction (0,1) to
+	// (Min.Y, Max.Y), so display Y grows upward.
 	data := ctx.TransData().Apply(geom.Pt{X: 15, Y: 0})
-	if data.X != 220 || data.Y != 220 {
-		t.Fatalf("transData = %+v, want {220 220}", data)
+	if data.X != 220 || data.Y != 380 {
+		t.Fatalf("transData = %+v, want {220 380}", data)
 	}
 
 	axes := ctx.TransAxes().Apply(geom.Pt{X: 0.5, Y: 0.5})
@@ -44,13 +46,13 @@ func TestDrawContextCoordinateHelpersSupportBlendedNestedProjectionTransforms(t 
 	}
 
 	figure := ctx.TransFigure().Apply(geom.Pt{X: 0.25, Y: 0.25})
-	if figure.X != 200 || figure.Y != 450 {
-		t.Fatalf("transFigure = %+v, want {200 450}", figure)
+	if figure.X != 200 || figure.Y != 150 {
+		t.Fatalf("transFigure = %+v, want {200 150}", figure)
 	}
 
 	blended := ctx.TransformFor(BlendCoords(CoordData, CoordAxes)).Apply(geom.Pt{X: 15, Y: 0.75})
-	if blended.X != 220 || blended.Y != 200 {
-		t.Fatalf("blended transform = %+v, want {220 200}", blended)
+	if blended.X != 220 || blended.Y != 400 {
+		t.Fatalf("blended transform = %+v, want {220 400}", blended)
 	}
 }
 
@@ -76,9 +78,10 @@ func TestTransformForCoordinateSpecsExposeExpectedTransforms(t *testing.T) {
 		t.Fatalf("CoordFigure TransformFor = %+v, want %+v", got, ctx.TransFigure().Apply(geom.Pt{X: 0.25, Y: 0.75}))
 	}
 
+	// Display space is y-up: CoordFigure y=0.25 maps to 0.25*500 from the bottom.
 	blended := ctx.TransformFor(BlendCoords(CoordData, CoordFigure)).Apply(geom.Pt{X: 5, Y: 0.25})
-	if blended.X != 150 || blended.Y != 375 {
-		t.Fatalf("CoordData/Figure blended transform = %+v, want {150 375}", blended)
+	if blended.X != 150 || blended.Y != 125 {
+		t.Fatalf("CoordData/Figure blended transform = %+v, want {150 125}", blended)
 	}
 }
 

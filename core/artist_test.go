@@ -553,14 +553,16 @@ func TestDrawAxesLabels_XLabelUsesTickBoundsAndLabelPad(t *testing.T) {
 	}
 
 	layout := measureSingleLineTextLayout(r, "Group", axisLabelFontSize(ctx), ctx.RC.FontKey)
+	// Display space is y-up: the bottom x-label sits below the axis at the
+	// lowest extent minus the pad (matches drawAxesLabels).
 	bottomExtent := spinePixelY(AxisBottom, px)
 	if tickBounds, ok := axisTickLabelBounds(ax.XAxis, r, ctx); ok {
-		bottomExtent = math.Max(bottomExtent, tickBounds.Max.Y)
+		bottomExtent = math.Min(bottomExtent, tickBounds.Min.Y)
 	}
 	want := alignedSingleLineOrigin(
 		geom.Pt{
 			X: ctx.TransAxes().Apply(geom.Pt{X: 0.5, Y: 0}).X,
-			Y: bottomExtent + axisLabelPadPx(ctx),
+			Y: bottomExtent - axisLabelPadPx(ctx),
 		},
 		layout,
 		TextAlignCenter,
@@ -653,14 +655,16 @@ func TestDrawAxesLabels_TopXLabelUsesTopTickBoundsAndLabelPad(t *testing.T) {
 	}
 
 	layout := measureSingleLineTextLayout(r, "Group", axisLabelFontSize(ctx), ctx.RC.FontKey)
+	// Display space is y-up: the top x-label sits above the axis at the highest
+	// extent plus the pad (matches drawAxesLabels).
 	topExtent := spinePixelY(AxisTop, px)
 	if tickBounds, ok := axisTickLabelBounds(ax.XAxisTop, r, ctx); ok {
-		topExtent = math.Min(topExtent, tickBounds.Min.Y)
+		topExtent = math.Max(topExtent, tickBounds.Max.Y)
 	}
 	want := alignedSingleLineOrigin(
 		geom.Pt{
 			X: ctx.TransAxes().Apply(geom.Pt{X: 0.5, Y: 0}).X,
-			Y: topExtent - axisLabelPadPx(ctx),
+			Y: topExtent + axisLabelPadPx(ctx),
 		},
 		layout,
 		TextAlignCenter,
@@ -716,7 +720,9 @@ func TestDrawAxesLabels_TitleClearsTopXLabel(t *testing.T) {
 	if !ok {
 		t.Fatal("expected xlabel bounds")
 	}
-	if titleBounds.Max.Y > xlabelBounds.Min.Y {
+	// Display space is y-up: the title clears the top x-label when its bottom
+	// edge (Min.Y) sits at or above the x-label's top edge (Max.Y).
+	if titleBounds.Min.Y < xlabelBounds.Max.Y {
 		t.Fatalf("title overlaps top xlabel: title=%+v xlabel=%+v", titleBounds, xlabelBounds)
 	}
 }
@@ -776,13 +782,14 @@ func TestDrawContextTransformsExposeCoordinateSpaces(t *testing.T) {
 	if got := ctx.TransData().Apply(geom.Pt{X: 2.5, Y: 0}); got != (geom.Pt{X: 100, Y: 200}) {
 		t.Fatalf("transData point = %+v, want {100 200}", got)
 	}
-	if got := ctx.TransAxes().Apply(geom.Pt{X: 0.25, Y: 0.75}); got != (geom.Pt{X: 100, Y: 150}) {
-		t.Fatalf("transAxes point = %+v, want {100 150}", got)
+	// Display space is y-up: fraction (0,1) maps to (Min.Y, Max.Y).
+	if got := ctx.TransAxes().Apply(geom.Pt{X: 0.25, Y: 0.75}); got != (geom.Pt{X: 100, Y: 250}) {
+		t.Fatalf("transAxes point = %+v, want {100 250}", got)
 	}
-	if got := ctx.TransFigure().Apply(geom.Pt{X: 0.25, Y: 0.75}); got != (geom.Pt{X: 100, Y: 125}) {
-		t.Fatalf("transFigure point = %+v, want {100 125}", got)
+	if got := ctx.TransFigure().Apply(geom.Pt{X: 0.25, Y: 0.75}); got != (geom.Pt{X: 100, Y: 375}) {
+		t.Fatalf("transFigure point = %+v, want {100 375}", got)
 	}
-	if got := ctx.TransformFor(BlendCoords(CoordFigure, CoordAxes)).Apply(geom.Pt{X: 0.5, Y: 0.25}); got != (geom.Pt{X: 200, Y: 250}) {
-		t.Fatalf("blended transform point = %+v, want {200 250}", got)
+	if got := ctx.TransformFor(BlendCoords(CoordFigure, CoordAxes)).Apply(geom.Pt{X: 0.5, Y: 0.25}); got != (geom.Pt{X: 200, Y: 150}) {
+		t.Fatalf("blended transform point = %+v, want {200 150}", got)
 	}
 }
