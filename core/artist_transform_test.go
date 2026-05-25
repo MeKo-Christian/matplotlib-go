@@ -67,10 +67,11 @@ func TestLine2DUsesArtistCoordinateTransform(t *testing.T) {
 	if len(ren.paths) != 1 {
 		t.Fatalf("path call count = %d, want 1", len(ren.paths))
 	}
-	if got := ren.paths[0].V[0]; got != (geom.Pt{X: 25, Y: 25}) {
+	// Display space is y-up: axes y=0.75 -> 75, y=0.25 -> 25 on a 100px axes.
+	if got := ren.paths[0].V[0]; got != (geom.Pt{X: 25, Y: 75}) {
 		t.Fatalf("line first point = %+v, want axes-coordinate display point", got)
 	}
-	if got := ren.paths[0].V[1]; got != (geom.Pt{X: 50, Y: 75}) {
+	if got := ren.paths[0].V[1]; got != (geom.Pt{X: 50, Y: 25}) {
 		t.Fatalf("line second point = %+v, want axes-coordinate display point", got)
 	}
 }
@@ -118,7 +119,8 @@ func TestScatterCopiesArtistTransformToPathCollection(t *testing.T) {
 	if tr == nil {
 		t.Fatal("scatter path collection did not retain artist transform metadata")
 	}
-	if got := tr.Apply(collection.Offsets[0]); got != (geom.Pt{X: 40, Y: 40}) {
+	// Display space is y-up: figure y=0.8 -> 160 on a 200px figure.
+	if got := tr.Apply(collection.Offsets[0]); got != (geom.Pt{X: 40, Y: 160}) {
 		t.Fatalf("scatter transformed offset = %+v, want figure-coordinate display point", got)
 	}
 }

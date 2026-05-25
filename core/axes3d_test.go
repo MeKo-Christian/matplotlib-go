@@ -152,10 +152,12 @@ func TestAxes3DProjectedDataMapsToMatplotlibDisplayCoordinates(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 	ctx := newAxesDrawContext(ax.Axes, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	// Display space is y-up: our display Y is the flip of Matplotlib's top-down
+	// pixel (H=560), so 560 - 233.38993552 = 326.61006448.
 	got := ctx.DataToPixel.Apply(geom.Pt{X: 0.039937290348120026, Y: 0.013747177404714107})
 	if !approx(got.X, 452.49035388, 1e-8) ||
-		!approx(got.Y, 233.38993552, 1e-8) {
-		t.Fatalf("projected display point = %+v, want Matplotlib top-left pixel {452.49035388 233.38993552}", got)
+		!approx(got.Y, 326.61006448, 1e-8) {
+		t.Fatalf("projected display point = %+v, want y-up display point {452.49035388 326.61006448}", got)
 	}
 }
 
@@ -2263,9 +2265,10 @@ func TestAxes3DTickLabelAnchorsMatchMatplotlibBasicFixture(t *testing.T) {
 		occurrence int
 		want       geom.Pt
 	}{
-		{label: "0.0", occurrence: 1, want: geom.Pt{X: 207.736, Y: 405.838}},
-		{label: "0.0", occurrence: 2, want: geom.Pt{X: 463.314, Y: 465.309}},
-		{label: "0.00", occurrence: 1, want: geom.Pt{X: 586.431, Y: 314.487}},
+		// Display space is y-up: Y is the flip of Matplotlib's top-down pixel (H=560).
+		{label: "0.0", occurrence: 1, want: geom.Pt{X: 207.736, Y: 154.162}},
+		{label: "0.0", occurrence: 2, want: geom.Pt{X: 463.314, Y: 94.691}},
+		{label: "0.00", occurrence: 1, want: geom.Pt{X: 586.431, Y: 245.513}},
 	} {
 		idx := -1
 		count := 0

@@ -359,8 +359,10 @@ func TestImageTransformPositiveAngleUsesDataSpaceOrientation(t *testing.T) {
 		math.Pi/2,
 	)
 
+	// Display space is y-up: a +90 deg (CCW) rotation maps right-center to
+	// top-center, which is y=10 (the top edge) rather than y=0.
 	got := tr.Apply(geom.Pt{X: 10, Y: 5})
-	if !almostEqualFloat(got.X, 5) || !almostEqualFloat(got.Y, 0) {
+	if !almostEqualFloat(got.X, 5) || !almostEqualFloat(got.Y, 10) {
 		t.Fatalf("positive rotation maps right-center to %+v, want top-center", got)
 	}
 }
@@ -463,9 +465,12 @@ func TestImage2D_DrawCeilsRasterSizeAndKeepsMatplotlibAnchor(t *testing.T) {
 	if rec.lastImageWidth != 274 || rec.lastImageHeight != 274 {
 		t.Fatalf("prefiltered image size = %dx%d, want 274x274", rec.lastImageWidth, rec.lastImageHeight)
 	}
+	// Display space is y-up: Matplotlib's _make_image rounds the bbox edges
+	// (image.py:415-418) to y0=ceil(35.5-eps)=36, y1=ceil(309.1)=310, which the
+	// bottom-anchored ceil in matplotlibImageDrawRect reproduces.
 	want := geom.Rect{
-		Min: geom.Pt{X: 183.2, Y: 35.6},
-		Max: geom.Pt{X: 457.2, Y: 309.6},
+		Min: geom.Pt{X: 183.2, Y: 36},
+		Max: geom.Pt{X: 457.2, Y: 310},
 	}
 	if !rectsApprox(rec.lastDst, want, 1e-9) {
 		t.Fatalf("image destination = %+v, want %+v", rec.lastDst, want)
