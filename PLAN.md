@@ -2699,20 +2699,20 @@ convenience layers over the core model.
 
 #### 12.5D Backend Canvas, Manager, and Tool Lifecycle
 
-- [ ] Audit upstream `backend_bases.py`, `backend_tools.py`, and
+- [x] Audit upstream `backend_bases.py`, `backend_tools.py`, and
       `_pylab_helpers.py` against `canvas`, backend registry metadata, and the
       interactive backend implementations.
-- [ ] Complete canvas/manager lifecycle semantics for figure creation,
+- [x] Complete canvas/manager lifecycle semantics for figure creation,
       current-manager tracking, draw vs draw-idle, resize, close/destroy,
       toolbar attachment, save dispatch, and backend capability reporting.
-- [ ] Tighten event contracts for mouse, key, scroll, pick, figure enter/leave,
+- [x] Tighten event contracts for mouse, key, scroll, pick, figure enter/leave,
       axes enter/leave, timer events, and callback connection/disconnection.
-- [ ] Complete toolbar/tool behavior needed by interactive backends: home,
+- [x] Complete toolbar/tool behavior needed by interactive backends: home,
       back, forward, pan, zoom, configure, save, cursor/status messages, mode
       state, and tool enablement.
-- [ ] Add backend-neutral lifecycle tests using fake canvases/managers and
+- [x] Add backend-neutral lifecycle tests using fake canvases/managers and
       smoke tests for WebAgg/Gio where the environment allows them.
-- [ ] Document backend-specific omissions, especially GUI toolkit behaviors
+- [x] Document backend-specific omissions, especially GUI toolkit behaviors
       that cannot be represented in the current headless test environment.
 
 #### 12.5E Widgets and Interaction Scope
@@ -2958,6 +2958,10 @@ Current slice landed:
   zoom/save tool classes and registry entries. Remaining backend scope is now
   centered on lower-value GUI presentation, cursor/status, configure/help/copy,
   and exact toolkit lifecycle edge behavior.
+- Promoted the backend lifecycle checklist to covered status based on existing
+  runtime/headless manager tests, pyplot fake-manager lifecycle tests, toolbar
+  controller tests, WebAgg/Gio event-loop smoke coverage, and public-surface
+  omission rows for GUI-only backend tools.
 Implementation notes:
 
 - Compare against upstream `image.py`, `pyplot.py`, `_pylab_helpers.py`,
