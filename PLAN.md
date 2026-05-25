@@ -2266,8 +2266,11 @@ Current slice landed:
 - `ConnectionStyle("arc")` now uses Matplotlib's style-specific defaults
   (`angleA=0`, `angleB=0`) instead of inheriting the `Angle` / `Angle3`
   `angleA=90` default.
+- `ConnectionStyle("arc", rad=...)` now rounds at arm/elbow vertices with the
+  upstream vertex sequence instead of rounding at the final endpoint.
 - Renderer-neutral patch tests cover the default horizontal start arm for
-  `arc,armA=...,armB=...`.
+  `arc,armA=...,armB=...` and rounded arm-end geometry for
+  `arc,armA=...,rad=...`.
 - `ConnectionStyle("bar", angle=...)` now projects the intermediate endpoint
   onto the requested connecting angle before constructing the second arm,
   matching upstream `Bar.connect` behavior while preserving the original final

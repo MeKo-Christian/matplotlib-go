@@ -359,35 +359,50 @@ func connectionAnglePath(posA, posB geom.Pt, angleA, angleB, rad float64) geom.P
 func connectionArcPath(posA, posB geom.Pt, angleA, angleB, armA, armB, rad float64) geom.Path {
 	path := geom.Path{}
 	path.MoveTo(posA)
-	last := posA
+	rounded := []geom.Pt{}
 	if armA != 0 {
 		dir := angleUnit(angleA)
-		last = geom.Pt{X: posA.X + armA*dir.X, Y: posA.Y + armA*dir.Y}
-		path.LineTo(last)
+		rounded = append(rounded,
+			geom.Pt{X: posA.X + (armA-rad)*dir.X, Y: posA.Y + (armA-rad)*dir.Y},
+			geom.Pt{X: posA.X + armA*dir.X, Y: posA.Y + armA*dir.Y},
+		)
 	}
 	if armB != 0 {
 		dir := angleUnit(angleB)
 		elbow := geom.Pt{X: posB.X + armB*dir.X, Y: posB.Y + armB*dir.Y}
-		if rad > 0 {
-			p1 := pointToward(last, elbow, math.Min(rad, distance(last, elbow)/2))
-			p2 := pointToward(elbow, last, math.Min(rad, distance(last, elbow)/2))
-			if distance(last, p1) > 0 {
-				path.LineTo(p1)
+		if len(rounded) > 0 {
+			prev := rounded[len(rounded)-1]
+			if d := distance(prev, elbow); d > 0 {
+				rounded = append(rounded, pointToward(prev, elbow, rad))
+				appendArcRoundedPoints(&path, rounded)
+				rounded = []geom.Pt{pointToward(prev, elbow, d-rad), elbow}
 			}
-			path.QuadTo(elbow, p2)
 		} else {
-			path.LineTo(elbow)
+			prev := posA
+			if d := distance(prev, elbow); d > 0 {
+				rounded = append(rounded, pointToward(prev, elbow, d-rad), elbow)
+			}
 		}
-		last = elbow
 	}
-	if rad > 0 && distance(last, posB) > rad {
-		p := pointToward(posB, last, rad)
-		path.LineTo(p)
-		path.QuadTo(posB, posB)
-	} else {
-		path.LineTo(posB)
+	if len(rounded) > 0 {
+		prev := rounded[len(rounded)-1]
+		if d := distance(prev, posB); d > 0 {
+			rounded = append(rounded, pointToward(prev, posB, rad))
+			appendArcRoundedPoints(&path, rounded)
+		}
 	}
+	path.LineTo(posB)
 	return path
+}
+
+func appendArcRoundedPoints(path *geom.Path, rounded []geom.Pt) {
+	if path == nil || len(rounded) == 0 {
+		return
+	}
+	path.LineTo(rounded[0])
+	if len(rounded) >= 3 {
+		path.QuadTo(rounded[1], rounded[2])
+	}
 }
 
 func connectionBarPath(posA, posB geom.Pt, armA, armB, fraction float64, angle *float64) geom.Path {

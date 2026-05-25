@@ -460,6 +460,33 @@ func TestConnectionStyleArcUsesMatplotlibDefaultAngles(t *testing.T) {
 	}
 }
 
+func TestConnectionStyleArcRadiusRoundsArmEndpointLikeMatplotlib(t *testing.T) {
+	style, ok := ConnectionStyleFromString("arc,armA=20,rad=5")
+	if !ok {
+		t.Fatal("ConnectionStyleFromString(arc) returned !ok")
+	}
+
+	path := style.connect(geom.Pt{X: 0, Y: 0}, geom.Pt{X: 100, Y: 0}, 0, 0)
+	if len(path.V) < 5 {
+		t.Fatalf("arc rounded path vertices = %+v, want start, rounded arm, and endpoint", path.V)
+	}
+	want := []geom.Pt{
+		{X: 0, Y: 0},
+		{X: 15, Y: 0},
+		{X: 20, Y: 0},
+		{X: 25, Y: 0},
+		{X: 100, Y: 0},
+	}
+	for i := range want {
+		if !approxPt(path.V[i], want[i], 1e-9) {
+			t.Fatalf("arc rounded vertex %d = %+v, want %+v (all vertices %+v)", i, path.V[i], want[i], path.V)
+		}
+	}
+	if path.C[2] != geom.QuadTo {
+		t.Fatalf("arc rounded corner command = %v, want QuadTo in commands %+v", path.C[2], path.C)
+	}
+}
+
 func TestConnectionStyleBarAngleProjectsEndpointLikeMatplotlib(t *testing.T) {
 	style, ok := ConnectionStyleFromString("bar,angle=0,fraction=0.3")
 	if !ok {
