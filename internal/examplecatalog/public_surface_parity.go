@@ -664,6 +664,16 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Note:              "Stateful pyplot plot delegates to the core Line2D path for common x/y and style-string migration cases. Remaining partial scope is Python's full variadic overload grammar, data= indirection breadth, and dynamic getp/setp-style property aliases.",
 	},
 	{
+		ID:                "pyplot-imshow",
+		UpstreamID:        "pyplot.py:function:imshow",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfacePartial,
+		GoFiles:           []string{"pyplot/pyplot.go", "core/matrix_helpers.go"},
+		CatalogIDs:        []string{"image_heatmap", "imshow_interpolation_matrix"},
+		ExampleIDs:        []string{"image_heatmap"},
+		Note:              "Stateful pyplot ImShow delegates to the current axes' typed ImShow helper, including origin, extent, alpha, scalar mapping, and interpolation options. Remaining partial scope is Python's full ndarray/image overload grammar and data= indirection behavior.",
+	},
+	{
 		ID:                "button-widget",
 		UpstreamID:        "widgets.py:class:Button",
 		FeatureCoverageID: "widgets-events-animation",

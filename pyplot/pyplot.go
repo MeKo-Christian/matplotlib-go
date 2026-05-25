@@ -445,6 +445,11 @@ func Image(data [][]float64, opts ...core.ImageOptions) *core.Image2D {
 	return GCA().Image(data, opts...)
 }
 
+// ImShow delegates to the current axes.
+func ImShow(data [][]float64, opts ...core.ImShowOptions) *core.Image2D {
+	return GCA().ImShow(data, opts...)
+}
+
 // MatShow delegates to the current axes.
 func MatShow(data [][]float64, opts ...core.MatShowOptions) *core.Image2D {
 	return GCA().MatShow(data, opts...)

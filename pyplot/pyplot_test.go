@@ -314,6 +314,10 @@ func TestMatrixAndSignalHelpersDelegateToCurrentAxes(t *testing.T) {
 		{0, 1},
 		{2, 3},
 	}
+	bilinear := "bilinear"
+	if img := ImShow(mat, core.ImShowOptions{Interpolation: &bilinear}); img == nil || img.Interpolation != "bilinear" {
+		t.Fatalf("ImShow() = %#v, want image with bilinear interpolation", img)
+	}
 	if img := MatShow(mat); img == nil {
 		t.Fatal("MatShow() returned nil")
 	}

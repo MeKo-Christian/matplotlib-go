@@ -2803,6 +2803,9 @@ Current slice landed:
   and FigureImage, imread, imsave, and thumbnail are documented omissions with
   migration guidance. The broad image.py row now only carries pcolorfast /
   transformed-resampling edge behavior as remaining partial scope.
+- Added pyplot `ImShow` as a stateful wrapper over `Axes.ImShow`, including
+  interpolation option delegation, and gave `pyplot.py:function:imshow` its own
+  public-surface row instead of relying on the broad pyplot module note.
 Implementation notes:
 
 - Compare against upstream `image.py`, `pyplot.py`, `_pylab_helpers.py`,
