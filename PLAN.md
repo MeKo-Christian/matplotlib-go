@@ -2871,6 +2871,11 @@ Current slice landed:
 - Added pyplot `GetCMap` over the existing color registry, with focused
   colormap lookup/fallback coverage and a public-surface row for
   `pyplot.get_cmap`.
+- Added explicit public-surface classifications for the remaining pyplot
+  dynamic/global shortcuts: numeric figure lookup helpers, current-mappable
+  `clim` / `sci` / `set_cmap`, blocking GUI input waits, `clabel`, polar grid
+  shortcuts, backend switching, and manager factory behavior now map to typed
+  Go APIs, partials, or intentional omissions.
 - Added pyplot `ImRead` / `ImSave` wrappers over the core image IO helpers,
   with a focused PNG round-trip delegation test and explicit public-surface
   rows for `pyplot.imread` / `pyplot.imsave`.
