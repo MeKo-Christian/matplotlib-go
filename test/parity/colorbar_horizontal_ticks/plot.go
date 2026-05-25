@@ -4,12 +4,19 @@ import (
 	"image"
 
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 )
 
 func Plot() *core.Figure {
-	fig, ax := common.ColorNormFixtureFigure("Horizontal Colorbar Ticks")
+	fig := core.NewFigure(640, 360)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.12, Y: 0.16}, Max: geom.Pt{X: 0.90, Y: 0.88}})
+	ax.SetTitle("Horizontal Colorbar Ticks")
+	ax.SetXLabel("x")
+	ax.SetYLabel("y")
+
 	cmap := "viridis"
+	vmin, vmax := -1.0, 1.2
 	mesh := ax.PColorMesh([][]float64{
 		{-1.0, -0.5, 0.0, 0.5},
 		{-0.6, -0.1, 0.4, 0.9},
@@ -19,8 +26,8 @@ func Plot() *core.Figure {
 		YEdges:   []float64{0, 1, 2, 3},
 		Shading:  core.MeshShadingFlat,
 		Colormap: &cmap,
-		VMin:     common.FloatPtr(-1),
-		VMax:     common.FloatPtr(1.2),
+		VMin:     &vmin,
+		VMax:     &vmax,
 	})
 	if mesh != nil {
 		fig.AddColorbar(ax, mesh, core.ColorbarOptions{
