@@ -1762,18 +1762,21 @@ migration-sensitive users.
 
 ### 17.5.4 Widget Chrome Policy Completion
 
-- [ ] Move remaining hard-coded padding, corner radius, stroke widths, slider
+- [x] Move hard-coded padding, corner radius, stroke widths, slider
       handle geometry, check/radio marker geometry, and text-box chrome behind
       the visual-style policy.
 - [ ] Match Matplotlib-compatible slider layout more closely: label/value text
       anchors, track rectangle, selection rectangle, init line, and circular
-      handle size/edge defaults.
+      handle size/edge defaults. Track/selection/handle geometry is now
+      style-driven; label/value anchors and init line remain open.
 - [ ] Match Matplotlib-compatible button and text-box layout more closely:
       square panel option, face/hover colors, label position, input text anchor,
-      and caret line behavior where applicable.
+      and caret line behavior where applicable. Button panel and text-box input
+      chrome are now style-driven; label/caret refinements remain open.
 - [ ] Match Matplotlib-compatible CheckButtons and RadioButtons geometry:
       legacy vertical positions, marker sizes, frame/check/radio stroke widths,
-      active fill semantics, and label offsets.
+      active fill semantics, and label offsets. Marker sizes, strokes, and label
+      offsets are now style-driven; active fill/check glyph parity remains open.
 - [ ] Keep the Go-default style visually unchanged except where a change is
       explicitly required for shared hit-testing correctness.
 

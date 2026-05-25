@@ -10,12 +10,12 @@ splitting it from the Go-default user-facing showcase.
 Before the Phase 17.5 compatibility path, `widgets_gallery` was listed in
 `PLAN.md` as a residual offender at `TestMatplotlibRef` MeanAbs `6.41`.
 
-Current focused verification:
+Current focused verification after the 17.5.4 chrome-geometry pass:
 
 | Check | Result |
 | --- | --- |
-| `TestMatplotlibRef/widgets_gallery` | PSNR `45.1 dB`, MeanAbs `1.51`, MaxDiff `255` |
-| `TestReferenceCompare/widgets_gallery` | PSNR `45.09 dB`, MeanAbs `1.51`, RMSE `23.62`, MaxDiff `255` |
+| `TestMatplotlibRef/widgets_gallery` | PSNR `47.2 dB`, MeanAbs `0.79`, MaxDiff `255` |
+| `TestReferenceCompare/widgets_gallery` | PSNR `47.24 dB`, MeanAbs `0.79`, RMSE `16.97`, MaxDiff `255` |
 | `TestGolden/widgets_gallery` | MaxDiff `0`, MeanAbs `0.00`, PSNR `+Inf` |
 
 Commands used:
@@ -32,12 +32,12 @@ rtk proxy go test -v ./test/ -run TestGolden/widgets_gallery
 the same fixed figure axes rectangles as the Python reference instead of the
 Go-default GridSpec showcase layout.
 
-**Widget chrome:** Still the main intentional work item. The Matplotlib-compatible
-style currently routes constructor colors through `style.WidgetVisualMatplotlib`,
-but several draw-time geometry choices remain Go-native: rounded panel corners,
-insets/padding, slider label/value anchoring, slider handle sizing, text-box
-input placement, check-button mark shape, radio marker sizing, and panel stroke
-widths.
+**Widget chrome:** Still the main intentional work item, but the first
+Matplotlib-compatible geometry slice is complete. Constructor colors, panel
+padding/radius/stroke, slider track/handle geometry, text-box panel/input
+chrome, and check/radio marker geometry now route through the visual-style
+policy. Remaining visible chrome residuals are mostly text placement: slider
+label/value anchors, range-slider value text, and text-box label alignment.
 
 **Selector geometry:** Mostly closed for the parity fixture. Static selector
 regions in the parity wrapper are now rendered with patch/line primitives that
@@ -47,8 +47,8 @@ artists separately, not on this static parity fixture.
 
 **Text metrics:** Minor but visible residuals remain in widget labels and value
 text. Slider/range-slider labels and values do not yet match Matplotlib's
-axes-coordinate text placement. Text-box label/value placement is also still
-Go-native.
+axes-coordinate text placement. Text-box value placement is closer after the
+chrome pass, but label alignment remains Go-native.
 
 **Cursor/multi-cursor behavior:** Not applicable to the static parity render
 after the source-aligned wrapper change. The reference cursor lines are rendered
@@ -63,8 +63,8 @@ differences are low-impact at the fixture level.
 ## Decisions
 
 - Continue with core widget chrome changes for Matplotlib-compatible mode:
-  sliders, text boxes, check buttons, radio buttons, and button panels should
-  get style-driven geometry instead of ad hoc draw-time constants.
+  slider/range-slider label/value anchors and the Matplotlib init line should
+  move behind the style policy next.
 - Do not change the Go-default showcase appearance while working on
   Matplotlib-compatible chrome, except where a shared geometry helper is proven
   to fix hit-testing correctness.
