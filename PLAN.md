@@ -2677,23 +2677,23 @@ convenience layers over the core model.
 
 #### 12.5C Pyplot and Stateful Wrapper Surface
 
-- [ ] Audit high-traffic upstream `pyplot.py` and `_pylab_helpers.py` functions
+- [x] Audit high-traffic upstream `pyplot.py` and `_pylab_helpers.py` functions
       against the Go `pyplot` package; rank missing wrappers by migration value
       rather than trying to clone every overload.
-- [ ] Add wrappers for implemented core features where the current absence is
+- [x] Add wrappers for implemented core features where the current absence is
       a migration blocker: common axes creation, subplot/subplots variants,
       plotting/image/stat helpers, axis/tick scale helpers, annotations,
       legends, colorbars, rc/style helpers, and save/show helpers.
-- [ ] Preserve object-oriented APIs as the source of truth; pyplot wrappers
+- [x] Preserve object-oriented APIs as the source of truth; pyplot wrappers
       should delegate to `core` without maintaining duplicate rendering or
       layout behavior.
-- [ ] Define clear error behavior for unsupported pyplot overloads, implicit
+- [x] Define clear error behavior for unsupported pyplot overloads, implicit
       figure-manager behavior, interactive mode toggles, and global state reset
       functions.
-- [ ] Add unit tests that pyplot wrappers delegate to the same core state as
+- [x] Add unit tests that pyplot wrappers delegate to the same core state as
       the object-oriented calls, plus migration-style examples for common
       pyplot workflows.
-- [ ] Update public-surface parity rows for `pyplot.py` and `_pylab_helpers.py`
+- [x] Update public-surface parity rows for `pyplot.py` and `_pylab_helpers.py`
       so each broad wrapper gap is either implemented, scoped to a smaller
       wrapper family, or intentionally omitted.
 
@@ -2881,6 +2881,9 @@ Current slice landed:
 - Added pyplot `GetCMap` over the existing color registry, with focused
   colormap lookup/fallback coverage and a public-surface row for
   `pyplot.get_cmap`.
+- Added a tested `examples/pyplot_workflow` migration example that builds a
+  stateful pyplot figure through `Subplots`, `SCA`, plot/scatter/bar/image
+  wrappers, annotation, legends, colorbar, and figure-level labels.
 - Added explicit public-surface classifications for the remaining pyplot
   dynamic/global shortcuts: numeric figure lookup helpers, current-mappable
   `clim` / `sci` / `set_cmap`, blocking GUI input waits, `clabel`, polar grid
