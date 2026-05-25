@@ -2855,6 +2855,10 @@ Current slice landed:
 - Documented `pyplot.getp`, `pyplot.setp`, and `pyplot.subplot_tool` as
   intentional omissions; Go uses typed artist APIs and layout controls instead
   of dynamic property strings or GUI-only adjustment dialogs.
+- Added pyplot wrappers for existing core plot/stat/layout helpers: `Step`,
+  `Stairs`, `BrokenBarH`, `BarLabel`, `BoxPlot`, `StackPlot`, `ECDF`,
+  `AutoScale`, `FigText`, `TightLayout`, `TwinX`, and `TwinY`, with focused
+  stateful delegation tests and public-surface rows.
 - Added core `ImRead` / `ImSave` image IO helpers for Go-supported file
   decoding and PNG `render.RGBAImage` output, including straight-alpha PNG
   round-trip tests and explicit unsupported-input errors.

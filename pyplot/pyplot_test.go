@@ -610,12 +610,88 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	if fill := Fill([]float64{0, 1, 0}, []float64{0, 0, 1}); fill == nil {
 		t.Fatal("Fill() returned nil")
 	}
+	if step := Step([]float64{0, 1, 2}, []float64{1, 3, 2}); step == nil {
+		t.Fatal("Step() returned nil")
+	}
+	if stairs := Stairs([]float64{1, 2}, []float64{0, 1, 2}); stairs == nil {
+		t.Fatal("Stairs() returned nil")
+	}
+	broken := BrokenBarH([][2]float64{{1, 2}, {4, 1}}, [2]float64{0.5, 0.25})
+	if broken == nil {
+		t.Fatal("BrokenBarH() returned nil")
+	}
+	if labels := BarLabel(broken, []string{"one", "two"}); len(labels) != 2 {
+		t.Fatalf("BarLabel() returned %d labels, want 2", len(labels))
+	}
+	if box := BoxPlot([]float64{1, 2, 3, 4}); box == nil {
+		t.Fatal("BoxPlot() returned nil")
+	}
+	if fills := StackPlot([]float64{0, 1}, [][]float64{{1, 2}, {2, 1}}); len(fills) != 2 {
+		t.Fatalf("StackPlot() returned %d fills, want 2", len(fills))
+	}
+	if ecdf := ECDF([]float64{3, 1, 2}); ecdf == nil {
+		t.Fatal("ECDF() returned nil")
+	}
 	pie := Pie([]float64{1, 2}, core.PieOptions{Labels: []string{"A", "B"}})
 	if pie == nil {
 		t.Fatal("Pie() returned nil")
 	}
 	if labels := PieLabel(pie, []string{"one", "two"}); len(labels) != 2 {
 		t.Fatalf("PieLabel() returned %d labels, want 2", len(labels))
+	}
+
+	ax := GCA()
+	XLim(-10, 10)
+	YLim(-10, 10)
+	AutoScale(0)
+	xMin, xMax := ax.XScale.Domain()
+	yMin, yMax := ax.YScale.Domain()
+	if xMin > 0 || xMax < 4 || yMin > 0 || yMax < 4 {
+		t.Fatalf("AutoScale() domains = x[%v,%v] y[%v,%v], want coverage for current artists", xMin, xMax, yMin, yMax)
+	}
+}
+
+func TestFigureLayoutAndTwinAxesWrappersDelegateToCurrentState(t *testing.T) {
+	resetForTests()
+
+	fig := GCF()
+	if text := FigText(0.1, 0.9, "figure note"); text == nil {
+		t.Fatal("FigText() returned nil")
+	}
+	if got := len(fig.Artists); got != 1 {
+		t.Fatalf("len(fig.Artists) = %d, want 1", got)
+	}
+
+	TightLayout()
+	if got := fig.LayoutEngine(); got != core.LayoutEngineTight {
+		t.Fatalf("layout engine = %v, want LayoutEngineTight", got)
+	}
+
+	base := GCA()
+	xTwin := TwinX()
+	if xTwin == nil {
+		t.Fatal("TwinX() returned nil")
+	}
+	if got := GCA(); got != xTwin {
+		t.Fatalf("after TwinX, GCA() = %p, want %p", got, xTwin)
+	}
+	if xTwin.YAxisRight == nil || xTwin.YAxisRight.Side != core.AxisRight {
+		t.Fatalf("TwinX right axis = %#v, want right", xTwin.YAxisRight)
+	}
+
+	SCA(base)
+	yTwin := TwinY()
+	if yTwin == nil {
+		t.Fatal("TwinY() returned nil")
+	}
+	if got := GCA(); got != yTwin {
+		t.Fatalf("after TwinY, GCA() = %p, want %p", got, yTwin)
+	}
+	if yTwin.XAxisTop == nil || yTwin.XAxisTop.Side != core.AxisTop {
+		t.Fatalf("TwinY top axis = %#v, want top", yTwin.XAxisTop)
+	}
+	if got := len(fig.Children); got != 3 {
+		t.Fatalf("len(fig.Children) = %d, want base axes plus two twins", got)
 	}
 }
 

@@ -374,6 +374,16 @@ func LogLog(x, y []float64, opts ...core.PlotOptions) *core.Line2D {
 	return GCA().LogLog(x, y, opts...)
 }
 
+// Step delegates to the current axes.
+func Step(x, y []float64, opts ...core.StepOptions) *core.Line2D {
+	return GCA().Step(x, y, opts...)
+}
+
+// Stairs delegates to the current axes.
+func Stairs(values, edges []float64, opts ...core.StairsOptions) *core.Stairs2D {
+	return GCA().Stairs(values, edges, opts...)
+}
+
 // Scatter delegates to the current axes.
 func Scatter(x, y []float64, opts ...core.ScatterOptions) *core.Scatter2D {
 	return GCA().Scatter(x, y, opts...)
@@ -510,6 +520,11 @@ func YLim(minVal, maxVal float64) {
 	GCA().SetYLim(minVal, maxVal)
 }
 
+// AutoScale updates current axes limits from artist bounds.
+func AutoScale(margin float64) {
+	GCA().AutoScale(margin)
+}
+
 // XScale sets the current axes x-axis scale.
 func XScale(name string, opts ...transform.ScaleOption) error {
 	return GCA().SetXScale(name, opts...)
@@ -641,6 +656,16 @@ func BarH(y, widths []float64, opts ...core.BarOptions) *core.Bar2D {
 	return GCA().BarH(y, widths, opts...)
 }
 
+// BrokenBarH delegates to the current axes.
+func BrokenBarH(xRanges [][2]float64, yRange [2]float64, opts ...core.BarOptions) *core.Bar2D {
+	return GCA().BrokenBarH(xRanges, yRange, opts...)
+}
+
+// BarLabel delegates to the current axes.
+func BarLabel(bar *core.Bar2D, labels []string, opts ...core.BarLabelOptions) []*core.Text {
+	return GCA().BarLabel(bar, labels, opts...)
+}
+
 // FillBetween delegates to the current axes.
 func FillBetween(x, y1, y2 []float64, opts ...core.FillOptions) *core.Fill2D {
 	return GCA().FillBetween(x, y1, y2, opts...)
@@ -654,6 +679,21 @@ func Fill(x, y []float64, opts ...core.FillOptions) *core.PolyCollection {
 // Hist delegates to the current axes.
 func Hist(data []float64, opts ...core.HistOptions) *core.Hist2D {
 	return GCA().Hist(data, opts...)
+}
+
+// BoxPlot delegates to the current axes.
+func BoxPlot(data []float64, opts ...core.BoxPlotOptions) *core.BoxPlot2D {
+	return GCA().BoxPlot(data, opts...)
+}
+
+// StackPlot delegates to the current axes.
+func StackPlot(x []float64, ys [][]float64, opts ...core.StackPlotOptions) []*core.Fill2D {
+	return GCA().StackPlot(x, ys, opts...)
+}
+
+// ECDF delegates to the current axes.
+func ECDF(data []float64, opts ...core.ECDFOptions) *core.Line2D {
+	return GCA().ECDF(data, opts...)
 }
 
 // ErrorBar delegates to the current axes.
@@ -861,6 +901,11 @@ func YLabel(label string) {
 	GCA().SetYLabel(label)
 }
 
+// FigText adds text in figure coordinates to the current figure.
+func FigText(x, y float64, text string, opts ...core.TextOptions) *core.Text {
+	return GCF().Text(x, y, text, opts...)
+}
+
 // Suptitle sets the current figure-level title.
 func Suptitle(label string) {
 	GCF().SetSuptitle(label)
@@ -879,6 +924,16 @@ func SupYLabel(label string) {
 // Box toggles the current axes frame.
 func Box(on bool) {
 	GCA().ShowFrame = on
+}
+
+// TwinX creates a current overlay axes sharing the current axes x-scale.
+func TwinX() *core.Axes {
+	return setCurrentAxes(GCA().TwinX())
+}
+
+// TwinY creates a current overlay axes sharing the current axes y-scale.
+func TwinY() *core.Axes {
+	return setCurrentAxes(GCA().TwinY())
 }
 
 // Legend adds a legend to the current axes.
@@ -926,6 +981,11 @@ func RCContext(params style.Params) (func(), error) {
 // RCDefaults restores the active defaults to the library baseline.
 func RCDefaults() {
 	style.ResetDefaults()
+}
+
+// TightLayout enables tight layout on the current figure.
+func TightLayout() {
+	GCF().TightLayout()
 }
 
 // LoadRCFile loads a Matplotlib-style rc file into the active defaults.
@@ -1239,6 +1299,18 @@ func applyTickLabelFormat(formatter core.ScalarFormatter, opts TickLabelFormatOp
 		formatter.UseMathText = *opts.UseMathText
 	}
 	return formatter, nil
+}
+
+func setCurrentAxes(ax *core.Axes) *core.Axes {
+	if ax == nil {
+		return nil
+	}
+	registry.mu.Lock()
+	if fig := registry.figureForAxesLocked(ax); fig != nil {
+		registry.rememberAxesLocked(fig, ax, "")
+	}
+	registry.mu.Unlock()
+	return ax
 }
 
 func setFixedTicks(axis *core.Axis, name string, ticks []float64, labels ...[]string) error {
