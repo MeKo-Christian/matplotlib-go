@@ -10,6 +10,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/canvas"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
@@ -183,6 +184,61 @@ func TestAxisLimitAndScaleHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 	if _, ok := ax.YScale.(transform.SymLog); !ok {
 		t.Fatalf("y scale = %T, want transform.SymLog", ax.YScale)
+	}
+}
+
+func TestGridAndTickParamsDelegateToCurrentAxes(t *testing.T) {
+	resetForTests()
+
+	gridColor := render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1}
+	gridWidth := 2.5
+	grids, err := Grid(true, core.TickParams{
+		Axis:          "both",
+		Which:         "both",
+		GridColor:     &gridColor,
+		GridLineWidth: &gridWidth,
+	})
+	if err != nil {
+		t.Fatalf("Grid() error = %v", err)
+	}
+	if len(grids) != 2 {
+		t.Fatalf("Grid() returned %d grids, want 2", len(grids))
+	}
+	for _, grid := range grids {
+		if !grid.Major || !grid.Minor {
+			t.Fatalf("grid visibility = major:%v minor:%v, want both true", grid.Major, grid.Minor)
+		}
+		if grid.Color != gridColor || grid.MinorColor != gridColor {
+			t.Fatalf("grid colors = %+v / %+v, want %+v", grid.Color, grid.MinorColor, gridColor)
+		}
+		if grid.LineWidth != gridWidth || grid.MinorLineWidth != gridWidth {
+			t.Fatalf("grid widths = %v / %v, want %v", grid.LineWidth, grid.MinorLineWidth, gridWidth)
+		}
+	}
+
+	showLabels := false
+	tickLength := 7.25
+	if err := TickParams(core.TickParams{
+		Axis:       "x",
+		ShowLabels: &showLabels,
+		Length:     &tickLength,
+	}); err != nil {
+		t.Fatalf("TickParams() error = %v", err)
+	}
+
+	ax := GCA()
+	if ax.XAxis.ShowLabels {
+		t.Fatal("TickParams() did not update x tick label visibility")
+	}
+	if !ax.YAxis.ShowLabels {
+		t.Fatal("TickParams(axis=x) unexpectedly changed y tick label visibility")
+	}
+	if ax.XAxis.TickSize != tickLength {
+		t.Fatalf("x tick length = %v, want %v", ax.XAxis.TickSize, tickLength)
+	}
+
+	if _, err := Grid(true, core.TickParams{Axis: "diagonal"}); err == nil {
+		t.Fatal("Grid() with unsupported axis returned nil error")
 	}
 }
 

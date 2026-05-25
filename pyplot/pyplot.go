@@ -406,6 +406,39 @@ func YScale(name string, opts ...transform.ScaleOption) error {
 	return GCA().SetYScale(name, opts...)
 }
 
+// Grid shows or hides grid lines on the current axes, creating grid artists as needed.
+func Grid(visible bool, params ...core.TickParams) ([]*core.Grid, error) {
+	ax := GCA()
+	tickParams := core.TickParams{
+		Axis:  "both",
+		Which: "major",
+	}
+	if len(params) > 0 {
+		tickParams = params[0]
+		if tickParams.Axis == "" {
+			tickParams.Axis = "both"
+		}
+		if tickParams.Which == "" {
+			tickParams.Which = "major"
+		}
+	}
+	tickParams.GridVisible = &visible
+
+	grids, err := ensureGridArtists(ax, tickParams.Axis)
+	if err != nil {
+		return nil, err
+	}
+	if err := ax.TickParams(tickParams); err != nil {
+		return nil, err
+	}
+	return grids, nil
+}
+
+// TickParams applies tick visibility and styling options to the current axes.
+func TickParams(params core.TickParams) error {
+	return GCA().TickParams(params)
+}
+
 // Bar delegates to the current axes.
 func Bar(x, heights []float64, opts ...core.BarOptions) *core.Bar2D {
 	return GCA().Bar(x, heights, opts...)
@@ -901,6 +934,53 @@ func clearAxes(ax *core.Axes) {
 	ax.YAxisRight = nil
 	ax.ExtraAxes = nil
 	ax.ShowFrame = true
+}
+
+func ensureGridArtists(ax *core.Axes, axisSpec string) ([]*core.Grid, error) {
+	sides, err := gridAxisSides(axisSpec)
+	if err != nil {
+		return nil, err
+	}
+
+	grids := make([]*core.Grid, 0, len(sides))
+	for _, side := range sides {
+		if grid := findGridArtist(ax, side); grid != nil {
+			grids = append(grids, grid)
+			continue
+		}
+		grids = append(grids, ax.AddGrid(side))
+	}
+	return grids, nil
+}
+
+func findGridArtist(ax *core.Axes, side core.AxisSide) *core.Grid {
+	if ax == nil {
+		return nil
+	}
+	for _, artist := range ax.Artists {
+		grid, ok := artist.(*core.Grid)
+		if ok && grid.Axis == side {
+			return grid
+		}
+	}
+	return nil
+}
+
+func gridAxisSides(axisSpec string) ([]core.AxisSide, error) {
+	switch strings.ToLower(strings.TrimSpace(axisSpec)) {
+	case "", "both":
+		return []core.AxisSide{core.AxisBottom, core.AxisLeft}, nil
+	case "x", "bottom":
+		return []core.AxisSide{core.AxisBottom}, nil
+	case "top":
+		return []core.AxisSide{core.AxisTop}, nil
+	case "y", "left":
+		return []core.AxisSide{core.AxisLeft}, nil
+	case "right":
+		return []core.AxisSide{core.AxisRight}, nil
+	default:
+		return nil, fmt.Errorf("pyplot: unsupported grid axis %q", axisSpec)
+	}
 }
 
 func ensureDefaultAxes(fig *core.Figure) *core.Axes {
