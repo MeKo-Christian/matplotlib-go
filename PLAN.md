@@ -2800,9 +2800,10 @@ Current slice landed:
 - Added explicit public-surface classifications for image.py's remaining
   image classes and IO helpers: BboxImage maps to existing annotation/anchored
   image composition, NonUniformImage / PcolorImage map to PColor/PColorMesh,
-  and FigureImage, imread, imsave, and thumbnail are documented omissions with
-  migration guidance. The broad image.py row now only carries pcolorfast /
-  transformed-resampling edge behavior as remaining partial scope.
+  FigureImage and thumbnail are documented omissions with migration guidance,
+  and imread / imsave now have explicit partial Go helpers. The broad image.py
+  row now only carries pcolorfast / transformed-resampling edge behavior as
+  remaining partial scope.
 - Added pyplot `ImShow` as a stateful wrapper over `Axes.ImShow`, including
   interpolation option delegation, and gave `pyplot.py:function:imshow` its own
   public-surface row instead of relying on the broad pyplot module note.
@@ -2818,6 +2819,9 @@ Current slice landed:
 - Added pyplot `CLF` / `CLA` reset helpers for clearing the current figure or
   current axes without destroying the figure/axes registry entry, with
   public-surface notes for the implemented `clf` / `cla` subset.
+- Added core `ImRead` / `ImSave` image IO helpers for Go-supported file
+  decoding and PNG `render.RGBAImage` output, including straight-alpha PNG
+  round-trip tests and explicit unsupported-input errors.
 - Added explicit pyplot image-helper rows for `matshow`, `spy`, and the
   intentionally omitted `figimage`, so the migration status of the high-traffic
   image wrapper family is concrete.
