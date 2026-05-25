@@ -569,6 +569,55 @@ func TestNativeHatchDrawsWithinPathClip(t *testing.T) {
 	}
 }
 
+func TestNativeDiagonalHatchUsesDeviceSpaceOrientation(t *testing.T) {
+	r := mustNew(t, 140, 100)
+	_ = r.Begin(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 140, Y: 100}})
+
+	var rect geom.Path
+	rect.MoveTo(geom.Pt{X: 20, Y: 20})
+	rect.LineTo(geom.Pt{X: 120, Y: 20})
+	rect.LineTo(geom.Pt{X: 120, Y: 80})
+	rect.LineTo(geom.Pt{X: 20, Y: 80})
+	rect.Close()
+	r.Path(rect, &render.Paint{
+		Hatch:          "/",
+		HatchColor:     render.Color{A: 1},
+		HatchLineWidth: 1,
+	})
+	_ = r.End()
+
+	slope, ok := darkPixelSlope(r.GetImage(), image.Rect(24, 24, 116, 76))
+	if !ok {
+		t.Fatal("expected diagonal hatch pixels")
+	}
+	if slope >= 0 {
+		t.Fatalf("/ hatch image-space slope = %.3f, want negative like Matplotlib's AGG hatch tile", slope)
+	}
+}
+
+func TestNativeDiagonalHatchDensityMatchesMatplotlibReference(t *testing.T) {
+	r := mustNew(t, 140, 100)
+	_ = r.Begin(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 140, Y: 100}})
+
+	var rect geom.Path
+	rect.MoveTo(geom.Pt{X: 20, Y: 20})
+	rect.LineTo(geom.Pt{X: 120, Y: 20})
+	rect.LineTo(geom.Pt{X: 120, Y: 80})
+	rect.LineTo(geom.Pt{X: 20, Y: 80})
+	rect.Close()
+	r.Path(rect, &render.Paint{
+		Hatch:          "///",
+		HatchColor:     render.Color{A: 1},
+		HatchLineWidth: 1,
+	})
+	_ = r.End()
+
+	runs := darkRunsOnScanline(r.GetImage(), 50, 25, 115)
+	if runs < 9 || runs > 13 {
+		t.Fatalf("/// hatch drew %d dark runs across tile scanline, want Matplotlib-like density around 11", runs)
+	}
+}
+
 func TestNativeHatchDrawsShapePatterns(t *testing.T) {
 	for _, hatch := range []string{"o", "O", ".", "*"} {
 		t.Run(hatch, func(t *testing.T) {
@@ -598,6 +647,55 @@ func TestNativeHatchDrawsShapePatterns(t *testing.T) {
 			}
 		})
 	}
+}
+
+func darkRunsOnScanline(img *image.RGBA, y, minX, maxX int) int {
+	runs := 0
+	inRun := false
+	for x := minX; x <= maxX; x++ {
+		c := img.RGBAAt(x, y)
+		dark := c.R < 64 && c.G < 64 && c.B < 64 && c.A > 0
+		if dark && !inRun {
+			runs++
+		}
+		inRun = dark
+	}
+	return runs
+}
+
+func darkPixelSlope(img *image.RGBA, bounds image.Rectangle) (float64, bool) {
+	var n int
+	var sumX, sumY float64
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			c := img.RGBAAt(x, y)
+			if c.R < 64 && c.G < 64 && c.B < 64 && c.A > 0 {
+				n++
+				sumX += float64(x)
+				sumY += float64(y)
+			}
+		}
+	}
+	if n < 2 {
+		return 0, false
+	}
+	meanX := sumX / float64(n)
+	meanY := sumY / float64(n)
+	var cov, varX float64
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			c := img.RGBAAt(x, y)
+			if c.R < 64 && c.G < 64 && c.B < 64 && c.A > 0 {
+				dx := float64(x) - meanX
+				cov += dx * (float64(y) - meanY)
+				varX += dx * dx
+			}
+		}
+	}
+	if varX == 0 {
+		return 0, false
+	}
+	return cov / varX, true
 }
 
 func TestNativeHatchResidualAgainstFallbackDiagnostic(t *testing.T) {

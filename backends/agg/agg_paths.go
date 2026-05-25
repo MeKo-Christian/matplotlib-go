@@ -774,8 +774,10 @@ func (r *Renderer) drawNativeHatch(clipPath geom.Path, paint *render.Paint) {
 			if dpi <= 0 {
 				dpi = 72
 			}
-			// Matplotlib hatch.py creates diagonal hatches with density lines
-			// in a DPI-sized unit tile; this is their display-space phase spacing.
+			// Matplotlib hatch.py creates diagonal hatches in a DPI-sized unit
+			// tile; only about half of the generated unit lines cross any given
+			// scanline, so this display-space phase spacing matches the rendered
+			// AGG density for repeated diagonal hatch characters.
 			spacing = math.Max(2, dpi/(3*float64(count)))
 		}
 		hatchPaint := render.Paint{
@@ -793,7 +795,7 @@ func (r *Renderer) drawNativeHatch(clipPath geom.Path, paint *render.Paint) {
 			if len(hatchPath.C) == 0 {
 				continue
 			}
-			r.Path(hatchPath, &hatchPaint)
+			r.pathDevice(hatchPath, &hatchPaint)
 		}
 	}
 }

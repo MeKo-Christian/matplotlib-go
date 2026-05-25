@@ -1654,8 +1654,9 @@ compensating in core.
 - [ ] skia shader / gradient / pattern / hatch fills bypass the gobasic device
       y-flip (blocked on the skia build).
 - [x] `pattern_gradient_effects` — fixture port reconciled to Matplotlib-style
-      image, patch, hatch, and `SimplePatchShadow` calls (MeanAbs 3.09 → 1.14,
-      2026-05-25).
+      image, patch, hatch, and `SimplePatchShadow` calls; AGG native hatch now
+      stays in device space like Matplotlib's backend tile pass (MeanAbs 3.09 →
+      0.42, 2026-05-25).
 
 (`widgets_gallery` residual is owned by Phase 17.5. `spectrum_variants` RMSE
 10.96 is a documented skip.)
