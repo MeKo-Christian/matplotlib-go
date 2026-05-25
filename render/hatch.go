@@ -39,7 +39,7 @@ func DrawHatchFallback(r Renderer, clipPath geom.Path, paint Paint) bool {
 	}
 	spacingBase := paint.HatchSpacing
 	if spacingBase <= 0 {
-		spacingBase = 32
+		spacingBase = DefaultHatchSpacing
 	}
 
 	drew := false

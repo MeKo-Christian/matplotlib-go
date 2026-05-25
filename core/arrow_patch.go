@@ -237,7 +237,7 @@ func (c *ConnectionPatch) connectionDisplayPath(ctx *DrawContext) geom.Path {
 	return shrinkPathEndpoints(path, arrowShrinkPixels(ctx, c.ShrinkA), arrowShrinkPixels(ctx, c.ShrinkB))
 }
 
-func (a *FancyArrowPatch) displayParts(_ *DrawContext, path geom.Path) []arrowPathPart {
+func (a *FancyArrowPatch) displayParts(ctx *DrawContext, path geom.Path) []arrowPathPart {
 	style := a.ArrowStyle
 	if style.Name == "" {
 		style, _ = ArrowStyleFromString("simple")
@@ -245,6 +245,9 @@ func (a *FancyArrowPatch) displayParts(_ *DrawContext, path geom.Path) []arrowPa
 	scale := a.MutationScale
 	if scale <= 0 {
 		scale = 10
+	}
+	if ctx != nil {
+		scale = pointsToPixels(ctx.RC, scale)
 	}
 	lineWidth := a.EdgeWidth
 	if lineWidth <= 0 {
@@ -724,26 +727,62 @@ func wedgeArrowPathForConnection(path geom.Path, tailWidth, shrinkFactor float64
 		shrinkFactor = 0.5
 	}
 
-	mid := quadraticPoint(start, ctrl, tip, 0.5)
-	startNormal := normalForVector(geom.Pt{X: ctrl.X - start.X, Y: ctrl.Y - start.Y})
-	midNormal := normalForVector(geom.Pt{X: tip.X - start.X, Y: tip.Y - start.Y})
-	if midNormal == (geom.Pt{}) {
-		midNormal = normalForVector(geom.Pt{X: tip.X - ctrl.X, Y: tip.Y - ctrl.Y})
-	}
-	if startNormal == (geom.Pt{}) || midNormal == (geom.Pt{}) {
+	plus, minus, ok := wedgedQuadraticBezier(start, ctrl, tip, tailWidth/2, 1, shrinkFactor, 0)
+	if !ok {
 		return wedgeArrowPath(start, tip, tailWidth, shrinkFactor)
 	}
 
-	tailHalf := tailWidth / 2
-	midHalf := tailHalf * shrinkFactor
-	points := []geom.Pt{
-		{X: start.X + startNormal.X*tailHalf, Y: start.Y + startNormal.Y*tailHalf},
-		{X: mid.X + midNormal.X*midHalf, Y: mid.Y + midNormal.Y*midHalf},
-		tip,
-		{X: mid.X - midNormal.X*midHalf, Y: mid.Y - midNormal.Y*midHalf},
-		{X: start.X - startNormal.X*tailHalf, Y: start.Y - startNormal.Y*tailHalf},
+	out := geom.Path{}
+	out.MoveTo(plus[0])
+	out.QuadTo(plus[1], plus[2])
+	out.LineTo(minus[2])
+	out.QuadTo(minus[1], minus[0])
+	out.Close()
+	return out
+}
+
+func wedgedQuadraticBezier(start, ctrl, end geom.Pt, width, w1, wm, w2 float64) ([3]geom.Pt, [3]geom.Pt, bool) {
+	dirStart := geom.Pt{X: ctrl.X - start.X, Y: ctrl.Y - start.Y}
+	dirEnd := geom.Pt{X: end.X - ctrl.X, Y: end.Y - ctrl.Y}
+	if dirStart == (geom.Pt{}) || dirEnd == (geom.Pt{}) {
+		return [3]geom.Pt{}, [3]geom.Pt{}, false
 	}
-	return polygonPath(points, true)
+
+	startPlus, startMinus := normalPoints(start, dirStart, width*w1)
+	endPlus, endMinus := normalPoints(end, dirEnd, width*w2)
+
+	c12 := geom.Pt{X: (start.X + ctrl.X) / 2, Y: (start.Y + ctrl.Y) / 2}
+	c23 := geom.Pt{X: (ctrl.X + end.X) / 2, Y: (ctrl.Y + end.Y) / 2}
+	mid := geom.Pt{X: (c12.X + c23.X) / 2, Y: (c12.Y + c23.Y) / 2}
+	midPlus, midMinus := normalPoints(mid, geom.Pt{X: c23.X - c12.X, Y: c23.Y - c12.Y}, width*wm)
+
+	return [3]geom.Pt{
+			startPlus,
+			quadraticControlThroughMidpoint(startPlus, midPlus, endPlus),
+			endPlus,
+		}, [3]geom.Pt{
+			startMinus,
+			quadraticControlThroughMidpoint(startMinus, midMinus, endMinus),
+			endMinus,
+		}, true
+}
+
+func normalPoints(center, direction geom.Pt, distance float64) (geom.Pt, geom.Pt) {
+	length := math.Hypot(direction.X, direction.Y)
+	if length == 0 || distance == 0 {
+		return center, center
+	}
+	cosT := direction.X / length
+	sinT := direction.Y / length
+	return geom.Pt{X: center.X + distance*sinT, Y: center.Y - distance*cosT},
+		geom.Pt{X: center.X - distance*sinT, Y: center.Y + distance*cosT}
+}
+
+func quadraticControlThroughMidpoint(start, mid, end geom.Pt) geom.Pt {
+	return geom.Pt{
+		X: 0.5 * (4*mid.X - (start.X + end.X)),
+		Y: 0.5 * (4*mid.Y - (start.Y + end.Y)),
+	}
 }
 
 func quadraticConnectionPoints(path geom.Path) (geom.Pt, geom.Pt, geom.Pt, bool) {

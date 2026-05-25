@@ -177,7 +177,7 @@ func (m *QuadMesh) drawQuadMesh(r render.Renderer, ctx *DrawContext) bool {
 					Hatch:        hatch,
 					HatchColor:   hatchColor,
 					HatchWidth:   hatchWidth,
-					HatchSpacing: 32,
+					HatchSpacing: render.DefaultHatchSpacing,
 					Antialiased:  m.antialiased(),
 				})
 			}

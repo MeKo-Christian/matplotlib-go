@@ -765,7 +765,7 @@ func (r *Renderer) drawNativeHatch(clipPath geom.Path, paint *render.Paint) {
 	}()
 
 	for pattern, count := range counts {
-		spacing := math.Max(2, 32/float64(count))
+		spacing := math.Max(2, render.DefaultHatchSpacing/float64(count))
 		if paint.HatchSpacing > 0 {
 			spacing = math.Max(2, paint.HatchSpacing/float64(count))
 		}

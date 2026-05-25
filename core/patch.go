@@ -121,7 +121,7 @@ func (p *Patch) resolvedHatchWidth() float64 {
 
 func (p *Patch) resolvedHatchSpacing() float64 {
 	if p == nil || p.HatchSpacing <= 0 {
-		return 32
+		return render.DefaultHatchSpacing
 	}
 	return p.HatchSpacing
 }

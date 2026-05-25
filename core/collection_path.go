@@ -79,7 +79,7 @@ func (c *PathCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		paint.Hatch = hatch
 		paint.HatchColor = hatchColor
 		paint.HatchLineWidth = hatchWidth
-		paint.HatchSpacing = 32
+		paint.HatchSpacing = render.DefaultHatchSpacing
 		if !c.antialiased() {
 			paint.Antialias = render.AntialiasOff
 		}
@@ -330,7 +330,7 @@ func (c *PathCollection) drawPathCollection(r render.Renderer, ctx *DrawContext)
 			Hatch:        hatch,
 			HatchColor:   hatchColor,
 			HatchWidth:   hatchWidth,
-			HatchSpacing: 32,
+			HatchSpacing: render.DefaultHatchSpacing,
 			Antialiased:  c.antialiased(),
 		})
 	}

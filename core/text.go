@@ -911,7 +911,7 @@ func (a *Annotation) drawArrowPath(r render.Renderer, ctx *DrawContext, path geo
 		},
 		ArrowStyle:      a.ArrowStyle,
 		ConnectionStyle: a.ConnectionStyle,
-		MutationScale:   pointsToPixels(ctx.RC, a.ArrowHeadSize),
+		MutationScale:   a.ArrowHeadSize,
 	}
 	for _, part := range patch.displayParts(ctx, path) {
 		if len(part.path.C) == 0 {

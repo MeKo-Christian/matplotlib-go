@@ -82,6 +82,14 @@ func TestFancyBboxPatchRoundUsesQuadraticCornersAndHatch(t *testing.T) {
 	}
 }
 
+func TestPatchDefaultHatchSpacingMatchesMatplotlibDensity(t *testing.T) {
+	patch := &Patch{}
+	want := 100.0 / 6.0
+	if got := patch.resolvedHatchSpacing(); !approx(got, want, 1e-12) {
+		t.Fatalf("default hatch spacing = %v, want Matplotlib density spacing %v", got, want)
+	}
+}
+
 func TestFancyBboxPatchRoundUsesMutationScaleAndAspect(t *testing.T) {
 	box := &FancyBboxPatch{
 		Width:          2,
@@ -659,6 +667,35 @@ func TestFancyArrowPatchMutationAspectScalesArrowMutation(t *testing.T) {
 	}
 }
 
+func TestFancyArrowPatchMutationScaleUsesPointUnits(t *testing.T) {
+	arrowStyle, ok := ArrowStyleFromString("->,head_length=0.4,head_width=0.2")
+	if !ok {
+		t.Fatal("missing -> arrow style")
+	}
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 0, Y: 0})
+	path.LineTo(geom.Pt{X: 100, Y: 0})
+	ctx := createTestDrawContext()
+	ctx.RC.DPI = 144
+
+	parts := (&FancyArrowPatch{
+		ArrowStyle:    arrowStyle,
+		MutationScale: 10,
+	}).displayParts(ctx, path)
+
+	if len(parts) != 2 {
+		t.Fatalf("curve arrow parts = %d, want line plus open head", len(parts))
+	}
+	headBounds, ok := pathBounds(parts[1].path)
+	if !ok {
+		t.Fatalf("missing arrow head bounds: %+v", parts[1].path)
+	}
+	wantHeight := arrowStyle.HeadWidth * 10 * ctx.RC.DPI / 72.0
+	if !approx(headBounds.H(), wantHeight, 1e-9) {
+		t.Fatalf("open arrow head height = %v, want mutation_scale in points -> %v px", headBounds.H(), wantHeight)
+	}
+}
+
 func TestArrowStyleWedgeUsesShrinkFactor(t *testing.T) {
 	style, ok := ArrowStyleFromString("wedge,tail_width=0.6,shrink_factor=0.25")
 	if !ok {
@@ -707,14 +744,46 @@ func TestArrowStyleWedgeFollowsQuadraticConnection(t *testing.T) {
 		t.Fatalf("wedge parts = %+v, want one fillable path", parts)
 	}
 	got := parts[0].path
-	if len(got.V) != 5 {
+	if len(got.V) != 6 {
 		t.Fatalf("wedge path vertices = %d, want tapered closed outline: %+v", len(got.V), got)
 	}
-	if got.V[1].Y < 20 || got.V[3].Y < 20 {
+	if got.V[1].Y < 20 || got.V[4].Y < 20 {
 		t.Fatalf("quadratic wedge ignored connection control point, got vertices %+v", got.V)
 	}
 	if got.V[2] != (geom.Pt{X: 100, Y: 0}) {
 		t.Fatalf("wedge should taper to the quadratic endpoint, got tip %+v", got.V[2])
+	}
+}
+
+func TestArrowStyleWedgeUsesQuadraticOutlineForQuadraticConnection(t *testing.T) {
+	style, ok := ArrowStyleFromString("wedge,tail_width=0.6,shrink_factor=0.25")
+	if !ok {
+		t.Fatal("ArrowStyleFromString(wedge) returned !ok")
+	}
+
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 0, Y: 0})
+	path.QuadTo(geom.Pt{X: 50, Y: 50}, geom.Pt{X: 100, Y: 0})
+	parts := style.transmute(path, 10, 1)
+	if len(parts) != 1 || !parts[0].fillable {
+		t.Fatalf("wedge parts = %+v, want one fillable path", parts)
+	}
+
+	want := []geom.Cmd{
+		geom.MoveTo,
+		geom.QuadTo,
+		geom.LineTo,
+		geom.QuadTo,
+		geom.ClosePath,
+	}
+	if got := parts[0].path.C; len(got) != len(want) {
+		t.Fatalf("wedge commands = %+v, want %+v", got, want)
+	} else {
+		for i := range want {
+			if got[i] != want[i] {
+				t.Fatalf("wedge commands = %+v, want %+v", got, want)
+			}
+		}
 	}
 }
 

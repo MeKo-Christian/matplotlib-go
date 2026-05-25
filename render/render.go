@@ -7,6 +7,10 @@ import (
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 )
 
+// DefaultHatchSpacing matches Matplotlib's default hatch density of six
+// pattern rows or lines in a 100 DPI tile.
+const DefaultHatchSpacing = 100.0 / 6.0
+
 // Paint configures drawing style for paths.
 type Paint struct {
 	LineWidth         float64

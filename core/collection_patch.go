@@ -204,7 +204,7 @@ func (c *PatchCollection) drawPathCollection(r render.Renderer, ctx *DrawContext
 			Hatch:        hatch,
 			HatchColor:   hatchColor,
 			HatchWidth:   hatchWidth,
-			HatchSpacing: 32,
+			HatchSpacing: render.DefaultHatchSpacing,
 			Antialiased:  c.antialiased(),
 		})
 	}
