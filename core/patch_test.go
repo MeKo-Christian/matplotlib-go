@@ -210,6 +210,51 @@ func TestFancyBboxPatchAdditionalBoxStyles(t *testing.T) {
 	}
 }
 
+func TestFancyBboxPatchStyleMatrixArrowBoxesMatchMatplotlibDisplay(t *testing.T) {
+	ctx := styleMatrixTestContext()
+
+	rarrow := &FancyBboxPatch{
+		XY:           geom.Pt{X: 7.4, Y: 5.4},
+		Width:        1.35,
+		Height:       0.62,
+		Pad:          0.10,
+		BoxStyle:     BoxStyleRArrow,
+		MutationSize: 1,
+		Coords:       Coords(CoordData),
+	}
+	assertPathVerticesApprox(t, rarrow.displayPath(ctx), []geom.Pt{
+		{X: 433.320, Y: 275.625},
+		{X: 505.149, Y: 275.625},
+		{X: 505.149, Y: 265.939},
+		{X: 539.835, Y: 294.998},
+		{X: 505.149, Y: 324.056},
+		{X: 505.149, Y: 314.370},
+		{X: 433.320, Y: 314.370},
+	}, 0.02)
+
+	darrow := &FancyBboxPatch{
+		XY:           geom.Pt{X: 9.65, Y: 5.4},
+		Width:        1.35,
+		Height:       0.62,
+		Pad:          0.10,
+		BoxStyle:     BoxStyleDArrow,
+		MutationSize: 1,
+		Coords:       Coords(CoordData),
+	}
+	assertPathVerticesApprox(t, darrow.displayPath(ctx), []geom.Pt{
+		{X: 575.811, Y: 314.370},
+		{X: 575.811, Y: 324.056},
+		{X: 541.125, Y: 294.998},
+		{X: 575.811, Y: 265.939},
+		{X: 575.811, Y: 275.625},
+		{X: 636.360, Y: 275.625},
+		{X: 636.360, Y: 265.939},
+		{X: 671.046, Y: 294.998},
+		{X: 636.360, Y: 324.056},
+		{X: 636.360, Y: 314.370},
+	}, 0.02)
+}
+
 func TestFancyBboxPatchToothStyles(t *testing.T) {
 	saw := (&FancyBboxPatch{
 		Width:    4,
@@ -272,6 +317,26 @@ func assertApproxPathBounds(t *testing.T, path geom.Path, want geom.Rect) {
 	if !approxPt(got.Min, want.Min, 1e-9) || !approxPt(got.Max, want.Max, 1e-9) {
 		t.Fatalf("bounds = %+v, want %+v", got, want)
 	}
+}
+
+func assertPathVerticesApprox(t *testing.T, got geom.Path, want []geom.Pt, tol float64) {
+	t.Helper()
+	if len(got.V) != len(want) {
+		t.Fatalf("path vertices = %d, want %d: %+v", len(got.V), len(want), got.V)
+	}
+	for i := range want {
+		if !approxPt(got.V[i], want[i], tol) {
+			t.Fatalf("vertex %d = %+v, want %+v (all vertices %+v)", i, got.V[i], want[i], got.V)
+		}
+	}
+}
+
+func styleMatrixTestContext() *DrawContext {
+	fig := NewFigure(720, 420)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.03, Y: 0.06}, Max: geom.Pt{X: 0.97, Y: 0.96}})
+	ax.SetXLim(0, 12)
+	ax.SetYLim(0, 8)
+	return AxesDrawContext(ax, fig)
 }
 
 func approxPt(a, b geom.Pt, tol float64) bool {
@@ -690,10 +755,107 @@ func TestFancyArrowPatchMutationScaleUsesPointUnits(t *testing.T) {
 	if !ok {
 		t.Fatalf("missing arrow head bounds: %+v", parts[1].path)
 	}
-	wantHeight := arrowStyle.HeadWidth * 10 * ctx.RC.DPI / 72.0
+	wantHeight := 2 * arrowStyle.HeadWidth * 10 * ctx.RC.DPI / 72.0
 	if !approx(headBounds.H(), wantHeight, 1e-9) {
 		t.Fatalf("open arrow head height = %v, want mutation_scale in points -> %v px", headBounds.H(), wantHeight)
 	}
+}
+
+func TestFancyArrowPatchStyleMatrixCurveArrowMatchesMatplotlib(t *testing.T) {
+	arrowStyle, ok := ArrowStyleFromString("->,head_length=0.35,head_width=0.22")
+	if !ok {
+		t.Fatal("missing -> arrow style")
+	}
+	connectionStyle, ok := ConnectionStyleFromString("arc,armA=0.9,armB=0.65,rad=0.18")
+	if !ok {
+		t.Fatal("missing arc connection style")
+	}
+	patch := &FancyArrowPatch{
+		PosA:            geom.Pt{X: 0.9, Y: 2.25},
+		PosB:            geom.Pt{X: 3.1, Y: 2.6},
+		ArrowStyle:      arrowStyle,
+		ConnectionStyle: connectionStyle,
+		MutationScale:   15,
+		Coords:          Coords(CoordData),
+		Patch:           Patch{EdgeWidth: 1.25},
+	}
+	ctx := styleMatrixTestContext()
+
+	parts := patch.displayParts(ctx, patch.displayPath(ctx))
+	if len(parts) != 2 {
+		t.Fatalf("curve arrow parts = %d, want line plus head", len(parts))
+	}
+	assertPathVerticesApprox(t, parts[0].path, []geom.Pt{
+		{X: 75.130, Y: 131.762},
+		{X: 192.533, Y: 147.441},
+	}, 0.02)
+	assertPathVerticesApprox(t, parts[1].path, []geom.Pt{
+		{X: 184.699, Y: 151.019},
+		{X: 192.533, Y: 147.441},
+		{X: 185.912, Y: 141.933},
+	}, 0.02)
+}
+
+func TestFancyArrowPatchStyleMatrixBarAndWedgeMatchMatplotlib(t *testing.T) {
+	ctx := styleMatrixTestContext()
+
+	barStyle, ok := ArrowStyleFromString("|-|")
+	if !ok {
+		t.Fatal("missing |-| arrow style")
+	}
+	barConnection, ok := ConnectionStyleFromString("bar,fraction=0.25,angle=0")
+	if !ok {
+		t.Fatal("missing bar connection style")
+	}
+	bar := &FancyArrowPatch{
+		PosA:            geom.Pt{X: 4.0, Y: 2.62},
+		PosB:            geom.Pt{X: 6.25, Y: 1.88},
+		ArrowStyle:      barStyle,
+		ConnectionStyle: barConnection,
+		MutationScale:   15,
+		Coords:          Coords(CoordData),
+		Patch:           Patch{EdgeWidth: 1.25},
+	}
+	barParts := bar.displayParts(ctx, bar.displayPath(ctx))
+	if len(barParts) != 3 {
+		t.Fatalf("bar arrow parts = %d, want line plus two bars", len(barParts))
+	}
+	assertPathVerticesApprox(t, barParts[0].path, []geom.Pt{
+		{X: 247.200, Y: 146.215},
+		{X: 247.200, Y: 81.123},
+		{X: 374.100, Y: 81.123},
+		{X: 374.100, Y: 111.254},
+	}, 0.02)
+
+	wedgeStyle, ok := ArrowStyleFromString("wedge,tail_width=0.26,shrink_factor=0.35")
+	if !ok {
+		t.Fatal("missing wedge arrow style")
+	}
+	wedgeConnection, ok := ConnectionStyleFromString("arc3,rad=0.22")
+	if !ok {
+		t.Fatal("missing arc3 connection style")
+	}
+	wedge := &FancyArrowPatch{
+		PosA:            geom.Pt{X: 7.05, Y: 2.08},
+		PosB:            geom.Pt{X: 10.8, Y: 2.58},
+		ArrowStyle:      wedgeStyle,
+		ConnectionStyle: wedgeConnection,
+		MutationScale:   15,
+		Coords:          Coords(CoordData),
+		Patch:           Patch{EdgeWidth: 1.25},
+	}
+	wedgeParts := wedge.displayParts(ctx, wedge.displayPath(ctx))
+	if len(wedgeParts) != 1 {
+		t.Fatalf("wedge arrow parts = %d, want one filled path", len(wedgeParts))
+	}
+	assertPathVerticesApprox(t, wedgeParts[0].path, []geom.Pt{
+		{X: 421.091, Y: 120.070},
+		{X: 530.650, Y: 89.275},
+		{X: 628.314, Y: 145.723},
+		{X: 628.314, Y: 145.723},
+		{X: 529.444, Y: 90.451},
+		{X: 422.662, Y: 125.253},
+	}, 0.02)
 }
 
 func TestArrowStyleWedgeUsesShrinkFactor(t *testing.T) {

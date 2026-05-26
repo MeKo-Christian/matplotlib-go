@@ -747,12 +747,6 @@ func (r *Renderer) drawNativeHatch(clipPath geom.Path, paint *render.Paint) {
 	if !ok {
 		return
 	}
-	if hatchHasShapePattern(paint.Hatch) {
-		fallbackPaint := *paint
-		fallbackPaint.HatchColor = color
-		render.DrawHatchFallback(r, clipPath, fallbackPaint)
-		return
-	}
 	counts := hatchCounts(paint.Hatch)
 	if len(counts) == 0 {
 		return
@@ -788,6 +782,9 @@ func (r *Renderer) drawNativeHatch(clipPath geom.Path, paint *render.Paint) {
 			Antialias: paint.Antialias,
 			Snap:      render.SnapOff,
 		}
+		if hatchPatternIsFilled(pattern) {
+			hatchPaint.Fill = color
+		}
 		if hatchPaint.LineWidth <= 0 {
 			hatchPaint.LineWidth = 1
 		}
@@ -800,21 +797,11 @@ func (r *Renderer) drawNativeHatch(clipPath geom.Path, paint *render.Paint) {
 	}
 }
 
-func hatchHasShapePattern(pattern string) bool {
-	for _, ch := range pattern {
-		switch ch {
-		case 'o', 'O', '.', '*':
-			return true
-		}
-	}
-	return false
-}
-
 func hatchCounts(pattern string) map[rune]int {
 	counts := make(map[rune]int)
 	for _, ch := range pattern {
 		switch ch {
-		case '|', '-', '/', '\\', '+', 'x', 'X':
+		case '|', '-', '/', '\\', '+', 'x', 'X', 'o', 'O', '.', '*':
 			counts[ch]++
 		}
 	}
@@ -841,9 +828,21 @@ func hatchPatternPaths(pattern rune, bounds geom.Rect, spacing float64) []geom.P
 			slashHatchPath(bounds, spacing),
 			backslashHatchPath(bounds, spacing),
 		}
+	case 'o':
+		return circleHatchPaths(bounds, spacing, 0.20)
+	case 'O':
+		return circleHatchPaths(bounds, spacing, 0.35)
+	case '.':
+		return circleHatchPaths(bounds, spacing, 0.10)
+	case '*':
+		return starHatchPaths(bounds, spacing)
 	default:
 		return nil
 	}
+}
+
+func hatchPatternIsFilled(pattern rune) bool {
+	return pattern == '.' || pattern == '*'
 }
 
 func verticalHatchPath(bounds geom.Rect, spacing float64) geom.Path {
@@ -854,6 +853,98 @@ func verticalHatchPath(bounds geom.Rect, spacing float64) geom.Path {
 		path.MoveTo(geom.Pt{X: x, Y: bounds.Min.Y - spacing})
 		path.LineTo(geom.Pt{X: x, Y: bounds.Max.Y + spacing})
 	}
+	return path
+}
+
+func circleHatchPaths(bounds geom.Rect, spacing, radiusFactor float64) []geom.Path {
+	if bounds.W() <= 0 || bounds.H() <= 0 || spacing <= 0 {
+		return nil
+	}
+	radius := math.Max(0.5, spacing*radiusFactor)
+	return tiledShapeHatchPaths(bounds, spacing, radius, func(center geom.Pt) geom.Path {
+		return circleHatchPath(center, radius)
+	})
+}
+
+func starHatchPaths(bounds geom.Rect, spacing float64) []geom.Path {
+	if bounds.W() <= 0 || bounds.H() <= 0 || spacing <= 0 {
+		return nil
+	}
+	outer := math.Max(0.75, spacing/3)
+	inner := outer * 0.5
+	return tiledShapeHatchPaths(bounds, spacing, outer, func(center geom.Pt) geom.Path {
+		return starHatchPath(center, outer, inner)
+	})
+}
+
+func tiledShapeHatchPaths(bounds geom.Rect, spacing, radius float64, build func(geom.Pt) geom.Path) []geom.Path {
+	yStart := math.Floor((bounds.Min.Y-radius)/spacing) * spacing
+	yEnd := bounds.Max.Y + radius
+	var paths []geom.Path
+	for y := yStart; y <= yEnd+1e-9; y += spacing {
+		row := int(math.Round(y / spacing))
+		xOffset := 0.0
+		if row%2 != 0 {
+			xOffset = spacing / 2
+		}
+		xStart := math.Floor((bounds.Min.X-radius-xOffset)/spacing)*spacing + xOffset
+		for x := xStart; x <= bounds.Max.X+radius+1e-9; x += spacing {
+			paths = append(paths, build(geom.Pt{X: x, Y: y}))
+		}
+	}
+	return paths
+}
+
+func circleHatchPath(center geom.Pt, radius float64) geom.Path {
+	k := radius * 0.5522847498307936
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: center.X + radius, Y: center.Y})
+	path.CubicTo(
+		geom.Pt{X: center.X + radius, Y: center.Y + k},
+		geom.Pt{X: center.X + k, Y: center.Y + radius},
+		geom.Pt{X: center.X, Y: center.Y + radius},
+	)
+	path.CubicTo(
+		geom.Pt{X: center.X - k, Y: center.Y + radius},
+		geom.Pt{X: center.X - radius, Y: center.Y + k},
+		geom.Pt{X: center.X - radius, Y: center.Y},
+	)
+	path.CubicTo(
+		geom.Pt{X: center.X - radius, Y: center.Y - k},
+		geom.Pt{X: center.X - k, Y: center.Y - radius},
+		geom.Pt{X: center.X, Y: center.Y - radius},
+	)
+	path.CubicTo(
+		geom.Pt{X: center.X + k, Y: center.Y - radius},
+		geom.Pt{X: center.X + radius, Y: center.Y - k},
+		geom.Pt{X: center.X + radius, Y: center.Y},
+	)
+	path.Close()
+	return path
+}
+
+func starHatchPath(center geom.Pt, outer, inner float64) geom.Path {
+	points := make([]geom.Pt, 0, 10)
+	for i := 0; i < 10; i++ {
+		radius := outer
+		if i%2 == 1 {
+			radius = inner
+		}
+		angle := -math.Pi/2 + float64(i)*math.Pi/5
+		points = append(points, geom.Pt{
+			X: center.X + radius*math.Cos(angle),
+			Y: center.Y + radius*math.Sin(angle),
+		})
+	}
+	path := geom.Path{}
+	for i, pt := range points {
+		if i == 0 {
+			path.MoveTo(pt)
+		} else {
+			path.LineTo(pt)
+		}
+	}
+	path.Close()
 	return path
 }
 

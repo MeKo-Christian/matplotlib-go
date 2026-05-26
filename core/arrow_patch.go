@@ -865,7 +865,7 @@ func arrowHeadPath(from, tip geom.Pt, headLength, headWidth float64, fill bool, 
 	}
 	ux, uy := dx/length, dy/length
 	base := geom.Pt{X: tip.X - ux*headLength, Y: tip.Y - uy*headLength}
-	px, py := -uy*headWidth/2, ux*headWidth/2
+	px, py := -uy*headWidth, ux*headWidth
 	left := geom.Pt{X: base.X + px, Y: base.Y + py}
 	right := geom.Pt{X: base.X - px, Y: base.Y - py}
 	if fill {
@@ -990,16 +990,218 @@ func shrinkPathEndpoints(path geom.Path, shrinkA, shrinkB float64) geom.Path {
 		}
 		return out
 	}
-	out := path
-	out.V = append([]geom.Pt(nil), path.V...)
-	if shrinkA > 0 {
-		out.V[0] = pointToward(out.V[0], pathSecond(out), shrinkA)
+	if out, ok := shrinkPathEndpointsAlongSegments(path, shrinkA, shrinkB); ok {
+		return out
 	}
-	if shrinkB > 0 {
-		last := len(out.V) - 1
-		out.V[last] = pointToward(out.V[last], pathPenultimate(out), shrinkB)
+	return path
+}
+
+type pathSegment struct {
+	cmd        geom.Cmd
+	start, end geom.Pt
+	ctrl       []geom.Pt
+	length     float64
+}
+
+func shrinkPathEndpointsAlongSegments(path geom.Path, shrinkA, shrinkB float64) (geom.Path, bool) {
+	segments := pathSegments(path)
+	if len(segments) == 0 {
+		return geom.Path{}, false
 	}
-	return out
+	start := clipStartByCircle(segments, segments[0].start, shrinkA)
+	end := clipEndByCircle(segments, segments[len(segments)-1].end, shrinkB)
+	if start.index > end.index {
+		return geom.Path{}, false
+	}
+	out := geom.Path{}
+	out.MoveTo(start.pt)
+	if start.index == end.index {
+		out.LineTo(end.pt)
+		return out, true
+	}
+	appendSegmentRemainder(&out, segments[start.index], start.pt)
+	for i := start.index + 1; i < end.index; i++ {
+		appendWholeSegment(&out, segments[i])
+	}
+	out.LineTo(end.pt)
+	return out, true
+}
+
+type pathDistancePoint struct {
+	index int
+	pt    geom.Pt
+}
+
+func pathSegments(path geom.Path) []pathSegment {
+	var segments []pathSegment
+	var current, subpathStart geom.Pt
+	hasCurrent := false
+	vi := 0
+	for _, cmd := range path.C {
+		switch cmd {
+		case geom.MoveTo:
+			if vi >= len(path.V) {
+				return segments
+			}
+			current = path.V[vi]
+			subpathStart = current
+			hasCurrent = true
+			vi++
+		case geom.LineTo:
+			if vi >= len(path.V) || !hasCurrent {
+				return segments
+			}
+			to := path.V[vi]
+			segments = append(segments, pathSegment{cmd: cmd, start: current, end: to, length: distance(current, to)})
+			current = to
+			vi++
+		case geom.QuadTo:
+			if vi+1 >= len(path.V) || !hasCurrent {
+				return segments
+			}
+			ctrl, to := path.V[vi], path.V[vi+1]
+			segments = append(segments, pathSegment{
+				cmd:    cmd,
+				start:  current,
+				end:    to,
+				ctrl:   []geom.Pt{ctrl},
+				length: approximateQuadraticLength(current, ctrl, to),
+			})
+			current = to
+			vi += 2
+		case geom.CubicTo:
+			if vi+2 >= len(path.V) || !hasCurrent {
+				return segments
+			}
+			c1, c2, to := path.V[vi], path.V[vi+1], path.V[vi+2]
+			segments = append(segments, pathSegment{
+				cmd:    cmd,
+				start:  current,
+				end:    to,
+				ctrl:   []geom.Pt{c1, c2},
+				length: approximateCubicLength(current, c1, c2, to),
+			})
+			current = to
+			vi += 3
+		case geom.ClosePath:
+			if hasCurrent && !samePointForArrowPath(current, subpathStart) {
+				segments = append(segments, pathSegment{cmd: geom.LineTo, start: current, end: subpathStart, length: distance(current, subpathStart)})
+				current = subpathStart
+			}
+		}
+	}
+	return segments
+}
+
+func clipStartByCircle(segments []pathSegment, center geom.Pt, radius float64) pathDistancePoint {
+	if radius <= 0 {
+		return pathDistancePoint{index: 0, pt: segments[0].start}
+	}
+	for i, segment := range segments {
+		if distance(segment.end, center) <= radius {
+			continue
+		}
+		return pathDistancePoint{index: i, pt: segmentCircleBoundary(segment, center, radius, true)}
+	}
+	return pathDistancePoint{index: len(segments) - 1, pt: segments[len(segments)-1].end}
+}
+
+func clipEndByCircle(segments []pathSegment, center geom.Pt, radius float64) pathDistancePoint {
+	last := len(segments) - 1
+	if radius <= 0 {
+		return pathDistancePoint{index: last, pt: segments[last].end}
+	}
+	for i := last; i >= 0; i-- {
+		segment := segments[i]
+		if distance(segment.start, center) <= radius {
+			continue
+		}
+		return pathDistancePoint{index: i, pt: segmentCircleBoundary(segment, center, radius, false)}
+	}
+	return pathDistancePoint{index: 0, pt: segments[0].start}
+}
+
+func segmentCircleBoundary(segment pathSegment, center geom.Pt, radius float64, fromStart bool) geom.Pt {
+	lo, hi := 0.0, 1.0
+	if fromStart {
+		for i := 0; i < 64; i++ {
+			mid := (lo + hi) / 2
+			if distance(pointAtSegmentT(segment, mid), center) <= radius {
+				lo = mid
+			} else {
+				hi = mid
+			}
+		}
+		return pointAtSegmentT(segment, hi)
+	}
+	for i := 0; i < 64; i++ {
+		mid := (lo + hi) / 2
+		if distance(pointAtSegmentT(segment, mid), center) <= radius {
+			hi = mid
+		} else {
+			lo = mid
+		}
+	}
+	return pointAtSegmentT(segment, hi)
+}
+
+func pointAtSegmentT(segment pathSegment, t float64) geom.Pt {
+	switch segment.cmd {
+	case geom.QuadTo:
+		return quadraticPoint(segment.start, segment.ctrl[0], segment.end, t)
+	case geom.CubicTo:
+		return cubicPoint(segment.start, segment.ctrl[0], segment.ctrl[1], segment.end, t)
+	default:
+		return lerpPoint(segment.start, segment.end, t)
+	}
+}
+
+func appendSegmentRemainder(out *geom.Path, segment pathSegment, from geom.Pt) {
+	switch segment.cmd {
+	case geom.QuadTo:
+		out.LineTo(segment.end)
+	case geom.CubicTo:
+		out.LineTo(segment.end)
+	default:
+		if !samePointForArrowPath(from, segment.end) {
+			out.LineTo(segment.end)
+		}
+	}
+}
+
+func appendWholeSegment(out *geom.Path, segment pathSegment) {
+	switch segment.cmd {
+	case geom.QuadTo:
+		out.QuadTo(segment.ctrl[0], segment.end)
+	case geom.CubicTo:
+		out.CubicTo(segment.ctrl[0], segment.ctrl[1], segment.end)
+	default:
+		out.LineTo(segment.end)
+	}
+}
+
+func approximateCubicLength(start, c1, c2, end geom.Pt) float64 {
+	const steps = 24
+	length := 0.0
+	prev := start
+	for i := 1; i <= steps; i++ {
+		pt := cubicPoint(start, c1, c2, end, float64(i)/steps)
+		length += distance(prev, pt)
+		prev = pt
+	}
+	return length
+}
+
+func cubicPoint(start, c1, c2, end geom.Pt, t float64) geom.Pt {
+	mt := 1 - t
+	return geom.Pt{
+		X: mt*mt*mt*start.X + 3*mt*mt*t*c1.X + 3*mt*t*t*c2.X + t*t*t*end.X,
+		Y: mt*mt*mt*start.Y + 3*mt*mt*t*c1.Y + 3*mt*t*t*c2.Y + t*t*t*end.Y,
+	}
+}
+
+func samePointForArrowPath(a, b geom.Pt) bool {
+	return math.Abs(a.X-b.X) < 1e-12 && math.Abs(a.Y-b.Y) < 1e-12
 }
 
 func shrinkQuadraticStart(path geom.Path, shrink float64) geom.Path {

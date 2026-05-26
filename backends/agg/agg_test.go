@@ -649,6 +649,32 @@ func TestNativeHatchDrawsShapePatterns(t *testing.T) {
 	}
 }
 
+func TestNativeShapeHatchUsesTilePhaseAtClipBoundary(t *testing.T) {
+	r := mustNew(t, 100, 80)
+	_ = r.Begin(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 100, Y: 80}})
+
+	var rect geom.Path
+	rect.MoveTo(geom.Pt{X: 20, Y: 20})
+	rect.LineTo(geom.Pt{X: 60, Y: 20})
+	rect.LineTo(geom.Pt{X: 60, Y: 60})
+	rect.LineTo(geom.Pt{X: 20, Y: 60})
+	rect.Close()
+	r.Path(rect, &render.Paint{
+		Hatch:          "o",
+		HatchColor:     render.Color{A: 1},
+		HatchLineWidth: 1,
+	})
+	_ = r.End()
+
+	bounds, pixels, ok := inkBounds(r.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	if !ok || pixels == 0 {
+		t.Fatal("expected native shape hatch pixels")
+	}
+	if bounds.Min.X > 21 || bounds.Min.Y > 21 {
+		t.Fatalf("shape hatch ink bounds = %+v, want tile-phased glyphs clipped at the patch boundary", bounds)
+	}
+}
+
 func darkRunsOnScanline(img *image.RGBA, y, minX, maxX int) int {
 	runs := 0
 	inRun := false

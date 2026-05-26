@@ -29,7 +29,7 @@ func (b *FancyBboxPatch) Draw(ren render.Renderer, ctx *DrawContext) {
 	if b == nil || ctx == nil || ren == nil {
 		return
 	}
-	path := buildArtistDisplayPath(ctx, b, b.Coords, b.localPath(), translateAffine(b.XY))
+	path := b.displayPath(ctx)
 	b.drawStyledPath(ren, path, geom.Path{})
 }
 
@@ -50,6 +50,10 @@ func (b *FancyBboxPatch) localPath() geom.Path {
 		path = applyAffinePath(path, geom.Affine{A: 1, D: aspect})
 	}
 	return path
+}
+
+func (b *FancyBboxPatch) displayPath(ctx *DrawContext) geom.Path {
+	return buildArtistDisplayPath(ctx, b, b.Coords, b.localPath(), translateAffine(b.XY))
 }
 
 func (b *FancyBboxPatch) mutationSize() float64 {
