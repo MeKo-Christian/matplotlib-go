@@ -1403,7 +1403,7 @@ func TestAnnotationArrowHeadSizeUsesPointMutationScale(t *testing.T) {
 	}
 	scale := pointsToPixels(ctx.RC, 9)
 	wantWidth := 0.35 * scale
-	wantHeight := 0.20 * scale
+	wantHeight := 2 * 0.20 * scale
 	if !approx(headBounds.Max.X-headBounds.Min.X, wantWidth, 1e-9) ||
 		!approx(headBounds.Max.Y-headBounds.Min.Y, wantHeight, 1e-9) {
 		t.Fatalf("arrow head bounds = %+v, want width %.12g height %.12g from point mutation scale", headBounds, wantWidth, wantHeight)

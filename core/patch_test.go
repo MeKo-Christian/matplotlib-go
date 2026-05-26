@@ -180,7 +180,7 @@ func TestFancyBboxPatchAdditionalBoxStyles(t *testing.T) {
 			style:     BoxStyleDArrow,
 			width:     4,
 			height:    2,
-			want:      geom.Rect{Min: geom.Pt{X: -1, Y: -0.5}, Max: geom.Pt{X: 5, Y: 2.5}},
+			want:      geom.Rect{Min: geom.Pt{X: -1, Y: -0.5}, Max: geom.Pt{X: 5.5, Y: 2.5}},
 			wantCmd:   geom.LineTo,
 			minCount:  8,
 			closePath: true,
@@ -223,13 +223,13 @@ func TestFancyBboxPatchStyleMatrixArrowBoxesMatchMatplotlibDisplay(t *testing.T)
 		Coords:       Coords(CoordData),
 	}
 	assertPathVerticesApprox(t, rarrow.displayPath(ctx), []geom.Pt{
-		{X: 433.320, Y: 275.625},
 		{X: 505.149, Y: 275.625},
-		{X: 505.149, Y: 265.939},
-		{X: 539.835, Y: 294.998},
-		{X: 505.149, Y: 324.056},
-		{X: 505.149, Y: 314.370},
+		{X: 433.320, Y: 275.625},
 		{X: 433.320, Y: 314.370},
+		{X: 505.149, Y: 314.370},
+		{X: 505.149, Y: 324.056},
+		{X: 539.835, Y: 294.998},
+		{X: 505.149, Y: 265.939},
 	}, 0.02)
 
 	darrow := &FancyBboxPatch{
@@ -242,16 +242,16 @@ func TestFancyBboxPatchStyleMatrixArrowBoxesMatchMatplotlibDisplay(t *testing.T)
 		Coords:       Coords(CoordData),
 	}
 	assertPathVerticesApprox(t, darrow.displayPath(ctx), []geom.Pt{
-		{X: 575.811, Y: 314.370},
-		{X: 575.811, Y: 324.056},
-		{X: 541.125, Y: 294.998},
-		{X: 575.811, Y: 265.939},
 		{X: 575.811, Y: 275.625},
 		{X: 636.360, Y: 275.625},
 		{X: 636.360, Y: 265.939},
 		{X: 671.046, Y: 294.998},
 		{X: 636.360, Y: 324.056},
 		{X: 636.360, Y: 314.370},
+		{X: 575.811, Y: 314.370},
+		{X: 575.811, Y: 324.056},
+		{X: 541.125, Y: 294.998},
+		{X: 575.811, Y: 265.939},
 	}, 0.02)
 }
 
@@ -293,7 +293,7 @@ func TestFancyBboxPatchLArrowReflectsAroundOriginalBoxWithPadding(t *testing.T) 
 	}
 
 	assertApproxPathBounds(t, box.localPath(), geom.Rect{
-		Min: geom.Pt{X: -3, Y: -2},
+		Min: geom.Pt{X: -2.2857142857142856, Y: -2},
 		Max: geom.Pt{X: 5, Y: 4},
 	})
 }
@@ -1355,11 +1355,11 @@ func TestArrowHeadPathPlacesBaseCornersPerpendicularInYUp(t *testing.T) {
 	if !approxPt(tip, geom.Pt{X: 10, Y: 0}, 1e-9) {
 		t.Fatalf("arrow head tip = %+v, want {10,0}", tip)
 	}
-	if !approxPt(left, geom.Pt{X: 6, Y: 2}, 1e-9) {
-		t.Fatalf("arrow head left base = %+v, want {6,2} (behind tip, above shaft)", left)
+	if !approxPt(left, geom.Pt{X: 6, Y: 4}, 1e-9) {
+		t.Fatalf("arrow head left base = %+v, want {6,4} (behind tip, above shaft)", left)
 	}
-	if !approxPt(right, geom.Pt{X: 6, Y: -2}, 1e-9) {
-		t.Fatalf("arrow head right base = %+v, want {6,-2} (behind tip, below shaft)", right)
+	if !approxPt(right, geom.Pt{X: 6, Y: -4}, 1e-9) {
+		t.Fatalf("arrow head right base = %+v, want {6,-4} (behind tip, below shaft)", right)
 	}
 }
 

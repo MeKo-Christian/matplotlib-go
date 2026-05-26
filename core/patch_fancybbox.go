@@ -80,10 +80,19 @@ func (b *FancyBboxPatch) boxStylePath(x0, y0, width, height, mutationSize float6
 	case BoxStyleEllipse:
 		return boxStyleEllipsePath(x0, y0, width, height, pad)
 	case BoxStyleRArrow:
+		if b.usesLegacyArrowBox() {
+			return boxStyleLegacyArrowPath(x0, y0, width, height, pad, false, false)
+		}
 		return boxStyleArrowPath(x0, y0, width, height, pad, b.arrowHeadWidth(), b.arrowHeadAngle(), false, false)
 	case BoxStyleLArrow:
+		if b.usesLegacyArrowBox() {
+			return boxStyleLegacyArrowPath(x0, y0, width, height, pad, true, false)
+		}
 		return boxStyleArrowPath(x0, y0, width, height, pad, b.arrowHeadWidth(), b.arrowHeadAngle(), true, false)
 	case BoxStyleDArrow:
+		if b.usesLegacyArrowBox() {
+			return boxStyleLegacyArrowPath(x0, y0, width, height, pad, false, true)
+		}
 		return boxStyleArrowPath(x0, y0, width, height, pad, b.arrowHeadWidth(), b.arrowHeadAngle(), false, true)
 	case BoxStyleRound4:
 		return boxStyleRound4Path(x0, y0, width, height, pad, b.RoundingSize, mutationSize)
@@ -104,6 +113,13 @@ func (b *FancyBboxPatch) toothSize(mutationSize float64) float64 {
 		return b.Pad * 0.5 * mutationSize
 	}
 	return 0
+}
+
+func (b *FancyBboxPatch) usesLegacyArrowBox() bool {
+	if b == nil {
+		return true
+	}
+	return b.ArrowHeadWidth <= 0 && math.Mod(b.ArrowHeadAngle, 360) == 0
 }
 
 func (b *FancyBboxPatch) arrowHeadWidth() float64 {
@@ -208,6 +224,57 @@ func boxStyleRound4Path(x0, y0, width, height, pad, roundingSize, mutationSize f
 	)
 	path.Close()
 	return path
+}
+
+func boxStyleLegacyArrowPath(x0, y0, width, height, pad float64, left, double bool) geom.Path {
+	if double {
+		height += 2 * pad
+		x0 -= pad
+		y0 -= pad
+		x1, y1 := x0+width, y0+height
+
+		dx := (y1 - y0) / 2
+		dxx := dx / 2
+		x0 += pad / 1.4
+		return polygonPath([]geom.Pt{
+			{X: x0 + dxx, Y: y0},
+			{X: x1, Y: y0},
+			{X: x1, Y: y0 - dxx},
+			{X: x1 + dx + dxx, Y: y0 + dx},
+			{X: x1, Y: y1 + dxx},
+			{X: x1, Y: y1},
+			{X: x0 + dxx, Y: y1},
+			{X: x0 + dxx, Y: y1 + dxx},
+			{X: x0 - dx, Y: y0 + dx},
+			{X: x0 + dxx, Y: y0 - dxx},
+		}, true)
+	}
+
+	origX0, origWidth := x0, width
+	width += 2 * pad
+	height += 2 * pad
+	x0 -= pad
+	y0 -= pad
+	x1, y1 := x0+width, y0+height
+
+	dx := (y1 - y0) / 2
+	dxx := dx / 2
+	x0 += pad / 1.4
+	points := []geom.Pt{
+		{X: x0 + dxx, Y: y0},
+		{X: x1, Y: y0},
+		{X: x1, Y: y1},
+		{X: x0 + dxx, Y: y1},
+		{X: x0 + dxx, Y: y1 + dxx},
+		{X: x0 - dx, Y: y0 + dx},
+		{X: x0 + dxx, Y: y0 - dxx},
+	}
+	if !left {
+		for i := range points {
+			points[i].X = 2*origX0 + origWidth - points[i].X
+		}
+	}
+	return polygonPath(points, true)
 }
 
 func boxStyleArrowPath(x0, y0, width, height, pad, headWidth, headAngle float64, left, double bool) geom.Path {
