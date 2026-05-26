@@ -149,6 +149,29 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 	}
 
+	if len(e.XY) > 1 {
+		line := Line2D{
+			XY:  append([]geom.Pt(nil), e.XY...),
+			W:   lineWidth,
+			Col: color,
+		}
+		if path := line.displayPath(ctx); len(path.C) > 0 {
+			linePaint := render.Paint{
+				Stroke:    color,
+				LineWidth: lineWidth,
+				LineJoin:  render.JoinRound,
+				LineCap:   render.CapButt,
+				Snap:      render.SnapAuto,
+				Simplify:  ctx != nil && ctx.RC.PathSimplify,
+			}
+			if ctx != nil {
+				linePaint.SimplifyThreshold = ctx.RC.PathSimplifyThreshold
+				linePaint.MaxChunkVertices = ctx.RC.AggPathChunkSize
+			}
+			r.Path(path, &linePaint)
+		}
+	}
+
 	if e.MarkerSet && e.MarkerSize > 0 {
 		scatter := &Scatter2D{
 			XY:        append([]geom.Pt(nil), e.XY...),

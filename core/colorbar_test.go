@@ -108,8 +108,11 @@ func TestFigureAddHorizontalColorbarConfiguresBottomAxes(t *testing.T) {
 	if got, want := cbAx.RectFraction.H(), wantHeight; !floatApprox(got, want, 1e-12) {
 		t.Fatalf("expected colorbar height to follow default aspect: got %v want %v", got, want)
 	}
-	if got, want := cbAx.RectFraction.Min.Y, base.Min.Y; !floatApprox(got, want, 1e-12) {
-		t.Fatalf("expected bottom colorbar to start at base bottom: got %v want %v", got, want)
+	if got, want := cbAx.RectFraction.Min.Y, base.Min.Y+wantSlotHeight-wantHeight; !floatApprox(got, want, 1e-12) {
+		t.Fatalf("expected bottom colorbar to anchor at top of matplotlib slot: got bottom=%v want %v", got, want)
+	}
+	if got, want := cbAx.RectFraction.Max.Y, base.Min.Y+wantSlotHeight; !floatApprox(got, want, 1e-12) {
+		t.Fatalf("expected bottom colorbar top to match matplotlib slot top: got top=%v want %v", got, want)
 	}
 	if cbAx.RectFraction.Max.Y >= ax.RectFraction.Min.Y {
 		t.Fatalf("expected colorbar below parent axes, got colorbar=%+v parent=%+v", cbAx.RectFraction, ax.RectFraction)

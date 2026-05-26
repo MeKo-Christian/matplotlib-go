@@ -275,11 +275,11 @@ func (a *AnchoredSizeBar) layout(r render.Renderer, ctx *DrawContext) anchoredSi
 	labelX := inner.Min.X + inner.W()/2
 	var barY, labelCenterY float64
 	if a.LabelTop {
-		labelCenterY = inner.Min.Y + labelH/2
-		barY = inner.Min.Y + labelH + sep
-	} else {
 		barY = inner.Min.Y
 		labelCenterY = inner.Min.Y + barH + sep + labelH/2
+	} else {
+		labelCenterY = inner.Min.Y + labelH/2
+		barY = inner.Min.Y + labelH + sep
 	}
 	bar := geom.Rect{
 		Min: geom.Pt{X: barX, Y: barY},

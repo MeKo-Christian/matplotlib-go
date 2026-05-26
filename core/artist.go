@@ -2070,19 +2070,19 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 			if framePath, ok := projectionFramePath(ctx.Projection, px); ok {
 				r.ClipPath(framePath)
 			}
-			for _, art := range ax.Artists {
+			for _, art := range sortedArtistDrawOrder(ax.Artists) {
 				drawArtist(r, ctx, art)
 			}
-			for _, art := range ax.WidgetArtists {
+			for _, art := range sortedArtistDrawOrder(ax.WidgetArtists) {
 				drawArtist(r, ctx, art)
 			}
 			r.Restore()
-			for _, art := range ax.Artists {
+			for _, art := range sortedArtistDrawOrder(ax.Artists) {
 				if overlay, ok := art.(OverlayArtist); ok {
 					drawOverlayArtist(r, ctx, art, overlay)
 				}
 			}
-			for _, art := range ax.WidgetArtists {
+			for _, art := range sortedArtistDrawOrder(ax.WidgetArtists) {
 				if overlay, ok := art.(OverlayArtist); ok {
 					drawOverlayArtist(r, ctx, art, overlay)
 				}
@@ -2107,29 +2107,21 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 			r.ClipPath(framePath)
 		}
 
-		if !ax.zsorted {
-			sortArtists(ax.Artists)
-			ax.zsorted = true
-		}
-		for _, art := range ax.Artists {
+		for _, art := range sortedArtistDrawOrder(ax.Artists) {
 			drawArtist(r, ctx, art)
 		}
-		if !ax.widgetZsorted {
-			sortArtists(ax.WidgetArtists)
-			ax.widgetZsorted = true
-		}
-		for _, art := range ax.WidgetArtists {
+		for _, art := range sortedArtistDrawOrder(ax.WidgetArtists) {
 			drawArtist(r, ctx, art)
 		}
 
 		r.Restore()
 
-		for _, art := range ax.Artists {
+		for _, art := range sortedArtistDrawOrder(ax.Artists) {
 			if overlay, ok := art.(OverlayArtist); ok {
 				drawOverlayArtist(r, ctx, art, overlay)
 			}
 		}
-		for _, art := range ax.WidgetArtists {
+		for _, art := range sortedArtistDrawOrder(ax.WidgetArtists) {
 			if overlay, ok := art.(OverlayArtist); ok {
 				drawOverlayArtist(r, ctx, art, overlay)
 			}

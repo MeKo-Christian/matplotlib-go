@@ -556,6 +556,7 @@ func collectLegendEntries(artists []Artist) []legendEntry {
 
 func (l *Legend) collectLegendEntries(artists []Artist) []legendEntry {
 	entries := make([]legendEntry, 0, len(artists))
+	deferredErrorBars := make([]Artist, 0)
 	for i := 0; i < len(artists); i++ {
 		art := artists[i]
 		if entry, ok := l.stemLegendEntryAt(artists, i); ok {
@@ -563,31 +564,45 @@ func (l *Legend) collectLegendEntries(artists []Artist) []legendEntry {
 			i++
 			continue
 		}
-		switch art.(type) {
-		case *Legend:
+		if _, ok := art.(*ErrorBar); ok {
+			deferredErrorBars = append(deferredErrorBars, art)
 			continue
-		default:
-			provider, ok := art.(legendEntryProvider)
-			if !ok {
-				continue
-			}
-			label := ArtistLabel(art)
-			if !legendLabelVisible(label) {
-				continue
-			}
-			if entry, ok := l.handlerEntryFor(art, label); ok {
-				entries = append(entries, entry)
-				continue
-			}
-			entry, ok := provider.legendEntry()
-			if !ok {
-				continue
-			}
-			entry.Label = label
+		}
+		if entry, ok := l.legendEntryForArtist(art); ok {
+			entries = append(entries, entry)
+		}
+	}
+	for _, art := range deferredErrorBars {
+		if entry, ok := l.legendEntryForArtist(art); ok {
 			entries = append(entries, entry)
 		}
 	}
 	return entries
+}
+
+func (l *Legend) legendEntryForArtist(art Artist) (legendEntry, bool) {
+	switch art.(type) {
+	case *Legend:
+		return legendEntry{}, false
+	default:
+		provider, ok := art.(legendEntryProvider)
+		if !ok {
+			return legendEntry{}, false
+		}
+		label := ArtistLabel(art)
+		if !legendLabelVisible(label) {
+			return legendEntry{}, false
+		}
+		if entry, ok := l.handlerEntryFor(art, label); ok {
+			return entry, true
+		}
+		entry, ok := provider.legendEntry()
+		if !ok {
+			return legendEntry{}, false
+		}
+		entry.Label = label
+		return entry, true
+	}
 }
 
 func (l *Legend) stemLegendEntryAt(artists []Artist, i int) (legendEntry, bool) {

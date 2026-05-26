@@ -20,6 +20,15 @@ func TestPlotUsesDirectAxesGeometry(t *testing.T) {
 	if !rectApprox(got, want, 1e-12) {
 		t.Fatalf("plot axes rect = %+v, want direct-add-axes colorbar rect %+v", got, want)
 	}
+
+	got = fig.Children[1].RectFraction
+	want = geom.Rect{
+		Min: geom.Pt{X: 0.12, Y: 0.1986666666666667},
+		Max: geom.Pt{X: 0.90, Y: 0.268},
+	}
+	if !rectApprox(got, want, 1e-12) {
+		t.Fatalf("colorbar axes rect = %+v, want matplotlib active colorbar rect %+v", got, want)
+	}
 }
 
 func rectApprox(got, want geom.Rect, tol float64) bool {

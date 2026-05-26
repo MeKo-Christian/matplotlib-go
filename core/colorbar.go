@@ -397,8 +397,9 @@ func colorbarPlacementRect(fig *Figure, base geom.Rect, thickness, slotThickness
 			}
 			parent.Min.X = left
 		}
-		rect.Min.X = base.Min.X
-		rect.Max.X = math.Min(base.Min.X+thickness, base.Max.X)
+		slotRight := math.Min(base.Min.X+slotThickness, base.Max.X)
+		rect.Min.X = math.Max(slotRight-thickness, base.Min.X)
+		rect.Max.X = slotRight
 	case "top":
 		if !useResolvedSlot {
 			top := base.Max.Y - slotThickness - padding
@@ -407,8 +408,9 @@ func colorbarPlacementRect(fig *Figure, base geom.Rect, thickness, slotThickness
 			}
 			parent.Max.Y = top
 		}
-		rect.Min.Y = math.Max(base.Max.Y-thickness, base.Min.Y)
-		rect.Max.Y = base.Max.Y
+		slotBottom := math.Max(base.Max.Y-slotThickness, base.Min.Y)
+		rect.Min.Y = slotBottom
+		rect.Max.Y = math.Min(slotBottom+thickness, base.Max.Y)
 	case "bottom":
 		if !useResolvedSlot {
 			bottom := base.Min.Y + slotThickness + padding
@@ -417,8 +419,9 @@ func colorbarPlacementRect(fig *Figure, base geom.Rect, thickness, slotThickness
 			}
 			parent.Min.Y = bottom
 		}
-		rect.Min.Y = base.Min.Y
-		rect.Max.Y = math.Min(base.Min.Y+thickness, base.Max.Y)
+		slotTop := math.Min(base.Min.Y+slotThickness, base.Max.Y)
+		rect.Min.Y = math.Max(slotTop-thickness, base.Min.Y)
+		rect.Max.Y = slotTop
 	default:
 		if useResolvedSlot {
 			slotLeft := base.Max.X + padding + constrainedColorbarSlotOffset(fig, base)

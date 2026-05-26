@@ -1,6 +1,7 @@
 package core
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -120,6 +121,54 @@ func TestLegendDrawSupportsMultipleColumns(t *testing.T) {
 	}
 	if !floatApprox(a.Y, c.Y, 1e-9) || !floatApprox(b.Y, d.Y, 1e-9) {
 		t.Fatalf("multi-column rows should align, got a=%+v b=%+v c=%+v d=%+v", a, b, c, d)
+	}
+}
+
+func TestLegendDrawKeepsCollectionOrderAfterZSorting(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.1, Y: 0.1},
+		Max: geom.Pt{X: 0.9, Y: 0.9},
+	})
+	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "line"})
+	ax.Scatter([]float64{0.5}, []float64{0.5}, ScatterOptions{Label: "scatter"})
+	ax.Plot([]float64{0, 1}, []float64{1, 2}, PlotOptions{Label: "handler"})
+	legend := ax.AddLegend()
+	legend.Location = LegendUpperLeft
+	legend.NumColumns = 2
+
+	var r legendRecordingRenderer
+	DrawFigure(fig, &r)
+
+	entries := legend.collectEntries()
+	labels := make([]string, len(entries))
+	for i, entry := range entries {
+		labels[i] = entry.Label
+	}
+	want := []string{"line", "scatter", "handler"}
+	if !reflect.DeepEqual(labels, want) {
+		t.Fatalf("legend collection order after draw = %v, want insertion order %v", labels, want)
+	}
+}
+
+func TestLegendCollectsErrorBarsAfterPlainArtistsLikeMatplotlibContainers(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.1, Y: 0.1},
+		Max: geom.Pt{X: 0.9, Y: 0.9},
+	})
+	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "line"})
+	ax.ErrorBar([]float64{0.5}, []float64{0.5}, nil, []float64{0.1}, ErrorBarOptions{Label: "errorbar"})
+	ax.Plot([]float64{0, 1}, []float64{1, 2}, PlotOptions{Label: "handler"})
+
+	entries := ax.AddLegend().collectEntries()
+	labels := make([]string, len(entries))
+	for i, entry := range entries {
+		labels[i] = entry.Label
+	}
+	want := []string{"line", "handler", "errorbar"}
+	if !reflect.DeepEqual(labels, want) {
+		t.Fatalf("legend collection order = %v, want Matplotlib child/container order %v", labels, want)
 	}
 }
 

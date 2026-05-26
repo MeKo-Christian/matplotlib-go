@@ -1649,8 +1649,12 @@ compensating in core.
 - [ ] AGG-port rotated-text glyph orientation: vertical / rotated axis labels
       render upside-down under y-up. Fix in `../agg_go` directly, not via a core
       compensation. Revisit widgets selector shapes at the same time.
-- [ ] `colorbar_horizontal_ticks` and `imshow_interpolation_matrix` — highest
-      remaining `TestMatplotlibRef` residuals (MeanAbs 7.28 / 4.31, 2026-05-25).
+- [x] `colorbar_horizontal_ticks` — bottom colorbars now place the aspect-limited
+      active bar at the top of Matplotlib's reserved colorbar slot; focused
+      `TestReferenceCompare/colorbar_horizontal_ticks` reports `RMSE 3.63`,
+      `MeanAbs 0.18` (2026-05-26).
+- [ ] `imshow_interpolation_matrix` — highest remaining `TestMatplotlibRef`
+      residual (MeanAbs 4.31, 2026-05-25).
 - [ ] skia shader / gradient / pattern / hatch fills bypass the gobasic device
       y-flip (blocked on the skia build).
 - [x] `pattern_gradient_effects` — fixture port reconciled to Matplotlib-style

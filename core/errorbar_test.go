@@ -73,6 +73,28 @@ func TestErrorBar_Draw_BroadcastError(t *testing.T) {
 	}
 }
 
+func TestErrorBarDrawsMatplotlibDefaultDataLine(t *testing.T) {
+	errBar := &ErrorBar{
+		XY: []geom.Pt{
+			{X: 1, Y: 2},
+			{X: 2, Y: 3},
+			{X: 3, Y: 2.5},
+		},
+		YErr:      []float64{0.4, 0.2, 0.3},
+		LineWidth: 1.2,
+		CapSize:   6,
+		Color:     render.Color{R: 0, G: 0.5, B: 0, A: 1},
+	}
+	r := &recordingRenderer{}
+	ctx := createTestDrawContext()
+
+	errBar.Draw(r, ctx)
+
+	if !hasErrorBarDataLine(r.pathCalls, ctx, errBar.XY) {
+		t.Fatalf("errorbar should draw Matplotlib's default data line through %v, got paths %+v", errBar.XY, r.pathCalls)
+	}
+}
+
 func TestErrorBarLimitCaretUsesEndpointAsBase(t *testing.T) {
 	errBar := &ErrorBar{
 		XY:        []geom.Pt{{X: 1, Y: 1}},
@@ -107,6 +129,35 @@ func TestErrorBarLimitCaretUsesEndpointAsBase(t *testing.T) {
 	if caret[1].Y >= endpoint.Y {
 		t.Fatalf("lower-limit caret tip y = %.3f, want above endpoint %.3f in display space", caret[1].Y, endpoint.Y)
 	}
+}
+
+func hasErrorBarDataLine(calls []recordedPathCall, ctx *DrawContext, points []geom.Pt) bool {
+	if len(points) == 0 {
+		return false
+	}
+	for _, call := range calls {
+		if len(call.path.V) != len(points) || len(call.path.C) != len(points) {
+			continue
+		}
+		if call.path.C[0] != geom.MoveTo {
+			continue
+		}
+		matches := true
+		for i, point := range points {
+			if i > 0 && call.path.C[i] != geom.LineTo {
+				matches = false
+				break
+			}
+			if call.path.V[i] != ctx.DataToPixel.Apply(point) {
+				matches = false
+				break
+			}
+		}
+		if matches {
+			return true
+		}
+	}
+	return false
 }
 
 func TestErrorBar_ZOrder(t *testing.T) {

@@ -89,7 +89,7 @@ var cases = []Case{
 	{ID: "errorbar_basic", Topic: "errorbar", Title: "Error Bars", Description: "Symmetric and asymmetric error bars with caps, marker styling, and legend output.", Showcase: true, SVGGoldenFamily: "errorbar", GoBasicSmokeFamily: "errorbar", SkiaParityFamily: "errorbar"},
 	{ID: "multi_series_basic", Topic: "multi", Title: "Multiple Series", Description: "Several labeled lines sharing one axes, demonstrating color cycling and legends.", Showcase: true, SkiaParityFamily: "line"},
 	{ID: "multi_series_color_cycle", Topic: "multi", Title: "Color Cycle"},
-	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MinPSNR: 23.0, MaxMeanAbs: 18.0, MaxRMSE: 32.0},
+	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MinPSNR: 23.0, MaxMeanAbs: 18.0, MaxRMSE: 8.0},
 	{ID: "text_annotation_matrix", Topic: "annotation", Title: "Text Annotation Matrix", FixtureOnly: true, MinPSNR: 20.0, MaxMeanAbs: 24.0, MaxRMSE: 42.0},
 	{ID: "hist_basic", Topic: "histogram", Title: "Histogram Counts", Description: "A deterministic histogram with count bins, labels, and default bar styling.", Showcase: true, SVGGoldenFamily: "hist", GoBasicSmokeFamily: "histogram", SkiaParityFamily: "histogram"},
 	{ID: "hist_density", Topic: "histogram", Title: "Histogram Density"},

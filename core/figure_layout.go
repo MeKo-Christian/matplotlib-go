@@ -429,3 +429,12 @@ func sortArtists(artists []Artist) {
 		return zi < zj
 	})
 }
+
+func sortedArtistDrawOrder(artists []Artist) []Artist {
+	if len(artists) < 2 {
+		return artists
+	}
+	drawOrder := append([]Artist(nil), artists...)
+	sortArtists(drawOrder)
+	return drawOrder
+}

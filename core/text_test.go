@@ -788,6 +788,30 @@ func TestRotatedTextBBoxUsesDisplayRotationSign(t *testing.T) {
 	}
 }
 
+func TestTextBBoxUsesLineBoxWhenInkBoundsAreShort(t *testing.T) {
+	ctx := createTestDrawContext()
+	r := &mathInkBoundsRenderer{}
+	layout := measureSingleLineTextLayout(r, "bbox", 10, "", false, ctx.RC.UseTeX)
+	origin := geom.Pt{X: 100, Y: 100}
+
+	got, ok := textBBoxRect(origin, layout, &TextBBoxOptions{
+		FaceColor: render.Color{A: 1},
+		EdgeColor: render.Color{A: 1},
+		Padding:   1,
+	}, ctx, 10)
+
+	if !ok {
+		t.Fatal("textBBoxRect returned !ok")
+	}
+	want := geom.Rect{
+		Min: geom.Pt{X: 99, Y: 97},
+		Max: geom.Pt{X: 121, Y: 109},
+	}
+	if !approxRect(got, want, 1e-9) {
+		t.Fatalf("text bbox = %+v, want line box %+v", got, want)
+	}
+}
+
 func TestTextRotationModeAnchorRotatesAroundAlignedTextBox(t *testing.T) {
 	ctx := createTestDrawContext()
 	text := &Text{

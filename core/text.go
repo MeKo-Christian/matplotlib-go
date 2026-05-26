@@ -1105,7 +1105,7 @@ func textBBoxRect(origin geom.Pt, layout singleLineTextLayout, opt *TextBBoxOpti
 	if opt == nil {
 		return geom.Rect{}, false
 	}
-	rect, ok := textInkRect(origin, layout)
+	rect, ok := textLineBoxRect(origin, layout)
 	if !ok {
 		return geom.Rect{}, false
 	}
@@ -1115,6 +1115,16 @@ func textBBoxRect(origin geom.Pt, layout singleLineTextLayout, opt *TextBBoxOpti
 	rect.Max.X += cfg.Padding
 	rect.Max.Y += cfg.Padding
 	return rect, true
+}
+
+func textLineBoxRect(origin geom.Pt, layout singleLineTextLayout) (geom.Rect, bool) {
+	if layout.Width <= 0 || layout.Height <= 0 {
+		return geom.Rect{}, false
+	}
+	return geom.Rect{
+		Min: geom.Pt{X: origin.X, Y: origin.Y - layout.Descent},
+		Max: geom.Pt{X: origin.X + layout.Width, Y: origin.Y + layout.Ascent},
+	}, true
 }
 
 func drawMultilineTextBBox(r render.Renderer, rect geom.Rect, opt *TextBBoxOptions, ctx *DrawContext, fontSize float64) {

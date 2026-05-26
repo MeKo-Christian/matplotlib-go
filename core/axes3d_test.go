@@ -346,8 +346,9 @@ func TestAxes3DSetViewResortsReprojectedArtists(t *testing.T) {
 	// This update changes object depths and should reorder artists.
 	ax.SetView(0, 0)
 	DrawFigure(fig, &render.NullRenderer{})
-	got := dataArtistsForOrderCheck(ax.Artists)
-	want := append([]Artist(nil), got...)
+	got := dataArtistsForOrderCheck(sortedArtistDrawOrder(ax.Artists))
+	want := dataArtistsForOrderCheck(ax.Artists)
+	want = append([]Artist(nil), want...)
 	sort.SliceStable(want, func(i, j int) bool {
 		zi, zj := want[i].Z(), want[j].Z()
 		if zi == zj {

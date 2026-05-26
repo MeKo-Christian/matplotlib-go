@@ -161,7 +161,7 @@ func TestAnchoredSizeBarDrawsDataScaledBarAndLabel(t *testing.T) {
 	if !floatApprox(gotBar.V[1].X-gotBar.V[0].X, 20, 1e-9) {
 		t.Fatalf("size bar display width = %v, want 20", gotBar.V[1].X-gotBar.V[0].X)
 	}
-	if r.origins[0].Y <= gotBar.V[0].Y {
+	if r.origins[0].Y >= gotBar.V[0].Y {
 		t.Fatalf("default label should be below the bar, got label origin %+v bar %+v", r.origins[0], gotBar.V)
 	}
 }
