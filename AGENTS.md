@@ -51,6 +51,16 @@ The `test/` directory is flat and catalog-driven — do not add per-case test fu
 - Try to keep the examples as close to the original matplotlib examples as possible.
 - The aim is to have core library parity with matplotlib, so don't tweak the examples to achieve parity, but rather tweak the core library to achieve parity with the original matplotlib output.
 
+### FreeType 2.6.1 parity build
+
+The AGG backend renders text via native FreeType bitmaps (autohinted, `hinting_factor=8`) using matplotlib's bundled DejaVu Sans 2.35. The default build links the **system** FreeType, whose autohinter differs slightly from matplotlib's pinned **2.6.1**, leaving a small residual text RMSE. To render byte-closer to the reference images, use the parity build:
+
+- `just freetype261-build` — builds a static FreeType 2.6.1 into `third_party/freetype/prefix/` (gitignored; pinned tarball/sha mirror `third_party/matplotlib/subprojects/freetype-2.6.1.wrap`).
+- `just test-parity` / `just test-parity-optional-visual` — run the suite linking FreeType 2.6.1 (the `freetype261` build tag selects tag-conditional cgo flags in `backends/agg/freetype_native.go`; no `PKG_CONFIG_PATH` needed, and go's build cache stays isolated from the default build).
+- `just golden-update-parity` — regenerate parity goldens.
+- Parity goldens live in `testdata/golden_freetype/{id}.png` (only cases whose text rendering differs under 2.6.1; others fall back to the shared `testdata/golden/`). Under `-tags freetype261` the harness reads/writes the parity dir; the **default build and its `testdata/golden/` are unchanged**, so contributors without the vendored FreeType are unaffected.
+- The guard test `TestNativeFreetypeIsPinned261` (agg, `-tags freetype261`) asserts the linked version is 2.6.1.
+
 ## Commit & Pull Request Guidelines
 
 - Commits: imperative mood, concise scope (e.g., `render: add NullRenderer stack checks`). Group mechanical changes separately from logic.
