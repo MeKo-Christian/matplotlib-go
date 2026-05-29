@@ -472,18 +472,17 @@ func TestLayoutMathTextUsesMatplotlibFractionAxisAlignment(t *testing.T) {
 	if !ok {
 		t.Fatal("LayoutMathText returned !ok")
 	}
-	// Expected values follow the faithful matplotlib _genfrac port: the rule is
-	// centered on the font math axis, so the auto-sized brackets hug the fraction
-	// tightly. Validated against testdata/matplotlib_ref/mathtext_fractions.png,
-	// whose bracket ink box measures ~75x44 px (this layout: 83.66 advance incl.
-	// side bearings, ascent+descent 30.78+14.05 = 44.8).
-	if got, want := layout.Width, 83.7; math.Abs(got-want) > 1.5 {
+	// Expected values follow the faithful matplotlib 3.8.4 _genfrac port (the
+	// version that generated the reference images): the fraction bar is centered
+	// in the middle of "=" and the auto-sized brackets span the stack. Validated
+	// against testdata/matplotlib_ref/mathtext_fractions.png.
+	if got, want := layout.Width, 89.1; math.Abs(got-want) > 1.5 {
 		t.Fatalf("bracketed fraction width = %.2f, want near %.2f", got, want)
 	}
-	if got, want := layout.Ascent, 30.8; math.Abs(got-want) > 1.0 {
+	if got, want := layout.Ascent, 31.6; math.Abs(got-want) > 1.0 {
 		t.Fatalf("bracketed fraction ascent = %.2f, want near %.2f", got, want)
 	}
-	if got, want := layout.Descent, 14.0; math.Abs(got-want) > 1.0 {
+	if got, want := layout.Descent, 12.8; math.Abs(got-want) > 1.0 {
 		t.Fatalf("bracketed fraction descent = %.2f, want near %.2f", got, want)
 	}
 }

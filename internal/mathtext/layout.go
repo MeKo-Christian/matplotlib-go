@@ -1476,53 +1476,109 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 		return layoutMathLimits(r, n, size, fontKey, opts)
 	}
 
+	// Faithful port of matplotlib 3.8.4 _mathtext.Parser.subsuper (regular
+	// sub/superscript branch). Vertical shifts come from the DejaVu Sans font
+	// constants scaled by x-height; the script box is shrunk once. Layout space
+	// is y-down (negative Y above baseline); matplotlib height=ascent, depth=descent.
 	base := layoutMathNode(r, pointerNode(n.base), size, fontKey, opts)
-	scriptSize := size * 0.7
-	x := base.Width
+	scriptSize := size * mathFracShrink
+	xHeight := mathXHeight(r, size, fontKey)
+	ruleThickness := mathUnderlineThickness(r, size, fontKey)
+
+	baseText := nodePlainText(pointerNode(n.base))
+	dropSub := isMathDropSubGlyph(baseText)
+	// matplotlib is_slanted: italic variable faces are slanted, and so are the
+	// drop-sub integral operators (∫∮), which render from a slanted math face.
+	slanted := isMathSlantedBox(base) || dropSub
+	lcHeight := base.Ascent
+	lcBaseline := 0.0
+	if dropSub {
+		lcBaseline = base.Descent
+	}
+
+	// Horizontal kerning of the scripts relative to the nucleus advance.
+	superKern := mathScriptDelta * xHeight
+	subKern := mathScriptDelta * xHeight
+	if slanted {
+		superKern += mathScriptDelta * xHeight
+		superKern += mathScriptDeltaSlanted * (lcHeight - xHeight*2.0/3.0)
+		if dropSub {
+			subKern = (3*mathScriptDelta - mathScriptDeltaIntegral) * lcHeight
+			superKern = (3*mathScriptDelta + mathScriptDeltaIntegral) * lcHeight
+		} else {
+			subKern = 0
+		}
+	}
+
 	var out mathLayoutBox
 	out.appendTranslated(base, 0, 0)
 	out.Width = base.Width
 	out.Ascent = base.Ascent
 	out.Descent = base.Descent
-
-	baseText := nodePlainText(pointerNode(n.base))
-	dropSub := isMathDropSubGlyph(baseText)
-	xHeight := mathXHeight(r, size, fontKey)
-	superKern := 0.0
-	subKern := 0.0
-	if dropSub {
-		lcHeight := base.Ascent
-		superKern = (3*mathScriptDelta + mathScriptDeltaIntegral) * lcHeight
-		subKern = (3*mathScriptDelta - mathScriptDeltaIntegral) * lcHeight
-	}
-
 	scriptMaxX := base.Width
-	if n.super != nil {
-		super := layoutMathNode(r, *n.super, scriptSize, fontKey, opts)
-		y := -maxFloat64(base.Ascent*0.55, scriptSize*0.35)
-		if dropSub {
-			y = -(base.Ascent - mathScriptSubdrop*xHeight)
-		}
-		scriptX := x + superKern
-		out.appendTranslated(super, scriptX, y)
-		scriptMaxX = maxFloat64(scriptMaxX, scriptX+super.Width)
-		out.Ascent = maxFloat64(out.Ascent, -y+super.Ascent)
-		out.Descent = maxFloat64(out.Descent, y+super.Descent)
-	}
-	if n.sub != nil {
+
+	switch {
+	case n.super == nil && n.sub != nil:
+		// node757: subscript without superscript.
 		sub := layoutMathNode(r, *n.sub, scriptSize, fontKey, opts)
-		y := maxFloat64(base.Descent*0.70, scriptSize*0.25)
+		shiftDown := mathScriptSub1 * xHeight
 		if dropSub {
-			y = base.Descent + mathScriptSubdrop*xHeight
+			shiftDown = lcBaseline + mathScriptSubdrop*xHeight
 		}
-		scriptX := x + subKern
-		out.appendTranslated(sub, scriptX, y)
+		scriptX := base.Width + subKern
+		out.appendTranslated(sub, scriptX, shiftDown)
 		scriptMaxX = maxFloat64(scriptMaxX, scriptX+sub.Width)
-		out.Ascent = maxFloat64(out.Ascent, -y+sub.Ascent)
-		out.Descent = maxFloat64(out.Descent, y+sub.Descent)
+		out.Descent = maxFloat64(out.Descent, shiftDown+sub.Descent)
+		out.Ascent = maxFloat64(out.Ascent, sub.Ascent-shiftDown)
+	case n.super != nil:
+		super := layoutMathNode(r, *n.super, scriptSize, fontKey, opts)
+		shiftUp := mathScriptSup1 * xHeight
+		if dropSub {
+			shiftUp = lcHeight - mathScriptSubdrop*xHeight
+		}
+		superX := base.Width + superKern
+		if n.sub == nil {
+			out.appendTranslated(super, superX, -shiftUp)
+			scriptMaxX = maxFloat64(scriptMaxX, superX+super.Width)
+			out.Ascent = maxFloat64(out.Ascent, shiftUp+super.Ascent)
+			out.Descent = maxFloat64(out.Descent, super.Descent-shiftUp)
+		} else {
+			// node759: both sub and superscript; if they would collide, raise super.
+			sub := layoutMathNode(r, *n.sub, scriptSize, fontKey, opts)
+			shiftDown := mathScriptSub2 * xHeight
+			if dropSub {
+				shiftDown = lcBaseline + mathScriptSubdrop*xHeight
+			}
+			clr := 2.0*ruleThickness - ((shiftUp - super.Descent) - (sub.Ascent - shiftDown))
+			if clr > 0 {
+				shiftUp += clr
+			}
+			subX := base.Width + subKern
+			out.appendTranslated(super, superX, -shiftUp)
+			out.appendTranslated(sub, subX, shiftDown)
+			scriptMaxX = maxFloat64(scriptMaxX, maxFloat64(superX+super.Width, subX+sub.Width))
+			out.Ascent = maxFloat64(out.Ascent, shiftUp+super.Ascent)
+			out.Descent = maxFloat64(out.Descent, shiftDown+sub.Descent)
+		}
+	}
+
+	// script_space trailing kern, except after drop-sub operators.
+	if !dropSub {
+		scriptMaxX += mathScriptSpace * xHeight
 	}
 	out.Width = scriptMaxX
 	return out
+}
+
+// isMathSlantedBox reports whether a laid-out nucleus renders with a slanted
+// (italic/oblique) face, matching matplotlib's Char.is_slanted() for the
+// sub/superscript kerning adjustments.
+func isMathSlantedBox(box mathLayoutBox) bool {
+	if len(box.runs) != 1 {
+		return false
+	}
+	key := strings.ToLower(box.runs[0].FontKey)
+	return strings.Contains(key, "italic") || strings.Contains(key, "oblique")
 }
 
 func layoutMathLimits(r Measurer, n mathLayoutNode, size float64, fontKey string, opts Options) mathLayoutBox {
@@ -1548,7 +1604,8 @@ func layoutMathLimits(r Measurer, n mathLayoutNode, size float64, fontKey string
 	baseX := (width - base.Width) / 2
 	superX := (width - super.Width) / 2
 	subX := (width - sub.Width) / 2
-	gap := maxFloat64(mathQuadWidth(r, size, fontKey)/16, 0.5) * 3.0
+	// matplotlib 3.8.4 subsuper over/under stack: vgap = rule_thickness * 3.
+	gap := mathUnderlineThickness(r, size, fontKey) * 3.0
 
 	var out mathLayoutBox
 	out.Width = width
@@ -1575,24 +1632,59 @@ func isMathLimitOperator(n mathLayoutNode) bool {
 	return n.kind == mathLayoutText && isMathLimitText(n.text)
 }
 
+// matplotlib 3.8.4 DejaVuSansFontConstants (lib/matplotlib/_mathtext.py),
+// inheriting FontConstantsBase defaults. Sup/sub shift constants are TeX table
+// values divided by the design x-height (1120); they are multiplied by the
+// scaled x-height in use. Pure-em metrics (x-height, axis, underline) are
+// multiples of the design em and scale with the pixel font size.
 const (
-	mathScriptDelta         = 0.025
-	mathScriptDeltaIntegral = 0.1
-	mathScriptSubdrop       = 0.4
-	mathDejaVuSansXHeight   = 1120.0 / 2048.0
+	// matplotlib 3.8.4 sub/superscript constants. DejaVuSansFontConstants is
+	// `pass` in 3.8.4, so DejaVu Sans uses the FontConstantsBase defaults (a
+	// newer matplotlib replaced these with per-font TeX-table values — do NOT
+	// use those, they don't match the 3.8.4 reference images).
+	mathScriptDelta         = 0.025 // delta
+	mathScriptDeltaSlanted  = 0.2   // delta_slanted
+	mathScriptDeltaIntegral = 0.1   // delta_integral
+	mathScriptSpace         = 0.05  // script_space
+	mathScriptSubdrop       = 0.4   // subdrop
+	mathScriptSup1          = 0.7   // sup1
+	mathScriptSub1          = 0.3   // sub1
+	mathScriptSub2          = 0.5   // sub2
 
-	// Fraction layout constants ported from matplotlib's DejaVuSansFontConstants
-	// (lib/matplotlib/_mathtext.py). num2/denom2 are the TEXTSTYLE numerator and
-	// denominator shifts as multiples of x-height; axisHeight is the math-axis
-	// height as a multiple of the design em (font size), where the fraction bar
-	// is centered.
-	mathFracNum2     = 868.352 / 1120.0
-	mathFracDenom2   = 768.0 / 1120.0
-	mathFracAxisHght = 512.0 / 2048.0
+	// Pure-em metrics (× pixel font size = fontsize*dpi/72).
+	mathDejaVuSansXHeight = 1120.0 / 2048.0 // consts.x_height
+	mathUnderlineRatio    = 0.75 / 12.0     // get_underline_thickness (hardcoded)
+
+	// SHRINK_FACTOR: TeX style step shrinking numerator/denominator and scripts.
+	mathFracShrink = 0.70
 )
 
+// mathFontSizePixels recovers matplotlib's box-model unit — the font size in
+// device pixels (fontsize*dpi/72) — from the rendered x-height. matplotlib's
+// TruetypeFonts.get_xheight returns consts.x_height*fontsize*dpi/72 for fonts
+// that declare an x-height (DejaVu Sans: 1120/2048), so dividing the measured
+// x-height by that ratio yields the pixel font size every font-constant shift
+// (axis height, underline thickness, sup/sub shifts) is scaled by.
+func mathFontSizePixels(r Measurer, size float64, fontKey string) float64 {
+	if r != nil {
+		if xh := r.MeasureText("x", size, fontKey).BoundsH; xh > 0 {
+			return xh / mathDejaVuSansXHeight
+		}
+	}
+	return mathQuadWidth(r, size, fontKey)
+}
+
+// mathXHeight is matplotlib get_xheight for DejaVu Sans: the x-height in device
+// pixels (consts.x_height * fontsize * dpi/72).
 func mathXHeight(r Measurer, size float64, fontKey string) float64 {
-	return mathQuadWidth(r, size, fontKey) * mathDejaVuSansXHeight
+	return mathFontSizePixels(r, size, fontKey) * mathDejaVuSansXHeight
+}
+
+// mathUnderlineThickness is matplotlib get_underline_thickness: hardcoded to
+// (0.75/12)*fontsize*dpi/72 because upstream found font underline metrics too
+// unreliable. The base unit for fraction bars, radical rules, and script gaps.
+func mathUnderlineThickness(r Measurer, size float64, fontKey string) float64 {
+	return mathFontSizePixels(r, size, fontKey) * mathUnderlineRatio
 }
 
 func isMathDropSubGlyph(text string) bool {
@@ -1614,66 +1706,42 @@ func isMathLimitText(text string) bool {
 }
 
 func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey string, opts Options, rule, display bool, leftDelim, rightDelim string) mathLayoutBox {
-	childSize := size * 0.70
-	if display {
-		childSize = size
+	childSize := size
+	if !display {
+		childSize *= mathFracShrink // matplotlib range(style.value): TEXTSTYLE shrinks once
 	}
 	numBox := layoutMathNode(r, num, childSize, fontKey, opts)
 	denBox := layoutMathNode(r, den, childSize, fontKey, opts)
-	thickness := maxFloat64(mathQuadWidth(r, size, fontKey)/16, 0.5)
+	thickness := mathUnderlineThickness(r, size, fontKey)
 	ruleThickness := thickness
 	if !rule {
 		ruleThickness = 0
 	}
 	contentWidth := maxFloat64(numBox.Width, denBox.Width)
-	width := contentWidth + 2*thickness
+	width := contentWidth + 2*thickness // matplotlib trailing Hbox(thickness*2)
 	ruleWidth := contentWidth
 	numX := (contentWidth - numBox.Width) / 2
 	denX := (contentWidth - denBox.Width) / 2
 
-	var numY, denY, ruleCenterY, ascent, descent float64
-	if rule {
-		// Faithful port of matplotlib _mathtext.Parser._genfrac (TEXTSTYLE, with
-		// rule). The fraction bar is centered on the font's math axis; the
-		// numerator/denominator shifts come from the DejaVu Sans font constants
-		// scaled by x-height. Layout space is y-down (negative Y is above the
-		// baseline); matplotlib's height=ascent and depth=descent.
-		xHeight := mathXHeight(r, size, fontKey)
-		axisHeight := mathFracAxisHght * size
-		delta := ruleThickness / 2
-		numShiftUp := mathFracNum2 * xHeight
-		denShiftDown := mathFracDenom2 * xHeight
-		clr := ruleThickness
-		numClr := maxFloat64((numShiftUp-numBox.Descent)-(axisHeight+delta), clr)
-		denClr := maxFloat64((axisHeight-delta)-(denBox.Ascent-denShiftDown), clr)
-		ruleCenterY = -axisHeight
-		numY = -(axisHeight + delta + numClr + numBox.Descent)
-		denY = -axisHeight + delta + denClr + denBox.Ascent
-		ascent = axisHeight + delta + numClr + numBox.Descent + numBox.Ascent
-		descent = denBox.Descent - axisHeight + delta + denClr + denBox.Ascent
-	} else {
-		// Rule-less stacks (\binom, \genfrac with rule size 0). matplotlib's
-		// _genfrac else-branch centers these on the math axis too, but its shifts
-		// need a measured x-height we don't have a faithful proxy for; the
-		// axis-centered heuristic below matches the matplotlib reference better
-		// across the matrix/binom fixtures than the TeX num3/denom2 shifts.
-		space := thickness * 2
-		equalMetrics := r.MeasureText("=", size, fontKey)
-		equalCenter := (equalMetrics.Ascent + equalMetrics.Descent) / 2
-		if equalMetrics.BoundsH > 0 {
-			equalCenter = -(equalMetrics.BoundsY + equalMetrics.BoundsH/2)
-		}
-		shift := denBox.Ascent - (equalCenter - thickness*3)
-		if equalMetrics.Ascent <= 0 && equalMetrics.Descent <= 0 {
-			shift = denBox.Ascent - size*0.12
-		}
-		vlistHeight := numBox.Ascent + numBox.Descent + space + ruleThickness + space + denBox.Ascent
-		denY = shift
-		ruleCenterY = shift - denBox.Ascent - space - ruleThickness/2
-		numY = ruleCenterY - ruleThickness/2 - space - numBox.Descent
-		ascent = vlistHeight - shift
-		descent = denBox.Descent + shift
+	// Faithful port of matplotlib 3.8.4 _mathtext.Parser._genfrac (the version
+	// that generated the reference images). The numerator/rule/denominator stack
+	// is Vlist[cnum, Vbox(0,2t), Hrule, Vbox(0,2t), cden] (Hrule height=depth=t/2,
+	// so a rule-less fraction keeps a 4t gap), shifted so the rule sits in the
+	// middle of "=": shift = cden.height - ("=" center - 3t). Layout space is
+	// y-down (negative Y above baseline); matplotlib height=ascent, depth=descent.
+	space := thickness * 2.0
+	eq := r.MeasureText("=", size, fontKey)
+	eqCenter := (eq.Ascent + eq.Descent) / 2
+	if eq.BoundsH > 0 {
+		eqCenter = -(eq.BoundsY + eq.BoundsH/2)
 	}
+	shift := denBox.Ascent - (eqCenter - thickness*3.0)
+	denY := shift
+	ruleCenterY := shift - denBox.Ascent - space - ruleThickness/2
+	numY := ruleCenterY - ruleThickness/2 - space - numBox.Descent
+	vlistHeight := numBox.Ascent + numBox.Descent + space + ruleThickness + space + denBox.Ascent
+	ascent := vlistHeight - shift
+	descent := denBox.Descent + shift
 
 	out := mathLayoutBox{
 		Width:   width,

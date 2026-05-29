@@ -260,7 +260,10 @@ func TestLayoutMathTextUsesInkBoundsForStackedMath(t *testing.T) {
 
 	plainGap := plainBottomY - plainTopY
 	boundedGap := boundedBottomY - boundedTopY
-	if boundedGap >= plainGap-4 {
+	// Ink-bounds measurement still tightens the x/y stack; the faithful 3.8.4
+	// genfrac derives the rule thickness from the measured x-height, so the
+	// synthetic plain/bounded delta is smaller than the old heuristic's.
+	if boundedGap >= plainGap-1.5 {
 		t.Fatalf("ink bounds should tighten stacked math: plain gap=%v bounded gap=%v plain=%+v bounded=%+v", plainGap, boundedGap, plainLayout.Runs, boundedLayout.Runs)
 	}
 }
