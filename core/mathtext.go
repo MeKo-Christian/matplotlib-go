@@ -259,38 +259,40 @@ func mathRuleDeviceRect(origin geom.Pt, rule geom.Rect) geom.Rect {
 	}
 }
 
-// snapMathRuleRect snaps a device-space math rule rect to the pixel grid the way
-// matplotlib's raster mathtext does (_mathtext.py to_raster): widen X outward
-// (floor min / ceil max) and force a thin rule to a 1px line centered on the bar,
-// so fraction bars render crisp and never collapse. Only the caller's raster
-// branch applies it; vector backends keep the unsnapped, resolution-independent rect.
-func snapMathRuleRect(r geom.Rect) geom.Rect {
-	x1 := math.Floor(r.Min.X)
-	x2 := math.Ceil(r.Max.X)
-	h := r.Max.Y - r.Min.Y
-	var y1, y2 float64
-	if int(h)-1 <= 0 { // thin rule -> 1px line centered on the bar
-		c := (r.Min.Y + r.Max.Y) / 2
-		y1 = math.Floor(c)
-		y2 = y1 + 1
-	} else {
-		y1 = math.Floor(r.Min.Y)
-		y2 = y1 + math.Round(h)
+// growThinMathRule mirrors matplotlib's Agg mathtext box handling
+// (backend_agg.py RendererAgg._draw_text_glyphs_and_boxes): when snapping is
+// active, a sub-pixel bar is grown symmetrically to a full pixel so thin
+// fraction/sqrt/matrix rules never vanish. The actual pixel-grid snap is then
+// applied by the shared PathSnapper port (via Paint.Snap), exactly as
+// matplotlib snaps the box path inside draw_path.
+func growThinMathRule(r geom.Rect) geom.Rect {
+	if w := r.Max.X - r.Min.X; w < 1 {
+		r.Min.X -= (1 - w) / 2
+		r.Max.X = r.Min.X + 1
 	}
-	return geom.Rect{Min: geom.Pt{X: x1, Y: y1}, Max: geom.Pt{X: x2, Y: y2}}
+	if h := r.Max.Y - r.Min.Y; h < 1 {
+		r.Min.Y -= (1 - h) / 2
+		r.Max.Y = r.Min.Y + 1
+	}
+	return r
 }
 
 func drawMathTextLayout(r render.Renderer, textRen render.TextDrawer, layout MathTextLayout, origin geom.Pt, textColor render.Color, fontKey string) {
-	// matplotlib snaps mathtext rules to the pixel grid only in its raster path
-	// (to_raster); its vector path leaves them resolution-independent. Mirror
-	// that: snap rules only for raster backends (those exporting an RGBA image).
+	// matplotlib's Agg backend draws mathtext rules as box paths with snapping
+	// enabled (gc.set_snap default None -> SNAP_AUTO), growing sub-pixel bars to
+	// 1px first; PathSnapper then quantizes each corner to floor(v+0.5). The Go
+	// snapPath is a faithful port, so route raster rules through it via SnapAuto.
+	// Vector backends (no RGBA export) draw exact, unsnapped rects like
+	// matplotlib's vector backends.
 	_, rasterBackend := r.(render.RGBAExporter)
 	for _, rule := range layout.Rules {
 		rect := mathRuleDeviceRect(origin, rule.Rect)
+		paint := render.Paint{Fill: textColor}
 		if rasterBackend {
-			rect = snapMathRuleRect(rect)
+			rect = growThinMathRule(rect)
+			paint.Snap = render.SnapAuto
 		}
-		r.Path(pixelRectPath(rect), &render.Paint{Fill: textColor})
+		r.Path(pixelRectPath(rect), &paint)
 	}
 	for _, run := range layout.Runs {
 		runFontKey := resolveRunFontKey(run, fontKey)
