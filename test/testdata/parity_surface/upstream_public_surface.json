@@ -353,12 +353,6 @@
       "name": "register_backend"
     },
     {
-      "id": "backend_bases.py:function:scroll_handler",
-      "kind": "function",
-      "module": "backend_bases.py",
-      "name": "scroll_handler"
-    },
-    {
       "id": "backend_tools.py:class:AxisScaleBase",
       "kind": "class",
       "module": "backend_tools.py",
@@ -653,6 +647,12 @@
       "name": "ColormapRegistry"
     },
     {
+      "id": "cm.py:function:get_cmap",
+      "kind": "function",
+      "module": "cm.py",
+      "name": "get_cmap"
+    },
+    {
       "id": "collections.py:class:AsteriskPolygonCollection",
       "kind": "class",
       "module": "collections.py",
@@ -833,12 +833,6 @@
       "name": "ListedColormap"
     },
     {
-      "id": "colors.py:class:MultiNorm",
-      "kind": "class",
-      "module": "colors.py",
-      "name": "MultiNorm"
-    },
-    {
       "id": "colors.py:class:MultivarColormap",
       "kind": "class",
       "module": "colors.py",
@@ -849,12 +843,6 @@
       "kind": "class",
       "module": "colors.py",
       "name": "NoNorm"
-    },
-    {
-      "id": "colors.py:class:Norm",
-      "kind": "class",
-      "module": "colors.py",
-      "name": "Norm"
     },
     {
       "id": "colors.py:class:Normalize",
@@ -963,12 +951,6 @@
       "kind": "class",
       "module": "font_manager.py",
       "name": "FontManager"
-    },
-    {
-      "id": "font_manager.py:class:FontPath",
-      "kind": "class",
-      "module": "font_manager.py",
-      "name": "FontPath"
     },
     {
       "id": "font_manager.py:class:FontProperties",
@@ -2573,12 +2555,6 @@
       "name": "grid"
     },
     {
-      "id": "pyplot.py:function:grouped_bar",
-      "kind": "function",
-      "module": "pyplot.py",
-      "name": "grouped_bar"
-    },
-    {
       "id": "pyplot.py:function:hexbin",
       "kind": "function",
       "module": "pyplot.py",
@@ -2765,12 +2741,6 @@
       "name": "pie"
     },
     {
-      "id": "pyplot.py:function:pie_label",
-      "kind": "function",
-      "module": "pyplot.py",
-      "name": "pie_label"
-    },
-    {
       "id": "pyplot.py:function:pink",
       "kind": "function",
       "module": "pyplot.py",
@@ -2787,6 +2757,12 @@
       "kind": "function",
       "module": "pyplot.py",
       "name": "plot"
+    },
+    {
+      "id": "pyplot.py:function:plot_date",
+      "kind": "function",
+      "module": "pyplot.py",
+      "name": "plot_date"
     },
     {
       "id": "pyplot.py:function:polar",
@@ -3597,6 +3573,12 @@
       "kind": "class",
       "module": "transforms.py",
       "name": "BboxTransformTo"
+    },
+    {
+      "id": "transforms.py:class:BboxTransformToMaxOnly",
+      "kind": "class",
+      "module": "transforms.py",
+      "name": "BboxTransformToMaxOnly"
     },
     {
       "id": "transforms.py:class:BlendedAffine2D",
