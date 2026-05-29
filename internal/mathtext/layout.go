@@ -1661,25 +1661,45 @@ const (
 	mathFracShrink = 0.70
 )
 
-// mathFontSizePixels recovers matplotlib's box-model unit — the font size in
-// device pixels (fontsize*dpi/72) — from the rendered x-height. matplotlib's
-// TruetypeFonts.get_xheight returns consts.x_height*fontsize*dpi/72 for fonts
-// that declare an x-height (DejaVu Sans: 1120/2048), so dividing the measured
-// x-height by that ratio yields the pixel font size every font-constant shift
-// (axis height, underline thickness, sup/sub shifts) is scaled by.
-func mathFontSizePixels(r Measurer, size float64, fontKey string) float64 {
-	if r != nil {
-		if xh := r.MeasureText("x", size, fontKey).BoundsH; xh > 0 {
-			return xh / mathDejaVuSansXHeight
-		}
+// mathIceberg returns matplotlib's "iceberg" for a glyph: the top ink extent
+// above the baseline (FreeType horiBearingY), in device pixels. Layout bounds
+// are y-down with negative Y above the baseline, so the iceberg is -BoundsY.
+// Returns 0 when the renderer cannot supply ink bounds.
+func mathIceberg(r Measurer, text string, size float64, fontKey string) float64 {
+	if r == nil {
+		return 0
 	}
-	return mathQuadWidth(r, size, fontKey)
+	m := r.MeasureText(text, size, fontKey)
+	if m.BoundsH <= 0 {
+		return 0
+	}
+	if ice := -m.BoundsY; ice > 0 {
+		return ice
+	}
+	return 0
 }
 
-// mathXHeight is matplotlib get_xheight for DejaVu Sans: the x-height in device
-// pixels (consts.x_height * fontsize * dpi/72).
+// mathXHeight is matplotlib TruetypeFonts.get_xheight for DejaVu Sans. DejaVu
+// has no PCLT table, so matplotlib uses the "poor man's xHeight" = the iceberg
+// (top ink extent above the baseline) of glyph 'x'. We return that directly.
 func mathXHeight(r Measurer, size float64, fontKey string) float64 {
+	if xh := mathIceberg(r, "x", size, fontKey); xh > 0 {
+		return xh
+	}
 	return mathFontSizePixels(r, size, fontKey) * mathDejaVuSansXHeight
+}
+
+// mathFontSizePixels recovers matplotlib's box-model unit — the font size in
+// device pixels (fontsize*dpi/72) — which is needed for the (font-independent)
+// underline thickness. The Measurer interface exposes only the point size, so
+// we recover the pixel size from the measured x-height of 'x' (its iceberg)
+// divided by DejaVu Sans' design-em x-height ratio (1120/2048). For DejaVu 'x'
+// (which sits on the baseline) this iceberg equals the full ink height.
+func mathFontSizePixels(r Measurer, size float64, fontKey string) float64 {
+	if xh := mathIceberg(r, "x", size, fontKey); xh > 0 {
+		return xh / mathDejaVuSansXHeight
+	}
+	return mathQuadWidth(r, size, fontKey)
 }
 
 // mathUnderlineThickness is matplotlib get_underline_thickness: hardcoded to
