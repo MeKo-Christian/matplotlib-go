@@ -12,7 +12,10 @@ except ModuleNotFoundError:
     sys.path.append(str(Path(__file__).resolve().parents[1]))
     from common import *  # noqa: F401,F403
 
-from .mesh_fixture_common import mesh_fixture_data, mesh_fixture_axes
+try:
+    from test.matplotlib_ref.plots.mesh_fixture_common import mesh_fixture_data, mesh_fixture_axes
+except ModuleNotFoundError:
+    from mesh_fixture_common import mesh_fixture_data, mesh_fixture_axes
 
 
 def pcolormesh_nearest(out_dir):

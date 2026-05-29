@@ -12,7 +12,10 @@ except ModuleNotFoundError:
     sys.path.append(str(Path(__file__).resolve().parents[1]))
     from common import *  # noqa: F401,F403
 
-from .mesh_fixture_common import mesh_fixture_axes, hist2d_weighted_data
+try:
+    from test.matplotlib_ref.plots.mesh_fixture_common import mesh_fixture_axes, hist2d_weighted_data
+except ModuleNotFoundError:
+    from mesh_fixture_common import mesh_fixture_axes, hist2d_weighted_data
 
 
 def hist2d_weighted_density(out_dir):

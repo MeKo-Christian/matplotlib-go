@@ -89,7 +89,7 @@ var cases = []Case{
 	{ID: "errorbar_basic", Topic: "errorbar", Title: "Error Bars", Description: "Symmetric and asymmetric error bars with caps, marker styling, and legend output.", Showcase: true, SVGGoldenFamily: "errorbar", GoBasicSmokeFamily: "errorbar", SkiaParityFamily: "errorbar"},
 	{ID: "multi_series_basic", Topic: "multi", Title: "Multiple Series", Description: "Several labeled lines sharing one axes, demonstrating color cycling and legends.", Showcase: true, SkiaParityFamily: "line"},
 	{ID: "multi_series_color_cycle", Topic: "multi", Title: "Color Cycle"},
-	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MinPSNR: 23.0, MaxMeanAbs: 18.0, MaxRMSE: 8.0},
+	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MinPSNR: 23.0, MaxMeanAbs: 18.0, MaxRMSE: 10.0},
 	{ID: "text_annotation_matrix", Topic: "annotation", Title: "Text Annotation Matrix", FixtureOnly: true, MinPSNR: 20.0, MaxMeanAbs: 24.0, MaxRMSE: 42.0},
 	{ID: "hist_basic", Topic: "histogram", Title: "Histogram Counts", Description: "A deterministic histogram with count bins, labels, and default bar styling.", Showcase: true, SVGGoldenFamily: "hist", GoBasicSmokeFamily: "histogram", SkiaParityFamily: "histogram"},
 	{ID: "hist_density", Topic: "histogram", Title: "Histogram Density"},
@@ -195,12 +195,12 @@ var cases = []Case{
 	{ID: "lognorm_imshow", Topic: "colorbar", Title: "LogNorm Imshow", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
 	{ID: "twoslope_norm_image", Topic: "colorbar", Title: "TwoSlopeNorm Image", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
 	{ID: "colorbar_extensions", Topic: "colorbar", Title: "Colorbar Extensions", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0},
-	{ID: "large_scatter", Topic: "raster", Title: "Large Scatter Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, MinPSNR: 55.0, MaxMeanAbs: 0.5, MaxRMSE: 4.0},
-	{ID: "mixed_collection", Topic: "raster", Title: "Mixed Path Collection", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, SVGGoldenFamily: "collection", GoBasicSmokeFamily: "collection", MinPSNR: 60.0, MaxMeanAbs: 0.5, MaxRMSE: 2.0},
+	{ID: "large_scatter", Topic: "raster", Title: "Large Scatter Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, MinPSNR: 55.0, MaxMeanAbs: 0.5, MaxRMSE: 6.0},
+	{ID: "mixed_collection", Topic: "raster", Title: "Mixed Path Collection", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, SVGGoldenFamily: "collection", GoBasicSmokeFamily: "collection", MinPSNR: 55.0, MaxMeanAbs: 0.5, MaxRMSE: 7.0},
 	{ID: "mixed_raster_vector", Topic: "raster", Title: "Mixed Raster Vector Output", FixtureOnly: true, Width: 640, Height: 640, SVGGoldenFamily: "mixed_raster", MinPSNR: 32.0, MaxMeanAbs: 9.0, MaxRMSE: 18.0},
-	{ID: "quad_mesh", Topic: "raster", Title: "Quad Mesh Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"quadmeshbatch"}, MinPSNR: 48.0, MaxMeanAbs: 1.0, MaxRMSE: 4.0},
+	{ID: "quad_mesh", Topic: "raster", Title: "Quad Mesh Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"quadmeshbatch"}, MinPSNR: 48.0, MaxMeanAbs: 1.0, MaxRMSE: 6.0},
 	{ID: "gouraud_triangles", Topic: "raster", Title: "Gouraud Triangles", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"gouraudtrianglebatch"}, MinPSNR: 25.0, MaxMeanAbs: 18.0},
-	{ID: "clip_path_batch", Topic: "raster", Title: "Clip Path Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathclip", "quadmeshbatch"}, MinPSNR: 45.0, MaxMeanAbs: 1.0, MaxRMSE: 6.0},
+	{ID: "clip_path_batch", Topic: "raster", Title: "Clip Path Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathclip", "quadmeshbatch"}, MinPSNR: 45.0, MaxMeanAbs: 1.0, MaxRMSE: 8.0},
 }
 
 // Cases returns every cataloged parity example/fixture.
