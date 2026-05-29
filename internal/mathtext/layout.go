@@ -1580,6 +1580,15 @@ const (
 	mathScriptDeltaIntegral = 0.1
 	mathScriptSubdrop       = 0.4
 	mathDejaVuSansXHeight   = 1120.0 / 2048.0
+
+	// Fraction layout constants ported from matplotlib's DejaVuSansFontConstants
+	// (lib/matplotlib/_mathtext.py). num2/denom2 are the TEXTSTYLE numerator and
+	// denominator shifts as multiples of x-height; axisHeight is the math-axis
+	// height as a multiple of the design em (font size), where the fraction bar
+	// is centered.
+	mathFracNum2     = 868.352 / 1120.0
+	mathFracDenom2   = 768.0 / 1120.0
+	mathFracAxisHght = 512.0 / 2048.0
 )
 
 func mathXHeight(r Measurer, size float64, fontKey string) float64 {
@@ -1611,32 +1620,54 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	}
 	numBox := layoutMathNode(r, num, childSize, fontKey, opts)
 	denBox := layoutMathNode(r, den, childSize, fontKey, opts)
-	sideThickness := maxFloat64(mathQuadWidth(r, size, fontKey)/16, 0.5)
-	ruleThickness := sideThickness
+	thickness := maxFloat64(mathQuadWidth(r, size, fontKey)/16, 0.5)
+	ruleThickness := thickness
 	if !rule {
 		ruleThickness = 0
 	}
 	contentWidth := maxFloat64(numBox.Width, denBox.Width)
-	width := contentWidth + 2*sideThickness
+	width := contentWidth + 2*thickness
 	ruleWidth := contentWidth
-	padding := 0.0
-	numX := padding + (contentWidth-numBox.Width)/2
-	denX := padding + (contentWidth-denBox.Width)/2
-	space := sideThickness * 2
-	equalMetrics := r.MeasureText("=", size, fontKey)
-	equalCenter := (equalMetrics.Ascent + equalMetrics.Descent) / 2
-	if equalMetrics.BoundsH > 0 {
-		equalCenter = -(equalMetrics.BoundsY + equalMetrics.BoundsH/2)
-	}
-	shift := denBox.Ascent - (equalCenter - sideThickness*3)
-	denY := shift
-	ruleCenterY := shift - denBox.Ascent - space - ruleThickness/2
-	numY := ruleCenterY - ruleThickness/2 - space - numBox.Descent
-	vlistHeight := numBox.Ascent + numBox.Descent + space + ruleThickness + space + denBox.Ascent
-	ascent := vlistHeight - shift
-	descent := denBox.Descent + shift
-	if equalMetrics.Ascent <= 0 && equalMetrics.Descent <= 0 {
-		shift = denBox.Ascent - size*0.12
+	numX := (contentWidth - numBox.Width) / 2
+	denX := (contentWidth - denBox.Width) / 2
+
+	var numY, denY, ruleCenterY, ascent, descent float64
+	if rule {
+		// Faithful port of matplotlib _mathtext.Parser._genfrac (TEXTSTYLE, with
+		// rule). The fraction bar is centered on the font's math axis; the
+		// numerator/denominator shifts come from the DejaVu Sans font constants
+		// scaled by x-height. Layout space is y-down (negative Y is above the
+		// baseline); matplotlib's height=ascent and depth=descent.
+		xHeight := mathXHeight(r, size, fontKey)
+		axisHeight := mathFracAxisHght * size
+		delta := ruleThickness / 2
+		numShiftUp := mathFracNum2 * xHeight
+		denShiftDown := mathFracDenom2 * xHeight
+		clr := ruleThickness
+		numClr := maxFloat64((numShiftUp-numBox.Descent)-(axisHeight+delta), clr)
+		denClr := maxFloat64((axisHeight-delta)-(denBox.Ascent-denShiftDown), clr)
+		ruleCenterY = -axisHeight
+		numY = -(axisHeight + delta + numClr + numBox.Descent)
+		denY = -axisHeight + delta + denClr + denBox.Ascent
+		ascent = axisHeight + delta + numClr + numBox.Descent + numBox.Ascent
+		descent = denBox.Descent - axisHeight + delta + denClr + denBox.Ascent
+	} else {
+		// Rule-less stacks (\binom, \genfrac with rule size 0). matplotlib's
+		// _genfrac else-branch centers these on the math axis too, but its shifts
+		// need a measured x-height we don't have a faithful proxy for; the
+		// axis-centered heuristic below matches the matplotlib reference better
+		// across the matrix/binom fixtures than the TeX num3/denom2 shifts.
+		space := thickness * 2
+		equalMetrics := r.MeasureText("=", size, fontKey)
+		equalCenter := (equalMetrics.Ascent + equalMetrics.Descent) / 2
+		if equalMetrics.BoundsH > 0 {
+			equalCenter = -(equalMetrics.BoundsY + equalMetrics.BoundsH/2)
+		}
+		shift := denBox.Ascent - (equalCenter - thickness*3)
+		if equalMetrics.Ascent <= 0 && equalMetrics.Descent <= 0 {
+			shift = denBox.Ascent - size*0.12
+		}
+		vlistHeight := numBox.Ascent + numBox.Descent + space + ruleThickness + space + denBox.Ascent
 		denY = shift
 		ruleCenterY = shift - denBox.Ascent - space - ruleThickness/2
 		numY = ruleCenterY - ruleThickness/2 - space - numBox.Descent
