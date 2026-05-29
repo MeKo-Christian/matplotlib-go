@@ -259,9 +259,37 @@ func mathRuleDeviceRect(origin geom.Pt, rule geom.Rect) geom.Rect {
 	}
 }
 
+// snapMathRuleRect snaps a device-space math rule rect to the pixel grid the way
+// matplotlib's raster mathtext does (_mathtext.py to_raster): widen X outward
+// (floor min / ceil max) and force a thin rule to a 1px line centered on the bar,
+// so fraction bars render crisp and never collapse. Only the caller's raster
+// branch applies it; vector backends keep the unsnapped, resolution-independent rect.
+func snapMathRuleRect(r geom.Rect) geom.Rect {
+	x1 := math.Floor(r.Min.X)
+	x2 := math.Ceil(r.Max.X)
+	h := r.Max.Y - r.Min.Y
+	var y1, y2 float64
+	if int(h)-1 <= 0 { // thin rule -> 1px line centered on the bar
+		c := (r.Min.Y + r.Max.Y) / 2
+		y1 = math.Floor(c)
+		y2 = y1 + 1
+	} else {
+		y1 = math.Floor(r.Min.Y)
+		y2 = y1 + math.Round(h)
+	}
+	return geom.Rect{Min: geom.Pt{X: x1, Y: y1}, Max: geom.Pt{X: x2, Y: y2}}
+}
+
 func drawMathTextLayout(r render.Renderer, textRen render.TextDrawer, layout MathTextLayout, origin geom.Pt, textColor render.Color, fontKey string) {
+	// matplotlib snaps mathtext rules to the pixel grid only in its raster path
+	// (to_raster); its vector path leaves them resolution-independent. Mirror
+	// that: snap rules only for raster backends (those exporting an RGBA image).
+	_, rasterBackend := r.(render.RGBAExporter)
 	for _, rule := range layout.Rules {
 		rect := mathRuleDeviceRect(origin, rule.Rect)
+		if rasterBackend {
+			rect = snapMathRuleRect(rect)
+		}
 		r.Path(pixelRectPath(rect), &render.Paint{Fill: textColor})
 	}
 	for _, run := range layout.Runs {
