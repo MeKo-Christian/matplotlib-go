@@ -265,5 +265,12 @@ func (r *Renderer) resolveTextFontFace(fontKey string) render.FontFace {
 
 func wantsDefaultDejaVuSans(fontKey string) bool {
 	fontKey = strings.TrimSpace(fontKey)
-	return fontKey == "" || strings.Contains(strings.ToLower(fontKey), "dejavu sans")
+	lower := strings.ToLower(fontKey)
+	// "DejaVu Sans Display" (used for large math operators) must resolve to its
+	// own .ttf, not the cached regular DejaVu Sans face — otherwise big operators
+	// render at regular size. Exclude any Display variant from the fast path.
+	if strings.Contains(lower, "display") {
+		return false
+	}
+	return fontKey == "" || strings.Contains(lower, "dejavu sans")
 }

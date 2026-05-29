@@ -241,17 +241,32 @@ func primeTextFont(textRen render.TextDrawer, sample string, size float64, fontK
 	}
 }
 
+// mathRunDevicePoint converts a math layout run offset (layout space, y-down:
+// negative Y sits above the baseline) into the renderer's y-up device space by
+// negating Y. The glyph outline pipeline (render/text_path.go sfntPoint) builds
+// ascenders at larger Y, so the layout offsets must be flipped to match.
+func mathRunDevicePoint(origin geom.Pt, offset geom.Pt) geom.Pt {
+	return geom.Pt{X: origin.X + offset.X, Y: origin.Y - offset.Y}
+}
+
+// mathRuleDeviceRect converts a math layout rule rect (layout space, y-down)
+// into y-up device space. Negating Y inverts min/max ordering, so the corners
+// are swapped to keep the rect well-formed (Min.Y <= Max.Y).
+func mathRuleDeviceRect(origin geom.Pt, rule geom.Rect) geom.Rect {
+	return geom.Rect{
+		Min: geom.Pt{X: origin.X + rule.Min.X, Y: origin.Y - rule.Max.Y},
+		Max: geom.Pt{X: origin.X + rule.Max.X, Y: origin.Y - rule.Min.Y},
+	}
+}
+
 func drawMathTextLayout(r render.Renderer, textRen render.TextDrawer, layout MathTextLayout, origin geom.Pt, textColor render.Color, fontKey string) {
 	for _, rule := range layout.Rules {
-		rect := geom.Rect{
-			Min: geom.Pt{X: origin.X + rule.Rect.Min.X, Y: origin.Y + rule.Rect.Min.Y},
-			Max: geom.Pt{X: origin.X + rule.Rect.Max.X, Y: origin.Y + rule.Rect.Max.Y},
-		}
+		rect := mathRuleDeviceRect(origin, rule.Rect)
 		r.Path(pixelRectPath(rect), &render.Paint{Fill: textColor})
 	}
 	for _, run := range layout.Runs {
 		runFontKey := resolveRunFontKey(run, fontKey)
-		drawTextWithFontContext(textRen, run.Text, geom.Pt{X: origin.X + run.Offset.X, Y: origin.Y + run.Offset.Y}, run.FontSize, textColor, runFontKey)
+		drawTextWithFontContext(textRen, run.Text, mathRunDevicePoint(origin, run.Offset), run.FontSize, textColor, runFontKey)
 	}
 }
 
@@ -304,15 +319,12 @@ func drawMathTextLayoutPathTransformed(r render.Renderer, layout MathTextLayout,
 func mathTextLayoutPaths(r render.Renderer, layout MathTextLayout, origin geom.Pt, fontKey string) ([]geom.Path, bool) {
 	paths := make([]geom.Path, 0, len(layout.Rules)+len(layout.Runs))
 	for _, rule := range layout.Rules {
-		rect := geom.Rect{
-			Min: geom.Pt{X: origin.X + rule.Rect.Min.X, Y: origin.Y + rule.Rect.Min.Y},
-			Max: geom.Pt{X: origin.X + rule.Rect.Max.X, Y: origin.Y + rule.Rect.Max.Y},
-		}
+		rect := mathRuleDeviceRect(origin, rule.Rect)
 		paths = append(paths, pixelRectPath(rect))
 	}
 	for _, run := range layout.Runs {
 		runFontKey := resolveRunFontKey(run, fontKey)
-		runPath, ok := mathTextRunPath(r, run.Text, geom.Pt{X: origin.X + run.Offset.X, Y: origin.Y + run.Offset.Y}, run.FontSize, runFontKey)
+		runPath, ok := mathTextRunPath(r, run.Text, mathRunDevicePoint(origin, run.Offset), run.FontSize, runFontKey)
 		if !ok {
 			return nil, false
 		}
