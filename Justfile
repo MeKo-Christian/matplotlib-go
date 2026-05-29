@@ -45,6 +45,43 @@ test:
 test-optional-visual:
     RUN_OPTIONAL_VISUAL_TESTS=true CGO_ENABLED=1 go test -tags freetype ./...
 
+# --- FreeType 2.6.1 parity build -------------------------------------------
+# matplotlib generates its reference images with FreeType 2.6.1 (its pinned
+# version). The default build links system FreeType, which rasterizes glyphs
+# slightly differently. The parity targets below build & link FreeType 2.6.1
+# (via PKG_CONFIG_PATH) so text matches the reference images byte-closer.
+# `freetype261-prefix` is the absolute path to the vendored pkg-config dir.
+freetype261-prefix := justfile_directory() / "third_party/freetype/prefix/lib/pkgconfig"
+
+# Build & cache the vendored static FreeType 2.6.1 (idempotent).
+freetype261-build:
+    bash third_party/freetype/build.sh
+
+# Build everything linking FreeType 2.6.1.
+build-parity: freetype261-build
+    PKG_CONFIG_PATH="{{freetype261-prefix}}:${PKG_CONFIG_PATH:-}" \
+      CGO_ENABLED=1 go build -tags "freetype freetype261" ./...
+
+# Run the full suite linking FreeType 2.6.1 (matches matplotlib references).
+test-parity: freetype261-build
+    PKG_CONFIG_PATH="{{freetype261-prefix}}:${PKG_CONFIG_PATH:-}" \
+      CGO_ENABLED=1 go test -count=1 -tags "freetype freetype261" ./...
+
+test-parity-optional-visual: freetype261-build
+    PKG_CONFIG_PATH="{{freetype261-prefix}}:${PKG_CONFIG_PATH:-}" \
+      RUN_OPTIONAL_VISUAL_TESTS=true CGO_ENABLED=1 go test -count=1 -tags "freetype freetype261" ./...
+
+# Regenerate golden images under the FreeType 2.6.1 parity build.
+golden-update-parity TEST="": freetype261-build
+    if [ -n "{{TEST}}" ]; then \
+      PKG_CONFIG_PATH="{{freetype261-prefix}}:${PKG_CONFIG_PATH:-}" \
+        CGO_ENABLED=1 go test -tags "freetype freetype261" -count=1 -run "{{TEST}}" ./test -update-golden; \
+    else \
+      PKG_CONFIG_PATH="{{freetype261-prefix}}:${PKG_CONFIG_PATH:-}" \
+        CGO_ENABLED=1 go test -tags "freetype freetype261" -count=1 -run '^Test.*_Golden$$' ./test -update-golden; \
+    fi
+# ---------------------------------------------------------------------------
+
 test-skia:
     CGO_ENABLED=1 go test -tags "skia freetype" ./...
 
