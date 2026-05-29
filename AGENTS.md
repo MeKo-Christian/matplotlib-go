@@ -45,7 +45,7 @@ The `test/` directory is flat and catalog-driven — do not add per-case test fu
 ## Parity testing
 
 - Matplotlib parity is the primary goal for this port: prefer changing core library behavior over changing examples or fixtures when rendered output diverges.
-- When trying to achieve parity with Matplotlib, always compare with the original code of matplotlib at ./third_party
+- When trying to achieve parity with Matplotlib, always compare with the original code of matplotlib at ./third_party. **`./third_party/matplotlib` is pinned to matplotlib 3.8.4, the exact version that generated `testdata/matplotlib_ref/*.png`** (verified byte-identical). Do not port behavior from a newer matplotlib — its mathtext/layout internals diverge from the reference images. If you have matplotlib 3.8.4 installed, you can regenerate/instrument a reference directly: `PYTHONPATH=. python3 test/matplotlib_ref/plots/<id>.py --output-dir /tmp/x`.
 - If possible, try to inspect the rendered output visually and compare it with the original matplotlib output.
 - Try to keep the examples as close to the original matplotlib examples as possible.
 - The aim is to have core library parity with matplotlib, so don't tweak the examples to achieve parity, but rather tweak the core library to achieve parity with the original matplotlib output.
