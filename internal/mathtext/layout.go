@@ -1632,16 +1632,14 @@ func isMathLimitOperator(n mathLayoutNode) bool {
 	return n.kind == mathLayoutText && isMathLimitText(n.text)
 }
 
-// matplotlib 3.8.4 DejaVuSansFontConstants (lib/matplotlib/_mathtext.py),
-// inheriting FontConstantsBase defaults. Sup/sub shift constants are TeX table
-// values divided by the design x-height (1120); they are multiplied by the
-// scaled x-height in use. Pure-em metrics (x-height, axis, underline) are
-// multiples of the design em and scale with the pixel font size.
+// FontConstantsBase defaults from matplotlib's lib/matplotlib/_mathtext.py.
+// These sub/superscript constants are unchanged between matplotlib 3.8.4 and
+// 3.10.9 (verified against the vendored 3.10.9 source), and DejaVuSansFontConstants
+// is literally `pass` in both versions, so DejaVu Sans uses these base values.
+// They are multiples of the scaled x-height (sup/sub shifts) or the pixel font
+// size (underline). The reference images (now generated under 3.10.9) match.
 const (
-	// matplotlib 3.8.4 sub/superscript constants. DejaVuSansFontConstants is
-	// `pass` in 3.8.4, so DejaVu Sans uses the FontConstantsBase defaults (a
-	// newer matplotlib replaced these with per-font TeX-table values — do NOT
-	// use those, they don't match the 3.8.4 reference images).
+	// matplotlib FontConstantsBase sub/superscript constants (DejaVu Sans = base).
 	mathScriptDelta         = 0.025 // delta
 	mathScriptDeltaSlanted  = 0.2   // delta_slanted
 	mathScriptDeltaIntegral = 0.1   // delta_integral
@@ -1651,9 +1649,13 @@ const (
 	mathScriptSub1          = 0.3   // sub1
 	mathScriptSub2          = 0.5   // sub2
 
-	// Pure-em metrics (× pixel font size = fontsize*dpi/72).
-	mathDejaVuSansXHeight = 1120.0 / 2048.0 // consts.x_height
-	mathUnderlineRatio    = 0.75 / 12.0     // get_underline_thickness (hardcoded)
+	// Design-em ratio for DejaVu Sans' x-height (xHeight 1120 / unitsPerEm 2048),
+	// used only to recover the pixel font size for underline thickness. NOTE:
+	// matplotlib's get_xheight does NOT use this ratio for DejaVu (which has no
+	// PCLT table) — it returns the iceberg (top ink extent) of glyph 'x'. See
+	// mathXHeight/mathFontSizePixels for how this cancels to the iceberg value.
+	mathDejaVuSansXHeight = 1120.0 / 2048.0
+	mathUnderlineRatio    = 0.75 / 12.0 // get_underline_thickness (hardcoded)
 
 	// SHRINK_FACTOR: TeX style step shrinking numerator/denominator and scripts.
 	mathFracShrink = 0.70
@@ -1723,12 +1725,14 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	numX := (contentWidth - numBox.Width) / 2
 	denX := (contentWidth - denBox.Width) / 2
 
-	// Faithful port of matplotlib 3.8.4 _mathtext.Parser._genfrac (the version
-	// that generated the reference images). The numerator/rule/denominator stack
-	// is Vlist[cnum, Vbox(0,2t), Hrule, Vbox(0,2t), cden] (Hrule height=depth=t/2,
-	// so a rule-less fraction keeps a 4t gap), shifted so the rule sits in the
-	// middle of "=": shift = cden.height - ("=" center - 3t). Layout space is
-	// y-down (negative Y above baseline); matplotlib height=ascent, depth=descent.
+	// Faithful port of matplotlib _mathtext.Parser._genfrac. This algorithm is
+	// unchanged between 3.8.4 and 3.10.9 (the vendored 3.10.9 source has no
+	// axis_height-based variant — _genfrac is still "="-centered). The
+	// numerator/rule/denominator stack is Vlist[cnum, Vbox(0,2t), Hrule,
+	// Vbox(0,2t), cden] (Hrule height=depth=t/2, so a rule-less fraction keeps a
+	// 4t gap), shifted so the rule sits in the middle of "=": shift =
+	// cden.height - ("=" center - 3t). Layout space is y-down (negative Y above
+	// baseline); matplotlib height=ascent, depth=descent.
 	space := thickness * 2.0
 	eq := r.MeasureText("=", size, fontKey)
 	eqCenter := (eq.Ascent + eq.Descent) / 2
