@@ -47,8 +47,29 @@ const (
 	optionalVisualTestsEnv = "RUN_OPTIONAL_VISUAL_TESTS"
 )
 
-// goldenDirName returns the bare directory name used for golden images.
-func goldenDirName() string { return "golden" }
+// goldenReadPath returns the golden PNG path for id. Under the FreeType-2.6.1
+// parity build (-tags freetype261) it prefers testdata/golden_freetype/{id}.png
+// when present (the parity render differs from the default build for that case),
+// falling back to the shared testdata/golden/{id}.png otherwise. The default
+// build always uses testdata/golden/. See goldenParityDir (build-tag gated).
+func goldenReadPath(id string) string {
+	if dir := goldenParityDir(); dir != "" {
+		p := filepath.Join("..", "testdata", dir, id+".png")
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	return filepath.Join("..", "testdata", "golden", id+".png")
+}
+
+// goldenWriteDir returns the directory that -update-golden writes to: the
+// parity directory under -tags freetype261, otherwise the shared golden dir.
+func goldenWriteDir() string {
+	if dir := goldenParityDir(); dir != "" {
+		return dir
+	}
+	return "golden"
+}
 
 // optionalVisualGoldenIDs lists catalog cases whose golden tests are gated by
 // RUN_OPTIONAL_VISUAL_TESTS=true. Cases not in this set always run. The set
@@ -130,16 +151,16 @@ func runGoldenTest(t *testing.T, testName string) {
 		t.Fatalf("Failed to render parity example %s: %v", testName, err)
 	}
 
-	goldenPath := "../testdata/" + goldenDirName() + "/" + testName + ".png"
-
 	if *updateGolden {
-		if err := imagecmp.SavePNG(img, goldenPath); err != nil {
+		writePath := "../testdata/" + goldenWriteDir() + "/" + testName + ".png"
+		if err := imagecmp.SavePNG(img, writePath); err != nil {
 			t.Fatalf("Failed to update golden image: %v", err)
 		}
 		t.Skip("Updated golden image")
 		return
 	}
 
+	goldenPath := goldenReadPath(testName)
 	want, err := imagecmp.LoadPNG(goldenPath)
 	if err != nil {
 		t.Fatalf("Failed to load golden image %s: %v", goldenPath, err)
@@ -322,7 +343,7 @@ func runReferenceCompareTest(t *testing.T, c *examplecatalog.Case) {
 		t.Fatalf("render parity example %s: %v", c.ID, err)
 	}
 
-	goldenPath := filepath.Join("..", "testdata", "golden", c.ID+".png")
+	goldenPath := goldenReadPath(c.ID)
 	matplotlibPath := filepath.Join("..", "testdata", "matplotlib_ref", c.ID+".png")
 
 	golden, err := imagecmp.LoadPNG(goldenPath)

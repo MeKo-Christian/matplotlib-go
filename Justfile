@@ -47,11 +47,13 @@ test-optional-visual:
 
 # --- FreeType 2.6.1 parity build -------------------------------------------
 # matplotlib generates its reference images with FreeType 2.6.1 (its pinned
-# version). The default build links system FreeType, which rasterizes glyphs
-# slightly differently. The parity targets below build & link FreeType 2.6.1
-# (via PKG_CONFIG_PATH) so text matches the reference images byte-closer.
-# `freetype261-prefix` is the absolute path to the vendored pkg-config dir.
-freetype261-prefix := justfile_directory() / "third_party/freetype/prefix/lib/pkgconfig"
+# version). The default build links system FreeType, which hints glyphs
+# slightly differently. The parity targets build & statically link FreeType
+# 2.6.1 so text matches the reference images byte-closer. The `freetype261`
+# build tag selects tag-conditional cgo flags (backends/agg/freetype_native.go)
+# that point at the vendored static lib — no PKG_CONFIG_PATH needed, and go's
+# build cache stays isolated from the default (system-FreeType) build.
+# Parity goldens live in testdata/golden_freetype/ (cases that differ).
 
 # Build & cache the vendored static FreeType 2.6.1 (idempotent).
 freetype261-build:
@@ -59,26 +61,21 @@ freetype261-build:
 
 # Build everything linking FreeType 2.6.1.
 build-parity: freetype261-build
-    PKG_CONFIG_PATH="{{freetype261-prefix}}:${PKG_CONFIG_PATH:-}" \
-      CGO_ENABLED=1 go build -tags "freetype freetype261" ./...
+    CGO_ENABLED=1 go build -tags "freetype freetype261" ./...
 
 # Run the full suite linking FreeType 2.6.1 (matches matplotlib references).
 test-parity: freetype261-build
-    PKG_CONFIG_PATH="{{freetype261-prefix}}:${PKG_CONFIG_PATH:-}" \
-      CGO_ENABLED=1 go test -count=1 -tags "freetype freetype261" ./...
+    CGO_ENABLED=1 go test -count=1 -tags "freetype freetype261" ./...
 
 test-parity-optional-visual: freetype261-build
-    PKG_CONFIG_PATH="{{freetype261-prefix}}:${PKG_CONFIG_PATH:-}" \
-      RUN_OPTIONAL_VISUAL_TESTS=true CGO_ENABLED=1 go test -count=1 -tags "freetype freetype261" ./...
+    RUN_OPTIONAL_VISUAL_TESTS=true CGO_ENABLED=1 go test -count=1 -tags "freetype freetype261" ./...
 
-# Regenerate golden images under the FreeType 2.6.1 parity build.
+# Regenerate parity golden images (testdata/golden_freetype/) under FreeType 2.6.1.
 golden-update-parity TEST="": freetype261-build
     if [ -n "{{TEST}}" ]; then \
-      PKG_CONFIG_PATH="{{freetype261-prefix}}:${PKG_CONFIG_PATH:-}" \
-        CGO_ENABLED=1 go test -tags "freetype freetype261" -count=1 -run "{{TEST}}" ./test -update-golden; \
+      RUN_OPTIONAL_VISUAL_TESTS=true CGO_ENABLED=1 go test -tags "freetype freetype261" -count=1 -run "{{TEST}}" ./test -update-golden; \
     else \
-      PKG_CONFIG_PATH="{{freetype261-prefix}}:${PKG_CONFIG_PATH:-}" \
-        CGO_ENABLED=1 go test -tags "freetype freetype261" -count=1 -run '^Test.*_Golden$$' ./test -update-golden; \
+      RUN_OPTIONAL_VISUAL_TESTS=true CGO_ENABLED=1 go test -tags "freetype freetype261" -count=1 -run 'TestGolden$$' ./test -update-golden; \
     fi
 # ---------------------------------------------------------------------------
 

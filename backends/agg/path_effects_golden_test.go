@@ -27,8 +27,8 @@ func TestPathEffectGoldens(t *testing.T) {
 		fixture := fixture
 		t.Run(fixture.name, func(t *testing.T) {
 			got := fixture.render(t)
-			goldenPath := filepath.Join("testdata", "path_effects_golden", fixture.name+".png")
 			if *updatePathEffectsGoldens {
+				goldenPath := filepath.Join("testdata", pathEffectGoldenWriteDir(), fixture.name+".png")
 				if err := os.MkdirAll(filepath.Dir(goldenPath), 0o755); err != nil {
 					t.Fatalf("create golden dir: %v", err)
 				}
@@ -38,6 +38,7 @@ func TestPathEffectGoldens(t *testing.T) {
 				t.Skip("updated AGG path-effect golden")
 			}
 
+			goldenPath := pathEffectGoldenReadPath(fixture.name)
 			want, err := imagecmp.LoadPNG(goldenPath)
 			if err != nil {
 				t.Fatalf("load golden %s: %v\n(rerun with -update-path-effects-golden)", goldenPath, err)

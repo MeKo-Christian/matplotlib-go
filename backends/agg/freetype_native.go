@@ -3,7 +3,16 @@
 package agg
 
 /*
-#cgo pkg-config: freetype2
+// Default build: link the system FreeType via pkg-config.
+#cgo !freetype261 pkg-config: freetype2
+// Parity build (-tags freetype261): link the vendored static FreeType 2.6.1
+// (matplotlib's pinned version) built by third_party/freetype/build.sh. Using
+// tag-conditional cgo flags (not PKG_CONFIG_PATH) makes the FreeType version a
+// function of the build tag, so go's build cache never serves a system-FreeType
+// agg object to a parity build or vice versa. ${SRCDIR} keeps it relocatable;
+// only libfreetype.a lives in the prefix, so -lfreetype links statically.
+#cgo freetype261 CFLAGS: -I${SRCDIR}/../../third_party/freetype/prefix/include/freetype2
+#cgo freetype261 LDFLAGS: -L${SRCDIR}/../../third_party/freetype/prefix/lib -lfreetype -lm
 #include <stdlib.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
