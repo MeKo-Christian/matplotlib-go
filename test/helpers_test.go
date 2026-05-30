@@ -47,27 +47,16 @@ const (
 	optionalVisualTestsEnv = "RUN_OPTIONAL_VISUAL_TESTS"
 )
 
-// goldenReadPath returns the golden PNG path for id. Under the FreeType-2.6.1
-// parity build (-tags freetype261) it prefers testdata/golden_freetype/{id}.png
-// when present (the parity render differs from the default build for that case),
-// falling back to the shared testdata/golden/{id}.png otherwise. The default
-// build always uses testdata/golden/. See goldenParityDir (build-tag gated).
+// goldenReadPath returns the golden PNG path for id. The AGG backend links the
+// vendored FreeType 2.6.1 (matplotlib's pinned version) by default, so a single
+// canonical golden set in testdata/golden/ byte-matches both the live render and
+// the matplotlib references — no per-FreeType-version split is needed.
 func goldenReadPath(id string) string {
-	if dir := goldenParityDir(); dir != "" {
-		p := filepath.Join("..", "testdata", dir, id+".png")
-		if _, err := os.Stat(p); err == nil {
-			return p
-		}
-	}
 	return filepath.Join("..", "testdata", "golden", id+".png")
 }
 
-// goldenWriteDir returns the directory that -update-golden writes to: the
-// parity directory under -tags freetype261, otherwise the shared golden dir.
+// goldenWriteDir returns the directory that -update-golden writes to.
 func goldenWriteDir() string {
-	if dir := goldenParityDir(); dir != "" {
-		return dir
-	}
 	return "golden"
 }
 

@@ -145,12 +145,12 @@ var cases = []Case{
 	{ID: "patch_style_matrix", Topic: "patches", Title: "Patch Style Matrix", FixtureOnly: true, MinPSNR: 22.0, MaxMeanAbs: 20.0, MaxRMSE: 34.0},
 	{ID: "mesh_contour_tri", Topic: "mesh", Title: "Meshes and Contours", Optional: true, WebDemoID: "mesh", Description: "PColorMesh, contour/contourf, Hist2D, triplot, tripcolor, and tricontour.", Showcase: true, GoBasicSmokeFamily: "mesh", MinPSNR: 37.5, MaxMeanAbs: 7.5, SkiaParityFamily: "mesh"},
 	{ID: "plot_variants", Topic: "variants", Title: "Plot Variants", Optional: true, WebDemoID: "variants", Description: "Step, stairs, reference lines, spans, broken bars, and stacked bars.", Showcase: true, GoBasicSmokeFamily: "variants", MinPSNR: 35.0, MaxMeanAbs: 6.5},
-	// MaxRMSE 14.0: golden-vs-matplotlib_ref RMSE is 13.41 under the default
-	// (system FreeType) build and 11.41 under the FreeType-2.6.1 parity build.
-	// The residual is broadly-distributed sub-pixel antialiasing/blend noise on
-	// dense text + the high-frequency angle-spectrum curve (font-independent),
-	// not a layout bug; 14.0 is the tightest shared cap that passes both builds.
-	{ID: "spectrum_variants", Topic: "signal", Title: "Spectrum Variants", FixtureOnly: true, GoBasicSmokeFamily: "signal", MinPSNR: 35.0, MaxMeanAbs: 6.5, MaxRMSE: 14.0},
+	// MaxRMSE 13.0: with the AGG backend now linking matplotlib's pinned FreeType
+	// 2.6.1 by default, golden-vs-matplotlib_ref RMSE is 11.41 (down from 13.41
+	// under system FreeType). The residual is broadly-distributed sub-pixel
+	// antialiasing/blend noise on the high-frequency angle-spectrum curve
+	// (font-independent), not a layout bug; 13.0 keeps a small margin over 11.41.
+	{ID: "spectrum_variants", Topic: "signal", Title: "Spectrum Variants", FixtureOnly: true, GoBasicSmokeFamily: "signal", MinPSNR: 35.0, MaxMeanAbs: 6.5, MaxRMSE: 13.0},
 	{ID: "stat_variants", Topic: "statistics", Title: "Statistical Views", Optional: true, WebDemoID: "statistics", Description: "Box plots, violin plots, empirical CDFs, and stack plots.", Showcase: true, GoBasicSmokeFamily: "statistics", MinPSNR: 32.0, MaxMeanAbs: 9.0},
 	{ID: "specialty_depth", Topic: "statistics", Title: "Specialty Depth", FixtureOnly: true, MinPSNR: 22.0, MaxMeanAbs: 20.0, MaxRMSE: 35.0},
 	{ID: "stem_plot", Topic: "specialty", Title: "Stem Plot", Optional: true},

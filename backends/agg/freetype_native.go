@@ -3,16 +3,22 @@
 package agg
 
 /*
-// Default build: link the system FreeType via pkg-config.
-#cgo !freetype261 pkg-config: freetype2
-// Parity build (-tags freetype261): link the vendored static FreeType 2.6.1
-// (matplotlib's pinned version) built by third_party/freetype/build.sh. Using
-// tag-conditional cgo flags (not PKG_CONFIG_PATH) makes the FreeType version a
-// function of the build tag, so go's build cache never serves a system-FreeType
-// agg object to a parity build or vice versa. ${SRCDIR} keeps it relocatable;
-// only libfreetype.a lives in the prefix, so -lfreetype links statically.
-#cgo freetype261 CFLAGS: -I${SRCDIR}/../../third_party/freetype/prefix/include/freetype2
-#cgo freetype261 LDFLAGS: -L${SRCDIR}/../../third_party/freetype/prefix/lib -lfreetype -lm
+// Default build: statically link the vendored FreeType 2.6.1 — matplotlib's
+// pinned version, the one used to generate every reference image. It is built
+// by `just freetype261-build` (third_party/freetype/build.sh) into the
+// gitignored prefix. Pinning the FreeType version is what makes the AGG text
+// rasterization byte-match the matplotlib references (the autohinter changed
+// between 2.6.1 and current system FreeType, ~20 RMSE on dense text). ${SRCDIR}
+// keeps the paths relocatable; only libfreetype.a ships in the prefix, so
+// -lfreetype links statically.
+//
+// Compile fallback (-tags systemfreetype): link the system FreeType via
+// pkg-config for environments without the vendored prefix (IDEs, quick vet).
+// This is NOT parity-exact — golden/reference tests are expected to diverge —
+// and exists only so the cgo packages compile without building FreeType 2.6.1.
+#cgo !systemfreetype CFLAGS: -I${SRCDIR}/../../third_party/freetype/prefix/include/freetype2
+#cgo !systemfreetype LDFLAGS: -L${SRCDIR}/../../third_party/freetype/prefix/lib -lfreetype -lm
+#cgo systemfreetype pkg-config: freetype2
 #include <stdlib.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
