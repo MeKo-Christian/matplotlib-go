@@ -329,6 +329,36 @@ func drawMathTextLayout(r render.Renderer, textRen render.TextDrawer, layout Mat
 	// Vector backends (no RGBA export) draw exact, unsnapped rects like
 	// matplotlib's vector backends.
 	_, rasterBackend := r.(render.RGBAExporter)
+
+	// Pixel-exact path: on a raster backend that implements matplotlib's
+	// to_raster glyph+rect blitting (cgo FreeType), draw the whole expression
+	// through it. Purego/WASM and vector backends fall through to the per-run
+	// subpixel path below.
+	if rasterBackend {
+		if imgDrawer, ok := textRen.(render.MathTextImageDrawer); ok {
+			glyphs := make([]render.MathGlyphPlacement, 0, len(layout.Runs))
+			for _, run := range layout.Runs {
+				glyphs = append(glyphs, render.MathGlyphPlacement{
+					Text:     run.Text,
+					FontSize: run.FontSize,
+					FontKey:  resolveRunFontKey(run, fontKey),
+					Ox:       run.Offset.X,
+					Oy:       run.Offset.Y,
+				})
+			}
+			rects := make([]render.MathRectPlacement, 0, len(layout.Rules))
+			for _, rule := range layout.Rules {
+				rects = append(rects, render.MathRectPlacement{
+					X1: rule.Rect.Min.X, Y1: rule.Rect.Min.Y,
+					X2: rule.Rect.Max.X, Y2: rule.Rect.Max.Y,
+				})
+			}
+			if imgDrawer.DrawMathTextImage(glyphs, rects, origin, textColor) {
+				return
+			}
+		}
+	}
+
 	for _, rule := range layout.Rules {
 		rect := mathRuleDeviceRect(origin, rule.Rect)
 		paint := render.Paint{Fill: textColor}

@@ -545,6 +545,207 @@ func nativeFreetypeVersion() string {
 	return fmt.Sprintf("%d.%d.%d", int(major), int(minor), int(patch))
 }
 
+// DrawMathTextImage rasterizes a flattened mathtext expression with matplotlib's
+// _mathtext.Output.to_raster pixel placement: one shared bounding box, per-glyph
+// integer blitting (int(ox)+bitmap_left, int(oy-iceberg)) and the draw_rect_filled
+// rule formula, then the whole image anchored at round(.)+1. Coordinates from core
+// are layout space (y-down, baseline = 0; Oy/rect.Y negative above baseline).
+func (r *Renderer) DrawMathTextImage(glyphs []render.MathGlyphPlacement, rects []render.MathRectPlacement, anchor geom.Pt, textColor render.Color) bool {
+	if r.ctx == nil || len(glyphs)+len(rects) == 0 {
+		return false
+	}
+	hf := matplotlibTextHintingFactor
+
+	type placed struct {
+		g    nativeMathGlyph
+		ox   float64
+		oy   float64
+		have bool
+	}
+	rendered := make([]placed, len(glyphs))
+
+	// Bounding box over glyph ink, rects, and the origin (0), with the -1/+1
+	// border, in layout y-down space. Glyph ink top = oy - ymax, bottom = oy - ymin.
+	xmin, ymin := 0.0, 0.0
+	xmax, ymax := 0.0, 0.0
+	for i, gp := range glyphs {
+		runes := []rune(gp.Text)
+		if len(runes) != 1 {
+			continue
+		}
+		var fontPath string
+		r.withTemporaryFontKey(func() {
+			font := r.configureTextFont(gp.FontSize, gp.FontKey)
+			if font.backend == textBackendRaster {
+				fontPath = font.face.Path
+			}
+		})
+		if fontPath == "" {
+			return false
+		}
+		g, ok := r.nativeFreetypeMathGlyph(runes[0], fontPath, gp.FontSize, hf)
+		if !ok {
+			return false
+		}
+		rendered[i] = placed{g: g, ox: gp.Ox, oy: gp.Oy, have: true}
+		xmin = math.Min(xmin, gp.Ox+g.xmin)
+		xmax = math.Max(xmax, gp.Ox+g.xmax)
+		ymin = math.Min(ymin, gp.Oy-g.ymax)
+		ymax = math.Max(ymax, gp.Oy-g.ymin)
+	}
+	for _, rc := range rects {
+		xmin = math.Min(xmin, rc.X1)
+		xmax = math.Max(xmax, rc.X2)
+		ymin = math.Min(ymin, rc.Y1)
+		ymax = math.Max(ymax, rc.Y2)
+	}
+	xmin -= 1
+	ymin -= 1
+	xmax += 1
+	ymax += 1
+	_ = xmax
+	_ = ymax
+
+	// Device placement of the math image. origin (display) X is the expression
+	// left; its device baseline is height-origin.Y. matplotlib places the image
+	// at round(text_x), round(.)+1; the -xmin/-ymin borders are folded into the
+	// per-element int() below.
+	baselineDev := float64(r.height) - anchor.Y
+	imageLeftDev := math.Round(anchor.X)
+	imageTopDev := math.Round(baselineDev+ymin) + 1
+
+	for i := range rendered {
+		p := &rendered[i]
+		if !p.have || p.g.mask == nil {
+			continue
+		}
+		gx := int(imageLeftDev) + int(p.ox-xmin) + p.g.bitmapLeft
+		gy := int(imageTopDev) + int((p.oy-ymin)-p.g.iceberg)
+		r.blendAlphaMask(p.g.mask, gx, gy, textColor)
+	}
+
+	for _, rc := range rects {
+		y1 := rc.Y1 - ymin
+		y2 := rc.Y2 - ymin
+		height := int(y2-y1) - 1
+		if height < 0 {
+			height = 0
+		}
+		var yy int
+		if height == 0 {
+			yy = int((y1+y2)/2 - 0.5)
+		} else {
+			yy = int(y1)
+		}
+		x0 := int(imageLeftDev) + int(rc.X1-xmin)
+		x1 := int(imageLeftDev) + int(math.Ceil(rc.X2-xmin))
+		top := int(imageTopDev) + yy
+		r.fillDeviceRect(x0, top, x1+1, top+height+1, textColor)
+	}
+	return true
+}
+
+// fillDeviceRect blends a solid color over the half-open device rect
+// [x0,x1) x [y0,y1) (matplotlib FT2Image.draw_rect_filled is inclusive; callers
+// pass the +1-adjusted half-open bounds).
+func (r *Renderer) fillDeviceRect(x0, y0, x1, y1 int, textColor render.Color) {
+	if x1 <= x0 || y1 <= y0 {
+		return
+	}
+	mask := image.NewAlpha(image.Rect(0, 0, x1-x0, y1-y0))
+	for i := range mask.Pix {
+		mask.Pix[i] = 0xff
+	}
+	r.blendAlphaMask(mask, x0, y0, textColor)
+}
+
+// nativeMathGlyph bundles one mathtext glyph's matplotlib `_get_info` metrics
+// (device pixels, baseline-relative, y-up) with its rendered hinted bitmap, so
+// DrawMathTextImage can position it exactly like _mathtext.Output.to_raster.
+type nativeMathGlyph struct {
+	iceberg               float64
+	xmin, xmax            float64
+	ymin, ymax            float64
+	mask                  *image.Alpha
+	bitmapLeft, bitmapTop int
+}
+
+// nativeFreetypeMathGlyph loads, measures and renders a single glyph with the
+// matplotlib FT2Font setup (dpi*hf horizontal grid + xx=1/hf transform,
+// FORCE_AUTOHINT) and returns its _get_info metrics plus the hinted bitmap. The
+// CBox is taken before FT_Render_Glyph (from the transformed outline, 1x).
+func (r *Renderer) nativeFreetypeMathGlyph(rr rune, fontPath string, size float64, hintingFactor int) (nativeMathGlyph, bool) {
+	if fontPath == "" || size <= 0 {
+		return nativeMathGlyph{}, false
+	}
+	if hintingFactor <= 0 {
+		hintingFactor = 1
+	}
+	dpi := r.resolution
+	if dpi == 0 {
+		dpi = 72
+	}
+
+	var library C.FT_Library
+	if C.FT_Init_FreeType(&library) != 0 {
+		return nativeMathGlyph{}, false
+	}
+	defer C.FT_Done_FreeType(library)
+
+	path := C.CString(fontPath)
+	defer C.free(unsafe.Pointer(path))
+
+	var ftFace C.FT_Face
+	if C.FT_New_Face(library, path, 0, &ftFace) != 0 {
+		return nativeMathGlyph{}, false
+	}
+	defer C.FT_Done_Face(ftFace)
+
+	charSize := C.FT_F26Dot6(math.Round(size * 64.0))
+	if C.FT_Set_Char_Size(ftFace, charSize, 0, C.FT_UInt(dpi*uint(hintingFactor)), C.FT_UInt(dpi)) != 0 {
+		return nativeMathGlyph{}, false
+	}
+	matrix := C.FT_Matrix{
+		xx: C.FT_Fixed(math.Round(65536.0 / float64(hintingFactor))),
+		yy: 0x10000,
+	}
+	C.FT_Set_Transform(ftFace, &matrix, nil)
+
+	glyphIndex := C.FT_Get_Char_Index(ftFace, C.FT_ULong(rr))
+	if glyphIndex == 0 {
+		return nativeMathGlyph{}, false
+	}
+	if C.FT_Load_Glyph(ftFace, glyphIndex, C.mpl_go_force_autohint_load_flags()) != 0 {
+		return nativeMathGlyph{}, false
+	}
+	slot := ftFace.glyph
+
+	var glyph C.FT_Glyph
+	if C.FT_Get_Glyph(slot, &glyph) != 0 {
+		return nativeMathGlyph{}, false
+	}
+	var cbox C.FT_BBox
+	C.FT_Glyph_Get_CBox(glyph, C.FT_GLYPH_BBOX_SUBPIXELS, &cbox)
+	C.FT_Done_Glyph(glyph)
+
+	out := nativeMathGlyph{
+		iceberg: float64(slot.metrics.horiBearingY) / 64.0,
+		xmin:    float64(cbox.xMin) / 64.0,
+		xmax:    float64(cbox.xMax) / 64.0,
+		ymin:    float64(cbox.yMin) / 64.0,
+		ymax:    float64(cbox.yMax) / 64.0,
+	}
+
+	if C.FT_Render_Glyph(slot, C.FT_RENDER_MODE_NORMAL) == 0 {
+		if mask, ok := freetypeBitmapMask(slot.bitmap); ok {
+			out.mask = mask
+			out.bitmapLeft = int(slot.bitmap_left)
+			out.bitmapTop = int(slot.bitmap_top)
+		}
+	}
+	return out, true
+}
+
 func freetypeBitmapMask(bitmap C.FT_Bitmap) (*image.Alpha, bool) {
 	width := int(bitmap.width)
 	height := int(bitmap.rows)

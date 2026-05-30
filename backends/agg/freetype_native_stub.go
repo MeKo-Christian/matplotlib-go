@@ -23,6 +23,12 @@ func (r *Renderer) measureNativeFreetypeGlyphRun(_ string, _ string, _ float64, 
 	return nil, false
 }
 
+// DrawMathTextImage is unavailable without cgo FreeType; returning false makes
+// core fall back to the pure-Go subpixel run-mask mathtext path.
+func (r *Renderer) DrawMathTextImage(_ []render.MathGlyphPlacement, _ []render.MathRectPlacement, _ geom.Pt, _ render.Color) bool {
+	return false
+}
+
 func (r *Renderer) measureNativeFreetypeTextBounds(_ string, _ render.FontFace, _ float64, _ int) (render.TextBounds, bool) {
 	return render.TextBounds{}, false
 }
