@@ -1933,9 +1933,14 @@ func layoutMathSqrt(r Measurer, radicand mathLayoutNode, index *mathLayoutNode, 
 	})
 
 	if index != nil {
-		indexBox := layoutMathNode(r, *index, size*0.55, fontKey, opts)
-		x := -indexBox.Width * 0.65
-		y := -root.Ascent * 0.55
+		// matplotlib sqrt: the root index is shrunk twice (SHRINK_FACTOR^2) and
+		// placed before the radical with a Kern(-check.width*0.5), so the radical
+		// sits check.width*0.5 right of the index's right edge. In this √-at-0
+		// frame that means index.x = root.Width*0.5 - index.Width. The index is
+		// shifted up by height*0.6 (matplotlib's hard-coded 0.6 hack).
+		indexBox := layoutMathNode(r, *index, size*mathFracShrink*mathFracShrink, fontKey, opts)
+		x := root.Width*0.5 - indexBox.Width
+		y := -root.Ascent * 0.6
 		out.appendTranslated(indexBox, x, y)
 		out.Ascent = maxFloat64(out.Ascent, -y+indexBox.Ascent)
 	}

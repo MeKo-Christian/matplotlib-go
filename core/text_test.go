@@ -137,7 +137,8 @@ func TestLayoutMathTextSqrtHasVinculum(t *testing.T) {
 	if len(layout.Rules) != 1 {
 		t.Fatalf("expected sqrt rule, got %+v", layout.Rules)
 	}
-	if !containsMathRun(layout.Runs, "√", 10.44) || !containsMathRun(layout.Runs, "3", 9.9) {
+	// The root index is shrunk twice (SHRINK_FACTOR^2 = 0.49): 18*0.49 = 8.82.
+	if !containsMathRun(layout.Runs, "√", 10.44) || !containsMathRun(layout.Runs, "3", 8.82) {
 		t.Fatalf("missing sqrt/index runs: %+v", layout.Runs)
 	}
 	if layout.Rules[0].Rect.Min.X <= 0 || layout.Rules[0].Rect.Max.X <= layout.Rules[0].Rect.Min.X {
