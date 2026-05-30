@@ -1948,8 +1948,12 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	contentWidth := maxFloat64(numBox.Width, denBox.Width)
 	width := contentWidth + 2*thickness // matplotlib trailing Hbox(thickness*2)
 	ruleWidth := contentWidth
-	numX := (contentWidth - numBox.Width) / 2
-	denX := (contentWidth - denBox.Width) / 2
+	// matplotlib centres num/den via HCentered = Hlist([Glue('ss'), x, Glue('ss')]).
+	// hlist_out ROUNDS the stretched glue (round(glue_set*cur_glue)), so the left
+	// pad is round((contentWidth-boxWidth)/2), not the exact half — a 0.29px
+	// centering offset rounds to 0 (e.g. u and v in a 2-row matrix share an ox).
+	numX := math.RoundToEven((contentWidth - numBox.Width) / 2)
+	denX := math.RoundToEven((contentWidth - denBox.Width) / 2)
 
 	// Faithful port of matplotlib _mathtext.Parser._genfrac. This algorithm is
 	// unchanged between 3.8.4 and 3.10.9 (the vendored 3.10.9 source has no
