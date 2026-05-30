@@ -1,6 +1,7 @@
 package mathtext
 
 import (
+	"math"
 	"strconv"
 	"strings"
 	"unicode"
@@ -1307,6 +1308,44 @@ func autoHeightChar(r Measurer, candidates []mathDelimiterGlyph, targetAscent, t
 	return shiftMathBoxDown(box, targetDescent-box.Descent)
 }
 
+// shrinkMathBox ports matplotlib Node.shrink(): it LINEARLY scales a laid-out
+// box's geometry (run offsets, rule rects, width, ascent, depth) by factor and
+// multiplies each run's render FontSize by factor. This deliberately differs
+// from re-measuring at the smaller size — matplotlib's box model positions
+// shrunk content with metrics scaled from the base measurement, while the glyph
+// bitmaps still rasterize at the shrunk fontsize.
+func shrinkMathBox(box mathLayoutBox, factor float64) mathLayoutBox {
+	out := mathLayoutBox{
+		Width:   box.Width * factor,
+		Ascent:  box.Ascent * factor,
+		Descent: box.Descent * factor,
+	}
+	for _, run := range box.runs {
+		run.Offset.X *= factor
+		run.Offset.Y *= factor
+		run.FontSize *= factor
+		out.runs = append(out.runs, run)
+	}
+	for _, rule := range box.rules {
+		rule.Rect.Min.X *= factor
+		rule.Rect.Min.Y *= factor
+		rule.Rect.Max.X *= factor
+		rule.Rect.Max.Y *= factor
+		out.rules = append(out.rules, rule)
+	}
+	return out
+}
+
+// shiftMathBoxRight shifts a box's contents right by dx, preserving metrics.
+func shiftMathBoxRight(box mathLayoutBox, dx float64) mathLayoutBox {
+	var out mathLayoutBox
+	out.appendTranslated(box, dx, 0)
+	out.Width = box.Width
+	out.Ascent = box.Ascent
+	out.Descent = box.Descent
+	return out
+}
+
 // shiftMathBoxDown shifts a box's contents down by dy (layout y-down), updating
 // ascent/descent (matplotlib Char.shift_amount).
 func shiftMathBoxDown(box mathLayoutBox, dy float64) mathLayoutBox {
@@ -1584,7 +1623,13 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 	// constants scaled by x-height; the script box is shrunk once. Layout space
 	// is y-down (negative Y above baseline); matplotlib height=ascent, depth=descent.
 	base := layoutMathNode(r, pointerNode(n.base), size, fontKey, opts)
-	scriptSize := size * mathFracShrink
+	// matplotlib wraps each script as Hlist([Kern, script]).shrink(), which
+	// LINEARLY scales the base-size box metrics by SHRINK_FACTOR (it does not
+	// re-measure at the smaller size — see shrinkMathBox / layoutMathFrac). So
+	// lay each script out at the base size and shrink the box.
+	layoutScript := func(node mathLayoutNode) mathLayoutBox {
+		return shrinkMathBox(layoutMathNode(r, node, size, fontKey, opts), mathFracShrink)
+	}
 	xHeight := mathXHeight(r, size, fontKey)
 	ruleThickness := mathUnderlineThickness(r, size, fontKey)
 
@@ -1632,7 +1677,7 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 	switch {
 	case n.super == nil && n.sub != nil:
 		// node757: subscript without superscript.
-		sub := layoutMathNode(r, *n.sub, scriptSize, fontKey, opts)
+		sub := layoutScript(*n.sub)
 		shiftDown := mathScriptSub1 * xHeight
 		if dropSub {
 			shiftDown = lcBaseline + mathScriptSubdrop*xHeight
@@ -1643,7 +1688,7 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 		out.Descent = maxFloat64(out.Descent, shiftDown+sub.Descent)
 		out.Ascent = maxFloat64(out.Ascent, sub.Ascent-shiftDown)
 	case n.super != nil:
-		super := layoutMathNode(r, *n.super, scriptSize, fontKey, opts)
+		super := layoutScript(*n.super)
 		shiftUp := mathScriptSup1 * xHeight
 		if dropSub {
 			shiftUp = lcHeight - mathScriptSubdrop*xHeight
@@ -1656,7 +1701,7 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 			out.Descent = maxFloat64(out.Descent, super.Descent-shiftUp)
 		} else {
 			// node759: both sub and superscript; if they would collide, raise super.
-			sub := layoutMathNode(r, *n.sub, scriptSize, fontKey, opts)
+			sub := layoutScript(*n.sub)
 			shiftDown := mathScriptSub2 * xHeight
 			if dropSub {
 				shiftDown = lcBaseline + mathScriptSubdrop*xHeight
@@ -1710,14 +1755,18 @@ func nodeIsSlanted(n mathLayoutNode) bool {
 
 func layoutMathLimits(r Measurer, n mathLayoutNode, size float64, fontKey string, opts Options) mathLayoutBox {
 	base := layoutMathNode(r, pointerNode(n.base), size, fontKey, opts)
-	scriptSize := size * 0.7
+	// As in layoutMathScript, the limits are shrunk via linear box scaling
+	// (matplotlib Node.shrink()), not re-measured at the smaller font size.
+	layoutScript := func(node mathLayoutNode) mathLayoutBox {
+		return shrinkMathBox(layoutMathNode(r, node, size, fontKey, opts), mathFracShrink)
+	}
 
 	var super, sub mathLayoutBox
 	if n.super != nil {
-		super = layoutMathNode(r, *n.super, scriptSize, fontKey, opts)
+		super = layoutScript(*n.super)
 	}
 	if n.sub != nil {
-		sub = layoutMathNode(r, *n.sub, scriptSize, fontKey, opts)
+		sub = layoutScript(*n.sub)
 	}
 
 	width := base.Width
@@ -1879,12 +1928,18 @@ func isMathLimitText(text string) bool {
 }
 
 func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey string, opts Options, rule, display bool, leftDelim, rightDelim string) mathLayoutBox {
-	childSize := size
-	if !display {
-		childSize *= mathFracShrink // matplotlib range(style.value): TEXTSTYLE shrinks once
+	// matplotlib shrinks the numerator/denominator with Node.shrink(), which
+	// LINEARLY scales the base-size box metrics by SHRINK_FACTOR (it does NOT
+	// re-measure at the smaller size — the hinted iceberg at the shrunk size
+	// differs, e.g. '1' iceberg is 10.0 at fs10 → 7.0 scaled, but 8.0 if
+	// re-measured at fs7). The glyph bitmap still renders at the shrunk size.
+	// So measure at the base size and shrink the box (scaling render FontSize).
+	numBox := layoutMathNode(r, num, size, fontKey, opts)
+	denBox := layoutMathNode(r, den, size, fontKey, opts)
+	if !display { // TEXTSTYLE shrinks once; DISPLAYSTYLE not at all
+		numBox = shrinkMathBox(numBox, mathFracShrink)
+		denBox = shrinkMathBox(denBox, mathFracShrink)
 	}
-	numBox := layoutMathNode(r, num, childSize, fontKey, opts)
-	denBox := layoutMathNode(r, den, childSize, fontKey, opts)
 	thickness := mathUnderlineThickness(r, size, fontKey)
 	ruleThickness := thickness
 	if !rule {
@@ -1922,9 +1977,15 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	}
 	shift := denBox.Ascent - (eqCenter - thickness*3.0)
 	denY := shift
-	ruleCenterY := shift - denBox.Ascent - space - ruleThickness/2
-	numY := ruleCenterY - ruleThickness/2 - space - numBox.Descent
-	vlistHeight := numBox.Ascent + numBox.Descent + space + ruleThickness + space + denBox.Ascent
+	// num→den gap = num.depth + 2*space + ruleAdvance + den.height, where the
+	// Hrule advances cur_v by its full height (ruleThickness) BEFORE drawing in
+	// vlist_out (a rule-less binom has ruleThickness 0 → 4t gap, a \frac → 5t).
+	numY := shift - denBox.Ascent - 2*space - ruleThickness - numBox.Descent
+	// The Hrule's pre-advance places its rect top one space below the den top:
+	// ruleTop = (denY - den.height) - space (NOT -3t — the earlier −3t put the
+	// bar one thickness too high; see vlist_out Box branch).
+	ruleTop := shift - denBox.Ascent - space
+	vlistHeight := numBox.Ascent + numBox.Descent + 2*space + ruleThickness + denBox.Ascent
 	ascent := vlistHeight - shift
 	descent := denBox.Descent + shift
 
@@ -1936,8 +1997,8 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	if rule {
 		out.rules = append(out.rules, MathTextLayoutRule{
 			Rect: geom.Rect{
-				Min: geom.Pt{X: 0, Y: ruleCenterY - ruleThickness/2},
-				Max: geom.Pt{X: ruleWidth, Y: ruleCenterY + ruleThickness/2},
+				Min: geom.Pt{X: 0, Y: ruleTop},
+				Max: geom.Pt{X: ruleWidth, Y: ruleTop + ruleThickness},
 			},
 		})
 	}
@@ -1981,40 +2042,71 @@ func layoutMathSqrt(r Measurer, radicand mathLayoutNode, index *mathLayoutNode, 
 	thickness := mathUnderlineThickness(r, size, fontKey)
 	radicandBox := layoutMathNode(r, radicand, size, fontKey, opts)
 	// matplotlib sqrt(): the radical (check) is an AutoHeightChar sized to the
-	// body height + 5*thickness, body depth.
+	// body height + 5*thickness (extra so it doesn't look cramped), body depth.
 	targetHeight := radicandBox.Ascent + 5*thickness
 	targetDepth := radicandBox.Descent
 	root := autoHeightChar(r, mathSqrtRadicalGlyphs(), targetHeight, targetDepth, size)
-	padding := 2 * thickness
-	ruleThickness := thickness
-	// The vinculum sits over the body at the radical's tick height: body ascent +
-	// the 5*thickness gap matplotlib adds (sqrt height = body.height + 5*thickness).
-	ruleTop := -(radicandBox.Ascent + 5*thickness)
+
+	// matplotlib re-derives height/depth from the (possibly scaled) radical:
+	//   height = check.height - check.shift_amount  (= root.Ascent)
+	//   depth  = check.depth  + check.shift_amount  (= root.Descent)
+	// then builds rightside = Vlist[Hrule, Glue('fill'), padded_body] and
+	// vpacks it to EXACTLY height + extra, where
+	//   extra = (fontsize*dpi)/(100*12) = mathFontSizePixels * 72/1200.
+	bodyHeight := root.Ascent
+	extra := mathFontSizePixels(r, size, fontKey) * (72.0 / 1200.0)
+	rightsideHeight := bodyHeight + extra
+	padding := 2 * thickness // Hbox(2*thickness) on each side of the body
+
+	// vlist_out stacks (Hrule total = thickness) + (Glue('fill')) + (body).
+	// The natural height above the body baseline is thickness + body.height; the
+	// glue stretches by `stretch` to fill rightsideHeight, and vlist_out ROUNDS
+	// the stretched glue — so the body baseline lands round(stretch)-stretch
+	// below the sqrt baseline (a sub-pixel shift that the int-blit needs exact).
+	stretch := rightsideHeight - thickness - radicandBox.Ascent
+	bodyDy := math.Round(stretch) - stretch
+
+	// Vinculum (Hrule): vlist_out advances cur_v by the Hrule's full height
+	// (thickness) from the top edge BEFORE drawing, so the rule's top sits one
+	// thickness below the box top, i.e. at -(rightsideHeight) + thickness.
+	ruleTop := -rightsideHeight + thickness
 
 	var out mathLayoutBox
 	out.appendTranslated(root, 0, 0)
 	bodyX := root.Width + padding
-	out.appendTranslated(radicandBox, bodyX, 0)
+	out.appendTranslated(shiftMathBoxDown(radicandBox, bodyDy), bodyX, 0)
 	out.Width = root.Width + radicandBox.Width + 2*padding
-	out.Ascent = maxFloat64(root.Ascent, radicandBox.Ascent)
+	// sqrt hlist hpack: height = rightside.height (= rightsideHeight), depth =
+	// max(check.depth+shift, rightside.depth) = root.Descent (= radicand depth).
+	out.Ascent = rightsideHeight
 	out.Descent = maxFloat64(root.Descent, radicandBox.Descent)
 	out.rules = append(out.rules, MathTextLayoutRule{
 		Rect: geom.Rect{
 			Min: geom.Pt{X: root.Width, Y: ruleTop},
-			Max: geom.Pt{X: out.Width, Y: ruleTop + ruleThickness},
+			Max: geom.Pt{X: out.Width, Y: ruleTop + thickness},
 		},
 	})
 
 	if index != nil {
 		// matplotlib sqrt: the root index is shrunk twice (SHRINK_FACTOR^2) and
-		// placed before the radical with a Kern(-check.width*0.5), so the radical
-		// sits check.width*0.5 right of the index's right edge. In this √-at-0
-		// frame that means index.x = root.Width*0.5 - index.Width. The index is
-		// shifted up by height*0.6 (matplotlib's hard-coded 0.6 hack).
+		// laid out as Hlist([root_vlist, Kern(-check.width*0.5), check, rightside])
+		// with the index (root_vlist) pinned at x=0. The radical therefore sits at
+		// x = index.Width - check.Width*0.5 (the box origin is the index's left
+		// edge). When that overhang is positive, shift the radical+body+rule right
+		// by it and keep the index at 0; otherwise the radical stays at 0 and the
+		// index sits root.Width*0.5 - index.Width to its left (origin at radical).
+		// The index is shifted up by height*0.6 (matplotlib's hard-coded 0.6 hack).
 		indexBox := layoutMathNode(r, *index, size*mathFracShrink*mathFracShrink, fontKey, opts)
-		x := root.Width*0.5 - indexBox.Width
+		over := indexBox.Width - root.Width*0.5
+		indexX := 0.0
+		if over > 0 {
+			out = shiftMathBoxRight(out, over)
+			out.Width += over
+		} else {
+			indexX = -over // = root.Width*0.5 - indexBox.Width
+		}
 		y := -root.Ascent * 0.6
-		out.appendTranslated(indexBox, x, y)
+		out.appendTranslated(indexBox, indexX, y)
 		out.Ascent = maxFloat64(out.Ascent, -y+indexBox.Ascent)
 	}
 	return out
