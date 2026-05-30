@@ -85,6 +85,47 @@ func (m mathTextMeasurer) GlyphRun(text string, size float64, fontKey string) ([
 	return out, true
 }
 
+// mathLayoutImageMetrics computes matplotlib's RasterParse (get_text_width_height_descent)
+// metrics for a laid-out MathText expression: the ink-image bbox (xmax-xmin,
+// ymax-ymin) with the -1/+1 border, exactly as _mathtext.Output.to_raster. The
+// Agg backend ALIGNS mathtext by these image metrics — NOT the advance/box
+// width — so a centered fraction (whose box.width includes a trailing Hbox(2t)
+// that the ink omits) would otherwise land ~1px off. Returns the image width and
+// the image ascent/descent: w = xmax-xmin, ascent = (ymax-ymin) - box.depth,
+// descent = (ymax-ymin) - box.height (so DrawMathTextImage's parseDescent =
+// totalH - boxAscent equals this descent — the two stay consistent). ok is false
+// when the renderer lacks the pixel-exact GlyphRun path (purego/vector), where
+// matplotlib uses the (box-based) to_vector metrics instead.
+func mathLayoutImageMetrics(r render.Renderer, layout MathTextLayout, fontKey string) (w, ascent, descent float64, ok bool) {
+	measurer := mathTextMeasurer{r: r}
+	xmin, ymin, xmax, ymax := 0.0, 0.0, 0.0, 0.0
+	sawGlyph := false
+	for _, run := range layout.Runs {
+		infos, ok := measurer.GlyphRun(run.Text, run.FontSize, resolveRunFontKey(run, fontKey))
+		if !ok || len(infos) == 0 {
+			return 0, 0, 0, false
+		}
+		info := infos[0]
+		xmin = math.Min(xmin, run.Offset.X+info.Xmin)
+		xmax = math.Max(xmax, run.Offset.X+info.Xmax)
+		ymin = math.Min(ymin, run.Offset.Y-info.Ymax)
+		ymax = math.Max(ymax, run.Offset.Y-info.Ymin)
+		sawGlyph = true
+	}
+	for _, rule := range layout.Rules {
+		xmin = math.Min(xmin, rule.Rect.Min.X)
+		xmax = math.Max(xmax, rule.Rect.Max.X)
+		ymin = math.Min(ymin, rule.Rect.Min.Y)
+		ymax = math.Max(ymax, rule.Rect.Max.Y)
+	}
+	if !sawGlyph && len(layout.Rules) == 0 {
+		return 0, 0, 0, false
+	}
+	xmin, ymin, xmax, ymax = xmin-1, ymin-1, xmax+1, ymax+1
+	totalH := ymax - ymin
+	return xmax - xmin, totalH - layout.Descent, totalH - layout.Ascent, true
+}
+
 type mathTextFontResolver struct{}
 
 func (mathTextFontResolver) ResolveMathFontKey(base string, request mt.FontRequest) string {

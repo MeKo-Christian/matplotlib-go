@@ -42,12 +42,24 @@ func measureSingleLineTextLayoutParseMath(r render.Renderer, text string, size f
 
 	if parseMath {
 		if layout, ok := layoutDisplayText(r, text, size, fontKey); ok {
+			width, ascent, descent := layout.Width, layout.Ascent, layout.Descent
+			height := layout.Height
+			// On the Agg raster backend, matplotlib aligns mathtext by the
+			// ink-image bbox (get_text_width_height_descent → to_raster), not the
+			// advance box. Override the metrics so centered/right-aligned math
+			// anchors to the same pixel as matplotlib. Vector/purego keep the box
+			// metrics (matplotlib's to_vector path).
+			if _, isRaster := r.(render.RGBAExporter); isRaster {
+				if w, a, d, ok := mathLayoutImageMetrics(r, layout, fontKey); ok {
+					width, ascent, descent, height = w, a, d, a+d
+				}
+			}
 			return singleLineTextLayout{
 				TextLineLayout: render.TextLineLayout{
-					Width:   layout.Width,
-					Ascent:  layout.Ascent,
-					Descent: layout.Descent,
-					Height:  layout.Height,
+					Width:   width,
+					Ascent:  ascent,
+					Descent: descent,
+					Height:  height,
 				},
 				MathLayout: &layout,
 			}
