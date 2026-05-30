@@ -188,7 +188,10 @@ func TestLayoutMathTextStacksLargeOperatorLimits(t *testing.T) {
 	sumCenter := sumX + sumW/2
 	subCenter := (subMinX + subMaxX) / 2
 	superCenter := superX + superW/2
-	if math.Abs(subCenter-sumCenter) > 0.01 || math.Abs(superCenter-sumCenter) > 0.01 {
+	// matplotlib rounds the HCentered glue per row (round(glue_set*cur_glue)), so
+	// each row's center may differ from the operator center by up to ~0.5px.
+	const centerTol = 0.6
+	if math.Abs(subCenter-sumCenter) > centerTol || math.Abs(superCenter-sumCenter) > centerTol {
 		t.Fatalf("large-operator limits not centered over operator: sumCenter=%v subCenter=%v superCenter=%v runs=%+v", sumCenter, subCenter, superCenter, layout.Runs)
 	}
 }

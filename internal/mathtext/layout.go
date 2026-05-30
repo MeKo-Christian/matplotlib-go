@@ -400,6 +400,15 @@ func (p *mathLayoutParser) parseCommandNode() mathLayoutNode {
 		return mathLayoutNode{kind: mathLayoutText, text: delim}
 	}
 	if op, ok := mathTextOperatorMap[name]; ok {
+		// matplotlib operatorname(): a function name gets a trailing thin space
+		// (\, = 0.16667em) unless it is an over-under function (lim/sup/max/...) or
+		// is immediately followed by a delimiter or a sub/superscript.
+		if mathFunctionTakesThinSpace(op) && !mathNextCharSuppressesFunctionSpace(p.input, p.pos) {
+			return mathLayoutNode{kind: mathLayoutList, children: []mathLayoutNode{
+				{kind: mathLayoutText, text: op},
+				{kind: mathLayoutSpace, widthEm: 0.16667},
+			}}
+		}
 		return mathLayoutNode{kind: mathLayoutText, text: op}
 	}
 	if _, ok := mathTextPassthroughCommands[name]; ok {
@@ -1769,7 +1778,23 @@ func layoutMathLimits(r Measurer, n mathLayoutNode, size float64, fontKey string
 		sub = layoutScript(*n.sub)
 	}
 
-	width := base.Width
+	// matplotlib HCenters the nucleus by its Char.width = INK width (metrics.width),
+	// not the advance — and a big operator like ∏ has large side bearings (advance
+	// 14.85 vs ink 12.0), so advance-centering shifts it ~2px. Use the nucleus ink
+	// width for a single display-operator glyph; multi-glyph nuclei (\lim) keep the
+	// Hlist advance width (their trailing kern already folds advance into width).
+	baseCenterWidth := base.Width
+	baseText := nodePlainText(pointerNode(n.base))
+	if isMathDisplayOperatorGlyph(baseText) {
+		if gm, ok := r.(GlyphMeasurer); ok {
+			opFontKey := mathDisplayOperatorFontKey(baseText, fontKey)
+			if infos, ok := gm.GlyphRun(baseText, size, opFontKey); ok && len(infos) == 1 {
+				baseCenterWidth = infos[0].Xmax - infos[0].Xmin
+			}
+		}
+	}
+
+	width := baseCenterWidth
 	if super.Width > width {
 		width = super.Width
 	}
@@ -1777,9 +1802,11 @@ func layoutMathLimits(r Measurer, n mathLayoutNode, size float64, fontKey string
 		width = sub.Width
 	}
 
-	baseX := (width - base.Width) / 2
-	superX := (width - super.Width) / 2
-	subX := (width - sub.Width) / 2
+	// matplotlib over/under limits stack HCentered rows; hlist_out rounds the
+	// centering glue (see layoutMathFrac), so round each row's left pad.
+	baseX := math.RoundToEven((width - baseCenterWidth) / 2)
+	superX := math.RoundToEven((width - super.Width) / 2)
+	subX := math.RoundToEven((width - sub.Width) / 2)
 	// matplotlib 3.8.4 subsuper over/under stack: vgap = rule_thickness * 3.
 	gap := mathUnderlineThickness(r, size, fontKey) * 3.0
 
@@ -1806,6 +1833,36 @@ func layoutMathLimits(r Measurer, n mathLayoutNode, size float64, fontKey string
 
 func isMathLimitOperator(n mathLayoutNode) bool {
 	return n.kind == mathLayoutText && isMathLimitText(n.text)
+}
+
+// mathOverUnderFunctionTexts are matplotlib's _overunder_functions (mapped to
+// their display text); these do NOT receive the operatorname trailing thin space.
+var mathOverUnderFunctionTexts = map[string]bool{
+	"lim": true, "lim inf": true, "lim sup": true, "sup": true, "max": true, "min": true,
+}
+
+// mathFunctionTakesThinSpace reports whether a function operator gets a trailing
+// \, thin space (all functions except the over-under ones).
+func mathFunctionTakesThinSpace(op string) bool {
+	return !mathOverUnderFunctionTexts[op]
+}
+
+// mathNextCharSuppressesFunctionSpace reports whether the next non-space char
+// after a function name is a delimiter or a sub/superscript, in which case
+// matplotlib omits the operatorname thin space.
+func mathNextCharSuppressesFunctionSpace(input []rune, pos int) bool {
+	for pos < len(input) && (input[pos] == ' ' || input[pos] == '\t' || input[pos] == '\n' || input[pos] == '\r') {
+		pos++
+	}
+	if pos >= len(input) {
+		return true
+	}
+	switch input[pos] {
+	case '^', '_', '(', ')', '[', ']', '|', '/':
+		return true
+	default:
+		return false
+	}
 }
 
 // FontConstantsBase defaults from matplotlib's lib/matplotlib/_mathtext.py.
