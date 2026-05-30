@@ -33,6 +33,14 @@ type Measurer interface {
 	MeasureText(text string, size float64, fontKey string) Metrics
 }
 
+// DPIMeasurer is an optional Measurer capability exposing the render DPI, so the
+// layout can compute matplotlib's exact `fontsize*dpi/72` device pixel size for
+// the (font-independent) underline thickness instead of reconstructing it from
+// the x-height.
+type DPIMeasurer interface {
+	DPI() float64
+}
+
 // GlyphMeasurer is an optional Measurer capability returning matplotlib's exact
 // per-glyph `_get_info` metrics. When a Measurer implements it and GlyphRun
 // returns ok, the layout positions glyphs pixel-exactly; otherwise it falls back
@@ -111,7 +119,6 @@ const (
 	mathRuleDelimiterScale  = 0.76
 	mathSpaceScale          = 1.60
 	mathCMXHeightScale      = 0.43
-	mathSizedDelimAdvance   = 1.00
 )
 
 type mathDelimiterGlyph struct {
@@ -1245,11 +1252,31 @@ func layoutMathDelimiter(r Measurer, delim string, targetAscent, targetDescent, 
 }
 
 func layoutMathSizedDelimiter(r Measurer, candidates []mathDelimiterGlyph, targetAscent, targetDescent, size float64) mathLayoutBox {
+	return autoHeightChar(r, candidates, targetAscent, targetDescent, size)
+}
+
+// mathAutoHeightBaseFontKey is the size-0 (unscaled) variant font in the DejaVu
+// Sans fontset's sized-alternatives list. matplotlib never scales the size-0
+// glyph when larger variants exist.
+const mathAutoHeightBaseFontKey = "DejaVu Sans"
+
+// autoHeightChar ports matplotlib _mathtext.AutoHeightChar for the DejaVu Sans
+// fontset (used for auto-sized delimiters and the sqrt radical). candidates must
+// be ordered smallest→largest with candidates[0] the size-0 DejaVu Sans glyph.
+// It selects the first variant whose ink height+depth reaches targetTotal minus
+// the 0.2*xHeight slack (else the largest), then — unless the size-0 glyph was
+// chosen and alternatives exist — scales it by factor = targetTotal/(h+d) and
+// shifts it down by shift_amount = targetDescent - char.depth.
+func autoHeightChar(r Measurer, candidates []mathDelimiterGlyph, targetAscent, targetDescent, size float64) mathLayoutBox {
+	if len(candidates) == 0 {
+		return mathLayoutBox{}
+	}
 	targetTotal := targetAscent + targetDescent
 	if targetTotal <= 0 {
 		targetTotal = size
 	}
-	tolerance := mathXHeight(r, size, "DejaVu Sans") * 0.2
+	threshold := targetTotal - 0.2*mathXHeight(r, size, mathAutoHeightBaseFontKey)
+
 	selected := candidates[len(candidates)-1]
 	selectedTotal := 0.0
 	for _, candidate := range candidates {
@@ -1260,21 +1287,34 @@ func layoutMathSizedDelimiter(r Measurer, candidates []mathDelimiterGlyph, targe
 		}
 		selected = candidate
 		selectedTotal = total
-		if total >= targetTotal-tolerance {
+		if total >= threshold {
 			break
 		}
+	}
+
+	// size-0 (DejaVu Sans) is rendered unscaled, baseline-aligned (shift 0).
+	if selected.fontKey == mathAutoHeightBaseFontKey && len(candidates) > 1 {
+		return layoutMathTextRun(r, selected.text, size, selected.fontKey)
 	}
 	if selectedTotal <= 0 {
 		selectedTotal = size
 	}
-	delimiterSize := size * targetTotal / selectedTotal
-	if delimiterSize <= 0 {
-		delimiterSize = size
+	fontsize := size * targetTotal / selectedTotal
+	if fontsize <= 0 {
+		fontsize = size
 	}
-	out := centerMathDelimiterBox(layoutMathTextRun(r, selected.text, delimiterSize, selected.fontKey), targetAscent, targetDescent)
-	if isMathSizedDelimiterFont(selected.fontKey) {
-		out.Width *= mathSizedDelimAdvance
-	}
+	box := layoutMathTextRun(r, selected.text, fontsize, selected.fontKey)
+	return shiftMathBoxDown(box, targetDescent-box.Descent)
+}
+
+// shiftMathBoxDown shifts a box's contents down by dy (layout y-down), updating
+// ascent/descent (matplotlib Char.shift_amount).
+func shiftMathBoxDown(box mathLayoutBox, dy float64) mathLayoutBox {
+	var out mathLayoutBox
+	out.appendTranslated(box, 0, dy)
+	out.Width = box.Width
+	out.Ascent = box.Ascent - dy
+	out.Descent = box.Descent + dy
 	return out
 }
 
@@ -1282,11 +1322,11 @@ func mathSizedDelimiterGlyphs(delim string) []mathDelimiterGlyph {
 	switch delim {
 	case "(", ")", "[", "]", "{", "}", "⌊", "⌋", "⌈", "⌉", "⟨", "⟩":
 		return []mathDelimiterGlyph{
+			{text: delim, fontKey: mathAutoHeightBaseFontKey},
 			stixSizeGlyph(1, delim),
 			stixSizeGlyph(2, delim),
 			stixSizeGlyph(3, delim),
 			stixSizeGlyph(4, delim),
-			stixSizeGlyph(5, delim),
 		}
 	default:
 		return nil
@@ -1306,10 +1346,6 @@ func stixSizeGlyph(size int, text string) mathDelimiterGlyph {
 	default:
 		return mathDelimiterGlyph{text: text, fontKey: "STIXSizeFiveSym"}
 	}
-}
-
-func isMathSizedDelimiterFont(fontKey string) bool {
-	return strings.HasPrefix(fontKey, "STIXSize") || fontKey == "STIXGeneral"
 }
 
 func centerMathDelimiterBox(box mathLayoutBox, targetAscent, targetDescent float64) mathLayoutBox {
@@ -1802,6 +1838,15 @@ func mathXHeight(r Measurer, size float64, fontKey string) float64 {
 // divided by DejaVu Sans' design-em x-height ratio (1120/2048). For DejaVu 'x'
 // (which sits on the baseline) this iceberg equals the full ink height.
 func mathFontSizePixels(r Measurer, size float64, fontKey string) float64 {
+	// Exact when the renderer exposes DPI (matplotlib fontsize*dpi/72). The
+	// x-height reconstruction below is an approximation used only as a fallback
+	// (purego/mock renderers) — its ratio drifts with the autohinter per size,
+	// which is why fraction-bar/thickness positions were off without exact DPI.
+	if dp, ok := r.(DPIMeasurer); ok {
+		if dpi := dp.DPI(); dpi > 0 {
+			return size * dpi / 72.0
+		}
+	}
 	if xh := mathIceberg(r, "x", size, fontKey); xh > 0 {
 		return xh / mathDejaVuSansXHeight
 	}
@@ -1860,10 +1905,20 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	// cden.height - ("=" center - 3t). Layout space is y-down (negative Y above
 	// baseline); matplotlib height=ascent, depth=descent.
 	space := thickness * 2.0
-	eq := r.MeasureText("=", size, fontKey)
-	eqCenter := (eq.Ascent + eq.Descent) / 2
-	if eq.BoundsH > 0 {
-		eqCenter = -(eq.BoundsY + eq.BoundsH/2)
+	// matplotlib centres the fraction line on "=": shift uses (ymax+ymin)/2 of the
+	// "=" glyph. Use exact _get_info bbox when available (GlyphRun), else hinted.
+	eqCenter := 0.0
+	if gm, ok := r.(GlyphMeasurer); ok {
+		if infos, ok := gm.GlyphRun("=", size, fontKey); ok && len(infos) > 0 {
+			eqCenter = (infos[0].Ymax + infos[0].Ymin) / 2
+		}
+	}
+	if eqCenter == 0 {
+		eq := r.MeasureText("=", size, fontKey)
+		eqCenter = (eq.Ascent + eq.Descent) / 2
+		if eq.BoundsH > 0 {
+			eqCenter = -(eq.BoundsY + eq.BoundsH/2)
+		}
 	}
 	shift := denBox.Ascent - (eqCenter - thickness*3.0)
 	denY := shift
@@ -1910,25 +1965,43 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	return delimited
 }
 
+// mathSqrtRadicalGlyphs lists the auto-height variants of the radical sign for
+// the DejaVu Sans fontset: size-0 DejaVu Sans, then STIX size variants 1-3
+// (matplotlib drops the largest STIX radical: alternatives[:-1]).
+func mathSqrtRadicalGlyphs() []mathDelimiterGlyph {
+	return []mathDelimiterGlyph{
+		{text: "√", fontKey: mathAutoHeightBaseFontKey},
+		{text: "√", fontKey: "STIXSizeOneSym"},
+		{text: "√", fontKey: "STIXSizeTwoSym"},
+		{text: "√", fontKey: "STIXSizeThreeSym"},
+	}
+}
+
 func layoutMathSqrt(r Measurer, radicand mathLayoutNode, index *mathLayoutNode, size float64, fontKey string, opts Options) mathLayoutBox {
-	thickness := maxFloat64(mathQuadWidth(r, size, fontKey)/16, 0.5)
-	root := layoutMathTextRun(r, "√", size*0.58, "STIXSizeOneSym")
+	thickness := mathUnderlineThickness(r, size, fontKey)
 	radicandBox := layoutMathNode(r, radicand, size, fontKey, opts)
+	// matplotlib sqrt(): the radical (check) is an AutoHeightChar sized to the
+	// body height + 5*thickness, body depth.
+	targetHeight := radicandBox.Ascent + 5*thickness
+	targetDepth := radicandBox.Descent
+	root := autoHeightChar(r, mathSqrtRadicalGlyphs(), targetHeight, targetDepth, size)
 	padding := 2 * thickness
 	ruleThickness := thickness
-	ruleY := -radicandBox.Ascent - 5*thickness
+	// The vinculum sits over the body at the radical's tick height: body ascent +
+	// the 5*thickness gap matplotlib adds (sqrt height = body.height + 5*thickness).
+	ruleTop := -(radicandBox.Ascent + 5*thickness)
 
 	var out mathLayoutBox
 	out.appendTranslated(root, 0, 0)
 	bodyX := root.Width + padding
 	out.appendTranslated(radicandBox, bodyX, 0)
 	out.Width = root.Width + radicandBox.Width + 2*padding
-	out.Ascent = maxFloat64(root.Ascent, -ruleY+ruleThickness)
+	out.Ascent = maxFloat64(root.Ascent, radicandBox.Ascent)
 	out.Descent = maxFloat64(root.Descent, radicandBox.Descent)
 	out.rules = append(out.rules, MathTextLayoutRule{
 		Rect: geom.Rect{
-			Min: geom.Pt{X: root.Width, Y: ruleY},
-			Max: geom.Pt{X: out.Width, Y: ruleY + ruleThickness},
+			Min: geom.Pt{X: root.Width, Y: ruleTop},
+			Max: geom.Pt{X: out.Width, Y: ruleTop + ruleThickness},
 		},
 	})
 

@@ -550,7 +550,7 @@ func nativeFreetypeVersion() string {
 // integer blitting (int(ox)+bitmap_left, int(oy-iceberg)) and the draw_rect_filled
 // rule formula, then the whole image anchored at round(.)+1. Coordinates from core
 // are layout space (y-down, baseline = 0; Oy/rect.Y negative above baseline).
-func (r *Renderer) DrawMathTextImage(glyphs []render.MathGlyphPlacement, rects []render.MathRectPlacement, anchor geom.Pt, textColor render.Color) bool {
+func (r *Renderer) DrawMathTextImage(glyphs []render.MathGlyphPlacement, rects []render.MathRectPlacement, anchor geom.Pt, boxAscent, boxDescent float64, textColor render.Color) bool {
 	if r.ctx == nil || len(glyphs)+len(rects) == 0 {
 		return false
 	}
@@ -606,13 +606,20 @@ func (r *Renderer) DrawMathTextImage(glyphs []render.MathGlyphPlacement, rects [
 	_ = xmax
 	_ = ymax
 
-	// Device placement of the math image. origin (display) X is the expression
-	// left; its device baseline is height-origin.Y. matplotlib places the image
-	// at round(text_x), round(.)+1; the -xmin/-ymin borders are folded into the
-	// per-element int() below.
+	// Device placement of the math image, matching matplotlib RendererAgg.draw_mathtext
+	// + draw_text_image. The renderer receives the device baseline (height-anchor.Y)
+	// and blits the image with its BOTTOM-LEFT at (round(x), round(y+descent)+1), so
+	// the top is round(B+descent)+1-imageHeight. descent and imageHeight come from
+	// Output.to_raster: d = (ymax-ymin)-box.height, h = (ymax-ymin)-box.depth,
+	// imageHeight = ceil(h+max(d,0)). The -xmin border is already folded into the
+	// per-glyph int(Ox-xmin) below; do NOT add it to the image left.
 	baselineDev := float64(r.height) - anchor.Y
+	totalH := ymax - ymin
+	parseDescent := totalH - boxAscent
+	parseH := totalH - boxDescent
+	imageHeight := math.Ceil(parseH + math.Max(parseDescent, 0))
 	imageLeftDev := math.Round(anchor.X)
-	imageTopDev := math.Round(baselineDev+ymin) + 1
+	imageTopDev := math.Round(baselineDev+parseDescent) + 1 - imageHeight
 
 	for i := range rendered {
 		p := &rendered[i]

@@ -13,6 +13,12 @@ type DPIAware interface {
 	SetResolution(dpi uint)
 }
 
+// DPIProvider is implemented by renderers that expose their current DPI, letting
+// mathtext layout compute matplotlib's exact fontsize*dpi/72 thickness.
+type DPIProvider interface {
+	Resolution() uint
+}
+
 // TextDrawer is implemented by renderers that support direct text drawing.
 type TextDrawer interface {
 	DrawText(text string, origin geom.Pt, size float64, textColor Color)
@@ -96,7 +102,10 @@ type MathRectPlacement struct {
 // sharing one bounding box). anchor is the expression baseline origin in display
 // space. Returns false when the pixel-exact path is unavailable.
 type MathTextImageDrawer interface {
-	DrawMathTextImage(glyphs []MathGlyphPlacement, rects []MathRectPlacement, anchor geom.Pt, textColor Color) bool
+	// boxAscent/boxDescent are the expression's layout ascent/descent (matplotlib
+	// box.height/box.depth), needed to reproduce to_raster's image height and the
+	// backend's round(baseline+descent)+1 placement.
+	DrawMathTextImage(glyphs []MathGlyphPlacement, rects []MathRectPlacement, anchor geom.Pt, boxAscent, boxDescent float64, textColor Color) bool
 }
 
 // TextFontMetricer is implemented by renderers that can report font-wide line

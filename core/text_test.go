@@ -137,8 +137,9 @@ func TestLayoutMathTextSqrtHasVinculum(t *testing.T) {
 	if len(layout.Rules) != 1 {
 		t.Fatalf("expected sqrt rule, got %+v", layout.Rules)
 	}
-	// The root index is shrunk twice (SHRINK_FACTOR^2 = 0.49): 18*0.49 = 8.82.
-	if !containsMathRun(layout.Runs, "√", 10.44) || !containsMathRun(layout.Runs, "3", 8.82) {
+	// The radical is an AutoHeightChar (size/font depends on the renderer's
+	// metrics); the root index is shrunk twice (SHRINK_FACTOR^2 = 0.49): 18*0.49 = 8.82.
+	if !containsMathRunText(layout.Runs, "√") || !containsMathRun(layout.Runs, "3", 8.82) {
 		t.Fatalf("missing sqrt/index runs: %+v", layout.Runs)
 	}
 	if layout.Rules[0].Rect.Min.X <= 0 || layout.Rules[0].Rect.Max.X <= layout.Rules[0].Rect.Min.X {
@@ -2362,6 +2363,15 @@ func approxRect(got, want geom.Rect, tol float64) bool {
 		approx(got.Min.Y, want.Min.Y, tol) &&
 		approx(got.Max.X, want.Max.X, tol) &&
 		approx(got.Max.Y, want.Max.Y, tol)
+}
+
+func containsMathRunText(runs []MathTextLayoutRun, text string) bool {
+	for _, run := range runs {
+		if run.Text == text {
+			return true
+		}
+	}
+	return false
 }
 
 func containsMathRun(runs []MathTextLayoutRun, text string, size float64) bool {

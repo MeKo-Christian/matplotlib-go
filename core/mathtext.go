@@ -47,6 +47,15 @@ func (m mathTextMeasurer) MeasureText(text string, size float64, fontKey string)
 	}
 }
 
+// DPI implements mt.DPIMeasurer so the layout can use matplotlib's exact
+// fontsize*dpi/72 thickness. Returns 0 when the renderer doesn't expose DPI.
+func (m mathTextMeasurer) DPI() float64 {
+	if p, ok := m.r.(render.DPIProvider); ok {
+		return float64(p.Resolution())
+	}
+	return 0
+}
+
 // GlyphRun implements mt.GlyphMeasurer by delegating to the renderer's
 // render.MathGlyphMeasurer capability (matplotlib `_get_info`). Returns false
 // when the renderer lacks the pixel-exact path (purego/WASM), so the layout
@@ -353,7 +362,7 @@ func drawMathTextLayout(r render.Renderer, textRen render.TextDrawer, layout Mat
 					X2: rule.Rect.Max.X, Y2: rule.Rect.Max.Y,
 				})
 			}
-			if imgDrawer.DrawMathTextImage(glyphs, rects, origin, textColor) {
+			if imgDrawer.DrawMathTextImage(glyphs, rects, origin, layout.Ascent, layout.Descent, textColor) {
 				return
 			}
 		}
