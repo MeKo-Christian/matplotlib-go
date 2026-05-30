@@ -3,12 +3,10 @@ _artifacts/
 testdata/_artifacts/
 *.png
 !testdata/golden/*.png
-!testdata/golden_freetype/*.png
 !testdata/matplotlib_ref/*.png
 !testdata/usetex_golden/*.png
 !backends/agg/testdata/pattern_gradient_golden/*.png
 !backends/agg/testdata/path_effects_golden/*.png
-!backends/agg/testdata/path_effects_golden_freetype/*.png
 
 # Temporary files
 *.tmp

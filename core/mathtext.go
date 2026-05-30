@@ -47,6 +47,35 @@ func (m mathTextMeasurer) MeasureText(text string, size float64, fontKey string)
 	}
 }
 
+// GlyphRun implements mt.GlyphMeasurer by delegating to the renderer's
+// render.MathGlyphMeasurer capability (matplotlib `_get_info`). Returns false
+// when the renderer lacks the pixel-exact path (purego/WASM), so the layout
+// falls back to whole-run MeasureText.
+func (m mathTextMeasurer) GlyphRun(text string, size float64, fontKey string) ([]mt.GlyphInfo, bool) {
+	measurer, ok := m.r.(render.MathGlyphMeasurer)
+	if !ok {
+		return nil, false
+	}
+	metrics, ok := measurer.MeasureMathGlyphRun(text, size, fontKey)
+	if !ok || len(metrics) == 0 {
+		return nil, false
+	}
+	out := make([]mt.GlyphInfo, len(metrics))
+	for i, gm := range metrics {
+		out[i] = mt.GlyphInfo{
+			Advance:    gm.Advance,
+			Iceberg:    gm.Iceberg,
+			Height:     gm.Height,
+			Xmin:       gm.Xmin,
+			Xmax:       gm.Xmax,
+			Ymin:       gm.Ymin,
+			Ymax:       gm.Ymax,
+			KernToPrev: gm.KernToPrev,
+		}
+	}
+	return out, true
+}
+
 type mathTextFontResolver struct{}
 
 func (mathTextFontResolver) ResolveMathFontKey(base string, request mt.FontRequest) string {
@@ -259,22 +288,37 @@ func mathRuleDeviceRect(origin geom.Pt, rule geom.Rect) geom.Rect {
 	}
 }
 
-// growThinMathRule mirrors matplotlib's Agg mathtext box handling
-// (backend_agg.py RendererAgg._draw_text_glyphs_and_boxes): when snapping is
-// active, a sub-pixel bar is grown symmetrically to a full pixel so thin
-// fraction/sqrt/matrix rules never vanish. The actual pixel-grid snap is then
-// applied by the shared PathSnapper port (via Paint.Snap), exactly as
-// matplotlib snaps the box path inside draw_path.
-func growThinMathRule(r geom.Rect) geom.Rect {
-	if w := r.Max.X - r.Min.X; w < 1 {
-		r.Min.X -= (1 - w) / 2
-		r.Max.X = r.Min.X + 1
+// rasterizeMathRule ports matplotlib's _mathtext.Output.to_raster rectangle
+// rasterization for the Agg backend. Given a device-space rule rect (y-down,
+// Min.Y = top), it reproduces matplotlib exactly:
+//
+//	height = max(int(y2 - y1) - 1, 0)
+//	if height == 0: y = int((y1+y2)/2 - 0.5)   # 1px bar centered on the rule
+//	else:           y = int(y1)
+//	draw_rect_filled(int(x1), y, ceil(x2), y+height)   # inclusive both corners
+//
+// FT2Image.draw_rect_filled fills [x0..x1] and [y0..y1] inclusive, so the
+// returned half-open rect adds +1 on the max corners. This is what places the
+// fraction bar 1-2px lower than the old grow+snap path, matching the reference.
+func rasterizeMathRule(r geom.Rect) geom.Rect {
+	x0 := math.Trunc(r.Min.X)
+	x1 := math.Ceil(r.Max.X)
+	y1, y2 := r.Min.Y, r.Max.Y
+	height := math.Trunc(y2-y1) - 1
+	if height < 0 {
+		height = 0
 	}
-	if h := r.Max.Y - r.Min.Y; h < 1 {
-		r.Min.Y -= (1 - h) / 2
-		r.Max.Y = r.Min.Y + 1
+	var y float64
+	if height == 0 {
+		center := (y1 + y2) / 2
+		y = math.Trunc(center - 0.5)
+	} else {
+		y = math.Trunc(y1)
 	}
-	return r
+	return geom.Rect{
+		Min: geom.Pt{X: x0, Y: y},
+		Max: geom.Pt{X: x1 + 1, Y: y + height + 1},
+	}
 }
 
 func drawMathTextLayout(r render.Renderer, textRen render.TextDrawer, layout MathTextLayout, origin geom.Pt, textColor render.Color, fontKey string) {
@@ -289,8 +333,11 @@ func drawMathTextLayout(r render.Renderer, textRen render.TextDrawer, layout Mat
 		rect := mathRuleDeviceRect(origin, rule.Rect)
 		paint := render.Paint{Fill: textColor}
 		if rasterBackend {
-			rect = growThinMathRule(rect)
-			paint.Snap = render.SnapAuto
+			// Faithful port of matplotlib _mathtext.Output.to_raster's rect
+			// rasterization (which then blits via FT2Image.draw_rect_filled).
+			// This integer-aligns the bar exactly as matplotlib does, so no
+			// PathSnapper pass is needed.
+			rect = rasterizeMathRule(rect)
 		}
 		r.Path(pixelRectPath(rect), &paint)
 	}

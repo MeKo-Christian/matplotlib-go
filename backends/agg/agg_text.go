@@ -366,6 +366,28 @@ func (r *Renderer) DrawTextWithFont(text string, origin geom.Pt, size float64, t
 	})
 }
 
+// MeasureMathGlyphRun implements render.MathGlyphMeasurer: it returns matplotlib
+// `_get_info` per-glyph metrics for pixel-exact mathtext layout. It is backed by
+// the native FreeType path (parity build); on purego/WASM the underlying accessor
+// returns false and the mathtext layout falls back to whole-run MeasureText.
+func (r *Renderer) MeasureMathGlyphRun(text string, size float64, fontKey string) ([]render.MathGlyphMetric, bool) {
+	if text == "" || size <= 0 {
+		return nil, false
+	}
+	var (
+		out []render.MathGlyphMetric
+		ok  bool
+	)
+	r.withTemporaryFontKey(func() {
+		font := r.configureTextFont(size, fontKey)
+		if font.backend != textBackendRaster || font.face.Path == "" {
+			return
+		}
+		out, ok = r.measureNativeFreetypeGlyphRun(text, font.face.Path, font.size, matplotlibTextHintingFactor)
+	})
+	return out, ok
+}
+
 func (r *Renderer) drawTextWithFontContext(text string, origin geom.Pt, size float64, textColor render.Color, fontKey string) {
 	if r.hasClipPath() {
 		bounds, haveBounds := r.textDrawBounds(text, origin, size, fontKey)

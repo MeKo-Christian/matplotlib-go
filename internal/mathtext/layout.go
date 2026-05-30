@@ -13,9 +13,32 @@ import (
 // baseline when the renderer can provide them.
 type Metrics struct{ W, H, Ascent, Descent, BoundsY, BoundsH float64 }
 
+// GlyphInfo carries matplotlib `_get_info` metrics for one glyph (device pixels,
+// baseline-relative, y-up). Advance is the UNHINTED linearHoriAdvance, Iceberg =
+// horiBearingY/64 (TeX height), Height the full ink height, Xmin/Xmax/Ymin/Ymax
+// the ink bbox, KernToPrev the kerning to the previous glyph in the run.
+type GlyphInfo struct {
+	Advance    float64
+	Iceberg    float64
+	Height     float64
+	Xmin       float64
+	Xmax       float64
+	Ymin       float64
+	Ymax       float64
+	KernToPrev float64
+}
+
 // Measurer measures text for one font key and size.
 type Measurer interface {
 	MeasureText(text string, size float64, fontKey string) Metrics
+}
+
+// GlyphMeasurer is an optional Measurer capability returning matplotlib's exact
+// per-glyph `_get_info` metrics. When a Measurer implements it and GlyphRun
+// returns ok, the layout positions glyphs pixel-exactly; otherwise it falls back
+// to whole-run MeasureText. (Unavailable on purego/WASM, which lacks FreeType.)
+type GlyphMeasurer interface {
+	GlyphRun(text string, size float64, fontKey string) ([]GlyphInfo, bool)
 }
 
 // FontStyle describes the font posture requested by MathText style commands.
@@ -1043,6 +1066,18 @@ func layoutMathTextRun(r Measurer, text string, size float64, fontKey string) ma
 		return mathLayoutBox{}
 	}
 	fontKey = mathDisplayOperatorFontKey(text, fontKey)
+
+	// Pixel-exact path: position every glyph individually from matplotlib
+	// `_get_info` metrics (mirrors ship() Char/Kern packing). Falls back to the
+	// whole-run path when the renderer lacks the FreeType capability (purego).
+	if gm, ok := r.(GlyphMeasurer); ok {
+		if infos, ok := gm.GlyphRun(text, size, fontKey); ok {
+			if box, ok := layoutMathGlyphRun(text, infos, size, fontKey); ok {
+				return box
+			}
+		}
+	}
+
 	metrics := r.MeasureText(text, size, fontKey)
 	if metrics.W <= 0 {
 		metrics.W = float64(len([]rune(text))) * size * 0.5
@@ -1057,6 +1092,38 @@ func layoutMathTextRun(r Measurer, text string, size float64, fontKey string) ma
 		Ascent:  metrics.Ascent,
 		Descent: metrics.Descent,
 	}
+}
+
+// layoutMathGlyphRun packs each glyph of text at its exact matplotlib position:
+// glyph i renders at cumulative Σ(advance)+Σ(kern), box width = total advance +
+// kerns, ascent = max(iceberg), depth = max(height - iceberg) (Char.depth). One
+// MathTextLayoutRun is emitted per glyph (baseline-aligned, layout y-down).
+func layoutMathGlyphRun(text string, infos []GlyphInfo, size float64, fontKey string) (mathLayoutBox, bool) {
+	runes := []rune(text)
+	if len(infos) != len(runes) || len(runes) == 0 {
+		return mathLayoutBox{}, false
+	}
+	var box mathLayoutBox
+	box.runs = make([]MathTextLayoutRun, 0, len(runes))
+	x := 0.0
+	for i, info := range infos {
+		x += info.KernToPrev
+		box.runs = append(box.runs, MathTextLayoutRun{
+			Text:     string(runes[i]),
+			Offset:   geom.Pt{X: x, Y: 0},
+			FontSize: size,
+			FontKey:  fontKey,
+		})
+		if info.Iceberg > box.Ascent {
+			box.Ascent = info.Iceberg
+		}
+		if depth := info.Height - info.Iceberg; depth > box.Descent {
+			box.Descent = depth
+		}
+		x += info.Advance
+	}
+	box.Width = x
+	return box, true
 }
 
 func mathDisplayOperatorFontKey(text, fontKey string) string {
@@ -1489,7 +1556,9 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 	dropSub := isMathDropSubGlyph(baseText)
 	// matplotlib is_slanted: italic variable faces are slanted, and so are the
 	// drop-sub integral operators (∫∮), which render from a slanted math face.
-	slanted := isMathSlantedBox(base) || dropSub
+	// The slant comes from the node's font style (FontStyleItalic), not the
+	// resolved fontKey, which is empty at layout time.
+	slanted := nodeIsSlanted(pointerNode(n.base)) || dropSub
 	lcHeight := base.Ascent
 	lcBaseline := 0.0
 	if dropSub {
@@ -1509,6 +1578,13 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 			subKern = 0
 		}
 	}
+
+	// matplotlib builds each script as Hlist([Kern(kern), script]) and calls
+	// x.shrink() once, which scales the kern by SHRINK_FACTOR (the script box is
+	// also laid out at scriptSize). The vertical shift_amount and the trailing
+	// script_space are applied AFTER shrink, so they are not scaled.
+	superKern *= mathFracShrink
+	subKern *= mathFracShrink
 
 	var out mathLayoutBox
 	out.appendTranslated(base, 0, 0)
@@ -1570,15 +1646,30 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 	return out
 }
 
-// isMathSlantedBox reports whether a laid-out nucleus renders with a slanted
-// (italic/oblique) face, matching matplotlib's Char.is_slanted() for the
-// sub/superscript kerning adjustments.
-func isMathSlantedBox(box mathLayoutBox) bool {
-	if len(box.runs) != 1 {
+// nodeIsSlanted reports whether the nucleus renders with a slanted (italic)
+// face, matching matplotlib's Char.is_slanted() for the sub/superscript kerning
+// adjustments. The slant is carried by the layout node's FontStyleItalic (math
+// variables are implicitly italic); the resolved fontKey is empty at layout time
+// so it cannot be inspected. For a multi-element nucleus the last element's slant
+// is used (matplotlib keys off last_char).
+func nodeIsSlanted(n mathLayoutNode) bool {
+	switch n.kind {
+	case mathLayoutStyled:
+		if n.style == FontStyleItalic {
+			return true
+		}
+		if n.style == FontStyleNormal && n.child != nil {
+			return nodeIsSlanted(*n.child)
+		}
+		return false
+	case mathLayoutList:
+		if len(n.children) == 0 {
+			return false
+		}
+		return nodeIsSlanted(n.children[len(n.children)-1])
+	default:
 		return false
 	}
-	key := strings.ToLower(box.runs[0].FontKey)
-	return strings.Contains(key, "italic") || strings.Contains(key, "oblique")
 }
 
 func layoutMathLimits(r Measurer, n mathLayoutNode, size float64, fontKey string, opts Options) mathLayoutBox {
@@ -1668,6 +1759,21 @@ const (
 func mathIceberg(r Measurer, text string, size float64, fontKey string) float64 {
 	if r == nil {
 		return 0
+	}
+	// Pixel-exact: iceberg = max(horiBearingY/64) over the glyphs (matplotlib
+	// `_get_info` iceberg / get_xheight). Falls back to hinted ink bounds.
+	if gm, ok := r.(GlyphMeasurer); ok {
+		if infos, ok := gm.GlyphRun(text, size, fontKey); ok && len(infos) > 0 {
+			ice := 0.0
+			for _, info := range infos {
+				if info.Iceberg > ice {
+					ice = info.Iceberg
+				}
+			}
+			if ice > 0 {
+				return ice
+			}
+		}
 	}
 	m := r.MeasureText(text, size, fontKey)
 	if m.BoundsH <= 0 {

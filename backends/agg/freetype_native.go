@@ -263,6 +263,94 @@ func (r *Renderer) measureNativeFreetypeTextRun(text string, face render.FontFac
 	return bounds, metrics, ok
 }
 
+// measureNativeFreetypeGlyphRun returns matplotlib `_get_info` metrics for every
+// glyph in text, used for pixel-exact mathtext layout/rasterization. It mirrors
+// matplotlib FT2Font.set_size exactly: horizontal resolution dpi*hintingFactor +
+// a face transform xx=1/hintingFactor, FORCE_AUTOHINT load. linearHoriAdvance is
+// unhinted (the wrapper divides it by hintingFactor — ft2font_wrapper.cpp:313),
+// horiBearingY/height are vertical (no hf), and the bbox is the transformed glyph
+// CBox (1x). See render.MathGlyphMetric.
+func (r *Renderer) measureNativeFreetypeGlyphRun(text string, fontPath string, size float64, hintingFactor int) ([]render.MathGlyphMetric, bool) {
+	if text == "" || fontPath == "" || size <= 0 {
+		return nil, false
+	}
+	if hintingFactor <= 0 {
+		hintingFactor = 1
+	}
+	dpi := r.resolution
+	if dpi == 0 {
+		dpi = 72
+	}
+
+	var library C.FT_Library
+	if C.FT_Init_FreeType(&library) != 0 {
+		return nil, false
+	}
+	defer C.FT_Done_FreeType(library)
+
+	path := C.CString(fontPath)
+	defer C.free(unsafe.Pointer(path))
+
+	var ftFace C.FT_Face
+	if C.FT_New_Face(library, path, 0, &ftFace) != 0 {
+		return nil, false
+	}
+	defer C.FT_Done_Face(ftFace)
+
+	charSize := C.FT_F26Dot6(math.Round(size * 64.0))
+	if C.FT_Set_Char_Size(ftFace, charSize, 0, C.FT_UInt(dpi*uint(hintingFactor)), C.FT_UInt(dpi)) != 0 {
+		return nil, false
+	}
+	matrix := C.FT_Matrix{
+		xx: C.FT_Fixed(math.Round(65536.0 / float64(hintingFactor))),
+		yy: 0x10000,
+	}
+	C.FT_Set_Transform(ftFace, &matrix, nil)
+	loadFlags := C.mpl_go_force_autohint_load_flags()
+	hf := float64(hintingFactor)
+
+	runes := []rune(text)
+	out := make([]render.MathGlyphMetric, 0, len(runes))
+	var previousGlyph C.FT_UInt
+	for _, rr := range runes {
+		glyphIndex := C.FT_Get_Char_Index(ftFace, C.FT_ULong(rr))
+		if glyphIndex == 0 {
+			return nil, false
+		}
+		kern := 0.0
+		if previousGlyph != 0 && C.mpl_go_has_kerning(ftFace) != 0 {
+			var kerning C.FT_Vector
+			if C.FT_Get_Kerning(ftFace, previousGlyph, glyphIndex, C.FT_KERNING_DEFAULT, &kerning) == 0 {
+				kern = float64(kerning.x) / hf / 64.0
+			}
+		}
+		if C.FT_Load_Glyph(ftFace, glyphIndex, loadFlags) != 0 {
+			return nil, false
+		}
+		slot := ftFace.glyph
+		var glyph C.FT_Glyph
+		if C.FT_Get_Glyph(slot, &glyph) != 0 {
+			return nil, false
+		}
+		var cbox C.FT_BBox
+		C.FT_Glyph_Get_CBox(glyph, C.FT_GLYPH_BBOX_SUBPIXELS, &cbox)
+		C.FT_Done_Glyph(glyph)
+
+		out = append(out, render.MathGlyphMetric{
+			Advance:    float64(slot.linearHoriAdvance) / hf / 65536.0,
+			Iceberg:    float64(slot.metrics.horiBearingY) / 64.0,
+			Height:     float64(slot.metrics.height) / 64.0,
+			Xmin:       float64(cbox.xMin) / 64.0,
+			Xmax:       float64(cbox.xMax) / 64.0,
+			Ymin:       float64(cbox.yMin) / 64.0,
+			Ymax:       float64(cbox.yMax) / 64.0,
+			KernToPrev: kern,
+		})
+		previousGlyph = glyphIndex
+	}
+	return out, true
+}
+
 func withNativeFreetypeRun(fontPath, text string, size float64, dpi uint, hintingFactor int, fn func(nativeFreetypeRun) bool) bool {
 	if fontPath == "" || text == "" || size <= 0 || fn == nil {
 		return false
