@@ -390,8 +390,13 @@ func figureColorbarMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engin
 					margin.bottom = math.Max(margin.bottom, colorbarSpace+padding.bottom)
 				}
 			} else {
-				padding.right += ax.effectiveRC(fig).AxisLineWidth
-				colorbarSpace := (thickness + colorbarPad) * vp.W()
+				rc := ax.effectiveRC(fig)
+				padding.right += rc.AxisLineWidth
+				// Reserve the same spine-width gap that constrainedColorbarSlotOffset
+				// applies during placement so the parent axes edge and the colorbar
+				// slot stay consistent (otherwise the axes ends ~1px too wide).
+				// AxisLineWidth is already stored in pixels.
+				colorbarSpace := (thickness+colorbarPad)*vp.W() + rc.AxisLineWidth
 				if location == "left" {
 					margin.left = math.Max(margin.left, colorbarSpace+padding.left)
 				} else {
