@@ -1379,12 +1379,34 @@ func tickLabelDisplayRect(side AxisSide, style TickLabelStyle, isXAxis bool, ori
 
 	hAlign, vAlign := resolvedTickLabelLayoutAlignments(side, style, isXAxis)
 	angle := style.Rotation * math.Pi / 180.0
-	anchor := tickLabelRotationAnchor(origin, layout, hAlign, vAlign, angle)
-	unrotatedRect, ok := alignedTextLayoutRect(anchor, layout, TextAlignCenter, textLayoutVAlignBottom, lineHeight)
-	if !ok {
+	// Faithful rotated extent: the metric box (baseline-left at the matplotlib draw
+	// origin, x∈[0,W], y∈[-Descent,Ascent] in y-up) rotated by +angle about the
+	// origin — matching what the backend renders.
+	o := tickLabelDrawOrigin(origin, layout, hAlign, vAlign, angle, false)
+	w := layout.Width
+	if w <= 0 && layout.HaveInkBounds {
+		w = layout.InkBounds.W
+	}
+	if w <= 0 {
 		return geom.Rect{}, false
 	}
-	return rotatedRectBounds(unrotatedRect, anchor, -angle), true
+	cosT := math.Cos(angle)
+	sinT := math.Sin(angle)
+	corners := [4][2]float64{{0, -layout.Descent}, {0, layout.Ascent}, {w, layout.Ascent}, {w, -layout.Descent}}
+	var out geom.Rect
+	for i, c := range corners {
+		px := o.X + c[0]*cosT - c[1]*sinT
+		py := o.Y + c[0]*sinT + c[1]*cosT
+		if i == 0 {
+			out = geom.Rect{Min: geom.Pt{X: px, Y: py}, Max: geom.Pt{X: px, Y: py}}
+			continue
+		}
+		out.Min.X = math.Min(out.Min.X, px)
+		out.Min.Y = math.Min(out.Min.Y, py)
+		out.Max.X = math.Max(out.Max.X, px)
+		out.Max.Y = math.Max(out.Max.Y, py)
+	}
+	return out, true
 }
 
 func alignedTextLayoutRect(anchor geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, lineHeight float64) (geom.Rect, bool) {
@@ -1431,35 +1453,6 @@ func alignedTextLayoutRect(anchor geom.Pt, layout singleLineTextLayout, hAlign T
 	}, true
 }
 
-func rotatedRectBounds(rect geom.Rect, anchor geom.Pt, angle float64) geom.Rect {
-	corners := []geom.Pt{
-		rect.Min,
-		{X: rect.Max.X, Y: rect.Min.Y},
-		rect.Max,
-		{X: rect.Min.X, Y: rect.Max.Y},
-	}
-	cosA := math.Cos(angle)
-	sinA := math.Sin(angle)
-	out := geom.Rect{Min: rotatePoint(corners[0], anchor, cosA, sinA), Max: rotatePoint(corners[0], anchor, cosA, sinA)}
-	for _, corner := range corners[1:] {
-		p := rotatePoint(corner, anchor, cosA, sinA)
-		out.Min.X = math.Min(out.Min.X, p.X)
-		out.Min.Y = math.Min(out.Min.Y, p.Y)
-		out.Max.X = math.Max(out.Max.X, p.X)
-		out.Max.Y = math.Max(out.Max.Y, p.Y)
-	}
-	return out
-}
-
-func rotatePoint(p, anchor geom.Pt, cosA, sinA float64) geom.Pt {
-	dx := p.X - anchor.X
-	dy := p.Y - anchor.Y
-	return geom.Pt{
-		X: anchor.X + dx*cosA - dy*sinA,
-		Y: anchor.Y + dx*sinA + dy*cosA,
-	}
-}
-
 func tickLabelCenterOffsetX(layout singleLineTextLayout) float64 {
 	return layout.Width / 2
 }
@@ -1497,26 +1490,20 @@ func tickLabelLeftOffsetForRightAxis(hAlign TextAlign, layout singleLineTextLayo
 	}
 }
 
-// tickLabelRotationAnchor reproduces matplotlib's rotation_mode="default" text
-// placement (see Text._get_layout in matplotlib/text.py) and returns the pivot
-// the AGG backend rotates about (the bottom-center of the unrotated metric box,
-// per rotatedTextOrigin).
+// tickLabelDrawOriginFromP ports matplotlib's Text._get_layout (matplotlib/text.py)
+// for a single line and returns the glyph baseline-left draw origin in y-up display
+// space, given the text anchor point P, the line metrics, the horizontal/vertical
+// alignment, the rotation angle (radians, CCW), and the rotation mode.
 //
-// matplotlib rotates the unrotated metric box (x∈[0,W], y∈[-h,0] in y-up display
-// space, h=ascent+descent), then translates it so the (hAlign,vAlign) reference
-// of the *rotated* bounding box lands on the anchor point P. Because the backend
-// rotates the same box about its bottom-center, placing that pivot at the point
-// matplotlib's transform maps the local bottom-center to makes the two coincide.
-func tickLabelRotationAnchor(origin geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64) geom.Pt {
-	// P is matplotlib's text anchor point (tick position + pad) that the
-	// unrotated origin was derived from; recover it by undoing the alignment.
-	p := geom.Pt{
-		X: origin.X + textHorizontalOriginOffset(layout, hAlign),
-		Y: origin.Y - textBaselineOffset(layout, vAlign),
-	}
-
+// matplotlib lays the unrotated metric box at x∈[0,W], y∈[-h,0] (y-up) with the
+// baseline-left at (0, -(h-d)). It rotates by M, aligns the (hAlign,vAlign)
+// reference to P, and the per-line draw position is M·(0,-(h-d)) minus the
+// alignment offset. In rotation_mode="default" the offset comes from the *rotated*
+// bounding box; in "anchor" it comes from the *unrotated* box, then rotated by M.
+func tickLabelDrawOriginFromP(p geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64, anchorMode bool) geom.Pt {
 	w := layout.Width
-	h := layout.Ascent + layout.Descent
+	d := layout.Descent
+	h := layout.Ascent + d
 	baseline := layout.Ascent // matplotlib's baseline = h - descent = ascent
 
 	cosT := math.Cos(angle)
@@ -1525,68 +1512,116 @@ func tickLabelRotationAnchor(origin geom.Pt, layout singleLineTextLayout, hAlign
 		return x*cosT - y*sinT, x*sinT + y*cosT
 	}
 
-	// Rotated bounding box of the unrotated corners (y-up display space).
-	cornersX := [4]float64{0, 0, w, w}
-	cornersY := [4]float64{-h, 0, 0, -h}
-	var rxMin, rxMax, ryMin, ryMax float64
-	for i := range 4 {
-		rx, ry := rot(cornersX[i], cornersY[i])
-		if i == 0 || rx < rxMin {
-			rxMin = rx
+	var offsetX, offsetY float64
+	if anchorMode {
+		// rotation_mode="anchor": offsets from the UNROTATED box, then rotated.
+		switch hAlign {
+		case TextAlignRight:
+			offsetX = w
+		case TextAlignCenter:
+			offsetX = w / 2
+		default: // left
+			offsetX = 0
 		}
-		if i == 0 || rx > rxMax {
-			rxMax = rx
+		switch vAlign {
+		case textLayoutVAlignTop:
+			offsetY = 0
+		case textLayoutVAlignCenter:
+			offsetY = -h / 2
+		case textLayoutVAlignBaseline:
+			offsetY = -baseline
+		case textLayoutVAlignCenterBaseline:
+			offsetY = -baseline / 2
+		default: // bottom
+			offsetY = -h
 		}
-		if i == 0 || ry < ryMin {
-			ryMin = ry
+		offsetX, offsetY = rot(offsetX, offsetY)
+	} else {
+		// rotation_mode="default": offsets from the ROTATED bounding box.
+		cornersX := [4]float64{0, 0, w, w}
+		cornersY := [4]float64{-h, 0, 0, -h}
+		var rxMin, rxMax, ryMin, ryMax float64
+		for i := range 4 {
+			rx, ry := rot(cornersX[i], cornersY[i])
+			if i == 0 || rx < rxMin {
+				rxMin = rx
+			}
+			if i == 0 || rx > rxMax {
+				rxMax = rx
+			}
+			if i == 0 || ry < ryMin {
+				ryMin = ry
+			}
+			if i == 0 || ry > ryMax {
+				ryMax = ry
+			}
 		}
-		if i == 0 || ry > ryMax {
-			ryMax = ry
+		switch hAlign {
+		case TextAlignRight:
+			offsetX = rxMax
+		case TextAlignCenter:
+			offsetX = (rxMin + rxMax) / 2
+		default: // left
+			offsetX = rxMin
+		}
+		switch vAlign {
+		case textLayoutVAlignTop:
+			offsetY = ryMax
+		case textLayoutVAlignCenter:
+			offsetY = (ryMin + ryMax) / 2
+		case textLayoutVAlignBaseline:
+			offsetY = ryMin + d
+		case textLayoutVAlignCenterBaseline:
+			offsetY = ryMin + (ryMax - ryMin) - baseline/2
+		default: // bottom
+			offsetY = ryMin
 		}
 	}
 
-	var offsetX float64
-	switch hAlign {
-	case TextAlignRight:
-		offsetX = rxMax
-	case TextAlignCenter:
-		offsetX = (rxMin + rxMax) / 2
-	default: // left
-		offsetX = rxMin
-	}
-
-	var offsetY float64
-	switch vAlign {
-	case textLayoutVAlignTop:
-		offsetY = ryMax
-	case textLayoutVAlignCenter:
-		offsetY = (ryMin + ryMax) / 2
-	case textLayoutVAlignBaseline:
-		offsetY = ryMin + layout.Descent
-	case textLayoutVAlignCenterBaseline:
-		offsetY = ryMin + (ryMax - ryMin) - baseline/2
-	default: // bottom
-		offsetY = ryMin
-	}
-
-	// Local bottom-center of the metric box, mapped through the same rotation.
-	bcX, bcY := rot(w/2, -h)
-
-	// Displacement from P to the pivot, in the renderer's y-up display space.
+	// matplotlib: draw_origin = P + M·(0, -(h-d)) - (offsetX, offsetY)
+	blX, blY := rot(0, -(h - d))
 	return geom.Pt{
-		X: p.X + (bcX - offsetX),
-		Y: p.Y + (bcY - offsetY),
+		X: p.X + blX - offsetX,
+		Y: p.Y + blY - offsetY,
 	}
 }
 
-func tickLabelBottomCenterOffset(layout singleLineTextLayout) geom.Pt {
-	if layout.HaveInkBounds && layout.InkBounds.W > 0 && layout.InkBounds.H > 0 {
-		return geom.Pt{
-			X: layout.InkBounds.X + layout.InkBounds.W/2,
-			Y: layout.InkBounds.Y + layout.InkBounds.H,
-		}
+// tickLabelDrawOrigin recovers matplotlib's text anchor point P from the unrotated
+// draw origin (undoing the alignment) and returns the matplotlib baseline-left draw
+// origin via tickLabelDrawOriginFromP.
+func tickLabelDrawOrigin(origin geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64, anchorMode bool) geom.Pt {
+	p := geom.Pt{
+		X: origin.X + textHorizontalOriginOffset(layout, hAlign),
+		Y: origin.Y - textBaselineOffset(layout, vAlign),
 	}
-	return geom.Pt{X: layout.Width / 2, Y: layout.Descent}
+	return tickLabelDrawOriginFromP(p, layout, hAlign, vAlign, angle, anchorMode)
+}
+
+// rotatedTextBackendAnchorFromP maps matplotlib's baseline-left draw origin O to the
+// bottom-center anchor the AGG backend rotates about. The backend renders the
+// baseline-left at anchor - R(angle)·(W/2, Descent) (proven from drawTextRotatedDirect
+// + the y-down device flip), and its metrics.W/Descent equal layout.Width/Descent, so
+// anchor = O + R(angle)·(W/2, Descent) makes the rendered glyphs land exactly on O.
+func rotatedTextBackendAnchorFromP(p geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64, anchorMode bool) geom.Pt {
+	o := tickLabelDrawOriginFromP(p, layout, hAlign, vAlign, angle, anchorMode)
+	cosT := math.Cos(angle)
+	sinT := math.Sin(angle)
+	w := layout.Width
+	d := layout.Descent
+	return geom.Pt{
+		X: o.X + (w/2*cosT - d*sinT),
+		Y: o.Y + (w/2*sinT + d*cosT),
+	}
+}
+
+// tickLabelRotationAnchor returns the AGG backend rotation pivot for a tick label
+// drawn with matplotlib's rotation_mode="default".
+func tickLabelRotationAnchor(origin geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64) geom.Pt {
+	p := geom.Pt{
+		X: origin.X + textHorizontalOriginOffset(layout, hAlign),
+		Y: origin.Y - textBaselineOffset(layout, vAlign),
+	}
+	return rotatedTextBackendAnchorFromP(p, layout, hAlign, vAlign, angle, false)
 }
 
 func resolvedTickLabelAlignments(side AxisSide, style TickLabelStyle, isXAxis bool) (TextAlign, TextVerticalAlign) {

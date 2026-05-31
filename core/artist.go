@@ -2286,7 +2286,18 @@ func drawAxesLabels(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect,
 		}
 		switch ren := r.(type) {
 		case render.RotatedTextDrawer:
-			drawDisplayTextRotated(ren, ax.YLabel, anchor, labelSize, angle, labelColor, ctx.RC.FontKey, ctx.RC.UseTeX)
+			// matplotlib draws BOTH the left and right y-axis labels at
+			// rotation=90 (reading bottom-to-top) with rotation_mode="anchor",
+			// ha="center", and va="bottom" (left) / va="top" (right). The left
+			// label is NOT mirrored — both sides share the +90° orientation.
+			labelAngle := math.Pi / 2
+			yLabelLayout := measureSingleLineTextLayout(r, ax.YLabel, labelSize, ctx.RC.FontKey, ctx.RC.UseTeX)
+			yLabelVAlign := textLayoutVAlignBottom
+			if side == AxisRight {
+				yLabelVAlign = textLayoutVAlignTop
+			}
+			backendAnchor := rotatedTextBackendAnchorFromP(anchor, yLabelLayout, TextAlignCenter, yLabelVAlign, labelAngle, true)
+			drawDisplayTextRotated(ren, ax.YLabel, backendAnchor, labelSize, labelAngle, labelColor, ctx.RC.FontKey, ctx.RC.UseTeX)
 		case render.VerticalTextDrawer:
 			if angle < 0 {
 				layout := measureSingleLineTextLayout(r, ax.YLabel, labelSize, ctx.RC.FontKey, ctx.RC.UseTeX)

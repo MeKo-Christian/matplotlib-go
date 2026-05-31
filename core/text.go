@@ -673,14 +673,13 @@ func textDistanceToBox(rotation float64, anchor geom.Pt, box geom.Rect) float64 
 }
 
 func textRotationAnchor(origin geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64, mode TextRotationMode) geom.Pt {
-	if mode == TextRotationModeAnchor {
-		pivot := tickLabelBottomCenterOffset(layout)
-		return geom.Pt{
-			X: origin.X + pivot.X,
-			Y: origin.Y + pivot.Y,
-		}
+	// Recover matplotlib's text anchor point P from the unrotated draw origin, then
+	// map matplotlib's baseline-left draw origin to the backend rotation pivot.
+	p := geom.Pt{
+		X: origin.X + textHorizontalOriginOffset(layout, hAlign),
+		Y: origin.Y - textBaselineOffset(layout, vAlign),
 	}
-	return tickLabelRotationAnchor(origin, layout, hAlign, vAlign, angle)
+	return rotatedTextBackendAnchorFromP(p, layout, hAlign, vAlign, angle, mode == TextRotationModeAnchor)
 }
 
 func wrappedTextLines(r render.Renderer, text string, fontSize float64, fontKey string, parseMath, useTeX bool, maxWidth float64) []string {

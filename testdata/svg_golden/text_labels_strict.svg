@@ -34,5 +34,5 @@ preserveAspectRatio="xMidYMid meet">
   <path d="M 576.5 324.5 L 576.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <text x="284.461539" y="27.666667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Text Labels</text>
   <text x="306.538461" y="361.628205" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Group</text>
-  <text x="17.995727" y="180.427351" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)" transform="matrix(0 -1 1 0 -147.431624 210.346154)">Value</text>
+  <text x="14.918803" y="180.427351" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)" transform="matrix(0 1 -1 0 207.26923 150.508548)">Value</text>
 </svg>

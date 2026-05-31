@@ -71,5 +71,5 @@ preserveAspectRatio="xMidYMid meet">
   <text x="366.523377" y="35.926763" font-size="8.4" font-family="mplgo-font-1" fill="rgb(0,0,0)">i</text>
   <text x="307.553847" y="347.228205" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">phase </text>
   <text x="339.861538" y="347.228205" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">θ</text>
-  <text x="-11.619658" y="176.827351" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)" transform="matrix(0 -1 1 0 -149.21624 201.361538)">amplitude 1⁄√2</text>
+  <text x="-20.446965" y="176.827351" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)" transform="matrix(0 1 -1 0 192.534231 158.043547)">amplitude 1⁄√2</text>
 </svg>
