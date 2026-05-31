@@ -432,9 +432,25 @@ func (g *Grid) drawLine(r render.Renderer, ctx *DrawContext, tickValue float64, 
 		Stroke:    color,
 		LineCap:   render.CapButt,
 		LineJoin:  render.JoinMiter,
-		Dashes:    dashes,
+		Dashes:    scaleGridDashes(dashes, width),
 	}
 	r.Path(path, &paint)
+}
+
+// scaleGridDashes mirrors matplotlib's Line2D dash scaling
+// (rcParams["lines.scale_dashes"] is True by default): the on/off pattern is
+// multiplied by the line width. Because both the pattern and width are already
+// in pixels here, the rendered dash length equals pattern*lineWidthPx — the
+// same result matplotlib produces from a points-based pattern at this DPI.
+func scaleGridDashes(dashes []float64, width float64) []float64 {
+	if len(dashes) == 0 || width <= 0 {
+		return dashes
+	}
+	scaled := make([]float64, len(dashes))
+	for i, d := range dashes {
+		scaled[i] = d * width
+	}
+	return scaled
 }
 
 func drawSampledGridLine(r render.Renderer, ctx *DrawContext, axis AxisSide, tick float64, segments int, paint render.Paint) {

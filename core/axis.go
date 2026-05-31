@@ -75,9 +75,11 @@ type Axis struct {
 	MinorLocator       Locator      // minor tick position calculator (nil = no minor ticks)
 	Formatter          Formatter    // major tick label formatter
 	MinorFormatter     Formatter    // optional minor tick label formatter
-	Color              render.Color // axis spine color, and tick/label color unless overridden
-	TickColor          *render.Color
-	TickLabelColor     *render.Color
+	Color               render.Color // axis spine color, and tick/label color unless overridden
+	TickColor           *render.Color
+	TickLabelColor      *render.Color
+	MinorTickColor      *render.Color // minor tick mark color (nil falls back to TickColor)
+	MinorTickLabelColor *render.Color // minor tick label color (nil falls back to MinorTickColor)
 	LineWidth          float64 // width of axis spine
 	LineCap            render.LineCap
 	LineJoin           render.LineJoin
@@ -216,7 +218,7 @@ func (a *Axis) DrawTicks(r render.Renderer, ctx *DrawContext) {
 		}
 		size := tickLevelSize(level, a.TickSize)
 		for _, tickValue := range ticks {
-			a.drawSingleTick(r, ctx, tickValue, size, a.tickLineWidth(), isXAxis)
+			a.drawSingleTick(r, ctx, tickValue, size, a.tickLineWidth(), a.tickColor(), isXAxis)
 		}
 	}
 }
@@ -267,7 +269,7 @@ func spinePixelEndpoints(side AxisSide, px geom.Rect) (geom.Pt, geom.Pt) {
 // drawTicks draws tick marks at the specified positions.
 func (a *Axis) drawTicks(r render.Renderer, ctx *DrawContext, ticks []float64, isXAxis bool) {
 	for _, tickValue := range ticks {
-		a.drawSingleTick(r, ctx, tickValue, a.TickSize, a.tickLineWidth(), isXAxis)
+		a.drawSingleTick(r, ctx, tickValue, a.TickSize, a.tickLineWidth(), a.tickColor(), isXAxis)
 	}
 }
 
@@ -278,12 +280,12 @@ func (a *Axis) drawMinorTicks(r render.Renderer, ctx *DrawContext, ticks []float
 		sz = a.TickSize * 0.6
 	}
 	for _, tickValue := range ticks {
-		a.drawSingleTick(r, ctx, tickValue, sz, a.minorTickLineWidth(), isXAxis)
+		a.drawSingleTick(r, ctx, tickValue, sz, a.minorTickLineWidth(), a.minorTickColor(), isXAxis)
 	}
 }
 
 // drawSingleTick draws a single tick mark pointing outward from the plot area.
-func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, tickSize, lineWidth float64, isXAxis bool) {
+func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, tickSize, lineWidth float64, stroke render.Color, isXAxis bool) {
 	var p1, p2 geom.Pt
 
 	if isXAxis {
@@ -312,7 +314,7 @@ func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, ti
 	// Draw the tick
 	paint := render.Paint{
 		LineWidth: lineWidth,
-		Stroke:    a.tickColor(),
+		Stroke:    stroke,
 		LineCap:   a.TickLineCap,
 		LineJoin:  a.TickLineJoin,
 		Dashes:    styleCloneDashes(a.Dashes),
@@ -416,18 +418,18 @@ func (a *Axis) DrawTickLabels(r render.Renderer, ctx *DrawContext) {
 	}
 	if a.ShowLabels && a.Locator != nil && a.Formatter != nil {
 		ticks := visibleTicks(a.Locator.Ticks(domainMin, domainMax, a.majorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
-		a.drawTickLabels(r, ctx, ticks, a.Formatter, a.MajorLabelStyle, a.TickSize, isXAxis)
+		a.drawTickLabels(r, ctx, ticks, a.Formatter, a.MajorLabelStyle, a.TickSize, a.tickLabelColor(), isXAxis)
 	}
 	if a.ShowMinorLabels && a.MinorLocator != nil && a.MinorFormatter != nil {
 		ticks := visibleTicks(a.MinorLocator.Ticks(domainMin, domainMax, a.minorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
-		a.drawTickLabels(r, ctx, ticks, a.MinorFormatter, a.MinorLabelStyle, a.minorTickSize(), isXAxis)
+		a.drawTickLabels(r, ctx, ticks, a.MinorFormatter, a.MinorLabelStyle, a.minorTickSize(), a.minorTickLabelColor(), isXAxis)
 	}
 	for _, level := range a.ExtraTickLevels {
 		if !level.ShowLabels || level.Locator == nil || level.Formatter == nil {
 			continue
 		}
 		ticks := visibleTicks(level.Locator.Ticks(domainMin, domainMax, a.majorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
-		a.drawTickLabels(r, ctx, ticks, level.Formatter, normalizeTickLabelStyle(level.LabelStyle), tickLevelSize(level, a.TickSize), isXAxis)
+		a.drawTickLabels(r, ctx, ticks, level.Formatter, normalizeTickLabelStyle(level.LabelStyle), tickLevelSize(level, a.TickSize), a.tickLabelColor(), isXAxis)
 	}
 }
 
@@ -519,7 +521,7 @@ func visibleTicks(ticks []float64, minVal, maxVal float64) []float64 {
 }
 
 // drawTickLabels draws text labels for a single tick level if the renderer supports text.
-func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64, isXAxis bool) {
+func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64, labelColor render.Color, isXAxis bool) {
 	textRen, ok := r.(render.TextDrawer)
 	if !ok || formatter == nil {
 		return
@@ -559,11 +561,11 @@ func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float
 		if style.Rotation != 0 && rotRen != nil {
 			hAlign, vAlign := resolvedTickLabelLayoutAlignments(a.Side, style, isXAxis)
 			angle := style.Rotation * math.Pi / 180.0
-			drawDisplayTextRotated(rotRen, label, tickLabelRotationAnchor(labelPos, layout, hAlign, vAlign, angle), fontSize, angle, a.tickLabelColor(), fontKey, ctx.RC.UseTeX)
+			drawDisplayTextRotated(rotRen, label, tickLabelRotationAnchor(labelPos, layout, hAlign, vAlign, angle), fontSize, angle, labelColor, fontKey, ctx.RC.UseTeX)
 			continue
 		}
 
-		drawDisplayText(textRen, label, labelPos, fontSize, a.tickLabelColor(), fontKey, ctx.RC.UseTeX)
+		drawDisplayText(textRen, label, labelPos, fontSize, labelColor, fontKey, ctx.RC.UseTeX)
 	}
 }
 
@@ -1066,6 +1068,30 @@ func (a *Axis) tickLabelColor() render.Color {
 		return *a.TickLabelColor
 	}
 	return a.tickColor()
+}
+
+// minorTickColor resolves the minor tick mark color. A nil override falls back
+// to the major tick color so that existing single-color configurations keep
+// their behavior; an explicit minor color (via tick_params which="minor") is
+// independent of the major color, matching matplotlib.
+func (a *Axis) minorTickColor() render.Color {
+	if a == nil {
+		return render.Color{}
+	}
+	if a.MinorTickColor != nil {
+		return *a.MinorTickColor
+	}
+	return a.tickColor()
+}
+
+func (a *Axis) minorTickLabelColor() render.Color {
+	if a == nil {
+		return render.Color{}
+	}
+	if a.MinorTickLabelColor != nil {
+		return *a.MinorTickLabelColor
+	}
+	return a.minorTickColor()
 }
 
 func (a *Axis) tickLineWidth() float64 {

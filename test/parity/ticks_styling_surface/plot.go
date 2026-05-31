@@ -22,6 +22,12 @@ func Plot() *core.Figure {
 	ax.SetTitle("Tick Styling Surface")
 	ax.SetXLabel("top labels")
 	ax.SetYLabel("right labels")
+	if err := ax.SetXLabelPosition("top"); err != nil {
+		panic(err)
+	}
+	if err := ax.SetYLabelPosition("right"); err != nil {
+		panic(err)
+	}
 	ax.SetXLim(0, 6)
 	ax.SetYLim(0, 12)
 

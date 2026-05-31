@@ -1379,10 +1379,30 @@ func (a *Axes) TickParams(params TickParams) error {
 			resetAxisTickParams(axis)
 		}
 		if params.Color != nil {
-			tickColor := *params.Color
-			labelColor := *params.Color
-			axis.TickColor = &tickColor
-			axis.TickLabelColor = &labelColor
+			// matplotlib's tick_params(colors=...) sets both the tick mark and
+			// label color, scoped to the selected major/minor tick set.
+			color := *params.Color
+			switch which {
+			case "minor":
+				minorColor := color
+				minorLabel := color
+				axis.MinorTickColor = &minorColor
+				axis.MinorTickLabelColor = &minorLabel
+			case "both":
+				tickColor := color
+				labelColor := color
+				minorColor := color
+				minorLabel := color
+				axis.TickColor = &tickColor
+				axis.TickLabelColor = &labelColor
+				axis.MinorTickColor = &minorColor
+				axis.MinorTickLabelColor = &minorLabel
+			default: // major
+				tickColor := color
+				labelColor := color
+				axis.TickColor = &tickColor
+				axis.TickLabelColor = &labelColor
+			}
 		}
 		if params.Width != nil {
 			switch which {
@@ -1453,6 +1473,8 @@ func resetAxisTickParams(axis *Axis) {
 	}
 	axis.TickColor = nil
 	axis.TickLabelColor = nil
+	axis.MinorTickColor = nil
+	axis.MinorTickLabelColor = nil
 	axis.TickLineCap = defaults.TickLineCap
 	axis.TickLineJoin = defaults.TickLineJoin
 	axis.TickLineWidth = defaults.TickLineWidth
