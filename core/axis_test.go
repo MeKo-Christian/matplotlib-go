@@ -1735,11 +1735,21 @@ func TestAxis_TickLabelBoundsIncludeRotatedLayout(t *testing.T) {
 		t.Fatal("expected rotated tick label bounds")
 	}
 
-	if rotated.Max.Y <= unrotated.Max.Y+10 {
-		t.Fatalf("rotated bounds did not include lower rotated layout: rotated=%+v unrotated=%+v", rotated, unrotated)
+	// matplotlib's rotation_mode="default" with valign="top" (the AutoAlign
+	// value for a bottom x-axis) pins the rotated bounding box's top edge to the
+	// anchor and lets the label extend downward and sideways — it never grows
+	// above the unrotated top. (Verified against matplotlib: a rotated bottom
+	// tick label keeps its top y unchanged and only its bottom y increases.)
+	// In this y-up coordinate the pinned top edge is Max.Y and the downward
+	// extent is Min.Y.
+	if rotated.Max.Y > unrotated.Max.Y+1 {
+		t.Fatalf("rotated bounds extended above the pinned top edge: rotated=%+v unrotated=%+v", rotated, unrotated)
 	}
-	if rotated.Min.Y >= unrotated.Min.Y {
-		t.Fatalf("rotated bounds did not include upper rotated layout: rotated=%+v unrotated=%+v", rotated, unrotated)
+	if rotated.Min.Y >= unrotated.Min.Y-10 {
+		t.Fatalf("rotated bounds did not extend below the unrotated layout: rotated=%+v unrotated=%+v", rotated, unrotated)
+	}
+	if (rotated.Max.Y - rotated.Min.Y) <= (unrotated.Max.Y - unrotated.Min.Y) {
+		t.Fatalf("rotated bounds were not taller than unrotated: rotated=%+v unrotated=%+v", rotated, unrotated)
 	}
 }
 

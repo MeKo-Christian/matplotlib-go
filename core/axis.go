@@ -70,39 +70,39 @@ const (
 
 // Axis renders axis spines, ticks, and labels for a single dimension.
 type Axis struct {
-	Side               AxisSide     // which side of the plot
-	Locator            Locator      // major tick position calculator
-	MinorLocator       Locator      // minor tick position calculator (nil = no minor ticks)
-	Formatter          Formatter    // major tick label formatter
-	MinorFormatter     Formatter    // optional minor tick label formatter
+	Side                AxisSide     // which side of the plot
+	Locator             Locator      // major tick position calculator
+	MinorLocator        Locator      // minor tick position calculator (nil = no minor ticks)
+	Formatter           Formatter    // major tick label formatter
+	MinorFormatter      Formatter    // optional minor tick label formatter
 	Color               render.Color // axis spine color, and tick/label color unless overridden
 	TickColor           *render.Color
 	TickLabelColor      *render.Color
 	MinorTickColor      *render.Color // minor tick mark color (nil falls back to TickColor)
 	MinorTickLabelColor *render.Color // minor tick label color (nil falls back to MinorTickColor)
-	LineWidth          float64 // width of axis spine
-	LineCap            render.LineCap
-	LineJoin           render.LineJoin
-	TickLineCap        render.LineCap
-	TickLineJoin       render.LineJoin
-	TickLineWidth      float64
-	MinorTickLineWidth float64
-	Dashes             []float64
-	TickSize           float64 // length of major tick marks (in pixels)
-	MinorTickSize      float64 // length of minor tick marks (in pixels); 0 uses TickSize*0.6
-	MajorTickCount     int     // target major tick count for automatic locators
-	MinorTickCount     int     // target minor tick count for automatic locators
-	TickDirection      TickDirection
-	SpinePositionMode  AxisSpinePositionMode
-	SpinePosition      float64
-	ShowSpine          bool // whether to draw the axis line
-	ShowTicks          bool // whether to draw major/minor tick marks
-	ShowLabels         bool // whether to draw major tick labels
-	ShowMinorLabels    bool // whether to draw minor tick labels
-	MajorLabelStyle    TickLabelStyle
-	MinorLabelStyle    TickLabelStyle
-	ExtraTickLevels    []TickLevel
-	z                  float64 // z-order
+	LineWidth           float64       // width of axis spine
+	LineCap             render.LineCap
+	LineJoin            render.LineJoin
+	TickLineCap         render.LineCap
+	TickLineJoin        render.LineJoin
+	TickLineWidth       float64
+	MinorTickLineWidth  float64
+	Dashes              []float64
+	TickSize            float64 // length of major tick marks (in pixels)
+	MinorTickSize       float64 // length of minor tick marks (in pixels); 0 uses TickSize*0.6
+	MajorTickCount      int     // target major tick count for automatic locators
+	MinorTickCount      int     // target minor tick count for automatic locators
+	TickDirection       TickDirection
+	SpinePositionMode   AxisSpinePositionMode
+	SpinePosition       float64
+	ShowSpine           bool // whether to draw the axis line
+	ShowTicks           bool // whether to draw major/minor tick marks
+	ShowLabels          bool // whether to draw major tick labels
+	ShowMinorLabels     bool // whether to draw minor tick labels
+	MajorLabelStyle     TickLabelStyle
+	MinorLabelStyle     TickLabelStyle
+	ExtraTickLevels     []TickLevel
+	z                   float64 // z-order
 }
 
 // NewXAxis creates an axis for the bottom (x-axis).
@@ -1497,23 +1497,85 @@ func tickLabelLeftOffsetForRightAxis(hAlign TextAlign, layout singleLineTextLayo
 	}
 }
 
+// tickLabelRotationAnchor reproduces matplotlib's rotation_mode="default" text
+// placement (see Text._get_layout in matplotlib/text.py) and returns the pivot
+// the AGG backend rotates about (the bottom-center of the unrotated metric box,
+// per rotatedTextOrigin).
+//
+// matplotlib rotates the unrotated metric box (x∈[0,W], y∈[-h,0] in y-up display
+// space, h=ascent+descent), then translates it so the (hAlign,vAlign) reference
+// of the *rotated* bounding box lands on the anchor point P. Because the backend
+// rotates the same box about its bottom-center, placing that pivot at the point
+// matplotlib's transform maps the local bottom-center to makes the two coincide.
 func tickLabelRotationAnchor(origin geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64) geom.Pt {
-	alignmentAnchor := geom.Pt{
+	// P is matplotlib's text anchor point (tick position + pad) that the
+	// unrotated origin was derived from; recover it by undoing the alignment.
+	p := geom.Pt{
 		X: origin.X + textHorizontalOriginOffset(layout, hAlign),
 		Y: origin.Y - textBaselineOffset(layout, vAlign),
 	}
-	pivot := tickLabelBottomCenterOffset(layout)
-	desired := geom.Pt{
-		X: textHorizontalOriginOffset(layout, hAlign),
-		Y: -textBaselineOffset(layout, vAlign),
+
+	w := layout.Width
+	h := layout.Ascent + layout.Descent
+	baseline := layout.Ascent // matplotlib's baseline = h - descent = ascent
+
+	cosT := math.Cos(angle)
+	sinT := math.Sin(angle)
+	rot := func(x, y float64) (float64, float64) {
+		return x*cosT - y*sinT, x*sinT + y*cosT
 	}
-	dx := desired.X - pivot.X
-	dy := desired.Y - pivot.Y
-	cosA := math.Cos(-angle)
-	sinA := math.Sin(-angle)
+
+	// Rotated bounding box of the unrotated corners (y-up display space).
+	cornersX := [4]float64{0, 0, w, w}
+	cornersY := [4]float64{-h, 0, 0, -h}
+	var rxMin, rxMax, ryMin, ryMax float64
+	for i := range 4 {
+		rx, ry := rot(cornersX[i], cornersY[i])
+		if i == 0 || rx < rxMin {
+			rxMin = rx
+		}
+		if i == 0 || rx > rxMax {
+			rxMax = rx
+		}
+		if i == 0 || ry < ryMin {
+			ryMin = ry
+		}
+		if i == 0 || ry > ryMax {
+			ryMax = ry
+		}
+	}
+
+	var offsetX float64
+	switch hAlign {
+	case TextAlignRight:
+		offsetX = rxMax
+	case TextAlignCenter:
+		offsetX = (rxMin + rxMax) / 2
+	default: // left
+		offsetX = rxMin
+	}
+
+	var offsetY float64
+	switch vAlign {
+	case textLayoutVAlignTop:
+		offsetY = ryMax
+	case textLayoutVAlignCenter:
+		offsetY = (ryMin + ryMax) / 2
+	case textLayoutVAlignBaseline:
+		offsetY = ryMin + layout.Descent
+	case textLayoutVAlignCenterBaseline:
+		offsetY = ryMin + (ryMax - ryMin) - baseline/2
+	default: // bottom
+		offsetY = ryMin
+	}
+
+	// Local bottom-center of the metric box, mapped through the same rotation.
+	bcX, bcY := rot(w/2, -h)
+
+	// Displacement from P to the pivot, in the renderer's y-up display space.
 	return geom.Pt{
-		X: alignmentAnchor.X - (dx*cosA - dy*sinA),
-		Y: alignmentAnchor.Y - (dx*sinA + dy*cosA),
+		X: p.X + (bcX - offsetX),
+		Y: p.Y + (bcY - offsetY),
 	}
 }
 
