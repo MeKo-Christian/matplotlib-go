@@ -650,12 +650,14 @@ dropping levels outside the data range. Annotation defaults now match
 Matplotlib's left/baseline alignment instead of inferring alignment from offset
 direction; this moved `mathtext_basic` to `RMSE 12.65`,
 `transform_annotation_modes` to `RMSE 3.60`, and `annotation_composition` to
-`RMSE 6.68`. A full `TestReferenceCompare` pass on 2026-06-01 then left the
-remaining over-10 cases as: `widgets_gallery`, `mathtext_inline_labels`,
-`colorbar_composition`, `text_annotation_matrix`,
+`RMSE 6.68`. `imshow_interpolation_matrix` is now `RMSE 6.83` after matching
+Matplotlib's scalar-data interpolation stage for high-upsampled 2D images before
+colormapping. A full `TestReferenceCompare` pass on 2026-06-01 then left the
+remaining cases at or above `RMSE 10` as: `widgets_gallery`,
+`mathtext_inline_labels`, `colorbar_composition`, `text_annotation_matrix`,
 `figure_labels_composition`, `mathtext_basic`, `mathtext_fractions`,
-`imshow_interpolation_matrix`, `spectrum_variants`, and borderline
-`mathtext_matrices`.
+and borderline `mathtext_matrices`. `mathtext_integrals` is now `RMSE 5.03`
+after matching Matplotlib's unspaced operator parsing inside `\lim` limits.
 
 **Source parity audit:** completed on 2026-05-22 with sub-agents across all
 Phase 8 subphases. Direct example/fixture mismatches were fixed where existing
@@ -730,13 +732,17 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: `internal/mathtext/layout.go`, fraction axis
       alignment, stretchy delimiters, square-root geometry, glyph metrics.
 
-### 8.8 `mathtext_integrals` (RMSE 30.42)
+### 8.8 `mathtext_integrals` (RMSE 5.03)
 
 - [x] Code: source audited; no source mismatch found.
-- [ ] Visual: integral/sum/product operator sizing and limit placement differ
-      strongly.
-- [ ] Likely core areas: large-operator display fonts, over/under limit layout,
-      math glyph metrics.
+- [x] Code: matched Matplotlib's `operatorname`/over-under function behavior
+      for `\lim` scripts: spaced-symbol padding is suppressed inside the limit
+      expression, while symbolic operators such as `\sum_{i=1}` keep normal
+      relation spacing.
+- [x] Visual: focused `TestReferenceCompare/mathtext_integrals` reports
+      `RMSE 5.03` after refreshing the Go golden.
+- [ ] Likely core areas for remaining residual: large-operator display fonts,
+      over/under limit layout, math glyph metrics.
 
 ### 8.9 `mathtext_matrices` (RMSE 25.54)
 
@@ -895,7 +901,7 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: stairs and fill-between polygon construction, axline
       clipping, dash scaling, bar label padding.
 
-### 8.25 `spectrum_variants` (RMSE 9.87)
+### 8.25 `spectrum_variants` (RMSE 9.88)
 
 - [x] Code: source audited; intent matches, but Python uses Matplotlib `mlab`
       spectrum helpers
@@ -904,8 +910,9 @@ renderer contract, backend implementation, or the AGG port itself.
       returning the linear magnitude spectrum while plotting dB-scaled values
       when `Scale: "dB"` is requested.
 - [x] Visual: focused `TestReferenceCompare/spectrum_variants` reports
-      `RMSE 9.87` after refreshing the Go golden; the catalog now enforces
-      `MaxRMSE: 10.0` for this case.
+      `RMSE 9.88` after limiting cross-axes label alignment to managed layout
+      passes and refreshing the Go golden; manual `add_axes` panels now position
+      y-labels independently like Matplotlib.
 - [x] Diagnostic: Go fixture samples differ from NumPy's generated samples at
       about 1e-16 because Go and NumPy/libm trig are not bit-identical; NumPy's
       FFT on Go-generated samples reproduces Go's near-zero-bin floor, while
@@ -1734,8 +1741,11 @@ compensating in core.
       active bar at the top of Matplotlib's reserved colorbar slot; focused
       `TestReferenceCompare/colorbar_horizontal_ticks` reports `RMSE 3.63`,
       `MeanAbs 0.18` (2026-05-26).
-- [ ] `imshow_interpolation_matrix` — highest remaining `TestMatplotlibRef`
-      residual (MeanAbs 4.31, 2026-05-25).
+- [x] `imshow_interpolation_matrix` — core scalar-image resampling now follows
+      Matplotlib's data-stage path for high-upsampled 2D inputs and applies the
+      AGG/Matplotlib interpolation filter family before colormapping; focused
+      `TestReferenceCompare/imshow_interpolation_matrix` reports `RMSE 6.83`
+      and `MeanAbs 0.58` (2026-06-01).
 - [ ] skia shader / gradient / pattern / hatch fills bypass the gobasic device
       y-flip (blocked on the skia build).
 - [x] `pattern_gradient_effects` — fixture port reconciled to Matplotlib-style
@@ -1743,8 +1753,7 @@ compensating in core.
       stays in device space like Matplotlib's backend tile pass (MeanAbs 3.09 →
       0.42, 2026-05-25).
 
-(`widgets_gallery` residual is owned by Phase 17.5. `spectrum_variants` RMSE
-10.96 is a documented skip.)
+(`widgets_gallery` residual is owned by Phase 17.5.)
 
 Exit criteria:
 

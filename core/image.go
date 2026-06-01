@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"strings"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -73,14 +74,16 @@ func (i *Image2D) rasterizeForRect(dst geom.Rect) (render.Image, bool) {
 	if i == nil || i.AngleDeg != 0 {
 		return i.rasterize()
 	}
+	rows, cols := scalarImageDimensions(i.Data)
+	if rows == 0 || cols == 0 {
+		return nil, false
+	}
 	width := int(math.Round(math.Abs(dst.W())))
 	height := int(math.Round(math.Abs(dst.H())))
-	if width <= len(i.Data[0]) || height <= len(i.Data) {
+	if width <= cols || height <= rows {
 		return i.rasterize()
 	}
-	switch i.Interpolation {
-	case "", "nearest", "none", "bilinear":
-	default:
+	if !shouldRasterizeScalarDataStage(i.Interpolation, width, height, cols, rows) {
 		return i.rasterize()
 	}
 	return i.rasterizeToSize(width, height)
@@ -122,11 +125,7 @@ func (i *Image2D) rasterizeToSize(targetWidth, targetHeight int) (render.Image, 
 			}
 		}
 		data := render.NewImageData(img)
-		if i.Interpolation == "bilinear" {
-			data.SetInterpolation("nearest")
-		} else {
-			data.SetInterpolation(i.Interpolation)
-		}
+		data.SetInterpolation(i.interpolationAfterScalarRasterize(targetWidth, targetHeight, cols, rows))
 		data.SetAlpha(clampOneToOne(i.Alpha))
 		return data, true
 	}
@@ -152,13 +151,15 @@ func (i *Image2D) rasterizeToSize(targetWidth, targetHeight int) (render.Image, 
 }
 
 func (i *Image2D) scaledScalarValue(dstY, dstX, targetHeight, targetWidth, rows, cols int) (float64, bool) {
-	if i != nil && i.Interpolation == "bilinear" {
-		rowCoord := imageSourceCoord(dstY, targetHeight, rows)
-		if i.Origin == ImageOriginLower {
-			rowCoord = float64(rows-1) - rowCoord
+	if i != nil {
+		if filter, ok := scalarImageFilterForInterpolation(i.Interpolation, targetWidth, targetHeight, cols, rows); ok {
+			rowCoord := imageSourceCoord(dstY, targetHeight, rows)
+			if i.Origin == ImageOriginLower {
+				rowCoord = float64(rows-1) - rowCoord
+			}
+			colCoord := imageSourceCoord(dstX, targetWidth, cols)
+			return filteredScalarSample(i.Data, rowCoord, colCoord, filter)
 		}
-		colCoord := imageSourceCoord(dstX, targetWidth, cols)
-		return bilinearScalarSample(i.Data, rowCoord, colCoord)
 	}
 	row := scaledNearestIndex(dstY, targetHeight, rows)
 	col := scaledNearestIndex(dstX, targetWidth, cols)
@@ -166,6 +167,43 @@ func (i *Image2D) scaledScalarValue(dstY, dstX, targetHeight, targetWidth, rows,
 		row = rows - 1 - row
 	}
 	return scalarAt(i.Data, row, col)
+}
+
+func (i *Image2D) interpolationAfterScalarRasterize(targetWidth, targetHeight, sourceWidth, sourceHeight int) string {
+	if i == nil {
+		return ""
+	}
+	if _, ok := scalarImageFilterForInterpolation(i.Interpolation, targetWidth, targetHeight, sourceWidth, sourceHeight); ok {
+		return "nearest"
+	}
+	return i.Interpolation
+}
+
+func scalarImageDimensions(data [][]float64) (int, int) {
+	rows := len(data)
+	cols := 0
+	for _, row := range data {
+		if len(row) > cols {
+			cols = len(row)
+		}
+	}
+	return rows, cols
+}
+
+func shouldRasterizeScalarDataStage(interpolation string, targetWidth, targetHeight, sourceWidth, sourceHeight int) bool {
+	switch normalizedImageInterpolation(interpolation) {
+	case "", "nearest", "none":
+		return true
+	}
+	if targetWidth < 3*sourceWidth || targetHeight < 3*sourceHeight {
+		return false
+	}
+	_, ok := scalarImageFilterForInterpolation(interpolation, targetWidth, targetHeight, sourceWidth, sourceHeight)
+	return ok
+}
+
+func normalizedImageInterpolation(interpolation string) string {
+	return strings.ToLower(strings.TrimSpace(interpolation))
 }
 
 func scaledNearestIndex(index, targetSize, sourceSize int) int {
@@ -196,6 +234,193 @@ func imageSourceCoord(index, targetSize, sourceSize int) float64 {
 }
 
 func bilinearScalarSample(data [][]float64, rowCoord, colCoord float64) (float64, bool) {
+	return filteredScalarSample(data, rowCoord, colCoord, scalarImageFilter{
+		radius: 1,
+		weight: func(x float64) float64 { return 1 - x },
+	})
+}
+
+type scalarImageFilter struct {
+	radius float64
+	weight func(float64) float64
+}
+
+func scalarImageFilterForInterpolation(interpolation string, targetWidth, targetHeight, sourceWidth, sourceHeight int) (scalarImageFilter, bool) {
+	switch normalizedImageInterpolation(interpolation) {
+	case "bilinear":
+		return scalarImageFilter{radius: 1, weight: func(x float64) float64 { return 1 - x }}, true
+	case "hanning":
+		return scalarImageFilter{radius: 1, weight: func(x float64) float64 { return 0.5 + 0.5*math.Cos(math.Pi*x) }}, true
+	case "hamming":
+		return scalarImageFilter{radius: 1, weight: func(x float64) float64 { return 0.54 + 0.46*math.Cos(math.Pi*x) }}, true
+	case "hermite":
+		return scalarImageFilter{radius: 1, weight: func(x float64) float64 { return (2*x-3)*x*x + 1 }}, true
+	case "quadric":
+		return scalarImageFilter{radius: 1.5, weight: func(x float64) float64 {
+			if x < 0.5 {
+				return 0.75 - x*x
+			}
+			if x < 1.5 {
+				t := x - 1.5
+				return 0.5 * t * t
+			}
+			return 0
+		}}, true
+	case "bicubic":
+		return scalarImageFilter{radius: 2, weight: cubicBSplineWeight}, true
+	case "kaiser":
+		k := newKaiserScalarFilter(6.33)
+		return scalarImageFilter{radius: 1, weight: k.weight}, true
+	case "catrom":
+		return scalarImageFilter{radius: 2, weight: func(x float64) float64 {
+			if x < 1 {
+				return 0.5 * (2 + x*x*(-5+x*3))
+			}
+			if x < 2 {
+				return 0.5 * (4 + x*(-8+x*(5-x)))
+			}
+			return 0
+		}}, true
+	case "mitchell":
+		return newMitchellScalarFilter(1.0/3.0, 1.0/3.0), true
+	case "spline16":
+		return scalarImageFilter{radius: 2, weight: func(x float64) float64 {
+			if x < 1 {
+				return ((x-9.0/5.0)*x-1.0/5.0)*x + 1
+			}
+			return ((-1.0/3.0*(x-1)+4.0/5.0)*(x-1) - 7.0/15.0) * (x - 1)
+		}}, true
+	case "spline36":
+		return scalarImageFilter{radius: 3, weight: func(x float64) float64 {
+			if x < 1 {
+				return ((13.0/11.0*x-453.0/209.0)*x-3.0/209.0)*x + 1
+			}
+			if x < 2 {
+				return ((-6.0/11.0*(x-1)+270.0/209.0)*(x-1) - 156.0/209.0) * (x - 1)
+			}
+			return ((1.0/11.0*(x-2)-45.0/209.0)*(x-2) + 26.0/209.0) * (x - 2)
+		}}, true
+	case "gaussian":
+		return scalarImageFilter{radius: 2, weight: func(x float64) float64 {
+			return math.Exp(-2*x*x) * math.Sqrt(2/math.Pi)
+		}}, true
+	case "bessel":
+		return scalarImageFilter{radius: 3.2383, weight: func(x float64) float64 {
+			if x == 0 {
+				return math.Pi / 4
+			}
+			return math.J1(math.Pi*x) / (2 * x)
+		}}, true
+	case "sinc":
+		return newWindowedSincScalarFilter(4.0, nil), true
+	case "lanczos":
+		return newWindowedSincScalarFilter(4.0, func(x, radius float64) float64 {
+			return sincWeight(x / radius)
+		}), true
+	case "blackman":
+		return newWindowedSincScalarFilter(4.0, func(x, radius float64) float64 {
+			xr := math.Pi * x / radius
+			return 0.42 + 0.5*math.Cos(xr) + 0.08*math.Cos(2*xr)
+		}), true
+	case "auto", "antialiased":
+		if shouldUseNearestForScalarAuto(targetWidth, targetHeight, sourceWidth, sourceHeight) {
+			return scalarImageFilter{}, false
+		}
+		return scalarImageFilter{radius: 1, weight: func(x float64) float64 { return 0.5 + 0.5*math.Cos(math.Pi*x) }}, true
+	default:
+		return scalarImageFilter{}, false
+	}
+}
+
+func shouldUseNearestForScalarAuto(targetWidth, targetHeight, sourceWidth, sourceHeight int) bool {
+	return (targetWidth > 3*sourceWidth || targetWidth == sourceWidth || targetWidth == 2*sourceWidth) &&
+		(targetHeight > 3*sourceHeight || targetHeight == sourceHeight || targetHeight == 2*sourceHeight)
+}
+
+func cubicBSplineWeight(x float64) float64 {
+	pow3 := func(v float64) float64 {
+		if v <= 0 {
+			return 0
+		}
+		return v * v * v
+	}
+	return (pow3(x+2) - 4*pow3(x+1) + 6*pow3(x) - 4*pow3(x-1)) / 6
+}
+
+type kaiserScalarFilter struct {
+	a   float64
+	i0a float64
+}
+
+func newKaiserScalarFilter(a float64) kaiserScalarFilter {
+	k := kaiserScalarFilter{a: a}
+	k.i0a = 1 / besselI0(a)
+	return k
+}
+
+func (k kaiserScalarFilter) weight(x float64) float64 {
+	return besselI0(k.a*math.Sqrt(1-x*x)) * k.i0a
+}
+
+func besselI0(x float64) float64 {
+	const epsilon = 1e-12
+	sum := 1.0
+	y := x * x / 4
+	t := y
+	for i := 2; t > epsilon; i++ {
+		sum += t
+		t *= y / (float64(i) * float64(i))
+	}
+	return sum
+}
+
+func newMitchellScalarFilter(b, c float64) scalarImageFilter {
+	p0 := (6 - 2*b) / 6
+	p2 := (-18 + 12*b + 6*c) / 6
+	p3 := (12 - 9*b - 6*c) / 6
+	q0 := (8*b + 24*c) / 6
+	q1 := (-12*b - 48*c) / 6
+	q2 := (6*b + 30*c) / 6
+	q3 := (-b - 6*c) / 6
+	return scalarImageFilter{radius: 2, weight: func(x float64) float64 {
+		if x < 1 {
+			return p0 + x*x*(p2+x*p3)
+		}
+		if x < 2 {
+			return q0 + x*(q1+x*(q2+x*q3))
+		}
+		return 0
+	}}
+}
+
+func newWindowedSincScalarFilter(radius float64, window func(float64, float64) float64) scalarImageFilter {
+	if radius < 2 {
+		radius = 2
+	}
+	return scalarImageFilter{radius: radius, weight: func(x float64) float64 {
+		if x == 0 {
+			return 1
+		}
+		if x > radius {
+			return 0
+		}
+		w := 1.0
+		if window != nil {
+			w = window(x, radius)
+		}
+		return sincWeight(x) * w
+	}}
+}
+
+func sincWeight(x float64) float64 {
+	if x == 0 {
+		return 1
+	}
+	x *= math.Pi
+	return math.Sin(x) / x
+}
+
+func filteredScalarSample(data [][]float64, rowCoord, colCoord float64, filter scalarImageFilter) (float64, bool) {
 	rows := len(data)
 	if rows == 0 {
 		return 0, false
@@ -212,23 +437,41 @@ func bilinearScalarSample(data [][]float64, rowCoord, colCoord float64) (float64
 
 	rowCoord = clampFloat(rowCoord, 0, float64(rows-1))
 	colCoord = clampFloat(colCoord, 0, float64(cols-1))
-	row0 := int(math.Floor(rowCoord))
-	col0 := int(math.Floor(colCoord))
-	row1 := minInt(row0+1, rows-1)
-	col1 := minInt(col0+1, cols-1)
-	wy := rowCoord - float64(row0)
-	wx := colCoord - float64(col0)
-
-	v00, ok00 := scalarAt(data, row0, col0)
-	v10, ok10 := scalarAt(data, row0, col1)
-	v01, ok01 := scalarAt(data, row1, col0)
-	v11, ok11 := scalarAt(data, row1, col1)
-	if !ok00 || !ok10 || !ok01 || !ok11 {
+	if filter.weight == nil || filter.radius <= 0 {
 		return 0, false
 	}
-	top := v00*(1-wx) + v10*wx
-	bottom := v01*(1-wx) + v11*wx
-	return top*(1-wy) + bottom*wy, true
+
+	rowStart := int(math.Ceil(rowCoord - filter.radius))
+	rowEnd := int(math.Floor(rowCoord + filter.radius))
+	colStart := int(math.Ceil(colCoord - filter.radius))
+	colEnd := int(math.Floor(colCoord + filter.radius))
+
+	sum := 0.0
+	weightSum := 0.0
+	for row := rowStart; row <= rowEnd; row++ {
+		wy := filter.weight(math.Abs(rowCoord - float64(row)))
+		if wy == 0 {
+			continue
+		}
+		clampedRow := minInt(maxInt(row, 0), rows-1)
+		for col := colStart; col <= colEnd; col++ {
+			wx := filter.weight(math.Abs(colCoord - float64(col)))
+			if wx == 0 {
+				continue
+			}
+			v, ok := scalarAt(data, clampedRow, minInt(maxInt(col, 0), cols-1))
+			if !ok {
+				continue
+			}
+			weight := wy * wx
+			sum += v * weight
+			weightSum += weight
+		}
+	}
+	if weightSum == 0 {
+		return 0, false
+	}
+	return sum / weightSum, true
 }
 
 func scalarAt(data [][]float64, row, col int) (float64, bool) {

@@ -154,9 +154,10 @@ type mathLayoutNode struct {
 }
 
 type mathLayoutParser struct {
-	input          []rune
-	pos            int
-	implicitItalic bool
+	input                   []rune
+	pos                     int
+	implicitItalic          bool
+	suppressOperatorSpacing bool
 }
 
 // LayoutMathText parses and lays out one MathText expression without requiring
@@ -311,7 +312,7 @@ func (p *mathLayoutParser) parseUntil(stop rune) mathLayoutNode {
 			return mathLayoutNode{kind: mathLayoutList, children: children}
 		case '^', '_':
 			p.pos++
-			children = attachMathScript(children, r, p.parseArgumentNode())
+			children = attachMathScript(children, r, p.parseScriptArgumentNode(scriptTargetsOverUnderFunction(children)))
 		case '\\':
 			node := p.parseCommandNode()
 			if node.spaced {
@@ -361,6 +362,17 @@ func (p *mathLayoutParser) parseArgumentNode() mathLayoutNode {
 		p.pos++
 		return mathAtomNode(r, p.implicitItalic)
 	}
+}
+
+func (p *mathLayoutParser) parseScriptArgumentNode(suppressOperatorSpacing bool) mathLayoutNode {
+	if !suppressOperatorSpacing {
+		return p.parseArgumentNode()
+	}
+	old := p.suppressOperatorSpacing
+	p.suppressOperatorSpacing = true
+	node := p.parseArgumentNode()
+	p.suppressOperatorSpacing = old
+	return node
 }
 
 func (p *mathLayoutParser) parseCommandNode() mathLayoutNode {
@@ -559,7 +571,9 @@ func (p *mathLayoutParser) appendMathOperator(children []mathLayoutNode, op rune
 }
 
 func (p *mathLayoutParser) appendMathSpacedOperator(children []mathLayoutNode, text string, stop rune) []mathLayoutNode {
-	if p.hasPreviousMathOperand(children) && p.hasNextMathOperand(stop) {
+	if p.suppressOperatorSpacing {
+		children = appendMathText(children, text)
+	} else if p.hasPreviousMathOperand(children) && p.hasNextMathOperand(stop) {
 		children = append(children, mathLayoutNode{kind: mathLayoutSpace, widthEm: 0.2})
 		children = appendMathText(children, text)
 		children = append(children, mathLayoutNode{kind: mathLayoutSpace, widthEm: 0.2})
@@ -968,6 +982,17 @@ func attachMathScript(children []mathLayoutNode, marker rune, script mathLayoutN
 	}
 	children[len(children)-1] = last
 	return children
+}
+
+func scriptTargetsOverUnderFunction(children []mathLayoutNode) bool {
+	if len(children) == 0 {
+		return false
+	}
+	last := children[len(children)-1]
+	if last.kind == mathLayoutScript {
+		last = pointerNode(last.base)
+	}
+	return last.kind == mathLayoutText && mathOverUnderFunctionTexts[last.text]
 }
 
 func (n mathLayoutNode) isEmpty() bool {

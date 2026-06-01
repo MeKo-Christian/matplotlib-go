@@ -76,7 +76,7 @@ func computeFigureTextAlignment(fig *Figure, r render.Renderer, figureRect geom.
 		xLabelExtents: map[axisAlignmentKey]float64{},
 		yLabelExtents: map[axisAlignmentKey]float64{},
 	}
-	if fig == nil {
+	if fig == nil || fig.layoutEngine == LayoutEngineNone {
 		return alignment
 	}
 

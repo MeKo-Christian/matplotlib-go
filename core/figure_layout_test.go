@@ -148,6 +148,38 @@ func TestAnchoredTextBoxDrawsFigureAndAxesBoxes(t *testing.T) {
 
 func TestDrawFigure_AlignsYLabelsAcrossColumn(t *testing.T) {
 	fig := NewFigure(800, 600)
+	fig.ConstrainedLayout()
+	grid := fig.Subplots(2, 1)
+	top := grid[0][0]
+	bottom := grid[1][0]
+
+	top.SetYLabel("Top Y")
+	bottom.SetYLabel("Bot Y")
+	top.YAxis.Locator = staticLocator{1000}
+	top.YAxis.Formatter = ScalarFormatter{Prec: 0}
+	bottom.YAxis.Locator = staticLocator{1}
+	bottom.YAxis.Formatter = ScalarFormatter{Prec: 0}
+
+	r := figureLayoutRecordingRenderer{
+		bounds: map[string]render.TextBounds{
+			"1000": {X: 1, Y: -8, W: 24, H: 10},
+			"1":    {X: 1, Y: -8, W: 5, H: 10},
+		},
+	}
+	DrawFigure(fig, &r)
+
+	topAnchor, okTop := r.rotatedAnchor("Top Y")
+	bottomAnchor, okBottom := r.rotatedAnchor("Bot Y")
+	if !okTop || !okBottom {
+		t.Fatalf("missing ylabel draws: %v", r.rotatedText)
+	}
+	if math.Abs(topAnchor.X-bottomAnchor.X) > 1e-9 {
+		t.Fatalf("expected aligned ylabel anchors, got top=%+v bottom=%+v", topAnchor, bottomAnchor)
+	}
+}
+
+func TestDrawFigure_DoesNotAlignManualAxesYLabelsWithoutLayoutEngine(t *testing.T) {
+	fig := NewFigure(800, 600)
 	top := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.15, Y: 0.55},
 		Max: geom.Pt{X: 0.90, Y: 0.90},
@@ -177,21 +209,17 @@ func TestDrawFigure_AlignsYLabelsAcrossColumn(t *testing.T) {
 	if !okTop || !okBottom {
 		t.Fatalf("missing ylabel draws: %v", r.rotatedText)
 	}
-	if topAnchor.X != bottomAnchor.X {
-		t.Fatalf("expected aligned ylabel anchors, got top=%+v bottom=%+v", topAnchor, bottomAnchor)
+	if topAnchor.X == bottomAnchor.X {
+		t.Fatalf("manual axes ylabels unexpectedly aligned at x=%v", topAnchor.X)
 	}
 }
 
 func TestDrawFigure_AlignsXLabelsAcrossRow(t *testing.T) {
 	fig := NewFigure(800, 600)
-	left := fig.AddAxes(geom.Rect{
-		Min: geom.Pt{X: 0.10, Y: 0.18},
-		Max: geom.Pt{X: 0.45, Y: 0.82},
-	})
-	right := fig.AddAxes(geom.Rect{
-		Min: geom.Pt{X: 0.55, Y: 0.18},
-		Max: geom.Pt{X: 0.90, Y: 0.82},
-	})
+	fig.ConstrainedLayout()
+	grid := fig.Subplots(1, 2)
+	left := grid[0][0]
+	right := grid[0][1]
 
 	left.SetXLabel("Left X")
 	right.SetXLabel("Right X")
@@ -213,7 +241,7 @@ func TestDrawFigure_AlignsXLabelsAcrossRow(t *testing.T) {
 	if !okLeft || !okRight {
 		t.Fatalf("missing xlabel draws: %v", r.texts)
 	}
-	if leftOrigin.Y != rightOrigin.Y {
+	if math.Abs(leftOrigin.Y-rightOrigin.Y) > 1e-9 {
 		t.Fatalf("expected aligned xlabel origins, got left=%+v right=%+v", leftOrigin, rightOrigin)
 	}
 }

@@ -426,6 +426,39 @@ func TestImage2D_DrawPrefilteredBilinearUsesNearestRendererInterpolation(t *test
 	}
 }
 
+func TestImage2D_DrawHighUpsampleBicubicUsesScalarDataStage(t *testing.T) {
+	bicubic := "bicubic"
+	ax := &Axes{}
+	img := ax.Image([][]float64{{0, 1}, {1, 0}}, ImageOptions{Interpolation: &bicubic})
+	if img == nil {
+		t.Fatal("Image returned nil")
+	}
+	img.XMax = 1
+	img.YMax = 1
+	img.Alpha = 1
+
+	rec := &imageSpyRenderer{}
+	ctx := createTestDrawContext()
+
+	if err := rec.Begin(geom.Rect{}); err != nil {
+		t.Fatalf("begin: %v", err)
+	}
+	img.Draw(rec, ctx)
+	if err := rec.End(); err != nil {
+		t.Fatalf("end: %v", err)
+	}
+
+	if rec.imageCalls != 1 {
+		t.Fatalf("imageCalls = %d, want 1", rec.imageCalls)
+	}
+	if rec.lastImageWidth <= 2 || rec.lastImageHeight <= 2 {
+		t.Fatalf("prefiltered image size = %dx%d, want destination-sized upsample", rec.lastImageWidth, rec.lastImageHeight)
+	}
+	if rec.lastInterpolation != "nearest" {
+		t.Fatalf("lastInterpolation = %q, want nearest after scalar-stage bicubic resampling", rec.lastInterpolation)
+	}
+}
+
 func TestImage2D_DrawCeilsRasterSizeAndKeepsMatplotlibAnchor(t *testing.T) {
 	img := &Image2D{
 		Data: [][]float64{
