@@ -418,8 +418,9 @@ func constrainedColorbarSlotOffset(fig *Figure, base geom.Rect) float64 {
 	// by the parent spine's line width in addition to the pad/space, so the
 	// drawn gap is measured edge-to-edge rather than frame-to-frame. Mirror that
 	// here so the colorbar lands at the same offset reserved below.
-	// AxisLineWidth is already stored in pixels.
-	lineWidthPx := fig.RC.AxisLineWidth
+	// AxisLineWidth is stored in pixels, but the rasterized spine is snapped to
+	// device pixels before the colorbar is placed against it.
+	lineWidthPx := math.Round(fig.RC.AxisLineWidth)
 	return (constrainedLayoutPadPx(fig) + 0.5*constrainedLayoutDefaultSpacePx(baseWidthPx, 1) + lineWidthPx) / fig.SizePx.X
 }
 

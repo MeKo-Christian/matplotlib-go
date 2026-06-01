@@ -158,9 +158,11 @@ func (a *AnchoredTextBox) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 
 	boxLayout := a.layout(r, ctx, layouts, fontSize)
-	boxPath := snappedPixelRectPath(boxLayout.patchBox)
+	boxPath := pixelRectPath(boxLayout.patchBox)
+	snap := render.SnapAuto
 	if a.CornerRadius > 0 {
 		boxPath = roundedRectPath(boxLayout.patchBox, a.CornerRadius)
+		snap = render.SnapOff
 	}
 	r.Path(boxPath, &render.Paint{
 		Fill:      a.BackgroundColor,
@@ -168,6 +170,7 @@ func (a *AnchoredTextBox) Draw(r render.Renderer, ctx *DrawContext) {
 		LineWidth: a.BorderWidth,
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
+		Snap:      snap,
 	})
 
 	y := boxLayout.contentBox.Max.Y - boxLayout.padding

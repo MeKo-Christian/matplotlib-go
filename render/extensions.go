@@ -157,6 +157,12 @@ type ImageTransformer interface {
 	ImageTransformed(img Image, dst geom.Rect, transform geom.Affine)
 }
 
+// BboxImageDrawer draws an image whose output size is determined by a display
+// bbox, matching Matplotlib's BboxImage/OffsetImage integer placement rules.
+type BboxImageDrawer interface {
+	DrawBboxImage(img Image, bbox geom.Rect) bool
+}
+
 // ClipPathTransformer is implemented by renderers that can apply an affine
 // transform directly to a path-based clip definition.
 type ClipPathTransformer interface {

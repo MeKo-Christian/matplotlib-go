@@ -207,16 +207,20 @@ func (a *AnnotationBbox) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 		a.drawArrowFromBox(r, ctx, box, target)
 	}
 	if a.FrameOn {
-		r.Path(snappedPixelRectPath(box), &render.Paint{
+		r.Path(pixelRectPath(box), &render.Paint{
 			Fill:      a.FaceColor,
 			Stroke:    a.EdgeColor,
 			LineWidth: a.LineWidth,
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
+			Snap:      render.SnapAuto,
 		})
 	}
 
 	if a.Image != nil {
+		if drawer, ok := r.(render.BboxImageDrawer); ok && drawer.DrawBboxImage(a.Image, contentBox) {
+			return
+		}
 		r.Image(a.Image, contentBox)
 		return
 	}

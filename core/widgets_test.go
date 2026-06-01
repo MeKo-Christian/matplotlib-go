@@ -162,6 +162,125 @@ func TestStyledWidgetGeometryUsesVisualPolicy(t *testing.T) {
 	}
 }
 
+func TestMatplotlibSliderTrackUsesRectangularPatch(t *testing.T) {
+	rc := style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
+	ctx := &DrawContext{
+		RC:   rc,
+		Clip: geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 210, Y: 80}},
+	}
+	slider := &Slider{
+		Label:       "gain",
+		Min:         0,
+		Max:         1,
+		Value:       0.5,
+		Enabled:     true,
+		FaceColor:   render.Color{R: 1, G: 1, B: 1, A: 1},
+		TrackColor:  render.Color{R: 211.0 / 255.0, G: 211.0 / 255.0, B: 211.0 / 255.0, A: 1},
+		FillColor:   render.Color{R: 31.0 / 255.0, G: 119.0 / 255.0, B: 180.0 / 255.0, A: 1},
+		HandleColor: render.Color{R: 1, G: 1, B: 1, A: 1},
+		TextColor:   render.Color{A: 1},
+		ValueFormat: "%.2f",
+	}
+	rec := &widgetChromeRecordingRenderer{}
+
+	slider.Draw(rec, ctx)
+
+	track, ok := rec.pathWithFill(slider.TrackColor)
+	if !ok {
+		t.Fatal("Matplotlib slider track path not recorded")
+	}
+	if hasCurveCommand(track.path) {
+		t.Fatalf("Matplotlib slider track should be rectangular, got curved path commands %v", track.path.C)
+	}
+	if bounds, ok := track.path.Bounds(); !ok || !approxRect(bounds, geom.Rect{Min: geom.Pt{X: 10, Y: 35}, Max: geom.Pt{X: 210, Y: 65}}, 1e-9) {
+		t.Fatalf("Matplotlib slider track bounds = %+v, want x full axes and y [0.25,0.75]", bounds)
+	}
+}
+
+func TestMatplotlibWidgetSquarePanelUsesSnapAuto(t *testing.T) {
+	rec := &widgetChromeRecordingRenderer{}
+	rect := geom.Rect{Min: geom.Pt{X: 10.2, Y: 20.3}, Max: geom.Pt{X: 110.2, Y: 50.3}}
+
+	drawWidgetPanel(rec, rect, render.Color{R: 1, G: 1, B: 1, A: 1}, render.Color{A: 1}, 1, 0)
+
+	if len(rec.paths) != 1 {
+		t.Fatalf("widget panel paths = %d, want 1", len(rec.paths))
+	}
+	call := rec.paths[0]
+	if call.paint.Snap != render.SnapAuto {
+		t.Fatalf("square widget panel snap = %v, want Matplotlib SnapAuto", call.paint.Snap)
+	}
+	if bounds, ok := call.path.Bounds(); !ok || !approxRect(bounds, rect, 1e-9) {
+		t.Fatalf("square widget panel bounds = %+v, want true patch bounds %+v", bounds, rect)
+	}
+}
+
+func TestMatplotlibCheckButtonsUseSourceFractionLayout(t *testing.T) {
+	rc := style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
+	ctx := &DrawContext{
+		RC:   rc,
+		Clip: geom.Rect{Min: geom.Pt{X: 66, Y: 53.2}, Max: geom.Pt{X: 462, Y: 144.4}},
+	}
+	checks := &CheckButtons{
+		Labels:     []string{"signal", "modulation", "grid"},
+		Values:     []bool{true, true, false},
+		Enabled:    true,
+		FaceColor:  render.Color{R: 1, G: 1, B: 1, A: 1},
+		EdgeColor:  render.Color{A: 1},
+		TextColor:  render.Color{A: 1},
+		CheckColor: render.Color{A: 1},
+	}
+	rec := &widgetChromeRecordingRenderer{}
+
+	checks.Draw(rec, ctx)
+
+	signal := rec.textCall("signal")
+	wantLabelX := ctx.Clip.Min.X + ctx.Clip.W()*0.25
+	if signal.origin.X < wantLabelX-1e-9 || signal.origin.X > wantLabelX+1e-9 {
+		t.Fatalf("Matplotlib CheckButtons label X = %.2f, want %.2f", signal.origin.X, wantLabelX)
+	}
+	marker, ok := rec.smallStrokePathNear(ctx.Clip.Min.X+ctx.Clip.W()*0.15, ctx.Clip.Min.Y+ctx.Clip.H()*0.75)
+	if !ok {
+		t.Fatalf("Matplotlib CheckButtons marker not near source position x=.15 y=.75; paths=%+v", rec.paths)
+	}
+	if bounds, _ := marker.path.Bounds(); rectCenter(bounds).X < ctx.Clip.Min.X+ctx.Clip.W()*0.15-1 || rectCenter(bounds).X > ctx.Clip.Min.X+ctx.Clip.W()*0.15+1 {
+		t.Fatalf("Matplotlib CheckButtons marker center X = %.2f, want near %.2f", rectCenter(bounds).X, ctx.Clip.Min.X+ctx.Clip.W()*0.15)
+	}
+}
+
+func TestMatplotlibRadioButtonsUseSourceFractionLayout(t *testing.T) {
+	rc := style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
+	ctx := &DrawContext{
+		RC:   rc,
+		Clip: geom.Rect{Min: geom.Pt{X: 605, Y: 53.2}, Max: geom.Pt{X: 913, Y: 144.4}},
+	}
+	radios := &RadioButtons{
+		Labels:    []string{"blue", "amber", "mono"},
+		Active:    1,
+		Enabled:   true,
+		FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
+		EdgeColor: render.Color{A: 1},
+		TextColor: render.Color{A: 1},
+		DotColor:  render.Color{B: 1, A: 1},
+	}
+	rec := &widgetChromeRecordingRenderer{}
+
+	radios.Draw(rec, ctx)
+
+	blue := rec.textCall("blue")
+	wantLabelX := ctx.Clip.Min.X + ctx.Clip.W()*0.25
+	if blue.origin.X < wantLabelX-1e-9 || blue.origin.X > wantLabelX+1e-9 {
+		t.Fatalf("Matplotlib RadioButtons label X = %.2f, want %.2f", blue.origin.X, wantLabelX)
+	}
+	marker, ok := rec.smallStrokePathNear(ctx.Clip.Min.X+ctx.Clip.W()*0.15, ctx.Clip.Min.Y+ctx.Clip.H()*0.75)
+	if !ok {
+		t.Fatalf("Matplotlib RadioButtons marker not near source position x=.15 y=.75; paths=%+v", rec.paths)
+	}
+	if bounds, _ := marker.path.Bounds(); rectCenter(bounds).Y < ctx.Clip.Min.Y+ctx.Clip.H()*0.75-1 || rectCenter(bounds).Y > ctx.Clip.Min.Y+ctx.Clip.H()*0.75+1 {
+		t.Fatalf("Matplotlib RadioButtons marker center Y = %.2f, want near %.2f", rectCenter(bounds).Y, ctx.Clip.Min.Y+ctx.Clip.H()*0.75)
+	}
+}
+
 func TestMatplotlibSliderTextAnchorsMatchAxesLayout(t *testing.T) {
 	rc := style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
 	ctx := &DrawContext{
@@ -402,6 +521,38 @@ func (r *widgetChromeRecordingRenderer) textCall(text string) widgetChromeTextCa
 		}
 	}
 	return widgetChromeTextCall{}
+}
+
+func (r *widgetChromeRecordingRenderer) pathWithFill(color render.Color) (widgetChromePathCall, bool) {
+	for _, call := range r.paths {
+		if call.paint.Fill == color {
+			return call, true
+		}
+	}
+	return widgetChromePathCall{}, false
+}
+
+func (r *widgetChromeRecordingRenderer) smallStrokePathNear(x, y float64) (widgetChromePathCall, bool) {
+	for _, call := range r.paths {
+		bounds, ok := call.path.Bounds()
+		if !ok || bounds.W() > 24 || bounds.H() > 24 || call.paint.Stroke.A == 0 {
+			continue
+		}
+		center := rectCenter(bounds)
+		if center.X >= x-4 && center.X <= x+4 && center.Y >= y-4 && center.Y <= y+4 {
+			return call, true
+		}
+	}
+	return widgetChromePathCall{}, false
+}
+
+func hasCurveCommand(path geom.Path) bool {
+	for _, cmd := range path.C {
+		if cmd == geom.QuadTo || cmd == geom.CubicTo {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *widgetChromeRecordingRenderer) smallWhiteFilledPaths() int {

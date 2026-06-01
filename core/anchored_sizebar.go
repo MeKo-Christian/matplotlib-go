@@ -179,12 +179,13 @@ func (a *AnchoredSizeBar) Draw(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 	if a.FrameOn {
-		r.Path(snappedPixelRectPath(layout.frame), &render.Paint{
+		r.Path(pixelRectPath(layout.frame), &render.Paint{
 			Fill:      a.BackgroundColor,
 			Stroke:    a.BorderColor,
 			LineWidth: a.BorderWidth,
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
+			Snap:      render.SnapAuto,
 		})
 	}
 	if layout.bar.H() > 0 {
@@ -193,11 +194,12 @@ func (a *AnchoredSizeBar) Draw(r render.Renderer, ctx *DrawContext) {
 			LineWidth: a.LineWidth,
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
+			Snap:      render.SnapAuto,
 		}
 		if a.FillBar {
 			paint.Fill = a.Color
 		}
-		r.Path(snappedPixelRectPath(layout.bar), paint)
+		r.Path(pixelRectPath(layout.bar), paint)
 	} else {
 		r.Path(geom.Path{
 			C: []geom.Cmd{geom.MoveTo, geom.LineTo},

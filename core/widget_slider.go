@@ -153,11 +153,12 @@ func (s *Slider) Draw(r render.Renderer, ctx *DrawContext) {
 	drawWidgetText(r, ctx, valueAnchor, sliderDisplayValue(s), fontSize, textColor, defaults.SliderValueAlign, defaults.SliderTextVAlign)
 
 	track := widgetStyledSliderTrack(panel, defaults)
-	drawWidgetPanel(r, track, s.TrackColor, render.Color{A: 0}, 0, track.H()/2)
+	trackRadius := widgetSliderTrackRadius(track, defaults)
+	drawWidgetPanel(r, track, s.TrackColor, render.Color{A: 0}, 0, trackRadius)
 	fraction := sliderFraction(s.Min, s.Max, s.Value)
 	fill := track
 	fill.Max.X = fill.Min.X + track.W()*fraction
-	drawWidgetPanel(r, fill, s.FillColor, render.Color{A: 0}, 0, fill.H()/2)
+	drawWidgetPanel(r, fill, s.FillColor, render.Color{A: 0}, 0, trackRadius)
 	if defaults.SliderInitColor.A > 0 && defaults.SliderInitLine > 0 {
 		initX := track.Min.X + track.W()*sliderFraction(s.Min, s.Max, s.Initial)
 		r.Path(pixelLinePath(

@@ -39,6 +39,32 @@ func TestLayoutMathTextSuppressesOperatorSpacingInLimitScripts(t *testing.T) {
 	}
 }
 
+func TestLayoutMathTextRulelessGenfracVectorMetricsMatchMatplotlib(t *testing.T) {
+	r, err := agg.New(300, 160, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.SetResolution(100)
+	if _, ok := r.MeasureMathGlyphRun("x", 25, "DejaVu Sans"); !ok {
+		t.Skip("pixel-exact MathText glyph metrics unavailable")
+	}
+
+	layout, ok := core.LayoutMathText(r, `\genfrac{(}{)}{0}{0}{a\quad b}{c\quad d}`, 25, "DejaVu Sans")
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+
+	// Matplotlib 3.10.9 VectorParse at 25 pt / 100 dpi:
+	// width=122, height=64, depth=23. VectorParse's height includes depth, so
+	// the layout ascent is approximately height-depth.
+	if math.Abs(layout.Width-122) > 1.25 ||
+		math.Abs(layout.Ascent-41) > 1.25 ||
+		math.Abs(layout.Descent-23) > 1.25 {
+		t.Fatalf("ruleless genfrac vector metrics = width %.3f ascent %.3f descent %.3f; want 122/41/23; runs=%+v",
+			layout.Width, layout.Ascent, layout.Descent, layout.Runs)
+	}
+}
+
 func mathTextRunByIndex(t *testing.T, runs []core.MathTextLayoutRun, text string, index int) core.MathTextLayoutRun {
 	t.Helper()
 	seen := 0

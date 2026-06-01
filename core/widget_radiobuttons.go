@@ -167,10 +167,12 @@ func (rdo *RadioButtons) Draw(r render.Renderer, ctx *DrawContext) {
 	if len(rdo.Labels) == 0 {
 		return
 	}
-	rowHeight := panel.H() / float64(len(rdo.Labels))
 	fontSize := resolvedFontSize(rdo.FontSize, ctx)
 	for i, label := range rdo.Labels {
-		center := geom.Pt{X: panel.Min.X + defaults.RadioCenterXPad, Y: panel.Max.Y - rowHeight*float64(i) - rowHeight/2}
+		center := geom.Pt{
+			X: widgetStyleCoord(panel.Min.X, panel.Max.X, defaults.RadioCenterXPad),
+			Y: widgetButtonRowCenterY(panel, i, len(rdo.Labels), defaults.RadioCenterXPad),
+		}
 		outer := ellipsePath(defaults.RadioOuterSize, defaults.RadioOuterSize)
 		outerPath := applyAffinePath(outer, patchAffine(center, 0))
 		markerFace := defaults.RadioInactiveFace
@@ -190,7 +192,11 @@ func (rdo *RadioButtons) Draw(r render.Renderer, ctx *DrawContext) {
 			innerPath := applyAffinePath(inner, patchAffine(center, 0))
 			r.Path(innerPath, &render.Paint{Fill: dotColor})
 		}
-		drawWidgetText(r, ctx, geom.Pt{X: center.X + defaults.RadioLabelGap, Y: center.Y}, label, fontSize, textColor, TextAlignLeft, textLayoutVAlignCenter)
+		labelX := center.X + defaults.RadioLabelGap
+		if defaults.RadioLabelGap >= 0 && defaults.RadioLabelGap <= 1 {
+			labelX = widgetStyleCoord(panel.Min.X, panel.Max.X, defaults.RadioLabelGap)
+		}
+		drawWidgetText(r, ctx, geom.Pt{X: labelX, Y: center.Y}, label, fontSize, textColor, TextAlignLeft, textLayoutVAlignCenter)
 	}
 }
 

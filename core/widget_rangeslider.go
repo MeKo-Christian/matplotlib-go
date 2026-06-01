@@ -171,13 +171,14 @@ func (s *RangeSlider) Draw(r render.Renderer, ctx *DrawContext) {
 	drawWidgetText(r, ctx, valueAnchor, rangeSliderDisplayValue(s, defaults), fontSize, textColor, defaults.SliderValueAlign, defaults.SliderTextVAlign)
 
 	track := widgetStyledSliderTrack(panel, defaults)
-	drawWidgetPanel(r, track, s.TrackColor, render.Color{A: 0}, 0, track.H()/2)
+	trackRadius := widgetSliderTrackRadius(track, defaults)
+	drawWidgetPanel(r, track, s.TrackColor, render.Color{A: 0}, 0, trackRadius)
 	lowFraction := sliderFraction(s.Min, s.Max, s.Low)
 	highFraction := sliderFraction(s.Min, s.Max, s.High)
 	fill := track
 	fill.Min.X = track.Min.X + track.W()*lowFraction
 	fill.Max.X = track.Min.X + track.W()*highFraction
-	drawWidgetPanel(r, fill, s.FillColor, render.Color{A: 0}, 0, fill.H()/2)
+	drawWidgetPanel(r, fill, s.FillColor, render.Color{A: 0}, 0, trackRadius)
 
 	for _, fraction := range []float64{lowFraction, highFraction} {
 		handleX := track.Min.X + track.W()*fraction

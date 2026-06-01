@@ -43,10 +43,10 @@ type axesDecorationPadding struct {
 
 const (
 	// Matplotlib rc defaults:
-	// figure.constrained_layout.{h_pad,w_pad}=3/72 inch and
+	// figure.constrained_layout.{h_pad,w_pad}=0.04167 inch and
 	// figure.constrained_layout.{hspace,wspace}=0.02.
 	// See third_party/matplotlib/lib/matplotlib/mpl-data/matplotlibrc.
-	matplotlibConstrainedLayoutPadPoints = 3.0
+	matplotlibConstrainedLayoutPadPoints = 0.04167 * 72.0
 	matplotlibConstrainedLayoutSpace     = 0.02
 
 	// Matplotlib Figure.tight_layout defaults to pad=1.08 font-size units.

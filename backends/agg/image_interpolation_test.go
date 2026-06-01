@@ -145,6 +145,85 @@ func TestAggImageNearestNonIntegerUpscalePreservesSourcePalette(t *testing.T) {
 	}
 }
 
+func TestAggImageNearestNonIntegerUpscaleAlignsTopEdgeLikeMatplotlib(t *testing.T) {
+	src := image.NewRGBA(image.Rect(0, 0, 14, 14))
+	for y := 0; y < 14; y++ {
+		for x := 0; x < 14; x++ {
+			src.SetRGBA(x, y, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+		}
+	}
+	src.SetRGBA(0, 0, color.RGBA{A: 255})
+	src.SetRGBA(0, 1, color.RGBA{A: 255})
+
+	raster := render.NewImageData(src)
+	raster.SetInterpolation("nearest")
+
+	r, err := New(640, 360, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 640, Y: 360}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	r.Image(raster, geom.Rect{
+		Min: geom.Pt{X: 183.2, Y: 50.4},
+		Max: geom.Pt{X: 456.8, Y: 324.0},
+	})
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	got := r.GetImage()
+	bounds, _, ok := inkBounds(got, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	if !ok {
+		t.Fatal("expected rendered black image pixels")
+	}
+	// Matplotlib's AxesImage _make_image ceils this 273.6 px image to 274 px,
+	// then RendererAgg places its top at device y=36 for this exact geometry.
+	if bounds.Min.Y != 36 {
+		t.Fatalf("nearest image top y = %v, want Matplotlib y=36 (bounds=%v)", bounds.Min.Y, bounds)
+	}
+}
+
+func TestAggBboxImageNearestNonIntegerUpscaleUsesMatplotlibBboxPlacement(t *testing.T) {
+	src := image.NewRGBA(image.Rect(0, 0, 12, 10))
+	for y := 0; y < 10; y++ {
+		for x := 0; x < 12; x++ {
+			src.SetRGBA(x, y, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+		}
+	}
+	src.SetRGBA(0, 0, color.RGBA{A: 255})
+
+	raster := render.NewImageData(src)
+	r, err := New(720, 420, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 720, Y: 420}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	if !r.DrawBboxImage(raster, geom.Rect{
+		Min: geom.Pt{X: 522.64, Y: 115.63333333333334},
+		Max: geom.Pt{X: 562.64, Y: 148.96666666666667},
+	}) {
+		t.Fatal("DrawBboxImage returned false")
+	}
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	got := r.GetImage()
+	bounds, _, ok := inkBounds(got, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	if !ok {
+		t.Fatal("expected rendered black image pixels")
+	}
+	// Matplotlib BboxImage rounds this x and computes top as
+	// int(canvasHeight - (bbox.y0 + ceil(imageHeight))).
+	if bounds.Min.X != 523 || bounds.Min.Y != 270 {
+		t.Fatalf("bbox image origin = %v, want Matplotlib top-left (523,270)", bounds.Min)
+	}
+}
+
 func TestAggImage_AutoInterpolationMatchesNearestForIntegerScale(t *testing.T) {
 	pngNearest := renderUpscaledImage(t, "nearest", 4, 4)
 	pngAuto := renderUpscaledImage(t, "auto", 4, 4)

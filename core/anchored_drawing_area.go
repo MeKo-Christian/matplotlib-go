@@ -131,12 +131,13 @@ func (a *AnchoredDrawingArea) Draw(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 	if a.FrameOn {
-		r.Path(snappedPixelRectPath(layout.frame), &render.Paint{
+		r.Path(pixelRectPath(layout.frame), &render.Paint{
 			Fill:      a.BackgroundColor,
 			Stroke:    a.BorderColor,
 			LineWidth: a.BorderWidth,
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
+			Snap:      render.SnapAuto,
 		})
 	}
 	drawChildren := func() {

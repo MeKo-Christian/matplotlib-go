@@ -54,6 +54,7 @@ type widgetVisualDefaults struct {
 	SliderTrackXPad        float64
 	SliderTrackYMin        float64
 	SliderTrackYMax        float64
+	SliderTrackRadius      float64
 	SliderHandleSize       float64
 	SliderHandleLine       float64
 	SliderInitColor        render.Color
@@ -160,6 +161,7 @@ func widgetDefaultsForRC(rc style.RC) widgetVisualDefaults {
 			SliderTrackXPad:        0,
 			SliderTrackYMin:        0.25,
 			SliderTrackYMax:        0.75,
+			SliderTrackRadius:      0,
 			SliderHandleSize:       10,
 			SliderHandleLine:       1,
 			SliderInitColor:        render.Color{R: 1, G: 0, B: 0, A: 1},
@@ -185,17 +187,17 @@ func widgetDefaultsForRC(rc style.RC) widgetVisualDefaults {
 			CheckBoxFace:           render.Color{A: 0},
 			CheckBoxMaxSize:        8,
 			CheckBoxScale:          0.50,
-			CheckBoxXPad:           18,
-			CheckLabelGap:          34,
+			CheckBoxXPad:           0.15,
+			CheckLabelGap:          0.25,
 			CheckBoxRadius:         0,
 			CheckBoxLineWidth:      1,
 			CheckMarkWidth:         1,
 			CheckMarkStyle:         widgetCheckMarkX,
-			RadioCenterXPad:        18,
+			RadioCenterXPad:        0.15,
 			RadioOuterSize:         8,
 			RadioInnerSize:         0,
 			RadioLineWidth:         1,
-			RadioLabelGap:          34,
+			RadioLabelGap:          0.25,
 			RadioInactiveFace:      render.Color{A: 0},
 			RadioActiveOuter:       true,
 		}
@@ -236,6 +238,7 @@ func widgetDefaultsForRC(rc style.RC) widgetVisualDefaults {
 			SliderTrackXPad:        14,
 			SliderTrackYMin:        -26,
 			SliderTrackYMax:        -14,
+			SliderTrackRadius:      -1,
 			SliderHandleSize:       1.9,
 			SliderHandleLine:       1,
 			SliderInitColor:        render.Color{A: 0},
@@ -401,6 +404,25 @@ func widgetStyledSliderTrack(panel geom.Rect, defaults widgetVisualDefaults) geo
 	}
 }
 
+func widgetSliderTrackRadius(track geom.Rect, defaults widgetVisualDefaults) float64 {
+	if defaults.SliderTrackRadius >= 0 {
+		return defaults.SliderTrackRadius
+	}
+	return track.H() / 2
+}
+
+func widgetButtonRowCenterY(panel geom.Rect, index, count int, sourceLayoutSentinel float64) float64 {
+	if count <= 0 {
+		return panel.Min.Y
+	}
+	if sourceLayoutSentinel >= 0 && sourceLayoutSentinel <= 1 {
+		fraction := 1 - float64(index+1)/float64(count+1)
+		return panel.Min.Y + panel.H()*fraction
+	}
+	rowHeight := panel.H() / float64(count)
+	return panel.Max.Y - rowHeight*float64(index) - rowHeight/2
+}
+
 func widgetStyleCoord(minV, maxV, value float64) float64 {
 	if value >= 0 && value <= 1 {
 		return minV + (maxV-minV)*value
@@ -429,6 +451,9 @@ func drawWidgetPanel(r render.Renderer, rect geom.Rect, fill, edge render.Color,
 		paint.LineWidth = width
 		paint.LineJoin = render.JoinRound
 		paint.LineCap = render.CapRound
+		if radius <= 0 {
+			paint.Snap = render.SnapAuto
+		}
 	}
 	r.Path(path, &paint)
 }

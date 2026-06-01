@@ -222,12 +222,13 @@ func (a *AnchoredPacker) Draw(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 	if a.FrameOn {
-		r.Path(snappedPixelRectPath(layout.frame), &render.Paint{
+		r.Path(pixelRectPath(layout.frame), &render.Paint{
 			Fill:      a.BackgroundColor,
 			Stroke:    a.BorderColor,
 			LineWidth: a.BorderWidth,
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
+			Snap:      render.SnapAuto,
 		})
 	}
 	for i, child := range a.children {
@@ -441,6 +442,9 @@ func (i *packedImage) size(_ render.Renderer, ctx *DrawContext, _ *AnchoredPacke
 
 func (i *packedImage) draw(r render.Renderer, _ *DrawContext, box geom.Rect, _ *AnchoredPacker) {
 	if i == nil || i.Image == nil {
+		return
+	}
+	if drawer, ok := r.(render.BboxImageDrawer); ok && drawer.DrawBboxImage(i.Image, box) {
 		return
 	}
 	r.Image(i.Image, box)

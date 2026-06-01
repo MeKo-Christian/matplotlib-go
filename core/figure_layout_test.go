@@ -414,7 +414,7 @@ func TestConstrainedLayoutKeepsNestedYAxisTickDensityReadable(t *testing.T) {
 func TestConstrainedLayoutReservesColorbarSpaceAndTracksParent(t *testing.T) {
 	fig := NewFigure(1000, 700)
 	fig.ConstrainedLayout()
-	if got, want := layoutPadPx(fig, LayoutEngineConstrained), pointsToPixels(fig.RC, 3); !floatApprox(got, want, 1e-12) {
+	if got, want := layoutPadPx(fig, LayoutEngineConstrained), 0.04167*fig.RC.DPI; !floatApprox(got, want, 1e-12) {
 		t.Fatalf("constrained layout pad = %v, want matplotlib default %v", got, want)
 	}
 	ax := fig.AddSubplot(1, 1, 1)
@@ -439,6 +439,24 @@ func TestConstrainedLayoutReservesColorbarSpaceAndTracksParent(t *testing.T) {
 	}
 	if ax.RectFraction.Max.X >= 0.90 {
 		t.Fatalf("constrained layout did not reserve right margin for colorbar: parent=%+v colorbar=%+v", ax.RectFraction, cb.RectFraction)
+	}
+}
+
+func TestConstrainedColorbarSlotOffsetUsesDeviceSnappedSpineWidth(t *testing.T) {
+	fig := NewFigure(1000, 700)
+	fig.ConstrainedLayout()
+	fig.RC.AxisLineWidth = 0.8 * 100 / 72
+	base := geom.Rect{
+		Min: geom.Pt{X: 0.051069777777777776, Y: 0.06777825396825397},
+		Max: geom.Pt{X: 0.8464725805555557, Y: 0.9621423809523809},
+	}
+
+	got := constrainedColorbarSlotOffset(fig, base) * fig.SizePx.X
+	want := constrainedLayoutPadPx(fig) +
+		0.5*constrainedLayoutDefaultSpacePx(base.W()*fig.SizePx.X, 1) +
+		math.Round(fig.RC.AxisLineWidth)
+	if !floatApprox(got, want, 1e-12) {
+		t.Fatalf("constrained colorbar slot offset = %v px, want device-snapped spine offset %v px", got, want)
 	}
 }
 

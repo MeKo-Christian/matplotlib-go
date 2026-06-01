@@ -1077,9 +1077,11 @@ func drawTextBBox(r render.Renderer, origin geom.Pt, layout singleLineTextLayout
 	}
 	cfg := resolvedTextBBoxOptions(*opt, ctx, fontSize)
 
-	path := snappedPixelRectPath(rect)
+	path := pixelRectPath(rect)
+	snap := render.SnapAuto
 	if cfg.CornerRadius > 0 {
 		path = roundedRectPath(rect, cfg.CornerRadius)
+		snap = render.SnapOff
 	}
 	r.Path(path, &render.Paint{
 		Fill:      cfg.FaceColor,
@@ -1087,6 +1089,7 @@ func drawTextBBox(r render.Renderer, origin geom.Pt, layout singleLineTextLayout
 		LineWidth: cfg.LineWidth,
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
+		Snap:      snap,
 	})
 }
 
@@ -1181,9 +1184,11 @@ func drawMultilineTextBBox(r render.Renderer, rect geom.Rect, opt *TextBBoxOptio
 	rect.Max.X += cfg.Padding
 	rect.Max.Y += cfg.Padding
 
-	path := snappedPixelRectPath(rect)
+	path := pixelRectPath(rect)
+	snap := render.SnapAuto
 	if cfg.CornerRadius > 0 {
 		path = roundedRectPath(rect, cfg.CornerRadius)
+		snap = render.SnapOff
 	}
 	r.Path(path, &render.Paint{
 		Fill:      cfg.FaceColor,
@@ -1191,6 +1196,7 @@ func drawMultilineTextBBox(r render.Renderer, rect geom.Rect, opt *TextBBoxOptio
 		LineWidth: cfg.LineWidth,
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
+		Snap:      snap,
 	})
 }
 

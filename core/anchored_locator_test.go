@@ -332,7 +332,7 @@ func TestAnchoredDrawingAreaCanClipChildren(t *testing.T) {
 	}
 }
 
-func TestAnchoredDrawingAreaFrameSnapsToPixelGrid(t *testing.T) {
+func TestAnchoredDrawingAreaFrameUsesMatplotlibSnapAuto(t *testing.T) {
 	area := (&Axes{}).AddAnchoredDrawingArea(10, 10, AnchoredDrawingAreaOptions{
 		Location:        LegendUpperLeft,
 		Padding:         1.25,
@@ -349,10 +349,19 @@ func TestAnchoredDrawingAreaFrameSnapsToPixelGrid(t *testing.T) {
 	if len(r.pathCalls) == 0 || len(r.pathCalls[0].path.V) < 4 {
 		t.Fatalf("expected frame path, got %+v", r.pathCalls)
 	}
-	for i, pt := range r.pathCalls[0].path.V[:4] {
+	call := r.pathCalls[0]
+	if call.paint.Snap != render.SnapAuto {
+		t.Fatalf("frame snap mode = %v, want Matplotlib SnapAuto", call.paint.Snap)
+	}
+	foundFractional := false
+	for _, pt := range call.path.V[:4] {
 		if !floatApprox(pt.X, math.Round(pt.X), 1e-9) || !floatApprox(pt.Y, math.Round(pt.Y), 1e-9) {
-			t.Fatalf("frame vertex %d = %+v, want snapped pixel coordinate; path=%+v", i, pt, r.pathCalls[0].path.V[:4])
+			foundFractional = true
+			break
 		}
+	}
+	if !foundFractional {
+		t.Fatalf("frame path was pre-rounded to integer vertices; want unsnapped patch bounds for renderer SnapAuto: %+v", call.path.V[:4])
 	}
 }
 

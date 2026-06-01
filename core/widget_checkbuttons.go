@@ -173,13 +173,12 @@ func (c *CheckButtons) Draw(r render.Renderer, ctx *DrawContext) {
 	rowHeight := panel.H() / float64(len(c.Labels))
 	fontSize := resolvedFontSize(c.FontSize, ctx)
 	for i, label := range c.Labels {
-		// y-up: stack row 0 at the top (panel.Max.Y) downward.
-		rowMaxY := panel.Max.Y - rowHeight*float64(i)
-		rowMinY := rowMaxY - rowHeight
+		centerY := widgetButtonRowCenterY(panel, i, len(c.Labels), defaults.CheckBoxXPad)
 		boxSize := math.Min(defaults.CheckBoxMaxSize, rowHeight*defaults.CheckBoxScale)
+		centerX := widgetStyleCoord(panel.Min.X, panel.Max.X, defaults.CheckBoxXPad)
 		box := geom.Rect{
-			Min: geom.Pt{X: panel.Min.X + defaults.CheckBoxXPad, Y: rowMinY + (rowHeight-boxSize)/2},
-			Max: geom.Pt{X: panel.Min.X + defaults.CheckBoxXPad + boxSize, Y: rowMaxY - (rowHeight-boxSize)/2},
+			Min: geom.Pt{X: centerX - boxSize/2, Y: centerY - boxSize/2},
+			Max: geom.Pt{X: centerX + boxSize/2, Y: centerY + boxSize/2},
 		}
 		drawWidgetPanel(r, box, defaults.CheckBoxFace, edge, defaults.CheckBoxLineWidth, defaults.CheckBoxRadius)
 		if i < len(c.Values) && c.Values[i] {
@@ -191,7 +190,11 @@ func (c *CheckButtons) Draw(r render.Renderer, ctx *DrawContext) {
 				LineCap:   render.CapRound,
 			})
 		}
-		drawWidgetText(r, ctx, geom.Pt{X: box.Max.X + defaults.CheckLabelGap, Y: rowMinY + rowHeight/2}, label, fontSize, textColor, TextAlignLeft, textLayoutVAlignCenter)
+		labelX := box.Max.X + defaults.CheckLabelGap
+		if defaults.CheckLabelGap >= 0 && defaults.CheckLabelGap <= 1 {
+			labelX = widgetStyleCoord(panel.Min.X, panel.Max.X, defaults.CheckLabelGap)
+		}
+		drawWidgetText(r, ctx, geom.Pt{X: labelX, Y: centerY}, label, fontSize, textColor, TextAlignLeft, textLayoutVAlignCenter)
 	}
 }
 

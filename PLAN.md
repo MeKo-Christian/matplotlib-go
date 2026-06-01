@@ -644,9 +644,15 @@ Matplotlib's 1 pt patch linewidth conversion. A follow-up pass matched
 Matplotlib's nearest-neighbor, palette-preserving non-integer image upscaling for
 the `OffsetImage`, corrected the fixture image's float-to-byte source colors,
 snapped the sizebar fill rectangle, and snapped unrotated square text bbox
-patches while leaving rotated bboxes unsnapped; the case is now `RMSE 9.76`.
-Remaining residuals are mostly offset-box stroke antialiasing and arrow/path
-edge differences.
+patches while leaving rotated bboxes unsnapped. A follow-up AGG pass split
+AxesImage and BboxImage/OffsetImage nearest placement: AxesImage top alignment
+now matches Matplotlib's rounded device y, while BboxImage uses Matplotlib's
+ceiled output buffer and integer top-edge placement. A final frame-snap pass
+kept anchored/text/annotation frame rectangles at their true patch bounds and
+set `SnapAuto`, matching Matplotlib's pixel-centered snapped 1 px strokes
+instead of pre-rounded antialiased integer-edge rectangles. The case is now
+`RMSE 5.41`. Remaining residuals are mostly arrow/path edge differences,
+rotated glyph antialiasing, and small TextArea/HPacker text placement drift.
 The 2026-06-01 full focused run initially had multiple geo fixtures above
 `RMSE 10`; a follow-up geo pass fixed Matplotlib GeoAxes longitude label
 placement (frame-bottom x-labels and equator tick labels padded above the
@@ -660,14 +666,25 @@ dropping levels outside the data range. Annotation defaults now match
 Matplotlib's left/baseline alignment instead of inferring alignment from offset
 direction; this moved `mathtext_basic` to `RMSE 12.65`,
 `transform_annotation_modes` to `RMSE 3.60`, and `annotation_composition` to
-`RMSE 6.68`. `imshow_interpolation_matrix` is now `RMSE 6.83` after matching
+`RMSE 6.68`. `imshow_interpolation_matrix` is now `RMSE 7.79` after matching
 Matplotlib's scalar-data interpolation stage for high-upsampled 2D images before
-colormapping. A full `TestReferenceCompare` pass on 2026-06-01 then left the
-remaining cases at or above `RMSE 10` as: `widgets_gallery`,
-`mathtext_inline_labels`, `colorbar_composition`, `text_annotation_matrix`,
-`figure_labels_composition`, `mathtext_basic`, `mathtext_fractions`,
-and borderline `mathtext_matrices`. `mathtext_integrals` is now `RMSE 5.03`
-after matching Matplotlib's unspaced operator parsing inside `\lim` limits.
+colormapping and then applying the AGG nearest image placement split. A full
+`TestReferenceCompare` pass on 2026-06-01 then left the remaining cases at or
+above `RMSE 10` as: `widgets_gallery` (`15.79`), `colorbar_composition`
+(`13.13`), `mathtext_basic` (`12.65`), `figure_labels_composition` (`12.56`),
+`mathtext_fractions` (`12.49`), `mathtext_inline_labels` (`12.34`), and
+borderline `mathtext_matrices` (`10.00`). `text_annotation_matrix` is now below
+that threshold at `RMSE 5.41`; the remaining differences are no longer the
+rotated box or offset-box frame geometry. `widgets_gallery` is now below the
+threshold at `RMSE 7.32` after matching Matplotlib widget-source layout for
+sliders, CheckButtons, RadioButtons, and snapped square widget panels.
+`colorbar_composition` is now `RMSE 8.98` and
+`figure_labels_composition` is now `RMSE 6.97` after matching Matplotlib's
+`0.04167` inch constrained-layout pad and using a device-snapped spine width
+for constrained colorbar slot placement. The remaining `RMSE >= 10` list is
+`mathtext_basic`, `mathtext_fractions`, `mathtext_inline_labels`, and
+borderline `mathtext_matrices`. `mathtext_integrals` is now `RMSE 5.03` after
+matching Matplotlib's unspaced operator parsing inside `\lim` limits.
 
 **Source parity audit:** completed on 2026-05-22 with sub-agents across all
 Phase 8 subphases. Direct example/fixture mismatches were fixed where existing
@@ -722,13 +739,17 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: `core/text.go`, AGG text measurement/baseline, axis
       label offsets.
 
-### 8.6 `mathtext_basic` (RMSE 12.65)
+### 8.6 `mathtext_basic` (RMSE 12.64)
 
 - [x] Code: data and math strings match; replaced anchored-text shortcut with
       axes-fraction `Text` + bbox and matched annotation arrow styling.
 - [x] Code: the annotation `xytext=(34, -26)` source offset is converted from
       points to display pixels, and core annotation defaults now use
       Matplotlib's left/baseline text alignment.
+- [x] Code: the line style now explicitly matches the Python fixture's
+      `linewidth=lw(2), color=TAB10[0]`, and rotated mixed inline MathText now
+      goes through the structured MathText layout instead of collapsing to a
+      normalized fallback string.
 - [ ] Visual: math glyph sizes, baselines, superscripts/subscripts, anchored
       box, and residual math annotation text differ.
 - [ ] Likely core areas: `internal/mathtext`, `core/mathtext.go`, AGG text
@@ -762,14 +783,17 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: `\genfrac` layout, delimiter sizing, matrix/stack ink
       bounds.
 
-### 8.10 `mathtext_inline_labels` (RMSE 18.03)
+### 8.10 `mathtext_inline_labels` (RMSE 12.34)
 
-- [x] Code: math sources match; remaining `LegendBest` placement difference is
-      core best-location behavior.
-- [ ] Visual: legend lands differently; math text in title, labels, and legend
-      still has glyph/baseline residuals.
-- [ ] Likely core areas: `core/legend.go` best-placement badness,
-      `internal/mathtext`, text metrics.
+- [x] Code: math sources match; line style now explicitly matches the Python
+      fixture.
+- [x] Code: `LegendBest` now scores the Matplotlib location candidate set and
+      accounts for line/path intersections, boxes, and points; the legend lands
+      in the Matplotlib upper-center position for this case.
+- [ ] Visual: math text in title, labels, and legend still has glyph/baseline
+      residuals.
+- [ ] Likely core areas: `internal/mathtext`, text metrics, and remaining
+      text-bbox/ink metric differences.
 
 ### 8.11 `image_heatmap` (RMSE 5.54)
 
@@ -807,13 +831,14 @@ renderer contract, backend implementation, or the AGG port itself.
       after refreshing the Go golden.
 - [ ] Likely core areas: remaining residual is minor text/axis antialiasing.
 
-### 8.15 `spy_image` (RMSE 19.42)
+### 8.15 `spy_image` (RMSE 2.49)
 
 - [x] Code: source audited; no source mismatch found.
-- [ ] Visual: sparsity image looks almost identical, but diff shows many
-      one-pixel cell-edge shifts.
-- [ ] Likely core areas: `MatShow` / `Spy` image extents, binary colormap
-      rasterization, nearest interpolation and pixel boundary alignment.
+- [x] Visual: focused `TestReferenceCompare/spy_image` reports `RMSE 2.49`
+      after matching AGG nearest non-integer AxesImage top-edge placement to
+      Matplotlib and refreshing the Go golden.
+- [ ] Likely core areas: remaining residual is minor axis/text antialiasing and
+      subpixel stroke drift.
 
 ### 8.16 `axes_top_right_inverted` (RMSE 5.06)
 
@@ -857,15 +882,15 @@ renderer contract, backend implementation, or the AGG port itself.
 - [x] Likely core areas: constrained layout parity, figure-level labels, figure
       legend anchoring, text bbox sizing.
 
-### 8.20 `colorbar_composition` (RMSE 18.60)
+### 8.20 `colorbar_composition` (RMSE 8.98)
 
 - [x] Code: translated the Python `imshow(..., aspect="auto", extent=...)`
       call through `ax.ImShow`; remaining differences are image/colorbar
       rendering and constrained-layout behavior.
-- [ ] Visual: heatmap/colorbar are similar, but raster sampling and colorbar
-      tick/label residuals cover much of the image.
-- [ ] Likely core areas: image extent/aspect handling, colormap
-      interpolation/normalization, colorbar layout and ticks.
+- [x] Visual: focused `TestReferenceCompare/colorbar_composition` now reports
+      `RMSE 8.98` after matching Matplotlib's constrained-layout pad
+      (`0.04167` inch) and colorbar slot spine-width snapping.
+- [x] Likely core areas: constrained layout and colorbar layout.
 
 ### 8.21 `annotation_composition` (RMSE 6.68)
 
@@ -1314,13 +1339,13 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: `core/colorbar.go`, `core/norm.go` BoundaryNorm
       colorbar rendering, axis/text placement.
 
-### 8.61 `lognorm_imshow` (RMSE 9.42)
+### 8.61 `lognorm_imshow` (RMSE 9.45)
 
 - [x] Code: source audited; fixture values and `LogNorm(1,1000)` match.
       `LogFormatter` now emits Matplotlib-style base-10 power labels instead
       of `1eN` labels for exact decades.
 - [x] Visual: focused `TestReferenceCompare/lognorm_imshow` reports
-      `RMSE 9.42` after refreshing the Go golden.
+      `RMSE 9.45` after refreshing the Go golden.
 - [ ] Likely core areas: remaining residual is minor image/colorbar
       rasterization and text antialiasing drift.
 
@@ -1754,8 +1779,8 @@ compensating in core.
 - [x] `imshow_interpolation_matrix` — core scalar-image resampling now follows
       Matplotlib's data-stage path for high-upsampled 2D inputs and applies the
       AGG/Matplotlib interpolation filter family before colormapping; focused
-      `TestReferenceCompare/imshow_interpolation_matrix` reports `RMSE 6.83`
-      and `MeanAbs 0.58` (2026-06-01).
+      `TestReferenceCompare/imshow_interpolation_matrix` reports `RMSE 7.79`
+      and `MeanAbs 0.71` after the AGG nearest placement split (2026-06-01).
 - [ ] skia shader / gradient / pattern / hatch fills bypass the gobasic device
       y-flip (blocked on the skia build).
 - [x] `pattern_gradient_effects` — fixture port reconciled to Matplotlib-style
@@ -1852,14 +1877,18 @@ migration-sensitive users.
       handle geometry, check/radio marker geometry, and text-box chrome behind
       the visual-style policy.
 - [x] Match Matplotlib-compatible slider layout more closely: label/value text
-      anchors, track rectangle, selection rectangle, init line, and circular
-      handle size/edge defaults.
+      anchors, source rectangular `Rectangle` / `axvspan` track geometry,
+      selection rectangle, init line, and circular handle size/edge defaults.
 - [x] Match Matplotlib-compatible button and text-box layout more closely:
       square panel option, face/hover colors, label position, input text anchor,
       and caret line behavior where applicable.
 - [x] Match Matplotlib-compatible CheckButtons and RadioButtons geometry:
-      legacy vertical positions, marker sizes, frame/check/radio stroke widths,
-      active fill semantics, and label offsets.
+      source `x=.15` marker centers, `x=.25` labels, `linspace(1,0,n+2)` row
+      positions, marker sizes, frame/check/radio stroke widths, active fill
+      semantics, and label offsets.
+- [x] Match Matplotlib's square widget panel stroke snapping for buttons,
+      text boxes, check/radio panels, and marker frames; focused
+      `TestReferenceCompare/widgets_gallery` now reports `RMSE 7.32`.
 - [x] Keep the Go-default style visually unchanged except where a change is
       explicitly required for shared hit-testing correctness.
 

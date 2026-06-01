@@ -183,6 +183,24 @@ func (r *Renderer) Image(img render.Image, dst geom.Rect) {
 	r.drawImageDirect(img, dst)
 }
 
+// DrawBboxImage draws a Matplotlib BboxImage/OffsetImage-style image. The bbox
+// is the logical display bbox in y-up coordinates; the raster image is ceiled to
+// integer pixels and then placed using RendererAgg's integer draw_image rules.
+func (r *Renderer) DrawBboxImage(img render.Image, bbox geom.Rect) bool {
+	if img == nil || r == nil || r.ctx == nil {
+		return false
+	}
+	dst := r.devRect(bbox)
+	if r.hasClipPath() {
+		bounds, haveBounds := imageDrawBounds(dst)
+		r.withClipPathMaskPremultiplied(bounds, haveBounds, func() {
+			r.drawBboxImageDirect(img, dst)
+		})
+		return true
+	}
+	return r.drawBboxImageDirect(img, dst)
+}
+
 func (r *Renderer) drawImageDirect(img render.Image, dst geom.Rect) {
 	aggImg, ok := renderImageToAGG(img)
 	if !ok {
@@ -226,6 +244,42 @@ func (r *Renderer) drawImageDirect(img render.Image, dst geom.Rect) {
 	_ = agg.DrawImageScaled(aggImg, x, y, w, h)
 }
 
+func (r *Renderer) drawBboxImageDirect(img render.Image, dst geom.Rect) bool {
+	x := dst.Min.X
+	y := dst.Min.Y
+	w := dst.W()
+	h := dst.H()
+	if w < 0 {
+		x += w
+		w = -w
+	}
+	if h < 0 {
+		y += h
+		h = -h
+	}
+	if w <= 0 || h <= 0 {
+		return false
+	}
+	if nearestImg, nx, ny, nw, nh, ok := nearestScaledBboxImageForDirectDraw(img, x, y, w, h); ok {
+		agg := r.ctx
+		prevBlendMode := agg.GetBlendMode()
+		prevFilter := agg.GetImageFilter()
+		prevResample := agg.GetImageResample()
+		agg.SetBlendMode(agglib.BlendSrcOver)
+		agg.SetImageFilter(agglib.NoFilter)
+		agg.SetImageResample(agglib.NoResample)
+		defer func() {
+			agg.SetBlendMode(prevBlendMode)
+			agg.SetImageFilter(prevFilter)
+			agg.SetImageResample(prevResample)
+		}()
+		_ = agg.DrawImageScaled(nearestImg, nx, ny, nw, nh)
+		return true
+	}
+	r.drawImageDirect(img, dst)
+	return true
+}
+
 func nearestScaledImageForDirectDraw(img render.Image, x, y, w, h float64) (*agglib.Image, float64, float64, float64, float64, bool) {
 	if img == nil || w <= 0 || h <= 0 {
 		return nil, 0, 0, 0, 0, false
@@ -248,7 +302,7 @@ func nearestScaledImageForDirectDraw(img render.Image, x, y, w, h float64) (*agg
 	if dstW == srcW && dstH == srcH && floatAlmostEqual(drawX, x) && floatAlmostEqual(roundedY, y) {
 		return nil, 0, 0, 0, 0, false
 	}
-	drawY := roundedY - 1
+	drawY := roundedY
 	rgbaImage, ok := img.(render.RGBAImage)
 	if !ok {
 		return nil, 0, 0, 0, 0, false
@@ -267,6 +321,16 @@ func nearestScaledImageForDirectDraw(img render.Image, x, y, w, h float64) (*agg
 		return nil, 0, 0, 0, 0, false
 	}
 	return aggImg, drawX, drawY, float64(dstW), float64(dstH), true
+}
+
+func nearestScaledBboxImageForDirectDraw(img render.Image, x, y, w, h float64) (*agglib.Image, float64, float64, float64, float64, bool) {
+	aggImg, _, _, nw, nh, ok := nearestScaledImageForDirectDraw(img, x, y, w, h)
+	if !ok {
+		return nil, 0, 0, 0, 0, false
+	}
+	drawX := math.Round(x)
+	drawY := math.Trunc(y + h - nh)
+	return aggImg, drawX, drawY, nw, nh, true
 }
 
 func scaleRGBANearest(src *image.RGBA, dstW, dstH int) *image.RGBA {
