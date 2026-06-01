@@ -575,9 +575,9 @@ bbox scaling/offset behavior for auto row-label columns, plus Matplotlib's
 auto patch snapping for rectilinear table cell paths, butt caps on two-sided
 violin summary lines, collection-level violin body alpha, and unclipped table
 overlay drawing.
-`mixed_raster_vector` is now `RMSE 9.30` after the Matplotlib-compatible polar
-theta label padding/centering fix moved its polar panel under the temporary
-target.
+`mixed_raster_vector` is now `RMSE 8.08` after the Matplotlib-compatible polar
+theta label padding/centering fix and moving axes legends to the unclipped
+overlay pass so polar legends are not clipped by the circular axes patch.
 `polar_axes` is now `RMSE 6.22` after matching Matplotlib's theta tick label
 centering and `_pad + 7pt` padding in addition to the radial spine/label
 changes.
@@ -599,6 +599,63 @@ has non-mathtext cases above `RMSE 10`; the previous paragraph is historical.
 `line2d_markers` is now `RMSE 7.16` after matching Matplotlib's Line2D legend
 marker sizing and fixing top/bottom half-filled marker orientation in marker
 local coordinates, with `testdata/golden/line2d_markers.png` refreshed.
+`errorbar_basic` is now `RMSE 9.76` after adding a core `NoDataLine` option
+that lets the Go example express Matplotlib's `fmt="none"` errorbar semantics
+directly, with `testdata/golden/errorbar_basic.png` refreshed.
+`formatter_scalar_scientific_labels` is now `RMSE 8.81` after matching
+Matplotlib MathText binary-operator spacing for command symbols such as
+`\times`, including inside `\mathdefault{...}` styled groups; its Go golden was
+refreshed.
+`patch_style_matrix` is now `RMSE 2.37` after matching Matplotlib patch
+`snap=None` auto-snapping for rectilinear patch paths and rendering unfilled
+circle hatches as filled outer/reversed-inner ring contours; its Go golden was
+refreshed.
+`vector_fields` is now `RMSE 7.99` after matching Matplotlib `angles="uv"`
+quiver direction signs and Barbs' point-length collection scaling / default
+barb side semantics; its optional Go golden was refreshed.
+`boxplot_basic` is now `RMSE 8.92` after adding a core `ManageTicks` option for
+Matplotlib's `boxplot(..., manage_ticks=False)` semantics and refreshing its Go
+golden.
+`scale_symlog_ticks` is now `RMSE 5.61` after matching Matplotlib's symlog
+`linscale / (1 - base^-1)` transform adjustment and `linthresh` scaling; its Go
+golden was refreshed.
+`scale_logit_ticks` is now `RMSE 5.09` after matching Matplotlib's
+MathText-wrapped `LogitFormatter` labels; its Go golden was refreshed.
+`asinh_norm_image` is now `RMSE 7.98` after using Matplotlib's norm-backed
+asinh colorbar scale (`AsinhLocator` plus scientific MathText formatter) for
+`AsinhNorm`; its Go golden was refreshed.
+`colorbar_boundary_values` is now `RMSE 9.57` after matching Matplotlib's
+extended-boundary colorbar semantics: the body uses interior boundaries, min/max
+extensions sit outside the body, and extension colors use the provided boundary
+values. `colorbar_extensions` was refreshed as an affected extension fixture and
+now reports `RMSE 7.61`.
+`artist_metadata` is now `RMSE 0.91` after fixing the fixture's local
+data-to-display helper to match Matplotlib's y-up display coordinates for
+explicit clip boxes; its Go golden was refreshed.
+`axes_grid1_showcase` is now `RMSE 4.95` after fixing anchored multiline text
+to draw top-down in y-up display space and switching the tile labels back to
+axes-coordinate `Text` with Matplotlib-style rounded bboxes; its Go golden was
+refreshed. The same anchored multiline fix refreshed `text_annotation_matrix`,
+which is now `RMSE 13.26` and still needs offset-box/annotation parity work.
+The 2026-06-01 full focused run initially had multiple geo fixtures above
+`RMSE 10`; a follow-up geo pass fixed Matplotlib GeoAxes longitude label
+placement (frame-bottom x-labels and equator tick labels padded above the
+equator), refreshed all four geo goldens, and now reports:
+`geo_mollweide_axes` 6.96, `geo_aitoff_axes` 6.92, `geo_hammer_axes` 5.41, and
+`geo_lambert_axes` 7.59.
+`unstructured_showcase` is now `RMSE 5.96` after switching the source-local
+`ax.text` / `fig.text` calls back to core `Text` artists and keeping
+Matplotlib's locator-bounded `tricontour(..., levels=N)` levels instead of
+dropping levels outside the data range. Annotation defaults now match
+Matplotlib's left/baseline alignment instead of inferring alignment from offset
+direction; this moved `mathtext_basic` to `RMSE 12.65`,
+`transform_annotation_modes` to `RMSE 3.60`, and `annotation_composition` to
+`RMSE 6.68`. A full `TestReferenceCompare` pass on 2026-06-01 then left the
+remaining over-10 cases as: `widgets_gallery`, `mathtext_inline_labels`,
+`colorbar_composition`, `text_annotation_matrix`,
+`figure_labels_composition`, `mathtext_basic`, `mathtext_fractions`,
+`imshow_interpolation_matrix`, `spectrum_variants`, and borderline
+`mathtext_matrices`.
 
 **Source parity audit:** completed on 2026-05-22 with sub-agents across all
 Phase 8 subphases. Direct example/fixture mismatches were fixed where existing
@@ -634,14 +691,16 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: `core/errorbar.go`, cap-size semantics, scatter marker
       rasterization, stroke antialiasing.
 
-### 8.4 `boxplot_basic` (RMSE 10.72)
+### 8.4 `boxplot_basic` (RMSE 8.92)
 
 - [x] Code: removed the explicit `CapWidth` override and matched the Python
       explicit light-gray `lw=0.5` y-grid.
-- [ ] Visual: strong horizontal grid residuals plus box, cap, and flier edge
-      differences.
-- [ ] Likely core areas: boxplot cap defaults, `core/grid.go` grid defaults,
-      marker/stroke rendering.
+- [x] Code: added `BoxPlotsOptions.ManageTicks` so examples can express
+      Matplotlib's `manage_ticks=False` without hidden fixture behavior.
+- [x] Visual: focused `TestReferenceCompare/boxplot_basic` reports
+      `RMSE 8.92`; remaining residual is mostly box, cap, and flier edge
+      rendering.
+- [ ] Likely core areas: marker/stroke rendering.
 
 ### 8.5 `text_labels_strict` (RMSE 5.91)
 
@@ -651,12 +710,15 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: `core/text.go`, AGG text measurement/baseline, axis
       label offsets.
 
-### 8.6 `mathtext_basic` (RMSE 18.04)
+### 8.6 `mathtext_basic` (RMSE 12.65)
 
 - [x] Code: data and math strings match; replaced anchored-text shortcut with
       axes-fraction `Text` + bbox and matched annotation arrow styling.
+- [x] Code: the annotation `xytext=(34, -26)` source offset is converted from
+      points to display pixels, and core annotation defaults now use
+      Matplotlib's left/baseline text alignment.
 - [ ] Visual: math glyph sizes, baselines, superscripts/subscripts, anchored
-      box, and annotation arrow/text differ.
+      box, and residual math annotation text differ.
 - [ ] Likely core areas: `internal/mathtext`, `core/mathtext.go`, AGG text
       bounds, annotation and anchored-box layout.
 
@@ -789,11 +851,12 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: image extent/aspect handling, colormap
       interpolation/normalization, colorbar layout and ticks.
 
-### 8.21 `annotation_composition` (RMSE 8.90)
+### 8.21 `annotation_composition` (RMSE 6.68)
 
 - [x] Code: matched explicit Python grid styling and annotation arrow width.
-- [ ] Visual: annotation text/arrow placement differs, with smaller legend,
-      grid, and text residuals.
+- [x] Code: core annotation defaults now match Matplotlib's left/baseline
+      alignment.
+- [ ] Visual: remaining residuals are smaller legend, grid, and text details.
 - [ ] Likely core areas: annotation arrows, offset-pixel coords, default
       plot/legend styling, Unicode text metrics.
 
@@ -941,8 +1004,10 @@ renderer contract, backend implementation, or the AGG port itself.
 - [x] Code: changed barb length defaults to point units and quiver-key default
       label separation to the Matplotlib-equivalent 0.1 inch at 100 DPI, then
       removed the Go-only barb pre-scaling and explicit key label separation.
-- [ ] Visual: fields align, but quiver/barb/stream glyph shapes and strokes
-      differ, especially barbs and stream arrows.
+- [x] Code: matched Matplotlib `angles="uv"` quiver direction signs and Barbs'
+      point-length collection scaling / default barb side semantics.
+- [x] Visual: case is below the temporary target at `RMSE 7.99`; remaining
+      residual is quiver/barb/stream antialiasing and minor glyph-shape detail.
 - [ ] Likely core areas: `core/vector_field.go` quiver scaling/arrow polygons,
       barb decomposition, streamplot integration/arrows, quiver-key layout.
 
@@ -962,38 +1027,44 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: polar transforms, polar tick labels, polar grid paths,
       fill clipping/antialiasing.
 
-### 8.35 `geo_mollweide_axes` (RMSE 7.98)
+### 8.35 `geo_mollweide_axes` (RMSE 6.96)
 
 - [x] Code: source audited; Go helper relies on projection defaults while the
-      Python explicitly sets ticks/formatters, but values match.
-- [ ] Visual: line is close; diff concentrates on oval frame, gridline sampling,
-      and labels.
+      Python explicitly sets ticks/formatters, but values match. GeoAxes
+      x-label/tick-label placement now matches Matplotlib's frame/equator
+      transforms.
+- [x] Visual: focused `TestReferenceCompare/geo_mollweide_axes` reports
+      `RMSE 6.96`; residual is mostly oval frame/grid antialiasing.
 - [ ] Likely core areas: `core/geo.go` Mollweide transform/frame/grid sampling,
       geo tick label transforms.
 
-### 8.36 `geo_aitoff_axes` (RMSE 7.34)
+### 8.36 `geo_aitoff_axes` (RMSE 6.92)
 
 - [x] Code: source audited; same projection-default versus explicit tick setup
-      as Mollweide, with matching values.
-- [ ] Visual: close overall; outer frame, meridians/parallels, and labels
-      differ.
+      as Mollweide, with matching values. GeoAxes x-label/tick-label placement
+      now matches Matplotlib.
+- [x] Visual: focused `TestReferenceCompare/geo_aitoff_axes` reports
+      `RMSE 6.92`; residual is mostly frame/grid antialiasing.
 - [ ] Likely core areas: Aitoff projection transform, geo grid path sampling,
       label padding.
 
-### 8.37 `geo_hammer_axes` (RMSE 6.98)
+### 8.37 `geo_hammer_axes` (RMSE 5.41)
 
 - [x] Code: source audited; same projection-default versus explicit tick setup
-      as Mollweide, with matching values.
-- [ ] Visual: sine trace aligns; frame/grid and text dominate the diff.
+      as Mollweide, with matching values. GeoAxes x-label/tick-label placement
+      now matches Matplotlib.
+- [x] Visual: focused `TestReferenceCompare/geo_hammer_axes` reports
+      `RMSE 5.41`.
 - [ ] Likely core areas: Hammer projection transform, geo frame/grid drawing,
       clipping.
 
-### 8.38 `geo_lambert_axes` (RMSE 7.78)
+### 8.38 `geo_lambert_axes` (RMSE 7.59)
 
 - [x] Code: source audited; Go sets Lambert x locator and relies on projection
       formatter / y-label hiding while Python explicitly formats x only.
-- [ ] Visual: line is close; circular frame/grid and longitude label placement
-      differ.
+      Longitude label placement now matches Matplotlib.
+- [x] Visual: focused `TestReferenceCompare/geo_lambert_axes` reports
+      `RMSE 7.59`.
 - [ ] Likely core areas: `lambertDataTransform`, Lambert box aspect/frame, geo
       grid/text transforms.
 
@@ -1143,15 +1214,19 @@ renderer contract, backend implementation, or the AGG port itself.
       `RMSE 3.50` after refreshing the Go golden.
 - [ ] Likely core areas: residual fill/text antialiasing.
 
-### 8.53 `unstructured_showcase` (RMSE 7.87)
+### 8.53 `unstructured_showcase` (RMSE 5.96)
 
 - [x] Code: changed `TriColor` edge color alpha to opaque white to match Python
       `edgecolors="white"`; larger remaining mismatch is core `tricontour`
       behavior.
-- [ ] Visual: triplot is close; tripcolor/tricontour and tricontourf have
-      different topology, label placement, and filled-band shapes.
-- [ ] Likely core areas: `core/contour.go` tri contour/fill generation and
-      inline labels, `core/triangulation.go` tripcolor edge/color handling.
+- [x] Code: changed the Go showcase's source-local `ax.text` and `fig.text`
+      calls back to `Text` artists with axes/figure coordinates instead of
+      anchored-text approximations.
+- [x] Code: `tricontour(..., levels=N)` now keeps Matplotlib `MaxNLocator`
+      bounds outside the data range for line contours.
+- [x] Visual: focused `TestReferenceCompare/unstructured_showcase` reports
+      `RMSE 5.96`; residual is mostly antialiasing and remaining
+      triangulation/contour edge details.
 
 ### 8.54 `arrays_showcase` (RMSE 8.73)
 
@@ -1174,13 +1249,13 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: `core/axis_artist.go`, `core/axis.go` dash/line-width
       parity for data-position spines, `core/grid.go` grid style configuration.
 
-### 8.56 `axes_grid1_showcase` (RMSE 10.73)
+### 8.56 `axes_grid1_showcase` (RMSE 4.95)
 
 - [x] Code: matched tile label font size and `round,pad=0.25` bbox semantics;
-      remaining `axes_pad` inch-vs-fraction behavior belongs in
-      `core/image_grid.go`.
-- [ ] Visual: near-identical overall; diff is mostly text/bbox/tick/axis
-      antialiasing and small label-box padding.
+      fixed anchored multiline text order, and made tile labels use
+      axes-coordinate `Text` like the Matplotlib source.
+- [x] Visual: focused `TestReferenceCompare/axes_grid1_showcase` reports
+      `RMSE 4.95`; residual is mostly image edge/tick/text antialiasing.
 - [ ] Likely core areas: `core/image_grid.go` inch-vs-fraction divider spacing,
       anchored text bbox padding, renderer text/line antialiasing.
 

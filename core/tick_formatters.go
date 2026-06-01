@@ -593,33 +593,48 @@ func (f LogitFormatter) Format(x float64) string {
 	if f.Minor || x <= 0 || x >= 1 || math.IsNaN(x) {
 		return ""
 	}
+	label := ""
 	if approx(2*x, 1, 1e-12) {
 		if f.OneHalf != "" {
-			return f.OneHalf
+			label = f.OneHalf
+		} else {
+			label = `\frac{1}{2}`
 		}
-		return "1/2"
-	}
-	if x < 0.5 && isPowerOfTen(x) {
-		return "10" + superscriptInt(int(math.Round(math.Log10(x))))
-	}
-	if x > 0.5 && isPowerOfTen(1-x) {
-		label := "10" + superscriptInt(int(math.Round(math.Log10(1-x))))
+	} else if x < 0.5 && isPowerOfTen(x) {
+		label = fmt.Sprintf("10^{%d}", int(math.Round(math.Log10(x))))
+	} else if x > 0.5 && isPowerOfTen(1-x) {
+		baseLabel := fmt.Sprintf("10^{%d}", int(math.Round(math.Log10(1-x))))
 		if f.UseOverline {
-			return "overline(" + label + ")"
+			label = `\overline{` + baseLabel + `}`
+		} else {
+			label = "1-" + baseLabel
 		}
-		return "1-" + label
+	} else if x < 0.1 {
+		label = logitFormatValue(x, true)
+	} else if x > 0.9 {
+		baseLabel := logitFormatValue(1-x, true)
+		if f.UseOverline {
+			label = `\overline{` + baseLabel + `}`
+		} else {
+			label = "1-" + baseLabel
+		}
+	} else {
+		label = logitFormatValue(x, false)
 	}
-	if x < 0.1 {
+	return `$\mathdefault{` + label + `}$`
+}
+
+func logitFormatValue(x float64, sciNotation bool) string {
+	if !sciNotation {
 		return strconv.FormatFloat(x, 'g', -1, 64)
 	}
-	if x > 0.9 {
-		label := strconv.FormatFloat(1-x, 'g', -1, 64)
-		if f.UseOverline {
-			return "overline(" + label + ")"
-		}
-		return "1-" + label
+	exp := int(math.Floor(math.Log10(x)))
+	mantissa := x * math.Pow10(-exp)
+	if approx(mantissa, math.Round(mantissa), 1e-12) {
+		mantissa = math.Round(mantissa)
 	}
-	return strconv.FormatFloat(x, 'g', -1, 64)
+	mantissaLabel := strconv.FormatFloat(mantissa, 'g', -1, 64)
+	return fmt.Sprintf(`%s\cdot10^{%d}`, mantissaLabel, exp)
 }
 
 func formatStrMethodValue(x float64, spec string) string {

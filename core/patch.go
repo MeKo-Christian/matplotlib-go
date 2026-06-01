@@ -147,6 +147,7 @@ func (p *Patch) strokePaint(color render.Color) render.Paint {
 		LineCap:     p.LineCap,
 		Dashes:      append([]float64(nil), p.Dashes...),
 		PathEffects: cloneRenderPathEffects(p.PathEffects),
+		Snap:        render.SnapAuto,
 	}
 }
 
@@ -167,7 +168,7 @@ func (p *Patch) drawStyledPath(r render.Renderer, fillPath, strokePath geom.Path
 	}
 
 	if len(fillPath.C) > 0 {
-		paint := render.Paint{Fill: faceColor}
+		paint := render.Paint{Fill: faceColor, Snap: render.SnapAuto}
 		paint.PathEffects = cloneRenderPathEffects(p.PathEffects)
 		if nativeHatch && p.Hatch != "" {
 			paint.Hatch = p.Hatch

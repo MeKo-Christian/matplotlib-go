@@ -573,6 +573,21 @@ func TestLayoutMathTextAddsMathOperatorSpacing(t *testing.T) {
 		t.Fatalf("binary operator spacing did not widen expression enough: %+v", compact)
 	}
 
+	times, ok := LayoutMathText(testMeasurer{}, `1\times x`, 20, "base", Options{})
+	if !ok {
+		t.Fatal("times LayoutMathText returned !ok")
+	}
+	if times.Width != compact.Width {
+		t.Fatalf(`\times should use Matplotlib binary operator spacing: times=%v compact=%v`, times.Width, compact.Width)
+	}
+	styledTimes, ok := LayoutMathText(testMeasurer{}, `\mathdefault{1\times{x}}`, 20, "base", Options{})
+	if !ok {
+		t.Fatal("styled times LayoutMathText returned !ok")
+	}
+	if styledTimes.Width != compact.Width {
+		t.Fatalf(`\mathdefault{\times} should keep binary operator spacing: styled=%v compact=%v`, styledTimes.Width, compact.Width)
+	}
+
 	unary, ok := LayoutMathText(testMeasurer{}, `-x`, 20, "base", Options{})
 	if !ok {
 		t.Fatal("unary LayoutMathText returned !ok")

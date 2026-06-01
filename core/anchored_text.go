@@ -170,13 +170,13 @@ func (a *AnchoredTextBox) Draw(r render.Renderer, ctx *DrawContext) {
 		LineCap:   render.CapButt,
 	})
 
-	y := boxLayout.contentBox.Min.Y + boxLayout.padding
+	y := boxLayout.contentBox.Max.Y - boxLayout.padding
 	leftX := boxLayout.contentBox.Min.X + boxLayout.padding
 	rightX := boxLayout.contentBox.Max.X - boxLayout.padding
 	for i, line := range lines {
 		layout := layouts[i]
 		if line == "" {
-			y += a.lineAdvance(fontSize, ctx)
+			y -= a.lineAdvance(fontSize, ctx)
 			continue
 		}
 		var anchorX float64
@@ -197,7 +197,7 @@ func (a *AnchoredTextBox) Draw(r render.Renderer, ctx *DrawContext) {
 			ctx.RC.FontKey,
 			ctx.RC.UseTeX,
 		)
-		y += a.lineAdvance(fontSize, ctx)
+		y -= a.lineAdvance(fontSize, ctx)
 	}
 }
 

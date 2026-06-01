@@ -138,7 +138,7 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	ax.colorbarBounds = cloneFloat64s(boundaries)
 	ax.ShowFrame = false
 	configureColorbarAxes(ax, location, cfg.Label)
-	configureColorbarScale(ax, mapping, location, cfg.Ticks, boundaries)
+	configureColorbarScale(ax, mapping, location, cfg.Ticks, boundaries, extend)
 
 	ax.Add(&Colorbar{
 		Mapping:     mapping,
@@ -171,7 +171,7 @@ func syncColorbarMapping(ax *Axes) {
 		}
 		mapping := cb.currentMapping()
 		cb.Mapping = mapping
-		configureColorbarScale(ax, mapping, ax.colorbarLocation, ax.colorbarTicks, ax.colorbarBounds)
+		configureColorbarScale(ax, mapping, ax.colorbarLocation, ax.colorbarTicks, ax.colorbarBounds, ax.colorbarExtend)
 	}
 }
 
@@ -259,6 +259,53 @@ func colorbarOptionBoundaries(values, boundaries []float64) []float64 {
 	out[0] = 2*out[1] - out[2]
 	last := len(out) - 1
 	out[last] = 2*out[last-1] - out[last-2]
+	return out
+}
+
+func colorbarInteriorBoundaries(boundaries []float64, extend string) []float64 {
+	out := cloneFloat64s(boundaries)
+	if len(out) < 2 {
+		return out
+	}
+	switch normalizeColorbarExtend(extend) {
+	case "min":
+		if len(out) > 2 {
+			out = out[1:]
+		}
+	case "max":
+		if len(out) > 2 {
+			out = out[:len(out)-1]
+		}
+	case "both":
+		if len(out) > 3 {
+			out = out[1 : len(out)-1]
+		}
+	}
+	if len(out) < 2 {
+		return cloneFloat64s(boundaries)
+	}
+	return out
+}
+
+func colorbarInteriorValues(values []float64, boundaries []float64, extend string) []float64 {
+	out := cloneFloat64s(values)
+	if len(out) != len(boundaries)-1 {
+		return out
+	}
+	switch normalizeColorbarExtend(extend) {
+	case "min":
+		if len(out) > 1 {
+			out = out[1:]
+		}
+	case "max":
+		if len(out) > 1 {
+			out = out[:len(out)-1]
+		}
+	case "both":
+		if len(out) > 2 {
+			out = out[1 : len(out)-1]
+		}
+	}
 	return out
 }
 
@@ -492,18 +539,19 @@ func colorbarBaseRect(parent *Axes) geom.Rect {
 	return parent.RectFraction
 }
 
-func configureColorbarScale(ax *Axes, mapping ScalarMapInfo, location string, ticks, boundaries []float64) {
+func configureColorbarScale(ax *Axes, mapping ScalarMapInfo, location string, ticks, boundaries []float64, extend string) {
 	if ax == nil {
 		return
 	}
 	vmin, vmax := mapping.VMin, mapping.VMax
 	if colorbarIsHorizontal(location) {
-		configureHorizontalColorbarScale(ax, mapping, location, ticks, boundaries)
+		configureHorizontalColorbarScale(ax, mapping, location, ticks, boundaries, extend)
 		return
 	}
 	target := verticalColorbarAxis(ax, location)
 	if len(boundaries) >= 2 {
-		ax.SetYLim(boundaries[0], boundaries[len(boundaries)-1])
+		inside := colorbarInteriorBoundaries(boundaries, extend)
+		ax.SetYLim(inside[0], inside[len(inside)-1])
 		if target != nil {
 			target.Locator = FixedLocator{TicksList: cloneFloat64s(boundaries)}
 			target.Formatter = ScalarFormatter{Prec: 6}
@@ -522,6 +570,19 @@ func configureColorbarScale(ax *Axes, mapping ScalarMapInfo, location string, ti
 		if target != nil {
 			target.Locator = LogLocator{Base: base}
 			target.Formatter = LogFormatter{Base: base}
+		}
+	case AsinhNorm:
+		if isFinite(vmin) && isFinite(vmax) && vmin != vmax {
+			linearWidth := asinhNormLinearWidth(norm.LinearWidth)
+			ax.YScale = transform.NewAsinh(vmin, vmax, linearWidth)
+			ax.yLimitsManual = true
+			configureScaleAxes(ax.YAxis, ax.YAxisRight, "asinh", transform.ResolveScaleOptions(
+				transform.WithScaleDomain(vmin, vmax),
+				transform.WithScaleBase(10),
+				transform.WithScaleLinearWidth(linearWidth),
+			))
+		} else {
+			ax.SetYLim(vmin, vmax)
 		}
 	case BoundaryNorm:
 		ax.SetYLim(vmin, vmax)
@@ -553,14 +614,15 @@ func verticalColorbarAxis(ax *Axes, location string) *Axis {
 	return ax.RightAxis()
 }
 
-func configureHorizontalColorbarScale(ax *Axes, mapping ScalarMapInfo, location string, ticks, boundaries []float64) {
+func configureHorizontalColorbarScale(ax *Axes, mapping ScalarMapInfo, location string, ticks, boundaries []float64, extend string) {
 	vmin, vmax := mapping.VMin, mapping.VMax
 	target := ax.XAxis
 	if location == "top" {
 		target = ax.TopAxis()
 	}
 	if len(boundaries) >= 2 {
-		ax.SetXLim(boundaries[0], boundaries[len(boundaries)-1])
+		inside := colorbarInteriorBoundaries(boundaries, extend)
+		ax.SetXLim(inside[0], inside[len(inside)-1])
 		if target != nil {
 			target.Locator = FixedLocator{TicksList: cloneFloat64s(boundaries)}
 			target.Formatter = ScalarFormatter{Prec: 6}
@@ -579,6 +641,19 @@ func configureHorizontalColorbarScale(ax *Axes, mapping ScalarMapInfo, location 
 		if target != nil {
 			target.Locator = LogLocator{Base: base}
 			target.Formatter = LogFormatter{Base: base}
+		}
+	case AsinhNorm:
+		if isFinite(vmin) && isFinite(vmax) && vmin != vmax {
+			linearWidth := asinhNormLinearWidth(norm.LinearWidth)
+			ax.XScale = transform.NewAsinh(vmin, vmax, linearWidth)
+			ax.xLimitsManual = true
+			configureScaleAxes(ax.XAxis, ax.XAxisTop, "asinh", transform.ResolveScaleOptions(
+				transform.WithScaleDomain(vmin, vmax),
+				transform.WithScaleBase(10),
+				transform.WithScaleLinearWidth(linearWidth),
+			))
+		} else {
+			ax.SetXLim(vmin, vmax)
 		}
 	case BoundaryNorm:
 		ax.SetXLim(vmin, vmax)
@@ -795,16 +870,16 @@ func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRe
 	height := clip.H() * 0.05
 	if extend == "min" || extend == "both" {
 		verts := []geom.Pt{
-			{X: clip.Min.X, Y: clip.Max.Y},
-			{X: clip.Max.X, Y: clip.Max.Y},
-			{X: (clip.Min.X + clip.Max.X) * 0.5, Y: clip.Max.Y + height},
+			{X: clip.Min.X, Y: clip.Min.Y},
+			{X: (clip.Min.X + clip.Max.X) * 0.5, Y: clip.Min.Y - height},
+			{X: clip.Max.X, Y: clip.Min.Y},
 		}
 		if extendRect {
 			verts = []geom.Pt{
-				{X: clip.Min.X, Y: clip.Max.Y},
-				{X: clip.Max.X, Y: clip.Max.Y},
-				{X: clip.Max.X, Y: clip.Max.Y + height},
-				{X: clip.Min.X, Y: clip.Max.Y + height},
+				{X: clip.Min.X, Y: clip.Min.Y - height},
+				{X: clip.Max.X, Y: clip.Min.Y - height},
+				{X: clip.Max.X, Y: clip.Min.Y},
+				{X: clip.Min.X, Y: clip.Min.Y},
 			}
 		}
 		out = append(out, colorbarExtensionPath{
@@ -817,16 +892,16 @@ func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRe
 	}
 	if extend == "max" || extend == "both" {
 		verts := []geom.Pt{
-			{X: clip.Min.X, Y: clip.Min.Y},
-			{X: (clip.Min.X + clip.Max.X) * 0.5, Y: clip.Min.Y - height},
-			{X: clip.Max.X, Y: clip.Min.Y},
+			{X: clip.Min.X, Y: clip.Max.Y},
+			{X: clip.Max.X, Y: clip.Max.Y},
+			{X: (clip.Min.X + clip.Max.X) * 0.5, Y: clip.Max.Y + height},
 		}
 		if extendRect {
 			verts = []geom.Pt{
-				{X: clip.Min.X, Y: clip.Min.Y - height},
-				{X: clip.Max.X, Y: clip.Min.Y - height},
-				{X: clip.Max.X, Y: clip.Min.Y},
-				{X: clip.Min.X, Y: clip.Min.Y},
+				{X: clip.Min.X, Y: clip.Max.Y},
+				{X: clip.Max.X, Y: clip.Max.Y},
+				{X: clip.Max.X, Y: clip.Max.Y + height},
+				{X: clip.Min.X, Y: clip.Max.Y + height},
 			}
 		}
 		out = append(out, colorbarExtensionPath{
@@ -944,7 +1019,34 @@ func (c *Colorbar) boundaryData(mapping ScalarMapInfo) ([]float64, []float64, bo
 			values[i] = (boundaries[i] + boundaries[i+1]) * 0.5
 		}
 	}
-	return boundaries, values, true
+	return colorbarInteriorBoundaries(boundaries, c.Extend), colorbarInteriorValues(values, boundaries, c.Extend), true
+}
+
+func (c *Colorbar) boundaryExtensionValue(mapping ScalarMapInfo, overRange bool) (float64, bool) {
+	if c == nil {
+		return 0, false
+	}
+	extend := normalizeColorbarExtend(c.Extend)
+	if extend == "neither" {
+		return 0, false
+	}
+	boundaries := cloneFloat64s(c.Boundaries)
+	if len(boundaries) < 2 {
+		if norm, ok := mapping.Norm.(BoundaryNorm); ok && len(norm.Boundaries) >= 2 {
+			boundaries = cloneFloat64s(norm.Boundaries)
+		}
+	}
+	values := cloneFloat64s(c.Values)
+	if len(boundaries) < 2 || len(values) != len(boundaries)-1 {
+		return 0, false
+	}
+	if !overRange && (extend == "min" || extend == "both") {
+		return values[0], true
+	}
+	if overRange && (extend == "max" || extend == "both") {
+		return values[len(values)-1], true
+	}
+	return 0, false
 }
 
 func drawColorbarBoundaryDividers(r render.Renderer, clip geom.Rect, boundaries []float64, spacing, orientation string, color render.Color, width float64) {
@@ -1020,12 +1122,17 @@ func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 
 	orientation := c.normalizedOrientation()
 	for _, ext := range colorbarExtensionPaths(ctx.Clip, c.Extend, orientation, c.ExtendRect) {
-		t := -1.0
-		if ext.OverRange {
-			t = 2
+		col := render.Color{}
+		if value, ok := c.boundaryExtensionValue(mapping, ext.OverRange); ok {
+			col = mapping.Color(value, alpha)
+		} else {
+			t := -1.0
+			if ext.OverRange {
+				t = 2
+			}
+			col = cmap.AtValue(t)
+			col.A *= alpha
 		}
-		col := cmap.AtValue(t)
-		col.A *= alpha
 		r.Path(ext.Path, &render.Paint{
 			Fill:      col,
 			LineJoin:  render.JoinMiter,
@@ -1087,15 +1194,15 @@ func colorbarExtendedOutlinePath(clip geom.Rect, extend, orientation string, ext
 	}
 
 	height := clip.H() * 0.05
-	bottom := clip.Max.Y
+	bottom := clip.Min.Y
 	bottomTip := bottom
 	if extend == "min" || extend == "both" {
-		bottomTip += height
+		bottomTip -= height
 	}
-	top := clip.Min.Y
+	top := clip.Max.Y
 	topTip := top
 	if extend == "max" || extend == "both" {
-		topTip -= height
+		topTip += height
 	}
 	if extendRect {
 		return geom.Path{

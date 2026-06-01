@@ -305,7 +305,7 @@ func geoTickLabelOrigin(a *Axis, ctx *DrawContext, tick float64, layout singleLi
 	switch a.Side {
 	case AxisBottom:
 		pos := ctx.DataToPixel.Apply(geom.Pt{X: tick, Y: 0})
-		anchor := geom.Pt{X: pos.X, Y: pos.Y - geoXAxisLabelPadPx}
+		anchor := geom.Pt{X: pos.X, Y: pos.Y + geoXAxisLabelPadPx}
 		return alignedSingleLineOrigin(anchor, layout, TextAlignCenter, textLayoutVAlignBottom), true
 	case AxisTop:
 		pos := ctx.DataToPixel.Apply(geom.Pt{X: tick, Y: 0})

@@ -158,13 +158,42 @@ func TestMollweideXAxisTickLabelsUseGeoTextTransform(t *testing.T) {
 	pos := ctx.DataToPixel.Apply(geom.Pt{X: 0, Y: 0})
 	layout := measureSingleLineTextLayout(r, "0", tickLabelFontSize(ax.XAxis, ctx), ctx.RC.FontKey)
 	want := alignedSingleLineOrigin(
-		geom.Pt{X: pos.X, Y: pos.Y - geoXAxisLabelPadPx},
+		geom.Pt{X: pos.X, Y: pos.Y + geoXAxisLabelPadPx},
 		layout,
 		TextAlignCenter,
 		textLayoutVAlignBottom,
 	)
 	if got := r.origins[0]; !approx(got.X, want.X, 1e-9) || !approx(got.Y, want.Y, 1e-9) {
 		t.Fatalf("center x tick label origin = %+v, want %+v", got, want)
+	}
+	if !(r.origins[0].Y > pos.Y) {
+		t.Fatalf("geo x tick label should be above equator, got origin=%+v equator=%+v", r.origins[0], pos)
+	}
+}
+
+func TestGeoXAxisLabelUsesFrameBottomNotEquatorTickBounds(t *testing.T) {
+	fig := NewFigure(720, 420)
+	ax, err := fig.AddAxesProjection(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.14},
+		Max: geom.Pt{X: 0.92, Y: 0.86},
+	}, "aitoff")
+	if err != nil {
+		t.Fatalf("AddAxesProjection(aitoff): %v", err)
+	}
+	ax.SetXLabel("longitude")
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	px := ax.adjustedLayout(fig)
+	r := &axesLabelRecordingRenderer{}
+
+	anchor, _ := xLabelAnchorPoint(ax, r, ctx, px, AxisBottom, figureTextAlignment{})
+	wantY := px.Min.Y - axisLabelPadPx(ctx)
+	if !approx(anchor.Y, wantY, 1e-9) {
+		t.Fatalf("geo x-label anchor y = %v, want frame bottom minus pad %v", anchor.Y, wantY)
+	}
+
+	equatorY := ctx.DataToPixel.Apply(geom.Pt{X: 0, Y: 0}).Y
+	if !(anchor.Y < equatorY) {
+		t.Fatalf("geo x-label anchor should be below equator tick labels, got anchor=%v equator=%v", anchor.Y, equatorY)
 	}
 }
 

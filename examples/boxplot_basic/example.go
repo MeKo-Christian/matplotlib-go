@@ -50,6 +50,7 @@ func Plot() *core.Figure {
 	medianWidth := 1.8
 	flierSize := 4.0
 	showFliers := true
+	manageTicks := false
 	ax.BoxPlots(datasets, core.BoxPlotsOptions{
 		Positions:    positions,
 		Width:        &boxWidth,
@@ -65,6 +66,7 @@ func Plot() *core.Figure {
 		FlierSize:    &flierSize,
 		Alpha:        &alpha,
 		ShowFliers:   &showFliers,
+		ManageTicks:  &manageTicks,
 	})
 
 	grid := ax.AddYGrid()

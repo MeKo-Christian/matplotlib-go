@@ -150,6 +150,7 @@ type mathLayoutNode struct {
 	families []string
 	style    FontStyle
 	weight   int
+	spaced   bool
 }
 
 type mathLayoutParser struct {
@@ -313,7 +314,9 @@ func (p *mathLayoutParser) parseUntil(stop rune) mathLayoutNode {
 			children = attachMathScript(children, r, p.parseArgumentNode())
 		case '\\':
 			node := p.parseCommandNode()
-			if node.kind == mathLayoutText {
+			if node.spaced {
+				children = p.appendMathSpacedOperator(children, node.text, stop)
+			} else if node.kind == mathLayoutText {
 				appendText(node.text)
 			} else if !node.isEmpty() {
 				children = append(children, node)
@@ -391,6 +394,9 @@ func (p *mathLayoutParser) parseCommandNode() mathLayoutNode {
 	name := string(p.input[start:p.pos])
 
 	if mapped, ok := mathTextCommandMap[name]; ok {
+		if mathTextCommandNeedsOperatorSpacing(name) {
+			return mathLayoutNode{kind: mathLayoutText, text: mapped, spaced: true}
+		}
 		return mathLayoutNode{kind: mathLayoutText, text: mapped}
 	}
 	if width, ok := mathTextSpacingCommandWidths[name]; ok {
@@ -547,14 +553,19 @@ func (p *mathLayoutParser) appendMathOperator(children []mathLayoutNode, op rune
 	if op == '-' {
 		text = "−"
 	}
-	if p.implicitItalic && p.hasPreviousMathOperand(children) && p.hasNextMathOperand(stop) {
+	children = p.appendMathSpacedOperator(children, text, stop)
+	p.pos++
+	return children
+}
+
+func (p *mathLayoutParser) appendMathSpacedOperator(children []mathLayoutNode, text string, stop rune) []mathLayoutNode {
+	if p.hasPreviousMathOperand(children) && p.hasNextMathOperand(stop) {
 		children = append(children, mathLayoutNode{kind: mathLayoutSpace, widthEm: 0.2})
 		children = appendMathText(children, text)
 		children = append(children, mathLayoutNode{kind: mathLayoutSpace, widthEm: 0.2})
 	} else {
 		children = appendMathText(children, text)
 	}
-	p.pos++
 	return children
 }
 
@@ -1845,6 +1856,48 @@ var mathOverUnderFunctionTexts = map[string]bool{
 // \, thin space (all functions except the over-under ones).
 func mathFunctionTakesThinSpace(op string) bool {
 	return !mathOverUnderFunctionTexts[op]
+}
+
+var mathTextSpacedCommandSymbols = map[string]struct{}{
+	"pm":             {},
+	"mp":             {},
+	"times":          {},
+	"cdot":           {},
+	"div":            {},
+	"ast":            {},
+	"circ":           {},
+	"bullet":         {},
+	"le":             {},
+	"leq":            {},
+	"ge":             {},
+	"geq":            {},
+	"ne":             {},
+	"neq":            {},
+	"approx":         {},
+	"equiv":          {},
+	"propto":         {},
+	"sim":            {},
+	"in":             {},
+	"notin":          {},
+	"subset":         {},
+	"subseteq":       {},
+	"supset":         {},
+	"supseteq":       {},
+	"cup":            {},
+	"cap":            {},
+	"land":           {},
+	"lor":            {},
+	"oplus":          {},
+	"otimes":         {},
+	"to":             {},
+	"rightarrow":     {},
+	"leftarrow":      {},
+	"leftrightarrow": {},
+}
+
+func mathTextCommandNeedsOperatorSpacing(name string) bool {
+	_, ok := mathTextSpacedCommandSymbols[name]
+	return ok
 }
 
 // mathNextCharSuppressesFunctionSpace reports whether the next non-space char

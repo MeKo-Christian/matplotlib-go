@@ -426,7 +426,7 @@ func (q *Quiver) unitDirectionAt(ctx *DrawContext, i int) (geom.Pt, bool) {
 	if length == 0 {
 		return geom.Pt{}, false
 	}
-	return geom.Pt{X: u / length, Y: -v / length}, true
+	return geom.Pt{X: u / length, Y: v / length}, true
 }
 
 func (q *Quiver) baseDisplayLengthAt(ctx *DrawContext, i int) (float64, bool) {

@@ -42,8 +42,8 @@ func Plot() *core.Figure {
 		FontSize: 12,
 	})
 	ax.Annotate(`$\Delta y \approx \frac{1}{2}$`, 3.2, 0.35, core.AnnotationOptions{
-		OffsetX:    34,
-		OffsetY:    -26,
+		OffsetX:    common.ReferencePointsToPixels(34),
+		OffsetY:    common.ReferencePointsToPixels(-26),
 		FontSize:   12,
 		ArrowColor: render.Color{R: 0, G: 0, B: 0, A: 1},
 		ArrowWidth: 1,

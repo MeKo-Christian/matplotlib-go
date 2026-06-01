@@ -43,6 +43,29 @@ func TestRectangleDrawAndBounds(t *testing.T) {
 	}
 }
 
+func TestPatchDrawUsesMatplotlibSnapAuto(t *testing.T) {
+	rect := &Rectangle{
+		Patch: Patch{
+			FaceColor: render.Color{R: 0.8, G: 0.2, B: 0.2, A: 1},
+			EdgeColor: render.Color{A: 1},
+			EdgeWidth: 1,
+		},
+		XY:     geom.Pt{X: 1, Y: 2},
+		Width:  3,
+		Height: 4,
+	}
+
+	r := &recordingRenderer{}
+	rect.Draw(r, createTestDrawContext())
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("expected one path call, got %d", len(r.pathCalls))
+	}
+	if got := r.pathCalls[0].paint.Snap; got != render.SnapAuto {
+		t.Fatalf("patch snap mode = %v, want Matplotlib SnapAuto", got)
+	}
+}
+
 func TestFancyBboxPatchRoundUsesQuadraticCornersAndHatch(t *testing.T) {
 	box := &FancyBboxPatch{
 		Patch: Patch{

@@ -545,9 +545,6 @@ func contourLocatorLevels(minValue, maxValue float64, levelCount int, filled boo
 		if !isFinite(level) {
 			continue
 		}
-		if !filled && (level < minValue || level > maxValue) {
-			continue
-		}
 		out = append(out, level)
 	}
 	return dedupeFloat64(out)

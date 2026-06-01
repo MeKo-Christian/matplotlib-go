@@ -47,24 +47,17 @@ func Plot() *core.Figure {
 		LineWidth: &meshWidth,
 		Label:     "triplot",
 	})
-	// Mirror Python ax.text(0.98, 0.02, ..., ha="right", va="bottom",
-	// transform=ax.transAxes): place the bbox so its lower-right corner sits
-	// at axes-fraction (0.98, 0.02), padded outward by `pad` so the text edge
-	// (not the bbox edge) lands at 0.98/0.02.
-	meshAx.AddAnchoredText("explicit triangular mesh", core.AnchoredTextOptions{
-		Locator: core.BBoxToAnchorLocator{
-			X: 0.98, Y: 0.02,
-			Location: core.LegendLowerRight,
-			OffsetX:  axTextPadPx,
-			OffsetY:  axTextPadPx,
+	meshAx.Text(0.98, 0.02, "explicit triangular mesh", core.TextOptions{
+		Coords:   core.Coords(core.CoordAxes),
+		HAlign:   core.TextAlignRight,
+		VAlign:   core.TextVAlignBottom,
+		FontSize: 10,
+		BBox: &core.TextBBoxOptions{
+			FaceColor:    bboxFace,
+			EdgeColor:    bboxBorder,
+			Padding:      axTextPadPx,
+			CornerRadius: axTextPadPx,
 		},
-		FontSize:        10,
-		Padding:         axTextPadPx,
-		CornerRadius:    axTextPadPx,
-		BackgroundColor: bboxFace,
-		BorderColor:     bboxBorder,
-		BorderWidth:     1,
-		TextAlign:       core.TextAlignRight,
 	})
 
 	colorAx := fig.AddAxes(geom.Rect{
@@ -110,23 +103,16 @@ func Plot() *core.Figure {
 		LevelCount: 7,
 	})
 
-	// Mirror Python fig.text(0.98, 0.98, ..., ha="right", va="top"): place the
-	// bbox so its upper-right corner sits at figure-fraction (0.98, 0.98),
-	// padded outward by `pad` so the text edge lands exactly at the anchor.
-	fig.AddAnchoredText("unstructured gallery family\ntriangulation, tripcolor, tricontour", core.AnchoredTextOptions{
-		Locator: core.BBoxToAnchorLocator{
-			X: 0.98, Y: 0.98,
-			Location: core.LegendUpperRight,
-			OffsetX:  figTextPadPx,
-			OffsetY:  -figTextPadPx,
+	fig.Text(0.98, 0.98, "unstructured gallery family\ntriangulation, tripcolor, tricontour", core.TextOptions{
+		HAlign:   core.TextAlignRight,
+		VAlign:   core.TextVAlignTop,
+		FontSize: 11,
+		BBox: &core.TextBBoxOptions{
+			FaceColor:    bboxFace,
+			EdgeColor:    bboxBorder,
+			Padding:      figTextPadPx,
+			CornerRadius: figTextPadPx,
 		},
-		FontSize:        11,
-		Padding:         figTextPadPx,
-		CornerRadius:    figTextPadPx,
-		BackgroundColor: bboxFace,
-		BorderColor:     bboxBorder,
-		BorderWidth:     1,
-		TextAlign:       core.TextAlignRight,
 	})
 
 	return fig

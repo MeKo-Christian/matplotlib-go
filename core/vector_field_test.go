@@ -194,6 +194,31 @@ func TestQuiverExplicitAngles(t *testing.T) {
 	}
 }
 
+func TestQuiverUVDirectionUsesMatplotlibComplexAngle(t *testing.T) {
+	ctx := createTestDrawContext()
+	q := &Quiver{
+		Anchors:       []geom.Pt{{X: 1, Y: 1}},
+		U:             []float64{0},
+		V:             []float64{1},
+		Pivot:         vectorPivotTail,
+		Angles:        quiverAnglesUV,
+		Units:         "dots",
+		ScaleUnits:    "dots",
+		Width:         4,
+		Scale:         1,
+		ScaleSet:      true,
+		forceLengthPx: 12,
+	}
+
+	vector, ok := q.directionVectorAt(ctx, 0)
+	if !ok {
+		t.Fatal("expected display vector")
+	}
+	if math.Abs(vector.X) > 1e-9 || vector.Y <= 0 {
+		t.Fatalf("angles='uv' should follow Matplotlib np.angle(U+Vi), got %+v", vector)
+	}
+}
+
 func TestQuiverKeyDrawOverlay(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax := fig.AddAxes(geom.Rect{
@@ -271,6 +296,33 @@ func TestBarbsDefaultLengthUsesPoints(t *testing.T) {
 	}
 }
 
+func TestBarbsPointsLengthMatchesMatplotlibCollectionScale(t *testing.T) {
+	length := 6.0
+	b := &Barbs{
+		Anchors:    []geom.Pt{{X: 1, Y: 1}},
+		U:          []float64{10},
+		V:          []float64{0},
+		BarbColor:  render.Color{A: 1},
+		FlagColor:  render.Color{A: 1},
+		LineWidth:  1,
+		Pivot:      vectorPivotTip,
+		Length:     length,
+		Units:      "points",
+		Sizes:      defaultBarbSizes(nil),
+		Increments: defaultBarbIncrements(nil),
+		Rounding:   true,
+	}
+
+	collection := b.asPathCollection(createTestDrawContext())
+	if len(collection.Paths) != 1 || len(collection.Paths[0].V) < 2 {
+		t.Fatalf("expected one display-space barb path, got %+v", collection.Paths)
+	}
+	wantLength := length * (100.0 / 72.0) * (length / 2.0)
+	if !approx(collection.Paths[0].V[1].X, -wantLength, 1e-9) {
+		t.Fatalf("barb staff endpoint X = %v, want %v", collection.Paths[0].V[1].X, -wantLength)
+	}
+}
+
 func TestBarbsFindTailsAndFlip(t *testing.T) {
 	b := &Barbs{
 		U:          []float64{35},
@@ -318,10 +370,10 @@ func TestBarbGlyphPathMatchesMatplotlibDisplayGeometry(t *testing.T) {
 	wantFull := []geom.Pt{
 		{X: 0, Y: 0},
 		{X: -28, Y: 0},
-		{X: -31.5, Y: -11.2},
+		{X: -31.5, Y: 11.2},
 		{X: -28, Y: 0},
 		{X: -24.5, Y: 0},
-		{X: -28, Y: -11.2},
+		{X: -28, Y: 11.2},
 		{X: -24.5, Y: 0},
 	}
 	assertPathVerticesClose(t, full, wantFull)
@@ -330,7 +382,7 @@ func TestBarbGlyphPathMatchesMatplotlibDisplayGeometry(t *testing.T) {
 	wantFlag := []geom.Pt{
 		{X: 0, Y: 0},
 		{X: -28, Y: 0},
-		{X: -24.5, Y: -11.2},
+		{X: -24.5, Y: 11.2},
 		{X: -21, Y: 0},
 	}
 	assertPathVerticesClose(t, flag, wantFlag)
@@ -340,7 +392,7 @@ func TestBarbGlyphPathMatchesMatplotlibDisplayGeometry(t *testing.T) {
 		{X: 0, Y: 0},
 		{X: -28, Y: 0},
 		{X: -22.75, Y: 0},
-		{X: -24.5, Y: -5.6},
+		{X: -24.5, Y: 5.6},
 		{X: -22.75, Y: 0},
 	}
 	assertPathVerticesClose(t, half, wantHalf)

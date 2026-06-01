@@ -1209,26 +1209,11 @@ func resolvedTextBBoxColor(c render.Color) render.Color {
 }
 
 func annotationHAlign(opt AnnotationOptions) TextAlign {
-	if opt.HAlign != TextAlignLeft {
-		return opt.HAlign
-	}
-	if opt.OffsetX < 0 {
-		return TextAlignRight
-	}
-	return TextAlignLeft
+	return opt.HAlign
 }
 
 func annotationVAlign(opt AnnotationOptions) TextVerticalAlign {
-	if opt.VAlign != TextVAlignBaseline {
-		return opt.VAlign
-	}
-	if opt.OffsetY > 0 {
-		return TextVAlignBottom
-	}
-	if opt.OffsetY < 0 {
-		return TextVAlignTop
-	}
-	return TextVAlignMiddle
+	return opt.VAlign
 }
 
 func alignedTextOrigin(anchor geom.Pt, metrics render.TextMetrics, hAlign TextAlign, vAlign TextVerticalAlign) geom.Pt {

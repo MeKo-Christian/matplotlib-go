@@ -36,21 +36,23 @@ func Plot() *core.Figure {
 		return fig
 	}
 
-	tilePad := 0.25 * 9 * fig.RC.DPI / 72
 	for row := range 2 {
 		for col := range 2 {
 			ax := grid.At(row, col)
 			ax.SetTitle("Tile " + string(rune('1'+row)) + "," + string(rune('1'+col)))
 			ax.ImShow(surface(24, 24, float64(row*2+col)))
-			ax.AddAnchoredText("image grid", core.AnchoredTextOptions{
-				Location:        core.LegendLowerRight,
-				Locator:         core.NewAnchoredOffsetLocator(core.LegendLowerRight, 3, 1, 3),
-				Padding:         tilePad,
-				CornerRadius:    tilePad,
-				BackgroundColor: render.Color{R: 1, G: 1, B: 1, A: 1},
-				BorderColor:     render.Color{R: 0.75, G: 0.75, B: 0.75, A: 1},
-				TextColor:       render.Color{R: 0, G: 0, B: 0, A: 1},
-				FontSize:        9,
+			labelPad := fontPad(9, 0.25, fig.RC.DPI)
+			ax.Text(0.98, 0.02, "image grid", core.TextOptions{
+				Coords:   core.Coords(core.CoordAxes),
+				HAlign:   core.TextAlignRight,
+				VAlign:   core.TextVAlignBottom,
+				FontSize: 9,
+				BBox: &core.TextBBoxOptions{
+					FaceColor:    render.Color{R: 1, G: 1, B: 1, A: 1},
+					EdgeColor:    render.Color{R: 0.75, G: 0.75, B: 0.75, A: 1},
+					Padding:      labelPad,
+					CornerRadius: labelPad,
+				},
 			})
 		}
 	}
@@ -121,6 +123,10 @@ func Render() image.Image {
 	r.SetResolution(DPI)
 	core.DrawFigure(fig, r)
 	return r.GetImage()
+}
+
+func fontPad(fontSize, fraction, dpi float64) float64 {
+	return fraction * fontSize * dpi / 72
 }
 
 func surface(rows, cols int, phase float64) [][]float64 {

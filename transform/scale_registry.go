@@ -312,27 +312,33 @@ func (s SymLog) Inv(u float64) (float64, bool) {
 }
 
 func (s SymLog) transform(x float64) (float64, bool) {
+	linearScaleAdjusted := s.linearScaleAdjusted()
 	sign := 1.0
 	if x < 0 {
 		sign = -1
 		x = -x
 	}
 	if x <= s.LinThresh {
-		return sign * s.LinearScale * x / s.LinThresh, true
+		return sign * x * linearScaleAdjusted, true
 	}
-	return sign * (s.LinearScale + math.Log(x/s.LinThresh)/math.Log(s.Base)), true
+	return sign * s.LinThresh * (linearScaleAdjusted + math.Log(x/s.LinThresh)/math.Log(s.Base)), true
 }
 
 func (s SymLog) inverse(y float64) (float64, bool) {
+	linearScaleAdjusted := s.linearScaleAdjusted()
 	sign := 1.0
 	if y < 0 {
 		sign = -1
 		y = -y
 	}
-	if y <= s.LinearScale {
-		return sign * s.LinThresh * y / s.LinearScale, true
+	if y <= s.LinThresh*linearScaleAdjusted {
+		return sign * y / linearScaleAdjusted, true
 	}
-	return sign * s.LinThresh * math.Pow(s.Base, y-s.LinearScale), true
+	return sign * s.LinThresh * math.Pow(s.Base, y/s.LinThresh-linearScaleAdjusted), true
+}
+
+func (s SymLog) linearScaleAdjusted() float64 {
+	return s.LinearScale / (1 - math.Pow(s.Base, -1))
 }
 
 // Asinh applies an inverse-hyperbolic-sine transform with a configurable linear width.

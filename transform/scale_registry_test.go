@@ -56,6 +56,38 @@ func TestSymLogScale_RoundTrip(t *testing.T) {
 	}
 }
 
+func TestSymLogTransformMatchesMatplotlibLinscaleAdjustment(t *testing.T) {
+	s := NewSymLog(-1000, 1000, 10, 2, 1.5)
+	adjusted := 1.5 / (1 - math.Pow(10, -1))
+	cases := []struct {
+		x    float64
+		want float64
+	}{
+		{x: -20, want: -2 * (adjusted + 1)},
+		{x: -2, want: -2 * adjusted},
+		{x: 0, want: 0},
+		{x: 2, want: 2 * adjusted},
+		{x: 20, want: 2 * (adjusted + 1)},
+	}
+
+	for _, tc := range cases {
+		got, ok := s.transform(tc.x)
+		if !ok {
+			t.Fatalf("transform(%v) failed", tc.x)
+		}
+		if !approx(got, tc.want, 1e-12) {
+			t.Fatalf("transform(%v) = %v, want Matplotlib %v", tc.x, got, tc.want)
+		}
+		inv, ok := s.inverse(got)
+		if !ok {
+			t.Fatalf("inverse(%v) failed", got)
+		}
+		if !approx(inv, tc.x, 1e-12*(1+math.Abs(tc.x))) {
+			t.Fatalf("inverse(transform(%v)) = %v", tc.x, inv)
+		}
+	}
+}
+
 func TestAsinhScale_RoundTrip(t *testing.T) {
 	r := rand.New(rand.NewSource(12))
 	s := NewAsinh(-25, 40, 0.5)

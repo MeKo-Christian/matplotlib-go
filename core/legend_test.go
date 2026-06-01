@@ -476,6 +476,27 @@ func TestLegendDefaultsMatchMatplotlibSpacing(t *testing.T) {
 	}
 }
 
+func TestAxesLegendDrawsOutsideAxesClip(t *testing.T) {
+	fig := NewFigure(240, 240)
+	ax := fig.AddPolarAxes(unitRect())
+	ax.SetYLim(0, 1)
+	color := render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1}
+	ax.Plot([]float64{0, 1}, []float64{0.2, 0.8}, PlotOptions{
+		Color: &color,
+		Label: "legend label",
+	})
+	ax.AddLegend()
+
+	r := &legendClipTrackingRenderer{}
+	DrawFigure(fig, r)
+
+	if clipped, ok := r.textClipped["legend label"]; !ok {
+		t.Fatalf("legend label was not drawn; saw texts %v", r.texts)
+	} else if clipped {
+		t.Fatal("legend label was drawn while the axes clip was active")
+	}
+}
+
 func legendBestPlacementTestContext() *DrawContext {
 	return &DrawContext{
 		DataToPixel: Transform2D{
@@ -497,6 +518,44 @@ type legendRecordingRenderer struct {
 	paints      []render.Paint
 	texts       []string
 	textOrigins map[string]geom.Pt
+}
+
+type legendClipTrackingRenderer struct {
+	legendRecordingRenderer
+	clipStack   []bool
+	clipActive  bool
+	textClipped map[string]bool
+}
+
+func (r *legendClipTrackingRenderer) Save() {
+	r.clipStack = append(r.clipStack, r.clipActive)
+	r.legendRecordingRenderer.Save()
+}
+
+func (r *legendClipTrackingRenderer) Restore() {
+	if len(r.clipStack) > 0 {
+		r.clipActive = r.clipStack[len(r.clipStack)-1]
+		r.clipStack = r.clipStack[:len(r.clipStack)-1]
+	}
+	r.legendRecordingRenderer.Restore()
+}
+
+func (r *legendClipTrackingRenderer) ClipRect(rect geom.Rect) {
+	r.clipActive = true
+	r.legendRecordingRenderer.ClipRect(rect)
+}
+
+func (r *legendClipTrackingRenderer) ClipPath(path geom.Path) {
+	r.clipActive = true
+	r.legendRecordingRenderer.ClipPath(path)
+}
+
+func (r *legendClipTrackingRenderer) DrawText(text string, origin geom.Pt, size float64, color render.Color) {
+	r.legendRecordingRenderer.DrawText(text, origin, size, color)
+	if r.textClipped == nil {
+		r.textClipped = map[string]bool{}
+	}
+	r.textClipped[text] = r.clipActive
 }
 
 func (r *legendRecordingRenderer) Path(path geom.Path, paint *render.Paint) {

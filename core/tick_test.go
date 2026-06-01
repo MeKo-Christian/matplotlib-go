@@ -783,10 +783,10 @@ func TestLogitFormatter(t *testing.T) {
 		value float64
 		want  string
 	}{
-		{value: 0.001, want: "10⁻³"},
-		{value: 0.5, want: "1/2"},
-		{value: 0.9, want: "1-10⁻¹"},
-		{value: 0.25, want: "0.25"},
+		{value: 0.001, want: `$\mathdefault{10^{-3}}$`},
+		{value: 0.5, want: `$\mathdefault{\frac{1}{2}}$`},
+		{value: 0.9, want: `$\mathdefault{1-10^{-1}}$`},
+		{value: 0.25, want: `$\mathdefault{0.25}$`},
 	}
 
 	for _, tc := range cases {

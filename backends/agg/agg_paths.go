@@ -829,11 +829,11 @@ func hatchPatternPaths(pattern rune, bounds geom.Rect, spacing float64) []geom.P
 			backslashHatchPath(bounds, spacing),
 		}
 	case 'o':
-		return circleHatchPaths(bounds, spacing, 0.20)
+		return circleHatchPaths(bounds, spacing, 0.20, true)
 	case 'O':
-		return circleHatchPaths(bounds, spacing, 0.35)
+		return circleHatchPaths(bounds, spacing, 0.35, true)
 	case '.':
-		return circleHatchPaths(bounds, spacing, 0.10)
+		return circleHatchPaths(bounds, spacing, 0.10, false)
 	case '*':
 		return starHatchPaths(bounds, spacing)
 	default:
@@ -842,7 +842,7 @@ func hatchPatternPaths(pattern rune, bounds geom.Rect, spacing float64) []geom.P
 }
 
 func hatchPatternIsFilled(pattern rune) bool {
-	return pattern == '.' || pattern == '*'
+	return pattern == 'o' || pattern == 'O' || pattern == '.' || pattern == '*'
 }
 
 func verticalHatchPath(bounds geom.Rect, spacing float64) geom.Path {
@@ -856,13 +856,13 @@ func verticalHatchPath(bounds geom.Rect, spacing float64) geom.Path {
 	return path
 }
 
-func circleHatchPaths(bounds geom.Rect, spacing, radiusFactor float64) []geom.Path {
+func circleHatchPaths(bounds geom.Rect, spacing, radiusFactor float64, ring bool) []geom.Path {
 	if bounds.W() <= 0 || bounds.H() <= 0 || spacing <= 0 {
 		return nil
 	}
 	radius := math.Max(0.5, spacing*radiusFactor)
 	return tiledShapeHatchPaths(bounds, spacing, radius, func(center geom.Pt) geom.Path {
-		return circleHatchPath(center, radius)
+		return circleHatchPath(center, radius, ring)
 	})
 }
 
@@ -895,7 +895,7 @@ func tiledShapeHatchPaths(bounds geom.Rect, spacing, radius float64, build func(
 	return paths
 }
 
-func circleHatchPath(center geom.Pt, radius float64) geom.Path {
+func circleHatchPath(center geom.Pt, radius float64, ring bool) geom.Path {
 	k := radius * 0.5522847498307936
 	path := geom.Path{}
 	path.MoveTo(geom.Pt{X: center.X + radius, Y: center.Y})
@@ -920,6 +920,32 @@ func circleHatchPath(center geom.Pt, radius float64) geom.Path {
 		geom.Pt{X: center.X + radius, Y: center.Y},
 	)
 	path.Close()
+	if ring {
+		inner := radius * 0.9
+		ik := inner * 0.5522847498307936
+		path.MoveTo(geom.Pt{X: center.X + inner, Y: center.Y})
+		path.CubicTo(
+			geom.Pt{X: center.X + inner, Y: center.Y - ik},
+			geom.Pt{X: center.X + ik, Y: center.Y - inner},
+			geom.Pt{X: center.X, Y: center.Y - inner},
+		)
+		path.CubicTo(
+			geom.Pt{X: center.X - ik, Y: center.Y - inner},
+			geom.Pt{X: center.X - inner, Y: center.Y - ik},
+			geom.Pt{X: center.X - inner, Y: center.Y},
+		)
+		path.CubicTo(
+			geom.Pt{X: center.X - inner, Y: center.Y + ik},
+			geom.Pt{X: center.X - ik, Y: center.Y + inner},
+			geom.Pt{X: center.X, Y: center.Y + inner},
+		)
+		path.CubicTo(
+			geom.Pt{X: center.X + ik, Y: center.Y + inner},
+			geom.Pt{X: center.X + inner, Y: center.Y + ik},
+			geom.Pt{X: center.X + inner, Y: center.Y},
+		)
+		path.Close()
+	}
 	return path
 }
 

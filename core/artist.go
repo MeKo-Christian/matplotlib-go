@@ -2093,6 +2093,9 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 				r.ClipPath(framePath)
 			}
 			for _, art := range sortedArtistDrawOrder(ax.Artists) {
+				if _, ok := art.(*Legend); ok {
+					continue
+				}
 				drawArtist(r, ctx, art)
 			}
 			for _, art := range sortedArtistDrawOrder(ax.WidgetArtists) {
@@ -2130,6 +2133,9 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 		}
 
 		for _, art := range sortedArtistDrawOrder(ax.Artists) {
+			if _, ok := art.(*Legend); ok {
+				continue
+			}
 			drawArtist(r, ctx, art)
 		}
 		for _, art := range sortedArtistDrawOrder(ax.WidgetArtists) {
@@ -2359,6 +2365,15 @@ func titleAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rec
 
 func xLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, side AxisSide, alignment figureTextAlignment) (geom.Pt, textLayoutVerticalAlign) {
 	anchor := ctx.TransAxes().Apply(geom.Pt{X: 0.5, Y: 0})
+
+	if isGeoProjection(ax.projection) {
+		if side == AxisTop {
+			anchor.Y = px.Max.Y + axisLabelPadPx(ctx)
+			return anchor, textLayoutVAlignBaseline
+		}
+		anchor.Y = px.Min.Y - axisLabelPadPx(ctx)
+		return anchor, textLayoutVAlignTop
+	}
 
 	xAxis := ax.axisForXLabelSide(side)
 	if side == AxisTop {

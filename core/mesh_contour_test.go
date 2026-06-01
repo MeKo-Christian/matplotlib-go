@@ -412,7 +412,7 @@ func TestAxesContourAndContourf(t *testing.T) {
 
 func TestContourLevelsUseNiceLocatorForImplicitCounts(t *testing.T) {
 	levels := contourLevels([]float64{0.287, 1.0}, nil, 6, false)
-	want := []float64{0.3, 0.45, 0.6, 0.75, 0.9}
+	want := []float64{0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1.05}
 	if len(levels) != len(want) {
 		t.Fatalf("levels = %v, want %v", levels, want)
 	}
@@ -699,6 +699,52 @@ func TestTriangulationArtists(t *testing.T) {
 	filled := ax.TriContourf(tri, []float64{0, 1, 2, 3}, ContourOptions{Levels: []float64{0, 1, 2, 3}})
 	if filled == nil || filled.Fills == nil {
 		t.Fatal("expected tricontourf fills")
+	}
+}
+
+func TestTriContourLevelCountKeepsMatplotlibLocatorBounds(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	tri := Triangulation{
+		X: []float64{0, 0.85, 1.75, 2.85, 0.2, 1.1, 2.1, 0.55, 1.55, 2.55},
+		Y: []float64{0, 0.2, 0.05, 0.3, 1, 1.15, 1.25, 2.15, 2.3, 2.05},
+		Triangles: [][3]int{
+			{0, 1, 4},
+			{1, 5, 4},
+			{1, 2, 5},
+			{2, 6, 5},
+			{2, 3, 6},
+			{4, 5, 7},
+			{5, 8, 7},
+			{5, 6, 8},
+			{6, 9, 8},
+		},
+	}
+	values := []float64{
+		0.6655574652398372,
+		1.4476504946307964,
+		1.2769269603531197,
+		-0.34020831291716114,
+		-0.24685398108361084,
+		0.3579864612613407,
+		-0.48559426177070847,
+		0.7782732859305255,
+		1.1192548874057175,
+		-0.4800029281709043,
+	}
+
+	contours := ax.TriContour(tri, values, ContourOptions{LevelCount: 6})
+	if contours == nil {
+		t.Fatal("expected tricontour set")
+	}
+	want := []float64{-0.6, -0.3, 0, 0.3, 0.6, 0.9, 1.2, 1.5}
+	if len(contours.Levels) != len(want) {
+		t.Fatalf("tricontour levels = %v, want %v", contours.Levels, want)
+	}
+	for i := range want {
+		if !approx(contours.Levels[i], want[i], 1e-12) {
+			t.Fatalf("tricontour levels[%d] = %v, want %v (all %v)", i, contours.Levels[i], want[i], contours.Levels)
+		}
 	}
 }
 

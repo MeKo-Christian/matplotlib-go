@@ -72,6 +72,50 @@ func TestAxesBoxPlots_CreatesMultipleBoxes(t *testing.T) {
 	}
 }
 
+func TestAxesBoxPlotsManageTicksFalsePreservesLocator(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+	ax.XAxis.Locator = AutoLocator{}
+	manageTicks := false
+
+	ax.BoxPlots(
+		[][]float64{
+			{1, 2, 3},
+			{4, 5, 6},
+		},
+		BoxPlotsOptions{ManageTicks: &manageTicks},
+	)
+
+	if _, ok := ax.XAxis.Locator.(AutoLocator); !ok {
+		t.Fatalf("x-axis locator = %T, want preserved AutoLocator when manage_ticks=False", ax.XAxis.Locator)
+	}
+}
+
+func TestAxesBoxPlotsManageTicksDefaultMatchesMatplotlib(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+
+	ax.BoxPlots(
+		[][]float64{
+			{1, 2, 3},
+			{4, 5, 6},
+		},
+		BoxPlotsOptions{Positions: []float64{1.5, 2.5}},
+	)
+
+	loc, ok := ax.XAxis.Locator.(FixedLocator)
+	if !ok {
+		t.Fatalf("x-axis locator = %T, want FixedLocator by default", ax.XAxis.Locator)
+	}
+	want := []float64{1.5, 2.5}
+	if len(loc.TicksList) != len(want) {
+		t.Fatalf("fixed ticks = %v, want %v", loc.TicksList, want)
+	}
+	for i := range want {
+		if loc.TicksList[i] != want[i] {
+			t.Fatalf("fixed tick %d = %v, want %v", i, loc.TicksList[i], want[i])
+		}
+	}
+}
+
 func TestAxesBoxPlotsDefaultWidthMatchesMatplotlibPositions(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 

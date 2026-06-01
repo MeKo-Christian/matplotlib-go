@@ -1395,6 +1395,20 @@ func TestAnnotationDrawsTextBBox(t *testing.T) {
 	}
 }
 
+func TestAnnotationDefaultAlignmentMatchesMatplotlib(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(unitRect())
+
+	ann := ax.Annotate("label", 0.5, 0.5, AnnotationOptions{
+		OffsetX: -10,
+		OffsetY: -8,
+	})
+
+	if ann.HAlign != TextAlignLeft || ann.VAlign != TextVAlignBaseline {
+		t.Fatalf("default annotation alignment = (%v, %v), want left/baseline", ann.HAlign, ann.VAlign)
+	}
+}
+
 func TestAnnotationArrowHeadSizeUsesPointMutationScale(t *testing.T) {
 	ctx := createTestDrawContext()
 	arrow, _ := ArrowStyleFromString("-|>,head_length=0.35,head_width=0.20")

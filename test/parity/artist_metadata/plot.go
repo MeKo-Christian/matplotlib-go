@@ -98,18 +98,18 @@ func rectPath(x, y, w, h float64) geom.Path {
 }
 
 func dataClipRect(x0, y0, x1, y1 float64) geom.Rect {
-	min := dataToDisplay(geom.Pt{X: x0, Y: y1})
-	max := dataToDisplay(geom.Pt{X: x1, Y: y0})
+	min := dataToDisplay(geom.Pt{X: x0, Y: y0})
+	max := dataToDisplay(geom.Pt{X: x1, Y: y1})
 	return geom.Rect{Min: min, Max: max}
 }
 
 func dataToDisplay(pt geom.Pt) geom.Pt {
 	minX := float64(Width) * axesRect.Min.X
 	maxX := float64(Width) * axesRect.Max.X
-	minY := float64(Height) * (1 - axesRect.Max.Y)
-	maxY := float64(Height) * (1 - axesRect.Min.Y)
+	minY := float64(Height) * axesRect.Min.Y
+	maxY := float64(Height) * axesRect.Max.Y
 	return geom.Pt{
 		X: minX + (pt.X/10)*(maxX-minX),
-		Y: maxY - (pt.Y/10)*(maxY-minY),
+		Y: minY + (pt.Y/10)*(maxY-minY),
 	}
 }

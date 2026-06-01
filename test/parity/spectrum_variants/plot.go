@@ -7,7 +7,6 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
-	"github.com/cwbudde/matplotlib-go/style"
 )
 
 const (
@@ -18,8 +17,7 @@ const (
 
 // Plot builds the showcase figure (backend-agnostic).
 func Plot() *core.Figure {
-	// Slightly soften fixture text to match Matplotlib Agg glyph coverage.
-	fig := core.NewFigure(900, 640, style.WithTextColor(0.08, 0.08, 0.08, 1))
+	fig := core.NewFigure(900, 640)
 	x := spectrumSignal()
 	width := 1.8
 

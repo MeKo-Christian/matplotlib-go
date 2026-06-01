@@ -808,6 +808,7 @@ type BoxPlotsOptions struct {
 	FlierSize    *float64       // outlier marker size in points
 	Alpha        *float64       // alpha transparency
 	ShowFliers   *bool          // whether to draw outliers
+	ManageTicks  *bool          // whether to place x ticks at box positions
 	Labels       []string       // series labels for legend
 
 	Notch               *bool
@@ -1024,7 +1025,11 @@ func (a *Axes) BoxPlots(datasets [][]float64, opts ...BoxPlotsOptions) []*BoxPlo
 			boxes = append(boxes, box)
 		}
 	}
-	if len(positions) > 0 && a.XAxis != nil {
+	manageTicks := true
+	if opt.ManageTicks != nil {
+		manageTicks = *opt.ManageTicks
+	}
+	if manageTicks && len(positions) > 0 && a.XAxis != nil {
 		// Matplotlib boxplot(..., manage_ticks=True) places x ticks at the box
 		// positions by default.
 		a.XAxis.Locator = FixedLocator{TicksList: positions}

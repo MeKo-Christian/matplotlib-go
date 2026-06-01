@@ -376,6 +376,41 @@ func TestFigureAddColorbarUsesLogNormTicks(t *testing.T) {
 	}
 }
 
+func TestFigureAddColorbarUsesAsinhNormScale(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{
+		{-80, 0},
+		{10, 120},
+	}, ImageOptions{Norm: AsinhNorm{LinearWidth: 2, VMin: -80, VMax: 120}})
+
+	cbAx := fig.AddColorbar(ax, img)
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	if _, ok := cbAx.YScale.(transform.Asinh); !ok {
+		t.Fatalf("colorbar y scale = %T, want transform.Asinh", cbAx.YScale)
+	}
+	loc, ok := cbAx.YAxisRight.Locator.(AsinhLocator)
+	if !ok {
+		t.Fatalf("right colorbar locator = %T, want AsinhLocator", cbAx.YAxisRight.Locator)
+	}
+	if loc.LinearWidth != 2 {
+		t.Fatalf("right colorbar AsinhLocator LinearWidth = %v, want 2", loc.LinearWidth)
+	}
+	formatter, ok := cbAx.YAxisRight.Formatter.(LogFormatterMathText)
+	if !ok || !formatter.SciNotation {
+		t.Fatalf("right colorbar formatter = %#v, want scientific LogFormatterMathText", cbAx.YAxisRight.Formatter)
+	}
+	yMin, yMax := cbAx.YScale.Domain()
+	if yMin != -80 || yMax != 120 {
+		t.Fatalf("asinh colorbar domain = %v..%v, want -80..120", yMin, yMax)
+	}
+}
+
 func TestFigureAddColorbarUsesBoundaryNormTicks(t *testing.T) {
 	fig := NewFigure(900, 600)
 	ax := fig.AddAxes(geom.Rect{
@@ -429,6 +464,33 @@ func TestFigureAddColorbarUsesExplicitBoundariesAsTicks(t *testing.T) {
 		if loc.TicksList[i] != want[i] {
 			t.Fatalf("explicit boundary tick %d = %v, want %v", i, loc.TicksList[i], want[i])
 		}
+	}
+}
+
+func TestFigureAddColorbarUsesInteriorBoundaryLimitsWithExtensions(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{{-0.7, 0.2}, {0.6, 1.4}}, ImageOptions{
+		Norm: Normalize{VMin: -0.5, VMax: 1.2},
+	})
+
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{
+		Extend:     "both",
+		ExtendRect: true,
+		Boundaries: []float64{-0.5, -0.1, 0.4, 1.2},
+		Values:     []float64{-0.35, 0.15, 0.8},
+		Spacing:    "uniform",
+		Ticks:      []float64{-0.5, -0.1, 0.4, 1.2},
+	})
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	yMin, yMax := cbAx.YScale.Domain()
+	if !floatApprox(yMin, -0.1, 1e-12) || !floatApprox(yMax, 0.4, 1e-12) {
+		t.Fatalf("extended boundary colorbar domain = %v..%v, want interior -0.1..0.4", yMin, yMax)
 	}
 }
 
@@ -796,6 +858,39 @@ func TestBoundaryColorbarDrawEdgesAddsInternalDividers(t *testing.T) {
 	}
 }
 
+func TestBoundaryColorbarWithExtensionsDrawsOnlyInteriorCells(t *testing.T) {
+	var r colorbarRecordingRenderer
+	clip := geom.Rect{
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 30, Y: 80},
+	}
+	cb := &Colorbar{
+		Mapping: ScalarMapInfo{
+			Colormap: "viridis",
+			Norm:     Normalize{VMin: -0.5, VMax: 1.2},
+			VMin:     -0.5,
+			VMax:     1.2,
+		}.Resolved(),
+		Boundaries:  []float64{-0.5, -0.1, 0.4, 1.2},
+		Values:      []float64{-0.35, 0.15, 0.8},
+		Extend:      "both",
+		ExtendRect:  true,
+		Alpha:       1,
+		BorderColor: render.Color{A: 1},
+		BorderWidth: 1,
+	}
+
+	cb.Draw(&r, &DrawContext{Clip: clip})
+
+	if len(r.paths) != 1 {
+		t.Fatalf("body path count = %d, want one interior boundary cell", len(r.paths))
+	}
+	body, _ := pathBounds(r.paths[0])
+	if !floatApprox(body.Min.Y, clip.Min.Y, 1e-12) || !floatApprox(body.Max.Y, clip.Max.Y, 1e-12) {
+		t.Fatalf("interior boundary cell bounds = %+v, want full body clip %+v", body, clip)
+	}
+}
+
 func TestColorbarExtendRectDrawsRectangularExtensions(t *testing.T) {
 	var r colorbarRecordingRenderer
 	clip := geom.Rect{
@@ -820,6 +915,13 @@ func TestColorbarExtendRectDrawsRectangularExtensions(t *testing.T) {
 	lower, _ := pathBounds(r.paths[256])
 	if !floatApprox(lower.Min.X, clip.Min.X, 1e-12) || !floatApprox(lower.Max.X, clip.Max.X, 1e-12) {
 		t.Fatalf("lower rectangular extension bounds = %+v, want full colorbar width", lower)
+	}
+	if !floatApprox(lower.Max.Y, clip.Min.Y, 1e-12) {
+		t.Fatalf("lower rectangular extension bounds = %+v, want below colorbar bottom y=%v", lower, clip.Min.Y)
+	}
+	upper, _ := pathBounds(r.paths[257])
+	if !floatApprox(upper.Min.Y, clip.Max.Y, 1e-12) {
+		t.Fatalf("upper rectangular extension bounds = %+v, want above colorbar top y=%v", upper, clip.Max.Y)
 	}
 }
 

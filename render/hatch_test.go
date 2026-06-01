@@ -9,11 +9,17 @@ import (
 
 type hatchRecordingRenderer struct {
 	NullRenderer
-	paths []geom.Path
+	paths  []geom.Path
+	paints []Paint
 }
 
 func (r *hatchRecordingRenderer) Path(p geom.Path, paint *Paint) {
 	r.paths = append(r.paths, p)
+	if paint == nil {
+		r.paints = append(r.paints, Paint{})
+		return
+	}
+	r.paints = append(r.paints, *paint)
 }
 
 func TestDrawHatchFallbackClipsToPolygon(t *testing.T) {
@@ -183,6 +189,42 @@ func TestDrawHatchFallbackShapeSizesFollowMatplotlibRatios(t *testing.T) {
 	}
 }
 
+func TestDrawHatchFallbackUnfilledCircleHatchUsesMatplotlibRingContour(t *testing.T) {
+	var clip geom.Path
+	clip.MoveTo(geom.Pt{X: 0, Y: 0})
+	clip.LineTo(geom.Pt{X: 20, Y: 0})
+	clip.LineTo(geom.Pt{X: 20, Y: 20})
+	clip.LineTo(geom.Pt{X: 0, Y: 20})
+	clip.Close()
+
+	r := &hatchRecordingRenderer{}
+	if !DrawHatchFallback(r, clip, Paint{
+		Hatch:          "o",
+		HatchColor:     Color{A: 1},
+		HatchLineWidth: 1,
+		HatchSpacing:   10,
+	}) {
+		t.Fatal("DrawHatchFallback returned false")
+	}
+	if len(r.paths) == 0 {
+		t.Fatal("expected circle hatch paths")
+	}
+	if got := hatchMoveCount(r.paths[0]); got != 2 {
+		t.Fatalf("unfilled circle hatch subpaths = %d, want outer and reversed inner contours", got)
+	}
+	if r.paints[0].Fill.A <= 0 {
+		t.Fatalf("unfilled circle hatch should fill the annular contour like Matplotlib, got paint %+v", r.paints[0])
+	}
+
+	bounds, ok := pathBoundsForTest(r.paths[0])
+	if !ok {
+		t.Fatal("missing first hatch bounds")
+	}
+	if math.Abs(bounds.W()-4) > 1e-6 {
+		t.Fatalf("outer circle hatch width = %g, want 4", bounds.W())
+	}
+}
+
 func hatchSegmentCount(paths []geom.Path) int {
 	count := 0
 	for _, path := range paths {
@@ -190,6 +232,16 @@ func hatchSegmentCount(paths []geom.Path) int {
 			if cmd == geom.LineTo {
 				count++
 			}
+		}
+	}
+	return count
+}
+
+func hatchMoveCount(path geom.Path) int {
+	count := 0
+	for _, cmd := range path.C {
+		if cmd == geom.MoveTo {
+			count++
 		}
 	}
 	return count

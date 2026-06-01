@@ -102,6 +102,29 @@ func TestAnchoredTextBoxBoxRectUsesLocator(t *testing.T) {
 	}
 }
 
+func TestAnchoredTextBoxDrawsMultilineContentTopDown(t *testing.T) {
+	box := newAnchoredTextBox("first\nsecond", styleRCForAnchoredTextTest(), AnchoredTextOptions{
+		Location: LegendUpperLeft,
+		Padding:  4,
+		Inset:    6,
+		FontSize: 10,
+	})
+	ctx := createTestDrawContext()
+	r := &textRecordingRenderer{}
+
+	box.Draw(r, ctx)
+
+	if len(r.texts) != 2 {
+		t.Fatalf("anchored multiline text draws = %d, want 2: %v", len(r.texts), r.texts)
+	}
+	if r.texts[0] != "first" || r.texts[1] != "second" {
+		t.Fatalf("anchored multiline draw order = %v, want source order", r.texts)
+	}
+	if !(r.origins[1].Y < r.origins[0].Y) {
+		t.Fatalf("anchored multiline should draw top-down in y-up display space, got origins %v", r.origins)
+	}
+}
+
 func TestAnchoredTextOptionsMergeWithDefaults(t *testing.T) {
 	box := newAnchoredTextBox("note", styleRCForAnchoredTextTest(), AnchoredTextOptions{
 		Location:        LegendLowerRight,

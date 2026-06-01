@@ -192,6 +192,9 @@ func (b *Barbs) asPathCollection(ctx *DrawContext) *PathCollection {
 	faceColors := make([]render.Color, len(b.Anchors))
 	edgeColors := make([]render.Color, len(b.Anchors))
 	lengthPx := b.Length * dotsPerUnit(ctx, b.Units)
+	if normalizeVectorUnits(b.Units, "points") == "points" {
+		lengthPx *= b.Length / 2
+	}
 	if lengthPx <= 0 {
 		lengthPx = 18
 	}
@@ -304,9 +307,9 @@ func (b *Barbs) barbGlyphPath(lengthPx float64, i int, empty bool) geom.Path {
 	height := lengthPx * positiveOrDefault(b.Sizes.Height, 0.4)
 	width := lengthPx * positiveOrDefault(b.Sizes.Width, 0.25)
 	flip := len(b.Flip) > i && b.Flip[i]
-	dir := -1.0
+	dir := 1.0
 	if flip {
-		dir = 1.0
+		dir = -1.0
 	}
 
 	path := geom.Path{}

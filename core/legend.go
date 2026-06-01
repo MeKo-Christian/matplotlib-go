@@ -259,6 +259,16 @@ func (l *Legend) ClearHandler(art Artist) *Legend {
 
 // Draw renders the legend box and entries.
 func (l *Legend) Draw(r render.Renderer, ctx *DrawContext) {
+	l.draw(r, ctx)
+}
+
+// DrawOverlay renders axes legends after the axes clip has been removed,
+// matching Matplotlib's unclipped legend artists.
+func (l *Legend) DrawOverlay(r render.Renderer, ctx *DrawContext) {
+	l.draw(r, ctx)
+}
+
+func (l *Legend) draw(r render.Renderer, ctx *DrawContext) {
 	textRen, ok := r.(render.TextDrawer)
 	if !ok {
 		return
