@@ -253,6 +253,105 @@ func TestScatterCircleMarkerPrototypeMatchesMatplotlibUnitMarker(t *testing.T) {
 	}
 }
 
+func TestScatterTriangleMarkerPrototypeUsesMatplotlibYUpOrientation(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		marker   MarkerType
+		wantSign float64
+	}{
+		{name: "triangle up", marker: MarkerTriangleUp, wantSign: 1},
+		{name: "triangle down", marker: MarkerTriangleDown, wantSign: -1},
+	} {
+		path := (&Scatter2D{Marker: tc.marker}).markerPrototypePath()
+		tipY, ok := centeredXExtremeY(path)
+		if !ok {
+			t.Fatalf("%s marker has no centered tip vertex: %+v", tc.name, path)
+		}
+		if tipY*tc.wantSign <= 0 {
+			t.Fatalf("%s centered tip y = %v, want sign %v in y-up marker coordinates", tc.name, tipY, tc.wantSign)
+		}
+		bounds, ok := pathBounds(path)
+		if !ok {
+			t.Fatalf("%s marker has no bounds", tc.name)
+		}
+		if !approx(bounds.Min.X, -0.5, 1e-12) ||
+			!approx(bounds.Min.Y, -0.5, 1e-12) ||
+			!approx(bounds.Max.X, 0.5, 1e-12) ||
+			!approx(bounds.Max.Y, 0.5, 1e-12) {
+			t.Fatalf("%s bounds = %+v, want Matplotlib triangle bounds [-0.5,-0.5]-[0.5,0.5]", tc.name, bounds)
+		}
+	}
+}
+
+func TestScatterRadialMarkerPrototypesUseMatplotlibYUpOrientation(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		style       MarkerStyle
+		vertexIndex int
+	}{
+		{name: "star", style: NewMarkerStyle(MarkerStar)},
+		{name: "tuple polygon", style: NewTupleMarkerStyle(5, MarkerTuplePolygon, 0)},
+		{name: "tuple star", style: NewTupleMarkerStyle(5, MarkerTupleStar, 0)},
+		{name: "tuple asterisk", style: NewTupleMarkerStyle(6, MarkerTupleAsterisk, 0), vertexIndex: 1},
+	} {
+		path := (&Scatter2D{MarkerStyle: tc.style}).markerPrototypePath()
+		if len(path.V) <= tc.vertexIndex {
+			t.Fatalf("%s marker produced too few vertices: %+v", tc.name, path.V)
+		}
+		if got := path.V[tc.vertexIndex].Y; got <= 0 {
+			t.Fatalf("%s orientation vertex y = %v, want positive y-up Matplotlib orientation", tc.name, got)
+		}
+	}
+}
+
+func TestScatterCaretMarkersUseMatplotlibMiterJoin(t *testing.T) {
+	for _, marker := range []MarkerType{
+		MarkerCaretLeft, MarkerCaretRight, MarkerCaretUp, MarkerCaretDown,
+		MarkerCaretLeftBase, MarkerCaretRightBase, MarkerCaretUpBase, MarkerCaretDownBase,
+	} {
+		scatter := &Scatter2D{Marker: marker}
+		if got := scatter.markerLineJoin(); got != render.JoinMiter {
+			t.Fatalf("caret marker %v join = %v, want Matplotlib miter join", marker, got)
+		}
+	}
+}
+
+func TestScatterCaretMarkersRetainMatplotlibScatterFill(t *testing.T) {
+	for _, marker := range []MarkerType{
+		MarkerCaretLeft, MarkerCaretRight, MarkerCaretUp, MarkerCaretDown,
+		MarkerCaretLeftBase, MarkerCaretRightBase, MarkerCaretUpBase, MarkerCaretDownBase,
+	} {
+		scatter := &Scatter2D{
+			XY:     []geom.Pt{{X: 1, Y: 1}},
+			Marker: marker,
+			Color:  render.Color{R: 0.2, G: 0.4, B: 0.8, A: 1},
+			Size:   36,
+		}
+		pc := scatter.toPathCollection(&render.NullRenderer{}, createTestDrawContext())
+		if pc.LineOnly {
+			t.Fatalf("caret marker %v path collection is line-only; want filled open path like Matplotlib scatter", marker)
+		}
+		if pc.FaceColor.A == 0 {
+			t.Fatalf("caret marker %v face alpha = 0, want visible fill like Matplotlib scatter", marker)
+		}
+	}
+}
+
+func centeredXExtremeY(path geom.Path) (float64, bool) {
+	have := false
+	var best geom.Pt
+	for _, pt := range path.V {
+		if !have || math.Abs(pt.X) < math.Abs(best.X) || (math.Abs(pt.X) == math.Abs(best.X) && math.Abs(pt.Y) > math.Abs(best.Y)) {
+			best = pt
+			have = true
+		}
+	}
+	if !have || math.Abs(best.X) > 1e-12 {
+		return 0, false
+	}
+	return best.Y, true
+}
+
 func TestScatterAreaFromRadius(t *testing.T) {
 	got := ScatterAreaFromRadius(8, 100)
 	want := math.Pi * 8 * 72.0 / 100.0 * (8 * 72.0 / 100.0)

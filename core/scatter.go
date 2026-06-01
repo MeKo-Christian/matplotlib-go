@@ -292,13 +292,13 @@ func (s *Scatter2D) markerPrototypePathForContext(r render.Renderer, ctx *DrawCo
 	case MarkerSquare:
 		return markerRectanglePath(-0.5, -0.5, 0.5, 0.5)
 	case MarkerTriangle:
-		return markerRegularPolygonPath(3, 90)
+		return markerTrianglePath(0)
 	case MarkerTriangleDown:
-		return markerRegularPolygonPath(3, 270)
+		return markerTrianglePath(180)
 	case MarkerTriangleLeft:
-		return markerRegularPolygonPath(3, 180)
+		return markerTrianglePath(90)
 	case MarkerTriangleRight:
-		return markerRegularPolygonPath(3, 0)
+		return markerTrianglePath(270)
 	case MarkerDiamond:
 		return s.createDiamondPath(geom.Pt{}, 1)
 	case MarkerThinDiamond:
@@ -448,7 +448,9 @@ func (s *Scatter2D) markerLineJoin() render.LineJoin {
 	switch style.Type {
 	case MarkerSquare, MarkerTriangle, MarkerTriangleDown, MarkerTriangleLeft, MarkerTriangleRight,
 		MarkerDiamond, MarkerThinDiamond, MarkerOctagon, MarkerPentagon, MarkerHexagon1, MarkerHexagon2,
-		MarkerFilledPlus, MarkerFilledX:
+		MarkerFilledPlus, MarkerFilledX,
+		MarkerCaretLeft, MarkerCaretRight, MarkerCaretUp, MarkerCaretDown,
+		MarkerCaretLeftBase, MarkerCaretRightBase, MarkerCaretUpBase, MarkerCaretDownBase:
 		return render.JoinMiter
 	case MarkerStar:
 		return render.JoinBevel
@@ -467,9 +469,7 @@ func markerLineOnly(style MarkerStyle) bool {
 	}
 	switch style.Type {
 	case MarkerPlus, MarkerCross, MarkerTriDown, MarkerTriUp, MarkerTriLeft, MarkerTriRight,
-		MarkerVLine, MarkerHLine, MarkerTickLeft, MarkerTickRight, MarkerTickUp, MarkerTickDown,
-		MarkerCaretLeft, MarkerCaretRight, MarkerCaretUp, MarkerCaretDown,
-		MarkerCaretLeftBase, MarkerCaretRightBase, MarkerCaretUpBase, MarkerCaretDownBase:
+		MarkerVLine, MarkerHLine, MarkerTickLeft, MarkerTickRight, MarkerTickUp, MarkerTickDown:
 		return true
 	default:
 		return false
@@ -762,9 +762,17 @@ func markerRegularPolygonPath(numsides int, angleDeg float64) geom.Path {
 	step := 2 * math.Pi / float64(numsides)
 	for i := range points {
 		theta := angle + float64(i)*step
-		points[i] = geom.Pt{X: 0.5 * math.Cos(theta), Y: -0.5 * math.Sin(theta)}
+		points[i] = geom.Pt{X: 0.5 * math.Cos(theta), Y: 0.5 * math.Sin(theta)}
 	}
 	return polygonPath(points, true)
+}
+
+func markerTrianglePath(angleDeg float64) geom.Path {
+	return rotatePath(polygonPath([]geom.Pt{
+		{X: 0, Y: 0.5},
+		{X: -0.5, Y: -0.5},
+		{X: 0.5, Y: -0.5},
+	}, true), angleDeg)
 }
 
 func markerStarPath(numsides int, innerCircle float64, angleDeg float64, close bool) geom.Path {
@@ -780,7 +788,7 @@ func markerStarPath(numsides int, innerCircle float64, angleDeg float64, close b
 			radius *= innerCircle
 		}
 		theta := angle + float64(i)*step
-		points = append(points, geom.Pt{X: radius * math.Cos(theta), Y: -radius * math.Sin(theta)})
+		points = append(points, geom.Pt{X: radius * math.Cos(theta), Y: radius * math.Sin(theta)})
 	}
 	return polygonPath(points, close)
 }
@@ -865,7 +873,7 @@ func markerTuplePath(tuple MarkerTuple) geom.Path {
 		step := math.Pi / float64(tuple.NumSides)
 		for i := 0; i < tuple.NumSides; i++ {
 			theta := angle + float64(i)*step
-			p := geom.Pt{X: 0.5 * math.Cos(theta), Y: -0.5 * math.Sin(theta)}
+			p := geom.Pt{X: 0.5 * math.Cos(theta), Y: 0.5 * math.Sin(theta)}
 			path.MoveTo(geom.Pt{X: -p.X, Y: -p.Y})
 			path.LineTo(p)
 		}
