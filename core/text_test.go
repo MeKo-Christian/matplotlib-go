@@ -2203,14 +2203,14 @@ func TestMultilineTextLinespacingControlsBaselineAdvance(t *testing.T) {
 	if len(r.origins) != 2 {
 		t.Fatalf("multiline draw origins = %d, want 2", len(r.origins))
 	}
-	wantAdvance := text.FontSize * text.Linespacing
+	wantAdvance := text.FontSize*0.2 + text.FontSize*0.8*text.Linespacing
 	gotAdvance := r.origins[0].Y - r.origins[1].Y // y-up: next line is below at smaller Y
 	if !approx(gotAdvance, wantAdvance, 1e-9) {
 		t.Fatalf("multiline baseline advance = %v, want %v", gotAdvance, wantAdvance)
 	}
 }
 
-func TestMultilineTextNormalLinespacingUsesFontLineGap(t *testing.T) {
+func TestMultilineTextNormalLinespacingMatchesMatplotlibBaselineAdvance(t *testing.T) {
 	ctx := createTestDrawContext()
 	text := &Text{
 		Position: geom.Pt{X: 1, Y: 1},
@@ -2227,10 +2227,10 @@ func TestMultilineTextNormalLinespacingUsesFontLineGap(t *testing.T) {
 	if len(r.origins) != 2 {
 		t.Fatalf("multiline draw origins = %d, want 2", len(r.origins))
 	}
-	wantAdvance := r.fontHeights.Ascent + r.fontHeights.Descent + r.fontHeights.LineGap
+	wantAdvance := r.fontHeights.Descent + r.fontHeights.Ascent*1.2
 	gotAdvance := r.origins[0].Y - r.origins[1].Y // y-up: next line is below at smaller Y
 	if !approx(gotAdvance, wantAdvance, 1e-9) {
-		t.Fatalf("normal multiline baseline advance = %v, want font height + gap %v", gotAdvance, wantAdvance)
+		t.Fatalf("normal multiline baseline advance = %v, want Matplotlib descent + ascent*linespacing %v", gotAdvance, wantAdvance)
 	}
 }
 
@@ -2252,10 +2252,10 @@ func TestMultilineTextNumericLinespacingUsesFontHeight(t *testing.T) {
 	if len(r.origins) != 2 {
 		t.Fatalf("multiline draw origins = %d, want 2", len(r.origins))
 	}
-	wantAdvance := text.Linespacing * (r.fontHeights.Ascent + r.fontHeights.Descent)
+	wantAdvance := r.fontHeights.Descent + text.Linespacing*r.fontHeights.Ascent
 	gotAdvance := r.origins[0].Y - r.origins[1].Y // y-up: next line is below at smaller Y
 	if !approx(gotAdvance, wantAdvance, 1e-9) {
-		t.Fatalf("numeric multiline baseline advance = %v, want linespacing * font height %v", gotAdvance, wantAdvance)
+		t.Fatalf("numeric multiline baseline advance = %v, want Matplotlib descent + linespacing*ascent %v", gotAdvance, wantAdvance)
 	}
 }
 

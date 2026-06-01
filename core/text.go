@@ -481,15 +481,31 @@ func measureMultilineTextBlock(r render.Renderer, ctx *DrawContext, anchor geom.
 	for i, line := range lines {
 		block.Layouts[i] = measureMultilineLineLayout(r, line, fontSize, fontKey, parseMath, useTeX)
 		block.Width = math.Max(block.Width, block.Layouts[i].Width)
-		block.LineAscents[i], block.LineDescents[i] = multilineLineExtents(block.Layouts[i], linespacing)
 	}
 
+	lpLayout := measureMultilineLineLayout(r, "lp", fontSize, fontKey, false, useTeX)
+	lpHeight, lpDescent := multilineMatplotlibHeightDescent(lpLayout)
+	lpAscent := math.Max(0, lpHeight-lpDescent)
+	spacing := resolvedTextLinespacing(linespacing)
 	baselineOffsets := make([]float64, len(lines))
-	baselineOffsets[0] = block.LineAscents[0]
-	for i := 1; i < len(lines); i++ {
-		baselineOffsets[i] = baselineOffsets[i-1] + block.LineDescents[i-1] + block.LineAscents[i]
+	thisY := 0.0
+	for i, layout := range block.Layouts {
+		height, descent := multilineMatplotlibHeightDescent(layout)
+		height = math.Max(height, lpHeight)
+		descent = math.Max(descent, lpDescent)
+		ascent := math.Max(0, height-descent)
+		block.LineAscents[i] = ascent
+		block.LineDescents[i] = descent
+
+		if i == 0 {
+			thisY = -ascent
+		} else {
+			thisY -= math.Max(lpAscent*spacing, ascent*spacing)
+		}
+		baselineOffsets[i] = -thisY
+		thisY -= descent
 	}
-	block.Height = baselineOffsets[len(lines)-1] + block.LineDescents[len(lines)-1]
+	block.Height = -thisY
 
 	left := anchor.X
 	switch hAlign {
@@ -529,34 +545,26 @@ func measureMultilineLineLayout(r render.Renderer, line string, fontSize float64
 	return layout
 }
 
-func multilineLineExtents(layout singleLineTextLayout, linespacing float64) (float64, float64) {
-	runAscent := layout.RunAscent
-	runDescent := layout.RunDescent
-	if runAscent+runDescent <= 0 {
-		runAscent = layout.Ascent
-		runDescent = layout.Descent
+func multilineMatplotlibHeightDescent(layout singleLineTextLayout) (float64, float64) {
+	height := layout.Height
+	descent := layout.Descent
+	if height <= 0 {
+		height = layout.Ascent + layout.Descent
 	}
-
-	fontHeight := layout.MinAscent + layout.MinDescent
-	if fontHeight <= 0 {
-		fontHeight = layout.Ascent + layout.Descent
+	if height <= 0 {
+		height = layout.RunAscent + layout.RunDescent
+		descent = layout.RunDescent
 	}
-	if fontHeight <= 0 {
-		fontHeight = runAscent + runDescent
+	if height <= 0 {
+		return 0, 0
 	}
-
-	if linespacing > 0 {
-		lineHeight := linespacing * fontHeight
-		leading := lineHeight - (runAscent + runDescent)
-		return runAscent + leading/2, runDescent + leading/2
+	if descent < 0 {
+		descent = 0
 	}
-
-	ascent := math.Max(runAscent, layout.MinAscent) + layout.LineGap/2
-	descent := math.Max(runDescent, layout.MinDescent) + layout.LineGap/2
-	if ascent+descent <= 0 {
-		return layout.Ascent, layout.Descent
+	if descent > height {
+		descent = height
 	}
-	return ascent, descent
+	return height, descent
 }
 
 func textRotationLayoutAlignments(hAlign TextAlign, vAlign TextVerticalAlign, angleDeg float64, mode TextRotationMode) (TextAlign, textLayoutVerticalAlign) {
