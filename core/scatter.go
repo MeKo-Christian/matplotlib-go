@@ -546,13 +546,13 @@ func splitCircleMarkerPath(fill MarkerFillStyle, size float64) geom.Path {
 	case MarkerFillTop:
 		points = append(points, geom.Pt{})
 		for i := 0; i <= steps; i++ {
-			theta := math.Pi + math.Pi*float64(i)/steps
+			theta := math.Pi * float64(i) / steps
 			points = append(points, geom.Pt{X: r * math.Cos(theta), Y: r * math.Sin(theta)})
 		}
 	case MarkerFillBottom:
 		points = append(points, geom.Pt{})
 		for i := 0; i <= steps; i++ {
-			theta := math.Pi * float64(i) / steps
+			theta := math.Pi + math.Pi*float64(i)/steps
 			points = append(points, geom.Pt{X: r * math.Cos(theta), Y: r * math.Sin(theta)})
 		}
 	default:
@@ -612,9 +612,9 @@ func clipMarkerPolygon(points []geom.Pt, fill MarkerFillStyle) []geom.Pt {
 	case MarkerFillRight:
 		return clipPolygonAgainstLine(points, func(p geom.Pt) float64 { return p.X - cx })
 	case MarkerFillTop:
-		return clipPolygonAgainstLine(points, func(p geom.Pt) float64 { return cy - p.Y })
-	case MarkerFillBottom:
 		return clipPolygonAgainstLine(points, func(p geom.Pt) float64 { return p.Y - cy })
+	case MarkerFillBottom:
+		return clipPolygonAgainstLine(points, func(p geom.Pt) float64 { return cy - p.Y })
 	default:
 		return append([]geom.Pt(nil), points...)
 	}

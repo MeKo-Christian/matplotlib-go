@@ -95,6 +95,29 @@ func TestErrorBarDrawsMatplotlibDefaultDataLine(t *testing.T) {
 	}
 }
 
+func TestErrorBarCanSuppressDataLineLikeFmtNone(t *testing.T) {
+	errBar := &ErrorBar{
+		XY: []geom.Pt{
+			{X: 1, Y: 2},
+			{X: 2, Y: 3},
+			{X: 3, Y: 2.5},
+		},
+		YErr:       []float64{0.4, 0.2, 0.3},
+		LineWidth:  1.2,
+		CapSize:    6,
+		Color:      render.Color{A: 1},
+		NoDataLine: true,
+	}
+	r := &recordingRenderer{}
+	ctx := createTestDrawContext()
+
+	errBar.Draw(r, ctx)
+
+	if hasErrorBarDataLine(r.pathCalls, ctx, errBar.XY) {
+		t.Fatalf("errorbar with NoDataLine should match Matplotlib fmt='none'; got data line in paths %+v", r.pathCalls)
+	}
+}
+
 func TestErrorBarLimitCaretUsesEndpointAsBase(t *testing.T) {
 	errBar := &ErrorBar{
 		XY:        []geom.Pt{{X: 1, Y: 1}},

@@ -132,6 +132,26 @@ func TestScatterHalfFilledMarkerDrawsSplitFillAndWholeEdge(t *testing.T) {
 	}
 }
 
+func TestMarkerFillTopKeepsPrimaryPathAboveCenter(t *testing.T) {
+	for _, marker := range []MarkerType{MarkerCircle, MarkerSquare} {
+		style := NewMarkerStyle(marker)
+		style.FillStyle = MarkerFillTop
+		full := (&Scatter2D{MarkerStyle: style}).markerPrototypePath()
+
+		primary, _, ok := splitMarkerFillPaths(style, full)
+		if !ok {
+			t.Fatalf("splitMarkerFillPaths(%v, top) returned !ok", marker)
+		}
+		bounds, ok := primary.Bounds()
+		if !ok {
+			t.Fatalf("primary top path for %v has no bounds", marker)
+		}
+		if bounds.Min.Y < -1e-12 || bounds.Max.Y <= 0 {
+			t.Fatalf("primary top path for %v bounds = %+v, want y >= 0", marker, bounds)
+		}
+	}
+}
+
 func TestScatter2D_EmptyData(t *testing.T) {
 	// Test with empty data
 	scatter := &Scatter2D{

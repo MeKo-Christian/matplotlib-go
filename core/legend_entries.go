@@ -58,6 +58,7 @@ func (l *Line2D) legendEntry() (legendEntry, bool) {
 		entry.markerAltFill = l.resolvedMarkerFaceColorAlt()
 		entry.markerEdge = l.resolvedMarkerEdgeColor()
 		entry.markerEdgeWidth = l.resolvedMarkerEdgeWidth(nil)
+		entry.markerSize = l.resolvedMarkerSize(nil)
 	}
 	return entry, true
 }

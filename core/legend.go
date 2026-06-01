@@ -84,6 +84,7 @@ type legendEntry struct {
 	markerAltFill   render.Color
 	markerEdge      render.Color
 	markerEdgeWidth float64
+	markerSize      float64
 
 	patchFill       render.Color
 	patchEdge       render.Color
@@ -870,7 +871,7 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 		patch.drawStyledPath(r, pixelRectPath(patchRect), geom.Path{})
 	case legendEntryMarker:
 		for _, pt := range l.markerSampleCenters(sample, center) {
-			l.drawMarkerSample(r, entry, pt, l.markerSampleRadius(5))
+			l.drawMarkerSample(r, entry, pt, l.markerSampleScale(entry, 5))
 		}
 	default:
 		lineWidth := entry.lineWidth
@@ -892,7 +893,7 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 			Dashes:    entry.dashes,
 		})
 		if entry.lineMarkerSet {
-			l.drawMarkerSample(r, entry, center, l.markerSampleRadius(5))
+			l.drawMarkerSample(r, entry, center, l.markerSampleScale(entry, 5))
 		}
 	}
 }
@@ -951,16 +952,20 @@ func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample
 		}, &paint)
 	}
 	if entry.lineMarkerSet {
-		l.drawMarkerSample(r, entry, center, l.markerSampleRadius(5))
+		l.drawMarkerSample(r, entry, center, l.markerSampleScale(entry, 5))
 	}
 }
 
-func (l *Legend) markerSampleRadius(base float64) float64 {
-	scale := 1.0
-	if l != nil && l.MarkerScale > 0 {
-		scale = l.MarkerScale
+func (l *Legend) markerSampleScale(entry legendEntry, base float64) float64 {
+	scale := base
+	if entry.markerSize > 0 {
+		scale = entry.markerSize
 	}
-	return base * scale
+	markerScale := 1.0
+	if l != nil && l.MarkerScale > 0 {
+		markerScale = l.MarkerScale
+	}
+	return scale * markerScale
 }
 
 func (l *Legend) markerSampleCenters(sample geom.Rect, center geom.Pt) []geom.Pt {

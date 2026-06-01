@@ -71,6 +71,40 @@ func TestLegendCollectsLineMarkers(t *testing.T) {
 	}
 }
 
+func TestLegendLineMarkerSampleUsesOriginalMarkerSize(t *testing.T) {
+	line := &Line2D{
+		Label:      "line markers",
+		Col:        render.Color{A: 1},
+		W:          1.5,
+		Marker:     MarkerCircle,
+		MarkerSet:  true,
+		MarkerSize: 12,
+	}
+	entry, ok := line.legendEntry()
+	if !ok {
+		t.Fatal("line marker legend entry not collected")
+	}
+
+	legend := NewLegend(nil)
+	var r legendRecordingRenderer
+	legend.drawSample(&r, entry, geom.Rect{
+		Min: geom.Pt{X: 0, Y: 0},
+		Max: geom.Pt{X: 40, Y: 20},
+	})
+
+	if len(r.paths) < 2 {
+		t.Fatalf("legend sample paths = %d, want line plus marker", len(r.paths))
+	}
+	markerBounds, ok := r.paths[1].Bounds()
+	if !ok {
+		t.Fatal("legend marker path has no bounds")
+	}
+	want := pointsToPixels(style.Default, line.MarkerSize)
+	if got := markerBounds.W(); !floatApprox(got, want, 1e-9) {
+		t.Fatalf("legend marker diameter = %v, want original Line2D markersize %v", got, want)
+	}
+}
+
 func TestLegendDrawRendersLabelsAndSamples(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{

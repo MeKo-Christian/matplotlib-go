@@ -594,6 +594,12 @@ The same 3D label-offset fix moves every `mplot3d_*` reference fixture below
 No non-mathtext cases remain above the temporary Phase 8 target of
 `RMSE < 10`. The mathtext cases remain excluded from this temporary threshold.
 
+**2026-06-01 continuation note:** current `parity-viewer-print` output still
+has non-mathtext cases above `RMSE 10`; the previous paragraph is historical.
+`line2d_markers` is now `RMSE 7.16` after matching Matplotlib's Line2D legend
+marker sizing and fixing top/bottom half-filled marker orientation in marker
+local coordinates, with `testdata/golden/line2d_markers.png` refreshed.
+
 **Source parity audit:** completed on 2026-05-22 with sub-agents across all
 Phase 8 subphases. Direct example/fixture mismatches were fixed where existing
 Go APIs could express the same Matplotlib call semantics. Remaining unchecked
