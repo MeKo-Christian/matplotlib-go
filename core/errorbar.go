@@ -22,7 +22,7 @@ type ErrorBar struct {
 	XUpLimits  []bool       // x value is an upper limit
 	Color      render.Color // stroke color
 	LineWidth  float64      // stroke width in pixels
-	CapSize    float64      // cap size in points, matching Matplotlib
+	CapSize    float64      // cap size in pixels
 	Marker     MarkerType   // optional data marker, matching Matplotlib fmt markers
 	MarkerSet  bool
 	MarkerSize float64 // marker size in points
@@ -43,12 +43,12 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 		lineWidth = 1.0
 	}
 
-	capSizePt := e.CapSize
-	if capSizePt < 0 {
-		capSizePt = 0
+	capSizePx := e.CapSize
+	if capSizePx < 0 {
+		capSizePx = 0
 	}
-	markerSizePx := pointsToPixels(ctx.RC, 2*capSizePt)
-	capHalf := markerSizePx * 0.5
+	markerSizePx := capSizePx
+	capHalf := capSizePx * 0.5
 
 	alpha := e.Alpha
 	if alpha <= 0 {
@@ -69,6 +69,7 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 		LineWidth: lineWidth,
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
+		Snap:      render.SnapAuto,
 	}
 
 	for i, pt := range e.XY {

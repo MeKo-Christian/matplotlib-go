@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -115,6 +116,56 @@ func TestErrorBarCanSuppressDataLineLikeFmtNone(t *testing.T) {
 
 	if hasErrorBarDataLine(r.pathCalls, ctx, errBar.XY) {
 		t.Fatalf("errorbar with NoDataLine should match Matplotlib fmt='none'; got data line in paths %+v", r.pathCalls)
+	}
+}
+
+func TestErrorBarCapSizeIsFullPixelLength(t *testing.T) {
+	errBar := &ErrorBar{
+		XY:        []geom.Pt{{X: 1, Y: 2}},
+		XErr:      []float64{0.2},
+		YErr:      []float64{0.4},
+		LineWidth: 1.2,
+		CapSize:   6,
+		Color:     render.Color{A: 1},
+	}
+	r := &recordingRenderer{}
+	ctx := createTestDrawContext()
+
+	errBar.Draw(r, ctx)
+
+	if len(r.pathCalls) != 6 {
+		t.Fatalf("path calls = %d, want x/y stems plus four cap paths", len(r.pathCalls))
+	}
+	for _, idx := range []int{1, 2, 4, 5} {
+		path := r.pathCalls[idx].path
+		if len(path.V) != 2 {
+			t.Fatalf("cap path %d vertices = %d, want 2", idx, len(path.V))
+		}
+		got := math.Hypot(path.V[1].X-path.V[0].X, path.V[1].Y-path.V[0].Y)
+		if math.Abs(got-6) > 1e-9 {
+			t.Fatalf("cap path %d length = %.6f px, want 6 px", idx, got)
+		}
+	}
+}
+
+func TestErrorBarSegmentsUseMatplotlibSnapAuto(t *testing.T) {
+	errBar := &ErrorBar{
+		XY:        []geom.Pt{{X: 1, Y: 2}},
+		XErr:      []float64{0.2},
+		YErr:      []float64{0.4},
+		LineWidth: 1.2,
+		CapSize:   6,
+		Color:     render.Color{A: 1},
+	}
+	r := &recordingRenderer{}
+	ctx := createTestDrawContext()
+
+	errBar.Draw(r, ctx)
+
+	for i, call := range r.pathCalls {
+		if call.paint.Snap != render.SnapAuto {
+			t.Fatalf("errorbar path %d snap mode = %v, want Matplotlib SnapAuto", i, call.paint.Snap)
+		}
 	}
 }
 
