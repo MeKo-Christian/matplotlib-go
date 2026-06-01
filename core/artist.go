@@ -1379,10 +1379,30 @@ func (a *Axes) TickParams(params TickParams) error {
 			resetAxisTickParams(axis)
 		}
 		if params.Color != nil {
-			tickColor := *params.Color
-			labelColor := *params.Color
-			axis.TickColor = &tickColor
-			axis.TickLabelColor = &labelColor
+			// matplotlib's tick_params(colors=...) sets both the tick mark and
+			// label color, scoped to the selected major/minor tick set.
+			color := *params.Color
+			switch which {
+			case "minor":
+				minorColor := color
+				minorLabel := color
+				axis.MinorTickColor = &minorColor
+				axis.MinorTickLabelColor = &minorLabel
+			case "both":
+				tickColor := color
+				labelColor := color
+				minorColor := color
+				minorLabel := color
+				axis.TickColor = &tickColor
+				axis.TickLabelColor = &labelColor
+				axis.MinorTickColor = &minorColor
+				axis.MinorTickLabelColor = &minorLabel
+			default: // major
+				tickColor := color
+				labelColor := color
+				axis.TickColor = &tickColor
+				axis.TickLabelColor = &labelColor
+			}
 		}
 		if params.Width != nil {
 			switch which {
@@ -1453,6 +1473,8 @@ func resetAxisTickParams(axis *Axis) {
 	}
 	axis.TickColor = nil
 	axis.TickLabelColor = nil
+	axis.MinorTickColor = nil
+	axis.MinorTickLabelColor = nil
 	axis.TickLineCap = defaults.TickLineCap
 	axis.TickLineJoin = defaults.TickLineJoin
 	axis.TickLineWidth = defaults.TickLineWidth
@@ -2254,17 +2276,24 @@ func drawAxesLabels(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect,
 	if ax.YLabel != "" && ax.ProjectionName() != "3d" {
 		side := ax.effectiveYLabelSide()
 		anchor := yLabelAnchorPoint(ax, r, ctx, px, side, alignment)
-		if side == AxisLeft {
-			anchor.X -= ctx.RC.AxisLineWidth
-			anchor.Y += ctx.RC.AxisLineWidth
-		}
 		angle := -math.Pi / 2
 		if side == AxisRight {
 			angle = math.Pi / 2
 		}
 		switch ren := r.(type) {
 		case render.RotatedTextDrawer:
-			drawDisplayTextRotated(ren, ax.YLabel, anchor, labelSize, angle, labelColor, ctx.RC.FontKey, ctx.RC.UseTeX)
+			// matplotlib draws BOTH the left and right y-axis labels at
+			// rotation=90 (reading bottom-to-top) with rotation_mode="anchor",
+			// ha="center", and va="bottom" (left) / va="top" (right). The left
+			// label is NOT mirrored — both sides share the +90° orientation.
+			labelAngle := math.Pi / 2
+			yLabelLayout := measureSingleLineTextLayout(r, ax.YLabel, labelSize, ctx.RC.FontKey, ctx.RC.UseTeX)
+			yLabelVAlign := textLayoutVAlignBottom
+			if side == AxisRight {
+				yLabelVAlign = textLayoutVAlignTop
+			}
+			backendAnchor := rotatedTextBackendAnchorFromP(anchor, yLabelLayout, TextAlignCenter, yLabelVAlign, labelAngle, true)
+			drawDisplayTextRotated(ren, ax.YLabel, backendAnchor, labelSize, labelAngle, labelColor, ctx.RC.FontKey, ctx.RC.UseTeX)
 		case render.VerticalTextDrawer:
 			if angle < 0 {
 				layout := measureSingleLineTextLayout(r, ax.YLabel, labelSize, ctx.RC.FontKey, ctx.RC.UseTeX)

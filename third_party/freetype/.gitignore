@@ -1,0 +1,4 @@
+# Only build.sh is tracked. Everything it downloads/builds is local.
+/freetype-*.tar.gz
+/src/
+/prefix/

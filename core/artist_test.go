@@ -510,12 +510,16 @@ func TestDrawAxesLabels_YLabelUsesTickBoundsAndLabelPad(t *testing.T) {
 
 	tickPos := ctx.DataToPixel.Apply(geom.Pt{X: getSpinePosition(ax.YAxis, ctx), Y: 4})
 	tickLabelMinX := tickPos.X - tickLabelPadPx(ax.YAxis, ctx) - (1 + 5.0) + 1
-	want := geom.Pt{
+	// P is matplotlib's label anchor: min(spine, tick bounds) - labelpad,
+	// vertically centered. The spine extent already includes its line width.
+	p := geom.Pt{
 		X: math.Min(spinePixelX(AxisLeft, px), tickLabelMinX) - axisLabelPadPx(ctx),
 		Y: px.Min.Y + px.H()/2,
 	}
-	want.X -= ctx.RC.AxisLineWidth
-	want.Y += ctx.RC.AxisLineWidth
+	// matplotlib draws the left y-label at rotation=90, rotation_mode="anchor",
+	// ha="center", va="bottom"; the backend pivot is derived via _get_layout.
+	layout := measureSingleLineTextLayout(r, "Value", axisLabelFontSize(ctx), ctx.RC.FontKey)
+	want := rotatedTextBackendAnchorFromP(p, layout, TextAlignCenter, textLayoutVAlignBottom, math.Pi/2, true)
 	if r.rotatedAnchors[0] != want {
 		t.Fatalf("ylabel anchor = %+v, want %+v", r.rotatedAnchors[0], want)
 	}
@@ -611,10 +615,15 @@ func TestDrawAxesLabels_YLabelRightUsesRightTickBounds(t *testing.T) {
 	if tickBounds, ok := axisTickLabelBounds(ax.YAxisRight, r, ctx); ok {
 		rightExtent = math.Max(rightExtent, tickBounds.Max.X)
 	}
-	want := geom.Pt{
+	// P is matplotlib's label anchor: max(spine, tick bounds) + labelpad, centered.
+	p := geom.Pt{
 		X: rightExtent + axisLabelPadPx(ctx),
 		Y: px.Min.Y + px.H()/2,
 	}
+	// matplotlib draws the right y-label at rotation=90, rotation_mode="anchor",
+	// ha="center", va="top"; the backend pivot is derived via _get_layout.
+	layout := measureSingleLineTextLayout(r, "Value", axisLabelFontSize(ctx), ctx.RC.FontKey)
+	want := rotatedTextBackendAnchorFromP(p, layout, TextAlignCenter, textLayoutVAlignTop, math.Pi/2, true)
 	if r.rotatedAnchors[0] != want {
 		t.Fatalf("right ylabel anchor = %+v, want %+v", r.rotatedAnchors[0], want)
 	}

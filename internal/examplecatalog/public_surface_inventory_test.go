@@ -98,7 +98,7 @@ func TestPublicSurfaceParityRowsClassifyLandmarkRows(t *testing.T) {
 	}
 }
 
-func TestPhase125ImageClassAndIOOmissionsHaveExplicitRows(t *testing.T) {
+func TestImageClassAndIOOmissionsHaveExplicitRows(t *testing.T) {
 	want := []string{
 		"image.py:class:BboxImage",
 		"image.py:class:FigureImage",
@@ -119,7 +119,7 @@ func TestPhase125ImageClassAndIOOmissionsHaveExplicitRows(t *testing.T) {
 	}
 }
 
-func TestPhase125PyplotImageHelpersHaveExplicitRows(t *testing.T) {
+func TestPyplotImageHelpersHaveExplicitRows(t *testing.T) {
 	want := []string{
 		"pyplot.py:function:figimage",
 		"pyplot.py:function:imshow",
@@ -139,7 +139,7 @@ func TestPhase125PyplotImageHelpersHaveExplicitRows(t *testing.T) {
 	}
 }
 
-func TestPhase125PyplotDynamicShortcutsHaveExplicitRows(t *testing.T) {
+func TestPyplotDynamicShortcutsHaveExplicitRows(t *testing.T) {
 	want := []string{
 		"pyplot.py:function:clabel",
 		"pyplot.py:function:clim",
@@ -169,7 +169,7 @@ func TestPhase125PyplotDynamicShortcutsHaveExplicitRows(t *testing.T) {
 	}
 }
 
-func TestPhase125WidgetClassesHaveExplicitRows(t *testing.T) {
+func TestWidgetClassesHaveExplicitRows(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	for _, surface := range artifact.Rows {
 		if surface.Module != "widgets.py" || surface.Kind != "class" {
@@ -185,7 +185,7 @@ func TestPhase125WidgetClassesHaveExplicitRows(t *testing.T) {
 	}
 }
 
-func TestPhase125AnimationSurfaceHasExplicitRows(t *testing.T) {
+func TestAnimationSurfaceHasExplicitRows(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	for _, surface := range artifact.Rows {
 		if surface.Module != "animation.py" {
@@ -201,7 +201,7 @@ func TestPhase125AnimationSurfaceHasExplicitRows(t *testing.T) {
 	}
 }
 
-func TestPhase125BackendLifecycleAndToolRowsAreExplicit(t *testing.T) {
+func TestBackendLifecycleAndToolRowsAreExplicit(t *testing.T) {
 	want := []string{
 		"_pylab_helpers.py:class:Gcf",
 		"backend_bases.py:class:Event",

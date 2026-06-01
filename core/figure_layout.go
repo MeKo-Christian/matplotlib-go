@@ -353,20 +353,21 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 	if fig.SupYLabel != "" {
 		layout := measureSingleLineTextLayout(r, fig.SupYLabel, labelSize, fig.RC.FontKey, fig.RC.UseTeX)
 		leftPad := figureLabelLeftInsetPx(fig, ctx)
-		anchor := geom.Pt{
-			X: figureRect.Min.X + leftPad + layout.Height,
+		p := geom.Pt{
+			X: figureRect.Min.X + leftPad,
 			Y: centerY,
 		}
 		switch ren := r.(type) {
 		case render.RotatedTextDrawer:
+			anchor := rotatedTextBackendAnchorFromP(p, layout, TextAlignLeft, textLayoutVAlignCenter, math.Pi/2, false)
 			drawDisplayTextRotated(ren, fig.SupYLabel, anchor, labelSize, math.Pi/2, labelColor, fig.RC.FontKey, fig.RC.UseTeX)
 		case render.VerticalTextDrawer:
-			drawDisplayTextVertical(ren, fig.SupYLabel, anchor, labelSize, labelColor, fig.RC.FontKey)
+			drawDisplayTextVertical(ren, fig.SupYLabel, p, labelSize, labelColor, fig.RC.FontKey)
 		default:
 			drawDisplayText(
 				textRen,
 				fig.SupYLabel,
-				alignedSingleLineOrigin(anchor, layout, TextAlignLeft, textLayoutVAlignCenter),
+				alignedSingleLineOrigin(p, layout, TextAlignLeft, textLayoutVAlignCenter),
 				labelSize,
 				labelColor,
 				fig.RC.FontKey,

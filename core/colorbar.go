@@ -367,7 +367,13 @@ func constrainedColorbarSlotOffset(fig *Figure, base geom.Rect) float64 {
 		return 0
 	}
 	baseWidthPx := base.W() * fig.SizePx.X
-	return (constrainedLayoutPadPx(fig) + 0.5*constrainedLayoutDefaultSpacePx(baseWidthPx, 1)) / fig.SizePx.X
+	// Matplotlib's constrained layout separates the parent axes and the colorbar
+	// by the parent spine's line width in addition to the pad/space, so the
+	// drawn gap is measured edge-to-edge rather than frame-to-frame. Mirror that
+	// here so the colorbar lands at the same offset reserved below.
+	// AxisLineWidth is already stored in pixels.
+	lineWidthPx := fig.RC.AxisLineWidth
+	return (constrainedLayoutPadPx(fig) + 0.5*constrainedLayoutDefaultSpacePx(baseWidthPx, 1) + lineWidthPx) / fig.SizePx.X
 }
 
 func colorbarParentRect(base geom.Rect, width, padding float64, useResolvedSlot bool) geom.Rect {

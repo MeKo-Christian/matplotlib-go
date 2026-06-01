@@ -63,11 +63,12 @@ func TestBBoxToAnchorLocatorUsesMatplotlibFigureFractions(t *testing.T) {
 		7,
 	)
 
-	// anchor: X=1100*0.99=1089, Y=720-720*0.90=72
-	// LegendUpperRight with borderaxespad inset: minX=1089-104-7=978, minY=72+7=79
+	// Matplotlib transforms bbox_to_anchor through BboxTransformTo(parent.bbox),
+	// so the y fraction grows upward in display coordinates. The legend's
+	// upper-right corner is inset from the transformed anchor.
 	if rect != (geom.Rect{
-		Min: geom.Pt{X: 978, Y: 79},
-		Max: geom.Pt{X: 1082, Y: 167},
+		Min: geom.Pt{X: 978, Y: 553},
+		Max: geom.Pt{X: 1082, Y: 641},
 	}) {
 		t.Fatalf("bbox_to_anchor locator rect = %+v", rect)
 	}

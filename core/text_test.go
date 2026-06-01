@@ -137,7 +137,9 @@ func TestLayoutMathTextSqrtHasVinculum(t *testing.T) {
 	if len(layout.Rules) != 1 {
 		t.Fatalf("expected sqrt rule, got %+v", layout.Rules)
 	}
-	if !containsMathRun(layout.Runs, "√", 10.44) || !containsMathRun(layout.Runs, "3", 9.9) {
+	// The radical is an AutoHeightChar (size/font depends on the renderer's
+	// metrics); the root index is shrunk twice (SHRINK_FACTOR^2 = 0.49): 18*0.49 = 8.82.
+	if !containsMathRunText(layout.Runs, "√") || !containsMathRun(layout.Runs, "3", 8.82) {
 		t.Fatalf("missing sqrt/index runs: %+v", layout.Runs)
 	}
 	if layout.Rules[0].Rect.Min.X <= 0 || layout.Rules[0].Rect.Max.X <= layout.Rules[0].Rect.Min.X {
@@ -186,7 +188,10 @@ func TestLayoutMathTextStacksLargeOperatorLimits(t *testing.T) {
 	sumCenter := sumX + sumW/2
 	subCenter := (subMinX + subMaxX) / 2
 	superCenter := superX + superW/2
-	if math.Abs(subCenter-sumCenter) > 0.01 || math.Abs(superCenter-sumCenter) > 0.01 {
+	// matplotlib rounds the HCentered glue per row (round(glue_set*cur_glue)), so
+	// each row's center may differ from the operator center by up to ~0.5px.
+	const centerTol = 0.6
+	if math.Abs(subCenter-sumCenter) > centerTol || math.Abs(superCenter-sumCenter) > centerTol {
 		t.Fatalf("large-operator limits not centered over operator: sumCenter=%v subCenter=%v superCenter=%v runs=%+v", sumCenter, subCenter, superCenter, layout.Runs)
 	}
 }
@@ -836,15 +841,21 @@ func TestTextRotationModeAnchorRotatesAroundAlignedTextBox(t *testing.T) {
 	}
 	anchor := transformedPoint(ctx, text.Coords, text.Position, text.OffsetX, text.OffsetY)
 	layout := measureSingleLineTextLayoutParseMath(r, text.Content, text.FontSize, text.FontKey, true, ctx.RC.UseTeX)
-	origin := alignedSingleLineOrigin(anchor, layout, text.HAlign, layoutVerticalAlign(text.VAlign, false))
-	want := geom.Pt{
-		X: origin.X + layout.Width/2,
-		Y: origin.Y + layout.Descent,
+	vAlign := layoutVerticalAlign(text.VAlign, false)
+	origin := alignedSingleLineOrigin(anchor, layout, text.HAlign, vAlign)
+	angle := text.Angle * math.Pi / 180
+	// rotation_mode="anchor" ports matplotlib Text._get_layout's anchor branch:
+	// the (ha,va) reference of the UNROTATED box is aligned, then rotated.
+	p := geom.Pt{
+		X: origin.X + textHorizontalOriginOffset(layout, text.HAlign),
+		Y: origin.Y - textBaselineOffset(layout, vAlign),
 	}
+	want := rotatedTextBackendAnchorFromP(p, layout, text.HAlign, vAlign, angle, true)
 	if !approx(r.fontRotatedCalls[0].anchor.X, want.X, 1e-9) || !approx(r.fontRotatedCalls[0].anchor.Y, want.Y, 1e-9) {
-		t.Fatalf("rotation_mode anchor draw anchor = %+v, want pre-rotation bottom-center %+v", r.fontRotatedCalls[0].anchor, want)
+		t.Fatalf("rotation_mode anchor draw anchor = %+v, want %+v", r.fontRotatedCalls[0].anchor, want)
 	}
-	defaultAnchor := tickLabelRotationAnchor(origin, layout, text.HAlign, layoutVerticalAlign(text.VAlign, false), text.Angle*math.Pi/180)
+	// Anchor mode must differ from default (rotated-bbox) mode.
+	defaultAnchor := tickLabelRotationAnchor(origin, layout, text.HAlign, vAlign, angle)
 	if approx(r.fontRotatedCalls[0].anchor.X, defaultAnchor.X, 1e-9) && approx(r.fontRotatedCalls[0].anchor.Y, defaultAnchor.Y, 1e-9) {
 		t.Fatalf("rotation_mode anchor unexpectedly matched default rotated-bbox anchor %+v", defaultAnchor)
 	}
@@ -2192,14 +2203,14 @@ func TestMultilineTextLinespacingControlsBaselineAdvance(t *testing.T) {
 	if len(r.origins) != 2 {
 		t.Fatalf("multiline draw origins = %d, want 2", len(r.origins))
 	}
-	wantAdvance := text.FontSize * text.Linespacing
+	wantAdvance := text.FontSize*0.2 + text.FontSize*0.8*text.Linespacing
 	gotAdvance := r.origins[0].Y - r.origins[1].Y // y-up: next line is below at smaller Y
 	if !approx(gotAdvance, wantAdvance, 1e-9) {
 		t.Fatalf("multiline baseline advance = %v, want %v", gotAdvance, wantAdvance)
 	}
 }
 
-func TestMultilineTextNormalLinespacingUsesFontLineGap(t *testing.T) {
+func TestMultilineTextNormalLinespacingMatchesMatplotlibBaselineAdvance(t *testing.T) {
 	ctx := createTestDrawContext()
 	text := &Text{
 		Position: geom.Pt{X: 1, Y: 1},
@@ -2216,10 +2227,10 @@ func TestMultilineTextNormalLinespacingUsesFontLineGap(t *testing.T) {
 	if len(r.origins) != 2 {
 		t.Fatalf("multiline draw origins = %d, want 2", len(r.origins))
 	}
-	wantAdvance := r.fontHeights.Ascent + r.fontHeights.Descent + r.fontHeights.LineGap
+	wantAdvance := r.fontHeights.Descent + r.fontHeights.Ascent*1.2
 	gotAdvance := r.origins[0].Y - r.origins[1].Y // y-up: next line is below at smaller Y
 	if !approx(gotAdvance, wantAdvance, 1e-9) {
-		t.Fatalf("normal multiline baseline advance = %v, want font height + gap %v", gotAdvance, wantAdvance)
+		t.Fatalf("normal multiline baseline advance = %v, want Matplotlib descent + ascent*linespacing %v", gotAdvance, wantAdvance)
 	}
 }
 
@@ -2241,10 +2252,10 @@ func TestMultilineTextNumericLinespacingUsesFontHeight(t *testing.T) {
 	if len(r.origins) != 2 {
 		t.Fatalf("multiline draw origins = %d, want 2", len(r.origins))
 	}
-	wantAdvance := text.Linespacing * (r.fontHeights.Ascent + r.fontHeights.Descent)
+	wantAdvance := r.fontHeights.Descent + text.Linespacing*r.fontHeights.Ascent
 	gotAdvance := r.origins[0].Y - r.origins[1].Y // y-up: next line is below at smaller Y
 	if !approx(gotAdvance, wantAdvance, 1e-9) {
-		t.Fatalf("numeric multiline baseline advance = %v, want linespacing * font height %v", gotAdvance, wantAdvance)
+		t.Fatalf("numeric multiline baseline advance = %v, want Matplotlib descent + linespacing*ascent %v", gotAdvance, wantAdvance)
 	}
 }
 
@@ -2361,6 +2372,15 @@ func approxRect(got, want geom.Rect, tol float64) bool {
 		approx(got.Min.Y, want.Min.Y, tol) &&
 		approx(got.Max.X, want.Max.X, tol) &&
 		approx(got.Max.Y, want.Max.Y, tol)
+}
+
+func containsMathRunText(runs []MathTextLayoutRun, text string) bool {
+	for _, run := range runs {
+		if run.Text == text {
+			return true
+		}
+	}
+	return false
 }
 
 func containsMathRun(runs []MathTextLayoutRun, text string, size float64) bool {

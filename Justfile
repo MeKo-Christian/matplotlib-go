@@ -13,7 +13,7 @@ fmt:
       echo "treefmt not installed; skipping"; \
     fi
 
-lint:
+lint: freetype261-build
     if command -v golangci-lint >/dev/null 2>&1; then \
       golangci-lint run --timeout=5m; \
     else \
@@ -21,7 +21,7 @@ lint:
       exit 1; \
     fi
 
-lint-fix:
+lint-fix: freetype261-build
     if command -v golangci-lint >/dev/null 2>&1; then \
       golangci-lint run --fix --timeout=5m; \
     else \
@@ -29,45 +29,60 @@ lint-fix:
       exit 1; \
     fi
 
-build:
+build: freetype261-build
     # Use freetype-aware rendering paths (including GoBasic text-family/size handling).
     CGO_ENABLED=1 go build -tags freetype ./...
 
 web-build:
     bash ./web/build-wasm.sh
 
-build-skia:
+build-skia: freetype261-build
     CGO_ENABLED=1 go build -tags "skia freetype" ./...
 
-test:
+test: freetype261-build
     CGO_ENABLED=1 go test -tags freetype ./...
 
-test-optional-visual:
+test-optional-visual: freetype261-build
     RUN_OPTIONAL_VISUAL_TESTS=true CGO_ENABLED=1 go test -tags freetype ./...
 
-test-skia:
+# --- FreeType 2.6.1 (matplotlib's pinned version) ---------------------------
+# matplotlib generates every reference image with FreeType 2.6.1. The AGG
+# backend statically links that same vendored FreeType by DEFAULT (the cgo
+# flags in backends/agg/freetype_native.go), so text rasterization byte-matches
+# the references — title_strict and the strict-text cases hit RMSE ~0. Every
+# cgo target below depends on `freetype261-build` so the prefix exists before
+# the first compile. (A `-tags systemfreetype` compile fallback links the
+# system FreeType for environments without the vendored prefix, but it is not
+# parity-exact and golden/reference tests are expected to diverge under it.)
+
+# Build & cache the vendored static FreeType 2.6.1 (idempotent).
+freetype261-build:
+    bash third_party/freetype/build.sh
+# ---------------------------------------------------------------------------
+
+test-skia: freetype261-build
     CGO_ENABLED=1 go test -tags "skia freetype" ./...
 
-golden-update TEST="":
+golden-update TEST="": freetype261-build
     if [ -n "{{TEST}}" ]; then \
       CGO_ENABLED=1 go test -tags freetype -count=1 -run "{{TEST}}" ./test -update-golden; \
     else \
       CGO_ENABLED=1 go test -tags freetype -count=1 -run '^Test.*_Golden$$' ./test -update-golden; \
     fi
 
-text-parity-backend:
+text-parity-backend: freetype261-build
     CGO_ENABLED=1 go test -tags freetype ./backends/agg -run "TestUsesDejaVuSansWithoutFallback|TestRasterTextWidthTracksRendererDPI|TestMeasureTextUsesStableFontLineMetrics|TestTrailingSpaceDoesNotRenderDuplicateGlyph|TestInternalSpaceDoesNotReplayPreviousGlyph" -count=1 -v
 
 text-parity-core:
     CGO_ENABLED=1 go test ./core -run "TestTitleFontSizeUsesTitleOnlyCompensation|TestDrawAxesLabels_YLabelUsesTickBoundsAndLabelPad|TestTickLabelPositionUsesBoundsForBottomXAxis|TestTickLabelPositionUsesBoundsForLeftYAxis|TestTickLabelPositionUsesFontHeightMetricsForBottomXAxis|TestTickLabelPositionUsesBottomAlignmentForTopXAxis|TestTickLabelPositionUsesCenterBaselineForRightYAxis|TestAlignedTextOrigin|TestAxesTextDrawsNormalizedContent|TestAnnotationDrawOverlayRendersArrowAndText|TestAxesTextSupportsAxesAndBlendedCoordinates" -count=1 -v
 
-text-parity-canaries:
+text-parity-canaries: freetype261-build
     CGO_ENABLED=1 go test -tags freetype ./test -run "TestMpl_BarBasicTickLabels|TestMpl_BarBasicTitle|TestMpl_HistStrategies|TestTextLabelsStrict_MatplotlibRef|TestTitleStrict_MatplotlibRef" -count=1 -v
 
-text-parity-golden:
+text-parity-golden: freetype261-build
     CGO_ENABLED=1 go test -tags freetype ./test -run "TestBarBasicTickLabels_Golden|TestBarBasicTitle_Golden|TestHistStrategies_Golden|TestTextLabelsStrict_Golden|TestTitleStrict_Golden" -count=1 -update-golden -v
 
-text-parity-compare:
+text-parity-compare: freetype261-build
     CGO_ENABLED=1 go test -tags freetype ./test -run "TestReferenceImages_GoldenVsMatplotlibRef/bar_basic_tick_labels|TestReferenceImages_GoldenVsMatplotlibRef/bar_basic_title|TestReferenceImages_GoldenVsMatplotlibRef/hist_strategies|TestTextLabelsStrict_MatplotlibRef|TestTitleStrict_MatplotlibRef" -count=1 -v
 
 backend-info:
@@ -77,7 +92,7 @@ cli:
     go run ./main.go --help
 
 # Start parity comparison viewer for matplotlib-go golden vs reference images.
-parity-viewer PORT="8090" FILTER="":
+parity-viewer PORT="8090" FILTER="": freetype261-build
     PORT={{PORT}} CGO_ENABLED=1 go run -tags freetype ./cmd/parityviewer --port {{PORT}} --name-filter "{{FILTER}}"
 
 # Start parity viewer with standard golden/reference cases and web demo cases.

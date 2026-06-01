@@ -187,6 +187,11 @@ func (r *Renderer) SetResolution(dpi uint) {
 	r.ctx.SetResolution(r.resolution)
 }
 
+// Resolution reports the current font rendering DPI (render.DPIProvider).
+func (r *Renderer) Resolution() uint {
+	return r.resolution
+}
+
 // Begin starts a drawing session with the given viewport.
 func (r *Renderer) Begin(viewport geom.Rect) error {
 	if r.began {

@@ -13,6 +13,12 @@ type DPIAware interface {
 	SetResolution(dpi uint)
 }
 
+// DPIProvider is implemented by renderers that expose their current DPI, letting
+// mathtext layout compute matplotlib's exact fontsize*dpi/72 thickness.
+type DPIProvider interface {
+	Resolution() uint
+}
+
 // TextDrawer is implemented by renderers that support direct text drawing.
 type TextDrawer interface {
 	DrawText(text string, origin geom.Pt, size float64, textColor Color)
@@ -46,6 +52,60 @@ type FontRotatedTextDrawer interface {
 // of text relative to the baseline origin used for DrawText.
 type TextBounder interface {
 	MeasureTextBounds(text string, size float64, fontKey string) (TextBounds, bool)
+}
+
+// MathGlyphMetric carries matplotlib `_mathtext.TruetypeFonts._get_info` metrics
+// for a single glyph, used to lay out and rasterize mathtext pixel-exactly.
+// All values are in device pixels relative to the glyph baseline (y-up): Iceberg
+// = horiBearingY/64 (the TeX "height"), Ymax/Ymin the ink bbox top/bottom,
+// Advance the UNHINTED linearHoriAdvance, KernToPrev the kerning to the previous
+// glyph in the run.
+type MathGlyphMetric struct {
+	Advance    float64
+	Iceberg    float64
+	Height     float64 // glyph.metrics.height/64 (full ink height)
+	Xmin       float64
+	Xmax       float64
+	Ymin       float64
+	Ymax       float64
+	KernToPrev float64
+}
+
+// MathGlyphMeasurer is implemented by renderers that can return matplotlib's
+// exact per-glyph mathtext metrics (`_get_info`). Returns false when the
+// pixel-exact (FreeType) path is unavailable (e.g. purego/WASM), in which case
+// the mathtext layout falls back to whole-run MeasureText.
+type MathGlyphMeasurer interface {
+	MeasureMathGlyphRun(text string, size float64, fontKey string) ([]MathGlyphMetric, bool)
+}
+
+// MathGlyphPlacement is one positioned glyph in a flattened mathtext expression,
+// in matplotlib `ship` coordinates (baseline-relative, y-up): Ox/Oy are the glyph
+// origin (Oy is the baseline; the glyph ink rises to Oy+Iceberg).
+type MathGlyphPlacement struct {
+	Text     string
+	FontSize float64
+	FontKey  string
+	Ox       float64
+	Oy       float64
+}
+
+// MathRectPlacement is one filled rule (fraction bar, radical vinculum) in ship
+// coordinates (baseline-relative, y-up), X1<X2, Y1<Y2.
+type MathRectPlacement struct {
+	X1, Y1, X2, Y2 float64
+}
+
+// MathTextImageDrawer is implemented by renderers that can rasterize a flattened
+// mathtext expression with matplotlib's `_mathtext.Output.to_raster` pixel
+// placement (per-glyph integer blitting + the `draw_rect_filled` rule formula,
+// sharing one bounding box). anchor is the expression baseline origin in display
+// space. Returns false when the pixel-exact path is unavailable.
+type MathTextImageDrawer interface {
+	// boxAscent/boxDescent are the expression's layout ascent/descent (matplotlib
+	// box.height/box.depth), needed to reproduce to_raster's image height and the
+	// backend's round(baseline+descent)+1 placement.
+	DrawMathTextImage(glyphs []MathGlyphPlacement, rects []MathRectPlacement, anchor geom.Pt, boxAscent, boxDescent float64, textColor Color) bool
 }
 
 // TextFontMetricer is implemented by renderers that can report font-wide line

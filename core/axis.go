@@ -70,37 +70,39 @@ const (
 
 // Axis renders axis spines, ticks, and labels for a single dimension.
 type Axis struct {
-	Side               AxisSide     // which side of the plot
-	Locator            Locator      // major tick position calculator
-	MinorLocator       Locator      // minor tick position calculator (nil = no minor ticks)
-	Formatter          Formatter    // major tick label formatter
-	MinorFormatter     Formatter    // optional minor tick label formatter
-	Color              render.Color // axis spine color, and tick/label color unless overridden
-	TickColor          *render.Color
-	TickLabelColor     *render.Color
-	LineWidth          float64 // width of axis spine
-	LineCap            render.LineCap
-	LineJoin           render.LineJoin
-	TickLineCap        render.LineCap
-	TickLineJoin       render.LineJoin
-	TickLineWidth      float64
-	MinorTickLineWidth float64
-	Dashes             []float64
-	TickSize           float64 // length of major tick marks (in pixels)
-	MinorTickSize      float64 // length of minor tick marks (in pixels); 0 uses TickSize*0.6
-	MajorTickCount     int     // target major tick count for automatic locators
-	MinorTickCount     int     // target minor tick count for automatic locators
-	TickDirection      TickDirection
-	SpinePositionMode  AxisSpinePositionMode
-	SpinePosition      float64
-	ShowSpine          bool // whether to draw the axis line
-	ShowTicks          bool // whether to draw major/minor tick marks
-	ShowLabels         bool // whether to draw major tick labels
-	ShowMinorLabels    bool // whether to draw minor tick labels
-	MajorLabelStyle    TickLabelStyle
-	MinorLabelStyle    TickLabelStyle
-	ExtraTickLevels    []TickLevel
-	z                  float64 // z-order
+	Side                AxisSide     // which side of the plot
+	Locator             Locator      // major tick position calculator
+	MinorLocator        Locator      // minor tick position calculator (nil = no minor ticks)
+	Formatter           Formatter    // major tick label formatter
+	MinorFormatter      Formatter    // optional minor tick label formatter
+	Color               render.Color // axis spine color, and tick/label color unless overridden
+	TickColor           *render.Color
+	TickLabelColor      *render.Color
+	MinorTickColor      *render.Color // minor tick mark color (nil falls back to TickColor)
+	MinorTickLabelColor *render.Color // minor tick label color (nil falls back to MinorTickColor)
+	LineWidth           float64       // width of axis spine
+	LineCap             render.LineCap
+	LineJoin            render.LineJoin
+	TickLineCap         render.LineCap
+	TickLineJoin        render.LineJoin
+	TickLineWidth       float64
+	MinorTickLineWidth  float64
+	Dashes              []float64
+	TickSize            float64 // length of major tick marks (in pixels)
+	MinorTickSize       float64 // length of minor tick marks (in pixels); 0 uses TickSize*0.6
+	MajorTickCount      int     // target major tick count for automatic locators
+	MinorTickCount      int     // target minor tick count for automatic locators
+	TickDirection       TickDirection
+	SpinePositionMode   AxisSpinePositionMode
+	SpinePosition       float64
+	ShowSpine           bool // whether to draw the axis line
+	ShowTicks           bool // whether to draw major/minor tick marks
+	ShowLabels          bool // whether to draw major tick labels
+	ShowMinorLabels     bool // whether to draw minor tick labels
+	MajorLabelStyle     TickLabelStyle
+	MinorLabelStyle     TickLabelStyle
+	ExtraTickLevels     []TickLevel
+	z                   float64 // z-order
 }
 
 // NewXAxis creates an axis for the bottom (x-axis).
@@ -216,7 +218,7 @@ func (a *Axis) DrawTicks(r render.Renderer, ctx *DrawContext) {
 		}
 		size := tickLevelSize(level, a.TickSize)
 		for _, tickValue := range ticks {
-			a.drawSingleTick(r, ctx, tickValue, size, a.tickLineWidth(), isXAxis)
+			a.drawSingleTick(r, ctx, tickValue, size, a.tickLineWidth(), a.tickColor(), isXAxis)
 		}
 	}
 }
@@ -267,7 +269,7 @@ func spinePixelEndpoints(side AxisSide, px geom.Rect) (geom.Pt, geom.Pt) {
 // drawTicks draws tick marks at the specified positions.
 func (a *Axis) drawTicks(r render.Renderer, ctx *DrawContext, ticks []float64, isXAxis bool) {
 	for _, tickValue := range ticks {
-		a.drawSingleTick(r, ctx, tickValue, a.TickSize, a.tickLineWidth(), isXAxis)
+		a.drawSingleTick(r, ctx, tickValue, a.TickSize, a.tickLineWidth(), a.tickColor(), isXAxis)
 	}
 }
 
@@ -278,12 +280,12 @@ func (a *Axis) drawMinorTicks(r render.Renderer, ctx *DrawContext, ticks []float
 		sz = a.TickSize * 0.6
 	}
 	for _, tickValue := range ticks {
-		a.drawSingleTick(r, ctx, tickValue, sz, a.minorTickLineWidth(), isXAxis)
+		a.drawSingleTick(r, ctx, tickValue, sz, a.minorTickLineWidth(), a.minorTickColor(), isXAxis)
 	}
 }
 
 // drawSingleTick draws a single tick mark pointing outward from the plot area.
-func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, tickSize, lineWidth float64, isXAxis bool) {
+func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, tickSize, lineWidth float64, stroke render.Color, isXAxis bool) {
 	var p1, p2 geom.Pt
 
 	if isXAxis {
@@ -312,7 +314,7 @@ func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, ti
 	// Draw the tick
 	paint := render.Paint{
 		LineWidth: lineWidth,
-		Stroke:    a.tickColor(),
+		Stroke:    stroke,
 		LineCap:   a.TickLineCap,
 		LineJoin:  a.TickLineJoin,
 		Dashes:    styleCloneDashes(a.Dashes),
@@ -416,18 +418,18 @@ func (a *Axis) DrawTickLabels(r render.Renderer, ctx *DrawContext) {
 	}
 	if a.ShowLabels && a.Locator != nil && a.Formatter != nil {
 		ticks := visibleTicks(a.Locator.Ticks(domainMin, domainMax, a.majorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
-		a.drawTickLabels(r, ctx, ticks, a.Formatter, a.MajorLabelStyle, a.TickSize, isXAxis)
+		a.drawTickLabels(r, ctx, ticks, a.Formatter, a.MajorLabelStyle, a.TickSize, a.tickLabelColor(), isXAxis)
 	}
 	if a.ShowMinorLabels && a.MinorLocator != nil && a.MinorFormatter != nil {
 		ticks := visibleTicks(a.MinorLocator.Ticks(domainMin, domainMax, a.minorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
-		a.drawTickLabels(r, ctx, ticks, a.MinorFormatter, a.MinorLabelStyle, a.minorTickSize(), isXAxis)
+		a.drawTickLabels(r, ctx, ticks, a.MinorFormatter, a.MinorLabelStyle, a.minorTickSize(), a.minorTickLabelColor(), isXAxis)
 	}
 	for _, level := range a.ExtraTickLevels {
 		if !level.ShowLabels || level.Locator == nil || level.Formatter == nil {
 			continue
 		}
 		ticks := visibleTicks(level.Locator.Ticks(domainMin, domainMax, a.majorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
-		a.drawTickLabels(r, ctx, ticks, level.Formatter, normalizeTickLabelStyle(level.LabelStyle), tickLevelSize(level, a.TickSize), isXAxis)
+		a.drawTickLabels(r, ctx, ticks, level.Formatter, normalizeTickLabelStyle(level.LabelStyle), tickLevelSize(level, a.TickSize), a.tickLabelColor(), isXAxis)
 	}
 }
 
@@ -519,7 +521,7 @@ func visibleTicks(ticks []float64, minVal, maxVal float64) []float64 {
 }
 
 // drawTickLabels draws text labels for a single tick level if the renderer supports text.
-func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64, isXAxis bool) {
+func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64, labelColor render.Color, isXAxis bool) {
 	textRen, ok := r.(render.TextDrawer)
 	if !ok || formatter == nil {
 		return
@@ -559,11 +561,11 @@ func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float
 		if style.Rotation != 0 && rotRen != nil {
 			hAlign, vAlign := resolvedTickLabelLayoutAlignments(a.Side, style, isXAxis)
 			angle := style.Rotation * math.Pi / 180.0
-			drawDisplayTextRotated(rotRen, label, tickLabelRotationAnchor(labelPos, layout, hAlign, vAlign, angle), fontSize, angle, a.tickLabelColor(), fontKey, ctx.RC.UseTeX)
+			drawDisplayTextRotated(rotRen, label, tickLabelRotationAnchor(labelPos, layout, hAlign, vAlign, angle), fontSize, angle, labelColor, fontKey, ctx.RC.UseTeX)
 			continue
 		}
 
-		drawDisplayText(textRen, label, labelPos, fontSize, a.tickLabelColor(), fontKey, ctx.RC.UseTeX)
+		drawDisplayText(textRen, label, labelPos, fontSize, labelColor, fontKey, ctx.RC.UseTeX)
 	}
 }
 
@@ -1068,6 +1070,30 @@ func (a *Axis) tickLabelColor() render.Color {
 	return a.tickColor()
 }
 
+// minorTickColor resolves the minor tick mark color. A nil override falls back
+// to the major tick color so that existing single-color configurations keep
+// their behavior; an explicit minor color (via tick_params which="minor") is
+// independent of the major color, matching matplotlib.
+func (a *Axis) minorTickColor() render.Color {
+	if a == nil {
+		return render.Color{}
+	}
+	if a.MinorTickColor != nil {
+		return *a.MinorTickColor
+	}
+	return a.tickColor()
+}
+
+func (a *Axis) minorTickLabelColor() render.Color {
+	if a == nil {
+		return render.Color{}
+	}
+	if a.MinorTickLabelColor != nil {
+		return *a.MinorTickLabelColor
+	}
+	return a.minorTickColor()
+}
+
 func (a *Axis) tickLineWidth() float64 {
 	if a == nil {
 		return 0
@@ -1353,12 +1379,34 @@ func tickLabelDisplayRect(side AxisSide, style TickLabelStyle, isXAxis bool, ori
 
 	hAlign, vAlign := resolvedTickLabelLayoutAlignments(side, style, isXAxis)
 	angle := style.Rotation * math.Pi / 180.0
-	anchor := tickLabelRotationAnchor(origin, layout, hAlign, vAlign, angle)
-	unrotatedRect, ok := alignedTextLayoutRect(anchor, layout, TextAlignCenter, textLayoutVAlignBottom, lineHeight)
-	if !ok {
+	// Faithful rotated extent: the metric box (baseline-left at the matplotlib draw
+	// origin, x∈[0,W], y∈[-Descent,Ascent] in y-up) rotated by +angle about the
+	// origin — matching what the backend renders.
+	o := tickLabelDrawOrigin(origin, layout, hAlign, vAlign, angle, false)
+	w := layout.Width
+	if w <= 0 && layout.HaveInkBounds {
+		w = layout.InkBounds.W
+	}
+	if w <= 0 {
 		return geom.Rect{}, false
 	}
-	return rotatedRectBounds(unrotatedRect, anchor, -angle), true
+	cosT := math.Cos(angle)
+	sinT := math.Sin(angle)
+	corners := [4][2]float64{{0, -layout.Descent}, {0, layout.Ascent}, {w, layout.Ascent}, {w, -layout.Descent}}
+	var out geom.Rect
+	for i, c := range corners {
+		px := o.X + c[0]*cosT - c[1]*sinT
+		py := o.Y + c[0]*sinT + c[1]*cosT
+		if i == 0 {
+			out = geom.Rect{Min: geom.Pt{X: px, Y: py}, Max: geom.Pt{X: px, Y: py}}
+			continue
+		}
+		out.Min.X = math.Min(out.Min.X, px)
+		out.Min.Y = math.Min(out.Min.Y, py)
+		out.Max.X = math.Max(out.Max.X, px)
+		out.Max.Y = math.Max(out.Max.Y, py)
+	}
+	return out, true
 }
 
 func alignedTextLayoutRect(anchor geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, lineHeight float64) (geom.Rect, bool) {
@@ -1405,35 +1453,6 @@ func alignedTextLayoutRect(anchor geom.Pt, layout singleLineTextLayout, hAlign T
 	}, true
 }
 
-func rotatedRectBounds(rect geom.Rect, anchor geom.Pt, angle float64) geom.Rect {
-	corners := []geom.Pt{
-		rect.Min,
-		{X: rect.Max.X, Y: rect.Min.Y},
-		rect.Max,
-		{X: rect.Min.X, Y: rect.Max.Y},
-	}
-	cosA := math.Cos(angle)
-	sinA := math.Sin(angle)
-	out := geom.Rect{Min: rotatePoint(corners[0], anchor, cosA, sinA), Max: rotatePoint(corners[0], anchor, cosA, sinA)}
-	for _, corner := range corners[1:] {
-		p := rotatePoint(corner, anchor, cosA, sinA)
-		out.Min.X = math.Min(out.Min.X, p.X)
-		out.Min.Y = math.Min(out.Min.Y, p.Y)
-		out.Max.X = math.Max(out.Max.X, p.X)
-		out.Max.Y = math.Max(out.Max.Y, p.Y)
-	}
-	return out
-}
-
-func rotatePoint(p, anchor geom.Pt, cosA, sinA float64) geom.Pt {
-	dx := p.X - anchor.X
-	dy := p.Y - anchor.Y
-	return geom.Pt{
-		X: anchor.X + dx*cosA - dy*sinA,
-		Y: anchor.Y + dx*sinA + dy*cosA,
-	}
-}
-
 func tickLabelCenterOffsetX(layout singleLineTextLayout) float64 {
 	return layout.Width / 2
 }
@@ -1471,34 +1490,138 @@ func tickLabelLeftOffsetForRightAxis(hAlign TextAlign, layout singleLineTextLayo
 	}
 }
 
-func tickLabelRotationAnchor(origin geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64) geom.Pt {
-	alignmentAnchor := geom.Pt{
-		X: origin.X + textHorizontalOriginOffset(layout, hAlign),
-		Y: origin.Y - textBaselineOffset(layout, vAlign),
+// tickLabelDrawOriginFromP ports matplotlib's Text._get_layout (matplotlib/text.py)
+// for a single line and returns the glyph baseline-left draw origin in y-up display
+// space, given the text anchor point P, the line metrics, the horizontal/vertical
+// alignment, the rotation angle (radians, CCW), and the rotation mode.
+//
+// matplotlib lays the unrotated metric box at x∈[0,W], y∈[-h,0] (y-up) with the
+// baseline-left at (0, -(h-d)). It rotates by M, aligns the (hAlign,vAlign)
+// reference to P, and the per-line draw position is M·(0,-(h-d)) minus the
+// alignment offset. In rotation_mode="default" the offset comes from the *rotated*
+// bounding box; in "anchor" it comes from the *unrotated* box, then rotated by M.
+func tickLabelDrawOriginFromP(p geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64, anchorMode bool) geom.Pt {
+	w := layout.Width
+	d := layout.Descent
+	h := layout.Ascent + d
+	baseline := layout.Ascent // matplotlib's baseline = h - descent = ascent
+
+	cosT := math.Cos(angle)
+	sinT := math.Sin(angle)
+	rot := func(x, y float64) (float64, float64) {
+		return x*cosT - y*sinT, x*sinT + y*cosT
 	}
-	pivot := tickLabelBottomCenterOffset(layout)
-	desired := geom.Pt{
-		X: textHorizontalOriginOffset(layout, hAlign),
-		Y: -textBaselineOffset(layout, vAlign),
+
+	var offsetX, offsetY float64
+	if anchorMode {
+		// rotation_mode="anchor": offsets from the UNROTATED box, then rotated.
+		switch hAlign {
+		case TextAlignRight:
+			offsetX = w
+		case TextAlignCenter:
+			offsetX = w / 2
+		default: // left
+			offsetX = 0
+		}
+		switch vAlign {
+		case textLayoutVAlignTop:
+			offsetY = 0
+		case textLayoutVAlignCenter:
+			offsetY = -h / 2
+		case textLayoutVAlignBaseline:
+			offsetY = -baseline
+		case textLayoutVAlignCenterBaseline:
+			offsetY = -baseline / 2
+		default: // bottom
+			offsetY = -h
+		}
+		offsetX, offsetY = rot(offsetX, offsetY)
+	} else {
+		// rotation_mode="default": offsets from the ROTATED bounding box.
+		cornersX := [4]float64{0, 0, w, w}
+		cornersY := [4]float64{-h, 0, 0, -h}
+		var rxMin, rxMax, ryMin, ryMax float64
+		for i := range 4 {
+			rx, ry := rot(cornersX[i], cornersY[i])
+			if i == 0 || rx < rxMin {
+				rxMin = rx
+			}
+			if i == 0 || rx > rxMax {
+				rxMax = rx
+			}
+			if i == 0 || ry < ryMin {
+				ryMin = ry
+			}
+			if i == 0 || ry > ryMax {
+				ryMax = ry
+			}
+		}
+		switch hAlign {
+		case TextAlignRight:
+			offsetX = rxMax
+		case TextAlignCenter:
+			offsetX = (rxMin + rxMax) / 2
+		default: // left
+			offsetX = rxMin
+		}
+		switch vAlign {
+		case textLayoutVAlignTop:
+			offsetY = ryMax
+		case textLayoutVAlignCenter:
+			offsetY = (ryMin + ryMax) / 2
+		case textLayoutVAlignBaseline:
+			offsetY = ryMin + d
+		case textLayoutVAlignCenterBaseline:
+			offsetY = ryMin + (ryMax - ryMin) - baseline/2
+		default: // bottom
+			offsetY = ryMin
+		}
 	}
-	dx := desired.X - pivot.X
-	dy := desired.Y - pivot.Y
-	cosA := math.Cos(-angle)
-	sinA := math.Sin(-angle)
+
+	// matplotlib: draw_origin = P + M·(0, -(h-d)) - (offsetX, offsetY)
+	blX, blY := rot(0, -(h - d))
 	return geom.Pt{
-		X: alignmentAnchor.X - (dx*cosA - dy*sinA),
-		Y: alignmentAnchor.Y - (dx*sinA + dy*cosA),
+		X: p.X + blX - offsetX,
+		Y: p.Y + blY - offsetY,
 	}
 }
 
-func tickLabelBottomCenterOffset(layout singleLineTextLayout) geom.Pt {
-	if layout.HaveInkBounds && layout.InkBounds.W > 0 && layout.InkBounds.H > 0 {
-		return geom.Pt{
-			X: layout.InkBounds.X + layout.InkBounds.W/2,
-			Y: layout.InkBounds.Y + layout.InkBounds.H,
-		}
+// tickLabelDrawOrigin recovers matplotlib's text anchor point P from the unrotated
+// draw origin (undoing the alignment) and returns the matplotlib baseline-left draw
+// origin via tickLabelDrawOriginFromP.
+func tickLabelDrawOrigin(origin geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64, anchorMode bool) geom.Pt {
+	p := geom.Pt{
+		X: origin.X + textHorizontalOriginOffset(layout, hAlign),
+		Y: origin.Y - textBaselineOffset(layout, vAlign),
 	}
-	return geom.Pt{X: layout.Width / 2, Y: layout.Descent}
+	return tickLabelDrawOriginFromP(p, layout, hAlign, vAlign, angle, anchorMode)
+}
+
+// rotatedTextBackendAnchorFromP maps matplotlib's baseline-left draw origin O to the
+// bottom-center anchor the AGG backend rotates about. The backend renders the
+// baseline-left at anchor - R(angle)·(W/2, Descent) (proven from drawTextRotatedDirect
+// + the y-down device flip), and its metrics.W/Descent equal layout.Width/Descent, so
+// anchor = O + R(angle)·(W/2, Descent) makes the rendered glyphs land exactly on O.
+func rotatedTextBackendAnchorFromP(p geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64, anchorMode bool) geom.Pt {
+	o := tickLabelDrawOriginFromP(p, layout, hAlign, vAlign, angle, anchorMode)
+	cosT := math.Cos(angle)
+	sinT := math.Sin(angle)
+	w := layout.Width
+	d := layout.Descent
+	return geom.Pt{
+		X: o.X + (w/2*cosT - d*sinT),
+		Y: o.Y + (w/2*sinT + d*cosT),
+	}
+}
+
+// tickLabelRotationAnchor returns the AGG backend rotation pivot for a tick label
+// drawn with matplotlib's rotation_mode="default".
+func tickLabelRotationAnchor(origin geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64) geom.Pt {
+	p := geom.Pt{
+		X: origin.X + textHorizontalOriginOffset(layout, hAlign),
+		Y: origin.Y - textBaselineOffset(layout, vAlign),
+	}
+	return rotatedTextBackendAnchorFromP(p, layout, hAlign, vAlign, angle, false)
 }
 
 func resolvedTickLabelAlignments(side AxisSide, style TickLabelStyle, isXAxis bool) (TextAlign, TextVerticalAlign) {

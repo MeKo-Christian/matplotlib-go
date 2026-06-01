@@ -1,6 +1,7 @@
 package mathtext
 
 import (
+	"math"
 	"strconv"
 	"strings"
 	"unicode"
@@ -13,9 +14,40 @@ import (
 // baseline when the renderer can provide them.
 type Metrics struct{ W, H, Ascent, Descent, BoundsY, BoundsH float64 }
 
+// GlyphInfo carries matplotlib `_get_info` metrics for one glyph (device pixels,
+// baseline-relative, y-up). Advance is the UNHINTED linearHoriAdvance, Iceberg =
+// horiBearingY/64 (TeX height), Height the full ink height, Xmin/Xmax/Ymin/Ymax
+// the ink bbox, KernToPrev the kerning to the previous glyph in the run.
+type GlyphInfo struct {
+	Advance    float64
+	Iceberg    float64
+	Height     float64
+	Xmin       float64
+	Xmax       float64
+	Ymin       float64
+	Ymax       float64
+	KernToPrev float64
+}
+
 // Measurer measures text for one font key and size.
 type Measurer interface {
 	MeasureText(text string, size float64, fontKey string) Metrics
+}
+
+// DPIMeasurer is an optional Measurer capability exposing the render DPI, so the
+// layout can compute matplotlib's exact `fontsize*dpi/72` device pixel size for
+// the (font-independent) underline thickness instead of reconstructing it from
+// the x-height.
+type DPIMeasurer interface {
+	DPI() float64
+}
+
+// GlyphMeasurer is an optional Measurer capability returning matplotlib's exact
+// per-glyph `_get_info` metrics. When a Measurer implements it and GlyphRun
+// returns ok, the layout positions glyphs pixel-exactly; otherwise it falls back
+// to whole-run MeasureText. (Unavailable on purego/WASM, which lacks FreeType.)
+type GlyphMeasurer interface {
+	GlyphRun(text string, size float64, fontKey string) ([]GlyphInfo, bool)
 }
 
 // FontStyle describes the font posture requested by MathText style commands.
@@ -88,7 +120,6 @@ const (
 	mathRuleDelimiterScale  = 0.76
 	mathSpaceScale          = 1.60
 	mathCMXHeightScale      = 0.43
-	mathSizedDelimAdvance   = 1.00
 )
 
 type mathDelimiterGlyph struct {
@@ -369,6 +400,15 @@ func (p *mathLayoutParser) parseCommandNode() mathLayoutNode {
 		return mathLayoutNode{kind: mathLayoutText, text: delim}
 	}
 	if op, ok := mathTextOperatorMap[name]; ok {
+		// matplotlib operatorname(): a function name gets a trailing thin space
+		// (\, = 0.16667em) unless it is an over-under function (lim/sup/max/...) or
+		// is immediately followed by a delimiter or a sub/superscript.
+		if mathFunctionTakesThinSpace(op) && !mathNextCharSuppressesFunctionSpace(p.input, p.pos) {
+			return mathLayoutNode{kind: mathLayoutList, children: []mathLayoutNode{
+				{kind: mathLayoutText, text: op},
+				{kind: mathLayoutSpace, widthEm: 0.16667},
+			}}
+		}
 		return mathLayoutNode{kind: mathLayoutText, text: op}
 	}
 	if _, ok := mathTextPassthroughCommands[name]; ok {
@@ -1043,6 +1083,18 @@ func layoutMathTextRun(r Measurer, text string, size float64, fontKey string) ma
 		return mathLayoutBox{}
 	}
 	fontKey = mathDisplayOperatorFontKey(text, fontKey)
+
+	// Pixel-exact path: position every glyph individually from matplotlib
+	// `_get_info` metrics (mirrors ship() Char/Kern packing). Falls back to the
+	// whole-run path when the renderer lacks the FreeType capability (purego).
+	if gm, ok := r.(GlyphMeasurer); ok {
+		if infos, ok := gm.GlyphRun(text, size, fontKey); ok {
+			if box, ok := layoutMathGlyphRun(text, infos, size, fontKey); ok {
+				return box
+			}
+		}
+	}
+
 	metrics := r.MeasureText(text, size, fontKey)
 	if metrics.W <= 0 {
 		metrics.W = float64(len([]rune(text))) * size * 0.5
@@ -1057,6 +1109,38 @@ func layoutMathTextRun(r Measurer, text string, size float64, fontKey string) ma
 		Ascent:  metrics.Ascent,
 		Descent: metrics.Descent,
 	}
+}
+
+// layoutMathGlyphRun packs each glyph of text at its exact matplotlib position:
+// glyph i renders at cumulative Σ(advance)+Σ(kern), box width = total advance +
+// kerns, ascent = max(iceberg), depth = max(height - iceberg) (Char.depth). One
+// MathTextLayoutRun is emitted per glyph (baseline-aligned, layout y-down).
+func layoutMathGlyphRun(text string, infos []GlyphInfo, size float64, fontKey string) (mathLayoutBox, bool) {
+	runes := []rune(text)
+	if len(infos) != len(runes) || len(runes) == 0 {
+		return mathLayoutBox{}, false
+	}
+	var box mathLayoutBox
+	box.runs = make([]MathTextLayoutRun, 0, len(runes))
+	x := 0.0
+	for i, info := range infos {
+		x += info.KernToPrev
+		box.runs = append(box.runs, MathTextLayoutRun{
+			Text:     string(runes[i]),
+			Offset:   geom.Pt{X: x, Y: 0},
+			FontSize: size,
+			FontKey:  fontKey,
+		})
+		if info.Iceberg > box.Ascent {
+			box.Ascent = info.Iceberg
+		}
+		if depth := info.Height - info.Iceberg; depth > box.Descent {
+			box.Descent = depth
+		}
+		x += info.Advance
+	}
+	box.Width = x
+	return box, true
 }
 
 func mathDisplayOperatorFontKey(text, fontKey string) string {
@@ -1178,11 +1262,31 @@ func layoutMathDelimiter(r Measurer, delim string, targetAscent, targetDescent, 
 }
 
 func layoutMathSizedDelimiter(r Measurer, candidates []mathDelimiterGlyph, targetAscent, targetDescent, size float64) mathLayoutBox {
+	return autoHeightChar(r, candidates, targetAscent, targetDescent, size)
+}
+
+// mathAutoHeightBaseFontKey is the size-0 (unscaled) variant font in the DejaVu
+// Sans fontset's sized-alternatives list. matplotlib never scales the size-0
+// glyph when larger variants exist.
+const mathAutoHeightBaseFontKey = "DejaVu Sans"
+
+// autoHeightChar ports matplotlib _mathtext.AutoHeightChar for the DejaVu Sans
+// fontset (used for auto-sized delimiters and the sqrt radical). candidates must
+// be ordered smallest→largest with candidates[0] the size-0 DejaVu Sans glyph.
+// It selects the first variant whose ink height+depth reaches targetTotal minus
+// the 0.2*xHeight slack (else the largest), then — unless the size-0 glyph was
+// chosen and alternatives exist — scales it by factor = targetTotal/(h+d) and
+// shifts it down by shift_amount = targetDescent - char.depth.
+func autoHeightChar(r Measurer, candidates []mathDelimiterGlyph, targetAscent, targetDescent, size float64) mathLayoutBox {
+	if len(candidates) == 0 {
+		return mathLayoutBox{}
+	}
 	targetTotal := targetAscent + targetDescent
 	if targetTotal <= 0 {
 		targetTotal = size
 	}
-	tolerance := mathXHeight(r, size, "DejaVu Sans") * 0.2
+	threshold := targetTotal - 0.2*mathXHeight(r, size, mathAutoHeightBaseFontKey)
+
 	selected := candidates[len(candidates)-1]
 	selectedTotal := 0.0
 	for _, candidate := range candidates {
@@ -1193,21 +1297,72 @@ func layoutMathSizedDelimiter(r Measurer, candidates []mathDelimiterGlyph, targe
 		}
 		selected = candidate
 		selectedTotal = total
-		if total >= targetTotal-tolerance {
+		if total >= threshold {
 			break
 		}
+	}
+
+	// size-0 (DejaVu Sans) is rendered unscaled, baseline-aligned (shift 0).
+	if selected.fontKey == mathAutoHeightBaseFontKey && len(candidates) > 1 {
+		return layoutMathTextRun(r, selected.text, size, selected.fontKey)
 	}
 	if selectedTotal <= 0 {
 		selectedTotal = size
 	}
-	delimiterSize := size * targetTotal / selectedTotal
-	if delimiterSize <= 0 {
-		delimiterSize = size
+	fontsize := size * targetTotal / selectedTotal
+	if fontsize <= 0 {
+		fontsize = size
 	}
-	out := centerMathDelimiterBox(layoutMathTextRun(r, selected.text, delimiterSize, selected.fontKey), targetAscent, targetDescent)
-	if isMathSizedDelimiterFont(selected.fontKey) {
-		out.Width *= mathSizedDelimAdvance
+	box := layoutMathTextRun(r, selected.text, fontsize, selected.fontKey)
+	return shiftMathBoxDown(box, targetDescent-box.Descent)
+}
+
+// shrinkMathBox ports matplotlib Node.shrink(): it LINEARLY scales a laid-out
+// box's geometry (run offsets, rule rects, width, ascent, depth) by factor and
+// multiplies each run's render FontSize by factor. This deliberately differs
+// from re-measuring at the smaller size — matplotlib's box model positions
+// shrunk content with metrics scaled from the base measurement, while the glyph
+// bitmaps still rasterize at the shrunk fontsize.
+func shrinkMathBox(box mathLayoutBox, factor float64) mathLayoutBox {
+	out := mathLayoutBox{
+		Width:   box.Width * factor,
+		Ascent:  box.Ascent * factor,
+		Descent: box.Descent * factor,
 	}
+	for _, run := range box.runs {
+		run.Offset.X *= factor
+		run.Offset.Y *= factor
+		run.FontSize *= factor
+		out.runs = append(out.runs, run)
+	}
+	for _, rule := range box.rules {
+		rule.Rect.Min.X *= factor
+		rule.Rect.Min.Y *= factor
+		rule.Rect.Max.X *= factor
+		rule.Rect.Max.Y *= factor
+		out.rules = append(out.rules, rule)
+	}
+	return out
+}
+
+// shiftMathBoxRight shifts a box's contents right by dx, preserving metrics.
+func shiftMathBoxRight(box mathLayoutBox, dx float64) mathLayoutBox {
+	var out mathLayoutBox
+	out.appendTranslated(box, dx, 0)
+	out.Width = box.Width
+	out.Ascent = box.Ascent
+	out.Descent = box.Descent
+	return out
+}
+
+// shiftMathBoxDown shifts a box's contents down by dy (layout y-down), updating
+// ascent/descent (matplotlib Char.shift_amount).
+func shiftMathBoxDown(box mathLayoutBox, dy float64) mathLayoutBox {
+	var out mathLayoutBox
+	out.appendTranslated(box, 0, dy)
+	out.Width = box.Width
+	out.Ascent = box.Ascent - dy
+	out.Descent = box.Descent + dy
 	return out
 }
 
@@ -1215,11 +1370,11 @@ func mathSizedDelimiterGlyphs(delim string) []mathDelimiterGlyph {
 	switch delim {
 	case "(", ")", "[", "]", "{", "}", "⌊", "⌋", "⌈", "⌉", "⟨", "⟩":
 		return []mathDelimiterGlyph{
+			{text: delim, fontKey: mathAutoHeightBaseFontKey},
 			stixSizeGlyph(1, delim),
 			stixSizeGlyph(2, delim),
 			stixSizeGlyph(3, delim),
 			stixSizeGlyph(4, delim),
-			stixSizeGlyph(5, delim),
 		}
 	default:
 		return nil
@@ -1239,10 +1394,6 @@ func stixSizeGlyph(size int, text string) mathDelimiterGlyph {
 	default:
 		return mathDelimiterGlyph{text: text, fontKey: "STIXSizeFiveSym"}
 	}
-}
-
-func isMathSizedDelimiterFont(fontKey string) bool {
-	return strings.HasPrefix(fontKey, "STIXSize") || fontKey == "STIXGeneral"
 }
 
 func centerMathDelimiterBox(box mathLayoutBox, targetAscent, targetDescent float64) mathLayoutBox {
@@ -1481,7 +1632,13 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 	// constants scaled by x-height; the script box is shrunk once. Layout space
 	// is y-down (negative Y above baseline); matplotlib height=ascent, depth=descent.
 	base := layoutMathNode(r, pointerNode(n.base), size, fontKey, opts)
-	scriptSize := size * mathFracShrink
+	// matplotlib wraps each script as Hlist([Kern, script]).shrink(), which
+	// LINEARLY scales the base-size box metrics by SHRINK_FACTOR (it does not
+	// re-measure at the smaller size — see shrinkMathBox / layoutMathFrac). So
+	// lay each script out at the base size and shrink the box.
+	layoutScript := func(node mathLayoutNode) mathLayoutBox {
+		return shrinkMathBox(layoutMathNode(r, node, size, fontKey, opts), mathFracShrink)
+	}
 	xHeight := mathXHeight(r, size, fontKey)
 	ruleThickness := mathUnderlineThickness(r, size, fontKey)
 
@@ -1489,7 +1646,9 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 	dropSub := isMathDropSubGlyph(baseText)
 	// matplotlib is_slanted: italic variable faces are slanted, and so are the
 	// drop-sub integral operators (∫∮), which render from a slanted math face.
-	slanted := isMathSlantedBox(base) || dropSub
+	// The slant comes from the node's font style (FontStyleItalic), not the
+	// resolved fontKey, which is empty at layout time.
+	slanted := nodeIsSlanted(pointerNode(n.base)) || dropSub
 	lcHeight := base.Ascent
 	lcBaseline := 0.0
 	if dropSub {
@@ -1510,6 +1669,13 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 		}
 	}
 
+	// matplotlib builds each script as Hlist([Kern(kern), script]) and calls
+	// x.shrink() once, which scales the kern by SHRINK_FACTOR (the script box is
+	// also laid out at scriptSize). The vertical shift_amount and the trailing
+	// script_space are applied AFTER shrink, so they are not scaled.
+	superKern *= mathFracShrink
+	subKern *= mathFracShrink
+
 	var out mathLayoutBox
 	out.appendTranslated(base, 0, 0)
 	out.Width = base.Width
@@ -1520,7 +1686,7 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 	switch {
 	case n.super == nil && n.sub != nil:
 		// node757: subscript without superscript.
-		sub := layoutMathNode(r, *n.sub, scriptSize, fontKey, opts)
+		sub := layoutScript(*n.sub)
 		shiftDown := mathScriptSub1 * xHeight
 		if dropSub {
 			shiftDown = lcBaseline + mathScriptSubdrop*xHeight
@@ -1531,7 +1697,7 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 		out.Descent = maxFloat64(out.Descent, shiftDown+sub.Descent)
 		out.Ascent = maxFloat64(out.Ascent, sub.Ascent-shiftDown)
 	case n.super != nil:
-		super := layoutMathNode(r, *n.super, scriptSize, fontKey, opts)
+		super := layoutScript(*n.super)
 		shiftUp := mathScriptSup1 * xHeight
 		if dropSub {
 			shiftUp = lcHeight - mathScriptSubdrop*xHeight
@@ -1544,7 +1710,7 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 			out.Descent = maxFloat64(out.Descent, super.Descent-shiftUp)
 		} else {
 			// node759: both sub and superscript; if they would collide, raise super.
-			sub := layoutMathNode(r, *n.sub, scriptSize, fontKey, opts)
+			sub := layoutScript(*n.sub)
 			shiftDown := mathScriptSub2 * xHeight
 			if dropSub {
 				shiftDown = lcBaseline + mathScriptSubdrop*xHeight
@@ -1570,30 +1736,65 @@ func layoutMathScript(r Measurer, n mathLayoutNode, size float64, fontKey string
 	return out
 }
 
-// isMathSlantedBox reports whether a laid-out nucleus renders with a slanted
-// (italic/oblique) face, matching matplotlib's Char.is_slanted() for the
-// sub/superscript kerning adjustments.
-func isMathSlantedBox(box mathLayoutBox) bool {
-	if len(box.runs) != 1 {
+// nodeIsSlanted reports whether the nucleus renders with a slanted (italic)
+// face, matching matplotlib's Char.is_slanted() for the sub/superscript kerning
+// adjustments. The slant is carried by the layout node's FontStyleItalic (math
+// variables are implicitly italic); the resolved fontKey is empty at layout time
+// so it cannot be inspected. For a multi-element nucleus the last element's slant
+// is used (matplotlib keys off last_char).
+func nodeIsSlanted(n mathLayoutNode) bool {
+	switch n.kind {
+	case mathLayoutStyled:
+		if n.style == FontStyleItalic {
+			return true
+		}
+		if n.style == FontStyleNormal && n.child != nil {
+			return nodeIsSlanted(*n.child)
+		}
+		return false
+	case mathLayoutList:
+		if len(n.children) == 0 {
+			return false
+		}
+		return nodeIsSlanted(n.children[len(n.children)-1])
+	default:
 		return false
 	}
-	key := strings.ToLower(box.runs[0].FontKey)
-	return strings.Contains(key, "italic") || strings.Contains(key, "oblique")
 }
 
 func layoutMathLimits(r Measurer, n mathLayoutNode, size float64, fontKey string, opts Options) mathLayoutBox {
 	base := layoutMathNode(r, pointerNode(n.base), size, fontKey, opts)
-	scriptSize := size * 0.7
+	// As in layoutMathScript, the limits are shrunk via linear box scaling
+	// (matplotlib Node.shrink()), not re-measured at the smaller font size.
+	layoutScript := func(node mathLayoutNode) mathLayoutBox {
+		return shrinkMathBox(layoutMathNode(r, node, size, fontKey, opts), mathFracShrink)
+	}
 
 	var super, sub mathLayoutBox
 	if n.super != nil {
-		super = layoutMathNode(r, *n.super, scriptSize, fontKey, opts)
+		super = layoutScript(*n.super)
 	}
 	if n.sub != nil {
-		sub = layoutMathNode(r, *n.sub, scriptSize, fontKey, opts)
+		sub = layoutScript(*n.sub)
 	}
 
-	width := base.Width
+	// matplotlib HCenters the nucleus by its Char.width = INK width (metrics.width),
+	// not the advance — and a big operator like ∏ has large side bearings (advance
+	// 14.85 vs ink 12.0), so advance-centering shifts it ~2px. Use the nucleus ink
+	// width for a single display-operator glyph; multi-glyph nuclei (\lim) keep the
+	// Hlist advance width (their trailing kern already folds advance into width).
+	baseCenterWidth := base.Width
+	baseText := nodePlainText(pointerNode(n.base))
+	if isMathDisplayOperatorGlyph(baseText) {
+		if gm, ok := r.(GlyphMeasurer); ok {
+			opFontKey := mathDisplayOperatorFontKey(baseText, fontKey)
+			if infos, ok := gm.GlyphRun(baseText, size, opFontKey); ok && len(infos) == 1 {
+				baseCenterWidth = infos[0].Xmax - infos[0].Xmin
+			}
+		}
+	}
+
+	width := baseCenterWidth
 	if super.Width > width {
 		width = super.Width
 	}
@@ -1601,9 +1802,11 @@ func layoutMathLimits(r Measurer, n mathLayoutNode, size float64, fontKey string
 		width = sub.Width
 	}
 
-	baseX := (width - base.Width) / 2
-	superX := (width - super.Width) / 2
-	subX := (width - sub.Width) / 2
+	// matplotlib over/under limits stack HCentered rows; hlist_out rounds the
+	// centering glue (see layoutMathFrac), so round each row's left pad.
+	baseX := math.RoundToEven((width - baseCenterWidth) / 2)
+	superX := math.RoundToEven((width - super.Width) / 2)
+	subX := math.RoundToEven((width - sub.Width) / 2)
 	// matplotlib 3.8.4 subsuper over/under stack: vgap = rule_thickness * 3.
 	gap := mathUnderlineThickness(r, size, fontKey) * 3.0
 
@@ -1632,16 +1835,44 @@ func isMathLimitOperator(n mathLayoutNode) bool {
 	return n.kind == mathLayoutText && isMathLimitText(n.text)
 }
 
-// matplotlib 3.8.4 DejaVuSansFontConstants (lib/matplotlib/_mathtext.py),
-// inheriting FontConstantsBase defaults. Sup/sub shift constants are TeX table
-// values divided by the design x-height (1120); they are multiplied by the
-// scaled x-height in use. Pure-em metrics (x-height, axis, underline) are
-// multiples of the design em and scale with the pixel font size.
+// mathOverUnderFunctionTexts are matplotlib's _overunder_functions (mapped to
+// their display text); these do NOT receive the operatorname trailing thin space.
+var mathOverUnderFunctionTexts = map[string]bool{
+	"lim": true, "lim inf": true, "lim sup": true, "sup": true, "max": true, "min": true,
+}
+
+// mathFunctionTakesThinSpace reports whether a function operator gets a trailing
+// \, thin space (all functions except the over-under ones).
+func mathFunctionTakesThinSpace(op string) bool {
+	return !mathOverUnderFunctionTexts[op]
+}
+
+// mathNextCharSuppressesFunctionSpace reports whether the next non-space char
+// after a function name is a delimiter or a sub/superscript, in which case
+// matplotlib omits the operatorname thin space.
+func mathNextCharSuppressesFunctionSpace(input []rune, pos int) bool {
+	for pos < len(input) && (input[pos] == ' ' || input[pos] == '\t' || input[pos] == '\n' || input[pos] == '\r') {
+		pos++
+	}
+	if pos >= len(input) {
+		return true
+	}
+	switch input[pos] {
+	case '^', '_', '(', ')', '[', ']', '|', '/':
+		return true
+	default:
+		return false
+	}
+}
+
+// FontConstantsBase defaults from matplotlib's lib/matplotlib/_mathtext.py.
+// These sub/superscript constants are unchanged between matplotlib 3.8.4 and
+// 3.10.9 (verified against the vendored 3.10.9 source), and DejaVuSansFontConstants
+// is literally `pass` in both versions, so DejaVu Sans uses these base values.
+// They are multiples of the scaled x-height (sup/sub shifts) or the pixel font
+// size (underline). The reference images (now generated under 3.10.9) match.
 const (
-	// matplotlib 3.8.4 sub/superscript constants. DejaVuSansFontConstants is
-	// `pass` in 3.8.4, so DejaVu Sans uses the FontConstantsBase defaults (a
-	// newer matplotlib replaced these with per-font TeX-table values — do NOT
-	// use those, they don't match the 3.8.4 reference images).
+	// matplotlib FontConstantsBase sub/superscript constants (DejaVu Sans = base).
 	mathScriptDelta         = 0.025 // delta
 	mathScriptDeltaSlanted  = 0.2   // delta_slanted
 	mathScriptDeltaIntegral = 0.1   // delta_integral
@@ -1651,33 +1882,81 @@ const (
 	mathScriptSub1          = 0.3   // sub1
 	mathScriptSub2          = 0.5   // sub2
 
-	// Pure-em metrics (× pixel font size = fontsize*dpi/72).
-	mathDejaVuSansXHeight = 1120.0 / 2048.0 // consts.x_height
-	mathUnderlineRatio    = 0.75 / 12.0     // get_underline_thickness (hardcoded)
+	// Design-em ratio for DejaVu Sans' x-height (xHeight 1120 / unitsPerEm 2048),
+	// used only to recover the pixel font size for underline thickness. NOTE:
+	// matplotlib's get_xheight does NOT use this ratio for DejaVu (which has no
+	// PCLT table) — it returns the iceberg (top ink extent) of glyph 'x'. See
+	// mathXHeight/mathFontSizePixels for how this cancels to the iceberg value.
+	mathDejaVuSansXHeight = 1120.0 / 2048.0
+	mathUnderlineRatio    = 0.75 / 12.0 // get_underline_thickness (hardcoded)
 
 	// SHRINK_FACTOR: TeX style step shrinking numerator/denominator and scripts.
 	mathFracShrink = 0.70
 )
 
-// mathFontSizePixels recovers matplotlib's box-model unit — the font size in
-// device pixels (fontsize*dpi/72) — from the rendered x-height. matplotlib's
-// TruetypeFonts.get_xheight returns consts.x_height*fontsize*dpi/72 for fonts
-// that declare an x-height (DejaVu Sans: 1120/2048), so dividing the measured
-// x-height by that ratio yields the pixel font size every font-constant shift
-// (axis height, underline thickness, sup/sub shifts) is scaled by.
-func mathFontSizePixels(r Measurer, size float64, fontKey string) float64 {
-	if r != nil {
-		if xh := r.MeasureText("x", size, fontKey).BoundsH; xh > 0 {
-			return xh / mathDejaVuSansXHeight
+// mathIceberg returns matplotlib's "iceberg" for a glyph: the top ink extent
+// above the baseline (FreeType horiBearingY), in device pixels. Layout bounds
+// are y-down with negative Y above the baseline, so the iceberg is -BoundsY.
+// Returns 0 when the renderer cannot supply ink bounds.
+func mathIceberg(r Measurer, text string, size float64, fontKey string) float64 {
+	if r == nil {
+		return 0
+	}
+	// Pixel-exact: iceberg = max(horiBearingY/64) over the glyphs (matplotlib
+	// `_get_info` iceberg / get_xheight). Falls back to hinted ink bounds.
+	if gm, ok := r.(GlyphMeasurer); ok {
+		if infos, ok := gm.GlyphRun(text, size, fontKey); ok && len(infos) > 0 {
+			ice := 0.0
+			for _, info := range infos {
+				if info.Iceberg > ice {
+					ice = info.Iceberg
+				}
+			}
+			if ice > 0 {
+				return ice
+			}
 		}
 	}
-	return mathQuadWidth(r, size, fontKey)
+	m := r.MeasureText(text, size, fontKey)
+	if m.BoundsH <= 0 {
+		return 0
+	}
+	if ice := -m.BoundsY; ice > 0 {
+		return ice
+	}
+	return 0
 }
 
-// mathXHeight is matplotlib get_xheight for DejaVu Sans: the x-height in device
-// pixels (consts.x_height * fontsize * dpi/72).
+// mathXHeight is matplotlib TruetypeFonts.get_xheight for DejaVu Sans. DejaVu
+// has no PCLT table, so matplotlib uses the "poor man's xHeight" = the iceberg
+// (top ink extent above the baseline) of glyph 'x'. We return that directly.
 func mathXHeight(r Measurer, size float64, fontKey string) float64 {
+	if xh := mathIceberg(r, "x", size, fontKey); xh > 0 {
+		return xh
+	}
 	return mathFontSizePixels(r, size, fontKey) * mathDejaVuSansXHeight
+}
+
+// mathFontSizePixels recovers matplotlib's box-model unit — the font size in
+// device pixels (fontsize*dpi/72) — which is needed for the (font-independent)
+// underline thickness. The Measurer interface exposes only the point size, so
+// we recover the pixel size from the measured x-height of 'x' (its iceberg)
+// divided by DejaVu Sans' design-em x-height ratio (1120/2048). For DejaVu 'x'
+// (which sits on the baseline) this iceberg equals the full ink height.
+func mathFontSizePixels(r Measurer, size float64, fontKey string) float64 {
+	// Exact when the renderer exposes DPI (matplotlib fontsize*dpi/72). The
+	// x-height reconstruction below is an approximation used only as a fallback
+	// (purego/mock renderers) — its ratio drifts with the autohinter per size,
+	// which is why fraction-bar/thickness positions were off without exact DPI.
+	if dp, ok := r.(DPIMeasurer); ok {
+		if dpi := dp.DPI(); dpi > 0 {
+			return size * dpi / 72.0
+		}
+	}
+	if xh := mathIceberg(r, "x", size, fontKey); xh > 0 {
+		return xh / mathDejaVuSansXHeight
+	}
+	return mathQuadWidth(r, size, fontKey)
 }
 
 // mathUnderlineThickness is matplotlib get_underline_thickness: hardcoded to
@@ -1706,12 +1985,18 @@ func isMathLimitText(text string) bool {
 }
 
 func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey string, opts Options, rule, display bool, leftDelim, rightDelim string) mathLayoutBox {
-	childSize := size
-	if !display {
-		childSize *= mathFracShrink // matplotlib range(style.value): TEXTSTYLE shrinks once
+	// matplotlib shrinks the numerator/denominator with Node.shrink(), which
+	// LINEARLY scales the base-size box metrics by SHRINK_FACTOR (it does NOT
+	// re-measure at the smaller size — the hinted iceberg at the shrunk size
+	// differs, e.g. '1' iceberg is 10.0 at fs10 → 7.0 scaled, but 8.0 if
+	// re-measured at fs7). The glyph bitmap still renders at the shrunk size.
+	// So measure at the base size and shrink the box (scaling render FontSize).
+	numBox := layoutMathNode(r, num, size, fontKey, opts)
+	denBox := layoutMathNode(r, den, size, fontKey, opts)
+	if !display { // TEXTSTYLE shrinks once; DISPLAYSTYLE not at all
+		numBox = shrinkMathBox(numBox, mathFracShrink)
+		denBox = shrinkMathBox(denBox, mathFracShrink)
 	}
-	numBox := layoutMathNode(r, num, childSize, fontKey, opts)
-	denBox := layoutMathNode(r, den, childSize, fontKey, opts)
 	thickness := mathUnderlineThickness(r, size, fontKey)
 	ruleThickness := thickness
 	if !rule {
@@ -1720,26 +2005,48 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	contentWidth := maxFloat64(numBox.Width, denBox.Width)
 	width := contentWidth + 2*thickness // matplotlib trailing Hbox(thickness*2)
 	ruleWidth := contentWidth
-	numX := (contentWidth - numBox.Width) / 2
-	denX := (contentWidth - denBox.Width) / 2
+	// matplotlib centres num/den via HCentered = Hlist([Glue('ss'), x, Glue('ss')]).
+	// hlist_out ROUNDS the stretched glue (round(glue_set*cur_glue)), so the left
+	// pad is round((contentWidth-boxWidth)/2), not the exact half — a 0.29px
+	// centering offset rounds to 0 (e.g. u and v in a 2-row matrix share an ox).
+	numX := math.RoundToEven((contentWidth - numBox.Width) / 2)
+	denX := math.RoundToEven((contentWidth - denBox.Width) / 2)
 
-	// Faithful port of matplotlib 3.8.4 _mathtext.Parser._genfrac (the version
-	// that generated the reference images). The numerator/rule/denominator stack
-	// is Vlist[cnum, Vbox(0,2t), Hrule, Vbox(0,2t), cden] (Hrule height=depth=t/2,
-	// so a rule-less fraction keeps a 4t gap), shifted so the rule sits in the
-	// middle of "=": shift = cden.height - ("=" center - 3t). Layout space is
-	// y-down (negative Y above baseline); matplotlib height=ascent, depth=descent.
+	// Faithful port of matplotlib _mathtext.Parser._genfrac. This algorithm is
+	// unchanged between 3.8.4 and 3.10.9 (the vendored 3.10.9 source has no
+	// axis_height-based variant — _genfrac is still "="-centered). The
+	// numerator/rule/denominator stack is Vlist[cnum, Vbox(0,2t), Hrule,
+	// Vbox(0,2t), cden] (Hrule height=depth=t/2, so a rule-less fraction keeps a
+	// 4t gap), shifted so the rule sits in the middle of "=": shift =
+	// cden.height - ("=" center - 3t). Layout space is y-down (negative Y above
+	// baseline); matplotlib height=ascent, depth=descent.
 	space := thickness * 2.0
-	eq := r.MeasureText("=", size, fontKey)
-	eqCenter := (eq.Ascent + eq.Descent) / 2
-	if eq.BoundsH > 0 {
-		eqCenter = -(eq.BoundsY + eq.BoundsH/2)
+	// matplotlib centres the fraction line on "=": shift uses (ymax+ymin)/2 of the
+	// "=" glyph. Use exact _get_info bbox when available (GlyphRun), else hinted.
+	eqCenter := 0.0
+	if gm, ok := r.(GlyphMeasurer); ok {
+		if infos, ok := gm.GlyphRun("=", size, fontKey); ok && len(infos) > 0 {
+			eqCenter = (infos[0].Ymax + infos[0].Ymin) / 2
+		}
+	}
+	if eqCenter == 0 {
+		eq := r.MeasureText("=", size, fontKey)
+		eqCenter = (eq.Ascent + eq.Descent) / 2
+		if eq.BoundsH > 0 {
+			eqCenter = -(eq.BoundsY + eq.BoundsH/2)
+		}
 	}
 	shift := denBox.Ascent - (eqCenter - thickness*3.0)
 	denY := shift
-	ruleCenterY := shift - denBox.Ascent - space - ruleThickness/2
-	numY := ruleCenterY - ruleThickness/2 - space - numBox.Descent
-	vlistHeight := numBox.Ascent + numBox.Descent + space + ruleThickness + space + denBox.Ascent
+	// num→den gap = num.depth + 2*space + ruleAdvance + den.height, where the
+	// Hrule advances cur_v by its full height (ruleThickness) BEFORE drawing in
+	// vlist_out (a rule-less binom has ruleThickness 0 → 4t gap, a \frac → 5t).
+	numY := shift - denBox.Ascent - 2*space - ruleThickness - numBox.Descent
+	// The Hrule's pre-advance places its rect top one space below the den top:
+	// ruleTop = (denY - den.height) - space (NOT -3t — the earlier −3t put the
+	// bar one thickness too high; see vlist_out Box branch).
+	ruleTop := shift - denBox.Ascent - space
+	vlistHeight := numBox.Ascent + numBox.Descent + 2*space + ruleThickness + denBox.Ascent
 	ascent := vlistHeight - shift
 	descent := denBox.Descent + shift
 
@@ -1751,8 +2058,8 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	if rule {
 		out.rules = append(out.rules, MathTextLayoutRule{
 			Rect: geom.Rect{
-				Min: geom.Pt{X: 0, Y: ruleCenterY - ruleThickness/2},
-				Max: geom.Pt{X: ruleWidth, Y: ruleCenterY + ruleThickness/2},
+				Min: geom.Pt{X: 0, Y: ruleTop},
+				Max: geom.Pt{X: ruleWidth, Y: ruleTop + ruleThickness},
 			},
 		})
 	}
@@ -1780,33 +2087,87 @@ func layoutMathFrac(r Measurer, num, den mathLayoutNode, size float64, fontKey s
 	return delimited
 }
 
+// mathSqrtRadicalGlyphs lists the auto-height variants of the radical sign for
+// the DejaVu Sans fontset: size-0 DejaVu Sans, then STIX size variants 1-3
+// (matplotlib drops the largest STIX radical: alternatives[:-1]).
+func mathSqrtRadicalGlyphs() []mathDelimiterGlyph {
+	return []mathDelimiterGlyph{
+		{text: "√", fontKey: mathAutoHeightBaseFontKey},
+		{text: "√", fontKey: "STIXSizeOneSym"},
+		{text: "√", fontKey: "STIXSizeTwoSym"},
+		{text: "√", fontKey: "STIXSizeThreeSym"},
+	}
+}
+
 func layoutMathSqrt(r Measurer, radicand mathLayoutNode, index *mathLayoutNode, size float64, fontKey string, opts Options) mathLayoutBox {
-	thickness := maxFloat64(mathQuadWidth(r, size, fontKey)/16, 0.5)
-	root := layoutMathTextRun(r, "√", size*0.58, "STIXSizeOneSym")
+	thickness := mathUnderlineThickness(r, size, fontKey)
 	radicandBox := layoutMathNode(r, radicand, size, fontKey, opts)
-	padding := 2 * thickness
-	ruleThickness := thickness
-	ruleY := -radicandBox.Ascent - 5*thickness
+	// matplotlib sqrt(): the radical (check) is an AutoHeightChar sized to the
+	// body height + 5*thickness (extra so it doesn't look cramped), body depth.
+	targetHeight := radicandBox.Ascent + 5*thickness
+	targetDepth := radicandBox.Descent
+	root := autoHeightChar(r, mathSqrtRadicalGlyphs(), targetHeight, targetDepth, size)
+
+	// matplotlib re-derives height/depth from the (possibly scaled) radical:
+	//   height = check.height - check.shift_amount  (= root.Ascent)
+	//   depth  = check.depth  + check.shift_amount  (= root.Descent)
+	// then builds rightside = Vlist[Hrule, Glue('fill'), padded_body] and
+	// vpacks it to EXACTLY height + extra, where
+	//   extra = (fontsize*dpi)/(100*12) = mathFontSizePixels * 72/1200.
+	bodyHeight := root.Ascent
+	extra := mathFontSizePixels(r, size, fontKey) * (72.0 / 1200.0)
+	rightsideHeight := bodyHeight + extra
+	padding := 2 * thickness // Hbox(2*thickness) on each side of the body
+
+	// vlist_out stacks (Hrule total = thickness) + (Glue('fill')) + (body).
+	// The natural height above the body baseline is thickness + body.height; the
+	// glue stretches by `stretch` to fill rightsideHeight, and vlist_out ROUNDS
+	// the stretched glue — so the body baseline lands round(stretch)-stretch
+	// below the sqrt baseline (a sub-pixel shift that the int-blit needs exact).
+	stretch := rightsideHeight - thickness - radicandBox.Ascent
+	bodyDy := math.Round(stretch) - stretch
+
+	// Vinculum (Hrule): vlist_out advances cur_v by the Hrule's full height
+	// (thickness) from the top edge BEFORE drawing, so the rule's top sits one
+	// thickness below the box top, i.e. at -(rightsideHeight) + thickness.
+	ruleTop := -rightsideHeight + thickness
 
 	var out mathLayoutBox
 	out.appendTranslated(root, 0, 0)
 	bodyX := root.Width + padding
-	out.appendTranslated(radicandBox, bodyX, 0)
+	out.appendTranslated(shiftMathBoxDown(radicandBox, bodyDy), bodyX, 0)
 	out.Width = root.Width + radicandBox.Width + 2*padding
-	out.Ascent = maxFloat64(root.Ascent, -ruleY+ruleThickness)
+	// sqrt hlist hpack: height = rightside.height (= rightsideHeight), depth =
+	// max(check.depth+shift, rightside.depth) = root.Descent (= radicand depth).
+	out.Ascent = rightsideHeight
 	out.Descent = maxFloat64(root.Descent, radicandBox.Descent)
 	out.rules = append(out.rules, MathTextLayoutRule{
 		Rect: geom.Rect{
-			Min: geom.Pt{X: root.Width, Y: ruleY},
-			Max: geom.Pt{X: out.Width, Y: ruleY + ruleThickness},
+			Min: geom.Pt{X: root.Width, Y: ruleTop},
+			Max: geom.Pt{X: out.Width, Y: ruleTop + thickness},
 		},
 	})
 
 	if index != nil {
-		indexBox := layoutMathNode(r, *index, size*0.55, fontKey, opts)
-		x := -indexBox.Width * 0.65
-		y := -root.Ascent * 0.55
-		out.appendTranslated(indexBox, x, y)
+		// matplotlib sqrt: the root index is shrunk twice (SHRINK_FACTOR^2) and
+		// laid out as Hlist([root_vlist, Kern(-check.width*0.5), check, rightside])
+		// with the index (root_vlist) pinned at x=0. The radical therefore sits at
+		// x = index.Width - check.Width*0.5 (the box origin is the index's left
+		// edge). When that overhang is positive, shift the radical+body+rule right
+		// by it and keep the index at 0; otherwise the radical stays at 0 and the
+		// index sits root.Width*0.5 - index.Width to its left (origin at radical).
+		// The index is shifted up by height*0.6 (matplotlib's hard-coded 0.6 hack).
+		indexBox := layoutMathNode(r, *index, size*mathFracShrink*mathFracShrink, fontKey, opts)
+		over := indexBox.Width - root.Width*0.5
+		indexX := 0.0
+		if over > 0 {
+			out = shiftMathBoxRight(out, over)
+			out.Width += over
+		} else {
+			indexX = -over // = root.Width*0.5 - indexBox.Width
+		}
+		y := -root.Ascent * 0.6
+		out.appendTranslated(indexBox, indexX, y)
 		out.Ascent = maxFloat64(out.Ascent, -y+indexBox.Ascent)
 	}
 	return out

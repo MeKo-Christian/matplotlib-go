@@ -128,7 +128,7 @@ func TestCatalogIncludesMixedRasterVectorFixture(t *testing.T) {
 	}
 }
 
-func TestCatalogIncludesPhase124PatchStyleFixture(t *testing.T) {
+func TestCatalogIncludesPatchStyleMatrixFixture(t *testing.T) {
 	c, ok := Lookup("patch_style_matrix")
 	if !ok {
 		t.Fatal("missing Phase 12.4 focused patch style parity catalog case")
@@ -141,7 +141,7 @@ func TestCatalogIncludesPhase124PatchStyleFixture(t *testing.T) {
 	}
 }
 
-func TestCatalogIncludesPhase124LegendLayoutFixture(t *testing.T) {
+func TestCatalogIncludesLegendLayoutMatrixFixture(t *testing.T) {
 	c, ok := Lookup("legend_layout_matrix")
 	if !ok {
 		t.Fatal("missing Phase 12.4 focused legend layout parity catalog case")
@@ -154,7 +154,7 @@ func TestCatalogIncludesPhase124LegendLayoutFixture(t *testing.T) {
 	}
 }
 
-func TestCatalogIncludesPhase124TextAnnotationFixture(t *testing.T) {
+func TestCatalogIncludesTextAnnotationMatrixFixture(t *testing.T) {
 	c, ok := Lookup("text_annotation_matrix")
 	if !ok {
 		t.Fatal("missing Phase 12.4 focused text/annotation parity catalog case")
@@ -167,7 +167,7 @@ func TestCatalogIncludesPhase124TextAnnotationFixture(t *testing.T) {
 	}
 }
 
-func TestCatalogIncludesPhase125InterpolationMatrixFixture(t *testing.T) {
+func TestCatalogIncludesImshowInterpolationMatrixFixture(t *testing.T) {
 	c, ok := Lookup("imshow_interpolation_matrix")
 	if !ok {
 		t.Fatal("missing Phase 12.5 focused interpolation matrix parity catalog case")
@@ -183,7 +183,7 @@ func TestCatalogIncludesPhase125InterpolationMatrixFixture(t *testing.T) {
 	}
 }
 
-func TestCatalogIncludesPhase125WidgetsGalleryShowcase(t *testing.T) {
+func TestCatalogIncludesWidgetsGalleryShowcase(t *testing.T) {
 	c, ok := Lookup("widgets_gallery")
 	if !ok {
 		t.Fatal("missing Phase 12.5 widgets gallery catalog case")
@@ -196,7 +196,7 @@ func TestCatalogIncludesPhase125WidgetsGalleryShowcase(t *testing.T) {
 	}
 }
 
-func TestCatalogIncludesPhase125AnimationGalleryShowcase(t *testing.T) {
+func TestCatalogIncludesAnimationGalleryShowcase(t *testing.T) {
 	c, ok := Lookup("animation_gallery")
 	if !ok {
 		t.Fatal("missing Phase 12.5 animation gallery catalog case")

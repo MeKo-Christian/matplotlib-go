@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -60,10 +61,13 @@ func TestDrawFigure_RendersFigureLevelLabels(t *testing.T) {
 		t.Fatalf("missing supylabel anchor: %v", r.rotatedText)
 	}
 	ylabelLayout := measureSingleLineTextLayout(&r, "value", figureLabelFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX)
-	wantYLabelAnchor := geom.Pt{
-		X: fig.DisplayRect().Min.X + figureLabelLeftInsetPx(fig, ctx) + ylabelLayout.Height,
+	// Figure.supylabel uses Matplotlib's default rotation mode with
+	// ha="left", va="center" at x=0.02/y=0.5 (or constrained-layout pad).
+	p := geom.Pt{
+		X: fig.DisplayRect().Min.X + figureLabelLeftInsetPx(fig, ctx),
 		Y: fig.DisplayRect().Min.Y + fig.DisplayRect().H()/2,
 	}
+	wantYLabelAnchor := rotatedTextBackendAnchorFromP(p, ylabelLayout, TextAlignLeft, textLayoutVAlignCenter, math.Pi/2, false)
 	if !floatApprox(anchor.X, wantYLabelAnchor.X, 1e-12) || !floatApprox(anchor.Y, wantYLabelAnchor.Y, 1e-12) {
 		t.Fatalf("supylabel anchor = %+v, want Matplotlib default x=0.02/y=0.5 anchor %+v", anchor, wantYLabelAnchor)
 	}
