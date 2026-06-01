@@ -635,8 +635,18 @@ explicit clip boxes; its Go golden was refreshed.
 `axes_grid1_showcase` is now `RMSE 4.95` after fixing anchored multiline text
 to draw top-down in y-up display space and switching the tile labels back to
 axes-coordinate `Text` with Matplotlib-style rounded bboxes; its Go golden was
-refreshed. The same anchored multiline fix refreshed `text_annotation_matrix`,
-which is now `RMSE 13.26` and still needs offset-box/annotation parity work.
+refreshed. The same anchored multiline fix refreshed `text_annotation_matrix`.
+On 2026-06-01, a focused `text_annotation_matrix` pass matched Matplotlib's
+single-line rotated text bbox transform for the rotated label, removed the
+Go-only rounded `AnchoredText` frame, made its multiline height use measured
+TextArea metrics, and made the remaining anchored offset-box frame widths use
+Matplotlib's 1 pt patch linewidth conversion. A follow-up pass matched
+Matplotlib's nearest-neighbor, palette-preserving non-integer image upscaling for
+the `OffsetImage`, corrected the fixture image's float-to-byte source colors,
+snapped the sizebar fill rectangle, and snapped unrotated square text bbox
+patches while leaving rotated bboxes unsnapped; the case is now `RMSE 9.76`.
+Remaining residuals are mostly offset-box stroke antialiasing and arrow/path
+edge differences.
 The 2026-06-01 full focused run initially had multiple geo fixtures above
 `RMSE 10`; a follow-up geo pass fixed Matplotlib GeoAxes longitude label
 placement (frame-bottom x-labels and equator tick labels padded above the

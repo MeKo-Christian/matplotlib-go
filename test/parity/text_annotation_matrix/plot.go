@@ -122,9 +122,9 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 		Inset:           fontPad(9, 0.6),
 		RowGap:          2,
 		BoxPadding:      0,
-		CornerRadius:    4,
 		BackgroundColor: render.Color{R: 0.98, G: 0.98, B: 0.94, A: 0.92},
 		BorderColor:     render.Color{R: 0.45, G: 0.45, B: 0.24, A: 1},
+		BorderWidth:     pt(1),
 		TextColor:       render.Color{R: 0.18, G: 0.18, B: 0.10, A: 1},
 		FontSize:        9,
 	})
@@ -148,6 +148,7 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 		Inset:           fontPad(10, 0.7),
 		BackgroundColor: render.Color{R: 0.98, G: 0.96, B: 0.88, A: 0.92},
 		BorderColor:     render.Color{R: 0.45, G: 0.36, B: 0.14, A: 1},
+		BorderWidth:     pt(1),
 	})
 	area.AddPath(localTrianglePath(), render.Paint{
 		Fill:      render.Color{R: 0.83, G: 0.44, B: 0.18, A: 0.85},
@@ -162,6 +163,7 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 		Sep:             pt(5),
 		BackgroundColor: render.Color{R: 0.93, G: 0.97, B: 1.00, A: 0.92},
 		BorderColor:     render.Color{R: 0.16, G: 0.37, B: 0.54, A: 1},
+		BorderWidth:     pt(1),
 		FontSize:        9,
 		TextColor:       render.Color{R: 0.10, G: 0.24, B: 0.35, A: 1},
 	})
@@ -182,6 +184,8 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 		FillBar:         &fill,
 		BackgroundColor: render.Color{R: 1, G: 1, B: 1, A: 0.82},
 		BorderColor:     render.Color{R: 0.20, G: 0.20, B: 0.20, A: 1},
+		BorderWidth:     pt(1),
+		LineWidth:       pt(1),
 		Color:           render.Color{R: 0.08, G: 0.08, B: 0.08, A: 1},
 		FontSize:        9,
 	})
@@ -191,9 +195,9 @@ func smallAnnotationImage() *render.ImageData {
 	img := image.NewRGBA(image.Rect(0, 0, 12, 10))
 	for y := 0; y < 10; y++ {
 		for x := 0; x < 12; x++ {
-			c := color.RGBA{R: 230, G: 240, B: 255, A: 255}
+			c := color.RGBA{R: 229, G: 239, B: 255, A: 255}
 			if (x+y)%2 == 0 {
-				c = color.RGBA{R: 96, G: 150, B: 210, A: 255}
+				c = color.RGBA{R: 96, G: 150, B: 209, A: 255}
 			}
 			img.SetRGBA(x, y, c)
 		}

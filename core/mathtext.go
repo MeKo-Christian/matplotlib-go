@@ -250,12 +250,10 @@ func drawDisplayTextRotatedParseMath(textRen render.RotatedTextDrawer, text stri
 	}
 
 	if parseMath {
-		if expr, ok := fullMathExpression(text); ok {
-			if ren, ok := textRen.(render.Renderer); ok {
-				if layout, ok := LayoutMathText(ren, expr, size, fontKey); ok {
-					if drawMathTextLayoutRotated(ren, layout, anchor, angle, textColor, fontKey) {
-						return
-					}
+		if ren, ok := textRen.(render.Renderer); ok {
+			if layout, ok := layoutDisplayText(ren, text, size, fontKey); ok {
+				if drawMathTextLayoutRotated(ren, layout, anchor, angle, textColor, fontKey) {
+					return
 				}
 			}
 		}

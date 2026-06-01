@@ -179,7 +179,7 @@ func (a *AnchoredSizeBar) Draw(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 	if a.FrameOn {
-		r.Path(pixelRectPath(layout.frame), &render.Paint{
+		r.Path(snappedPixelRectPath(layout.frame), &render.Paint{
 			Fill:      a.BackgroundColor,
 			Stroke:    a.BorderColor,
 			LineWidth: a.BorderWidth,
@@ -197,7 +197,7 @@ func (a *AnchoredSizeBar) Draw(r render.Renderer, ctx *DrawContext) {
 		if a.FillBar {
 			paint.Fill = a.Color
 		}
-		r.Path(pixelRectPath(layout.bar), paint)
+		r.Path(snappedPixelRectPath(layout.bar), paint)
 	} else {
 		r.Path(geom.Path{
 			C: []geom.Cmd{geom.MoveTo, geom.LineTo},

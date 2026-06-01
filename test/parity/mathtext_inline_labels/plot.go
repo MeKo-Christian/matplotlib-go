@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/render"
 )
 
 const (
@@ -32,8 +33,11 @@ func Plot() *core.Figure {
 		y2[i] = 0.48 + 0.28*math.Cos(1.5*t+0.45)
 	}
 
-	ax.Plot(x, y1, core.PlotOptions{Label: `state $x_i(t)$`})
-	ax.Plot(x, y2, core.PlotOptions{Label: `state $y_i(t)$`})
+	lineWidth := 2.0
+	blue := render.Color{R: 31.0 / 255.0, G: 119.0 / 255.0, B: 180.0 / 255.0, A: 1}
+	orange := render.Color{R: 255.0 / 255.0, G: 127.0 / 255.0, B: 14.0 / 255.0, A: 1}
+	ax.Plot(x, y1, core.PlotOptions{Color: &blue, LineWidth: &lineWidth, Label: `state $x_i(t)$`})
+	ax.Plot(x, y2, core.PlotOptions{Color: &orange, LineWidth: &lineWidth, Label: `state $y_i(t)$`})
 	ax.SetTitle(`Inline labels: $\omega_n$ response`)
 	ax.SetXLabel(`time $t$`)
 	ax.SetYLabel(`state $x_i(t)$`)

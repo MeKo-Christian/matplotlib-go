@@ -791,8 +791,8 @@ func TestRotatedTextBBoxUsesDisplayRotationSign(t *testing.T) {
 		X: r.pathCalls[0].path.V[1].X - r.pathCalls[0].path.V[0].X,
 		Y: r.pathCalls[0].path.V[1].Y - r.pathCalls[0].path.V[0].Y,
 	}
-	if edge.X <= 0 || edge.Y >= 0 {
-		t.Fatalf("positive text rotation should tilt bbox upward in display coordinates, edge=%+v path=%+v", edge, r.pathCalls[0].path.V[:4])
+	if edge.X <= 0 || edge.Y <= 0 {
+		t.Fatalf("positive text rotation should tilt bbox upward in y-up display coordinates, edge=%+v path=%+v", edge, r.pathCalls[0].path.V[:4])
 	}
 }
 
@@ -840,6 +840,58 @@ func TestRotatedTextBBoxUsesDefaultRotationDrawOrigin(t *testing.T) {
 	}
 }
 
+func TestRotatedTextBBoxMatchesMatplotlibTextAnnotationMatrixLabel(t *testing.T) {
+	ctx := createTestDrawContext()
+	ctx.RC.DPI = 100
+	layout := singleLineTextLayout{
+		TextLineLayout: render.TextLineLayout{
+			Width:   105.875,
+			Ascent:  14,
+			Descent: 4,
+			Height:  18,
+		},
+	}
+	anchor := geom.Pt{X: 289.8, Y: 341.964}
+	angleDeg := -28.0
+	angle := angleDeg * math.Pi / 180
+	drawOrigin := tickLabelDrawOriginFromP(anchor, layout, TextAlignCenter, textLayoutVAlignCenter, angle, false)
+	path, ok := rotatedTextBBoxPath(anchor, drawOrigin, layout, &TextBBoxOptions{
+		Padding: pointsToPixels(ctx.RC, 12*0.25),
+	}, ctx, 12, angleDeg)
+	if !ok {
+		t.Fatal("rotatedTextBBoxPath returned !ok")
+	}
+	got, ok := pathBounds(path)
+	if !ok {
+		t.Fatalf("rotated bbox path has no bounds: %+v", path)
+	}
+
+	// Matplotlib 3.10.9 text_annotation_matrix rotated label bbox patch extent:
+	// (233.1986379227708, 303.5297409941049, 113.20272415445842, 76.86851801179034)
+	// in y-up display coordinates.
+	want := geom.Rect{
+		Min: geom.Pt{X: 233.1986379227708, Y: 303.5297409941049},
+		Max: geom.Pt{X: 346.40136207722924, Y: 380.3982590058952},
+	}
+	if !approxRect(got, want, 1e-9) {
+		t.Fatalf("rotated bbox bounds = %+v, want Matplotlib %+v; path=%+v", got, want, path.V)
+	}
+	wantVertices := []geom.Pt{
+		{X: 233.1986379227708, Y: 357.14730572727683},
+		{X: 334.0386109238674, Y: 303.5297409941048},
+		{X: 346.40136207722924, Y: 326.7806942727233},
+		{X: 245.56138907613257, Y: 380.3982590058952},
+	}
+	if len(path.V) < len(wantVertices) {
+		t.Fatalf("rotated bbox path has %d vertices, want at least %d: %+v", len(path.V), len(wantVertices), path.V)
+	}
+	for i, want := range wantVertices {
+		if !approx(path.V[i].X, want.X, 1e-9) || !approx(path.V[i].Y, want.Y, 1e-9) {
+			t.Fatalf("rotated bbox vertex %d = %+v, want Matplotlib %+v; path=%+v", i, path.V[i], want, path.V)
+		}
+	}
+}
+
 func matplotlibRotatedTextBBoxPathForTest(anchor, drawOrigin geom.Pt, layout singleLineTextLayout, opt *TextBBoxOptions, ctx *DrawContext, fontSize, angleDeg float64) (geom.Path, bool) {
 	if opt == nil || layout.Width <= 0 || layout.Height <= 0 {
 		return geom.Path{}, false
@@ -853,7 +905,7 @@ func matplotlibRotatedTextBBoxPathForTest(anchor, drawOrigin geom.Pt, layout sin
 	}
 
 	lineX := drawOrigin.X - anchor.X
-	lineY := -(drawOrigin.Y - anchor.Y)
+	lineY := drawOrigin.Y - anchor.Y
 	x1, y1 := rotate(lineX, lineY, -angle)
 	y1 -= layout.Descent
 	x2 := x1 + layout.Width
@@ -870,7 +922,7 @@ func matplotlibRotatedTextBBoxPathForTest(anchor, drawOrigin geom.Pt, layout sin
 	})
 	for i := range local.V {
 		x, y := rotate(local.V[i].X, local.V[i].Y, angle)
-		local.V[i] = geom.Pt{X: anchor.X + xBox + x, Y: anchor.Y - (yBox + y)}
+		local.V[i] = geom.Pt{X: anchor.X + xBox + x, Y: anchor.Y + yBox + y}
 	}
 	return local, true
 }
@@ -1405,6 +1457,21 @@ func TestDrawDisplayTextVerticalFullMathUsesPaths(t *testing.T) {
 	}
 	if !containsTextString(r.textPathCalls, "1") || !containsTextString(r.textPathCalls, "2") {
 		t.Fatalf("expected fraction runs to resolve through TextPath, got %v", r.textPathCalls)
+	}
+	if r.pathCount < 3 {
+		t.Fatalf("expected fraction rule plus glyph paths, got %d paths", r.pathCount)
+	}
+}
+
+func TestDrawDisplayTextRotatedMixedInlineMathUsesPaths(t *testing.T) {
+	var r rotatedMathTextRecordingRenderer
+	drawDisplayTextRotated(&r, `amp $\\frac{1}{2}$`, geom.Pt{X: 100, Y: 60}, 12, math.Pi/2, render.Color{A: 1}, "DejaVu Sans")
+
+	if len(r.rotatedTexts) != 0 {
+		t.Fatalf("mixed inline math unexpectedly used DrawTextRotated fallback: %v", r.rotatedTexts)
+	}
+	if !containsTextString(r.textPathCalls, "amp ") || !containsTextString(r.textPathCalls, "1") || !containsTextString(r.textPathCalls, "2") {
+		t.Fatalf("expected mixed inline math runs to resolve through TextPath, got %v", r.textPathCalls)
 	}
 	if r.pathCount < 3 {
 		t.Fatalf("expected fraction rule plus glyph paths, got %d paths", r.pathCount)
@@ -2034,6 +2101,24 @@ func (r *verticalMathTextRecordingRenderer) DrawTextVertical(text string, _ geom
 }
 
 func (r *verticalMathTextRecordingRenderer) TextPath(text string, origin geom.Pt, _ float64, _ string) (geom.Path, bool) {
+	r.textPathCalls = append(r.textPathCalls, text)
+	return patchRectPath(geom.Rect{
+		Min: geom.Pt{X: origin.X, Y: origin.Y - 4},
+		Max: geom.Pt{X: origin.X + 4, Y: origin.Y},
+	}), true
+}
+
+type rotatedMathTextRecordingRenderer struct {
+	textRecordingRenderer
+	rotatedTexts  []string
+	textPathCalls []string
+}
+
+func (r *rotatedMathTextRecordingRenderer) DrawTextRotated(text string, _ geom.Pt, _ float64, _ float64, _ render.Color) {
+	r.rotatedTexts = append(r.rotatedTexts, text)
+}
+
+func (r *rotatedMathTextRecordingRenderer) TextPath(text string, origin geom.Pt, _ float64, _ string) (geom.Path, bool) {
 	r.textPathCalls = append(r.textPathCalls, text)
 	return patchRectPath(geom.Rect{
 		Min: geom.Pt{X: origin.X, Y: origin.Y - 4},

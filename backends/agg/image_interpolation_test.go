@@ -96,6 +96,55 @@ func TestAggImage_EmptyInterpolationMatchesNearest(t *testing.T) {
 	}
 }
 
+func TestAggImageNearestNonIntegerUpscalePreservesSourcePalette(t *testing.T) {
+	src := image.NewRGBA(image.Rect(0, 0, 12, 10))
+	dark := color.RGBA{R: 96, G: 150, B: 209, A: 255}
+	light := color.RGBA{R: 229, G: 239, B: 255, A: 255}
+	for y := 0; y < 10; y++ {
+		for x := 0; x < 12; x++ {
+			c := light
+			if (x+y)%2 == 0 {
+				c = dark
+			}
+			src.SetRGBA(x, y, c)
+		}
+	}
+	raster := render.NewImageData(src)
+	raster.SetInterpolation("nearest")
+
+	r, err := New(64, 64, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 64, Y: 64}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	r.Image(raster, geom.Rect{Min: geom.Pt{X: 10, Y: 10}, Max: geom.Pt{X: 50, Y: 43.333333333333336}})
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	got := r.GetImage()
+	allowed := map[color.RGBA]bool{
+		dark:                             true,
+		light:                            true,
+		{R: 255, G: 255, B: 255, A: 255}: true,
+	}
+	var blended []color.RGBA
+	for y := 0; y < got.Bounds().Dy(); y++ {
+		for x := 0; x < got.Bounds().Dx(); x++ {
+			c := got.RGBAAt(x, y)
+			if allowed[c] {
+				continue
+			}
+			blended = append(blended, c)
+			if len(blended) >= 5 {
+				t.Fatalf("nearest non-integer upscale produced blended colors, first samples=%+v", blended)
+			}
+		}
+	}
+}
+
 func TestAggImage_AutoInterpolationMatchesNearestForIntegerScale(t *testing.T) {
 	pngNearest := renderUpscaledImage(t, "nearest", 4, 4)
 	pngAuto := renderUpscaledImage(t, "auto", 4, 4)

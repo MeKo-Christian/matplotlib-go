@@ -158,7 +158,7 @@ func (a *AnchoredTextBox) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 
 	boxLayout := a.layout(r, ctx, layouts, fontSize)
-	boxPath := pixelRectPath(boxLayout.patchBox)
+	boxPath := snappedPixelRectPath(boxLayout.patchBox)
 	if a.CornerRadius > 0 {
 		boxPath = roundedRectPath(boxLayout.patchBox, a.CornerRadius)
 	}
@@ -176,7 +176,7 @@ func (a *AnchoredTextBox) Draw(r render.Renderer, ctx *DrawContext) {
 	for i, line := range lines {
 		layout := layouts[i]
 		if line == "" {
-			y -= a.lineAdvance(fontSize, ctx)
+			y -= boxLayout.lineAdvance
 			continue
 		}
 		var anchorX float64
@@ -197,7 +197,7 @@ func (a *AnchoredTextBox) Draw(r render.Renderer, ctx *DrawContext) {
 			ctx.RC.FontKey,
 			ctx.RC.UseTeX,
 		)
-		y -= a.lineAdvance(fontSize, ctx)
+		y -= boxLayout.lineAdvance
 	}
 }
 
@@ -235,9 +235,10 @@ func (a *AnchoredTextBox) boxRect(r render.Renderer, ctx *DrawContext) (geom.Rec
 }
 
 type anchoredTextLayout struct {
-	contentBox geom.Rect
-	patchBox   geom.Rect
-	padding    float64
+	contentBox  geom.Rect
+	patchBox    geom.Rect
+	padding     float64
+	lineAdvance float64
 }
 
 func (a *AnchoredTextBox) layout(_ render.Renderer, ctx *DrawContext, layouts []singleLineTextLayout, fontSize float64) anchoredTextLayout {
@@ -251,14 +252,17 @@ func (a *AnchoredTextBox) layout(_ render.Renderer, ctx *DrawContext, layouts []
 		}
 	}
 	contentHeight := 0.0
+	lineHeight := anchoredTextLineHeight(layouts, fontSize, ctx)
+	lineAdvance := lineHeight + a.resolvedRowGapForLineHeight(lineHeight, fontSize, ctx)
 	if len(layouts) > 0 {
-		contentHeight = a.lineHeight(fontSize, ctx) + a.lineAdvance(fontSize, ctx)*float64(len(layouts)-1)
+		contentHeight = lineHeight + lineAdvance*float64(len(layouts)-1)
 	}
 	contentBox := resolveAnchoredBoxRect(a.Locator, ctx.Clip, maxWidth+padding*2, contentHeight+padding*2, a.Location, inset)
 	return anchoredTextLayout{
-		contentBox: contentBox,
-		patchBox:   expandAnchoredRect(contentBox, boxPadding),
-		padding:    padding,
+		contentBox:  contentBox,
+		patchBox:    expandAnchoredRect(contentBox, boxPadding),
+		padding:     padding,
+		lineAdvance: lineAdvance,
 	}
 }
 
@@ -283,6 +287,16 @@ func (a *AnchoredTextBox) resolvedRowGap(fontSize float64, ctx *DrawContext) flo
 	return 0.2 * a.lineHeight(fontSize, ctx)
 }
 
+func (a *AnchoredTextBox) resolvedRowGapForLineHeight(lineHeight, fontSize float64, ctx *DrawContext) float64 {
+	if a != nil && a.RowGap >= 0 {
+		return a.RowGap
+	}
+	if lineHeight <= 0 {
+		lineHeight = a.lineHeight(fontSize, ctx)
+	}
+	return 0.2 * lineHeight
+}
+
 func (a *AnchoredTextBox) resolvedBoxPadding() float64 {
 	if a == nil || a.BoxPadding <= 0 {
 		return 0
@@ -296,6 +310,23 @@ func (a *AnchoredTextBox) lineHeight(fontSize float64, ctx *DrawContext) float64
 
 func (a *AnchoredTextBox) lineAdvance(fontSize float64, ctx *DrawContext) float64 {
 	return a.lineHeight(fontSize, ctx) + a.resolvedRowGap(fontSize, ctx)
+}
+
+func anchoredTextLineHeight(layouts []singleLineTextLayout, fontSize float64, ctx *DrawContext) float64 {
+	height := 0.0
+	for _, layout := range layouts {
+		lineHeight := layout.RunAscent + layout.RunDescent
+		if lineHeight <= 0 {
+			lineHeight = layout.Height
+		}
+		if lineHeight > height {
+			height = lineHeight
+		}
+	}
+	if height <= 0 && ctx != nil {
+		height = pointsToPixels(ctx.RC, fontSize)
+	}
+	return height
 }
 
 func expandAnchoredRect(r geom.Rect, pad float64) geom.Rect {
@@ -320,6 +351,21 @@ func anchoredBoxRect(clip geom.Rect, width, height float64, location LegendLocat
 	case LegendLowerLeft:
 		minX = clip.Min.X + inset
 		minY = clip.Min.Y + inset
+	case LegendRight, LegendCenterRight:
+		minX = clip.Max.X - inset - width
+		minY = clip.Min.Y + (clip.H()-height)/2
+	case LegendCenterLeft:
+		minX = clip.Min.X + inset
+		minY = clip.Min.Y + (clip.H()-height)/2
+	case LegendLowerCenter:
+		minX = clip.Min.X + (clip.W()-width)/2
+		minY = clip.Min.Y + inset
+	case LegendUpperCenter:
+		minX = clip.Min.X + (clip.W()-width)/2
+		minY = clip.Max.Y - inset - height
+	case LegendCenter:
+		minX = clip.Min.X + (clip.W()-width)/2
+		minY = clip.Min.Y + (clip.H()-height)/2
 	default:
 		minX = clip.Max.X - inset - width
 		minY = clip.Max.Y - inset - height

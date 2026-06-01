@@ -2,6 +2,8 @@ package core
 
 import (
 	"image"
+	"math"
+	"strings"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -122,6 +124,34 @@ func TestAnchoredTextBoxDrawsMultilineContentTopDown(t *testing.T) {
 	}
 	if !(r.origins[1].Y < r.origins[0].Y) {
 		t.Fatalf("anchored multiline should draw top-down in y-up display space, got origins %v", r.origins)
+	}
+}
+
+func TestAnchoredTextBoxMultilineHeightUsesMeasuredTextAreaMetrics(t *testing.T) {
+	box := newAnchoredTextBox("anchored\ntext", styleRCForAnchoredTextTest(), AnchoredTextOptions{
+		Location:   LegendUpperLeft,
+		Padding:    pointsToPixels(style.Default, 9*0.35),
+		Inset:      pointsToPixels(style.Default, 9*0.6),
+		RowGap:     2,
+		BoxPadding: 0,
+		FontSize:   9,
+	})
+	ctx := createTestDrawContext()
+	ctx.RC.DPI = 100
+	r := &anchoredTextMetricRenderer{}
+	lines := strings.Split(box.Content, "\n")
+	layouts := make([]singleLineTextLayout, len(lines))
+	for i, line := range lines {
+		layouts[i] = measureSingleLineTextLayout(r, line, box.FontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
+	}
+
+	got := box.layout(r, ctx, layouts, box.FontSize).patchBox
+
+	// Matplotlib TextArea("anchored\ntext", size=9) is 58.75 x 28 px at
+	// 100 DPI; AnchoredText pad=0.35 expands it by 4.375 px on each side.
+	wantH := 28.0 + 2*pointsToPixels(ctx.RC, 9*0.35)
+	if !floatApprox(got.H(), wantH, 1e-9) {
+		t.Fatalf("anchored multiline frame height = %v, want Matplotlib TextArea height %v", got.H(), wantH)
 	}
 }
 
@@ -298,6 +328,30 @@ func TestAnchoredDrawingAreaCanClipChildren(t *testing.T) {
 	for i := range wantEvents {
 		if r.events[i] != wantEvents[i] {
 			t.Fatalf("clip events = %v, want %v", r.events, wantEvents)
+		}
+	}
+}
+
+func TestAnchoredDrawingAreaFrameSnapsToPixelGrid(t *testing.T) {
+	area := (&Axes{}).AddAnchoredDrawingArea(10, 10, AnchoredDrawingAreaOptions{
+		Location:        LegendUpperLeft,
+		Padding:         1.25,
+		Inset:           5.4,
+		FrameOn:         boolPtr(true),
+		BackgroundColor: render.Color{A: 1},
+		BorderColor:     render.Color{A: 1},
+	})
+	ctx := createTestDrawContext()
+	r := &recordingRenderer{}
+
+	area.Draw(r, ctx)
+
+	if len(r.pathCalls) == 0 || len(r.pathCalls[0].path.V) < 4 {
+		t.Fatalf("expected frame path, got %+v", r.pathCalls)
+	}
+	for i, pt := range r.pathCalls[0].path.V[:4] {
+		if !floatApprox(pt.X, math.Round(pt.X), 1e-9) || !floatApprox(pt.Y, math.Round(pt.Y), 1e-9) {
+			t.Fatalf("frame vertex %d = %+v, want snapped pixel coordinate; path=%+v", i, pt, r.pathCalls[0].path.V[:4])
 		}
 	}
 }
@@ -484,6 +538,22 @@ func recordedPaintExists(calls []recordedPathCall, fill, stroke render.Color, li
 
 func pointsApprox(got, want geom.Pt, tol float64) bool {
 	return floatApprox(got.X, want.X, tol) && floatApprox(got.Y, want.Y, tol)
+}
+
+type anchoredTextMetricRenderer struct {
+	render.NullRenderer
+}
+
+func (r *anchoredTextMetricRenderer) MeasureText(text string, size float64, _ string) render.TextMetrics {
+	widths := map[string]float64{
+		"anchored": 58.75,
+		"text":     24.625,
+	}
+	width := widths[text]
+	if width == 0 {
+		width = float64(len(text)) * size * 0.5
+	}
+	return render.TextMetrics{W: width, H: 13, Ascent: 10, Descent: 3}
 }
 
 func recordedStrokePath(calls []recordedPathCall, stroke render.Color) geom.Path {

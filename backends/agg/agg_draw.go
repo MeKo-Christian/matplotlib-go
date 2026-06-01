@@ -1,6 +1,7 @@
 package agg
 
 import (
+	"image"
 	"math"
 
 	agglib "github.com/cwbudde/agg_go"
@@ -214,9 +215,94 @@ func (r *Renderer) drawImageDirect(img render.Image, dst geom.Rect) {
 	if w <= 0 || h <= 0 {
 		return
 	}
+	if nearestImg, nx, ny, nw, nh, ok := nearestScaledImageForDirectDraw(img, x, y, w, h); ok {
+		agg.SetImageFilter(agglib.NoFilter)
+		agg.SetImageResample(agglib.NoResample)
+		_ = agg.DrawImageScaled(nearestImg, nx, ny, nw, nh)
+		return
+	}
 	applyInterpolation(agg, img, w, h)
 
 	_ = agg.DrawImageScaled(aggImg, x, y, w, h)
+}
+
+func nearestScaledImageForDirectDraw(img render.Image, x, y, w, h float64) (*agglib.Image, float64, float64, float64, float64, bool) {
+	if img == nil || w <= 0 || h <= 0 {
+		return nil, 0, 0, 0, 0, false
+	}
+	srcW, srcH := img.Size()
+	if srcW <= 0 || srcH <= 0 {
+		return nil, 0, 0, 0, 0, false
+	}
+	filter, ok := resolveInterpolationName(img.Interpolation(), float64(srcW), float64(srcH), w, h)
+	if !ok || filter != agglib.NoFilter {
+		return nil, 0, 0, 0, 0, false
+	}
+	drawX := math.Round(x)
+	roundedY := math.Round(y)
+	dstW := int(math.Ceil(w))
+	dstH := int(math.Ceil(h))
+	if dstW <= 0 || dstH <= 0 {
+		return nil, 0, 0, 0, 0, false
+	}
+	if dstW == srcW && dstH == srcH && floatAlmostEqual(drawX, x) && floatAlmostEqual(roundedY, y) {
+		return nil, 0, 0, 0, 0, false
+	}
+	drawY := roundedY - 1
+	rgbaImage, ok := img.(render.RGBAImage)
+	if !ok {
+		return nil, 0, 0, 0, 0, false
+	}
+	scaled := scaleRGBANearest(rgbaImage.RGBA(), dstW, dstH)
+	if scaled == nil {
+		return nil, 0, 0, 0, 0, false
+	}
+	data := render.NewImageData(scaled)
+	data.SetInterpolation("nearest")
+	if alpha, ok := img.(render.ImageAlpha); ok {
+		data.SetAlpha(alpha.Alpha())
+	}
+	aggImg, ok := renderImageToAGG(data)
+	if !ok {
+		return nil, 0, 0, 0, 0, false
+	}
+	return aggImg, drawX, drawY, float64(dstW), float64(dstH), true
+}
+
+func scaleRGBANearest(src *image.RGBA, dstW, dstH int) *image.RGBA {
+	if src == nil || dstW <= 0 || dstH <= 0 {
+		return nil
+	}
+	bounds := src.Bounds()
+	srcW := bounds.Dx()
+	srcH := bounds.Dy()
+	if srcW <= 0 || srcH <= 0 {
+		return nil
+	}
+	dst := image.NewRGBA(image.Rect(0, 0, dstW, dstH))
+	scaleX := float64(dstW) / float64(srcW)
+	scaleY := float64(dstH) / float64(srcH)
+	for y := 0; y < dstH; y++ {
+		srcY := int(math.Round((float64(y)+0.5)/scaleY - 0.5))
+		if srcY < 0 {
+			srcY = 0
+		}
+		if srcY >= srcH {
+			srcY = srcH - 1
+		}
+		srcRow := src.Pix[src.PixOffset(bounds.Min.X, bounds.Min.Y+srcY):]
+		for x := 0; x < dstW; x++ {
+			srcX := int(math.Round((float64(x)+0.5)/scaleX - 0.5))
+			if srcX < 0 {
+				srcX = 0
+			}
+			if srcX >= srcW {
+				srcX = srcW - 1
+			}
+			copy(dst.Pix[dst.PixOffset(x, y):dst.PixOffset(x, y)+4], srcRow[srcX*4:srcX*4+4])
+		}
+	}
+	return dst
 }
 
 // ImageTransformed draws an image using the provided affine transformation.

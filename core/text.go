@@ -1077,7 +1077,7 @@ func drawTextBBox(r render.Renderer, origin geom.Pt, layout singleLineTextLayout
 	}
 	cfg := resolvedTextBBoxOptions(*opt, ctx, fontSize)
 
-	path := pixelRectPath(rect)
+	path := snappedPixelRectPath(rect)
 	if cfg.CornerRadius > 0 {
 		path = roundedRectPath(rect, cfg.CornerRadius)
 	}
@@ -1118,11 +1118,11 @@ func rotatedTextBBoxPath(anchor, drawOrigin geom.Pt, layout singleLineTextLayout
 		return x*cosT - y*sinT, x*sinT + y*cosT
 	}
 
-	// Port matplotlib.text._get_textbox for the single-line case. Work in
-	// Matplotlib's local y-up text coordinates, then flip the transformed path
-	// back to the renderer's y-down display coordinates.
+	// Port matplotlib.text._get_textbox for the single-line case. Both the
+	// layout offsets and renderer geometry use Matplotlib's y-up display
+	// coordinates here.
 	lineX := drawOrigin.X - anchor.X
-	lineY := -(drawOrigin.Y - anchor.Y)
+	lineY := drawOrigin.Y - anchor.Y
 	x1, y1 := rotate(lineX, lineY, -angle)
 	y1 -= layout.Descent
 	x2 := x1 + layout.Width
@@ -1143,7 +1143,7 @@ func rotatedTextBBoxPath(anchor, drawOrigin geom.Pt, layout singleLineTextLayout
 	}
 	for i := range path.V {
 		x, y := rotate(path.V[i].X, path.V[i].Y, angle)
-		path.V[i] = geom.Pt{X: anchor.X + xBox + x, Y: anchor.Y - (yBox + y)}
+		path.V[i] = geom.Pt{X: anchor.X + xBox + x, Y: anchor.Y + yBox + y}
 	}
 	return path, true
 }
@@ -1181,7 +1181,7 @@ func drawMultilineTextBBox(r render.Renderer, rect geom.Rect, opt *TextBBoxOptio
 	rect.Max.X += cfg.Padding
 	rect.Max.Y += cfg.Padding
 
-	path := pixelRectPath(rect)
+	path := snappedPixelRectPath(rect)
 	if cfg.CornerRadius > 0 {
 		path = roundedRectPath(rect, cfg.CornerRadius)
 	}

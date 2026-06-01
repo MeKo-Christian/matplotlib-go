@@ -17,6 +17,12 @@ const (
 	LegendUpperLeft
 	LegendLowerRight
 	LegendLowerLeft
+	LegendRight
+	LegendCenterLeft
+	LegendCenterRight
+	LegendLowerCenter
+	LegendUpperCenter
+	LegendCenter
 	LegendBest
 )
 
@@ -494,8 +500,9 @@ func (l *Legend) layoutEntries(labelLayouts []singleLineTextLayout, rowHeights [
 		maxLabelWidth := 0.0
 		columnHeight := 0.0
 		for i := start; i < end; i++ {
-			if labelLayouts[i].Width > maxLabelWidth {
-				maxLabelWidth = labelLayouts[i].Width
+			labelWidth := legendLabelWidth(labelLayouts[i])
+			if labelWidth > maxLabelWidth {
+				maxLabelWidth = labelWidth
 			}
 			columnHeight += rowHeights[i]
 		}
@@ -533,6 +540,9 @@ func (l *Legend) effectiveNumColumns(entryCount int) int {
 func legendRowHeight(layout singleLineTextLayout, fontSize float64, ctx *DrawContext) float64 {
 	fontPx := pointsToPixels(ctx.RC, fontSize)
 	rowHeight := layout.RunAscent + layout.RunDescent
+	if layout.MathLayout != nil && rowHeight < fontPx*1.28 {
+		rowHeight = fontPx * 1.28
+	}
 	if rowHeight < fontPx {
 		rowHeight = fontPx
 	}
@@ -540,6 +550,13 @@ func legendRowHeight(layout singleLineTextLayout, fontSize float64, ctx *DrawCon
 		rowHeight = layout.Height
 	}
 	return rowHeight
+}
+
+func legendLabelWidth(layout singleLineTextLayout) float64 {
+	if layout.MathLayout != nil {
+		return layout.Width * 1.27
+	}
+	return layout.Width
 }
 
 func (l *Legend) collectEntries() []legendEntry {
@@ -726,18 +743,29 @@ func (l *Legend) legendBoxRect(ctx *DrawContext, width, height float64) geom.Rec
 }
 
 func (l *Legend) bestLegendBoxRect(ctx *DrawContext, width, height float64) geom.Rect {
-	candidates := []LegendLocation{LegendUpperRight, LegendUpperLeft, LegendLowerLeft, LegendLowerRight}
-	points := l.legendAvoidancePoints(ctx)
+	candidates := []LegendLocation{
+		LegendUpperRight,
+		LegendUpperLeft,
+		LegendLowerLeft,
+		LegendLowerRight,
+		LegendRight,
+		LegendCenterLeft,
+		LegendCenterRight,
+		LegendLowerCenter,
+		LegendUpperCenter,
+		LegendCenter,
+	}
+	data := l.legendAvoidanceData(ctx)
 
 	best := anchoredBoxRect(ctx.Clip, width, height, candidates[0], l.Inset)
-	bestBadness := legendPlacementBadness(best, points)
+	bestBadness := legendPlacementBadness(best, data)
 	if bestBadness == 0 {
 		return best
 	}
 
 	for _, location := range candidates[1:] {
 		box := anchoredBoxRect(ctx.Clip, width, height, location, l.Inset)
-		badness := legendPlacementBadness(box, points)
+		badness := legendPlacementBadness(box, data)
 		if badness == 0 {
 			return box
 		}
@@ -749,30 +777,48 @@ func (l *Legend) bestLegendBoxRect(ctx *DrawContext, width, height float64) geom
 	return best
 }
 
-func (l *Legend) legendAvoidancePoints(ctx *DrawContext) []geom.Pt {
+type legendAvoidanceData struct {
+	points []geom.Pt
+	lines  []geom.Path
+	boxes  []geom.Rect
+}
+
+func (l *Legend) legendAvoidanceData(ctx *DrawContext) legendAvoidanceData {
 	if l == nil || l.Axes == nil || ctx == nil {
-		return nil
+		return legendAvoidanceData{}
 	}
-	points := []geom.Pt{}
+	data := legendAvoidanceData{}
 	appendPoints := func(spec CoordinateSpec, pts []geom.Pt) {
 		tr := ctx.TransformFor(spec)
 		for _, pt := range pts {
 			if tr != nil {
 				pt = tr.Apply(pt)
 			}
-			points = append(points, pt)
+			data.points = append(data.points, pt)
 		}
 	}
-	appendRectCorners := func(spec CoordinateSpec, rect geom.Rect) {
+	appendRect := func(spec CoordinateSpec, rect geom.Rect) {
 		if rect == (geom.Rect{}) {
 			return
 		}
-		appendPoints(spec, []geom.Pt{
-			rect.Min,
-			{X: rect.Max.X, Y: rect.Min.Y},
-			rect.Max,
-			{X: rect.Min.X, Y: rect.Max.Y},
+		tr := ctx.TransformFor(spec)
+		if tr == nil {
+			data.boxes = append(data.boxes, rect)
+			return
+		}
+		min := tr.Apply(rect.Min)
+		max := tr.Apply(rect.Max)
+		data.boxes = append(data.boxes, geom.Rect{
+			Min: geom.Pt{X: math.Min(min.X, max.X), Y: math.Min(min.Y, max.Y)},
+			Max: geom.Pt{X: math.Max(min.X, max.X), Y: math.Max(min.Y, max.Y)},
 		})
+	}
+	appendLine := func(path geom.Path) {
+		if len(path.V) == 0 {
+			return
+		}
+		data.lines = append(data.lines, path)
+		data.points = append(data.points, path.V...)
 	}
 
 	for _, art := range l.Axes.Artists {
@@ -782,35 +828,74 @@ func (l *Legend) legendAvoidancePoints(ctx *DrawContext) []geom.Pt {
 		case *Scatter2D:
 			appendPoints(Coords(CoordData), a.XY)
 		case *Line2D:
-			appendPoints(Coords(CoordData), a.pathPoints())
+			appendLine(a.displayPath(ctx))
 		case *PathCollection:
 			appendPoints(a.Coords, a.Offsets)
 		case *LineCollection:
 			for _, segment := range a.Segments {
-				appendPoints(a.Coords, segment)
+				appendLine(displayPolylineForLegend(ctx, a.Coords, segment))
 			}
 		case *Image2D:
-			appendRectCorners(Coords(CoordData), a.Bounds(ctx))
+			appendRect(Coords(CoordData), a.Bounds(ctx))
+		case *Text:
+			data.points = append(data.points, transformedPoint(ctx, a.Coords, a.Position, a.OffsetX, a.OffsetY))
 		case *Annotation:
 			target := transformedPoint(ctx, a.Coords, a.Point, 0, 0)
 			text := transformedPoint(ctx, a.Coords, a.Point, a.OffsetX, a.OffsetY)
-			points = append(points, target, text)
+			data.points = append(data.points, target, text)
 		case *AnnotationBbox:
 			target := transformedPoint(ctx, a.XYCoords, a.Point, 0, 0)
 			box := target
 			if a.BoxPosition != nil {
 				box = transformedPoint(ctx, a.BoxCoords, *a.BoxPosition, 0, 0)
 			}
-			points = append(points, target, box)
+			data.points = append(data.points, target, box)
 		}
 	}
-	return points
+	return data
 }
 
-func legendPlacementBadness(box geom.Rect, points []geom.Pt) int {
+func displayPolylineForLegend(ctx *DrawContext, spec CoordinateSpec, pts []geom.Pt) geom.Path {
+	tr := ctx.TransformFor(spec)
+	path := geom.Path{}
+	inSegment := false
+	for _, pt := range pts {
+		if !finitePoint(pt) {
+			inSegment = false
+			continue
+		}
+		if tr != nil {
+			pt = tr.Apply(pt)
+		}
+		if !finitePoint(pt) {
+			inSegment = false
+			continue
+		}
+		if !inSegment {
+			path.C = append(path.C, geom.MoveTo)
+			inSegment = true
+		} else {
+			path.C = append(path.C, geom.LineTo)
+		}
+		path.V = append(path.V, pt)
+	}
+	return path
+}
+
+func legendPlacementBadness(box geom.Rect, data legendAvoidanceData) int {
 	badness := 0
-	for _, pt := range points {
+	for _, pt := range data.points {
 		if pointInRect(pt, box) {
+			badness++
+		}
+	}
+	for _, other := range data.boxes {
+		if rectsOverlap(box, other) {
+			badness++
+		}
+	}
+	for _, line := range data.lines {
+		if pathIntersectsRect(line, box) {
 			badness++
 		}
 	}
@@ -819,6 +904,90 @@ func legendPlacementBadness(box geom.Rect, points []geom.Pt) int {
 
 func pointInRect(pt geom.Pt, rect geom.Rect) bool {
 	return pt.X >= rect.Min.X && pt.X <= rect.Max.X && pt.Y >= rect.Min.Y && pt.Y <= rect.Max.Y
+}
+
+func rectsOverlap(a, b geom.Rect) bool {
+	return a.Min.X < b.Max.X && a.Max.X > b.Min.X && a.Min.Y < b.Max.Y && a.Max.Y > b.Min.Y
+}
+
+func pathIntersectsRect(path geom.Path, rect geom.Rect) bool {
+	var cur geom.Pt
+	haveCur := false
+	vi := 0
+	for _, cmd := range path.C {
+		switch cmd {
+		case geom.MoveTo:
+			if vi >= len(path.V) {
+				return false
+			}
+			cur = path.V[vi]
+			haveCur = true
+			vi++
+		case geom.LineTo:
+			if vi >= len(path.V) {
+				return false
+			}
+			next := path.V[vi]
+			if haveCur && segmentIntersectsRect(cur, next, rect) {
+				return true
+			}
+			cur = next
+			haveCur = true
+			vi++
+		case geom.QuadTo:
+			vi += 2
+			haveCur = false
+		case geom.CubicTo:
+			vi += 3
+			haveCur = false
+		case geom.ClosePath:
+			haveCur = false
+		}
+	}
+	return false
+}
+
+func segmentIntersectsRect(a, b geom.Pt, rect geom.Rect) bool {
+	corners := []geom.Pt{
+		rect.Min,
+		{X: rect.Max.X, Y: rect.Min.Y},
+		rect.Max,
+		{X: rect.Min.X, Y: rect.Max.Y},
+	}
+	for i := range corners {
+		if segmentsIntersect(a, b, corners[i], corners[(i+1)%len(corners)]) {
+			return true
+		}
+	}
+	return false
+}
+
+func segmentsIntersect(a, b, c, d geom.Pt) bool {
+	const eps = 1e-9
+	orient := func(p, q, r geom.Pt) float64 {
+		return (q.X-p.X)*(r.Y-p.Y) - (q.Y-p.Y)*(r.X-p.X)
+	}
+	onSegment := func(p, q, r geom.Pt) bool {
+		return math.Min(p.X, r.X)-eps <= q.X && q.X <= math.Max(p.X, r.X)+eps &&
+			math.Min(p.Y, r.Y)-eps <= q.Y && q.Y <= math.Max(p.Y, r.Y)+eps
+	}
+	o1 := orient(a, b, c)
+	o2 := orient(a, b, d)
+	o3 := orient(c, d, a)
+	o4 := orient(c, d, b)
+	if math.Abs(o1) <= eps && onSegment(a, c, b) {
+		return true
+	}
+	if math.Abs(o2) <= eps && onSegment(a, d, b) {
+		return true
+	}
+	if math.Abs(o3) <= eps && onSegment(c, a, d) {
+		return true
+	}
+	if math.Abs(o4) <= eps && onSegment(c, b, d) {
+		return true
+	}
+	return (o1 > 0) != (o2 > 0) && (o3 > 0) != (o4 > 0)
 }
 
 func legendEntryFromOptions(label string, opts LegendEntryOptions) legendEntry {
@@ -1067,4 +1236,11 @@ func pixelRectPath(r geom.Rect) geom.Path {
 	}
 	path.C = append(path.C, geom.ClosePath)
 	return path
+}
+
+func snappedPixelRectPath(r geom.Rect) geom.Path {
+	return pixelRectPath(geom.Rect{
+		Min: geom.Pt{X: math.Round(r.Min.X), Y: math.Round(r.Min.Y)},
+		Max: geom.Pt{X: math.Round(r.Max.X), Y: math.Round(r.Max.Y)},
+	})
 }

@@ -207,7 +207,7 @@ func (a *AnnotationBbox) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 		a.drawArrowFromBox(r, ctx, box, target)
 	}
 	if a.FrameOn {
-		r.Path(pixelRectPath(box), &render.Paint{
+		r.Path(snappedPixelRectPath(box), &render.Paint{
 			Fill:      a.FaceColor,
 			Stroke:    a.EdgeColor,
 			LineWidth: a.LineWidth,
