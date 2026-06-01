@@ -93,7 +93,7 @@ func TestFoundationAPIGapsCoverRequiredFundamentals(t *testing.T) {
 	}
 }
 
-func TestPhase124FoundationGapsAreSplitBySurface(t *testing.T) {
+func TestPatchTextLegendFoundationGapsAreSplitBySurface(t *testing.T) {
 	for _, tc := range []struct {
 		id      string
 		modules []string
@@ -115,7 +115,7 @@ func TestPhase124FoundationGapsAreSplitBySurface(t *testing.T) {
 	}
 }
 
-func TestPhase125FoundationGapsAreSplitBySurface(t *testing.T) {
+func TestImagePyplotBackendFoundationGapsAreSplitBySurface(t *testing.T) {
 	for _, tc := range []struct {
 		id      string
 		modules []string
@@ -136,7 +136,7 @@ func TestPhase125FoundationGapsAreSplitBySurface(t *testing.T) {
 	}
 }
 
-func TestPhase125ImageGapClassifiesPColorFast(t *testing.T) {
+func TestImageGapClassifiesPColorFast(t *testing.T) {
 	gap, ok := LookupFoundationAPIGap("image-class-breadth")
 	if !ok {
 		t.Fatal("missing image-class-breadth foundation gap")
