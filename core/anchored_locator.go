@@ -83,8 +83,9 @@ func (l RelativeAnchoredBoxLocator) Rect(clip geom.Rect, width, height float64) 
 }
 
 // BBoxToAnchorLocator mirrors Matplotlib's two-value bbox_to_anchor positioning:
-// X and Y are parent-fraction coordinates with origin at the bottom left, and
-// Location selects which legend corner is placed at that anchor.
+// X and Y are parent-fraction coordinates in display space (origin at the
+// bottom left), and Location selects which legend corner is placed at that
+// anchor.
 type BBoxToAnchorLocator struct {
 	X        float64
 	Y        float64
@@ -100,23 +101,23 @@ func (l BBoxToAnchorLocator) Rect(clip geom.Rect, width, height float64) geom.Re
 func (l BBoxToAnchorLocator) RectWithInset(clip geom.Rect, width, height, inset float64) geom.Rect {
 	anchor := geom.Pt{
 		X: clip.Min.X + clip.W()*l.X + l.OffsetX,
-		Y: clip.Max.Y - clip.H()*l.Y + l.OffsetY,
+		Y: clip.Min.Y + clip.H()*l.Y + l.OffsetY,
 	}
 
 	var minX, minY float64
 	switch l.Location {
 	case LegendUpperLeft:
 		minX = anchor.X + inset
-		minY = anchor.Y + inset
+		minY = anchor.Y - height - inset
 	case LegendLowerRight:
 		minX = anchor.X - width - inset
-		minY = anchor.Y - height - inset
+		minY = anchor.Y + inset
 	case LegendLowerLeft:
 		minX = anchor.X + inset
-		minY = anchor.Y - height - inset
+		minY = anchor.Y + inset
 	default:
 		minX = anchor.X - width - inset
-		minY = anchor.Y + inset
+		minY = anchor.Y - height - inset
 	}
 
 	return geom.Rect{
