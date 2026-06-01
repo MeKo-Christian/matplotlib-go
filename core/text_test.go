@@ -796,6 +796,85 @@ func TestRotatedTextBBoxUsesDisplayRotationSign(t *testing.T) {
 	}
 }
 
+func TestRotatedTextBBoxUsesDefaultRotationDrawOrigin(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 1},
+		Content:  "tilt",
+		FontSize: 10,
+		HAlign:   TextAlignCenter,
+		VAlign:   TextVAlignMiddle,
+		Angle:    -28,
+		ClipOn:   true,
+		BBox: &TextBBoxOptions{
+			FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
+			EdgeColor: render.Color{A: 1},
+			Padding:   2,
+		},
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.pathCalls) == 0 {
+		t.Fatal("expected rotated text bbox path")
+	}
+	layout := measureSingleLineTextLayoutParseMath(r, text.Content, text.FontSize, text.FontKey, true, ctx.RC.UseTeX)
+	hAlign, vAlign := textRotationLayoutAlignments(text.HAlign, text.VAlign, text.Angle, text.RotationMode)
+	anchor := transformedPoint(ctx, text.Coords, text.Position, text.OffsetX, text.OffsetY)
+	angle := text.Angle * math.Pi / 180
+	drawOrigin := tickLabelDrawOriginFromP(anchor, layout, hAlign, vAlign, angle, false)
+	want, ok := matplotlibRotatedTextBBoxPathForTest(anchor, drawOrigin, layout, text.BBox, ctx, text.FontSize, text.Angle)
+	if !ok {
+		t.Fatal("matplotlibRotatedTextBBoxPathForTest returned !ok")
+	}
+
+	got := r.pathCalls[0].path
+	if len(got.V) < 4 || len(want.V) < 4 {
+		t.Fatalf("bbox paths too short: got=%+v want=%+v", got.V, want.V)
+	}
+	for i := 0; i < 4; i++ {
+		if !approx(got.V[i].X, want.V[i].X, 1e-9) || !approx(got.V[i].Y, want.V[i].Y, 1e-9) {
+			t.Fatalf("rotated bbox vertex %d = %+v, want %+v; got path=%+v want path=%+v", i, got.V[i], want.V[i], got.V[:4], want.V[:4])
+		}
+	}
+}
+
+func matplotlibRotatedTextBBoxPathForTest(anchor, drawOrigin geom.Pt, layout singleLineTextLayout, opt *TextBBoxOptions, ctx *DrawContext, fontSize, angleDeg float64) (geom.Path, bool) {
+	if opt == nil || layout.Width <= 0 || layout.Height <= 0 {
+		return geom.Path{}, false
+	}
+	cfg := resolvedTextBBoxOptions(*opt, ctx, fontSize)
+	angle := angleDeg * math.Pi / 180
+	rotate := func(x, y, a float64) (float64, float64) {
+		cosT := math.Cos(a)
+		sinT := math.Sin(a)
+		return x*cosT - y*sinT, x*sinT + y*cosT
+	}
+
+	lineX := drawOrigin.X - anchor.X
+	lineY := -(drawOrigin.Y - anchor.Y)
+	x1, y1 := rotate(lineX, lineY, -angle)
+	y1 -= layout.Descent
+	x2 := x1 + layout.Width
+	y2 := y1 + layout.Height
+	xBox := math.Min(x1, x2)
+	yBox := math.Min(y1, y2)
+	wBox := math.Abs(x2 - x1)
+	hBox := math.Abs(y2 - y1)
+	xBox, yBox = rotate(xBox, yBox, angle)
+
+	local := pixelRectPath(geom.Rect{
+		Min: geom.Pt{X: -cfg.Padding, Y: -cfg.Padding},
+		Max: geom.Pt{X: wBox + cfg.Padding, Y: hBox + cfg.Padding},
+	})
+	for i := range local.V {
+		x, y := rotate(local.V[i].X, local.V[i].Y, angle)
+		local.V[i] = geom.Pt{X: anchor.X + xBox + x, Y: anchor.Y - (yBox + y)}
+	}
+	return local, true
+}
+
 func TestTextBBoxUsesLineBoxWhenInkBoundsAreShort(t *testing.T) {
 	ctx := createTestDrawContext()
 	r := &mathInkBoundsRenderer{}

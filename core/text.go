@@ -380,9 +380,11 @@ func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
 	if t.Angle != 0 {
 		if rotated, ok := r.(render.RotatedTextDrawer); ok {
 			angle := t.Angle * math.Pi / 180
-			rotAnchor := textRotationAnchor(origin, layout, hAlign, vAlign, angle, t.RotationMode)
-			drawTextBBoxRotated(r, origin, layout, t.BBox, ctx, fontSize, rotAnchor, t.Angle)
-			if len(t.PathEffects) > 0 && drawTextPathEffects(r, content, origin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
+			anchorMode := t.RotationMode == TextRotationModeAnchor
+			drawOrigin := tickLabelDrawOriginFromP(anchor, layout, hAlign, vAlign, angle, anchorMode)
+			rotAnchor := rotatedTextBackendAnchorFromP(anchor, layout, hAlign, vAlign, angle, anchorMode)
+			drawTextBBoxRotated(r, anchor, drawOrigin, layout, t.BBox, ctx, fontSize, t.Angle)
+			if len(t.PathEffects) > 0 && drawTextPathEffects(r, content, drawOrigin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
 				return
 			}
 			drawDisplayTextRotatedParseMath(rotated, content, rotAnchor, fontSize, angle, textColor, fontKey, parseMath, ctx.RC.UseTeX)
@@ -826,8 +828,9 @@ func (a *Annotation) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 		if rotated, ok := r.(render.RotatedTextDrawer); ok {
 			angle := a.Angle * math.Pi / 180
 			vAlign := layoutVerticalAlign(a.VAlign, false)
-			rotAnchor := textRotationAnchor(origin, layout, a.HAlign, vAlign, angle, TextRotationModeDefault)
-			drawTextBBoxRotated(r, origin, layout, a.BBox, ctx, fontSize, rotAnchor, a.Angle)
+			drawOrigin := tickLabelDrawOriginFromP(anchor, layout, a.HAlign, vAlign, angle, false)
+			rotAnchor := rotatedTextBackendAnchorFromP(anchor, layout, a.HAlign, vAlign, angle, false)
+			drawTextBBoxRotated(r, anchor, drawOrigin, layout, a.BBox, ctx, fontSize, a.Angle)
 			drawDisplayTextRotatedParseMath(rotated, a.Content, rotAnchor, fontSize, angle, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 			return
 		}
@@ -1087,18 +1090,13 @@ func drawTextBBox(r render.Renderer, origin geom.Pt, layout singleLineTextLayout
 	})
 }
 
-func drawTextBBoxRotated(r render.Renderer, origin geom.Pt, layout singleLineTextLayout, opt *TextBBoxOptions, ctx *DrawContext, fontSize float64, pivot geom.Pt, angleDeg float64) {
-	rect, ok := textBBoxRect(origin, layout, opt, ctx, fontSize)
+func drawTextBBoxRotated(r render.Renderer, anchor, drawOrigin geom.Pt, layout singleLineTextLayout, opt *TextBBoxOptions, ctx *DrawContext, fontSize, angleDeg float64) {
+	path, ok := rotatedTextBBoxPath(anchor, drawOrigin, layout, opt, ctx, fontSize, angleDeg)
 	if !ok {
 		return
 	}
 	cfg := resolvedTextBBoxOptions(*opt, ctx, fontSize)
 
-	path := pixelRectPath(rect)
-	if cfg.CornerRadius > 0 {
-		path = roundedRectPath(rect, cfg.CornerRadius)
-	}
-	path = rotatePathAround(path, pivot, -angleDeg)
 	r.Path(path, &render.Paint{
 		Fill:      cfg.FaceColor,
 		Stroke:    cfg.EdgeColor,
@@ -1106,6 +1104,48 @@ func drawTextBBoxRotated(r render.Renderer, origin geom.Pt, layout singleLineTex
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
 	})
+}
+
+func rotatedTextBBoxPath(anchor, drawOrigin geom.Pt, layout singleLineTextLayout, opt *TextBBoxOptions, ctx *DrawContext, fontSize, angleDeg float64) (geom.Path, bool) {
+	if opt == nil || layout.Width <= 0 || layout.Height <= 0 {
+		return geom.Path{}, false
+	}
+	cfg := resolvedTextBBoxOptions(*opt, ctx, fontSize)
+	angle := angleDeg * math.Pi / 180
+	rotate := func(x, y, a float64) (float64, float64) {
+		cosT := math.Cos(a)
+		sinT := math.Sin(a)
+		return x*cosT - y*sinT, x*sinT + y*cosT
+	}
+
+	// Port matplotlib.text._get_textbox for the single-line case. Work in
+	// Matplotlib's local y-up text coordinates, then flip the transformed path
+	// back to the renderer's y-down display coordinates.
+	lineX := drawOrigin.X - anchor.X
+	lineY := -(drawOrigin.Y - anchor.Y)
+	x1, y1 := rotate(lineX, lineY, -angle)
+	y1 -= layout.Descent
+	x2 := x1 + layout.Width
+	y2 := y1 + layout.Height
+	xBox := math.Min(x1, x2)
+	yBox := math.Min(y1, y2)
+	wBox := math.Abs(x2 - x1)
+	hBox := math.Abs(y2 - y1)
+	xBox, yBox = rotate(xBox, yBox, angle)
+
+	rect := geom.Rect{
+		Min: geom.Pt{X: -cfg.Padding, Y: -cfg.Padding},
+		Max: geom.Pt{X: wBox + cfg.Padding, Y: hBox + cfg.Padding},
+	}
+	path := pixelRectPath(rect)
+	if cfg.CornerRadius > 0 {
+		path = roundedRectPath(rect, cfg.CornerRadius)
+	}
+	for i := range path.V {
+		x, y := rotate(path.V[i].X, path.V[i].Y, angle)
+		path.V[i] = geom.Pt{X: anchor.X + xBox + x, Y: anchor.Y - (yBox + y)}
+	}
+	return path, true
 }
 
 func textBBoxRect(origin geom.Pt, layout singleLineTextLayout, opt *TextBBoxOptions, ctx *DrawContext, fontSize float64) (geom.Rect, bool) {
