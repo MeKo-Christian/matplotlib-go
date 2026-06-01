@@ -656,6 +656,7 @@ type ErrorBarOptions struct {
 	MarkerSize *float64      // marker size in points
 	Alpha      *float64      // alpha transparency
 	Label      string        // series label for legend
+	NoDataLine bool          // true matches Matplotlib fmt="none"
 
 	XErrLower []float64 // optional asymmetric lower x errors
 	XErrUpper []float64 // optional asymmetric upper x errors
@@ -716,22 +717,23 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 	}
 
 	bar := &ErrorBar{
-		XY:        pts,
-		XErr:      xErr,
-		YErr:      yErr,
-		XErrLower: append([]float64(nil), opt.XErrLower...),
-		XErrUpper: append([]float64(nil), opt.XErrUpper...),
-		YErrLower: append([]float64(nil), opt.YErrLower...),
-		YErrUpper: append([]float64(nil), opt.YErrUpper...),
-		LoLimits:  append([]bool(nil), opt.LoLimits...),
-		UpLimits:  append([]bool(nil), opt.UpLimits...),
-		XLoLimits: append([]bool(nil), opt.XLoLimits...),
-		XUpLimits: append([]bool(nil), opt.XUpLimits...),
-		Color:     color,
-		LineWidth: lineWidth,
-		CapSize:   capSize,
-		Alpha:     alpha,
-		Label:     opt.Label,
+		XY:         pts,
+		XErr:       xErr,
+		YErr:       yErr,
+		XErrLower:  append([]float64(nil), opt.XErrLower...),
+		XErrUpper:  append([]float64(nil), opt.XErrUpper...),
+		YErrLower:  append([]float64(nil), opt.YErrLower...),
+		YErrUpper:  append([]float64(nil), opt.YErrUpper...),
+		LoLimits:   append([]bool(nil), opt.LoLimits...),
+		UpLimits:   append([]bool(nil), opt.UpLimits...),
+		XLoLimits:  append([]bool(nil), opt.XLoLimits...),
+		XUpLimits:  append([]bool(nil), opt.XUpLimits...),
+		Color:      color,
+		LineWidth:  lineWidth,
+		CapSize:    capSize,
+		Alpha:      alpha,
+		Label:      opt.Label,
+		NoDataLine: opt.NoDataLine,
 	}
 	if opt.Marker != nil {
 		bar.Marker = *opt.Marker

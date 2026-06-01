@@ -51,9 +51,10 @@ func Plot() *core.Figure {
 		EdgeWidth: &edgeWidth,
 	})
 	ax.ErrorBar(x, y, xErr, yErr, core.ErrorBarOptions{
-		Color:     &black,
-		LineWidth: &errorWidth,
-		CapSize:   &errorCap,
+		Color:      &black,
+		LineWidth:  &errorWidth,
+		CapSize:    &errorCap,
+		NoDataLine: true,
 	})
 	return fig
 }

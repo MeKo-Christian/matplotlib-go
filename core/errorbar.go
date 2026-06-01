@@ -28,6 +28,7 @@ type ErrorBar struct {
 	MarkerSize float64 // marker size in points
 	Alpha      float64 // alpha transparency (0-1), if 0 uses 1.0
 	Label      string  // series label for legend
+	NoDataLine bool    // true matches Matplotlib fmt="none" data-line suppression
 	z          float64 // z-order
 }
 
@@ -149,7 +150,7 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 	}
 
-	if len(e.XY) > 1 {
+	if len(e.XY) > 1 && !e.NoDataLine {
 		line := Line2D{
 			XY:  append([]geom.Pt(nil), e.XY...),
 			W:   lineWidth,

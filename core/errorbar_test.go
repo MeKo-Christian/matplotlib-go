@@ -234,11 +234,12 @@ func TestAxes_ErrorBar_Options(t *testing.T) {
 		nil,
 		[]float64{0.2},
 		ErrorBarOptions{
-			Color:     &col,
-			LineWidth: &lineWidth,
-			CapSize:   &capSize,
-			Alpha:     &alpha,
-			Label:     "test",
+			Color:      &col,
+			LineWidth:  &lineWidth,
+			CapSize:    &capSize,
+			Alpha:      &alpha,
+			NoDataLine: true,
+			Label:      "test",
 		},
 	)
 
@@ -256,6 +257,9 @@ func TestAxes_ErrorBar_Options(t *testing.T) {
 	}
 	if errBar.Alpha != alpha {
 		t.Errorf("expected alpha %v, got %v", alpha, errBar.Alpha)
+	}
+	if !errBar.NoDataLine {
+		t.Error("expected NoDataLine option to be applied")
 	}
 }
 
