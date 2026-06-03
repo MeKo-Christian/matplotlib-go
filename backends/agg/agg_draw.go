@@ -522,7 +522,7 @@ func (r *Renderer) DrawQuadMesh(batch render.QuadMeshBatch) bool {
 			HatchColor:   cell.HatchColor,
 			HatchSpacing: cell.HatchSpacing,
 			Antialias:    render.AntialiasDefault,
-			Snap:         render.SnapOn,
+			Snap:         cell.Snap,
 		}
 		if cell.HatchWidth > 0 {
 			paint.HatchLineWidth = cell.HatchWidth

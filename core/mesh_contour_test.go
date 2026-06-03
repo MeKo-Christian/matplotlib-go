@@ -8,6 +8,7 @@ import (
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 func TestAxesPColorMeshAndColorbar(t *testing.T) {
@@ -78,6 +79,35 @@ func TestAxesPColorFastUsesQuadMeshPath(t *testing.T) {
 	}
 	if len(ax.Artists) != 1 || ax.Artists[0] != mesh {
 		t.Fatalf("PColorFast did not add the returned mesh to the axes")
+	}
+}
+
+func TestAxesPColorUsesUnsnappedMeshEdgesLikeMatplotlib(t *testing.T) {
+	ax := &Axes{
+		XScale: transform.NewLinear(0, 2),
+		YScale: transform.NewLinear(0, 2),
+		XAxis:  NewXAxis(),
+		YAxis:  NewYAxis(),
+	}
+	width := 0.75
+	edge := render.Color{A: 1}
+	mesh := ax.PColor([][]float64{{0, 1}}, MeshOptions{
+		XEdges:    []float64{0, 1, 2},
+		YEdges:    []float64{0, 1},
+		EdgeColor: &edge,
+		EdgeWidth: &width,
+	})
+	if mesh == nil {
+		t.Fatal("expected pcolor mesh")
+	}
+
+	r := &batchRecordingRenderer{returnNative: true}
+	mesh.Draw(r, createTestDrawContext())
+	if len(r.quadMeshBatches) != 1 || len(r.quadMeshBatches[0].Cells) == 0 {
+		t.Fatalf("expected one native quad mesh batch, got %v", r.quadMeshBatches)
+	}
+	if got := r.quadMeshBatches[0].Cells[0].Snap; got != render.SnapOff {
+		t.Fatalf("pcolor snap = %v, want SnapOff like Matplotlib pcolor", got)
 	}
 }
 

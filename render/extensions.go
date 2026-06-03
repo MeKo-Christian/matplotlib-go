@@ -291,6 +291,7 @@ type QuadMeshCell struct {
 	HatchWidth   float64
 	HatchSpacing float64
 	Antialiased  bool
+	Snap         SnapMode
 }
 
 // QuadMeshBatch describes pcolor/pcolormesh-style quadrilateral cells.

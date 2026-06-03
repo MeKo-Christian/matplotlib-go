@@ -18,6 +18,7 @@ type QuadMesh struct {
 	// meshes routed to native Gouraud triangle drawing when available.
 	Shading MeshShading
 	Values  [][]float64
+	Snap    render.SnapMode
 }
 
 // Draw renders the quad mesh.
@@ -179,6 +180,7 @@ func (m *QuadMesh) drawQuadMesh(r render.Renderer, ctx *DrawContext) bool {
 					HatchWidth:   hatchWidth,
 					HatchSpacing: render.DefaultHatchSpacing,
 					Antialiased:  m.antialiased(),
+					Snap:         m.Snap,
 				})
 			}
 			idx++
