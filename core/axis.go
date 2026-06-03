@@ -251,7 +251,7 @@ func (a *Axis) drawSpine(r render.Renderer, ctx *DrawContext) {
 func spinePixelEndpoints(side AxisSide, px geom.Rect) (geom.Pt, geom.Pt) {
 	x1 := math.Round(px.Min.X) + 0.5
 	y1 := math.Round(px.Min.Y) - 0.5
-	x2 := math.Round(px.Max.X) + 0.5
+	x2 := math.Floor(px.Max.X) + 0.5
 	y2 := math.Round(px.Max.Y) - 0.5
 
 	switch side {

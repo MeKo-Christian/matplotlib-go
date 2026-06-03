@@ -798,6 +798,18 @@ func TestAxisMajorTickTargetUsesMatplotlibTickSpaceHeuristic(t *testing.T) {
 	}
 }
 
+func TestSpinePixelEndpointsRightBoundaryUsesMatplotlibPixelCenter(t *testing.T) {
+	px := geom.Rect{
+		Min: geom.Pt{X: 51.06977777777778, Y: 47.444777777777794},
+		Max: geom.Pt{X: 846.5389694444445, Y: 673.4996666666666},
+	}
+
+	p1, p2 := spinePixelEndpoints(AxisRight, px)
+	if p1.X != 846.5 || p2.X != 846.5 {
+		t.Fatalf("right spine x = %v..%v, want Matplotlib pixel center 846.5", p1.X, p2.X)
+	}
+}
+
 func TestAxesLocatorParamsMajorCountBypassesAdaptiveTickCapacity(t *testing.T) {
 	axes := &Axes{
 		XAxis:    NewXAxis(),

@@ -43,6 +43,68 @@ When this repo is “done”, it should provide:
 
 ---
 
+## Chart Types
+
+The current plotting surface is organized around Matplotlib-style `Axes`
+methods. Supported chart classes include:
+
+- **Line and marker plots:** regular line plots, multi-series plots, markers,
+  dashed lines, step plots, stairs, reference lines, horizontal/vertical spans,
+  and broken horizontal bars via `Plot`, `SemilogX`, `SemilogY`, `LogLog`,
+  `Step`, `Stairs`, `AxHLine`, `AxVLine`, `AxLine`, `AxHSpan`, `AxVSpan`, and
+  `BrokenBarH`.
+- **Scatter and point-cloud plots:** scatter plots with marker, size, color,
+  alpha, and large collection support via `Scatter`.
+- **Bar and category charts:** vertical bars, horizontal bars, grouped bars,
+  categorical/date/unit-aware bars, and bar labels via `Bar`, `BarH`,
+  `BarUnits`, and `BarLabel`.
+- **Area and filled-region charts:** filled polygons, fill-to-baseline,
+  fill-between curves, horizontal fill-between, and stacked area charts via
+  `Fill`, `FillToBaseline`, `FillBetween`, `FillBetweenX`, and `StackPlot`.
+- **Distribution and statistical charts:** histograms, multi-histograms,
+  2D histograms, box plots, violin plots, empirical CDFs, and event plots via
+  `Hist`, `HistMulti`, `Hist2D`, `BoxPlot`, `BoxPlots`, `Violinplot`, `ECDF`,
+  and `Eventplot`.
+- **Uncertainty and stem plots:** error bars and stem plots via `ErrorBar` and
+  `Stem`.
+- **Image, matrix, and heatmap plots:** image arrays, imshow-style plots,
+  matrix display, sparsity plots, annotated heatmaps, alpha/interpolation
+  variants, and colorbars via `Image`, `ImShow`, `MatShow`, `Spy`,
+  `AnnotatedHeatmap`, and `AddColorbar`.
+- **Mesh, contour, and unstructured data plots:** pseudocolor meshes, fast
+  pcolor, contour and filled-contour plots, triangulation wire plots,
+  tripcolor, and tricontour variants via `PColor`, `PColorFast`, `PColorMesh`,
+  `Contour`, `Contourf`, `TriPlot`, `TriColor`, `TriContour`, and
+  `TriContourf`.
+- **Vector-field plots:** quiver arrows, quiver keys, wind barbs, streamplots,
+  and grid-based vector inputs via `Quiver`, `QuiverGrid`, `QuiverKey`,
+  `Barbs`, `BarbsGrid`, and `Streamplot`.
+- **Signal-analysis plots:** spectrograms, PSD, magnitude/angle/phase spectra,
+  CSD, coherence, autocorrelation, and cross-correlation via `Specgram`, `PSD`,
+  `MagnitudeSpectrum`, `AngleSpectrum`, `PhaseSpectrum`, `CSD`, `Cohere`,
+  `ACorr`, and `XCorr`.
+- **Specialty charts:** pie charts, hexbin density plots, tables, radar charts,
+  Sankey-style flows, and custom patches via `Pie`, `Hexbin`, `Table`,
+  `NewSankey`, radar projection helpers, and patch/artist APIs.
+- **Projection charts:** polar axes, radar axes, geographic projections
+  including Aitoff, Hammer, Lambert, and Mollweide, plus Skew-T style axes.
+- **3D chart classes:** 3D line, scatter, surface, wireframe, contours,
+  triangulated surface, bars, voxels, quiver, stem, error bars, fill-between,
+  and terrain examples via `AddAxes3D`, `Plot3D`, `Scatter3D`, `Surface`,
+  `Wireframe`, `Contour`, `Contourf`, `Trisurf`, `Bar3D`, `Voxels`,
+  `Quiver3D`, `Stem3D`, `ErrorBar3D`, and `FillBetween3D`.
+- **Text, annotation, and composition views:** titles, labels, MathText,
+  annotations, legends, inset axes, axes-grid layouts, figure labels, colorbar
+  composition, and axis-artist style layouts.
+- **Interactive/widget surfaces:** buttons, sliders, range sliders, text boxes,
+  check/radio buttons, selectors, cursors, multi-cursors, and animation
+  scaffolding for interactive backends.
+
+The curated examples gallery shows representative plots for these classes and
+is the best way to check the current visual coverage.
+
+---
+
 ## Testing
 
 This project uses golden image testing to ensure visual consistency across platforms and detect rendering regressions.
