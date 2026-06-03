@@ -686,6 +686,20 @@ for constrained colorbar slot placement. The remaining `RMSE >= 10` list is
 borderline `mathtext_matrices`. `mathtext_integrals` is now `RMSE 5.03` after
 matching Matplotlib's unspaced operator parsing inside `\lim` limits.
 
+**2026-06-03 continuation note:** MathText raster placement now follows
+Matplotlib `_mathtext.Output.to_raster` ship coordinates: glyph/rule y values
+are offset by `box.height` while the origin stays at zero. Mixed inline math
+line metrics now apply Matplotlib `Text._get_layout`'s `lp` guard
+(`h=max(h, lp_h)`, `d=max(d, lp_d)`), and lowercase Greek math command glyphs
+now use the italic math face while Greek capitals stay roman. The affected Go
+goldens were refreshed. Current `parity-viewer-print FILTER=mathtext` rows are:
+`mathtext_inline_labels` `RMSE 11.17`, `mathtext_basic` `RMSE 10.53`,
+`formatter_log_mathtext_labels` `RMSE 7.33`, `mathtext_fractions` `RMSE 4.01`,
+`mathtext_matrices` `RMSE 0.24`, and `mathtext_integrals` `RMSE 0.00`.
+The remaining over-threshold work is the script-heavy `mathtext_inline_labels`
+and `mathtext_basic` residual; keep following Matplotlib `_mathtext.py` rather
+than fixture-local offsets.
+
 **Source parity audit:** completed on 2026-05-22 with sub-agents across all
 Phase 8 subphases. Direct example/fixture mismatches were fixed where existing
 Go APIs could express the same Matplotlib call semantics. Remaining unchecked

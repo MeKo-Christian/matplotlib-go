@@ -185,6 +185,25 @@ func TestLayoutMathTextUsesItalicLatinVariablesByDefault(t *testing.T) {
 	}
 }
 
+func TestLayoutMathTextUsesItalicLowercaseGreekByDefault(t *testing.T) {
+	resolver := &recordingResolver{}
+	layout, ok := LayoutMathText(testMeasurer{}, `\alpha+\Omega+\pi`, 20, "base", Options{FontResolver: resolver})
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+
+	want := map[string]string{
+		"α": "style:italic",
+		"Ω": "base",
+		"π": "style:italic",
+	}
+	for text, fontKey := range want {
+		if !containsRunWithFont(layout.Runs, text, fontKey) {
+			t.Fatalf("missing %q with font %q in runs %+v", text, fontKey, layout.Runs)
+		}
+	}
+}
+
 func TestLayoutMathTextUsesItalicLatinVariablesInMatrices(t *testing.T) {
 	resolver := &recordingResolver{}
 	layout, ok := LayoutMathText(testMeasurer{}, `\begin{pmatrix}x&y\end{pmatrix}`, 20, "base", Options{FontResolver: resolver})
@@ -758,6 +777,15 @@ func TestCacheSaveLoadFileReusesLayoutAcrossProcesses(t *testing.T) {
 func containsTestRun(runs []MathTextLayoutRun, text string, size float64) bool {
 	for _, run := range runs {
 		if run.Text == text && run.FontSize == size {
+			return true
+		}
+	}
+	return false
+}
+
+func containsRunWithFont(runs []MathTextLayoutRun, text, fontKey string) bool {
+	for _, run := range runs {
+		if run.Text == text && run.FontKey == fontKey {
 			return true
 		}
 	}

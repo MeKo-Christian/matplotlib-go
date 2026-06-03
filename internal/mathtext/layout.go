@@ -409,6 +409,9 @@ func (p *mathLayoutParser) parseCommandNode() mathLayoutNode {
 		if mathTextCommandNeedsOperatorSpacing(name) {
 			return mathLayoutNode{kind: mathLayoutText, text: mapped, spaced: true}
 		}
+		if runes := []rune(mapped); len(runes) == 1 {
+			return mathAtomNode(runes[0], p.implicitItalic)
+		}
 		return mathLayoutNode{kind: mathLayoutText, text: mapped}
 	}
 	if width, ok := mathTextSpacingCommandWidths[name]; ok {
@@ -545,15 +548,18 @@ func appendMathAtom(children []mathLayoutNode, r rune, implicitItalic bool) []ma
 }
 
 func mathAtomNode(r rune, implicitItalic bool) mathLayoutNode {
-	if implicitItalic && isMathItalicLatin(r) {
+	if implicitItalic && isMathItalicRune(r) {
 		text := mathLayoutNode{kind: mathLayoutText, text: string(r)}
 		return mathLayoutNode{kind: mathLayoutStyled, child: &text, style: FontStyleItalic}
 	}
 	return mathLayoutNode{kind: mathLayoutText, text: string(r)}
 }
 
-func isMathItalicLatin(r rune) bool {
-	return ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z')
+func isMathItalicRune(r rune) bool {
+	if !unicode.IsLetter(r) {
+		return false
+	}
+	return !(unicode.In(r, unicode.Greek) && unicode.IsUpper(r))
 }
 
 func mathDelimiterFontKey() string {
