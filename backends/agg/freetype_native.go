@@ -588,16 +588,17 @@ func (r *Renderer) DrawMathTextImage(glyphs []render.MathGlyphPlacement, rects [
 			return false
 		}
 		rendered[i] = placed{g: g, ox: gp.Ox, oy: gp.Oy, have: true}
+		shipY := boxAscent + gp.Oy
 		xmin = math.Min(xmin, gp.Ox+g.xmin)
 		xmax = math.Max(xmax, gp.Ox+g.xmax)
-		ymin = math.Min(ymin, gp.Oy-g.ymax)
-		ymax = math.Max(ymax, gp.Oy-g.ymin)
+		ymin = math.Min(ymin, shipY-g.ymax)
+		ymax = math.Max(ymax, shipY-g.ymin)
 	}
 	for _, rc := range rects {
 		xmin = math.Min(xmin, rc.X1)
 		xmax = math.Max(xmax, rc.X2)
-		ymin = math.Min(ymin, rc.Y1)
-		ymax = math.Max(ymax, rc.Y2)
+		ymin = math.Min(ymin, boxAscent+rc.Y1)
+		ymax = math.Max(ymax, boxAscent+rc.Y2)
 	}
 	xmin -= 1
 	ymin -= 1
@@ -627,13 +628,13 @@ func (r *Renderer) DrawMathTextImage(glyphs []render.MathGlyphPlacement, rects [
 			continue
 		}
 		gx := int(imageLeftDev) + int(p.ox-xmin) + p.g.bitmapLeft
-		gy := int(imageTopDev) + int((p.oy-ymin)-p.g.iceberg)
+		gy := int(imageTopDev) + int((boxAscent+p.oy-ymin)-p.g.iceberg)
 		r.blendAlphaMask(p.g.mask, gx, gy, textColor)
 	}
 
 	for _, rc := range rects {
-		y1 := rc.Y1 - ymin
-		y2 := rc.Y2 - ymin
+		y1 := boxAscent + rc.Y1 - ymin
+		y2 := boxAscent + rc.Y2 - ymin
 		height := int(y2-y1) - 1
 		if height < 0 {
 			height = 0

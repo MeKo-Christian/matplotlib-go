@@ -54,6 +54,17 @@ func measureSingleLineTextLayoutParseMath(r render.Renderer, text string, size f
 					width, ascent, descent, height = w, a, d, a+d
 				}
 			}
+			lp := r.MeasureText("lp", size, fontKey)
+			if lp.H > height {
+				height = lp.H
+			}
+			if lp.Descent > descent {
+				descent = lp.Descent
+			}
+			ascent = height - descent
+			if ascent < 0 {
+				ascent = 0
+			}
 			return singleLineTextLayout{
 				TextLineLayout: render.TextLineLayout{
 					Width:   width,

@@ -147,6 +147,58 @@ func TestLayoutMathTextSqrtHasVinculum(t *testing.T) {
 	}
 }
 
+func TestMathTextRasterMetricsUseMatplotlibShipCoordinates(t *testing.T) {
+	r := mathRasterMetricRenderer{}
+	layout := MathTextLayout{
+		Width:   191.7080706490,
+		Ascent:  35.9166666667,
+		Descent: 7.0000000000,
+		Height:  42.9166666667,
+		Runs: []MathTextLayoutRun{
+			{Text: "√", Offset: geom.Pt{X: 0.6923, Y: -6.0000}, FontSize: 12.6433},
+			{Text: "x", Offset: geom.Pt{X: 23.1829, Y: 0.0799}, FontSize: 23.0000},
+			{Text: "+", Offset: geom.Pt{X: 48.3704, Y: 0.0799}, FontSize: 23.0000},
+			{Text: "1", Offset: geom.Pt{X: 81.4329, Y: 0.0799}, FontSize: 23.0000},
+			{Text: "3", Offset: geom.Pt{X: 0.0000, Y: -20.4000}, FontSize: 11.2700},
+			{Text: "+", Offset: geom.Pt{X: 112.0353, Y: 0.0000}, FontSize: 23.0000},
+			{Text: "√", Offset: geom.Pt{X: 145.0978, Y: 1.0000}, FontSize: 13.4100},
+			{Text: "y", Offset: geom.Pt{X: 168.7775, Y: 0.0799}, FontSize: 23.0000},
+		},
+		Rules: []MathTextLayoutRule{
+			{Rect: geom.Rect{Min: geom.Pt{X: 19.1899, Y: -33.9201}, Max: geom.Pt{X: 105.7853, Y: -31.9236}}},
+			{Rect: geom.Rect{Min: geom.Pt{X: 164.7845, Y: -28.9201}, Max: geom.Pt{X: 191.7081, Y: -26.9236}}},
+		},
+	}
+
+	_, ascent, descent, ok := mathLayoutImageMetrics(&r, layout, "DejaVu Sans")
+	if !ok {
+		t.Fatal("mathLayoutImageMetrics returned !ok")
+	}
+
+	// Matplotlib 3.10.9 _mathtext.Output.to_raster for
+	// $\sqrt[3]{x + 1} + \sqrt{y}$ at 23 pt / 100 dpi reports RasterParse
+	// height=47.0763888889 and depth=9.0798611111, so the ascent is
+	// height-depth=37.9965277778. The bbox is computed in ship coordinates:
+	// glyph/rule y values are offset by box.height while the origin 0 is not.
+	if math.Abs(ascent-37.9965277778) > 0.01 || math.Abs(descent-9.0798611111) > 0.01 {
+		t.Fatalf("raster metrics ascent/descent = %.10f/%.10f, want 37.9965277778/9.0798611111", ascent, descent)
+	}
+}
+
+func TestMixedMathTextLineMetricsIncludePlainLPDescent(t *testing.T) {
+	r := inlineMathLineMetricRenderer{}
+	layout := measureSingleLineTextLayoutParseMath(&r, `time $t$`, 10, "DejaVu Sans", true)
+
+	// Matplotlib Text._get_layout asks the renderer for "lp" metrics with
+	// ismath=False and applies h=max(line_h, lp_h), d=max(line_d, lp_d). For
+	// "time $t$" at 10 pt / 100 dpi this keeps height=15 and raises descent
+	// from the raw mathtext 2 px to the plain-font 3 px.
+	if math.Abs(layout.Height-15) > 0.01 || math.Abs(layout.Descent-3) > 0.01 || math.Abs(layout.Ascent-12) > 0.01 {
+		t.Fatalf("mixed math line metrics = height %.2f ascent %.2f descent %.2f, want 15/12/3",
+			layout.Height, layout.Ascent, layout.Descent)
+	}
+}
+
 func TestLayoutMathTextStacksLargeOperatorLimits(t *testing.T) {
 	var r textRecordingRenderer
 	layout, ok := LayoutMathText(&r, `\\sum\\limits_{i=1}^n`, 20, "DejaVu Sans")
@@ -2007,6 +2059,74 @@ func (r *textRecordingRenderer) MeasureText(text string, size float64, _ string)
 
 type mathInkBoundsRenderer struct {
 	textRecordingRenderer
+}
+
+type mathRasterMetricRenderer struct {
+	render.NullRenderer
+}
+
+type inlineMathLineMetricRenderer struct {
+	render.NullRenderer
+}
+
+func (inlineMathLineMetricRenderer) GetImage() *image.RGBA {
+	return image.NewRGBA(image.Rect(0, 0, 1, 1))
+}
+
+func (inlineMathLineMetricRenderer) MeasureText(text string, _ float64, _ string) render.TextMetrics {
+	switch text {
+	case "lp":
+		return render.TextMetrics{W: 10, H: 14, Ascent: 11, Descent: 3}
+	case "time ":
+		return render.TextMetrics{W: 30, H: 15, Ascent: 13, Descent: 2}
+	default:
+		return render.TextMetrics{W: 5, H: 15, Ascent: 13, Descent: 2}
+	}
+}
+
+func (inlineMathLineMetricRenderer) MeasureMathGlyphRun(text string, _ float64, _ string) ([]render.MathGlyphMetric, bool) {
+	if text != "t" {
+		return nil, false
+	}
+	return []render.MathGlyphMetric{{
+		Advance: 5,
+		Iceberg: 13,
+		Height:  15,
+		Xmin:    0,
+		Xmax:    5,
+		Ymin:    -2,
+		Ymax:    13,
+	}}, true
+}
+
+func (mathRasterMetricRenderer) GetImage() *image.RGBA {
+	return image.NewRGBA(image.Rect(0, 0, 1, 1))
+}
+
+func (mathRasterMetricRenderer) MeasureMathGlyphRun(text string, size float64, _ string) ([]render.MathGlyphMetric, bool) {
+	metric := render.MathGlyphMetric{}
+	switch text {
+	case "√":
+		if math.Abs(size-12.6433) < 0.01 {
+			metric = render.MathGlyphMetric{Xmin: 1.9688, Xmax: 19.0625, Ymin: -5.3125, Ymax: 27.9375}
+		} else {
+			metric = render.MathGlyphMetric{Xmin: 2.0938, Xmax: 20.2812, Ymin: -5.6094, Ymax: 29.4844}
+		}
+	case "x":
+		metric = render.MathGlyphMetric{Xmin: -0.8281, Xmax: 19.2031, Ymin: 0, Ymax: 18}
+	case "+":
+		metric = render.MathGlyphMetric{Xmin: 3.3750, Xmax: 23.3750, Ymin: 0, Ymax: 20}
+	case "1":
+		metric = render.MathGlyphMetric{Xmin: 3.5625, Xmax: 17.5000, Ymin: 0, Ymax: 23}
+	case "3":
+		metric = render.MathGlyphMetric{Xmin: 1.1875, Xmax: 8.6250, Ymin: 0, Ymax: 12}
+	case "y":
+		metric = render.MathGlyphMetric{Xmin: -0.7969, Xmax: 19.2969, Ymin: -7, Ymax: 18}
+	default:
+		return nil, false
+	}
+	metric.Iceberg = metric.Ymax
+	return []render.MathGlyphMetric{metric}, true
 }
 
 func (r *mathInkBoundsRenderer) MeasureTextBounds(text string, size float64, _ string) (render.TextBounds, bool) {

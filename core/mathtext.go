@@ -106,17 +106,18 @@ func mathLayoutImageMetrics(r render.Renderer, layout MathTextLayout, fontKey st
 			return 0, 0, 0, false
 		}
 		info := infos[0]
+		shipY := layout.Ascent + run.Offset.Y
 		xmin = math.Min(xmin, run.Offset.X+info.Xmin)
 		xmax = math.Max(xmax, run.Offset.X+info.Xmax)
-		ymin = math.Min(ymin, run.Offset.Y-info.Ymax)
-		ymax = math.Max(ymax, run.Offset.Y-info.Ymin)
+		ymin = math.Min(ymin, shipY-info.Ymax)
+		ymax = math.Max(ymax, shipY-info.Ymin)
 		sawGlyph = true
 	}
 	for _, rule := range layout.Rules {
 		xmin = math.Min(xmin, rule.Rect.Min.X)
 		xmax = math.Max(xmax, rule.Rect.Max.X)
-		ymin = math.Min(ymin, rule.Rect.Min.Y)
-		ymax = math.Max(ymax, rule.Rect.Max.Y)
+		ymin = math.Min(ymin, layout.Ascent+rule.Rect.Min.Y)
+		ymax = math.Max(ymax, layout.Ascent+rule.Rect.Max.Y)
 	}
 	if !sawGlyph && len(layout.Rules) == 0 {
 		return 0, 0, 0, false
