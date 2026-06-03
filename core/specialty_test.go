@@ -243,6 +243,24 @@ func TestAxesPieAdvancedOptionsAndPieLabel(t *testing.T) {
 	if len(pie.Labels) != 2 || pie.Labels[0].Angle == 0 {
 		t.Fatalf("pie label text angle = %v, want non-zero rotation", pie.Labels[0].Angle)
 	}
+	if pie.Labels[0].FontSize != ax.effectiveRC(nil).TickLabelSize("x") {
+		t.Fatalf("pie label font size = %v, want xtick label size %v", pie.Labels[0].FontSize, ax.effectiveRC(nil).TickLabelSize("x"))
+	}
+	if pie.Labels[0].VAlign != TextVAlignBottom || pie.Labels[1].VAlign != TextVAlignBottom {
+		t.Fatalf("upper rotated pie label vertical alignment = %v, %v; want bottom", pie.Labels[0].VAlign, pie.Labels[1].VAlign)
+	}
+	deepPie := ax.Pie([]float64{0.22, 0.18, 0.30}, PieOptions{
+		Labels:       []string{"Alpha", "Beta", "Gamma"},
+		Normalize:    &normalize,
+		RotateLabels: true,
+		StartAngle:   30,
+	})
+	if deepPie == nil || len(deepPie.Labels) != 3 {
+		t.Fatal("expected partial rotated pie labels")
+	}
+	if deepPie.Labels[2].VAlign != TextVAlignTop {
+		t.Fatalf("lower rotated pie label vertical alignment = %v, want top", deepPie.Labels[2].VAlign)
+	}
 	added := ax.PieLabel(pie, []string{"one", "two"}, PieLabelOptions{Distance: 0.8, Rotate: true})
 	if len(added) != 2 {
 		t.Fatalf("PieLabel added %d labels, want 2", len(added))

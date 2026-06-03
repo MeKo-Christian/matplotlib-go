@@ -213,15 +213,17 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 		if label := stringAt("", cfg.Labels, i); label != "" {
 			labelPt := piePoint(wedge.Center, cfg.Radius*cfg.LabelDistance, mid)
 			clipOn := false
-			labelHAlign := pieAlign(mid)
-			labelVAlign := TextVAlignMiddle
+			labelHAlign := pieLabelHAlign(labelPt.X)
+			labelVAlign := pieLabelVAlign(labelPt.Y, cfg.RotateLabels)
+			labelSize := a.effectiveRC(a.figure).TickLabelSize("x")
 			container.LabelAngles = append(container.LabelAngles, pieLabelRotation(mid, cfg.RotateLabels))
 			container.Labels = append(container.Labels, a.Text(labelPt.X, labelPt.Y, label, TextOptions{
-				Coords: cfg.Coords,
-				HAlign: labelHAlign,
-				VAlign: labelVAlign,
-				Angle:  pieLabelRotation(mid, cfg.RotateLabels),
-				ClipOn: &clipOn,
+				Coords:   cfg.Coords,
+				FontSize: labelSize,
+				HAlign:   labelHAlign,
+				VAlign:   labelVAlign,
+				Angle:    pieLabelRotation(mid, cfg.RotateLabels),
+				ClipOn:   &clipOn,
 			}))
 		}
 		if cfg.AutoPct != "" {
@@ -408,16 +410,21 @@ func piePoint(center geom.Pt, radius, angleDeg float64) geom.Pt {
 	}
 }
 
-func pieAlign(angleDeg float64) TextAlign {
-	rad := angleDeg * math.Pi / 180
-	switch {
-	case math.Cos(rad) < -0.2:
-		return TextAlignRight
-	case math.Cos(rad) > 0.2:
+func pieLabelHAlign(x float64) TextAlign {
+	if x > 0 {
 		return TextAlignLeft
-	default:
-		return TextAlignCenter
 	}
+	return TextAlignRight
+}
+
+func pieLabelVAlign(y float64, rotate bool) TextVerticalAlign {
+	if !rotate {
+		return TextVAlignMiddle
+	}
+	if y > 0 {
+		return TextVAlignBottom
+	}
+	return TextVAlignTop
 }
 
 func pieOuterLabelAlignment(pt geom.Pt, rotate bool) (TextAlign, TextVerticalAlign) {

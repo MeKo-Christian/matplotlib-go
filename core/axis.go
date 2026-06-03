@@ -92,6 +92,7 @@ type Axis struct {
 	MinorTickSize       float64 // length of minor tick marks (in pixels); 0 uses TickSize*0.6
 	MajorTickCount      int     // target major tick count for automatic locators
 	MinorTickCount      int     // target minor tick count for automatic locators
+	majorTickCountFixed bool
 	TickDirection       TickDirection
 	SpinePositionMode   AxisSpinePositionMode
 	SpinePosition       float64
@@ -449,7 +450,7 @@ func (a *Axis) minorTickTargetCount() int {
 
 func (a *Axis) majorTickTargetCountForContext(ctx *DrawContext, isXAxis bool) int {
 	target := a.majorTickTargetCount()
-	if ctx == nil || target <= 1 {
+	if ctx == nil || target <= 1 || a.majorTickCountFixed {
 		return target
 	}
 

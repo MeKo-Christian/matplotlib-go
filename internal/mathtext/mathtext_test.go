@@ -60,6 +60,33 @@ func (m *countingMeasurer) MeasureText(text string, size float64, _ string) Metr
 	}
 }
 
+type kerningGlyphMeasurer struct{}
+
+func (kerningGlyphMeasurer) MeasureText(text string, size float64, _ string) Metrics {
+	return Metrics{
+		W:       float64(len([]rune(text))) * size,
+		H:       size,
+		Ascent:  size * 0.8,
+		Descent: size * 0.2,
+	}
+}
+
+func (kerningGlyphMeasurer) GlyphRun(text string, _ float64, _ string) ([]GlyphInfo, bool) {
+	out := make([]GlyphInfo, 0, len([]rune(text)))
+	for _, r := range text {
+		info := GlyphInfo{Advance: 10, Iceberg: 8, Height: 10, Xmax: 10, Ymin: -2, Ymax: 8}
+		if r == 'e' {
+			info.KernToPrev = -3
+		}
+		if r == ' ' {
+			info.Advance = 5
+			info.Xmax = 5
+		}
+		out = append(out, info)
+	}
+	return out, true
+}
+
 type recordingResolver struct {
 	requests []FontRequest
 }
@@ -118,6 +145,35 @@ func TestLayoutDisplayBuildsMixedRuns(t *testing.T) {
 	}
 	if layout.Width <= 0 || len(layout.Runs) < 3 || len(layout.Rules) == 0 {
 		t.Fatalf("unexpected layout: %+v", layout)
+	}
+}
+
+func TestLayoutDisplayPlainSegmentsDoNotApplyGlyphKerning(t *testing.T) {
+	layout, ok := LayoutDisplay(kerningGlyphMeasurer{}, `Te $x$`, 12, "base", Options{})
+	if !ok {
+		t.Fatal("LayoutDisplay returned !ok")
+	}
+
+	var eRun, xRun *MathTextLayoutRun
+	for i := range layout.Runs {
+		switch layout.Runs[i].Text {
+		case "e":
+			eRun = &layout.Runs[i]
+		case "x":
+			xRun = &layout.Runs[i]
+		}
+	}
+	if eRun == nil || xRun == nil {
+		t.Fatalf("missing e or x run in %+v", layout.Runs)
+	}
+
+	// Matplotlib's mathtext non_math parser builds a TextArea-like Hlist whose
+	// visible glyph positions do not include the native FreeType kerning deltas
+	// that ordinary text drawing applies. The math segment therefore starts
+	// after T(10)+e(10)+space(5), not after the -3 Te kern.
+	if eRun.Offset.X != 10 || xRun.Offset.X != 25 {
+		t.Fatalf("plain segment offsets include kerning: e.x=%v x.x=%v, want 10 and 25; runs=%+v",
+			eRun.Offset.X, xRun.Offset.X, layout.Runs)
 	}
 }
 

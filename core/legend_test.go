@@ -159,6 +159,17 @@ func TestLegendDrawSupportsMultipleColumns(t *testing.T) {
 	}
 }
 
+func TestLegendMathLabelWidthUsesMeasuredTextWidth(t *testing.T) {
+	layout := singleLineTextLayout{
+		TextLineLayout: render.TextLineLayout{Width: 81},
+		MathLayout:    &MathTextLayout{},
+	}
+
+	if got, want := legendLabelWidth(layout), layout.Width; got != want {
+		t.Fatalf("math legend label width = %v, want measured width %v", got, want)
+	}
+}
+
 func TestLegendDrawKeepsCollectionOrderAfterZSorting(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{

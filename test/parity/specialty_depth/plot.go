@@ -48,6 +48,7 @@ func Plot() *core.Figure {
 			UpLimits:   []bool{false, false, false, true},
 			XLoLimits:  []bool{true, false, false, false},
 			XUpLimits:  []bool{false, false, true, false},
+			NoDataLine: true,
 		},
 	)
 

@@ -570,7 +570,7 @@ func configureColorbarScale(ax *Axes, mapping ScalarMapInfo, location string, ti
 		}
 		if target != nil {
 			target.Locator = LogLocator{Base: base}
-			target.Formatter = LogFormatter{Base: base}
+			target.Formatter = LogFormatterMathText{Base: base, SciNotation: true}
 		}
 	case AsinhNorm:
 		if isFinite(vmin) && isFinite(vmax) && vmin != vmax {
@@ -641,7 +641,7 @@ func configureHorizontalColorbarScale(ax *Axes, mapping ScalarMapInfo, location 
 		}
 		if target != nil {
 			target.Locator = LogLocator{Base: base}
-			target.Formatter = LogFormatter{Base: base}
+			target.Formatter = LogFormatterMathText{Base: base, SciNotation: true}
 		}
 	case AsinhNorm:
 		if isFinite(vmin) && isFinite(vmax) && vmin != vmax {
@@ -1158,6 +1158,27 @@ func colorbarExtendedOutlinePath(clip geom.Rect, extend, orientation string, ext
 	if extend == "neither" || clip.W() <= 0 || clip.H() <= 0 {
 		return geom.Path{}
 	}
+	if extendRect {
+		outlineRect := clip
+		if orientation == "horizontal" {
+			width := clip.W() * 0.05
+			if extend == "min" || extend == "both" {
+				outlineRect.Min.X -= width
+			}
+			if extend == "max" || extend == "both" {
+				outlineRect.Max.X += width
+			}
+		} else {
+			height := clip.H() * 0.05
+			if extend == "min" || extend == "both" {
+				outlineRect.Min.Y -= height
+			}
+			if extend == "max" || extend == "both" {
+				outlineRect.Max.Y += height
+			}
+		}
+		return snappedStrokeRectPath(outlineRect)
+	}
 	if orientation == "horizontal" {
 		width := clip.W() * 0.05
 		left := clip.Min.X
@@ -1169,17 +1190,6 @@ func colorbarExtendedOutlinePath(clip geom.Rect, extend, orientation string, ext
 		rightTip := right
 		if extend == "max" || extend == "both" {
 			rightTip += width
-		}
-		if extendRect {
-			return geom.Path{
-				V: []geom.Pt{
-					{X: leftTip, Y: clip.Min.Y},
-					{X: rightTip, Y: clip.Min.Y},
-					{X: rightTip, Y: clip.Max.Y},
-					{X: leftTip, Y: clip.Max.Y},
-				},
-				C: closedPolygonCmds(4),
-			}
 		}
 		midY := (clip.Min.Y + clip.Max.Y) * 0.5
 		verts := []geom.Pt{{X: left, Y: clip.Max.Y}}
@@ -1204,17 +1214,6 @@ func colorbarExtendedOutlinePath(clip geom.Rect, extend, orientation string, ext
 	topTip := top
 	if extend == "max" || extend == "both" {
 		topTip += height
-	}
-	if extendRect {
-		return geom.Path{
-			V: []geom.Pt{
-				{X: clip.Min.X, Y: bottomTip},
-				{X: clip.Max.X, Y: bottomTip},
-				{X: clip.Max.X, Y: topTip},
-				{X: clip.Min.X, Y: topTip},
-			},
-			C: closedPolygonCmds(4),
-		}
 	}
 	midX := (clip.Min.X + clip.Max.X) * 0.5
 	verts := []geom.Pt{{X: clip.Min.X, Y: bottom}}

@@ -367,8 +367,12 @@ func TestFigureAddColorbarUsesLogNormTicks(t *testing.T) {
 	if _, ok := cbAx.YAxisRight.Locator.(LogLocator); !ok {
 		t.Fatalf("right colorbar locator = %T, want LogLocator", cbAx.YAxisRight.Locator)
 	}
-	if _, ok := cbAx.YAxisRight.Formatter.(LogFormatter); !ok {
-		t.Fatalf("right colorbar formatter = %T, want LogFormatter", cbAx.YAxisRight.Formatter)
+	formatter, ok := cbAx.YAxisRight.Formatter.(LogFormatterMathText)
+	if !ok || !formatter.SciNotation {
+		t.Fatalf("right colorbar formatter = %#v, want scientific LogFormatterMathText", cbAx.YAxisRight.Formatter)
+	}
+	if got, want := formatter.Format(1000), `$\mathdefault{10^{3}}$`; got != want {
+		t.Fatalf("right colorbar formatter label = %q, want %q", got, want)
 	}
 	yMin, yMax := cbAx.YScale.Domain()
 	if yMin != 1 || yMax != 100 {
@@ -922,6 +926,45 @@ func TestColorbarExtendRectDrawsRectangularExtensions(t *testing.T) {
 	upper, _ := pathBounds(r.paths[257])
 	if !floatApprox(upper.Min.Y, clip.Max.Y, 1e-12) {
 		t.Fatalf("upper rectangular extension bounds = %+v, want above colorbar top y=%v", upper, clip.Max.Y)
+	}
+}
+
+func TestColorbarExtendedOutlineSnapsToPixelCenters(t *testing.T) {
+	var r colorbarRecordingRenderer
+	clip := geom.Rect{
+		Min: geom.Pt{X: 10.4, Y: 20.6},
+		Max: geom.Pt{X: 42.6, Y: 80.2},
+	}
+	cb := &Colorbar{
+		Mapping:     ScalarMapInfo{Colormap: "gray", VMin: 0, VMax: 1}.Resolved(),
+		Extend:      "both",
+		ExtendRect:  true,
+		Alpha:       1,
+		BorderColor: render.Color{A: 1},
+		BorderWidth: 1,
+	}
+	ctx := &DrawContext{Clip: clip}
+
+	cb.Draw(&r, ctx)
+	cb.DrawOverlay(&r, ctx)
+
+	if len(r.strokePaths) == 0 {
+		t.Fatal("expected stroked extended outline path")
+	}
+	outline := r.strokePaths[len(r.strokePaths)-1]
+	want := []geom.Pt{
+		{X: 10.5, Y: 17.5},
+		{X: 43.5, Y: 17.5},
+		{X: 43.5, Y: 82.5},
+		{X: 10.5, Y: 82.5},
+	}
+	if len(outline.V) < len(want) {
+		t.Fatalf("outline vertices = %v, want at least %d", outline.V, len(want))
+	}
+	for i, wantPt := range want {
+		if !floatApprox(outline.V[i].X, wantPt.X, 1e-12) || !floatApprox(outline.V[i].Y, wantPt.Y, 1e-12) {
+			t.Fatalf("outline vertex %d = %+v, want %+v", i, outline.V[i], wantPt)
+		}
 	}
 }
 

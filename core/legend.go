@@ -553,9 +553,6 @@ func legendRowHeight(layout singleLineTextLayout, fontSize float64, ctx *DrawCon
 }
 
 func legendLabelWidth(layout singleLineTextLayout) float64 {
-	if layout.MathLayout != nil {
-		return layout.Width * 1.27
-	}
 	return layout.Width
 }
 

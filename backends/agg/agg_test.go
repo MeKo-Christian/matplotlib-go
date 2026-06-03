@@ -908,6 +908,27 @@ func TestDrawTextRotatedMaintainsReadableFootprint(t *testing.T) {
 	}
 }
 
+func TestDrawTextRotatedMatchesMatplotlibRightYLabelInkBounds(t *testing.T) {
+	r := mustNew(t, 640, 360)
+	r.SetResolution(100)
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 640, Y: 360}}); err != nil {
+		t.Fatalf("Begin failed: %v", err)
+	}
+	r.DrawTextRotatedWithFont("log value", geom.Pt{X: 564.0331732855902, Y: 178.2}, 10, math.Pi/2, render.Color{A: 1}, "DejaVu Sans")
+	if err := r.End(); err != nil {
+		t.Fatalf("End failed: %v", err)
+	}
+
+	bounds, pixels, ok := inkBounds(r.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	if !ok || pixels == 0 {
+		t.Fatal("expected rotated label ink")
+	}
+	want := geom.Rect{Min: geom.Pt{X: 555, Y: 152}, Max: geom.Pt{X: 569, Y: 214}}
+	if bounds != want {
+		t.Fatalf("rotated right-y label ink bounds = %v, want matplotlib %v (pixels=%d)", bounds, want, pixels)
+	}
+}
+
 func TestGetImage(t *testing.T) {
 	r := mustNew(t, 200, 150)
 	img := r.GetImage()

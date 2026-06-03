@@ -230,7 +230,7 @@ func LayoutDisplay(m Measurer, text string, size float64, fontKey string, opts O
 				Descent: layout.Descent,
 			}
 		} else {
-			child = layoutMathTextRun(m, displayTextCommandReplacer.Replace(segment.Text), size, fontKey)
+			child = layoutDisplayPlainTextRun(m, displayTextCommandReplacer.Replace(segment.Text), size, fontKey)
 		}
 		if child.Width <= 0 && len(child.runs) == 0 && len(child.rules) == 0 {
 			continue
@@ -1121,6 +1121,14 @@ func layoutMathNode(r Measurer, n mathLayoutNode, size float64, fontKey string, 
 }
 
 func layoutMathTextRun(r Measurer, text string, size float64, fontKey string) mathLayoutBox {
+	return layoutMeasuredTextRun(r, text, size, fontKey, true)
+}
+
+func layoutDisplayPlainTextRun(r Measurer, text string, size float64, fontKey string) mathLayoutBox {
+	return layoutMeasuredTextRun(r, text, size, fontKey, false)
+}
+
+func layoutMeasuredTextRun(r Measurer, text string, size float64, fontKey string, applyKerning bool) mathLayoutBox {
 	if text == "" {
 		return mathLayoutBox{}
 	}
@@ -1131,7 +1139,7 @@ func layoutMathTextRun(r Measurer, text string, size float64, fontKey string) ma
 	// whole-run path when the renderer lacks the FreeType capability (purego).
 	if gm, ok := r.(GlyphMeasurer); ok {
 		if infos, ok := gm.GlyphRun(text, size, fontKey); ok {
-			if box, ok := layoutMathGlyphRun(text, infos, size, fontKey); ok {
+			if box, ok := layoutMathGlyphRun(text, infos, size, fontKey, applyKerning); ok {
 				return box
 			}
 		}
@@ -1157,7 +1165,7 @@ func layoutMathTextRun(r Measurer, text string, size float64, fontKey string) ma
 // glyph i renders at cumulative Σ(advance)+Σ(kern), box width = total advance +
 // kerns, ascent = max(iceberg), depth = max(height - iceberg) (Char.depth). One
 // MathTextLayoutRun is emitted per glyph (baseline-aligned, layout y-down).
-func layoutMathGlyphRun(text string, infos []GlyphInfo, size float64, fontKey string) (mathLayoutBox, bool) {
+func layoutMathGlyphRun(text string, infos []GlyphInfo, size float64, fontKey string, applyKerning bool) (mathLayoutBox, bool) {
 	runes := []rune(text)
 	if len(infos) != len(runes) || len(runes) == 0 {
 		return mathLayoutBox{}, false
@@ -1166,7 +1174,9 @@ func layoutMathGlyphRun(text string, infos []GlyphInfo, size float64, fontKey st
 	box.runs = make([]MathTextLayoutRun, 0, len(runes))
 	x := 0.0
 	for i, info := range infos {
-		x += info.KernToPrev
+		if applyKerning {
+			x += info.KernToPrev
+		}
 		box.runs = append(box.runs, MathTextLayoutRun{
 			Text:     string(runes[i]),
 			Offset:   geom.Pt{X: x, Y: 0},

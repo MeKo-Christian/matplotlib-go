@@ -798,6 +798,43 @@ func TestAxisMajorTickTargetUsesMatplotlibTickSpaceHeuristic(t *testing.T) {
 	}
 }
 
+func TestAxesLocatorParamsMajorCountBypassesAdaptiveTickCapacity(t *testing.T) {
+	axes := &Axes{
+		XAxis:    NewXAxis(),
+		XAxisTop: NewXAxis(),
+	}
+	axes.XAxisTop.Side = AxisTop
+
+	if err := axes.LocatorParams(LocatorParams{Axis: "x", MajorCount: 6}); err != nil {
+		t.Fatalf("LocatorParams: %v", err)
+	}
+
+	ctx := &DrawContext{
+		RC: style.RC{
+			DPI:                100,
+			XTickLabelFontSize: 10,
+		},
+		Clip: geom.Rect{
+			Min: geom.Pt{X: 0, Y: 0},
+			Max: geom.Pt{X: 240, Y: 320},
+		},
+	}
+	if got, want := axes.XAxisTop.majorTickTargetCountForContext(ctx, true), 6; got != want {
+		t.Fatalf("explicit x tick target = %v, want %v", got, want)
+	}
+
+	ticks := axes.XAxisTop.Locator.Ticks(-1, 5, axes.XAxisTop.majorTickTargetCountForContext(ctx, true))
+	want := []float64{-1, 0, 1, 2, 3, 4, 5}
+	if len(ticks) != len(want) {
+		t.Fatalf("tick count = %d, want %d: %v", len(ticks), len(want), ticks)
+	}
+	for i := range want {
+		if ticks[i] != want[i] {
+			t.Fatalf("ticks = %v, want %v", ticks, want)
+		}
+	}
+}
+
 func TestAxes_TickParamsAppliesLabelStyle(t *testing.T) {
 	axes := &Axes{XAxis: NewXAxis()}
 

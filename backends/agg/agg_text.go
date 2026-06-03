@@ -465,6 +465,8 @@ func (r *Renderer) drawTextRotatedDirect(text string, anchor geom.Pt, size, angl
 	}
 
 	bounds, haveBounds := r.MeasureTextBounds(text, size, fontKey)
+	anchor.X -= 1
+	anchor.Y -= 1.5
 	origin := rotatedTextOrigin(anchor, metrics, bounds, haveBounds)
 	font := r.configureTextFont(size, fontKey)
 

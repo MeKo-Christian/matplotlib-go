@@ -200,6 +200,9 @@ func TestErrorBarLimitCaretUsesEndpointAsBase(t *testing.T) {
 	if caret[0].Y != endpoint.Y || caret[2].Y != endpoint.Y {
 		t.Fatalf("caret base y = %.3f, %.3f; want endpoint y %.3f", caret[0].Y, caret[2].Y, endpoint.Y)
 	}
+	if got, want := math.Abs(caret[2].X-caret[0].X), 16.0; math.Abs(got-want) > 1e-9 {
+		t.Fatalf("caret base width = %.3f px, want %.3f px from markersize=2*capsize", got, want)
+	}
 	if caret[1].Y >= endpoint.Y {
 		t.Fatalf("lower-limit caret tip y = %.3f, want above endpoint %.3f in display space", caret[1].Y, endpoint.Y)
 	}

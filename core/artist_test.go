@@ -629,6 +629,44 @@ func TestDrawAxesLabels_YLabelRightUsesRightTickBounds(t *testing.T) {
 	}
 }
 
+func TestDrawAxesLabels_YLabelUsesTickPaddingWhenFormatterSuppressesLabels(t *testing.T) {
+	ax := &Axes{
+		YAxis:  NewYAxis(),
+		YLabel: "Value",
+	}
+	ax.YAxis.Locator = staticLocator{0.5}
+	ax.YAxis.Formatter = NullFormatter{}
+
+	ctx := createTestDrawContext()
+	ctx.RC.DPI = 72
+	px := geom.Rect{
+		Min: geom.Pt{X: 50, Y: 350},
+		Max: geom.Pt{X: 150, Y: 450},
+	}
+
+	r := &axesLabelRecordingRenderer{}
+	if err := r.Begin(geom.Rect{}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	defer r.End()
+
+	drawAxesLabels(ax, r, ctx, px, figureTextAlignment{})
+
+	if len(r.rotatedText) != 1 || r.rotatedText[0] != "Value" {
+		t.Fatalf("unexpected rotated text draws: %v", r.rotatedText)
+	}
+
+	p := geom.Pt{
+		X: spinePixelX(AxisLeft, px) - tickLabelPadPx(ax.YAxis, ctx) - axisLabelPadPx(ctx),
+		Y: px.Min.Y + px.H()/2,
+	}
+	layout := measureSingleLineTextLayout(r, "Value", axisLabelFontSize(ctx), ctx.RC.FontKey)
+	want := rotatedTextBackendAnchorFromP(p, layout, TextAlignCenter, textLayoutVAlignBottom, math.Pi/2, true)
+	if r.rotatedAnchors[0] != want {
+		t.Fatalf("ylabel anchor = %+v, want tick-padded %+v", r.rotatedAnchors[0], want)
+	}
+}
+
 func TestDrawAxesLabels_TopXLabelUsesTopTickBoundsAndLabelPad(t *testing.T) {
 	ax := &Axes{
 		XAxis:      NewXAxis(),
@@ -733,6 +771,61 @@ func TestDrawAxesLabels_TitleClearsTopXLabel(t *testing.T) {
 	// edge (Min.Y) sits at or above the x-label's top edge (Max.Y).
 	if titleBounds.Min.Y < xlabelBounds.Max.Y {
 		t.Fatalf("title overlaps top xlabel: title=%+v xlabel=%+v", titleBounds, xlabelBounds)
+	}
+}
+
+func TestDrawAxesLabels_TitleAboveTopXLabelUsesMatplotlibSecondAdjustment(t *testing.T) {
+	ax := &Axes{
+		XAxis:      NewXAxis(),
+		XAxisTop:   NewXAxis(),
+		Title:      "Title",
+		XLabel:     "Group",
+		xLabelSide: AxisTop,
+	}
+	ax.XAxisTop.Side = AxisTop
+	ax.XAxisTop.Locator = staticLocator{2}
+	ax.XAxisTop.Formatter = ScalarFormatter{Prec: 0}
+
+	ctx := createTestDrawContext()
+	ctx.RC.DPI = 100
+	px := geom.Rect{
+		Min: geom.Pt{X: 50, Y: 350},
+		Max: geom.Pt{X: 150, Y: 450},
+	}
+
+	r := &axesLabelRecordingRenderer{
+		bounds: map[string]render.TextBounds{
+			"2":     {X: 1, Y: -8, W: 5, H: 10},
+			"Group": {X: 0, Y: -8, W: 24, H: 10},
+			"Title": {X: 0, Y: -10, W: 30, H: 12},
+		},
+	}
+	if err := r.Begin(geom.Rect{}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	defer r.End()
+
+	drawAxesLabels(ax, r, ctx, px, figureTextAlignment{})
+
+	if len(r.texts) != 2 || r.texts[0] != "Title" || r.texts[1] != "Group" {
+		t.Fatalf("unexpected text draws: %v", r.texts)
+	}
+	titleLayout := measureSingleLineTextLayout(r, "Title", titleFontSize(ctx), ctx.RC.FontKey)
+	titleBounds, ok := textInkRect(r.origins[0], titleLayout)
+	if !ok {
+		t.Fatal("expected title bounds")
+	}
+	topExtent := titleTopExtent(ax, r, ctx, px)
+	wantBounds, ok := textInkRect(geom.Pt{
+		X: r.origins[0].X,
+		Y: topExtent + pointsToPixels(ctx.RC, 6) + 1,
+	}, titleLayout)
+	if !ok {
+		t.Fatal("expected adjusted title bounds")
+	}
+	want := wantBounds.Min.Y
+	if math.Abs(titleBounds.Min.Y-want) > 1e-9 {
+		t.Fatalf("title bottom = %v, want %v after Matplotlib second adjustment", titleBounds.Min.Y, want)
 	}
 }
 

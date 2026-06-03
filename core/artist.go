@@ -1353,6 +1353,7 @@ func (a *Axes) LocatorParams(params LocatorParams) error {
 		}
 		if params.MajorCount > 0 {
 			axis.MajorTickCount = params.MajorCount
+			axis.majorTickCountFixed = true
 		}
 		if params.MinorCount > 0 {
 			axis.MinorTickCount = params.MinorCount
@@ -1483,6 +1484,7 @@ func resetAxisTickParams(axis *Axis) {
 	axis.MinorTickSize = defaults.MinorTickSize
 	axis.MajorTickCount = defaults.MajorTickCount
 	axis.MinorTickCount = defaults.MinorTickCount
+	axis.majorTickCountFixed = defaults.majorTickCountFixed
 	axis.TickDirection = defaults.TickDirection
 	axis.ShowTicks = defaults.ShowTicks
 	axis.ShowLabels = defaults.ShowLabels
@@ -2357,6 +2359,9 @@ func titleAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rec
 	if aligned, ok := alignment.titleExtents[alignmentKey(AxisTop, spinePixelY(AxisTop, px))]; ok {
 		topExtent = aligned
 	}
+	if ax != nil && ax.XLabel != "" && ax.effectiveXLabelSide() == AxisTop {
+		topExtent += 1
+	}
 	return geom.Pt{
 		X: ctx.TransAxes().Apply(geom.Pt{X: 0.5, Y: 1}).X,
 		Y: topExtent + titlePadPx,
@@ -2413,6 +2418,8 @@ func yLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 		rightExtent := spineX
 		if tickBounds, ok := axisTickLabelBounds(yAxis, r, ctx); ok {
 			rightExtent = math.Max(rightExtent, tickBounds.Max.X)
+		} else if yAxis != nil && yAxis.ShowTicks {
+			rightExtent += tickLabelPadPx(yAxis, ctx)
 		}
 		if aligned, ok := alignment.yLabelExtents[alignmentKey(side, spinePixelX(side, px))]; ok {
 			rightExtent = aligned
@@ -2425,6 +2432,8 @@ func yLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 	leftExtent := spineX
 	if tickBounds, ok := axisTickLabelBounds(yAxis, r, ctx); ok {
 		leftExtent = math.Min(leftExtent, tickBounds.Min.X)
+	} else if yAxis != nil && yAxis.ShowTicks {
+		leftExtent -= tickLabelPadPx(yAxis, ctx)
 	}
 	if aligned, ok := alignment.yLabelExtents[alignmentKey(side, spinePixelX(side, px))]; ok {
 		leftExtent = aligned
