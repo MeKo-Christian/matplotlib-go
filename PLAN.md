@@ -1943,6 +1943,161 @@ Exit criteria:
 
 ---
 
+# Phase 17.75: Remaining Matplotlib Plot Surface Closure
+
+**Goal:** systematically close every currently known Matplotlib 3.10.9 plotting
+surface gap that is not already covered by Phases 12-17.5, before treating
+example/browser breadth as documentation work.
+
+**Reference sources:** `third_party/matplotlib/lib/matplotlib/axes/_axes.py`,
+`third_party/matplotlib/lib/mpl_toolkits/mplot3d/axes3d.py`,
+`third_party/matplotlib/lib/matplotlib/pyplot.py`,
+`internal/examplecatalog.PublicSurfaceParityRows`,
+`internal/examplecatalog.FoundationAPIGapAudit`,
+`internal/examplecatalog.FeatureCoverageMatrix`, and the catalog cases under
+`test/parity/`.
+
+### 17.75.1 Gap Ledger and Status Gates
+
+- [ ] Generate or update `docs/matplotlib-parity-status.md` from the committed
+      public-surface inventory so every upstream plotting method, registry
+      item, and toolkit feature has one owner phase.
+- [ ] Add a machine-readable "closure phase" field to the parity inventory for
+      every row currently marked `partial` or `not-started`.
+- [ ] Fail CI when a tracked upstream row is `partial` or `not-started` without
+      either a 17.75 task reference, an existing phase owner, or an explicit
+      intentional-omission rationale.
+- [ ] Split broad `partial` rows into smaller actionable rows when the remaining
+      work mixes implementation, API-wrapper, fixture, and demo concerns.
+
+### 17.75.2 Missing or Thin 2D Axes Convenience APIs
+
+- [ ] Add Go-style public helpers, pyplot wrappers where appropriate, and
+      parity fixtures for Matplotlib convenience methods that are still absent
+      or only reachable through lower-level artists:
+      `Axes.bxp`, precomputed-stat `Axes.violin`, `Axes.arrow`,
+      collection-style `Axes.hlines` / `Axes.vlines`, and a source-compatible
+      contour-label entry point equivalent to `Axes.clabel`.
+- [ ] For helpers that already have lower-level equivalents, keep the lower
+      layer as the implementation source and make the new method a typed,
+      tested convenience wrapper.
+- [ ] Add `test/parity/<id>/plot.go`, `plot.py`, and
+      `test/matplotlib_ref/plots/<id>.py` cases for each newly exposed helper.
+- [ ] Update README and migration docs with the local method names and any
+      intentional signature differences.
+
+### 17.75.3 Axes Method Option Breadth
+
+- [ ] Close remaining option gaps for high-use 2D plots: histogram density /
+      cumulative / weights / bin-strategy edge cases, scatter scalar-mapping
+      and marker-family edge cases, bar-label and grouped/stacked bar semantics,
+      fill-between masking / interpolation / step semantics, and errorbar cap /
+      limit / errorevery behavior.
+- [ ] Expand collection and mesh option breadth where it affects visible output:
+      mutable setter behavior, scalar-mappable callbacks, offset transforms,
+      `pcolor` masked-coordinate behavior, `pcolormesh` shape validation, and
+      Gouraud / nearest / flat shading parity.
+- [ ] Add focused unit tests first for every option edge case, then add or
+      update catalog fixtures only when the behavior is visible.
+- [ ] Keep example source close to Matplotlib; do not change examples to hide
+      option gaps.
+
+### 17.75.4 3D Toolkit Closure
+
+- [ ] Add missing `Axes3D` triangulated contour helpers equivalent to
+      Matplotlib's `tricontour` and `tricontourf`, backed by the existing
+      triangulation and 3D projection machinery.
+- [ ] Audit all existing 3D helpers (`Plot3D`, `Scatter3D`, `Surface`,
+      `Wireframe`, `Contour`, `Contourf`, `Trisurf`, `Bar3D`, `Voxels`,
+      `Quiver3D`, `Stem3D`, `ErrorBar3D`, and `FillBetween3D`) against
+      upstream defaults for z sorting, clipping, axis limits, colormapping,
+      pane/grid styling, and view initialization.
+- [ ] Add parity fixtures for any 3D chart class that currently has a public API
+      but no Matplotlib reference comparison.
+- [ ] Record intentional mplot3d divergences when Go's projection or depth
+      ordering model cannot exactly match upstream without destabilizing 2D
+      rendering.
+
+### 17.75.5 Color, Image, Norm, and Colorbar Extras
+
+- [ ] Decide and implement or explicitly omit advanced color surfaces not yet
+      covered by the scalar-mappable model: `LightSource`, multivariate /
+      bivariate colormaps, `MultiNorm`, and exact edge-case color conversion
+      behavior.
+- [ ] Close transformed-image resampling residuals and document backend-specific
+      interpolation fallbacks where AGG, GoBasic, SVG/PDF, or Skia cannot match
+      Matplotlib exactly.
+- [ ] Complete colorbar formatter, gridspec-placement, multi-parent placement,
+      boundary, extension, and mutable-mappable behavior needed by upstream
+      examples.
+- [ ] Add colormap/norm/colorbar fixtures before promoting the behavior to
+      user-facing galleries.
+
+### 17.75.6 Patch, Annotation, Legend, and Offset-Box Tail
+
+- [ ] Finish exact ArrowStyle / ConnectionStyle geometry edge cases and any
+      specialized patch classes still classified as partial in the public
+      surface map.
+- [ ] Add remaining text/annotation coordinate aliases, tightbbox /
+      window-extent interactions, and richer static `AnnotationBbox` /
+      offset-box content where upstream examples require them.
+- [ ] Complete legend handler and placement gaps that affect static rendering:
+      scalar-mapped collection samples, full bbox/path-intersection
+      `loc="best"` scoring, and proxy/compound handle behavior.
+- [ ] Keep draggable GUI-only legend and offset-box behavior either explicitly
+      omitted or owned by the backend/event-loop work below.
+
+### 17.75.7 Stateful Pyplot and Migration Wrappers
+
+- [ ] Add pyplot wrappers for newly closed object-oriented APIs only where they
+      reduce Matplotlib migration friction.
+- [ ] Audit pyplot state transitions, interactive-mode hooks, current
+      figure/axes behavior, and common overloads against upstream `pyplot.py`.
+- [ ] Prefer typed Go options over Python-like variadic overload cloning, but
+      document every intentional signature divergence in the migration guide.
+- [ ] Add smoke tests proving pyplot wrappers delegate to the same core
+      implementation as the object-oriented API.
+
+### 17.75.8 Backend, Widget, and Animation Tail
+
+- [ ] Close remaining backend lifecycle gaps that affect plotting behavior:
+      draw-event order, timers, toolbar/tool manager actions, figure manager
+      lifecycle, and backend capability reporting.
+- [ ] Complete widget and selector interaction edge cases that remain after
+      Phase 17.5: active-state semantics, handle behavior, disabled states,
+      keyboard modifiers, and browser-demo interaction parity.
+- [ ] Decide animation writer scope for v1.0: deterministic GIF/MP4 writers,
+      HTML representation, save-count/cache behavior, and explicit unsupported
+      writer errors.
+- [ ] Add backend/widget/animation cases only when they can run
+      deterministically in CI or are guarded by explicit optional-tool checks.
+
+### 17.75.9 Final Closure Sweep
+
+- [ ] Re-run the upstream public-surface extractor and resolve every changed or
+      newly unclassified row.
+- [ ] Ensure every remaining `not-started` row is either implemented, converted
+      to a precise `partial` with an owner task, or marked
+      `intentional-omission` with rationale.
+- [ ] Ensure every remaining `partial` row has a committed test, catalog case,
+      or documentation entry proving what is still missing.
+- [ ] Run `just fmt && just lint && just test`, then run the catalog parity
+      suites for every newly added or modified case.
+
+Exit criteria:
+
+- [ ] `docs/matplotlib-parity-status.md` has no unowned `partial` or
+      `not-started` plotting rows.
+- [ ] Every Matplotlib chart/helper class that is in scope for this port has a
+      direct Go API, an idiomatic Go equivalent, or an explicit intentional
+      omission.
+- [ ] Every newly implemented surface has focused unit coverage and, when
+      visible, a catalog-driven Matplotlib reference fixture.
+- [ ] Example and browser-gallery phases can proceed without hiding unresolved
+      implementation gaps as "documentation" work.
+
+---
+
 # Phase 18: User-Facing Example Breadth
 
 **Goal:** ensure every major implemented public feature family has a
