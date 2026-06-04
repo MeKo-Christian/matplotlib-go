@@ -206,15 +206,23 @@ func setLogScaleFromData(ax *Axes, values []float64, isX bool) {
 
 // ScatterOptions holds optional parameters for scatter plots.
 type ScatterOptions struct {
-	Color       *render.Color // if nil, uses automatic color cycling
-	Size        *float64      // marker area in points^2
-	Marker      *MarkerType   // marker type
-	MarkerStyle *MarkerStyle  // marker style; overrides Marker when non-nil
-	MarkerPath  *geom.Path    // custom marker path (overrides Marker when non-nil)
-	EdgeColor   *render.Color // edge color
-	EdgeWidth   *float64      // edge width
-	Alpha       *float64      // alpha transparency
-	Label       string        // series label for legend
+	Color        *render.Color    // if nil, uses automatic color cycling
+	Colors       []render.Color   // per-point marker face colors
+	ScalarValues []float64        // per-point scalar values mapped through Colormap/Norm
+	Colormap     string           // colormap name for ScalarValues
+	Norm         ScalarNormalizer // normalizer for ScalarValues
+	VMin         *float64         // lower color limit for ScalarValues
+	VMax         *float64         // upper color limit for ScalarValues
+	Size         *float64         // marker area in points^2
+	Sizes        []float64        // per-point marker areas in points^2
+	Marker       *MarkerType      // marker type
+	MarkerStyle  *MarkerStyle     // marker style; overrides Marker when non-nil
+	MarkerPath   *geom.Path       // custom marker path (overrides Marker when non-nil)
+	EdgeColor    *render.Color    // edge color
+	EdgeColors   []render.Color   // per-point marker edge colors
+	EdgeWidth    *float64         // edge width
+	Alpha        *float64         // alpha transparency
+	Label        string           // series label for legend
 }
 
 // Scatter creates a scatter plot with automatic shape/fill color cycling if no color is specified.
@@ -222,12 +230,12 @@ func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 	if len(x) == 0 || len(y) == 0 {
 		return nil
 	}
+	if len(x) != len(y) {
+		return nil
+	}
 
 	// Create points
 	n := len(x)
-	if len(y) < n {
-		n = len(y)
-	}
 	points := make([]geom.Pt, n)
 	for i := 0; i < n; i++ {
 		points[i] = geom.Pt{X: x[i], Y: y[i]}
@@ -251,6 +259,17 @@ func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 	if opt.Size != nil {
 		size = *opt.Size
 	}
+	var sizes []float64
+	if len(opt.Sizes) > 0 {
+		if !validScatterOptionLength(len(opt.Sizes), n) {
+			return nil
+		}
+		if len(opt.Sizes) == 1 {
+			size = opt.Sizes[0]
+		} else {
+			sizes = cloneFloat64s(opt.Sizes)
+		}
+	}
 
 	// Get marker type
 	marker := MarkerCircle
@@ -262,6 +281,58 @@ func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 	edgeColor := color
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
+	}
+	var colors []render.Color
+	if len(opt.Colors) > 0 {
+		if !validScatterOptionLength(len(opt.Colors), n) {
+			return nil
+		}
+		if len(opt.Colors) == 1 {
+			color = opt.Colors[0]
+			if opt.EdgeColor == nil {
+				edgeColor = color
+			}
+		} else {
+			colors = cloneRenderColors(opt.Colors)
+		}
+	}
+	var scalarValues []float64
+	var scalarMap ScalarMapInfo
+	scalarMapSet := false
+	if len(opt.ScalarValues) > 0 {
+		if !validScatterOptionLength(len(opt.ScalarValues), n) {
+			return nil
+		}
+		scalarValues = cloneFloat64s(opt.ScalarValues)
+		if len(opt.ScalarValues) == 1 && n > 1 {
+			scalarValues = make([]float64, n)
+			for i := range scalarValues {
+				scalarValues[i] = opt.ScalarValues[0]
+			}
+		}
+		mapping, err := ResolveScalarMapValues(scalarValues, ScalarMapConfig{
+			Colormap: opt.Colormap,
+			Norm:     opt.Norm,
+			VMin:     opt.VMin,
+			VMax:     opt.VMax,
+		})
+		if err != nil {
+			return nil
+		}
+		scalarMap = mapping
+		scalarMapSet = true
+		colors = nil
+	}
+	var edgeColors []render.Color
+	if len(opt.EdgeColors) > 0 {
+		if !validScatterOptionLength(len(opt.EdgeColors), n) {
+			return nil
+		}
+		if len(opt.EdgeColors) == 1 {
+			edgeColor = opt.EdgeColors[0]
+		} else {
+			edgeColors = cloneRenderColors(opt.EdgeColors)
+		}
 	}
 
 	edgeWidth := 1.0
@@ -277,14 +348,26 @@ func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 
 	// Create scatter
 	scatter := &Scatter2D{
-		XY:        points,
-		Size:      size,
-		Color:     color,
-		EdgeColor: edgeColor,
-		EdgeWidth: edgeWidth,
-		Alpha:     alpha,
-		Marker:    marker,
-		Label:     opt.Label,
+		XY:           points,
+		Sizes:        sizes,
+		Colors:       colors,
+		EdgeColors:   edgeColors,
+		ScalarValues: scalarValues,
+		Size:         size,
+		Color:        color,
+		EdgeColor:    edgeColor,
+		EdgeWidth:    edgeWidth,
+		Alpha:        alpha,
+		Marker:       marker,
+		Label:        opt.Label,
+	}
+	if scalarMapSet {
+		scatter.Colormap = scalarMap.Colormap
+		scatter.Norm = scalarMap.Norm
+		scatter.VMin = scalarMap.VMin
+		scatter.VMax = scalarMap.VMax
+		scatter.scalarCLimSet = true
+		scatter.EdgeColorsFace = opt.EdgeColor == nil && len(opt.EdgeColors) == 0
 	}
 	if opt.MarkerStyle != nil {
 		scatter.MarkerStyle = *opt.MarkerStyle
@@ -295,6 +378,10 @@ func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 
 	a.Add(scatter)
 	return scatter
+}
+
+func validScatterOptionLength(length, n int) bool {
+	return length == 1 || length == n
 }
 
 // BarOptions holds optional parameters for bar plots.

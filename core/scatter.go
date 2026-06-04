@@ -177,21 +177,28 @@ func MarkerTypeFromString(marker string) (MarkerType, bool) {
 // Scatter2D renders points with configurable markers.
 type Scatter2D struct {
 	ArtistRasterization
-	XY          []geom.Pt      // data space points
-	Sizes       []float64      // marker areas in points^2, if nil uses Size
-	Colors      []render.Color // marker colors, if nil uses Color
-	EdgeColors  []render.Color // edge colors for marker outlines, if nil uses EdgeColor
-	MarkerPath  geom.Path      // optional custom marker path in normalized collection space
-	Size        float64        // default marker area in points^2
-	Color       render.Color   // default marker color
-	EdgeColor   render.Color   // default edge color for marker outlines
-	EdgeWidth   float64        // edge width in pixels (0 means no edge)
-	Alpha       float64        // alpha transparency (0-1), applied to both fill and edge
-	PathEffects []render.PathEffect
-	Marker      MarkerType // marker shape
-	MarkerStyle MarkerStyle
-	Label       string  // series label for legend
-	z           float64 // z-order
+	XY             []geom.Pt      // data space points
+	Sizes          []float64      // marker areas in points^2, if nil uses Size
+	Colors         []render.Color // marker colors, if nil uses Color
+	EdgeColors     []render.Color // edge colors for marker outlines, if nil uses EdgeColor
+	ScalarValues   []float64      // scalar values mapped to marker face colors
+	MarkerPath     geom.Path      // optional custom marker path in normalized collection space
+	Size           float64        // default marker area in points^2
+	Color          render.Color   // default marker color
+	EdgeColor      render.Color   // default edge color for marker outlines
+	EdgeWidth      float64        // edge width in pixels (0 means no edge)
+	Colormap       string
+	Norm           ScalarNormalizer
+	VMin           float64
+	VMax           float64
+	EdgeColorsFace bool
+	scalarCLimSet  bool
+	Alpha          float64 // alpha transparency (0-1), applied to both fill and edge
+	PathEffects    []render.PathEffect
+	Marker         MarkerType // marker shape
+	MarkerStyle    MarkerStyle
+	Label          string  // series label for legend
+	z              float64 // z-order
 }
 
 var stemMarkerScale = math.Sqrt(math.Pi)
@@ -411,13 +418,19 @@ func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathC
 		faceColor.A = 0
 	}
 
-	return &PathCollection{
+	pc := &PathCollection{
 		Collection: Collection{
 			ArtistRasterization: s.ArtistRasterization,
 			Label:               s.Label,
 			Alpha:               alpha,
 			z:                   s.z,
+			Colormap:            s.Colormap,
+			Norm:                s.Norm,
+			VMin:                s.VMin,
+			VMax:                s.VMax,
+			EdgeColorsFace:      s.EdgeColorsFace,
 			PathEffects:         cloneRenderPathEffects(s.PathEffects),
+			scalarCLimSet:       s.scalarCLimSet,
 		},
 		Path:          s.markerPrototypePathForContext(r, ctx),
 		Offsets:       append([]geom.Pt(nil), s.XY...),
@@ -435,6 +448,13 @@ func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathC
 		LineCapSet:    true,
 		LineOnly:      lineOnly,
 	}
+	if s.EdgeColorsFace && len(pc.FaceColors) > 0 {
+		pc.EdgeColors = cloneRenderColors(pc.FaceColors)
+	}
+	if len(s.ScalarValues) > 0 {
+		_ = pc.SetArray(s.ScalarValues)
+	}
+	return pc
 }
 
 func (s *Scatter2D) markerLineJoin() render.LineJoin {

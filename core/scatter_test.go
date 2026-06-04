@@ -572,6 +572,101 @@ func TestScatterAutoScaleIgnoresMarkerSize(t *testing.T) {
 	}
 }
 
+func TestAxesScatterRejectsMismatchedXYLikeMatplotlib(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+
+	if got := ax.Scatter([]float64{0, 1}, []float64{0}); got != nil {
+		t.Fatalf("Scatter with mismatched x/y lengths returned %#v, want nil", got)
+	}
+	if got := len(ax.Artists); got != 0 {
+		t.Fatalf("mismatched scatter registered %d artists, want 0", got)
+	}
+}
+
+func TestAxesScatterAppliesPerPointSizeAndColors(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	sizes := []float64{9, 16, 25}
+	colors := []render.Color{
+		{R: 1, A: 1},
+		{G: 1, A: 1},
+		{B: 1, A: 1},
+	}
+	edgeColors := []render.Color{
+		{R: 0.2, A: 1},
+		{G: 0.2, A: 1},
+		{B: 0.2, A: 1},
+	}
+
+	scatter := ax.Scatter(
+		[]float64{0, 1, 2},
+		[]float64{2, 1, 0},
+		ScatterOptions{Sizes: sizes, Colors: colors, EdgeColors: edgeColors},
+	)
+
+	if scatter == nil {
+		t.Fatal("Scatter returned nil")
+	}
+	if got, want := scatter.Sizes, sizes; len(got) != len(want) {
+		t.Fatalf("scatter sizes = %v, want %v", got, want)
+	}
+	for i, want := range sizes {
+		if got := scatter.Sizes[i]; got != want {
+			t.Fatalf("scatter size %d = %v, want %v", i, got, want)
+		}
+	}
+	for i, want := range colors {
+		if got := scatter.Colors[i]; got != want {
+			t.Fatalf("scatter face color %d = %+v, want %+v", i, got, want)
+		}
+	}
+	for i, want := range edgeColors {
+		if got := scatter.EdgeColors[i]; got != want {
+			t.Fatalf("scatter edge color %d = %+v, want %+v", i, got, want)
+		}
+	}
+}
+
+func TestAxesScatterScalarValuesMapFacesAndDefaultEdges(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	values := []float64{0, 1}
+
+	scatter := ax.Scatter(
+		[]float64{0, 1},
+		[]float64{1, 0},
+		ScatterOptions{ScalarValues: values, Colormap: "viridis"},
+	)
+
+	if scatter == nil {
+		t.Fatal("Scatter returned nil")
+	}
+	pc := scatter.toPathCollection(&render.NullRenderer{}, createTestDrawContext())
+	if got, want := pc.GetArray(), values; len(got) != len(want) {
+		t.Fatalf("scalar array = %v, want %v", got, want)
+	}
+	for i, want := range values {
+		if got := pc.GetArray()[i]; got != want {
+			t.Fatalf("scalar array %d = %v, want %v", i, got, want)
+		}
+	}
+	if len(pc.FaceColors) != len(values) {
+		t.Fatalf("mapped face colors = %d, want %d", len(pc.FaceColors), len(values))
+	}
+	if got := pc.FaceColors[0]; got == pc.FaceColors[1] {
+		t.Fatalf("mapped face colors should differ for distinct scalar values: %+v", got)
+	}
+	if !pc.EdgeColorsFace {
+		t.Fatal("default scatter scalar mapping should keep edgecolors='face'")
+	}
+	for i := range pc.FaceColors {
+		if got, want := pc.EdgeColors[i], pc.FaceColors[i]; got != want {
+			t.Fatalf("mapped edge color %d = %+v, want face %+v", i, got, want)
+		}
+	}
+}
+
 func TestScatter2D_EdgeColors(t *testing.T) {
 	// Test with edge colors and width
 	scatter := &Scatter2D{
