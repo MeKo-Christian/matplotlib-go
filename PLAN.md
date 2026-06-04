@@ -2241,6 +2241,19 @@ example/browser breadth as documentation work.
               `Bar3D` and `FillBetween3D` facecolor, edgecolor, alpha,
               shading, and per-face ordering behavior.
 
+                - [ ] 17.75.4.4.3.3.1 FillBetween3D Colors: align
+                  `FillBetween3D` facecolor, edgecolor, alpha, and
+                  non-scalar-mappable collection behavior for quad and polygon
+                  modes.
+
+                - [ ] 17.75.4.4.3.3.2 Bar3D Single-Color Semantics: align
+                  single-color `Bar3D` face alpha, default edge visibility,
+                  shading, face ordering, and non-scalar-mappable state.
+
+                - [ ] 17.75.4.4.3.3.3 Bar3D Per-Bar and Per-Face Colors:
+                  support or document Matplotlib's per-bar, six-face, and
+                  `6*N` face color variants with focused tests.
+
             - [ ] 17.75.4.4.3.4 Voxel Face Colors: align `Voxels` scalar and
               explicit facecolor behavior, visible-face color selection,
               alpha propagation, and depth-sorted redraw updates.
