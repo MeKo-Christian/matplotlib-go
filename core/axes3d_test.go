@@ -1520,6 +1520,85 @@ func TestAxes3DContourAndContourfCreateCollections(t *testing.T) {
 	}
 }
 
+func TestAxes3DTriContourAndTriContourfCreateCollections(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	tri := Triangulation{
+		X:         []float64{0, 1, 0},
+		Y:         []float64{0, 0, 1},
+		Triangles: [][3]int{{0, 1, 2}},
+	}
+	values := []float64{0, 1, 1}
+	contour := ax.TriContour(tri, values, PlotOptions{Levels: []float64{0.5}})
+	if contour == nil {
+		t.Fatal("TriContour returned nil")
+	}
+	if contourf := ax.TriContourf(tri, values, PlotOptions{Levels: []float64{0, 0.5, 1}}); contourf == nil {
+		t.Fatal("TriContourf returned nil")
+	}
+	if invalid := ax.TriContour(tri, values[:2], PlotOptions{Levels: []float64{0.5}}); invalid != nil {
+		t.Fatal("TriContour accepted mismatched value length")
+	}
+}
+
+func TestAxes3DTriContourProjectsLinesAtContourLevels(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	tri := Triangulation{
+		X:         []float64{0, 1, 0},
+		Y:         []float64{0, 0, 1},
+		Triangles: [][3]int{{0, 1, 2}},
+	}
+	contour := ax.TriContour(tri, []float64{0, 1, 1}, PlotOptions{Levels: []float64{0.5}})
+	if contour == nil {
+		t.Fatal("TriContour returned nil")
+	}
+	if got, want := len(contour.Segments), 1; got != want {
+		t.Fatalf("tricontour segments = %d, want %d", got, want)
+	}
+	want := []Pt{
+		ax.ProjectPoint(0.5, 0, 0.5),
+		ax.ProjectPoint(0, 0.5, 0.5),
+	}
+	if !pointsEqual(contour.Segments[0], want, 1e-12) {
+		t.Fatalf("tricontour segment = %+v, want projected contour level %+v", contour.Segments[0], want)
+	}
+}
+
+func TestAxes3DTriContourfAutoscaleUsesFilledLevelMidpointsLikeMatplotlib(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	tri := Triangulation{
+		X:         []float64{0, 1, 0, 1},
+		Y:         []float64{0, 0, 1, 1},
+		Triangles: [][3]int{{0, 1, 2}, {1, 3, 2}},
+	}
+	fill := ax.TriContourf(
+		tri,
+		[]float64{0.1, 0.2, 0.8, 0.9},
+		PlotOptions{Levels: []float64{0, 1, 2}},
+	)
+	if fill == nil {
+		t.Fatal("TriContourf returned nil")
+	}
+	mins, maxs := ax.projectionLimits()
+	if !approx(mins[2], 0.5, 1e-12) || !approx(maxs[2], 1.5, 1e-12) {
+		t.Fatalf("TriContourf projection z limits = %.12g..%.12g, want Matplotlib autoscale from filled midpoints 0.5..1.5", mins[2], maxs[2])
+	}
+}
+
 func TestAxes3DContourfProjectsFilledContourBands(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())

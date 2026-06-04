@@ -359,6 +359,54 @@ func (a *Axes3D) observe3DContourf(x, y []float64, z [][]float64, opt PlotOption
 	return changed
 }
 
+func (a *Axes3D) observe3DTriContourf(tri Triangulation, z []float64, opt PlotOptions) bool {
+	if a == nil || len(tri.X) == 0 || len(tri.X) != len(tri.Y) || len(z) != len(tri.X) {
+		return false
+	}
+	zdir := normalized3DDir(opt.ZDir)
+	rotatedValues := z
+	if zdir != "z" {
+		rotatedValues = make([]float64, len(z))
+		for i := range z {
+			p := rotate3DPointAxes(tri.X[i], tri.Y[i], z[i], zdir)
+			rotatedValues[i] = p[2]
+		}
+	}
+	levels := contourLevels(rotatedValues, opt.Levels, opt.LevelCount, true)
+	if len(levels) < 2 {
+		return a.observe3DTriangulation(tri, z)
+	}
+	midpoints := make([]float64, 0, len(levels)-1)
+	for i := 0; i+1 < len(levels); i++ {
+		midpoints = append(midpoints, levels[i]+(levels[i+1]-levels[i])*0.5)
+	}
+
+	minX, maxX := finiteRange(tri.X)
+	minY, maxY := finiteRange(tri.Y)
+	minZ, maxZ := finiteRange(z)
+	minLevel, maxLevel := finiteRange(midpoints)
+	if !isFinite(minX) || !isFinite(maxX) || !isFinite(minY) || !isFinite(maxY) || !isFinite(minZ) || !isFinite(maxZ) || !isFinite(minLevel) || !isFinite(maxLevel) {
+		return false
+	}
+
+	minPoint := vec3{minX, minY, minZ}
+	maxPoint := vec3{maxX, maxY, maxZ}
+	switch zdir {
+	case "x":
+		minPoint[0], maxPoint[0] = minLevel, maxLevel
+	case "y":
+		minPoint[1], maxPoint[1] = minLevel, maxLevel
+	default:
+		minPoint[2], maxPoint[2] = minLevel, maxLevel
+	}
+
+	changed := a.observe3DPoint(minPoint[0], minPoint[1], minPoint[2])
+	if a.observe3DPoint(maxPoint[0], maxPoint[1], maxPoint[2]) {
+		changed = true
+	}
+	return changed
+}
+
 func (a *Axes3D) observe3DTriangulation(tri Triangulation, z []float64) bool {
 	n := len(tri.X)
 	if len(tri.Y) < n {

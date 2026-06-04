@@ -141,9 +141,9 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "toolkits-projections",
 		Status:            PublicSurfacePartial,
 		ClosurePhase:      "17.75.4",
-		GoFiles:           []string{"core/axes3d.go", "core/triangulation.go", "core/contour.go"},
+		GoFiles:           []string{"core/axes3d_contour_surface.go", "core/triangulation.go", "core/contour.go"},
 		CatalogIDs:        []string{"mesh_contour_tri", "mplot3d_trisurf3d"},
-		Note:              "Triangulation and 3D projection machinery exist, but an Axes3D.tricontour-equivalent helper and focused 3D triangulated-contour fixture remain a Phase 17.75.4 task.",
+		Note:              "Axes3D.TriContour now projects triangulated contour lines through Matplotlib-style rotate_axes/juggle_axes handling with levels, offset planes, zdir, axlim clipping, colormap/norm metadata, reprojectors, and focused unit coverage. Remaining partial scope is dedicated mplot3d tricontour reference fixture coverage in Phase 17.75.4.",
 	},
 	{
 		ID:                "axes3d-tricontourf-method",
@@ -151,9 +151,9 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "toolkits-projections",
 		Status:            PublicSurfacePartial,
 		ClosurePhase:      "17.75.4",
-		GoFiles:           []string{"core/axes3d.go", "core/triangulation.go", "core/contour.go"},
+		GoFiles:           []string{"core/axes3d_contour_surface.go", "core/triangulation.go", "core/contour.go"},
 		CatalogIDs:        []string{"mesh_contour_tri", "mplot3d_trisurf3d"},
-		Note:              "Triangulation and 3D projection machinery exist, but an Axes3D.tricontourf-equivalent helper and focused 3D filled-triangulated-contour fixture remain a Phase 17.75.4 task.",
+		Note:              "Axes3D.TriContourf now projects filled triangulated contour bands through Matplotlib-style rotate_axes/juggle_axes handling with levels, offset planes, zdir, axlim clipping, colormap/norm metadata, filled-level autoscaling, reprojectors, and focused unit coverage. Remaining partial scope is dedicated mplot3d tricontourf reference fixture coverage in Phase 17.75.4.",
 	},
 	{
 		ID:                "colors-funcnorm-class",

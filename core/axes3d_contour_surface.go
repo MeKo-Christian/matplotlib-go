@@ -162,6 +162,180 @@ func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opts ...PlotOptions) *P
 	return collection
 }
 
+// TriContour projects contour lines over an explicit triangulated 3D mesh.
+func (a *Axes3D) TriContour(tri Triangulation, z []float64, opts ...PlotOptions) *LineCollection {
+	if a == nil || len(tri.X) == 0 {
+		return nil
+	}
+	if err := tri.Validate(); err != nil || len(z) != len(tri.X) {
+		return nil
+	}
+	var ok bool
+	tri, ok = autoTriangulate(tri)
+	if !ok {
+		return nil
+	}
+
+	opt := firstPlotOptions(opts)
+	limitsChanged := a.observe3DTriangulation(tri, z)
+	segments, segmentLevels, levels, values, zorder := a.projectedTriContourLineData(tri, z, opt)
+	if len(segments) == 0 {
+		return nil
+	}
+
+	color := a.NextColor()
+	lineWidth := 1.0
+	alpha := 1.0
+	colorOverride := false
+	if opt.Color != nil {
+		color = *opt.Color
+		colorOverride = true
+	}
+	if opt.LineWidth != nil {
+		lineWidth = *opt.LineWidth
+	}
+	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
+		alpha = *opt.Alpha
+	}
+
+	mapping := ScalarMapInfo{}
+	colors := []render.Color(nil)
+	collectionAlpha := alpha
+	if !colorOverride {
+		mapping = contourScalarMap(values, levels, opt)
+		colors = make([]render.Color, len(segmentLevels))
+		for i, level := range segmentLevels {
+			colors[i] = mapping.Color(level, alpha)
+		}
+		collectionAlpha = 1
+	}
+
+	collection := &LineCollection{
+		Collection: Collection{
+			Coords:   Coords(CoordData),
+			Label:    opt.Label,
+			Alpha:    collectionAlpha,
+			z:        zorder,
+			Colormap: mapping.Colormap,
+			Norm:     mapping.Norm,
+			VMin:     mapping.VMin,
+			VMax:     mapping.VMax,
+		},
+		Segments:  segments,
+		Color:     color,
+		Colors:    colors,
+		LineWidth: lineWidth,
+		LineJoin:  render.JoinRound,
+		LineCap:   render.CapRound,
+	}
+	a.Add(collection)
+	a.add3DReprojector(func() {
+		if collection != nil {
+			segments, segmentLevels, levels, values, zorder := a.projectedTriContourLineData(tri, z, opt)
+			collection.Segments = segments
+			if !colorOverride {
+				mapping := contourScalarMap(values, levels, opt)
+				colors := make([]render.Color, len(segmentLevels))
+				for i, level := range segmentLevels {
+					colors[i] = mapping.Color(level, alpha)
+				}
+				collection.Colors = colors
+				collection.Colormap = mapping.Colormap
+				collection.Norm = mapping.Norm
+				collection.VMin = mapping.VMin
+				collection.VMax = mapping.VMax
+			} else {
+				collection.Colormap = ""
+				collection.Norm = nil
+				collection.VMin = 0
+				collection.VMax = 0
+				collection.Colors = nil
+			}
+			collection.z = zorder
+		}
+	}, limitsChanged)
+	return collection
+}
+
+// TriContourf projects filled contour bands over an explicit triangulated 3D mesh.
+func (a *Axes3D) TriContourf(tri Triangulation, z []float64, opts ...PlotOptions) *PolyCollection {
+	if a == nil || len(tri.X) == 0 {
+		return nil
+	}
+	if err := tri.Validate(); err != nil || len(z) != len(tri.X) {
+		return nil
+	}
+	var ok bool
+	tri, ok = autoTriangulate(tri)
+	if !ok {
+		return nil
+	}
+
+	opt := firstPlotOptions(opts)
+	colorOverride := opt.Color != nil
+	alpha := 0.45
+	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
+		alpha = *opt.Alpha
+	}
+	limitsChanged := a.observe3DTriContourf(tri, z, opt)
+
+	paths, colors, zorder, mapping := a.projectedTriContourFillData(tri, z, alpha, opt)
+	if len(paths) == 0 {
+		return nil
+	}
+	cmap := mapping.Colormap
+	norm := mapping.Norm
+	vMin := mapping.VMin
+	vMax := mapping.VMax
+	if colorOverride {
+		cmap = ""
+		norm = nil
+		vMin = 0
+		vMax = 0
+	}
+
+	collection := &PolyCollection{
+		PatchCollection: PatchCollection{
+			Collection: Collection{
+				Coords:   Coords(CoordData),
+				Label:    opt.Label,
+				Alpha:    1,
+				Colormap: cmap,
+				Norm:     norm,
+				VMin:     vMin,
+				VMax:     vMax,
+				z:        zorder,
+			},
+			Paths:      paths,
+			FaceColors: colors,
+			LineJoin:   render.JoinMiter,
+			LineCap:    render.CapButt,
+		},
+	}
+	a.Add(collection)
+	a.add3DReprojector(func() {
+		if collection != nil {
+			paths, colors, zorder, mapping := a.projectedTriContourFillData(tri, z, alpha, opt)
+			collection.Polygons = nil
+			collection.Paths = paths
+			collection.FaceColors = colors
+			if colorOverride {
+				collection.Colormap = ""
+				collection.Norm = nil
+				collection.VMin = 0
+				collection.VMax = 0
+			} else {
+				collection.Colormap = mapping.Colormap
+				collection.Norm = mapping.Norm
+				collection.VMin = mapping.VMin
+				collection.VMax = mapping.VMax
+			}
+			collection.z = zorder
+		}
+	}, limitsChanged)
+	return collection
+}
+
 // Surface draws a structured surface as projected, z-sorted quadrilateral faces.
 func (a *Axes3D) Surface(x, y []float64, z [][]float64, opts ...PlotOptions) *PolyCollection {
 	limitsChanged := a.observe3DGrid(x, y, z)
@@ -430,6 +604,128 @@ func (a *Axes3D) projectedContourFillData(x, y []float64, z [][]float64, alpha f
 	return paths, colors, computed3DCollectionZ(collectionDepth), mapping
 }
 
+func (a *Axes3D) projectedTriContourLineData(tri Triangulation, z []float64, opt PlotOptions) ([][]geom.Pt, []float64, []float64, []float64, float64) {
+	if a == nil {
+		return nil, nil, nil, nil, defaultPatchZ
+	}
+	zdir := normalized3DDir(opt.ZDir)
+	rotatedTri, rotatedValues, ok := rotatedTriangulation3D(tri, z, zdir)
+	if !ok {
+		return nil, nil, nil, nil, defaultPatchZ
+	}
+	levels := contourLevels(rotatedValues, opt.Levels, opt.LevelCount, false)
+	if len(levels) == 0 {
+		return nil, nil, nil, nil, defaultPatchZ
+	}
+	rawLines, rawLevels := contourPolylines(rotatedTri, rotatedValues, levels)
+	if len(rawLines) == 0 {
+		return nil, nil, nil, nil, defaultPatchZ
+	}
+
+	segments := make([][]geom.Pt, 0, len(rawLines))
+	segmentLevels := make([]float64, 0, len(rawLines))
+	depth := math.Inf(1)
+	for i, polyline := range rawLines {
+		if len(polyline) < 2 {
+			continue
+		}
+		level := rawLevels[i]
+		planeLevel := contourPlaneLevel(level, opt.Offset)
+		runs := [][]vec3{contourPolyline3D(polyline, planeLevel, zdir)}
+		if opt.AxLimClip {
+			runs = a.clip3DPolylineRuns(runs[0])
+		}
+		for _, run := range runs {
+			if len(run) < 2 {
+				continue
+			}
+			projected := make([]geom.Pt, len(run))
+			for j, point3D := range run {
+				var zDepth float64
+				projected[j], zDepth = a.projectPointDepth(point3D[0], point3D[1], point3D[2])
+				if zDepth < depth {
+					depth = zDepth
+				}
+			}
+			segments = append(segments, projected)
+			segmentLevels = append(segmentLevels, level)
+		}
+	}
+	return segments, segmentLevels, levels, rotatedValues, computed3DCollectionZ(depth)
+}
+
+func (a *Axes3D) projectedTriContourFillData(tri Triangulation, z []float64, alpha float64, opt PlotOptions) ([]geom.Path, []render.Color, float64, ScalarMapInfo) {
+	if a == nil {
+		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+	}
+	zdir := normalized3DDir(opt.ZDir)
+	rotatedTri, rotatedValues, ok := rotatedTriangulation3D(tri, z, zdir)
+	if !ok {
+		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+	}
+	levels := contourLevels(rotatedValues, opt.Levels, opt.LevelCount, true)
+	if len(levels) < 2 {
+		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+	}
+	mapping := contourScalarMap(rotatedValues, levels, opt)
+	collectionDepth := math.Inf(1)
+	paths := make([]geom.Path, 0, len(levels)-1)
+	colors := make([]render.Color, 0, len(levels)-1)
+
+	for levelIdx := 0; levelIdx+1 < len(levels); levelIdx++ {
+		low := levels[levelIdx]
+		high := levels[levelIdx+1]
+		bandLevel := 0.5 * (low + high)
+		planeLevel := contourPlaneLevel(bandLevel, opt.Offset)
+		rawPolygons := contourTriBandPolygons(rotatedTri, rotatedValues, low, high)
+		if len(rawPolygons) == 0 {
+			continue
+		}
+
+		projectedPolygons := make([][]geom.Pt, 0, len(rawPolygons))
+		for _, polygon := range rawPolygons {
+			if len(polygon) < 3 {
+				continue
+			}
+			rawPolygon3D := contourPolyline3D(polygon, planeLevel, zdir)
+			if opt.AxLimClip && !a.polygonWithin3DViewLimits(rawPolygon3D) {
+				continue
+			}
+			projected := make([]geom.Pt, len(rawPolygon3D))
+			for i, point3D := range rawPolygon3D {
+				projectedPt, zDepth := a.projectPointDepth(point3D[0], point3D[1], point3D[2])
+				projected[i] = projectedPt
+				if zDepth < collectionDepth {
+					collectionDepth = zDepth
+				}
+			}
+			projectedPolygons = append(projectedPolygons, projected)
+		}
+		if len(projectedPolygons) == 0 {
+			continue
+		}
+		path := contourBoundaryPath(projectedPolygons)
+		if len(path.C) == 0 {
+			path = contourPolygonsPath(projectedPolygons)
+		}
+		if len(path.C) == 0 {
+			continue
+		}
+
+		color := mapping.Color(bandLevel, alpha)
+		if opt.Color != nil {
+			color = *opt.Color
+			color.A *= alpha
+		}
+		paths = append(paths, path)
+		colors = append(colors, color)
+	}
+	if len(paths) == 0 {
+		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+	}
+	return paths, colors, computed3DCollectionZ(collectionDepth), mapping
+}
+
 func validate3DGridContourInput(x, y []float64, z [][]float64) (rows, cols int, ok bool) {
 	if len(z) == 0 {
 		return 0, 0, false
@@ -529,6 +825,26 @@ func rotatedContourTriangulation(x, y []float64, z [][]float64, zdir string) (Tr
 		}
 	}
 	return Triangulation{X: pointsX, Y: pointsY, Triangles: triangles, Mask: mask}, values, true
+}
+
+func rotatedTriangulation3D(tri Triangulation, z []float64, zdir string) (Triangulation, []float64, bool) {
+	if err := tri.Validate(); err != nil || len(z) != len(tri.X) {
+		return Triangulation{}, nil, false
+	}
+	rotated := Triangulation{
+		X:         make([]float64, len(tri.X)),
+		Y:         make([]float64, len(tri.Y)),
+		Triangles: append([][3]int(nil), tri.Triangles...),
+		Mask:      append([]bool(nil), tri.Mask...),
+	}
+	values := make([]float64, len(z))
+	for i := range z {
+		p := rotate3DPointAxes(tri.X[i], tri.Y[i], z[i], zdir)
+		rotated.X[i] = p[0]
+		rotated.Y[i] = p[1]
+		values[i] = p[2]
+	}
+	return rotated, values, true
 }
 
 func (a *Axes3D) projectSurfacePolygons(x, y []float64, z [][]float64, opts ...PlotOptions) ([][]geom.Pt, []render.Color, float64, ScalarMapInfo) {

@@ -2121,7 +2121,7 @@ example/browser breadth as documentation work.
 
 - [ ] Split 17.75.4 into execution-ready subtasks and complete them in order:
 
-    - [ ] 17.75.4.1 Axes3D Triangulated Contours: add `tricontour` and
+    - [x] 17.75.4.1 Axes3D Triangulated Contours: add `tricontour` and
       `tricontourf`-equivalent helpers backed by the existing triangulation,
       contour, and 3D projection machinery. Compare control flow and defaults
       against `third_party/matplotlib/lib/mpl_toolkits/mplot3d/axes3d.py` and
