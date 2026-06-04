@@ -929,6 +929,26 @@ func TestDrawTextRotatedMatchesMatplotlibRightYLabelInkBounds(t *testing.T) {
 	}
 }
 
+func TestDrawTextUsesMatplotlibRoundHalfEvenForBitmapOrigin(t *testing.T) {
+	r := mustNew(t, 120, 80)
+	r.SetResolution(100)
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 120, Y: 80}}); err != nil {
+		t.Fatalf("Begin failed: %v", err)
+	}
+	r.DrawTextWithFont("0", geom.Pt{X: 59.625, Y: 40}, 10, render.Color{A: 1}, "DejaVu Sans")
+	if err := r.End(); err != nil {
+		t.Fatalf("End failed: %v", err)
+	}
+
+	bounds, _, ok := inkBounds(r.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	if !ok {
+		t.Fatal("expected visible text ink")
+	}
+	if got, want := bounds.Min.X, 60.0; got != want {
+		t.Fatalf("text ink min x = %v, want matplotlib round-half-even placement %v", got, want)
+	}
+}
+
 func TestGetImage(t *testing.T) {
 	r := mustNew(t, 200, 150)
 	img := r.GetImage()

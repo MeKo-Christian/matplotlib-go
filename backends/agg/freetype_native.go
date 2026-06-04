@@ -170,6 +170,12 @@ func (r *Renderer) drawNativeFreetypeText(text string, face render.FontFace, ori
 	return drewGlyph
 }
 
+// Matplotlib's Python AGG backend calls Python round() before draw_text_image,
+// which is ties-to-even, not Go's half-away-from-zero math.Round.
+func pythonRound(v float64) float64 {
+	return math.RoundToEven(v)
+}
+
 func (r *Renderer) drawNativeFreetypeRunText(text string, face render.FontFace, origin geom.Pt, size float64, textColor render.Color, hintingFactor int) bool {
 	if r.ctx == nil || text == "" || face.Path == "" || size <= 0 {
 		return false
@@ -186,8 +192,8 @@ func (r *Renderer) drawNativeFreetypeRunText(text string, face render.FontFace, 
 		}
 		maskHeight := mask.Bounds().Dy()
 		descent := -float64(run.bbox.yMin) / 64.0
-		dstX := math.Round(origin.X + float64(run.bbox.xMin)/64.0)
-		bottomY := math.Round(origin.Y+descent) + 1
+		dstX := pythonRound(origin.X + float64(run.bbox.xMin)/64.0)
+		bottomY := pythonRound(origin.Y+descent) + 1
 		dstY := bottomY - float64(maskHeight)
 		return r.blendAlphaMask(mask, int(dstX), int(dstY), textColor)
 	})
@@ -219,8 +225,8 @@ func (r *Renderer) drawNativeFreetypeRunTextRotated(text string, face render.Fon
 		descent := -float64(run.bbox.yMin) / 64.0
 		sinT := math.Sin(angle)
 		cosT := math.Cos(angle)
-		x := math.Round(origin.X + float64(run.bbox.xMin)/64.0 + descent*sinT)
-		y := math.Round(origin.Y+descent*cosT) + 1
+		x := pythonRound(origin.X + float64(run.bbox.xMin)/64.0 + descent*sinT)
+		y := pythonRound(origin.Y+descent*cosT) + 1
 		height := float64(mask.Bounds().Dy())
 		transform := agglib.NewTransformationsFromValues(
 			cosT,
@@ -682,8 +688,8 @@ func (r *Renderer) DrawMathTextImage(glyphs []render.MathGlyphPlacement, rects [
 	parseDescent := totalH - boxAscent
 	parseH := totalH - boxDescent
 	imageHeight := math.Ceil(parseH + math.Max(parseDescent, 0))
-	imageLeftDev := math.Round(anchor.X)
-	imageTopDev := math.Round(baselineDev+parseDescent) + 1 - imageHeight
+	imageLeftDev := pythonRound(anchor.X)
+	imageTopDev := pythonRound(baselineDev+parseDescent) + 1 - imageHeight
 
 	for i := range rendered {
 		p := &rendered[i]

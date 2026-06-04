@@ -811,6 +811,25 @@ func (r *textRecordingRenderer) DrawText(text string, origin geom.Pt, size float
 	r.Renderer.DrawText(text, origin, size, color)
 }
 
+func (r *textRecordingRenderer) DrawTextWithFont(text string, origin geom.Pt, size float64, color render.Color, fontKey string) {
+	bounds, _ := r.MeasureTextBounds(text, size, fontKey)
+	metrics := r.MeasureText(text, size, fontKey)
+	heights, _ := r.MeasureFontHeights(size, fontKey)
+	r.records = append(r.records, textDrawRecord{
+		Text:    text,
+		Size:    size,
+		Origin:  origin,
+		Metrics: metrics,
+		Heights: heights,
+		Bounds:  bounds,
+		Ink: geom.Rect{
+			Min: geom.Pt{X: origin.X + bounds.X, Y: origin.Y + bounds.Y},
+			Max: geom.Pt{X: origin.X + bounds.X + bounds.W, Y: origin.Y + bounds.Y + bounds.H},
+		},
+	})
+	r.Renderer.DrawTextWithFont(text, origin, size, color, fontKey)
+}
+
 func TestBarBasicTextPlacementDiagnostic(t *testing.T) {
 	if os.Getenv("MPL_GO_TEXT_DIAG") == "" {
 		t.Skip("set MPL_GO_TEXT_DIAG=1 to log Go vs Matplotlib text placement")
