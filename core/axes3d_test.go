@@ -1384,6 +1384,40 @@ func TestAxes3DFillBetweenCreatesProjectedQuadBands(t *testing.T) {
 	}
 }
 
+func TestAxes3DFillBetweenAxLimClipDropsOutsidePolygons(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(0, 1.25)
+
+	fill := ax.FillBetween3D(
+		[]float64{0, 1, 2},
+		[]float64{0, 0, 0},
+		[]float64{1, 1, 1},
+		[]float64{0, 1, 2},
+		[]float64{1, 1, 1},
+		[]float64{0, 0, 0},
+		FillBetween3DOptions{Mode: FillBetween3DModeQuad, AxLimClip: true},
+	)
+	if fill == nil {
+		t.Fatal("FillBetween3D returned nil")
+	}
+	if got, want := len(fill.Polygons), 1; got != want {
+		t.Fatalf("clipped FillBetween3D polygons = %d, want only the in-limit quad (%d)", got, want)
+	}
+	want := []Pt{
+		ax.ProjectPoint(0, 0, 1),
+		ax.ProjectPoint(1, 0, 1),
+		ax.ProjectPoint(1, 1, 0),
+		ax.ProjectPoint(0, 1, 0),
+	}
+	if !pointsEqual(fill.Polygons[0], want, 1e-12) {
+		t.Fatalf("clipped FillBetween3D polygon = %+v, want %+v", fill.Polygons[0], want)
+	}
+}
+
 func TestAxes3DBarProjects2DBarsIntoSelectedZDirection(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -2714,6 +2748,42 @@ func TestAxes3DBar3DCreatesSegments(t *testing.T) {
 	}
 	if !foundFaces {
 		t.Fatal("Bar3D did not add filled projected cuboid faces")
+	}
+}
+
+func TestAxes3DBar3DAxLimClipDropsOutsideCuboids(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(0, 1)
+
+	collection := ax.Bar3D(
+		[]float64{0, 2},
+		[]float64{0, 0},
+		[]float64{0, 0},
+		[]float64{0.5, 0.5},
+		[]float64{0.5, 0.5},
+		[]float64{0.5, 0.5},
+		Bar3DOptions{AxLimClip: true},
+	)
+	if collection == nil {
+		t.Fatal("Bar3D returned nil")
+	}
+	if got, want := len(collection.Segments), 8; got != want {
+		t.Fatalf("clipped Bar3D edge segments = %d, want one in-limit cuboid (%d)", got, want)
+	}
+	foundClippedFaces := false
+	for _, artist := range ax.Artists {
+		polys, ok := artist.(*PolyCollection)
+		if ok && len(polys.Polygons) == 6 {
+			foundClippedFaces = true
+			break
+		}
+	}
+	if !foundClippedFaces {
+		t.Fatal("Bar3D did not add exactly one in-limit cuboid's filled faces")
 	}
 }
 

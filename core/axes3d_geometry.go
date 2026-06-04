@@ -190,9 +190,9 @@ type projected3DPolygon struct {
 	depth   float64
 }
 
-func (a *Axes3D) projectFillBetween3DPolygons(x1, y1, z1, x2, y2, z2 []float64, mode FillBetween3DMode) ([][]geom.Pt, float64) {
+func (a *Axes3D) projectFillBetween3DPolygons(x1, y1, z1, x2, y2, z2 []float64, mode FillBetween3DMode, axlimClip ...bool) ([][]geom.Pt, float64) {
 	raw := fillBetween3DRawPolygons(x1, y1, z1, x2, y2, z2, mode)
-	return a.projectSorted3DPolygons(raw)
+	return a.projectSorted3DPolygons(raw, axlimClip...)
 }
 
 func fillBetween3DRawPolygons(x1, y1, z1, x2, y2, z2 []float64, mode FillBetween3DMode) [][]vec3 {
@@ -372,11 +372,15 @@ func errorBar3DCapSegments(center vec3, axis int, half float64) [][]vec3 {
 	return [][]vec3{{a0, a1}, {b0, b1}}
 }
 
-func (a *Axes3D) projectSorted3DPolygons(raw [][]vec3) ([][]geom.Pt, float64) {
+func (a *Axes3D) projectSorted3DPolygons(raw [][]vec3, axlimClip ...bool) ([][]geom.Pt, float64) {
 	projected := make([]projected3DPolygon, 0, len(raw))
 	collectionDepth := math.Inf(1)
+	clip := len(axlimClip) > 0 && axlimClip[0]
 	for _, polygon3D := range raw {
 		if len(polygon3D) < 3 {
+			continue
+		}
+		if clip && !a.polygonWithin3DViewLimits(polygon3D) {
 			continue
 		}
 		polygon := make([]geom.Pt, 0, len(polygon3D))

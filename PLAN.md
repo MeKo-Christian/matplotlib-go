@@ -2139,7 +2139,7 @@ example/browser breadth as documentation work.
           clipping, and projected-extent behavior. Add targeted regression
           tests before changing shared projection paths.
 
-        - [ ] 17.75.4.2.2 Surface and Polygon Depth: audit `Surface`,
+        - [x] 17.75.4.2.2 Surface and Polygon Depth: audit `Surface`,
           `Contour`, `Contourf`, `TriContour`, `TriContourf`, `Trisurf`,
           `Bar3D`, and `FillBetween3D` against Matplotlib's polygon face
           sorting, collection zorder, offset-plane clipping, and projected

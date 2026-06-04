@@ -103,6 +103,7 @@ type Bar3DOptions struct {
 	LineWidth *float64
 	Alpha     *float64
 	Label     string
+	AxLimClip bool
 }
 
 // VoxelOptions configures boolean-grid voxel rendering.
@@ -129,8 +130,10 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *Lin
 	alpha := 1.0
 	edgeAlpha := 0.0
 	label := ""
+	opt := Bar3DOptions{}
 	if len(opts) > 0 {
-		o := opts[0]
+		opt = opts[0]
+		o := opt
 		if o.Color != nil {
 			color = *o.Color
 		}
@@ -151,7 +154,7 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *Lin
 	if len(opts) > 0 && opts[0].Alpha != nil {
 		faceColor.A *= alpha
 	}
-	faces, faceColors := a.projectBar3DShadedFaces(x, y, z, dx, dy, dz, faceColor)
+	faces, faceColors := a.projectBar3DShadedFaces(x, y, z, dx, dy, dz, faceColor, opt.AxLimClip)
 	barZ := a.bar3DCollectionZ(x, y, z, dx, dy, dz)
 	if len(faces) > 0 {
 		faceCollection := &PolyCollection{
@@ -167,7 +170,7 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *Lin
 		a.Add(faceCollection)
 		a.add3DReprojector(func() {
 			if faceCollection != nil {
-				faces, faceColors := a.projectBar3DShadedFaces(x, y, z, dx, dy, dz, faceColor)
+				faces, faceColors := a.projectBar3DShadedFaces(x, y, z, dx, dy, dz, faceColor, opt.AxLimClip)
 				faceCollection.Polygons = faces
 				faceCollection.FaceColors = faceColors
 				faceCollection.z = a.bar3DCollectionZ(x, y, z, dx, dy, dz)
@@ -175,7 +178,7 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *Lin
 		}, limitsChanged)
 	}
 
-	segments := a.projectBar3DSegments(x, y, z, dx, dy, dz)
+	segments := a.projectBar3DSegments(x, y, z, dx, dy, dz, opt.AxLimClip)
 
 	collection := &LineCollection{
 		Collection: Collection{
@@ -193,7 +196,7 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *Lin
 	a.Add(collection)
 	a.add3DReprojector(func() {
 		if collection != nil {
-			collection.Segments = a.projectBar3DSegments(x, y, z, dx, dy, dz)
+			collection.Segments = a.projectBar3DSegments(x, y, z, dx, dy, dz, opt.AxLimClip)
 			collection.z = a.bar3DCollectionZ(x, y, z, dx, dy, dz)
 		}
 	}, limitsChanged)

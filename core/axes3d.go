@@ -424,6 +424,7 @@ type FillBetween3DOptions struct {
 	Alpha     *float64
 	Label     string
 	Mode      FillBetween3DMode
+	AxLimClip bool
 }
 
 // Quiver3DOptions configures Axes3D.Quiver.
@@ -620,7 +621,7 @@ func (a *Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBet
 		edgeWidth = *opt.EdgeWidth
 	}
 
-	polygons, zorder := a.projectFillBetween3DPolygons(x1[:n], y1[:n], z1[:n], x2[:n], y2[:n], z2[:n], opt.Mode)
+	polygons, zorder := a.projectFillBetween3DPolygons(x1[:n], y1[:n], z1[:n], x2[:n], y2[:n], z2[:n], opt.Mode, opt.AxLimClip)
 	if len(polygons) == 0 {
 		return nil
 	}
@@ -638,7 +639,7 @@ func (a *Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBet
 	}
 	a.Add(collection)
 	a.add3DReprojector(func() {
-		polygons, zorder := a.projectFillBetween3DPolygons(x1[:n], y1[:n], z1[:n], x2[:n], y2[:n], z2[:n], opt.Mode)
+		polygons, zorder := a.projectFillBetween3DPolygons(x1[:n], y1[:n], z1[:n], x2[:n], y2[:n], z2[:n], opt.Mode, opt.AxLimClip)
 		collection.Polygons = polygons
 		collection.FaceColors = repeatColor(color, len(polygons))
 		collection.z = zorder

@@ -207,9 +207,10 @@ func (a *Axes3D) clip3DPolylineRuns(polyline []vec3) [][]vec3 {
 	return runs
 }
 
-func (a *Axes3D) projectBar3DSegments(x, y, z, dx, dy, dz []float64) [][]geom.Pt {
+func (a *Axes3D) projectBar3DSegments(x, y, z, dx, dy, dz []float64, axlimClip ...bool) [][]geom.Pt {
 	n := minLen(x, y, z, dx, dy, dz)
 	segments := make([][]geom.Pt, 0, n*8)
+	clip := len(axlimClip) > 0 && axlimClip[0]
 	for i := 0; i < n; i++ {
 		x0 := x[i]
 		x1 := x[i] + dx[i]
@@ -227,26 +228,28 @@ func (a *Axes3D) projectBar3DSegments(x, y, z, dx, dy, dz []float64) [][]geom.Pt
 			bottom, top = top, bottom
 		}
 
-		p00 := a.ProjectPoint(x0, y0, top)
-		p10 := a.ProjectPoint(x1, y0, top)
-		p11 := a.ProjectPoint(x1, y1, top)
-		p01 := a.ProjectPoint(x0, y1, top)
-		q00 := a.ProjectPoint(x0, y0, bottom)
-		q10 := a.ProjectPoint(x1, y0, bottom)
-		q11 := a.ProjectPoint(x1, y1, bottom)
-		q01 := a.ProjectPoint(x0, y1, bottom)
-
-		segments = append(
-			segments,
-			[]geom.Pt{p00, p10},
-			[]geom.Pt{p10, p11},
-			[]geom.Pt{p11, p01},
-			[]geom.Pt{p01, p00},
-			[]geom.Pt{p00, q00},
-			[]geom.Pt{p10, q10},
-			[]geom.Pt{p11, q11},
-			[]geom.Pt{p01, q01},
-		)
+		corners := [8]vec3{
+			{x0, y0, bottom},
+			{x1, y0, bottom},
+			{x1, y1, bottom},
+			{x0, y1, bottom},
+			{x0, y0, top},
+			{x1, y0, top},
+			{x1, y1, top},
+			{x0, y1, top},
+		}
+		raw := [][]vec3{
+			{corners[4], corners[5]},
+			{corners[5], corners[6]},
+			{corners[6], corners[7]},
+			{corners[7], corners[4]},
+			{corners[4], corners[0]},
+			{corners[5], corners[1]},
+			{corners[6], corners[2]},
+			{corners[7], corners[3]},
+		}
+		projected, _ := a.project3DLineSegments(raw, clip)
+		segments = append(segments, projected...)
 	}
 	return segments
 }
@@ -256,7 +259,7 @@ func (a *Axes3D) projectBar3DFaces(x, y, z, dx, dy, dz []float64) [][]geom.Pt {
 	return polygons
 }
 
-func (a *Axes3D) projectBar3DShadedFaces(x, y, z, dx, dy, dz []float64, baseColor render.Color) ([][]geom.Pt, []render.Color) {
+func (a *Axes3D) projectBar3DShadedFaces(x, y, z, dx, dy, dz []float64, baseColor render.Color, axlimClip ...bool) ([][]geom.Pt, []render.Color) {
 	type face struct {
 		polygon []geom.Pt
 		color   render.Color
@@ -264,6 +267,7 @@ func (a *Axes3D) projectBar3DShadedFaces(x, y, z, dx, dy, dz []float64, baseColo
 	}
 	n := minLen(x, y, z, dx, dy, dz)
 	faces := make([]face, 0, n*6)
+	clip := len(axlimClip) > 0 && axlimClip[0]
 	for i := 0; i < n; i++ {
 		x0 := x[i]
 		x1 := x[i] + dx[i]
@@ -308,12 +312,17 @@ func (a *Axes3D) projectBar3DShadedFaces(x, y, z, dx, dy, dz []float64, baseColo
 		}
 		for faceIdx, indices := range faceIndices {
 			polygon := make([]geom.Pt, 0, len(indices))
+			polygon3D := make([]vec3, 0, len(indices))
 			depth := 0.0
 			for _, idx := range indices {
 				c := corners[idx]
+				polygon3D = append(polygon3D, vec3{c[0], c[1], c[2]})
 				pt, zDepth := a.projectPointDepth(c[0], c[1], c[2])
 				polygon = append(polygon, pt)
 				depth += zDepth
+			}
+			if clip && !a.polygonWithin3DViewLimits(polygon3D) {
+				continue
 			}
 			faces = append(faces, face{
 				polygon: polygon,
