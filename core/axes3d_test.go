@@ -367,20 +367,56 @@ func TestAxes3DScatterScalarValuesFollowAxLimClip(t *testing.T) {
 	}
 	ax.SetXLim(0, 1)
 
+	x := []float64{0.25, 0.75, 2}
+	y := []float64{0, 0.5, 0}
+	z := []float64{0, 1, 0}
+	values := []float64{2, 8, 9}
+	vmin := 0.0
+	vmax := 10.0
 	scatter := ax.Scatter3D(
-		[]float64{0.25, 2},
-		[]float64{0, 0},
-		[]float64{0, 1},
-		ScatterOptions{ScalarValues: []float64{2, 9}, Colormap: "viridis", AxLimClip: true},
+		x,
+		y,
+		z,
+		ScatterOptions{ScalarValues: values, Colormap: "viridis", VMin: &vmin, VMax: &vmax, AxLimClip: true},
 	)
 	if scatter == nil {
 		t.Fatal("Scatter3D returned nil")
 	}
-	if got, want := len(scatter.XY), 1; got != want {
+	if got, want := len(scatter.XY), 2; got != want {
 		t.Fatalf("3D scatter clipped points = %d, want %d", got, want)
 	}
-	if got, want := scatter.ScalarValues, []float64{2}; len(got) != len(want) || !approx(got[0], want[0], 1e-12) {
-		t.Fatalf("3D scatter clipped scalar array = %v, want visible values %v", got, want)
+	projected := ax.projectedScatterData(x, y, z, true)
+	sort.SliceStable(projected, func(i, j int) bool {
+		return projected[i].depth > projected[j].depth
+	})
+	wantValues := make([]float64, len(projected))
+	for i, point := range projected {
+		wantValues[i] = values[point.index]
+	}
+	if len(scatter.ScalarValues) != len(wantValues) {
+		t.Fatalf("3D scatter clipped scalar array = %v, want visible sorted values %v", scatter.ScalarValues, wantValues)
+	}
+	for i, want := range wantValues {
+		if !approx(scatter.ScalarValues[i], want, 1e-12) {
+			t.Fatalf("3D scatter clipped scalar array = %v, want visible sorted values %v", scatter.ScalarValues, wantValues)
+		}
+	}
+	if got, want := scatter.GetArray(), scatter.ScalarValues; len(got) != len(want) {
+		t.Fatalf("3D scatter clipped GetArray = %v, want %v", got, want)
+	}
+	cbAx := fig.AddColorbar(ax.Axes, scatter)
+	if cbAx == nil || len(cbAx.Artists) == 0 {
+		t.Fatal("AddColorbar returned no colorbar axes for clipped 3D scatter")
+	}
+	cb, ok := cbAx.Artists[0].(*Colorbar)
+	if !ok {
+		t.Fatalf("clipped 3D scatter colorbar artist = %T, want *Colorbar", cbAx.Artists[0])
+	}
+	if cb.Mappable != scatter {
+		t.Fatalf("clipped 3D scatter colorbar mappable = %p, want scatter %p", cb.Mappable, scatter)
+	}
+	if cb.Mapping.Colormap != "viridis" || cb.Mapping.VMin != vmin || cb.Mapping.VMax != vmax {
+		t.Fatalf("clipped 3D scatter colorbar mapping = %+v, want viridis range %.1f..%.1f", cb.Mapping, vmin, vmax)
 	}
 }
 

@@ -2310,9 +2310,13 @@ example/browser breadth as documentation work.
                   and `TriContourf`, asserting colorbar creation, retained
                   mappable handles, cmap/clim mapping, and axis domains.
 
-                - [ ] 17.75.4.4.4.2.2 Scatter Mappables: test colorbar
+                - [x] 17.75.4.4.4.2.2 Scatter Mappables: test colorbar
                   creation from `Scatter3D`, including depth-shaded scalar
-                  arrays and clipped/reprojected point order.
+                  arrays and clipped/reprojected point order. Extended the
+                  focused scatter scalar tests to assert direct colorbar
+                  creation, retained scatter mappable handles, explicit
+                  cmap/clim mapping, clipped visible scalar arrays, and
+                  projected depth-sorted value order.
 
                 - [ ] 17.75.4.4.4.2.3 Unsupported Helpers: test or document
                   colorbar behavior for explicit-color 3D helpers such as
