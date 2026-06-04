@@ -2133,7 +2133,7 @@ example/browser breadth as documentation work.
       behavior. Complete the scoped audits below in order before marking this
       parent item done.
 
-        - [ ] 17.75.4.2.1 Line and Marker Depth: audit `Plot3D`, `Scatter3D`,
+        - [x] 17.75.4.2.1 Line and Marker Depth: audit `Plot3D`, `Scatter3D`,
           `Wireframe`, `Quiver3D`, `Stem3D`, and `ErrorBar3D` against
           Matplotlib's line/marker depth ordering, depth shading, axlim
           clipping, and projected-extent behavior. Add targeted regression

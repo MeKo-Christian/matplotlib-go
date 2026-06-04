@@ -35,7 +35,7 @@ func reprojectLine3D(line *Line2D, points []geom.Pt) {
 	line.XY = append(line.XY[:0], points...)
 }
 
-func (a *Axes3D) projectedScatterData(x, y, z []float64) []projectedScatterPoint {
+func (a *Axes3D) projectedScatterData(x, y, z []float64, axlimClip ...bool) []projectedScatterPoint {
 	n := len(x)
 	if len(y) < n {
 		n = len(y)
@@ -43,9 +43,13 @@ func (a *Axes3D) projectedScatterData(x, y, z []float64) []projectedScatterPoint
 	if len(z) < n {
 		n = len(z)
 	}
+	clip := len(axlimClip) > 0 && axlimClip[0]
 	points := make([]projectedScatterPoint, 0, n)
 	for i := 0; i < n; i++ {
 		if !isFinite3D(x[i], y[i], z[i]) {
+			continue
+		}
+		if clip && !a.pointWithin3DViewLimits(vec3{x[i], y[i], z[i]}) {
 			continue
 		}
 		point, depth := a.projectPointDepth(x[i], y[i], z[i])

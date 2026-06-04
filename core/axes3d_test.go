@@ -243,6 +243,32 @@ func TestAxes3DScatterDepthShadesAndSortsMarkersLikeMatplotlib(t *testing.T) {
 	}
 }
 
+func TestAxes3DScatterAxLimClipDropsOutsideMarkers(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(0, 1)
+
+	scatter := ax.Scatter3D(
+		[]float64{0.25, 2},
+		[]float64{0, 0},
+		[]float64{0, 0},
+		ScatterOptions{AxLimClip: true},
+	)
+	if scatter == nil {
+		t.Fatal("Scatter3D returned nil")
+	}
+	if got, want := len(scatter.XY), 1; got != want {
+		t.Fatalf("Scatter3D clipped markers = %d, want %d", got, want)
+	}
+	want := ax.ProjectPoint(0.25, 0, 0)
+	if got := scatter.XY[0]; !approx(got.X, want.X, 1e-12) || !approx(got.Y, want.Y, 1e-12) {
+		t.Fatalf("Scatter3D clipped marker = %+v, want %+v", got, want)
+	}
+}
+
 func TestAxes3DPlot3DUsesProjectedCoordinates(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -258,6 +284,35 @@ func TestAxes3DPlot3DUsesProjectedCoordinates(t *testing.T) {
 	}
 	if got, want := len(line.XY), 2; got != want {
 		t.Fatalf("projected points = %d, want %d", got, want)
+	}
+}
+
+func TestAxes3DPlot3DAxLimClipDropsOutsidePoints(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(0, 1)
+
+	line := ax.Plot3D(
+		[]float64{0, 0.5, 2},
+		[]float64{0, 0, 0},
+		[]float64{0, 0, 0},
+		PlotOptions{AxLimClip: true},
+	)
+	if line == nil {
+		t.Fatal("Plot3D returned nil")
+	}
+	if got, want := len(line.XY), 2; got != want {
+		t.Fatalf("Plot3D clipped points = %d, want %d", got, want)
+	}
+	want := []Pt{
+		ax.ProjectPoint(0, 0, 0),
+		ax.ProjectPoint(0.5, 0, 0),
+	}
+	if !pointsEqual(line.XY, want, 1e-12) {
+		t.Fatalf("Plot3D clipped XY = %+v, want %+v", line.XY, want)
 	}
 }
 
@@ -651,6 +706,35 @@ func TestAxes3DWireframeDefaultLineWidthMatchesMatplotlib(t *testing.T) {
 	}
 	if got, want := collection.LineWidth, 2.0; got != want {
 		t.Fatalf("wireframe default line width = %v, want Matplotlib default converted to Go pixels %v", got, want)
+	}
+}
+
+func TestAxes3DWireframeAxLimClipDropsOutsideRuns(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(0, 1)
+
+	collection := ax.Wireframe(
+		[]float64{0, 2},
+		[]float64{0, 1},
+		[][]float64{{0, 0}, {0, 0}},
+		PlotOptions{AxLimClip: true},
+	)
+	if collection == nil {
+		t.Fatal("Wireframe returned nil")
+	}
+	if got, want := len(collection.Segments), 1; got != want {
+		t.Fatalf("wireframe clipped segments = %d, want only the in-limit column (%d)", got, want)
+	}
+	want := []Pt{
+		ax.ProjectPoint(0, 0, 0),
+		ax.ProjectPoint(0, 1, 0),
+	}
+	if !pointsEqual(collection.Segments[0], want, 1e-12) {
+		t.Fatalf("wireframe clipped segment = %+v, want %+v", collection.Segments[0], want)
 	}
 }
 
@@ -1230,6 +1314,41 @@ func TestAxes3DStemSupportsMatplotlibOrientationJuggling(t *testing.T) {
 	}
 }
 
+func TestAxes3DStemAxLimClipDropsOutsideStemsAndMarkers(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(0, 1)
+
+	container := ax.Stem3D(
+		[]float64{0.25, 2},
+		[]float64{0, 0},
+		[]float64{1, 1},
+		Stem3DOptions{AxLimClip: true},
+	)
+	if container == nil {
+		t.Fatal("Stem3D returned nil")
+	}
+	if got, want := len(container.StemLines.Segments), 1; got != want {
+		t.Fatalf("clipped stem segments = %d, want %d", got, want)
+	}
+	if got, want := len(container.MarkerCollection.Offsets), 1; got != want {
+		t.Fatalf("clipped stem markers = %d, want %d", got, want)
+	}
+	if got, want := len(container.Baseline.XY), 1; got != want {
+		t.Fatalf("clipped stem baseline points = %d, want %d", got, want)
+	}
+	want := []Pt{
+		ax.ProjectPoint(0.25, 0, 0),
+		ax.ProjectPoint(0.25, 0, 1),
+	}
+	if !pointsEqual(container.StemLines.Segments[0], want, 1e-12) {
+		t.Fatalf("clipped stem segment = %+v, want %+v", container.StemLines.Segments[0], want)
+	}
+}
+
 func TestAxes3DFillBetweenCreatesProjectedQuadBands(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -1363,6 +1482,39 @@ func TestAxes3DQuiverNormalizesVectorsAndSupportsMiddlePivot(t *testing.T) {
 	}
 }
 
+func TestAxes3DQuiverAxLimClipDropsOutsideArrows(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(0, 1)
+
+	length := 0.2
+	q := ax.Quiver(
+		[]float64{0.25, 2},
+		[]float64{0, 0},
+		[]float64{0, 0},
+		[]float64{1, 1},
+		[]float64{0, 0},
+		[]float64{0, 0},
+		Quiver3DOptions{Length: &length, Pivot: "tail", AxLimClip: true},
+	)
+	if q == nil {
+		t.Fatal("Quiver returned nil")
+	}
+	if got, want := len(q.Segments), 3; got != want {
+		t.Fatalf("clipped quiver segments = %d, want one arrow with shaft plus two heads (%d)", got, want)
+	}
+	wantShaft := []Pt{
+		ax.ProjectPoint(0.45, 0, 0),
+		ax.ProjectPoint(0.25, 0, 0),
+	}
+	if !pointsEqual(q.Segments[0], wantShaft, 1e-12) {
+		t.Fatalf("clipped quiver shaft = %+v, want %+v", q.Segments[0], wantShaft)
+	}
+}
+
 func TestAxes3DErrorBarProjectsXYZRangesAndCaps(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -1418,6 +1570,38 @@ func TestAxes3DErrorBarUsesComputedDepthZOrder(t *testing.T) {
 	}
 	if !(high.Z() > low.Z()) {
 		t.Fatalf("3D errorbar zorders = low %.6g high %.6g, want projected depth ordering", low.Z(), high.Z())
+	}
+}
+
+func TestAxes3DErrorBarAxLimClipDropsOutsideRanges(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(0, 1)
+
+	errs := ax.ErrorBar3D(
+		[]float64{0.5, 2},
+		[]float64{0, 0},
+		[]float64{0, 0},
+		nil,
+		nil,
+		[]float64{0.1, 0.1},
+		ErrorBar3DOptions{AxLimClip: true},
+	)
+	if errs == nil {
+		t.Fatal("ErrorBar3D returned nil")
+	}
+	if got, want := len(errs.Segments), 1; got != want {
+		t.Fatalf("clipped errorbar segments = %d, want only the in-limit z range (%d)", got, want)
+	}
+	want := []Pt{
+		ax.ProjectPoint(0.5, 0, -0.1),
+		ax.ProjectPoint(0.5, 0, 0.1),
+	}
+	if !pointsEqual(errs.Segments[0], want, 1e-12) {
+		t.Fatalf("clipped errorbar segment = %+v, want %+v", errs.Segments[0], want)
 	}
 }
 

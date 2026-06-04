@@ -223,6 +223,7 @@ type ScatterOptions struct {
 	EdgeWidth    *float64         // edge width
 	Alpha        *float64         // alpha transparency
 	Label        string           // series label for legend
+	AxLimClip    bool             // 3D scatter: hide points outside explicit axes limits
 }
 
 // Scatter creates a scatter plot with automatic shape/fill color cycling if no color is specified.

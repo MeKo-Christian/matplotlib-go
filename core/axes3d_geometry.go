@@ -73,7 +73,7 @@ func stem3DLineEndpoints(x, y, z, bottom float64, orientation string) (vec3, vec
 	}
 }
 
-func (a *Axes3D) projectStem3DGeometry(x, y, z []float64, bottom float64, orientation string) ([][]geom.Pt, []geom.Pt, []geom.Pt, float64) {
+func (a *Axes3D) projectStem3DGeometry(x, y, z []float64, bottom float64, orientation string, axlimClip bool) ([][]geom.Pt, []geom.Pt, []geom.Pt, float64) {
 	n := minLen(x, y, z)
 	segments := make([][]geom.Pt, 0, n)
 	baseline := make([]geom.Pt, 0, n)
@@ -81,6 +81,9 @@ func (a *Axes3D) projectStem3DGeometry(x, y, z []float64, bottom float64, orient
 	depth := math.Inf(1)
 	for i := 0; i < n; i++ {
 		start, end := stem3DLineEndpoints(x[i], y[i], z[i], bottom, orientation)
+		if axlimClip && (!a.pointWithin3DViewLimits(start) || !a.pointWithin3DViewLimits(end)) {
+			continue
+		}
 		startPt, startDepth := a.projectPointDepth(start[0], start[1], start[2])
 		endPt, endDepth := a.projectPointDepth(end[0], end[1], end[2])
 		segments = append(segments, []geom.Pt{startPt, endPt})
@@ -97,7 +100,7 @@ func (a *Axes3D) projectStem3DGeometry(x, y, z []float64, bottom float64, orient
 }
 
 func (a *Axes3D) projectQuiver3DSegments(x, y, z, u, v, w []float64, opt Quiver3DOptions) ([][]geom.Pt, float64) {
-	return a.project3DLineSegments(quiver3DRawSegments(x, y, z, u, v, w, opt))
+	return a.project3DLineSegments(quiver3DRawSegments(x, y, z, u, v, w, opt), opt.AxLimClip)
 }
 
 func (a *Axes3D) observeQuiver3DData(x, y, z, u, v, w []float64, opt Quiver3DOptions) bool {
@@ -315,7 +318,7 @@ func (a *Axes3D) observe3DErrorBarData(x, y, z, xErr, yErr, zErr []float64, opt 
 }
 
 func (a *Axes3D) projectErrorBar3DSegments(x, y, z, xErr, yErr, zErr []float64, opt ErrorBar3DOptions) ([][]geom.Pt, float64) {
-	return a.project3DLineSegments(errorBar3DRawSegments(x, y, z, xErr, yErr, zErr, opt))
+	return a.project3DLineSegments(errorBar3DRawSegments(x, y, z, xErr, yErr, zErr, opt), opt.AxLimClip)
 }
 
 func errorBar3DRawSegments(x, y, z, xErr, yErr, zErr []float64, opt ErrorBar3DOptions) [][]vec3 {
@@ -445,34 +448,52 @@ func (a *Axes3D) projectSorted3DLineSegments(raw [][]vec3) ([][]geom.Pt, float64
 	return segments, computed3DCollectionZ(collectionDepth)
 }
 
-func (a *Axes3D) project3DLineSegments(raw [][]vec3) ([][]geom.Pt, float64) {
+func (a *Axes3D) project3DLineSegments(raw [][]vec3, axlimClip ...bool) ([][]geom.Pt, float64) {
 	segments := make([][]geom.Pt, 0, len(raw))
 	collectionDepth := math.Inf(1)
+	clip := len(axlimClip) > 0 && axlimClip[0]
 	for _, segment3D := range raw {
 		if len(segment3D) < 2 {
 			continue
 		}
-		segment := make([]geom.Pt, 0, len(segment3D))
-		valid := true
-		for _, p := range segment3D {
-			if !isFinite3D(p[0], p[1], p[2]) {
-				valid = false
-				break
-			}
-			pt, zDepth := a.projectPointDepth(p[0], p[1], p[2])
-			segment = append(segment, pt)
-			if zDepth < collectionDepth {
-				collectionDepth = zDepth
-			}
+		runs := [][]vec3{segment3D}
+		if clip {
+			runs = a.clip3DPolylineRuns(segment3D)
 		}
-		if valid {
+		for _, run3D := range runs {
+			segment, minDepth, ok := a.project3DLineSegment(run3D)
+			if !ok {
+				continue
+			}
+			if minDepth < collectionDepth {
+				collectionDepth = minDepth
+			}
 			segments = append(segments, segment)
 		}
 	}
 	return segments, computed3DCollectionZ(collectionDepth)
 }
 
-func (a *Axes3D) projectedData(x, y, z []float64) []geom.Pt {
+func (a *Axes3D) project3DLineSegment(segment3D []vec3) ([]geom.Pt, float64, bool) {
+	if len(segment3D) < 2 {
+		return nil, math.Inf(1), false
+	}
+	segment := make([]geom.Pt, 0, len(segment3D))
+	minDepth := math.Inf(1)
+	for _, p := range segment3D {
+		if !isFinite3D(p[0], p[1], p[2]) {
+			return nil, math.Inf(1), false
+		}
+		pt, zDepth := a.projectPointDepth(p[0], p[1], p[2])
+		segment = append(segment, pt)
+		if zDepth < minDepth {
+			minDepth = zDepth
+		}
+	}
+	return segment, minDepth, true
+}
+
+func (a *Axes3D) projectedData(x, y, z []float64, axlimClip ...bool) []geom.Pt {
 	if a == nil || a.Axes == nil {
 		return nil
 	}
@@ -488,9 +509,16 @@ func (a *Axes3D) projectedData(x, y, z []float64) []geom.Pt {
 		return nil
 	}
 
-	pts := make([]geom.Pt, n)
+	clip := len(axlimClip) > 0 && axlimClip[0]
+	pts := make([]geom.Pt, 0, n)
 	for i := 0; i < n; i++ {
-		pts[i] = a.ProjectPoint(x[i], y[i], z[i])
+		if !isFinite3D(x[i], y[i], z[i]) {
+			continue
+		}
+		if clip && !a.pointWithin3DViewLimits(vec3{x[i], y[i], z[i]}) {
+			continue
+		}
+		pts = append(pts, a.ProjectPoint(x[i], y[i], z[i]))
 	}
 	return pts
 }
@@ -511,23 +539,30 @@ func (a *Axes3D) projectWireframeSegments(x, y []float64, z [][]float64, opts ..
 	}
 
 	rowIndices, colIndices := wireframeSampleIndices(rows, cols, firstPlotOptions(opts))
+	opt := firstPlotOptions(opts)
 	segments := make([][]geom.Pt, 0, len(rowIndices)+len(colIndices))
 	for _, row := range rowIndices {
-		line := make([]geom.Pt, 0, cols)
+		line3D := make([]vec3, 0, cols)
 		for col := 0; col < cols; col++ {
-			line = append(line, a.ProjectPoint(x[col], y[row], z[row][col]))
+			line3D = append(line3D, vec3{x[col], y[row], z[row][col]})
 		}
-		if len(line) > 1 {
-			segments = append(segments, line)
+		lines, _ := a.project3DLineSegments([][]vec3{line3D}, opt.AxLimClip)
+		for _, line := range lines {
+			if len(line) > 1 {
+				segments = append(segments, line)
+			}
 		}
 	}
 	for _, col := range colIndices {
-		line := make([]geom.Pt, 0, rows)
+		line3D := make([]vec3, 0, rows)
 		for row := 0; row < rows; row++ {
-			line = append(line, a.ProjectPoint(x[col], y[row], z[row][col]))
+			line3D = append(line3D, vec3{x[col], y[row], z[row][col]})
 		}
-		if len(line) > 1 {
-			segments = append(segments, line)
+		lines, _ := a.project3DLineSegments([][]vec3{line3D}, opt.AxLimClip)
+		for _, line := range lines {
+			if len(line) > 1 {
+				segments = append(segments, line)
+			}
 		}
 	}
 	return segments

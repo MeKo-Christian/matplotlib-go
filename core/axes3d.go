@@ -296,7 +296,8 @@ func NewAxes3D(ax *Axes) *Axes3D {
 // Plot3D projects x/y/z values and draws a line through projected points.
 func (a *Axes3D) Plot3D(x, y, z []float64, opts ...PlotOptions) *Line2D {
 	limitsChanged := a.observe3DData(x, y, z)
-	projected := a.projectedData(x, y, z)
+	opt := firstPlotOptions(opts)
+	projected := a.projectedData(x, y, z, opt.AxLimClip)
 	if len(projected) == 0 {
 		return nil
 	}
@@ -308,15 +309,15 @@ func (a *Axes3D) Plot3D(x, y, z []float64, opts ...PlotOptions) *Line2D {
 	}
 
 	if len(opts) > 0 {
-		line := a.Plot(x2, y2, opts[0])
+		line := a.Plot(x2, y2, opt)
 		a.add3DReprojector(func() {
-			reprojectLine3D(line, a.projectedData(x, y, z))
+			reprojectLine3D(line, a.projectedData(x, y, z, opt.AxLimClip))
 		}, limitsChanged)
 		return line
 	}
 	line := a.Plot(x2, y2)
 	a.add3DReprojector(func() {
-		reprojectLine3D(line, a.projectedData(x, y, z))
+		reprojectLine3D(line, a.projectedData(x, y, z, opt.AxLimClip))
 	}, limitsChanged)
 	return line
 }
@@ -327,7 +328,15 @@ func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...ScatterOptions) *Scatter2D
 	if a.ensure3DZMargin(0.05) {
 		limitsChanged = true
 	}
-	projected := a.projectedData(x, y, z)
+	opt := ScatterOptions{}
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	if opt.Size == nil {
+		size := default3DScatterSize
+		opt.Size = &size
+	}
+	projected := a.projectedData(x, y, z, opt.AxLimClip)
 	if len(projected) == 0 {
 		return nil
 	}
@@ -338,30 +347,21 @@ func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...ScatterOptions) *Scatter2D
 		y2[i] = p.Y
 	}
 
-	opt := ScatterOptions{}
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
-	if opt.Size == nil {
-		size := default3DScatterSize
-		opt.Size = &size
-	}
-
 	if len(opts) > 0 {
 		scatter := a.Scatter(x2, y2, opt)
-		reprojectScatter3D(scatter, a.projectedScatterData(x, y, z))
+		reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip))
 		scatter.z = a.points3DCollectionZ(x, y, z)
 		a.add3DReprojector(func() {
-			reprojectScatter3D(scatter, a.projectedScatterData(x, y, z))
+			reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip))
 			scatter.z = a.points3DCollectionZ(x, y, z)
 		}, limitsChanged)
 		return scatter
 	}
 	scatter := a.Scatter(x2, y2, opt)
-	reprojectScatter3D(scatter, a.projectedScatterData(x, y, z))
+	reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip))
 	scatter.z = a.points3DCollectionZ(x, y, z)
 	a.add3DReprojector(func() {
-		reprojectScatter3D(scatter, a.projectedScatterData(x, y, z))
+		reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip))
 		scatter.z = a.points3DCollectionZ(x, y, z)
 	}, limitsChanged)
 	return scatter
@@ -404,6 +404,7 @@ type Stem3DOptions struct {
 	MarkerEdgeWidth *float64
 	Label           string
 	Alpha           *float64
+	AxLimClip       bool
 }
 
 // FillBetween3DMode controls the polygon construction for 3D fill bands.
@@ -445,6 +446,7 @@ type ErrorBar3DOptions struct {
 	CapSize   *float64
 	Alpha     *float64
 	Label     string
+	AxLimClip bool
 
 	XErrLower []float64
 	XErrUpper []float64
@@ -526,7 +528,7 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *StemContainer
 		markerPath = scatter.markerPrototypePath()
 	}
 
-	segments, baseline, offsets, zorder := a.projectStem3DGeometry(x[:n], y[:n], z[:n], bottom, orientation)
+	segments, baseline, offsets, zorder := a.projectStem3DGeometry(x[:n], y[:n], z[:n], bottom, orientation, opt.AxLimClip)
 	stems := &LineCollection{
 		Collection: Collection{Coords: Coords(CoordData), Label: opt.Label, Alpha: 1, z: zorder},
 		Segments:   segments,
@@ -558,7 +560,7 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *StemContainer
 	a.AddCollection(markers)
 	a.Add(baselineArtist)
 	a.add3DReprojector(func() {
-		segments, baseline, offsets, zorder := a.projectStem3DGeometry(x[:n], y[:n], z[:n], bottom, orientation)
+		segments, baseline, offsets, zorder := a.projectStem3DGeometry(x[:n], y[:n], z[:n], bottom, orientation, opt.AxLimClip)
 		stems.Segments = segments
 		stems.z = zorder
 		markers.Offsets = offsets
