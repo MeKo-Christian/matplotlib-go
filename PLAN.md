@@ -2369,10 +2369,13 @@ example/browser breadth as documentation work.
               for each changed 3D color path before adding or refreshing visual
               fixtures.
 
-                - [ ] 17.75.4.4.5.1.1 Scalar Helper Tests: finish focused
+                - [x] 17.75.4.4.5.1.1 Scalar Helper Tests: finish focused
                   scalar-array, cmap, norm, clim, and alpha tests for surface,
                   trisurf, contour, filled contour, triangulated contour, and
-                  scatter helpers.
+                  scatter helpers. Added
+                  `TestAxes3DScalarMappableHelpersApplyAlphaToMappedColors`
+                  and fixed `Scatter3D` scalar colormap colors to respect
+                  scatter alpha before depth shading.
 
                 - [ ] 17.75.4.4.5.1.2 Explicit Color Tests: finish focused
                   explicit-color, per-face/per-point, shading, and
@@ -2514,6 +2517,14 @@ example/browser breadth as documentation work.
         - [ ] 17.75.4.6.3 Final 3D Status Regeneration: regenerate
           `docs/matplotlib-parity-status.md`, run focused catalog/doc freshness
           tests, and mark `17.75.4` complete.
+
+            - [ ] 17.75.4.6.3.1 Status Regeneration: run the documented
+              parity-status regeneration path after all 17.75.4 metadata,
+              migration notes, and fixture rows are updated.
+
+            - [ ] 17.75.4.6.3.2 Final Verification: run focused 3D, catalog,
+              reference-compare, and doc freshness checks before marking
+              17.75.4 complete.
 
 ### 17.75.5 Color, Image, Norm, and Colorbar Extras
 
@@ -2932,8 +2943,8 @@ example/browser breadth as documentation work.
           tests, and mark `17.75.5` complete.
 
             - [ ] 17.75.5.7.4.1 Status Regeneration: run the documented
-              parity-status regeneration path after all 17.75.5 metadata is
-              updated.
+              parity-status regeneration path after all 17.75.5 metadata,
+              migration notes, and fixture rows are updated.
 
             - [ ] 17.75.5.7.4.2 Final Verification: run focused color, norm,
               image, colorbar, catalog, and doc freshness tests before marking

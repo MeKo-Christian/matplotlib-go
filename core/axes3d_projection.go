@@ -100,9 +100,10 @@ func scatterScalarColors(scatter *Scatter2D) []render.Color {
 		VMin:     scatter.VMin,
 		VMax:     scatter.VMax,
 	}.Resolved()
+	alpha := scatter.EffectiveAlpha(scatter.Alpha)
 	colors := make([]render.Color, len(scatter.ScalarValues))
 	for i, value := range scatter.ScalarValues {
-		colors[i] = mapping.Color(value, 1)
+		colors[i] = mapping.Color(value, alpha)
 	}
 	return colors
 }

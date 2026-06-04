@@ -522,6 +522,101 @@ func TestAxes3DScalarMappableContractAudit(t *testing.T) {
 	}
 }
 
+func TestAxes3DScalarMappableHelpersApplyAlphaToMappedColors(t *testing.T) {
+	cmap := "viridis"
+	alpha := 0.4
+	gridX := []float64{0, 1}
+	gridY := []float64{0, 1}
+	gridZ := [][]float64{{0, 2}, {4, 6}}
+	tri := Triangulation{
+		X:         []float64{0, 1, 0, 1},
+		Y:         []float64{0, 0, 1, 1},
+		Triangles: [][3]int{{0, 1, 2}, {1, 3, 2}},
+	}
+
+	tests := []struct {
+		name   string
+		colors func(*Axes3D) []render.Color
+	}{
+		{
+			name: "Surface",
+			colors: func(ax *Axes3D) []render.Color {
+				return ax.Surface(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, Alpha: &alpha}).FaceColors
+			},
+		},
+		{
+			name: "Trisurf",
+			colors: func(ax *Axes3D) []render.Color {
+				return ax.Trisurf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, Alpha: &alpha}).FaceColors
+			},
+		},
+		{
+			name: "Contour",
+			colors: func(ax *Axes3D) []render.Color {
+				return ax.Contour(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, Alpha: &alpha, Levels: []float64{2, 4}}).Colors
+			},
+		},
+		{
+			name: "Contourf",
+			colors: func(ax *Axes3D) []render.Color {
+				return ax.Contourf(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, Alpha: &alpha, Levels: []float64{0, 2, 4, 6}}).FaceColors
+			},
+		},
+		{
+			name: "TriContour",
+			colors: func(ax *Axes3D) []render.Color {
+				return ax.TriContour(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, Alpha: &alpha, Levels: []float64{2, 4}}).Colors
+			},
+		},
+		{
+			name: "TriContourf",
+			colors: func(ax *Axes3D) []render.Color {
+				return ax.TriContourf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, Alpha: &alpha, Levels: []float64{0, 2, 4, 6}}).FaceColors
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fig := NewFigure(640, 480)
+			ax, err := fig.AddAxes3D(unitRect())
+			if err != nil {
+				t.Fatalf("AddAxes3D: %v", err)
+			}
+			colors := tt.colors(ax)
+			if len(colors) == 0 {
+				t.Fatalf("%s produced no mapped colors", tt.name)
+			}
+			for i, color := range colors {
+				if !approx(color.A, alpha, 1e-12) {
+					t.Fatalf("%s mapped color %d alpha = %.12g, want %.12g", tt.name, i, color.A, alpha)
+				}
+			}
+		})
+	}
+
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	scatter := ax.Scatter3D(
+		[]float64{0, 1},
+		[]float64{0, 1},
+		[]float64{0, 1},
+		ScatterOptions{ScalarValues: []float64{0, 1}, Colormap: cmap, Alpha: &alpha},
+	)
+	if scatter == nil {
+		t.Fatal("Scatter3D returned nil")
+	}
+	if got, want := len(scatter.Colors), 2; got != want {
+		t.Fatalf("scatter mapped colors = %d, want %d", got, want)
+	}
+	if !approx(scatter.Colors[0].A, alpha*0.3, 1e-12) || !approx(scatter.Colors[1].A, alpha, 1e-12) {
+		t.Fatalf("scatter mapped depth-shaded alphas = %.12g, %.12g; want %.12g..%.12g", scatter.Colors[0].A, scatter.Colors[1].A, alpha*0.3, alpha)
+	}
+}
+
 func TestAxes3DCollectionMappablesCreateColorbars(t *testing.T) {
 	cmap := "plasma"
 	vmin := 0.0
