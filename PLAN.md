@@ -2081,31 +2081,41 @@ example/browser breadth as documentation work.
       `Clabel`) plus regression tests that assert pyplot delegates to the expected
       axes-level implementation.
 
-    - [ ] 17.75.2.5 Fixtures and Docs: add one parity fixture triplet
+    - [x] 17.75.2.5 Fixtures and Docs: add one parity fixture triplet
       (`test/parity/<id>/plot.go`, `plot.py`, and
       `test/matplotlib_ref/plots/<id>.py`) for each helper as needed, then update
       `docs/matplotlib-parity-status.md` and migration notes with any intentional
       signature differences.
 
-    - [ ] 17.75.2.6 Alignment Checks: ensure each completed helper tracks the
+    - [x] 17.75.2.6 Alignment Checks: ensure each completed helper tracks the
       equivalent implementation in `./third_party/matplotlib` and document any
       intentional deviations before marking the helper complete.
 
 ### 17.75.3 Axes Method Option Breadth
 
-- [ ] Close remaining option gaps for high-use 2D plots: histogram density /
-      cumulative / weights / bin-strategy edge cases, scatter scalar-mapping
-      and marker-family edge cases, bar-label and grouped/stacked bar semantics,
-      fill-between masking / interpolation / step semantics, and errorbar cap /
-      limit / errorevery behavior.
-- [ ] Expand collection and mesh option breadth where it affects visible output:
-      mutable setter behavior, scalar-mappable callbacks, offset transforms,
-      `pcolor` masked-coordinate behavior, `pcolormesh` shape validation, and
-      Gouraud / nearest / flat shading parity.
-- [ ] Add focused unit tests first for every option edge case, then add or
-      update catalog fixtures only when the behavior is visible.
-- [ ] Keep example source close to Matplotlib; do not change examples to hide
-      option gaps.
+- [ ] Split 17.75.3 into execution-ready subtasks and complete them in order:
+    - [x] 17.75.3.1 Histogram Option Breadth: close high-use `Axes.hist`
+      gaps for weights, explicit range handling, cumulative density semantics,
+      and reverse cumulative behavior. Add focused numeric unit tests before
+      code changes and compare the implementation against
+      `third_party/matplotlib/lib/matplotlib/axes/_axes.py`.
+    - [ ] 17.75.3.2 Scatter Option Breadth: harden scalar-mapping,
+      marker-family, edgecolor/facecolor, alpha, and size edge cases where
+      they affect visible output.
+    - [ ] 17.75.3.3 Bar Option Breadth: add or harden bar labels,
+      align/width/baseline semantics, and grouped/stacked bar behavior.
+    - [ ] 17.75.3.4 Fill-Between Option Breadth: implement masking,
+      interpolation, and step semantics for `fill_between` /
+      `fill_betweenx` parity.
+    - [ ] 17.75.3.5 Errorbar Option Breadth: close cap, limit-marker,
+      asymmetric error, and `errorevery` behavior gaps.
+    - [ ] 17.75.3.6 Collections and Mesh Breadth: expand mutable setter
+      behavior, scalar-mappable callbacks, offset transforms, `pcolor`
+      masked-coordinate behavior, `pcolormesh` shape validation, and Gouraud /
+      nearest / flat shading parity where visible.
+    - [ ] 17.75.3.7 Fixtures, Docs, and Alignment: add or update catalog
+      fixtures only for visible behavior, document intentional deviations, and
+      keep example source close to Matplotlib rather than hiding option gaps.
 
 ### 17.75.4 3D Toolkit Closure
 

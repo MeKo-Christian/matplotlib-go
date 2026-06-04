@@ -1,0 +1,74 @@
+# Matplotlib to Go Migration Notes
+
+This project keeps Matplotlib's plotting model and visual behavior where it can,
+but the Go API uses typed option structs instead of Python's dynamic keyword
+and property-dict conventions.
+
+## Phase 17.75.2 Axes Helpers
+
+The 17.75.2 helpers cover common Matplotlib migration calls with intentionally
+typed signatures:
+
+- `Axes.Bxp` and `pyplot.Bxp` accept `[]core.BxpStat` plus
+  `core.BxpOptions`, instead of Python's list of dictionaries and separate
+  `boxprops`, `whiskerprops`, `capprops`, and related property dictionaries.
+- `Axes.Violin` and `pyplot.Violin` accept `[]core.ViolinStat` plus
+  `core.ViolinStatsOptions`, mirroring Matplotlib's precomputed-stat contract
+  while keeping styling and visibility flags in a typed options value.
+- `Axes.HLines`, `Axes.VLines`, `pyplot.HLines`, and `pyplot.VLines` accept
+  slice inputs and a `core.LineCollection` style value. Single-value endpoints
+  or extents broadcast across multiple positions like Matplotlib; masked-array
+  handling and Python's full color/linestyle alias grammar remain out of scope.
+- `Axes.Clabel`, `ContourSet.Clabel`, and `pyplot.Clabel` accept a
+  `core.ClabelOptions` value for level filtering, formatter, font size, color,
+  inline spacing, and manual label positions. GUI-driven manual placement and
+  exact Python `Text` artist compatibility remain partial.
+
+The parity fixture `axes_convenience_helpers` exercises these helpers against
+Matplotlib 3.10.9 reference output.
+
+### Source Alignment
+
+The covered helpers were checked against the vendored Matplotlib 3.10.9 source
+in `third_party/matplotlib`:
+
+- `Axes.HLines` and `Axes.VLines` track
+  `lib/matplotlib/axes/_axes.py` `Axes.hlines` and `Axes.vlines` by
+  normalizing scalar-like endpoints/extents, creating data-space two-point
+  segments, registering a `LineCollection`, and updating data limits through
+  the collection path. The Go API accepts slices and one optional typed
+  `LineCollection`; Python `data=`, masked arrays, arbitrary `**kwargs`, and
+  color/linestyle alias normalization are intentionally not mirrored.
+- `Axes.Bxp` tracks `Axes.bxp` by consuming precomputed median/quartile/whisker
+  stats, deriving default positions, widths, and cap widths, drawing boxes,
+  whiskers, caps, medians, optional means/fliers, and optionally managing tick
+  labels. Go returns a `core.BxpContainer` of typed `Line2D` groups and does
+  not implement Python's `patch_artist`, rcParam/property-dict merging, pending
+  `vert` deprecation path, or dynamic legend/property alias behavior.
+- `Axes.Violin` tracks `Axes.violin` by consuming precomputed `coords`/`vals`
+  density stats, normalizing density to half-width, honoring
+  vertical/horizontal orientation and `both`/`low`/`high` sides, and drawing
+  body, mean, median, extrema, and quantile collections. Go keeps collection
+  return values in `core.ViolinContainer` and leaves Python's exact return-dict
+  key shape and rcParam color-cycle details partial.
+- `Axes.Clabel`, `ContourSet.Clabel`, and `pyplot.Clabel` track
+  `Axes.clabel` and `ContourLabeler.clabel`: the axes method delegates to the
+  contour set, level filtering must match existing contour levels, formatters
+  and colors are applied to generated labels, and manual iterable positions are
+  supported. GUI/manual event-loop placement, `rightside_up`,
+  `use_clabeltext`, and exact `Text` artist return semantics remain out of
+  scope for the typed Go surface.
+
+## Phase 17.75.3 Axes Option Breadth
+
+`Axes.Hist` and `pyplot.Hist` now support weighted samples, explicit
+histogram ranges, density normalization based on the in-range weighted total,
+and right-to-left cumulative density through `ReverseCumulative`. These track
+Matplotlib 3.10.9 `Axes.hist`, which forwards `weights`, `range`, and
+`density` to `numpy.histogram` before applying cumulative post-processing.
+
+The Go API uses `core.HistOptions.Weights`, `core.HistOptions.Range`, and
+`core.HistOptions.ReverseCumulative` instead of Python's dynamic
+`weights=`, `range=`, and numeric `cumulative=-1` keyword forms. Multi-dataset
+histogram inputs, `rwidth`, `align`, `log`, and per-dataset patch property
+sequences remain later 17.75.3 work.

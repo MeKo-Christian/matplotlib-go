@@ -198,6 +198,44 @@ func TestHist2D_Normalization_Density(t *testing.T) {
 	}
 }
 
+func TestHist2D_WeightsAndDensityUseInRangeTotal(t *testing.T) {
+	hist := &Hist2D{
+		Data:     []float64{-1, 0.2, 0.4, 1.2, 2.2, 9},
+		Weights:  []float64{100, 2, 3, 5, 10, 100},
+		BinEdges: []float64{0, 1, 2, 3},
+		Norm:     HistNormDensity,
+	}
+
+	edges, counts := hist.BinCounts()
+	assertFloatSlices(t, "edges", edges, []float64{0, 1, 2, 3})
+	assertFloatSlices(t, "weighted density", counts, []float64{0.25, 0.25, 0.5})
+}
+
+func TestHist2D_RangeSetsBinsAndExcludesOutliers(t *testing.T) {
+	hist := &Hist2D{
+		Data:  []float64{-10, 0.1, 0.9, 1.1, 1.9, 10},
+		Bins:  2,
+		Range: &HistRange{Min: 0, Max: 2},
+	}
+
+	edges, counts := hist.BinCounts()
+	assertFloatSlices(t, "edges", edges, []float64{0, 1, 2})
+	assertFloatSlices(t, "counts", counts, []float64{2, 2})
+}
+
+func TestHist2D_ReverseCumulativeDensity(t *testing.T) {
+	hist := &Hist2D{
+		Data:              []float64{0.2, 0.4, 1.2, 2.2},
+		BinEdges:          []float64{0, 1, 2, 3},
+		Norm:              HistNormDensity,
+		Cumulative:        true,
+		ReverseCumulative: true,
+	}
+
+	_, counts := hist.BinCounts()
+	assertFloatSlices(t, "reverse cumulative density", counts, []float64{1, 0.5, 0.25})
+}
+
 func TestHist2D_Bounds_Empty(t *testing.T) {
 	hist := &Hist2D{}
 	bounds := hist.Bounds(nil)
@@ -315,6 +353,18 @@ func TestAxes_Hist_Options(t *testing.T) {
 	}
 	if hist.Label != "test" {
 		t.Errorf("expected label 'test', got %q", hist.Label)
+	}
+}
+
+func TestAxesHistRejectsMismatchedWeights(t *testing.T) {
+	fig := NewFigure(640, 360)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+
+	got := ax.Hist([]float64{1, 2, 3}, HistOptions{
+		Weights: []float64{1, 2},
+	})
+	if got != nil {
+		t.Fatal("Hist with mismatched weights should return nil")
 	}
 }
 

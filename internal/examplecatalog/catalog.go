@@ -96,6 +96,7 @@ var cases = []Case{
 	{ID: "hist_density", Topic: "histogram", Title: "Histogram Density"},
 	{ID: "hist_strategies", Topic: "histogram", Title: "Histogram Strategies"},
 	{ID: "boxplot_basic", Topic: "boxplot", Title: "Box Plot", Description: "Grouped box plots with whiskers, medians, outliers, and categorical labels.", Optional: true, Showcase: true, MinPSNR: 44.0, MaxMeanAbs: 2.0},
+	{ID: "axes_convenience_helpers", Topic: "axes", Title: "Axes Convenience Helpers", Description: "Precomputed bxp and violin stats, hlines/vlines broadcasting, and post-hoc clabel convenience helpers.", FixtureOnly: true, MinPSNR: 24.0, MaxMeanAbs: 18.0, MaxRMSE: 36.0},
 	{ID: "text_labels_strict", Topic: "text", Title: "Strict Text Labels", Optional: true, SVGGoldenFamily: "text_layout", GoBasicSmokeFamily: "text", SkiaParityFamily: "text"},
 	{ID: "title_strict", Topic: "text", Title: "Strict Title"},
 	{ID: "mathtext_basic", Topic: "mathtext", Title: "MathText Basic", FixtureOnly: true, SVGGoldenFamily: "mathtext", GoBasicSmokeFamily: "mathtext", SkiaParityFamily: "mathtext"},

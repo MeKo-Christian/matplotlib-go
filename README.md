@@ -39,7 +39,8 @@ When this repo is “done”, it should provide:
 - Multiple renderers (AGG, GoBasic, SVG/PDF, and opt-in Skia) with visual parity
 - A gallery of reproducible, high-quality examples
 - Deterministic test suite with image baselines
-- Documentation and guides, including **“Matplotlib to Go”** migration notes
+- Documentation and guides, including
+  [Matplotlib to Go migration notes](docs/matplotlib-migration-notes.md)
 
 ---
 

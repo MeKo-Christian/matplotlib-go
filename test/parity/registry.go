@@ -42,6 +42,7 @@ import (
 	example_artist_metadata "github.com/cwbudde/matplotlib-go/test/parity/artist_metadata"
 	example_asinh_norm_image "github.com/cwbudde/matplotlib-go/test/parity/asinh_norm_image"
 	example_axes_control_surface "github.com/cwbudde/matplotlib-go/test/parity/axes_control_surface"
+	example_axes_convenience_helpers "github.com/cwbudde/matplotlib-go/test/parity/axes_convenience_helpers"
 	example_axes_grid1_showcase "github.com/cwbudde/matplotlib-go/test/parity/axes_grid1_showcase"
 	example_axes_top_right_inverted "github.com/cwbudde/matplotlib-go/test/parity/axes_top_right_inverted"
 	example_axisartist_showcase "github.com/cwbudde/matplotlib-go/test/parity/axisartist_showcase"
@@ -238,6 +239,7 @@ var renderByID = map[string]func() image.Image{
 	"mathtext_inline_labels":             example_mathtext_inline_labels.Render,
 	"axes_top_right_inverted":            example_axes_top_right_inverted.Render,
 	"axes_control_surface":               example_axes_control_surface.Render,
+	"axes_convenience_helpers":           example_axes_convenience_helpers.Render,
 	"transform_coordinates":              example_transform_coordinates.Render,
 	"transform_annotation_modes":         example_transform_annotation_modes.Render,
 	"path_clipped_transformed":           example_path_clipped_transformed.Render,

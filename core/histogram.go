@@ -28,6 +28,13 @@ const (
 	HistNormDensity                     // count/(total*width) — area integrates to 1
 )
 
+// HistRange defines an explicit histogram domain. Values outside the closed
+// range are excluded from the bin counts.
+type HistRange struct {
+	Min float64
+	Max float64
+}
+
 // HistType controls how histogram bins are presented.
 type HistType uint8
 
@@ -40,20 +47,23 @@ const (
 // Hist2D renders histogram plots computed from raw data.
 // Bars span from edge[i] to edge[i+1] with no gap between adjacent bins.
 type Hist2D struct {
-	Data       []float64    // raw data values
-	Bins       int          // number of bins (0 = auto)
-	BinEdges   []float64    // explicit bin edges; overrides Bins when len > 1
-	BinStrat   BinStrategy  // automatic binning strategy (used when Bins==0 and BinEdges==nil)
-	Norm       HistNorm     // normalization mode
-	Cumulative bool         // accumulate bin heights from left to right
-	HistType   HistType     // bar, step, or filled step presentation
-	Baselines  []float64    // optional per-bin baselines for stacked histograms
-	Color      render.Color // bar fill color
-	EdgeColor  render.Color // bar outline color
-	EdgeWidth  float64      // bar outline width in pixels (0 = no outline)
-	Alpha      float64      // alpha transparency (0-1, 0 means 1.0)
-	Label      string       // series label for legend
-	z          float64      // z-order
+	Data              []float64    // raw data values
+	Weights           []float64    // per-sample weights; nil means each sample has weight 1
+	Bins              int          // number of bins (0 = auto)
+	BinEdges          []float64    // explicit bin edges; overrides Bins when len > 1
+	Range             *HistRange   // explicit histogram range; ignored when BinEdges is set
+	BinStrat          BinStrategy  // automatic binning strategy (used when Bins==0 and BinEdges==nil)
+	Norm              HistNorm     // normalization mode
+	Cumulative        bool         // accumulate bin heights from left to right
+	ReverseCumulative bool         // accumulate bin heights from right to left
+	HistType          HistType     // bar, step, or filled step presentation
+	Baselines         []float64    // optional per-bin baselines for stacked histograms
+	Color             render.Color // bar fill color
+	EdgeColor         render.Color // bar outline color
+	EdgeWidth         float64      // bar outline width in pixels (0 = no outline)
+	Alpha             float64      // alpha transparency (0-1, 0 means 1.0)
+	Label             string       // series label for legend
+	z                 float64      // z-order
 
 	// Computed lazily on first Draw/Bounds call.
 	computed bool
@@ -71,12 +81,19 @@ func (h *Hist2D) compute() {
 	if len(h.Data) == 0 {
 		return
 	}
+	if len(h.Weights) > 0 && len(h.Weights) != len(h.Data) {
+		return
+	}
 
 	// Determine bin edges.
 	if len(h.BinEdges) > 1 {
 		h.edges = h.BinEdges
 	} else {
-		h.edges = computeBinEdges(h.Data, h.Bins, h.BinStrat)
+		edges, ok := computeHistBinEdges(h.Data, h.Bins, h.BinStrat, h.Range)
+		if !ok {
+			return
+		}
+		h.edges = edges
 	}
 
 	nBins := len(h.edges) - 1
@@ -86,28 +103,52 @@ func (h *Hist2D) compute() {
 
 	// Count data in each bin. The last bin includes the right edge.
 	raw := make([]float64, nBins)
-	for _, v := range h.Data {
+	total := 0.0
+	for i, v := range h.Data {
+		if !isFinite(v) {
+			continue
+		}
 		idx := findBin(v, h.edges)
 		if idx >= 0 && idx < nBins {
-			raw[idx]++
+			weight := 1.0
+			if len(h.Weights) > 0 {
+				weight = h.Weights[i]
+				if !isFinite(weight) {
+					continue
+				}
+			}
+			raw[idx] += weight
+			total += weight
 		}
 	}
 	if h.Cumulative {
-		running := 0.0
-		for i, c := range raw {
-			running += c
-			raw[i] = running
+		if h.ReverseCumulative {
+			running := 0.0
+			for i := len(raw) - 1; i >= 0; i-- {
+				running += raw[i]
+				raw[i] = running
+			}
+		} else {
+			running := 0.0
+			for i, c := range raw {
+				running += c
+				raw[i] = running
+			}
 		}
 	}
 
 	// Apply normalization.
-	total := float64(len(h.Data))
 	h.counts = make([]float64, nBins)
 	for i, c := range raw {
 		switch h.Norm {
 		case HistNormProbability:
-			h.counts[i] = c / total
+			if total != 0 {
+				h.counts[i] = c / total
+			}
 		case HistNormDensity:
+			if total == 0 {
+				continue
+			}
 			if h.Cumulative {
 				h.counts[i] = c / total
 				continue
@@ -147,6 +188,34 @@ func findBin(v float64, edges []float64) int {
 
 // computeBinEdges computes evenly-spaced bin edges from data.
 func computeBinEdges(data []float64, nBins int, start BinStrategy) []float64 {
+	edges, _ := computeHistBinEdges(data, nBins, start, nil)
+	return edges
+}
+
+func computeHistBinEdges(data []float64, nBins int, start BinStrategy, histRange *HistRange) ([]float64, bool) {
+	if histRange != nil {
+		if !isFinite(histRange.Min) || !isFinite(histRange.Max) || histRange.Min >= histRange.Max {
+			return nil, false
+		}
+		if nBins <= 0 {
+			filtered := finiteValuesInRange(data, histRange.Min, histRange.Max)
+			if len(filtered) == 0 {
+				nBins = 1
+			} else {
+				nBins = autoBinCount(filtered, start)
+			}
+		}
+		if nBins < 1 {
+			nBins = 1
+		}
+		return evenBinEdges(histRange.Min, histRange.Max, nBins), true
+	}
+
+	data = finiteValues(data)
+	if len(data) == 0 {
+		return nil, false
+	}
+
 	// Find data range.
 	minV, maxV := data[0], data[0]
 	for _, v := range data[1:] {
@@ -173,6 +242,10 @@ func computeBinEdges(data []float64, nBins int, start BinStrategy) []float64 {
 		nBins = 1
 	}
 
+	return evenBinEdges(minV, maxV, nBins), true
+}
+
+func evenBinEdges(minV, maxV float64, nBins int) []float64 {
 	edges := make([]float64, nBins+1)
 	width := (maxV - minV) / float64(nBins)
 	for i := range edges {
@@ -181,6 +254,16 @@ func computeBinEdges(data []float64, nBins int, start BinStrategy) []float64 {
 	// Ensure last edge is exactly maxV to avoid floating-point drift.
 	edges[nBins] = maxV
 	return edges
+}
+
+func finiteValuesInRange(data []float64, minV, maxV float64) []float64 {
+	out := make([]float64, 0, len(data))
+	for _, v := range data {
+		if isFinite(v) && v >= minV && v <= maxV {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 // autoBinCount chooses bin count based on strategy.
