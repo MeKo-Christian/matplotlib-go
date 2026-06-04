@@ -2128,12 +2128,32 @@ example/browser breadth as documentation work.
       add focused tests for triangulation input validation, artist return types,
       and axis-limit expansion.
 
-    - [ ] 17.75.4.2 3D Depth Ordering and Clipping: audit `Plot3D`,
-      `Scatter3D`, `Surface`, `Wireframe`, `Contour`, `Contourf`, `Trisurf`,
-      `Bar3D`, `Voxels`, `Quiver3D`, `Stem3D`, `ErrorBar3D`, and
-      `FillBetween3D` against upstream z sorting, depth shading, clipping, and
-      projected-extent behavior. Add targeted regression tests before changing
-      shared projection or renderer paths.
+    - [ ] 17.75.4.2 3D Depth Ordering and Clipping: audit all public 3D helpers
+      against upstream z sorting, depth shading, clipping, and projected-extent
+      behavior. Complete the scoped audits below in order before marking this
+      parent item done.
+
+        - [ ] 17.75.4.2.1 Line and Marker Depth: audit `Plot3D`, `Scatter3D`,
+          `Wireframe`, `Quiver3D`, `Stem3D`, and `ErrorBar3D` against
+          Matplotlib's line/marker depth ordering, depth shading, axlim
+          clipping, and projected-extent behavior. Add targeted regression
+          tests before changing shared projection paths.
+
+        - [ ] 17.75.4.2.2 Surface and Polygon Depth: audit `Surface`,
+          `Contour`, `Contourf`, `TriContour`, `TriContourf`, `Trisurf`,
+          `Bar3D`, and `FillBetween3D` against Matplotlib's polygon face
+          sorting, collection zorder, offset-plane clipping, and projected
+          extent behavior. Add targeted regression tests before changing shared
+          polygon or contour paths.
+
+        - [ ] 17.75.4.2.3 Voxel Depth and Visibility: audit `Voxels` against
+          Matplotlib's visible-face extraction, per-face sorting, collection
+          zorder, clipping, and redraw behavior. Add focused regression tests
+          for adjacent hidden faces and view-dependent ordering.
+
+        - [ ] 17.75.4.2.4 Depth/Clipping Ledger: record any intentional
+          residual mplot3d divergences in parity metadata and migration notes,
+          then update `docs/matplotlib-parity-status.md`.
 
     - [ ] 17.75.4.3 3D Axis Defaults and View State: align mplot3d defaults for
       view initialization, axis-limit autoscaling, pane/grid styling, aspect
