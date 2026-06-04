@@ -2429,9 +2429,15 @@ example/browser breadth as documentation work.
               3D helper to an example-catalog row and Matplotlib-reference
               plot, noting missing or duplicate coverage.
 
-                - [ ] 17.75.4.5.1.1.1 Catalog Scan: inventory current
+                - [x] 17.75.4.5.1.1.1 Catalog Scan: inventory current
                   `internal/examplecatalog` rows and `test/matplotlib_ref`
-                  plots for every public 3D helper.
+                  plots for every public 3D helper. Found 12 existing
+                  `mplot3d_*` catalog/reference/golden triplets:
+                  basic, terrain, plot3d, scatter3d, surface3d, wire3d,
+                  trisurf3d, bar3d, voxels, quiver3d, stem3d, and
+                  fill_between3d. Weak or missing dedicated coverage remains
+                  for 3D contour/contourf, tricontour/tricontourf,
+                  errorbar3d, projected `Axes3D.Bar`, and `Text3D`.
 
                 - [ ] 17.75.4.5.1.1.2 Missing Row List: record missing,
                   duplicate, and weak-coverage 3D fixture cases before adding
