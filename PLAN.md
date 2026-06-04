@@ -2406,8 +2406,10 @@ example/browser breadth as documentation work.
               `docs/matplotlib-parity-status.md` and run focused freshness
               checks for the changed metadata.
 
-                - [ ] 17.75.4.4.5.3.1 Regenerate Status: run the documented
+                - [x] 17.75.4.4.5.3.1 Regenerate Status: run the documented
                   parity-status generation path for changed 3D color metadata.
+                  Regenerated `docs/matplotlib-parity-status.md` with
+                  `rtk go run ./cmd/paritystatusdoc`.
 
                 - [ ] 17.75.4.4.5.3.2 Freshness Checks: run focused tests or
                   diff checks that prove generated docs match the metadata.
