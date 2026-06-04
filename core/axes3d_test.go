@@ -405,6 +405,31 @@ func TestAxes3DPlot3DUsesProjectedCoordinates(t *testing.T) {
 	}
 }
 
+func TestAxes3DPlot3DPropagatesColorAndAlphaLikeLine2D(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	color := render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1}
+	alpha := 0.35
+	line := ax.Plot3D(
+		[]float64{0, 1},
+		[]float64{0, 1},
+		[]float64{0, 1},
+		PlotOptions{Color: &color, Alpha: &alpha},
+	)
+	if line == nil {
+		t.Fatal("Plot3D returned nil")
+	}
+	want := color
+	want.A = alpha
+	if got := line.Col; got != want {
+		t.Fatalf("Plot3D color = %+v, want Line2D color with alpha %+v", got, want)
+	}
+}
+
 func TestAxes3DPlot3DAxLimClipDropsOutsidePoints(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -1512,6 +1537,61 @@ func TestAxes3DStemProjectsBaselineStemsAndMarkers(t *testing.T) {
 	}
 }
 
+func TestAxes3DStemColorsApplyAlphaAndStayNonMappable(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	color := render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1}
+	baseline := render.Color{R: 0.8, G: 0.1, B: 0.3, A: 1}
+	markerEdge := render.Color{R: 0.9, G: 0.7, B: 0.2, A: 1}
+	alpha := 0.4
+	container := ax.Stem3D(
+		[]float64{0, 1},
+		[]float64{0, 1},
+		[]float64{1, 2},
+		Stem3DOptions{
+			Color:           &color,
+			BaselineColor:   &baseline,
+			MarkerEdgeColor: &markerEdge,
+			Alpha:           &alpha,
+		},
+	)
+	if container == nil {
+		t.Fatal("Stem3D returned nil")
+	}
+	wantStem := color
+	wantStem.A *= alpha
+	if got := container.StemLines.Color; got != wantStem {
+		t.Fatalf("stem line color = %+v, want %+v", got, wantStem)
+	}
+	if got := container.MarkerCollection.FaceColor; got != wantStem {
+		t.Fatalf("stem marker face color = %+v, want %+v", got, wantStem)
+	}
+	wantEdge := markerEdge
+	wantEdge.A *= alpha
+	if got := container.MarkerCollection.EdgeColor; got != wantEdge {
+		t.Fatalf("stem marker edge color = %+v, want %+v", got, wantEdge)
+	}
+	wantBaseline := baseline
+	wantBaseline.A *= alpha
+	if got := container.Baseline.Col; got != wantBaseline {
+		t.Fatalf("stem baseline color = %+v, want %+v", got, wantBaseline)
+	}
+	if array := container.StemLines.GetArray(); len(array) != 0 {
+		t.Fatalf("stem line scalar array = %v, want non-scalar-mappable LineCollection", array)
+	}
+	if array := container.MarkerCollection.GetArray(); len(array) != 0 {
+		t.Fatalf("stem marker scalar array = %v, want non-scalar-mappable PathCollection", array)
+	}
+	mapping := container.StemLines.ScalarMap()
+	if mapping.Colormap != "" || mapping.Norm != nil || mapping.VMin != 0 || mapping.VMax != 0 {
+		t.Fatalf("stem scalar map = %+v, want no scalar-map metadata", mapping)
+	}
+}
+
 func TestAxes3DStemSupportsMatplotlibOrientationJuggling(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -1711,6 +1791,41 @@ func TestAxes3DQuiverUsesMatplotlibTailPivotGeometry(t *testing.T) {
 	}
 }
 
+func TestAxes3DQuiverColorsApplyAlphaAndStayNonMappable(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	color := render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1}
+	alpha := 0.45
+	q := ax.Quiver(
+		[]float64{0},
+		[]float64{0},
+		[]float64{0},
+		[]float64{1},
+		[]float64{0},
+		[]float64{0},
+		Quiver3DOptions{Color: &color, Alpha: &alpha},
+	)
+	if q == nil {
+		t.Fatal("Quiver returned nil")
+	}
+	want := color
+	want.A *= alpha
+	if got := q.Color; got != want {
+		t.Fatalf("quiver color = %+v, want %+v", got, want)
+	}
+	if array := q.GetArray(); len(array) != 0 {
+		t.Fatalf("quiver scalar array = %v, want non-scalar-mappable Line3DCollection", array)
+	}
+	mapping := q.ScalarMap()
+	if mapping.Colormap != "" || mapping.Norm != nil || mapping.VMin != 0 || mapping.VMax != 0 {
+		t.Fatalf("quiver scalar map = %+v, want no scalar-map metadata", mapping)
+	}
+}
+
 func TestAxes3DQuiverNormalizesVectorsAndSupportsMiddlePivot(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -1813,6 +1928,41 @@ func TestAxes3DErrorBarProjectsXYZRangesAndCaps(t *testing.T) {
 	}
 	if !pointsEqual(errs.Segments[2], wantZRange, 1e-12) {
 		t.Fatalf("z error range = %+v, want projected z range %+v", errs.Segments[2], wantZRange)
+	}
+}
+
+func TestAxes3DErrorBarColorsApplyAlphaAndStayNonMappable(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	color := render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1}
+	alpha := 0.25
+	errs := ax.ErrorBar3D(
+		[]float64{0},
+		[]float64{0},
+		[]float64{1},
+		nil,
+		nil,
+		[]float64{0.1},
+		ErrorBar3DOptions{Color: &color, Alpha: &alpha},
+	)
+	if errs == nil {
+		t.Fatal("ErrorBar3D returned nil")
+	}
+	want := color
+	want.A *= alpha
+	if got := errs.Color; got != want {
+		t.Fatalf("errorbar color = %+v, want %+v", got, want)
+	}
+	if array := errs.GetArray(); len(array) != 0 {
+		t.Fatalf("errorbar scalar array = %v, want non-scalar-mappable Line3DCollection", array)
+	}
+	mapping := errs.ScalarMap()
+	if mapping.Colormap != "" || mapping.Norm != nil || mapping.VMin != 0 || mapping.VMax != 0 {
+		t.Fatalf("errorbar scalar map = %+v, want no scalar-map metadata", mapping)
 	}
 }
 

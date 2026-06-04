@@ -2232,7 +2232,7 @@ example/browser breadth as documentation work.
               scalar arrays, cmap/norm/clim, depth-shade alpha changes,
               explicit color precedence, and colorbar-compatible metadata.
 
-            - [ ] 17.75.4.4.3.2 Quiver and Line-Like Colors: align `Quiver3D`,
+            - [x] 17.75.4.4.3.2 Quiver and Line-Like Colors: align `Quiver3D`,
               `Plot3D`, `Stem3D`, and `ErrorBar3D` color propagation,
               alpha handling, and any intentionally non-scalar-mappable
               behavior against upstream collection types.
