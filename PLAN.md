@@ -2146,7 +2146,7 @@ example/browser breadth as documentation work.
           extent behavior. Add targeted regression tests before changing shared
           polygon or contour paths.
 
-        - [ ] 17.75.4.2.3 Voxel Depth and Visibility: audit `Voxels` against
+        - [x] 17.75.4.2.3 Voxel Depth and Visibility: audit `Voxels` against
           Matplotlib's visible-face extraction, per-face sorting, collection
           zorder, clipping, and redraw behavior. Add focused regression tests
           for adjacent hidden faces and view-dependent ordering.

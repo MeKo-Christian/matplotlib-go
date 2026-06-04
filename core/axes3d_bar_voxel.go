@@ -115,6 +115,7 @@ type VoxelOptions struct {
 	Alpha      *float64
 	Shade      *bool
 	Label      string
+	AxLimClip  bool
 }
 
 // Bar3D draws a simple projected wireframe column for each x/y/z sample.
@@ -261,6 +262,10 @@ func (a *Axes3D) Voxels(filled [][][]bool, opts ...VoxelOptions) map[[3]int]*Pol
 		for coord, collection := range collections {
 			voxel, ok := refreshed[coord]
 			if !ok {
+				collection.Polygons = nil
+				collection.FaceColors = nil
+				collection.EdgeColor = render.Color{}
+				collection.z = defaultPatchZ
 				continue
 			}
 			collection.Polygons = voxel.polygons
@@ -290,6 +295,7 @@ func (a *Axes3D) Voxel(x, y, z, dx, dy, dz []float64, opts ...PlotOptions) *Line
 	if o.Alpha != nil {
 		voxelOpts[0].Alpha = o.Alpha
 	}
+	voxelOpts[0].AxLimClip = o.AxLimClip
 	voxelOpts[0].Label = o.Label
 	return a.Bar3D(x, y, z, dx, dy, dz, voxelOpts...)
 }
@@ -389,6 +395,9 @@ func (a *Axes3D) projectVoxelCollections(filled [][][]bool, opt VoxelOptions, al
 
 				faces := make([]voxelFace, 0, 6)
 				for _, raw := range voxelVisibleFaces(filled, i, j, k) {
+					if opt.AxLimClip && !a.polygonWithin3DViewLimits(raw.polygon) {
+						continue
+					}
 					polygon := make([]geom.Pt, len(raw.polygon))
 					depth := 0.0
 					for idx, point := range raw.polygon {

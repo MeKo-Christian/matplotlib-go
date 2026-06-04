@@ -2939,6 +2939,83 @@ func TestAxes3DVoxelsCullInternalFacesLikeMatplotlib(t *testing.T) {
 	}
 }
 
+func TestAxes3DVoxelsAxLimClipDropsOutsideVoxelFaces(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(0, 1)
+
+	voxels := ax.Voxels([][][]bool{
+		{{true}},
+		{{true}},
+	}, VoxelOptions{AxLimClip: true})
+	if got, want := len(voxels), 1; got != want {
+		t.Fatalf("clipped voxel collection count = %d, want only the in-limit voxel (%d)", got, want)
+	}
+	voxel, ok := voxels[[3]int{0, 0, 0}]
+	if !ok {
+		t.Fatal("missing in-limit voxel collection")
+	}
+	if got, want := len(voxel.Polygons), 5; got != want {
+		t.Fatalf("in-limit voxel visible faces = %d, want 5 after adjacent-face culling", got)
+	}
+}
+
+func TestAxes3DVoxelsAxLimClipClearsStaleFacesAfterViewLimitChange(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(0, 2)
+
+	voxels := ax.Voxels([][][]bool{
+		{{true}},
+		{{true}},
+	}, VoxelOptions{AxLimClip: true})
+	if got, want := len(voxels), 2; got != want {
+		t.Fatalf("initial voxel collection count = %d, want %d", got, want)
+	}
+	outside := voxels[[3]int{1, 0, 0}]
+	if outside == nil || len(outside.Polygons) == 0 {
+		t.Fatalf("expected second voxel to start visible, got %+v", outside)
+	}
+
+	ax.SetXLim(0, 1)
+	if got := len(outside.Polygons); got != 0 {
+		t.Fatalf("stale clipped voxel polygons = %d, want cleared after view-limit reprojection", got)
+	}
+	if got := len(outside.FaceColors); got != 0 {
+		t.Fatalf("stale clipped voxel face colors = %d, want cleared after view-limit reprojection", got)
+	}
+}
+
+func TestAxes3DVoxelsResortFacesAfterViewChange(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	filled := [][][]bool{{{true}}}
+	voxels := ax.Voxels(filled)
+	voxel := voxels[[3]int{0, 0, 0}]
+	if voxel == nil {
+		t.Fatal("missing voxel collection")
+	}
+
+	ax.SetView(0, 0)
+	want := ax.projectVoxelCollections(filled, VoxelOptions{}, 1)[[3]int{0, 0, 0}]
+	if len(want.polygons) == 0 {
+		t.Fatal("expected projected voxel faces")
+	}
+	if !pointsEqual(voxel.Polygons[0], want.polygons[0], 1e-12) {
+		t.Fatalf("voxel first face after view change = %+v, want depth-sorted face %+v", voxel.Polygons[0], want.polygons[0])
+	}
+}
+
 func TestAxes3DVoxelCallsBarLikeSegments(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
