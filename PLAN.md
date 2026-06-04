@@ -2331,9 +2331,16 @@ example/browser breadth as documentation work.
               post-creation mappable updates for 3D helpers, keeping immutable
               Go API differences explicit.
 
-                - [ ] 17.75.4.4.4.3.1 Matplotlib Update Audit: compare
+                - [x] 17.75.4.4.4.3.1 Matplotlib Update Audit: compare
                   upstream callback/update behavior for changed arrays, cmap,
-                  norm, clim, and alpha on 3D mappables.
+                  norm, clim, and alpha on 3D mappables. Audited
+                  `third_party/matplotlib/lib/matplotlib/colorizer.py`,
+                  `third_party/matplotlib/lib/matplotlib/colorbar.py`,
+                  `third_party/matplotlib/lib/matplotlib/collections.py`,
+                  3D mappable construction in `axes3d.py`, and Go
+                  `core/colorbar.go` / collection setters; recorded the
+                  callback-driven Matplotlib model versus Go's pull-based
+                  sync model in `docs/matplotlib-migration-notes.md`.
 
                 - [ ] 17.75.4.4.4.3.2 Go Contract Decision: decide whether the
                   Go port supports mutable colorbar updates or treats 3D

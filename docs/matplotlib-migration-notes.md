@@ -217,3 +217,28 @@ forcing `Figure.AddColorbar` on the returned collection creates only the
 generic default `viridis` 0..1 colorbar. That is not treated as a supported
 data-backed 3D colorbar; supported 3D colorbar sources are the helpers in the
 `yes` rows above.
+
+### 3D scalar-mappable mutable update audit
+
+Matplotlib's scalar-mappable update model is callback-driven. A
+`ScalarMappable` / `ColorizingArtist` owns an array (`set_array` /
+`get_array`), cmap, norm, and clim; changing cmap or norm calls `changed()`,
+changing clim updates the norm and emits the norm's `changed` signal, and
+`Colorbar` registers `mappable.callbacks.connect('changed',
+Colorbar.update_normal)`. `Colorbar.update_normal` then pulls the mappable's
+alpha, cmap, and norm, resets locator/formatter state only when the norm object
+changes, redraws the colorbar, and keeps contour-specific line overlays in
+sync. During draw, colorbar processing also calls `mappable.autoscale_None()`
+when an array exists so unscaled norms can pick up array-derived limits.
+
+The Go colorbar model is pull-based. Shared collection types expose typed
+`SetArray`, `SetColormap`, `SetNorm`, and `SetCLim` methods that refresh their
+own scalar-derived colors and scalar-map metadata. `Figure.AddColorbar` stores
+the `ScalarMappable` handle, and `syncColorbarMapping` re-reads
+`ScalarMap()` during layout/draw to update colorbar cmap, norm, and clim.
+There is no callback registry on 3D mappables, no mutable `SetArray` API on the
+returned `Scatter2D`, and colorbar alpha is currently independent from 3D
+artist alpha. For 3D collection-backed helpers, mutable cmap/norm/clim updates
+can follow the shared collection setters; for `Scatter3D`, array and mapping
+state are treated as construction-time values unless a later typed scatter
+mutation API is added.
