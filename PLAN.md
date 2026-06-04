@@ -2509,9 +2509,12 @@ example/browser breadth as documentation work.
                   tricontourf triplets. Split because this mixes existing
                   surface/trisurf rows with multiple missing contour rows.
 
-                    - [ ] 17.75.4.5.2.2.1.1 Surface/Trisurf Verification:
+                    - [x] 17.75.4.5.2.2.1.1 Surface/Trisurf Verification:
                       verify existing `mplot3d_surface3d` and
                       `mplot3d_trisurf3d` triplets after the scalar/color work.
+                      Focused golden, Matplotlib-reference, and
+                      reference-compare checks pass; refreshed the stale
+                      `mplot3d_surface3d` Go golden.
 
                     - [ ] 17.75.4.5.2.2.1.2 Structured Contour Triplets:
                       add dedicated `mplot3d_contour3d` and
