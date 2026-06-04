@@ -2195,7 +2195,7 @@ example/browser breadth as documentation work.
           to its Matplotlib collection type and scalar-mappable behavior,
           including color-array, cmap, norm, clim, alpha, and colorbar support.
 
-        - [ ] 17.75.4.4.2 Surface, Trisurf, and Contour Colors: align cmap,
+        - [x] 17.75.4.4.2 Surface, Trisurf, and Contour Colors: align cmap,
           norm, facecolor, edgecolor, shade, alpha, and per-face/per-vertex
           color handling for `Surface`, `Trisurf`, `Contour`, `Contourf`,
           `TriContour`, and `TriContourf`. Complete the scoped audits below
@@ -2218,7 +2218,7 @@ example/browser breadth as documentation work.
               level-based colormapping, explicit color override behavior,
               alpha handling, scalar-map metadata, and reprojected updates.
 
-            - [ ] 17.75.4.4.2.4 Filled Contour Band Colors: align `Contourf`
+            - [x] 17.75.4.4.2.4 Filled Contour Band Colors: align `Contourf`
               and `TriContourf` filled band colors with Matplotlib's
               level-midpoint colormapping, explicit color override behavior,
               alpha handling, scalar-map metadata, and reprojected updates.

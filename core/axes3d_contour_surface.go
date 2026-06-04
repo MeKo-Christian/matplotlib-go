@@ -110,7 +110,7 @@ func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opts ...PlotOptions) *P
 	label = opt.Label
 	limitsChanged := a.observe3DContourf(x, y, z, opt)
 
-	paths, colors, zorder, mapping := a.projectedContourFillData(x, y, z, alpha, opt)
+	paths, colors, scalarValues, zorder, mapping := a.projectedContourFillData(x, y, z, alpha, opt)
 	if len(paths) == 0 {
 		return nil
 	}
@@ -118,6 +118,9 @@ func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opts ...PlotOptions) *P
 	norm := mapping.Norm
 	vMin := mapping.VMin
 	vMax := mapping.VMax
+	if colorOverride {
+		scalarValues = nil
+	}
 	if colorOverride {
 		cmap = ""
 		norm = nil
@@ -128,14 +131,15 @@ func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opts ...PlotOptions) *P
 	collection := &PolyCollection{
 		PatchCollection: PatchCollection{
 			Collection: Collection{
-				Coords:   Coords(CoordData),
-				Label:    label,
-				Alpha:    1,
-				Colormap: cmap,
-				Norm:     norm,
-				VMin:     vMin,
-				VMax:     vMax,
-				z:        zorder,
+				Coords:       Coords(CoordData),
+				Label:        label,
+				Alpha:        1,
+				Colormap:     cmap,
+				Norm:         norm,
+				VMin:         vMin,
+				VMax:         vMax,
+				ScalarValues: scalarValues,
+				z:            zorder,
 			},
 			Paths:      paths,
 			FaceColors: colors,
@@ -146,7 +150,7 @@ func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opts ...PlotOptions) *P
 	a.Add(collection)
 	a.add3DReprojector(func() {
 		if collection != nil {
-			paths, colors, zorder, mapping := a.projectedContourFillData(x, y, z, alpha, opt)
+			paths, colors, scalarValues, zorder, mapping := a.projectedContourFillData(x, y, z, alpha, opt)
 			collection.Polygons = nil
 			collection.Paths = paths
 			collection.FaceColors = colors
@@ -155,11 +159,13 @@ func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opts ...PlotOptions) *P
 				collection.Norm = nil
 				collection.VMin = 0
 				collection.VMax = 0
+				collection.ScalarValues = nil
 			} else {
 				collection.Colormap = mapping.Colormap
 				collection.Norm = mapping.Norm
 				collection.VMin = mapping.VMin
 				collection.VMax = mapping.VMax
+				collection.ScalarValues = scalarValues
 			}
 			collection.z = zorder
 		}
@@ -289,7 +295,7 @@ func (a *Axes3D) TriContourf(tri Triangulation, z []float64, opts ...PlotOptions
 	}
 	limitsChanged := a.observe3DTriContourf(tri, z, opt)
 
-	paths, colors, zorder, mapping := a.projectedTriContourFillData(tri, z, alpha, opt)
+	paths, colors, scalarValues, zorder, mapping := a.projectedTriContourFillData(tri, z, alpha, opt)
 	if len(paths) == 0 {
 		return nil
 	}
@@ -297,6 +303,9 @@ func (a *Axes3D) TriContourf(tri Triangulation, z []float64, opts ...PlotOptions
 	norm := mapping.Norm
 	vMin := mapping.VMin
 	vMax := mapping.VMax
+	if colorOverride {
+		scalarValues = nil
+	}
 	if colorOverride {
 		cmap = ""
 		norm = nil
@@ -307,14 +316,15 @@ func (a *Axes3D) TriContourf(tri Triangulation, z []float64, opts ...PlotOptions
 	collection := &PolyCollection{
 		PatchCollection: PatchCollection{
 			Collection: Collection{
-				Coords:   Coords(CoordData),
-				Label:    opt.Label,
-				Alpha:    1,
-				Colormap: cmap,
-				Norm:     norm,
-				VMin:     vMin,
-				VMax:     vMax,
-				z:        zorder,
+				Coords:       Coords(CoordData),
+				Label:        opt.Label,
+				Alpha:        1,
+				Colormap:     cmap,
+				Norm:         norm,
+				VMin:         vMin,
+				VMax:         vMax,
+				ScalarValues: scalarValues,
+				z:            zorder,
 			},
 			Paths:      paths,
 			FaceColors: colors,
@@ -325,7 +335,7 @@ func (a *Axes3D) TriContourf(tri Triangulation, z []float64, opts ...PlotOptions
 	a.Add(collection)
 	a.add3DReprojector(func() {
 		if collection != nil {
-			paths, colors, zorder, mapping := a.projectedTriContourFillData(tri, z, alpha, opt)
+			paths, colors, scalarValues, zorder, mapping := a.projectedTriContourFillData(tri, z, alpha, opt)
 			collection.Polygons = nil
 			collection.Paths = paths
 			collection.FaceColors = colors
@@ -334,11 +344,13 @@ func (a *Axes3D) TriContourf(tri Triangulation, z []float64, opts ...PlotOptions
 				collection.Norm = nil
 				collection.VMin = 0
 				collection.VMax = 0
+				collection.ScalarValues = nil
 			} else {
 				collection.Colormap = mapping.Colormap
 				collection.Norm = mapping.Norm
 				collection.VMin = mapping.VMin
 				collection.VMax = mapping.VMax
+				collection.ScalarValues = scalarValues
 			}
 			collection.z = zorder
 		}
@@ -508,6 +520,24 @@ func contourScalarMap(values, levels []float64, opt PlotOptions) ScalarMapInfo {
 	return mapping
 }
 
+func contourLayerValues(levels []float64, mapping ScalarMapInfo) []float64 {
+	if len(levels) < 2 {
+		return nil
+	}
+	values := make([]float64, len(levels)-1)
+	logScale := mapping.Norm != nil && mapping.Norm.NormName() == "log"
+	for i := range values {
+		low := levels[i]
+		high := levels[i+1]
+		if logScale && low > 0 && high > 0 {
+			values[i] = math.Sqrt(low) * math.Sqrt(high)
+		} else {
+			values[i] = 0.5 * (low + high)
+		}
+	}
+	return values
+}
+
 func (a *Axes3D) contourLines3D(x, y []float64, z [][]float64, opt PlotOptions, zdir string) ([][]geom.Pt, []float64, []float64, []float64, bool) {
 	rows, cols, ok := validate3DGridContourInput(x, y, z)
 	if !ok {
@@ -531,18 +561,19 @@ func (a *Axes3D) contourLines3D(x, y []float64, z [][]float64, opt PlotOptions, 
 	return lines, lineLevels, levels, rotatedValues, true
 }
 
-func (a *Axes3D) projectedContourFillData(x, y []float64, z [][]float64, alpha float64, opt PlotOptions) ([]geom.Path, []render.Color, float64, ScalarMapInfo) {
+func (a *Axes3D) projectedContourFillData(x, y []float64, z [][]float64, alpha float64, opt PlotOptions) ([]geom.Path, []render.Color, []float64, float64, ScalarMapInfo) {
 	rows, cols, ok := validate3DGridContourInput(x, y, z)
 	if !ok {
-		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+		return nil, nil, nil, defaultPatchZ, ScalarMapInfo{}
 	}
 	values := flattenGridValues(z)
 	levels := contourLevels(values, opt.Levels, opt.LevelCount, true)
 	if len(levels) < 2 {
-		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+		return nil, nil, nil, defaultPatchZ, ScalarMapInfo{}
 	}
 	zdir := normalized3DDir(opt.ZDir)
 	mapping := contourScalarMap(values, levels, opt)
+	layerValues := contourLayerValues(levels, mapping)
 	collectionDepth := math.Inf(1)
 	paths := make([]geom.Path, 0, len(levels)-1)
 	colors := make([]render.Color, 0, len(levels)-1)
@@ -553,14 +584,14 @@ func (a *Axes3D) projectedContourFillData(x, y []float64, z [][]float64, alpha f
 		var ok bool
 		tri, rotatedValues, ok = rotatedContourTriangulation(x[:cols], y[:rows], z, zdir)
 		if !ok {
-			return nil, nil, defaultPatchZ, ScalarMapInfo{}
+			return nil, nil, nil, defaultPatchZ, ScalarMapInfo{}
 		}
 	}
 
 	for levelIdx := 0; levelIdx+1 < len(levels); levelIdx++ {
 		low := levels[levelIdx]
 		high := levels[levelIdx+1]
-		bandLevel := 0.5 * (low + high)
+		bandLevel := layerValues[levelIdx]
 		planeLevel := contourPlaneLevel(bandLevel, opt.Offset)
 		var rawPolygons [][]geom.Pt
 		if zdir == "z" {
@@ -611,9 +642,9 @@ func (a *Axes3D) projectedContourFillData(x, y []float64, z [][]float64, alpha f
 		colors = append(colors, color)
 	}
 	if len(paths) == 0 {
-		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+		return nil, nil, nil, defaultPatchZ, ScalarMapInfo{}
 	}
-	return paths, colors, computed3DCollectionZ(collectionDepth), mapping
+	return paths, colors, layerValues, computed3DCollectionZ(collectionDepth), mapping
 }
 
 func (a *Axes3D) projectedTriContourLineData(tri Triangulation, z []float64, opt PlotOptions) ([][]geom.Pt, []float64, []float64, []float64, float64) {
@@ -666,20 +697,21 @@ func (a *Axes3D) projectedTriContourLineData(tri Triangulation, z []float64, opt
 	return segments, segmentLevels, levels, rotatedValues, computed3DCollectionZ(depth)
 }
 
-func (a *Axes3D) projectedTriContourFillData(tri Triangulation, z []float64, alpha float64, opt PlotOptions) ([]geom.Path, []render.Color, float64, ScalarMapInfo) {
+func (a *Axes3D) projectedTriContourFillData(tri Triangulation, z []float64, alpha float64, opt PlotOptions) ([]geom.Path, []render.Color, []float64, float64, ScalarMapInfo) {
 	if a == nil {
-		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+		return nil, nil, nil, defaultPatchZ, ScalarMapInfo{}
 	}
 	zdir := normalized3DDir(opt.ZDir)
 	rotatedTri, rotatedValues, ok := rotatedTriangulation3D(tri, z, zdir)
 	if !ok {
-		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+		return nil, nil, nil, defaultPatchZ, ScalarMapInfo{}
 	}
 	levels := contourLevels(rotatedValues, opt.Levels, opt.LevelCount, true)
 	if len(levels) < 2 {
-		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+		return nil, nil, nil, defaultPatchZ, ScalarMapInfo{}
 	}
 	mapping := contourScalarMap(rotatedValues, levels, opt)
+	layerValues := contourLayerValues(levels, mapping)
 	collectionDepth := math.Inf(1)
 	paths := make([]geom.Path, 0, len(levels)-1)
 	colors := make([]render.Color, 0, len(levels)-1)
@@ -687,7 +719,7 @@ func (a *Axes3D) projectedTriContourFillData(tri Triangulation, z []float64, alp
 	for levelIdx := 0; levelIdx+1 < len(levels); levelIdx++ {
 		low := levels[levelIdx]
 		high := levels[levelIdx+1]
-		bandLevel := 0.5 * (low + high)
+		bandLevel := layerValues[levelIdx]
 		planeLevel := contourPlaneLevel(bandLevel, opt.Offset)
 		rawPolygons := contourTriBandPolygons(rotatedTri, rotatedValues, low, high)
 		if len(rawPolygons) == 0 {
@@ -733,9 +765,9 @@ func (a *Axes3D) projectedTriContourFillData(tri Triangulation, z []float64, alp
 		colors = append(colors, color)
 	}
 	if len(paths) == 0 {
-		return nil, nil, defaultPatchZ, ScalarMapInfo{}
+		return nil, nil, nil, defaultPatchZ, ScalarMapInfo{}
 	}
-	return paths, colors, computed3DCollectionZ(collectionDepth), mapping
+	return paths, colors, layerValues, computed3DCollectionZ(collectionDepth), mapping
 }
 
 func validate3DGridContourInput(x, y []float64, z [][]float64) (rows, cols int, ok bool) {

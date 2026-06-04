@@ -2393,15 +2393,16 @@ func TestAxes3DContourfExposesConfiguredScalarMapForColorbars(t *testing.T) {
 	cmap := "plasma"
 	vmin := 0.0
 	vmax := 12.0
+	levels := []float64{0, 2, 4, 6}
 	contour := ax.Contourf(
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 2}, {4, 6}},
 		PlotOptions{
-			Colormap:   &cmap,
-			VMin:       &vmin,
-			VMax:       &vmax,
-			LevelCount: 3,
+			Colormap: &cmap,
+			VMin:     &vmin,
+			VMax:     &vmax,
+			Levels:   levels,
 		},
 	)
 	if contour == nil {
@@ -2410,6 +2411,16 @@ func TestAxes3DContourfExposesConfiguredScalarMapForColorbars(t *testing.T) {
 	mapping := contour.ScalarMap()
 	if mapping.Colormap != cmap || mapping.VMin != vmin || mapping.VMax != vmax {
 		t.Fatalf("contourf scalar map = %+v, want cmap=%q range %.1f..%.1f", mapping, cmap, vmin, vmax)
+	}
+	array := contour.GetArray()
+	want := []float64{1, 3, 5}
+	if len(array) != len(want) {
+		t.Fatalf("contourf scalar array = %v, want Matplotlib filled contour layer values %v", array, want)
+	}
+	for i := range want {
+		if !approx(array[i], want[i], 1e-12) {
+			t.Fatalf("contourf scalar array = %v, want Matplotlib filled contour layer values %v", array, want)
+		}
 	}
 }
 
@@ -2432,6 +2443,82 @@ func TestAxes3DContourfExplicitColorDisablesScalarMapStateLikeMatplotlib(t *test
 	}
 	if contour.Colormap != "" || contour.Norm != nil || contour.VMin != 0 || contour.VMax != 0 {
 		t.Fatalf("contourf scalar map state = cmap=%q norm=%T vmin=%g vmax=%g, want no scalar-map metadata", contour.Colormap, contour.Norm, contour.VMin, contour.VMax)
+	}
+	if array := contour.GetArray(); len(array) != 0 {
+		t.Fatalf("explicit-color contourf scalar array = %v, want no mappable array", array)
+	}
+}
+
+func TestAxes3DTriContourfExposesLayerArrayForColorbars(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	cmap := "plasma"
+	vmin := 0.0
+	vmax := 6.0
+	tri := Triangulation{
+		X:         []float64{0, 1, 0, 1},
+		Y:         []float64{0, 0, 1, 1},
+		Triangles: [][3]int{{0, 1, 2}, {1, 3, 2}},
+	}
+	levels := []float64{0, 2, 4, 6}
+	contour := ax.TriContourf(
+		tri,
+		[]float64{0, 2, 4, 6},
+		PlotOptions{
+			Colormap: &cmap,
+			VMin:     &vmin,
+			VMax:     &vmax,
+			Levels:   levels,
+		},
+	)
+	if contour == nil {
+		t.Fatal("TriContourf returned nil")
+	}
+	mapping := contour.ScalarMap()
+	if mapping.Colormap != cmap || mapping.VMin != vmin || mapping.VMax != vmax {
+		t.Fatalf("tricontourf scalar map = %+v, want cmap=%q range %.1f..%.1f", mapping, cmap, vmin, vmax)
+	}
+	array := contour.GetArray()
+	want := []float64{1, 3, 5}
+	if len(array) != len(want) {
+		t.Fatalf("tricontourf scalar array = %v, want Matplotlib filled contour layer values %v", array, want)
+	}
+	for i := range want {
+		if !approx(array[i], want[i], 1e-12) {
+			t.Fatalf("tricontourf scalar array = %v, want Matplotlib filled contour layer values %v", array, want)
+		}
+	}
+}
+
+func TestAxes3DTriContourfExplicitColorDisablesScalarMapStateLikeMatplotlib(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	override := render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1}
+	tri := Triangulation{
+		X:         []float64{0, 1, 0, 1},
+		Y:         []float64{0, 0, 1, 1},
+		Triangles: [][3]int{{0, 1, 2}, {1, 3, 2}},
+	}
+	contour := ax.TriContourf(tri, []float64{0, 2, 4, 6}, PlotOptions{
+		Color:  &override,
+		Levels: []float64{0, 2, 4, 6},
+	})
+	if contour == nil {
+		t.Fatal("TriContourf returned nil")
+	}
+	if contour.Colormap != "" || contour.Norm != nil || contour.VMin != 0 || contour.VMax != 0 {
+		t.Fatalf("explicit-color tricontourf scalar map state = cmap=%q norm=%T vmin=%g vmax=%g, want no scalar-map metadata", contour.Colormap, contour.Norm, contour.VMin, contour.VMax)
+	}
+	if array := contour.GetArray(); len(array) != 0 {
+		t.Fatalf("explicit-color tricontourf scalar array = %v, want no mappable array", array)
 	}
 }
 
