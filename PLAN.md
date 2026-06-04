@@ -2038,7 +2038,7 @@ example/browser breadth as documentation work.
 - [x] Fail CI when a tracked upstream row is `partial` or `not-started` without
       either a 17.75 task reference, an existing phase owner, or an explicit
       intentional-omission rationale.
-- [ ] Split broad `partial` rows into smaller actionable rows when the remaining
+- [x] Split broad `partial` rows into smaller actionable rows when the remaining
       work mixes implementation, API-wrapper, fixture, and demo concerns.
 
       2026-06-04: first ledger pass added `ClosurePhase` /
@@ -2049,6 +2049,14 @@ example/browser breadth as documentation work.
       tracks plotting-method and 3D-toolkit gaps directly. The remaining work
       is the manual split of broad generated `partial` families into smaller
       implementation/API/fixture/demo rows where needed.
+
+      2026-06-04 follow-up: split the named 17.75 surfaces out of broad
+      generated buckets: `17.75.2` now owns `Axes.bxp`, `Axes.violin`,
+      `Axes.arrow`, `Axes.hlines`, `Axes.vlines`, `Axes.clabel`, plus matching
+      pyplot wrappers where relevant; `17.75.4` has explicit `Axes3D.tricontour`
+      / `tricontourf` rows; and `17.75.5` has explicit `FuncNorm`,
+      `LightSource`, bivariate, and multivariate colormap rows. Remaining
+      broad rows are intentional phase-level buckets for option-breadth audits.
 
 ### 17.75.2 Missing or Thin 2D Axes Convenience APIs
 
