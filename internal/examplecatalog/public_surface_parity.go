@@ -2162,9 +2162,9 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		status:            PublicSurfacePartial,
 		closurePhase:      "17.75.3",
 		goFiles:           []string{"core/artist.go", "core/plot.go", "core/plot_variants.go", "core/histogram.go", "core/mesh.go", "core/contour.go"},
-		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants"},
+		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants", "axes_option_breadth_17_75_3"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants"},
-		note:              "Axes plotting methods are tracked as typed core helpers plus pyplot wrappers where appropriate. Histogram weights, explicit ranges, in-range density normalization, and reverse cumulative behavior are covered through HistOptions. Remaining method-option breadth, overload grammar, and convenience helpers are owned by Phase 17.75.2/17.75.3.",
+		note:              "Axes plotting methods are tracked as typed core helpers plus pyplot wrappers where appropriate. Histogram weights/ranges/cumulative density, scatter scalar styling, edge-aligned/stacked bar labels, fill_between where/interpolate/step semantics, errorbar errorevery, and collection/mesh scalar mutation have focused unit or fixture coverage. Remaining partial scope is Python overload grammar, dynamic kwargs/property-dict aliases, and lower-priority method families outside the 17.75.3 option-breadth slice.",
 	},
 	{
 		idPrefix:          "axes-plotting-class",
@@ -2173,9 +2173,9 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		status:            PublicSurfacePartial,
 		closurePhase:      "17.75.3",
 		goFiles:           []string{"core/artist.go", "core/plot.go", "core/plot_variants.go", "core/histogram.go", "core/mesh.go", "core/contour.go"},
-		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants"},
+		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants", "axes_option_breadth_17_75_3"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants"},
-		note:              "The upstream Axes plotting class maps to Go's typed Axes and helper functions. HistOptions now covers weighted histograms, explicit histogram ranges, density normalization over included samples, and reverse cumulative behavior. Remaining plotting-method closure is split across Phase 17.75.2 convenience APIs and Phase 17.75.3 option breadth.",
+		note:              "The upstream Axes plotting class maps to Go's typed Axes and helper functions. Phase 17.75.3 option-breadth coverage includes typed histogram weights/ranges/cumulative density, scatter scalar styling, edge-aligned/stacked bar labels, fill_between where/interpolate/step semantics, errorbar errorevery, and collection/mesh scalar mutation. Remaining partial scope is Python overload grammar, dynamic kwargs/property-dict aliases, and lower-priority method families outside the 17.75.3 option-breadth slice.",
 	},
 	{
 		idPrefix:          "axes-base-method",

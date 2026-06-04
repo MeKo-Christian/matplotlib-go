@@ -61,14 +61,38 @@ in `third_party/matplotlib`:
 
 ## Phase 17.75.3 Axes Option Breadth
 
-`Axes.Hist` and `pyplot.Hist` now support weighted samples, explicit
-histogram ranges, density normalization based on the in-range weighted total,
-and right-to-left cumulative density through `ReverseCumulative`. These track
-Matplotlib 3.10.9 `Axes.hist`, which forwards `weights`, `range`, and
-`density` to `numpy.histogram` before applying cumulative post-processing.
+The 17.75.3 option-breadth work covers visible high-use options through typed
+Go option structs:
 
-The Go API uses `core.HistOptions.Weights`, `core.HistOptions.Range`, and
-`core.HistOptions.ReverseCumulative` instead of Python's dynamic
-`weights=`, `range=`, and numeric `cumulative=-1` keyword forms. Multi-dataset
-histogram inputs, `rwidth`, `align`, `log`, and per-dataset patch property
-sequences remain later 17.75.3 work.
+- `Axes.Hist` and `pyplot.Hist` support weighted samples, explicit histogram
+  ranges, density normalization based on the in-range weighted total, and
+  right-to-left cumulative density through `ReverseCumulative`.
+- `Axes.Scatter` supports per-point sizes, per-point face/edge colors, scalar
+  values mapped through a colormap/norm, and Matplotlib's default
+  edgecolor-face behavior for scalar-mapped markers.
+- `Axes.Bar`, `Axes.BarH`, and `Axes.BarLabel` support per-bar widths/colors,
+  edge alignment, explicit baselines, and edge labels that use the stacked bar
+  endpoint rather than only the segment height.
+- `Axes.FillBetween` and `Axes.FillBetweenX` support `where` masks,
+  interpolation at crossing boundaries, and `pre`/`post`/`mid` step expansion.
+- `Axes.ErrorBar` supports `errorevery` stride/start selection while keeping
+  the data line complete.
+- Path collections and quad meshes expose typed mutable setters for visible
+  scalar-map, offset, style, and rectilinear-edge changes.
+
+These were checked against vendored Matplotlib 3.10.9 in
+`third_party/matplotlib/lib/matplotlib/axes/_axes.py` and
+`third_party/matplotlib/lib/matplotlib/collections.py`. The Go API keeps
+explicit fields such as `core.HistOptions.Weights`,
+`core.ScatterOptions.ScalarValues`, `core.BarOptions.Align`,
+`core.FillOptions.Where`, and `core.ErrorBarOptions.ErrorEvery` instead of
+Python's dynamic `**kwargs`, `data=`, property dictionaries, and overload
+grammar. Multi-dataset histogram inputs, broad alias normalization, masked
+array input objects, and exact Python container/property mutation semantics
+remain partial.
+
+The parity fixture `axes_option_breadth_17_75_3` exercises visible scatter,
+bar-label, fill-between, and errorbar option behavior against Matplotlib 3.10.9
+reference output. Collection and mesh mutable-setter behavior is covered by
+focused unit tests and existing mesh/colorbar fixtures where it produces
+visible output.

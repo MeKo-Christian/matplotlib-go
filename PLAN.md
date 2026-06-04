@@ -2093,7 +2093,7 @@ example/browser breadth as documentation work.
 
 ### 17.75.3 Axes Method Option Breadth
 
-- [ ] Split 17.75.3 into execution-ready subtasks and complete them in order:
+- [x] Split 17.75.3 into execution-ready subtasks and complete them in order:
     - [x] 17.75.3.1 Histogram Option Breadth: close high-use `Axes.hist`
       gaps for weights, explicit range handling, cumulative density semantics,
       and reverse cumulative behavior. Add focused numeric unit tests before
@@ -2113,7 +2113,7 @@ example/browser breadth as documentation work.
       behavior, scalar-mappable callbacks, offset transforms, `pcolor`
       masked-coordinate behavior, `pcolormesh` shape validation, and Gouraud /
       nearest / flat shading parity where visible.
-    - [ ] 17.75.3.7 Fixtures, Docs, and Alignment: add or update catalog
+    - [x] 17.75.3.7 Fixtures, Docs, and Alignment: add or update catalog
       fixtures only for visible behavior, document intentional deviations, and
       keep example source close to Matplotlib rather than hiding option gaps.
 

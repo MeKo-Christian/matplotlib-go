@@ -51,6 +51,7 @@ colormap_cyclic
 named_colors
 axes_top_right_inverted
 axes_control_surface
+axes_option_breadth_17_75_3
 transform_coordinates
 transform_annotation_modes
 path_clipped_transformed
