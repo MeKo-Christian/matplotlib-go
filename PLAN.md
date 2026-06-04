@@ -2529,6 +2529,21 @@ example/browser breadth as documentation work.
                   voxel and fill-between surface triplets with documented
                   visibility and face-color expectations.
 
+                    - [ ] 17.75.4.5.2.2.2.1 Voxel Verification: verify the
+                      existing `mplot3d_voxels` Go/Python/golden/reference
+                      triplet after the visibility and color work, refreshing
+                      only stale generated images.
+
+                    - [ ] 17.75.4.5.2.2.2.2 Fill-Between Verification: verify
+                      the existing `mplot3d_fill_between3d`
+                      Go/Python/golden/reference triplet after polygon color
+                      and clipping work.
+
+                    - [ ] 17.75.4.5.2.2.2.3 Residual Polygon Fixtures: add any
+                      remaining dedicated polygon-style 3D fixture triplet
+                      identified by the 17.75.4.5.1 inventory, keeping Go and
+                      Python examples structurally close.
+
         - [ ] 17.75.4.5.3 Reference Tolerances and Optional Visuals: tune only
           case-specific tolerances for documented projection, clipping, or
           backend residuals, and add optional-visual gates only where native
@@ -2538,8 +2553,24 @@ example/browser breadth as documentation work.
               only for inventory-approved residuals and keep defaults unchanged
               for exact or near-exact cases.
 
+                - [ ] 17.75.4.5.3.1.1 Reference Metric Review: run focused
+                  golden, Matplotlib-reference, and reference-compare checks
+                  for all 17.75.4.5 fixture triplets and record actual metrics.
+
+                - [ ] 17.75.4.5.3.1.2 Case Tolerance Updates: update only the
+                  catalog rows whose measured metrics require documented
+                  projection, depth-order, clipping, or backend tolerances.
+
             - [ ] 17.75.4.5.3.2 Optional Backend Gates: add optional-visual
               gates only for cases whose pixels depend on backend availability.
+
+                - [ ] 17.75.4.5.3.2.1 Backend Sensitivity Check: verify whether
+                  any new 3D fixture depends on optional native backend
+                  behavior rather than deterministic AGG output.
+
+                - [ ] 17.75.4.5.3.2.2 Gate Map Updates: update
+                  `optionalVisualGoldenIDs` / `optionalVisualMplRefIDs` only
+                  for cases proven backend-conditional.
 
         - [ ] 17.75.4.5.4 Fixture Coverage Ledger: update example-catalog
           metadata, parity docs, and migration notes with new fixture coverage
@@ -2548,8 +2579,24 @@ example/browser breadth as documentation work.
             - [ ] 17.75.4.5.4.1 Catalog Metadata: update catalog rows,
               tolerances, and case descriptions for newly added 3D fixtures.
 
+                - [ ] 17.75.4.5.4.1.1 Catalog Rows: add or revise
+                  `internal/examplecatalog` titles, dimensions, tolerance
+                  fields, validation clusters, and demo-breadth rows for the
+                  17.75.4.5 fixtures.
+
+                - [ ] 17.75.4.5.4.1.2 Catalog Freshness Tests: run focused
+                  catalog tests that validate fixture files, clusters, and
+                  demo-breadth references.
+
             - [ ] 17.75.4.5.4.2 Fixture Docs: record new coverage and residual
               rendering differences in migration notes and parity status docs.
+
+                - [ ] 17.75.4.5.4.2.1 Coverage Notes: update migration notes or
+                  parity metadata with the newly covered 3D fixture surfaces.
+
+                - [ ] 17.75.4.5.4.2.2 Residual Notes: document any remaining
+                  projection, depth-order, clipping, or typed-API differences
+                  found while adding the fixture triplets.
 
     - [ ] 17.75.4.6 3D Docs and Divergence Ledger: update parity metadata,
       migration notes, and `docs/matplotlib-parity-status.md` with completed 3D
@@ -2564,9 +2611,25 @@ example/browser breadth as documentation work.
             - [ ] 17.75.4.6.1.1 Supported Rows: mark implemented 3D APIs as
               supported with references to the completed 17.75.4 subtasks.
 
+                - [ ] 17.75.4.6.1.1.1 Public Surface Scan: compare the 3D
+                  public-surface metadata against completed 17.75.4 rows and
+                  identify stale unsupported/partial entries.
+
+                - [ ] 17.75.4.6.1.1.2 Supported Metadata Update: update the
+                  supported 3D metadata rows with task references and fixture
+                  IDs where coverage now exists.
+
             - [ ] 17.75.4.6.1.2 Omission Rows: record intentional omissions
               with concrete mplot3d behavior, Go API rationale, and affected
               examples.
+
+                - [ ] 17.75.4.6.1.2.1 Omission Scan: identify remaining 3D
+                  public-surface entries that are intentionally omitted or only
+                  partially supported.
+
+                - [ ] 17.75.4.6.1.2.2 Omission Metadata Update: record concrete
+                  Matplotlib behavior, Go API rationale, and affected fixture
+                  or example IDs for each omission.
 
         - [ ] 17.75.4.6.2 Migration Notes: summarize implemented 3D parity
           surfaces, typed Go API differences, and any residual mplot3d
@@ -2576,8 +2639,22 @@ example/browser breadth as documentation work.
               aligned 3D projection, color, fixture, and scalar-mappable
               behavior.
 
+                - [ ] 17.75.4.6.2.1.1 Migration Coverage Summary: add concise
+                  migration-note coverage for newly supported 3D helpers,
+                  fixtures, scalar colors, and colorbar interactions.
+
+                - [ ] 17.75.4.6.2.1.2 Example References: include relevant
+                  fixture or catalog IDs so the notes are traceable to tests.
+
             - [ ] 17.75.4.6.2.2 Typed API Differences: document Go-specific
               typed options and immutable-state differences from Matplotlib.
+
+                - [ ] 17.75.4.6.2.2.1 Typed Option Review: list 3D behavior
+                  where Go typed options intentionally replace Matplotlib's
+                  dynamic keyword or mutable artist patterns.
+
+                - [ ] 17.75.4.6.2.2.2 Difference Notes: document each retained
+                  difference with a supported workaround or explicit omission.
 
         - [ ] 17.75.4.6.3 Final 3D Status Regeneration: regenerate
           `docs/matplotlib-parity-status.md`, run focused catalog/doc freshness
@@ -2763,9 +2840,25 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.2.4.1 Focused Norm Tests: run targeted norm and
               scalar-mappable tests before adding visual fixtures.
 
+                - [ ] 17.75.5.2.4.1.1 Norm Behavior Tests: run or add focused
+                  tests for each implemented norm's scalar, slice, inverse,
+                  clipping, and out-of-range behavior.
+
+                - [ ] 17.75.5.2.4.1.2 Scalar-Mappable Norm Tests: run or add
+                  focused tests for norm-driven colormap lookup, clim/autoscale
+                  interaction, and supported update semantics.
+
             - [ ] 17.75.5.2.4.2 Norm Metadata: update public-surface metadata,
               migration notes, and parity status for implemented or omitted
               norm behavior.
+
+                - [ ] 17.75.5.2.4.2.1 Norm Public-Surface Rows: update
+                  implemented, partial, or omitted norm rows with concrete
+                  task references and fixture/test coverage.
+
+                - [ ] 17.75.5.2.4.2.2 Norm Docs and Status: update migration
+                  notes and regenerate parity status after the norm rows are
+                  current.
 
     - [ ] 17.75.5.3 LightSource and Shaded Images: decide and implement or
       explicitly omit `LightSource`-style hillshading, RGB shading, blend modes,
@@ -2814,9 +2907,25 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.3.4.1 Focused Lighting Tests: add non-visual tests
               for implemented hillshade/blend math or omission assertions.
 
+                - [ ] 17.75.5.3.4.1.1 Hillshade Math Tests: test gradients,
+                  azimuth/altitude defaults, fraction handling, and clipping
+                  for implemented hillshade behavior.
+
+                - [ ] 17.75.5.3.4.1.2 Blend Mode Tests: test overlay,
+                  soft-light, hsv, custom blend behavior, or explicit omission
+                  diagnostics for unsupported blend paths.
+
             - [ ] 17.75.5.3.4.2 Fixture and Docs Update: add required visual
               fixtures or record LightSource omissions in parity metadata and
               migration notes.
+
+                - [ ] 17.75.5.3.4.2.1 Lighting Fixture Decision: decide which
+                  LightSource or shaded-image examples need visual triplets
+                  after focused behavior tests land.
+
+                - [ ] 17.75.5.3.4.2.2 Lighting Metadata Update: update
+                  public-surface metadata, migration notes, and parity status
+                  with implemented fixtures or explicit omissions.
 
     - [ ] 17.75.5.4 Bivariate and Multivariate Colormaps: implement or
       intentionally omit bivariate/multivariate colormap support, including
@@ -2863,8 +2972,24 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.4.4.1 Focused Colormap Tests: run tests for supported
               bivariate/multivariate lookup behavior or omission diagnostics.
 
+                - [ ] 17.75.5.4.4.1.1 Lookup Tests: test lookup-table shape,
+                  scalar/vector input normalization, alpha behavior, and bad
+                  value handling for implemented colormap paths.
+
+                - [ ] 17.75.5.4.4.1.2 Omission Tests: add focused diagnostics
+                  for bivariate or multivariate inputs intentionally outside
+                  the Go API.
+
             - [ ] 17.75.5.4.4.2 Metadata Regeneration: update colormap metadata,
               migration notes, and parity status after the support decision.
+
+                - [ ] 17.75.5.4.4.2.1 Colormap Public-Surface Rows: update
+                  bivariate and multivariate metadata rows with implemented or
+                  omitted status and task references.
+
+                - [ ] 17.75.5.4.4.2.2 Colormap Docs and Status: update
+                  migration notes and regenerate parity status after metadata
+                  is current.
 
     - [ ] 17.75.5.5 Transformed Image Resampling: close residual transformed
       image resampling gaps and document backend-specific interpolation
@@ -2912,8 +3037,24 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.5.4.1 Fixture Refresh: add or refresh transformed
               image reference fixtures only after backend behavior is aligned.
 
+                - [ ] 17.75.5.5.4.1.1 Image Fixture Priority: choose the
+                  smallest transformed-image fixture set that covers
+                  interpolation, extent/origin, clipping, and affine placement.
+
+                - [ ] 17.75.5.5.4.1.2 Image Triplet Generation: add or refresh
+                  the selected Go/Python/golden/reference image fixture
+                  triplets and run focused visual checks.
+
             - [ ] 17.75.5.5.4.2 Backend Notes: record backend-specific
               interpolation and vector fallback residuals in docs and metadata.
+
+                - [ ] 17.75.5.5.4.2.1 Raster Backend Notes: record AGG and
+                  GoBasic interpolation or transform residuals that remain
+                  after alignment.
+
+                - [ ] 17.75.5.5.4.2.2 Vector Backend Notes: record SVG/PDF
+                  placement, interpolation-hint, clipping, and raster-embed
+                  fallback differences.
 
     - [ ] 17.75.5.6 Colorbar Placement and Formatter Breadth: complete colorbar
       formatter, gridspec-style placement, multi-parent placement, boundary,
@@ -2960,9 +3101,29 @@ example/browser breadth as documentation work.
               formatter, boundary, and update-contract tests before visual
               fixture work.
 
+                - [ ] 17.75.5.6.4.1.1 Placement Tests: run or add focused
+                  colorbar tests for parent selection, orientation, shrink,
+                  aspect, pad, anchor, and supported layout behavior.
+
+                - [ ] 17.75.5.6.4.1.2 Formatter and Boundary Tests: run or add
+                  focused tests for ticks, labels, boundaries, extensions,
+                  spacing, and discrete colorbar behavior.
+
+                - [ ] 17.75.5.6.4.1.3 Update Contract Tests: run or add tests
+                  for supported mutable-mappable behavior or explicit
+                  immutable-state omissions.
+
             - [ ] 17.75.5.6.4.2 Colorbar Metadata: update public-surface
               metadata, migration notes, and parity status for supported
               colorbar behavior and omissions.
+
+                - [ ] 17.75.5.6.4.2.1 Colorbar Public-Surface Rows: update
+                  colorbar placement, formatter, boundary, extension, and
+                  update-semantics rows with support or omission status.
+
+                - [ ] 17.75.5.6.4.2.2 Colorbar Docs and Status: update
+                  migration notes and regenerate parity status after metadata
+                  is current.
 
     - [ ] 17.75.5.7 Color Fixtures and Docs: add colormap, norm, image, and
       colorbar parity fixture triplets before promoting behavior to
@@ -2978,8 +3139,23 @@ example/browser breadth as documentation work.
               norm, image, and colorbar feature to existing catalog and
               Matplotlib-reference coverage.
 
+                - [ ] 17.75.5.7.1.1.1 Catalog Scan: inventory current
+                  color, norm, image, and colorbar catalog rows, reference
+                  plots, golden files, and validation clusters.
+
+                - [ ] 17.75.5.7.1.1.2 Missing Coverage List: record missing,
+                  duplicate, or weak fixture coverage by public API surface.
+
             - [ ] 17.75.5.7.1.2 Fixture Priority List: order missing fixtures
               by API coverage, parity risk, and upstream example importance.
+
+                - [ ] 17.75.5.7.1.2.1 Risk Classification: classify missing
+                  fixtures by expected pixel exactness, backend sensitivity,
+                  text/tick sensitivity, and API-coverage value.
+
+                - [ ] 17.75.5.7.1.2.2 Proposed Tolerances: record initial
+                  per-case tolerance bands only for risk categories already
+                  explained by completed behavior work.
 
         - [ ] 17.75.5.7.2 Color/Image Fixture Triplets: add missing Go,
           Python-reference, and golden fixture triplets after core behavior is
@@ -2989,9 +3165,25 @@ example/browser breadth as documentation work.
               colormap, norm, FuncNorm, and boundary/discrete colorbar fixture
               triplets after core behavior lands.
 
+                - [ ] 17.75.5.7.2.1.1 Norm Triplets: add selected norm,
+                  FuncNorm, boundary, and centered/two-slope
+                  Go/Python/golden/reference triplets.
+
+                - [ ] 17.75.5.7.2.1.2 Colormap Triplets: add selected
+                  colormap, bivariate/multivariate decision, and discrete
+                  mapping Go/Python/golden/reference triplets.
+
             - [ ] 17.75.5.7.2.2 Image and Colorbar Fixtures: add transformed
               image, LightSource, and colorbar placement/formatter fixture
               triplets after backend behavior lands.
+
+                - [ ] 17.75.5.7.2.2.1 Image and Lighting Triplets: add selected
+                  transformed-image and LightSource/shaded-image
+                  Go/Python/golden/reference triplets.
+
+                - [ ] 17.75.5.7.2.2.2 Colorbar Triplets: add selected
+                  placement, formatter, boundary, extension, and update-contract
+                  colorbar Go/Python/golden/reference triplets.
 
         - [ ] 17.75.5.7.3 Metadata and Migration Notes: record supported
           surfaces, intentional omissions, and backend-specific residuals in
@@ -3000,8 +3192,24 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.7.3.1 Metadata Rows: update public-surface metadata
               for supported color, image, norm, and colorbar behavior.
 
+                - [ ] 17.75.5.7.3.1.1 Supported Metadata Rows: mark implemented
+                  color, norm, image, and colorbar APIs with task references
+                  and fixture IDs.
+
+                - [ ] 17.75.5.7.3.1.2 Omission Metadata Rows: record
+                  intentional omissions or partial support with concrete API
+                  rationale and affected examples.
+
             - [ ] 17.75.5.7.3.2 Migration Notes: summarize Go API differences,
               omissions, and backend-specific rendering residuals.
+
+                - [ ] 17.75.5.7.3.2.1 API Difference Notes: document typed Go
+                  API differences for color conversion, norms, colormaps,
+                  images, and colorbars.
+
+                - [ ] 17.75.5.7.3.2.2 Backend Residual Notes: document
+                  backend-specific raster/vector residuals and supported
+                  workarounds.
 
         - [ ] 17.75.5.7.4 Final Color Status Regeneration: regenerate
           `docs/matplotlib-parity-status.md`, run focused catalog/doc freshness
@@ -3011,9 +3219,22 @@ example/browser breadth as documentation work.
               parity-status regeneration path after all 17.75.5 metadata,
               migration notes, and fixture rows are updated.
 
+                - [ ] 17.75.5.7.4.1.1 Regenerate Status: run the documented
+                  parity-status generator after metadata and migration notes
+                  are current.
+
+                - [ ] 17.75.5.7.4.1.2 Freshness Check: verify the regenerated
+                  status output is stable and no fixture/catalog rows are stale.
+
             - [ ] 17.75.5.7.4.2 Final Verification: run focused color, norm,
               image, colorbar, catalog, and doc freshness tests before marking
               17.75.5 complete.
+
+                - [ ] 17.75.5.7.4.2.1 Focused Test Sweep: run focused color,
+                  norm, image, colorbar, reference-compare, and catalog tests.
+
+                - [ ] 17.75.5.7.4.2.2 Completion Mark: mark 17.75.5 complete
+                  only after status regeneration and focused verification pass.
 
 ### 17.75.6 Patch, Annotation, Legend, and Offset-Box Tail
 
