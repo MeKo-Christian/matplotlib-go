@@ -100,6 +100,7 @@ func (a *Axes3D) Bar(x, heights []float64, opts ...Bar3DPlaneOptions) *PolyColle
 // Bar3DOptions configures projected wireframe bars.
 type Bar3DOptions struct {
 	Color     *render.Color
+	Colors    []render.Color
 	LineWidth *float64
 	Alpha     *float64
 	Label     string
@@ -155,7 +156,8 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *Lin
 	if len(opts) > 0 && opts[0].Alpha != nil {
 		faceColor.A *= alpha
 	}
-	faces, faceColors := a.projectBar3DShadedFaces(x, y, z, dx, dy, dz, faceColor, opt.AxLimClip)
+	faceBaseColors := bar3DFaceBaseColors(faceColor, opt.Colors, alpha, n)
+	faces, faceColors := a.projectBar3DShadedFaces(x, y, z, dx, dy, dz, faceBaseColors, opt.AxLimClip)
 	barZ := a.bar3DCollectionZ(x, y, z, dx, dy, dz)
 	if len(faces) > 0 {
 		faceCollection := &PolyCollection{
@@ -171,7 +173,7 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *Lin
 		a.Add(faceCollection)
 		a.add3DReprojector(func() {
 			if faceCollection != nil {
-				faces, faceColors := a.projectBar3DShadedFaces(x, y, z, dx, dy, dz, faceColor, opt.AxLimClip)
+				faces, faceColors := a.projectBar3DShadedFaces(x, y, z, dx, dy, dz, faceBaseColors, opt.AxLimClip)
 				faceCollection.Polygons = faces
 				faceCollection.FaceColors = faceColors
 				faceCollection.z = a.bar3DCollectionZ(x, y, z, dx, dy, dz)
@@ -202,6 +204,51 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *Lin
 		}
 	}, limitsChanged)
 	return collection
+}
+
+func bar3DFaceBaseColors(defaultColor render.Color, colors []render.Color, alpha float64, bars int) []render.Color {
+	totalFaces := bars * 6
+	if totalFaces <= 0 {
+		return nil
+	}
+	applyAlpha := func(color render.Color) render.Color {
+		color.A *= alpha
+		return color
+	}
+	resolved := make([]render.Color, totalFaces)
+	if len(colors) == 0 {
+		for i := range resolved {
+			resolved[i] = defaultColor
+		}
+		return resolved
+	}
+	if len(colors) == bars {
+		for bar := range bars {
+			color := applyAlpha(colors[bar])
+			for face := 0; face < 6; face++ {
+				resolved[bar*6+face] = color
+			}
+		}
+		return resolved
+	}
+	if len(colors) == 6 {
+		for bar := range bars {
+			for face := 0; face < 6; face++ {
+				resolved[bar*6+face] = applyAlpha(colors[face])
+			}
+		}
+		return resolved
+	}
+	if len(colors) == totalFaces {
+		for i := range resolved {
+			resolved[i] = applyAlpha(colors[i])
+		}
+		return resolved
+	}
+	for i := range resolved {
+		resolved[i] = applyAlpha(colors[i%len(colors)])
+	}
+	return resolved
 }
 
 // Voxels renders a boolean occupancy grid as per-voxel face collections with

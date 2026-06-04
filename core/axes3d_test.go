@@ -3557,6 +3557,100 @@ func TestAxes3DBar3DSingleColorAppliesAlphaShadingAndStaysNonMappable(t *testing
 	}
 }
 
+func TestAxes3DBar3DSupportsPerBarAndPerFaceColorsLikeMatplotlib(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	perBar := []render.Color{
+		{R: 1, G: 0, B: 0, A: 0.21},
+		{R: 0, G: 1, B: 0, A: 0.77},
+	}
+	ax.Bar3D(
+		[]float64{0, 2},
+		[]float64{0, 0},
+		[]float64{0, 0},
+		[]float64{1, 1},
+		[]float64{1, 1},
+		[]float64{1, 1},
+		Bar3DOptions{Colors: perBar},
+	)
+	perBarFaces := latestBar3DFaceCollection(t, ax, 12)
+	for _, want := range []float64{0.21, 0.77} {
+		if got, wantCount := countFaceColorAlpha(perBarFaces.FaceColors, want), 6; got != wantCount {
+			t.Fatalf("per-bar face alpha %.2f count = %d, want %d in %+v", want, got, wantCount, perBarFaces.FaceColors)
+		}
+	}
+
+	facePattern := []render.Color{
+		{R: 1, G: 0, B: 0, A: 0.11},
+		{R: 0, G: 1, B: 0, A: 0.22},
+		{R: 0, G: 0, B: 1, A: 0.33},
+		{R: 1, G: 1, B: 0, A: 0.44},
+		{R: 1, G: 0, B: 1, A: 0.55},
+		{R: 0, G: 1, B: 1, A: 0.66},
+	}
+	ax.Bar3D(
+		[]float64{0},
+		[]float64{0},
+		[]float64{0},
+		[]float64{1},
+		[]float64{1},
+		[]float64{1},
+		Bar3DOptions{Colors: facePattern},
+	)
+	facePatternFaces := latestBar3DFaceCollection(t, ax, 6)
+	for _, color := range facePattern {
+		if got, wantCount := countFaceColorAlpha(facePatternFaces.FaceColors, color.A), 1; got != wantCount {
+			t.Fatalf("six-face alpha %.2f count = %d, want %d in %+v", color.A, got, wantCount, facePatternFaces.FaceColors)
+		}
+	}
+
+	allFaces := make([]render.Color, 12)
+	for i := range allFaces {
+		allFaces[i] = render.Color{R: float64(i) / 12, G: 0.25, B: 0.75, A: 0.05 + float64(i)*0.03}
+	}
+	ax.Bar3D(
+		[]float64{0, 2},
+		[]float64{0, 0},
+		[]float64{0, 0},
+		[]float64{1, 1},
+		[]float64{1, 1},
+		[]float64{1, 1},
+		Bar3DOptions{Colors: allFaces},
+	)
+	allFaceCollection := latestBar3DFaceCollection(t, ax, 12)
+	for _, color := range allFaces {
+		if got, wantCount := countFaceColorAlpha(allFaceCollection.FaceColors, color.A), 1; got != wantCount {
+			t.Fatalf("6*N face alpha %.2f count = %d, want %d in %+v", color.A, got, wantCount, allFaceCollection.FaceColors)
+		}
+	}
+}
+
+func latestBar3DFaceCollection(t *testing.T, ax *Axes3D, faceCount int) *PolyCollection {
+	t.Helper()
+	for i := len(ax.Artists) - 1; i >= 0; i-- {
+		polys, ok := ax.Artists[i].(*PolyCollection)
+		if ok && len(polys.Polygons) == faceCount {
+			return polys
+		}
+	}
+	t.Fatalf("Bar3D did not add PolyCollection with %d faces", faceCount)
+	return nil
+}
+
+func countFaceColorAlpha(colors []render.Color, alpha float64) int {
+	count := 0
+	for _, color := range colors {
+		if approx(color.A, alpha, 1e-12) {
+			count++
+		}
+	}
+	return count
+}
+
 func TestAxes3DBar3DAxLimClipDropsOutsideCuboids(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())

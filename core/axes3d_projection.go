@@ -384,11 +384,12 @@ func (a *Axes3D) projectBar3DSegments(x, y, z, dx, dy, dz []float64, axlimClip .
 }
 
 func (a *Axes3D) projectBar3DFaces(x, y, z, dx, dy, dz []float64) [][]geom.Pt {
-	polygons, _ := a.projectBar3DShadedFaces(x, y, z, dx, dy, dz, render.Color{R: 1, G: 1, B: 1, A: 1})
+	n := minLen(x, y, z, dx, dy, dz)
+	polygons, _ := a.projectBar3DShadedFaces(x, y, z, dx, dy, dz, bar3DFaceBaseColors(render.Color{R: 1, G: 1, B: 1, A: 1}, nil, 1, n))
 	return polygons
 }
 
-func (a *Axes3D) projectBar3DShadedFaces(x, y, z, dx, dy, dz []float64, baseColor render.Color, axlimClip ...bool) ([][]geom.Pt, []render.Color) {
+func (a *Axes3D) projectBar3DShadedFaces(x, y, z, dx, dy, dz []float64, baseColors []render.Color, axlimClip ...bool) ([][]geom.Pt, []render.Color) {
 	type face struct {
 		polygon []geom.Pt
 		color   render.Color
@@ -424,20 +425,20 @@ func (a *Axes3D) projectBar3DShadedFaces(x, y, z, dx, dy, dz []float64, baseColo
 			{x0, y1, z1},
 		}
 		faceIndices := [][4]int{
-			{0, 1, 2, 3},
+			{0, 3, 2, 1},
 			{4, 5, 6, 7},
 			{0, 1, 5, 4},
-			{1, 2, 6, 5},
 			{2, 3, 7, 6},
 			{3, 0, 4, 7},
+			{1, 2, 6, 5},
 		}
 		normals := []vec3{
 			{0, 0, -1},
 			{0, 0, 1},
 			{0, -1, 0},
-			{1, 0, 0},
 			{0, 1, 0},
 			{-1, 0, 0},
+			{1, 0, 0},
 		}
 		for faceIdx, indices := range faceIndices {
 			polygon := make([]geom.Pt, 0, len(indices))
@@ -452,6 +453,11 @@ func (a *Axes3D) projectBar3DShadedFaces(x, y, z, dx, dy, dz []float64, baseColo
 			}
 			if clip && !a.polygonWithin3DViewLimits(polygon3D) {
 				continue
+			}
+			baseColor := render.Color{R: 1, G: 1, B: 1, A: 1}
+			colorIdx := i*6 + faceIdx
+			if colorIdx < len(baseColors) {
+				baseColor = baseColors[colorIdx]
 			}
 			faces = append(faces, face{
 				polygon: polygon,
