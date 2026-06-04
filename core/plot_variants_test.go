@@ -188,6 +188,33 @@ func TestAxesBarLabel_Placement(t *testing.T) {
 	}
 }
 
+func TestAxesBarLabelEdgeFormatsEndpointForStackedBars(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+	bar := &Bar2D{
+		X:           []float64{1, 2},
+		Heights:     []float64{3, -2},
+		Baselines:   []float64{1, 4},
+		Orientation: BarVertical,
+	}
+	ax.Add(bar)
+
+	edge := ax.BarLabel(bar, nil, BarLabelOptions{Format: "%.1f"})
+	if len(edge) != 2 {
+		t.Fatalf("got %d edge labels, want 2", len(edge))
+	}
+	if edge[0].Content != "4.0" || edge[1].Content != "2.0" {
+		t.Fatalf("edge labels = %q, %q; want endpoint values 4.0, 2.0", edge[0].Content, edge[1].Content)
+	}
+
+	center := ax.BarLabel(bar, nil, BarLabelOptions{Position: "center", Format: "%.1f"})
+	if len(center) != 2 {
+		t.Fatalf("got %d center labels, want 2", len(center))
+	}
+	if center[0].Content != "3.0" || center[1].Content != "-2.0" {
+		t.Fatalf("center labels = %q, %q; want segment lengths 3.0, -2.0", center[0].Content, center[1].Content)
+	}
+}
+
 func TestAxesAxHLine_UsesBlendedCoordinates(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 	line := ax.AxHLine(2)

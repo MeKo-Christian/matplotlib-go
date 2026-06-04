@@ -385,15 +385,26 @@ func validScatterOptionLength(length, n int) bool {
 }
 
 // BarOptions holds optional parameters for bar plots.
+type BarAlign uint8
+
+const (
+	BarAlignCenter BarAlign = iota
+	BarAlignEdge
+)
+
 type BarOptions struct {
 	Color       *render.Color   // if nil, uses automatic color cycling
+	Colors      []render.Color  // per-bar fill colors
 	Width       *float64        // bar width
+	Widths      []float64       // per-bar widths
 	EdgeColor   *render.Color   // edge color
+	EdgeColors  []render.Color  // per-bar edge colors
 	EdgeWidth   *float64        // edge width
 	Alpha       *float64        // alpha transparency
 	Baseline    *float64        // baseline value
 	Baselines   []float64       // per-bar baseline/left values
 	Orientation *BarOrientation // vertical or horizontal
+	Align       *BarAlign       // center or edge alignment
 	Label       string          // series label for legend
 }
 
@@ -420,11 +431,44 @@ func (a *Axes) Bar(x, heights []float64, opts ...BarOptions) *Bar2D {
 	if opt.Width != nil {
 		width = *opt.Width
 	}
+	var widths []float64
+	if len(opt.Widths) > 0 {
+		if !validBarOptionLength(len(opt.Widths), len(x)) {
+			return nil
+		}
+		if len(opt.Widths) == 1 {
+			width = opt.Widths[0]
+		} else {
+			widths = cloneFloat64s(opt.Widths)
+		}
+	}
 
 	// Get edge properties
 	edgeColor := render.Color{R: 0, G: 0, B: 0, A: 0} // transparent by default
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
+	}
+	var colors []render.Color
+	if len(opt.Colors) > 0 {
+		if !validBarOptionLength(len(opt.Colors), len(x)) {
+			return nil
+		}
+		if len(opt.Colors) == 1 {
+			color = opt.Colors[0]
+		} else {
+			colors = cloneRenderColors(opt.Colors)
+		}
+	}
+	var edgeColors []render.Color
+	if len(opt.EdgeColors) > 0 {
+		if !validBarOptionLength(len(opt.EdgeColors), len(x)) {
+			return nil
+		}
+		if len(opt.EdgeColors) == 1 {
+			edgeColor = opt.EdgeColors[0]
+		} else {
+			edgeColors = cloneRenderColors(opt.EdgeColors)
+		}
 	}
 
 	edgeWidth := 0.0
@@ -449,15 +493,28 @@ func (a *Axes) Bar(x, heights []float64, opts ...BarOptions) *Bar2D {
 	if opt.Orientation != nil {
 		orientation = *opt.Orientation
 	}
+	align := BarAlignCenter
+	if opt.Align != nil {
+		align = *opt.Align
+	}
+	positions := cloneFloat64s(x)
+	if align == BarAlignEdge {
+		for i := range positions {
+			positions[i] += barWidthAt(width, widths, i) / 2
+		}
+	}
 
 	// Create bar chart
 	bar := &Bar2D{
-		X:           x,
+		X:           positions,
 		Heights:     heights,
 		Width:       width,
+		Widths:      widths,
 		Baselines:   append([]float64(nil), opt.Baselines...),
 		Color:       color,
+		Colors:      colors,
 		EdgeColor:   edgeColor,
+		EdgeColors:  edgeColors,
 		EdgeWidth:   edgeWidth,
 		Alpha:       alpha,
 		Baseline:    baseline,
@@ -467,6 +524,10 @@ func (a *Axes) Bar(x, heights []float64, opts ...BarOptions) *Bar2D {
 
 	a.Add(bar)
 	return bar
+}
+
+func validBarOptionLength(length, n int) bool {
+	return length == 1 || length == n
 }
 
 // BarH creates a horizontal bar chart and sets orientation to horizontal.

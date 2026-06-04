@@ -215,23 +215,13 @@ func (b *Bar2D) StickyEdges() ([]float64, []float64) {
 
 // verticalBounds calculates bounds for vertical bars.
 func (b *Bar2D) verticalBounds(numBars int) geom.Rect {
-	// Get maximum width for bounds calculation
-	maxWidth := b.Width
-	if b.Widths != nil {
-		for _, width := range b.Widths {
-			if width > maxWidth {
-				maxWidth = width
-			}
-		}
-	}
-	halfMaxWidth := maxWidth / 2
-
 	// Initialize bounds with first bar
 	x0 := b.X[0]
 	height0 := b.Heights[0]
 	baseline0 := b.baselineAt(0)
-	minX := x0 - halfMaxWidth
-	maxX := x0 + halfMaxWidth
+	left0, right0 := barSpanAroundCenter(x0, barWidthAt(b.Width, b.Widths, 0))
+	minX := left0
+	maxX := right0
 	minY := baseline0
 	maxY := baseline0 + height0
 
@@ -247,8 +237,7 @@ func (b *Bar2D) verticalBounds(numBars int) geom.Rect {
 		baseline := b.baselineAt(i)
 
 		// X bounds (bar positions and width)
-		left := x - halfMaxWidth
-		right := x + halfMaxWidth
+		left, right := barSpanAroundCenter(x, barWidthAt(b.Width, b.Widths, i))
 		if left < minX {
 			minX = left
 		}
@@ -286,25 +275,15 @@ func (b *Bar2D) verticalBounds(numBars int) geom.Rect {
 
 // horizontalBounds calculates bounds for horizontal bars.
 func (b *Bar2D) horizontalBounds(numBars int) geom.Rect {
-	// Get maximum width for bounds calculation
-	maxWidth := b.Width
-	if b.Widths != nil {
-		for _, width := range b.Widths {
-			if width > maxWidth {
-				maxWidth = width
-			}
-		}
-	}
-	halfMaxWidth := maxWidth / 2
-
 	// Initialize bounds with first bar
 	y0 := b.X[0] // In horizontal bars, X represents Y positions
 	height0 := b.Heights[0]
 	baseline0 := b.baselineAt(0)
 	minX := baseline0
 	maxX := baseline0 + height0
-	minY := y0 - halfMaxWidth
-	maxY := y0 + halfMaxWidth
+	bottom0, top0 := barSpanAroundCenter(y0, barWidthAt(b.Width, b.Widths, 0))
+	minY := bottom0
+	maxY := top0
 
 	if height0 < 0 {
 		minX = baseline0 + height0
@@ -339,8 +318,7 @@ func (b *Bar2D) horizontalBounds(numBars int) geom.Rect {
 		}
 
 		// Y bounds (bar positions and width)
-		bottom := y - halfMaxWidth
-		top := y + halfMaxWidth
+		bottom, top := barSpanAroundCenter(y, barWidthAt(b.Width, b.Widths, i))
 		if bottom < minY {
 			minY = bottom
 		}
@@ -360,4 +338,21 @@ func (b *Bar2D) baselineAt(i int) float64 {
 		return b.Baselines[i]
 	}
 	return b.Baseline
+}
+
+func barWidthAt(fallback float64, widths []float64, i int) float64 {
+	if len(widths) > 0 && i < len(widths) {
+		return widths[i]
+	}
+	return fallback
+}
+
+func barSpanAroundCenter(center, width float64) (float64, float64) {
+	half := width / 2
+	a := center - half
+	b := center + half
+	if a <= b {
+		return a, b
+	}
+	return b, a
 }

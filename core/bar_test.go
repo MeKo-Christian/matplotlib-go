@@ -179,6 +179,71 @@ func TestAxesBarHForcesHorizontalOrientation(t *testing.T) {
 	}
 }
 
+func TestAxesBarEdgeAlignConvertsPositionsToCenters(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	align := BarAlignEdge
+	width := 0.5
+
+	bar := ax.Bar([]float64{1, 2}, []float64{3, 4}, BarOptions{
+		Align: &align,
+		Width: &width,
+	})
+
+	if bar == nil {
+		t.Fatal("Bar returned nil")
+	}
+	if got, want := bar.X, []float64{1.25, 2.25}; len(got) != len(want) {
+		t.Fatalf("bar centers = %v, want %v", got, want)
+	}
+	for i, want := range []float64{1.25, 2.25} {
+		if got := bar.X[i]; got != want {
+			t.Fatalf("bar center %d = %v, want %v", i, got, want)
+		}
+	}
+	if got, want := bar.Bounds(nil), (geom.Rect{Min: geom.Pt{X: 1, Y: 0}, Max: geom.Pt{X: 2.5, Y: 4}}); got != want {
+		t.Fatalf("bar bounds = %+v, want %+v", got, want)
+	}
+}
+
+func TestAxesBarAppliesPerBarWidthsColorsAndBaselines(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	widths := []float64{0.4, 0.8}
+	colors := []render.Color{{R: 1, A: 1}, {G: 1, A: 1}}
+	edgeColors := []render.Color{{B: 1, A: 1}, {R: 0.5, G: 0.5, A: 1}}
+	baselines := []float64{1, 3}
+
+	bar := ax.Bar([]float64{1, 2}, []float64{2, -1}, BarOptions{
+		Widths:     widths,
+		Colors:     colors,
+		EdgeColors: edgeColors,
+		Baselines:  baselines,
+	})
+
+	if bar == nil {
+		t.Fatal("Bar returned nil")
+	}
+	for i, want := range widths {
+		if got := bar.Widths[i]; got != want {
+			t.Fatalf("width %d = %v, want %v", i, got, want)
+		}
+	}
+	for i, want := range colors {
+		if got := bar.Colors[i]; got != want {
+			t.Fatalf("color %d = %+v, want %+v", i, got, want)
+		}
+	}
+	for i, want := range edgeColors {
+		if got := bar.EdgeColors[i]; got != want {
+			t.Fatalf("edge color %d = %+v, want %+v", i, got, want)
+		}
+	}
+	if got, want := bar.Bounds(nil), (geom.Rect{Min: geom.Pt{X: 0.8, Y: 1}, Max: geom.Pt{X: 2.4, Y: 3}}); got != want {
+		t.Fatalf("bar bounds = %+v, want %+v", got, want)
+	}
+}
+
 func TestBar2D_VariableWidthsAndColors(t *testing.T) {
 	// Test with variable widths and colors
 	bar := &Bar2D{

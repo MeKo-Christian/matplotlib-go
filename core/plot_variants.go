@@ -404,7 +404,7 @@ func (a *Axes) BarLabel(bar *Bar2D, labels []string, opts ...BarLabelOptions) []
 
 	texts := make([]*Text, 0, n)
 	for i := 0; i < n; i++ {
-		label := barLabelText(i, labels, bar.Heights[i], format)
+		label := barLabelText(i, labels, barLabelValue(bar, i, position), format)
 		if label == "" {
 			continue
 		}
@@ -805,6 +805,13 @@ func barLabelText(index int, labels []string, value float64, format string) stri
 		return labels[index]
 	}
 	return fmt.Sprintf(format, value)
+}
+
+func barLabelValue(bar *Bar2D, index int, position string) float64 {
+	if position == "center" {
+		return bar.Heights[index]
+	}
+	return bar.baselineAt(index) + bar.Heights[index]
 }
 
 func barLabelPlacement(bar *Bar2D, index int, position string, padding float64) (TextOptions, float64, float64) {

@@ -2099,10 +2099,10 @@ example/browser breadth as documentation work.
       and reverse cumulative behavior. Add focused numeric unit tests before
       code changes and compare the implementation against
       `third_party/matplotlib/lib/matplotlib/axes/_axes.py`.
-    - [ ] 17.75.3.2 Scatter Option Breadth: harden scalar-mapping,
+    - [x] 17.75.3.2 Scatter Option Breadth: harden scalar-mapping,
       marker-family, edgecolor/facecolor, alpha, and size edge cases where
       they affect visible output.
-    - [ ] 17.75.3.3 Bar Option Breadth: add or harden bar labels,
+    - [x] 17.75.3.3 Bar Option Breadth: add or harden bar labels,
       align/width/baseline semantics, and grouped/stacked bar behavior.
     - [ ] 17.75.3.4 Fill-Between Option Breadth: implement masking,
       interpolation, and step semantics for `fill_between` /
