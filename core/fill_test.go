@@ -410,6 +410,63 @@ func TestFillBetweenAutoScalesYAndPreservesManualX(t *testing.T) {
 	}
 }
 
+func TestFillBetweenWhereSplitsContiguousRegions(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(unitRect())
+	fill := ax.FillBetween(
+		[]float64{0, 1, 2, 3, 4},
+		[]float64{1, 2, 3, 4, 5},
+		[]float64{0, 0, 0, 0, 0},
+		FillOptions{Where: []bool{true, true, false, true, true}},
+	)
+	if fill == nil {
+		t.Fatal("FillBetween returned nil")
+	}
+
+	r := &recordingRenderer{}
+	fill.Draw(r, createTestDrawContext())
+	if len(r.pathCalls) != 2 {
+		t.Fatalf("path calls = %d, want one polygon per contiguous true region", len(r.pathCalls))
+	}
+	if got, want := fill.Bounds(nil), (geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 4, Y: 5}}); got != want {
+		t.Fatalf("bounds = %+v, want %+v", got, want)
+	}
+}
+
+func TestFillBetweenWhereInterpolatesCrossingBoundary(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(unitRect())
+	fill := ax.FillBetween(
+		[]float64{0, 1, 2},
+		[]float64{-1, 1, 1},
+		[]float64{0, 0, 0},
+		FillOptions{
+			Where:       []bool{false, true, true},
+			Interpolate: true,
+		},
+	)
+	if fill == nil {
+		t.Fatal("FillBetween returned nil")
+	}
+
+	if got, want := fill.Bounds(nil), (geom.Rect{Min: geom.Pt{X: 0.5, Y: 0}, Max: geom.Pt{X: 2, Y: 1}}); got != want {
+		t.Fatalf("interpolated bounds = %+v, want %+v", got, want)
+	}
+}
+
+func TestFillBetweenStepPostExpandsRegionSamples(t *testing.T) {
+	fill := &Fill2D{
+		X:     []float64{0, 1, 2},
+		Y1:    []float64{1, 3, 2},
+		Y2:    []float64{0, 0, 0},
+		Step:  FillStepPost,
+		Color: render.Color{A: 1},
+	}
+
+	path := fill.createFillPath(3, createTestDrawContext())
+	if len(path.V) != 12 {
+		t.Fatalf("step-post path vertices = %d, want expanded Matplotlib step polygon vertices", len(path.V))
+	}
+}
+
 func TestFill2D_EdgeColors(t *testing.T) {
 	// Test with edge colors and width
 	fill := &Fill2D{

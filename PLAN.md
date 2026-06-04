@@ -2104,7 +2104,7 @@ example/browser breadth as documentation work.
       they affect visible output.
     - [x] 17.75.3.3 Bar Option Breadth: add or harden bar labels,
       align/width/baseline semantics, and grouped/stacked bar behavior.
-    - [ ] 17.75.3.4 Fill-Between Option Breadth: implement masking,
+    - [x] 17.75.3.4 Fill-Between Option Breadth: implement masking,
       interpolation, and step semantics for `fill_between` /
       `fill_betweenx` parity.
     - [ ] 17.75.3.5 Errorbar Option Breadth: close cap, limit-marker,

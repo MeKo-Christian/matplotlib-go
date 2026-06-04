@@ -623,6 +623,9 @@ func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) *Fill2D {
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
+	if len(opt.Where) > 0 && len(opt.Where) != len(y) {
+		return nil
+	}
 
 	color := a.NextColor()
 	if opt.Color != nil {
@@ -648,6 +651,9 @@ func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) *Fill2D {
 		X:           y,
 		Y1:          x1,
 		Y2:          x2,
+		Where:       append([]bool(nil), opt.Where...),
+		Interpolate: opt.Interpolate,
+		Step:        opt.Step,
 		Orientation: FillHorizontal,
 		Color:       color,
 		EdgeColor:   edgeColor,
@@ -663,12 +669,15 @@ func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) *Fill2D {
 
 // FillOptions holds optional parameters for fill plots.
 type FillOptions struct {
-	Color     *render.Color // if nil, uses automatic color cycling
-	EdgeColor *render.Color // edge color
-	EdgeWidth *float64      // edge width
-	Alpha     *float64      // alpha transparency
-	Baseline  *float64      // baseline value
-	Label     string        // series label for legend
+	Color       *render.Color // if nil, uses automatic color cycling
+	EdgeColor   *render.Color // edge color
+	EdgeWidth   *float64      // edge width
+	Alpha       *float64      // alpha transparency
+	Baseline    *float64      // baseline value
+	Where       []bool        // fill only contiguous regions where adjacent points are true
+	Interpolate bool          // interpolate region boundaries at curve crossings
+	Step        FillStep      // optional step mode
+	Label       string        // series label for legend
 }
 
 // FillBetweenPlot creates a fill between two curves with automatic color cycling.
@@ -681,6 +690,9 @@ func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) *Fill2D
 	var opt FillOptions
 	if len(opts) > 0 {
 		opt = opts[0]
+	}
+	if len(opt.Where) > 0 && len(opt.Where) != len(x) {
+		return nil
 	}
 
 	// Get color (automatic cycling if not specified)
@@ -709,14 +721,17 @@ func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) *Fill2D
 
 	// Create fill
 	fill := &Fill2D{
-		X:         x,
-		Y1:        y1,
-		Y2:        y2,
-		Color:     color,
-		EdgeColor: edgeColor,
-		EdgeWidth: edgeWidth,
-		Alpha:     alpha,
-		Label:     opt.Label,
+		X:           x,
+		Y1:          y1,
+		Y2:          y2,
+		Where:       append([]bool(nil), opt.Where...),
+		Interpolate: opt.Interpolate,
+		Step:        opt.Step,
+		Color:       color,
+		EdgeColor:   edgeColor,
+		EdgeWidth:   edgeWidth,
+		Alpha:       alpha,
+		Label:       opt.Label,
 	}
 
 	a.Add(fill)
