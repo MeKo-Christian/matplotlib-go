@@ -151,3 +151,25 @@ values rather than Python's mutable `Axes3D` artist objects, shared-view axes,
 mutation. `Axes3D.View()` reports the legacy elevation/azimuth/distance triple;
 roll, vertical-axis, projection type, and focal length are controlled through
 dedicated typed methods.
+
+## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
+
+The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
+collection type and scalar-mappable behavior:
+
+| Go helper | Matplotlib surface | Upstream mappable behavior | Current Go state |
+| --- | --- | --- | --- |
+| `Axes3D.Surface` / `PlotSurfaceGrid` | `Axes3D.plot_surface` -> `Poly3DCollection` | With `cmap`, `set_array(avg_z)`, `set_clim`, and `set_norm`; with `facecolors`, explicit per-face colors; otherwise a solid color, optionally shaded. | `PlotOptions.Colormap`, `Norm`, `VMin`, and `VMax` populate `PolyCollection` scalar-map metadata; explicit `FaceColors` and edge-color behavior are supported. Remaining audit scope is shade/lightsource and per-face color breadth. |
+| `Axes3D.Trisurf` | `Axes3D.plot_trisurf` -> `Poly3DCollection` | With `cmap`, scalar array is per-triangle average z; `norm`/`vmin`/`vmax` propagate. Without `cmap`, uses explicit/next color and optional shading. | Colormap, norm, and clim metadata exist on the returned `PolyCollection`. Remaining scope is shade/lightsource and custom face-color breadth. |
+| `Axes3D.Contour` / `TriContour` | `Axes3D.contour` / `tricontour` -> 3D contour collections | 2D contour set is converted to 3D line collections; level colors are scalar-mapped unless explicit colors override them. | Level colors and scalar-map metadata are exposed for colorbars; explicit color clears scalar-map state. Remaining scope is fixture and colorbar integration breadth. |
+| `Axes3D.Contourf` / `TriContourf` | `Axes3D.contourf` / `tricontourf` -> `Poly3DCollection` bands | Filled contour bands carry level-based scalar-map state unless explicit colors override them. | Filled bands expose colormap/norm/clim metadata and filled-level autoscaling. Remaining scope is fixture and colorbar integration breadth. |
+| `Axes3D.Scatter3D` | `Axes3D.scatter` -> `Path3DCollection` | Delegates to 2D `Axes.scatter`; numeric `c` remains scalar-mappable, then colors are depth-shaded and z-sorted. | Returned `Scatter2D` already supports `ScalarValues`, `Colormap`, `Norm`, `VMin`, and `VMax`; 3D depth-shade sorting exists. Remaining scope is explicit 3D scatter option audit and colorbar coverage. |
+| `Axes3D.Quiver3D`, `Wireframe`, `ErrorBar3D`, `Stem3D`, `Plot3D` | `Line3DCollection` or `Line2D`-derived artists | Primarily explicit line colors/kwargs; not scalar-mappable in the common mplot3d examples. | Typed color, alpha, width, and label options exist; scalar mapping is intentionally not treated as the default surface for these line helpers. |
+| `Axes3D.Bar3D` | `Axes3D.bar3d` -> `Poly3DCollection` | Accepts single, per-bar, six-face, or per-face color arrays; shade/lightsource apply to facecolors. It is not a scalar-array mappable by default. | Current Go API is wireframe-oriented with typed color/alpha/width, plus shaded faces used internally for filled variants. Remaining scope is per-face/per-bar color and shade parity. |
+| `Axes3D.FillBetween3D` | `Axes3D.fill_between` -> `Poly3DCollection` | Accepts `facecolors`, optional shade, and forwards collection kwargs; not scalar-array mappable by default. | Typed color, edge color, alpha, mode, and clipping exist. Remaining scope is facecolor-list and shade parity. |
+| `Axes3D.Voxels` | `Axes3D.voxels` -> per-voxel `Poly3DCollection` dict | Accepts scalar or shaped facecolor/edgecolor arrays; shade/lightsource apply per voxel; not scalar-array mappable by default. | Typed per-voxel face/edge color maps and shade flag exist. Remaining scope is shaped color-array breadth and colorbar omission documentation. |
+
+This inventory keeps scalar-array colorbars scoped to the helpers that
+Matplotlib exposes as scalar mappables in normal static examples, while
+explicit-color 3D helpers remain typed color surfaces unless a later task adds
+dedicated scalar-array APIs.

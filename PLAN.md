@@ -2191,7 +2191,7 @@ example/browser breadth as documentation work.
       norm, alpha, colorbar-compatible scalar state, and per-face/per-point
       colors consistently with Matplotlib's public examples.
 
-        - [ ] 17.75.4.4.1 Scalar-Mappable Inventory: map every public 3D helper
+        - [x] 17.75.4.4.1 Scalar-Mappable Inventory: map every public 3D helper
           to its Matplotlib collection type and scalar-mappable behavior,
           including color-array, cmap, norm, clim, alpha, and colorbar support.
 
