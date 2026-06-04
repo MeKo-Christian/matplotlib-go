@@ -286,9 +286,12 @@ backends, and stabilize `internal/mathtext` for promotion.
       `internal/mathtext/doc.go` documents the retained internal API:
       normalization, display segmentation, layout-to-runs/rules, renderer font
       resolution hooks, and cache/storage contracts.
-- [ ] Promote `internal/mathtext` to a top-level module / repo with its own
-      versioning after the documented promotion date; this is v1.0 API-freeze
-      follow-through rather than a Phase 3 exit blocker.
+- [x] Promote `internal/mathtext` to a top-level module / repo with its own
+      versioning after the documented promotion date.
+      A standalone sibling repository now exists at `../mathtext` with the
+      renderer-neutral parser/layout/cache API, local `Pt` / `Rect` geometry
+      types, no non-stdlib module dependencies, and renderer-specific metric
+      parity tests kept in `matplotlib-go`.
 
 **Exit criteria:**
 

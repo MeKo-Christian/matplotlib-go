@@ -190,11 +190,11 @@ func TestErrorBarLimitCaretUsesEndpointAsBase(t *testing.T) {
 	if len(caret) != 3 {
 		t.Fatalf("caret vertices = %d, want 3", len(caret))
 	}
-	if got := r.pathCalls[1].paint.Fill; got.A <= 0 {
-		t.Fatalf("limit caret fill alpha = %v, want filled Matplotlib cap marker", got.A)
+	if got := r.pathCalls[1].paint.Fill; got.A != 0 {
+		t.Fatalf("limit caret fill alpha = %v, want open stroked Matplotlib caret marker", got.A)
 	}
-	if cmds := r.pathCalls[1].path.C; len(cmds) == 0 || cmds[len(cmds)-1] != geom.ClosePath {
-		t.Fatalf("limit caret commands = %v, want closed filled marker path", cmds)
+	if cmds := r.pathCalls[1].path.C; len(cmds) == 0 || cmds[len(cmds)-1] == geom.ClosePath {
+		t.Fatalf("limit caret commands = %v, want open stroked marker path", cmds)
 	}
 	endpoint := ctx.DataToPixel.Apply(geom.Pt{X: 1, Y: 2})
 	if caret[0].Y != endpoint.Y || caret[2].Y != endpoint.Y {
@@ -205,6 +205,33 @@ func TestErrorBarLimitCaretUsesEndpointAsBase(t *testing.T) {
 	}
 	if caret[1].Y >= endpoint.Y {
 		t.Fatalf("lower-limit caret tip y = %.3f, want above endpoint %.3f in display space", caret[1].Y, endpoint.Y)
+	}
+}
+
+func TestErrorBarUpperLimitCaretPointsDownFromEndpoint(t *testing.T) {
+	errBar := &ErrorBar{
+		XY:        []geom.Pt{{X: 1, Y: 2}},
+		YErrLower: []float64{1},
+		UpLimits:  []bool{true},
+		CapSize:   8,
+		LineWidth: 1,
+		Color:     render.Color{A: 1},
+	}
+	r := &recordingRenderer{}
+	ctx := createTestDrawContext()
+
+	errBar.Draw(r, ctx)
+
+	if len(r.pathCalls) != 3 {
+		t.Fatalf("path calls = %d, want stem, caret, and cap marker", len(r.pathCalls))
+	}
+	caret := r.pathCalls[1].path.V
+	endpoint := ctx.DataToPixel.Apply(geom.Pt{X: 1, Y: 1})
+	if caret[0].Y != endpoint.Y || caret[2].Y != endpoint.Y {
+		t.Fatalf("caret base y = %.3f, %.3f; want endpoint y %.3f", caret[0].Y, caret[2].Y, endpoint.Y)
+	}
+	if caret[1].Y <= endpoint.Y {
+		t.Fatalf("upper-limit caret tip y = %.3f, want below endpoint %.3f in display space", caret[1].Y, endpoint.Y)
 	}
 }
 
@@ -306,8 +333,8 @@ func TestAxes_ErrorBar_Options(t *testing.T) {
 	if errBar.LineWidth != lineWidth {
 		t.Errorf("expected line width %v, got %v", lineWidth, errBar.LineWidth)
 	}
-	if errBar.CapSize != capSize {
-		t.Errorf("expected cap size %v, got %v", capSize, errBar.CapSize)
+	if want := pointsToPixels(fig.RC, capSize); errBar.CapSize != want {
+		t.Errorf("expected cap size %v px, got %v", want, errBar.CapSize)
 	}
 	if errBar.Alpha != alpha {
 		t.Errorf("expected alpha %v, got %v", alpha, errBar.Alpha)

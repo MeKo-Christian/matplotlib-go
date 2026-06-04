@@ -321,11 +321,9 @@ func drawLimitCaret(r render.Renderer, ctx *DrawContext, basePt geom.Pt, dirX, d
 		p2 = geom.Pt{X: base.X + half, Y: base.Y}
 	}
 	markerPaint := *paint
-	if markerPaint.Fill.A <= 0 {
-		markerPaint.Fill = markerPaint.Stroke
-	}
+	markerPaint.Fill = render.Color{}
 	r.Path(geom.Path{
-		C: []geom.Cmd{geom.MoveTo, geom.LineTo, geom.LineTo, geom.ClosePath},
+		C: []geom.Cmd{geom.MoveTo, geom.LineTo, geom.LineTo},
 		V: []geom.Pt{p1, apex, p2},
 	}, &markerPaint)
 }

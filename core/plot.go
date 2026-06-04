@@ -651,7 +651,7 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) *Hist2D {
 type ErrorBarOptions struct {
 	Color      *render.Color // if nil, uses automatic color cycling
 	LineWidth  *float64      // error bar line width (px)
-	CapSize    *float64      // cap size in pixels
+	CapSize    *float64      // cap size in points
 	Marker     *MarkerType   // optional data marker equivalent to Matplotlib fmt markers
 	MarkerSize *float64      // marker size in points
 	Alpha      *float64      // alpha transparency
@@ -693,6 +693,7 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 	if opt.CapSize != nil {
 		capSize = *opt.CapSize
 	}
+	capSizePx := pointsToPixels(a.resolvedRC(), capSize)
 
 	alpha := 1.0
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
@@ -730,7 +731,7 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 		XUpLimits:  append([]bool(nil), opt.XUpLimits...),
 		Color:      color,
 		LineWidth:  lineWidth,
-		CapSize:    capSize,
+		CapSize:    capSizePx,
 		Alpha:      alpha,
 		Label:      opt.Label,
 		NoDataLine: opt.NoDataLine,
