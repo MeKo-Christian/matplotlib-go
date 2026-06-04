@@ -610,6 +610,138 @@ func TestAxes3DCollectionMappablesCreateColorbars(t *testing.T) {
 	}
 }
 
+func TestAxes3DUnsupportedColorbarHelpersExposeNoScalarData(t *testing.T) {
+	type scalarArrayMappable interface {
+		ScalarMappable
+		GetArray() []float64
+	}
+
+	tests := []struct {
+		name string
+		make func(*Axes3D) scalarArrayMappable
+	}{
+		{
+			name: "Wireframe",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				return ax.Wireframe([]float64{0, 1}, []float64{0, 1}, [][]float64{{0, 1}, {1, 2}})
+			},
+		},
+		{
+			name: "Quiver3D",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				return ax.Quiver3D([]float64{0}, []float64{0}, []float64{0}, []float64{1}, []float64{0}, []float64{0})
+			},
+		},
+		{
+			name: "ErrorBar3D",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				return ax.ErrorBar3D([]float64{0}, []float64{0}, []float64{0}, nil, nil, []float64{0.1})
+			},
+		},
+		{
+			name: "Stem3D lines",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				container := ax.Stem3D([]float64{0, 1}, []float64{0, 1}, []float64{1, 2})
+				if container == nil {
+					return nil
+				}
+				return container.StemLines
+			},
+		},
+		{
+			name: "Stem3D markers",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				container := ax.Stem3D([]float64{0, 1}, []float64{0, 1}, []float64{1, 2})
+				if container == nil {
+					return nil
+				}
+				return container.MarkerCollection
+			},
+		},
+		{
+			name: "FillBetween3D",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				return ax.FillBetween3D(
+					[]float64{0, 1, 2},
+					[]float64{0, 0, 0},
+					[]float64{1, 1, 1},
+					[]float64{0, 1, 2},
+					[]float64{1, 1, 1},
+					[]float64{0, 0, 0},
+					FillBetween3DOptions{Mode: FillBetween3DModeQuad},
+				)
+			},
+		},
+		{
+			name: "Bar3D edges",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				return ax.Bar3D([]float64{0}, []float64{0}, []float64{0}, []float64{1}, []float64{1}, []float64{1})
+			},
+		},
+		{
+			name: "Bar3D faces",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				if ax.Bar3D([]float64{0}, []float64{0}, []float64{0}, []float64{1}, []float64{1}, []float64{1}) == nil {
+					return nil
+				}
+				return latestBar3DFaceCollection(t, ax, 6)
+			},
+		},
+		{
+			name: "Voxels",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				voxels := ax.Voxels([][][]bool{{{true}}})
+				return voxels[[3]int{0, 0, 0}]
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fig := NewFigure(640, 480)
+			ax, err := fig.AddAxes3D(unitRect())
+			if err != nil {
+				t.Fatalf("AddAxes3D: %v", err)
+			}
+			mappable := tt.make(ax)
+			if mappable == nil {
+				t.Fatalf("%s returned nil", tt.name)
+			}
+			if array := mappable.GetArray(); len(array) != 0 {
+				t.Fatalf("%s scalar array = %v, want no data-backed colorbar array", tt.name, array)
+			}
+			mapping := mappable.ScalarMap()
+			if mapping.Colormap != "" || mapping.Norm != nil || mapping.VMin != 0 || mapping.VMax != 0 {
+				t.Fatalf("%s scalar map = %+v, want no scalar-map metadata", tt.name, mapping)
+			}
+			cbAx := fig.AddColorbar(ax.Axes, mappable)
+			if cbAx == nil || len(cbAx.Artists) == 0 {
+				t.Fatalf("AddColorbar returned no axes for empty %s mappable", tt.name)
+			}
+			cb, ok := cbAx.Artists[0].(*Colorbar)
+			if !ok {
+				t.Fatalf("%s colorbar artist = %T, want *Colorbar", tt.name, cbAx.Artists[0])
+			}
+			if cb.Mapping.Colormap != "viridis" || cb.Mapping.VMin != 0 || cb.Mapping.VMax != 1 {
+				t.Fatalf("%s forced colorbar mapping = %+v, want generic default mapping", tt.name, cb.Mapping)
+			}
+		})
+	}
+
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	line := ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
+	if line == nil {
+		t.Fatal("Plot3D returned nil")
+	}
+	if _, ok := any(line).(ScalarMappable); ok {
+		t.Fatal("Plot3D unexpectedly implements ScalarMappable")
+	}
+}
+
 func TestAxes3DScatterAxLimClipDropsOutsideMarkers(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())

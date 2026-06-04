@@ -209,3 +209,11 @@ The helper-level audit currently classifies the Go 3D helpers this way:
 | `Contourf` / `TriContourf` | yes | Returned `PolyCollection` exposes filled-band layer arrays and scalar-map metadata unless explicit colors disable the scalar map. |
 | `Scatter3D` | yes | Returned `Scatter2D` exposes `ScalarMap()` and `GetArray()` directly, while projected `PathCollection` draw state keeps the depth-shaded mapped colors. |
 | `Voxels`, `Bar3D`, `FillBetween3D`, `Quiver3D`, `Wireframe`, `ErrorBar3D`, `Stem3D`, `Plot3D` | no by default | These helpers follow Matplotlib's common explicit-color collection or line surfaces and are not scalar-array colorbar sources unless a future typed scalar-array API is added. |
+
+Some explicit-color helpers return collection types that satisfy Go's generic
+`ScalarMappable` interface because the shared collection base exposes
+`ScalarMap()`. When those helpers have no scalar array or scalar-map metadata,
+forcing `Figure.AddColorbar` on the returned collection creates only the
+generic default `viridis` 0..1 colorbar. That is not treated as a supported
+data-backed 3D colorbar; supported 3D colorbar sources are the helpers in the
+`yes` rows above.

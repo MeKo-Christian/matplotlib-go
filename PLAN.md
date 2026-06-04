@@ -2298,7 +2298,7 @@ example/browser breadth as documentation work.
                   with consistent cmap/clim metadata; omissions are documented
                   in `docs/matplotlib-migration-notes.md`.
 
-            - [ ] 17.75.4.4.4.2 Colorbar Creation Tests: add focused tests for
+            - [x] 17.75.4.4.4.2 Colorbar Creation Tests: add focused tests for
               surface, trisurf, contour, scatter, and voxel colorbar creation
               using the shared scalar-mappable contract.
 
@@ -2318,9 +2318,14 @@ example/browser breadth as documentation work.
                   cmap/clim mapping, clipped visible scalar arrays, and
                   projected depth-sorted value order.
 
-                - [ ] 17.75.4.4.4.2.3 Unsupported Helpers: test or document
+                - [x] 17.75.4.4.4.2.3 Unsupported Helpers: test or document
                   colorbar behavior for explicit-color 3D helpers such as
                   voxels, bars, quiver, stems, and fill-between surfaces.
+                  Added `TestAxes3DUnsupportedColorbarHelpersExposeNoScalarData`
+                  for wireframe, quiver, errorbar, stem, fill-between, bar,
+                  voxel, and plot-line helpers, and documented that forcing a
+                  colorbar on empty explicit-color collection mappables yields
+                  only the generic default mapping.
 
             - [ ] 17.75.4.4.4.3 Mutable-State Decision: document or implement
               post-creation mappable updates for 3D helpers, keeping immutable
