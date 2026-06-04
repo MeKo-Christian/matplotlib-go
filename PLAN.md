@@ -2213,7 +2213,7 @@ example/browser breadth as documentation work.
               explicit color, edgecolor, alpha, and masked-triangle color
               ordering.
 
-            - [ ] 17.75.4.4.2.3 Contour Line Colors: align `Contour` and
+            - [x] 17.75.4.4.2.3 Contour Line Colors: align `Contour` and
               `TriContour` line collection colors with Matplotlib's
               level-based colormapping, explicit color override behavior,
               alpha handling, scalar-map metadata, and reprojected updates.

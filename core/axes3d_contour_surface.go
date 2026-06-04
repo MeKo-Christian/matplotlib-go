@@ -36,6 +36,7 @@ func (a *Axes3D) Contour(x, y []float64, z [][]float64, opts ...PlotOptions) *Li
 
 	mapping := ScalarMapInfo{}
 	colors := []render.Color(nil)
+	scalarValues := []float64(nil)
 	collectionAlpha := alpha
 	if !colorOverride {
 		mapping = contourScalarMap(values, levels, opt)
@@ -43,19 +44,21 @@ func (a *Axes3D) Contour(x, y []float64, z [][]float64, opts ...PlotOptions) *Li
 		for i, level := range segmentLevels {
 			colors[i] = mapping.Color(level, alpha)
 		}
+		scalarValues = append([]float64(nil), levels...)
 		collectionAlpha = 1
 	}
 
 	collection := &LineCollection{
 		Collection: Collection{
-			Coords:   Coords(CoordData),
-			Label:    label,
-			Alpha:    collectionAlpha,
-			z:        zorder,
-			Colormap: mapping.Colormap,
-			Norm:     mapping.Norm,
-			VMin:     mapping.VMin,
-			VMax:     mapping.VMax,
+			Coords:       Coords(CoordData),
+			Label:        label,
+			Alpha:        collectionAlpha,
+			z:            zorder,
+			Colormap:     mapping.Colormap,
+			Norm:         mapping.Norm,
+			VMin:         mapping.VMin,
+			VMax:         mapping.VMax,
+			ScalarValues: scalarValues,
 		},
 		Segments:  segments,
 		Color:     color,
@@ -80,11 +83,13 @@ func (a *Axes3D) Contour(x, y []float64, z [][]float64, opts ...PlotOptions) *Li
 				collection.Norm = mapping.Norm
 				collection.VMin = mapping.VMin
 				collection.VMax = mapping.VMax
+				collection.ScalarValues = append([]float64(nil), levels...)
 			} else {
 				collection.Colormap = ""
 				collection.Norm = nil
 				collection.VMin = 0
 				collection.VMax = 0
+				collection.ScalarValues = nil
 				collection.Colors = nil
 			}
 			collection.z = zorder
@@ -200,6 +205,7 @@ func (a *Axes3D) TriContour(tri Triangulation, z []float64, opts ...PlotOptions)
 
 	mapping := ScalarMapInfo{}
 	colors := []render.Color(nil)
+	scalarValues := []float64(nil)
 	collectionAlpha := alpha
 	if !colorOverride {
 		mapping = contourScalarMap(values, levels, opt)
@@ -207,19 +213,21 @@ func (a *Axes3D) TriContour(tri Triangulation, z []float64, opts ...PlotOptions)
 		for i, level := range segmentLevels {
 			colors[i] = mapping.Color(level, alpha)
 		}
+		scalarValues = append([]float64(nil), levels...)
 		collectionAlpha = 1
 	}
 
 	collection := &LineCollection{
 		Collection: Collection{
-			Coords:   Coords(CoordData),
-			Label:    opt.Label,
-			Alpha:    collectionAlpha,
-			z:        zorder,
-			Colormap: mapping.Colormap,
-			Norm:     mapping.Norm,
-			VMin:     mapping.VMin,
-			VMax:     mapping.VMax,
+			Coords:       Coords(CoordData),
+			Label:        opt.Label,
+			Alpha:        collectionAlpha,
+			z:            zorder,
+			Colormap:     mapping.Colormap,
+			Norm:         mapping.Norm,
+			VMin:         mapping.VMin,
+			VMax:         mapping.VMax,
+			ScalarValues: scalarValues,
 		},
 		Segments:  segments,
 		Color:     color,
@@ -244,11 +252,13 @@ func (a *Axes3D) TriContour(tri Triangulation, z []float64, opts ...PlotOptions)
 				collection.Norm = mapping.Norm
 				collection.VMin = mapping.VMin
 				collection.VMax = mapping.VMax
+				collection.ScalarValues = append([]float64(nil), levels...)
 			} else {
 				collection.Colormap = ""
 				collection.Norm = nil
 				collection.VMin = 0
 				collection.VMax = 0
+				collection.ScalarValues = nil
 				collection.Colors = nil
 			}
 			collection.z = zorder
