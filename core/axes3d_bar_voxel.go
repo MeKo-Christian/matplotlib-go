@@ -282,6 +282,9 @@ func (a *Axes3D) Voxels(filled [][][]bool, opts ...VoxelOptions) map[[3]int]*Pol
 	if opt.EdgeColor != nil && opt.EdgeColor.A > 0 {
 		edgeWidth = 1.0
 	}
+	if edgeWidth == 0 && len(opt.EdgeColors) > 0 {
+		edgeWidth = 1.0
+	}
 	limitsChanged := a.observe3DVoxels(filled)
 	projected := a.projectVoxelCollections(filled, opt, alpha)
 	if len(projected) == 0 {

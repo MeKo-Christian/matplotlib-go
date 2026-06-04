@@ -3839,6 +3839,128 @@ func TestAxes3DVoxelsCullInternalFacesLikeMatplotlib(t *testing.T) {
 	}
 }
 
+func TestAxes3DVoxelsApplyFaceEdgeAlphaAndStayNonMappable(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	defaultFace := render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1}
+	defaultEdge := render.Color{R: 0.8, G: 0.1, B: 0.3, A: 1}
+	overrideFace := render.Color{R: 0.9, G: 0.7, B: 0.2, A: 1}
+	overrideEdge := render.Color{R: 0.1, G: 0.8, B: 0.4, A: 1}
+	alpha := 0.5
+	shade := false
+
+	voxels := ax.Voxels([][][]bool{
+		{{true}},
+		{{true}},
+	}, VoxelOptions{
+		FaceColor:  &defaultFace,
+		FaceColors: map[[3]int]render.Color{{1, 0, 0}: overrideFace},
+		EdgeColor:  &defaultEdge,
+		EdgeColors: map[[3]int]render.Color{{1, 0, 0}: overrideEdge},
+		Alpha:      &alpha,
+		Shade:      &shade,
+	})
+	if got, want := len(voxels), 2; got != want {
+		t.Fatalf("voxel collection count = %d, want %d", got, want)
+	}
+
+	wantDefaultFace := defaultFace
+	wantDefaultFace.A *= alpha
+	wantDefaultEdge := defaultEdge
+	wantDefaultEdge.A *= alpha
+	assertVoxelCollectionColors(t, voxels[[3]int{0, 0, 0}], wantDefaultFace, wantDefaultEdge)
+
+	wantOverrideFace := overrideFace
+	wantOverrideFace.A *= alpha
+	wantOverrideEdge := overrideEdge
+	wantOverrideEdge.A *= alpha
+	assertVoxelCollectionColors(t, voxels[[3]int{1, 0, 0}], wantOverrideFace, wantOverrideEdge)
+}
+
+func TestAxes3DVoxelsPerVoxelEdgeColorsEnableEdges(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	edge := render.Color{R: 0.8, G: 0.1, B: 0.3, A: 1}
+	shade := false
+	voxels := ax.Voxels([][][]bool{{{true}}}, VoxelOptions{
+		EdgeColors: map[[3]int]render.Color{{0, 0, 0}: edge},
+		Shade:      &shade,
+	})
+	voxel := voxels[[3]int{0, 0, 0}]
+	if voxel == nil {
+		t.Fatal("missing voxel collection")
+	}
+	if got, want := voxel.EdgeColor, edge; got != want {
+		t.Fatalf("voxel edge color = %+v, want %+v", got, want)
+	}
+	if got, want := voxel.EdgeWidth, 1.0; got != want {
+		t.Fatalf("voxel edge width = %v, want visible Matplotlib-style per-voxel edges width %v", got, want)
+	}
+}
+
+func TestAxes3DVoxelsShadeFaceColorsByDefault(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	face := render.Color{R: 0.9, G: 0.7, B: 0.2, A: 1}
+	voxels := ax.Voxels([][][]bool{{{true}}}, VoxelOptions{FaceColor: &face})
+	voxel := voxels[[3]int{0, 0, 0}]
+	if voxel == nil {
+		t.Fatal("missing voxel collection")
+	}
+	shaded := false
+	for _, got := range voxel.FaceColors {
+		if got.A != face.A {
+			t.Fatalf("shaded voxel face alpha = %v, want preserved alpha %v", got.A, face.A)
+		}
+		if got.R != face.R || got.G != face.G || got.B != face.B {
+			shaded = true
+		}
+	}
+	if !shaded {
+		t.Fatalf("voxel face colors = %+v, want Matplotlib-style shaded variants of %+v", voxel.FaceColors, face)
+	}
+}
+
+func assertVoxelCollectionColors(t *testing.T, voxel *PolyCollection, face, edge render.Color) {
+	t.Helper()
+	if voxel == nil {
+		t.Fatal("missing voxel collection")
+	}
+	if len(voxel.FaceColors) == 0 {
+		t.Fatal("voxel has no visible face colors")
+	}
+	for i, got := range voxel.FaceColors {
+		if got != face {
+			t.Fatalf("voxel face color %d = %+v, want %+v", i, got, face)
+		}
+	}
+	if got := voxel.EdgeColor; got != edge {
+		t.Fatalf("voxel edge color = %+v, want %+v", got, edge)
+	}
+	if got, want := voxel.EdgeWidth, 1.0; got != want {
+		t.Fatalf("voxel edge width = %v, want %v", got, want)
+	}
+	if array := voxel.GetArray(); len(array) != 0 {
+		t.Fatalf("voxel scalar array = %v, want non-scalar-mappable PolyCollection", array)
+	}
+	mapping := voxel.ScalarMap()
+	if mapping.Colormap != "" || mapping.Norm != nil || mapping.VMin != 0 || mapping.VMax != 0 {
+		t.Fatalf("voxel scalar map = %+v, want no scalar-map metadata", mapping)
+	}
+}
+
 func TestAxes3DVoxelsAxLimClipDropsOutsideVoxelFaces(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())

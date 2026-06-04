@@ -2223,7 +2223,7 @@ example/browser breadth as documentation work.
               level-midpoint colormapping, explicit color override behavior,
               alpha handling, scalar-map metadata, and reprojected updates.
 
-        - [ ] 17.75.4.4.3 Scatter, Quiver, and Voxel Colors: align scalar and
+        - [x] 17.75.4.4.3 Scatter, Quiver, and Voxel Colors: align scalar and
           explicit color behavior for `Scatter3D`, `Quiver3D`, `Bar3D`,
           `FillBetween3D`, and `Voxels`, including depth-shade interactions and
           per-point/per-face alpha.
@@ -2254,7 +2254,7 @@ example/browser breadth as documentation work.
                   support or document Matplotlib's per-bar, six-face, and
                   `6*N` face color variants with focused tests.
 
-            - [ ] 17.75.4.4.3.4 Voxel Face Colors: align `Voxels` scalar and
+            - [x] 17.75.4.4.3.4 Voxel Face Colors: align `Voxels` scalar and
               explicit facecolor behavior, visible-face color selection,
               alpha propagation, and depth-sorted redraw updates.
 
