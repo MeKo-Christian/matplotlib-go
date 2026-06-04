@@ -2302,9 +2302,13 @@ example/browser breadth as documentation work.
               surface, trisurf, contour, scatter, and voxel colorbar creation
               using the shared scalar-mappable contract.
 
-                - [ ] 17.75.4.4.4.2.1 Collection Mappables: test colorbar
+                - [x] 17.75.4.4.4.2.1 Collection Mappables: test colorbar
                   creation from 3D collections returned by surface, trisurf,
                   contour, filled contour, and triangulated contour helpers.
+                  Added `TestAxes3DCollectionMappablesCreateColorbars` for
+                  `Surface`, `Trisurf`, `Contour`, `Contourf`, `TriContour`,
+                  and `TriContourf`, asserting colorbar creation, retained
+                  mappable handles, cmap/clim mapping, and axis domains.
 
                 - [ ] 17.75.4.4.4.2.2 Scatter Mappables: test colorbar
                   creation from `Scatter3D`, including depth-shaded scalar
