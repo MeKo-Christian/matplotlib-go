@@ -1221,6 +1221,9 @@ func TestAxes3DSurfaceDefaultHasNoEdgeColorsLikeMatplotlibCmapSurface(t *testing
 	if got, want := collection.EdgeWidth, 1.0; got != want {
 		t.Fatalf("surface default linewidth = %v, want %v like Matplotlib plot_surface", got, want)
 	}
+	if len(collection.FaceColors) == 0 || collection.FaceColors[0].A != 1 {
+		t.Fatalf("surface default face alpha = %v, want opaque Matplotlib default", collection.FaceColors)
+	}
 }
 
 func TestAxes3DSurfaceExposesScalarMapForColorbars(t *testing.T) {
@@ -1245,6 +1248,13 @@ func TestAxes3DSurfaceExposesScalarMapForColorbars(t *testing.T) {
 	mapping := surface.ScalarMap()
 	if mapping.Colormap != cmap || mapping.VMin != vmin || mapping.VMax != vmax {
 		t.Fatalf("surface scalar map = %+v, want cmap=%q range %.1f..%.1f", mapping, cmap, vmin, vmax)
+	}
+	array := surface.GetArray()
+	if got, want := len(array), 1; got != want {
+		t.Fatalf("surface scalar array len = %d, want %d Matplotlib average-z value", got, want)
+	}
+	if len(array) == 1 && !approx(array[0], 3, 1e-12) {
+		t.Fatalf("surface scalar array = %v, want Matplotlib face average z [3]", array)
 	}
 }
 

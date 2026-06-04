@@ -339,12 +339,12 @@ func (a *Axes3D) TriContourf(tri Triangulation, z []float64, opts ...PlotOptions
 // Surface draws a structured surface as projected, z-sorted quadrilateral faces.
 func (a *Axes3D) Surface(x, y []float64, z [][]float64, opts ...PlotOptions) *PolyCollection {
 	limitsChanged := a.observe3DGrid(x, y, z)
-	polygons, faceColors, zorder, mapping := a.projectSurfacePolygons(x, y, z, opts...)
+	polygons, faceColors, scalarValues, zorder, mapping := a.projectSurfacePolygons(x, y, z, opts...)
 	if len(polygons) == 0 {
 		return nil
 	}
 
-	alpha := 0.85
+	alpha := 1.0
 	label := ""
 	edgeWidth := 1.0
 	edgeColor := render.Color{A: 0}
@@ -377,15 +377,16 @@ func (a *Axes3D) Surface(x, y []float64, z [][]float64, opts ...PlotOptions) *Po
 		Polygons: polygons,
 		PatchCollection: PatchCollection{
 			Collection: Collection{
-				Coords:    Coords(CoordData),
-				Label:     label,
-				Alpha:     1,
-				Antialias: antialias,
-				Colormap:  mapping.Colormap,
-				Norm:      mapping.Norm,
-				VMin:      mapping.VMin,
-				VMax:      mapping.VMax,
-				z:         zorder,
+				Coords:       Coords(CoordData),
+				Label:        label,
+				Alpha:        1,
+				Antialias:    antialias,
+				Colormap:     mapping.Colormap,
+				Norm:         mapping.Norm,
+				VMin:         mapping.VMin,
+				VMax:         mapping.VMax,
+				ScalarValues: scalarValues,
+				z:            zorder,
 			},
 			FaceColors: faceColors,
 			EdgeColor:  edgeColor,
@@ -398,7 +399,7 @@ func (a *Axes3D) Surface(x, y []float64, z [][]float64, opts ...PlotOptions) *Po
 	a.Add(collection)
 	a.add3DReprojector(func() {
 		if collection != nil {
-			polygons, faceColors, zorder, mapping := a.projectSurfacePolygons(x, y, z, opts...)
+			polygons, faceColors, scalarValues, zorder, mapping := a.projectSurfacePolygons(x, y, z, opts...)
 			for i := range faceColors {
 				faceColors[i].A *= alpha
 			}
@@ -409,6 +410,7 @@ func (a *Axes3D) Surface(x, y []float64, z [][]float64, opts ...PlotOptions) *Po
 			collection.Norm = mapping.Norm
 			collection.VMin = mapping.VMin
 			collection.VMax = mapping.VMax
+			collection.ScalarValues = scalarValues
 			collection.z = zorder
 		}
 	}, limitsChanged)
@@ -847,18 +849,18 @@ func rotatedTriangulation3D(tri Triangulation, z []float64, zdir string) (Triang
 	return rotated, values, true
 }
 
-func (a *Axes3D) projectSurfacePolygons(x, y []float64, z [][]float64, opts ...PlotOptions) ([][]geom.Pt, []render.Color, float64, ScalarMapInfo) {
+func (a *Axes3D) projectSurfacePolygons(x, y []float64, z [][]float64, opts ...PlotOptions) ([][]geom.Pt, []render.Color, []float64, float64, ScalarMapInfo) {
 	if a == nil || len(z) == 0 {
-		return nil, nil, 0, ScalarMapInfo{}
+		return nil, nil, nil, 0, ScalarMapInfo{}
 	}
 	rows := len(z)
 	cols := len(z[0])
 	if cols == 0 || len(x) < cols || len(y) < rows {
-		return nil, nil, 0, ScalarMapInfo{}
+		return nil, nil, nil, 0, ScalarMapInfo{}
 	}
 	for row := 1; row < rows; row++ {
 		if len(z[row]) != cols {
-			return nil, nil, 0, ScalarMapInfo{}
+			return nil, nil, nil, 0, ScalarMapInfo{}
 		}
 	}
 
@@ -938,7 +940,7 @@ func (a *Axes3D) projectSurfacePolygons(x, y []float64, z [][]float64, opts ...P
 		}
 	}
 	if len(faces) == 0 {
-		return nil, nil, 0, ScalarMapInfo{}
+		return nil, nil, nil, 0, ScalarMapInfo{}
 	}
 
 	sort.SliceStable(faces, func(i, j int) bool {
@@ -951,15 +953,20 @@ func (a *Axes3D) projectSurfacePolygons(x, y []float64, z [][]float64, opts ...P
 	}
 	polygons := make([][]geom.Pt, len(faces))
 	colors := make([]render.Color, len(faces))
+	scalarValues := []float64(nil)
+	if useMapping {
+		scalarValues = make([]float64, len(faces))
+	}
 	for i, face := range faces {
 		polygons[i] = face.polygon
 		if useMapping {
 			colors[i] = mapping.Color(face.value, 1)
+			scalarValues[i] = face.value
 		} else {
 			colors[i] = face.color
 		}
 	}
-	return polygons, colors, computed3DCollectionZ(collectionDepth), mapping
+	return polygons, colors, scalarValues, computed3DCollectionZ(collectionDepth), mapping
 }
 
 func surfaceGridSampleIndices(length, count int) []int {

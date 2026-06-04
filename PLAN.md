@@ -2201,7 +2201,7 @@ example/browser breadth as documentation work.
           `TriContour`, and `TriContourf`. Complete the scoped audits below
           before marking this parent item done.
 
-            - [ ] 17.75.4.4.2.1 Surface Color Semantics: align
+            - [x] 17.75.4.4.2.1 Surface Color Semantics: align
               `Surface` / `PlotSurfaceGrid` with Matplotlib's
               `plot_surface` behavior for cmap-driven scalar arrays,
               facecolors, edgecolors, shade disabling under cmap, alpha, and
