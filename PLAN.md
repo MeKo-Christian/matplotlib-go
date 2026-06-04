@@ -2186,7 +2186,7 @@ example/browser breadth as documentation work.
           view-state divergences in parity metadata and migration notes, then
           regenerate `docs/matplotlib-parity-status.md`.
 
-    - [ ] 17.75.4.4 3D Colormapping and Scalar Mappables: ensure surface,
+    - [x] 17.75.4.4 3D Colormapping and Scalar Mappables: ensure surface,
       contour, trisurf, scatter, voxels, and quiver helpers propagate cmap,
       norm, alpha, colorbar-compatible scalar state, and per-face/per-point
       colors consistently with Matplotlib's public examples.
@@ -2361,7 +2361,7 @@ example/browser breadth as documentation work.
                   scatter/callback/alpha/reprojection differences are recorded
                   in `docs/matplotlib-migration-notes.md`.
 
-        - [ ] 17.75.4.4.5 Colormapping Ledger: add focused tests, update parity
+        - [x] 17.75.4.4.5 Colormapping Ledger: add focused tests, update parity
           metadata for supported and intentionally omitted 3D color behavior,
           and regenerate docs.
 
@@ -2402,7 +2402,7 @@ example/browser breadth as documentation work.
                   helper omission ledger and the intentionally narrower mutable
                   colorbar update model.
 
-            - [ ] 17.75.4.4.5.3 Status Regeneration: regenerate
+            - [x] 17.75.4.4.5.3 Status Regeneration: regenerate
               `docs/matplotlib-parity-status.md` and run focused freshness
               checks for the changed metadata.
 
@@ -2411,8 +2411,10 @@ example/browser breadth as documentation work.
                   Regenerated `docs/matplotlib-parity-status.md` with
                   `rtk go run ./cmd/paritystatusdoc`.
 
-                - [ ] 17.75.4.4.5.3.2 Freshness Checks: run focused tests or
+                - [x] 17.75.4.4.5.3.2 Freshness Checks: run focused tests or
                   diff checks that prove generated docs match the metadata.
+                  Ran focused public-surface status freshness checks and 3D
+                  scalar/colorbar/explicit-color core tests.
 
     - [ ] 17.75.4.5 3D Fixtures and Reference Coverage: add parity fixture
       triplets for public 3D chart classes that lack Matplotlib reference
