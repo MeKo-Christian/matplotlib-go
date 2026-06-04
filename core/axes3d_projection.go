@@ -163,9 +163,16 @@ func (a *Axes3D) pointWithin3DViewLimits(point vec3) bool {
 		return false
 	}
 	mins, maxs := a.projectionLimits()
-	return point[0] >= mins[0] && point[0] <= maxs[0] &&
-		point[1] >= mins[1] && point[1] <= maxs[1] &&
-		point[2] >= mins[2] && point[2] <= maxs[2]
+	for i := range 3 {
+		lo, hi := mins[i], maxs[i]
+		if hi < lo {
+			lo, hi = hi, lo
+		}
+		if point[i] < lo || point[i] > hi {
+			return false
+		}
+	}
+	return true
 }
 
 func (a *Axes3D) polygonWithin3DViewLimits(polygon []vec3) bool {

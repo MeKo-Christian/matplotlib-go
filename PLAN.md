@@ -2166,7 +2166,7 @@ example/browser breadth as documentation work.
           projection-type, and box-aspect defaults. Add focused tests for reset
           and reprojection behavior before changing shared projection state.
 
-        - [ ] 17.75.4.3.2 Axis Limits and Autoscale State: audit explicit
+        - [x] 17.75.4.3.2 Axis Limits and Autoscale State: audit explicit
           x/y/z limits, data-limit expansion, margins, z-margin defaults, and
           stale-view recomputation against Matplotlib's `cla`, autoscale, and
           `_get_coord_info` paths. Keep Go's typed limit APIs documented when

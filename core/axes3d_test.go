@@ -142,6 +142,51 @@ func TestAxes3DProjectPointMatchesMatplotlibScatterFixtureLimits(t *testing.T) {
 	}
 }
 
+func TestAxes3DExplicitLimitsPreserveMatplotlibInvertedAxis(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	ax.SetXLim(1, 0)
+	mins, maxs := ax.projectionLimits()
+	if mins[0] != 1 || maxs[0] != 0 {
+		t.Fatalf("inverted x projection limits = (%v, %v), want caller order (1, 0)", mins[0], maxs[0])
+	}
+	got := ax.ProjectPoint(0.25, 0.5, 0.5)
+	want := project3DPointWithLimits(0.25, 0.5, 0.5, ax.elevationDeg, ax.azimuthDeg, ax.distance, mins, maxs, ax.projectionState())
+	if !approx(got.X, want.X, 1e-12) || !approx(got.Y, want.Y, 1e-12) {
+		t.Fatalf("inverted x ProjectPoint = %+v, want projection with caller-order limits %+v", got, want)
+	}
+}
+
+func TestAxes3DAxLimClipUsesNumericRangeForInvertedLimits(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	ax.SetXLim(1, 0)
+	scatter := ax.Scatter3D(
+		[]float64{0.25, 1.25},
+		[]float64{0.5, 0.5},
+		[]float64{0.5, 0.5},
+		ScatterOptions{AxLimClip: true},
+	)
+	if scatter == nil {
+		t.Fatal("Scatter3D returned nil")
+	}
+	if got, want := len(scatter.XY), 1; got != want {
+		t.Fatalf("Scatter3D clipped markers with inverted xlim = %d, want %d", got, want)
+	}
+	want := ax.ProjectPoint(0.25, 0.5, 0.5)
+	if got := scatter.XY[0]; !approx(got.X, want.X, 1e-12) || !approx(got.Y, want.Y, 1e-12) {
+		t.Fatalf("Scatter3D clipped marker with inverted xlim = %+v, want %+v", got, want)
+	}
+}
+
 func TestAxes3DProjectedDataMapsToMatplotlibDisplayCoordinates(t *testing.T) {
 	fig := NewFigure(720, 560)
 	ax, err := fig.AddAxes3D(geom.Rect{

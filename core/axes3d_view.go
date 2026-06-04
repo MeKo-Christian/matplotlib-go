@@ -125,9 +125,6 @@ func (a *Axes3D) setViewLimit3D(axis int, minVal, maxVal float64) {
 	if a == nil || axis < 0 || axis >= len(a.viewSet) || !isFinite(minVal) || !isFinite(maxVal) {
 		return
 	}
-	if maxVal < minVal {
-		minVal, maxVal = maxVal, minVal
-	}
 	a.viewMin[axis] = minVal
 	a.viewMax[axis] = maxVal
 	a.viewSet[axis] = true
