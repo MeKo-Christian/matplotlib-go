@@ -311,6 +311,82 @@ func TestAxesViolinplotAddsCollections(t *testing.T) {
 	}
 }
 
+func TestAxesViolinUsesPrecomputedStats(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+
+	violins := ax.Violin(
+		[]ViolinStat{
+			{
+				Coords:    []float64{1, 2, 3},
+				Vals:      []float64{0.2, 1.0, 0.2},
+				Mean:      2.1,
+				Median:    2,
+				Min:       1,
+				Max:       3,
+				Quantiles: []float64{1.5, 2.5},
+			},
+			{
+				Coords: []float64{2, 3, 4},
+				Vals:   []float64{0.3, 1.2, 0.3},
+				Mean:   3,
+				Median: 3,
+				Min:    2,
+				Max:    4,
+			},
+		},
+		ViolinStatsOptions{
+			Positions:   []float64{1.5, 2.5},
+			Widths:      []float64{0.4, 0.6},
+			ShowMeans:   boolPtr(true),
+			ShowMedians: boolPtr(true),
+			ShowExtrema: boolPtr(true),
+			Side:        "high",
+		},
+	)
+
+	if violins == nil {
+		t.Fatal("expected precomputed violin container")
+	}
+	if violins.Bodies == nil || len(violins.Bodies.Polygons) != 2 {
+		t.Fatalf("violin bodies = %#v, want two body polygons", violins.Bodies)
+	}
+	if violins.Means == nil || len(violins.Means.Segments) != 2 {
+		t.Fatalf("mean segments = %#v, want 2", violins.Means)
+	}
+	if violins.Medians == nil || len(violins.Medians.Segments) != 2 {
+		t.Fatalf("median segments = %#v, want 2", violins.Medians)
+	}
+	if violins.Quantiles == nil || len(violins.Quantiles.Segments) != 2 {
+		t.Fatalf("quantile segments = %#v, want 2", violins.Quantiles)
+	}
+	if violins.Extrema == nil || len(violins.Extrema.Segments) != 6 {
+		t.Fatalf("extrema segments = %#v, want 6", violins.Extrema)
+	}
+	if got := violins.Medians.LineCap; got != render.CapSquare {
+		t.Fatalf("one-sided violin summary line cap = %v, want Matplotlib projecting cap", got)
+	}
+	if got := violins.Bodies.Polygons[0][0]; got != (geom.Pt{X: 1.5, Y: 1}) {
+		t.Fatalf("first one-sided body point = %+v, want anchored at position", got)
+	}
+}
+
+func TestAxesViolinValidatesPrecomputedStats(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+
+	if got := ax.Violin([]ViolinStat{{Coords: []float64{1, 2}, Vals: []float64{1}}}); got != nil {
+		t.Fatalf("Violin with mismatched coords/vals returned %#v, want nil", got)
+	}
+	if got := ax.Violin(
+		[]ViolinStat{
+			{Coords: []float64{1, 2}, Vals: []float64{1, 1}, Mean: 1.5, Median: 1.5, Min: 1, Max: 2},
+			{Coords: []float64{1, 2}, Vals: []float64{1, 1}, Mean: 1.5, Median: 1.5, Min: 1, Max: 2},
+		},
+		ViolinStatsOptions{Positions: []float64{1}},
+	); got != nil {
+		t.Fatalf("Violin with mismatched positions returned %#v, want nil", got)
+	}
+}
+
 func TestAxesViolinplotSideOrientationQuantilesAndBandwidthMethod(t *testing.T) {
 	ax := NewFigure(640, 480).AddAxes(geom.Rect{})
 	violins := ax.Violinplot([][]float64{

@@ -2060,19 +2060,36 @@ example/browser breadth as documentation work.
 
 ### 17.75.2 Missing or Thin 2D Axes Convenience APIs
 
-- [ ] Add Go-style public helpers, pyplot wrappers where appropriate, and
-      parity fixtures for Matplotlib convenience methods that are still absent
-      or only reachable through lower-level artists:
-      `Axes.bxp`, precomputed-stat `Axes.violin`, `Axes.arrow`,
-      collection-style `Axes.hlines` / `Axes.vlines`, and a source-compatible
-      contour-label entry point equivalent to `Axes.clabel`.
-- [ ] For helpers that already have lower-level equivalents, keep the lower
-      layer as the implementation source and make the new method a typed,
-      tested convenience wrapper.
-- [ ] Add `test/parity/<id>/plot.go`, `plot.py`, and
-      `test/matplotlib_ref/plots/<id>.py` cases for each newly exposed helper.
-- [ ] Update README and migration docs with the local method names and any
-      intentional signature differences.
+- [ ] Split 17.75.2 into execution-ready subtasks and complete them in order:
+
+    - [x] 17.75.2.1 Axes Convenience: implement Go API wrappers for `Axes.bxp`
+      and `Axes.violin` (precomputed statistics mode) using existing lower-level
+      `core` helpers as implementation. Add targeted unit tests for input
+      validation, return types, and artist registration.
+
+    - [ ] 17.75.2.2 Axes Line Collections: implement or harden Go API wrappers for
+      `Axes.hlines` and `Axes.vlines` to match existing matplotlib behavior
+      expectations for scalar/list-like arguments and collection defaults. Keep
+      behavior aligned with `core` collection drawing paths and add focused tests.
+
+    - [ ] 17.75.2.3 Axes Contour Labels: add `Axes.clabel` parity helper that
+      delegates to contour label rendering and accepts the same control surface as
+      upstream options; include unit tests for automatic and manual label placement.
+
+    - [ ] 17.75.2.4 Pyplot Parity Surface: add pyplot wrappers for each new 17.75.2
+      helper (`Bxp`, `Violin`, `Ax*` collection calls for line families, and
+      `Clabel`) plus regression tests that assert pyplot delegates to the expected
+      axes-level implementation.
+
+    - [ ] 17.75.2.5 Fixtures and Docs: add one parity fixture triplet
+      (`test/parity/<id>/plot.go`, `plot.py`, and
+      `test/matplotlib_ref/plots/<id>.py`) for each helper as needed, then update
+      `docs/matplotlib-parity-status.md` and migration notes with any intentional
+      signature differences.
+
+    - [ ] 17.75.2.6 Alignment Checks: ensure each completed helper tracks the
+      equivalent implementation in `./third_party/matplotlib` and document any
+      intentional deviations before marking the helper complete.
 
 ### 17.75.3 Axes Method Option Breadth
 

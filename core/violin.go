@@ -31,6 +31,34 @@ type ViolinOptions struct {
 	Label           string
 }
 
+// ViolinStat contains precomputed statistics for Axes.Violin.
+type ViolinStat struct {
+	Coords    []float64
+	Vals      []float64
+	Mean      float64
+	Median    float64
+	Min       float64
+	Max       float64
+	Quantiles []float64
+}
+
+// ViolinStatsOptions configures Axes.Violin.
+type ViolinStatsOptions struct {
+	Positions   []float64
+	Widths      []float64
+	Colors      []render.Color
+	EdgeColor   *render.Color
+	EdgeWidth   float64
+	Alpha       float64
+	Orientation string
+	Side        string
+	LineColor   *render.Color
+	ShowMeans   *bool
+	ShowMedians *bool
+	ShowExtrema *bool
+	Label       string
+}
+
 // ViolinContainer groups the collections created by Axes.Violinplot.
 type ViolinContainer struct {
 	Bodies    *PolyCollection
@@ -70,47 +98,102 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 		}
 	}
 
-	polygons := make([][]geom.Pt, 0, len(data))
-	faceColors := make([]render.Color, 0, len(data))
-	medianSegments := make([][]geom.Pt, 0, len(data))
-	meanSegments := make([][]geom.Pt, 0, len(data))
-	extremaSegments := make([][]geom.Pt, 0, len(data)*3)
-	quantileSegments := make([][]geom.Pt, 0, len(data))
-	orientation := normalizeViolinOrientation(cfg.Orientation)
-	side := normalizeViolinSide(cfg.Side)
-	defaultLineColor := a.PeekColor()
-
+	stats := make([]ViolinStat, 0, len(data))
 	for i, series := range data {
 		values := specialtyFiniteValues(series)
 		if len(values) == 0 {
 			continue
 		}
-
-		width := math.Abs(floatAt(cfg.Widths, i, 0.5))
-		if width == 0 {
-			width = 0.5
-		}
-		position := floatAt(cfg.Positions, i, float64(i+1))
-		stats := specialtyViolinStats(values)
 		grid, density := specialtyKDE(values, cfg.Points, cfg.Bandwidth, cfg.BandwidthMethod)
 		if len(grid) == 0 || len(density) == 0 {
 			continue
 		}
+		summary := specialtyViolinStats(values)
+		stats = append(stats, ViolinStat{
+			Coords:    grid,
+			Vals:      density,
+			Mean:      summary.mean,
+			Median:    summary.median,
+			Min:       summary.min,
+			Max:       summary.max,
+			Quantiles: violinQuantiles(cfg.Quantiles, i, values),
+		})
+	}
+	if len(stats) == 0 {
+		return nil
+	}
+	return a.renderViolin(stats, ViolinStatsOptions{
+		Positions:   cfg.Positions,
+		Widths:      cfg.Widths,
+		Colors:      cfg.Colors,
+		EdgeColor:   cfg.EdgeColor,
+		EdgeWidth:   cfg.EdgeWidth,
+		Alpha:       cfg.Alpha,
+		Orientation: cfg.Orientation,
+		Side:        cfg.Side,
+		LineColor:   cfg.LineColor,
+		ShowMeans:   cfg.ShowMeans,
+		ShowMedians: cfg.ShowMedians,
+		ShowExtrema: cfg.ShowExtrema,
+		Label:       cfg.Label,
+	}, true)
+}
 
+// Violin draws one violin body per precomputed statistics entry.
+func (a *Axes) Violin(stats []ViolinStat, opts ...ViolinStatsOptions) *ViolinContainer {
+	if a == nil || len(stats) == 0 {
+		return nil
+	}
+	var cfg ViolinStatsOptions
+	if len(opts) > 0 {
+		cfg = opts[0]
+	}
+	if cfg.EdgeWidth <= 0 {
+		cfg.EdgeWidth = 1
+	}
+	if cfg.Alpha <= 0 {
+		cfg.Alpha = 0.3
+	}
+	return a.renderViolin(stats, cfg, false)
+}
+
+func (a *Axes) renderViolin(stats []ViolinStat, cfg ViolinStatsOptions, defaultShowMedians bool) *ViolinContainer {
+	n := len(stats)
+	if !validOptionalList(cfg.Positions, n) || !validOptionalScalarList(cfg.Widths, n) {
+		return nil
+	}
+	positions := expandFloatOption(cfg.Positions, n, func(i int) float64 { return float64(i + 1) })
+	widths := expandFloatOption(cfg.Widths, n, func(int) float64 { return 0.5 })
+	polygons := make([][]geom.Pt, 0, n)
+	faceColors := make([]render.Color, 0, n)
+	medianSegments := make([][]geom.Pt, 0, n)
+	meanSegments := make([][]geom.Pt, 0, n)
+	extremaSegments := make([][]geom.Pt, 0, n*3)
+	quantileSegments := make([][]geom.Pt, 0, n)
+	orientation := normalizeViolinOrientation(cfg.Orientation)
+	side := normalizeViolinSide(cfg.Side)
+	defaultLineColor := a.PeekColor()
+
+	for i, stat := range stats {
+		if !validViolinStat(stat) {
+			return nil
+		}
+		width := math.Abs(widths[i])
+		if width == 0 {
+			width = 0.5
+		}
+		position := positions[i]
 		maxDensity := 0.0
-		for _, d := range density {
+		for _, d := range stat.Vals {
 			if d > maxDensity {
 				maxDensity = d
 			}
 		}
-		if maxDensity == 0 {
-			maxDensity = 1
-		}
 
-		lowSide := make([]geom.Pt, 0, len(grid))
-		highSide := make([]geom.Pt, 0, len(grid))
-		for j := range grid {
-			halfWidth := density[j] / maxDensity * width * 0.5
+		lowSide := make([]geom.Pt, 0, len(stat.Coords))
+		highSide := make([]geom.Pt, 0, len(stat.Coords))
+		for j := range stat.Coords {
+			halfWidth := stat.Vals[j] / maxDensity * width * 0.5
 			lowOffset := -halfWidth
 			highOffset := halfWidth
 			switch side {
@@ -119,8 +202,8 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 			case "low":
 				highOffset = 0
 			}
-			lowSide = append(lowSide, violinPoint(position+lowOffset, grid[j], orientation))
-			highSide = append(highSide, violinPoint(position+highOffset, grid[j], orientation))
+			lowSide = append(lowSide, violinPoint(position+lowOffset, stat.Coords[j], orientation))
+			highSide = append(highSide, violinPoint(position+highOffset, stat.Coords[j], orientation))
 		}
 		polygon := make([]geom.Pt, 0, len(lowSide)+len(highSide))
 		polygon = append(polygon, lowSide...)
@@ -133,20 +216,20 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 		faceColors = append(faceColors, color)
 
 		if specialtyBool(cfg.ShowMeans, false) {
-			meanSegments = append(meanSegments, violinPerpSegment(position, width, stats.mean, orientation, side))
+			meanSegments = append(meanSegments, violinPerpSegment(position, width, stat.Mean, orientation, side))
 		}
-		if specialtyBool(cfg.ShowMedians, true) {
-			medianSegments = append(medianSegments, violinPerpSegment(position, width, stats.median, orientation, side))
+		if specialtyBool(cfg.ShowMedians, defaultShowMedians) {
+			medianSegments = append(medianSegments, violinPerpSegment(position, width, stat.Median, orientation, side))
 		}
-		for _, q := range violinQuantiles(cfg.Quantiles, i, values) {
+		for _, q := range stat.Quantiles {
 			quantileSegments = append(quantileSegments, violinPerpSegment(position, width, q, orientation, side))
 		}
 		if specialtyBool(cfg.ShowExtrema, true) {
 			extremaSegments = append(
 				extremaSegments,
-				violinParallelSegment(position, stats.min, stats.max, orientation),
-				violinPerpSegment(position, width, stats.min, orientation, side),
-				violinPerpSegment(position, width, stats.max, orientation, side),
+				violinParallelSegment(position, stat.Min, stat.Max, orientation),
+				violinPerpSegment(position, width, stat.Min, orientation, side),
+				violinPerpSegment(position, width, stat.Max, orientation, side),
 			)
 		}
 	}
@@ -220,6 +303,23 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 		a.AddCollection(container.Extrema)
 	}
 	return container
+}
+
+func validViolinStat(stat ViolinStat) bool {
+	if len(stat.Coords) == 0 || len(stat.Coords) != len(stat.Vals) {
+		return false
+	}
+	if !isFinite(stat.Mean) || !isFinite(stat.Median) || !isFinite(stat.Min) || !isFinite(stat.Max) {
+		return false
+	}
+	hasPositiveDensity := false
+	for i := range stat.Coords {
+		if !isFinite(stat.Coords[i]) || !isFinite(stat.Vals[i]) || stat.Vals[i] < 0 {
+			return false
+		}
+		hasPositiveDensity = hasPositiveDensity || stat.Vals[i] > 0
+	}
+	return hasPositiveDensity
 }
 
 func specialtyFiniteValues(values []float64) []float64 {

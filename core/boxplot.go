@@ -3,7 +3,9 @@ package core
 import (
 	"math"
 	"sort"
+	"strconv"
 
+	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -53,6 +55,286 @@ type boxPlotStats struct {
 	ciLow        float64
 	ciHigh       float64
 	outliers     []float64
+}
+
+// BxpStat contains precomputed statistics for Axes.Bxp.
+type BxpStat struct {
+	Med    float64
+	Q1     float64
+	Q3     float64
+	Whislo float64
+	Whishi float64
+
+	Mean   *float64
+	Cilo   *float64
+	Cihi   *float64
+	Fliers []float64
+	Label  string
+}
+
+// BxpOptions configures Axes.Bxp.
+type BxpOptions struct {
+	Positions   []float64
+	Widths      []float64
+	CapWidths   []float64
+	Orientation string
+
+	ShowNotches *bool
+	ShowMeans   *bool
+	ShowCaps    *bool
+	ShowBox     *bool
+	ShowFliers  *bool
+	MeanLine    bool
+	ManageTicks *bool
+
+	Color       *render.Color
+	MedianColor *render.Color
+	MeanColor   *render.Color
+	FlierColor  *render.Color
+	LineWidth   *float64
+	MarkerSize  *float64
+
+	Label  string
+	Labels []string
+}
+
+// BxpContainer groups the Line2D artists created by Axes.Bxp.
+type BxpContainer struct {
+	Whiskers []*Line2D
+	Caps     []*Line2D
+	Boxes    []*Line2D
+	Medians  []*Line2D
+	Fliers   []*Line2D
+	Means    []*Line2D
+}
+
+// Bxp draws box plots from precomputed statistics, matching Matplotlib's
+// low-level Axes.bxp surface while returning typed artist groups.
+func (a *Axes) Bxp(stats []BxpStat, opts ...BxpOptions) *BxpContainer {
+	if a == nil || len(stats) == 0 {
+		return nil
+	}
+	var opt BxpOptions
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	n := len(stats)
+	if !validOptionalList(opt.Positions, n) || !validOptionalScalarList(opt.Widths, n) || !validOptionalScalarList(opt.CapWidths, n) {
+		return nil
+	}
+	if len(opt.Labels) > 0 && len(opt.Labels) != n {
+		return nil
+	}
+	orientation := normalizeViolinOrientation(opt.Orientation)
+	positions := expandFloatOption(opt.Positions, n, func(i int) float64 { return float64(i + 1) })
+	widths := expandFloatOption(opt.Widths, n, func(int) float64 {
+		return matplotlibBoxPlotDefaultWidth(n, positions)
+	})
+	capWidths := expandFloatOption(opt.CapWidths, n, func(i int) float64 {
+		return math.Abs(widths[i]) * 0.5
+	})
+
+	showNotches := specialtyBool(opt.ShowNotches, false)
+	showMeans := specialtyBool(opt.ShowMeans, false)
+	showCaps := specialtyBool(opt.ShowCaps, true)
+	showBox := specialtyBool(opt.ShowBox, true)
+	showFliers := specialtyBool(opt.ShowFliers, true)
+	manageTicks := specialtyBool(opt.ManageTicks, true)
+
+	color := render.Color{R: 0, G: 0, B: 0, A: 1}
+	if opt.Color != nil {
+		color = *opt.Color
+	}
+	medianColor := matcolor.Tab10[1]
+	if opt.MedianColor != nil {
+		medianColor = *opt.MedianColor
+	}
+	meanColor := matcolor.Tab10[2]
+	if opt.MeanColor != nil {
+		meanColor = *opt.MeanColor
+	}
+	flierColor := color
+	if opt.FlierColor != nil {
+		flierColor = *opt.FlierColor
+	}
+	lineWidth := 1.0
+	if opt.LineWidth != nil && *opt.LineWidth > 0 {
+		lineWidth = *opt.LineWidth
+	}
+	markerSize := 3.5
+	if opt.MarkerSize != nil && *opt.MarkerSize > 0 {
+		markerSize = *opt.MarkerSize
+	}
+
+	container := &BxpContainer{}
+	tickLabels := make([]string, n)
+	for i, stat := range stats {
+		if !validBxpStat(stat) {
+			return nil
+		}
+		pos := positions[i]
+		width := math.Abs(widths[i])
+		capWidth := math.Abs(capWidths[i])
+		left := pos - width*0.5
+		right := pos + width*0.5
+		capLeft := pos - capWidth*0.5
+		capRight := pos + capWidth*0.5
+
+		tickLabels[i] = stat.Label
+		if tickLabels[i] == "" {
+			tickLabels[i] = trimFloatLabel(pos)
+		}
+
+		if showBox {
+			boxPoints := bxpBoxPoints(stat, pos, left, right, showNotches, orientation)
+			container.Boxes = append(container.Boxes, a.addBxpLine(boxPoints, color, lineWidth, ""))
+		}
+		container.Whiskers = append(container.Whiskers,
+			a.addBxpLine([]geom.Pt{violinPoint(pos, stat.Q1, orientation), violinPoint(pos, stat.Whislo, orientation)}, color, lineWidth, ""),
+			a.addBxpLine([]geom.Pt{violinPoint(pos, stat.Q3, orientation), violinPoint(pos, stat.Whishi, orientation)}, color, lineWidth, ""),
+		)
+		if showCaps {
+			container.Caps = append(container.Caps,
+				a.addBxpLine([]geom.Pt{violinPoint(capLeft, stat.Whislo, orientation), violinPoint(capRight, stat.Whislo, orientation)}, color, lineWidth, ""),
+				a.addBxpLine([]geom.Pt{violinPoint(capLeft, stat.Whishi, orientation), violinPoint(capRight, stat.Whishi, orientation)}, color, lineWidth, ""),
+			)
+		}
+		medianLabel := ""
+		if len(opt.Labels) > 0 {
+			medianLabel = opt.Labels[i]
+		} else if opt.Label != "" && i == 0 {
+			medianLabel = opt.Label
+		}
+		medLeft, medRight := left, right
+		if showNotches {
+			medLeft, medRight = pos-width*0.25, pos+width*0.25
+		}
+		container.Medians = append(container.Medians, a.addBxpLine(
+			[]geom.Pt{violinPoint(medLeft, stat.Med, orientation), violinPoint(medRight, stat.Med, orientation)},
+			medianColor, lineWidth, medianLabel,
+		))
+		if showMeans && stat.Mean != nil && isFinite(*stat.Mean) {
+			if opt.MeanLine {
+				container.Means = append(container.Means, a.addBxpLine(
+					[]geom.Pt{violinPoint(left, *stat.Mean, orientation), violinPoint(right, *stat.Mean, orientation)},
+					meanColor, lineWidth, "",
+				))
+			} else {
+				container.Means = append(container.Means, a.addBxpMarker(violinPoint(pos, *stat.Mean, orientation), meanColor, markerSize))
+			}
+		}
+		if showFliers && len(stat.Fliers) > 0 {
+			points := make([]geom.Pt, 0, len(stat.Fliers))
+			for _, flier := range stat.Fliers {
+				if isFinite(flier) {
+					points = append(points, violinPoint(pos, flier, orientation))
+				}
+			}
+			if len(points) > 0 {
+				container.Fliers = append(container.Fliers, a.addBxpMarkers(points, flierColor, markerSize))
+			}
+		}
+	}
+	if manageTicks {
+		if orientation == "horizontal" {
+			a.YAxis.Locator = FixedLocator{TicksList: positions}
+			a.YAxis.Formatter = FixedFormatter{Labels: tickLabels}
+		} else {
+			a.XAxis.Locator = FixedLocator{TicksList: positions}
+			a.XAxis.Formatter = FixedFormatter{Labels: tickLabels}
+		}
+	}
+	return container
+}
+
+func (a *Axes) addBxpLine(points []geom.Pt, color render.Color, width float64, label string) *Line2D {
+	line := &Line2D{XY: points, Col: color, W: width, Label: label, z: 2}
+	a.Add(line)
+	return line
+}
+
+func (a *Axes) addBxpMarker(point geom.Pt, color render.Color, size float64) *Line2D {
+	return a.addBxpMarkers([]geom.Pt{point}, color, size)
+}
+
+func (a *Axes) addBxpMarkers(points []geom.Pt, color render.Color, size float64) *Line2D {
+	line := &Line2D{
+		XY:              points,
+		Col:             color,
+		Marker:          MarkerCircle,
+		MarkerSet:       true,
+		MarkerSize:      size,
+		MarkerFaceColor: color,
+		MarkerEdgeColor: color,
+		z:               2.1,
+	}
+	a.Add(line)
+	return line
+}
+
+func bxpBoxPoints(stat BxpStat, pos, left, right float64, notched bool, orientation string) []geom.Pt {
+	if !notched {
+		return []geom.Pt{
+			violinPoint(left, stat.Q1, orientation),
+			violinPoint(right, stat.Q1, orientation),
+			violinPoint(right, stat.Q3, orientation),
+			violinPoint(left, stat.Q3, orientation),
+			violinPoint(left, stat.Q1, orientation),
+		}
+	}
+	cilo, cihi := stat.Med, stat.Med
+	if stat.Cilo != nil {
+		cilo = *stat.Cilo
+	}
+	if stat.Cihi != nil {
+		cihi = *stat.Cihi
+	}
+	notchLeft := pos - (right-left)*0.25
+	notchRight := pos + (right-left)*0.25
+	return []geom.Pt{
+		violinPoint(left, stat.Q1, orientation),
+		violinPoint(right, stat.Q1, orientation),
+		violinPoint(right, cilo, orientation),
+		violinPoint(notchRight, stat.Med, orientation),
+		violinPoint(right, cihi, orientation),
+		violinPoint(right, stat.Q3, orientation),
+		violinPoint(left, stat.Q3, orientation),
+		violinPoint(left, cihi, orientation),
+		violinPoint(notchLeft, stat.Med, orientation),
+		violinPoint(left, cilo, orientation),
+		violinPoint(left, stat.Q1, orientation),
+	}
+}
+
+func validBxpStat(stat BxpStat) bool {
+	return isFinite(stat.Med) && isFinite(stat.Q1) && isFinite(stat.Q3) && isFinite(stat.Whislo) && isFinite(stat.Whishi)
+}
+
+func validOptionalScalarList(values []float64, n int) bool {
+	return len(values) == 0 || len(values) == 1 || len(values) == n
+}
+
+func validOptionalList(values []float64, n int) bool {
+	return len(values) == 0 || len(values) == n
+}
+
+func expandFloatOption(values []float64, n int, fallback func(int) float64) []float64 {
+	out := make([]float64, n)
+	for i := range out {
+		switch {
+		case len(values) == 1:
+			out[i] = values[0]
+		case len(values) == n:
+			out[i] = values[i]
+		default:
+			out[i] = fallback(i)
+		}
+	}
+	return out
+}
+
+func trimFloatLabel(value float64) string {
+	return strconv.FormatFloat(value, 'g', -1, 64)
 }
 
 func (b *BoxPlot2D) compute() {

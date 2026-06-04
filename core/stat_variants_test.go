@@ -72,6 +72,74 @@ func TestAxesBoxPlots_CreatesMultipleBoxes(t *testing.T) {
 	}
 }
 
+func TestAxesBxpCreatesComponentArtistsAndTicks(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+	mean := 2.2
+
+	container := ax.Bxp(
+		[]BxpStat{
+			{Med: 2, Q1: 1, Q3: 3, Whislo: 0.5, Whishi: 3.5, Mean: &mean, Fliers: []float64{4.2}, Label: "A"},
+			{Med: 5, Q1: 4, Q3: 6, Whislo: 3.5, Whishi: 6.5, Label: "B"},
+		},
+		BxpOptions{ShowMeans: boolPtr(true), Label: "stats"},
+	)
+
+	if container == nil {
+		t.Fatal("expected bxp container")
+	}
+	if len(container.Boxes) != 2 || len(container.Medians) != 2 || len(container.Whiskers) != 4 {
+		t.Fatalf("unexpected box component counts boxes=%d medians=%d whiskers=%d", len(container.Boxes), len(container.Medians), len(container.Whiskers))
+	}
+	if len(container.Caps) != 4 || len(container.Fliers) != 1 || len(container.Means) != 1 {
+		t.Fatalf("unexpected optional component counts caps=%d fliers=%d means=%d", len(container.Caps), len(container.Fliers), len(container.Means))
+	}
+	if container.Medians[0].Label != "stats" || container.Medians[1].Label != "" {
+		t.Fatalf("median labels = %q, %q; want first legend label only", container.Medians[0].Label, container.Medians[1].Label)
+	}
+	if len(ax.Artists) != 14 {
+		t.Fatalf("registered artists = %d, want 14 component Line2D artists", len(ax.Artists))
+	}
+
+	loc, ok := ax.XAxis.Locator.(FixedLocator)
+	if !ok {
+		t.Fatalf("x-axis locator = %T, want FixedLocator", ax.XAxis.Locator)
+	}
+	assertFloatSlices(t, "bxp ticks", loc.TicksList, []float64{1, 2})
+	formatter, ok := ax.XAxis.Formatter.(FixedFormatter)
+	if !ok {
+		t.Fatalf("x-axis formatter = %T, want FixedFormatter", ax.XAxis.Formatter)
+	}
+	if len(formatter.Labels) != 2 || formatter.Labels[0] != "A" || formatter.Labels[1] != "B" {
+		t.Fatalf("tick labels = %v, want [A B]", formatter.Labels)
+	}
+}
+
+func TestAxesBxpValidatesOptionLengthsAndHorizontalTicks(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+	stats := []BxpStat{
+		{Med: 2, Q1: 1, Q3: 3, Whislo: 0.5, Whishi: 3.5},
+		{Med: 5, Q1: 4, Q3: 6, Whislo: 3.5, Whishi: 6.5},
+	}
+	if got := ax.Bxp(stats, BxpOptions{Positions: []float64{1}}); got != nil {
+		t.Fatalf("Bxp with mismatched positions returned %#v, want nil", got)
+	}
+
+	container := ax.Bxp(stats, BxpOptions{
+		Positions:   []float64{1.5, 2.5},
+		Widths:      []float64{0.4, 0.5},
+		Orientation: "horizontal",
+	})
+	if container == nil {
+		t.Fatal("expected horizontal bxp container")
+	}
+	if got := container.Medians[0].XY; len(got) != 2 || got[0] != (geom.Pt{X: 2, Y: 1.3}) || got[1] != (geom.Pt{X: 2, Y: 1.7}) {
+		t.Fatalf("horizontal median data = %+v, want x fixed at median and y spanning box width", got)
+	}
+	if _, ok := ax.YAxis.Locator.(FixedLocator); !ok {
+		t.Fatalf("y-axis locator = %T, want FixedLocator for horizontal Bxp", ax.YAxis.Locator)
+	}
+}
+
 func TestAxesBoxPlotsManageTicksFalsePreservesLocator(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 	ax.XAxis.Locator = AutoLocator{}
