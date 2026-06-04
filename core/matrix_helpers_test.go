@@ -171,6 +171,32 @@ func TestAxesSpySupportsMarkerAndImageModes(t *testing.T) {
 	}
 }
 
+func TestAxesSpyLeavesXLabelAtBottomWithTopTicks(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(unitRect())
+	ax.SetXLabel("column")
+	ax.Spy([][]float64{{1, 0}, {0, 1}}, SpyOptions{MarkerSize: 10})
+
+	if ax.effectiveXLabelSide() != AxisBottom {
+		t.Fatalf("spy xlabel side = %v, want bottom like Matplotlib", ax.effectiveXLabelSide())
+	}
+	if ax.XAxisTop == nil || !ax.XAxisTop.ShowTicks || !ax.XAxisTop.ShowLabels {
+		t.Fatal("spy should place ticks and tick labels on the top axis")
+	}
+
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	ctx.RC.DPI = 72
+	px := ax.adjustedLayout(fig)
+	r := &axesLabelRecordingRenderer{}
+	drawAxesLabels(ax, r, ctx, px, figureTextAlignment{})
+	if len(r.texts) != 1 || r.texts[0] != "column" {
+		t.Fatalf("drawn texts = %v, want only xlabel", r.texts)
+	}
+	if r.origins[0].Y >= spinePixelY(AxisBottom, px) {
+		t.Fatalf("spy xlabel origin Y = %.3f, want below bottom spine %.3f", r.origins[0].Y, spinePixelY(AxisBottom, px))
+	}
+}
+
 func TestAxesSpyMarkerSizeUsesMatplotlibPointDiameter(t *testing.T) {
 	data := [][]float64{{1}}
 

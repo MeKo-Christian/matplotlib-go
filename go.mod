@@ -13,6 +13,8 @@ require (
 	codeberg.org/go-fonts/dejavu v0.4.0
 	gioui.org v0.10.0
 	github.com/cwbudde/agg_go v0.2.31
+	github.com/cwbudde/mathtext v0.1.0
+	golang.org/x/net v0.48.0
 	golang.org/x/text v0.32.0
 )
 
@@ -32,7 +34,6 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/exp/shiny v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
-	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

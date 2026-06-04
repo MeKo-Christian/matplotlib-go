@@ -211,14 +211,14 @@ Exit criteria:
 # Phase 3: Mathematical Text and TeX
 
 ✅ **Completed.** MathText and `usetex` are first-class across the active
-raster/vector targets, with toolchain-gated TeX coverage and a documented
-promotion date for `internal/mathtext`.
+raster/vector targets, with toolchain-gated TeX coverage and MathText promoted
+to the standalone `github.com/cwbudde/mathtext` module.
 
 **Goal:** make MathText and `usetex` first-class across raster and vector
-backends, and stabilize `internal/mathtext` for promotion.
+backends, and stabilize MathText for standalone module promotion.
 
 **Reference sources:** `third_party/matplotlib/lib/matplotlib/_mathtext.py`,
-`mathtext.py`, `texmanager.py`; current `internal/mathtext/`.
+`mathtext.py`, `texmanager.py`; current `github.com/cwbudde/mathtext`.
 
 ### 3.1 MathText Pipeline Completion
 
@@ -232,8 +232,7 @@ backends, and stabilize `internal/mathtext` for promotion.
       fences, and spacing; the Phase 3 parity fixtures cover the same areas
       against Matplotlib references.
 - [x] Cache stabilization: deterministic cache keys, eviction policy, and
-      cross-process safe storage so `internal/mathtext` can ship as its own
-      module.
+      cross-process safe storage so MathText can ship as its own module.
       In-memory caches now support deterministic FIFO bounds via
       `CacheConfig`; `Cache.SaveFile` / `Cache.LoadFile` provide deterministic
       JSON snapshots with atomic writes for cross-process reuse.
@@ -278,20 +277,20 @@ backends, and stabilize `internal/mathtext` for promotion.
 
 ### 3.3 MathText Module Promotion
 
-- Promotion target: document the final `internal/mathtext` API by
-  2026-07-31, then either move it to a top-level `mathtext` package in this
-  repository or split it into its own module before the v1.0 API freeze.
-- [x] Stabilize the public API surface of `internal/mathtext` against the
+- Promotion target: document the final MathText API by 2026-07-31, then either
+  move it to a top-level `mathtext` package in this repository or split it into
+  its own module before the v1.0 API freeze.
+- [x] Stabilize the public API surface of MathText against the
       needs of the AGG, SVG, PDF, and Skia text drawers.
-      `internal/mathtext/doc.go` documents the retained internal API:
+      The standalone module documents the retained API:
       normalization, display segmentation, layout-to-runs/rules, renderer font
       resolution hooks, and cache/storage contracts.
-- [x] Promote `internal/mathtext` to a top-level module / repo with its own
+- [x] Promote MathText to a top-level module / repo with its own
       versioning after the documented promotion date.
-      A standalone sibling repository now exists at `../mathtext` with the
-      renderer-neutral parser/layout/cache API, local `Pt` / `Rect` geometry
-      types, no non-stdlib module dependencies, and renderer-specific metric
-      parity tests kept in `matplotlib-go`.
+      The standalone repository `github.com/cwbudde/mathtext` is tagged
+      `v0.1.0` with the renderer-neutral parser/layout/cache API, local `Pt` /
+      `Rect` geometry types, and no non-stdlib module dependencies.
+      Renderer-specific metric parity tests remain in `matplotlib-go`.
 
 **Exit criteria:**
 
@@ -303,8 +302,7 @@ backends, and stabilize `internal/mathtext` for promotion.
       comparisons for the Phase 3 fixture set.
 - [x] `usetex` is opt-in, dependency-free by default, and tested when the
       external TeX toolchain is present.
-- [x] `internal/mathtext` is either standalone or has a documented promotion
-      date.
+- [x] MathText is standalone with independent module versioning.
 
 ---
 
@@ -564,9 +562,8 @@ reserves the full figure-label line box instead of only the ink bounds.
 `spectrum_variants` is now `RMSE 9.87` after aligning the fixture-only
 near-zero FFT residue inputs with the NumPy/Matplotlib reference arrays and
 refreshing the Go golden.
-`specialty_depth` is now `RMSE 9.42` after matching Matplotlib's filled
-errorbar limit markers and drawing hexbin marginals above the main hex
-collection.
+`specialty_depth` is now `RMSE 6.92` after matching Matplotlib's point-unit
+errorbar cap sizing and open stroked limit-caret markers.
 `twoslope_norm_image` is now `RMSE 6.24` after matching Matplotlib's
 function-scaled colorbar axis for `TwoSlopeNorm`.
 `colorbar_extensions` is now `RMSE 7.00` after matching Matplotlib's extended
@@ -769,7 +766,7 @@ renderer contract, backend implementation, or the AGG port itself.
       normalized fallback string.
 - [ ] Visual: math glyph sizes, baselines, superscripts/subscripts, anchored
       box, and residual math annotation text differ.
-- [ ] Likely core areas: `internal/mathtext`, `core/mathtext.go`, AGG text
+- [ ] Likely core areas: `github.com/cwbudde/mathtext`, `core/mathtext.go`, AGG text
       bounds, annotation and anchored-box layout.
 
 ### 8.7 `mathtext_fractions` (RMSE 26.98)
@@ -777,7 +774,7 @@ renderer contract, backend implementation, or the AGG port itself.
 - [x] Code: source audited; no source mismatch found.
 - [ ] Visual: fraction stacks, binomial layout, roots, and bracket sizing are
       visibly different.
-- [ ] Likely core areas: `internal/mathtext/layout.go`, fraction axis
+- [ ] Likely core areas: `github.com/cwbudde/mathtext` layout, fraction axis
       alignment, stretchy delimiters, square-root geometry, glyph metrics.
 
 ### 8.8 `mathtext_integrals` (RMSE 5.03)
@@ -809,7 +806,7 @@ renderer contract, backend implementation, or the AGG port itself.
       in the Matplotlib upper-center position for this case.
 - [ ] Visual: math text in title, labels, and legend still has glyph/baseline
       residuals.
-- [ ] Likely core areas: `internal/mathtext`, text metrics, and remaining
+- [ ] Likely core areas: `github.com/cwbudde/mathtext`, text metrics, and remaining
       text-bbox/ink metric differences.
 
 ### 8.11 `image_heatmap` (RMSE 5.54)
@@ -980,7 +977,7 @@ renderer contract, backend implementation, or the AGG port itself.
       exact-zero angle/phase residues remains future hardening; the fixture is
       under the Phase 8 threshold without broad renderer or FFT changes.
 
-### 8.26 `specialty_depth` (RMSE 9.42)
+### 8.26 `specialty_depth` (RMSE 6.92)
 
 - [x] Code: removed the separate scatter workaround for `errorbar(fmt="o")`
       and matched boxplot flier size, violin edge color, and pie wedge
@@ -988,10 +985,13 @@ renderer contract, backend implementation, or the AGG port itself.
       `boxplot.medianprops.color = C1` and linewidth `1.0`. Errorbar limit
       markers now render as filled cap markers, and hexbin marginal bars draw
       above the main hex collection like Matplotlib.
+      Follow-up: errorbar capsize now uses Matplotlib point units at the
+      public `Axes.ErrorBar` boundary, and limit markers render as open stroked
+      carets with miter joins instead of closed filled triangles.
 - [x] Visual: focused `TestReferenceCompare/specialty_depth` reports
-      `RMSE 9.42` after refreshing the Go golden.
-- [ ] Likely core areas: errorbar limit caps, boxplot statistics/notches/fliers,
-      violin KDE/side option, pie wedge styling, hexbin log scales/marginals.
+      `RMSE 6.92` after refreshing the Go golden.
+- [ ] Likely core areas: boxplot statistics/notches/fliers, violin KDE/side
+      option, pie wedge styling, hexbin log scales/marginals.
 
 ### 8.27 `stem_plot` (RMSE 4.13)
 
@@ -1287,16 +1287,20 @@ renderer contract, backend implementation, or the AGG port itself.
       `RMSE 5.96`; residual is mostly antialiasing and remaining
       triangulation/contour edge details.
 
-### 8.54 `arrays_showcase` (RMSE 8.73)
+### 8.54 `arrays_showcase` (RMSE 8.08)
 
 - [x] Code: source audited; heatmap, mesh, and spy data match. Spy marker
       panel picked up the Line2D marker sizing fix; contour lines now use
       structured-grid cell clipping instead of triangulating quads.
 - [x] Visual: center contour paths now draw above the pcolormesh cells by
       defaulting line contours to Matplotlib's line z-order. Focused
-      `TestReferenceCompare/arrays_showcase` now reports `RMSE 8.73`.
+      `TestReferenceCompare/arrays_showcase` now reports `RMSE 8.08`.
 - [ ] Likely remaining areas: contour label placement/inline clipping, text and
       mesh antialiasing.
+- [ ] Follow-up: port Matplotlib 3.10.9 automatic `ContourLabeler.clabel`
+      placement/inline clipping more closely. Current artifact audit shows the
+      mesh subplot at local `RMSE 11.98` and contour-label region at
+      `RMSE 15.13`, making label placement the dominant residual.
 
 ### 8.55 `axisartist_showcase` (RMSE 13.25)
 

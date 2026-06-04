@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	mt "github.com/cwbudde/mathtext"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
@@ -155,18 +156,18 @@ func TestMathTextRasterMetricsUseMatplotlibShipCoordinates(t *testing.T) {
 		Descent: 7.0000000000,
 		Height:  42.9166666667,
 		Runs: []MathTextLayoutRun{
-			{Text: "√", Offset: geom.Pt{X: 0.6923, Y: -6.0000}, FontSize: 12.6433},
-			{Text: "x", Offset: geom.Pt{X: 23.1829, Y: 0.0799}, FontSize: 23.0000},
-			{Text: "+", Offset: geom.Pt{X: 48.3704, Y: 0.0799}, FontSize: 23.0000},
-			{Text: "1", Offset: geom.Pt{X: 81.4329, Y: 0.0799}, FontSize: 23.0000},
-			{Text: "3", Offset: geom.Pt{X: 0.0000, Y: -20.4000}, FontSize: 11.2700},
-			{Text: "+", Offset: geom.Pt{X: 112.0353, Y: 0.0000}, FontSize: 23.0000},
-			{Text: "√", Offset: geom.Pt{X: 145.0978, Y: 1.0000}, FontSize: 13.4100},
-			{Text: "y", Offset: geom.Pt{X: 168.7775, Y: 0.0799}, FontSize: 23.0000},
+			{Text: "√", Offset: mt.Pt{X: 0.6923, Y: -6.0000}, FontSize: 12.6433},
+			{Text: "x", Offset: mt.Pt{X: 23.1829, Y: 0.0799}, FontSize: 23.0000},
+			{Text: "+", Offset: mt.Pt{X: 48.3704, Y: 0.0799}, FontSize: 23.0000},
+			{Text: "1", Offset: mt.Pt{X: 81.4329, Y: 0.0799}, FontSize: 23.0000},
+			{Text: "3", Offset: mt.Pt{X: 0.0000, Y: -20.4000}, FontSize: 11.2700},
+			{Text: "+", Offset: mt.Pt{X: 112.0353, Y: 0.0000}, FontSize: 23.0000},
+			{Text: "√", Offset: mt.Pt{X: 145.0978, Y: 1.0000}, FontSize: 13.4100},
+			{Text: "y", Offset: mt.Pt{X: 168.7775, Y: 0.0799}, FontSize: 23.0000},
 		},
 		Rules: []MathTextLayoutRule{
-			{Rect: geom.Rect{Min: geom.Pt{X: 19.1899, Y: -33.9201}, Max: geom.Pt{X: 105.7853, Y: -31.9236}}},
-			{Rect: geom.Rect{Min: geom.Pt{X: 164.7845, Y: -28.9201}, Max: geom.Pt{X: 191.7081, Y: -26.9236}}},
+			{Rect: mt.Rect{Min: mt.Pt{X: 19.1899, Y: -33.9201}, Max: mt.Pt{X: 105.7853, Y: -31.9236}}},
+			{Rect: mt.Rect{Min: mt.Pt{X: 164.7845, Y: -28.9201}, Max: mt.Pt{X: 191.7081, Y: -26.9236}}},
 		},
 	}
 

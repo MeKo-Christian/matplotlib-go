@@ -4,8 +4,8 @@ import (
 	"math"
 	"strings"
 
+	mt "github.com/cwbudde/mathtext"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
-	mt "github.com/cwbudde/matplotlib-go/internal/mathtext"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -409,7 +409,7 @@ func drawMathTextLayout(r render.Renderer, textRen render.TextDrawer, layout Mat
 	}
 
 	for _, rule := range layout.Rules {
-		rect := mathRuleDeviceRect(origin, rule.Rect)
+		rect := mathRuleDeviceRect(origin, mathTextRectToGeom(rule.Rect))
 		paint := render.Paint{Fill: textColor}
 		if rasterBackend {
 			// Faithful port of matplotlib _mathtext.Output.to_raster's rect
@@ -422,7 +422,7 @@ func drawMathTextLayout(r render.Renderer, textRen render.TextDrawer, layout Mat
 	}
 	for _, run := range layout.Runs {
 		runFontKey := resolveRunFontKey(run, fontKey)
-		drawTextWithFontContext(textRen, run.Text, mathRunDevicePoint(origin, run.Offset), run.FontSize, textColor, runFontKey)
+		drawTextWithFontContext(textRen, run.Text, mathRunDevicePoint(origin, mathTextPtToGeom(run.Offset)), run.FontSize, textColor, runFontKey)
 	}
 }
 
@@ -475,12 +475,12 @@ func drawMathTextLayoutPathTransformed(r render.Renderer, layout MathTextLayout,
 func mathTextLayoutPaths(r render.Renderer, layout MathTextLayout, origin geom.Pt, fontKey string) ([]geom.Path, bool) {
 	paths := make([]geom.Path, 0, len(layout.Rules)+len(layout.Runs))
 	for _, rule := range layout.Rules {
-		rect := mathRuleDeviceRect(origin, rule.Rect)
+		rect := mathRuleDeviceRect(origin, mathTextRectToGeom(rule.Rect))
 		paths = append(paths, pixelRectPath(rect))
 	}
 	for _, run := range layout.Runs {
 		runFontKey := resolveRunFontKey(run, fontKey)
-		runPath, ok := mathTextRunPath(r, run.Text, mathRunDevicePoint(origin, run.Offset), run.FontSize, runFontKey)
+		runPath, ok := mathTextRunPath(r, run.Text, mathRunDevicePoint(origin, mathTextPtToGeom(run.Offset)), run.FontSize, runFontKey)
 		if !ok {
 			return nil, false
 		}
@@ -503,4 +503,15 @@ func resolveRunFontKey(run MathTextLayoutRun, fallback string) string {
 		return run.FontKey
 	}
 	return fallback
+}
+
+func mathTextPtToGeom(pt mt.Pt) geom.Pt {
+	return geom.Pt{X: pt.X, Y: pt.Y}
+}
+
+func mathTextRectToGeom(rect mt.Rect) geom.Rect {
+	return geom.Rect{
+		Min: mathTextPtToGeom(rect.Min),
+		Max: mathTextPtToGeom(rect.Max),
+	}
 }
