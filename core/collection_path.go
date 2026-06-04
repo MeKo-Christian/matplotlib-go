@@ -142,6 +142,46 @@ func (c *PathCollection) ClearOffsetCoords() {
 	c.SetStale(true)
 }
 
+// SetOffsets replaces per-item offsets, cloning the input slice.
+func (c *PathCollection) SetOffsets(offsets []geom.Pt) {
+	if c == nil {
+		return
+	}
+	c.Offsets = append([]geom.Pt(nil), offsets...)
+	c.SetStale(true)
+}
+
+// SetSizes replaces per-item marker sizes, cloning the input slice.
+func (c *PathCollection) SetSizes(sizes []float64) {
+	if c == nil {
+		return
+	}
+	c.Sizes = cloneFloat64s(sizes)
+	c.SetStale(true)
+}
+
+// SetFaceColors replaces per-item face colors, cloning the input slice.
+func (c *PathCollection) SetFaceColors(colors []render.Color) {
+	if c == nil {
+		return
+	}
+	c.FaceColors = cloneRenderColors(colors)
+	if c.EdgeColorsFace {
+		c.EdgeColors = cloneRenderColors(c.FaceColors)
+	}
+	c.SetStale(true)
+}
+
+// SetEdgeColors replaces per-item edge colors, cloning the input slice.
+func (c *PathCollection) SetEdgeColors(colors []render.Color) {
+	if c == nil {
+		return
+	}
+	c.EdgeColorsFace = false
+	c.EdgeColors = cloneRenderColors(colors)
+	c.SetStale(true)
+}
+
 func (c *PathCollection) legendEntry() (legendEntry, bool) {
 	if c == nil || c.label() == "" {
 		return legendEntry{}, false

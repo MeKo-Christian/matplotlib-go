@@ -113,6 +113,25 @@ func (m *QuadMesh) SetCLim(vmin, vmax float64) error {
 	return nil
 }
 
+// SetEdges replaces the mesh edge coordinates, preserving scalar-array shape
+// compatibility for the current shading mode.
+func (m *QuadMesh) SetEdges(xEdges, yEdges []float64) error {
+	if m == nil {
+		return nil
+	}
+	if len(xEdges) < 2 || len(yEdges) < 2 || !allFiniteValues(xEdges) || !allFiniteValues(yEdges) {
+		return fmt.Errorf("mesh edge coordinates must be finite and have at least two values per axis")
+	}
+	rows, cols := meshScalarShapeForEdges(len(yEdges), len(xEdges), m.resolvedShading())
+	if len(m.ScalarValues) > 0 && len(m.ScalarValues) != rows*cols {
+		return fmt.Errorf("mesh edge coordinates imply %d scalar values, have %d", rows*cols, len(m.ScalarValues))
+	}
+	m.XEdges = cloneFloat64s(xEdges)
+	m.YEdges = cloneFloat64s(yEdges)
+	m.SetStale(true)
+	return nil
+}
+
 func (m *QuadMesh) asPatchCollection() *PatchCollection {
 	if m == nil {
 		return nil
@@ -300,15 +319,15 @@ func (m *QuadMesh) scalarGridShape() (rows, cols int, ok bool) {
 	if m == nil {
 		return 0, 0, false
 	}
-	switch m.resolvedShading() {
-	case MeshShadingGouraud:
-		rows = len(m.YEdges)
-		cols = len(m.XEdges)
-	default:
-		rows = maxInt(0, len(m.YEdges)-1)
-		cols = maxInt(0, len(m.XEdges)-1)
-	}
+	rows, cols = meshScalarShapeForEdges(len(m.YEdges), len(m.XEdges), m.resolvedShading())
 	return rows, cols, rows > 0 && cols > 0
+}
+
+func meshScalarShapeForEdges(yEdges, xEdges int, shading MeshShading) (rows, cols int) {
+	if shading == MeshShadingGouraud {
+		return yEdges, xEdges
+	}
+	return maxInt(0, yEdges-1), maxInt(0, xEdges-1)
 }
 
 func (m *QuadMesh) resolvedShading() MeshShading {

@@ -2109,7 +2109,7 @@ example/browser breadth as documentation work.
       `fill_betweenx` parity.
     - [x] 17.75.3.5 Errorbar Option Breadth: close cap, limit-marker,
       asymmetric error, and `errorevery` behavior gaps.
-    - [ ] 17.75.3.6 Collections and Mesh Breadth: expand mutable setter
+    - [x] 17.75.3.6 Collections and Mesh Breadth: expand mutable setter
       behavior, scalar-mappable callbacks, offset transforms, `pcolor`
       masked-coordinate behavior, `pcolormesh` shape validation, and Gouraud /
       nearest / flat shading parity where visible.

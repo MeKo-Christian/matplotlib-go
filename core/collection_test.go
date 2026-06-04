@@ -386,6 +386,46 @@ func TestPathCollectionSetArrayRefreshesMappedFacesAndFaceEdges(t *testing.T) {
 	}
 }
 
+func TestPathCollectionMutableSettersCloneAndMarkStale(t *testing.T) {
+	pc := &PathCollection{}
+	pc.SetStale(false)
+
+	offsets := []geom.Pt{{X: 1, Y: 2}}
+	pc.SetOffsets(offsets)
+	offsets[0] = geom.Pt{X: 9, Y: 9}
+	if got, want := pc.Offsets[0], (geom.Pt{X: 1, Y: 2}); got != want {
+		t.Fatalf("offset clone = %+v, want %+v", got, want)
+	}
+	if !pc.Stale() {
+		t.Fatal("SetOffsets did not mark collection stale")
+	}
+
+	pc.SetStale(false)
+	sizes := []float64{4, 9}
+	pc.SetSizes(sizes)
+	sizes[0] = 99
+	if got, want := pc.Sizes[0], 4.0; got != want {
+		t.Fatalf("size clone = %v, want %v", got, want)
+	}
+	if !pc.Stale() {
+		t.Fatal("SetSizes did not mark collection stale")
+	}
+
+	faces := []render.Color{{R: 1, A: 1}}
+	pc.SetFaceColors(faces)
+	faces[0] = render.Color{B: 1, A: 1}
+	if got, want := pc.FaceColors[0], (render.Color{R: 1, A: 1}); got != want {
+		t.Fatalf("face color clone = %+v, want %+v", got, want)
+	}
+
+	edges := []render.Color{{G: 1, A: 1}}
+	pc.SetEdgeColors(edges)
+	edges[0] = render.Color{R: 1, A: 1}
+	if got, want := pc.EdgeColors[0], (render.Color{G: 1, A: 1}); got != want {
+		t.Fatalf("edge color clone = %+v, want %+v", got, want)
+	}
+}
+
 func TestPathCollectionFallsBackWhenMarkerBatchDeclines(t *testing.T) {
 	pc := &PathCollection{
 		Path:          polygonPath([]geom.Pt{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: 1}}, true),
@@ -792,6 +832,44 @@ func TestQuadMeshSetArrayRefreshesFlatColorsAndFaceEdges(t *testing.T) {
 	}
 	if got, want := mesh.EdgeColors[3], mesh.FaceColors[3]; got != want {
 		t.Fatalf("face-style edge after cmap = %+v, want mapped face %+v", got, want)
+	}
+}
+
+func TestQuadMeshSetEdgesClonesValidatesAndMarksStale(t *testing.T) {
+	mesh := &QuadMesh{
+		XEdges:  []float64{0, 1, 2},
+		YEdges:  []float64{0, 1},
+		Shading: MeshShadingFlat,
+	}
+	if err := mesh.SetArray([]float64{1, 2}); err != nil {
+		t.Fatalf("SetArray: %v", err)
+	}
+	mesh.SetStale(false)
+
+	xEdges := []float64{-1, 0, 1}
+	yEdges := []float64{2, 4}
+	if err := mesh.SetEdges(xEdges, yEdges); err != nil {
+		t.Fatalf("SetEdges: %v", err)
+	}
+	xEdges[0] = 99
+	yEdges[0] = 99
+	if got, want := mesh.XEdges[0], -1.0; got != want {
+		t.Fatalf("x edge clone = %v, want %v", got, want)
+	}
+	if got, want := mesh.YEdges[0], 2.0; got != want {
+		t.Fatalf("y edge clone = %v, want %v", got, want)
+	}
+	if !mesh.Stale() {
+		t.Fatal("SetEdges did not mark mesh stale")
+	}
+	if got, want := mesh.Bounds(nil), (geom.Rect{Min: geom.Pt{X: -1, Y: 2}, Max: geom.Pt{X: 1, Y: 4}}); got != want {
+		t.Fatalf("bounds after SetEdges = %+v, want %+v", got, want)
+	}
+	if err := mesh.SetEdges([]float64{0, 1, 2, 3}, []float64{0, 1}); err == nil {
+		t.Fatal("SetEdges accepted coordinates incompatible with existing scalar array")
+	}
+	if err := mesh.SetEdges([]float64{0, math.NaN(), 2}, []float64{0, 1}); err == nil {
+		t.Fatal("SetEdges accepted non-finite coordinates")
 	}
 }
 
