@@ -2365,7 +2365,7 @@ example/browser breadth as documentation work.
           metadata for supported and intentionally omitted 3D color behavior,
           and regenerate docs.
 
-            - [ ] 17.75.4.4.5.1 Focused Color Tests: finish targeted unit tests
+            - [x] 17.75.4.4.5.1 Focused Color Tests: finish targeted unit tests
               for each changed 3D color path before adding or refreshing visual
               fixtures.
 
@@ -2377,10 +2377,13 @@ example/browser breadth as documentation work.
                   and fixed `Scatter3D` scalar colormap colors to respect
                   scatter alpha before depth shading.
 
-                - [ ] 17.75.4.4.5.1.2 Explicit Color Tests: finish focused
+                - [x] 17.75.4.4.5.1.2 Explicit Color Tests: finish focused
                   explicit-color, per-face/per-point, shading, and
                   non-scalar-mappable tests for bars, voxels, quiver, stems,
-                  line-like helpers, and fill-between surfaces.
+                  line-like helpers, and fill-between surfaces. Existing tests
+                  already covered bars, voxels, quiver, stems, error bars, and
+                  fill-between; added `Plot3D` and `Wireframe` line-like
+                  non-scalar-mappable coverage.
 
             - [ ] 17.75.4.4.5.2 Metadata Updates: update public-surface
               metadata and migration notes with supported 3D color behavior and

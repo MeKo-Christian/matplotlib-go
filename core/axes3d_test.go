@@ -948,6 +948,12 @@ func TestAxes3DPlot3DPropagatesColorAndAlphaLikeLine2D(t *testing.T) {
 	if got := line.Col; got != want {
 		t.Fatalf("Plot3D color = %+v, want Line2D color with alpha %+v", got, want)
 	}
+	if _, ok := any(line).(interface{ GetArray() []float64 }); ok {
+		t.Fatal("Plot3D returned scalar-array capable artist, want Line2D-style explicit color artist")
+	}
+	if _, ok := any(line).(interface{ ScalarMap() ScalarMapInfo }); ok {
+		t.Fatal("Plot3D returned scalar-mappable artist, want Line2D-style explicit color artist")
+	}
 }
 
 func TestAxes3DPlot3DAxLimClipDropsOutsidePoints(t *testing.T) {
@@ -1451,6 +1457,43 @@ func TestAxes3DWireframeDefaultLineWidthMatchesMatplotlib(t *testing.T) {
 	}
 	if got, want := collection.LineWidth, 2.0; got != want {
 		t.Fatalf("wireframe default line width = %v, want Matplotlib default converted to Go pixels %v", got, want)
+	}
+}
+
+func TestAxes3DWireframeColorsApplyAlphaAndStayNonMappable(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	color := render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1}
+	alpha := 0.35
+	lineWidth := 1.25
+	collection := ax.Wireframe(
+		[]float64{0, 1},
+		[]float64{0, 1},
+		[][]float64{{0, 1}, {1, 2}},
+		PlotOptions{Color: &color, Alpha: &alpha, LineWidth: &lineWidth},
+	)
+	if collection == nil {
+		t.Fatal("Wireframe returned nil")
+	}
+	if got := collection.Color; got != color {
+		t.Fatalf("wireframe color = %+v, want explicit Line3DCollection color %+v", got, color)
+	}
+	if got := collection.Alpha; got != alpha {
+		t.Fatalf("wireframe alpha = %v, want collection alpha %v", got, alpha)
+	}
+	if got := collection.LineWidth; got != lineWidth {
+		t.Fatalf("wireframe line width = %v, want %v", got, lineWidth)
+	}
+	if array := collection.GetArray(); len(array) != 0 {
+		t.Fatalf("wireframe scalar array = %v, want non-scalar-mappable Line3DCollection", array)
+	}
+	mapping := collection.ScalarMap()
+	if mapping.Colormap != "" || mapping.Norm != nil || mapping.VMin != 0 || mapping.VMax != 0 {
+		t.Fatalf("wireframe scalar map = %+v, want no scalar-map metadata", mapping)
 	}
 }
 
