@@ -13,6 +13,8 @@ SOURCE_ROOT = Path("third_party/matplotlib/lib/matplotlib")
 
 MODULES = [
     "artist.py",
+    "axes/_axes.py",
+    "axes/_base.py",
     "axis.py",
     "ticker.py",
     "scale.py",
@@ -38,7 +40,14 @@ MODULES = [
     "backend_tools.py",
     "widgets.py",
     "animation.py",
+    "mpl_toolkits/mplot3d/axes3d.py",
 ]
+
+CLASS_METHOD_TARGETS = {
+    "axes/_axes.py": {"Axes"},
+    "axes/_base.py": {"_AxesBase"},
+    "mpl_toolkits/mplot3d/axes3d.py": {"Axes3D"},
+}
 
 
 @dataclass(frozen=True)
@@ -52,8 +61,9 @@ class Row:
 def main() -> None:
     rows: list[Row] = []
     for module in MODULES:
-        tree = ast.parse((SOURCE_ROOT / module).read_text(), filename=module)
+        tree = ast.parse(module_path(module).read_text(), filename=module)
         rows.extend(top_level_rows(module, tree))
+        rows.extend(class_method_rows(module, tree))
         rows.extend(registry_rows(module, tree))
 
     rows = sorted(set(rows), key=lambda row: row.id)
@@ -64,6 +74,12 @@ def main() -> None:
         "rows": [asdict(row) for row in rows],
     }
     print(json.dumps(artifact, indent=2, sort_keys=True))
+
+
+def module_path(module: str) -> Path:
+    if module.startswith("mpl_toolkits/"):
+        return SOURCE_ROOT.parent / module
+    return SOURCE_ROOT / module
 
 
 def top_level_rows(module: str, tree: ast.Module) -> list[Row]:
@@ -77,6 +93,20 @@ def top_level_rows(module: str, tree: ast.Module) -> list[Row]:
             for name in assignment_names(node):
                 if is_public_constant(name):
                     rows.append(row(module, "constant", name))
+    return rows
+
+
+def class_method_rows(module: str, tree: ast.Module) -> list[Row]:
+    rows: list[Row] = []
+    targets = CLASS_METHOD_TARGETS.get(module, set())
+    if not targets:
+        return rows
+    for node in tree.body:
+        if not isinstance(node, ast.ClassDef) or node.name not in targets:
+            continue
+        for child in node.body:
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and is_public(child.name):
+                rows.append(row(module, "method", f"{node.name}.{child.name}"))
     return rows
 
 

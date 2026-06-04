@@ -1,6 +1,8 @@
 {
   "modules": [
     "artist.py",
+    "axes/_axes.py",
+    "axes/_base.py",
     "axis.py",
     "ticker.py",
     "scale.py",
@@ -25,7 +27,8 @@
     "backend_bases.py",
     "backend_tools.py",
     "widgets.py",
-    "animation.py"
+    "animation.py",
+    "mpl_toolkits/mplot3d/axes3d.py"
   ],
   "rows": [
     {
@@ -171,6 +174,1158 @@
       "kind": "function",
       "module": "artist.py",
       "name": "setp"
+    },
+    {
+      "id": "axes/_axes.py:class:Axes",
+      "kind": "class",
+      "module": "axes/_axes.py",
+      "name": "Axes"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.acorr",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.acorr"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.angle_spectrum",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.angle_spectrum"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.annotate",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.annotate"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.arrow",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.arrow"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.axhline",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.axhline"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.axhspan",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.axhspan"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.axline",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.axline"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.axvline",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.axvline"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.axvspan",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.axvspan"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.bar",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.bar"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.bar_label",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.bar_label"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.barbs",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.barbs"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.barh",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.barh"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.boxplot",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.boxplot"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.broken_barh",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.broken_barh"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.bxp",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.bxp"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.clabel",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.clabel"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.cohere",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.cohere"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.contour",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.contour"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.contourf",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.contourf"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.csd",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.csd"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.ecdf",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.ecdf"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.errorbar",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.errorbar"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.eventplot",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.eventplot"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.fill",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.fill"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.fill_between",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.fill_between"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.fill_betweenx",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.fill_betweenx"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.get_legend_handles_labels",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.get_legend_handles_labels"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.get_title",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.get_title"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.hexbin",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.hexbin"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.hist",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.hist"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.hist2d",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.hist2d"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.hlines",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.hlines"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.imshow",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.imshow"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.indicate_inset",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.indicate_inset"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.indicate_inset_zoom",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.indicate_inset_zoom"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.inset_axes",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.inset_axes"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.legend",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.legend"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.loglog",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.loglog"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.magnitude_spectrum",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.magnitude_spectrum"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.matshow",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.matshow"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.pcolor",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.pcolor"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.pcolorfast",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.pcolorfast"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.pcolormesh",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.pcolormesh"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.phase_spectrum",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.phase_spectrum"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.pie",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.pie"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.plot",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.plot"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.plot_date",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.plot_date"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.psd",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.psd"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.quiver",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.quiver"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.quiverkey",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.quiverkey"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.scatter",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.scatter"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.secondary_xaxis",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.secondary_xaxis"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.secondary_yaxis",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.secondary_yaxis"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.semilogx",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.semilogx"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.semilogy",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.semilogy"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.set_title",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.set_title"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.specgram",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.specgram"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.spy",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.spy"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.stairs",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.stairs"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.stem",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.stem"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.step",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.step"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.text",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.text"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.violin",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.violin"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.violinplot",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.violinplot"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.vlines",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.vlines"
+    },
+    {
+      "id": "axes/_axes.py:method:Axes.xcorr",
+      "kind": "method",
+      "module": "axes/_axes.py",
+      "name": "Axes.xcorr"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.add_artist",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.add_artist"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.add_child_axes",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.add_child_axes"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.add_collection",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.add_collection"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.add_container",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.add_container"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.add_image",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.add_image"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.add_line",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.add_line"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.add_patch",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.add_patch"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.add_table",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.add_table"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.apply_aspect",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.apply_aspect"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.artists",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.artists"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.autoscale",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.autoscale"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.autoscale_view",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.autoscale_view"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.axis",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.axis"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.can_pan",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.can_pan"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.can_zoom",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.can_zoom"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.cla",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.cla"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.clear",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.clear"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.collections",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.collections"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.contains",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.contains"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.contains_point",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.contains_point"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.drag_pan",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.drag_pan"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.draw",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.draw"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.draw_artist",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.draw_artist"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.end_pan",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.end_pan"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.format_coord",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.format_coord"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.format_xdata",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.format_xdata"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.format_ydata",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.format_ydata"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_adjustable",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_adjustable"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_anchor",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_anchor"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_aspect",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_aspect"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_autoscale_on",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_autoscale_on"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_axes_locator",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_axes_locator"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_axisbelow",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_axisbelow"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_box_aspect",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_box_aspect"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_children",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_children"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_data_ratio",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_data_ratio"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_default_bbox_extra_artists",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_default_bbox_extra_artists"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_facecolor",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_facecolor"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_forward_navigation_events",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_forward_navigation_events"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_frame_on",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_frame_on"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_gridspec",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_gridspec"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_images",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_images"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_legend",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_legend"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_lines",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_lines"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_navigate",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_navigate"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_navigate_mode",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_navigate_mode"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_position",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_position"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_rasterization_zorder",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_rasterization_zorder"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_shared_x_axes",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_shared_x_axes"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_shared_y_axes",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_shared_y_axes"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_subplotspec",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_subplotspec"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_tightbbox",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_tightbbox"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_window_extent",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_window_extent"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_xaxis",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_xaxis"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_xaxis_text1_transform",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_xaxis_text1_transform"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_xaxis_text2_transform",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_xaxis_text2_transform"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_xaxis_transform",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_xaxis_transform"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_xbound",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_xbound"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_xlabel",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_xlabel"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_xlim",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_xlim"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_xmargin",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_xmargin"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_yaxis",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_yaxis"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_yaxis_text1_transform",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_yaxis_text1_transform"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_yaxis_text2_transform",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_yaxis_text2_transform"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_yaxis_transform",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_yaxis_transform"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_ybound",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_ybound"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_ylabel",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_ylabel"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_ylim",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_ylim"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.get_ymargin",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.get_ymargin"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.grid",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.grid"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.has_data",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.has_data"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.images",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.images"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.in_axes",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.in_axes"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.invert_xaxis",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.invert_xaxis"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.invert_yaxis",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.invert_yaxis"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.label_outer",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.label_outer"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.lines",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.lines"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.locator_params",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.locator_params"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.margins",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.margins"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.minorticks_off",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.minorticks_off"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.minorticks_on",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.minorticks_on"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.patches",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.patches"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.redraw_in_frame",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.redraw_in_frame"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.relim",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.relim"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.reset_position",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.reset_position"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_adjustable",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_adjustable"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_anchor",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_anchor"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_aspect",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_aspect"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_autoscale_on",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_autoscale_on"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_axes_locator",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_axes_locator"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_axis_off",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_axis_off"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_axis_on",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_axis_on"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_axisbelow",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_axisbelow"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_box_aspect",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_box_aspect"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_facecolor",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_facecolor"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_figure",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_figure"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_forward_navigation_events",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_forward_navigation_events"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_frame_on",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_frame_on"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_navigate",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_navigate"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_navigate_mode",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_navigate_mode"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_position",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_position"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_prop_cycle",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_prop_cycle"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_rasterization_zorder",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_rasterization_zorder"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_subplotspec",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_subplotspec"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_xbound",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_xbound"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_xlabel",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_xlabel"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_xlim",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_xlim"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_xmargin",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_xmargin"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_ybound",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_ybound"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_ylabel",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_ylabel"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_ylim",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_ylim"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.set_ymargin",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.set_ymargin"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.sharex",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.sharex"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.sharey",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.sharey"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.start_pan",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.start_pan"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.tables",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.tables"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.texts",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.texts"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.tick_params",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.tick_params"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.ticklabel_format",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.ticklabel_format"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.twinx",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.twinx"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.twiny",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.twiny"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.update_datalim",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.update_datalim"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.use_sticky_edges",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.use_sticky_edges"
+    },
+    {
+      "id": "axes/_base.py:method:_AxesBase.viewLim",
+      "kind": "method",
+      "module": "axes/_base.py",
+      "name": "_AxesBase.viewLim"
     },
     {
       "id": "axis.py:class:Axis",
@@ -1731,6 +2886,432 @@
       "kind": "registry:marker",
       "module": "markers.py",
       "name": "|"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:class:Axes3D",
+      "kind": "class",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:function:get_test_data",
+      "kind": "function",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "get_test_data"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.add_collection3d",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.add_collection3d"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.add_contour_set",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.add_contour_set"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.add_contourf_set",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.add_contourf_set"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.apply_aspect",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.apply_aspect"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.auto_scale_xyz",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.auto_scale_xyz"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.autoscale",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.autoscale"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.autoscale_view",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.autoscale_view"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.bar",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.bar"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.bar3d",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.bar3d"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.can_pan",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.can_pan"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.can_zoom",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.can_zoom"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.clabel",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.clabel"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.clear",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.clear"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.contour",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.contour"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.contourf",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.contourf"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.convert_zunits",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.convert_zunits"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.disable_mouse_rotation",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.disable_mouse_rotation"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.drag_pan",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.drag_pan"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.draw",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.draw"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.errorbar",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.errorbar"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.fill_between",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.fill_between"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.format_coord",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.format_coord"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.format_zdata",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.format_zdata"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.get_axis_position",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.get_axis_position"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.get_proj",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.get_proj"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.get_tightbbox",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.get_tightbbox"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.get_w_lims",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.get_w_lims"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.get_xlim",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.get_xlim"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.get_ylim",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.get_ylim"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.get_zaxis",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.get_zaxis"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.get_zbound",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.get_zbound"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.get_zlabel",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.get_zlabel"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.get_zlim",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.get_zlim"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.get_zmargin",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.get_zmargin"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.grid",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.grid"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.invert_zaxis",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.invert_zaxis"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.margins",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.margins"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.mouse_init",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.mouse_init"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.plot",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.plot"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.plot_surface",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.plot_surface"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.plot_trisurf",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.plot_trisurf"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.plot_wireframe",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.plot_wireframe"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.quiver",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.quiver"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.scatter",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.scatter"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_aspect",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_aspect"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_axis_off",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_axis_off"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_axis_on",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_axis_on"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_box_aspect",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_box_aspect"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_proj_type",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_proj_type"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_title",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_title"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_top_view",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_top_view"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_xbound",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_xbound"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_xlim",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_xlim"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_ybound",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_ybound"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_ylim",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_ylim"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_zbound",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_zbound"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_zlabel",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_zlabel"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_zlim",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_zlim"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.set_zmargin",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.set_zmargin"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.shareview",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.shareview"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.sharez",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.sharez"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.stem",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.stem"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.text",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.text"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.tick_params",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.tick_params"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.tricontour",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.tricontour"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.tricontourf",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.tricontourf"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.update_datalim",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.update_datalim"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.view_init",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.view_init"
+    },
+    {
+      "id": "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.voxels",
+      "kind": "method",
+      "module": "mpl_toolkits/mplot3d/axes3d.py",
+      "name": "Axes3D.voxels"
     },
     {
       "id": "offsetbox.py:class:AnchoredOffsetbox",

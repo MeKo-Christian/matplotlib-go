@@ -32,6 +32,8 @@ type PublicSurfaceParity struct {
 	UpstreamID        string
 	FeatureCoverageID string
 	Status            PublicSurfaceParityStatus
+	ClosurePhase      string
+	ClosureRationale  string
 	GoFiles           []string
 	CatalogIDs        []string
 	ExampleIDs        []string
@@ -45,6 +47,8 @@ type publicSurfaceParityRule struct {
 	name              string
 	featureCoverageID string
 	status            PublicSurfaceParityStatus
+	closurePhase      string
+	closureRationale  string
 	goFiles           []string
 	catalogIDs        []string
 	exampleIDs        []string
@@ -2007,6 +2011,52 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		note:              "Go keeps an interface-based Artist model; broad dynamic properties, inspection helpers, getp/setp, and callbacks remain partial.",
 	},
 	{
+		idPrefix:          "axes-plotting-method",
+		module:            "axes/_axes.py",
+		kind:              "method",
+		featureCoverageID: "axes",
+		status:            PublicSurfacePartial,
+		closurePhase:      "17.75.3",
+		goFiles:           []string{"core/artist.go", "core/plot.go", "core/plot_variants.go", "core/histogram.go", "core/mesh.go", "core/contour.go"},
+		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants"},
+		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants"},
+		note:              "Axes plotting methods are tracked as typed core helpers plus pyplot wrappers where appropriate. Remaining method-option breadth, overload grammar, and convenience helpers are owned by Phase 17.75.2/17.75.3.",
+	},
+	{
+		idPrefix:          "axes-plotting-class",
+		module:            "axes/_axes.py",
+		featureCoverageID: "axes",
+		status:            PublicSurfacePartial,
+		closurePhase:      "17.75.3",
+		goFiles:           []string{"core/artist.go", "core/plot.go", "core/plot_variants.go", "core/histogram.go", "core/mesh.go", "core/contour.go"},
+		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants"},
+		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants"},
+		note:              "The upstream Axes plotting class maps to Go's typed Axes and helper functions. Remaining plotting-method closure is split across Phase 17.75.2 convenience APIs and Phase 17.75.3 option breadth.",
+	},
+	{
+		idPrefix:          "axes-base-method",
+		module:            "axes/_base.py",
+		kind:              "method",
+		featureCoverageID: "axes",
+		status:            PublicSurfacePartial,
+		closurePhase:      "17.75.3",
+		goFiles:           []string{"core/artist.go", "core/axis.go", "core/figure_layout.go", "core/subplots.go"},
+		catalogIDs:        []string{"axes_control_surface", "transform_coordinates", "layout_bbox_helpers"},
+		exampleIDs:        []string{"axes_control_surface"},
+		note:              "Axes base methods are represented through typed axes state, limits, scales, labels, transforms, layout, and shared-axis helpers. Remaining option breadth and Python overload compatibility are owned by Phase 17.75.3.",
+	},
+	{
+		idPrefix:          "mplot3d-axes3d",
+		module:            "mpl_toolkits/mplot3d/axes3d.py",
+		featureCoverageID: "toolkits-projections",
+		status:            PublicSurfacePartial,
+		closurePhase:      "17.75.4",
+		goFiles:           []string{"core/axes3d.go"},
+		catalogIDs:        []string{"mplot3d_basic", "mplot3d_terrain", "mplot3d_scatter3d", "mplot3d_surface3d", "mplot3d_wire3d", "mplot3d_trisurf3d"},
+		exampleIDs:        []string{"mplot3d_terrain"},
+		note:              "Axes3D construction and common 3D plot helpers exist as typed core APIs with catalog coverage. Remaining 3D method breadth, option semantics, and toolkit fixtures are owned by Phase 17.75.4.",
+	},
+	{
 		idPrefix:          "axis",
 		module:            "axis.py",
 		featureCoverageID: "axis-ticker-scale",
@@ -2366,7 +2416,7 @@ func PublicSurfaceParityForRow(surface PublicSurfaceRow) (PublicSurfaceParity, b
 		if !rule.matches(surface) {
 			continue
 		}
-		return rule.classification(surface), true
+		return clonePublicSurfaceParity(rule.classification(surface)), true
 	}
 	return PublicSurfaceParity{}, false
 }
@@ -2402,6 +2452,8 @@ func (r publicSurfaceParityRule) classification(surface PublicSurfaceRow) Public
 		UpstreamID:        surface.ID,
 		FeatureCoverageID: r.featureCoverageID,
 		Status:            r.status,
+		ClosurePhase:      r.closurePhase,
+		ClosureRationale:  r.closureRationale,
 		GoFiles:           append([]string(nil), r.goFiles...),
 		CatalogIDs:        append([]string(nil), r.catalogIDs...),
 		ExampleIDs:        append([]string(nil), r.exampleIDs...),
@@ -2410,10 +2462,63 @@ func (r publicSurfaceParityRule) classification(surface PublicSurfaceRow) Public
 }
 
 func clonePublicSurfaceParity(row PublicSurfaceParity) PublicSurfaceParity {
+	row = publicSurfaceParityWithClosureDefaults(row)
 	row.GoFiles = append([]string(nil), row.GoFiles...)
 	row.CatalogIDs = append([]string(nil), row.CatalogIDs...)
 	row.ExampleIDs = append([]string(nil), row.ExampleIDs...)
 	return row
+}
+
+func publicSurfaceParityWithClosureDefaults(row PublicSurfaceParity) PublicSurfaceParity {
+	if row.Status != PublicSurfacePartial && row.Status != PublicSurfaceNotStarted {
+		return row
+	}
+	if row.ClosurePhase == "" {
+		row.ClosurePhase = publicSurfaceDefaultClosurePhase(row)
+	}
+	if row.ClosurePhase == "" && row.ClosureRationale == "" && publicSurfaceNoteHasIntentionalOmission(row.Note) {
+		row.ClosureRationale = "Intentional omission scope is documented in the row note."
+	}
+	return row
+}
+
+func publicSurfaceDefaultClosurePhase(row PublicSurfaceParity) string {
+	switch {
+	case strings.Contains(row.Note, "12.2C"):
+		return "12.2C"
+	case strings.Contains(row.Note, "12.2D/E"):
+		return "12.2D/E"
+	case strings.Contains(row.Note, "12.2G"):
+		return "12.2G"
+	case strings.Contains(row.Note, "12.4C"):
+		return "12.4C"
+	case strings.Contains(row.Note, "12.5"):
+		return "12.5"
+	}
+	switch row.FeatureCoverageID {
+	case "axes", "lines", "collections", "axis-ticker-scale":
+		return "17.75.3"
+	case "toolkits-projections":
+		return "17.75.4"
+	case "image", "colorbar", "colors-cm":
+		return "17.75.5"
+	case "artist", "patches", "text-annotation-legend":
+		return "17.75.6"
+	case "pyplot-state":
+		return "17.75.7"
+	case "renderer-backends", "widgets-events-animation":
+		return "17.75.8"
+	default:
+		return "17.75.9"
+	}
+}
+
+func publicSurfaceNoteHasIntentionalOmission(note string) bool {
+	note = strings.ToLower(note)
+	return strings.Contains(note, "intentionally omitted") ||
+		strings.Contains(note, "intentionally outside") ||
+		strings.Contains(note, "intentional omission") ||
+		strings.Contains(note, "omitted until")
 }
 
 func publicSurfaceIDSlug(value string) string {

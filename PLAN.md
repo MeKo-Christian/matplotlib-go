@@ -2030,16 +2030,25 @@ example/browser breadth as documentation work.
 
 ### 17.75.1 Gap Ledger and Status Gates
 
-- [ ] Generate or update `docs/matplotlib-parity-status.md` from the committed
+- [x] Generate or update `docs/matplotlib-parity-status.md` from the committed
       public-surface inventory so every upstream plotting method, registry
       item, and toolkit feature has one owner phase.
-- [ ] Add a machine-readable "closure phase" field to the parity inventory for
+- [x] Add a machine-readable "closure phase" field to the parity inventory for
       every row currently marked `partial` or `not-started`.
-- [ ] Fail CI when a tracked upstream row is `partial` or `not-started` without
+- [x] Fail CI when a tracked upstream row is `partial` or `not-started` without
       either a 17.75 task reference, an existing phase owner, or an explicit
       intentional-omission rationale.
 - [ ] Split broad `partial` rows into smaller actionable rows when the remaining
       work mixes implementation, API-wrapper, fixture, and demo concerns.
+
+      2026-06-04: first ledger pass added `ClosurePhase` /
+      `ClosureRationale` to expanded public-surface rows, generated
+      `docs/matplotlib-parity-status.md` via `cmd/paritystatusdoc`, and added
+      CI tests for closure ownership and doc freshness. The upstream extractor
+      now includes `Axes`, `_AxesBase`, and `Axes3D` method rows so 17.75
+      tracks plotting-method and 3D-toolkit gaps directly. The remaining work
+      is the manual split of broad generated `partial` families into smaller
+      implementation/API/fixture/demo rows where needed.
 
 ### 17.75.2 Missing or Thin 2D Axes Convenience APIs
 

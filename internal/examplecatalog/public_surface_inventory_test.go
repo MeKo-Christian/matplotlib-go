@@ -23,6 +23,10 @@ func TestPublicSurfaceInventoryContainsLandmarkUpstreamRows(t *testing.T) {
 	}
 	want := []string{
 		"artist.py:class:Artist",
+		"axes/_axes.py:class:Axes",
+		"axes/_axes.py:method:Axes.plot",
+		"axes/_axes.py:method:Axes.violin",
+		"axes/_base.py:method:_AxesBase.set_xlim",
 		"axis.py:class:Axis",
 		"ticker.py:class:EngFormatter",
 		"scale.py:registry:scale:log",
@@ -49,6 +53,8 @@ func TestPublicSurfaceInventoryContainsLandmarkUpstreamRows(t *testing.T) {
 		"backend_tools.py:registry:tool:home",
 		"widgets.py:class:Button",
 		"animation.py:class:FuncAnimation",
+		"mpl_toolkits/mplot3d/axes3d.py:class:Axes3D",
+		"mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.plot_surface",
 	}
 	for _, id := range want {
 		if !publicSurfaceArtifactHasRow(artifact, id) {
@@ -298,6 +304,34 @@ func TestPublicSurfaceParityRowsReferenceExistingLocalArtifacts(t *testing.T) {
 	}
 }
 
+func TestOpenPublicSurfaceParityRowsHaveClosureOwners(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	for _, row := range PublicSurfaceParityRowsForSurface(artifact.Rows) {
+		if row.Status != PublicSurfacePartial && row.Status != PublicSurfaceNotStarted {
+			continue
+		}
+		if row.ClosurePhase == "" && row.ClosureRationale == "" {
+			t.Fatalf("%s (%s) is %s without a closure phase or omission rationale", row.ID, row.UpstreamID, row.Status)
+		}
+		if row.ClosurePhase != "" && !validPublicSurfaceClosurePhase(row.ClosurePhase) {
+			t.Fatalf("%s has invalid closure phase %q", row.ID, row.ClosurePhase)
+		}
+	}
+}
+
+func TestMatplotlibParityStatusDocIsCurrent(t *testing.T) {
+	root := repoRoot(t)
+	artifact := loadPublicSurfaceArtifact(t)
+	got, err := os.ReadFile(filepath.Join(root, "docs", "matplotlib-parity-status.md"))
+	if err != nil {
+		t.Fatalf("read matplotlib parity status doc: %v", err)
+	}
+	want := MatplotlibParityStatusMarkdown(artifact.Rows)
+	if !bytes.Equal(bytes.TrimSpace(got), bytes.TrimSpace([]byte(want))) {
+		t.Fatal("docs/matplotlib-parity-status.md is stale; regenerate it from MatplotlibParityStatusMarkdown")
+	}
+}
+
 func loadPublicSurfaceArtifact(t *testing.T) publicSurfaceArtifact {
 	t.Helper()
 	root := repoRoot(t)
@@ -337,6 +371,27 @@ func validatePublicSurfaceParityRow(t *testing.T, artifact publicSurfaceArtifact
 	}
 	if len(row.GoFiles) == 0 {
 		t.Fatalf("%s has no local Go file reference", row.ID)
+	}
+}
+
+func validPublicSurfaceClosurePhase(phase string) bool {
+	switch phase {
+	case "12.2C",
+		"12.2D/E",
+		"12.2G",
+		"12.4C",
+		"12.5",
+		"17.75.2",
+		"17.75.3",
+		"17.75.4",
+		"17.75.5",
+		"17.75.6",
+		"17.75.7",
+		"17.75.8",
+		"17.75.9":
+		return true
+	default:
+		return false
 	}
 }
 
