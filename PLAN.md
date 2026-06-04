@@ -2425,7 +2425,7 @@ example/browser breadth as documentation work.
           example catalog entries, and `test/matplotlib_ref/plots` coverage to
           list missing fixture triplets before adding new images.
 
-            - [ ] 17.75.4.5.1.1 Public API Coverage Matrix: map every exported
+            - [x] 17.75.4.5.1.1 Public API Coverage Matrix: map every exported
               3D helper to an example-catalog row and Matplotlib-reference
               plot, noting missing or duplicate coverage.
 
@@ -2439,9 +2439,16 @@ example/browser breadth as documentation work.
                   for 3D contour/contourf, tricontour/tricontourf,
                   errorbar3d, projected `Axes3D.Bar`, and `Text3D`.
 
-                - [ ] 17.75.4.5.1.1.2 Missing Row List: record missing,
+                - [x] 17.75.4.5.1.1.2 Missing Row List: record missing,
                   duplicate, and weak-coverage 3D fixture cases before adding
-                  any generated images.
+                  any generated images. Add dedicated fixture triplets for
+                  `mplot3d_contour3d`, `mplot3d_contourf3d`,
+                  `mplot3d_tricontour3d`, `mplot3d_tricontourf3d`,
+                  `mplot3d_errorbar3d`, `mplot3d_bar2d_zdir`, and
+                  `mplot3d_text3d`. Existing `mplot3d_basic` weakly touches
+                  contour and text, and `mesh_contour_tri`/`mplot3d_trisurf3d`
+                  weakly support triangulation, but none are dedicated
+                  Matplotlib-reference rows for those 3D public helpers.
 
             - [ ] 17.75.4.5.1.2 Tolerance Risk List: identify cases likely to
               need case-specific tolerances because of projection, clipping,
