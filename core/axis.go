@@ -246,12 +246,14 @@ func (a *Axis) drawSpine(r render.Renderer, ctx *DrawContext) {
 }
 
 // spinePixelEndpoints returns the two pixel-space endpoints for a spine on the
-// given side of px. AGG strokes align crisply when centered on pixel centers,
-// so boundaries are shifted by 0.5 px instead of landing on pixel edges.
+// given side of px. This is the most honest translation of Matplotlib 3.10.9's
+// AGG PathSnapper for axis-aligned, 1 px-ish spines: SNAP_AUTO rounds display
+// coordinates with floor(coord+0.5)+0.5, so RMSE regressions after this point
+// should be chased in layout/geometry instead of by weakening the snap.
 func spinePixelEndpoints(side AxisSide, px geom.Rect) (geom.Pt, geom.Pt) {
 	x1 := math.Round(px.Min.X) + 0.5
 	y1 := math.Round(px.Min.Y) - 0.5
-	x2 := math.Floor(px.Max.X) + 0.5
+	x2 := math.Floor(px.Max.X+0.5) + 0.5
 	y2 := math.Round(px.Max.Y) - 0.5
 
 	switch side {

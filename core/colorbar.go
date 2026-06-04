@@ -437,6 +437,10 @@ func colorbarSlotLeft(base geom.Rect, width float64, useResolvedSlot bool) float
 }
 
 func colorbarPlacementRect(fig *Figure, base geom.Rect, thickness, slotThickness, padding float64, location string, useResolvedSlot bool) (geom.Rect, geom.Rect) {
+	return colorbarPlacementRectWithSlotOffset(fig, base, thickness, slotThickness, padding, location, useResolvedSlot, math.NaN())
+}
+
+func colorbarPlacementRectWithSlotOffset(fig *Figure, base geom.Rect, thickness, slotThickness, padding float64, location string, useResolvedSlot bool, slotOffset float64) (geom.Rect, geom.Rect) {
 	parent := base
 	rect := base
 	if padding < 0 {
@@ -479,8 +483,8 @@ func colorbarPlacementRect(fig *Figure, base geom.Rect, thickness, slotThickness
 	default:
 		if useResolvedSlot {
 			slotLeft := base.Max.X + padding + constrainedColorbarSlotOffset(fig, base)
-			if slotLeft+slotThickness > 1 {
-				slotThickness = math.Max(thickness, 1-slotLeft)
+			if !math.IsNaN(slotOffset) {
+				slotLeft = base.Max.X + padding + slotOffset
 			}
 			rect.Min.X = slotLeft
 			rect.Max.X = slotLeft + slotThickness

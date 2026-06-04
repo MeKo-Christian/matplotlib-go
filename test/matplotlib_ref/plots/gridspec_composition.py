@@ -43,10 +43,8 @@ def gridspec_composition(out_dir):
     bottom_right.set_xticks([0, 1, 2, 3])
     bottom_right.set_yticks([1, 2])
 
-    # Pin the subfigure inset to the same GridSpec-derived rectangle as the Go
-    # port. Matplotlib's add_subfigure(outer[1, 1]) uses the raw lower-right
-    # quadrant here rather than the explicitly padded GridSpec cell.
-    inset = fig.add_axes(go_rect(0.703689, 0.135965, 0.945761, 0.423684))
+    sub = fig.add_subfigure(outer[1, 1])
+    inset = sub.add_subplot(1, 1, 1)
     _composition_configure_axes(inset, "SubFigure", [0, 1, 2, 3], [2.0, 2.4, 1.9, 2.7], (0.55, 0.22, 0.50))
     inset.set_xticks([0, 1, 2, 3])
     inset.set_yticks([2.0, 2.2, 2.4, 2.6])

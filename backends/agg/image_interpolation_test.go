@@ -185,6 +185,42 @@ func TestAggImageNearestNonIntegerUpscaleAlignsTopEdgeLikeMatplotlib(t *testing.
 	}
 }
 
+func TestAggClipRectUsesMatplotlibHalfUpQuantizationForImages(t *testing.T) {
+	src := image.NewRGBA(image.Rect(0, 0, 16, 16))
+	for y := 0; y < 16; y++ {
+		for x := 0; x < 16; x++ {
+			src.SetRGBA(x, y, color.RGBA{G: 255, A: 255})
+		}
+	}
+
+	r, err := New(640, 360, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 640, Y: 360}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	r.ClipRect(geom.Rect{
+		Min: geom.Pt{X: 76.8, Y: 57.6},
+		Max: geom.Pt{X: 588.8, Y: 316.8},
+	})
+	r.Image(render.NewImageData(src), geom.Rect{
+		Min: geom.Pt{X: -179.2, Y: 57.6},
+		Max: geom.Pt{X: 844.8, Y: 316.8},
+	})
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	got := r.GetImage()
+	if px := got.RGBAAt(76, 100); px != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
+		t.Fatalf("clip column before rounded edge = %+v, want background", px)
+	}
+	if px := got.RGBAAt(77, 100); px.G < 200 {
+		t.Fatalf("clip column at rounded edge = %+v, want image", px)
+	}
+}
+
 func TestAggBboxImageNearestNonIntegerUpscaleUsesMatplotlibBboxPlacement(t *testing.T) {
 	src := image.NewRGBA(image.Rect(0, 0, 12, 10))
 	for y := 0; y < 10; y++ {

@@ -260,6 +260,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 			Fill:     boxColor,
 			LineJoin: render.JoinMiter,
 			LineCap:  render.CapButt,
+			Snap:     render.SnapAuto,
 		}
 		if edgeWidth > 0 && edgeColor.A > 0 {
 			paint.Stroke = edgeColor
@@ -274,6 +275,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 			LineWidth: whiskerWidth,
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
+			Snap:      render.SnapAuto,
 		}
 		r.Path(linePath(ctx, geom.Pt{X: b.Position, Y: b.stats.lowerWhisker}, geom.Pt{X: b.Position, Y: b.stats.q1}), &whiskerPaint)
 		r.Path(linePath(ctx, geom.Pt{X: b.Position, Y: b.stats.q3}, geom.Pt{X: b.Position, Y: b.stats.upperWhisker}), &whiskerPaint)
@@ -283,6 +285,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 			LineWidth: whiskerWidth,
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
+			Snap:      render.SnapAuto,
 		}
 		capLeft := b.Position - capWidth/2
 		capRight := b.Position + capWidth/2
@@ -296,6 +299,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 			LineWidth: medianWidth,
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
+			Snap:      render.SnapAuto,
 		}
 		medianLeft, medianRight := xLeft, xRight
 		if b.Notch {
@@ -316,6 +320,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 			LineWidth: flierEdgeWidth,
 			LineJoin:  render.JoinRound,
 			LineCap:   render.CapRound,
+			Snap:      render.SnapAuto,
 		}
 		marker := b.FlierMarker
 		if marker == 0 {

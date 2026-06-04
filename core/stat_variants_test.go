@@ -150,6 +150,26 @@ func TestAxesBoxPlotDefaultMedianStyleMatchesMatplotlib(t *testing.T) {
 	}
 }
 
+func TestAxesBoxPlotSubArtistsUseMatplotlibPathSnapping(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+	box := ax.BoxPlot([]float64{1, 2, 3, 4, 5})
+	if box == nil {
+		t.Fatal("expected box plot")
+	}
+
+	renderer := &recordingRenderer{}
+	box.Draw(renderer, createTestDrawContext())
+
+	if len(renderer.pathCalls) != 6 {
+		t.Fatalf("got %d path calls, want box, whiskers, caps, and median", len(renderer.pathCalls))
+	}
+	for i, call := range renderer.pathCalls {
+		if call.paint.Snap != render.SnapAuto {
+			t.Fatalf("path call %d snap = %v, want SnapAuto like Matplotlib PathPatch/Line2D", i, call.paint.Snap)
+		}
+	}
+}
+
 func TestAxesBoxPlot_AdvancedStatOptions(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 	notch := true

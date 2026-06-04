@@ -83,10 +83,10 @@ func WithSubplotShareYMode(mode ShareMode) SubplotOption {
 
 func defaultSubplotOptions() SubplotOptions {
 	return SubplotOptions{
-		Left:   0.10,
-		Right:  0.95,
-		Bottom: 0.10,
-		Top:    0.90,
+		Left:   matplotlibSubplotLeft,
+		Right:  matplotlibSubplotRight,
+		Bottom: matplotlibSubplotBottom,
+		Top:    matplotlibSubplotTop,
 		WSpace: 0.05,
 		HSpace: 0.06,
 	}

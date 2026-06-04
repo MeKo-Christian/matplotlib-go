@@ -162,7 +162,7 @@ func TestLegendDrawSupportsMultipleColumns(t *testing.T) {
 func TestLegendMathLabelWidthUsesMeasuredTextWidth(t *testing.T) {
 	layout := singleLineTextLayout{
 		TextLineLayout: render.TextLineLayout{Width: 81},
-		MathLayout:    &MathTextLayout{},
+		MathLayout:     &MathTextLayout{},
 	}
 
 	if got, want := legendLabelWidth(layout), layout.Width; got != want {
@@ -485,10 +485,10 @@ func TestLegendBestPlacementMatchesMathtextInlineLabels(t *testing.T) {
 	if !ok {
 		t.Fatal("legend.boxRect returned !ok")
 	}
-	want := anchoredBoxRect(ctx.Clip, box.W(), box.H(), LegendUpperCenter, legend.Inset)
+	want := anchoredBoxRect(ctx.Clip, box.W(), box.H(), LegendLowerLeft, legend.Inset)
 	if !approxRect(box, want, 1e-9) {
 		data := legend.legendAvoidanceData(ctx)
-		t.Fatalf("best legend box = %+v, want upper-center %+v; scores UR=%d UL=%d LL=%d LR=%d UC=%d C=%d lines=%+v",
+		t.Fatalf("best legend box = %+v, want lower-left %+v; scores UR=%d UL=%d LL=%d LR=%d UC=%d C=%d lines=%+v",
 			box, want,
 			legendPlacementBadness(anchoredBoxRect(ctx.Clip, box.W(), box.H(), LegendUpperRight, legend.Inset), data),
 			legendPlacementBadness(anchoredBoxRect(ctx.Clip, box.W(), box.H(), LegendUpperLeft, legend.Inset), data),

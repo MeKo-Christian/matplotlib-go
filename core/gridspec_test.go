@@ -67,8 +67,8 @@ func TestFigureAddSubplotAndSubplotCode(t *testing.T) {
 		t.Fatal("expected subplot axes")
 	}
 	assertRectApprox(t, ax.RectFraction, geom.Rect{
-		Min: geom.Pt{X: 0.1, Y: 0.1},
-		Max: geom.Pt{X: 0.5, Y: 0.47},
+		Min: geom.Pt{X: 0.125, Y: 0.11},
+		Max: geom.Pt{X: 0.4875, Y: 0.465},
 	})
 
 	code := fig.AddSubplotCode(224)
@@ -76,8 +76,8 @@ func TestFigureAddSubplotAndSubplotCode(t *testing.T) {
 		t.Fatal("expected subplot axes from code")
 	}
 	assertRectApprox(t, code.RectFraction, geom.Rect{
-		Min: geom.Pt{X: 0.55, Y: 0.1},
-		Max: geom.Pt{X: 0.95, Y: 0.47},
+		Min: geom.Pt{X: 0.5375, Y: 0.11},
+		Max: geom.Pt{X: 0.9, Y: 0.465},
 	})
 }
 
@@ -88,8 +88,8 @@ func TestFigureSubplot2GridSpans(t *testing.T) {
 		t.Fatal("expected subplot2grid axes")
 	}
 	assertRectApprox(t, ax.RectFraction, geom.Rect{
-		Min: geom.Pt{X: 0.4, Y: 0.1},
-		Max: geom.Pt{X: 0.95, Y: 0.6133333333333333},
+		Min: geom.Pt{X: 0.4, Y: 0.11},
+		Max: geom.Pt{X: 0.9, Y: 0.6033333333333333},
 	})
 }
 
@@ -156,6 +156,35 @@ func TestSubFigureComposition(t *testing.T) {
 	assertRectApprox(t, ax.RectFraction, geom.Rect{
 		Min: geom.Pt{X: 0.34, Y: 0.56},
 		Max: geom.Pt{X: 0.66, Y: 0.74},
+	})
+}
+
+func TestSubplotSpecSubFigureUsesMatplotlibRawGridCell(t *testing.T) {
+	fig := NewFigure(960, 640)
+	outer := fig.GridSpec(
+		2,
+		2,
+		WithGridSpecPadding(0.08, 0.96, 0.10, 0.92),
+		WithGridSpecSpacing(0.06/(2+0.06), 0.28/(2+0.28)),
+		WithGridSpecWidthRatios(2, 1),
+	)
+
+	sub := outer.Cell(1, 1).SubFigure()
+	if sub == nil {
+		t.Fatal("expected subfigure")
+	}
+	assertRectApprox(t, sub.RectFraction, geom.Rect{
+		Min: geom.Pt{X: 2.0 / 3.0, Y: 0},
+		Max: geom.Pt{X: 1, Y: 0.5},
+	})
+
+	ax := sub.AddSubplot(1, 1, 1)
+	if ax == nil {
+		t.Fatal("expected subfigure subplot")
+	}
+	assertRectApprox(t, ax.RectFraction, geom.Rect{
+		Min: geom.Pt{X: 0.7083333333333334, Y: 0.055},
+		Max: geom.Pt{X: 0.9666666666666667, Y: 0.44},
 	})
 }
 

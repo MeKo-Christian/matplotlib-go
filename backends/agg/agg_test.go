@@ -1044,6 +1044,7 @@ func TestDrawQuadMeshSnapsFractionalRectilinearEdges(t *testing.T) {
 			},
 			Edge:      render.Color{A: 1},
 			LineWidth: 1,
+			Snap:      render.SnapOn,
 		},
 	}})
 	if !ok {

@@ -129,29 +129,29 @@ func prepareFigureLayout(fig *Figure, r render.Renderer, vp geom.Rect) {
 		syncAxesToSubplotSpecs(fig, state)
 		syncColorbarAxes(fig)
 		for _, root := range managedRootGrids(fig) {
-			resolveMeasuredGridLayout(fig, r, vp, root, gridAxes, children, state)
+			resolveMeasuredGridLayout(fig, r, vp, root, gridAxes, children, state, iter)
 		}
 	}
 	syncAxesToSubplotSpecs(fig, state)
 	syncColorbarAxes(fig)
 }
 
-func resolveMeasuredGridLayout(fig *Figure, r render.Renderer, vp geom.Rect, grid *GridSpec, gridAxes map[*GridSpec][]*Axes, children map[*GridSpec][]*GridSpec, state map[*GridSpec]GridSpecOptions) {
+func resolveMeasuredGridLayout(fig *Figure, r render.Renderer, vp geom.Rect, grid *GridSpec, gridAxes map[*GridSpec][]*Axes, children map[*GridSpec][]*GridSpec, state map[*GridSpec]GridSpecOptions, layoutPass int) {
 	if grid == nil {
 		return
 	}
 
 	syncAxesToSubplotSpecs(fig, state)
 	alignment := computeFigureTextAlignment(fig, r, vp)
-	state[grid] = measuredGridOptions(fig, r, vp, grid, gridAxes[grid], state, alignment)
+	state[grid] = measuredGridOptions(fig, r, vp, grid, gridAxes[grid], state, alignment, layoutPass)
 	syncAxesToSubplotSpecs(fig, state)
 
 	for _, child := range children[grid] {
-		resolveMeasuredGridLayout(fig, r, vp, child, gridAxes, children, state)
+		resolveMeasuredGridLayout(fig, r, vp, child, gridAxes, children, state, layoutPass)
 	}
 }
 
-func measuredGridOptions(fig *Figure, r render.Renderer, vp geom.Rect, grid *GridSpec, axes []*Axes, state map[*GridSpec]GridSpecOptions, alignment figureTextAlignment) GridSpecOptions {
+func measuredGridOptions(fig *Figure, r render.Renderer, vp geom.Rect, grid *GridSpec, axes []*Axes, state map[*GridSpec]GridSpecOptions, alignment figureTextAlignment, layoutPass int) GridSpecOptions {
 	if grid == nil {
 		return GridSpecOptions{}
 	}
@@ -190,7 +190,7 @@ func measuredGridOptions(fig *Figure, r render.Renderer, vp geom.Rect, grid *Gri
 		innerPadX = math.Max(constrainedLayoutDefaultSpacePx(parentPx.W(), grid.nCols), 2*outerPadX)
 		innerPadY = math.Max(constrainedLayoutDefaultSpacePx(parentPx.H(), grid.nRows), 2*outerPadY)
 	}
-	global := figureLayoutMarginsPx(fig, r, vp, fig.layoutEngine)
+	global := figureLayoutMarginsPx(fig, r, vp, fig.layoutEngine, layoutPass)
 	if !gridCoversWholeFigure(grid) {
 		global = figureMargin{}
 	}
@@ -344,9 +344,9 @@ func figureLabelTightHeight(r render.Renderer, text string, size float64, fontKe
 	return lineHeight
 }
 
-func figureLayoutMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engine LayoutEngine) figureMargin {
+func figureLayoutMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engine LayoutEngine, layoutPass int) figureMargin {
 	margins := figureLabelMarginsPx(fig, r, vp, engine)
-	margins = addFigureMargins(margins, figureColorbarMarginsPx(fig, r, vp, engine))
+	margins = addFigureMargins(margins, figureColorbarMarginsPx(fig, r, vp, engine, layoutPass))
 	return margins
 }
 
@@ -359,7 +359,7 @@ func addFigureMargins(a, b figureMargin) figureMargin {
 	}
 }
 
-func figureColorbarMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engine LayoutEngine) figureMargin {
+func figureColorbarMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engine LayoutEngine, layoutPass int) figureMargin {
 	if fig == nil {
 		return figureMargin{}
 	}
@@ -381,6 +381,9 @@ func figureColorbarMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engin
 			}
 			padding := measureAxesDecorationPadding(ax, fig, r, vp, alignment)
 			colorbarPad := resolvedColorbarPadding(base, ax.colorbarPadding, location)
+			if layoutPass == 0 {
+				colorbarPad = 0
+			}
 			if colorbarIsHorizontal(location) {
 				padding.bottom += ax.effectiveRC(fig).AxisLineWidth
 				colorbarSpace := (thickness + colorbarPad) * vp.H()
@@ -390,13 +393,7 @@ func figureColorbarMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engin
 					margin.bottom = math.Max(margin.bottom, colorbarSpace+padding.bottom)
 				}
 			} else {
-				rc := ax.effectiveRC(fig)
-				padding.right += rc.AxisLineWidth
-				// Reserve the same spine-width gap that constrainedColorbarSlotOffset
-				// applies during placement so the parent axes edge and the colorbar
-				// slot stay consistent (otherwise the axes ends ~1px too wide).
-				// AxisLineWidth is already stored in pixels.
-				colorbarSpace := (thickness+colorbarPad)*vp.W() + rc.AxisLineWidth
+				colorbarSpace := (thickness + colorbarPad) * vp.W()
 				if location == "left" {
 					margin.left = math.Max(margin.left, colorbarSpace+padding.left)
 				} else {
@@ -484,8 +481,16 @@ func syncAxesToSubplotSpecs(fig *Figure, state map[*GridSpec]GridSpecOptions) {
 }
 
 func syncColorbarAxes(fig *Figure) {
+	syncColorbarAxesMeasured(fig, nil, geom.Rect{})
+}
+
+func syncColorbarAxesMeasured(fig *Figure, r render.Renderer, vp geom.Rect) {
 	if fig == nil {
 		return
+	}
+	var alignment figureTextAlignment
+	if r != nil {
+		alignment = computeFigureTextAlignment(fig, r, vp)
 	}
 	for _, ax := range fig.Children {
 		if ax == nil || ax.colorbarParent == nil {
@@ -509,7 +514,11 @@ func syncColorbarAxes(fig *Figure) {
 			padding = resolvedColorbarPadding(base, ax.colorbarPadding, location)
 			thickness = resolvedColorbarThickness(fig, base, ax.colorbarWidth, resolvedColorbarAspect(ax.colorbarAspect), location)
 			slotThickness = resolvedColorbarSlotThickness(base, ax.colorbarWidth, location)
-			_, ax.RectFraction = colorbarPlacementRect(fig, base, thickness, slotThickness, padding, location, useResolvedSlot)
+			slotOffset := math.NaN()
+			if r != nil && location == "right" && fig.SizePx.X > 0 {
+				slotOffset = measureAxesDecorationPadding(parent, fig, r, vp, alignment).right / fig.SizePx.X
+			}
+			_, ax.RectFraction = colorbarPlacementRectWithSlotOffset(fig, base, thickness, slotThickness, padding, location, useResolvedSlot, slotOffset)
 			ax.RectFraction = insetColorbarRectForExtensions(fig, ax.RectFraction, ax.colorbarExtend, location)
 			continue
 		}

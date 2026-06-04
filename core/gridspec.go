@@ -29,6 +29,13 @@ type GridSpec struct {
 	options GridSpecOptions
 }
 
+const (
+	matplotlibSubplotLeft   = 0.125
+	matplotlibSubplotRight  = 0.9
+	matplotlibSubplotBottom = 0.11
+	matplotlibSubplotTop    = 0.88
+)
+
 // SubplotSpec describes a span within a GridSpec.
 type SubplotSpec struct {
 	figure   *Figure
@@ -155,7 +162,7 @@ func (f *Figure) AddSubplot(nRows, nCols, index int, opts ...SubplotAxesOption) 
 	gs := f.GridSpec(
 		nRows,
 		nCols,
-		subplotGridSpecOptions(0.10, 0.95, 0.10, 0.90, 0.05, 0.06)...,
+		subplotGridSpecOptions(matplotlibSubplotLeft, matplotlibSubplotRight, matplotlibSubplotBottom, matplotlibSubplotTop, 0.05, 0.06)...,
 	)
 	if gs == nil || index <= 0 || index > nRows*nCols {
 		return nil
@@ -188,7 +195,7 @@ func (f *Figure) Subplot2Grid(shape [2]int, loc [2]int, rowSpan, colSpan int, op
 	gs := f.GridSpec(
 		shape[0],
 		shape[1],
-		subplotGridSpecOptions(0.10, 0.95, 0.10, 0.90, 0.05, 0.06)...,
+		subplotGridSpecOptions(matplotlibSubplotLeft, matplotlibSubplotRight, matplotlibSubplotBottom, matplotlibSubplotTop, 0.05, 0.06)...,
 	)
 	if gs == nil {
 		return nil
@@ -308,7 +315,7 @@ func (sf *SubFigure) AddSubplot(nRows, nCols, index int, opts ...SubplotAxesOpti
 	gs := sf.GridSpec(
 		nRows,
 		nCols,
-		subplotGridSpecOptions(0.10, 0.95, 0.10, 0.90, 0.05, 0.06)...,
+		subplotGridSpecOptions(matplotlibSubplotLeft, matplotlibSubplotRight, matplotlibSubplotBottom, matplotlibSubplotTop, 0.05, 0.06)...,
 	)
 	if gs == nil || index <= 0 || index > nRows*nCols {
 		return nil
@@ -330,7 +337,7 @@ func (sf *SubFigure) Subplot2Grid(shape [2]int, loc [2]int, rowSpan, colSpan int
 	gs := sf.GridSpec(
 		shape[0],
 		shape[1],
-		subplotGridSpecOptions(0.10, 0.95, 0.10, 0.90, 0.05, 0.06)...,
+		subplotGridSpecOptions(matplotlibSubplotLeft, matplotlibSubplotRight, matplotlibSubplotBottom, matplotlibSubplotTop, 0.05, 0.06)...,
 	)
 	if gs == nil {
 		return nil
@@ -352,6 +359,13 @@ func (spec SubplotSpec) GridSpec(nRows, nCols int, opts ...GridSpecOption) *Grid
 // Rect returns the figure-normalized rectangle occupied by this subplot span.
 func (spec SubplotSpec) Rect() geom.Rect {
 	return spec.rectWithOptions(nil)
+}
+
+func (spec SubplotSpec) rawRect() geom.Rect {
+	if spec.grid == nil {
+		return geom.Rect{}
+	}
+	return spec.grid.rawRectForSpan(spec.rowStart, spec.rowEnd, spec.colStart, spec.colEnd)
 }
 
 func (spec SubplotSpec) rectWithOptions(state map[*GridSpec]GridSpecOptions) geom.Rect {
@@ -412,7 +426,7 @@ func (spec SubplotSpec) SubFigure() *SubFigure {
 	}
 	return &SubFigure{
 		figure:       spec.figure,
-		RectFraction: spec.Rect(),
+		RectFraction: spec.rawRect(),
 	}
 }
 
@@ -523,6 +537,44 @@ func (gs *GridSpec) rectForSpan(rowStart, rowEnd, colStart, colEnd int, state ma
 		Min: geom.Pt{X: minX, Y: minY},
 		Max: geom.Pt{X: maxX, Y: maxY},
 	}
+}
+
+func (gs *GridSpec) rawRectForSpan(rowStart, rowEnd, colStart, colEnd int) geom.Rect {
+	if gs == nil {
+		return geom.Rect{}
+	}
+
+	parent := gs.rawParentRect()
+	baseW := parent.W()
+	baseH := parent.H()
+	if baseW <= 0 || baseH <= 0 {
+		return geom.Rect{}
+	}
+
+	widths := distributeRatios(gs.options.WidthRatios, gs.nCols, baseW)
+	heights := distributeRatios(gs.options.HeightRatios, gs.nRows, baseH)
+
+	minX := parent.Min.X + accumulate(widths, colStart)
+	maxX := minX + accumulate(widths[colStart:colEnd], len(widths[colStart:colEnd]))
+
+	offsetFromTop := accumulate(heights, rowStart)
+	maxY := parent.Max.Y - offsetFromTop
+	minY := maxY - accumulate(heights[rowStart:rowEnd], len(heights[rowStart:rowEnd]))
+
+	return geom.Rect{
+		Min: geom.Pt{X: minX, Y: minY},
+		Max: geom.Pt{X: maxX, Y: maxY},
+	}
+}
+
+func (gs *GridSpec) rawParentRect() geom.Rect {
+	if gs == nil {
+		return geom.Rect{}
+	}
+	if gs.parent != nil {
+		return gs.parent.rawRect()
+	}
+	return gs.base
 }
 
 func (gs *GridSpec) parentRectForState(state map[*GridSpec]GridSpecOptions) geom.Rect {

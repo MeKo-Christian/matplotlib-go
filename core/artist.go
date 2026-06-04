@@ -2069,7 +2069,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 
 	prepareFigureLayout(fig, r, vp)
 	syncAxesLocators(fig, r)
-	syncColorbarAxes(fig)
+	syncColorbarAxesMeasured(fig, r, vp)
 	syncAxesLocators(fig, r)
 	alignment := computeFigureTextAlignment(fig, r, vp)
 

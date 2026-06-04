@@ -83,10 +83,11 @@ func (r *Renderer) clipCompositeRegion(bounds geom.Rect, haveBounds bool) (pixel
 		maxY: r.height,
 	}
 	if r.clipRect != nil {
-		region.minX = maxInt(region.minX, int(math.Floor(r.clipRect.Min.X)))
-		region.minY = maxInt(region.minY, int(math.Floor(r.clipRect.Min.Y)))
-		region.maxX = minInt(region.maxX, int(math.Ceil(r.clipRect.Max.X)))
-		region.maxY = minInt(region.maxY, int(math.Ceil(r.clipRect.Max.Y)))
+		minX, minY, maxX, maxY := quantizedClipBox(*r.clipRect)
+		region.minX = maxInt(region.minX, minX)
+		region.minY = maxInt(region.minY, minY)
+		region.maxX = minInt(region.maxX, maxX)
+		region.maxY = minInt(region.maxY, maxY)
 	}
 	if haveBounds {
 		region.minX = maxInt(region.minX, int(math.Floor(bounds.Min.X)))
@@ -362,14 +363,21 @@ func clonePath(path geom.Path) geom.Path {
 
 func (r *Renderer) applyClipRect() {
 	if r.clipRect != nil {
-		minX := math.Floor(r.clipRect.Min.X)
-		minY := math.Floor(r.clipRect.Min.Y)
-		maxX := math.Ceil(r.clipRect.Max.X)
-		maxY := math.Ceil(r.clipRect.Max.Y)
-		r.ctx.ClipBox(minX, minY, maxX, maxY)
+		minX, minY, maxX, maxY := quantizedClipBox(*r.clipRect)
+		r.ctx.ClipBox(float64(minX), float64(minY), float64(maxX), float64(maxY))
 		return
 	}
 	r.ctx.ClipBox(0, 0, float64(r.width), float64(r.height))
+}
+
+func quantizedClipBox(rect geom.Rect) (minX, minY, maxX, maxY int) {
+	// Matplotlib 3.10.9's RendererAgg::set_clipbox converts each display-space
+	// clip edge with int(floor(edge+0.5)). The rect is already in device
+	// coordinates here, so apply the same half-up integer quantization directly.
+	return int(math.Floor(rect.Min.X + 0.5)),
+		int(math.Floor(rect.Min.Y + 0.5)),
+		int(math.Floor(rect.Max.X + 0.5)),
+		int(math.Floor(rect.Max.Y + 0.5))
 }
 
 // renderImageToAGG converts a renderer image into an AGG image type.

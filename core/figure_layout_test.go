@@ -427,14 +427,17 @@ func TestConstrainedLayoutReservesColorbarSpaceAndTracksParent(t *testing.T) {
 	var r figureLayoutRecordingRenderer
 	DrawFigure(fig, &r)
 
-	if cb.RectFraction.Max.X > 1 {
-		t.Fatalf("colorbar overflowed figure: %+v", cb.RectFraction)
+	if cb.RectFraction.Max.X <= 1 {
+		t.Fatalf("expected Matplotlib-style original colorbar slot to extend beyond figure, got %+v", cb.RectFraction)
 	}
 	if cb.RectFraction.Min.X <= ax.RectFraction.Max.X {
 		t.Fatalf("colorbar did not stay to the right of parent: parent=%+v colorbar=%+v", ax.RectFraction, cb.RectFraction)
 	}
 	base := cb.colorbarBase
-	if got, want := cb.RectFraction.Min.X-ax.RectFraction.Max.X, resolvedColorbarPadding(base, cb.colorbarPadding)+constrainedColorbarSlotOffset(fig, base); !floatApprox(got, want, 1e-9) {
+	vp := fig.DisplayRect()
+	alignment := computeFigureTextAlignment(fig, &r, vp)
+	parentRight := measureAxesDecorationPadding(ax, fig, &r, vp, alignment).right / fig.SizePx.X
+	if got, want := cb.RectFraction.Min.X-ax.RectFraction.Max.X, resolvedColorbarPadding(base, cb.colorbarPadding)+parentRight; !floatApprox(got, want, 1e-9) {
 		t.Fatalf("colorbar did not track parent padding: got %v want %v", got, want)
 	}
 	if ax.RectFraction.Max.X >= 0.90 {
