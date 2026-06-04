@@ -1,4 +1,5 @@
 basic_line
+basic_line_labels
 joins_caps
 dashes
 line2d_semantics

@@ -132,6 +132,16 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		},
 	},
 	{
+		ID:        "showcase-basic_line_labels",
+		Title:     "Basic Line Labels Browser Coverage",
+		Status:    BrowserDemoPlanned,
+		Action:    "include in a line styles or text layout browser demo",
+		Rationale: "The labeled line showcase is CLI-only and isolates axis-label layout behavior for browser inspection.",
+		CatalogIDs: []string{
+			"basic_line_labels",
+		},
+	},
+	{
 		ID:        "showcase-dashes",
 		Title:     "Dash Patterns Browser Coverage",
 		Status:    BrowserDemoPlanned,

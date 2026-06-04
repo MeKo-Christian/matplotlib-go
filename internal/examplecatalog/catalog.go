@@ -67,6 +67,7 @@ const (
 
 var cases = []Case{
 	{ID: "basic_line", Topic: "lines", Title: "Basic Line", Description: "A minimal line plot with explicit limits, labels, and one Line2D artist.", Showcase: true, GoBasicSmokeFamily: "line", SkiaParityFamily: "line"},
+	{ID: "basic_line_labels", Topic: "lines", Title: "Basic Line Labels", Description: "A minimal line plot with x and y axis labels for label layout parity checks.", Showcase: true, GoBasicSmokeFamily: "line", SkiaParityFamily: "line"},
 	{ID: "joins_caps", Topic: "lines", Title: "Line Joins and Caps"},
 	{ID: "dashes", Topic: "lines", Title: "Dash Patterns", Description: "Multiple line styles showing dash arrays, cap styles, and legend labeling.", Showcase: true},
 	{ID: "line2d_semantics", Topic: "lines", Title: "Line2D Semantics", FixtureOnly: true, MinPSNR: 34.0, MaxMeanAbs: 8.0},

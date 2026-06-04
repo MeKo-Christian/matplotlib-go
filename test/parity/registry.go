@@ -16,6 +16,7 @@ import (
 	showcase_axisartist_showcase "github.com/cwbudde/matplotlib-go/examples/axisartist_showcase"
 	showcase_bar_basic "github.com/cwbudde/matplotlib-go/examples/bar_basic"
 	showcase_basic_line "github.com/cwbudde/matplotlib-go/examples/basic_line"
+	showcase_basic_line_labels "github.com/cwbudde/matplotlib-go/examples/basic_line_labels"
 	showcase_boxplot_basic "github.com/cwbudde/matplotlib-go/examples/boxplot_basic"
 	showcase_colorbar_composition "github.com/cwbudde/matplotlib-go/examples/colorbar_composition"
 	showcase_errorbar_basic "github.com/cwbudde/matplotlib-go/examples/errorbar_basic"
@@ -52,6 +53,7 @@ import (
 	example_bar_grouped "github.com/cwbudde/matplotlib-go/test/parity/bar_grouped"
 	example_bar_horizontal "github.com/cwbudde/matplotlib-go/test/parity/bar_horizontal"
 	example_basic_line "github.com/cwbudde/matplotlib-go/test/parity/basic_line"
+	example_basic_line_labels "github.com/cwbudde/matplotlib-go/test/parity/basic_line_labels"
 	example_boundarynorm_pcolormesh "github.com/cwbudde/matplotlib-go/test/parity/boundarynorm_pcolormesh"
 	example_boxplot_basic "github.com/cwbudde/matplotlib-go/test/parity/boxplot_basic"
 	example_clip_path_batch "github.com/cwbudde/matplotlib-go/test/parity/clip_path_batch"
@@ -184,6 +186,7 @@ type Case struct {
 var renderByID = map[string]func() image.Image{
 	"animation_gallery":                  showcase_animation_gallery.Render,
 	"basic_line":                         example_basic_line.Render,
+	"basic_line_labels":                  example_basic_line_labels.Render,
 	"joins_caps":                         example_joins_caps.Render,
 	"dashes":                             example_dashes.Render,
 	"line2d_semantics":                   example_line2d_semantics.Render,
@@ -350,6 +353,7 @@ var figureByID = map[string]func() *core.Figure{
 	"axisartist_showcase":                showcase_axisartist_showcase.Plot,
 	"asinh_norm_image":                   example_asinh_norm_image.Plot,
 	"basic_line":                         showcase_basic_line.Plot,
+	"basic_line_labels":                  showcase_basic_line_labels.Plot,
 	"bar_basic":                          showcase_bar_basic.Plot,
 	"boxplot_basic":                      showcase_boxplot_basic.Plot,
 	"colorbar_composition":               showcase_colorbar_composition.Plot,

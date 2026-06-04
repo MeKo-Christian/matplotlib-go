@@ -29,6 +29,7 @@ import (
 	axisartist_showcase "github.com/cwbudde/matplotlib-go/examples/axisartist_showcase"
 	bar_basic "github.com/cwbudde/matplotlib-go/examples/bar_basic"
 	basic_line "github.com/cwbudde/matplotlib-go/examples/basic_line"
+	basic_line_labels "github.com/cwbudde/matplotlib-go/examples/basic_line_labels"
 	boxplot_basic "github.com/cwbudde/matplotlib-go/examples/boxplot_basic"
 	colorbar_composition "github.com/cwbudde/matplotlib-go/examples/colorbar_composition"
 	dashes "github.com/cwbudde/matplotlib-go/examples/dashes"
@@ -70,6 +71,7 @@ var registry = map[string]func() *core.Figure{
 	"axisartist_showcase":       axisartist_showcase.Plot,
 	"bar_basic":                 bar_basic.Plot,
 	"basic_line":                basic_line.Plot,
+	"basic_line_labels":         basic_line_labels.Plot,
 	"boxplot_basic":             boxplot_basic.Plot,
 	"colorbar_composition":      colorbar_composition.Plot,
 	"dashes":                    dashes.Plot,
