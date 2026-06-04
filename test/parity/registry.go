@@ -119,6 +119,7 @@ import (
 	example_mixed_raster_vector "github.com/cwbudde/matplotlib-go/test/parity/mixed_raster_vector"
 	example_mplot3d_bar3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_bar3d"
 	example_mplot3d_basic "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_basic"
+	example_mplot3d_errorbar3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_errorbar3d"
 	example_mplot3d_fill_between3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_fill_between3d"
 	example_mplot3d_plot3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_plot3d"
 	example_mplot3d_quiver3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_quiver3d"
@@ -298,6 +299,7 @@ var renderByID = map[string]func() image.Image{
 	"mplot3d_bar3d":                      example_mplot3d_bar3d.Render,
 	"mplot3d_voxels":                     example_mplot3d_voxels.Render,
 	"mplot3d_quiver3d":                   example_mplot3d_quiver3d.Render,
+	"mplot3d_errorbar3d":                 example_mplot3d_errorbar3d.Render,
 	"mplot3d_stem3d":                     example_mplot3d_stem3d.Render,
 	"mplot3d_fill_between3d":             example_mplot3d_fill_between3d.Render,
 	"unstructured_showcase":              example_unstructured_showcase.Render,

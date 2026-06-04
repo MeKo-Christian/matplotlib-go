@@ -237,7 +237,7 @@ var demoBreadthGaps = []DemoBreadthGap{
 		Topic:       "mplot3d",
 		Title:       "mplot3d Gallery",
 		Priority:    DemoBreadthHigh,
-		CatalogIDs:  []string{"mplot3d_basic", "mplot3d_terrain", "mplot3d_plot3d", "mplot3d_scatter3d", "mplot3d_surface3d", "mplot3d_wire3d", "mplot3d_trisurf3d", "mplot3d_bar3d", "mplot3d_voxels", "mplot3d_quiver3d", "mplot3d_stem3d", "mplot3d_fill_between3d"},
+		CatalogIDs:  []string{"mplot3d_basic", "mplot3d_terrain", "mplot3d_plot3d", "mplot3d_scatter3d", "mplot3d_surface3d", "mplot3d_wire3d", "mplot3d_trisurf3d", "mplot3d_bar3d", "mplot3d_voxels", "mplot3d_quiver3d", "mplot3d_errorbar3d", "mplot3d_stem3d", "mplot3d_fill_between3d"},
 		ShowcaseIDs: []string{"mplot3d_terrain"},
 		TargetFeatures: []string{
 			"3D line",

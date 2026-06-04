@@ -2487,9 +2487,12 @@ example/browser breadth as documentation work.
             - [ ] 17.75.4.5.2.1 Low-Complexity Fixtures: add missing line-like,
               scatter, stem, errorbar, wireframe, and bar fixture triplets.
 
-                - [ ] 17.75.4.5.2.1.1 Line-Like Triplets: add or refresh
+                - [x] 17.75.4.5.2.1.1 Line-Like Triplets: add or refresh
                   `Plot3D`, `Stem3D`, `ErrorBar3D`, `Quiver3D`, and
-                  `Wireframe` triplets with close Go/Python structure.
+                  `Wireframe` triplets with close Go/Python structure. Added
+                  the missing `mplot3d_errorbar3d` Go/Python/golden/reference
+                  triplet; `Plot3D`, `Stem3D`, `Quiver3D`, and `Wireframe`
+                  already had dedicated triplets.
 
                 - [ ] 17.75.4.5.2.1.2 Point and Bar Triplets: add or refresh
                   `Scatter3D` and `Bar3D` triplets after scalar/color behavior

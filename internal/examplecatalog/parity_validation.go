@@ -61,6 +61,7 @@ var parityFixValidationTargets = []ParityFixValidationTarget{
 	{CaseID: "mplot3d_bar3d", ClusterIDs: []string{ValidationClusterProjection3D}},
 	{CaseID: "mplot3d_voxels", ClusterIDs: []string{ValidationClusterProjection3D}},
 	{CaseID: "mplot3d_quiver3d", ClusterIDs: []string{ValidationClusterProjection3D}},
+	{CaseID: "mplot3d_errorbar3d", ClusterIDs: []string{ValidationClusterProjection3D}},
 	{CaseID: "mplot3d_stem3d", ClusterIDs: []string{ValidationClusterProjection3D}},
 	{CaseID: "mplot3d_fill_between3d", ClusterIDs: []string{ValidationClusterProjection3D}},
 	{CaseID: "unstructured_showcase", ClusterIDs: []string{ValidationClusterContour, ValidationClusterImageMeshColorbar}},

@@ -77,6 +77,7 @@ var validationClusters = []ValidationCluster{
 			"mplot3d_bar3d",
 			"mplot3d_voxels",
 			"mplot3d_quiver3d",
+			"mplot3d_errorbar3d",
 			"mplot3d_stem3d",
 			"mplot3d_fill_between3d",
 			"polar_axes",

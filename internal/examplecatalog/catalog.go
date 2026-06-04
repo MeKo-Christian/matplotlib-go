@@ -182,6 +182,7 @@ var cases = []Case{
 	{ID: "mplot3d_bar3d", Topic: "mplot3d", Title: "3D Bars", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 30.0, MaxMeanAbs: 8.0, MaxRMSE: 18.0},
 	{ID: "mplot3d_voxels", Topic: "mplot3d", Title: "3D Voxels", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 18.0},
 	{ID: "mplot3d_quiver3d", Topic: "mplot3d", Title: "3D Quiver", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 18.0},
+	{ID: "mplot3d_errorbar3d", Topic: "mplot3d", Title: "3D Error Bars", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 18.0},
 	{ID: "mplot3d_stem3d", Topic: "mplot3d", Title: "3D Stem", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 18.0},
 	{ID: "mplot3d_fill_between3d", Topic: "mplot3d", Title: "3D Fill Between", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 35.0, MaxMeanAbs: 10.0, MaxRMSE: 18.0},
 	{ID: "unstructured_showcase", Topic: "unstructured", Title: "Unstructured Showcase", Description: "Triangulated and irregular data views covering triplot, tripcolor, and contour variants.", Optional: true, Showcase: true, GoBasicSmokeFamily: "unstructured", MinPSNR: 30.0, MaxMeanAbs: 10.0},

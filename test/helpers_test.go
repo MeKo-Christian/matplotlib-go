@@ -100,6 +100,7 @@ var optionalVisualGoldenIDs = map[string]bool{
 	"mplot3d_bar3d":           true,
 	"mplot3d_voxels":          true,
 	"mplot3d_quiver3d":        true,
+	"mplot3d_errorbar3d":      true,
 	"mplot3d_stem3d":          true,
 	"mplot3d_fill_between3d":  true,
 	"unstructured_showcase":   true,
