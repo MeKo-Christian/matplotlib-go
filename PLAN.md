@@ -2241,7 +2241,7 @@ example/browser breadth as documentation work.
               `Bar3D` and `FillBetween3D` facecolor, edgecolor, alpha,
               shading, and per-face ordering behavior.
 
-                - [ ] 17.75.4.4.3.3.1 FillBetween3D Colors: align
+                - [x] 17.75.4.4.3.3.1 FillBetween3D Colors: align
                   `FillBetween3D` facecolor, edgecolor, alpha, and
                   non-scalar-mappable collection behavior for quad and polygon
                   modes.

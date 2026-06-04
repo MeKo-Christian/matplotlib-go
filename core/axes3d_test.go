@@ -1690,6 +1690,84 @@ func TestAxes3DFillBetweenCreatesProjectedQuadBands(t *testing.T) {
 	}
 }
 
+func TestAxes3DFillBetweenColorsApplyAlphaAndStayNonMappable(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	color := render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1}
+	edge := render.Color{R: 0.8, G: 0.1, B: 0.3, A: 1}
+	alpha := 0.35
+	edgeWidth := 1.25
+	fill := ax.FillBetween3D(
+		[]float64{0, 1, 2},
+		[]float64{0, 0, 0},
+		[]float64{1, 1, 1},
+		[]float64{0, 1, 2},
+		[]float64{1, 1, 1},
+		[]float64{0, 0, 0},
+		FillBetween3DOptions{
+			Color:     &color,
+			EdgeColor: &edge,
+			EdgeWidth: &edgeWidth,
+			Alpha:     &alpha,
+			Mode:      FillBetween3DModeQuad,
+		},
+	)
+	if fill == nil {
+		t.Fatal("FillBetween3D returned nil")
+	}
+	wantFace := color
+	wantFace.A *= alpha
+	if got, want := len(fill.FaceColors), len(fill.Polygons); got != want {
+		t.Fatalf("fill face colors = %d, polygons = %d; want one color per quad", got, want)
+	}
+	for i, got := range fill.FaceColors {
+		if got != wantFace {
+			t.Fatalf("fill face color %d = %+v, want %+v", i, got, wantFace)
+		}
+	}
+	wantEdge := edge
+	wantEdge.A *= alpha
+	if got := fill.EdgeColor; got != wantEdge {
+		t.Fatalf("fill edge color = %+v, want %+v", got, wantEdge)
+	}
+	if got := fill.EdgeWidth; got != edgeWidth {
+		t.Fatalf("fill edge width = %v, want %v", got, edgeWidth)
+	}
+	if array := fill.GetArray(); len(array) != 0 {
+		t.Fatalf("fill scalar array = %v, want non-scalar-mappable PolyCollection", array)
+	}
+	mapping := fill.ScalarMap()
+	if mapping.Colormap != "" || mapping.Norm != nil || mapping.VMin != 0 || mapping.VMax != 0 {
+		t.Fatalf("fill scalar map = %+v, want no scalar-map metadata", mapping)
+	}
+
+	polygonFill := ax.FillBetween3D(
+		[]float64{0, 1, 2},
+		[]float64{0, 0, 0},
+		[]float64{1, 1, 1},
+		[]float64{0, 1, 2},
+		[]float64{1, 1, 1},
+		[]float64{0, 0, 0},
+		FillBetween3DOptions{Color: &color, Alpha: &alpha, Mode: FillBetween3DModePolygon},
+	)
+	if polygonFill == nil {
+		t.Fatal("polygon FillBetween3D returned nil")
+	}
+	if got, want := len(polygonFill.Polygons), 1; got != want {
+		t.Fatalf("polygon fill polygons = %d, want %d", got, want)
+	}
+	if got, want := len(polygonFill.FaceColors), 1; got != want {
+		t.Fatalf("polygon fill face colors = %d, want %d", got, want)
+	}
+	if polygonFill.FaceColors[0] != wantFace {
+		t.Fatalf("polygon fill face color = %+v, want %+v", polygonFill.FaceColors[0], wantFace)
+	}
+}
+
 func TestAxes3DFillBetweenAxLimClipDropsOutsidePolygons(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
