@@ -2246,7 +2246,7 @@ example/browser breadth as documentation work.
                   non-scalar-mappable collection behavior for quad and polygon
                   modes.
 
-                - [ ] 17.75.4.4.3.3.2 Bar3D Single-Color Semantics: align
+                - [x] 17.75.4.4.3.3.2 Bar3D Single-Color Semantics: align
                   single-color `Bar3D` face alpha, default edge visibility,
                   shading, face ordering, and non-scalar-mappable state.
 

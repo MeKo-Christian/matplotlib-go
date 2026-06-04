@@ -3490,6 +3490,73 @@ func TestAxes3DBar3DCreatesSegments(t *testing.T) {
 	}
 }
 
+func TestAxes3DBar3DSingleColorAppliesAlphaShadingAndStaysNonMappable(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	color := render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1}
+	alpha := 0.4
+	lineWidth := 1.5
+	edges := ax.Bar3D(
+		[]float64{0},
+		[]float64{0},
+		[]float64{0},
+		[]float64{1},
+		[]float64{1},
+		[]float64{1},
+		Bar3DOptions{Color: &color, Alpha: &alpha, LineWidth: &lineWidth},
+	)
+	if edges == nil {
+		t.Fatal("Bar3D returned nil")
+	}
+	if got := edges.Color; got != color {
+		t.Fatalf("Bar3D edge color = %+v, want unshaded explicit line color %+v", got, color)
+	}
+	if got := edges.Alpha; got != alpha {
+		t.Fatalf("Bar3D edge collection alpha = %v, want %v", got, alpha)
+	}
+	if array := edges.GetArray(); len(array) != 0 {
+		t.Fatalf("Bar3D edge scalar array = %v, want non-scalar-mappable LineCollection", array)
+	}
+
+	var faces *PolyCollection
+	for _, artist := range ax.Artists {
+		polys, ok := artist.(*PolyCollection)
+		if ok && len(polys.Polygons) == 6 {
+			faces = polys
+			break
+		}
+	}
+	if faces == nil {
+		t.Fatal("Bar3D did not add filled projected cuboid faces")
+	}
+	if got, want := len(faces.FaceColors), 6; got != want {
+		t.Fatalf("Bar3D face colors = %d, want %d", got, want)
+	}
+	shaded := false
+	for i, got := range faces.FaceColors {
+		if !approx(got.A, color.A*alpha, 1e-12) {
+			t.Fatalf("Bar3D face color %d alpha = %v, want %v", i, got.A, color.A*alpha)
+		}
+		if got.R != color.R || got.G != color.G || got.B != color.B {
+			shaded = true
+		}
+	}
+	if !shaded {
+		t.Fatalf("Bar3D face colors = %+v, want Matplotlib-style shaded single color", faces.FaceColors)
+	}
+	if array := faces.GetArray(); len(array) != 0 {
+		t.Fatalf("Bar3D face scalar array = %v, want non-scalar-mappable PolyCollection", array)
+	}
+	mapping := faces.ScalarMap()
+	if mapping.Colormap != "" || mapping.Norm != nil || mapping.VMin != 0 || mapping.VMax != 0 {
+		t.Fatalf("Bar3D face scalar map = %+v, want no scalar-map metadata", mapping)
+	}
+}
+
 func TestAxes3DBar3DAxLimClipDropsOutsideCuboids(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
