@@ -2258,7 +2258,7 @@ example/browser breadth as documentation work.
               explicit facecolor behavior, visible-face color selection,
               alpha propagation, and depth-sorted redraw updates.
 
-        - [ ] 17.75.4.4.4 3D Colorbar Integration: ensure 3D scalar mappables
+        - [x] 17.75.4.4.4 3D Colorbar Integration: ensure 3D scalar mappables
           expose enough state for colorbar creation and update behavior, or
           document intentional omissions where the Go API stays immutable.
           Complete the scoped checks below in order before marking this parent
@@ -2327,7 +2327,7 @@ example/browser breadth as documentation work.
                   colorbar on empty explicit-color collection mappables yields
                   only the generic default mapping.
 
-            - [ ] 17.75.4.4.4.3 Mutable-State Decision: document or implement
+            - [x] 17.75.4.4.4.3 Mutable-State Decision: document or implement
               post-creation mappable updates for 3D helpers, keeping immutable
               Go API differences explicit.
 
@@ -2352,9 +2352,14 @@ example/browser breadth as documentation work.
                   persistence of manual array overrides across 3D reprojection
                   outside the supported mutable contract.
 
-                - [ ] 17.75.4.4.4.3.3 Tests and Docs: add update tests for
+                - [x] 17.75.4.4.4.3.3 Tests and Docs: add update tests for
                   supported behavior or document immutable-state differences in
-                  migration notes and parity metadata.
+                  migration notes and parity metadata. Added
+                  `TestAxes3DCollectionColorbarSyncsMutableMapping` to verify
+                  collection-backed 3D colorbars sync cmap/clim updates via
+                  typed collection setters and draw/layout sync; immutable
+                  scatter/callback/alpha/reprojection differences are recorded
+                  in `docs/matplotlib-migration-notes.md`.
 
         - [ ] 17.75.4.4.5 Colormapping Ledger: add focused tests, update parity
           metadata for supported and intentionally omitted 3D color behavior,

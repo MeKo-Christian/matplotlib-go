@@ -610,6 +610,50 @@ func TestAxes3DCollectionMappablesCreateColorbars(t *testing.T) {
 	}
 }
 
+func TestAxes3DCollectionColorbarSyncsMutableMapping(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	cmap := "viridis"
+	surface := ax.Surface(
+		[]float64{0, 1},
+		[]float64{0, 1},
+		[][]float64{{0, 2}, {4, 6}},
+		PlotOptions{Colormap: &cmap},
+	)
+	if surface == nil {
+		t.Fatal("Surface returned nil")
+	}
+	cbAx := fig.AddColorbar(ax.Axes, surface)
+	if cbAx == nil || len(cbAx.Artists) == 0 {
+		t.Fatal("AddColorbar returned no colorbar axes for mutable 3D surface")
+	}
+
+	if err := surface.SetCLim(-1, 2); err != nil {
+		t.Fatalf("SetCLim: %v", err)
+	}
+	surface.SetColormap("plasma")
+	DrawFigure(fig, &colorbarRecordingRenderer{})
+
+	yMin, yMax := cbAx.YScale.Domain()
+	if yMin != -1 || yMax != 2 {
+		t.Fatalf("synced 3D surface colorbar limits = %v..%v, want -1..2", yMin, yMax)
+	}
+	cb, ok := cbAx.Artists[0].(*Colorbar)
+	if !ok {
+		t.Fatalf("3D surface colorbar artist = %T, want *Colorbar", cbAx.Artists[0])
+	}
+	if cb.Mapping.VMin != -1 || cb.Mapping.VMax != 2 {
+		t.Fatalf("synced 3D surface colorbar mapping = %+v, want -1..2", cb.Mapping)
+	}
+	if cb.Mapping.Colormap != "plasma" {
+		t.Fatalf("synced 3D surface colorbar colormap = %q, want plasma", cb.Mapping.Colormap)
+	}
+}
+
 func TestAxes3DUnsupportedColorbarHelpersExposeNoScalarData(t *testing.T) {
 	type scalarArrayMappable interface {
 		ScalarMappable
