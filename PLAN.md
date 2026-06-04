@@ -2506,7 +2506,21 @@ example/browser breadth as documentation work.
 
                 - [ ] 17.75.4.5.2.2.1 Surface and Contour Triplets: add or
                   refresh surface, trisurf, contour, contourf, tricontour, and
-                  tricontourf triplets.
+                  tricontourf triplets. Split because this mixes existing
+                  surface/trisurf rows with multiple missing contour rows.
+
+                    - [ ] 17.75.4.5.2.2.1.1 Surface/Trisurf Verification:
+                      verify existing `mplot3d_surface3d` and
+                      `mplot3d_trisurf3d` triplets after the scalar/color work.
+
+                    - [ ] 17.75.4.5.2.2.1.2 Structured Contour Triplets:
+                      add dedicated `mplot3d_contour3d` and
+                      `mplot3d_contourf3d` Go/Python/golden/reference triplets.
+
+                    - [ ] 17.75.4.5.2.2.1.3 Triangulated Contour Triplets:
+                      add dedicated `mplot3d_tricontour3d` and
+                      `mplot3d_tricontourf3d` Go/Python/golden/reference
+                      triplets.
 
                 - [ ] 17.75.4.5.2.2.2 Voxel and Fill Triplets: add or refresh
                   voxel and fill-between surface triplets with documented
