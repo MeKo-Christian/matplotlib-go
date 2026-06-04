@@ -584,6 +584,10 @@ remaining residual is mostly title/legend/tick text raster placement.
 `layout_bbox_helpers` is now `RMSE 7.32` after converting its dashed
 figure-space rectangle pattern from Matplotlib points to pixels at 100 DPI;
 remaining residual is mostly text and AGG straight-alpha/color quantization.
+`axes_control_surface` is now `RMSE 3.15` after matching Matplotlib's title
+avoidance for top x-labels: the top-label contribution uses the full line
+ascent, not only ink bounds, so titles above top labels sit on the same
+baseline. Its Go golden was refreshed.
 `polar_axes` is now `RMSE 6.22` after matching Matplotlib's theta tick label
 centering and `_pad + 7pt` padding in addition to the radial spine/label
 changes.
@@ -891,15 +895,18 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: inverted-axis tick layout, mirrored axis tick/label
       positioning, text metrics and antialiasing.
 
-### 8.17 `axes_control_surface` (RMSE 11.87)
+### 8.17 `axes_control_surface` (RMSE 3.15)
 
 - [x] Code: source audited; Go manually models Matplotlib `tick_top`,
       `tick_right`, `set_aspect`, `set_box_aspect`, `twinx`, and
-      `secondary_xaxis`; remaining differences are core/layout behavior.
-- [ ] Visual: strongest residuals are around the left axes box/ticks and right
-      twin/secondary axes ticks/spines.
-- [ ] Likely core areas: box aspect adjustment, tick-param propagation,
-      twin/secondary-axis transforms and spine layout.
+      `secondary_xaxis`; no fixture workaround was added.
+- [x] Code: title avoidance for top x-labels now uses full text line ascent
+      instead of ink-only bounds, matching Matplotlib's title baseline when a
+      top x-label is present.
+- [x] Visual: focused `TestReferenceCompare/axes_control_surface` reports
+      `RMSE 3.15` after refreshing the Go golden.
+- [ ] Likely core areas: residual minor axis/text antialiasing and small
+      twin/secondary-axis stroke differences.
 
 ### 8.18 `transform_coordinates` (RMSE 10.99)
 

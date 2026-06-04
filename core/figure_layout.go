@@ -154,7 +154,10 @@ func titleTopExtentForAxes(ax *Axes, r render.Renderer, ctx *DrawContext, px geo
 	if ax.XLabel != "" && ax.effectiveXLabelSide() == AxisTop {
 		layout := measureSingleLineTextLayout(r, ax.XLabel, axisLabelFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
 		anchor, vAlign := xLabelAnchorPoint(ax, r, ctx, px, AxisTop, figureTextAlignment{})
-		if bounds, ok := textInkRect(alignedSingleLineOrigin(anchor, layout, TextAlignCenter, vAlign), layout); ok {
+		origin := alignedSingleLineOrigin(anchor, layout, TextAlignCenter, vAlign)
+		if layout.Ascent > 0 {
+			extent = math.Max(extent, origin.Y+layout.Ascent)
+		} else if bounds, ok := textInkRect(origin, layout); ok {
 			extent = math.Max(extent, bounds.Max.Y)
 		}
 	}
