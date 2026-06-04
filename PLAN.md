@@ -2119,34 +2119,87 @@ example/browser breadth as documentation work.
 
 ### 17.75.4 3D Toolkit Closure
 
-- [ ] Add missing `Axes3D` triangulated contour helpers equivalent to
-      Matplotlib's `tricontour` and `tricontourf`, backed by the existing
-      triangulation and 3D projection machinery.
-- [ ] Audit all existing 3D helpers (`Plot3D`, `Scatter3D`, `Surface`,
-      `Wireframe`, `Contour`, `Contourf`, `Trisurf`, `Bar3D`, `Voxels`,
-      `Quiver3D`, `Stem3D`, `ErrorBar3D`, and `FillBetween3D`) against
-      upstream defaults for z sorting, clipping, axis limits, colormapping,
-      pane/grid styling, and view initialization.
-- [ ] Add parity fixtures for any 3D chart class that currently has a public API
-      but no Matplotlib reference comparison.
-- [ ] Record intentional mplot3d divergences when Go's projection or depth
+- [ ] Split 17.75.4 into execution-ready subtasks and complete them in order:
+
+    - [ ] 17.75.4.1 Axes3D Triangulated Contours: add `tricontour` and
+      `tricontourf`-equivalent helpers backed by the existing triangulation,
+      contour, and 3D projection machinery. Compare control flow and defaults
+      against `third_party/matplotlib/lib/mpl_toolkits/mplot3d/axes3d.py` and
+      add focused tests for triangulation input validation, artist return types,
+      and axis-limit expansion.
+
+    - [ ] 17.75.4.2 3D Depth Ordering and Clipping: audit `Plot3D`,
+      `Scatter3D`, `Surface`, `Wireframe`, `Contour`, `Contourf`, `Trisurf`,
+      `Bar3D`, `Voxels`, `Quiver3D`, `Stem3D`, `ErrorBar3D`, and
+      `FillBetween3D` against upstream z sorting, depth shading, clipping, and
+      projected-extent behavior. Add targeted regression tests before changing
+      shared projection or renderer paths.
+
+    - [ ] 17.75.4.3 3D Axis Defaults and View State: align mplot3d defaults for
+      view initialization, axis-limit autoscaling, pane/grid styling, aspect
+      handling, and label/tick placement where they affect static rendering.
+      Document any intentional Go API differences from Matplotlib's mutable
+      `Axes3D` state model.
+
+    - [ ] 17.75.4.4 3D Colormapping and Scalar Mappables: ensure surface,
+      contour, trisurf, scatter, voxels, and quiver helpers propagate cmap,
+      norm, alpha, colorbar-compatible scalar state, and per-face/per-point
+      colors consistently with Matplotlib's public examples.
+
+    - [ ] 17.75.4.5 3D Fixtures and Reference Coverage: add parity fixture
+      triplets for public 3D chart classes that lack Matplotlib reference
+      comparisons, keeping Go and Python examples structurally close and using
+      per-case tolerances only for known projection/depth-order residuals.
+
+    - [ ] 17.75.4.6 3D Docs and Divergence Ledger: update parity metadata,
+      migration notes, and `docs/matplotlib-parity-status.md` with completed 3D
+      surfaces and explicit mplot3d divergences when Go's projection or depth
       ordering model cannot exactly match upstream without destabilizing 2D
       rendering.
 
 ### 17.75.5 Color, Image, Norm, and Colorbar Extras
 
-- [ ] Decide and implement or explicitly omit advanced color surfaces not yet
-      covered by the scalar-mappable model: `LightSource`, multivariate /
-      bivariate colormaps, `MultiNorm`, and exact edge-case color conversion
-      behavior.
-- [ ] Close transformed-image resampling residuals and document backend-specific
-      interpolation fallbacks where AGG, GoBasic, SVG/PDF, or Skia cannot match
-      Matplotlib exactly.
-- [ ] Complete colorbar formatter, gridspec-placement, multi-parent placement,
-      boundary, extension, and mutable-mappable behavior needed by upstream
+- [ ] Split 17.75.5 into execution-ready subtasks and complete them in order:
+
+    - [ ] 17.75.5.1 Color Conversion Edge Cases: audit exact Matplotlib color
+      parsing and conversion behavior for named colors, hex forms, alpha
+      precedence, grayscale strings, masked/NaN values, and sequence ambiguity.
+      Add focused tests from `third_party/matplotlib/lib/matplotlib/colors.py`
+      before changing shared color APIs.
+
+    - [ ] 17.75.5.2 Norm Breadth and FuncNorm: implement or explicitly omit
+      remaining normalization surfaces including `FuncNorm`, `MultiNorm` /
+      multi-stage normalization, boundary behavior, clipping, inverse mapping,
+      and scalar-mappable callback interactions. Keep deviations documented in
+      parity metadata rather than hidden in examples.
+
+    - [ ] 17.75.5.3 LightSource and Shaded Images: decide and implement or
+      explicitly omit `LightSource`-style hillshading, RGB shading, blend modes,
+      and surface-image lighting paths needed by upstream examples. Compare
+      algorithms against `third_party/matplotlib/lib/matplotlib/colors.py` and
+      `third_party/matplotlib/lib/matplotlib/image.py`.
+
+    - [ ] 17.75.5.4 Bivariate and Multivariate Colormaps: implement or
+      intentionally omit bivariate/multivariate colormap support, including
+      lookup-table shape validation, alpha handling, scalar-mappable
+      integration, and colorbar display expectations for supported cases.
+
+    - [ ] 17.75.5.5 Transformed Image Resampling: close residual transformed
+      image resampling gaps and document backend-specific interpolation
+      fallbacks where AGG, GoBasic, SVG/PDF, or Skia cannot match Matplotlib
+      exactly. Add visual parity fixtures only after core image behavior is
+      aligned.
+
+    - [ ] 17.75.5.6 Colorbar Placement and Formatter Breadth: complete colorbar
+      formatter, gridspec-style placement, multi-parent placement, boundary,
+      extension, tick, label, and mutable-mappable behavior needed by upstream
       examples.
-- [ ] Add colormap/norm/colorbar fixtures before promoting the behavior to
-      user-facing galleries.
+
+    - [ ] 17.75.5.7 Color Fixtures and Docs: add colormap, norm, image, and
+      colorbar parity fixture triplets before promoting behavior to
+      user-facing galleries, then update parity metadata,
+      `docs/matplotlib-parity-status.md`, and migration notes with intentional
+      signature or backend-rendering differences.
 
 ### 17.75.6 Patch, Annotation, Legend, and Offset-Box Tail
 
