@@ -180,33 +180,71 @@ func (r *Renderer) drawNativeFreetypeRunText(text string, face render.FontFace, 
 		dpi = 72
 	}
 	return withNativeFreetypeRun(face.Path, text, size, dpi, hintingFactor, func(run nativeFreetypeRun) bool {
-		maskWidth := int((run.bbox.xMax-run.bbox.xMin)/64) + 2
-		maskHeight := int((run.bbox.yMax-run.bbox.yMin)/64) + 2
-		if maskWidth <= 0 || maskHeight <= 0 {
+		mask, ok := nativeFreetypeRunMask(run)
+		if !ok {
 			return false
 		}
-		mask := image.NewAlpha(image.Rect(0, 0, maskWidth, maskHeight))
-
-		for i := range run.glyphs {
-			if C.FT_Glyph_To_Bitmap(&run.glyphs[i], C.FT_RENDER_MODE_NORMAL, nil, 1) != 0 {
-				return false
-			}
-			bitmap := C.mpl_go_bitmap_glyph_bitmap(run.glyphs[i])
-			glyphMask, ok := freetypeBitmapMask(*bitmap)
-			if !ok {
-				continue
-			}
-
-			x := int(float64(C.mpl_go_bitmap_glyph_left(run.glyphs[i])) - float64(run.bbox.xMin)/64.0)
-			y := int(float64(run.bbox.yMax)/64.0) - int(C.mpl_go_bitmap_glyph_top(run.glyphs[i])) + 1
-			orAlphaMask(mask, glyphMask, x, y)
-		}
-
+		maskHeight := mask.Bounds().Dy()
 		descent := -float64(run.bbox.yMin) / 64.0
 		dstX := math.Round(origin.X + float64(run.bbox.xMin)/64.0)
 		bottomY := math.Round(origin.Y+descent) + 1
 		dstY := bottomY - float64(maskHeight)
 		return r.blendAlphaMask(mask, int(dstX), int(dstY), textColor)
+	})
+}
+
+func (r *Renderer) drawNativeFreetypeRunTextRotated(text string, face render.FontFace, origin geom.Pt, size, angle float64, textColor render.Color, hintingFactor int) bool {
+	if r.ctx == nil || text == "" || face.Path == "" || size <= 0 {
+		return false
+	}
+
+	dpi := r.resolution
+	if dpi == 0 {
+		dpi = 72
+	}
+	return withNativeFreetypeRun(face.Path, text, size, dpi, hintingFactor, func(run nativeFreetypeRun) bool {
+		mask, ok := nativeFreetypeRunMask(run)
+		if !ok {
+			return false
+		}
+		src := image.NewRGBA(mask.Bounds())
+		draw.DrawMask(src, src.Bounds(), image.NewUniform(renderColorToRGBA(textColor)), image.Point{}, mask, image.Point{}, draw.Over)
+		img, err := agglib.NewImageFromStandardImage(src)
+		if err != nil {
+			return false
+		}
+
+		origin = r.devPt(origin)
+
+		descent := -float64(run.bbox.yMin) / 64.0
+		sinT := math.Sin(angle)
+		cosT := math.Cos(angle)
+		x := math.Round(origin.X + float64(run.bbox.xMin)/64.0 + descent*sinT)
+		y := math.Round(origin.Y+descent*cosT) + 1
+		height := float64(mask.Bounds().Dy())
+		transform := agglib.NewTransformationsFromValues(
+			cosT,
+			-sinT,
+			sinT,
+			cosT,
+			x-height*sinT,
+			y-height*cosT,
+		)
+
+		prevBlendMode := r.ctx.GetBlendMode()
+		prevFilter := r.ctx.GetImageFilter()
+		prevResample := r.ctx.GetImageResample()
+		defer func() {
+			r.ctx.SetBlendMode(prevBlendMode)
+			r.ctx.SetImageFilter(prevFilter)
+			r.ctx.SetImageResample(prevResample)
+		}()
+		r.ctx.SetBlendMode(agglib.BlendSrcOver)
+		r.ctx.SetImageFilter(agglib.Spline36)
+		r.ctx.SetImageResample(resampleForFilter(agglib.Spline36))
+
+		err = r.ctx.DrawImageTransformed(img, transform)
+		return err == nil
 	})
 }
 
@@ -461,6 +499,31 @@ func withNativeFreetypeRun(fontPath, text string, size float64, dpi uint, hintin
 		bbox:    bbox,
 		advance: advance,
 	})
+}
+
+func nativeFreetypeRunMask(run nativeFreetypeRun) (*image.Alpha, bool) {
+	maskWidth := int((run.bbox.xMax-run.bbox.xMin)/64) + 2
+	maskHeight := int((run.bbox.yMax-run.bbox.yMin)/64) + 2
+	if maskWidth <= 0 || maskHeight <= 0 {
+		return nil, false
+	}
+	mask := image.NewAlpha(image.Rect(0, 0, maskWidth, maskHeight))
+
+	for i := range run.glyphs {
+		if C.FT_Glyph_To_Bitmap(&run.glyphs[i], C.FT_RENDER_MODE_NORMAL, nil, 1) != 0 {
+			return nil, false
+		}
+		bitmap := C.mpl_go_bitmap_glyph_bitmap(run.glyphs[i])
+		glyphMask, ok := freetypeBitmapMask(*bitmap)
+		if !ok {
+			continue
+		}
+
+		x := int(float64(C.mpl_go_bitmap_glyph_left(run.glyphs[i])) - float64(run.bbox.xMin)/64.0)
+		y := int(float64(run.bbox.yMax)/64.0) - int(C.mpl_go_bitmap_glyph_top(run.glyphs[i])) + 1
+		orAlphaMask(mask, glyphMask, x, y)
+	}
+	return mask, true
 }
 
 func freeNativeGlyphs(glyphs []C.FT_Glyph) {

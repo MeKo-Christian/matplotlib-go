@@ -465,10 +465,15 @@ func (r *Renderer) drawTextRotatedDirect(text string, anchor geom.Pt, size, angl
 	}
 
 	bounds, haveBounds := r.MeasureTextBounds(text, size, fontKey)
-	anchor.X -= 1
-	anchor.Y -= 1.5
 	origin := rotatedTextOrigin(anchor, metrics, bounds, haveBounds)
 	font := r.configureTextFont(size, fontKey)
+
+	if font.backend == textBackendRaster && font.face.Path != "" {
+		drawOrigin := rotatedTextDrawOrigin(anchor, metrics, angle)
+		if r.drawNativeFreetypeRunTextRotated(text, font.face, drawOrigin, font.size, angle, textColor, matplotlibTextHintingFactor) {
+			return
+		}
+	}
 
 	// The painter transform operates in y-down device space. The geometry it
 	// receives is flipped to device (path fallback flips via r.Path; the direct
@@ -568,6 +573,15 @@ func rotatedTextOrigin(anchor geom.Pt, metrics render.TextMetrics, bounds render
 	return geom.Pt{
 		X: anchor.X - metrics.W/2,
 		Y: anchor.Y - metrics.Descent,
+	}
+}
+
+func rotatedTextDrawOrigin(anchor geom.Pt, metrics render.TextMetrics, angle float64) geom.Pt {
+	cosT := math.Cos(angle)
+	sinT := math.Sin(angle)
+	return geom.Pt{
+		X: anchor.X - (metrics.W/2*cosT - metrics.Descent*sinT),
+		Y: anchor.Y - (metrics.W/2*sinT + metrics.Descent*cosT),
 	}
 }
 
