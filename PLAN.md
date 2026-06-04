@@ -2264,7 +2264,7 @@ example/browser breadth as documentation work.
           Complete the scoped checks below in order before marking this parent
           item done.
 
-            - [ ] 17.75.4.4.4.1 Mappable State Audit: verify every supported
+            - [x] 17.75.4.4.4.1 Mappable State Audit: verify every supported
               3D scalar helper exposes array, cmap, norm, clim, alpha, and
               collection metadata in the same shape colorbar code expects.
 
@@ -2289,9 +2289,14 @@ example/browser breadth as documentation work.
                   tests, and recorded supported versus explicit-color-only 3D
                   helpers in `docs/matplotlib-migration-notes.md`.
 
-                - [ ] 17.75.4.4.4.1.3 Audit Tests or Notes: add focused
+                - [x] 17.75.4.4.4.1.3 Audit Tests or Notes: add focused
                   contract tests for supported helpers or update the ledger
                   with concrete omissions before changing colorbar creation.
+                  Added `TestAxes3DScalarMappableContractAudit` to enumerate
+                  `Surface`, `Trisurf`, `Contour`, `Contourf`, `TriContour`,
+                  `TriContourf`, and `Scatter3D` as scalar-array mappables
+                  with consistent cmap/clim metadata; omissions are documented
+                  in `docs/matplotlib-migration-notes.md`.
 
             - [ ] 17.75.4.4.4.2 Colorbar Creation Tests: add focused tests for
               surface, trisurf, contour, scatter, and voxel colorbar creation

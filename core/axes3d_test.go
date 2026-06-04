@@ -384,6 +384,108 @@ func TestAxes3DScatterScalarValuesFollowAxLimClip(t *testing.T) {
 	}
 }
 
+func TestAxes3DScalarMappableContractAudit(t *testing.T) {
+	type scalarArrayMappable interface {
+		ScalarMappable
+		GetArray() []float64
+	}
+
+	cmap := "viridis"
+	vmin := 0.0
+	vmax := 10.0
+	gridX := []float64{0, 1}
+	gridY := []float64{0, 1}
+	gridZ := [][]float64{{0, 2}, {4, 6}}
+	tri := Triangulation{
+		X:         []float64{0, 1, 0, 1},
+		Y:         []float64{0, 0, 1, 1},
+		Triangles: [][3]int{{0, 1, 2}, {1, 3, 2}},
+	}
+
+	tests := []struct {
+		name    string
+		make    func(*Axes3D) scalarArrayMappable
+		wantLen int
+	}{
+		{
+			name: "Surface",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				return ax.Surface(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax})
+			},
+			wantLen: 1,
+		},
+		{
+			name: "Trisurf",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				return ax.Trisurf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax})
+			},
+			wantLen: 2,
+		},
+		{
+			name: "Contour",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				return ax.Contour(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax, Levels: []float64{2, 4}})
+			},
+			wantLen: 2,
+		},
+		{
+			name: "Contourf",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				return ax.Contourf(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax, Levels: []float64{0, 2, 4, 6}})
+			},
+			wantLen: 3,
+		},
+		{
+			name: "TriContour",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				return ax.TriContour(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax, Levels: []float64{2, 4}})
+			},
+			wantLen: 2,
+		},
+		{
+			name: "TriContourf",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				return ax.TriContourf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax, Levels: []float64{0, 2, 4, 6}})
+			},
+			wantLen: 3,
+		},
+		{
+			name: "Scatter3D",
+			make: func(ax *Axes3D) scalarArrayMappable {
+				return ax.Scatter3D(
+					[]float64{0, 1},
+					[]float64{0, 1},
+					[]float64{0, 1},
+					ScatterOptions{ScalarValues: []float64{2, 8}, Colormap: cmap, VMin: &vmin, VMax: &vmax},
+				)
+			},
+			wantLen: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fig := NewFigure(640, 480)
+			ax, err := fig.AddAxes3D(unitRect())
+			if err != nil {
+				t.Fatalf("AddAxes3D: %v", err)
+			}
+			mappable := tt.make(ax)
+			if mappable == nil {
+				t.Fatalf("%s returned nil", tt.name)
+			}
+			mapping := mappable.ScalarMap()
+			if mapping.Colormap != cmap || mapping.VMin != vmin || mapping.VMax != vmax {
+				t.Fatalf("%s scalar map = %+v, want cmap=%q range %.1f..%.1f", tt.name, mapping, cmap, vmin, vmax)
+			}
+			array := mappable.GetArray()
+			if got := len(array); got != tt.wantLen {
+				t.Fatalf("%s scalar array = %v, len %d, want len %d", tt.name, array, got, tt.wantLen)
+			}
+		})
+	}
+}
+
 func TestAxes3DScatterAxLimClipDropsOutsideMarkers(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
