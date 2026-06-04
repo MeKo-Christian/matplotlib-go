@@ -39,6 +39,7 @@ def legend_layout_matrix(out_dir):
         [3.3, 3.8, 3.1, 3.6, 3.2],
         color=orange,
         edgecolor=red,
+        linewidths=lw(1.0),
         marker="o",
         label="scatter",
     )

@@ -547,9 +547,10 @@ stale `mplot3d_scatter3d` Python reference and targeted Go goldens.
 `patch_showcase` is `RMSE 6.39`, `lognorm_imshow` is `RMSE 9.42`
 after switching log tick labels to Matplotlib-style powers, `spy_marker`
 is `RMSE 2.50` after matching Line2D marker sizing, and a focused
-`TestReferenceCompare/arrays_showcase` run now reports `RMSE 8.73` after
+`TestReferenceCompare/arrays_showcase` run now reports `RMSE 8.00` after
 using structured-grid contour lines and Matplotlib-like contour z-order.
-The same structured contour fix moves `mesh_contour_tri` to `RMSE 7.52`.
+The same structured contour fix plus a stale optional golden refresh moves
+`mesh_contour_tri` to `RMSE 7.19`.
 `pcolormesh_gouraud` is now `RMSE 4.78` after matching Matplotlib's
 four-triangle Gouraud quad conversion.
 `stem_plot` is now `RMSE 4.13` and `mplot3d_stem3d` is now `RMSE 13.55`
@@ -577,7 +578,12 @@ violin summary lines, collection-level violin body alpha, and unclipped table
 overlay drawing.
 `mixed_raster_vector` is now `RMSE 8.08` after the Matplotlib-compatible polar
 theta label padding/centering fix and moving axes legends to the unclipped
-overlay pass so polar legends are not clipped by the circular axes patch.
+overlay pass so polar legends are not clipped by the circular axes patch; a
+2026-06-04 audit found the polar data region is already below target and the
+remaining residual is dominated by title/legend/tick text raster placement.
+`layout_bbox_helpers` is now `RMSE 7.32` after converting its dashed
+figure-space rectangle pattern from Matplotlib points to pixels at 100 DPI;
+remaining residual is mostly text and AGG straight-alpha/color quantization.
 `polar_axes` is now `RMSE 6.22` after matching Matplotlib's theta tick label
 centering and `_pad + 7pt` padding in addition to the radial spine/label
 changes.
@@ -597,8 +603,9 @@ No non-mathtext cases remain above the temporary Phase 8 target of
 **2026-06-01 continuation note:** current `parity-viewer-print` output still
 has non-mathtext cases above `RMSE 10`; the previous paragraph is historical.
 `line2d_markers` is now `RMSE 7.16` after matching Matplotlib's Line2D legend
-marker sizing and fixing top/bottom half-filled marker orientation in marker
-local coordinates, with `testdata/golden/line2d_markers.png` refreshed.
+marker sizing, fixing top/bottom half-filled marker orientation in marker local
+coordinates, and replacing polygonal half-circle fills with Matplotlib's cubic
+right-half circle path, with `testdata/golden/line2d_markers.png` refreshed.
 `errorbar_basic` is now `RMSE 9.76` after adding a core `NoDataLine` option
 that lets the Go example express Matplotlib's `fmt="none"` errorbar semantics
 directly, with `testdata/golden/errorbar_basic.png` refreshed.
@@ -610,9 +617,22 @@ refreshed.
 `snap=None` auto-snapping for rectilinear patch paths and rendering unfilled
 circle hatches as filled outer/reversed-inner ring contours; its Go golden was
 refreshed.
-`vector_fields` is now `RMSE 7.99` after matching Matplotlib `angles="uv"`
-quiver direction signs and Barbs' point-length collection scaling / default
-barb side semantics; its optional Go golden was refreshed.
+`vector_fields` is now `RMSE 2.69` after matching Matplotlib `angles="uv"`
+quiver direction signs, Barbs' point-length collection scaling / default barb
+side semantics, raw barb vector-angle rotation, and closed barb glyph paths; its
+optional Go golden was refreshed.
+`arrays_showcase` is now `RMSE 7.72`, `mesh_contour_tri` is now `RMSE 7.14`,
+`unstructured_showcase` is now `RMSE 5.50`, `pcolor_flat` is now `RMSE 4.00`,
+and `pcolormesh_masked` is now `RMSE 0.59` after matching Matplotlib's split
+mesh defaults: `pcolormesh` snaps rectilinear cells and disables antialiasing,
+while `pcolor` keeps unsnapped, collection-default antialiasing when edges are
+stroked. The affected Go goldens were refreshed.
+`legend_layout_matrix` is now `RMSE 7.14` after matching Matplotlib legend
+patch handle boxes, full-width line handles, 0.3-font scatter handle padding,
+and errorbar legend cap/stem geometry, plus aligning the Python reference
+scatter edge linewidth with the Go fixture's pixel-width convention. Its Go
+golden and Matplotlib reference were refreshed; remaining residual is mostly
+legend marker/text raster placement and title/tick text antialiasing.
 `boxplot_basic` is now `RMSE 8.92` after adding a core `ManageTicks` option for
 Matplotlib's `boxplot(..., manage_ticks=False)` semantics and refreshing its Go
 golden.
@@ -658,7 +678,7 @@ The 2026-06-01 full focused run initially had multiple geo fixtures above
 placement (frame-bottom x-labels and equator tick labels padded above the
 equator), refreshed all four geo goldens, and now reports:
 `geo_mollweide_axes` 6.96, `geo_aitoff_axes` 6.92, `geo_hammer_axes` 5.41, and
-`geo_lambert_axes` 7.59.
+`geo_lambert_axes` 5.33 after refreshing its stale optional golden.
 `unstructured_showcase` is now `RMSE 5.96` after switching the source-local
 `ax.text` / `fig.text` calls back to core `Text` artists and keeping
 Matplotlib's locator-bounded `tricontour(..., levels=N)` levels instead of
@@ -928,19 +948,22 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: remaining residuals are hatches, ellipse/star/fancy
       box antialiasing, and alpha compositing.
 
-### 8.23 `mesh_contour_tri` (RMSE 7.52)
+### 8.23 `mesh_contour_tri` (RMSE 7.14)
 
 - [x] Code: removed explicit half-step tick locator/formatter overrides so the
       example relies on core locator defaults like the Python source. Structured
       `Axes.Contour` now uses quad-grid contour lines and line z-order above
       filled contours.
-- [x] Visual: focused `TestReferenceCompare/mesh_contour_tri` now reports
-      `RMSE 7.52`; contourf/contour labels and triangulation coloring/lines
-      remain the dominant residuals.
+- [x] Code: `PColorMesh` now defaults native quad cells to Matplotlib-style
+      antialiasing off while `PColor` keeps patch-collection antialiasing for
+      stroked edges.
+- [x] Visual: focused `TestReferenceCompare/mesh_contour_tri` passes and the
+      refreshed optional golden now reports `RMSE 7.14`; contourf/contour
+      labels and triangulation coloring/lines remain the dominant residuals.
 - [ ] Likely core areas: contour marching/fill bands, contour label placement,
       tripcolor flat shading, mesh edge strokes.
 
-### 8.24 `plot_variants` (RMSE 7.11)
+### 8.24 `plot_variants` (RMSE 7.22)
 
 - [x] Code: replaced subplot-grid approximation with explicit `AddAxes`
       rectangles, replaced broken-bar `BarLabel` shortcuts with explicit
@@ -1058,15 +1081,17 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: custom unit `AxisInfo`, scatter marker area/edge
       linewidth, text metrics.
 
-### 8.33 `vector_fields` (RMSE 7.99)
+### 8.33 `vector_fields` (RMSE 2.69)
 
 - [x] Code: changed barb length defaults to point units and quiver-key default
       label separation to the Matplotlib-equivalent 0.1 inch at 100 DPI, then
       removed the Go-only barb pre-scaling and explicit key label separation.
 - [x] Code: matched Matplotlib `angles="uv"` quiver direction signs and Barbs'
       point-length collection scaling / default barb side semantics.
-- [x] Visual: case is below the temporary target at `RMSE 7.99`; remaining
-      residual is quiver/barb/stream antialiasing and minor glyph-shape detail.
+- [x] Code: matched Matplotlib Barbs' raw `atan2(v, u)` rotation and
+      `CLOSEPOLY` glyph paths instead of applying axes data-scale skew.
+- [x] Visual: case is below the temporary target at `RMSE 2.69`; remaining
+      residual is streamplot antialiasing and minor glyph-shape detail.
 - [ ] Likely core areas: `core/vector_field.go` quiver scaling/arrow polygons,
       barb decomposition, streamplot integration/arrows, quiver-key layout.
 
@@ -1117,15 +1142,15 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: Hammer projection transform, geo frame/grid drawing,
       clipping.
 
-### 8.38 `geo_lambert_axes` (RMSE 7.59)
+### 8.38 `geo_lambert_axes` (RMSE 5.33)
 
 - [x] Code: source audited; Go sets Lambert x locator and relies on projection
       formatter / y-label hiding while Python explicitly formats x only.
       Longitude label placement now matches Matplotlib.
-- [x] Visual: focused `TestReferenceCompare/geo_lambert_axes` reports
-      `RMSE 7.59`.
-- [ ] Likely core areas: `lambertDataTransform`, Lambert box aspect/frame, geo
-      grid/text transforms.
+- [x] Visual: focused `TestReferenceCompare/geo_lambert_axes` passes and the
+      refreshed optional golden is below target at `RMSE 5.33`.
+- [ ] Likely core areas: residual Lambert frame/grid edge antialiasing and geo
+      text transforms.
 
 ### 8.39 `radar_basic` (RMSE 6.99)
 
@@ -1273,7 +1298,7 @@ renderer contract, backend implementation, or the AGG port itself.
       `RMSE 3.50` after refreshing the Go golden.
 - [ ] Likely core areas: residual fill/text antialiasing.
 
-### 8.53 `unstructured_showcase` (RMSE 5.96)
+### 8.53 `unstructured_showcase` (RMSE 5.50)
 
 - [x] Code: changed `TriColor` edge color alpha to opaque white to match Python
       `edgecolors="white"`; larger remaining mismatch is core `tricontour`
@@ -1283,18 +1308,22 @@ renderer contract, backend implementation, or the AGG port itself.
       anchored-text approximations.
 - [x] Code: `tricontour(..., levels=N)` now keeps Matplotlib `MaxNLocator`
       bounds outside the data range for line contours.
+- [x] Code: picked up Matplotlib-compatible `PColorMesh` antialias defaults for
+      the rectilinear mesh portions.
 - [x] Visual: focused `TestReferenceCompare/unstructured_showcase` reports
-      `RMSE 5.96`; residual is mostly antialiasing and remaining
+      `RMSE 5.50`; residual is mostly antialiasing and remaining
       triangulation/contour edge details.
 
-### 8.54 `arrays_showcase` (RMSE 8.08)
+### 8.54 `arrays_showcase` (RMSE 7.72)
 
 - [x] Code: source audited; heatmap, mesh, and spy data match. Spy marker
       panel picked up the Line2D marker sizing fix; contour lines now use
       structured-grid cell clipping instead of triangulating quads.
 - [x] Visual: center contour paths now draw above the pcolormesh cells by
       defaulting line contours to Matplotlib's line z-order. Focused
-      `TestReferenceCompare/arrays_showcase` now reports `RMSE 8.08`.
+      `TestReferenceCompare/arrays_showcase` passes and the refreshed optional
+      golden now reports `RMSE 7.72` after the `PColorMesh` antialias default
+      fix.
 - [ ] Likely remaining areas: contour label placement/inline clipping, text and
       mesh antialiasing.
 - [ ] Follow-up: port Matplotlib 3.10.9 automatic `ContourLabeler.clabel`
@@ -1302,15 +1331,34 @@ renderer contract, backend implementation, or the AGG port itself.
       mesh subplot at local `RMSE 11.98` and contour-label region at
       `RMSE 15.13`, making label placement the dominant residual.
 
-### 8.55 `axisartist_showcase` (RMSE 13.25)
+### 8.55 `axisartist_showcase` (RMSE 6.66)
 
 - [x] Code: replaced floating cloned axes with explicit `AxHLine` / `AxVLine`,
       matched dash/linewidth values, light y-grid color, tick direction, and
       axes-fraction note text/bbox.
-- [ ] Visual: plot geometry is close, but gridlines, dashed zero axes,
-      tick/text antialiasing, and legend/text box pixels dominate.
-- [ ] Likely core areas: `core/axis_artist.go`, `core/axis.go` dash/line-width
-      parity for data-position spines, `core/grid.go` grid style configuration.
+- [x] Code: restored source parity for the parasite `twinx` axis by leaving the
+      right-side ticks/labels visible and colored, and matched
+      `host.legend(loc="upper center")` instead of anchoring the legend below
+      the axes.
+- [x] Visual: focused `parity-viewer-print axisartist_showcase` reports
+      `RMSE 6.66`; remaining residual is mostly tick/text antialiasing and
+      small grid/line edge differences.
+
+### 8.55a `legend_layout_matrix` (RMSE 7.14)
+
+- [x] Code: matched Matplotlib legend handler geometry for patch keys by
+      filling the full handle box, matched full-width line handles, used
+      Matplotlib's 0.3-font scatter handle x padding, and corrected errorbar
+      legend stems/caps to use `0.5 * fontsize` error extents and doubled cap
+      marker length.
+- [x] Code: aligned the Python reference scatter edge linewidth with the Go
+      fixture's pixel-width convention using `linewidths=lw(1.0)`.
+- [x] Visual: focused `TestGolden/legend_layout_matrix` and
+      `TestReferenceCompare/legend_layout_matrix` pass after refreshing the Go
+      golden and Matplotlib reference; focused `parity-viewer-print` reports
+      `RMSE 7.14`.
+- [ ] Likely remaining areas: legend marker raster placement/size, title and
+      x-tick text antialiasing, and renderer-level line-cap differences.
 
 ### 8.56 `axes_grid1_showcase` (RMSE 4.95)
 
@@ -1322,14 +1370,13 @@ renderer contract, backend implementation, or the AGG port itself.
 - [ ] Likely core areas: `core/image_grid.go` inch-vs-fraction divider spacing,
       anchored text bbox padding, renderer text/line antialiasing.
 
-### 8.57 `pcolor_flat` (RMSE 8.74)
+### 8.57 `pcolor_flat` (RMSE 4.00)
 
-- [x] Code: source audited; remaining Go `PColor` as `PColorMesh` versus
-      Matplotlib `PolyQuadMesh` is core mesh/collection behavior.
-- [ ] Visual: data cells align, but every cell edge/stroke and text edge
-      differs.
-- [ ] Likely core areas: `core/mesh.go`, `core/collection.go` pcolor versus
-      pcolormesh semantics, quad edge antialias/snap.
+- [x] Code: source audited; `PColor` now keeps unsnapped mesh edges and
+      collection-default antialiasing for stroked edges, matching Matplotlib
+      `pcolor` behavior.
+- [x] Visual: focused `parity-viewer-print` reports `RMSE 4.00`; remaining
+      residual is mostly text and minor edge rasterization.
 
 ### 8.58 `pcolormesh_gouraud` (RMSE 4.78)
 

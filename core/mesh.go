@@ -60,7 +60,7 @@ type Hist2DResult struct {
 
 // PColor renders a scalar matrix as a rectilinear quad mesh.
 func (a *Axes) PColor(data [][]float64, opts ...MeshOptions) *QuadMesh {
-	return a.pcolorMesh(data, render.SnapOff, opts...)
+	return a.pcolorMesh(data, render.SnapOff, render.AntialiasDefault, opts...)
 }
 
 // PColorFast renders a scalar matrix through the rectilinear quad mesh path.
@@ -70,10 +70,10 @@ func (a *Axes) PColorFast(data [][]float64, opts ...MeshOptions) *QuadMesh {
 
 // PColorMesh renders a scalar matrix as a rectilinear quad mesh.
 func (a *Axes) PColorMesh(data [][]float64, opts ...MeshOptions) *QuadMesh {
-	return a.pcolorMesh(data, render.SnapOn, opts...)
+	return a.pcolorMesh(data, render.SnapOn, render.AntialiasOff, opts...)
 }
 
-func (a *Axes) pcolorMesh(data [][]float64, snap render.SnapMode, opts ...MeshOptions) *QuadMesh {
+func (a *Axes) pcolorMesh(data [][]float64, snap render.SnapMode, antialias render.AntialiasMode, opts ...MeshOptions) *QuadMesh {
 	rows, cols, ok := finiteMatrixSize(data)
 	if !ok {
 		return nil
@@ -153,6 +153,7 @@ func (a *Axes) pcolorMesh(data [][]float64, snap render.SnapMode, opts ...MeshOp
 				Coords:       Coords(CoordData),
 				Label:        opt.Label,
 				Alpha:        1,
+				Antialias:    antialias,
 				Colormap:     mapping.Colormap,
 				Norm:         mapping.Norm,
 				VMin:         mapping.VMin,

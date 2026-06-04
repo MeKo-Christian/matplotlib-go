@@ -214,11 +214,7 @@ func (b *Barbs) asPathCollection(ctx *DrawContext) *PathCollection {
 			continue
 		}
 
-		dx := u
-		dy := v
-		p1 := ctx.TransData().Apply(b.Anchors[i])
-		p2 := ctx.TransData().Apply(geom.Pt{X: b.Anchors[i].X + dx, Y: b.Anchors[i].Y + dy})
-		angle := math.Atan2(p2.Y-p1.Y, p2.X-p1.X)
+		angle := math.Atan2(v, u)
 		paths[i] = applyAffinePath(path, geom.Affine{
 			A: math.Cos(angle),
 			B: math.Sin(angle),
@@ -342,6 +338,7 @@ func (b *Barbs) barbGlyphPath(lengthPx float64, i int, empty bool) geom.Path {
 		path.LineTo(geom.Pt{X: -(offset + width/4), Y: dir * height * 0.5})
 		path.LineTo(geom.Pt{X: -offset, Y: 0})
 	}
+	path.Close()
 
 	shift := 0.0
 	switch normalizeVectorPivot(b.Pivot, vectorPivotTip) {

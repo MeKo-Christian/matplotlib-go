@@ -241,6 +241,38 @@ func TestLegendMarkerSampleScaleAndScatterPoints(t *testing.T) {
 	if !(pathCenterX(scaled.paths[0]) < pathCenterX(scaled.paths[1]) && pathCenterX(scaled.paths[1]) < pathCenterX(scaled.paths[2])) {
 		t.Fatalf("scatter sample marker centers should advance left-to-right: %+v", scaled.paths)
 	}
+	wantCenters := []float64{19, 40, 61}
+	for i, want := range wantCenters {
+		if got := pathCenterX(scaled.paths[i]); !floatApprox(got, want, 1e-9) {
+			t.Fatalf("scatter sample marker %d center x = %g, want Matplotlib padded position %g", i, got, want)
+		}
+	}
+}
+
+func TestLegendPatchSampleFillsMatplotlibHandleBox(t *testing.T) {
+	entry := legendEntryFromPatchStyle(
+		"patch",
+		render.Color{R: 1, A: 1},
+		render.Color{A: 1},
+		1,
+		"",
+		render.Color{},
+		0,
+	)
+	sample := geom.Rect{Min: geom.Pt{X: 10, Y: 10}, Max: geom.Pt{X: 70, Y: 30}}
+
+	var r legendRecordingRenderer
+	(&Legend{}).drawSample(&r, entry, sample)
+	if got := len(r.paths); got != 1 {
+		t.Fatalf("patch legend sample paths = %d, want 1", got)
+	}
+	bounds := pathBoundsForLegendTest(r.paths[0])
+	if !floatApprox(bounds.Min.X, sample.Min.X, 1e-9) || !floatApprox(bounds.Max.X, sample.Max.X, 1e-9) {
+		t.Fatalf("patch sample width = [%g, %g], want full handle width [%g, %g]", bounds.Min.X, bounds.Max.X, sample.Min.X, sample.Max.X)
+	}
+	if !floatApprox(bounds.H(), sample.H()*0.7, 1e-9) {
+		t.Fatalf("patch sample height = %g, want Matplotlib handleheight %g", bounds.H(), sample.H()*0.7)
+	}
 }
 
 func TestLegendDrawsErrorBarSampleWithCaps(t *testing.T) {
@@ -256,13 +288,20 @@ func TestLegendDrawsErrorBarSampleWithCaps(t *testing.T) {
 	}
 
 	var r legendRecordingRenderer
-	(&Legend{}).drawSample(&r, entry, geom.Rect{Min: geom.Pt{X: 10, Y: 10}, Max: geom.Pt{X: 70, Y: 30}})
+	sample := geom.Rect{Min: geom.Pt{X: 10, Y: 10}, Max: geom.Pt{X: 50, Y: 30}}
+	(&Legend{}).drawSample(&r, entry, sample)
 
 	if !containsVerticalLegendPath(r.paths) {
 		t.Fatalf("errorbar legend sample should include vertical error stem, got paths %+v", r.paths)
 	}
 	if countHorizontalLegendSegments(r.paths) < 3 {
 		t.Fatalf("errorbar legend sample should include line and two caps, got paths %+v", r.paths)
+	}
+	if !floatApprox(r.paths[1].V[0].Y, sample.Min.Y, 1e-9) || !floatApprox(r.paths[1].V[1].Y, sample.Max.Y, 1e-9) {
+		t.Fatalf("errorbar legend stem = %+v, want full 0.5-font extent over sample [%g, %g]", r.paths[1], sample.Min.Y, sample.Max.Y)
+	}
+	if got := math.Abs(r.paths[2].V[1].X - r.paths[2].V[0].X); !floatApprox(got, 12, 1e-9) {
+		t.Fatalf("errorbar legend cap length = %g, want Matplotlib 2*capsize marker length", got)
 	}
 }
 

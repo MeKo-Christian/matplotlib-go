@@ -152,6 +152,22 @@ func TestMarkerFillTopKeepsPrimaryPathAboveCenter(t *testing.T) {
 	}
 }
 
+func TestCircleHalfFillUsesMatplotlibCubicRightHalf(t *testing.T) {
+	path := splitCircleMarkerPath(MarkerFillRight, 1)
+	wantCommands := []geom.Cmd{geom.MoveTo, geom.CubicTo, geom.CubicTo, geom.CubicTo, geom.CubicTo, geom.ClosePath}
+	if len(path.C) != len(wantCommands) {
+		t.Fatalf("right-half circle commands = %v, want %v", path.C, wantCommands)
+	}
+	for i, want := range wantCommands {
+		if path.C[i] != want {
+			t.Fatalf("right-half circle command %d = %v, want %v", i, path.C[i], want)
+		}
+	}
+	if len(path.V) != 13 {
+		t.Fatalf("right-half circle vertices = %d, want Matplotlib unit_circle_righthalf vertices without CLOSEPOLY dummy", len(path.V))
+	}
+}
+
 func TestScatter2D_EmptyData(t *testing.T) {
 	// Test with empty data
 	scatter := &Scatter2D{

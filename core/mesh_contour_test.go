@@ -109,6 +109,41 @@ func TestAxesPColorUsesUnsnappedMeshEdgesLikeMatplotlib(t *testing.T) {
 	if got := r.quadMeshBatches[0].Cells[0].Snap; got != render.SnapOff {
 		t.Fatalf("pcolor snap = %v, want SnapOff like Matplotlib pcolor", got)
 	}
+	if !r.quadMeshBatches[0].Cells[0].Antialiased {
+		t.Fatal("pcolor antialiasing should follow patch collection defaults when edges are stroked")
+	}
+}
+
+func TestAxesPColorMeshDisablesAntialiasingLikeMatplotlib(t *testing.T) {
+	ax := &Axes{
+		XScale: transform.NewLinear(0, 2),
+		YScale: transform.NewLinear(0, 2),
+		XAxis:  NewXAxis(),
+		YAxis:  NewYAxis(),
+	}
+	width := 0.75
+	edge := render.Color{A: 1}
+	mesh := ax.PColorMesh([][]float64{{0, 1}}, MeshOptions{
+		XEdges:    []float64{0, 1, 2},
+		YEdges:    []float64{0, 1},
+		EdgeColor: &edge,
+		EdgeWidth: &width,
+	})
+	if mesh == nil {
+		t.Fatal("expected pcolormesh mesh")
+	}
+
+	r := &batchRecordingRenderer{returnNative: true}
+	mesh.Draw(r, createTestDrawContext())
+	if len(r.quadMeshBatches) != 1 || len(r.quadMeshBatches[0].Cells) == 0 {
+		t.Fatalf("expected one native quad mesh batch, got %v", r.quadMeshBatches)
+	}
+	if got := r.quadMeshBatches[0].Cells[0].Snap; got != render.SnapOn {
+		t.Fatalf("pcolormesh snap = %v, want SnapOn", got)
+	}
+	if r.quadMeshBatches[0].Cells[0].Antialiased {
+		t.Fatal("pcolormesh antialiasing should default off like Matplotlib")
+	}
 }
 
 func TestPColorMeshShadingAutoUsesCenterCoordinates(t *testing.T) {

@@ -528,37 +528,56 @@ func splitCircleMarkerPath(fill MarkerFillStyle, size float64) geom.Path {
 	if r <= 0 {
 		return geom.Path{}
 	}
-	const steps = 24
-	points := make([]geom.Pt, 0, steps+3)
+	const magic = 0.2652031
+	sqrtHalf := math.Sqrt(0.5)
+	magic45 := sqrtHalf * magic
+
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 0, Y: -r})
+	path.CubicTo(
+		geom.Pt{X: magic * r, Y: -r},
+		geom.Pt{X: (sqrtHalf - magic45) * r, Y: -(sqrtHalf + magic45) * r},
+		geom.Pt{X: sqrtHalf * r, Y: -sqrtHalf * r},
+	)
+	path.CubicTo(
+		geom.Pt{X: (sqrtHalf + magic45) * r, Y: -(sqrtHalf - magic45) * r},
+		geom.Pt{X: r, Y: -magic * r},
+		geom.Pt{X: r, Y: 0},
+	)
+	path.CubicTo(
+		geom.Pt{X: r, Y: magic * r},
+		geom.Pt{X: (sqrtHalf + magic45) * r, Y: (sqrtHalf - magic45) * r},
+		geom.Pt{X: sqrtHalf * r, Y: sqrtHalf * r},
+	)
+	path.CubicTo(
+		geom.Pt{X: (sqrtHalf - magic45) * r, Y: (sqrtHalf + magic45) * r},
+		geom.Pt{X: magic * r, Y: r},
+		geom.Pt{X: 0, Y: r},
+	)
+	path.Close()
+
+	angle := 0.0
 	switch fill {
 	case MarkerFillRight:
-		points = append(points, geom.Pt{})
-		for i := 0; i <= steps; i++ {
-			theta := -math.Pi/2 + math.Pi*float64(i)/steps
-			points = append(points, geom.Pt{X: r * math.Cos(theta), Y: r * math.Sin(theta)})
-		}
+		angle = 0
 	case MarkerFillLeft:
-		points = append(points, geom.Pt{})
-		for i := 0; i <= steps; i++ {
-			theta := math.Pi/2 + math.Pi*float64(i)/steps
-			points = append(points, geom.Pt{X: r * math.Cos(theta), Y: r * math.Sin(theta)})
-		}
+		angle = math.Pi
 	case MarkerFillTop:
-		points = append(points, geom.Pt{})
-		for i := 0; i <= steps; i++ {
-			theta := math.Pi * float64(i) / steps
-			points = append(points, geom.Pt{X: r * math.Cos(theta), Y: r * math.Sin(theta)})
-		}
+		angle = math.Pi / 2
 	case MarkerFillBottom:
-		points = append(points, geom.Pt{})
-		for i := 0; i <= steps; i++ {
-			theta := math.Pi + math.Pi*float64(i)/steps
-			points = append(points, geom.Pt{X: r * math.Cos(theta), Y: r * math.Sin(theta)})
-		}
+		angle = 3 * math.Pi / 2
 	default:
 		return geom.Path{}
 	}
-	return polygonPath(points, true)
+	if angle == 0 {
+		return path
+	}
+	return applyAffinePath(path, geom.Affine{
+		A: math.Cos(angle),
+		B: math.Sin(angle),
+		C: -math.Sin(angle),
+		D: math.Cos(angle),
+	})
 }
 
 func closedPathPolygon(path geom.Path) ([]geom.Pt, bool) {

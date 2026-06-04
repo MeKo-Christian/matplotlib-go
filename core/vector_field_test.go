@@ -323,6 +323,42 @@ func TestBarbsPointsLengthMatchesMatplotlibCollectionScale(t *testing.T) {
 	}
 }
 
+func TestBarbsDirectionUsesRawVectorAngleLikeMatplotlib(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.15, Y: 0.2},
+		Max: geom.Pt{X: 0.85, Y: 0.8},
+	})
+	ax.SetXLim(0, 100)
+	ax.SetYLim(0, 1)
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+
+	b := &Barbs{
+		Anchors:    []geom.Pt{{X: 50, Y: 0.5}},
+		U:          []float64{10},
+		V:          []float64{10},
+		BarbColor:  render.Color{A: 1},
+		FlagColor:  render.Color{A: 1},
+		LineWidth:  1,
+		Pivot:      vectorPivotTip,
+		Length:     18,
+		Units:      "dots",
+		Sizes:      defaultBarbSizes(nil),
+		Increments: defaultBarbIncrements(nil),
+		Rounding:   true,
+	}
+
+	collection := b.asPathCollection(ctx)
+	if len(collection.Paths) != 1 || len(collection.Paths[0].V) < 2 {
+		t.Fatalf("expected one display-space barb path, got %+v", collection.Paths)
+	}
+	end := collection.Paths[0].V[1]
+	want := -18 / math.Sqrt2
+	if !approx(end.X, want, 1e-9) || !approx(end.Y, want, 1e-9) {
+		t.Fatalf("barb staff endpoint = %+v, want raw 45-degree angle endpoint (%v, %v)", end, want, want)
+	}
+}
+
 func TestBarbsFindTailsAndFlip(t *testing.T) {
 	b := &Barbs{
 		U:          []float64{35},
@@ -367,6 +403,9 @@ func TestBarbGlyphPathMatchesMatplotlibDisplayGeometry(t *testing.T) {
 	}
 
 	full := b.barbGlyphPath(28, 0, false)
+	if len(full.C) == 0 || full.C[len(full.C)-1] != geom.ClosePath {
+		t.Fatalf("full barb path should close like Matplotlib PolyCollection, got commands %+v", full.C)
+	}
 	wantFull := []geom.Pt{
 		{X: 0, Y: 0},
 		{X: -28, Y: 0},

@@ -1030,9 +1030,17 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 	case legendEntryErrorBar:
 		l.drawErrorBarSample(r, entry, sample, center)
 	case legendEntryPatch:
+		// Matplotlib's HandlerPatch fills the legend handle box. The
+		// handleheight default is 0.7 font-size units, and the default
+		// handlelength is 2.0 font-size units, so it occupies 70% of the
+		// row height and the full handle width.
+		handleHeight := sample.H() * 0.7
+		if handleHeight <= 0 {
+			handleHeight = sample.H()
+		}
 		patchRect := geom.Rect{
-			Min: geom.Pt{X: sample.Min.X + 2, Y: center.Y - 5},
-			Max: geom.Pt{X: sample.Max.X - 2, Y: center.Y + 5},
+			Min: geom.Pt{X: sample.Min.X, Y: center.Y - handleHeight/2},
+			Max: geom.Pt{X: sample.Max.X, Y: center.Y + handleHeight/2},
 		}
 		patch := Patch{
 			FaceColor:  entry.patchFill,
@@ -1057,8 +1065,8 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 		path := geom.Path{
 			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
 			V: []geom.Pt{
-				{X: sample.Min.X + 1, Y: center.Y},
-				{X: sample.Max.X - 1, Y: center.Y},
+				{X: sample.Min.X, Y: center.Y},
+				{X: sample.Max.X, Y: center.Y},
 			},
 		}
 		r.Path(path, &render.Paint{
@@ -1094,10 +1102,16 @@ func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample
 	capHalf := entry.errorbarCapSize / 2
 	if capHalf <= 0 {
 		capHalf = 3
+	} else {
+		capHalf = entry.errorbarCapSize
 	}
 	if entry.errorbarY {
-		top := geom.Pt{X: center.X, Y: sample.Min.Y + sample.H()*0.2}
-		bottom := geom.Pt{X: center.X, Y: sample.Max.Y - sample.H()*0.2}
+		errSize := sample.W() * 0.25
+		if errSize <= 0 {
+			errSize = sample.H() * 0.5
+		}
+		top := geom.Pt{X: center.X, Y: center.Y - errSize}
+		bottom := geom.Pt{X: center.X, Y: center.Y + errSize}
 		r.Path(geom.Path{
 			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
 			V: []geom.Pt{top, bottom},
@@ -1153,10 +1167,17 @@ func (l *Legend) markerSampleCenters(sample geom.Rect, center geom.Pt) []geom.Pt
 		return []geom.Pt{center}
 	}
 	centers := make([]geom.Pt, points)
-	step := sample.W() / float64(points+1)
+	pad := sample.W() * 0.15
+	if pad < 0 {
+		pad = 0
+	}
+	step := 0.0
+	if points > 1 {
+		step = (sample.W() - 2*pad) / float64(points-1)
+	}
 	for i := 0; i < points; i++ {
 		centers[i] = geom.Pt{
-			X: sample.Min.X + step*float64(i+1),
+			X: sample.Min.X + pad + step*float64(i),
 			Y: center.Y,
 		}
 	}

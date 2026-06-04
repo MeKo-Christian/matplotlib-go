@@ -70,13 +70,6 @@ func Plot() *core.Figure {
 	overlay := host.TwinX()
 	if overlay != nil {
 		overlay.SetYLim(0, 100)
-		overlay.YAxis.Color = render.Color{R: 0.74, G: 0.28, B: 0.18, A: 1}
-		overlay.YAxis.ShowSpine = false
-		overlay.YAxis.ShowTicks = false
-		overlay.YAxis.ShowLabels = false
-		overlay.XAxis.ShowSpine = false
-		overlay.XAxis.ShowTicks = false
-		overlay.XAxis.ShowLabels = false
 
 		right := overlay.RightAxis()
 		right.Color = render.Color{R: 0.74, G: 0.28, B: 0.18, A: 1}
@@ -102,13 +95,7 @@ func Plot() *core.Figure {
 		},
 	})
 	legend := host.AddLegend()
-	legend.SetLocator(core.RelativeAnchoredBoxLocator{
-		X:       0.5,
-		Y:       0,
-		OffsetY: 10,
-		HAlign:  core.BoxAlignCenter,
-		VAlign:  core.BoxAlignTop,
-	})
+	legend.Location = core.LegendUpperCenter
 
 	return fig
 }

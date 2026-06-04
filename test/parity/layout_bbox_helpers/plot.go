@@ -18,6 +18,7 @@ const (
 // Plot builds the showcase figure (backend-agnostic).
 func Plot() *core.Figure {
 	fig := core.NewFigure(720, 420)
+	dashScale := float64(DPI) / 72.0
 
 	leftRect := geom.Rect{Min: geom.Pt{X: 0.10, Y: 0.19}, Max: geom.Pt{X: 0.45, Y: 0.78}}
 	rightRect := geom.Rect{Min: geom.Pt{X: 0.56, Y: 0.34}, Max: geom.Pt{X: 0.88, Y: 0.82}}
@@ -38,7 +39,7 @@ func Plot() *core.Figure {
 			FaceColor: render.Color{R: 0.95, G: 0.74, B: 0.20, A: 0.08},
 			EdgeColor: render.Color{R: 0.42, G: 0.34, B: 0.12, A: 1},
 			EdgeWidth: 1.4,
-			Dashes:    []float64{6, 4},
+			Dashes:    []float64{6 * dashScale, 4 * dashScale},
 		},
 		XY:     paddedRect.Min,
 		Width:  paddedRect.W(),
