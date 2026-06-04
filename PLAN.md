@@ -2177,7 +2177,7 @@ example/browser breadth as documentation work.
           selection with `axis3d.py` where they affect static rendering. Add
           regression tests around rc-derived style and view-dependent panes.
 
-        - [ ] 17.75.4.3.4 Label and Tick Placement: audit 3D axis-label and
+        - [x] 17.75.4.3.4 Label and Tick Placement: audit 3D axis-label and
           tick-label anchor, rotation, offset, draw-order, and visibility
           behavior against upstream axis placement logic. Add tests for
           view-dependent placement and label toggles.

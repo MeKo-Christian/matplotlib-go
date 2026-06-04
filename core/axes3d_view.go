@@ -171,6 +171,7 @@ func (a *Axes3D) SetShowXTickLabels(show bool) {
 		return
 	}
 	a.showXLabels = show
+	a.reproject3DArtists()
 }
 
 // SetShowYTickLabels controls whether y-axis tick labels are drawn on the 3D frame.
@@ -179,6 +180,7 @@ func (a *Axes3D) SetShowYTickLabels(show bool) {
 		return
 	}
 	a.showYLabels = show
+	a.reproject3DArtists()
 }
 
 // SetShowZTickLabels controls whether z-axis tick labels are drawn on the 3D frame.

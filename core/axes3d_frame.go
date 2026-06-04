@@ -502,14 +502,18 @@ func draw3DTextAtAnchorAligned(textRen render.TextDrawer, r render.Renderer, ctx
 }
 
 func frameAxisTicks(minVal, maxVal float64) []float64 {
-	ticks := AutoLocator{}.Ticks(minVal, maxVal, 9)
+	lo, hi := minVal, maxVal
+	if hi < lo {
+		lo, hi = hi, lo
+	}
+	ticks := AutoLocator{}.Ticks(lo, hi, 9)
 	if len(ticks) == 0 {
 		return nil
 	}
-	eps := 1e-12 * math.Max(1, math.Abs(maxVal-minVal))
+	eps := 1e-12 * math.Max(1, math.Abs(hi-lo))
 	filtered := ticks[:0]
 	for _, tick := range ticks {
-		if tick >= minVal-eps && tick <= maxVal+eps {
+		if tick >= lo-eps && tick <= hi+eps {
 			filtered = append(filtered, tick)
 		}
 	}

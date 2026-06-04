@@ -946,6 +946,15 @@ func TestAxes3DFrameAxisTicksMatchMatplotlibDensity(t *testing.T) {
 	}
 }
 
+func TestAxes3DFrameAxisTicksHandleInvertedLimitsLikeMatplotlib(t *testing.T) {
+	ticks := frameAxisTicks(1, 0)
+	if !containsFloat64Approx(ticks, 0, 1e-12) ||
+		!containsFloat64Approx(ticks, 0.2, 1e-12) ||
+		!containsFloat64Approx(ticks, 1, 1e-12) {
+		t.Fatalf("3D inverted axis ticks = %v, want ascending Matplotlib tick locations within 0..1", ticks)
+	}
+}
+
 func TestAxes3DAxisLineSegmentsUseMatplotlibCameraFacingEdges(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -2525,6 +2534,65 @@ func TestAxes3DDrawsYAxisEndpointTickLabels(t *testing.T) {
 	}
 }
 
+func TestAxes3DTickLabelsRespectVisibilityToggles(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(0, 1)
+	ax.SetYLim(0, 1)
+	ax.SetZLim(0, 1)
+	mins, maxs := ax.projectionLimits()
+	ctx := newAxesDrawContext(ax.Axes, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+
+	drawLabels := func() []string {
+		r := &axes3DTextRecorder{}
+		ax.draw3DTickLabels(r, r, ctx, mins, maxs, mins, maxs)
+		return append([]string(nil), r.texts...)
+	}
+	all := drawLabels()
+	if countString(all, "0.0") != 3 {
+		t.Fatalf("visible 3D tick labels = %v, want one 0.0 label on x, y, and z", all)
+	}
+
+	ax.SetShowXTickLabels(false)
+	xHidden := drawLabels()
+	if countString(xHidden, "0.0") != 2 {
+		t.Fatalf("x-hidden 3D tick labels = %v, want x-axis labels removed", xHidden)
+	}
+	ax.SetShowYTickLabels(false)
+	yHidden := drawLabels()
+	if countString(yHidden, "0.0") != 1 {
+		t.Fatalf("x/y-hidden 3D tick labels = %v, want only z-axis labels", yHidden)
+	}
+	ax.SetShowZTickLabels(false)
+	zHidden := drawLabels()
+	if len(zHidden) != 0 {
+		t.Fatalf("all hidden 3D tick labels = %v, want none", zHidden)
+	}
+}
+
+func TestAxes3DTickLabelsDrawForInvertedExplicitLimits(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(1, 0)
+	ax.SetYLim(0, 1)
+	ax.SetZLim(0, 1)
+	mins, maxs := ax.projectionLimits()
+	ctx := newAxesDrawContext(ax.Axes, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	r := &axes3DTextRecorder{}
+
+	ax.draw3DTickLabels(r, r, ctx, mins, maxs, mins, maxs)
+
+	if !containsString(r.texts, "0.2") || !containsString(r.texts, "1.0") {
+		t.Fatalf("inverted x tick labels = %v, want Matplotlib-style labels from numeric 0..1 range", r.texts)
+	}
+}
+
 func TestAxes3DFrameTextDrawsBeforeDataCollectionsLikeMatplotlib(t *testing.T) {
 	fig := NewFigure(420, 320)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -2817,6 +2885,16 @@ func containsColor(values []render.Color, want render.Color) bool {
 		}
 	}
 	return false
+}
+
+func countString(items []string, want string) int {
+	count := 0
+	for _, got := range items {
+		if got == want {
+			count++
+		}
+	}
+	return count
 }
 
 func containsDashPattern(values [][]float64, want []float64) bool {
