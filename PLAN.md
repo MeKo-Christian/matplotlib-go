@@ -2342,9 +2342,15 @@ example/browser breadth as documentation work.
                   callback-driven Matplotlib model versus Go's pull-based
                   sync model in `docs/matplotlib-migration-notes.md`.
 
-                - [ ] 17.75.4.4.4.3.2 Go Contract Decision: decide whether the
+                - [x] 17.75.4.4.4.3.2 Go Contract Decision: decide whether the
                   Go port supports mutable colorbar updates or treats 3D
-                  mappables as immutable after colorbar creation.
+                  mappables as immutable after colorbar creation. Decision:
+                  support post-creation colorbar updates only through existing
+                  typed collection setters plus pull-based draw/layout sync for
+                  collection-backed 3D mappables; keep `Scatter3D`,
+                  Matplotlib-style callbacks, colorbar alpha propagation, and
+                  persistence of manual array overrides across 3D reprojection
+                  outside the supported mutable contract.
 
                 - [ ] 17.75.4.4.4.3.3 Tests and Docs: add update tests for
                   supported behavior or document immutable-state differences in

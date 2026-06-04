@@ -242,3 +242,16 @@ artist alpha. For 3D collection-backed helpers, mutable cmap/norm/clim updates
 can follow the shared collection setters; for `Scatter3D`, array and mapping
 state are treated as construction-time values unless a later typed scatter
 mutation API is added.
+
+Decision for 17.75.4: 3D colorbars support post-creation updates only through
+the existing typed collection setters on the returned collection objects
+(`SetArray`, `SetColormap`, `SetNorm`, and `SetCLim`) plus the pull-based
+colorbar sync that runs during layout/draw. This covers collection-backed
+`Surface`, `Trisurf`, `Contour`, `Contourf`, `TriContour`, and `TriContourf`
+handles when callers intentionally mutate the returned collection. It does not
+promise Matplotlib's callback lifecycle, alpha propagation into existing
+colorbars, mutable scatter arrays, or persistence of manual collection-array
+overrides across later 3D view/limit reprojection. Reprojection closures remain
+owned by the original 3D helper inputs and may recompute projection-derived
+arrays such as surface average-z, contour levels, filled-contour layer values,
+or scatter visible sorted scalars.
