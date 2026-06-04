@@ -877,6 +877,87 @@ func TestContourLabelsDrawOverlay(t *testing.T) {
 	}
 }
 
+func TestAxesClabelDelegatesToContourSetAndFiltersLevels(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.1, Y: 0.1},
+		Max: geom.Pt{X: 0.9, Y: 0.9},
+	})
+
+	contours := ax.Contour([][]float64{
+		{0, 1, 2},
+		{1, 2, 3},
+		{2, 3, 4},
+	}, ContourOptions{
+		Levels: []float64{1, 2, 3},
+	})
+	if contours == nil {
+		t.Fatal("expected contour set")
+	}
+
+	fontSize := 12.0
+	color := render.Color{R: 0.8, G: 0.1, B: 0.2, A: 1}
+	labels := ax.Clabel(contours, ClabelOptions{
+		Levels:    []float64{2},
+		Formatter: FuncFormatter(func(float64) string { return "L2" }),
+		FontSize:  &fontSize,
+		Color:     &color,
+	})
+
+	if len(labels) != 1 {
+		t.Fatalf("labels = %d, want one filtered contour label", len(labels))
+	}
+	if labels[0].Text != "L2" || labels[0].Level != 2 || labels[0].Color != color {
+		t.Fatalf("label = %+v, want level 2 text/color", labels[0])
+	}
+	if !contours.inlineLabels {
+		t.Fatal("Axes.Clabel should default to inline labels like Matplotlib")
+	}
+	if contours.LabelFontSize != fontSize {
+		t.Fatalf("label font size = %v, want %v", contours.LabelFontSize, fontSize)
+	}
+
+	var renderer contourTextRenderer
+	DrawFigure(fig, &renderer)
+	if len(renderer.texts) == 0 {
+		t.Fatal("expected clabel text to be rendered")
+	}
+}
+
+func TestAxesClabelManualPositionsPlaceNearestContourLabels(t *testing.T) {
+	ax := NewFigure(640, 480).AddAxes(geom.Rect{})
+	contours := ax.Contour([][]float64{
+		{0, 1, 2},
+		{1, 2, 3},
+		{2, 3, 4},
+	}, ContourOptions{
+		Levels: []float64{1, 2, 3},
+	})
+	if contours == nil {
+		t.Fatal("expected contour set")
+	}
+
+	inline := false
+	labels := ax.Clabel(contours, ClabelOptions{
+		Levels:          []float64{2},
+		ManualPositions: []geom.Pt{{X: 1, Y: 1}},
+		Inline:          &inline,
+	})
+
+	if len(labels) != 1 {
+		t.Fatalf("manual labels = %d, want 1", len(labels))
+	}
+	if labels[0].Level != 2 {
+		t.Fatalf("manual label level = %v, want nearest requested level 2", labels[0].Level)
+	}
+	if contours.inlineLabels {
+		t.Fatal("manual non-inline clabel should not erase contour lines")
+	}
+	if len(contours.labels) != 1 || contours.labels[0].Position == (geom.Pt{}) {
+		t.Fatalf("stored contour labels = %+v", contours.labels)
+	}
+}
+
 func TestContourInlineLabelAngleUsesMatplotlibDisplayConvention(t *testing.T) {
 	screen := []geom.Pt{
 		{X: 0, Y: 10},

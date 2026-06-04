@@ -34,6 +34,29 @@ type contourLabel struct {
 	Position geom.Pt
 	Angle    float64
 	Color    render.Color
+	Level    float64
+}
+
+// ClabelOptions configures contour label placement for Axes.Clabel and
+// ContourSet.Clabel.
+type ClabelOptions struct {
+	Levels          []float64
+	Formatter       Formatter
+	FontSize        *float64
+	Color           *render.Color
+	Colors          []render.Color
+	Inline          *bool
+	InlineSpacing   float64
+	ManualPositions []geom.Pt
+}
+
+// ContourLabel stores the public metadata for a placed contour label.
+type ContourLabel struct {
+	Text     string
+	Level    float64
+	Position geom.Pt
+	Angle    float64
+	Color    render.Color
 }
 
 // ContourSet stores the artists created by contour/contourf calls.
@@ -47,8 +70,57 @@ type ContourSet struct {
 	LabelColor     render.Color
 	labels         []contourLabel
 	lineLevels     []float64
+	labelLevels    []float64
+	labelInlineGap float64
 	inlineLabels   bool
 	z              float64
+}
+
+// Clabel delegates contour labeling to the provided contour set, matching
+// Matplotlib's Axes.clabel call shape.
+func (a *Axes) Clabel(cs *ContourSet, opts ...ClabelOptions) []ContourLabel {
+	if cs == nil {
+		return nil
+	}
+	return cs.Clabel(opts...)
+}
+
+// Clabel adds labels to a contour set and returns metadata for the labels that
+// were placed.
+func (c *ContourSet) Clabel(opts ...ClabelOptions) []ContourLabel {
+	if c == nil || c.Lines == nil || len(c.Lines.Segments) == 0 {
+		return nil
+	}
+	var opt ClabelOptions
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	indices, ok := c.clabelLineIndices(opt.Levels)
+	if !ok || len(indices) == 0 {
+		return nil
+	}
+
+	c.LabelFormatter = contourFormatter(firstFormatter(opt.Formatter, c.LabelFormatter))
+	if opt.FontSize != nil && *opt.FontSize > 0 {
+		c.LabelFontSize = *opt.FontSize
+	} else if c.LabelFontSize <= 0 {
+		c.LabelFontSize = 10
+	}
+	if opt.Color != nil {
+		c.LabelColor = *opt.Color
+	} else if len(opt.Colors) > 0 {
+		c.LabelColor = opt.Colors[0]
+	}
+	c.inlineLabels = specialtyBool(opt.Inline, true)
+	c.labelLevels = uniqueLevelsForIndices(c.lineLevels, indices)
+	c.labelInlineGap = opt.InlineSpacing
+
+	labels := c.clabelPlaceAutomatic(indices, opt)
+	if len(opt.ManualPositions) > 0 {
+		labels = c.clabelPlaceManual(indices, opt)
+	}
+	c.labels = labels
+	return publicContourLabels(labels)
 }
 
 // Contour draws isolines over a rectilinear scalar grid.
@@ -213,7 +285,11 @@ func (c *ContourSet) drawInlineLabeledLines(r render.Renderer, ctx *DrawContext)
 
 	setRendererResolution(r, ctx.RC.DPI)
 	fontSize := resolvedFontSize(c.LabelFontSize, ctx)
-	segments, colors, widths, labels := contourInlineLabelSegments(c.Lines, c.lineLevels, c.LabelFormatter, fontSize, r, ctx)
+	inlineSpacing := c.labelInlineGap
+	if inlineSpacing <= 0 {
+		inlineSpacing = 5
+	}
+	segments, colors, widths, labels := contourInlineLabelSegmentsForLevels(c.Lines, c.lineLevels, c.labelLevels, c.LabelFormatter, fontSize, inlineSpacing, r, ctx)
 	c.labels = labels
 	if len(segments) == 0 {
 		return
@@ -1063,14 +1139,168 @@ func contourLabels(polylines [][]geom.Pt, levels []float64, colors []render.Colo
 			Position: position,
 			Angle:    normalizeLabelAngle(angle),
 			Color:    candidate.color,
+			Level:    level,
 		})
 	}
 	return labels
 }
 
-func contourInlineLabelSegments(lines *LineCollection, levels []float64, formatter Formatter, fontSize float64, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, []contourLabel) {
-	const inlineSpacing = 5.0
+func (c *ContourSet) clabelLineIndices(levels []float64) ([]int, bool) {
+	if c == nil || len(c.lineLevels) == 0 {
+		return nil, false
+	}
+	if len(levels) == 0 {
+		indices := make([]int, len(c.lineLevels))
+		for i := range c.lineLevels {
+			indices[i] = i
+		}
+		return indices, true
+	}
+	for _, level := range levels {
+		if !contourLevelAvailable(c.Levels, level) {
+			return nil, false
+		}
+	}
+	indices := []int{}
+	for i, level := range c.lineLevels {
+		if contourLevelAvailable(levels, level) {
+			indices = append(indices, i)
+		}
+	}
+	return indices, true
+}
 
+func (c *ContourSet) clabelPlaceAutomatic(indices []int, opt ClabelOptions) []contourLabel {
+	polylines := make([][]geom.Pt, 0, len(indices))
+	levels := make([]float64, 0, len(indices))
+	colors := make([]render.Color, 0, len(indices))
+	for _, idx := range indices {
+		if idx < 0 || c.Lines == nil || idx >= len(c.Lines.Segments) || idx >= len(c.lineLevels) {
+			continue
+		}
+		level := c.lineLevels[idx]
+		polylines = append(polylines, c.Lines.Segments[idx])
+		levels = append(levels, level)
+		colors = append(colors, c.clabelColor(idx, level, len(levels)-1, opt))
+	}
+	return contourLabels(polylines, levels, colors, c.LabelFormatter)
+}
+
+func (c *ContourSet) clabelPlaceManual(indices []int, opt ClabelOptions) []contourLabel {
+	labels := make([]contourLabel, 0, len(opt.ManualPositions))
+	for _, point := range opt.ManualPositions {
+		idx, projection, angle, ok := c.nearestContourLabelPoint(indices, point)
+		if !ok {
+			continue
+		}
+		level := c.lineLevels[idx]
+		labels = append(labels, contourLabel{
+			Text:     c.LabelFormatter.Format(level),
+			Position: projection,
+			Angle:    angle,
+			Color:    c.clabelColor(idx, level, len(labels), opt),
+			Level:    level,
+		})
+	}
+	return labels
+}
+
+func (c *ContourSet) nearestContourLabelPoint(indices []int, point geom.Pt) (int, geom.Pt, float64, bool) {
+	bestIdx := -1
+	bestPoint := geom.Pt{}
+	bestAngle := 0.0
+	bestDist := math.Inf(1)
+	for _, idx := range indices {
+		if c == nil || c.Lines == nil || idx < 0 || idx >= len(c.Lines.Segments) {
+			continue
+		}
+		segment := c.Lines.Segments[idx]
+		for i := 1; i < len(segment); i++ {
+			projection, dist := projectPointToSegment(point, segment[i-1], segment[i])
+			if dist >= bestDist {
+				continue
+			}
+			bestDist = dist
+			bestIdx = idx
+			bestPoint = projection
+			bestAngle = normalizeLabelAngle(math.Atan2(segment[i].Y-segment[i-1].Y, segment[i].X-segment[i-1].X))
+		}
+	}
+	return bestIdx, bestPoint, bestAngle, bestIdx >= 0
+}
+
+func (c *ContourSet) clabelColor(segmentIndex int, level float64, labelIndex int, opt ClabelOptions) render.Color {
+	if opt.Color != nil {
+		return *opt.Color
+	}
+	if len(opt.Colors) > 0 {
+		return opt.Colors[labelIndex%len(opt.Colors)]
+	}
+	if c != nil && c.Lines != nil {
+		return colorAt(c.Lines.Color, c.Lines.Colors, segmentIndex)
+	}
+	return render.Color{}
+}
+
+func publicContourLabels(labels []contourLabel) []ContourLabel {
+	out := make([]ContourLabel, len(labels))
+	for i, label := range labels {
+		out[i] = ContourLabel{
+			Text:     label.Text,
+			Level:    label.Level,
+			Position: label.Position,
+			Angle:    label.Angle,
+			Color:    label.Color,
+		}
+	}
+	return out
+}
+
+func uniqueLevelsForIndices(levels []float64, indices []int) []float64 {
+	out := []float64{}
+	for _, idx := range indices {
+		if idx < 0 || idx >= len(levels) || contourLevelAvailable(out, levels[idx]) {
+			continue
+		}
+		out = append(out, levels[idx])
+	}
+	return out
+}
+
+func contourLevelAvailable(levels []float64, level float64) bool {
+	for _, existing := range levels {
+		if math.Abs(existing-level) <= 1e-12 {
+			return true
+		}
+	}
+	return false
+}
+
+func firstFormatter(primary, fallback Formatter) Formatter {
+	if primary != nil {
+		return primary
+	}
+	return fallback
+}
+
+func projectPointToSegment(point, a, b geom.Pt) (geom.Pt, float64) {
+	dx := b.X - a.X
+	dy := b.Y - a.Y
+	den := dx*dx + dy*dy
+	if den <= 0 {
+		return a, pointDistanceSquared(point, a)
+	}
+	t := ((point.X-a.X)*dx + (point.Y-a.Y)*dy) / den
+	t = clampFloat(t, 0, 1)
+	projection := geom.Pt{X: a.X + t*dx, Y: a.Y + t*dy}
+	return projection, pointDistanceSquared(point, projection)
+}
+
+func contourInlineLabelSegments(lines *LineCollection, levels []float64, formatter Formatter, fontSize float64, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, []contourLabel) {
+	return contourInlineLabelSegmentsForLevels(lines, levels, nil, formatter, fontSize, 5, r, ctx)
+}
+
+func contourInlineLabelSegmentsForLevels(lines *LineCollection, levels, selectedLevels []float64, formatter Formatter, fontSize, inlineSpacing float64, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, []contourLabel) {
 	segments := make([][]geom.Pt, 0, len(lines.Segments))
 	colors := make([]render.Color, 0, len(lines.Segments))
 	widths := make([]float64, 0, len(lines.Segments))
@@ -1090,6 +1320,10 @@ func contourInlineLabelSegments(lines *LineCollection, levels []float64, formatt
 		}
 
 		if len(segment) < 2 || i >= len(levels) {
+			appendSegment(segment)
+			continue
+		}
+		if len(selectedLevels) > 0 && !contourLevelAvailable(selectedLevels, levels[i]) {
 			appendSegment(segment)
 			continue
 		}
@@ -1126,6 +1360,7 @@ func contourInlineLabelSegments(lines *LineCollection, levels []float64, formatt
 			Position: segment[labelIdx],
 			Angle:    angle,
 			Color:    color,
+			Level:    levels[i],
 		})
 	}
 

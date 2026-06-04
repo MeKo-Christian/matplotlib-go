@@ -502,6 +502,63 @@ func TestLineCollectionLegendEntry(t *testing.T) {
 	}
 }
 
+func TestAxesHLinesBroadcastsEndpointsAndRegistersCollection(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+	color := render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1}
+
+	lines := ax.HLines(
+		[]float64{1, 2, 3},
+		[]float64{0},
+		[]float64{4},
+		LineCollection{
+			Collection: Collection{Label: "thresholds", Alpha: 0.75},
+			Color:      color,
+			LineWidth:  2.5,
+			LineCap:    render.CapSquare,
+		},
+	)
+
+	if lines == nil {
+		t.Fatal("expected HLines collection")
+	}
+	if len(lines.Segments) != 3 {
+		t.Fatalf("segments = %d, want 3", len(lines.Segments))
+	}
+	if got := lines.Segments[1]; got[0] != (geom.Pt{X: 0, Y: 2}) || got[1] != (geom.Pt{X: 4, Y: 2}) {
+		t.Fatalf("second horizontal segment = %+v", got)
+	}
+	if len(ax.Artists) != 1 || ax.Artists[0] != lines {
+		t.Fatalf("registered artists = %d, want returned collection", len(ax.Artists))
+	}
+	if lines.Coords != Coords(CoordData) || lines.Label != "thresholds" || lines.Alpha != 0.75 {
+		t.Fatalf("collection metadata = coords=%+v label=%q alpha=%v", lines.Coords, lines.Label, lines.Alpha)
+	}
+	if lines.Color != color || lines.LineWidth != 2.5 || lines.LineCap != render.CapSquare {
+		t.Fatalf("line style = color=%+v width=%v cap=%v", lines.Color, lines.LineWidth, lines.LineCap)
+	}
+}
+
+func TestAxesVLinesBroadcastsExtentsAndRejectsMismatchedLengths(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+
+	lines := ax.VLines([]float64{1, 2}, []float64{-1}, []float64{3})
+	if lines == nil {
+		t.Fatal("expected VLines collection")
+	}
+	if len(lines.Segments) != 2 {
+		t.Fatalf("segments = %d, want 2", len(lines.Segments))
+	}
+	if got := lines.Segments[0]; got[0] != (geom.Pt{X: 1, Y: -1}) || got[1] != (geom.Pt{X: 1, Y: 3}) {
+		t.Fatalf("first vertical segment = %+v", got)
+	}
+	if got := ax.VLines([]float64{1, 2}, []float64{0, 1, 2}, []float64{3}); got != nil {
+		t.Fatalf("VLines with mismatched lengths returned %#v, want nil", got)
+	}
+	if got := ax.HLines([]float64{1, 2}, []float64{0}, []float64{3, 4, 5}); got != nil {
+		t.Fatalf("HLines with mismatched lengths returned %#v, want nil", got)
+	}
+}
+
 func TestLineCollectionSetArrayRefreshesStrokeColors(t *testing.T) {
 	cmapName := "linecollection-scalar-array"
 	low := render.Color{R: 1, A: 1}

@@ -2067,12 +2067,12 @@ example/browser breadth as documentation work.
       `core` helpers as implementation. Add targeted unit tests for input
       validation, return types, and artist registration.
 
-    - [ ] 17.75.2.2 Axes Line Collections: implement or harden Go API wrappers for
+    - [x] 17.75.2.2 Axes Line Collections: implement or harden Go API wrappers for
       `Axes.hlines` and `Axes.vlines` to match existing matplotlib behavior
       expectations for scalar/list-like arguments and collection defaults. Keep
       behavior aligned with `core` collection drawing paths and add focused tests.
 
-    - [ ] 17.75.2.3 Axes Contour Labels: add `Axes.clabel` parity helper that
+    - [x] 17.75.2.3 Axes Contour Labels: add `Axes.clabel` parity helper that
       delegates to contour label rendering and accepts the same control surface as
       upstream options; include unit tests for automatic and manual label placement.
 
