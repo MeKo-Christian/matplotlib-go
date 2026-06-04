@@ -2421,7 +2421,7 @@ example/browser breadth as documentation work.
       comparisons, keeping Go and Python examples structurally close and using
       per-case tolerances only for known projection/depth-order residuals.
 
-        - [ ] 17.75.4.5.1 Fixture Gap Inventory: compare public 3D helper rows,
+        - [x] 17.75.4.5.1 Fixture Gap Inventory: compare public 3D helper rows,
           example catalog entries, and `test/matplotlib_ref/plots` coverage to
           list missing fixture triplets before adding new images.
 
@@ -2450,7 +2450,7 @@ example/browser breadth as documentation work.
                   weakly support triangulation, but none are dedicated
                   Matplotlib-reference rows for those 3D public helpers.
 
-            - [ ] 17.75.4.5.1.2 Tolerance Risk List: identify cases likely to
+            - [x] 17.75.4.5.1.2 Tolerance Risk List: identify cases likely to
               need case-specific tolerances because of projection, clipping,
               or depth-order residuals before generating images.
 
@@ -2466,9 +2466,18 @@ example/browser breadth as documentation work.
                   raster sensitivity for all; no optional-visual gate is
                   expected from the inventory alone.
 
-                - [ ] 17.75.4.5.1.2.2 Proposed Tolerances: record proposed
+                - [x] 17.75.4.5.1.2.2 Proposed Tolerances: record proposed
                   per-case tolerances only for risks already explained by
-                  completed parity work.
+                  completed parity work. Proposed initial tolerances should
+                  mirror current 3D bands rather than broadening defaults:
+                  contour/contourf/tricontour/tricontourf at the
+                  wire/trisurf/voxel-style high-risk band (`MinPSNR` about 30,
+                  `MaxMeanAbs` 10-12, `MaxRMSE` 18); errorbar3d and text3d at
+                  the quiver/stem-style band (`MinPSNR` about 30,
+                  `MaxMeanAbs` 10, `MaxRMSE` 18); `mplot3d_bar2d_zdir` at the
+                  bar-style band (`MinPSNR` about 30, `MaxMeanAbs` 8,
+                  `MaxRMSE` 18). Tighten after generated-image inspection if a
+                  case renders closer than its risk class.
 
         - [ ] 17.75.4.5.2 Core 3D Fixture Triplets: add Go/Python/golden
           fixtures for missing line, scatter, stem, errorbar, bar, wireframe,
