@@ -2172,7 +2172,7 @@ example/browser breadth as documentation work.
           `_get_coord_info` paths. Keep Go's typed limit APIs documented when
           they intentionally differ from Matplotlib's mutable state model.
 
-        - [ ] 17.75.4.3.3 Pane, Grid, and Tick Styling: align default pane
+        - [x] 17.75.4.3.3 Pane, Grid, and Tick Styling: align default pane
           colors, grid colors, line styles, tick directions, and visible-axis
           selection with `axis3d.py` where they affect static rendering. Add
           regression tests around rc-derived style and view-dependent panes.

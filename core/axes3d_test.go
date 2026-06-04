@@ -2615,6 +2615,29 @@ func TestAxes3DFrameUsesRCColorsLikeMatplotlib(t *testing.T) {
 	}
 }
 
+func TestAxes3DFrameUsesRCGridDashesLikeMatplotlib(t *testing.T) {
+	gridWidth := 2.0
+	fig := NewFigure(420, 320, style.WithGridLineWidths(gridWidth, gridWidth))
+	fig.RC.GridDashes = []float64{3, 1.5}
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.Surface(
+		[]float64{0, 1},
+		[]float64{0, 1},
+		[][]float64{{0, 1}, {1, 2}},
+	)
+
+	r := &axes3DLineWidthRecorder{}
+	DrawFigure(fig, r)
+
+	want := scaleGridDashes(fig.RC.GridDashes, gridWidth)
+	if !containsDashPattern(r.dashes, want) {
+		t.Fatalf("3D frame grid dashes = %v, want Matplotlib grid linestyle dashes %v", r.dashes, want)
+	}
+}
+
 func TestAxes3DTickLabelsUseMatplotlibDataSpaceOffset(t *testing.T) {
 	fig := NewFigure(760, 560)
 	ax, err := fig.AddAxes3D(geom.Rect{
@@ -2763,6 +2786,7 @@ type axes3DLineWidthRecorder struct {
 	render.NullRenderer
 	widths []float64
 	colors []render.Color
+	dashes [][]float64
 }
 
 func (r *axes3DLineWidthRecorder) Path(_ geom.Path, paint *render.Paint) {
@@ -2771,6 +2795,7 @@ func (r *axes3DLineWidthRecorder) Path(_ geom.Path, paint *render.Paint) {
 	}
 	r.widths = append(r.widths, paint.LineWidth)
 	r.colors = append(r.colors, paint.Stroke)
+	r.dashes = append(r.dashes, append([]float64(nil), paint.Dashes...))
 }
 
 func containsFloat64(values []float64, want float64) bool {
@@ -2788,6 +2813,25 @@ func containsColor(values []render.Color, want render.Color) bool {
 			approx(got.G, want.G, 1e-12) &&
 			approx(got.B, want.B, 1e-12) &&
 			approx(got.A, want.A, 1e-12) {
+			return true
+		}
+	}
+	return false
+}
+
+func containsDashPattern(values [][]float64, want []float64) bool {
+	for _, got := range values {
+		if len(got) != len(want) {
+			continue
+		}
+		matches := true
+		for i := range got {
+			if !approx(got[i], want[i], 1e-12) {
+				matches = false
+				break
+			}
+		}
+		if matches {
 			return true
 		}
 	}

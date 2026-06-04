@@ -235,6 +235,7 @@ func (f *axes3DFrame) Draw(r render.Renderer, ctx *DrawContext) {
 		Segments:   segments,
 		Color:      gridColor,
 		LineWidth:  gridLineWidth,
+		Dashes:     scaleGridDashes(ctx.RC.GridDashes, gridLineWidth),
 		LineJoin:   render.JoinMiter,
 		LineCap:    render.CapButt,
 	}).Draw(r, ctx)
