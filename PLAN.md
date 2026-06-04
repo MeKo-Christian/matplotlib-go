@@ -2484,7 +2484,7 @@ example/browser breadth as documentation work.
           surface, trisurf, contour, triangulated contour, voxel, and
           fill-between surfaces as needed.
 
-            - [ ] 17.75.4.5.2.1 Low-Complexity Fixtures: add missing line-like,
+            - [x] 17.75.4.5.2.1 Low-Complexity Fixtures: add missing line-like,
               scatter, stem, errorbar, wireframe, and bar fixture triplets.
 
                 - [x] 17.75.4.5.2.1.1 Line-Like Triplets: add or refresh
@@ -2494,9 +2494,11 @@ example/browser breadth as documentation work.
                   triplet; `Plot3D`, `Stem3D`, `Quiver3D`, and `Wireframe`
                   already had dedicated triplets.
 
-                - [ ] 17.75.4.5.2.1.2 Point and Bar Triplets: add or refresh
+                - [x] 17.75.4.5.2.1.2 Point and Bar Triplets: add or refresh
                   `Scatter3D` and `Bar3D` triplets after scalar/color behavior
-                  is covered by focused tests.
+                  is covered by focused tests. Existing `mplot3d_scatter3d`
+                  and `mplot3d_bar3d` triplets are dedicated and passed focused
+                  golden, Matplotlib-reference, and reference-compare checks.
 
             - [ ] 17.75.4.5.2.2 Polygon Fixtures: add missing surface, trisurf,
               contour, triangulated contour, voxel, and fill-between fixture
