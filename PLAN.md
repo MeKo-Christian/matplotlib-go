@@ -2198,7 +2198,30 @@ example/browser breadth as documentation work.
         - [ ] 17.75.4.4.2 Surface, Trisurf, and Contour Colors: align cmap,
           norm, facecolor, edgecolor, shade, alpha, and per-face/per-vertex
           color handling for `Surface`, `Trisurf`, `Contour`, `Contourf`,
-          `TriContour`, and `TriContourf`.
+          `TriContour`, and `TriContourf`. Complete the scoped audits below
+          before marking this parent item done.
+
+            - [ ] 17.75.4.4.2.1 Surface Color Semantics: align
+              `Surface` / `PlotSurfaceGrid` with Matplotlib's
+              `plot_surface` behavior for cmap-driven scalar arrays,
+              facecolors, edgecolors, shade disabling under cmap, alpha, and
+              scalar-map metadata.
+
+            - [ ] 17.75.4.4.2.2 Trisurf Color Semantics: align `Trisurf`
+              with `plot_trisurf` for per-triangle average-z scalar arrays,
+              cmap/norm/clim propagation, shade disabling under cmap,
+              explicit color, edgecolor, alpha, and masked-triangle color
+              ordering.
+
+            - [ ] 17.75.4.4.2.3 Contour Line Colors: align `Contour` and
+              `TriContour` line collection colors with Matplotlib's
+              level-based colormapping, explicit color override behavior,
+              alpha handling, scalar-map metadata, and reprojected updates.
+
+            - [ ] 17.75.4.4.2.4 Filled Contour Band Colors: align `Contourf`
+              and `TriContourf` filled band colors with Matplotlib's
+              level-midpoint colormapping, explicit color override behavior,
+              alpha handling, scalar-map metadata, and reprojected updates.
 
         - [ ] 17.75.4.4.3 Scatter, Quiver, and Voxel Colors: align scalar and
           explicit color behavior for `Scatter3D`, `Quiver3D`, `Bar3D`,
