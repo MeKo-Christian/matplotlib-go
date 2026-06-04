@@ -96,3 +96,27 @@ bar-label, fill-between, and errorbar option behavior against Matplotlib 3.10.9
 reference output. Collection and mesh mutable-setter behavior is covered by
 focused unit tests and existing mesh/colorbar fixtures where it produces
 visible output.
+
+## Phase 17.75.4 mplot3d Depth and Clipping
+
+The 17.75.4 depth/clipping audit aligns common static mplot3d helpers with
+Matplotlib 3.10.9 while keeping the Go API typed:
+
+- `Axes3D.Plot3D`, `Scatter3D`, `Wireframe`, `Quiver3D`, `Stem3D`, and
+  `ErrorBar3D` support explicit-limit clipping through typed `AxLimClip`
+  fields and reproject their geometry when view limits or camera state change.
+- `Axes3D.Surface`, `Contour`, `Contourf`, `TriContour`, `TriContourf`,
+  `Trisurf`, `Bar3D`, and `FillBetween3D` use projected collection z-ordering
+  and face/polygon ordering where the renderer needs stable static output.
+  Offset-plane contour clipping and typed `AxLimClip` options follow
+  Matplotlib's `axlim_clip` intent.
+- `Axes3D.Voxels` culls adjacent internal faces, sorts visible faces by
+  projected depth, supports typed `AxLimClip`, and clears stale projected
+  geometry when a view-limit reprojection removes a voxel.
+
+Intentional differences remain: Go does not mirror Python's full positional
+overload grammar, `data=` dispatch, masked-array machinery, GUI event methods,
+or mutable `Poly3DCollection`/`Line3DCollection` internals. Projection and depth
+ordering are implemented as deterministic pre-projected 2D artists, so rare
+interpenetrating 3D geometry can still differ from Matplotlib's painter-order
+heuristics.

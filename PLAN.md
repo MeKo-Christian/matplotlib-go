@@ -2128,7 +2128,7 @@ example/browser breadth as documentation work.
       add focused tests for triangulation input validation, artist return types,
       and axis-limit expansion.
 
-    - [ ] 17.75.4.2 3D Depth Ordering and Clipping: audit all public 3D helpers
+    - [x] 17.75.4.2 3D Depth Ordering and Clipping: audit all public 3D helpers
       against upstream z sorting, depth shading, clipping, and projected-extent
       behavior. Complete the scoped audits below in order before marking this
       parent item done.
@@ -2151,7 +2151,7 @@ example/browser breadth as documentation work.
           zorder, clipping, and redraw behavior. Add focused regression tests
           for adjacent hidden faces and view-dependent ordering.
 
-        - [ ] 17.75.4.2.4 Depth/Clipping Ledger: record any intentional
+        - [x] 17.75.4.2.4 Depth/Clipping Ledger: record any intentional
           residual mplot3d divergences in parity metadata and migration notes,
           then update `docs/matplotlib-parity-status.md`.
 

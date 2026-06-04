@@ -2195,10 +2195,10 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		featureCoverageID: "toolkits-projections",
 		status:            PublicSurfacePartial,
 		closurePhase:      "17.75.4",
-		goFiles:           []string{"core/axes3d.go"},
-		catalogIDs:        []string{"mplot3d_basic", "mplot3d_terrain", "mplot3d_scatter3d", "mplot3d_surface3d", "mplot3d_wire3d", "mplot3d_trisurf3d"},
+		goFiles:           []string{"core/axes3d.go", "core/axes3d_contour_surface.go", "core/axes3d_bar_voxel.go", "core/axes3d_geometry.go", "core/axes3d_projection.go"},
+		catalogIDs:        []string{"mplot3d_basic", "mplot3d_terrain", "mplot3d_scatter3d", "mplot3d_surface3d", "mplot3d_wire3d", "mplot3d_trisurf3d", "mplot3d_bar3d", "mplot3d_voxels", "mplot3d_quiver3d", "mplot3d_stem3d", "mplot3d_fill_between3d"},
 		exampleIDs:        []string{"mplot3d_terrain"},
-		note:              "Axes3D construction and common 3D plot helpers exist as typed core APIs with catalog coverage. Remaining 3D method breadth, option semantics, and toolkit fixtures are owned by Phase 17.75.4.",
+		note:              "Axes3D construction and common 3D plot helpers exist as typed core APIs with catalog coverage. Phase 17.75.4 depth/clipping work covers line and marker helpers, surfaces, contours, triangulated contours, trisurf, bar3d, fill-between3d, voxels, quiver, stem, and errorbar with computed depth ordering, visible-face or face sorting where applicable, AxLimClip-style explicit-limit clipping, and redraw reprojectors. Remaining 3D partial scope is axis/view defaults, scalar-mappable breadth, dedicated tricontour fixtures, GUI/event methods, Python overload grammar, and residual projection/depth-order differences that are documented as typed Go deviations.",
 	},
 	{
 		idPrefix:          "axis",
