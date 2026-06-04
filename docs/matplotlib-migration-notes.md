@@ -173,3 +173,28 @@ This inventory keeps scalar-array colorbars scoped to the helpers that
 Matplotlib exposes as scalar mappables in normal static examples, while
 explicit-color 3D helpers remain typed color surfaces unless a later task adds
 dedicated scalar-array APIs.
+
+### 3D scalar-mappable colorbar contract
+
+Matplotlib 3.10.9 colorbars consume the public scalar-mappable surface rather
+than private 3D projection data: `Colorbar` reads the mappable's `cmap`, `norm`,
+clim, `get_array`, and artist alpha, with callback wiring for later
+`changed()` updates. The mplot3d helpers preserve that contract by returning
+scalar-mappable collection types where upstream examples expect colorbars:
+`plot_surface` / `plot_trisurf` return `Poly3DCollection` instances that call
+`set_array` with average face z values when `cmap` is present; `scatter`
+returns a `Path3DCollection` from the 2D scatter path; contour helpers return
+`ContourSet` values whose levels and color values drive colorbar boundaries.
+`voxels`, `bar3d`, `fill_between`, quiver, stem, and line helpers use explicit
+color collection or line surfaces by default rather than scalar arrays.
+
+The Go colorbar path intentionally uses a narrower typed contract:
+`Figure.AddColorbar` accepts `ScalarMappable`, reads `ScalarMap()` for colormap,
+norm, and clim, and keeps the mappable handle so `syncColorbarMapping` can
+refresh mutable clim/colormap changes. Shared collections additionally expose
+`GetArray()` as a Matplotlib-style audit surface for scalar values, but
+`GetArray()` is not required by `AddColorbar` itself. Therefore the 3D colorbar
+integration audit treats collection-backed helpers as compatible when they
+return a `ScalarMappable` with matching `ScalarMap()` metadata and, where the
+underlying Matplotlib collection calls `set_array`, a matching `GetArray()`
+shape for the colorbar-driving scalar values.

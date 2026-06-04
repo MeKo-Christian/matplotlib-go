@@ -2268,10 +2268,17 @@ example/browser breadth as documentation work.
               3D scalar helper exposes array, cmap, norm, clim, alpha, and
               collection metadata in the same shape colorbar code expects.
 
-                - [ ] 17.75.4.4.4.1.1 Contract Inventory: compare the Go
+                - [x] 17.75.4.4.4.1.1 Contract Inventory: compare the Go
                   `ScalarMappable` and collection contracts with Matplotlib's
                   `ScalarMappable` / 3D collection return types, including
-                  `get_array`, cmap, norm, clim, and alpha.
+                  `get_array`, cmap, norm, clim, and alpha. Audited
+                  `core/scalar_mappable.go`, `core/collection_common.go`,
+                  `core/colorbar.go`,
+                  `third_party/matplotlib/lib/matplotlib/colorizer.py`,
+                  `third_party/matplotlib/lib/matplotlib/colorbar.py`, and
+                  `third_party/matplotlib/lib/mpl_toolkits/mplot3d/axes3d.py`;
+                  recorded the typed Go colorbar contract in
+                  `docs/matplotlib-migration-notes.md`.
 
                 - [ ] 17.75.4.4.4.1.2 Helper Coverage Audit: verify
                   `Surface`, `Trisurf`, `Contour`, `Contourf`, `TriContour`,
