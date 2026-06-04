@@ -692,6 +692,11 @@ func BoxPlot(data []float64, opts ...core.BoxPlotOptions) *core.BoxPlot2D {
 	return GCA().BoxPlot(data, opts...)
 }
 
+// Bxp delegates precomputed boxplot statistics to the current axes.
+func Bxp(stats []core.BxpStat, opts ...core.BxpOptions) *core.BxpContainer {
+	return GCA().Bxp(stats, opts...)
+}
+
 // StackPlot delegates to the current axes.
 func StackPlot(x []float64, ys [][]float64, opts ...core.StackPlotOptions) []*core.Fill2D {
 	return GCA().StackPlot(x, ys, opts...)
@@ -730,32 +735,12 @@ func Arrow(x, y, dx, dy float64, opts ...core.Arrow) *core.Arrow {
 
 // HLines adds horizontal line segments to the current axes.
 func HLines(y, xMin, xMax []float64, opts ...core.LineCollection) *core.LineCollection {
-	if len(y) == 0 || len(y) != len(xMin) || len(y) != len(xMax) {
-		return nil
-	}
-	segments := make([][]geom.Pt, len(y))
-	for i := range y {
-		segments[i] = []geom.Pt{
-			{X: xMin[i], Y: y[i]},
-			{X: xMax[i], Y: y[i]},
-		}
-	}
-	return addLineCollection(segments, opts...)
+	return GCA().HLines(y, xMin, xMax, opts...)
 }
 
 // VLines adds vertical line segments to the current axes.
 func VLines(x, yMin, yMax []float64, opts ...core.LineCollection) *core.LineCollection {
-	if len(x) == 0 || len(x) != len(yMin) || len(x) != len(yMax) {
-		return nil
-	}
-	segments := make([][]geom.Pt, len(x))
-	for i := range x {
-		segments[i] = []geom.Pt{
-			{X: x[i], Y: yMin[i]},
-			{X: x[i], Y: yMax[i]},
-		}
-	}
-	return addLineCollection(segments, opts...)
+	return GCA().VLines(x, yMin, yMax, opts...)
 }
 
 // Stem delegates to the current axes.
@@ -883,6 +868,11 @@ func Contour(data [][]float64, opts ...core.ContourOptions) *core.ContourSet {
 	return GCA().Contour(data, opts...)
 }
 
+// Clabel delegates contour labeling to the current axes.
+func Clabel(cs *core.ContourSet, opts ...core.ClabelOptions) []core.ContourLabel {
+	return GCA().Clabel(cs, opts...)
+}
+
 // Contourf delegates to the current axes.
 func Contourf(data [][]float64, opts ...core.ContourOptions) *core.ContourSet {
 	return GCA().Contourf(data, opts...)
@@ -951,6 +941,11 @@ func PieLabel(container *core.PieContainer, labels []string, opts ...core.PieLab
 // Violinplot delegates to the current axes.
 func Violinplot(data [][]float64, opts ...core.ViolinOptions) *core.ViolinContainer {
 	return GCA().Violinplot(data, opts...)
+}
+
+// Violin delegates precomputed violin statistics to the current axes.
+func Violin(stats []core.ViolinStat, opts ...core.ViolinStatsOptions) *core.ViolinContainer {
+	return GCA().Violin(stats, opts...)
 }
 
 // Table delegates to the current axes.

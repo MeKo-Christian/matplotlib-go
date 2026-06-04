@@ -630,12 +630,18 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	if hLines.Segments[1][0] != (geom.Pt{X: 0.5, Y: 2}) || hLines.Segments[1][1] != (geom.Pt{X: 3.5, Y: 2}) {
 		t.Fatalf("HLines second segment = %+v", hLines.Segments[1])
 	}
+	if hLinesBroadcast := HLines([]float64{3, 4}, []float64{-1}, []float64{1}); hLinesBroadcast == nil || len(hLinesBroadcast.Segments) != 2 {
+		t.Fatalf("HLines broadcast = %#v, want two segments", hLinesBroadcast)
+	}
 	vLines := VLines([]float64{1, 2}, []float64{-1, -2}, []float64{1, 2})
 	if vLines == nil || len(vLines.Segments) != 2 {
 		t.Fatalf("VLines() = %#v, want two segments", vLines)
 	}
 	if vLines.Segments[0][0] != (geom.Pt{X: 1, Y: -1}) || vLines.Segments[0][1] != (geom.Pt{X: 1, Y: 1}) {
 		t.Fatalf("VLines first segment = %+v", vLines.Segments[0])
+	}
+	if vLinesBroadcast := VLines([]float64{3, 4}, []float64{-2}, []float64{2}); vLinesBroadcast == nil || len(vLinesBroadcast.Segments) != 2 {
+		t.Fatalf("VLines broadcast = %#v, want two segments", vLinesBroadcast)
 	}
 	if step := Step([]float64{0, 1, 2}, []float64{1, 3, 2}); step == nil {
 		t.Fatal("Step() returned nil")
@@ -653,6 +659,9 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	if box := BoxPlot([]float64{1, 2, 3, 4}); box == nil {
 		t.Fatal("BoxPlot() returned nil")
 	}
+	if bxp := Bxp([]core.BxpStat{{Med: 2, Q1: 1, Q3: 3, Whislo: 0, Whishi: 4}}); bxp == nil || len(bxp.Medians) != 1 {
+		t.Fatalf("Bxp() = %#v, want one median", bxp)
+	}
 	if fills := StackPlot([]float64{0, 1}, [][]float64{{1, 2}, {2, 1}}); len(fills) != 2 {
 		t.Fatalf("StackPlot() returned %d fills, want 2", len(fills))
 	}
@@ -665,6 +674,29 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 	if labels := PieLabel(pie, []string{"one", "two"}); len(labels) != 2 {
 		t.Fatalf("PieLabel() returned %d labels, want 2", len(labels))
+	}
+	violin := Violin([]core.ViolinStat{{
+		Coords: []float64{1, 2, 3},
+		Vals:   []float64{0.2, 1, 0.2},
+		Mean:   2,
+		Median: 2,
+		Min:    1,
+		Max:    3,
+	}})
+	if violin == nil || violin.Bodies == nil || len(violin.Bodies.Polygons) != 1 {
+		t.Fatalf("Violin() = %#v, want one body", violin)
+	}
+
+	contours := Contour([][]float64{
+		{0, 1, 2},
+		{1, 2, 3},
+		{2, 3, 4},
+	}, core.ContourOptions{Levels: []float64{2}})
+	if contours == nil {
+		t.Fatal("Contour() returned nil")
+	}
+	if labels := Clabel(contours, core.ClabelOptions{Levels: []float64{2}}); len(labels) != 1 {
+		t.Fatalf("Clabel() returned %d labels, want 1", len(labels))
 	}
 
 	ax := GCA()

@@ -2076,7 +2076,7 @@ example/browser breadth as documentation work.
       delegates to contour label rendering and accepts the same control surface as
       upstream options; include unit tests for automatic and manual label placement.
 
-    - [ ] 17.75.2.4 Pyplot Parity Surface: add pyplot wrappers for each new 17.75.2
+    - [x] 17.75.2.4 Pyplot Parity Surface: add pyplot wrappers for each new 17.75.2
       helper (`Bxp`, `Violin`, `Ax*` collection calls for line families, and
       `Clabel`) plus regression tests that assert pyplot delegates to the expected
       axes-level implementation.
