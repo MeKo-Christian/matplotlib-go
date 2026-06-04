@@ -2454,9 +2454,17 @@ example/browser breadth as documentation work.
               need case-specific tolerances because of projection, clipping,
               or depth-order residuals before generating images.
 
-                - [ ] 17.75.4.5.1.2.1 Risk Classification: classify each
+                - [x] 17.75.4.5.1.2.1 Risk Classification: classify each
                   missing fixture by expected exactness, projection risk, text
-                  risk, and backend sensitivity.
+                  risk, and backend sensitivity. Classification:
+                  contour/contourf/tricontour/tricontourf are high projection
+                  and collection-order risk with low text risk; errorbar3d is
+                  medium projection/depth risk with low text risk;
+                  `mplot3d_bar2d_zdir` is medium projection and bar-edge risk;
+                  `mplot3d_text3d` is high text/layout risk plus medium
+                  projection-anchor risk. Backend sensitivity is normal AGG
+                  raster sensitivity for all; no optional-visual gate is
+                  expected from the inventory alone.
 
                 - [ ] 17.75.4.5.1.2.2 Proposed Tolerances: record proposed
                   per-case tolerances only for risks already explained by
