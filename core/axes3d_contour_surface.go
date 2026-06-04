@@ -1451,7 +1451,7 @@ func (a *Axes3D) Trisurf(tri Triangulation, z []float64, opts ...PlotOptions) *P
 
 	faceColor := color
 	faceColor.A *= alpha
-	faces, faceColors, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, firstPlotOptions(opts))
+	faces, faceColors, scalarValues, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, firstPlotOptions(opts))
 	if len(faces) == 0 {
 		return nil
 	}
@@ -1459,15 +1459,16 @@ func (a *Axes3D) Trisurf(tri Triangulation, z []float64, opts ...PlotOptions) *P
 		Polygons: faces,
 		PatchCollection: PatchCollection{
 			Collection: Collection{
-				Coords:    Coords(CoordData),
-				Label:     label,
-				Alpha:     1,
-				Antialias: antialias,
-				Colormap:  mapping.Colormap,
-				Norm:      mapping.Norm,
-				VMin:      mapping.VMin,
-				VMax:      mapping.VMax,
-				z:         faceZ,
+				Coords:       Coords(CoordData),
+				Label:        label,
+				Alpha:        1,
+				Antialias:    antialias,
+				Colormap:     mapping.Colormap,
+				Norm:         mapping.Norm,
+				VMin:         mapping.VMin,
+				VMax:         mapping.VMax,
+				ScalarValues: scalarValues,
+				z:            faceZ,
 			},
 			FaceColors: faceColors,
 			EdgeColor:  edgeColor,
@@ -1479,13 +1480,14 @@ func (a *Axes3D) Trisurf(tri Triangulation, z []float64, opts ...PlotOptions) *P
 	a.Add(collection)
 	a.add3DReprojector(func() {
 		if collection != nil {
-			faces, faceColors, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, firstPlotOptions(opts))
+			faces, faceColors, scalarValues, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, firstPlotOptions(opts))
 			collection.Polygons = faces
 			collection.FaceColors = faceColors
 			collection.Colormap = mapping.Colormap
 			collection.Norm = mapping.Norm
 			collection.VMin = mapping.VMin
 			collection.VMax = mapping.VMax
+			collection.ScalarValues = scalarValues
 			collection.z = faceZ
 		}
 	}, limitsChanged)

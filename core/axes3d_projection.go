@@ -84,7 +84,7 @@ func depthShadedScatterColors(color render.Color, points []projectedScatterPoint
 	return colors
 }
 
-func (a *Axes3D) projectTriangulationFaces(tri Triangulation, z []float64, baseColor render.Color, opt PlotOptions) ([][]geom.Pt, []render.Color, float64, ScalarMapInfo) {
+func (a *Axes3D) projectTriangulationFaces(tri Triangulation, z []float64, baseColor render.Color, opt PlotOptions) ([][]geom.Pt, []render.Color, []float64, float64, ScalarMapInfo) {
 	type triFace struct {
 		polygon []geom.Pt
 		value   float64
@@ -143,10 +143,15 @@ func (a *Axes3D) projectTriangulationFaces(tri Triangulation, z []float64, baseC
 	shade := trisurfShadeEnabled(opt, useMapping)
 	polygons := make([][]geom.Pt, len(faces))
 	colors := make([]render.Color, len(faces))
+	scalarValues := []float64(nil)
+	if useMapping {
+		scalarValues = make([]float64, len(faces))
+	}
 	for i, face := range faces {
 		polygons[i] = face.polygon
 		if useMapping {
 			colors[i] = mapping.Color(face.value, baseColor.A)
+			scalarValues[i] = face.value
 		} else {
 			if shade {
 				colors[i] = face.color
@@ -155,7 +160,7 @@ func (a *Axes3D) projectTriangulationFaces(tri Triangulation, z []float64, baseC
 			}
 		}
 	}
-	return polygons, colors, computed3DCollectionZ(collectionDepth), mapping
+	return polygons, colors, scalarValues, computed3DCollectionZ(collectionDepth), mapping
 }
 
 func (a *Axes3D) pointWithin3DViewLimits(point vec3) bool {

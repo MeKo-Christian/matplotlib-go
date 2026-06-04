@@ -1351,6 +1351,13 @@ func TestAxes3DTrisurfExposesConfiguredNorm(t *testing.T) {
 	if mapping.Colormap != cmap || mapping.Norm == nil || mapping.Norm.NormName() != "log" {
 		t.Fatalf("trisurf scalar map = %+v, want inferno/log norm", mapping)
 	}
+	array := surface.GetArray()
+	if got, want := len(array), 1; got != want {
+		t.Fatalf("trisurf scalar array len = %d, want %d Matplotlib average-z value", got, want)
+	}
+	if len(array) == 1 && !approx(array[0], 37, 1e-12) {
+		t.Fatalf("trisurf scalar array = %v, want Matplotlib triangle average z [37]", array)
+	}
 }
 
 func TestAxes3DTrisurfHonorsAntialiasSetting(t *testing.T) {

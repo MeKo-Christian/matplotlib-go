@@ -2207,7 +2207,7 @@ example/browser breadth as documentation work.
               facecolors, edgecolors, shade disabling under cmap, alpha, and
               scalar-map metadata.
 
-            - [ ] 17.75.4.4.2.2 Trisurf Color Semantics: align `Trisurf`
+            - [x] 17.75.4.4.2.2 Trisurf Color Semantics: align `Trisurf`
               with `plot_trisurf` for per-triangle average-z scalar arrays,
               cmap/norm/clim propagation, shade disabling under cmap,
               explicit color, edgecolor, alpha, and masked-triangle color
