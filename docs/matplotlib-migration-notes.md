@@ -120,3 +120,34 @@ or mutable `Poly3DCollection`/`Line3DCollection` internals. Projection and depth
 ordering are implemented as deterministic pre-projected 2D artists, so rare
 interpenetrating 3D geometry can still differ from Matplotlib's painter-order
 heuristics.
+
+## Phase 17.75.4 mplot3d Axis Defaults and View State
+
+The 17.75.4 axis/view audit checked the Go `Axes3D` state against
+`mpl_toolkits/mplot3d/axes3d.py` and `axis3d.py` in the vendored Matplotlib
+3.10.9 source:
+
+- View defaults match Matplotlib's static-rendering defaults: elevation `30`,
+  azimuth `-60`, roll `0`, vertical axis `z`, camera distance `10`, and the
+  4:4:3 box-aspect scale used by mplot3d.
+- `Axes3D.SetViewInit` carries the full view state needed for roll and
+  vertical-axis projection, while `SetProjectionType("persp"|"ortho")`
+  mirrors Matplotlib's projection-type validation and focal-length behavior for
+  static rendering.
+- Explicit x/y/z view limits are kept in caller order so inverted 3D axes
+  project like Matplotlib. Tick generation and `AxLimClip` checks still use
+  the numeric inclusive range so inverted axes retain visible ticks, labels,
+  and clipped artists.
+- Pane selection, grid segments, axis lines, tick directions, pane colors,
+  rc-derived grid/axis colors, line widths, and grid dash styling are aligned
+  with the mplot3d frame logic where they affect static output.
+- Tick-label and axis-label placement uses Matplotlib's rough point-to-data
+  offset model, includes endpoint tick labels, keeps Unicode-minus formatting,
+  and supports typed x/y/z tick-label visibility toggles.
+
+Intentional differences remain: Go exposes typed setters and immutable option
+values rather than Python's mutable `Axes3D` artist objects, shared-view axes,
+`data=` dispatch, GUI mouse rotation/pan/zoom callbacks, or arbitrary keyword
+mutation. `Axes3D.View()` reports the legacy elevation/azimuth/distance triple;
+roll, vertical-axis, projection type, and focal length are controlled through
+dedicated typed methods.

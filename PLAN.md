@@ -2155,7 +2155,7 @@ example/browser breadth as documentation work.
           residual mplot3d divergences in parity metadata and migration notes,
           then update `docs/matplotlib-parity-status.md`.
 
-    - [ ] 17.75.4.3 3D Axis Defaults and View State: align mplot3d defaults for
+    - [x] 17.75.4.3 3D Axis Defaults and View State: align mplot3d defaults for
       view initialization, axis-limit autoscaling, pane/grid styling, aspect
       handling, and label/tick placement where they affect static rendering.
       Complete the scoped audits below before marking this parent item done.
@@ -2182,7 +2182,7 @@ example/browser breadth as documentation work.
           behavior against upstream axis placement logic. Add tests for
           view-dependent placement and label toggles.
 
-        - [ ] 17.75.4.3.5 Axis Defaults Ledger: record intentional 3D axis and
+        - [x] 17.75.4.3.5 Axis Defaults Ledger: record intentional 3D axis and
           view-state divergences in parity metadata and migration notes, then
           regenerate `docs/matplotlib-parity-status.md`.
 
