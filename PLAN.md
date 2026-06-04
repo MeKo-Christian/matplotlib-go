@@ -576,11 +576,11 @@ bbox scaling/offset behavior for auto row-label columns, plus Matplotlib's
 auto patch snapping for rectilinear table cell paths, butt caps on two-sided
 violin summary lines, collection-level violin body alpha, and unclipped table
 overlay drawing.
-`mixed_raster_vector` is now `RMSE 8.08` after the Matplotlib-compatible polar
-theta label padding/centering fix and moving axes legends to the unclipped
-overlay pass so polar legends are not clipped by the circular axes patch; a
-2026-06-04 audit found the polar data region is already below target and the
-remaining residual is dominated by title/legend/tick text raster placement.
+`mixed_raster_vector` is now `RMSE 6.39` after removing the Go-only explicit
+rasterization DPI override so the fixture directly mirrors Matplotlib's
+`rasterized=True`, and refreshing a stale Matplotlib reference generated from
+the current Python source. The polar data region was already below target;
+remaining residual is mostly title/legend/tick text raster placement.
 `layout_bbox_helpers` is now `RMSE 7.32` after converting its dashed
 figure-space rectangle pattern from Matplotlib points to pixels at 100 DPI;
 remaining residual is mostly text and AGG straight-alpha/color quantization.
@@ -621,12 +621,15 @@ refreshed.
 quiver direction signs, Barbs' point-length collection scaling / default barb
 side semantics, raw barb vector-angle rotation, and closed barb glyph paths; its
 optional Go golden was refreshed.
-`arrays_showcase` is now `RMSE 7.72`, `mesh_contour_tri` is now `RMSE 7.14`,
+`arrays_showcase` is now `RMSE 6.31`, `mesh_contour_tri` is now `RMSE 7.14`,
 `unstructured_showcase` is now `RMSE 5.50`, `pcolor_flat` is now `RMSE 4.00`,
 and `pcolormesh_masked` is now `RMSE 0.59` after matching Matplotlib's split
 mesh defaults: `pcolormesh` snaps rectilinear cells and disables antialiasing,
 while `pcolor` keeps unsnapped, collection-default antialiasing when edges are
-stroked. The affected Go goldens were refreshed.
+stroked. `arrays_showcase` later dropped below target after fixing bottom x-label
+fallback placement for matrix views with hidden bottom ticks, removing a stale
+top-xlabel title `+1` compensation, and matching contour line cap style. The
+affected Go goldens were refreshed.
 `legend_layout_matrix` is now `RMSE 7.14` after matching Matplotlib legend
 patch handle boxes, full-width line handles, 0.3-font scatter handle padding,
 and errorbar legend cap/stem geometry, plus aligning the Python reference
@@ -1314,22 +1317,24 @@ renderer contract, backend implementation, or the AGG port itself.
       `RMSE 5.50`; residual is mostly antialiasing and remaining
       triangulation/contour edge details.
 
-### 8.54 `arrays_showcase` (RMSE 7.72)
+### 8.54 `arrays_showcase` (RMSE 6.31)
 
 - [x] Code: source audited; heatmap, mesh, and spy data match. Spy marker
       panel picked up the Line2D marker sizing fix; contour lines now use
-      structured-grid cell clipping instead of triangulating quads.
+      structured-grid cell clipping instead of triangulating quads. Follow-up
+      core pass fixed bottom x-label fallback placement when matrix views hide
+      bottom ticks, removed the stale top-xlabel title `+1` compensation, and
+      matched Matplotlib's butt cap style for contour line collections.
 - [x] Visual: center contour paths now draw above the pcolormesh cells by
       defaulting line contours to Matplotlib's line z-order. Focused
       `TestReferenceCompare/arrays_showcase` passes and the refreshed optional
-      golden now reports `RMSE 7.72` after the `PColorMesh` antialias default
-      fix.
-- [ ] Likely remaining areas: contour label placement/inline clipping, text and
+      golden now reports `RMSE 6.31`.
+- [x] Likely remaining areas: contour label placement/inline clipping, text and
       mesh antialiasing.
 - [ ] Follow-up: port Matplotlib 3.10.9 automatic `ContourLabeler.clabel`
-      placement/inline clipping more closely. Current artifact audit shows the
-      mesh subplot at local `RMSE 11.98` and contour-label region at
-      `RMSE 15.13`, making label placement the dominant residual.
+      placement/inline clipping more closely if this fixture is revisited below
+      the current target; remaining residual is dominated by contour label
+      placement and mesh antialiasing.
 
 ### 8.55 `axisartist_showcase` (RMSE 6.66)
 

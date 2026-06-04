@@ -113,7 +113,7 @@ func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
 		Colors:    colors,
 		LineWidth: lineWidth,
 		LineJoin:  render.JoinRound,
-		LineCap:   render.CapRound,
+		LineCap:   render.CapButt,
 	}
 	set.lineLevels = append([]float64(nil), polylineLevels...)
 	if opt.LabelLines {
@@ -374,7 +374,7 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 				Colors:    colors,
 				LineWidth: lineWidth,
 				LineJoin:  render.JoinRound,
-				LineCap:   render.CapRound,
+				LineCap:   render.CapButt,
 			}
 			set.lineLevels = append([]float64(nil), polylineLevels...)
 			if opt.LabelLines {

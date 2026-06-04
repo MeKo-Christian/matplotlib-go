@@ -559,7 +559,7 @@ func TestDrawAxesLabels_XLabelUsesTickBoundsAndLabelPad(t *testing.T) {
 	layout := measureSingleLineTextLayout(r, "Group", axisLabelFontSize(ctx), ctx.RC.FontKey)
 	// Display space is y-up: the bottom x-label sits below the axis at the
 	// lowest extent minus the pad (matches drawAxesLabels).
-	bottomExtent := spinePixelY(AxisBottom, px)
+	bottomExtent := xLabelSpinePixelY(AxisBottom, px)
 	if tickBounds, ok := axisTickLabelBounds(ax.XAxis, r, ctx); ok {
 		bottomExtent = math.Min(bottomExtent, tickBounds.Min.Y)
 	}
@@ -704,7 +704,7 @@ func TestDrawAxesLabels_TopXLabelUsesTopTickBoundsAndLabelPad(t *testing.T) {
 	layout := measureSingleLineTextLayout(r, "Group", axisLabelFontSize(ctx), ctx.RC.FontKey)
 	// Display space is y-up: the top x-label sits above the axis at the highest
 	// extent plus the pad (matches drawAxesLabels).
-	topExtent := spinePixelY(AxisTop, px)
+	topExtent := xLabelSpinePixelY(AxisTop, px)
 	if tickBounds, ok := axisTickLabelBounds(ax.XAxisTop, r, ctx); ok {
 		topExtent = math.Max(topExtent, tickBounds.Max.Y)
 	}
@@ -774,7 +774,7 @@ func TestDrawAxesLabels_TitleClearsTopXLabel(t *testing.T) {
 	}
 }
 
-func TestDrawAxesLabels_TitleAboveTopXLabelUsesMatplotlibSecondAdjustment(t *testing.T) {
+func TestDrawAxesLabels_TitleAboveTopXLabelUsesMatplotlibPadOnly(t *testing.T) {
 	ax := &Axes{
 		XAxis:      NewXAxis(),
 		XAxisTop:   NewXAxis(),
@@ -818,14 +818,14 @@ func TestDrawAxesLabels_TitleAboveTopXLabelUsesMatplotlibSecondAdjustment(t *tes
 	topExtent := titleTopExtent(ax, r, ctx, px)
 	wantBounds, ok := textInkRect(geom.Pt{
 		X: r.origins[0].X,
-		Y: topExtent + pointsToPixels(ctx.RC, 6) + 1,
+		Y: topExtent + pointsToPixels(ctx.RC, 6),
 	}, titleLayout)
 	if !ok {
 		t.Fatal("expected adjusted title bounds")
 	}
 	want := wantBounds.Min.Y
 	if math.Abs(titleBounds.Min.Y-want) > 1e-9 {
-		t.Fatalf("title bottom = %v, want %v after Matplotlib second adjustment", titleBounds.Min.Y, want)
+		t.Fatalf("title bottom = %v, want %v after Matplotlib title pad", titleBounds.Min.Y, want)
 	}
 }
 

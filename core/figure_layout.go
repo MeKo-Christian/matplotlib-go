@@ -86,7 +86,7 @@ func computeFigureTextAlignment(fig *Figure, r render.Renderer, figureRect geom.
 
 		if ax.XLabel != "" {
 			side := ax.effectiveXLabelSide()
-			key := alignmentKey(side, spinePixelY(side, px))
+			key := alignmentKey(side, xLabelSpinePixelY(side, px))
 			extent := xLabelExtent(ax, r, ctx, px, side)
 			if side == AxisTop {
 				if current, ok := alignment.xLabelExtents[key]; !ok || extent < current {
@@ -162,7 +162,7 @@ func titleTopExtentForAxes(ax *Axes, r render.Renderer, ctx *DrawContext, px geo
 }
 
 func xLabelExtent(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, side AxisSide) float64 {
-	extent := spinePixelY(side, px)
+	extent := xLabelSpinePixelY(side, px)
 	xAxis := ax.axisForXLabelSide(side)
 	if xAxis == nil {
 		return extent

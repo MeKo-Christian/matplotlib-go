@@ -52,7 +52,7 @@ func Plot() *core.Figure {
 		Marker:     core.MarkerCircle,
 		Label:      "raster cloud",
 	}
-	cloud.SetRasterization(render.Rasterization{Mode: render.RasterizeAlways, DPI: 180})
+	cloud.SetRasterization(render.Rasterization{Mode: render.RasterizeAlways})
 	ax.Add(cloud)
 
 	lineTheta := make([]float64, 180)

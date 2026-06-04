@@ -2359,9 +2359,6 @@ func titleAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rec
 	if aligned, ok := alignment.titleExtents[alignmentKey(AxisTop, spinePixelY(AxisTop, px))]; ok {
 		topExtent = aligned
 	}
-	if ax != nil && ax.XLabel != "" && ax.effectiveXLabelSide() == AxisTop {
-		topExtent += 1
-	}
 	return geom.Pt{
 		X: ctx.TransAxes().Apply(geom.Pt{X: 0.5, Y: 1}).X,
 		Y: topExtent + titlePadPx,
@@ -2382,26 +2379,26 @@ func xLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 
 	xAxis := ax.axisForXLabelSide(side)
 	if side == AxisTop {
-		topExtent := spinePixelY(AxisTop, px)
+		topExtent := xLabelSpinePixelY(AxisTop, px)
 		if xAxis != nil {
 			if tickBounds, ok := axisTickLabelBounds(xAxis, r, ctx); ok {
 				topExtent = math.Max(topExtent, tickBounds.Max.Y)
 			}
 		}
-		if aligned, ok := alignment.xLabelExtents[alignmentKey(side, spinePixelY(side, px))]; ok {
+		if aligned, ok := alignment.xLabelExtents[alignmentKey(side, xLabelSpinePixelY(side, px))]; ok {
 			topExtent = aligned
 		}
 		anchor.Y = topExtent + axisLabelPadPx(ctx)
 		return anchor, textLayoutVAlignBaseline
 	}
 
-	bottomExtent := spinePixelY(AxisBottom, px)
+	bottomExtent := xLabelSpinePixelY(AxisBottom, px)
 	if xAxis != nil {
 		if tickBounds, ok := axisTickLabelBounds(xAxis, r, ctx); ok {
 			bottomExtent = math.Min(bottomExtent, tickBounds.Min.Y)
 		}
 	}
-	if aligned, ok := alignment.xLabelExtents[alignmentKey(side, spinePixelY(side, px))]; ok {
+	if aligned, ok := alignment.xLabelExtents[alignmentKey(side, xLabelSpinePixelY(side, px))]; ok {
 		bottomExtent = aligned
 	}
 	anchor.Y = bottomExtent - axisLabelPadPx(ctx)
@@ -2506,6 +2503,17 @@ func spinePixelX(side AxisSide, px geom.Rect) float64 {
 func spinePixelY(side AxisSide, px geom.Rect) float64 {
 	p1, _ := spinePixelEndpoints(side, px)
 	return p1.Y
+}
+
+func xLabelSpinePixelY(side AxisSide, px geom.Rect) float64 {
+	switch side {
+	case AxisBottom:
+		return math.Round(px.Min.Y) - 0.5
+	case AxisTop:
+		return math.Round(px.Max.Y) - 0.5
+	default:
+		return spinePixelY(side, px)
+	}
 }
 
 func (a *Axes) adjustedLayout(f *Figure) geom.Rect {

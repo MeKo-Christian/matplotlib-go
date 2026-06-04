@@ -192,8 +192,97 @@ func TestAxesSpyLeavesXLabelAtBottomWithTopTicks(t *testing.T) {
 	if len(r.texts) != 1 || r.texts[0] != "column" {
 		t.Fatalf("drawn texts = %v, want only xlabel", r.texts)
 	}
-	if r.origins[0].Y >= spinePixelY(AxisBottom, px) {
-		t.Fatalf("spy xlabel origin Y = %.3f, want below bottom spine %.3f", r.origins[0].Y, spinePixelY(AxisBottom, px))
+	if r.origins[0].Y >= xLabelSpinePixelY(AxisBottom, px) {
+		t.Fatalf("spy xlabel origin Y = %.3f, want below bottom spine %.3f", r.origins[0].Y, xLabelSpinePixelY(AxisBottom, px))
+	}
+}
+
+func TestAxesSpyDrawFigureLeavesXLabelAtBottomOnce(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(unitRect())
+	ax.SetXLabel("column")
+	ax.Spy([][]float64{{1, 0}, {0, 1}}, SpyOptions{MarkerSize: 10})
+
+	r := &axesLabelRecordingRenderer{}
+	DrawFigure(fig, r)
+
+	var origins []geom.Pt
+	for i, drawn := range r.texts {
+		if drawn == "column" {
+			origins = append(origins, r.origins[i])
+		}
+	}
+	if len(origins) != 1 {
+		t.Fatalf("drawn column origins = %v, want one xlabel", origins)
+	}
+
+	px := ax.adjustedLayout(fig)
+	if origins[0].Y >= xLabelSpinePixelY(AxisBottom, px) {
+		t.Fatalf("spy xlabel origin Y = %.3f, want below bottom spine %.3f", origins[0].Y, xLabelSpinePixelY(AxisBottom, px))
+	}
+}
+
+func TestAxesSpyXLabelNotAffectedByEarlierTopXLabel(t *testing.T) {
+	fig := NewFigure(1240, 620)
+
+	topLabelAx := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.05, Y: 0.14},
+		Max: geom.Pt{X: 0.31, Y: 0.88},
+	})
+	topLabelAx.SetXLabel("column")
+	topLabelAx.Image([][]float64{
+		{1, 2, 3, 4, 5},
+		{2, 3, 4, 5, 6},
+		{3, 4, 5, 6, 7},
+		{4, 5, 6, 7, 8},
+	}, ImageOptions{Origin: ImageOriginUpper})
+	topLabelAx.SetXLim(-0.5, 4.5)
+	topLabelAx.SetYLim(3.5, -0.5)
+	_ = topLabelAx.SetAspect("equal")
+	if topLabelAx.XAxis != nil {
+		topLabelAx.XAxis.ShowTicks = false
+		topLabelAx.XAxis.ShowLabels = false
+	}
+	if top := topLabelAx.TopAxis(); top != nil {
+		top.ShowTicks = true
+		top.ShowLabels = true
+	}
+	_ = topLabelAx.SetXLabelPosition("top")
+
+	spyAx := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.69, Y: 0.14},
+		Max: geom.Pt{X: 0.95, Y: 0.88},
+	})
+	spyAx.SetXLabel("column")
+	spyData := make([][]float64, 18)
+	for row := range spyData {
+		spyData[row] = make([]float64, 18)
+		for col := range spyData[row] {
+			if row == col || row+col == 17 {
+				spyData[row][col] = 1
+			}
+		}
+	}
+	spyAx.Spy(spyData, SpyOptions{MarkerSize: 10})
+	if spyAx.effectiveXLabelSide() != AxisBottom {
+		t.Fatalf("spy xlabel side before draw = %v, want bottom", spyAx.effectiveXLabelSide())
+	}
+
+	r := &axesLabelRecordingRenderer{}
+	DrawFigure(fig, r)
+
+	var spyOrigins []geom.Pt
+	for i, drawn := range r.texts {
+		if drawn == "column" && r.origins[i].X > 800 {
+			spyOrigins = append(spyOrigins, r.origins[i])
+		}
+	}
+	if len(spyOrigins) != 1 {
+		t.Fatalf("spy column origins = %v, want one xlabel", spyOrigins)
+	}
+	px := spyAx.adjustedLayout(fig)
+	if spyOrigins[0].Y >= xLabelSpinePixelY(AxisBottom, px) {
+		t.Fatalf("spy xlabel origin Y = %.3f, want below bottom spine %.3f", spyOrigins[0].Y, xLabelSpinePixelY(AxisBottom, px))
 	}
 }
 
