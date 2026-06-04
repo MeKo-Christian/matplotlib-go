@@ -821,14 +821,16 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) *Hist2D {
 
 // ErrorBarOptions holds optional parameters for error bar plots.
 type ErrorBarOptions struct {
-	Color      *render.Color // if nil, uses automatic color cycling
-	LineWidth  *float64      // error bar line width (px)
-	CapSize    *float64      // cap size in points
-	Marker     *MarkerType   // optional data marker equivalent to Matplotlib fmt markers
-	MarkerSize *float64      // marker size in points
-	Alpha      *float64      // alpha transparency
-	Label      string        // series label for legend
-	NoDataLine bool          // true matches Matplotlib fmt="none"
+	Color           *render.Color // if nil, uses automatic color cycling
+	LineWidth       *float64      // error bar line width (px)
+	CapSize         *float64      // cap size in points
+	Marker          *MarkerType   // optional data marker equivalent to Matplotlib fmt markers
+	MarkerSize      *float64      // marker size in points
+	Alpha           *float64      // alpha transparency
+	Label           string        // series label for legend
+	NoDataLine      bool          // true matches Matplotlib fmt="none"
+	ErrorEvery      int           // draw error bars every N points, default 1
+	ErrorEveryStart int           // starting point for ErrorEvery, matching errorevery=(start,N)
 
 	XErrLower []float64 // optional asymmetric lower x errors
 	XErrUpper []float64 // optional asymmetric upper x errors
@@ -883,6 +885,13 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 		!validBoolValues(opt.XLoLimits, n) || !validBoolValues(opt.XUpLimits, n) {
 		return nil
 	}
+	if opt.ErrorEvery < 0 || (opt.ErrorEvery == 0 && opt.ErrorEveryStart != 0) || opt.ErrorEveryStart < 0 {
+		return nil
+	}
+	errorEvery := opt.ErrorEvery
+	if errorEvery == 0 {
+		errorEvery = 1
+	}
 
 	pts := make([]geom.Pt, n)
 	for i := 0; i < n; i++ {
@@ -890,23 +899,25 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 	}
 
 	bar := &ErrorBar{
-		XY:         pts,
-		XErr:       xErr,
-		YErr:       yErr,
-		XErrLower:  append([]float64(nil), opt.XErrLower...),
-		XErrUpper:  append([]float64(nil), opt.XErrUpper...),
-		YErrLower:  append([]float64(nil), opt.YErrLower...),
-		YErrUpper:  append([]float64(nil), opt.YErrUpper...),
-		LoLimits:   append([]bool(nil), opt.LoLimits...),
-		UpLimits:   append([]bool(nil), opt.UpLimits...),
-		XLoLimits:  append([]bool(nil), opt.XLoLimits...),
-		XUpLimits:  append([]bool(nil), opt.XUpLimits...),
-		Color:      color,
-		LineWidth:  lineWidth,
-		CapSize:    capSizePx,
-		Alpha:      alpha,
-		Label:      opt.Label,
-		NoDataLine: opt.NoDataLine,
+		XY:              pts,
+		XErr:            xErr,
+		YErr:            yErr,
+		XErrLower:       append([]float64(nil), opt.XErrLower...),
+		XErrUpper:       append([]float64(nil), opt.XErrUpper...),
+		YErrLower:       append([]float64(nil), opt.YErrLower...),
+		YErrUpper:       append([]float64(nil), opt.YErrUpper...),
+		LoLimits:        append([]bool(nil), opt.LoLimits...),
+		UpLimits:        append([]bool(nil), opt.UpLimits...),
+		XLoLimits:       append([]bool(nil), opt.XLoLimits...),
+		XUpLimits:       append([]bool(nil), opt.XUpLimits...),
+		Color:           color,
+		LineWidth:       lineWidth,
+		CapSize:         capSizePx,
+		Alpha:           alpha,
+		Label:           opt.Label,
+		NoDataLine:      opt.NoDataLine,
+		ErrorEvery:      errorEvery,
+		ErrorEveryStart: opt.ErrorEveryStart,
 	}
 	if opt.Marker != nil {
 		bar.Marker = *opt.Marker

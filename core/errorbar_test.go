@@ -379,3 +379,67 @@ func TestAxes_ErrorBar_AsymmetricLimitsAndValidation(t *testing.T) {
 		t.Fatal("asymmetric errors with invalid length should be rejected")
 	}
 }
+
+func TestErrorBarErrorEverySkipsErrorStemsButKeepsDataLine(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+	every := 2
+	errBar := ax.ErrorBar(
+		[]float64{0, 1, 2, 3, 4},
+		[]float64{1, 2, 3, 4, 5},
+		nil,
+		[]float64{0.2},
+		ErrorBarOptions{ErrorEvery: every},
+	)
+	if errBar == nil {
+		t.Fatal("expected errorbar")
+	}
+
+	r := &recordingRenderer{}
+	ctx := createTestDrawContext()
+	errBar.Draw(r, ctx)
+
+	if !hasErrorBarDataLine(r.pathCalls, ctx, errBar.XY) {
+		t.Fatal("errorevery should not thin the data line")
+	}
+	if got, want := countNonDataLinePaths(r.pathCalls, ctx, errBar.XY), 9; got != want {
+		t.Fatalf("errorbar-only path count = %d, want stems/caps for indices 0,2,4 (%d)", got, want)
+	}
+}
+
+func TestErrorBarErrorEveryStartMatchesTupleForm(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+	every := 2
+	start := 1
+	errBar := ax.ErrorBar(
+		[]float64{0, 1, 2, 3, 4},
+		[]float64{1, 2, 3, 4, 5},
+		nil,
+		[]float64{0.2},
+		ErrorBarOptions{ErrorEvery: every, ErrorEveryStart: start},
+	)
+	if errBar == nil {
+		t.Fatal("expected errorbar")
+	}
+
+	r := &recordingRenderer{}
+	ctx := createTestDrawContext()
+	errBar.Draw(r, ctx)
+
+	if got, want := countNonDataLinePaths(r.pathCalls, ctx, errBar.XY), 6; got != want {
+		t.Fatalf("errorbar-only path count = %d, want stems/caps for indices 1,3 (%d)", got, want)
+	}
+	if got := ax.ErrorBar([]float64{0, 1}, []float64{1, 2}, nil, []float64{0.1}, ErrorBarOptions{ErrorEvery: -1}); got != nil {
+		t.Fatal("negative ErrorEvery should be rejected")
+	}
+}
+
+func countNonDataLinePaths(calls []recordedPathCall, ctx *DrawContext, points []geom.Pt) int {
+	count := 0
+	for _, call := range calls {
+		if hasErrorBarDataLine([]recordedPathCall{call}, ctx, points) {
+			continue
+		}
+		count++
+	}
+	return count
+}

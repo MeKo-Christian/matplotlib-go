@@ -9,27 +9,29 @@ import (
 
 // ErrorBar renders symmetric horizontal and/or vertical error bars for points.
 type ErrorBar struct {
-	XY         []geom.Pt    // data-space points
-	XErr       []float64    // symmetric x errors (same length as XY or broadcast scalar)
-	YErr       []float64    // symmetric y errors (same length as XY or broadcast scalar)
-	XErrLower  []float64    // asymmetric lower x errors
-	XErrUpper  []float64    // asymmetric upper x errors
-	YErrLower  []float64    // asymmetric lower y errors
-	YErrUpper  []float64    // asymmetric upper y errors
-	LoLimits   []bool       // y value is a lower limit
-	UpLimits   []bool       // y value is an upper limit
-	XLoLimits  []bool       // x value is a lower limit
-	XUpLimits  []bool       // x value is an upper limit
-	Color      render.Color // stroke color
-	LineWidth  float64      // stroke width in pixels
-	CapSize    float64      // cap size in pixels
-	Marker     MarkerType   // optional data marker, matching Matplotlib fmt markers
-	MarkerSet  bool
-	MarkerSize float64 // marker size in points
-	Alpha      float64 // alpha transparency (0-1), if 0 uses 1.0
-	Label      string  // series label for legend
-	NoDataLine bool    // true matches Matplotlib fmt="none" data-line suppression
-	z          float64 // z-order
+	XY              []geom.Pt    // data-space points
+	XErr            []float64    // symmetric x errors (same length as XY or broadcast scalar)
+	YErr            []float64    // symmetric y errors (same length as XY or broadcast scalar)
+	XErrLower       []float64    // asymmetric lower x errors
+	XErrUpper       []float64    // asymmetric upper x errors
+	YErrLower       []float64    // asymmetric lower y errors
+	YErrUpper       []float64    // asymmetric upper y errors
+	LoLimits        []bool       // y value is a lower limit
+	UpLimits        []bool       // y value is an upper limit
+	XLoLimits       []bool       // x value is a lower limit
+	XUpLimits       []bool       // x value is an upper limit
+	Color           render.Color // stroke color
+	LineWidth       float64      // stroke width in pixels
+	CapSize         float64      // cap size in pixels
+	Marker          MarkerType   // optional data marker, matching Matplotlib fmt markers
+	MarkerSet       bool
+	MarkerSize      float64 // marker size in points
+	Alpha           float64 // alpha transparency (0-1), if 0 uses 1.0
+	Label           string  // series label for legend
+	NoDataLine      bool    // true matches Matplotlib fmt="none" data-line suppression
+	ErrorEvery      int     // draw error bars every N points, default 1
+	ErrorEveryStart int     // starting point for ErrorEvery
+	z               float64 // z-order
 }
 
 // Draw renders each error bar from XY to XY with symmetric offsets.
@@ -73,6 +75,9 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 
 	for i, pt := range e.XY {
+		if !e.errorEveryApplies(i) {
+			continue
+		}
 		xLow, xHigh := resolveErrorRange(e.XErr, e.XErrLower, e.XErrUpper, i)
 		yLow, yHigh := resolveErrorRange(e.YErr, e.YErrLower, e.YErrUpper, i)
 		xLoLimit := resolveBool(e.XLoLimits, i)
@@ -219,6 +224,9 @@ func (e *ErrorBar) Bounds(*DrawContext) geom.Rect {
 			bounds.Max.Y = pt.Y
 		}
 
+		if !e.errorEveryApplies(i) {
+			continue
+		}
 		xLow, xHigh := resolveErrorRange(e.XErr, e.XErrLower, e.XErrUpper, i)
 		yLow, yHigh := resolveErrorRange(e.YErr, e.YErrLower, e.YErrUpper, i)
 		if resolveBool(e.XLoLimits, i) {
@@ -256,6 +264,18 @@ func (e *ErrorBar) Bounds(*DrawContext) geom.Rect {
 	}
 
 	return bounds
+}
+
+func (e *ErrorBar) errorEveryApplies(i int) bool {
+	every := e.ErrorEvery
+	if every <= 0 {
+		every = 1
+	}
+	start := e.ErrorEveryStart
+	if start < 0 || i < start {
+		return false
+	}
+	return (i-start)%every == 0
 }
 
 func resolveErrorRange(symmetric, lower, upper []float64, i int) (float64, float64) {
