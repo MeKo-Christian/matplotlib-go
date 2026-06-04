@@ -198,3 +198,14 @@ integration audit treats collection-backed helpers as compatible when they
 return a `ScalarMappable` with matching `ScalarMap()` metadata and, where the
 underlying Matplotlib collection calls `set_array`, a matching `GetArray()`
 shape for the colorbar-driving scalar values.
+
+The helper-level audit currently classifies the Go 3D helpers this way:
+
+| Helper group | Colorbar-compatible state | Notes |
+| --- | --- | --- |
+| `Surface` / `PlotSurfaceGrid` | yes | Returned `PolyCollection` exposes average-z `GetArray()`, cmap, norm, and clim metadata when `Colormap` is set. |
+| `Trisurf` | yes | Returned `PolyCollection` exposes per-triangle average-z `GetArray()`, cmap, norm, and clim metadata when `Colormap` is set. |
+| `Contour` / `TriContour` | yes | Returned `LineCollection` exposes level arrays and scalar-map metadata unless explicit colors disable the scalar map. |
+| `Contourf` / `TriContourf` | yes | Returned `PolyCollection` exposes filled-band layer arrays and scalar-map metadata unless explicit colors disable the scalar map. |
+| `Scatter3D` | yes | Returned `Scatter2D` exposes `ScalarMap()` and `GetArray()` directly, while projected `PathCollection` draw state keeps the depth-shaded mapped colors. |
+| `Voxels`, `Bar3D`, `FillBetween3D`, `Quiver3D`, `Wireframe`, `ErrorBar3D`, `Stem3D`, `Plot3D` | no by default | These helpers follow Matplotlib's common explicit-color collection or line surfaces and are not scalar-array colorbar sources unless a future typed scalar-array API is added. |

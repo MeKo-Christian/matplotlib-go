@@ -2280,10 +2280,14 @@ example/browser breadth as documentation work.
                   recorded the typed Go colorbar contract in
                   `docs/matplotlib-migration-notes.md`.
 
-                - [ ] 17.75.4.4.4.1.2 Helper Coverage Audit: verify
+                - [x] 17.75.4.4.4.1.2 Helper Coverage Audit: verify
                   `Surface`, `Trisurf`, `Contour`, `Contourf`, `TriContour`,
                   `TriContourf`, and `Scatter3D` expose colorbar-compatible
-                  state, and list helpers that intentionally do not.
+                  state, and list helpers that intentionally do not. Added
+                  direct `Scatter2D` scalar-mappable methods, verified the
+                  collection-backed helpers against existing scalar-array
+                  tests, and recorded supported versus explicit-color-only 3D
+                  helpers in `docs/matplotlib-migration-notes.md`.
 
                 - [ ] 17.75.4.4.4.1.3 Audit Tests or Notes: add focused
                   contract tests for supported helpers or update the ledger

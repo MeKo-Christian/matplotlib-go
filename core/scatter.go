@@ -201,6 +201,28 @@ type Scatter2D struct {
 	z              float64 // z-order
 }
 
+// ScalarMap exposes scatter scalar mapping for colorbars.
+func (s *Scatter2D) ScalarMap() ScalarMapInfo {
+	if s == nil {
+		return ScalarMapInfo{}
+	}
+	return ScalarMapInfo{
+		Colormap: s.Colormap,
+		VMin:     s.VMin,
+		VMax:     s.VMax,
+		Norm:     s.Norm,
+	}
+}
+
+// GetArray returns a copy of the scatter scalar array, matching Matplotlib's
+// scalar-mappable PathCollection surface.
+func (s *Scatter2D) GetArray() []float64 {
+	if s == nil || len(s.ScalarValues) == 0 {
+		return nil
+	}
+	return append([]float64(nil), s.ScalarValues...)
+}
+
 var stemMarkerScale = math.Sqrt(math.Pi)
 
 // Draw renders scatter points by creating filled paths for each marker.

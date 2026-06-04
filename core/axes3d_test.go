@@ -322,6 +322,29 @@ func TestAxes3DScatterScalarValuesKeepMappedColorsThroughDepthShade(t *testing.T
 	if !approx(scatter.Colors[0].A, 0.3, 1e-12) || !approx(scatter.Colors[1].A, 1.0, 1e-12) {
 		t.Fatalf("3D scatter scalar depth-shaded alphas = %.12g, %.12g; want Matplotlib z-sorted alpha range 0.3..1.0", scatter.Colors[0].A, scatter.Colors[1].A)
 	}
+	mapping := scatter.ScalarMap()
+	if mapping.Colormap != "viridis" || mapping.VMin != 0 || mapping.VMax != 1 {
+		t.Fatalf("3D scatter scalar map = %+v, want viridis range 0..1 for colorbar", mapping)
+	}
+	if got, want := scatter.GetArray(), scatter.ScalarValues; len(got) != len(want) {
+		t.Fatalf("3D scatter GetArray = %v, want %v", got, want)
+	}
+	for _, want := range scatter.ScalarValues {
+		if !containsFloat64Approx(scatter.GetArray(), want, 1e-12) {
+			t.Fatalf("3D scatter GetArray = %v, want values %v", scatter.GetArray(), scatter.ScalarValues)
+		}
+	}
+	cbAx := fig.AddColorbar(ax.Axes, scatter)
+	if cbAx == nil || len(cbAx.Artists) == 0 {
+		t.Fatal("AddColorbar returned no colorbar axes for 3D scatter scalar mappable")
+	}
+	cb, ok := cbAx.Artists[0].(*Colorbar)
+	if !ok {
+		t.Fatalf("3D scatter colorbar artist = %T, want *Colorbar", cbAx.Artists[0])
+	}
+	if cb.Mapping.Colormap != "viridis" || cb.Mapping.VMin != 0 || cb.Mapping.VMax != 1 {
+		t.Fatalf("3D scatter colorbar mapping = %+v, want viridis range 0..1", cb.Mapping)
+	}
 	pc := scatter.toPathCollection(&render.NullRenderer{}, createTestDrawContext())
 	if got, want := pc.GetArray(), scatter.ScalarValues; len(got) != len(want) {
 		t.Fatalf("3D scatter path collection scalar array = %v, want %v", got, want)
