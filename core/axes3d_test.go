@@ -288,6 +288,79 @@ func TestAxes3DScatterDepthShadesAndSortsMarkersLikeMatplotlib(t *testing.T) {
 	}
 }
 
+func TestAxes3DScatterScalarValuesKeepMappedColorsThroughDepthShade(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	values := []float64{0, 1}
+	scatter := ax.Scatter3D(
+		[]float64{0, 1},
+		[]float64{0, 1},
+		[]float64{0, 1},
+		ScatterOptions{ScalarValues: values, Colormap: "viridis"},
+	)
+	if scatter == nil {
+		t.Fatal("Scatter3D returned nil")
+	}
+	if got, want := len(scatter.ScalarValues), len(values); got != want {
+		t.Fatalf("3D scatter scalar array len = %d, want %d visible values", got, want)
+	}
+	for _, want := range values {
+		if !containsFloat64Approx(scatter.ScalarValues, want, 1e-12) {
+			t.Fatalf("3D scatter scalar array = %v, want values %v preserved through z sort", scatter.ScalarValues, values)
+		}
+	}
+	if got, want := len(scatter.Colors), len(values); got != want {
+		t.Fatalf("3D scatter mapped colors = %d, want %d depth-shaded mapped colors", got, want)
+	}
+	if len(scatter.Colors) == 2 && scatter.Colors[0].R == scatter.Colors[1].R && scatter.Colors[0].G == scatter.Colors[1].G && scatter.Colors[0].B == scatter.Colors[1].B {
+		t.Fatalf("3D scatter mapped colors = %+v, want distinct scalar-mapped RGB values", scatter.Colors)
+	}
+	if !approx(scatter.Colors[0].A, 0.3, 1e-12) || !approx(scatter.Colors[1].A, 1.0, 1e-12) {
+		t.Fatalf("3D scatter scalar depth-shaded alphas = %.12g, %.12g; want Matplotlib z-sorted alpha range 0.3..1.0", scatter.Colors[0].A, scatter.Colors[1].A)
+	}
+	pc := scatter.toPathCollection(&render.NullRenderer{}, createTestDrawContext())
+	if got, want := pc.GetArray(), scatter.ScalarValues; len(got) != len(want) {
+		t.Fatalf("3D scatter path collection scalar array = %v, want %v", got, want)
+	}
+	for i, want := range scatter.Colors {
+		if got := pc.FaceColors[i]; got != want {
+			t.Fatalf("3D scatter path face color %d = %+v, want depth-shaded mapped color %+v", i, got, want)
+		}
+		if got := pc.EdgeColors[i]; got != want {
+			t.Fatalf("3D scatter default edge color %d = %+v, want face color %+v", i, got, want)
+		}
+	}
+}
+
+func TestAxes3DScatterScalarValuesFollowAxLimClip(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(0, 1)
+
+	scatter := ax.Scatter3D(
+		[]float64{0.25, 2},
+		[]float64{0, 0},
+		[]float64{0, 1},
+		ScatterOptions{ScalarValues: []float64{2, 9}, Colormap: "viridis", AxLimClip: true},
+	)
+	if scatter == nil {
+		t.Fatal("Scatter3D returned nil")
+	}
+	if got, want := len(scatter.XY), 1; got != want {
+		t.Fatalf("3D scatter clipped points = %d, want %d", got, want)
+	}
+	if got, want := scatter.ScalarValues, []float64{2}; len(got) != len(want) || !approx(got[0], want[0], 1e-12) {
+		t.Fatalf("3D scatter clipped scalar array = %v, want visible values %v", got, want)
+	}
+}
+
 func TestAxes3DScatterAxLimClipDropsOutsideMarkers(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())

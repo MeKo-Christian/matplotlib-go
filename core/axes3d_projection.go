@@ -11,9 +11,10 @@ import (
 type projectedScatterPoint struct {
 	point geom.Pt
 	depth float64
+	index int
 }
 
-func reprojectScatter3D(scatter *Scatter2D, points []projectedScatterPoint) {
+func reprojectScatter3D(scatter *Scatter2D, points []projectedScatterPoint, opt ScatterOptions) {
 	if scatter == nil {
 		return
 	}
@@ -24,8 +25,39 @@ func reprojectScatter3D(scatter *Scatter2D, points []projectedScatterPoint) {
 	for _, point := range points {
 		scatter.XY = append(scatter.XY, point.point)
 	}
-	scatter.Colors = depthShadedScatterColors(scatter.Color, points)
-	scatter.EdgeColors = depthShadedScatterColors(scatter.EdgeColor, points)
+
+	if len(opt.Sizes) > 1 {
+		scatter.Sizes = reorderScatterFloat64s(opt.Sizes, points)
+	}
+	if len(opt.ScalarValues) > 0 {
+		scatter.ScalarValues = reorderScatterFloat64s(opt.ScalarValues, points)
+		scatter.Colors = depthShadedScatterColors(scatterScalarColors(scatter), points)
+	} else {
+		scatter.ScalarValues = nil
+		scatter.Colors = depthShadedScatterColors(scatterPointColors(scatter.Color, opt.Colors, points), points)
+	}
+	if scatter.EdgeColorsFace {
+		scatter.EdgeColors = cloneRenderColors(scatter.Colors)
+	} else {
+		scatter.EdgeColors = depthShadedScatterColors(scatterPointColors(scatter.EdgeColor, opt.EdgeColors, points), points)
+	}
+}
+
+func scatterOptionsForProjected(opt ScatterOptions, points []projectedScatterPoint) ScatterOptions {
+	filtered := opt
+	if len(opt.Colors) > 1 {
+		filtered.Colors = reorderScatterColors(opt.Colors, points)
+	}
+	if len(opt.EdgeColors) > 1 {
+		filtered.EdgeColors = reorderScatterColors(opt.EdgeColors, points)
+	}
+	if len(opt.ScalarValues) > 1 {
+		filtered.ScalarValues = reorderScatterFloat64s(opt.ScalarValues, points)
+	}
+	if len(opt.Sizes) > 1 {
+		filtered.Sizes = reorderScatterFloat64s(opt.Sizes, points)
+	}
+	return filtered
 }
 
 func reprojectLine3D(line *Line2D, points []geom.Pt) {
@@ -53,12 +85,94 @@ func (a *Axes3D) projectedScatterData(x, y, z []float64, axlimClip ...bool) []pr
 			continue
 		}
 		point, depth := a.projectPointDepth(x[i], y[i], z[i])
-		points = append(points, projectedScatterPoint{point: point, depth: depth})
+		points = append(points, projectedScatterPoint{point: point, depth: depth, index: i})
 	}
 	return points
 }
 
-func depthShadedScatterColors(color render.Color, points []projectedScatterPoint) []render.Color {
+func scatterScalarColors(scatter *Scatter2D) []render.Color {
+	if scatter == nil || len(scatter.ScalarValues) == 0 {
+		return nil
+	}
+	mapping := ScalarMapInfo{
+		Colormap: scatter.Colormap,
+		Norm:     scatter.Norm,
+		VMin:     scatter.VMin,
+		VMax:     scatter.VMax,
+	}.Resolved()
+	colors := make([]render.Color, len(scatter.ScalarValues))
+	for i, value := range scatter.ScalarValues {
+		colors[i] = mapping.Color(value, 1)
+	}
+	return colors
+}
+
+func scatterPointColors(fallback render.Color, source []render.Color, points []projectedScatterPoint) []render.Color {
+	if len(points) == 0 {
+		return nil
+	}
+	colors := make([]render.Color, len(points))
+	if len(source) == 1 {
+		for i := range colors {
+			colors[i] = source[0]
+		}
+		return colors
+	}
+	if len(source) > 1 {
+		for i, point := range points {
+			if point.index < len(source) {
+				colors[i] = source[point.index]
+			} else {
+				colors[i] = fallback
+			}
+		}
+		return colors
+	}
+	for i := range colors {
+		colors[i] = fallback
+	}
+	return colors
+}
+
+func reorderScatterFloat64s(values []float64, points []projectedScatterPoint) []float64 {
+	if len(values) == 0 || len(points) == 0 {
+		return nil
+	}
+	reordered := make([]float64, len(points))
+	if len(values) == 1 {
+		for i := range reordered {
+			reordered[i] = values[0]
+		}
+		return reordered
+	}
+	for i, point := range points {
+		if point.index < len(values) {
+			reordered[i] = values[point.index]
+		}
+	}
+	return reordered
+}
+
+func reorderScatterColors(values []render.Color, points []projectedScatterPoint) []render.Color {
+	if len(values) == 0 || len(points) == 0 {
+		return nil
+	}
+	reordered := make([]render.Color, len(points))
+	if len(values) == 1 {
+		for i := range reordered {
+			reordered[i] = values[0]
+		}
+		return reordered
+	}
+	for i, point := range points {
+		if point.index < len(values) {
+			reordered[i] = values[point.index]
+		}
+	}
+	return reordered
+}
+
+func depthShadedScatterColors(colors []render.Color, points []projectedScatterPoint) []render.Color {
 	if len(points) == 0 {
 		return nil
 	}
@@ -71,17 +185,20 @@ func depthShadedScatterColors(color render.Color, points []projectedScatterPoint
 			maxZ = point.depth
 		}
 	}
-	colors := make([]render.Color, len(points))
+	shadedColors := make([]render.Color, len(points))
 	for i, point := range points {
 		saturation := 1.0
 		if maxZ != minZ {
 			saturation = 1 - ((point.depth-minZ)/(maxZ-minZ))*0.7
 		}
-		shaded := color
+		shaded := render.Color{}
+		if i < len(colors) {
+			shaded = colors[i]
+		}
 		shaded.A *= saturation
-		colors[i] = shaded
+		shadedColors[i] = shaded
 	}
-	return colors
+	return shadedColors
 }
 
 func (a *Axes3D) projectTriangulationFaces(tri Triangulation, z []float64, baseColor render.Color, opt PlotOptions) ([][]geom.Pt, []render.Color, []float64, float64, ScalarMapInfo) {

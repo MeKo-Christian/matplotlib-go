@@ -453,6 +453,15 @@ func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathC
 	}
 	if len(s.ScalarValues) > 0 {
 		_ = pc.SetArray(s.ScalarValues)
+		if len(s.Colors) > 0 {
+			pc.FaceColors = append([]render.Color(nil), s.Colors...)
+			if pc.EdgeColorsFace {
+				pc.EdgeColors = cloneRenderColors(pc.FaceColors)
+			}
+		}
+		if len(s.EdgeColors) > 0 {
+			pc.EdgeColors = append([]render.Color(nil), s.EdgeColors...)
+		}
 	}
 	return pc
 }

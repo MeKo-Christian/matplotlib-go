@@ -2228,7 +2228,7 @@ example/browser breadth as documentation work.
           `FillBetween3D`, and `Voxels`, including depth-shade interactions and
           per-point/per-face alpha.
 
-            - [ ] 17.75.4.4.3.1 Scatter Scalar Colors: align `Scatter3D`
+            - [x] 17.75.4.4.3.1 Scatter Scalar Colors: align `Scatter3D`
               scalar arrays, cmap/norm/clim, depth-shade alpha changes,
               explicit color precedence, and colorbar-compatible metadata.
 

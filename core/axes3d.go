@@ -346,32 +346,33 @@ func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...ScatterOptions) *Scatter2D
 		size := default3DScatterSize
 		opt.Size = &size
 	}
-	projected := a.projectedData(x, y, z, opt.AxLimClip)
+	projected := a.projectedScatterData(x, y, z, opt.AxLimClip)
 	if len(projected) == 0 {
 		return nil
 	}
 
 	x2, y2 := make([]float64, len(projected)), make([]float64, len(projected))
 	for i, p := range projected {
-		x2[i] = p.X
-		y2[i] = p.Y
+		x2[i] = p.point.X
+		y2[i] = p.point.Y
 	}
+	projectedOpt := scatterOptionsForProjected(opt, projected)
 
 	if len(opts) > 0 {
-		scatter := a.Scatter(x2, y2, opt)
-		reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip))
+		scatter := a.Scatter(x2, y2, projectedOpt)
+		reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip), opt)
 		scatter.z = a.points3DCollectionZ(x, y, z)
 		a.add3DReprojector(func() {
-			reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip))
+			reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip), opt)
 			scatter.z = a.points3DCollectionZ(x, y, z)
 		}, limitsChanged)
 		return scatter
 	}
-	scatter := a.Scatter(x2, y2, opt)
-	reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip))
+	scatter := a.Scatter(x2, y2, projectedOpt)
+	reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip), opt)
 	scatter.z = a.points3DCollectionZ(x, y, z)
 	a.add3DReprojector(func() {
-		reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip))
+		reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip), opt)
 		scatter.z = a.points3DCollectionZ(x, y, z)
 	}, limitsChanged)
 	return scatter
