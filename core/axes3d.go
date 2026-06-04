@@ -40,6 +40,7 @@ type Axes3D struct {
 	showYLabels  bool
 	showZLabels  bool
 	distance     float64
+	focalLength  float64
 	boxAspect    vec3
 	hasData      bool
 	dataMin      vec3
@@ -59,6 +60,7 @@ type projected3DState struct {
 	rollDeg      float64
 	verticalAxis int
 	boxAspect    vec3
+	focalLength  float64
 }
 
 func (a *Axes3D) projectionState() projected3DState {
@@ -67,12 +69,14 @@ func (a *Axes3D) projectionState() projected3DState {
 			rollDeg:      default3DRollDeg,
 			verticalAxis: default3DVerticalAxis,
 			boxAspect:    default3DBoxAspect(),
+			focalLength:  default3DFocalLength,
 		}
 	}
 	return projected3DState{
 		rollDeg:      a.rollDeg,
 		verticalAxis: a.verticalAxis,
 		boxAspect:    a.boxAspect,
+		focalLength:  a.focalLength,
 	}
 }
 
@@ -93,12 +97,16 @@ func projected3DStateOrDefault(state ...projected3DState) projected3DState {
 		if s.boxAspect[0] == 0 && s.boxAspect[1] == 0 && s.boxAspect[2] == 0 {
 			s.boxAspect = default3DBoxAspect()
 		}
+		if s.focalLength == 0 {
+			s.focalLength = default3DFocalLength
+		}
 		return s
 	}
 	return projected3DState{
 		rollDeg:      default3DRollDeg,
 		verticalAxis: default3DVerticalAxis,
 		boxAspect:    default3DBoxAspect(),
+		focalLength:  default3DFocalLength,
 	}
 }
 
@@ -287,6 +295,7 @@ func NewAxes3D(ax *Axes) *Axes3D {
 		showYLabels:  true,
 		showZLabels:  true,
 		distance:     default3DDistance,
+		focalLength:  default3DFocalLength,
 		boxAspect:    default3DBoxAspect(),
 	}
 	ax.Add(&axes3DFrame{axes: axes})

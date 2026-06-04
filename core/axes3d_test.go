@@ -468,6 +468,88 @@ func TestAxes3DSetBoxAspect3DReprojectsAndValidatesZoom(t *testing.T) {
 	}
 }
 
+func TestAxes3DSetProjectionTypeMatchesMatplotlib(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	if got := ax.ProjectionType(); got != "persp" {
+		t.Fatalf("default projection type = %q, want persp", got)
+	}
+	if err := ax.SetProjectionType("ortho"); err != nil {
+		t.Fatalf("SetProjectionType(ortho): %v", err)
+	}
+	if got := ax.ProjectionType(); got != "ortho" {
+		t.Fatalf("projection type = %q, want ortho", got)
+	}
+	got := ax.ProjectPoint(1, 1, 1)
+	if !approx(got.X, 0.07805859468646568, 1e-12) ||
+		!approx(got.Y, 0.04757324323990303, 1e-12) {
+		t.Fatalf("orthographic ProjectPoint(1,1,1) = %+v, want Matplotlib set_proj_type('ortho') projection", got)
+	}
+
+	if err := ax.SetProjectionType("persp", 2); err != nil {
+		t.Fatalf("SetProjectionType(persp, 2): %v", err)
+	}
+	got = ax.ProjectPoint(1, 1, 1)
+	if !approx(got.X, 0.0781881920661384, 1e-12) ||
+		!approx(got.Y, 0.047652227081351764, 1e-12) {
+		t.Fatalf("focal-length ProjectPoint(1,1,1) = %+v, want Matplotlib set_proj_type('persp', focal_length=2) projection", got)
+	}
+
+	if err := ax.SetProjectionType("persp", 0); err == nil {
+		t.Fatal("SetProjectionType(persp, 0): got nil, want error")
+	}
+	if err := ax.SetProjectionType("ortho", 1); err == nil {
+		t.Fatal("SetProjectionType(ortho, 1): got nil, want error")
+	}
+	if err := ax.SetProjectionType("bad"); err == nil {
+		t.Fatal("SetProjectionType(bad): got nil, want error")
+	}
+}
+
+func TestAxes3DSetDefaultsResetsViewAspectAndProjection(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	if err := ax.SetViewInit(5, 15, 25, "x"); err != nil {
+		t.Fatalf("SetViewInit: %v", err)
+	}
+	if err := ax.SetProjectionType("ortho"); err != nil {
+		t.Fatalf("SetProjectionType(ortho): %v", err)
+	}
+	if err := ax.SetBoxAspect3D([3]float64{2, 1, 4}, 1.5); err != nil {
+		t.Fatalf("SetBoxAspect3D: %v", err)
+	}
+	ax.SetDistance(7)
+
+	ax.SetDefaults()
+	elev, azim, distance := ax.View()
+	if !approx(elev, default3DElevationDeg, 1e-12) ||
+		!approx(azim, default3DAzimuthDeg, 1e-12) ||
+		!approx(distance, default3DDistance, 1e-12) {
+		t.Fatalf("View after SetDefaults = (%v, %v, %v), want Matplotlib defaults", elev, azim, distance)
+	}
+	if ax.rollDeg != default3DRollDeg || ax.verticalAxis != default3DVerticalAxis {
+		t.Fatalf("roll/vertical axis after SetDefaults = (%v, %v), want (%v, %v)", ax.rollDeg, ax.verticalAxis, default3DRollDeg, default3DVerticalAxis)
+	}
+	if got := ax.ProjectionType(); got != "persp" {
+		t.Fatalf("projection type after SetDefaults = %q, want persp", got)
+	}
+	if ax.focalLength != default3DFocalLength {
+		t.Fatalf("focal length after SetDefaults = %v, want %v", ax.focalLength, default3DFocalLength)
+	}
+	if got, want := ax.boxAspect, default3DBoxAspect(); !approx(got[0], want[0], 1e-12) ||
+		!approx(got[1], want[1], 1e-12) || !approx(got[2], want[2], 1e-12) {
+		t.Fatalf("box aspect after SetDefaults = %v, want %v", got, want)
+	}
+}
+
 func TestAxes3DSetZLabelRenders3DLabel(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())

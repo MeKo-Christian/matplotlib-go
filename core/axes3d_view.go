@@ -45,6 +45,48 @@ func (a *Axes3D) SetDistance(distance float64) {
 	a.reproject3DArtists()
 }
 
+// SetProjectionType sets the 3D projection type, matching Matplotlib's
+// set_proj_type for the supported static-rendering modes "persp" and "ortho".
+func (a *Axes3D) SetProjectionType(projType string, focalLength ...float64) error {
+	if a == nil {
+		return nil
+	}
+	focal := math.NaN()
+	if len(focalLength) > 0 {
+		focal = focalLength[0]
+	}
+	switch projType {
+	case "persp":
+		if math.IsNaN(focal) {
+			focal = default3DFocalLength
+		}
+		if focal <= 0 || !isFinite(focal) {
+			return fmt.Errorf("focal_length = %v must be greater than 0", focal)
+		}
+	case "ortho":
+		if !math.IsNaN(focal) && !math.IsInf(focal, 1) {
+			return fmt.Errorf("focal_length = %v must be +Inf for proj_type = %s", focal, projType)
+		}
+		focal = math.Inf(1)
+	default:
+		return fmt.Errorf("invalid projection type %q", projType)
+	}
+	a.focalLength = focal
+	a.reproject3DArtists()
+	return nil
+}
+
+// ProjectionType reports the current 3D projection type.
+func (a *Axes3D) ProjectionType() string {
+	if a == nil {
+		return ""
+	}
+	if math.IsInf(a.focalLength, 1) {
+		return "ortho"
+	}
+	return "persp"
+}
+
 // SetDefaults sets standard Matplotlib-like defaults for elevation, azimuth,
 // and perspective distance.
 func (a *Axes3D) SetDefaults() {
@@ -60,6 +102,7 @@ func (a *Axes3D) SetDefaults() {
 	a.rollDeg = default3DRollDeg
 	a.verticalAxis = default3DVerticalAxis
 	a.boxAspect = default3DBoxAspect()
+	a.focalLength = default3DFocalLength
 	a.reproject3DArtists()
 }
 

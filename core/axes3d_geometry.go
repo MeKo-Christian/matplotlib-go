@@ -678,8 +678,15 @@ func default3DProjectionMatrix(
 	}
 	eye := center.add(viewDir.scale(distance))
 	u, v, w := viewAxes(eye, center, elevationDeg, s.verticalAxis, s.rollDeg)
-	view := viewTransformation(u, v, w, eye)
-	proj := perspectiveTransformation(-distance, distance, default3DFocalLength)
+	viewEye := eye
+	if !math.IsInf(s.focalLength, 1) {
+		viewEye = center.add(viewDir.scale(distance * s.focalLength))
+	}
+	view := viewTransformation(u, v, w, viewEye)
+	proj := perspectiveTransformation(-distance, distance, s.focalLength)
+	if math.IsInf(s.focalLength, 1) {
+		proj = orthographicTransformation(-distance, distance)
+	}
 	return proj.mul(view.mul(world))
 }
 
@@ -725,6 +732,17 @@ func perspectiveTransformation(zfront, zback, focalLength float64) mat4 {
 		{0, focalLength, 0, 0},
 		{0, 0, b, c},
 		{0, 0, -1, 0},
+	}
+}
+
+func orthographicTransformation(zfront, zback float64) mat4 {
+	a := -(zfront + zback)
+	b := -(zfront - zback)
+	return mat4{
+		{2, 0, 0, 0},
+		{0, 2, 0, 0},
+		{0, 0, -2, 0},
+		{0, 0, a, b},
 	}
 }
 

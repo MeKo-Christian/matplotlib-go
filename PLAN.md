@@ -2160,7 +2160,7 @@ example/browser breadth as documentation work.
       handling, and label/tick placement where they affect static rendering.
       Complete the scoped audits below before marking this parent item done.
 
-        - [ ] 17.75.4.3.1 View Init and Aspect Defaults: compare
+        - [x] 17.75.4.3.1 View Init and Aspect Defaults: compare
           `Axes3D.__init__`, `view_init`, `set_proj_type`, and
           `set_box_aspect` against Go's view, roll, vertical-axis, distance,
           projection-type, and box-aspect defaults. Add focused tests for reset
