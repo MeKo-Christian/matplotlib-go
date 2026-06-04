@@ -2385,7 +2385,7 @@ example/browser breadth as documentation work.
                   fill-between; added `Plot3D` and `Wireframe` line-like
                   non-scalar-mappable coverage.
 
-            - [ ] 17.75.4.4.5.2 Metadata Updates: update public-surface
+            - [x] 17.75.4.4.5.2 Metadata Updates: update public-surface
               metadata and migration notes with supported 3D color behavior and
               intentional omissions.
 
@@ -2395,9 +2395,12 @@ example/browser breadth as documentation work.
                   scalar-mappable/colorbar source files and the completed 3D
                   scalar-map plus explicit-color coverage.
 
-                - [ ] 17.75.4.4.5.2.2 Omission Notes: record intentional
+                - [x] 17.75.4.4.5.2.2 Omission Notes: record intentional
                   explicit-color-only or immutable-state differences with
-                  upstream references.
+                  upstream references. Updated
+                  `docs/matplotlib-migration-notes.md` with the explicit-color
+                  helper omission ledger and the intentionally narrower mutable
+                  colorbar update model.
 
             - [ ] 17.75.4.4.5.3 Status Regeneration: regenerate
               `docs/matplotlib-parity-status.md` and run focused freshness
