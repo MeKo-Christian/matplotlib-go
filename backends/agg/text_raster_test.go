@@ -43,7 +43,7 @@ func TestDrawRasterTextUsesSharedCombiningMarkShape(t *testing.T) {
 	}
 }
 
-func TestMeasureRasterTextUsesSharedShapedAdvance(t *testing.T) {
+func TestMeasureRasterTextUsesMatplotlibPlainTextAdvance(t *testing.T) {
 	r, err := New(220, 120, render.Color{R: 1, G: 1, B: 1, A: 1})
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
@@ -51,9 +51,9 @@ func TestMeasureRasterTextUsesSharedShapedAdvance(t *testing.T) {
 
 	face := render.FontFace{Family: "DejaVu Sans", Data: dejavusans.TTF}
 	const size = 72.0
-	shaped, ok := render.ShapeText("fi", geom.Pt{}, r.fontPixelSize(size), render.TextShapingOptions{FontKey: fontReference(face)})
-	if !ok || len(shaped.Glyphs) != 1 {
-		t.Fatalf("ShapeText(fi) = %+v, %v; want one ligature glyph", shaped, ok)
+	shaped, ok := render.ShapeText("fi", geom.Pt{}, r.fontPixelSize(size), matplotlibPlainTextShapingOptions(fontReference(face)))
+	if !ok || len(shaped.Glyphs) != 2 {
+		t.Fatalf("plain text ShapeText(fi) = %+v, %v; want separate f and i glyphs", shaped, ok)
 	}
 
 	metrics, ok := r.measureRasterText("fi", face, size)
@@ -65,7 +65,7 @@ func TestMeasureRasterTextUsesSharedShapedAdvance(t *testing.T) {
 	}
 }
 
-func TestMeasureTextBoundsUsesSharedShapedBounds(t *testing.T) {
+func TestMeasureTextBoundsUsesMatplotlibPlainTextBounds(t *testing.T) {
 	r, err := New(220, 120, render.Color{R: 1, G: 1, B: 1, A: 1})
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
@@ -76,20 +76,24 @@ func TestMeasureTextBoundsUsesSharedShapedBounds(t *testing.T) {
 	if font.backend != textBackendRaster {
 		t.Fatal("expected raster text backend")
 	}
-	shaped, ok := render.ShapeText("fi", geom.Pt{}, r.fontPixelSize(font.size), render.TextShapingOptions{FontKey: fontReference(font.face)})
-	if !ok || len(shaped.Glyphs) != 1 {
-		t.Fatalf("ShapeText(fi) = %+v, %v; want one ligature glyph", shaped, ok)
+	shaped, ok := render.ShapeText("fi", geom.Pt{}, r.fontPixelSize(font.size), matplotlibPlainTextShapingOptions(fontReference(font.face)))
+	if !ok || len(shaped.Glyphs) != 2 {
+		t.Fatalf("plain text ShapeText(fi) = %+v, %v; want separate f and i glyphs", shaped, ok)
 	}
 
 	bounds, ok := r.MeasureTextBounds("fi", size, "")
 	if !ok {
 		t.Fatal("MeasureTextBounds(fi) failed")
 	}
-	if math.Abs(bounds.X-shaped.Bounds.X) > 1e-9 ||
-		math.Abs(bounds.Y-shaped.Bounds.Y) > 1e-9 ||
-		math.Abs(bounds.W-shaped.Bounds.W) > 1e-9 ||
-		math.Abs(bounds.H-shaped.Bounds.H) > 1e-9 {
-		t.Fatalf("MeasureTextBounds(fi) = %+v, want shaped bounds %+v", bounds, shaped.Bounds)
+	nativeBounds, ok := r.measureNativeFreetypeTextBounds("fi", font.face, size, matplotlibTextHintingFactor)
+	if !ok {
+		t.Fatal("native MeasureTextBounds(fi) failed")
+	}
+	if math.Abs(bounds.X-nativeBounds.X) > 1e-9 ||
+		math.Abs(bounds.Y-nativeBounds.Y) > 1e-9 ||
+		math.Abs(bounds.W-nativeBounds.W) > 1e-9 ||
+		math.Abs(bounds.H-nativeBounds.H) > 1e-9 {
+		t.Fatalf("MeasureTextBounds(fi) = %+v, want native bounds %+v", bounds, nativeBounds)
 	}
 }
 

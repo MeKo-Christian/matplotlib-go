@@ -602,17 +602,21 @@ No non-mathtext cases remain above the temporary Phase 8 target of
 
 **2026-06-01 continuation note:** current `parity-viewer-print` output still
 has non-mathtext cases above `RMSE 10`; the previous paragraph is historical.
-`line2d_markers` is now `RMSE 7.16` after matching Matplotlib's Line2D legend
+`line2d_markers` is now `RMSE 6.96` after matching Matplotlib's Line2D legend
 marker sizing, fixing top/bottom half-filled marker orientation in marker local
 coordinates, and replacing polygonal half-circle fills with Matplotlib's cubic
-right-half circle path, with `testdata/golden/line2d_markers.png` refreshed.
+right-half circle path; it later dropped below target after AGG plain-text
+ligatures were disabled to match Matplotlib FT2Font, with
+`testdata/golden/line2d_markers.png` refreshed.
 `errorbar_basic` is now `RMSE 9.76` after adding a core `NoDataLine` option
 that lets the Go example express Matplotlib's `fmt="none"` errorbar semantics
 directly, with `testdata/golden/errorbar_basic.png` refreshed.
-`formatter_scalar_scientific_labels` is now `RMSE 8.81` after matching
+`formatter_scalar_scientific_labels` is now `RMSE 3.44` after matching
 Matplotlib MathText binary-operator spacing for command symbols such as
-`\times`, including inside `\mathdefault{...}` styled groups; its Go golden was
-refreshed.
+`\times`, preserving `ScalarFormatter` mathtext wrappers for step-formatted
+zero ticks, and disabling AGG plain-text ligature substitution so titles such as
+`Scalar Scientific Formatter` render through the native FT2Font character path;
+its Go golden was refreshed.
 `patch_style_matrix` is now `RMSE 2.37` after matching Matplotlib patch
 `snap=None` auto-snapping for rectilinear patch paths and rendering unfilled
 circle hatches as filled outer/reversed-inner ring contours; its Go golden was
@@ -622,13 +626,14 @@ quiver direction signs, Barbs' point-length collection scaling / default barb
 side semantics, raw barb vector-angle rotation, and closed barb glyph paths; its
 optional Go golden was refreshed.
 `arrays_showcase` is now `RMSE 6.31`, `mesh_contour_tri` is now `RMSE 7.14`,
-`unstructured_showcase` is now `RMSE 5.50`, `pcolor_flat` is now `RMSE 4.00`,
+`unstructured_showcase` is now `RMSE 5.50`, `pcolor_flat` is now `RMSE 0.44`,
 and `pcolormesh_masked` is now `RMSE 0.59` after matching Matplotlib's split
 mesh defaults: `pcolormesh` snaps rectilinear cells and disables antialiasing,
 while `pcolor` keeps unsnapped, collection-default antialiasing when edges are
 stroked. `arrays_showcase` later dropped below target after fixing bottom x-label
 fallback placement for matrix views with hidden bottom ticks, removing a stale
-top-xlabel title `+1` compensation, and matching contour line cap style. The
+top-xlabel title `+1` compensation, and matching contour line cap style;
+`pcolor_flat` later improved after disabling AGG plain-text ligatures. The
 affected Go goldens were refreshed.
 `legend_layout_matrix` is now `RMSE 7.14` after matching Matplotlib legend
 patch handle boxes, full-width line handles, 0.3-font scatter handle padding,

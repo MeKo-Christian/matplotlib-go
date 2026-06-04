@@ -608,6 +608,16 @@ func TestFormatScalarTickLabel_UsesStepPrecision(t *testing.T) {
 	}
 }
 
+func TestFormatScalarTickLabel_PreservesMathTextForStepLabels(t *testing.T) {
+	f := ScalarFormatter{UseMathText: true}
+	if got, want := formatScalarTickLabel(f, 0, 1200), `$\mathdefault{0}$`; got != want {
+		t.Fatalf("zero mathtext step label = %q, want %q", got, want)
+	}
+	if got, want := formatScalarTickLabel(f, 0.5, 0.5), `$\mathdefault{0.5}$`; got != want {
+		t.Fatalf("decimal mathtext step label = %q, want %q", got, want)
+	}
+}
+
 func TestFixedFormatter_UsesTickIndex(t *testing.T) {
 	formatter := FixedFormatter{Labels: []string{"low", "mid", "high"}}
 	ticks := []float64{1, 2, 3}

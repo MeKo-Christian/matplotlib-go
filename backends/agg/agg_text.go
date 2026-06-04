@@ -233,7 +233,7 @@ func (r *Renderer) MeasureTextBounds(text string, size float64, fontKey string) 
 	}
 	sizePx := r.fontPixelSize(font.size)
 	fontKey = fontReference(font.face)
-	if shaped, ok := render.ShapeText(text, geom.Pt{}, sizePx, render.TextShapingOptions{FontKey: fontKey}); ok {
+	if shaped, ok := render.ShapeText(text, geom.Pt{}, sizePx, matplotlibPlainTextShapingOptions(fontKey)); ok {
 		if shapedTextMatchesRuneSequence(text, shaped) {
 			if bounds, ok := r.measureNativeFreetypeTextBounds(text, font.face, font.size, matplotlibTextHintingFactor); ok {
 				return bounds, true

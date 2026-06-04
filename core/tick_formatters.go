@@ -60,7 +60,11 @@ func formatScalarTickLabel(f ScalarFormatter, x, step float64) string {
 		x = 0
 	}
 
-	return scalarFixMinus(strconv.FormatFloat(x, 'f', prec, 64))
+	label := scalarFixMinus(strconv.FormatFloat(x, 'f', prec, 64))
+	if f.UseMathText {
+		return `$\mathdefault{` + label + `}$`
+	}
+	return label
 }
 
 // ScalarFormatter formats numbers with fixed precision and trims trailing zeros.

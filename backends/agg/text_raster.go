@@ -89,7 +89,7 @@ func (r *Renderer) measureRasterText(text string, face render.FontFace, size flo
 	}
 	defer func() { _ = fontFace.Close() }()
 
-	shaped, ok := render.ShapeText(text, geom.Pt{}, r.fontPixelSize(size), render.TextShapingOptions{FontKey: fontKey})
+	shaped, ok := render.ShapeText(text, geom.Pt{}, r.fontPixelSize(size), matplotlibPlainTextShapingOptions(fontKey))
 	if !ok {
 		return render.TextMetrics{}, false
 	}
@@ -137,7 +137,7 @@ func (r *Renderer) drawRasterText(text string, face render.FontFace, origin geom
 	// bitmaps stay upright). The upright bitmap rasterization below is unchanged.
 	origin = r.devPt(origin)
 
-	shaped, ok := render.ShapeText(text, geom.Pt{}, r.fontPixelSize(size), render.TextShapingOptions{FontKey: fontKey})
+	shaped, ok := render.ShapeText(text, geom.Pt{}, r.fontPixelSize(size), matplotlibPlainTextShapingOptions(fontKey))
 	if !ok {
 		return false
 	}
@@ -190,6 +190,16 @@ func (r *Renderer) drawRasterText(text string, face render.FontFace, origin geom
 	}
 
 	return drewGlyph || len(shaped.Glyphs) == 0 || shaped.Advance.X > 0
+}
+
+func matplotlibPlainTextShapingOptions(fontKey string) render.TextShapingOptions {
+	return render.TextShapingOptions{
+		FontKey: fontKey,
+		Features: []render.TextFeature{
+			{Tag: "liga", Value: 0},
+			{Tag: "clig", Value: 0},
+		},
+	}
 }
 
 func shapedTextMatchesRuneSequence(text string, shaped render.ShapedText) bool {

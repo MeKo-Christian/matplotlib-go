@@ -428,6 +428,7 @@ func withNativeFreetypeRun(fontPath, text string, size float64, dpi uint, hintin
 		xx: C.FT_Fixed(math.Round(65536.0 / float64(hintingFactor))),
 		yy: 0x10000,
 	}
+	C.FT_Set_Transform(ftFace, &matrix, nil)
 
 	loadFlags := C.mpl_go_force_autohint_load_flags()
 	glyphs := make([]C.FT_Glyph, 0, len([]rune(text)))
@@ -448,8 +449,8 @@ func withNativeFreetypeRun(fontPath, text string, size float64, dpi uint, hintin
 		if previousGlyph != 0 && C.mpl_go_has_kerning(ftFace) != 0 {
 			var kerning C.FT_Vector
 			if C.FT_Get_Kerning(ftFace, previousGlyph, glyphIndex, C.FT_KERNING_DEFAULT, &kerning) == 0 {
-				pen.x += kerning.x
-				pen.y += kerning.y
+				pen.x += C.FT_Pos(int(kerning.x) / hintingFactor)
+				pen.y += C.FT_Pos(int(kerning.y) / hintingFactor)
 			}
 		}
 		if C.FT_Load_Glyph(ftFace, glyphIndex, loadFlags) != 0 {
@@ -460,7 +461,6 @@ func withNativeFreetypeRun(fontPath, text string, size float64, dpi uint, hintin
 			return false
 		}
 		C.FT_Glyph_Transform(glyph, nil, &pen)
-		C.FT_Glyph_Transform(glyph, &matrix, nil)
 
 		var glyphBox C.FT_BBox
 		C.FT_Glyph_Get_CBox(glyph, C.FT_GLYPH_BBOX_SUBPIXELS, &glyphBox)
@@ -499,7 +499,7 @@ func withNativeFreetypeRun(fontPath, text string, size float64, dpi uint, hintin
 		bbox.xMin, bbox.yMin, bbox.xMax, bbox.yMax = 0, 0, 0, 0
 	}
 
-	advance := float64(pen.x) * float64(matrix.xx) / 65536.0 / 64.0
+	advance := float64(pen.x) / 64.0
 	return fn(nativeFreetypeRun{
 		glyphs:  glyphs,
 		bbox:    bbox,
