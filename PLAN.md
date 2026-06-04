@@ -2389,8 +2389,11 @@ example/browser breadth as documentation work.
               metadata and migration notes with supported 3D color behavior and
               intentional omissions.
 
-                - [ ] 17.75.4.4.5.2.1 Public Surface Rows: update metadata rows
+                - [x] 17.75.4.4.5.2.1 Public Surface Rows: update metadata rows
                   for newly supported 3D color and scalar-mappable behavior.
+                  Updated the `mplot3d-axes3d` public-surface row to include
+                  scalar-mappable/colorbar source files and the completed 3D
+                  scalar-map plus explicit-color coverage.
 
                 - [ ] 17.75.4.4.5.2.2 Omission Notes: record intentional
                   explicit-color-only or immutable-state differences with
