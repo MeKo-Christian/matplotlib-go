@@ -2119,7 +2119,7 @@ example/browser breadth as documentation work.
 
 ### 17.75.4 3D Toolkit Closure
 
-- [ ] Split 17.75.4 into execution-ready subtasks and complete them in order:
+- [x] Split 17.75.4 into execution-ready subtasks and complete them in order:
 
     - [x] 17.75.4.1 Axes3D Triangulated Contours: add `tricontour` and
       `tricontourf`-equivalent helpers backed by the existing triangulation,
@@ -2228,13 +2228,54 @@ example/browser breadth as documentation work.
           `FillBetween3D`, and `Voxels`, including depth-shade interactions and
           per-point/per-face alpha.
 
+            - [ ] 17.75.4.4.3.1 Scatter Scalar Colors: align `Scatter3D`
+              scalar arrays, cmap/norm/clim, depth-shade alpha changes,
+              explicit color precedence, and colorbar-compatible metadata.
+
+            - [ ] 17.75.4.4.3.2 Quiver and Line-Like Colors: align `Quiver3D`,
+              `Plot3D`, `Stem3D`, and `ErrorBar3D` color propagation,
+              alpha handling, and any intentionally non-scalar-mappable
+              behavior against upstream collection types.
+
+            - [ ] 17.75.4.4.3.3 Bar and Fill-Between Face Colors: align
+              `Bar3D` and `FillBetween3D` facecolor, edgecolor, alpha,
+              shading, and per-face ordering behavior.
+
+            - [ ] 17.75.4.4.3.4 Voxel Face Colors: align `Voxels` scalar and
+              explicit facecolor behavior, visible-face color selection,
+              alpha propagation, and depth-sorted redraw updates.
+
         - [ ] 17.75.4.4.4 3D Colorbar Integration: ensure 3D scalar mappables
           expose enough state for colorbar creation and update behavior, or
           document intentional omissions where the Go API stays immutable.
 
+            - [ ] 17.75.4.4.4.1 Mappable State Audit: verify every supported
+              3D scalar helper exposes array, cmap, norm, clim, alpha, and
+              collection metadata in the same shape colorbar code expects.
+
+            - [ ] 17.75.4.4.4.2 Colorbar Creation Tests: add focused tests for
+              surface, trisurf, contour, scatter, and voxel colorbar creation
+              using the shared scalar-mappable contract.
+
+            - [ ] 17.75.4.4.4.3 Mutable-State Decision: document or implement
+              post-creation mappable updates for 3D helpers, keeping immutable
+              Go API differences explicit.
+
         - [ ] 17.75.4.4.5 Colormapping Ledger: add focused tests, update parity
           metadata for supported and intentionally omitted 3D color behavior,
           and regenerate docs.
+
+            - [ ] 17.75.4.4.5.1 Focused Color Tests: finish targeted unit tests
+              for each changed 3D color path before adding or refreshing visual
+              fixtures.
+
+            - [ ] 17.75.4.4.5.2 Metadata Updates: update public-surface
+              metadata and migration notes with supported 3D color behavior and
+              intentional omissions.
+
+            - [ ] 17.75.4.4.5.3 Status Regeneration: regenerate
+              `docs/matplotlib-parity-status.md` and run focused freshness
+              checks for the changed metadata.
 
     - [ ] 17.75.4.5 3D Fixtures and Reference Coverage: add parity fixture
       triplets for public 3D chart classes that lack Matplotlib reference
@@ -2245,19 +2286,47 @@ example/browser breadth as documentation work.
           example catalog entries, and `test/matplotlib_ref/plots` coverage to
           list missing fixture triplets before adding new images.
 
+            - [ ] 17.75.4.5.1.1 Public API Coverage Matrix: map every exported
+              3D helper to an example-catalog row and Matplotlib-reference
+              plot, noting missing or duplicate coverage.
+
+            - [ ] 17.75.4.5.1.2 Tolerance Risk List: identify cases likely to
+              need case-specific tolerances because of projection, clipping,
+              or depth-order residuals before generating images.
+
         - [ ] 17.75.4.5.2 Core 3D Fixture Triplets: add Go/Python/golden
           fixtures for missing line, scatter, stem, errorbar, bar, wireframe,
           surface, trisurf, contour, triangulated contour, voxel, and
           fill-between surfaces as needed.
+
+            - [ ] 17.75.4.5.2.1 Low-Complexity Fixtures: add missing line-like,
+              scatter, stem, errorbar, wireframe, and bar fixture triplets.
+
+            - [ ] 17.75.4.5.2.2 Polygon Fixtures: add missing surface, trisurf,
+              contour, triangulated contour, voxel, and fill-between fixture
+              triplets after core behavior is aligned.
 
         - [ ] 17.75.4.5.3 Reference Tolerances and Optional Visuals: tune only
           case-specific tolerances for documented projection, clipping, or
           backend residuals, and add optional-visual gates only where native
           backend availability truly changes pixels.
 
+            - [ ] 17.75.4.5.3.1 Tolerance Application: add per-case tolerances
+              only for inventory-approved residuals and keep defaults unchanged
+              for exact or near-exact cases.
+
+            - [ ] 17.75.4.5.3.2 Optional Backend Gates: add optional-visual
+              gates only for cases whose pixels depend on backend availability.
+
         - [ ] 17.75.4.5.4 Fixture Coverage Ledger: update example-catalog
           metadata, parity docs, and migration notes with new fixture coverage
           and residual rendering differences.
+
+            - [ ] 17.75.4.5.4.1 Catalog Metadata: update catalog rows,
+              tolerances, and case descriptions for newly added 3D fixtures.
+
+            - [ ] 17.75.4.5.4.2 Fixture Docs: record new coverage and residual
+              rendering differences in migration notes and parity status docs.
 
     - [ ] 17.75.4.6 3D Docs and Divergence Ledger: update parity metadata,
       migration notes, and `docs/matplotlib-parity-status.md` with completed 3D
@@ -2269,9 +2338,23 @@ example/browser breadth as documentation work.
           rows as supported or intentional omissions with concrete rationale
           and task references.
 
+            - [ ] 17.75.4.6.1.1 Supported Rows: mark implemented 3D APIs as
+              supported with references to the completed 17.75.4 subtasks.
+
+            - [ ] 17.75.4.6.1.2 Omission Rows: record intentional omissions
+              with concrete mplot3d behavior, Go API rationale, and affected
+              examples.
+
         - [ ] 17.75.4.6.2 Migration Notes: summarize implemented 3D parity
           surfaces, typed Go API differences, and any residual mplot3d
           divergences in `docs/matplotlib-migration-notes.md`.
+
+            - [ ] 17.75.4.6.2.1 Implemented Behavior Notes: summarize newly
+              aligned 3D projection, color, fixture, and scalar-mappable
+              behavior.
+
+            - [ ] 17.75.4.6.2.2 Typed API Differences: document Go-specific
+              typed options and immutable-state differences from Matplotlib.
 
         - [ ] 17.75.4.6.3 Final 3D Status Regeneration: regenerate
           `docs/matplotlib-parity-status.md`, run focused catalog/doc freshness
@@ -2279,7 +2362,7 @@ example/browser breadth as documentation work.
 
 ### 17.75.5 Color, Image, Norm, and Colorbar Extras
 
-- [ ] Split 17.75.5 into execution-ready subtasks and complete them in order:
+- [x] Split 17.75.5 into execution-ready subtasks and complete them in order:
 
     - [ ] 17.75.5.1 Color Conversion Edge Cases: audit exact Matplotlib color
       parsing and conversion behavior for named colors, hex forms, alpha
@@ -2290,13 +2373,33 @@ example/browser breadth as documentation work.
           Tableau/CSS/XKCD precedence, `none`, short/long hex forms, and alpha
           suffix behavior against `colors.py`.
 
+            - [ ] 17.75.5.1.1.1 Named Color Tables: compare Go named-color
+              tables and precedence against Matplotlib's base, Tableau, CSS4,
+              and XKCD tables.
+
+            - [ ] 17.75.5.1.1.2 Hex Forms: align supported short/long hex
+              forms, optional alpha suffixes, and invalid hex diagnostics.
+
         - [ ] 17.75.5.1.2 Alpha and Grayscale Semantics: audit explicit alpha
           precedence, grayscale-string validation, numeric ambiguity, and
           sequence handling against Matplotlib's conversion tests.
 
+            - [ ] 17.75.5.1.2.1 Alpha Precedence: compare explicit alpha
+              overrides, embedded alpha, `none`, and default opacity handling.
+
+            - [ ] 17.75.5.1.2.2 Grayscale and Sequence Ambiguity: align
+              grayscale strings, numeric inputs, and sequence-length handling
+              for supported Go APIs.
+
         - [ ] 17.75.5.1.3 Masked, NaN, and Invalid Inputs: align masked arrays,
           NaN handling, invalid-length sequences, and error messages where they
           affect supported Go APIs.
+
+            - [ ] 17.75.5.1.3.1 Bad Value Semantics: compare masked, NaN, and
+              invalid numeric inputs against Matplotlib's conversion behavior.
+
+            - [ ] 17.75.5.1.3.2 Error Surface: align supported error messages
+              and document Python-only dynamic input omissions.
 
         - [ ] 17.75.5.1.4 Color Conversion Ledger: add focused tests, document
           unsupported dynamic Python-only inputs, and update parity metadata.
@@ -2315,9 +2418,23 @@ example/browser breadth as documentation work.
           and inverse callbacks or record an intentional omission with API
           rationale and affected examples.
 
+            - [ ] 17.75.5.2.2.1 FuncNorm API Shape: decide callback signatures,
+              inverse requirements, clipping behavior, and scalar input/output
+              expectations.
+
+            - [ ] 17.75.5.2.2.2 FuncNorm Tests or Omission: add focused tests
+              for implemented behavior or record the intentional omission in
+              metadata and migration notes.
+
         - [ ] 17.75.5.2.3 Boundary and Multi-Stage Norms: close remaining
           boundary, centered/two-slope, multi-stage, bad/under/over, and
           scalar-mappable callback gaps needed by fixtures.
+
+            - [ ] 17.75.5.2.3.1 Boundary and Centered Norms: align boundary,
+              centered, two-slope, clipping, inverse, and out-of-range behavior.
+
+            - [ ] 17.75.5.2.3.2 Scalar-Mappable Norm Updates: implement or
+              document callback/update behavior for norm and clim changes.
 
         - [ ] 17.75.5.2.4 Norm Fixtures and Ledger: add focused norm tests,
           update public-surface metadata, and regenerate docs.
@@ -2336,9 +2453,24 @@ example/browser breadth as documentation work.
           the static-rendering subset needed by examples, or document why the
           Go port intentionally omits LightSource-style image lighting.
 
+            - [ ] 17.75.5.3.2.1 Hillshade Core: implement or omit the grayscale
+              hillshade core with Matplotlib default azimuth, altitude, and
+              fraction semantics.
+
+            - [ ] 17.75.5.3.2.2 RGB Blend Modes: implement or omit overlay,
+              soft-light, hsv, and custom blend paths needed by examples.
+
         - [ ] 17.75.5.3.3 Surface Lighting Integration: connect supported
           lighting to image/surface rendering paths where Matplotlib examples
           require it, keeping backend fallbacks explicit.
+
+            - [ ] 17.75.5.3.3.1 Image Path Integration: connect supported
+              LightSource behavior to image rendering and transformed image
+              paths where static examples need it.
+
+            - [ ] 17.75.5.3.3.2 Surface Path Integration: connect supported
+              lighting to surface rendering without regressing 3D shade
+              semantics from 17.75.4.
 
         - [ ] 17.75.5.3.4 LightSource Fixtures and Ledger: add reference
           fixtures or omission notes, then update parity metadata and docs.
@@ -2356,9 +2488,23 @@ example/browser breadth as documentation work.
           static-rendering subset or document an intentional omission with
           affected examples and public-surface metadata.
 
+            - [ ] 17.75.5.4.2.1 Bivariate API Shape: decide lookup-table shape,
+              input normalization, alpha handling, and colorbar expectations.
+
+            - [ ] 17.75.5.4.2.2 Bivariate Tests or Omission: add focused tests
+              for implemented behavior or record the omission with affected
+              examples.
+
         - [ ] 17.75.5.4.3 Multivariate Support Decision: implement
           multichannel lookup behavior or document why the Go API keeps only
           scalar colormaps.
+
+            - [ ] 17.75.5.4.3.1 Multivariate API Shape: decide whether
+              multichannel lookup tables fit the Go color API without
+              destabilizing scalar colormaps.
+
+            - [ ] 17.75.5.4.3.2 Multivariate Tests or Omission: add tests for
+              supported behavior or record the omission with rationale.
 
         - [ ] 17.75.5.4.4 Colormap Fixtures and Ledger: add tests/fixtures for
           supported behavior, record omissions, and regenerate docs.
@@ -2377,9 +2523,23 @@ example/browser breadth as documentation work.
           raster resampling gaps first, with focused tests before visual
           fixture updates.
 
+            - [ ] 17.75.5.5.2.1 Interpolation Kernel Alignment: compare and
+              adjust nearest, bilinear, bicubic, antialiasing, and `none`
+              behavior for AGG and Go raster paths.
+
+            - [ ] 17.75.5.5.2.2 Transform and Extent Alignment: align origin,
+              extent, affine transforms, clipping, and pixel-center placement.
+
         - [ ] 17.75.5.5.3 Vector Backend Fallbacks: document and test SVG/PDF
           fallback behavior where exact Matplotlib image resampling is not
           practical.
+
+            - [ ] 17.75.5.5.3.1 SVG/PDF Behavior: test vector backend image
+              placement, interpolation hints, clipping, and fallback raster
+              embedding behavior.
+
+            - [ ] 17.75.5.5.3.2 Backend Divergence Notes: document residual
+              vector differences that should not affect raster parity.
 
         - [ ] 17.75.5.5.4 Image Fixture Ledger: add or refresh transformed
           image fixtures and update parity docs with backend-specific residuals.
@@ -2393,13 +2553,34 @@ example/browser breadth as documentation work.
           multi-parent, gridspec-style, inset, shrink, aspect, pad, anchor, and
           location behavior against upstream static examples.
 
+            - [ ] 17.75.5.6.1.1 Parent and Layout Modes: compare single-parent,
+              multi-parent, gridspec-style, and inset placement behavior.
+
+            - [ ] 17.75.5.6.1.2 Size and Anchor Options: align shrink, aspect,
+              pad, anchor, panchor, location, and orientation defaults where
+              supported.
+
         - [ ] 17.75.5.6.2 Colorbar Formatter and Tick Breadth: align locators,
           formatters, boundaries, extensions, minor ticks, labels, and
           orientation behavior needed by supported examples.
 
+            - [ ] 17.75.5.6.2.1 Boundaries and Extensions: align boundary,
+              spacing, extend, extendfrac, under/over, and discrete colorbar
+              behavior.
+
+            - [ ] 17.75.5.6.2.2 Tick and Label Formatting: align locator,
+              formatter, minor tick, label, orientation, and tick-position
+              behavior used by examples.
+
         - [ ] 17.75.5.6.3 Mutable Mappable Semantics: implement or document
           callback/update behavior for cmap, norm, clim, alpha, and array
           changes after colorbar creation.
+
+            - [ ] 17.75.5.6.3.1 Update Contract: define supported post-creation
+              updates for cmap, norm, clim, alpha, and scalar arrays.
+
+            - [ ] 17.75.5.6.3.2 Colorbar Update Tests or Omission: add focused
+              update tests or document immutable Go API differences.
 
         - [ ] 17.75.5.6.4 Colorbar Fixtures and Ledger: add focused colorbar
           fixtures, update metadata, and regenerate docs.
@@ -2414,13 +2595,34 @@ example/browser breadth as documentation work.
           and colorbar public-surface rows against example-catalog and
           Matplotlib-reference coverage.
 
+            - [ ] 17.75.5.7.1.1 Public API Coverage Matrix: map each color,
+              norm, image, and colorbar feature to existing catalog and
+              Matplotlib-reference coverage.
+
+            - [ ] 17.75.5.7.1.2 Fixture Priority List: order missing fixtures
+              by API coverage, parity risk, and upstream example importance.
+
         - [ ] 17.75.5.7.2 Color/Image Fixture Triplets: add missing Go,
           Python-reference, and golden fixture triplets after core behavior is
           aligned.
 
+            - [ ] 17.75.5.7.2.1 Norm and Colormap Fixtures: add missing
+              colormap, norm, FuncNorm, and boundary/discrete colorbar fixture
+              triplets after core behavior lands.
+
+            - [ ] 17.75.5.7.2.2 Image and Colorbar Fixtures: add transformed
+              image, LightSource, and colorbar placement/formatter fixture
+              triplets after backend behavior lands.
+
         - [ ] 17.75.5.7.3 Metadata and Migration Notes: record supported
           surfaces, intentional omissions, and backend-specific residuals in
           public-surface metadata and migration notes.
+
+            - [ ] 17.75.5.7.3.1 Metadata Rows: update public-surface metadata
+              for supported color, image, norm, and colorbar behavior.
+
+            - [ ] 17.75.5.7.3.2 Migration Notes: summarize Go API differences,
+              omissions, and backend-specific rendering residuals.
 
         - [ ] 17.75.5.7.4 Final Color Status Regeneration: regenerate
           `docs/matplotlib-parity-status.md`, run focused catalog/doc freshness
