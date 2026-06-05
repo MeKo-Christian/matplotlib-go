@@ -2251,7 +2251,7 @@ example/browser breadth as documentation work.
                   tests and migration-note entries for unsupported input
                   categories.
 
-        - [ ] 17.75.5.1.4 Color Conversion Ledger: add focused tests, document
+        - [x] 17.75.5.1.4 Color Conversion Ledger: add focused tests, document
           unsupported dynamic Python-only inputs, and update parity metadata.
 
             - [x] 17.75.5.1.4.1 Test Consolidation: run the focused color
