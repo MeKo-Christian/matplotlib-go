@@ -412,3 +412,26 @@ func TestTransformedImageVectorBackendDivergenceNotesAreDocumented(t *testing.T)
 		}
 	}
 }
+
+func TestTransformedImageVectorBackendFallbacksAreDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Vector Backend Fallbacks",
+		"SVG/PDF Vector Image Behavior and Vector Backend Divergence Notes are the fallback inputs",
+		"`SVG` and `PDF` preserve placement, transforms, alpha structure, and clipping contracts",
+		"exact image resampling is viewer-dependent and not a raster parity gate",
+		"interpolation names are not emitted as vector resampling directives",
+		"future fixture work should compare vector structure rather than SVG/PDF viewer pixels",
+		"AGG remains the raster parity backend for image fixtures",
+		"GoBasic remains the deterministic nearest-only raster fallback",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image vector backend fallback docs missing %q", phrase)
+		}
+	}
+}

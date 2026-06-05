@@ -745,6 +745,18 @@ for the active fixtures but can produce different scalar-stage resampling when a
 large image is mostly outside the axes clip. The fixture refresh can proceed
 with AGG as the raster reference and GoBasic documented as a fallback.
 
+## Phase 17.75.5 Vector Backend Fallbacks
+
+SVG/PDF Vector Image Behavior and Vector Backend Divergence Notes are the
+fallback inputs for transformed image resampling. `SVG` and `PDF` preserve
+placement, transforms, alpha structure, and clipping contracts, but exact image
+resampling is viewer-dependent and not a raster parity gate.
+
+The interpolation names are not emitted as vector resampling directives, so
+future fixture work should compare vector structure rather than SVG/PDF viewer
+pixels. AGG remains the raster parity backend for image fixtures, and GoBasic
+remains the deterministic nearest-only raster fallback.
+
 ## Phase 17.75.5 SVG/PDF Vector Image Behavior
 
 `SVG` emits embedded PNG data-URI `<image>` nodes with

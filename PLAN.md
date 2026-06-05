@@ -2235,7 +2235,7 @@ example/browser breadth as documentation work.
             - [x] 17.75.5.5.2.2 Transform and Extent Alignment: align origin,
               extent, affine transforms, clipping, and pixel-center placement.
 
-        - [ ] 17.75.5.5.3 Vector Backend Fallbacks: document and test SVG/PDF
+        - [x] 17.75.5.5.3 Vector Backend Fallbacks: document and test SVG/PDF
           fallback behavior where exact Matplotlib image resampling is not
           practical.
 
