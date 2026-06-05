@@ -2232,7 +2232,7 @@ example/browser breadth as documentation work.
           for supported examples; and defined the supported post-creation
           update contract for cmap, norm, clim, alpha, and scalar arrays.
 
-        - [ ] 17.75.5.6.2 Colorbar Update Tests or Omission: add focused update
+        - [x] 17.75.5.6.2 Colorbar Update Tests or Omission: add focused update
           tests for the supported mutable-mappable behavior (cmap, norm, clim,
           alpha, array changes after creation) or document the immutable Go API
           differences.

@@ -660,6 +660,49 @@ func TestFigureColorbarSyncsMutableCollectionMapping(t *testing.T) {
 	}
 }
 
+func TestFigureColorbarSyncsMutableCollectionNormScale(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	pc := &PathCollection{
+		Collection: Collection{Colormap: "viridis"},
+		Path:       polygonPath([]geom.Pt{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: 1}}, true),
+		Offsets:    []geom.Pt{{X: 0, Y: 0}, {X: 1, Y: 1}, {X: 2, Y: 0}},
+		FaceColor:  render.Color{A: 1},
+	}
+	if err := pc.SetArray([]float64{0.1, 1, 10}); err != nil {
+		t.Fatalf("SetArray: %v", err)
+	}
+	ax.Add(pc)
+
+	cbAx := fig.AddColorbar(ax, pc)
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	if err := pc.SetNorm(LogNorm{VMin: 0.1, VMax: 10}); err != nil {
+		t.Fatalf("SetNorm: %v", err)
+	}
+
+	DrawFigure(fig, &colorbarRecordingRenderer{})
+
+	if _, ok := cbAx.YScale.(transform.Log); !ok {
+		t.Fatalf("synced colorbar scale = %T, want transform.Log", cbAx.YScale)
+	}
+	yMin, yMax := cbAx.YScale.Domain()
+	if yMin != 0.1 || yMax != 10 {
+		t.Fatalf("synced log colorbar limits = %v..%v, want 0.1..10", yMin, yMax)
+	}
+	cb, ok := cbAx.Artists[0].(*Colorbar)
+	if !ok {
+		t.Fatalf("colorbar artist = %T, want *Colorbar", cbAx.Artists[0])
+	}
+	if got := cb.Mapping.Norm.NormName(); got != "log" {
+		t.Fatalf("synced colorbar norm = %q, want log", got)
+	}
+}
+
 func TestFigureAddColorbarShrinksAxesForExtensions(t *testing.T) {
 	fig := NewFigure(640, 360)
 	ax := fig.AddAxes(geom.Rect{

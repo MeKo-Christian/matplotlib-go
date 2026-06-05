@@ -109,3 +109,68 @@ func TestColorbarMutableMappableUpdateContractIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestColorbarMutableUpdateTestsAndOmissionsAreDocumented(t *testing.T) {
+	sourceRequirements := map[string][]string{
+		filepath.Join("..", "core", "colorbar_test.go"): {
+			"TestFigureColorbarSyncsMutableCollectionMapping",
+			"pc.SetCLim(-1, 2)",
+			"pc.SetColormap(\"plasma\")",
+			"TestFigureColorbarSyncsMutableCollectionNormScale",
+			"pc.SetNorm(LogNorm{VMin: 0.1, VMax: 10})",
+			"want transform.Log",
+		},
+		filepath.Join("..", "core", "collection_test.go"): {
+			"TestPathCollectionSetArrayRefreshesMappedFacesAndFaceEdges",
+			"TestLineCollectionSetArrayRefreshesStrokeColors",
+			"TestQuadMeshSetArrayRefreshesFlatColorsAndFaceEdges",
+			"TestQuadMeshSetArrayKeepsBadUnderOverColorsAfterMappingChanges",
+		},
+		filepath.Join("..", "test", "parity", "collection_mutable_scalarmap", "plot.go"): {
+			"mesh.SetArray([]float64{",
+			"mesh.SetColormap(\"plasma\")",
+			"mesh.SetCLim(-0.5, 1.0)",
+			"core.ColorbarOptions{Label: \"updated\"}",
+		},
+		filepath.Join("..", "core", "rasterization.go"): {
+			"func (a *ArtistRasterization) SetAlpha(alpha float64)",
+		},
+		filepath.Join("..", "core", "scalar_mappable.go"): {
+			"type ScalarMapInfo struct",
+			"Colormap string",
+			"Norm     ScalarNormalizer",
+		},
+	}
+	for path, phrases := range sourceRequirements {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		src := string(data)
+		for _, phrase := range phrases {
+			if !strings.Contains(src, phrase) {
+				t.Fatalf("%s missing colorbar update test marker %q", path, phrase)
+			}
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Colorbar Mutable Update Tests and Omissions",
+		"`TestFigureColorbarSyncsMutableCollectionMapping` covers post-creation `SetCLim` and `SetColormap` synchronization",
+		"`TestFigureColorbarSyncsMutableCollectionNormScale` covers post-creation `SetNorm` synchronization to a log colorbar scale",
+		"Collection tests cover `SetArray` refresh for PathCollection, LineCollection, and QuadMesh",
+		"`collection_mutable_scalarmap` provides the visible parity fixture for `SetArray`, `SetColormap`, `SetCLim`, and a colorbar",
+		"Alpha mutation remains documented as an omission from colorbar synchronization because `ScalarMapInfo` carries colormap, norm, vmin, and vmax, not artist alpha",
+		"Matplotlib callback-driven immediate `update_normal` redraw semantics remain outside the Go API",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("colorbar mutable update test docs missing %q", phrase)
+		}
+	}
+}

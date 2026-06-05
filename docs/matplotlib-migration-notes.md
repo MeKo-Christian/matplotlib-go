@@ -1079,6 +1079,21 @@ artist paint property. Matplotlib callback registries and
 `Colorbar.update_normal` side effects remain documented residuals for the typed
 Go API.
 
+## Phase 17.75.5 Colorbar Mutable Update Tests and Omissions
+
+`TestFigureColorbarSyncsMutableCollectionMapping` covers post-creation
+`SetCLim` and `SetColormap` synchronization. `TestFigureColorbarSyncsMutableCollectionNormScale`
+covers post-creation `SetNorm` synchronization to a log colorbar scale.
+Collection tests cover `SetArray` refresh for PathCollection, LineCollection,
+and QuadMesh.
+
+`collection_mutable_scalarmap` provides the visible parity fixture for
+`SetArray`, `SetColormap`, `SetCLim`, and a colorbar. Alpha mutation remains
+documented as an omission from colorbar synchronization because `ScalarMapInfo`
+carries colormap, norm, vmin, and vmax, not artist alpha. Matplotlib
+callback-driven immediate `update_normal` redraw semantics remain outside the
+Go API.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

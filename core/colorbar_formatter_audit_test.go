@@ -219,9 +219,9 @@ func TestColorbarFormatterAndTickBreadthMilestoneIsClosed(t *testing.T) {
 	}
 	planText := strings.Join(strings.Fields(string(planData)), " ")
 	requiredPlan := []string{
-		"- [x] 17.75.5.6.2 Colorbar Formatter and Tick Breadth: align locators, formatters, boundaries, extensions, minor ticks, labels, and orientation behavior needed by supported examples.",
-		"- [x] 17.75.5.6.2.1 Boundaries and Extensions: align boundary, spacing, extend, extendfrac, under/over, and discrete colorbar behavior.",
-		"- [x] 17.75.5.6.2.2 Tick and Label Formatting: align locator, formatter, minor tick, label, orientation, and tick-position behavior used by examples.",
+		"[x] 17.75.5.6.1 Placement, Formatter, and Update Audit",
+		"aligned locators, formatters, boundaries, extensions (extend, extendfrac, spacing, under/over), minor ticks, labels, tick position, and discrete colorbar behavior",
+		"defined the supported post-creation update contract for cmap, norm, clim, alpha, and scalar arrays",
 	}
 	for _, phrase := range requiredPlan {
 		if !strings.Contains(planText, phrase) {
