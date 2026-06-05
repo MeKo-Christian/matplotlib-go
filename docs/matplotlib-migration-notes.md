@@ -1038,6 +1038,26 @@ spacing, and drawedges adds internal dividers. The custom `extendfrac` and
 `extendfrac='auto'` remain documented residuals because the Go colorbar
 extension geometry currently uses the Matplotlib default 5% extension length.
 
+## Phase 17.75.5 Colorbar Tick and Label Formatting
+
+Matplotlib colorbars expose `ticks`, `format`, `label`, `orientation`, and
+`ticklocation`. `update_ticks` applies the long-axis major locator, minor
+locator, and major formatter, and `set_ticks` supports labels and `minor=True`
+upstream. Matplotlib also exposes colorbar locator, formatter, minorlocator,
+and minorformatter properties that proxy the long axis.
+
+Go supports explicit major ticks through `ColorbarOptions.Ticks`. Go routes
+boundary, explicit boundary, log, asinh, and nonlinear norm colorbars to focused
+locators and formatters. Colorbar labels are placed on the active long axis for
+right, left, top, and bottom locations, and horizontal bottom colorbar tick
+fixtures are covered by `colorbar_horizontal_ticks`.
+
+Go clears colorbar minor locators and does not expose colorbar minor tick
+controls. The custom colorbar formatter options, ticklocation independent from
+location, `set_ticks(labels=...)`, and minor formatter APIs remain documented
+residuals because supported examples rely on fixed major ticks, default scalar
+formatting, norm-driven log/asinh formatting, and location-driven tick sides.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

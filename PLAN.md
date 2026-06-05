@@ -2295,7 +2295,7 @@ example/browser breadth as documentation work.
               spacing, extend, extendfrac, under/over, and discrete colorbar
               behavior.
 
-            - [ ] 17.75.5.6.2.2 Tick and Label Formatting: align locator,
+            - [x] 17.75.5.6.2.2 Tick and Label Formatting: align locator,
               formatter, minor tick, label, orientation, and tick-position
               behavior used by examples.
 
