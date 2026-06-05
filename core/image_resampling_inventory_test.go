@@ -688,3 +688,26 @@ func TestTransformedImageBackendNotesAreDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageFixtureLedgerIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Image Fixture Ledger",
+		"Fixture Refresh and Backend Notes are the image fixture ledger inputs",
+		"the ledger closes on `imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed` as the priority transformed-image triplets",
+		"the selected triplets have Go wrappers, Matplotlib reference scripts, golden PNGs, and Matplotlib reference PNGs",
+		"focused visual checks passed across golden, Matplotlib-reference, and reference-compare suites",
+		"backend-specific residuals are recorded for AGG, GoBasic, SVG, and PDF",
+		"public-surface metadata records both raster image coverage and vector renderer-backend coverage",
+		"the remaining transformed-image parity scope is parent-level closure of Transformed Image Resampling",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image fixture ledger docs missing %q", phrase)
+		}
+	}
+}

@@ -2246,7 +2246,7 @@ example/browser breadth as documentation work.
             - [x] 17.75.5.5.3.2 Backend Divergence Notes: document residual
               vector differences that should not affect raster parity.
 
-        - [ ] 17.75.5.5.4 Image Fixture Ledger: add or refresh transformed
+        - [x] 17.75.5.5.4 Image Fixture Ledger: add or refresh transformed
           image fixtures and update parity docs with backend-specific residuals.
 
             - [x] 17.75.5.5.4.1 Fixture Refresh: add or refresh transformed

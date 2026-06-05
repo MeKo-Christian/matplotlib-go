@@ -792,6 +792,22 @@ documented backend divergence, not AGG regressions. The vector fixtures should
 continue checking embedded image objects, transforms, soft masks, and clip
 structure rather than pixel-matching viewer resampling kernels.
 
+## Phase 17.75.5 Image Fixture Ledger
+
+Fixture Refresh and Backend Notes are the image fixture ledger inputs. The
+summary records that the ledger closes on `imshow_interpolation_matrix`,
+`imshow_clipped`, and `imshow_transformed` as the priority transformed-image
+triplets. The ledger records that the selected triplets have Go wrappers,
+Matplotlib reference scripts, golden PNGs, and Matplotlib reference PNGs.
+
+The ledger records that focused visual checks passed across golden,
+Matplotlib-reference, and reference-compare suites. It records that
+backend-specific residuals are recorded for AGG, GoBasic, SVG, and PDF. It also
+records that public-surface metadata records both raster image coverage and
+vector renderer-backend coverage. The ledger records that the remaining
+transformed-image parity scope is parent-level closure of Transformed Image
+Resampling.
+
 ## Phase 17.75.5 Fixture Refresh
 
 Image Fixture Priority and Image Triplet Generation are the fixture refresh
