@@ -2240,7 +2240,7 @@ example/browser breadth as documentation work.
                   omission notes for bad values that can appear in typed Go
                   color APIs.
 
-            - [ ] 17.75.5.1.3.2 Error Surface: align supported error messages
+            - [x] 17.75.5.1.3.2 Error Surface: align supported error messages
               and document Python-only dynamic input omissions.
 
                 - [x] 17.75.5.1.3.2.1 Diagnostic Comparison: compare current
