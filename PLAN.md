@@ -2480,7 +2480,7 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.4.4.2 Metadata Regeneration: update colormap metadata,
               migration notes, and parity status after the support decision.
 
-                - [ ] 17.75.5.4.4.2.1 Colormap Public-Surface Rows: update
+                - [x] 17.75.5.4.4.2.1 Colormap Public-Surface Rows: update
                   bivariate and multivariate metadata rows with implemented or
                   omitted status and task references.
 

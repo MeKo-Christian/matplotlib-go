@@ -301,6 +301,44 @@ func TestColorsLightSourceSurfaceRowIsIntentionalOmission(t *testing.T) {
 	}
 }
 
+func TestBivarMultivarColormapRowsAreIntentionalOmissions(t *testing.T) {
+	tests := []struct {
+		upstreamID string
+		required   []string
+	}{
+		{
+			upstreamID: "colors.py:class:BivarColormap",
+			required:   []string{"Phase 17.75.5", "intentional omission", "two-component", "2D colorbar"},
+		},
+		{
+			upstreamID: "colors.py:class:BivarColormapFromImage",
+			required:   []string{"Phase 17.75.5", "intentional omission", "image-backed bivariate", "two-dimensional LUT"},
+		},
+		{
+			upstreamID: "colors.py:class:MultivarColormap",
+			required:   []string{"Phase 17.75.5", "intentional omission", "tuple-valued component arrays", "multi-component colorbar"},
+		},
+		{
+			upstreamID: "colors.py:class:SegmentedBivarColormap",
+			required:   []string{"Phase 17.75.5", "intentional omission", "segmented bivariate", "visual fixture"},
+		},
+	}
+	for _, tc := range tests {
+		row, ok := LookupPublicSurfaceParityByUpstreamID(tc.upstreamID)
+		if !ok {
+			t.Fatalf("missing explicit Phase 17.75.5 classification for %s", tc.upstreamID)
+		}
+		if row.Status != PublicSurfaceIntentionalOmission {
+			t.Fatalf("%s status = %s, want %s", tc.upstreamID, row.Status, PublicSurfaceIntentionalOmission)
+		}
+		for _, phrase := range tc.required {
+			if !strings.Contains(row.Note, phrase) {
+				t.Fatalf("%s note missing %q: %q", tc.upstreamID, phrase, row.Note)
+			}
+		}
+	}
+}
+
 func TestPublicSurfaceParityRowsCoverCommittedInventory(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	rows := PublicSurfaceParityRowsForSurface(artifact.Rows)
