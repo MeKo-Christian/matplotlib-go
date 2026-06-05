@@ -2311,7 +2311,7 @@ example/browser breadth as documentation work.
           boundary, centered/two-slope, multi-stage, bad/under/over, and
           scalar-mappable callback gaps needed by fixtures.
 
-            - [ ] 17.75.5.2.3.1 Boundary and Centered Norms: align boundary,
+            - [x] 17.75.5.2.3.1 Boundary and Centered Norms: align boundary,
               centered, two-slope, clipping, inverse, and out-of-range behavior.
 
                 - [x] 17.75.5.2.3.1.1 BoundaryNorm Audit: compare boundary
