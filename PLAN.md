@@ -2325,7 +2325,7 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.2.3.2 Scalar-Mappable Norm Updates: implement or
               document callback/update behavior for norm and clim changes.
 
-                - [ ] 17.75.5.2.3.2.1 Update Audit: compare upstream norm/clim
+                - [x] 17.75.5.2.3.2.1 Update Audit: compare upstream norm/clim
                   callback behavior and stale colorbar invalidation.
 
                 - [ ] 17.75.5.2.3.2.2 Go Update Decision: add supported update

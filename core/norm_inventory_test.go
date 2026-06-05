@@ -202,6 +202,57 @@ func TestFuncNormOmissionLedgerIsDocumented(t *testing.T) {
 	}
 }
 
+func TestScalarMappableNormUpdateAuditIsDocumented(t *testing.T) {
+	colorizer := readUpstreamMatplotlibFile(t, "colorizer.py")
+	colorbar := readUpstreamMatplotlibFile(t, "colorbar.py")
+	upstreamRequired := []struct {
+		name string
+		src  string
+	}{
+		{"colorizer changed registry", "self.callbacks = cbook.CallbackRegistry(signals=[\"changed\"])"},
+		{"norm callback connection", "self._id_norm = self.norm.callbacks.connect('changed'"},
+		{"set clim", "def set_clim(self, vmin=None, vmax=None):"},
+		{"blocked norm callbacks", "with self.norm.callbacks.blocked(signal='changed')"},
+		{"colorizer changed", "def changed(self):"},
+	}
+	for _, required := range upstreamRequired {
+		if !strings.Contains(colorizer, required.src) {
+			t.Fatalf("upstream Colorizer audit missing %s", required.name)
+		}
+	}
+	for _, phrase := range []string{
+		"mappable.callbacks.connect(",
+		"def update_normal(self, mappable=None):",
+		"self._reset_locator_formatter_scale()",
+	} {
+		if !strings.Contains(colorbar, phrase) {
+			t.Fatalf("upstream Colorbar audit missing %q", phrase)
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	for _, phrase := range []string{
+		"Phase 17.75.5 Scalar-Mappable Norm Update Audit",
+		"Matplotlib `Colorizer` connects norm callbacks",
+		"`set_clim`",
+		"blocks norm callbacks",
+		"`Colorbar.update_normal`",
+		"Go uses pull-based",
+		"`SetNorm`",
+		"`SetCLim`",
+		"`syncColorbarMapping`",
+		"no callback registry",
+	} {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("scalar-mappable norm update audit missing %q", phrase)
+		}
+	}
+}
+
 var normInventory = []normInventoryEntry{
 	{
 		upstream:      "Normalize",
@@ -263,9 +314,14 @@ var normInventory = []normInventoryEntry{
 
 func readUpstreamColorsPy(t *testing.T) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("..", "third_party", "matplotlib", "lib", "matplotlib", "colors.py"))
+	return readUpstreamMatplotlibFile(t, "colors.py")
+}
+
+func readUpstreamMatplotlibFile(t *testing.T, name string) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("..", "third_party", "matplotlib", "lib", "matplotlib", name))
 	if err != nil {
-		t.Fatalf("read upstream colors.py: %v", err)
+		t.Fatalf("read upstream %s: %v", name, err)
 	}
 	return string(data)
 }

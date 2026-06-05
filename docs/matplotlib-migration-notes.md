@@ -287,6 +287,22 @@ directly for custom color normalization. Axis-level custom transforms continue
 to use `transform.Scale` through `function` and `functionlog`, which remains
 separate from scalar-mappable color normalization.
 
+## Phase 17.75.5 Scalar-Mappable Norm Update Audit
+
+Matplotlib `Colorizer` connects norm callbacks into a changed-event pipeline:
+norm changes trigger the colorizer, scalar mappables forward `changed`, and
+attached colorbars listen through `mappable.callbacks.connect`. `set_clim`
+blocks norm callbacks, changes `vmin` and `vmax` together, then emits one norm
+change. `Colorbar.update_normal` responds to mappable changes and resets
+locator/formatter/scale state when the norm object changes.
+
+Go uses pull-based scalar-map updates instead. Mappables expose `ScalarMap()`;
+mutable collections and meshes expose `SetNorm`, `SetCLim`, `SetArray`, and
+`SetColormap`; colorbars keep the mappable handle and refresh through
+`syncColorbarMapping` during layout/draw. There is no callback registry for
+norm changes. The current supported behavior is explicit mutation followed by
+redraw, with colorbars pulling the latest norm and clim from the mappable.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
