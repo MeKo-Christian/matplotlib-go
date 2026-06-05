@@ -2334,7 +2334,7 @@ example/browser breadth as documentation work.
         - [ ] 17.75.5.2.4 Norm Fixtures and Ledger: add focused norm tests,
           update public-surface metadata, and regenerate docs.
 
-            - [ ] 17.75.5.2.4.1 Focused Norm Tests: run targeted norm and
+            - [x] 17.75.5.2.4.1 Focused Norm Tests: run targeted norm and
               scalar-mappable tests before adding visual fixtures.
 
                 - [x] 17.75.5.2.4.1.1 Norm Behavior Tests: run or add focused
