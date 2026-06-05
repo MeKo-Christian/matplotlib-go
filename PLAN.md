@@ -2473,7 +2473,7 @@ example/browser breadth as documentation work.
                   scalar/vector input normalization, alpha behavior, and bad
                   value handling for implemented colormap paths.
 
-                - [ ] 17.75.5.4.4.1.2 Omission Tests: add focused diagnostics
+                - [x] 17.75.5.4.4.1.2 Omission Tests: add focused diagnostics
                   for bivariate or multivariate inputs intentionally outside
                   the Go API.
 

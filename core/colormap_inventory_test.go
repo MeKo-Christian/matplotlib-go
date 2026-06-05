@@ -389,3 +389,40 @@ func TestFocusedColormapLookupTestsAreDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestBivarMultivarOmissionDiagnosticsAreDocumented(t *testing.T) {
+	testSrc, err := os.ReadFile(filepath.Join("colormap_inventory_test.go"))
+	if err != nil {
+		t.Fatalf("read colormap inventory tests: %v", err)
+	}
+	for _, phrase := range []string{
+		"TestBivarColormapOmissionIsDocumented",
+		"TestMultivarColormapOmissionIsDocumented",
+		"test/matplotlib_ref",
+		"test/parity",
+	} {
+		if !strings.Contains(string(testSrc), phrase) {
+			t.Fatalf("omission diagnostics missing coverage marker %q", phrase)
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Colormap Omission Diagnostics",
+		"unsupported bivariate inputs are two-component lookup-table inputs",
+		"unsupported multivariate inputs are tuple-valued component arrays",
+		"no Go artist accepts tuple-valued colormap input",
+		"fixture scans cover `test/matplotlib_ref/plots` and `test/parity`",
+		"covered by `TestBivarColormapOmissionIsDocumented`",
+		"covered by `TestMultivarColormapOmissionIsDocumented`",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("colormap omission diagnostics docs missing %q", phrase)
+		}
+	}
+}

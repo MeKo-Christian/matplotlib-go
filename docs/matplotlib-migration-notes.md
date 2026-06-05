@@ -590,6 +590,20 @@ colors, component alpha semantics, and colorbar contracts are documented in
 the bivariate and multivariate omission ledgers instead of being hidden inside
 the scalar lookup API.
 
+## Phase 17.75.5 Colormap Omission Diagnostics
+
+For this phase, unsupported bivariate inputs are two-component lookup-table
+inputs, and unsupported multivariate inputs are tuple-valued component arrays.
+For diagnostics, no Go artist accepts tuple-valued colormap input, and no
+scalar colormap overload attempts to reinterpret vectors as multi-variate
+lookup coordinates.
+
+The fixture scans cover `test/matplotlib_ref/plots` and `test/parity` so new
+examples cannot silently start depending on these omitted APIs. Bivariate
+fixture and ledger diagnostics are covered by `TestBivarColormapOmissionIsDocumented`;
+multivariate fixture and ledger diagnostics are covered by
+`TestMultivarColormapOmissionIsDocumented`.
+
 ## Phase 17.75.5 Bivariate Colormap Omission Ledger
 
 `BivarColormap`, `BivarColormapFromImage`, and `SegmentedBivarColormap` are
