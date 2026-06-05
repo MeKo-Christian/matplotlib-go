@@ -666,3 +666,25 @@ func TestTransformedImageVectorBackendNotesAreDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageBackendNotesAreDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Backend Notes",
+		"Raster Backend Notes and Vector Backend Notes are the backend notes inputs",
+		"raster residuals are AGG clipped scalar-stage resampling and GoBasic nearest-only fallback behavior",
+		"vector residuals are SVG/PDF viewer-side resampling, interpolation-hint omission, clip-edge antialiasing, and structural raster embedding",
+		"public-surface metadata records both image interpolation/image artist coverage and renderer-backend coverage",
+		"AGG remains the pixel-parity backend for refreshed image triplets",
+		"SVG/PDF comparisons should remain structural rather than viewer-pixel comparisons",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image backend notes summary missing %q", phrase)
+		}
+	}
+}

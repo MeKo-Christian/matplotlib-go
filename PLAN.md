@@ -2260,7 +2260,7 @@ example/browser breadth as documentation work.
                   the selected Go/Python/golden/reference image fixture
                   triplets and run focused visual checks.
 
-            - [ ] 17.75.5.5.4.2 Backend Notes: record backend-specific
+            - [x] 17.75.5.5.4.2 Backend Notes: record backend-specific
               interpolation and vector fallback residuals in docs and metadata.
 
                 - [x] 17.75.5.5.4.2.1 Raster Backend Notes: record AGG and

@@ -806,6 +806,19 @@ suites. The supporting image fixtures remain in the ledger but were not
 refreshed because their behavior did not change. The backend-specific residuals
 are deferred to the Backend Notes children.
 
+## Phase 17.75.5 Backend Notes
+
+Raster Backend Notes and Vector Backend Notes are the backend notes inputs. The
+raster residuals are AGG clipped scalar-stage resampling and GoBasic
+nearest-only fallback behavior. The vector residuals are SVG/PDF viewer-side
+resampling, interpolation-hint omission, clip-edge antialiasing, and structural
+raster embedding.
+
+The public-surface metadata records both image interpolation/image artist
+coverage and renderer-backend coverage. AGG remains the pixel-parity backend for
+refreshed image triplets, and SVG/PDF comparisons should remain structural
+rather than viewer-pixel comparisons.
+
 ## Phase 17.75.5 Raster Backend Notes
 
 `AGG` remains the raster parity backend for transformed-image fixtures.
