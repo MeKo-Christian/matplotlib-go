@@ -2452,7 +2452,7 @@ example/browser breadth as documentation work.
               for implemented behavior or record the omission with affected
               examples.
 
-        - [ ] 17.75.5.4.3 Multivariate Support Decision: implement
+        - [x] 17.75.5.4.3 Multivariate Support Decision: implement
           multichannel lookup behavior or document why the Go API keeps only
           scalar colormaps.
 
