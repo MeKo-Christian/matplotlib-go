@@ -618,3 +618,51 @@ func TestTransformedImageRasterBackendNotesAreDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageVectorBackendNotesAreDocumented(t *testing.T) {
+	sourceRequirements := map[string][]string{
+		filepath.Join("..", "internal", "examplecatalog", "public_surface_parity.go"): {
+			"SVG/PDF vector image output preserves placement, clip structure, alpha masks, and embedded raster image objects",
+			"interpolation hints are not emitted as SVG image-rendering or PDF Interpolate directives",
+			"viewer-side image resampling remains a documented vector-backend residual",
+		},
+		filepath.Join("..", "internal", "examplecatalog", "catalog.go"): {
+			`SVGGoldenFamily: "image"`,
+			`SVGGoldenFamily: "mixed_raster"`,
+		},
+	}
+	for path, phrases := range sourceRequirements {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		src := string(data)
+		for _, phrase := range phrases {
+			if !strings.Contains(src, phrase) {
+				t.Fatalf("%s missing vector backend note marker %q", path, phrase)
+			}
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Vector Backend Notes",
+		"`SVG` and `PDF` are structural vector backends for image fixtures",
+		"placement, affine transforms, clip structure, embedded raster images, and PDF soft masks are the parity contract",
+		"interpolation hints are not emitted as SVG `image-rendering` or PDF `/Interpolate` directives",
+		"viewer-side resampling and clip-edge antialiasing remain output-consumer dependent",
+		"`image_heatmap` carries the SVG `image` golden family",
+		"`mixed_raster_vector` carries the SVG `mixed_raster` golden family",
+		"vector backend notes are recorded in public-surface metadata for renderer-backend coverage",
+		"raster pixel parity remains assigned to AGG",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image vector backend notes missing %q", phrase)
+		}
+	}
+}

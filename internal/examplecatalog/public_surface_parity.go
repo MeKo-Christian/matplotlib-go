@@ -2557,7 +2557,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"render/render.go", "render/graphics_context.go", "render/extensions.go", "backends/registry.go", "canvas/canvas.go", "canvas/dispatcher.go"},
 		catalogIDs:        []string{"basic_line", "mixed_raster_vector", "large_scatter", "clip_path_batch"},
 		exampleIDs:        []string{"basic_line"},
-		note:              "Renderer, canvas, events, and backend registration are split into Go packages rather than mirroring Matplotlib backend base classes directly. Remaining backend-base scope is precise figure-manager lifecycle transitions, draw-event/resize/close semantics, timer edge behavior, and backend-specific GUI behaviors.",
+		note:              "Renderer, canvas, events, and backend registration are split into Go packages rather than mirroring Matplotlib backend base classes directly. SVG/PDF vector image output preserves placement, clip structure, alpha masks, and embedded raster image objects; interpolation hints are not emitted as SVG image-rendering or PDF Interpolate directives, and viewer-side image resampling remains a documented vector-backend residual. Remaining backend-base scope is precise figure-manager lifecycle transitions, draw-event/resize/close semantics, timer edge behavior, and backend-specific GUI behaviors.",
 	},
 	{
 		idPrefix:          "backend-tool-registry",

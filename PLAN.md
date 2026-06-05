@@ -2267,7 +2267,7 @@ example/browser breadth as documentation work.
                   GoBasic interpolation or transform residuals that remain
                   after alignment.
 
-                - [ ] 17.75.5.5.4.2.2 Vector Backend Notes: record SVG/PDF
+                - [x] 17.75.5.5.4.2.2 Vector Backend Notes: record SVG/PDF
                   placement, interpolation-hint, clipping, and raster-embed
                   fallback differences.
 

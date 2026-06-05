@@ -822,6 +822,19 @@ pixel centers through `nearestScaledSourceIndex`.
 The ledger records that these raster residuals are recorded in public-surface
 metadata for image interpolation and image artist coverage.
 
+## Phase 17.75.5 Vector Backend Notes
+
+`SVG` and `PDF` are structural vector backends for image fixtures. The vector
+contract records that placement, affine transforms, clip structure, embedded
+raster images, and PDF soft masks are the parity contract. The interpolation
+hints are not emitted as SVG `image-rendering` or PDF `/Interpolate` directives.
+
+The vector residual ledger records that viewer-side resampling and clip-edge
+antialiasing remain output-consumer dependent. `image_heatmap` carries the SVG
+`image` golden family, and `mixed_raster_vector` carries the SVG `mixed_raster`
+golden family. The vector backend notes are recorded in public-surface metadata
+for renderer-backend coverage; raster pixel parity remains assigned to AGG.
+
 ## Phase 17.75.5 Image Fixture Priority
 
 The smallest transformed-image fixture priority set is
