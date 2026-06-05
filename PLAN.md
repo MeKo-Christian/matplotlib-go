@@ -2303,7 +2303,7 @@ example/browser breadth as documentation work.
           callback/update behavior for cmap, norm, clim, alpha, and array
           changes after colorbar creation.
 
-            - [ ] 17.75.5.6.3.1 Update Contract: define supported post-creation
+            - [x] 17.75.5.6.3.1 Update Contract: define supported post-creation
               updates for cmap, norm, clim, alpha, and scalar arrays.
 
             - [ ] 17.75.5.6.3.2 Colorbar Update Tests or Omission: add focused

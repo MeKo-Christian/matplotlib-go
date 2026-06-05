@@ -1058,6 +1058,27 @@ location, `set_ticks(labels=...)`, and minor formatter APIs remain documented
 residuals because supported examples rely on fixed major ticks, default scalar
 formatting, norm-driven log/asinh formatting, and location-driven tick sides.
 
+## Phase 17.75.5 Colorbar Mutable Mappable Update Contract
+
+Matplotlib colorbars attach to scalar mappables through
+`mappable.callbacks.connect('changed', Colorbar.update_normal)`.
+`Colorbar.update_normal` pulls alpha, colormap, and norm from the mappable,
+then redraws the colorbar and resets locator, formatter, and scale state when
+the norm object changes.
+
+Go colorbars store the typed `ScalarMappable` handle and refresh through
+`syncColorbarMapping` during layout or draw. The supported Go update path is
+explicit mutation followed by redraw. `SetArray`, `SetColormap`, `SetNorm`, and
+`SetCLim` refresh scalar-derived collection colors and scalar-map metadata.
+Colorbar cmap, norm, and clim changes synchronize from `ScalarMap()` on redraw.
+
+The scalar-array changes are supported on PathCollection, LineCollection,
+PatchCollection, and QuadMesh; alpha is not part of `ScalarMapInfo` and colorbar
+alpha does not follow mappable alpha automatically; mappable alpha remains an
+artist paint property. Matplotlib callback registries and
+`Colorbar.update_normal` side effects remain documented residuals for the typed
+Go API.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
