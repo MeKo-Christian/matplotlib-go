@@ -951,6 +951,30 @@ shape. That keeps visual clipping correct for current fixtures, but clipped
 scalar-stage resampling can still differ from upstream when only a subregion of
 a large image is visible.
 
+## Phase 17.75.5 Colorbar Parent and Layout Modes
+
+Matplotlib `Figure.colorbar` accepts `ax` as a single axes, iterable, tuple,
+dict-values view, or numpy array. When no explicit `cax` is supplied,
+`make_axes` unions all parent axes positions and shrinks each parent; the
+multi-parent path is figure-coordinate placement. `make_axes_gridspec` is
+single-parent and replaces the parent subplotspec when `use_gridspec=True` and
+the parent has a subplotspec. `cax` may be a manually supplied axes, including
+an inset axes, and then the colorbar uses that axes directly instead of
+stealing parent space.
+
+Go `Figure.AddColorbar` is intentionally single-parent through `parent *Axes`.
+For this path, the Go colorbar axes is created internally with
+`Figure.AddAxes`, stores `colorbarParent`, and derives its base from the parent
+axes or parent subplotspec. For draw-time updates, subplot and
+constrained-layout colorbars track the parent through
+`syncColorbarAxesMeasured`, including the constrained-layout resolved slot for
+subplotspec-backed parents.
+
+Go has inset axes through `Axes.InsetAxes`, but no colorbar `cax` parameter.
+That means single-parent direct axes, subplot, and constrained-layout placement
+are supported, while multi-parent and inset-`cax` colorbar placement remain
+unsupported placement modes.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

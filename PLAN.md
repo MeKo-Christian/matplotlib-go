@@ -2280,7 +2280,7 @@ example/browser breadth as documentation work.
           multi-parent, gridspec-style, inset, shrink, aspect, pad, anchor, and
           location behavior against upstream static examples.
 
-            - [ ] 17.75.5.6.1.1 Parent and Layout Modes: compare single-parent,
+            - [x] 17.75.5.6.1.1 Parent and Layout Modes: compare single-parent,
               multi-parent, gridspec-style, and inset placement behavior.
 
             - [ ] 17.75.5.6.1.2 Size and Anchor Options: align shrink, aspect,
