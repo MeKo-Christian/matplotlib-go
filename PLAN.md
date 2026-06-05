@@ -2433,7 +2433,7 @@ example/browser breadth as documentation work.
           multivariate colormap classes, lookup-table shape rules, alpha
           handling, and call semantics against Matplotlib.
 
-            - [ ] 17.75.5.4.1.1 Upstream API Inventory: inspect bivariate and
+            - [x] 17.75.5.4.1.1 Upstream API Inventory: inspect bivariate and
               multivariate colormap constructors, lookup tables, alpha rules,
               and scalar-mappable integration points.
 

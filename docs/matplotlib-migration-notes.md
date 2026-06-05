@@ -504,6 +504,38 @@ broad `colors.py` rows now point to explicit norm, dynamic norm-factory, and
 LightSource rows; remaining open color-surface work is the Python-only dynamic
 color input surface plus bivariate/multivariate colormap decisions.
 
+## Phase 17.75.5 Bivar/Multivar Upstream API Inventory
+
+Matplotlib 3.10.9 treats bivariate and multivariate colormaps as separate
+public color-mapping surfaces rather than ordinary scalar colormap names.
+`MultivarColormap` wraps two or more scalar colormaps and combines component
+RGBA results with a `combination_mode`: `sRGB_add` sums RGB channels while
+`sRGB_sub` subtracts the combined complement. It multiplies component alpha,
+tracks transparent bad values, supports tuple-shaped input matching the number
+of variates, validates alpha shape against the first input, optionally clips
+RGB/alpha to `[0, 1]`, rejects `bytes=True` when clipping is disabled, and has
+per-component resampling plus `with_extremes` support.
+
+`BivarColormap` is a two-input lookup-table surface with `N` and `M`
+quantization dimensions, `origin`, transparent bad color, magenta outside
+color, and shape modes `square`, `circle`, `ignore`, and `circleignore`.
+Its call path requires a two-part input, applies shape-specific clipping or
+outside marking, maps float inputs by multiplying by `N`/`M` while treating
+exact `1.0` as the last in-range index, indexes `_lut[X0, X1]`, applies bad and
+outside colors, optionally returns bytes, and validates alpha shape against the
+first input. It also exposes 1D component colormaps through `__getitem__`,
+resampling/reversal/transposition helpers, circular display masking, and
+`with_extremes` for bad/outside/shape/origin.
+
+`SegmentedBivarColormap` builds a bivariate table from a `(k, l, 3)` patch by
+supersampling into an `(N, N, 4)` LUT with bilinear image resampling.
+`BivarColormapFromImage` accepts `(N, M, 3)` or `(N, M, 4)` lookup tables,
+converts uint8 data to floats, and adds opaque alpha when only RGB is supplied.
+`cm.py` registers generated families through `_bivar_colormaps` and
+`_multivar_colormaps`; scalar-mappable integration is multi-variate because
+the colormap input is a tuple of component arrays, not one normalized scalar
+array.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
