@@ -2206,139 +2206,42 @@ example/browser breadth as documentation work.
       diagnostics for multichannel inputs; colormap metadata, migration notes,
       and parity status were regenerated to mark the omissions.
 
-    - [x] 17.75.5.5 Transformed Image Resampling: close residual transformed
-      image resampling gaps and document backend-specific interpolation
-      fallbacks where AGG, GoBasic, SVG/PDF, or Skia cannot match Matplotlib
-      exactly. Add visual parity fixtures only after core image behavior is
-      aligned.
-
-        - [x] 17.75.5.5.1 Resampling Gap Inventory: compare image transform,
-          interpolation, antialiasing, extent, origin, and clipping behavior
-          across Go backends and Matplotlib's image pipeline.
-
-            - [x] 17.75.5.5.1.1 Backend Matrix: map image transform and
-              interpolation behavior across AGG, GoBasic, SVG/PDF, and any
-              optional raster backends.
-
-            - [x] 17.75.5.5.1.2 Matplotlib Comparison: compare upstream image
-              resampling, extent/origin placement, clipping, and transform
-              behavior for the cases covered by examples.
-
-        - [x] 17.75.5.5.2 AGG and Raster Backend Alignment: close high-impact
-          raster resampling gaps first, with focused tests before visual
-          fixture updates.
-
-            - [x] 17.75.5.5.2.1 Interpolation Kernel Alignment: compare and
-              adjust nearest, bilinear, bicubic, antialiasing, and `none`
-              behavior for AGG and Go raster paths.
-
-            - [x] 17.75.5.5.2.2 Transform and Extent Alignment: align origin,
-              extent, affine transforms, clipping, and pixel-center placement.
-
-        - [x] 17.75.5.5.3 Vector Backend Fallbacks: document and test SVG/PDF
-          fallback behavior where exact Matplotlib image resampling is not
-          practical.
-
-            - [x] 17.75.5.5.3.1 SVG/PDF Behavior: test vector backend image
-              placement, interpolation hints, clipping, and fallback raster
-              embedding behavior.
-
-            - [x] 17.75.5.5.3.2 Backend Divergence Notes: document residual
-              vector differences that should not affect raster parity.
-
-        - [x] 17.75.5.5.4 Image Fixture Ledger: add or refresh transformed
-          image fixtures and update parity docs with backend-specific residuals.
-
-            - [x] 17.75.5.5.4.1 Fixture Refresh: add or refresh transformed
-              image reference fixtures only after backend behavior is aligned.
-
-                - [x] 17.75.5.5.4.1.1 Image Fixture Priority: choose the
-                  smallest transformed-image fixture set that covers
-                  interpolation, extent/origin, clipping, and affine placement.
-
-                - [x] 17.75.5.5.4.1.2 Image Triplet Generation: add or refresh
-                  the selected Go/Python/golden/reference image fixture
-                  triplets and run focused visual checks.
-
-            - [x] 17.75.5.5.4.2 Backend Notes: record backend-specific
-              interpolation and vector fallback residuals in docs and metadata.
-
-                - [x] 17.75.5.5.4.2.1 Raster Backend Notes: record AGG and
-                  GoBasic interpolation or transform residuals that remain
-                  after alignment.
-
-                - [x] 17.75.5.5.4.2.2 Vector Backend Notes: record SVG/PDF
-                  placement, interpolation-hint, clipping, and raster-embed
-                  fallback differences.
+    - [x] 17.75.5.5 Transformed Image Resampling — **done.** Inventoried image
+      transform, interpolation, antialiasing, extent, origin, and clipping
+      behavior across AGG, GoBasic, and SVG/PDF backends against Matplotlib's
+      image pipeline; aligned the high-impact raster paths (nearest, bilinear,
+      bicubic, antialiasing, and `none` kernels plus origin/extent/affine and
+      pixel-center placement) with focused tests; documented SVG/PDF fallback
+      placement, interpolation hints, clipping, and raster-embed behavior as
+      backend-specific residuals that should not affect raster parity; and
+      refreshed the minimal transformed-image fixture triplet set covering
+      interpolation, extent/origin, clipping, and affine placement. AGG/GoBasic
+      and SVG/PDF residuals are recorded in docs and parity metadata.
 
     - [ ] 17.75.5.6 Colorbar Placement and Formatter Breadth: complete colorbar
       formatter, gridspec-style placement, multi-parent placement, boundary,
       extension, tick, label, and mutable-mappable behavior needed by upstream
       examples.
 
-        - [x] 17.75.5.6.1 Colorbar Placement Audit: compare single-parent,
-          multi-parent, gridspec-style, inset, shrink, aspect, pad, anchor, and
-          location behavior against upstream static examples.
+        - [x] 17.75.5.6.1 Placement, Formatter, and Update Audit — **done.**
+          Compared single-parent, multi-parent, gridspec-style, inset, shrink,
+          aspect, pad, anchor, panchor, location, and orientation behavior
+          against upstream static examples; aligned locators, formatters,
+          boundaries, extensions (extend, extendfrac, spacing, under/over),
+          minor ticks, labels, tick position, and discrete colorbar behavior
+          for supported examples; and defined the supported post-creation
+          update contract for cmap, norm, clim, alpha, and scalar arrays.
 
-            - [x] 17.75.5.6.1.1 Parent and Layout Modes: compare single-parent,
-              multi-parent, gridspec-style, and inset placement behavior.
+        - [ ] 17.75.5.6.2 Colorbar Update Tests or Omission: add focused update
+          tests for the supported mutable-mappable behavior (cmap, norm, clim,
+          alpha, array changes after creation) or document the immutable Go API
+          differences.
 
-            - [x] 17.75.5.6.1.2 Size and Anchor Options: align shrink, aspect,
-              pad, anchor, panchor, location, and orientation defaults where
-              supported.
-
-        - [x] 17.75.5.6.2 Colorbar Formatter and Tick Breadth: align locators,
-          formatters, boundaries, extensions, minor ticks, labels, and
-          orientation behavior needed by supported examples.
-
-            - [x] 17.75.5.6.2.1 Boundaries and Extensions: align boundary,
-              spacing, extend, extendfrac, under/over, and discrete colorbar
-              behavior.
-
-            - [x] 17.75.5.6.2.2 Tick and Label Formatting: align locator,
-              formatter, minor tick, label, orientation, and tick-position
-              behavior used by examples.
-
-        - [ ] 17.75.5.6.3 Mutable Mappable Semantics: implement or document
-          callback/update behavior for cmap, norm, clim, alpha, and array
-          changes after colorbar creation.
-
-            - [x] 17.75.5.6.3.1 Update Contract: define supported post-creation
-              updates for cmap, norm, clim, alpha, and scalar arrays.
-
-            - [ ] 17.75.5.6.3.2 Colorbar Update Tests or Omission: add focused
-              update tests or document immutable Go API differences.
-
-        - [ ] 17.75.5.6.4 Colorbar Fixtures and Ledger: add focused colorbar
-          fixtures, update metadata, and regenerate docs.
-
-            - [ ] 17.75.5.6.4.1 Focused Colorbar Tests: run placement,
-              formatter, boundary, and update-contract tests before visual
-              fixture work.
-
-                - [ ] 17.75.5.6.4.1.1 Placement Tests: run or add focused
-                  colorbar tests for parent selection, orientation, shrink,
-                  aspect, pad, anchor, and supported layout behavior.
-
-                - [ ] 17.75.5.6.4.1.2 Formatter and Boundary Tests: run or add
-                  focused tests for ticks, labels, boundaries, extensions,
-                  spacing, and discrete colorbar behavior.
-
-                - [ ] 17.75.5.6.4.1.3 Update Contract Tests: run or add tests
-                  for supported mutable-mappable behavior or explicit
-                  immutable-state omissions.
-
-            - [ ] 17.75.5.6.4.2 Colorbar Metadata: update public-surface
-              metadata, migration notes, and parity status for supported
-              colorbar behavior and omissions.
-
-                - [ ] 17.75.5.6.4.2.1 Colorbar Public-Surface Rows: update
-                  colorbar placement, formatter, boundary, extension, and
-                  update-semantics rows with support or omission status.
-
-                - [ ] 17.75.5.6.4.2.2 Colorbar Docs and Status: update
-                  migration notes and regenerate parity status after metadata
-                  is current.
+        - [ ] 17.75.5.6.3 Colorbar Fixtures, Tests, and Ledger: add focused
+          placement, formatter, boundary, and update-contract colorbar tests;
+          add focused colorbar fixtures; update public-surface metadata and
+          migration notes for supported placement/formatter/boundary/extension/
+          update-semantics behavior and omissions; and regenerate parity status.
 
     - [ ] 17.75.5.7 Color Fixtures and Docs: add colormap, norm, image, and
       colorbar parity fixture triplets before promoting behavior to
@@ -2346,110 +2249,35 @@ example/browser breadth as documentation work.
       `docs/matplotlib-parity-status.md`, and migration notes with intentional
       signature or backend-rendering differences.
 
-        - [ ] 17.75.5.7.1 Fixture Gap Inventory: compare color, norm, image,
-          and colorbar public-surface rows against example-catalog and
-          Matplotlib-reference coverage.
+        - [ ] 17.75.5.7.1 Fixture Gap Inventory: scan current color, norm,
+          image, and colorbar catalog rows, reference plots, golden files, and
+          validation clusters against public-surface rows; record missing,
+          duplicate, or weak coverage; and order the missing fixtures by API
+          coverage, parity risk (pixel exactness, backend/text/tick
+          sensitivity), and upstream example importance, with initial per-case
+          tolerance bands only for risk categories already explained by
+          completed behavior work.
 
-            - [ ] 17.75.5.7.1.1 Public API Coverage Matrix: map each color,
-              norm, image, and colorbar feature to existing catalog and
-              Matplotlib-reference coverage.
+        - [ ] 17.75.5.7.2 Color/Image/Colorbar Fixture Triplets: after core
+          behavior is aligned, add the missing Go/Python-reference/golden
+          triplets — norm/FuncNorm/boundary/two-slope and colormap/discrete
+          (with the bivariate/multivariate decision), transformed-image and
+          LightSource/shaded-image, and colorbar placement/formatter/boundary/
+          extension/update-contract triplets — running focused visual checks.
 
-                - [ ] 17.75.5.7.1.1.1 Catalog Scan: inventory current
-                  color, norm, image, and colorbar catalog rows, reference
-                  plots, golden files, and validation clusters.
-
-                - [ ] 17.75.5.7.1.1.2 Missing Coverage List: record missing,
-                  duplicate, or weak fixture coverage by public API surface.
-
-            - [ ] 17.75.5.7.1.2 Fixture Priority List: order missing fixtures
-              by API coverage, parity risk, and upstream example importance.
-
-                - [ ] 17.75.5.7.1.2.1 Risk Classification: classify missing
-                  fixtures by expected pixel exactness, backend sensitivity,
-                  text/tick sensitivity, and API-coverage value.
-
-                - [ ] 17.75.5.7.1.2.2 Proposed Tolerances: record initial
-                  per-case tolerance bands only for risk categories already
-                  explained by completed behavior work.
-
-        - [ ] 17.75.5.7.2 Color/Image Fixture Triplets: add missing Go,
-          Python-reference, and golden fixture triplets after core behavior is
-          aligned.
-
-            - [ ] 17.75.5.7.2.1 Norm and Colormap Fixtures: add missing
-              colormap, norm, FuncNorm, and boundary/discrete colorbar fixture
-              triplets after core behavior lands.
-
-                - [ ] 17.75.5.7.2.1.1 Norm Triplets: add selected norm,
-                  FuncNorm, boundary, and centered/two-slope
-                  Go/Python/golden/reference triplets.
-
-                - [ ] 17.75.5.7.2.1.2 Colormap Triplets: add selected
-                  colormap, bivariate/multivariate decision, and discrete
-                  mapping Go/Python/golden/reference triplets.
-
-            - [ ] 17.75.5.7.2.2 Image and Colorbar Fixtures: add transformed
-              image, LightSource, and colorbar placement/formatter fixture
-              triplets after backend behavior lands.
-
-                - [ ] 17.75.5.7.2.2.1 Image and Lighting Triplets: add selected
-                  transformed-image and LightSource/shaded-image
-                  Go/Python/golden/reference triplets.
-
-                - [ ] 17.75.5.7.2.2.2 Colorbar Triplets: add selected
-                  placement, formatter, boundary, extension, and update-contract
-                  colorbar Go/Python/golden/reference triplets.
-
-        - [ ] 17.75.5.7.3 Metadata and Migration Notes: record supported
-          surfaces, intentional omissions, and backend-specific residuals in
-          public-surface metadata and migration notes.
-
-            - [ ] 17.75.5.7.3.1 Metadata Rows: update public-surface metadata
-              for supported color, image, norm, and colorbar behavior.
-
-                - [ ] 17.75.5.7.3.1.1 Supported Metadata Rows: mark implemented
-                  color, norm, image, and colorbar APIs with task references
-                  and fixture IDs.
-
-                - [ ] 17.75.5.7.3.1.2 Omission Metadata Rows: record
-                  intentional omissions or partial support with concrete API
-                  rationale and affected examples.
-
-            - [ ] 17.75.5.7.3.2 Migration Notes: summarize Go API differences,
-              omissions, and backend-specific rendering residuals.
-
-                - [ ] 17.75.5.7.3.2.1 API Difference Notes: document typed Go
-                  API differences for color conversion, norms, colormaps,
-                  images, and colorbars.
-
-                - [ ] 17.75.5.7.3.2.2 Backend Residual Notes: document
-                  backend-specific raster/vector residuals and supported
-                  workarounds.
+        - [ ] 17.75.5.7.3 Metadata and Migration Notes: mark implemented color,
+          norm, image, and colorbar APIs in public-surface metadata with task
+          references and fixture IDs; record intentional omissions or partial
+          support with concrete API rationale and affected examples; and
+          summarize typed Go API differences and backend-specific raster/vector
+          rendering residuals (plus supported workarounds) in migration notes.
 
         - [ ] 17.75.5.7.4 Final Color Status Regeneration: regenerate
-          `docs/matplotlib-parity-status.md`, run focused catalog/doc freshness
-          tests, and mark `17.75.5` complete.
-
-            - [ ] 17.75.5.7.4.1 Status Regeneration: run the documented
-              parity-status regeneration path after all 17.75.5 metadata,
-              migration notes, and fixture rows are updated.
-
-                - [ ] 17.75.5.7.4.1.1 Regenerate Status: run the documented
-                  parity-status generator after metadata and migration notes
-                  are current.
-
-                - [ ] 17.75.5.7.4.1.2 Freshness Check: verify the regenerated
-                  status output is stable and no fixture/catalog rows are stale.
-
-            - [ ] 17.75.5.7.4.2 Final Verification: run focused color, norm,
-              image, colorbar, catalog, and doc freshness tests before marking
-              17.75.5 complete.
-
-                - [ ] 17.75.5.7.4.2.1 Focused Test Sweep: run focused color,
-                  norm, image, colorbar, reference-compare, and catalog tests.
-
-                - [ ] 17.75.5.7.4.2.2 Completion Mark: mark 17.75.5 complete
-                  only after status regeneration and focused verification pass.
+          `docs/matplotlib-parity-status.md` after metadata/migration notes are
+          current, verify the output is stable with no stale fixture/catalog
+          rows, run the focused color/norm/image/colorbar/reference-compare/
+          catalog and doc-freshness test sweep, and mark `17.75.5` complete only
+          after regeneration and verification pass.
 
 ### 17.75.6 Patch, Annotation, Legend, and Offset-Box Tail
 
