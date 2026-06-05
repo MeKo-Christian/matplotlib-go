@@ -176,6 +176,25 @@ func TestPyplotDynamicShortcutsHaveExplicitRows(t *testing.T) {
 	}
 }
 
+func TestPatchStyleClosureRowsAreNotLeftPartial(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	for _, surface := range artifact.Rows {
+		if surface.Module != "patches.py" {
+			continue
+		}
+		if surface.Kind != "class" && !strings.HasPrefix(surface.Kind, "registry:") {
+			continue
+		}
+		row, ok := PublicSurfaceParityForRow(surface)
+		if !ok {
+			t.Fatalf("missing Phase 17.75.6 patch-style classification for %q", surface.ID)
+		}
+		if row.Status == PublicSurfacePartial || row.Status == PublicSurfaceNotStarted {
+			t.Fatalf("%s status = %s, want closed patch class/registry decision", surface.ID, row.Status)
+		}
+	}
+}
+
 func TestWidgetClassesHaveExplicitRows(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	for _, surface := range artifact.Rows {

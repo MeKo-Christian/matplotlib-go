@@ -2193,9 +2193,15 @@ example/browser breadth as documentation work.
 
 ### 17.75.6 Patch, Annotation, Legend, and Offset-Box Tail
 
-- [ ] Finish exact ArrowStyle / ConnectionStyle geometry edge cases and any
+- [x] Finish exact ArrowStyle / ConnectionStyle geometry edge cases and any
       specialized patch classes still classified as partial in the public
-      surface map.
+      surface map. 2026-06-05 follow-up: closed patch class rows as
+      idiomatic static-rendering equivalents, closed public BoxStyle /
+      ArrowStyle / ConnectionStyle registry rows as direct equivalents, and
+      left private registry implementation sentinels as explicit intentional
+      omissions. `TestPatchStyleClosureRowsAreNotLeftPartial` guards this
+      split; remaining patch scope is Python helper/debug functions, dynamic
+      property grammar, and broader visual fixture closure.
 - [ ] Add remaining text/annotation coordinate aliases, tightbbox /
       window-extent interactions, and richer static `AnnotationBbox` /
       offset-box content where upstream examples require them.

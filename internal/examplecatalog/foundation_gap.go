@@ -174,9 +174,9 @@ var foundationAPIGaps = []FoundationAPIGap{
 			"BoxStyle registry entries, renderer-neutral hatch geometry for the upstream hatch " +
 			"character set, AGG shape hatches, vector-native shape hatch patterns, FancyArrowPatch, " +
 			"DPI-correct Matplotlib-style FancyArrowPatch endpoint shrinking, patchA/patchB endpoint clipping, explicit ConnectionPatch shrink conversion, FancyArrowPatch / ConnectionPatch round cap/join defaults, FancyArrowPatch mutation-aspect arrow transmutation, ArrowStyle Simple / Fancy / Wedge quadratic-connection geometry, ArrowStyle Wedge shrink-factor behavior, ArrowStyle curve linewidth-projected line shortening and bracket scale overrides, ArrowStyle BarAB zero-length bracket defaults, ConnectionStyle Arc3 zero-rad quadratic paths, Arc defaults and rounded arm geometry, ConnectionStyle Bar angle projection, ConnectionPatch, and several extra patch classes.",
-		Gap: "Remaining patch scope is exact ArrowStyle / ConnectionStyle geometry edge cases, " +
-			"specialized patch class breadth, and broader visual fixture closure beyond the focused " +
-			"patch_style_matrix registry case.",
+		Gap: "Remaining patch scope is Python helper/debug function parity, the broad mutable " +
+			"Patch property grammar, and broader visual fixture closure beyond the focused " +
+			"patch_showcase and patch_style_matrix registry cases.",
 		Decision: GapDecisionImplement,
 		Rationale: "These are enumerable public catalogs; missing entries should be implemented or tracked " +
 			"as explicit intentional divergences.",
