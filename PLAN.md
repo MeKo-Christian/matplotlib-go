@@ -2199,7 +2199,7 @@ example/browser breadth as documentation work.
                 - [x] 17.75.5.1.1.2.2 Invalid Forms: add focused diagnostics
                   tests for malformed length, characters, and alpha suffixes.
 
-        - [ ] 17.75.5.1.2 Alpha and Grayscale Semantics: audit explicit alpha
+        - [x] 17.75.5.1.2 Alpha and Grayscale Semantics: audit explicit alpha
           precedence, grayscale-string validation, numeric ambiguity, and
           sequence handling against Matplotlib's conversion tests.
 
