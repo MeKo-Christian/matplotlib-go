@@ -2328,7 +2328,7 @@ example/browser breadth as documentation work.
                 - [x] 17.75.5.2.3.2.1 Update Audit: compare upstream norm/clim
                   callback behavior and stale colorbar invalidation.
 
-                - [ ] 17.75.5.2.3.2.2 Go Update Decision: add supported update
+                - [x] 17.75.5.2.3.2.2 Go Update Decision: add supported update
                   tests or document immutable scalar-map behavior.
 
         - [ ] 17.75.5.2.4 Norm Fixtures and Ledger: add focused norm tests,

@@ -253,6 +253,29 @@ func TestScalarMappableNormUpdateAuditIsDocumented(t *testing.T) {
 	}
 }
 
+func TestScalarMappableNormUpdateDecisionIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	for _, phrase := range []string{
+		"Phase 17.75.5 Scalar-Mappable Norm Update Decision",
+		"supported Go update path",
+		"`SetArray`",
+		"`SetColormap`",
+		"`SetNorm`",
+		"`SetCLim`",
+		"redraw",
+		"colorbar pulls",
+		"Matplotlib-style callback registry remains intentionally omitted",
+	} {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("scalar-mappable norm update decision missing %q", phrase)
+		}
+	}
+}
+
 var normInventory = []normInventoryEntry{
 	{
 		upstream:      "Normalize",

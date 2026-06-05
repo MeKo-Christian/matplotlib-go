@@ -303,6 +303,19 @@ mutable collections and meshes expose `SetNorm`, `SetCLim`, `SetArray`, and
 norm changes. The current supported behavior is explicit mutation followed by
 redraw, with colorbars pulling the latest norm and clim from the mappable.
 
+## Phase 17.75.5 Scalar-Mappable Norm Update Decision
+
+The supported Go update path is explicit mutation followed by redraw:
+`SetArray`, `SetColormap`, `SetNorm`, and `SetCLim` update the mappable state
+and mark it stale where the artist supports mutable scalar maps. A colorbar
+stores the mappable handle, so during layout or drawing the colorbar pulls the
+latest `ScalarMap()` state and updates its scale, limits, colormap, and norm
+metadata.
+
+Matplotlib-style callback registry remains intentionally omitted for this
+surface. Callers should mutate the typed mappable and redraw the figure; they
+should not expect norm objects to notify colorbars independently.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
