@@ -2460,7 +2460,7 @@ example/browser breadth as documentation work.
               multichannel lookup tables fit the Go color API without
               destabilizing scalar colormaps.
 
-            - [ ] 17.75.5.4.3.2 Multivariate Tests or Omission: add tests for
+            - [x] 17.75.5.4.3.2 Multivariate Tests or Omission: add tests for
               supported behavior or record the omission with rationale.
 
         - [ ] 17.75.5.4.4 Colormap Fixtures and Ledger: add tests/fixtures for

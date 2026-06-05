@@ -306,3 +306,56 @@ func TestMultivarColormapAPIShapeDecisionIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestMultivarColormapOmissionIsDocumented(t *testing.T) {
+	for _, refDir := range []string{
+		filepath.Join("..", "test", "matplotlib_ref", "plots"),
+		filepath.Join("..", "test", "parity"),
+	} {
+		err := filepath.WalkDir(refDir, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() || filepath.Ext(path) != ".py" && filepath.Ext(path) != ".go" {
+				return nil
+			}
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			src := string(data)
+			for _, phrase := range []string{"MultivarColormap", "multivar", "_multivar_colormaps", "combination_mode"} {
+				if strings.Contains(src, phrase) {
+					t.Fatalf("%s unexpectedly requires multivariate colormap API via %q", path, phrase)
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("scan %s for multivariate API fixtures: %v", refDir, err)
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Multivariate Colormap Omission Ledger",
+		"`MultivarColormap`",
+		"`combination_mode`",
+		"`sRGB_add`",
+		"`sRGB_sub`",
+		"intentional omission",
+		"affected examples are currently none",
+		"no committed parity fixture imports or calls a multivariate colormap",
+		"single-variate `color.Colormap` remains",
+		"Future multivariate support should start with a focused visual or scalar-mappable fixture",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("multivariate omission docs missing %q", phrase)
+		}
+	}
+}

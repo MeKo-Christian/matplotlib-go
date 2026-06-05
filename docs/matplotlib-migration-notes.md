@@ -609,6 +609,23 @@ multivariate mapping inside `color.Colormap` or `ScalarMapInfo` would blur the
 current scalar contract and leave component-array validation, alpha semantics,
 and colorbar behavior implicit.
 
+## Phase 17.75.5 Multivariate Colormap Omission Ledger
+
+`MultivarColormap` is an intentional omission in the current Go API, including
+the `combination_mode` variants `sRGB_add` and `sRGB_sub`. The affected
+examples are currently none: no committed parity fixture imports or calls a
+multivariate colormap, and no supported colorbar example needs tuple-valued
+component arrays.
+
+The single-variate `color.Colormap` remains the supported path, paired with
+scalar normalization through `ScalarMapInfo`. Callers that need
+component-colormap composition should first add a Matplotlib reference fixture
+that exercises multivariate mapping directly. Future multivariate support
+should start with a focused visual or scalar-mappable fixture so component
+input validation, `combination_mode` behavior, bad-value propagation, alpha
+multiplication, and multi-component colorbar expectations are all tested
+together.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
