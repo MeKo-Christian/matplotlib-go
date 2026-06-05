@@ -300,7 +300,7 @@ func cloneColorMap(src map[string]render.Color) map[string]render.Color {
 }
 
 var (
-	baseColors    = parseNamedColorData(baseColorHexData)
+	baseColors    = parseBaseColorData(baseColorData)
 	tableauColors = parseNamedColorData(tableauColorHexData)
 	css4Colors    = parseNamedColorData(css4ColorHexData)
 	xkcdColors    = parseNamedColorData(xkcdColorHexData)
@@ -326,6 +326,30 @@ func buildNamedColors() map[string]render.Color {
 	}
 	for name, col := range baseColors {
 		out[name] = col
+	}
+	return out
+}
+
+func parseBaseColorData(data string) map[string]render.Color {
+	out := map[string]render.Color{}
+	for _, line := range strings.Split(data, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		fields := strings.Split(line, "\t")
+		if len(fields) != 4 {
+			panic("invalid base color table row: " + line)
+		}
+		values := make([]float64, 3)
+		for i := range values {
+			parsed, err := strconv.ParseFloat(fields[i+1], 64)
+			if err != nil {
+				panic(err)
+			}
+			values[i] = parsed
+		}
+		out[fields[0]] = render.Color{R: values[0], G: values[1], B: values[2], A: 1}
 	}
 	return out
 }

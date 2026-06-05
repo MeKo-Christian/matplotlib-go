@@ -2,6 +2,11 @@ package color
 
 import (
 	"math"
+	"os"
+	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/render"
@@ -20,6 +25,16 @@ func TestNamedColorCatalogSizesMatchMatplotlib(t *testing.T) {
 	if got, want := len(XKCDColors()), 949; got != want {
 		t.Fatalf("XKCDColors length = %d, want %d", got, want)
 	}
+}
+
+func TestNamedColorInventoryMatchesMatplotlibTables(t *testing.T) {
+	upstream := loadUpstreamNamedColorTables(t)
+
+	assertColorMapEqual(t, "base", BaseColors(), upstream.base)
+	assertColorMapEqual(t, "tableau", TableauColors(), upstream.tableau)
+	assertColorMapEqual(t, "css4", CSS4Colors(), upstream.css4)
+	assertColorMapEqual(t, "xkcd", XKCDColors(), upstream.xkcd)
+	assertColorMapEqual(t, "full", NamedColors(), upstream.full)
 }
 
 func TestToRGBAResolvesMatplotlibNamedColors(t *testing.T) {
@@ -93,4 +108,216 @@ func sameColor(a, b render.Color) bool {
 		math.Abs(a.G-b.G) < eps &&
 		math.Abs(a.B-b.B) < eps &&
 		math.Abs(a.A-b.A) < eps
+}
+
+type upstreamNamedColorTables struct {
+	base    map[string]render.Color
+	tableau map[string]render.Color
+	css4    map[string]render.Color
+	xkcd    map[string]render.Color
+	full    map[string]render.Color
+}
+
+func loadUpstreamNamedColorTables(t *testing.T) upstreamNamedColorTables {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("..", "third_party", "matplotlib", "lib", "matplotlib", "_color_data.py"))
+	if err != nil {
+		t.Fatalf("read upstream color data: %v", err)
+	}
+	src := string(data)
+	tables := upstreamNamedColorTables{
+		base:    parseUpstreamColorDict(t, src, "BASE_COLORS", false),
+		tableau: parseUpstreamColorDict(t, src, "TABLEAU_COLORS", false),
+		css4:    parseUpstreamColorDict(t, src, "CSS4_COLORS", false),
+		xkcd:    parseUpstreamColorDict(t, src, "XKCD_COLORS", true),
+	}
+	tables.full = buildUpstreamFullNamedColors(tables)
+	return tables
+}
+
+func parseUpstreamColorDict(t *testing.T, src, name string, prefixXKCD bool) map[string]render.Color {
+	t.Helper()
+	block := extractUpstreamDictBlock(t, src, name)
+	out := map[string]render.Color{}
+	for _, line := range strings.Split(block, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		line = stripUpstreamLineComment(line)
+		line = strings.TrimSuffix(line, ",")
+		if line == "" {
+			continue
+		}
+		colorName, value := splitUpstreamDictRow(t, name, line)
+		if prefixXKCD {
+			colorName = "xkcd:" + colorName
+		}
+		out[colorName] = parseUpstreamColorValue(t, name, colorName, value)
+	}
+	return out
+}
+
+func stripUpstreamLineComment(line string) string {
+	var quote byte
+	for i := 0; i < len(line); i++ {
+		switch line[i] {
+		case '\'', '"':
+			if i == 0 || line[i-1] != '\\' {
+				if quote == 0 {
+					quote = line[i]
+				} else if quote == line[i] {
+					quote = 0
+				}
+			}
+		case '#':
+			if quote == 0 {
+				return strings.TrimSpace(line[:i])
+			}
+		}
+	}
+	return line
+}
+
+func splitUpstreamDictRow(t *testing.T, table, line string) (string, string) {
+	t.Helper()
+	line = strings.TrimSpace(line)
+	if line == "" || line[0] != '\'' && line[0] != '"' {
+		t.Fatalf("%s: malformed upstream row %q", table, line)
+	}
+	quote := line[0]
+	end := -1
+	for i := 1; i < len(line); i++ {
+		if line[i] == quote && line[i-1] != '\\' {
+			end = i
+			break
+		}
+	}
+	if end < 0 {
+		t.Fatalf("%s: unterminated upstream key in %q", table, line)
+	}
+	rest := strings.TrimSpace(line[end+1:])
+	if !strings.HasPrefix(rest, ":") {
+		t.Fatalf("%s: missing ':' after upstream key in %q", table, line)
+	}
+	return line[1:end], strings.TrimSpace(rest[1:])
+}
+
+func extractUpstreamDictBlock(t *testing.T, src, name string) string {
+	t.Helper()
+	startMarker := name + " = {"
+	start := strings.Index(src, startMarker)
+	if start < 0 {
+		t.Fatalf("upstream color data missing %s", name)
+	}
+	bodyStart := start + len(startMarker)
+	depth := 1
+	var quote byte
+	for i := bodyStart; i < len(src); i++ {
+		switch src[i] {
+		case '\'', '"':
+			if i == 0 || src[i-1] != '\\' {
+				if quote == 0 {
+					quote = src[i]
+				} else if quote == src[i] {
+					quote = 0
+				}
+			}
+		case '{':
+			if quote == 0 {
+				depth++
+			}
+		case '}':
+			if quote == 0 {
+				depth--
+				if depth == 0 {
+					return src[bodyStart:i]
+				}
+			}
+		}
+	}
+	t.Fatalf("upstream color data has unterminated %s", name)
+	return ""
+}
+
+func parseUpstreamColorValue(t *testing.T, table, name, value string) render.Color {
+	t.Helper()
+	if strings.HasPrefix(value, "'") || strings.HasPrefix(value, `"`) {
+		hex := strings.Trim(value, `'"`)
+		col, err := parseHexColor(hex, toRGBAConfig{})
+		if err != nil {
+			t.Fatalf("%s[%q]: parse %q: %v", table, name, hex, err)
+		}
+		return col
+	}
+	if !strings.HasPrefix(value, "(") || !strings.HasSuffix(value, ")") {
+		t.Fatalf("%s[%q]: unsupported upstream color value %q", table, name, value)
+	}
+	parts := strings.Split(strings.Trim(value, "()"), ",")
+	if len(parts) != 3 {
+		t.Fatalf("%s[%q]: tuple length = %d, want 3", table, name, len(parts))
+	}
+	var rgb [3]float64
+	for i, part := range parts {
+		parsed, err := strconv.ParseFloat(strings.TrimSpace(part), 64)
+		if err != nil {
+			t.Fatalf("%s[%q]: parse tuple component %q: %v", table, name, part, err)
+		}
+		rgb[i] = parsed
+	}
+	return render.Color{R: rgb[0], G: rgb[1], B: rgb[2], A: 1}
+}
+
+func buildUpstreamFullNamedColors(tables upstreamNamedColorTables) map[string]render.Color {
+	out := map[string]render.Color{}
+	for name, col := range tables.xkcd {
+		out[name] = col
+		if strings.Contains(name, "grey") {
+			out[strings.ReplaceAll(name, "grey", "gray")] = col
+		}
+	}
+	for name, col := range tables.css4 {
+		out[name] = col
+	}
+	for name, col := range tables.tableau {
+		out[name] = col
+		if strings.Contains(name, "gray") {
+			out[strings.ReplaceAll(name, "gray", "grey")] = col
+		}
+	}
+	for name, col := range tables.base {
+		out[name] = col
+	}
+	return out
+}
+
+func assertColorMapEqual(t *testing.T, label string, got, want map[string]render.Color) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("%s color table length = %d, want %d; missing=%v extra=%v",
+			label, len(got), len(want), missingKeys(want, got), missingKeys(got, want))
+	}
+	for name, wantColor := range want {
+		gotColor, ok := got[name]
+		if !ok {
+			t.Fatalf("%s color table missing %q", label, name)
+		}
+		if !sameColor(gotColor, wantColor) {
+			t.Fatalf("%s[%q] = %+v, want %+v", label, name, gotColor, wantColor)
+		}
+	}
+}
+
+func missingKeys(want, got map[string]render.Color) []string {
+	var missing []string
+	for key := range want {
+		if _, ok := got[key]; !ok {
+			missing = append(missing, key)
+		}
+	}
+	sort.Strings(missing)
+	if len(missing) > 12 {
+		missing = append(missing[:12], "...")
+	}
+	return missing
 }

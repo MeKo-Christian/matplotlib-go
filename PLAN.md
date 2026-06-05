@@ -2182,7 +2182,7 @@ example/browser breadth as documentation work.
               tables and precedence against Matplotlib's base, Tableau, CSS4,
               and XKCD tables.
 
-                - [ ] 17.75.5.1.1.1.1 Table Inventory: compare current Go
+                - [x] 17.75.5.1.1.1.1 Table Inventory: compare current Go
                   color-name data against `colors.py` and upstream color data
                   files, recording missing names and precedence conflicts.
 

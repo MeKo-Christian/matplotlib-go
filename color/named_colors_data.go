@@ -1,15 +1,15 @@
 // Code generated from third_party/matplotlib/lib/matplotlib/_color_data.py; DO NOT EDIT.
 package color
 
-const baseColorHexData = `
-b	#0000FF
-c	#00BFBF
-g	#008000
-k	#000000
-m	#BF00BF
-r	#FF0000
-w	#FFFFFF
-y	#BFBF00
+const baseColorData = `
+b	0	0	1
+c	0	0.75	0.75
+g	0	0.5	0
+k	0	0	0
+m	0.75	0	0.75
+r	1	0	0
+w	1	1	1
+y	0.75	0.75	0
 `
 
 const tableauColorHexData = `
