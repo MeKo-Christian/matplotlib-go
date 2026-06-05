@@ -2322,7 +2322,7 @@ example/browser breadth as documentation work.
                   two-slope, symmetric-log, power, inverse, and clipping
                   behavior needed by examples.
 
-            - [ ] 17.75.5.2.3.2 Scalar-Mappable Norm Updates: implement or
+            - [x] 17.75.5.2.3.2 Scalar-Mappable Norm Updates: implement or
               document callback/update behavior for norm and clim changes.
 
                 - [x] 17.75.5.2.3.2.1 Update Audit: compare upstream norm/clim
