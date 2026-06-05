@@ -339,6 +339,46 @@ func TestDraggableLegendRowIsExplicitlyOmitted(t *testing.T) {
 	t.Fatal("missing upstream surface row legend.py:class:DraggableLegend")
 }
 
+func TestArtistDynamicRowsAreSplitFromStaticArtistSurface(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	rowFor := func(upstreamID string) PublicSurfaceParity {
+		t.Helper()
+		for _, surface := range artifact.Rows {
+			if surface.ID != upstreamID {
+				continue
+			}
+			row, ok := PublicSurfaceParityForRow(surface)
+			if !ok {
+				t.Fatalf("missing Phase 17.75.6 artist classification for %q", upstreamID)
+			}
+			return row
+		}
+		t.Fatalf("missing upstream surface row %q", upstreamID)
+		return PublicSurfaceParity{}
+	}
+
+	for _, upstreamID := range []string{
+		"artist.py:class:Artist",
+		"artist.py:function:allow_rasterization",
+	} {
+		row := rowFor(upstreamID)
+		if row.Status == PublicSurfacePartial || row.Status == PublicSurfaceNotStarted {
+			t.Fatalf("%s status = %s, want closed static artist decision", upstreamID, row.Status)
+		}
+	}
+	for _, upstreamID := range []string{
+		"artist.py:class:ArtistInspector",
+		"artist.py:function:getp",
+		"artist.py:function:kwdoc",
+		"artist.py:function:setp",
+	} {
+		row := rowFor(upstreamID)
+		if row.Status != PublicSurfaceIntentionalOmission {
+			t.Fatalf("%s status = %s, want intentional omission", upstreamID, row.Status)
+		}
+	}
+}
+
 func TestWidgetClassesHaveExplicitRows(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	for _, surface := range artifact.Rows {

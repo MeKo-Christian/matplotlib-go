@@ -28,10 +28,10 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 | Status | Rows |
 | --- | ---: |
 | direct-equivalent | 81 |
-| idiomatic-equivalent | 98 |
-| partial | 665 |
+| idiomatic-equivalent | 100 |
+| partial | 659 |
 | not-started | 0 |
-| intentional-omission | 52 |
+| intentional-omission | 56 |
 
 ## Closure Owner Summary
 
@@ -42,7 +42,7 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 | 17.75.3 | 293 |
 | 17.75.4 | 71 |
 | 17.75.5 | 26 |
-| 17.75.6 | 35 |
+| 17.75.6 | 29 |
 | 17.75.7 | 145 |
 | 17.75.8 | 73 |
 | 17.75.9 | 5 |
@@ -51,12 +51,6 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 
 | Upstream | Feature | Status | Closure owner | Local files | Note |
 | --- | --- | --- | --- | --- | --- |
-| artist.py:class:Artist | artist | partial | 17.75.6 | core/artist.go, core/lifecycle.go, core/rasterization.go | Go has an Artist interface plus shared static rendering metadata for labels, visibility, alpha, clipping, transforms, in-layout, and local stale state. Matplotlib's dynamic property, callback, getp/setp, and parent-stale lifecycle surface remains intentionally partial. |
-| artist.py:class:ArtistInspector | artist | partial | 17.75.6 | core/artist.go, core/lifecycle.go, core/rasterization.go | Go keeps an interface-based Artist model; broad dynamic properties, inspection helpers, getp/setp, and callbacks remain partial. |
-| artist.py:function:allow_rasterization | artist | partial | 17.75.6 | core/artist.go, core/lifecycle.go, core/rasterization.go | Go keeps an interface-based Artist model; broad dynamic properties, inspection helpers, getp/setp, and callbacks remain partial. |
-| artist.py:function:getp | artist | partial | 17.75.6 | core/artist.go, core/lifecycle.go, core/rasterization.go | Go keeps an interface-based Artist model; broad dynamic properties, inspection helpers, getp/setp, and callbacks remain partial. |
-| artist.py:function:kwdoc | artist | partial | 17.75.6 | core/artist.go, core/lifecycle.go, core/rasterization.go | Go keeps an interface-based Artist model; broad dynamic properties, inspection helpers, getp/setp, and callbacks remain partial. |
-| artist.py:function:setp | artist | partial | 17.75.6 | core/artist.go, core/lifecycle.go, core/rasterization.go | Go keeps an interface-based Artist model; broad dynamic properties, inspection helpers, getp/setp, and callbacks remain partial. |
 | axes/_axes.py:class:Axes | axes | partial | 17.75.3 | core/artist.go, core/plot.go, core/plot_variants.go, core/histogram.go, core/mesh.go, core/contour.go | The upstream Axes plotting class maps to Go's typed Axes and helper functions. Phase 17.75.3 option-breadth coverage includes typed histogram weights/ranges/cumulative density, scatter scalar styling, edge-aligned/stacked bar labels, fill_between where/interpolate/step semantics, errorbar errorevery, and collection/mesh scalar mutation. Remaining partial scope is Python overload grammar, dynamic kwargs/property-dict aliases, and lower-priority method families outside the 17.75.3 option-breadth slice. |
 | axes/_axes.py:method:Axes.acorr | axes | partial | 17.75.3 | core/artist.go, core/plot.go, core/plot_variants.go, core/histogram.go, core/mesh.go, core/contour.go | Axes plotting methods are tracked as typed core helpers plus pyplot wrappers where appropriate. Histogram weights/ranges/cumulative density, scatter scalar styling, edge-aligned/stacked bar labels, fill_between where/interpolate/step semantics, errorbar errorevery, and collection/mesh scalar mutation have focused unit or fixture coverage. Remaining partial scope is Python overload grammar, dynamic kwargs/property-dict aliases, and lower-priority method families outside the 17.75.3 option-breadth slice. |
 | axes/_axes.py:method:Axes.angle_spectrum | axes | partial | 17.75.3 | core/artist.go, core/plot.go, core/plot_variants.go, core/histogram.go, core/mesh.go, core/contour.go | Axes plotting methods are tracked as typed core helpers plus pyplot wrappers where appropriate. Histogram weights/ranges/cumulative density, scatter scalar styling, edge-aligned/stacked bar labels, fill_between where/interpolate/step semantics, errorbar errorevery, and collection/mesh scalar mutation have focused unit or fixture coverage. Remaining partial scope is Python overload grammar, dynamic kwargs/property-dict aliases, and lower-priority method families outside the 17.75.3 option-breadth slice. |
