@@ -2304,9 +2304,15 @@ example/browser breadth as documentation work.
       or changed upstream rows required classification. Verified with
       `go test ./internal/examplecatalog/...`, including extractor freshness,
       stale-doc, duplicate-row, and closure-owner guards.
-- [ ] Ensure every remaining `not-started` row is either implemented, converted
+- [x] Ensure every remaining `not-started` row is either implemented, converted
       to a precise `partial` with an owner task, or marked
       `intentional-omission` with rationale.
+      2026-06-05: audited the generated parity status inventory and confirmed
+      there are zero remaining `not-started` public-surface rows
+      (`docs/matplotlib-parity-status.md` summary reports `not-started | 0`,
+      and no detail rows match `| not-started |`). `go test
+      ./internal/examplecatalog/...` keeps the generated doc current and
+      verifies every tracked open row has a valid closure owner or rationale.
 - [ ] Ensure every remaining `partial` row has a committed test, catalog case,
       or documentation entry proving what is still missing.
 - [ ] Run `just fmt && just lint && just test`, then run the catalog parity
