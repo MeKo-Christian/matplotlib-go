@@ -131,6 +131,73 @@ func TestAsinhNormAutoscaleClipAndValidation(t *testing.T) {
 	}
 }
 
+func TestCenteredAndNonlinearNormsMatchUpstreamAudit(t *testing.T) {
+	centered := CenteredNorm{VCenter: 0, HalfRange: 4}
+	centeredCases := map[float64]float64{-2: 0.25, 0: 0.5, 4: 1, 8: 1.5}
+	for value, want := range centeredCases {
+		if got := centered.Map(value); !floatApprox(got, want, 1e-12) {
+			t.Fatalf("CenteredNorm.Map(%v) = %v, want %v", value, got, want)
+		}
+	}
+	if got := (CenteredNorm{VCenter: 0, HalfRange: 4, Clip: true}).Map(8); got != 1 {
+		t.Fatalf("clipped CenteredNorm.Map(8) = %v, want 1", got)
+	}
+
+	twoSlope := TwoSlopeNorm{VMin: -4, VCenter: 0, VMax: 2}
+	twoSlopeCases := map[float64]float64{-4: 0, -2: 0.25, 0: 0.5, 1: 0.75, 2: 1}
+	for value, want := range twoSlopeCases {
+		if got := twoSlope.Map(value); !floatApprox(got, want, 1e-12) {
+			t.Fatalf("TwoSlopeNorm.Map(%v) = %v, want %v", value, got, want)
+		}
+	}
+	for value, want := range map[float64]float64{0.25: -2, 0.5: 0, 0.75: 1} {
+		got, ok := twoSlope.Inverse(value)
+		if !ok || !floatApprox(got, want, 1e-12) {
+			t.Fatalf("TwoSlopeNorm.Inverse(%v) = %v ok=%v, want %v ok=true", value, got, ok, want)
+		}
+	}
+	autoscaled := (TwoSlopeNorm{VCenter: 0, VMin: math.NaN(), VMax: math.NaN()}).Autoscale([]float64{2, 4}).(TwoSlopeNorm)
+	if autoscaled.VMin != -4 || autoscaled.VMax != 4 {
+		t.Fatalf("TwoSlopeNorm autoscaled range = %v..%v, want -4..4", autoscaled.VMin, autoscaled.VMax)
+	}
+	for _, norm := range []TwoSlopeNorm{
+		{VMin: 0, VCenter: 0, VMax: 1},
+		{VMin: -1, VCenter: 1, VMax: 1},
+	} {
+		if err := norm.Validate(); err == nil {
+			t.Fatalf("TwoSlopeNorm{%v,%v,%v}.Validate() = nil, want ascending-order error", norm.VMin, norm.VCenter, norm.VMax)
+		}
+	}
+
+	power := PowerNorm{Gamma: 2, VMin: 0, VMax: 2}
+	if got := power.Map(-1); !floatApprox(got, -0.5, 1e-12) {
+		t.Fatalf("PowerNorm.Map(-1) = %v, want -0.5", got)
+	}
+	if got := power.Map(4); !floatApprox(got, 4, 1e-12) {
+		t.Fatalf("PowerNorm.Map(4) = %v, want 4", got)
+	}
+	if got := (PowerNorm{Gamma: 2, VMin: 0, VMax: 2, Clip: true}).Map(4); got != 1 {
+		t.Fatalf("clipped PowerNorm.Map(4) = %v, want 1", got)
+	}
+
+	for _, tc := range []struct {
+		name  string
+		norm  ScalarNormalizer
+		value float64
+	}{
+		{"symlog", SymLogNorm{VMin: -100, VMax: 100, LinThresh: 1, LinScale: 1, Base: 10}, 0.75},
+		{"asinh", AsinhNorm{LinearWidth: 2, VMin: -10, VMax: 10}, 0.75},
+	} {
+		mappedInverse, ok := tc.norm.Inverse(tc.value)
+		if !ok {
+			t.Fatalf("%s inverse(%v) returned !ok", tc.name, tc.value)
+		}
+		if got := tc.norm.Map(mappedInverse); !floatApprox(got, tc.value, 1e-12) {
+			t.Fatalf("%s Map(Inverse(%v)) = %v, want %v", tc.name, tc.value, got, tc.value)
+		}
+	}
+}
+
 func TestBoundaryNormReturnsDiscreteColorIndexes(t *testing.T) {
 	norm := BoundaryNorm{Boundaries: []float64{0, 10, 20}, NColors: 5}
 	if got := norm.Index(-1); got != -1 {

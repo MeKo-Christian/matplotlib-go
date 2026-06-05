@@ -2318,7 +2318,7 @@ example/browser breadth as documentation work.
                   indexing, under/over/bad values, extension behavior, and
                   colorbar tick expectations.
 
-                - [ ] 17.75.5.2.3.1.2 Centered Norm Audit: compare centered,
+                - [x] 17.75.5.2.3.1.2 Centered Norm Audit: compare centered,
                   two-slope, symmetric-log, power, inverse, and clipping
                   behavior needed by examples.
 

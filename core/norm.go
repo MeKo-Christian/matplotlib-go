@@ -411,7 +411,7 @@ func (n TwoSlopeNorm) Autoscale(values []float64) ScalarNormalizer {
 func (n TwoSlopeNorm) Range() (float64, float64) { return n.VMin, n.VMax }
 
 func (n TwoSlopeNorm) Validate() error {
-	if isFinite(n.VMin) && isFinite(n.VCenter) && isFinite(n.VMax) && !(n.VMin <= n.VCenter && n.VCenter <= n.VMax) {
+	if isFinite(n.VMin) && isFinite(n.VCenter) && isFinite(n.VMax) && !(n.VMin < n.VCenter && n.VCenter < n.VMax) {
 		return fmt.Errorf("vmin, vcenter, and vmax must be in ascending order")
 	}
 	return nil
