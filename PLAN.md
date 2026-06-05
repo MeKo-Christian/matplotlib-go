@@ -2249,7 +2249,7 @@ example/browser breadth as documentation work.
         - [ ] 17.75.5.5.4 Image Fixture Ledger: add or refresh transformed
           image fixtures and update parity docs with backend-specific residuals.
 
-            - [ ] 17.75.5.5.4.1 Fixture Refresh: add or refresh transformed
+            - [x] 17.75.5.5.4.1 Fixture Refresh: add or refresh transformed
               image reference fixtures only after backend behavior is aligned.
 
                 - [x] 17.75.5.5.4.1.1 Image Fixture Priority: choose the

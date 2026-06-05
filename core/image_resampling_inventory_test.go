@@ -548,3 +548,26 @@ func TestTransformedImageTripletGenerationIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageFixtureRefreshIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Fixture Refresh",
+		"Image Fixture Priority and Image Triplet Generation are the fixture refresh inputs",
+		"the refreshed priority triplets are `imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed`",
+		"the refresh happened after AGG/raster alignment and SVG/PDF fallback documentation",
+		"golden and Matplotlib reference PNGs were regenerated or confirmed for the selected triplets",
+		"focused visual checks passed for the selected triplets across golden, Matplotlib-reference, and reference-compare suites",
+		"supporting image fixtures remain in the ledger but were not refreshed because their behavior did not change",
+		"backend-specific residuals are deferred to the Backend Notes children",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image fixture refresh docs missing %q", phrase)
+		}
+	}
+}

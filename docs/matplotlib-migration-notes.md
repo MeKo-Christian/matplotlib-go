@@ -792,6 +792,20 @@ documented backend divergence, not AGG regressions. The vector fixtures should
 continue checking embedded image objects, transforms, soft masks, and clip
 structure rather than pixel-matching viewer resampling kernels.
 
+## Phase 17.75.5 Fixture Refresh
+
+Image Fixture Priority and Image Triplet Generation are the fixture refresh
+inputs. The fixture refresh records that the refreshed priority triplets are
+`imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed`; the
+refresh happened after AGG/raster alignment and SVG/PDF fallback documentation.
+
+The ledger records that golden and Matplotlib reference PNGs were regenerated or
+confirmed for the selected triplets. The focused visual checks passed for the
+selected triplets across golden, Matplotlib-reference, and reference-compare
+suites. The supporting image fixtures remain in the ledger but were not
+refreshed because their behavior did not change. The backend-specific residuals
+are deferred to the Backend Notes children.
+
 ## Phase 17.75.5 Image Fixture Priority
 
 The smallest transformed-image fixture priority set is
