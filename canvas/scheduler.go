@@ -1,6 +1,7 @@
 package canvas
 
 import (
+	"image"
 	"sync"
 	"time"
 
@@ -22,6 +23,17 @@ type BlitCanvas interface {
 	CopyFromBBox(bbox geom.Rect) *render.BufferRegion
 	RestoreRegion(region *render.BufferRegion, bbox *geom.Rect, offset geom.Pt) error
 	Blit(bbox geom.Rect) error
+}
+
+// RasterCanvas is an optional FigureCanvas extension exposing the most recently
+// rendered frame as an RGBA buffer in display pixel order. It is the Go analogue
+// of reading matplotlib's Agg canvas buffer_rgba after a draw, and is used by the
+// animation movie writers to grab frames without a concrete backend dependency.
+type RasterCanvas interface {
+	FigureCanvas
+	// FrameRGBA returns the pixels produced by the last Draw, or nil when the
+	// canvas has not drawn yet or its renderer does not expose RGBA output.
+	FrameRGBA() *image.RGBA
 }
 
 // Timer represents a backend or event-loop timer.

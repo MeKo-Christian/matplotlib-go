@@ -2262,17 +2262,37 @@ example/browser breadth as documentation work.
 
 ### 17.6.8 Backend, Widget, and Animation Tail
 
-- [ ] Close remaining backend lifecycle gaps that affect plotting behavior:
+- [x] Close remaining backend lifecycle gaps that affect plotting behavior:
       draw-event order, timers, toolbar/tool manager actions, figure manager
       lifecycle, and backend capability reporting.
-- [ ] Complete widget and selector interaction edge cases that remain after
+- [x] Complete widget and selector interaction edge cases that remain after
       Phase 17.5: active-state semantics, handle behavior, disabled states,
       keyboard modifiers, and browser-demo interaction parity.
-- [ ] Decide animation writer scope for v1.0: deterministic GIF/MP4 writers,
+- [x] Decide animation writer scope for v1.0: deterministic GIF/MP4 writers,
       HTML representation, save-count/cache behavior, and explicit unsupported
       writer errors.
-- [ ] Add backend/widget/animation cases only when they can run
+- [x] Add backend/widget/animation cases only when they can run
       deterministically in CI or are guarded by explicit optional-tool checks.
+
+  2026-06-05 follow-up: closed the backend/widget/animation tail as a
+  static-vs-GUI split. Animation: ported matplotlib's writer stack code-wise —
+  animation.MovieWriter mirrors AbstractMovieWriter, Saving mirrors the saving()
+  context manager, PillowWriter encodes via stdlib image/gif (Delay=100/fps,
+  LoopCount=0, fixed-palette determinism), a writer registry mirrors
+  MovieWriterRegistry, and Animation.Save mirrors Animation.save
+  (writer-by-extension, fps=1000/interval, WithSaveCount). Frame capture uses the
+  new optional canvas.RasterCanvas (FrameRGBA on the headless canvas) as the
+  savefig RGBA analogue. MP4/FFmpeg/ImageMagick and HTML stay intentional
+  omissions returning ErrWriterUnsupported. Widgets: added
+  TestWidgetInteractionAcrossVisualStyles proving active-state, handle, disabled,
+  and keyboard-modifier interaction under both style.WidgetVisualStyle values
+  (closes the open 17.5.5 item). Backend: draw/resize/close routing, timers,
+  navigation, figure-manager lifecycle, and home/back/forward/pan/zoom/save tools
+  are idiomatic equivalents; GUI-only tools/behavior are explicit intentional
+  omissions. Reclassified every backend_bases.py / backend_tools.py / widgets.py
+  / animation.py parity row off partial, tightened the guard tests, regenerated
+  docs/matplotlib-parity-status.md, and added a "Phase 17.75.8 Backend, Widget,
+  and Animation Tail" section to docs/matplotlib-migration-notes.md.
 
 ### 17.6.9 Final Closure Sweep
 

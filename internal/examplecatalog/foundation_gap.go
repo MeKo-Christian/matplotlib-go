@@ -349,10 +349,13 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CurrentEquivalent: "Go separates renderer contracts, backend registry, figure canvas, managers, " +
 			"dispatchers, navigation, and tools across render/backends/canvas packages.",
 		Gap: "Matplotlib's FigureCanvasBase, FigureManagerBase, ToolManager, toolbar, timer, " +
-			"draw-event, and interactive lifecycle semantics are only partially mirrored.",
+			"and draw/resize/close lifecycle semantics are mirrored idiomatically; only GUI-toolkit-specific " +
+			"behavior (live window events, cursor/status presentation, GUI tool widgets) is out of scope.",
 		Decision: GapDecisionIdiomaticEquivalent,
-		Rationale: "Preserve the Go package split, while completing lifecycle semantics through the Phase 4 " +
-			"interactive backend and event-loop work.",
+		Rationale: "Phase 17.6.8 closed the backend lifecycle as a static-vs-GUI split: draw-event/resize/close " +
+			"routing, timer start/stop/running, navigation, and the home/back/forward/pan/zoom/save tools are " +
+			"idiomatic equivalents, while purely GUI tools (fullscreen, grid, help, copy, cursor, quit, " +
+			"subplot-config, rubberband) are explicit intentional omissions.",
 	},
 	{
 		ID:              "widget-interaction-scope",
@@ -371,32 +374,34 @@ var foundationAPIGaps = []FoundationAPIGap{
 			"canvas/widget_interaction.go",
 			"canvas/dispatcher.go",
 		},
-		CurrentEquivalent: "Go has static widget artists and canvas event routing for buttons, sliders, " +
+		CurrentEquivalent: "Go has widget artists and canvas event routing for buttons, sliders, " +
 			"range sliders, check buttons, radio buttons, text boxes, span selectors, rectangle / ellipse " +
-			"selectors, polygon selectors, lasso selectors, cursor, and multi-cursor helpers, with focused " +
-			"interaction tests for mouse, keyboard, hover, callback ordering, and disabled-state workflows.",
-		Gap: "Remaining widget scope is exact upstream active-state and styling edge cases, advanced " +
-			"selector handle behavior, menu/tool widgets, GUI-specific behaviors, and browser-demo coverage " +
-			"for supported interactions.",
-		Decision: GapDecisionImplement,
-		Rationale: "Widgets are useful only when event semantics are deterministic; unsupported GUI-only " +
-			"paths should be documented instead of silently approximated.",
+			"selectors, polygon selectors, lasso selectors, cursor, and multi-cursor helpers, with interaction " +
+			"tests for mouse, keyboard, hover, callback ordering, active-state, handle behavior, disabled state, " +
+			"and keyboard modifiers verified under both widget visual styles.",
+		Gap: "Only GUI-only behavior remains out of scope: useblit, live cursor/status integration, " +
+			"input-method editing, the SubplotTool/menu widgets, and browser-demo interaction.",
+		Decision: GapDecisionIdiomaticEquivalent,
+		Rationale: "Phase 17.6.8 completed the widget interaction edge cases (active-state, handles, disabled, " +
+			"modifiers) with style-parameterized tests; remaining GUI-only paths are documented intentional " +
+			"omissions, with browser-demo interaction deferred to Phase 19.",
 	},
 	{
 		ID:              "animation-playback-writers",
 		CoverageID:      "widgets-events-animation",
 		Title:           "Animation playback and writer scope",
 		UpstreamModules: []string{"animation.py"},
-		GoFiles:         []string{"animation/animation.go", "canvas/scheduler.go"},
+		GoFiles:         []string{"animation/animation.go", "animation/writers.go", "animation/writer_pillow.go", "canvas/scheduler.go"},
 		CurrentEquivalent: "Go has FuncAnimation- and ArtistAnimation-style stepping on top of the " +
 			"canvas scheduler, including init callbacks, repeat handling, repeat-delay ticks, animated " +
-			"artist tracking, blit-region hooks, and event-loop start/stop behavior covered by unit tests.",
-		Gap: "Remaining animation scope is cache/save-count edge behavior, HTML representation, " +
-			"movie writer APIs, deterministic GIF/MP4 writer decisions, and browser/example coverage " +
-			"for playback and blitting.",
-		Decision: GapDecisionImplement,
-		Rationale: "Interactive playback can stay dependency-light, while writer support should be added " +
-			"only where output dependencies and backend behavior are deterministic.",
+			"artist tracking, blit-region hooks, and event-loop start/stop behavior, plus Save to a " +
+			"deterministic GIF via the AbstractMovieWriter/PillowWriter port (image/gif), all covered by unit tests.",
+		Gap: "Only external-encoder and GUI-only output remains out of scope: HTML representation and " +
+			"FFmpeg/ImageMagick (MP4) writers, which return ErrWriterUnsupported.",
+		Decision: GapDecisionIdiomaticEquivalent,
+		Rationale: "Phase 17.6.8 chose a pure-Go GIF writer (image/gif, no external tools) ported from " +
+			"PillowWriter as the v1.0 writer scope; external-encoder writers are explicit intentional omissions " +
+			"because the port ships no ffmpeg/imagemagick dependency.",
 	},
 }
 

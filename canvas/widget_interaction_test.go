@@ -7,7 +7,137 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
+
+// TestWidgetInteractionAcrossVisualStyles closes the Phase 17.5.5 gap: the four
+// interaction edge cases (active-state semantics, handle behavior, disabled
+// states, keyboard modifiers) must hold under both the Go-default and the
+// Matplotlib-compatible widget visual styles, even though Phase 17.5.4 made
+// handle/marker geometry style-dependent. Assertions are behavioral invariants
+// (callback counts, deterministic keyboard deltas, square-drag geometry) so they
+// do not depend on the style-specific pixel geometry.
+func TestWidgetInteractionAcrossVisualStyles(t *testing.T) {
+	styles := []struct {
+		name string
+		opt  style.Option
+	}{
+		{"go", style.WithWidgetVisualStyle(style.WidgetVisualGo)},
+		{"matplotlib", style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib)},
+	}
+
+	for _, st := range styles {
+		t.Run(st.name, func(t *testing.T) {
+			// Active-state semantics + disabled states: a button click fires
+			// exactly one callback while enabled and none while disabled. Each
+			// widget uses its own full-axes figure so hit-testing matches the
+			// proven coordinates from the single-style interaction tests.
+			figB := core.NewFigure(120, 80, st.opt)
+			axB := figB.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
+			button := axB.Button("Run")
+			clicks := 0
+			button.OnClicked(func(*core.Button) { clicks++ })
+
+			var dispatcherB Dispatcher
+			wiB := NewWidgetInteraction(figB, func() error { return nil })
+			wiB.Attach(&dispatcherB)
+			defer wiB.Detach()
+
+			pressRelease := func(d *Dispatcher, fig *core.Figure, ax *core.Axes, p geom.Pt, mods Modifier) {
+				t.Helper()
+				if err := d.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: p, Button: MouseButtonLeft, Modifiers: mods}); err != nil {
+					t.Fatalf("press: %v", err)
+				}
+				if err := d.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: p, Button: MouseButtonLeft, Modifiers: mods}); err != nil {
+					t.Fatalf("release: %v", err)
+				}
+			}
+
+			buttonCenter := geom.Pt{X: 60, Y: 40}
+			pressRelease(&dispatcherB, figB, axB, buttonCenter, 0)
+			if clicks != 1 {
+				t.Fatalf("enabled button clicks = %d, want 1", clicks)
+			}
+			if button.Pressed {
+				t.Fatal("button should clear pressed after release")
+			}
+			button.Enabled = false
+			pressRelease(&dispatcherB, figB, axB, buttonCenter, 0)
+			if clicks != 1 {
+				t.Fatalf("disabled button clicks = %d, want 1 (unchanged)", clicks)
+			}
+
+			// Handle behavior + keyboard modifiers: a drag focuses the slider, then
+			// keyboard nudges apply deterministic deltas (step and ctrl-boosted
+			// step) independent of the style's handle geometry.
+			figS := core.NewFigure(120, 80, st.opt)
+			axS := figS.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
+			slider := axS.Slider("gain", 0, 10, 5)
+			var sliderChanges int
+			slider.OnChanged(func(*core.Slider, float64) { sliderChanges++ })
+
+			var dispatcherS Dispatcher
+			wiS := NewWidgetInteraction(figS, func() error { return nil })
+			wiS.Attach(&dispatcherS)
+			defer wiS.Detach()
+
+			pressRelease(&dispatcherS, figS, axS, geom.Pt{X: 90, Y: 60}, 0)
+			if sliderChanges == 0 {
+				t.Fatal("slider press should fire OnChanged")
+			}
+			base := slider.Value
+			if err := dispatcherS.Emit(Event{Type: EventKeyPress, Figure: figS, Axes: axS, Key: "right"}); err != nil {
+				t.Fatalf("slider right: %v", err)
+			}
+			assertCloseEnough(t, slider.Value-base, 0.1)
+			afterStep := slider.Value
+			if err := dispatcherS.Emit(Event{Type: EventKeyPress, Figure: figS, Axes: axS, Key: "right", Modifiers: ModifierControl}); err != nil {
+				t.Fatalf("slider ctrl+right: %v", err)
+			}
+			assertCloseEnough(t, slider.Value-afterStep, 1.0)
+
+			// Disabled state ignores keyboard nudges.
+			slider.Enabled = false
+			frozen := slider.Value
+			if err := dispatcherS.Emit(Event{Type: EventKeyPress, Figure: figS, Axes: axS, Key: "right"}); err != nil {
+				t.Fatalf("disabled slider right: %v", err)
+			}
+			assertCloseEnough(t, slider.Value-frozen, 0)
+
+			// Handle/modifier geometry: a shift-constrained rectangle drag must
+			// produce a square selection in both styles (data-space, geometry
+			// independent of widget chrome).
+			figR := core.NewFigure(160, 100, st.opt)
+			axR := figR.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
+			axR.SetXLim(0, 100)
+			axR.SetYLim(0, 100)
+			rect := axR.RectangleSelector()
+
+			var dispatcherR Dispatcher
+			wiR := NewWidgetInteraction(figR, func() error { return nil })
+			wiR.Attach(&dispatcherR)
+			defer wiR.Detach()
+
+			press := geom.Pt{X: 30, Y: 30}
+			move := geom.Pt{X: 120, Y: 90}
+			if err := dispatcherR.Emit(Event{Type: EventMousePress, Figure: figR, Axes: axR, Position: press, Button: MouseButtonLeft, Modifiers: ModifierShift}); err != nil {
+				t.Fatalf("rect press: %v", err)
+			}
+			if err := dispatcherR.Emit(Event{Type: EventMouseMove, Figure: figR, Axes: axR, Position: move, Button: MouseButtonLeft, Modifiers: ModifierShift}); err != nil {
+				t.Fatalf("rect move: %v", err)
+			}
+			if err := dispatcherR.Emit(Event{Type: EventMouseRelease, Figure: figR, Axes: axR, Position: move, Button: MouseButtonLeft, Modifiers: ModifierShift}); err != nil {
+				t.Fatalf("rect release: %v", err)
+			}
+			if !rect.Active {
+				t.Fatal("rectangle selector should be active after drag")
+			}
+			if math.Abs((rect.Max.X-rect.Min.X)-(rect.Max.Y-rect.Min.Y)) > 1e-9 {
+				t.Fatalf("shift drag should be square, got w=%g h=%g", rect.Max.X-rect.Min.X, rect.Max.Y-rect.Min.Y)
+			}
+		})
+	}
+}
 
 func assertCloseEnough(t *testing.T, got, want float64) {
 	t.Helper()

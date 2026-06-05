@@ -2,6 +2,8 @@ package animation
 
 import (
 	"errors"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -175,12 +177,125 @@ func (a *Animation) Config() Config {
 	return a.cfg
 }
 
-// Save reports that file writer support is intentionally outside the current
-// animation surface. Interactive playback and deterministic Step rendering are
-// supported; callers that need files should render frames explicitly and encode
-// them with a chosen image/video package.
-func (a *Animation) Save(_ string) error {
-	return ErrWriterUnsupported
+// SaveOption configures Save, mirroring the writer/fps/dpi/save_count keyword
+// arguments of matplotlib.animation.Animation.save.
+type SaveOption func(*saveConfig)
+
+type saveConfig struct {
+	writer    MovieWriter
+	writerSet bool
+	fps       int
+	dpi       float64
+	saveCount int
+}
+
+// WithWriter saves with an explicit writer instead of selecting one by filename
+// extension, mirroring save(writer=...).
+func WithWriter(w MovieWriter) SaveOption {
+	return func(c *saveConfig) { c.writer = w; c.writerSet = true }
+}
+
+// WithFPS sets the saved frame rate, mirroring save(fps=...). When unset, the
+// rate is derived from the animation interval as 1000/interval(ms).
+func WithFPS(fps int) SaveOption { return func(c *saveConfig) { c.fps = fps } }
+
+// WithDPI sets the dots-per-inch passed to the writer, mirroring save(dpi=...).
+func WithDPI(dpi float64) SaveOption { return func(c *saveConfig) { c.dpi = dpi } }
+
+// WithSaveCount sets how many frames to write, mirroring FuncAnimation's
+// save_count. When unset it defaults to the configured Frames count. The Go port
+// has no cache_frame_data knob because Save regenerates every frame
+// deterministically from the update function.
+func WithSaveCount(n int) SaveOption { return func(c *saveConfig) { c.saveCount = n } }
+
+// Save draws every frame and writes them to filename, mirroring
+// matplotlib.animation.Animation.save.
+//
+// The writer is chosen from the filename extension (".gif" → PillowWriter) unless
+// one is supplied with WithWriter. Extensions and writer names that require
+// external encoders (mp4/ffmpeg/imagemagick) or HTML output return
+// ErrWriterUnsupported.
+func (a *Animation) Save(filename string, opts ...SaveOption) error {
+	cfg := saveConfig{}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
+	// fps defaults to 1000/interval(ms), matching save()'s fps fallback.
+	fps := cfg.fps
+	if fps <= 0 {
+		fps = int(float64(time.Second)/float64(a.cfg.Interval) + 0.5)
+		if fps < 1 {
+			fps = 1
+		}
+	}
+
+	writer := cfg.writer
+	if !cfg.writerSet {
+		name, ok := writerNameForFile(filename)
+		if !ok {
+			return ErrWriterUnsupported
+		}
+		w, err := WriterByName(name, fps)
+		if err != nil {
+			return err
+		}
+		writer = w
+	}
+	if writer == nil {
+		return ErrWriterUnsupported
+	}
+
+	// save_count defaults to the configured frame count.
+	saveCount := cfg.saveCount
+	if saveCount <= 0 {
+		saveCount = a.cfg.Frames
+	}
+	if saveCount <= 0 {
+		return ErrNoFramesToRun
+	}
+
+	return Saving(writer, a.cfg.Canvas, filename, cfg.dpi, func() error {
+		for frame := 0; frame < saveCount; frame++ {
+			if err := a.drawSaveFrame(frame, frame == 0); err != nil {
+				return err
+			}
+			if err := writer.GrabFrame(); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// drawSaveFrame renders one frame for Save without blitting, mirroring
+// Animation._draw_next_frame(data, blit=False): run the one-time init pass, call
+// the update function, mark the produced artists animated, and draw the figure.
+func (a *Animation) drawSaveFrame(frame int, first bool) error {
+	if first && a.init != nil {
+		initial, err := a.init()
+		if err != nil {
+			return err
+		}
+		a.registerAnimated(initial)
+	}
+	updated, err := a.update(frame)
+	if err != nil {
+		return err
+	}
+	a.registerAnimated(updated)
+	return a.cfg.Canvas.Draw()
+}
+
+// writerNameForFile maps a filename extension to a registered writer name. Only
+// ".gif" is supported; every other extension is an intentional omission.
+func writerNameForFile(filename string) (string, bool) {
+	switch strings.ToLower(filepath.Ext(filename)) {
+	case ".gif":
+		return "pillow", true
+	default:
+		return "", false
+	}
 }
 
 // Step advances the animation by one frame deterministically. It performs the

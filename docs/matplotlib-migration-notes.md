@@ -1469,3 +1469,66 @@ property-dict aliases, and`getp`/`setp`/`findobj` property strings are replaced
   `thetagrids` map to explicit polar axes plus the ordinary typed `Plot`, locator,
   formatter, and tick/grid styling path rather than implicit projection-mutating
   shortcuts.
+
+## Phase 17.75.8 Backend, Widget, and Animation Tail
+
+PLAN.md task 17.6.8 closed the backend, widget, and animation public-surface
+tail. Every `backend_bases.py`, `backend_tools.py`, `widgets.py`, and
+`animation.py` row now resolves to a direct/idiomatic equivalent or an explicit
+intentional omission (guarded by `TestWidgetClassesHaveExplicitRows`,
+`TestAnimationSurfaceHasExplicitRows`, `TestBackendLifecycleAndToolRowsAreExplicit`,
+and `TestBackendWidgetAnimationTailDecisions`, which reject leftover `partial`
+rows).
+
+### Animation GIF writer (PillowWriter port)
+
+The animation writer stack is a direct port of matplotlib's
+`lib/matplotlib/animation.py`:
+
+- `animation.MovieWriter` mirrors `AbstractMovieWriter`
+  (`Setup`/`FrameSize`/`GrabFrame`/`Finish`), and `Saving` is the Go analogue of
+  the `saving()` context manager (setup, then deferred finish).
+- `animation.PillowWriter` mirrors `PillowWriter`: `GrabFrame` captures the
+  canvas RGBA buffer (the new optional `canvas.RasterCanvas` capability, the Go
+  analogue of `grab_frame`'s `fig.savefig(format="rgba")`), and `Finish` encodes
+  with the standard library `image/gif`. `Delay` is `int(100/fps)` centiseconds
+  (matplotlib uses `duration=int(1000/fps)` ms) and `LoopCount` is `0` (matching
+  Pillow's `loop=0`). Frames are quantized against a fixed palette so the encode
+  is byte-for-byte deterministic across platforms.
+- A package-level writer registry (`RegisterWriter`/`WriterByName`) mirrors
+  `MovieWriterRegistry`, registering only the dependency-free `"pillow"` writer.
+- `Animation.Save(filename, ...SaveOption)` mirrors `Animation.save`: it resolves
+  the writer by extension (`.gif` → pillow) or `WithWriter`, defaults fps to
+  `1000/interval`, and drives a save-count frame loop (`WithSaveCount`).
+
+Intentional signature divergences:
+
+- **Save options, not `**kwargs`.** `WithWriter`/`WithFPS`/`WithDPI`/
+`WithSaveCount` replace keyword arguments.
+- **No `cache_frame_data`.** Frames are regenerated deterministically by the
+  update function, so frame caching is unnecessary.
+- **Explicit unsupported-writer errors.** Unknown or external-encoder writer
+  names (`ffmpeg`, `imagemagick`, `html`) and non-`.gif` extensions return
+  `ErrWriterUnsupported`, instead of matplotlib silently falling back to
+  PillowWriter, because the port ships no external encoders.
+
+### Static-vs-GUI split for backend and widget surfaces
+
+Backend lifecycle and widget interaction are classified by splitting the
+plotting-relevant behavior (idiomatic equivalents) from GUI-only behavior
+(intentional omissions):
+
+- **Backend lifecycle (idiomatic).** Typed events, draw/draw-idle/resize/close
+  routing, the figure canvas/manager, navigation/toolbar, the timer
+  (`canvas/scheduler.go`), and the home/back/forward/pan/zoom/save tools.
+- **GUI-only backend behavior (omitted).** Live window event synthesis,
+  cursor/status presentation, and the remaining GUI tool-manager tools
+  (fullscreen, grid, help, copy, cursor, quit, subplot-config, rubberband,
+  axis-scale toggles).
+- **Widgets (idiomatic).** Active-state semantics, handle behavior, disabled
+  states, and keyboard modifiers are verified under both
+  `style.WidgetVisualStyle` values by
+  `TestWidgetInteractionAcrossVisualStyles`.
+- **GUI-only widget behavior (omitted).** `useblit`, live cursor/status
+  integration, input-method editing, the `SubplotTool`/menu widgets, and
+  browser-demo interaction (deferred to Phase 19).

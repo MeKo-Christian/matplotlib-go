@@ -521,75 +521,110 @@ func TestTextPathRowsUseRendererLevelEquivalent(t *testing.T) {
 	}
 }
 
-func TestWidgetClassesHaveExplicitRows(t *testing.T) {
+// assertModuleRowsClosed verifies every upstream row in the given modules
+// resolves to a parity decision that is neither not-started nor partial. It is
+// the Phase 17.6.8 closure guard for the backend/widget/animation tail: those
+// rows used to be allowed to stay partial, but 17.6.8 resolved each into a
+// direct/idiomatic equivalent or an explicit intentional omission.
+func assertModuleRowsClosed(t *testing.T, modules ...string) {
+	t.Helper()
 	artifact := loadPublicSurfaceArtifact(t)
+	wanted := map[string]bool{}
+	for _, m := range modules {
+		wanted[m] = true
+	}
+	checked := 0
 	for _, surface := range artifact.Rows {
-		if surface.Module != "widgets.py" || surface.Kind != "class" {
+		if !wanted[surface.Module] {
 			continue
 		}
-		row, ok := LookupPublicSurfaceParityByUpstreamID(surface.ID)
+		checked++
+		row, ok := PublicSurfaceParityForRow(surface)
 		if !ok {
-			t.Fatalf("missing explicit Phase 12.5 widget classification for %q", surface.ID)
+			t.Fatalf("missing Phase 17.6.8 classification for %q", surface.ID)
 		}
-		if row.Status == PublicSurfaceNotStarted {
-			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", surface.ID, row.Status)
+		if row.Status == PublicSurfacePartial || row.Status == PublicSurfaceNotStarted {
+			t.Fatalf("%s status = %s, want a closed backend/widget/animation decision (idiomatic, direct, or intentional-omission)", surface.ID, row.Status)
 		}
 	}
+	if checked == 0 {
+		t.Fatalf("no surface rows found for %v; artifact may be stale", modules)
+	}
+}
+
+func TestWidgetClassesHaveExplicitRows(t *testing.T) {
+	assertModuleRowsClosed(t, "widgets.py")
 }
 
 func TestAnimationSurfaceHasExplicitRows(t *testing.T) {
-	artifact := loadPublicSurfaceArtifact(t)
-	for _, surface := range artifact.Rows {
-		if surface.Module != "animation.py" {
-			continue
-		}
-		row, ok := LookupPublicSurfaceParityByUpstreamID(surface.ID)
-		if !ok {
-			t.Fatalf("missing explicit Phase 12.5 animation classification for %q", surface.ID)
-		}
-		if row.Status == PublicSurfaceNotStarted {
-			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", surface.ID, row.Status)
-		}
-	}
+	assertModuleRowsClosed(t, "animation.py")
 }
 
 func TestBackendLifecycleAndToolRowsAreExplicit(t *testing.T) {
+	// Landmark rows that must exist with a concrete classification, plus a full
+	// sweep that rejects any leftover partial/not-started backend or tool row.
 	want := []string{
-		"_pylab_helpers.py:class:Gcf",
 		"backend_bases.py:class:Event",
 		"backend_bases.py:class:DrawEvent",
-		"backend_bases.py:class:KeyEvent",
-		"backend_bases.py:class:MouseEvent",
-		"backend_bases.py:class:PickEvent",
-		"backend_bases.py:class:ResizeEvent",
-		"backend_bases.py:class:CloseEvent",
 		"backend_bases.py:class:FigureCanvasBase",
 		"backend_bases.py:class:FigureManagerBase",
 		"backend_bases.py:class:NavigationToolbar2",
 		"backend_bases.py:class:TimerBase",
-		"backend_bases.py:function:get_registered_canvas_class",
-		"backend_bases.py:function:register_backend",
 		"backend_tools.py:class:ToolBase",
-		"backend_tools.py:class:ToolHome",
-		"backend_tools.py:class:ToolBack",
-		"backend_tools.py:class:ToolForward",
-		"backend_tools.py:class:ToolPan",
-		"backend_tools.py:class:ToolZoom",
-		"backend_tools.py:class:SaveFigureBase",
 		"backend_tools.py:registry:tool:home",
-		"backend_tools.py:registry:tool:back",
-		"backend_tools.py:registry:tool:forward",
-		"backend_tools.py:registry:tool:pan",
-		"backend_tools.py:registry:tool:zoom",
 		"backend_tools.py:registry:tool:save",
 	}
 	for _, upstreamID := range want {
 		row, ok := LookupPublicSurfaceParityByUpstreamID(upstreamID)
 		if !ok {
-			t.Fatalf("missing explicit Phase 12.5 backend/tool classification for %q", upstreamID)
+			t.Fatalf("missing explicit backend/tool classification for %q", upstreamID)
 		}
-		if row.Status == PublicSurfaceNotStarted {
-			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", upstreamID, row.Status)
+		if row.Status == PublicSurfaceNotStarted || row.Status == PublicSurfacePartial {
+			t.Fatalf("%s status = %s, want a closed idiomatic, direct, or intentional-omission decision", upstreamID, row.Status)
+		}
+	}
+	assertModuleRowsClosed(t, "backend_bases.py", "backend_tools.py")
+}
+
+// TestBackendWidgetAnimationTailDecisions locks the specific Phase 17.6.8
+// closure decisions for the most load-bearing rows, including the ported GIF
+// writer stack and the static-vs-GUI tool split.
+func TestBackendWidgetAnimationTailDecisions(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	rowFor := func(upstreamID string) (PublicSurfaceParity, bool) {
+		for _, surface := range artifact.Rows {
+			if surface.ID == upstreamID {
+				return PublicSurfaceParityForRow(surface)
+			}
+		}
+		return PublicSurfaceParity{}, false
+	}
+
+	cases := []struct {
+		upstreamID   string
+		wantStatus   PublicSurfaceParityStatus
+		noteContains string
+	}{
+		{"animation.py:class:PillowWriter", PublicSurfaceDirectEquivalent, "image/gif"},
+		{"animation.py:class:AbstractMovieWriter", PublicSurfaceIdiomaticEquivalent, "MovieWriter interface"},
+		{"animation.py:class:MovieWriterRegistry", PublicSurfaceIdiomaticEquivalent, "registry"},
+		{"animation.py:class:FuncAnimation", PublicSurfaceIdiomaticEquivalent, "17.6.8"},
+		{"animation.py:class:FFMpegWriter", PublicSurfaceIntentionalOmission, "external"},
+		{"animation.py:class:HTMLWriter", PublicSurfaceIntentionalOmission, "HTML"},
+		{"widgets.py:class:Button", PublicSurfaceIdiomaticEquivalent, "17.6.8"},
+		{"backend_bases.py:class:FigureCanvasBase", PublicSurfaceIdiomaticEquivalent, "17.6.8"},
+		{"backend_tools.py:registry:tool:fullscreen", PublicSurfaceIntentionalOmission, "intentionally omitted"},
+	}
+	for _, tc := range cases {
+		row, ok := rowFor(tc.upstreamID)
+		if !ok {
+			t.Fatalf("missing classification for %q", tc.upstreamID)
+		}
+		if row.Status != tc.wantStatus {
+			t.Fatalf("%s status = %s, want %s", tc.upstreamID, row.Status, tc.wantStatus)
+		}
+		if !strings.Contains(row.Note, tc.noteContains) {
+			t.Fatalf("%s note %q does not contain %q", tc.upstreamID, row.Note, tc.noteContains)
 		}
 	}
 }

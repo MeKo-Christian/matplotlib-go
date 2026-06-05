@@ -4,6 +4,8 @@ import (
 	"errors"
 	"image"
 	"image/color"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/animation"
@@ -16,7 +18,7 @@ func TestRenderProducesNonBlankImage(t *testing.T) {
 	}
 }
 
-func TestFuncAnimationDemoStepsAndReportsUnsupportedSave(t *testing.T) {
+func TestFuncAnimationDemoStepsAndSavesGIF(t *testing.T) {
 	demo, err := NewFuncAnimationDemo()
 	if err != nil {
 		t.Fatalf("NewFuncAnimationDemo: %v", err)
@@ -30,8 +32,20 @@ func TestFuncAnimationDemoStepsAndReportsUnsupportedSave(t *testing.T) {
 	if demo.Animation.TotalFramesDrawn() != 1 {
 		t.Fatalf("func animation drawn frames = %d, want 1", demo.Animation.TotalFramesDrawn())
 	}
-	if err := demo.Animation.Save("out.gif"); !errors.Is(err, animation.ErrWriterUnsupported) {
-		t.Fatalf("func animation Save error = %v, want ErrWriterUnsupported", err)
+
+	// The AGG demo canvas implements canvas.RasterCanvas, so the ported GIF
+	// writer can save deterministically.
+	gifPath := filepath.Join(t.TempDir(), "demo.gif")
+	if err := demo.Animation.Save(gifPath); err != nil {
+		t.Fatalf("func animation Save(.gif): %v", err)
+	}
+	if info, err := os.Stat(gifPath); err != nil || info.Size() == 0 {
+		t.Fatalf("saved gif missing or empty: stat=%v err=%v", info, err)
+	}
+
+	// Unsupported extensions still report ErrWriterUnsupported.
+	if err := demo.Animation.Save(filepath.Join(t.TempDir(), "demo.mp4")); !errors.Is(err, animation.ErrWriterUnsupported) {
+		t.Fatalf("func animation Save(.mp4) error = %v, want ErrWriterUnsupported", err)
 	}
 }
 

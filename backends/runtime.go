@@ -3,6 +3,7 @@ package backends
 import (
 	"errors"
 	"fmt"
+	"image"
 	"os"
 	"path/filepath"
 	"strings"
@@ -142,6 +143,21 @@ func (c *headlessCanvas) DrawIdle() error {
 		return err
 	}
 	return c.dispatcher.Emit(event)
+}
+
+// FrameRGBA returns the pixels produced by the most recent Draw when the active
+// renderer exposes an RGBA buffer (render.RGBAExporter). It implements
+// canvas.RasterCanvas so movie writers can grab frames from the canvas, matching
+// matplotlib reading its Agg canvas buffer_rgba after a draw.
+func (c *headlessCanvas) FrameRGBA() *image.RGBA {
+	c.mu.Lock()
+	renderer := c.renderer
+	c.mu.Unlock()
+	exporter, ok := renderer.(render.RGBAExporter)
+	if !ok {
+		return nil
+	}
+	return exporter.GetImage()
 }
 
 func (c *headlessCanvas) Resize(width, height int) error {
@@ -439,6 +455,7 @@ func snapshotFigureHome(fig *canvas.Figure) figureHomeState {
 
 var (
 	_ canvas.DrawIdleCanvas = (*headlessCanvas)(nil)
+	_ canvas.RasterCanvas   = (*headlessCanvas)(nil)
 	_ canvas.FigureManager  = (*defaultManager)(nil)
 )
 
