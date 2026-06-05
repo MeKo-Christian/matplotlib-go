@@ -2225,7 +2225,7 @@ example/browser breadth as documentation work.
                   typed conversions or document Python-only ambiguity that the
                   Go API intentionally avoids.
 
-        - [ ] 17.75.5.1.3 Masked, NaN, and Invalid Inputs: align masked arrays,
+        - [x] 17.75.5.1.3 Masked, NaN, and Invalid Inputs: align masked arrays,
           NaN handling, invalid-length sequences, and error messages where they
           affect supported Go APIs.
 
