@@ -2217,7 +2217,7 @@ example/browser breadth as documentation work.
               grayscale strings, numeric inputs, and sequence-length handling
               for supported Go APIs.
 
-                - [ ] 17.75.5.1.2.2.1 Ambiguity Audit: compare string
+                - [x] 17.75.5.1.2.2.1 Ambiguity Audit: compare string
                   grayscale, numeric grayscale, RGB(A) sequences, and invalid
                   sequence lengths against Matplotlib.
 
