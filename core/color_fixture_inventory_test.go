@@ -283,3 +283,54 @@ func TestColorImageColorbarMetadataAndMigrationNotesAreDocumented(t *testing.T) 
 		}
 	}
 }
+
+func TestFinalColorStatusRegenerationIsDocumented(t *testing.T) {
+	sourceRequirements := map[string][]string{
+		filepath.Join("..", "PLAN.md"): {
+			"[x] 17.75.5.7 Color Fixtures and Docs",
+			"[x] 17.75.5.7.4 Final Color Status Regeneration",
+		},
+		filepath.Join("..", "docs", "matplotlib-parity-status.md"): {
+			"Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstream_public_surface.json`.",
+			"colorbar.py:class:Colorbar",
+			"colors.py:class:ColorConverter",
+			"image.py:class:AxesImage",
+			"mutable mappable clim/colormap/norm updates",
+		},
+		filepath.Join("..", "internal", "examplecatalog", "public_surface_inventory_test.go"): {
+			"TestMatplotlibParityStatusDocIsCurrent",
+			"TestPublicSurfaceParityRowsCoverCommittedInventory",
+			"TestPublicSurfaceParityRowsReferenceExistingLocalArtifacts",
+		},
+	}
+	for path, phrases := range sourceRequirements {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		src := string(data)
+		for _, phrase := range phrases {
+			if !strings.Contains(src, phrase) {
+				t.Fatalf("%s missing final color status marker %q", path, phrase)
+			}
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Final Color Status Regeneration",
+		"`docs/matplotlib-parity-status.md` was regenerated from `cmd/paritystatusdoc` after color, image, norm, and colorbar metadata updates",
+		"The final sweep covers Golden, MatplotlibRef, and ReferenceCompare for color, norm, image, and colorbar fixtures",
+		"The catalog/doc freshness checks are `TestMatplotlibParityStatusDocIsCurrent`, `TestPublicSurfaceParityRowsCoverCommittedInventory`, and `TestPublicSurfaceParityRowsReferenceExistingLocalArtifacts`",
+		"`17.75.5.7` and `17.75.5.7.4` are closed only after those checks pass",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("final color status docs missing %q", phrase)
+		}
+	}
+}

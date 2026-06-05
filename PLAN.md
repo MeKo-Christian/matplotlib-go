@@ -2243,7 +2243,7 @@ example/browser breadth as documentation work.
           migration notes for supported placement/formatter/boundary/extension/
           update-semantics behavior and omissions; and regenerate parity status.
 
-    - [ ] 17.75.5.7 Color Fixtures and Docs: add colormap, norm, image, and
+    - [x] 17.75.5.7 Color Fixtures and Docs: add colormap, norm, image, and
       colorbar parity fixture triplets before promoting behavior to
       user-facing galleries, then update parity metadata,
       `docs/matplotlib-parity-status.md`, and migration notes with intentional
@@ -2272,7 +2272,7 @@ example/browser breadth as documentation work.
           summarize typed Go API differences and backend-specific raster/vector
           rendering residuals (plus supported workarounds) in migration notes.
 
-        - [ ] 17.75.5.7.4 Final Color Status Regeneration: regenerate
+        - [x] 17.75.5.7.4 Final Color Status Regeneration: regenerate
           `docs/matplotlib-parity-status.md` after metadata/migration notes are
           current, verify the output is stable with no stale fixture/catalog
           rows, run the focused color/norm/image/colorbar/reference-compare/

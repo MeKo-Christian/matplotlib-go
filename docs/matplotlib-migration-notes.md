@@ -1171,6 +1171,18 @@ colorbars.
 `docs/matplotlib-parity-status.md` is generated from `internal/examplecatalog`
 and carries the updated color/image/colorbar row notes.
 
+## Phase 17.75.5 Final Color Status Regeneration
+
+`docs/matplotlib-parity-status.md` was regenerated from `cmd/paritystatusdoc`
+after color, image, norm, and colorbar metadata updates. The final sweep covers
+Golden, MatplotlibRef, and ReferenceCompare for color, norm, image, and colorbar
+fixtures.
+
+The catalog/doc freshness checks are `TestMatplotlibParityStatusDocIsCurrent`,
+`TestPublicSurfaceParityRowsCoverCommittedInventory`, and
+`TestPublicSurfaceParityRowsReferenceExistingLocalArtifacts`. `17.75.5.7` and
+`17.75.5.7.4` are closed only after those checks pass.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
