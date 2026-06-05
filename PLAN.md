@@ -2288,7 +2288,7 @@ example/browser breadth as documentation work.
               inverse requirements, clipping behavior, and scalar input/output
               expectations.
 
-                - [ ] 17.75.5.2.2.1.1 Upstream Contract: inspect
+                - [x] 17.75.5.2.2.1.1 Upstream Contract: inspect
                   Matplotlib's `FuncNorm` autoscale, inverse, clipping, and
                   array handling paths.
 

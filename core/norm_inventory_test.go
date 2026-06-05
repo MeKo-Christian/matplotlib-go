@@ -110,6 +110,49 @@ func TestNormGapListDocumentsSupportedFixtureNeeds(t *testing.T) {
 	}
 }
 
+func TestFuncNormUpstreamContractIsDocumented(t *testing.T) {
+	src := readUpstreamColorsPy(t)
+	upstreamRequired := []string{
+		"def make_norm_from_scale(scale_cls, base_norm_cls=None",
+		"scale_cls, *scale_args",
+		"self._trf = self._scale.get_transform()",
+		"def __call__(self, value, clip=None):",
+		"if clip:",
+		"def inverse(self, value):",
+		"def autoscale_None(self, A):",
+		"@make_norm_from_scale(\n    scale.FuncScale",
+		"functions : (callable, callable)",
+		"The forward function must be monotonic.",
+		"Both functions must have the signature",
+	}
+	for _, phrase := range upstreamRequired {
+		if !strings.Contains(src, phrase) {
+			t.Fatalf("upstream FuncNorm contract missing %q", phrase)
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	docRequired := []string{
+		"Phase 17.75.5 FuncNorm Upstream Contract",
+		"`make_norm_from_scale`",
+		"`scale.FuncScale`",
+		"forward and inverse",
+		"monotonic",
+		"`clip`",
+		"`autoscale_None`",
+		"transform-domain finite values",
+	}
+	for _, phrase := range docRequired {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("FuncNorm contract docs missing %q", phrase)
+		}
+	}
+}
+
 var normInventory = []normInventoryEntry{
 	{
 		upstream:      "Normalize",
