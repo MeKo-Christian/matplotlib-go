@@ -2441,7 +2441,7 @@ example/browser breadth as documentation work.
               existing scalar colormap model and which would require a
               separate typed surface.
 
-        - [ ] 17.75.5.4.2 Bivariate Support Decision: implement the supported
+        - [x] 17.75.5.4.2 Bivariate Support Decision: implement the supported
           static-rendering subset or document an intentional omission with
           affected examples and public-surface metadata.
 
