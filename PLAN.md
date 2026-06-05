@@ -2398,7 +2398,7 @@ example/browser breadth as documentation work.
               lighting to surface rendering without regressing 3D shade
               semantics from 17.75.4.
 
-        - [ ] 17.75.5.3.4 LightSource Fixtures and Ledger: add reference
+        - [x] 17.75.5.3.4 LightSource Fixtures and Ledger: add reference
           fixtures or omission notes, then update parity metadata and docs.
 
             - [x] 17.75.5.3.4.1 Focused Lighting Tests: add non-visual tests
