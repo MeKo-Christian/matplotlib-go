@@ -1,6 +1,7 @@
 package core
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -75,6 +76,59 @@ func TestLightSourceAlgorithmInventoryIsDocumented(t *testing.T) {
 	for _, phrase := range requiredDocs {
 		if !strings.Contains(doc, phrase) {
 			t.Fatalf("LightSource inventory docs missing %q", phrase)
+		}
+	}
+}
+
+func TestLightSourceExampleNeedListIsDocumented(t *testing.T) {
+	refDir := filepath.Join("..", "test", "matplotlib_ref", "plots")
+	forbidden := []string{"LightSource", "lightsource=", "hillshade(", "shade_rgb(", "blend_mode="}
+	err := filepath.WalkDir(refDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || filepath.Ext(path) != ".py" {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		src := string(data)
+		for _, phrase := range forbidden {
+			if strings.Contains(src, phrase) {
+				t.Fatalf("%s unexpectedly requires LightSource image-lighting API via %q", path, phrase)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("scan matplotlib reference plots: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	requiredDocs := []string{
+		"Phase 17.75.5 LightSource Example Need List",
+		"No committed Python parity fixture imports `LightSource`",
+		"No 2D image fixture",
+		"`hillshade`, `shade`, or `shade_rgb`",
+		"`mplot3d_terrain`",
+		"`plot_surface(..., cmap=\"viridis\")`",
+		"Matplotlib disables",
+		"surface face shading when a colormap is present",
+		"`mplot3d_bar3d`",
+		"`mplot3d_voxels`",
+		"`mplot3d_trisurf3d`",
+		"`shade3DFaceColor`",
+		"does not require a broad `LightSource` API",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("LightSource need-list docs missing %q", phrase)
 		}
 	}
 }

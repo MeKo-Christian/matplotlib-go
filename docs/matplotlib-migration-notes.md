@@ -376,6 +376,32 @@ preserves alpha. The current Go 3D shading helper mirrors that mplot3d face
 shading route; it does not implement the 2D `LightSource.hillshade`,
 `shade`, or `shade_rgb` image-lighting API.
 
+## Phase 17.75.5 LightSource Example Need List
+
+No committed Python parity fixture imports `LightSource`, passes
+`lightsource=`, or calls the 2D image-lighting helpers. No 2D image fixture
+currently calls `hillshade`, `shade`, or `shade_rgb`; the image fixtures are
+plain imshow/matshow/alpha/interpolation cases rather than shaded-relief image
+examples.
+
+The current references that mention shading are mplot3d examples, and they use
+Matplotlib's separate collection-face shading path:
+
+- `mplot3d_terrain`, `mplot3d_basic`, and `mplot3d_surface3d` call
+  `plot_surface(..., cmap="viridis")` or another colormap; Matplotlib disables
+  surface face shading when a colormap is present.
+- `mplot3d_bar3d` and `mplot3d_voxels` rely on default mplot3d face shading
+  for explicit colors, which the Go `shade3DFaceColor` path already mirrors.
+- `mplot3d_trisurf3d` uses a colormap and therefore does not require
+  LightSource-driven face shading; explicit-color trisurf shading is covered by
+  focused Go tests for `shade3DFaceColor`.
+
+This means the supported parity set does not require a broad `LightSource` API
+or 2D shaded-image integration yet. The next implementation decision can either
+keep LightSource as an explicit omission with this fixture audit, or add a
+small static subset only if a new visual fixture exercises hillshade/blend
+behavior.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

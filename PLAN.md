@@ -2371,7 +2371,7 @@ example/browser breadth as documentation work.
               `LightSource` defaults, gradient handling, shading fraction, and
               blend-mode formulas.
 
-            - [ ] 17.75.5.3.1.2 Example Need List: identify which upstream or
+            - [x] 17.75.5.3.1.2 Example Need List: identify which upstream or
               parity fixtures actually require LightSource behavior before
               implementing a broad API.
 
