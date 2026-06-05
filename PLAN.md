@@ -2169,7 +2169,7 @@ example/browser breadth as documentation work.
 
 - [x] Split 17.75.5 into execution-ready subtasks and complete them in order:
 
-    - [ ] 17.75.5.1 Color Conversion Edge Cases: audit exact Matplotlib color
+    - [x] 17.75.5.1 Color Conversion Edge Cases: audit exact Matplotlib color
       parsing and conversion behavior for named colors, hex forms, alpha
       precedence, grayscale strings, masked/NaN values, and sequence ambiguity.
       Complete the scoped audits below before changing shared color APIs.
