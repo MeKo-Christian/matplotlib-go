@@ -448,6 +448,79 @@ func TestPatchDebugHelperRowsAreExplicitlyOmitted(t *testing.T) {
 	}
 }
 
+func TestFontManagerRowsAreSplitByTypedFontSurfaceAndRuntimeHelpers(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	rowFor := func(upstreamID string) PublicSurfaceParity {
+		t.Helper()
+		for _, surface := range artifact.Rows {
+			if surface.ID != upstreamID {
+				continue
+			}
+			row, ok := PublicSurfaceParityForRow(surface)
+			if !ok {
+				t.Fatalf("missing Phase 17.75.6 font-manager classification for %q", upstreamID)
+			}
+			return row
+		}
+		t.Fatalf("missing upstream surface row %q", upstreamID)
+		return PublicSurfaceParity{}
+	}
+
+	for _, upstreamID := range []string{
+		"font_manager.py:class:FontEntry",
+		"font_manager.py:class:FontManager",
+		"font_manager.py:class:FontProperties",
+		"font_manager.py:function:get_font",
+	} {
+		row := rowFor(upstreamID)
+		if row.Status == PublicSurfacePartial || row.Status == PublicSurfaceNotStarted {
+			t.Fatalf("%s status = %s, want closed typed font-manager decision", upstreamID, row.Status)
+		}
+	}
+	for _, upstreamID := range []string{
+		"font_manager.py:function:afmFontProperty",
+		"font_manager.py:function:findSystemFonts",
+		"font_manager.py:function:get_fontext_synonyms",
+		"font_manager.py:function:is_opentype_cff_font",
+		"font_manager.py:function:json_dump",
+		"font_manager.py:function:json_load",
+		"font_manager.py:function:list_fonts",
+		"font_manager.py:function:ttfFontProperty",
+		"font_manager.py:function:win32FontDirectory",
+	} {
+		row := rowFor(upstreamID)
+		if row.Status != PublicSurfaceIntentionalOmission {
+			t.Fatalf("%s status = %s, want intentional omission", upstreamID, row.Status)
+		}
+	}
+}
+
+func TestTextPathRowsUseRendererLevelEquivalent(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	for _, upstreamID := range []string{
+		"textpath.py:class:TextPath",
+		"textpath.py:class:TextToPath",
+	} {
+		found := false
+		for _, surface := range artifact.Rows {
+			if surface.ID != upstreamID {
+				continue
+			}
+			found = true
+			row, ok := PublicSurfaceParityForRow(surface)
+			if !ok {
+				t.Fatalf("missing Phase 17.75.6 textpath classification for %q", upstreamID)
+			}
+			if row.Status == PublicSurfacePartial || row.Status == PublicSurfaceNotStarted {
+				t.Fatalf("%s status = %s, want renderer-level textpath equivalent", upstreamID, row.Status)
+			}
+		}
+		if !found {
+			t.Fatalf("missing upstream surface row %q", upstreamID)
+		}
+	}
+}
+
 func TestWidgetClassesHaveExplicitRows(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	for _, surface := range artifact.Rows {
