@@ -2206,7 +2206,7 @@ example/browser breadth as documentation work.
       diagnostics for multichannel inputs; colormap metadata, migration notes,
       and parity status were regenerated to mark the omissions.
 
-    - [ ] 17.75.5.5 Transformed Image Resampling: close residual transformed
+    - [x] 17.75.5.5 Transformed Image Resampling: close residual transformed
       image resampling gaps and document backend-specific interpolation
       fallbacks where AGG, GoBasic, SVG/PDF, or Skia cannot match Matplotlib
       exactly. Add visual parity fixtures only after core image behavior is

@@ -711,3 +711,26 @@ func TestTransformedImageFixtureLedgerIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageResamplingIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Transformed Image Resampling",
+		"Resampling Gap Inventory, AGG and Raster Backend Alignment, Vector Backend Fallbacks, and Image Fixture Ledger are the closure inputs",
+		"AGG is the pixel-parity backend for refreshed transformed-image fixtures",
+		"GoBasic is documented as the nearest-only raster fallback",
+		"SVG/PDF behavior is structural and viewer-side image resampling is not a raster parity gate",
+		"`imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed` are the refreshed priority triplets",
+		"remaining transformed-image residuals are documented backend contracts rather than open fixture blockers",
+		"future colorbar work starts after transformed-image resampling is closed",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image resampling closure docs missing %q", phrase)
+		}
+	}
+}

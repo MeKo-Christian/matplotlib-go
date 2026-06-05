@@ -655,6 +655,22 @@ input validation, `combination_mode` behavior, bad-value propagation, alpha
 multiplication, and multi-component colorbar expectations are all tested
 together.
 
+## Phase 17.75.5 Transformed Image Resampling
+
+Resampling Gap Inventory, AGG and Raster Backend Alignment, Vector Backend
+Fallbacks, and Image Fixture Ledger are the closure inputs. AGG is the
+pixel-parity backend for refreshed transformed-image fixtures. GoBasic is
+documented as the nearest-only raster fallback. SVG/PDF behavior is structural
+and viewer-side image resampling is not a raster parity gate.
+
+`imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed` are
+the refreshed priority triplets. The remaining transformed-image residuals are
+documented backend contracts rather than open fixture blockers. The fixture
+ledger, raster/vector backend notes, and public-surface metadata now identify
+where exact raster parity is expected and where backend fallback behavior is
+intentional. The future colorbar work starts after transformed-image resampling
+is closed.
+
 ## Phase 17.75.5 Resampling Gap Inventory
 
 Backend matrix coverage and Matplotlib pipeline comparison are the inventory
