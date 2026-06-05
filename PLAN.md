@@ -2190,7 +2190,7 @@ example/browser breadth as documentation work.
                   tests for exact matches, aliases, `none`, case handling, and
                   intentionally unsupported dynamic Python inputs.
 
-            - [ ] 17.75.5.1.1.2 Hex Forms: align supported short/long hex
+            - [x] 17.75.5.1.1.2 Hex Forms: align supported short/long hex
               forms, optional alpha suffixes, and invalid hex diagnostics.
 
                 - [x] 17.75.5.1.1.2.1 Supported Forms: compare `#rgb`,
