@@ -2236,7 +2236,7 @@ example/browser breadth as documentation work.
                   infinite, negative, out-of-range, masked, and nil-equivalent
                   inputs against upstream behavior.
 
-                - [ ] 17.75.5.1.3.1.2 Supported Handling: add tests or
+                - [x] 17.75.5.1.3.1.2 Supported Handling: add tests or
                   omission notes for bad values that can appear in typed Go
                   color APIs.
 

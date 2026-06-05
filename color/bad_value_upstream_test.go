@@ -53,6 +53,39 @@ func TestMatplotlibBadValueSemanticsInventory(t *testing.T) {
 	}
 }
 
+func TestToRGBABadValueHandlingMatchesSupportedMatplotlibCases(t *testing.T) {
+	for _, tc := range matplotlibBadValueCases {
+		if !tc.goSupported {
+			continue
+		}
+		got, err := ToRGBA(tc.spec)
+		if tc.wantErr {
+			if err == nil {
+				t.Fatalf("%s: ToRGBA(%v) = %+v, want error", tc.name, tc.spec, got)
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatalf("%s: ToRGBA(%v) error = %v", tc.name, tc.spec, err)
+		}
+		if !sameColor(got, tc.want) {
+			t.Fatalf("%s: ToRGBA(%v) = %+v, want %+v", tc.name, tc.spec, got, tc.want)
+		}
+	}
+}
+
+func TestToRGBARejectsUnsupportedBadValueCases(t *testing.T) {
+	for _, tc := range matplotlibBadValueCases {
+		if tc.goSupported {
+			continue
+		}
+		got, err := ToRGBA(tc.spec)
+		if err == nil {
+			t.Fatalf("%s: ToRGBA(%v) = %+v, want unsupported bad-value error", tc.name, tc.spec, got)
+		}
+	}
+}
+
 var matplotlibBadValueCases = []matplotlibBadValueCase{
 	{
 		name:        "nil equivalent is invalid",
