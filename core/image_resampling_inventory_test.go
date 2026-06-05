@@ -300,3 +300,28 @@ func TestTransformedImageTransformAndExtentAlignmentIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageAggRasterAlignmentIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 AGG and Raster Backend Alignment",
+		"Interpolation Kernel Alignment and Transform and Extent Alignment are the raster alignment inputs",
+		"`AGG` is the parity raster backend",
+		"`GoBasic` is the deterministic nearest-only raster fallback",
+		"`auto` and `antialiased` follow Matplotlib's nearest/Hanning scale split",
+		"`nearest` and `none` preserve nearest-neighbor behavior",
+		"`Axes.ImShow` explicit extents preserve user-provided limits",
+		"`matplotlibImageDrawRect`, `imageTransform`, and `rotationAnchor` pin rounded placement and affine orientation",
+		"the remaining raster limitation is clipped scalar-stage resampling from Matplotlib's `clipped_bbox` output shape",
+		"fixture refresh can proceed with AGG as the raster reference and GoBasic documented as a fallback",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image AGG/raster alignment docs missing %q", phrase)
+		}
+	}
+}

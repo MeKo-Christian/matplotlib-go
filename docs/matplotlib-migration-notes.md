@@ -722,6 +722,29 @@ support from the backend matrix. The remaining comparison work is AGG
 interpolation-stage selection, clipped output-size quantization, transformed
 image clipping, and pixel-center placement under explicit extents and rotation.
 
+## Phase 17.75.5 AGG and Raster Backend Alignment
+
+Interpolation Kernel Alignment and Transform and Extent Alignment are the
+raster alignment inputs. `AGG` is the parity raster backend: it consumes the
+Matplotlib interpolation-name registry, applies transformed-image affine draws,
+and carries the tests for adaptive interpolation and transformed image
+placement. `GoBasic` is the deterministic nearest-only raster fallback, with
+nearest scaling pinned to destination pixel centers rather than a full
+Matplotlib kernel surface.
+
+`auto` and `antialiased` follow Matplotlib's nearest/Hanning scale split, while
+`nearest` and `none` preserve nearest-neighbor behavior. `Axes.ImShow` explicit
+extents preserve user-provided limits, and `matplotlibImageDrawRect`,
+`imageTransform`, and `rotationAnchor` pin rounded placement and affine
+orientation for core images.
+
+Current raster alignment status: the remaining raster limitation is clipped
+scalar-stage resampling from Matplotlib's `clipped_bbox` output shape. Current
+Go rendering clips image pixels through the renderer, which is visually correct
+for the active fixtures but can produce different scalar-stage resampling when a
+large image is mostly outside the axes clip. The fixture refresh can proceed
+with AGG as the raster reference and GoBasic documented as a fallback.
+
 ## Phase 17.75.5 Interpolation Kernel Alignment
 
 `AGG` keeps the Matplotlib interpolation-name registry for raster image draws:

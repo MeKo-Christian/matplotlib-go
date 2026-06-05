@@ -2224,7 +2224,7 @@ example/browser breadth as documentation work.
               resampling, extent/origin placement, clipping, and transform
               behavior for the cases covered by examples.
 
-        - [ ] 17.75.5.5.2 AGG and Raster Backend Alignment: close high-impact
+        - [x] 17.75.5.5.2 AGG and Raster Backend Alignment: close high-impact
           raster resampling gaps first, with focused tests before visual
           fixture updates.
 
