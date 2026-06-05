@@ -2313,8 +2313,15 @@ example/browser breadth as documentation work.
       and no detail rows match `| not-started |`). `go test
       ./internal/examplecatalog/...` keeps the generated doc current and
       verifies every tracked open row has a valid closure owner or rationale.
-- [ ] Ensure every remaining `partial` row has a committed test, catalog case,
+- [x] Ensure every remaining `partial` row has a committed test, catalog case,
       or documentation entry proving what is still missing.
+      2026-06-05: added
+      `TestPartialPublicSurfaceRowsHaveEvidenceOfRemainingScope` so every
+      generated `partial` public-surface row must either reference committed
+      catalog/showcase evidence or document the remaining scope in its parity
+      note. Verified with `go test ./internal/examplecatalog/...`; the
+      generated status ledger currently tracks 557 `partial` rows with that
+      evidence gate enforced.
 - [ ] Run `just fmt && just lint && just test`, then run the catalog parity
       suites for every newly added or modified case.
 

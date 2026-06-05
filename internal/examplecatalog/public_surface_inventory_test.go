@@ -790,6 +790,20 @@ func TestOpenPublicSurfaceParityRowsHaveClosureOwners(t *testing.T) {
 	}
 }
 
+func TestPartialPublicSurfaceRowsHaveEvidenceOfRemainingScope(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	for _, row := range PublicSurfaceParityRowsForSurface(artifact.Rows) {
+		if row.Status != PublicSurfacePartial {
+			continue
+		}
+		hasFixtureEvidence := len(row.CatalogIDs) > 0 || len(row.ExampleIDs) > 0
+		hasDocumentationEvidence := partialNoteDocumentsRemainingScope(row.Note)
+		if !hasFixtureEvidence && !hasDocumentationEvidence {
+			t.Fatalf("%s (%s) is partial without catalog/showcase evidence or a documented remaining scope", row.ID, row.UpstreamID)
+		}
+	}
+}
+
 func TestMatplotlibParityStatusDocIsCurrent(t *testing.T) {
 	root := repoRoot(t)
 	artifact := loadPublicSurfaceArtifact(t)
@@ -873,6 +887,25 @@ func validPublicSurfaceClosurePhase(phase string) bool {
 	default:
 		return false
 	}
+}
+
+func partialNoteDocumentsRemainingScope(note string) bool {
+	note = strings.ToLower(note)
+	for _, marker := range []string{
+		"remaining",
+		"remains",
+		"remain ",
+		"documented",
+		"omission",
+		"omitted",
+		"outside",
+		"unsupported",
+	} {
+		if strings.Contains(note, marker) {
+			return true
+		}
+	}
+	return false
 }
 
 func validPublicSurfaceParityStatus(status PublicSurfaceParityStatus) bool {
