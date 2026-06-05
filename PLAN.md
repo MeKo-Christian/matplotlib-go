@@ -2386,7 +2386,7 @@ example/browser breadth as documentation work.
             - [x] 17.75.5.3.2.2 RGB Blend Modes: implement or omit overlay,
               soft-light, hsv, and custom blend paths needed by examples.
 
-        - [ ] 17.75.5.3.3 Surface Lighting Integration: connect supported
+        - [x] 17.75.5.3.3 Surface Lighting Integration: connect supported
           lighting to image/surface rendering paths where Matplotlib examples
           require it, keeping backend fallbacks explicit.
 
