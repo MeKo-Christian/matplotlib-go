@@ -2296,7 +2296,7 @@ example/browser breadth as documentation work.
                   and inverse callback signatures plus error behavior for
                   unsupported or non-monotonic mappings.
 
-            - [ ] 17.75.5.2.2.2 FuncNorm Tests or Omission: add focused tests
+            - [x] 17.75.5.2.2.2 FuncNorm Tests or Omission: add focused tests
               for implemented behavior or record the intentional omission in
               metadata and migration notes.
 
