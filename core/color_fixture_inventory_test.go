@@ -112,3 +112,112 @@ func TestColorImageColorbarFixtureGapInventoryIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestColorImageColorbarFixtureTripletsAreDocumented(t *testing.T) {
+	tripletIDs := []string{
+		"colormap_diverging",
+		"colormap_qualitative",
+		"colormap_cyclic",
+		"named_colors",
+		"image_heatmap",
+		"imshow_clipped",
+		"imshow_transformed",
+		"imshow_interpolation_matrix",
+		"image_alpha",
+		"matshow_basic",
+		"spy_marker",
+		"spy_image",
+		"asinh_norm_image",
+		"boundarynorm_pcolormesh",
+		"collection_mutable_scalarmap",
+		"colorbar_boundary_values",
+		"colorbar_horizontal_ticks",
+		"lognorm_imshow",
+		"twoslope_norm_image",
+		"colorbar_extensions",
+	}
+	sourceRequirements := map[string][]string{
+		filepath.Join("..", "internal", "examplecatalog", "catalog.go"): tripletIDs,
+		filepath.Join("..", "testdata", "golden"): {
+			"colormap_diverging.png",
+			"colormap_qualitative.png",
+			"colormap_cyclic.png",
+			"image_heatmap.png",
+			"imshow_clipped.png",
+			"imshow_transformed.png",
+			"image_alpha.png",
+			"matshow_basic.png",
+			"spy_marker.png",
+			"spy_image.png",
+			"asinh_norm_image.png",
+			"boundarynorm_pcolormesh.png",
+			"collection_mutable_scalarmap.png",
+			"colorbar_boundary_values.png",
+			"colorbar_horizontal_ticks.png",
+			"lognorm_imshow.png",
+			"twoslope_norm_image.png",
+			"colorbar_extensions.png",
+		},
+		filepath.Join("..", "test", "matplotlib_ref", "plots", "__init__.py"): {
+			"colormap_diverging",
+			"colormap_qualitative",
+			"colormap_cyclic",
+			"asinh_norm_image",
+			"boundarynorm_pcolormesh",
+			"collection_mutable_scalarmap",
+			"colorbar_boundary_values",
+			"colorbar_horizontal_ticks",
+			"lognorm_imshow",
+			"twoslope_norm_image",
+			"colorbar_extensions",
+		},
+	}
+	for path, phrases := range sourceRequirements {
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Fatalf("stat %s: %v", path, err)
+		}
+		var src string
+		if info.IsDir() {
+			entries, err := os.ReadDir(path)
+			if err != nil {
+				t.Fatalf("read dir %s: %v", path, err)
+			}
+			names := make([]string, 0, len(entries))
+			for _, entry := range entries {
+				names = append(names, entry.Name())
+			}
+			src = strings.Join(names, " ")
+		} else {
+			data, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatalf("read %s: %v", path, err)
+			}
+			src = string(data)
+		}
+		for _, phrase := range phrases {
+			if !strings.Contains(src, phrase) {
+				t.Fatalf("%s missing fixture triplet marker %q", path, phrase)
+			}
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Color/Image/Colorbar Fixture Triplets",
+		"Committed triplets cover scalar colormap swatches, named colors, image heatmap/clipped/transformed/interpolation/alpha/matshow/spy paths, and the colorbar norm/update/extension set",
+		"Existing norm triplets cover LogNorm, AsinhNorm, TwoSlopeNorm, BoundaryNorm, and Normalize-backed mutable scalar maps",
+		"No new FuncNorm, LightSource, shaded-relief, bivariate, or multivariate triplet is added for this phase because those APIs are documented omissions",
+		"Colorbar placement/formatter/boundary/extension/update-contract coverage is represented by `colorbar_composition`, `colorbar_horizontal_ticks`, `colorbar_boundary_values`, `colorbar_extensions`, and `collection_mutable_scalarmap`",
+		"Focused visual checks for this phase are `TestGolden` and `TestMatplotlibRef` on colormap_diverging, colormap_qualitative, colormap_cyclic, asinh_norm_image, boundarynorm_pcolormesh, collection_mutable_scalarmap, colorbar_boundary_values, colorbar_horizontal_ticks, lognorm_imshow, twoslope_norm_image, and colorbar_extensions",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("fixture triplet docs missing %q", phrase)
+		}
+	}
+}

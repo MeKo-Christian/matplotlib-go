@@ -2258,7 +2258,7 @@ example/browser breadth as documentation work.
           tolerance bands only for risk categories already explained by
           completed behavior work.
 
-        - [ ] 17.75.5.7.2 Color/Image/Colorbar Fixture Triplets: after core
+        - [x] 17.75.5.7.2 Color/Image/Colorbar Fixture Triplets: after core
           behavior is aligned, add the missing Go/Python-reference/golden
           triplets — norm/FuncNorm/boundary/two-slope and colormap/discrete
           (with the bivariate/multivariate decision), transformed-image and

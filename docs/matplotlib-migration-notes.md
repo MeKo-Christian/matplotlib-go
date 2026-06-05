@@ -1133,6 +1133,26 @@ multi-component colorbar contract exists. Potential weak coverage: scalar
 colormap families are represented by only three fixture rows and colorbar
 composition is the only showcase example.
 
+## Phase 17.75.5 Color/Image/Colorbar Fixture Triplets
+
+Committed triplets cover scalar colormap swatches, named colors, image
+heatmap/clipped/transformed/interpolation/alpha/matshow/spy paths, and the
+colorbar norm/update/extension set. Existing norm triplets cover LogNorm,
+AsinhNorm, TwoSlopeNorm, BoundaryNorm, and Normalize-backed mutable scalar maps.
+
+No new FuncNorm, LightSource, shaded-relief, bivariate, or multivariate triplet
+is added for this phase because those APIs are documented omissions. Colorbar
+placement/formatter/boundary/extension/update-contract coverage is represented
+by `colorbar_composition`, `colorbar_horizontal_ticks`,
+`colorbar_boundary_values`, `colorbar_extensions`, and
+`collection_mutable_scalarmap`.
+
+Focused visual checks for this phase are `TestGolden` and `TestMatplotlibRef` on
+colormap_diverging, colormap_qualitative, colormap_cyclic, asinh_norm_image,
+boundarynorm_pcolormesh, collection_mutable_scalarmap,
+colorbar_boundary_values, colorbar_horizontal_ticks, lognorm_imshow,
+twoslope_norm_image, and colorbar_extensions.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
