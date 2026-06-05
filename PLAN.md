@@ -2463,7 +2463,7 @@ example/browser breadth as documentation work.
             - [x] 17.75.5.4.3.2 Multivariate Tests or Omission: add tests for
               supported behavior or record the omission with rationale.
 
-        - [ ] 17.75.5.4.4 Colormap Fixtures and Ledger: add tests/fixtures for
+        - [x] 17.75.5.4.4 Colormap Fixtures and Ledger: add tests/fixtures for
           supported behavior, record omissions, and regenerate docs.
 
             - [x] 17.75.5.4.4.1 Focused Colormap Tests: run tests for supported
