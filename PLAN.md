@@ -2401,7 +2401,7 @@ example/browser breadth as documentation work.
         - [ ] 17.75.5.3.4 LightSource Fixtures and Ledger: add reference
           fixtures or omission notes, then update parity metadata and docs.
 
-            - [ ] 17.75.5.3.4.1 Focused Lighting Tests: add non-visual tests
+            - [x] 17.75.5.3.4.1 Focused Lighting Tests: add non-visual tests
               for implemented hillshade/blend math or omission assertions.
 
                 - [x] 17.75.5.3.4.1.1 Hillshade Math Tests: test gradients,
