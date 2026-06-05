@@ -2404,7 +2404,7 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.3.4.1 Focused Lighting Tests: add non-visual tests
               for implemented hillshade/blend math or omission assertions.
 
-                - [ ] 17.75.5.3.4.1.1 Hillshade Math Tests: test gradients,
+                - [x] 17.75.5.3.4.1.1 Hillshade Math Tests: test gradients,
                   azimuth/altitude defaults, fraction handling, and clipping
                   for implemented hillshade behavior.
 
