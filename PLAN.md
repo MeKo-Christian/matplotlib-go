@@ -2367,7 +2367,7 @@ example/browser breadth as documentation work.
           shade, shade-rgb, blend modes, fraction, vert/horz exaggeration, and
           azimuth/altitude defaults against upstream.
 
-            - [ ] 17.75.5.3.1.1 Algorithm Inventory: inspect upstream
+            - [x] 17.75.5.3.1.1 Algorithm Inventory: inspect upstream
               `LightSource` defaults, gradient handling, shading fraction, and
               blend-mode formulas.
 

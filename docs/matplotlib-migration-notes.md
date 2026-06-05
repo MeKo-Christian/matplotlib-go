@@ -340,6 +340,42 @@ Matplotlib-style callback registry remains intentionally omitted for this
 surface. Callers should mutate the typed mappable and redraw the figure; they
 should not expect norm objects to notify colorbars independently.
 
+## Phase 17.75.5 LightSource Algorithm Inventory
+
+Matplotlib's `colors.LightSource` is a 2D elevation-image lighting helper, not
+the same code path as mplot3d collection face shading. Its constructor defaults
+are `azdeg=315` and `altdeg=45`, with HSV blend limits
+`hsv_min_val=0`, `hsv_max_val=1`, `hsv_min_sat=1`, and `hsv_max_sat=0`.
+The `direction` property converts clockwise-from-north azimuth into
+counterclockwise-from-east math coordinates with `90 - azdeg`, then combines
+that azimuth with altitude as a unit vector.
+
+`hillshade` takes a 2D elevation array and defaults `vert_exag=1`, `dx=1`,
+`dy=1`, and `fraction=1`. The row spacing is inverted with `dy = -dy` to match
+image/raster orientation, gradients are computed as
+`np.gradient(vert_exag * elevation, dy, dx)`, normals are assembled as
+`(-e_dx, -e_dy, 1)`, normalized, and passed to `shade_normals`. In
+`shade_normals`, `fraction` multiplies the dot-product intensity before
+Matplotlib rescales by the original intensity min/max when the range exceeds
+`1e-6`, then clips the result to `[0, 1]`.
+
+`shade` first colormaps data with an optional norm and defaults to
+`blend_mode='overlay'`; `shade_rgb` consumes an existing RGB image and defaults
+to `blend_mode='hsv'`. The built-in blend paths are `blend_overlay`,
+`blend_soft_light`, and `blend_hsv`, with callable blend functions also
+accepted upstream. Overlay uses the low/high branch formulas around
+`rgb <= 0.5`, soft-light uses the pegtop formula
+`2 * intensity * rgb + (1 - 2 * intensity) * rgb**2`, and HSV shifts
+saturation/value toward the configured min/max HSV limits after converting the
+hillshade intensity to `[-1, 1]`.
+
+3D collection face shading is separate. Matplotlib's `art3d._shade_colors`
+uses `LightSource(azdeg=225, altdeg=19.4712)` by default, maps the face-normal
+dot product from `[-1, 1]` to `[0.3, 1]`, multiplies RGB by that shade, and
+preserves alpha. The current Go 3D shading helper mirrors that mplot3d face
+shading route; it does not implement the 2D `LightSource.hillshade`,
+`shade`, or `shade_rgb` image-lighting API.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
