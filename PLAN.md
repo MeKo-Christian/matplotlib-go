@@ -2120,13 +2120,11 @@ example/browser breadth as documentation work.
 ### 17.75.4 3D Toolkit Closure
 
 - [x] Split 17.75.4 into execution-ready subtasks and complete them in order:
-
     - [x] 17.75.4.1 Axes3D Triangulated Contours: added `tricontour`/
       `tricontourf` helpers backed by existing triangulation, contour, and 3D
       projection machinery (audited against `mplot3d/axes3d.py`), with focused
       tests for triangulation validation, artist return types, and axis-limit
       expansion.
-
     - [x] 17.75.4.2 3D Depth Ordering and Clipping: audited line/marker
       (`Plot3D`, `Scatter3D`, `Wireframe`, `Quiver3D`, `Stem3D`, `ErrorBar3D`),
       surface/polygon (`Surface`, `Contour`, `Contourf`, `TriContour`,
@@ -2135,366 +2133,37 @@ example/browser breadth as documentation work.
       projected-extent behavior, adding targeted regression tests; residual
       mplot3d divergences are recorded in parity metadata, migration notes, and
       `docs/matplotlib-parity-status.md`.
-
     - [x] 17.75.4.3 3D Axis Defaults and View State: aligned mplot3d defaults
       for view init/aspect (`Axes3D.__init__`, `view_init`, `set_proj_type`,
       `set_box_aspect`), axis limits/autoscale state, pane/grid/tick styling,
       and label/tick placement against `axis3d.py`, with focused tests;
       intentional divergences are recorded in parity metadata and migration
       notes and regenerated into `docs/matplotlib-parity-status.md`.
-
-    - [x] 17.75.4.4 3D Colormapping and Scalar Mappables: ensure surface,
-      contour, trisurf, scatter, voxels, and quiver helpers propagate cmap,
-      norm, alpha, colorbar-compatible scalar state, and per-face/per-point
-      colors consistently with Matplotlib's public examples.
-
-        - [x] 17.75.4.4.1 Scalar-Mappable Inventory: map every public 3D helper
-          to its Matplotlib collection type and scalar-mappable behavior,
-          including color-array, cmap, norm, clim, alpha, and colorbar support.
-
-        - [x] 17.75.4.4.2 Surface, Trisurf, and Contour Colors: aligned cmap,
-          norm, clim, facecolor, edgecolor, shade (disabled under cmap), alpha,
-          and per-face/per-vertex color handling for `Surface`/`PlotSurfaceGrid`
-          (vs `plot_surface`), `Trisurf` (vs `plot_trisurf`, per-triangle
-          average-z), and `Contour`/`Contourf`/`TriContour`/`TriContourf`
-          (level-based and level-midpoint colormapping with explicit-color
-          overrides, scalar-map metadata, and reprojected updates).
-
-        - [x] 17.75.4.4.3 Scatter, Quiver, and Voxel Colors: aligned scalar and
-          explicit color behavior for `Scatter3D` (cmap/norm/clim, depth-shade
-          alpha, explicit-color precedence, colorbar metadata), the
-          line-like/non-scalar-mappable helpers `Quiver3D`/`Plot3D`/`Stem3D`/
-          `ErrorBar3D`, `Bar3D` (single-color, per-bar, six-face, and `6*N`
-          variants), `FillBetween3D` (quad/polygon facecolor, edgecolor, alpha),
-          and `Voxels` (visible-face color selection, alpha, depth-sorted
-          redraw).
-
-        - [x] 17.75.4.4.4 3D Colorbar Integration: ensure 3D scalar mappables
-          expose enough state for colorbar creation and update behavior, or
-          document intentional omissions where the Go API stays immutable.
-          Complete the scoped checks below in order before marking this parent
-          item done.
-
-            - [x] 17.75.4.4.4.1 Mappable State Audit: verified the Go
-              `ScalarMappable`/3D collection contracts (`get_array`, cmap, norm,
-              clim, alpha) against Matplotlib, confirmed `Surface`, `Trisurf`,
-              `Contour`, `Contourf`, `TriContour`, `TriContourf`, and `Scatter3D`
-              (after adding direct `Scatter2D` scalar-mappable methods) expose
-              colorbar-compatible state, and added
-              `TestAxes3DScalarMappableContractAudit`; the typed colorbar
-              contract and explicit-color-only omissions are recorded in
-              `docs/matplotlib-migration-notes.md`.
-
-            - [x] 17.75.4.4.4.2 Colorbar Creation Tests: added
-              `TestAxes3DCollectionMappablesCreateColorbars` (surface, trisurf,
-              contour, contourf, tricontour, tricontourf), extended the scatter
-              scalar tests to cover direct `Scatter3D` colorbar creation with
-              clipped/depth-sorted arrays, and added
-              `TestAxes3DUnsupportedColorbarHelpersExposeNoScalarData` for
-              explicit-color helpers (wireframe, quiver, errorbar, stem,
-              fill-between, bar, voxel, plot-line).
-
-            - [x] 17.75.4.4.4.3 Mutable-State Decision: audited upstream
-              callback/update behavior, then decided the Go port supports
-              post-creation colorbar updates only through typed collection
-              setters plus pull-based draw/layout sync for collection-backed 3D
-              mappables (`TestAxes3DCollectionColorbarSyncsMutableMapping`);
-              `Scatter3D`, Matplotlib-style callbacks, colorbar alpha
-              propagation, and manual array persistence across reprojection stay
-              outside the supported contract and are documented in
-              `docs/matplotlib-migration-notes.md`.
-
-        - [x] 17.75.4.4.5 Colormapping Ledger: add focused tests, update parity
-          metadata for supported and intentionally omitted 3D color behavior,
-          and regenerate docs.
-
-            - [x] 17.75.4.4.5.1 Focused Color Tests: added
-              `TestAxes3DScalarMappableHelpersApplyAlphaToMappedColors` (fixing
-              `Scatter3D` scalar colors to respect alpha before depth shading)
-              and `Plot3D`/`Wireframe` line-like non-scalar-mappable coverage;
-              bars, voxels, quiver, stems, error bars, and fill-between were
-              already covered.
-
-            - [x] 17.75.4.4.5.2 Metadata Updates: updated the `mplot3d-axes3d`
-              public-surface row with scalar-mappable/colorbar source files and
-              completed 3D color coverage, and recorded the explicit-color
-              helper omission ledger and narrower mutable colorbar model in
-              `docs/matplotlib-migration-notes.md`.
-
-            - [x] 17.75.4.4.5.3 Status Regeneration: regenerated
-              `docs/matplotlib-parity-status.md` via
-              `rtk go run ./cmd/paritystatusdoc` and ran focused public-surface
-              freshness plus 3D scalar/colorbar/explicit-color core tests.
-
-    - [x] 17.75.4.5 3D Fixtures and Reference Coverage: added the seven missing
-      3D parity triplets (errorbar3d, contour3d, contourf3d, tricontour3d,
-      tricontourf3d, bar2d_zdir, text3d), kept Go/Python structurally close with
-      shared data, gated the new goldens as optional-visual, recorded metrics
-      and residuals, and updated catalog metadata; all checks pass within the 3D
-      tolerance band.
-
-        - [x] 17.75.4.5.1 Fixture Gap Inventory: compare public 3D helper rows,
-          example catalog entries, and `test/matplotlib_ref/plots` coverage to
-          list missing fixture triplets before adding new images.
-
-            - [x] 17.75.4.5.1.1 Public API Coverage Matrix: found 12 existing
-              `mplot3d_*` triplets (basic, terrain, plot3d, scatter3d,
-              surface3d, wire3d, trisurf3d, bar3d, voxels, quiver3d, stem3d,
-              fill_between3d) and listed missing dedicated triplets:
-              `mplot3d_contour3d`, `mplot3d_contourf3d`, `mplot3d_tricontour3d`,
-              `mplot3d_tricontourf3d`, `mplot3d_errorbar3d`, `mplot3d_bar2d_zdir`,
-              and `mplot3d_text3d`.
-
-            - [x] 17.75.4.5.1.2 Tolerance Risk List: classified
-              contour/contourf/tricontour/tricontourf as high projection and
-              collection-order risk, errorbar3d/text3d/bar2d_zdir as medium, and
-              proposed per-case tolerances mirroring current 3D bands (high-risk
-              `MinPSNR`~30/`MaxMeanAbs` 10-12/`MaxRMSE` 18; others
-              `MinPSNR`~30/`MaxMeanAbs` 8-10/`MaxRMSE` 18), to tighten after
-              generated-image inspection.
-
-        - [x] 17.75.4.5.2 Core 3D Fixture Triplets: added all missing 3D
-          fixture triplets (errorbar3d, contour3d, contourf3d, tricontour3d,
-          tricontourf3d, bar2d_zdir, text3d) and verified the existing
-          line/scatter/stem/bar/wireframe/surface/trisurf/voxel/fill-between
-          triplets; all pass golden/reference/compare checks.
-
-            - [x] 17.75.4.5.2.1 Low-Complexity Fixtures: added the missing
-              `mplot3d_errorbar3d` Go/Python/golden/reference triplet; `Plot3D`,
-              `Stem3D`, `Quiver3D`, `Wireframe`, `Scatter3D`, and `Bar3D`
-              already had dedicated triplets that passed focused
-              golden/Matplotlib-reference/reference-compare checks.
-
-            - [x] 17.75.4.5.2.2 Polygon Fixtures: added the missing
-              contour/triangulated-contour triplets, verified surface/trisurf/
-              voxel/fill-between, and added the residual bar2d_zdir/text3d
-              fixtures; all aligned within their bands.
-
-                - [x] 17.75.4.5.2.2.1 Surface and Contour Triplets: verified
-                  existing surface/trisurf triplets and added the missing
-                  contour3d/contourf3d/tricontour3d/tricontourf3d triplets; all
-                  golden/reference/compare checks pass within the high-risk 3D
-                  band.
-
-                    - [x] 17.75.4.5.2.2.1.1 Surface/Trisurf Verification:
-                      focused golden/Matplotlib-reference/reference-compare
-                      checks pass for `mplot3d_surface3d` and
-                      `mplot3d_trisurf3d`; refreshed the stale
-                      `mplot3d_surface3d` Go golden.
-
-                    - [x] 17.75.4.5.2.2.1.2 Structured Contour Triplets:
-                      added dedicated `mplot3d_contour3d` and
-                      `mplot3d_contourf3d` Go/Python/golden/reference triplets
-                      (shared `get_test_data(0.25)` dual-Gaussian grid, explicit
-                      levels + coolwarm cmap with matched vmin/vmax). Golden,
-                      Matplotlib-reference, and reference-compare checks pass:
-                      contour3d RMSE 3.17 / PSNR 52.0, contourf3d RMSE 6.06 /
-                      PSNR 45.4.
-
-                    - [x] 17.75.4.5.2.2.1.3 Triangulated Contour Triplets:
-                      added dedicated `mplot3d_tricontour3d` and
-                      `mplot3d_tricontourf3d` Go/Python/golden/reference
-                      triplets, reusing the trisurf3d polar-fan point cloud with
-                      auto-Delaunay (matching Go's `core.Triangulation` and
-                      matplotlib's qhull mesh) plus explicit levels and CMRmap.
-                      All checks pass: tricontour3d RMSE 4.62 / PSNR 52.0,
-                      tricontourf3d RMSE 13.0 / PSNR 46.5.
-
-                - [x] 17.75.4.5.2.2.2 Voxel and Fill Triplets: verified the
-                  existing voxel and fill-between triplets and added the residual
-                  bar2d_zdir/text3d fixtures; all pass within their bands.
-
-                    - [x] 17.75.4.5.2.2.2.1 Voxel Verification: verified the
-                      existing `mplot3d_voxels` triplet after the visibility and
-                      color work — golden matches the live render exactly
-                      (MaxDiff 0) and reference-compare passes at RMSE 2.93 /
-                      PSNR 50.5; no refresh needed.
-
-                    - [x] 17.75.4.5.2.2.2.2 Fill-Between Verification: verified
-                      the existing `mplot3d_fill_between3d` triplet after polygon
-                      color and clipping work — golden matches the live render
-                      exactly (MaxDiff 0) and reference-compare passes at
-                      RMSE 5.34 / PSNR 44.2; no refresh needed.
-
-                    - [x] 17.75.4.5.2.2.2.3 Residual Polygon Fixtures: added the
-                      remaining inventory fixtures `mplot3d_bar2d_zdir`
-                      (planar 2D bars projected with zdir="y", RMSE 1.09 /
-                      PSNR 56.8) and `mplot3d_text3d` (flat 3D text labels with
-                      explicit axis limits to neutralize the Go-vs-matplotlib
-                      text autoscale divergence, RMSE 14.79 / PSNR 45.3). Both
-                      keep Go and Python structurally close and pass all
-                      golden/reference/compare checks.
-
-        - [x] 17.75.4.5.3 Reference Tolerances and Optional Visuals: recorded
-          per-case metrics, kept the 3D family tolerance band without
-          broadening, and gated the six new 3D goldens as optional-visual to
-          match the existing family.
-
-            - [x] 17.75.4.5.3.1 Tolerance Application: measured every new
-              triplet and kept the 3D family band; no defaults broadened.
-
-                - [x] 17.75.4.5.3.1.1 Reference Metric Review: recorded
-                  reference-compare metrics for every new triplet —
-                  contour3d RMSE 3.17/PSNR 52.0, contourf3d RMSE 6.06/PSNR 45.4,
-                  tricontour3d RMSE 4.62/PSNR 52.0, tricontourf3d RMSE 13.0/
-                  PSNR 46.5, bar2d_zdir RMSE 1.09/PSNR 56.8, text3d RMSE 14.79/
-                  PSNR 45.3. All pass golden, Matplotlib-reference, and
-                  reference-compare checks.
-
-                - [x] 17.75.4.5.3.1.2 Case Tolerance Updates: kept every new
-                  row at the established 3D family band (`MinPSNR` 30,
-                  `MaxMeanAbs` 8-12, `MaxRMSE` 18) without broadening defaults.
-                  The depth-order/text residuals on tricontourf3d (RMSE 13.0)
-                  and text3d (RMSE 14.79) are what justify the band's `MaxRMSE`
-                  18; the near-exact cases (bar2d_zdir, contour3d) keep margin
-                  rather than being over-tightened, matching sibling
-                  wire/trisurf/voxel rows.
-
-            - [x] 17.75.4.5.3.2 Optional Backend Gates: gated the six new 3D
-              goldens as optional-visual to match the existing family.
-
-                - [x] 17.75.4.5.3.2.1 Backend Sensitivity Check: the new
-                  fixtures render through the same AGG raster + native-FreeType
-                  text path as the rest of the `mplot3d_*` family (text3d is
-                  text/FreeType-heavy; the contour/tricontour/bar cases are 3D
-                  projection raster), so they belong to the same optional-visual
-                  golden class as every existing 3D fixture. No `mplRef` gating
-                  is needed — they match the references with deterministic AGG
-                  output and only the golden compare is gated.
-
-                - [x] 17.75.4.5.3.2.2 Gate Map Updates: added `mplot3d_contour3d`,
-                  `mplot3d_contourf3d`, `mplot3d_tricontour3d`,
-                  `mplot3d_tricontourf3d`, `mplot3d_bar2d_zdir`, and
-                  `mplot3d_text3d` to `optionalVisualGoldenIDs`, matching the
-                  existing 3D family. Verified the default run now skips their
-                  goldens while reference-compare still runs, and the
-                  `RUN_OPTIONAL_VISUAL_TESTS=true` run passes all three checks.
-
-        - [x] 17.75.4.5.4 Fixture Coverage Ledger: updated example-catalog
-          metadata (rows, clusters, demo-breadth, parity sources), migration
-          notes (coverage + residual differences), with the parity-status doc
-          regenerated in 17.75.4.6.3.
-
-            - [x] 17.75.4.5.4.1 Catalog Metadata: added catalog rows, cluster/
-              demo-breadth wiring, and canonical parity source pairs; freshness
-              tests pass.
-
-                - [x] 17.75.4.5.4.1.1 Catalog Rows: added catalog rows (title,
-                  720x560 dims, 3D-band tolerances) for the six new fixtures and
-                  wired them into the `Projection3D` validation cluster,
-                  `mplot3d-gallery` demo-breadth row, and parity-validation
-                  targets; also added the canonical `test/parity/<id>/`
-                  `plot.py` and `__init__.py` pairs (and backfilled the missing
-                  `mplot3d_errorbar3d/plot.py`).
-
-                - [x] 17.75.4.5.4.1.2 Catalog Freshness Tests: `go test
-                  ./internal/examplecatalog/...` passes, validating fixture
-                  files, golden/reference presence, cluster membership,
-                  demo-breadth accounting, and canonical parity source pairs.
-
-            - [x] 17.75.4.5.4.2 Fixture Docs: recorded new coverage and residual
-              rendering differences in `docs/matplotlib-migration-notes.md`
-              (parity-status doc regenerated in 17.75.4.6.3).
-
-                - [x] 17.75.4.5.4.2.1 Coverage Notes: added a "3D fixture
-                  coverage (17.75.4.5)" section to
-                  `docs/matplotlib-migration-notes.md` listing the seven new
-                  triplets, their shared-data construction, and measured
-                  metrics.
-
-                - [x] 17.75.4.5.4.2.2 Residual Notes: documented the residual
-                  differences in the same section — filled-contour band
-                  transparency, the text3d explicit-limit / flat-text
-                  divergence (Go `Text3D` autoscales, matplotlib text does
-                  not), and the single-color-per-plane bar2d_zdir simplification.
-
-    - [x] 17.75.4.6 3D Docs and Divergence Ledger: updated parity metadata,
-      migration notes, and `docs/matplotlib-parity-status.md` with completed 3D
-      surfaces and explicit mplot3d divergences where Go's typed static surface
-      intentionally differs from Matplotlib.
-
-        - [x] 17.75.4.6.1 Public Surface Metadata: marked completed 3D public
-          rows with current fixture coverage and residual typed-API rationale;
-          no new intentional omissions were needed.
-
-            - [x] 17.75.4.6.1.1 Supported Rows: updated implemented 3D API
-              rows with references to completed 17.75.4 fixture coverage.
-
-                - [x] 17.75.4.6.1.1.1 Public Surface Scan: compared the
-                  17.75.4 public-surface rows against the completed fixture
-                  work. The aggregate `Axes3D` row already listed the new
-                  contour/bar/text fixture IDs and residual scope; the stale
-                  rows were the dedicated `Axes3D.tricontour` and
-                  `Axes3D.tricontourf` entries, which still described their
-                  dedicated reference fixtures as pending.
-
-                - [x] 17.75.4.6.1.1.2 Supported Metadata Update: added
-                  `mplot3d_tricontour3d` and `mplot3d_tricontourf3d` to the
-                  dedicated tricontour public-surface rows, updated their notes
-                  to point at the completed Matplotlib-reference fixtures, and
-                  regenerated `docs/matplotlib-parity-status.md`.
-
-            - [x] 17.75.4.6.1.2 Omission Rows: recorded the omission scan
-              result; 17.75.4 has residual partial scope rather than new
-              intentional-omission rows.
-
-                - [x] 17.75.4.6.1.2.1 Omission Scan: identified remaining 3D
-                  public-surface scope as partial support only: GUI/event
-                  methods, Python dynamic overload grammar, and residual
-                  projection/depth-order/text-autoscale differences.
-
-                - [x] 17.75.4.6.1.2.2 Omission Metadata Update: no new
-                  `PublicSurfaceIntentionalOmission` rows were required; the
-                  retained partial rows now carry concrete fixture IDs and typed
-                  Go deviation rationale.
-
-        - [x] 17.75.4.6.2 Migration Notes: summarized implemented 3D parity
-          surfaces, typed Go API differences, and residual mplot3d divergences
-          in `docs/matplotlib-migration-notes.md`.
-
-            - [x] 17.75.4.6.2.1 Implemented Behavior Notes: summarized newly
-              aligned 3D projection, color, fixture, and scalar-mappable
-              behavior.
-
-                - [x] 17.75.4.6.2.1.1 Migration Coverage Summary: added a
-                  17.75.4 public-surface summary covering view defaults,
-                  projection/depth/clipping behavior, scalar-mappable/colorbar
-                  support, and the newly covered 3D fixture gaps.
-
-                - [x] 17.75.4.6.2.1.2 Example References: listed the
-                  `mplot3d_*` fixture IDs that prove the implemented 3D
-                  behavior, including contour, tricontour, errorbar, projected
-                  bar, and text coverage.
-
-            - [x] 17.75.4.6.2.2 Typed API Differences: documented Go-specific
-              typed options and immutable-state differences from Matplotlib.
-
-                - [x] 17.75.4.6.2.2.1 Typed Option Review: listed the 3D
-                  surfaces where typed `PlotOptions`, explicit setters, and
-                  returned collection handles replace Matplotlib's dynamic
-                  keyword, `data=`, and artist-property grammar.
-
-                - [x] 17.75.4.6.2.2.2 Difference Notes: documented retained
-                  differences for pull-based colorbar updates, flat/autoscaling
-                  3D text, GUI/event-only APIs, overload aliases, masked arrays,
-                  and rare painter-order residuals.
-
-        - [x] 17.75.4.6.3 Final 3D Status Regeneration: regenerated
-          `docs/matplotlib-parity-status.md`, ran focused catalog/doc freshness
-          tests, refreshed the stale `mplot3d_basic` golden, and completed
-          17.75.4.
-
-            - [x] 17.75.4.6.3.1 Status Regeneration: reran
-              `rtk go run ./cmd/paritystatusdoc >
-              docs/matplotlib-parity-status.md` after all 17.75.4 metadata,
-              migration notes, and fixture rows were updated; the regenerated
-              status doc was stable.
-
-            - [x] 17.75.4.6.3.2 Final Verification: focused verification
-              passed: `RUN_OPTIONAL_VISUAL_TESTS=true rtk go test ./test -run
-              'TestGolden/mplot3d_|TestMatplotlibRef/mplot3d_|TestReferenceCompare/mplot3d_'`
-              (60 passed), `rtk go test ./core -run 'TestAxes3D'` (159 passed),
-              and `rtk go test ./internal/examplecatalog/...` (108 passed).
+    - [x] 17.75.4.4 3D Colormapping and Scalar Mappables: aligned cmap, norm,
+      clim, alpha, explicit/per-face/per-point colors, scalar-map metadata, and
+      colorbar creation/update behavior for surface, trisurf, structured and
+      triangulated contours, scatter, bar, voxel, line-like, and fill-between
+      helpers; documented explicit-color-only helpers and the narrower
+      pull-based Go colorbar update contract.
+    - [x] 17.75.4.5 3D Fixtures and Reference Coverage: added the missing
+      Go/Python/golden/reference triplets `mplot3d_errorbar3d`,
+      `mplot3d_contour3d`, `mplot3d_contourf3d`, `mplot3d_tricontour3d`,
+      `mplot3d_tricontourf3d`, `mplot3d_bar2d_zdir`, and `mplot3d_text3d`;
+      verified existing 3D triplets, kept Go/Python data close to Matplotlib,
+      gated new 3D goldens as optional-visual, and kept established 3D tolerance
+      bands without broadening defaults.
+    - [x] 17.75.4.6 3D Docs and Divergence Ledger: updated public-surface
+      metadata, migration notes, and `docs/matplotlib-parity-status.md` with
+      completed 3D fixture coverage, typed Go API differences, residual
+      projection/depth-order/text-autoscale divergences, and no new intentional
+      omissions.
+    - [x] 17.75.4.7 Final 3D Verification: regenerated
+      `docs/matplotlib-parity-status.md`, refreshed stale
+      `testdata/golden/mplot3d_basic.png`, and passed focused verification:
+      `RUN_OPTIONAL_VISUAL_TESTS=true rtk go test ./test -run
+      'TestGolden/mplot3d_|TestMatplotlibRef/mplot3d_|TestReferenceCompare/mplot3d_'`
+      (60 passed), `rtk go test ./core -run 'TestAxes3D'` (159 passed), and
+      `rtk go test ./internal/examplecatalog/...` (108 passed).
 
 ### 17.75.5 Color, Image, Norm, and Colorbar Extras
 
