@@ -2307,7 +2307,7 @@ example/browser breadth as documentation work.
                 - [x] 17.75.5.2.2.2.2 Omission Ledger: if omitted, record the
                   API rationale, affected examples, and fallback recommendation.
 
-        - [ ] 17.75.5.2.3 Boundary and Multi-Stage Norms: close remaining
+        - [x] 17.75.5.2.3 Boundary and Multi-Stage Norms: close remaining
           boundary, centered/two-slope, multi-stage, bad/under/over, and
           scalar-mappable callback gaps needed by fixtures.
 
