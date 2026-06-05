@@ -2414,32 +2414,40 @@ example/browser breadth as documentation work.
       ordering model cannot exactly match upstream without destabilizing 2D
       rendering.
 
-        - [ ] 17.75.4.6.1 Public Surface Metadata: mark completed 3D public
-          rows as supported or intentional omissions with concrete rationale
-          and task references.
+        - [x] 17.75.4.6.1 Public Surface Metadata: marked completed 3D public
+          rows with current fixture coverage and residual typed-API rationale;
+          no new intentional omissions were needed.
 
-            - [ ] 17.75.4.6.1.1 Supported Rows: mark implemented 3D APIs as
-              supported with references to the completed 17.75.4 subtasks.
+            - [x] 17.75.4.6.1.1 Supported Rows: updated implemented 3D API
+              rows with references to completed 17.75.4 fixture coverage.
 
-                - [ ] 17.75.4.6.1.1.1 Public Surface Scan: compare the 3D
-                  public-surface metadata against completed 17.75.4 rows and
-                  identify stale unsupported/partial entries.
+                - [x] 17.75.4.6.1.1.1 Public Surface Scan: compared the
+                  17.75.4 public-surface rows against the completed fixture
+                  work. The aggregate `Axes3D` row already listed the new
+                  contour/bar/text fixture IDs and residual scope; the stale
+                  rows were the dedicated `Axes3D.tricontour` and
+                  `Axes3D.tricontourf` entries, which still described their
+                  dedicated reference fixtures as pending.
 
-                - [ ] 17.75.4.6.1.1.2 Supported Metadata Update: update the
-                  supported 3D metadata rows with task references and fixture
-                  IDs where coverage now exists.
+                - [x] 17.75.4.6.1.1.2 Supported Metadata Update: added
+                  `mplot3d_tricontour3d` and `mplot3d_tricontourf3d` to the
+                  dedicated tricontour public-surface rows, updated their notes
+                  to point at the completed Matplotlib-reference fixtures, and
+                  regenerated `docs/matplotlib-parity-status.md`.
 
-            - [ ] 17.75.4.6.1.2 Omission Rows: record intentional omissions
-              with concrete mplot3d behavior, Go API rationale, and affected
-              examples.
+            - [x] 17.75.4.6.1.2 Omission Rows: recorded the omission scan
+              result; 17.75.4 has residual partial scope rather than new
+              intentional-omission rows.
 
-                - [ ] 17.75.4.6.1.2.1 Omission Scan: identify remaining 3D
-                  public-surface entries that are intentionally omitted or only
-                  partially supported.
+                - [x] 17.75.4.6.1.2.1 Omission Scan: identified remaining 3D
+                  public-surface scope as partial support only: GUI/event
+                  methods, Python dynamic overload grammar, and residual
+                  projection/depth-order/text-autoscale differences.
 
-                - [ ] 17.75.4.6.1.2.2 Omission Metadata Update: record concrete
-                  Matplotlib behavior, Go API rationale, and affected fixture
-                  or example IDs for each omission.
+                - [x] 17.75.4.6.1.2.2 Omission Metadata Update: no new
+                  `PublicSurfaceIntentionalOmission` rows were required; the
+                  retained partial rows now carry concrete fixture IDs and typed
+                  Go deviation rationale.
 
         - [ ] 17.75.4.6.2 Migration Notes: summarize implemented 3D parity
           surfaces, typed Go API differences, and any residual mplot3d

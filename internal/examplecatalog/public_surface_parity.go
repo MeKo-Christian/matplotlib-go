@@ -142,8 +142,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		ClosurePhase:      "17.75.4",
 		GoFiles:           []string{"core/axes3d_contour_surface.go", "core/triangulation.go", "core/contour.go"},
-		CatalogIDs:        []string{"mesh_contour_tri", "mplot3d_trisurf3d"},
-		Note:              "Axes3D.TriContour now projects triangulated contour lines through Matplotlib-style rotate_axes/juggle_axes handling with levels, offset planes, zdir, axlim clipping, colormap/norm metadata, reprojectors, and focused unit coverage. Remaining partial scope is dedicated mplot3d tricontour reference fixture coverage in Phase 17.75.4.",
+		CatalogIDs:        []string{"mesh_contour_tri", "mplot3d_trisurf3d", "mplot3d_tricontour3d"},
+		Note:              "Axes3D.TriContour now projects triangulated contour lines through Matplotlib-style rotate_axes/juggle_axes handling with levels, offset planes, zdir, axlim clipping, colormap/norm metadata, reprojectors, focused unit coverage, and the dedicated mplot3d_tricontour3d Matplotlib-reference fixture. Remaining partial scope is Python's dynamic overload grammar and residual 3D projection/depth-order differences documented as typed Go deviations.",
 	},
 	{
 		ID:                "axes3d-tricontourf-method",
@@ -152,8 +152,8 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		ClosurePhase:      "17.75.4",
 		GoFiles:           []string{"core/axes3d_contour_surface.go", "core/triangulation.go", "core/contour.go"},
-		CatalogIDs:        []string{"mesh_contour_tri", "mplot3d_trisurf3d"},
-		Note:              "Axes3D.TriContourf now projects filled triangulated contour bands through Matplotlib-style rotate_axes/juggle_axes handling with levels, offset planes, zdir, axlim clipping, colormap/norm metadata, filled-level autoscaling, reprojectors, and focused unit coverage. Remaining partial scope is dedicated mplot3d tricontourf reference fixture coverage in Phase 17.75.4.",
+		CatalogIDs:        []string{"mesh_contour_tri", "mplot3d_trisurf3d", "mplot3d_tricontourf3d"},
+		Note:              "Axes3D.TriContourf now projects filled triangulated contour bands through Matplotlib-style rotate_axes/juggle_axes handling with levels, offset planes, zdir, axlim clipping, colormap/norm metadata, filled-level autoscaling, reprojectors, focused unit coverage, and the dedicated mplot3d_tricontourf3d Matplotlib-reference fixture. Remaining partial scope is Python's dynamic overload grammar and residual 3D projection/depth-order differences documented as typed Go deviations.",
 	},
 	{
 		ID:                "colors-funcnorm-class",
