@@ -536,6 +536,28 @@ converts uint8 data to floats, and adds opaque alpha when only RGB is supplied.
 the colormap input is a tuple of component arrays, not one normalized scalar
 array.
 
+## Phase 17.75.5 Bivar/Multivar Go Fit Assessment
+
+The current Go color API is intentionally scalar. `color.Colormap` maps one
+normalized `float64` to one `render.Color` through `At` / `AtValue`.
+`ScalarMapInfo` stores one colormap name, one norm, and one scalar range, and
+`ScalarMapInfo.Color` maps one scalar value plus alpha into a display color.
+That model fits Matplotlib's scalar colormaps, norms, and scalar-mappable
+colorbars.
+
+Bivariate and multivariate colormaps do not fit the current scalar colormap
+model as an overload. They require tuple or vector input, variate counts,
+shape-specific clipping/outside behavior, multi-dimensional lookup tables,
+component-colormap mixing, and different bad/outside/alpha semantics. They
+also imply colorbar expectations beyond one scalar axis: a bivariate LUT needs
+2D display semantics, while a multivariate colormap exposes multiple component
+colormaps.
+
+If support is added later, it should be a separate typed surface rather than a
+hidden mode of `color.Colormap`. The scalar colormap path should stay stable
+for existing `ScalarMappable` artists, and colorbar expectations would also
+need a new contract before bivariate or multivariate mappables become public.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

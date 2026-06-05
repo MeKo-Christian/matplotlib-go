@@ -2437,7 +2437,7 @@ example/browser breadth as documentation work.
               multivariate colormap constructors, lookup tables, alpha rules,
               and scalar-mappable integration points.
 
-            - [ ] 17.75.5.4.1.2 Go Fit Assessment: decide which APIs fit the
+            - [x] 17.75.5.4.1.2 Go Fit Assessment: decide which APIs fit the
               existing scalar colormap model and which would require a
               separate typed surface.
 

@@ -99,3 +99,58 @@ func TestBivarMultivarColormapUpstreamInventoryIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestBivarMultivarGoFitAssessmentIsDocumented(t *testing.T) {
+	colorSrc, err := os.ReadFile(filepath.Join("..", "color", "colormap.go"))
+	if err != nil {
+		t.Fatalf("read color colormap source: %v", err)
+	}
+	for _, phrase := range []string{
+		"type Colormap struct",
+		"func (c Colormap) At(t float64) render.Color",
+		"func (c Colormap) AtValue(t float64) render.Color",
+	} {
+		if !strings.Contains(string(colorSrc), phrase) {
+			t.Fatalf("local scalar colormap source missing %q", phrase)
+		}
+	}
+
+	scalarSrc, err := os.ReadFile(filepath.Join("..", "core", "scalar_mappable.go"))
+	if err != nil {
+		t.Fatalf("read scalar mappable source: %v", err)
+	}
+	for _, phrase := range []string{
+		"type ScalarMapInfo struct",
+		"Colormap string",
+		"Norm     ScalarNormalizer",
+		"func (m ScalarMapInfo) Color(v, alpha float64) render.Color",
+		"func ResolveScalarMapValues(values []float64, cfg ScalarMapConfig)",
+	} {
+		if !strings.Contains(string(scalarSrc), phrase) {
+			t.Fatalf("local scalar mappable source missing %q", phrase)
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	requiredDocs := []string{
+		"Phase 17.75.5 Bivar/Multivar Go Fit Assessment",
+		"`color.Colormap` maps one",
+		"normalized `float64`",
+		"`ScalarMapInfo` stores one colormap name, one norm, and",
+		"one scalar range",
+		"do not fit the current scalar colormap",
+		"separate typed surface",
+		"hidden mode of `color.Colormap`",
+		"colorbar expectations would also",
+		"need a new contract",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("bivar/multivar Go fit docs missing %q", phrase)
+		}
+	}
+}
