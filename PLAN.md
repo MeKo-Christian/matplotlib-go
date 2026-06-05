@@ -2258,7 +2258,7 @@ example/browser breadth as documentation work.
               conversion tests added under 17.75.5.1 and remove redundant
               coverage only if it duplicates exact cases.
 
-            - [ ] 17.75.5.1.4.2 Metadata and Docs: update public-surface
+            - [x] 17.75.5.1.4.2 Metadata and Docs: update public-surface
               metadata and migration notes with supported color parsing and
               typed Go API omissions.
 

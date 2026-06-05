@@ -2455,7 +2455,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"color/colormap.go", "color/listed_colormaps.go", "color/named_colors.go", "core/norm.go"},
 		catalogIDs:        []string{"colormap_diverging", "colormap_qualitative", "colormap_cyclic", "named_colors", "asinh_norm_image", "lognorm_imshow", "twoslope_norm_image"},
-		note:              "Named colors, colormaps, and common norms including AsinhNorm exist; FuncNorm, LightSource, bivar/multivar colormaps, and conversion edge cases remain intentionally outside the narrow v1.0 surface unless a visible fixture needs them.",
+		note:              "Named colors, Matplotlib hex forms, grayscale strings, typed RGB/RGBA values, color-cycle references, colormaps, and common norms including AsinhNorm exist; Python-only dynamic color-alpha tuples, to_rgba_array batch inputs, masked values, NaN component pass-through, FuncNorm, LightSource, and bivar/multivar colormaps remain typed Go omissions or later Phase 17.75.5 decisions.",
 	},
 	{
 		idPrefix:          "pyplot",

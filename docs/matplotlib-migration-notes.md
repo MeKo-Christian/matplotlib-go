@@ -175,6 +175,12 @@ NaN RGB component can pass through `to_rgba`. Use explicit typed Go alpha
 options, numeric RGB/RGBA slices, and scalar-mappable image/collection APIs
 instead.
 
+The public parity ledger records this as a typed `colors.py` partial: `ToRGBA`
+is the supported conversion entry point, while Python convenience helpers such
+as `to_rgb`, `to_hex`, `same_color`, `is_color_like`, and `to_rgba_array`
+remain intentionally omitted unless a later migration fixture needs dedicated
+typed APIs.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
