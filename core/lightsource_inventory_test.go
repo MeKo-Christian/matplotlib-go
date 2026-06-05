@@ -316,6 +316,39 @@ func TestLightSourceFixtureDecisionIsDocumented(t *testing.T) {
 	}
 }
 
+func TestLightSourceMetadataUpdateIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	requiredDocs := []string{
+		"Phase 17.75.5 LightSource Metadata Update",
+		"`colors.py:class:LightSource`",
+		"`intentional-omission`",
+		"`mplot3d_terrain`",
+		"`LightSource.hillshade`, `shade`, or `shade_rgb`",
+		"`docs/matplotlib-parity-status.md` was regenerated",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("LightSource metadata docs missing %q", phrase)
+		}
+	}
+
+	statusData, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-parity-status.md"))
+	if err != nil {
+		t.Fatalf("read parity status: %v", err)
+	}
+	status := string(statusData)
+	if strings.Contains(status, "| colors.py:class:LightSource | colors-cm | partial |") {
+		t.Fatal("parity status still reports LightSource as an open partial row")
+	}
+	if !strings.Contains(status, "LightSource have explicit Phase 17.75.5 rows") {
+		t.Fatal("parity status broad colors note does not reference explicit LightSource row")
+	}
+}
+
 func readUpstreamMPLToolkitsFile(t *testing.T, parts ...string) string {
 	t.Helper()
 	pathParts := append([]string{"..", "third_party", "matplotlib", "lib", "mpl_toolkits"}, parts...)

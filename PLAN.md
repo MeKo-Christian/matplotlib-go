@@ -2420,7 +2420,7 @@ example/browser breadth as documentation work.
                   LightSource or shaded-image examples need visual triplets
                   after focused behavior tests land.
 
-                - [ ] 17.75.5.3.4.2.2 Lighting Metadata Update: update
+                - [x] 17.75.5.3.4.2.2 Lighting Metadata Update: update
                   public-surface metadata, migration notes, and parity status
                   with implemented fixtures or explicit omissions.
 

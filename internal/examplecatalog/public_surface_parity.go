@@ -246,11 +246,10 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		ID:                "colors-lightsource-class",
 		UpstreamID:        "colors.py:class:LightSource",
 		FeatureCoverageID: "colors-cm",
-		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.75.5",
-		GoFiles:           []string{"color/colormap.go", "core/norm.go"},
+		Status:            PublicSurfaceIntentionalOmission,
+		GoFiles:           []string{"core/axes3d_projection.go", "core/lightsource_inventory_test.go"},
 		CatalogIDs:        []string{"mplot3d_terrain"},
-		Note:              "Surface shading uses existing color and norm primitives, but a Matplotlib LightSource-equivalent API and terrain/image fixtures remain a Phase 17.75.5 implementation-or-omission decision.",
+		Note:              "Phase 17.75.5 records LightSource as an intentional omission for the 2D image-lighting API: no committed fixture requires LightSource.hillshade, shade, or shade_rgb output, and supported mplot3d face shading remains a separate shade3DFaceColor path covered by the mplot3d_terrain audit and focused tests.",
 	},
 	{
 		ID:                "colors-bivar-colormap-class",
@@ -2532,7 +2531,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"color/colormap.go", "color/listed_colormaps.go", "color/named_colors.go", "core/norm.go"},
 		catalogIDs:        []string{"colormap_diverging", "colormap_qualitative", "colormap_cyclic", "named_colors", "asinh_norm_image", "lognorm_imshow", "twoslope_norm_image"},
-		note:              "Named colors, Matplotlib hex forms, grayscale strings, typed RGB/RGBA values, color-cycle references, and single-variate colormaps exist; norm classes and the dynamic norm factory have explicit Phase 17.75.5 rows. Python-only dynamic color-alpha tuples, to_rgba_array batch inputs, masked values, NaN component pass-through, LightSource, and bivar/multivar colormaps remain typed Go omissions or later Phase 17.75.5 decisions.",
+		note:              "Named colors, Matplotlib hex forms, grayscale strings, typed RGB/RGBA values, color-cycle references, and single-variate colormaps exist; norm classes, the dynamic norm factory, and LightSource have explicit Phase 17.75.5 rows. Python-only dynamic color-alpha tuples, to_rgba_array batch inputs, masked values, NaN component pass-through, and bivar/multivar colormaps remain typed Go omissions or later Phase 17.75.5 decisions.",
 	},
 	{
 		idPrefix:          "pyplot",

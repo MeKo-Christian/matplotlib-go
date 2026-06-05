@@ -491,6 +491,19 @@ triplet should call one of `hillshade`, `shade`, or `shade_rgb` directly so the
 Go port has a concrete reference for gradient, fraction, blend-mode, alpha, and
 mask behavior.
 
+## Phase 17.75.5 LightSource Metadata Update
+
+The public-surface ledger now marks `colors.py:class:LightSource` as
+`intentional-omission`. The row is anchored to `mplot3d_terrain` only as a
+fixture-audit reference: that case uses mplot3d surface rendering and does not
+exercise `LightSource.hillshade`, `shade`, or `shade_rgb` image lighting.
+
+`docs/matplotlib-parity-status.md` was regenerated after the metadata update,
+so `LightSource` no longer appears as an open Phase 17.75.5 partial row. The
+broad `colors.py` rows now point to explicit norm, dynamic norm-factory, and
+LightSource rows; remaining open color-surface work is the Python-only dynamic
+color input surface plus bivariate/multivariate colormap decisions.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

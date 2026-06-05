@@ -276,6 +276,31 @@ func TestColorsNormSurfaceRowsHaveExplicitDecisions(t *testing.T) {
 	}
 }
 
+func TestColorsLightSourceSurfaceRowIsIntentionalOmission(t *testing.T) {
+	row, ok := LookupPublicSurfaceParityByUpstreamID("colors.py:class:LightSource")
+	if !ok {
+		t.Fatal("missing explicit Phase 17.75.5 LightSource classification")
+	}
+	if row.Status != PublicSurfaceIntentionalOmission {
+		t.Fatalf("LightSource status = %s, want %s", row.Status, PublicSurfaceIntentionalOmission)
+	}
+	required := []string{
+		"Phase 17.75.5",
+		"intentional omission",
+		"LightSource.hillshade",
+		"shade_rgb",
+		"mplot3d face shading",
+	}
+	for _, phrase := range required {
+		if !strings.Contains(row.Note, phrase) {
+			t.Fatalf("LightSource row note missing %q: %q", phrase, row.Note)
+		}
+	}
+	if !stringSliceContains(row.CatalogIDs, "mplot3d_terrain") {
+		t.Fatalf("LightSource row catalog IDs = %v, want mplot3d_terrain audit anchor", row.CatalogIDs)
+	}
+}
+
 func TestPublicSurfaceParityRowsCoverCommittedInventory(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	rows := PublicSurfaceParityRowsForSurface(artifact.Rows)
@@ -377,6 +402,15 @@ func loadPublicSurfaceArtifact(t *testing.T) publicSurfaceArtifact {
 func publicSurfaceArtifactHasRow(artifact publicSurfaceArtifact, id string) bool {
 	for _, row := range artifact.Rows {
 		if row.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
+func stringSliceContains(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
 			return true
 		}
 	}
