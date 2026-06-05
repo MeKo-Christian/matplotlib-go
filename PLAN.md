@@ -273,7 +273,7 @@ backends, and stabilize MathText for standalone module promotion.
       a clear diagnostic when missing.
       The committed `testdata/usetex_golden/basic.png` fixture is regenerated
       by `go test ./test -run TestUseTeXGoldenWithSystemToolchain
-    -update-usetex-golden` on hosts with `latex` + `dvipng`.
+      -update-usetex-golden` on hosts with `latex` + `dvipng`.
 
 ### 3.3 MathText Module Promotion
 
@@ -844,7 +844,7 @@ renderer contract, backend implementation, or the AGG port itself.
 ### 8.11 `image_heatmap` (RMSE 5.54)
 
 - [x] Code: translated Python `imshow(..., interpolation="nearest",
-  aspect="auto", extent=...)` through `ax.ImShow`.
+aspect="auto", extent=...)` through `ax.ImShow`.
 - [ ] Visual: cells align; residuals appear at cell boundaries and tick/text
       edges.
 - [ ] Likely core areas: `core/image.go`, `core/image_api.go`, image pixel
@@ -2028,7 +2028,7 @@ example/browser breadth as documentation work.
 `internal/examplecatalog.FeatureCoverageMatrix`, and the catalog cases under
 `test/parity/`.
 
-### 17.75.1 Gap Ledger and Status Gates
+### 17.6.1 Gap Ledger and Status Gates
 
 - [x] Generate or update `docs/matplotlib-parity-status.md` from the committed
       public-surface inventory so every upstream plotting method, registry
@@ -2058,7 +2058,7 @@ example/browser breadth as documentation work.
       `LightSource`, bivariate, and multivariate colormap rows. Remaining
       broad rows are intentional phase-level buckets for option-breadth audits.
 
-### 17.75.2 Missing or Thin 2D Axes Convenience APIs
+### 17.6.2 Missing or Thin 2D Axes Convenience APIs
 
 - [x] 17.75.2.1 Axes Convenience: implement Go API wrappers for `Axes.bxp`
       and `Axes.violin` (precomputed statistics mode) using existing lower-level
@@ -2084,7 +2084,7 @@ example/browser breadth as documentation work.
       equivalent implementation in `./third_party/matplotlib` and document any
       intentional deviations before marking the helper complete.
 
-### 17.75.3 Axes Method Option Breadth
+### 17.6.3 Axes Method Option Breadth
 
 - [x] 17.75.3.1 Histogram Option Breadth: close high-use `Axes.hist`
       gaps for weights, explicit range handling, cumulative density semantics,
@@ -2109,7 +2109,7 @@ example/browser breadth as documentation work.
       fixtures only for visible behavior, document intentional deviations, and
       keep example source close to Matplotlib rather than hiding option gaps.
 
-### 17.75.4 3D Toolkit Closure
+### 17.6.4 3D Toolkit Closure
 
 - [x] 17.75.4.1 Axes3D Triangulated Contours: added `tricontour`/
       `tricontourf` helpers backed by existing triangulation, contour, and 3D
@@ -2156,7 +2156,7 @@ example/browser breadth as documentation work.
       (60 passed), `rtk go test ./core -run 'TestAxes3D'` (159 passed), and
       `rtk go test ./internal/examplecatalog/...` (108 passed).
 
-### 17.75.5 Color, Image, Norm, and Colorbar Extras
+### 17.6.5 Color, Image, Norm, and Colorbar Extras
 
 - [x] 17.75.5.1 Color Conversion Edge Cases — audited Matplotlib color
       parsing (named/hex/grayscale/`none` tables and precedence, alpha
@@ -2191,7 +2191,7 @@ example/browser breadth as documentation work.
       surfaces and intentional omissions in public-surface metadata and migration
       notes, and regenerated `docs/matplotlib-parity-status.md`.
 
-### 17.75.6 Patch, Annotation, Legend, and Offset-Box Tail
+### 17.6.6 Patch, Annotation, Legend, and Offset-Box Tail
 
 - [x] Finish exact ArrowStyle / ConnectionStyle geometry edge cases and any
       specialized patch classes still classified as partial in the public
@@ -2218,18 +2218,34 @@ example/browser breadth as documentation work.
 - [ ] Keep draggable GUI-only legend and offset-box behavior either explicitly
       omitted or owned by the backend/event-loop work below.
 
-### 17.75.7 Stateful Pyplot and Migration Wrappers
+### 17.6.7 Stateful Pyplot and Migration Wrappers
 
-- [ ] Add pyplot wrappers for newly closed object-oriented APIs only where they
+- [x] Add pyplot wrappers for newly closed object-oriented APIs only where they
       reduce Matplotlib migration friction.
-- [ ] Audit pyplot state transitions, interactive-mode hooks, current
+- [x] Audit pyplot state transitions, interactive-mode hooks, current
       figure/axes behavior, and common overloads against upstream `pyplot.py`.
-- [ ] Prefer typed Go options over Python-like variadic overload cloning, but
+- [x] Prefer typed Go options over Python-like variadic overload cloning, but
       document every intentional signature divergence in the migration guide.
-- [ ] Add smoke tests proving pyplot wrappers delegate to the same core
-      implementation as the object-oriented API.
+- [x] Add smoke tests proving pyplot wrappers delegate to the same core
+      implementation as the object-oriented API. 2026-06-05 follow-up: audited the
+      `pyplot` wrapper surface against vendored 3.10.9 `pyplot.py` /
+      `_pylab_helpers.py` and closed it as an idiomatic equivalent — the stateful
+      registry (current figure/axes, subplot/manager caches), interactive-mode
+      hooks (`Ion`/`Ioff`/`IsInteractive`/`DrawIfInteractive`), and lifecycle
+      (`CLF`/`CLA`/`Close`/`CloseAll`/`SwitchBackend`) all delegate to the
+      object-oriented core API, so **no new public wrappers were required**. Added
+      a "Phase 17.75.7 Pyplot State and Migration Wrappers" section to
+      `docs/matplotlib-migration-notes.md` enumerating every intentional signature
+      divergence (setter-only limit/tick helpers, label setters returning no
+      `Text`, omitted numeric figure registry, omitted current-mappable
+      `sci`/`clim`/`set_cmap`, omitted GUI-blocking helpers, typed options vs
+      `**kwargs`/`data=`/property grammar, idiomatic polar/rgrids/thetagrids).
+      `pyplot.TestPyplotWrappersShareCoreAxesPath` proves wrappers route through
+      `GCA()`/`GCF()` to the same core artists, and
+      `internal/examplecatalog.TestPyplotStateSurfaceRowsAreExplicitlyDecided`
+      locks every `pyplot.py`/`_pylab_helpers.py` row to an explicit decision.
 
-### 17.75.8 Backend, Widget, and Animation Tail
+### 17.6.8 Backend, Widget, and Animation Tail
 
 - [ ] Close remaining backend lifecycle gaps that affect plotting behavior:
       draw-event order, timers, toolbar/tool manager actions, figure manager
@@ -2243,7 +2259,7 @@ example/browser breadth as documentation work.
 - [ ] Add backend/widget/animation cases only when they can run
       deterministically in CI or are guarded by explicit optional-tool checks.
 
-### 17.75.9 Final Closure Sweep
+### 17.6.9 Final Closure Sweep
 
 - [ ] Re-run the upstream public-surface extractor and resolve every changed or
       newly unclassified row.

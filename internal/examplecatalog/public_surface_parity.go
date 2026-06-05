@@ -1064,7 +1064,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"pyplot/pyplot.go", "core/artist.go"},
 		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Matplotlib's pyplot margins shortcut maps only partially to Go's immediate margin-based AutoScale path. Persistent per-axis margin state, tight-view toggling, and getter/setter overloads remain omitted until core axes state needs them.",
+		Note:              "Matplotlib's pyplot margins shortcut maps only partially to Go's immediate margin-based AutoScale path. Phase 17.75.7 keeps persistent per-axis margin state, tight-view toggling, and getter/setter overloads as a documented intentional divergence; callers use the typed AutoScale margin path.",
 	},
 	{
 		ID:                "pyplot-gcf",

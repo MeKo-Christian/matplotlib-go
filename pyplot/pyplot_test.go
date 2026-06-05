@@ -261,6 +261,62 @@ func TestStatefulHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 }
 
+// TestPyplotWrappersShareCoreAxesPath proves the Phase 17.75.7 contract that
+// stateful pyplot wrappers route through GCA()/GCF() to the same core
+// implementation as the object-oriented API: the artist a wrapper returns is the
+// exact artist the current axes appended, and a direct GCA() call produces an
+// equivalent artist through the same path.
+func TestPyplotWrappersShareCoreAxesPath(t *testing.T) {
+	resetForTests()
+
+	x := []float64{0, 1, 2}
+	y := []float64{1, 2, 3}
+
+	// The artist returned by the pyplot wrapper must be identical to the one the
+	// current axes appended -- i.e. the wrapper added nothing of its own and
+	// delegated straight to Axes.Plot.
+	wrapperLine := Plot(x, y)
+	ax := GCA()
+	if wrapperLine == nil {
+		t.Fatal("Plot() returned nil")
+	}
+	if len(ax.Artists) != 1 || ax.Artists[0] != wrapperLine {
+		t.Fatalf("pyplot.Plot did not append its returned artist to GCA(): artists=%d", len(ax.Artists))
+	}
+
+	// Calling the object-oriented API on the same current axes must use the same
+	// path and append an equivalent *core.Line2D, increasing the artist count by
+	// exactly one.
+	directLine := ax.Plot(x, y)
+	if directLine == nil {
+		t.Fatal("GCA().Plot() returned nil")
+	}
+	if len(ax.Artists) != 2 || ax.Artists[1] != directLine {
+		t.Fatalf("GCA().Plot did not append exactly one artist: artists=%d", len(ax.Artists))
+	}
+	if directLine == wrapperLine {
+		t.Fatal("expected distinct Line2D artists for the two calls")
+	}
+
+	// State mutators must target the same GCA() fields as their OO counterparts.
+	resetForTests()
+	Title("via pyplot")
+	if got := GCA().Title; got != "via pyplot" {
+		t.Fatalf("pyplot.Title delegated to %q, want %q", got, "via pyplot")
+	}
+	GCA().SetTitle("via axes")
+	if got := GCA().Title; got != "via axes" {
+		t.Fatalf("GCA().SetTitle set %q, want %q; wrappers must share the same field", got, "via axes")
+	}
+
+	// Figure-level wrappers must target the current figure that GCF() returns.
+	resetForTests()
+	Suptitle("shared")
+	if got := GCF().SupTitle; got != "shared" {
+		t.Fatalf("pyplot.Suptitle delegated to %q, want %q", got, "shared")
+	}
+}
+
 func TestTextAndAnnotateDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 

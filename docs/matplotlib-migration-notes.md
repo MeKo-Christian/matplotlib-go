@@ -188,18 +188,18 @@ Current scalar-mappable normalization is exposed through the typed
 class hierarchy. The Phase 17.75.5 inventory maps the upstream `colors.py`
 norm surface to Go as follows:
 
-| Matplotlib norm | Go surface | Related axis scale | Colorbar route |
-| --- | --- | --- | --- |
-| `Normalize` | `core.Normalize` | `linear` | default linear scalar-map axis |
-| `LogNorm` | `core.LogNorm` | `log` | log colorbar scale and log ticks |
-| `SymLogNorm` | `core.SymLogNorm` | `symlog` | function colorbar scale through the norm inverse |
-| `AsinhNorm` | `core.AsinhNorm` | `asinh` | asinh colorbar scale with linear-width metadata |
-| `PowerNorm` | `core.PowerNorm` | none | function colorbar scale through the norm inverse |
-| `TwoSlopeNorm` | `core.TwoSlopeNorm` | none | function colorbar scale through the norm inverse |
-| `CenteredNorm` | `core.CenteredNorm` | none | function colorbar scale through the norm inverse |
-| `BoundaryNorm` | `core.BoundaryNorm` | none | boundary ticks, boundaries, values, and extensions |
-| `NoNorm` | `core.NoNorm` | none | index-style scalar map on a linear colorbar axis |
-| `FuncNorm` | custom `core.ScalarNormalizer` implementations | `function`, `functionlog` scales exist for axes | accepted through the interface, with no concrete `FuncNorm` clone |
+| Matplotlib norm | Go surface                                     | Related axis scale                              | Colorbar route                                                    |
+| --------------- | ---------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------- |
+| `Normalize`     | `core.Normalize`                               | `linear`                                        | default linear scalar-map axis                                    |
+| `LogNorm`       | `core.LogNorm`                                 | `log`                                           | log colorbar scale and log ticks                                  |
+| `SymLogNorm`    | `core.SymLogNorm`                              | `symlog`                                        | function colorbar scale through the norm inverse                  |
+| `AsinhNorm`     | `core.AsinhNorm`                               | `asinh`                                         | asinh colorbar scale with linear-width metadata                   |
+| `PowerNorm`     | `core.PowerNorm`                               | none                                            | function colorbar scale through the norm inverse                  |
+| `TwoSlopeNorm`  | `core.TwoSlopeNorm`                            | none                                            | function colorbar scale through the norm inverse                  |
+| `CenteredNorm`  | `core.CenteredNorm`                            | none                                            | function colorbar scale through the norm inverse                  |
+| `BoundaryNorm`  | `core.BoundaryNorm`                            | none                                            | boundary ticks, boundaries, values, and extensions                |
+| `NoNorm`        | `core.NoNorm`                                  | none                                            | index-style scalar map on a linear colorbar axis                  |
+| `FuncNorm`      | custom `core.ScalarNormalizer` implementations | `function`, `functionlog` scales exist for axes | accepted through the interface, with no concrete `FuncNorm` clone |
 
 This keeps axes scales and color normalization deliberately separate: axis
 `function`/`functionlog` scales do not automatically become color norms, and
@@ -699,14 +699,14 @@ and draws the already-rasterized image axis-aligned. Non-rotated images always
 use `Renderer.Image`. Scalar image data is rasterized in core first, preserving
 `ImageData.Interpolation()` unless core performs a scalar-stage resample.
 
-| Backend | Transform surface | Interpolation / resampling state | Notes |
-| --- | --- | --- | --- |
-| `AGG` | Native `render.ImageTransformer` through `Renderer.ImageTransformed`. | AGG consumes `Interpolation()` for direct and transformed image draws, including `nearest`, `bilinear`, `bicubic`, `auto` / `antialiased`, and Matplotlib-name aliases. It also has nearest-specific placement helpers for non-integer direct draws. | Treat as the raster reference backend for later image-resampling alignment. |
-| `GoBasic` | Native `render.ImageTransformer` through `Renderer.ImageTransformed`. | Uses deterministic nearest-style bitmap scaling and affine sampling; it does not consume interpolation names. | Correctness fallback for pure-Go builds, not a pixel-parity backend for interpolation kernels. |
-| `SVG` | Native `render.ImageTransformer` by emitting transformed `<image>` nodes. | Embeds source RGBA pixels as PNG data and leaves resampling to SVG viewers; interpolation names are not mapped to renderer-specific filters. | Clip paths and affine matrices are preserved structurally. |
-| `PDF` | Native `render.ImageTransformer` by emitting image XObjects with affine matrices. | Embeds transformed raster image XObjects; interpolation names are not mapped to PDF interpolation dictionaries. | Mixed-raster vector groups forward transformed images to the active raster renderer. |
-| `PS` / `PGF` | Native `render.ImageTransformer` by emitting transformed raster/image pixel scopes. | Vector-generator fallback; exact viewer-side resampling is backend/output-consumer dependent. | Included in the vector-backend follow-up, but lower priority than SVG/PDF. |
-| `Skia` | Optional `-tags skia` CPU renderer advertises native `render.ImageTransformer`; the default untagged stub is unavailable. | Tagged Skia currently follows its CPU compatibility renderer path, not an external GPU/native Skia resampling contract. | Treat as optional raster coverage until the external Skia C ABI lands. |
+| Backend      | Transform surface                                                                                                         | Interpolation / resampling state                                                                                                                                                                                                                     | Notes                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `AGG`        | Native `render.ImageTransformer` through `Renderer.ImageTransformed`.                                                     | AGG consumes `Interpolation()` for direct and transformed image draws, including `nearest`, `bilinear`, `bicubic`, `auto` / `antialiased`, and Matplotlib-name aliases. It also has nearest-specific placement helpers for non-integer direct draws. | Treat as the raster reference backend for later image-resampling alignment.                    |
+| `GoBasic`    | Native `render.ImageTransformer` through `Renderer.ImageTransformed`.                                                     | Uses deterministic nearest-style bitmap scaling and affine sampling; it does not consume interpolation names.                                                                                                                                        | Correctness fallback for pure-Go builds, not a pixel-parity backend for interpolation kernels. |
+| `SVG`        | Native `render.ImageTransformer` by emitting transformed `<image>` nodes.                                                 | Embeds source RGBA pixels as PNG data and leaves resampling to SVG viewers; interpolation names are not mapped to renderer-specific filters.                                                                                                         | Clip paths and affine matrices are preserved structurally.                                     |
+| `PDF`        | Native `render.ImageTransformer` by emitting image XObjects with affine matrices.                                         | Embeds transformed raster image XObjects; interpolation names are not mapped to PDF interpolation dictionaries.                                                                                                                                      | Mixed-raster vector groups forward transformed images to the active raster renderer.           |
+| `PS` / `PGF` | Native `render.ImageTransformer` by emitting transformed raster/image pixel scopes.                                       | Vector-generator fallback; exact viewer-side resampling is backend/output-consumer dependent.                                                                                                                                                        | Included in the vector-backend follow-up, but lower priority than SVG/PDF.                     |
+| `Skia`       | Optional `-tags skia` CPU renderer advertises native `render.ImageTransformer`; the default untagged stub is unavailable. | Tagged Skia currently follows its CPU compatibility renderer path, not an external GPU/native Skia resampling contract.                                                                                                                              | Treat as optional raster coverage until the external Skia C ABI lands.                         |
 
 The matrix means the next image-resampling work should compare AGG first,
 document GoBasic's nearest-style fallback separately. SVG/PDF embed
@@ -1188,17 +1188,17 @@ The catalog/doc freshness checks are `TestMatplotlibParityStatusDocIsCurrent`,
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
 collection type and scalar-mappable behavior:
 
-| Go helper | Matplotlib surface | Upstream mappable behavior | Current Go state |
-| --- | --- | --- | --- |
-| `Axes3D.Surface` / `PlotSurfaceGrid` | `Axes3D.plot_surface` -> `Poly3DCollection` | With `cmap`, `set_array(avg_z)`, `set_clim`, and `set_norm`; with `facecolors`, explicit per-face colors; otherwise a solid color, optionally shaded. | `PlotOptions.Colormap`, `Norm`, `VMin`, and `VMax` populate average-z `PolyCollection` scalar-map metadata; explicit `FaceColors`, edge-color behavior, alpha, and colorbar creation/update through collection setters are supported. |
-| `Axes3D.Trisurf` | `Axes3D.plot_trisurf` -> `Poly3DCollection` | With `cmap`, scalar array is per-triangle average z; `norm`/`vmin`/`vmax` propagate. Without `cmap`, uses explicit/next color and optional shading. | Colormap, norm, clim metadata, per-triangle average-z arrays, explicit edge color, alpha, and colorbar creation/update through collection setters exist on the returned `PolyCollection`. |
-| `Axes3D.Contour` / `TriContour` | `Axes3D.contour` / `tricontour` -> 3D contour collections | 2D contour set is converted to 3D line collections; level colors are scalar-mapped unless explicit colors override them. | Level colors, scalar arrays, scalar-map metadata, alpha, and colorbars are exposed; explicit colors clear scalar-map state like Matplotlib. |
-| `Axes3D.Contourf` / `TriContourf` | `Axes3D.contourf` / `tricontourf` -> `Poly3DCollection` bands | Filled contour bands carry level-based scalar-map state unless explicit colors override them. | Filled bands expose colormap/norm/clim metadata, filled-level autoscaling arrays, alpha, and colorbars; explicit colors clear scalar-map state like Matplotlib. |
-| `Axes3D.Scatter3D` | `Axes3D.scatter` -> `Path3DCollection` | Delegates to 2D `Axes.scatter`; numeric `c` remains scalar-mappable, then colors are depth-shaded and z-sorted. | Returned `Scatter2D` supports `ScalarValues`, `Colormap`, `Norm`, `VMin`, and `VMax`; scalar-mapped colors respect scatter alpha before depth shading and remain colorbar-compatible. |
-| `Axes3D.Quiver3D`, `Wireframe`, `ErrorBar3D`, `Stem3D`, `Plot3D` | `Line3DCollection` or `Line2D`-derived artists | Primarily explicit line colors/kwargs; not scalar-mappable in the common mplot3d examples. | Typed color, alpha, width, and label options exist; scalar mapping is intentionally not treated as the default surface for these line helpers. |
-| `Axes3D.Bar3D` | `Axes3D.bar3d` -> `Poly3DCollection` | Accepts single, per-bar, six-face, or per-face color arrays; shade/lightsource apply to facecolors. It is not a scalar-array mappable by default. | Typed color, alpha, width, shaded projected faces, and single/per-bar/six-face/`6*N` face-color variants are covered; it remains explicit-color-only by default. |
-| `Axes3D.FillBetween3D` | `Axes3D.fill_between` -> `Poly3DCollection` | Accepts `facecolors`, optional shade, and forwards collection kwargs; not scalar-array mappable by default. | Typed color, edge color, alpha, mode, clipping, and non-scalar-mappable collection behavior are covered. |
-| `Axes3D.Voxels` | `Axes3D.voxels` -> per-voxel `Poly3DCollection` dict | Accepts scalar or shaped facecolor/edgecolor arrays; shade/lightsource apply per voxel; not scalar-array mappable by default. | Typed per-voxel face/edge color maps, default shading, alpha propagation, visible-face sorting, and non-scalar-mappable collection behavior are covered. |
+| Go helper                                                        | Matplotlib surface                                            | Upstream mappable behavior                                                                                                                            | Current Go state                                                                                                                                                                                                                      |
+| ---------------------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Axes3D.Surface` / `PlotSurfaceGrid`                             | `Axes3D.plot_surface` -> `Poly3DCollection`                   | With `cmap`, `set_array(avg_z)`, `set_clim`, and `set_norm`; with `facecolors`, explicit per-face colors; otherwise a solid color, optionally shaded. | `PlotOptions.Colormap`, `Norm`, `VMin`, and `VMax` populate average-z `PolyCollection` scalar-map metadata; explicit `FaceColors`, edge-color behavior, alpha, and colorbar creation/update through collection setters are supported. |
+| `Axes3D.Trisurf`                                                 | `Axes3D.plot_trisurf` -> `Poly3DCollection`                   | With `cmap`, scalar array is per-triangle average z; `norm`/`vmin`/`vmax` propagate. Without `cmap`, uses explicit/next color and optional shading.   | Colormap, norm, clim metadata, per-triangle average-z arrays, explicit edge color, alpha, and colorbar creation/update through collection setters exist on the returned `PolyCollection`.                                             |
+| `Axes3D.Contour` / `TriContour`                                  | `Axes3D.contour` / `tricontour` -> 3D contour collections     | 2D contour set is converted to 3D line collections; level colors are scalar-mapped unless explicit colors override them.                              | Level colors, scalar arrays, scalar-map metadata, alpha, and colorbars are exposed; explicit colors clear scalar-map state like Matplotlib.                                                                                           |
+| `Axes3D.Contourf` / `TriContourf`                                | `Axes3D.contourf` / `tricontourf` -> `Poly3DCollection` bands | Filled contour bands carry level-based scalar-map state unless explicit colors override them.                                                         | Filled bands expose colormap/norm/clim metadata, filled-level autoscaling arrays, alpha, and colorbars; explicit colors clear scalar-map state like Matplotlib.                                                                       |
+| `Axes3D.Scatter3D`                                               | `Axes3D.scatter` -> `Path3DCollection`                        | Delegates to 2D `Axes.scatter`; numeric `c` remains scalar-mappable, then colors are depth-shaded and z-sorted.                                       | Returned `Scatter2D` supports `ScalarValues`, `Colormap`, `Norm`, `VMin`, and `VMax`; scalar-mapped colors respect scatter alpha before depth shading and remain colorbar-compatible.                                                 |
+| `Axes3D.Quiver3D`, `Wireframe`, `ErrorBar3D`, `Stem3D`, `Plot3D` | `Line3DCollection` or `Line2D`-derived artists                | Primarily explicit line colors/kwargs; not scalar-mappable in the common mplot3d examples.                                                            | Typed color, alpha, width, and label options exist; scalar mapping is intentionally not treated as the default surface for these line helpers.                                                                                        |
+| `Axes3D.Bar3D`                                                   | `Axes3D.bar3d` -> `Poly3DCollection`                          | Accepts single, per-bar, six-face, or per-face color arrays; shade/lightsource apply to facecolors. It is not a scalar-array mappable by default.     | Typed color, alpha, width, shaded projected faces, and single/per-bar/six-face/`6*N` face-color variants are covered; it remains explicit-color-only by default.                                                                      |
+| `Axes3D.FillBetween3D`                                           | `Axes3D.fill_between` -> `Poly3DCollection`                   | Accepts `facecolors`, optional shade, and forwards collection kwargs; not scalar-array mappable by default.                                           | Typed color, edge color, alpha, mode, clipping, and non-scalar-mappable collection behavior are covered.                                                                                                                              |
+| `Axes3D.Voxels`                                                  | `Axes3D.voxels` -> per-voxel `Poly3DCollection` dict          | Accepts scalar or shaped facecolor/edgecolor arrays; shade/lightsource apply per voxel; not scalar-array mappable by default.                         | Typed per-voxel face/edge color maps, default shading, alpha propagation, visible-face sorting, and non-scalar-mappable collection behavior are covered.                                                                              |
 
 This inventory keeps scalar-array colorbars scoped to the helpers that
 Matplotlib exposes as scalar mappables in normal static examples, while
@@ -1232,14 +1232,14 @@ shape for the colorbar-driving scalar values.
 
 The helper-level audit currently classifies the Go 3D helpers this way:
 
-| Helper group | Colorbar-compatible state | Notes |
-| --- | --- | --- |
-| `Surface` / `PlotSurfaceGrid` | yes | Returned `PolyCollection` exposes average-z `GetArray()`, cmap, norm, and clim metadata when `Colormap` is set. |
-| `Trisurf` | yes | Returned `PolyCollection` exposes per-triangle average-z `GetArray()`, cmap, norm, and clim metadata when `Colormap` is set. |
-| `Contour` / `TriContour` | yes | Returned `LineCollection` exposes level arrays and scalar-map metadata unless explicit colors disable the scalar map. |
-| `Contourf` / `TriContourf` | yes | Returned `PolyCollection` exposes filled-band layer arrays and scalar-map metadata unless explicit colors disable the scalar map. |
-| `Scatter3D` | yes | Returned `Scatter2D` exposes `ScalarMap()` and `GetArray()` directly, while projected `PathCollection` draw state keeps the depth-shaded mapped colors. |
-| `Voxels`, `Bar3D`, `FillBetween3D`, `Quiver3D`, `Wireframe`, `ErrorBar3D`, `Stem3D`, `Plot3D` | no by default | These helpers follow Matplotlib's common explicit-color collection or line surfaces and are not scalar-array colorbar sources unless a future typed scalar-array API is added. |
+| Helper group                                                                                  | Colorbar-compatible state | Notes                                                                                                                                                                          |
+| --------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Surface` / `PlotSurfaceGrid`                                                                 | yes                       | Returned `PolyCollection` exposes average-z `GetArray()`, cmap, norm, and clim metadata when `Colormap` is set.                                                                |
+| `Trisurf`                                                                                     | yes                       | Returned `PolyCollection` exposes per-triangle average-z `GetArray()`, cmap, norm, and clim metadata when `Colormap` is set.                                                   |
+| `Contour` / `TriContour`                                                                      | yes                       | Returned `LineCollection` exposes level arrays and scalar-map metadata unless explicit colors disable the scalar map.                                                          |
+| `Contourf` / `TriContourf`                                                                    | yes                       | Returned `PolyCollection` exposes filled-band layer arrays and scalar-map metadata unless explicit colors disable the scalar map.                                              |
+| `Scatter3D`                                                                                   | yes                       | Returned `Scatter2D` exposes `ScalarMap()` and `GetArray()` directly, while projected `PathCollection` draw state keeps the depth-shaded mapped colors.                        |
+| `Voxels`, `Bar3D`, `FillBetween3D`, `Quiver3D`, `Wireframe`, `ErrorBar3D`, `Stem3D`, `Plot3D` | no by default             | These helpers follow Matplotlib's common explicit-color collection or line surfaces and are not scalar-array colorbar sources unless a future typed scalar-array API is added. |
 
 Some explicit-color helpers return collection types that satisfy Go's generic
 `ScalarMappable` interface because the shared collection base exposes
@@ -1390,3 +1390,82 @@ differences, not fixture bugs:
 - GUI/event-only methods, Python overload aliases, masked-array machinery, and
   rare interpenetrating-geometry painter-order differences remain outside the
   static typed surface covered by 17.75.4.
+
+## Phase 17.75.7 Pyplot State and Migration Wrappers
+
+The `pyplot` package is an optional stateful convenience layer over the explicit
+`core.Figure` / `core.Axes` object-oriented API. It keeps the object model
+first-class: every wrapper delegates directly to a core method and returns the
+same artist the current axes appended (see
+`pyplot.TestPyplotWrappersShareCoreAxesPath`). Phase 17.75.7 audited the wrapper
+surface against the vendored Matplotlib 3.10.9 `lib/matplotlib/pyplot.py` and
+`lib/matplotlib/_pylab_helpers.py` and closed it as an idiomatic equivalent: no
+new public wrappers were required because the closed object-oriented surface is
+already reachable through the existing 150+ wrappers plus typed `core.*Options`
+structs. Every upstream `pyplot.py`/`_pylab_helpers.py` row carries an explicit
+decision, locked by
+`internal/examplecatalog.TestPyplotStateSurfaceRowsAreExplicitlyDecided`.
+
+### State model
+
+A single package-level registry tracks stateful context, mirroring Matplotlib's
+current-figure/current-axes stack without cloning its numeric manager registry:
+
+- `Figure` / `FigureSized` create and mark a new current figure; `GCF` returns the
+  current figure and lazily creates one. `GCA` returns the current axes for the
+  current figure, lazily creating a default 1×1 subplot.
+- `Subplot` caches axes per `(rows, cols, index)` slot so repeated calls reuse the
+  same axes; `Subplots` creates a fresh figure and registers the whole grid.
+- `SCA` marks a registered axes (and its owning figure) current; `DelAxes` removes
+  one and fixes up current-axes bookkeeping. Both error for unregistered axes
+  instead of silently creating state.
+- `CLF` clears the current figure but keeps it registered and current; `CLA`
+  clears the current axes but keeps it current; `Close` / `CloseAll` remove
+  figures and close their cached managers.
+- Per-figure `canvas.FigureManager` instances are cached through `ensureManager`;
+  `SetManagerFactory`, `SetShowHandler`, and `SwitchBackend` swap the factory and
+  close stale managers. `Show` / `Pause` / `Draw` drive those managers.
+
+### Interactive-mode hooks
+
+- `Ion` / `Ioff` toggle interactive mode and **return a restore function** (Go
+  idiom) rather than only mutating hidden global state; `IsInteractive` reports the
+  current flag.
+- `DrawIfInteractive` is a no-op unless interactive mode is enabled, matching
+  Matplotlib's `draw_if_interactive` gate.
+- `Connect` / `Disconnect` register canvas event handlers through the current
+  figure's manager.
+
+### Intentional signature divergences
+
+These are deliberate API differences, not parity bugs:
+
+- **Setter-only limit/tick helpers.** `XLim` / `YLim` / `XTicks` / `YTicks` set
+  values and return nothing; Matplotlib's getter mode, one-sided keyword, and
+  tuple-return overloads are not cloned. Read current state from the typed axis /
+  scale objects instead.
+- **No `Text` return from label setters.** `Title`, `XLabel`, `YLabel`,
+  `Suptitle`, `SupXLabel`, `SupYLabel`, and `Box` mutate typed fields and return
+  nothing rather than a mutable `Text` artist. Use `Text` / `FigText` / `Annotate`
+  when a returned artist handle is needed.
+- **Typed mode strings.** `Axis` accepts the supported subset
+  (`on`/`off`/`equal`/`auto`/`""`) and errors on unknown modes instead of
+  Matplotlib's broad string/limit overload grammar.
+- **Typed options over `**kwargs`/`data=`/variadic.** All plotting wrappers take
+`core.\*Options`structs; Python's dynamic keyword grammar,`data=`indirection,
+property-dict aliases, and`getp`/`setp`/`findobj` property strings are replaced
+  by explicit fields and returned artist handles.
+- **No numeric figure registry.** `get_fignums`, `get_figlabels`, and
+  `fignum_exists` are intentionally omitted; callers keep explicit `*core.Figure`
+  handles and use `Close` / `CloseAll` for deterministic lifecycle cleanup.
+- **No hidden current-mappable.** `sci`, `clim`, and `set_cmap` are omitted; pass
+  typed colormap/`vmin`/`vmax` options at artist construction or mutate the
+  returned `ScalarMappable` handle (`SetColormap`, `SetNorm`, `SetCLim`). `Colorbar`
+  takes an explicit mappable argument.
+- **GUI-blocking helpers omitted.** `ginput`, `waitforbuttonpress`, and
+  `subplot_tool` are out of scope for the headless typed surface; backend/event
+  work owns any future interactive equivalents.
+- **Polar/radial shortcuts as idiomatic equivalents.** `polar`, `rgrids`, and
+  `thetagrids` map to explicit polar axes plus the ordinary typed `Plot`, locator,
+  formatter, and tick/grid styling path rather than implicit projection-mutating
+  shortcuts.

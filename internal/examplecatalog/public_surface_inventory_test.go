@@ -176,6 +176,33 @@ func TestPyplotDynamicShortcutsHaveExplicitRows(t *testing.T) {
 	}
 }
 
+// TestPyplotStateSurfaceRowsAreExplicitlyDecided locks the Phase 17.75.7 closure
+// of the stateful pyplot wrapper surface: every upstream pyplot.py and
+// _pylab_helpers.py row must resolve to a parity decision that is not
+// not-started. Implemented wrappers, documented partials, idiomatic equivalents,
+// and intentional omissions are all acceptable; an unclassified or not-started
+// row is not.
+func TestPyplotStateSurfaceRowsAreExplicitlyDecided(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	checked := 0
+	for _, surface := range artifact.Rows {
+		if surface.Module != "pyplot.py" && surface.Module != "_pylab_helpers.py" {
+			continue
+		}
+		checked++
+		row, ok := PublicSurfaceParityForRow(surface)
+		if !ok {
+			t.Fatalf("missing Phase 17.75.7 pyplot state classification for %q", surface.ID)
+		}
+		if row.Status == PublicSurfaceNotStarted {
+			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", surface.ID, row.Status)
+		}
+	}
+	if checked == 0 {
+		t.Fatal("no pyplot.py/_pylab_helpers.py surface rows found; artifact may be stale")
+	}
+}
+
 func TestPatchStyleClosureRowsAreNotLeftPartial(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	for _, surface := range artifact.Rows {
