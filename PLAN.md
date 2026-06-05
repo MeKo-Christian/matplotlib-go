@@ -2284,7 +2284,7 @@ example/browser breadth as documentation work.
           and inverse callbacks or record an intentional omission with API
           rationale and affected examples.
 
-            - [ ] 17.75.5.2.2.1 FuncNorm API Shape: decide callback signatures,
+            - [x] 17.75.5.2.2.1 FuncNorm API Shape: decide callback signatures,
               inverse requirements, clipping behavior, and scalar input/output
               expectations.
 
