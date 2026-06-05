@@ -806,6 +806,22 @@ suites. The supporting image fixtures remain in the ledger but were not
 refreshed because their behavior did not change. The backend-specific residuals
 are deferred to the Backend Notes children.
 
+## Phase 17.75.5 Raster Backend Notes
+
+`AGG` remains the raster parity backend for transformed-image fixtures.
+`imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed` are
+AGG-backed parity triplets. The raster notes record that the remaining AGG
+raster residual is clipped scalar-stage resampling from Matplotlib's
+`clipped_bbox` output shape.
+
+`GoBasic` remains the deterministic nearest-only raster fallback. GoBasic does
+not consume interpolation names and is covered by smoke metadata rather than
+pixel-parity triplets. GoBasic non-integer nearest scaling uses destination
+pixel centers through `nearestScaledSourceIndex`.
+
+The ledger records that these raster residuals are recorded in public-surface
+metadata for image interpolation and image artist coverage.
+
 ## Phase 17.75.5 Image Fixture Priority
 
 The smallest transformed-image fixture priority set is

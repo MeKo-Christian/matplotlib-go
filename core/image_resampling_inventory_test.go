@@ -571,3 +571,50 @@ func TestTransformedImageFixtureRefreshIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageRasterBackendNotesAreDocumented(t *testing.T) {
+	sourceRequirements := map[string][]string{
+		filepath.Join("..", "internal", "examplecatalog", "public_surface_parity.go"): {
+			"AGG remains the raster parity backend for transformed-image fixtures",
+			"clipped scalar-stage resampling from Matplotlib's clipped_bbox output shape remains a documented raster residual",
+			"GoBasic remains a deterministic nearest-only smoke/fallback backend and does not consume interpolation names",
+		},
+		filepath.Join("..", "internal", "examplecatalog", "catalog.go"): {
+			"GoBasicSmokeFamily: \"image\"",
+			"SkiaParityFamily: \"image\"",
+		},
+	}
+	for path, phrases := range sourceRequirements {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		src := string(data)
+		for _, phrase := range phrases {
+			if !strings.Contains(src, phrase) {
+				t.Fatalf("%s missing raster backend note marker %q", path, phrase)
+			}
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Raster Backend Notes",
+		"`AGG` remains the raster parity backend for transformed-image fixtures",
+		"`imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed` are AGG-backed parity triplets",
+		"the remaining AGG raster residual is clipped scalar-stage resampling from Matplotlib's `clipped_bbox` output shape",
+		"`GoBasic` remains the deterministic nearest-only raster fallback",
+		"GoBasic does not consume interpolation names and is covered by smoke metadata rather than pixel-parity triplets",
+		"non-integer nearest scaling uses destination pixel centers through `nearestScaledSourceIndex`",
+		"these raster residuals are recorded in public-surface metadata for image interpolation and image artist coverage",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image raster backend notes missing %q", phrase)
+		}
+	}
+}

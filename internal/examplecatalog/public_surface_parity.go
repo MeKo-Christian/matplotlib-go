@@ -546,7 +546,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceDirectEquivalent,
 		GoFiles:           []string{"core/image.go", "backends/agg/interpolation.go"},
 		CatalogIDs:        []string{"image_heatmap", "imshow_bilinear", "imshow_bicubic", "imshow_interpolation_matrix"},
-		Note:              "AGG interpolation name resolution maps Matplotlib's Lanczos filter directly; imshow_interpolation_matrix covers the full Matplotlib interpolation registry visually.",
+		Note:              "AGG remains the raster parity backend for transformed-image fixtures. AGG interpolation name resolution maps Matplotlib's Lanczos filter directly; imshow_interpolation_matrix covers the full Matplotlib interpolation registry visually. GoBasic remains a deterministic nearest-only smoke/fallback backend and does not consume interpolation names.",
 	},
 	{
 		ID:                "image-bbox-image",
@@ -2480,7 +2480,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/image.go", "backends/agg/interpolation.go"},
 		catalogIDs:        []string{"image_heatmap", "imshow_bilinear", "imshow_bicubic", "imshow_interpolation_matrix"},
 		exampleIDs:        []string{"image_heatmap"},
-		note:              "The AGG backend resolves Matplotlib interpolation names to AGG image filters, including adaptive auto/antialiased handling; imshow_interpolation_matrix keeps every registry name catalog-visible.",
+		note:              "AGG remains the raster parity backend for transformed-image fixtures. The AGG backend resolves Matplotlib interpolation names to AGG image filters, including adaptive auto/antialiased handling; imshow_interpolation_matrix keeps every registry name catalog-visible. GoBasic remains a deterministic nearest-only smoke/fallback backend and does not consume interpolation names.",
 	},
 	{
 		idPrefix:          "image",
@@ -2490,7 +2490,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/image.go", "core/image_api.go", "core/matrix_helpers.go"},
 		catalogIDs:        []string{"image_heatmap", "imshow_clipped", "imshow_transformed", "imshow_interpolation_matrix", "image_alpha", "matshow_basic", "spy_marker", "spy_image", "arrays_showcase"},
 		exampleIDs:        []string{"image_heatmap", "arrays_showcase"},
-		note:              "imshow, matshow, spy, alpha, origin, extent, interpolation, colorbar integration, transformed images, and the PColorFast-to-PColorMesh fast pseudocolor mapping exist. Specific image.py class and IO helper omissions now have explicit rows; remaining image partial scope is exact transformed-image resampling edge behavior.",
+		note:              "imshow, matshow, spy, alpha, origin, extent, interpolation, colorbar integration, transformed images, and the PColorFast-to-PColorMesh fast pseudocolor mapping exist. Specific image.py class and IO helper omissions now have explicit rows; clipped scalar-stage resampling from Matplotlib's clipped_bbox output shape remains a documented raster residual.",
 	},
 	{
 		idPrefix:          "colorbar",

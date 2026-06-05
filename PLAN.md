@@ -2263,7 +2263,7 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.5.4.2 Backend Notes: record backend-specific
               interpolation and vector fallback residuals in docs and metadata.
 
-                - [ ] 17.75.5.5.4.2.1 Raster Backend Notes: record AGG and
+                - [x] 17.75.5.5.4.2.1 Raster Backend Notes: record AGG and
                   GoBasic interpolation or transform residuals that remain
                   after alignment.
 
