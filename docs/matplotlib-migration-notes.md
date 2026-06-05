@@ -975,6 +975,33 @@ That means single-parent direct axes, subplot, and constrained-layout placement
 are supported, while multi-parent and inset-`cax` colorbar placement remain
 unsupported placement modes.
 
+## Phase 17.75.5 Colorbar Size and Anchor Options
+
+Matplotlib placement defaults are `fraction=0.15`, `shrink=1.0`, `aspect=20`,
+vertical `pad=0.05`, and horizontal `pad=0.15`. Matplotlib `location` also
+chooses orientation and rejects incompatible `location`/`orientation`
+combinations. Its default anchors are location-specific, and `panchor` controls
+the parent axes anchor unless explicitly set to false.
+
+Go records the default slot fraction with `defaultColorbarFraction=0.15`.
+`defaultColorbarPadding=0.05`, `defaultHorizontalColorbarPadding=0.15`, and
+`defaultColorbarAspect=20` mirror Matplotlib's default placement constants for
+the supported single-parent path. Go exposes explicit colorbar thickness as
+`ColorbarOptions.Width` rather than a Matplotlib `fraction` option; the default
+slot still uses the Matplotlib 0.15 fraction.
+
+`ColorbarOptions.Shrink` and `ColorbarOptions.Anchor` shrink only the long
+colorbar axis, matching the supported Matplotlib shrink direction for vertical
+and horizontal colorbars. `ColorbarOptions.Padding`, `Aspect`, `Location`, and
+`Orientation` cover the supported placement defaults, including right, left,
+top, bottom, vertical, and horizontal routing.
+
+`panchor` is not supported because Go axes do not expose a parent-anchor
+colorbar option. For validation, incompatible `Location` and `Orientation`
+values are normalized by location precedence rather than rejected, because
+`AddColorbar` does not return placement validation errors. These differences
+remain documented residuals for the colorbar placement audit.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

@@ -90,3 +90,79 @@ func TestColorbarParentAndLayoutModesAreDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestColorbarSizeAndAnchorOptionsAreDocumented(t *testing.T) {
+	sourceRequirements := map[string][]string{
+		filepath.Join("..", "third_party", "matplotlib", "lib", "matplotlib", "colorbar.py"): {
+			"fraction : float, default: 0.15",
+			"shrink : float, default: 1.0",
+			"aspect : float, default: 20",
+			"pad : float, default: 0.05 if vertical, 0.15 if horizontal",
+			"anchor : (float, float), optional",
+			"panchor : (float, float), or *False*, optional",
+			"\"left\":   {\"location\": \"left\", \"anchor\": (1.0, 0.5)",
+			"\"right\":  {\"location\": \"right\", \"anchor\": (0.0, 0.5)",
+			"\"top\":    {\"location\": \"top\", \"anchor\": (0.5, 0.0)",
+			"\"bottom\": {\"location\": \"bottom\", \"anchor\": (0.5, 1.0)",
+			"raise TypeError(\"location and orientation are mutually exclusive\")",
+		},
+		filepath.Join("..", "core", "colorbar.go"): {
+			"Width       float64",
+			"Padding     float64",
+			"Aspect      float64",
+			"Shrink      float64",
+			"Anchor      *geom.Pt",
+			"Location    string",
+			"Orientation string",
+			"defaultColorbarFraction          = 0.15",
+			"defaultColorbarPadding           = 0.05",
+			"defaultHorizontalColorbarPadding = 0.15",
+			"defaultColorbarAspect            = 20.0",
+			"func resolvedColorbarPadding(base geom.Rect, padding float64, location ...string) float64",
+			"func resolvedColorbarThickness(fig *Figure, base geom.Rect, width, aspect float64, location string) float64",
+			"func applyColorbarShrinkAnchor(rect geom.Rect, shrink float64, anchor *geom.Pt, location string) geom.Rect",
+			"func normalizeColorbarLocation(location, orientation string) string",
+		},
+		filepath.Join("..", "core", "colorbar_test.go"): {
+			"TestFigureAddHorizontalColorbarConfiguresBottomAxes",
+			"TestFigureAddHorizontalColorbarConfiguresTopAxes",
+			"TestFigureAddColorbarShrinkAnchorsVerticalLongAxis",
+			"TestFigureAddColorbarShrinkAnchorsHorizontalLongAxis",
+		},
+	}
+	for path, phrases := range sourceRequirements {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		src := string(data)
+		for _, phrase := range phrases {
+			if !strings.Contains(src, phrase) {
+				t.Fatalf("%s missing colorbar size/anchor marker %q", path, phrase)
+			}
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Colorbar Size and Anchor Options",
+		"Matplotlib placement defaults are `fraction=0.15`, `shrink=1.0`, `aspect=20`, vertical `pad=0.05`, and horizontal `pad=0.15`",
+		"Matplotlib `location` also chooses orientation and rejects incompatible `location`/`orientation` combinations",
+		"Go records the default slot fraction with `defaultColorbarFraction=0.15`",
+		"`defaultColorbarPadding=0.05`, `defaultHorizontalColorbarPadding=0.15`, and `defaultColorbarAspect=20`",
+		"Go exposes explicit colorbar thickness as `ColorbarOptions.Width` rather than a Matplotlib `fraction` option",
+		"`ColorbarOptions.Shrink` and `ColorbarOptions.Anchor` shrink only the long colorbar axis",
+		"`ColorbarOptions.Padding`, `Aspect`, `Location`, and `Orientation` cover the supported placement defaults",
+		"`panchor` is not supported because Go axes do not expose a parent-anchor colorbar option",
+		"incompatible `Location` and `Orientation` values are normalized by location precedence rather than rejected",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("colorbar size/anchor docs missing %q", phrase)
+		}
+	}
+}

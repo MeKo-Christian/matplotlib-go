@@ -2283,7 +2283,7 @@ example/browser breadth as documentation work.
             - [x] 17.75.5.6.1.1 Parent and Layout Modes: compare single-parent,
               multi-parent, gridspec-style, and inset placement behavior.
 
-            - [ ] 17.75.5.6.1.2 Size and Anchor Options: align shrink, aspect,
+            - [x] 17.75.5.6.1.2 Size and Anchor Options: align shrink, aspect,
               pad, anchor, panchor, location, and orientation defaults where
               supported.
 
