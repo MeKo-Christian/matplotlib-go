@@ -379,6 +379,75 @@ func TestArtistDynamicRowsAreSplitFromStaticArtistSurface(t *testing.T) {
 	}
 }
 
+func TestHatchImplementationRowsAreSplitFromRendererHatchSurface(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	rowFor := func(upstreamID string) PublicSurfaceParity {
+		t.Helper()
+		for _, surface := range artifact.Rows {
+			if surface.ID != upstreamID {
+				continue
+			}
+			row, ok := PublicSurfaceParityForRow(surface)
+			if !ok {
+				t.Fatalf("missing Phase 17.75.6 hatch classification for %q", upstreamID)
+			}
+			return row
+		}
+		t.Fatalf("missing upstream surface row %q", upstreamID)
+		return PublicSurfaceParity{}
+	}
+
+	for _, upstreamID := range []string{
+		"hatch.py:class:Circles",
+		"hatch.py:class:HatchPatternBase",
+		"hatch.py:class:HorizontalHatch",
+		"hatch.py:class:LargeCircles",
+		"hatch.py:class:NorthEastHatch",
+		"hatch.py:class:Shapes",
+		"hatch.py:class:SmallCircles",
+		"hatch.py:class:SmallFilledCircles",
+		"hatch.py:class:SouthEastHatch",
+		"hatch.py:class:Stars",
+		"hatch.py:class:VerticalHatch",
+	} {
+		row := rowFor(upstreamID)
+		if row.Status != PublicSurfaceIntentionalOmission {
+			t.Fatalf("%s status = %s, want intentional omission", upstreamID, row.Status)
+		}
+	}
+
+	row := rowFor("hatch.py:function:get_path")
+	if row.Status == PublicSurfacePartial || row.Status == PublicSurfaceNotStarted {
+		t.Fatalf("hatch.py:function:get_path status = %s, want closed renderer hatch decision", row.Status)
+	}
+}
+
+func TestPatchDebugHelperRowsAreExplicitlyOmitted(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	for _, upstreamID := range []string{
+		"patches.py:function:bbox_artist",
+		"patches.py:function:draw_bbox",
+	} {
+		found := false
+		for _, surface := range artifact.Rows {
+			if surface.ID != upstreamID {
+				continue
+			}
+			found = true
+			row, ok := PublicSurfaceParityForRow(surface)
+			if !ok {
+				t.Fatalf("missing Phase 17.75.6 patch helper classification for %q", upstreamID)
+			}
+			if row.Status != PublicSurfaceIntentionalOmission {
+				t.Fatalf("%s status = %s, want intentional omission", upstreamID, row.Status)
+			}
+		}
+		if !found {
+			t.Fatalf("missing upstream surface row %q", upstreamID)
+		}
+	}
+}
+
 func TestWidgetClassesHaveExplicitRows(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	for _, surface := range artifact.Rows {
