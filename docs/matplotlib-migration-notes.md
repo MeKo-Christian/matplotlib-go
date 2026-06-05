@@ -422,6 +422,24 @@ image-row spacing, `np.gradient`-style derivative handling, normalized
 `(-e_dx, -e_dy, 1)` normals, fraction scaling before min/max rescale, and final
 `[0, 1]` clipping.
 
+## Phase 17.75.5 LightSource RGB Blend Mode Decision
+
+`shade` and `shade_rgb` remain intentionally omitted along with the
+LightSource RGB blend-mode surface. That means there is no public Go equivalent
+for `blend_overlay`, `blend_soft_light`, `blend_hsv`, or Matplotlib's callable
+blend modes in the current API.
+
+No committed parity fixture requires RGB shaded-relief blend output. Adding
+only one of the upstream blend formulas would create an incomplete public
+contract, while adding all modes would still be unverified without a visual
+fixture that exercises the LightSource image-lighting path. For now, the Go
+port should not expose a partial LightSource blend API.
+
+Existing colormap lookup and mplot3d face shading remain unchanged by this
+omission. Colormapped images continue to use normal scalar mapping, and
+explicit-color 3D faces continue to use the separate `shade3DFaceColor`
+implementation documented above.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

@@ -183,6 +183,32 @@ func TestLightSourceHillshadeCoreOmissionIsDocumented(t *testing.T) {
 	}
 }
 
+func TestLightSourceBlendModeOmissionIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	requiredDocs := []string{
+		"Phase 17.75.5 LightSource RGB Blend Mode Decision",
+		"`shade` and `shade_rgb` remain intentionally omitted",
+		"`blend_overlay`",
+		"`blend_soft_light`",
+		"`blend_hsv`",
+		"callable",
+		"blend modes",
+		"No committed parity fixture requires RGB shaded-relief blend output",
+		"Go",
+		"port should not expose a partial LightSource blend API",
+		"Existing colormap lookup and mplot3d face shading remain unchanged",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("LightSource blend-mode decision docs missing %q", phrase)
+		}
+	}
+}
+
 func readUpstreamMPLToolkitsFile(t *testing.T, parts ...string) string {
 	t.Helper()
 	pathParts := append([]string{"..", "third_party", "matplotlib", "lib", "mpl_toolkits"}, parts...)

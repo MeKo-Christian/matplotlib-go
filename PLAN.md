@@ -2383,7 +2383,7 @@ example/browser breadth as documentation work.
               hillshade core with Matplotlib default azimuth, altitude, and
               fraction semantics.
 
-            - [ ] 17.75.5.3.2.2 RGB Blend Modes: implement or omit overlay,
+            - [x] 17.75.5.3.2.2 RGB Blend Modes: implement or omit overlay,
               soft-light, hsv, and custom blend paths needed by examples.
 
         - [ ] 17.75.5.3.3 Surface Lighting Integration: connect supported
