@@ -1016,6 +1016,28 @@ values are normalized by location precedence rather than rejected, because
 `AddColorbar` does not return placement validation errors. These differences
 remain documented residuals for the colorbar placement audit.
 
+## Phase 17.75.5 Colorbar Boundaries and Extensions
+
+Matplotlib boundary colorbars derive `_boundaries`, `_values`, and interior
+`vmin`/`vmax` through `_process_values`. For discrete colorbars,
+`spacing='uniform'` gives each discrete color equal space and
+`spacing='proportional'` sizes cells by data interval. `extend` supports
+`neither`, `min`, `max`, and `both`; `extendrect` switches extension patches
+from triangles to rectangles.
+
+`extendfrac` supports default 5%, `auto`, scalar, and pair lengths upstream.
+Go supports `ColorbarOptions.Boundaries`, `Values`, `Spacing`, `DrawEdges`,
+`Extend`, and `ExtendRect`. Go trims colorbar scale limits to interior
+boundaries when extensions are active, matching the visible body limits used by
+the covered fixtures.
+
+For out-of-range bins, under/over color routing is covered through
+`Colormap.AtValue` and explicit boundary extension values. Boundary ticks come
+from `FixedLocator`, boundary cell drawing supports uniform and proportional
+spacing, and drawedges adds internal dividers. The custom `extendfrac` and
+`extendfrac='auto'` remain documented residuals because the Go colorbar
+extension geometry currently uses the Matplotlib default 5% extension length.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

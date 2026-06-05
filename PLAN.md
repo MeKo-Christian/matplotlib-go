@@ -2291,7 +2291,7 @@ example/browser breadth as documentation work.
           formatters, boundaries, extensions, minor ticks, labels, and
           orientation behavior needed by supported examples.
 
-            - [ ] 17.75.5.6.2.1 Boundaries and Extensions: align boundary,
+            - [x] 17.75.5.6.2.1 Boundaries and Extensions: align boundary,
               spacing, extend, extendfrac, under/over, and discrete colorbar
               behavior.
 
