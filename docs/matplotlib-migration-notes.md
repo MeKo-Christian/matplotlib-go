@@ -722,6 +722,26 @@ support from the backend matrix. The remaining comparison work is AGG
 interpolation-stage selection, clipped output-size quantization, transformed
 image clipping, and pixel-center placement under explicit extents and rotation.
 
+## Phase 17.75.5 Interpolation Kernel Alignment
+
+`AGG` keeps the Matplotlib interpolation-name registry for raster image draws:
+`nearest` and `none` resolve to nearest-neighbor sampling, `bilinear` and
+`bicubic` resolve to their corresponding AGG kernels, and `auto` and
+`antialiased` use the Matplotlib scale rule that selects nearest for integer or
+large upscales and Hanning otherwise. The AGG rendering tests cover the adaptive
+nearest/Hanning split and the full Matplotlib interpolation-name list.
+
+`GoBasic` remains nearest-only. GoBasic direct image scaling now samples source
+pixels from destination pixel centers through `nearestScaledSourceIndex`. That
+matches the nearest-neighbor placement used by the AGG direct-draw helper and
+fixes non-integer upscales such as 2 source pixels rendered into 3 destination
+pixels, where the center pixel should select the second source pixel.
+
+The remaining kernel limits are AGG's Kaiser fallback and viewer-dependent
+vector resampling. Kaiser still maps to the closest public AGG filter exposed by
+`agg_go`; SVG/PDF/PS/PGF interpolation behavior remains an output-consumer
+property to document under the vector-backend fallback tasks.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

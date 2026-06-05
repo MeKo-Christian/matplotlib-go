@@ -2228,7 +2228,7 @@ example/browser breadth as documentation work.
           raster resampling gaps first, with focused tests before visual
           fixture updates.
 
-            - [ ] 17.75.5.5.2.1 Interpolation Kernel Alignment: compare and
+            - [x] 17.75.5.5.2.1 Interpolation Kernel Alignment: compare and
               adjust nearest, bilinear, bicubic, antialiasing, and `none`
               behavior for AGG and Go raster paths.
 

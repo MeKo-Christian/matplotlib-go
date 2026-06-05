@@ -36,7 +36,7 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestImageScalingUsesPixelEdges(t *testing.T) {
+func TestImageScalingIntegerUpscalePreservesSourceRuns(t *testing.T) {
 	r := New(6, 1, render.Color{R: 1, G: 1, B: 1, A: 1})
 	src := image.NewRGBA(image.Rect(0, 0, 3, 1))
 	red := color.RGBA{R: 255, A: 255}
@@ -52,6 +52,29 @@ func TestImageScalingUsesPixelEdges(t *testing.T) {
 	})
 
 	want := []color.RGBA{red, red, green, green, blue, blue}
+	for x, expected := range want {
+		if got := r.GetImage().RGBAAt(x, 0); got != expected {
+			t.Fatalf("pixel %d = %#v, want %#v", x, got, expected)
+		}
+	}
+}
+
+func TestImageScalingNearestUsesPixelCentersForNonIntegerUpscale(t *testing.T) {
+	r := New(3, 1, render.Color{R: 1, G: 1, B: 1, A: 1})
+	src := image.NewRGBA(image.Rect(0, 0, 2, 1))
+	red := color.RGBA{R: 255, A: 255}
+	green := color.RGBA{G: 255, A: 255}
+	src.SetRGBA(0, 0, red)
+	src.SetRGBA(1, 0, green)
+
+	img := render.NewImageData(src)
+	img.SetInterpolation("nearest")
+	r.Image(img, geom.Rect{
+		Min: geom.Pt{X: 0, Y: 0},
+		Max: geom.Pt{X: 3, Y: 1},
+	})
+
+	want := []color.RGBA{red, green, green}
 	for x, expected := range want {
 		if got := r.GetImage().RGBAAt(x, 0); got != expected {
 			t.Fatalf("pixel %d = %#v, want %#v", x, got, expected)

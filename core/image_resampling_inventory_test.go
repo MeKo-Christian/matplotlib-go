@@ -181,3 +181,61 @@ func TestTransformedImageResamplingGapInventoryIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageInterpolationKernelAlignmentIsDocumented(t *testing.T) {
+	sourceRequirements := map[string][]string{
+		filepath.Join("..", "backends", "agg", "interpolation.go"): {
+			"case \"\", \"none\", \"nearest\":",
+			"case \"bilinear\":",
+			"case \"bicubic\":",
+			"case \"auto\", \"antialiased\":",
+			"shouldUseNearestForAutoResample",
+		},
+		filepath.Join("..", "backends", "agg", "image_interpolation_test.go"): {
+			"TestAggImage_AutoInterpolationMatchesNearestForIntegerScale",
+			"TestAggImage_AutoInterpolationUsesHanningForNonIntegerScale",
+			"TestAggImage_AllMatplotlibInterpolationNamesRender",
+		},
+		filepath.Join("..", "backends", "gobasic", "gobasic.go"): {
+			"nearestScaledSourceIndex",
+			"math.Round((float64(rel)+0.5)*float64(srcSize)/float64(dstSize) - 0.5)",
+		},
+		filepath.Join("..", "backends", "gobasic", "gobasic_test.go"): {
+			"TestImageScalingNearestUsesPixelCentersForNonIntegerUpscale",
+		},
+	}
+	for path, phrases := range sourceRequirements {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		src := string(data)
+		for _, phrase := range phrases {
+			if !strings.Contains(src, phrase) {
+				t.Fatalf("%s missing interpolation alignment source marker %q", path, phrase)
+			}
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Interpolation Kernel Alignment",
+		"`nearest` and `none`",
+		"`bilinear` and `bicubic`",
+		"`auto` and `antialiased`",
+		"`AGG` keeps the Matplotlib interpolation-name registry",
+		"`GoBasic` remains nearest-only",
+		"`nearestScaledSourceIndex`",
+		"GoBasic direct image scaling now samples source pixels from destination pixel centers",
+		"remaining kernel limits are AGG's Kaiser fallback and viewer-dependent vector resampling",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image interpolation kernel alignment docs missing %q", phrase)
+		}
+	}
+}

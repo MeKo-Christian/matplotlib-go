@@ -651,24 +651,12 @@ func (r *Renderer) drawBitmapScaledWithAlpha(src *image.RGBA, dstX, dstY, dstW, 
 
 	srcMin := src.Bounds().Min
 	for y := dst.Min.Y; y < dst.Max.Y; y++ {
-		sy := int(math.Floor(float64(y-dstY) * float64(srcH) / float64(dstH)))
-		if sy < 0 {
-			sy = 0
-		}
-		if sy >= srcH {
-			sy = srcH - 1
-		}
+		sy := nearestScaledSourceIndex(y, dstY, dstH, srcH)
 
 		srcIdxBase := src.PixOffset(srcMin.X, srcMin.Y+sy)
 		srcRow := src.Pix[srcIdxBase : srcIdxBase+srcW*4]
 		for x := dst.Min.X; x < dst.Max.X; x++ {
-			sx := int(math.Floor(float64(x-dstX) * float64(srcW) / float64(dstW)))
-			if sx < 0 {
-				sx = 0
-			}
-			if sx >= srcW {
-				sx = srcW - 1
-			}
+			sx := nearestScaledSourceIndex(x, dstX, dstW, srcW)
 
 			srcOffset := sx * 4
 			srcColor := color.RGBA{
@@ -683,6 +671,21 @@ func (r *Renderer) drawBitmapScaledWithAlpha(src *image.RGBA, dstX, dstY, dstW, 
 			r.blendPixel(x, y, srcColor)
 		}
 	}
+}
+
+func nearestScaledSourceIndex(dstIndex, dstOrigin, dstSize, srcSize int) int {
+	if dstSize <= 0 || srcSize <= 0 {
+		return 0
+	}
+	rel := dstIndex - dstOrigin
+	idx := int(math.Round((float64(rel)+0.5)*float64(srcSize)/float64(dstSize) - 0.5))
+	if idx < 0 {
+		return 0
+	}
+	if idx >= srcSize {
+		return srcSize - 1
+	}
+	return idx
 }
 
 func (r *Renderer) drawBitmapTransformed(src *image.RGBA, transform geom.Affine, alpha float64) {
