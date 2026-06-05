@@ -389,3 +389,26 @@ func TestTransformedImageVectorBackendBehaviorIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageVectorBackendDivergenceNotesAreDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Vector Backend Divergence Notes",
+		"These residual vector differences do not block AGG raster parity",
+		"`SVG` viewer-side image resampling can differ by browser or SVG consumer",
+		"`PDF` viewer-side image resampling can differ by reader or print pipeline",
+		"interpolation names are preserved only in Go artist state, not emitted as vector backend resampling directives",
+		"clip structure is contract-tested, but clip edge antialiasing remains output-consumer dependent",
+		"alpha and transformed placement are structural contracts, while sampled pixels remain a raster-backend responsibility",
+		"future fixture comparisons should treat SVG/PDF image resampling deltas as documented backend divergence, not AGG regressions",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image vector backend divergence docs missing %q", phrase)
+		}
+	}
+}

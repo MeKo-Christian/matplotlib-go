@@ -763,6 +763,23 @@ The interpolation names are intentionally not translated into SVG
 remains viewer-dependent for SVG/PDF output, while placement, transformed
 embedding, and clip structure are tested as the vector fallback contract.
 
+## Phase 17.75.5 Vector Backend Divergence Notes
+
+These residual vector differences do not block AGG raster parity. `SVG`
+viewer-side image resampling can differ by browser or SVG consumer, and `PDF`
+viewer-side image resampling can differ by reader or print pipeline. The
+interpolation names are preserved only in Go artist state, not emitted as vector
+backend resampling directives.
+
+The clip structure is contract-tested, but clip edge antialiasing remains
+output-consumer dependent; alpha and transformed placement are structural
+contracts, while sampled pixels remain a raster-backend responsibility.
+
+The future fixture comparisons should treat SVG/PDF image resampling deltas as
+documented backend divergence, not AGG regressions. The vector fixtures should
+continue checking embedded image objects, transforms, soft masks, and clip
+structure rather than pixel-matching viewer resampling kernels.
+
 ## Phase 17.75.5 Interpolation Kernel Alignment
 
 `AGG` keeps the Matplotlib interpolation-name registry for raster image draws:

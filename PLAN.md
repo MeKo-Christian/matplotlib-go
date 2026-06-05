@@ -2243,7 +2243,7 @@ example/browser breadth as documentation work.
               placement, interpolation hints, clipping, and fallback raster
               embedding behavior.
 
-            - [ ] 17.75.5.5.3.2 Backend Divergence Notes: document residual
+            - [x] 17.75.5.5.3.2 Backend Divergence Notes: document residual
               vector differences that should not affect raster parity.
 
         - [ ] 17.75.5.5.4 Image Fixture Ledger: add or refresh transformed
