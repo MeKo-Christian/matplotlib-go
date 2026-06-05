@@ -118,6 +118,35 @@ func TestToRGBAParsesHexGrayCycleAndTuples(t *testing.T) {
 	}
 }
 
+func TestToRGBAParsesMatplotlibSupportedHexForms(t *testing.T) {
+	tests := []struct {
+		name string
+		spec string
+		opts []ToRGBAOption
+		want render.Color
+	}{
+		{"short rgb", "#123", nil, render.Color{R: 0x11 / 255.0, G: 0x22 / 255.0, B: 0x33 / 255.0, A: 1}},
+		{"short rgba", "#1234", nil, render.Color{R: 0x11 / 255.0, G: 0x22 / 255.0, B: 0x33 / 255.0, A: 0x44 / 255.0}},
+		{"long rgb", "#112233", nil, render.Color{R: 0x11 / 255.0, G: 0x22 / 255.0, B: 0x33 / 255.0, A: 1}},
+		{"long rgba", "#11223344", nil, render.Color{R: 0x11 / 255.0, G: 0x22 / 255.0, B: 0x33 / 255.0, A: 0x44 / 255.0}},
+		{"uppercase short rgb", "#ABC", nil, render.Color{R: 0xaa / 255.0, G: 0xbb / 255.0, B: 0xcc / 255.0, A: 1}},
+		{"uppercase short rgba", "#ABCD", nil, render.Color{R: 0xaa / 255.0, G: 0xbb / 255.0, B: 0xcc / 255.0, A: 0xdd / 255.0}},
+		{"uppercase long rgb", "#AABBCC", nil, render.Color{R: 0xaa / 255.0, G: 0xbb / 255.0, B: 0xcc / 255.0, A: 1}},
+		{"uppercase long rgba", "#AABBCCDD", nil, render.Color{R: 0xaa / 255.0, G: 0xbb / 255.0, B: 0xcc / 255.0, A: 0xdd / 255.0}},
+		{"short rgba alpha override", "#1234", []ToRGBAOption{WithAlpha(0.25)}, render.Color{R: 0x11 / 255.0, G: 0x22 / 255.0, B: 0x33 / 255.0, A: 0.25}},
+		{"long rgba alpha override", "#11223344", []ToRGBAOption{WithAlpha(0.25)}, render.Color{R: 0x11 / 255.0, G: 0x22 / 255.0, B: 0x33 / 255.0, A: 0.25}},
+	}
+	for _, tc := range tests {
+		got, err := ToRGBA(tc.spec, tc.opts...)
+		if err != nil {
+			t.Fatalf("%s: ToRGBA(%q) error = %v", tc.name, tc.spec, err)
+		}
+		if !sameColor(got, tc.want) {
+			t.Fatalf("%s: ToRGBA(%q) = %+v, want %+v", tc.name, tc.spec, got, tc.want)
+		}
+	}
+}
+
 func TestToRGBARejectsInvalidSpecs(t *testing.T) {
 	for _, spec := range []any{"B", "#12", "1.5", []float64{1, 0, 0, 0, 1}, []float64{1.2, 0, 0}} {
 		if got, err := ToRGBA(spec); err == nil {

@@ -2193,7 +2193,7 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.1.1.2 Hex Forms: align supported short/long hex
               forms, optional alpha suffixes, and invalid hex diagnostics.
 
-                - [ ] 17.75.5.1.1.2.1 Supported Forms: compare `#rgb`,
+                - [x] 17.75.5.1.1.2.1 Supported Forms: compare `#rgb`,
                   `#rgba`, `#rrggbb`, and `#rrggbbaa` parsing with upstream.
 
                 - [ ] 17.75.5.1.1.2.2 Invalid Forms: add focused diagnostics
