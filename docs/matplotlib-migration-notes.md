@@ -577,6 +577,19 @@ bivariate API directly. Without such a fixture, adding only the LUT type or
 only a registry entry would leave colorbar, scalar-mappable, outside-color, and
 component-colormap behavior underspecified.
 
+## Phase 17.75.5 Focused Colormap Lookup Tests
+
+The implemented lookup path is single-variate `color.Colormap`. Focused unit
+coverage now locks down listed lookup-table quantization, the empty-table
+fallback shape, linear-segment alpha interpolation, and bad, under, and over
+colors routed through `AtValue`.
+
+The bivariate and multivariate lookup tables remain omission-only in this phase.
+Their tuple/vector input shape, multi-dimensional lookup tables, outside
+colors, component alpha semantics, and colorbar contracts are documented in
+the bivariate and multivariate omission ledgers instead of being hidden inside
+the scalar lookup API.
+
 ## Phase 17.75.5 Bivariate Colormap Omission Ledger
 
 `BivarColormap`, `BivarColormapFromImage`, and `SegmentedBivarColormap` are

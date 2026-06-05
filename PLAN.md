@@ -2469,7 +2469,7 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.4.4.1 Focused Colormap Tests: run tests for supported
               bivariate/multivariate lookup behavior or omission diagnostics.
 
-                - [ ] 17.75.5.4.4.1.1 Lookup Tests: test lookup-table shape,
+                - [x] 17.75.5.4.4.1.1 Lookup Tests: test lookup-table shape,
                   scalar/vector input normalization, alpha behavior, and bad
                   value handling for implemented colormap paths.
 

@@ -284,6 +284,62 @@ func TestColormapAtValueDefaultsBadTransparentAndUnderOverEndpoints(t *testing.T
 	}
 }
 
+func TestScalarColormapLookupCoversShapeAlphaAndBadValues(t *testing.T) {
+	low := render.Color{R: 1, A: 0.25}
+	mid := render.Color{G: 1, A: 0.5}
+	high := render.Color{B: 1, A: 0.75}
+	listed := NewListedColormap("lookup-shape", []render.Color{low, mid, high})
+
+	for _, tt := range []struct {
+		t    float64
+		want render.Color
+	}{
+		{t: -0.1, want: low},
+		{t: 0, want: low},
+		{t: 0.2, want: low},
+		{t: 1.0 / 3.0, want: mid},
+		{t: 0.9, want: high},
+		{t: 1, want: high},
+		{t: math.NaN(), want: low},
+	} {
+		if got := listed.At(tt.t); got != tt.want {
+			t.Fatalf("listed.At(%v) = %#v, want %#v", tt.t, got, tt.want)
+		}
+	}
+
+	empty := NewListedColormap("empty lookup-shape", nil)
+	if got := empty.At(0.99); got != (render.Color{A: 1}) {
+		t.Fatalf("empty listed colormap lookup = %#v, want opaque black fallback", got)
+	}
+
+	linear := NewColormap("lookup-alpha", []ColorStop{
+		{Pos: 0, Color: render.Color{R: 0.2, A: 0.2}},
+		{Pos: 1, Color: render.Color{R: 0.8, A: 0.8}},
+	})
+	if got, want := linear.At(0.5), (render.Color{R: 0.5, A: 0.5}); got != want {
+		t.Fatalf("linear alpha midpoint = %#v, want %#v", got, want)
+	}
+
+	bad := render.Color{R: 0.8, A: 0.1}
+	under := render.Color{G: 0.7, A: 0.2}
+	over := render.Color{B: 0.6, A: 0.3}
+	bounded := listed.WithBad(bad).WithUnder(under).WithOver(over)
+	for _, tt := range []struct {
+		t    float64
+		want render.Color
+	}{
+		{t: math.NaN(), want: bad},
+		{t: math.Inf(1), want: bad},
+		{t: math.Inf(-1), want: bad},
+		{t: -0.01, want: under},
+		{t: 1.01, want: over},
+	} {
+		if got := bounded.AtValue(tt.t); got != tt.want {
+			t.Fatalf("bounded.AtValue(%v) = %#v, want %#v", tt.t, got, tt.want)
+		}
+	}
+}
+
 func TestRegisterColormap_IgnoreEmptyName(t *testing.T) {
 	// Preserve the fallback behavior when name normalization would become empty.
 	defaultBefore := DefaultColormap()

@@ -359,3 +359,33 @@ func TestMultivarColormapOmissionIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestFocusedColormapLookupTestsAreDocumented(t *testing.T) {
+	colorTests, err := os.ReadFile(filepath.Join("..", "color", "colormap_test.go"))
+	if err != nil {
+		t.Fatalf("read color colormap tests: %v", err)
+	}
+	if !strings.Contains(string(colorTests), "TestScalarColormapLookupCoversShapeAlphaAndBadValues") {
+		t.Fatal("missing focused scalar colormap lookup test")
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Focused Colormap Lookup Tests",
+		"implemented lookup path is single-variate `color.Colormap`",
+		"listed lookup-table quantization",
+		"linear-segment alpha interpolation",
+		"bad, under, and over colors",
+		"`AtValue`",
+		"bivariate and multivariate lookup tables remain omission-only",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("focused lookup docs missing %q", phrase)
+		}
+	}
+}
