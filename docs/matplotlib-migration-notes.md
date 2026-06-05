@@ -678,6 +678,30 @@ transformed raster image objects, and PS/PGF are structural transform emitters
 whose exact display resampling may differ by viewer. Skia is optional
 `-tags skia` coverage rather than a required default backend.
 
+## Phase 17.75.5 Transformed Image Matplotlib Comparison
+
+The upstream comparison anchor is `third_party/matplotlib/lib/matplotlib/image.py`.
+For the examples currently covered by the catalog, the relevant path is
+`AxesImage.make_image` -> `_ImageBase._make_image`, plus
+`AxesImage.set_extent` and `AxesImage.get_extent`. `_make_image` intersects
+`out_bbox` with `clip_bbox`, computes output pixel dimensions from
+`clipped_bbox * magnification`, uses `round_to_pixel_border=True` for normal
+axes images, folds `origin='upper'` through a vertical flip while
+`origin='lower'` keeps lower-left placement, and chooses between the
+`interpolation_stage` values `data` and `rgba`; `auto` and `antialiased` choose
+between those stages based on transform size.
+
+The covered Go examples are `image_heatmap`, `collection_mutable_scalarmap`,
+`colorbar_composition`, and matrix helpers (`MatShow`, `ImShow`, `Spy`,
+`AnnotatedHeatmap`), and current Go comparison points are `Image2D.Draw`,
+`matplotlibImageDrawRect`, `Image2D.rasterizeForRect`, and `Axes.ImShow`.
+
+Current inventory result: Go already records extent/origin through `Image2D`
+bounds and matrix helpers; clipping and transform routing depend on renderer
+support from the backend matrix. The remaining comparison work is AGG
+interpolation-stage selection, clipped output-size quantization, transformed
+image clipping, and pixel-center placement under explicit extents and rotation.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

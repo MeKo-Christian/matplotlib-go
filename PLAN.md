@@ -2220,7 +2220,7 @@ example/browser breadth as documentation work.
               interpolation behavior across AGG, GoBasic, SVG/PDF, and any
               optional raster backends.
 
-            - [ ] 17.75.5.5.1.2 Matplotlib Comparison: compare upstream image
+            - [x] 17.75.5.5.1.2 Matplotlib Comparison: compare upstream image
               resampling, extent/origin placement, clipping, and transform
               behavior for the cases covered by examples.
 

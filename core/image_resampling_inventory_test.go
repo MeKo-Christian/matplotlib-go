@@ -95,3 +95,61 @@ func TestTransformedImageBackendMatrixIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageMatplotlibComparisonIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "third_party", "matplotlib", "lib", "matplotlib", "image.py"))
+	if err != nil {
+		t.Fatalf("read upstream image.py: %v", err)
+	}
+	upstream := string(data)
+	upstreamRequirements := []string{
+		"def _resample(",
+		"def _make_image(self, A, in_bbox, out_bbox, clip_bbox, magnification=1.0,",
+		"clipped_bbox = Bbox.intersection(out_bbox, clip_bbox)",
+		"out_width_base = clipped_bbox.width * magnification",
+		"round_to_pixel_border",
+		"if self.origin == 'upper':",
+		"interpolation_stage = self._interpolation_stage",
+		"if interpolation_stage in ['antialiased', 'auto']:",
+		"interpolation_stage = 'rgba'",
+		"interpolation_stage = 'data'",
+		"def make_image(self, renderer, magnification=1.0, unsampled=False):",
+		"clip = ((self.get_clip_box() or self.axes.bbox) if self.get_clip_on()",
+		"return self._make_image(self._A, bbox, transformed_bbox, clip,",
+		"def set_extent(self, extent, **kwargs):",
+		"def get_extent(self):",
+	}
+	for _, phrase := range upstreamRequirements {
+		if !strings.Contains(upstream, phrase) {
+			t.Fatalf("upstream image.py missing comparison marker %q", phrase)
+		}
+	}
+
+	data, err = os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Transformed Image Matplotlib Comparison",
+		"upstream comparison anchor is `third_party/matplotlib/lib/matplotlib/image.py`",
+		"`_ImageBase._make_image`",
+		"`AxesImage.make_image`",
+		"`AxesImage.set_extent`",
+		"`AxesImage.get_extent`",
+		"intersects `out_bbox` with `clip_bbox`",
+		"`round_to_pixel_border=True`",
+		"`origin='upper'`",
+		"`origin='lower'`",
+		"`interpolation_stage`",
+		"`data` and `rgba`",
+		"`auto` and `antialiased`",
+		"covered Go examples are `image_heatmap`, `collection_mutable_scalarmap`, `colorbar_composition`, and matrix helpers",
+		"current Go comparison points are `Image2D.Draw`, `matplotlibImageDrawRect`, `Image2D.rasterizeForRect`, and `Axes.ImShow`",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image Matplotlib comparison docs missing %q", phrase)
+		}
+	}
+}
