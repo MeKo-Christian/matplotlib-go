@@ -2300,7 +2300,7 @@ example/browser breadth as documentation work.
               for implemented behavior or record the intentional omission in
               metadata and migration notes.
 
-                - [ ] 17.75.5.2.2.2.1 Behavior Tests: test forward mapping,
+                - [x] 17.75.5.2.2.2.1 Behavior Tests: test forward mapping,
                   inverse mapping, autoscale/clim interaction, and scalar
                   mappable color lookup when implemented.
 
