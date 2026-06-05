@@ -2169,324 +2169,42 @@ example/browser breadth as documentation work.
 
 - [x] Split 17.75.5 into execution-ready subtasks and complete them in order:
 
-    - [x] 17.75.5.1 Color Conversion Edge Cases: audit exact Matplotlib color
-      parsing and conversion behavior for named colors, hex forms, alpha
-      precedence, grayscale strings, masked/NaN values, and sequence ambiguity.
-      Complete the scoped audits below before changing shared color APIs.
-
-        - [x] 17.75.5.1.1 Color Name and Hex Parsing: compare named colors,
-          Tableau/CSS/XKCD precedence, `none`, short/long hex forms, and alpha
-          suffix behavior against `colors.py`.
-
-            - [x] 17.75.5.1.1.1 Named Color Tables: compare Go named-color
-              tables and precedence against Matplotlib's base, Tableau, CSS4,
-              and XKCD tables.
-
-                - [x] 17.75.5.1.1.1.1 Table Inventory: compare current Go
-                  color-name data against `colors.py` and upstream color data
-                  files, recording missing names and precedence conflicts.
-
-                - [x] 17.75.5.1.1.1.2 Parser Tests: add focused named-color
-                  tests for exact matches, aliases, `none`, case handling, and
-                  intentionally unsupported dynamic Python inputs.
-
-            - [x] 17.75.5.1.1.2 Hex Forms: align supported short/long hex
-              forms, optional alpha suffixes, and invalid hex diagnostics.
-
-                - [x] 17.75.5.1.1.2.1 Supported Forms: compare `#rgb`,
-                  `#rgba`, `#rrggbb`, and `#rrggbbaa` parsing with upstream.
-
-                - [x] 17.75.5.1.1.2.2 Invalid Forms: add focused diagnostics
-                  tests for malformed length, characters, and alpha suffixes.
-
-        - [x] 17.75.5.1.2 Alpha and Grayscale Semantics: audit explicit alpha
-          precedence, grayscale-string validation, numeric ambiguity, and
-          sequence handling against Matplotlib's conversion tests.
-
-            - [x] 17.75.5.1.2.1 Alpha Precedence: compare explicit alpha
-              overrides, embedded alpha, `none`, and default opacity handling.
-
-                - [x] 17.75.5.1.2.1.1 Upstream Cases: extract Matplotlib
-                  alpha-precedence cases from `colors.py` and upstream tests.
-
-                - [x] 17.75.5.1.2.1.2 Go API Alignment: add or update tests
-                  for explicit alpha, embedded alpha, `none`, and default
-                  opacity in supported Go conversion paths.
-
-            - [x] 17.75.5.1.2.2 Grayscale and Sequence Ambiguity: align
-              grayscale strings, numeric inputs, and sequence-length handling
-              for supported Go APIs.
-
-                - [x] 17.75.5.1.2.2.1 Ambiguity Audit: compare string
-                  grayscale, numeric grayscale, RGB(A) sequences, and invalid
-                  sequence lengths against Matplotlib.
-
-                - [x] 17.75.5.1.2.2.2 Typed API Decision: implement supported
-                  typed conversions or document Python-only ambiguity that the
-                  Go API intentionally avoids.
-
-        - [x] 17.75.5.1.3 Masked, NaN, and Invalid Inputs: align masked arrays,
-          NaN handling, invalid-length sequences, and error messages where they
-          affect supported Go APIs.
-
-            - [x] 17.75.5.1.3.1 Bad Value Semantics: compare masked, NaN, and
-              invalid numeric inputs against Matplotlib's conversion behavior.
-
-                - [x] 17.75.5.1.3.1.1 Invalid Input Audit: compare NaN,
-                  infinite, negative, out-of-range, masked, and nil-equivalent
-                  inputs against upstream behavior.
-
-                - [x] 17.75.5.1.3.1.2 Supported Handling: add tests or
-                  omission notes for bad values that can appear in typed Go
-                  color APIs.
-
-            - [x] 17.75.5.1.3.2 Error Surface: align supported error messages
-              and document Python-only dynamic input omissions.
-
-                - [x] 17.75.5.1.3.2.1 Diagnostic Comparison: compare current
-                  Go errors with upstream failure categories rather than
-                  overfitting exact Python wording.
-
-                - [x] 17.75.5.1.3.2.2 Error Tests and Docs: add focused error
-                  tests and migration-note entries for unsupported input
-                  categories.
-
-        - [x] 17.75.5.1.4 Color Conversion Ledger: add focused tests, document
-          unsupported dynamic Python-only inputs, and update parity metadata.
-
-            - [x] 17.75.5.1.4.1 Test Consolidation: run the focused color
-              conversion tests added under 17.75.5.1 and remove redundant
-              coverage only if it duplicates exact cases.
-
-            - [x] 17.75.5.1.4.2 Metadata and Docs: update public-surface
-              metadata and migration notes with supported color parsing and
-              typed Go API omissions.
-
-    - [x] 17.75.5.2 Norm Breadth and FuncNorm: implement or explicitly omit
-      remaining normalization surfaces including `FuncNorm`, `MultiNorm` /
-      multi-stage normalization, boundary behavior, clipping, inverse mapping,
-      and scalar-mappable callback interactions. Keep deviations documented in
-      parity metadata rather than hidden in examples.
-
-        - [x] 17.75.5.2.1 Existing Norm Audit: compare supported Go norms
-          against `Normalize`, `LogNorm`, `SymLogNorm`, `PowerNorm`,
-          `BoundaryNorm`, `TwoSlopeNorm`, and inverse/clip behavior.
-
-            - [x] 17.75.5.2.1.1 Norm Inventory: map current Go norm types,
-              constructors, clipping behavior, inverse support, and scalar
-              mappable integration against upstream classes.
-
-            - [x] 17.75.5.2.1.2 Gap List: record missing or divergent norm
-              behavior needed by supported examples before implementing new
-              norm types.
-
-        - [x] 17.75.5.2.2 FuncNorm Decision: implement `FuncNorm` with forward
-          and inverse callbacks or record an intentional omission with API
-          rationale and affected examples.
-
-            - [x] 17.75.5.2.2.1 FuncNorm API Shape: decide callback signatures,
-              inverse requirements, clipping behavior, and scalar input/output
-              expectations.
-
-                - [x] 17.75.5.2.2.1.1 Upstream Contract: inspect
-                  Matplotlib's `FuncNorm` autoscale, inverse, clipping, and
-                  array handling paths.
-
-                - [x] 17.75.5.2.2.1.2 Go Callback Shape: choose typed forward
-                  and inverse callback signatures plus error behavior for
-                  unsupported or non-monotonic mappings.
-
-            - [x] 17.75.5.2.2.2 FuncNorm Tests or Omission: add focused tests
-              for implemented behavior or record the intentional omission in
-              metadata and migration notes.
-
-                - [x] 17.75.5.2.2.2.1 Behavior Tests: test forward mapping,
-                  inverse mapping, autoscale/clim interaction, and scalar
-                  mappable color lookup when implemented.
-
-                - [x] 17.75.5.2.2.2.2 Omission Ledger: if omitted, record the
-                  API rationale, affected examples, and fallback recommendation.
-
-        - [x] 17.75.5.2.3 Boundary and Multi-Stage Norms: close remaining
-          boundary, centered/two-slope, multi-stage, bad/under/over, and
-          scalar-mappable callback gaps needed by fixtures.
-
-            - [x] 17.75.5.2.3.1 Boundary and Centered Norms: align boundary,
-              centered, two-slope, clipping, inverse, and out-of-range behavior.
-
-                - [x] 17.75.5.2.3.1.1 BoundaryNorm Audit: compare boundary
-                  indexing, under/over/bad values, extension behavior, and
-                  colorbar tick expectations.
-
-                - [x] 17.75.5.2.3.1.2 Centered Norm Audit: compare centered,
-                  two-slope, symmetric-log, power, inverse, and clipping
-                  behavior needed by examples.
-
-            - [x] 17.75.5.2.3.2 Scalar-Mappable Norm Updates: implement or
-              document callback/update behavior for norm and clim changes.
-
-                - [x] 17.75.5.2.3.2.1 Update Audit: compare upstream norm/clim
-                  callback behavior and stale colorbar invalidation.
-
-                - [x] 17.75.5.2.3.2.2 Go Update Decision: add supported update
-                  tests or document immutable scalar-map behavior.
-
-        - [x] 17.75.5.2.4 Norm Fixtures and Ledger: add focused norm tests,
-          update public-surface metadata, and regenerate docs.
-
-            - [x] 17.75.5.2.4.1 Focused Norm Tests: run targeted norm and
-              scalar-mappable tests before adding visual fixtures.
-
-                - [x] 17.75.5.2.4.1.1 Norm Behavior Tests: run or add focused
-                  tests for each implemented norm's scalar, slice, inverse,
-                  clipping, and out-of-range behavior.
-
-                - [x] 17.75.5.2.4.1.2 Scalar-Mappable Norm Tests: run or add
-                  focused tests for norm-driven colormap lookup, clim/autoscale
-                  interaction, and supported update semantics.
-
-            - [x] 17.75.5.2.4.2 Norm Metadata: update public-surface metadata,
-              migration notes, and parity status for implemented or omitted
-              norm behavior.
-
-                - [x] 17.75.5.2.4.2.1 Norm Public-Surface Rows: update
-                  implemented, partial, or omitted norm rows with concrete
-                  task references and fixture/test coverage.
-
-                - [x] 17.75.5.2.4.2.2 Norm Docs and Status: update migration
-                  notes and regenerate parity status after the norm rows are
-                  current.
-
-    - [x] 17.75.5.3 LightSource and Shaded Images: decide and implement or
-      explicitly omit `LightSource`-style hillshading, RGB shading, blend modes,
-      and surface-image lighting paths needed by upstream examples. Compare
-      algorithms against `third_party/matplotlib/lib/matplotlib/colors.py` and
-      `third_party/matplotlib/lib/matplotlib/image.py`.
-
-        - [x] 17.75.5.3.1 LightSource Algorithm Audit: compare hillshade,
-          shade, shade-rgb, blend modes, fraction, vert/horz exaggeration, and
-          azimuth/altitude defaults against upstream.
-
-            - [x] 17.75.5.3.1.1 Algorithm Inventory: inspect upstream
-              `LightSource` defaults, gradient handling, shading fraction, and
-              blend-mode formulas.
-
-            - [x] 17.75.5.3.1.2 Example Need List: identify which upstream or
-              parity fixtures actually require LightSource behavior before
-              implementing a broad API.
-
-        - [x] 17.75.5.3.2 Shaded Image Implementation or Omission: implement
-          the static-rendering subset needed by examples, or document why the
-          Go port intentionally omits LightSource-style image lighting.
-
-            - [x] 17.75.5.3.2.1 Hillshade Core: implement or omit the grayscale
-              hillshade core with Matplotlib default azimuth, altitude, and
-              fraction semantics.
-
-            - [x] 17.75.5.3.2.2 RGB Blend Modes: implement or omit overlay,
-              soft-light, hsv, and custom blend paths needed by examples.
-
-        - [x] 17.75.5.3.3 Surface Lighting Integration: connect supported
-          lighting to image/surface rendering paths where Matplotlib examples
-          require it, keeping backend fallbacks explicit.
-
-            - [x] 17.75.5.3.3.1 Image Path Integration: connect supported
-              LightSource behavior to image rendering and transformed image
-              paths where static examples need it.
-
-            - [x] 17.75.5.3.3.2 Surface Path Integration: connect supported
-              lighting to surface rendering without regressing 3D shade
-              semantics from 17.75.4.
-
-        - [x] 17.75.5.3.4 LightSource Fixtures and Ledger: add reference
-          fixtures or omission notes, then update parity metadata and docs.
-
-            - [x] 17.75.5.3.4.1 Focused Lighting Tests: add non-visual tests
-              for implemented hillshade/blend math or omission assertions.
-
-                - [x] 17.75.5.3.4.1.1 Hillshade Math Tests: test gradients,
-                  azimuth/altitude defaults, fraction handling, and clipping
-                  for implemented hillshade behavior.
-
-                - [x] 17.75.5.3.4.1.2 Blend Mode Tests: test overlay,
-                  soft-light, hsv, custom blend behavior, or explicit omission
-                  diagnostics for unsupported blend paths.
-
-            - [x] 17.75.5.3.4.2 Fixture and Docs Update: add required visual
-              fixtures or record LightSource omissions in parity metadata and
-              migration notes.
-
-                - [x] 17.75.5.3.4.2.1 Lighting Fixture Decision: decide which
-                  LightSource or shaded-image examples need visual triplets
-                  after focused behavior tests land.
-
-                - [x] 17.75.5.3.4.2.2 Lighting Metadata Update: update
-                  public-surface metadata, migration notes, and parity status
-                  with implemented fixtures or explicit omissions.
-
-    - [x] 17.75.5.4 Bivariate and Multivariate Colormaps: implement or
-      intentionally omit bivariate/multivariate colormap support, including
-      lookup-table shape validation, alpha handling, scalar-mappable
-      integration, and colorbar display expectations for supported cases.
-
-        - [x] 17.75.5.4.1 Colormap API Audit: compare bivariate and
-          multivariate colormap classes, lookup-table shape rules, alpha
-          handling, and call semantics against Matplotlib.
-
-            - [x] 17.75.5.4.1.1 Upstream API Inventory: inspect bivariate and
-              multivariate colormap constructors, lookup tables, alpha rules,
-              and scalar-mappable integration points.
-
-            - [x] 17.75.5.4.1.2 Go Fit Assessment: decide which APIs fit the
-              existing scalar colormap model and which would require a
-              separate typed surface.
-
-        - [x] 17.75.5.4.2 Bivariate Support Decision: implement the supported
-          static-rendering subset or document an intentional omission with
-          affected examples and public-surface metadata.
-
-            - [x] 17.75.5.4.2.1 Bivariate API Shape: decide lookup-table shape,
-              input normalization, alpha handling, and colorbar expectations.
-
-            - [x] 17.75.5.4.2.2 Bivariate Tests or Omission: add focused tests
-              for implemented behavior or record the omission with affected
-              examples.
-
-        - [x] 17.75.5.4.3 Multivariate Support Decision: implement
-          multichannel lookup behavior or document why the Go API keeps only
-          scalar colormaps.
-
-            - [x] 17.75.5.4.3.1 Multivariate API Shape: decide whether
-              multichannel lookup tables fit the Go color API without
-              destabilizing scalar colormaps.
-
-            - [x] 17.75.5.4.3.2 Multivariate Tests or Omission: add tests for
-              supported behavior or record the omission with rationale.
-
-        - [x] 17.75.5.4.4 Colormap Fixtures and Ledger: add tests/fixtures for
-          supported behavior, record omissions, and regenerate docs.
-
-            - [x] 17.75.5.4.4.1 Focused Colormap Tests: run tests for supported
-              bivariate/multivariate lookup behavior or omission diagnostics.
-
-                - [x] 17.75.5.4.4.1.1 Lookup Tests: test lookup-table shape,
-                  scalar/vector input normalization, alpha behavior, and bad
-                  value handling for implemented colormap paths.
-
-                - [x] 17.75.5.4.4.1.2 Omission Tests: add focused diagnostics
-                  for bivariate or multivariate inputs intentionally outside
-                  the Go API.
-
-            - [x] 17.75.5.4.4.2 Metadata Regeneration: update colormap metadata,
-              migration notes, and parity status after the support decision.
-
-                - [x] 17.75.5.4.4.2.1 Colormap Public-Surface Rows: update
-                  bivariate and multivariate metadata rows with implemented or
-                  omitted status and task references.
-
-                - [x] 17.75.5.4.4.2.2 Colormap Docs and Status: update
-                  migration notes and regenerate parity status after metadata
-                  is current.
+    - [x] 17.75.5.1 Color Conversion Edge Cases — **done.** Audited Matplotlib
+      color parsing/conversion against `colors.py`: named base/Tableau/CSS4/XKCD
+      tables and precedence, `none`, short/long hex with optional alpha suffix,
+      explicit-vs-embedded alpha precedence, grayscale strings, numeric/sequence
+      ambiguity, and masked/NaN/invalid inputs. Added focused parser, alpha, and
+      diagnostics tests; documented the Python-only dynamic inputs the typed Go
+      API intentionally omits; updated public-surface metadata and migration
+      notes.
+
+    - [x] 17.75.5.2 Norm Breadth and FuncNorm — **done.** Audited the existing
+      Go norms against `Normalize`/`LogNorm`/`SymLogNorm`/`PowerNorm`/
+      `BoundaryNorm`/`TwoSlopeNorm` (clip, inverse, out-of-range, and
+      scalar-mappable integration) and added focused norm and scalar-mappable
+      tests. `FuncNorm` and `MultiNorm`/multi-stage normalization are
+      intentional omissions as concrete Go types — no supported fixture requires
+      them and arbitrary callbacks route through the `core.ScalarNormalizer`
+      interface (`function`/`functionlog` scales cover the axes case). The
+      omission rationale and affected examples are recorded in metadata,
+      migration notes, and parity status.
+
+    - [x] 17.75.5.3 LightSource and Shaded Images — **done.** Inventoried
+      upstream `colors.LightSource` hillshade/shade/shade_rgb, blend modes, and
+      azimuth/altitude/fraction defaults, and confirmed no committed parity
+      fixture imports `LightSource` or the 2D image-lighting helpers. Kept
+      hillshade and RGB blend modes as an explicit omission (no `LightSource`
+      type) without regressing the existing mplot3d explicit-color face-shading
+      path; the fixture audit and omission are recorded in migration notes and
+      parity metadata.
+
+    - [x] 17.75.5.4 Bivariate and Multivariate Colormaps — **done.** Audited
+      upstream bivariate/multivariate colormap constructors, lookup-table
+      shapes, alpha rules, and scalar-mappable integration against the scalar Go
+      colormap model. Both are intentional omissions — the Go API keeps only
+      scalar colormaps — covered by focused scalar lookup tests plus omission
+      diagnostics for multichannel inputs; colormap metadata, migration notes,
+      and parity status were regenerated to mark the omissions.
 
     - [ ] 17.75.5.5 Transformed Image Resampling: close residual transformed
       image resampling gaps and document backend-specific interpolation

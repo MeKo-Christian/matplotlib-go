@@ -1,0 +1,222 @@
+package core
+
+import (
+	"fmt"
+	"math"
+	"strings"
+
+	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/transform"
+)
+
+func (a *Axes) SetXLim(minVal, maxVal float64) {
+	target := a.xScaleRoot()
+	target.XScale = replaceScaleDomain(target.XScale, minVal, maxVal)
+	target.xLimitsManual = true
+	target.refreshUnitAxis(true)
+}
+
+func (a *Axes) SetYLim(minVal, maxVal float64) {
+	target := a.yScaleRoot()
+	target.YScale = replaceScaleDomain(target.YScale, minVal, maxVal)
+	target.yLimitsManual = true
+	target.refreshUnitAxis(false)
+}
+
+func (a *Axes) SetXScale(name string, opts ...transform.ScaleOption) error {
+	return a.setScale(true, name, opts...)
+}
+
+func (a *Axes) SetYScale(name string, opts ...transform.ScaleOption) error {
+	return a.setScale(false, name, opts...)
+}
+
+func (a *Axes) SetXLimLog(minVal, maxVal, base float64) {
+	target := a.xScaleRoot()
+	if state := target.unitState(true); state != nil && !state.scaleCompatible("log") {
+		return
+	}
+	target.XScale = transform.NewLog(minVal, maxVal, base)
+	target.xLimitsManual = true
+	configureScaleAxes(target.XAxis, target.XAxisTop, "log", transform.ResolveScaleOptions(
+		transform.WithScaleDomain(minVal, maxVal),
+		transform.WithScaleBase(base),
+	))
+}
+
+func (a *Axes) SetYLimLog(minVal, maxVal, base float64) {
+	target := a.yScaleRoot()
+	if state := target.unitState(false); state != nil && !state.scaleCompatible("log") {
+		return
+	}
+	target.YScale = transform.NewLog(minVal, maxVal, base)
+	target.yLimitsManual = true
+	configureScaleAxes(target.YAxis, target.YAxisRight, "log", transform.ResolveScaleOptions(
+		transform.WithScaleDomain(minVal, maxVal),
+		transform.WithScaleBase(base),
+	))
+}
+
+func (a *Axes) InvertX() {
+	target := a.xScaleRoot()
+	if target == nil || target.XScale == nil {
+		return
+	}
+	target.XScale = toggleInvertedScale(target.XScale)
+}
+
+func (a *Axes) InvertY() {
+	target := a.yScaleRoot()
+	if target == nil || target.YScale == nil {
+		return
+	}
+	target.YScale = toggleInvertedScale(target.YScale)
+}
+
+func (a *Axes) XInverted() bool {
+	if a == nil {
+		return false
+	}
+	return scaleDomainDescending(a.effectiveXScale())
+}
+
+func (a *Axes) YInverted() bool {
+	if a == nil {
+		return false
+	}
+	return scaleDomainDescending(a.effectiveYScale())
+}
+
+func (a *Axes) SetAspect(mode string, value ...float64) error {
+	if a == nil {
+		return nil
+	}
+	switch strings.ToLower(strings.TrimSpace(mode)) {
+	case "", "auto":
+		a.aspectMode = "auto"
+		a.aspectValue = 1
+	case "equal":
+		a.aspectMode = "equal"
+		a.aspectValue = 1
+	case "ratio":
+		if len(value) == 0 || value[0] <= 0 || math.IsNaN(value[0]) || math.IsInf(value[0], 0) {
+			return fmt.Errorf("ratio aspect requires a positive finite value")
+		}
+		a.aspectMode = "ratio"
+		a.aspectValue = value[0]
+	default:
+		return fmt.Errorf("unsupported aspect mode %q", mode)
+	}
+	return nil
+}
+
+func (a *Axes) SetAxisEqual() {
+	_ = a.SetAspect("equal")
+}
+
+func (a *Axes) SetBoxAspect(aspect float64) error {
+	if a == nil {
+		return nil
+	}
+	if aspect <= 0 || math.IsNaN(aspect) || math.IsInf(aspect, 0) {
+		return fmt.Errorf("box aspect must be a positive finite value")
+	}
+	a.boxAspect = aspect
+	return nil
+}
+
+func (a *Axes) ClearBoxAspect() {
+	if a == nil {
+		return
+	}
+	a.boxAspect = 0
+}
+
+func (a *Axes) layout(f *Figure) (pixelRect geom.Rect) {
+	// Display space is y-up with a bottom-left origin (Matplotlib convention).
+	// Figure fractions map directly to display pixels without a Y flip; the
+	// device y-inversion is owned by the backend at rasterization.
+	minPt := geom.Pt{X: f.SizePx.X * a.RectFraction.Min.X, Y: f.SizePx.Y * a.RectFraction.Min.Y}
+	maxPt := geom.Pt{X: f.SizePx.X * a.RectFraction.Max.X, Y: f.SizePx.Y * a.RectFraction.Max.Y}
+	return geom.Rect{Min: minPt, Max: maxPt}
+}
+
+func (a *Axes) adjustedLayout(f *Figure) geom.Rect {
+	px := a.layout(f)
+	if a.colorbarParent != nil {
+		return a.adjustedColorbarLayout(f, px)
+	}
+	target := 0.0
+	if a.boxAspect > 0 {
+		target = a.boxAspect
+	} else {
+		switch a.aspectMode {
+		case "equal":
+			target = a.dataAspectTarget(1)
+		case "ratio":
+			target = a.dataAspectTarget(a.aspectValue)
+		}
+	}
+	if target <= 0 || math.IsNaN(target) || math.IsInf(target, 0) {
+		return px
+	}
+	return rectWithAspect(px, target)
+}
+
+func (a *Axes) adjustedColorbarLayout(f *Figure, px geom.Rect) geom.Rect {
+	if a == nil || f == nil || f.SizePx.X <= 0 || f.SizePx.Y <= 0 {
+		return px
+	}
+	if colorbarIsHorizontal(a.colorbarLocation) {
+		return px
+	}
+	width := a.colorbarWidth
+	if width > 0 {
+		width *= f.SizePx.X
+	} else {
+		aspect := resolvedColorbarAspect(a.colorbarAspect)
+		if aspect > 0 {
+			aspect *= colorbarExtensionShrink(a.colorbarExtend)
+			width = px.H() / aspect
+		}
+	}
+	if width <= 0 || width >= px.W() {
+		return px
+	}
+	px.Max.X = px.Min.X + width
+	return px
+}
+
+func (a *Axes) dataAspectTarget(aspect float64) float64 {
+	if a == nil || aspect <= 0 {
+		return 0
+	}
+	xMin, xMax := currentScaleDomain(a.effectiveXScale())
+	yMin, yMax := currentScaleDomain(a.effectiveYScale())
+	xSpan := math.Abs(xMax - xMin)
+	ySpan := math.Abs(yMax - yMin)
+	if xSpan == 0 || ySpan == 0 {
+		return 0
+	}
+	return aspect * ySpan / xSpan
+}
+
+func rectWithAspect(r geom.Rect, target float64) geom.Rect {
+	if target <= 0 {
+		return r
+	}
+	cur := r.H() / r.W()
+	switch {
+	case cur > target:
+		newH := r.W() * target
+		pad := (r.H() - newH) / 2
+		r.Min.Y += pad
+		r.Max.Y -= pad
+	case cur < target:
+		newW := r.H() / target
+		pad := (r.W() - newW) / 2
+		r.Min.X += pad
+		r.Max.X -= pad
+	}
+	return r
+}
