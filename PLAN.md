@@ -2349,7 +2349,7 @@ example/browser breadth as documentation work.
               migration notes, and parity status for implemented or omitted
               norm behavior.
 
-                - [ ] 17.75.5.2.4.2.1 Norm Public-Surface Rows: update
+                - [x] 17.75.5.2.4.2.1 Norm Public-Surface Rows: update
                   implemented, partial, or omitted norm rows with concrete
                   task references and fixture/test coverage.
 

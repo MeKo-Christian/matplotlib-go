@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -244,6 +245,33 @@ func TestBackendLifecycleAndToolRowsAreExplicit(t *testing.T) {
 		}
 		if row.Status == PublicSurfaceNotStarted {
 			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", upstreamID, row.Status)
+		}
+	}
+}
+
+func TestColorsNormSurfaceRowsHaveExplicitDecisions(t *testing.T) {
+	want := []string{
+		"colors.py:class:Normalize",
+		"colors.py:class:SymLogNorm",
+		"colors.py:class:PowerNorm",
+		"colors.py:class:TwoSlopeNorm",
+		"colors.py:class:CenteredNorm",
+		"colors.py:class:BoundaryNorm",
+		"colors.py:class:NoNorm",
+		"colors.py:class:AsinhNorm",
+		"colors.py:class:FuncNorm",
+		"colors.py:function:make_norm_from_scale",
+	}
+	for _, upstreamID := range want {
+		row, ok := LookupPublicSurfaceParityByUpstreamID(upstreamID)
+		if !ok {
+			t.Fatalf("missing explicit Phase 17.75.5 norm classification for %q", upstreamID)
+		}
+		if row.Status == PublicSurfaceNotStarted {
+			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", upstreamID, row.Status)
+		}
+		if !strings.Contains(row.Note, "17.75.5") && !strings.Contains(row.Note, "ScalarNormalizer") {
+			t.Fatalf("%s note does not reference the Phase 17.75.5 norm decision or ScalarNormalizer contract: %q", upstreamID, row.Note)
 		}
 	}
 }
