@@ -2265,7 +2265,7 @@ example/browser breadth as documentation work.
           LightSource/shaded-image, and colorbar placement/formatter/boundary/
           extension/update-contract triplets — running focused visual checks.
 
-        - [ ] 17.75.5.7.3 Metadata and Migration Notes: mark implemented color,
+        - [x] 17.75.5.7.3 Metadata and Migration Notes: mark implemented color,
           norm, image, and colorbar APIs in public-surface metadata with task
           references and fixture IDs; record intentional omissions or partial
           support with concrete API rationale and affected examples; and

@@ -221,3 +221,65 @@ func TestColorImageColorbarFixtureTripletsAreDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestColorImageColorbarMetadataAndMigrationNotesAreDocumented(t *testing.T) {
+	sourceRequirements := map[string][]string{
+		filepath.Join("..", "internal", "examplecatalog", "public_surface_parity.go"): {
+			"idPrefix:          \"image\"",
+			"idPrefix:          \"colorbar\"",
+			"idPrefix:          \"colorizer\"",
+			"idPrefix:          \"cm\"",
+			"idPrefix:          \"colors\"",
+			"colors-normalize-class",
+			"colors-boundarynorm-class",
+			"colors-asinhnorm-class",
+			"colors-twoslope-norm-class",
+			"FuncNorm is intentionally omitted",
+			"LightSource as an intentional omission",
+			"bivar/multivar colormaps",
+			"pyplot-imshow",
+			"pyplot-colorbar",
+		},
+		filepath.Join("..", "docs", "matplotlib-parity-status.md"): {
+			"image.py:class:AxesImage",
+			"colorbar.py:class:Colorbar",
+			"cm.py:function:get_cmap",
+			"colors.py:class:ColorConverter",
+			"pyplot.py:function:imshow",
+			"pyplot.py:function:colorbar",
+			"mutable mappable clim/colormap/norm updates",
+			"LightSource and bivar/multivar colormaps have explicit intentional-omission rows",
+		},
+	}
+	for path, phrases := range sourceRequirements {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		src := string(data)
+		for _, phrase := range phrases {
+			if !strings.Contains(src, phrase) {
+				t.Fatalf("%s missing metadata marker %q", path, phrase)
+			}
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Metadata and Migration Notes",
+		"Public-surface metadata marks color conversion, scalar colormaps, norms, images, colorbars, and colorizer routing with Phase 17.75.5 notes",
+		"Implemented fixture IDs are attached to image, colorbar, colors-cm, Normalize, BoundaryNorm, AsinhNorm, TwoSlopeNorm, pyplot imshow, pyplot colorbar, current-image, and current-mappable rows",
+		"Intentional omissions remain recorded for FuncNorm as a concrete type, LightSource, bivariate colormaps, and multivariate colormaps",
+		"Migration notes summarize typed Go API differences for dynamic Python color inputs, callback-driven colorbar updates, custom colorbar formatters, gridspec and multi-parent colorbar helpers, and omitted shaded-relief or multi-component colorbars",
+		"`docs/matplotlib-parity-status.md` is generated from `internal/examplecatalog` and carries the updated color/image/colorbar row notes",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("metadata and migration docs missing %q", phrase)
+		}
+	}
+}

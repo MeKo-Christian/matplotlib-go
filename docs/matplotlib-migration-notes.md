@@ -1153,6 +1153,24 @@ boundarynorm_pcolormesh, collection_mutable_scalarmap,
 colorbar_boundary_values, colorbar_horizontal_ticks, lognorm_imshow,
 twoslope_norm_image, and colorbar_extensions.
 
+## Phase 17.75.5 Metadata and Migration Notes
+
+Public-surface metadata marks color conversion, scalar colormaps, norms, images,
+colorbars, and colorizer routing with Phase 17.75.5 notes. Implemented fixture
+IDs are attached to image, colorbar, colors-cm, Normalize, BoundaryNorm,
+AsinhNorm, TwoSlopeNorm, pyplot imshow, pyplot colorbar, current-image, and
+current-mappable rows.
+
+Intentional omissions remain recorded for FuncNorm as a concrete type,
+LightSource, bivariate colormaps, and multivariate colormaps. Migration notes
+summarize typed Go API differences for dynamic Python color inputs,
+callback-driven colorbar updates, custom colorbar formatters, gridspec and
+multi-parent colorbar helpers, and omitted shaded-relief or multi-component
+colorbars.
+
+`docs/matplotlib-parity-status.md` is generated from `internal/examplecatalog`
+and carries the updated color/image/colorbar row notes.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
