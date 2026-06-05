@@ -2243,7 +2243,7 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.1.3.2 Error Surface: align supported error messages
               and document Python-only dynamic input omissions.
 
-                - [ ] 17.75.5.1.3.2.1 Diagnostic Comparison: compare current
+                - [x] 17.75.5.1.3.2.1 Diagnostic Comparison: compare current
                   Go errors with upstream failure categories rather than
                   overfitting exact Python wording.
 
