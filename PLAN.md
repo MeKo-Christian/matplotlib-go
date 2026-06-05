@@ -2262,7 +2262,7 @@ example/browser breadth as documentation work.
               metadata and migration notes with supported color parsing and
               typed Go API omissions.
 
-    - [ ] 17.75.5.2 Norm Breadth and FuncNorm: implement or explicitly omit
+    - [x] 17.75.5.2 Norm Breadth and FuncNorm: implement or explicitly omit
       remaining normalization surfaces including `FuncNorm`, `MultiNorm` /
       multi-stage normalization, boundary behavior, clipping, inverse mapping,
       and scalar-mappable callback interactions. Keep deviations documented in
