@@ -2408,11 +2408,10 @@ example/browser breadth as documentation work.
                   divergence (Go `Text3D` autoscales, matplotlib text does
                   not), and the single-color-per-plane bar2d_zdir simplification.
 
-    - [ ] 17.75.4.6 3D Docs and Divergence Ledger: update parity metadata,
+    - [x] 17.75.4.6 3D Docs and Divergence Ledger: updated parity metadata,
       migration notes, and `docs/matplotlib-parity-status.md` with completed 3D
-      surfaces and explicit mplot3d divergences when Go's projection or depth
-      ordering model cannot exactly match upstream without destabilizing 2D
-      rendering.
+      surfaces and explicit mplot3d divergences where Go's typed static surface
+      intentionally differs from Matplotlib.
 
         - [x] 17.75.4.6.1 Public Surface Metadata: marked completed 3D public
           rows with current fixture coverage and residual typed-API rationale;
@@ -2480,17 +2479,22 @@ example/browser breadth as documentation work.
                   3D text, GUI/event-only APIs, overload aliases, masked arrays,
                   and rare painter-order residuals.
 
-        - [ ] 17.75.4.6.3 Final 3D Status Regeneration: regenerate
-          `docs/matplotlib-parity-status.md`, run focused catalog/doc freshness
-          tests, and mark `17.75.4` complete.
+        - [x] 17.75.4.6.3 Final 3D Status Regeneration: regenerated
+          `docs/matplotlib-parity-status.md`, ran focused catalog/doc freshness
+          tests, refreshed the stale `mplot3d_basic` golden, and completed
+          17.75.4.
 
-            - [ ] 17.75.4.6.3.1 Status Regeneration: run the documented
-              parity-status regeneration path after all 17.75.4 metadata,
-              migration notes, and fixture rows are updated.
+            - [x] 17.75.4.6.3.1 Status Regeneration: reran
+              `rtk go run ./cmd/paritystatusdoc >
+              docs/matplotlib-parity-status.md` after all 17.75.4 metadata,
+              migration notes, and fixture rows were updated; the regenerated
+              status doc was stable.
 
-            - [ ] 17.75.4.6.3.2 Final Verification: run focused 3D, catalog,
-              reference-compare, and doc freshness checks before marking
-              17.75.4 complete.
+            - [x] 17.75.4.6.3.2 Final Verification: focused verification
+              passed: `RUN_OPTIONAL_VISUAL_TESTS=true rtk go test ./test -run
+              'TestGolden/mplot3d_|TestMatplotlibRef/mplot3d_|TestReferenceCompare/mplot3d_'`
+              (60 passed), `rtk go test ./core -run 'TestAxes3D'` (159 passed),
+              and `rtk go test ./internal/examplecatalog/...` (108 passed).
 
 ### 17.75.5 Color, Image, Norm, and Colorbar Extras
 
