@@ -2272,7 +2272,7 @@ example/browser breadth as documentation work.
           against `Normalize`, `LogNorm`, `SymLogNorm`, `PowerNorm`,
           `BoundaryNorm`, `TwoSlopeNorm`, and inverse/clip behavior.
 
-            - [ ] 17.75.5.2.1.1 Norm Inventory: map current Go norm types,
+            - [x] 17.75.5.2.1.1 Norm Inventory: map current Go norm types,
               constructors, clipping behavior, inverse support, and scalar
               mappable integration against upstream classes.
 

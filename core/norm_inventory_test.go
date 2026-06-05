@@ -1,0 +1,155 @@
+package core
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/cwbudde/matplotlib-go/transform"
+)
+
+type normInventoryEntry struct {
+	upstream          string
+	upstreamGenerated bool
+	goNorm            ScalarNormalizer
+	scaleNames        []string
+	colorbarRoute     string
+	omission          string
+}
+
+func TestNormInventoryMatchesMatplotlibColorsSurface(t *testing.T) {
+	src := readUpstreamColorsPy(t)
+	scaleNames := map[string]bool{}
+	for _, name := range transform.ScaleNames() {
+		scaleNames[name] = true
+	}
+
+	seen := map[string]bool{}
+	for _, entry := range normInventory {
+		if entry.upstream == "" {
+			t.Fatal("norm inventory entry has empty upstream name")
+		}
+		if seen[entry.upstream] {
+			t.Fatalf("duplicate norm inventory entry %q", entry.upstream)
+		}
+		seen[entry.upstream] = true
+
+		if entry.upstreamGenerated {
+			if !strings.Contains(src, entry.upstream+" = make_norm_from_scale(") {
+				t.Fatalf("upstream generated norm %s not found in colors.py", entry.upstream)
+			}
+		} else if !strings.Contains(src, "class "+entry.upstream) {
+			t.Fatalf("upstream norm class %s not found in colors.py", entry.upstream)
+		}
+
+		for _, scaleName := range entry.scaleNames {
+			if !scaleNames[scaleName] {
+				t.Fatalf("%s references missing scale registry name %q", entry.upstream, scaleName)
+			}
+		}
+		if entry.colorbarRoute == "" {
+			t.Fatalf("%s missing colorbar interaction inventory", entry.upstream)
+		}
+		if entry.goNorm == nil {
+			if entry.omission == "" {
+				t.Fatalf("%s has no Go norm and no omission note", entry.upstream)
+			}
+			continue
+		}
+		if entry.omission != "" {
+			t.Fatalf("%s has both Go norm and omission note", entry.upstream)
+		}
+		if entry.goNorm.NormName() == "" {
+			t.Fatalf("%s Go norm reports empty NormName", entry.upstream)
+		}
+		if err := entry.goNorm.Validate(); err != nil {
+			t.Fatalf("%s Go norm Validate() = %v", entry.upstream, err)
+		}
+	}
+
+	for _, required := range []string{
+		"Normalize",
+		"LogNorm",
+		"TwoSlopeNorm",
+		"CenteredNorm",
+		"FuncNorm",
+		"SymLogNorm",
+		"AsinhNorm",
+		"PowerNorm",
+		"BoundaryNorm",
+		"NoNorm",
+	} {
+		if !seen[required] {
+			t.Fatalf("norm inventory missing %s", required)
+		}
+	}
+}
+
+var normInventory = []normInventoryEntry{
+	{
+		upstream:      "Normalize",
+		goNorm:        Normalize{VMin: 0, VMax: 1},
+		scaleNames:    []string{"linear"},
+		colorbarRoute: "default scalar-map norm and linear colorbar axis",
+	},
+	{
+		upstream:          "LogNorm",
+		upstreamGenerated: true,
+		goNorm:            LogNorm{VMin: 1, VMax: 10},
+		scaleNames:        []string{"log"},
+		colorbarRoute:     "log colorbar scale and log tick locator",
+	},
+	{
+		upstream:      "TwoSlopeNorm",
+		goNorm:        TwoSlopeNorm{VMin: -1, VCenter: 0, VMax: 2},
+		colorbarRoute: "function colorbar scale via norm inverse",
+	},
+	{
+		upstream:      "CenteredNorm",
+		goNorm:        CenteredNorm{VCenter: 0, HalfRange: 1},
+		colorbarRoute: "function colorbar scale via norm inverse",
+	},
+	{
+		upstream:      "FuncNorm",
+		scaleNames:    []string{"function", "functionlog"},
+		colorbarRoute: "custom ScalarNormalizer values are accepted, but no concrete FuncNorm type is exported",
+		omission:      "represented by caller-provided ScalarNormalizer implementations rather than a Matplotlib FuncNorm clone",
+	},
+	{
+		upstream:      "SymLogNorm",
+		goNorm:        SymLogNorm{VMin: -10, VMax: 10, LinThresh: 1, LinScale: 1, Base: 10},
+		scaleNames:    []string{"symlog"},
+		colorbarRoute: "function colorbar scale via norm inverse",
+	},
+	{
+		upstream:      "AsinhNorm",
+		goNorm:        AsinhNorm{LinearWidth: 1, VMin: -10, VMax: 10},
+		scaleNames:    []string{"asinh"},
+		colorbarRoute: "asinh colorbar scale with linear-width metadata",
+	},
+	{
+		upstream:      "PowerNorm",
+		goNorm:        PowerNorm{Gamma: 2, VMin: 0, VMax: 1},
+		colorbarRoute: "function colorbar scale via norm inverse",
+	},
+	{
+		upstream:      "BoundaryNorm",
+		goNorm:        BoundaryNorm{Boundaries: []float64{0, 1, 2}, NColors: 2},
+		colorbarRoute: "boundary colorbar ticks, boundaries, values, and extension handling",
+	},
+	{
+		upstream:      "NoNorm",
+		goNorm:        NoNorm{},
+		colorbarRoute: "index-style scalar map with linear colorbar axis",
+	},
+}
+
+func readUpstreamColorsPy(t *testing.T) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("..", "third_party", "matplotlib", "lib", "matplotlib", "colors.py"))
+	if err != nil {
+		t.Fatalf("read upstream colors.py: %v", err)
+	}
+	return string(data)
+}

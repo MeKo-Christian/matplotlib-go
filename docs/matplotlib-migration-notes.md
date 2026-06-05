@@ -181,6 +181,30 @@ as `to_rgb`, `to_hex`, `same_color`, `is_color_like`, and `to_rgba_array`
 remain intentionally omitted unless a later migration fixture needs dedicated
 typed APIs.
 
+## Phase 17.75.5 Norm Inventory
+
+Current scalar-mappable normalization is exposed through the typed
+`core.ScalarNormalizer` interface rather than Matplotlib's mutable `Normalize`
+class hierarchy. The Phase 17.75.5 inventory maps the upstream `colors.py`
+norm surface to Go as follows:
+
+| Matplotlib norm | Go surface | Related axis scale | Colorbar route |
+| --- | --- | --- | --- |
+| `Normalize` | `core.Normalize` | `linear` | default linear scalar-map axis |
+| `LogNorm` | `core.LogNorm` | `log` | log colorbar scale and log ticks |
+| `SymLogNorm` | `core.SymLogNorm` | `symlog` | function colorbar scale through the norm inverse |
+| `AsinhNorm` | `core.AsinhNorm` | `asinh` | asinh colorbar scale with linear-width metadata |
+| `PowerNorm` | `core.PowerNorm` | none | function colorbar scale through the norm inverse |
+| `TwoSlopeNorm` | `core.TwoSlopeNorm` | none | function colorbar scale through the norm inverse |
+| `CenteredNorm` | `core.CenteredNorm` | none | function colorbar scale through the norm inverse |
+| `BoundaryNorm` | `core.BoundaryNorm` | none | boundary ticks, boundaries, values, and extensions |
+| `NoNorm` | `core.NoNorm` | none | index-style scalar map on a linear colorbar axis |
+| `FuncNorm` | custom `core.ScalarNormalizer` implementations | `function`, `functionlog` scales exist for axes | accepted through the interface, with no concrete `FuncNorm` clone |
+
+This keeps axes scales and color normalization deliberately separate: axis
+`function`/`functionlog` scales do not automatically become color norms, and
+custom color normalization should implement `ScalarNormalizer` directly.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
