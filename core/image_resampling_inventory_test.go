@@ -325,3 +325,67 @@ func TestTransformedImageAggRasterAlignmentIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageVectorBackendBehaviorIsDocumented(t *testing.T) {
+	sourceRequirements := map[string][]string{
+		filepath.Join("..", "backends", "svg", "image.go"): {
+			"r.renderImageNode(rgba, flipped, \"\")",
+			"preserveAspectRatio=\"none\"",
+			"uri := \"data:image/png;base64,\" + encoded",
+			"matrixTransform(r.deviceFlip().Mul(transform))",
+			"clipIDs:   r.currentClipIDs()",
+		},
+		filepath.Join("..", "backends", "svg", "svg_test.go"): {
+			"TestImageTransformedEmitsMatrixAttribute",
+			"TestImageTransformedHonorsClip",
+			"TestImageSerializesEmbeddedPNGAndNormalizesDestinationRect",
+		},
+		filepath.Join("..", "backends", "pdf", "pdf.go"): {
+			"r.drawImageWithMatrix(img, matrix)",
+			"writeImageInvocation(matrix, name)",
+			"RGBA images with alpha get a grayscale soft mask",
+		},
+		filepath.Join("..", "backends", "pdf", "pdf_test.go"): {
+			"TestImageEmitsXObjectResourceAndDrawOperator",
+			"TestImageWithAlphaEmitsSoftMask",
+			"TestImageTransformedEmitsAffineImageMatrix",
+			"TestRendererClipRectEmitsRectangleClip",
+			"TestRendererClipPathEmitsClipOperators",
+		},
+	}
+	for path, phrases := range sourceRequirements {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		src := string(data)
+		for _, phrase := range phrases {
+			if !strings.Contains(src, phrase) {
+				t.Fatalf("%s missing vector backend behavior marker %q", path, phrase)
+			}
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 SVG/PDF Vector Image Behavior",
+		"`SVG` emits embedded PNG data-URI `<image>` nodes",
+		"`preserveAspectRatio=\"none\"`",
+		"`transform=\"matrix(...)\"`",
+		"active clip paths wrap image nodes",
+		"`PDF` emits image XObjects",
+		"`cm` image matrices",
+		"alpha is represented by grayscale soft masks",
+		"interpolation names are intentionally not translated into SVG `image-rendering` hints or PDF `/Interpolate` dictionaries",
+		"exact resampling remains viewer-dependent for SVG/PDF output",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image vector backend behavior docs missing %q", phrase)
+		}
+	}
+}

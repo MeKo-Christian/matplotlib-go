@@ -745,6 +745,24 @@ for the active fixtures but can produce different scalar-stage resampling when a
 large image is mostly outside the axes clip. The fixture refresh can proceed
 with AGG as the raster reference and GoBasic documented as a fallback.
 
+## Phase 17.75.5 SVG/PDF Vector Image Behavior
+
+`SVG` emits embedded PNG data-URI `<image>` nodes with
+`preserveAspectRatio="none"`. Axis-aligned images use x/y/width/height
+placement, transformed images use `transform="matrix(...)"`, and active clip
+paths wrap image nodes through the shared SVG clip stack. The SVG backend does
+not reinterpret image interpolation names as viewer hints.
+
+`PDF` emits image XObjects and draws them through `cm` image matrices.
+Transformed images fold the source image dimensions into the matrix before the
+XObject draw, and alpha is represented by grayscale soft masks. PDF clipping is
+structural through rectangle/path clip operators in the content stream.
+
+The interpolation names are intentionally not translated into SVG
+`image-rendering` hints or PDF `/Interpolate` dictionaries; exact resampling
+remains viewer-dependent for SVG/PDF output, while placement, transformed
+embedding, and clip structure are tested as the vector fallback contract.
+
 ## Phase 17.75.5 Interpolation Kernel Alignment
 
 `AGG` keeps the Matplotlib interpolation-name registry for raster image draws:

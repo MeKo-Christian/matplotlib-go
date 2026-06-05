@@ -2239,7 +2239,7 @@ example/browser breadth as documentation work.
           fallback behavior where exact Matplotlib image resampling is not
           practical.
 
-            - [ ] 17.75.5.5.3.1 SVG/PDF Behavior: test vector backend image
+            - [x] 17.75.5.5.3.1 SVG/PDF Behavior: test vector backend image
               placement, interpolation hints, clipping, and fallback raster
               embedding behavior.
 
