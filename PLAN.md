@@ -2229,7 +2229,7 @@ example/browser breadth as documentation work.
           NaN handling, invalid-length sequences, and error messages where they
           affect supported Go APIs.
 
-            - [ ] 17.75.5.1.3.1 Bad Value Semantics: compare masked, NaN, and
+            - [x] 17.75.5.1.3.1 Bad Value Semantics: compare masked, NaN, and
               invalid numeric inputs against Matplotlib's conversion behavior.
 
                 - [x] 17.75.5.1.3.1.1 Invalid Input Audit: compare NaN,
