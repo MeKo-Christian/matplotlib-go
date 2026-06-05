@@ -2191,7 +2191,7 @@ example/browser breadth as documentation work.
       surfaces and intentional omissions in public-surface metadata and migration
       notes, and regenerated `docs/matplotlib-parity-status.md`.
 
-### 17.75.6 Patch, Annotation, Legend, and Offset-Box Tail
+### 17.6.6 Patch, Annotation, Legend, and Offset-Box Tail
 
 - [x] Finish exact ArrowStyle / ConnectionStyle geometry edge cases and any
       specialized patch classes still classified as partial in the public
