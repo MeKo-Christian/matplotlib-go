@@ -2232,7 +2232,7 @@ example/browser breadth as documentation work.
               adjust nearest, bilinear, bicubic, antialiasing, and `none`
               behavior for AGG and Go raster paths.
 
-            - [ ] 17.75.5.5.2.2 Transform and Extent Alignment: align origin,
+            - [x] 17.75.5.5.2.2 Transform and Extent Alignment: align origin,
               extent, affine transforms, clipping, and pixel-center placement.
 
         - [ ] 17.75.5.5.3 Vector Backend Fallbacks: document and test SVG/PDF

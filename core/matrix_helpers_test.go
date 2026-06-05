@@ -398,6 +398,26 @@ func TestImShow_ExtentDrivesAxesLimits(t *testing.T) {
 	}
 }
 
+func TestImShow_ExplicitExtentOriginUpperDoesNotInvertYLimits(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(unitRect())
+	img := ax.ImShow([][]float64{{0, 1}, {2, 3}}, ImShowOptions{
+		Extent: &[4]float64{10, 20, 30, 40},
+		Origin: ImageOriginUpper,
+	})
+	if img == nil {
+		t.Fatal("ImShow returned nil")
+	}
+
+	yMin, yMax := ax.YScale.Domain()
+	if yMin != 30 || yMax != 40 {
+		t.Fatalf("explicit extent with origin upper y domain = [%v,%v], want Matplotlib [30,40]", yMin, yMax)
+	}
+	if ax.YInverted() {
+		t.Fatal("explicit extent with origin upper should not invert the y-axis")
+	}
+}
+
 func TestImShow_InterpolationPropagatesToImage(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(unitRect())

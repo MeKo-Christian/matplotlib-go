@@ -229,11 +229,13 @@ func (a *Axes) ImShow(data [][]float64, opts ...ImShowOptions) *Image2D {
 	}
 	a.SetXLim(xMin, xMax)
 	a.SetYLim(yMin, yMax)
-	if cfg.Origin == ImageOriginUpper && !a.YInverted() {
-		a.InvertY()
-	}
-	if cfg.Origin == ImageOriginLower && a.YInverted() {
-		a.InvertY()
+	if cfg.Extent == nil {
+		if cfg.Origin == ImageOriginUpper && !a.YInverted() {
+			a.InvertY()
+		}
+		if cfg.Origin == ImageOriginLower && a.YInverted() {
+			a.InvertY()
+		}
 	}
 	return img
 }

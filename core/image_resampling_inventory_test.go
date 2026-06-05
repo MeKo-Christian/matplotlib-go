@@ -239,3 +239,64 @@ func TestTransformedImageInterpolationKernelAlignmentIsDocumented(t *testing.T) 
 		}
 	}
 }
+
+func TestTransformedImageTransformAndExtentAlignmentIsDocumented(t *testing.T) {
+	sourceRequirements := map[string][]string{
+		filepath.Join("..", "core", "matrix_helpers.go"): {
+			"if cfg.Extent == nil {",
+			"cfg.Origin == ImageOriginUpper",
+			"a.InvertY()",
+		},
+		filepath.Join("..", "core", "matrix_helpers_test.go"): {
+			"TestImShow_ExplicitExtentOriginUpperDoesNotInvertYLimits",
+			"want Matplotlib [30,40]",
+		},
+		filepath.Join("..", "core", "image.go"): {
+			"matplotlibImageDrawRect",
+			"imageTransform(dst, raster, anchor, angleRad)",
+			"rotationAnchor(ctx, dst)",
+		},
+		filepath.Join("..", "core", "image_test.go"): {
+			"TestImage2D_DrawCeilsRasterSizeAndKeepsMatplotlibAnchor",
+			"TestImageTransformPositiveAngleUsesDataSpaceOrientation",
+		},
+		filepath.Join("..", "backends", "agg", "image_interpolation_test.go"): {
+			"TestAggTransformedImagePreservesSourceOrientation",
+			"TestAggTransformedImageRespectsClipPathAndAlpha",
+		},
+	}
+	for path, phrases := range sourceRequirements {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		src := string(data)
+		for _, phrase := range phrases {
+			if !strings.Contains(src, phrase) {
+				t.Fatalf("%s missing transform/extent source marker %q", path, phrase)
+			}
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Transform and Extent Alignment",
+		"`Axes.ImShow` now matches Matplotlib explicit extent handling",
+		"`origin='upper'` does not invert explicit `extent=(left, right, bottom, top)` limits",
+		"default centered-pixel extents still use origin-driven Y presentation",
+		"`matplotlibImageDrawRect`",
+		"`imageTransform`",
+		"`rotationAnchor`",
+		"AGG transformed-image tests pin source orientation, clip-path masking, and alpha",
+		"remaining clipping limitation is that Go still clips image pixels at the renderer layer rather than resampling from Matplotlib's `clipped_bbox` output shape",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image transform/extent alignment docs missing %q", phrase)
+		}
+	}
+}

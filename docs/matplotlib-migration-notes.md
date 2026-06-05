@@ -742,6 +742,27 @@ vector resampling. Kaiser still maps to the closest public AGG filter exposed by
 `agg_go`; SVG/PDF/PS/PGF interpolation behavior remains an output-consumer
 property to document under the vector-backend fallback tasks.
 
+## Phase 17.75.5 Transform and Extent Alignment
+
+`Axes.ImShow` now matches Matplotlib explicit extent handling:
+`origin='upper'` does not invert explicit `extent=(left, right, bottom, top)`
+limits. The default centered-pixel extents still use origin-driven Y presentation,
+so the common no-extent `imshow` case keeps the top-row-at-top behavior while
+explicit extents preserve the user-provided bottom/top ordering.
+
+The core transformed-image path is pinned by `matplotlibImageDrawRect`,
+`imageTransform`, and `rotationAnchor`: non-rotated images preserve
+Matplotlib's rounded output anchor, rotated images use a data-space positive
+angle convention, and custom anchors remain data-coordinate inputs. AGG
+transformed-image tests pin source orientation, clip-path masking, and alpha
+for native `render.ImageTransformer` draws.
+
+The remaining clipping limitation is that Go still clips image pixels at the
+renderer layer rather than resampling from Matplotlib's `clipped_bbox` output
+shape. That keeps visual clipping correct for current fixtures, but clipped
+scalar-stage resampling can still differ from upstream when only a subregion of
+a large image is visible.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
