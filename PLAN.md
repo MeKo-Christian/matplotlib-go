@@ -2174,7 +2174,7 @@ example/browser breadth as documentation work.
       precedence, grayscale strings, masked/NaN values, and sequence ambiguity.
       Complete the scoped audits below before changing shared color APIs.
 
-        - [ ] 17.75.5.1.1 Color Name and Hex Parsing: compare named colors,
+        - [x] 17.75.5.1.1 Color Name and Hex Parsing: compare named colors,
           Tableau/CSS/XKCD precedence, `none`, short/long hex forms, and alpha
           suffix behavior against `colors.py`.
 
