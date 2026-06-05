@@ -2477,7 +2477,7 @@ example/browser breadth as documentation work.
                   for bivariate or multivariate inputs intentionally outside
                   the Go API.
 
-            - [ ] 17.75.5.4.4.2 Metadata Regeneration: update colormap metadata,
+            - [x] 17.75.5.4.4.2 Metadata Regeneration: update colormap metadata,
               migration notes, and parity status after the support decision.
 
                 - [x] 17.75.5.4.4.2.1 Colormap Public-Surface Rows: update
