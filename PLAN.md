@@ -2232,7 +2232,7 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.1.3.1 Bad Value Semantics: compare masked, NaN, and
               invalid numeric inputs against Matplotlib's conversion behavior.
 
-                - [ ] 17.75.5.1.3.1.1 Invalid Input Audit: compare NaN,
+                - [x] 17.75.5.1.3.1.1 Invalid Input Audit: compare NaN,
                   infinite, negative, out-of-range, masked, and nil-equivalent
                   inputs against upstream behavior.
 
