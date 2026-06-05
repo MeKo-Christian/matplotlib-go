@@ -2379,7 +2379,7 @@ example/browser breadth as documentation work.
           the static-rendering subset needed by examples, or document why the
           Go port intentionally omits LightSource-style image lighting.
 
-            - [ ] 17.75.5.3.2.1 Hillshade Core: implement or omit the grayscale
+            - [x] 17.75.5.3.2.1 Hillshade Core: implement or omit the grayscale
               hillshade core with Matplotlib default azimuth, altitude, and
               fraction semantics.
 

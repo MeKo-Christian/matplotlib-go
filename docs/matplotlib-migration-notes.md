@@ -402,6 +402,26 @@ keep LightSource as an explicit omission with this fixture audit, or add a
 small static subset only if a new visual fixture exercises hillshade/blend
 behavior.
 
+## Phase 17.75.5 LightSource Hillshade Core Decision
+
+`hillshade` remains intentionally omitted for the current Go public API. No
+`core.LightSource` or `color.LightSource` type is added, and there is no
+standalone grayscale hillshade constructor that promises Matplotlib's
+`azdeg=315`, `altdeg=45`, `vert_exag=1`, `dx=1`, `dy=1`, and `fraction=1`
+semantics.
+
+The reason is fixture scope rather than algorithm complexity. No committed
+parity fixture requires grayscale hillshade output, and the supported mplot3d
+examples exercise collection-face shading instead of 2D elevation-image
+lighting. `shade3DFaceColor` remains the supported 3D face-shading path for
+solid-color bars, voxels, and explicit-color triangulated surfaces.
+
+Revisit this decision when a shaded-relief image fixture is added. At that
+point the implementation should start from the upstream audit above: inverted
+image-row spacing, `np.gradient`-style derivative handling, normalized
+`(-e_dx, -e_dy, 1)` normals, fraction scaling before min/max rescale, and final
+`[0, 1]` clipping.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

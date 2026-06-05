@@ -133,6 +133,56 @@ func TestLightSourceExampleNeedListIsDocumented(t *testing.T) {
 	}
 }
 
+func TestLightSourceHillshadeCoreOmissionIsDocumented(t *testing.T) {
+	for _, dir := range []string{"core", "color"} {
+		root := filepath.Join("..", dir)
+		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() || filepath.Ext(path) != ".go" || filepath.Base(path) == "lightsource_inventory_test.go" {
+				return nil
+			}
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			src := string(data)
+			for _, phrase := range []string{"type LightSource", "func Hillshade", "Hillshade("} {
+				if strings.Contains(src, phrase) {
+					t.Fatalf("%s unexpectedly implements LightSource hillshade API via %q", path, phrase)
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("scan %s for hillshade API: %v", dir, err)
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	requiredDocs := []string{
+		"Phase 17.75.5 LightSource Hillshade Core Decision",
+		"`hillshade` remains intentionally omitted",
+		"`core.LightSource` or `color.LightSource` type is added",
+		"`azdeg=315`, `altdeg=45`",
+		"`vert_exag=1`, `dx=1`, `dy=1`, and `fraction=1`",
+		"No committed",
+		"parity fixture requires grayscale hillshade output",
+		"`shade3DFaceColor` remains the supported 3D face-shading path",
+		"Revisit this decision when a shaded-relief image fixture is added",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("LightSource hillshade decision docs missing %q", phrase)
+		}
+	}
+}
+
 func readUpstreamMPLToolkitsFile(t *testing.T, parts ...string) string {
 	t.Helper()
 	pathParts := append([]string{"..", "third_party", "matplotlib", "lib", "mpl_toolkits"}, parts...)
