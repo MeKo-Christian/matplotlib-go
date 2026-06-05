@@ -2314,7 +2314,7 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.2.3.1 Boundary and Centered Norms: align boundary,
               centered, two-slope, clipping, inverse, and out-of-range behavior.
 
-                - [ ] 17.75.5.2.3.1.1 BoundaryNorm Audit: compare boundary
+                - [x] 17.75.5.2.3.1.1 BoundaryNorm Audit: compare boundary
                   indexing, under/over/bad values, extension behavior, and
                   colorbar tick expectations.
 

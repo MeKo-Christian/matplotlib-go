@@ -150,6 +150,70 @@ func TestBoundaryNormReturnsDiscreteColorIndexes(t *testing.T) {
 	}
 }
 
+func TestBoundaryNormMatchesUpstreamIndexAudit(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		norm   BoundaryNorm
+		values map[float64]int
+	}{
+		{
+			name:   "base bins use under and over sentinels",
+			source: "colors.py:BoundaryNorm.__call__: under=-1 over=ncolors when clip is false",
+			norm:   BoundaryNorm{Boundaries: []float64{0, 1, 2, 3}, NColors: 3},
+			values: map[float64]int{-0.1: -1, 0: 0, 0.5: 0, 1: 1, 2.9: 2, 3: 3},
+		},
+		{
+			name:   "clip clamps out of range values",
+			source: "colors.py:BoundaryNorm.__call__: clip clamps to first and last color",
+			norm:   BoundaryNorm{Boundaries: []float64{0, 10, 20}, NColors: 5, Clip: true},
+			values: map[float64]int{-1: 0, 0: 0, 5: 0, 15: 4, 20: 4, 25: 4},
+		},
+		{
+			name:   "more colors than regions stretches indexes",
+			source: "colors.py:BoundaryNorm.__call__: stretch region indexes over color range",
+			norm:   BoundaryNorm{Boundaries: []float64{0, 10, 20}, NColors: 5},
+			values: map[float64]int{-1: -1, 5: 0, 15: 4, 20: 5},
+		},
+		{
+			name:   "extend min offsets interior bins",
+			source: "colors.py:BoundaryNorm.__init__: extend min increments offset",
+			norm:   BoundaryNorm{Boundaries: []float64{0, 1, 2}, NColors: 3, Extend: "min"},
+			values: map[float64]int{-0.1: -1, 0.5: 1, 1.5: 2, 2: 3},
+		},
+		{
+			name:   "extend both keeps under and over sentinels",
+			source: "colors.py:BoundaryNorm.__init__: extend both adds min and max regions",
+			norm:   BoundaryNorm{Boundaries: []float64{0, 1, 2}, NColors: 4, Extend: "both"},
+			values: map[float64]int{-0.1: -1, 0.5: 1, 1.5: 2, 2: 4},
+		},
+	}
+
+	for _, tc := range tests {
+		if tc.source == "" {
+			t.Fatalf("%s missing upstream source", tc.name)
+		}
+		if err := tc.norm.Validate(); err != nil {
+			t.Fatalf("%s Validate() = %v", tc.name, err)
+		}
+		for value, want := range tc.values {
+			if got := tc.norm.Index(value); got != want {
+				t.Fatalf("%s BoundaryNorm.Index(%v) = %d, want %d", tc.name, value, got, want)
+			}
+		}
+	}
+
+	if err := (BoundaryNorm{Boundaries: []float64{0, 1, 2}, NColors: 3, Clip: true, Extend: "both"}).Validate(); err == nil {
+		t.Fatal("clip=true with extend should fail validation")
+	}
+	if err := (BoundaryNorm{Boundaries: []float64{0, 1, 2}, NColors: 2, Extend: "both"}).Validate(); err == nil {
+		t.Fatal("ncolors smaller than extended region count should fail validation")
+	}
+	if _, ok := (BoundaryNorm{Boundaries: []float64{0, 1}, NColors: 1}).Inverse(0); ok {
+		t.Fatal("BoundaryNorm.Inverse returned ok=true, want non-invertible")
+	}
+}
+
 func TestResolveScalarMapRejectsNormWithVMinVMax(t *testing.T) {
 	vmin := 0.0
 	_, err := ResolveScalarMapValues([]float64{1, 2, 3}, ScalarMapConfig{
