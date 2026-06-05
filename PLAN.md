@@ -2341,7 +2341,7 @@ example/browser breadth as documentation work.
                   tests for each implemented norm's scalar, slice, inverse,
                   clipping, and out-of-range behavior.
 
-                - [ ] 17.75.5.2.4.1.2 Scalar-Mappable Norm Tests: run or add
+                - [x] 17.75.5.2.4.1.2 Scalar-Mappable Norm Tests: run or add
                   focused tests for norm-driven colormap lookup, clim/autoscale
                   interaction, and supported update semantics.
 
