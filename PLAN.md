@@ -2178,7 +2178,7 @@ example/browser breadth as documentation work.
           Tableau/CSS/XKCD precedence, `none`, short/long hex forms, and alpha
           suffix behavior against `colors.py`.
 
-            - [ ] 17.75.5.1.1.1 Named Color Tables: compare Go named-color
+            - [x] 17.75.5.1.1.1 Named Color Tables: compare Go named-color
               tables and precedence against Matplotlib's base, Tableau, CSS4,
               and XKCD tables.
 
