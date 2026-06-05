@@ -211,3 +211,38 @@ func TestColorbarTickAndLabelFormattingIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestColorbarFormatterAndTickBreadthMilestoneIsClosed(t *testing.T) {
+	planData, err := os.ReadFile(filepath.Join("..", "PLAN.md"))
+	if err != nil {
+		t.Fatalf("read PLAN.md: %v", err)
+	}
+	planText := strings.Join(strings.Fields(string(planData)), " ")
+	requiredPlan := []string{
+		"- [x] 17.75.5.6.2 Colorbar Formatter and Tick Breadth: align locators, formatters, boundaries, extensions, minor ticks, labels, and orientation behavior needed by supported examples.",
+		"- [x] 17.75.5.6.2.1 Boundaries and Extensions: align boundary, spacing, extend, extendfrac, under/over, and discrete colorbar behavior.",
+		"- [x] 17.75.5.6.2.2 Tick and Label Formatting: align locator, formatter, minor tick, label, orientation, and tick-position behavior used by examples.",
+	}
+	for _, phrase := range requiredPlan {
+		if !strings.Contains(planText, phrase) {
+			t.Fatalf("colorbar formatter/tick breadth milestone missing PLAN marker %q", phrase)
+		}
+	}
+
+	docData, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(docData)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Colorbar Boundaries and Extensions",
+		"Phase 17.75.5 Colorbar Tick and Label Formatting",
+		"custom `extendfrac` and `extendfrac='auto'` remain documented residuals",
+		"custom colorbar formatter options, ticklocation independent from location, `set_ticks(labels=...)`, and minor formatter APIs remain documented residuals",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("colorbar formatter/tick breadth milestone missing docs marker %q", phrase)
+		}
+	}
+}

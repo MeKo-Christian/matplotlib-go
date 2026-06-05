@@ -2287,7 +2287,7 @@ example/browser breadth as documentation work.
               pad, anchor, panchor, location, and orientation defaults where
               supported.
 
-        - [ ] 17.75.5.6.2 Colorbar Formatter and Tick Breadth: align locators,
+        - [x] 17.75.5.6.2 Colorbar Formatter and Tick Breadth: align locators,
           formatters, boundaries, extensions, minor ticks, labels, and
           orientation behavior needed by supported examples.
 
