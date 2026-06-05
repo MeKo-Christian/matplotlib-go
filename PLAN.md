@@ -2203,7 +2203,7 @@ example/browser breadth as documentation work.
           precedence, grayscale-string validation, numeric ambiguity, and
           sequence handling against Matplotlib's conversion tests.
 
-            - [ ] 17.75.5.1.2.1 Alpha Precedence: compare explicit alpha
+            - [x] 17.75.5.1.2.1 Alpha Precedence: compare explicit alpha
               overrides, embedded alpha, `none`, and default opacity handling.
 
                 - [x] 17.75.5.1.2.1.1 Upstream Cases: extract Matplotlib
