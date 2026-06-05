@@ -283,6 +283,39 @@ func TestLightSourceSurfacePathIntegrationDecisionIsDocumented(t *testing.T) {
 	}
 }
 
+func TestLightSourceFixtureDecisionIsDocumented(t *testing.T) {
+	parityDir := filepath.Join("..", "test", "parity")
+	entries, err := os.ReadDir(parityDir)
+	if err != nil {
+		t.Fatalf("read parity dir: %v", err)
+	}
+	for _, entry := range entries {
+		name := entry.Name()
+		if strings.Contains(name, "lightsource") || strings.Contains(name, "hillshade") || strings.Contains(name, "shaded_image") {
+			t.Fatalf("unexpected LightSource visual fixture %q before fixture decision changes", name)
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	requiredDocs := []string{
+		"Phase 17.75.5 LightSource Fixture Decision",
+		"No new LightSource or shaded-image visual triplet is added",
+		"`hillshade`, `shade`, and `shade_rgb` reference fixtures are deferred",
+		"`mplot3d_terrain` remains an mplot3d surface fixture",
+		"existing 3D fixtures cover the separate face-shading path",
+		"Add a dedicated visual triplet before implementing the 2D LightSource API",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("LightSource fixture decision docs missing %q", phrase)
+		}
+	}
+}
+
 func readUpstreamMPLToolkitsFile(t *testing.T, parts ...string) string {
 	t.Helper()
 	pathParts := append([]string{"..", "third_party", "matplotlib", "lib", "mpl_toolkits"}, parts...)

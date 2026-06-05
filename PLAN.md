@@ -2416,7 +2416,7 @@ example/browser breadth as documentation work.
               fixtures or record LightSource omissions in parity metadata and
               migration notes.
 
-                - [ ] 17.75.5.3.4.2.1 Lighting Fixture Decision: decide which
+                - [x] 17.75.5.3.4.2.1 Lighting Fixture Decision: decide which
                   LightSource or shaded-image examples need visual triplets
                   after focused behavior tests land.
 

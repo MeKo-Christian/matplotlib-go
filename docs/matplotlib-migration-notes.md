@@ -474,6 +474,23 @@ Do not add a `lightsource` option to these paths until a visual fixture needs
 custom mplot3d light-source positioning. Such a fixture should compare against
 `art3d._shade_colors`, not the 2D `colors.LightSource.shade_rgb` image path.
 
+## Phase 17.75.5 LightSource Fixture Decision
+
+No new LightSource or shaded-image visual triplet is added for this phase.
+`hillshade`, `shade`, and `shade_rgb` reference fixtures are deferred because
+the committed example set does not exercise 2D shaded-relief image lighting.
+
+`mplot3d_terrain` remains an mplot3d surface fixture, not a 2D LightSource
+fixture: its colormapped `plot_surface` path disables Matplotlib face shading,
+and its solid-color trisurf path is covered by the existing mplot3d face-shade
+tests. The existing 3D fixtures cover the separate face-shading path for bars,
+voxels, and explicit-color surfaces without adding the 2D `LightSource` API.
+
+Add a dedicated visual triplet before implementing the 2D LightSource API. The
+triplet should call one of `hillshade`, `shade`, or `shade_rgb` directly so the
+Go port has a concrete reference for gradient, fraction, blend-mode, alpha, and
+mask behavior.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
