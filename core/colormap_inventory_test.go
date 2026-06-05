@@ -258,3 +258,51 @@ func TestBivarColormapOmissionIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestMultivarColormapAPIShapeDecisionIsDocumented(t *testing.T) {
+	for _, dir := range []string{"color", "core"} {
+		root := filepath.Join("..", dir)
+		err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() || filepath.Ext(path) != ".go" || filepath.Base(path) == "colormap_inventory_test.go" {
+				return nil
+			}
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			if strings.Contains(string(data), "MultivarColormap") {
+				t.Fatalf("%s unexpectedly exposes multivariate colormap API", path)
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("scan %s for multivariate API: %v", dir, err)
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	docText := strings.Join(strings.Fields(doc), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Multivariate API Shape Decision",
+		"no `color.MultivarColormap`",
+		"future API would need a component-colormap list",
+		"`combination_mode`",
+		"`sRGB_add`",
+		"`sRGB_sub`",
+		"tuple input with one component per variate",
+		"component alpha multiplication",
+		"multi-component colorbar contract",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("multivariate API shape docs missing %q", phrase)
+		}
+	}
+}

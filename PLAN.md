@@ -2456,7 +2456,7 @@ example/browser breadth as documentation work.
           multichannel lookup behavior or document why the Go API keeps only
           scalar colormaps.
 
-            - [ ] 17.75.5.4.3.1 Multivariate API Shape: decide whether
+            - [x] 17.75.5.4.3.1 Multivariate API Shape: decide whether
               multichannel lookup tables fit the Go color API without
               destabilizing scalar colormaps.
 

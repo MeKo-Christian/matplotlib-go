@@ -591,6 +591,24 @@ the bivariate API directly. Future bivariate support should start with a visual
 fixture so lookup-table shape, outside/bad handling, alpha behavior, and 2D
 colorbar expectations are all tested together.
 
+## Phase 17.75.5 Multivariate API Shape Decision
+
+No multivariate colormap API is added in this phase: there is no
+`color.MultivarColormap`, no multivariate registry, and no scalar-mappable
+overload that accepts component-array tuples. Existing scalar mapping remains
+one `color.Colormap`, one normalizer, one scalar range, and one colorbar axis.
+
+A future API would need a component-colormap list, variate-count validation,
+`combination_mode` support for `sRGB_add` and `sRGB_sub`, tuple input with one
+component per variate, bad-value propagation across all components, component
+alpha multiplication, optional clipping/bytes behavior, per-component
+resampling and extremes, and a multi-component colorbar contract.
+
+That future surface should be typed separately from scalar colormaps. Hiding
+multivariate mapping inside `color.Colormap` or `ScalarMapInfo` would blur the
+current scalar contract and leave component-array validation, alpha semantics,
+and colorbar behavior implicit.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
