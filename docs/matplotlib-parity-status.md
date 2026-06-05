@@ -29,9 +29,9 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 | --- | ---: |
 | direct-equivalent | 50 |
 | idiomatic-equivalent | 38 |
-| partial | 772 |
+| partial | 771 |
 | not-started | 0 |
-| intentional-omission | 36 |
+| intentional-omission | 37 |
 
 ## Closure Owner Summary
 
@@ -41,7 +41,7 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 | 17.75.2 | 10 |
 | 17.75.3 | 293 |
 | 17.75.4 | 71 |
-| 17.75.5 | 41 |
+| 17.75.5 | 40 |
 | 17.75.6 | 127 |
 | 17.75.7 | 145 |
 | 17.75.8 | 73 |
@@ -330,7 +330,6 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 | colors.py:class:ColorConverter | colors-cm | partial | 17.75.5 | color/colormap.go, color/listed_colormaps.go, color/named_colors.go, core/norm.go | Named colors, Matplotlib hex forms, grayscale strings, typed RGB/RGBA values, color-cycle references, colormaps, and common norms including AsinhNorm exist; Python-only dynamic color-alpha tuples, to_rgba_array batch inputs, masked values, NaN component pass-through, FuncNorm, LightSource, and bivar/multivar colormaps remain typed Go omissions or later Phase 17.75.5 decisions. |
 | colors.py:class:ColorSequenceRegistry | colors-cm | partial | 17.75.5 | color/colormap.go, color/listed_colormaps.go, color/named_colors.go, core/norm.go | Named colors, Matplotlib hex forms, grayscale strings, typed RGB/RGBA values, color-cycle references, colormaps, and common norms including AsinhNorm exist; Python-only dynamic color-alpha tuples, to_rgba_array batch inputs, masked values, NaN component pass-through, FuncNorm, LightSource, and bivar/multivar colormaps remain typed Go omissions or later Phase 17.75.5 decisions. |
 | colors.py:class:Colormap | colors-cm | partial | 17.75.5 | color/colormap.go, color/listed_colormaps.go, color/named_colors.go, core/norm.go | Named colors, Matplotlib hex forms, grayscale strings, typed RGB/RGBA values, color-cycle references, colormaps, and common norms including AsinhNorm exist; Python-only dynamic color-alpha tuples, to_rgba_array batch inputs, masked values, NaN component pass-through, FuncNorm, LightSource, and bivar/multivar colormaps remain typed Go omissions or later Phase 17.75.5 decisions. |
-| colors.py:class:FuncNorm | colors-cm | partial | 17.75.5 | core/norm.go, transform/scale_registry.go | Function-backed scales exist, but a Normalize-compatible FuncNorm surface, colorbar scale integration, and fixtures remain a Phase 17.75.5 implementation-or-omission decision. |
 | colors.py:class:LightSource | colors-cm | partial | 17.75.5 | color/colormap.go, core/norm.go | Surface shading uses existing color and norm primitives, but a Matplotlib LightSource-equivalent API and terrain/image fixtures remain a Phase 17.75.5 implementation-or-omission decision. |
 | colors.py:class:LinearSegmentedColormap | colors-cm | partial | 17.75.5 | color/colormap.go, color/listed_colormaps.go, color/named_colors.go, core/norm.go | Named colors, Matplotlib hex forms, grayscale strings, typed RGB/RGBA values, color-cycle references, colormaps, and common norms including AsinhNorm exist; Python-only dynamic color-alpha tuples, to_rgba_array batch inputs, masked values, NaN component pass-through, FuncNorm, LightSource, and bivar/multivar colormaps remain typed Go omissions or later Phase 17.75.5 decisions. |
 | colors.py:class:ListedColormap | colors-cm | partial | 17.75.5 | color/colormap.go, color/listed_colormaps.go, color/named_colors.go, core/norm.go | Named colors, Matplotlib hex forms, grayscale strings, typed RGB/RGBA values, color-cycle references, colormaps, and common norms including AsinhNorm exist; Python-only dynamic color-alpha tuples, to_rgba_array batch inputs, masked values, NaN component pass-through, FuncNorm, LightSource, and bivar/multivar colormaps remain typed Go omissions or later Phase 17.75.5 decisions. |

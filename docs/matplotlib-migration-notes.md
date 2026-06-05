@@ -270,6 +270,23 @@ metadata. Until a supported fixture needs Matplotlib-compatible `FuncNorm`
 construction, no concrete `FuncNorm` type is added; callers that need arbitrary
 normalization should provide a typed `ScalarNormalizer` implementation.
 
+## Phase 17.75.5 FuncNorm Omission Ledger
+
+`FuncNorm` is an intentional omission as a concrete Go type. The affected
+examples are currently none: no supported parity fixture requires it.
+`asinh_norm_image`, `twoslope_norm_image`, `lognorm_imshow`, and
+`boundarynorm_pcolormesh` are covered by concrete typed norms, and the other
+supported colorbar examples use explicit `Normalize` or `BoundaryNorm`
+behavior.
+
+The rationale is API scope. Matplotlib's `FuncNorm` is array-like, transform
+scale-backed, mask-aware, and callback-friendly; adding that surface without a
+fixture would create a broad compatibility promise that the current typed API
+does not need. The fallback recommendation is to implement `ScalarNormalizer`
+directly for custom color normalization. Axis-level custom transforms continue
+to use `transform.Scale` through `function` and `functionlog`, which remains
+separate from scalar-mappable color normalization.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

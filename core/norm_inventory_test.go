@@ -178,6 +178,30 @@ func TestFuncNormGoCallbackShapeDecisionIsDocumented(t *testing.T) {
 	}
 }
 
+func TestFuncNormOmissionLedgerIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	required := []string{
+		"Phase 17.75.5 FuncNorm Omission Ledger",
+		"intentional omission",
+		"no supported parity fixture",
+		"`asinh_norm_image`",
+		"`twoslope_norm_image`",
+		"`lognorm_imshow`",
+		"`boundarynorm_pcolormesh`",
+		"implement `ScalarNormalizer` directly",
+		"`transform.Scale`",
+	}
+	for _, phrase := range required {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("FuncNorm omission ledger missing %q", phrase)
+		}
+	}
+}
+
 var normInventory = []normInventoryEntry{
 	{
 		upstream:      "Normalize",

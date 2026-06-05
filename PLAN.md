@@ -2304,7 +2304,7 @@ example/browser breadth as documentation work.
                   inverse mapping, autoscale/clim interaction, and scalar
                   mappable color lookup when implemented.
 
-                - [ ] 17.75.5.2.2.2.2 Omission Ledger: if omitted, record the
+                - [x] 17.75.5.2.2.2.2 Omission Ledger: if omitted, record the
                   API rationale, affected examples, and fallback recommendation.
 
         - [ ] 17.75.5.2.3 Boundary and Multi-Stage Norms: close remaining

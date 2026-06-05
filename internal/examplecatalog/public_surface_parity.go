@@ -159,11 +159,11 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		ID:                "colors-funcnorm-class",
 		UpstreamID:        "colors.py:class:FuncNorm",
 		FeatureCoverageID: "colors-cm",
-		Status:            PublicSurfacePartial,
+		Status:            PublicSurfaceIntentionalOmission,
 		ClosurePhase:      "17.75.5",
 		GoFiles:           []string{"core/norm.go", "transform/scale_registry.go"},
 		CatalogIDs:        []string{"asinh_norm_image", "twoslope_norm_image"},
-		Note:              "Function-backed scales exist, but a Normalize-compatible FuncNorm surface, colorbar scale integration, and fixtures remain a Phase 17.75.5 implementation-or-omission decision.",
+		Note:              "FuncNorm is intentionally omitted as a concrete Go type: no supported parity fixture requires Matplotlib's array-like function-normalizer constructor, and arbitrary color normalization is available by implementing ScalarNormalizer directly. Axis-level function/functionlog scales remain separate transform.Scale APIs.",
 	},
 	{
 		ID:                "colors-lightsource-class",
