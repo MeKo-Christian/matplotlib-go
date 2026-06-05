@@ -52,6 +52,38 @@ func TestMatplotlibGrayscaleSequenceAmbiguityInventory(t *testing.T) {
 	}
 }
 
+func TestToRGBAGrayscaleSequenceMatchesSupportedMatplotlibCases(t *testing.T) {
+	for _, tc := range matplotlibGrayscaleSequenceCases {
+		if !tc.goSupported {
+			continue
+		}
+		got, err := ToRGBA(tc.spec)
+		if tc.wantErr {
+			if err == nil {
+				t.Fatalf("%s: ToRGBA(%v) = %+v, want error", tc.name, tc.spec, got)
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatalf("%s: ToRGBA(%v) error = %v", tc.name, tc.spec, err)
+		}
+		if !sameColor(got, tc.want) {
+			t.Fatalf("%s: ToRGBA(%v) = %+v, want %+v", tc.name, tc.spec, got, tc.want)
+		}
+	}
+}
+
+func TestToRGBARejectsPythonArrayAmbiguityCases(t *testing.T) {
+	for _, tc := range matplotlibGrayscaleSequenceCases {
+		if tc.goSupported {
+			continue
+		}
+		if got, err := ToRGBA(tc.spec); err == nil {
+			t.Fatalf("%s: ToRGBA(%v) = %+v, want unsupported Python-only input error", tc.name, tc.spec, got)
+		}
+	}
+}
+
 var matplotlibGrayscaleSequenceCases = []matplotlibGrayscaleSequenceCase{
 	{
 		name:        "string grayscale lower bound",

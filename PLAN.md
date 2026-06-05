@@ -2221,7 +2221,7 @@ example/browser breadth as documentation work.
                   grayscale, numeric grayscale, RGB(A) sequences, and invalid
                   sequence lengths against Matplotlib.
 
-                - [ ] 17.75.5.1.2.2.2 Typed API Decision: implement supported
+                - [x] 17.75.5.1.2.2.2 Typed API Decision: implement supported
                   typed conversions or document Python-only ambiguity that the
                   Go API intentionally avoids.
 
