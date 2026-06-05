@@ -29,9 +29,9 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 | --- | ---: |
 | direct-equivalent | 81 |
 | idiomatic-equivalent | 98 |
-| partial | 666 |
+| partial | 665 |
 | not-started | 0 |
-| intentional-omission | 51 |
+| intentional-omission | 52 |
 
 ## Closure Owner Summary
 
@@ -42,7 +42,7 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 | 17.75.3 | 293 |
 | 17.75.4 | 71 |
 | 17.75.5 | 26 |
-| 17.75.6 | 36 |
+| 17.75.6 | 35 |
 | 17.75.7 | 145 |
 | 17.75.8 | 73 |
 | 17.75.9 | 5 |
@@ -565,7 +565,6 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 | font_manager.py:function:list_fonts | text-annotation-legend | partial | 17.75.6 | render/font_manager.go, core/text.go | Go exposes renderer FontProperties, font-key parsing, embedded default font lookup, direct file requests, and per-text structured family/style/weight/stretch/variant/file/language/math-font plus OpenType feature routing. The broader Matplotlib fontconfig cache, system font discovery, exact stretch/variant scoring, and dynamic FontManager mutation surface remain a precise partial scope. |
 | font_manager.py:function:ttfFontProperty | text-annotation-legend | partial | 17.75.6 | render/font_manager.go, core/text.go | Go exposes renderer FontProperties, font-key parsing, embedded default font lookup, direct file requests, and per-text structured family/style/weight/stretch/variant/file/language/math-font plus OpenType feature routing. The broader Matplotlib fontconfig cache, system font discovery, exact stretch/variant scoring, and dynamic FontManager mutation surface remain a precise partial scope. |
 | font_manager.py:function:win32FontDirectory | text-annotation-legend | partial | 17.75.6 | render/font_manager.go, core/text.go | Go exposes renderer FontProperties, font-key parsing, embedded default font lookup, direct file requests, and per-text structured family/style/weight/stretch/variant/file/language/math-font plus OpenType feature routing. The broader Matplotlib fontconfig cache, system font discovery, exact stretch/variant scoring, and dynamic FontManager mutation surface remain a precise partial scope. |
-| legend.py:class:DraggableLegend | text-annotation-legend | partial | 17.75.6 | core/legend.go | DraggableLegend is GUI/event-loop behavior and remains owned by the draggable legend closure item rather than the static legend rendering surface. |
 | textpath.py:class:TextPath | text-annotation-legend | partial | 17.75.6 | render/text_path.go, render/text_shaping.go, core/mathtext.go | Go provides renderer-level text path and shaping helpers for glyph outlines, kerning, combining marks, bidi/Arabic shaping where supported by the embedded shaping path, and MathText/TeX text path routing. The Python TextPath class object and full TextToPath cache/control surface are not cloned one-for-one. |
 | textpath.py:class:TextToPath | text-annotation-legend | partial | 17.75.6 | render/text_path.go, render/text_shaping.go, core/mathtext.go | Go provides renderer-level text path and shaping helpers for glyph outlines, kerning, combining marks, bidi/Arabic shaping where supported by the embedded shaping path, and MathText/TeX text path routing. The Python TextPath class object and full TextToPath cache/control surface are not cloned one-for-one. |
 | mpl_toolkits/mplot3d/axes3d.py:class:Axes3D | toolkits-projections | partial | 17.75.4 | core/axes3d.go, core/axes3d_view.go, core/axes3d_frame.go, core/axes3d_contour_surface.go, core/axes3d_bar_voxel.go, core/axes3d_geometry.go, core/axes3d_projection.go, core/scalar_mappable.go, core/collection_common.go, core/colorbar.go | Axes3D construction and common 3D plot helpers exist as typed core APIs with catalog coverage. Phase 17.75.4 depth/clipping work covers line and marker helpers, surfaces, contours, triangulated contours, trisurf, bar3d, fill-between3d, voxels, quiver, stem, and errorbar with computed depth ordering, visible-face or face sorting where applicable, AxLimClip-style explicit-limit clipping, and redraw reprojectors. Axis/view-state work covers Matplotlib 3.10-style view defaults, roll and vertical-axis view_init state, perspective/orthographic projection type and focal-length validation, box-aspect reset behavior, explicit and inverted 3D limits, autoscale margins, active panes, grid/tick styling, tick-label placement, and tick-label visibility toggles. Colormapping work covers surface, trisurf, contour, filled contour, triangulated contour, and scatter scalar-map metadata for colorbars, plus explicit-color/non-scalar-mappable behavior for bars, voxels, quiver, stems, error bars, wireframes, plot lines, and fill-between surfaces. Dedicated Matplotlib-reference fixture breadth is now covered for structured and triangulated 3D contours (contour3d, contourf3d, tricontour3d, tricontourf3d), planar 2D bars projected with zdir (bar2d_zdir), and flat 3D text labels (text3d), in addition to the existing line/scatter/stem/errorbar/bar/wireframe/surface/trisurf/voxel/fill-between triplets. Remaining 3D partial scope is GUI/event methods, Python overload grammar, and residual projection/depth-order/text-autoscale differences that are documented as typed Go deviations in docs/matplotlib-migration-notes.md. |

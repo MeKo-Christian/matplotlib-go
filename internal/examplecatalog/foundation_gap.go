@@ -265,8 +265,8 @@ var foundationAPIGaps = []FoundationAPIGap{
 			"bboxes, patch paths, and annotation anchors. Figure-level legends collect across axes and " +
 			"stack with figure labels. The legend_layout_matrix fixture gives focused coverage for those " +
 			"handler and layout paths.",
-		Gap: "Remaining legend scope is draggable GUI/event-loop behavior and exact arbitrary Python " +
-			"handler-map dispatch; static samples are represented through typed Go entries, collected " +
+		Gap: "Draggable legend behavior and exact arbitrary Python handler-map dispatch are explicit " +
+			"typed-API divergences; static samples are represented through typed Go entries, collected " +
 			"artist samples, and per-artist handler overrides.",
 		Decision: GapDecisionImplement,
 		Rationale: "Legend output is visible in many examples; handler parity should stay typed and " +

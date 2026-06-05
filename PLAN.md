@@ -2191,7 +2191,7 @@ example/browser breadth as documentation work.
       surfaces and intentional omissions in public-surface metadata and migration
       notes, and regenerated `docs/matplotlib-parity-status.md`.
 
-### 17.6.6 Patch, Annotation, Legend, and Offset-Box Tail
+### 17.75.6 Patch, Annotation, Legend, and Offset-Box Tail
 
 - [x] Finish exact ArrowStyle / ConnectionStyle geometry edge cases and any
       specialized patch classes still classified as partial in the public
@@ -2225,8 +2225,13 @@ example/browser breadth as documentation work.
       `TestLegendBestPlacementAvoidsPatchBounds`,
       `TestLegendBestPlacementAvoidsPatchPaths`, and
       `TestLegendStaticRowsAreNotLeftPartial`.
-- [ ] Keep draggable GUI-only legend and offset-box behavior either explicitly
-      omitted or owned by the backend/event-loop work below.
+- [x] Keep draggable GUI-only legend and offset-box behavior either explicitly
+      omitted or owned by the backend/event-loop work below. 2026-06-05
+      follow-up: `DraggableLegend`, draggable offset boxes, and
+      `offsetbox.DEBUG` are explicit intentional omissions from the
+      renderer-neutral static surface. Guarded by
+      `TestDraggableLegendRowIsExplicitlyOmitted` and
+      `TestTextAnnotationOffsetboxRowsAreSplitByStaticAndGuiScope`.
 
 ### 17.6.7 Stateful Pyplot and Migration Wrappers
 

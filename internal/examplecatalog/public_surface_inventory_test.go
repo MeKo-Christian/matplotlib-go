@@ -321,6 +321,24 @@ func TestLegendStaticRowsAreNotLeftPartial(t *testing.T) {
 	}
 }
 
+func TestDraggableLegendRowIsExplicitlyOmitted(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	for _, surface := range artifact.Rows {
+		if surface.ID != "legend.py:class:DraggableLegend" {
+			continue
+		}
+		row, ok := PublicSurfaceParityForRow(surface)
+		if !ok {
+			t.Fatal("missing Phase 17.75.6 DraggableLegend classification")
+		}
+		if row.Status != PublicSurfaceIntentionalOmission {
+			t.Fatalf("DraggableLegend status = %s, want intentional omission", row.Status)
+		}
+		return
+	}
+	t.Fatal("missing upstream surface row legend.py:class:DraggableLegend")
+}
+
 func TestWidgetClassesHaveExplicitRows(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	for _, surface := range artifact.Rows {

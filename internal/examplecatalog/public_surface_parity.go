@@ -2506,10 +2506,10 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		kind:              "class",
 		name:              "DraggableLegend",
 		featureCoverageID: "text-annotation-legend",
-		status:            PublicSurfacePartial,
+		status:            PublicSurfaceIntentionalOmission,
 		goFiles:           []string{"core/legend.go"},
 		catalogIDs:        []string{"legend_layout_matrix"},
-		note:              "DraggableLegend is GUI/event-loop behavior and remains owned by the draggable legend closure item rather than the static legend rendering surface.",
+		note:              "DraggableLegend is GUI/event-loop behavior and is intentionally omitted from the renderer-neutral static legend surface; backend/event-loop integrations can expose their own drag affordances without cloning Matplotlib's mutable helper class.",
 	},
 	{
 		idPrefix:          "legend-static",
