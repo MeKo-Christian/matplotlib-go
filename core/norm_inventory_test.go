@@ -86,6 +86,30 @@ func TestNormInventoryMatchesMatplotlibColorsSurface(t *testing.T) {
 	}
 }
 
+func TestNormGapListDocumentsSupportedFixtureNeeds(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	required := []string{
+		"Phase 17.75.5 Norm Gap List",
+		"`lognorm_imshow`",
+		"`twoslope_norm_image`",
+		"`boundarynorm_pcolormesh`",
+		"`asinh_norm_image`",
+		"No supported parity fixture currently requires `FuncNorm`",
+		"`MultiNorm`",
+		"scalar-mappable callback",
+		"clip",
+	}
+	for _, phrase := range required {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("norm gap list missing %q", phrase)
+		}
+	}
+}
+
 var normInventory = []normInventoryEntry{
 	{
 		upstream:      "Normalize",

@@ -205,6 +205,30 @@ This keeps axes scales and color normalization deliberately separate: axis
 `function`/`functionlog` scales do not automatically become color norms, and
 custom color normalization should implement `ScalarNormalizer` directly.
 
+## Phase 17.75.5 Norm Gap List
+
+Supported parity fixtures currently exercise the norm behavior needed by
+visible examples:
+
+- `lognorm_imshow` covers `LogNorm` image mapping and log colorbar ticks.
+- `twoslope_norm_image` covers diverging `TwoSlopeNorm` colorbar placement
+  with an inverse-backed function scale.
+- `boundarynorm_pcolormesh` and `colorbar_boundary_values` cover
+  `BoundaryNorm`, explicit boundaries/values, and colorbar extensions.
+- `asinh_norm_image` covers `AsinhNorm` image mapping and its colorbar scale.
+
+No supported parity fixture currently requires `FuncNorm`, `MultiNorm`, or a
+multi-stage normalization pipeline. `FuncNorm` remains represented by custom
+`ScalarNormalizer` implementations until a fixture needs a concrete typed
+constructor and callback policy. `MultiNorm` is not present as a Matplotlib
+3.10.9 `colors.py` public class, so any later multi-stage norm support should
+be driven by a visible example rather than added speculatively.
+
+Known norm deviations to resolve before broadening the surface are Matplotlib's
+mutable scalar-mappable callback lifecycle, exact `clip` edge behavior for
+nonlinear norms beyond the covered fixtures, and richer boundary/under/over
+interactions when a colorbar is updated after construction.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

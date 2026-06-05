@@ -2276,7 +2276,7 @@ example/browser breadth as documentation work.
               constructors, clipping behavior, inverse support, and scalar
               mappable integration against upstream classes.
 
-            - [ ] 17.75.5.2.1.2 Gap List: record missing or divergent norm
+            - [x] 17.75.5.2.1.2 Gap List: record missing or divergent norm
               behavior needed by supported examples before implementing new
               norm types.
 
