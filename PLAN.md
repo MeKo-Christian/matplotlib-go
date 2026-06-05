@@ -2353,7 +2353,7 @@ example/browser breadth as documentation work.
                   implemented, partial, or omitted norm rows with concrete
                   task references and fixture/test coverage.
 
-                - [ ] 17.75.5.2.4.2.2 Norm Docs and Status: update migration
+                - [x] 17.75.5.2.4.2.2 Norm Docs and Status: update migration
                   notes and regenerate parity status after the norm rows are
                   current.
 

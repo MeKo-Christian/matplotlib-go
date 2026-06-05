@@ -287,6 +287,30 @@ directly for custom color normalization. Axis-level custom transforms continue
 to use `transform.Scale` through `function` and `functionlog`, which remains
 separate from scalar-mappable color normalization.
 
+## Phase 17.75.5 Norm Public Surface Metadata
+
+The public-surface ledger now gives norm behavior explicit rows instead of
+leaving it inside the broad `colors.py` partial classification. `Normalize`,
+`SymLogNorm`, `PowerNorm`, `TwoSlopeNorm`, `CenteredNorm`, `BoundaryNorm`,
+`NoNorm`, and `AsinhNorm` are marked `idiomatic-equivalent`: Go exposes their
+behavior as concrete `ScalarNormalizer` values rather than Matplotlib's mutable
+normalizer classes, and the focused norm/scalar-mappable tests plus the
+`asinh_norm_image`, `twoslope_norm_image`, `boundarynorm_pcolormesh`,
+`colorbar_boundary_values`, and `colorbar_extensions` fixtures cover the
+currently supported behavior.
+
+`FuncNorm` and `make_norm_from_scale` are marked `intentional-omission` as
+public Go constructors. The supported route for arbitrary color normalization
+is still a caller-provided `ScalarNormalizer`, while axis-level custom
+transforms continue to use `transform.Scale`. `LogNorm` remains covered by the
+norm inventory and `lognorm_imshow`; Matplotlib 3.10.9 generates it through
+`make_norm_from_scale`, so the committed public-surface extraction does not
+carry a separate `colors.py:class:LogNorm` row.
+
+`docs/matplotlib-parity-status.md` was regenerated after those row decisions.
+The open broad `colors.py` rows now point to the explicit norm rows and no
+longer list implemented normalizers as unresolved Phase 17.75.5 partials.
+
 ## Phase 17.75.5 Scalar-Mappable Norm Update Audit
 
 Matplotlib `Colorizer` connects norm callbacks into a changed-event pipeline:

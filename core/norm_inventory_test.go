@@ -202,6 +202,44 @@ func TestFuncNormOmissionLedgerIsDocumented(t *testing.T) {
 	}
 }
 
+func TestNormMetadataDocsAndStatusAreCurrent(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	required := []string{
+		"Phase 17.75.5 Norm Public Surface Metadata",
+		"`idiomatic-equivalent`",
+		"`FuncNorm` and `make_norm_from_scale`",
+		"`intentional-omission`",
+		"`LogNorm` remains covered by the",
+		"norm inventory and `lognorm_imshow`",
+	}
+	for _, phrase := range required {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("norm metadata docs missing %q", phrase)
+		}
+	}
+	for _, name := range []string{"Normalize", "SymLogNorm", "PowerNorm", "TwoSlopeNorm", "CenteredNorm", "BoundaryNorm", "NoNorm", "AsinhNorm"} {
+		if !strings.Contains(doc, "`"+name+"`") {
+			t.Fatalf("norm metadata docs missing implemented norm %q", name)
+		}
+	}
+
+	statusData, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-parity-status.md"))
+	if err != nil {
+		t.Fatalf("read parity status doc: %v", err)
+	}
+	status := string(statusData)
+	if strings.Contains(status, "| colors.py:class:Normalize | colors-cm | partial |") {
+		t.Fatal("parity status still reports Normalize through the broad partial colors row")
+	}
+	if !strings.Contains(status, "norm classes and the dynamic norm factory have explicit Phase 17.75.5 rows") {
+		t.Fatal("parity status broad colors note does not point to explicit norm rows")
+	}
+}
+
 func TestScalarMappableNormUpdateAuditIsDocumented(t *testing.T) {
 	colorizer := readUpstreamMatplotlibFile(t, "colorizer.py")
 	colorbar := readUpstreamMatplotlibFile(t, "colorbar.py")
