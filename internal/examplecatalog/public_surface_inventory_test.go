@@ -195,6 +195,61 @@ func TestPatchStyleClosureRowsAreNotLeftPartial(t *testing.T) {
 	}
 }
 
+func TestTextAnnotationOffsetboxRowsAreSplitByStaticAndGuiScope(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	rowFor := func(upstreamID string) PublicSurfaceParity {
+		t.Helper()
+		for _, surface := range artifact.Rows {
+			if surface.ID != upstreamID {
+				continue
+			}
+			row, ok := PublicSurfaceParityForRow(surface)
+			if !ok {
+				t.Fatalf("missing Phase 17.75.6 text/offsetbox classification for %q", upstreamID)
+			}
+			return row
+		}
+		t.Fatalf("missing upstream surface row %q", upstreamID)
+		return PublicSurfaceParity{}
+	}
+
+	wantClosed := []string{
+		"text.py:class:Annotation",
+		"text.py:class:OffsetFrom",
+		"text.py:class:Text",
+		"offsetbox.py:class:AnchoredOffsetbox",
+		"offsetbox.py:class:AnchoredText",
+		"offsetbox.py:class:AnnotationBbox",
+		"offsetbox.py:class:AuxTransformBox",
+		"offsetbox.py:class:DrawingArea",
+		"offsetbox.py:class:HPacker",
+		"offsetbox.py:class:OffsetBox",
+		"offsetbox.py:class:OffsetImage",
+		"offsetbox.py:class:PackerBase",
+		"offsetbox.py:class:PaddedBox",
+		"offsetbox.py:class:TextArea",
+		"offsetbox.py:class:VPacker",
+	}
+	for _, upstreamID := range wantClosed {
+		row := rowFor(upstreamID)
+		if row.Status == PublicSurfacePartial || row.Status == PublicSurfaceNotStarted {
+			t.Fatalf("%s status = %s, want closed static text/offsetbox decision", upstreamID, row.Status)
+		}
+	}
+
+	for _, upstreamID := range []string{
+		"offsetbox.py:class:DraggableAnnotation",
+		"offsetbox.py:class:DraggableBase",
+		"offsetbox.py:class:DraggableOffsetBox",
+		"offsetbox.py:constant:DEBUG",
+	} {
+		row := rowFor(upstreamID)
+		if row.Status != PublicSurfaceIntentionalOmission {
+			t.Fatalf("%s status = %s, want intentional omission", upstreamID, row.Status)
+		}
+	}
+}
+
 func TestWidgetClassesHaveExplicitRows(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	for _, surface := range artifact.Rows {

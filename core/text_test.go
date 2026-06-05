@@ -1837,6 +1837,44 @@ func TestAnnotateRespectsConfiguredCoordinateSpaces(t *testing.T) {
 	expectConnection(connections[2], figureAnchor, figureTarget)
 }
 
+func TestAnnotateSupportsSeparateTextCoordinateSpace(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(unitRect())
+	ax.XAxis.ShowSpine = false
+	ax.XAxis.ShowTicks = false
+	ax.XAxis.ShowLabels = false
+	ax.YAxis.ShowSpine = false
+	ax.YAxis.ShowTicks = false
+	ax.YAxis.ShowLabels = false
+	ax.ShowFrame = false
+	textPos := geom.Pt{X: 0.82, Y: 0.18}
+
+	ax.Annotate("mixed", 0.25, 0.75, AnnotationOptions{
+		Coords:       Coords(CoordData),
+		TextPosition: &textPos,
+		TextCoords:   Coords(CoordAxes),
+		OffsetX:      6,
+		OffsetY:      -4,
+	})
+
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	target := ctx.TransformFor(Coords(CoordData)).Apply(geom.Pt{X: 0.25, Y: 0.75})
+	anchor := transform.NewOffset(ctx.TransformFor(Coords(CoordAxes)), geom.Pt{X: 6, Y: -4}).Apply(textPos)
+
+	r := &textRecordingRenderer{}
+	DrawFigure(fig, r)
+
+	if len(r.origins) != 1 {
+		t.Fatalf("annotation text origins = %+v, want one text draw", r.origins)
+	}
+	if math.Hypot(r.origins[0].X-anchor.X, r.origins[0].Y-anchor.Y) > 40 {
+		t.Fatalf("annotation text origin = %+v, want near axes-coordinate anchor %+v", r.origins[0], anchor)
+	}
+	if !containsPathPointNearForTextTest(r.pathCalls, target, 12) {
+		t.Fatalf("annotation arrow should land near data-coordinate target %+v, got paths %+v", target, r.pathCalls)
+	}
+}
+
 func TestAnnotationBboxDrawsTextFrameAndArrow(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(unitRect())

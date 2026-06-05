@@ -224,9 +224,12 @@ var foundationAPIGaps = []FoundationAPIGap{
 		GoFiles:         []string{"core/text.go", "core/annotation_box.go", "core/arrow_patch.go", "transform/transform.go"},
 		CurrentEquivalent: "Go annotations support text, arrows, arrow styles, connection styles, " +
 			"explicit annotation_clip behavior, Matplotlib's default data-only annotation_clip policy, " +
-			"text bbox patches, rotated and multiline annotation text, static AnnotationBbox-style text/image boxes, and overlay drawing.",
-		Gap: "Matplotlib's separate xycoords / textcoords aliases, non-text/non-image AnnotationBbox offsetbox " +
-			"content, and tightbbox / window-extent interaction are only partially represented.",
+			"text bbox patches, rotated and multiline annotation text, separate annotated-point and " +
+			"text-position coordinate spaces through TextPosition/TextCoords, static AnnotationBbox-style " +
+			"text/image boxes, and overlay drawing.",
+		Gap: "Remaining annotation scope is Matplotlib's dynamic setter/getter grammar and OffsetFrom's " +
+			"live artist-bbox callable; tight layout/window-extent behavior is represented by the measured " +
+			"text/annotation layout helpers and catalog fixtures rather than public Python get_window_extent methods.",
 		Decision: GapDecisionImplement,
 		Rationale: "Common annotation coordinate modes are widely used in Matplotlib examples and should " +
 			"be implemented with transform-backed Go options.",
@@ -242,9 +245,9 @@ var foundationAPIGaps = []FoundationAPIGap{
 			"packers for text / drawing / image children, and AnchoredSizeBar. The " +
 			"text_annotation_matrix fixture gives focused coverage for those static offset-box " +
 			"paths.",
-		Gap: "Remaining offsetbox scope is richer non-text/non-image AnnotationBbox content, " +
-			"AuxTransformBox/PaddedBox-style composition where a visible fixture needs it, tightbbox " +
-			"interaction, and explicit omission of draggable GUI-only boxes from the static v1.0 surface.",
+		Gap: "Remaining offsetbox scope is exact Python mutable class hierarchy and arbitrary custom " +
+			"child dispatch; draggable GUI-only boxes and the module DEBUG flag are explicit intentional " +
+			"omissions from the static renderer-neutral v1.0 surface.",
 		Decision: GapDecisionImplement,
 		Rationale: "Static offset boxes affect annotations, legends, and axes-grid style labels; GUI-only " +
 			"dragging should stay separate from renderer-neutral layout parity.",

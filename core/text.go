@@ -85,7 +85,14 @@ type TextBBoxOptions struct {
 
 // AnnotationOptions configures an Annotation artist.
 type AnnotationOptions struct {
-	Coords          CoordinateSpec
+	Coords CoordinateSpec
+	// TextPosition sets an explicit annotation text anchor, matching
+	// Matplotlib's xytext. When nil, the text anchor is the annotated point plus
+	// OffsetX/OffsetY in display pixels.
+	TextPosition *geom.Pt
+	// TextCoords controls TextPosition's coordinate space. The zero value is
+	// data coordinates.
+	TextCoords      CoordinateSpec
 	OffsetX         float64
 	OffsetY         float64
 	FontSize        float64
@@ -154,6 +161,8 @@ type Annotation struct {
 	Point   geom.Pt
 	Content string
 
+	TextPosition    *geom.Pt
+	TextCoords      CoordinateSpec
 	OffsetX         float64
 	OffsetY         float64
 	FontSize        float64
@@ -302,6 +311,8 @@ func (a *Axes) Annotate(text string, x, y float64, opts ...AnnotationOptions) *A
 	artist := &Annotation{
 		Point:           geom.Pt{X: x, Y: y},
 		Content:         text,
+		TextPosition:    clonePoint(opt.TextPosition),
+		TextCoords:      opt.TextCoords,
 		OffsetX:         opt.OffsetX,
 		OffsetY:         opt.OffsetY,
 		FontSize:        opt.FontSize,
@@ -803,7 +814,7 @@ func (a *Annotation) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	if annotationPointClipped(a.AnnotationClip, a.Coords, target, ctx.Clip) {
 		return
 	}
-	anchor := transformedPoint(ctx, a.Coords, a.Point, a.OffsetX, a.OffsetY)
+	anchor := a.textAnchor(ctx)
 	lines := strings.Split(a.Content, "\n")
 	if len(lines) > 1 {
 		a.drawMultilineAnnotation(r, textRen, ctx, target, anchor, fontSize, fontKey, parseMath, lines)
@@ -880,6 +891,16 @@ func (a *Annotation) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
 
 // Z returns the annotation z-order.
 func (a *Annotation) Z() float64 { return a.z }
+
+func (a *Annotation) textAnchor(ctx *DrawContext) geom.Pt {
+	if a != nil && a.TextPosition != nil {
+		return transformedPoint(ctx, a.TextCoords, *a.TextPosition, a.OffsetX, a.OffsetY)
+	}
+	if a == nil {
+		return geom.Pt{}
+	}
+	return transformedPoint(ctx, a.Coords, a.Point, a.OffsetX, a.OffsetY)
+}
 
 func (a *Annotation) drawArrow(r render.Renderer, ctx *DrawContext, start, target geom.Pt) {
 	path := a.ConnectionStyle.connect(start, target, arrowShrinkPixels(ctx, 2), arrowShrinkPixels(ctx, 2))

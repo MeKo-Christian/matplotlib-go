@@ -2202,9 +2202,16 @@ example/browser breadth as documentation work.
       omissions. `TestPatchStyleClosureRowsAreNotLeftPartial` guards this
       split; remaining patch scope is Python helper/debug functions, dynamic
       property grammar, and broader visual fixture closure.
-- [ ] Add remaining text/annotation coordinate aliases, tightbbox /
+- [x] Add remaining text/annotation coordinate aliases, tightbbox /
       window-extent interactions, and richer static `AnnotationBbox` /
-      offset-box content where upstream examples require them.
+      offset-box content where upstream examples require them. 2026-06-05
+      follow-up: added `AnnotationOptions.TextPosition` / `TextCoords` for
+      separate annotated-point and text-anchor coordinate spaces, split
+      static offset-box rows into idiomatic equivalents, and recorded
+      `OffsetFrom`, draggable offset boxes, and `offsetbox.DEBUG` as explicit
+      non-static omissions. `TestAnnotateSupportsSeparateTextCoordinateSpace`
+      and `TestTextAnnotationOffsetboxRowsAreSplitByStaticAndGuiScope` guard
+      the closure.
 - [ ] Complete legend handler and placement gaps that affect static rendering:
       scalar-mapped collection samples, full bbox/path-intersection
       `loc="best"` scoring, and proxy/compound handle behavior.
