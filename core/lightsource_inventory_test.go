@@ -244,6 +244,45 @@ func TestLightSourceImagePathIntegrationOmissionIsDocumented(t *testing.T) {
 	}
 }
 
+func TestLightSourceSurfacePathIntegrationDecisionIsDocumented(t *testing.T) {
+	for _, name := range []string{"axes3d_contour_surface.go", "axes3d_bar_voxel.go", "axes3d_projection.go"} {
+		path := filepath.Join("..", "core", name)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		src := string(data)
+		if strings.Contains(src, "LightSource") || strings.Contains(src, "lightsource") {
+			t.Fatalf("%s unexpectedly exposes a LightSource surface option", path)
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	requiredDocs := []string{
+		"Phase 17.75.5 LightSource Surface Path Integration Decision",
+		"no public `LightSource` object is connected",
+		"`Surface`",
+		"`Trisurf`",
+		"`Bar3D`",
+		"`Voxels`",
+		"`shade3DFaceColor` remains the supported mplot3d face-shading implementation",
+		"`LightSource(azdeg=225, altdeg=19.4712)`",
+		"`[0.3, 1]`",
+		"preserves alpha",
+		"Colormapped `plot_surface` and `plot_trisurf` paths keep shading disabled",
+		"Do not add a `lightsource` option",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("LightSource surface integration docs missing %q", phrase)
+		}
+	}
+}
+
 func readUpstreamMPLToolkitsFile(t *testing.T, parts ...string) string {
 	t.Helper()
 	pathParts := append([]string{"..", "third_party", "matplotlib", "lib", "mpl_toolkits"}, parts...)

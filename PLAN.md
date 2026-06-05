@@ -2394,7 +2394,7 @@ example/browser breadth as documentation work.
               LightSource behavior to image rendering and transformed image
               paths where static examples need it.
 
-            - [ ] 17.75.5.3.3.2 Surface Path Integration: connect supported
+            - [x] 17.75.5.3.3.2 Surface Path Integration: connect supported
               lighting to surface rendering without regressing 3D shade
               semantics from 17.75.4.
 

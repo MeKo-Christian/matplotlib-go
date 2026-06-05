@@ -455,6 +455,25 @@ would have no public `LightSource` API or visual parity fixture. A future
 shaded-relief fixture should add the typed lighting surface first, then connect
 it through image creation before backend resampling.
 
+## Phase 17.75.5 LightSource Surface Path Integration Decision
+
+For mplot3d, no public `LightSource` object is connected to `Surface`,
+`Trisurf`, `Bar3D`, or `Voxels`. The supported integration remains the
+Matplotlib 3D face-shading subset already implemented in core:
+`shade3DFaceColor` remains the supported mplot3d face-shading implementation,
+using `LightSource(azdeg=225, altdeg=19.4712)`, mapping face-normal dot
+products into `[0.3, 1]`, multiplying RGB, and preserving alpha.
+
+Colormapped `plot_surface` and `plot_trisurf` paths keep shading disabled like
+Matplotlib, while explicit-color trisurf, bar3d, and voxel paths keep using
+the existing face-normal shading helper. This preserves the 17.75.4 3D
+semantics and avoids changing colorbar/scalar-map behavior for colormapped
+surfaces.
+
+Do not add a `lightsource` option to these paths until a visual fixture needs
+custom mplot3d light-source positioning. Such a fixture should compare against
+`art3d._shade_colors`, not the 2D `colors.LightSource.shade_rgb` image path.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
