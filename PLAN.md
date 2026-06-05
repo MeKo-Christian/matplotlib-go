@@ -2247,7 +2247,7 @@ example/browser breadth as documentation work.
                   Go errors with upstream failure categories rather than
                   overfitting exact Python wording.
 
-                - [ ] 17.75.5.1.3.2.2 Error Tests and Docs: add focused error
+                - [x] 17.75.5.1.3.2.2 Error Tests and Docs: add focused error
                   tests and migration-note entries for unsupported input
                   categories.
 

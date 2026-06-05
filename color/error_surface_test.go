@@ -1,6 +1,8 @@
 package color
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -99,6 +101,28 @@ func TestToRGBAErrorSurfaceMatchesUpstreamFailureCategories(t *testing.T) {
 		if category := classifyColorError(err); category != tc.category {
 			t.Fatalf("%s: ToRGBA(%v) error category = %s from %q, want %s",
 				tc.name, tc.spec, category, err, tc.category)
+		}
+	}
+}
+
+func TestColorConversionMigrationNotesDocumentUnsupportedInputs(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	required := []string{
+		"Phase 17.75.5 Color Conversion",
+		"failure category rather than exact Python",
+		"color-alpha tuples",
+		"to_rgba_array",
+		"NumPy masked values",
+		"NaN RGB component",
+		"explicit typed Go alpha",
+	}
+	for _, phrase := range required {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("migration notes missing %q", phrase)
 		}
 	}
 }

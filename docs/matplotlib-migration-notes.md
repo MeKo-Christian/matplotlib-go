@@ -152,6 +152,29 @@ mutation. `Axes3D.View()` reports the legacy elevation/azimuth/distance triple;
 roll, vertical-axis, projection type, and focal length are controlled through
 dedicated typed methods.
 
+## Phase 17.75.5 Color Conversion
+
+`color.ToRGBA` covers the Matplotlib color forms that map cleanly to typed Go:
+single-letter base colors, CSS4/X11 names, `tab:` Tableau colors, `xkcd:`
+survey names, case-insensitive named colors except single-letter aliases,
+`none`, `C0`-style color-cycle references, `#rgb`, `#rgba`, `#rrggbb`,
+`#rrggbbaa`, grayscale strings in `[0,1]`, `render.Color`, Go
+`image/color.Color`, and numeric RGB/RGBA slices or arrays.
+
+The error surface is compared by failure category rather than exact Python
+wording: alpha range, malformed hex, grayscale-string range, invalid RGBA
+argument, sequence length, and RGBA channel range. Go diagnostics may be more
+specific than Matplotlib's `Invalid RGBA argument` text, but they are kept in
+the same broad conversion categories.
+
+Python-only dynamic input forms are intentionally not mirrored by `ToRGBA`:
+color-alpha tuples such as `("red", 0.5)`, `to_rgba_array` batch conversion
+inputs such as lists of grayscale strings or alpha arrays, NumPy masked values
+and masked arrays, and Matplotlib's scalar-array bad-value handling where a
+NaN RGB component can pass through `to_rgba`. Use explicit typed Go alpha
+options, numeric RGB/RGBA slices, and scalar-mappable image/collection APIs
+instead.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's
