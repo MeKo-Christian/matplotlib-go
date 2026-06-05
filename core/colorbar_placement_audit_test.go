@@ -166,3 +166,26 @@ func TestColorbarSizeAndAnchorOptionsAreDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestColorbarPlacementAuditIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Colorbar Placement Audit",
+		"Parent and Layout Modes and Size and Anchor Options are the placement audit inputs",
+		"supported placement scope is single-parent `Figure.AddColorbar`",
+		"direct axes, subplot-backed axes, and constrained-layout parent tracking are covered",
+		"right, left, top, bottom, vertical, and horizontal routing are covered",
+		"default slot fraction, padding, aspect, shrink, and anchor behavior are documented",
+		"multi-parent placement, inset-`cax`, `panchor`, and incompatible location/orientation rejection remain documented residuals",
+		"formatter and tick breadth starts after colorbar placement audit closure",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("colorbar placement audit docs missing %q", phrase)
+		}
+	}
+}

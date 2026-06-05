@@ -2276,7 +2276,7 @@ example/browser breadth as documentation work.
       extension, tick, label, and mutable-mappable behavior needed by upstream
       examples.
 
-        - [ ] 17.75.5.6.1 Colorbar Placement Audit: compare single-parent,
+        - [x] 17.75.5.6.1 Colorbar Placement Audit: compare single-parent,
           multi-parent, gridspec-style, inset, shrink, aspect, pad, anchor, and
           location behavior against upstream static examples.
 

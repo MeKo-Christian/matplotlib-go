@@ -951,6 +951,20 @@ shape. That keeps visual clipping correct for current fixtures, but clipped
 scalar-stage resampling can still differ from upstream when only a subregion of
 a large image is visible.
 
+## Phase 17.75.5 Colorbar Placement Audit
+
+Parent and Layout Modes and Size and Anchor Options are the placement audit
+inputs. The supported placement scope is single-parent `Figure.AddColorbar`.
+For supported parents, direct axes, subplot-backed axes, and
+constrained-layout parent tracking are covered, and right, left, top, bottom,
+vertical, and horizontal routing are covered.
+
+The default slot fraction, padding, aspect, shrink, and anchor behavior are
+documented against Matplotlib's `make_axes` and `make_axes_gridspec` defaults.
+The audit records that multi-parent placement, inset-`cax`, `panchor`, and
+incompatible location/orientation rejection remain documented residuals. The
+formatter and tick breadth starts after colorbar placement audit closure.
+
 ## Phase 17.75.5 Colorbar Parent and Layout Modes
 
 Matplotlib `Figure.colorbar` accepts `ax` as a single axes, iterable, tuple,
