@@ -2449,30 +2449,36 @@ example/browser breadth as documentation work.
                   retained partial rows now carry concrete fixture IDs and typed
                   Go deviation rationale.
 
-        - [ ] 17.75.4.6.2 Migration Notes: summarize implemented 3D parity
-          surfaces, typed Go API differences, and any residual mplot3d
-          divergences in `docs/matplotlib-migration-notes.md`.
+        - [x] 17.75.4.6.2 Migration Notes: summarized implemented 3D parity
+          surfaces, typed Go API differences, and residual mplot3d divergences
+          in `docs/matplotlib-migration-notes.md`.
 
-            - [ ] 17.75.4.6.2.1 Implemented Behavior Notes: summarize newly
+            - [x] 17.75.4.6.2.1 Implemented Behavior Notes: summarized newly
               aligned 3D projection, color, fixture, and scalar-mappable
               behavior.
 
-                - [ ] 17.75.4.6.2.1.1 Migration Coverage Summary: add concise
-                  migration-note coverage for newly supported 3D helpers,
-                  fixtures, scalar colors, and colorbar interactions.
+                - [x] 17.75.4.6.2.1.1 Migration Coverage Summary: added a
+                  17.75.4 public-surface summary covering view defaults,
+                  projection/depth/clipping behavior, scalar-mappable/colorbar
+                  support, and the newly covered 3D fixture gaps.
 
-                - [ ] 17.75.4.6.2.1.2 Example References: include relevant
-                  fixture or catalog IDs so the notes are traceable to tests.
+                - [x] 17.75.4.6.2.1.2 Example References: listed the
+                  `mplot3d_*` fixture IDs that prove the implemented 3D
+                  behavior, including contour, tricontour, errorbar, projected
+                  bar, and text coverage.
 
-            - [ ] 17.75.4.6.2.2 Typed API Differences: document Go-specific
+            - [x] 17.75.4.6.2.2 Typed API Differences: documented Go-specific
               typed options and immutable-state differences from Matplotlib.
 
-                - [ ] 17.75.4.6.2.2.1 Typed Option Review: list 3D behavior
-                  where Go typed options intentionally replace Matplotlib's
-                  dynamic keyword or mutable artist patterns.
+                - [x] 17.75.4.6.2.2.1 Typed Option Review: listed the 3D
+                  surfaces where typed `PlotOptions`, explicit setters, and
+                  returned collection handles replace Matplotlib's dynamic
+                  keyword, `data=`, and artist-property grammar.
 
-                - [ ] 17.75.4.6.2.2.2 Difference Notes: document each retained
-                  difference with a supported workaround or explicit omission.
+                - [x] 17.75.4.6.2.2.2 Difference Notes: documented retained
+                  differences for pull-based colorbar updates, flat/autoscaling
+                  3D text, GUI/event-only APIs, overload aliases, masked arrays,
+                  and rare painter-order residuals.
 
         - [ ] 17.75.4.6.3 Final 3D Status Regeneration: regenerate
           `docs/matplotlib-parity-status.md`, run focused catalog/doc freshness

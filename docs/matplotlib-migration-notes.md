@@ -314,3 +314,48 @@ Residual rendering differences (all within the band):
   random, heights) because the Go plane-bar API takes one color rather than
   Matplotlib's per-bar color array; the per-plane depth ordering, alpha, and
   edges otherwise match.
+
+## Phase 17.75.4 mplot3d Public-Surface Summary
+
+The 17.75.4 closure brings the static Go `Axes3D` surface in line with the
+Matplotlib 3.10.9 behavior used by the parity catalog. The implemented behavior
+is covered by focused unit tests plus the `mplot3d_*` fixture family:
+`mplot3d_plot3d`, `mplot3d_scatter3d`, `mplot3d_surface3d`, `mplot3d_wire3d`,
+`mplot3d_trisurf3d`, `mplot3d_bar3d`, `mplot3d_voxels`, `mplot3d_quiver3d`,
+`mplot3d_stem3d`, `mplot3d_fill_between3d`, `mplot3d_errorbar3d`,
+`mplot3d_contour3d`, `mplot3d_contourf3d`, `mplot3d_tricontour3d`,
+`mplot3d_tricontourf3d`, `mplot3d_bar2d_zdir`, and `mplot3d_text3d`.
+
+For migration purposes, the supported static behavior is:
+
+- Matplotlib-style view defaults, roll, vertical-axis projection, perspective
+  and orthographic projection type, focal-length validation, explicit/inverted
+  x/y/z limits, autoscale margins, pane/grid/tick styling, and 3D label/tick
+  placement.
+- Projected depth ordering, explicit-limit clipping, and view/limit
+  reprojection for lines, markers, surfaces, contours, triangulated contours,
+  bars, voxels, quiver, stems, error bars, and fill-between surfaces.
+- Scalar-mappable metadata and colorbar compatibility for surface/trisurf,
+  structured and triangulated contour/contourf, and scalar-colored scatter;
+  explicit-color helpers remain explicit-color surfaces by default.
+- Matplotlib-reference coverage for the previously weak or missing 3D fixture
+  cases: structured contour, filled structured contour, triangulated contour,
+  filled triangulated contour, 3D error bars, projected 2D bars, and 3D text.
+
+Retained Go-specific differences are intentional and should be treated as API
+differences, not fixture bugs:
+
+- Go uses typed option structs and explicit setters instead of Matplotlib's
+  dynamic keyword grammar, `data=` dispatch, mutable artist-property strings,
+  and Python collection internals. Prefer typed `PlotOptions`, explicit
+  x/y/z-limit setters, and returned collection handles.
+- Colorbar updates are pull-based through `Figure.AddColorbar` and typed
+  collection setters (`SetArray`, `SetColormap`, `SetNorm`, `SetCLim`) rather
+  than Matplotlib's callback registry and `Colorbar.update_normal` lifecycle.
+- 3D text currently renders flat projected text and participates in Go data
+  limit expansion. Match Matplotlib's non-autoscaling text behavior by setting
+  explicit 3D limits when text positions should not affect the plotted data
+  range.
+- GUI/event-only methods, Python overload aliases, masked-array machinery, and
+  rare interpenetrating-geometry painter-order differences remain outside the
+  static typed surface covered by 17.75.4.
