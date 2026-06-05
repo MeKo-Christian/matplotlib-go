@@ -2186,7 +2186,7 @@ example/browser breadth as documentation work.
                   color-name data against `colors.py` and upstream color data
                   files, recording missing names and precedence conflicts.
 
-                - [ ] 17.75.5.1.1.1.2 Parser Tests: add focused named-color
+                - [x] 17.75.5.1.1.1.2 Parser Tests: add focused named-color
                   tests for exact matches, aliases, `none`, case handling, and
                   intentionally unsupported dynamic Python inputs.
 

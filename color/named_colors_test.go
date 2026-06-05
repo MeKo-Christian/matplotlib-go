@@ -43,10 +43,19 @@ func TestToRGBAResolvesMatplotlibNamedColors(t *testing.T) {
 		want render.Color
 	}{
 		{"b", render.Color{R: 0, G: 0, B: 1, A: 1}},
+		{"g", render.Color{R: 0, G: 0.5, B: 0, A: 1}},
+		{"c", render.Color{R: 0, G: 0.75, B: 0.75, A: 1}},
 		{"rebeccapurple", render.Color{R: 0x66 / 255.0, G: 0x33 / 255.0, B: 0x99 / 255.0, A: 1}},
+		{"Red", render.Color{R: 1, G: 0, B: 0, A: 1}},
+		{"RED", render.Color{R: 1, G: 0, B: 0, A: 1}},
 		{"tab:orange", Tab10[1]},
+		{"TAB:BLUE", Tab10[0]},
+		{"tab:gray", Tab10[7]},
 		{"tab:grey", Tab10[7]},
 		{"xkcd:cloudy blue", render.Color{R: 0xac / 255.0, G: 0xc2 / 255.0, B: 0xd9 / 255.0, A: 1}},
+		{"XKCD:WARM GREY", render.Color{R: 0x97 / 255.0, G: 0x8a / 255.0, B: 0x84 / 255.0, A: 1}},
+		{"xkcd:bluish grey", render.Color{R: 0x74 / 255.0, G: 0x8b / 255.0, B: 0x97 / 255.0, A: 1}},
+		{"xkcd:bluish gray", render.Color{R: 0x74 / 255.0, G: 0x8b / 255.0, B: 0x97 / 255.0, A: 1}},
 		{"xkcd:warm gray", render.Color{R: 0x97 / 255.0, G: 0x8a / 255.0, B: 0x84 / 255.0, A: 1}},
 	}
 	for _, tc := range tests {
@@ -56,6 +65,24 @@ func TestToRGBAResolvesMatplotlibNamedColors(t *testing.T) {
 		}
 		if !sameColor(got, tc.want) {
 			t.Fatalf("ToRGBA(%q) = %+v, want %+v", tc.name, got, tc.want)
+		}
+	}
+}
+
+func TestToRGBANamedColorNoneAndCaseHandling(t *testing.T) {
+	for _, spec := range []string{"none", "None", "NONE"} {
+		got, err := ToRGBA(spec, WithAlpha(0.8))
+		if err != nil {
+			t.Fatalf("ToRGBA(%q, WithAlpha(0.8)) error = %v", spec, err)
+		}
+		if !sameColor(got, render.Color{A: 0}) {
+			t.Fatalf("ToRGBA(%q, WithAlpha(0.8)) = %+v, want transparent none", spec, got)
+		}
+	}
+
+	for _, spec := range []any{"B", "c0", "CN", "C-1", []any{"red", 0.1}} {
+		if got, err := ToRGBA(spec); err == nil {
+			t.Fatalf("ToRGBA(%v) = %+v, want error", spec, got)
 		}
 	}
 }
