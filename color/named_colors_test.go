@@ -147,6 +147,33 @@ func TestToRGBAParsesMatplotlibSupportedHexForms(t *testing.T) {
 	}
 }
 
+func TestToRGBARejectsInvalidHexForms(t *testing.T) {
+	tests := []struct {
+		name string
+		spec string
+	}{
+		{"too short", "#12"},
+		{"malformed short alpha length", "#12345"},
+		{"malformed long alpha length", "#1234567"},
+		{"too long", "#123456789"},
+		{"invalid short rgb character", "#12x"},
+		{"invalid long rgb character", "#11223x"},
+		{"invalid short alpha suffix", "#123x"},
+		{"invalid long alpha suffix", "#1122334x"},
+		{"too long after alpha suffix", "#112233445"},
+		{"too long with invalid alpha suffix", "#11223344x"},
+	}
+	for _, tc := range tests {
+		got, err := ToRGBA(tc.spec)
+		if err == nil {
+			t.Fatalf("%s: ToRGBA(%q) = %+v, want error", tc.name, tc.spec, got)
+		}
+		if !strings.Contains(err.Error(), "invalid hex color specifier") {
+			t.Fatalf("%s: ToRGBA(%q) error = %q, want hex diagnostic", tc.name, tc.spec, err)
+		}
+	}
+}
+
 func TestToRGBARejectsInvalidSpecs(t *testing.T) {
 	for _, spec := range []any{"B", "#12", "1.5", []float64{1, 0, 0, 0, 1}, []float64{1.2, 0, 0}} {
 		if got, err := ToRGBA(spec); err == nil {

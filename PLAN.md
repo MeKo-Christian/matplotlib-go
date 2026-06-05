@@ -2196,7 +2196,7 @@ example/browser breadth as documentation work.
                 - [x] 17.75.5.1.1.2.1 Supported Forms: compare `#rgb`,
                   `#rgba`, `#rrggbb`, and `#rrggbbaa` parsing with upstream.
 
-                - [ ] 17.75.5.1.1.2.2 Invalid Forms: add focused diagnostics
+                - [x] 17.75.5.1.1.2.2 Invalid Forms: add focused diagnostics
                   tests for malformed length, characters, and alpha suffixes.
 
         - [ ] 17.75.5.1.2 Alpha and Grayscale Semantics: audit explicit alpha
