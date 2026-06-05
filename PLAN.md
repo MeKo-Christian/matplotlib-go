@@ -2357,7 +2357,7 @@ example/browser breadth as documentation work.
                   notes and regenerate parity status after the norm rows are
                   current.
 
-    - [ ] 17.75.5.3 LightSource and Shaded Images: decide and implement or
+    - [x] 17.75.5.3 LightSource and Shaded Images: decide and implement or
       explicitly omit `LightSource`-style hillshading, RGB shading, blend modes,
       and surface-image lighting paths needed by upstream examples. Compare
       algorithms against `third_party/matplotlib/lib/matplotlib/colors.py` and
