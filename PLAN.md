@@ -2424,7 +2424,7 @@ example/browser breadth as documentation work.
                   public-surface metadata, migration notes, and parity status
                   with implemented fixtures or explicit omissions.
 
-    - [ ] 17.75.5.4 Bivariate and Multivariate Colormaps: implement or
+    - [x] 17.75.5.4 Bivariate and Multivariate Colormaps: implement or
       intentionally omit bivariate/multivariate colormap support, including
       lookup-table shape validation, alpha handling, scalar-mappable
       integration, and colorbar display expectations for supported cases.
