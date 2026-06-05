@@ -344,7 +344,7 @@ func TestLightSourceMetadataUpdateIsDocumented(t *testing.T) {
 	if strings.Contains(status, "| colors.py:class:LightSource | colors-cm | partial |") {
 		t.Fatal("parity status still reports LightSource as an open partial row")
 	}
-	if !strings.Contains(status, "LightSource have explicit Phase 17.75.5 rows") {
+	if !strings.Contains(status, "LightSource and bivar/multivar colormaps have explicit intentional-omission rows") {
 		t.Fatal("parity status broad colors note does not reference explicit LightSource row")
 	}
 }

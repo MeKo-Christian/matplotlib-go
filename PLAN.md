@@ -2484,7 +2484,7 @@ example/browser breadth as documentation work.
                   bivariate and multivariate metadata rows with implemented or
                   omitted status and task references.
 
-                - [ ] 17.75.5.4.4.2.2 Colormap Docs and Status: update
+                - [x] 17.75.5.4.4.2.2 Colormap Docs and Status: update
                   migration notes and regenerate parity status after metadata
                   is current.
 

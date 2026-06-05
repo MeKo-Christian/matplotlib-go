@@ -500,9 +500,11 @@ exercise `LightSource.hillshade`, `shade`, or `shade_rgb` image lighting.
 
 `docs/matplotlib-parity-status.md` was regenerated after the metadata update,
 so `LightSource` no longer appears as an open Phase 17.75.5 partial row. The
-broad `colors.py` rows now point to explicit norm, dynamic norm-factory, and
-LightSource rows; remaining open color-surface work is the Python-only dynamic
-color input surface plus bivariate/multivariate colormap decisions.
+broad `colors.py` rows now point to explicit norm and dynamic norm-factory
+rows, plus explicit intentional-omission rows for LightSource and
+bivariate/multivariate colormaps. Remaining open color-surface work is the
+Python-only dynamic color input surface and batch/masked color conversion
+edge cases.
 
 ## Phase 17.75.5 Bivar/Multivar Upstream API Inventory
 
