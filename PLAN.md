@@ -2412,7 +2412,7 @@ example/browser breadth as documentation work.
                   soft-light, hsv, custom blend behavior, or explicit omission
                   diagnostics for unsupported blend paths.
 
-            - [ ] 17.75.5.3.4.2 Fixture and Docs Update: add required visual
+            - [x] 17.75.5.3.4.2 Fixture and Docs Update: add required visual
               fixtures or record LightSource omissions in parity metadata and
               migration notes.
 
