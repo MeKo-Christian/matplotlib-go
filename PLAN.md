@@ -2268,7 +2268,7 @@ example/browser breadth as documentation work.
       and scalar-mappable callback interactions. Keep deviations documented in
       parity metadata rather than hidden in examples.
 
-        - [ ] 17.75.5.2.1 Existing Norm Audit: compare supported Go norms
+        - [x] 17.75.5.2.1 Existing Norm Audit: compare supported Go norms
           against `Normalize`, `LogNorm`, `SymLogNorm`, `PowerNorm`,
           `BoundaryNorm`, `TwoSlopeNorm`, and inverse/clip behavior.
 
