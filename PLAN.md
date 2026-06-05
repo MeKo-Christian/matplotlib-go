@@ -2337,7 +2337,7 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.2.4.1 Focused Norm Tests: run targeted norm and
               scalar-mappable tests before adding visual fixtures.
 
-                - [ ] 17.75.5.2.4.1.1 Norm Behavior Tests: run or add focused
+                - [x] 17.75.5.2.4.1.1 Norm Behavior Tests: run or add focused
                   tests for each implemented norm's scalar, slice, inverse,
                   clipping, and out-of-range behavior.
 
