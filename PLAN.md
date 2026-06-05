@@ -2375,7 +2375,7 @@ example/browser breadth as documentation work.
               parity fixtures actually require LightSource behavior before
               implementing a broad API.
 
-        - [ ] 17.75.5.3.2 Shaded Image Implementation or Omission: implement
+        - [x] 17.75.5.3.2 Shaded Image Implementation or Omission: implement
           the static-rendering subset needed by examples, or document why the
           Go port intentionally omits LightSource-style image lighting.
 
