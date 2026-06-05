@@ -440,6 +440,21 @@ omission. Colormapped images continue to use normal scalar mapping, and
 explicit-color 3D faces continue to use the separate `shade3DFaceColor`
 implementation documented above.
 
+## Phase 17.75.5 LightSource Image Path Integration Decision
+
+Because the LightSource hillshade and RGB blend APIs are omitted, no
+LightSource path is connected to `Image2D`, `imshow`, `matshow`, or
+transformed-image rendering. The AGG image backend remains a scalar-image
+renderer: it receives already-colormapped or scalar-mapped image data and does
+not synthesize shaded-relief RGB output from an elevation array.
+
+No static image fixture requires shaded-relief rendering. Keeping the image
+path unchanged avoids coupling image resampling to unimplemented
+hillshade/blend semantics and avoids introducing a renderer-only feature that
+would have no public `LightSource` API or visual parity fixture. A future
+shaded-relief fixture should add the typed lighting surface first, then connect
+it through image creation before backend resampling.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

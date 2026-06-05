@@ -209,6 +209,41 @@ func TestLightSourceBlendModeOmissionIsDocumented(t *testing.T) {
 	}
 }
 
+func TestLightSourceImagePathIntegrationOmissionIsDocumented(t *testing.T) {
+	for _, name := range []string{"image.go", "image_api.go", "matrix_helpers.go"} {
+		path := filepath.Join("..", "core", name)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		if strings.Contains(string(data), "LightSource") || strings.Contains(string(data), "Hillshade") {
+			t.Fatalf("%s unexpectedly wires LightSource into image rendering", path)
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	requiredDocs := []string{
+		"Phase 17.75.5 LightSource Image Path Integration Decision",
+		"LightSource path is connected",
+		"`Image2D`, `imshow`, `matshow`, or",
+		"transformed-image rendering",
+		"The AGG image backend remains a scalar-image",
+		"renderer",
+		"No static image fixture requires shaded-relief rendering",
+		"avoids coupling image resampling to unimplemented",
+		"hillshade/blend semantics",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("LightSource image integration docs missing %q", phrase)
+		}
+	}
+}
+
 func readUpstreamMPLToolkitsFile(t *testing.T, parts ...string) string {
 	t.Helper()
 	pathParts := append([]string{"..", "third_party", "matplotlib", "lib", "mpl_toolkits"}, parts...)

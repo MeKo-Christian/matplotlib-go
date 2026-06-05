@@ -2390,7 +2390,7 @@ example/browser breadth as documentation work.
           lighting to image/surface rendering paths where Matplotlib examples
           require it, keeping backend fallbacks explicit.
 
-            - [ ] 17.75.5.3.3.1 Image Path Integration: connect supported
+            - [x] 17.75.5.3.3.1 Image Path Integration: connect supported
               LightSource behavior to image rendering and transformed image
               paths where static examples need it.
 
