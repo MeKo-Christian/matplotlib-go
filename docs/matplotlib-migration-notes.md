@@ -577,6 +577,20 @@ bivariate API directly. Without such a fixture, adding only the LUT type or
 only a registry entry would leave colorbar, scalar-mappable, outside-color, and
 component-colormap behavior underspecified.
 
+## Phase 17.75.5 Bivariate Colormap Omission Ledger
+
+`BivarColormap`, `BivarColormapFromImage`, and `SegmentedBivarColormap` are
+intentional omissions in the current Go API. The affected examples are
+currently none: no committed parity fixture imports or calls a bivariate
+colormap, and no supported colorbar example needs a two-dimensional LUT display.
+
+The supported path remains single-variate `color.Colormap` plus scalar
+normalization through `ScalarMapInfo`. Callers that need a visible two-input
+color surface should first add a Matplotlib reference fixture that exercises
+the bivariate API directly. Future bivariate support should start with a visual
+fixture so lookup-table shape, outside/bad handling, alpha behavior, and 2D
+colorbar expectations are all tested together.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

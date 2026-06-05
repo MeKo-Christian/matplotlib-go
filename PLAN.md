@@ -2448,7 +2448,7 @@ example/browser breadth as documentation work.
             - [x] 17.75.5.4.2.1 Bivariate API Shape: decide lookup-table shape,
               input normalization, alpha handling, and colorbar expectations.
 
-            - [ ] 17.75.5.4.2.2 Bivariate Tests or Omission: add focused tests
+            - [x] 17.75.5.4.2.2 Bivariate Tests or Omission: add focused tests
               for implemented behavior or record the omission with affected
               examples.
 

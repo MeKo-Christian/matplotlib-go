@@ -206,3 +206,55 @@ func TestBivarColormapAPIShapeDecisionIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestBivarColormapOmissionIsDocumented(t *testing.T) {
+	refDir := filepath.Join("..", "test", "matplotlib_ref", "plots")
+	forbidden := []string{"BivarColormap", "bivar", "_bivar_colormaps"}
+	err := filepath.WalkDir(refDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || filepath.Ext(path) != ".py" {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		src := string(data)
+		for _, phrase := range forbidden {
+			if strings.Contains(src, phrase) {
+				t.Fatalf("%s unexpectedly requires bivariate colormap API via %q", path, phrase)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("scan matplotlib reference plots: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	requiredDocs := []string{
+		"Phase 17.75.5 Bivariate Colormap Omission Ledger",
+		"`BivarColormap`",
+		"`BivarColormapFromImage`",
+		"`SegmentedBivarColormap`",
+		"intentional omissions",
+		"affected examples are",
+		"currently none",
+		"no committed parity fixture",
+		"imports or calls a bivariate",
+		"single-variate `color.Colormap`",
+		"remains",
+		"Future bivariate support should start with a visual",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("bivariate omission docs missing %q", phrase)
+		}
+	}
+}
