@@ -792,6 +792,22 @@ documented backend divergence, not AGG regressions. The vector fixtures should
 continue checking embedded image objects, transforms, soft masks, and clip
 structure rather than pixel-matching viewer resampling kernels.
 
+## Phase 17.75.5 Image Fixture Priority
+
+The smallest transformed-image fixture priority set is
+`imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed`.
+`imshow_interpolation_matrix` covers interpolation breadth across the
+Matplotlib name registry. `imshow_clipped` covers clipping plus explicit
+`extent` and `origin='lower'`. `imshow_transformed` covers affine placement
+with explicit extent/origin and bilinear sampling.
+
+`image_heatmap`, `image_alpha`, `lognorm_imshow`, `twoslope_norm_image`,
+`asinh_norm_image`, `matshow_basic`, `spy_image`, and `spy_marker` remain
+supporting image fixtures. The fixture refresh should update the three priority
+triplets first, then supporting image fixtures only when their behavior changes.
+The ledger records that the priority set already has Go parity wrappers,
+Matplotlib reference scripts, golden PNGs, and Matplotlib reference PNGs.
+
 ## Phase 17.75.5 Interpolation Kernel Alignment
 
 `AGG` keeps the Matplotlib interpolation-name registry for raster image draws:

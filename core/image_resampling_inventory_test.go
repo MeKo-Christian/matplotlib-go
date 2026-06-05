@@ -435,3 +435,94 @@ func TestTransformedImageVectorBackendFallbacksAreDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageFixturePriorityIsDocumented(t *testing.T) {
+	sourceRequirements := map[string][]string{
+		filepath.Join("..", "internal", "examplecatalog", "catalog.go"): {
+			`ID: "imshow_interpolation_matrix"`,
+			`ID: "imshow_clipped"`,
+			`ID: "imshow_transformed"`,
+		},
+		filepath.Join("..", "test", "parity", "imshow_interpolation_matrix", "plot.go"): {
+			`"nearest", "none", "bilinear", "bicubic", "hanning"`,
+			`"antialiased", "auto"`,
+			"Extent:        &extent",
+			"Origin:        core.ImageOriginLower",
+		},
+		filepath.Join("..", "test", "parity", "imshow_interpolation_matrix", "plot.py"): {
+			"INTERPOLATION_MODES",
+			"interpolation=mode",
+			`origin="lower"`,
+		},
+		filepath.Join("..", "test", "parity", "imshow_clipped", "plot.go"): {
+			"ax.SetXLim(2, 6)",
+			"ax.SetYLim(1, 7)",
+			"Extent:        &extent",
+			"Origin:        core.ImageOriginLower",
+		},
+		filepath.Join("..", "test", "matplotlib_ref", "plots", "imshow_clipped.py"): {
+			"ax.set_xlim(2, 6)",
+			"ax.set_ylim(1, 7)",
+			`origin="lower"`,
+			"extent=(0, 8, 0, 8)",
+		},
+		filepath.Join("..", "test", "parity", "imshow_transformed", "plot.go"): {
+			"angle := 28.0",
+			"XMin:          &xmin",
+			"YMax:          &ymax",
+			"Interpolation: &bilinear",
+		},
+		filepath.Join("..", "test", "matplotlib_ref", "plots", "imshow_transformed.py"): {
+			"rotate_deg_around(2, 2, 28)",
+			"transform=trans",
+			"interpolation=\"bilinear\"",
+			"extent=(0, 4, 0, 4)",
+		},
+	}
+	for path, phrases := range sourceRequirements {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		src := string(data)
+		for _, phrase := range phrases {
+			if !strings.Contains(src, phrase) {
+				t.Fatalf("%s missing transformed-image fixture priority marker %q", path, phrase)
+			}
+		}
+	}
+
+	for _, id := range []string{"imshow_interpolation_matrix", "imshow_clipped", "imshow_transformed"} {
+		requiredFiles := []string{
+			filepath.Join("..", "test", "parity", id, "plot.go"),
+			filepath.Join("..", "testdata", "golden", id+".png"),
+			filepath.Join("..", "testdata", "matplotlib_ref", id+".png"),
+		}
+		for _, path := range requiredFiles {
+			if _, err := os.Stat(path); err != nil {
+				t.Fatalf("%s missing transformed-image priority fixture file %s: %v", id, path, err)
+			}
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Image Fixture Priority",
+		"smallest transformed-image fixture priority set is `imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed`",
+		"`imshow_interpolation_matrix` covers interpolation breadth",
+		"`imshow_clipped` covers clipping plus explicit `extent` and `origin='lower'`",
+		"`imshow_transformed` covers affine placement with explicit extent/origin and bilinear sampling",
+		"`image_heatmap`, `image_alpha`, `lognorm_imshow`, `twoslope_norm_image`, `asinh_norm_image`, `matshow_basic`, `spy_image`, and `spy_marker` remain supporting image fixtures",
+		"fixture refresh should update the three priority triplets first, then supporting image fixtures only when their behavior changes",
+		"the priority set already has Go parity wrappers, Matplotlib reference scripts, golden PNGs, and Matplotlib reference PNGs",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image fixture priority docs missing %q", phrase)
+		}
+	}
+}

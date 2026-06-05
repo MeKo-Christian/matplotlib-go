@@ -2252,7 +2252,7 @@ example/browser breadth as documentation work.
             - [ ] 17.75.5.5.4.1 Fixture Refresh: add or refresh transformed
               image reference fixtures only after backend behavior is aligned.
 
-                - [ ] 17.75.5.5.4.1.1 Image Fixture Priority: choose the
+                - [x] 17.75.5.5.4.1.1 Image Fixture Priority: choose the
                   smallest transformed-image fixture set that covers
                   interpolation, extent/origin, clipping, and affine placement.
 
