@@ -2218,7 +2218,7 @@ example/browser breadth as documentation work.
       interpolation, extent/origin, clipping, and affine placement. AGG/GoBasic
       and SVG/PDF residuals are recorded in docs and parity metadata.
 
-    - [ ] 17.75.5.6 Colorbar Placement and Formatter Breadth: complete colorbar
+    - [x] 17.75.5.6 Colorbar Placement and Formatter Breadth: complete colorbar
       formatter, gridspec-style placement, multi-parent placement, boundary,
       extension, tick, label, and mutable-mappable behavior needed by upstream
       examples.

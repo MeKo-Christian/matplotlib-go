@@ -211,3 +211,43 @@ func TestColorbarFixtureLedgerIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestColorbarPlacementAndFormatterBreadthMilestoneIsClosed(t *testing.T) {
+	planData, err := os.ReadFile(filepath.Join("..", "PLAN.md"))
+	if err != nil {
+		t.Fatalf("read PLAN.md: %v", err)
+	}
+	planText := strings.Join(strings.Fields(string(planData)), " ")
+	requiredPlan := []string{
+		"[x] 17.75.5.6 Colorbar Placement and Formatter Breadth",
+		"[x] 17.75.5.6.1 Placement, Formatter, and Update Audit",
+		"[x] 17.75.5.6.2 Colorbar Update Tests or Omission",
+		"[x] 17.75.5.6.3 Colorbar Fixtures, Tests, and Ledger",
+	}
+	for _, phrase := range requiredPlan {
+		if !strings.Contains(planText, phrase) {
+			t.Fatalf("colorbar placement/formatter milestone missing PLAN marker %q", phrase)
+		}
+	}
+
+	docData, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(docData)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Colorbar Placement Audit",
+		"Phase 17.75.5 Colorbar Parent and Layout Modes",
+		"Phase 17.75.5 Colorbar Size and Anchor Options",
+		"Phase 17.75.5 Colorbar Boundaries and Extensions",
+		"Phase 17.75.5 Colorbar Tick and Label Formatting",
+		"Phase 17.75.5 Colorbar Mutable Mappable Update Contract",
+		"Phase 17.75.5 Colorbar Mutable Update Tests and Omissions",
+		"Phase 17.75.5 Colorbar Fixtures and Ledger",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("colorbar placement/formatter milestone missing docs marker %q", phrase)
+		}
+	}
+}
