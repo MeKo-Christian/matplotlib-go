@@ -2254,7 +2254,7 @@ example/browser breadth as documentation work.
         - [ ] 17.75.5.1.4 Color Conversion Ledger: add focused tests, document
           unsupported dynamic Python-only inputs, and update parity metadata.
 
-            - [ ] 17.75.5.1.4.1 Test Consolidation: run the focused color
+            - [x] 17.75.5.1.4.1 Test Consolidation: run the focused color
               conversion tests added under 17.75.5.1 and remove redundant
               coverage only if it duplicates exact cases.
 
