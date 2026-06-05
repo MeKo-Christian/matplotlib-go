@@ -2212,7 +2212,7 @@ example/browser breadth as documentation work.
       exactly. Add visual parity fixtures only after core image behavior is
       aligned.
 
-        - [ ] 17.75.5.5.1 Resampling Gap Inventory: compare image transform,
+        - [x] 17.75.5.5.1 Resampling Gap Inventory: compare image transform,
           interpolation, antialiasing, extent, origin, and clipping behavior
           across Go backends and Matplotlib's image pipeline.
 

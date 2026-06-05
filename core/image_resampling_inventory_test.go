@@ -153,3 +153,31 @@ func TestTransformedImageMatplotlibComparisonIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageResamplingGapInventoryIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Resampling Gap Inventory",
+		"Backend matrix coverage and Matplotlib pipeline comparison are the inventory inputs",
+		"`Image2D.Draw`",
+		"`Image2D.rasterizeForRect`",
+		"`matplotlibImageDrawRect`",
+		"`Axes.ImShow`",
+		"`_ImageBase._make_image`",
+		"`AxesImage.make_image`",
+		"`AGG` is the raster backend to align first",
+		"`GoBasic` remains the deterministic nearest-style fallback",
+		"`SVG` and `PDF` preserve affine image placement",
+		"remaining raster gaps are interpolation kernels, antialiasing stage selection, clipping, extent/origin placement, affine transforms, and pixel-center placement",
+		"remaining vector gaps are interpolation hints, clipping structure, and documented viewer-side resampling divergence",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image resampling gap inventory docs missing %q", phrase)
+		}
+	}
+}

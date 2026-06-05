@@ -655,6 +655,26 @@ input validation, `combination_mode` behavior, bad-value propagation, alpha
 multiplication, and multi-component colorbar expectations are all tested
 together.
 
+## Phase 17.75.5 Resampling Gap Inventory
+
+Backend matrix coverage and Matplotlib pipeline comparison are the inventory
+inputs for transformed image parity. The Go comparison surface is
+`Image2D.Draw`, `Image2D.rasterizeForRect`, `matplotlibImageDrawRect`, and
+`Axes.ImShow`; the upstream Matplotlib comparison surface is
+`AxesImage.make_image` and `_ImageBase._make_image`, with extent/origin state
+from `AxesImage.set_extent` and `AxesImage.get_extent`.
+
+`AGG` is the raster backend to align first because it consumes interpolation
+names for direct and transformed draws. `GoBasic` remains the deterministic
+nearest-style fallback for pure-Go rendering. `SVG` and `PDF` preserve affine
+image placement by embedding transformed raster images, while exact resampling
+depends on the downstream viewer.
+
+The remaining raster gaps are interpolation kernels, antialiasing stage
+selection, clipping, extent/origin placement, affine transforms, and
+pixel-center placement. The remaining vector gaps are interpolation hints,
+clipping structure, and documented viewer-side resampling divergence.
+
 ## Phase 17.75.5 Transformed Image Backend Matrix
 
 `Image2D.Draw` routes rotated images through a native `render.ImageTransformer`
