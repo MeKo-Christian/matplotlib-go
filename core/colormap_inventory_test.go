@@ -154,3 +154,55 @@ func TestBivarMultivarGoFitAssessmentIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestBivarColormapAPIShapeDecisionIsDocumented(t *testing.T) {
+	for _, dir := range []string{"color", "core"} {
+		root := filepath.Join("..", dir)
+		err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() || filepath.Ext(path) != ".go" || filepath.Base(path) == "colormap_inventory_test.go" {
+				return nil
+			}
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			src := string(data)
+			for _, phrase := range []string{"type BivarColormap", "BivarColormapFromImage", "SegmentedBivarColormap"} {
+				if strings.Contains(src, phrase) {
+					t.Fatalf("%s unexpectedly exposes bivariate colormap API via %q", path, phrase)
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("scan %s for bivariate API: %v", dir, err)
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	requiredDocs := []string{
+		"Phase 17.75.5 Bivariate API Shape Decision",
+		"`color.BivarColormap`",
+		"no `BivarColormapFromImage`",
+		"`SegmentedBivarColormap`",
+		"future API would need",
+		"`N`, `M`, `shape`, and",
+		"`origin`",
+		"`(N, M, 3)` or `(N, M, 4)`",
+		"bad and outside colors",
+		"two-component input",
+		"2D colorbar contract",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("bivariate API shape docs missing %q", phrase)
+		}
+	}
+}

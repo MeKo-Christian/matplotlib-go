@@ -558,6 +558,25 @@ hidden mode of `color.Colormap`. The scalar colormap path should stay stable
 for existing `ScalarMappable` artists, and colorbar expectations would also
 need a new contract before bivariate or multivariate mappables become public.
 
+## Phase 17.75.5 Bivariate API Shape Decision
+
+No bivariate colormap API is added in this phase: there is no
+`color.BivarColormap`, no `BivarColormapFromImage`, and no
+`SegmentedBivarColormap` type in the Go public surface. Existing colormap
+lookup remains one-dimensional and scalar.
+
+A future API would need to be explicit about Matplotlib's bivariate shape
+surface before implementation. At minimum it would need `N`, `M`, `shape`, and
+`origin` fields or constructor arguments; support for `(N, M, 3)` or
+`(N, M, 4)` lookup tables; bad and outside colors; `square`, `circle`,
+`ignore`, and `circleignore` clipping semantics; two-component input with
+float/index handling; alpha shape validation; and a 2D colorbar contract.
+
+That future surface should be driven by a visual fixture that calls the
+bivariate API directly. Without such a fixture, adding only the LUT type or
+only a registry entry would leave colorbar, scalar-mappable, outside-color, and
+component-colormap behavior underspecified.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

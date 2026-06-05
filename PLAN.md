@@ -2445,7 +2445,7 @@ example/browser breadth as documentation work.
           static-rendering subset or document an intentional omission with
           affected examples and public-surface metadata.
 
-            - [ ] 17.75.5.4.2.1 Bivariate API Shape: decide lookup-table shape,
+            - [x] 17.75.5.4.2.1 Bivariate API Shape: decide lookup-table shape,
               input normalization, alpha handling, and colorbar expectations.
 
             - [ ] 17.75.5.4.2.2 Bivariate Tests or Omission: add focused tests
