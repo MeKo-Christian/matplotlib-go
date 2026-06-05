@@ -2429,7 +2429,7 @@ example/browser breadth as documentation work.
       lookup-table shape validation, alpha handling, scalar-mappable
       integration, and colorbar display expectations for supported cases.
 
-        - [ ] 17.75.5.4.1 Colormap API Audit: compare bivariate and
+        - [x] 17.75.5.4.1 Colormap API Audit: compare bivariate and
           multivariate colormap classes, lookup-table shape rules, alpha
           handling, and call semantics against Matplotlib.
 
