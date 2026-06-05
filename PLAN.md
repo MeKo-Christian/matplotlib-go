@@ -2345,7 +2345,7 @@ example/browser breadth as documentation work.
                   focused tests for norm-driven colormap lookup, clim/autoscale
                   interaction, and supported update semantics.
 
-            - [ ] 17.75.5.2.4.2 Norm Metadata: update public-surface metadata,
+            - [x] 17.75.5.2.4.2 Norm Metadata: update public-surface metadata,
               migration notes, and parity status for implemented or omitted
               norm behavior.
 
