@@ -2209,7 +2209,7 @@ example/browser breadth as documentation work.
                 - [x] 17.75.5.1.2.1.1 Upstream Cases: extract Matplotlib
                   alpha-precedence cases from `colors.py` and upstream tests.
 
-                - [ ] 17.75.5.1.2.1.2 Go API Alignment: add or update tests
+                - [x] 17.75.5.1.2.1.2 Go API Alignment: add or update tests
                   for explicit alpha, embedded alpha, `none`, and default
                   opacity in supported Go conversion paths.
 

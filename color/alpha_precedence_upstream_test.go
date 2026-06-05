@@ -12,6 +12,7 @@ type matplotlibAlphaPrecedenceCase struct {
 	spec        any
 	alpha       *float64
 	want        render.Color
+	wantErr     bool
 	goSupported bool
 }
 
@@ -55,6 +56,31 @@ func TestMatplotlibAlphaPrecedenceUpstreamCaseInventory(t *testing.T) {
 
 func alphaPtr(alpha float64) *float64 {
 	return &alpha
+}
+
+func TestToRGBAAlphaPrecedenceMatchesSupportedMatplotlibCases(t *testing.T) {
+	for _, tc := range matplotlibAlphaPrecedenceCases {
+		if !tc.goSupported {
+			continue
+		}
+		opts := []ToRGBAOption{}
+		if tc.alpha != nil {
+			opts = append(opts, WithAlpha(*tc.alpha))
+		}
+		got, err := ToRGBA(tc.spec, opts...)
+		if tc.wantErr {
+			if err == nil {
+				t.Fatalf("%s: ToRGBA(%v) = %+v, want error", tc.name, tc.spec, got)
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatalf("%s: ToRGBA(%v) error = %v", tc.name, tc.spec, err)
+		}
+		if !sameColor(got, tc.want) {
+			t.Fatalf("%s: ToRGBA(%v) = %+v, want %+v", tc.name, tc.spec, got, tc.want)
+		}
+	}
 }
 
 var matplotlibAlphaPrecedenceCases = []matplotlibAlphaPrecedenceCase{
@@ -119,6 +145,7 @@ var matplotlibAlphaPrecedenceCases = []matplotlibAlphaPrecedenceCase{
 		source:      "colors.py:_to_rgba_no_colorcycle: invalid explicit alpha errors",
 		spec:        "blue",
 		alpha:       alphaPtr(2),
+		wantErr:     true,
 		goSupported: true,
 	},
 	{
@@ -142,6 +169,7 @@ var matplotlibAlphaPrecedenceCases = []matplotlibAlphaPrecedenceCase{
 		source:      "tests/test_colors.py:test_to_rgba_error_with_color_invalid_alpha_tuple",
 		spec:        []any{"blue", 2.0},
 		alpha:       nil,
+		wantErr:     true,
 		goSupported: false,
 	},
 	{
