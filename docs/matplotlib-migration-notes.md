@@ -251,6 +251,25 @@ scales with forward and inverse callbacks, but a color `FuncNorm` decision must
 choose a typed `ScalarNormalizer` constructor, the callback shape, and how much
 of Matplotlib's array-like, mask, `clip`, and autoscale behavior to mirror.
 
+## Phase 17.75.5 FuncNorm Go Callback Shape
+
+The current Go callback shape for arbitrary color normalization remains the
+existing `ScalarNormalizer` interface:
+
+- `Map(float64) float64`
+- `Inverse(float64) (float64, bool)`
+- `Autoscale([]float64) ScalarNormalizer`
+- `Range() (float64, float64)`
+- `Validate() error`
+- `NormName() string`
+
+This deliberately does not share the axis `transform.Scale` callback shape.
+Axis scales map data coordinates into axes fraction space, while color norms
+also carry scalar-map range, validation, autoscale, and colorbar identity
+metadata. Until a supported fixture needs Matplotlib-compatible `FuncNorm`
+construction, no concrete `FuncNorm` type is added; callers that need arbitrary
+normalization should provide a typed `ScalarNormalizer` implementation.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

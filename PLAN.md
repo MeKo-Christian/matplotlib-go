@@ -2292,7 +2292,7 @@ example/browser breadth as documentation work.
                   Matplotlib's `FuncNorm` autoscale, inverse, clipping, and
                   array handling paths.
 
-                - [ ] 17.75.5.2.2.1.2 Go Callback Shape: choose typed forward
+                - [x] 17.75.5.2.2.1.2 Go Callback Shape: choose typed forward
                   and inverse callback signatures plus error behavior for
                   unsupported or non-monotonic mappings.
 

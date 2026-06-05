@@ -153,6 +153,31 @@ func TestFuncNormUpstreamContractIsDocumented(t *testing.T) {
 	}
 }
 
+func TestFuncNormGoCallbackShapeDecisionIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	doc := string(data)
+	required := []string{
+		"Phase 17.75.5 FuncNorm Go Callback Shape",
+		"`ScalarNormalizer`",
+		"`Map(float64) float64`",
+		"`Inverse(float64) (float64, bool)`",
+		"`Autoscale([]float64) ScalarNormalizer`",
+		"`Range() (float64, float64)`",
+		"`Validate() error`",
+		"`NormName() string`",
+		"does not share the axis `transform.Scale` callback shape",
+		"no concrete `FuncNorm` type is added",
+	}
+	for _, phrase := range required {
+		if !strings.Contains(doc, phrase) {
+			t.Fatalf("FuncNorm callback-shape docs missing %q", phrase)
+		}
+	}
+}
+
 var normInventory = []normInventoryEntry{
 	{
 		upstream:      "Normalize",
