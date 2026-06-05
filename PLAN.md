@@ -2212,9 +2212,19 @@ example/browser breadth as documentation work.
       non-static omissions. `TestAnnotateSupportsSeparateTextCoordinateSpace`
       and `TestTextAnnotationOffsetboxRowsAreSplitByStaticAndGuiScope` guard
       the closure.
-- [ ] Complete legend handler and placement gaps that affect static rendering:
+- [x] Complete legend handler and placement gaps that affect static rendering:
       scalar-mapped collection samples, full bbox/path-intersection
-      `loc="best"` scoring, and proxy/compound handle behavior.
+      `loc="best"` scoring, and proxy/compound handle behavior. 2026-06-05
+      follow-up: legend collection samples now resolve scalar-mapped
+      Path/Patch/Line collection colors; `LegendBest` scores rectangle bboxes
+      and patch paths in addition to existing line/collection-offset/image/
+      annotation data; static `Legend` / `legend_handler.py` rows are split
+      from `DraggableLegend`, with arbitrary Python handler maps documented as
+      typed-API divergence. Guarded by
+      `TestLegendCollectionSamplesUseScalarMappedColors`,
+      `TestLegendBestPlacementAvoidsPatchBounds`,
+      `TestLegendBestPlacementAvoidsPatchPaths`, and
+      `TestLegendStaticRowsAreNotLeftPartial`.
 - [ ] Keep draggable GUI-only legend and offset-box behavior either explicitly
       omitted or owned by the backend/event-loop work below.
 

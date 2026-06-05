@@ -88,9 +88,17 @@ func (c *PatchCollection) legendEntry() (legendEntry, bool) {
 	if c == nil || c.label() == "" {
 		return legendEntry{}, false
 	}
+	fill := c.alphaColor(colorAt(c.FaceColor, c.FaceColors, 0))
+	if len(c.FaceColors) == 0 && c.FaceColor == (render.Color{}) {
+		mapped, ok := c.scalarMappedColorAt(0)
+		if !ok {
+			mapped = fill
+		}
+		fill = mapped
+	}
 	return legendEntryFromPatchStyle(
 		c.label(),
-		c.alphaColor(colorAt(c.FaceColor, c.FaceColors, 0)),
+		fill,
 		c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, 0)),
 		widthAt(c.EdgeWidth, c.EdgeWidths, 0),
 		stringAt(c.Hatch, c.Hatches, 0),

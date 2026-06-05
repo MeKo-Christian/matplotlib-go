@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
@@ -439,6 +440,87 @@ func TestLegendSetHandlerOverridesCollectedArtistSample(t *testing.T) {
 	}
 }
 
+func TestLegendCollectionSamplesUseScalarMappedColors(t *testing.T) {
+	cmapName := "legend-collection-scalar"
+	low := render.Color{R: 1, A: 1}
+	high := render.Color{B: 1, A: 1}
+	matcolor.RegisterColormap(cmapName, matcolor.NewColormap(cmapName, []matcolor.ColorStop{
+		{Pos: 0, Color: low},
+		{Pos: 1, Color: high},
+	}))
+
+	pathCollection := &PathCollection{
+		Collection: Collection{
+			Label:        "mapped",
+			Colormap:     cmapName,
+			VMin:         0,
+			VMax:         10,
+			ScalarValues: []float64{0, 10},
+		},
+		Path:      markerCirclePath(1),
+		Offsets:   []geom.Pt{{X: 0, Y: 0}, {X: 1, Y: 1}},
+		EdgeColor: render.Color{A: 1},
+		EdgeWidth: 1,
+	}
+	pathEntry, ok := pathCollection.legendEntry()
+	if !ok {
+		t.Fatal("scalar-mapped path collection legend entry not collected")
+	}
+	if got := pathEntry.markerFill; got != low {
+		t.Fatalf("legend marker fill = %+v, want first scalar-mapped face %+v", got, low)
+	}
+
+	explicit := render.Color{G: 1, A: 1}
+	pathCollection.FaceColor = explicit
+	pathEntry, ok = pathCollection.legendEntry()
+	if !ok {
+		t.Fatal("explicit-colored path collection legend entry not collected")
+	}
+	if got := pathEntry.markerFill; got != explicit {
+		t.Fatalf("legend marker fill with explicit face = %+v, want explicit color %+v", got, explicit)
+	}
+	pathCollection.FaceColor = render.Color{}
+
+	patchCollection := &PatchCollection{
+		Collection: Collection{
+			Label:        "mapped patch",
+			Colormap:     cmapName,
+			VMin:         0,
+			VMax:         10,
+			ScalarValues: []float64{10},
+		},
+		Paths:     []geom.Path{polygonPath([]geom.Pt{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: 1}}, true)},
+		EdgeColor: render.Color{A: 1},
+		EdgeWidth: 1,
+	}
+	patchEntry, ok := patchCollection.legendEntry()
+	if !ok {
+		t.Fatal("scalar-mapped patch collection legend entry not collected")
+	}
+	if got := patchEntry.patchFill; got != high {
+		t.Fatalf("legend patch fill = %+v, want first scalar-mapped face %+v", got, high)
+	}
+
+	lineCollection := &LineCollection{
+		Collection: Collection{
+			Label:        "mapped line",
+			Colormap:     cmapName,
+			VMin:         0,
+			VMax:         10,
+			ScalarValues: []float64{10},
+		},
+		Segments:  [][]geom.Pt{{{X: 0, Y: 0}, {X: 1, Y: 1}}},
+		LineWidth: 1,
+	}
+	lineEntry, ok := lineCollection.legendEntry()
+	if !ok {
+		t.Fatal("scalar-mapped line collection legend entry not collected")
+	}
+	if got := lineEntry.lineColor; got != high {
+		t.Fatalf("legend line color = %+v, want first scalar-mapped stroke %+v", got, high)
+	}
+}
+
 func TestLegendBestPlacementAvoidsLineAndScatterPoints(t *testing.T) {
 	ax := &Axes{}
 	legend := NewLegend(ax)
@@ -555,6 +637,45 @@ func TestLegendBestPlacementAvoidsImageExtent(t *testing.T) {
 	want := anchoredBoxRect(ctx.Clip, 80, 40, LegendUpperLeft, legend.Inset)
 	if box != want {
 		t.Fatalf("best legend box = %+v, want upper-left %+v when image occupies upper-right", box, want)
+	}
+}
+
+func TestLegendBestPlacementAvoidsPatchBounds(t *testing.T) {
+	ax := &Axes{}
+	legend := NewLegend(ax)
+	patch := &Rectangle{
+		XY:     geom.Pt{X: 0.84, Y: 0.86},
+		Width:  0.14,
+		Height: 0.12,
+		Coords: Coords(CoordData),
+	}
+	ax.Artists = []Artist{patch, legend}
+
+	ctx := legendBestPlacementTestContext()
+	box := legend.bestLegendBoxRect(ctx, 80, 40)
+	want := anchoredBoxRect(ctx.Clip, 80, 40, LegendUpperLeft, legend.Inset)
+	if box != want {
+		t.Fatalf("best legend box = %+v, want upper-left %+v when patch bbox occupies upper-right", box, want)
+	}
+}
+
+func TestLegendBestPlacementAvoidsPatchPaths(t *testing.T) {
+	ax := &Axes{}
+	legend := NewLegend(ax)
+	patch := &PathPatch{
+		Path: geom.Path{
+			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+			V: []geom.Pt{{X: 0.84, Y: 0.94}, {X: 0.99, Y: 0.94}},
+		},
+		Coords: Coords(CoordData),
+	}
+	ax.Artists = []Artist{patch, legend}
+
+	ctx := legendBestPlacementTestContext()
+	box := legend.bestLegendBoxRect(ctx, 80, 40)
+	want := anchoredBoxRect(ctx.Clip, 80, 40, LegendUpperLeft, legend.Inset)
+	if box != want {
+		t.Fatalf("best legend box = %+v, want upper-left %+v when patch path occupies upper-right", box, want)
 	}
 }
 

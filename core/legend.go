@@ -832,6 +832,10 @@ func (l *Legend) legendAvoidanceData(ctx *DrawContext) legendAvoidanceData {
 			for _, segment := range a.Segments {
 				appendLine(displayPolylineForLegend(ctx, a.Coords, segment))
 			}
+		case *Rectangle:
+			appendRect(a.Coords, a.Bounds(ctx))
+		case *PathPatch:
+			appendLine(buildArtistDisplayPath(ctx, a, a.Coords, a.Path, geom.Identity()))
 		case *Image2D:
 			appendRect(Coords(CoordData), a.Bounds(ctx))
 		case *Text:

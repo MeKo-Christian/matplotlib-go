@@ -91,7 +91,15 @@ func (c *LineCollection) legendEntry() (legendEntry, bool) {
 	if c == nil || c.label() == "" {
 		return legendEntry{}, false
 	}
-	return legendEntryFromLine(c.label(), c.alphaColor(colorAt(c.Color, c.Colors, 0)), widthAt(c.LineWidth, c.LineWidths, 0), dashesAt(c.Dashes, c.DashPatterns, 0)), true
+	color := c.alphaColor(colorAt(c.Color, c.Colors, 0))
+	if len(c.Colors) == 0 && c.Color == (render.Color{}) {
+		mapped, ok := c.scalarMappedColorAt(0)
+		if !ok {
+			mapped = color
+		}
+		color = mapped
+	}
+	return legendEntryFromLine(c.label(), color, widthAt(c.LineWidth, c.LineWidths, 0), dashesAt(c.Dashes, c.DashPatterns, 0)), true
 }
 
 // SetArray stores scalar values and refreshes mapped line-collection stroke colors.

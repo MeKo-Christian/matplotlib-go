@@ -192,6 +192,13 @@ func (c *Collection) mappedScalarColors() []render.Color {
 	return colors
 }
 
+func (c *Collection) scalarMappedColorAt(i int) (render.Color, bool) {
+	if c == nil || i < 0 || i >= len(c.ScalarValues) {
+		return render.Color{}, false
+	}
+	return c.ScalarMap().Resolved().Color(c.ScalarValues[i], c.alphaValue()), true
+}
+
 func scalarNormWithRange(norm ScalarNormalizer, vmin, vmax float64) ScalarNormalizer {
 	switch n := norm.(type) {
 	case Normalize:

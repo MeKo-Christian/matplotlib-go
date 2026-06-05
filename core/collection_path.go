@@ -186,12 +186,24 @@ func (c *PathCollection) legendEntry() (legendEntry, bool) {
 	if c == nil || c.label() == "" {
 		return legendEntry{}, false
 	}
+	fill := c.faceColorAt(0)
+	edge := c.edgeColorAt(0)
+	if len(c.FaceColors) == 0 && c.FaceColor == (render.Color{}) {
+		mapped, ok := c.scalarMappedColorAt(0)
+		if !ok {
+			mapped = fill
+		}
+		fill = mapped
+		if c.EdgeColorsFace {
+			edge = mapped
+		}
+	}
 	return legendEntry{
 		Label:           c.label(),
 		kind:            legendEntryMarker,
 		markerPath:      c.pathAt(0),
-		markerFill:      c.faceColorAt(0),
-		markerEdge:      c.edgeColorAt(0),
+		markerFill:      fill,
+		markerEdge:      edge,
 		markerEdgeWidth: c.edgeWidthAt(0),
 	}, true
 }

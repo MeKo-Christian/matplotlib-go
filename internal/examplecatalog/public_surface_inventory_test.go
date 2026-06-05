@@ -277,6 +277,50 @@ func TestTextAnnotationOffsetboxRowsAreSplitByStaticAndGuiScope(t *testing.T) {
 	}
 }
 
+func TestLegendStaticRowsAreNotLeftPartial(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	rowFor := func(upstreamID string) PublicSurfaceParity {
+		t.Helper()
+		for _, surface := range artifact.Rows {
+			if surface.ID != upstreamID {
+				continue
+			}
+			row, ok := PublicSurfaceParityForRow(surface)
+			if !ok {
+				t.Fatalf("missing Phase 17.75.6 static legend classification for %q", upstreamID)
+			}
+			return row
+		}
+		t.Fatalf("missing upstream surface row %q", upstreamID)
+		return PublicSurfaceParity{}
+	}
+
+	for _, upstreamID := range []string{
+		"legend.py:class:Legend",
+		"legend_handler.py:class:HandlerBase",
+		"legend_handler.py:class:HandlerCircleCollection",
+		"legend_handler.py:class:HandlerErrorbar",
+		"legend_handler.py:class:HandlerLine2D",
+		"legend_handler.py:class:HandlerLine2DCompound",
+		"legend_handler.py:class:HandlerLineCollection",
+		"legend_handler.py:class:HandlerNpoints",
+		"legend_handler.py:class:HandlerNpointsYoffsets",
+		"legend_handler.py:class:HandlerPatch",
+		"legend_handler.py:class:HandlerPathCollection",
+		"legend_handler.py:class:HandlerPolyCollection",
+		"legend_handler.py:class:HandlerRegularPolyCollection",
+		"legend_handler.py:class:HandlerStem",
+		"legend_handler.py:class:HandlerStepPatch",
+		"legend_handler.py:class:HandlerTuple",
+		"legend_handler.py:function:update_from_first_child",
+	} {
+		row := rowFor(upstreamID)
+		if row.Status == PublicSurfacePartial || row.Status == PublicSurfaceNotStarted {
+			t.Fatalf("%s status = %s, want closed static legend decision", upstreamID, row.Status)
+		}
+	}
+}
+
 func TestWidgetClassesHaveExplicitRows(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	for _, surface := range artifact.Rows {
