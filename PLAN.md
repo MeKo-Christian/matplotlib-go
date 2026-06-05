@@ -2408,7 +2408,7 @@ example/browser breadth as documentation work.
                   azimuth/altitude defaults, fraction handling, and clipping
                   for implemented hillshade behavior.
 
-                - [ ] 17.75.5.3.4.1.2 Blend Mode Tests: test overlay,
+                - [x] 17.75.5.3.4.1.2 Blend Mode Tests: test overlay,
                   soft-light, hsv, custom blend behavior, or explicit omission
                   diagnostics for unsupported blend paths.
 
