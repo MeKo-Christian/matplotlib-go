@@ -2213,7 +2213,7 @@ example/browser breadth as documentation work.
                   for explicit alpha, embedded alpha, `none`, and default
                   opacity in supported Go conversion paths.
 
-            - [ ] 17.75.5.1.2.2 Grayscale and Sequence Ambiguity: align
+            - [x] 17.75.5.1.2.2 Grayscale and Sequence Ambiguity: align
               grayscale strings, numeric inputs, and sequence-length handling
               for supported Go APIs.
 
