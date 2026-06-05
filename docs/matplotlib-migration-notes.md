@@ -1094,6 +1094,24 @@ carries colormap, norm, vmin, and vmax, not artist alpha. Matplotlib
 callback-driven immediate `update_normal` redraw semantics remain outside the
 Go API.
 
+## Phase 17.75.5 Colorbar Fixtures and Ledger
+
+The colorbar fixture ledger is catalog-visible through `colorbar_composition`,
+`asinh_norm_image`, `boundarynorm_pcolormesh`, `collection_mutable_scalarmap`,
+`colorbar_boundary_values`, `colorbar_horizontal_ticks`, `lognorm_imshow`,
+`twoslope_norm_image`, and `colorbar_extensions`. These cases cover composed
+placement, asinh/log/two-slope/boundary norms, mutable scalar-map updates,
+explicit boundaries and values, horizontal explicit ticks, and extension
+patches.
+
+Those IDs are linked through the colorbar feature-coverage row, the
+image/mesh/colorbar validation cluster, `test/parity/registry.go`, and the
+Matplotlib-reference plot registry. The public-surface colorbar row records
+mutable mappable clim/colormap/norm updates, explicit ticks,
+boundary/discrete behavior, shrink/anchor options, and extension shapes while
+leaving custom formatter objects, gridspec helpers, and multi-parent colorbars
+as documented partials.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

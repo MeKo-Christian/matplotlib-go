@@ -2237,7 +2237,7 @@ example/browser breadth as documentation work.
           alpha, array changes after creation) or document the immutable Go API
           differences.
 
-        - [ ] 17.75.5.6.3 Colorbar Fixtures, Tests, and Ledger: add focused
+        - [x] 17.75.5.6.3 Colorbar Fixtures, Tests, and Ledger: add focused
           placement, formatter, boundary, and update-contract colorbar tests;
           add focused colorbar fixtures; update public-surface metadata and
           migration notes for supported placement/formatter/boundary/extension/

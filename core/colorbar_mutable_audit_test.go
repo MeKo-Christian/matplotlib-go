@@ -174,3 +174,40 @@ func TestColorbarMutableUpdateTestsAndOmissionsAreDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestColorbarFixtureLedgerIsDocumented(t *testing.T) {
+	colorbarIDs := []string{
+		"colorbar_composition",
+		"asinh_norm_image",
+		"boundarynorm_pcolormesh",
+		"collection_mutable_scalarmap",
+		"colorbar_boundary_values",
+		"colorbar_horizontal_ticks",
+		"lognorm_imshow",
+		"twoslope_norm_image",
+		"colorbar_extensions",
+	}
+	sourceRequirements := map[string][]string{
+		filepath.Join("..", "internal", "examplecatalog", "catalog.go"):               colorbarIDs,
+		filepath.Join("..", "internal", "examplecatalog", "feature_coverage.go"):      colorbarIDs,
+		filepath.Join("..", "internal", "examplecatalog", "validation_clusters.go"):   colorbarIDs,
+		filepath.Join("..", "internal", "examplecatalog", "parity_validation.go"):     colorbarIDs,
+		filepath.Join("..", "test", "parity", "registry.go"):                          colorbarIDs,
+		filepath.Join("..", "test", "matplotlib_ref", "plots", "__init__.py"):         colorbarIDs,
+		filepath.Join("..", "internal", "examplecatalog", "public_surface_parity.go"): append(colorbarIDs, "mutable mappable clim/colormap/norm updates"),
+		filepath.Join("..", "docs", "matplotlib-parity-status.md"):                    {"mutable mappable clim/colormap/norm updates"},
+		filepath.Join("..", "docs", "matplotlib-migration-notes.md"):                  append(colorbarIDs[:1:1], "Phase 17.75.5 Colorbar Fixtures and Ledger"),
+	}
+	for path, phrases := range sourceRequirements {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		src := string(data)
+		for _, phrase := range phrases {
+			if !strings.Contains(src, phrase) {
+				t.Fatalf("%s missing colorbar fixture ledger marker %q", path, phrase)
+			}
+		}
+	}
+}

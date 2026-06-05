@@ -2500,7 +2500,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/colorbar.go", "core/scalar_mappable.go", "core/norm.go"},
 		catalogIDs:        []string{"colorbar_composition", "asinh_norm_image", "boundarynorm_pcolormesh", "collection_mutable_scalarmap", "colorbar_boundary_values", "colorbar_horizontal_ticks", "lognorm_imshow", "twoslope_norm_image", "colorbar_extensions"},
 		exampleIDs:        []string{"colorbar_composition"},
-		note:              "Scalar mappables and vertical/horizontal colorbars exist, including synchronization with mutable mappable clim/colormap updates, explicit tick lists, explicit boundaries/values, uniform/proportional spacing, drawedges, shrink/anchor options, and rectangular/triangular extensions; custom formatter objects, gridspec helpers, and multi-parent colorbars remain partial.",
+		note:              "Scalar mappables and vertical/horizontal colorbars exist, including synchronization with mutable mappable clim/colormap/norm updates, explicit tick lists, explicit boundaries/values, uniform/proportional spacing, drawedges, shrink/anchor options, and rectangular/triangular extensions; custom formatter objects, gridspec helpers, and multi-parent colorbars remain partial.",
 	},
 	{
 		idPrefix:          "colorizer",
