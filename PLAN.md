@@ -2256,7 +2256,7 @@ example/browser breadth as documentation work.
                   smallest transformed-image fixture set that covers
                   interpolation, extent/origin, clipping, and affine placement.
 
-                - [ ] 17.75.5.5.4.1.2 Image Triplet Generation: add or refresh
+                - [x] 17.75.5.5.4.1.2 Image Triplet Generation: add or refresh
                   the selected Go/Python/golden/reference image fixture
                   triplets and run focused visual checks.
 

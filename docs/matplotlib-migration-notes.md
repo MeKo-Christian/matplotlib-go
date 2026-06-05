@@ -808,6 +808,20 @@ triplets first, then supporting image fixtures only when their behavior changes.
 The ledger records that the priority set already has Go parity wrappers,
 Matplotlib reference scripts, golden PNGs, and Matplotlib reference PNGs.
 
+## Phase 17.75.5 Image Triplet Generation
+
+The refreshed triplets are `imshow_interpolation_matrix`, `imshow_clipped`, and
+`imshow_transformed`. The Go golden refresh was run with
+`rtk go test -tags freetype ./test -run 'TestGolden/(imshow_interpolation_matrix|imshow_clipped|imshow_transformed)$' -count=1 -update-golden`.
+The Matplotlib reference refresh was run with
+`rtk env PYTHONPATH=. python3 test/matplotlib_ref/generate.py --output-dir testdata/matplotlib_ref --plots imshow_interpolation_matrix imshow_clipped imshow_transformed`.
+
+Focused visual checks use
+`rtk go test -tags freetype ./test -run 'Test(Golden|MatplotlibRef|ReferenceCompare)/(imshow_interpolation_matrix|imshow_clipped|imshow_transformed)$' -count=1`.
+The ledger records that the refresh produced no required source wrapper or
+Python reference script changes; the committed PNG triplets remain the
+authoritative visual fixture inputs for the next backend-notes items.
+
 ## Phase 17.75.5 Interpolation Kernel Alignment
 
 `AGG` keeps the Matplotlib interpolation-name registry for raster image draws:

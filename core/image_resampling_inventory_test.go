@@ -526,3 +526,25 @@ func TestTransformedImageFixturePriorityIsDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestTransformedImageTripletGenerationIsDocumented(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(data)), " ")
+	requiredDocs := []string{
+		"Phase 17.75.5 Image Triplet Generation",
+		"refreshed triplets are `imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed`",
+		"`rtk go test -tags freetype ./test -run 'TestGolden/(imshow_interpolation_matrix|imshow_clipped|imshow_transformed)$' -count=1 -update-golden`",
+		"`rtk env PYTHONPATH=. python3 test/matplotlib_ref/generate.py --output-dir testdata/matplotlib_ref --plots imshow_interpolation_matrix imshow_clipped imshow_transformed`",
+		"`rtk go test -tags freetype ./test -run 'Test(Golden|MatplotlibRef|ReferenceCompare)/(imshow_interpolation_matrix|imshow_clipped|imshow_transformed)$' -count=1`",
+		"the refresh produced no required source wrapper or Python reference script changes",
+		"the committed PNG triplets remain the authoritative visual fixture inputs for the next backend-notes items",
+	}
+	for _, phrase := range requiredDocs {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("transformed image triplet generation docs missing %q", phrase)
+		}
+	}
+}
