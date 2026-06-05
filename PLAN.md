@@ -2280,7 +2280,7 @@ example/browser breadth as documentation work.
               behavior needed by supported examples before implementing new
               norm types.
 
-        - [ ] 17.75.5.2.2 FuncNorm Decision: implement `FuncNorm` with forward
+        - [x] 17.75.5.2.2 FuncNorm Decision: implement `FuncNorm` with forward
           and inverse callbacks or record an intentional omission with API
           rationale and affected examples.
 
