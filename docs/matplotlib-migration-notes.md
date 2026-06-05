@@ -1112,6 +1112,27 @@ boundary/discrete behavior, shrink/anchor options, and extension shapes while
 leaving custom formatter objects, gridspec helpers, and multi-parent colorbars
 as documented partials.
 
+## Phase 17.75.5 Fixture Gap Inventory
+
+Color fixtures currently cover named colors plus diverging, qualitative, and
+cyclic scalar colormaps. Image fixtures cover heatmap, clipped, transformed,
+bilinear, bicubic, interpolation-matrix, alpha, matshow, spy-marker, spy-image,
+and arrays-showcase paths. Norm and colorbar fixtures cover log, asinh,
+two-slope, boundary/discrete, mutable scalar-map, explicit ticks, and
+extensions.
+
+Missing high-priority fixture work is ordered as norm/FuncNorm/boundary/two-slope
+and colormap/discrete triplets before transformed-image/LightSource and colorbar
+placement/formatter/update triplets. This order keeps new visual fixtures tied
+to behavior that is already implemented or explicitly documented as an omission.
+
+LightSource and shaded-relief image fixtures remain absent by design because the
+2D image-lighting API is intentionally omitted for now. The bivariate and
+multivariate colormap fixture work remains deferred until a 2D or
+multi-component colorbar contract exists. Potential weak coverage: scalar
+colormap families are represented by only three fixture rows and colorbar
+composition is the only showcase example.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

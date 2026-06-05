@@ -2249,7 +2249,7 @@ example/browser breadth as documentation work.
       `docs/matplotlib-parity-status.md`, and migration notes with intentional
       signature or backend-rendering differences.
 
-        - [ ] 17.75.5.7.1 Fixture Gap Inventory: scan current color, norm,
+        - [x] 17.75.5.7.1 Fixture Gap Inventory: scan current color, norm,
           image, and colorbar catalog rows, reference plots, golden files, and
           validation clusters against public-surface rows; record missing,
           duplicate, or weak coverage; and order the missing fixtures by API
