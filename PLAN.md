@@ -2466,7 +2466,7 @@ example/browser breadth as documentation work.
         - [ ] 17.75.5.4.4 Colormap Fixtures and Ledger: add tests/fixtures for
           supported behavior, record omissions, and regenerate docs.
 
-            - [ ] 17.75.5.4.4.1 Focused Colormap Tests: run tests for supported
+            - [x] 17.75.5.4.4.1 Focused Colormap Tests: run tests for supported
               bivariate/multivariate lookup behavior or omission diagnostics.
 
                 - [x] 17.75.5.4.4.1.1 Lookup Tests: test lookup-table shape,
