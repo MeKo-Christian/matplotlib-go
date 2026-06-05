@@ -277,3 +277,40 @@ overrides across later 3D view/limit reprojection. Reprojection closures remain
 owned by the original 3D helper inputs and may recompute projection-derived
 arrays such as surface average-z, contour levels, filled-contour layer values,
 or scatter visible sorted scalars.
+
+### 3D fixture coverage (17.75.4.5)
+
+The 3D fixture sweep closed the inventory gaps with seven new parity triplets
+(Go `test/parity/<id>/plot.go` + `plot.py`, Python `test/matplotlib_ref/plots`,
+golden, and matplotlib reference): `mplot3d_errorbar3d`, `mplot3d_contour3d`,
+`mplot3d_contourf3d`, `mplot3d_tricontour3d`, `mplot3d_tricontourf3d`,
+`mplot3d_bar2d_zdir`, and `mplot3d_text3d`. Each keeps the Go and Python
+sources structurally close and shares identical input data so only rendering
+differences remain. The structured-contour cases reuse the
+`get_test_data(0.25)` dual-Gaussian grid with explicit levels and matched
+`vmin`/`vmax`; the triangulated-contour cases reuse the `mplot3d_trisurf3d`
+polar fan point cloud and rely on auto-Delaunay so the Go `core.Triangulation`
+mesh and matplotlib's qhull mesh agree. All seven join the existing `mplot3d_*`
+family in `optionalVisualGoldenIDs` and use the shared 3D tolerance band
+(`MinPSNR` 30, `MaxMeanAbs` 8-12, `MaxRMSE` 18).
+
+Measured golden-vs-reference metrics: contour3d RMSE 3.17 / PSNR 52.0,
+contourf3d RMSE 6.06 / PSNR 45.4, tricontour3d RMSE 4.62 / PSNR 52.0,
+tricontourf3d RMSE 13.0 / PSNR 46.5, bar2d_zdir RMSE 1.09 / PSNR 56.8, and
+text3d RMSE 14.79 / PSNR 45.3.
+
+Residual rendering differences (all within the band):
+
+- Filled 3D contour bands (`Contourf` / `TriContourf`) render marginally more
+  transparent than Matplotlib's `Poly3DCollection`, so `mplot3d_contourf3d` and
+  `mplot3d_tricontourf3d` carry the band's higher RMSE; the band positions,
+  level colors, and depth order match.
+- `mplot3d_text3d` sets explicit `SetXLim`/`SetYLim`/`SetZLim` in both the Go
+  and Python sources because Go's `Text3D` expands the data limits while
+  Matplotlib's `text` does not participate in 3D autoscaling. With shared
+  limits the projection is identical; only flat (`zdir=None`) labels are used,
+  since Go does not rotate 3D text along an axis direction.
+- `mplot3d_bar2d_zdir` uses a single base color per plane (and fixed, not
+  random, heights) because the Go plane-bar API takes one color rather than
+  Matplotlib's per-bar color array; the per-plane depth ordering, alpha, and
+  edges otherwise match.

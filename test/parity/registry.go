@@ -118,7 +118,10 @@ import (
 	example_mixed_collection "github.com/cwbudde/matplotlib-go/test/parity/mixed_collection"
 	example_mixed_raster_vector "github.com/cwbudde/matplotlib-go/test/parity/mixed_raster_vector"
 	example_mplot3d_bar3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_bar3d"
+	example_mplot3d_bar2d_zdir "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_bar2d_zdir"
 	example_mplot3d_basic "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_basic"
+	example_mplot3d_contour3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_contour3d"
+	example_mplot3d_contourf3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_contourf3d"
 	example_mplot3d_errorbar3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_errorbar3d"
 	example_mplot3d_fill_between3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_fill_between3d"
 	example_mplot3d_plot3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_plot3d"
@@ -127,7 +130,10 @@ import (
 	example_mplot3d_stem3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_stem3d"
 	example_mplot3d_surface3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_surface3d"
 	example_mplot3d_terrain "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_terrain"
+	example_mplot3d_tricontour3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_tricontour3d"
+	example_mplot3d_tricontourf3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_tricontourf3d"
 	example_mplot3d_trisurf3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_trisurf3d"
+	example_mplot3d_text3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_text3d"
 	example_mplot3d_voxels "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_voxels"
 	example_mplot3d_wire3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_wire3d"
 	example_multi_series_basic "github.com/cwbudde/matplotlib-go/test/parity/multi_series_basic"
@@ -296,9 +302,15 @@ var renderByID = map[string]func() image.Image{
 	"mplot3d_surface3d":                  example_mplot3d_surface3d.Render,
 	"mplot3d_wire3d":                     example_mplot3d_wire3d.Render,
 	"mplot3d_trisurf3d":                  example_mplot3d_trisurf3d.Render,
+	"mplot3d_tricontour3d":               example_mplot3d_tricontour3d.Render,
+	"mplot3d_tricontourf3d":              example_mplot3d_tricontourf3d.Render,
+	"mplot3d_text3d":                     example_mplot3d_text3d.Render,
 	"mplot3d_bar3d":                      example_mplot3d_bar3d.Render,
+	"mplot3d_bar2d_zdir":                 example_mplot3d_bar2d_zdir.Render,
 	"mplot3d_voxels":                     example_mplot3d_voxels.Render,
 	"mplot3d_quiver3d":                   example_mplot3d_quiver3d.Render,
+	"mplot3d_contour3d":                  example_mplot3d_contour3d.Render,
+	"mplot3d_contourf3d":                 example_mplot3d_contourf3d.Render,
 	"mplot3d_errorbar3d":                 example_mplot3d_errorbar3d.Render,
 	"mplot3d_stem3d":                     example_mplot3d_stem3d.Render,
 	"mplot3d_fill_between3d":             example_mplot3d_fill_between3d.Render,
