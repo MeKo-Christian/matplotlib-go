@@ -2363,7 +2363,7 @@ example/browser breadth as documentation work.
       algorithms against `third_party/matplotlib/lib/matplotlib/colors.py` and
       `third_party/matplotlib/lib/matplotlib/image.py`.
 
-        - [ ] 17.75.5.3.1 LightSource Algorithm Audit: compare hillshade,
+        - [x] 17.75.5.3.1 LightSource Algorithm Audit: compare hillshade,
           shade, shade-rgb, blend modes, fraction, vert/horz exaggeration, and
           azimuth/altitude defaults against upstream.
 
