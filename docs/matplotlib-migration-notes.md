@@ -655,6 +655,29 @@ input validation, `combination_mode` behavior, bad-value propagation, alpha
 multiplication, and multi-component colorbar expectations are all tested
 together.
 
+## Phase 17.75.5 Transformed Image Backend Matrix
+
+`Image2D.Draw` routes rotated images through a native `render.ImageTransformer`
+when the renderer implements it; otherwise the core fallback ignores rotation
+and draws the already-rasterized image axis-aligned. Non-rotated images always
+use `Renderer.Image`. Scalar image data is rasterized in core first, preserving
+`ImageData.Interpolation()` unless core performs a scalar-stage resample.
+
+| Backend | Transform surface | Interpolation / resampling state | Notes |
+| --- | --- | --- | --- |
+| `AGG` | Native `render.ImageTransformer` through `Renderer.ImageTransformed`. | AGG consumes `Interpolation()` for direct and transformed image draws, including `nearest`, `bilinear`, `bicubic`, `auto` / `antialiased`, and Matplotlib-name aliases. It also has nearest-specific placement helpers for non-integer direct draws. | Treat as the raster reference backend for later image-resampling alignment. |
+| `GoBasic` | Native `render.ImageTransformer` through `Renderer.ImageTransformed`. | Uses deterministic nearest-style bitmap scaling and affine sampling; it does not consume interpolation names. | Correctness fallback for pure-Go builds, not a pixel-parity backend for interpolation kernels. |
+| `SVG` | Native `render.ImageTransformer` by emitting transformed `<image>` nodes. | Embeds source RGBA pixels as PNG data and leaves resampling to SVG viewers; interpolation names are not mapped to renderer-specific filters. | Clip paths and affine matrices are preserved structurally. |
+| `PDF` | Native `render.ImageTransformer` by emitting image XObjects with affine matrices. | Embeds transformed raster image XObjects; interpolation names are not mapped to PDF interpolation dictionaries. | Mixed-raster vector groups forward transformed images to the active raster renderer. |
+| `PS` / `PGF` | Native `render.ImageTransformer` by emitting transformed raster/image pixel scopes. | Vector-generator fallback; exact viewer-side resampling is backend/output-consumer dependent. | Included in the vector-backend follow-up, but lower priority than SVG/PDF. |
+| `Skia` | Optional `-tags skia` CPU renderer advertises native `render.ImageTransformer`; the default untagged stub is unavailable. | Tagged Skia currently follows its CPU compatibility renderer path, not an external GPU/native Skia resampling contract. | Treat as optional raster coverage until the external Skia C ABI lands. |
+
+The matrix means the next image-resampling work should compare AGG first,
+document GoBasic's nearest-style fallback separately. SVG/PDF embed
+transformed raster image objects, and PS/PGF are structural transform emitters
+whose exact display resampling may differ by viewer. Skia is optional
+`-tags skia` coverage rather than a required default backend.
+
 ## Phase 17.75.4 mplot3d Scalar-Mappable Inventory
 
 The 17.75.4 colormapping audit maps each public Go 3D helper to Matplotlib's

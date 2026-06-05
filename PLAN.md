@@ -2216,7 +2216,7 @@ example/browser breadth as documentation work.
           interpolation, antialiasing, extent, origin, and clipping behavior
           across Go backends and Matplotlib's image pipeline.
 
-            - [ ] 17.75.5.5.1.1 Backend Matrix: map image transform and
+            - [x] 17.75.5.5.1.1 Backend Matrix: map image transform and
               interpolation behavior across AGG, GoBasic, SVG/PDF, and any
               optional raster backends.
 
