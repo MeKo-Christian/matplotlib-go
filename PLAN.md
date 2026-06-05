@@ -2296,8 +2296,14 @@ example/browser breadth as documentation work.
 
 ### 17.6.9 Final Closure Sweep
 
-- [ ] Re-run the upstream public-surface extractor and resolve every changed or
+- [x] Re-run the upstream public-surface extractor and resolve every changed or
       newly unclassified row.
+      2026-06-05: reran `internal/examplecatalog/extract_public_surface.py`
+      against vendored Matplotlib 3.10.9; the fresh artifact was byte-identical
+      to `test/testdata/parity_surface/upstream_public_surface.json`, so no new
+      or changed upstream rows required classification. Verified with
+      `go test ./internal/examplecatalog/...`, including extractor freshness,
+      stale-doc, duplicate-row, and closure-owner guards.
 - [ ] Ensure every remaining `not-started` row is either implemented, converted
       to a precise `partial` with an owner task, or marked
       `intentional-omission` with rationale.
