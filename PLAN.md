@@ -1791,6 +1791,10 @@ Exit criteria:
 source-backed Matplotlib-compatible widget visual mode for parity testing and
 migration-sensitive users.
 
+Status: completed 2026-06-06. Phase 17.5 widget/style/parity validation and
+image checks pass; the exact focused command that also includes full `./core`
+currently reports only unrelated Phase 17.6.5 PLAN-marker audit failures.
+
 **Reference sources:** `third_party/matplotlib/lib/matplotlib/widgets.py`,
 `test/parity/widgets_gallery/plot.py`, `examples/widgets_gallery/example.go`,
 `core/widget_*.go`, `core/widgets_common.go`, and
@@ -1852,23 +1856,43 @@ migration-sensitive users.
 
 ### 17.5.5 Interaction and Hit-Testing
 
-- [ ] Add style-parameterized interaction tests for button click, slider drag,
+- [x] Add style-parameterized interaction tests for button click, slider drag,
       range-slider handle selection, check/radio activation, and text-box
       focus/caret behavior under both Go and Matplotlib-compatible styles.
-- [ ] Ensure style changes do not alter widget hit regions unless the visual
+- [x] Ensure style changes do not alter widget hit regions unless the visual
       geometry also changes and the interaction test documents that behavior.
-- [ ] Add renderer-neutral unit tests for helper geometry used by styled widget
+- [x] Add renderer-neutral unit tests for helper geometry used by styled widget
       panels, tracks, handles, and markers.
 
 ### 17.5.6 Validation and Closure
 
-- [ ] Run and record focused verification:
+- [x] Run and record focused verification:
       `rtk go test ./style ./core ./canvas ./test/parity/widgets_gallery ./test/parity ./examples/widgets_gallery`.
-- [ ] Run and record image verification:
+      2026-06-06: exact command was run and reported `1176 passed, 3 failed`;
+      the only failures were unrelated Phase 17.6.5 PLAN-marker audit checks in
+      `core` (`TestFinalColorStatusRegenerationIsDocumented`,
+      `TestColorbarFormatterAndTickBreadthMilestoneIsClosed`,
+      `TestColorbarPlacementAndFormatterBreadthMilestoneIsClosed`). The
+      Phase 17.5-target packages passed with
+      `rtk go test ./style ./canvas ./test/parity/widgets_gallery ./test/parity ./examples/widgets_gallery`
+      (`109 passed in 5 packages`), and the focused widget/core subset passed
+      (`14 passed in 1 package`).
+- [x] Run and record image verification:
       `rtk go test ./test/ -run 'TestGolden/widgets_gallery|TestMatplotlibRef/widgets_gallery|TestReferenceCompare/widgets_gallery'`.
-- [ ] Visually inspect Go-default showcase, Matplotlib-compatible parity render,
+      2026-06-06: passed. Metrics: `TestGolden/widgets_gallery`
+      `MaxDiff=0 MeanAbs=0.00 PSNR=+Inf`; `TestMatplotlibRef/widgets_gallery`
+      `PSNR=48.2 dB MeanAbs=0.39 MaxDiff=255`;
+      `TestReferenceCompare/widgets_gallery` `MaxDiff=255 MeanAbs=0.39
+      RMSE=6.17 PSNR=48.16dB`.
+- [x] Visually inspect Go-default showcase, Matplotlib-compatible parity render,
       Matplotlib reference, and diff artifact before accepting any new golden
       update.
+      2026-06-06: inspected `/tmp/widgets_gallery_go_default.png`,
+      `testdata/_artifacts/reference_compare/widgets_gallery_rendered.png`,
+      `widgets_gallery_matplotlib_ref.png`, and
+      `widgets_gallery_golden_vs_matplotlib_ref_diff.png`. Go-default keeps the
+      rounded native chrome; compatibility render matches the Matplotlib
+      reference structurally; no golden update was needed.
 
 Exit criteria:
 
@@ -1876,14 +1900,22 @@ Exit criteria:
       with meaningfully improved parity metrics.
 - [x] The current Go widget appearance remains available and remains the
       default for normal examples.
-- [ ] Widget interaction tests pass under both visual styles where geometry or
+- [x] Widget interaction tests pass under both visual styles where geometry or
       hit regions are affected.
-- [ ] Any remaining widget-gallery residuals are classified as intentional Go
+      2026-06-06: style-parameterized canvas interaction tests cover button,
+      slider, range-slider, check/radio, and text-box focus/caret paths.
+- [x] Any remaining widget-gallery residuals are classified as intentional Go
       visual choices, upstream GUI/backend differences, or concrete follow-up
       bugs.
-- [ ] All Matplotlib-compatible widget chrome values that affect rendered output
+      2026-06-06: residuals remain classified in
+      `docs/phase-17.5-widget-residual-audit.md`; the final visual inspection
+      found no new unclassified widget-gallery residuals.
+- [x] All Matplotlib-compatible widget chrome values that affect rendered output
       are sourced from the visual-style policy rather than duplicated in
       individual widget draw methods.
+      2026-06-06: renderer-neutral geometry tests cover panels, tracks, row
+      placement, and coordinate helpers; canvas interaction now reuses the same
+      core style-aware geometry used for rendering.
 
 ---
 

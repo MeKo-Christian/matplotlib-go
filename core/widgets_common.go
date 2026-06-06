@@ -404,11 +404,40 @@ func widgetStyledSliderTrack(panel geom.Rect, defaults widgetVisualDefaults) geo
 	}
 }
 
+func widgetSliderTrackForContext(ctx *DrawContext) geom.Rect {
+	if ctx == nil {
+		return geom.Rect{}
+	}
+	defaults := widgetDefaultsForRC(ctx.RC)
+	panel := widgetStyledPanelRect(ctx.Clip, defaults.SliderPanelPad)
+	return widgetStyledSliderTrack(panel, defaults)
+}
+
 func widgetSliderTrackRadius(track geom.Rect, defaults widgetVisualDefaults) float64 {
 	if defaults.SliderTrackRadius >= 0 {
 		return defaults.SliderTrackRadius
 	}
 	return track.H() / 2
+}
+
+func widgetTextBoxInputRect(panel geom.Rect, defaults widgetVisualDefaults) geom.Rect {
+	return geom.Rect{
+		Min: geom.Pt{
+			X: panel.Min.X + defaults.TextBoxInputXPad,
+			Y: widgetStyleCoord(panel.Min.Y, panel.Max.Y, defaults.TextBoxInputYMin),
+		},
+		Max: geom.Pt{
+			X: panel.Max.X - defaults.TextBoxInputXPad,
+			Y: widgetStyleCoord(panel.Min.Y, panel.Max.Y, defaults.TextBoxInputYMax),
+		},
+	}
+}
+
+func widgetTextBoxTextAnchor(input geom.Rect, defaults widgetVisualDefaults) geom.Pt {
+	return geom.Pt{
+		X: widgetResolvedCoord(input.Min.X, input.Max.X, defaults.TextBoxTextX),
+		Y: widgetResolvedCoord(input.Min.Y, input.Max.Y, defaults.TextBoxTextY),
+	}
 }
 
 func widgetButtonRowCenterY(panel geom.Rect, index, count int, sourceLayoutSentinel float64) float64 {

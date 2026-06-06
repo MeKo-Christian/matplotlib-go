@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/core"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
 )
 
 func axesInteractionArtists(axes *core.Axes) []core.Artist {
@@ -104,21 +103,4 @@ func clampInt(v, minV, maxV int) int {
 		return maxV
 	}
 	return v
-}
-
-func widgetInsetRect(rect geom.Rect, pad float64) geom.Rect {
-	return geom.Rect{
-		Min: geom.Pt{X: rect.Min.X + pad, Y: rect.Min.Y + pad},
-		Max: geom.Pt{X: rect.Max.X - pad, Y: rect.Max.Y - pad},
-	}
-}
-
-func widgetFontSize(size float64, ctx *core.DrawContext) float64 {
-	if size > 0 {
-		return size
-	}
-	if ctx != nil && ctx.RC.FontSize > 0 {
-		return ctx.RC.FontSize
-	}
-	return 12
 }

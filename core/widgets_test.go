@@ -162,6 +162,59 @@ func TestStyledWidgetGeometryUsesVisualPolicy(t *testing.T) {
 	}
 }
 
+func TestWidgetHelperGeometryIsRendererNeutral(t *testing.T) {
+	clip := geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 210, Y: 80}}
+	goDefaults := widgetDefaultsForRC(style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualGo)))
+	mplDefaults := widgetDefaultsForRC(style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib)))
+
+	goPanel := widgetStyledPanelRect(clip, goDefaults.SliderPanelPad)
+	if !approxRect(goPanel, geom.Rect{Min: geom.Pt{X: 14, Y: 24}, Max: geom.Pt{X: 206, Y: 76}}, 1e-9) {
+		t.Fatalf("Go styled panel = %+v, want inset by native panel padding", goPanel)
+	}
+	goTrack := widgetStyledSliderTrack(goPanel, goDefaults)
+	if !approxRect(goTrack, geom.Rect{Min: geom.Pt{X: 28, Y: 50}, Max: geom.Pt{X: 192, Y: 62}}, 1e-9) {
+		t.Fatalf("Go slider track = %+v, want native track geometry", goTrack)
+	}
+	if got, want := widgetSliderTrackRadius(goTrack, goDefaults), goTrack.H()/2; got != want {
+		t.Fatalf("Go slider track radius = %v, want half track height %v", got, want)
+	}
+
+	mplPanel := widgetStyledPanelRect(clip, mplDefaults.SliderPanelPad)
+	if mplPanel != clip {
+		t.Fatalf("Matplotlib styled panel = %+v, want full clip %+v", mplPanel, clip)
+	}
+	mplTrack := widgetStyledSliderTrack(mplPanel, mplDefaults)
+	if !approxRect(mplTrack, geom.Rect{Min: geom.Pt{X: 10, Y: 35}, Max: geom.Pt{X: 210, Y: 65}}, 1e-9) {
+		t.Fatalf("Matplotlib slider track = %+v, want source fraction geometry", mplTrack)
+	}
+	if got := widgetSliderTrackRadius(mplTrack, mplDefaults); got != 0 {
+		t.Fatalf("Matplotlib slider track radius = %v, want rectangular track", got)
+	}
+}
+
+func TestWidgetRowAndCoordinateHelpersAreRendererNeutral(t *testing.T) {
+	panel := geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 120, Y: 90}}
+
+	if got, want := widgetButtonRowCenterY(panel, 0, 3, 0.15), 67.5; got != want {
+		t.Fatalf("source-style row 0 center = %v, want %v", got, want)
+	}
+	if got, want := widgetButtonRowCenterY(panel, 1, 3, 0.15), 45.0; got != want {
+		t.Fatalf("source-style row 1 center = %v, want %v", got, want)
+	}
+	if got, want := widgetButtonRowCenterY(panel, 0, 3, 14), 75.0; got != want {
+		t.Fatalf("native row 0 center = %v, want %v", got, want)
+	}
+	if got, want := widgetStyleCoord(panel.Min.X, panel.Max.X, 0.25), 30.0; got != want {
+		t.Fatalf("fraction style coord = %v, want %v", got, want)
+	}
+	if got, want := widgetStyleCoord(panel.Min.X, panel.Max.X, -8), 112.0; got != want {
+		t.Fatalf("negative pixel style coord = %v, want %v", got, want)
+	}
+	if got, want := widgetResolvedCoord(panel.Min.X, panel.Max.X, widgetFractionCoord(-0.02)), -2.4; got != want {
+		t.Fatalf("resolved fractional coord = %v, want %v", got, want)
+	}
+}
+
 func TestMatplotlibSliderTrackUsesRectangularPatch(t *testing.T) {
 	rc := style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
 	ctx := &DrawContext{

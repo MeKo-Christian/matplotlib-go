@@ -204,6 +204,21 @@ func (s *Slider) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	}
 	return false, PickInfo{}
 }
+
+// ValueForPoint maps a figure-pixel point to the slider value using the same
+// visual-style track geometry used for drawing.
+func (s *Slider) ValueForPoint(p geom.Pt, ctx *DrawContext) (float64, bool) {
+	if s == nil || ctx == nil {
+		return 0, false
+	}
+	track := widgetSliderTrackForContext(ctx)
+	if track.W() <= 0 {
+		return 0, false
+	}
+	value := s.Min + (s.Max-s.Min)*((p.X-track.Min.X)/track.W())
+	return value, true
+}
+
 func (s *Slider) Z() float64   { return s.z }
 func (s *Slider) WidgetLayer() {}
 

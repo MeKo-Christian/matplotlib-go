@@ -139,6 +139,185 @@ func TestWidgetInteractionAcrossVisualStyles(t *testing.T) {
 	}
 }
 
+func TestWidgetInteractionSliderDragUsesVisualStyleGeometry(t *testing.T) {
+	tests := []struct {
+		name      string
+		opt       style.Option
+		press     geom.Pt
+		wantValue float64
+	}{
+		{
+			name:      "go",
+			opt:       style.WithWidgetVisualStyle(style.WidgetVisualGo),
+			press:     geom.Pt{X: 90, Y: 40},
+			wantValue: 8.6,
+		},
+		{
+			name:      "matplotlib",
+			opt:       style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib),
+			press:     geom.Pt{X: 90, Y: 40},
+			wantValue: 7.5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fig := core.NewFigure(120, 80, tt.opt)
+			ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
+			slider := ax.Slider("gain", 0, 10, 5)
+
+			var dispatcher Dispatcher
+			wi := NewWidgetInteraction(fig, func() error { return nil })
+			wi.Attach(&dispatcher)
+			defer wi.Detach()
+
+			if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: tt.press, Button: MouseButtonLeft}); err != nil {
+				t.Fatalf("slider press: %v", err)
+			}
+			assertCloseEnough(t, slider.Value, tt.wantValue)
+		})
+	}
+}
+
+func TestWidgetInteractionRangeSliderHandleSelectionUsesVisualStyleGeometry(t *testing.T) {
+	tests := []struct {
+		name     string
+		opt      style.Option
+		press    geom.Pt
+		wantLow  float64
+		wantHigh float64
+	}{
+		{
+			name:     "go",
+			opt:      style.WithWidgetVisualStyle(style.WidgetVisualGo),
+			press:    geom.Pt{X: 30, Y: 40},
+			wantLow:  1.4,
+			wantHigh: 8,
+		},
+		{
+			name:     "matplotlib",
+			opt:      style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib),
+			press:    geom.Pt{X: 30, Y: 40},
+			wantLow:  2.5,
+			wantHigh: 8,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fig := core.NewFigure(120, 80, tt.opt)
+			ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
+			slider := ax.RangeSlider("window", 0, 10, 2, 8)
+
+			var dispatcher Dispatcher
+			wi := NewWidgetInteraction(fig, func() error { return nil })
+			wi.Attach(&dispatcher)
+			defer wi.Detach()
+
+			if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: tt.press, Button: MouseButtonLeft}); err != nil {
+				t.Fatalf("range slider press: %v", err)
+			}
+			assertCloseEnough(t, slider.Low, tt.wantLow)
+			assertCloseEnough(t, slider.High, tt.wantHigh)
+		})
+	}
+}
+
+func TestWidgetInteractionCheckRadioAndTextBoxAcrossVisualStyles(t *testing.T) {
+	tests := []struct {
+		name         string
+		opt          style.Option
+		textClickX   float64
+		wantText     string
+		checkRow1Y   float64
+		radioRow1Y   float64
+		wantCheckRow int
+		wantRadioRow int
+	}{
+		{
+			name:         "go",
+			opt:          style.WithWidgetVisualStyle(style.WidgetVisualGo),
+			textClickX:   28.4,
+			wantText:     "abZcd",
+			checkRow1Y:   40,
+			radioRow1Y:   40,
+			wantCheckRow: 1,
+			wantRadioRow: 1,
+		},
+		{
+			name:         "matplotlib",
+			opt:          style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib),
+			textClickX:   14.4,
+			wantText:     "abZcd",
+			checkRow1Y:   40,
+			radioRow1Y:   40,
+			wantCheckRow: 1,
+			wantRadioRow: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fig := core.NewFigure(120, 80, tt.opt)
+			axChecks := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+			checks := axChecks.CheckButtons([]string{"A", "B", "C"}, []bool{false, false, false})
+
+			var dispatcherChecks Dispatcher
+			wiChecks := NewWidgetInteraction(fig, func() error { return nil })
+			wiChecks.Attach(&dispatcherChecks)
+			defer wiChecks.Detach()
+
+			checkPoint := geom.Pt{X: 20, Y: tt.checkRow1Y}
+			if err := dispatcherChecks.Emit(Event{Type: EventMousePress, Figure: fig, Axes: axChecks, Position: checkPoint, Button: MouseButtonLeft}); err != nil {
+				t.Fatalf("check press: %v", err)
+			}
+			if !checks.Values[tt.wantCheckRow] {
+				t.Fatalf("check row %d = false, want true; values=%v", tt.wantCheckRow, checks.Values)
+			}
+
+			figRadio := core.NewFigure(120, 80, tt.opt)
+			axRadio := figRadio.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+			radios := axRadio.RadioButtons([]string{"x", "y", "z"}, 0)
+
+			var dispatcherRadio Dispatcher
+			wiRadio := NewWidgetInteraction(figRadio, func() error { return nil })
+			wiRadio.Attach(&dispatcherRadio)
+			defer wiRadio.Detach()
+
+			radioPoint := geom.Pt{X: 20, Y: tt.radioRow1Y}
+			if err := dispatcherRadio.Emit(Event{Type: EventMousePress, Figure: figRadio, Axes: axRadio, Position: radioPoint, Button: MouseButtonLeft}); err != nil {
+				t.Fatalf("radio press: %v", err)
+			}
+			if radios.Active != tt.wantRadioRow {
+				t.Fatalf("radio active = %d, want %d", radios.Active, tt.wantRadioRow)
+			}
+
+			figText := core.NewFigure(120, 80, tt.opt)
+			axText := figText.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
+			text := axText.TextBox("Query", "abcd")
+
+			var dispatcherText Dispatcher
+			wiText := NewWidgetInteraction(figText, func() error { return nil })
+			wiText.Attach(&dispatcherText)
+			defer wiText.Detach()
+
+			textPoint := geom.Pt{X: tt.textClickX, Y: 40}
+			if err := dispatcherText.Emit(Event{Type: EventMousePress, Figure: figText, Axes: axText, Position: textPoint, Button: MouseButtonLeft}); err != nil {
+				t.Fatalf("text press: %v", err)
+			}
+			if !text.Active {
+				t.Fatal("text box should become active on press")
+			}
+			if err := dispatcherText.Emit(Event{Type: EventKeyPress, Figure: figText, Axes: axText, Key: "Z"}); err != nil {
+				t.Fatalf("text insert: %v", err)
+			}
+			if text.Value != tt.wantText {
+				t.Fatalf("text value = %q, want %q", text.Value, tt.wantText)
+			}
+		})
+	}
+}
+
 func assertCloseEnough(t *testing.T, got, want float64) {
 	t.Helper()
 	const eps = 1e-9

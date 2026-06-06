@@ -1,7 +1,6 @@
 package canvas
 
 import (
-	"math"
 	"strings"
 	"sync"
 
@@ -114,28 +113,7 @@ func cursorIndexFromTextPoint(tb *core.TextBox, axes *Axes, fig *Figure, point g
 		return 0
 	}
 	ctx := core.AxesDrawContext(axes, fig)
-	panel := widgetInsetRect(ctx.Clip, 4)
-	input := geom.Rect{
-		Min: geom.Pt{X: panel.Min.X + 4, Y: panel.Min.Y + 30},
-		Max: geom.Pt{X: panel.Max.X - 4, Y: panel.Max.Y - 8},
-	}
-	if input.W() <= 0 {
-		return 0
-	}
-	size := widgetFontSize(tb.FontSize, ctx)
-	cell := size * 0.42
-	if cell <= 0 {
-		cell = 1
-	}
-	index := int(math.Round((point.X - (input.Min.X + 12)) / cell))
-	if index < 0 {
-		return 0
-	}
-	runes := []rune(tb.Value)
-	if index > len(runes) {
-		return len(runes)
-	}
-	return index
+	return tb.CaretForPoint(point, ctx)
 }
 
 func setClipboard(value string) {

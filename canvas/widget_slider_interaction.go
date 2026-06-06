@@ -67,18 +67,10 @@ func (w *WidgetInteraction) setSliderValueFromPointLocked(slider *core.Slider, a
 	if ctx == nil {
 		return
 	}
-	panel := widgetInsetRect(ctx.Clip, 4)
-	if panel.W() <= 0 {
+	v, ok := slider.ValueForPoint(position, ctx)
+	if !ok {
 		return
 	}
-	track := geom.Rect{
-		Min: geom.Pt{X: panel.Min.X + 14, Y: panel.Max.Y - 26},
-		Max: geom.Pt{X: panel.Max.X - 14, Y: panel.Max.Y - 14},
-	}
-	if track.W() <= 0 {
-		return
-	}
-	v := slider.Min + (slider.Max-slider.Min)*((position.X-track.Min.X)/track.W())
 	slider.SetValue(v)
 }
 
@@ -90,18 +82,10 @@ func (w *WidgetInteraction) setRangeSliderValueFromPointLocked(slider *core.Rang
 	if ctx == nil {
 		return
 	}
-	panel := widgetInsetRect(ctx.Clip, 4)
-	if panel.W() <= 0 {
+	v, ok := slider.ValueForPoint(position, ctx)
+	if !ok {
 		return
 	}
-	track := geom.Rect{
-		Min: geom.Pt{X: panel.Min.X + 14, Y: panel.Max.Y - 26},
-		Max: geom.Pt{X: panel.Max.X - 14, Y: panel.Max.Y - 14},
-	}
-	if track.W() <= 0 {
-		return
-	}
-	v := slider.Min + (slider.Max-slider.Min)*((position.X-track.Min.X)/track.W())
 	if handle <= 0 {
 		slider.SetLow(v)
 		return

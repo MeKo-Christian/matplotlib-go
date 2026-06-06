@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"unicode"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -445,10 +446,7 @@ func (t *TextBox) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 	drawWidgetText(r, ctx, labelAnchor, t.Label, fontSize, t.TextColor, defaults.TextBoxLabelAlign, defaults.TextBoxLabelVAlign)
 
-	input := geom.Rect{
-		Min: geom.Pt{X: panel.Min.X + defaults.TextBoxInputXPad, Y: widgetStyleCoord(panel.Min.Y, panel.Max.Y, defaults.TextBoxInputYMin)},
-		Max: geom.Pt{X: panel.Max.X - defaults.TextBoxInputXPad, Y: widgetStyleCoord(panel.Min.Y, panel.Max.Y, defaults.TextBoxInputYMax)},
-	}
+	input := widgetTextBoxInputRect(panel, defaults)
 	edge := t.EdgeColor
 	if t.Active && defaults.TextBoxActiveEdgeBlend > 0 {
 		edge = mixColor(edge, render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1}, defaults.TextBoxActiveEdgeBlend)
@@ -461,10 +459,7 @@ func (t *TextBox) Draw(r render.Renderer, ctx *DrawContext) {
 		display = t.Placeholder
 		displayColor = mixColor(t.TextColor, render.Color{R: 1, G: 1, B: 1, A: 1}, 0.45)
 	}
-	textAnchor := geom.Pt{
-		X: widgetResolvedCoord(input.Min.X, input.Max.X, defaults.TextBoxTextX),
-		Y: widgetResolvedCoord(input.Min.Y, input.Max.Y, defaults.TextBoxTextY),
-	}
+	textAnchor := widgetTextBoxTextAnchor(input, defaults)
 	drawWidgetText(r, ctx, textAnchor, display, fontSize, displayColor, defaults.TextBoxTextAlign, defaults.TextBoxTextVAlign)
 	if t.Active {
 		caretIndex := clampInt(t.caret, 0, len([]rune(t.Value)))
@@ -494,6 +489,29 @@ func (t *TextBox) Bounds(ctx *DrawContext) geom.Rect {
 	defaults := widgetDefaultsForRC(ctx.RC)
 	return widgetStyledPanelRect(ctx.Clip, defaults.TextBoxPanelPad)
 }
+
+// CaretForPoint maps a figure-pixel point to a text insertion index using the
+// same visual-style text anchor geometry used for drawing.
+func (t *TextBox) CaretForPoint(p geom.Pt, ctx *DrawContext) int {
+	if t == nil || ctx == nil {
+		return 0
+	}
+	defaults := widgetDefaultsForRC(ctx.RC)
+	panel := widgetStyledPanelRect(ctx.Clip, defaults.TextBoxPanelPad)
+	input := widgetTextBoxInputRect(panel, defaults)
+	if input.W() <= 0 {
+		return 0
+	}
+	fontSize := resolvedFontSize(t.FontSize, ctx)
+	cell := fontSize * 0.42
+	if cell <= 0 {
+		cell = 1
+	}
+	textAnchor := widgetTextBoxTextAnchor(input, defaults)
+	index := int(math.Round((p.X - textAnchor.X) / cell))
+	return clampTextIndex(t.Value, index)
+}
+
 func (t *TextBox) Z() float64   { return t.z }
 func (t *TextBox) WidgetLayer() {}
 
