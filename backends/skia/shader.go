@@ -91,7 +91,12 @@ func (b *cpuSurfaceBridge) DrawPathFill(dst *image.RGBA, path geom.Path, paint r
 			if coverage == 0 {
 				continue
 			}
-			src := shader.ColorAt(geom.Pt{X: float64(x) + 0.5, Y: float64(y) + 0.5})
+			// The path mask and clip masks above were rasterized in y-down
+			// device space, but gradient/pattern shaders are defined in y-up
+			// display space (the same space their endpoints/cells arrive in).
+			// Map this device pixel back to display space before sampling so the
+			// shader lines up with the rest of the (gobasic-flipped) scene.
+			src := shader.ColorAt(geom.Pt{X: float64(x) + 0.5, Y: float64(b.height) - (float64(y) + 0.5)})
 			src.A = uint8(uint32(src.A) * uint32(coverage) / 255)
 			blendPixel(dst, x, y, src)
 		}
@@ -260,9 +265,15 @@ func (r *Renderer) drawShaderFill(path geom.Path, paint *render.Paint) bool {
 	}
 	shaderPaint := *paint
 	applyForcedAlpha(&shaderPaint)
-	if !r.bridge.DrawPathFill(r.GetImage(), path, shaderPaint, bridgeDrawState{
-		clipRect:  cloneRectPtr(r.clipRect),
-		clipPaths: clonePaths(r.clipPaths),
+	// The bridge rasterizes into the y-down image buffer; flip the fill path and
+	// clips to device space here so the mask aligns with the buffer (the bridge
+	// maps each device pixel back to display space when sampling the shader). The
+	// hatch/stroke fallbacks below keep the original display-space path because
+	// r.Renderer.Path (gobasic) owns its own device flip.
+	height := float64(r.height)
+	if !r.bridge.DrawPathFill(r.GetImage(), flipPathY(path, height), shaderPaint, bridgeDrawState{
+		clipRect:  flipRectPtrY(r.clipRect, height),
+		clipPaths: flipPathsY(r.clipPaths, height),
 	}) {
 		return false
 	}
@@ -552,6 +563,43 @@ func cloneRectPtr(rect *geom.Rect) *geom.Rect {
 	}
 	copied := *rect
 	return &copied
+}
+
+// flipPathY returns a copy of p with every vertex flipped from y-up display
+// space to the y-down device buffer (y -> height - y), mirroring
+// gobasic.Renderer.devPath. The command slice is shared (read-only).
+func flipPathY(p geom.Path, height float64) geom.Path {
+	out := p
+	out.V = make([]geom.Pt, len(p.V))
+	for i, v := range p.V {
+		out.V[i] = geom.Pt{X: v.X, Y: height - v.Y}
+	}
+	return out
+}
+
+// flipPathsY device-flips each path, returning nil for an empty input.
+func flipPathsY(paths []geom.Path, height float64) []geom.Path {
+	if len(paths) == 0 {
+		return nil
+	}
+	out := make([]geom.Path, len(paths))
+	for i, p := range paths {
+		out[i] = flipPathY(p, height)
+	}
+	return out
+}
+
+// flipRectPtrY device-flips a display-space rect, swapping Min.Y/Max.Y so the
+// result keeps Min.Y <= Max.Y (mirrors gobasic.Renderer.devRect).
+func flipRectPtrY(rect *geom.Rect, height float64) *geom.Rect {
+	if rect == nil {
+		return nil
+	}
+	flipped := geom.Rect{
+		Min: geom.Pt{X: rect.Min.X, Y: height - rect.Max.Y},
+		Max: geom.Pt{X: rect.Max.X, Y: height - rect.Min.Y},
+	}
+	return &flipped
 }
 
 func applyForcedAlpha(paint *render.Paint) {

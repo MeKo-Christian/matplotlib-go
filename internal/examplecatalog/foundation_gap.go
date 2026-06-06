@@ -395,12 +395,12 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CurrentEquivalent: "Go has FuncAnimation- and ArtistAnimation-style stepping on top of the " +
 			"canvas scheduler, including init callbacks, repeat handling, repeat-delay ticks, animated " +
 			"artist tracking, blit-region hooks, and event-loop start/stop behavior, plus Save to a " +
-			"deterministic GIF via the AbstractMovieWriter/PillowWriter port (image/gif), all covered by unit tests.",
+			"deterministic GIF via the AbstractMovieWriter/GifWriter stack (image/gif), all covered by unit tests.",
 		Gap: "Only external-encoder and GUI-only output remains out of scope: HTML representation and " +
 			"FFmpeg/ImageMagick (MP4) writers, which return ErrWriterUnsupported.",
 		Decision: GapDecisionIdiomaticEquivalent,
-		Rationale: "Phase 17.6.8 chose a pure-Go GIF writer (image/gif, no external tools) ported from " +
-			"PillowWriter as the v1.0 writer scope; external-encoder writers are explicit intentional omissions " +
+		Rationale: "Phase 17.6.8 chose a pure-Go GifWriter (image/gif, no external tools) as the v1.0 writer scope; " +
+			"it mirrors Matplotlib's PillowWriter, while external-encoder writers are explicit intentional omissions " +
 			"because the port ships no ffmpeg/imagemagick dependency.",
 	},
 }

@@ -1,6 +1,9 @@
 //go:build skia
 
-package skia
+// External skia_test package: this file imports test/parity (→ backends/all →
+// backends/skia), which would be an import cycle from an internal test. See the
+// note in parity_test.go.
+package skia_test
 
 import (
 	"image"
@@ -11,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/backends"
+	"github.com/cwbudde/matplotlib-go/backends/skia"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -19,7 +23,7 @@ import (
 )
 
 func TestSkiaTaggedRendererImplementsCPUBaseContract(t *testing.T) {
-	r, err := New(backends.Config{
+	r, err := skia.New(backends.Config{
 		Width:      32,
 		Height:     24,
 		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
@@ -101,7 +105,7 @@ func TestSkiaTaggedRendererDrawsMathText(t *testing.T) {
 		FontSize: 16,
 	})
 
-	r, err := New(backends.Config{
+	r, err := skia.New(backends.Config{
 		Width:      120,
 		Height:     80,
 		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
@@ -130,7 +134,7 @@ func TestSkiaTaggedRendererMatchesMathTextGoldens(t *testing.T) {
 			if err != nil {
 				t.Fatalf("parity figure %s: %v", id, err)
 			}
-			r, err := New(backends.Config{
+			r, err := skia.New(backends.Config{
 				Width:      int(fig.SizePx.X),
 				Height:     int(fig.SizePx.Y),
 				Background: render.Color{R: 1, G: 1, B: 1, A: 1},
@@ -239,7 +243,7 @@ func TestSkiaTaggedRegistryAdvertisesImplementedCPUCapabilities(t *testing.T) {
 }
 
 func TestSkiaTaggedPathEffectFilterUsesOffscreenSurface(t *testing.T) {
-	renderer, err := New(backends.TestDefaultConfig(80, 60))
+	renderer, err := skia.New(backends.TestDefaultConfig(80, 60))
 	if err != nil {
 		t.Fatalf("New(skia) error = %v", err)
 	}

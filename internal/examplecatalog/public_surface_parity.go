@@ -2108,7 +2108,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"animation/animation.go", "animation/writers.go", "animation/writer_pillow.go", "canvas/scheduler.go"},
 		CatalogIDs:        []string{"animation_gallery"},
-		Note:              "Go Animation provides frame stepping, start/stop event-loop integration, repeat handling, animated artist tracking, blit fallback hooks, and Save through the deterministic GIF writer ported from PillowWriter (Phase 17.6.8). External-encoder and GUI-only behavior is intentionally omitted for v1.0: HTML representation, frame-cache tuning, and FFmpeg/ImageMagick movie writers, which return ErrWriterUnsupported.",
+		Note:              "Go Animation provides frame stepping, start/stop event-loop integration, repeat handling, animated artist tracking, blit fallback hooks, and Save through the deterministic GifWriter analogue of PillowWriter (Phase 17.6.8). External-encoder and GUI-only behavior is intentionally omitted for v1.0: HTML representation, frame-cache tuning, and FFmpeg/ImageMagick movie writers, which return ErrWriterUnsupported.",
 	},
 	{
 		ID:                "animation-timed-animation",
@@ -2126,7 +2126,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"animation/animation.go", "animation/writers.go", "animation/writer_pillow.go", "canvas/scheduler.go"},
 		CatalogIDs:        []string{"animation_gallery"},
-		Note:              "Go FuncAnimation-style playback supports frame stepping, init callbacks, repeat and repeat-delay handling, animated artist tracking, blit-region hooks, event-loop start/stop behavior, and Save with a save-count frame loop (WithSaveCount) writing GIF via the ported PillowWriter (Phase 17.6.8). External-encoder and GUI-only behavior is intentionally omitted for v1.0: HTML representation and FFmpeg/ImageMagick movie writers (ErrWriterUnsupported); cache_frame_data is unnecessary because frames regenerate deterministically.",
+		Note:              "Go FuncAnimation-style playback supports frame stepping, init callbacks, repeat and repeat-delay handling, animated artist tracking, blit-region hooks, event-loop start/stop behavior, and Save with a save-count frame loop (WithSaveCount) writing GIF via GifWriter (Phase 17.6.8). External-encoder and GUI-only behavior is intentionally omitted for v1.0: HTML representation and FFmpeg/ImageMagick movie writers (ErrWriterUnsupported); cache_frame_data is unnecessary because frames regenerate deterministically.",
 	},
 	{
 		ID:                "animation-artist-animation",
@@ -2175,7 +2175,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceDirectEquivalent,
 		GoFiles:           []string{"animation/writer_pillow.go"},
-		Note:              "Go ports PillowWriter as a deterministic, dependency-free GIF writer (Phase 17.6.8): GrabFrame captures the canvas RGBA buffer (canvas.RasterCanvas, the analogue of grab_frame's fig.savefig(format=\"rgba\")) and Finish encodes with the standard library image/gif (EncodeAll, Delay=int(100/fps) centiseconds matching duration=int(1000/fps), LoopCount=0 matching loop=0). Frames are quantized against a fixed palette so output is byte-for-byte deterministic across platforms.",
+		Note:              "Go exposes GifWriter as a deterministic, dependency-free analogue of PillowWriter (Phase 17.6.8): GrabFrame captures the canvas RGBA buffer (canvas.RasterCanvas, the analogue of grab_frame's fig.savefig(format=\"rgba\")) and Finish encodes with the standard library image/gif (EncodeAll, Delay=int(100/fps) centiseconds matching duration=int(1000/fps), LoopCount=0 matching loop=0). Frames are quantized against a fixed palette so output is byte-for-byte deterministic across platforms; PillowWriter remains a compatibility alias.",
 	},
 	{
 		ID:                "animation-html-writer",
@@ -2834,7 +2834,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"animation/animation.go", "animation/writers.go", "animation/writer_pillow.go", "canvas/scheduler.go"},
 		catalogIDs:        []string{"animation_gallery"},
 		exampleIDs:        []string{"animation_gallery"},
-		note:              "Go has FuncAnimation- and ArtistAnimation-style stepping on top of the canvas scheduler, including init callbacks, repeat and repeat-delay handling, animated artist tracking, blit-region hooks, event-loop start/stop behavior, and Save to deterministic GIF via the ported AbstractMovieWriter/PillowWriter stack (Phase 17.6.8). animation_gallery gives catalog-visible setup and deterministic stepping coverage. External-encoder and GUI-only behavior is intentionally omitted for v1.0: HTML representation and FFmpeg/ImageMagick (MP4) writers, which return ErrWriterUnsupported.",
+		note:              "Go has FuncAnimation- and ArtistAnimation-style stepping on top of the canvas scheduler, including init callbacks, repeat and repeat-delay handling, animated artist tracking, blit-region hooks, event-loop start/stop behavior, and Save to deterministic GIF via the AbstractMovieWriter/GifWriter stack (Phase 17.6.8). animation_gallery gives catalog-visible setup and deterministic stepping coverage. External-encoder and GUI-only behavior is intentionally omitted for v1.0: HTML representation and FFmpeg/ImageMagick (MP4) writers, which return ErrWriterUnsupported.",
 	},
 }
 

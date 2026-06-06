@@ -1480,7 +1480,7 @@ intentional omission (guarded by `TestWidgetClassesHaveExplicitRows`,
 and `TestBackendWidgetAnimationTailDecisions`, which reject leftover `partial`
 rows).
 
-### Animation GIF writer (PillowWriter port)
+### Animation GIF writer (PillowWriter analogue)
 
 The animation writer stack is a direct port of matplotlib's
 `lib/matplotlib/animation.py`:
@@ -1488,7 +1488,7 @@ The animation writer stack is a direct port of matplotlib's
 - `animation.MovieWriter` mirrors `AbstractMovieWriter`
   (`Setup`/`FrameSize`/`GrabFrame`/`Finish`), and `Saving` is the Go analogue of
   the `saving()` context manager (setup, then deferred finish).
-- `animation.PillowWriter` mirrors `PillowWriter`: `GrabFrame` captures the
+- `animation.GifWriter` mirrors `PillowWriter`: `GrabFrame` captures the
   canvas RGBA buffer (the new optional `canvas.RasterCanvas` capability, the Go
   analogue of `grab_frame`'s `fig.savefig(format="rgba")`), and `Finish` encodes
   with the standard library `image/gif`. `Delay` is `int(100/fps)` centiseconds
