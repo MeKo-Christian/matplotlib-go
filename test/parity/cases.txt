@@ -36,6 +36,7 @@ mathtext_integrals
 mathtext_matrices
 mathtext_inline_labels
 image_heatmap
+image_variants_gallery
 imshow_clipped
 imshow_transformed
 imshow_bilinear
@@ -48,7 +49,9 @@ spy_image
 colormap_diverging
 colormap_qualitative
 colormap_cyclic
+colormap_families_gallery
 named_colors
+named_colors_gallery
 axes_top_right_inverted
 axes_control_surface
 axes_option_breadth_17_75_3
@@ -74,6 +77,7 @@ artist_metadata
 gridspec_composition
 figure_labels_composition
 colorbar_composition
+colorbar_variants_gallery
 annotation_composition
 patch_showcase
 patch_style_matrix

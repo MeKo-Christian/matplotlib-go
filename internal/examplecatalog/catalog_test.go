@@ -183,6 +183,30 @@ func TestCatalogIncludesImshowInterpolationMatrixFixture(t *testing.T) {
 	}
 }
 
+func TestCatalogIncludesColorImageGalleryShowcases(t *testing.T) {
+	want := map[string]string{
+		"named_colors_gallery":      "color",
+		"colormap_families_gallery": "colormap",
+		"image_variants_gallery":    "image",
+		"colorbar_variants_gallery": "colorbar",
+	}
+	for id, topic := range want {
+		c, ok := Lookup(id)
+		if !ok {
+			t.Fatalf("missing Phase 18.2 showcase catalog case %q", id)
+		}
+		if c.Topic != topic {
+			t.Fatalf("%s topic = %q, want %q", id, c.Topic, topic)
+		}
+		if !c.Showcase {
+			t.Fatalf("%s should be a user-facing showcase", id)
+		}
+		if c.FixtureOnly {
+			t.Fatalf("%s should not be fixture-only", id)
+		}
+	}
+}
+
 func TestCatalogIncludesWidgetsGalleryShowcase(t *testing.T) {
 	c, ok := Lookup("widgets_gallery")
 	if !ok {

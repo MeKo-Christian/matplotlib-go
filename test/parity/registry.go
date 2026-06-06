@@ -19,19 +19,23 @@ import (
 	showcase_basic_line_labels "github.com/cwbudde/matplotlib-go/examples/basic_line_labels"
 	showcase_boxplot_basic "github.com/cwbudde/matplotlib-go/examples/boxplot_basic"
 	showcase_colorbar_composition "github.com/cwbudde/matplotlib-go/examples/colorbar_composition"
+	showcase_colorbar_variants_gallery "github.com/cwbudde/matplotlib-go/examples/colorbar_variants_gallery"
+	showcase_colormap_families_gallery "github.com/cwbudde/matplotlib-go/examples/colormap_families_gallery"
 	showcase_errorbar_basic "github.com/cwbudde/matplotlib-go/examples/errorbar_basic"
 	showcase_geo_mollweide_axes "github.com/cwbudde/matplotlib-go/examples/geo_mollweide_axes"
 	showcase_gridspec_composition "github.com/cwbudde/matplotlib-go/examples/gridspec_composition"
 	showcase_hist_basic "github.com/cwbudde/matplotlib-go/examples/hist_basic"
 	showcase_image_heatmap "github.com/cwbudde/matplotlib-go/examples/image_heatmap"
-	showcase_mesh_contour_tri "github.com/cwbudde/matplotlib-go/examples/mesh_contour_tri"
+	showcase_image_variants_gallery "github.com/cwbudde/matplotlib-go/examples/image_variants_gallery"
 	showcase_lines_markers_gallery "github.com/cwbudde/matplotlib-go/examples/lines_markers_gallery"
+	showcase_mesh_contour_tri "github.com/cwbudde/matplotlib-go/examples/mesh_contour_tri"
 	showcase_multi_series_basic "github.com/cwbudde/matplotlib-go/examples/multi_series_basic"
+	showcase_named_colors_gallery "github.com/cwbudde/matplotlib-go/examples/named_colors_gallery"
 	showcase_plot_variants "github.com/cwbudde/matplotlib-go/examples/plot_variants"
-	showcase_scatter_gallery "github.com/cwbudde/matplotlib-go/examples/scatter_gallery"
 	showcase_polar_axes "github.com/cwbudde/matplotlib-go/examples/polar_axes"
 	showcase_radar_basic "github.com/cwbudde/matplotlib-go/examples/radar_basic"
 	showcase_scatter_basic "github.com/cwbudde/matplotlib-go/examples/scatter_basic"
+	showcase_scatter_gallery "github.com/cwbudde/matplotlib-go/examples/scatter_gallery"
 	showcase_skewt_basic "github.com/cwbudde/matplotlib-go/examples/skewt_basic"
 	showcase_specialty_artists "github.com/cwbudde/matplotlib-go/examples/specialty_artists"
 	showcase_stat_variants "github.com/cwbudde/matplotlib-go/examples/stat_variants"
@@ -66,8 +70,10 @@ import (
 	example_colorbar_composition "github.com/cwbudde/matplotlib-go/test/parity/colorbar_composition"
 	example_colorbar_extensions "github.com/cwbudde/matplotlib-go/test/parity/colorbar_extensions"
 	example_colorbar_horizontal_ticks "github.com/cwbudde/matplotlib-go/test/parity/colorbar_horizontal_ticks"
+	example_colorbar_variants_gallery "github.com/cwbudde/matplotlib-go/test/parity/colorbar_variants_gallery"
 	example_colormap_cyclic "github.com/cwbudde/matplotlib-go/test/parity/colormap_cyclic"
 	example_colormap_diverging "github.com/cwbudde/matplotlib-go/test/parity/colormap_diverging"
+	example_colormap_families_gallery "github.com/cwbudde/matplotlib-go/test/parity/colormap_families_gallery"
 	example_colormap_qualitative "github.com/cwbudde/matplotlib-go/test/parity/colormap_qualitative"
 	example_dashes "github.com/cwbudde/matplotlib-go/test/parity/dashes"
 	example_date_concise_intraday_labels "github.com/cwbudde/matplotlib-go/test/parity/date_concise_intraday_labels"
@@ -94,6 +100,7 @@ import (
 	example_hist_strategies "github.com/cwbudde/matplotlib-go/test/parity/hist_strategies"
 	example_image_alpha "github.com/cwbudde/matplotlib-go/test/parity/image_alpha"
 	example_image_heatmap "github.com/cwbudde/matplotlib-go/test/parity/image_heatmap"
+	example_image_variants_gallery "github.com/cwbudde/matplotlib-go/test/parity/image_variants_gallery"
 	example_imshow_bicubic "github.com/cwbudde/matplotlib-go/test/parity/imshow_bicubic"
 	example_imshow_bilinear "github.com/cwbudde/matplotlib-go/test/parity/imshow_bilinear"
 	example_imshow_clipped "github.com/cwbudde/matplotlib-go/test/parity/imshow_clipped"
@@ -105,6 +112,7 @@ import (
 	example_legend_layout_matrix "github.com/cwbudde/matplotlib-go/test/parity/legend_layout_matrix"
 	example_line2d_markers "github.com/cwbudde/matplotlib-go/test/parity/line2d_markers"
 	example_line2d_semantics "github.com/cwbudde/matplotlib-go/test/parity/line2d_semantics"
+	example_lines_markers_gallery "github.com/cwbudde/matplotlib-go/test/parity/lines_markers_gallery"
 	example_locator_fixed_index_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_fixed_index_labels"
 	example_locator_linear_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_linear_labels"
 	example_locator_log_minor_threshold_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_log_minor_threshold_labels"
@@ -141,6 +149,7 @@ import (
 	example_multi_series_basic "github.com/cwbudde/matplotlib-go/test/parity/multi_series_basic"
 	example_multi_series_color_cycle "github.com/cwbudde/matplotlib-go/test/parity/multi_series_color_cycle"
 	example_named_colors "github.com/cwbudde/matplotlib-go/test/parity/named_colors"
+	example_named_colors_gallery "github.com/cwbudde/matplotlib-go/test/parity/named_colors_gallery"
 	example_patch_showcase "github.com/cwbudde/matplotlib-go/test/parity/patch_showcase"
 	example_patch_style_matrix "github.com/cwbudde/matplotlib-go/test/parity/patch_style_matrix"
 	example_path_clipped_transformed "github.com/cwbudde/matplotlib-go/test/parity/path_clipped_transformed"
@@ -150,10 +159,8 @@ import (
 	example_pcolormesh_gouraud "github.com/cwbudde/matplotlib-go/test/parity/pcolormesh_gouraud"
 	example_pcolormesh_masked "github.com/cwbudde/matplotlib-go/test/parity/pcolormesh_masked"
 	example_pcolormesh_nearest "github.com/cwbudde/matplotlib-go/test/parity/pcolormesh_nearest"
-	example_lines_markers_gallery "github.com/cwbudde/matplotlib-go/test/parity/lines_markers_gallery"
 	example_plot_variants "github.com/cwbudde/matplotlib-go/test/parity/plot_variants"
 	example_polar_axes "github.com/cwbudde/matplotlib-go/test/parity/polar_axes"
-	example_scatter_gallery "github.com/cwbudde/matplotlib-go/test/parity/scatter_gallery"
 	example_quad_mesh "github.com/cwbudde/matplotlib-go/test/parity/quad_mesh"
 	example_radar_basic "github.com/cwbudde/matplotlib-go/test/parity/radar_basic"
 	example_scale_asinh_ticks "github.com/cwbudde/matplotlib-go/test/parity/scale_asinh_ticks"
@@ -162,6 +169,7 @@ import (
 	example_scale_symlog_ticks "github.com/cwbudde/matplotlib-go/test/parity/scale_symlog_ticks"
 	example_scatter_advanced "github.com/cwbudde/matplotlib-go/test/parity/scatter_advanced"
 	example_scatter_basic "github.com/cwbudde/matplotlib-go/test/parity/scatter_basic"
+	example_scatter_gallery "github.com/cwbudde/matplotlib-go/test/parity/scatter_gallery"
 	example_scatter_marker_types "github.com/cwbudde/matplotlib-go/test/parity/scatter_marker_types"
 	example_skewt_basic "github.com/cwbudde/matplotlib-go/test/parity/skewt_basic"
 	example_specialty_artists "github.com/cwbudde/matplotlib-go/test/parity/specialty_artists"
@@ -233,6 +241,7 @@ var renderByID = map[string]func() image.Image{
 	"text_labels_strict":                 example_text_labels_strict.Render,
 	"title_strict":                       example_title_strict.Render,
 	"image_heatmap":                      example_image_heatmap.Render,
+	"image_variants_gallery":             example_image_variants_gallery.Render,
 	"imshow_clipped":                     example_imshow_clipped.Render,
 	"imshow_transformed":                 example_imshow_transformed.Render,
 	"imshow_bilinear":                    example_imshow_bilinear.Render,
@@ -245,7 +254,9 @@ var renderByID = map[string]func() image.Image{
 	"colormap_diverging":                 example_colormap_diverging.Render,
 	"colormap_qualitative":               example_colormap_qualitative.Render,
 	"colormap_cyclic":                    example_colormap_cyclic.Render,
+	"colormap_families_gallery":          example_colormap_families_gallery.Render,
 	"named_colors":                       example_named_colors.Render,
+	"named_colors_gallery":               example_named_colors_gallery.Render,
 	"mathtext_basic":                     example_mathtext_basic.Render,
 	"mathtext_fractions":                 example_mathtext_fractions.Render,
 	"mathtext_integrals":                 example_mathtext_integrals.Render,
@@ -277,6 +288,7 @@ var renderByID = map[string]func() image.Image{
 	"gridspec_composition":               example_gridspec_composition.Render,
 	"figure_labels_composition":          example_figure_labels_composition.Render,
 	"colorbar_composition":               example_colorbar_composition.Render,
+	"colorbar_variants_gallery":          example_colorbar_variants_gallery.Render,
 	"annotation_composition":             example_annotation_composition.Render,
 	"patch_showcase":                     example_patch_showcase.Render,
 	"patch_style_matrix":                 example_patch_style_matrix.Render,
@@ -382,9 +394,11 @@ var figureByID = map[string]func() *core.Figure{
 	"bar_basic":                          showcase_bar_basic.Plot,
 	"boxplot_basic":                      showcase_boxplot_basic.Plot,
 	"colorbar_composition":               showcase_colorbar_composition.Plot,
+	"colorbar_variants_gallery":          showcase_colorbar_variants_gallery.Plot,
 	"colorbar_boundary_values":           example_colorbar_boundary_values.Plot,
 	"colorbar_horizontal_ticks":          example_colorbar_horizontal_ticks.Plot,
 	"colormap_diverging":                 example_colormap_diverging.Plot,
+	"colormap_families_gallery":          showcase_colormap_families_gallery.Plot,
 	"collection_mutable_scalarmap":       example_collection_mutable_scalarmap.Plot,
 	"errorbar_basic":                     showcase_errorbar_basic.Plot,
 	"fill_between":                       example_fill_between.Plot,
@@ -396,10 +410,12 @@ var figureByID = map[string]func() *core.Figure{
 	"hist_basic":                         showcase_hist_basic.Plot,
 	"mesh_contour_tri":                   showcase_mesh_contour_tri.Plot,
 	"image_heatmap":                      showcase_image_heatmap.Plot,
+	"image_variants_gallery":             showcase_image_variants_gallery.Plot,
 	"multi_series_basic":                 showcase_multi_series_basic.Plot,
 	"legend_layout_matrix":               example_legend_layout_matrix.Plot,
 	"text_annotation_matrix":             example_text_annotation_matrix.Plot,
 	"named_colors":                       example_named_colors.Plot,
+	"named_colors_gallery":               showcase_named_colors_gallery.Plot,
 	"plot_variants":                      showcase_plot_variants.Plot,
 	"polar_axes":                         showcase_polar_axes.Plot,
 	"radar_basic":                        showcase_radar_basic.Plot,
