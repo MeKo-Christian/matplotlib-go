@@ -85,6 +85,44 @@ func TestFeatureCoverageReferencesExistingGoFiles(t *testing.T) {
 	}
 }
 
+func TestPatchesFeatureCoverageNamesPublicShowcaseAndBrowserPlan(t *testing.T) {
+	row, ok := LookupFeatureCoverage("patches")
+	if !ok {
+		t.Fatal("missing patches feature coverage row")
+	}
+	if !containsString(row.ExampleIDs, "patch_showcase") {
+		t.Fatalf("patches ExampleIDs = %v, want patch_showcase", row.ExampleIDs)
+	}
+	if row.UserShowcase == CoveragePending {
+		t.Fatalf("patches UserShowcase = %s, want active public showcase status", row.UserShowcase)
+	}
+	if row.BrowserDemo == CoveragePending {
+		t.Fatalf("patches BrowserDemo = %s, want active or planned browser status", row.BrowserDemo)
+	}
+	browserRow, ok := LookupBrowserDemoCoverage("webref-patches")
+	if !ok {
+		t.Fatal("missing webref-patches browser coverage row")
+	}
+	if browserRow.Status == BrowserDemoReferenceOnly {
+		t.Fatalf("webref-patches Status = %s, want active or planned browser path", browserRow.Status)
+	}
+	if !containsString(browserRow.CatalogIDs, "patch_showcase") {
+		t.Fatalf("webref-patches CatalogIDs = %v, want patch_showcase", browserRow.CatalogIDs)
+	}
+}
+
+func TestPublicFeatureCoverageRowsDoNotReportUnintentionalFixtureOnlyBreadth(t *testing.T) {
+	for _, row := range FeatureCoverageMatrix() {
+		if row.Breadth != BreadthFixtureOnly {
+			continue
+		}
+		if row.IntentionalOmission != "" {
+			continue
+		}
+		t.Fatalf("%s reports fixture-only feature-family breadth without an intentional omission", row.ID)
+	}
+}
+
 func TestImplementedFeatureCoverageHasFixtureOrOmission(t *testing.T) {
 	for _, row := range FeatureCoverageMatrix() {
 		if row.GoEquivalent != CoverageImplemented {

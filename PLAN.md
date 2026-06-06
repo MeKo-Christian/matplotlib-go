@@ -313,8 +313,13 @@ and the blit-friendly redraw paths from Phase 4.
 
 - [x] GIF writer (pure-Go encoder, no external dependency).
 - [ ] APNG writer for higher-quality web demos.
-- [ ] MP4 / WebM writers via optional `ffmpeg` shellout, gated by a build
+- [x] MP4 / WebM writers via optional `ffmpeg` shellout, gated by a build
       tag and runtime detection.
+      Builds compiled with `-tags ffmpeg` register `ffmpeg` (`.mp4`,
+      H.264/libx264) and `ffmpeg-webm` (`.webm`, VP9/libvpx-vp9) writers.
+      Default builds keep MP4/WebM unsupported; tagged builds still return
+      `ErrWriterUnsupported` when the `ffmpeg` executable is unavailable at
+      runtime.
 - [ ] HTML embedding writer producing self-contained
       `<video>` / `<canvas>` snippets for the web demo host.
 
@@ -1773,166 +1778,30 @@ Completed scope:
 
 # Phase 18: User-Facing Example Breadth
 
-**Goal:** ensure every major implemented public feature family has a
-user-facing Go example that demonstrates meaningful Matplotlib-equivalent
-variants, not just a parity fixture.
+✅ **Completed.** Every major implemented public feature family now has a
+user-facing Go example demonstrating meaningful Matplotlib-equivalent variants,
+not just a parity fixture.
 
-### 18.1 Core Plot Family Galleries
+Completed scope:
 
-- [x] Add or expand examples for line/marker grids, advanced scatter, bar
-      variants, fill variants, histogram variants, and multi-series legend
-      behavior.
-  - [x] Line/marker grids + multi-series legend — `lines_markers_gallery`
-        showcase (dash arrays, joins/caps, built-in marker grid with open-fill
-        markers, multi-series legend). Closes the `marker-grid` demo-breadth
-        gap; reference-compare PSNR ≈ 58 dB.
-  - [x] Advanced scatter — `scatter_gallery` showcase (colormapped scalar
-        mapping, variable size, alpha blending, marker families). Closes the
-        `advanced-scatter` demo-breadth gap; reference-compare PSNR ≈ 63 dB.
-  - [x] Bar variants — `bar_variants` showcase (vertical+tick labels,
-        horizontal, grouped, stacked+bar labels). Closes the `bar-variants`
-        demo-breadth gap; reference-compare PSNR ≈ 61 dB.
-  - [x] Fill variants — `fill_variants` showcase (fill_between, fill_betweenx,
-        stacked fills, alpha overlap). Closes the `fill-variants` demo-breadth
-        gap; reference-compare PSNR ≈ 52 dB.
-  - [x] Histogram variants — `histogram_variants` showcase (counts, density,
-        cumulative, overlapping probability). Closes the `histogram-variants`
-        demo-breadth gap; reference-compare PSNR ≈ 52 dB.
-- [x] Each gallery lives under `examples/<id>/` with a matching
-      `test/parity/<id>/plot.go`, `test/parity/<id>/plot.py`, and
-      `test/matplotlib_ref/plots/<id>.py` entry, plus committed golden +
-      matplotlib_ref PNGs.
-- [x] `internal/examplecatalog.Case` rows added for all five galleries
-      (`Showcase: true`), discoverable through the catalog and golden/reference
-      tests; the `lines` feature-coverage row is now `broad`/`implemented` and
-      each high-priority core demo-breadth gap names its showcase.
-
-Implementation notes:
-
-- Keep Go examples close to upstream Matplotlib examples. If output diverges,
-  fix the core library first.
-- Use `DemoBreadthGaps` as the checklist; do not close a gap until the demo
-  includes the target features listed there.
-
-### 18.2 Color, Image, Text, and Annotation Galleries
-
-- [x] Add named-color swatches and colormap family galleries.
-- [x] Add image interpolation/alpha/matshow/spy galleries.
-- [x] Add colorbar norm/extension galleries.
-- [x] Add MathText, text layout, annotation, legend, and offset-box galleries.
-
-Implementation notes:
-
-- Prefer several focused examples over one overloaded gallery when visual
-  differences need inspection.
-- Include captions/descriptions in catalog metadata explaining what feature
-  breadth the example validates.
-
-### 18.3 Toolkit, Projection, 3D, and Backend Output Galleries
-
-- [x] Add a broad mplot3d gallery covering 3D line, scatter, surface,
-      wireframe, trisurf, bar3d, voxels, quiver3d, stem3d, and fill-between3d.
-      The `mplot3d_gallery` showcase lives under `examples/`, has Go/Python
-      parity wrappers, and keeps the focused 3D fixtures for residual checks.
-- [x] Expand projection/toolkit galleries for geographic projections, radar,
-      Skew-T, axisartist, and axes_grid1. `projection_toolkit_gallery` now
-      groups polar, Mollweide, Aitoff, Hammer, Lambert, radar, Skew-T,
-      axisartist-style twin axes, and axes_grid1-style image-grid panels.
-- [x] Add mixed raster/vector output examples for SVG/PDF behavior with dense
-      rasterized artists and vector text/axes.
-      `mixed_raster_vector` is now a user-facing example backed by the existing
-      SVG/PDF golden artifact coverage.
-- [x] Add or expand triangulation galleries covering triplot, tripcolor,
-      tricontour, tricontourf, and masked meshes. `triangulation_gallery` now
-      lives under `examples/`, has Go/Python parity wrappers, and pairs
-      triangulation panels with masked pcolormesh coverage.
-
-Implementation notes:
-
-- For 3D and projection examples, include both Python and Go sources even when
-  the Go implementation is intentionally approximate.
-- Backend-output examples should save and compare SVG/PDF artifacts, not just
-  PNG screenshots.
-
-### 18.4 High-Priority Demo Breadth Closure
-
-Remaining purpose: finish the first Phase 18 exit criterion by making every
-high-priority `DemoBreadthGap` either visibly closed by a showcase or explicitly
-split into Phase 9C when the residual is implementation/API breadth rather than
-example breadth.
-
-- [x] Add a focused ticks/scales/formatters gallery for the remaining
-      high-priority `ticks-scales-formatters` gap.
-  - Target catalog ID: `ticks_scales_formatters_gallery`.
-  - Cover major/minor locators, date and category formatting, log/symlog/asinh
-    or logit scale examples, engineering/percent/scientific formatter labels,
-    and a custom-converter panel where practical.
-  - Add the normal gallery artifacts:
-    `examples/ticks_scales_formatters_gallery/`,
-    `test/parity/ticks_scales_formatters_gallery/`,
-    `test/matplotlib_ref/plots/ticks_scales_formatters_gallery.py`,
-    committed `testdata/golden/` and `testdata/matplotlib_ref/` PNGs, catalog
-    row, parity registry row, CLI registry row, validation-cluster coverage, and
-    browser-demo planned coverage.
-- [x] Update the `ticks-scales-formatters` `DemoBreadthGap` row to name the new
-      showcase and rewrite its coverage text so it no longer says formatter
-      breadth is not isolated.
-- [x] Audit the already-showcased high-priority rows and remove stale
-      example-breadth wording where a gallery now exists:
-      `marker-grid`, `advanced-scatter`, `bar-variants`, `fill-variants`,
-      `histogram-variants`, `colormap-families`, `image-variants`,
-      `colorbar-norms-extensions`, `mathtext-gallery`, `text-layout-gallery`,
-      `annotation-legend-offsetbox`, and `mplot3d-gallery`.
-- [x] Split any residual non-example work from those high-priority rows into
-      precise Phase 9C implementation/API follow-ups. Examples include
-      resampled colormap API breadth, transformed-image edge fixtures,
-      mutable scalar-map edge fixtures, or formatter objects when the gallery
-      already demonstrates the user-visible behavior.
-- [x] Add a regression test that the first Phase 18 exit criterion is
-      mechanically checkable: every high-priority `DemoBreadthGap` must either
-      name at least one `Showcase: true` catalog row that covers its target
-      features or carry an explicit Phase 9C split rationale.
-- [x] Mark the first Phase 18 exit criterion complete only after that test
-      passes and the audit text no longer points at missing user-facing demos.
-
-### 18.5 Fixture-Only Public Status Cleanup
-
-Remaining purpose: finish the third Phase 18 exit criterion by removing or
-justifying the lone `fixture-only` public feature-family status in
-`docs/matplotlib-parity-status.md`.
-
-- [ ] Resolve the `patches` feature-coverage row, currently reported as
-      `fixture-only`.
-  - If the existing `patch_showcase` is sufficient as the user-facing example,
-    update `internal/examplecatalog/feature_coverage.go` so `patches` includes
-    `ExampleIDs: []string{"patch_showcase"}`, has a non-pending
-    `UserShowcase`, and uses `BreadthThin` or `BreadthBroad` instead of
-    `BreadthFixtureOnly`.
-  - If `patch_showcase` is too narrow, add a broader `patch_gallery` showcase
-    covering rectangles, circles, ellipses, polygons, fancy boxes, arrows,
-    connection patches, hatch styles, and common patch styling. Add the normal
-    examples/parity/reference/golden/catalog/registry wiring before changing
-    the feature-coverage status.
-- [ ] Add or update browser-demo coverage metadata for patch examples so the
-      status is either active or explicitly planned instead of silently pending.
-- [ ] Regenerate `docs/matplotlib-parity-status.md` from the catalog after the
-      feature-coverage change.
-- [ ] Add a regression test for the third Phase 18 exit criterion: implemented
-      public feature families may not report `BreadthFixtureOnly` unless they
-      have an explicit, intentional classification explaining why no
-      user-facing example is appropriate.
-- [ ] Mark the third Phase 18 exit criterion complete only after the regenerated
-      status doc has no unintentional `fixture-only` feature-family rows.
-
-**Exit criteria:**
-
-- [x] Every high-priority `DemoBreadthGap` is closed by a user-facing example
-      or split into a precise implementation gap in Phase 9C.
-- [x] Every medium-priority `DemoBreadthGap` has either a user-facing example
-      or a scheduled follow-up rationale.
-- [ ] `docs/matplotlib-parity-status.md` reports no `fixture-only` example
-      status for implemented public feature families unless it has an
-      intentional reason.
+- Core plot-family showcases (`lines_markers_gallery`, `scatter_gallery`,
+  `bar_variants`, `fill_variants`, `histogram_variants`) and color/image/text/
+  annotation, toolkit/projection (`projection_toolkit_gallery`), 3D
+  (`mplot3d_gallery`), triangulation (`triangulation_gallery`), mixed
+  raster/vector (`mixed_raster_vector`), and `ticks_scales_formatters_gallery`
+  galleries are added under `examples/<id>/` with matching parity/reference
+  wrappers, committed golden + matplotlib_ref PNGs, and `Showcase: true` catalog
+  rows discoverable through the golden/reference tests.
+- Every high-priority `DemoBreadthGap` is closed by a named showcase or split
+  into a precise Phase 9C implementation/API follow-up; stale example-breadth
+  wording was removed from the already-showcased rows.
+- The lone `fixture-only` `patches` feature-family status is resolved
+  (`patch_showcase`/`patch_gallery` user-facing coverage) and
+  `docs/matplotlib-parity-status.md` was regenerated from the catalog.
+- Regression tests mechanically enforce the exit criteria: every high-priority
+  gap names a covering showcase or carries a Phase 9C split rationale, and
+  implemented public families may not report `BreadthFixtureOnly` without an
+  explicit intentional classification.
 
 ---
 

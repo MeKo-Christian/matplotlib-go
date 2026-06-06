@@ -138,9 +138,9 @@ func TestSaveUnsupportedExtensionReturnsError(t *testing.T) {
 	cnv := newRasterFakeCanvas(2, 2)
 	anim := newGIFAnimation(t, cnv, 2)
 
-	out := filepath.Join(t.TempDir(), "anim.mp4")
+	out := filepath.Join(t.TempDir(), "anim.unknownvideo")
 	if err := anim.Save(out); err != ErrWriterUnsupported {
-		t.Fatalf("Save(.mp4) = %v, want ErrWriterUnsupported", err)
+		t.Fatalf("Save(.unknownvideo) = %v, want ErrWriterUnsupported", err)
 	}
 }
 
@@ -153,7 +153,7 @@ func TestWriterByNameRegistry(t *testing.T) {
 		t.Fatalf("WriterByName(pillow) = %T, want *GifWriter", w)
 	}
 
-	for _, name := range []string{"ffmpeg", "imagemagick", "html", "unknown"} {
+	for _, name := range []string{"imagemagick", "html", "unknown"} {
 		if _, err := WriterByName(name, 5); err != ErrWriterUnsupported {
 			t.Fatalf("WriterByName(%q) = %v, want ErrWriterUnsupported", name, err)
 		}

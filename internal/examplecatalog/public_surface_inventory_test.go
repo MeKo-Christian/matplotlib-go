@@ -627,7 +627,7 @@ func TestBackendWidgetAnimationTailDecisions(t *testing.T) {
 		{"animation.py:class:AbstractMovieWriter", PublicSurfaceIdiomaticEquivalent, "MovieWriter interface"},
 		{"animation.py:class:MovieWriterRegistry", PublicSurfaceIdiomaticEquivalent, "registry"},
 		{"animation.py:class:FuncAnimation", PublicSurfaceIdiomaticEquivalent, "17.6.8"},
-		{"animation.py:class:FFMpegWriter", PublicSurfaceIntentionalOmission, "external"},
+		{"animation.py:class:FFMpegWriter", PublicSurfaceDirectEquivalent, "ffmpeg"},
 		{"animation.py:class:HTMLWriter", PublicSurfaceIntentionalOmission, "HTML"},
 		{"widgets.py:class:Button", PublicSurfaceIdiomaticEquivalent, "17.6.8"},
 		{"backend_bases.py:class:FigureCanvasBase", PublicSurfaceIdiomaticEquivalent, "17.6.8"},

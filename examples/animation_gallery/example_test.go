@@ -43,9 +43,9 @@ func TestFuncAnimationDemoStepsAndSavesGIF(t *testing.T) {
 		t.Fatalf("saved gif missing or empty: stat=%v err=%v", info, err)
 	}
 
-	// Unsupported extensions still report ErrWriterUnsupported.
-	if err := demo.Animation.Save(filepath.Join(t.TempDir(), "demo.mp4")); !errors.Is(err, animation.ErrWriterUnsupported) {
-		t.Fatalf("func animation Save(.mp4) error = %v, want ErrWriterUnsupported", err)
+	// Unknown extensions still report ErrWriterUnsupported.
+	if err := demo.Animation.Save(filepath.Join(t.TempDir(), "demo.unknownvideo")); !errors.Is(err, animation.ErrWriterUnsupported) {
+		t.Fatalf("func animation Save(.unknownvideo) error = %v, want ErrWriterUnsupported", err)
 	}
 }
 

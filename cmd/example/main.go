@@ -56,6 +56,7 @@ import (
 	mplot3d_terrain "github.com/cwbudde/matplotlib-go/examples/mplot3d_terrain"
 	multi_series_basic "github.com/cwbudde/matplotlib-go/examples/multi_series_basic"
 	named_colors_gallery "github.com/cwbudde/matplotlib-go/examples/named_colors_gallery"
+	patch_showcase "github.com/cwbudde/matplotlib-go/examples/patch_showcase"
 	plot_variants "github.com/cwbudde/matplotlib-go/examples/plot_variants"
 	polar_axes "github.com/cwbudde/matplotlib-go/examples/polar_axes"
 	projection_toolkit_gallery "github.com/cwbudde/matplotlib-go/examples/projection_toolkit_gallery"
@@ -115,6 +116,7 @@ var registry = map[string]func() *core.Figure{
 	"mplot3d_terrain":                     mplot3d_terrain.Plot,
 	"multi_series_basic":                  multi_series_basic.Plot,
 	"named_colors_gallery":                named_colors_gallery.Plot,
+	"patch_showcase":                      patch_showcase.Plot,
 	"plot_variants":                       plot_variants.Plot,
 	"polar_axes":                          polar_axes.Plot,
 	"projection_toolkit_gallery":          projection_toolkit_gallery.Plot,

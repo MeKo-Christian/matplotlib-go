@@ -13,4 +13,8 @@
 // background snapshot during Start, then on each frame restores the snapshot
 // and replays only the animated artists before blitting the affected region.
 // Backends without blit support fall back to a full canvas redraw per frame.
+//
+// GIF output is dependency-free through GifWriter. MP4 and WebM output are
+// optional: builds compiled with -tags ffmpeg register ffmpeg-backed writers
+// that stream raw RGBA frames to an ffmpeg executable discovered at runtime.
 package animation

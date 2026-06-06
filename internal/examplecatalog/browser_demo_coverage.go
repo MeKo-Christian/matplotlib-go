@@ -96,6 +96,14 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		CatalogIDs:      []string{"patch_showcase"},
 	},
 	{
+		ID:         "showcase-patch_showcase",
+		Title:      "Patch Showcase Browser Coverage",
+		Status:     BrowserDemoPlanned,
+		Action:     "promote into a patch and hatch browser demo",
+		Rationale:  "Patch primitives, hatches, fancy arrows, path patches, and fancy boxes are user-facing and should be browser-visible.",
+		CatalogIDs: []string{"patch_showcase"},
+	},
+	{
 		ID:              "webref-radialforce",
 		Title:           "Radial Force Web Reference Module",
 		Status:          BrowserDemoReferenceOnly,

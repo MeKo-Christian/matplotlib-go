@@ -171,12 +171,13 @@ var featureCoverageRows = []FeatureCoverage{
 		UpstreamGalleryFamilies: []string{"shapes_and_collections"},
 		GoFiles:                 []string{"core/patch.go", "core/patch_extra.go", "core/arrow_patch.go"},
 		CatalogIDs:              []string{"patch_showcase", "patch_style_matrix"},
+		ExampleIDs:              []string{"patch_showcase"},
 		GoEquivalent:            CoveragePartial,
 		ParityFixture:           CoverageImplemented,
-		UserShowcase:            CoveragePending,
-		BrowserDemo:             CoveragePending,
-		Breadth:                 BreadthFixtureOnly,
-		Notes: "Common patch shapes, hatch routing, FancyBboxPatch BoxStyle registry, and FancyArrowPatch / ConnectionPatch / ArrowStyle / ConnectionStyle geometry exist, covered by patch_showcase and patch_style_matrix. " +
+		UserShowcase:            CoveragePartial,
+		BrowserDemo:             CoveragePartial,
+		Breadth:                 BreadthThin,
+		Notes: "Common patch shapes, hatch routing, FancyBboxPatch BoxStyle registry, and FancyArrowPatch / ConnectionPatch / ArrowStyle / ConnectionStyle geometry exist; patch_showcase is the public gallery entry, patch_style_matrix remains the focused parity fixture, and webref-patches records the planned browser path. " +
 			"Remaining partial scope is Python helper/debug function parity and the broad mutable Patch property grammar, tracked as the patch-style-registries foundation gap.",
 	},
 	{

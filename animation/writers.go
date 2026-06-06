@@ -47,9 +47,8 @@ func Saving(w MovieWriter, c canvas.FigureCanvas, outfile string, dpi float64, b
 type WriterFactory func(fps int) MovieWriter
 
 // writerRegistry mirrors matplotlib.animation.MovieWriterRegistry / the module
-// level writers registry. Only deterministic, dependency-free writers are
-// registered; external-encoder writers (ffmpeg, imagemagick) and the HTML
-// representation are intentionally absent and resolve to ErrWriterUnsupported.
+// level writers registry. The dependency-free GIF writer is always registered;
+// optional external encoders may register themselves from build-tagged files.
 var writerRegistry = map[string]WriterFactory{}
 
 // RegisterWriter adds a named writer factory, mirroring
@@ -70,12 +69,10 @@ func RegisteredWriters() []string {
 }
 
 // WriterByName resolves a registered writer by name at the given frame rate.
-// Unknown names (including the intentionally unsupported "ffmpeg",
-// "imagemagick", and "html") return ErrWriterUnsupported.
+// Unknown or unavailable names return ErrWriterUnsupported.
 //
 // This diverges from matplotlib, which silently falls back to PillowWriter when
-// a named writer is unavailable; the port surfaces an explicit error instead
-// because it ships no external encoders.
+// a named writer is unavailable; the port surfaces an explicit error instead.
 func WriterByName(name string, fps int) (MovieWriter, error) {
 	factory, ok := writerRegistry[strings.ToLower(name)]
 	if !ok {

@@ -211,10 +211,9 @@ func WithSaveCount(n int) SaveOption { return func(c *saveConfig) { c.saveCount 
 // Save draws every frame and writes them to filename, mirroring
 // matplotlib.animation.Animation.save.
 //
-// The writer is chosen from the filename extension (".gif" -> GifWriter) unless
-// one is supplied with WithWriter. Extensions and writer names that require
-// external encoders (mp4/ffmpeg/imagemagick) or HTML output return
-// ErrWriterUnsupported.
+// The writer is chosen from the filename extension (".gif" -> GifWriter,
+// ".mp4"/".webm" -> optional ffmpeg writers) unless one is supplied with
+// WithWriter. Unknown or unavailable writers return ErrWriterUnsupported.
 func (a *Animation) Save(filename string, opts ...SaveOption) error {
 	cfg := saveConfig{}
 	for _, opt := range opts {
@@ -287,12 +286,18 @@ func (a *Animation) drawSaveFrame(frame int, first bool) error {
 	return a.cfg.Canvas.Draw()
 }
 
-// writerNameForFile maps a filename extension to a registered writer name. Only
-// ".gif" is supported; every other extension is an intentional omission.
+// writerNameForFile maps a filename extension to a registered writer name.
+// ".gif" is always available; ".mp4" and ".webm" resolve to optional ffmpeg
+// writers when built with -tags ffmpeg, otherwise WriterByName reports
+// ErrWriterUnsupported.
 func writerNameForFile(filename string) (string, bool) {
 	switch strings.ToLower(filepath.Ext(filename)) {
 	case ".gif":
 		return "pillow", true
+	case ".mp4":
+		return "ffmpeg", true
+	case ".webm":
+		return "ffmpeg-webm", true
 	default:
 		return "", false
 	}

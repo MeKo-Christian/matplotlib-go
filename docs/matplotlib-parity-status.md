@@ -4,34 +4,34 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 
 ## Feature Coverage
 
-| Feature                  | Go          | Fixture     | Showcase    | Browser     | Breadth      |
-| ------------------------ | ----------- | ----------- | ----------- | ----------- | ------------ |
-| artist                   | partial     | implemented | partial     | partial     | thin         |
-| axes                     | implemented | implemented | implemented | implemented | broad        |
-| figure-layout            | implemented | implemented | implemented | partial     | broad        |
-| axis-ticker-scale        | partial     | implemented | partial     | partial     | thin         |
-| transforms               | partial     | implemented | partial     | partial     | thin         |
-| lines                    | implemented | implemented | implemented | pending     | broad        |
-| collections              | partial     | implemented | partial     | partial     | thin         |
-| patches                  | partial     | implemented | pending     | pending     | fixture-only |
-| text-annotation-legend   | partial     | implemented | partial     | partial     | broad        |
-| image                    | implemented | implemented | partial     | partial     | thin         |
-| colorbar                 | partial     | implemented | partial     | partial     | thin         |
-| colors-cm                | partial     | implemented | partial     | pending     | thin         |
-| pyplot-state             | partial     | implemented | partial     | pending     | thin         |
-| renderer-backends        | implemented | implemented | partial     | pending     | thin         |
-| widgets-events-animation | partial     | partial     | partial     | pending     | thin         |
-| toolkits-projections     | partial     | implemented | implemented | partial     | thin         |
+| Feature                  | Go          | Fixture     | Showcase    | Browser     | Breadth |
+| ------------------------ | ----------- | ----------- | ----------- | ----------- | ------- |
+| artist                   | partial     | implemented | partial     | partial     | thin    |
+| axes                     | implemented | implemented | implemented | implemented | broad   |
+| figure-layout            | implemented | implemented | implemented | partial     | broad   |
+| axis-ticker-scale        | partial     | implemented | partial     | partial     | thin    |
+| transforms               | partial     | implemented | partial     | partial     | thin    |
+| lines                    | implemented | implemented | implemented | pending     | broad   |
+| collections              | partial     | implemented | partial     | partial     | thin    |
+| patches                  | partial     | implemented | partial     | partial     | thin    |
+| text-annotation-legend   | partial     | implemented | partial     | partial     | broad   |
+| image                    | implemented | implemented | partial     | partial     | thin    |
+| colorbar                 | partial     | implemented | partial     | partial     | thin    |
+| colors-cm                | partial     | implemented | partial     | pending     | thin    |
+| pyplot-state             | partial     | implemented | partial     | pending     | thin    |
+| renderer-backends        | implemented | implemented | partial     | pending     | thin    |
+| widgets-events-animation | partial     | partial     | partial     | pending     | thin    |
+| toolkits-projections     | partial     | implemented | implemented | partial     | thin    |
 
 ## Public Surface Summary
 
 | Status               | Rows |
 | -------------------- | ---: |
-| direct-equivalent    |   82 |
-| idiomatic-equivalent |  147 |
+| direct-equivalent    |   83 |
+| idiomatic-equivalent |  149 |
 | partial              |  556 |
 | not-started          |    0 |
-| intentional-omission |  111 |
+| intentional-omission |  108 |
 
 ## Closure Owner Summary
 
