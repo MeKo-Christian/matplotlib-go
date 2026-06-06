@@ -201,8 +201,8 @@ var featureCoverageRows = []FeatureCoverage{
 		UpstreamModules:         []string{"image.py"},
 		UpstreamGalleryFamilies: []string{"images_contours_and_fields"},
 		GoFiles:                 []string{"core/image.go", "core/image_api.go", "core/matrix_helpers.go"},
-		CatalogIDs:              []string{"image_heatmap", "imshow_clipped", "imshow_transformed", "imshow_bilinear", "imshow_bicubic", "imshow_interpolation_matrix", "image_alpha", "matshow_basic", "spy_marker", "spy_image", "arrays_showcase"},
-		ExampleIDs:              []string{"image_heatmap", "arrays_showcase"},
+		CatalogIDs:              []string{"image_heatmap", "image_variants_gallery", "imshow_clipped", "imshow_transformed", "imshow_bilinear", "imshow_bicubic", "imshow_interpolation_matrix", "image_alpha", "matshow_basic", "spy_marker", "spy_image", "arrays_showcase"},
+		ExampleIDs:              []string{"image_heatmap", "arrays_showcase", "image_variants_gallery"},
 		WebDemoIDs:              []string{"matrix"},
 		GoEquivalent:            CoverageImplemented,
 		ParityFixture:           CoverageImplemented,
@@ -216,15 +216,15 @@ var featureCoverageRows = []FeatureCoverage{
 		UpstreamModules:         []string{"colorbar.py", "colorizer.py"},
 		UpstreamGalleryFamilies: []string{"images_contours_and_fields"},
 		GoFiles:                 []string{"core/colorbar.go", "core/scalar_mappable.go", "core/norm.go"},
-		CatalogIDs:              []string{"colorbar_composition", "asinh_norm_image", "boundarynorm_pcolormesh", "collection_mutable_scalarmap", "colorbar_boundary_values", "colorbar_horizontal_ticks", "lognorm_imshow", "twoslope_norm_image", "colorbar_extensions"},
-		ExampleIDs:              []string{"colorbar_composition"},
+		CatalogIDs:              []string{"colorbar_composition", "colorbar_variants_gallery", "asinh_norm_image", "boundarynorm_pcolormesh", "collection_mutable_scalarmap", "colorbar_boundary_values", "colorbar_horizontal_ticks", "lognorm_imshow", "twoslope_norm_image", "colorbar_extensions"},
+		ExampleIDs:              []string{"colorbar_composition", "colorbar_variants_gallery"},
 		WebDemoIDs:              []string{"composition", "matrix"},
 		GoEquivalent:            CoveragePartial,
 		ParityFixture:           CoverageImplemented,
 		UserShowcase:            CoveragePartial,
 		BrowserDemo:             CoveragePartial,
 		Breadth:                 BreadthThin,
-		Notes: "Figure-level colorbars with colormap/norm routing, vertical/horizontal placement, extension patches, explicit ticks/boundaries/values, uniform/proportional spacing, drawedges, and mutable mappable sync are covered by colorbar_composition, colorbar_boundary_values, colorbar_horizontal_ticks, and colorbar_extensions. " +
+		Notes: "Figure-level colorbars with colormap/norm routing, vertical/horizontal placement, extension patches, explicit ticks/boundaries/values, uniform/proportional spacing, drawedges, and mutable mappable sync are covered by colorbar_composition, colorbar_variants_gallery, colorbar_boundary_values, colorbar_horizontal_ticks, and colorbar_extensions. " +
 			"Remaining partial scope is custom formatter objects, gridspec-specific placement helpers, and multi-parent colorbar placement in the current figure/axes model, tracked as the colorbar-orientation-ticks foundation gap.",
 	},
 	{
@@ -233,13 +233,14 @@ var featureCoverageRows = []FeatureCoverage{
 		UpstreamModules:         []string{"colors.py", "cm.py", "_cm.py", "_cm_listed.py", "_color_data.py"},
 		UpstreamGalleryFamilies: []string{"color"},
 		GoFiles:                 []string{"color/colormap.go", "color/listed_colormaps.go", "color/named_colors.go", "core/norm.go"},
-		CatalogIDs:              []string{"colormap_diverging", "colormap_qualitative", "colormap_cyclic", "named_colors", "asinh_norm_image", "lognorm_imshow", "twoslope_norm_image"},
+		CatalogIDs:              []string{"colormap_diverging", "colormap_qualitative", "colormap_cyclic", "colormap_families_gallery", "named_colors", "named_colors_gallery", "asinh_norm_image", "lognorm_imshow", "twoslope_norm_image"},
+		ExampleIDs:              []string{"colormap_families_gallery", "named_colors_gallery"},
 		GoEquivalent:            CoveragePartial,
 		ParityFixture:           CoverageImplemented,
-		UserShowcase:            CoveragePending,
+		UserShowcase:            CoveragePartial,
 		BrowserDemo:             CoveragePending,
-		Breadth:                 BreadthFixtureOnly,
-		Notes: "Named colors, listed/segmented/reversed/resampled colormaps, and common norms (Log/SymLog/Power/TwoSlope/Centered/Boundary/Asinh/NoNorm) exist, covered by colormap_diverging/qualitative/cyclic, named_colors, and the norm image fixtures. " +
+		Breadth:                 BreadthThin,
+		Notes: "Named colors, listed/segmented/reversed/resampled colormaps, and common norms (Log/SymLog/Power/TwoSlope/Centered/Boundary/Asinh/NoNorm) exist, covered by colormap_diverging/qualitative/cyclic, colormap_families_gallery, named_colors_gallery, named_colors, and the norm image fixtures. " +
 			"Remaining partial scope is MultiNorm, multivar/bivar colormaps, LightSource, and edge-case color conversion, kept outside the single-scalar mapping API until a visible fixture needs them, tracked as the colors-norms-lightsource foundation gap.",
 	},
 	{

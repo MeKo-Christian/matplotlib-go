@@ -11,13 +11,13 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 | figure-layout            | implemented | implemented | implemented | partial     | broad        |
 | axis-ticker-scale        | partial     | implemented | partial     | partial     | thin         |
 | transforms               | partial     | implemented | partial     | partial     | thin         |
-| lines                    | implemented | implemented | partial     | pending     | thin         |
+| lines                    | implemented | implemented | implemented | pending     | broad        |
 | collections              | partial     | implemented | partial     | partial     | thin         |
 | patches                  | partial     | implemented | pending     | pending     | fixture-only |
 | text-annotation-legend   | partial     | implemented | partial     | partial     | thin         |
 | image                    | implemented | implemented | partial     | partial     | thin         |
 | colorbar                 | partial     | implemented | partial     | partial     | thin         |
-| colors-cm                | partial     | implemented | pending     | pending     | fixture-only |
+| colors-cm                | partial     | implemented | partial     | pending     | thin         |
 | pyplot-state             | partial     | implemented | partial     | pending     | thin         |
 | renderer-backends        | implemented | implemented | partial     | pending     | thin         |
 | widgets-events-animation | partial     | partial     | partial     | pending     | thin         |

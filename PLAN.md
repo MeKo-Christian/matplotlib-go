@@ -1798,9 +1798,9 @@ Implementation notes:
 
 ### 18.2 Color, Image, Text, and Annotation Galleries
 
-- [ ] Add named-color swatches and colormap family galleries.
-- [ ] Add image interpolation/alpha/matshow/spy galleries.
-- [ ] Add colorbar norm/extension galleries.
+- [x] Add named-color swatches and colormap family galleries.
+- [x] Add image interpolation/alpha/matshow/spy galleries.
+- [x] Add colorbar norm/extension galleries.
 - [ ] Add MathText, text layout, annotation, legend, and offset-box galleries.
 
 Implementation notes:
