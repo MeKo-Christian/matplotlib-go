@@ -23,6 +23,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	animation_gallery "github.com/cwbudde/matplotlib-go/examples/animation_gallery"
 	annotation_composition "github.com/cwbudde/matplotlib-go/examples/annotation_composition"
+	annotation_legend_offsetbox_gallery "github.com/cwbudde/matplotlib-go/examples/annotation_legend_offsetbox_gallery"
 	arrays_showcase "github.com/cwbudde/matplotlib-go/examples/arrays_showcase"
 	axes_control_surface "github.com/cwbudde/matplotlib-go/examples/axes_control_surface"
 	axes_grid1_showcase "github.com/cwbudde/matplotlib-go/examples/axes_grid1_showcase"
@@ -32,6 +33,8 @@ import (
 	basic_line_labels "github.com/cwbudde/matplotlib-go/examples/basic_line_labels"
 	boxplot_basic "github.com/cwbudde/matplotlib-go/examples/boxplot_basic"
 	colorbar_composition "github.com/cwbudde/matplotlib-go/examples/colorbar_composition"
+	colorbar_variants_gallery "github.com/cwbudde/matplotlib-go/examples/colorbar_variants_gallery"
+	colormap_families_gallery "github.com/cwbudde/matplotlib-go/examples/colormap_families_gallery"
 	dashes "github.com/cwbudde/matplotlib-go/examples/dashes"
 	errorbar_basic "github.com/cwbudde/matplotlib-go/examples/errorbar_basic"
 	figure_labels_composition "github.com/cwbudde/matplotlib-go/examples/figure_labels_composition"
@@ -41,10 +44,15 @@ import (
 	gridspec_composition "github.com/cwbudde/matplotlib-go/examples/gridspec_composition"
 	hist_basic "github.com/cwbudde/matplotlib-go/examples/hist_basic"
 	image_heatmap "github.com/cwbudde/matplotlib-go/examples/image_heatmap"
+	image_variants_gallery "github.com/cwbudde/matplotlib-go/examples/image_variants_gallery"
 	lines_markers_gallery "github.com/cwbudde/matplotlib-go/examples/lines_markers_gallery"
+	mathtext_gallery "github.com/cwbudde/matplotlib-go/examples/mathtext_gallery"
 	mesh_contour_tri "github.com/cwbudde/matplotlib-go/examples/mesh_contour_tri"
+	mixed_raster_vector "github.com/cwbudde/matplotlib-go/examples/mixed_raster_vector"
+	mplot3d_gallery "github.com/cwbudde/matplotlib-go/examples/mplot3d_gallery"
 	mplot3d_terrain "github.com/cwbudde/matplotlib-go/examples/mplot3d_terrain"
 	multi_series_basic "github.com/cwbudde/matplotlib-go/examples/multi_series_basic"
+	named_colors_gallery "github.com/cwbudde/matplotlib-go/examples/named_colors_gallery"
 	plot_variants "github.com/cwbudde/matplotlib-go/examples/plot_variants"
 	polar_axes "github.com/cwbudde/matplotlib-go/examples/polar_axes"
 	radar_basic "github.com/cwbudde/matplotlib-go/examples/radar_basic"
@@ -53,6 +61,7 @@ import (
 	skewt_basic "github.com/cwbudde/matplotlib-go/examples/skewt_basic"
 	specialty_artists "github.com/cwbudde/matplotlib-go/examples/specialty_artists"
 	stat_variants "github.com/cwbudde/matplotlib-go/examples/stat_variants"
+	text_layout_gallery "github.com/cwbudde/matplotlib-go/examples/text_layout_gallery"
 	units_overview "github.com/cwbudde/matplotlib-go/examples/units_overview"
 	unstructured_showcase "github.com/cwbudde/matplotlib-go/examples/unstructured_showcase"
 	vector_fields "github.com/cwbudde/matplotlib-go/examples/vector_fields"
@@ -65,42 +74,51 @@ import (
 // corresponding *core.Figure. Keep in sync with the Showcase: true rows in
 // internal/examplecatalog/catalog.go.
 var registry = map[string]func() *core.Figure{
-	"animation_gallery":         animation_gallery.Plot,
-	"annotation_composition":    annotation_composition.Plot,
-	"arrays_showcase":           arrays_showcase.Plot,
-	"axes_control_surface":      axes_control_surface.Plot,
-	"axes_grid1_showcase":       axes_grid1_showcase.Plot,
-	"axisartist_showcase":       axisartist_showcase.Plot,
-	"bar_basic":                 bar_basic.Plot,
-	"basic_line":                basic_line.Plot,
-	"basic_line_labels":         basic_line_labels.Plot,
-	"boxplot_basic":             boxplot_basic.Plot,
-	"colorbar_composition":      colorbar_composition.Plot,
-	"dashes":                    dashes.Plot,
-	"errorbar_basic":            errorbar_basic.Plot,
-	"figure_labels_composition": figure_labels_composition.Plot,
-	"fill_basic":                fill_basic.Plot,
-	"geo_aitoff_axes":           geo_aitoff_axes.Plot,
-	"geo_mollweide_axes":        geo_mollweide_axes.Plot,
-	"gridspec_composition":      gridspec_composition.Plot,
-	"hist_basic":                hist_basic.Plot,
-	"image_heatmap":             image_heatmap.Plot,
-	"lines_markers_gallery":     lines_markers_gallery.Plot,
-	"mesh_contour_tri":          mesh_contour_tri.Plot,
-	"mplot3d_terrain":           mplot3d_terrain.Plot,
-	"multi_series_basic":        multi_series_basic.Plot,
-	"plot_variants":             plot_variants.Plot,
-	"polar_axes":                polar_axes.Plot,
-	"radar_basic":               radar_basic.Plot,
-	"scatter_basic":             scatter_basic.Plot,
-	"scatter_gallery":           scatter_gallery.Plot,
-	"skewt_basic":               skewt_basic.Plot,
-	"specialty_artists":         specialty_artists.Plot,
-	"stat_variants":             stat_variants.Plot,
-	"units_overview":            units_overview.Plot,
-	"unstructured_showcase":     unstructured_showcase.Plot,
-	"vector_fields":             vector_fields.Plot,
-	"widgets_gallery":           widgets_gallery.Plot,
+	"animation_gallery":                   animation_gallery.Plot,
+	"annotation_composition":              annotation_composition.Plot,
+	"annotation_legend_offsetbox_gallery": annotation_legend_offsetbox_gallery.Plot,
+	"arrays_showcase":                     arrays_showcase.Plot,
+	"axes_control_surface":                axes_control_surface.Plot,
+	"axes_grid1_showcase":                 axes_grid1_showcase.Plot,
+	"axisartist_showcase":                 axisartist_showcase.Plot,
+	"bar_basic":                           bar_basic.Plot,
+	"basic_line":                          basic_line.Plot,
+	"basic_line_labels":                   basic_line_labels.Plot,
+	"boxplot_basic":                       boxplot_basic.Plot,
+	"colorbar_composition":                colorbar_composition.Plot,
+	"colorbar_variants_gallery":           colorbar_variants_gallery.Plot,
+	"colormap_families_gallery":           colormap_families_gallery.Plot,
+	"dashes":                              dashes.Plot,
+	"errorbar_basic":                      errorbar_basic.Plot,
+	"figure_labels_composition":           figure_labels_composition.Plot,
+	"fill_basic":                          fill_basic.Plot,
+	"geo_aitoff_axes":                     geo_aitoff_axes.Plot,
+	"geo_mollweide_axes":                  geo_mollweide_axes.Plot,
+	"gridspec_composition":                gridspec_composition.Plot,
+	"hist_basic":                          hist_basic.Plot,
+	"image_heatmap":                       image_heatmap.Plot,
+	"image_variants_gallery":              image_variants_gallery.Plot,
+	"lines_markers_gallery":               lines_markers_gallery.Plot,
+	"mathtext_gallery":                    mathtext_gallery.Plot,
+	"mesh_contour_tri":                    mesh_contour_tri.Plot,
+	"mixed_raster_vector":                 mixed_raster_vector.Plot,
+	"mplot3d_gallery":                     mplot3d_gallery.Plot,
+	"mplot3d_terrain":                     mplot3d_terrain.Plot,
+	"multi_series_basic":                  multi_series_basic.Plot,
+	"named_colors_gallery":                named_colors_gallery.Plot,
+	"plot_variants":                       plot_variants.Plot,
+	"polar_axes":                          polar_axes.Plot,
+	"radar_basic":                         radar_basic.Plot,
+	"scatter_basic":                       scatter_basic.Plot,
+	"scatter_gallery":                     scatter_gallery.Plot,
+	"skewt_basic":                         skewt_basic.Plot,
+	"specialty_artists":                   specialty_artists.Plot,
+	"stat_variants":                       stat_variants.Plot,
+	"text_layout_gallery":                 text_layout_gallery.Plot,
+	"units_overview":                      units_overview.Plot,
+	"unstructured_showcase":               unstructured_showcase.Plot,
+	"vector_fields":                       vector_fields.Plot,
+	"widgets_gallery":                     widgets_gallery.Plot,
 }
 
 func main() {

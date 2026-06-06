@@ -230,6 +230,31 @@ func TestCatalogIncludesTextGalleryShowcases(t *testing.T) {
 	}
 }
 
+func TestCatalogIncludesHighImpactToolkitOutputShowcases(t *testing.T) {
+	want := map[string]string{
+		"mplot3d_gallery":     "mplot3d",
+		"mixed_raster_vector": "raster",
+	}
+	for id, topic := range want {
+		c, ok := Lookup(id)
+		if !ok {
+			t.Fatalf("missing high-impact toolkit/output showcase catalog case %q", id)
+		}
+		if c.Topic != topic {
+			t.Fatalf("%s topic = %q, want %q", id, c.Topic, topic)
+		}
+		if !c.Showcase {
+			t.Fatalf("%s should be a user-facing showcase", id)
+		}
+		if c.FixtureOnly {
+			t.Fatalf("%s should not be fixture-only", id)
+		}
+		if c.GoPath != "examples/"+id+"/example.go" {
+			t.Fatalf("%s GoPath = %q, want examples/%s/example.go", id, c.GoPath, id)
+		}
+	}
+}
+
 func TestCatalogIncludesWidgetsGalleryShowcase(t *testing.T) {
 	c, ok := Lookup("widgets_gallery")
 	if !ok {

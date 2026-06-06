@@ -415,7 +415,7 @@ backend parity program but is not yet complete.
         reports `DefaultMode` / `GPUStatus` per the `skiagpu` build tag
         (`StatusPlanned` with the tag, `StatusDeferred` without). Today the GPU
         set mirrors the CPU set because the GPU mode is a CPU-readback scaffold.
-  - [ ] Truthful per-mode native / fallback / unavailable in the *live*
+  - [ ] Truthful per-mode native / fallback / unavailable in the _live_
         `BackendComparisonReport` (e.g. a second GPU registry entry). Deferred
         until the real GPU path exists and the two sets actually diverge.
 - [x] Skia vs AGG semantic-fixture comparison; tolerances documented per
@@ -1709,7 +1709,7 @@ enshrined the bug), not a new regression.
 - [x] AGG-port rotated-text glyph orientation — fixed at the AGG **backend**
       layer (no `../agg_go` or core change). Raster path rotates the glyph mask
       with a device-space transform (`backends/agg/freetype_native.go
-      drawNativeFreetypeRunTextRotated`); outline/GSV fallbacks rotate about the
+    drawNativeFreetypeRunTextRotated`); outline/GSV fallbacks rotate about the
       device anchor (`backends/agg/agg_text.go`). Strict-text cases match
       references at RMSE ~0; guarded by `TestDrawTextRotated*` in
       `backends/agg/agg_test.go`. (`canvas/widget_selectors.go` uses axis-aligned
@@ -1782,12 +1782,23 @@ variants, not just a parity fixture.
 - [ ] Add or expand examples for line/marker grids, advanced scatter, bar
       variants, fill variants, histogram variants, and multi-series legend
       behavior.
-- [ ] Each example should live under `examples/<id>/` and have a matching
+  - [x] Line/marker grids + multi-series legend — `lines_markers_gallery`
+        showcase (dash arrays, joins/caps, built-in marker grid with open-fill
+        markers, multi-series legend). Closes the `marker-grid` demo-breadth
+        gap; reference-compare PSNR ≈ 58 dB.
+  - [x] Advanced scatter — `scatter_gallery` showcase (colormapped scalar
+        mapping, variable size, alpha blending, marker families). Closes the
+        `advanced-scatter` demo-breadth gap; reference-compare PSNR ≈ 63 dB.
+  - [ ] Bar / fill / histogram variants — scheduled follow-up reusing the same
+        wiring; their demo-breadth gaps stay open until then.
+- [x] Each delivered gallery lives under `examples/<id>/` with a matching
       `test/parity/<id>/plot.go`, `test/parity/<id>/plot.py`, and
-      `test/matplotlib_ref/plots/<id>.py` entry when it represents parity
-      behavior.
-- [ ] Update `internal/examplecatalog.Case` rows so examples are discoverable
-      through the catalog and golden/reference tests.
+      `test/matplotlib_ref/plots/<id>.py` entry, plus committed golden +
+      matplotlib_ref PNGs. (Bar/fill/histogram remain for the follow-up.)
+- [x] `internal/examplecatalog.Case` rows added for the delivered galleries
+      (`Showcase: true`), discoverable through the catalog and golden/reference
+      tests; the `lines` feature-coverage row is now `broad`/`implemented`.
+      (Bar/fill/histogram remain for the follow-up.)
 
 Implementation notes:
 
@@ -1812,12 +1823,16 @@ Implementation notes:
 
 ### 18.3 Toolkit, Projection, 3D, and Backend Output Galleries
 
-- [ ] Add a broad mplot3d gallery covering 3D line, scatter, surface,
+- [x] Add a broad mplot3d gallery covering 3D line, scatter, surface,
       wireframe, trisurf, bar3d, voxels, quiver3d, stem3d, and fill-between3d.
+      The `mplot3d_gallery` showcase lives under `examples/`, has Go/Python
+      parity wrappers, and keeps the focused 3D fixtures for residual checks.
 - [ ] Expand projection/toolkit galleries for geographic projections, radar,
       Skew-T, axisartist, and axes_grid1.
-- [ ] Add mixed raster/vector output examples for SVG/PDF behavior with dense
+- [x] Add mixed raster/vector output examples for SVG/PDF behavior with dense
       rasterized artists and vector text/axes.
+      `mixed_raster_vector` is now a user-facing example backed by the existing
+      SVG/PDF golden artifact coverage.
 - [ ] Add or expand triangulation galleries covering triplot, tripcolor,
       tricontour, tricontourf, and masked meshes.
 

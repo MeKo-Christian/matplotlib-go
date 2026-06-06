@@ -110,3 +110,21 @@ func TestHighPriorityDemoBreadthGapsPointToThinCoverage(t *testing.T) {
 		}
 	}
 }
+
+func TestHighImpactToolkitOutputDemoBreadthGapsNameShowcases(t *testing.T) {
+	want := map[string][]string{
+		"mplot3d-gallery":            {"mplot3d_gallery"},
+		"mixed-raster-vector-output": {"mixed_raster_vector"},
+	}
+	for gapID, showcaseIDs := range want {
+		gap, ok := LookupDemoBreadthGap(gapID)
+		if !ok {
+			t.Fatalf("missing high-impact toolkit/output demo breadth gap %q", gapID)
+		}
+		for _, id := range showcaseIDs {
+			if !containsString(gap.ShowcaseIDs, id) {
+				t.Fatalf("%s ShowcaseIDs = %v, want %q", gapID, gap.ShowcaseIDs, id)
+			}
+		}
+	}
+}

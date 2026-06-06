@@ -31,6 +31,8 @@ import (
 	showcase_lines_markers_gallery "github.com/cwbudde/matplotlib-go/examples/lines_markers_gallery"
 	showcase_mathtext_gallery "github.com/cwbudde/matplotlib-go/examples/mathtext_gallery"
 	showcase_mesh_contour_tri "github.com/cwbudde/matplotlib-go/examples/mesh_contour_tri"
+	showcase_mixed_raster_vector "github.com/cwbudde/matplotlib-go/examples/mixed_raster_vector"
+	showcase_mplot3d_gallery "github.com/cwbudde/matplotlib-go/examples/mplot3d_gallery"
 	showcase_multi_series_basic "github.com/cwbudde/matplotlib-go/examples/multi_series_basic"
 	showcase_named_colors_gallery "github.com/cwbudde/matplotlib-go/examples/named_colors_gallery"
 	showcase_plot_variants "github.com/cwbudde/matplotlib-go/examples/plot_variants"
@@ -139,6 +141,7 @@ import (
 	example_mplot3d_contourf3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_contourf3d"
 	example_mplot3d_errorbar3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_errorbar3d"
 	example_mplot3d_fill_between3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_fill_between3d"
+	example_mplot3d_gallery "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_gallery"
 	example_mplot3d_plot3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_plot3d"
 	example_mplot3d_quiver3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_quiver3d"
 	example_mplot3d_scatter3d "github.com/cwbudde/matplotlib-go/test/parity/mplot3d_scatter3d"
@@ -324,6 +327,7 @@ var renderByID = map[string]func() image.Image{
 	"skewt_basic":                         example_skewt_basic.Render,
 	"mplot3d_basic":                       example_mplot3d_basic.Render,
 	"mplot3d_terrain":                     example_mplot3d_terrain.Render,
+	"mplot3d_gallery":                     example_mplot3d_gallery.Render,
 	"mplot3d_plot3d":                      example_mplot3d_plot3d.Render,
 	"mplot3d_scatter3d":                   example_mplot3d_scatter3d.Render,
 	"mplot3d_surface3d":                   example_mplot3d_surface3d.Render,
@@ -448,7 +452,8 @@ var figureByID = map[string]func() *core.Figure{
 	"mathtext_inline_labels":              example_mathtext_inline_labels.Plot,
 	"mplot3d_basic":                       example_mplot3d_basic.Plot,
 	"mixed_collection":                    example_mixed_collection.Plot,
-	"mixed_raster_vector":                 example_mixed_raster_vector.Plot,
+	"mixed_raster_vector":                 showcase_mixed_raster_vector.Plot,
+	"mplot3d_gallery":                     showcase_mplot3d_gallery.Plot,
 	"spectrum_variants":                   example_spectrum_variants.Plot,
 	"unstructured_showcase":               showcase_unstructured_showcase.Plot,
 	"widgets_gallery":                     example_widgets_gallery.Plot,

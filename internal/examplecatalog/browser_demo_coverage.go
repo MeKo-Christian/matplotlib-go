@@ -304,6 +304,14 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		CatalogIDs: []string{"colorbar_variants_gallery"},
 	},
 	{
+		ID:         "showcase-mixed_raster_vector",
+		Title:      "Mixed Raster/Vector Browser Coverage",
+		Status:     BrowserDemoPlanned,
+		Action:     "include in a backend output browser demo or export gallery",
+		Rationale:  "Mixed raster/vector output is user-facing and has SVG/PDF artifact coverage, but browser inspection still needs an export-focused grouping.",
+		CatalogIDs: []string{"mixed_raster_vector"},
+	},
+	{
 		ID:         "showcase-annotation_composition",
 		Title:      "Annotation Browser Coverage",
 		Status:     BrowserDemoPlanned,
@@ -342,6 +350,14 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		Action:     "include in a 3D browser demo",
 		Rationale:  "The 3D toolkit has many fixtures and one terrain showcase, but no active browser demo.",
 		CatalogIDs: []string{"mplot3d_terrain"},
+	},
+	{
+		ID:         "showcase-mplot3d_gallery",
+		Title:      "mplot3d Gallery Browser Coverage",
+		Status:     BrowserDemoPlanned,
+		Action:     "include in a 3D browser demo",
+		Rationale:  "The broad 3D gallery is user-facing but remains CLI-only until the browser gallery gets a dedicated 3D grouping.",
+		CatalogIDs: []string{"mplot3d_gallery"},
 	},
 	{
 		ID:         "showcase-unstructured_showcase",

@@ -60,6 +60,7 @@ var featureCoverageRows = []FeatureCoverage{
 		UpstreamModules: []string{"artist.py"},
 		GoFiles:         []string{"core/artist.go", "core/lifecycle.go", "core/rasterization.go"},
 		CatalogIDs:      []string{"basic_line", "patch_showcase", "mixed_raster_vector"},
+		ExampleIDs:      []string{"basic_line", "mixed_raster_vector"},
 		GoEquivalent:    CoveragePartial,
 		ParityFixture:   CoverageImplemented,
 		UserShowcase:    CoveragePartial,
@@ -265,7 +266,7 @@ var featureCoverageRows = []FeatureCoverage{
 		UpstreamGalleryFamilies: []string{"misc"},
 		GoFiles:                 []string{"render/render.go", "render/graphics_context.go", "render/extensions.go", "backends/registry.go"},
 		CatalogIDs:              []string{"basic_line", "mixed_raster_vector", "large_scatter", "clip_path_batch"},
-		ExampleIDs:              []string{"basic_line"},
+		ExampleIDs:              []string{"basic_line", "mixed_raster_vector"},
 		GoEquivalent:            CoverageImplemented,
 		ParityFixture:           CoverageImplemented,
 		UserShowcase:            CoveragePartial,
@@ -293,16 +294,16 @@ var featureCoverageRows = []FeatureCoverage{
 		UpstreamModules:         []string{"projections/polar.py", "projections/geo.py", "mpl_toolkits/mplot3d", "mpl_toolkits/axisartist", "mpl_toolkits/axes_grid1"},
 		UpstreamGalleryFamilies: []string{"mplot3d", "axisartist", "axes_grid1", "specialty_plots"},
 		GoFiles:                 []string{"core/polar.go", "core/geo.go", "core/skew.go", "core/axes3d.go", "core/axis_artist.go", "core/image_grid.go"},
-		CatalogIDs:              []string{"polar_axes", "geo_mollweide_axes", "geo_aitoff_axes", "geo_hammer_axes", "geo_lambert_axes", "radar_basic", "skewt_basic", "mplot3d_terrain", "axisartist_showcase", "axes_grid1_showcase"},
-		ExampleIDs:              []string{"polar_axes", "geo_mollweide_axes", "geo_aitoff_axes", "radar_basic", "skewt_basic", "mplot3d_terrain", "axisartist_showcase", "axes_grid1_showcase"},
+		CatalogIDs:              []string{"polar_axes", "geo_mollweide_axes", "geo_aitoff_axes", "geo_hammer_axes", "geo_lambert_axes", "radar_basic", "skewt_basic", "mplot3d_terrain", "mplot3d_gallery", "axisartist_showcase", "axes_grid1_showcase"},
+		ExampleIDs:              []string{"polar_axes", "geo_mollweide_axes", "geo_aitoff_axes", "radar_basic", "skewt_basic", "mplot3d_terrain", "mplot3d_gallery", "axisartist_showcase", "axes_grid1_showcase"},
 		WebDemoIDs:              []string{"polar", "projections"},
 		GoEquivalent:            CoveragePartial,
 		ParityFixture:           CoverageImplemented,
 		UserShowcase:            CoverageImplemented,
 		BrowserDemo:             CoveragePartial,
 		Breadth:                 BreadthThin,
-		Notes: "Polar, Mollweide/Aitoff/Hammer/Lambert geo projections, radar, SkewT, mplot3d terrain, axisartist, and axes_grid1 showcases exist with parity fixtures. " +
-			"Remaining partial scope is broader mplot3d 3D artist/lighting breadth, full axisartist floating-axes/curvilinear-grid coverage, and additional axes_grid1 helpers beyond the showcase cases.",
+		Notes: "Polar, Mollweide/Aitoff/Hammer/Lambert geo projections, radar, SkewT, mplot3d terrain/gallery, axisartist, and axes_grid1 showcases exist with parity fixtures. " +
+			"Remaining partial scope is full axisartist floating-axes/curvilinear-grid coverage, additional axes_grid1 helpers beyond the showcase cases, and browser grouping for the advanced toolkit examples.",
 	},
 }
 
