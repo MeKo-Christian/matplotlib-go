@@ -1842,8 +1842,10 @@ Implementation notes:
       rasterized artists and vector text/axes.
       `mixed_raster_vector` is now a user-facing example backed by the existing
       SVG/PDF golden artifact coverage.
-- [ ] Add or expand triangulation galleries covering triplot, tripcolor,
-      tricontour, tricontourf, and masked meshes.
+- [x] Add or expand triangulation galleries covering triplot, tripcolor,
+      tricontour, tricontourf, and masked meshes. `triangulation_gallery` now
+      lives under `examples/`, has Go/Python parity wrappers, and pairs
+      triangulation panels with masked pcolormesh coverage.
 
 Implementation notes:
 
@@ -1856,7 +1858,7 @@ Implementation notes:
 
 - [ ] Every high-priority `DemoBreadthGap` is closed by a user-facing example
       or split into a precise implementation gap in Phase 9C.
-- [ ] Every medium-priority `DemoBreadthGap` has either a user-facing example
+- [x] Every medium-priority `DemoBreadthGap` has either a user-facing example
       or a scheduled follow-up rationale.
 - [ ] `docs/matplotlib-parity-status.md` reports no `fixture-only` example
       status for implemented public feature families unless it has an

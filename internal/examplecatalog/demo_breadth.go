@@ -293,8 +293,8 @@ var demoBreadthGaps = []DemoBreadthGap{
 		Topic:       "unstructured",
 		Title:       "Unstructured Triangulation and Contours",
 		Priority:    DemoBreadthMedium,
-		CatalogIDs:  []string{"unstructured_showcase", "mesh_contour_tri", "pcolor_flat", "pcolormesh_masked"},
-		ShowcaseIDs: []string{"unstructured_showcase", "mesh_contour_tri"},
+		CatalogIDs:  []string{"unstructured_showcase", "triangulation_gallery", "mesh_contour_tri", "pcolor_flat", "pcolormesh_masked"},
+		ShowcaseIDs: []string{"unstructured_showcase", "triangulation_gallery", "mesh_contour_tri"},
 		WebDemoIDs:  []string{"mesh"},
 		TargetFeatures: []string{
 			"triplot",
@@ -303,9 +303,9 @@ var demoBreadthGaps = []DemoBreadthGap{
 			"tricontourf",
 			"masked meshes",
 		},
-		CurrentCoverage: "Unstructured and mesh examples exist, but irregular triangulation is not isolated in the browser gallery.",
+		CurrentCoverage: "Unstructured triangulation now has a focused gallery covering triplot, tripcolor, tricontour, tricontourf, and masked pcolormesh; browser promotion remains planned.",
 		Need:            "Triangulation parity has distinct topology and labeling risks that should be visually grouped.",
-		RecommendedDemo: "Add or expand a triangulation gallery covering triplot, tripcolor, tricontour, tricontourf, and masked meshes.",
+		RecommendedDemo: "Promote triangulation_gallery into the mesh browser demo or a dedicated triangulation browser group.",
 	},
 	{
 		ID:          "widgets-animation-gallery",

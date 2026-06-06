@@ -61,6 +61,7 @@ var validationClusters = []ValidationCluster{
 			"mesh_contour_tri",
 			"arrays_showcase",
 			"unstructured_showcase",
+			"triangulation_gallery",
 			"hist2d_weighted_density",
 		},
 	},
@@ -156,6 +157,7 @@ var validationClusters = []ValidationCluster{
 		CaseIDs: []string{
 			"mesh_contour_tri",
 			"unstructured_showcase",
+			"triangulation_gallery",
 			"arrays_showcase",
 			"pcolor_flat",
 			"pcolormesh_gouraud",

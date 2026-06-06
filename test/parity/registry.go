@@ -48,6 +48,7 @@ import (
 	showcase_specialty_artists "github.com/cwbudde/matplotlib-go/examples/specialty_artists"
 	showcase_stat_variants "github.com/cwbudde/matplotlib-go/examples/stat_variants"
 	showcase_text_layout_gallery "github.com/cwbudde/matplotlib-go/examples/text_layout_gallery"
+	showcase_triangulation_gallery "github.com/cwbudde/matplotlib-go/examples/triangulation_gallery"
 	showcase_units_overview "github.com/cwbudde/matplotlib-go/examples/units_overview"
 	showcase_unstructured_showcase "github.com/cwbudde/matplotlib-go/examples/unstructured_showcase"
 	showcase_vector_fields "github.com/cwbudde/matplotlib-go/examples/vector_fields"
@@ -202,6 +203,7 @@ import (
 	example_title_strict "github.com/cwbudde/matplotlib-go/test/parity/title_strict"
 	example_transform_annotation_modes "github.com/cwbudde/matplotlib-go/test/parity/transform_annotation_modes"
 	example_transform_coordinates "github.com/cwbudde/matplotlib-go/test/parity/transform_coordinates"
+	example_triangulation_gallery "github.com/cwbudde/matplotlib-go/test/parity/triangulation_gallery"
 	example_twoslope_norm_image "github.com/cwbudde/matplotlib-go/test/parity/twoslope_norm_image"
 	example_units_categories "github.com/cwbudde/matplotlib-go/test/parity/units_categories"
 	example_units_custom_converter "github.com/cwbudde/matplotlib-go/test/parity/units_custom_converter"
@@ -358,6 +360,7 @@ var renderByID = map[string]func() image.Image{
 	"mplot3d_stem3d":                      example_mplot3d_stem3d.Render,
 	"mplot3d_fill_between3d":              example_mplot3d_fill_between3d.Render,
 	"unstructured_showcase":               example_unstructured_showcase.Render,
+	"triangulation_gallery":               example_triangulation_gallery.Render,
 	"arrays_showcase":                     example_arrays_showcase.Render,
 	"widgets_gallery":                     example_widgets_gallery.Render,
 	"axisartist_showcase":                 example_axisartist_showcase.Render,
@@ -472,6 +475,7 @@ var figureByID = map[string]func() *core.Figure{
 	"mplot3d_gallery":                     showcase_mplot3d_gallery.Plot,
 	"spectrum_variants":                   example_spectrum_variants.Plot,
 	"unstructured_showcase":               showcase_unstructured_showcase.Plot,
+	"triangulation_gallery":               showcase_triangulation_gallery.Plot,
 	"widgets_gallery":                     example_widgets_gallery.Plot,
 	"imshow_clipped":                      example_imshow_clipped.Plot,
 	"imshow_transformed":                  example_imshow_transformed.Plot,

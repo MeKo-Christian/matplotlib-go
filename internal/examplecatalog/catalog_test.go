@@ -275,6 +275,25 @@ func TestCatalogIncludesProjectionToolkitGalleryShowcase(t *testing.T) {
 	}
 }
 
+func TestCatalogIncludesTriangulationGalleryShowcase(t *testing.T) {
+	c, ok := Lookup("triangulation_gallery")
+	if !ok {
+		t.Fatal("missing triangulation_gallery catalog case")
+	}
+	if c.Topic != "unstructured" {
+		t.Fatalf("triangulation_gallery topic = %q, want unstructured", c.Topic)
+	}
+	if !c.Showcase {
+		t.Fatal("triangulation_gallery should be a user-facing showcase")
+	}
+	if c.FixtureOnly {
+		t.Fatal("triangulation_gallery should not be fixture-only")
+	}
+	if c.Description == "" {
+		t.Fatal("triangulation_gallery should describe triplot, tripcolor, tricontour, tricontourf, and masked mesh coverage")
+	}
+}
+
 func TestCatalogIncludesWidgetsGalleryShowcase(t *testing.T) {
 	c, ok := Lookup("widgets_gallery")
 	if !ok {
@@ -530,6 +549,7 @@ func TestParityFixValidationTargetsNameClusters(t *testing.T) {
 		"mplot3d_bar2d_zdir",
 		"mplot3d_text3d",
 		"unstructured_showcase",
+		"triangulation_gallery",
 		"arrays_showcase",
 		"axisartist_showcase",
 		"axes_grid1_showcase",

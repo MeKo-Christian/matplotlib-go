@@ -400,6 +400,14 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		CatalogIDs: []string{"unstructured_showcase"},
 	},
 	{
+		ID:         "showcase-triangulation_gallery",
+		Title:      "Triangulation Gallery Browser Coverage",
+		Status:     BrowserDemoPlanned,
+		Action:     "include in the mesh browser demo or a dedicated triangulation browser group",
+		Rationale:  "The focused triangulation gallery groups triplot, tripcolor, tricontour, tricontourf, and masked mesh behavior for browser inspection.",
+		CatalogIDs: []string{"triangulation_gallery"},
+	},
+	{
 		ID:         "showcase-axisartist_showcase",
 		Title:      "AxisArtist Browser Coverage",
 		Status:     BrowserDemoPlanned,

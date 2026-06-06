@@ -147,3 +147,4 @@ bar_variants
 fill_variants
 histogram_variants
 projection_toolkit_gallery
+triangulation_gallery

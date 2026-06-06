@@ -138,3 +138,24 @@ func TestProjectionToolkitDemoBreadthGapNamesGalleryShowcase(t *testing.T) {
 		t.Fatalf("projection-toolkit-gallery ShowcaseIDs = %v, want projection_toolkit_gallery", gap.ShowcaseIDs)
 	}
 }
+
+func TestUnstructuredTriangulationDemoBreadthGapNamesGalleryShowcase(t *testing.T) {
+	gap, ok := LookupDemoBreadthGap("unstructured-triangulation")
+	if !ok {
+		t.Fatal("missing unstructured-triangulation demo breadth gap")
+	}
+	if !containsString(gap.ShowcaseIDs, "triangulation_gallery") {
+		t.Fatalf("unstructured-triangulation ShowcaseIDs = %v, want triangulation_gallery", gap.ShowcaseIDs)
+	}
+}
+
+func TestMediumPriorityDemoBreadthGapsHaveExamplesOrFollowups(t *testing.T) {
+	for _, gap := range DemoBreadthGaps() {
+		if gap.Priority != DemoBreadthMedium {
+			continue
+		}
+		if len(gap.ShowcaseIDs) == 0 && gap.RecommendedDemo == "" {
+			t.Fatalf("%s has no user-facing showcase or scheduled follow-up rationale", gap.ID)
+		}
+	}
+}
