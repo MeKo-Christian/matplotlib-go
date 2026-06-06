@@ -1,4 +1,4 @@
-//go:build skia && skiagpu
+//go:build skiagpu
 
 package skia
 
@@ -7,4 +7,8 @@ package skia
 // the underlying surface is still the deterministic CPU readback bridge: this is
 // scaffolding for a future native SkSurface::MakeRenderTarget path, not real GPU
 // acceleration. See backends/skia/strategy.go.
+//
+// The flag is keyed on skiagpu alone (not skia) so the build-tag-free strategy.go
+// can report GPU status in every build configuration; the GPU renderer itself
+// lives in skia.go and still requires the skia tag.
 const gpuBuildEnabled = true

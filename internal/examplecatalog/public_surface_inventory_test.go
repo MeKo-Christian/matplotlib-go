@@ -422,6 +422,24 @@ func TestHatchImplementationRowsAreSplitFromRendererHatchSurface(t *testing.T) {
 	}
 }
 
+func TestSketchAndFigureImageRowsHaveExplicitDecisions(t *testing.T) {
+	for _, upstreamID := range []string{
+		"pyplot.py:function:xkcd",
+		"pyplot.py:function:figimage",
+	} {
+		row, ok := LookupPublicSurfaceParityByUpstreamID(upstreamID)
+		if !ok {
+			t.Fatalf("missing explicit 9.7 decision for %s", upstreamID)
+		}
+		if row.Status != PublicSurfaceIntentionalOmission {
+			t.Fatalf("%s status = %s, want intentional omission", upstreamID, row.Status)
+		}
+		if !partialNoteDocumentsRemainingScope(row.Note) {
+			t.Fatalf("%s note should document omission rationale: %q", upstreamID, row.Note)
+		}
+	}
+}
+
 func TestPatchDebugHelperRowsAreExplicitlyOmitted(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
 	for _, upstreamID := range []string{

@@ -1368,6 +1368,15 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Note:              "Stateful pyplot figimage is intentionally omitted with FigureImage: use a frameless full-figure axes plus ImShow/Image for visible composition until a dedicated figure-image artist is justified.",
 	},
 	{
+		ID:                "pyplot-xkcd",
+		UpstreamID:        "pyplot.py:function:xkcd",
+		FeatureCoverageID: "pyplot-state",
+		Status:            PublicSurfaceIntentionalOmission,
+		GoFiles:           []string{"pyplot/pyplot.go", "render/render.go", "render/graphics_context.go"},
+		CatalogIDs:        []string{"path_effects", "patch_style_matrix"},
+		Note:              "Stateful pyplot xkcd / sketch-style mode is intentionally omitted for v1.0. Go keeps explicit typed path effects and renderer SketchParams plumbing, but does not provide Matplotlib's global rcParams-mutating xkcd context manager or Artist.set_sketch_params public surface until a visual fixture requires sketch jitter parity.",
+	},
+	{
 		ID:                "pyplot-close",
 		UpstreamID:        "pyplot.py:function:close",
 		FeatureCoverageID: "pyplot-state",

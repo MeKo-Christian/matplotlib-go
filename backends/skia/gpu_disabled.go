@@ -1,4 +1,4 @@
-//go:build skia && !skiagpu
+//go:build !skiagpu
 
 package skia
 

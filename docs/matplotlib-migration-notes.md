@@ -1470,6 +1470,25 @@ property-dict aliases, and`getp`/`setp`/`findobj` property strings are replaced
   formatter, and tick/grid styling path rather than implicit projection-mutating
   shortcuts.
 
+## Phase 9.7 rcParams Key Audit
+
+`style.SupportedMPLStyleKeys()` is the supported rcParams subset for
+Matplotlib `.mplstyle` and `matplotlibrc` ingestion. The list is checked against
+the upstream `third_party/matplotlib/lib/matplotlib/mpl-data/matplotlibrc`
+inventory; the only non-literal keys are Go's explicit
+`grid.major.*` / `grid.minor.*` aliases, which map back to Matplotlib's
+`grid.color` and `grid.linestyle` keys.
+
+Unsupported rcParams are reported through `MPLStyleReport.Unsupported` and
+ignored. That keeps style loading deterministic while recording unsupported
+keys instead of silently applying wrong defaults. For 9.7, unsupported keys are
+intentional typed-API divergences unless a fixture needs them.
+
+`pyplot.xkcd()` and Matplotlib's sketch-style rcParams mutation are omitted for
+v1.0. The renderer model has `render.SketchParams` plumbing for a future
+explicit sketch effect, but the port does not expose Matplotlib's global
+context-manager behavior or `Artist.set_sketch_params`-style public surface.
+
 ## Phase 17.6.8 Backend, Widget, and Animation Tail
 
 PLAN.md task 17.6.8 closed the backend, widget, and animation public-surface

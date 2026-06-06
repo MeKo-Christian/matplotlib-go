@@ -1,6 +1,11 @@
 package style
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
 
 func TestSupportedMPLStyleKeysReturnSortedCopy(t *testing.T) {
 	keys := SupportedMPLStyleKeys()
@@ -49,5 +54,72 @@ func TestMPLStyleParamsApplySupportedKeysAndReportUnsupported(t *testing.T) {
 	}
 	if len(report.Unsupported) != 1 || report.Unsupported[0].Key != "unsupported.option" {
 		t.Fatalf("unsupported report = %+v", report.Unsupported)
+	}
+}
+
+func TestSupportedMPLStyleKeysAreAuditedAgainstUpstream(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "third_party", "matplotlib", "lib", "matplotlib", "mpl-data", "matplotlibrc"))
+	if err != nil {
+		t.Fatalf("read upstream matplotlibrc: %v", err)
+	}
+	upstream := upstreamMatplotlibRCKeys(string(data))
+	if len(upstream) == 0 {
+		t.Fatal("upstream matplotlibrc key inventory is empty")
+	}
+
+	for _, key := range SupportedMPLStyleKeys() {
+		upstreamKey := supportedMPLStyleKeyUpstreamEquivalent(key)
+		if !upstream[upstreamKey] {
+			t.Fatalf("supported style key %q maps to upstream key %q, which is not present in upstream matplotlibrc", key, upstreamKey)
+		}
+	}
+	if len(upstream) <= len(SupportedMPLStyleKeys()) {
+		t.Fatalf("upstream rcParams inventory = %d keys, supported = %d; expected an audited subset",
+			len(upstream), len(SupportedMPLStyleKeys()))
+	}
+
+	doc, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
+	if err != nil {
+		t.Fatalf("read migration notes: %v", err)
+	}
+	docText := strings.Join(strings.Fields(string(doc)), " ")
+	for _, phrase := range []string{
+		"Phase 9.7 rcParams Key Audit",
+		"`style.SupportedMPLStyleKeys()` is the supported rcParams subset",
+		"Unsupported rcParams are reported through `MPLStyleReport.Unsupported` and ignored",
+		"unsupported keys are intentional typed-API divergences unless a fixture needs them",
+	} {
+		if !strings.Contains(docText, phrase) {
+			t.Fatalf("migration notes missing rcParams audit phrase %q", phrase)
+		}
+	}
+}
+
+func upstreamMatplotlibRCKeys(src string) map[string]bool {
+	keys := map[string]bool{}
+	for _, line := range strings.Split(src, "\n") {
+		line = strings.TrimSpace(line)
+		line = strings.TrimPrefix(line, "#")
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") || !strings.Contains(line, ":") {
+			continue
+		}
+		key := strings.TrimSpace(strings.SplitN(line, ":", 2)[0])
+		if key == "" || strings.ContainsAny(key, " \t") {
+			continue
+		}
+		keys[key] = true
+	}
+	return keys
+}
+
+func supportedMPLStyleKeyUpstreamEquivalent(key string) string {
+	switch key {
+	case "grid.major.color", "grid.minor.color":
+		return "grid.color"
+	case "grid.major.linestyle", "grid.minor.linestyle":
+		return "grid.linestyle"
+	default:
+		return key
 	}
 }

@@ -67,8 +67,8 @@ func New(config backends.Config) (*Renderer, error) {
 			ColorType:   "RGBA8888",
 		}
 	}
-	if skiaConfig.UseGPU {
-		return nil, errors.New("skia backend GPU mode is not implemented")
+	if skiaConfig.UseGPU && !gpuBuildEnabled {
+		return nil, errors.New("skia backend GPU mode requires the skiagpu build tag")
 	}
 	if config.Width <= 0 || config.Height <= 0 {
 		return nil, errors.New("skia backend requires positive width and height")
@@ -88,14 +88,23 @@ func New(config backends.Config) (*Renderer, error) {
 	if config.DPI > 0 {
 		resolution = uint(config.DPI)
 	}
+	// Under the skiagpu build tag a GPU-mode request selects the GPU render mode,
+	// but the surface remains the deterministic CPU readback bridge until a native
+	// SkSurface::MakeRenderTarget path exists. This keeps golden tests reproducible
+	// while the GPU plumbing is scaffolded.
+	useGPU := skiaConfig.UseGPU && gpuBuildEnabled
+	mode := ModeCPU
+	if useGPU {
+		mode = ModeGPU
+	}
 	return &Renderer{
 		Renderer:    cpu,
 		width:       config.Width,
 		height:      config.Height,
 		resolution:  resolution,
 		background:  config.Background,
-		bridge:      newCPUSurfaceBridge(config.Width, config.Height),
-		useGPU:      false,
+		bridge:      newCPUSurfaceBridge(config.Width, config.Height, mode),
+		useGPU:      useGPU,
 		sampleCount: skiaConfig.SampleCount,
 		colorType:   skiaConfig.ColorType,
 	}, nil

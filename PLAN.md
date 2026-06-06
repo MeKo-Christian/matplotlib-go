@@ -375,14 +375,30 @@ backend parity program but is not yet complete.
         distinguishes the CPU bridge stand-ins from the truly native
         `GouraudTriangleBatch` path. The external batch ABI remains the open
         path to flipping these back to native (`✓`).
+  - [ ] External `SkCanvas::drawAtlas` / `SkVertices` ABI integration to flip
+        the bridged (`≈`) marker/collection/mesh paths to native (`✓`). Blocked
+        on the external Skia C-ABI binding that is deferred by
+        `backends/skia/strategy.go` (`Binding: external-c-api`; required libs:
+        Skia shared library, C-ABI wrapper, `CGO_ENABLED=1`).
 - [ ] Skia native hatching via tiled `SkShader`s.
   - [x] CPU Skia consumes hatch metadata during path rendering and advertises
         `NativeHatcher`; tiled external `SkShader` hatches remain open.
   - [x] CPU Skia reports `NativeHatcher` as bridged (`≈`) until the external
         tiled `SkShader` integration lands. Hatch geometry continues to route
         through `render.DrawHatchFallback`.
+  - [ ] Tiled external `SkShader` hatches to flip `NativeHatcher` from bridged
+        (`≈`) to native (`✓`). Blocked on the same external Skia C-ABI binding.
 - [ ] GPU mode (`SkSurface::MakeRenderTarget`) behind a separate build tag,
       with deterministic CPU readback for golden tests.
+  - [x] `skiagpu` build-tag scaffold: a GPU-mode request (`SkiaConfig.UseGPU`)
+        is accepted only under `-tags skiagpu`, selects the GPU render mode
+        (`BridgeInfo.Mode == ModeGPU`), and rasterizes deterministically through
+        the existing CPU readback bridge (`NativeSurface == false`) so golden
+        tests stay reproducible. `gpu_enabled.go` / `gpu_disabled.go` carry the
+        `gpuBuildEnabled` flag; `TestGPUScaffoldRendersThroughCPUReadback`
+        (`backends/skia/gpu_scaffold_test.go`) covers it.
+  - [ ] Real native `SkSurface::MakeRenderTarget` GPU rendering (currently the
+        scaffold is CPU-readback only). Blocked on the external Skia/GPU library.
 - [ ] Capability reporting split between CPU and GPU configurations so the
       comparison report shows truthful native / fallback / unavailable status
       per mode.
@@ -394,6 +410,14 @@ backend parity program but is not yet complete.
         are visible. The CPU/GPU split itself is still deferred until a GPU
         build tag exists; the bridged status is the only CPU-side distinction
         the comparison report needs today.
+  - [x] CPU/GPU capability-split data structure: `skia.ModeCapabilities(mode)`
+        encodes the per-mode optional-capability sets and `BackendStrategy()`
+        reports `DefaultMode` / `GPUStatus` per the `skiagpu` build tag
+        (`StatusPlanned` with the tag, `StatusDeferred` without). Today the GPU
+        set mirrors the CPU set because the GPU mode is a CPU-readback scaffold.
+  - [ ] Truthful per-mode native / fallback / unavailable in the *live*
+        `BackendComparisonReport` (e.g. a second GPU registry entry). Deferred
+        until the real GPU path exists and the two sets actually diverge.
 - [x] Skia vs AGG semantic-fixture comparison; tolerances documented per
       fixture where Skia is not expected to pixel-match.
       `TestSkiaParityAgainstAGGGoldens` in `backends/skia/parity_test.go`
@@ -444,14 +468,22 @@ backend parity program but is not yet complete.
 
 **Exit criteria:**
 
-- [ ] AGG, SVG, and Skia all advertise truthful capability matrices for
+- [x] AGG, SVG, and Skia all advertise truthful capability matrices for
       every optional renderer interface, with no `✓!` drift markers in the
-      comparison report.
-- [ ] Every committed plot family has at least one native and one
+      comparison report. Enforced by
+      `TestRegisteredBackendsAdvertiseSupportedCapabilities`
+      (`backends/backend_capability_runtime_test.go`), which fails on any
+      fallback→native drift; the `≈` bridged marker
+      (`backends/capabilities.go`) keeps the CPU bridge stand-ins honest.
+- [x] Every committed plot family has at least one native and one
       fallback-path fixture so silent fallbacks cannot pass for native
-      behavior.
+      behavior. Enforced by `test/agg_native_fixtures_test.go` (native fixtures
+      split from renderer-neutral cases) and `test/gobasic_smoke_test.go`
+      (fallback smoke coverage required for every static plot family).
 - [ ] Skia is a viable secondary raster backend for users who need GPU
-      acceleration.
+      acceleration. Still open: the `skiagpu` scaffold provides the build tag
+      and deterministic CPU readback, but real `SkSurface::MakeRenderTarget`
+      GPU acceleration is blocked on the external Skia/GPU binding.
 
 ---
 
@@ -1518,13 +1550,13 @@ are missing.
 
 ### 9.7 Hatch styles and miscellaneous
 
-- [ ] Verify the full hatch character set (`/ \ | - + x o O . *`) and
+- [x] Verify the full hatch character set (`/ \ | - + x o O . *`) and
       repeat-density semantics against `hatch.py`.
-- [ ] Add `set_sketch_params` / `pyplot.xkcd()` sketch-style support, or
+- [x] Add `set_sketch_params` / `pyplot.xkcd()` sketch-style support, or
       document the omission.
-- [ ] Decide on `figimage`: implement or document as an intentional omission.
+- [x] Decide on `figimage`: implement or document as an intentional omission.
       (`pcolorfast` now maps to the typed `PColorFast` / `PColorMesh` path.)
-- [ ] Audit `rcParams` keys against upstream and record which keys are
+- [x] Audit `rcParams` keys against upstream and record which keys are
       unsupported.
 
 **Exit criteria:**
