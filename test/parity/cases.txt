@@ -148,3 +148,4 @@ fill_variants
 histogram_variants
 projection_toolkit_gallery
 triangulation_gallery
+ticks_scales_formatters_gallery

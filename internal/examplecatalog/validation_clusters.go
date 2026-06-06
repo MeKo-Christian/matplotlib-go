@@ -36,6 +36,7 @@ var validationClusters = []ValidationCluster{
 			"axisartist_showcase",
 			"axes_grid1_showcase",
 			"projection_toolkit_gallery",
+			"ticks_scales_formatters_gallery",
 		},
 	},
 	{
@@ -149,6 +150,7 @@ var validationClusters = []ValidationCluster{
 			"units_categories",
 			"units_custom_converter",
 			"vector_fields",
+			"ticks_scales_formatters_gallery",
 		},
 	},
 	{

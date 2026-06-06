@@ -294,6 +294,25 @@ func TestCatalogIncludesTriangulationGalleryShowcase(t *testing.T) {
 	}
 }
 
+func TestCatalogIncludesTicksScalesFormattersGalleryShowcase(t *testing.T) {
+	c, ok := Lookup("ticks_scales_formatters_gallery")
+	if !ok {
+		t.Fatal("missing ticks_scales_formatters_gallery catalog case")
+	}
+	if c.Topic != "axes" {
+		t.Fatalf("ticks_scales_formatters_gallery topic = %q, want axes", c.Topic)
+	}
+	if !c.Showcase {
+		t.Fatal("ticks_scales_formatters_gallery should be a user-facing showcase")
+	}
+	if c.FixtureOnly {
+		t.Fatal("ticks_scales_formatters_gallery should not be fixture-only")
+	}
+	if c.Description == "" {
+		t.Fatal("ticks_scales_formatters_gallery should describe locator, scale, formatter, date, category, and unit coverage")
+	}
+}
+
 func TestCatalogIncludesWidgetsGalleryShowcase(t *testing.T) {
 	c, ok := Lookup("widgets_gallery")
 	if !ok {
@@ -502,6 +521,7 @@ func TestParityFixValidationTargetsNameClusters(t *testing.T) {
 		"spy_image",
 		"axes_top_right_inverted",
 		"axes_control_surface",
+		"ticks_scales_formatters_gallery",
 		"transform_coordinates",
 		"figure_labels_composition",
 		"colorbar_composition",

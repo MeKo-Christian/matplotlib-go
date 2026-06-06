@@ -104,16 +104,16 @@ var featureCoverageRows = []FeatureCoverage{
 		UpstreamModules:         []string{"axis.py", "ticker.py", "scale.py", "dates.py", "category.py"},
 		UpstreamGalleryFamilies: []string{"ticks", "scales"},
 		GoFiles:                 []string{"core/axis.go", "core/date_tick.go", "core/units.go", "transform/scale_registry.go"},
-		CatalogIDs:              []string{"axes_control_surface", "units_dates", "units_categories", "lognorm_imshow", "skewt_basic"},
-		ExampleIDs:              []string{"axes_control_surface", "units_overview", "skewt_basic"},
+		CatalogIDs:              []string{"axes_control_surface", "ticks_scales_formatters_gallery", "units_dates", "units_categories", "lognorm_imshow", "skewt_basic"},
+		ExampleIDs:              []string{"axes_control_surface", "ticks_scales_formatters_gallery", "units_overview", "skewt_basic"},
 		WebDemoIDs:              []string{"axes", "units"},
 		GoEquivalent:            CoveragePartial,
 		ParityFixture:           CoverageImplemented,
 		UserShowcase:            CoveragePartial,
 		BrowserDemo:             CoveragePartial,
 		Breadth:                 BreadthThin,
-		Notes: "Major/minor ticks, TickParams styling, date/category units, and linear/log/symlog/asinh/logit/function/functionlog scales exist. " +
-			"The dates.py surface audit is tracked in DateSurfaceAuditRows. Remaining 12.2C/D/E scope is formatter edge cases and family-specific catalog fixtures.",
+		Notes: "Major/minor ticks, TickParams styling, date/category units, custom units, formatter families, and linear/log/symlog/asinh/logit/function/functionlog scales exist. " +
+			"The ticks_scales_formatters_gallery showcase provides the user-facing breadth example; the dates.py surface audit and residual formatter edge fixtures remain tracked in DateSurfaceAuditRows and 12.2C/D/E.",
 	},
 	{
 		ID:                      "transforms",

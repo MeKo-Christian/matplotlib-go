@@ -149,6 +149,16 @@ func TestUnstructuredTriangulationDemoBreadthGapNamesGalleryShowcase(t *testing.
 	}
 }
 
+func TestTicksScalesFormattersDemoBreadthGapNamesDedicatedGalleryShowcase(t *testing.T) {
+	gap, ok := LookupDemoBreadthGap("ticks-scales-formatters")
+	if !ok {
+		t.Fatal("missing ticks-scales-formatters demo breadth gap")
+	}
+	if !containsString(gap.ShowcaseIDs, "ticks_scales_formatters_gallery") {
+		t.Fatalf("ticks-scales-formatters ShowcaseIDs = %v, want ticks_scales_formatters_gallery", gap.ShowcaseIDs)
+	}
+}
+
 func TestMediumPriorityDemoBreadthGapsHaveExamplesOrFollowups(t *testing.T) {
 	for _, gap := range DemoBreadthGaps() {
 		if gap.Priority != DemoBreadthMedium {

@@ -48,6 +48,7 @@ import (
 	showcase_specialty_artists "github.com/cwbudde/matplotlib-go/examples/specialty_artists"
 	showcase_stat_variants "github.com/cwbudde/matplotlib-go/examples/stat_variants"
 	showcase_text_layout_gallery "github.com/cwbudde/matplotlib-go/examples/text_layout_gallery"
+	showcase_ticks_scales_formatters_gallery "github.com/cwbudde/matplotlib-go/examples/ticks_scales_formatters_gallery"
 	showcase_triangulation_gallery "github.com/cwbudde/matplotlib-go/examples/triangulation_gallery"
 	showcase_units_overview "github.com/cwbudde/matplotlib-go/examples/units_overview"
 	showcase_unstructured_showcase "github.com/cwbudde/matplotlib-go/examples/unstructured_showcase"
@@ -199,6 +200,7 @@ import (
 	example_text_annotation_matrix "github.com/cwbudde/matplotlib-go/test/parity/text_annotation_matrix"
 	example_text_labels_strict "github.com/cwbudde/matplotlib-go/test/parity/text_labels_strict"
 	example_text_layout_gallery "github.com/cwbudde/matplotlib-go/test/parity/text_layout_gallery"
+	example_ticks_scales_formatters_gallery "github.com/cwbudde/matplotlib-go/test/parity/ticks_scales_formatters_gallery"
 	example_ticks_styling_surface "github.com/cwbudde/matplotlib-go/test/parity/ticks_styling_surface"
 	example_title_strict "github.com/cwbudde/matplotlib-go/test/parity/title_strict"
 	example_transform_annotation_modes "github.com/cwbudde/matplotlib-go/test/parity/transform_annotation_modes"
@@ -286,6 +288,7 @@ var renderByID = map[string]func() image.Image{
 	"mathtext_inline_labels":              example_mathtext_inline_labels.Render,
 	"mathtext_gallery":                    example_mathtext_gallery.Render,
 	"text_layout_gallery":                 example_text_layout_gallery.Render,
+	"ticks_scales_formatters_gallery":     example_ticks_scales_formatters_gallery.Render,
 	"axes_top_right_inverted":             example_axes_top_right_inverted.Render,
 	"axes_control_surface":                example_axes_control_surface.Render,
 	"axes_convenience_helpers":            example_axes_convenience_helpers.Render,
@@ -444,6 +447,7 @@ var figureByID = map[string]func() *core.Figure{
 	"image_variants_gallery":              showcase_image_variants_gallery.Plot,
 	"mathtext_gallery":                    showcase_mathtext_gallery.Plot,
 	"text_layout_gallery":                 showcase_text_layout_gallery.Plot,
+	"ticks_scales_formatters_gallery":     showcase_ticks_scales_formatters_gallery.Plot,
 	"multi_series_basic":                  showcase_multi_series_basic.Plot,
 	"legend_layout_matrix":                example_legend_layout_matrix.Plot,
 	"text_annotation_matrix":              example_text_annotation_matrix.Plot,

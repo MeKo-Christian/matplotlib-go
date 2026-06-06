@@ -1861,7 +1861,7 @@ high-priority `DemoBreadthGap` either visibly closed by a showcase or explicitly
 split into Phase 9C when the residual is implementation/API breadth rather than
 example breadth.
 
-- [ ] Add a focused ticks/scales/formatters gallery for the remaining
+- [x] Add a focused ticks/scales/formatters gallery for the remaining
       high-priority `ticks-scales-formatters` gap.
   - Target catalog ID: `ticks_scales_formatters_gallery`.
   - Cover major/minor locators, date and category formatting, log/symlog/asinh
@@ -1874,7 +1874,7 @@ example breadth.
     committed `testdata/golden/` and `testdata/matplotlib_ref/` PNGs, catalog
     row, parity registry row, CLI registry row, validation-cluster coverage, and
     browser-demo planned coverage.
-- [ ] Update the `ticks-scales-formatters` `DemoBreadthGap` row to name the new
+- [x] Update the `ticks-scales-formatters` `DemoBreadthGap` row to name the new
       showcase and rewrite its coverage text so it no longer says formatter
       breadth is not isolated.
 - [ ] Audit the already-showcased high-priority rows and remove stale

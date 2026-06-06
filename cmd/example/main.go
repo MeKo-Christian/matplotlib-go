@@ -66,6 +66,7 @@ import (
 	specialty_artists "github.com/cwbudde/matplotlib-go/examples/specialty_artists"
 	stat_variants "github.com/cwbudde/matplotlib-go/examples/stat_variants"
 	text_layout_gallery "github.com/cwbudde/matplotlib-go/examples/text_layout_gallery"
+	ticks_scales_formatters_gallery "github.com/cwbudde/matplotlib-go/examples/ticks_scales_formatters_gallery"
 	triangulation_gallery "github.com/cwbudde/matplotlib-go/examples/triangulation_gallery"
 	units_overview "github.com/cwbudde/matplotlib-go/examples/units_overview"
 	unstructured_showcase "github.com/cwbudde/matplotlib-go/examples/unstructured_showcase"
@@ -124,6 +125,7 @@ var registry = map[string]func() *core.Figure{
 	"specialty_artists":                   specialty_artists.Plot,
 	"stat_variants":                       stat_variants.Plot,
 	"text_layout_gallery":                 text_layout_gallery.Plot,
+	"ticks_scales_formatters_gallery":     ticks_scales_formatters_gallery.Plot,
 	"triangulation_gallery":               triangulation_gallery.Plot,
 	"units_overview":                      units_overview.Plot,
 	"unstructured_showcase":               unstructured_showcase.Plot,

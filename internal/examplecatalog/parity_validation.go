@@ -25,6 +25,7 @@ var parityFixValidationTargets = []ParityFixValidationTarget{
 	{CaseID: "spy_image", ClusterIDs: []string{ValidationClusterImageMeshColorbar}},
 	{CaseID: "axes_top_right_inverted", ClusterIDs: []string{ValidationClusterLayoutText}},
 	{CaseID: "axes_control_surface", ClusterIDs: []string{ValidationClusterLayoutText}},
+	{CaseID: "ticks_scales_formatters_gallery", ClusterIDs: []string{ValidationClusterLayoutText, ValidationClusterSignalUnitsVector}},
 	{CaseID: "transform_coordinates", ClusterIDs: []string{ValidationClusterLayoutText}},
 	{CaseID: "figure_labels_composition", ClusterIDs: []string{ValidationClusterLayoutText}},
 	{CaseID: "colorbar_composition", ClusterIDs: []string{ValidationClusterLayoutText, ValidationClusterImageMeshColorbar}},

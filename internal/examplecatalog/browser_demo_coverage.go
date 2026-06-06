@@ -280,6 +280,14 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		CatalogIDs: []string{"text_layout_gallery"},
 	},
 	{
+		ID:         "showcase-ticks_scales_formatters_gallery",
+		Title:      "Ticks, Scales, and Formatters Gallery Browser Coverage",
+		Status:     BrowserDemoPlanned,
+		Action:     "include in the axes or units browser demo",
+		Rationale:  "Locator, formatter, scale, date, category, and custom-unit behavior should be browser-inspectable after the CLI showcase.",
+		CatalogIDs: []string{"ticks_scales_formatters_gallery"},
+	},
+	{
 		ID:         "showcase-annotation_legend_offsetbox_gallery",
 		Title:      "Annotation, Legend, and Offset Box Gallery Browser Coverage",
 		Status:     BrowserDemoPlanned,

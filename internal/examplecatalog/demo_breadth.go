@@ -197,8 +197,8 @@ var demoBreadthGaps = []DemoBreadthGap{
 		Topic:       "axes",
 		Title:       "Ticks, Scales, and Formatters",
 		Priority:    DemoBreadthHigh,
-		CatalogIDs:  []string{"axes_control_surface", "units_dates", "units_categories", "units_custom_converter", "lognorm_imshow", "skewt_basic"},
-		ShowcaseIDs: []string{"axes_control_surface", "units_overview", "skewt_basic"},
+		CatalogIDs:  []string{"axes_control_surface", "ticks_scales_formatters_gallery", "units_dates", "units_categories", "units_custom_converter", "lognorm_imshow", "skewt_basic"},
+		ShowcaseIDs: []string{"axes_control_surface", "ticks_scales_formatters_gallery", "units_overview", "skewt_basic"},
 		WebDemoIDs:  []string{"axes", "units"},
 		TargetFeatures: []string{
 			"major locators",
@@ -208,9 +208,9 @@ var demoBreadthGaps = []DemoBreadthGap{
 			"log scale",
 			"custom converters",
 		},
-		CurrentCoverage: "Axes controls and units are showcased, but ticker/formatter breadth is not isolated as its own gallery.",
+		CurrentCoverage: "Ticks, scales, formatters, date labels, category labels, and custom units now have a dedicated gallery; focused fixtures remain for locator/formatter edge cases.",
 		Need:            "Tick and scale parity should be visible without reading broader axes examples.",
-		RecommendedDemo: "Add a ticks/scales gallery covering locator and formatter variants, date/category units, log/norm cases, and custom converters.",
+		RecommendedDemo: "Keep ticks_scales_formatters_gallery as the user-facing breadth example and split residual locator/formatter API edge cases into Phase 9C.",
 	},
 	{
 		ID:              "text-layout-gallery",
