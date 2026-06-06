@@ -95,3 +95,23 @@ func TestImplementedFeatureCoverageHasFixtureOrOmission(t *testing.T) {
 		}
 	}
 }
+
+// TestPartialFeatureCoverageRowsArePrecise enforces the Phase 17 exit criterion
+// that every `partial` core feature row is either moved to implemented /
+// intentional-omission or kept as a smaller precise partial row: a partial
+// GoEquivalent row must document the remaining scope (or carry an explicit
+// intentional omission) rather than leaving the partial status unexplained.
+func TestPartialFeatureCoverageRowsArePrecise(t *testing.T) {
+	for _, row := range FeatureCoverageMatrix() {
+		if row.GoEquivalent != CoveragePartial {
+			continue
+		}
+		if row.IntentionalOmission != "" {
+			continue
+		}
+		if !partialNoteDocumentsRemainingScope(row.Notes) {
+			t.Fatalf("%s is a partial core feature row without precise remaining-scope notes; "+
+				"move it to implemented/intentional-omission or document what is still missing", row.ID)
+		}
+	}
+}

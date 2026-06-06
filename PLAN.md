@@ -1811,7 +1811,7 @@ Exit criteria:
 **Goal:** close remaining image/stateful-wrapper/backend/widget/animation
 parity decisions and keep unsupported scope explicit.
 
-Status: largely completed and compacted; final closure still open.
+Status: completed and compacted; final closure landed 2026-06-06.
 
 - [x] Image class/resampling scope, interpolation registry coverage,
       transformed-image behavior, and typed omissions/errors are implemented.
@@ -1823,15 +1823,30 @@ Status: largely completed and compacted; final closure still open.
       `_pylab_helpers.py`, `backend_bases.py`, `backend_tools.py`,
       `widgets.py`, and `animation.py` are split into precise statuses.
 
-Exit criteria (remaining open):
+Exit criteria:
 
-- [ ] Every `GapDecisionImplement` row in `FoundationAPIGapAudit` is either
+- [x] Every `GapDecisionImplement` row in `FoundationAPIGapAudit` is either
       implemented with catalog coverage or deliberately reclassified with
       rationale.
-- [ ] Every `partial` core feature row in `FeatureCoverageMatrix` is moved to
+      2026-06-06: all 9 `GapDecisionImplement` rows point at a coverage row that
+      carries catalog cases (`axis-ticker-scale`, `collections`, `patches`,
+      `text-annotation-legend`, `image`, `colorbar`), locked by
+      `TestImplementGapsHaveCatalogCoverageOrReclassification` — an implement gap
+      with no catalog coverage now fails the suite unless it is reclassified with
+      rationale.
+- [x] Every `partial` core feature row in `FeatureCoverageMatrix` is moved to
       `implemented`, `intentional-omission`, or a smaller precise partial row.
-- [ ] `go test ./test/...` parity failures from newly changed behavior are
+      2026-06-06: added precise remaining-scope notes to the 7 previously
+      unexplained partial rows (`collections`, `patches`,
+      `text-annotation-legend`, `colorbar`, `colors-cm`, `pyplot-state`,
+      `toolkits-projections`); every `partial` `GoEquivalent` row now documents
+      what is still missing (or carries an intentional omission), locked by
+      `TestPartialFeatureCoverageRowsArePrecise`.
+- [x] `go test ./test/...` parity failures from newly changed behavior are
       resolved by source-backed core fixes or fixture updates.
+      2026-06-06: closure changes are inventory/notes/tests only (no rendering
+      behavior change); `CGO_ENABLED=1 go test -tags freetype ./test/...` passes
+      (521 cases) and `go test ./internal/examplecatalog/...` passes (125 cases).
 
 ---
 

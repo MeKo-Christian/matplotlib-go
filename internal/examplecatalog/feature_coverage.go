@@ -159,6 +159,8 @@ var featureCoverageRows = []FeatureCoverage{
 		UserShowcase:            CoveragePartial,
 		BrowserDemo:             CoveragePartial,
 		Breadth:                 BreadthThin,
+		Notes: "PathCollection, LineCollection, PatchCollection, PolyCollection, QuadMesh, event, and hexbin collections exist with scalar-mappable SetArray/SetColormap/SetNorm/SetCLim and an offset coordinate transform, covered by mixed_collection, large_scatter, quad_mesh, gouraud_triangles, and collection_mutable_scalarmap. " +
+			"Remaining partial scope is the broad mutable setter surface, PolyQuadMesh-specific masked-coordinate pcolor polygon dropping, per-cell hatch/linestyle flexibility, and QuadMesh array-shape variants beyond flat/nearest and Gouraud, kept idiomatic until a visible fixture needs them.",
 	},
 	{
 		ID:                      "patches",
@@ -172,6 +174,8 @@ var featureCoverageRows = []FeatureCoverage{
 		UserShowcase:            CoveragePending,
 		BrowserDemo:             CoveragePending,
 		Breadth:                 BreadthFixtureOnly,
+		Notes: "Common patch shapes, hatch routing, FancyBboxPatch BoxStyle registry, and FancyArrowPatch / ConnectionPatch / ArrowStyle / ConnectionStyle geometry exist, covered by patch_showcase and patch_style_matrix. " +
+			"Remaining partial scope is Python helper/debug function parity and the broad mutable Patch property grammar, tracked as the patch-style-registries foundation gap.",
 	},
 	{
 		ID:                      "text-annotation-legend",
@@ -187,6 +191,8 @@ var featureCoverageRows = []FeatureCoverage{
 		UserShowcase:            CoveragePartial,
 		BrowserDemo:             CoveragePartial,
 		Breadth:                 BreadthThin,
+		Notes: "Text / MathText / TeX layout, the annotation coordinate model, static offset boxes, and static legend handlers/layout are covered by text_labels_strict, title_strict, mathtext_inline_labels, annotation_composition, legend_layout_matrix, and text_annotation_matrix. " +
+			"Remaining partial scope is the dynamic get/set property grammar, public get_window_extent methods, OffsetFrom live callables, draggable legend/offsetbox GUI behavior, and fixture-specific pixel residuals, split across the text/annotation/offsetbox/legend foundation gaps.",
 	},
 	{
 		ID:                      "image",
@@ -217,6 +223,8 @@ var featureCoverageRows = []FeatureCoverage{
 		UserShowcase:            CoveragePartial,
 		BrowserDemo:             CoveragePartial,
 		Breadth:                 BreadthThin,
+		Notes: "Figure-level colorbars with colormap/norm routing, vertical/horizontal placement, extension patches, explicit ticks/boundaries/values, uniform/proportional spacing, drawedges, and mutable mappable sync are covered by colorbar_composition, colorbar_boundary_values, colorbar_horizontal_ticks, and colorbar_extensions. " +
+			"Remaining partial scope is custom formatter objects, gridspec-specific placement helpers, and multi-parent colorbar placement in the current figure/axes model, tracked as the colorbar-orientation-ticks foundation gap.",
 	},
 	{
 		ID:                      "colors-cm",
@@ -230,6 +238,8 @@ var featureCoverageRows = []FeatureCoverage{
 		UserShowcase:            CoveragePending,
 		BrowserDemo:             CoveragePending,
 		Breadth:                 BreadthFixtureOnly,
+		Notes: "Named colors, listed/segmented/reversed/resampled colormaps, and common norms (Log/SymLog/Power/TwoSlope/Centered/Boundary/Asinh/NoNorm) exist, covered by colormap_diverging/qualitative/cyclic, named_colors, and the norm image fixtures. " +
+			"Remaining partial scope is MultiNorm, multivar/bivar colormaps, LightSource, and edge-case color conversion, kept outside the single-scalar mapping API until a visible fixture needs them, tracked as the colors-norms-lightsource foundation gap.",
 	},
 	{
 		ID:              "pyplot-state",
@@ -243,6 +253,8 @@ var featureCoverageRows = []FeatureCoverage{
 		UserShowcase:    CoveragePartial,
 		BrowserDemo:     CoveragePending,
 		Breadth:         BreadthThin,
+		Notes: "Pyplot figure/current-axes state plus common plot/text/annotation/limit/scale wrappers delegate to the object-oriented core, covered by basic_line, scatter_basic, and bar_basic. " +
+			"Remaining partial scope is intentional signature divergences: setter-only limit/tick helpers, label setters that return no Text handle, the omitted numeric figure registry and sci/clim/set_cmap shortcuts, omitted GUI-blocking helpers, and typed options instead of Python overload/data= grammar, documented in docs/matplotlib-migration-notes.md and tracked as the pyplot-wrapper-surface foundation gap.",
 	},
 	{
 		ID:                      "renderer-backends",
@@ -287,6 +299,8 @@ var featureCoverageRows = []FeatureCoverage{
 		UserShowcase:            CoverageImplemented,
 		BrowserDemo:             CoveragePartial,
 		Breadth:                 BreadthThin,
+		Notes: "Polar, Mollweide/Aitoff/Hammer/Lambert geo projections, radar, SkewT, mplot3d terrain, axisartist, and axes_grid1 showcases exist with parity fixtures. " +
+			"Remaining partial scope is broader mplot3d 3D artist/lighting breadth, full axisartist floating-axes/curvilinear-grid coverage, and additional axes_grid1 helpers beyond the showcase cases.",
 	},
 }
 

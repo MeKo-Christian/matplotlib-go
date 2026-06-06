@@ -149,6 +149,31 @@ func TestImageGapClassifiesPColorFast(t *testing.T) {
 	}
 }
 
+// TestImplementGapsHaveCatalogCoverageOrReclassification enforces the Phase 17
+// exit criterion that every GapDecisionImplement row is either implemented with
+// catalog coverage or deliberately reclassified with rationale. A gap that is
+// still marked "implement" must point at a coverage row that carries at least
+// one catalog case; otherwise it should be reclassified to an idiomatic
+// equivalent or intentional omission with rationale.
+func TestImplementGapsHaveCatalogCoverageOrReclassification(t *testing.T) {
+	for _, gap := range FoundationAPIGapAudit() {
+		if gap.Decision != GapDecisionImplement {
+			continue
+		}
+		if gap.Rationale == "" {
+			t.Fatalf("%s is GapDecisionImplement without rationale", gap.ID)
+		}
+		row, ok := LookupFeatureCoverage(gap.CoverageID)
+		if !ok {
+			t.Fatalf("%s is GapDecisionImplement but references missing coverage row %q", gap.ID, gap.CoverageID)
+		}
+		if len(row.CatalogIDs) == 0 {
+			t.Fatalf("%s is GapDecisionImplement but coverage row %q has no catalog coverage; "+
+				"implement catalog parity or reclassify the gap with rationale", gap.ID, gap.CoverageID)
+		}
+	}
+}
+
 func TestFoundationAPIGapsReferenceExistingGoFiles(t *testing.T) {
 	root := repoRoot(t)
 	for _, gap := range FoundationAPIGapAudit() {
