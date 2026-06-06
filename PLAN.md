@@ -1877,22 +1877,22 @@ example breadth.
 - [x] Update the `ticks-scales-formatters` `DemoBreadthGap` row to name the new
       showcase and rewrite its coverage text so it no longer says formatter
       breadth is not isolated.
-- [ ] Audit the already-showcased high-priority rows and remove stale
+- [x] Audit the already-showcased high-priority rows and remove stale
       example-breadth wording where a gallery now exists:
       `marker-grid`, `advanced-scatter`, `bar-variants`, `fill-variants`,
       `histogram-variants`, `colormap-families`, `image-variants`,
       `colorbar-norms-extensions`, `mathtext-gallery`, `text-layout-gallery`,
       `annotation-legend-offsetbox`, and `mplot3d-gallery`.
-- [ ] Split any residual non-example work from those high-priority rows into
+- [x] Split any residual non-example work from those high-priority rows into
       precise Phase 9C implementation/API follow-ups. Examples include
       resampled colormap API breadth, transformed-image edge fixtures,
       mutable scalar-map edge fixtures, or formatter objects when the gallery
       already demonstrates the user-visible behavior.
-- [ ] Add a regression test that the first Phase 18 exit criterion is
+- [x] Add a regression test that the first Phase 18 exit criterion is
       mechanically checkable: every high-priority `DemoBreadthGap` must either
       name at least one `Showcase: true` catalog row that covers its target
       features or carry an explicit Phase 9C split rationale.
-- [ ] Mark the first Phase 18 exit criterion complete only after that test
+- [x] Mark the first Phase 18 exit criterion complete only after that test
       passes and the audit text no longer points at missing user-facing demos.
 
 ### 18.5 Fixture-Only Public Status Cleanup
@@ -1926,7 +1926,7 @@ justifying the lone `fixture-only` public feature-family status in
 
 **Exit criteria:**
 
-- [ ] Every high-priority `DemoBreadthGap` is closed by a user-facing example
+- [x] Every high-priority `DemoBreadthGap` is closed by a user-facing example
       or split into a precise implementation gap in Phase 9C.
 - [x] Every medium-priority `DemoBreadthGap` has either a user-facing example
       or a scheduled follow-up rationale.

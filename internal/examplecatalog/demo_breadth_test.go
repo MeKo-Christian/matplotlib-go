@@ -169,3 +169,45 @@ func TestMediumPriorityDemoBreadthGapsHaveExamplesOrFollowups(t *testing.T) {
 		}
 	}
 }
+
+func TestHighPriorityDemoBreadthGapsAreClosedOrSplit(t *testing.T) {
+	stalePhrases := []string{
+		"not isolated",
+		"Only a",
+		"remain fixture-heavy",
+		"fixture-only",
+		"parity-only",
+		"Add a",
+		"Promote a",
+	}
+	for _, gap := range DemoBreadthGaps() {
+		if gap.Priority != DemoBreadthHigh {
+			continue
+		}
+		if len(gap.ShowcaseIDs) == 0 {
+			t.Fatalf("%s has no user-facing showcase and no Phase 9C split", gap.ID)
+		}
+		for _, phrase := range stalePhrases {
+			if containsStringFragment(gap.CurrentCoverage, phrase) {
+				t.Fatalf("%s CurrentCoverage still uses stale example-breadth wording %q: %s", gap.ID, phrase, gap.CurrentCoverage)
+			}
+			if containsStringFragment(gap.RecommendedDemo, phrase) {
+				t.Fatalf("%s RecommendedDemo still uses stale example-breadth wording %q: %s", gap.ID, phrase, gap.RecommendedDemo)
+			}
+		}
+		if containsStringFragment(gap.CurrentCoverage, "residual") || containsStringFragment(gap.RecommendedDemo, "residual") {
+			if gap.ImplementationSplitRationale == "" {
+				t.Fatalf("%s mentions residual work but has no Phase 9C split rationale", gap.ID)
+			}
+		}
+	}
+}
+
+func containsStringFragment(s, fragment string) bool {
+	for i := 0; i+len(fragment) <= len(s); i++ {
+		if s[i:i+len(fragment)] == fragment {
+			return true
+		}
+	}
+	return false
+}
