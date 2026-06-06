@@ -29,6 +29,7 @@ import (
 	axes_grid1_showcase "github.com/cwbudde/matplotlib-go/examples/axes_grid1_showcase"
 	axisartist_showcase "github.com/cwbudde/matplotlib-go/examples/axisartist_showcase"
 	bar_basic "github.com/cwbudde/matplotlib-go/examples/bar_basic"
+	bar_variants "github.com/cwbudde/matplotlib-go/examples/bar_variants"
 	basic_line "github.com/cwbudde/matplotlib-go/examples/basic_line"
 	basic_line_labels "github.com/cwbudde/matplotlib-go/examples/basic_line_labels"
 	boxplot_basic "github.com/cwbudde/matplotlib-go/examples/boxplot_basic"
@@ -39,10 +40,12 @@ import (
 	errorbar_basic "github.com/cwbudde/matplotlib-go/examples/errorbar_basic"
 	figure_labels_composition "github.com/cwbudde/matplotlib-go/examples/figure_labels_composition"
 	fill_basic "github.com/cwbudde/matplotlib-go/examples/fill_basic"
+	fill_variants "github.com/cwbudde/matplotlib-go/examples/fill_variants"
 	geo_aitoff_axes "github.com/cwbudde/matplotlib-go/examples/geo_aitoff_axes"
 	geo_mollweide_axes "github.com/cwbudde/matplotlib-go/examples/geo_mollweide_axes"
 	gridspec_composition "github.com/cwbudde/matplotlib-go/examples/gridspec_composition"
 	hist_basic "github.com/cwbudde/matplotlib-go/examples/hist_basic"
+	histogram_variants "github.com/cwbudde/matplotlib-go/examples/histogram_variants"
 	image_heatmap "github.com/cwbudde/matplotlib-go/examples/image_heatmap"
 	image_variants_gallery "github.com/cwbudde/matplotlib-go/examples/image_variants_gallery"
 	lines_markers_gallery "github.com/cwbudde/matplotlib-go/examples/lines_markers_gallery"
@@ -55,6 +58,7 @@ import (
 	named_colors_gallery "github.com/cwbudde/matplotlib-go/examples/named_colors_gallery"
 	plot_variants "github.com/cwbudde/matplotlib-go/examples/plot_variants"
 	polar_axes "github.com/cwbudde/matplotlib-go/examples/polar_axes"
+	projection_toolkit_gallery "github.com/cwbudde/matplotlib-go/examples/projection_toolkit_gallery"
 	radar_basic "github.com/cwbudde/matplotlib-go/examples/radar_basic"
 	scatter_basic "github.com/cwbudde/matplotlib-go/examples/scatter_basic"
 	scatter_gallery "github.com/cwbudde/matplotlib-go/examples/scatter_gallery"
@@ -82,6 +86,7 @@ var registry = map[string]func() *core.Figure{
 	"axes_grid1_showcase":                 axes_grid1_showcase.Plot,
 	"axisartist_showcase":                 axisartist_showcase.Plot,
 	"bar_basic":                           bar_basic.Plot,
+	"bar_variants":                        bar_variants.Plot,
 	"basic_line":                          basic_line.Plot,
 	"basic_line_labels":                   basic_line_labels.Plot,
 	"boxplot_basic":                       boxplot_basic.Plot,
@@ -92,10 +97,12 @@ var registry = map[string]func() *core.Figure{
 	"errorbar_basic":                      errorbar_basic.Plot,
 	"figure_labels_composition":           figure_labels_composition.Plot,
 	"fill_basic":                          fill_basic.Plot,
+	"fill_variants":                       fill_variants.Plot,
 	"geo_aitoff_axes":                     geo_aitoff_axes.Plot,
 	"geo_mollweide_axes":                  geo_mollweide_axes.Plot,
 	"gridspec_composition":                gridspec_composition.Plot,
 	"hist_basic":                          hist_basic.Plot,
+	"histogram_variants":                  histogram_variants.Plot,
 	"image_heatmap":                       image_heatmap.Plot,
 	"image_variants_gallery":              image_variants_gallery.Plot,
 	"lines_markers_gallery":               lines_markers_gallery.Plot,
@@ -108,6 +115,7 @@ var registry = map[string]func() *core.Figure{
 	"named_colors_gallery":                named_colors_gallery.Plot,
 	"plot_variants":                       plot_variants.Plot,
 	"polar_axes":                          polar_axes.Plot,
+	"projection_toolkit_gallery":          projection_toolkit_gallery.Plot,
 	"radar_basic":                         radar_basic.Plot,
 	"scatter_basic":                       scatter_basic.Plot,
 	"scatter_gallery":                     scatter_gallery.Plot,

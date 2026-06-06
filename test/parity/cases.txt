@@ -143,3 +143,7 @@ gouraud_triangles
 clip_path_batch
 lines_markers_gallery
 scatter_gallery
+bar_variants
+fill_variants
+histogram_variants
+projection_toolkit_gallery

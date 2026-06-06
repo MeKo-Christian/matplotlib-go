@@ -90,6 +90,7 @@ func TestCatalogIncludesProjectionAndToolkitFixtures(t *testing.T) {
 		"geo_lambert_axes",
 		"radar_basic",
 		"skewt_basic",
+		"projection_toolkit_gallery",
 		"mplot3d_basic",
 		"mplot3d_terrain",
 	}
@@ -252,6 +253,25 @@ func TestCatalogIncludesHighImpactToolkitOutputShowcases(t *testing.T) {
 		if c.GoPath != "examples/"+id+"/example.go" {
 			t.Fatalf("%s GoPath = %q, want examples/%s/example.go", id, c.GoPath, id)
 		}
+	}
+}
+
+func TestCatalogIncludesProjectionToolkitGalleryShowcase(t *testing.T) {
+	c, ok := Lookup("projection_toolkit_gallery")
+	if !ok {
+		t.Fatal("missing projection_toolkit_gallery catalog case")
+	}
+	if c.Topic != "projections" {
+		t.Fatalf("projection_toolkit_gallery topic = %q, want projections", c.Topic)
+	}
+	if !c.Showcase {
+		t.Fatal("projection_toolkit_gallery should be a user-facing showcase")
+	}
+	if c.FixtureOnly {
+		t.Fatal("projection_toolkit_gallery should not be fixture-only")
+	}
+	if c.Description == "" {
+		t.Fatal("projection_toolkit_gallery should describe the grouped projection/toolkit coverage")
 	}
 }
 
@@ -489,6 +509,7 @@ func TestParityFixValidationTargetsNameClusters(t *testing.T) {
 		"geo_lambert_axes",
 		"radar_basic",
 		"skewt_basic",
+		"projection_toolkit_gallery",
 		"mplot3d_basic",
 		"mplot3d_terrain",
 		"mplot3d_plot3d",

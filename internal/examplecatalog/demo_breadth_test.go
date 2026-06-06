@@ -128,3 +128,13 @@ func TestHighImpactToolkitOutputDemoBreadthGapsNameShowcases(t *testing.T) {
 		}
 	}
 }
+
+func TestProjectionToolkitDemoBreadthGapNamesGalleryShowcase(t *testing.T) {
+	gap, ok := LookupDemoBreadthGap("projection-toolkit-gallery")
+	if !ok {
+		t.Fatal("missing projection-toolkit-gallery demo breadth gap")
+	}
+	if !containsString(gap.ShowcaseIDs, "projection_toolkit_gallery") {
+		t.Fatalf("projection-toolkit-gallery ShowcaseIDs = %v, want projection_toolkit_gallery", gap.ShowcaseIDs)
+	}
+}

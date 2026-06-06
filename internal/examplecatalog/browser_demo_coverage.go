@@ -184,12 +184,28 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		CatalogIDs: []string{"bar_basic"},
 	},
 	{
+		ID:         "showcase-bar_variants",
+		Title:      "Bar Variants Gallery Browser Coverage",
+		Status:     BrowserDemoPlanned,
+		Action:     "promote into a bar variants browser demo",
+		Rationale:  "The combined gallery (vertical+labels, horizontal, grouped, stacked+labels) is the natural browser panel for bar variants.",
+		CatalogIDs: []string{"bar_variants"},
+	},
+	{
 		ID:         "showcase-fill_basic",
 		Title:      "Fill Browser Coverage",
 		Status:     BrowserDemoPlanned,
 		Action:     "include in a fill variants browser demo",
 		Rationale:  "Fill-to-baseline should anchor a browser gallery for fill_between and stacked fills.",
 		CatalogIDs: []string{"fill_basic"},
+	},
+	{
+		ID:         "showcase-fill_variants",
+		Title:      "Fill Variants Gallery Browser Coverage",
+		Status:     BrowserDemoPlanned,
+		Action:     "promote into a fill variants browser demo",
+		Rationale:  "The combined gallery (fill_between, fill_betweenx, stacked, alpha overlap) is the natural browser panel for the fill surface.",
+		CatalogIDs: []string{"fill_variants"},
 	},
 	{
 		ID:         "showcase-errorbar_basic",
@@ -214,6 +230,14 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		Action:     "include in a histogram variants browser demo",
 		Rationale:  "The basic histogram showcase should become the baseline panel for histogram variants.",
 		CatalogIDs: []string{"hist_basic"},
+	},
+	{
+		ID:         "showcase-histogram_variants",
+		Title:      "Histogram Variants Gallery Browser Coverage",
+		Status:     BrowserDemoPlanned,
+		Action:     "promote into a histogram variants browser demo",
+		Rationale:  "The combined gallery (counts, density, cumulative, multiple) is the natural browser panel for histogram variants.",
+		CatalogIDs: []string{"histogram_variants"},
 	},
 	{
 		ID:         "showcase-boxplot_basic",
@@ -358,6 +382,14 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		Action:     "include in a 3D browser demo",
 		Rationale:  "The broad 3D gallery is user-facing but remains CLI-only until the browser gallery gets a dedicated 3D grouping.",
 		CatalogIDs: []string{"mplot3d_gallery"},
+	},
+	{
+		ID:         "showcase-projection_toolkit_gallery",
+		Title:      "Projection Toolkit Gallery Browser Coverage",
+		Status:     BrowserDemoPlanned,
+		Action:     "promote into the projections browser demo",
+		Rationale:  "The grouped projection/toolkit gallery is the natural browser panel for polar, geographic, radar, skew-T, axisartist, and axes_grid1 behavior.",
+		CatalogIDs: []string{"projection_toolkit_gallery"},
 	},
 	{
 		ID:         "showcase-unstructured_showcase",

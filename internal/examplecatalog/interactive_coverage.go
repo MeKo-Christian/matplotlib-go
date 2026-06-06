@@ -38,6 +38,7 @@ var interactiveCoverage = []InteractiveCoverageRow{
 	{Topic: "multi", RepresentativeID: "multi_series_basic", WebAgg: true, Gio: true},
 	{Topic: "patches", RepresentativeID: "patch_showcase", WebAgg: true, Gio: true},
 	{Topic: "polar", RepresentativeID: "polar_axes", WebAgg: true, Gio: true},
+	{Topic: "projections", RepresentativeID: "projection_toolkit_gallery", WebAgg: true, Gio: true},
 	{Topic: "radar", RepresentativeID: "radar_basic", WebAgg: true, Gio: true},
 	{Topic: "raster", RepresentativeID: "mixed_collection", WebAgg: true, Gio: true},
 	{Topic: "scatter", RepresentativeID: "scatter_basic", WebAgg: true, Gio: true},

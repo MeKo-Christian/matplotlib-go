@@ -35,6 +35,7 @@ var validationClusters = []ValidationCluster{
 			"colorbar_composition",
 			"axisartist_showcase",
 			"axes_grid1_showcase",
+			"projection_toolkit_gallery",
 		},
 	},
 	{
@@ -93,6 +94,7 @@ var validationClusters = []ValidationCluster{
 			"geo_lambert_axes",
 			"radar_basic",
 			"skewt_basic",
+			"projection_toolkit_gallery",
 		},
 	},
 	{

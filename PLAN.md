@@ -1709,7 +1709,7 @@ enshrined the bug), not a new regression.
 - [x] AGG-port rotated-text glyph orientation — fixed at the AGG **backend**
       layer (no `../agg_go` or core change). Raster path rotates the glyph mask
       with a device-space transform (`backends/agg/freetype_native.go
-    drawNativeFreetypeRunTextRotated`); outline/GSV fallbacks rotate about the
+drawNativeFreetypeRunTextRotated`); outline/GSV fallbacks rotate about the
       device anchor (`backends/agg/agg_text.go`). Strict-text cases match
       references at RMSE ~0; guarded by `TestDrawTextRotated*` in
       `backends/agg/agg_test.go`. (`canvas/widget_selectors.go` uses axis-aligned
@@ -1779,7 +1779,7 @@ variants, not just a parity fixture.
 
 ### 18.1 Core Plot Family Galleries
 
-- [ ] Add or expand examples for line/marker grids, advanced scatter, bar
+- [x] Add or expand examples for line/marker grids, advanced scatter, bar
       variants, fill variants, histogram variants, and multi-series legend
       behavior.
   - [x] Line/marker grids + multi-series legend — `lines_markers_gallery`
@@ -1789,16 +1789,23 @@ variants, not just a parity fixture.
   - [x] Advanced scatter — `scatter_gallery` showcase (colormapped scalar
         mapping, variable size, alpha blending, marker families). Closes the
         `advanced-scatter` demo-breadth gap; reference-compare PSNR ≈ 63 dB.
-  - [ ] Bar / fill / histogram variants — scheduled follow-up reusing the same
-        wiring; their demo-breadth gaps stay open until then.
-- [x] Each delivered gallery lives under `examples/<id>/` with a matching
+  - [x] Bar variants — `bar_variants` showcase (vertical+tick labels,
+        horizontal, grouped, stacked+bar labels). Closes the `bar-variants`
+        demo-breadth gap; reference-compare PSNR ≈ 61 dB.
+  - [x] Fill variants — `fill_variants` showcase (fill_between, fill_betweenx,
+        stacked fills, alpha overlap). Closes the `fill-variants` demo-breadth
+        gap; reference-compare PSNR ≈ 52 dB.
+  - [x] Histogram variants — `histogram_variants` showcase (counts, density,
+        cumulative, overlapping probability). Closes the `histogram-variants`
+        demo-breadth gap; reference-compare PSNR ≈ 52 dB.
+- [x] Each gallery lives under `examples/<id>/` with a matching
       `test/parity/<id>/plot.go`, `test/parity/<id>/plot.py`, and
       `test/matplotlib_ref/plots/<id>.py` entry, plus committed golden +
-      matplotlib_ref PNGs. (Bar/fill/histogram remain for the follow-up.)
-- [x] `internal/examplecatalog.Case` rows added for the delivered galleries
+      matplotlib_ref PNGs.
+- [x] `internal/examplecatalog.Case` rows added for all five galleries
       (`Showcase: true`), discoverable through the catalog and golden/reference
-      tests; the `lines` feature-coverage row is now `broad`/`implemented`.
-      (Bar/fill/histogram remain for the follow-up.)
+      tests; the `lines` feature-coverage row is now `broad`/`implemented` and
+      each high-priority core demo-breadth gap names its showcase.
 
 Implementation notes:
 
@@ -1827,8 +1834,10 @@ Implementation notes:
       wireframe, trisurf, bar3d, voxels, quiver3d, stem3d, and fill-between3d.
       The `mplot3d_gallery` showcase lives under `examples/`, has Go/Python
       parity wrappers, and keeps the focused 3D fixtures for residual checks.
-- [ ] Expand projection/toolkit galleries for geographic projections, radar,
-      Skew-T, axisartist, and axes_grid1.
+- [x] Expand projection/toolkit galleries for geographic projections, radar,
+      Skew-T, axisartist, and axes_grid1. `projection_toolkit_gallery` now
+      groups polar, Mollweide, Aitoff, Hammer, Lambert, radar, Skew-T,
+      axisartist-style twin axes, and axes_grid1-style image-grid panels.
 - [x] Add mixed raster/vector output examples for SVG/PDF behavior with dense
       rasterized artists and vector text/axes.
       `mixed_raster_vector` is now a user-facing example backed by the existing

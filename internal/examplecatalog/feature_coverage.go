@@ -294,16 +294,16 @@ var featureCoverageRows = []FeatureCoverage{
 		UpstreamModules:         []string{"projections/polar.py", "projections/geo.py", "mpl_toolkits/mplot3d", "mpl_toolkits/axisartist", "mpl_toolkits/axes_grid1"},
 		UpstreamGalleryFamilies: []string{"mplot3d", "axisartist", "axes_grid1", "specialty_plots"},
 		GoFiles:                 []string{"core/polar.go", "core/geo.go", "core/skew.go", "core/axes3d.go", "core/axis_artist.go", "core/image_grid.go"},
-		CatalogIDs:              []string{"polar_axes", "geo_mollweide_axes", "geo_aitoff_axes", "geo_hammer_axes", "geo_lambert_axes", "radar_basic", "skewt_basic", "mplot3d_terrain", "mplot3d_gallery", "axisartist_showcase", "axes_grid1_showcase"},
-		ExampleIDs:              []string{"polar_axes", "geo_mollweide_axes", "geo_aitoff_axes", "radar_basic", "skewt_basic", "mplot3d_terrain", "mplot3d_gallery", "axisartist_showcase", "axes_grid1_showcase"},
+		CatalogIDs:              []string{"polar_axes", "geo_mollweide_axes", "geo_aitoff_axes", "geo_hammer_axes", "geo_lambert_axes", "radar_basic", "skewt_basic", "projection_toolkit_gallery", "mplot3d_terrain", "mplot3d_gallery", "axisartist_showcase", "axes_grid1_showcase"},
+		ExampleIDs:              []string{"polar_axes", "geo_mollweide_axes", "geo_aitoff_axes", "radar_basic", "skewt_basic", "projection_toolkit_gallery", "mplot3d_terrain", "mplot3d_gallery", "axisartist_showcase", "axes_grid1_showcase"},
 		WebDemoIDs:              []string{"polar", "projections"},
 		GoEquivalent:            CoveragePartial,
 		ParityFixture:           CoverageImplemented,
 		UserShowcase:            CoverageImplemented,
 		BrowserDemo:             CoveragePartial,
 		Breadth:                 BreadthThin,
-		Notes: "Polar, Mollweide/Aitoff/Hammer/Lambert geo projections, radar, SkewT, mplot3d terrain/gallery, axisartist, and axes_grid1 showcases exist with parity fixtures. " +
-			"Remaining partial scope is full axisartist floating-axes/curvilinear-grid coverage, additional axes_grid1 helpers beyond the showcase cases, and browser grouping for the advanced toolkit examples.",
+		Notes: "Polar, Mollweide/Aitoff/Hammer/Lambert geo projections, radar, SkewT, the grouped projection_toolkit_gallery, mplot3d terrain/gallery, axisartist, and axes_grid1 showcases exist with parity fixtures. " +
+			"Remaining partial scope is full axisartist floating-axes/curvilinear-grid coverage, additional axes_grid1 helpers beyond the showcase cases, and browser promotion for the advanced toolkit examples.",
 	},
 }
 

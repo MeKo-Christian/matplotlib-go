@@ -16,6 +16,7 @@ import (
 	showcase_axes_grid1_showcase "github.com/cwbudde/matplotlib-go/examples/axes_grid1_showcase"
 	showcase_axisartist_showcase "github.com/cwbudde/matplotlib-go/examples/axisartist_showcase"
 	showcase_bar_basic "github.com/cwbudde/matplotlib-go/examples/bar_basic"
+	showcase_bar_variants "github.com/cwbudde/matplotlib-go/examples/bar_variants"
 	showcase_basic_line "github.com/cwbudde/matplotlib-go/examples/basic_line"
 	showcase_basic_line_labels "github.com/cwbudde/matplotlib-go/examples/basic_line_labels"
 	showcase_boxplot_basic "github.com/cwbudde/matplotlib-go/examples/boxplot_basic"
@@ -23,9 +24,11 @@ import (
 	showcase_colorbar_variants_gallery "github.com/cwbudde/matplotlib-go/examples/colorbar_variants_gallery"
 	showcase_colormap_families_gallery "github.com/cwbudde/matplotlib-go/examples/colormap_families_gallery"
 	showcase_errorbar_basic "github.com/cwbudde/matplotlib-go/examples/errorbar_basic"
+	showcase_fill_variants "github.com/cwbudde/matplotlib-go/examples/fill_variants"
 	showcase_geo_mollweide_axes "github.com/cwbudde/matplotlib-go/examples/geo_mollweide_axes"
 	showcase_gridspec_composition "github.com/cwbudde/matplotlib-go/examples/gridspec_composition"
 	showcase_hist_basic "github.com/cwbudde/matplotlib-go/examples/hist_basic"
+	showcase_histogram_variants "github.com/cwbudde/matplotlib-go/examples/histogram_variants"
 	showcase_image_heatmap "github.com/cwbudde/matplotlib-go/examples/image_heatmap"
 	showcase_image_variants_gallery "github.com/cwbudde/matplotlib-go/examples/image_variants_gallery"
 	showcase_lines_markers_gallery "github.com/cwbudde/matplotlib-go/examples/lines_markers_gallery"
@@ -37,6 +40,7 @@ import (
 	showcase_named_colors_gallery "github.com/cwbudde/matplotlib-go/examples/named_colors_gallery"
 	showcase_plot_variants "github.com/cwbudde/matplotlib-go/examples/plot_variants"
 	showcase_polar_axes "github.com/cwbudde/matplotlib-go/examples/polar_axes"
+	showcase_projection_toolkit_gallery "github.com/cwbudde/matplotlib-go/examples/projection_toolkit_gallery"
 	showcase_radar_basic "github.com/cwbudde/matplotlib-go/examples/radar_basic"
 	showcase_scatter_basic "github.com/cwbudde/matplotlib-go/examples/scatter_basic"
 	showcase_scatter_gallery "github.com/cwbudde/matplotlib-go/examples/scatter_gallery"
@@ -66,6 +70,7 @@ import (
 	example_bar_basic_title "github.com/cwbudde/matplotlib-go/test/parity/bar_basic_title"
 	example_bar_grouped "github.com/cwbudde/matplotlib-go/test/parity/bar_grouped"
 	example_bar_horizontal "github.com/cwbudde/matplotlib-go/test/parity/bar_horizontal"
+	example_bar_variants "github.com/cwbudde/matplotlib-go/test/parity/bar_variants"
 	example_basic_line "github.com/cwbudde/matplotlib-go/test/parity/basic_line"
 	example_basic_line_labels "github.com/cwbudde/matplotlib-go/test/parity/basic_line_labels"
 	example_boundarynorm_pcolormesh "github.com/cwbudde/matplotlib-go/test/parity/boundarynorm_pcolormesh"
@@ -89,6 +94,7 @@ import (
 	example_fill_basic "github.com/cwbudde/matplotlib-go/test/parity/fill_basic"
 	example_fill_between "github.com/cwbudde/matplotlib-go/test/parity/fill_between"
 	example_fill_stacked "github.com/cwbudde/matplotlib-go/test/parity/fill_stacked"
+	example_fill_variants "github.com/cwbudde/matplotlib-go/test/parity/fill_variants"
 	example_formatter_engineering_labels "github.com/cwbudde/matplotlib-go/test/parity/formatter_engineering_labels"
 	example_formatter_fixed_null_labels "github.com/cwbudde/matplotlib-go/test/parity/formatter_fixed_null_labels"
 	example_formatter_log_mathtext_labels "github.com/cwbudde/matplotlib-go/test/parity/formatter_log_mathtext_labels"
@@ -104,6 +110,7 @@ import (
 	example_hist_basic "github.com/cwbudde/matplotlib-go/test/parity/hist_basic"
 	example_hist_density "github.com/cwbudde/matplotlib-go/test/parity/hist_density"
 	example_hist_strategies "github.com/cwbudde/matplotlib-go/test/parity/hist_strategies"
+	example_histogram_variants "github.com/cwbudde/matplotlib-go/test/parity/histogram_variants"
 	example_image_alpha "github.com/cwbudde/matplotlib-go/test/parity/image_alpha"
 	example_image_heatmap "github.com/cwbudde/matplotlib-go/test/parity/image_heatmap"
 	example_image_variants_gallery "github.com/cwbudde/matplotlib-go/test/parity/image_variants_gallery"
@@ -169,6 +176,7 @@ import (
 	example_pcolormesh_nearest "github.com/cwbudde/matplotlib-go/test/parity/pcolormesh_nearest"
 	example_plot_variants "github.com/cwbudde/matplotlib-go/test/parity/plot_variants"
 	example_polar_axes "github.com/cwbudde/matplotlib-go/test/parity/polar_axes"
+	example_projection_toolkit_gallery "github.com/cwbudde/matplotlib-go/test/parity/projection_toolkit_gallery"
 	example_quad_mesh "github.com/cwbudde/matplotlib-go/test/parity/quad_mesh"
 	example_radar_basic "github.com/cwbudde/matplotlib-go/test/parity/radar_basic"
 	example_scale_asinh_ticks "github.com/cwbudde/matplotlib-go/test/parity/scale_asinh_ticks"
@@ -234,6 +242,9 @@ var renderByID = map[string]func() image.Image{
 	"bar_basic":                           example_bar_basic.Render,
 	"bar_horizontal":                      example_bar_horizontal.Render,
 	"bar_grouped":                         example_bar_grouped.Render,
+	"bar_variants":                        example_bar_variants.Render,
+	"fill_variants":                       example_fill_variants.Render,
+	"histogram_variants":                  example_histogram_variants.Render,
 	"fill_basic":                          example_fill_basic.Render,
 	"fill_between":                        example_fill_between.Render,
 	"fill_stacked":                        example_fill_stacked.Render,
@@ -325,6 +336,7 @@ var renderByID = map[string]func() image.Image{
 	"geo_lambert_axes":                    example_geo_lambert_axes.Render,
 	"radar_basic":                         example_radar_basic.Render,
 	"skewt_basic":                         example_skewt_basic.Render,
+	"projection_toolkit_gallery":          example_projection_toolkit_gallery.Render,
 	"mplot3d_basic":                       example_mplot3d_basic.Render,
 	"mplot3d_terrain":                     example_mplot3d_terrain.Render,
 	"mplot3d_gallery":                     example_mplot3d_gallery.Render,
@@ -405,6 +417,9 @@ var figureByID = map[string]func() *core.Figure{
 	"basic_line":                          showcase_basic_line.Plot,
 	"basic_line_labels":                   showcase_basic_line_labels.Plot,
 	"bar_basic":                           showcase_bar_basic.Plot,
+	"bar_variants":                        showcase_bar_variants.Plot,
+	"fill_variants":                       showcase_fill_variants.Plot,
+	"histogram_variants":                  showcase_histogram_variants.Plot,
 	"boxplot_basic":                       showcase_boxplot_basic.Plot,
 	"colorbar_composition":                showcase_colorbar_composition.Plot,
 	"colorbar_variants_gallery":           showcase_colorbar_variants_gallery.Plot,
@@ -434,6 +449,7 @@ var figureByID = map[string]func() *core.Figure{
 	"annotation_legend_offsetbox_gallery": showcase_annotation_legend_offsetbox_gallery.Plot,
 	"plot_variants":                       showcase_plot_variants.Plot,
 	"polar_axes":                          showcase_polar_axes.Plot,
+	"projection_toolkit_gallery":          showcase_projection_toolkit_gallery.Plot,
 	"radar_basic":                         showcase_radar_basic.Plot,
 	"patch_showcase":                      example_patch_showcase.Plot,
 	"patch_style_matrix":                  example_patch_style_matrix.Plot,

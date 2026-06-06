@@ -51,6 +51,7 @@ var parityFixValidationTargets = []ParityFixValidationTarget{
 	{CaseID: "geo_lambert_axes", ClusterIDs: []string{ValidationClusterProjection3D}},
 	{CaseID: "radar_basic", ClusterIDs: []string{ValidationClusterProjection3D}},
 	{CaseID: "skewt_basic", ClusterIDs: []string{ValidationClusterProjection3D}},
+	{CaseID: "projection_toolkit_gallery", ClusterIDs: []string{ValidationClusterProjection3D, ValidationClusterLayoutText}},
 	{CaseID: "mplot3d_basic", ClusterIDs: []string{ValidationClusterProjection3D}},
 	{CaseID: "mplot3d_terrain", ClusterIDs: []string{ValidationClusterProjection3D}},
 	{CaseID: "mplot3d_plot3d", ClusterIDs: []string{ValidationClusterProjection3D}},
