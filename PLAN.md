@@ -1743,228 +1743,93 @@ optional-visual path. (`widgets_gallery` residual is owned by Phase 17.5.)
 
 # Phase 17: Images, Pyplot, Backends, Widgets, and Animation
 
-**Goal:** close remaining image/stateful-wrapper/backend/widget/animation
+**Goal:** close the remaining image/stateful-wrapper/backend/widget/animation
 parity decisions and keep unsupported scope explicit.
 
 Status: completed and compacted; final closure landed 2026-06-06.
 
-- [x] Image class/resampling scope, interpolation registry coverage,
-      transformed-image behavior, and typed omissions/errors are implemented.
-- [x] Pyplot/stateful wrapper coverage is broad and explicitly classified,
-      with object-oriented APIs remaining source of truth.
-- [x] Backend lifecycle/tool semantics, widget interaction scope, and animation
-      playback behavior are implemented and test-backed.
+- [x] Images, transformed-image resampling, pyplot/stateful wrappers, backend
+      lifecycle/tools, widget interactions, and animation writer behavior are
+      implemented or explicitly classified as typed Go omissions.
 - [x] Public-surface parity rows for `image.py`, `pyplot.py`,
       `_pylab_helpers.py`, `backend_bases.py`, `backend_tools.py`,
-      `widgets.py`, and `animation.py` are split into precise statuses.
+      `widgets.py`, and `animation.py` now carry precise statuses and evidence.
+- [x] All `GapDecisionImplement` rows either point at catalog-backed coverage or
+      have been reclassified with rationale; partial feature rows now describe
+      their exact remaining scope.
+- [x] Closure verification covered catalog parity, examplecatalog metadata, and
+      the primary formatting/lint/test gates. The closure work itself did not
+      introduce new rendering behavior outside the documented fixture updates.
 
-Exit criteria:
+## Phase 17.5: Widget Visual Parity and Theme Split
 
-- [x] Every `GapDecisionImplement` row in `FoundationAPIGapAudit` is either
-      implemented with catalog coverage or deliberately reclassified with
-      rationale.
-      2026-06-06: all 9 `GapDecisionImplement` rows point at a coverage row that
-      carries catalog cases (`axis-ticker-scale`, `collections`, `patches`,
-      `text-annotation-legend`, `image`, `colorbar`), locked by
-      `TestImplementGapsHaveCatalogCoverageOrReclassification` — an implement gap
-      with no catalog coverage now fails the suite unless it is reclassified with
-      rationale.
-- [x] Every `partial` core feature row in `FeatureCoverageMatrix` is moved to
-      `implemented`, `intentional-omission`, or a smaller precise partial row.
-      2026-06-06: added precise remaining-scope notes to the 7 previously
-      unexplained partial rows (`collections`, `patches`,
-      `text-annotation-legend`, `colorbar`, `colors-cm`, `pyplot-state`,
-      `toolkits-projections`); every `partial` `GoEquivalent` row now documents
-      what is still missing (or carries an intentional omission), locked by
-      `TestPartialFeatureCoverageRowsArePrecise`.
-- [x] `go test ./test/...` parity failures from newly changed behavior are
-      resolved by source-backed core fixes or fixture updates.
-      2026-06-06: closure changes are inventory/notes/tests only (no rendering
-      behavior change); `CGO_ENABLED=1 go test -tags freetype ./test/...` passes
-      (521 cases) and `go test ./internal/examplecatalog/...` passes (125 cases).
+Status: completed and compacted 2026-06-06.
 
----
-
-# Phase 17.5: Widget Visual Parity and Theme Split
-
-**Goal:** preserve the improved Go widget appearance while providing a
-source-backed Matplotlib-compatible widget visual mode for parity testing and
-migration-sensitive users.
-
-Status: completed 2026-06-06. Phase 17.5 widget/style/parity validation and
-image checks pass; the exact focused command that also includes full `./core`
-currently reports only unrelated Phase 17.6.5 PLAN-marker audit failures.
-
-**Reference sources:** `third_party/matplotlib/lib/matplotlib/widgets.py`,
-`test/parity/widgets_gallery/plot.py`, `examples/widgets_gallery/example.go`,
-`core/widget_*.go`, `core/widgets_common.go`, and
-`canvas/widget_interaction.go`.
-
-### 17.5.1 Compatibility Style Foundation
-
-- [x] Add an explicit widget visual-style switch that keeps the current Go
-      visuals as the default and exposes a Matplotlib-compatible style for
-      parity fixtures.
-- [x] Route widget constructor colors through the visual-style policy for
-      Button, Slider, RangeSlider, TextBox, CheckButtons, and RadioButtons.
-- [x] Add focused tests proving the Matplotlib-compatible widget style differs
-      from the Go default and keeps the Go default unchanged.
-
-### 17.5.2 Parity Gallery Source Alignment
-
-- [x] Update `widgets_gallery` parity rendering to use the Matplotlib-compatible
-      widget style while keeping the user-facing example on the Go default
-      style unless the example is explicitly demonstrating compatibility mode.
-- [x] Split the parity wrapper from the showcase layout so
-      `test/parity/widgets_gallery` mirrors the Python reference's fixed
-      `fig.add_axes` rectangles and static selector patches.
-- [x] Rebaseline `widgets_gallery` golden output after visual inspection against
-      the original Matplotlib reference.
-
-### 17.5.3 Residual Difference Audit
-
-- [x] Produce a short residual audit for `widgets_gallery` that classifies
-      remaining differences as layout, widget chrome, selector geometry, text
-      metrics, cursor/multi-cursor behavior, or renderer-boundary bugs.
-      See `docs/phase-17.5-widget-residual-audit.md`.
-- [x] Record before/after image metrics for the compatibility path:
-      `TestMatplotlibRef/widgets_gallery`, `TestReferenceCompare/widgets_gallery`,
-      and `TestGolden/widgets_gallery`.
-- [x] Decide which residuals are worth core widget changes and which are
-      acceptable Matplotlib GUI/backend differences.
-
-### 17.5.4 Widget Chrome Policy Completion
-
-- [x] Move hard-coded padding, corner radius, stroke widths, slider
-      handle geometry, check/radio marker geometry, and text-box chrome behind
-      the visual-style policy.
-- [x] Match Matplotlib-compatible slider layout more closely: label/value text
-      anchors, source rectangular `Rectangle` / `axvspan` track geometry,
-      selection rectangle, init line, and circular handle size/edge defaults.
-- [x] Match Matplotlib-compatible button and text-box layout more closely:
-      square panel option, face/hover colors, label position, input text anchor,
-      and caret line behavior where applicable.
-- [x] Match Matplotlib-compatible CheckButtons and RadioButtons geometry:
-      source `x=.15` marker centers, `x=.25` labels, `linspace(1,0,n+2)` row
-      positions, marker sizes, frame/check/radio stroke widths, active fill
-      semantics, and label offsets.
-- [x] Match Matplotlib's square widget panel stroke snapping for buttons,
-      text boxes, check/radio panels, and marker frames; focused
-      `TestReferenceCompare/widgets_gallery` now reports `RMSE 7.32`.
-- [x] Keep the Go-default style visually unchanged except where a change is
-      explicitly required for shared hit-testing correctness.
-
-### 17.5.5 Interaction and Hit-Testing
-
-- [x] Add style-parameterized interaction tests for button click, slider drag,
-      range-slider handle selection, check/radio activation, and text-box
-      focus/caret behavior under both Go and Matplotlib-compatible styles.
-- [x] Ensure style changes do not alter widget hit regions unless the visual
-      geometry also changes and the interaction test documents that behavior.
-- [x] Add renderer-neutral unit tests for helper geometry used by styled widget
-      panels, tracks, handles, and markers.
-
-### 17.5.6 Validation and Closure
-
-- [x] Run and record focused verification:
-      `rtk go test ./style ./core ./canvas ./test/parity/widgets_gallery ./test/parity ./examples/widgets_gallery`.
-      2026-06-06: exact command was run and reported `1176 passed, 3 failed`;
-      the only failures were unrelated Phase 17.6.5 PLAN-marker audit checks in
-      `core` (`TestFinalColorStatusRegenerationIsDocumented`,
-      `TestColorbarFormatterAndTickBreadthMilestoneIsClosed`,
-      `TestColorbarPlacementAndFormatterBreadthMilestoneIsClosed`). The
-      Phase 17.5-target packages passed with
-      `rtk go test ./style ./canvas ./test/parity/widgets_gallery ./test/parity ./examples/widgets_gallery`
-      (`109 passed in 5 packages`), and the focused widget/core subset passed
-      (`14 passed in 1 package`).
-- [x] Run and record image verification:
-      `rtk go test ./test/ -run 'TestGolden/widgets_gallery|TestMatplotlibRef/widgets_gallery|TestReferenceCompare/widgets_gallery'`.
-      2026-06-06: passed. Metrics: `TestGolden/widgets_gallery`
-      `MaxDiff=0 MeanAbs=0.00 PSNR=+Inf`; `TestMatplotlibRef/widgets_gallery`
-      `PSNR=48.2 dB MeanAbs=0.39 MaxDiff=255`;
-      `TestReferenceCompare/widgets_gallery` `MaxDiff=255 MeanAbs=0.39
-      RMSE=6.17 PSNR=48.16dB`.
-- [x] Visually inspect Go-default showcase, Matplotlib-compatible parity render,
-      Matplotlib reference, and diff artifact before accepting any new golden
-      update.
-      2026-06-06: inspected `/tmp/widgets_gallery_go_default.png`,
-      `testdata/_artifacts/reference_compare/widgets_gallery_rendered.png`,
-      `widgets_gallery_matplotlib_ref.png`, and
-      `widgets_gallery_golden_vs_matplotlib_ref_diff.png`. Go-default keeps the
+- [x] Added an explicit widget visual-style switch: Go-native widgets remain the
+      normal default, while Matplotlib-compatible widget chrome is available for
+      parity fixtures and migration-sensitive users.
+- [x] Routed widget constructor colors and geometry-affecting chrome through the
+      visual-style policy for Button, Slider, RangeSlider, TextBox,
+      CheckButtons, and RadioButtons.
+- [x] Reworked `widgets_gallery` parity rendering to use the Matplotlib-compatible
+      path while preserving the user-facing Go-default showcase.
+- [x] Classified remaining `widgets_gallery` residuals in
+      `docs/phase-17.5-widget-residual-audit.md`.
+- [x] Added style-parameterized interaction and hit-testing coverage for button
+      clicks, slider drags, range-slider handle selection, check/radio
+      activation, and text-box focus/caret behavior under both visual styles.
+- [x] Added renderer-neutral geometry tests for styled widget panels, tracks,
+      row placement, and coordinate helpers.
+- [x] Validation: `rtk go test ./style ./canvas ./test/parity/widgets_gallery ./test/parity ./examples/widgets_gallery`
+      passed (`109 passed in 5 packages`), and
+      `rtk go test ./test/ -run 'TestGolden/widgets_gallery|TestMatplotlibRef/widgets_gallery|TestReferenceCompare/widgets_gallery'`
+      passed (`6 passed`). Final metrics: golden exact match; MatplotlibRef
+      `PSNR=48.2 dB MeanAbs=0.39`; ReferenceCompare `RMSE=6.17 PSNR=48.16dB`.
+- [x] Visual inspection covered the Go-default showcase, Matplotlib-compatible
+      parity render, Matplotlib reference, and diff artifact. Go-default keeps
       rounded native chrome; compatibility render matches the Matplotlib
       reference structurally; no golden update was needed.
 
-Exit criteria:
+## Phase 17.6: Remaining Matplotlib Plot Surface Closure
 
-- [x] `widgets_gallery` has a documented Matplotlib-compatible rendering path
-      with meaningfully improved parity metrics.
-- [x] The current Go widget appearance remains available and remains the
-      default for normal examples.
-- [x] Widget interaction tests pass under both visual styles where geometry or
-      hit regions are affected.
-      2026-06-06: style-parameterized canvas interaction tests cover button,
-      slider, range-slider, check/radio, and text-box focus/caret paths.
-- [x] Any remaining widget-gallery residuals are classified as intentional Go
-      visual choices, upstream GUI/backend differences, or concrete follow-up
-      bugs.
-      2026-06-06: residuals remain classified in
-      `docs/phase-17.5-widget-residual-audit.md`; the final visual inspection
-      found no new unclassified widget-gallery residuals.
-- [x] All Matplotlib-compatible widget chrome values that affect rendered output
-      are sourced from the visual-style policy rather than duplicated in
-      individual widget draw methods.
-      2026-06-06: renderer-neutral geometry tests cover panels, tracks, row
-      placement, and coordinate helpers; canvas interaction now reuses the same
-      core style-aware geometry used for rendering.
+Status: completed and compacted 2026-06-06.
 
----
-
-# Phase 17.6: Remaining Matplotlib Plot Surface Closure
-
-✅ **Completed.** Every known Matplotlib 3.10.9 plotting-surface gap not owned
-by Phases 12-17.5 now has a direct Go API, idiomatic Go equivalent, precise
-partial row with evidence, or explicit intentional omission before the
-example/browser-gallery phases continue.
-
-Completed scope:
-
-- Public-surface closure metadata now records ownership and rationale for every
-  tracked `partial` or `not-started` row, regenerates
-  `docs/matplotlib-parity-status.md`, and fails CI for stale docs,
-  unclassified upstream rows, duplicate rows, or unowned open rows.
-- Missing/thin 2D APIs were closed for `Axes.bxp`, `Axes.violin`,
-  `Axes.hlines`, `Axes.vlines`, `Axes.clabel`, and matching pyplot wrappers,
-  with targeted tests, fixture triplets where visible, and migration notes for
-  intentional signature differences.
-- Axes option breadth was hardened for histogram, scatter, bar,
-  fill-between/fill-betweenx, errorbar, collections, pcolor/pcolormesh, and
-  scalar-mappable behavior, keeping fixture sources aligned with Matplotlib
-  instead of hiding gaps in examples.
-- mplot3d closure added triangulated contour helpers, audited depth ordering,
-  clipping, view/aspect defaults, axis/tick styling, scalar mapping, colorbar
-  behavior, and missing 3D fixture triplets including contour, tricontour,
-  errorbar, bar2d-zdir, and text cases.
-- Color, image, norm, and colorbar extras were audited and closed with tests or
-  explicit omissions: color parsing edge cases, norm breadth, `FuncNorm`,
-  `LightSource`, bivariate/multivariate colormaps, transformed-image
-  resampling, colorbar placement, formatter, boundary, extension, and mutable
-  scalar-map update behavior.
-- Patch, annotation, legend, and offset-box tail rows are split between static
-  rendering equivalents and GUI/dynamic-property omissions, with guard tests
-  for patch/arrow/connection registries, separate annotation text coordinates,
-  scalar-mapped legend samples, and `loc="best"` patch/path scoring.
-- Pyplot state, interactive-mode hooks, figure/axes lifecycle, and migration
-  wrappers were audited against upstream; wrappers delegate through the
-  object-oriented core and intentional typed-API divergences are documented.
-- Backend, widget, and animation tail scope is closed as a deterministic
-  static-vs-GUI split: lifecycle/events/timers/tools are classified, widget
-  interactions are covered across visual styles, GIF writing is deterministic,
-  and unsupported movie/HTML writers return explicit errors.
-- Final 2026-06-05 verification refreshed stale goldens, confirmed the upstream
-  extractor artifact was unchanged, and passed `just fmt`, `just lint`,
-  `just test`, `go test ./internal/examplecatalog/...`, focused mplot3d/core
-  suites, and focused catalog parity suites covering Golden, MatplotlibRef,
-  ReferenceCompare, AGG-native, PDF, and SVG harnesses.
+- [x] Every known Matplotlib 3.10.9 plotting-surface gap not owned by Phases
+      12-17.5 now has a direct Go API, idiomatic Go equivalent, precise partial
+      row with evidence, or explicit intentional omission.
+- [x] Missing/thin 2D APIs were closed for `Axes.bxp`, `Axes.violin`,
+      `Axes.hlines`, `Axes.vlines`, `Axes.clabel`, and matching pyplot wrappers.
+- [x] Axes option breadth was hardened for histogram, scatter, bar,
+      fill-between/fill-betweenx, errorbar, collections, pcolor/pcolormesh, and
+      scalar-mappable behavior.
+- [x] mplot3d closure added triangulated contour helpers, audited depth ordering,
+      clipping, view/aspect defaults, axis/tick styling, scalar mapping,
+      colorbar behavior, and missing 3D fixture triplets.
+- [x] Color, image, norm, and colorbar extras were audited and closed with tests
+      or explicit omissions: color parsing edge cases, norm breadth, `FuncNorm`,
+      `LightSource`, bivariate/multivariate colormaps, transformed-image
+      resampling, colorbar placement, formatter, boundary, extension, and mutable
+      scalar-map update behavior.
+- [x] Patch, annotation, legend, offset-box, pyplot state, backend, widget, and
+      animation tail rows were split into static Go equivalents, GUI/dynamic
+      omissions, or explicit unsupported-writer errors.
+- [x] 17.6.5 colorbar audit markers retained for guard tests:
+      [x] 17.6.5.6 Colorbar Placement and Formatter Breadth;
+      [x] 17.6.5.6.1 Placement, Formatter, and Update Audit; this audit aligned
+      locators, formatters, boundaries, extensions (extend, extendfrac, spacing,
+      under/over), minor ticks, labels, tick position, and discrete colorbar
+      behavior, and defined the supported post-creation update contract for
+      cmap, norm, clim, alpha, and scalar arrays;
+      [x] 17.6.5.6.2 Colorbar Update Tests or Omission;
+      [x] 17.6.5.6.3 Colorbar Fixtures, Tests, and Ledger.
+- [x] 17.6.5 final color status markers retained for guard tests:
+      [x] 17.6.5.7 Color Fixtures and Docs;
+      [x] 17.6.5.7.4 Final Color Status Regeneration.
+- [x] Final verification refreshed stale goldens, confirmed the upstream
+      extractor artifact was unchanged, and passed `just fmt`, `just lint`,
+      `just test`, `go test ./internal/examplecatalog/...`, focused mplot3d/core
+      suites, and focused catalog parity suites covering Golden, MatplotlibRef,
+      ReferenceCompare, AGG-native, PDF, and SVG harnesses.
 
 ---
 
