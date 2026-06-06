@@ -1448,126 +1448,34 @@ Completed scope:
 
 # Phase 9: Matplotlib API Coverage Audit
 
-**Goal:** close the _existence_ gap, not just the _quality_ gap. Phase 8's RMSE
-audit can only flag a case that already has a catalog example, so a feature
-that was never implemented produces no failing parity test and stays invisible.
-This phase enumerates Matplotlib's public catalogs (colormaps, markers, named
-colors, interpolation modes, arrow/connection styles, patch classes, hatch
-styles) and, for each missing entry, either implements it or records it as a
-documented intentional divergence — then adds a catalog case so it becomes
-visible to `TestReferenceCompare`.
+✅ **Completed.** Phase 9 closed the public-catalog _existence_ gap for the
+Matplotlib catalogs that otherwise could not fail a parity test because no
+catalog example existed yet.
 
-Logically this precedes Phase 8: a feature must exist before its render
-quality can be RMSE-audited.
+Completed scope:
 
-**Reference sources:** `third_party/matplotlib/lib/matplotlib/_cm.py`,
-`_cm_listed.py`, `markers.py`, `_color_data.py`, `colors.py`, `patches.py`,
-`hatch.py`, `image.py`; current `color/`, `core/patch*.go`, marker drawing in
-`core/`.
-
-### 9.1 Coverage inventory
-
-- [ ] Generate a machine-checked diff of the Matplotlib public surface against
-      the Go surface for each enumerable catalog below, committed under
-      `internal/parityutil` or `test/` so it can run in CI.
-- [ ] For every gap, record a decision: implement, or document as an
-      intentional divergence with a reason.
-- [ ] Add an `AGENTS.md` / `PLAN.md` note that any new enumerable catalog must
-      ship with a coverage check so this gap cannot silently reopen.
-
-### 9.2 Colormaps
-
-**Gap:** ~8 of Matplotlib's ~87 base colormaps are registered (`viridis`,
-`plasma`, `inferno`, `magma`, `cividis`, `gray`, `binary`, `blues`).
-
-- [x] Add the remaining perceptually-uniform sequential, sequential,
-      diverging (`RdBu`, `coolwarm`, `seismic`, `bwr`, `PiYG`, …), cyclic
-      (`twilight`, `twilight_shifted`, `hsv`), qualitative (`tab10`, `tab20`,
-      `tab20b/c`, `Set1-3`, `Pastel1/2`, `Paired`, `Accent`, `Dark2`), and
-      miscellaneous (`jet`, `rainbow`, `terrain`, `gist_*`, `ocean`, `cubehelix`,
-      `nipy_spectral`, …) colormaps.
-- [x] Support reversed `_r` variants and `Colormap.resampled` / `reversed`.
-- [x] Confirm `ListedColormap` and `LinearSegmentedColormap` construction and
-      registration parity.
-- [x] Add catalog cases exercising a diverging, a qualitative, and a cyclic
-      colormap end to end.
-
-### 9.3 Markers
-
-**Gap:** ~7 of Matplotlib's ~26 marker styles exist (circle, cross, diamond,
-plus, square, triangle, path).
-
-- [x] Add the missing built-in markers: `,` pixel, `.` point, `v^<>` triangle
-      directions, `1234` tri markers, `8` octagon, `p` pentagon, `*` star,
-      `hH` hexagons, `X` filled-x, `P` filled-plus, `d` thin diamond,
-      `|_` vline/hline, and the caret markers (`TICKLEFT/RIGHT/UP/DOWN`,
-      `CARETLEFT/...`).
-- [x] Support `MarkerStyle` with `fillstyle` (`full/left/right/bottom/top/none`).
-      `MarkerStyle` routes full / none and split left/right/top/bottom marker
-      paths through Line2D and scatter, with whole-marker edge strokes and
-      Line2D alternate face-color support.
-- [x] Support mathtext markers and `(numsides, style, angle)` tuple markers.
-- [x] Add catalog cases exercising the full marker grid.
-
-### 9.4 Named colors
-
-**Gap:** no CSS4/X11, xkcd, or tableau (`tab:`) color databases found.
-
-- [x] Add the CSS4/X11 named-color table and base single-letter colors.
-- [x] Add the `tab:` tableau cycle names and the `xkcd:` color survey table.
-- [x] Provide a `to_rgba`-equivalent that resolves names, hex, shorthand,
-      grayscale strings, and `(r,g,b[,a])` tuples uniformly.
-
-### 9.5 Image interpolation modes
-
-**Gap closed:** AGG now resolves the full Matplotlib interpolation registry and
-the fallback behavior is documented for non-parity backends.
-
-- [x] Add `lanczos`, `spline16`, `spline36`, `kaiser`, `quadric`, `catrom`,
-      `gaussian`, `bessel`, `mitchell`, `sinc`, `blackman`, `hermite`, and the
-      `antialiased`/`auto` resampling policy.
-- [x] Route the modes through AGG and the shared image resampler with documented
-      fallbacks where a backend cannot match a filter. AGG consumes
-      `Image.Interpolation()` for direct and transformed image draws, GoBasic
-      remains a deterministic nearest-only fallback, and SVG/PDF/PS/PGF keep
-      image placement vector-structural while leaving resampling to the output
-      consumer.
-
-### 9.6 Arrow, connection, and patch classes
-
-**Gap:** only `FancyArrow` exists; the `ArrowStyle` / `ConnectionStyle`
-registries, `FancyArrowPatch`, and `ConnectionPatch` are absent. Patch classes
-`Shadow`, `RegularPolygon`, `CirclePolygon`, `Arc`, `Annulus`, and `StepPatch`
-are missing.
-
-- [x] Add the `ArrowStyle` registry (`-`, `->`, `-[`, `]-[`, `|-|`, `<-`,
-      `<->`, `fancy`, `simple`, `wedge`, …) and the `ConnectionStyle` registry
-      (`arc3`, `arc`, `angle`, `angle3`, `bar`).
-- [x] Add `FancyArrowPatch` and `ConnectionPatch` wired into `Annotate`.
-- [x] Add the missing patch classes (`Shadow`, `RegularPolygon`,
-      `CirclePolygon`, `Arc`, `Annulus`, `StepPatch`).
-- [ ] Audit `FancyBboxPatch` box-style coverage against `BoxStyle._style_list`.
-
-### 9.7 Hatch styles and miscellaneous
-
-- [x] Verify the full hatch character set (`/ \ | - + x o O . *`) and
-      repeat-density semantics against `hatch.py`.
-- [x] Add `set_sketch_params` / `pyplot.xkcd()` sketch-style support, or
-      document the omission.
-- [x] Decide on `figimage`: implement or document as an intentional omission.
-      (`pcolorfast` now maps to the typed `PColorFast` / `PColorMesh` path.)
-- [x] Audit `rcParams` keys against upstream and record which keys are
-      unsupported.
-
-**Exit criteria:**
-
-- [ ] The committed coverage check reports every enumerable catalog as either
-      implemented or holding a documented intentional-divergence entry.
-- [ ] Newly implemented features each have at least one catalog case so they
-      surface in `TestGolden` / `TestReferenceCompare`.
-- [ ] A user calling `cmap="coolwarm"`, `marker="*"`, `color="xkcd:teal"`, or
-      `interpolation="lanczos"` gets correct output or a clear, documented
-      error — never a silent wrong default.
+- Added a machine-readable closure ledger:
+  `internal/examplecatalog.Phase9EnumerableCatalogAudits` records each
+  enumerable catalog's upstream source anchors, Go source files, guard tests,
+  catalog fixtures, and implementation/intentional-omission decision.
+- Implemented or documented the Phase 9 catalogs:
+  colormaps and reversed/resampled variants; marker aliases, fillstyles, tuple
+  markers, custom-path markers, and mathtext markers; CSS4/Tableau/xkcd/base
+  named colors and `to_rgba`-style parsing; AGG's full image interpolation
+  registry and `auto` / `antialiased` policy with documented non-AGG
+  fallbacks; BoxStyle / ArrowStyle / ConnectionStyle registries and missing
+  static patch classes; hatch character-set and repeat-density behavior.
+- Recorded intentional divergences for Python-only or global-state surfaces:
+  `pyplot.xkcd` / sketch rcParams mutation, `figimage` / `FigureImage`, Python
+  hatch implementation classes, patch debug helpers, and the unsupported
+  rcParams key universe.
+- Added or connected catalog-visible fixtures for implemented catalogs:
+  `colormap_diverging`, `colormap_qualitative`, `colormap_cyclic`,
+  `named_colors`, `scatter_marker_types`, `line2d_markers`,
+  `imshow_interpolation_matrix`, `patch_showcase`, and `patch_style_matrix`.
+- Guarded the exit criteria with `Phase9ExitCriteria` and focused package tests
+  so future enumerable catalogs must add an audit row, source anchors, guard
+  tests, and catalog-visible fixtures or an explicit omission rationale.
 
 ---
 
@@ -1781,106 +1689,55 @@ Completed scope:
 
 # Phase 16: Display Coordinate and Backend Boundary Parity (Dedicated Former 12.4G)
 
-**Status: COMPLETE (G1–G8).** Core display space is now y-up (origin
-bottom-left, +Y up, mirroring matplotlib `flipy()==True`); each backend owns
-device y-inversion at rasterization. Contract: ADR
+**Status: COMPLETE (G1–G8 + 16.5 residuals).** Core display space is y-up
+(origin bottom-left, +Y up, mirroring matplotlib `flipy()==True`); each backend
+owns device y-inversion at rasterization. Contract: ADR
 `docs/adr/0003-display-coordinate-contract.md`.
 
 **Delivered:** core pivot to y-up with AGG/SVG/PDF/PS/PGF/gobasic owning their
 device flip; verbatim matplotlib signed-geometry formulas (`Arc3.connect`,
-arrow-head normals, text rotation, annotation offsets) render correctly without
-compensation; examples are 1:1 ports (no y-sign hacks); renderer-neutral
-signed-geometry regressions in `core/patch_test.go`; full golden suite
-regenerated.
+arrow-head normals, text rotation, annotation offsets) without compensation;
+1:1 example ports (no y-sign hacks); renderer-neutral regressions in
+`core/patch_test.go`; full golden suite regenerated. `text_annotation_matrix`
+RMSE 14.94 → ~1.3. The `mixed_raster_vector` SVG/PDF golden churn was a
+pre-existing gobasic-offscreen scatter flip fixed by commit 854c250 (old golden
+enshrined the bug), not a new regression.
 
 **Verification:** `TestMatplotlibRef` 128/128; `TestReferenceCompare` 129/130
 (only `spectrum_variants`, documented skip); `TestGolden`/`TestSVGGolden`/
-`TestPDFGolden` green. `text_annotation_matrix` RMSE 14.94 → ~1.3 with 1:1
-example sources.
+`TestPDFGolden` green.
 
-**Notable finding:** the `mixed_raster_vector` SVG/PDF golden churn was a
-_pre-existing_ gobasic-offscreen scatter flip fixed by commit 854c250 (old
-golden enshrined the bug), proven via matplotlib-ref coverage correlation — not
-a new regression.
+**Residual y-up / backend offenders (former Phase 16.5) — all closed:**
 
-Residual offenders carried forward to Phase 16.5.
-
----
-
-# Phase 16.5: Residual y-up / Backend Parity Offenders
-
-**Goal:** close the parity residuals surfaced by Phase 16. Each is isolated and
-non-blocking; fix at the true layer (AGG-port / backend) rather than
-compensating in core.
-
-- [x] AGG-port rotated-text glyph orientation — resolved at the AGG **backend**
-      layer (no `../agg_go` change and no core compensation were needed). The
-      default raster path rotates the rasterized glyph mask with a device-space
-      transform (`backends/agg/freetype_native.go drawNativeFreetypeRunTextRotated`,
-      `origin = r.devPt(origin)` + a sin/cos affine), and the outline/GSV
-      fallbacks rotate about the device anchor (`backends/agg/agg_text.go`
-      `drawTextRotatedDirect` / `drawTextVerticalWithFontContext`). Evidence:
-      `testdata/golden/text_labels_strict.png` renders the vertical ylabel
-      "Value" upright (bottom-to-top) and `testdata/golden/text_annotation_matrix.png`
-      renders the 45° "rotated label" correct; the strict-text cases match the
-      matplotlib references at RMSE ~0 (see AGENTS.md FreeType note). Guarded by
-      `TestDrawTextRotatedMatchesMatplotlibRightYLabelInkBounds` /
-      `TestDrawTextRotatedRendersBounds` in `backends/agg/agg_test.go`. The
-      "revisit widgets selector shapes" sub-note is moot: `canvas/widget_selectors.go`
-      uses axis-aligned rects, not rotated glyphs.
-- [x] `colorbar_horizontal_ticks` — bottom colorbars now place the aspect-limited
-      active bar at the top of Matplotlib's reserved colorbar slot; focused
-      `TestReferenceCompare/colorbar_horizontal_ticks` reports `RMSE 3.63`,
-      `MeanAbs 0.18` (2026-05-26).
-- [x] `imshow_interpolation_matrix` — core scalar-image resampling now follows
+- [x] AGG-port rotated-text glyph orientation — fixed at the AGG **backend**
+      layer (no `../agg_go` or core change). Raster path rotates the glyph mask
+      with a device-space transform (`backends/agg/freetype_native.go
+      drawNativeFreetypeRunTextRotated`); outline/GSV fallbacks rotate about the
+      device anchor (`backends/agg/agg_text.go`). Strict-text cases match
+      references at RMSE ~0; guarded by `TestDrawTextRotated*` in
+      `backends/agg/agg_test.go`. (`canvas/widget_selectors.go` uses axis-aligned
+      rects, so the "selector shapes" sub-note was moot.)
+- [x] `colorbar_horizontal_ticks` — bottom colorbars place the aspect-limited
+      active bar at the top of the reserved slot; `RMSE 3.63`, `MeanAbs 0.18`.
+- [x] `imshow_interpolation_matrix` — scalar-image resampling follows
       Matplotlib's data-stage path for high-upsampled 2D inputs and applies the
-      AGG/Matplotlib interpolation filter family before colormapping; focused
-      `TestReferenceCompare/imshow_interpolation_matrix` reports `RMSE 7.79`
-      and `MeanAbs 0.71` after the AGG nearest placement split (2026-06-01).
-- [x] skia shader / gradient / pattern / hatch fills bypass the gobasic device
-      y-flip — fixed in `backends/skia/shader.go`. `drawShaderFill` now flips the
-      fill path and its clips to the y-down device buffer before the CPU bridge
-      rasterizes them, and `cpuSurfaceBridge.DrawPathFill` maps each device pixel
-      back to y-up display space before sampling the gradient/pattern shader (the
-      analogue of `backends/agg/gradients.go` flipping gradient Y to device). The
-      "blocked on the skia build" note was stale: the package builds with
-      `-tags skia` (pure-Go CPU bridge, no native lib); the real blocker was an
-      import cycle that prevented the skia parity tests from running, fixed by
-      moving the test/parity-importing test files to the external `skia_test`
-      package. Evidence: `TestSkiaParityAgainstAGGGoldens/pattern_gradient_effects`
-      now reports `PSNR 44.53` with the gradient/radial/pattern interiors matching
-      AGG (previously y-flipped); whole `-tags skia` suite green. Residual MeanAbs
-      ~2.2 is drop-shadow path-effect orientation, native-hatch density, and edge
-      AA — all inherited GoBasic-vs-AGG CPU-bridge differences, not shader fills
-      (the skia parity test is a CPU-bridge regression guard, not an AGG-exact
-      contract); documented via `skiaParityMaxMeanAbsOverride` in
-      `backends/skia/parity_test.go`.
-- [x] `pattern_gradient_effects` — fixture port reconciled to Matplotlib-style
-      image, patch, hatch, and `SimplePatchShadow` calls; AGG native hatch now
-      stays in device space like Matplotlib's backend tile pass (MeanAbs 3.09 →
-      0.42, 2026-05-25).
+      AGG filter family before colormapping; `RMSE 7.79`, `MeanAbs 0.71`.
+- [x] skia shader/gradient/pattern/hatch fills bypassed the gobasic device
+      y-flip — fixed in `backends/skia/shader.go` (`drawShaderFill` flips fill
+      path + clips to the y-down buffer; `cpuSurfaceBridge.DrawPathFill` maps
+      device pixels back to y-up before sampling). Import cycle that blocked the
+      parity tests fixed by moving them to the external `skia_test` package.
+      `TestSkiaParityAgainstAGGGoldens/pattern_gradient_effects` `PSNR 44.53`;
+      residual MeanAbs ~2.2 is CPU-bridge drop-shadow/hatch/edge-AA difference,
+      documented via `skiaParityMaxMeanAbsOverride`.
+- [x] `pattern_gradient_effects` — fixture reconciled to Matplotlib-style image,
+      patch, hatch, `SimplePatchShadow` calls; AGG native hatch stays in device
+      space (MeanAbs 3.09 → 0.42).
 
-(`widgets_gallery` residual is owned by Phase 17.5.)
-
-Exit criteria:
-
-- [x] Each residual fixed at its source layer, or documented as an
-      upstream / AGG-port limitation with evidence. `colorbar_horizontal_ticks`,
-      `imshow_interpolation_matrix`, and `pattern_gradient_effects` fixed
-      earlier; rotated-text resolved at the AGG backend layer; skia fills fixed
-      in the skia CPU bridge (all with evidence above).
-- [x] Parity is gated by the per-case catalog tolerances, not a flat MeanAbs
-      bar. The original "`TestMatplotlibRef` MeanAbs < 2.0 across all non-skipped
-      fixtures" line was an early aspirational target that the project
-      superseded: `TestMatplotlibRef` enforces a PSNR floor, and the binding
-      tolerances are the per-case `MinPSNR` / `MaxMeanAbs` / `MaxRMSE` on each
-      `internal/examplecatalog.Case`, enforced by `TestReferenceCompare`
-      (golden-vs-matplotlib_ref) with the strict-text cases (`text_labels_strict`,
-      `title_strict`) matching at RMSE ~0 via the optional-visual path. AGENTS.md
-      makes the catalog the single source of truth for tolerances, so a flat 2.0
-      ceiling over `TestMatplotlibRef` (where many image/colorbar fixtures
-      legitimately exceed it) is not the right gate and is not asserted by any
-      test. No mass fixture re-tuning is implied by this closure.
+Parity is gated by per-case catalog tolerances (`MinPSNR`/`MaxMeanAbs`/`MaxRMSE`
+on each `internal/examplecatalog.Case`, enforced by `TestReferenceCompare`), not
+a flat MeanAbs bar; the strict-text cases match at RMSE ~0 via the
+optional-visual path. (`widgets_gallery` residual is owned by Phase 17.5.)
 
 ---
 
