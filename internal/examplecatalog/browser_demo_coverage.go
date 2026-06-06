@@ -152,12 +152,28 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		},
 	},
 	{
+		ID:         "showcase-lines_markers_gallery",
+		Title:      "Line and Marker Style Gallery Browser Coverage",
+		Status:     BrowserDemoPlanned,
+		Action:     "promote into a line/marker styles browser demo",
+		Rationale:  "The combined gallery (dashes, joins/caps, marker grid, multi-series legend) is the natural browser panel for the Line2D stroke and marker surface.",
+		CatalogIDs: []string{"lines_markers_gallery"},
+	},
+	{
 		ID:         "showcase-scatter_basic",
 		Title:      "Basic Scatter Browser Coverage",
 		Status:     BrowserDemoPlanned,
 		Action:     "include in an advanced scatter browser demo",
 		Rationale:  "The basic scatter showcase should be the baseline panel for richer scatter browser coverage.",
 		CatalogIDs: []string{"scatter_basic"},
+	},
+	{
+		ID:         "showcase-scatter_gallery",
+		Title:      "Advanced Scatter Gallery Browser Coverage",
+		Status:     BrowserDemoPlanned,
+		Action:     "promote into an advanced scatter browser demo",
+		Rationale:  "The combined gallery (colormapped, variable size, alpha blending, marker families) is the natural browser panel for advanced scatter behavior.",
+		CatalogIDs: []string{"scatter_gallery"},
 	},
 	{
 		ID:         "showcase-bar_basic",

@@ -25,8 +25,10 @@ import (
 	showcase_hist_basic "github.com/cwbudde/matplotlib-go/examples/hist_basic"
 	showcase_image_heatmap "github.com/cwbudde/matplotlib-go/examples/image_heatmap"
 	showcase_mesh_contour_tri "github.com/cwbudde/matplotlib-go/examples/mesh_contour_tri"
+	showcase_lines_markers_gallery "github.com/cwbudde/matplotlib-go/examples/lines_markers_gallery"
 	showcase_multi_series_basic "github.com/cwbudde/matplotlib-go/examples/multi_series_basic"
 	showcase_plot_variants "github.com/cwbudde/matplotlib-go/examples/plot_variants"
+	showcase_scatter_gallery "github.com/cwbudde/matplotlib-go/examples/scatter_gallery"
 	showcase_polar_axes "github.com/cwbudde/matplotlib-go/examples/polar_axes"
 	showcase_radar_basic "github.com/cwbudde/matplotlib-go/examples/radar_basic"
 	showcase_scatter_basic "github.com/cwbudde/matplotlib-go/examples/scatter_basic"
@@ -148,8 +150,10 @@ import (
 	example_pcolormesh_gouraud "github.com/cwbudde/matplotlib-go/test/parity/pcolormesh_gouraud"
 	example_pcolormesh_masked "github.com/cwbudde/matplotlib-go/test/parity/pcolormesh_masked"
 	example_pcolormesh_nearest "github.com/cwbudde/matplotlib-go/test/parity/pcolormesh_nearest"
+	example_lines_markers_gallery "github.com/cwbudde/matplotlib-go/test/parity/lines_markers_gallery"
 	example_plot_variants "github.com/cwbudde/matplotlib-go/test/parity/plot_variants"
 	example_polar_axes "github.com/cwbudde/matplotlib-go/test/parity/polar_axes"
+	example_scatter_gallery "github.com/cwbudde/matplotlib-go/test/parity/scatter_gallery"
 	example_quad_mesh "github.com/cwbudde/matplotlib-go/test/parity/quad_mesh"
 	example_radar_basic "github.com/cwbudde/matplotlib-go/test/parity/radar_basic"
 	example_scale_asinh_ticks "github.com/cwbudde/matplotlib-go/test/parity/scale_asinh_ticks"
@@ -205,6 +209,7 @@ var renderByID = map[string]func() image.Image{
 	"scatter_basic":                      example_scatter_basic.Render,
 	"scatter_marker_types":               example_scatter_marker_types.Render,
 	"scatter_advanced":                   example_scatter_advanced.Render,
+	"scatter_gallery":                    example_scatter_gallery.Render,
 	"bar_basic_frame":                    example_bar_basic_frame.Render,
 	"bar_basic_ticks":                    example_bar_basic_ticks.Render,
 	"bar_basic_tick_labels":              example_bar_basic_tick_labels.Render,
@@ -216,6 +221,7 @@ var renderByID = map[string]func() image.Image{
 	"fill_between":                       example_fill_between.Render,
 	"fill_stacked":                       example_fill_stacked.Render,
 	"errorbar_basic":                     example_errorbar_basic.Render,
+	"lines_markers_gallery":              example_lines_markers_gallery.Render,
 	"multi_series_basic":                 example_multi_series_basic.Render,
 	"multi_series_color_cycle":           example_multi_series_color_cycle.Render,
 	"legend_layout_matrix":               example_legend_layout_matrix.Render,
@@ -385,6 +391,8 @@ var figureByID = map[string]func() *core.Figure{
 	"geo_mollweide_axes":                 showcase_geo_mollweide_axes.Plot,
 	"gridspec_composition":               showcase_gridspec_composition.Plot,
 	"scatter_basic":                      showcase_scatter_basic.Plot,
+	"scatter_gallery":                    showcase_scatter_gallery.Plot,
+	"lines_markers_gallery":              showcase_lines_markers_gallery.Plot,
 	"hist_basic":                         showcase_hist_basic.Plot,
 	"mesh_contour_tri":                   showcase_mesh_contour_tri.Plot,
 	"image_heatmap":                      showcase_image_heatmap.Plot,

@@ -41,6 +41,7 @@ import (
 	gridspec_composition "github.com/cwbudde/matplotlib-go/examples/gridspec_composition"
 	hist_basic "github.com/cwbudde/matplotlib-go/examples/hist_basic"
 	image_heatmap "github.com/cwbudde/matplotlib-go/examples/image_heatmap"
+	lines_markers_gallery "github.com/cwbudde/matplotlib-go/examples/lines_markers_gallery"
 	mesh_contour_tri "github.com/cwbudde/matplotlib-go/examples/mesh_contour_tri"
 	mplot3d_terrain "github.com/cwbudde/matplotlib-go/examples/mplot3d_terrain"
 	multi_series_basic "github.com/cwbudde/matplotlib-go/examples/multi_series_basic"
@@ -48,6 +49,7 @@ import (
 	polar_axes "github.com/cwbudde/matplotlib-go/examples/polar_axes"
 	radar_basic "github.com/cwbudde/matplotlib-go/examples/radar_basic"
 	scatter_basic "github.com/cwbudde/matplotlib-go/examples/scatter_basic"
+	scatter_gallery "github.com/cwbudde/matplotlib-go/examples/scatter_gallery"
 	skewt_basic "github.com/cwbudde/matplotlib-go/examples/skewt_basic"
 	specialty_artists "github.com/cwbudde/matplotlib-go/examples/specialty_artists"
 	stat_variants "github.com/cwbudde/matplotlib-go/examples/stat_variants"
@@ -83,6 +85,7 @@ var registry = map[string]func() *core.Figure{
 	"gridspec_composition":      gridspec_composition.Plot,
 	"hist_basic":                hist_basic.Plot,
 	"image_heatmap":             image_heatmap.Plot,
+	"lines_markers_gallery":     lines_markers_gallery.Plot,
 	"mesh_contour_tri":          mesh_contour_tri.Plot,
 	"mplot3d_terrain":           mplot3d_terrain.Plot,
 	"multi_series_basic":        multi_series_basic.Plot,
@@ -90,6 +93,7 @@ var registry = map[string]func() *core.Figure{
 	"polar_axes":                polar_axes.Plot,
 	"radar_basic":               radar_basic.Plot,
 	"scatter_basic":             scatter_basic.Plot,
+	"scatter_gallery":           scatter_gallery.Plot,
 	"skewt_basic":               skewt_basic.Plot,
 	"specialty_artists":         specialty_artists.Plot,
 	"stat_variants":             stat_variants.Plot,

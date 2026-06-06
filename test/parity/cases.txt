@@ -134,3 +134,5 @@ mixed_collection
 quad_mesh
 gouraud_triangles
 clip_path_batch
+lines_markers_gallery
+scatter_gallery
