@@ -198,14 +198,6 @@ Completed scope:
   `path_effects`, `pattern_gradient_effects`, and `mixed_raster_vector`, each
   with golden and Matplotlib-reference PNG coverage where applicable.
 
-Exit criteria:
-
-- [x] Pattern fills, gradients, and path effects work uniformly across AGG,
-      SVG, PDF, and Skia without backend-name conditionals.
-- [x] `Artist.SetRasterized(true)` produces correct mixed-mode output on every
-      vector backend.
-- [x] All effects have committed golden and Matplotlib-reference fixtures.
-
 ---
 
 # Phase 3: Mathematical Text and TeX
@@ -214,95 +206,28 @@ Exit criteria:
 raster/vector targets, with toolchain-gated TeX coverage and MathText promoted
 to the standalone `github.com/cwbudde/mathtext` module.
 
-**Goal:** make MathText and `usetex` first-class across raster and vector
-backends, and stabilize MathText for standalone module promotion.
+Completed scope:
 
-**Reference sources:** `third_party/matplotlib/lib/matplotlib/_mathtext.py`,
-`mathtext.py`, `texmanager.py`; current `github.com/cwbudde/mathtext`.
-
-### 3.1 MathText Pipeline Completion
-
-- [x] Finish the shared shaping layer (carried over from prior backend work)
-      so AGG text draw, text measurement, text bounds, and text-path output all
-      consume the same shaped glyph runs.
-- [x] Complete the MathText grammar coverage gaps versus upstream: stacked
-      fractions, accents, big operators, integral limits, matrix environments.
-      Unit coverage now exercises stacked operator limits, integral side
-      scripts, accents, matrix/array environments, fractions/genfrac, roots,
-      fences, and spacing; the Phase 3 parity fixtures cover the same areas
-      against Matplotlib references.
-- [x] Cache stabilization: deterministic cache keys, eviction policy, and
-      cross-process safe storage so MathText can ship as its own module.
-      In-memory caches now support deterministic FIFO bounds via
-      `CacheConfig`; `Cache.SaveFile` / `Cache.LoadFile` provide deterministic
-      JSON snapshots with atomic writes for cross-process reuse.
-- [x] MathText draw path through every backend: AGG (raster glyph composite),
-      SVG (paths or text-as-text where the font is available), PDF, Skia.
-      AGG has Matplotlib reference PNG fixtures; SVG and PS have explicit
-      MathText vector-output smoke tests plus rasterized tolerance checks
-      against the AGG goldens; PDF has golden and rasterized tolerance coverage
-      for all Phase 3 MathText fixtures; Skia has build-tagged golden
-      comparison coverage.
-- [x] Golden fixtures: mathtext_basic, mathtext_fractions, mathtext_integrals,
-      mathtext_matrices, mathtext_inline_labels.
-
-### 3.2 `usetex` Support
-
-- Current implementation status: AGG, SVG, and PDF have opt-in
-  `latex`+`dvipng` raster paths backed by `internal/tex`; PDF embeds cached TeX
-  PNGs as image XObjects and scales them from raster pixels to PDF points.
-- DVI geometry status: `internal/tex` now parses DVI page extents with
-  Matplotlib-style width/height/descent semantics, including rules and glyphs
-  backed by TFM metrics found through configured directories or `kpsewhich`.
-  `Manager.Render` prefers those cached DVI metrics and falls back to PNG
-  dimensions when DVI/TFM geometry is unavailable.
-- System TeX integration status: `internal/tex` includes a toolchain-gated
-  integration test for the real `latex` + `dvipng` path. It skips with a clear
-  diagnostic when those commands are absent. The `test` package also has a
-  toolchain-gated `text.usetex` artist-pipeline smoke test through AGG and a
-  gated AGG PNG golden harness (`-update-usetex-golden`) for hosts with a TeX
-  toolchain.
-- [x] `usetex` import path that shells out to a system `latex` / `dvipng` /
-      `dvisvgm` pipeline, behind a build tag / rc switch so the default build
-      has no external dependency.
-- [x] DVI parser sufficient to read the geometry of the rasterized result
-      back into the renderer's text bounds API.
-- [x] Shared clipping, alpha, and DPI semantics between MathText and `usetex`
-      paths so the artist-side API does not branch.
-- [x] Golden fixtures gated by the presence of a TeX installation; skip with
-      a clear diagnostic when missing.
-      The committed `testdata/usetex_golden/basic.png` fixture is regenerated
-      by `go test ./test -run TestUseTeXGoldenWithSystemToolchain
-      -update-usetex-golden` on hosts with `latex` + `dvipng`.
-
-### 3.3 MathText Module Promotion
-
-- Promotion target: document the final MathText API by 2026-07-31, then either
-  move it to a top-level `mathtext` package in this repository or split it into
-  its own module before the v1.0 API freeze.
-- [x] Stabilize the public API surface of MathText against the
-      needs of the AGG, SVG, PDF, and Skia text drawers.
-      The standalone module documents the retained API:
-      normalization, display segmentation, layout-to-runs/rules, renderer font
-      resolution hooks, and cache/storage contracts.
-- [x] Promote MathText to a top-level module / repo with its own
-      versioning after the documented promotion date.
-      The standalone repository `github.com/cwbudde/mathtext` is tagged
-      `v0.1.0` with the renderer-neutral parser/layout/cache API, local `Pt` /
-      `Rect` geometry types, and no non-stdlib module dependencies.
-      Renderer-specific metric parity tests remain in `matplotlib-go`.
-
-**Exit criteria:**
-
-- [x] MathText renders identically across all backends within documented
-      tolerances.
-      AGG PNG goldens are cross-checked against Matplotlib references with
-      catalog tolerances; PDF, PS, and SVG vector outputs are rasterized and
-      compared against the same AGG goldens; Skia has build-tagged PNG golden
-      comparisons for the Phase 3 fixture set.
-- [x] `usetex` is opt-in, dependency-free by default, and tested when the
-      external TeX toolchain is present.
-- [x] MathText is standalone with independent module versioning.
+- The shared MathText shaping path feeds AGG text drawing, text measurement,
+  text bounds, and text-path output from the same shaped glyph runs.
+- Grammar and layout coverage now includes stacked fractions, genfrac, roots,
+  accents, big operators, integral and operator limits, matrix/array
+  environments, fences, and spacing, with parity fixtures for
+  `mathtext_basic`, `mathtext_fractions`, `mathtext_integrals`,
+  `mathtext_matrices`, and `mathtext_inline_labels`.
+- Deterministic MathText caches support bounded in-memory reuse plus
+  cross-process JSON snapshot save/load with atomic writes.
+- MathText renders through AGG, SVG, PDF, PS smoke/rasterized paths, and
+  build-tagged Skia coverage with documented tolerances against Matplotlib
+  references or AGG goldens.
+- `usetex` is opt-in and dependency-free by default; hosts with `latex` and
+  `dvipng` get toolchain-gated integration, artist-pipeline, and golden tests.
+- `internal/tex` parses DVI page extents with Matplotlib-style
+  width/height/descent semantics and falls back to PNG dimensions when DVI/TFM
+  geometry is unavailable.
+- MathText is promoted to `github.com/cwbudde/mathtext` with independent
+  versioning, a renderer-neutral parser/layout/cache API, local geometry types,
+  and no non-stdlib module dependencies.
 
 ---
 
@@ -1755,68 +1680,66 @@ Implementation notes:
 
 # Phase 12: Artist, Line2D, and Marker Semantics
 
-**Goal:** close foundational `artist.py`, `lines.py`, and `markers.py` gaps that
-affect visible parity and migration.
+✅ **Completed.** Foundational `artist.py`, `lines.py`, and `markers.py`
+parity gaps that affect visible rendering and migration are closed.
 
-Status: completed and compacted.
+Completed scope:
 
-- [x] Shared artist metadata, clipping, alpha, visibility, stale/in-layout, and
-      centralized traversal behavior are implemented and covered by tests.
-- [x] Marker catalogue, fillstyles, `markevery`, line cap/join/dash behavior,
-      and focused marker parity matrices are implemented or explicitly
-      classified.
-- [x] Audit and public-surface rows for `artist.py`, `lines.py`, and
-      `markers.py` are closed to precise statuses.
+- Shared artist metadata, clipping, alpha, visibility, stale/in-layout, and
+  centralized traversal behavior are implemented and covered by tests.
+- Marker catalogue, fillstyles, `markevery`, line cap/join/dash behavior, and
+  focused marker parity matrices are implemented or explicitly classified.
+- Audit and public-surface rows for `artist.py`, `lines.py`, and `markers.py`
+  are closed to precise statuses.
 
 ---
 
 # Phase 13: Axis, Ticker, Formatter, Scale, and Transform Breadth
 
-**Goal:** close axis/ticker/scale/transform parity gaps that drive persistent
-axis and display-coordinate residuals.
+✅ **Completed.** Axis, ticker, formatter, scale, and transform parity gaps
+that drove persistent axis and display-coordinate residuals are closed.
 
-Status: completed and compacted.
+Completed scope:
 
-- [x] Tick lifecycle, offset/scientific text behavior, locator/formatter
-      breadth, and shared/twin-axis interactions are covered.
-- [x] Scale/transform breadth includes log/symlog/logit and inversion/caching
-      edge behavior with renderer-neutral tests.
-- [x] Audit and public-surface rows for `axis.py`, `ticker.py`, `scale.py`, and
-      `transforms.py` are closed to precise statuses.
+- Tick lifecycle, offset/scientific text behavior, locator/formatter breadth,
+  and shared/twin-axis interactions are covered.
+- Scale/transform breadth includes log/symlog/logit and inversion/caching edge
+  behavior with renderer-neutral tests.
+- Audit and public-surface rows for `axis.py`, `ticker.py`, `scale.py`, and
+  `transforms.py` are closed to precise statuses.
 
 ---
 
 # Phase 14: Collections, Scalar Mapping, Meshes, and Colorbars
 
-**Goal:** close high-value collection/scalar-mapping/mesh/colorbar gaps that
-affect visible output and migration.
+✅ **Completed.** High-value collection, scalar-mapping, mesh, and colorbar
+gaps that affect visible output and migration are closed.
 
-Status: completed and compacted.
+Completed scope:
 
-- [x] Mutable collection/scalar-mappable state updates propagate
-      deterministically.
-- [x] Mesh shading/shape rules and colorbar orientation/boundary/tick behavior
-      are source-backed and fixture-covered.
-- [x] Advanced norm/color-helper scope is implemented or explicitly classified.
-- [x] Audit and public-surface rows for `collections.py`, `cm.py`, `colors.py`,
-      `colorbar.py`, and `colorizer.py` are closed to precise statuses.
+- Mutable collection/scalar-mappable state updates propagate deterministically.
+- Mesh shading/shape rules and colorbar orientation/boundary/tick behavior are
+  source-backed and fixture-covered.
+- Advanced norm/color-helper scope is implemented or explicitly classified.
+- Audit and public-surface rows for `collections.py`, `cm.py`, `colors.py`,
+  `colorbar.py`, and `colorizer.py` are closed to precise statuses.
 
 ---
 
 # Phase 15: Patches, Text, Annotation, Legend, and Offset Boxes (Core Closure)
 
-**Goal:** complete the non-coordinate-boundary portion of former 12.4 (12.4A-F)
-with a compact status view.
+✅ **Completed.** The non-coordinate-boundary portion of former 12.4
+(`12.4A-F`) is closed.
 
-Status: completed and compacted.
+Completed scope:
 
-- [x] Patch/hatch coverage includes box styles, arrow/connection styles,
-      hatch-density semantics, and focused fixture coverage.
-- [x] Text/font, annotation/offset-box, and legend handler/layout breadth are
-      implemented with renderer-neutral tests and focused matrix fixtures.
-- [x] Audit and public-surface rows for `patches.py`, `hatch.py`, `text.py`,
-      `font_manager.py`, `textpath.py`, `legend.py`, `legend_handler.py`, and
-      `offsetbox.py` are closed to precise statuses.
+- Patch/hatch coverage includes box styles, arrow/connection styles,
+  hatch-density semantics, and focused fixture coverage.
+- Text/font, annotation/offset-box, and legend handler/layout breadth are
+  implemented with renderer-neutral tests and focused matrix fixtures.
+- Audit and public-surface rows for `patches.py`, `hatch.py`, `text.py`,
+  `font_manager.py`, `textpath.py`, `legend.py`, `legend_handler.py`, and
+  `offsetbox.py` are closed to precise statuses.
 
 ---
 
@@ -2016,354 +1939,50 @@ Exit criteria:
 
 # Phase 17.6: Remaining Matplotlib Plot Surface Closure
 
-**Goal:** systematically close every currently known Matplotlib 3.10.9 plotting
-surface gap that is not already covered by Phases 12-17.5, before treating
-example/browser breadth as documentation work.
+✅ **Completed.** Every known Matplotlib 3.10.9 plotting-surface gap not owned
+by Phases 12-17.5 now has a direct Go API, idiomatic Go equivalent, precise
+partial row with evidence, or explicit intentional omission before the
+example/browser-gallery phases continue.
 
-**Reference sources:** `third_party/matplotlib/lib/matplotlib/axes/_axes.py`,
-`third_party/matplotlib/lib/mpl_toolkits/mplot3d/axes3d.py`,
-`third_party/matplotlib/lib/matplotlib/pyplot.py`,
-`internal/examplecatalog.PublicSurfaceParityRows`,
-`internal/examplecatalog.FoundationAPIGapAudit`,
-`internal/examplecatalog.FeatureCoverageMatrix`, and the catalog cases under
-`test/parity/`.
+Completed scope:
 
-### 17.6.1 Gap Ledger and Status Gates
-
-- [x] Generate or update `docs/matplotlib-parity-status.md` from the committed
-      public-surface inventory so every upstream plotting method, registry
-      item, and toolkit feature has one owner phase.
-- [x] Add a machine-readable "closure phase" field to the parity inventory for
-      every row currently marked `partial` or `not-started`.
-- [x] Fail CI when a tracked upstream row is `partial` or `not-started` without
-      either a 17.6 task reference, an existing phase owner, or an explicit
-      intentional-omission rationale.
-- [x] Split broad `partial` rows into smaller actionable rows when the remaining
-      work mixes implementation, API-wrapper, fixture, and demo concerns.
-
-      2026-06-04: first ledger pass added `ClosurePhase` /
-      `ClosureRationale` to expanded public-surface rows, generated
-      `docs/matplotlib-parity-status.md` via `cmd/paritystatusdoc`, and added
-      CI tests for closure ownership and doc freshness. The upstream extractor
-      now includes `Axes`, `_AxesBase`, and `Axes3D` method rows so 17.6
-      tracks plotting-method and 3D-toolkit gaps directly. The remaining work
-      is the manual split of broad generated `partial` families into smaller
-      implementation/API/fixture/demo rows where needed.
-
-      2026-06-04 follow-up: split the named 17.6 surfaces out of broad
-      generated buckets: `17.6.2` now owns `Axes.bxp`, `Axes.violin`,
-      `Axes.arrow`, `Axes.hlines`, `Axes.vlines`, `Axes.clabel`, plus matching
-      pyplot wrappers where relevant; `17.6.4` has explicit `Axes3D.tricontour`
-      / `tricontourf` rows; and `17.6.5` has explicit `FuncNorm`,
-      `LightSource`, bivariate, and multivariate colormap rows. Remaining
-      broad rows are intentional phase-level buckets for option-breadth audits.
-
-### 17.6.2 Missing or Thin 2D Axes Convenience APIs
-
-- [x] 17.6.2.1 Axes Convenience: implement Go API wrappers for `Axes.bxp`
-      and `Axes.violin` (precomputed statistics mode) using existing lower-level
-      `core` helpers as implementation. Add targeted unit tests for input
-      validation, return types, and artist registration.
-- [x] 17.6.2.2 Axes Line Collections: implement or harden Go API wrappers for
-      `Axes.hlines` and `Axes.vlines` to match existing matplotlib behavior
-      expectations for scalar/list-like arguments and collection defaults. Keep
-      behavior aligned with `core` collection drawing paths and add focused tests.
-- [x] 17.6.2.3 Axes Contour Labels: add `Axes.clabel` parity helper that
-      delegates to contour label rendering and accepts the same control surface as
-      upstream options; include unit tests for automatic and manual label placement.
-- [x] 17.6.2.4 Pyplot Parity Surface: add pyplot wrappers for each new 17.6.2
-      helper (`Bxp`, `Violin`, `Ax*` collection calls for line families, and
-      `Clabel`) plus regression tests that assert pyplot delegates to the expected
-      axes-level implementation.
-- [x] 17.6.2.5 Fixtures and Docs: add one parity fixture triplet
-      (`test/parity/<id>/plot.go`, `plot.py`, and
-      `test/matplotlib_ref/plots/<id>.py`) for each helper as needed, then update
-      `docs/matplotlib-parity-status.md` and migration notes with any intentional
-      signature differences.
-- [x] 17.6.2.6 Alignment Checks: ensure each completed helper tracks the
-      equivalent implementation in `./third_party/matplotlib` and document any
-      intentional deviations before marking the helper complete.
-
-### 17.6.3 Axes Method Option Breadth
-
-- [x] 17.6.3.1 Histogram Option Breadth: close high-use `Axes.hist`
-      gaps for weights, explicit range handling, cumulative density semantics,
-      and reverse cumulative behavior. Add focused numeric unit tests before
-      code changes and compare the implementation against
-      `third_party/matplotlib/lib/matplotlib/axes/_axes.py`.
-- [x] 17.6.3.2 Scatter Option Breadth: harden scalar-mapping,
-      marker-family, edgecolor/facecolor, alpha, and size edge cases where
-      they affect visible output.
-- [x] 17.6.3.3 Bar Option Breadth: add or harden bar labels,
-      align/width/baseline semantics, and grouped/stacked bar behavior.
-- [x] 17.6.3.4 Fill-Between Option Breadth: implement masking,
-      interpolation, and step semantics for `fill_between` /
-      `fill_betweenx` parity.
-- [x] 17.6.3.5 Errorbar Option Breadth: close cap, limit-marker,
-      asymmetric error, and `errorevery` behavior gaps.
-- [x] 17.6.3.6 Collections and Mesh Breadth: expand mutable setter
-      behavior, scalar-mappable callbacks, offset transforms, `pcolor`
-      masked-coordinate behavior, `pcolormesh` shape validation, and Gouraud /
-      nearest / flat shading parity where visible.
-- [x] 17.6.3.7 Fixtures, Docs, and Alignment: add or update catalog
-      fixtures only for visible behavior, document intentional deviations, and
-      keep example source close to Matplotlib rather than hiding option gaps.
-
-### 17.6.4 3D Toolkit Closure
-
-- [x] 17.6.4.1 Axes3D Triangulated Contours: added `tricontour`/
-      `tricontourf` helpers backed by existing triangulation, contour, and 3D
-      projection machinery (audited against `mplot3d/axes3d.py`), with focused
-      tests for triangulation validation, artist return types, and axis-limit
-      expansion.
-- [x] 17.6.4.2 3D Depth Ordering and Clipping: audited line/marker
-      (`Plot3D`, `Scatter3D`, `Wireframe`, `Quiver3D`, `Stem3D`, `ErrorBar3D`),
-      surface/polygon (`Surface`, `Contour`, `Contourf`, `TriContour`,
-      `TriContourf`, `Trisurf`, `Bar3D`, `FillBetween3D`), and `Voxels` helpers
-      against upstream z sorting, depth shading, axlim clipping, and
-      projected-extent behavior, adding targeted regression tests; residual
-      mplot3d divergences are recorded in parity metadata, migration notes, and
-      `docs/matplotlib-parity-status.md`.
-- [x] 17.6.4.3 3D Axis Defaults and View State: aligned mplot3d defaults
-      for view init/aspect (`Axes3D.__init__`, `view_init`, `set_proj_type`,
-      `set_box_aspect`), axis limits/autoscale state, pane/grid/tick styling,
-      and label/tick placement against `axis3d.py`, with focused tests;
-      intentional divergences are recorded in parity metadata and migration
-      notes and regenerated into `docs/matplotlib-parity-status.md`.
-- [x] 17.6.4.4 3D Colormapping and Scalar Mappables: aligned cmap, norm,
-      clim, alpha, explicit/per-face/per-point colors, scalar-map metadata, and
-      colorbar creation/update behavior for surface, trisurf, structured and
-      triangulated contours, scatter, bar, voxel, line-like, and fill-between
-      helpers; documented explicit-color-only helpers and the narrower
-      pull-based Go colorbar update contract.
-- [x] 17.6.4.5 3D Fixtures and Reference Coverage: added the missing
-      Go/Python/golden/reference triplets `mplot3d_errorbar3d`,
-      `mplot3d_contour3d`, `mplot3d_contourf3d`, `mplot3d_tricontour3d`,
-      `mplot3d_tricontourf3d`, `mplot3d_bar2d_zdir`, and `mplot3d_text3d`;
-      verified existing 3D triplets, kept Go/Python data close to Matplotlib,
-      gated new 3D goldens as optional-visual, and kept established 3D tolerance
-      bands without broadening defaults.
-- [x] 17.6.4.6 3D Docs and Divergence Ledger: updated public-surface
-      metadata, migration notes, and `docs/matplotlib-parity-status.md` with
-      completed 3D fixture coverage, typed Go API differences, residual
-      projection/depth-order/text-autoscale divergences, and no new intentional
-      omissions.
-- [x] 17.6.4.7 Final 3D Verification: regenerated
-      `docs/matplotlib-parity-status.md`, refreshed stale
-      `testdata/golden/mplot3d_basic.png`, and passed focused verification:
-      `RUN_OPTIONAL_VISUAL_TESTS=true rtk go test ./test -run
-      'TestGolden/mplot3d_|TestMatplotlibRef/mplot3d_|TestReferenceCompare/mplot3d_'`
-      (60 passed), `rtk go test ./core -run 'TestAxes3D'` (159 passed), and
-      `rtk go test ./internal/examplecatalog/...` (108 passed).
-
-### 17.6.5 Color, Image, Norm, and Colorbar Extras
-
-- [x] 17.6.5.1 Color Conversion Edge Cases — audited Matplotlib color
-      parsing (named/hex/grayscale/`none` tables and precedence, alpha
-      precedence, numeric/sequence ambiguity, masked/NaN inputs), added
-      parser/alpha/diagnostics tests, and documented the Python-only dynamic
-      inputs the typed Go API omits.
-- [x] 17.6.5.2 Norm Breadth and FuncNorm — audited the Go norms
-      (`Normalize`/`LogNorm`/`SymLogNorm`/`PowerNorm`/`BoundaryNorm`/
-      `TwoSlopeNorm`) with focused tests. `FuncNorm` and multi-stage norms are
-      intentional omissions: arbitrary callbacks route through
-      `core.ScalarNormalizer`, and `function`/`functionlog` scales cover the
-      axes case.
-- [x] 17.6.5.3 LightSource and Shaded Images — inventoried upstream
-      hillshade/shade/shade_rgb and blend modes; kept them as an explicit
-      omission (no `LightSource` type, no fixture needs it) without regressing
-      the mplot3d explicit-color face-shading path.
-- [x] 17.6.5.4 Bivariate and Multivariate Colormaps — intentional
-      omissions; the Go API keeps only scalar colormaps, covered by scalar
-      lookup tests plus omission diagnostics for multichannel inputs.
-- [x] 17.6.5.5 Transformed Image Resampling — inventoried
-      transform/interpolation/extent/origin/clipping across AGG, GoBasic, and
-      SVG/PDF; aligned the raster kernels (nearest/bilinear/bicubic/antialiased/
-      `none`) and placement with focused tests; documented SVG/PDF fallback
-      residuals; and refreshed the minimal transformed-image fixture set.
-- [x] 17.6.5.6 Colorbar Placement and Formatter Breadth — aligned
-      single/multi-parent, gridspec-style, inset, shrink/aspect/pad/anchor,
-      locators, formatters, boundaries, extensions, and discrete behavior; added
-      focused placement/formatter/boundary/update tests and fixtures; and
-      defined the post-creation update contract (cmap/norm/clim/alpha/array).
-  - [x] 17.6.5.6.1 Placement, Formatter, and Update Audit — aligned locators,
-        formatters, boundaries, extensions (extend, extendfrac, spacing,
-        under/over), minor ticks, labels, tick position, and discrete colorbar
-        behavior; defined the supported post-creation update contract for cmap,
-        norm, clim, alpha, and scalar arrays.
-  - [x] 17.6.5.6.2 Colorbar Update Tests or Omission — covered mutable
-        mappable clim/colormap/norm updates and documented callback-driven
-        immediate redraw behavior as an intentional Go API divergence.
-  - [x] 17.6.5.6.3 Colorbar Fixtures, Tests, and Ledger — committed focused
-        colorbar boundary, horizontal tick, extension, and mutable scalar-map
-        fixtures plus public-surface ledger entries.
-- [x] 17.6.5.7 Color Fixtures and Docs — added the missing
-      norm/colormap/image/colorbar Go/Python/golden triplets, recorded supported
-      surfaces and intentional omissions in public-surface metadata and migration
-      notes, and regenerated `docs/matplotlib-parity-status.md`.
-  - [x] 17.6.5.7.4 Final Color Status Regeneration — regenerated
-        `docs/matplotlib-parity-status.md` from `cmd/paritystatusdoc` after
-        color, image, norm, and colorbar metadata updates; final sweep coverage
-        includes Golden, MatplotlibRef, and ReferenceCompare for color, norm,
-        image, and colorbar fixtures.
-
-### 17.6.6 Patch, Annotation, Legend, and Offset-Box Tail
-
-- [x] Finish exact ArrowStyle / ConnectionStyle geometry edge cases and any
-      specialized patch classes still classified as partial in the public
-      surface map. 2026-06-05 follow-up: closed patch class rows as
-      idiomatic static-rendering equivalents, closed public BoxStyle /
-      ArrowStyle / ConnectionStyle registry rows as direct equivalents, and
-      left private registry implementation sentinels as explicit intentional
-      omissions. `TestPatchStyleClosureRowsAreNotLeftPartial` guards this
-      split; remaining patch scope is Python helper/debug functions, dynamic
-      property grammar, and broader visual fixture closure.
-- [x] Add remaining text/annotation coordinate aliases, tightbbox /
-      window-extent interactions, and richer static `AnnotationBbox` /
-      offset-box content where upstream examples require them. 2026-06-05
-      follow-up: added `AnnotationOptions.TextPosition` / `TextCoords` for
-      separate annotated-point and text-anchor coordinate spaces, split
-      static offset-box rows into idiomatic equivalents, and recorded
-      `OffsetFrom`, draggable offset boxes, and `offsetbox.DEBUG` as explicit
-      non-static omissions. `TestAnnotateSupportsSeparateTextCoordinateSpace`
-      and `TestTextAnnotationOffsetboxRowsAreSplitByStaticAndGuiScope` guard
-      the closure.
-- [x] Complete legend handler and placement gaps that affect static rendering:
-      scalar-mapped collection samples, full bbox/path-intersection
-      `loc="best"` scoring, and proxy/compound handle behavior. 2026-06-05
-      follow-up: legend collection samples now resolve scalar-mapped
-      Path/Patch/Line collection colors; `LegendBest` scores rectangle bboxes
-      and patch paths in addition to existing line/collection-offset/image/
-      annotation data; static `Legend` / `legend_handler.py` rows are split
-      from `DraggableLegend`, with arbitrary Python handler maps documented as
-      typed-API divergence. Guarded by
-      `TestLegendCollectionSamplesUseScalarMappedColors`,
-      `TestLegendBestPlacementAvoidsPatchBounds`,
-      `TestLegendBestPlacementAvoidsPatchPaths`, and
-      `TestLegendStaticRowsAreNotLeftPartial`.
-- [x] Keep draggable GUI-only legend and offset-box behavior either explicitly
-      omitted or owned by the backend/event-loop work below. 2026-06-05
-      follow-up: `DraggableLegend`, draggable offset boxes, and
-      `offsetbox.DEBUG` are explicit intentional omissions from the
-      renderer-neutral static surface. Guarded by
-      `TestDraggableLegendRowIsExplicitlyOmitted` and
-      `TestTextAnnotationOffsetboxRowsAreSplitByStaticAndGuiScope`.
-
-### 17.6.7 Stateful Pyplot and Migration Wrappers
-
-- [x] Add pyplot wrappers for newly closed object-oriented APIs only where they
-      reduce Matplotlib migration friction.
-- [x] Audit pyplot state transitions, interactive-mode hooks, current
-      figure/axes behavior, and common overloads against upstream `pyplot.py`.
-- [x] Prefer typed Go options over Python-like variadic overload cloning, but
-      document every intentional signature divergence in the migration guide.
-- [x] Add smoke tests proving pyplot wrappers delegate to the same core
-      implementation as the object-oriented API. 2026-06-05 follow-up: audited the
-      `pyplot` wrapper surface against vendored 3.10.9 `pyplot.py` /
-      `_pylab_helpers.py` and closed it as an idiomatic equivalent — the stateful
-      registry (current figure/axes, subplot/manager caches), interactive-mode
-      hooks (`Ion`/`Ioff`/`IsInteractive`/`DrawIfInteractive`), and lifecycle
-      (`CLF`/`CLA`/`Close`/`CloseAll`/`SwitchBackend`) all delegate to the
-      object-oriented core API, so **no new public wrappers were required**. Added
-      a "Phase 17.6.7 Pyplot State and Migration Wrappers" section to
-      `docs/matplotlib-migration-notes.md` enumerating every intentional signature
-      divergence (setter-only limit/tick helpers, label setters returning no
-      `Text`, omitted numeric figure registry, omitted current-mappable
-      `sci`/`clim`/`set_cmap`, omitted GUI-blocking helpers, typed options vs
-      `**kwargs`/`data=`/property grammar, idiomatic polar/rgrids/thetagrids).
-      `pyplot.TestPyplotWrappersShareCoreAxesPath` proves wrappers route through
-      `GCA()`/`GCF()` to the same core artists, and
-      `internal/examplecatalog.TestPyplotStateSurfaceRowsAreExplicitlyDecided`
-      locks every `pyplot.py`/`_pylab_helpers.py` row to an explicit decision.
-
-### 17.6.8 Backend, Widget, and Animation Tail
-
-- [x] Close remaining backend lifecycle gaps that affect plotting behavior:
-      draw-event order, timers, toolbar/tool manager actions, figure manager
-      lifecycle, and backend capability reporting.
-- [x] Complete widget and selector interaction edge cases that remain after
-      Phase 17.5: active-state semantics, handle behavior, disabled states,
-      keyboard modifiers, and browser-demo interaction parity.
-- [x] Decide animation writer scope for v1.0: deterministic GIF/MP4 writers,
-      HTML representation, save-count/cache behavior, and explicit unsupported
-      writer errors.
-- [x] Add backend/widget/animation cases only when they can run
-      deterministically in CI or are guarded by explicit optional-tool checks.
-
-  2026-06-05 follow-up: closed the backend/widget/animation tail as a
-  static-vs-GUI split. Animation: ported matplotlib's writer stack code-wise —
-  animation.MovieWriter mirrors AbstractMovieWriter, Saving mirrors the saving()
-  context manager, PillowWriter encodes via stdlib image/gif (Delay=100/fps,
-  LoopCount=0, fixed-palette determinism), a writer registry mirrors
-  MovieWriterRegistry, and Animation.Save mirrors Animation.save
-  (writer-by-extension, fps=1000/interval, WithSaveCount). Frame capture uses the
-  new optional canvas.RasterCanvas (FrameRGBA on the headless canvas) as the
-  savefig RGBA analogue. MP4/FFmpeg/ImageMagick and HTML stay intentional
-  omissions returning ErrWriterUnsupported. Widgets: added
-  TestWidgetInteractionAcrossVisualStyles proving active-state, handle, disabled,
-  and keyboard-modifier interaction under both style.WidgetVisualStyle values
-  (closes the open 17.5.5 item). Backend: draw/resize/close routing, timers,
-  navigation, figure-manager lifecycle, and home/back/forward/pan/zoom/save tools
-  are idiomatic equivalents; GUI-only tools/behavior are explicit intentional
-  omissions. Reclassified every backend_bases.py / backend_tools.py / widgets.py
-  / animation.py parity row off partial, tightened the guard tests, regenerated
-  docs/matplotlib-parity-status.md, and added a "Phase 17.6.8 Backend, Widget,
-  and Animation Tail" section to docs/matplotlib-migration-notes.md.
-
-### 17.6.9 Final Closure Sweep
-
-- [x] Re-run the upstream public-surface extractor and resolve every changed or
-      newly unclassified row.
-      2026-06-05: reran `internal/examplecatalog/extract_public_surface.py`
-      against vendored Matplotlib 3.10.9; the fresh artifact was byte-identical
-      to `test/testdata/parity_surface/upstream_public_surface.json`, so no new
-      or changed upstream rows required classification. Verified with
-      `go test ./internal/examplecatalog/...`, including extractor freshness,
-      stale-doc, duplicate-row, and closure-owner guards.
-- [x] Ensure every remaining `not-started` row is either implemented, converted
-      to a precise `partial` with an owner task, or marked
-      `intentional-omission` with rationale.
-      2026-06-05: audited the generated parity status inventory and confirmed
-      there are zero remaining `not-started` public-surface rows
-      (`docs/matplotlib-parity-status.md` summary reports `not-started | 0`,
-      and no detail rows match `| not-started |`). `go test
-      ./internal/examplecatalog/...` keeps the generated doc current and
-      verifies every tracked open row has a valid closure owner or rationale.
-- [x] Ensure every remaining `partial` row has a committed test, catalog case,
-      or documentation entry proving what is still missing.
-      2026-06-05: added
-      `TestPartialPublicSurfaceRowsHaveEvidenceOfRemainingScope` so every
-      generated `partial` public-surface row must either reference committed
-      catalog/showcase evidence or document the remaining scope in its parity
-      note. Verified with `go test ./internal/examplecatalog/...`; the
-      generated status ledger currently tracks 557 `partial` rows with that
-      evidence gate enforced.
-- [x] Run `just fmt && just lint && just test`, then run the catalog parity
-      suites for every newly added or modified case.
-      2026-06-05: `just fmt` is stable (`treefmt` reports 0 changed files);
-      `just lint` passes with the baseline-aware
-      `--new-from-merge-base=origin/main` gate and reports 0 issues for the
-      local 17.6.9 stack; `just test` passes with the vendored FreeType 2.6.1
-      build. Refreshed stale committed goldens for `quad_mesh`,
-      `mesh_contour_tri`, `mathtext_inline_labels`, `mixed_raster_vector`, and
-      `errorbar_basic`, then passed the focused catalog parity suite covering
-      `TestGolden`, `TestAGGNativeGolden`, `TestMatplotlibRef`,
-      `TestAGGNativeMatplotlibRef`, `TestReferenceCompare`,
-      `TestAGGNativeReferenceCompare`, `TestPDFGolden`, and `TestSVGGolden`.
-      Optional visual PNG goldens for `errorbar_basic` and `mesh_contour_tri`
-      were also run with `RUN_OPTIONAL_VISUAL_TESTS=true`.
-
-Exit criteria:
-
-- [x] `docs/matplotlib-parity-status.md` has no unowned `partial` or
-      `not-started` plotting rows.
-- [x] Every Matplotlib chart/helper class that is in scope for this port has a
-      direct Go API, an idiomatic Go equivalent, or an explicit intentional
-      omission.
-- [x] Every newly implemented surface has focused unit coverage and, when
-      visible, a catalog-driven Matplotlib reference fixture.
-- [x] Example and browser-gallery phases can proceed without hiding unresolved
-      implementation gaps as "documentation" work.
+- Public-surface closure metadata now records ownership and rationale for every
+  tracked `partial` or `not-started` row, regenerates
+  `docs/matplotlib-parity-status.md`, and fails CI for stale docs,
+  unclassified upstream rows, duplicate rows, or unowned open rows.
+- Missing/thin 2D APIs were closed for `Axes.bxp`, `Axes.violin`,
+  `Axes.hlines`, `Axes.vlines`, `Axes.clabel`, and matching pyplot wrappers,
+  with targeted tests, fixture triplets where visible, and migration notes for
+  intentional signature differences.
+- Axes option breadth was hardened for histogram, scatter, bar,
+  fill-between/fill-betweenx, errorbar, collections, pcolor/pcolormesh, and
+  scalar-mappable behavior, keeping fixture sources aligned with Matplotlib
+  instead of hiding gaps in examples.
+- mplot3d closure added triangulated contour helpers, audited depth ordering,
+  clipping, view/aspect defaults, axis/tick styling, scalar mapping, colorbar
+  behavior, and missing 3D fixture triplets including contour, tricontour,
+  errorbar, bar2d-zdir, and text cases.
+- Color, image, norm, and colorbar extras were audited and closed with tests or
+  explicit omissions: color parsing edge cases, norm breadth, `FuncNorm`,
+  `LightSource`, bivariate/multivariate colormaps, transformed-image
+  resampling, colorbar placement, formatter, boundary, extension, and mutable
+  scalar-map update behavior.
+- Patch, annotation, legend, and offset-box tail rows are split between static
+  rendering equivalents and GUI/dynamic-property omissions, with guard tests
+  for patch/arrow/connection registries, separate annotation text coordinates,
+  scalar-mapped legend samples, and `loc="best"` patch/path scoring.
+- Pyplot state, interactive-mode hooks, figure/axes lifecycle, and migration
+  wrappers were audited against upstream; wrappers delegate through the
+  object-oriented core and intentional typed-API divergences are documented.
+- Backend, widget, and animation tail scope is closed as a deterministic
+  static-vs-GUI split: lifecycle/events/timers/tools are classified, widget
+  interactions are covered across visual styles, GIF writing is deterministic,
+  and unsupported movie/HTML writers return explicit errors.
+- Final 2026-06-05 verification refreshed stale goldens, confirmed the upstream
+  extractor artifact was unchanged, and passed `just fmt`, `just lint`,
+  `just test`, `go test ./internal/examplecatalog/...`, focused mplot3d/core
+  suites, and focused catalog parity suites covering Golden, MatplotlibRef,
+  ReferenceCompare, AGG-native, PDF, and SVG harnesses.
 
 ---
 
