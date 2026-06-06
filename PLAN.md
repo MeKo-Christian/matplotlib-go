@@ -1854,6 +1854,76 @@ Implementation notes:
 - Backend-output examples should save and compare SVG/PDF artifacts, not just
   PNG screenshots.
 
+### 18.4 High-Priority Demo Breadth Closure
+
+Remaining purpose: finish the first Phase 18 exit criterion by making every
+high-priority `DemoBreadthGap` either visibly closed by a showcase or explicitly
+split into Phase 9C when the residual is implementation/API breadth rather than
+example breadth.
+
+- [ ] Add a focused ticks/scales/formatters gallery for the remaining
+      high-priority `ticks-scales-formatters` gap.
+  - Target catalog ID: `ticks_scales_formatters_gallery`.
+  - Cover major/minor locators, date and category formatting, log/symlog/asinh
+    or logit scale examples, engineering/percent/scientific formatter labels,
+    and a custom-converter panel where practical.
+  - Add the normal gallery artifacts:
+    `examples/ticks_scales_formatters_gallery/`,
+    `test/parity/ticks_scales_formatters_gallery/`,
+    `test/matplotlib_ref/plots/ticks_scales_formatters_gallery.py`,
+    committed `testdata/golden/` and `testdata/matplotlib_ref/` PNGs, catalog
+    row, parity registry row, CLI registry row, validation-cluster coverage, and
+    browser-demo planned coverage.
+- [ ] Update the `ticks-scales-formatters` `DemoBreadthGap` row to name the new
+      showcase and rewrite its coverage text so it no longer says formatter
+      breadth is not isolated.
+- [ ] Audit the already-showcased high-priority rows and remove stale
+      example-breadth wording where a gallery now exists:
+      `marker-grid`, `advanced-scatter`, `bar-variants`, `fill-variants`,
+      `histogram-variants`, `colormap-families`, `image-variants`,
+      `colorbar-norms-extensions`, `mathtext-gallery`, `text-layout-gallery`,
+      `annotation-legend-offsetbox`, and `mplot3d-gallery`.
+- [ ] Split any residual non-example work from those high-priority rows into
+      precise Phase 9C implementation/API follow-ups. Examples include
+      resampled colormap API breadth, transformed-image edge fixtures,
+      mutable scalar-map edge fixtures, or formatter objects when the gallery
+      already demonstrates the user-visible behavior.
+- [ ] Add a regression test that the first Phase 18 exit criterion is
+      mechanically checkable: every high-priority `DemoBreadthGap` must either
+      name at least one `Showcase: true` catalog row that covers its target
+      features or carry an explicit Phase 9C split rationale.
+- [ ] Mark the first Phase 18 exit criterion complete only after that test
+      passes and the audit text no longer points at missing user-facing demos.
+
+### 18.5 Fixture-Only Public Status Cleanup
+
+Remaining purpose: finish the third Phase 18 exit criterion by removing or
+justifying the lone `fixture-only` public feature-family status in
+`docs/matplotlib-parity-status.md`.
+
+- [ ] Resolve the `patches` feature-coverage row, currently reported as
+      `fixture-only`.
+  - If the existing `patch_showcase` is sufficient as the user-facing example,
+    update `internal/examplecatalog/feature_coverage.go` so `patches` includes
+    `ExampleIDs: []string{"patch_showcase"}`, has a non-pending
+    `UserShowcase`, and uses `BreadthThin` or `BreadthBroad` instead of
+    `BreadthFixtureOnly`.
+  - If `patch_showcase` is too narrow, add a broader `patch_gallery` showcase
+    covering rectangles, circles, ellipses, polygons, fancy boxes, arrows,
+    connection patches, hatch styles, and common patch styling. Add the normal
+    examples/parity/reference/golden/catalog/registry wiring before changing
+    the feature-coverage status.
+- [ ] Add or update browser-demo coverage metadata for patch examples so the
+      status is either active or explicitly planned instead of silently pending.
+- [ ] Regenerate `docs/matplotlib-parity-status.md` from the catalog after the
+      feature-coverage change.
+- [ ] Add a regression test for the third Phase 18 exit criterion: implemented
+      public feature families may not report `BreadthFixtureOnly` unless they
+      have an explicit, intentional classification explaining why no
+      user-facing example is appropriate.
+- [ ] Mark the third Phase 18 exit criterion complete only after the regenerated
+      status doc has no unintentional `fixture-only` feature-family rows.
+
 **Exit criteria:**
 
 - [ ] Every high-priority `DemoBreadthGap` is closed by a user-facing example
