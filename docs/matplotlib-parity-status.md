@@ -14,7 +14,7 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 | lines                    | implemented | implemented | implemented | pending     | broad        |
 | collections              | partial     | implemented | partial     | partial     | thin         |
 | patches                  | partial     | implemented | pending     | pending     | fixture-only |
-| text-annotation-legend   | partial     | implemented | partial     | partial     | thin         |
+| text-annotation-legend   | partial     | implemented | partial     | partial     | broad        |
 | image                    | implemented | implemented | partial     | partial     | thin         |
 | colorbar                 | partial     | implemented | partial     | partial     | thin         |
 | colors-cm                | partial     | implemented | partial     | pending     | thin         |

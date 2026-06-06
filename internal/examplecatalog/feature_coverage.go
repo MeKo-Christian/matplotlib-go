@@ -184,15 +184,15 @@ var featureCoverageRows = []FeatureCoverage{
 		UpstreamModules:         []string{"text.py", "legend.py", "legend_handler.py", "offsetbox.py", "textpath.py"},
 		UpstreamGalleryFamilies: []string{"text_labels_and_annotations"},
 		GoFiles:                 []string{"core/text.go", "core/annotation_box.go", "core/legend.go", "core/anchored_text.go", "core/anchored_drawing_area.go", "core/anchored_packer.go", "core/anchored_sizebar.go", "render/text_path.go"},
-		CatalogIDs:              []string{"text_labels_strict", "title_strict", "annotation_composition", "figure_labels_composition", "mathtext_inline_labels", "legend_layout_matrix", "text_annotation_matrix"},
-		ExampleIDs:              []string{"annotation_composition", "figure_labels_composition"},
+		CatalogIDs:              []string{"text_labels_strict", "title_strict", "text_layout_gallery", "annotation_composition", "annotation_legend_offsetbox_gallery", "figure_labels_composition", "mathtext_gallery", "mathtext_inline_labels", "legend_layout_matrix", "text_annotation_matrix"},
+		ExampleIDs:              []string{"text_layout_gallery", "annotation_composition", "annotation_legend_offsetbox_gallery", "figure_labels_composition", "mathtext_gallery"},
 		WebDemoIDs:              []string{"composition"},
 		GoEquivalent:            CoveragePartial,
 		ParityFixture:           CoverageImplemented,
 		UserShowcase:            CoveragePartial,
 		BrowserDemo:             CoveragePartial,
-		Breadth:                 BreadthThin,
-		Notes: "Text / MathText / TeX layout, the annotation coordinate model, static offset boxes, and static legend handlers/layout are covered by text_labels_strict, title_strict, mathtext_inline_labels, annotation_composition, legend_layout_matrix, and text_annotation_matrix. " +
+		Breadth:                 BreadthBroad,
+		Notes: "Text / MathText / TeX layout, the annotation coordinate model, static offset boxes, and static legend handlers/layout are covered by text_layout_gallery, mathtext_gallery, annotation_legend_offsetbox_gallery, text_labels_strict, title_strict, mathtext_inline_labels, annotation_composition, legend_layout_matrix, and text_annotation_matrix. " +
 			"Remaining partial scope is the dynamic get/set property grammar, public get_window_extent methods, OffsetFrom live callables, draggable legend/offsetbox GUI behavior, and fixture-specific pixel residuals, split across the text/annotation/offsetbox/legend foundation gaps.",
 	},
 	{

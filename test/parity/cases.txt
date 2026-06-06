@@ -35,6 +35,8 @@ mathtext_fractions
 mathtext_integrals
 mathtext_matrices
 mathtext_inline_labels
+mathtext_gallery
+text_layout_gallery
 image_heatmap
 image_variants_gallery
 imshow_clipped
@@ -79,6 +81,7 @@ figure_labels_composition
 colorbar_composition
 colorbar_variants_gallery
 annotation_composition
+annotation_legend_offsetbox_gallery
 patch_showcase
 patch_style_matrix
 mesh_contour_tri

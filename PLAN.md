@@ -1801,7 +1801,7 @@ Implementation notes:
 - [x] Add named-color swatches and colormap family galleries.
 - [x] Add image interpolation/alpha/matshow/spy galleries.
 - [x] Add colorbar norm/extension galleries.
-- [ ] Add MathText, text layout, annotation, legend, and offset-box galleries.
+- [x] Add MathText, text layout, annotation, legend, and offset-box galleries.
 
 Implementation notes:
 

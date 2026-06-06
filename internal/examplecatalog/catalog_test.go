@@ -207,6 +207,29 @@ func TestCatalogIncludesColorImageGalleryShowcases(t *testing.T) {
 	}
 }
 
+func TestCatalogIncludesTextGalleryShowcases(t *testing.T) {
+	want := map[string]string{
+		"mathtext_gallery":                    "mathtext",
+		"text_layout_gallery":                 "text",
+		"annotation_legend_offsetbox_gallery": "annotation",
+	}
+	for id, topic := range want {
+		c, ok := Lookup(id)
+		if !ok {
+			t.Fatalf("missing Phase 18.2 showcase catalog case %q", id)
+		}
+		if c.Topic != topic {
+			t.Fatalf("%s topic = %q, want %q", id, c.Topic, topic)
+		}
+		if !c.Showcase {
+			t.Fatalf("%s should be a user-facing showcase", id)
+		}
+		if c.FixtureOnly {
+			t.Fatalf("%s should not be fixture-only", id)
+		}
+	}
+}
+
 func TestCatalogIncludesWidgetsGalleryShowcase(t *testing.T) {
 	c, ok := Lookup("widgets_gallery")
 	if !ok {
