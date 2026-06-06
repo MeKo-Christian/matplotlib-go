@@ -18,7 +18,7 @@ const defaultWriterFPS = 5
 // grabbed, mirroring matplotlib indexing self._frames[0] on an empty list.
 var ErrNoFramesGrabbed = errors.New("animation: no frames were grabbed")
 
-// PillowWriter is a deterministic, dependency-free GIF writer. It is the Go
+// GifWriter is a deterministic, dependency-free GIF writer. It is the Go
 // analogue of matplotlib.animation.PillowWriter: it accumulates frames during
 // GrabFrame and encodes them into an animated GIF on Finish.
 //
@@ -27,7 +27,7 @@ var ErrNoFramesGrabbed = errors.New("animation: no frames were grabbed")
 // This port grabs the canvas RGBA buffer (canvas.RasterCanvas) and encodes with
 // the standard library image/gif, quantizing against a fixed palette so the
 // output is byte-for-byte deterministic across platforms.
-type PillowWriter struct {
+type GifWriter struct {
 	FPS int
 
 	cnv    canvas.FigureCanvas
@@ -37,18 +37,27 @@ type PillowWriter struct {
 	frames []*image.RGBA // mirrors self._frames
 }
 
-// NewPillowWriter returns a PillowWriter at the given frame rate. fps <= 0 falls
+// NewGifWriter returns a GifWriter at the given frame rate. fps <= 0 falls
 // back to the AbstractMovieWriter default of 5.
-func NewPillowWriter(fps int) *PillowWriter {
+func NewGifWriter(fps int) *GifWriter {
 	if fps <= 0 {
 		fps = defaultWriterFPS
 	}
-	return &PillowWriter{FPS: fps}
+	return &GifWriter{FPS: fps}
 }
+
+// PillowWriter is a compatibility alias for GifWriter. Matplotlib names the
+// equivalent class PillowWriter, but this port uses the standard library
+// image/gif encoder rather than Pillow.
+type PillowWriter = GifWriter
+
+// NewPillowWriter returns a GifWriter. It is kept for callers using the earlier
+// Matplotlib-derived name.
+func NewPillowWriter(fps int) *GifWriter { return NewGifWriter(fps) }
 
 // Setup stores the canvas, output path, and dpi and resets the frame buffer,
 // mirroring PillowWriter.setup.
-func (p *PillowWriter) Setup(c canvas.FigureCanvas, outfile string, dpi float64) error {
+func (p *GifWriter) Setup(c canvas.FigureCanvas, outfile string, dpi float64) error {
 	if c == nil {
 		return ErrNilCanvas
 	}
@@ -68,14 +77,14 @@ func (p *PillowWriter) Setup(c canvas.FigureCanvas, outfile string, dpi float64)
 
 // FrameSize returns the (width, height) in pixels of a movie frame, mirroring
 // AbstractMovieWriter.frame_size.
-func (p *PillowWriter) FrameSize() (w, h int) {
+func (p *GifWriter) FrameSize() (w, h int) {
 	return p.w, p.h
 }
 
 // GrabFrame captures the canvas's most recently rendered RGBA buffer and appends
 // a private copy, mirroring PillowWriter.grab_frame (which reads the figure's
 // RGBA buffer and stores it).
-func (p *PillowWriter) GrabFrame() error {
+func (p *GifWriter) GrabFrame() error {
 	raster, ok := p.cnv.(canvas.RasterCanvas)
 	if !ok {
 		return ErrWriterUnsupported
@@ -90,7 +99,7 @@ func (p *PillowWriter) GrabFrame() error {
 
 // Finish encodes the accumulated frames into an animated GIF at p.out, mirroring
 // PillowWriter.finish (save_all=True, duration=int(1000/fps), loop=0).
-func (p *PillowWriter) Finish() (err error) {
+func (p *GifWriter) Finish() (err error) {
 	if len(p.frames) == 0 {
 		return ErrNoFramesGrabbed
 	}
@@ -132,4 +141,4 @@ func cloneRGBAImage(img *image.RGBA) *image.RGBA {
 	return clone
 }
 
-var _ MovieWriter = (*PillowWriter)(nil)
+var _ MovieWriter = (*GifWriter)(nil)

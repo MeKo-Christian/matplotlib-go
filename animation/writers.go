@@ -85,5 +85,5 @@ func WriterByName(name string, fps int) (MovieWriter, error) {
 }
 
 func init() {
-	RegisterWriter("pillow", func(fps int) MovieWriter { return NewPillowWriter(fps) })
+	RegisterWriter("pillow", func(fps int) MovieWriter { return NewGifWriter(fps) })
 }

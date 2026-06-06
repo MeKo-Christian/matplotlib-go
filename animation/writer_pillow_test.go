@@ -149,8 +149,8 @@ func TestWriterByNameRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("WriterByName(pillow): %v", err)
 	}
-	if _, ok := w.(*PillowWriter); !ok {
-		t.Fatalf("WriterByName(pillow) = %T, want *PillowWriter", w)
+	if _, ok := w.(*GifWriter); !ok {
+		t.Fatalf("WriterByName(pillow) = %T, want *GifWriter", w)
 	}
 
 	for _, name := range []string{"ffmpeg", "imagemagick", "html", "unknown"} {
@@ -160,9 +160,9 @@ func TestWriterByNameRegistry(t *testing.T) {
 	}
 }
 
-func TestPillowWriterRequiresRasterCanvas(t *testing.T) {
+func TestGifWriterRequiresRasterCanvas(t *testing.T) {
 	// A plain canvas without RasterCanvas must be rejected at Setup.
-	w := NewPillowWriter(5)
+	w := NewGifWriter(5)
 	if err := w.Setup(plainCanvas{}, "x.gif", 0); err != ErrWriterUnsupported {
 		t.Fatalf("Setup(non-raster) = %v, want ErrWriterUnsupported", err)
 	}

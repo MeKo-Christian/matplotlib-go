@@ -311,7 +311,7 @@ and the blit-friendly redraw paths from Phase 4.
 
 ### 6.2 Frame Writers
 
-- [ ] GIF writer (pure-Go encoder, no external dependency).
+- [x] GIF writer (pure-Go encoder, no external dependency).
 - [ ] APNG writer for higher-quality web demos.
 - [ ] MP4 / WebM writers via optional `ffmpeg` shellout, gated by a build
       tag and runtime detection.

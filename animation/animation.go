@@ -211,7 +211,7 @@ func WithSaveCount(n int) SaveOption { return func(c *saveConfig) { c.saveCount 
 // Save draws every frame and writes them to filename, mirroring
 // matplotlib.animation.Animation.save.
 //
-// The writer is chosen from the filename extension (".gif" → PillowWriter) unless
+// The writer is chosen from the filename extension (".gif" -> GifWriter) unless
 // one is supplied with WithWriter. Extensions and writer names that require
 // external encoders (mp4/ffmpeg/imagemagick) or HTML output return
 // ErrWriterUnsupported.
