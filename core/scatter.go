@@ -53,8 +53,8 @@ const (
 
 const MarkerTriangleUp = MarkerTriangle
 
-// MarkerFillStyle controls marker filling. Full and none are currently routed
-// through scatter; half-fill styles are reserved for alternate-path rendering.
+// MarkerFillStyle controls marker filling. Full and none use the normal marker
+// path; half-fill styles split filled marker paths for alternate-side drawing.
 type MarkerFillStyle uint8
 
 const (

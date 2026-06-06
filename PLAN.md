@@ -1470,10 +1470,10 @@ plus, square, triangle, path).
       `hH` hexagons, `X` filled-x, `P` filled-plus, `d` thin diamond,
       `|_` vline/hline, and the caret markers (`TICKLEFT/RIGHT/UP/DOWN`,
       `CARETLEFT/...`).
-- [ ] Support `MarkerStyle` with `fillstyle` (`full/left/right/bottom/top/none`).
-      `MarkerStyle` exists and `full` / `none` are routed through scatter;
-      half-fill (`left/right/bottom/top`) still needs alternate-path drawing
-      rather than the current single-path collection model.
+- [x] Support `MarkerStyle` with `fillstyle` (`full/left/right/bottom/top/none`).
+      `MarkerStyle` routes full / none and split left/right/top/bottom marker
+      paths through Line2D and scatter, with whole-marker edge strokes and
+      Line2D alternate face-color support.
 - [x] Support mathtext markers and `(numsides, style, angle)` tuple markers.
 - [x] Add catalog cases exercising the full marker grid.
 
@@ -1488,14 +1488,18 @@ plus, square, triangle, path).
 
 ### 9.5 Image interpolation modes
 
-**Gap:** ~5 of ~16 interpolation modes exist (nearest, bilinear, bicubic,
-hamming, hanning).
+**Gap closed:** AGG now resolves the full Matplotlib interpolation registry and
+the fallback behavior is documented for non-parity backends.
 
-- [ ] Add `lanczos`, `spline16`, `spline36`, `kaiser`, `quadric`, `catrom`,
+- [x] Add `lanczos`, `spline16`, `spline36`, `kaiser`, `quadric`, `catrom`,
       `gaussian`, `bessel`, `mitchell`, `sinc`, `blackman`, `hermite`, and the
       `antialiased`/`auto` resampling policy.
-- [ ] Route the modes through AGG and the shared image resampler with documented
-      fallbacks where a backend cannot match a filter.
+- [x] Route the modes through AGG and the shared image resampler with documented
+      fallbacks where a backend cannot match a filter. AGG consumes
+      `Image.Interpolation()` for direct and transformed image draws, GoBasic
+      remains a deterministic nearest-only fallback, and SVG/PDF/PS/PGF keep
+      image placement vector-structural while leaving resampling to the output
+      consumer.
 
 ### 9.6 Arrow, connection, and patch classes
 
