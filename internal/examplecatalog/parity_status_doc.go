@@ -6,6 +6,13 @@ import (
 	"strings"
 )
 
+type markdownTableAlign int
+
+const (
+	markdownTableLeft markdownTableAlign = iota
+	markdownTableRight
+)
+
 // MatplotlibParityStatusMarkdown renders the committed parity inventories as a
 // compact status ledger for docs/matplotlib-parity-status.md.
 func MatplotlibParityStatusMarkdown(publicSurface []PublicSurfaceRow) string {
@@ -21,17 +28,23 @@ func MatplotlibParityStatusMarkdown(publicSurface []PublicSurfaceRow) string {
 	b.WriteString("# Matplotlib Parity Status\n\n")
 	b.WriteString("Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstream_public_surface.json`.\n\n")
 	b.WriteString("## Feature Coverage\n\n")
-	b.WriteString("| Feature | Go | Fixture | Showcase | Browser | Breadth |\n")
-	b.WriteString("| --- | --- | --- | --- | --- | --- |\n")
+	featureRows := make([][]string, 0, len(FeatureCoverageMatrix()))
 	for _, row := range FeatureCoverageMatrix() {
-		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s | %s |\n",
+		featureRows = append(featureRows, []string{
 			markdownEscape(row.ID),
-			row.GoEquivalent,
-			row.ParityFixture,
-			row.UserShowcase,
-			row.BrowserDemo,
-			row.Breadth)
+			string(row.GoEquivalent),
+			string(row.ParityFixture),
+			string(row.UserShowcase),
+			string(row.BrowserDemo),
+			string(row.Breadth),
+		})
 	}
+	writeMarkdownTable(
+		&b,
+		[]string{"Feature", "Go", "Fixture", "Showcase", "Browser", "Breadth"},
+		[]markdownTableAlign{markdownTableLeft, markdownTableLeft, markdownTableLeft, markdownTableLeft, markdownTableLeft, markdownTableLeft},
+		featureRows,
+	)
 
 	b.WriteString("\n## Public Surface Summary\n\n")
 	writeStatusSummary(&b, publicRows)
@@ -39,8 +52,7 @@ func MatplotlibParityStatusMarkdown(publicSurface []PublicSurfaceRow) string {
 	writeClosureSummary(&b, publicRows)
 
 	b.WriteString("\n## Open Public Surface Rows\n\n")
-	b.WriteString("| Upstream | Feature | Status | Closure owner | Local files | Note |\n")
-	b.WriteString("| --- | --- | --- | --- | --- | --- |\n")
+	openRows := make([][]string, 0, len(publicRows))
 	for _, row := range publicRows {
 		if row.Status != PublicSurfacePartial && row.Status != PublicSurfaceNotStarted {
 			continue
@@ -49,14 +61,21 @@ func MatplotlibParityStatusMarkdown(publicSurface []PublicSurfaceRow) string {
 		if owner == "" {
 			owner = row.ClosureRationale
 		}
-		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s | %s |\n",
-			markdownEscape(row.UpstreamID),
+		openRows = append(openRows, []string{
+			markdownEscapeUpstreamID(row.UpstreamID),
 			markdownEscape(row.FeatureCoverageID),
-			row.Status,
+			string(row.Status),
 			markdownEscape(owner),
 			markdownEscape(strings.Join(row.GoFiles, ", ")),
-			markdownEscape(row.Note))
+			markdownEscape(row.Note),
+		})
 	}
+	writeMarkdownTable(
+		&b,
+		[]string{"Upstream", "Feature", "Status", "Closure owner", "Local files", "Note"},
+		[]markdownTableAlign{markdownTableLeft, markdownTableLeft, markdownTableLeft, markdownTableLeft, markdownTableLeft, markdownTableLeft},
+		openRows,
+	)
 	return b.String()
 }
 
@@ -65,8 +84,7 @@ func writeStatusSummary(b *strings.Builder, rows []PublicSurfaceParity) {
 	for _, row := range rows {
 		counts[row.Status]++
 	}
-	b.WriteString("| Status | Rows |\n")
-	b.WriteString("| --- | ---: |\n")
+	tableRows := make([][]string, 0, 5)
 	for _, status := range []PublicSurfaceParityStatus{
 		PublicSurfaceDirectEquivalent,
 		PublicSurfaceIdiomaticEquivalent,
@@ -74,8 +92,14 @@ func writeStatusSummary(b *strings.Builder, rows []PublicSurfaceParity) {
 		PublicSurfaceNotStarted,
 		PublicSurfaceIntentionalOmission,
 	} {
-		fmt.Fprintf(b, "| %s | %d |\n", status, counts[status])
+		tableRows = append(tableRows, []string{string(status), fmt.Sprintf("%d", counts[status])})
 	}
+	writeMarkdownTable(
+		b,
+		[]string{"Status", "Rows"},
+		[]markdownTableAlign{markdownTableLeft, markdownTableRight},
+		tableRows,
+	)
 }
 
 func writeClosureSummary(b *strings.Builder, rows []PublicSurfaceParity) {
@@ -97,15 +121,81 @@ func writeClosureSummary(b *strings.Builder, rows []PublicSurfaceParity) {
 	sort.Strings(owners)
 
 	b.WriteString("## Closure Owner Summary\n\n")
-	b.WriteString("| Owner | Open rows |\n")
-	b.WriteString("| --- | ---: |\n")
+	tableRows := make([][]string, 0, len(owners))
 	for _, owner := range owners {
-		fmt.Fprintf(b, "| %s | %d |\n", markdownEscape(owner), counts[owner])
+		tableRows = append(tableRows, []string{markdownEscape(owner), fmt.Sprintf("%d", counts[owner])})
 	}
+	writeMarkdownTable(
+		b,
+		[]string{"Owner", "Open rows"},
+		[]markdownTableAlign{markdownTableLeft, markdownTableRight},
+		tableRows,
+	)
 }
 
 func markdownEscape(value string) string {
 	value = strings.ReplaceAll(value, "\n", " ")
 	value = strings.ReplaceAll(value, "|", "\\|")
 	return value
+}
+
+func markdownEscapeUpstreamID(value string) string {
+	value = markdownEscape(value)
+	var b strings.Builder
+	b.Grow(len(value))
+	for i, r := range value {
+		if r == '_' && (i == 0 || value[i-1] == '/' || value[i-1] == ':') {
+			b.WriteByte('\\')
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
+
+func writeMarkdownTable(b *strings.Builder, headers []string, aligns []markdownTableAlign, rows [][]string) {
+	if len(headers) != len(aligns) {
+		panic("markdown table headers and alignments differ")
+	}
+	widths := make([]int, len(headers))
+	for i, header := range headers {
+		widths[i] = len(header)
+	}
+	for _, row := range rows {
+		if len(row) != len(headers) {
+			panic("markdown table row has unexpected width")
+		}
+		for i, cell := range row {
+			widths[i] = max(widths[i], len(cell))
+		}
+	}
+
+	writeMarkdownTableRow(b, headers, aligns, widths)
+	separators := make([]string, len(headers))
+	for i, width := range widths {
+		if width < 3 {
+			width = 3
+		}
+		switch aligns[i] {
+		case markdownTableRight:
+			separators[i] = strings.Repeat("-", width-1) + ":"
+		default:
+			separators[i] = strings.Repeat("-", width)
+		}
+	}
+	writeMarkdownTableRow(b, separators, aligns, widths)
+	for _, row := range rows {
+		writeMarkdownTableRow(b, row, aligns, widths)
+	}
+}
+
+func writeMarkdownTableRow(b *strings.Builder, cells []string, aligns []markdownTableAlign, widths []int) {
+	b.WriteString("|")
+	for i, cell := range cells {
+		if aligns[i] == markdownTableRight {
+			fmt.Fprintf(b, " %*s |", widths[i], cell)
+			continue
+		}
+		fmt.Fprintf(b, " %-*s |", widths[i], cell)
+	}
+	b.WriteString("\n")
 }

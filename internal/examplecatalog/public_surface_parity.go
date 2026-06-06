@@ -80,7 +80,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "axes/_axes.py:method:Axes.bxp",
 		FeatureCoverageID: "axes",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.75.2",
+		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"core/boxplot.go", "core/plot.go"},
 		CatalogIDs:        []string{"boxplot_basic", "stat_variants", "axes_convenience_helpers"},
 		Note:              "Precomputed-stat Axes.Bxp now creates typed Line2D component groups with Matplotlib-style positions, widths, caps, fliers, means, labels, and tick management. Remaining partial scope is Python property-dict alias breadth and patch_artist return-shape compatibility.",
@@ -90,7 +90,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "axes/_axes.py:method:Axes.violin",
 		FeatureCoverageID: "axes",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.75.2",
+		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"core/violin.go", "core/stat_variants.go"},
 		CatalogIDs:        []string{"stat_variants", "specialty_artists", "axes_convenience_helpers"},
 		Note:              "Axes.Violin now accepts precomputed coords/vals/stat summaries and shares the lower-level violin renderer with Violinplot. Remaining partial scope is Python collection return-shape exactness and full style alias breadth.",
@@ -100,17 +100,17 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "axes/_axes.py:method:Axes.arrow",
 		FeatureCoverageID: "axes",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.75.2",
+		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"core/patch_fancyarrow.go", "core/arrow_patch.go"},
 		CatalogIDs:        []string{"patch_showcase", "plot_variants"},
-		Note:              "Arrow artists exist through lower-level patch helpers and pyplot, but a typed Axes.arrow convenience method with Matplotlib-style defaults and fixture coverage remains a Phase 17.75.2 task.",
+		Note:              "Arrow artists exist through lower-level patch helpers and pyplot, but a typed Axes.arrow convenience method with Matplotlib-style defaults and fixture coverage remains a Phase 17.6.2 task.",
 	},
 	{
 		ID:                "axes-hlines-method",
 		UpstreamID:        "axes/_axes.py:method:Axes.hlines",
 		FeatureCoverageID: "axes",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.75.2",
+		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"core/collection_line.go", "core/line_collection_helpers.go"},
 		CatalogIDs:        []string{"plot_variants", "axes_convenience_helpers"},
 		Note:              "Axes.HLines now creates data-coordinate LineCollection artists with single-value endpoint broadcasting and fixture coverage. Remaining partial scope is Matplotlib's kwargs/color/linestyle alias grammar and masked-array handling.",
@@ -120,7 +120,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "axes/_axes.py:method:Axes.vlines",
 		FeatureCoverageID: "axes",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.75.2",
+		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"core/collection_line.go", "core/line_collection_helpers.go"},
 		CatalogIDs:        []string{"plot_variants", "axes_convenience_helpers"},
 		Note:              "Axes.VLines now creates data-coordinate LineCollection artists with single-value extent broadcasting and fixture coverage. Remaining partial scope is Matplotlib's kwargs/color/linestyle alias grammar and masked-array handling.",
@@ -130,7 +130,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "axes/_axes.py:method:Axes.clabel",
 		FeatureCoverageID: "axes",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.75.2",
+		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"core/contour.go"},
 		CatalogIDs:        []string{"mesh_contour_tri", "axes_convenience_helpers"},
 		Note:              "Axes.Clabel now delegates to ContourSet.Clabel for post-hoc contour label placement with level filtering, formatter/font/color options, inline spacing, manual positions, and fixture coverage. Remaining partial scope is GUI/manual event-loop semantics and exact Text artist compatibility.",
@@ -140,7 +140,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.tricontour",
 		FeatureCoverageID: "toolkits-projections",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.75.4",
+		ClosurePhase:      "17.6.4",
 		GoFiles:           []string{"core/axes3d_contour_surface.go", "core/triangulation.go", "core/contour.go"},
 		CatalogIDs:        []string{"mesh_contour_tri", "mplot3d_trisurf3d", "mplot3d_tricontour3d"},
 		Note:              "Axes3D.TriContour now projects triangulated contour lines through Matplotlib-style rotate_axes/juggle_axes handling with levels, offset planes, zdir, axlim clipping, colormap/norm metadata, reprojectors, focused unit coverage, and the dedicated mplot3d_tricontour3d Matplotlib-reference fixture. Remaining partial scope is Python's dynamic overload grammar and residual 3D projection/depth-order differences documented as typed Go deviations.",
@@ -150,7 +150,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.tricontourf",
 		FeatureCoverageID: "toolkits-projections",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.75.4",
+		ClosurePhase:      "17.6.4",
 		GoFiles:           []string{"core/axes3d_contour_surface.go", "core/triangulation.go", "core/contour.go"},
 		CatalogIDs:        []string{"mesh_contour_tri", "mplot3d_trisurf3d", "mplot3d_tricontourf3d"},
 		Note:              "Axes3D.TriContourf now projects filled triangulated contour bands through Matplotlib-style rotate_axes/juggle_axes handling with levels, offset planes, zdir, axlim clipping, colormap/norm metadata, filled-level autoscaling, reprojectors, focused unit coverage, and the dedicated mplot3d_tricontourf3d Matplotlib-reference fixture. Remaining partial scope is Python's dynamic overload grammar and residual 3D projection/depth-order differences documented as typed Go deviations.",
@@ -162,7 +162,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/scalar_mappable.go", "core/colorbar.go"},
 		CatalogIDs:        []string{"image_heatmap", "colorbar_boundary_values", "collection_mutable_scalarmap"},
-		Note:              "Phase 17.75.5 records Normalize as core.Normalize through the ScalarNormalizer contract: linear mapping, clipping, autoscale, inverse, scalar-mappable clim updates, and colorbar synchronization are covered by focused norm tests and visible scalar-map fixtures.",
+		Note:              "Phase 17.6.5 records Normalize as core.Normalize through the ScalarNormalizer contract: linear mapping, clipping, autoscale, inverse, scalar-mappable clim updates, and colorbar synchronization are covered by focused norm tests and visible scalar-map fixtures.",
 	},
 	{
 		ID:                "colors-symlognorm-class",
@@ -170,7 +170,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "colors-cm",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/colorbar.go"},
-		Note:              "Phase 17.75.5 records SymLogNorm as core.SymLogNorm through the ScalarNormalizer contract, with scalar, inverse, autoscale, clipping, out-of-range, and colorbar function-scale routing covered by focused norm tests.",
+		Note:              "Phase 17.6.5 records SymLogNorm as core.SymLogNorm through the ScalarNormalizer contract, with scalar, inverse, autoscale, clipping, out-of-range, and colorbar function-scale routing covered by focused norm tests.",
 	},
 	{
 		ID:                "colors-powernorm-class",
@@ -178,7 +178,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "colors-cm",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/colorbar.go"},
-		Note:              "Phase 17.75.5 records PowerNorm as core.PowerNorm through the ScalarNormalizer contract, with gamma mapping, inverse, autoscale, clipping, and colorbar function-scale routing covered by focused norm tests.",
+		Note:              "Phase 17.6.5 records PowerNorm as core.PowerNorm through the ScalarNormalizer contract, with gamma mapping, inverse, autoscale, clipping, and colorbar function-scale routing covered by focused norm tests.",
 	},
 	{
 		ID:                "colors-twoslope-norm-class",
@@ -187,7 +187,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/colorbar.go"},
 		CatalogIDs:        []string{"twoslope_norm_image"},
-		Note:              "Phase 17.75.5 records TwoSlopeNorm as core.TwoSlopeNorm through the ScalarNormalizer contract, with strict ascending vmin/vcenter/vmax validation, inverse behavior, autoscale expansion, colorbar routing, and the twoslope_norm_image fixture covered.",
+		Note:              "Phase 17.6.5 records TwoSlopeNorm as core.TwoSlopeNorm through the ScalarNormalizer contract, with strict ascending vmin/vcenter/vmax validation, inverse behavior, autoscale expansion, colorbar routing, and the twoslope_norm_image fixture covered.",
 	},
 	{
 		ID:                "colors-centerednorm-class",
@@ -195,7 +195,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "colors-cm",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/colorbar.go"},
-		Note:              "Phase 17.75.5 records CenteredNorm as core.CenteredNorm through the ScalarNormalizer contract, with halfrange symmetry, vcenter handling, autoscale, inverse behavior, clipping, and colorbar function-scale routing covered by focused norm tests.",
+		Note:              "Phase 17.6.5 records CenteredNorm as core.CenteredNorm through the ScalarNormalizer contract, with halfrange symmetry, vcenter handling, autoscale, inverse behavior, clipping, and colorbar function-scale routing covered by focused norm tests.",
 	},
 	{
 		ID:                "colors-boundarynorm-class",
@@ -204,7 +204,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/colorbar.go", "core/mesh.go"},
 		CatalogIDs:        []string{"boundarynorm_pcolormesh", "colorbar_boundary_values", "colorbar_extensions"},
-		Note:              "Phase 17.75.5 records BoundaryNorm as core.BoundaryNorm through the ScalarNormalizer contract, with upstream-matched region indexes, clip/extend validation, non-invertible behavior, boundary ticks/values, colorbar extensions, and dedicated visual fixtures covered.",
+		Note:              "Phase 17.6.5 records BoundaryNorm as core.BoundaryNorm through the ScalarNormalizer contract, with upstream-matched region indexes, clip/extend validation, non-invertible behavior, boundary ticks/values, colorbar extensions, and dedicated visual fixtures covered.",
 	},
 	{
 		ID:                "colors-nonorm-class",
@@ -212,7 +212,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "colors-cm",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/scalar_mappable.go", "core/colorbar.go"},
-		Note:              "Phase 17.75.5 records NoNorm as core.NoNorm through the ScalarNormalizer contract, with identity index-style mapping and scalar-map color lookup covered by focused norm and scalar-mappable tests.",
+		Note:              "Phase 17.6.5 records NoNorm as core.NoNorm through the ScalarNormalizer contract, with identity index-style mapping and scalar-map color lookup covered by focused norm and scalar-mappable tests.",
 	},
 	{
 		ID:                "colors-asinhnorm-class",
@@ -221,14 +221,14 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/colorbar.go"},
 		CatalogIDs:        []string{"asinh_norm_image"},
-		Note:              "Phase 17.75.5 records AsinhNorm as core.AsinhNorm through the ScalarNormalizer contract, with smooth asinh mapping, inverse, autoscale, clipping, asinh colorbar routing, and the asinh_norm_image fixture covered.",
+		Note:              "Phase 17.6.5 records AsinhNorm as core.AsinhNorm through the ScalarNormalizer contract, with smooth asinh mapping, inverse, autoscale, clipping, asinh colorbar routing, and the asinh_norm_image fixture covered.",
 	},
 	{
 		ID:                "colors-funcnorm-class",
 		UpstreamID:        "colors.py:class:FuncNorm",
 		FeatureCoverageID: "colors-cm",
 		Status:            PublicSurfaceIntentionalOmission,
-		ClosurePhase:      "17.75.5",
+		ClosurePhase:      "17.6.5",
 		GoFiles:           []string{"core/norm.go", "transform/scale_registry.go"},
 		CatalogIDs:        []string{"asinh_norm_image", "twoslope_norm_image"},
 		Note:              "FuncNorm is intentionally omitted as a concrete Go type: no supported parity fixture requires Matplotlib's array-like function-normalizer constructor, and arbitrary color normalization is available by implementing ScalarNormalizer directly. Axis-level function/functionlog scales remain separate transform.Scale APIs.",
@@ -240,7 +240,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIntentionalOmission,
 		GoFiles:           []string{"core/norm.go", "transform/scale_registry.go"},
 		CatalogIDs:        []string{"asinh_norm_image", "lognorm_imshow", "twoslope_norm_image"},
-		Note:              "Phase 17.75.5 intentionally omits Matplotlib's dynamic make_norm_from_scale class factory; Go exposes concrete ScalarNormalizer values and transform.Scale registration instead, while caller-defined ScalarNormalizer implementations cover custom normalization without Python-style generated classes.",
+		Note:              "Phase 17.6.5 intentionally omits Matplotlib's dynamic make_norm_from_scale class factory; Go exposes concrete ScalarNormalizer values and transform.Scale registration instead, while caller-defined ScalarNormalizer implementations cover custom normalization without Python-style generated classes.",
 	},
 	{
 		ID:                "colors-lightsource-class",
@@ -249,7 +249,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIntentionalOmission,
 		GoFiles:           []string{"core/axes3d_projection.go", "core/lightsource_inventory_test.go"},
 		CatalogIDs:        []string{"mplot3d_terrain"},
-		Note:              "Phase 17.75.5 records LightSource as an intentional omission for the 2D image-lighting API: no committed fixture requires LightSource.hillshade, shade, or shade_rgb output, and supported mplot3d face shading remains a separate shade3DFaceColor path covered by the mplot3d_terrain audit and focused tests.",
+		Note:              "Phase 17.6.5 records LightSource as an intentional omission for the 2D image-lighting API: no committed fixture requires LightSource.hillshade, shade, or shade_rgb output, and supported mplot3d face shading remains a separate shade3DFaceColor path covered by the mplot3d_terrain audit and focused tests.",
 	},
 	{
 		ID:                "colors-bivar-colormap-class",
@@ -258,7 +258,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIntentionalOmission,
 		GoFiles:           []string{"color/colormap.go", "core/colormap_inventory_test.go"},
 		CatalogIDs:        []string{"colormap_diverging", "colormap_qualitative", "colormap_cyclic"},
-		Note:              "Phase 17.75.5 records BivarColormap as an intentional omission: Go keeps the public color API single-variate, no committed fixture needs two-component lookup-table inputs, and a future implementation would need explicit outside/bad handling plus a 2D colorbar contract.",
+		Note:              "Phase 17.6.5 records BivarColormap as an intentional omission: Go keeps the public color API single-variate, no committed fixture needs two-component lookup-table inputs, and a future implementation would need explicit outside/bad handling plus a 2D colorbar contract.",
 	},
 	{
 		ID:                "colors-bivar-colormap-from-image-class",
@@ -267,7 +267,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIntentionalOmission,
 		GoFiles:           []string{"color/colormap.go", "core/image_io.go", "core/colormap_inventory_test.go"},
 		CatalogIDs:        []string{"colormap_diverging", "image_heatmap"},
-		Note:              "Phase 17.75.5 records BivarColormapFromImage as an intentional omission: Go supports scalar colormap lookup and image IO, but image-backed bivariate construction would require a two-dimensional LUT surface and matching 2D colorbar behavior.",
+		Note:              "Phase 17.6.5 records BivarColormapFromImage as an intentional omission: Go supports scalar colormap lookup and image IO, but image-backed bivariate construction would require a two-dimensional LUT surface and matching 2D colorbar behavior.",
 	},
 	{
 		ID:                "colors-multivar-colormap-class",
@@ -276,7 +276,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIntentionalOmission,
 		GoFiles:           []string{"color/colormap.go", "core/scalar_mappable.go", "core/colormap_inventory_test.go"},
 		CatalogIDs:        []string{"colormap_diverging", "collection_mutable_scalarmap"},
-		Note:              "Phase 17.75.5 records MultivarColormap as an intentional omission: the scalar-mappable model is single-variate, no Go artist accepts tuple-valued component arrays, and a future API would need explicit combination_mode plus multi-component colorbar semantics.",
+		Note:              "Phase 17.6.5 records MultivarColormap as an intentional omission: the scalar-mappable model is single-variate, no Go artist accepts tuple-valued component arrays, and a future API would need explicit combination_mode plus multi-component colorbar semantics.",
 	},
 	{
 		ID:                "colors-segmented-bivar-colormap-class",
@@ -285,7 +285,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIntentionalOmission,
 		GoFiles:           []string{"color/colormap.go", "core/colormap_inventory_test.go"},
 		CatalogIDs:        []string{"colormap_diverging", "colormap_cyclic"},
-		Note:              "Phase 17.75.5 records SegmentedBivarColormap as an intentional omission: segmented bivariate lookup needs a direct visual fixture before Go adds patch resampling, two-component input handling, and bivariate colorbar semantics.",
+		Note:              "Phase 17.6.5 records SegmentedBivarColormap as an intentional omission: segmented bivariate lookup needs a direct visual fixture before Go adds patch resampling, two-component input handling, and bivariate colorbar semantics.",
 	},
 	{
 		ID:                "patches-arrowstyle-private-base",
@@ -929,7 +929,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "pyplot.py:function:arrow",
 		FeatureCoverageID: "pyplot-state",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.75.2",
+		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"pyplot/pyplot.go", "core/patch_fancyarrow.go"},
 		CatalogIDs:        []string{"patch_showcase", "plot_variants"},
 		Note:              "Stateful pyplot Arrow creates a core FancyArrow artist on the current axes in data coordinates. Remaining partial scope is Matplotlib's full Patch kwargs alias grammar and default style tuning.",
@@ -1064,7 +1064,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"pyplot/pyplot.go", "core/artist.go"},
 		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Matplotlib's pyplot margins shortcut maps only partially to Go's immediate margin-based AutoScale path. Phase 17.75.7 keeps persistent per-axis margin state, tight-view toggling, and getter/setter overloads as a documented intentional divergence; callers use the typed AutoScale margin path.",
+		Note:              "Matplotlib's pyplot margins shortcut maps only partially to Go's immediate margin-based AutoScale path. Phase 17.6.7 keeps persistent per-axis margin state, tight-view toggling, and getter/setter overloads as a documented intentional divergence; callers use the typed AutoScale margin path.",
 	},
 	{
 		ID:                "pyplot-gcf",
@@ -1217,7 +1217,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "pyplot.py:function:hlines",
 		FeatureCoverageID: "pyplot-state",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.75.2",
+		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"pyplot/pyplot.go", "core/collection_line.go", "core/line_collection_helpers.go"},
 		CatalogIDs:        []string{"plot_variants", "axes_convenience_helpers"},
 		Note:              "Stateful pyplot HLines delegates to Axes.HLines, including data-coordinate LineCollection creation and single-value endpoint broadcasting. Remaining partial scope is Matplotlib's color/linestyle kwargs aliases and masked-array handling.",
@@ -1227,7 +1227,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "pyplot.py:function:vlines",
 		FeatureCoverageID: "pyplot-state",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.75.2",
+		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"pyplot/pyplot.go", "core/collection_line.go", "core/line_collection_helpers.go"},
 		CatalogIDs:        []string{"plot_variants", "axes_convenience_helpers"},
 		Note:              "Stateful pyplot VLines delegates to Axes.VLines, including data-coordinate LineCollection creation and single-value extent broadcasting. Remaining partial scope is Matplotlib's color/linestyle kwargs aliases and masked-array handling.",
@@ -1273,7 +1273,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "pyplot.py:function:clabel",
 		FeatureCoverageID: "pyplot-state",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.75.2",
+		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"pyplot/pyplot.go", "core/contour.go"},
 		CatalogIDs:        []string{"mesh_contour_tri", "axes_convenience_helpers"},
 		Note:              "Stateful pyplot Clabel now delegates post-hoc contour label placement to the current axes over an existing ContourSet. Remaining partial scope is Matplotlib's GUI/manual event-loop semantics and full Text artist compatibility.",
@@ -2314,22 +2314,22 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		kind:              "method",
 		featureCoverageID: "axes",
 		status:            PublicSurfacePartial,
-		closurePhase:      "17.75.3",
+		closurePhase:      "17.6.3",
 		goFiles:           []string{"core/artist.go", "core/plot.go", "core/plot_variants.go", "core/histogram.go", "core/mesh.go", "core/contour.go"},
 		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants", "axes_option_breadth_17_75_3"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants"},
-		note:              "Axes plotting methods are tracked as typed core helpers plus pyplot wrappers where appropriate. Histogram weights/ranges/cumulative density, scatter scalar styling, edge-aligned/stacked bar labels, fill_between where/interpolate/step semantics, errorbar errorevery, and collection/mesh scalar mutation have focused unit or fixture coverage. Remaining partial scope is Python overload grammar, dynamic kwargs/property-dict aliases, and lower-priority method families outside the 17.75.3 option-breadth slice.",
+		note:              "Axes plotting methods are tracked as typed core helpers plus pyplot wrappers where appropriate. Histogram weights/ranges/cumulative density, scatter scalar styling, edge-aligned/stacked bar labels, fill_between where/interpolate/step semantics, errorbar errorevery, and collection/mesh scalar mutation have focused unit or fixture coverage. Remaining partial scope is Python overload grammar, dynamic kwargs/property-dict aliases, and lower-priority method families outside the 17.6.3 option-breadth slice.",
 	},
 	{
 		idPrefix:          "axes-plotting-class",
 		module:            "axes/_axes.py",
 		featureCoverageID: "axes",
 		status:            PublicSurfacePartial,
-		closurePhase:      "17.75.3",
+		closurePhase:      "17.6.3",
 		goFiles:           []string{"core/artist.go", "core/plot.go", "core/plot_variants.go", "core/histogram.go", "core/mesh.go", "core/contour.go"},
 		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants", "axes_option_breadth_17_75_3"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants"},
-		note:              "The upstream Axes plotting class maps to Go's typed Axes and helper functions. Phase 17.75.3 option-breadth coverage includes typed histogram weights/ranges/cumulative density, scatter scalar styling, edge-aligned/stacked bar labels, fill_between where/interpolate/step semantics, errorbar errorevery, and collection/mesh scalar mutation. Remaining partial scope is Python overload grammar, dynamic kwargs/property-dict aliases, and lower-priority method families outside the 17.75.3 option-breadth slice.",
+		note:              "The upstream Axes plotting class maps to Go's typed Axes and helper functions. Phase 17.6.3 option-breadth coverage includes typed histogram weights/ranges/cumulative density, scatter scalar styling, edge-aligned/stacked bar labels, fill_between where/interpolate/step semantics, errorbar errorevery, and collection/mesh scalar mutation. Remaining partial scope is Python overload grammar, dynamic kwargs/property-dict aliases, and lower-priority method families outside the 17.6.3 option-breadth slice.",
 	},
 	{
 		idPrefix:          "axes-base-method",
@@ -2337,22 +2337,22 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		kind:              "method",
 		featureCoverageID: "axes",
 		status:            PublicSurfacePartial,
-		closurePhase:      "17.75.3",
+		closurePhase:      "17.6.3",
 		goFiles:           []string{"core/artist.go", "core/axis.go", "core/figure_layout.go", "core/subplots.go"},
 		catalogIDs:        []string{"axes_control_surface", "transform_coordinates", "layout_bbox_helpers"},
 		exampleIDs:        []string{"axes_control_surface"},
-		note:              "Axes base methods are represented through typed axes state, limits, scales, labels, transforms, layout, and shared-axis helpers. Remaining option breadth and Python overload compatibility are owned by Phase 17.75.3.",
+		note:              "Axes base methods are represented through typed axes state, limits, scales, labels, transforms, layout, and shared-axis helpers. Remaining option breadth and Python overload compatibility are owned by Phase 17.6.3.",
 	},
 	{
 		idPrefix:          "mplot3d-axes3d",
 		module:            "mpl_toolkits/mplot3d/axes3d.py",
 		featureCoverageID: "toolkits-projections",
 		status:            PublicSurfacePartial,
-		closurePhase:      "17.75.4",
+		closurePhase:      "17.6.4",
 		goFiles:           []string{"core/axes3d.go", "core/axes3d_view.go", "core/axes3d_frame.go", "core/axes3d_contour_surface.go", "core/axes3d_bar_voxel.go", "core/axes3d_geometry.go", "core/axes3d_projection.go", "core/scalar_mappable.go", "core/collection_common.go", "core/colorbar.go"},
 		catalogIDs:        []string{"mplot3d_basic", "mplot3d_terrain", "mplot3d_scatter3d", "mplot3d_surface3d", "mplot3d_wire3d", "mplot3d_trisurf3d", "mplot3d_bar3d", "mplot3d_voxels", "mplot3d_quiver3d", "mplot3d_stem3d", "mplot3d_fill_between3d", "mplot3d_errorbar3d", "mplot3d_contour3d", "mplot3d_contourf3d", "mplot3d_tricontour3d", "mplot3d_tricontourf3d", "mplot3d_bar2d_zdir", "mplot3d_text3d"},
 		exampleIDs:        []string{"mplot3d_terrain"},
-		note:              "Axes3D construction and common 3D plot helpers exist as typed core APIs with catalog coverage. Phase 17.75.4 depth/clipping work covers line and marker helpers, surfaces, contours, triangulated contours, trisurf, bar3d, fill-between3d, voxels, quiver, stem, and errorbar with computed depth ordering, visible-face or face sorting where applicable, AxLimClip-style explicit-limit clipping, and redraw reprojectors. Axis/view-state work covers Matplotlib 3.10-style view defaults, roll and vertical-axis view_init state, perspective/orthographic projection type and focal-length validation, box-aspect reset behavior, explicit and inverted 3D limits, autoscale margins, active panes, grid/tick styling, tick-label placement, and tick-label visibility toggles. Colormapping work covers surface, trisurf, contour, filled contour, triangulated contour, and scatter scalar-map metadata for colorbars, plus explicit-color/non-scalar-mappable behavior for bars, voxels, quiver, stems, error bars, wireframes, plot lines, and fill-between surfaces. Dedicated Matplotlib-reference fixture breadth is now covered for structured and triangulated 3D contours (contour3d, contourf3d, tricontour3d, tricontourf3d), planar 2D bars projected with zdir (bar2d_zdir), and flat 3D text labels (text3d), in addition to the existing line/scatter/stem/errorbar/bar/wireframe/surface/trisurf/voxel/fill-between triplets. Remaining 3D partial scope is GUI/event methods, Python overload grammar, and residual projection/depth-order/text-autoscale differences that are documented as typed Go deviations in docs/matplotlib-migration-notes.md.",
+		note:              "Axes3D construction and common 3D plot helpers exist as typed core APIs with catalog coverage. Phase 17.6.4 depth/clipping work covers line and marker helpers, surfaces, contours, triangulated contours, trisurf, bar3d, fill-between3d, voxels, quiver, stem, and errorbar with computed depth ordering, visible-face or face sorting where applicable, AxLimClip-style explicit-limit clipping, and redraw reprojectors. Axis/view-state work covers Matplotlib 3.10-style view defaults, roll and vertical-axis view_init state, perspective/orthographic projection type and focal-length validation, box-aspect reset behavior, explicit and inverted 3D limits, autoscale margins, active panes, grid/tick styling, tick-label placement, and tick-label visibility toggles. Colormapping work covers surface, trisurf, contour, filled contour, triangulated contour, and scatter scalar-map metadata for colorbars, plus explicit-color/non-scalar-mappable behavior for bars, voxels, quiver, stems, error bars, wireframes, plot lines, and fill-between surfaces. Dedicated Matplotlib-reference fixture breadth is now covered for structured and triangulated 3D contours (contour3d, contourf3d, tricontour3d, tricontourf3d), planar 2D bars projected with zdir (bar2d_zdir), and flat 3D text labels (text3d), in addition to the existing line/scatter/stem/errorbar/bar/wireframe/surface/trisurf/voxel/fill-between triplets. Remaining 3D partial scope is GUI/event methods, Python overload grammar, and residual projection/depth-order/text-autoscale differences that are documented as typed Go deviations in docs/matplotlib-migration-notes.md.",
 	},
 	{
 		idPrefix:          "axis",
@@ -2767,7 +2767,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"color/colormap.go", "color/listed_colormaps.go", "color/named_colors.go", "core/norm.go"},
 		catalogIDs:        []string{"colormap_diverging", "colormap_qualitative", "colormap_cyclic", "named_colors", "asinh_norm_image", "lognorm_imshow", "twoslope_norm_image"},
-		note:              "Named colors, Matplotlib hex forms, grayscale strings, typed RGB/RGBA values, color-cycle references, and single-variate colormaps exist; norm classes and the dynamic norm factory have explicit Phase 17.75.5 rows, while LightSource and bivar/multivar colormaps have explicit intentional-omission rows. Python-only dynamic color-alpha tuples, to_rgba_array batch inputs, masked values, and NaN component pass-through remain typed Go omissions.",
+		note:              "Named colors, Matplotlib hex forms, grayscale strings, typed RGB/RGBA values, color-cycle references, and single-variate colormaps exist; norm classes and the dynamic norm factory have explicit Phase 17.6.5 rows, while LightSource and bivar/multivar colormaps have explicit intentional-omission rows. Python-only dynamic color-alpha tuples, to_rgba_array batch inputs, masked values, and NaN component pass-through remain typed Go omissions.",
 	},
 	{
 		idPrefix:          "pyplot",
@@ -2953,19 +2953,19 @@ func publicSurfaceDefaultClosurePhase(row PublicSurfaceParity) string {
 	}
 	switch row.FeatureCoverageID {
 	case "axes", "lines", "collections", "axis-ticker-scale":
-		return "17.75.3"
+		return "17.6.3"
 	case "toolkits-projections":
-		return "17.75.4"
+		return "17.6.4"
 	case "image", "colorbar", "colors-cm":
-		return "17.75.5"
+		return "17.6.5"
 	case "artist", "patches", "text-annotation-legend":
-		return "17.75.6"
+		return "17.6.6"
 	case "pyplot-state":
-		return "17.75.7"
+		return "17.6.7"
 	case "renderer-backends", "widgets-events-animation":
-		return "17.75.8"
+		return "17.6.8"
 	default:
-		return "17.75.9"
+		return "17.6.9"
 	}
 }
 

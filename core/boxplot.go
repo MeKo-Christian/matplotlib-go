@@ -189,12 +189,14 @@ func (a *Axes) Bxp(stats []BxpStat, opts ...BxpOptions) *BxpContainer {
 			boxPoints := bxpBoxPoints(stat, pos, left, right, showNotches, orientation)
 			container.Boxes = append(container.Boxes, a.addBxpLine(boxPoints, color, lineWidth, ""))
 		}
-		container.Whiskers = append(container.Whiskers,
+		container.Whiskers = append(
+			container.Whiskers,
 			a.addBxpLine([]geom.Pt{violinPoint(pos, stat.Q1, orientation), violinPoint(pos, stat.Whislo, orientation)}, color, lineWidth, ""),
 			a.addBxpLine([]geom.Pt{violinPoint(pos, stat.Q3, orientation), violinPoint(pos, stat.Whishi, orientation)}, color, lineWidth, ""),
 		)
 		if showCaps {
-			container.Caps = append(container.Caps,
+			container.Caps = append(
+				container.Caps,
 				a.addBxpLine([]geom.Pt{violinPoint(capLeft, stat.Whislo, orientation), violinPoint(capRight, stat.Whislo, orientation)}, color, lineWidth, ""),
 				a.addBxpLine([]geom.Pt{violinPoint(capLeft, stat.Whishi, orientation), violinPoint(capRight, stat.Whishi, orientation)}, color, lineWidth, ""),
 			)

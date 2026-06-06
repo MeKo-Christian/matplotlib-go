@@ -12,11 +12,11 @@ Before the Phase 17.5 compatibility path, `widgets_gallery` was listed in
 
 Current focused verification after completing the 17.5.4 chrome-policy pass:
 
-| Check | Result |
-| --- | --- |
-| `TestMatplotlibRef/widgets_gallery` | PSNR `47.4 dB`, MeanAbs `0.73`, MaxDiff `255` |
+| Check                                  | Result                                                       |
+| -------------------------------------- | ------------------------------------------------------------ |
+| `TestMatplotlibRef/widgets_gallery`    | PSNR `47.4 dB`, MeanAbs `0.73`, MaxDiff `255`                |
 | `TestReferenceCompare/widgets_gallery` | PSNR `47.39 dB`, MeanAbs `0.73`, RMSE `15.81`, MaxDiff `255` |
-| `TestGolden/widgets_gallery` | MaxDiff `0`, MeanAbs `0.00`, PSNR `+Inf` |
+| `TestGolden/widgets_gallery`           | MaxDiff `0`, MeanAbs `0.00`, PSNR `+Inf`                     |
 
 Commands used:
 

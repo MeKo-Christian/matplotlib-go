@@ -329,7 +329,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		GoFiles:         []string{"pyplot/pyplot.go", "pyplot/pyplot_test.go", "canvas/canvas.go"},
 		CurrentEquivalent: "Go has a pyplot package with figure/current-axes state, common plot wrappers, " +
 			"text, annotation, reference-line, span, axis-limit, and axis-scale wrappers, rc helpers, savefig, show, and pause hooks. " +
-			"Phase 17.75.7 audited the wrapper surface against vendored pyplot.py/_pylab_helpers.py: state transitions, " +
+			"Phase 17.6.7 audited the wrapper surface against vendored pyplot.py/_pylab_helpers.py: state transitions, " +
 			"interactive-mode hooks, and current figure/axes behavior all delegate to the object-oriented core API, and every " +
 			"upstream row carries an explicit decision (locked by TestPyplotStateSurfaceRowsAreExplicitlyDecided).",
 		Gap: "Intentional signature divergences remain by design: setter-only limit/tick helpers, label setters that return " +
@@ -337,7 +337,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 			"GUI-blocking helpers, and typed options instead of Python overload/data=/property-dict grammar.",
 		Decision: GapDecisionIdiomaticEquivalent,
 		Rationale: "Do not clone Python signatures wholesale; the closed object-oriented surface is reachable through the " +
-			"existing wrappers plus typed core.*Options, so 17.75.7 added no new public wrappers and documented every " +
+			"existing wrappers plus typed core.*Options, so 17.6.7 added no new public wrappers and documented every " +
 			"intentional divergence in docs/matplotlib-migration-notes.md instead.",
 	},
 	{

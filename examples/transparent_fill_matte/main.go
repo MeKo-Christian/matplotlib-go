@@ -42,7 +42,8 @@ func main() {
 
 	// Transparent figure + axes background, exactly as a transparent savefig.
 	transparent := render.Color{R: 1, G: 1, B: 1, A: 0}
-	fig := core.NewFigure(width, height,
+	fig := core.NewFigure(
+		width, height,
 		style.WithBackground(1, 1, 1, 0),
 		style.WithAxesBackground(transparent),
 	)

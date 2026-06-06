@@ -15,6 +15,14 @@ fmt:
 
 lint: freetype261-build
     if command -v golangci-lint >/dev/null 2>&1; then \
+      golangci-lint run --timeout=5m --new-from-merge-base=origin/main; \
+    else \
+      echo "golangci-lint not installed; run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
+      exit 1; \
+    fi
+
+lint-full: freetype261-build
+    if command -v golangci-lint >/dev/null 2>&1; then \
       golangci-lint run --timeout=5m; \
     else \
       echo "golangci-lint not installed; run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \

@@ -22,7 +22,10 @@ excludes = [
 command = "prettier"
 options = ["-w"]
 includes = ["*.html", "*.css", "*.yaml", "*.yml", "*.js", "*.json", "*.md"]
-excludes = [".release-please-manifest.json"]
+excludes = [
+  ".release-please-manifest.json",
+  "docs/matplotlib-migration-notes.md",
+]
 
 ### Go
 

@@ -176,7 +176,7 @@ func TestPyplotDynamicShortcutsHaveExplicitRows(t *testing.T) {
 	}
 }
 
-// TestPyplotStateSurfaceRowsAreExplicitlyDecided locks the Phase 17.75.7 closure
+// TestPyplotStateSurfaceRowsAreExplicitlyDecided locks the Phase 17.6.7 closure
 // of the stateful pyplot wrapper surface: every upstream pyplot.py and
 // _pylab_helpers.py row must resolve to a parity decision that is not
 // not-started. Implemented wrappers, documented partials, idiomatic equivalents,
@@ -192,7 +192,7 @@ func TestPyplotStateSurfaceRowsAreExplicitlyDecided(t *testing.T) {
 		checked++
 		row, ok := PublicSurfaceParityForRow(surface)
 		if !ok {
-			t.Fatalf("missing Phase 17.75.7 pyplot state classification for %q", surface.ID)
+			t.Fatalf("missing Phase 17.6.7 pyplot state classification for %q", surface.ID)
 		}
 		if row.Status == PublicSurfaceNotStarted {
 			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", surface.ID, row.Status)
@@ -214,7 +214,7 @@ func TestPatchStyleClosureRowsAreNotLeftPartial(t *testing.T) {
 		}
 		row, ok := PublicSurfaceParityForRow(surface)
 		if !ok {
-			t.Fatalf("missing Phase 17.75.6 patch-style classification for %q", surface.ID)
+			t.Fatalf("missing Phase 17.6.6 patch-style classification for %q", surface.ID)
 		}
 		if row.Status == PublicSurfacePartial || row.Status == PublicSurfaceNotStarted {
 			t.Fatalf("%s status = %s, want closed patch class/registry decision", surface.ID, row.Status)
@@ -232,7 +232,7 @@ func TestTextAnnotationOffsetboxRowsAreSplitByStaticAndGuiScope(t *testing.T) {
 			}
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.75.6 text/offsetbox classification for %q", upstreamID)
+				t.Fatalf("missing Phase 17.6.6 text/offsetbox classification for %q", upstreamID)
 			}
 			return row
 		}
@@ -287,7 +287,7 @@ func TestLegendStaticRowsAreNotLeftPartial(t *testing.T) {
 			}
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.75.6 static legend classification for %q", upstreamID)
+				t.Fatalf("missing Phase 17.6.6 static legend classification for %q", upstreamID)
 			}
 			return row
 		}
@@ -329,7 +329,7 @@ func TestDraggableLegendRowIsExplicitlyOmitted(t *testing.T) {
 		}
 		row, ok := PublicSurfaceParityForRow(surface)
 		if !ok {
-			t.Fatal("missing Phase 17.75.6 DraggableLegend classification")
+			t.Fatal("missing Phase 17.6.6 DraggableLegend classification")
 		}
 		if row.Status != PublicSurfaceIntentionalOmission {
 			t.Fatalf("DraggableLegend status = %s, want intentional omission", row.Status)
@@ -349,7 +349,7 @@ func TestArtistDynamicRowsAreSplitFromStaticArtistSurface(t *testing.T) {
 			}
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.75.6 artist classification for %q", upstreamID)
+				t.Fatalf("missing Phase 17.6.6 artist classification for %q", upstreamID)
 			}
 			return row
 		}
@@ -389,7 +389,7 @@ func TestHatchImplementationRowsAreSplitFromRendererHatchSurface(t *testing.T) {
 			}
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.75.6 hatch classification for %q", upstreamID)
+				t.Fatalf("missing Phase 17.6.6 hatch classification for %q", upstreamID)
 			}
 			return row
 		}
@@ -436,7 +436,7 @@ func TestPatchDebugHelperRowsAreExplicitlyOmitted(t *testing.T) {
 			found = true
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.75.6 patch helper classification for %q", upstreamID)
+				t.Fatalf("missing Phase 17.6.6 patch helper classification for %q", upstreamID)
 			}
 			if row.Status != PublicSurfaceIntentionalOmission {
 				t.Fatalf("%s status = %s, want intentional omission", upstreamID, row.Status)
@@ -458,7 +458,7 @@ func TestFontManagerRowsAreSplitByTypedFontSurfaceAndRuntimeHelpers(t *testing.T
 			}
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.75.6 font-manager classification for %q", upstreamID)
+				t.Fatalf("missing Phase 17.6.6 font-manager classification for %q", upstreamID)
 			}
 			return row
 		}
@@ -509,7 +509,7 @@ func TestTextPathRowsUseRendererLevelEquivalent(t *testing.T) {
 			found = true
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.75.6 textpath classification for %q", upstreamID)
+				t.Fatalf("missing Phase 17.6.6 textpath classification for %q", upstreamID)
 			}
 			if row.Status == PublicSurfacePartial || row.Status == PublicSurfaceNotStarted {
 				t.Fatalf("%s status = %s, want renderer-level textpath equivalent", upstreamID, row.Status)
@@ -645,13 +645,13 @@ func TestColorsNormSurfaceRowsHaveExplicitDecisions(t *testing.T) {
 	for _, upstreamID := range want {
 		row, ok := LookupPublicSurfaceParityByUpstreamID(upstreamID)
 		if !ok {
-			t.Fatalf("missing explicit Phase 17.75.5 norm classification for %q", upstreamID)
+			t.Fatalf("missing explicit Phase 17.6.5 norm classification for %q", upstreamID)
 		}
 		if row.Status == PublicSurfaceNotStarted {
 			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", upstreamID, row.Status)
 		}
-		if !strings.Contains(row.Note, "17.75.5") && !strings.Contains(row.Note, "ScalarNormalizer") {
-			t.Fatalf("%s note does not reference the Phase 17.75.5 norm decision or ScalarNormalizer contract: %q", upstreamID, row.Note)
+		if !strings.Contains(row.Note, "17.6.5") && !strings.Contains(row.Note, "ScalarNormalizer") {
+			t.Fatalf("%s note does not reference the Phase 17.6.5 norm decision or ScalarNormalizer contract: %q", upstreamID, row.Note)
 		}
 	}
 }
@@ -659,13 +659,13 @@ func TestColorsNormSurfaceRowsHaveExplicitDecisions(t *testing.T) {
 func TestColorsLightSourceSurfaceRowIsIntentionalOmission(t *testing.T) {
 	row, ok := LookupPublicSurfaceParityByUpstreamID("colors.py:class:LightSource")
 	if !ok {
-		t.Fatal("missing explicit Phase 17.75.5 LightSource classification")
+		t.Fatal("missing explicit Phase 17.6.5 LightSource classification")
 	}
 	if row.Status != PublicSurfaceIntentionalOmission {
 		t.Fatalf("LightSource status = %s, want %s", row.Status, PublicSurfaceIntentionalOmission)
 	}
 	required := []string{
-		"Phase 17.75.5",
+		"Phase 17.6.5",
 		"intentional omission",
 		"LightSource.hillshade",
 		"shade_rgb",
@@ -688,25 +688,25 @@ func TestBivarMultivarColormapRowsAreIntentionalOmissions(t *testing.T) {
 	}{
 		{
 			upstreamID: "colors.py:class:BivarColormap",
-			required:   []string{"Phase 17.75.5", "intentional omission", "two-component", "2D colorbar"},
+			required:   []string{"Phase 17.6.5", "intentional omission", "two-component", "2D colorbar"},
 		},
 		{
 			upstreamID: "colors.py:class:BivarColormapFromImage",
-			required:   []string{"Phase 17.75.5", "intentional omission", "image-backed bivariate", "two-dimensional LUT"},
+			required:   []string{"Phase 17.6.5", "intentional omission", "image-backed bivariate", "two-dimensional LUT"},
 		},
 		{
 			upstreamID: "colors.py:class:MultivarColormap",
-			required:   []string{"Phase 17.75.5", "intentional omission", "tuple-valued component arrays", "multi-component colorbar"},
+			required:   []string{"Phase 17.6.5", "intentional omission", "tuple-valued component arrays", "multi-component colorbar"},
 		},
 		{
 			upstreamID: "colors.py:class:SegmentedBivarColormap",
-			required:   []string{"Phase 17.75.5", "intentional omission", "segmented bivariate", "visual fixture"},
+			required:   []string{"Phase 17.6.5", "intentional omission", "segmented bivariate", "visual fixture"},
 		},
 	}
 	for _, tc := range tests {
 		row, ok := LookupPublicSurfaceParityByUpstreamID(tc.upstreamID)
 		if !ok {
-			t.Fatalf("missing explicit Phase 17.75.5 classification for %s", tc.upstreamID)
+			t.Fatalf("missing explicit Phase 17.6.5 classification for %s", tc.upstreamID)
 		}
 		if row.Status != PublicSurfaceIntentionalOmission {
 			t.Fatalf("%s status = %s, want %s", tc.upstreamID, row.Status, PublicSurfaceIntentionalOmission)
@@ -875,14 +875,14 @@ func validPublicSurfaceClosurePhase(phase string) bool {
 		"12.2G",
 		"12.4C",
 		"12.5",
-		"17.75.2",
-		"17.75.3",
-		"17.75.4",
-		"17.75.5",
-		"17.75.6",
-		"17.75.7",
-		"17.75.8",
-		"17.75.9":
+		"17.6.2",
+		"17.6.3",
+		"17.6.4",
+		"17.6.5",
+		"17.6.6",
+		"17.6.7",
+		"17.6.8",
+		"17.6.9":
 		return true
 	default:
 		return false

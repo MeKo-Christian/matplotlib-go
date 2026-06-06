@@ -92,7 +92,7 @@ func TestColorbarMutableMappableUpdateContractIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.75.5 Colorbar Mutable Mappable Update Contract",
+		"Phase 17.6.5 Colorbar Mutable Mappable Update Contract",
 		"Matplotlib colorbars attach to scalar mappables through `mappable.callbacks.connect('changed', Colorbar.update_normal)`",
 		"`Colorbar.update_normal` pulls alpha, colormap, and norm from the mappable",
 		"Go colorbars store the typed `ScalarMappable` handle and refresh through `syncColorbarMapping` during layout or draw",
@@ -160,7 +160,7 @@ func TestColorbarMutableUpdateTestsAndOmissionsAreDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.75.5 Colorbar Mutable Update Tests and Omissions",
+		"Phase 17.6.5 Colorbar Mutable Update Tests and Omissions",
 		"`TestFigureColorbarSyncsMutableCollectionMapping` covers post-creation `SetCLim` and `SetColormap` synchronization",
 		"`TestFigureColorbarSyncsMutableCollectionNormScale` covers post-creation `SetNorm` synchronization to a log colorbar scale",
 		"Collection tests cover `SetArray` refresh for PathCollection, LineCollection, and QuadMesh",
@@ -196,7 +196,7 @@ func TestColorbarFixtureLedgerIsDocumented(t *testing.T) {
 		filepath.Join("..", "test", "matplotlib_ref", "plots", "__init__.py"):         colorbarIDs,
 		filepath.Join("..", "internal", "examplecatalog", "public_surface_parity.go"): append(colorbarIDs, "mutable mappable clim/colormap/norm updates"),
 		filepath.Join("..", "docs", "matplotlib-parity-status.md"):                    {"mutable mappable clim/colormap/norm updates"},
-		filepath.Join("..", "docs", "matplotlib-migration-notes.md"):                  append(colorbarIDs[:1:1], "Phase 17.75.5 Colorbar Fixtures and Ledger"),
+		filepath.Join("..", "docs", "matplotlib-migration-notes.md"):                  append(colorbarIDs[:1:1], "Phase 17.6.5 Colorbar Fixtures and Ledger"),
 	}
 	for path, phrases := range sourceRequirements {
 		data, err := os.ReadFile(path)
@@ -219,10 +219,10 @@ func TestColorbarPlacementAndFormatterBreadthMilestoneIsClosed(t *testing.T) {
 	}
 	planText := strings.Join(strings.Fields(string(planData)), " ")
 	requiredPlan := []string{
-		"[x] 17.75.5.6 Colorbar Placement and Formatter Breadth",
-		"[x] 17.75.5.6.1 Placement, Formatter, and Update Audit",
-		"[x] 17.75.5.6.2 Colorbar Update Tests or Omission",
-		"[x] 17.75.5.6.3 Colorbar Fixtures, Tests, and Ledger",
+		"[x] 17.6.5.6 Colorbar Placement and Formatter Breadth",
+		"[x] 17.6.5.6.1 Placement, Formatter, and Update Audit",
+		"[x] 17.6.5.6.2 Colorbar Update Tests or Omission",
+		"[x] 17.6.5.6.3 Colorbar Fixtures, Tests, and Ledger",
 	}
 	for _, phrase := range requiredPlan {
 		if !strings.Contains(planText, phrase) {
@@ -236,14 +236,14 @@ func TestColorbarPlacementAndFormatterBreadthMilestoneIsClosed(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(docData)), " ")
 	requiredDocs := []string{
-		"Phase 17.75.5 Colorbar Placement Audit",
-		"Phase 17.75.5 Colorbar Parent and Layout Modes",
-		"Phase 17.75.5 Colorbar Size and Anchor Options",
-		"Phase 17.75.5 Colorbar Boundaries and Extensions",
-		"Phase 17.75.5 Colorbar Tick and Label Formatting",
-		"Phase 17.75.5 Colorbar Mutable Mappable Update Contract",
-		"Phase 17.75.5 Colorbar Mutable Update Tests and Omissions",
-		"Phase 17.75.5 Colorbar Fixtures and Ledger",
+		"Phase 17.6.5 Colorbar Placement Audit",
+		"Phase 17.6.5 Colorbar Parent and Layout Modes",
+		"Phase 17.6.5 Colorbar Size and Anchor Options",
+		"Phase 17.6.5 Colorbar Boundaries and Extensions",
+		"Phase 17.6.5 Colorbar Tick and Label Formatting",
+		"Phase 17.6.5 Colorbar Mutable Mappable Update Contract",
+		"Phase 17.6.5 Colorbar Mutable Update Tests and Omissions",
+		"Phase 17.6.5 Colorbar Fixtures and Ledger",
 	}
 	for _, phrase := range requiredDocs {
 		if !strings.Contains(docText, phrase) {
