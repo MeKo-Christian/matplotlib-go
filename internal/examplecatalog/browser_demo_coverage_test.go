@@ -50,6 +50,72 @@ func TestWebDemoReferenceModulesAreReconciled(t *testing.T) {
 	}
 }
 
+func TestPlannedWebReferenceModulesAreActiveOrReferenceOnly(t *testing.T) {
+	wantActive := []string{
+		"annotations",
+		"bars",
+		"errorbars",
+		"fills",
+		"heatmap",
+		"histogram",
+		"lines",
+		"patches",
+		"scatter",
+		"subplots",
+	}
+	for _, module := range wantActive {
+		row, ok := LookupBrowserDemoCoverage("webref-" + module)
+		if !ok {
+			t.Fatalf("missing web reference coverage row for %q", module)
+		}
+		if row.ReferenceModule != module {
+			t.Fatalf("%s ReferenceModule = %q, want %q", row.ID, row.ReferenceModule, module)
+		}
+		if row.Status != BrowserDemoActive {
+			t.Fatalf("%s Status = %s, want %s", row.ID, row.Status, BrowserDemoActive)
+		}
+		if row.ActiveWebDemoID == "" {
+			t.Fatalf("%s has no active web demo mapping", row.ID)
+		}
+		active, ok := LookupWebDemo(row.ActiveWebDemoID)
+		if !ok {
+			t.Fatalf("%s maps to missing web demo %q", row.ID, row.ActiveWebDemoID)
+		}
+		if !containsString(row.CatalogIDs, active.ID) {
+			t.Fatalf("%s CatalogIDs = %v, want active catalog case %q", row.ID, row.CatalogIDs, active.ID)
+		}
+	}
+
+	row, ok := LookupBrowserDemoCoverage("webref-radialforce")
+	if !ok {
+		t.Fatal("missing radialforce web reference coverage row")
+	}
+	if row.Status != BrowserDemoReferenceOnly {
+		t.Fatalf("radialforce Status = %s, want %s", row.Status, BrowserDemoReferenceOnly)
+	}
+	if row.ActiveWebDemoID != "" {
+		t.Fatalf("radialforce ActiveWebDemoID = %q, want empty reference-only mapping", row.ActiveWebDemoID)
+	}
+}
+
+func TestActiveWebReferenceModulesMapToCatalogCases(t *testing.T) {
+	for _, row := range BrowserDemoCoverageRows() {
+		if row.ReferenceModule == "" || row.Status != BrowserDemoActive {
+			continue
+		}
+		if row.ActiveWebDemoID == "" {
+			t.Fatalf("%s is active but has no active web demo ID", row.ID)
+		}
+		c, ok := LookupWebDemo(row.ActiveWebDemoID)
+		if !ok {
+			t.Fatalf("%s maps to missing web demo %q", row.ID, row.ActiveWebDemoID)
+		}
+		if !containsString(row.CatalogIDs, c.ID) {
+			t.Fatalf("%s CatalogIDs = %v, want active web demo catalog case %q", row.ID, row.CatalogIDs, c.ID)
+		}
+	}
+}
+
 func TestCLIOnlyShowcasesHaveBrowserCoverageRows(t *testing.T) {
 	for _, c := range Cases() {
 		if !c.Showcase || c.WebDemoID != "" {

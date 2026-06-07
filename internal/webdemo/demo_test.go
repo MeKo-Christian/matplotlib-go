@@ -10,8 +10,18 @@ import (
 func TestCatalogStable(t *testing.T) {
 	got := Catalog()
 	wantIDs := []string{
+		"lines",
+		"scatter",
+		"bars",
+		"fills",
+		"errorbars",
+		"histogram",
+		"heatmap",
 		"axes",
 		"composition",
+		"subplots",
+		"annotations",
+		"patches",
 		"mesh",
 		"variants",
 		"statistics",

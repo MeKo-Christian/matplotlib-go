@@ -1799,13 +1799,13 @@ same feature families covered by parity fixtures and CLI examples.
 
 ### 19.1 Wire Planned Web Reference Modules
 
-- [ ] Wire `test/matplotlib_ref/webdemos/annotations.py`, `bars.py`,
+- [x] Wire `test/matplotlib_ref/webdemos/annotations.py`, `bars.py`,
       `errorbars.py`, `fills.py`, `heatmap.py`, `histogram.py`, `lines.py`,
       `patches.py`, `scatter.py`, and `subplots.py` into active browser demos
       or fold them into existing catalog-backed browser families.
-- [ ] Keep `radialforce.py` reference-only until it is promoted to a catalog
+- [x] Keep `radialforce.py` reference-only until it is promoted to a catalog
       case.
-- [ ] Add tests that every active web reference module maps to a catalog case
+- [x] Add tests that every active web reference module maps to a catalog case
       and every catalog-backed planned row either has an active browser demo or
       remains explicitly planned.
 
