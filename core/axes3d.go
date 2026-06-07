@@ -22,6 +22,7 @@ const (
 	default3DBoxAspectZoom25 = 25.0 / 24.0
 	default3DViewMin         = -0.095
 	default3DViewMax         = 0.09
+	default3DWorldViewMargin = 1.0 / 48.0
 	default3DScatterSize     = 20.0
 )
 
@@ -196,7 +197,7 @@ func (f *axes3DFrame) Draw(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 	mins, maxs := f.axes.projectionLimits()
-	frameMins, frameMaxs := axes3DFrameLimits(mins, maxs)
+	frameMins, frameMaxs := mins, maxs
 	gridLineWidth := 0.8
 	axisLineWidth := 0.8
 	gridColor := render.Color{R: 0.70, G: 0.70, B: 0.70, A: 1}

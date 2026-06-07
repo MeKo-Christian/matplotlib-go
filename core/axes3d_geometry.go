@@ -692,7 +692,7 @@ func default3DProjectionMatrix(
 
 func default3DBoxAspect() vec3 {
 	aspect := vec3{4, 4, 3}
-	scale := default3DBoxAspectScale / aspect.norm()
+	scale := default3DBoxAspectScale * default3DBoxAspectZoom25 / aspect.norm()
 	return aspect.scale(scale)
 }
 

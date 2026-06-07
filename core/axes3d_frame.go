@@ -506,7 +506,11 @@ func frameAxisTicks(minVal, maxVal float64) []float64 {
 	if hi < lo {
 		lo, hi = hi, lo
 	}
-	ticks := AutoLocator{}.Ticks(lo, hi, 9)
+	ticks := MaxNLocator{
+		N:            9,
+		Steps:        []float64{1, 2, 2.5, 5, 10},
+		RawStepScale: 23.0 / 24.0,
+	}.Ticks(lo, hi, 9)
 	if len(ticks) == 0 {
 		return nil
 	}

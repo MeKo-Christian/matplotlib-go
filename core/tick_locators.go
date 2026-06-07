@@ -255,6 +255,9 @@ type MaxNLocator struct {
 	Symmetric bool
 	Prune     string
 	MinTicks  int
+	// RawStepScale mirrors Matplotlib's axis-specific raw-step adjustments.
+	// Zero means no adjustment.
+	RawStepScale float64
 }
 
 func (l MaxNLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
@@ -284,6 +287,9 @@ func (l MaxNLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 
 	span := maxVal - minVal
 	raw := span / float64(maxIntervals)
+	if l.RawStepScale > 0 {
+		raw *= l.RawStepScale
+	}
 	if raw <= 0 || math.IsInf(raw, 0) || math.IsNaN(raw) {
 		return []float64{minVal, maxVal}
 	}

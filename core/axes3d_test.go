@@ -1286,10 +1286,9 @@ func TestAxes3DSetZLabelRenders3DLabel(t *testing.T) {
 	}
 
 	mins, maxs := ax.projectionLimits()
-	frameMins, frameMaxs := axes3DFrameLimits(mins, maxs)
 	ctx := newAxesDrawContext(ax.Axes, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 	r := &axes3DTextRecorder{}
-	ax.draw3DAxisLabels(r, r, ctx, frameMins, frameMaxs)
+	ax.draw3DAxisLabels(r, r, ctx, mins, maxs)
 
 	if !containsString(r.texts, "Z") {
 		t.Fatalf("expected z-axis label text in draw calls, got %v", r.texts)

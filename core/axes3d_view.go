@@ -245,16 +245,18 @@ func (a *Axes3D) projectionLimits() (vec3, vec3) {
 			maxs[i] = a.viewMax[i]
 			continue
 		}
-		if !a.hasData {
-			continue
-		}
-		if mins[i] == maxs[i] {
+		if a.hasData && mins[i] == maxs[i] {
 			mins[i] -= 0.5
 			maxs[i] += 0.5
 		}
-		margin := (maxs[i] - mins[i]) * a.default3DDataMargin(i)
-		mins[i] -= margin
-		maxs[i] += margin
+		if a.hasData {
+			margin := (maxs[i] - mins[i]) * a.default3DDataMargin(i)
+			mins[i] -= margin
+			maxs[i] += margin
+		}
+		viewMargin := (maxs[i] - mins[i]) * default3DWorldViewMargin
+		mins[i] -= viewMargin
+		maxs[i] += viewMargin
 	}
 	return mins, maxs
 }
@@ -275,15 +277,6 @@ func (a *Axes3D) ensure3DZMargin(margin float64) bool {
 	}
 	a.zMargin = margin
 	return true
-}
-
-func axes3DFrameLimits(mins, maxs vec3) (vec3, vec3) {
-	for i := range 3 {
-		delta := (maxs[i] - mins[i]) / 12
-		mins[i] -= 0.25 * delta
-		maxs[i] += 0.25 * delta
-	}
-	return mins, maxs
 }
 
 func (a *Axes3D) observe3DPoint(x, y, z float64) bool {
