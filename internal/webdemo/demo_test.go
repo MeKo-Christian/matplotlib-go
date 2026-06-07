@@ -20,6 +20,7 @@ func TestCatalogStable(t *testing.T) {
 		"axes",
 		"composition",
 		"subplots",
+		"colorbars",
 		"annotations",
 		"patches",
 		"mesh",
@@ -30,8 +31,13 @@ func TestCatalogStable(t *testing.T) {
 		"vectors",
 		"polar",
 		"projections",
+		"toolkit",
+		"mplot3d",
+		"triangulation",
 		"matrix",
 		"animation",
+		"axisartist",
+		"axes_grid1",
 	}
 	if len(got) != len(wantIDs) {
 		t.Fatalf("Catalog() len = %d, want %d", len(got), len(wantIDs))
@@ -260,6 +266,39 @@ func TestRenderEachShowcaseProducesImage(t *testing.T) {
 			}
 			if allWhite {
 				t.Fatalf("Render(%q) returned an all-white image", descriptor.ID)
+			}
+		})
+	}
+}
+
+func TestRenderPromotedCLIShowcasesProducesImage(t *testing.T) {
+	for _, id := range []string{
+		"lines",
+		"scatter",
+		"bars",
+		"fills",
+		"errorbars",
+		"histogram",
+		"heatmap",
+		"subplots",
+		"annotations",
+		"colorbars",
+		"toolkit",
+		"mplot3d",
+		"triangulation",
+		"axisartist",
+		"axes_grid1",
+	} {
+		t.Run(id, func(t *testing.T) {
+			img, descriptor, err := Render(id, 0, 0)
+			if err != nil {
+				t.Fatalf("Render(%q) error = %v", id, err)
+			}
+			if descriptor.ID != id {
+				t.Fatalf("descriptor.ID = %q, want %q", descriptor.ID, id)
+			}
+			if img == nil || img.Bounds().Empty() {
+				t.Fatalf("Render(%q) returned empty image", id)
 			}
 		})
 	}

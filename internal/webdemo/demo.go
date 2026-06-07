@@ -15,7 +15,10 @@ import (
 	annotation_legend_offsetbox_gallery "github.com/cwbudde/matplotlib-go/examples/annotation_legend_offsetbox_gallery"
 	arrays_showcase "github.com/cwbudde/matplotlib-go/examples/arrays_showcase"
 	axes_control_surface "github.com/cwbudde/matplotlib-go/examples/axes_control_surface"
+	axes_grid1_showcase "github.com/cwbudde/matplotlib-go/examples/axes_grid1_showcase"
+	axisartist_showcase "github.com/cwbudde/matplotlib-go/examples/axisartist_showcase"
 	bar_variants "github.com/cwbudde/matplotlib-go/examples/bar_variants"
+	colorbar_variants_gallery "github.com/cwbudde/matplotlib-go/examples/colorbar_variants_gallery"
 	errorbar_basic "github.com/cwbudde/matplotlib-go/examples/errorbar_basic"
 	figure_labels_composition "github.com/cwbudde/matplotlib-go/examples/figure_labels_composition"
 	fill_variants "github.com/cwbudde/matplotlib-go/examples/fill_variants"
@@ -25,12 +28,15 @@ import (
 	image_heatmap "github.com/cwbudde/matplotlib-go/examples/image_heatmap"
 	lines_markers_gallery "github.com/cwbudde/matplotlib-go/examples/lines_markers_gallery"
 	mesh_contour_tri "github.com/cwbudde/matplotlib-go/examples/mesh_contour_tri"
+	mplot3d_gallery "github.com/cwbudde/matplotlib-go/examples/mplot3d_gallery"
 	patch_showcase "github.com/cwbudde/matplotlib-go/examples/patch_showcase"
 	plot_variants "github.com/cwbudde/matplotlib-go/examples/plot_variants"
 	polar_axes "github.com/cwbudde/matplotlib-go/examples/polar_axes"
+	projection_toolkit_gallery "github.com/cwbudde/matplotlib-go/examples/projection_toolkit_gallery"
 	scatter_gallery "github.com/cwbudde/matplotlib-go/examples/scatter_gallery"
 	specialty_artists "github.com/cwbudde/matplotlib-go/examples/specialty_artists"
 	stat_variants "github.com/cwbudde/matplotlib-go/examples/stat_variants"
+	triangulation_gallery "github.com/cwbudde/matplotlib-go/examples/triangulation_gallery"
 	units_overview "github.com/cwbudde/matplotlib-go/examples/units_overview"
 	vector_fields "github.com/cwbudde/matplotlib-go/examples/vector_fields"
 	"github.com/cwbudde/matplotlib-go/internal/examplecatalog"
@@ -63,28 +69,34 @@ var backendDescriptors = append(baseBackendDescriptors(), optionalBackendDescrip
 // dimensions baked in by the showcase author. The width/height arguments to
 // Build are advisory only — the figure's own SizePx wins at render time.
 var showcaseBuilders = map[string]func() *core.Figure{
-	"lines":       lines_markers_gallery.Plot,
-	"scatter":     scatter_gallery.Plot,
-	"bars":        bar_variants.Plot,
-	"fills":       fill_variants.Plot,
-	"errorbars":   errorbar_basic.Plot,
-	"histogram":   histogram_variants.Plot,
-	"heatmap":     image_heatmap.Plot,
-	"axes":        axes_control_surface.Plot,
-	"composition": gridspec_composition.Plot,
-	"subplots":    figure_labels_composition.Plot,
-	"annotations": annotation_legend_offsetbox_gallery.Plot,
-	"patches":     patch_showcase.Plot,
-	"mesh":        mesh_contour_tri.Plot,
-	"variants":    plot_variants.Plot,
-	"statistics":  stat_variants.Plot,
-	"specialty":   specialty_artists.Plot,
-	"units":       units_overview.Plot,
-	"vectors":     vector_fields.Plot,
-	"polar":       polar_axes.Plot,
-	"projections": geo_mollweide_axes.Plot,
-	"matrix":      arrays_showcase.Plot,
-	"animation":   animation_gallery.Plot,
+	"lines":         lines_markers_gallery.Plot,
+	"scatter":       scatter_gallery.Plot,
+	"bars":          bar_variants.Plot,
+	"fills":         fill_variants.Plot,
+	"errorbars":     errorbar_basic.Plot,
+	"histogram":     histogram_variants.Plot,
+	"heatmap":       image_heatmap.Plot,
+	"axes":          axes_control_surface.Plot,
+	"composition":   gridspec_composition.Plot,
+	"subplots":      figure_labels_composition.Plot,
+	"colorbars":     colorbar_variants_gallery.Plot,
+	"annotations":   annotation_legend_offsetbox_gallery.Plot,
+	"patches":       patch_showcase.Plot,
+	"mesh":          mesh_contour_tri.Plot,
+	"variants":      plot_variants.Plot,
+	"statistics":    stat_variants.Plot,
+	"specialty":     specialty_artists.Plot,
+	"units":         units_overview.Plot,
+	"vectors":       vector_fields.Plot,
+	"polar":         polar_axes.Plot,
+	"projections":   geo_mollweide_axes.Plot,
+	"toolkit":       projection_toolkit_gallery.Plot,
+	"mplot3d":       mplot3d_gallery.Plot,
+	"triangulation": triangulation_gallery.Plot,
+	"matrix":        arrays_showcase.Plot,
+	"animation":     animation_gallery.Plot,
+	"axisartist":    axisartist_showcase.Plot,
+	"axes_grid1":    axes_grid1_showcase.Plot,
 }
 
 type rasterRenderer interface {

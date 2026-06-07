@@ -1811,14 +1811,14 @@ same feature families covered by parity fixtures and CLI examples.
 
 ### 19.2 Promote CLI-Only Showcases
 
-- [ ] Promote CLI-only showcases listed in `BrowserDemoCoverageRows` into
+- [x] Promote CLI-only showcases listed in `BrowserDemoCoverageRows` into
       browser demos: basic lines, dashes, scatter, bars, fills, errorbars,
       multi-series, histograms, boxplots, heatmaps, figure labels, colorbars,
       annotations, projections, mplot3d, triangulation, axisartist, and
       axes_grid1.
-- [ ] Browser demos must use the same catalog factories as parity tests or a
+- [x] Browser demos must use the same catalog factories as parity tests or a
       documented wrapper around them.
-- [ ] Add browser-demo smoke tests that render each promoted demo and verify it
+- [x] Add browser-demo smoke tests that render each promoted demo and verify it
       has a non-empty image/artifact.
 
 ### 19.3 Browser Parity Status Reporting

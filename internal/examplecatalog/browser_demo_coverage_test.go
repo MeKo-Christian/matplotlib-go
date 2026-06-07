@@ -116,6 +116,59 @@ func TestActiveWebReferenceModulesMapToCatalogCases(t *testing.T) {
 	}
 }
 
+func TestCLIShowcasePromotionRowsAreActive(t *testing.T) {
+	wantActiveWebDemo := map[string]string{
+		"showcase-basic_line":                 "lines",
+		"showcase-basic_line_labels":          "lines",
+		"showcase-dashes":                     "lines",
+		"showcase-scatter_basic":              "scatter",
+		"showcase-bar_basic":                  "bars",
+		"showcase-fill_basic":                 "fills",
+		"showcase-errorbar_basic":             "errorbars",
+		"showcase-multi_series_basic":         "lines",
+		"showcase-hist_basic":                 "histogram",
+		"showcase-boxplot_basic":              "statistics",
+		"showcase-image_heatmap":              "heatmap",
+		"showcase-figure_labels_composition":  "subplots",
+		"showcase-colorbar_composition":       "colorbars",
+		"showcase-colorbar_variants_gallery":  "colorbars",
+		"showcase-annotation_composition":     "annotations",
+		"showcase-geo_aitoff_axes":            "toolkit",
+		"showcase-radar_basic":                "toolkit",
+		"showcase-skewt_basic":                "toolkit",
+		"showcase-mplot3d_terrain":            "mplot3d",
+		"showcase-mplot3d_gallery":            "mplot3d",
+		"showcase-projection_toolkit_gallery": "toolkit",
+		"showcase-unstructured_showcase":      "triangulation",
+		"showcase-triangulation_gallery":      "triangulation",
+		"showcase-axisartist_showcase":        "axisartist",
+		"showcase-axes_grid1_showcase":        "axes_grid1",
+	}
+	for rowID, wantWebDemoID := range wantActiveWebDemo {
+		row, ok := LookupBrowserDemoCoverage(rowID)
+		if !ok {
+			t.Fatalf("missing showcase coverage row %q", rowID)
+		}
+		if row.Status != BrowserDemoActive {
+			t.Fatalf("%s Status = %s, want %s", row.ID, row.Status, BrowserDemoActive)
+		}
+		if row.ActiveWebDemoID != wantWebDemoID {
+			t.Fatalf("%s ActiveWebDemoID = %q, want %q", row.ID, row.ActiveWebDemoID, wantWebDemoID)
+		}
+		if _, ok := LookupWebDemo(row.ActiveWebDemoID); !ok {
+			t.Fatalf("%s maps to missing active web demo %q", row.ID, row.ActiveWebDemoID)
+		}
+		if len(row.CatalogIDs) == 0 {
+			t.Fatalf("%s has no catalog IDs", row.ID)
+		}
+		for _, id := range row.CatalogIDs {
+			if _, ok := Lookup(id); !ok {
+				t.Fatalf("%s references missing catalog case %q", row.ID, id)
+			}
+		}
+	}
+}
+
 func TestCLIOnlyShowcasesHaveBrowserCoverageRows(t *testing.T) {
 	for _, c := range Cases() {
 		if !c.Showcase || c.WebDemoID != "" {
