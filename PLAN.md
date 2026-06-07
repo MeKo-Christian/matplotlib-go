@@ -312,7 +312,11 @@ and the blit-friendly redraw paths from Phase 4.
 ### 6.2 Frame Writers
 
 - [x] GIF writer (pure-Go encoder, no external dependency).
-- [ ] APNG writer for higher-quality web demos.
+- [x] APNG writer for higher-quality web demos.
+      `animation.APNGWriter` is dependency-free and registered as `apng`.
+      `Animation.Save("*.apng")` captures full RGBA frames from
+      `canvas.RasterCanvas` and writes a full-frame animated PNG with infinite
+      looping and fps-derived frame delays.
 - [x] MP4 / WebM writers via optional `ffmpeg` shellout, gated by a build
       tag and runtime detection.
       Builds compiled with `-tags ffmpeg` register `ffmpeg` (`.mp4`,

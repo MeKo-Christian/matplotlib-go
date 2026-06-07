@@ -1514,14 +1514,19 @@ The animation writer stack is a direct port of matplotlib's
   (matplotlib uses `duration=int(1000/fps)` ms) and `LoopCount` is `0` (matching
   Pillow's `loop=0`). Frames are quantized against a fixed palette so the encode
   is byte-for-byte deterministic across platforms.
+- `animation.APNGWriter` is dependency-free and preserves full RGBA frames for
+  higher-quality web demos. `Finish` writes a full-frame animated PNG using
+  `IHDR`, `acTL`, `fcTL`, `IDAT`, `fdAT`, and `IEND` chunks, loops forever
+  (`num_plays=0`), and derives APNG frame delays from fps.
 - A package-level writer registry (`RegisterWriter`/`WriterByName`) mirrors
-  `MovieWriterRegistry`, registering the dependency-free `"pillow"` writer in
-  all builds. Builds compiled with `-tags ffmpeg` also register `"ffmpeg"` for
-  `.mp4`/H.264 output and `"ffmpeg-webm"` for `.webm`/VP9 output.
+  `MovieWriterRegistry`, registering the dependency-free `"pillow"` and
+  `"apng"` writers in all builds. Builds compiled with `-tags ffmpeg` also
+  register `"ffmpeg"` for `.mp4`/H.264 output and `"ffmpeg-webm"` for
+  `.webm`/VP9 output.
 - `Animation.Save(filename, ...SaveOption)` mirrors `Animation.save`: it resolves
-  the writer by extension (`.gif` → pillow, `.mp4`/`.webm` → optional ffmpeg
-  writers) or `WithWriter`, defaults fps to `1000/interval`, and drives a
-  save-count frame loop (`WithSaveCount`).
+  the writer by extension (`.gif` → pillow, `.apng` → apng,
+  `.mp4`/`.webm` → optional ffmpeg writers) or `WithWriter`, defaults fps to
+  `1000/interval`, and drives a save-count frame loop (`WithSaveCount`).
 - `animation.FFmpegWriter` is available only with `-tags ffmpeg`. It detects the
   `ffmpeg` executable at runtime, streams raw RGBA frames over stdin, and returns
   `ErrWriterUnsupported` when ffmpeg is not installed.

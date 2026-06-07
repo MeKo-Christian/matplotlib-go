@@ -391,17 +391,18 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CoverageID:      "widgets-events-animation",
 		Title:           "Animation playback and writer scope",
 		UpstreamModules: []string{"animation.py"},
-		GoFiles:         []string{"animation/animation.go", "animation/writers.go", "animation/writer_pillow.go", "animation/writer_ffmpeg.go", "canvas/scheduler.go"},
+		GoFiles:         []string{"animation/animation.go", "animation/writers.go", "animation/writer_pillow.go", "animation/writer_apng.go", "animation/writer_ffmpeg.go", "canvas/scheduler.go"},
 		CurrentEquivalent: "Go has FuncAnimation- and ArtistAnimation-style stepping on top of the " +
 			"canvas scheduler, including init callbacks, repeat handling, repeat-delay ticks, animated " +
 			"artist tracking, blit-region hooks, and event-loop start/stop behavior, plus Save to a " +
-			"deterministic GIF via the AbstractMovieWriter/GifWriter stack (image/gif) and optional " +
-			"MP4/WebM output through the -tags ffmpeg writer, all covered by unit tests.",
-		Gap: "Only APNG, HTML representation, and ImageMagick-style external output remain out of scope; " +
+			"deterministic GIF via the AbstractMovieWriter/GifWriter stack (image/gif), dependency-free " +
+			"full-RGBA APNG output for web demos, and optional MP4/WebM output through the -tags ffmpeg " +
+			"writer, all covered by unit tests.",
+		Gap: "Only HTML representation and ImageMagick-style external output remain out of scope; " +
 			"default builds still report ErrWriterUnsupported for ffmpeg-backed MP4/WebM.",
 		Decision: GapDecisionIdiomaticEquivalent,
 		Rationale: "Phase 17.6.8 chose a pure-Go GifWriter (image/gif, no external tools) as the default writer scope; " +
-			"Phase 6.2 adds opt-in ffmpeg shellout support behind a build tag and runtime executable detection.",
+			"Phase 6.2 adds dependency-free APNG plus opt-in ffmpeg shellout support behind a build tag and runtime executable detection.",
 	},
 }
 
