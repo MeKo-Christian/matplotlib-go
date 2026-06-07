@@ -104,7 +104,7 @@ func New(config backends.Config) (*Renderer, error) {
 		height:      config.Height,
 		resolution:  resolution,
 		background:  config.Background,
-		bridge:      newCPUSurfaceBridge(config.Width, config.Height, mode),
+		bridge:      selectSurfaceBridge(config.Width, config.Height, mode),
 		useGPU:      useGPU,
 		sampleCount: skiaConfig.SampleCount,
 		colorType:   skiaConfig.ColorType,
@@ -328,16 +328,22 @@ func (r *Renderer) BridgeInfo() BridgeInfo {
 
 // IsCapabilityBridged reports whether the named backends.Capability is
 // satisfied through the CPU surface bridge rather than a truly batch-native
-// Skia code path. The CPU compatibility renderer implements the optional
-// batch interfaces (MarkerBatch, PathCollectionBatch, QuadMeshBatch) by
-// looping per item and calling Path, and consumes hatch metadata via the
-// renderer-neutral DrawHatchFallback helper. Until the external Skia C ABI
-// lands, those capabilities should report as bridged so the capability matrix
-// distinguishes them from the GouraudTriangleBatch path which performs custom
-// CPU pixel interpolation directly.
+// Skia code path.
+//
+// With the pure-Go CPU bridge the optional batch interfaces (MarkerBatch,
+// PathCollectionBatch, QuadMeshBatch) loop per item and call Path, and hatch
+// metadata is consumed via the renderer-neutral DrawHatchFallback helper, so
+// those report as bridged. When a native Skia surface bridge is active (the
+// skiacgo build links a real Skia library) markers route through native
+// SkCanvas/SkPath rasterization, so MarkerBatch reports native; path
+// collections, quad meshes, and hatching still loop through the CPU path until
+// their native batch entrypoints land, so they stay bridged.
 func (r *Renderer) IsCapabilityBridged(name string) bool {
+	native := r != nil && r.bridge != nil && r.bridge.Info().NativeSurface
 	switch name {
-	case "markerbatch", "pathcollectionbatch", "quadmeshbatch", "nativehatcher":
+	case "markerbatch":
+		return !native
+	case "pathcollectionbatch", "quadmeshbatch", "nativehatcher":
 		return true
 	default:
 		return false

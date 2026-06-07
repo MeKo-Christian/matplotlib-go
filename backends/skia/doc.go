@@ -24,11 +24,31 @@
 //
 // # Dependencies
 //
-// The current skia-tagged CPU compatibility renderer has no external runtime
-// dependency beyond normal Go builds. Future native Skia integration will
-// require CGO_ENABLED=1, a Skia shared library, and the matplotlib-go C ABI
-// wrapper library. GPU mode will additionally require platform-specific
-// graphics drivers and context setup.
+// The skia-tagged CPU compatibility renderer has no external runtime dependency
+// beyond normal Go builds. The native cgo backend (-tags "skia skiacgo")
+// additionally requires CGO_ENABLED=1, a built Skia shared library, and the
+// matplotlib-go C ABI wrapper (skia_cwrap.h / skia_cwrap.cpp, compiled in this
+// package). GPU mode will additionally require platform-specific graphics
+// drivers and context setup.
+//
+// # Native cgo backend (skiacgo)
+//
+// The skiacgo build tag links a real Skia library through the narrow C ABI in
+// skia_cwrap.h. The Skia include/library locations are supplied at build time
+// via CGO_CXXFLAGS / CGO_LDFLAGS; the `build-skia-native` / `test-skia-native`
+// just recipes wire them from SKIA_ROOT. With this tag the surfaceBridge is
+// backed by a native SkSurface: gradient path fills (SkShaders gradients),
+// marker batches (SkCanvas/SkPath), and Gouraud triangles (SkVertices) render
+// natively, so IsCapabilityBridged reports MarkerBatch as native. Path
+// collections, transformed images, quad meshes, and hatching still route
+// through the CPU bridge for now.
+//
+// FreeType caveat: Skia statically bundles its own FreeType when built without
+// system FreeType. The native Skia backend uses Skia only for geometry (no
+// text), so it does not link FreeType itself — but combining the `skiacgo` tag
+// with the `freetype` tag (agg's vendored FreeType 2.6.1) in one binary
+// produces duplicate FT_* symbols and a runtime crash. To use native Skia and
+// agg native-FreeType text together, rebuild Skia with skia_use_freetype=false.
 //
 // # Current Status
 //
@@ -39,8 +59,11 @@
 // mode, but still render through deterministic CPU readback. The CPU bridge
 // consumes renderer-neutral pattern and gradient fills, including linear and
 // radial gradients, stop opacity, transformed fills, and tiled pattern fills.
-// Native GPU surfaces and external Skia-native batch drawing remain unavailable;
-// NativePathRequirements records the deferred external primitives.
+// Builds with -tags "skia skiacgo" link a real Skia library and render gradient
+// fills, marker batches, and Gouraud triangles natively (see the native cgo
+// section above). Native GPU surfaces and the remaining Skia-native batch
+// primitives (path collections, quad meshes, tiled-shader hatching) are still
+// unavailable; NativePathRequirements records the deferred external primitives.
 //
 // # Configuration
 //

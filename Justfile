@@ -2,6 +2,14 @@
 
 set shell := ["bash", "-cu"]
 
+# Root of a built Skia checkout for the native (cgo) Skia backend. Override with
+# `SKIA_ROOT=/path/to/skia just test-skia-native`. The directory must contain
+# Skia's `include/` headers and a built shared library under `out/Shared/`
+# (see the docs in backends/skia/skia_cwrap.cpp / native_cgo.go).
+skia_root := env_var_or_default("SKIA_ROOT", "/mnt/projekte/Code/skia")
+skia_cgo_cxxflags := "-I" + skia_root
+skia_cgo_ldflags := "-L" + skia_root + "/out/Shared -lskia -Wl,-rpath," + skia_root + "/out/Shared"
+
 default: build
 
 all: build
@@ -70,6 +78,32 @@ freetype261-build:
 
 test-skia: freetype261-build
     CGO_ENABLED=1 go test -tags "skia freetype" ./...
+
+# --- Native Skia backend (cgo, links a real Skia library) ------------------
+# These targets add the `skiacgo` tag, which compiles backends/skia/skia_cwrap.cpp
+# and links {{skia_root}}/out/Shared/libskia.so via the C-ABI wrapper. Set
+# SKIA_ROOT to point at your Skia checkout if it is not at the default path.
+#
+# NOTE: the `freetype` tag is intentionally omitted. The native Skia backend
+# uses Skia only for geometry (paths/markers/vertices/gradients), not text, so
+# it does not need FreeType. If libskia.so was built with
+# skia_use_freetype2/system_freetype disabled it statically bundles its own
+# FreeType; linking agg's vendored FreeType 2.6.1 (the `freetype` tag) into the
+# same binary causes duplicate FT_* symbols and a runtime crash. To run native
+# Skia AND agg's native-FreeType text in one binary, rebuild Skia with
+# `skia_use_freetype=false` first.
+
+build-skia-native:
+    CGO_ENABLED=1 \
+      CGO_CXXFLAGS="{{skia_cgo_cxxflags}}" \
+      CGO_LDFLAGS="{{skia_cgo_ldflags}}" \
+      go build -tags "skia skiacgo" ./backends/skia/...
+
+test-skia-native:
+    CGO_ENABLED=1 \
+      CGO_CXXFLAGS="{{skia_cgo_cxxflags}}" \
+      CGO_LDFLAGS="{{skia_cgo_ldflags}}" \
+      go test -tags "skia skiacgo" ./backends/skia/... -v
 
 golden-update TEST="": freetype261-build
     if [ -n "{{TEST}}" ]; then \

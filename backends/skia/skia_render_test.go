@@ -229,7 +229,6 @@ func TestSkiaTaggedRegistryAdvertisesImplementedCPUCapabilities(t *testing.T) {
 	// visible. GouraudTriangleBatch performs custom CPU pixel interpolation
 	// directly and must stay native.
 	for _, cap := range []backends.Capability{
-		backends.MarkerBatch,
 		backends.PathCollectionBatch,
 		backends.QuadMeshBatch,
 		backends.NativeHatcher,
@@ -240,6 +239,16 @@ func TestSkiaTaggedRegistryAdvertisesImplementedCPUCapabilities(t *testing.T) {
 	}
 	if status := backends.RendererCapabilityStatus(backends.Skia, renderer, backends.GouraudTriangleBatch); status != backends.CapabilityNative {
 		t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want %s", backends.GouraudTriangleBatch, status, backends.CapabilityNative)
+	}
+
+	// MarkerBatch is native when a real Skia library is linked (skiacgo build);
+	// the pure-Go build satisfies it through the CPU bridge.
+	wantMarker := backends.CapabilityBridged
+	if sk, ok := renderer.(*skia.Renderer); ok && sk.BridgeInfo().NativeSurface {
+		wantMarker = backends.CapabilityNative
+	}
+	if status := backends.RendererCapabilityStatus(backends.Skia, renderer, backends.MarkerBatch); status != wantMarker {
+		t.Fatalf("RendererCapabilityStatus(skia, markerbatch) = %s, want %s", status, wantMarker)
 	}
 }
 

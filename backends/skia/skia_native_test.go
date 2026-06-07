@@ -29,7 +29,6 @@ func TestSkiaTaggedRendererImplementsNativeBatchInterfaces(t *testing.T) {
 		}
 	}
 	for _, cap := range []backends.Capability{
-		backends.MarkerBatch,
 		backends.PathCollectionBatch,
 		backends.QuadMeshBatch,
 		backends.NativeHatcher,
@@ -37,6 +36,16 @@ func TestSkiaTaggedRendererImplementsNativeBatchInterfaces(t *testing.T) {
 		if status := backends.RendererCapabilityStatus(backends.Skia, r, cap); status != backends.CapabilityBridged {
 			t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want bridged", cap, status)
 		}
+	}
+
+	// MarkerBatch is native when a real Skia library is linked (skiacgo build),
+	// otherwise satisfied through the CPU bridge.
+	wantMarker := backends.CapabilityBridged
+	if r.BridgeInfo().NativeSurface {
+		wantMarker = backends.CapabilityNative
+	}
+	if status := backends.RendererCapabilityStatus(backends.Skia, r, backends.MarkerBatch); status != wantMarker {
+		t.Fatalf("RendererCapabilityStatus(skia, markerbatch) = %s, want %s", status, wantMarker)
 	}
 }
 

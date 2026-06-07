@@ -69,24 +69,36 @@ flips those to native (`✓`).
       (`test/diagnostics_test.go`, env-gated by `MPL_GO_RESIDUAL_DIAG`) logs
       per-case residual metrics and dumps diff PNGs under
       `testdata/_artifacts/non_text_residuals/`.
-- [ ] Native Skia marker batches, path collections, transformed images, quad
+- 🧪 Native Skia marker batches, path collections, transformed images, quad
       meshes, and Gouraud triangles via `SkCanvas::drawAtlas` / `SkVertices`.
-      *(Blocked: external C-ABI.)*
-- [ ] Native Skia hatching via tiled `SkShader`s. *(Blocked: external C-ABI.)*
+      **C-ABI wrapper landed** (`backends/skia/skia_cwrap.{h,cpp}` + cgo binding
+      `native_cgo.go`, `-tags "skia skiacgo"`): gradient path fills (SkShaders
+      gradients), marker batches (SkCanvas/SkPath), and Gouraud triangles
+      (SkVertices) now render natively and `MarkerBatch` reports native (`✓`).
+      *Still bridged:* path collections, transformed images, quad meshes.
+- [ ] Native Skia hatching via tiled `SkShader`s. *(Wrapper exists; tiled-shader
+      hatch entrypoint not yet wired — still CPU-bridged.)*
 - [ ] GPU mode (`SkSurface::MakeRenderTarget`) behind the `skiagpu` build tag with
       deterministic CPU readback for goldens. The scaffold exists
       (`gpu_scaffold_test.go`, CPU-readback only); real GPU rendering is
       *(blocked: external Skia/GPU library)*.
-- [ ] Truthful per-mode native/fallback/unavailable reporting in the *live*
-      `BackendComparisonReport` once CPU and GPU capability sets actually diverge.
+- 🧪 Truthful per-mode native/fallback/unavailable reporting in the *live*
+      `BackendComparisonReport`. `IsCapabilityBridged` now flips `MarkerBatch`
+      from bridged to native when the `skiacgo` native surface is linked; full
+      CPU↔GPU divergence still waits on native GPU.
 
-*Status (2026-06-07): items 2–4 verified externally blocked — no Skia C-ABI
-wrapper or linked Skia/GPU library is present, so the `backends/skia` renderer
-is a pure-Go bridge (embeds `gobasic`, rasterizes via `golang.org/x/image/vector`)
-that truthfully reports the four batch/hatch capabilities as bridged (`≈`); the
-report infrastructure for item 5 (`ModeCapabilities`, `RendererModeReporter`,
-`skia/cpu`+`skia/gpu` labels) already exists, but its CPU↔GPU divergence trigger
-cannot fire honestly until 2–4 land.*
+*Status (2026-06-07): a real Skia library (milestone 151) was built locally and
+the C-ABI wrapper now links it under `-tags "skia skiacgo"` — verified by
+`backends/skia/native_cgo_test.go` (version probe, native gradient fills,
+markers, Gouraud). The default `-tags skia` build remains the pure-Go bridge
+(embeds `gobasic`, rasterizes via `golang.org/x/image/vector`). Build/test with
+`just build-skia-native` / `just test-skia-native` (override `SKIA_ROOT`).
+**FreeType caveat:** a Skia built without system FreeType bundles its own; do
+not combine `skiacgo` with the `freetype` tag in one binary (duplicate `FT_*`
+symbols crash) — rebuild Skia with `skia_use_freetype=false` for combined use.
+Remaining native work (path collections, quad meshes, tiled-shader hatch, real
+GPU) is now unblocked at the wrapper level — it needs the corresponding
+entrypoints wired, not external access.*
 
 **Exit criterion:**
 

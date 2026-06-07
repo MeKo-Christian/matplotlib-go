@@ -19,6 +19,23 @@ var (
 	_ render.NativeHatcher         = (*Renderer)(nil)
 )
 
+// nativeBatchBridge is implemented by a surfaceBridge backed by a real Skia
+// library (the cgo bridge under the skiacgo build tag). When the active bridge
+// satisfies it, the batch entry points route markers and Gouraud triangles
+// through native Skia rasterization; otherwise they use the per-item CPU loops
+// below. Each method returns false when it declines a batch, so the caller can
+// fall back without losing output.
+type nativeBatchBridge interface {
+	drawMarkersNative(dst *image.RGBA, batch render.MarkerBatch, state bridgeDrawState, height float64) bool
+	drawGouraudNative(dst *image.RGBA, batch render.GouraudTriangleBatch, state bridgeDrawState) bool
+}
+
+// bridgeClipState snapshots the current clip into the bridge-facing struct the
+// native batch methods consume.
+func (r *Renderer) bridgeClipState() bridgeDrawState {
+	return bridgeDrawState{clipRect: r.clipRect, clipPaths: r.clipPaths}
+}
+
 // DrawMarkers renders one marker path at many display-space offsets through
 // the Skia CPU bridge path. The implementation currently loops per item and
 // calls Path, so IsCapabilityBridged reports MarkerBatch as bridged until the
@@ -26,6 +43,11 @@ var (
 func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 	if r == nil || len(batch.Marker.C) == 0 || len(batch.Items) == 0 {
 		return false
+	}
+	if nb, ok := r.bridge.(nativeBatchBridge); ok {
+		if nb.drawMarkersNative(r.GetImage(), batch, r.bridgeClipState(), float64(r.height)) {
+			return true
+		}
 	}
 	for i := range batch.Items {
 		item := &batch.Items[i]
@@ -123,6 +145,11 @@ func (r *Renderer) DrawQuadMesh(batch render.QuadMeshBatch) bool {
 func (r *Renderer) DrawGouraudTriangles(batch render.GouraudTriangleBatch) bool {
 	if r == nil || len(batch.Triangles) == 0 || r.GetImage() == nil {
 		return false
+	}
+	if nb, ok := r.bridge.(nativeBatchBridge); ok {
+		if nb.drawGouraudNative(r.GetImage(), batch, r.bridgeClipState()) {
+			return true
+		}
 	}
 	for i := range batch.Triangles {
 		r.drawGouraudTriangle(&batch.Triangles[i])
