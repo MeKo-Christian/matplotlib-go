@@ -199,6 +199,49 @@ func TestBrowserDemoCoverageReferencesCatalogAndWebDemos(t *testing.T) {
 	}
 }
 
+func TestEveryShowcaseHasBrowserAccounting(t *testing.T) {
+	accounted := map[string]bool{}
+	for _, row := range BrowserDemoCoverageRows() {
+		for _, id := range row.CatalogIDs {
+			accounted[id] = true
+		}
+	}
+	for _, c := range Cases() {
+		if !c.Showcase {
+			continue
+		}
+		if !accounted[c.ID] {
+			t.Fatalf("showcase %q has no browser coverage accounting row", c.ID)
+		}
+	}
+}
+
+func TestActiveBrowserDemosMapToFeatureCoverageRows(t *testing.T) {
+	featureWebIDs := map[string]bool{}
+	for _, row := range FeatureCoverageMatrix() {
+		for _, id := range row.WebDemoIDs {
+			featureWebIDs[id] = true
+		}
+	}
+	for _, c := range WebDemos() {
+		if !featureWebIDs[c.WebDemoID] {
+			t.Fatalf("web demo %q for catalog case %q is not referenced by any feature coverage row", c.WebDemoID, c.ID)
+		}
+	}
+}
+
+func TestPlannedBrowserRowsNameLaterFeatureGap(t *testing.T) {
+	for _, row := range BrowserDemoCoverageRows() {
+		if row.Status != BrowserDemoPlanned {
+			continue
+		}
+		text := row.Action + " " + row.Rationale
+		if !strings.Contains(text, "Phase ") {
+			t.Fatalf("%s is planned but does not name a later feature gap: %s", row.ID, text)
+		}
+	}
+}
+
 func TestAnimationGalleryBrowserCoverageIsActive(t *testing.T) {
 	row, ok := LookupBrowserDemoCoverage("showcase-animation_gallery")
 	if !ok {

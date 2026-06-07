@@ -1823,19 +1823,19 @@ same feature families covered by parity fixtures and CLI examples.
 
 ### 19.3 Browser Parity Status Reporting
 
-- [ ] Update `docs/matplotlib-parity-status.md` with active/planned/reference
+- [x] Update `docs/matplotlib-parity-status.md` with active/planned/reference
       browser status for each feature family.
-- [ ] Fail CI if a `Showcase: true` catalog row has no browser accounting row.
-- [ ] Fail CI if a browser demo references a feature family that is not present
+- [x] Fail CI if a `Showcase: true` catalog row has no browser accounting row.
+- [x] Fail CI if a browser demo references a feature family that is not present
       in the catalog.
 
 **Exit criteria:**
 
-- [ ] Every `BrowserDemoPlanned` row is active, intentionally reference-only,
+- [x] Every `BrowserDemoPlanned` row is active, intentionally reference-only,
       or tied to a later documented feature gap.
-- [ ] The browser gallery can be used to visually inspect the major parity
+- [x] The browser gallery can be used to visually inspect the major parity
       families without manually running parity tests.
-- [ ] Browser demo coverage is generated from or checked against the catalog.
+- [x] Browser demo coverage is generated from or checked against the catalog.
 
 ---
 

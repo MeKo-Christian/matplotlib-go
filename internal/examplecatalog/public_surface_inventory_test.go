@@ -835,6 +835,24 @@ func TestMatplotlibParityStatusDocIsCurrent(t *testing.T) {
 	}
 }
 
+func TestMatplotlibParityStatusDocIncludesBrowserCoverage(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	doc := MatplotlibParityStatusMarkdown(artifact.Rows)
+	for _, want := range []string{
+		"## Browser Demo Coverage",
+		"Browser demo",
+		"Catalog cases",
+		"webref-radialforce",
+		"reference-only",
+		"showcase-animation_gallery",
+		"active",
+	} {
+		if !strings.Contains(doc, want) {
+			t.Fatalf("generated parity status doc is missing %q", want)
+		}
+	}
+}
+
 func loadPublicSurfaceArtifact(t *testing.T) publicSurfaceArtifact {
 	t.Helper()
 	root := repoRoot(t)

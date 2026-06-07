@@ -46,6 +46,33 @@ func MatplotlibParityStatusMarkdown(publicSurface []PublicSurfaceRow) string {
 		featureRows,
 	)
 
+	b.WriteString("\n## Browser Demo Coverage\n\n")
+	browserRows := make([][]string, 0, len(BrowserDemoCoverageRows()))
+	for _, row := range BrowserDemoCoverageRows() {
+		reference := row.ReferenceModule
+		if reference == "" {
+			reference = "-"
+		}
+		demoID := row.ActiveWebDemoID
+		if demoID == "" {
+			demoID = "-"
+		}
+		browserRows = append(browserRows, []string{
+			markdownEscape(row.ID),
+			string(row.Status),
+			markdownEscape(demoID),
+			markdownEscape(strings.Join(row.CatalogIDs, ", ")),
+			markdownEscape(reference),
+			markdownEscape(row.Action),
+		})
+	}
+	writeMarkdownTable(
+		&b,
+		[]string{"Row", "Status", "Browser demo", "Catalog cases", "Reference", "Action"},
+		[]markdownTableAlign{markdownTableLeft, markdownTableLeft, markdownTableLeft, markdownTableLeft, markdownTableLeft, markdownTableLeft},
+		browserRows,
+	)
+
 	b.WriteString("\n## Public Surface Summary\n\n")
 	writeStatusSummary(&b, publicRows)
 	b.WriteString("\n")
