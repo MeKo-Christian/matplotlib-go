@@ -21,9 +21,8 @@ type label struct {
 }
 
 // Plot places flat (zdir=None) text labels at 3D positions. Explicit axis
-// limits are set in both Go and the matplotlib reference so the projection is
-// identical regardless of whether text artists participate in autoscaling
-// (Go's Text3D expands the data limits; matplotlib text does not).
+// limits mirror the matplotlib reference and keep the text-only example on the
+// same 0..10 view volume as the upstream 3D text/pathpatch gallery pattern.
 func Plot() *core.Figure {
 	fig := core.NewFigure(720, 560)
 	ax, err := fig.AddAxes3D(geom.Rect{
