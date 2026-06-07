@@ -27,11 +27,11 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 
 | Status               | Rows |
 | -------------------- | ---: |
-| direct-equivalent    |   83 |
+| direct-equivalent    |   84 |
 | idiomatic-equivalent |  149 |
 | partial              |  556 |
 | not-started          |    0 |
-| intentional-omission |  108 |
+| intentional-omission |  107 |
 
 ## Closure Owner Summary
 

@@ -153,7 +153,7 @@ func TestWriterByNameRegistry(t *testing.T) {
 		t.Fatalf("WriterByName(pillow) = %T, want *GifWriter", w)
 	}
 
-	for _, name := range []string{"imagemagick", "html", "unknown"} {
+	for _, name := range []string{"imagemagick", "unknown"} {
 		if _, err := WriterByName(name, 5); err != ErrWriterUnsupported {
 			t.Fatalf("WriterByName(%q) = %v, want ErrWriterUnsupported", name, err)
 		}

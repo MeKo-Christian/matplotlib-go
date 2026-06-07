@@ -1518,15 +1518,18 @@ The animation writer stack is a direct port of matplotlib's
   higher-quality web demos. `Finish` writes a full-frame animated PNG using
   `IHDR`, `acTL`, `fcTL`, `IDAT`, `fdAT`, and `IEND` chunks, loops forever
   (`num_plays=0`), and derives APNG frame delays from fps.
+- `animation.HTMLWriter` is dependency-free and produces a self-contained HTML
+  animation payload. `Finish` encodes each grabbed RGBA frame as a PNG data URI
+  with inline JSON metadata, CSS, and JavaScript playback controls.
 - A package-level writer registry (`RegisterWriter`/`WriterByName`) mirrors
-  `MovieWriterRegistry`, registering the dependency-free `"pillow"` and
-  `"apng"` writers in all builds. Builds compiled with `-tags ffmpeg` also
+  `MovieWriterRegistry`, registering the dependency-free `"pillow"`, `"apng"`,
+  and `"html"` writers in all builds. Builds compiled with `-tags ffmpeg` also
   register `"ffmpeg"` for `.mp4`/H.264 output and `"ffmpeg-webm"` for
   `.webm`/VP9 output.
 - `Animation.Save(filename, ...SaveOption)` mirrors `Animation.save`: it resolves
-  the writer by extension (`.gif` → pillow, `.apng` → apng,
-  `.mp4`/`.webm` → optional ffmpeg writers) or `WithWriter`, defaults fps to
-  `1000/interval`, and drives a save-count frame loop (`WithSaveCount`).
+  the writer by extension (`.gif` → pillow, `.apng` → apng, `.html`/`.htm` →
+  html, `.mp4`/`.webm` → optional ffmpeg writers) or `WithWriter`, defaults fps
+  to `1000/interval`, and drives a save-count frame loop (`WithSaveCount`).
 - `animation.FFmpegWriter` is available only with `-tags ffmpeg`. It detects the
   `ffmpeg` executable at runtime, streams raw RGBA frames over stdin, and returns
   `ErrWriterUnsupported` when ffmpeg is not installed.
@@ -1538,8 +1541,8 @@ Intentional signature divergences:
 - **No `cache_frame_data`.** Frames are regenerated deterministically by the
   update function, so frame caching is unnecessary.
 - **Explicit unsupported-writer errors.** Unknown or unavailable writer names
-  (`imagemagick`, `html`, or `ffmpeg` without the build tag/runtime executable)
-  and unknown extensions return `ErrWriterUnsupported`, instead of matplotlib
+  (`imagemagick`, or `ffmpeg` without the build tag/runtime executable) and
+  unknown extensions return `ErrWriterUnsupported`, instead of matplotlib
   silently falling back to PillowWriter.
 
 ### Static-vs-GUI split for backend and widget surfaces

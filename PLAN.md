@@ -324,8 +324,11 @@ and the blit-friendly redraw paths from Phase 4.
       Default builds keep MP4/WebM unsupported; tagged builds still return
       `ErrWriterUnsupported` when the `ffmpeg` executable is unavailable at
       runtime.
-- [ ] HTML embedding writer producing self-contained
-      `<video>` / `<canvas>` snippets for the web demo host.
+- [x] HTML embedding writer producing self-contained snippets for the web demo
+      host. `animation.HTMLWriter` is dependency-free and registered as
+      `html`. `Animation.Save("*.html")` / `Save("*.htm")` embeds each saved
+      RGBA frame as a PNG data URI with inline playback controls and
+      fps-derived timing metadata.
 
 ### 6.3 Animation Examples and Fixtures
 

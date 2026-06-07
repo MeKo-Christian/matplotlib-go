@@ -47,8 +47,8 @@ func Saving(w MovieWriter, c canvas.FigureCanvas, outfile string, dpi float64, b
 type WriterFactory func(fps int) MovieWriter
 
 // writerRegistry mirrors matplotlib.animation.MovieWriterRegistry / the module
-// level writers registry. The dependency-free GIF and APNG writers are always
-// registered; optional external encoders may register themselves from
+// level writers registry. The dependency-free GIF, APNG, and HTML writers are
+// always registered; optional external encoders may register themselves from
 // build-tagged files.
 var writerRegistry = map[string]WriterFactory{}
 
@@ -84,4 +84,5 @@ func WriterByName(name string, fps int) (MovieWriter, error) {
 
 func init() {
 	RegisterWriter("pillow", func(fps int) MovieWriter { return NewGifWriter(fps) })
+	RegisterWriter("html", func(fps int) MovieWriter { return NewHTMLWriter(fps) })
 }

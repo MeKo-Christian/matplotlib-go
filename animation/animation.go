@@ -212,9 +212,9 @@ func WithSaveCount(n int) SaveOption { return func(c *saveConfig) { c.saveCount 
 // matplotlib.animation.Animation.save.
 //
 // The writer is chosen from the filename extension (".gif" -> GifWriter,
-// ".apng" -> APNGWriter, ".mp4"/".webm" -> optional ffmpeg writers) unless one
-// is supplied with WithWriter. Unknown or unavailable writers return
-// ErrWriterUnsupported.
+// ".apng" -> APNGWriter, ".html"/".htm" -> HTMLWriter, ".mp4"/".webm" ->
+// optional ffmpeg writers) unless one is supplied with WithWriter. Unknown or
+// unavailable writers return ErrWriterUnsupported.
 func (a *Animation) Save(filename string, opts ...SaveOption) error {
 	cfg := saveConfig{}
 	for _, opt := range opts {
@@ -288,15 +288,17 @@ func (a *Animation) drawSaveFrame(frame int, first bool) error {
 }
 
 // writerNameForFile maps a filename extension to a registered writer name.
-// ".gif" and ".apng" are always available; ".mp4" and ".webm" resolve to
-// optional ffmpeg writers when built with -tags ffmpeg, otherwise WriterByName
-// reports ErrWriterUnsupported.
+// ".gif", ".apng", ".html", and ".htm" are always available; ".mp4" and
+// ".webm" resolve to optional ffmpeg writers when built with -tags ffmpeg,
+// otherwise WriterByName reports ErrWriterUnsupported.
 func writerNameForFile(filename string) (string, bool) {
 	switch strings.ToLower(filepath.Ext(filename)) {
 	case ".gif":
 		return "pillow", true
 	case ".apng":
 		return "apng", true
+	case ".html", ".htm":
+		return "html", true
 	case ".mp4":
 		return "ffmpeg", true
 	case ".webm":
