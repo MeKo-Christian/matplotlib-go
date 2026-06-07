@@ -1,9 +1,10 @@
 # Matplotlib-Go Development Plan
 
-This plan tracks the remaining work to bring `matplotlib-go` to a v1.0 release. The
-roadmap is cross-checked against the local upstream Matplotlib snapshot in
-`third_party/matplotlib` so uncovered areas are tracked explicitly instead of
-being deferred to a vague "future work" bucket.
+This plan tracks the **remaining** work to bring `matplotlib-go` to a stable
+v1.0 release. The foundation is built; what follows is the focused path to the
+finish. The roadmap is cross-checked against the local upstream Matplotlib
+snapshot in `third_party/matplotlib` so uncovered areas stay explicit instead of
+sliding into a vague "future work" bucket.
 
 ---
 
@@ -17,1877 +18,180 @@ being deferred to a vague "future work" bucket.
 
 ---
 
-# Where We Are Today
+# Already Shipped (Foundation Complete)
 
-The project has progressed well past the proof-of-concept stage. The major
-milestones already achieved are:
+The project is well past proof-of-concept. The following are implemented,
+tested, and stable:
 
-**Architecture and core model**
+- **Core model & transforms** — `Figure → Axes → Artists` with stale/callback
+  propagation and draw scheduling; explicit transform graph (`transData`,
+  `transAxes`, `transFigure`, blended/offset transforms, projection layer).
+- **Backends (4)** — AGG (primary anti-aliased raster, native batches, buffer
+  regions, filters), GoBasic (pure-Go correctness fallback), SVG (deterministic
+  vector with structural diff harness), Skia (opt-in CPU raster). Capability
+  matrix and save dispatch are registry-driven.
+- **Publication vectors** — PDF, PS/EPS, and PGF via the shared save pipeline.
+- **Plot vocabulary** — full 2D basics, statistical, color-mapped, vector-field,
+  specialty, patches/collections, and 3D (`mplot3d`) families, plus non-Cartesian
+  projections (polar, radar, skewx, geo).
+- **Layout / style / API** — subplots, GridSpec, mosaic, subfigures, twin/secondary
+  axes; `tight_layout` / `constrained_layout`; insets, dividers, image grids,
+  axisartist; `rcParams` / themes / `.mplstyle`; OO core API plus a `pyplot` layer.
+- **MathText & usetex** — first-class across the active backends.
+- **Renderer effects** — patterns, gradients, and path effects (renderer-neutral
+  pipeline with backend-native fast paths).
+- **Interactive runtime** — headless event model, draw-idle/blit redraw, Gio
+  desktop and WebAgg/WASM frontends, widgets and selectors.
+- **Animation** — `FuncAnimation` / `ArtistAnimation` with GIF/APNG/HTML writers
+  (dependency-free) and optional ffmpeg MP4/WebM.
+- **Parity infrastructure** — catalog-driven `TestGolden` / `TestMatplotlibRef` /
+  `TestReferenceCompare` with per-case tolerances; public-surface inventory and
+  classification map; catalog-backed CLI and browser galleries.
 
-- Artist hierarchy (`Figure → Axes → Artists`) with stale/callback propagation,
-  draw scheduling, and lifecycle parity with upstream Matplotlib's
-  `RendererBase` / `GraphicsContext` split.
-- Explicit transform graph with `transData`, `transAxes`, `transFigure`, blended
-  and offset transforms, and a projection-friendly composition layer.
-- Backend-agnostic `render.Renderer` contract with optional capability
-  interfaces (`TextDrawer`, `ImageTransformer`, `MarkerDrawer`,
-  `PathCollectionDrawer`, `NativeHatcher`, `ClipPathTransformer`,
-  `PNGExporter`, `SVGExporter`, …).
-- Capability matrix and save dispatch driven by the backend registry rather
-  than backend-name conditionals.
-- mplot3d parity fixtures now enforce `MaxRMSE < 18` against the Matplotlib
-  references, including z-axis autoscale behavior, pane/grid framing, exact
-  tab10 colors, and refreshed 3D golden images.
-
-**Backends**
-
-- **AGG** (`backends/agg`) — primary anti-aliased raster backend, native marker
-  batches, path collections, Gouraud triangles, transformed images, hatches,
-  buffer regions (`CopyFromBBox` / `RestoreRegion`), and offscreen filters
-  (`StartFilter` / `StopFilter`).
-- **GoBasic** (`backends/gobasic`) — pure-Go correctness fallback with full
-  renderer-neutral contract coverage and documented fidelity limits.
-- **SVG** (`backends/svg`) — deterministic vector output with native clip
-  paths, marker / path-collection batches, `<pattern>` hatches,
-  text-as-text vs text-as-path policy, hash-salted IDs, and a structural diff
-  test harness.
-- **Skia** (`backends/skia`) — opt-in CPU raster backend behind a build tag,
-  shares the raster contract surface for paths, images, clipping, text, and
-  PNG export.
-
-**Plot vocabulary**
-
-- 2D basics: line, scatter, bar (vertical/horizontal/grouped/stacked),
-  fill / fill_between / fill_betweenx, step, stairs, axhline/vline/span,
-  broken_barh.
-- Statistical: histogram (with binning strategies and density / cumulative
-  variants), boxplot (notches, confidence intervals, custom whiskers),
-  errorbar (asymmetric, with limit indicators), violinplot, ecdf, stackplot.
-- Color-mapped: imshow / matshow / spy, pcolor / pcolormesh (flat / nearest /
-  gouraud), contour / contourf, hist2d (weighted, density), hexbin, tripcolor,
-  tricontour / tricontourf.
-- Vector fields: quiver, quiverkey, barbs, streamplot.
-- Specialty: stem, eventplot, pie, table, sankey, specgram, psd, csd, cohere,
-  xcorr, acorr, annotated heatmaps, magnitude / angle / phase spectra.
-- Patches and collections: Rectangle, Circle, Ellipse, Polygon, PathPatch,
-  FancyArrow, hatch fills, PathCollection, LineCollection, PatchCollection,
-  PolyCollection, QuadMesh.
-- 3D (`mplot3d`): plot3d, scatter3d, surface, wireframe, contour / contourf,
-  trisurf, voxels, quiver3d, errorbar3d, stem3d, bar3d, fill_between3d,
-  with depth sorting and shared scalar-mappable state.
-- Non-Cartesian: polar, radar, skewx, mollweide projections via the
-  `projection=` registry.
-
-**Layout, composition, and styling**
-
-- Subplots, `add_subplot`, `GridSpec`, `subplot_mosaic`, nested grids,
-  `SubFigure`, granular share modes, twin / secondary axes.
-- Layout engines: `subplots_adjust`, `tight_layout`, `constrained_layout`,
-  measured-text margin computation, colorbar slot management.
-- Inset / zoomed-inset, `AxesDivider`, `ImageGrid`, `RGBAxes`, parasite axes,
-  anchored artists, `AxisArtist`, floating axes, curvilinear grids.
-- Figure-level labels (`suptitle`, `supxlabel`, `supylabel`), figure legends,
-  anchored boxes.
-- Style system: `rcParams`, `rc`, `rc_context`, `rcdefaults`, `.mplstyle`
-  loading, theme library, publication-ready themes.
-
-**API surface**
-
-- Object-oriented core API plus a stateful `pyplot` layer covering the common
-  Matplotlib migration path (`Figure`, `GCF`, `GCA`, `Subplot`, `Subplots`,
-  `title`, `xlabel`, `legend`, `colorbar`, `savefig`, `show`, …).
-- Convenience entry points: `SemilogX`, `SemilogY`, `LogLog`, `PlotDate`,
-  `Fill`, `BarH`, full spectrum variant wrappers.
-- Color-mapping model: `Normalize`, `NoNorm`, `LogNorm`, `SymLogNorm`,
-  `PowerNorm`, `TwoSlopeNorm`, `CenteredNorm`, `BoundaryNorm`, with consistent
-  scalar-mappable routing through every color-mapped artist.
-- Date / category / unit converters and locators.
-
-**Tooling and infrastructure**
-
-- Headless `FigureCanvas` / `FigureManager` abstraction with event model
-  (mouse / key / resize / draw / close) and tool manager scaffolding.
-- WASM web demo host with persisted light/dark theme switch, focus/input
-  preservation, and GitHub Pages deployment.
-- `cmd/example` runner with `-list` mode driven by the
-  `internal/examplecatalog` source of truth.
-- Catalog-driven parity test suite: `TestGolden`, `TestMatplotlibRef`,
-  `TestReferenceCompare` discover cases by ID; per-case tolerances live on the
-  catalog row.
-
-**What's left** is the focused work in the phases below: remaining PS/PGF
-hardening, renderer effects (patterns / gradients / path effects), MathText /
-TeX promotion follow-through, animation, backend deepening, parity closure,
-example / browser-gallery breadth, and documentation polish for v1.0.
+*Former Phases 1–6, 8A, 9–19 are complete; see git history for the detailed
+per-phase implementation logs.*
 
 ---
 
-# Phase 1: Publication Backends and Shared Save Pipeline
+# Phase 1: Backend Deepening (Skia Native + GPU)
 
-✅ **Completed.** PDF, PS/EPS, and PGF are now deterministic publication-vector
-backends integrated into one shared, extension-driven save pipeline across PNG,
-SVG, PDF, PS/EPS, and PGF.
+**Goal:** finish the backend-specific work carved out of the earlier parity
+program. The remaining items are almost entirely gated by the **external Skia
+C-ABI binding** (`backends/skia/strategy.go`, `Binding: external-c-api`;
+requires the Skia shared library, a C-ABI wrapper, and `CGO_ENABLED=1`). The CPU
+Skia bridge already advertises truthful bridged (`≈`) capabilities; the open work
+flips those to native (`✓`).
 
-Completed scope:
+- [ ] AGG parity diagnostics for remaining non-text residuals: dense path
+      collections, repeated translucent overlaps, image interpolation modes,
+      hatch clipping, and mixed raster/vector fallbacks. *(Not Skia-blocked — the
+      one self-contained item here.)*
+- [ ] Native Skia marker batches, path collections, transformed images, quad
+      meshes, and Gouraud triangles via `SkCanvas::drawAtlas` / `SkVertices`.
+      *(Blocked: external C-ABI.)*
+- [ ] Native Skia hatching via tiled `SkShader`s. *(Blocked: external C-ABI.)*
+- [ ] GPU mode (`SkSurface::MakeRenderTarget`) behind the `skiagpu` build tag with
+      deterministic CPU readback for goldens. The scaffold exists
+      (`gpu_scaffold_test.go`, CPU-readback only); real GPU rendering is
+      *(blocked: external Skia/GPU library)*.
+- [ ] Truthful per-mode native/fallback/unavailable reporting in the *live*
+      `BackendComparisonReport` once CPU and GPU capability sets actually diverge.
 
-- PDF (`backends/pdf`) supports deterministic object/page-stream writing,
-  `SOURCE_DATE_EPOCH` metadata, full path/fill/stroke/clip drawing, embedded
-  Type 0/CIDFontType2 subsets with deterministic maps, and reusable native
-  resources for images, hatches, marker/path collections, alpha, and
-  transformed images.
-- PS/EPS provides deterministic Level-2 output for paths, clips,
-  strokes/fills, transformed images, native hatches, and reusable
-  marker/path-collection procedures; unavoidable Level-2 limitations versus PDF
-  are implemented where possible and clearly documented otherwise.
-- PGF provides deterministic generator-only `pgfpicture` output for paths,
-  clips, text/rotated text, opacity, hatches, raster/transformed images,
-  mixed-raster groups, and reusable marker/path-collection macros, with TeX
-  compilation optional and generator-smoke CI coverage.
-- Shared save routing uses `SelectBackendForExtension` + `SaveFormats` across
-  public entry points (`pyplot`, canvas/manager, CLI, examples), with unified
-  `render.SaveOption` plumbing (including PGF metadata/preamble/comment/
-  verification controls), capability reporting, explicit unsupported-option
-  errors, and consistent mixed raster/vector behavior via DPI-aware offscreen
-  replay.
-- Structural/smoke/golden fixtures cover backend selection, export stability,
-  text/clipping/transforms, alpha, rasterized artists, and vector-surround
-  preservation.
+**Exit criterion:**
 
----
-
-# Phase 2: Renderer Effects, Patterns, and Compositing
-
-✅ **Completed.** Phase 2 is fully closed. Artists can request pattern fills,
-gradient fills, path effects, filtered path-effect passes, and mixed
-raster/vector output through renderer-neutral capability interfaces, without
-backend-name conditionals in core effect routing.
-
-**Reference sources:** `third_party/matplotlib/lib/matplotlib/patheffects.py`,
-`third_party/matplotlib/lib/matplotlib/colors.py`, AGG filter behavior, SVG
-`<pattern>` / `<filter>` output, and PDF image/form resource behavior.
-
-Completed scope:
-
-- Pattern and gradient fills: `render.PatternFill` and `render.GradientFill`
-  live on `render.Paint`, with `render.PatternFiller` and
-  `render.GradientFiller` capability interfaces plus graphics-context alpha
-  propagation.
-- Native targets: AGG, SVG, PDF, and Skia-tagged CPU builds all advertise and
-  satisfy pattern/gradient/path-effect capabilities through runtime interfaces.
-- Backend output: AGG renders gradient spans and tiled pattern fills; SVG emits
-  deterministic gradient/pattern/filter defs; PDF emits axial/radial shadings,
-  tiling patterns, transparency-group forms, and soft-mask image XObjects;
-  Skia uses the CPU bridge for the same renderer-neutral contracts.
-- Path effects: `render.PathEffect` covers normal, stroke/halo, simple patch
-  and line shadows, patch effects, ticked strokes, and filtered repaint passes;
-  core line, patch, text, scatter, and collection artists carry effects through
-  to path paints.
-- Filter routing: SVG and PDF use `render.PathEffectFilterDrawer` where they
-  can produce backend-local output; AGG and Skia use `render.FilterRenderer`;
-  PS, PGF, and GoBasic document and report fallback semantics truthfully.
-- Mixed raster/vector output: `render.Rasterization` and
-  `render.RasterizationController` support explicit `Artist.SetRasterized(true)`
-  and auto-rasterization for dense output, with SVG/PDF/PS/PGF embedding
-  DPI-aware raster tiles while preserving surrounding vector content.
-- Regression coverage: cross-backend semantic tests assert effect routing uses
-  `render.PatternFiller`, `render.GradientFiller`, `render.PathEffectDrawer`,
-  `render.PathEffectFilterDrawer`, and `render.FilterRenderer`; backend
-  capability matrix tests pin truthful native/fallback declarations.
-- Fixture coverage: committed catalog fixtures cover path effects,
-  pattern/gradient/effect combinations, and mixed raster/vector output:
-  `path_effects`, `pattern_gradient_effects`, and `mixed_raster_vector`, each
-  with golden and Matplotlib-reference PNG coverage where applicable.
-
----
-
-# Phase 3: Mathematical Text and TeX
-
-✅ **Completed.** MathText and `usetex` are first-class across the active
-raster/vector targets, with toolchain-gated TeX coverage and MathText promoted
-to the standalone `github.com/cwbudde/mathtext` module.
-
-Completed scope:
-
-- The shared MathText shaping path feeds AGG text drawing, text measurement,
-  text bounds, and text-path output from the same shaped glyph runs.
-- Grammar and layout coverage now includes stacked fractions, genfrac, roots,
-  accents, big operators, integral and operator limits, matrix/array
-  environments, fences, and spacing, with parity fixtures for
-  `mathtext_basic`, `mathtext_fractions`, `mathtext_integrals`,
-  `mathtext_matrices`, and `mathtext_inline_labels`.
-- Deterministic MathText caches support bounded in-memory reuse plus
-  cross-process JSON snapshot save/load with atomic writes.
-- MathText renders through AGG, SVG, PDF, PS smoke/rasterized paths, and
-  build-tagged Skia coverage with documented tolerances against Matplotlib
-  references or AGG goldens.
-- `usetex` is opt-in and dependency-free by default; hosts with `latex` and
-  `dvipng` get toolchain-gated integration, artist-pipeline, and golden tests.
-- `internal/tex` parses DVI page extents with Matplotlib-style
-  width/height/descent semantics and falls back to PNG dimensions when DVI/TFM
-  geometry is unavailable.
-- MathText is promoted to `github.com/cwbudde/mathtext` with independent
-  versioning, a renderer-neutral parser/layout/cache API, local geometry types,
-  and no non-stdlib module dependencies.
-
----
-
-# Phase 4: Interactive Backends and Event Loop
-
-✅ **Completed.** The headless event scaffolding has been turned into shared
-interactive infrastructure with desktop, web, and WASM frontends.
-
-Completed scope:
-
-- Navigation, picking, hover coordinate formatting, callback registration, and
-  Matplotlib-style event lifecycle semantics are implemented on the shared
-  canvas/event surface.
-- The Gio desktop backend hosts AGG rendering, maps toolkit input to canvas
-  events, supports toolbar actions, and ships desktop embedding examples.
-- The WebAgg backend implements server-side managers, WebSocket protocol
-  handling, browser canvas updates, toolbar state, binary PNG frames, and
-  embedding examples.
-- The WASM demo host supports pan, zoom, rubber-band selection, toolbar
-  actions, hover state, and shared input normalization.
-- Draw-idle coalescing, stale redraw propagation, blit/damage-region support,
-  lifecycle/error tests, and matrix smoke coverage exercise catalog
-  representatives across Gio and WebAgg.
-- `docs/interactive-backends.md` documents the common event, picker, toolbar,
-  draw-idle, save, and backend capability contracts.
-
----
-
-# Phase 5: Widgets and Selectors
-
-✅ **Completed.** Static widget artists are fully interactive through the
-shared Phase 4 event dispatcher.
-
-Completed scope:
-
-- Buttons, sliders, range sliders, check buttons, radio buttons, and text boxes
-  support pointer and keyboard interaction, state changes, and callbacks.
-- Span, rectangle, ellipse, polygon, and lasso selectors support mouse and
-  keyboard editing with upstream-style modifier behavior.
-- Cursor and multi-cursor helpers are driven by shared hover events.
-- Widget z-order, widget-axis layout helpers, and a complete widget gallery are
-  in place for headless, desktop, and web backends.
-
----
-
-# Phase 6: Animation
-
-✅ **Completed.** The `animation` package adds a Matplotlib-style animation API
-driven by the Phase 4 event loop and blit-friendly redraw paths, with
-dependency-free frame writers and deterministic frame-parity fixtures.
-
-**Reference sources:** `third_party/matplotlib/lib/matplotlib/animation.py`.
-
-Completed scope:
-
-- `FuncAnimation` and `ArtistAnimation` mirror upstream signatures over a shared
-  deterministic frame loop with interval, repeat, repeat-delay, and blit
-  controls; `Step()` advances frames without a real timer and `Start()` installs
-  one on the configured `canvas.EventLoop`.
-- Artist `set_animated` is honored end-to-end: `core.DrawFigure` skips animated
-  artists by default and `DrawFigureWithOptions` exposes background-suppress,
-  animated-only, and all-artist passes; the engine captures a background
-  snapshot and blits per frame on `BlitCanvas` + `BufferRegioner`, falling back
-  to full redraws otherwise (AGG and Skia).
-- Dependency-free default-build writers for GIF, APNG, and HTML (PNG data-URI
-  frames with inline playback controls); optional `-tags ffmpeg` adds MP4
-  (libx264) and WebM (libvpx-vp9) writers with runtime detection.
-- `examples/animation_gallery` showcases FuncAnimation, ArtistAnimation,
-  scatter/collection, imshow heatmap, and two-panel subplot animations, all
-  built from closed-form per-frame generators.
-- Deterministic frame fixtures (`animation_{line,scatter,imshow,subplots}_frame`)
-  verify frame-N output against Matplotlib references at `RMSE 0.10–2.51`
-  (`PSNR 56.9–67.9 dB`); `animation_gallery` appears in the WASM demo gallery.
-
----
-
-# Phase 7: Backend Deepening and Parity Hardening
-
-**Goal:** finish the backend-specific work that was carved out of the earlier
-backend parity program but is not yet complete.
-
-### 7.1 AGG Native Capabilities
-
-- [x] Complete the AGG MathText raster pipeline once Phase 3.1 lands so
-      raster glyph composition shares the same shaping pipeline as text-as-path.
-- [x] Plumb `usetex` output through AGG using the DVI parser from Phase 3.2.
-- [ ] Expand AGG parity diagnostics for remaining non-text residuals: dense
-      path collections, repeated translucent overlaps, image interpolation modes,
-      hatch clipping, and mixed raster / vector fallbacks.
-- [x] Split AGG-native parity fixtures from renderer-neutral fallback
-      fixtures so missing native AGG behavior cannot be hidden by fallback
-      drawing.
-
-### 7.2 SVG Coverage Expansion
-
-- [x] Expand the structural golden set to the remaining canonical plot
-      families: bar, errorbar, hist, collection, image, clipped polar,
-      hatch_bars, text_layout, mathtext.
-- [x] Wire the SVG-specific golden set into the catalog so the structural
-      diff harness runs alongside the rasterized golden / reference comparison.
-
-### 7.3 Skia Native Paths
-
-- [ ] Native Skia marker batches, path collections, transformed images,
-      quad meshes, and Gouraud triangles wired through `SkCanvas::drawAtlas` and
-      `SkVertices`.
-  - [x] CPU Skia renderer implements the renderer optional interfaces for
-        marker batches, path collections, transformed images, quad meshes, and
-        Gouraud triangles through the deterministic Skia bridge boundary; the
-        external `drawAtlas` / `SkVertices` ABI integration remains open.
-  - [x] CPU Skia reports `MarkerBatch`, `PathCollectionBatch`, and
-        `QuadMeshBatch` as bridged (`≈`) via the new
-        `render.CapabilityBridgeReporter` interface, so the comparison report
-        distinguishes the CPU bridge stand-ins from the truly native
-        `GouraudTriangleBatch` path. The external batch ABI remains the open
-        path to flipping these back to native (`✓`).
-  - [x] `skia.NativePathRequirements()` now records the deferred native
-        primitive/capability mapping for `SkCanvas::drawAtlas`, `SkVertices`,
-        tiled `SkShader`, and `SkSurface::MakeRenderTarget`, including status
-        and blocker text, so the external ABI boundary is tested as strategy
-        data instead of living only in prose.
-  - [ ] External `SkCanvas::drawAtlas` / `SkVertices` ABI integration to flip
-        the bridged (`≈`) marker/collection/mesh paths to native (`✓`). Blocked
-        on the external Skia C-ABI binding that is deferred by
-        `backends/skia/strategy.go` (`Binding: external-c-api`; required libs:
-        Skia shared library, C-ABI wrapper, `CGO_ENABLED=1`).
-- [ ] Skia native hatching via tiled `SkShader`s.
-  - [x] CPU Skia consumes hatch metadata during path rendering and advertises
-        `NativeHatcher`; tiled external `SkShader` hatches remain open.
-  - [x] CPU Skia reports `NativeHatcher` as bridged (`≈`) until the external
-        tiled `SkShader` integration lands. Hatch geometry continues to route
-        through `render.DrawHatchFallback`.
-  - [ ] Tiled external `SkShader` hatches to flip `NativeHatcher` from bridged
-        (`≈`) to native (`✓`). Blocked on the same external Skia C-ABI binding.
-- [ ] GPU mode (`SkSurface::MakeRenderTarget`) behind a separate build tag,
-      with deterministic CPU readback for golden tests.
-  - [x] `skiagpu` build-tag scaffold: a GPU-mode request (`SkiaConfig.UseGPU`)
-        is accepted only under `-tags skiagpu`, selects the GPU render mode
-        (`BridgeInfo.Mode == ModeGPU`), and rasterizes deterministically through
-        the existing CPU readback bridge (`NativeSurface == false`) so golden
-        tests stay reproducible. `gpu_enabled.go` / `gpu_disabled.go` carry the
-        `gpuBuildEnabled` flag; `TestGPUScaffoldRendersThroughCPUReadback`
-        (`backends/skia/gpu_scaffold_test.go`) covers it.
-  - [ ] Real native `SkSurface::MakeRenderTarget` GPU rendering (currently the
-        scaffold is CPU-readback only). Blocked on the external Skia/GPU library.
-- [ ] Capability reporting split between CPU and GPU configurations so the
-      comparison report shows truthful native / fallback / unavailable status
-      per mode.
-  - [x] CPU Skia capability reporting now marks implemented optional paths as
-        native instead of fallback; GPU-specific capability reporting remains
-        deferred until the GPU build tag exists.
-  - [x] A fourth `CapabilityBridged` status (`≈` marker) sits between native
-        and fallback in `BackendComparisonReport` so the CPU bridge stand-ins
-        are visible. The CPU/GPU mode split is exposed as strategy data and
-        live report labels; capability-set divergence remains deferred until a
-        real GPU path exists.
-  - [x] CPU/GPU capability-split data structure: `skia.ModeCapabilities(mode)`
-        encodes the per-mode optional-capability sets and `BackendStrategy()`
-        reports `DefaultMode` / `GPUStatus` per the `skiagpu` build tag
-        (`StatusPlanned` with the tag, `StatusDeferred` without). Today the GPU
-        set mirrors the CPU set because the GPU mode is a CPU-readback scaffold.
-  - [x] Live `BackendComparisonReport` rows now include renderer mode labels
-        for multi-mode renderers (`skia/cpu` and, under `-tags skiagpu`,
-        `skia/gpu`), so audits can distinguish the active Skia mode while
-        keeping the existing native / bridged / fallback status markers.
-  - [ ] Truthful per-mode native / fallback / unavailable in the _live_
-        `BackendComparisonReport` with divergent CPU/GPU capability sets
-        (e.g. a second GPU registry entry). Deferred until the real GPU path
-        exists and the two sets actually diverge.
-- [x] Skia vs AGG semantic-fixture comparison; tolerances documented per
-      fixture where Skia is not expected to pixel-match.
-      `TestSkiaParityAgainstAGGGoldens` in `backends/skia/parity_test.go`
-      (build-tagged `skia`) iterates every catalog `Case` opted into the new
-      `SkiaParityFamily` field and compares Skia CPU output against the
-      committed AGG golden. Per-case `MinPSNR` / `MaxMeanAbs` overrides on
-      the catalog row take precedence over the harness defaults; failures emit
-      got / golden / diff artifacts under
-      `testdata/_artifacts/skia_parity/{id}/`. Covers line, scatter, bar,
-      fill, errorbar, histogram, text, MathText, image, mesh, hatch/patch,
-      polar, and path-effect / pattern-gradient families.
-
-### 7.4 GoBasic Long Tail
-
-- [x] GoBasic equivalents for the renderer-neutral path effect pipeline
-      introduced in Phase 2 so the fallback backend keeps full semantic coverage.
-  - [x] Add GoBasic semantic tests for `Normal`, `Stroke`, `PathPatch`,
-        `SimplePatchShadow`, `SimpleLineShadow`, and `TickedStroke` path
-        effects, proving each pass draws visible non-background pixels and
-        honors offset / stroke / fill semantics through `render.DrawPathWithEffects`.
-  - [x] Add GoBasic filter-effect fallback coverage documenting that unsupported
-        blur/filter effects degrade to a deterministic repaint pass unless the
-        renderer implements `render.FilterRenderer` or `render.PathEffectFilterDrawer`.
-  - [x] Add artist-level GoBasic path-effect smoke tests for line, patch,
-        scatter / path collection, and text-path effects so core artist routing
-        cannot bypass the renderer-neutral path-effect pipeline.
-  - [x] Update GoBasic docs and capability expectations to state which path
-        effects are semantic fallbacks and which filter effects are intentionally
-        approximate.
-- [x] GoBasic smoke coverage for any new plot family introduced in Phases
-      1-6 (PDF / interactive / animation paths excluded since GoBasic targets
-      static output).
-  - [x] Add a catalog-derived GoBasic smoke test that renders every static
-        catalog case opted into `GoBasicSmokeFamily` through `backends.GoBasic`
-        and asserts the image is non-empty.
-  - [x] Keep cases requiring unsupported external/runtime dependencies
-        (`usetex`, interactive, animation, vector export, or backend-native
-        AGG / Skia fixtures) out of the GoBasic smoke set by requiring explicit
-        `GoBasicSmokeFamily` opt-in metadata.
-  - [x] Ensure every Phase 1-6 plot family has at least one GoBasic-rendered
-        smoke case in the catalog-derived set, including path effects,
-        MathText, images, meshes, collections, hatches, statistical views,
-        specialty artists, projections, layouts, and other static catalog
-        surfaces.
-  - [x] Add a small summary test for coverage metadata so newly added static
-        plot families fail fast until they declare GoBasic smoke coverage or
-        an explicit skip reason.
-
-**Exit criteria:**
-
-- [x] AGG, SVG, and Skia all advertise truthful capability matrices for
-      every optional renderer interface, with no `✓!` drift markers in the
-      comparison report. Enforced by
-      `TestRegisteredBackendsAdvertiseSupportedCapabilities`
-      (`backends/backend_capability_runtime_test.go`), which fails on any
-      fallback→native drift; the `≈` bridged marker
-      (`backends/capabilities.go`) keeps the CPU bridge stand-ins honest.
-- [x] Every committed plot family has at least one native and one
-      fallback-path fixture so silent fallbacks cannot pass for native
-      behavior. Enforced by `test/agg_native_fixtures_test.go` (native fixtures
-      split from renderer-neutral cases) and `test/gobasic_smoke_test.go`
-      (fallback smoke coverage required for every static plot family).
 - [ ] Skia is a viable secondary raster backend for users who need GPU
-      acceleration. Still open: the `skiagpu` scaffold provides the build tag
-      and deterministic CPU readback, but real `SkSurface::MakeRenderTarget`
-      GPU acceleration is blocked on the external Skia/GPU binding.
+      acceleration. *(Open: blocked on the external Skia/GPU binding above.)*
 
 ---
 
-# Phase 8: RMSE > 5 Example Parity Audit
-
-**Goal:** close the current catalog cases whose committed Go golden differs
-from the Matplotlib reference by `RMSE > 5`, using core-library parity fixes
-before fixture tweaks. Baseline captured with
-`go test -v ./test -run TestReferenceCompare` on 2026-05-21.
-
-**Visual audit artifacts:** `testdata/_artifacts/reference_compare/*_golden.png`,
-`*_matplotlib_ref.png`, and `*_golden_vs_matplotlib_ref_diff.png`.
-
-**Latest RMSE run:** `rtk proxy go test -v ./test -run TestReferenceCompare -count=1`
-on 2026-05-23 passes all committed catalog tolerances after refreshing the
-stale `mplot3d_scatter3d` Python reference and targeted Go goldens.
-`mplot3d_scatter3d` is now `RMSE 8.42` (down from 18.81),
-`patch_showcase` is `RMSE 6.39`, `lognorm_imshow` is `RMSE 9.42`
-after switching log tick labels to Matplotlib-style powers, `spy_marker`
-is `RMSE 2.50` after matching Line2D marker sizing, and a focused
-`TestReferenceCompare/arrays_showcase` run now reports `RMSE 8.00` after
-using structured-grid contour lines and Matplotlib-like contour z-order.
-The same structured contour fix plus a stale optional golden refresh moves
-`mesh_contour_tri` to `RMSE 7.19`.
-`pcolormesh_gouraud` is now `RMSE 4.78` after matching Matplotlib's
-four-triangle Gouraud quad conversion.
-`stem_plot` is now `RMSE 4.13` and `mplot3d_stem3d` is now `RMSE 13.55`
-after matching Matplotlib stem baseline color, marker size, and 3D stem cap
-defaults.
-`spy_image` is now `RMSE 3.45` after matching Matplotlib's ceiled image
-resampling buffer geometry and refreshing the stale Go golden.
-`figure_labels_composition` is now `RMSE 6.60` after constrained layout
-reserves the full figure-label line box instead of only the ink bounds.
-`spectrum_variants` is now `RMSE 9.87` after aligning the fixture-only
-near-zero FFT residue inputs with the NumPy/Matplotlib reference arrays and
-refreshing the Go golden.
-`specialty_depth` is now `RMSE 6.92` after matching Matplotlib's point-unit
-errorbar cap sizing and open stroked limit-caret markers.
-`twoslope_norm_image` is now `RMSE 6.24` after matching Matplotlib's
-function-scaled colorbar axis for `TwoSlopeNorm`.
-`colorbar_extensions` is now `RMSE 7.00` after matching Matplotlib's extended
-colorbar box-aspect shrink compensation.
-`specialty_artists` is now `RMSE 7.52` after matching Matplotlib's 1 pt
-table patch linewidth default, anchoring table text from ink bounds, and
-auto-sizing row-label cells from renderer text bounds, including Matplotlib's
-bbox scaling/offset behavior for auto row-label columns, plus Matplotlib's
-auto patch snapping for rectilinear table cell paths, butt caps on two-sided
-violin summary lines, collection-level violin body alpha, and unclipped table
-overlay drawing.
-`mixed_raster_vector` is now `RMSE 6.39` after removing the Go-only explicit
-rasterization DPI override so the fixture directly mirrors Matplotlib's
-`rasterized=True`, and refreshing a stale Matplotlib reference generated from
-the current Python source. The polar data region was already below target;
-remaining residual is mostly title/legend/tick text raster placement.
-`layout_bbox_helpers` is now `RMSE 7.32` after converting its dashed
-figure-space rectangle pattern from Matplotlib points to pixels at 100 DPI;
-remaining residual is mostly text and AGG straight-alpha/color quantization.
-`axes_control_surface` is now `RMSE 3.15` after matching Matplotlib's title
-avoidance for top x-labels: the top-label contribution uses the full line
-ascent, not only ink bounds, so titles above top labels sit on the same
-baseline. Its Go golden was refreshed.
-`polar_axes` is now `RMSE 6.22` after matching Matplotlib's theta tick label
-centering and `_pad + 7pt` padding in addition to the radial spine/label
-changes.
-`radar_basic` is now `RMSE 6.99` after removing the radar-specific theta tick
-size workaround and using the same Matplotlib theta label padding/centering.
-`units_dates` is now `RMSE 5.92` after preserving explicit date locators and
-formatters across unit-axis refreshes.
-`skewt_basic` is now `RMSE 5.02` after matching Matplotlib's skew-x top-axis
-visibility, upper-interval x gridlines, and unskewed y tick placement.
-`mplot3d_basic` is now `RMSE 3.76` after matching Matplotlib's 3D tick/axis
-label offset deltas to the expanded frame limits returned by `_get_coord_info`.
-The same 3D label-offset fix moves every `mplot3d_*` reference fixture below
-`RMSE 4` after refreshing the affected Go goldens.
-No non-mathtext cases remain above the temporary Phase 8 target of
-`RMSE < 10`. The mathtext cases remain excluded from this temporary threshold.
-
-**2026-06-01 continuation note:** current `parity-viewer-print` output still
-has non-mathtext cases above `RMSE 10`; the previous paragraph is historical.
-`line2d_markers` is now `RMSE 6.96` after matching Matplotlib's Line2D legend
-marker sizing, fixing top/bottom half-filled marker orientation in marker local
-coordinates, and replacing polygonal half-circle fills with Matplotlib's cubic
-right-half circle path; it later dropped below target after AGG plain-text
-ligatures were disabled to match Matplotlib FT2Font, with
-`testdata/golden/line2d_markers.png` refreshed.
-`errorbar_basic` is now `RMSE 9.76` after adding a core `NoDataLine` option
-that lets the Go example express Matplotlib's `fmt="none"` errorbar semantics
-directly, with `testdata/golden/errorbar_basic.png` refreshed.
-`formatter_scalar_scientific_labels` is now `RMSE 3.44` after matching
-Matplotlib MathText binary-operator spacing for command symbols such as
-`\times`, preserving `ScalarFormatter` mathtext wrappers for step-formatted
-zero ticks, and disabling AGG plain-text ligature substitution so titles such as
-`Scalar Scientific Formatter` render through the native FT2Font character path;
-its Go golden was refreshed.
-`patch_style_matrix` is now `RMSE 2.37` after matching Matplotlib patch
-`snap=None` auto-snapping for rectilinear patch paths and rendering unfilled
-circle hatches as filled outer/reversed-inner ring contours; its Go golden was
-refreshed.
-`vector_fields` is now `RMSE 2.69` after matching Matplotlib `angles="uv"`
-quiver direction signs, Barbs' point-length collection scaling / default barb
-side semantics, raw barb vector-angle rotation, and closed barb glyph paths; its
-optional Go golden was refreshed.
-`arrays_showcase` is now `RMSE 6.31`, `mesh_contour_tri` is now `RMSE 7.14`,
-`unstructured_showcase` is now `RMSE 5.50`, `pcolor_flat` is now `RMSE 0.44`,
-and `pcolormesh_masked` is now `RMSE 0.59` after matching Matplotlib's split
-mesh defaults: `pcolormesh` snaps rectilinear cells and disables antialiasing,
-while `pcolor` keeps unsnapped, collection-default antialiasing when edges are
-stroked. `arrays_showcase` later dropped below target after fixing bottom x-label
-fallback placement for matrix views with hidden bottom ticks, removing a stale
-top-xlabel title `+1` compensation, and matching contour line cap style;
-`pcolor_flat` later improved after disabling AGG plain-text ligatures. The
-affected Go goldens were refreshed.
-`legend_layout_matrix` is now `RMSE 7.14` after matching Matplotlib legend
-patch handle boxes, full-width line handles, 0.3-font scatter handle padding,
-and errorbar legend cap/stem geometry, plus aligning the Python reference
-scatter edge linewidth with the Go fixture's pixel-width convention. Its Go
-golden and Matplotlib reference were refreshed; remaining residual is mostly
-legend marker/text raster placement and title/tick text antialiasing.
-`boxplot_basic` is now `RMSE 8.92` after adding a core `ManageTicks` option for
-Matplotlib's `boxplot(..., manage_ticks=False)` semantics and refreshing its Go
-golden.
-`scale_symlog_ticks` is now `RMSE 5.61` after matching Matplotlib's symlog
-`linscale / (1 - base^-1)` transform adjustment and `linthresh` scaling; its Go
-golden was refreshed.
-`scale_logit_ticks` is now `RMSE 5.09` after matching Matplotlib's
-MathText-wrapped `LogitFormatter` labels; its Go golden was refreshed.
-`asinh_norm_image` is now `RMSE 7.98` after using Matplotlib's norm-backed
-asinh colorbar scale (`AsinhLocator` plus scientific MathText formatter) for
-`AsinhNorm`; its Go golden was refreshed.
-`colorbar_boundary_values` is now `RMSE 9.57` after matching Matplotlib's
-extended-boundary colorbar semantics: the body uses interior boundaries, min/max
-extensions sit outside the body, and extension colors use the provided boundary
-values. `colorbar_extensions` was refreshed as an affected extension fixture and
-now reports `RMSE 7.61`.
-`artist_metadata` is now `RMSE 0.91` after fixing the fixture's local
-data-to-display helper to match Matplotlib's y-up display coordinates for
-explicit clip boxes; its Go golden was refreshed.
-`axes_grid1_showcase` is now `RMSE 4.95` after fixing anchored multiline text
-to draw top-down in y-up display space and switching the tile labels back to
-axes-coordinate `Text` with Matplotlib-style rounded bboxes; its Go golden was
-refreshed. The same anchored multiline fix refreshed `text_annotation_matrix`.
-On 2026-06-01, a focused `text_annotation_matrix` pass matched Matplotlib's
-single-line rotated text bbox transform for the rotated label, removed the
-Go-only rounded `AnchoredText` frame, made its multiline height use measured
-TextArea metrics, and made the remaining anchored offset-box frame widths use
-Matplotlib's 1 pt patch linewidth conversion. A follow-up pass matched
-Matplotlib's nearest-neighbor, palette-preserving non-integer image upscaling for
-the `OffsetImage`, corrected the fixture image's float-to-byte source colors,
-snapped the sizebar fill rectangle, and snapped unrotated square text bbox
-patches while leaving rotated bboxes unsnapped. A follow-up AGG pass split
-AxesImage and BboxImage/OffsetImage nearest placement: AxesImage top alignment
-now matches Matplotlib's rounded device y, while BboxImage uses Matplotlib's
-ceiled output buffer and integer top-edge placement. A final frame-snap pass
-kept anchored/text/annotation frame rectangles at their true patch bounds and
-set `SnapAuto`, matching Matplotlib's pixel-centered snapped 1 px strokes
-instead of pre-rounded antialiased integer-edge rectangles. The case is now
-`RMSE 5.41`. Remaining residuals are mostly arrow/path edge differences,
-rotated glyph antialiasing, and small TextArea/HPacker text placement drift.
-The 2026-06-01 full focused run initially had multiple geo fixtures above
-`RMSE 10`; a follow-up geo pass fixed Matplotlib GeoAxes longitude label
-placement (frame-bottom x-labels and equator tick labels padded above the
-equator), refreshed all four geo goldens, and now reports:
-`geo_mollweide_axes` 6.96, `geo_aitoff_axes` 6.92, `geo_hammer_axes` 5.41, and
-`geo_lambert_axes` 5.33 after refreshing its stale optional golden.
-`unstructured_showcase` is now `RMSE 5.96` after switching the source-local
-`ax.text` / `fig.text` calls back to core `Text` artists and keeping
-Matplotlib's locator-bounded `tricontour(..., levels=N)` levels instead of
-dropping levels outside the data range. Annotation defaults now match
-Matplotlib's left/baseline alignment instead of inferring alignment from offset
-direction; this moved `mathtext_basic` to `RMSE 12.65`,
-`transform_annotation_modes` to `RMSE 3.60`, and `annotation_composition` to
-`RMSE 6.68`. `imshow_interpolation_matrix` is now `RMSE 7.79` after matching
-Matplotlib's scalar-data interpolation stage for high-upsampled 2D images before
-colormapping and then applying the AGG nearest image placement split. A full
-`TestReferenceCompare` pass on 2026-06-01 then left the remaining cases at or
-above `RMSE 10` as: `widgets_gallery` (`15.79`), `colorbar_composition`
-(`13.13`), `mathtext_basic` (`12.65`), `figure_labels_composition` (`12.56`),
-`mathtext_fractions` (`12.49`), `mathtext_inline_labels` (`12.34`), and
-borderline `mathtext_matrices` (`10.00`). `text_annotation_matrix` is now below
-that threshold at `RMSE 5.41`; the remaining differences are no longer the
-rotated box or offset-box frame geometry. `widgets_gallery` is now below the
-threshold at `RMSE 7.32` after matching Matplotlib widget-source layout for
-sliders, CheckButtons, RadioButtons, and snapped square widget panels.
-`colorbar_composition` is now `RMSE 8.98` and
-`figure_labels_composition` is now `RMSE 6.97` after matching Matplotlib's
-`0.04167` inch constrained-layout pad and using a device-snapped spine width
-for constrained colorbar slot placement. The remaining `RMSE >= 10` list is
-`mathtext_basic`, `mathtext_fractions`, `mathtext_inline_labels`, and
-borderline `mathtext_matrices`. `mathtext_integrals` is now `RMSE 5.03` after
-matching Matplotlib's unspaced operator parsing inside `\lim` limits.
-
-**2026-06-03 continuation note:** MathText raster placement now follows
-Matplotlib `_mathtext.Output.to_raster` ship coordinates: glyph/rule y values
-are offset by `box.height` while the origin stays at zero. Mixed inline math
-line metrics now apply Matplotlib `Text._get_layout`'s `lp` guard
-(`h=max(h, lp_h)`, `d=max(d, lp_d)`), and lowercase Greek math command glyphs
-now use the italic math face while Greek capitals stay roman. The affected Go
-goldens were refreshed. Current `parity-viewer-print FILTER=mathtext` rows are:
-`mathtext_inline_labels` `RMSE 11.17`, `mathtext_basic` `RMSE 10.53`,
-`formatter_log_mathtext_labels` `RMSE 7.33`, `mathtext_fractions` `RMSE 4.01`,
-`mathtext_matrices` `RMSE 0.24`, and `mathtext_integrals` `RMSE 0.00`.
-The remaining over-threshold work is the script-heavy `mathtext_inline_labels`
-and `mathtext_basic` residual; keep following Matplotlib `_mathtext.py` rather
-than fixture-local offsets.
-
-**Source parity audit:** completed on 2026-05-22 with sub-agents across all
-Phase 8 subphases. Direct example/fixture mismatches were fixed where existing
-Go APIs could express the same Matplotlib call semantics. Remaining unchecked
-items are renderer/layout/core API parity work, not example-source workarounds.
-Do not make a fixture pass by adding per-example offsets, hidden special cases,
-or catalog-only hacks. If the Go example already expresses the same public
-Matplotlib semantics, the fix belongs in the core plotting model, layout code,
-renderer contract, backend implementation, or the AGG port itself.
-
-### 8.1 `fill_basic` (RMSE 6.38)
-
-- [x] Code: source audited; no material example mismatch found.
-- [ ] Visual: polygon shape matches; residuals sit on fill outline, baseline,
-      ticks, and text antialiasing.
-- [ ] Likely core areas: `core/fill.go`, AGG polygon stroke/fill antialiasing,
-      text metrics.
-
-### 8.2 `fill_stacked` (RMSE 9.32)
-
-- [x] Code: source audited; no material example mismatch found.
-- [ ] Visual: stacked layer boundaries and outer fill edges differ; title/text
-      residuals remain.
-- [ ] Likely core areas: `FillBetween` / `FillToBaseline` stroke ordering,
-      alpha compositing, path rasterization.
-
-### 8.3 `errorbar_basic` (RMSE 6.95)
-
-- [x] Code: source audited; data, colors, and line widths are intentionally
-      matched.
-- [ ] Visual: plot is close; caps, marker edges, line endpoints, and labels
-      drive the diff.
-- [ ] Likely core areas: `core/errorbar.go`, cap-size semantics, scatter marker
-      rasterization, stroke antialiasing.
-
-### 8.4 `boxplot_basic` (RMSE 8.92)
-
-- [x] Code: removed the explicit `CapWidth` override and matched the Python
-      explicit light-gray `lw=0.5` y-grid.
-- [x] Code: added `BoxPlotsOptions.ManageTicks` so examples can express
-      Matplotlib's `manage_ticks=False` without hidden fixture behavior.
-- [x] Visual: focused `TestReferenceCompare/boxplot_basic` reports
-      `RMSE 8.92`; remaining residual is mostly box, cap, and flier edge
-      rendering.
-- [ ] Likely core areas: marker/stroke rendering.
-
-### 8.5 `text_labels_strict` (RMSE 5.91)
-
-- [x] Code: source audited; no source mismatch found.
-- [ ] Visual: axes structure is identical; residuals are mostly title, axis,
-      tick-label placement, and glyph antialiasing.
-- [ ] Likely core areas: `core/text.go`, AGG text measurement/baseline, axis
-      label offsets.
-
-### 8.6 `mathtext_basic` (RMSE 12.64)
-
-- [x] Code: data and math strings match; replaced anchored-text shortcut with
-      axes-fraction `Text` + bbox and matched annotation arrow styling.
-- [x] Code: the annotation `xytext=(34, -26)` source offset is converted from
-      points to display pixels, and core annotation defaults now use
-      Matplotlib's left/baseline text alignment.
-- [x] Code: the line style now explicitly matches the Python fixture's
-      `linewidth=lw(2), color=TAB10[0]`, and rotated mixed inline MathText now
-      goes through the structured MathText layout instead of collapsing to a
-      normalized fallback string.
-- [ ] Visual: math glyph sizes, baselines, superscripts/subscripts, anchored
-      box, and residual math annotation text differ.
-- [ ] Likely core areas: `github.com/cwbudde/mathtext`, `core/mathtext.go`, AGG text
-      bounds, annotation and anchored-box layout.
-
-### 8.7 `mathtext_fractions` (RMSE 26.98)
-
-- [x] Code: source audited; no source mismatch found.
-- [ ] Visual: fraction stacks, binomial layout, roots, and bracket sizing are
-      visibly different.
-- [ ] Likely core areas: `github.com/cwbudde/mathtext` layout, fraction axis
-      alignment, stretchy delimiters, square-root geometry, glyph metrics.
-
-### 8.8 `mathtext_integrals` (RMSE 5.03)
-
-- [x] Code: source audited; no source mismatch found.
-- [x] Code: matched Matplotlib's `operatorname`/over-under function behavior
-      for `\lim` scripts: spaced-symbol padding is suppressed inside the limit
-      expression, while symbolic operators such as `\sum_{i=1}` keep normal
-      relation spacing.
-- [x] Visual: focused `TestReferenceCompare/mathtext_integrals` reports
-      `RMSE 5.03` after refreshing the Go golden.
-- [ ] Likely core areas for remaining residual: large-operator display fonts,
-      over/under limit layout, math glyph metrics.
-
-### 8.9 `mathtext_matrices` (RMSE 25.54)
-
-- [x] Code: source audited; no source mismatch found.
-- [ ] Visual: matrix delimiters, row spacing, `\quad` spacing, and angle
-      brackets differ.
-- [ ] Likely core areas: `\genfrac` layout, delimiter sizing, matrix/stack ink
-      bounds.
-
-### 8.10 `mathtext_inline_labels` (RMSE 12.34)
-
-- [x] Code: math sources match; line style now explicitly matches the Python
-      fixture.
-- [x] Code: `LegendBest` now scores the Matplotlib location candidate set and
-      accounts for line/path intersections, boxes, and points; the legend lands
-      in the Matplotlib upper-center position for this case.
-- [ ] Visual: math text in title, labels, and legend still has glyph/baseline
-      residuals.
-- [ ] Likely core areas: `github.com/cwbudde/mathtext`, text metrics, and remaining
-      text-bbox/ink metric differences.
-
-### 8.11 `image_heatmap` (RMSE 5.54)
-
-- [x] Code: translated Python `imshow(..., interpolation="nearest",
-aspect="auto", extent=...)` through `ax.ImShow`.
-- [ ] Visual: cells align; residuals appear at cell boundaries and tick/text
-      edges.
-- [ ] Likely core areas: `core/image.go`, `core/image_api.go`, image pixel
-      snapping and resampling defaults.
-
-### 8.12 `imshow_clipped` (RMSE 8.19)
-
-- [x] Code: source audited; data helper matches and no material source mismatch
-      found.
-- [ ] Visual: clipped image contents match, but row/column boundary residuals
-      are strong.
-- [ ] Likely core areas: `core/matrix_helpers.go`, `core/image.go`, nearest
-      source-coordinate mapping, clip/pixel edge alignment.
-
-### 8.13 `imshow_transformed` (RMSE 7.04)
-
-- [x] Code: source audited; both examples rotate 28 degrees around the image
-      center.
-- [ ] Visual: transformed image is aligned, but interpolation gradients and
-      rotated edges differ across most of the raster.
-- [ ] Likely core areas: transformed image affine, bilinear sampling, AGG
-      `ImageTransformed` interpolation.
-
-### 8.14 `spy_marker` (RMSE 2.50)
-
-- [x] Code: source audited; marker mode now matches Matplotlib Line2D marker
-      sizing by converting the marker edge width from points and rounding the
-      marker footprint to output pixels.
-- [x] Visual: focused `TestReferenceCompare/spy_marker` reports `RMSE 2.50`
-      after refreshing the Go golden.
-- [ ] Likely core areas: remaining residual is minor text/axis antialiasing.
-
-### 8.15 `spy_image` (RMSE 2.49)
-
-- [x] Code: source audited; no source mismatch found.
-- [x] Visual: focused `TestReferenceCompare/spy_image` reports `RMSE 2.49`
-      after matching AGG nearest non-integer AxesImage top-edge placement to
-      Matplotlib and refreshing the Go golden.
-- [ ] Likely core areas: remaining residual is minor axis/text antialiasing and
-      subpixel stroke drift.
-
-### 8.16 `axes_top_right_inverted` (RMSE 5.06)
-
-- [x] Code: source audited; mostly equivalent, with remaining differences in
-      mirrored/inverted axis layout behavior.
-- [ ] Visual: data marks align; residuals are small title/tick/text and y-label
-      differences.
-- [ ] Likely core areas: inverted-axis tick layout, mirrored axis tick/label
-      positioning, text metrics and antialiasing.
-
-### 8.17 `axes_control_surface` (RMSE 3.15)
-
-- [x] Code: source audited; Go manually models Matplotlib `tick_top`,
-      `tick_right`, `set_aspect`, `set_box_aspect`, `twinx`, and
-      `secondary_xaxis`; no fixture workaround was added.
-- [x] Code: title avoidance for top x-labels now uses full text line ascent
-      instead of ink-only bounds, matching Matplotlib's title baseline when a
-      top x-label is present.
-- [x] Visual: focused `TestReferenceCompare/axes_control_surface` reports
-      `RMSE 3.15` after refreshing the Go golden.
-- [ ] Likely core areas: residual minor axis/text antialiasing and small
-      twin/secondary-axis stroke differences.
-
-### 8.18 `transform_coordinates` (RMSE 10.99)
-
-- [x] Code: removed the Go-only blended-text offset, used `fig.Text` for
-      figure text, and matched annotation arrow/alignment plus grid styling.
-- [ ] Visual: annotation/arrow and figure/axes/blended text placement differ
-      clearly.
-- [ ] Likely core areas: coordinate transforms, blended figure/axes coords,
-      annotation offset-pixel handling, arrow rendering.
-
-### 8.19 `figure_labels_composition` (RMSE 4.96)
-
-- [x] Code: switched from manual subplot padding/spacing to
-      `ConstrainedLayout()` + `Subplots(2, 2)` to mirror Python
-      `constrained_layout=True`; legend locator remains the direct
-      `bbox_to_anchor` translation.
-- [x] Code: tightened constrained-layout line-box measurement, figure-level
-      label auto-padding, rotated-label anchoring, text bbox stroke sizing, and
-      inter-column/inter-row spacing to match Matplotlib's layout model.
-- [x] Visual: focused `TestMatplotlibRef/figure_labels_composition` now reports
-      PSNR 51.9 dB / MeanAbs 0.21; direct artifact RMSE is 4.96.
-- [x] Likely core areas: constrained layout parity, figure-level labels, figure
-      legend anchoring, text bbox sizing.
-
-### 8.20 `colorbar_composition` (RMSE 8.98)
-
-- [x] Code: translated the Python `imshow(..., aspect="auto", extent=...)`
-      call through `ax.ImShow`; remaining differences are image/colorbar
-      rendering and constrained-layout behavior.
-- [x] Visual: focused `TestReferenceCompare/colorbar_composition` now reports
-      `RMSE 8.98` after matching Matplotlib's constrained-layout pad
-      (`0.04167` inch) and colorbar slot spine-width snapping.
-- [x] Likely core areas: constrained layout and colorbar layout.
-
-### 8.21 `annotation_composition` (RMSE 6.68)
-
-- [x] Code: matched explicit Python grid styling and annotation arrow width.
-- [x] Code: core annotation defaults now match Matplotlib's left/baseline
-      alignment.
-- [ ] Visual: remaining residuals are smaller legend, grid, and text details.
-- [ ] Likely core areas: annotation arrows, offset-pixel coords, default
-      plot/legend styling, Unicode text metrics.
-
-### 8.22 `patch_showcase` (RMSE 10.13)
-
-- [x] Code: source audited; no direct example mismatch fixed. Remaining
-      `FancyArrow(..., length_includes_head=True)` parity belongs in core patch
-      semantics.
-- [x] Code: added `FancyArrow.LengthIncludesHead` to model Matplotlib's
-      `length_includes_head` option and set it explicitly in the translated
-      patch showcase call.
-- [x] Visual: refreshed `testdata/golden/patch_showcase.png`; focused
-      `TestReferenceCompare/patch_showcase` now reports `RMSE 6.39`.
-- [ ] Likely core areas: remaining residuals are hatches, ellipse/star/fancy
-      box antialiasing, and alpha compositing.
-
-### 8.23 `mesh_contour_tri` (RMSE 7.14)
-
-- [x] Code: removed explicit half-step tick locator/formatter overrides so the
-      example relies on core locator defaults like the Python source. Structured
-      `Axes.Contour` now uses quad-grid contour lines and line z-order above
-      filled contours.
-- [x] Code: `PColorMesh` now defaults native quad cells to Matplotlib-style
-      antialiasing off while `PColor` keeps patch-collection antialiasing for
-      stroked edges.
-- [x] Visual: focused `TestReferenceCompare/mesh_contour_tri` passes and the
-      refreshed optional golden now reports `RMSE 7.14`; contourf/contour
-      labels and triangulation coloring/lines remain the dominant residuals.
-- [ ] Likely core areas: contour marching/fill bands, contour label placement,
-      tripcolor flat shading, mesh edge strokes.
-
-### 8.24 `plot_variants` (RMSE 7.22)
-
-- [x] Code: replaced subplot-grid approximation with explicit `AddAxes`
-      rectangles, replaced broken-bar `BarLabel` shortcuts with explicit
-      `Text`, and matched stacked-bar label font/padding.
-- [ ] Visual: fill-between-x polygon/edge, stairs/step edges, bar labels, grid,
-      and text differ.
-- [ ] Likely core areas: stairs and fill-between polygon construction, axline
-      clipping, dash scaling, bar label padding.
-
-### 8.25 `spectrum_variants` (RMSE 9.88)
-
-- [x] Code: source audited; intent matches, but Python uses Matplotlib `mlab`
-      spectrum helpers
-      with explicit one-sided/two-sided handling and FFT normalization.
-      `Axes.MagnitudeSpectrum` now matches Matplotlib's return contract by
-      returning the linear magnitude spectrum while plotting dB-scaled values
-      when `Scale: "dB"` is requested.
-- [x] Visual: focused `TestReferenceCompare/spectrum_variants` reports
-      `RMSE 9.88` after limiting cross-axes label alignment to managed layout
-      passes and refreshing the Go golden; manual `add_axes` panels now position
-      y-labels independently like Matplotlib.
-- [x] Diagnostic: Go fixture samples differ from NumPy's generated samples at
-      about 1e-16 because Go and NumPy/libm trig are not bit-identical; NumPy's
-      FFT on Go-generated samples reproduces Go's near-zero-bin floor, while
-      Go's FFT on NumPy-generated samples reproduces the Matplotlib magnitude
-      floor. The fixture now uses the NumPy-generated signal, and the
-      implementation-specific angle/phase residues are stored as fixture-only
-      Matplotlib reference arrays.
-- [x] Diagnostic: changing Line2D's default capstyle toward Matplotlib's
-      `projecting` default barely moves `spectrum_variants` and pushes other
-      non-mathtext fixtures over `RMSE 10`; leave this as a separate parity
-      hardening task, not a Phase 8 spectrum fix.
-- [ ] Likely core areas: general NumPy/pocketfft numerical parity for
-      exact-zero angle/phase residues remains future hardening; the fixture is
-      under the Phase 8 threshold without broad renderer or FFT changes.
-
-### 8.26 `specialty_depth` (RMSE 6.92)
-
-- [x] Code: removed the separate scatter workaround for `errorbar(fmt="o")`
-      and matched boxplot flier size, violin edge color, and pie wedge
-      edge/linewidth. Boxplot median defaults now match Matplotlib's
-      `boxplot.medianprops.color = C1` and linewidth `1.0`. Errorbar limit
-      markers now render as filled cap markers, and hexbin marginal bars draw
-      above the main hex collection like Matplotlib.
-      Follow-up: errorbar capsize now uses Matplotlib point units at the
-      public `Axes.ErrorBar` boundary, and limit markers render as open stroked
-      carets with miter joins instead of closed filled triangles.
-- [x] Visual: focused `TestReferenceCompare/specialty_depth` reports
-      `RMSE 6.92` after refreshing the Go golden.
-- [ ] Likely core areas: boxplot statistics/notches/fliers, violin KDE/side
-      option, pie wedge styling, hexbin log scales/marginals.
-
-### 8.27 `stem_plot` (RMSE 4.13)
-
-- [x] Code: matched explicit grid styling and removed the Go-only legend label;
-      `Axes.Stem` now matches Matplotlib's default `basefmt='C3-'` baseline and
-      Line2D-style point marker diameter.
-- [x] Visual: focused `TestReferenceCompare/stem_plot` now reports `RMSE 4.13`.
-- [ ] Likely core areas: residual grid/tick/text antialiasing.
-
-### 8.28 `specialty_artists` (RMSE 7.52)
-
-- [x] Code: matched Python hexbin `mincnt=1`, pie white wedge
-      edge/linewidth, removed extra labels, and simplified table styling to
-      Python defaults where possible. Shared hexbin marginal draw-order and
-      errorbar limit-marker fixes move the current render closer. Table cells
-      now match Matplotlib's 1 pt patch linewidth, ink-bounds text anchoring,
-      renderer-measured row-label auto width, and bbox scaling/offset behavior
-      for auto row-label columns. Table cell paths now use Matplotlib-style
-      auto patch snapping for rectilinear paths. Two-sided violin summary lines
-      now use Matplotlib's default butt caps, violin body alpha is applied at
-      the collection level, and tables draw as unclipped overlays like
-      Matplotlib's `clip_on(False)` table artist.
-- [x] Visual: focused `TestReferenceCompare/specialty_artists` reports
-      `RMSE 7.52` after refreshing the Go golden.
-- [ ] Likely core areas: event collection widths, hexbin bin geometry/mincnt and
-      color normalization, pie wedge/text placement, violin KDE, table layout.
-
-### 8.29 `units_overview` (RMSE 6.45)
-
-- [x] Code: source audited; no substantive data/layout mismatch. Go uses units
-      converters idiomatically for the same output.
-- [ ] Visual: data align; diff is mostly text/tick labels and scatter/bar edge
-      antialiasing.
-- [ ] Likely core areas: unit formatters/locators, text metrics, marker/bar
-      stroke rasterization.
-
-### 8.30 `units_dates` (RMSE 5.92)
-
-- [x] Code: added a `DayLocator` and changed the Go example to pass
-      `time.Time` values through `FillBetweenUnits` / `PlotUnits`, matching the
-      Python datetime + `mdates.DayLocator` structure without pre-conversion.
-- [x] Code: unit-axis refresh now preserves explicit locator/formatter choices
-      after date conversion, matching Matplotlib's default-axis-info guard.
-- [ ] Visual: line/fill positions align; diff follows fill polygon edges, line
-      strokes, and labels.
-- [ ] Likely core areas: date units/date formatter parity, `FillBetween`
-      edge/antialias behavior, text.
-
-### 8.31 `units_categories` (RMSE 6.76)
-
-- [x] Code: source audited; no major example mismatch. Go uses `BarUnits`
-      including horizontal orientation as the idiomatic equivalent of Python
-      `bar` / `barh`.
-- [ ] Visual: bars align; diff is labels, grid/stroke edges, and bar outlines.
-- [ ] Likely core areas: categorical units, horizontal `Bar2D` geometry/strokes,
-      grid draw ordering, text.
-
-### 8.32 `units_custom_converter` (RMSE 5.25)
-
-- [x] Code: source audited; Go uses registered `TestDistanceKM` converter as
-      the idiomatic equivalent of Python floats plus `FuncFormatter`.
-- [ ] Visual: line/points align; marker fill/edge and tick/title text drive the
-      diff.
-- [ ] Likely core areas: custom unit `AxisInfo`, scatter marker area/edge
-      linewidth, text metrics.
-
-### 8.33 `vector_fields` (RMSE 2.69)
-
-- [x] Code: changed barb length defaults to point units and quiver-key default
-      label separation to the Matplotlib-equivalent 0.1 inch at 100 DPI, then
-      removed the Go-only barb pre-scaling and explicit key label separation.
-- [x] Code: matched Matplotlib `angles="uv"` quiver direction signs and Barbs'
-      point-length collection scaling / default barb side semantics.
-- [x] Code: matched Matplotlib Barbs' raw `atan2(v, u)` rotation and
-      `CLOSEPOLY` glyph paths instead of applying axes data-scale skew.
-- [x] Visual: case is below the temporary target at `RMSE 2.69`; remaining
-      residual is streamplot antialiasing and minor glyph-shape detail.
-- [ ] Likely core areas: `core/vector_field.go` quiver scaling/arrow polygons,
-      barb decomposition, streamplot integration/arrows, quiver-key layout.
-
-### 8.34 `polar_axes` (RMSE 6.22)
-
-- [x] Code: source audited; `FillToBaseline` is the current idiomatic
-      equivalent of Python `fill_between(..., 0)` for this case.
-- [x] Code: matched Matplotlib polar defaults by hiding polar tick marks,
-      removing polar minor tick locators, and drawing polar/radar grids between
-      patch and line z-orders.
-- [x] Code: polar radial spine is hidden, full-circle radial labels no longer
-      receive tick padding, scalar radial tick labels use step precision, and
-      theta tick labels are center-aligned with Matplotlib's `_pad + 7pt`
-      padding.
-- [x] Visual: focused `TestReferenceCompare/polar_axes` reports `RMSE 6.22`
-      after refreshing the Go golden.
-- [ ] Likely core areas: polar transforms, polar tick labels, polar grid paths,
-      fill clipping/antialiasing.
-
-### 8.35 `geo_mollweide_axes` (RMSE 6.96)
-
-- [x] Code: source audited; Go helper relies on projection defaults while the
-      Python explicitly sets ticks/formatters, but values match. GeoAxes
-      x-label/tick-label placement now matches Matplotlib's frame/equator
-      transforms.
-- [x] Visual: focused `TestReferenceCompare/geo_mollweide_axes` reports
-      `RMSE 6.96`; residual is mostly oval frame/grid antialiasing.
-- [ ] Likely core areas: `core/geo.go` Mollweide transform/frame/grid sampling,
-      geo tick label transforms.
-
-### 8.36 `geo_aitoff_axes` (RMSE 6.92)
-
-- [x] Code: source audited; same projection-default versus explicit tick setup
-      as Mollweide, with matching values. GeoAxes x-label/tick-label placement
-      now matches Matplotlib.
-- [x] Visual: focused `TestReferenceCompare/geo_aitoff_axes` reports
-      `RMSE 6.92`; residual is mostly frame/grid antialiasing.
-- [ ] Likely core areas: Aitoff projection transform, geo grid path sampling,
-      label padding.
-
-### 8.37 `geo_hammer_axes` (RMSE 5.41)
-
-- [x] Code: source audited; same projection-default versus explicit tick setup
-      as Mollweide, with matching values. GeoAxes x-label/tick-label placement
-      now matches Matplotlib.
-- [x] Visual: focused `TestReferenceCompare/geo_hammer_axes` reports
-      `RMSE 5.41`.
-- [ ] Likely core areas: Hammer projection transform, geo frame/grid drawing,
-      clipping.
-
-### 8.38 `geo_lambert_axes` (RMSE 5.33)
-
-- [x] Code: source audited; Go sets Lambert x locator and relies on projection
-      formatter / y-label hiding while Python explicitly formats x only.
-      Longitude label placement now matches Matplotlib.
-- [x] Visual: focused `TestReferenceCompare/geo_lambert_axes` passes and the
-      refreshed optional golden is below target at `RMSE 5.33`.
-- [ ] Likely core areas: residual Lambert frame/grid edge antialiasing and geo
-      text transforms.
-
-### 8.39 `radar_basic` (RMSE 6.99)
-
-- [x] Code: changed the fill call from baseline fill to polygon `Fill` to match
-      Python `ax.fill(closed_angles, closed_values, ...)`; remaining
-      projection/frame differences are core radar behavior.
-- [x] Code: radar theta ticks keep Matplotlib's default tick size for label
-      padding while tick marks remain hidden; theta labels are center-aligned
-      with `_pad + 7pt` padding.
-- [x] Visual: focused `TestReferenceCompare/radar_basic` reports `RMSE 6.99`
-      after refreshing the Go golden.
-- [ ] Likely core areas: radar projection configuration, polar grid
-      interpolation, tick label padding, polygon fill/stroke rasterization.
-
-### 8.40 `skewt_basic` (RMSE 5.02)
-
-- [x] Code: Go source now directly mirrors the Python `set_yscale`,
-      locator/formatter, and grid setup while relying on the core skewx
-      projection for Matplotlib-compatible behavior.
-- [x] Code: `AddSkewXAxes` keeps the top spine but hides top tick marks/labels,
-      extends x-grid ticks through the skewed upper view interval, and positions
-      y-axis ticks/labels on the left spine instead of through the skewed data
-      transform.
-- [x] Visual: focused `TestReferenceCompare/skewt_basic` reports `RMSE 5.02`
-      after refreshing the Go golden.
-- [ ] Likely core areas: residual legend/text antialiasing and line/grid
-      rasterization.
-
-### 8.41 `mplot3d_basic` (RMSE 3.76)
-
-- [x] Code: added Python `cmap="viridis"` to the Go `Surface(... Alpha)`
-      call.
-- [x] Code: 3D tick labels and axis labels now compute Matplotlib-style
-      label-offset centers/deltas from the expanded frame limits, not the
-      projection/view limits.
-- [x] Visual: focused `TestReferenceCompare/mplot3d_basic` reports `RMSE 3.76`
-      after refreshing the Go golden.
-- [ ] Likely core areas: remaining residual is subpixel text/rasterization and
-      minor 3D data-artist antialiasing.
-
-### 8.42 `mplot3d_terrain` (RMSE 2.79)
-
-- [x] Code: source audited; fixture bodies mostly match and Go
-      axes-coordinates text corresponds to Python `text2D(..., transAxes)`.
-- [x] Code: shared 3D tick/axis label offsets now use expanded frame limits.
-- [x] Visual: focused `TestReferenceCompare/mplot3d_terrain` reports
-      `RMSE 2.79` after refreshing the Go golden.
-- [ ] Likely core areas: remaining residual is minor contour/surface
-      rasterization and subpixel frame/text antialiasing.
-
-### 8.43 `mplot3d_plot3d` (RMSE 1.19)
-
-- [x] Code: source audited; no obvious source mismatch found.
-- [x] Code: shared 3D tick/axis label offsets now use expanded frame limits.
-- [x] Visual: focused `TestReferenceCompare/mplot3d_plot3d` reports
-      `RMSE 1.19` after refreshing the Go golden.
-- [ ] Likely core areas: residual line/text antialiasing.
-
-### 8.44 `mplot3d_scatter3d` (RMSE 1.51)
-
-- [x] Code: resolved the deterministic source-parity issue by using the shared
-      Go-compatible PCG stream in the Python reference and generating the Go
-      scatter values from the same stream instead of hardcoding point arrays.
-- [x] Code: matched Matplotlib `Axes3D.scatter` defaults by applying
-      `s=20` for 3D scatter calls and depth-shading/z-sorting edge colors along
-      with face colors.
-- [x] Code: shared 3D tick/axis label offsets now use expanded frame limits.
-- [x] Visual: refreshed stale `testdata/matplotlib_ref/mplot3d_scatter3d.png`
-      and `testdata/golden/mplot3d_scatter3d.png`; latest
-      `TestReferenceCompare/mplot3d_scatter3d` reports `RMSE 1.51`.
-- [ ] Likely core areas: remaining residual is marker/text antialiasing rather
-      than source fixture drift.
-
-### 8.45 `mplot3d_surface3d` (RMSE 2.89)
-
-- [x] Code: source audited; fixture data/options match. Remaining default-alpha
-      difference is core `Surface` behavior.
-- [x] Code: shared 3D tick/axis label offsets now use expanded frame limits.
-- [x] Visual: focused `TestReferenceCompare/mplot3d_surface3d` reports
-      `RMSE 2.89` after refreshing the Go golden.
-- [ ] Likely core areas: residual surface/text antialiasing and minor colormap
-      raster differences.
-
-### 8.46 `mplot3d_wire3d` (RMSE 1.29)
-
-- [x] Code: source audited; no obvious mismatch. Go helper mirrors upstream
-      `axes3d.get_test_data`.
-- [x] Code: shared 3D tick/axis label offsets now use expanded frame limits.
-- [x] Visual: focused `TestReferenceCompare/mplot3d_wire3d` reports
-      `RMSE 1.29` after refreshing the Go golden.
-- [ ] Likely core areas: residual line/text antialiasing.
-
-### 8.47 `mplot3d_trisurf3d` (RMSE 1.93)
-
-- [x] Code: added automatic Delaunay triangulation for `Trisurf` when triangles
-      are omitted, then removed the manual fan/ring triangle construction from
-      the example to match Python `plot_trisurf(x, y, z, ...)`.
-- [x] Code: shared 3D tick/axis label offsets now use expanded frame limits.
-- [x] Visual: focused `TestReferenceCompare/mplot3d_trisurf3d` reports
-      `RMSE 1.93` after refreshing the Go golden.
-- [ ] Likely core areas: residual facet/text antialiasing.
-
-### 8.48 `mplot3d_bar3d` (RMSE 3.20)
-
-- [x] Code: source audited; fixture values match.
-- [x] Code: shared 3D tick/axis label offsets now use expanded frame limits.
-- [x] Visual: focused `TestReferenceCompare/mplot3d_bar3d` reports
-      `RMSE 3.20` after refreshing the Go golden.
-- [ ] Likely core areas: residual face/text antialiasing.
-
-### 8.49 `mplot3d_voxels` (RMSE 2.93)
-
-- [x] Code: source audited; fixture values/options match.
-- [x] Code: shared 3D tick/axis label offsets now use expanded frame limits.
-- [x] Visual: focused `TestReferenceCompare/mplot3d_voxels` reports
-      `RMSE 2.93` after refreshing the Go golden.
-- [ ] Likely core areas: residual face/edge/text antialiasing.
-
-### 8.50 `mplot3d_quiver3d` (RMSE 3.38)
-
-- [x] Code: source audited; loop order appears to match NumPy `meshgrid`
-      flattening.
-- [x] Code: shared 3D tick/axis label offsets now use expanded frame limits.
-- [x] Visual: focused `TestReferenceCompare/mplot3d_quiver3d` reports
-      `RMSE 3.38` after refreshing the Go golden.
-- [ ] Likely core areas: residual arrow/text antialiasing.
-
-### 8.51 `mplot3d_stem3d` (RMSE 3.61)
-
-- [x] Code: source audited; `Stem3D` now matches Matplotlib's default
-      `basefmt='C3-'`, Line2D marker point diameter, and Line3DCollection butt
-      capstyle for stem lines.
-- [x] Code: shared 3D tick/axis label offsets now use expanded frame limits.
-- [x] Visual: focused `TestReferenceCompare/mplot3d_stem3d` now reports
-      `RMSE 3.61` after refreshing the Go golden.
-- [ ] Likely core areas: residual stem marker/line/text antialiasing.
-
-### 8.52 `mplot3d_fill_between3d` (RMSE 3.50)
-
-- [x] Code: removed the explicit fill color so the Go call mirrors Python
-      `fill_between(..., alpha=0.5)`; remaining difference is core 3D ruled
-      surface shading/z-order.
-- [x] Code: shared 3D tick/axis label offsets now use expanded frame limits.
-- [x] Visual: focused `TestReferenceCompare/mplot3d_fill_between3d` reports
-      `RMSE 3.50` after refreshing the Go golden.
-- [ ] Likely core areas: residual fill/text antialiasing.
-
-### 8.53 `unstructured_showcase` (RMSE 5.50)
-
-- [x] Code: changed `TriColor` edge color alpha to opaque white to match Python
-      `edgecolors="white"`; larger remaining mismatch is core `tricontour`
-      behavior.
-- [x] Code: changed the Go showcase's source-local `ax.text` and `fig.text`
-      calls back to `Text` artists with axes/figure coordinates instead of
-      anchored-text approximations.
-- [x] Code: `tricontour(..., levels=N)` now keeps Matplotlib `MaxNLocator`
-      bounds outside the data range for line contours.
-- [x] Code: picked up Matplotlib-compatible `PColorMesh` antialias defaults for
-      the rectilinear mesh portions.
-- [x] Visual: focused `TestReferenceCompare/unstructured_showcase` reports
-      `RMSE 5.50`; residual is mostly antialiasing and remaining
-      triangulation/contour edge details.
-
-### 8.54 `arrays_showcase` (RMSE 6.31)
-
-- [x] Code: source audited; heatmap, mesh, and spy data match. Spy marker
-      panel picked up the Line2D marker sizing fix; contour lines now use
-      structured-grid cell clipping instead of triangulating quads. Follow-up
-      core pass fixed bottom x-label fallback placement when matrix views hide
-      bottom ticks, removed the stale top-xlabel title `+1` compensation, and
-      matched Matplotlib's butt cap style for contour line collections.
-- [x] Visual: center contour paths now draw above the pcolormesh cells by
-      defaulting line contours to Matplotlib's line z-order. Focused
-      `TestReferenceCompare/arrays_showcase` passes and the refreshed optional
-      golden now reports `RMSE 6.31`.
-- [x] Likely remaining areas: contour label placement/inline clipping, text and
-      mesh antialiasing.
-- [ ] Follow-up: port Matplotlib 3.10.9 automatic `ContourLabeler.clabel`
-      placement/inline clipping more closely if this fixture is revisited below
-      the current target; remaining residual is dominated by contour label
-      placement and mesh antialiasing.
-
-### 8.55 `axisartist_showcase` (RMSE 6.66)
-
-- [x] Code: replaced floating cloned axes with explicit `AxHLine` / `AxVLine`,
-      matched dash/linewidth values, light y-grid color, tick direction, and
-      axes-fraction note text/bbox.
-- [x] Code: restored source parity for the parasite `twinx` axis by leaving the
-      right-side ticks/labels visible and colored, and matched
-      `host.legend(loc="upper center")` instead of anchoring the legend below
-      the axes.
-- [x] Visual: focused `parity-viewer-print axisartist_showcase` reports
-      `RMSE 6.66`; remaining residual is mostly tick/text antialiasing and
-      small grid/line edge differences.
-
-### 8.55a `legend_layout_matrix` (RMSE 7.14)
-
-- [x] Code: matched Matplotlib legend handler geometry for patch keys by
-      filling the full handle box, matched full-width line handles, used
-      Matplotlib's 0.3-font scatter handle x padding, and corrected errorbar
-      legend stems/caps to use `0.5 * fontsize` error extents and doubled cap
-      marker length.
-- [x] Code: aligned the Python reference scatter edge linewidth with the Go
-      fixture's pixel-width convention using `linewidths=lw(1.0)`.
-- [x] Visual: focused `TestGolden/legend_layout_matrix` and
-      `TestReferenceCompare/legend_layout_matrix` pass after refreshing the Go
-      golden and Matplotlib reference; focused `parity-viewer-print` reports
-      `RMSE 7.14`.
-- [ ] Likely remaining areas: legend marker raster placement/size, title and
-      x-tick text antialiasing, and renderer-level line-cap differences.
-
-### 8.56 `axes_grid1_showcase` (RMSE 4.95)
-
-- [x] Code: matched tile label font size and `round,pad=0.25` bbox semantics;
-      fixed anchored multiline text order, and made tile labels use
-      axes-coordinate `Text` like the Matplotlib source.
-- [x] Visual: focused `TestReferenceCompare/axes_grid1_showcase` reports
-      `RMSE 4.95`; residual is mostly image edge/tick/text antialiasing.
-- [ ] Likely core areas: `core/image_grid.go` inch-vs-fraction divider spacing,
-      anchored text bbox padding, renderer text/line antialiasing.
-
-### 8.57 `pcolor_flat` (RMSE 4.00)
-
-- [x] Code: source audited; `PColor` now keeps unsnapped mesh edges and
-      collection-default antialiasing for stroked edges, matching Matplotlib
-      `pcolor` behavior.
-- [x] Visual: focused `parity-viewer-print` reports `RMSE 4.00`; remaining
-      residual is mostly text and minor edge rasterization.
-
-### 8.58 `pcolormesh_gouraud` (RMSE 4.78)
-
-- [x] Code: source audited; fixture inputs match. `QuadMesh.drawGouraudMesh`
-      now matches Matplotlib's `_convert_mesh_to_triangles` by splitting each
-      quad into four center-fan Gouraud triangles with averaged center RGBA.
-- [x] Visual: focused `TestReferenceCompare/pcolormesh_gouraud` now reports
-      `RMSE 4.78`; remaining residual is mostly colorbar/text and minor
-      rasterization drift.
-- [ ] Likely core areas: AGG Gouraud rasterization and colorbar/text
-      antialiasing.
-
-### 8.59 `hist2d_weighted_density` (RMSE 7.48)
-
-- [x] Code: source audited; no obvious fixture/binning mismatch and weighted
-      density setup matches Python.
-- [ ] Visual: mesh bins align and values look correct; differences are mainly
-      colorbar, tick/text, and edge rendering.
-- [ ] Likely core areas: colorbar axis rendering, text metrics, quad mesh
-      antialiasing.
-
-### 8.60 `boundarynorm_pcolormesh` (RMSE 5.86)
-
-- [x] Code: source audited; data, boundaries, `BoundaryNorm`, and pcolormesh
-      setup match.
-- [ ] Visual: discrete bands align; residual is mostly colorbar ticks/label,
-      border, and text.
-- [ ] Likely core areas: `core/colorbar.go`, `core/norm.go` BoundaryNorm
-      colorbar rendering, axis/text placement.
-
-### 8.61 `lognorm_imshow` (RMSE 9.45)
-
-- [x] Code: source audited; fixture values and `LogNorm(1,1000)` match.
-      `LogFormatter` now emits Matplotlib-style base-10 power labels instead
-      of `1eN` labels for exact decades.
-- [x] Visual: focused `TestReferenceCompare/lognorm_imshow` reports
-      `RMSE 9.45` after refreshing the Go golden.
-- [ ] Likely core areas: remaining residual is minor image/colorbar
-      rasterization and text antialiasing drift.
-
-### 8.62 `twoslope_norm_image` (RMSE 6.24)
-
-- [x] Code: source audited; data, custom diverging colormap stops, and
-      `TwoSlopeNorm(-3,0,6)` match. `Figure.AddColorbar` now installs a
-      Matplotlib-like function scale for non-linear continuous norms so the
-      colorbar axis transforms through `norm`/`inverse`.
-- [x] Visual: focused `TestReferenceCompare/twoslope_norm_image` reports
-      `RMSE 6.24` after refreshing the Go golden.
-- [ ] Likely core areas: remaining residual is minor image/colorbar
-      rasterization and text antialiasing drift.
-
-### 8.63 `colorbar_extensions` (RMSE 7.00)
-
-- [x] Code: source audited; fixture requests `Extend: "both"` like Python
-      `extend="both"`. `core/colorbar.go` now draws extension patches outside
-      the clipped artist pass and shrinks the inner colorbar axes for extension
-      space, matching Matplotlib's colorbar layout model.
-- [x] Code: extended colorbars now compensate the box aspect by the extension
-      shrink factor, matching Matplotlib's `_ColorbarAxesLocator` behavior.
-- [x] Visual: focused `TestReferenceCompare/colorbar_extensions` reports
-      `RMSE 7.00` after refreshing the Go golden.
-- [ ] Likely core areas: residual colorbar outline/text antialiasing.
+# Phase 2: Visual Parity Closure (RMSE > 5)
+
+**Goal:** every catalog case renders within `RMSE 5` of its Matplotlib
+reference, or carries a documented, frozen tolerance exception. Core-library
+fixes are preferred over fixture tweaks (no example-source workarounds,
+fixture-specific core branches, catalog-ID conditionals, or unexplained
+empirical constants — enforced by `internal/examplecatalog.ValidationClusters`).
+
+**Status today:** the committed catalog tolerances all pass
+(`TestReferenceCompare`). The dominant *unfinished* residual is the **MathText
+family**, which remains well above target:
+
+- `mathtext_fractions` (~RMSE 27), `mathtext_matrices` (~RMSE 25),
+  `mathtext_inline_labels` (~RMSE 12), `mathtext_basic` (~RMSE 12).
+- Likely core areas: `github.com/cwbudde/mathtext` layout — fraction-axis
+  alignment, stretchy / `\genfrac` delimiter sizing, square-root geometry, matrix /
+  stack ink bounds, sub/superscript placement — plus `core/mathtext.go`, AGG text
+  bounds, and anchored-box / annotation layout.
+
+**Workflow:**
+
+- [ ] Regenerate the current over-threshold list before each work session:
+      `just parity-viewer-print` (or `go test ./test -run TestReferenceCompare`).
+      Visual artifacts land under `testdata/_artifacts/reference_compare/`
+      (`*_golden.png`, `*_matplotlib_ref.png`, `*_…_diff.png`).
+- [ ] Close the MathText family by following upstream `_mathtext.py`, not
+      fixture-local offsets.
+- [ ] For any case that cannot reach `RMSE 5`, record a documented frozen
+      tolerance on the catalog row with an owner and rationale.
 
 **Exit criteria:**
 
-- [ ] Every listed subphase is either fixed in core behavior or explicitly
-      justified as an intentional divergence. Source parity has been audited
-      and direct example mismatches have been fixed where current APIs allow.
-- [ ] `TestReferenceCompare` records no catalog case above `RMSE 5.00` unless
-      that case has a documented, frozen tolerance exception.
-- [ ] All fixes are validated against both source parity and visual artifacts,
-      not just metric deltas.
+- [ ] `TestReferenceCompare` records no catalog case above `RMSE 5` except those
+      with a documented, frozen tolerance exception.
+- [ ] Each fix is validated against source parity and visual artifacts, not just
+      the metric delta.
 
 ---
 
-# Phase 8A: Cross-Fixture Parity Hardening
+# Phase 3: Parity Status Reporting
 
-✅ **Completed.** Individual RMSE fixes are now governed by reusable
-cross-fixture validation rules so parity work cannot overfit one catalog case.
+**Goal:** finish and keep `docs/matplotlib-parity-status.md` as the single
+human-readable parity surface, generated from the machine inventories
+(`internal/examplecatalog.PublicSurfaceParityRows` over the committed
+`test/testdata/parity_surface/upstream_public_surface.json`, plus
+`BrowserDemoCoverageRows` / `FeatureCoverageMatrix`).
 
-Completed scope:
+The doc already exists with Feature Coverage, Browser Demo Coverage, Public
+Surface Summary, Closure Owner Summary, and Open Public Surface Rows sections,
+and the browser-side CI gates are in place (a `Showcase: true` row without a
+browser accounting row, or a browser demo referencing a non-catalog family, both
+fail CI). Remaining work is the upstream-family detail and its guard:
 
-- Parity-fix policy forbids example-source workarounds, fixture-specific core
-  branches, catalog-ID conditionals, and unexplained empirical constants.
-- `internal/examplecatalog.ValidationClusters` defines stable validation groups
-  for layout/text, image/mesh/colorbar, and projection/3D work.
-- Catalog tests enforce cluster membership, required validation targets, and
-  the absence of quoted catalog IDs in non-test implementation files.
-- Accepted layout/text empirical corrections were replaced with source-backed
-  Matplotlib models for constrained-layout padding, figure-label
-  autopositioning, and figure-artist spacing.
-- Remaining renderer nudges must carry owner, rationale, and removal path before acceptance.
-
----
-
-# Phase 9: Matplotlib API Coverage Audit
-
-✅ **Completed.** Phase 9 closed the public-catalog _existence_ gap for the
-Matplotlib catalogs that otherwise could not fail a parity test because no
-catalog example existed yet.
-
-Completed scope:
-
-- Added a machine-readable closure ledger:
-  `internal/examplecatalog.Phase9EnumerableCatalogAudits` records each
-  enumerable catalog's upstream source anchors, Go source files, guard tests,
-  catalog fixtures, and implementation/intentional-omission decision.
-- Implemented or documented the Phase 9 catalogs:
-  colormaps and reversed/resampled variants; marker aliases, fillstyles, tuple
-  markers, custom-path markers, and mathtext markers; CSS4/Tableau/xkcd/base
-  named colors and `to_rgba`-style parsing; AGG's full image interpolation
-  registry and `auto` / `antialiased` policy with documented non-AGG
-  fallbacks; BoxStyle / ArrowStyle / ConnectionStyle registries and missing
-  static patch classes; hatch character-set and repeat-density behavior.
-- Recorded intentional divergences for Python-only or global-state surfaces:
-  `pyplot.xkcd` / sketch rcParams mutation, `figimage` / `FigureImage`, Python
-  hatch implementation classes, patch debug helpers, and the unsupported
-  rcParams key universe.
-- Added or connected catalog-visible fixtures for implemented catalogs:
-  `colormap_diverging`, `colormap_qualitative`, `colormap_cyclic`,
-  `named_colors`, `scatter_marker_types`, `line2d_markers`,
-  `imshow_interpolation_matrix`, `patch_showcase`, and `patch_style_matrix`.
-- Guarded the exit criteria with `Phase9ExitCriteria` and focused package tests
-  so future enumerable catalogs must add an audit row, source anchors, guard
-  tests, and catalog-visible fixtures or an explicit omission rationale.
-
----
-
-# Phase 10: Feature and Demo Coverage Audit
-
-✅ **Completed.** The coarse feature/demo audit now makes missing Matplotlib
-parity coverage visible and testable before v1.0.
-
-Completed scope:
-
-- `FeatureCoverageMatrix` classifies foundational Matplotlib areas by
-  implementation, parity fixture, showcase, browser-demo, and breadth status.
-- `FoundationAPIGapAudit` records decisions for thin or missing fundamental
-  APIs across artists, axes, ticks, transforms, lines, collections, patches,
-  text, images, colorbars, colors, pyplot, and backends.
-- `DemoBreadthGaps` tracks fixture-heavy or thin user-facing examples and links
-  high-priority gaps to target feature families.
-- `BrowserDemoCoverageRows` reconciles inactive web reference modules and
-  CLI-only showcases against active, planned, or reference-only browser demo
-  status.
-- Reference-consistency tests enforce Go/Python parity source pairs and visible
-  Matplotlib reference modules for catalog cases.
-- `docs/phase-10-coverage-audit.md` explains the audit inventories and
-  clarifies that implementation follow-up continues in Phases 9B-9E.
-
----
-
-# Phase 11: Exhaustive Public Surface Parity Map
-
-**Goal:** turn the coarse Phase 10 audit into the detailed answer originally
-needed: for each relevant upstream Matplotlib public API, enumerable registry,
-and gallery family, state whether the Go port has a direct equivalent, an
-idiomatic equivalent, an intentional omission, or no implementation yet.
-
-**Reference sources:** `third_party/matplotlib/lib/matplotlib/`,
-`third_party/matplotlib/galleries/examples/`, `internal/examplecatalog/`,
-`core/`, `transform/`, `render/`, `color/`, `style/`, `pyplot/`, `canvas/`,
-`backends/`, `examples/`, and `test/parity/`.
-
-### 11.1 Public API Inventory Generator
-
-- [x] Add a small internal tool that scans upstream Python modules for public
-      classes, functions, constants, and registries in the modules tracked by
-      `FoundationAPIGapAudit`: `artist.py`, `axis.py`, `ticker.py`,
-      `scale.py`, `transforms.py`, `lines.py`, `markers.py`,
-      `collections.py`, `patches.py`, `text.py`, `legend.py`,
-      `offsetbox.py`, `image.py`, `colorbar.py`, `cm.py`, `colors.py`,
-      `pyplot.py`, `backend_bases.py`, `backend_tools.py`, `widgets.py`, and
-      `animation.py`.
-- [x] Store the normalized inventory under `internal/examplecatalog` or
-      `test/testdata/parity_surface/` so CI can diff upstream-visible
-      additions.
-- [x] Treat enumerable registries specially: markers, line styles, draw styles,
-      cap/join styles, colormaps, named colors, norms, locators, formatters,
-      scales, patch classes, box styles, arrow styles, connection styles,
-      hatch patterns, projections, backends, toolbar tools, widgets, and image
-      interpolation modes.
-
-Current slice landed:
-
-- `internal/examplecatalog/extract_public_surface.py` uses Python `ast` to
-  extract a stable upstream inventory.
-- `test/testdata/parity_surface/upstream_public_surface.json` stores the
-  committed inventory: 21 modules and 591 public-surface rows covering public
-  classes, functions, constants, and selected registries such as markers,
-  line styles, patch styles, scales, toolbar tools, and image interpolation
-  modes.
-- Catalog tests now verify landmark upstream rows and fail when the committed
-  artifact differs from the extractor output.
-- `internal/examplecatalog.PublicSurfaceParityRows` seeds the
-  mapping with first-pass classifications for landmark rows including
-  `Artist`, `Line2D`, the `*` marker, `lanczos` interpolation, `pyplot.plot`,
-  `Button`, and `FuncAnimation`.
-
-Implementation notes:
-
-- Use Python `ast` for the upstream scan rather than regex so class/function
-  extraction is stable.
-- Keep private names out by default, but allow explicit include lists for
-  upstream registries whose public API is stored in underscored module data
-  such as `_cm.py`, `_cm_listed.py`, and `_color_data.py`.
-- Start with a generated JSON artifact and a Go test that verifies every
-  public upstream row has a local classification.
-
-### 11.2 Go Equivalent Mapping
-
-- [x] Add a `PublicSurfaceParityRows` inventory that maps each upstream row to
-      one of:
-      `direct-equivalent`, `idiomatic-equivalent`, `partial`, `not-started`,
-      `intentional-omission`.
-- [x] For every row, record the local Go package/file, catalog IDs, demo IDs,
-      and implementation note.
-- [x] Fail tests when a new upstream row appears without a classification.
-
-Current slice landed:
-
-- `internal/examplecatalog.PublicSurfaceParityRowsForSurface` now classifies
-  the committed upstream inventory row-by-row, with exact overrides for
-  landmark APIs and conservative module/family rules for the remaining public
-  classes, functions, constants, and registries.
-- The committed 591-row upstream surface is covered by tests that require one
-  classification per row, stable status values, an existing `FeatureCoverage`
-  row, at least one local Go file reference, and valid catalog/showcase
-  references when present.
-- Exact overrides now capture high-signal parity answers such as `Artist`,
-  `Line2D`, `pyplot.plot`, `Button`, `FuncAnimation`, marker `*`, and AGG's
-  direct `lanczos` interpolation support.
-
-Implementation notes:
-
-- Seed the mapping from `FeatureCoverageMatrix` and `FoundationAPIGapAudit`,
-  then refine it row-by-row.
-- Keep the first pass conservative: if the Go port supports a concept but not
-  the full upstream behavior, mark it `partial`.
-- Prefer documenting an intentional omission over leaving behavior ambiguous.
-
-### 11.3 Human Parity Status Report
-
-- [ ] Generate or maintain `docs/matplotlib-parity-status.md` from the
-      machine-readable inventories.
-- [ ] Include one table per upstream feature family with columns:
-      upstream API / registry item, Go status, local API, parity fixture,
-      user-facing example, browser demo, and remaining work.
-- [ ] Add a summary table that answers directly:
-      "ported", "partially ported", "not ported", "intentionally omitted",
-      "has parity fixture", "has user example", and "has browser demo".
-
-Implementation notes:
-
-- Do not hand-write status that duplicates data without a check. Either
-  generate the report or add tests that ensure the doc references every
-  inventory row.
-- Link every "missing" or "partial" row to a Phase 9C, 9D, or 9E task.
-
-**Exit criteria:**
-
-- [ ] A developer can open `docs/matplotlib-parity-status.md` and see a
-      detailed answer to whether each tracked upstream feature is ported and
-      whether it has examples.
-- [ ] CI fails when an upstream public row or enumerable registry item is
-      tracked but unclassified.
+- [ ] One table per upstream feature family with columns: upstream API / registry
+      item, Go status (`direct-equivalent` / `idiomatic-equivalent` / `partial` /
+      `not-started` / `intentional-omission`), local API, parity fixture, user
+      example, browser demo, and remaining work — generated, not hand-written.
+- [ ] CI fails when an upstream public row or enumerable registry item is tracked
+      but unclassified.
 - [ ] Every `partial`, `not-started`, and `intentional-omission` row has a
       rationale and a next action.
 
----
+**Exit criterion:**
 
-# Phase 12: Artist, Line2D, and Marker Semantics
-
-✅ **Completed.** Foundational `artist.py`, `lines.py`, and `markers.py`
-parity gaps that affect visible rendering and migration are closed.
-
-Completed scope:
-
-- Shared artist metadata, clipping, alpha, visibility, stale/in-layout, and
-  centralized traversal behavior are implemented and covered by tests.
-- Marker catalogue, fillstyles, `markevery`, line cap/join/dash behavior, and
-  focused marker parity matrices are implemented or explicitly classified.
-- Audit and public-surface rows for `artist.py`, `lines.py`, and `markers.py`
-  are closed to precise statuses.
+- [ ] A developer can open `docs/matplotlib-parity-status.md` and see, per tracked
+      upstream feature, whether it is ported and whether it has examples / a
+      browser demo, with CI guarding completeness.
 
 ---
 
-# Phase 13: Axis, Ticker, Formatter, Scale, and Transform Breadth
+# Phase 4: Documentation, Performance, and v1.0 Release
 
-✅ **Completed.** Axis, ticker, formatter, scale, and transform parity gaps
-that drove persistent axis and display-coordinate residuals are closed.
+**Goal:** make the project consumable by users who have not followed the
+development thread, establish performance baselines, and tag a stable v1.0.
+*(The Matplotlib migration guide, the backend-selection guide
+`docs/backend-selection.md`, the showcase caption/snippet review, the
+intentional-divergence "anti-gallery", and the README browser-gallery entry
+point are already done.)*
 
-Completed scope:
+### 4.1 API Documentation
 
-- Tick lifecycle, offset/scientific text behavior, locator/formatter breadth,
-  and shared/twin-axis interactions are covered.
-- Scale/transform breadth includes log/symlog/logit and inversion/caching edge
-  behavior with renderer-neutral tests.
-- Audit and public-surface rows for `axis.py`, `ticker.py`, `scale.py`, and
-  `transforms.py` are closed to precise statuses.
+- [ ] Package-level GoDoc passes for every public package, with a worked example
+      per package.
+- [ ] Hosted documentation site (pkg.go.dev plus a curated landing page on the
+      existing GitHub Pages deployment).
 
----
+### 4.2 Performance Pass
 
-# Phase 14: Collections, Scalar Mapping, Meshes, and Colorbars
-
-✅ **Completed.** High-value collection, scalar-mapping, mesh, and colorbar
-gaps that affect visible output and migration are closed.
-
-Completed scope:
-
-- Mutable collection/scalar-mappable state updates propagate deterministically.
-- Mesh shading/shape rules and colorbar orientation/boundary/tick behavior are
-  source-backed and fixture-covered.
-- Advanced norm/color-helper scope is implemented or explicitly classified.
-- Audit and public-surface rows for `collections.py`, `cm.py`, `colors.py`,
-  `colorbar.py`, and `colorizer.py` are closed to precise statuses.
-
----
-
-# Phase 15: Patches, Text, Annotation, Legend, and Offset Boxes (Core Closure)
-
-Completed scope:
-
-- Patch/hatch coverage includes box styles, arrow/connection styles,
-  hatch-density semantics, and focused fixture coverage.
-- Text/font, annotation/offset-box, and legend handler/layout breadth are
-  implemented with renderer-neutral tests and focused matrix fixtures.
-- Audit and public-surface rows for `patches.py`, `hatch.py`, `text.py`,
-  `font_manager.py`, `textpath.py`, `legend.py`, `legend_handler.py`, and
-  `offsetbox.py` are closed to precise statuses.
-
----
-
-# Phase 16: Display Coordinate and Backend Boundary Parity (Dedicated Former 12.4G)
-
-**Status: COMPLETE (G1–G8 + 16.5 residuals).** Core display space is y-up
-(origin bottom-left, +Y up, mirroring matplotlib `flipy()==True`); each backend
-owns device y-inversion at rasterization. Contract: ADR
-`docs/adr/0003-display-coordinate-contract.md`.
-
-**Delivered:** core pivot to y-up with AGG/SVG/PDF/PS/PGF/gobasic owning their
-device flip; verbatim matplotlib signed-geometry formulas (`Arc3.connect`,
-arrow-head normals, text rotation, annotation offsets) without compensation;
-1:1 example ports (no y-sign hacks); renderer-neutral regressions in
-`core/patch_test.go`; full golden suite regenerated. `text_annotation_matrix`
-RMSE 14.94 → ~1.3. The `mixed_raster_vector` SVG/PDF golden churn was a
-pre-existing gobasic-offscreen scatter flip fixed by commit 854c250 (old golden
-enshrined the bug), not a new regression.
-
-**Verification:** `TestMatplotlibRef` 128/128; `TestReferenceCompare` 129/130
-(only `spectrum_variants`, documented skip); `TestGolden`/`TestSVGGolden`/
-`TestPDFGolden` green.
-
-**Residual y-up / backend offenders (former Phase 16.5) — all closed:**
-
-- [x] AGG-port rotated-text glyph orientation — fixed at the AGG **backend**
-      layer (no `../agg_go` or core change). Raster path rotates the glyph mask
-      with a device-space transform (`backends/agg/freetype_native.go
-drawNativeFreetypeRunTextRotated`); outline/GSV fallbacks rotate about the
-      device anchor (`backends/agg/agg_text.go`). Strict-text cases match
-      references at RMSE ~0; guarded by `TestDrawTextRotated*` in
-      `backends/agg/agg_test.go`. (`canvas/widget_selectors.go` uses axis-aligned
-      rects, so the "selector shapes" sub-note was moot.)
-- [x] `colorbar_horizontal_ticks` — bottom colorbars place the aspect-limited
-      active bar at the top of the reserved slot; `RMSE 3.63`, `MeanAbs 0.18`.
-- [x] `imshow_interpolation_matrix` — scalar-image resampling follows
-      Matplotlib's data-stage path for high-upsampled 2D inputs and applies the
-      AGG filter family before colormapping; `RMSE 7.79`, `MeanAbs 0.71`.
-- [x] skia shader/gradient/pattern/hatch fills bypassed the gobasic device
-      y-flip — fixed in `backends/skia/shader.go` (`drawShaderFill` flips fill
-      path + clips to the y-down buffer; `cpuSurfaceBridge.DrawPathFill` maps
-      device pixels back to y-up before sampling). Import cycle that blocked the
-      parity tests fixed by moving them to the external `skia_test` package.
-      `TestSkiaParityAgainstAGGGoldens/pattern_gradient_effects` `PSNR 44.53`;
-      residual MeanAbs ~2.2 is CPU-bridge drop-shadow/hatch/edge-AA difference,
-      documented via `skiaParityMaxMeanAbsOverride`.
-- [x] `pattern_gradient_effects` — fixture reconciled to Matplotlib-style image,
-      patch, hatch, `SimplePatchShadow` calls; AGG native hatch stays in device
-      space (MeanAbs 3.09 → 0.42).
-
-Parity is gated by per-case catalog tolerances (`MinPSNR`/`MaxMeanAbs`/`MaxRMSE`
-on each `internal/examplecatalog.Case`, enforced by `TestReferenceCompare`), not
-a flat MeanAbs bar; the strict-text cases match at RMSE ~0 via the
-optional-visual path. (`widgets_gallery` residual is owned by Phase 17.5.)
-
----
-
-# Phase 17: Images, Pyplot, Backends, Widgets, and Animation
-
-Completed scope:
-
-- Image, pyplot, backend, widget, and animation public-surface rows are closed
-  to precise statuses, with unsupported GUI/dynamic behavior documented as typed
-  Go omissions rather than left ambiguous.
-- Widget visual parity is split cleanly: Go-native widget chrome remains the
-  normal default, while `widgets_gallery` has a Matplotlib-compatible rendering
-  path, classified residuals in `docs/phase-17.5-widget-residual-audit.md`, and
-  style-parameterized interaction coverage for affected hit regions.
-- Plot-surface closure covers missing/thin 2D APIs (`Axes.bxp`,
-  `Axes.violin`, `Axes.hlines`, `Axes.vlines`, `Axes.clabel`, plus pyplot
-  wrappers), hardened axes option breadth, scalar-mappable behavior, and
-  catalog-backed parity rows.
-- mplot3d closure covers triangulated contour helpers, depth ordering, clipping,
-  view/aspect defaults, axis/tick styling, scalar mapping, colorbar behavior,
-  and missing 3D fixture triplets.
-- Color, image, norm, and colorbar tails are audited and closed with tests or
-  explicit omissions, including parsing edge cases, norm breadth, `FuncNorm`,
-  `LightSource`, bivariate/multivariate colormaps, transformed-image resampling,
-  colorbar placement/formatting/boundaries/extensions, and mutable scalar-map
-  update behavior.
-- Patch, annotation, legend, offset-box, pyplot state, backend, widget, and
-  animation tails are split between static Go equivalents, GUI/dynamic
-  omissions, and explicit unsupported-writer errors.
-- Final verification refreshed stale goldens, confirmed the upstream extractor
-  artifact was unchanged, and passed the primary fmt/lint/test gates plus
-  focused catalog parity suites covering Golden, MatplotlibRef,
-  ReferenceCompare, AGG-native, PDF, and SVG harnesses.
-
-Completed color/colorbar closure markers:
-
-- [x] 17.6.5.6 Colorbar Placement and Formatter Breadth
-  - [x] 17.6.5.6.1 Placement, Formatter, and Update Audit
-        This aligned locators, formatters, boundaries, extensions (extend,
-        extendfrac, spacing, under/over), minor ticks, labels, tick position,
-        and discrete colorbar behavior, and defined the supported post-creation
-        update contract for cmap, norm, clim, alpha, and scalar arrays.
-  - [x] 17.6.5.6.2 Colorbar Update Tests or Omission
-  - [x] 17.6.5.6.3 Colorbar Fixtures, Tests, and Ledger
-- [x] 17.6.5.7 Color Fixtures and Docs
-  - [x] 17.6.5.7.4 Final Color Status Regeneration
-
----
-
-# Phase 18: User-Facing Example Breadth
-
-✅ **Completed.** Every major implemented public feature family now has a
-user-facing Go example demonstrating meaningful Matplotlib-equivalent variants,
-not just a parity fixture.
-
-Completed scope:
-
-- Core plot-family showcases (`lines_markers_gallery`, `scatter_gallery`,
-  `bar_variants`, `fill_variants`, `histogram_variants`) and color/image/text/
-  annotation, toolkit/projection (`projection_toolkit_gallery`), 3D
-  (`mplot3d_gallery`), triangulation (`triangulation_gallery`), mixed
-  raster/vector (`mixed_raster_vector`), and `ticks_scales_formatters_gallery`
-  galleries are added under `examples/<id>/` with matching parity/reference
-  wrappers, committed golden + matplotlib_ref PNGs, and `Showcase: true` catalog
-  rows discoverable through the golden/reference tests.
-- Every high-priority `DemoBreadthGap` is closed by a named showcase or split
-  into a precise Phase 9C implementation/API follow-up; stale example-breadth
-  wording was removed from the already-showcased rows.
-- The lone `fixture-only` `patches` feature-family status is resolved
-  (`patch_showcase`/`patch_gallery` user-facing coverage) and
-  `docs/matplotlib-parity-status.md` was regenerated from the catalog.
-- Regression tests mechanically enforce the exit criteria: every high-priority
-  gap names a covering showcase or carries a Phase 9C split rationale, and
-  implemented public families may not report `BreadthFixtureOnly` without an
-  explicit intentional classification.
-
----
-
-# Phase 19: Browser Gallery Alignment
-
-**Goal:** make the browser gallery a catalog-backed inspection surface for the
-same feature families covered by parity fixtures and CLI examples.
-
-### 19.1 Wire Planned Web Reference Modules
-
-- [x] Wire `test/matplotlib_ref/webdemos/annotations.py`, `bars.py`,
-      `errorbars.py`, `fills.py`, `heatmap.py`, `histogram.py`, `lines.py`,
-      `patches.py`, `scatter.py`, and `subplots.py` into active browser demos
-      or fold them into existing catalog-backed browser families.
-- [x] Keep `radialforce.py` reference-only until it is promoted to a catalog
-      case.
-- [x] Add tests that every active web reference module maps to a catalog case
-      and every catalog-backed planned row either has an active browser demo or
-      remains explicitly planned.
-
-### 19.2 Promote CLI-Only Showcases
-
-- [x] Promote CLI-only showcases listed in `BrowserDemoCoverageRows` into
-      browser demos: basic lines, dashes, scatter, bars, fills, errorbars,
-      multi-series, histograms, boxplots, heatmaps, figure labels, colorbars,
-      annotations, projections, mplot3d, triangulation, axisartist, and
-      axes_grid1.
-- [x] Browser demos must use the same catalog factories as parity tests or a
-      documented wrapper around them.
-- [x] Add browser-demo smoke tests that render each promoted demo and verify it
-      has a non-empty image/artifact.
-
-### 19.3 Browser Parity Status Reporting
-
-- [x] Update `docs/matplotlib-parity-status.md` with active/planned/reference
-      browser status for each feature family.
-- [x] Fail CI if a `Showcase: true` catalog row has no browser accounting row.
-- [x] Fail CI if a browser demo references a feature family that is not present
-      in the catalog.
-
-**Exit criteria:**
-
-- [x] Every `BrowserDemoPlanned` row is active, intentionally reference-only,
-      or tied to a later documented feature gap.
-- [x] The browser gallery can be used to visually inspect the major parity
-      families without manually running parity tests.
-- [x] Browser demo coverage is generated from or checked against the catalog.
-
----
-
-# Phase 20: Documentation, Examples Polish, and v1.0 Release
-
-**Goal:** make the project consumable by users who have not been following
-the development thread, and tag a stable v1.0.
-
-### 20.1 API Documentation
-
-- [ ] Package-level GoDoc passes for every public package, with a worked
-      example per package.
-- [ ] Hosted documentation site (pkg.go.dev plus a curated landing page
-      under the existing GitHub Pages deployment).
-- [x] Migration guide from upstream Matplotlib: side-by-side Python / Go
-      snippets for every plot family covered by the catalog.
-- [x] Backend selection guide: when to use AGG / GoBasic / SVG / PDF /
-      Skia, with capability matrix excerpts (`docs/backend-selection.md`).
-
-### 20.2 Examples Gallery Polish
-
-- [x] Review every `Showcase: true` catalog row for caption, description,
-      and runnable snippet quality.
-- [x] Add an "anti-gallery" of intentional Matplotlib-divergence cases with
-      the reasons documented (where the Go port chose different defaults).
-- [x] Promote the WASM browser gallery to a first-class entry point on the
-      project README.
-
-### 20.3 Performance Pass
-
-- [ ] Profiling sweep across the catalog: identify hotspots that exceed the
+- [ ] Profiling sweep across the catalog: find hotspots that exceed the
       100k-point smoothness goal and the sub-second typical-plot goal.
-- [ ] Reusable benchmark suite under `benchmarks/` with regression tracking
-      in CI.
-- [ ] Documented memory-usage targets and a tuning guide for long-running
-      applications.
+- [ ] Reusable benchmark suite under `benchmarks/` with CI regression tracking.
+- [ ] Documented memory-usage targets and a tuning guide for long-running apps.
 
-### 20.4 Release Readiness
+### 4.3 Release Readiness
 
-- [ ] Semantic version policy decision and `CHANGELOG.md` baseline.
-- [ ] Final golden / reference regeneration pass with explicit per-case
-      tolerances frozen for v1.0.
-- [ ] Public API stability audit: identify and either rename or hide any
-      symbol that is not intended to be part of the v1.0 surface.
-- [ ] CI gate: `just fmt && just lint && just test` plus catalog-driven
-      parity checks must all pass on the release branch.
+- [ ] Semantic-version policy decision and `CHANGELOG.md` baseline.
+- [ ] Final golden / reference regeneration pass with per-case tolerances frozen
+      for v1.0.
+- [ ] Public API stability audit: rename or hide any symbol not intended for the
+      v1.0 surface.
+- [ ] CI gate: `just fmt && just lint && just test` plus catalog-driven parity
+      checks all pass on the release branch.
 - [ ] Tag v1.0.
 
 **Exit criteria:**
 
-- [ ] A new user can install the module, follow the documentation, and
-      reproduce every showcase plot.
+- [ ] A new user can install the module, follow the docs, and reproduce every
+      showcase plot.
 - [ ] The public API surface is documented, audited, and frozen for v1.0.
 - [ ] Performance and parity baselines are tracked in CI.
 
@@ -1897,8 +201,8 @@ the development thread, and tag a stable v1.0.
 
 ## Backend Strategy
 
-- **Primary raster backend:** AGG (`backends/agg/`) — anti-aliased,
-  sub-pixel accurate, reference for parity fixtures.
+- **Primary raster backend:** AGG (`backends/agg/`) — anti-aliased, sub-pixel
+  accurate, reference for parity fixtures.
 - **AGG port ownership:** if a parity failure is caused by a fundamental
   rasterization, text, path, transform, or blending issue in the Go AGG port,
   fix `../agg_go` rather than adding compensating behavior in this repository.
@@ -1906,27 +210,24 @@ the development thread, and tag a stable v1.0.
   correctness fallback.
 - **Primary vector backend:** SVG (`backends/svg/`) — deterministic,
   browser-readable, structurally tested.
-- **Publication vector backends:** PDF / PS / PGF (Phase 1).
-- **Accelerated raster backend:** Skia (`backends/skia/`) — opt-in CPU and
-  future GPU paths.
+- **Publication vector backends:** PDF / PS / PGF.
+- **Accelerated raster backend:** Skia (`backends/skia/`) — opt-in CPU and future
+  GPU paths.
 
 ## Testing Strategy
 
 - Catalog-driven parity tests (`internal/examplecatalog.Case` + `test/`).
-- Golden image tests for raster backends, structural diff for vector
-  backends.
+- Golden image tests for raster backends, structural diff for vector backends.
 - Property-based tests for data ranges and transforms.
-- Visual regression against Matplotlib references with documented
-  per-case tolerances.
-- `go test ./...` runs the full suite; `go test ./test/ -run <id>` runs
-  one parity case.
+- Visual regression against Matplotlib references with documented per-case
+  tolerances.
+- `go test ./...` runs the full suite; `go test ./test/ -run <id>` runs one
+  parity case.
 
 ## API Design Principles
 
-- Follow Matplotlib conventions where sensible; document and explain
-  divergences.
-- Use functional options for configuration; keep zero-value defaults
-  useful.
+- Follow Matplotlib conventions where sensible; document and explain divergences.
+- Use functional options for configuration; keep zero-value defaults useful.
 - Keep the object-oriented core API first-class; offer `pyplot` as a
   migration-friendly convenience layer.
 - Provide escape hatches (renderer access, raw paths) for advanced cases.
@@ -1942,14 +243,13 @@ the development thread, and tag a stable v1.0.
 - Every feature gets a working example tied to the catalog.
 - Examples serve as integration tests and gallery content.
 - Showcase examples appear in the WASM browser gallery and the README.
-- Examples demonstrate real-world usage rather than minimal API smoke
-  tests.
+- Examples demonstrate real-world usage rather than minimal API smoke tests.
 
 ---
 
-This roadmap reflects the work remaining to bring matplotlib-go to a
-stable, documented v1.0 release. Phases 1-3 close functional gaps in
-output formats, effects, and math typography; Phases 4-6 add the
-interactive runtime that the headless event infrastructure has been
-waiting for; Phase 7 hardens the backend matrix; Phase 8 finishes the
+This roadmap reflects the work remaining to bring matplotlib-go to a stable,
+documented v1.0 release. **Phase 1** hardens the backend matrix (mostly the
+deferred external Skia binding); **Phase 2** closes the remaining visual parity
+gap (chiefly MathText); **Phase 3** finishes and guards the parity status
+report; **Phase 4** delivers documentation, performance baselines, and the v1.0
 release.

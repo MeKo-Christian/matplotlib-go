@@ -196,9 +196,6 @@ func (f *axes3DFrame) Draw(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 	mins, maxs := f.axes.projectionLimits()
-	if !f.axes.hasData {
-		mins, maxs = vec3{0, 0, 0}, vec3{1, 1, 1}
-	}
 	frameMins, frameMaxs := axes3DFrameLimits(mins, maxs)
 	gridLineWidth := 0.8
 	axisLineWidth := 0.8
@@ -389,14 +386,13 @@ func (a *Axes3D) Text3D(x, y, z float64, text string, opts ...TextOptions) *Text
 	if a == nil || a.Axes == nil {
 		return nil
 	}
-	limitsChanged := a.observe3DPoint(x, y, z)
 	p := a.ProjectPoint(x, y, z)
 	txt := a.Text(p.X, p.Y, text, opts...)
 	a.add3DReprojector(func() {
 		if txt != nil {
 			txt.Position = a.ProjectPoint(x, y, z)
 		}
-	}, limitsChanged)
+	}, false)
 	return txt
 }
 

@@ -142,6 +142,58 @@ func TestAxes3DProjectPointMatchesMatplotlibScatterFixtureLimits(t *testing.T) {
 	}
 }
 
+func TestAxes3DText3DDoesNotExpandDataLimitsLikeMatplotlib(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	text := ax.Text3D(9, 8, 7, "label")
+	if text == nil {
+		t.Fatal("Text3D returned nil")
+	}
+	mins, maxs := ax.projectionLimits()
+	if mins != (vec3{0, 0, 0}) || maxs != (vec3{1, 1, 1}) {
+		t.Fatalf("text-only projection limits = %v..%v, want Matplotlib default limits 0..1", mins, maxs)
+	}
+	if ax.hasData {
+		t.Fatal("Text3D marked the axes as having data; Matplotlib text does not update 3D data limits")
+	}
+
+	ax.Scatter3D([]float64{1, 9}, []float64{1, 9}, []float64{1, 9})
+	mins, maxs = ax.projectionLimits()
+	wantMins := vec3{0.6, 0.6, 0.6}
+	wantMaxs := vec3{9.4, 9.4, 9.4}
+	if !approx(mins[0], wantMins[0], 1e-12) || !approx(mins[1], wantMins[1], 1e-12) || !approx(mins[2], wantMins[2], 1e-12) ||
+		!approx(maxs[0], wantMaxs[0], 1e-12) || !approx(maxs[1], wantMaxs[1], 1e-12) || !approx(maxs[2], wantMaxs[2], 1e-12) {
+		t.Fatalf("projection limits after scatter = %v..%v, want text ignored and scatter autoscaled to %v..%v", mins, maxs, wantMins, wantMaxs)
+	}
+	wantPos := ax.ProjectPoint(9, 8, 7)
+	if !pointsEqual([]geom.Pt{text.Position}, []geom.Pt{wantPos}, 1e-12) {
+		t.Fatalf("Text3D position after later scatter = %+v, want reprojected %+v", text.Position, wantPos)
+	}
+}
+
+func TestAxes3DFrameHonorsExplicitLimitsWithoutData(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+	ax.SetXLim(0, 10)
+	ax.SetYLim(0, 10)
+	ax.SetZLim(0, 10)
+
+	ctx := newAxesDrawContext(ax.Axes, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	r := &axes3DTextRecorder{}
+	(&axes3DFrame{axes: ax}).Draw(r, ctx)
+
+	if !containsString(r.texts, "10") {
+		t.Fatalf("3D frame tick labels = %v, want explicit 0..10 limits honored without data", r.texts)
+	}
+}
+
 func TestAxes3DExplicitLimitsPreserveMatplotlibInvertedAxis(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
