@@ -55,55 +55,78 @@ per-phase implementation logs.*
 
 # Phase 1: Backend Deepening (Skia Native + GPU)
 
-**Goal:** finish the backend-specific work carved out of the earlier parity
-program. The remaining items are almost entirely gated by the **external Skia
-C-ABI binding** (`backends/skia/strategy.go`, `Binding: external-c-api`;
-requires the Skia shared library, a C-ABI wrapper, and `CGO_ENABLED=1`). The CPU
-Skia bridge already advertises truthful bridged (`≈`) capabilities; the open work
-flips those to native (`✓`).
+**Goal:** finish the backend-specific Skia work. The historical blocker (no Skia
+C-ABI binding) is **resolved**: a real Skia library is built locally and a narrow
+C-ABI wrapper links it under `-tags "skia skiacgo"`. The remaining work is wiring
+the rest of the native primitives through that wrapper and standing up real GPU
+mode — no longer external-access-blocked, just unbuilt.
 
-- [x] AGG parity diagnostics for remaining non-text residuals: dense path
-      collections, repeated translucent overlaps, image interpolation modes,
-      hatch clipping, and mixed raster/vector fallbacks. *(Not Skia-blocked — the
-      one self-contained item here.)* Done: `TestNonTextResidualDiagnostics`
+## Done
+
+- [x] **AGG parity diagnostics for non-text residuals** (the one self-contained,
+      never-Skia-blocked item): `TestNonTextResidualDiagnostics`
       (`test/diagnostics_test.go`, env-gated by `MPL_GO_RESIDUAL_DIAG`) logs
-      per-case residual metrics and dumps diff PNGs under
+      per-case residual metrics across dense path collections, translucent
+      overlaps, image-interpolation modes, hatch clipping, and mixed
+      raster/vector, dumping diff PNGs under
       `testdata/_artifacts/non_text_residuals/`.
-- 🧪 Native Skia marker batches, path collections, transformed images, quad
-      meshes, and Gouraud triangles via `SkCanvas::drawAtlas` / `SkVertices`.
-      **C-ABI wrapper landed** (`backends/skia/skia_cwrap.{h,cpp}` + cgo binding
-      `native_cgo.go`, `-tags "skia skiacgo"`): gradient path fills (SkShaders
-      gradients), marker batches (SkCanvas/SkPath), and Gouraud triangles
-      (SkVertices) now render natively and `MarkerBatch` reports native (`✓`).
-      *Still bridged:* path collections, transformed images, quad meshes.
-- [ ] Native Skia hatching via tiled `SkShader`s. *(Wrapper exists; tiled-shader
-      hatch entrypoint not yet wired — still CPU-bridged.)*
-- [ ] GPU mode (`SkSurface::MakeRenderTarget`) behind the `skiagpu` build tag with
-      deterministic CPU readback for goldens. The scaffold exists
-      (`gpu_scaffold_test.go`, CPU-readback only); real GPU rendering is
-      *(blocked: external Skia/GPU library)*.
-- 🧪 Truthful per-mode native/fallback/unavailable reporting in the *live*
-      `BackendComparisonReport`. `IsCapabilityBridged` now flips `MarkerBatch`
-      from bridged to native when the `skiacgo` native surface is linked; full
-      CPU↔GPU divergence still waits on native GPU.
+- [x] **C-ABI Skia wrapper + cgo bridge** (`backends/skia/skia_cwrap.{h,cpp}`,
+      `native_cgo.go`; tag `skiacgo`). Links Skia milestone 151. Native today:
+      gradient path fills (`SkShaders` gradients), marker batches
+      (`SkCanvas`/`SkPath`), Gouraud triangles (`SkVertices`). Verified by
+      `native_cgo_test.go`. `IsCapabilityBridged` flips `MarkerBatch` to native
+      (`✓`) when the native surface is linked; default `-tags skia` stays the
+      pure-Go CPU bridge.
 
-*Status (2026-06-07): a real Skia library (milestone 151) was built locally and
-the C-ABI wrapper now links it under `-tags "skia skiacgo"` — verified by
-`backends/skia/native_cgo_test.go` (version probe, native gradient fills,
-markers, Gouraud). The default `-tags skia` build remains the pure-Go bridge
-(embeds `gobasic`, rasterizes via `golang.org/x/image/vector`). Build/test with
-`just build-skia-native` / `just test-skia-native` (override `SKIA_ROOT`).
-**FreeType caveat:** a Skia built without system FreeType bundles its own; do
-not combine `skiacgo` with the `freetype` tag in one binary (duplicate `FT_*`
-symbols crash) — rebuild Skia with `skia_use_freetype=false` for combined use.
-Remaining native work (path collections, quad meshes, tiled-shader hatch, real
-GPU) is now unblocked at the wrapper level — it needs the corresponding
-entrypoints wired, not external access.*
+## Build / test (carry-on entry points)
+
+- Build the library once (outside the repo): a Skia checkout with `include/` and
+  a built `out/Shared/libskia.so`. For combined use with text, build with
+  `skia_use_freetype=false` (see caveat).
+- `just build-skia-native` / `just test-skia-native` (override `SKIA_ROOT`, default
+  `/mnt/projekte/Code/skia`). They pass `CGO_CXXFLAGS`/`CGO_LDFLAGS` and add an
+  rpath so the test binary finds `libskia.so` without `LD_LIBRARY_PATH`.
+- **FreeType caveat:** a Skia built without system FreeType statically bundles its
+  own. Combining `skiacgo` with the `freetype` tag (agg's vendored FreeType 2.6.1)
+  in one binary produces duplicate `FT_*` symbols and a runtime crash, so the
+  native recipes deliberately omit `freetype`. Rebuild Skia with
+  `skia_use_freetype=false` to run native Skia and agg text in one binary.
+
+## Remaining work (each unblocked; wire the wrapper entrypoint)
+
+- [ ] **Native path collections.** Add a `drawPathCollectionNative` to the
+      `nativeBatchBridge` interface + dispatch in `Renderer.DrawPathCollection`
+      (`skia_native.go`); render all items into one native surface (loop
+      `mgsk_draw_path`, or add a batched multi-path C entrypoint). Flip
+      `pathcollectionbatch` in `IsCapabilityBridged`.
+- [ ] **Native quad meshes.** Add `drawQuadMeshNative`; emit two `SkVertices`
+      triangles per cell with the face color (reuse `mgsk_draw_vertices`) or one
+      `mgsk_draw_path` per cell. Flip `quadmeshbatch`.
+- [ ] **Native transformed images.** Add `mgsk_draw_image` (SkImage raster copy +
+      `drawImageRect` with sampling) to the wrapper; implement
+      `render.ImageTransformer` on the native path.
+- [ ] **Native hatching via tiled `SkShader`.** Add a tiled-shader hatch
+      entrypoint to the wrapper and route `NativeHatcher` through it instead of
+      `render.DrawHatchFallback`; flip `nativehatcher`.
+- [ ] **Real GPU mode** (`SkSurface::MakeRenderTarget`) behind `skiagpu` +
+      `skiacgo`: add `mgsk_surface_new_gpu` (Ganesh `GrDirectContext` over GL or
+      Vulkan) + flush; wire `FlushGPU`; keep deterministic CPU readback for
+      goldens. Requires a platform GPU context (GL/Vulkan dev libs). The
+      CPU-readback scaffold (`gpu_scaffold_test.go`) already exists.
+- [ ] **Per-mode reporting divergence.** Once GPU is real, split
+      `ModeCapabilities` (`strategy.go`) so CPU and GPU capability sets differ and
+      the live `BackendComparisonReport` shows per-mode native/fallback/unavailable.
+- [ ] **Parity hardening.** Add `skiacgo` tests comparing native output to the AGG
+      goldens within tolerance (markers/gradients/Gouraud first), and update each
+      `NativePathRequirements` row in `strategy.go` from `StatusDeferred` to
+      `StatusImplemented` as its primitive lands.
 
 **Exit criterion:**
 
-- [ ] Skia is a viable secondary raster backend for users who need GPU
-      acceleration. *(Open: blocked on the external Skia/GPU binding above.)*
+- [ ] Skia is a viable secondary raster backend: native batch primitives + real
+      GPU acceleration available under `skiacgo`/`skiagpu`, with parity-checked
+      output and truthful per-mode capability reporting. *(Wrapper + first native
+      primitives done; remaining items above.)*
 
 ---
 
