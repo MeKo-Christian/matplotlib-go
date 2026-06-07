@@ -448,12 +448,13 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		CatalogIDs: []string{"widgets_gallery"},
 	},
 	{
-		ID:         "showcase-animation_gallery",
-		Title:      "Animation Gallery Browser Coverage",
-		Status:     BrowserDemoPlanned,
-		Action:     "include in a widgets or animation browser demo once timer playback is deterministic in the web host",
-		Rationale:  "The animation gallery is catalog-visible for setup and deterministic stepping, but browser playback should be validated with real timer/event-loop behavior.",
-		CatalogIDs: []string{"animation_gallery"},
+		ID:              "showcase-animation_gallery",
+		Title:           "Animation Gallery Browser Coverage",
+		Status:          BrowserDemoActive,
+		Action:          "expose as the animation web demo while timer-driven browser playback remains covered by the event-loop and writer tests",
+		Rationale:       "The animation gallery is catalog-visible for setup, deterministic stepping, and static preview, and the WASM demo catalog now exposes that preview directly.",
+		ActiveWebDemoID: "animation",
+		CatalogIDs:      []string{"animation_gallery"},
 	},
 }
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import importlib
 
-DEMO_SPECS = [('axes', 'demo_axes'), ('composition', 'demo_composition'), ('mesh', 'demo_mesh'), ('variants', 'demo_variants'), ('statistics', 'demo_statistics'), ('specialty', 'demo_specialty'), ('units', 'demo_units'), ('vectors', 'demo_vectors'), ('polar', 'demo_polar'), ('projections', 'demo_projections'), ('matrix', 'demo_matrix')]
+DEMO_SPECS = [('axes', 'demo_axes'), ('composition', 'demo_composition'), ('mesh', 'demo_mesh'), ('variants', 'demo_variants'), ('statistics', 'demo_statistics'), ('specialty', 'demo_specialty'), ('units', 'demo_units'), ('vectors', 'demo_vectors'), ('polar', 'demo_polar'), ('projections', 'demo_projections'), ('matrix', 'demo_matrix'), ('animation', 'demo_animation')]
 DEMO_NAMES = [name for name, _ in DEMO_SPECS]
 
 def load_demo(name: str):

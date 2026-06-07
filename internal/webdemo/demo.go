@@ -11,6 +11,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/backends/gobasic"
 	"github.com/cwbudde/matplotlib-go/core"
+	animation_gallery "github.com/cwbudde/matplotlib-go/examples/animation_gallery"
 	arrays_showcase "github.com/cwbudde/matplotlib-go/examples/arrays_showcase"
 	axes_control_surface "github.com/cwbudde/matplotlib-go/examples/axes_control_surface"
 	geo_mollweide_axes "github.com/cwbudde/matplotlib-go/examples/geo_mollweide_axes"
@@ -63,6 +64,7 @@ var showcaseBuilders = map[string]func() *core.Figure{
 	"statistics":  stat_variants.Plot,
 	"units":       units_overview.Plot,
 	"vectors":     vector_fields.Plot,
+	"animation":   animation_gallery.Plot,
 }
 
 type rasterRenderer interface {

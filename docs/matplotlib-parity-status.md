@@ -20,7 +20,7 @@ Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstr
 | colors-cm                | partial     | implemented | partial     | pending     | thin    |
 | pyplot-state             | partial     | implemented | partial     | pending     | thin    |
 | renderer-backends        | implemented | implemented | partial     | pending     | thin    |
-| widgets-events-animation | partial     | partial     | partial     | pending     | thin    |
+| widgets-events-animation | partial     | partial     | partial     | partial     | thin    |
 | toolkits-projections     | partial     | implemented | implemented | partial     | thin    |
 
 ## Public Surface Summary

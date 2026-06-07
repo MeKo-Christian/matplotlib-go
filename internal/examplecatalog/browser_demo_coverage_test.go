@@ -79,3 +79,19 @@ func TestBrowserDemoCoverageReferencesCatalogAndWebDemos(t *testing.T) {
 		}
 	}
 }
+
+func TestAnimationGalleryBrowserCoverageIsActive(t *testing.T) {
+	row, ok := LookupBrowserDemoCoverage("showcase-animation_gallery")
+	if !ok {
+		t.Fatal("missing animation gallery browser coverage row")
+	}
+	if row.Status != BrowserDemoActive {
+		t.Fatalf("animation gallery browser coverage status = %s, want %s", row.Status, BrowserDemoActive)
+	}
+	if row.ActiveWebDemoID != "animation" {
+		t.Fatalf("animation gallery ActiveWebDemoID = %q, want animation", row.ActiveWebDemoID)
+	}
+	if _, ok := LookupWebDemo(row.ActiveWebDemoID); !ok {
+		t.Fatalf("animation gallery active web demo %q does not resolve", row.ActiveWebDemoID)
+	}
+}

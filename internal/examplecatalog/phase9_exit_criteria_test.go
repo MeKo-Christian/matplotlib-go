@@ -2,8 +2,8 @@ package examplecatalog
 
 import "testing"
 
-func TestPhase9EnumerableCatalogAuditsAreComplete(t *testing.T) {
-	audits := Phase9EnumerableCatalogAudits()
+func TestEnumerableCatalogAuditsAreComplete(t *testing.T) {
+	audits := EnumerableCatalogAudits()
 	if len(audits) == 0 {
 		t.Fatal("missing Phase 9 enumerable catalog audits")
 	}
@@ -23,7 +23,7 @@ func TestPhase9EnumerableCatalogAuditsAreComplete(t *testing.T) {
 		if len(audit.GuardTests) == 0 {
 			t.Fatalf("%s has no machine-checked guard tests", audit.ID)
 		}
-		if audit.Decision == Phase9DecisionImplemented && len(audit.CatalogIDs) == 0 {
+		if audit.Decision == CatalogDecisionImplemented && len(audit.CatalogIDs) == 0 {
 			t.Fatalf("%s is implemented but has no catalog-visible fixture IDs", audit.ID)
 		}
 		for _, id := range audit.CatalogIDs {
@@ -50,8 +50,8 @@ func TestPhase9EnumerableCatalogAuditsAreComplete(t *testing.T) {
 	}
 }
 
-func TestPhase9ExitCriteriaAreSatisfied(t *testing.T) {
-	criteria := Phase9ExitCriteria()
+func TestCatalogExitCriteriaAreSatisfied(t *testing.T) {
+	criteria := CatalogExitCriteria()
 	if len(criteria) != 3 {
 		t.Fatalf("Phase 9 exit criteria count = %d, want 3", len(criteria))
 	}
@@ -59,8 +59,8 @@ func TestPhase9ExitCriteriaAreSatisfied(t *testing.T) {
 		if criterion.ID == "" || criterion.Criterion == "" || criterion.Evidence == "" {
 			t.Fatalf("incomplete Phase 9 exit criterion: %+v", criterion)
 		}
-		if criterion.Status != Phase9ExitSatisfied {
-			t.Fatalf("%s status = %s, want %s", criterion.ID, criterion.Status, Phase9ExitSatisfied)
+		if criterion.Status != CatalogExitSatisfied {
+			t.Fatalf("%s status = %s, want %s", criterion.ID, criterion.Status, CatalogExitSatisfied)
 		}
 	}
 }

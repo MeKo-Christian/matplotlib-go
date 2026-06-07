@@ -21,6 +21,7 @@ func TestCatalogStable(t *testing.T) {
 		"polar",
 		"projections",
 		"matrix",
+		"animation",
 	}
 	if len(got) != len(wantIDs) {
 		t.Fatalf("Catalog() len = %d, want %d", len(got), len(wantIDs))
@@ -36,6 +37,22 @@ func TestCatalogStable(t *testing.T) {
 		if got[i].Description == "" {
 			t.Fatalf("Catalog()[%d].Description is empty", i)
 		}
+	}
+}
+
+func TestAnimationGalleryAvailableInWASMDemoCatalog(t *testing.T) {
+	if !ValidDemoID("animation") {
+		t.Fatal("animation demo should be available in the WASM demo catalog")
+	}
+	fig, descriptor, err := Build("animation", 0, 0)
+	if err != nil {
+		t.Fatalf("Build(animation): %v", err)
+	}
+	if descriptor.ID != "animation" {
+		t.Fatalf("descriptor.ID = %q, want animation", descriptor.ID)
+	}
+	if fig == nil || len(fig.Children) == 0 {
+		t.Fatal("Build(animation) returned an empty figure")
 	}
 }
 

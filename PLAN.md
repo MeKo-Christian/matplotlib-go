@@ -349,11 +349,19 @@ and the blit-friendly redraw paths from Phase 4.
 
 **Exit criteria:**
 
-- [ ] `FuncAnimation` produces correct frames in headless mode and animates
+- [x] `FuncAnimation` produces correct frames in headless mode and animates
       smoothly in interactive backends.
-- [ ] At least one self-contained file format works without external
+      Deterministic stepping and timer/event-loop behavior are covered in
+      `animation` tests; `internal/examplecatalog.InteractiveCoverageMatrix`
+      records animation coverage for WebAgg and Gio.
+- [x] At least one self-contained file format works without external
       dependencies (GIF).
-- [ ] Animation examples appear in the WASM demo gallery.
+      GIF, APNG, and HTML writers are now dependency-free default-build writers
+      backed by focused save/registry tests.
+- [x] Animation examples appear in the WASM demo gallery.
+      `animation_gallery` is exposed as web demo `animation` through the shared
+      catalog, has a Matplotlib web reference module, and is smoke-tested by
+      the `internal/webdemo` catalog builder.
 
 ---
 
@@ -1790,6 +1798,19 @@ Completed scope:
   artifact was unchanged, and passed the primary fmt/lint/test gates plus
   focused catalog parity suites covering Golden, MatplotlibRef,
   ReferenceCompare, AGG-native, PDF, and SVG harnesses.
+
+Completed color/colorbar closure markers:
+
+- [x] 17.6.5.6 Colorbar Placement and Formatter Breadth
+  - [x] 17.6.5.6.1 Placement, Formatter, and Update Audit
+        This aligned locators, formatters, boundaries, extensions (extend,
+        extendfrac, spacing, under/over), minor ticks, labels, tick position,
+        and discrete colorbar behavior, and defined the supported post-creation
+        update contract for cmap, norm, clim, alpha, and scalar arrays.
+  - [x] 17.6.5.6.2 Colorbar Update Tests or Omission
+  - [x] 17.6.5.6.3 Colorbar Fixtures, Tests, and Ledger
+- [x] 17.6.5.7 Color Fixtures and Docs
+  - [x] 17.6.5.7.4 Final Color Status Regeneration
 
 ---
 

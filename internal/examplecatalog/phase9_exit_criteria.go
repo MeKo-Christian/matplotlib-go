@@ -1,20 +1,20 @@
 package examplecatalog
 
-// Phase9CatalogDecision records whether an enumerable Matplotlib catalog was
+// CatalogAuditDecision records whether an enumerable Matplotlib catalog was
 // implemented directly/idiomatically or deliberately omitted for this Go API.
-type Phase9CatalogDecision string
+type CatalogAuditDecision string
 
 const (
-	Phase9DecisionImplemented Phase9CatalogDecision = "implemented"
-	Phase9DecisionOmitted     Phase9CatalogDecision = "intentional-omission"
+	CatalogDecisionImplemented CatalogAuditDecision = "implemented"
+	CatalogDecisionOmitted     CatalogAuditDecision = "intentional-omission"
 )
 
-// Phase9CatalogAudit records the evidence used to close one Phase 9 enumerable
+// CatalogAudit records the evidence used to close one Phase 9 enumerable
 // catalog or miscellaneous coverage-audit decision.
-type Phase9CatalogAudit struct {
+type CatalogAudit struct {
 	ID              string
 	Title           string
-	Decision        Phase9CatalogDecision
+	Decision        CatalogAuditDecision
 	UpstreamSources []string
 	GoSources       []string
 	GuardTests      []string
@@ -22,15 +22,15 @@ type Phase9CatalogAudit struct {
 	Notes           string
 }
 
-// Phase9EnumerableCatalogAudits returns the machine-readable Phase 9 closure
+// EnumerableCatalogAudits returns the machine-readable Phase 9 closure
 // ledger. The guard tests named here are the CI checks that keep each catalog
 // from silently drifting away from the local Matplotlib 3.10.9 snapshot.
-func Phase9EnumerableCatalogAudits() []Phase9CatalogAudit {
-	rows := []Phase9CatalogAudit{
+func EnumerableCatalogAudits() []CatalogAudit {
+	rows := []CatalogAudit{
 		{
 			ID:       "colormap-registry",
 			Title:    "Matplotlib colormap registry",
-			Decision: Phase9DecisionImplemented,
+			Decision: CatalogDecisionImplemented,
 			UpstreamSources: []string{
 				"third_party/matplotlib/lib/matplotlib/_cm.py",
 				"third_party/matplotlib/lib/matplotlib/_cm_listed.py",
@@ -52,7 +52,7 @@ func Phase9EnumerableCatalogAudits() []Phase9CatalogAudit {
 		{
 			ID:       "marker-registry",
 			Title:    "Matplotlib marker and fillstyle registry",
-			Decision: Phase9DecisionImplemented,
+			Decision: CatalogDecisionImplemented,
 			UpstreamSources: []string{
 				"third_party/matplotlib/lib/matplotlib/markers.py",
 				"third_party/matplotlib/lib/matplotlib/lines.py",
@@ -70,7 +70,7 @@ func Phase9EnumerableCatalogAudits() []Phase9CatalogAudit {
 		{
 			ID:       "named-colors",
 			Title:    "Named color tables and to_rgba-equivalent parsing",
-			Decision: Phase9DecisionImplemented,
+			Decision: CatalogDecisionImplemented,
 			UpstreamSources: []string{
 				"third_party/matplotlib/lib/matplotlib/_color_data.py",
 				"third_party/matplotlib/lib/matplotlib/colors.py",
@@ -87,7 +87,7 @@ func Phase9EnumerableCatalogAudits() []Phase9CatalogAudit {
 		{
 			ID:              "image-interpolation-registry",
 			Title:           "imshow interpolation names and adaptive policy",
-			Decision:        Phase9DecisionImplemented,
+			Decision:        CatalogDecisionImplemented,
 			UpstreamSources: []string{"third_party/matplotlib/lib/matplotlib/image.py"},
 			GoSources:       []string{"backends/agg/interpolation.go", "core/image.go", "core/image_api.go"},
 			GuardTests: []string{
@@ -102,7 +102,7 @@ func Phase9EnumerableCatalogAudits() []Phase9CatalogAudit {
 		{
 			ID:       "patch-style-registries",
 			Title:    "Patch, BoxStyle, ArrowStyle, and ConnectionStyle registries",
-			Decision: Phase9DecisionImplemented,
+			Decision: CatalogDecisionImplemented,
 			UpstreamSources: []string{
 				"third_party/matplotlib/lib/matplotlib/patches.py",
 			},
@@ -119,7 +119,7 @@ func Phase9EnumerableCatalogAudits() []Phase9CatalogAudit {
 		{
 			ID:              "hatch-registry",
 			Title:           "Hatch character set and repeat density",
-			Decision:        Phase9DecisionImplemented,
+			Decision:        CatalogDecisionImplemented,
 			UpstreamSources: []string{"third_party/matplotlib/lib/matplotlib/hatch.py"},
 			GoSources:       []string{"render/hatch.go", "backends/agg/agg_paths.go", "backends/internal/vectorhatch/vectorhatch.go"},
 			GuardTests: []string{
@@ -135,7 +135,7 @@ func Phase9EnumerableCatalogAudits() []Phase9CatalogAudit {
 		{
 			ID:       "sketch-xkcd",
 			Title:    "Sketch-style / pyplot.xkcd mode",
-			Decision: Phase9DecisionOmitted,
+			Decision: CatalogDecisionOmitted,
 			UpstreamSources: []string{
 				"third_party/matplotlib/lib/matplotlib/pyplot.py",
 				"third_party/matplotlib/lib/matplotlib/artist.py",
@@ -150,7 +150,7 @@ func Phase9EnumerableCatalogAudits() []Phase9CatalogAudit {
 		{
 			ID:       "figimage",
 			Title:    "FigureImage / pyplot.figimage",
-			Decision: Phase9DecisionOmitted,
+			Decision: CatalogDecisionOmitted,
 			UpstreamSources: []string{
 				"third_party/matplotlib/lib/matplotlib/image.py",
 				"third_party/matplotlib/lib/matplotlib/pyplot.py",
@@ -164,7 +164,7 @@ func Phase9EnumerableCatalogAudits() []Phase9CatalogAudit {
 		{
 			ID:       "rcparams",
 			Title:    "rcParams key universe",
-			Decision: Phase9DecisionOmitted,
+			Decision: CatalogDecisionOmitted,
 			UpstreamSources: []string{
 				"third_party/matplotlib/lib/matplotlib/rcsetup.py",
 				"third_party/matplotlib/lib/matplotlib/mpl-data/matplotlibrc",
@@ -177,50 +177,50 @@ func Phase9EnumerableCatalogAudits() []Phase9CatalogAudit {
 			Notes: "Go supports a documented rcParams subset; unsupported keys are reported and ignored as typed-API divergences.",
 		},
 	}
-	out := make([]Phase9CatalogAudit, len(rows))
+	out := make([]CatalogAudit, len(rows))
 	copy(out, rows)
 	return out
 }
 
-// Phase9ExitStatus records whether a Phase 9 exit criterion is satisfied.
-type Phase9ExitStatus string
+// CatalogExitStatus records whether a Phase 9 exit criterion is satisfied.
+type CatalogExitStatus string
 
 const (
-	Phase9ExitSatisfied Phase9ExitStatus = "satisfied"
+	CatalogExitSatisfied CatalogExitStatus = "satisfied"
 )
 
-// Phase9ExitCriterion records evidence for one Phase 9 exit criterion.
-type Phase9ExitCriterion struct {
+// CatalogExitCriterion records evidence for one Phase 9 exit criterion.
+type CatalogExitCriterion struct {
 	ID        string
 	Criterion string
-	Status    Phase9ExitStatus
+	Status    CatalogExitStatus
 	Evidence  string
 }
 
-// Phase9ExitCriteria returns the machine-checked closure ledger for PLAN.md
+// CatalogExitCriteria returns the machine-checked closure ledger for PLAN.md
 // Phase 9's exit criteria.
-func Phase9ExitCriteria() []Phase9ExitCriterion {
-	rows := []Phase9ExitCriterion{
+func CatalogExitCriteria() []CatalogExitCriterion {
+	rows := []CatalogExitCriterion{
 		{
 			ID:        "catalog-decisions",
 			Criterion: "Every enumerable catalog is implemented or explicitly justified as an intentional divergence.",
-			Status:    Phase9ExitSatisfied,
-			Evidence:  "Phase9EnumerableCatalogAudits plus PublicSurfaceParityRowsForSurface classify each tracked catalog and omission.",
+			Status:    CatalogExitSatisfied,
+			Evidence:  "EnumerableCatalogAudits plus PublicSurfaceParityRowsForSurface classify each tracked catalog and omission.",
 		},
 		{
 			ID:        "catalog-visibility",
 			Criterion: "Newly implemented catalog features have at least one TestGolden/TestReferenceCompare-visible catalog case.",
-			Status:    Phase9ExitSatisfied,
-			Evidence:  "Implemented Phase9EnumerableCatalogAudits rows require CatalogIDs that resolve through examplecatalog.Lookup.",
+			Status:    CatalogExitSatisfied,
+			Evidence:  "Implemented EnumerableCatalogAudits rows require CatalogIDs that resolve through examplecatalog.Lookup.",
 		},
 		{
 			ID:        "sentinel-user-calls",
 			Criterion: "Representative user calls for colormap, marker, named color, and interpolation resolve correctly or have documented errors.",
-			Status:    Phase9ExitSatisfied,
+			Status:    CatalogExitSatisfied,
 			Evidence:  "Colormap, marker, named-color, and AGG interpolation guard tests cover coolwarm, star markers, xkcd colors, and lanczos-style interpolation routing.",
 		},
 	}
-	out := make([]Phase9ExitCriterion, len(rows))
+	out := make([]CatalogExitCriterion, len(rows))
 	copy(out, rows)
 	return out
 }
