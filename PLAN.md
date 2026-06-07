@@ -62,10 +62,13 @@ requires the Skia shared library, a C-ABI wrapper, and `CGO_ENABLED=1`). The CPU
 Skia bridge already advertises truthful bridged (`≈`) capabilities; the open work
 flips those to native (`✓`).
 
-- [ ] AGG parity diagnostics for remaining non-text residuals: dense path
+- [x] AGG parity diagnostics for remaining non-text residuals: dense path
       collections, repeated translucent overlaps, image interpolation modes,
       hatch clipping, and mixed raster/vector fallbacks. *(Not Skia-blocked — the
-      one self-contained item here.)*
+      one self-contained item here.)* Done: `TestNonTextResidualDiagnostics`
+      (`test/diagnostics_test.go`, env-gated by `MPL_GO_RESIDUAL_DIAG`) logs
+      per-case residual metrics and dumps diff PNGs under
+      `testdata/_artifacts/non_text_residuals/`.
 - [ ] Native Skia marker batches, path collections, transformed images, quad
       meshes, and Gouraud triangles via `SkCanvas::drawAtlas` / `SkVertices`.
       *(Blocked: external C-ABI.)*
@@ -76,6 +79,14 @@ flips those to native (`✓`).
       *(blocked: external Skia/GPU library)*.
 - [ ] Truthful per-mode native/fallback/unavailable reporting in the *live*
       `BackendComparisonReport` once CPU and GPU capability sets actually diverge.
+
+*Status (2026-06-07): items 2–4 verified externally blocked — no Skia C-ABI
+wrapper or linked Skia/GPU library is present, so the `backends/skia` renderer
+is a pure-Go bridge (embeds `gobasic`, rasterizes via `golang.org/x/image/vector`)
+that truthfully reports the four batch/hatch capabilities as bridged (`≈`); the
+report infrastructure for item 5 (`ModeCapabilities`, `RendererModeReporter`,
+`skia/cpu`+`skia/gpu` labels) already exists, but its CPU↔GPU divergence trigger
+cannot fire honestly until 2–4 land.*
 
 **Exit criterion:**
 
