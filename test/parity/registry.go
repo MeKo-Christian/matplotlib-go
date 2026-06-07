@@ -54,6 +54,10 @@ import (
 	showcase_unstructured_showcase "github.com/cwbudde/matplotlib-go/examples/unstructured_showcase"
 	showcase_vector_fields "github.com/cwbudde/matplotlib-go/examples/vector_fields"
 	"github.com/cwbudde/matplotlib-go/internal/examplecatalog"
+	example_animation_imshow_frame "github.com/cwbudde/matplotlib-go/test/parity/animation_imshow_frame"
+	example_animation_line_frame "github.com/cwbudde/matplotlib-go/test/parity/animation_line_frame"
+	example_animation_scatter_frame "github.com/cwbudde/matplotlib-go/test/parity/animation_scatter_frame"
+	example_animation_subplots_frame "github.com/cwbudde/matplotlib-go/test/parity/animation_subplots_frame"
 	example_annotation_composition "github.com/cwbudde/matplotlib-go/test/parity/annotation_composition"
 	example_annotation_legend_offsetbox_gallery "github.com/cwbudde/matplotlib-go/test/parity/annotation_legend_offsetbox_gallery"
 	example_arrays_showcase "github.com/cwbudde/matplotlib-go/test/parity/arrays_showcase"
@@ -227,6 +231,10 @@ type Case struct {
 
 var renderByID = map[string]func() image.Image{
 	"animation_gallery":                   showcase_animation_gallery.Render,
+	"animation_line_frame":                example_animation_line_frame.Render,
+	"animation_scatter_frame":             example_animation_scatter_frame.Render,
+	"animation_imshow_frame":              example_animation_imshow_frame.Render,
+	"animation_subplots_frame":            example_animation_subplots_frame.Render,
 	"basic_line":                          example_basic_line.Render,
 	"basic_line_labels":                   example_basic_line_labels.Render,
 	"joins_caps":                          example_joins_caps.Render,

@@ -67,6 +67,49 @@ func TestArtistAnimationDemoSteps(t *testing.T) {
 	}
 }
 
+func TestFrameAnimationDemosStep(t *testing.T) {
+	demos := map[string]func() (*Demo, error){
+		"scatter": NewScatterAnimationDemo,
+		"imshow":  NewImshowAnimationDemo,
+		"subplot": NewSubplotAnimationDemo,
+	}
+	for name, ctor := range demos {
+		t.Run(name, func(t *testing.T) {
+			demo, err := ctor()
+			if err != nil {
+				t.Fatalf("%s demo: %v", name, err)
+			}
+			if len(demo.Artists) == 0 {
+				t.Fatalf("%s demo has no artists", name)
+			}
+			for i := 0; i < 3; i++ {
+				if _, err := demo.Animation.Step(); err != nil {
+					t.Fatalf("%s step %d: %v", name, i, err)
+				}
+			}
+			if demo.Animation.TotalFramesDrawn() != 3 {
+				t.Fatalf("%s drawn frames = %d, want 3", name, demo.Animation.TotalFramesDrawn())
+			}
+		})
+	}
+}
+
+func TestFrameRenderersProduceContent(t *testing.T) {
+	renderers := map[string]func() image.Image{
+		"line":     RenderLineFrame,
+		"scatter":  RenderScatterFrame,
+		"imshow":   RenderImshowFrame,
+		"subplots": RenderSubplotsFrame,
+	}
+	for name, render := range renderers {
+		t.Run(name, func(t *testing.T) {
+			if !hasNonWhitePixel(render()) {
+				t.Fatalf("%s frame render is blank", name)
+			}
+		})
+	}
+}
+
 func hasNonWhitePixel(img image.Image) bool {
 	if img == nil {
 		return false

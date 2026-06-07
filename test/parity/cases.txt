@@ -149,3 +149,7 @@ histogram_variants
 projection_toolkit_gallery
 triangulation_gallery
 ticks_scales_formatters_gallery
+animation_line_frame
+animation_scatter_frame
+animation_imshow_frame
+animation_subplots_frame

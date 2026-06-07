@@ -329,10 +329,20 @@ and the blit-friendly redraw paths from Phase 4.
 
 ### 6.3 Animation Examples and Fixtures
 
-- [ ] Animated line plot, animated scatter / collection, animated imshow
+- [x] Animated line plot, animated scatter / collection, animated imshow
       (heatmap), animated subplot composition.
-- [ ] Deterministic-frame golden fixtures verifying frame-N output matches
+      `examples/animation_gallery` now exposes `NewFuncAnimationDemo`,
+      `NewArtistAnimationDemo`, `NewScatterAnimationDemo` (orbiting scalar-mapped
+      collection), `NewImshowAnimationDemo` (ripple heatmap), and
+      `NewSubplotAnimationDemo` (two-panel line + heatmap), each driven by a
+      closed-form per-frame data generator in `frames.go`.
+- [x] Deterministic-frame golden fixtures verifying frame-N output matches
       Matplotlib's frame-N output within tolerance.
+      Catalog cases `animation_line_frame`, `animation_scatter_frame`,
+      `animation_imshow_frame`, and `animation_subplots_frame` each render
+      `GoldenFrame` (8) statically; the matching `test/parity/<id>/plot.py`
+      reference modules reproduce the identical closed-form frame. Current
+      golden-vs-matplotlib parity is `RMSE 0.10–2.51` (`PSNR 56.9–67.9 dB`).
 
 **Exit criteria:**
 
