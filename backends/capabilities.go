@@ -115,18 +115,19 @@ func (r *Registry) BackendComparisonReport(config Config) string {
 
 	type row struct {
 		backend  Backend
+		label    string
 		renderer render.Renderer
 		instErr  error
 	}
 	rows := make([]row, 0, len(available))
 	for _, backend := range available {
 		renderer, err := r.Create(backend, config)
-		rows = append(rows, row{backend: backend, renderer: renderer, instErr: err})
+		rows = append(rows, row{backend: backend, label: backendReportLabel(backend, renderer), renderer: renderer, instErr: err})
 	}
 
 	nameWidth := len("Backend")
 	for _, rw := range rows {
-		if n := len(rw.backend); n > nameWidth {
+		if n := len(rw.label); n > nameWidth {
 			nameWidth = n
 		}
 	}
@@ -161,7 +162,7 @@ func (r *Registry) BackendComparisonReport(config Config) string {
 	b.WriteByte('\n')
 
 	for _, rw := range rows {
-		fmt.Fprintf(&b, "%-*s", nameWidth+2, string(rw.backend))
+		fmt.Fprintf(&b, "%-*s", nameWidth+2, rw.label)
 		info, _ := r.Get(rw.backend)
 		fmt.Fprintf(&b, "%-*s", saveWidth+2, saveFormatsString(info))
 		if rw.instErr != nil {
@@ -177,6 +178,16 @@ func (r *Registry) BackendComparisonReport(config Config) string {
 	}
 
 	return b.String()
+}
+
+func backendReportLabel(backend Backend, renderer render.Renderer) string {
+	label := string(backend)
+	if reporter, ok := renderer.(render.RendererModeReporter); ok {
+		if mode := strings.TrimSpace(reporter.RendererModeLabel()); mode != "" {
+			label += "/" + mode
+		}
+	}
+	return label
 }
 
 func saveFormatsString(info *BackendInfo) string {

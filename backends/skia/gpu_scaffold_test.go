@@ -4,6 +4,7 @@ package skia
 
 import (
 	"image"
+	"strings"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/backends"
@@ -60,6 +61,18 @@ func TestGPUScaffoldRendersThroughCPUReadback(t *testing.T) {
 	}
 	if !hasNonBackgroundPixel(img) {
 		t.Fatal("GPU scaffold produced an empty image; CPU readback did not render the path")
+	}
+}
+
+func TestGPUScaffoldBackendComparisonReportLabelsGPUMode(t *testing.T) {
+	report := backends.BackendComparisonReport(backends.Config{
+		Width:      32,
+		Height:     24,
+		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
+		Options:    backends.SkiaConfig{UseGPU: true, SampleCount: 1, ColorType: "RGBA8888"},
+	})
+	if !strings.Contains(report, "skia/gpu") {
+		t.Fatalf("BackendComparisonReport did not label Skia GPU mode:\n%s", report)
 	}
 }
 

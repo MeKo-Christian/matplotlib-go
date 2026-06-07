@@ -11,6 +11,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/backends"
@@ -239,6 +240,13 @@ func TestSkiaTaggedRegistryAdvertisesImplementedCPUCapabilities(t *testing.T) {
 	}
 	if status := backends.RendererCapabilityStatus(backends.Skia, renderer, backends.GouraudTriangleBatch); status != backends.CapabilityNative {
 		t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want %s", backends.GouraudTriangleBatch, status, backends.CapabilityNative)
+	}
+}
+
+func TestSkiaTaggedBackendComparisonReportLabelsCPUMode(t *testing.T) {
+	report := backends.BackendComparisonReport(backends.TestDefaultConfig(32, 24))
+	if !strings.Contains(report, "skia/cpu") {
+		t.Fatalf("BackendComparisonReport did not label Skia CPU mode:\n%s", report)
 	}
 }
 

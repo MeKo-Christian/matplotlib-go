@@ -275,93 +275,32 @@ Completed scope:
 
 # Phase 6: Animation
 
-**Goal:** add the animation API that depends on the interactive event loop
-and the blit-friendly redraw paths from Phase 4.
+✅ **Completed.** The `animation` package adds a Matplotlib-style animation API
+driven by the Phase 4 event loop and blit-friendly redraw paths, with
+dependency-free frame writers and deterministic frame-parity fixtures.
 
 **Reference sources:** `third_party/matplotlib/lib/matplotlib/animation.py`.
 
-### 6.1 Animation API
+Completed scope:
 
-- [x] `FuncAnimation` and `ArtistAnimation` mirroring upstream signatures,
-      driven by the figure's draw-idle scheduler.
-      The new `animation` package wraps `canvas.FigureCanvas` with a
-      deterministic frame loop. `NewFuncAnimation` calls a user-supplied
-      `UpdateFunc(frame int) ([]core.Artist, error)` and an optional
-      `InitFunc`; `NewArtistAnimation` toggles visibility on a fixed
-      `[][]core.Artist` per frame. Both reuse the shared `Animation` core
-      and timer integration in `canvas.EventLoop`.
-- [x] Frame timing / pacing controls (interval, repeat, repeat_delay,
-      blit toggle) with deterministic-frame mode for tests.
-      `Animation.Step()` advances one frame without spinning a real timer;
-      `Animation.Start()` installs a timer on the configured `EventLoop`.
-      Finite, non-repeating runs auto-stop after `Frames` frames; repeating
-      runs wrap the frame counter and insert a one-shot `RepeatDelay` skip
-      tick before the next cycle.
-- [x] Artist `set_animated(true)` flag honored by the AGG and Skia
-      backends via blit regions.
-      `core.ArtistRasterization` now carries an `animated` flag (with
-      `SetAnimated` / `Animated` accessors) which every embedding artist
-      inherits. `core.DrawFigure` skips animated artists by default and
-      `core.DrawFigureWithOptions(fig, r, DrawOptions{AnimatedFilter: ...})`
-      gives the animation engine background-suppress, animated-only, and
-      all-artist passes. When the canvas implements both `BlitCanvas` and
-      `BufferRegioner`, the engine captures a background snapshot on the
-      first frame, then restores + blits per frame; otherwise it falls back
-      to a full redraw, which still drives AGG and Skia correctly.
-
-### 6.2 Frame Writers
-
-- [x] GIF writer (pure-Go encoder, no external dependency).
-- [x] APNG writer for higher-quality web demos.
-      `animation.APNGWriter` is dependency-free and registered as `apng`.
-      `Animation.Save("*.apng")` captures full RGBA frames from
-      `canvas.RasterCanvas` and writes a full-frame animated PNG with infinite
-      looping and fps-derived frame delays.
-- [x] MP4 / WebM writers via optional `ffmpeg` shellout, gated by a build
-      tag and runtime detection.
-      Builds compiled with `-tags ffmpeg` register `ffmpeg` (`.mp4`,
-      H.264/libx264) and `ffmpeg-webm` (`.webm`, VP9/libvpx-vp9) writers.
-      Default builds keep MP4/WebM unsupported; tagged builds still return
-      `ErrWriterUnsupported` when the `ffmpeg` executable is unavailable at
-      runtime.
-- [x] HTML embedding writer producing self-contained snippets for the web demo
-      host. `animation.HTMLWriter` is dependency-free and registered as
-      `html`. `Animation.Save("*.html")` / `Save("*.htm")` embeds each saved
-      RGBA frame as a PNG data URI with inline playback controls and
-      fps-derived timing metadata.
-
-### 6.3 Animation Examples and Fixtures
-
-- [x] Animated line plot, animated scatter / collection, animated imshow
-      (heatmap), animated subplot composition.
-      `examples/animation_gallery` now exposes `NewFuncAnimationDemo`,
-      `NewArtistAnimationDemo`, `NewScatterAnimationDemo` (orbiting scalar-mapped
-      collection), `NewImshowAnimationDemo` (ripple heatmap), and
-      `NewSubplotAnimationDemo` (two-panel line + heatmap), each driven by a
-      closed-form per-frame data generator in `frames.go`.
-- [x] Deterministic-frame golden fixtures verifying frame-N output matches
-      Matplotlib's frame-N output within tolerance.
-      Catalog cases `animation_line_frame`, `animation_scatter_frame`,
-      `animation_imshow_frame`, and `animation_subplots_frame` each render
-      `GoldenFrame` (8) statically; the matching `test/parity/<id>/plot.py`
-      reference modules reproduce the identical closed-form frame. Current
-      golden-vs-matplotlib parity is `RMSE 0.10–2.51` (`PSNR 56.9–67.9 dB`).
-
-**Exit criteria:**
-
-- [x] `FuncAnimation` produces correct frames in headless mode and animates
-      smoothly in interactive backends.
-      Deterministic stepping and timer/event-loop behavior are covered in
-      `animation` tests; `internal/examplecatalog.InteractiveCoverageMatrix`
-      records animation coverage for WebAgg and Gio.
-- [x] At least one self-contained file format works without external
-      dependencies (GIF).
-      GIF, APNG, and HTML writers are now dependency-free default-build writers
-      backed by focused save/registry tests.
-- [x] Animation examples appear in the WASM demo gallery.
-      `animation_gallery` is exposed as web demo `animation` through the shared
-      catalog, has a Matplotlib web reference module, and is smoke-tested by
-      the `internal/webdemo` catalog builder.
+- `FuncAnimation` and `ArtistAnimation` mirror upstream signatures over a shared
+  deterministic frame loop with interval, repeat, repeat-delay, and blit
+  controls; `Step()` advances frames without a real timer and `Start()` installs
+  one on the configured `canvas.EventLoop`.
+- Artist `set_animated` is honored end-to-end: `core.DrawFigure` skips animated
+  artists by default and `DrawFigureWithOptions` exposes background-suppress,
+  animated-only, and all-artist passes; the engine captures a background
+  snapshot and blits per frame on `BlitCanvas` + `BufferRegioner`, falling back
+  to full redraws otherwise (AGG and Skia).
+- Dependency-free default-build writers for GIF, APNG, and HTML (PNG data-URI
+  frames with inline playback controls); optional `-tags ffmpeg` adds MP4
+  (libx264) and WebM (libvpx-vp9) writers with runtime detection.
+- `examples/animation_gallery` showcases FuncAnimation, ArtistAnimation,
+  scatter/collection, imshow heatmap, and two-panel subplot animations, all
+  built from closed-form per-frame generators.
+- Deterministic frame fixtures (`animation_{line,scatter,imshow,subplots}_frame`)
+  verify frame-N output against Matplotlib references at `RMSE 0.10–2.51`
+  (`PSNR 56.9–67.9 dB`); `animation_gallery` appears in the WASM demo gallery.
 
 ---
 
@@ -437,17 +376,22 @@ backend parity program but is not yet complete.
         deferred until the GPU build tag exists.
   - [x] A fourth `CapabilityBridged` status (`≈` marker) sits between native
         and fallback in `BackendComparisonReport` so the CPU bridge stand-ins
-        are visible. The CPU/GPU split itself is still deferred until a GPU
-        build tag exists; the bridged status is the only CPU-side distinction
-        the comparison report needs today.
+        are visible. The CPU/GPU mode split is exposed as strategy data and
+        live report labels; capability-set divergence remains deferred until a
+        real GPU path exists.
   - [x] CPU/GPU capability-split data structure: `skia.ModeCapabilities(mode)`
         encodes the per-mode optional-capability sets and `BackendStrategy()`
         reports `DefaultMode` / `GPUStatus` per the `skiagpu` build tag
         (`StatusPlanned` with the tag, `StatusDeferred` without). Today the GPU
         set mirrors the CPU set because the GPU mode is a CPU-readback scaffold.
+  - [x] Live `BackendComparisonReport` rows now include renderer mode labels
+        for multi-mode renderers (`skia/cpu` and, under `-tags skiagpu`,
+        `skia/gpu`), so audits can distinguish the active Skia mode while
+        keeping the existing native / bridged / fallback status markers.
   - [ ] Truthful per-mode native / fallback / unavailable in the _live_
-        `BackendComparisonReport` (e.g. a second GPU registry entry). Deferred
-        until the real GPU path exists and the two sets actually diverge.
+        `BackendComparisonReport` with divergent CPU/GPU capability sets
+        (e.g. a second GPU registry entry). Deferred until the real GPU path
+        exists and the two sets actually diverge.
 - [x] Skia vs AGG semantic-fixture comparison; tolerances documented per
       fixture where Skia is not expected to pixel-match.
       `TestSkiaParityAgainstAGGGoldens` in `backends/skia/parity_test.go`

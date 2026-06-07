@@ -337,6 +337,13 @@ type CapabilityBridgeReporter interface {
 	IsCapabilityBridged(name string) bool
 }
 
+// RendererModeReporter is implemented by renderers that have multiple concrete
+// modes behind one backend registration, such as Skia's CPU and GPU-scaffold
+// modes. Backend comparison reports append this label to the backend row name.
+type RendererModeReporter interface {
+	RendererModeLabel() string
+}
+
 // PNGExporter is implemented by renderers that can export their output to PNG.
 type PNGExporter interface {
 	SavePNG(path string) error

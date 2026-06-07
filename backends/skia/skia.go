@@ -54,6 +54,7 @@ var (
 	_ render.PatternFiller            = (*Renderer)(nil)
 	_ render.GradientFiller           = (*Renderer)(nil)
 	_ render.CapabilityBridgeReporter = (*Renderer)(nil)
+	_ render.RendererModeReporter     = (*Renderer)(nil)
 )
 
 // New creates a new Skia renderer with the given configuration.
@@ -341,6 +342,15 @@ func (r *Renderer) IsCapabilityBridged(name string) bool {
 	default:
 		return false
 	}
+}
+
+// RendererModeLabel reports the active Skia render mode for capability reports.
+func (r *Renderer) RendererModeLabel() string {
+	info := r.BridgeInfo()
+	if info.Mode == "" {
+		return ""
+	}
+	return string(info.Mode)
 }
 
 // GetSurface returns the underlying Skia surface for advanced operations.
