@@ -46,6 +46,17 @@ type Strategy struct {
 	RequiredLibraries []string
 }
 
+// NativePathRequirement records one deferred Skia-native integration point.
+// It is strategy metadata, not a runtime capability declaration.
+type NativePathRequirement struct {
+	Primitive           string
+	Modes               []RenderMode
+	Capabilities        []backends.Capability
+	ExternalEntrypoints []string
+	Status              ImplementationStatus
+	BlockedBy           string
+}
+
 // BridgeInfo describes the concrete bridge used by one renderer instance.
 type BridgeInfo struct {
 	Binding         BindingStrategy
@@ -81,6 +92,47 @@ func BackendStrategy() Strategy {
 			"Skia shared library for future native paths",
 			"C ABI wrapper library for future native paths",
 			"CGO_ENABLED=1 for future native paths",
+		},
+	}
+}
+
+// NativePathRequirements returns the explicit external Skia primitives that
+// must exist before bridged CPU compatibility paths can be promoted to truly
+// native backend paths.
+func NativePathRequirements() []NativePathRequirement {
+	const externalABIBlocker = "external Skia C-ABI wrapper and linked Skia library"
+	return []NativePathRequirement{
+		{
+			Primitive:           "SkCanvas::drawAtlas",
+			Modes:               []RenderMode{ModeCPU, ModeGPU},
+			Capabilities:        []backends.Capability{backends.MarkerBatch, backends.PathCollectionBatch},
+			ExternalEntrypoints: []string{"SkCanvas::drawAtlas"},
+			Status:              StatusDeferred,
+			BlockedBy:           externalABIBlocker,
+		},
+		{
+			Primitive:           "SkVertices",
+			Modes:               []RenderMode{ModeCPU, ModeGPU},
+			Capabilities:        []backends.Capability{backends.QuadMeshBatch, backends.GouraudTriangleBatch},
+			ExternalEntrypoints: []string{"SkVertices::MakeCopy", "SkCanvas::drawVertices"},
+			Status:              StatusDeferred,
+			BlockedBy:           externalABIBlocker,
+		},
+		{
+			Primitive:           "tiled SkShader",
+			Modes:               []RenderMode{ModeCPU, ModeGPU},
+			Capabilities:        []backends.Capability{backends.NativeHatcher},
+			ExternalEntrypoints: []string{"SkShader", "SkCanvas::drawPath"},
+			Status:              StatusDeferred,
+			BlockedBy:           externalABIBlocker,
+		},
+		{
+			Primitive:           "SkSurface::MakeRenderTarget",
+			Modes:               []RenderMode{ModeGPU},
+			Capabilities:        []backends.Capability{backends.GPUAccel},
+			ExternalEntrypoints: []string{"SkSurface::MakeRenderTarget", "SkSurface::readPixels"},
+			Status:              StatusDeferred,
+			BlockedBy:           "external Skia GPU library, platform GPU context, and deterministic CPU readback",
 		},
 	}
 }

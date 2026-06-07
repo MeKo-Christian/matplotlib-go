@@ -66,3 +66,56 @@ func TestModeCapabilitiesExposesCPUGPUSplit(t *testing.T) {
 		t.Fatalf("unknown mode returned %d capabilities, want CPU set len %d", len(got), len(cpu))
 	}
 }
+
+func TestNativePathRequirementsDocumentDeferredExternalABI(t *testing.T) {
+	requirements := NativePathRequirements()
+	if len(requirements) == 0 {
+		t.Fatal("NativePathRequirements returned no deferred native paths")
+	}
+
+	byPrimitive := make(map[string]NativePathRequirement, len(requirements))
+	for _, req := range requirements {
+		if req.Primitive == "" {
+			t.Fatalf("native path requirement missing primitive: %#v", req)
+		}
+		if req.Status != StatusDeferred {
+			t.Fatalf("%s status = %q, want %q until external ABI lands", req.Primitive, req.Status, StatusDeferred)
+		}
+		if len(req.Capabilities) == 0 {
+			t.Fatalf("%s should map to at least one renderer capability", req.Primitive)
+		}
+		if len(req.ExternalEntrypoints) == 0 {
+			t.Fatalf("%s should name external Skia entrypoints", req.Primitive)
+		}
+		if req.BlockedBy == "" {
+			t.Fatalf("%s should document its blocker", req.Primitive)
+		}
+		byPrimitive[req.Primitive] = req
+	}
+
+	for _, primitive := range []string{
+		"SkCanvas::drawAtlas",
+		"SkVertices",
+		"tiled SkShader",
+		"SkSurface::MakeRenderTarget",
+	} {
+		if _, ok := byPrimitive[primitive]; !ok {
+			t.Fatalf("NativePathRequirements missing %s", primitive)
+		}
+	}
+
+	assertRequirementHasCapability(t, byPrimitive["SkCanvas::drawAtlas"], backends.MarkerBatch)
+	assertRequirementHasCapability(t, byPrimitive["SkVertices"], backends.QuadMeshBatch)
+	assertRequirementHasCapability(t, byPrimitive["tiled SkShader"], backends.NativeHatcher)
+	assertRequirementHasCapability(t, byPrimitive["SkSurface::MakeRenderTarget"], backends.GPUAccel)
+}
+
+func assertRequirementHasCapability(t *testing.T, req NativePathRequirement, capability backends.Capability) {
+	t.Helper()
+	for _, got := range req.Capabilities {
+		if got == capability {
+			return
+		}
+	}
+	t.Fatalf("%s capabilities = %v, missing %s", req.Primitive, req.Capabilities, capability)
+}

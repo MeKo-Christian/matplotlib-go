@@ -9,7 +9,9 @@
 //   - first implementation target: CPU raster output through a Skia-local
 //     bridge boundary, with the shared raster surface still used for fallback
 //     drawing paths
-//   - GPU mode: deferred until the CPU path and capability reporting are stable
+//   - GPU mode: a skiagpu build-tag scaffold that selects GPU mode but still
+//     renders through deterministic CPU readback until native SkSurface support
+//     lands
 //   - default CI: non-Skia stub builds; skia-tagged tests are gated
 //
 // The package deliberately does not depend on an unstable Go Skia binding. The
@@ -32,15 +34,19 @@
 //
 // Default builds compile the unavailable stub in skia_stub.go and advertise no
 // capabilities or save formats. Builds with -tags skia register an available
-// CPU renderer for static raster output and PNG save dispatch. The CPU bridge
+// CPU renderer for static raster output and PNG save dispatch. Builds with
+// -tags "skia skiagpu" also accept SkiaConfig.UseGPU and report the GPU scaffold
+// mode, but still render through deterministic CPU readback. The CPU bridge
 // consumes renderer-neutral pattern and gradient fills, including linear and
 // radial gradients, stop opacity, transformed fills, and tiled pattern fills.
-// GPU mode and external Skia-native batch drawing remain unavailable.
+// Native GPU surfaces and external Skia-native batch drawing remain unavailable;
+// NativePathRequirements records the deferred external primitives.
 //
 // # Configuration
 //
-// Use SkiaConfig to configure color formats and quality settings. UseGPU is
-// reserved and currently returns an error because GPU mode is deferred:
+// Use SkiaConfig to configure color formats and quality settings. UseGPU returns
+// an error under plain -tags skia and selects the CPU-readback GPU scaffold under
+// -tags "skia skiagpu":
 //
 //	config := backends.Config{
 //		Width: 800, Height: 600,

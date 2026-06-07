@@ -344,6 +344,11 @@ backend parity program but is not yet complete.
         distinguishes the CPU bridge stand-ins from the truly native
         `GouraudTriangleBatch` path. The external batch ABI remains the open
         path to flipping these back to native (`✓`).
+  - [x] `skia.NativePathRequirements()` now records the deferred native
+        primitive/capability mapping for `SkCanvas::drawAtlas`, `SkVertices`,
+        tiled `SkShader`, and `SkSurface::MakeRenderTarget`, including status
+        and blocker text, so the external ABI boundary is tested as strategy
+        data instead of living only in prose.
   - [ ] External `SkCanvas::drawAtlas` / `SkVertices` ABI integration to flip
         the bridged (`≈`) marker/collection/mesh paths to native (`✓`). Blocked
         on the external Skia C-ABI binding that is deferred by

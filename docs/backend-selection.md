@@ -110,8 +110,9 @@ the shared `render.SaveOption` surface, including `render.WithPGFMetadata`,
 ### Skia — opt-in accelerated raster backend
 
 Build-tagged CPU raster renderer (`-tags skia`) with a Skia-local bridge
-boundary; the external Skia C ABI and GPU mode are deferred. It supports text
-shaping, pattern/gradient fills, and PNG export.
+boundary. The `skiagpu` tag enables a GPU-mode scaffold with deterministic CPU
+readback; native Skia GPU surfaces and the external Skia C ABI remain deferred.
+It supports text shaping, pattern/gradient fills, and PNG export.
 
 Use Skia for Skia-parity development and static PNG comparisons. It is **not**
 registered unless you build with `-tags skia`, so it never appears in the
