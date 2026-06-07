@@ -100,14 +100,14 @@ func TestAxes3DProjectionLimitsUseMatplotlibZMargin(t *testing.T) {
 
 	ax.Plot3D([]float64{0, 1}, []float64{-1, 1}, []float64{-2, 2})
 	mins, maxs := ax.projectionLimits()
-	if !approx(mins[0], -0.05, 1e-12) || !approx(maxs[0], 1.05, 1e-12) {
-		t.Fatalf("x projection limits = (%v, %v), want 5%% Matplotlib x margin", mins[0], maxs[0])
+	if !approx(mins[0], -0.07291666666666667, 1e-12) || !approx(maxs[0], 1.0729166666666667, 1e-12) {
+		t.Fatalf("x projection limits = (%v, %v), want Matplotlib data margin plus 3D view margin", mins[0], maxs[0])
 	}
-	if !approx(mins[1], -1.1, 1e-12) || !approx(maxs[1], 1.1, 1e-12) {
-		t.Fatalf("y projection limits = (%v, %v), want 5%% Matplotlib y margin", mins[1], maxs[1])
+	if !approx(mins[1], -1.1458333333333335, 1e-12) || !approx(maxs[1], 1.1458333333333335, 1e-12) {
+		t.Fatalf("y projection limits = (%v, %v), want Matplotlib data margin plus 3D view margin", mins[1], maxs[1])
 	}
-	if !approx(mins[2], -2, 1e-12) || !approx(maxs[2], 2, 1e-12) {
-		t.Fatalf("line z projection limits = (%v, %v), want Matplotlib line z margin 0", mins[2], maxs[2])
+	if !approx(mins[2], -2.0833333333333335, 1e-12) || !approx(maxs[2], 2.0833333333333335, 1e-12) {
+		t.Fatalf("line z projection limits = (%v, %v), want Matplotlib 3D view margin", mins[2], maxs[2])
 	}
 }
 
@@ -120,8 +120,8 @@ func TestAxes3DScatterProjectionLimitsUseMatplotlibZMargin(t *testing.T) {
 
 	ax.Scatter3D([]float64{0, 1}, []float64{-1, 1}, []float64{-2, 2})
 	mins, maxs := ax.projectionLimits()
-	if !approx(mins[2], -2.2, 1e-12) || !approx(maxs[2], 2.2, 1e-12) {
-		t.Fatalf("scatter z projection limits = (%v, %v), want Matplotlib scatter z margin 5%%", mins[2], maxs[2])
+	if !approx(mins[2], -2.291666666666667, 1e-12) || !approx(maxs[2], 2.291666666666667, 1e-12) {
+		t.Fatalf("scatter z projection limits = (%v, %v), want Matplotlib scatter z margin plus 3D view margin", mins[2], maxs[2])
 	}
 }
 
@@ -136,9 +136,9 @@ func TestAxes3DProjectPointMatchesMatplotlibScatterFixtureLimits(t *testing.T) {
 	ax.SetZLim(-51.007126259038195, -24.886181592223462)
 
 	got := ax.ProjectPoint(29.444073116538434, 91.3534531817269, -37.52903158779476)
-	if !approx(got.X, 0.039937290348120026, 1e-12) ||
-		!approx(got.Y, 0.013747177404714107, 1e-12) {
-		t.Fatalf("scatter fixture projection = %+v, want Matplotlib projection {0.039937290348120026 0.013747177404714107}", got)
+	if !approx(got.X, 0.04156475342576397, 1e-12) ||
+		!approx(got.Y, 0.014307381250617935, 1e-12) {
+		t.Fatalf("scatter fixture projection = %+v, want Matplotlib projection {0.04156475342576397 0.014307381250617935}", got)
 	}
 }
 
@@ -154,8 +154,11 @@ func TestAxes3DText3DDoesNotExpandDataLimitsLikeMatplotlib(t *testing.T) {
 		t.Fatal("Text3D returned nil")
 	}
 	mins, maxs := ax.projectionLimits()
-	if mins != (vec3{0, 0, 0}) || maxs != (vec3{1, 1, 1}) {
-		t.Fatalf("text-only projection limits = %v..%v, want Matplotlib default limits 0..1", mins, maxs)
+	wantTextMins := vec3{-0.020833333333333332, -0.020833333333333332, -0.020833333333333332}
+	wantTextMaxs := vec3{1.0208333333333333, 1.0208333333333333, 1.0208333333333333}
+	if !approx(mins[0], wantTextMins[0], 1e-12) || !approx(mins[1], wantTextMins[1], 1e-12) || !approx(mins[2], wantTextMins[2], 1e-12) ||
+		!approx(maxs[0], wantTextMaxs[0], 1e-12) || !approx(maxs[1], wantTextMaxs[1], 1e-12) || !approx(maxs[2], wantTextMaxs[2], 1e-12) {
+		t.Fatalf("text-only projection limits = %v..%v, want Matplotlib default limits plus 3D view margin %v..%v", mins, maxs, wantTextMins, wantTextMaxs)
 	}
 	if ax.hasData {
 		t.Fatal("Text3D marked the axes as having data; Matplotlib text does not update 3D data limits")
@@ -163,8 +166,8 @@ func TestAxes3DText3DDoesNotExpandDataLimitsLikeMatplotlib(t *testing.T) {
 
 	ax.Scatter3D([]float64{1, 9}, []float64{1, 9}, []float64{1, 9})
 	mins, maxs = ax.projectionLimits()
-	wantMins := vec3{0.6, 0.6, 0.6}
-	wantMaxs := vec3{9.4, 9.4, 9.4}
+	wantMins := vec3{0.41666666666666663, 0.41666666666666663, 0.41666666666666663}
+	wantMaxs := vec3{9.583333333333334, 9.583333333333334, 9.583333333333334}
 	if !approx(mins[0], wantMins[0], 1e-12) || !approx(mins[1], wantMins[1], 1e-12) || !approx(mins[2], wantMins[2], 1e-12) ||
 		!approx(maxs[0], wantMaxs[0], 1e-12) || !approx(maxs[1], wantMaxs[1], 1e-12) || !approx(maxs[2], wantMaxs[2], 1e-12) {
 		t.Fatalf("projection limits after scatter = %v..%v, want text ignored and scatter autoscaled to %v..%v", mins, maxs, wantMins, wantMaxs)
@@ -1353,20 +1356,10 @@ func TestAxes3DProjectionLimitsUseMatplotlibXYAutoscaleMargins(t *testing.T) {
 
 	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 2})
 	mins, maxs := ax.projectionLimits()
-	if !approx(mins[0], -0.05, 1e-12) || !approx(maxs[0], 1.05, 1e-12) ||
-		!approx(mins[1], -0.05, 1e-12) || !approx(maxs[1], 1.05, 1e-12) ||
-		!approx(mins[2], 0, 1e-12) || !approx(maxs[2], 2, 1e-12) {
-		t.Fatalf("projection limits = %v..%v, want Matplotlib line autoscale margins [-0.05 -0.05 0]..[1.05 1.05 2]", mins, maxs)
-	}
-}
-
-func TestAxes3DFrameLimitsAddMatplotlibViewMargin(t *testing.T) {
-	mins, maxs := axes3DFrameLimits(vec3{-0.05, -0.05, -0.1}, vec3{1.05, 1.05, 2.1})
-	if !approx(mins[0], -0.07291666666666667, 1e-12) ||
-		!approx(maxs[0], 1.0729166666666667, 1e-12) ||
-		!approx(mins[2], -0.14583333333333334, 1e-12) ||
-		!approx(maxs[2], 2.1458333333333335, 1e-12) {
-		t.Fatalf("frame limits = %v..%v, want Matplotlib axis3d _get_coord_info view margin", mins, maxs)
+	if !approx(mins[0], -0.07291666666666667, 1e-12) || !approx(maxs[0], 1.0729166666666667, 1e-12) ||
+		!approx(mins[1], -0.07291666666666667, 1e-12) || !approx(maxs[1], 1.0729166666666667, 1e-12) ||
+		!approx(mins[2], -0.041666666666666664, 1e-12) || !approx(maxs[2], 2.0416666666666665, 1e-12) {
+		t.Fatalf("projection limits = %v..%v, want Matplotlib line autoscale margins plus 3D view margin", mins, maxs)
 	}
 }
 
@@ -1586,9 +1579,9 @@ func TestAxes3DFrameSegmentsUseMatplotlibActiveGridPlanes(t *testing.T) {
 
 	segments := ax.frameSegments(vec3{0, 0, 0}, vec3{1, 1, 1})
 	want := []Pt{
-		ax.ProjectPoint(0.2, 0, 0),
-		ax.ProjectPoint(0.2, 1, 0),
-		ax.ProjectPoint(0.2, 1, 1),
+		ax.project3DPointWithState(0.2, 0, 0, vec3{0, 0, 0}, vec3{1, 1, 1}),
+		ax.project3DPointWithState(0.2, 1, 0, vec3{0, 0, 0}, vec3{1, 1, 1}),
+		ax.project3DPointWithState(0.2, 1, 1, vec3{0, 0, 0}, vec3{1, 1, 1}),
 	}
 	if !contains3DSegment(segments, want, 1e-12) {
 		t.Fatalf("missing Matplotlib-style x gridline through active panes; want %+v in %+v", want, segments)
@@ -1604,7 +1597,7 @@ func TestAxes3DFrameSegmentsDoNotAddSeparateCubeBox(t *testing.T) {
 
 	mins := vec3{-0.05, -0.05, -0.1}
 	maxs := vec3{1.05, 1.05, 2.1}
-	frameMins, frameMaxs := axes3DFrameLimits(mins, maxs)
+	frameMins, frameMaxs := mins, maxs
 	segments := ax.frameSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs)
 	gridSegments := ax.frameGridSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs)
 	if got, want := len(segments), len(gridSegments); got != want {
@@ -1676,7 +1669,7 @@ func TestAxes3DAxisLineSegmentsUseMatplotlibCameraFacingEdges(t *testing.T) {
 
 	mins := vec3{-0.05, -0.05, -0.1}
 	maxs := vec3{1.05, 1.05, 2.1}
-	frameMins, frameMaxs := axes3DFrameLimits(mins, maxs)
+	frameMins, frameMaxs := mins, maxs
 	segments := ax.axisLineSegmentsProjected(frameMins, frameMaxs, mins, maxs)
 	if got, want := len(segments), 3; got != want {
 		t.Fatalf("axis line count = %d, want %d", got, want)
@@ -1716,7 +1709,7 @@ func TestAxes3DTickSegmentsUseMatplotlibInwardOutwardFactors(t *testing.T) {
 
 	mins := vec3{-0.05, -0.05, -0.1}
 	maxs := vec3{1.05, 1.05, 2.1}
-	frameMins, frameMaxs := axes3DFrameLimits(mins, maxs)
+	frameMins, frameMaxs := mins, maxs
 	segments := ax.axisTickSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs)
 	if len(segments) == 0 {
 		t.Fatal("axis tick segments are empty")
@@ -2722,7 +2715,7 @@ func projectPlaneCorners(ax *Axes3D, plane [4][3]int, mins, maxs vec3) []Pt {
 		if corner[2] == 1 {
 			z = maxs[2]
 		}
-		points[i] = ax.ProjectPoint(x, y, z)
+		points[i] = ax.project3DPointWithState(x, y, z, mins, maxs)
 	}
 	return points
 }
@@ -2880,8 +2873,8 @@ func TestAxes3DTriContourfAutoscaleUsesFilledLevelMidpointsLikeMatplotlib(t *tes
 		t.Fatal("TriContourf returned nil")
 	}
 	mins, maxs := ax.projectionLimits()
-	if !approx(mins[2], 0.5, 1e-12) || !approx(maxs[2], 1.5, 1e-12) {
-		t.Fatalf("TriContourf projection z limits = %.12g..%.12g, want Matplotlib autoscale from filled midpoints 0.5..1.5", mins[2], maxs[2])
+	if !approx(mins[2], 0.4791666666666667, 1e-12) || !approx(maxs[2], 1.5208333333333333, 1e-12) {
+		t.Fatalf("TriContourf projection z limits = %.12g..%.12g, want Matplotlib autoscale from filled midpoints plus 3D view margin", mins[2], maxs[2])
 	}
 }
 
@@ -3004,8 +2997,8 @@ func TestAxes3DContourfAutoscaleUsesFilledLevelMidpointsLikeMatplotlib(t *testin
 		t.Fatal("Contourf returned nil")
 	}
 	mins, maxs := ax.projectionLimits()
-	if !approx(mins[2], 0.5, 1e-12) || !approx(maxs[2], 1.5, 1e-12) {
-		t.Fatalf("Contourf projection z limits = %.12g..%.12g, want Matplotlib autoscale from filled midpoints 0.5..1.5", mins[2], maxs[2])
+	if !approx(mins[2], 0.4791666666666667, 1e-12) || !approx(maxs[2], 1.5208333333333333, 1e-12) {
+		t.Fatalf("Contourf projection z limits = %.12g..%.12g, want Matplotlib autoscale from filled midpoints plus 3D view margin", mins[2], maxs[2])
 	}
 }
 
@@ -3830,7 +3823,7 @@ func TestAxes3DTickLabelsUseMatplotlibDataSpaceOffset(t *testing.T) {
 	ax.Surface([]float64{0, 1}, []float64{0, 1}, z)
 
 	mins, maxs := ax.projectionLimits()
-	frameMins, frameMaxs := axes3DFrameLimits(mins, maxs)
+	frameMins, frameMaxs := mins, maxs
 	ctx := newAxesDrawContext(ax.Axes, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 	r := &axes3DTextRecorder{}
 
@@ -3873,7 +3866,7 @@ func TestAxes3DTickLabelAnchorsMatchMatplotlibBasicFixture(t *testing.T) {
 	ax.Text3D(0.2, 0.8, 0.6, "demo point")
 
 	mins, maxs := ax.projectionLimits()
-	frameMins, frameMaxs := axes3DFrameLimits(mins, maxs)
+	frameMins, frameMaxs := mins, maxs
 	ctx := newAxesDrawContext(ax.Axes, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 	r := &axes3DTextRecorder{}
 

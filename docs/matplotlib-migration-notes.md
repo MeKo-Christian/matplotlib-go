@@ -1323,12 +1323,14 @@ differences remain. The structured-contour cases reuse the
 polar fan point cloud and rely on auto-Delaunay so the Go `core.Triangulation`
 mesh and matplotlib's qhull mesh agree. All seven join the existing `mplot3d_*`
 family in `optionalVisualGoldenIDs` and use the shared 3D tolerance band
-(`MinPSNR` 30, `MaxMeanAbs` 8-12, `MaxRMSE` 18).
+(`MinPSNR` 30, `MaxMeanAbs` 8-12, `MaxRMSE` 18), except `mplot3d_text3d`
+which now carries a tighter `MaxRMSE` 2 after the 3D frame/tick/label
+projection limits were aligned with Matplotlib.
 
 Measured golden-vs-reference metrics: contour3d RMSE 3.17 / PSNR 52.0,
 contourf3d RMSE 6.06 / PSNR 45.4, tricontour3d RMSE 4.62 / PSNR 52.0,
 tricontourf3d RMSE 13.0 / PSNR 46.5, bar2d_zdir RMSE 1.09 / PSNR 56.8, and
-text3d RMSE 14.79 / PSNR 45.3.
+text3d RMSE 0.66 / PSNR 61.1.
 
 Residual rendering differences (all within the band):
 
@@ -1336,11 +1338,11 @@ Residual rendering differences (all within the band):
   transparent than Matplotlib's `Poly3DCollection`, so `mplot3d_contourf3d` and
   `mplot3d_tricontourf3d` carry the band's higher RMSE; the band positions,
   level colors, and depth order match.
-- `mplot3d_text3d` sets explicit `SetXLim`/`SetYLim`/`SetZLim` in both the Go
-  and Python sources because Go's `Text3D` expands the data limits while
-  Matplotlib's `text` does not participate in 3D autoscaling. With shared
-  limits the projection is identical; only flat (`zdir=None`) labels are used,
-  since Go does not rotate 3D text along an axis direction.
+- `mplot3d_text3d` keeps explicit `SetXLim`/`SetYLim`/`SetZLim` / `set_xlim` /
+  `set_ylim` / `set_zlim` in both the Go and Python sources, matching the
+  upstream mplot3d gallery pattern for text/pathpatch examples. `Text3D` does
+  not update 3D data limits, and the remaining residual difference is from core
+  text/frame rasterization rather than fixture-specific workarounds.
 - `mplot3d_bar2d_zdir` uses a single base color per plane (and fixed, not
   random, heights) because the Go plane-bar API takes one color rather than
   Matplotlib's per-bar color array; the per-plane depth ordering, alpha, and
