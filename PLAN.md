@@ -142,26 +142,41 @@ the enforcement half of this principle: no example-source workarounds,
 fixture-specific core branches, catalog-ID conditionals, or unexplained
 empirical constants (`internal/examplecatalog.ValidationClusters`).
 
-**Status (2026-06-12, measured `testdata/golden/` vs `testdata/matplotlib_ref/`
-at HEAD, harness metric):** 165 paired cases; **131 at RMSE ≤ 5**, 52 below
-RMSE 1, strict-text cases at exactly 0. The **MathText family — formerly the
-headline residual — is closed**: `mathtext_integrals` 0.00,
-`mathtext_matrices` 0.24, `mathtext_gallery` 2.28, `mathtext_fractions` 4.01;
-only `mathtext_basic` (5.33) and `mathtext_inline_labels` (5.88) sit marginally
-above target, and their diffs are general text placement, not mathtext layout.
-**34 cases remain above RMSE 5**, clustering into five workstreams.
+**Status (2026-06-12, after W1, measured `testdata/golden/` vs
+`testdata/matplotlib_ref/`, harness metric):** 165 paired cases; **137 at
+RMSE ≤ 5**, strict-text cases at exactly 0. The **MathText family is closed**
+(`mathtext_integrals` 0.00, `mathtext_matrices` 0.24, `mathtext_gallery` 2.28,
+`mathtext_fractions` 4.01; only `mathtext_basic` 5.33 / `mathtext_inline_labels`
+5.88 marginally above, and their diffs are general text placement). **The
+mplot3d family is closed** (W1 below). **28 cases remain above RMSE 5**,
+covered by workstreams W2–W5.
 
 ## Workstreams (ordered by residual; each names the upstream source to translate)
 
-- [ ] **W1 — mplot3d structural parity.** `mplot3d_gallery` 22.7,
-      `mplot3d_tricontourf3d` 13.0, `mplot3d_contourf3d` 6.1,
-      `mplot3d_fill_between3d` 5.3, `mplot3d_errorbar3d` 5.1, plus a tail just
-      under target (`bar3d` 4.9, `terrain` 4.9, `surface3d` 4.7). The diff
-      images show whole-axes divergence in *every* panel — pane/grid/tick
-      placement and projected geometry, not one bad artist. Audit the Go port
-      line-by-line against `mpl_toolkits/mplot3d/{proj3d,axis3d,axes3d,art3d}.py`
-      (view/projection matrix, `_axinfo` constants, tick & label offset math,
-      depth sorting), porting each computation faithfully.
+- [x] **W1 — mplot3d structural parity. DONE 2026-06-12** — whole family now
+      ≤ 4.6 (`gallery` 22.7→3.4, `tricontourf3d` 13.0→1.7, `contourf3d`
+      6.1→0.9, `fill_between3d` 5.3→2.6, `errorbar3d` 5.1→2.6, `terrain`
+      4.9→1.0, `surface3d` 4.7→0.8). Four faithful ports, each cited from
+      upstream:
+      1. `Axes3D.Contourf`/`TriContourf` defaulted alpha to an empirical 0.45;
+         upstream forwards kwargs unchanged → opaque (now 1.0).
+      2. 3D tick count was a fixed `MaxNLocator{N: 9}`; ported
+         `XAxis.get_tick_space` (all 3D axes inherit XAxis) +
+         `MaxNLocator._raw_ticks` nbins='auto' clipping → tick density now
+         adapts to axes width (`axes3DTickBins`), which closed the gallery and
+         most of the family tail.
+      3. `FillBetween3D` drew unshaded uniform quads; ported the
+         shade-default (quad→true, polygon→false) +
+         `art3d._generate_normals`/`_shade_colors` per-quad lightsource
+         shading (colors now survive the painter depth sort).
+      4. Filled contour bands now render `antialiased=False` like upstream
+         `ContourSet`, and — cross-repo, in `../agg_go` — `AntialiasOff` is a
+         true binary-coverage mode (`SetAntiAliased`, mirroring AGG
+         `scanline_bin`: any touched cell → fully covered pixel) instead of
+         the old gamma-0.1 approximation that suppressed partial coverage.
+         This also dropped 2D filled-contour cases (`mesh_contour_tri`
+         7.1→6.9, `unstructured_showcase` 5.5→4.2, `triangulation_gallery`
+         4.3→3.3).
 - [ ] **W2 — geo/polar/radar projections.** `projection_toolkit_gallery` 20.2,
       `radar_basic` 6.9, `geo_mollweide_axes` 5.9, `geo_lambert_axes` 5.3
       (aitoff/hammer pass at 3.9 — use them as the behavioral baseline). Diffs
@@ -186,17 +201,19 @@ above target, and their diffs are general text placement, not mathtext layout.
       (`_get_layout`, `_get_wrapped_text`, rotation/anchor handling)
       faithfully; the unrotated alignment grid already matches.
 - [ ] **W5 — the 5–7.3 band (≈ 21 cases).** `layout_bbox_helpers` 7.3,
-      `plot_variants` 7.2, `axes_convenience_helpers` 7.2, `mesh_contour_tri`
-      7.1, `legend_layout_matrix` 7.1, `line2d_markers` 7.0, `fill_stacked`
-      6.9, `specialty_depth` 6.9, `mixed_raster_vector` 6.4, `arrays_showcase`
-      6.3, `widgets_gallery` 6.2, `fill_basic` 6.1,
+      `plot_variants` 7.2, `axes_convenience_helpers` 7.2, `legend_layout_matrix`
+      7.1, `line2d_markers` 7.0, `fill_stacked` 6.9, `specialty_depth` 6.9,
+      `mesh_contour_tri` 6.9 (improved from 7.1 by the W1 antialiasing port;
+      remaining residual is contour band geometry/labels), `mixed_raster_vector`
+      6.4, `arrays_showcase` 6.3, `widgets_gallery` 6.2, `fill_basic` 6.1,
       `annotation_legend_offsetbox_gallery` 6.0, `clip_path_batch` 6.0,
       `mathtext_inline_labels` 5.9, `annotation_composition` 5.8,
-      `fill_variants` 5.5, `unstructured_showcase` 5.5, `mathtext_basic` 5.3,
-      `specialty_artists` 5.3, `axes_option_breadth_17_75_3` 5.3. Expect a few
-      shared root causes (legend/offsetbox layout, fill-edge handling, label
-      placement) rather than 21 independent bugs: diagnose each diff first,
-      group by root cause, then fix each group as an upstream port
+      `fill_variants` 5.5, `mathtext_basic` 5.3,
+      `specialty_artists` 5.3, `axes_option_breadth_17_75_3` 5.3
+      (`unstructured_showcase` dropped to 4.2 via the W1 antialiasing port).
+      Expect a few shared root causes (legend/offsetbox layout, fill-edge
+      handling, label placement) rather than independent bugs: diagnose each
+      diff first, group by root cause, then fix each group as an upstream port
       (`legend.py`, `offsetbox.py`, collection/fill paths).
 
 ## Method (code parity, per failing case)
