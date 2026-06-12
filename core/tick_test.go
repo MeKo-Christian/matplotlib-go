@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"strings"
 	"testing"
+
+	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 func strictlyIncreasing(xs []float64) bool {
@@ -784,6 +786,30 @@ func TestLogFormattersMinorThresholds(t *testing.T) {
 	}
 	if got := (LogFormatterExponent{Base: 10, LabelOnlyBase: true}).FormatTick(20, 0, []float64{10, 20, 100}); got != "" {
 		t.Fatalf("label-only-base exponent formatter = %q, want empty", got)
+	}
+}
+
+func TestDefaultLogScaleFormatterUsesMatplotlibMinorThresholds(t *testing.T) {
+	axis := &Axis{}
+	configureScaleAxis(axis, "log", transform.ScaleOptions{Base: 10})
+
+	formatter, ok := axis.Formatter.(LogFormatterMathText)
+	if !ok {
+		t.Fatalf("log scale formatter = %T, want LogFormatterMathText", axis.Formatter)
+	}
+	ticks := []float64{200, 300, 500, 700, 850, 1000}
+	want := []string{
+		`$\mathdefault{2\times10^{2}}$`,
+		`$\mathdefault{3\times10^{2}}$`,
+		"",
+		"",
+		"",
+		`$\mathdefault{10^{3}}$`,
+	}
+	for i, tick := range ticks {
+		if got := formatter.FormatTick(tick, i, ticks); got != want[i] {
+			t.Fatalf("default log formatter tick %v = %q, want %q", tick, got, want[i])
+		}
 	}
 }
 

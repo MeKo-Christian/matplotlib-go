@@ -181,14 +181,44 @@ func geoEllipsePath(clip geom.Rect) geom.Path {
 	if rx <= 0 || ry <= 0 {
 		return path
 	}
-	for i := 0; i <= geoFrameSegments; i++ {
-		t := 2 * math.Pi * float64(i) / float64(geoFrameSegments)
-		pt := geom.Pt{X: center.X + rx*math.Cos(t), Y: center.Y + ry*math.Sin(t)}
-		if i == 0 {
-			path.MoveTo(pt)
-		} else {
-			path.LineTo(pt)
-		}
+	// Matplotlib's GeoAxes frame is a Circle patch, whose Path.circle uses
+	// eight cubic Bézier arcs with this Lancaster constant.
+	const magic = 0.2652031
+	sqrtHalf := math.Sqrt(0.5)
+	magic45 := sqrtHalf * magic
+	unit := []geom.Pt{
+		{X: 0, Y: -1},
+		{X: magic, Y: -1},
+		{X: sqrtHalf - magic45, Y: -sqrtHalf - magic45},
+		{X: sqrtHalf, Y: -sqrtHalf},
+		{X: sqrtHalf + magic45, Y: -sqrtHalf + magic45},
+		{X: 1, Y: -magic},
+		{X: 1, Y: 0},
+		{X: 1, Y: magic},
+		{X: sqrtHalf + magic45, Y: sqrtHalf - magic45},
+		{X: sqrtHalf, Y: sqrtHalf},
+		{X: sqrtHalf - magic45, Y: sqrtHalf + magic45},
+		{X: magic, Y: 1},
+		{X: 0, Y: 1},
+		{X: -magic, Y: 1},
+		{X: -sqrtHalf + magic45, Y: sqrtHalf + magic45},
+		{X: -sqrtHalf, Y: sqrtHalf},
+		{X: -sqrtHalf - magic45, Y: sqrtHalf - magic45},
+		{X: -1, Y: magic},
+		{X: -1, Y: 0},
+		{X: -1, Y: -magic},
+		{X: -sqrtHalf - magic45, Y: -sqrtHalf + magic45},
+		{X: -sqrtHalf, Y: -sqrtHalf},
+		{X: -sqrtHalf + magic45, Y: -sqrtHalf - magic45},
+		{X: -magic, Y: -1},
+		{X: 0, Y: -1},
+	}
+	scale := func(pt geom.Pt) geom.Pt {
+		return geom.Pt{X: center.X + pt.X*rx, Y: center.Y + pt.Y*ry}
+	}
+	path.MoveTo(scale(unit[0]))
+	for i := 1; i < len(unit); i += 3 {
+		path.CubicTo(scale(unit[i]), scale(unit[i+1]), scale(unit[i+2]))
 	}
 	path.Close()
 	return path

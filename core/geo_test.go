@@ -101,7 +101,7 @@ func TestMollweideFrameAndGridUseSampledCurves(t *testing.T) {
 				foundLatitude = true
 			}
 		}
-		if len(call.path.C) > 0 && call.path.C[len(call.path.C)-1] == geom.ClosePath && len(call.path.V) >= geoFrameSegments {
+		if len(call.path.C) == 10 && call.path.C[0] == geom.MoveTo && call.path.C[len(call.path.C)-1] == geom.ClosePath {
 			foundFrame = true
 		}
 	}
@@ -113,7 +113,33 @@ func TestMollweideFrameAndGridUseSampledCurves(t *testing.T) {
 		t.Fatal("expected sampled parallel grid path")
 	}
 	if !foundFrame {
-		t.Fatal("expected closed oval frame path")
+		t.Fatal("expected Matplotlib-style closed cubic oval frame path")
+	}
+}
+
+func TestGeoFrameUsesMatplotlibCircleBezier(t *testing.T) {
+	clip := geom.Rect{Min: geom.Pt{X: 57.2, Y: 52}, Max: geom.Pt{X: 462.8, Y: 457.6}}
+	path := geoEllipsePath(clip)
+
+	if len(path.C) != 10 {
+		t.Fatalf("geo frame command count = %d, want MoveTo + 8 CubicTo + ClosePath", len(path.C))
+	}
+	if path.C[0] != geom.MoveTo || path.C[len(path.C)-1] != geom.ClosePath {
+		t.Fatalf("geo frame commands start/end = %v/%v, want MoveTo/ClosePath", path.C[0], path.C[len(path.C)-1])
+	}
+	for i, cmd := range path.C[1 : len(path.C)-1] {
+		if cmd != geom.CubicTo {
+			t.Fatalf("geo frame command %d = %v, want CubicTo", i+1, cmd)
+		}
+	}
+	if len(path.V) != 25 {
+		t.Fatalf("geo frame vertex count = %d, want 25", len(path.V))
+	}
+	center := geom.Pt{X: clip.Min.X + clip.W()/2, Y: clip.Min.Y + clip.H()/2}
+	radius := clip.W() / 2
+	wantFirst := geom.Pt{X: center.X, Y: center.Y - radius}
+	if !approx(path.V[0].X, wantFirst.X, 1e-9) || !approx(path.V[0].Y, wantFirst.Y, 1e-9) {
+		t.Fatalf("geo frame first vertex = %+v, want Matplotlib Path.circle bottom point %+v", path.V[0], wantFirst)
 	}
 }
 

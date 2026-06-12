@@ -202,7 +202,7 @@ func (g *Grid) drawCurvelinear(r render.Renderer, ctx *DrawContext) {
 		}
 		paint := polarTickPaint(minorColor, minorWidth, g.MinorDashes)
 		for _, tick := range visibleTicks(minorLoc.Ticks(domainMin, domainMax, g.curvelinearTargetTickCount(axis, true)), domainMin, domainMax) {
-			drawSampledGridLine(r, ctx, g.Axis, tick, geoGridSegments, paint)
+			drawCurvelinearGridLine(r, ctx, g.Axis, tick, geoGridSegments, paint)
 		}
 	}
 
@@ -210,7 +210,7 @@ func (g *Grid) drawCurvelinear(r render.Renderer, ctx *DrawContext) {
 		loc := g.curvelinearLocator(axis, false)
 		paint := polarTickPaint(majorColor, g.LineWidth, g.Dashes)
 		for _, tick := range visibleTicks(loc.Ticks(domainMin, domainMax, g.curvelinearTargetTickCount(axis, false)), domainMin, domainMax) {
-			drawSampledGridLine(r, ctx, g.Axis, tick, geoGridSegments, paint)
+			drawCurvelinearGridLine(r, ctx, g.Axis, tick, geoGridSegments, paint)
 		}
 	}
 }
@@ -483,6 +483,40 @@ func drawSampledGridLine(r render.Renderer, ctx *DrawContext, axis AxisSide, tic
 	}
 	paint.Snap = render.SnapAuto
 	r.Path(path, &paint)
+}
+
+func drawCurvelinearGridLine(r render.Renderer, ctx *DrawContext, axis AxisSide, tick float64, segments int, paint render.Paint) {
+	if drawSkewXYGridLine(r, ctx, axis, tick, paint) {
+		return
+	}
+	drawSampledGridLine(r, ctx, axis, tick, segments, paint)
+}
+
+func drawSkewXYGridLine(r render.Renderer, ctx *DrawContext, axis AxisSide, tick float64, paint render.Paint) bool {
+	if ctx == nil || ctx.DataToPixel.YScale == nil {
+		return false
+	}
+	if axis != AxisLeft && axis != AxisRight {
+		return false
+	}
+	if _, ok := skewXProjectionForAxes(ctx.Axes); !ok {
+		return false
+	}
+	transAxes := ctx.TransAxes()
+	if transAxes == nil {
+		return false
+	}
+	y := ctx.DataToPixel.YScale.Fwd(tick)
+	if math.IsNaN(y) || math.IsInf(y, 0) {
+		return true
+	}
+
+	path := geom.Path{}
+	path.MoveTo(transAxes.Apply(geom.Pt{X: 0, Y: y}))
+	path.LineTo(transAxes.Apply(geom.Pt{X: 1, Y: y}))
+	paint.Snap = render.SnapAuto
+	r.Path(path, &paint)
+	return true
 }
 
 // Z returns the z-order for sorting.

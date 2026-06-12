@@ -142,12 +142,13 @@ func TestSkewXProjectionRejectsAngleOnOtherAxes(t *testing.T) {
 	}
 }
 
-func TestSkewXGridUsesSampledProjectionPathsAndAxisLocators(t *testing.T) {
+func TestSkewXYGridSpansAxesWithoutSkew(t *testing.T) {
 	fig := NewFigure(480, 360)
 	ax, err := fig.AddSkewXAxes(unitRect())
 	if err != nil {
 		t.Fatalf("AddSkewXAxes: %v", err)
 	}
+	ax.YAxis.Locator = FixedLocator{TicksList: []float64{300}}
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 
 	grid := NewGrid(AxisLeft)
@@ -156,13 +157,22 @@ func TestSkewXGridUsesSampledProjectionPathsAndAxisLocators(t *testing.T) {
 	r := &recordingRenderer{}
 	grid.Draw(r, ctx)
 
-	if got := len(r.pathCalls); got != 7 {
-		t.Fatalf("expected 7 major pressure grid paths from axis locator fallback, got %d", got)
+	if got := len(r.pathCalls); got != 1 {
+		t.Fatalf("expected 1 major pressure grid path, got %d", got)
 	}
-	for i, call := range r.pathCalls {
-		if got := len(call.path.V); got != geoGridSegments+1 {
-			t.Fatalf("grid path %d vertex count = %d, want %d", i, got, geoGridSegments+1)
-		}
+	path := r.pathCalls[0].path
+	if got := len(path.V); got != 2 {
+		t.Fatalf("pressure grid vertex count = %d, want 2", got)
+	}
+
+	y := ctx.DataToPixel.YScale.Fwd(300)
+	wantLeft := ctx.TransAxes().Apply(geom.Pt{X: 0, Y: y})
+	wantRight := ctx.TransAxes().Apply(geom.Pt{X: 1, Y: y})
+	if !approx(path.V[0].X, wantLeft.X, 1e-9) || !approx(path.V[0].Y, wantLeft.Y, 1e-9) {
+		t.Fatalf("pressure grid start = %+v, want %+v", path.V[0], wantLeft)
+	}
+	if !approx(path.V[1].X, wantRight.X, 1e-9) || !approx(path.V[1].Y, wantRight.Y, 1e-9) {
+		t.Fatalf("pressure grid end = %+v, want %+v", path.V[1], wantRight)
 	}
 }
 

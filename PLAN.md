@@ -198,11 +198,45 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
       Remaining (tracked under W2b below): `geo_lambert_axes` 5.24 (center
       "0" tick label + xlabel fringe), and the gallery's non-geo panels.
 - [ ] **W2b — gallery leftovers.** `projection_toolkit_gallery` 11.9 and
-      `axisartist_showcase` 5.7: the Skew-T panel's axes box is vertically
-      offset a few px vs upstream, the AxisArtist/Twin panel's parasite right
-      axis sits at a different x, and the geo panels retain ±1px label
-      fringes. Port targets: the skewx layout path and
-      `mpl_toolkits/axes_grid1/parasite_axes.py`.
+      `axisartist_showcase` 5.7: close the remaining projection/toolkit residuals
+      without example-source workarounds.
+      - [x] **W2b.1 — Baseline and classify residuals.** Regenerate/inspect
+            `TestReferenceCompare/{geo_lambert_axes,projection_toolkit_gallery,axisartist_showcase}`;
+            use the committed diff artifacts under
+            `testdata/_artifacts/reference_compare/` and, if needed, an
+            env-gated probe in `test/diagnostics_test.go` to record the first
+            divergent intermediate values. 2026-06-12 update: direct
+            rendered-vs-reference metrics after the first fixes are
+            `projection_toolkit_gallery` RMSE 11.29, `geo_lambert_axes` 5.22,
+            and `axisartist_showcase` 5.68. The gallery residual is now
+            concentrated in the bottom Skew-T/AxisArtist panels; the Lambert
+            panel is already about RMSE 3.8 inside the gallery.
+      - [ ] **W2b.2 — Lambert label fringe.** Fix `geo_lambert_axes` 5.24 by
+            translating the relevant upstream geo tick-label/xlabel placement
+            from `third_party/matplotlib/lib/matplotlib/projections/geo.py`
+            into `core/projection_lambert.go` / `core/geo.go`; expected residual
+            is the center `"0"` tick label and xlabel fringe only.
+      - [ ] **W2b.3 — Skew-T axes box placement.** Fix the Skew-T panel in
+            `projection_toolkit_gallery` by comparing the local skewx projection
+            path (`core/skew.go`, `core/axis.go`) against the upstream custom
+            skew projection embedded in
+            `test/matplotlib_ref/plots/projection_toolkit_gallery.py`; keep the
+            gallery example unchanged except for any unavoidable API call cleanup.
+            2026-06-12 progress: fixed the default log formatter's Matplotlib
+            `minor_thresholds=(1, 0.4)` behavior and the Skew-X y-grid blended
+            transform so pressure gridlines span the axes instead of being
+            skew-clipped. Remaining visible Skew-T residue is mostly spine,
+            legend, and line anti-alias/placement noise.
+      - [ ] **W2b.4 — Parasite right-axis placement.** Fix the AxisArtist/Twin
+            panel residual in `projection_toolkit_gallery` and
+            `axisartist_showcase` by porting host/parasite placement semantics
+            from `third_party/matplotlib/lib/mpl_toolkits/axes_grid1/parasite_axes.py`
+            and adjacent axisartist code into `core/parasite_axes.go` /
+            `core/axis_artist.go`.
+      - [ ] **W2b.5 — Verify and ratchet.** Regold only after the core fixes,
+            then run the focused reference compares plus neighboring projection
+            cases (`geo_*`, `polar_axes`, `radar_basic`, `skewt_basic`); update
+            per-case tolerances only downward or document any frozen exception.
 - [ ] **W3 — ticks, scales, and inset placement.**
       `ticks_scales_formatters_gallery` 17.6, `date_concise_intraday_labels`
       5.8. The gallery diff isolates three distinct defects: (a) major/minor
@@ -211,6 +245,59 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
       tick labels render doubled/offset. Port targets:
       `lib/matplotlib/{ticker,scale,dates,category,units}.py` for (a)/(c) and
       the inset-axes placement path for (b).
+      - [ ] **W3.1 — Baseline and instrument residuals.** Regenerate/inspect
+            `TestReferenceCompare/{ticks_scales_formatters_gallery,date_concise_intraday_labels}`;
+            preserve the example sources, and add only env-gated diagnostics in
+            `test/diagnostics_test.go` if pixel inspection is insufficient.
+            Record, per affected panel, the first divergent intermediate values:
+            major tick locations, minor tick locations, formatter inputs/outputs,
+            inset axes rectangle in figure coordinates, and final display-space
+            label positions.
+      - [ ] **W3.2 — MultipleLocator and AutoMinorLocator positions.** Fix the
+            "Major and Minor Locators" panel by comparing
+            `core/tick_locators.go` and `core/axis.go` against
+            `third_party/matplotlib/lib/matplotlib/ticker.py`
+            (`MultipleLocator.tick_values`, `AutoMinorLocator.__call__`) and the
+            axis view-limit handoff. Add focused unit coverage in
+            `core/tick_test.go` for the `0..6`, base-1.5, `AutoMinorLocator(3)`
+            case before regolding.
+      - [ ] **W3.3 — Log scale major/minor locator handoff.** Fix the log panel
+            by tracing `SetXScale("log")`, default major locator installation,
+            and explicit `LogLocator{Base: 10, SubsMode: "auto"}` minor ticks
+            through `transform/scale_registry.go`, `core/axes_ticks.go`, and
+            `core/tick_locators.go`. Port the relevant behavior from
+            `third_party/matplotlib/lib/matplotlib/scale.py` and
+            `third_party/matplotlib/lib/matplotlib/ticker.py`; verify with
+            `locator_log_minor_threshold_labels` and the W3 gallery.
+      - [ ] **W3.4 — Concise intraday date labels.** Fix
+            `date_concise_intraday_labels` by porting the shared locator-aware
+            label-level selection and zero-format/offset handling from
+            `third_party/matplotlib/lib/matplotlib/dates.py`
+            (`ConciseDateFormatter`) into `core/date_tick.go`. Keep the public
+            Go API value-style, but make the formatter observe the full tick
+            sequence exactly like upstream.
+      - [ ] **W3.5 — Category inset axes placement.** Fix the embedded
+            "Categories" axes rectangle in `ticks_scales_formatters_gallery` by
+            comparing `Figure.AddAxes` / axes bounding-box handling in
+            `core/figure.go`, `core/axes.go`, and `internal/geom` with
+            upstream `Figure.add_axes` / `Axes.set_position` behavior. The target
+            rectangle is the Python reference's figure-fraction
+            `go_rect(0.30, 0.16, 0.43, 0.30)`; do not compensate by changing the
+            example.
+      - [ ] **W3.6 — Custom-unit formatter duplication/offset.** Fix the
+            custom-unit panel by tracing `PlotUnits` / `ScatterUnits` /
+            `AutoScale` through `core/units.go`, `core/axes.go`, and
+            `internal/parityutil` test converters, then port the relevant
+            conversion and default-unit behavior from
+            `third_party/matplotlib/lib/matplotlib/{category,units}.py`.
+            Confirm tick labels are produced once, at the same display positions
+            as upstream, and that `units_custom_converter` still passes.
+      - [ ] **W3.7 — Verify, regold, and ratchet.** After the core fixes, regold
+            `ticks_scales_formatters_gallery` and `date_concise_intraday_labels`;
+            run their focused `TestReferenceCompare` targets plus neighboring
+            locator/unit/date cases (`locator_*`, `scale_*`, `units_*`,
+            `ticks_styling_surface`). Update tolerances only downward unless a
+            documented upstream-incompatible exception remains.
 - [ ] **W4 — text layout: wrapping and rotated multiline.**
       `text_layout_gallery` 14.6. The diff isolates the residual to: the wrap
       point of `wrap=True` text (display-width logic in

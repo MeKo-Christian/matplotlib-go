@@ -438,6 +438,9 @@ func (l *Line2D) displayPath(ctx *DrawContext) geom.Path {
 	if len(points) == 0 {
 		return geom.Path{}
 	}
+	if ctx != nil && isGeoProjection(ctx.Projection) && artistUsesDataCoords(l, Coords(CoordData)) {
+		points = interpolateFiniteLineSegments(points, geoGridSegments)
+	}
 	tr := artistTransformFor(ctx, l, Coords(CoordData))
 	p := geom.Path{}
 	inSegment := false
@@ -463,6 +466,34 @@ func (l *Line2D) displayPath(ctx *DrawContext) geom.Path {
 		p.V = append(p.V, q)
 	}
 	return p
+}
+
+func interpolateFiniteLineSegments(points []geom.Pt, steps int) []geom.Pt {
+	if len(points) < 2 || steps <= 1 {
+		return points
+	}
+	out := make([]geom.Pt, 0, 1+(len(points)-1)*steps)
+	var prev geom.Pt
+	havePrev := false
+	for _, pt := range points {
+		if !finitePoint(pt) {
+			out = append(out, pt)
+			havePrev = false
+			continue
+		}
+		if !havePrev {
+			out = append(out, pt)
+			prev = pt
+			havePrev = true
+			continue
+		}
+		for i := 1; i <= steps; i++ {
+			t := float64(i) / float64(steps)
+			out = append(out, interpolateLinePoint(prev, pt, t))
+		}
+		prev = pt
+	}
+	return out
 }
 
 func (l *Line2D) drawMarkers(r render.Renderer, ctx *DrawContext) {

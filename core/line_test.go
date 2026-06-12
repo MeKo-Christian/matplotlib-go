@@ -431,6 +431,39 @@ func TestLine2DInvalidPointsBreakPathAndBounds(t *testing.T) {
 	}
 }
 
+func TestLine2DGeoProjectionInterpolatesLikeMatplotlib(t *testing.T) {
+	fig := NewFigure(400, 400)
+	ax, err := fig.AddAxesProjection(unitRect(), "lambert")
+	if err != nil {
+		t.Fatalf("AddAxesProjection(lambert): %v", err)
+	}
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	line := &Line2D{
+		XY: []geom.Pt{
+			{X: -math.Pi / 2, Y: 0},
+			{X: math.Pi / 2, Y: 0.35},
+		},
+	}
+
+	path := line.displayPath(ctx)
+	if got, want := len(path.C), geoGridSegments+1; got != want {
+		t.Fatalf("geo line command count = %d, want %d after Matplotlib RESOLUTION interpolation", got, want)
+	}
+	if got, want := len(path.V), geoGridSegments+1; got != want {
+		t.Fatalf("geo line vertex count = %d, want %d after Matplotlib RESOLUTION interpolation", got, want)
+	}
+	tMid := float64(geoGridSegments/2) / float64(geoGridSegments)
+	wantMidData := geom.Pt{
+		X: -math.Pi/2 + math.Pi*tMid,
+		Y: 0.35 * tMid,
+	}
+	wantMid := ctx.DataToPixel.Apply(wantMidData)
+	gotMid := path.V[geoGridSegments/2]
+	if !approx(gotMid.X, wantMid.X, 1e-9) || !approx(gotMid.Y, wantMid.Y, 1e-9) {
+		t.Fatalf("geo line midpoint = %+v, want projection of interpolated data midpoint %+v", gotMid, wantMid)
+	}
+}
+
 func TestLine2DGapColorDrawsInverseDashPass(t *testing.T) {
 	line := &Line2D{
 		XY: []geom.Pt{
