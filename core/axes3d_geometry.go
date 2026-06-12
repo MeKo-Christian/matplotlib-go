@@ -192,11 +192,6 @@ type projected3DPolygon struct {
 	color   render.Color
 }
 
-func (a *Axes3D) projectFillBetween3DPolygons(x1, y1, z1, x2, y2, z2 []float64, mode FillBetween3DMode, axlimClip ...bool) ([][]geom.Pt, float64) {
-	raw := fillBetween3DRawPolygons(x1, y1, z1, x2, y2, z2, mode)
-	return a.projectSorted3DPolygons(raw, axlimClip...)
-}
-
 // resolveFillBetween3DMode ports the mode='auto' branch of
 // matplotlib Axes3D.fill_between: 'polygon' when all points lie on one 3D
 // plane, 'quad' otherwise.
