@@ -227,7 +227,8 @@ func (f *axes3DFrame) Draw(r render.Renderer, ctx *DrawContext) {
 		},
 	}).Draw(r, ctx)
 
-	segments := f.axes.frameSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs)
+	nbins := axes3DTickBins(ctx)
+	segments := f.axes.frameSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs, nbins)
 	(&LineCollection{
 		Collection: Collection{Coords: Coords(CoordData), Alpha: 1},
 		Segments:   segments,
@@ -248,7 +249,7 @@ func (f *axes3DFrame) Draw(r render.Renderer, ctx *DrawContext) {
 		LineCap:    render.CapButt,
 	}).Draw(r, ctx)
 
-	tickSegments := f.axes.axisTickSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs)
+	tickSegments := f.axes.axisTickSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs, nbins)
 	(&LineCollection{
 		Collection: Collection{Coords: Coords(CoordData), Alpha: 1},
 		Segments:   tickSegments,

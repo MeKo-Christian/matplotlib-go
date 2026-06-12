@@ -102,7 +102,9 @@ func (a *Axes3D) Contour(x, y []float64, z [][]float64, opts ...PlotOptions) *Li
 func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opts ...PlotOptions) *PolyCollection {
 	opt := firstPlotOptions(opts)
 	colorOverride := opt.Color != nil
-	alpha := 0.45
+	// matplotlib Axes3D.contourf forwards kwargs to Axes.contourf unchanged:
+	// filled bands are opaque unless the caller passes alpha.
+	alpha := 1.0
 	label := ""
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 		alpha = *opt.Alpha
@@ -289,7 +291,9 @@ func (a *Axes3D) TriContourf(tri Triangulation, z []float64, opts ...PlotOptions
 
 	opt := firstPlotOptions(opts)
 	colorOverride := opt.Color != nil
-	alpha := 0.45
+	// matplotlib Axes3D.tricontourf forwards kwargs to Axes.tricontourf
+	// unchanged: filled bands are opaque unless the caller passes alpha.
+	alpha := 1.0
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 		alpha = *opt.Alpha
 	}

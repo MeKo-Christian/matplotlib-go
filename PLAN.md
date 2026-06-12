@@ -130,42 +130,113 @@ mode — no longer external-access-blocked, just unbuilt.
 
 ---
 
-# Phase 2: Visual Parity Closure (RMSE > 5)
+# Phase 2: Visual Parity Closure via Code Parity (RMSE ≤ 5)
 
 **Goal:** every catalog case renders within `RMSE 5` of its Matplotlib
-reference, or carries a documented, frozen tolerance exception. Core-library
-fixes are preferred over fixture tweaks (no example-source workarounds,
+reference, or carries a documented, frozen tolerance exception — and the route
+there is **code parity**: when a case diverges, find the upstream code path in
+`third_party/matplotlib` (3.10.9) responsible for the difference and make the
+Go implementation a faithful, idiomatic translation of it. Visual parity then
+follows by construction instead of by tuning. The existing bans stand and are
+the enforcement half of this principle: no example-source workarounds,
 fixture-specific core branches, catalog-ID conditionals, or unexplained
-empirical constants — enforced by `internal/examplecatalog.ValidationClusters`).
+empirical constants (`internal/examplecatalog.ValidationClusters`).
 
-**Status today:** the committed catalog tolerances all pass
-(`TestReferenceCompare`). The dominant *unfinished* residual is the **MathText
-family**, which remains well above target:
+**Status (2026-06-12, measured `testdata/golden/` vs `testdata/matplotlib_ref/`
+at HEAD, harness metric):** 165 paired cases; **131 at RMSE ≤ 5**, 52 below
+RMSE 1, strict-text cases at exactly 0. The **MathText family — formerly the
+headline residual — is closed**: `mathtext_integrals` 0.00,
+`mathtext_matrices` 0.24, `mathtext_gallery` 2.28, `mathtext_fractions` 4.01;
+only `mathtext_basic` (5.33) and `mathtext_inline_labels` (5.88) sit marginally
+above target, and their diffs are general text placement, not mathtext layout.
+**34 cases remain above RMSE 5**, clustering into five workstreams.
 
-- `mathtext_fractions` (~RMSE 27), `mathtext_matrices` (~RMSE 25),
-  `mathtext_inline_labels` (~RMSE 12), `mathtext_basic` (~RMSE 12).
-- Likely core areas: `github.com/cwbudde/mathtext` layout — fraction-axis
-  alignment, stretchy / `\genfrac` delimiter sizing, square-root geometry, matrix /
-  stack ink bounds, sub/superscript placement — plus `core/mathtext.go`, AGG text
-  bounds, and anchored-box / annotation layout.
+## Workstreams (ordered by residual; each names the upstream source to translate)
 
-**Workflow:**
+- [ ] **W1 — mplot3d structural parity.** `mplot3d_gallery` 22.7,
+      `mplot3d_tricontourf3d` 13.0, `mplot3d_contourf3d` 6.1,
+      `mplot3d_fill_between3d` 5.3, `mplot3d_errorbar3d` 5.1, plus a tail just
+      under target (`bar3d` 4.9, `terrain` 4.9, `surface3d` 4.7). The diff
+      images show whole-axes divergence in *every* panel — pane/grid/tick
+      placement and projected geometry, not one bad artist. Audit the Go port
+      line-by-line against `mpl_toolkits/mplot3d/{proj3d,axis3d,axes3d,art3d}.py`
+      (view/projection matrix, `_axinfo` constants, tick & label offset math,
+      depth sorting), porting each computation faithfully.
+- [ ] **W2 — geo/polar/radar projections.** `projection_toolkit_gallery` 20.2,
+      `radar_basic` 6.9, `geo_mollweide_axes` 5.9, `geo_lambert_axes` 5.3
+      (aitoff/hammer pass at 3.9 — use them as the behavioral baseline). Diffs
+      concentrate on gridline paths and tick-label anchoring around the
+      projection boundary. Port targets:
+      `lib/matplotlib/projections/{geo,polar}.py` (gridline path generation,
+      tick label positioning) and the axisartist twin-axes panel
+      (`axisartist_showcase` 5.7).
+- [ ] **W3 — ticks, scales, and inset placement.**
+      `ticks_scales_formatters_gallery` 17.6, `date_concise_intraday_labels`
+      5.8. The gallery diff isolates three distinct defects: (a) major/minor
+      tick *positions* differ in the MultipleLocator and log panels, (b) the
+      embedded "Categories" inset axes is placed wholly wrong, (c) custom-unit
+      tick labels render doubled/offset. Port targets:
+      `lib/matplotlib/{ticker,scale,dates,category,units}.py` for (a)/(c) and
+      the inset-axes placement path for (b).
+- [ ] **W4 — text layout: wrapping and rotated multiline.**
+      `text_layout_gallery` 14.6. The diff isolates the residual to: the wrap
+      point of `wrap=True` text (display-width logic in
+      `Text._get_wrapped_text`), the rotated multiline block, and the
+      `rotation_mode="anchor"` box. Port `lib/matplotlib/text.py`
+      (`_get_layout`, `_get_wrapped_text`, rotation/anchor handling)
+      faithfully; the unrotated alignment grid already matches.
+- [ ] **W5 — the 5–7.3 band (≈ 21 cases).** `layout_bbox_helpers` 7.3,
+      `plot_variants` 7.2, `axes_convenience_helpers` 7.2, `mesh_contour_tri`
+      7.1, `legend_layout_matrix` 7.1, `line2d_markers` 7.0, `fill_stacked`
+      6.9, `specialty_depth` 6.9, `mixed_raster_vector` 6.4, `arrays_showcase`
+      6.3, `widgets_gallery` 6.2, `fill_basic` 6.1,
+      `annotation_legend_offsetbox_gallery` 6.0, `clip_path_batch` 6.0,
+      `mathtext_inline_labels` 5.9, `annotation_composition` 5.8,
+      `fill_variants` 5.5, `unstructured_showcase` 5.5, `mathtext_basic` 5.3,
+      `specialty_artists` 5.3, `axes_option_breadth_17_75_3` 5.3. Expect a few
+      shared root causes (legend/offsetbox layout, fill-edge handling, label
+      placement) rather than 21 independent bugs: diagnose each diff first,
+      group by root cause, then fix each group as an upstream port
+      (`legend.py`, `offsetbox.py`, collection/fill paths).
 
-- [ ] Regenerate the current over-threshold list before each work session:
-      `just parity-viewer-print` (or `go test ./test -run TestReferenceCompare`).
-      Visual artifacts land under `testdata/_artifacts/reference_compare/`
-      (`*_golden.png`, `*_matplotlib_ref.png`, `*_…_diff.png`).
-- [ ] Close the MathText family by following upstream `_mathtext.py`, not
-      fixture-local offsets.
-- [ ] For any case that cannot reach `RMSE 5`, record a documented frozen
-      tolerance on the catalog row with an owner and rationale.
+## Method (code parity, per failing case)
+
+1. Inspect the committed diff artifact
+   (`testdata/_artifacts/reference_compare/{id}_golden_vs_matplotlib_ref_diff.png`;
+   regenerate with `just parity-viewer-print` or
+   `go test ./test -run TestReferenceCompare`). Classify the residual:
+   geometry, placement, text, or anti-aliasing.
+2. Locate the upstream code path in `third_party/matplotlib`. Instrument both
+   sides to find the *first diverging intermediate value* — Python via
+   `PYTHONPATH=. python3 test/matplotlib_ref/plots/<id>.py` with temporary
+   prints, Go via an env-gated probe in `test/diagnostics_test.go`.
+3. Make the Go side a faithful idiomatic translation of the upstream
+   computation. Cite the upstream file/function in the commit message so every
+   fix carries its provenance.
+4. Regold, confirm the metric *and* the visual diff, and check neighboring
+   cases for regressions (`TestReferenceCompare` full run).
+
+## Tolerance ratchet (new)
+
+The committed per-case tolerances are far looser than today's actuals (e.g.
+`mathtext_gallery` MaxRMSE 55 vs actual 2.3, `widgets_gallery` 120 vs 6.2,
+`text_annotation_matrix` 42 vs 4.7), so the suite currently cannot catch large
+regressions on already-good cases.
+
+- [ ] After each workstream lands, ratchet the affected rows down to
+      ≈ actual + small headroom.
+- [ ] End state: closed cases use the package defaults (no per-row override);
+      overrides remain only on documented, frozen exceptions.
 
 **Exit criteria:**
 
 - [ ] `TestReferenceCompare` records no catalog case above `RMSE 5` except those
       with a documented, frozen tolerance exception.
-- [ ] Each fix is validated against source parity and visual artifacts, not just
-      the metric delta.
+- [ ] Every parity fix names the upstream matplotlib code it translates
+      (commit-message provenance), and is validated against the visual diff,
+      not just the metric delta.
+- [ ] Catalog tolerances are ratcheted so a regression of any closed case
+      fails CI.
 
 ---
 
@@ -296,6 +367,7 @@ point are already done.)*
 This roadmap reflects the work remaining to bring matplotlib-go to a stable,
 documented v1.0 release. **Phase 1** hardens the backend matrix (mostly the
 deferred external Skia binding); **Phase 2** closes the remaining visual parity
-gap (chiefly MathText); **Phase 3** finishes and guards the parity status
-report; **Phase 4** delivers documentation, performance baselines, and the v1.0
-release.
+gap via code parity with upstream (chiefly mplot3d, projections, ticks/scales,
+and text layout — MathText is closed); **Phase 3** finishes and guards the
+parity status report; **Phase 4** delivers documentation, performance
+baselines, and the v1.0 release.

@@ -9,11 +9,11 @@ import (
 )
 
 func (a *Axes3D) frameSegments(mins, maxs vec3) [][]geom.Pt {
-	return a.frameSegmentsProjected(mins, maxs, mins, maxs, mins, maxs)
+	return a.frameSegmentsProjected(mins, maxs, mins, maxs, mins, maxs, 9)
 }
 
-func (a *Axes3D) frameSegmentsProjected(mins, maxs, projMins, projMaxs, tickMins, tickMaxs vec3) [][]geom.Pt {
-	return a.frameGridSegmentsProjected(mins, maxs, projMins, projMaxs, tickMins, tickMaxs)
+func (a *Axes3D) frameSegmentsProjected(mins, maxs, projMins, projMaxs, tickMins, tickMaxs vec3, nbins int) [][]geom.Pt {
+	return a.frameGridSegmentsProjected(mins, maxs, projMins, projMaxs, tickMins, tickMaxs, nbins)
 }
 
 func (a *Axes3D) activePanePolygons(mins, maxs vec3) [][]geom.Pt {
@@ -63,7 +63,7 @@ func (a *Axes3D) activePanePolygonsProjected(mins, maxs, projMins, projMaxs vec3
 }
 
 func (a *Axes3D) frameGridSegments(mins, maxs vec3) [][]geom.Pt {
-	return a.frameGridSegmentsProjected(mins, maxs, mins, maxs, mins, maxs)
+	return a.frameGridSegmentsProjected(mins, maxs, mins, maxs, mins, maxs, 9)
 }
 
 func (a *Axes3D) axisLineSegmentsProjected(mins, maxs, projMins, projMaxs vec3) [][]geom.Pt {
@@ -78,7 +78,7 @@ func (a *Axes3D) axisLineSegmentsProjected(mins, maxs, projMins, projMaxs vec3) 
 	return segments
 }
 
-func (a *Axes3D) axisTickSegmentsProjected(mins, maxs, projMins, projMaxs, tickMins, tickMaxs vec3) [][]geom.Pt {
+func (a *Axes3D) axisTickSegmentsProjected(mins, maxs, projMins, projMaxs, tickMins, tickMaxs vec3, nbins int) [][]geom.Pt {
 	project := func(p vec3) geom.Pt {
 		return a.project3DPointWithState(p[0], p[1], p[2], projMins, projMaxs)
 	}
@@ -94,7 +94,7 @@ func (a *Axes3D) axisTickSegmentsProjected(mins, maxs, projMins, projMaxs, tickM
 		}
 		outward := pair[0][tickDir] + 0.1*tickDelta
 		inward := pair[0][tickDir] - 0.2*tickDelta
-		for _, tick := range frameAxisTicks(tickMins[axis], tickMaxs[axis]) {
+		for _, tick := range frameAxisTicks(tickMins[axis], tickMaxs[axis], nbins) {
 			p0 := pair[0]
 			p1 := pair[0]
 			p0[axis] = tick
@@ -137,7 +137,7 @@ func (a *Axes3D) axisLineEdgePointPairs(mins, maxs, projMins, projMaxs vec3) [][
 	return pairs
 }
 
-func (a *Axes3D) frameGridSegmentsProjected(mins, maxs, projMins, projMaxs, tickMins, tickMaxs vec3) [][]geom.Pt {
+func (a *Axes3D) frameGridSegmentsProjected(mins, maxs, projMins, projMaxs, tickMins, tickMaxs vec3, nbins int) [][]geom.Pt {
 	project := func(p vec3) geom.Pt {
 		return a.project3DPointWithState(p[0], p[1], p[2], projMins, projMaxs)
 	}
@@ -161,7 +161,7 @@ func (a *Axes3D) frameGridSegmentsProjected(mins, maxs, projMins, projMaxs, tick
 		{tickMins[2], tickMaxs[2]},
 	}
 	for index, lim := range limits {
-		for _, tick := range frameAxisTicks(lim[0], lim[1]) {
+		for _, tick := range frameAxisTicks(lim[0], lim[1], nbins) {
 			p0 := minmax
 			p1 := minmax
 			p2 := minmax
@@ -378,9 +378,10 @@ func (a *Axes3D) draw3DTickLabels(textRen render.TextDrawer, r render.Renderer, 
 	}
 	axisLines := a.axisLineEdgePointPairs(mins, maxs, tickMins, tickMaxs)
 	tickDirs := [3]int{1, 0, 0}
+	nbins := axes3DTickBins(ctx)
 
 	if a.showXLabels {
-		xTicks := frameAxisTicks(tickMins[0], tickMaxs[0])
+		xTicks := frameAxisTicks(tickMins[0], tickMaxs[0], nbins)
 		for i, tick := range xTicks {
 			pos := axisLines[0][0]
 			pos[0] = tick
@@ -390,7 +391,7 @@ func (a *Axes3D) draw3DTickLabels(textRen render.TextDrawer, r render.Renderer, 
 		}
 	}
 	if a.showYLabels {
-		yTicks := frameAxisTicks(tickMins[1], tickMaxs[1])
+		yTicks := frameAxisTicks(tickMins[1], tickMaxs[1], nbins)
 		for i, tick := range yTicks {
 			pos := axisLines[1][0]
 			pos[1] = tick
@@ -399,7 +400,7 @@ func (a *Axes3D) draw3DTickLabels(textRen render.TextDrawer, r render.Renderer, 
 			draw3DTextAtAnchorAligned(textRen, r, ctx, format3DTick(tick, i, yTicks), anchor, fontSize, textColor, textLayoutVAlignTop)
 		}
 	}
-	zTicks := frameAxisTicks(tickMins[2], tickMaxs[2])
+	zTicks := frameAxisTicks(tickMins[2], tickMaxs[2], nbins)
 	if a.showZLabels {
 		for i, tick := range zTicks {
 			pos := axisLines[2][0]
@@ -501,16 +502,53 @@ func draw3DTextAtAnchorAligned(textRen render.TextDrawer, r render.Renderer, ctx
 	drawDisplayText(textRen, label, origin, fontSize, textColor, ctx.RC.FontKey, ctx.RC.UseTeX)
 }
 
-func frameAxisTicks(minVal, maxVal float64) []float64 {
+// axes3DTickSpace ports matplotlib XAxis.get_tick_space, which every 3D axis
+// uses (axis3d.Axis subclasses maxis.XAxis): the estimated number of ticks
+// that fit along the axes-box width in points, assuming tick text has at most
+// a 3:1 aspect ratio relative to the x tick label size.
+func axes3DTickSpace(ctx *DrawContext) int {
+	if ctx == nil {
+		return 9
+	}
+	dpi := 100.0
+	if ctx.RC.DPI > 0 {
+		dpi = ctx.RC.DPI
+	}
+	lengthPt := ctx.Clip.W() / dpi * 72
+	size := ctx.RC.TickLabelSize("x") * 3
+	if size <= 0 {
+		return math.MaxInt32
+	}
+	return int(math.Floor(lengthPt / size))
+}
+
+// axes3DTickBins resolves AutoLocator's nbins='auto' the way
+// MaxNLocator._raw_ticks does: clip(axis.get_tick_space(), max(1,
+// min_n_ticks-1), 9) with AutoLocator's min_n_ticks=2.
+func axes3DTickBins(ctx *DrawContext) int {
+	n := axes3DTickSpace(ctx)
+	if n < 1 {
+		n = 1
+	}
+	if n > 9 {
+		n = 9
+	}
+	return n
+}
+
+func frameAxisTicks(minVal, maxVal float64, nbins int) []float64 {
 	lo, hi := minVal, maxVal
 	if hi < lo {
 		lo, hi = hi, lo
 	}
+	if nbins <= 0 {
+		nbins = 9
+	}
 	ticks := MaxNLocator{
-		N:            9,
+		N:            nbins,
 		Steps:        []float64{1, 2, 2.5, 5, 10},
 		RawStepScale: 23.0 / 24.0,
-	}.Ticks(lo, hi, 9)
+	}.Ticks(lo, hi, nbins)
 	if len(ticks) == 0 {
 		return nil
 	}

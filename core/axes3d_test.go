@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"sort"
 	"testing"
 
@@ -1598,8 +1599,8 @@ func TestAxes3DFrameSegmentsDoNotAddSeparateCubeBox(t *testing.T) {
 	mins := vec3{-0.05, -0.05, -0.1}
 	maxs := vec3{1.05, 1.05, 2.1}
 	frameMins, frameMaxs := mins, maxs
-	segments := ax.frameSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs)
-	gridSegments := ax.frameGridSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs)
+	segments := ax.frameSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs, 9)
+	gridSegments := ax.frameGridSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs, 9)
 	if got, want := len(segments), len(gridSegments); got != want {
 		t.Fatalf("frame segment count = %d, want grid-only Matplotlib frame count %d", got, want)
 	}
@@ -1645,14 +1646,14 @@ func TestAxes3DFrameGridSegmentsUseAxisTickLocations(t *testing.T) {
 }
 
 func TestAxes3DFrameAxisTicksMatchMatplotlibDensity(t *testing.T) {
-	ticks := frameAxisTicks(-0.1, 2.1)
+	ticks := frameAxisTicks(-0.1, 2.1, 9)
 	if !containsFloat64Approx(ticks, 0.25, 1e-12) {
 		t.Fatalf("3D frame ticks = %v, want Matplotlib-like 0.25 z tick", ticks)
 	}
 }
 
 func TestAxes3DFrameAxisTicksHandleInvertedLimitsLikeMatplotlib(t *testing.T) {
-	ticks := frameAxisTicks(1, 0)
+	ticks := frameAxisTicks(1, 0, 9)
 	if !containsFloat64Approx(ticks, 0, 1e-12) ||
 		!containsFloat64Approx(ticks, 0.2, 1e-12) ||
 		!containsFloat64Approx(ticks, 1, 1e-12) {
@@ -1710,13 +1711,13 @@ func TestAxes3DTickSegmentsUseMatplotlibInwardOutwardFactors(t *testing.T) {
 	mins := vec3{-0.05, -0.05, -0.1}
 	maxs := vec3{1.05, 1.05, 2.1}
 	frameMins, frameMaxs := mins, maxs
-	segments := ax.axisTickSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs)
+	segments := ax.axisTickSegmentsProjected(frameMins, frameMaxs, mins, maxs, mins, maxs, 9)
 	if len(segments) == 0 {
 		t.Fatal("axis tick segments are empty")
 	}
 
 	pair := ax.axisLineEdgePointPairs(frameMins, frameMaxs, mins, maxs)[0]
-	tick := frameAxisTicks(mins[0], maxs[0])[0]
+	tick := frameAxisTicks(mins[0], maxs[0], 9)[0]
 	tickDir := 1
 	tickDelta := (maxs[tickDir] - mins[tickDir]) / 12
 	if !ax.activePaneHighsProjected(frameMins, frameMaxs, mins, maxs)[tickDir] {
@@ -2824,6 +2825,79 @@ func TestAxes3DTriContourAndTriContourfCreateCollections(t *testing.T) {
 	}
 }
 
+func TestAxes3DTickCountAdaptsToAxesWidthLikeMatplotlib(t *testing.T) {
+	// matplotlib's 3D axes all inherit XAxis, so AutoLocator's nbins='auto'
+	// resolves via XAxis.get_tick_space: floor(axes_width_pt / (3 * xtick
+	// labelsize)), clipped to [max(1, min_n_ticks-1), 9] in
+	// MaxNLocator._raw_ticks.
+	narrow := &DrawContext{
+		RC:   style.RC{DPI: 100, XTickLabelFontSize: 10},
+		Clip: geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 200, Y: 300}},
+	}
+	// 200 px @ 100 dpi = 144 pt; 144 / 30 = 4.8 -> 4 bins.
+	if got, want := axes3DTickBins(narrow), 4; got != want {
+		t.Fatalf("narrow axes tick bins = %d, want %d", got, want)
+	}
+	wide := &DrawContext{
+		RC:   style.RC{DPI: 100, XTickLabelFontSize: 10},
+		Clip: geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 600, Y: 300}},
+	}
+	// 600 px @ 100 dpi = 432 pt; 432 / 30 = 14.4 -> clipped to 9 bins.
+	if got, want := axes3DTickBins(wide), 9; got != want {
+		t.Fatalf("wide axes tick bins = %d, want %d", got, want)
+	}
+
+	// nbins=4 over [-30, 30]: raw step 60/4 * 23/24 = 14.375 -> step 20 ->
+	// visible ticks -20, 0, 20 (matplotlib gallery-size 3D panels).
+	ticks := frameAxisTicks(-30, 30, 4)
+	want := []float64{-20, 0, 20}
+	if len(ticks) != len(want) {
+		t.Fatalf("frameAxisTicks(-30, 30, 4) = %v, want %v", ticks, want)
+	}
+	for i := range want {
+		if math.Abs(ticks[i]-want[i]) > 1e-9 {
+			t.Fatalf("frameAxisTicks(-30, 30, 4) = %v, want %v", ticks, want)
+		}
+	}
+}
+
+func TestAxes3DContourfDefaultsToOpaqueFacesLikeMatplotlib(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	tri := Triangulation{
+		X:         []float64{0, 1, 0},
+		Y:         []float64{0, 0, 1},
+		Triangles: [][3]int{{0, 1, 2}},
+	}
+	values := []float64{0, 1, 1}
+	triFilled := ax.TriContourf(tri, values, PlotOptions{Levels: []float64{0, 0.5, 1}})
+	if triFilled == nil {
+		t.Fatal("TriContourf returned nil")
+	}
+	for i, c := range triFilled.FaceColors {
+		if c.A != 1 {
+			t.Fatalf("TriContourf face color %d alpha = %v, want 1 (matplotlib draws filled contours opaque by default)", i, c.A)
+		}
+	}
+
+	x := []float64{0, 1, 2}
+	y := []float64{0, 1, 2}
+	z := [][]float64{{0, 0.5, 1}, {0.5, 1, 1.5}, {1, 1.5, 2}}
+	filled := ax.Contourf(x, y, z, PlotOptions{Levels: []float64{0, 1, 2}})
+	if filled == nil {
+		t.Fatal("Contourf returned nil")
+	}
+	for i, c := range filled.FaceColors {
+		if c.A != 1 {
+			t.Fatalf("Contourf face color %d alpha = %v, want 1 (matplotlib draws filled contours opaque by default)", i, c.A)
+		}
+	}
+}
+
 func TestAxes3DTriContourProjectsLinesAtContourLevels(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())
@@ -3623,9 +3697,9 @@ func TestAxes3DDrawsYAxisEndpointTickLabels(t *testing.T) {
 
 	ax.draw3DTickLabels(r, r, ctx, mins, maxs, mins, maxs)
 
-	xTicks := frameAxisTicks(mins[0], maxs[0])
-	yTicks := frameAxisTicks(mins[1], maxs[1])
-	zTicks := frameAxisTicks(mins[2], maxs[2])
+	xTicks := frameAxisTicks(mins[0], maxs[0], 9)
+	yTicks := frameAxisTicks(mins[1], maxs[1], 9)
+	zTicks := frameAxisTicks(mins[2], maxs[2], 9)
 	if got, want := len(r.texts), len(xTicks)+len(yTicks)+len(zTicks); got != want {
 		t.Fatalf("3D tick label count = %d, want x+y+z endpoint labels included (%d)", got, want)
 	}
@@ -3832,7 +3906,7 @@ func TestAxes3DTickLabelsUseMatplotlibDataSpaceOffset(t *testing.T) {
 	if len(r.texts) == 0 {
 		t.Fatal("expected 3D tick labels to be drawn")
 	}
-	xTicks := frameAxisTicks(mins[0], maxs[0])
+	xTicks := frameAxisTicks(mins[0], maxs[0], 9)
 	label := format3DTick(xTicks[0], 0, xTicks)
 	if got := r.texts[0]; got != label {
 		t.Fatalf("first tick label = %q, want first x tick %q", got, label)
