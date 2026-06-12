@@ -27,6 +27,7 @@ var (
 // fall back without losing output.
 type nativeBatchBridge interface {
 	drawMarkersNative(dst *image.RGBA, batch render.MarkerBatch, state bridgeDrawState, height float64) bool
+	drawPathCollectionNative(dst *image.RGBA, batch render.PathCollectionBatch, state bridgeDrawState) bool
 	drawGouraudNative(dst *image.RGBA, batch render.GouraudTriangleBatch, state bridgeDrawState) bool
 }
 
@@ -71,6 +72,11 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
 	if r == nil || len(batch.Items) == 0 {
 		return false
+	}
+	if nb, ok := r.bridge.(nativeBatchBridge); ok {
+		if nb.drawPathCollectionNative(r.GetImage(), batch, r.bridgeClipState()) {
+			return true
+		}
 	}
 	for i := range batch.Items {
 		item := &batch.Items[i]

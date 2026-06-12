@@ -181,6 +181,64 @@ func (b *nativeSurfaceBridge) drawMarkersNative(dst *image.RGBA, batch render.Ma
 	return true
 }
 
+// drawPathCollectionNative renders solid fill/stroke path-collection items
+// through one native Skia surface and composites the result over dst. It
+// declines richer paint features so DrawPathCollection can keep using the
+// existing renderer-neutral fallbacks for those items.
+func (b *nativeSurfaceBridge) drawPathCollectionNative(dst *image.RGBA, batch render.PathCollectionBatch, state bridgeDrawState) bool {
+	if dst == nil || len(batch.Items) == 0 {
+		return false
+	}
+	for i := range batch.Items {
+		item := &batch.Items[i]
+		if len(item.Path.C) == 0 {
+			continue
+		}
+		if !item.Path.Validate() || !canDrawPathCollectionItemNative(item) {
+			return false
+		}
+	}
+
+	w, h := dst.Bounds().Dx(), dst.Bounds().Dy()
+	surf := newNativeSurface(w, h)
+	if surf == nil {
+		return false
+	}
+	defer surf.delete()
+
+	drew := false
+	for i := range batch.Items {
+		item := &batch.Items[i]
+		if len(item.Path.C) == 0 {
+			continue
+		}
+		paint := item.Paint
+		applyForcedAlpha(&paint)
+		if !item.Antialiased {
+			paint.Antialias = render.AntialiasOff
+		}
+		cp := newSolidCPaint(paint)
+		verbs, coords := pathToVerbsCoords(item.Path)
+		C.mgsk_draw_path(surf.ptr,
+			bytePtr(verbs), C.int(len(verbs)),
+			floatPtr(coords), C.int(len(coords)),
+			&cp)
+		drew = true
+	}
+	if !drew {
+		return true
+	}
+
+	rendered := surf.readImage()
+	bounds := dst.Bounds()
+	if state.clipRect != nil {
+		bounds = bounds.Intersect(rectToImage(*state.clipRect))
+	}
+	clipMasks := rasterizeClipMasks(w, h, state.clipPaths)
+	compositeNativeOver(dst, rendered, bounds, clipMasks)
+	return true
+}
+
 // drawGouraudNative renders interpolated-color triangles via SkVertices through
 // a native Skia surface and composites the result over dst.
 func (b *nativeSurfaceBridge) drawGouraudNative(dst *image.RGBA, batch render.GouraudTriangleBatch, state bridgeDrawState) bool {
@@ -305,6 +363,42 @@ func newGradientCPaint(grad render.GradientFill, height float64) (*C.MgSkPaint, 
 		C.free(unsafe.Pointer(cp))
 	}
 	return cp, free
+}
+
+func newSolidCPaint(p render.Paint) C.MgSkPaint {
+	cp := C.MgSkPaint{}
+	cp.fill_r = C.float(p.Fill.R)
+	cp.fill_g = C.float(p.Fill.G)
+	cp.fill_b = C.float(p.Fill.B)
+	cp.fill_a = C.float(p.Fill.A)
+	cp.stroke_r = C.float(p.Stroke.R)
+	cp.stroke_g = C.float(p.Stroke.G)
+	cp.stroke_b = C.float(p.Stroke.B)
+	cp.stroke_a = C.float(p.Stroke.A)
+	cp.line_width = C.float(p.LineWidth)
+	cp.antialias = boolToCInt(p.Antialias != render.AntialiasOff)
+	return cp
+}
+
+func canDrawPathCollectionItemNative(item *render.PathCollectionItem) bool {
+	if item == nil {
+		return false
+	}
+	p := item.Paint
+	return p.FillGradient.Kind == render.GradientNone &&
+		!hasPatternFill(p.FillPattern) &&
+		p.Hatch == "" &&
+		item.Hatch == "" &&
+		len(p.PathEffects) == 0 &&
+		len(p.Dashes) == 0 &&
+		p.CompositeMode == render.CompositeSourceOver &&
+		p.Rasterization.Mode == render.RasterizeDefault &&
+		p.LineJoin == render.JoinMiter &&
+		p.LineCap == render.CapButt &&
+		!p.HasClipPathTrans &&
+		p.Sketch.Scale == 0 &&
+		p.Sketch.Length == 0 &&
+		p.Sketch.Randomness == 0
 }
 
 func appendColor(dst []float32, c render.Color) []float32 {

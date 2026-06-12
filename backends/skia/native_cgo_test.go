@@ -23,7 +23,8 @@ func TestNativeSkiaVersionLinked(t *testing.T) {
 }
 
 // TestNativeBridgeReportsNativeSurface confirms the skiacgo build selects the
-// native bridge and flips the marker-batch capability from bridged to native.
+// native bridge and flips linked native batch capabilities from bridged to
+// native.
 func TestNativeBridgeReportsNativeSurface(t *testing.T) {
 	bridge := selectSurfaceBridge(16, 16, ModeCPU)
 	if !bridge.Info().NativeSurface {
@@ -42,8 +43,8 @@ func TestNativeBridgeReportsNativeSurface(t *testing.T) {
 	if r.IsCapabilityBridged("markerbatch") {
 		t.Error("markerbatch should report native under the skiacgo build")
 	}
-	if !r.IsCapabilityBridged("pathcollectionbatch") {
-		t.Error("pathcollectionbatch should still report bridged (no native batch yet)")
+	if r.IsCapabilityBridged("pathcollectionbatch") {
+		t.Error("pathcollectionbatch should report native under the skiacgo build")
 	}
 }
 
@@ -129,6 +130,57 @@ func TestNativeMarkers(t *testing.T) {
 	// Each marker center maps (offset.X, height-offset.Y) -> (8,16) and (24,16).
 	if c := dst.RGBAAt(8, 16); c.A == 0 || c.G <= c.R {
 		t.Errorf("expected green ink near first marker center, got %v", c)
+	}
+}
+
+// TestNativePathCollection renders multiple solid path-collection items through
+// one native surface and confirms both fill and stroke survive compositing.
+func TestNativePathCollection(t *testing.T) {
+	bridge := selectSurfaceBridge(32, 32, ModeCPU).(nativeBatchBridge)
+	dst := image.NewRGBA(image.Rect(0, 0, 32, 32))
+
+	var left geom.Path
+	left.MoveTo(geom.Pt{X: 4, Y: 4})
+	left.LineTo(geom.Pt{X: 14, Y: 4})
+	left.LineTo(geom.Pt{X: 14, Y: 18})
+	left.LineTo(geom.Pt{X: 4, Y: 18})
+	left.Close()
+
+	var right geom.Path
+	right.MoveTo(geom.Pt{X: 18, Y: 14})
+	right.LineTo(geom.Pt{X: 28, Y: 14})
+	right.LineTo(geom.Pt{X: 28, Y: 28})
+	right.LineTo(geom.Pt{X: 18, Y: 28})
+	right.Close()
+
+	batch := render.PathCollectionBatch{Items: []render.PathCollectionItem{
+		{
+			Path:        left,
+			Paint:       render.Paint{Fill: render.Color{R: 1, A: 1}},
+			Antialiased: true,
+		},
+		{
+			Path: right,
+			Paint: render.Paint{
+				Fill:      render.Color{G: 1, A: 1},
+				Stroke:    render.Color{B: 1, A: 1},
+				LineWidth: 2,
+			},
+			Antialiased: true,
+		},
+	}}
+
+	if !bridge.drawPathCollectionNative(dst, batch, bridgeDrawState{}) {
+		t.Fatal("drawPathCollectionNative returned false for solid path collection")
+	}
+	if c := dst.RGBAAt(8, 8); c.A == 0 || c.R <= c.G || c.R <= c.B {
+		t.Fatalf("expected red fill in first path, got %v", c)
+	}
+	if c := dst.RGBAAt(22, 20); c.A == 0 || c.G <= c.R || c.G <= c.B {
+		t.Fatalf("expected green fill in second path, got %v", c)
+	}
+	if c := dst.RGBAAt(18, 20); c.A == 0 || c.B <= c.G {
+		t.Fatalf("expected blue stroke on second path edge, got %v", c)
 	}
 }
 
