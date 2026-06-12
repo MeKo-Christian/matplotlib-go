@@ -98,6 +98,19 @@ void mgsk_draw_vertices(MgSkSurface *s,
                         int triangle_count,
                         int antialias);
 
+/* Draw an RGBA image through an affine transform. `pixels` is straight-alpha
+ * RGBA8888, `stride` bytes per source row. `matrix` is a 3x2 affine in Skia row
+ * order {scaleX, skewX, transX, skewY, scaleY, transY} mapping source image
+ * pixels into device space. sampling: 0 nearest, 1 linear, 2 cubic Mitchell. */
+void mgsk_draw_image(MgSkSurface *s,
+                     const uint8_t *pixels,
+                     int width,
+                     int height,
+                     int stride,
+                     const float *matrix,
+                     float alpha,
+                     int sampling);
+
 /* Copy the surface into dst as straight-alpha RGBA8888, `stride` bytes per row.
  * dst must hold at least height*stride bytes. */
 void mgsk_surface_read_pixels(MgSkSurface *s, uint8_t *dst, int stride);

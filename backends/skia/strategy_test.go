@@ -100,6 +100,7 @@ func TestNativePathRequirementsDocumentDeferredExternalABI(t *testing.T) {
 		"SkCanvas::drawPath native batches",
 		"SkVertices Gouraud triangles",
 		"SkVertices quad mesh cells",
+		"SkImage transformed blits",
 		"tiled SkShader",
 		"SkSurface::MakeRenderTarget",
 	} {
@@ -115,6 +116,8 @@ func TestNativePathRequirementsDocumentDeferredExternalABI(t *testing.T) {
 	assertRequirementStatus(t, byPrimitive["SkVertices Gouraud triangles"], StatusImplemented)
 	assertRequirementHasCapability(t, byPrimitive["SkVertices quad mesh cells"], backends.QuadMeshBatch)
 	assertRequirementStatus(t, byPrimitive["SkVertices quad mesh cells"], StatusImplemented)
+	assertRequirementHasCapability(t, byPrimitive["SkImage transformed blits"], backends.ImageTransform)
+	assertRequirementStatus(t, byPrimitive["SkImage transformed blits"], StatusImplemented)
 	assertRequirementHasCapability(t, byPrimitive["tiled SkShader"], backends.NativeHatcher)
 	assertRequirementStatus(t, byPrimitive["tiled SkShader"], StatusDeferred)
 	assertRequirementHasCapability(t, byPrimitive["SkSurface::MakeRenderTarget"], backends.GPUAccel)

@@ -102,7 +102,7 @@ mode — no longer external-access-blocked, just unbuilt.
 - [x] **Native quad meshes.** Add `drawQuadMeshNative`; emit two `SkVertices`
       triangles per cell with the face color (reuse `mgsk_draw_vertices`) or one
       `mgsk_draw_path` per cell. Flip `quadmeshbatch`.
-- [ ] **Native transformed images.** Add `mgsk_draw_image` (SkImage raster copy +
+- [x] **Native transformed images.** Add `mgsk_draw_image` (SkImage raster copy +
       `drawImageRect` with sampling) to the wrapper; implement
       `render.ImageTransformer` on the native path.
 - [ ] **Native hatching via tiled `SkShader`.** Add a tiled-shader hatch

@@ -237,14 +237,15 @@ func TestSkiaTaggedRegistryAdvertisesImplementedCPUCapabilities(t *testing.T) {
 		t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want %s", backends.GouraudTriangleBatch, status, backends.CapabilityNative)
 	}
 
-	// MarkerBatch, PathCollectionBatch, and QuadMeshBatch are native when a real
-	// Skia library is linked (skiacgo build); the pure-Go build satisfies them
-	// through the CPU bridge.
+	// ImageTransform, MarkerBatch, PathCollectionBatch, and QuadMeshBatch are
+	// native when a real Skia library is linked (skiacgo build); the pure-Go
+	// build satisfies them through the CPU bridge.
 	wantNativeBatch := backends.CapabilityBridged
 	if sk, ok := renderer.(*skia.Renderer); ok && sk.BridgeInfo().NativeSurface {
 		wantNativeBatch = backends.CapabilityNative
 	}
 	for _, cap := range []backends.Capability{
+		backends.ImageTransform,
 		backends.MarkerBatch,
 		backends.PathCollectionBatch,
 		backends.QuadMeshBatch,

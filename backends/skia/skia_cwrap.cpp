@@ -16,12 +16,16 @@
 
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
+#include "include/core/SkImage.h"
 #include "include/core/SkImageInfo.h"
 #include "include/core/SkMatrix.h"
 #include "include/core/SkPaint.h"
 #include "include/core/SkPath.h"
 #include "include/core/SkPathBuilder.h"
 #include "include/core/SkPoint.h"
+#include "include/core/SkPixmap.h"
+#include "include/core/SkRect.h"
+#include "include/core/SkSamplingOptions.h"
 #include "include/core/SkSurface.h"
 #include "include/core/SkTileMode.h"
 #include "include/core/SkVertices.h"
@@ -272,6 +276,49 @@ void mgsk_draw_vertices(MgSkSurface *s,
     // kModulate with an opaque white paint yields the raw interpolated vertex
     // colors (white * color == color).
     s->canvas->drawVertices(vertices, SkBlendMode::kModulate, paint);
+}
+
+void mgsk_draw_image(MgSkSurface *s,
+                     const uint8_t *pixels,
+                     int width,
+                     int height,
+                     int stride,
+                     const float *matrix,
+                     float alpha,
+                     int sampling) {
+    if (s == nullptr || s->canvas == nullptr || pixels == nullptr || matrix == nullptr ||
+        width <= 0 || height <= 0 || stride < width * 4 || alpha <= 0.0f) {
+        return;
+    }
+    SkImageInfo info = SkImageInfo::Make(width, height, kRGBA_8888_SkColorType,
+                                         kUnpremul_SkAlphaType);
+    SkPixmap pixmap(info, pixels, static_cast<size_t>(stride));
+    sk_sp<SkImage> image = SkImages::RasterFromPixmapCopy(pixmap);
+    if (image == nullptr) {
+        return;
+    }
+
+    SkSamplingOptions options;
+    if (sampling == 1) {
+        options = SkSamplingOptions(SkFilterMode::kLinear);
+    } else if (sampling == 2) {
+        options = SkSamplingOptions(SkCubicResampler::Mitchell());
+    }
+
+    SkPaint paint;
+    paint.setAntiAlias(true);
+    paint.setAlphaf(std::clamp(alpha, 0.0f, 1.0f));
+
+    SkMatrix mat;
+    mat.setAll(matrix[0], matrix[1], matrix[2],
+               matrix[3], matrix[4], matrix[5],
+               0, 0, 1);
+
+    s->canvas->save();
+    s->canvas->concat(mat);
+    SkRect src = SkRect::MakeWH(static_cast<SkScalar>(width), static_cast<SkScalar>(height));
+    s->canvas->drawImageRect(image, src, src, options, &paint, SkCanvas::kStrict_SrcRectConstraint);
+    s->canvas->restore();
 }
 
 void mgsk_surface_read_pixels(MgSkSurface *s, uint8_t *dst, int stride) {

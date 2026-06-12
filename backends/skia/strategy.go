@@ -123,6 +123,13 @@ func NativePathRequirements() []NativePathRequirement {
 			Status:              StatusImplemented,
 		},
 		{
+			Primitive:           "SkImage transformed blits",
+			Modes:               []RenderMode{ModeCPU, ModeGPU},
+			Capabilities:        []backends.Capability{backends.ImageTransform},
+			ExternalEntrypoints: []string{"mgsk_draw_image", "SkImages::RasterFromPixmapCopy", "SkCanvas::drawImageRect"},
+			Status:              StatusImplemented,
+		},
+		{
 			Primitive:           "tiled SkShader",
 			Modes:               []RenderMode{ModeCPU, ModeGPU},
 			Capabilities:        []backends.Capability{backends.NativeHatcher},

@@ -32,10 +32,29 @@ type nativeBatchBridge interface {
 	drawGouraudNative(dst *image.RGBA, batch render.GouraudTriangleBatch, state bridgeDrawState) bool
 }
 
+type nativeImageBridge interface {
+	drawImageTransformedNative(dst *image.RGBA, img render.Image, transform geom.Affine, state bridgeDrawState) bool
+}
+
 // bridgeClipState snapshots the current clip into the bridge-facing struct the
 // native batch methods consume.
 func (r *Renderer) bridgeClipState() bridgeDrawState {
 	return bridgeDrawState{clipRect: r.clipRect, clipPaths: r.clipPaths}
+}
+
+// ImageTransformed draws a raster image through an arbitrary affine transform.
+// Native Skia builds route RGBA-backed images through SkImage; unsupported image
+// sources and pure-Go Skia builds fall back to the embedded CPU renderer.
+func (r *Renderer) ImageTransformed(img render.Image, dst geom.Rect, transform geom.Affine) {
+	if r == nil || r.Renderer == nil || img == nil {
+		return
+	}
+	if nb, ok := r.bridge.(nativeImageBridge); ok {
+		if nb.drawImageTransformedNative(r.GetImage(), img, transform, r.bridgeClipState()) {
+			return
+		}
+	}
+	r.Renderer.ImageTransformed(img, dst, transform)
 }
 
 // DrawMarkers renders one marker path at many display-space offsets. Native

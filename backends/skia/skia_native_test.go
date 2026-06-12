@@ -20,13 +20,8 @@ func TestSkiaTaggedRendererImplementsNativeBatchInterfaces(t *testing.T) {
 	var _ render.GouraudTriangleDrawer = r
 	var _ render.NativeHatcher = r
 
-	for _, cap := range []backends.Capability{
-		backends.ImageTransform,
-		backends.GouraudTriangleBatch,
-	} {
-		if status := backends.RendererCapabilityStatus(backends.Skia, r, cap); status != backends.CapabilityNative {
-			t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want native", cap, status)
-		}
+	if status := backends.RendererCapabilityStatus(backends.Skia, r, backends.GouraudTriangleBatch); status != backends.CapabilityNative {
+		t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want native", backends.GouraudTriangleBatch, status)
 	}
 	for _, cap := range []backends.Capability{
 		backends.NativeHatcher,
@@ -36,14 +31,15 @@ func TestSkiaTaggedRendererImplementsNativeBatchInterfaces(t *testing.T) {
 		}
 	}
 
-	// MarkerBatch, PathCollectionBatch, and QuadMeshBatch are native when a real
-	// Skia library is linked (skiacgo build), otherwise satisfied through the CPU
-	// bridge.
+	// ImageTransform, MarkerBatch, PathCollectionBatch, and QuadMeshBatch are
+	// native when a real Skia library is linked (skiacgo build), otherwise
+	// satisfied through the CPU bridge.
 	wantNativeBatch := backends.CapabilityBridged
 	if r.BridgeInfo().NativeSurface {
 		wantNativeBatch = backends.CapabilityNative
 	}
 	for _, cap := range []backends.Capability{
+		backends.ImageTransform,
 		backends.MarkerBatch,
 		backends.PathCollectionBatch,
 		backends.QuadMeshBatch,

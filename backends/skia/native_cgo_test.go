@@ -4,6 +4,8 @@ package skia
 
 import (
 	"image"
+	"image/color"
+	"math"
 	"strings"
 	"testing"
 
@@ -48,6 +50,9 @@ func TestNativeBridgeReportsNativeSurface(t *testing.T) {
 	}
 	if r.IsCapabilityBridged("quadmeshbatch") {
 		t.Error("quadmeshbatch should report native under the skiacgo build")
+	}
+	if r.IsCapabilityBridged("imagetransform") {
+		t.Error("imagetransform should report native under the skiacgo build")
 	}
 }
 
@@ -231,6 +236,78 @@ func TestNativeQuadMesh(t *testing.T) {
 	}
 	if c := dst.RGBAAt(22, 12); c.A == 0 || c.G <= c.R || c.G <= c.B {
 		t.Fatalf("expected green face in y-flipped second cell, got %v", c)
+	}
+}
+
+// TestNativeTransformedImage renders an RGBA image through the native bridge,
+// confirming image-space row orientation, display->device y flipping, alpha, and
+// clip-path masking match the renderer contract.
+func TestNativeTransformedImage(t *testing.T) {
+	bridge, ok := selectSurfaceBridge(20, 20, ModeCPU).(interface {
+		drawImageTransformedNative(*image.RGBA, render.Image, geom.Affine, bridgeDrawState) bool
+	})
+	if !ok {
+		t.Fatal("native bridge does not implement transformed image drawing")
+	}
+	dst := image.NewRGBA(image.Rect(0, 0, 20, 20))
+	for y := 0; y < 20; y++ {
+		for x := 0; x < 20; x++ {
+			dst.SetRGBA(x, y, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+		}
+	}
+
+	src := image.NewRGBA(image.Rect(0, 0, 2, 2))
+	src.SetRGBA(0, 0, color.RGBA{R: 255, A: 255})
+	src.SetRGBA(1, 0, color.RGBA{G: 255, A: 255})
+	src.SetRGBA(0, 1, color.RGBA{B: 255, A: 255})
+	src.SetRGBA(1, 1, color.RGBA{R: 255, G: 255, A: 255})
+	data := render.NewImageData(src)
+	data.SetAlpha(0.5)
+
+	ok = bridge.drawImageTransformedNative(dst, data, geom.Affine{
+		A: 10,
+		D: -10,
+		F: 20,
+	}, bridgeDrawState{})
+	if !ok {
+		t.Fatal("drawImageTransformedNative returned false for RGBA image")
+	}
+
+	topLeft := dst.RGBAAt(2, 2)
+	if topLeft.R != 255 || math.Abs(float64(topLeft.G)-128) > 2 || math.Abs(float64(topLeft.B)-128) > 2 || topLeft.A != 255 {
+		t.Fatalf("top-left source row not drawn as half-alpha red over white: %+v", topLeft)
+	}
+	topRight := dst.RGBAAt(12, 2)
+	if topRight.G != 255 || math.Abs(float64(topRight.R)-128) > 2 || math.Abs(float64(topRight.B)-128) > 2 || topRight.A != 255 {
+		t.Fatalf("top-right source row not drawn as half-alpha green over white: %+v", topRight)
+	}
+
+	clippedDst := image.NewRGBA(image.Rect(0, 0, 20, 20))
+	for y := 0; y < 20; y++ {
+		for x := 0; x < 20; x++ {
+			clippedDst.SetRGBA(x, y, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+		}
+	}
+	var clip geom.Path
+	clip.MoveTo(geom.Pt{X: 0, Y: 0})
+	clip.LineTo(geom.Pt{X: 20, Y: 0})
+	clip.LineTo(geom.Pt{X: 0, Y: 20})
+	clip.Close()
+	ok = bridge.drawImageTransformedNative(clippedDst, data, geom.Affine{
+		A: 10,
+		D: -10,
+		F: 20,
+	}, bridgeDrawState{clipPaths: []geom.Path{clip}})
+	if !ok {
+		t.Fatal("drawImageTransformedNative returned false for clipped RGBA image")
+	}
+	outside := clippedDst.RGBAAt(15, 4)
+	if outside != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
+		t.Fatalf("transformed image escaped y-flipped clip path: %+v", outside)
+	}
+	inside := clippedDst.RGBAAt(4, 15)
+	if inside.A != 255 || inside == (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
+		t.Fatalf("clipped transformed image did not draw inside clip: %+v", inside)
 	}
 }
 

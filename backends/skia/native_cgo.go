@@ -21,6 +21,7 @@ import (
 	"image"
 	"image/color"
 	"sort"
+	"strings"
 	"unsafe"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -312,6 +313,74 @@ func (b *nativeSurfaceBridge) drawQuadMeshNative(dst *image.RGBA, batch render.Q
 	return true
 }
 
+// drawImageTransformedNative renders an RGBA-backed image through native Skia.
+// The affine maps source image pixels into y-up display coordinates; this method
+// composes the device y-flip before passing the matrix to Skia's y-down canvas.
+func (b *nativeSurfaceBridge) drawImageTransformedNative(dst *image.RGBA, img render.Image, transform geom.Affine, state bridgeDrawState) bool {
+	if dst == nil || img == nil {
+		return false
+	}
+	rgba, ok := img.(render.RGBAImage)
+	if !ok {
+		return false
+	}
+	src := rgba.RGBA()
+	if src == nil {
+		return false
+	}
+	srcBounds := src.Bounds()
+	srcW, srcH := srcBounds.Dx(), srcBounds.Dy()
+	if srcW <= 0 || srcH <= 0 || src.Stride < srcW*4 || len(src.Pix) == 0 {
+		return false
+	}
+
+	w, h := dst.Bounds().Dx(), dst.Bounds().Dy()
+	height := float64(h)
+	deviceTransform := geom.Affine{A: 1, D: -1, F: geom.F64(height)}.Mul(transform)
+	matrix := []float32{
+		float32(deviceTransform.A), float32(deviceTransform.C), float32(deviceTransform.E),
+		float32(deviceTransform.B), float32(deviceTransform.D), float32(deviceTransform.F),
+	}
+	alpha := imageAlphaMultiplier(img)
+	if alpha <= 0 {
+		return true
+	}
+
+	surf := newNativeSurface(w, h)
+	if surf == nil {
+		return false
+	}
+	defer surf.delete()
+
+	pixOffset := src.PixOffset(srcBounds.Min.X, srcBounds.Min.Y)
+	if pixOffset < 0 || pixOffset >= len(src.Pix) {
+		return false
+	}
+	C.mgsk_draw_image(
+		surf.ptr,
+		(*C.uint8_t)(unsafe.Pointer(&src.Pix[pixOffset])),
+		C.int(srcW),
+		C.int(srcH),
+		C.int(src.Stride),
+		floatPtr(matrix),
+		C.float(alpha),
+		C.int(skiaImageSampling(img.Interpolation())),
+	)
+
+	flippedState := bridgeDrawState{
+		clipRect:  flipRectPtrY(state.clipRect, height),
+		clipPaths: flipPathsY(state.clipPaths, height),
+	}
+	rendered := surf.readImage()
+	bounds := dst.Bounds()
+	if flippedState.clipRect != nil {
+		bounds = bounds.Intersect(rectToImage(*flippedState.clipRect))
+	}
+	clipMasks := rasterizeClipMasks(w, h, flippedState.clipPaths)
+	compositeNativeOver(dst, rendered, bounds, clipMasks)
+	return true
+}
+
 // drawGouraudNative renders interpolated-color triangles via SkVertices through
 // a native Skia surface and composites the result over dst.
 func (b *nativeSurfaceBridge) drawGouraudNative(dst *image.RGBA, batch render.GouraudTriangleBatch, state bridgeDrawState) bool {
@@ -483,6 +552,32 @@ func canDrawQuadMeshCellNative(cell *render.QuadMeshCell) bool {
 		cell.HatchColor.A <= 0 &&
 		cell.HatchWidth <= 0 &&
 		cell.Snap == render.SnapOff
+}
+
+func imageAlphaMultiplier(img render.Image) float64 {
+	alphaImage, ok := img.(render.ImageAlpha)
+	if !ok {
+		return 1
+	}
+	alpha := alphaImage.Alpha()
+	if alpha <= 0 {
+		return 0
+	}
+	if alpha >= 1 {
+		return 1
+	}
+	return alpha
+}
+
+func skiaImageSampling(name string) int {
+	switch strings.ToLower(strings.TrimSpace(name)) {
+	case "bilinear", "hanning", "hamming", "hermite", "kaiser", "quadric", "gaussian", "bessel", "sinc", "lanczos", "blackman", "auto", "antialiased":
+		return 1
+	case "bicubic", "spline16", "spline36", "catrom", "mitchell":
+		return 2
+	default:
+		return 0
+	}
 }
 
 func appendColor(dst []float32, c render.Color) []float32 {

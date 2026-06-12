@@ -330,18 +330,18 @@ func (r *Renderer) BridgeInfo() BridgeInfo {
 // satisfied through the CPU surface bridge rather than a truly batch-native
 // Skia code path.
 //
-// With the pure-Go CPU bridge the optional batch interfaces (MarkerBatch,
-// PathCollectionBatch, QuadMeshBatch) loop per item and call Path, and hatch
-// metadata is consumed via the renderer-neutral DrawHatchFallback helper, so
-// those report as bridged. When a native Skia surface bridge is active (the
-// skiacgo build links a real Skia library) markers route through native
-// SkCanvas/SkPath/SkVertices rasterization, so MarkerBatch,
-// PathCollectionBatch, and QuadMeshBatch report native; hatching still loops
-// through the CPU path until its native entrypoint lands, so it stays bridged.
+// With the pure-Go CPU bridge the optional batch interfaces and transformed
+// images are satisfied by compatibility loops or the embedded CPU renderer, and
+// hatch metadata is consumed via the renderer-neutral DrawHatchFallback helper,
+// so those report as bridged. When a native Skia surface bridge is active (the
+// skiacgo build links a real Skia library), markers, path collections, quad
+// meshes, and transformed RGBA images route through native Skia rasterization;
+// hatching still loops through the CPU path until its native entrypoint lands,
+// so it stays bridged.
 func (r *Renderer) IsCapabilityBridged(name string) bool {
 	native := r != nil && r.bridge != nil && r.bridge.Info().NativeSurface
 	switch name {
-	case "markerbatch", "pathcollectionbatch", "quadmeshbatch":
+	case "imagetransform", "markerbatch", "pathcollectionbatch", "quadmeshbatch":
 		return !native
 	case "nativehatcher":
 		return true
