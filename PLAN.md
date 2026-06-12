@@ -215,7 +215,13 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             translating the relevant upstream geo tick-label/xlabel placement
             from `third_party/matplotlib/lib/matplotlib/projections/geo.py`
             into `core/projection_lambert.go` / `core/geo.go`; expected residual
-            is the center `"0"` tick label and xlabel fringe only.
+            is the center `"0"` tick label and xlabel fringe only. 2026-06-12
+            investigation: GeoAxes transform, frame fallback, label anchor
+            `(260, 46.4444)`, and Matplotlib's `draw_text` bitmap offset all
+            match upstream for the fixture. The remaining standalone RMSE is
+            dominated by a one-pixel `longitude` glyph coverage difference;
+            avoid a fixture-specific label offset unless the text renderer root
+            cause is proven.
       - [ ] **W2b.3 — Skew-T axes box placement.** Fix the Skew-T panel in
             `projection_toolkit_gallery` by comparing the local skewx projection
             path (`core/skew.go`, `core/axis.go`) against the upstream custom
@@ -232,7 +238,12 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `axisartist_showcase` by porting host/parasite placement semantics
             from `third_party/matplotlib/lib/mpl_toolkits/axes_grid1/parasite_axes.py`
             and adjacent axisartist code into `core/parasite_axes.go` /
-            `core/axis_artist.go`.
+            `core/axis_artist.go`. 2026-06-12 investigation: host/twin limits,
+            right-axis styling, text box, legend, and dense ImageGrid layout are
+            visually/layout-equivalent to the Python references. The residual
+            currently concentrates in dashed floating axes, legend frame/swatch
+            strokes, and image interpolation/color-grid pixels rather than a
+            parasite placement mismatch.
       - [ ] **W2b.5 — Verify and ratchet.** Regold only after the core fixes,
             then run the focused reference compares plus neighboring projection
             cases (`geo_*`, `polar_axes`, `radar_basic`, `skewt_basic`); update
