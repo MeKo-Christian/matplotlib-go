@@ -418,6 +418,18 @@ func TestImShow_ExplicitExtentOriginUpperDoesNotInvertYLimits(t *testing.T) {
 	}
 }
 
+func TestImShow_DefaultInterpolationUsesMatplotlibAntialiased(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(unitRect())
+	img := ax.ImShow([][]float64{{0, 1}, {2, 3}})
+	if img == nil {
+		t.Fatal("ImShow returned nil")
+	}
+	if img.Interpolation != "antialiased" {
+		t.Fatalf("default ImShow interpolation = %q, want matplotlib rc default antialiased", img.Interpolation)
+	}
+}
+
 func TestImShow_InterpolationPropagatesToImage(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(unitRect())

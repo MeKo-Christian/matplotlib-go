@@ -822,6 +822,23 @@ func TestSpinePixelEndpointsRightBoundaryRoundsPastHalfPixel(t *testing.T) {
 	}
 }
 
+func TestSpinePixelEndpointsHorizontalBoundariesUseDeviceSpaceSnap(t *testing.T) {
+	px := geom.Rect{
+		Min: geom.Pt{X: 499.4, Y: 67.5},
+		Max: geom.Pt{X: 847.0, Y: 268.5},
+	}
+
+	b1, b2 := spinePixelEndpoints(AxisBottom, px)
+	if b1.Y != 66.5 || b2.Y != 66.5 {
+		t.Fatalf("bottom spine y = %v..%v, want Matplotlib device-snapped center 66.5", b1.Y, b2.Y)
+	}
+
+	t1, t2 := spinePixelEndpoints(AxisTop, px)
+	if t1.Y != 267.5 || t2.Y != 267.5 {
+		t.Fatalf("top spine y = %v..%v, want Matplotlib device-snapped center 267.5", t1.Y, t2.Y)
+	}
+}
+
 func TestAxesLocatorParamsMajorCountBypassesAdaptiveTickCapacity(t *testing.T) {
 	axes := &Axes{
 		XAxis:    NewXAxis(),

@@ -251,22 +251,30 @@ func (a *Axis) drawSpine(r render.Renderer, ctx *DrawContext) {
 // coordinates with floor(coord+0.5)+0.5, so RMSE regressions after this point
 // should be chased in layout/geometry instead of by weakening the snap.
 func spinePixelEndpoints(side AxisSide, px geom.Rect) (geom.Pt, geom.Pt) {
-	x1 := math.Round(px.Min.X) + 0.5
-	y1 := math.Round(px.Min.Y) - 0.5
-	x2 := math.Floor(px.Max.X+0.5) + 0.5
-	y2 := math.Round(px.Max.Y) - 0.5
+	x1 := snapDisplayX(px.Min.X)
+	y1 := snapDisplayY(px.Min.Y)
+	x2 := snapDisplayX(px.Max.X)
+	y2 := snapDisplayY(px.Max.Y)
 
 	switch side {
 	case AxisBottom:
-		return geom.Pt{X: x1, Y: y2}, geom.Pt{X: x2, Y: y2}
-	case AxisTop:
 		return geom.Pt{X: x1, Y: y1}, geom.Pt{X: x2, Y: y1}
+	case AxisTop:
+		return geom.Pt{X: x1, Y: y2}, geom.Pt{X: x2, Y: y2}
 	case AxisLeft:
 		return geom.Pt{X: x1, Y: y1}, geom.Pt{X: x1, Y: y2}
 	case AxisRight:
 		return geom.Pt{X: x2, Y: y1}, geom.Pt{X: x2, Y: y2}
 	}
 	return geom.Pt{}, geom.Pt{}
+}
+
+func snapDisplayX(x float64) float64 {
+	return math.Floor(x+0.5) + 0.5
+}
+
+func snapDisplayY(y float64) float64 {
+	return math.Ceil(y-0.5) - 0.5
 }
 
 // drawTicks draws tick marks at the specified positions.

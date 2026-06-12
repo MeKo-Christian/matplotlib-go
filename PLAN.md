@@ -250,63 +250,85 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             per-case tolerances only downward or document any frozen exception.
 - [ ] **W3 — ticks, scales, and inset placement.**
       `ticks_scales_formatters_gallery` 17.6, `date_concise_intraday_labels`
-      5.8. The gallery diff isolates three distinct defects: (a) major/minor
-      tick *positions* differ in the MultipleLocator and log panels, (b) the
-      embedded "Categories" inset axes is placed wholly wrong, (c) custom-unit
-      tick labels render doubled/offset. Port targets:
-      `lib/matplotlib/{ticker,scale,dates,category,units}.py` for (a)/(c) and
-      the inset-axes placement path for (b).
-      - [ ] **W3.1 — Baseline and instrument residuals.** Regenerate/inspect
+      5.8. Focus on the large, structural differences first: tick locations,
+      axes rectangles, and text/formatter output. Small line/grid blending
+      differences from the Go AGG port (`../agg_go`) are not W3 blockers unless
+      they mask a larger geometry or style mismatch. Port targets:
+      `lib/matplotlib/{ticker,scale,dates,category,units}.py`, plus
+      `Figure.add_axes` / `Axes.set_position` placement semantics.
+      - [ ] **W3.1 — Baseline, visual triage, and probes.** Regenerate/inspect
             `TestReferenceCompare/{ticks_scales_formatters_gallery,date_concise_intraday_labels}`;
-            preserve the example sources, and add only env-gated diagnostics in
-            `test/diagnostics_test.go` if pixel inspection is insufficient.
-            Record, per affected panel, the first divergent intermediate values:
-            major tick locations, minor tick locations, formatter inputs/outputs,
-            inset axes rectangle in figure coordinates, and final display-space
-            label positions.
+            compare the rendered PNGs visually against
+            `testdata/matplotlib_ref/`, and classify each residual by panel:
+            locator positions, formatter strings, axes placement, or renderer
+            blending. Preserve the example sources. If visual inspection is
+            insufficient, add only env-gated diagnostics in
+            `test/diagnostics_test.go` that log major tick locations, minor tick
+            locations, formatter inputs/outputs, inset rectangles in figure
+            coordinates, and final display-space label boxes.
       - [ ] **W3.2 — MultipleLocator and AutoMinorLocator positions.** Fix the
             "Major and Minor Locators" panel by comparing
-            `core/tick_locators.go` and `core/axis.go` against
-            `third_party/matplotlib/lib/matplotlib/ticker.py`
+            `core/tick_locators.go`, `core/axis.go`, and `core/axes_ticks.go`
+            against `third_party/matplotlib/lib/matplotlib/ticker.py`
             (`MultipleLocator.tick_values`, `AutoMinorLocator.__call__`) and the
             axis view-limit handoff. Add focused unit coverage in
-            `core/tick_test.go` for the `0..6`, base-1.5, `AutoMinorLocator(3)`
-            case before regolding.
-      - [ ] **W3.3 — Log scale major/minor locator handoff.** Fix the log panel
+            `core/tick_test.go` for the `0..6`, base-1.5,
+            `AutoMinorLocator(3)` case before touching goldens.
+      - [ ] **W3.3 — Log-scale locator and formatter handoff.** Fix the log panel
             by tracing `SetXScale("log")`, default major locator installation,
-            and explicit `LogLocator{Base: 10, SubsMode: "auto"}` minor ticks
-            through `transform/scale_registry.go`, `core/axes_ticks.go`, and
-            `core/tick_locators.go`. Port the relevant behavior from
+            explicit `LogLocator(base=10, subs="auto")` minor ticks, and
+            `LogFormatterMathtext(base=10)` labels through
+            `transform/scale_registry.go`, `core/axes_scale.go`,
+            `core/axes_ticks.go`, `core/tick_locators.go`, and the formatter
+            path. Port the relevant behavior from
             `third_party/matplotlib/lib/matplotlib/scale.py` and
             `third_party/matplotlib/lib/matplotlib/ticker.py`; verify with
-            `locator_log_minor_threshold_labels` and the W3 gallery.
-      - [ ] **W3.4 — Concise intraday date labels.** Fix
+            `locator_log_minor_threshold_labels`, `scale_log_variants`, and the
+            W3 gallery.
+      - [ ] **W3.4 — Gallery date locator/formatter panel.** Fix the "Date and
+            Category Formatters" main axes by tracing `DayLocator`,
+            `DateFormatter("%d %b", tz=UTC)`, `Axes.margins(0.04)`, and date
+            unit conversion through `core/date_tick.go`, `core/units.go`, and
+            `core/axes.go`. Port the relevant behavior from
+            `third_party/matplotlib/lib/matplotlib/dates.py`; confirm the
+            `01 Feb`, `07 Feb`, `14 Feb`, `21 Feb` ticks land at upstream
+            positions before evaluating pixel residue.
+      - [ ] **W3.5 — Concise intraday date labels.** Fix
             `date_concise_intraday_labels` by porting the shared locator-aware
-            label-level selection and zero-format/offset handling from
+            label-level selection, zero-format handling, and offset-string
+            suppression from
             `third_party/matplotlib/lib/matplotlib/dates.py`
             (`ConciseDateFormatter`) into `core/date_tick.go`. Keep the public
             Go API value-style, but make the formatter observe the full tick
             sequence exactly like upstream.
-      - [ ] **W3.5 — Category inset axes placement.** Fix the embedded
+      - [ ] **W3.6 — Category inset axes placement.** Fix the embedded
             "Categories" axes rectangle in `ticks_scales_formatters_gallery` by
-            comparing `Figure.AddAxes` / axes bounding-box handling in
-            `core/figure.go`, `core/axes.go`, and `internal/geom` with
-            upstream `Figure.add_axes` / `Axes.set_position` behavior. The target
-            rectangle is the Python reference's figure-fraction
-            `go_rect(0.30, 0.16, 0.43, 0.30)`; do not compensate by changing the
-            example.
-      - [ ] **W3.6 — Custom-unit formatter duplication/offset.** Fix the
+            comparing `Figure.AddAxes`, axes bounding-box handling, and any
+            locator/position override path in `core/figure.go`, `core/axes.go`,
+            `core/axes_locator.go`, and `internal/geom` with upstream
+            `Figure.add_axes` / `Axes.set_position`. The target rectangle is the
+            Python reference's figure-fraction `go_rect(0.30, 0.16, 0.43, 0.30)`;
+            do not compensate by changing the example.
+      - [ ] **W3.7 — Category tick conversion inside the inset.** Once the inset
+            rectangle is correct, verify the categorical bar positions and hidden
+            x tick labels against
+            `third_party/matplotlib/lib/matplotlib/category.py`. If the bars or
+            ticks still differ after placement is fixed, port the category
+            mapping/default-unit behavior through `core/units.go` and
+            `core/axes.go`, with focused coverage in `core/units_test.go`.
+      - [ ] **W3.8 — Custom-unit formatter duplication/offset.** Fix the
             custom-unit panel by tracing `PlotUnits` / `ScatterUnits` /
             `AutoScale` through `core/units.go`, `core/axes.go`, and
             `internal/parityutil` test converters, then port the relevant
             conversion and default-unit behavior from
-            `third_party/matplotlib/lib/matplotlib/{category,units}.py`.
-            Confirm tick labels are produced once, at the same display positions
-            as upstream, and that `units_custom_converter` still passes.
-      - [ ] **W3.7 — Verify, regold, and ratchet.** After the core fixes, regold
-            `ticks_scales_formatters_gallery` and `date_concise_intraday_labels`;
-            run their focused `TestReferenceCompare` targets plus neighboring
-            locator/unit/date cases (`locator_*`, `scale_*`, `units_*`,
+            `third_party/matplotlib/lib/matplotlib/units.py`. Confirm tick
+            labels are produced once, at the same display positions as upstream,
+            and that `units_custom_converter` still passes.
+      - [ ] **W3.9 — Verification and tolerance ratchet.** After the core fixes,
+            regold `ticks_scales_formatters_gallery` and
+            `date_concise_intraday_labels`; run their focused
+            `TestReferenceCompare` targets plus neighboring locator/unit/date
+            cases (`locator_*`, `scale_*`, `units_*`, `date_*`,
             `ticks_styling_surface`). Update tolerances only downward unless a
             documented upstream-incompatible exception remains.
 - [ ] **W4 — text layout: wrapping and rotated multiline.**

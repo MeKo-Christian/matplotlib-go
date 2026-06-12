@@ -39,7 +39,8 @@ type ImShowOptions struct {
 	// (left, right, bottom, top) data coordinates.
 	Extent *[4]float64
 	// Interpolation selects the resampling filter (e.g. "nearest",
-	// "bilinear", "bicubic"). Empty defers to the renderer default.
+	// "bilinear", "bicubic"). Nil uses Matplotlib's rc default
+	// "antialiased"; a pointer to "" defers to the renderer default.
 	Interpolation *string
 }
 
@@ -164,9 +165,11 @@ func (a *Axes) ImShow(data [][]float64, opts ...ImShowOptions) *Image2D {
 		return nil
 	}
 
+	defaultInterpolation := "antialiased"
 	cfg := ImShowOptions{
-		Aspect: "equal",
-		Origin: ImageOriginUpper,
+		Aspect:        "equal",
+		Origin:        ImageOriginUpper,
+		Interpolation: &defaultInterpolation,
 	}
 	if len(opts) > 0 {
 		opt := opts[0]
