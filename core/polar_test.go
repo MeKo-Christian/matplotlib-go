@@ -288,7 +288,9 @@ func TestPolarRadialLabelPositionAffectsTicksAndLabels(t *testing.T) {
 	fontSize := tickLabelFontSize(ax.YAxis, ctx)
 	layout := measureSingleLineTextLayout(r, "radial", fontSize, ctx.RC.FontKey)
 	anchor := polarPixelPoint(center, outerRadius*0.5, math.Pi)
-	hAlign, vAlign := polarTickLabelAlignments(math.Pi)
+	// Full-circle polar axes anchor radial labels with ha='left', va='bottom'
+	// (matplotlib PolarAxes.get_yaxis_text1_transform).
+	hAlign, vAlign := polarRadialTickLabelAlignments(true, math.Pi)
 	wantOrigin := alignedSingleLineOrigin(anchor, layout, hAlign, vAlign)
 
 	if !approx(r.origins[0].X, wantOrigin.X, 1e-6) || !approx(r.origins[0].Y, wantOrigin.Y, 1e-6) {

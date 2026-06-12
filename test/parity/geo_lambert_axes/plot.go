@@ -30,6 +30,7 @@ func Plot() *core.Figure {
 	ax.SetXLabel("longitude")
 	ax.SetYLabel("latitude")
 	ax.XAxis.Locator = core.FixedLocator{TicksList: common.LambertLongitudeTicks()}
+	ax.XAxis.Formatter = core.FuncFormatter(common.PlainDegreeFormat)
 
 	gridColor := render.Color{R: 0.78, G: 0.80, B: 0.84, A: 1}
 	lonGrid := ax.AddGrid(core.AxisBottom)

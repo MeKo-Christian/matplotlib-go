@@ -132,11 +132,13 @@ func TestMollweideDefaultsUseMatplotlibGeoTickLabels(t *testing.T) {
 	if got, want := len(yTicks), 11; got != want {
 		t.Fatalf("latitude tick count = %d, want %d", got, want)
 	}
-	if got := formatTickLabel(ax.XAxis.Formatter, xTicks[0], 0, xTicks); got != "-150" {
-		t.Fatalf("first longitude label = %q, want -150", got)
+	// The default geo formatter is matplotlib's ThetaFormatter: degrees with a
+	// trailing degree sign (projections/geo.py).
+	if got := formatTickLabel(ax.XAxis.Formatter, xTicks[0], 0, xTicks); got != "-150°" {
+		t.Fatalf("first longitude label = %q, want -150°", got)
 	}
-	if got := formatTickLabel(ax.YAxis.Formatter, yTicks[len(yTicks)-1], len(yTicks)-1, yTicks); got != "75" {
-		t.Fatalf("last latitude label = %q, want 75", got)
+	if got := formatTickLabel(ax.YAxis.Formatter, yTicks[len(yTicks)-1], len(yTicks)-1, yTicks); got != "75°" {
+		t.Fatalf("last latitude label = %q, want 75°", got)
 	}
 }
 
@@ -152,11 +154,11 @@ func TestMollweideXAxisTickLabelsUseGeoTextTransform(t *testing.T) {
 
 	ax.XAxis.DrawTickLabels(r, ctx)
 
-	if got, want := r.texts, []string{"0"}; len(got) != len(want) || got[0] != want[0] {
+	if got, want := r.texts, []string{"0°"}; len(got) != len(want) || got[0] != want[0] {
 		t.Fatalf("x tick labels = %v, want %v", got, want)
 	}
 	pos := ctx.DataToPixel.Apply(geom.Pt{X: 0, Y: 0})
-	layout := measureSingleLineTextLayout(r, "0", tickLabelFontSize(ax.XAxis, ctx), ctx.RC.FontKey)
+	layout := measureSingleLineTextLayout(r, "0°", tickLabelFontSize(ax.XAxis, ctx), ctx.RC.FontKey)
 	want := alignedSingleLineOrigin(
 		geom.Pt{X: pos.X, Y: pos.Y + geoXAxisLabelPadPx},
 		layout,

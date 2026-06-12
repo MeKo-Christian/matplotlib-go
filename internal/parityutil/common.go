@@ -187,6 +187,13 @@ func LambertLongitudeTicks() []float64 {
 	return ticks
 }
 
+// PlainDegreeFormat mirrors the matplotlib reference fixtures' plain degree
+// formatter (`lambda x, _: f"{round(x * 180.0 / math.pi):.0f}"`), which
+// replaces the geo axes' default ThetaFormatter (degrees with a degree sign).
+func PlainDegreeFormat(rad float64) string {
+	return fmt.Sprintf("%.0f", math.Round(rad*180/math.Pi))
+}
+
 // PlotGeoProjectionAxes builds a geographic-projection figure with a single
 // sinusoidal lat/lon trace. Backend-agnostic.
 func PlotGeoProjectionAxes(projection, title string, lonMin, lonMax float64) *core.Figure {
@@ -201,6 +208,8 @@ func PlotGeoProjectionAxes(projection, title string, lonMin, lonMax float64) *co
 	ax.SetTitle(title)
 	ax.SetXLabel("longitude")
 	ax.SetYLabel("latitude")
+	ax.XAxis.Formatter = core.FuncFormatter(PlainDegreeFormat)
+	ax.YAxis.Formatter = core.FuncFormatter(PlainDegreeFormat)
 
 	gridColor := render.Color{R: 0.78, G: 0.80, B: 0.84, A: 1}
 	lonGrid := ax.AddGrid(core.AxisBottom)

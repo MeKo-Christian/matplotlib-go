@@ -102,7 +102,9 @@ func TestRadarRadialLabelsUseMatplotlibDefaultOffsetFromNorth(t *testing.T) {
 	fontSize := tickLabelFontSize(ax.YAxis, ctx)
 	layout := measureSingleLineTextLayout(r, "radial", fontSize, ctx.RC.FontKey)
 	anchor := polarPixelPoint(center, outerRadius*0.5, labelAngle)
-	hAlign, vAlign := polarTickLabelAlignments(labelAngle)
+	// Full-circle polar axes anchor radial labels with ha='left', va='bottom'
+	// (matplotlib PolarAxes.get_yaxis_text1_transform).
+	hAlign, vAlign := polarRadialTickLabelAlignments(true, labelAngle)
 	wantOrigin := alignedSingleLineOrigin(anchor, layout, hAlign, vAlign)
 
 	if !approx(r.origins[0].X, wantOrigin.X, 1e-6) || !approx(r.origins[0].Y, wantOrigin.Y, 1e-6) {

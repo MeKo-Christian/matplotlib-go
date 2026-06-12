@@ -69,14 +69,14 @@ func (p *geoProjection) ConfigureAxes(ax *Axes) {
 
 	ax.XAxis.Locator = FixedLocator{TicksList: longitudeTicks}
 	ax.XAxis.MinorLocator = NullLocator{}
-	ax.XAxis.Formatter = FuncFormatter(formatGeoDegreeLabel)
+	ax.XAxis.Formatter = FuncFormatter(geoThetaFormat(30))
 	ax.XAxis.ShowSpine = true
 	ax.XAxis.ShowTicks = false
 	ax.XAxis.ShowLabels = true
 
 	ax.YAxis.Locator = FixedLocator{TicksList: latitudeTicks}
 	ax.YAxis.MinorLocator = NullLocator{}
-	ax.YAxis.Formatter = FuncFormatter(formatGeoDegreeLabel)
+	ax.YAxis.Formatter = FuncFormatter(geoThetaFormat(15))
 	ax.YAxis.ShowSpine = false
 	ax.YAxis.ShowTicks = false
 	ax.YAxis.ShowLabels = true
@@ -219,9 +219,12 @@ func drawGeoGridLine(r render.Renderer, ctx *DrawContext, axis AxisSide, tick fl
 			path.LineTo(pt)
 		}
 	}
-	// Straight parallels/meridians (e.g. Mollweide latitude lines) snap to
-	// pixel rows/columns in matplotlib's AGG renderer; curved ones pass through.
-	r.Path(snapPathToPixels(path, paint.LineWidth), &paint)
+	// matplotlib gridlines are Line2D artists with snap=None, which the AGG
+	// renderer treats as SNAP_AUTO: straight parallels/meridians (e.g.
+	// Mollweide latitude lines) snap to pixel rows/columns in device space,
+	// curved ones pass through (src/path_converters.h PathSnapper).
+	paint.Snap = render.SnapAuto
+	r.Path(path, &paint)
 }
 
 func (a *Axis) drawGeoTickLabels(r render.Renderer, ctx *DrawContext) {
@@ -335,15 +338,20 @@ func geoLatitudeLabelPoint(ctx *DrawContext, lon, lat float64) geom.Pt {
 	return ctx.TransAxes().Apply(axesPt)
 }
 
-func formatGeoDegreeLabel(rad float64) string {
-	deg := rad * 180 / math.Pi
-	if approx(deg, math.Round(deg), 1e-9) {
-		deg = math.Round(deg)
+// geoThetaFormat ports matplotlib's GeoAxes.ThetaFormatter
+// (projections/geo.py): radians are converted to degrees, rounded to the grid
+// spacing, and rendered with a trailing degree sign. It is the default
+// formatter for geographic axes; fixtures mirroring upstream examples that
+// install a plain FuncFormatter override it the same way the Python originals
+// do.
+func geoThetaFormat(roundTo float64) func(float64) string {
+	return func(rad float64) string {
+		deg := rad * 180 / math.Pi
+		if roundTo > 0 {
+			deg = math.Round(deg/roundTo) * roundTo
+		}
+		return fmt.Sprintf("%.0f°", deg)
 	}
-	if approx(deg, 0, 1e-9) {
-		return "0"
-	}
-	return fmt.Sprintf("%.0f", deg)
 }
 
 func clamp(v, lo, hi float64) float64 {
