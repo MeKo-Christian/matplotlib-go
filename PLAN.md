@@ -197,9 +197,14 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
       `projection_toolkit_gallery` 20.2→**11.9**.
       Remaining (tracked under W2b below): `geo_lambert_axes` 5.24 (center
       "0" tick label + xlabel fringe), and the gallery's non-geo panels.
-- [ ] **W2b — gallery leftovers.** `projection_toolkit_gallery` 11.9 and
-      `axisartist_showcase` 5.7: close the remaining projection/toolkit residuals
-      without example-source workarounds.
+- [x] **W2b — gallery leftovers. DONE 2026-06-12** — closed the remaining
+      projection/toolkit residuals without example-source workarounds. Final
+      focused reference-compare metrics after regolding the affected projection
+      cases: `geo_lambert_axes` **0.60**, `axisartist_showcase` **2.66**,
+      `projection_toolkit_gallery` **3.93**; neighboring projection cases also
+      stay under RMSE 5 (`polar_axes` 4.75, `geo_mollweide_axes` 4.24,
+      `geo_aitoff_axes` 3.67, `geo_hammer_axes` 3.67, `radar_basic` 0.35,
+      `skewt_basic` 2.87).
       - [x] **W2b.1 — Baseline and classify residuals.** Regenerate/inspect
             `TestReferenceCompare/{geo_lambert_axes,projection_toolkit_gallery,axisartist_showcase}`;
             use the committed diff artifacts under
@@ -211,18 +216,20 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             and `axisartist_showcase` 5.68. The gallery residual is now
             concentrated in the bottom Skew-T/AxisArtist panels; the Lambert
             panel is already about RMSE 3.8 inside the gallery.
-      - [ ] **W2b.2 — Lambert label fringe.** Fix `geo_lambert_axes` 5.24 by
+      - [x] **W2b.2 — Lambert label fringe.** Fix `geo_lambert_axes` 5.24 by
             translating the relevant upstream geo tick-label/xlabel placement
             from `third_party/matplotlib/lib/matplotlib/projections/geo.py`
             into `core/projection_lambert.go` / `core/geo.go`; expected residual
             is the center `"0"` tick label and xlabel fringe only. 2026-06-12
             investigation: GeoAxes transform, frame fallback, label anchor
             `(260, 46.4444)`, and Matplotlib's `draw_text` bitmap offset all
-            match upstream for the fixture. The remaining standalone RMSE is
-            dominated by a one-pixel `longitude` glyph coverage difference;
-            avoid a fixture-specific label offset unless the text renderer root
-            cause is proven.
-      - [ ] **W2b.3 — Skew-T axes box placement.** Fix the Skew-T panel in
+            matched upstream for the fixture. The proven root cause was a
+            floating half-tie in AGG text-image placement: Go computed
+            `227.25000000000006 + 1.25`, so round-to-even landed one pixel to
+            the right where Matplotlib hit the exact half tie. `pythonRound`
+            now normalizes tiny half-tie noise before round-to-even, dropping
+            `geo_lambert_axes` to RMSE 0.60.
+      - [x] **W2b.3 — Skew-T axes box placement.** Fix the Skew-T panel in
             `projection_toolkit_gallery` by comparing the local skewx projection
             path (`core/skew.go`, `core/axis.go`) against the upstream custom
             skew projection embedded in
@@ -231,9 +238,11 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             2026-06-12 progress: fixed the default log formatter's Matplotlib
             `minor_thresholds=(1, 0.4)` behavior and the Skew-X y-grid blended
             transform so pressure gridlines span the axes instead of being
-            skew-clipped. Remaining visible Skew-T residue is mostly spine,
-            legend, and line anti-alias/placement noise.
-      - [ ] **W2b.4 — Parasite right-axis placement.** Fix the AxisArtist/Twin
+            skew-clipped. Closure came from matching AGG-style device-space
+            horizontal spine snapping and preserving Matplotlib `Line2D`
+            snap-auto on reference-line artists; remaining line/grid differences
+            are below the W2b threshold and consistent with renderer-level AA.
+      - [x] **W2b.4 — Parasite right-axis placement.** Fix the AxisArtist/Twin
             panel residual in `projection_toolkit_gallery` and
             `axisartist_showcase` by porting host/parasite placement semantics
             from `third_party/matplotlib/lib/mpl_toolkits/axes_grid1/parasite_axes.py`
@@ -241,13 +250,20 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `core/axis_artist.go`. 2026-06-12 investigation: host/twin limits,
             right-axis styling, text box, legend, and dense ImageGrid layout are
             visually/layout-equivalent to the Python references. The residual
-            currently concentrates in dashed floating axes, legend frame/swatch
-            strokes, and image interpolation/color-grid pixels rather than a
-            parasite placement mismatch.
-      - [ ] **W2b.5 — Verify and ratchet.** Regold only after the core fixes,
+            concentrated in dashed floating axes and legend strokes rather than
+            parasite placement. Reference-line dashes now use Matplotlib
+            linewidth scaling and snap-auto like `Line2D`, dropping
+            `axisartist_showcase` to RMSE 2.66 and helping the gallery reach
+            RMSE 3.93.
+      - [x] **W2b.5 — Verify and ratchet.** Regold only after the core fixes,
             then run the focused reference compares plus neighboring projection
             cases (`geo_*`, `polar_axes`, `radar_basic`, `skewt_basic`); update
             per-case tolerances only downward or document any frozen exception.
+            2026-06-12 verification:
+            `go test ./backends/agg -run 'Test(PythonRoundTreatsFloatingHalfTiesLikeMatplotlibTextPlacement|BlendAlphaMaskAppliesTextAlphaAndClips)$'`,
+            `go test ./core -run 'TestAxesAx(HLine_UsesBlendedCoordinates|HLine_ScalesDashesLikeMatplotlibLine2D|HLine_UsesMatplotlibLine2DSnap|Line_ClipsToCurrentView)$|TestSpinePixelEndpoints(RightBoundaryUsesMatplotlibPathSnapper|RightBoundaryRoundsPastHalfPixel|HorizontalBoundariesUseDeviceSpaceSnap)$'`,
+            targeted `TestGolden` update for the projection cases, and
+            `TestReferenceCompare/(geo_lambert_axes|projection_toolkit_gallery|axisartist_showcase|geo_mollweide_axes|geo_aitoff_axes|geo_hammer_axes|polar_axes|radar_basic|skewt_basic)$`.
 - [ ] **W3 — ticks, scales, and inset placement.**
       `ticks_scales_formatters_gallery` 17.6, `date_concise_intraday_labels`
       5.8. Focus on the large, structural differences first: tick locations,

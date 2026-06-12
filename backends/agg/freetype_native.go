@@ -173,6 +173,10 @@ func (r *Renderer) drawNativeFreetypeText(text string, face render.FontFace, ori
 // Matplotlib's Python AGG backend calls Python round() before draw_text_image,
 // which is ties-to-even, not Go's half-away-from-zero math.Round.
 func pythonRound(v float64) float64 {
+	half := math.Floor(v) + 0.5
+	if math.Abs(v-half) < 1e-9 {
+		v = half
+	}
 	return math.RoundToEven(v)
 }
 

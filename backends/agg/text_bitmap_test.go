@@ -30,3 +30,15 @@ func TestBlendAlphaMaskAppliesTextAlphaAndClips(t *testing.T) {
 		t.Fatalf("out-of-mask destination pixel changed: %+v", got)
 	}
 }
+
+func TestPythonRoundTreatsFloatingHalfTiesLikeMatplotlibTextPlacement(t *testing.T) {
+	if got := pythonRound(228.50000000000006); got != 228 {
+		t.Fatalf("pythonRound near even half tie = %v, want 228", got)
+	}
+	if got := pythonRound(229.50000000000006); got != 230 {
+		t.Fatalf("pythonRound near odd half tie = %v, want 230", got)
+	}
+	if got := pythonRound(228.5001); got != 229 {
+		t.Fatalf("pythonRound non-tie = %v, want 229", got)
+	}
+}
