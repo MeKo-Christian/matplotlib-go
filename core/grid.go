@@ -86,6 +86,9 @@ func (g *Grid) Draw(r render.Renderer, ctx *DrawContext) {
 		if minorLoc == nil {
 			minorLoc = MinorLinearLocator{N: 5}
 		}
+		if axis != nil {
+			minorLoc = locatorWithMajorContext(minorLoc, axis.Locator)
+		}
 		minorTicks := visibleTicks(minorLoc.Ticks(domainMin, domainMax, g.cartesianTargetTickCount(axis, true, ctx, isXAxis)), domainMin, domainMax)
 
 		minorColor := g.MinorColor
@@ -359,13 +362,18 @@ func (g *Grid) axisForContext(ctx *DrawContext) *Axis {
 
 func (g *Grid) curvelinearLocator(axis *Axis, minor bool) Locator {
 	if minor {
+		var loc Locator
 		if g.MinorLocator != nil {
-			return g.MinorLocator
+			loc = g.MinorLocator
+		} else if axis != nil && axis.MinorLocator != nil {
+			loc = axis.MinorLocator
+		} else {
+			loc = MinorLinearLocator{N: 5}
 		}
-		if axis != nil && axis.MinorLocator != nil {
-			return axis.MinorLocator
+		if axis != nil {
+			loc = locatorWithMajorContext(loc, axis.Locator)
 		}
-		return MinorLinearLocator{N: 5}
+		return loc
 	}
 	if g.Locator != nil {
 		return g.Locator

@@ -1,8 +1,10 @@
 package core
 
 import (
+	"fmt"
 	"math"
 	"testing"
+	"time"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -1347,6 +1349,46 @@ func TestGrid_UsesOwningAxisMajorLocator(t *testing.T) {
 	}
 }
 
+func TestGrid_AutoMinorLocatorUsesOwningAxisMajorLocator(t *testing.T) {
+	grid := NewGrid(AxisBottom)
+	grid.Major = false
+	grid.Minor = true
+	ctx := createTestDrawContext()
+	ctx.DataToPixel.XScale = transform.NewLinear(0, 6)
+	ctx.Axes = &Axes{
+		XAxis: NewXAxis(),
+		YAxis: NewYAxis(),
+	}
+	ctx.Axes.XAxis.Locator = MultipleLocator{Base: 1.5}
+	ctx.Axes.XAxis.MinorLocator = AutoMinorLocator{N: 3}
+
+	renderer := &gridRecordingRenderer{}
+	_ = renderer.Begin(geom.Rect{})
+	grid.Draw(renderer, ctx)
+	_ = renderer.End()
+
+	got := make([]float64, 0, len(renderer.paths))
+	for _, path := range renderer.paths {
+		if len(path.V) == 0 {
+			continue
+		}
+		data, ok := ctx.DataToPixel.Invert(path.V[0])
+		if !ok {
+			t.Fatalf("invert grid path point %+v", path.V[0])
+		}
+		got = append(got, math.Round(data.X*2)/2)
+	}
+	want := []float64{0.5, 1, 2, 2.5, 3.5, 4, 5, 5.5}
+	if len(got) != len(want) {
+		t.Fatalf("minor grid ticks = %v, want %v", got, want)
+	}
+	for i := range want {
+		if math.Abs(got[i]-want[i]) > 1e-9 {
+			t.Fatalf("minor grid tick %d = %v, want %v (all %v)", i, got[i], want[i], got)
+		}
+	}
+}
+
 func TestGrid_Disabled(t *testing.T) {
 	// Test grid with major disabled
 	grid := NewGrid(AxisLeft)
@@ -1457,6 +1499,44 @@ func TestAxis_DrawTickLabels_OmitsXLabelsOutsideViewLimits(t *testing.T) {
 		if r.texts[i] != want[i] {
 			t.Fatalf("tick label %d mismatch: got %q want %q", i, r.texts[i], want[i])
 		}
+	}
+}
+
+func TestAxis_DrawTickLabels_DrawsConciseDateOffsetText(t *testing.T) {
+	axis := NewXAxis()
+	start := time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC)
+	ticks := []float64{
+		timeToDateNumber(start),
+		timeToDateNumber(start.Add(6 * time.Hour)),
+		timeToDateNumber(start.Add(12 * time.Hour)),
+		timeToDateNumber(start.Add(18 * time.Hour)),
+	}
+	axis.Locator = FixedLocator{TicksList: ticks}
+	axis.Formatter = ConciseDateFormatter{Location: time.UTC}
+
+	ctx := createTestDrawContext()
+	ctx.DataToPixel.XScale = transform.NewLinear(ticks[0], ticks[len(ticks)-1])
+
+	var r axisLabelRecordingRenderer
+	if err := r.Begin(geom.Rect{}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	axis.DrawTickLabels(&r, ctx)
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	want := []string{"Jan-02", "06:00", "12:00", "18:00", "2024-Jan-02"}
+	if fmt.Sprint(r.texts) != fmt.Sprint(want) {
+		t.Fatalf("drawn concise labels = %v, want %v", r.texts, want)
+	}
+	if len(r.origins) != len(want) {
+		t.Fatalf("drawn origins = %d, want %d", len(r.origins), len(want))
+	}
+	offset := r.origins[len(r.origins)-1]
+	first := r.origins[0]
+	if !(offset.X > first.X && offset.Y < first.Y) {
+		t.Fatalf("offset origin = %+v, want bottom-right below labels starting at %+v", offset, first)
 	}
 }
 

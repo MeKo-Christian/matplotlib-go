@@ -215,10 +215,6 @@ func TestLogLocator_MajorsMonotone(t *testing.T) {
 		if !strictlyIncreasing(ticks) {
 			t.Fatalf("log ticks not increasing: %+v", ticks)
 		}
-		// All ticks should be within [min,max]
-		if ticks[0] < 1-1e-12 || ticks[len(ticks)-1] > 1e6+1e-12 {
-			t.Fatalf("log ticks out of range: first=%v last=%v", ticks[0], ticks[len(ticks)-1])
-		}
 	}
 }
 
@@ -248,21 +244,21 @@ func TestLogLocator_MinorsBetweenMajors(t *testing.T) {
 
 func TestLogLocatorSubsAutoAndAllModes(t *testing.T) {
 	auto := (LogLocator{Base: 10, SubsMode: "auto"}).Ticks(1, 100, 0)
-	for _, major := range []float64{1, 10, 100} {
+	for _, major := range []float64{0.1, 1, 10, 100, 1000} {
 		for _, tick := range auto {
 			if tick == major {
 				t.Fatalf("auto subs should omit integer powers, got %v", auto)
 			}
 		}
 	}
-	for _, want := range []float64{2, 3, 9, 20, 90} {
+	for _, want := range []float64{0.2, 0.9, 2, 3, 9, 20, 90, 200, 9000} {
 		if !hasTick(auto, want) {
 			t.Fatalf("auto subs missing %v in %v", want, auto)
 		}
 	}
 
 	all := (LogLocator{Base: 10, SubsMode: "all"}).Ticks(1, 100, 0)
-	for _, want := range []float64{1, 2, 9, 10, 20, 90, 100} {
+	for _, want := range []float64{0.1, 0.2, 0.9, 1, 2, 9, 10, 20, 90, 100, 1000, 9000} {
 		if !hasTick(all, want) {
 			t.Fatalf("all subs missing %v in %v", want, all)
 		}
@@ -276,8 +272,8 @@ func TestLogLocatorSubsAutoAndAllModes(t *testing.T) {
 
 func TestLogLocatorRespectsTickBudgetAndSuppressesDenseMinors(t *testing.T) {
 	majors := (LogLocator{Base: 10, NumTicks: 4}).Ticks(1, 1e12, 0)
-	if len(majors) > 6 {
-		t.Fatalf("budgeted log major ticks = %v, want a thinned set", majors)
+	if len(majors) != 7 {
+		t.Fatalf("budgeted log major ticks = %v, want Matplotlib's one-stride-padded thinned set", majors)
 	}
 	if !strictlyIncreasing(majors) {
 		t.Fatalf("budgeted log major ticks not increasing: %v", majors)
@@ -311,21 +307,21 @@ func TestLogLocatorStrideAndInvalidDomains(t *testing.T) {
 			loc:    LogLocator{Base: 2, NumTicks: 4},
 			minVal: 1,
 			maxVal: 1024,
-			want:   []float64{1, 8, 64, 512},
+			want:   []float64{0.125, 1, 8, 64, 512, 4096, 32768},
 		},
 		{
 			name:   "base10-budgeted",
 			loc:    LogLocator{Base: 10, NumTicks: 4},
 			minVal: 1,
 			maxVal: 1e12,
-			want:   []float64{1, 1e3, 1e6, 1e9, 1e12},
+			want:   []float64{1e-3, 1, 1e3, 1e6, 1e9, 1e12, 1e15},
 		},
 		{
 			name:   "inverted-domain",
 			loc:    LogLocator{Base: 10},
 			minVal: 100,
 			maxVal: 1,
-			want:   []float64{1, 10, 100},
+			want:   []float64{0.1, 1, 10, 100, 1000},
 		},
 	}
 	for _, tc := range cases {
@@ -507,13 +503,26 @@ func TestFixedLocator_NbinsSubsamplesIncludingSmallestAbs(t *testing.T) {
 
 func TestMultipleLocator_Basic(t *testing.T) {
 	ticks := (MultipleLocator{Base: 2.5}).Ticks(0.5, 8.5, 0)
-	want := []float64{2.5, 5, 7.5}
+	want := []float64{0, 2.5, 5, 7.5, 10}
 	if len(ticks) != len(want) {
 		t.Fatalf("MultipleLocator tick count = %d, want %d (%v)", len(ticks), len(want), ticks)
 	}
 	for i := range want {
 		if math.Abs(ticks[i]-want[i]) > 1e-12 {
 			t.Fatalf("MultipleLocator tick %d = %v, want %v", i, ticks[i], want[i])
+		}
+	}
+}
+
+func TestAutoMinorLocator_UsesMajorLocatorStepLikeMatplotlib(t *testing.T) {
+	ticks := (AutoMinorLocator{N: 3, Major: MultipleLocator{Base: 1.5}}).Ticks(0, 6, 0)
+	want := []float64{0.5, 1, 2, 2.5, 3.5, 4, 5, 5.5}
+	if len(ticks) != len(want) {
+		t.Fatalf("AutoMinorLocator ticks = %v, want %v", ticks, want)
+	}
+	for i := range want {
+		if math.Abs(ticks[i]-want[i]) > 1e-12 {
+			t.Fatalf("AutoMinorLocator tick %d = %v, want %v", i, ticks[i], want[i])
 		}
 	}
 }

@@ -148,8 +148,8 @@ func addDateCategoryPanel(fig *core.Figure, rect geom.Rect) {
 	ax.AutoScale(0.04)
 
 	right := fig.AddAxes(geom.Rect{
-		Min: geom.Pt{X: rect.Min.X + 0.23, Y: rect.Min.Y + 0.06},
-		Max: geom.Pt{X: rect.Max.X - 0.02, Y: rect.Max.Y - 0.04},
+		Min: geom.Pt{X: 0.30, Y: 0.16},
+		Max: geom.Pt{X: 0.43, Y: 0.30},
 	})
 	right.SetTitle("Categories")
 	right.XAxis.ShowLabels = false
@@ -171,8 +171,11 @@ func addCustomUnitPanel(fig *core.Figure, rect geom.Rect) {
 	if _, err := ax.ScatterUnits(distances, pace, core.ScatterOptions{Color: &green, EdgeColor: &blue, Size: ptr(core.ScatterAreaFromRadius(5.0, DPI))}); err != nil {
 		panic(err)
 	}
+	ax.SetXLim(3, 44)
 	ax.SetYLim(0, 1)
-	ax.AutoScale(0.08)
+	ax.XAxis.Formatter = core.FuncFormatter(func(v float64) string {
+		return fmt.Sprintf("%g km", v)
+	})
 	ax.YAxis.Formatter = core.PercentFormatter{XMax: 1, DisplayRange: 1}
 }
 

@@ -418,6 +418,23 @@ func TestConciseDateFormatterUsesSharedTickLevel(t *testing.T) {
 	}
 }
 
+func TestConciseDateFormatterOffsetTextUsesSharedDateContext(t *testing.T) {
+	formatter := ConciseDateFormatter{Location: time.UTC}
+	ticks := []float64{
+		timeToDateNumber(time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC)),
+		timeToDateNumber(time.Date(2024, time.January, 2, 6, 0, 0, 0, time.UTC)),
+		timeToDateNumber(time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC)),
+		timeToDateNumber(time.Date(2024, time.January, 2, 18, 0, 0, 0, time.UTC)),
+	}
+	offsetter, ok := any(formatter).(OffsetFormatter)
+	if !ok {
+		t.Fatal("ConciseDateFormatter should provide axis offset text")
+	}
+	if got := offsetter.OffsetText(ticks); got != "2024-Jan-02" {
+		t.Fatalf("concise offset text = %q, want %q", got, "2024-Jan-02")
+	}
+}
+
 func assertDateTicks(t *testing.T, ticks []float64, want []time.Time) {
 	t.Helper()
 	if len(ticks) != len(want) {

@@ -496,6 +496,18 @@ func (f ConciseDateFormatter) FormatTick(x float64, index int, ticks []float64) 
 	return label
 }
 
+func (f ConciseDateFormatter) OffsetText(ticks []float64) string {
+	if len(ticks) == 0 {
+		return ""
+	}
+	level := conciseDateCommonLevel(ticks, f.location())
+	layout := f.offsetFormatForLevel(level)
+	if layout == "" {
+		return ""
+	}
+	return dateNumberToTime(ticks[len(ticks)-1], f.location()).Format(layout)
+}
+
 func (f ConciseDateFormatter) location() *time.Location {
 	if f.Location != nil {
 		return f.Location
@@ -530,6 +542,17 @@ func (f ConciseDateFormatter) zeroFormatForLevel(level int) string {
 	}
 	if len(f.Formats) > 0 && level > 0 && level-1 < len(f.Formats) && f.Formats[level-1] != "" {
 		return f.Formats[level-1]
+	}
+	return defaults[level]
+}
+
+func (f ConciseDateFormatter) offsetFormatForLevel(level int) string {
+	defaults := []string{"", "2006", "2006-Jan", "2006-Jan-02", "2006-Jan-02", "2006-Jan-02 15:04"}
+	if level < 0 {
+		level = 0
+	}
+	if level >= len(defaults) {
+		level = len(defaults) - 1
 	}
 	return defaults[level]
 }

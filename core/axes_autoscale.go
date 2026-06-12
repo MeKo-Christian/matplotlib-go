@@ -6,8 +6,8 @@ import (
 )
 
 func (a *Axes) AutoScale(margin float64) {
-	a.autoScaleAxis(true, margin, false)
-	a.autoScaleAxis(false, margin, false)
+	a.autoScaleAxis(true, margin, true)
+	a.autoScaleAxis(false, margin, true)
 }
 
 func (a *Axes) autoScaleIfEnabled(margin float64) {

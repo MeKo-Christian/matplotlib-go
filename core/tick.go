@@ -10,6 +10,18 @@ type Locator interface {
 	Ticks(minVal, maxVal float64, targetCount int) []float64
 }
 
+func locatorWithMajorContext(locator, major Locator) Locator {
+	if locator == nil {
+		return nil
+	}
+	auto, ok := locator.(AutoMinorLocator)
+	if !ok || auto.Major != nil {
+		return locator
+	}
+	auto.Major = major
+	return auto
+}
+
 // Formatter converts numeric tick values to strings.
 type Formatter interface {
 	Format(x float64) string
@@ -18,6 +30,12 @@ type Formatter interface {
 // IndexedFormatter can tailor labels to a tick's position in the sequence.
 type IndexedFormatter interface {
 	FormatTick(x float64, index int, ticks []float64) string
+}
+
+// OffsetFormatter can provide Matplotlib-style axis offset text for a full tick
+// sequence, such as ConciseDateFormatter's shared date context.
+type OffsetFormatter interface {
+	OffsetText(ticks []float64) string
 }
 
 func formatTickLabelForTicks(formatter Formatter, tick float64, index int, ticks []float64) string {

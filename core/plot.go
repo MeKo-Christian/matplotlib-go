@@ -524,6 +524,7 @@ func (a *Axes) Bar(x, heights []float64, opts ...BarOptions) *Bar2D {
 	}
 
 	a.Add(bar)
+	a.autoScaleIfEnabled(defaultAutoScaleMargin)
 	return bar
 }
 

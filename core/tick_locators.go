@@ -230,15 +230,16 @@ func (l MultipleLocator) Ticks(minVal, maxVal float64, _ int) []float64 {
 	}
 
 	startN := math.Ceil((minVal - l.Offset) / l.Base)
-	endN := math.Floor((maxVal - l.Offset) / l.Base)
-	if endN < startN {
+	first := startN * l.Base
+	n := math.Floor((maxVal - l.Offset - first + 0.001*l.Base) / l.Base)
+	if n < 0 {
 		return nil
 	}
 
-	nmax := int(endN-startN) + 2
-	ticks := make([]float64, 0, nmax)
-	for n := startN; n <= endN; n++ {
-		v := l.Offset + n*l.Base
+	count := int(n) + 3
+	ticks := make([]float64, 0, count)
+	for i := 0; i < count; i++ {
+		v := l.Offset + first - l.Base + float64(i)*l.Base
 		if approx(v, 0, 1e-12*math.Max(1, math.Abs(l.Base))) {
 			v = 0
 		}
@@ -488,11 +489,10 @@ func (l LogLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 	if minVal <= 0 || maxVal <= 0 {
 		return nil
 	}
-	// Find exponent range
 	lb := math.Log(base)
-	kmin := math.Ceil(math.Log(minVal) / lb)
-	kmax := math.Floor(math.Log(maxVal)/lb + 1e-10) // Add small epsilon to handle floating point precision
-	nDecades := int(kmax-kmin) + 1
+	logMin := math.Log(minVal) / lb
+	logMax := math.Log(maxVal) / lb
+	numDecades := int(math.Floor(logMax) - math.Ceil(logMin))
 	numTicks := l.NumTicks
 	if numTicks <= 0 {
 		numTicks = targetCount
@@ -503,33 +503,35 @@ func (l LogLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 	if numTicks < 2 {
 		numTicks = 2
 	}
+
+	multipliers := l.logMultipliers(numDecades)
+	if len(multipliers) == 0 {
+		return nil
+	}
+
 	stride := 1
-	if nDecades > 0 {
-		stride = nDecades/(numTicks+1) + 1
-	}
-	var ticks []float64
-	multipliers := l.minorMultipliers(nDecades)
-	includeMultipliers := l.Minor || l.SubsMode != "" || len(l.Subs) > 0
-	if l.Minor && includeMultipliers && len(multipliers) == 0 {
-		return nil
-	}
-	if includeMultipliers && len(multipliers) > 0 && stride > 1 && nDecades > 1 {
-		return nil
-	}
-	includeMajors := strings.ToLower(strings.TrimSpace(l.SubsMode)) != "auto"
-	// Majors
-	for k := kmin; k <= kmax; k += float64(stride) {
-		v := math.Pow(base, k)
-		if includeMajors && v >= minVal && v <= maxVal {
-			ticks = append(ticks, v)
+	if numDecades > 0 {
+		stride = int(math.Ceil(float64(numDecades) / float64(numTicks)))
+		if stride < 1 {
+			stride = 1
 		}
-		if includeMultipliers {
-			for _, sub := range multipliers {
-				mv := sub * math.Pow(base, k)
-				if mv > v && mv < math.Pow(base, k+1) && mv >= minVal && mv <= maxVal {
-					ticks = append(ticks, mv)
-				}
-			}
+		if stride >= numDecades {
+			stride = max(1, numDecades-1)
+		}
+	}
+
+	hasSubs := len(multipliers) > 1 || (len(multipliers) == 1 && multipliers[0] != 1)
+	if hasSubs && stride > 1 {
+		return nil
+	}
+
+	start := int(math.Floor(logMin)) - stride
+	stop := int(math.Ceil(logMax)) + 2*stride
+	var ticks []float64
+	for k := start; k < stop; k += stride {
+		decade := math.Pow(base, float64(k))
+		for _, sub := range multipliers {
+			ticks = append(ticks, sub*decade)
 		}
 	}
 	sort.Float64s(ticks)
@@ -545,6 +547,37 @@ func (l LogLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 		}
 	}
 	return out
+}
+
+func (l LogLocator) logMultipliers(nDecades int) []float64 {
+	if len(l.Subs) > 0 {
+		return append([]float64(nil), l.Subs...)
+	}
+	mode := strings.ToLower(strings.TrimSpace(l.SubsMode))
+	if mode == "auto" || mode == "all" {
+		if nDecades > 10 || l.Base < 3 {
+			if mode == "auto" {
+				return nil
+			}
+			return []float64{1}
+		}
+		first := 2.0
+		if mode == "all" {
+			first = 1
+		}
+		var subs []float64
+		for sub := first; sub < l.Base; sub++ {
+			subs = append(subs, sub)
+		}
+		return subs
+	}
+	if l.Minor {
+		if nDecades >= 10 || l.Base < 3 {
+			return nil
+		}
+		return []float64{1, 2, 5}
+	}
+	return []float64{1}
 }
 
 func (l LogLocator) minorMultipliers(nDecades int) []float64 {

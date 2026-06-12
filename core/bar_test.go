@@ -138,6 +138,23 @@ func TestBarAutoScaleUsesStickyBaseline(t *testing.T) {
 	}
 }
 
+func TestAxesBarAutoScalesOnAddLikeMatplotlib(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	width := 0.72
+
+	ax.Bar([]float64{0, 1, 2}, []float64{0.35, 0.75, 0.55}, BarOptions{Width: &width})
+
+	xMin, xMax := ax.XScale.Domain()
+	yMin, yMax := ax.YScale.Domain()
+	if math.Abs(xMin-(-0.496)) > 1e-12 || math.Abs(xMax-2.496) > 1e-12 {
+		t.Fatalf("bar autoscale x = [%v, %v], want [-0.496, 2.496]", xMin, xMax)
+	}
+	if math.Abs(yMin) > 1e-12 || math.Abs(yMax-0.7875) > 1e-12 {
+		t.Fatalf("bar autoscale y = [%v, %v], want [0, 0.7875]", yMin, yMax)
+	}
+}
+
 func TestHorizontalBarAutoScaleUsesStickyBaseline(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})

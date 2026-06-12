@@ -196,7 +196,8 @@ func (a *Axis) DrawTicks(r render.Renderer, ctx *DrawContext) {
 	if a.ShowTicks {
 		// Minor ticks first
 		if a.MinorLocator != nil {
-			minorTicks := visibleTicks(a.MinorLocator.Ticks(domainMin, domainMax, a.minorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
+			minorLoc := locatorWithMajorContext(a.MinorLocator, a.Locator)
+			minorTicks := visibleTicks(minorLoc.Ticks(domainMin, domainMax, a.minorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
 			if len(minorTicks) > 0 {
 				a.drawMinorTicks(r, ctx, minorTicks, isXAxis)
 			}
@@ -430,9 +431,11 @@ func (a *Axis) DrawTickLabels(r render.Renderer, ctx *DrawContext) {
 	if a.ShowLabels && a.Locator != nil && a.Formatter != nil {
 		ticks := visibleTicks(a.Locator.Ticks(domainMin, domainMax, a.majorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
 		a.drawTickLabels(r, ctx, ticks, a.Formatter, a.MajorLabelStyle, a.TickSize, a.tickLabelColor(), isXAxis)
+		a.drawTickOffsetText(r, ctx, ticks, a.Formatter, a.MajorLabelStyle, a.TickSize, a.tickLabelColor(), isXAxis)
 	}
 	if a.ShowMinorLabels && a.MinorLocator != nil && a.MinorFormatter != nil {
-		ticks := visibleTicks(a.MinorLocator.Ticks(domainMin, domainMax, a.minorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
+		minorLoc := locatorWithMajorContext(a.MinorLocator, a.Locator)
+		ticks := visibleTicks(minorLoc.Ticks(domainMin, domainMax, a.minorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
 		a.drawTickLabels(r, ctx, ticks, a.MinorFormatter, a.MinorLabelStyle, a.minorTickSize(), a.minorTickLabelColor(), isXAxis)
 	}
 	for _, level := range a.ExtraTickLevels {
@@ -578,6 +581,43 @@ func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float
 
 		drawDisplayText(textRen, label, labelPos, fontSize, labelColor, fontKey, ctx.RC.UseTeX)
 	}
+}
+
+func (a *Axis) drawTickOffsetText(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64, labelColor render.Color, isXAxis bool) {
+	textRen, ok := r.(render.TextDrawer)
+	if !ok || formatter == nil || !isXAxis {
+		return
+	}
+	offsetter, ok := formatter.(OffsetFormatter)
+	if !ok {
+		return
+	}
+	label := offsetter.OffsetText(ticks)
+	if label == "" {
+		return
+	}
+
+	style = normalizeTickLabelStyle(style)
+	fontSize := tickLabelFontSizeForStyle(a, style, ctx)
+	fontKey := tickLabelFontKey(style, ctx)
+	labelPadPx := tickLabelPadForAxisSize(a, tickSize, style, ctx)
+	layout := measureSingleLineTextLayout(r, label, fontSize, fontKey, ctx.RC.UseTeX)
+	gap := 0.3 * fontSize
+
+	var anchor geom.Pt
+	switch a.Side {
+	case AxisBottom:
+		anchor = geom.Pt{X: ctx.Clip.Max.X, Y: ctx.Clip.Min.Y - labelPadPx - layout.Height - gap}
+	case AxisTop:
+		anchor = geom.Pt{X: ctx.Clip.Max.X, Y: ctx.Clip.Max.Y + labelPadPx + layout.Height + gap}
+	default:
+		return
+	}
+	origin := geom.Pt{
+		X: anchor.X - textHorizontalOriginOffset(layout, TextAlignRight),
+		Y: anchor.Y + textBaselineOffset(layout, textLayoutVAlignTop),
+	}
+	drawDisplayText(textRen, label, origin, fontSize, labelColor, fontKey, ctx.RC.UseTeX)
 }
 
 func tickLabelFontSize(a *Axis, ctx *DrawContext) float64 {
@@ -893,8 +933,9 @@ func axisTickLabelBounds(a *Axis, r render.Renderer, ctx *DrawContext) (geom.Rec
 		})
 	}
 	if a.ShowMinorLabels && a.MinorLocator != nil && a.MinorFormatter != nil {
+		minorLoc := locatorWithMajorContext(a.MinorLocator, a.Locator)
 		levels = append(levels, labelLevel{
-			ticks:     visibleTicks(a.MinorLocator.Ticks(domainMin, domainMax, a.minorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax),
+			ticks:     visibleTicks(minorLoc.Ticks(domainMin, domainMax, a.minorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax),
 			formatter: a.MinorFormatter,
 			style:     a.MinorLabelStyle,
 			tickSize:  a.minorTickSize(),

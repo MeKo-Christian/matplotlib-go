@@ -775,6 +775,24 @@ func TestAutoScaleWithMargin(t *testing.T) {
 	}
 }
 
+func TestAutoScaleRespectsManualLimitsLikeMatplotlibMargins(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+
+	ax.Plot([]float64{0, 10}, []float64{0.08, 0.48})
+	ax.SetYLim(0, 1)
+	ax.AutoScale(0.04)
+
+	xMin, xMax := ax.XScale.Domain()
+	yMin, yMax := ax.YScale.Domain()
+	if !floatApprox(xMin, -0.4, 1e-12) || !floatApprox(xMax, 10.4, 1e-12) {
+		t.Fatalf("x limits = [%v, %v], want [-0.4, 10.4]", xMin, xMax)
+	}
+	if yMin != 0 || yMax != 1 {
+		t.Fatalf("manual y limits = [%v, %v], want [0, 1]", yMin, yMax)
+	}
+}
+
 func TestAutoScaleNoData(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
