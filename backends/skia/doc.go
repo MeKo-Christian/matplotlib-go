@@ -38,10 +38,10 @@
 // via CGO_CXXFLAGS / CGO_LDFLAGS; the `build-skia-native` / `test-skia-native`
 // just recipes wire them from SKIA_ROOT. With this tag the surfaceBridge is
 // backed by a native SkSurface: gradient path fills (SkShaders gradients),
-// marker batches (SkCanvas/SkPath), and Gouraud triangles (SkVertices) render
-// natively, so IsCapabilityBridged reports MarkerBatch as native. Path
-// collections, transformed images, quad meshes, and hatching still route
-// through the CPU bridge for now.
+// marker batches and path collections (SkCanvas/SkPath), quad meshes, and
+// Gouraud triangles (SkVertices) render natively, so IsCapabilityBridged
+// reports MarkerBatch, PathCollectionBatch, and QuadMeshBatch as native.
+// Transformed images and hatching still route through the CPU bridge for now.
 //
 // FreeType caveat: Skia statically bundles its own FreeType when built without
 // system FreeType. The native Skia backend uses Skia only for geometry (no
@@ -60,10 +60,10 @@
 // consumes renderer-neutral pattern and gradient fills, including linear and
 // radial gradients, stop opacity, transformed fills, and tiled pattern fills.
 // Builds with -tags "skia skiacgo" link a real Skia library and render gradient
-// fills, marker batches, and Gouraud triangles natively (see the native cgo
-// section above). Native GPU surfaces and the remaining Skia-native batch
-// primitives (path collections, quad meshes, tiled-shader hatching) are still
-// unavailable; NativePathRequirements records the deferred external primitives.
+// fills, marker batches, path collections, quad meshes, and Gouraud triangles
+// natively (see the native cgo section above). Native GPU surfaces,
+// transformed-image blits, and tiled-shader hatching are still unavailable;
+// NativePathRequirements records implemented and deferred external primitives.
 //
 // # Configuration
 //

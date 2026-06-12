@@ -96,27 +96,31 @@ func BackendStrategy() Strategy {
 	}
 }
 
-// NativePathRequirements returns the explicit external Skia primitives that
-// must exist before bridged CPU compatibility paths can be promoted to truly
-// native backend paths.
+// NativePathRequirements returns the explicit external Skia primitives tracked
+// for promotion from CPU compatibility paths to truly native backend paths.
 func NativePathRequirements() []NativePathRequirement {
 	const externalABIBlocker = "external Skia C-ABI wrapper and linked Skia library"
 	return []NativePathRequirement{
 		{
-			Primitive:           "SkCanvas::drawAtlas",
+			Primitive:           "SkCanvas::drawPath native batches",
 			Modes:               []RenderMode{ModeCPU, ModeGPU},
 			Capabilities:        []backends.Capability{backends.MarkerBatch, backends.PathCollectionBatch},
-			ExternalEntrypoints: []string{"SkCanvas::drawAtlas"},
-			Status:              StatusDeferred,
-			BlockedBy:           externalABIBlocker,
+			ExternalEntrypoints: []string{"mgsk_draw_markers", "mgsk_draw_path"},
+			Status:              StatusImplemented,
 		},
 		{
-			Primitive:           "SkVertices",
+			Primitive:           "SkVertices Gouraud triangles",
 			Modes:               []RenderMode{ModeCPU, ModeGPU},
-			Capabilities:        []backends.Capability{backends.QuadMeshBatch, backends.GouraudTriangleBatch},
+			Capabilities:        []backends.Capability{backends.GouraudTriangleBatch},
 			ExternalEntrypoints: []string{"SkVertices::MakeCopy", "SkCanvas::drawVertices"},
-			Status:              StatusDeferred,
-			BlockedBy:           externalABIBlocker,
+			Status:              StatusImplemented,
+		},
+		{
+			Primitive:           "SkVertices quad mesh cells",
+			Modes:               []RenderMode{ModeCPU, ModeGPU},
+			Capabilities:        []backends.Capability{backends.QuadMeshBatch},
+			ExternalEntrypoints: []string{"SkVertices::MakeCopy", "SkCanvas::drawVertices"},
+			Status:              StatusImplemented,
 		},
 		{
 			Primitive:           "tiled SkShader",

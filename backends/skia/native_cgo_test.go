@@ -46,6 +46,9 @@ func TestNativeBridgeReportsNativeSurface(t *testing.T) {
 	if r.IsCapabilityBridged("pathcollectionbatch") {
 		t.Error("pathcollectionbatch should report native under the skiacgo build")
 	}
+	if r.IsCapabilityBridged("quadmeshbatch") {
+		t.Error("quadmeshbatch should report native under the skiacgo build")
+	}
 }
 
 // TestNativeGradientFill renders a horizontal red->blue linear gradient through
@@ -173,14 +176,61 @@ func TestNativePathCollection(t *testing.T) {
 	if !bridge.drawPathCollectionNative(dst, batch, bridgeDrawState{}) {
 		t.Fatal("drawPathCollectionNative returned false for solid path collection")
 	}
-	if c := dst.RGBAAt(8, 8); c.A == 0 || c.R <= c.G || c.R <= c.B {
-		t.Fatalf("expected red fill in first path, got %v", c)
+	if c := dst.RGBAAt(8, 20); c.A == 0 || c.R <= c.G || c.R <= c.B {
+		t.Fatalf("expected red fill in y-flipped first path, got %v", c)
 	}
-	if c := dst.RGBAAt(22, 20); c.A == 0 || c.G <= c.R || c.G <= c.B {
-		t.Fatalf("expected green fill in second path, got %v", c)
+	if c := dst.RGBAAt(8, 8); c.A != 0 {
+		t.Fatalf("expected original y-up first path location to stay empty, got %v", c)
 	}
-	if c := dst.RGBAAt(18, 20); c.A == 0 || c.B <= c.G {
-		t.Fatalf("expected blue stroke on second path edge, got %v", c)
+	if c := dst.RGBAAt(22, 12); c.A == 0 || c.G <= c.R || c.G <= c.B {
+		t.Fatalf("expected green fill in y-flipped second path, got %v", c)
+	}
+	if c := dst.RGBAAt(18, 12); c.A == 0 || c.B <= c.G {
+		t.Fatalf("expected blue stroke on y-flipped second path edge, got %v", c)
+	}
+}
+
+// TestNativeQuadMesh renders face-only quadrilateral cells as native SkVertices
+// triangles and confirms display-space coordinates are flipped into Skia device
+// space.
+func TestNativeQuadMesh(t *testing.T) {
+	bridge := selectSurfaceBridge(32, 32, ModeCPU).(nativeBatchBridge)
+	dst := image.NewRGBA(image.Rect(0, 0, 32, 32))
+
+	batch := render.QuadMeshBatch{Cells: []render.QuadMeshCell{
+		{
+			Quad: [4]geom.Pt{
+				{X: 4, Y: 4},
+				{X: 14, Y: 4},
+				{X: 14, Y: 18},
+				{X: 4, Y: 18},
+			},
+			Face:        render.Color{R: 1, A: 1},
+			Antialiased: true,
+		},
+		{
+			Quad: [4]geom.Pt{
+				{X: 18, Y: 14},
+				{X: 28, Y: 14},
+				{X: 28, Y: 28},
+				{X: 18, Y: 28},
+			},
+			Face:        render.Color{G: 1, A: 1},
+			Antialiased: true,
+		},
+	}}
+
+	if !bridge.drawQuadMeshNative(dst, batch, bridgeDrawState{}) {
+		t.Fatal("drawQuadMeshNative returned false for face-only quad mesh")
+	}
+	if c := dst.RGBAAt(8, 20); c.A == 0 || c.R <= c.G || c.R <= c.B {
+		t.Fatalf("expected red face in y-flipped first cell, got %v", c)
+	}
+	if c := dst.RGBAAt(8, 8); c.A != 0 {
+		t.Fatalf("expected original y-up first cell location to stay empty, got %v", c)
+	}
+	if c := dst.RGBAAt(22, 12); c.A == 0 || c.G <= c.R || c.G <= c.B {
+		t.Fatalf("expected green face in y-flipped second cell, got %v", c)
 	}
 }
 

@@ -94,12 +94,12 @@ mode — no longer external-access-blocked, just unbuilt.
 
 ## Remaining work (each unblocked; wire the wrapper entrypoint)
 
-- [ ] **Native path collections.** Add a `drawPathCollectionNative` to the
+- [x] **Native path collections.** Add a `drawPathCollectionNative` to the
       `nativeBatchBridge` interface + dispatch in `Renderer.DrawPathCollection`
       (`skia_native.go`); render all items into one native surface (loop
       `mgsk_draw_path`, or add a batched multi-path C entrypoint). Flip
       `pathcollectionbatch` in `IsCapabilityBridged`.
-- [ ] **Native quad meshes.** Add `drawQuadMeshNative`; emit two `SkVertices`
+- [x] **Native quad meshes.** Add `drawQuadMeshNative`; emit two `SkVertices`
       triangles per cell with the face color (reuse `mgsk_draw_vertices`) or one
       `mgsk_draw_path` per cell. Flip `quadmeshbatch`.
 - [ ] **Native transformed images.** Add `mgsk_draw_image` (SkImage raster copy +

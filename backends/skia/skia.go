@@ -335,15 +335,15 @@ func (r *Renderer) BridgeInfo() BridgeInfo {
 // metadata is consumed via the renderer-neutral DrawHatchFallback helper, so
 // those report as bridged. When a native Skia surface bridge is active (the
 // skiacgo build links a real Skia library) markers route through native
-// SkCanvas/SkPath rasterization, so MarkerBatch and PathCollectionBatch report
-// native; quad meshes and hatching still loop through the CPU path until their
-// native batch entrypoints land, so they stay bridged.
+// SkCanvas/SkPath/SkVertices rasterization, so MarkerBatch,
+// PathCollectionBatch, and QuadMeshBatch report native; hatching still loops
+// through the CPU path until its native entrypoint lands, so it stays bridged.
 func (r *Renderer) IsCapabilityBridged(name string) bool {
 	native := r != nil && r.bridge != nil && r.bridge.Info().NativeSurface
 	switch name {
-	case "markerbatch", "pathcollectionbatch":
+	case "markerbatch", "pathcollectionbatch", "quadmeshbatch":
 		return !native
-	case "quadmeshbatch", "nativehatcher":
+	case "nativehatcher":
 		return true
 	default:
 		return false

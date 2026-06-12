@@ -28,6 +28,7 @@ var (
 type nativeBatchBridge interface {
 	drawMarkersNative(dst *image.RGBA, batch render.MarkerBatch, state bridgeDrawState, height float64) bool
 	drawPathCollectionNative(dst *image.RGBA, batch render.PathCollectionBatch, state bridgeDrawState) bool
+	drawQuadMeshNative(dst *image.RGBA, batch render.QuadMeshBatch, state bridgeDrawState) bool
 	drawGouraudNative(dst *image.RGBA, batch render.GouraudTriangleBatch, state bridgeDrawState) bool
 }
 
@@ -37,10 +38,9 @@ func (r *Renderer) bridgeClipState() bridgeDrawState {
 	return bridgeDrawState{clipRect: r.clipRect, clipPaths: r.clipPaths}
 }
 
-// DrawMarkers renders one marker path at many display-space offsets through
-// the Skia CPU bridge path. The implementation currently loops per item and
-// calls Path, so IsCapabilityBridged reports MarkerBatch as bridged until the
-// external Skia C ABI provides SkCanvas::drawAtlas.
+// DrawMarkers renders one marker path at many display-space offsets. Native
+// Skia builds batch the markers through one Skia surface; pure-Go Skia builds
+// loop per item through Path.
 func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 	if r == nil || len(batch.Marker.C) == 0 || len(batch.Items) == 0 {
 		return false
@@ -65,10 +65,9 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 	return true
 }
 
-// DrawPathCollection renders a display-space path collection through the CPU
-// bridge by looping per item and calling Path. IsCapabilityBridged reports
-// PathCollectionBatch as bridged until the external Skia C ABI provides a
-// real batched collection call.
+// DrawPathCollection renders a display-space path collection. Native Skia
+// builds draw supported solid fill/stroke items through one Skia surface;
+// unsupported paint features and pure-Go Skia builds loop per item through Path.
 func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
 	if r == nil || len(batch.Items) == 0 {
 		return false
@@ -98,13 +97,17 @@ func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
 	return true
 }
 
-// DrawQuadMesh renders pcolor/pcolormesh-style quadrilateral cells through
-// the CPU bridge by constructing one Path per cell. IsCapabilityBridged
-// reports QuadMeshBatch as bridged until the external Skia C ABI provides
-// SkVertices-based mesh rasterization.
+// DrawQuadMesh renders pcolor/pcolormesh-style quadrilateral cells. Native Skia
+// builds draw face-only cells through SkVertices; styled cells and pure-Go Skia
+// builds construct one Path per cell through the CPU bridge.
 func (r *Renderer) DrawQuadMesh(batch render.QuadMeshBatch) bool {
 	if r == nil || len(batch.Cells) == 0 {
 		return false
+	}
+	if nb, ok := r.bridge.(nativeBatchBridge); ok {
+		if nb.drawQuadMeshNative(r.GetImage(), batch, r.bridgeClipState()) {
+			return true
+		}
 	}
 	for i := range batch.Cells {
 		cell := &batch.Cells[i]

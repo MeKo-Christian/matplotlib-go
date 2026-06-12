@@ -70,7 +70,7 @@ func TestModeCapabilitiesExposesCPUGPUSplit(t *testing.T) {
 func TestNativePathRequirementsDocumentDeferredExternalABI(t *testing.T) {
 	requirements := NativePathRequirements()
 	if len(requirements) == 0 {
-		t.Fatal("NativePathRequirements returned no deferred native paths")
+		t.Fatal("NativePathRequirements returned no native paths")
 	}
 
 	byPrimitive := make(map[string]NativePathRequirement, len(requirements))
@@ -78,8 +78,8 @@ func TestNativePathRequirementsDocumentDeferredExternalABI(t *testing.T) {
 		if req.Primitive == "" {
 			t.Fatalf("native path requirement missing primitive: %#v", req)
 		}
-		if req.Status != StatusDeferred {
-			t.Fatalf("%s status = %q, want %q until external ABI lands", req.Primitive, req.Status, StatusDeferred)
+		if req.Status != StatusDeferred && req.Status != StatusImplemented {
+			t.Fatalf("%s status = %q, want %q or %q", req.Primitive, req.Status, StatusImplemented, StatusDeferred)
 		}
 		if len(req.Capabilities) == 0 {
 			t.Fatalf("%s should map to at least one renderer capability", req.Primitive)
@@ -87,15 +87,19 @@ func TestNativePathRequirementsDocumentDeferredExternalABI(t *testing.T) {
 		if len(req.ExternalEntrypoints) == 0 {
 			t.Fatalf("%s should name external Skia entrypoints", req.Primitive)
 		}
-		if req.BlockedBy == "" {
+		if req.Status == StatusDeferred && req.BlockedBy == "" {
 			t.Fatalf("%s should document its blocker", req.Primitive)
+		}
+		if req.Status == StatusImplemented && req.BlockedBy != "" {
+			t.Fatalf("%s is implemented but still documents blocker %q", req.Primitive, req.BlockedBy)
 		}
 		byPrimitive[req.Primitive] = req
 	}
 
 	for _, primitive := range []string{
-		"SkCanvas::drawAtlas",
-		"SkVertices",
+		"SkCanvas::drawPath native batches",
+		"SkVertices Gouraud triangles",
+		"SkVertices quad mesh cells",
 		"tiled SkShader",
 		"SkSurface::MakeRenderTarget",
 	} {
@@ -104,10 +108,17 @@ func TestNativePathRequirementsDocumentDeferredExternalABI(t *testing.T) {
 		}
 	}
 
-	assertRequirementHasCapability(t, byPrimitive["SkCanvas::drawAtlas"], backends.MarkerBatch)
-	assertRequirementHasCapability(t, byPrimitive["SkVertices"], backends.QuadMeshBatch)
+	assertRequirementHasCapability(t, byPrimitive["SkCanvas::drawPath native batches"], backends.MarkerBatch)
+	assertRequirementHasCapability(t, byPrimitive["SkCanvas::drawPath native batches"], backends.PathCollectionBatch)
+	assertRequirementStatus(t, byPrimitive["SkCanvas::drawPath native batches"], StatusImplemented)
+	assertRequirementHasCapability(t, byPrimitive["SkVertices Gouraud triangles"], backends.GouraudTriangleBatch)
+	assertRequirementStatus(t, byPrimitive["SkVertices Gouraud triangles"], StatusImplemented)
+	assertRequirementHasCapability(t, byPrimitive["SkVertices quad mesh cells"], backends.QuadMeshBatch)
+	assertRequirementStatus(t, byPrimitive["SkVertices quad mesh cells"], StatusImplemented)
 	assertRequirementHasCapability(t, byPrimitive["tiled SkShader"], backends.NativeHatcher)
+	assertRequirementStatus(t, byPrimitive["tiled SkShader"], StatusDeferred)
 	assertRequirementHasCapability(t, byPrimitive["SkSurface::MakeRenderTarget"], backends.GPUAccel)
+	assertRequirementStatus(t, byPrimitive["SkSurface::MakeRenderTarget"], StatusDeferred)
 }
 
 func assertRequirementHasCapability(t *testing.T, req NativePathRequirement, capability backends.Capability) {
@@ -118,4 +129,11 @@ func assertRequirementHasCapability(t *testing.T, req NativePathRequirement, cap
 		}
 	}
 	t.Fatalf("%s capabilities = %v, missing %s", req.Primitive, req.Capabilities, capability)
+}
+
+func assertRequirementStatus(t *testing.T, req NativePathRequirement, status ImplementationStatus) {
+	t.Helper()
+	if req.Status != status {
+		t.Fatalf("%s status = %q, want %q", req.Primitive, req.Status, status)
+	}
 }

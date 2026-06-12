@@ -152,6 +152,10 @@ func (b *nativeSurfaceBridge) drawMarkersNative(dst *image.RGBA, batch render.Ma
 	}
 
 	w, h := dst.Bounds().Dx(), dst.Bounds().Dy()
+	flippedState := bridgeDrawState{
+		clipRect:  flipRectPtrY(state.clipRect, height),
+		clipPaths: flipPathsY(state.clipPaths, height),
+	}
 	surf := newNativeSurface(w, h)
 	if surf == nil {
 		return false
@@ -173,10 +177,10 @@ func (b *nativeSurfaceBridge) drawMarkersNative(dst *image.RGBA, batch render.Ma
 
 	rendered := surf.readImage()
 	bounds := dst.Bounds()
-	if state.clipRect != nil {
-		bounds = bounds.Intersect(rectToImage(*state.clipRect))
+	if flippedState.clipRect != nil {
+		bounds = bounds.Intersect(rectToImage(*flippedState.clipRect))
 	}
-	clipMasks := rasterizeClipMasks(w, h, state.clipPaths)
+	clipMasks := rasterizeClipMasks(w, h, flippedState.clipPaths)
 	compositeNativeOver(dst, rendered, bounds, clipMasks)
 	return true
 }
@@ -200,6 +204,11 @@ func (b *nativeSurfaceBridge) drawPathCollectionNative(dst *image.RGBA, batch re
 	}
 
 	w, h := dst.Bounds().Dx(), dst.Bounds().Dy()
+	height := float64(h)
+	flippedState := bridgeDrawState{
+		clipRect:  flipRectPtrY(state.clipRect, height),
+		clipPaths: flipPathsY(state.clipPaths, height),
+	}
 	surf := newNativeSurface(w, h)
 	if surf == nil {
 		return false
@@ -218,7 +227,7 @@ func (b *nativeSurfaceBridge) drawPathCollectionNative(dst *image.RGBA, batch re
 			paint.Antialias = render.AntialiasOff
 		}
 		cp := newSolidCPaint(paint)
-		verbs, coords := pathToVerbsCoords(item.Path)
+		verbs, coords := pathToVerbsCoords(flipPathY(item.Path, height))
 		C.mgsk_draw_path(surf.ptr,
 			bytePtr(verbs), C.int(len(verbs)),
 			floatPtr(coords), C.int(len(coords)),
@@ -231,10 +240,74 @@ func (b *nativeSurfaceBridge) drawPathCollectionNative(dst *image.RGBA, batch re
 
 	rendered := surf.readImage()
 	bounds := dst.Bounds()
-	if state.clipRect != nil {
-		bounds = bounds.Intersect(rectToImage(*state.clipRect))
+	if flippedState.clipRect != nil {
+		bounds = bounds.Intersect(rectToImage(*flippedState.clipRect))
 	}
-	clipMasks := rasterizeClipMasks(w, h, state.clipPaths)
+	clipMasks := rasterizeClipMasks(w, h, flippedState.clipPaths)
+	compositeNativeOver(dst, rendered, bounds, clipMasks)
+	return true
+}
+
+// drawQuadMeshNative renders face-only quadrilateral cells as two native
+// SkVertices triangles per cell. Cells with edges, dashes, or hatches are
+// declined so DrawQuadMesh can preserve the existing CPU fallback behavior.
+func (b *nativeSurfaceBridge) drawQuadMeshNative(dst *image.RGBA, batch render.QuadMeshBatch, state bridgeDrawState) bool {
+	if dst == nil || len(batch.Cells) == 0 {
+		return false
+	}
+	positions := make([]float32, 0, len(batch.Cells)*12)
+	colors := make([]float32, 0, len(batch.Cells)*24)
+	antialias := true
+	w, h := dst.Bounds().Dx(), dst.Bounds().Dy()
+	height := float64(h)
+	for i := range batch.Cells {
+		cell := &batch.Cells[i]
+		if !canDrawQuadMeshCellNative(cell) {
+			return false
+		}
+		if cell.Face.A <= 0 {
+			continue
+		}
+		if !cell.Antialiased {
+			antialias = false
+		}
+		p0 := flipPointY(cell.Quad[0], height)
+		p1 := flipPointY(cell.Quad[1], height)
+		p2 := flipPointY(cell.Quad[2], height)
+		p3 := flipPointY(cell.Quad[3], height)
+		for _, p := range []geom.Pt{p0, p1, p2, p0, p2, p3} {
+			positions = append(positions, float32(p.X), float32(p.Y))
+			colors = appendColor(colors, cell.Face)
+		}
+	}
+	if len(positions) == 0 {
+		return true
+	}
+
+	flippedState := bridgeDrawState{
+		clipRect:  flipRectPtrY(state.clipRect, height),
+		clipPaths: flipPathsY(state.clipPaths, height),
+	}
+	surf := newNativeSurface(w, h)
+	if surf == nil {
+		return false
+	}
+	defer surf.delete()
+
+	C.mgsk_draw_vertices(
+		surf.ptr,
+		floatPtr(positions),
+		floatPtr(colors),
+		C.int(len(positions)/6),
+		boolToCInt(antialias),
+	)
+
+	rendered := surf.readImage()
+	bounds := dst.Bounds()
+	if flippedState.clipRect != nil {
+		bounds = bounds.Intersect(rectToImage(*flippedState.clipRect))
+	}
+	clipMasks := rasterizeClipMasks(w, h, flippedState.clipPaths)
 	compositeNativeOver(dst, rendered, bounds, clipMasks)
 	return true
 }
@@ -401,8 +474,23 @@ func canDrawPathCollectionItemNative(item *render.PathCollectionItem) bool {
 		p.Sketch.Randomness == 0
 }
 
+func canDrawQuadMeshCellNative(cell *render.QuadMeshCell) bool {
+	return cell != nil &&
+		cell.Edge.A <= 0 &&
+		cell.LineWidth <= 0 &&
+		len(cell.Dashes) == 0 &&
+		cell.Hatch == "" &&
+		cell.HatchColor.A <= 0 &&
+		cell.HatchWidth <= 0 &&
+		cell.Snap == render.SnapOff
+}
+
 func appendColor(dst []float32, c render.Color) []float32 {
 	return append(dst, float32(c.R), float32(c.G), float32(c.B), float32(c.A))
+}
+
+func flipPointY(p geom.Pt, height float64) geom.Pt {
+	return geom.Pt{X: p.X, Y: height - p.Y}
 }
 
 func pathToVerbsCoords(p geom.Path) ([]uint8, []float32) {

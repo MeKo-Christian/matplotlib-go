@@ -222,15 +222,11 @@ func TestSkiaTaggedRegistryAdvertisesImplementedCPUCapabilities(t *testing.T) {
 		t.Fatal("CPU skia backend should not advertise GPU acceleration")
 	}
 
-	// The CPU compatibility renderer satisfies the batch and hatch capability
-	// interfaces through the CPU surface bridge until the external Skia C ABI
-	// lands. The capability matrix must report those four as bridged so the
-	// difference between bridge stand-ins and truly native code paths stays
-	// visible. GouraudTriangleBatch performs custom CPU pixel interpolation
-	// directly and must stay native.
+	// The CPU compatibility renderer satisfies hatching through the CPU surface
+	// bridge until its native Skia C ABI path lands. The capability matrix must
+	// report it as bridged so the difference between bridge stand-ins and truly
+	// native code paths stays visible.
 	for _, cap := range []backends.Capability{
-		backends.PathCollectionBatch,
-		backends.QuadMeshBatch,
 		backends.NativeHatcher,
 	} {
 		if status := backends.RendererCapabilityStatus(backends.Skia, renderer, cap); status != backends.CapabilityBridged {
@@ -241,14 +237,21 @@ func TestSkiaTaggedRegistryAdvertisesImplementedCPUCapabilities(t *testing.T) {
 		t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want %s", backends.GouraudTriangleBatch, status, backends.CapabilityNative)
 	}
 
-	// MarkerBatch is native when a real Skia library is linked (skiacgo build);
-	// the pure-Go build satisfies it through the CPU bridge.
-	wantMarker := backends.CapabilityBridged
+	// MarkerBatch, PathCollectionBatch, and QuadMeshBatch are native when a real
+	// Skia library is linked (skiacgo build); the pure-Go build satisfies them
+	// through the CPU bridge.
+	wantNativeBatch := backends.CapabilityBridged
 	if sk, ok := renderer.(*skia.Renderer); ok && sk.BridgeInfo().NativeSurface {
-		wantMarker = backends.CapabilityNative
+		wantNativeBatch = backends.CapabilityNative
 	}
-	if status := backends.RendererCapabilityStatus(backends.Skia, renderer, backends.MarkerBatch); status != wantMarker {
-		t.Fatalf("RendererCapabilityStatus(skia, markerbatch) = %s, want %s", status, wantMarker)
+	for _, cap := range []backends.Capability{
+		backends.MarkerBatch,
+		backends.PathCollectionBatch,
+		backends.QuadMeshBatch,
+	} {
+		if status := backends.RendererCapabilityStatus(backends.Skia, renderer, cap); status != wantNativeBatch {
+			t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want %s", cap, status, wantNativeBatch)
+		}
 	}
 }
 
