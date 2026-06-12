@@ -213,22 +213,9 @@ func TestColorbarTickAndLabelFormattingIsDocumented(t *testing.T) {
 }
 
 func TestColorbarFormatterAndTickBreadthMilestoneIsClosed(t *testing.T) {
-	planData, err := os.ReadFile(filepath.Join("..", "PLAN.md"))
-	if err != nil {
-		t.Fatalf("read PLAN.md: %v", err)
-	}
-	planText := strings.Join(strings.Fields(string(planData)), " ")
-	requiredPlan := []string{
-		"[x] 17.6.5.6.1 Placement, Formatter, and Update Audit",
-		"aligned locators, formatters, boundaries, extensions (extend, extendfrac, spacing, under/over), minor ticks, labels, tick position, and discrete colorbar behavior",
-		"defined the supported post-creation update contract for cmap, norm, clim, alpha, and scalar arrays",
-	}
-	for _, phrase := range requiredPlan {
-		if !strings.Contains(planText, phrase) {
-			t.Fatalf("colorbar formatter/tick breadth milestone missing PLAN marker %q", phrase)
-		}
-	}
-
+	// The per-milestone PLAN.md markers were retired when the roadmap was
+	// restructured (completed phases now live in git history); the docs
+	// remain the guarded surface.
 	docData, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
 	if err != nil {
 		t.Fatalf("read migration notes: %v", err)

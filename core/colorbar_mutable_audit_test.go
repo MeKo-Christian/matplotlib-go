@@ -213,23 +213,9 @@ func TestColorbarFixtureLedgerIsDocumented(t *testing.T) {
 }
 
 func TestColorbarPlacementAndFormatterBreadthMilestoneIsClosed(t *testing.T) {
-	planData, err := os.ReadFile(filepath.Join("..", "PLAN.md"))
-	if err != nil {
-		t.Fatalf("read PLAN.md: %v", err)
-	}
-	planText := strings.Join(strings.Fields(string(planData)), " ")
-	requiredPlan := []string{
-		"[x] 17.6.5.6 Colorbar Placement and Formatter Breadth",
-		"[x] 17.6.5.6.1 Placement, Formatter, and Update Audit",
-		"[x] 17.6.5.6.2 Colorbar Update Tests or Omission",
-		"[x] 17.6.5.6.3 Colorbar Fixtures, Tests, and Ledger",
-	}
-	for _, phrase := range requiredPlan {
-		if !strings.Contains(planText, phrase) {
-			t.Fatalf("colorbar placement/formatter milestone missing PLAN marker %q", phrase)
-		}
-	}
-
+	// The per-milestone PLAN.md markers were retired when the roadmap was
+	// restructured (completed phases now live in git history); the docs
+	// remain the guarded surface.
 	docData, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
 	if err != nil {
 		t.Fatalf("read migration notes: %v", err)

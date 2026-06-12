@@ -142,14 +142,15 @@ the enforcement half of this principle: no example-source workarounds,
 fixture-specific core branches, catalog-ID conditionals, or unexplained
 empirical constants (`internal/examplecatalog.ValidationClusters`).
 
-**Status (2026-06-12, after W1, measured `testdata/golden/` vs
-`testdata/matplotlib_ref/`, harness metric):** 165 paired cases; **137 at
+**Status (2026-06-12, after W1+W2, measured `testdata/golden/` vs
+`testdata/matplotlib_ref/`, harness metric):** 165 paired cases; **139 at
 RMSE ≤ 5**, strict-text cases at exactly 0. The **MathText family is closed**
 (`mathtext_integrals` 0.00, `mathtext_matrices` 0.24, `mathtext_gallery` 2.28,
 `mathtext_fractions` 4.01; only `mathtext_basic` 5.33 / `mathtext_inline_labels`
 5.88 marginally above, and their diffs are general text placement). **The
-mplot3d family is closed** (W1 below). **28 cases remain above RMSE 5**,
-covered by workstreams W2–W5.
+mplot3d family is closed** (W1) and the **geo/polar/radar family is closed
+except `geo_lambert_axes` 5.24 and the toolkit gallery** (W2). **26 cases
+remain above RMSE 5**, covered by workstreams W2b–W5.
 
 ## Workstreams (ordered by residual; each names the upstream source to translate)
 
@@ -177,14 +178,31 @@ covered by workstreams W2–W5.
          This also dropped 2D filled-contour cases (`mesh_contour_tri`
          7.1→6.9, `unstructured_showcase` 5.5→4.2, `triangulation_gallery`
          4.3→3.3).
-- [ ] **W2 — geo/polar/radar projections.** `projection_toolkit_gallery` 20.2,
-      `radar_basic` 6.9, `geo_mollweide_axes` 5.9, `geo_lambert_axes` 5.3
-      (aitoff/hammer pass at 3.9 — use them as the behavioral baseline). Diffs
-      concentrate on gridline paths and tick-label anchoring around the
-      projection boundary. Port targets:
-      `lib/matplotlib/projections/{geo,polar}.py` (gridline path generation,
-      tick label positioning) and the axisartist twin-axes panel
-      (`axisartist_showcase` 5.7).
+- [x] **W2 — geo/polar/radar projections. LARGELY DONE 2026-06-12** — five
+      faithful ports landed: (1) `Axes.Fill` now creates patch-zorder-1
+      artists like upstream `fill()` → Polygon (was 2, drew gridlines under
+      fills); (2) full-circle radial tick labels anchor ha=left/va=bottom with
+      no pad (`PolarAxes.get_yaxis_text1_transform`); (3) geo/polar gridline
+      paints use `SnapAuto` so the backend's PathSnapper port (device-frame
+      `floor(v+0.5)+0.5`, h/v-only paths) matches AGG — straight Mollweide
+      parallels and radar spokes now land on matplotlib's pixel rows;
+      (4) the default geo formatter is upstream's `ThetaFormatter` (degrees
+      with degree sign, rounded to grid spacing) — fixtures mirror the Python
+      references' plain-formatter overrides; (5) `rlabel_position` is stored
+      in theta-data space and mapped through theta offset/direction at draw
+      time (`RadialTick.update_position`), plus `Axes.SetFrameOn` porting
+      `set_frame_on(False)`'s remove-all-spines semantics.
+      Results: `radar_basic` 6.9→**0.35**, `geo_mollweide_axes` 5.9→**4.3**,
+      `polar_axes` 4.8→4.75, aitoff/hammer 3.9→3.8, `skewt_basic` 3.6→3.1,
+      `projection_toolkit_gallery` 20.2→**11.9**.
+      Remaining (tracked under W2b below): `geo_lambert_axes` 5.24 (center
+      "0" tick label + xlabel fringe), and the gallery's non-geo panels.
+- [ ] **W2b — gallery leftovers.** `projection_toolkit_gallery` 11.9 and
+      `axisartist_showcase` 5.7: the Skew-T panel's axes box is vertically
+      offset a few px vs upstream, the AxisArtist/Twin panel's parasite right
+      axis sits at a different x, and the geo panels retain ±1px label
+      fringes. Port targets: the skewx layout path and
+      `mpl_toolkits/axes_grid1/parasite_axes.py`.
 - [ ] **W3 — ticks, scales, and inset placement.**
       `ticks_scales_formatters_gallery` 17.6, `date_concise_intraday_labels`
       5.8. The gallery diff isolates three distinct defects: (a) major/minor

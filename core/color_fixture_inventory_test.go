@@ -285,11 +285,10 @@ func TestColorImageColorbarMetadataAndMigrationNotesAreDocumented(t *testing.T) 
 }
 
 func TestFinalColorStatusRegenerationIsDocumented(t *testing.T) {
+	// The per-milestone PLAN.md markers were retired when the roadmap was
+	// restructured (completed phases now live in git history); the generated
+	// docs and their guard tests remain the guarded surface.
 	sourceRequirements := map[string][]string{
-		filepath.Join("..", "PLAN.md"): {
-			"[x] 17.6.5.7 Color Fixtures and Docs",
-			"[x] 17.6.5.7.4 Final Color Status Regeneration",
-		},
 		filepath.Join("..", "docs", "matplotlib-parity-status.md"): {
 			"Generated from `internal/examplecatalog` and `test/testdata/parity_surface/upstream_public_surface.json`.",
 			"colorbar.py:class:Colorbar",
