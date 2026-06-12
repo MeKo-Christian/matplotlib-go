@@ -172,11 +172,23 @@ func (e *ErrorBar) legendEntry() (legendEntry, bool) {
 	entry.errorbarY = errorbarHasY(e)
 	entry.errorbarCapSize = e.CapSize
 	if e.MarkerSet {
+		markerLine := &Line2D{
+			Marker:     e.Marker,
+			MarkerSet:  true,
+			MarkerSize: e.MarkerSize,
+		}
+		spec := markerLine.markerPathSpec(nil, nil)
 		entry.lineMarkerSet = true
 		entry.marker = e.Marker
+		entry.markerPath = spec.Path
+		entry.markerAltPath = spec.AltPath
+		entry.markerEdgePath = spec.EdgePath
+		entry.markerHasAlt = spec.HasAlt
+		entry.markerLineOnly = markerLineOnly(markerLine.resolvedMarkerStyle())
 		entry.markerFill = color
 		entry.markerEdge = color
 		entry.markerEdgeWidth = e.LineWidth
+		entry.markerSize = markerLine.resolvedMarkerSize(nil)
 	}
 	return entry, true
 }
