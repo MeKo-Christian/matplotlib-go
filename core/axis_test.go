@@ -824,7 +824,7 @@ func TestSpinePixelEndpointsRightBoundaryRoundsPastHalfPixel(t *testing.T) {
 
 func TestSpinePixelEndpointsHorizontalBoundariesUseDeviceSpaceSnap(t *testing.T) {
 	px := geom.Rect{
-		Min: geom.Pt{X: 499.4, Y: 67.5},
+		Min: geom.Pt{X: 499.4, Y: 67.50000000000001},
 		Max: geom.Pt{X: 847.0, Y: 268.5},
 	}
 

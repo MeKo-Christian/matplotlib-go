@@ -274,7 +274,7 @@ func snapDisplayX(x float64) float64 {
 }
 
 func snapDisplayY(y float64) float64 {
-	return math.Ceil(y-0.5) - 0.5
+	return math.Ceil(y-0.5-1e-9) - 0.5
 }
 
 // drawTicks draws tick marks at the specified positions.
