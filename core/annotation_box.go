@@ -218,10 +218,11 @@ func (a *AnnotationBbox) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	}
 
 	if a.Image != nil {
-		if drawer, ok := r.(render.BboxImageDrawer); ok && drawer.DrawBboxImage(a.Image, contentBox) {
+		img := offsetImageWithMatplotlibDefaults(a.Image)
+		if drawer, ok := r.(render.BboxImageDrawer); ok && drawer.DrawBboxImage(img, contentBox) {
 			return
 		}
-		r.Image(a.Image, contentBox)
+		r.Image(img, contentBox)
 		return
 	}
 	textRen := r.(render.TextDrawer)

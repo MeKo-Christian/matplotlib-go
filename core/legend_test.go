@@ -107,6 +107,35 @@ func TestLegendLineMarkerSampleUsesOriginalMarkerSize(t *testing.T) {
 	}
 }
 
+func TestLegendLineSampleCopiesLine2DStrokeCaps(t *testing.T) {
+	line := &Line2D{
+		Label: "line",
+		Col:   render.Color{R: 0.2, G: 0.3, B: 0.4, A: 1},
+		W:     2,
+	}
+	entry, ok := line.legendEntry()
+	if !ok {
+		t.Fatal("line legend entry not collected")
+	}
+
+	legend := NewLegend(nil)
+	var r legendRecordingRenderer
+	legend.drawSample(&r, entry, geom.Rect{
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 40, Y: 32},
+	})
+
+	if len(r.paints) == 0 {
+		t.Fatal("legend sample did not draw a line")
+	}
+	if got := r.paints[0].LineCap; got != render.CapButt {
+		t.Fatalf("legend line cap = %v, want Line2D default %v", got, render.CapButt)
+	}
+	if got := r.paints[0].LineJoin; got != render.JoinRound {
+		t.Fatalf("legend line join = %v, want Line2D default %v", got, render.JoinRound)
+	}
+}
+
 func TestLegendErrorBarMarkerSampleUsesOriginalMarkerSize(t *testing.T) {
 	errBar := &ErrorBar{
 		Label:      "errorbar markers",
@@ -211,6 +240,41 @@ func TestLegendScatterSampleCentersUseMatplotlibOffsets(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("scatter sample centers = %+v, want Matplotlib offsets %+v", got, want)
+	}
+}
+
+func TestLegendScatterSampleUsesSourceCollectionSize(t *testing.T) {
+	scatter := &Scatter2D{
+		Label:     "scatter",
+		Size:      36,
+		Color:     render.Color{A: 1},
+		EdgeColor: render.Color{A: 1},
+		EdgeWidth: 1,
+		Marker:    MarkerCircle,
+	}
+	entry, ok := scatter.legendEntry()
+	if !ok {
+		t.Fatal("scatter legend entry not collected")
+	}
+
+	legend := NewLegend(nil)
+	legend.MarkerScale = 1.8
+	var r legendRecordingRenderer
+	legend.drawSample(&r, entry, geom.Rect{
+		Min: geom.Pt{X: 0, Y: 0},
+		Max: geom.Pt{X: 40, Y: 20},
+	})
+
+	if len(r.paths) != 1 {
+		t.Fatalf("legend scatter sample paths = %d, want one marker", len(r.paths))
+	}
+	markerBounds, ok := r.paths[0].Bounds()
+	if !ok {
+		t.Fatal("legend scatter marker path has no bounds")
+	}
+	want := pointsToPixels(style.Default, math.Sqrt(scatter.Size)) * legend.MarkerScale
+	if got := markerBounds.W(); !floatApprox(got, want, 1e-9) {
+		t.Fatalf("legend scatter marker diameter = %v, want source collection size %v", got, want)
 	}
 }
 

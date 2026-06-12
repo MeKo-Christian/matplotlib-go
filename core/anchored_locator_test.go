@@ -536,6 +536,49 @@ func TestAnchoredPackerImageAndDrawingAreaScaleByDPI(t *testing.T) {
 	}
 }
 
+func TestAnchoredPackerImageDefaultsToMatplotlibAntialiasedInterpolation(t *testing.T) {
+	img := render.NewImageData(image.NewRGBA(image.Rect(0, 0, 4, 3)))
+	packer := (&Axes{}).AddAnchoredPacker(PackHorizontal, AnchoredPackerOptions{
+		Location: LegendUpperLeft,
+		Padding:  0,
+		Inset:    0,
+		FrameOn:  boolPtr(false),
+	})
+	packer.AddImage(img, 1)
+
+	r := &bboxImageInterpolationRenderer{}
+	packer.Draw(r, createTestDrawContext())
+
+	if !r.called {
+		t.Fatal("DrawBboxImage was not called")
+	}
+	if r.interpolation != "antialiased" {
+		t.Fatalf("packed image interpolation = %q, want Matplotlib OffsetImage default antialiased", r.interpolation)
+	}
+}
+
+func TestAnchoredPackerImagePreservesExplicitInterpolation(t *testing.T) {
+	img := render.NewImageData(image.NewRGBA(image.Rect(0, 0, 4, 3)))
+	img.SetInterpolation("nearest")
+	packer := (&Axes{}).AddAnchoredPacker(PackHorizontal, AnchoredPackerOptions{
+		Location: LegendUpperLeft,
+		Padding:  0,
+		Inset:    0,
+		FrameOn:  boolPtr(false),
+	})
+	packer.AddImage(img, 1)
+
+	r := &bboxImageInterpolationRenderer{}
+	packer.Draw(r, createTestDrawContext())
+
+	if !r.called {
+		t.Fatal("DrawBboxImage was not called")
+	}
+	if r.interpolation != "nearest" {
+		t.Fatalf("packed image interpolation = %q, want explicit interpolation preserved", r.interpolation)
+	}
+}
+
 func recordedPaintExists(calls []recordedPathCall, fill, stroke render.Color, lineWidth float64) bool {
 	for _, call := range calls {
 		if call.paint.Fill == fill && call.paint.Stroke == stroke && floatApprox(call.paint.LineWidth, lineWidth, 1e-12) {
@@ -572,6 +615,18 @@ func recordedStrokePath(calls []recordedPathCall, stroke render.Color) geom.Path
 		}
 	}
 	return geom.Path{}
+}
+
+type bboxImageInterpolationRenderer struct {
+	render.NullRenderer
+	called        bool
+	interpolation string
+}
+
+func (r *bboxImageInterpolationRenderer) DrawBboxImage(img render.Image, _ geom.Rect) bool {
+	r.called = true
+	r.interpolation = img.Interpolation()
+	return true
 }
 
 func styleRCForAnchoredTextTest() style.RC {

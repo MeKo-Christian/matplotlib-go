@@ -516,6 +516,28 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             RMSE 0.779 (below target; was 7.32), while
             `legend_layout_matrix` remains RMSE 7.175 and
             `annotation_legend_offsetbox_gallery` remains RMSE 6.563.
+            2026-06-13 progress: tightened legend marker handlers by carrying
+            source marker sizes into errorbar and scatter entries. Errorbar
+            legend entries now reuse Line2D marker path metadata and original
+            point marker size (`TestLegendErrorBarMarkerSampleUsesOriginalMarkerSize`);
+            scatter legend entries now preserve the PathCollection marker
+            prototype and source `sqrt(size)` marker diameter before applying
+            `markerscale` (`TestLegendScatterSampleUsesSourceCollectionSize`).
+            `legend_layout_matrix` current reference RMSE moved 7.14 → 6.76;
+            remaining visible residual is dominated by text/hatch/thin-stroke
+            pixels rather than large legend layout displacement.
+            2026-06-13 progress: matched Matplotlib `OffsetImage` /
+            `BboxImage` default interpolation for anchored packer images and
+            `AnnotationBbox` image content. Empty image interpolation now
+            resolves to the upstream rc default `antialiased` only for
+            OffsetImage-style drawing, while explicit image interpolation is
+            preserved (`TestAnchoredPackerImageDefaultsToMatplotlibAntialiasedInterpolation`,
+            `TestAnchoredPackerImagePreservesExplicitInterpolation`,
+            `TestAnnotationBboxImageDefaultsToMatplotlibAntialiasedInterpolation`,
+            `TestAnnotationBboxImagePreservesExplicitInterpolation`).
+            `annotation_legend_offsetbox_gallery` current reference RMSE moved
+            6.56 → 6.52; remaining W5.2 residual is mostly text, hatch, image
+            kernel, and thin-stroke pixels rather than large offsetbox geometry.
       - [ ] **W5.3 — Axes helpers, lines, markers, and label placement.** Tackle
             `plot_variants`, `axes_convenience_helpers`, `line2d_markers`,
             `specialty_artists`, `specialty_depth`, and

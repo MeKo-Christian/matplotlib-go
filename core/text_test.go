@@ -2188,6 +2188,51 @@ func TestAnnotationBboxDrawsImageContent(t *testing.T) {
 	}
 }
 
+func TestAnnotationBboxImageDefaultsToMatplotlibAntialiasedInterpolation(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(unitRect())
+	img := render.NewImageData(image.NewRGBA(image.Rect(0, 0, 10, 6)))
+	boxPos := geom.Pt{X: 0.4, Y: 0.6}
+	ax.AnnotationBbox("", 0.1, 0.2, AnnotationBboxOptions{
+		BoxCoords:   Coords(CoordAxes),
+		BoxPosition: &boxPos,
+		Image:       img,
+	})
+
+	r := &bboxImageInterpolationRenderer{}
+	DrawFigure(fig, r)
+
+	if !r.called {
+		t.Fatal("DrawBboxImage was not called")
+	}
+	if r.interpolation != "antialiased" {
+		t.Fatalf("annotation image interpolation = %q, want Matplotlib OffsetImage default antialiased", r.interpolation)
+	}
+}
+
+func TestAnnotationBboxImagePreservesExplicitInterpolation(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(unitRect())
+	img := render.NewImageData(image.NewRGBA(image.Rect(0, 0, 10, 6)))
+	img.SetInterpolation("nearest")
+	boxPos := geom.Pt{X: 0.4, Y: 0.6}
+	ax.AnnotationBbox("", 0.1, 0.2, AnnotationBboxOptions{
+		BoxCoords:   Coords(CoordAxes),
+		BoxPosition: &boxPos,
+		Image:       img,
+	})
+
+	r := &bboxImageInterpolationRenderer{}
+	DrawFigure(fig, r)
+
+	if !r.called {
+		t.Fatal("DrawBboxImage was not called")
+	}
+	if r.interpolation != "nearest" {
+		t.Fatalf("annotation image interpolation = %q, want explicit interpolation preserved", r.interpolation)
+	}
+}
+
 func TestAnnotationBboxImageZoomScalesByDPI(t *testing.T) {
 	fig := NewFigure(800, 600)
 	fig.RC = style.Apply(fig.RC, style.WithDPI(144))

@@ -1,8 +1,11 @@
 package core
 
 import (
+	"math"
+
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 func legendEntryFromPatchStyle(label string, face, edge render.Color, edgeWidth float64, hatch string, hatchColor render.Color, hatchWidth float64) legendEntry {
@@ -87,7 +90,17 @@ func (s *Scatter2D) legendEntry() (legendEntry, bool) {
 		}
 		fill.A = 0
 	}
-	return legendEntryFromMarker(s.Label, s.Marker, s.MarkerPath, fill, edge, s.EdgeWidth), true
+	entry := legendEntryFromMarker(s.Label, s.Marker, s.markerPrototypePathForContext(nil, nil), fill, edge, s.EdgeWidth)
+	entry.markerLineOnly = markerLineOnly(s.resolvedMarkerStyle())
+	size := s.Size
+	if size <= 0 {
+		size = 36
+	}
+	if len(s.Sizes) > 0 && s.Sizes[0] > 0 {
+		size = s.Sizes[0]
+	}
+	entry.markerSize = pointsToPixels(style.Default, math.Sqrt(size))
+	return entry, true
 }
 
 func (b *Bar2D) legendEntry() (legendEntry, bool) {

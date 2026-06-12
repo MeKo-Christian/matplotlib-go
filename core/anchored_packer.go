@@ -444,10 +444,11 @@ func (i *packedImage) draw(r render.Renderer, _ *DrawContext, box geom.Rect, _ *
 	if i == nil || i.Image == nil {
 		return
 	}
-	if drawer, ok := r.(render.BboxImageDrawer); ok && drawer.DrawBboxImage(i.Image, box) {
+	img := offsetImageWithMatplotlibDefaults(i.Image)
+	if drawer, ok := r.(render.BboxImageDrawer); ok && drawer.DrawBboxImage(img, box) {
 		return
 	}
-	r.Image(i.Image, box)
+	r.Image(img, box)
 }
 
 func (i *packedImage) resolvedZoom() float64 {
