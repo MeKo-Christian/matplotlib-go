@@ -222,24 +222,13 @@ func TestSkiaTaggedRegistryAdvertisesImplementedCPUCapabilities(t *testing.T) {
 		t.Fatal("CPU skia backend should not advertise GPU acceleration")
 	}
 
-	// The CPU compatibility renderer satisfies hatching through the CPU surface
-	// bridge until its native Skia C ABI path lands. The capability matrix must
-	// report it as bridged so the difference between bridge stand-ins and truly
-	// native code paths stays visible.
-	for _, cap := range []backends.Capability{
-		backends.NativeHatcher,
-	} {
-		if status := backends.RendererCapabilityStatus(backends.Skia, renderer, cap); status != backends.CapabilityBridged {
-			t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want %s", cap, status, backends.CapabilityBridged)
-		}
-	}
 	if status := backends.RendererCapabilityStatus(backends.Skia, renderer, backends.GouraudTriangleBatch); status != backends.CapabilityNative {
 		t.Fatalf("RendererCapabilityStatus(skia, %s) = %s, want %s", backends.GouraudTriangleBatch, status, backends.CapabilityNative)
 	}
 
-	// ImageTransform, MarkerBatch, PathCollectionBatch, and QuadMeshBatch are
-	// native when a real Skia library is linked (skiacgo build); the pure-Go
-	// build satisfies them through the CPU bridge.
+	// ImageTransform, NativeHatcher, MarkerBatch, PathCollectionBatch, and
+	// QuadMeshBatch are native when a real Skia library is linked (skiacgo
+	// build); the pure-Go build satisfies them through the CPU bridge.
 	wantNativeBatch := backends.CapabilityBridged
 	if sk, ok := renderer.(*skia.Renderer); ok && sk.BridgeInfo().NativeSurface {
 		wantNativeBatch = backends.CapabilityNative
@@ -247,6 +236,7 @@ func TestSkiaTaggedRegistryAdvertisesImplementedCPUCapabilities(t *testing.T) {
 	for _, cap := range []backends.Capability{
 		backends.ImageTransform,
 		backends.MarkerBatch,
+		backends.NativeHatcher,
 		backends.PathCollectionBatch,
 		backends.QuadMeshBatch,
 	} {

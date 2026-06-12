@@ -36,6 +36,10 @@ type nativeImageBridge interface {
 	drawImageTransformedNative(dst *image.RGBA, img render.Image, transform geom.Affine, state bridgeDrawState) bool
 }
 
+type nativeHatchBridge interface {
+	drawHatchPathNative(dst *image.RGBA, path geom.Path, paint render.Paint, state bridgeDrawState) bool
+}
+
 // bridgeClipState snapshots the current clip into the bridge-facing struct the
 // native batch methods consume.
 func (r *Renderer) bridgeClipState() bridgeDrawState {
@@ -186,10 +190,8 @@ func (r *Renderer) DrawGouraudTriangles(batch render.GouraudTriangleBatch) bool 
 }
 
 // SupportsNativeHatch reports that Skia consumes hatch metadata during Path.
-// The actual hatch geometry is produced by the renderer-neutral
-// render.DrawHatchFallback helper, so IsCapabilityBridged reports
-// NativeHatcher as bridged until the external Skia C ABI provides tiled
-// SkShader hatches.
+// Native cgo builds rasterize hatch pixels through a tiled SkShader; pure-Go
+// builds keep using the renderer-neutral hatch fallback.
 func (r *Renderer) SupportsNativeHatch() bool { return r != nil }
 
 func (r *Renderer) drawNativeHatchPath(path geom.Path, paint *render.Paint) bool {
@@ -210,13 +212,27 @@ func (r *Renderer) drawNativeHatchPath(path geom.Path, paint *render.Paint) bool
 		r.Renderer.Path(path, &fillPaint)
 	}
 
-	fallbackPaint := hatchPaint
-	fallbackPaint.Fill = render.Color{}
-	fallbackPaint.Stroke = render.Color{}
-	fallbackPaint.FillGradient = render.GradientFill{}
-	fallbackPaint.FillPattern = render.PatternFill{}
-	if !render.DrawHatchFallback(r, path, fallbackPaint) {
-		r.Renderer.Path(path, &fallbackPaint)
+	hatchOnlyPaint := hatchPaint
+	hatchOnlyPaint.Fill = render.Color{}
+	hatchOnlyPaint.Stroke = render.Color{}
+	hatchOnlyPaint.FillGradient = render.GradientFill{}
+	hatchOnlyPaint.FillPattern = render.PatternFill{}
+	if nb, ok := r.bridge.(nativeHatchBridge); ok {
+		if nb.drawHatchPathNative(r.GetImage(), path, hatchOnlyPaint, r.bridgeClipState()) {
+			if hatchPaint.Stroke.A > 0 && hatchPaint.LineWidth > 0 {
+				strokePaint := hatchPaint
+				strokePaint.Fill = render.Color{}
+				strokePaint.Hatch = ""
+				strokePaint.FillGradient = render.GradientFill{}
+				strokePaint.FillPattern = render.PatternFill{}
+				r.Renderer.Path(path, &strokePaint)
+			}
+			return true
+		}
+	}
+
+	if !render.DrawHatchFallback(r, path, hatchOnlyPaint) {
+		r.Renderer.Path(path, &hatchOnlyPaint)
 	}
 
 	if hatchPaint.Stroke.A > 0 && hatchPaint.LineWidth > 0 {

@@ -119,7 +119,7 @@ func TestNativePathRequirementsDocumentDeferredExternalABI(t *testing.T) {
 	assertRequirementHasCapability(t, byPrimitive["SkImage transformed blits"], backends.ImageTransform)
 	assertRequirementStatus(t, byPrimitive["SkImage transformed blits"], StatusImplemented)
 	assertRequirementHasCapability(t, byPrimitive["tiled SkShader"], backends.NativeHatcher)
-	assertRequirementStatus(t, byPrimitive["tiled SkShader"], StatusDeferred)
+	assertRequirementStatus(t, byPrimitive["tiled SkShader"], StatusImplemented)
 	assertRequirementHasCapability(t, byPrimitive["SkSurface::MakeRenderTarget"], backends.GPUAccel)
 	assertRequirementStatus(t, byPrimitive["SkSurface::MakeRenderTarget"], StatusDeferred)
 }

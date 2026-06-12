@@ -111,6 +111,18 @@ void mgsk_draw_image(MgSkSurface *s,
                      float alpha,
                      int sampling);
 
+/* Draw hatch pixels clipped by `path` using a repeated SkShader tile. `hatch`
+ * holds the Matplotlib hatch character sequence (`|`, `-`, `/`, `\`, `+`, `x`,
+ * `X`, `o`, `O`, `.`, `*`). Colors are straight-alpha RGBA in [0,1]. */
+void mgsk_draw_hatch_path(MgSkSurface *s,
+                          const uint8_t *verbs, int nverbs,
+                          const float *coords, int ncoords,
+                          const char *hatch, int hatch_len,
+                          float r, float g, float b, float a,
+                          float line_width,
+                          float spacing,
+                          int antialias);
+
 /* Copy the surface into dst as straight-alpha RGBA8888, `stride` bytes per row.
  * dst must hold at least height*stride bytes. */
 void mgsk_surface_read_pixels(MgSkSurface *s, uint8_t *dst, int stride);

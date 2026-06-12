@@ -31,6 +31,7 @@ import (
 var (
 	_ surfaceBridge     = (*nativeSurfaceBridge)(nil)
 	_ nativeBatchBridge = (*nativeSurfaceBridge)(nil)
+	_ nativeHatchBridge = (*nativeSurfaceBridge)(nil)
 )
 
 // selectSurfaceBridge returns the native Skia bridge under the skiacgo build
@@ -365,6 +366,64 @@ func (b *nativeSurfaceBridge) drawImageTransformedNative(dst *image.RGBA, img re
 		floatPtr(matrix),
 		C.float(alpha),
 		C.int(skiaImageSampling(img.Interpolation())),
+	)
+
+	flippedState := bridgeDrawState{
+		clipRect:  flipRectPtrY(state.clipRect, height),
+		clipPaths: flipPathsY(state.clipPaths, height),
+	}
+	rendered := surf.readImage()
+	bounds := dst.Bounds()
+	if flippedState.clipRect != nil {
+		bounds = bounds.Intersect(rectToImage(*flippedState.clipRect))
+	}
+	clipMasks := rasterizeClipMasks(w, h, flippedState.clipPaths)
+	compositeNativeOver(dst, rendered, bounds, clipMasks)
+	return true
+}
+
+// drawHatchPathNative fills path-local hatch pixels via a repeated SkShader on
+// a native Skia surface, then composites them back into the CPU image.
+func (b *nativeSurfaceBridge) drawHatchPathNative(dst *image.RGBA, path geom.Path, paint render.Paint, state bridgeDrawState) bool {
+	if dst == nil || paint.Hatch == "" || !path.Validate() {
+		return false
+	}
+	paintCopy := paint
+	applyForcedAlpha(&paintCopy)
+	color := paintCopy.HatchColor
+	if color.A <= 0 {
+		return true
+	}
+	lineWidth := paintCopy.HatchLineWidth
+	if lineWidth <= 0 {
+		lineWidth = 1
+	}
+	spacing := paintCopy.HatchSpacing
+	if spacing <= 0 {
+		spacing = render.DefaultHatchSpacing
+	}
+
+	w, h := dst.Bounds().Dx(), dst.Bounds().Dy()
+	height := float64(h)
+	surf := newNativeSurface(w, h)
+	if surf == nil {
+		return false
+	}
+	defer surf.delete()
+
+	flippedPath := flipPathY(path, height)
+	verbs, coords := pathToVerbsCoords(flippedPath)
+	hatch := C.CString(paintCopy.Hatch)
+	defer C.free(unsafe.Pointer(hatch))
+	C.mgsk_draw_hatch_path(
+		surf.ptr,
+		bytePtr(verbs), C.int(len(verbs)),
+		floatPtr(coords), C.int(len(coords)),
+		hatch, C.int(len(paintCopy.Hatch)),
+		C.float(color.R), C.float(color.G), C.float(color.B), C.float(color.A),
+		C.float(lineWidth),
+		C.float(spacing),
+		boolToCInt(paintCopy.Antialias != render.AntialiasOff),
 	)
 
 	flippedState := bridgeDrawState{

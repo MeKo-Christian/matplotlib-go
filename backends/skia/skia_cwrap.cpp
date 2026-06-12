@@ -11,6 +11,7 @@
 #include "skia_cwrap.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <vector>
 
@@ -155,6 +156,175 @@ void drawStroke(SkCanvas *canvas, const SkPath &path, const MgSkPaint *paint) {
     sk.setStrokeWidth(paint->line_width);
     sk.setColor(colorFromFloat(paint->stroke_r, paint->stroke_g, paint->stroke_b, paint->stroke_a));
     canvas->drawPath(path, sk);
+}
+
+int hatchCount(const char *hatch, int hatch_len, char needle) {
+    if (hatch == nullptr || hatch_len <= 0) {
+        return 0;
+    }
+    int count = 0;
+    for (int i = 0; i < hatch_len; ++i) {
+        if (hatch[i] == needle) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+float hatchStep(float spacing, int count) {
+    if (count <= 0) {
+        return 0.0f;
+    }
+    if (spacing <= 0.0f) {
+        spacing = 100.0f / 6.0f;
+    }
+    return std::max(2.0f, spacing / static_cast<float>(count));
+}
+
+void drawLineHatches(SkCanvas *canvas, int tile, SkPaint *paint,
+                     int vertical_count, int horizontal_count,
+                     int slash_count, int backslash_count,
+                     float spacing) {
+    float step = hatchStep(spacing, vertical_count);
+    if (step > 0.0f) {
+        for (float x = 0.0f; x <= static_cast<float>(tile) + step * 0.5f; x += step) {
+            canvas->drawLine(x, 0.0f, x, static_cast<float>(tile), *paint);
+        }
+    }
+    step = hatchStep(spacing, horizontal_count);
+    if (step > 0.0f) {
+        for (float y = 0.0f; y <= static_cast<float>(tile) + step * 0.5f; y += step) {
+            canvas->drawLine(0.0f, y, static_cast<float>(tile), y, *paint);
+        }
+    }
+    step = hatchStep(spacing, slash_count);
+    if (step > 0.0f) {
+        for (float x = -static_cast<float>(tile); x <= static_cast<float>(tile) + step; x += step) {
+            canvas->drawLine(x, static_cast<float>(tile), x + static_cast<float>(tile), 0.0f, *paint);
+        }
+    }
+    step = hatchStep(spacing, backslash_count);
+    if (step > 0.0f) {
+        for (float x = -static_cast<float>(tile); x <= static_cast<float>(tile) + step; x += step) {
+            canvas->drawLine(x, 0.0f, x + static_cast<float>(tile), static_cast<float>(tile), *paint);
+        }
+    }
+}
+
+SkPath starPath(float cx, float cy, float outer, float inner) {
+    SkPathBuilder builder;
+    constexpr float pi = 3.14159265358979323846f;
+    for (int i = 0; i < 10; ++i) {
+        float radius = (i % 2 == 0) ? outer : inner;
+        float angle = -pi / 2.0f + static_cast<float>(i) * pi / 5.0f;
+        float x = cx + radius * std::cos(angle);
+        float y = cy + radius * std::sin(angle);
+        if (i == 0) {
+            builder.moveTo(x, y);
+        } else {
+            builder.lineTo(x, y);
+        }
+    }
+    builder.close();
+    return builder.detach();
+}
+
+void drawShapeGrid(SkCanvas *canvas, int tile, SkPaint *paint, float step, float radius,
+                   bool ring, bool star) {
+    if (step <= 0.0f) {
+        return;
+    }
+    int row = 0;
+    for (float y = step / 2.0f; y <= static_cast<float>(tile) + 1e-5f; y += step, ++row) {
+        float offset = (row % 2 == 0) ? 0.0f : step / 2.0f;
+        for (float x = step / 2.0f + offset; x <= static_cast<float>(tile) + 1e-5f; x += step) {
+            if (star) {
+                canvas->drawPath(starPath(x, y, radius, radius * 0.5f), *paint);
+                continue;
+            }
+            if (ring) {
+                SkPathBuilder builder(SkPathFillType::kEvenOdd);
+                builder.addCircle(x, y, radius, SkPathDirection::kCW);
+                builder.addCircle(x, y, radius * 0.9f, SkPathDirection::kCCW);
+                canvas->drawPath(builder.detach(), *paint);
+                continue;
+            }
+            canvas->drawCircle(x, y, radius, *paint);
+        }
+    }
+}
+
+void drawShapeHatches(SkCanvas *canvas, int tile, SkPaint *paint,
+                      int small_circles, int large_circles, int dots, int stars,
+                      float spacing) {
+    float step = hatchStep(spacing, small_circles);
+    if (step > 0.0f) {
+        drawShapeGrid(canvas, tile, paint, step, std::max(0.5f, step * 0.20f), true, false);
+    }
+    step = hatchStep(spacing, large_circles);
+    if (step > 0.0f) {
+        drawShapeGrid(canvas, tile, paint, step, std::max(0.5f, step * 0.35f), true, false);
+    }
+    step = hatchStep(spacing, dots);
+    if (step > 0.0f) {
+        drawShapeGrid(canvas, tile, paint, step, std::max(0.5f, step * 0.10f), false, false);
+    }
+    step = hatchStep(spacing, stars);
+    if (step > 0.0f) {
+        drawShapeGrid(canvas, tile, paint, step, std::max(0.75f, step / 3.0f), false, true);
+    }
+}
+
+sk_sp<SkShader> makeHatchShader(const char *hatch, int hatch_len, SkColor color,
+                                float line_width, float spacing, int antialias) {
+    if (hatch == nullptr || hatch_len <= 0) {
+        return nullptr;
+    }
+    constexpr int tile = 72;
+    SkImageInfo info = SkImageInfo::Make(tile, tile, kRGBA_8888_SkColorType, kPremul_SkAlphaType);
+    sk_sp<SkSurface> tileSurface = SkSurfaces::Raster(info);
+    if (tileSurface == nullptr) {
+        return nullptr;
+    }
+    SkCanvas *canvas = tileSurface->getCanvas();
+    canvas->clear(SK_ColorTRANSPARENT);
+
+    if (line_width <= 0.0f) {
+        line_width = 1.0f;
+    }
+
+    SkPaint linePaint;
+    linePaint.setAntiAlias(antialias != 0);
+    linePaint.setStyle(SkPaint::kStroke_Style);
+    linePaint.setStrokeWidth(line_width);
+    linePaint.setStrokeCap(SkPaint::kSquare_Cap);
+    linePaint.setStrokeJoin(SkPaint::kRound_Join);
+    linePaint.setColor(color);
+
+    int vertical = hatchCount(hatch, hatch_len, '|') + hatchCount(hatch, hatch_len, '+');
+    int horizontal = hatchCount(hatch, hatch_len, '-') + hatchCount(hatch, hatch_len, '+');
+    int slash = hatchCount(hatch, hatch_len, '/') + hatchCount(hatch, hatch_len, 'x') +
+                hatchCount(hatch, hatch_len, 'X');
+    int backslash = hatchCount(hatch, hatch_len, '\\') + hatchCount(hatch, hatch_len, 'x') +
+                    hatchCount(hatch, hatch_len, 'X');
+    drawLineHatches(canvas, tile, &linePaint, vertical, horizontal, slash, backslash, spacing);
+
+    SkPaint shapePaint;
+    shapePaint.setAntiAlias(antialias != 0);
+    shapePaint.setStyle(SkPaint::kFill_Style);
+    shapePaint.setColor(color);
+    drawShapeHatches(canvas, tile, &shapePaint,
+                     hatchCount(hatch, hatch_len, 'o'),
+                     hatchCount(hatch, hatch_len, 'O'),
+                     hatchCount(hatch, hatch_len, '.'),
+                     hatchCount(hatch, hatch_len, '*'),
+                     spacing);
+
+    sk_sp<SkImage> image = tileSurface->makeImageSnapshot();
+    if (image == nullptr) {
+        return nullptr;
+    }
+    return image->makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, SkSamplingOptions(), nullptr);
 }
 
 }  // namespace
@@ -319,6 +489,31 @@ void mgsk_draw_image(MgSkSurface *s,
     SkRect src = SkRect::MakeWH(static_cast<SkScalar>(width), static_cast<SkScalar>(height));
     s->canvas->drawImageRect(image, src, src, options, &paint, SkCanvas::kStrict_SrcRectConstraint);
     s->canvas->restore();
+}
+
+void mgsk_draw_hatch_path(MgSkSurface *s,
+                          const uint8_t *verbs, int nverbs,
+                          const float *coords, int ncoords,
+                          const char *hatch, int hatch_len,
+                          float r, float g, float b, float a,
+                          float line_width,
+                          float spacing,
+                          int antialias) {
+    if (s == nullptr || s->canvas == nullptr || verbs == nullptr || nverbs <= 0 ||
+        hatch == nullptr || hatch_len <= 0 || a <= 0.0f) {
+        return;
+    }
+    SkPath path = buildPath(verbs, nverbs, coords, ncoords);
+    sk_sp<SkShader> shader = makeHatchShader(
+        hatch, hatch_len, colorFromFloat(r, g, b, a), line_width, spacing, antialias);
+    if (shader == nullptr) {
+        return;
+    }
+    SkPaint paint;
+    paint.setAntiAlias(antialias != 0);
+    paint.setStyle(SkPaint::kFill_Style);
+    paint.setShader(shader);
+    s->canvas->drawPath(path, paint);
 }
 
 void mgsk_surface_read_pixels(MgSkSurface *s, uint8_t *dst, int stride) {

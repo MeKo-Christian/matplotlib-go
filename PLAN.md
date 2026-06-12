@@ -105,7 +105,7 @@ mode — no longer external-access-blocked, just unbuilt.
 - [x] **Native transformed images.** Add `mgsk_draw_image` (SkImage raster copy +
       `drawImageRect` with sampling) to the wrapper; implement
       `render.ImageTransformer` on the native path.
-- [ ] **Native hatching via tiled `SkShader`.** Add a tiled-shader hatch
+- [x] **Native hatching via tiled `SkShader`.** Add a tiled-shader hatch
       entrypoint to the wrapper and route `NativeHatcher` through it instead of
       `render.DrawHatchFallback`; flip `nativehatcher`.
 - [ ] **Real GPU mode** (`SkSurface::MakeRenderTarget`) behind `skiagpu` +

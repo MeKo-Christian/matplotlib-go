@@ -54,6 +54,9 @@ func TestNativeBridgeReportsNativeSurface(t *testing.T) {
 	if r.IsCapabilityBridged("imagetransform") {
 		t.Error("imagetransform should report native under the skiacgo build")
 	}
+	if r.IsCapabilityBridged("nativehatcher") {
+		t.Error("nativehatcher should report native under the skiacgo build")
+	}
 }
 
 // TestNativeGradientFill renders a horizontal red->blue linear gradient through
@@ -308,6 +311,50 @@ func TestNativeTransformedImage(t *testing.T) {
 	inside := clippedDst.RGBAAt(4, 15)
 	if inside.A != 255 || inside == (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
 		t.Fatalf("clipped transformed image did not draw inside clip: %+v", inside)
+	}
+}
+
+// TestNativeHatchShader renders a hatch fill through the native bridge. The
+// direct bridge assertion keeps this test red while hatches are only expanded
+// through render.DrawHatchFallback.
+func TestNativeHatchShader(t *testing.T) {
+	bridge, ok := selectSurfaceBridge(32, 32, ModeCPU).(interface {
+		drawHatchPathNative(*image.RGBA, geom.Path, render.Paint, bridgeDrawState) bool
+	})
+	if !ok {
+		t.Fatal("native bridge does not implement hatch shader drawing")
+	}
+	dst := image.NewRGBA(image.Rect(0, 0, 32, 32))
+	for y := 0; y < 32; y++ {
+		for x := 0; x < 32; x++ {
+			dst.SetRGBA(x, y, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+		}
+	}
+
+	paint := render.Paint{
+		Hatch:          "/",
+		HatchColor:     render.Color{R: 1, A: 1},
+		HatchLineWidth: 2,
+		HatchSpacing:   8,
+	}
+	if !bridge.drawHatchPathNative(dst, rectPath(4, 4, 28, 28), paint, bridgeDrawState{}) {
+		t.Fatal("drawHatchPathNative returned false for slash hatch")
+	}
+
+	redPixels := 0
+	for y := 0; y < 32; y++ {
+		for x := 0; x < 32; x++ {
+			c := dst.RGBAAt(x, y)
+			if c.R > 180 && c.G < 120 && c.B < 120 {
+				redPixels++
+			}
+		}
+	}
+	if redPixels == 0 {
+		t.Fatal("native hatch shader produced no red hatch pixels")
+	}
+	if got := dst.RGBAAt(1, 1); got != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
+		t.Fatalf("native hatch shader drew outside the path clip: %+v", got)
 	}
 }
 

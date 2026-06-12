@@ -332,19 +332,16 @@ func (r *Renderer) BridgeInfo() BridgeInfo {
 //
 // With the pure-Go CPU bridge the optional batch interfaces and transformed
 // images are satisfied by compatibility loops or the embedded CPU renderer, and
-// hatch metadata is consumed via the renderer-neutral DrawHatchFallback helper,
+// hatch metadata is expanded by the renderer-neutral DrawHatchFallback helper,
 // so those report as bridged. When a native Skia surface bridge is active (the
 // skiacgo build links a real Skia library), markers, path collections, quad
-// meshes, and transformed RGBA images route through native Skia rasterization;
-// hatching still loops through the CPU path until its native entrypoint lands,
-// so it stays bridged.
+// meshes, transformed RGBA images, and hatch fills route through native Skia
+// rasterization.
 func (r *Renderer) IsCapabilityBridged(name string) bool {
 	native := r != nil && r.bridge != nil && r.bridge.Info().NativeSurface
 	switch name {
-	case "imagetransform", "markerbatch", "pathcollectionbatch", "quadmeshbatch":
+	case "imagetransform", "markerbatch", "nativehatcher", "pathcollectionbatch", "quadmeshbatch":
 		return !native
-	case "nativehatcher":
-		return true
 	default:
 		return false
 	}

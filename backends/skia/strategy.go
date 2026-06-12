@@ -133,9 +133,8 @@ func NativePathRequirements() []NativePathRequirement {
 			Primitive:           "tiled SkShader",
 			Modes:               []RenderMode{ModeCPU, ModeGPU},
 			Capabilities:        []backends.Capability{backends.NativeHatcher},
-			ExternalEntrypoints: []string{"SkShader", "SkCanvas::drawPath"},
-			Status:              StatusDeferred,
-			BlockedBy:           externalABIBlocker,
+			ExternalEntrypoints: []string{"mgsk_draw_hatch_path", "SkImage::makeShader", "SkCanvas::drawPath"},
+			Status:              StatusImplemented,
 		},
 		{
 			Primitive:           "SkSurface::MakeRenderTarget",
