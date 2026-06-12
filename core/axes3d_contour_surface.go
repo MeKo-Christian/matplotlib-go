@@ -142,6 +142,9 @@ func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opts ...PlotOptions) *P
 				VMax:         vMax,
 				ScalarValues: scalarValues,
 				z:            zorder,
+				// matplotlib ContourSet: antialiased=None with filled=True
+				// resolves to False, so band fills render with hard edges.
+				Antialias: render.AntialiasOff,
 			},
 			Paths:      paths,
 			FaceColors: colors,
@@ -329,6 +332,9 @@ func (a *Axes3D) TriContourf(tri Triangulation, z []float64, opts ...PlotOptions
 				VMax:         vMax,
 				ScalarValues: scalarValues,
 				z:            zorder,
+				// matplotlib ContourSet: antialiased=None with filled=True
+				// resolves to False, so band fills render with hard edges.
+				Antialias: render.AntialiasOff,
 			},
 			Paths:      paths,
 			FaceColors: colors,

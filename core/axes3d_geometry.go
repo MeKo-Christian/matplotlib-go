@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/render"
 )
 
 func normalized3DDir(dir string) string {
@@ -188,6 +189,7 @@ func rotate3DVector(vec, axis vec3, angle float64) vec3 {
 type projected3DPolygon struct {
 	polygon []geom.Pt
 	depth   float64
+	color   render.Color
 }
 
 func (a *Axes3D) projectFillBetween3DPolygons(x1, y1, z1, x2, y2, z2 []float64, mode FillBetween3DMode, axlimClip ...bool) ([][]geom.Pt, float64) {

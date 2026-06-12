@@ -433,6 +433,9 @@ type FillBetween3DOptions struct {
 	Alpha     *float64
 	Label     string
 	Mode      FillBetween3DMode
+	// Shade mirrors matplotlib's fill_between shade parameter: nil defaults
+	// to true in 'quad' mode and false in 'polygon' mode.
+	Shade     *bool
 	AxLimClip bool
 }
 
@@ -630,11 +633,32 @@ func (a *Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBet
 		edgeWidth = *opt.EdgeWidth
 	}
 
-	polygons, zorder := a.projectFillBetween3DPolygons(x1[:n], y1[:n], z1[:n], x2[:n], y2[:n], z2[:n], opt.Mode, opt.AxLimClip)
+	// matplotlib fill_between: shade defaults to true in 'quad' mode and
+	// false in 'polygon' mode; shaded quads get per-face lightsource-scaled
+	// copies of the base color (Poly3DCollection(shade=True) ->
+	// art3d._generate_normals + _shade_colors).
+	mode := resolveFillBetween3DMode(x1[:n], y1[:n], z1[:n], x2[:n], y2[:n], z2[:n], opt.Mode)
+	shade := mode == FillBetween3DModeQuad
+	if opt.Shade != nil {
+		shade = *opt.Shade
+	}
+	raw := fillBetween3DRawPolygons(x1[:n], y1[:n], z1[:n], x2[:n], y2[:n], z2[:n], mode)
+	faceColors := make([]render.Color, len(raw))
+	for i, polygon := range raw {
+		if shade {
+			faceColors[i] = shade3DFaceColor(color, polygon3DNormal(polygon))
+		} else {
+			faceColors[i] = color
+		}
+	}
+
+	project := func() ([][]geom.Pt, []render.Color, float64) {
+		return a.projectSorted3DPolygonsWithColors(raw, faceColors, opt.AxLimClip)
+	}
+	polygons, colors, zorder := project()
 	if len(polygons) == 0 {
 		return nil
 	}
-	colors := repeatColor(color, len(polygons))
 	collection := &PolyCollection{
 		Polygons: polygons,
 		PatchCollection: PatchCollection{
@@ -648,9 +672,9 @@ func (a *Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBet
 	}
 	a.Add(collection)
 	a.add3DReprojector(func() {
-		polygons, zorder := a.projectFillBetween3DPolygons(x1[:n], y1[:n], z1[:n], x2[:n], y2[:n], z2[:n], opt.Mode, opt.AxLimClip)
+		polygons, colors, zorder := project()
 		collection.Polygons = polygons
-		collection.FaceColors = repeatColor(color, len(polygons))
+		collection.FaceColors = colors
 		collection.z = zorder
 	}, limitsChanged)
 	return collection

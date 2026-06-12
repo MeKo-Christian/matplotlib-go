@@ -425,6 +425,10 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 						Norm:     norm,
 						VMin:     vmin,
 						VMax:     vmax,
+						// matplotlib ContourSet: antialiased=None with
+						// filled=True resolves to False (contour.py), so
+						// band fills render with hard edges.
+						Antialias: render.AntialiasOff,
 					},
 					FaceColors: faceColors,
 					LineJoin:   render.JoinMiter,

@@ -2309,6 +2309,9 @@ func TestAxes3DFillBetweenColorsApplyAlphaAndStayNonMappable(t *testing.T) {
 	edge := render.Color{R: 0.8, G: 0.1, B: 0.3, A: 1}
 	alpha := 0.35
 	edgeWidth := 1.25
+	// shade=false isolates the alpha propagation under test; quad mode would
+	// otherwise shade each face like matplotlib's fill_between(shade=None).
+	noShade := false
 	fill := ax.FillBetween3D(
 		[]float64{0, 1, 2},
 		[]float64{0, 0, 0},
@@ -2322,6 +2325,7 @@ func TestAxes3DFillBetweenColorsApplyAlphaAndStayNonMappable(t *testing.T) {
 			EdgeWidth: &edgeWidth,
 			Alpha:     &alpha,
 			Mode:      FillBetween3DModeQuad,
+			Shade:     &noShade,
 		},
 	)
 	if fill == nil {
