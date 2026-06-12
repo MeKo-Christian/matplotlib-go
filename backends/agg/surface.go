@@ -194,6 +194,14 @@ func (s *aggSurface) GetAntiAliasGamma() float64 {
 	return s.painter.GetAntiAliasGamma()
 }
 
+func (s *aggSurface) SetAntiAliased(enabled bool) {
+	s.painter.SetAntiAliased(enabled)
+}
+
+func (s *aggSurface) GetAntiAliased() bool {
+	return s.painter.GetAntiAliased()
+}
+
 func (s *aggSurface) ClearDashes() {
 	s.painter.RemoveAllDashes()
 }

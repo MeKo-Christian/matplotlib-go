@@ -210,20 +210,28 @@ func (r *Renderer) applyAntialiasMode(mode render.AntialiasMode) func() {
 	if r.ctx == nil {
 		return func() {}
 	}
-	prev := r.ctx.GetAntiAliasGamma()
 	switch mode {
 	case render.AntialiasOn:
+		prev := r.ctx.GetAntiAliasGamma()
+		prevAA := r.ctx.GetAntiAliased()
+		r.ctx.SetAntiAliased(true)
 		r.ctx.SetAntiAliasGamma(1.0)
+		return func() {
+			r.ctx.SetAntiAliasGamma(prev)
+			r.ctx.SetAntiAliased(prevAA)
+		}
 	case render.AntialiasOff:
-		// AGG exposes antialiasing through the rasterizer gamma curve rather
-		// than a boolean switch. A low gamma sharply suppresses partial
-		// coverage and gives callers an aliased-style path when requested.
-		r.ctx.SetAntiAliasGamma(0.1)
+		// matplotlib's Agg backend switches to scanline_bin /
+		// renderer_scanline_bin_solid when a graphics context has
+		// antialiased=false: every touched cell becomes a fully covered
+		// pixel (_backend_agg.h _draw_path).
+		prevAA := r.ctx.GetAntiAliased()
+		r.ctx.SetAntiAliased(false)
+		return func() {
+			r.ctx.SetAntiAliased(prevAA)
+		}
 	default:
 		return func() {}
-	}
-	return func() {
-		r.ctx.SetAntiAliasGamma(prev)
 	}
 }
 
