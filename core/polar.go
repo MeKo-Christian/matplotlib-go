@@ -238,6 +238,17 @@ func polarTickPaint(color render.Color, width float64, dashes []float64) render.
 	}
 }
 
+// polarRadialTickLabelAlignments ports matplotlib's
+// PolarAxes.get_yaxis_text1_transform (projections/polar.py): for a
+// full-circle theta range the radial tick labels anchor at the projected
+// (rlabel_position, r) point with ha='left', va='bottom' and no pad shift.
+func polarRadialTickLabelAlignments(fullCircle bool, angle float64) (TextAlign, textLayoutVerticalAlign) {
+	if fullCircle {
+		return TextAlignLeft, textLayoutVAlignBottom
+	}
+	return polarTickLabelAlignments(angle)
+}
+
 func polarTickLabelAlignments(angle float64) (TextAlign, textLayoutVerticalAlign) {
 	angle = math.Mod(angle, 2*math.Pi)
 	if angle < 0 {

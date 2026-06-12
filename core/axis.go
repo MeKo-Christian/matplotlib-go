@@ -1166,7 +1166,8 @@ func (a *Axis) drawPolarRadialTickLabels(textRen render.TextDrawer, r render.Ren
 	fontSize := tickLabelFontSizeForStyle(a, style, ctx)
 	fontKey := tickLabelFontKey(style, ctx)
 	labelPadPx := tickLabelPadForAxisSize(a, tickSize, style, ctx)
-	if polarIsFullCircle(ctx.DataToPixel.XScale) {
+	fullCircle := polarIsFullCircle(ctx.DataToPixel.XScale)
+	if fullCircle {
 		labelPadPx = 0
 	}
 	labelAngle := polarRadialLabelAngleForProjection(ctx.Projection)
@@ -1179,7 +1180,7 @@ func (a *Axis) drawPolarRadialTickLabels(textRen render.TextDrawer, r render.Ren
 		layout := measureSingleLineTextLayout(r, label, fontSize, fontKey, ctx.RC.UseTeX)
 		radius := outerRadius * ctx.DataToPixel.YScale.Fwd(tick)
 		anchor := polarPixelPoint(center, radius+labelPadPx, labelAngle)
-		hAlign, vAlign := polarTickLabelAlignments(labelAngle)
+		hAlign, vAlign := polarRadialTickLabelAlignments(fullCircle, labelAngle)
 		drawDisplayText(textRen, label, alignedSingleLineOrigin(anchor, layout, hAlign, vAlign), fontSize, a.tickLabelColor(), fontKey, ctx.RC.UseTeX)
 	}
 }
@@ -1283,12 +1284,13 @@ func (a *Axis) polarTickLabelBoundsForLevel(r render.Renderer, ctx *DrawContext,
 			hAlign, vAlign = TextAlignCenter, textLayoutVAlignCenter
 		} else {
 			radialLabelPadPx := labelPadPx
-			if polarIsFullCircle(ctx.DataToPixel.XScale) {
+			fullCircle := polarIsFullCircle(ctx.DataToPixel.XScale)
+			if fullCircle {
 				radialLabelPadPx = 0
 			}
 			radius := outerRadius * ctx.DataToPixel.YScale.Fwd(tick)
 			anchor = polarPixelPoint(center, radius+radialLabelPadPx, labelAngle)
-			hAlign, vAlign = polarTickLabelAlignments(labelAngle)
+			hAlign, vAlign = polarRadialTickLabelAlignments(fullCircle, labelAngle)
 		}
 
 		origin := alignedSingleLineOrigin(anchor, layout, hAlign, vAlign)

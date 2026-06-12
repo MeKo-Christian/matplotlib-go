@@ -592,7 +592,9 @@ func (a *Axes) Fill(x, y []float64, opts ...FillOptions) *PolyCollection {
 			Collection: Collection{
 				Label: opt.Label,
 				Alpha: 1,
-				z:     2,
+				// matplotlib's fill() returns Polygon patches (Patch.zorder=1),
+				// which draw below gridlines (axisbelow='line' puts the axis at 1.5).
+				z: 1,
 			},
 			FaceColors: []render.Color{color},
 			EdgeColor:  edgeColor,

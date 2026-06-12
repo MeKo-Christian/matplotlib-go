@@ -256,7 +256,9 @@ func (g *Grid) drawPolarLines(r render.Renderer, ctx *DrawContext, minor bool, c
 			path := geom.Path{}
 			path.MoveTo(center)
 			path.LineTo(polarPixelPoint(center, outerRadius, angle))
-			r.Path(path, &paint)
+			// Axis-aligned spokes (e.g. the radar north spoke) snap in
+			// matplotlib's renderer; diagonal spokes pass through.
+			r.Path(snapPathToPixels(path, paint.LineWidth), &paint)
 		}
 	case AxisLeft, AxisRight:
 		axis := axisForPolarGrid(ctx, false)
@@ -274,7 +276,7 @@ func (g *Grid) drawPolarLines(r render.Renderer, ctx *DrawContext, minor bool, c
 			if sides := radarFrameSidesForProjection(ctx.Projection); sides >= 3 {
 				path = polarPolygonFramePath(ctx.Projection, center, radius, sides)
 			}
-			r.Path(path, &paint)
+			r.Path(snapPathToPixels(path, paint.LineWidth), &paint)
 		}
 	}
 }
@@ -437,6 +439,51 @@ func (g *Grid) drawLine(r render.Renderer, ctx *DrawContext, tickValue float64, 
 	r.Path(path, &paint)
 }
 
+// snapPathToPixels ports matplotlib's PathSnapper in SNAP_AUTO mode
+// (third_party/matplotlib/src/path_converters.h): a path of at most 1024
+// vertices consisting solely of horizontal or vertical line segments has every
+// vertex snapped to floor(v+0.5)+s, where s is 0.5 when the stroke width
+// rounds to an odd integer and 0 otherwise. Any diagonal segment or curve
+// returns the path unchanged. matplotlib applies this in the renderer to every
+// path drawn with snap mode "auto" (the Line2D default); here it is applied at
+// the gridline call sites, which draw plain polylines.
+func snapPathToPixels(path geom.Path, strokeWidth float64) geom.Path {
+	if len(path.V) == 0 || len(path.V) > 1024 {
+		return path
+	}
+	vi := 0
+	var prev geom.Pt
+	for _, cmd := range path.C {
+		switch cmd {
+		case geom.MoveTo:
+			prev = path.V[vi]
+			vi++
+		case geom.LineTo:
+			cur := path.V[vi]
+			vi++
+			if math.Abs(prev.X-cur.X) >= 1e-4 && math.Abs(prev.Y-cur.Y) >= 1e-4 {
+				return path
+			}
+			prev = cur
+		case geom.ClosePath:
+			// The implicit closing segment is not inspected, matching the
+			// upstream vertex-stream behavior.
+		default:
+			// QuadTo/CubicTo: curves are never snapped.
+			return path
+		}
+	}
+	snapValue := 0.0
+	if int(math.Round(strokeWidth))%2 != 0 {
+		snapValue = 0.5
+	}
+	out := geom.Path{C: append([]geom.Cmd(nil), path.C...), V: make([]geom.Pt, len(path.V))}
+	for i, v := range path.V {
+		out.V[i] = geom.Pt{X: math.Floor(v.X+0.5) + snapValue, Y: math.Floor(v.Y+0.5) + snapValue}
+	}
+	return out
+}
+
 // scaleGridDashes mirrors matplotlib's Line2D dash scaling
 // (rcParams["lines.scale_dashes"] is True by default): the on/off pattern is
 // multiplied by the line width. Because both the pattern and width are already
@@ -477,7 +524,7 @@ func drawSampledGridLine(r render.Renderer, ctx *DrawContext, axis AxisSide, tic
 			path.LineTo(pt)
 		}
 	}
-	r.Path(path, &paint)
+	r.Path(snapPathToPixels(path, paint.LineWidth), &paint)
 }
 
 // Z returns the z-order for sorting.

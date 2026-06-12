@@ -219,7 +219,9 @@ func drawGeoGridLine(r render.Renderer, ctx *DrawContext, axis AxisSide, tick fl
 			path.LineTo(pt)
 		}
 	}
-	r.Path(path, &paint)
+	// Straight parallels/meridians (e.g. Mollweide latitude lines) snap to
+	// pixel rows/columns in matplotlib's AGG renderer; curved ones pass through.
+	r.Path(snapPathToPixels(path, paint.LineWidth), &paint)
 }
 
 func (a *Axis) drawGeoTickLabels(r render.Renderer, ctx *DrawContext) {
