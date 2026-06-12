@@ -516,6 +516,7 @@ func (s *Segment2D) Draw(r render.Renderer, ctx *DrawContext) {
 		LineJoin:  render.JoinRound,
 		LineCap:   render.CapButt,
 		Dashes:    lineDashesForPaint(s.Dashes, s.LineWidth, DashUnitsMatplotlib),
+		Snap:      render.SnapAuto,
 	})
 }
 
@@ -572,6 +573,7 @@ func (l *InfiniteLine2D) Draw(r render.Renderer, ctx *DrawContext) {
 		LineJoin:  render.JoinRound,
 		LineCap:   render.CapButt,
 		Dashes:    lineDashesForPaint(l.Dashes, l.LineWidth, DashUnitsMatplotlib),
+		Snap:      render.SnapAuto,
 	})
 }
 
