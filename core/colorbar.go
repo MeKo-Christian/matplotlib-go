@@ -136,7 +136,10 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	ax.colorbarLocation = location
 	ax.colorbarTicks = cloneFloat64s(cfg.Ticks)
 	ax.colorbarBounds = cloneFloat64s(boundaries)
-	ax.ShowFrame = false
+	// matplotlib hides every rectangular spine of the colorbar axes and draws
+	// the border as a dedicated outline spine instead (colorbar.py:
+	// `for spine in self.ax.spines.values(): spine.set_visible(False)`).
+	ax.SetFrameOn(false)
 	configureColorbarAxes(ax, location, cfg.Label)
 	configureColorbarScale(ax, mapping, location, cfg.Ticks, boundaries, extend)
 

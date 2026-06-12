@@ -112,6 +112,22 @@ func (a *Axes) ProjectionName() string {
 	return a.projection.Name()
 }
 
+// SetFrameOn mirrors matplotlib's Axes.set_frame_on: turning the frame off
+// removes every spine from the draw list (axes/_base.py draw:
+// `if not (self.axison and self._frameon): artists.remove(spine)`), in
+// addition to the top/right frame edges.
+func (a *Axes) SetFrameOn(on bool) {
+	if a == nil {
+		return
+	}
+	a.ShowFrame = on
+	for _, axis := range []*Axis{a.XAxis, a.YAxis, a.XAxisTop, a.YAxisRight} {
+		if axis != nil {
+			axis.ShowSpine = on
+		}
+	}
+}
+
 func (a *Axes) SetThetaZeroLocation(location string, offsetDeg ...float64) error {
 	proj, ok := polarProjectionForAxes(a)
 	if !ok {
@@ -146,6 +162,9 @@ func (a *Axes) SetThetaDirection(direction string) error {
 	return nil
 }
 
+// SetRadialLabelPosition mirrors matplotlib's set_rlabel_position: the angle
+// is in theta-data degrees; the display position additionally follows the
+// theta zero location and direction.
 func (a *Axes) SetRadialLabelPosition(angleDeg float64) error {
 	proj, ok := polarProjectionForAxes(a)
 	if !ok {

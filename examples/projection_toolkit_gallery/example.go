@@ -229,7 +229,7 @@ func addAxesGridPanel(fig *core.Figure, rect geom.Rect) {
 	outer.SetTitle("axes_grid1")
 	outer.XAxis.Locator = core.FixedLocator{}
 	outer.YAxis.Locator = core.FixedLocator{}
-	outer.ShowFrame = false
+	outer.SetFrameOn(false)
 
 	gridRect := geom.Rect{
 		Min: geom.Pt{X: rect.Min.X + 0.01, Y: rect.Min.Y + 0.02},

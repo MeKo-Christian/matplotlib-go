@@ -409,9 +409,14 @@ func polarProjectionState(proj Projection) (offset, direction, radialLabelAngle 
 	return offset, direction, radialLabelAngle
 }
 
+// polarRadialLabelAngleForProjection returns the display-space angle of the
+// radial tick labels. matplotlib stores rlabel_position in theta-data space
+// and maps it through the theta direction and offset
+// (polar.py RadialTick.update_position:
+// `angle = rlabel_position * direction + offset`).
 func polarRadialLabelAngleForProjection(proj Projection) float64 {
-	_, _, angle := polarProjectionState(proj)
-	return angle
+	offset, direction, rlabel := polarProjectionState(proj)
+	return normalizePolarAngle(offset + direction*rlabel)
 }
 
 func polarCompassAngle(location string) (float64, bool) {

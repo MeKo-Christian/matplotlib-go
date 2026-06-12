@@ -149,9 +149,12 @@ func (rectilinearProjection) DataToAxes(ax *Axes) transform.T {
 }
 
 type polarProjection struct {
-	name             string
-	thetaOffset      float64
-	thetaDirection   float64
+	name           string
+	thetaOffset    float64
+	thetaDirection float64
+	// radialLabelAngle is matplotlib's rlabel_position in theta-data radians
+	// (default 22.5°); the display angle is derived from it with the theta
+	// offset and direction at draw time.
 	radialLabelAngle float64
 	radarVariables   int
 	radarLabels      []string
@@ -170,7 +173,7 @@ func newRadarProjection() *polarProjection {
 		name:             "radar",
 		thetaOffset:      math.Pi / 2,
 		thetaDirection:   1,
-		radialLabelAngle: math.Pi/2 + defaultPolarRadialLabelAngle,
+		radialLabelAngle: defaultPolarRadialLabelAngle,
 		radarVariables:   defaultRadarVariables,
 	}
 }
