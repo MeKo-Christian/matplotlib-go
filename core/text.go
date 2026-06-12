@@ -196,7 +196,7 @@ func (a *Axes) Text(x, y float64, text string, opts ...TextOptions) *Text {
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
-	clipOn := true
+	clipOn := false
 	if opt.ClipOn != nil {
 		clipOn = *opt.ClipOn
 	}
@@ -411,9 +411,41 @@ func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
 
 func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, ctx *DrawContext, anchor geom.Pt, fontSize float64, fontKey string, parseMath bool, lines []string) {
 	hAlign, vAlign := textRotationLayoutAlignments(t.HAlign, t.VAlign, t.Angle, t.RotationMode)
+	textColor := t.ApplyArtistAlpha(resolvedTextColor(t.Color, ctx))
 	block, ok := measureMultilineTextBlock(r, ctx, anchor, fontSize, fontKey, parseMath, ctx.RC.UseTeX, lines, t.Linespacing, hAlign, vAlign)
 	if !ok {
 		return
+	}
+	lineAlign := hAlign
+	if t.MultiAlignment != nil {
+		lineAlign = *t.MultiAlignment
+	}
+
+	if t.Angle != 0 {
+		if rotated, ok := r.(render.RotatedTextDrawer); ok {
+			angle := t.Angle * math.Pi / 180
+			rotatedBlock, ok := measureRotatedMultilineTextBlock(r, fontSize, fontKey, parseMath, ctx.RC.UseTeX, lines, t.Linespacing, hAlign, vAlign, lineAlign, angle, t.RotationMode)
+			if ok {
+				if t.BBox != nil {
+					drawMultilineTextBBoxRotatedMatplotlib(r, anchor, rotatedBlock, t.BBox, ctx, fontSize, t.Angle)
+				}
+				for i, line := range lines {
+					if line == "" {
+						continue
+					}
+					origin := geom.Pt{
+						X: anchor.X + rotatedBlock.LineOffsets[i].X,
+						Y: anchor.Y + rotatedBlock.LineOffsets[i].Y,
+					}
+					rotAnchor := rotatedTextBackendAnchorForOrigin(origin, rotatedBlock.Layouts[i], angle)
+					if len(t.PathEffects) > 0 && drawTextPathEffects(r, line, origin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
+						continue
+					}
+					drawDisplayTextRotatedParseMath(rotated, line, rotAnchor, fontSize, angle, textColor, fontKey, parseMath, ctx.RC.UseTeX)
+				}
+				return
+			}
+		}
 	}
 
 	if t.BBox != nil {
@@ -431,11 +463,6 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 		}
 	}
 
-	textColor := t.ApplyArtistAlpha(resolvedTextColor(t.Color, ctx))
-	lineAlign := hAlign
-	if t.MultiAlignment != nil {
-		lineAlign = *t.MultiAlignment
-	}
 	for i, line := range lines {
 		if line == "" {
 			continue
@@ -547,6 +574,186 @@ func measureMultilineTextBlock(r render.Renderer, ctx *DrawContext, anchor geom.
 		Max: geom.Pt{X: left + block.Width, Y: top},
 	}
 	return block, true
+}
+
+type rotatedMultilineTextBlockLayout struct {
+	Layouts       []singleLineTextLayout
+	LineOffsets   []geom.Pt
+	TextBoxX      float64
+	TextBoxY      float64
+	TextBoxWidth  float64
+	TextBoxHeight float64
+}
+
+func measureRotatedMultilineTextBlock(r render.Renderer, fontSize float64, fontKey string, parseMath, useTeX bool, lines []string, linespacing float64, hAlign TextAlign, vAlign textLayoutVerticalAlign, lineAlign TextAlign, angle float64, mode TextRotationMode) (rotatedMultilineTextBlockLayout, bool) {
+	if len(lines) == 0 {
+		return rotatedMultilineTextBlockLayout{}, false
+	}
+	layout := rotatedMultilineTextBlockLayout{
+		Layouts:     make([]singleLineTextLayout, len(lines)),
+		LineOffsets: make([]geom.Pt, len(lines)),
+	}
+	widths := make([]float64, len(lines))
+	heights := make([]float64, len(lines))
+	xs := make([]float64, len(lines))
+	ys := make([]float64, len(lines))
+
+	lpLayout := measureMultilineLineLayout(r, "lp", fontSize, fontKey, false, useTeX)
+	lpHeight, lpDescent := multilineMatplotlibHeightDescent(lpLayout)
+	minDY := (lpHeight - lpDescent) * resolvedTextLinespacing(linespacing)
+	spacing := resolvedTextLinespacing(linespacing)
+
+	width := 0.0
+	thisY := 0.0
+	descent := 0.0
+	baseline := 0.0
+	for i, line := range lines {
+		lineLayout := measureMultilineLineLayout(r, line, fontSize, fontKey, parseMath, useTeX)
+		lineHeight, lineDescent := multilineMatplotlibHeightDescent(lineLayout)
+		lineHeight = math.Max(lineHeight, lpHeight)
+		lineDescent = math.Max(lineDescent, lpDescent)
+
+		layout.Layouts[i] = lineLayout
+		widths[i] = lineLayout.Width
+		heights[i] = lineHeight
+		width = math.Max(width, lineLayout.Width)
+
+		baseline = (lineHeight - lineDescent) - thisY
+		if i == 0 {
+			thisY = -(lineHeight - lineDescent)
+		} else {
+			thisY -= math.Max(minDY, (lineHeight-lineDescent)*spacing)
+		}
+		xs[i] = 0
+		ys[i] = thisY
+		thisY -= lineDescent
+		descent = lineDescent
+	}
+
+	xmin, xmax := 0.0, width
+	ymax := 0.0
+	ymin := ys[len(ys)-1] - descent
+	corners := []geom.Pt{
+		{X: xmin, Y: ymin},
+		{X: xmin, Y: ymax},
+		{X: xmax, Y: ymax},
+		{X: xmax, Y: ymin},
+	}
+	minRotX, maxRotX := math.Inf(1), math.Inf(-1)
+	minRotY, maxRotY := math.Inf(1), math.Inf(-1)
+	for _, corner := range corners {
+		rot := rotateTextLayoutPoint(corner, angle)
+		minRotX = math.Min(minRotX, rot.X)
+		maxRotX = math.Max(maxRotX, rot.X)
+		minRotY = math.Min(minRotY, rot.Y)
+		maxRotY = math.Max(maxRotY, rot.Y)
+	}
+
+	var offsetX, offsetY float64
+	if mode == TextRotationModeAnchor {
+		offsetX = textLayoutHorizontalOffset(xmin, xmax, hAlign)
+		offsetY = textLayoutVerticalOffset(ymin, ymax, ymax-ymin, descent, baseline, vAlign, true)
+		rot := rotateTextLayoutPoint(geom.Pt{X: offsetX, Y: offsetY}, angle)
+		offsetX, offsetY = rot.X, rot.Y
+	} else {
+		offsetX = textLayoutHorizontalOffset(minRotX, maxRotX, hAlign)
+		offsetY = textLayoutVerticalOffset(minRotY, maxRotY, maxRotY-minRotY, descent, baseline, vAlign, false)
+	}
+
+	for i := range lines {
+		lineX := xs[i]
+		switch lineAlign {
+		case TextAlignCenter:
+			lineX += width/2 - widths[i]/2
+		case TextAlignRight:
+			lineX += width - widths[i]
+		}
+		rot := rotateTextLayoutPoint(geom.Pt{X: lineX, Y: ys[i]}, angle)
+		layout.LineOffsets[i] = geom.Pt{X: rot.X - offsetX, Y: rot.Y - offsetY}
+	}
+
+	var projectedXs, projectedYs []float64
+	for i := range lines {
+		linePt := rotateTextLayoutPoint(layout.LineOffsets[i], -angle)
+		y1 := linePt.Y - descent
+		x2 := linePt.X + widths[i]
+		y2 := y1 + heights[i]
+		projectedXs = append(projectedXs, linePt.X, x2)
+		projectedYs = append(projectedYs, y1, y2)
+	}
+	xtBox, ytBox := minFloat64(projectedXs), minFloat64(projectedYs)
+	layout.TextBoxWidth = maxFloat64(projectedXs) - xtBox
+	layout.TextBoxHeight = maxFloat64(projectedYs) - ytBox
+	boxOrigin := rotateTextLayoutPoint(geom.Pt{X: xtBox, Y: ytBox}, angle)
+	layout.TextBoxX = boxOrigin.X
+	layout.TextBoxY = boxOrigin.Y
+	return layout, true
+}
+
+func textLayoutHorizontalOffset(minX, maxX float64, align TextAlign) float64 {
+	switch align {
+	case TextAlignCenter:
+		return (minX + maxX) / 2
+	case TextAlignRight:
+		return maxX
+	default:
+		return minX
+	}
+}
+
+func textLayoutVerticalOffset(minY, maxY, height, descent, baseline float64, align textLayoutVerticalAlign, anchorMode bool) float64 {
+	switch align {
+	case textLayoutVAlignCenter:
+		return (minY + maxY) / 2
+	case textLayoutVAlignTop:
+		return maxY
+	case textLayoutVAlignBaseline:
+		if anchorMode {
+			return maxY - baseline
+		}
+		return minY + descent
+	case textLayoutVAlignCenterBaseline:
+		if anchorMode {
+			return maxY - baseline/2
+		}
+		return minY + height - baseline/2
+	default:
+		return minY
+	}
+}
+
+func rotateTextLayoutPoint(p geom.Pt, angle float64) geom.Pt {
+	cosT := math.Cos(angle)
+	sinT := math.Sin(angle)
+	return geom.Pt{
+		X: p.X*cosT - p.Y*sinT,
+		Y: p.X*sinT + p.Y*cosT,
+	}
+}
+
+func rotatedTextBackendAnchorForOrigin(origin geom.Pt, layout singleLineTextLayout, angle float64) geom.Pt {
+	cosT := math.Cos(angle)
+	sinT := math.Sin(angle)
+	return geom.Pt{
+		X: origin.X + (layout.Width/2*cosT - layout.Descent*sinT),
+		Y: origin.Y + (layout.Width/2*sinT + layout.Descent*cosT),
+	}
+}
+
+func minFloat64(values []float64) float64 {
+	min := math.Inf(1)
+	for _, v := range values {
+		min = math.Min(min, v)
+	}
+	return min
+}
+
+func maxFloat64(values []float64) float64 {
+	max := math.Inf(-1)
+	for _, v := range values {
+		max = math.Max(max, v)
+	}
+	return max
 }
 
 func measureMultilineLineLayout(r render.Renderer, line string, fontSize float64, fontKey string, parseMath, useTeX bool) singleLineTextLayout {
@@ -710,26 +917,27 @@ func wrappedTextLines(r render.Renderer, text string, fontSize float64, fontKey 
 	}
 	lines := make([]string, 0, len(paragraphs))
 	for _, paragraph := range paragraphs {
-		if paragraph == "" {
-			lines = append(lines, "")
-			continue
-		}
-		words := strings.Fields(paragraph)
-		if len(words) == 0 {
-			lines = append(lines, "")
-			continue
-		}
-		current := words[0]
-		for _, word := range words[1:] {
-			candidate := current + " " + word
-			if measureSingleLineTextLayoutParseMath(r, candidate, fontSize, fontKey, parseMath, useTeX).Width <= maxWidth {
-				current = candidate
-				continue
+		words := strings.Split(paragraph, " ")
+		for len(words) > 0 {
+			if len(words) == 1 {
+				lines = append(lines, words[0])
+				break
 			}
-			lines = append(lines, current)
-			current = word
+			for i := 2; i <= len(words); i++ {
+				candidate := strings.Join(words[:i], " ")
+				width := math.Ceil(measureSingleLineTextLayoutParseMath(r, candidate, fontSize, fontKey, parseMath, useTeX).Width)
+				if width > maxWidth {
+					lines = append(lines, strings.Join(words[:i-1], " "))
+					words = words[i-1:]
+					break
+				}
+				if i == len(words) {
+					lines = append(lines, candidate)
+					words = nil
+					break
+				}
+			}
 		}
-		lines = append(lines, current)
 	}
 	return lines
 }
@@ -1233,6 +1441,36 @@ func drawMultilineTextBBoxRotated(r render.Renderer, rect geom.Rect, opt *TextBB
 		path = roundedRectPath(rect, cfg.CornerRadius)
 	}
 	path = rotatePathAround(path, pivot, -angleDeg)
+	r.Path(path, &render.Paint{
+		Fill:      cfg.FaceColor,
+		Stroke:    cfg.EdgeColor,
+		LineWidth: cfg.LineWidth,
+		LineJoin:  render.JoinMiter,
+		LineCap:   render.CapButt,
+	})
+}
+
+func drawMultilineTextBBoxRotatedMatplotlib(r render.Renderer, anchor geom.Pt, block rotatedMultilineTextBlockLayout, opt *TextBBoxOptions, ctx *DrawContext, fontSize, angleDeg float64) {
+	if opt == nil || block.TextBoxWidth <= 0 || block.TextBoxHeight <= 0 {
+		return
+	}
+	cfg := resolvedTextBBoxOptions(*opt, ctx, fontSize)
+	angle := angleDeg * math.Pi / 180
+	rect := geom.Rect{
+		Min: geom.Pt{X: -cfg.Padding, Y: -cfg.Padding},
+		Max: geom.Pt{X: block.TextBoxWidth + cfg.Padding, Y: block.TextBoxHeight + cfg.Padding},
+	}
+	path := pixelRectPath(rect)
+	if cfg.CornerRadius > 0 {
+		path = roundedRectPath(rect, cfg.CornerRadius)
+	}
+	for i := range path.V {
+		rot := rotateTextLayoutPoint(path.V[i], angle)
+		path.V[i] = geom.Pt{
+			X: anchor.X + block.TextBoxX + rot.X,
+			Y: anchor.Y + block.TextBoxY + rot.Y,
+		}
+	}
 	r.Path(path, &render.Paint{
 		Fill:      cfg.FaceColor,
 		Stroke:    cfg.EdgeColor,

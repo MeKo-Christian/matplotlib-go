@@ -353,13 +353,85 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             cases (`locator_*`, `scale_*`, `units_*`, `date_*`,
             `ticks_styling_surface`). Update tolerances only downward unless a
             documented upstream-incompatible exception remains.
-- [ ] **W4 — text layout: wrapping and rotated multiline.**
-      `text_layout_gallery` 14.6. The diff isolates the residual to: the wrap
+- [x] **W4 — text layout: wrapping and rotated multiline. DONE 2026-06-13**
+      `text_layout_gallery` 14.6→**3.32**. The diff isolated the residual to: the wrap
       point of `wrap=True` text (display-width logic in
       `Text._get_wrapped_text`), the rotated multiline block, and the
       `rotation_mode="anchor"` box. Port `lib/matplotlib/text.py`
       (`_get_layout`, `_get_wrapped_text`, rotation/anchor handling)
-      faithfully; the unrotated alignment grid already matches.
+      faithfully; the unrotated alignment grid already matches. 2026-06-13
+      closure: `wrappedTextLines` now preserves Matplotlib literal-space
+      splitting and `ceil(width)` checks; the gallery uses `Wrap: true` like
+      the Python fixture; rotated multiline lines use `_get_layout`-style
+      block-level rotated offsets before converting to the AGG backend's
+      bottom-center anchor; `Axes.Text` defaults to unclipped like upstream.
+      The golden was regenerated and the catalog tolerance ratcheted to
+      `MinPSNR=50`, `MaxMeanAbs=1`, `MaxRMSE=5`.
+      - [x] **W4.1 — Baseline, visual triage, and text-layout probes.**
+            Regenerate/inspect
+            `TestReferenceCompare/text_layout_gallery`; compare the committed
+            diff artifact against `testdata/matplotlib_ref/text_layout_gallery.png`
+            and classify each remaining pixel cluster as wrapping, multiline
+            line placement, rotated bbox placement, or renderer glyph ink.
+            Preserve the example shape. If the visual diff is not enough, add
+            only env-gated diagnostics in `test/diagnostics_test.go` that log
+            the Go anchor point, wrap width, wrapped lines, per-line
+            width/height/descent, multiline block rect/baselines, rotated bbox
+            path, and draw origin/pivot for the three W4 text artists. Compare
+            those values to temporary prints from
+            `third_party/matplotlib/lib/matplotlib/text.py` and
+            `test/parity/text_layout_gallery/plot.py`.
+      - [x] **W4.2 — Matplotlib-style `wrap=True` line breaking.**
+            Port `Text._get_wrap_line_width`, `_get_dist_to_box`,
+            `_get_rendered_text_width`, and `_get_wrapped_text` from
+            `third_party/matplotlib/lib/matplotlib/text.py` into
+            `core/text.go`'s `textAutoWrapWidth`, `textDistanceToBox`, and
+            `wrappedTextLines`. Match upstream details that affect the wrap
+            point: figure-window extent, rotation treated as anchor mode for
+            wrap-width calculation, `ceil(width)` for candidate lines, splitting
+            user text on literal spaces instead of `strings.Fields`, forced
+            newline handling, and no word splitting for one over-wide word.
+            Focused coverage now exercises the literal-space and `ceil(width)`
+            behavior directly, alongside the existing fixed-width and
+            figure-box wrap tests.
+      - [x] **W4.3 — Make the gallery exercise automatic wrapping.**
+            After W4.2 makes `TextOptions.Wrap` match upstream, update
+            `examples/text_layout_gallery/example.go` so the wrapped sample uses
+            `Wrap: true` instead of the current explicit `WrapWidth: 170`. This
+            keeps the Go example aligned with
+            `test/parity/text_layout_gallery/plot.py`; do not choose a custom
+            width to hide residuals.
+      - [x] **W4.4 — Port `_get_layout` multiline metrics and offsets.**
+            Reconcile `core/text.go`'s `measureMultilineTextBlock` and
+            `drawMultilineText` with Matplotlib's `_get_layout`: compute the
+            `"lp"` full-font extent once, use `min_dy = (lp_h - lp_d) *
+            linespacing`, promote each line's height/descent with `max(h, lp_h)`
+            / `max(d, lp_d)`, place baselines with the same `thisy` sequence,
+            and apply `multialignment` offsets against the maximum line width.
+            Focused coverage now checks the rotated `"rotation\nmode"` block
+            against Matplotlib's line offsets; MathText/TeX behavior remains on
+            the existing path.
+      - [x] **W4.5 — Port rotation-mode anchor bbox semantics.**
+            Rework the rotated single-line and multiline bbox path in
+            `core/text.go` (`textRotationLayoutAlignments`,
+            `tickLabelDrawOriginFromP`, `rotatedTextBackendAnchorFromP`,
+            `drawTextBBoxRotated`, `drawMultilineTextBBoxRotated`) against
+            upstream `_get_layout` and `update_bbox_position_size`. For
+            `rotation_mode="anchor"`, align the unrotated bbox first, transform
+            the alignment offset through the rotation matrix, then draw the bbox
+            and glyphs from the same display-space offset. Verify with focused
+            tests for the gallery `"anchor"` sample and the rotated
+            `"rotation\nmode"` block.
+      - [x] **W4.6 — Verify, regold, and ratchet.**
+            Regold only after the core ports and the `Wrap: true` example
+            cleanup. Run
+            `go test ./test -run 'TestReferenceCompare/text_layout_gallery$'`
+            plus neighboring text cases (`text_labels_strict`, `title_strict`,
+            `text_annotation_matrix`, `figure_labels_composition`,
+            `mathtext_gallery`, `mathtext_inline_labels`). Update the
+            `text_layout_gallery` catalog tolerance downward from its current
+            broad value only after the rendered-vs-reference RMSE is under the
+            W4 target.
 - [ ] **W5 — the 5–7.3 band (≈ 21 cases).** `layout_bbox_helpers` 7.3,
       `plot_variants` 7.2, `axes_convenience_helpers` 7.2, `legend_layout_matrix`
       7.1, `line2d_markers` 7.0, `fill_stacked` 6.9, `specialty_depth` 6.9,

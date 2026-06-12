@@ -664,6 +664,22 @@ func TestDrawDisplayTextVerticalUsesExplicitFontDrawer(t *testing.T) {
 	}
 }
 
+func TestAxesTextDefaultsToUnclippedLikeMatplotlib(t *testing.T) {
+	fig := NewFigure(200, 120)
+	ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
+
+	text := ax.Text(0.5, 0.5, "label")
+	if text.ClipOn {
+		t.Fatal("Axes.Text default ClipOn = true, want false")
+	}
+
+	clipOn := true
+	clipped := ax.Text(0.5, 0.5, "clipped", TextOptions{ClipOn: &clipOn})
+	if !clipped.ClipOn {
+		t.Fatal("Axes.Text explicit ClipOn=true was not preserved")
+	}
+}
+
 func TestTextArtistUsesTeXRendererWhenRCUseTeX(t *testing.T) {
 	fig := NewFigure(320, 240)
 	fig.RC.UseTeX = true
@@ -789,6 +805,20 @@ func TestTextArtistWrapUsesFigureBoxWidth(t *testing.T) {
 	}
 }
 
+func TestWrappedTextLinesMatchMatplotlibSpaceAndCeilSemantics(t *testing.T) {
+	r := &textRecordingRenderer{}
+	got := wrappedTextLines(r, "alpha  beta gamma", 10, "", true, false, 51.4)
+	want := []string{"alpha ", "beta gamma"}
+	if len(got) != len(want) {
+		t.Fatalf("wrapped lines = %q, want %q", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("wrapped line %d = %q, want %q (all lines %q)", i, got[i], want[i], got)
+		}
+	}
+}
+
 func TestRotatedTextBBoxRotatesWithText(t *testing.T) {
 	ctx := createTestDrawContext()
 	text := &Text{
@@ -893,6 +923,38 @@ func TestRotatedTextBBoxUsesDefaultRotationDrawOrigin(t *testing.T) {
 	}
 }
 
+func TestRotatedMultilineTextUsesMatplotlibLayoutOffsets(t *testing.T) {
+	ctx := createTestDrawContext()
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 1},
+		Content:  "rotation\nmode",
+		FontSize: 10,
+		HAlign:   TextAlignCenter,
+		VAlign:   TextVAlignMiddle,
+		Angle:    -32,
+		ClipOn:   true,
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.fontRotatedCalls) != 2 {
+		t.Fatalf("rotated multiline calls = %+v, want two lines", r.fontRotatedCalls)
+	}
+	lines := []string{"rotation", "mode"}
+	anchor := transformedPoint(ctx, text.Coords, text.Position, text.OffsetX, text.OffsetY)
+	angle := text.Angle * math.Pi / 180
+	wantOffsets := matplotlibMultilineOffsetsForTest(r, lines, text.FontSize, text.FontKey, text.Linespacing, text.HAlign, text.VAlign, angle)
+	for i, call := range r.fontRotatedCalls {
+		layout := measureSingleLineTextLayoutParseMath(r, call.text, text.FontSize, text.FontKey, true, ctx.RC.UseTeX)
+		gotOrigin := rotatedTextBaselineOriginForTest(call.anchor, layout, angle)
+		got := geom.Pt{X: gotOrigin.X - anchor.X, Y: gotOrigin.Y - anchor.Y}
+		if !approx(got.X, wantOffsets[i].X, 1e-9) || !approx(got.Y, wantOffsets[i].Y, 1e-9) {
+			t.Fatalf("line %q baseline offset = %+v, want Matplotlib %+v; all calls=%+v", call.text, got, wantOffsets[i], r.fontRotatedCalls)
+		}
+	}
+}
+
 func TestRotatedTextBBoxMatchesMatplotlibTextAnnotationMatrixLabel(t *testing.T) {
 	ctx := createTestDrawContext()
 	ctx.RC.DPI = 100
@@ -943,6 +1005,102 @@ func TestRotatedTextBBoxMatchesMatplotlibTextAnnotationMatrixLabel(t *testing.T)
 			t.Fatalf("rotated bbox vertex %d = %+v, want Matplotlib %+v; path=%+v", i, path.V[i], want, path.V)
 		}
 	}
+}
+
+func matplotlibMultilineOffsetsForTest(r render.Renderer, lines []string, fontSize float64, fontKey string, linespacing float64, hAlign TextAlign, vAlign TextVerticalAlign, angle float64) []geom.Pt {
+	widths := make([]float64, len(lines))
+	xs := make([]float64, len(lines))
+	ys := make([]float64, len(lines))
+	lp := measureSingleLineTextLayoutParseMath(r, "lp", fontSize, fontKey, false, false)
+	lpH, lpD := multilineMatplotlibHeightDescent(lp)
+	minDY := (lpH - lpD) * resolvedTextLinespacing(linespacing)
+	thisY := 0.0
+	descent := 0.0
+	baseline := 0.0
+	width := 0.0
+	for i, line := range lines {
+		layout := measureMultilineLineLayout(r, line, fontSize, fontKey, true, false)
+		w := layout.Width
+		h, d := multilineMatplotlibHeightDescent(layout)
+		h = math.Max(h, lpH)
+		d = math.Max(d, lpD)
+		widths[i] = w
+		width = math.Max(width, w)
+		baseline = (h - d) - thisY
+		if i == 0 {
+			thisY = -(h - d)
+		} else {
+			thisY -= math.Max(minDY, (h-d)*resolvedTextLinespacing(linespacing))
+		}
+		xs[i] = 0
+		ys[i] = thisY
+		thisY -= d
+		descent = d
+	}
+	xmin, xmax := 0.0, width
+	ymax := 0.0
+	ymin := ys[len(ys)-1] - descent
+	corners := []geom.Pt{
+		{X: xmin, Y: ymin},
+		{X: xmin, Y: ymax},
+		{X: xmax, Y: ymax},
+		{X: xmax, Y: ymin},
+	}
+	minRotX, maxRotX := math.Inf(1), math.Inf(-1)
+	minRotY, maxRotY := math.Inf(1), math.Inf(-1)
+	for _, corner := range corners {
+		rot := rotatePointForTest(corner, angle)
+		minRotX = math.Min(minRotX, rot.X)
+		maxRotX = math.Max(maxRotX, rot.X)
+		minRotY = math.Min(minRotY, rot.Y)
+		maxRotY = math.Max(maxRotY, rot.Y)
+	}
+	offsetX := minRotX
+	switch hAlign {
+	case TextAlignCenter:
+		offsetX = (minRotX + maxRotX) / 2
+	case TextAlignRight:
+		offsetX = maxRotX
+	}
+	offsetY := minRotY
+	switch vAlign {
+	case TextVAlignMiddle:
+		offsetY = (minRotY + maxRotY) / 2
+	case TextVAlignTop:
+		offsetY = maxRotY
+	case TextVAlignBaseline:
+		offsetY = minRotY + descent
+	case TextVAlignCenterBaseline:
+		offsetY = minRotY + (maxRotY - minRotY) - baseline/2
+	}
+	out := make([]geom.Pt, len(lines))
+	for i := range lines {
+		lineX := xs[i]
+		switch hAlign {
+		case TextAlignCenter:
+			lineX += width/2 - widths[i]/2
+		case TextAlignRight:
+			lineX += width - widths[i]
+		}
+		rot := rotatePointForTest(geom.Pt{X: lineX, Y: ys[i]}, angle)
+		out[i] = geom.Pt{X: rot.X - offsetX, Y: rot.Y - offsetY}
+	}
+	return out
+}
+
+func rotatedTextBaselineOriginForTest(anchor geom.Pt, layout singleLineTextLayout, angle float64) geom.Pt {
+	cosT := math.Cos(angle)
+	sinT := math.Sin(angle)
+	return geom.Pt{
+		X: anchor.X - (layout.Width/2*cosT - layout.Descent*sinT),
+		Y: anchor.Y - (layout.Width/2*sinT + layout.Descent*cosT),
+	}
+}
+
+func rotatePointForTest(p geom.Pt, angle float64) geom.Pt {
+	cosT := math.Cos(angle)
+	sinT := math.Sin(angle)
+	return geom.Pt{X: p.X*cosT - p.Y*sinT, Y: p.X*sinT + p.Y*cosT}
 }
 
 func matplotlibRotatedTextBBoxPathForTest(anchor, drawOrigin geom.Pt, layout singleLineTextLayout, opt *TextBBoxOptions, ctx *DrawContext, fontSize, angleDeg float64) (geom.Path, bool) {

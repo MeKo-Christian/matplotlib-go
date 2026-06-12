@@ -111,7 +111,7 @@ var cases = []Case{
 	{ID: "mathtext_matrices", Topic: "mathtext", Title: "MathText Matrices", FixtureOnly: true, SkiaParityFamily: "mathtext"},
 	{ID: "mathtext_inline_labels", Topic: "mathtext", Title: "MathText Inline Labels", FixtureOnly: true, SkiaParityFamily: "mathtext"},
 	{ID: "mathtext_gallery", Topic: "mathtext", Title: "MathText Gallery", Description: "Fractions, roots, operators, fences, matrices, and inline MathText labels in one browsable figure.", Showcase: true, Width: 900, Height: 560, MinPSNR: 16.0, MaxMeanAbs: 35.0, MaxRMSE: 55.0},
-	{ID: "text_layout_gallery", Topic: "text", Title: "Text Layout Gallery", Description: "Alignment, rotation, multiline layout, wrapping, and text bbox styling in one gallery.", Showcase: true, Width: 900, Height: 560, MinPSNR: 24.0, MaxMeanAbs: 20.0, MaxRMSE: 34.0},
+	{ID: "text_layout_gallery", Topic: "text", Title: "Text Layout Gallery", Description: "Alignment, rotation, multiline layout, wrapping, and text bbox styling in one gallery.", Showcase: true, Width: 900, Height: 560, MinPSNR: 50.0, MaxMeanAbs: 1.0, MaxRMSE: 5.0},
 	{ID: "image_heatmap", Topic: "image", Title: "Heatmap Image", Description: "A gridded image plot with a colorbar and axis labels for matrix-style data.", WebDemoID: "heatmap", Showcase: true, SVGGoldenFamily: "image", GoBasicSmokeFamily: "image", SkiaParityFamily: "image"},
 	{ID: "image_variants_gallery", Topic: "image", Title: "Image Variants Gallery", Description: "Side-by-side interpolation modes, alpha image overlays, MatShow ticks, and spy marker/image modes.", Showcase: true, Width: 1080, Height: 720, MinPSNR: 20.0, MaxMeanAbs: 28.0, MaxRMSE: 44.0},
 	{ID: "imshow_clipped", Topic: "image", Title: "Clipped Imshow", FixtureOnly: true, MinPSNR: 30.0, MaxMeanAbs: 10.0},

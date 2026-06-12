@@ -101,11 +101,11 @@ func addMultilineSamples(ax *core.Axes) {
 
 func addWrappedSample(ax *core.Axes) {
 	ax.Text(3.45, 1.78, "wrapped text uses a fixed display width inside a rounded bbox", core.TextOptions{
-		HAlign:    core.TextAlignLeft,
-		VAlign:    core.TextVAlignTop,
-		WrapWidth: 170,
-		FontSize:  11,
-		BBox:      textBox(11, 0.28, render.Color{R: 1.00, G: 0.98, B: 0.88, A: 0.88}, render.Color{R: 0.52, G: 0.45, B: 0.16, A: 1}),
+		HAlign:   core.TextAlignLeft,
+		VAlign:   core.TextVAlignTop,
+		Wrap:     true,
+		FontSize: 11,
+		BBox:     textBox(11, 0.28, render.Color{R: 1.00, G: 0.98, B: 0.88, A: 0.88}, render.Color{R: 0.52, G: 0.45, B: 0.16, A: 1}),
 	})
 }
 
