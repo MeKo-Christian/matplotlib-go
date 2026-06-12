@@ -160,6 +160,23 @@ func TestLegendDrawSupportsMultipleColumns(t *testing.T) {
 	}
 }
 
+func TestLegendScatterSampleCentersUseMatplotlibOffsets(t *testing.T) {
+	legend := NewLegend(nil)
+	legend.ScatterPoints = 3
+	sample := geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 50, Y: 40}}
+	center := geom.Pt{X: 30, Y: 30}
+
+	got := legend.markerSampleCenters(sample, center)
+	want := []geom.Pt{
+		{X: 16, Y: 28.25},
+		{X: 30, Y: 30.00},
+		{X: 44, Y: 27.375},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("scatter sample centers = %+v, want Matplotlib offsets %+v", got, want)
+	}
+}
+
 func TestLegendMathLabelWidthUsesMeasuredTextWidth(t *testing.T) {
 	layout := singleLineTextLayout{
 		TextLineLayout: render.TextLineLayout{Width: 81},

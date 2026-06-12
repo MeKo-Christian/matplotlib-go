@@ -1180,9 +1180,17 @@ func (l *Legend) markerSampleCenters(sample geom.Rect, center geom.Pt) []geom.Pt
 		step = (sample.W() - 2*pad) / float64(points-1)
 	}
 	for i := 0; i < points; i++ {
+		y := center.Y
+		if points > 1 {
+			// Matplotlib's HandlerPathCollection uses Legend._scatteryoffsets
+			// [3/8, 4/8, 2.5/8] within a default 0.7-fontsize handle box.
+			offsets := [...]float64{3.0 / 8.0, 4.0 / 8.0, 2.5 / 8.0}
+			handleHeight := sample.H() * 0.7
+			y = center.Y - handleHeight/2 + offsets[i%len(offsets)]*handleHeight
+		}
 		centers[i] = geom.Pt{
 			X: sample.Min.X + pad + step*float64(i),
-			Y: center.Y,
+			Y: y,
 		}
 	}
 	return centers

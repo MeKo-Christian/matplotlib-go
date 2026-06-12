@@ -447,6 +447,120 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
       handling, label placement) rather than independent bugs: diagnose each
       diff first, group by root cause, then fix each group as an upstream port
       (`legend.py`, `offsetbox.py`, collection/fill paths).
+      - [x] **W5.1 — Baseline, visual triage, and clustering.** Regenerate and
+            inspect focused `TestReferenceCompare` output for every W5 case;
+            use the committed diff artifacts under
+            `testdata/_artifacts/reference_compare/` plus temporary visual
+            side-by-side inspection to classify each residual as bbox/layout,
+            legend/offsetbox, annotation placement, line/marker stroke,
+            fill/collection geometry, contour/mesh labeling, raster/image
+            compositing, or MathText/text-placement tail. Add only env-gated
+            probes in `test/diagnostics_test.go`, and record the cluster result
+            directly in this W5 section before changing core behavior.
+            2026-06-13 baseline (`go test ./test -run
+            'TestReferenceCompare/(layout_bbox_helpers|plot_variants|axes_convenience_helpers|legend_layout_matrix|line2d_markers|fill_stacked|specialty_depth|mesh_contour_tri|mixed_raster_vector|arrays_showcase|widgets_gallery|fill_basic|annotation_legend_offsetbox_gallery|clip_path_batch|mathtext_inline_labels|annotation_composition|fill_variants|mathtext_basic|specialty_artists|axes_option_breadth_17_75_3)$'
+            -count=1 -v` plus `TestAGGNativeReferenceCompare/clip_path_batch`):
+            `layout_bbox_helpers` 7.32, `axes_convenience_helpers` 7.21,
+            `legend_layout_matrix` 7.14, `plot_variants` 7.08,
+            `line2d_markers` 6.96, `fill_stacked` 6.94,
+            `specialty_depth` 6.92, `mesh_contour_tri` 6.91,
+            `annotation_legend_offsetbox_gallery` 6.56,
+            `arrays_showcase` 6.31, `mixed_raster_vector` 6.31,
+            `fill_basic` 6.06, `clip_path_batch` 5.99,
+            `mathtext_inline_labels` 5.88, `annotation_composition` 5.79,
+            `fill_variants` 5.51, `mathtext_basic` 5.33,
+            `specialty_artists` 5.31,
+            `axes_option_breadth_17_75_3` 5.26; `widgets_gallery` is already
+            below the W5 target at 4.63 and should be ratcheted after neighboring
+            widget/layout checks stay green.
+            Visual cluster: bbox/offsetbox/legend packing =
+            `layout_bbox_helpers`, `legend_layout_matrix`,
+            `annotation_legend_offsetbox_gallery`; annotation/text placement =
+            `annotation_composition`, `mathtext_basic`,
+            `mathtext_inline_labels`; lines/markers/bar labels =
+            `line2d_markers`, `plot_variants`,
+            `axes_option_breadth_17_75_3`; fill/collection edges =
+            `fill_basic`, `fill_stacked`, `fill_variants`, `clip_path_batch`;
+            contour/mesh/image = `mesh_contour_tri`, `arrays_showcase`;
+            specialty/statistical artists = `axes_convenience_helpers`,
+            `specialty_depth`, `specialty_artists`; raster/vector composition =
+            `mixed_raster_vector`.
+      - [ ] **W5.2 — Legend, offsetbox, and bbox helper layout.** Tackle
+            `layout_bbox_helpers`, `legend_layout_matrix`,
+            `annotation_legend_offsetbox_gallery`, and any W5.1 cases clustered
+            with them by porting the first divergent bbox/packing computations
+            from `third_party/matplotlib/lib/matplotlib/{legend,offsetbox}.py`
+            and adjacent text/bbox helpers into `core/legend.go`,
+            `core/offsetbox.go`, `core/annotation.go`, and `internal/geom`.
+            Verify helper-only unit coverage before regolding gallery cases.
+            2026-06-13 progress: ported Matplotlib
+            `legend_handler.HandlerNpoints.get_xdata` /
+            `Legend._scatteryoffsets` behavior for scatter legend handles:
+            multi-point marker samples now keep the upstream x padding and use
+            the `[3/8, 4/8, 2.5/8]` vertical offsets inside the default
+            0.7-fontsize handle box (`TestLegendScatterSampleCentersUseMatplotlibOffsets`).
+            This makes the `legend_layout_matrix` scatter sample visually match
+            the reference, but focused current-render checks still show the
+            W5.2 cases at essentially the same overall PSNR/MeanAbs; remaining
+            residual is concentrated in thin frame/text/handler strokes and
+            anchored offsetbox/text packing.
+            2026-06-13 progress: ported Matplotlib patch dash scaling from
+            `patches.Patch.set_linestyle` / `set_linewidth`, which route patch
+            linestyles through `lines._scale_dashes(..., linewidth)`. Go patches
+            now keep renderer-unit dashes by default but can opt into
+            `DashUnitsMatplotlib` (`TestPatchDashesCanUseMatplotlibLineWidthScaling`,
+            `TestPatchDashesDefaultToRendererUnits`); the `layout_bbox_helpers`
+            parity fixture now uses the original `(6, 4)` linestyle tuple units
+            instead of pre-scaled renderer lengths. Live current-render metrics
+            after the change: `layout_bbox_helpers` PSNR 53.3 dB, MeanAbs 0.30,
+            RMSE 0.779 (below target; was 7.32), while
+            `legend_layout_matrix` remains RMSE 7.175 and
+            `annotation_legend_offsetbox_gallery` remains RMSE 6.563.
+      - [ ] **W5.3 — Axes helpers, lines, markers, and label placement.** Tackle
+            `plot_variants`, `axes_convenience_helpers`, `line2d_markers`,
+            `specialty_artists`, `specialty_depth`, and
+            `axes_option_breadth_17_75_3` where W5.1 identifies shared
+            line/marker/label placement causes. Compare `core/line.go`,
+            `core/axes*.go`, marker-path generation, zorder/depth ordering, and
+            autoscale/sticky-edge behavior against upstream
+            `lib/matplotlib/{axes/_axes.py,lines.py,markers.py,artist.py}`.
+      - [ ] **W5.4 — Fill and collection edge semantics.** Tackle
+            `fill_basic`, `fill_variants`, `fill_stacked`, `clip_path_batch`,
+            and any related residual in `mixed_raster_vector` by translating the
+            upstream fill/collection path construction, edgecolor defaults,
+            clipping, sticky edges, and antialias flags from
+            `lib/matplotlib/{axes/_axes.py,collections.py,patches.py}` into the
+            local fill, patch, and collection paths. Do not tune example data or
+            case-specific tolerances.
+      - [ ] **W5.5 — Contour, triangulation, and mesh labels.** Tackle
+            `mesh_contour_tri` and any W5.1-linked residuals in
+            `arrays_showcase` by comparing `core/contour*`, triangulation, image
+            normalization, and label-placement paths against upstream
+            `lib/matplotlib/{contour.py,tri/_tricontour.py,image.py,colors.py}`.
+            Preserve the W1 binary-coverage antialias behavior and isolate any
+            remaining mismatch to geometry, color normalization, or label
+            placement before changing rendering code.
+      - [ ] **W5.6 — Annotation and MathText tail cases.** Tackle
+            `annotation_composition`, `mathtext_inline_labels`, and
+            `mathtext_basic` only after W5.2/W5.3 have ruled out shared
+            bbox/label placement causes. Compare annotation arrow/text offset
+            transforms against `lib/matplotlib/text.py` and
+            `lib/matplotlib/patches.py`; compare any remaining MathText residue
+            against `lib/matplotlib/_mathtext.py` without retargeting the
+            already-closed MathText family.
+      - [ ] **W5.7 — Widgets, raster/vector mixing, and image arrays.** Tackle
+            `widgets_gallery`, `mixed_raster_vector`, and `arrays_showcase`
+            residuals not covered by W5.4/W5.5 by checking widget artist layout,
+            image interpolation/origin/extents, rasterization boundaries, and
+            compositing order against upstream `widgets.py`, `image.py`,
+            `axes/_axes.py`, and backend mixed-mode rendering paths.
+      - [ ] **W5.8 — Verify, regold, and ratchet.** After each root-cause group
+            lands, regold only the affected cases, run focused
+            `TestReferenceCompare` targets plus neighboring cases in the same
+            catalog family, and update per-case tolerances only downward or with
+            a documented frozen exception. The W5 exit target is every listed
+            case at `RMSE <= 5` or explicitly classified as a remaining
+            non-core-renderer exception.
 
 ## Method (code parity, per failing case)
 

@@ -66,6 +66,57 @@ func TestPatchDrawUsesMatplotlibSnapAuto(t *testing.T) {
 	}
 }
 
+func TestPatchDashesCanUseMatplotlibLineWidthScaling(t *testing.T) {
+	rect := &Rectangle{
+		Patch: Patch{
+			FaceColor: render.Color{A: 0},
+			EdgeColor: render.Color{A: 1},
+			EdgeWidth: 2.5,
+			Dashes:    []float64{4, 2},
+			DashUnits: DashUnitsMatplotlib,
+		},
+		Width:  1,
+		Height: 1,
+	}
+
+	r := &recordingRenderer{}
+	rect.Draw(r, createTestDrawContext())
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("expected one stroked path call, got %d", len(r.pathCalls))
+	}
+	got := r.pathCalls[0].paint.Dashes
+	want := []float64{10, 5}
+	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Fatalf("patch dashes = %v, want Matplotlib linewidth-scaled %v", got, want)
+	}
+}
+
+func TestPatchDashesDefaultToRendererUnits(t *testing.T) {
+	rect := &Rectangle{
+		Patch: Patch{
+			FaceColor: render.Color{A: 0},
+			EdgeColor: render.Color{A: 1},
+			EdgeWidth: 2.5,
+			Dashes:    []float64{4, 2},
+		},
+		Width:  1,
+		Height: 1,
+	}
+
+	r := &recordingRenderer{}
+	rect.Draw(r, createTestDrawContext())
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("expected one stroked path call, got %d", len(r.pathCalls))
+	}
+	got := r.pathCalls[0].paint.Dashes
+	want := []float64{4, 2}
+	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Fatalf("patch dashes = %v, want raw renderer-unit dashes %v", got, want)
+	}
+}
+
 func TestFancyBboxPatchRoundUsesQuadraticCornersAndHatch(t *testing.T) {
 	box := &FancyBboxPatch{
 		Patch: Patch{
