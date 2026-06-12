@@ -195,18 +195,39 @@ func (a *Axes3D) projectFillBetween3DPolygons(x1, y1, z1, x2, y2, z2 []float64, 
 	return a.projectSorted3DPolygons(raw, axlimClip...)
 }
 
+// resolveFillBetween3DMode ports the mode='auto' branch of
+// matplotlib Axes3D.fill_between: 'polygon' when all points lie on one 3D
+// plane, 'quad' otherwise.
+func resolveFillBetween3DMode(x1, y1, z1, x2, y2, z2 []float64, mode FillBetween3DMode) FillBetween3DMode {
+	if mode == "" || mode == FillBetween3DModeAuto {
+		if fillBetween3DCoplanar(x1, y1, z1, x2, y2, z2) {
+			return FillBetween3DModePolygon
+		}
+		return FillBetween3DModeQuad
+	}
+	return mode
+}
+
+// polygon3DNormal ports art3d._generate_normals for a single polygon: pick
+// three points equally spaced around the polygon and take
+// cross(p[0]-p[n/3], p[n/3]-p[2n/3]).
+func polygon3DNormal(ps []vec3) vec3 {
+	n := len(ps)
+	if n < 3 {
+		return vec3{}
+	}
+	i2, i3 := n/3, 2*n/3
+	v1 := ps[0].sub(ps[i2])
+	v2 := ps[i2].sub(ps[i3])
+	return v1.cross(v2)
+}
+
 func fillBetween3DRawPolygons(x1, y1, z1, x2, y2, z2 []float64, mode FillBetween3DMode) [][]vec3 {
 	n := minLen(x1, y1, z1, x2, y2, z2)
 	if n < 2 {
 		return nil
 	}
-	if mode == "" || mode == FillBetween3DModeAuto {
-		if fillBetween3DCoplanar(x1[:n], y1[:n], z1[:n], x2[:n], y2[:n], z2[:n]) {
-			mode = FillBetween3DModePolygon
-		} else {
-			mode = FillBetween3DModeQuad
-		}
-	}
+	mode = resolveFillBetween3DMode(x1[:n], y1[:n], z1[:n], x2[:n], y2[:n], z2[:n], mode)
 	if mode == FillBetween3DModePolygon {
 		polygon := make([]vec3, 0, n*2)
 		for i := 0; i < n; i++ {
@@ -373,10 +394,18 @@ func errorBar3DCapSegments(center vec3, axis int, half float64) [][]vec3 {
 }
 
 func (a *Axes3D) projectSorted3DPolygons(raw [][]vec3, axlimClip ...bool) ([][]geom.Pt, float64) {
+	polygons, _, z := a.projectSorted3DPolygonsWithColors(raw, nil, axlimClip...)
+	return polygons, z
+}
+
+// projectSorted3DPolygonsWithColors projects raw polygons and depth-sorts
+// them painter-style, keeping each optional per-polygon color paired with its
+// polygon through the sort.
+func (a *Axes3D) projectSorted3DPolygonsWithColors(raw [][]vec3, colors []render.Color, axlimClip ...bool) ([][]geom.Pt, []render.Color, float64) {
 	projected := make([]projected3DPolygon, 0, len(raw))
 	collectionDepth := math.Inf(1)
 	clip := len(axlimClip) > 0 && axlimClip[0]
-	for _, polygon3D := range raw {
+	for index, polygon3D := range raw {
 		if len(polygon3D) < 3 {
 			continue
 		}
@@ -399,7 +428,11 @@ func (a *Axes3D) projectSorted3DPolygons(raw [][]vec3, axlimClip ...bool) ([][]g
 			}
 		}
 		if valid {
-			projected = append(projected, projected3DPolygon{polygon: polygon, depth: depth / float64(len(polygon3D))})
+			item := projected3DPolygon{polygon: polygon, depth: depth / float64(len(polygon3D))}
+			if index < len(colors) {
+				item.color = colors[index]
+			}
+			projected = append(projected, item)
 		}
 	}
 	sort.SliceStable(projected, func(i, j int) bool {
@@ -409,7 +442,14 @@ func (a *Axes3D) projectSorted3DPolygons(raw [][]vec3, axlimClip ...bool) ([][]g
 	for i, item := range projected {
 		polygons[i] = item.polygon
 	}
-	return polygons, computed3DCollectionZ(collectionDepth)
+	var sortedColors []render.Color
+	if colors != nil {
+		sortedColors = make([]render.Color, len(projected))
+		for i, item := range projected {
+			sortedColors[i] = item.color
+		}
+	}
+	return polygons, sortedColors, computed3DCollectionZ(collectionDepth)
 }
 
 func (a *Axes3D) projectSorted3DLineSegments(raw [][]vec3) ([][]geom.Pt, float64) {

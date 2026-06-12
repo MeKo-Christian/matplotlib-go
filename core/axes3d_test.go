@@ -2825,6 +2825,75 @@ func TestAxes3DTriContourAndTriContourfCreateCollections(t *testing.T) {
 	}
 }
 
+func TestAxes3DFillBetweenQuadModeShadesFacesLikeMatplotlib(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	// A non-planar ribbon: auto mode resolves to 'quad', whose matplotlib
+	// shade default is true, so each quad gets a lightsource-shaded copy of
+	// the base color (art3d._shade_colors via Poly3DCollection(shade=True)).
+	n := 12
+	x1 := make([]float64, n)
+	y1 := make([]float64, n)
+	z1 := make([]float64, n)
+	x2 := make([]float64, n)
+	y2 := make([]float64, n)
+	z2 := make([]float64, n)
+	for i := range x1 {
+		t1 := 4 * math.Pi * float64(i) / float64(n-1)
+		x1[i] = math.Cos(t1)
+		y1[i] = math.Sin(t1)
+		z1[i] = float64(i) / float64(n-1)
+		x2[i] = 0.4 * math.Cos(t1)
+		y2[i] = 0.4 * math.Sin(t1)
+		z2[i] = z1[i]
+	}
+	base := render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1}
+	c := ax.FillBetween(x1, y1, z1, x2, y2, z2, FillBetween3DOptions{Color: &base})
+	if c == nil {
+		t.Fatal("FillBetween returned nil")
+	}
+	if len(c.FaceColors) != n-1 {
+		t.Fatalf("face colors = %d, want %d quads", len(c.FaceColors), n-1)
+	}
+	allEqual := true
+	for _, fc := range c.FaceColors[1:] {
+		if fc != c.FaceColors[0] {
+			allEqual = false
+			break
+		}
+	}
+	if allEqual {
+		t.Fatalf("quad-mode fill_between face colors are uniform %+v; want per-quad lightsource shading", c.FaceColors[0])
+	}
+	for i, fc := range c.FaceColors {
+		if fc.R > base.R || fc.G > base.G || fc.B > base.B {
+			t.Fatalf("face color %d = %+v brighter than base %+v; shading only darkens", i, fc, base)
+		}
+		if fc.A != base.A {
+			t.Fatalf("face color %d alpha = %v, want %v (shading preserves alpha)", i, fc.A, base.A)
+		}
+	}
+
+	// Planar input: auto mode resolves to 'polygon', whose shade default is
+	// false, so the single polygon keeps the unshaded base color.
+	xs := []float64{0, 1, 2, 3}
+	ones := []float64{1, 1, 1, 1}
+	zeros := []float64{0, 0, 0, 0}
+	flat := ax.FillBetween(xs, zeros, zeros, xs, ones, zeros, FillBetween3DOptions{Color: &base})
+	if flat == nil {
+		t.Fatal("planar FillBetween returned nil")
+	}
+	for i, fc := range flat.FaceColors {
+		if fc != base {
+			t.Fatalf("polygon-mode face color %d = %+v, want unshaded base %+v", i, fc, base)
+		}
+	}
+}
+
 func TestAxes3DTickCountAdaptsToAxesWidthLikeMatplotlib(t *testing.T) {
 	// matplotlib's 3D axes all inherit XAxis, so AutoLocator's nbins='auto'
 	// resolves via XAxis.get_tick_space: floor(axes_width_pt / (3 * xtick
