@@ -83,6 +83,7 @@ type legendEntry struct {
 	lineMarkerSet bool
 
 	marker          MarkerType
+	markerStyle     MarkerStyle
 	markerPath      geom.Path
 	markerAltPath   geom.Path
 	markerEdgePath  geom.Path
@@ -1215,9 +1216,11 @@ func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center g
 	markerPath := entry.markerPath
 	markerScale := radius
 	if len(markerPath.C) == 0 {
-		sampleScatter := Scatter2D{Marker: entry.marker}
-		markerPath = sampleScatter.markerPrototypePath()
-		markerScale = radius * stemMarkerScale
+		sampleScatter := Scatter2D{Marker: entry.marker, MarkerStyle: entry.markerStyle}
+		markerPath = sampleScatter.markerPrototypePathForContext(r, nil)
+		if entry.markerStyle.Tuple == nil && entry.markerStyle.MathText == "" && len(entry.markerStyle.Path.C) == 0 && entry.markerStyle.Type == 0 && entry.markerStyle.FillStyle == 0 {
+			markerScale = radius * stemMarkerScale
+		}
 	}
 	if entry.markerHasAlt {
 		drawLegendMarkerPath(r, markerPath, center, markerScale, entry.markerSnap, render.Paint{

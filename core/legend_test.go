@@ -180,6 +180,27 @@ func TestLegendLineMarkerSampleCopiesMatplotlibSnapPolicy(t *testing.T) {
 	}
 }
 
+func TestLegendLineMathTextMarkerDefersPathToRenderer(t *testing.T) {
+	mathMarker := NewMathTextMarkerStyle("$f$")
+	line := &Line2D{
+		Label:       "mathtext",
+		Col:         render.Color{A: 1},
+		W:           1.5,
+		MarkerStyle: mathMarker,
+		MarkerSize:  12,
+	}
+	entry, ok := line.legendEntry()
+	if !ok {
+		t.Fatal("line marker legend entry not collected")
+	}
+	if entry.markerStyle.MathText != "$f$" {
+		t.Fatalf("legend marker style = %+v, want mathtext marker retained", entry.markerStyle)
+	}
+	if len(entry.markerPath.C) != 0 {
+		t.Fatalf("mathtext legend marker path was resolved without a renderer; commands=%d", len(entry.markerPath.C))
+	}
+}
+
 func TestLegendLineSampleCopiesLine2DStrokeCaps(t *testing.T) {
 	line := &Line2D{
 		Label: "line",

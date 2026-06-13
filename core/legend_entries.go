@@ -40,6 +40,7 @@ func legendEntryFromMarker(label string, marker MarkerType, markerPath geom.Path
 		Label:           label,
 		kind:            legendEntryMarker,
 		marker:          marker,
+		markerStyle:     scatter.resolvedMarkerStyle(),
 		markerPath:      markerPath,
 		markerFill:      fill,
 		markerEdge:      edge,
@@ -56,14 +57,18 @@ func (l *Line2D) legendEntry() (legendEntry, bool) {
 	}
 	entry := legendEntryFromLine(l.Label, l.ApplyArtistAlpha(l.Col), l.W, l.Dashes)
 	if l.hasMarkers() {
+		style := l.resolvedMarkerStyle()
 		spec := l.markerPathSpec(nil, nil)
 		entry.lineMarkerSet = true
 		entry.marker = l.Marker
-		entry.markerPath = spec.Path
+		entry.markerStyle = style
+		if style.MathText == "" {
+			entry.markerPath = spec.Path
+		}
 		entry.markerAltPath = spec.AltPath
 		entry.markerEdgePath = spec.EdgePath
 		entry.markerHasAlt = spec.HasAlt
-		entry.markerLineOnly = markerLineOnly(l.resolvedMarkerStyle())
+		entry.markerLineOnly = markerLineOnly(style)
 		entry.markerFill = l.resolvedMarkerFaceColor()
 		entry.markerAltFill = l.resolvedMarkerFaceColorAlt()
 		entry.markerEdge = l.resolvedMarkerEdgeColor()
@@ -102,6 +107,10 @@ func (s *Scatter2D) legendEntry() (legendEntry, bool) {
 		fill.A = 0
 	}
 	entry := legendEntryFromMarker(s.Label, s.Marker, s.markerPrototypePathForContext(nil, nil), fill, edge, s.EdgeWidth)
+	entry.markerStyle = s.resolvedMarkerStyle()
+	if entry.markerStyle.MathText != "" {
+		entry.markerPath = geom.Path{}
+	}
 	entry.markerLineOnly = markerLineOnly(s.resolvedMarkerStyle())
 	size := s.Size
 	if size <= 0 {
@@ -207,6 +216,7 @@ func (e *ErrorBar) legendEntry() (legendEntry, bool) {
 		spec := markerLine.markerPathSpec(nil, nil)
 		entry.lineMarkerSet = true
 		entry.marker = e.Marker
+		entry.markerStyle = markerLine.resolvedMarkerStyle()
 		entry.markerPath = spec.Path
 		entry.markerAltPath = spec.AltPath
 		entry.markerEdgePath = spec.EdgePath

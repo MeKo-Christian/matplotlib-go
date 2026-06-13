@@ -591,6 +591,21 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `axes_option_breadth_17_75_3` 5.24, and below-target
             `widgets_gallery` 4.63, `plot_variants` 3.69,
             `axes_convenience_helpers` 3.09, `layout_bbox_helpers` 0.78.
+            2026-06-13 update: moved `line2d_markers` below the W5 target,
+            6.92 → 4.80, by matching Matplotlib's explicit `solid_capstyle`
+            fixture usage (`TestLine2D_ExplicitSolidCapstyleOverridesDefault`,
+            `TestPlotLinesMirrorMatplotlibButtCapstyle`), custom marker path
+            normalization (`TestScatterCustomMarkerPathNormalizesLikeMatplotlib`),
+            half-filled `Line2D` marker edge passes
+            (`TestLine2DHalfFilledMarkerDrawsSplitHalvesWithEdges`), legend
+            marker stroke/snap style
+            (`TestLegendLineMarkerSampleCopiesMarkerStrokeStyle`,
+            `TestLegendLineMarkerSampleCopiesMatplotlibSnapPolicy`), and
+            renderer-deferred mathtext legend marker paths
+            (`TestLegendLineMathTextMarkerDefersPathToRenderer`). Current
+            W5.3 below-target set: `line2d_markers` 4.80,
+            `plot_variants` 3.69, `axes_convenience_helpers` 3.09,
+            `layout_bbox_helpers` 0.78.
       - [ ] **W5.4 — Fill and collection edge semantics.** Tackle
             `fill_basic`, `fill_variants`, `fill_stacked`, `clip_path_batch`,
             and any related residual in `mixed_raster_vector` by translating the
