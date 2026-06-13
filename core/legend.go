@@ -1202,6 +1202,8 @@ func (l *Legend) markerSampleCenters(sample geom.Rect, center geom.Pt) []geom.Pt
 }
 
 func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center geom.Pt, radius float64) {
+	center.X += 0.5
+	center.Y += 0.5
 	lineJoin := entry.markerLineJoin
 	if lineJoin == 0 {
 		lineJoin = render.JoinRound
