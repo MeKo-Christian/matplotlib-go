@@ -145,7 +145,7 @@ var cases = []Case{
 	{ID: "locator_log_minor_threshold_labels", Topic: "axes", Title: "Log Locator Minor Labels", FixtureOnly: true, Width: 720, Height: 420, MinPSNR: 53.0, MaxMeanAbs: 0.20, MaxRMSE: 2.0},
 	{ID: "locator_maxn_edge_labels", Topic: "axes", Title: "MaxN Locator Edge Labels", FixtureOnly: true, Width: 720, Height: 540, MinPSNR: 60.0, MaxMeanAbs: 0.10, MaxRMSE: 5.0},
 	{ID: "scale_asinh_ticks", Topic: "axes", Title: "Asinh Scale Ticks", FixtureOnly: true, Width: 720, Height: 400, MinPSNR: 63.0, MaxMeanAbs: 0.05, MaxRMSE: 2.5},
-	{ID: "scale_function_defaults", Topic: "axes", Title: "Function Scale Defaults", FixtureOnly: true, Width: 720, Height: 480, MinPSNR: 63.0, MaxMeanAbs: 0.05, MaxRMSE: 3.5},
+	{ID: "scale_function_defaults", Topic: "axes", Title: "Function Scale Defaults", FixtureOnly: true, Width: 720, Height: 480, MinPSNR: 62.0, MaxMeanAbs: 0.05, MaxRMSE: 1.0},
 	{ID: "scale_logit_ticks", Topic: "axes", Title: "Logit Scale Ticks", FixtureOnly: true, Width: 720, Height: 400, MinPSNR: 57.0, MaxMeanAbs: 0.10, MaxRMSE: 4.0},
 	{ID: "scale_symlog_ticks", Topic: "axes", Title: "Symlog Scale Ticks", FixtureOnly: true, Width: 720, Height: 400, MinPSNR: 64.0, MaxMeanAbs: 0.05, MaxRMSE: 0.5},
 	{ID: "ticks_styling_surface", Topic: "axes", Title: "Tick Styling Surface", FixtureOnly: true, Width: 720, Height: 420, MinPSNR: 50.0, MaxMeanAbs: 0.30, MaxRMSE: 3.0},

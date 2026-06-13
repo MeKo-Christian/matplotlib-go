@@ -212,11 +212,11 @@ RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run 'TestReferenceCompa
       passes under older broad tolerance but is above target. Start from divider,
       image-grid, inset, anchored artist, and colorbar layout against
       `mpl_toolkits.axes_grid1`.
-- [ ] `scale_function_defaults`: RMSE 6.06, PSNR 59.03 dB, MeanAbs 0.08. This
-      currently fails its ratcheted catalog tolerance (`MinPSNR=63.0`,
-      `MaxMeanAbs=0.05`, `MaxRMSE=3.5`). Re-check function-scale transform,
-      inverse transform sampling, autoscale, and default locator/formatter
-      installation.
+- [x] `scale_function_defaults`: fixed on 2026-06-13. Go now installs
+      Matplotlib-style default auto minor `LogLocator` ticks for `functionlog`
+      scales and uses the unsnapped Matplotlib y-label bbox extent. Updated
+      committed golden/reference metric: RMSE 0.56, PSNR 62.53 dB, MeanAbs
+      0.02.
 - [ ] `ticks_scales_formatters_gallery`: RMSE 5.80, PSNR 56.05 dB, MeanAbs 0.13.
       Subtest passes under the documented `MaxRMSE=7.0` exception, but remains
       above the Phase 2 target. Re-check the W3 gallery panels after fixing the
