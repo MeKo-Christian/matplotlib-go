@@ -372,6 +372,41 @@ func TestLegendScatterSampleUsesSourceCollectionSize(t *testing.T) {
 	}
 }
 
+func TestLegendScatterSampleUsesMatplotlibVariableSizeRepresentative(t *testing.T) {
+	scatter := &Scatter2D{
+		Label:     "scatter",
+		Sizes:     []float64{16, 100, 36},
+		Color:     render.Color{A: 1},
+		EdgeColor: render.Color{A: 1},
+		EdgeWidth: 1,
+		Marker:    MarkerCircle,
+	}
+	entry, ok := scatter.legendEntry()
+	if !ok {
+		t.Fatal("scatter legend entry not collected")
+	}
+
+	legend := NewLegend(nil)
+	var r legendRecordingRenderer
+	legend.drawSample(&r, entry, geom.Rect{
+		Min: geom.Pt{X: 0, Y: 0},
+		Max: geom.Pt{X: 40, Y: 20},
+	})
+
+	if len(r.paths) != 1 {
+		t.Fatalf("legend scatter sample paths = %d, want one marker", len(r.paths))
+	}
+	markerBounds, ok := r.paths[0].Bounds()
+	if !ok {
+		t.Fatal("legend scatter marker path has no bounds")
+	}
+	wantArea := 0.5 * (16.0 + 100.0)
+	want := pointsToPixels(style.Default, math.Sqrt(wantArea))
+	if got := markerBounds.W(); !floatApprox(got, want, 1e-9) {
+		t.Fatalf("legend scatter variable-size marker diameter = %v, want Matplotlib representative size %v", got, want)
+	}
+}
+
 func TestLegendMathLabelWidthUsesMeasuredTextWidth(t *testing.T) {
 	layout := singleLineTextLayout{
 		TextLineLayout: render.TextLineLayout{Width: 81},

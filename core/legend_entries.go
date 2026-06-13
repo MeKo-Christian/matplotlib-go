@@ -130,14 +130,43 @@ func (s *Scatter2D) legendEntry() (legendEntry, bool) {
 	if size <= 0 {
 		size = 36
 	}
-	if len(s.Sizes) > 0 && s.Sizes[0] > 0 {
-		size = s.Sizes[0]
+	if legendSize, ok := legendCollectionArea(s.Sizes, size); ok {
+		size = legendSize
 	}
 	entry.markerSize = pointsToPixels(style.Default, math.Sqrt(size))
 	entry.markerLineJoin = s.markerLineJoin()
 	entry.markerLineCap = s.markerLineCap()
 	entry.markerSnap = markerSnapMode(s.resolvedMarkerStyle(), entry.markerSize)
 	return entry, true
+}
+
+func legendCollectionArea(sizes []float64, fallback float64) (float64, bool) {
+	if len(sizes) == 0 {
+		if fallback > 0 {
+			return fallback, true
+		}
+		return 0, false
+	}
+	minSize := math.Inf(1)
+	maxSize := 0.0
+	for _, size := range sizes {
+		if size <= 0 || math.IsNaN(size) || math.IsInf(size, 0) {
+			continue
+		}
+		if size < minSize {
+			minSize = size
+		}
+		if size > maxSize {
+			maxSize = size
+		}
+	}
+	if maxSize <= 0 || math.IsInf(minSize, 1) {
+		if fallback > 0 {
+			return fallback, true
+		}
+		return 0, false
+	}
+	return 0.5 * (minSize + maxSize), true
 }
 
 func (b *Bar2D) legendEntry() (legendEntry, bool) {

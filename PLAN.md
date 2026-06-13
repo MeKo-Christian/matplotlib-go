@@ -472,8 +472,8 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
       `offsetbox.py`, `axes/_axes.py`, `collections.py`, `contour.py`,
       `image.py`) rather than fixture-specific tuning.
       Current open work is narrow: `legend_layout_matrix`,
-      `mixed_raster_vector`, `arrays_showcase`, `clip_path_batch`
-      remeasurement/closure, and W5-wide regold/tolerance ratcheting.
+      `mixed_raster_vector`, `clip_path_batch` remeasurement/closure, and
+      W5-wide regold/tolerance ratcheting.
       - [x] **W5 status ledger — closed below RMSE 5.** Closed in W5:
             `layout_bbox_helpers` 0.78, `axes_convenience_helpers` 3.09,
             `plot_variants` 3.69, `line2d_markers` 4.80,
@@ -483,14 +483,13 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `annotation_composition` 1.42, `mathtext_inline_labels` 4.10,
             `axes_option_breadth_17_75_3` 3.95,
             `annotation_legend_offsetbox_gallery` 4.48, and
-            `widgets_gallery` 4.63.
+            `widgets_gallery` 4.63, and `arrays_showcase` 2.82.
       - [ ] **W5 status ledger — remaining open cases.** Finish or remeasure:
-            `legend_layout_matrix` (last recorded 6.32),
-            `mixed_raster_vector` (last recorded 6.26), `arrays_showcase`
-            (last recorded 5.83 with remaining structural contour-label
-            residual), and
-            `clip_path_batch` (last baseline 5.99; verify after fill/collection
-            work before deciding whether a core fix is still needed).
+            `legend_layout_matrix` (last recorded 6.28) and
+            `mixed_raster_vector` (last recorded 6.25). `clip_path_batch`
+            needs catalog/test discovery follow-up: the historical baseline was
+            5.99, but the current focused `TestReferenceCompare/clip_path_batch`
+            command reports no subtest to run in this checkout.
       - [x] **W5.1 — Baseline, visual triage, and clustering.** Regenerate and
             inspect focused `TestReferenceCompare` output for every W5 case;
             use the committed diff artifacts under
@@ -644,6 +643,15 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             conflict markers in the local `../agg_go` replace dependency; the
             released `agg_go v0.2.31` is too old for this checkout's
             `SetAntiAliased` / `GetAntiAliased` calls.
+            2026-06-13 update: aligned explicit legend proxy/handler hatch
+            defaults with Matplotlib patch semantics. `LegendEntryOptions`
+            patch samples now inherit hatch color from the edge color and use
+            the rc hatch linewidth default when no explicit hatch style is
+            supplied (`TestLegendPatchSampleDefaultsHatchStyleLikeMatplotlib`);
+            the `legend_layout_matrix` proxy fixture no longer overrides those
+            defaults. Refreshed reference RMSE moved 6.30 → 6.28. The case
+            remains above target, with the remaining diff concentrated in
+            legend text, thin strokes, and antialiasing.
       - [x] **W5.3 — Axes helpers, lines, markers, and label placement.** Tackle
             `plot_variants`, `axes_convenience_helpers`, `line2d_markers`,
             `specialty_artists`, `specialty_depth`, and
@@ -818,14 +826,12 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
                   `mesh_contour_tri` by fixing tricontour z-order, closed-loop
                   contour label placement, and structured `Contourf` band
                   polygons.
-            - [ ] **W5.5.2 — Arrays showcase contour-label residual.**
-                  Isolate the `arrays_showcase` structural contour-label
-                  placement difference against upstream contour label selection
-                  before changing image or renderer behavior.
-            - [ ] **W5.5.3 — Arrays image/color normalization check.**
-                  After W5.5.2, verify that remaining `arrays_showcase`
-                  residual is not image origin, interpolation, normalization,
-                  or colorbar placement.
+            - [x] **W5.5.2 — Arrays showcase contour-label residual.**
+                  Close the `arrays_showcase` structural contour-label
+                  placement difference against upstream contour label selection.
+            - [x] **W5.5.3 — Arrays image/color normalization check.**
+                  Verify that the remaining `arrays_showcase` residue is below
+                  target after contour-label closure.
             2026-06-13 update: moved `mesh_contour_tri` below the W5 target.
             The residual had three contour-side causes: explicit `TriContour`
             sets inherited z=0 and rendered below tripcolor/triplot instead of
@@ -855,6 +861,13 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             fix those labels and disturbed neighboring label choices; the next
             W5.5.2 step should compare and port contourpy's open-path
             generation/order more directly.
+            2026-06-13 update: closed `arrays_showcase` below the W5 target.
+            The final residual was contour label anchoring, not image/color
+            normalization: rotated inline contour labels now use the shared
+            center-aligned backend anchor mapping instead of a height-only
+            manual anchor (`TestContourRotatedTextAnchorKeepsCenterFixed`).
+            Focused verification after refreshing the golden:
+            `TestReferenceCompare/arrays_showcase` RMSE 2.82, PSNR 53.78 dB.
       - [x] **W5.6 — Annotation and MathText tail cases.** Tackle
             `annotation_composition`, `mathtext_inline_labels`, and
             `mathtext_basic` only after W5.2/W5.3 have ruled out shared
@@ -910,9 +923,9 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
                   `mixed_raster_vector` (last RMSE 6.26) or document a frozen
                   renderer exception if the remaining one-pixel
                   antialias/stroke differences are not a core geometry bug.
-            - [ ] **W5.7.4 — Arrays showcase image-side residue.** After W5.5
-                  contour-label work, close or classify any remaining
-                  `arrays_showcase` image/interpolation/colorbar residual.
+            - [x] **W5.7.4 — Arrays showcase image-side residue.** After W5.5
+                  contour-label work, `arrays_showcase` is below target; no
+                  separate image/interpolation/colorbar fix is currently needed.
             - [ ] **W5.7.5 — Raster/image neighboring checks.** Run focused
                   W5.7 cases plus neighboring `image_*`, `imshow_*`,
                   `matshow_basic`, `spy_*`, `large_scatter`,
@@ -928,6 +941,15 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             antialias/stroke differences in polar grid/spine, line, text, and
             scatter marker edges. `arrays_showcase` remains above target with a
             structural contour-label placement residual.
+            2026-06-13 update: matched Matplotlib's representative legend size
+            for variable-size scatter collections. For a one-point scatter
+            legend, Go now uses `0.5*(min(size)+max(size))` before applying the
+            marker scale instead of the first collection size
+            (`TestLegendScatterSampleUsesMatplotlibVariableSizeRepresentative`).
+            Refreshed `mixed_raster_vector` moved 6.26 → 6.25. Visual/region
+            probes show the polar data area is already below RMSE 5; the
+            remaining full-image residual is dominated by the polar title,
+            legend text/sample antialiasing, and thin vector strokes.
       - [ ] **W5.8 — Verify, regold, and ratchet.** After each root-cause group
             lands, regold only the affected cases, run focused
             `TestReferenceCompare` targets plus neighboring cases in the same
