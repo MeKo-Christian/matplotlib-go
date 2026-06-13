@@ -70,7 +70,7 @@ func (f *Fill2D) Draw(r render.Renderer, ctx *DrawContext) {
 	if f.EdgeWidth > 0 && edgeColor.A > 0 {
 		paint.Stroke = edgeColor
 		paint.LineWidth = f.EdgeWidth
-		paint.LineJoin = render.JoinMiter
+		paint.LineJoin = render.JoinRound
 		paint.LineCap = render.CapButt
 		if f.EdgeWidth <= 1.5 {
 			paint.Snap = render.SnapOn
@@ -81,6 +81,10 @@ func (f *Fill2D) Draw(r render.Renderer, ctx *DrawContext) {
 		fillPath := f.createFillPathForRegion(region, ctx)
 		if len(fillPath.C) == 0 {
 			continue
+		}
+		for i := range fillPath.V {
+			fillPath.V[i].X += 0.5
+			fillPath.V[i].Y -= 0.5
 		}
 		r.Path(fillPath, &paint)
 	}

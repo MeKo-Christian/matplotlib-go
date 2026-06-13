@@ -670,6 +670,13 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             The remaining fixture diff is localized to arrow antialiasing and
             is well below the W5 threshold. Remaining W5.6 target:
             `mathtext_inline_labels` 5.88.
+            2026-06-13 update: moved `mathtext_inline_labels` below the W5
+            target, 5.88 → 4.10, by matching the left y-label anchor to
+            Matplotlib's device-pixel tick/spine bbox placement before applying
+            the label pad (`TestDrawAxesLabels_YLabelUsesTickBoundsAndLabelPad`,
+            `TestDrawAxesLabels_YLabelUsesTickPaddingWhenFormatterSuppressesLabels`).
+            W5.6 is now below target: `mathtext_basic` 4.77,
+            `annotation_composition` 1.42, `mathtext_inline_labels` 4.10.
       - [ ] **W5.7 — Widgets, raster/vector mixing, and image arrays.** Tackle
             `widgets_gallery`, `mixed_raster_vector`, and `arrays_showcase`
             residuals not covered by W5.4/W5.5 by checking widget artist layout,

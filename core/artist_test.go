@@ -512,8 +512,9 @@ func TestDrawAxesLabels_YLabelUsesTickBoundsAndLabelPad(t *testing.T) {
 	tickLabelMinX := tickPos.X - tickLabelPadPx(ax.YAxis, ctx) - (1 + 5.0) + 1
 	// P is matplotlib's label anchor: min(spine, tick bounds) - labelpad,
 	// vertically centered. The spine extent already includes its line width.
+	leftExtent := math.Min(spinePixelX(AxisLeft, px), tickLabelMinX)
 	p := geom.Pt{
-		X: math.Min(spinePixelX(AxisLeft, px), tickLabelMinX) - axisLabelPadPx(ctx),
+		X: math.Ceil(leftExtent) - axisLabelPadPx(ctx),
 		Y: px.Min.Y + px.H()/2,
 	}
 	// matplotlib draws the left y-label at rotation=90, rotation_mode="anchor",
@@ -657,7 +658,7 @@ func TestDrawAxesLabels_YLabelUsesTickPaddingWhenFormatterSuppressesLabels(t *te
 	}
 
 	p := geom.Pt{
-		X: spinePixelX(AxisLeft, px) - tickLabelPadPx(ax.YAxis, ctx) - axisLabelPadPx(ctx),
+		X: math.Ceil(spinePixelX(AxisLeft, px)-tickLabelPadPx(ax.YAxis, ctx)) - axisLabelPadPx(ctx),
 		Y: px.Min.Y + px.H()/2,
 	}
 	layout := measureSingleLineTextLayout(r, "Value", axisLabelFontSize(ctx), ctx.RC.FontKey)
