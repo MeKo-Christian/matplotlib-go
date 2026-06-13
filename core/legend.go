@@ -335,6 +335,7 @@ func (l *Legend) draw(r render.Renderer, ctx *DrawContext) {
 			LineWidth: l.BorderWidth,
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
+			Snap:      render.SnapAuto,
 		})
 	}
 
@@ -365,21 +366,24 @@ func (l *Legend) draw(r render.Renderer, ctx *DrawContext) {
 			rowHeight := rowHeights[i]
 			centerY := columnY - rowHeight/2
 			labelLayout := labelLayouts[i]
+			labelOrigin := alignedSingleLineOrigin(
+				geom.Pt{X: x + l.SampleWidth + l.SampleTextGap, Y: centerY},
+				labelLayout,
+				TextAlignLeft,
+				textLayoutVAlignCenter,
+			)
+			fontPx := pointsToPixels(ctx.RC, fontSize)
+			sampleCenterY := labelOrigin.Y + 0.35*fontPx
 
 			l.drawSampleWithFontPixels(r, entry, geom.Rect{
-				Min: geom.Pt{X: x, Y: centerY - rowHeight/2},
-				Max: geom.Pt{X: x + l.SampleWidth, Y: centerY + rowHeight/2},
-			}, pointsToPixels(ctx.RC, fontSize))
+				Min: geom.Pt{X: x, Y: sampleCenterY - fontPx/2},
+				Max: geom.Pt{X: x + l.SampleWidth, Y: sampleCenterY + fontPx/2},
+			}, fontPx)
 
 			drawDisplayText(
 				textRen,
 				entry.Label,
-				alignedSingleLineOrigin(
-					geom.Pt{X: x + l.SampleWidth + l.SampleTextGap, Y: centerY},
-					labelLayout,
-					TextAlignLeft,
-					textLayoutVAlignCenter,
-				),
+				labelOrigin,
 				fontSize,
 				l.TextColor,
 				ctx.RC.FontKey,

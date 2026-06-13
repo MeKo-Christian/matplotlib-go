@@ -659,6 +659,58 @@ func TestLegendFrameOnFalseSkipsFrameOnly(t *testing.T) {
 	}
 }
 
+func TestLegendFrameUsesMatplotlibSnapAuto(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.1, Y: 0.1},
+		Max: geom.Pt{X: 0.9, Y: 0.9},
+	})
+	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	legend := ax.AddLegend()
+
+	var r legendRecordingRenderer
+	DrawFigure(fig, &r)
+
+	for i, paint := range r.paints {
+		if paint.Fill == legend.BackgroundColor && paint.Stroke == legend.BorderColor && paint.LineWidth == legend.BorderWidth {
+			if paint.Snap != render.SnapAuto {
+				t.Fatalf("legend frame paint %d snap = %v, want Matplotlib SnapAuto", i, paint.Snap)
+			}
+			return
+		}
+	}
+	t.Fatal("legend frame paint was not drawn")
+}
+
+func TestLegendSampleCentersUseMatplotlibHandleBaseline(t *testing.T) {
+	legend := NewLegend(nil)
+	legend.Location = LegendUpperLeft
+	legend.entries = []legendEntry{
+		legendEntryFromLine("signal", render.Color{R: 0.1, G: 0.2, B: 0.7, A: 1}, 2, nil),
+	}
+	ctx := &DrawContext{
+		RC:   style.Default,
+		Clip: geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 300, Y: 200}},
+	}
+	var r legendRecordingRenderer
+	legend.draw(&r, ctx)
+
+	labelOrigin := r.textOrigin("signal")
+	fontPx := pointsToPixels(ctx.RC, legend.FontSize)
+	wantY := labelOrigin.Y + 0.35*fontPx
+	for i, path := range r.paths {
+		if i >= len(r.paints) || r.paints[i].Stroke != legend.entries[0].lineColor || len(path.V) < 2 {
+			continue
+		}
+		gotY := path.V[0].Y
+		if !floatApprox(gotY, wantY, 1e-9) {
+			t.Fatalf("legend sample center Y = %v, want Matplotlib baseline + 0.35*fontsize = %v", gotY, wantY)
+		}
+		return
+	}
+	t.Fatalf("legend line sample was not drawn; paths=%+v", r.paths)
+}
+
 func TestLegendAddEntryDrawsProxyPatchSample(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{
