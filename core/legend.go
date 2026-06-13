@@ -366,10 +366,10 @@ func (l *Legend) draw(r render.Renderer, ctx *DrawContext) {
 			centerY := columnY - rowHeight/2
 			labelLayout := labelLayouts[i]
 
-			l.drawSample(r, entry, geom.Rect{
+			l.drawSampleWithFontPixels(r, entry, geom.Rect{
 				Min: geom.Pt{X: x, Y: centerY - rowHeight/2},
 				Max: geom.Pt{X: x + l.SampleWidth, Y: centerY + rowHeight/2},
-			})
+			}, pointsToPixels(ctx.RC, fontSize))
 
 			drawDisplayText(
 				textRen,
@@ -1031,6 +1031,14 @@ func defaultVisibleColor(color render.Color) render.Color {
 }
 
 func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Rect) {
+	fontSize := style.Default.LegendSize()
+	if l != nil && l.FontSize > 0 {
+		fontSize = l.FontSize
+	}
+	l.drawSampleWithFontPixels(r, entry, sample, pointsToPixels(style.Default, fontSize))
+}
+
+func (l *Legend) drawSampleWithFontPixels(r render.Renderer, entry legendEntry, sample geom.Rect, fontPx float64) {
 	center := geom.Pt{
 		X: sample.Min.X + sample.W()/2,
 		Y: sample.Min.Y + sample.H()/2,
@@ -1038,7 +1046,7 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 
 	switch entry.kind {
 	case legendEntryErrorBar:
-		l.drawErrorBarSample(r, entry, sample, center)
+		l.drawErrorBarSample(r, entry, sample, center, fontPx)
 	case legendEntryPatch:
 		// Matplotlib's HandlerPatch fills the legend handle box. The
 		// handleheight default is 0.7 font-size units, and the default
@@ -1092,7 +1100,7 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 	}
 }
 
-func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample geom.Rect, center geom.Pt) {
+func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample geom.Rect, center geom.Pt, fontPx float64) {
 	lineWidth := entry.lineWidth
 	if lineWidth <= 0 {
 		lineWidth = 1.5
@@ -1116,7 +1124,7 @@ func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample
 		capHalf = entry.errorbarCapSize
 	}
 	if entry.errorbarY {
-		errSize := sample.W() * 0.25
+		errSize := fontPx * 0.5
 		if errSize <= 0 {
 			errSize = sample.H() * 0.5
 		}
