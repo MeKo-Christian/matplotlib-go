@@ -76,13 +76,11 @@ func Plot() *core.Figure {
 	proxyLegend.Location = core.LegendLowerRight
 	proxyLegend.FrameOn = false
 	proxyLegend.AddEntry("proxy patch", core.LegendEntryOptions{
-		Sample:     core.LegendSamplePatch,
-		FaceColor:  render.Color{R: 0.93, G: 0.77, B: 0.33, A: 0.92},
-		EdgeColor:  render.Color{R: 0.45, G: 0.30, B: 0.08, A: 1},
-		EdgeWidth:  1.2,
-		Hatch:      "xx",
-		HatchColor: render.Color{R: 0.30, G: 0.20, B: 0.08, A: 1},
-		HatchWidth: 0.8,
+		Sample:    core.LegendSamplePatch,
+		FaceColor: render.Color{R: 0.93, G: 0.77, B: 0.33, A: 0.92},
+		EdgeColor: render.Color{R: 0.45, G: 0.30, B: 0.08, A: 1},
+		EdgeWidth: 1.2,
+		Hatch:     "xx",
 	})
 
 	return fig

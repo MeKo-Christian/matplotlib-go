@@ -9,6 +9,20 @@ import (
 )
 
 func legendEntryFromPatchStyle(label string, face, edge render.Color, edgeWidth float64, hatch string, hatchColor render.Color, hatchWidth float64) legendEntry {
+	if hatch != "" {
+		if hatchColor.A <= 0 {
+			hatchColor = edge
+		}
+		if hatchColor.A <= 0 {
+			hatchColor = face
+		}
+		if hatchColor.A <= 0 {
+			hatchColor = render.Color{A: 1}
+		}
+		if hatchWidth <= 0 {
+			hatchWidth = 100.0 / 72.0
+		}
+	}
 	return legendEntry{
 		Label:           label,
 		kind:            legendEntryPatch,

@@ -488,6 +488,27 @@ func TestLegendPatchSampleFillsMatplotlibHandleBox(t *testing.T) {
 	}
 }
 
+func TestLegendPatchSampleDefaultsHatchStyleLikeMatplotlib(t *testing.T) {
+	edge := render.Color{R: 0.45, G: 0.30, B: 0.08, A: 1}
+	entry := legendEntryFromOptions("proxy", LegendEntryOptions{
+		Sample:    LegendSamplePatch,
+		FaceColor: render.Color{R: 0.93, G: 0.77, B: 0.33, A: 0.92},
+		EdgeColor: edge,
+		EdgeWidth: 1.2,
+		Hatch:     "xx",
+	})
+
+	if entry.patchHatch != "xx" {
+		t.Fatalf("patch legend hatch = %q, want xx", entry.patchHatch)
+	}
+	if entry.patchHatchColor != edge {
+		t.Fatalf("patch legend hatch color = %+v, want edge color %+v", entry.patchHatchColor, edge)
+	}
+	if !floatApprox(entry.patchHatchWidth, 100.0/72.0, 1e-9) {
+		t.Fatalf("patch legend hatch linewidth = %g, want Matplotlib default %g", entry.patchHatchWidth, 100.0/72.0)
+	}
+}
+
 func TestLegendDrawsErrorBarSampleWithCaps(t *testing.T) {
 	entry, ok := (&ErrorBar{
 		Label:     "errs",
