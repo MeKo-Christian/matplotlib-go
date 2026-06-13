@@ -494,6 +494,48 @@ func TestFill2D_EdgeColors(t *testing.T) {
 	}
 }
 
+func TestFill2DDrawUsesMatplotlibFillCollectionSnap(t *testing.T) {
+	fill := &Fill2D{
+		X:         []float64{0, 1, 2},
+		Y1:        []float64{1, 2, 1},
+		Y2:        []float64{0, 0, 0},
+		Color:     render.Color{A: 1},
+		EdgeColor: render.Color{A: 1},
+		EdgeWidth: 1,
+	}
+	r := &recordingRenderer{}
+
+	fill.Draw(r, createTestDrawContext())
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("path calls = %d, want 1", len(r.pathCalls))
+	}
+	if got := r.pathCalls[0].paint.Snap; got != render.SnapOn {
+		t.Fatalf("fill paint snap = %v, want Matplotlib fill collection edge snapping", got)
+	}
+}
+
+func TestFill2DDrawLeavesThickFillEdgesUnsnapped(t *testing.T) {
+	fill := &Fill2D{
+		X:         []float64{0, 1, 2},
+		Y1:        []float64{1, 2, 1},
+		Y2:        []float64{0, 0, 0},
+		Color:     render.Color{A: 1},
+		EdgeColor: render.Color{A: 1},
+		EdgeWidth: 2,
+	}
+	r := &recordingRenderer{}
+
+	fill.Draw(r, createTestDrawContext())
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("path calls = %d, want 1", len(r.pathCalls))
+	}
+	if got := r.pathCalls[0].paint.Snap; got != render.SnapAuto {
+		t.Fatalf("thick fill edge snap = %v, want Matplotlib unsnapped thick fill path", got)
+	}
+}
+
 func TestFill2D_AlphaEdgeCases(t *testing.T) {
 	testCases := []struct {
 		name  string

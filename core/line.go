@@ -115,6 +115,8 @@ type Line2D struct {
 	Col             render.Color // stroke color
 	Dashes          []float64    // dash pattern (on/off pairs)
 	DashUnits       DashUnits    // unit system for Dashes
+	LineCap         render.LineCap
+	LineCapSet      bool
 	GapColor        render.Color // optional dashed-line gap color
 	GapColorSet     bool
 	PathEffects     []render.PathEffect
@@ -318,11 +320,18 @@ func (l *Line2D) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 
 	dashes := lineDashesForPaint(l.Dashes, l.W, l.DashUnits)
+	lineCap := render.CapSquare
+	if len(dashes) > 0 {
+		lineCap = render.CapButt
+	}
+	if l.LineCapSet {
+		lineCap = l.LineCap
+	}
 	paint := render.Paint{
 		LineWidth:   l.W,
 		LineJoin:    render.JoinRound, // Default to round joins
-		LineCap:     render.CapButt,   // Default to butt caps
-		MiterLimit:  10.0,             // Standard miter limit
+		LineCap:     lineCap,
+		MiterLimit:  10.0, // Standard miter limit
 		Stroke:      l.ApplyArtistAlpha(l.Col),
 		Dashes:      dashes,
 		PathEffects: append([]render.PathEffect(nil), l.PathEffects...),

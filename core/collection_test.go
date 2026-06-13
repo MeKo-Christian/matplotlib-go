@@ -542,6 +542,25 @@ func TestLineCollectionLegendEntry(t *testing.T) {
 	}
 }
 
+func TestLineCollectionDrawUsesMatplotlibAutoSnap(t *testing.T) {
+	lines := &LineCollection{
+		Collection: Collection{Alpha: 1},
+		Segments:   [][]geom.Pt{{{X: 0, Y: 1}, {X: 4, Y: 1}}},
+		Color:      render.Color{A: 1},
+		LineWidth:  1.4,
+	}
+
+	r := &recordingRenderer{}
+	lines.Draw(r, createTestDrawContext())
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("path calls = %d, want 1", len(r.pathCalls))
+	}
+	if got := r.pathCalls[0].paint.Snap; got != render.SnapAuto {
+		t.Fatalf("line collection snap = %v, want Matplotlib snap=None/SnapAuto", got)
+	}
+}
+
 func TestAxesHLinesBroadcastsEndpointsAndRegistersCollection(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 	color := render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1}

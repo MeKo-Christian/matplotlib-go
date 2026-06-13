@@ -320,6 +320,27 @@ func TestScatterRadialMarkerPrototypesUseMatplotlibYUpOrientation(t *testing.T) 
 	}
 }
 
+func TestScatterCustomMarkerPathNormalizesLikeMatplotlib(t *testing.T) {
+	custom := geom.Path{}
+	custom.MoveTo(geom.Pt{X: 0, Y: -0.55})
+	custom.LineTo(geom.Pt{X: 0.48, Y: 0.36})
+	custom.LineTo(geom.Pt{X: -0.48, Y: 0.36})
+	custom.Close()
+
+	path := (&Scatter2D{MarkerPath: custom}).markerPrototypePath()
+	if len(path.V) == 0 {
+		t.Fatal("custom marker path produced no vertices")
+	}
+	maxAbs := 0.0
+	for _, pt := range path.V {
+		maxAbs = math.Max(maxAbs, math.Abs(pt.X))
+		maxAbs = math.Max(maxAbs, math.Abs(pt.Y))
+	}
+	if !floatApprox(maxAbs, 0.5, 1e-12) {
+		t.Fatalf("custom marker max abs coordinate = %v, want Matplotlib 0.5 normalization", maxAbs)
+	}
+}
+
 func TestScatterCaretMarkersUseMatplotlibMiterJoin(t *testing.T) {
 	for _, marker := range []MarkerType{
 		MarkerCaretLeft, MarkerCaretRight, MarkerCaretUp, MarkerCaretDown,

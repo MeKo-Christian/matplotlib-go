@@ -54,6 +54,7 @@ func (c *LineCollection) Draw(r render.Renderer, ctx *DrawContext) {
 			LineCap:     lineCap,
 			Dashes:      dashes,
 			PathEffects: cloneRenderPathEffects(c.PathEffects),
+			Snap:        render.SnapAuto,
 		})
 	}
 }

@@ -27,12 +27,13 @@ func Plot() *core.Figure {
 	ax.SetYLim(-1, 3)
 
 	x := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	zeros := make([]float64, len(x))
 	y := []float64{0.5, 1.8, 2.3, 1.2, 2.8, 1.9, 2.1, 1.5, 0.8}
 
 	fill := &core.Fill2D{
 		X:         x,
-		Y1:        y,
-		Baseline:  0,
+		Y1:        zeros,
+		Y2:        y,
 		Color:     render.Color{R: 0.3, G: 0.7, B: 0.9, A: 0.7},
 		EdgeColor: render.Color{R: 0.1, G: 0.3, B: 0.5, A: 1.0},
 		EdgeWidth: 2.0,

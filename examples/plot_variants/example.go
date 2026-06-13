@@ -71,12 +71,12 @@ func Plot() *core.Figure {
 	fillAx.AxHLine(4.0, core.HLineOptions{
 		Color:     &render.Color{R: 0.52, G: 0.18, B: 0.18, A: 1},
 		LineWidth: common.FloatPtr(1.2),
-		Dashes:    []float64{4, 3},
+		Dashes:    []float64{4 * 36.0 / DPI, 3 * 36.0 / DPI},
 	})
 	fillAx.AxVLine(5.3, core.VLineOptions{
 		Color:     &render.Color{R: 0.18, G: 0.22, B: 0.55, A: 1},
 		LineWidth: common.FloatPtr(1.2),
-		Dashes:    []float64{2, 2},
+		Dashes:    []float64{2 * 36.0 / DPI, 2 * 36.0 / DPI},
 	})
 	fillAx.AxLine(
 		geom.Pt{X: 0.9, Y: 0.3},

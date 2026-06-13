@@ -63,6 +63,7 @@ func (f *Fill2D) Draw(r render.Renderer, ctx *DrawContext) {
 	// Create paint for fill area
 	paint := render.Paint{
 		Fill: fillColor,
+		Snap: render.SnapAuto,
 	}
 
 	// Add stroke if edge width is specified and edge color has alpha > 0
@@ -71,6 +72,9 @@ func (f *Fill2D) Draw(r render.Renderer, ctx *DrawContext) {
 		paint.LineWidth = f.EdgeWidth
 		paint.LineJoin = render.JoinMiter
 		paint.LineCap = render.CapButt
+		if f.EdgeWidth <= 1.5 {
+			paint.Snap = render.SnapOn
+		}
 	}
 
 	for _, region := range f.fillRegions() {

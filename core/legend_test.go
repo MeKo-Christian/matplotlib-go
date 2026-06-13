@@ -107,6 +107,39 @@ func TestLegendLineMarkerSampleUsesOriginalMarkerSize(t *testing.T) {
 	}
 }
 
+func TestLegendLineMarkerSampleCopiesMarkerStrokeStyle(t *testing.T) {
+	tuple := NewTupleMarkerStyle(5, MarkerTupleStar, 18)
+	line := &Line2D{
+		Label:       "tuple star",
+		Col:         render.Color{R: 0.5, A: 1},
+		W:           1.4,
+		MarkerStyle: tuple,
+		MarkerSize:  11,
+	}
+	entry, ok := line.legendEntry()
+	if !ok {
+		t.Fatal("line marker legend entry not collected")
+	}
+
+	legend := NewLegend(nil)
+	var r legendRecordingRenderer
+	legend.drawSample(&r, entry, geom.Rect{
+		Min: geom.Pt{X: 0, Y: 0},
+		Max: geom.Pt{X: 40, Y: 20},
+	})
+
+	if len(r.paints) < 2 {
+		t.Fatalf("legend sample paints = %d, want line plus marker", len(r.paints))
+	}
+	markerPaint := r.paints[1]
+	if markerPaint.LineJoin != render.JoinBevel {
+		t.Fatalf("legend tuple-star marker join = %v, want Matplotlib bevel join", markerPaint.LineJoin)
+	}
+	if markerPaint.LineCap != render.CapButt {
+		t.Fatalf("legend tuple-star marker cap = %v, want Matplotlib butt cap", markerPaint.LineCap)
+	}
+}
+
 func TestLegendLineSampleCopiesLine2DStrokeCaps(t *testing.T) {
 	line := &Line2D{
 		Label: "line",
@@ -839,6 +872,9 @@ func TestLegendDefaultsMatchMatplotlibSpacing(t *testing.T) {
 	}
 	if !floatApprox(legend.SampleTextGap, 0.8*fontPx, 1e-9) {
 		t.Fatalf("legend sample-text gap = %v, want %v", legend.SampleTextGap, 0.8*fontPx)
+	}
+	if !floatApprox(legend.BorderWidth, pointsToPixels(fig.RC, 1), 1e-9) {
+		t.Fatalf("legend border width = %v, want Matplotlib 1 point linewidth %v", legend.BorderWidth, pointsToPixels(fig.RC, 1))
 	}
 	if legend.CornerRadius <= 0 {
 		t.Fatalf("legend corner radius = %v, want rounded Matplotlib fancybox", legend.CornerRadius)

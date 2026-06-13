@@ -291,12 +291,12 @@ func (s *Scatter2D) markerPrototypePath() geom.Path {
 
 func (s *Scatter2D) markerPrototypePathForContext(r render.Renderer, ctx *DrawContext) geom.Path {
 	if len(s.MarkerPath.C) > 0 {
-		return s.MarkerPath
+		return normalizeCustomMarkerPath(s.MarkerPath)
 	}
 
 	style := s.resolvedMarkerStyle()
 	if len(style.Path.C) > 0 {
-		return style.Path
+		return normalizeCustomMarkerPath(style.Path)
 	}
 	if style.Tuple != nil {
 		return markerTuplePath(*style.Tuple)
@@ -973,6 +973,19 @@ func mathTextMarkerPath(r render.Renderer, text, fontKey string) (geom.Path, boo
 		return geom.Path{}, false
 	}
 	return normalizeMarkerPath(path)
+}
+
+func normalizeCustomMarkerPath(path geom.Path) geom.Path {
+	maxAbs := 0.0
+	for _, pt := range path.V {
+		maxAbs = math.Max(maxAbs, math.Abs(pt.X))
+		maxAbs = math.Max(maxAbs, math.Abs(pt.Y))
+	}
+	if maxAbs <= 0 || math.IsNaN(maxAbs) || math.IsInf(maxAbs, 0) {
+		return geom.Path{}
+	}
+	scale := 0.5 / maxAbs
+	return applyAffinePath(path, geom.Affine{A: scale, D: scale})
 }
 
 func combineAndNormalizeMarkerPaths(paths []geom.Path) (geom.Path, bool) {

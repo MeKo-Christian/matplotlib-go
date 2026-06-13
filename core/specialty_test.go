@@ -313,6 +313,7 @@ func TestAxesViolinplotAddsCollections(t *testing.T) {
 
 func TestAxesViolinUsesPrecomputedStats(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+	defaultColor := ax.PeekColor()
 
 	violins := ax.Violin(
 		[]ViolinStat{
@@ -350,8 +351,17 @@ func TestAxesViolinUsesPrecomputedStats(t *testing.T) {
 	if violins.Bodies == nil || len(violins.Bodies.Polygons) != 2 {
 		t.Fatalf("violin bodies = %#v, want two body polygons", violins.Bodies)
 	}
+	if len(violins.Bodies.FaceColors) != 2 || violins.Bodies.FaceColors[0] != defaultColor || violins.Bodies.FaceColors[1] != defaultColor {
+		t.Fatalf("violin default face colors = %+v, want one Matplotlib cycle color %+v reused for all bodies", violins.Bodies.FaceColors, defaultColor)
+	}
+	if got := violins.Bodies.EdgeColor.A; got != 0 {
+		t.Fatalf("violin default body edge alpha = %v, want no edge like Matplotlib violin bodies", got)
+	}
 	if violins.Means == nil || len(violins.Means.Segments) != 2 {
 		t.Fatalf("mean segments = %#v, want 2", violins.Means)
+	}
+	if got := violins.Means.Color; got != defaultColor {
+		t.Fatalf("violin mean line color = %+v, want default body color %+v", got, defaultColor)
 	}
 	if violins.Medians == nil || len(violins.Medians.Segments) != 2 {
 		t.Fatalf("median segments = %#v, want 2", violins.Medians)

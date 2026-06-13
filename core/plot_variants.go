@@ -391,7 +391,7 @@ func (a *Axes) BarLabel(bar *Bar2D, labels []string, opts ...BarLabelOptions) []
 	if position == "" {
 		position = "edge"
 	}
-	padding := opt.Padding
+	padding := pointsToPixels(a.resolvedRC(), opt.Padding)
 	format := opt.Format
 	if format == "" {
 		format = "%g"
@@ -427,7 +427,7 @@ func (s *Stairs2D) Draw(r render.Renderer, ctx *DrawContext) {
 
 	fillColor, strokeColor := s.resolvedColors()
 	if s.Fill && fillColor.A > 0 {
-		paint := render.Paint{Fill: fillColor}
+		paint := render.Paint{Fill: fillColor, Snap: render.SnapAuto}
 		if s.LineWidth > 0 && strokeColor.A > 0 {
 			paint.Stroke = strokeColor
 			paint.LineWidth = s.LineWidth
@@ -446,6 +446,7 @@ func (s *Stairs2D) Draw(r render.Renderer, ctx *DrawContext) {
 		LineWidth: s.LineWidth,
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
+		Snap:      render.SnapAuto,
 	})
 }
 
@@ -564,6 +565,10 @@ func (l *InfiniteLine2D) Draw(r render.Renderer, ctx *DrawContext) {
 	if !ok {
 		return
 	}
+	lineCap := render.CapSquare
+	if len(l.Dashes) > 0 {
+		lineCap = render.CapButt
+	}
 	r.Path(geom.Path{
 		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
 		V: []geom.Pt{start, end},
@@ -571,7 +576,7 @@ func (l *InfiniteLine2D) Draw(r render.Renderer, ctx *DrawContext) {
 		Stroke:    l.Color,
 		LineWidth: l.LineWidth,
 		LineJoin:  render.JoinRound,
-		LineCap:   render.CapButt,
+		LineCap:   lineCap,
 		Dashes:    lineDashesForPaint(l.Dashes, l.LineWidth, DashUnitsMatplotlib),
 		Snap:      render.SnapAuto,
 	})
@@ -620,10 +625,16 @@ func (s *Stairs2D) stepPath(n int, ctx *DrawContext) geom.Path {
 }
 
 func (s *Stairs2D) fillPath(n int, ctx *DrawContext) geom.Path {
-	path := s.stepPath(n, ctx)
+	path := geom.Path{}
+	path.MoveTo(ctx.DataToPixel.Apply(geom.Pt{X: s.Edges[0], Y: s.Baseline}))
+	path.LineTo(ctx.DataToPixel.Apply(geom.Pt{X: s.Edges[0], Y: s.Values[0]}))
+	for i := 0; i < n; i++ {
+		path.LineTo(ctx.DataToPixel.Apply(geom.Pt{X: s.Edges[i+1], Y: s.Values[i]}))
+		if i+1 < n {
+			path.LineTo(ctx.DataToPixel.Apply(geom.Pt{X: s.Edges[i+1], Y: s.Values[i+1]}))
+		}
+	}
 	path.LineTo(ctx.DataToPixel.Apply(geom.Pt{X: s.Edges[n], Y: s.Baseline}))
-	path.LineTo(ctx.DataToPixel.Apply(geom.Pt{X: s.Edges[0], Y: s.Baseline}))
-	path.Close()
 	return path
 }
 
@@ -757,14 +768,14 @@ func (a *Axes) newSpan(start, end geom.Pt, coords CoordinateSpec, opt SpanOption
 		alpha = *opt.Alpha
 	}
 	color.A *= alpha
-	edgeColor := render.Color{}
+	edgeColor := color
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
 		if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 			edgeColor.A *= *opt.Alpha
 		}
 	}
-	edgeWidth := 0.0
+	edgeWidth := pointsToPixels(rc, 1)
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
 	}
@@ -776,7 +787,7 @@ func (a *Axes) newSpan(start, end geom.Pt, coords CoordinateSpec, opt SpanOption
 		Color:     color,
 		EdgeColor: edgeColor,
 		EdgeWidth: edgeWidth,
-		z:         -20,
+		z:         defaultPatchZ,
 	}
 }
 
@@ -855,13 +866,13 @@ func barLabelPlacement(bar *Bar2D, index int, position string, padding float64) 
 		return TextOptions{
 			HAlign:  TextAlignCenter,
 			VAlign:  TextVAlignBottom,
-			OffsetY: -padding,
+			OffsetY: padding,
 		}, anchorX, end
 	}
 	return TextOptions{
 		HAlign:  TextAlignCenter,
 		VAlign:  TextVAlignTop,
-		OffsetY: padding,
+		OffsetY: -padding,
 	}, anchorX, end
 }
 

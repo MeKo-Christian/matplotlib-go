@@ -175,7 +175,7 @@ func TestAxesBarLabel_Placement(t *testing.T) {
 	}
 
 	padded := ax.BarLabel(bar, []string{"padded"}, BarLabelOptions{Padding: 4})
-	if len(padded) == 0 || padded[0].OffsetY != -4 {
+	if len(padded) == 0 || padded[0].OffsetY != pointsToPixels(ax.resolvedRC(), 4) {
 		t.Fatalf("explicit padded label = %+v", padded)
 	}
 
@@ -289,6 +289,22 @@ func TestAxesAxLine_ClipsToCurrentView(t *testing.T) {
 	}
 }
 
+func TestAxesAxLine_UsesMatplotlibSolidCapstyle(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+	line := ax.AxLine(geom.Pt{X: 0, Y: 0}, geom.Pt{X: 10, Y: 10})
+
+	r := &recordingRenderer{}
+	ctx := createTestDrawContext()
+	line.Draw(r, ctx)
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("expected one path call, got %d", len(r.pathCalls))
+	}
+	if got := r.pathCalls[0].paint.LineCap; got != render.CapSquare {
+		t.Fatalf("axline solid capstyle = %v, want Matplotlib projecting capstyle", got)
+	}
+}
+
 func TestStairs2D_DrawFilled(t *testing.T) {
 	stairs := &Stairs2D{
 		Edges:     []float64{0, 1, 3},
@@ -301,7 +317,8 @@ func TestStairs2D_DrawFilled(t *testing.T) {
 	}
 
 	r := &recordingRenderer{}
-	stairs.Draw(r, createTestDrawContext())
+	ctx := createTestDrawContext()
+	stairs.Draw(r, ctx)
 
 	if len(r.pathCalls) != 1 {
 		t.Fatalf("expected one path call, got %d", len(r.pathCalls))
@@ -310,8 +327,43 @@ func TestStairs2D_DrawFilled(t *testing.T) {
 	if call.paint.Fill.A != 1 || call.paint.Stroke.A != 1 {
 		t.Fatalf("unexpected paint = %+v", call.paint)
 	}
-	if len(call.path.C) == 0 || call.path.C[len(call.path.C)-1] != geom.ClosePath {
-		t.Fatalf("expected closed fill path, got %+v", call.path.C)
+	if call.paint.Snap != render.SnapAuto {
+		t.Fatalf("stairs paint snap = %v, want Matplotlib snap=None/SnapAuto", call.paint.Snap)
+	}
+	wantCodes := []geom.Cmd{
+		geom.MoveTo,
+		geom.LineTo,
+		geom.LineTo,
+		geom.LineTo,
+		geom.LineTo,
+		geom.LineTo,
+	}
+	if len(call.path.C) != len(wantCodes) {
+		t.Fatalf("path commands = %+v, want %+v", call.path.C, wantCodes)
+	}
+	for i, wantCode := range wantCodes {
+		if call.path.C[i] != wantCode {
+			t.Fatalf("path commands = %+v, want %+v", call.path.C, wantCodes)
+		}
+	}
+	want := []geom.Pt{
+		{X: 0, Y: 1},
+		{X: 0, Y: 2},
+		{X: 1, Y: 2},
+		{X: 1, Y: 4},
+		{X: 3, Y: 4},
+		{X: 3, Y: 1},
+	}
+	for i := range want {
+		want[i] = ctx.DataToPixel.Apply(want[i])
+	}
+	if len(call.path.V) != len(want) {
+		t.Fatalf("path vertices = %+v, want %+v", call.path.V, want)
+	}
+	for i := range want {
+		if call.path.V[i] != want[i] {
+			t.Fatalf("path vertices = %+v, want %+v", call.path.V, want)
+		}
 	}
 }
 
@@ -328,5 +380,17 @@ func TestAxesAxVSpan_DrawsFilledRect(t *testing.T) {
 	}
 	if r.pathCalls[0].paint.Fill.A == 0 {
 		t.Fatalf("expected non-transparent fill paint")
+	}
+	if r.pathCalls[0].paint.Stroke.A == 0 || r.pathCalls[0].paint.LineWidth != pointsToPixels(ax.resolvedRC(), 1) {
+		t.Fatalf("span edge paint = %+v, want Matplotlib same-color 1pt edge", r.pathCalls[0].paint)
+	}
+}
+
+func TestAxesAxVSpan_DefaultZOrderMatchesMatplotlibPatch(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+	span := ax.AxVSpan(2, 4)
+
+	if got := span.Z(); got != defaultPatchZ {
+		t.Fatalf("axvspan zorder = %v, want Matplotlib patch zorder %v", got, defaultPatchZ)
 	}
 }

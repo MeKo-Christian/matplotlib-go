@@ -172,7 +172,8 @@ func (a *Axes) renderViolin(stats []ViolinStat, cfg ViolinStatsOptions, defaultS
 	quantileSegments := make([][]geom.Pt, 0, n)
 	orientation := normalizeViolinOrientation(cfg.Orientation)
 	side := normalizeViolinSide(cfg.Side)
-	defaultLineColor := a.PeekColor()
+	defaultFaceColor := a.NextColor()
+	defaultLineColor := defaultFaceColor
 
 	for i, stat := range stats {
 		if !validViolinStat(stat) {
@@ -212,7 +213,7 @@ func (a *Axes) renderViolin(stats []ViolinStat, cfg ViolinStatsOptions, defaultS
 		}
 		polygons = append(polygons, polygon)
 
-		color := colorAt(a.NextColor(), cfg.Colors, i)
+		color := colorAt(defaultFaceColor, cfg.Colors, i)
 		faceColors = append(faceColors, color)
 
 		if specialtyBool(cfg.ShowMeans, false) {
@@ -238,7 +239,7 @@ func (a *Axes) renderViolin(stats []ViolinStat, cfg ViolinStatsOptions, defaultS
 		return nil
 	}
 
-	edgeColor := render.Color{R: 0.12, G: 0.12, B: 0.12, A: 0.9}
+	edgeColor := render.Color{}
 	if cfg.EdgeColor != nil {
 		edgeColor = *cfg.EdgeColor
 	}

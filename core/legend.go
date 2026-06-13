@@ -77,6 +77,8 @@ type legendEntry struct {
 
 	lineColor     render.Color
 	lineWidth     float64
+	lineJoin      render.LineJoin
+	lineCap       render.LineCap
 	dashes        []float64
 	lineMarkerSet bool
 
@@ -91,6 +93,8 @@ type legendEntry struct {
 	markerEdge      render.Color
 	markerEdgeWidth float64
 	markerSize      float64
+	markerLineJoin  render.LineJoin
+	markerLineCap   render.LineCap
 
 	patchFill       render.Color
 	patchEdge       render.Color
@@ -171,7 +175,7 @@ func NewLegend(ax *Axes) *Legend {
 		BackgroundColor: rc.LegendBackground,
 		BorderColor:     rc.LegendBorderColor,
 		TextColor:       rc.LegendTextColor,
-		BorderWidth:     1,
+		BorderWidth:     pointsToPixels(rc, 1),
 		FontSize:        fontSize,
 		z:               1_000,
 	}
@@ -203,7 +207,7 @@ func NewFigureLegend(fig *Figure) *Legend {
 		BackgroundColor: rc.LegendBackground,
 		BorderColor:     rc.LegendBorderColor,
 		TextColor:       rc.LegendTextColor,
-		BorderWidth:     1,
+		BorderWidth:     pointsToPixels(rc, 1),
 		FontSize:        fontSize,
 		z:               1_000,
 	}
@@ -1076,8 +1080,8 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 		r.Path(path, &render.Paint{
 			Stroke:    entry.lineColor,
 			LineWidth: lineWidth,
-			LineJoin:  render.JoinRound,
-			LineCap:   render.CapRound,
+			LineJoin:  entry.lineJoin,
+			LineCap:   entry.lineCap,
 			Dashes:    entry.dashes,
 		})
 		if entry.lineMarkerSet {
@@ -1197,6 +1201,14 @@ func (l *Legend) markerSampleCenters(sample geom.Rect, center geom.Pt) []geom.Pt
 }
 
 func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center geom.Pt, radius float64) {
+	lineJoin := entry.markerLineJoin
+	if lineJoin == 0 {
+		lineJoin = render.JoinRound
+	}
+	lineCap := entry.markerLineCap
+	if lineCap == 0 {
+		lineCap = render.CapButt
+	}
 	markerPath := entry.markerPath
 	if len(markerPath.C) == 0 {
 		sampleScatter := Scatter2D{Marker: entry.marker}
@@ -1207,14 +1219,14 @@ func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center g
 	if entry.markerHasAlt {
 		r.Path(markerPath, &render.Paint{
 			Fill:     entry.markerFill,
-			LineJoin: render.JoinRound,
-			LineCap:  render.CapRound,
+			LineJoin: lineJoin,
+			LineCap:  lineCap,
 		})
 		if len(entry.markerAltPath.C) > 0 {
 			r.Path(scaleAndTranslatePath(entry.markerAltPath, radius, center), &render.Paint{
 				Fill:     entry.markerAltFill,
-				LineJoin: render.JoinRound,
-				LineCap:  render.CapRound,
+				LineJoin: lineJoin,
+				LineCap:  lineCap,
 			})
 		}
 		edgePath := entry.markerEdgePath
@@ -1225,8 +1237,8 @@ func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center g
 			r.Path(scaleAndTranslatePath(edgePath, radius, center), &render.Paint{
 				Stroke:    entry.markerEdge,
 				LineWidth: entry.markerEdgeWidth,
-				LineJoin:  render.JoinRound,
-				LineCap:   render.CapRound,
+				LineJoin:  lineJoin,
+				LineCap:   lineCap,
 			})
 		}
 		return
@@ -1243,8 +1255,8 @@ func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center g
 		Fill:      fill,
 		Stroke:    edge,
 		LineWidth: entry.markerEdgeWidth,
-		LineJoin:  render.JoinRound,
-		LineCap:   render.CapRound,
+		LineJoin:  lineJoin,
+		LineCap:   lineCap,
 	})
 }
 

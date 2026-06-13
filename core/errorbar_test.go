@@ -119,6 +119,54 @@ func TestErrorBarCanSuppressDataLineLikeFmtNone(t *testing.T) {
 	}
 }
 
+func TestErrorBarDefaultLineWidthMatchesMatplotlib(t *testing.T) {
+	errBar := &ErrorBar{
+		XY: []geom.Pt{
+			{X: 1, Y: 2},
+			{X: 2, Y: 3},
+		},
+		YErr: []float64{0.4, 0.2},
+		Color: render.Color{
+			A: 1,
+		},
+	}
+	r := &recordingRenderer{}
+	ctx := createTestDrawContext()
+
+	errBar.Draw(r, ctx)
+
+	if len(r.pathCalls) == 0 {
+		t.Fatal("errorbar drew no paths")
+	}
+	want := pointsToPixels(ctx.RC, 1.5)
+	if got := r.pathCalls[0].paint.LineWidth; !floatApprox(got, want, 1e-9) {
+		t.Fatalf("default errorbar line width = %v, want Matplotlib 1.5 pt = %v px", got, want)
+	}
+}
+
+func TestErrorBarMarkerEdgeWidthDefaultsToMatplotlibMarkerEdgeWidth(t *testing.T) {
+	errBar := &ErrorBar{
+		XY:         []geom.Pt{{X: 1, Y: 2}},
+		Color:      render.Color{A: 1},
+		Marker:     MarkerCircle,
+		MarkerSet:  true,
+		MarkerSize: 4.5,
+	}
+	r := &recordingRenderer{}
+	ctx := createTestDrawContext()
+
+	errBar.Draw(r, ctx)
+
+	if len(r.pathCalls) == 0 {
+		t.Fatal("errorbar marker drew no paths")
+	}
+	want := pointsToPixels(ctx.RC, 1)
+	got := r.pathCalls[len(r.pathCalls)-1].paint.LineWidth
+	if !floatApprox(got, want, 1e-9) {
+		t.Fatalf("default errorbar marker edge width = %v, want Matplotlib 1 pt = %v px", got, want)
+	}
+}
+
 func TestErrorBarCapSizeIsFullPixelLength(t *testing.T) {
 	errBar := &ErrorBar{
 		XY:        []geom.Pt{{X: 1, Y: 2}},

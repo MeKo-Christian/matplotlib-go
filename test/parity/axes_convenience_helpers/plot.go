@@ -41,11 +41,6 @@ func Plot() *core.Figure {
 	}, core.ViolinStatsOptions{
 		ShowMeans:   boolPtr(true),
 		ShowMedians: boolPtr(true),
-		Colors: []render.Color{
-			{R: 0.85, G: 0.42, B: 0.18, A: 1},
-			{R: 0.20, G: 0.55, B: 0.35, A: 1},
-		},
-		LineColor: colorPtr(render.Color{R: 0.10, G: 0.10, B: 0.10, A: 1}),
 	})
 
 	lineAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.69, Y: 0.58}, Max: geom.Pt{X: 0.96, Y: 0.92}})

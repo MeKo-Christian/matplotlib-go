@@ -28,6 +28,7 @@ func Plot() *core.Figure {
 	ax.SetYLim(0, 8)
 
 	x := []float64{1, 2, 3, 4, 5, 6, 7}
+	zeros := make([]float64, len(x))
 	layer1 := []float64{1, 1.5, 2, 1.8, 2.2, 1.9, 1.6}
 	layer2 := make([]float64, len(layer1))
 	layer3 := make([]float64, len(layer1))
@@ -36,7 +37,7 @@ func Plot() *core.Figure {
 		layer3[i] = layer2[i] + 1.2 + 0.4*math.Cos(float64(i))
 	}
 
-	fill1 := core.FillToBaseline(x, layer1, 0, render.Color{R: 0.8, G: 0.2, B: 0.2, A: 0.8})
+	fill1 := core.FillBetween(x, zeros, layer1, render.Color{R: 0.8, G: 0.2, B: 0.2, A: 0.8})
 	fill1.EdgeColor = render.Color{R: 0.5, G: 0, B: 0, A: 1}
 	fill1.EdgeWidth = 1.0
 

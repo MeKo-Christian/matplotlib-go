@@ -16,6 +16,7 @@ type PlotOptions struct {
 	Color           *render.Color // if nil, uses automatic color cycling
 	EdgeColor       *render.Color
 	LineWidth       *float64 // if nil, uses default
+	LineCap         *render.LineCap
 	EdgeWidth       *float64
 	Dashes          []float64 // dash pattern
 	DrawStyle       *LineDrawStyle
@@ -93,6 +94,10 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 		Dashes:    opt.Dashes,
 		DrawStyle: LineDrawStyleDefault,
 		Label:     opt.Label,
+	}
+	if opt.LineCap != nil {
+		line.LineCap = *opt.LineCap
+		line.LineCapSet = true
 	}
 	if opt.DrawStyle != nil {
 		line.DrawStyle = *opt.DrawStyle

@@ -4,32 +4,21 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/render"
 )
 
-func TestPlotUsesReferenceLegendLocation(t *testing.T) {
+func TestPlotLinesMirrorMatplotlibButtCapstyle(t *testing.T) {
 	fig := Plot()
-	if len(fig.Children) == 0 {
-		t.Fatal("figure has no axes")
+	if len(fig.Children) != 1 {
+		t.Fatalf("axes count = %d, want 1", len(fig.Children))
 	}
-
-	legend := findLegend(fig.Children[0])
-	if legend == nil {
-		t.Fatal("plot should include a legend")
-	}
-	if legend.Location != core.LegendUpperLeft {
-		t.Fatalf("legend location = %v, want upper left", legend.Location)
-	}
-}
-
-func findLegend(ax *core.Axes) *core.Legend {
-	if ax == nil {
-		return nil
-	}
-	for _, art := range ax.Artists {
-		legend, ok := art.(*core.Legend)
-		if ok {
-			return legend
+	for i, art := range fig.Children[0].Artists {
+		line, ok := art.(*core.Line2D)
+		if !ok {
+			continue
+		}
+		if !line.LineCapSet || line.LineCap != render.CapButt {
+			t.Fatalf("line artist %d cap = set:%v %v, want Python solid_capstyle='butt'", i, line.LineCapSet, line.LineCap)
 		}
 	}
-	return nil
 }

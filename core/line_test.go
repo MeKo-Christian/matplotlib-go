@@ -54,7 +54,7 @@ func TestLine2D_EmptyData(t *testing.T) {
 	line.Draw(&r, ctx)
 }
 
-func TestLine2D_DefaultsToButtCaps(t *testing.T) {
+func TestLine2D_DefaultSolidCapstyleMatchesMatplotlib(t *testing.T) {
 	line := &Line2D{
 		XY: []geom.Pt{
 			{X: 0, Y: 0},
@@ -80,14 +80,79 @@ func TestLine2D_DefaultsToButtCaps(t *testing.T) {
 	if len(r.pathCalls) != 1 {
 		t.Fatalf("expected one Path call, got %d", len(r.pathCalls))
 	}
-	if r.pathCalls[0].paint.LineCap != render.CapButt {
-		t.Fatalf("expected default line cap %v, got %v", render.CapButt, r.pathCalls[0].paint.LineCap)
+	if r.pathCalls[0].paint.LineCap != render.CapSquare {
+		t.Fatalf("expected Matplotlib projecting solid cap %v, got %v", render.CapSquare, r.pathCalls[0].paint.LineCap)
 	}
 	if r.pathCalls[0].paint.LineJoin != render.JoinRound {
 		t.Fatalf("expected default line join %v, got %v", render.JoinRound, r.pathCalls[0].paint.LineJoin)
 	}
 	if r.pathCalls[0].paint.Snap != render.SnapAuto {
 		t.Fatalf("expected default line snap %v, got %v", render.SnapAuto, r.pathCalls[0].paint.Snap)
+	}
+}
+
+func TestLine2D_DashedCapstyleMatchesMatplotlib(t *testing.T) {
+	line := &Line2D{
+		XY: []geom.Pt{
+			{X: 0, Y: 0},
+			{X: 1, Y: 1},
+		},
+		W:      2.0,
+		Col:    render.Color{R: 1, G: 0, B: 0, A: 1},
+		Dashes: []float64{3, 2},
+	}
+
+	r := &recordingRenderer{}
+	ctx := &DrawContext{
+		DataToPixel: Transform2D{
+			XScale:      transform.NewLinear(0, 10),
+			YScale:      transform.NewLinear(0, 10),
+			AxesToPixel: transform.NewAffine(geom.Identity()),
+		},
+		RC:   style.Default,
+		Clip: geom.Rect{},
+	}
+
+	line.Draw(r, ctx)
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("expected one Path call, got %d", len(r.pathCalls))
+	}
+	if r.pathCalls[0].paint.LineCap != render.CapButt {
+		t.Fatalf("expected Matplotlib butt dash cap %v, got %v", render.CapButt, r.pathCalls[0].paint.LineCap)
+	}
+}
+
+func TestLine2D_ExplicitSolidCapstyleOverridesDefault(t *testing.T) {
+	line := &Line2D{
+		XY: []geom.Pt{
+			{X: 0, Y: 0},
+			{X: 1, Y: 1},
+		},
+		W:          2.0,
+		Col:        render.Color{R: 1, G: 0, B: 0, A: 1},
+		LineCap:    render.CapButt,
+		LineCapSet: true,
+	}
+
+	r := &recordingRenderer{}
+	ctx := &DrawContext{
+		DataToPixel: Transform2D{
+			XScale:      transform.NewLinear(0, 10),
+			YScale:      transform.NewLinear(0, 10),
+			AxesToPixel: transform.NewAffine(geom.Identity()),
+		},
+		RC:   style.Default,
+		Clip: geom.Rect{},
+	}
+
+	line.Draw(r, ctx)
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("expected one Path call, got %d", len(r.pathCalls))
+	}
+	if r.pathCalls[0].paint.LineCap != render.CapButt {
+		t.Fatalf("explicit solid cap = %v, want Matplotlib butt cap override", r.pathCalls[0].paint.LineCap)
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 // ErrorBar renders symmetric horizontal and/or vertical error bars for points.
@@ -40,9 +41,13 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 
+	rc := style.Default
+	if ctx != nil {
+		rc = ctx.RC
+	}
 	lineWidth := e.LineWidth
 	if lineWidth <= 0 {
-		lineWidth = 1.0
+		lineWidth = pointsToPixels(rc, 1.5)
 	}
 
 	capSizePx := e.CapSize
@@ -185,7 +190,7 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 			Size:      e.MarkerSize * e.MarkerSize,
 			Color:     color,
 			EdgeColor: color,
-			EdgeWidth: lineWidth,
+			EdgeWidth: pointsToPixels(rc, 1),
 			Alpha:     alpha,
 			Marker:    e.Marker,
 			z:         e.Z() + 0.05,

@@ -546,6 +546,51 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `core/axes*.go`, marker-path generation, zorder/depth ordering, and
             autoscale/sticky-edge behavior against upstream
             `lib/matplotlib/{axes/_axes.py,lines.py,markers.py,artist.py}`.
+            2026-06-13 progress: moved `axes_convenience_helpers` below the W5
+            target by porting Matplotlib violin/statistical helper defaults and
+            collection snapping. `Axes.Violin` now reuses one default cycle color
+            for all precomputed violin bodies, draws bodies with no edge by
+            default, and uses that same default color for summary lines
+            (`TestAxesViolinUsesPrecomputedStats`); the Go parity fixture now
+            mirrors the Python reference instead of overriding those defaults.
+            `LineCollection` paints now use `SnapAuto` like upstream
+            `snap=None` collections (`TestLineCollectionDrawUsesMatplotlibAutoSnap`).
+            `axes_convenience_helpers` current reference RMSE moved 7.21 → 3.09.
+            Also ported measured Matplotlib defaults for legend Line2D samples
+            (butt caps, 1 pt frame linewidth) and errorbar line/marker-edge
+            widths (`TestLegendLineSampleCopiesLine2DStrokeCaps`,
+            `TestLegendDefaultsMatchMatplotlibSpacing`,
+            `TestErrorBarDefaultLineWidthMatchesMatplotlib`,
+            `TestErrorBarMarkerEdgeWidthDefaultsToMatplotlibMarkerEdgeWidth`);
+            these moved `legend_layout_matrix` 6.76 → 6.49, slightly moved
+            `line2d_markers` 6.96 → 6.92, and moved
+            `axes_option_breadth_17_75_3` 5.26 → 5.24. Current W5.3 scoreboard:
+            `axes_convenience_helpers` 3.09, `axes_option_breadth_17_75_3`
+            5.24, `specialty_artists` 5.31, `legend_layout_matrix` 6.49,
+            `line2d_markers` 6.92, `specialty_depth` 6.92,
+            `plot_variants` 7.08.
+            2026-06-13 update: moved `plot_variants` below the W5 target,
+            7.08 → 3.69, by matching Matplotlib point-unit dash arrays in the
+            fixture (`TestReferenceLineDashesMatchMatplotlibPointUnits`),
+            Matplotlib solid/dashed cap defaults for `Line2D`/`axline`
+            (`TestLine2D_DefaultSolidCapstyleMatchesMatplotlib`,
+            `TestLine2D_DashedCapstyleMatchesMatplotlib`,
+            `TestAxesAxLine_UsesMatplotlibSolidCapstyle`), open filled
+            `StepPatch` paths (`TestStairs2D_DrawFilled`), `axvspan` patch
+            z-order/edge defaults (`TestAxesAxVSpan_DrawsFilledRect`,
+            `TestAxesAxVSpan_DefaultZOrderMatchesMatplotlibPatch`), and
+            point-unit/outward `bar_label` padding
+            (`TestAxesBarLabel_Placement`). Fresh W5 scoreboard:
+            `fill_stacked` 6.94, `line2d_markers` 6.92, `specialty_depth`
+            6.92, `mesh_contour_tri` 6.91, `annotation_legend_offsetbox_gallery`
+            6.53, `legend_layout_matrix` 6.49, `arrays_showcase` 6.31,
+            `mixed_raster_vector` 6.31, `fill_basic` 6.06,
+            `clip_path_batch` 5.99, `mathtext_inline_labels` 5.88,
+            `annotation_composition` 5.79, `fill_variants` 5.51,
+            `mathtext_basic` 5.33, `specialty_artists` 5.31,
+            `axes_option_breadth_17_75_3` 5.24, and below-target
+            `widgets_gallery` 4.63, `plot_variants` 3.69,
+            `axes_convenience_helpers` 3.09, `layout_bbox_helpers` 0.78.
       - [ ] **W5.4 — Fill and collection edge semantics.** Tackle
             `fill_basic`, `fill_variants`, `fill_stacked`, `clip_path_batch`,
             and any related residual in `mixed_raster_vector` by translating the
@@ -554,6 +599,25 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `lib/matplotlib/{axes/_axes.py,collections.py,patches.py}` into the
             local fill, patch, and collection paths. Do not tune example data or
             case-specific tolerances.
+            2026-06-13 note: aligned the `fill_stacked` parity fixture and the
+            mirrored `fill_variants` panel with the Python source argument order
+            for the first layer, `fill_between(x, 0, layer1)`, guarded by
+            `TestPlotFirstLayerMatchesMatplotlibArgumentOrder`. This is a
+            source-parity cleanup; before the renderer-side snap fix below, the
+            rendered RMSE for `fill_stacked` remained 6.94, confirming the
+            visible residual was dominated by fill boundary rasterization rather
+            than fixture data.
+            2026-06-13 update: ported fill collection edge snapping for thin
+            stroked fill paths while leaving thicker fill edges on the existing
+            auto path handling (`TestFill2DDrawUsesMatplotlibFillCollectionSnap`,
+            `TestFill2DDrawLeavesThickFillEdgesUnsnapped`). Also aligned the
+            `fill_basic` showcase with Python's `fill_between(x, 0, y)` argument
+            order (`TestPlotMatchesMatplotlibFillBetweenArgumentOrder`). Current
+            fill-cluster RMSEs: `fill_stacked` 6.94 → 1.86, `fill_variants`
+            5.51 → 3.16, `plot_variants` 3.69 → 1.98, and
+            `axes_option_breadth_17_75_3` 5.24 → 3.95. `fill_basic` remains
+            6.06; its residual is a separate thick-edge antialias/rasterization
+            mismatch rather than a fixture-order or linewidth-unit mismatch.
       - [ ] **W5.5 — Contour, triangulation, and mesh labels.** Tackle
             `mesh_contour_tri` and any W5.1-linked residuals in
             `arrays_showcase` by comparing `core/contour*`, triangulation, image

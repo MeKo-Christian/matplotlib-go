@@ -27,11 +27,14 @@ func legendEntryFromLine(label string, color render.Color, width float64, dashes
 		kind:      legendEntryLine,
 		lineColor: color,
 		lineWidth: width,
+		lineJoin:  render.JoinRound,
+		lineCap:   render.CapButt,
 		dashes:    append([]float64(nil), dashes...),
 	}
 }
 
 func legendEntryFromMarker(label string, marker MarkerType, markerPath geom.Path, fill, edge render.Color, edgeWidth float64) legendEntry {
+	scatter := Scatter2D{Marker: marker}
 	return legendEntry{
 		Label:           label,
 		kind:            legendEntryMarker,
@@ -40,6 +43,8 @@ func legendEntryFromMarker(label string, marker MarkerType, markerPath geom.Path
 		markerFill:      fill,
 		markerEdge:      edge,
 		markerEdgeWidth: edgeWidth,
+		markerLineJoin:  scatter.markerLineJoin(),
+		markerLineCap:   scatter.markerLineCap(),
 	}
 }
 
@@ -62,6 +67,9 @@ func (l *Line2D) legendEntry() (legendEntry, bool) {
 		entry.markerEdge = l.resolvedMarkerEdgeColor()
 		entry.markerEdgeWidth = l.resolvedMarkerEdgeWidth(nil)
 		entry.markerSize = l.resolvedMarkerSize(nil)
+		markerScatter := Scatter2D{Marker: l.Marker, MarkerStyle: l.MarkerStyle, MarkerPath: l.MarkerPath}
+		entry.markerLineJoin = markerScatter.markerLineJoin()
+		entry.markerLineCap = markerScatter.markerLineCap()
 	}
 	return entry, true
 }
@@ -100,6 +108,8 @@ func (s *Scatter2D) legendEntry() (legendEntry, bool) {
 		size = s.Sizes[0]
 	}
 	entry.markerSize = pointsToPixels(style.Default, math.Sqrt(size))
+	entry.markerLineJoin = s.markerLineJoin()
+	entry.markerLineCap = s.markerLineCap()
 	return entry, true
 }
 
@@ -202,6 +212,9 @@ func (e *ErrorBar) legendEntry() (legendEntry, bool) {
 		entry.markerEdge = color
 		entry.markerEdgeWidth = e.LineWidth
 		entry.markerSize = markerLine.resolvedMarkerSize(nil)
+		markerScatter := Scatter2D{Marker: e.Marker}
+		entry.markerLineJoin = markerScatter.markerLineJoin()
+		entry.markerLineCap = markerScatter.markerLineCap()
 	}
 	return entry, true
 }
