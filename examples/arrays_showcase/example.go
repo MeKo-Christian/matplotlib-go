@@ -190,14 +190,15 @@ func drawMeshAndContour(fig *core.Figure) {
 
 	contourColor := ptr(render.Color{R: 0.14, G: 0.10, B: 0.16, A: 0.95})
 	ax.Contour(data, core.ContourOptions{
-		Color:         contourColor,
-		LineWidth:     ptr(1.1),
-		LevelCount:    6,
-		X:             arange(cols),
-		Y:             arange(rows),
-		LabelLines:    true,
-		LabelColor:    contourColor,
-		LabelFontSize: ptr(10.0),
+		Color:          contourColor,
+		LineWidth:      ptr(1.1),
+		LevelCount:     6,
+		X:              arange(cols),
+		Y:              arange(rows),
+		LabelLines:     true,
+		LabelFormatter: core.FormatStrFormatter{Pattern: "%.3g"},
+		LabelColor:     contourColor,
+		LabelFontSize:  ptr(10.0),
 	})
 	ax.SetXLim(0, float64(cols))
 	ax.SetYLim(0, float64(rows))

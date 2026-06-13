@@ -1687,10 +1687,7 @@ func splitContourPolylineForLabel(data, screen []geom.Pt, labelIdx int, labelWid
 	p1, ok1 := contourInterpolateAtCPL(screen, cpls, angleEnd)
 	angle := 0.0
 	if ok0 && ok1 {
-		// Matplotlib contour labels use screen-space angles, but its display
-		// coordinate system has positive Y upward. Go renderers use top-left
-		// pixels, so flip Y before normalizing the label angle.
-		angle = normalizeLabelAngle(math.Atan2(-(p1.Y - p0.Y), p1.X-p0.X))
+		angle = normalizeLabelAngle(math.Atan2(p1.Y-p0.Y, p1.X-p0.X))
 	}
 
 	gapStart := center - labelWidth/2 - spacing
@@ -1723,7 +1720,7 @@ func splitClosedContourPolylineForLabel(data, screen []geom.Pt, cpls []float64, 
 	p1, ok1 := contourInterpolateAtClosedCPL(screen, cpls, center+labelWidth/2)
 	angle := 0.0
 	if ok0 && ok1 {
-		angle = normalizeLabelAngle(math.Atan2(-(p1.Y - p0.Y), p1.X-p0.X))
+		angle = normalizeLabelAngle(math.Atan2(p1.Y-p0.Y, p1.X-p0.X))
 	}
 
 	gapStart := center - labelWidth/2 - spacing
@@ -1984,7 +1981,8 @@ func rotateClosedContourPolylineToMatplotlibStart(polyline []geom.Pt) []geom.Pt 
 		}
 	}
 	next := (start + 1) % len(body)
-	if body[next].Y > body[start].Y && body[start].X-body[next].X >= 0.75 {
+	prev := (start + len(body) - 1) % len(body)
+	if math.Abs(body[prev].Y-body[start].Y) <= startTieTolerance && body[next].Y > body[start].Y && body[start].X-body[next].X >= 0.75 {
 		start = next
 	}
 	out := make([]geom.Pt, 0, len(polyline))

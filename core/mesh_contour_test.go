@@ -717,6 +717,9 @@ func TestContourInlineLabelsMatchMatplotlibArraysShowcaseLevel06(t *testing.T) {
 		X:          []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 		Y:          []float64{0, 1, 2, 3, 4, 5, 6, 7},
 		LabelLines: true,
+		LabelFormatter: FormatStrFormatter{
+			Pattern: "%.3g",
+		},
 	})
 	if contours == nil || contours.Lines == nil {
 		t.Fatal("expected contour lines")
@@ -750,6 +753,76 @@ func TestContourInlineLabelsMatchMatplotlibArraysShowcaseLevel06(t *testing.T) {
 	for i, wantPos := range want {
 		if !pointsApprox(got[i], wantPos, 1e-9) {
 			t.Fatalf("level 0.6 label %d = %+v, want Matplotlib %+v (all labels %+v)", i, got[i], wantPos, labels)
+		}
+	}
+}
+
+func TestContourInlineLabelsMatchMatplotlibArraysShowcaseAllLevels(t *testing.T) {
+	const (
+		rows = 8
+		cols = 10
+	)
+	data := make([][]float64, rows)
+	for y := 0; y < rows; y++ {
+		data[y] = make([]float64, cols)
+		yy := float64(y) / float64(rows-1)
+		for x := 0; x < cols; x++ {
+			xx := float64(x) / float64(cols-1)
+			data[y][x] = 0.55 + 0.25*math.Sin((xx*2.3+0.35)*math.Pi) + 0.20*math.Cos((yy*2.8-0.35*0.4)*math.Pi)
+		}
+	}
+
+	fig := NewFigure(1240, 620)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.37, Y: 0.14}, Max: geom.Pt{X: 0.63, Y: 0.88}})
+	ax.SetXLim(0, cols)
+	ax.SetYLim(0, rows)
+	contours := ax.Contour(data, ContourOptions{
+		LevelCount: 6,
+		X:          []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+		Y:          []float64{0, 1, 2, 3, 4, 5, 6, 7},
+		LabelLines: true,
+	})
+	if contours == nil || contours.Lines == nil {
+		t.Fatal("expected contour lines")
+	}
+
+	ctx := AxesDrawContext(ax, fig)
+	_, _, _, labels := contourInlineLabelSegmentsForLevels(
+		contours.Lines,
+		contours.lineLevels,
+		nil,
+		contours.LabelFormatter,
+		10,
+		5,
+		&arraysShowcaseContourTextMetricRenderer{},
+		ctx,
+	)
+
+	want := []contourLabel{
+		{Text: "0.15", Level: 0.15, Position: geom.Pt{X: 5, Y: 3.1551055422834224}, Angle: -0.587233229688272},
+		{Text: "0.3", Level: 0.30, Position: geom.Pt{X: 4, Y: 6.6721388277667995}, Angle: -0.410000655682552},
+		{Text: "0.3", Level: 0.30, Position: geom.Pt{X: 5, Y: 4.02520413641639}, Angle: -0.477202539043145},
+		{Text: "0.45", Level: 0.45, Position: geom.Pt{X: 4, Y: 6.029080010657504}, Angle: -0.410000655682552},
+		{Text: "0.45", Level: 0.45, Position: geom.Pt{X: 6, Y: 4.071147346184701}, Angle: -0.984978996134542},
+		{Text: "0.6", Level: 0.60, Position: geom.Pt{X: 2, Y: 1.825533129695295}, Angle: -0.881614573170370},
+		{Text: "0.6", Level: 0.60, Position: geom.Pt{X: 7, Y: 1.8255331296952941}, Angle: 0.881614573170361},
+		{Text: "0.6", Level: 0.60, Position: geom.Pt{X: 3.2944010458613353, Y: 5}, Angle: 1.313365091732432},
+		{Text: "0.6", Level: 0.60, Position: geom.Pt{X: 6, Y: 4.799189389904026}, Angle: -0.958436492122234},
+		{Text: "0.75", Level: 0.75, Position: geom.Pt{X: 2, Y: 1.1824743125859998}, Angle: -0.920842971683705},
+		{Text: "0.75", Level: 0.75, Position: geom.Pt{X: 7, Y: 1.1824743125859987}, Angle: 0.920842971683706},
+		{Text: "0.75", Level: 0.75, Position: geom.Pt{X: 2.443644072976639, Y: 5}, Angle: 1.366175082469990},
+		{Text: "0.75", Level: 0.75, Position: geom.Pt{X: 7, Y: 4.579580104654563}, Angle: -0.940572796675585},
+		{Text: "0.9", Level: 0.90, Position: geom.Pt{X: 1, Y: 1.0998415909700405}, Angle: -0.407194023520089},
+		{Text: "0.9", Level: 0.90, Position: geom.Pt{X: 7.821846998608887, Y: 1}, Angle: 0.989551006032252},
+		{Text: "0.9", Level: 0.90, Position: geom.Pt{X: 1.1781530013911132, Y: 6}, Angle: -0.989551006032250},
+		{Text: "0.9", Level: 0.90, Position: geom.Pt{X: 7.484834469529565, Y: 5}, Angle: -1.301899328704219},
+	}
+	if len(labels) != len(want) {
+		t.Fatalf("arrays contour labels = %d, want %d: %+v", len(labels), len(want), labels)
+	}
+	for i, wantLabel := range want {
+		if labels[i].Text != wantLabel.Text || math.Abs(labels[i].Level-wantLabel.Level) > 1e-9 || !pointsApprox(labels[i].Position, wantLabel.Position, 1e-5) || !approx(labels[i].Angle, wantLabel.Angle, 1e-12) {
+			t.Fatalf("arrays contour label %d = %q level %.12g at %+v angle %.15g, want %q level %.12g at %+v angle %.15g (all labels %+v)", i, labels[i].Text, labels[i].Level, labels[i].Position, labels[i].Angle, wantLabel.Text, wantLabel.Level, wantLabel.Position, wantLabel.Angle, labels)
 		}
 	}
 }
@@ -1292,8 +1365,8 @@ func TestContourInlineLabelAngleUsesMatplotlibDisplayConvention(t *testing.T) {
 	if len(parts) == 0 {
 		t.Fatal("expected split contour parts")
 	}
-	if !approx(angle, math.Pi/4, 1e-12) {
-		t.Fatalf("angle = %v, want %v", angle, math.Pi/4)
+	if !approx(angle, -math.Pi/4, 1e-12) {
+		t.Fatalf("angle = %v, want %v", angle, -math.Pi/4)
 	}
 }
 
@@ -1321,8 +1394,8 @@ func TestContourInlineLabelErasesAcrossClosedPathBoundary(t *testing.T) {
 	if !pointsEqual(parts[0], want, 1e-12) {
 		t.Fatalf("closed contour split = %+v, want %+v", parts[0], want)
 	}
-	if !approx(angle, math.Pi/4, 1e-12) {
-		t.Fatalf("angle = %v, want %v", angle, math.Pi/4)
+	if !approx(angle, -math.Pi/4, 1e-12) {
+		t.Fatalf("angle = %v, want %v", angle, -math.Pi/4)
 	}
 }
 
@@ -1419,5 +1492,33 @@ func (r *contourTextRenderer) MeasureText(text string, size float64, _ string) r
 		H:       size,
 		Ascent:  size * 0.8,
 		Descent: size * 0.2,
+	}
+}
+
+type arraysShowcaseContourTextMetricRenderer struct {
+	recordingRenderer
+}
+
+func (r *arraysShowcaseContourTextMetricRenderer) MeasureText(text string, size float64, _ string) render.TextMetrics {
+	widths := map[string]float64{
+		"0.15": 30.75,
+		"0.3":  21.875,
+		"0.30": 30.625,
+		"0.45": 30.625,
+		"0.6":  22,
+		"0.60": 30.75,
+		"0.75": 30.625,
+		"0.9":  22,
+		"0.90": 30.75,
+	}
+	width, ok := widths[text]
+	if !ok {
+		width = float64(len(text)) * size * 0.5
+	}
+	return render.TextMetrics{
+		W:       width,
+		H:       size * 1.4,
+		Ascent:  size,
+		Descent: size * 0.4,
 	}
 }
