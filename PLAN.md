@@ -606,6 +606,11 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             W5.3 below-target set: `line2d_markers` 4.80,
             `plot_variants` 3.69, `axes_convenience_helpers` 3.09,
             `layout_bbox_helpers` 0.78.
+            2026-06-13 update: refreshed the stale `specialty_artists` golden
+            after the earlier W5 helper/artist parity fixes; no additional core
+            change was needed. Current reference RMSE moved 5.31 → 4.86
+            (`TestGolden/specialty_artists`, `TestMatplotlibRef/specialty_artists`,
+            `TestReferenceCompare/specialty_artists`).
       - [ ] **W5.4 — Fill and collection edge semantics.** Tackle
             `fill_basic`, `fill_variants`, `fill_stacked`, `clip_path_batch`,
             and any related residual in `mixed_raster_vector` by translating the
@@ -649,6 +654,22 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `lib/matplotlib/patches.py`; compare any remaining MathText residue
             against `lib/matplotlib/_mathtext.py` without retargeting the
             already-closed MathText family.
+            2026-06-13 update: moved `mathtext_basic` below the W5 target,
+            5.33 → 4.77, by matching Matplotlib `Text.set_bbox` semantics for
+            fractional `boxstyle` padding: explicit `TextBBoxOptions.Padding`
+            values below 1 now scale by the rendered font size while pixel
+            padding values ≥ 1 keep their previous display-pixel meaning
+            (`TestTextBBoxFractionalPaddingScalesByFontSize`). The refreshed
+            fixture passes live Matplotlib comparison at PSNR 60.8 dB and
+            MeanAbs 0.05. Remaining W5.6 targets: `mathtext_inline_labels`
+            5.88 and `annotation_composition` 5.79.
+            2026-06-13 update: moved `annotation_composition` below the W5
+            target, 5.79 → 1.42, by matching Matplotlib multiline text baseline
+            alignment: baseline-aligned multiline text anchors the last line's
+            baseline, not the first (`TestMultilineBaselineAlignsLastLineLikeMatplotlib`).
+            The remaining fixture diff is localized to arrow antialiasing and
+            is well below the W5 threshold. Remaining W5.6 target:
+            `mathtext_inline_labels` 5.88.
       - [ ] **W5.7 — Widgets, raster/vector mixing, and image arrays.** Tackle
             `widgets_gallery`, `mixed_raster_vector`, and `arrays_showcase`
             residuals not covered by W5.4/W5.5 by checking widget artist layout,

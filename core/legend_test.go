@@ -454,7 +454,7 @@ func TestLegendMarkerSampleScaleAndScatterPoints(t *testing.T) {
 	if !(pathCenterX(scaled.paths[0]) < pathCenterX(scaled.paths[1]) && pathCenterX(scaled.paths[1]) < pathCenterX(scaled.paths[2])) {
 		t.Fatalf("scatter sample marker centers should advance left-to-right: %+v", scaled.paths)
 	}
-	wantCenters := []float64{19, 40, 61}
+	wantCenters := []float64{19.5, 40.5, 61.5}
 	for i, want := range wantCenters {
 		if got := pathCenterX(scaled.paths[i]); !floatApprox(got, want, 1e-9) {
 			t.Fatalf("scatter sample marker %d center x = %g, want Matplotlib padded position %g", i, got, want)

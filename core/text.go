@@ -562,7 +562,7 @@ func measureMultilineTextBlock(r render.Renderer, ctx *DrawContext, anchor geom.
 	case textLayoutVAlignBottom:
 		top += block.Height
 	case textLayoutVAlignBaseline:
-		top += block.LineAscents[0]
+		top += baselineOffsets[len(baselineOffsets)-1]
 	case textLayoutVAlignCenterBaseline:
 		top += block.LineAscents[0] / 2
 	}
@@ -1502,6 +1502,8 @@ func resolvedTextBBoxOptions(opt TextBBoxOptions, ctx *DrawContext, fontSize flo
 		if ctx != nil {
 			opt.Padding = pointsToPixels(ctx.RC, 0.4*fontSize)
 		}
+	} else if opt.Padding < 1 && ctx != nil {
+		opt.Padding = pointsToPixels(ctx.RC, opt.Padding*fontSize)
 	}
 	return opt
 }

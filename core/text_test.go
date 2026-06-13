@@ -85,6 +85,28 @@ func TestNormalizeDisplayText_HandlesMiddleDelimiter(t *testing.T) {
 	}
 }
 
+func TestTextBBoxFractionalPaddingScalesByFontSize(t *testing.T) {
+	ctx := createTestDrawContext()
+	got := resolvedTextBBoxOptions(TextBBoxOptions{
+		FaceColor: render.Color{A: 1},
+		EdgeColor: render.Color{A: 1},
+		Padding:   0.3,
+	}, ctx, 12)
+	want := pointsToPixels(ctx.RC, 0.3*12)
+	if !approx(got.Padding, want, 1e-12) {
+		t.Fatalf("fractional bbox padding = %v, want %v", got.Padding, want)
+	}
+
+	pixel := resolvedTextBBoxOptions(TextBBoxOptions{
+		FaceColor: render.Color{A: 1},
+		EdgeColor: render.Color{A: 1},
+		Padding:   3,
+	}, ctx, 12)
+	if !approx(pixel.Padding, 3, 1e-12) {
+		t.Fatalf("pixel bbox padding = %v, want 3", pixel.Padding)
+	}
+}
+
 func TestLayoutMathTextScripts(t *testing.T) {
 	var r textRecordingRenderer
 	layout, ok := LayoutMathText(&r, `x_i^2`, 20, "DejaVu Sans")
@@ -1916,6 +1938,28 @@ func TestAnnotationMultilineSplitsTextDraws(t *testing.T) {
 		if !approx(col.A, 0.5, 1e-12) {
 			t.Fatalf("annotation multiline text alpha[%d] = %g, want 0.5", i, col.A)
 		}
+	}
+}
+
+func TestMultilineBaselineAlignsLastLineLikeMatplotlib(t *testing.T) {
+	ctx := createTestDrawContext()
+	var r textRecordingRenderer
+	anchor := geom.Pt{X: 100, Y: 200}
+
+	block, ok := measureMultilineTextBlock(&r, ctx, anchor, 10, "", false, false,
+		[]string{"top", "bottom"}, 0, TextAlignLeft, textLayoutVAlignBaseline)
+
+	if !ok {
+		t.Fatal("measureMultilineTextBlock returned !ok")
+	}
+	if len(block.BaselineYs) != 2 {
+		t.Fatalf("baseline count = %d, want 2", len(block.BaselineYs))
+	}
+	if !approx(block.BaselineYs[1], anchor.Y, 1e-9) {
+		t.Fatalf("last multiline baseline = %v, want anchor y %v", block.BaselineYs[1], anchor.Y)
+	}
+	if block.BaselineYs[0] <= anchor.Y {
+		t.Fatalf("first multiline baseline = %v, want above anchor y %v", block.BaselineYs[0], anchor.Y)
 	}
 }
 
