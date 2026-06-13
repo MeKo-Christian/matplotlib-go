@@ -1256,7 +1256,6 @@ func drawLegendMarkerPath(r render.Renderer, markerPath geom.Path, center geom.P
 	if len(markerPath.C) == 0 || scale <= 0 {
 		return
 	}
-	paint.Snap = render.SnapAuto
 	path := scaleAndTranslatePath(markerPath, scale, center)
 	r.Path(path, &paint)
 }
