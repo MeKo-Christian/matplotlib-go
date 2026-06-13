@@ -192,9 +192,13 @@ func titleAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rec
 	if aligned, ok := alignment.titleExtents[alignmentKey(AxisTop, spinePixelY(AxisTop, px))]; ok {
 		topExtent = aligned
 	}
+	y := topExtent + titlePadPx
+	if isPolarProjection(ctx.Projection) {
+		y = math.Ceil(y)
+	}
 	return geom.Pt{
 		X: ctx.TransAxes().Apply(geom.Pt{X: 0.5, Y: 1}).X,
-		Y: topExtent + titlePadPx,
+		Y: y,
 	}
 }
 

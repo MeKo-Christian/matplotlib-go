@@ -316,3 +316,27 @@ func TestPolarRadialLabelPositionAffectsTicksAndLabels(t *testing.T) {
 		t.Fatalf("radial tick label origin = %+v, want %+v", r.origins[0], wantOrigin)
 	}
 }
+
+func TestPolarTitleBaselineSnapsUpToMatplotlibPixelRow(t *testing.T) {
+	fig := NewFigure(640, 640)
+	ax := fig.AddPolarAxes(geom.Rect{
+		Min: geom.Pt{X: 0.12, Y: 0.12},
+		Max: geom.Pt{X: 0.88, Y: 0.88},
+	})
+	ax.SetTitle("Mixed Raster / Vector")
+	ax.SetYLim(0, 1)
+
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	r := &polarTextRenderer{}
+	drawAxesLabels(ax, r, ctx, ax.adjustedLayout(fig), figureTextAlignment{})
+
+	if len(r.texts) != 1 || r.texts[0] != "Mixed Raster / Vector" {
+		t.Fatalf("unexpected title draws: %v", r.texts)
+	}
+
+	rawAnchor := titleTopExtent(ax, r, ctx, ax.adjustedLayout(fig)) + pointsToPixels(ctx.RC, 6)
+	wantY := math.Ceil(rawAnchor)
+	if !approx(r.origins[0].Y, wantY, 1e-9) {
+		t.Fatalf("polar title baseline Y = %v, want upward pixel snap from raw %v to %v", r.origins[0].Y, rawAnchor, wantY)
+	}
+}
