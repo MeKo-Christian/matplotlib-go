@@ -475,14 +475,14 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
       ratcheting.
       - [x] **W5 status ledger — closed below RMSE 5.** Closed in W5:
             `layout_bbox_helpers` 0.78, `axes_convenience_helpers` 3.09,
-            `plot_variants` 3.69, `line2d_markers` 4.80,
-            `specialty_artists` 4.86, `specialty_depth` 4.27,
+            `plot_variants` 3.74, `line2d_markers` 4.80,
+            `specialty_artists` 4.62, `specialty_depth` 4.33,
             `fill_stacked` 1.86, `fill_variants` 3.16, `fill_basic` 0.24,
-            `mesh_contour_tri` 2.87, `mathtext_basic` 4.77,
+            `mesh_contour_tri` 2.32, `mathtext_basic` 4.77,
             `annotation_composition` 1.42, `mathtext_inline_labels` 4.10,
-            `axes_option_breadth_17_75_3` 3.95,
+            `axes_option_breadth_17_75_3` 3.70,
             `annotation_legend_offsetbox_gallery` 4.48, and
-            `widgets_gallery` 4.63, `arrays_showcase` 2.82,
+            `widgets_gallery` 4.55, `arrays_showcase` 2.82,
             `clip_path_batch` 4.58, `mixed_raster_vector` 3.06, and
             `legend_layout_matrix` 4.98.
       - [x] **W5 status ledger — remaining open cases.** No known W5 cases
@@ -811,16 +811,16 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `axes_option_breadth_17_75_3` 5.24 → 3.95. `fill_basic` remains
             6.06; its residual is a separate thick-edge antialias/rasterization
             mismatch rather than a fixture-order or linewidth-unit mismatch.
-            2026-06-13 update: moved `fill_basic` below the W5 target by
-            matching Matplotlib's single-path `FillBetweenPolyCollection`
-            renderer placement. Matplotlib's optimized collection path renders a
-            single polygon as a stamped marker with a device-space half-pixel
-            offset; in the Go y-up core coordinates that is `(+0.5, -0.5)`
-            before the AGG backend y-flip. The fix is scoped to one-region fill
-            paths and leaves multi-region masks on generic collection placement
-            (`TestFill2DSingleRegionUsesMatplotlibCollectionPlacement`,
+            2026-06-13 correction: Matplotlib's
+            `FillBetweenPolyCollection` display vertices are the raw
+            data-to-display transform, not a half-pixel stamped-marker offset.
+            Removed the stale single-region `(+0.5, -0.5)` placement shim and
+            kept multi-region masks on the same raw transformed vertices
+            (`TestFill2DSingleRegionUsesMatplotlibTransformedVertices`,
             `TestFill2DMultiRegionUsesMatplotlibGenericCollectionPlacement`).
-            `fill_basic` current reference RMSE moved 6.06 → 0.24.
+            The refreshed fill-cluster goldens are now below target:
+            `fill_basic` 0.24, `fill_stacked` 1.86, `fill_variants` 3.16,
+            and `plot_variants` 3.74.
             2026-06-13 update: moved `clip_path_batch` below the W5 target.
             The residual was draw order, not clip geometry or scalar mapping:
             rectangular grids now use Matplotlib's default
@@ -980,9 +980,15 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             a documented frozen exception. The W5 exit target is every listed
             case at `RMSE <= 5` or explicitly classified as a remaining
             non-core-renderer exception.
-            - [ ] **W5.8.1 — Fresh W5 scoreboard.** Re-run the complete W5
-                  `TestReferenceCompare` regex after the open W5.2/W5.4/W5.5/W5.7
-                  items and update the status ledger with current metrics.
+            - [x] **W5.8.1 — Fresh W5 scoreboard.** Re-ran the complete W5
+                  `TestReferenceCompare` regex on 2026-06-13 after closing
+                  `legend_layout_matrix` and refreshing the stale
+                  `fill_variants` / `plot_variants` goldens. Every W5 case is
+                  now below RMSE 5; highest current cases are
+                  `legend_layout_matrix` 4.98, `line2d_markers` 4.80,
+                  `mathtext_basic` 4.77, `specialty_artists` 4.62,
+                  `widgets_gallery` 4.55, `annotation_legend_offsetbox_gallery`
+                  4.48, and `specialty_depth` 4.33.
             - [ ] **W5.8.2 — Regold closed cases only.** Regold W5 cases only
                   after their root-cause fix is in core behavior or the example
                   has been restored to upstream source parity.
