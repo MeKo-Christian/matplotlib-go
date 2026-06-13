@@ -12,7 +12,7 @@ require (
 require (
 	codeberg.org/go-fonts/dejavu v0.4.0
 	gioui.org v0.10.0
-	github.com/cwbudde/agg_go v0.2.31
+	github.com/cwbudde/agg_go v0.3.0
 	github.com/cwbudde/mathtext v0.1.0
 	golang.org/x/net v0.48.0
 	golang.org/x/text v0.32.0

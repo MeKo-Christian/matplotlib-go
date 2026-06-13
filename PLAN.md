@@ -132,331 +132,50 @@ mode — no longer external-access-blocked, just unbuilt.
 
 # Phase 2: Visual Parity Closure via Code Parity (RMSE ≤ 5)
 
-**Goal:** every catalog case renders within `RMSE 5` of its Matplotlib
-reference, or carries a documented, frozen tolerance exception — and the route
-there is **code parity**: when a case diverges, find the upstream code path in
-`third_party/matplotlib` (3.10.9) responsible for the difference and make the
-Go implementation a faithful, idiomatic translation of it. Visual parity then
-follows by construction instead of by tuning. The existing bans stand and are
-the enforcement half of this principle: no example-source workarounds,
-fixture-specific core branches, catalog-ID conditionals, or unexplained
-empirical constants (`internal/examplecatalog.ValidationClusters`).
+**Goal:** every catalog case renders within `RMSE 5` of its Matplotlib 3.10.9
+reference, or carries a documented, frozen tolerance exception. The route remains
+**code parity**: for each visual mismatch, find the responsible upstream path in
+`third_party/matplotlib` and port the computation faithfully into Go. Do not use
+example-source workarounds, fixture-specific core branches, catalog-ID
+conditionals, or unexplained empirical constants.
 
-**Status (2026-06-12, after W1+W2, measured `testdata/golden/` vs
-`testdata/matplotlib_ref/`, harness metric):** 165 paired cases; **139 at
-RMSE ≤ 5**, strict-text cases at exactly 0. The **MathText family is closed**
-(`mathtext_integrals` 0.00, `mathtext_matrices` 0.24, `mathtext_gallery` 2.28,
-`mathtext_fractions` 4.01; only `mathtext_basic` 5.33 / `mathtext_inline_labels`
-5.88 marginally above, and their diffs are general text placement). **The
-mplot3d family is closed** (W1) and the **geo/polar/radar family is closed
-except `geo_lambert_axes` 5.24 and the toolkit gallery** (W2). **26 cases
-remain above RMSE 5**, covered by workstreams W2b–W5.
+**Current status (2026-06-13):** the original Phase 2 structural work is mostly
+complete. W1-W5 closed the old high-residual families: mplot3d, projections,
+axisartist/projection-toolkit leftovers, text wrapping/rotated layout, MathText
+and annotation tails, legend/offsetbox layout, fills/collections, contour/mesh,
+arrays, widgets, and mixed raster/vector. The latest full W5 scoreboard is below
+`RMSE 5`; highest W5 cases were `legend_layout_matrix` 4.98,
+`line2d_markers` 4.80, `mathtext_basic` 4.77, `specialty_artists` 4.62,
+`widgets_gallery` 4.55, `annotation_legend_offsetbox_gallery` 4.48, and
+`specialty_depth` 4.33.
 
-## Workstreams (ordered by residual; each names the upstream source to translate)
+Phase 2 is still open because a fresh focused sweep shows regressions outside the
+closed W5 queue. Some currently pass only because their catalog tolerances are
+still loose, so treat the list below as the active Phase 2 work queue before any
+final tolerance ratchet.
 
-- [x] **W1 — mplot3d structural parity. DONE 2026-06-12** — whole family now
-      ≤ 4.6 (`gallery` 22.7→3.4, `tricontourf3d` 13.0→1.7, `contourf3d`
-      6.1→0.9, `fill_between3d` 5.3→2.6, `errorbar3d` 5.1→2.6, `terrain`
-      4.9→1.0, `surface3d` 4.7→0.8). Four faithful ports, each cited from
-      upstream:
-      1. `Axes3D.Contourf`/`TriContourf` defaulted alpha to an empirical 0.45;
-         upstream forwards kwargs unchanged → opaque (now 1.0).
-      2. 3D tick count was a fixed `MaxNLocator{N: 9}`; ported
-         `XAxis.get_tick_space` (all 3D axes inherit XAxis) +
-         `MaxNLocator._raw_ticks` nbins='auto' clipping → tick density now
-         adapts to axes width (`axes3DTickBins`), which closed the gallery and
-         most of the family tail.
-      3. `FillBetween3D` drew unshaded uniform quads; ported the
-         shade-default (quad→true, polygon→false) +
-         `art3d._generate_normals`/`_shade_colors` per-quad lightsource
-         shading (colors now survive the painter depth sort).
-      4. Filled contour bands now render `antialiased=False` like upstream
-         `ContourSet`, and — cross-repo, in `../agg_go` — `AntialiasOff` is a
-         true binary-coverage mode (`SetAntiAliased`, mirroring AGG
-         `scanline_bin`: any touched cell → fully covered pixel) instead of
-         the old gamma-0.1 approximation that suppressed partial coverage.
-         This also dropped 2D filled-contour cases (`mesh_contour_tri`
-         7.1→6.9, `unstructured_showcase` 5.5→4.2, `triangulation_gallery`
-         4.3→3.3).
-- [x] **W2 — geo/polar/radar projections. LARGELY DONE 2026-06-12** — five
-      faithful ports landed: (1) `Axes.Fill` now creates patch-zorder-1
-      artists like upstream `fill()` → Polygon (was 2, drew gridlines under
-      fills); (2) full-circle radial tick labels anchor ha=left/va=bottom with
-      no pad (`PolarAxes.get_yaxis_text1_transform`); (3) geo/polar gridline
-      paints use `SnapAuto` so the backend's PathSnapper port (device-frame
-      `floor(v+0.5)+0.5`, h/v-only paths) matches AGG — straight Mollweide
-      parallels and radar spokes now land on matplotlib's pixel rows;
-      (4) the default geo formatter is upstream's `ThetaFormatter` (degrees
-      with degree sign, rounded to grid spacing) — fixtures mirror the Python
-      references' plain-formatter overrides; (5) `rlabel_position` is stored
-      in theta-data space and mapped through theta offset/direction at draw
-      time (`RadialTick.update_position`), plus `Axes.SetFrameOn` porting
-      `set_frame_on(False)`'s remove-all-spines semantics.
-      Results: `radar_basic` 6.9→**0.35**, `geo_mollweide_axes` 5.9→**4.3**,
-      `polar_axes` 4.8→4.75, aitoff/hammer 3.9→3.8, `skewt_basic` 3.6→3.1,
-      `projection_toolkit_gallery` 20.2→**11.9**.
-      Remaining (tracked under W2b below): `geo_lambert_axes` 5.24 (center
-      "0" tick label + xlabel fringe), and the gallery's non-geo panels.
-- [x] **W2b — gallery leftovers. DONE 2026-06-12** — closed the remaining
-      projection/toolkit residuals without example-source workarounds. Final
-      focused reference-compare metrics after regolding the affected projection
-      cases: `geo_lambert_axes` **0.60**, `axisartist_showcase` **2.66**,
-      `projection_toolkit_gallery` **3.93**; neighboring projection cases also
-      stay under RMSE 5 (`polar_axes` 4.75, `geo_mollweide_axes` 4.24,
-      `geo_aitoff_axes` 3.67, `geo_hammer_axes` 3.67, `radar_basic` 0.35,
-      `skewt_basic` 2.87).
-      - [x] **W2b.1 — Baseline and classify residuals.** Regenerate/inspect
-            `TestReferenceCompare/{geo_lambert_axes,projection_toolkit_gallery,axisartist_showcase}`;
-            use the committed diff artifacts under
-            `testdata/_artifacts/reference_compare/` and, if needed, an
-            env-gated probe in `test/diagnostics_test.go` to record the first
-            divergent intermediate values. 2026-06-12 update: direct
-            rendered-vs-reference metrics after the first fixes are
-            `projection_toolkit_gallery` RMSE 11.29, `geo_lambert_axes` 5.22,
-            and `axisartist_showcase` 5.68. The gallery residual is now
-            concentrated in the bottom Skew-T/AxisArtist panels; the Lambert
-            panel is already about RMSE 3.8 inside the gallery.
-      - [x] **W2b.2 — Lambert label fringe.** Fix `geo_lambert_axes` 5.24 by
-            translating the relevant upstream geo tick-label/xlabel placement
-            from `third_party/matplotlib/lib/matplotlib/projections/geo.py`
-            into `core/projection_lambert.go` / `core/geo.go`; expected residual
-            is the center `"0"` tick label and xlabel fringe only. 2026-06-12
-            investigation: GeoAxes transform, frame fallback, label anchor
-            `(260, 46.4444)`, and Matplotlib's `draw_text` bitmap offset all
-            matched upstream for the fixture. The proven root cause was a
-            floating half-tie in AGG text-image placement: Go computed
-            `227.25000000000006 + 1.25`, so round-to-even landed one pixel to
-            the right where Matplotlib hit the exact half tie. `pythonRound`
-            now normalizes tiny half-tie noise before round-to-even, dropping
-            `geo_lambert_axes` to RMSE 0.60.
-      - [x] **W2b.3 — Skew-T axes box placement.** Fix the Skew-T panel in
-            `projection_toolkit_gallery` by comparing the local skewx projection
-            path (`core/skew.go`, `core/axis.go`) against the upstream custom
-            skew projection embedded in
-            `test/matplotlib_ref/plots/projection_toolkit_gallery.py`; keep the
-            gallery example unchanged except for any unavoidable API call cleanup.
-            2026-06-12 progress: fixed the default log formatter's Matplotlib
-            `minor_thresholds=(1, 0.4)` behavior and the Skew-X y-grid blended
-            transform so pressure gridlines span the axes instead of being
-            skew-clipped. Closure came from matching AGG-style device-space
-            horizontal spine snapping and preserving Matplotlib `Line2D`
-            snap-auto on reference-line artists; remaining line/grid differences
-            are below the W2b threshold and consistent with renderer-level AA.
-      - [x] **W2b.4 — Parasite right-axis placement.** Fix the AxisArtist/Twin
-            panel residual in `projection_toolkit_gallery` and
-            `axisartist_showcase` by porting host/parasite placement semantics
-            from `third_party/matplotlib/lib/mpl_toolkits/axes_grid1/parasite_axes.py`
-            and adjacent axisartist code into `core/parasite_axes.go` /
-            `core/axis_artist.go`. 2026-06-12 investigation: host/twin limits,
-            right-axis styling, text box, legend, and dense ImageGrid layout are
-            visually/layout-equivalent to the Python references. The residual
-            concentrated in dashed floating axes and legend strokes rather than
-            parasite placement. Reference-line dashes now use Matplotlib
-            linewidth scaling and snap-auto like `Line2D`, dropping
-            `axisartist_showcase` to RMSE 2.66 and helping the gallery reach
-            RMSE 3.93.
-      - [x] **W2b.5 — Verify and ratchet.** Regold only after the core fixes,
-            then run the focused reference compares plus neighboring projection
-            cases (`geo_*`, `polar_axes`, `radar_basic`, `skewt_basic`); update
-            per-case tolerances only downward or document any frozen exception.
-            2026-06-12 verification:
-            `go test ./backends/agg -run 'Test(PythonRoundTreatsFloatingHalfTiesLikeMatplotlibTextPlacement|BlendAlphaMaskAppliesTextAlphaAndClips)$'`,
-            `go test ./core -run 'TestAxesAx(HLine_UsesBlendedCoordinates|HLine_ScalesDashesLikeMatplotlibLine2D|HLine_UsesMatplotlibLine2DSnap|Line_ClipsToCurrentView)$|TestSpinePixelEndpoints(RightBoundaryUsesMatplotlibPathSnapper|RightBoundaryRoundsPastHalfPixel|HorizontalBoundariesUseDeviceSpaceSnap)$'`,
-            targeted `TestGolden` update for the projection cases, and
-            `TestReferenceCompare/(geo_lambert_axes|projection_toolkit_gallery|axisartist_showcase|geo_mollweide_axes|geo_aitoff_axes|geo_hammer_axes|polar_axes|radar_basic|skewt_basic)$`.
-- [x] **W3 — ticks, scales, and inset placement.**
-      `ticks_scales_formatters_gallery` 17.6, `date_concise_intraday_labels`
-      5.8. Focus on the large, structural differences first: tick locations,
-      axes rectangles, and text/formatter output. Small line/grid blending
-      differences from the Go AGG port (`../agg_go`) are not W3 blockers unless
-      they mask a larger geometry or style mismatch. Port targets:
-      `lib/matplotlib/{ticker,scale,dates,category,units}.py`, plus
-      `Figure.add_axes` / `Axes.set_position` placement semantics.
-      2026-06-12 status: RMSE target reached without regolding:
-      `ticks_scales_formatters_gallery` 4.759,
-      `date_concise_intraday_labels` 4.995. Neighboring unit/date checks:
-      `units_categories` 4.443, `units_custom_converter` 0.117,
-      `units_dates` 0.862. `TestReferenceCompare` still reports the old
-      golden-vs-reference RMSEs until W3.9 regolds and ratchets tolerances.
-      - [x] **W3.1 — Baseline, visual triage, and probes.** Regenerate/inspect
-            `TestReferenceCompare/{ticks_scales_formatters_gallery,date_concise_intraday_labels}`;
-            compare the rendered PNGs visually against
-            `testdata/matplotlib_ref/`, and classify each residual by panel:
-            locator positions, formatter strings, axes placement, or renderer
-            blending. Preserve the example sources. If visual inspection is
-            insufficient, add only env-gated diagnostics in
-            `test/diagnostics_test.go` that log major tick locations, minor tick
-            locations, formatter inputs/outputs, inset rectangles in figure
-            coordinates, and final display-space label boxes.
-      - [x] **W3.2 — MultipleLocator and AutoMinorLocator positions.** Fix the
-            "Major and Minor Locators" panel by comparing
-            `core/tick_locators.go`, `core/axis.go`, and `core/axes_ticks.go`
-            against `third_party/matplotlib/lib/matplotlib/ticker.py`
-            (`MultipleLocator.tick_values`, `AutoMinorLocator.__call__`) and the
-            axis view-limit handoff. Add focused unit coverage in
-            `core/tick_test.go` for the `0..6`, base-1.5,
-            `AutoMinorLocator(3)` case before touching goldens.
-      - [x] **W3.3 — Log-scale locator and formatter handoff.** Fix the log panel
-            by tracing `SetXScale("log")`, default major locator installation,
-            explicit `LogLocator(base=10, subs="auto")` minor ticks, and
-            `LogFormatterMathtext(base=10)` labels through
-            `transform/scale_registry.go`, `core/axes_scale.go`,
-            `core/axes_ticks.go`, `core/tick_locators.go`, and the formatter
-            path. Port the relevant behavior from
-            `third_party/matplotlib/lib/matplotlib/scale.py` and
-            `third_party/matplotlib/lib/matplotlib/ticker.py`; verify with
-            `locator_log_minor_threshold_labels`, `scale_log_variants`, and the
-            W3 gallery.
-      - [x] **W3.4 — Gallery date locator/formatter panel.** Fix the "Date and
-            Category Formatters" main axes by tracing `DayLocator`,
-            `DateFormatter("%d %b", tz=UTC)`, `Axes.margins(0.04)`, and date
-            unit conversion through `core/date_tick.go`, `core/units.go`, and
-            `core/axes.go`. Port the relevant behavior from
-            `third_party/matplotlib/lib/matplotlib/dates.py`; confirm the
-            `01 Feb`, `07 Feb`, `14 Feb`, `21 Feb` ticks land at upstream
-            positions before evaluating pixel residue.
-      - [x] **W3.5 — Concise intraday date labels.** Fix
-            `date_concise_intraday_labels` by porting the shared locator-aware
-            label-level selection, zero-format handling, and offset-string
-            suppression from
-            `third_party/matplotlib/lib/matplotlib/dates.py`
-            (`ConciseDateFormatter`) into `core/date_tick.go`. Keep the public
-            Go API value-style, but make the formatter observe the full tick
-            sequence exactly like upstream.
-      - [x] **W3.6 — Category inset axes placement.** Fix the embedded
-            "Categories" axes rectangle in `ticks_scales_formatters_gallery` by
-            comparing `Figure.AddAxes`, axes bounding-box handling, and any
-            locator/position override path in `core/figure.go`, `core/axes.go`,
-            `core/axes_locator.go`, and `internal/geom` with upstream
-            `Figure.add_axes` / `Axes.set_position`. The target rectangle is the
-            Python reference's figure-fraction `go_rect(0.30, 0.16, 0.43, 0.30)`;
-            do not compensate by changing the example.
-      - [x] **W3.7 — Category tick conversion inside the inset.** Once the inset
-            rectangle is correct, verify the categorical bar positions and hidden
-            x tick labels against
-            `third_party/matplotlib/lib/matplotlib/category.py`. If the bars or
-            ticks still differ after placement is fixed, port the category
-            mapping/default-unit behavior through `core/units.go` and
-            `core/axes.go`, with focused coverage in `core/units_test.go`.
-      - [x] **W3.8 — Custom-unit formatter duplication/offset.** Fix the
-            custom-unit panel by tracing `PlotUnits` / `ScatterUnits` /
-            `AutoScale` through `core/units.go`, `core/axes.go`, and
-            `internal/parityutil` test converters, then port the relevant
-            conversion and default-unit behavior from
-            `third_party/matplotlib/lib/matplotlib/units.py`. Confirm tick
-            labels are produced once, at the same display positions as upstream,
-            and that `units_custom_converter` still passes.
-      - [x] **W3.9 — Verification and tolerance ratchet.** After the core fixes,
-            regold `ticks_scales_formatters_gallery` and
-            `date_concise_intraday_labels`; run their focused
-            `TestReferenceCompare` targets plus neighboring locator/unit/date
-            cases (`locator_*`, `scale_*`, `units_*`, `date_*`,
-            `ticks_styling_surface`). Update tolerances only downward unless a
-            documented upstream-incompatible exception remains.
-            2026-06-13 closure: regenerated the two W3 goldens with
-            `just golden-update
-            'TestGolden/(ticks_scales_formatters_gallery|date_concise_intraday_labels)$'`.
-            Fresh `TestReferenceCompare` metrics for the W3 set:
-            `ticks_scales_formatters_gallery` RMSE 5.80 / PSNR 56.05 /
-            MeanAbs 0.13, `date_concise_intraday_labels` RMSE 6.67 /
-            PSNR 58.18 / MeanAbs 0.10, `locator_fixed_index_labels` RMSE 0.06,
-            `locator_linear_labels` 0.06,
-            `locator_log_minor_threshold_labels` 1.41,
-            `locator_maxn_edge_labels` 4.30, `scale_asinh_ticks` 1.76,
-            `scale_function_defaults` 2.62, `scale_logit_ticks` 3.14,
-            `scale_symlog_ticks` 0.14, `ticks_styling_surface` 2.08,
-            `date_month_year_labels` 0.12, `units_overview` 0.30,
-            `units_dates` 0.86, `units_categories` 4.44, and
-            `units_custom_converter` 0.12. The two headline W3 cases remain
-            just above RMSE 5 after regolding; their catalog rows are ratcheted
-            from broad tolerances to tight documented `MaxRMSE=7.0`
-            exceptions because the remaining tail is text/tick rasterization,
-            not locator, formatter, date, category, or unit geometry. Neighboring
-            W3 locator/scale/unit/date rows were ratcheted to measured values
-            plus small headroom. Post-ratchet `./test` rerun is temporarily
-            blocked by unresolved conflict markers in the local `../agg_go`
-            replace dependency; `go test ./internal/examplecatalog` still
-            passes after the catalog edit.
-- [x] **W4 — text layout: wrapping and rotated multiline. DONE 2026-06-13**
-      `text_layout_gallery` 14.6→**3.32**. The diff isolated the residual to: the wrap
-      point of `wrap=True` text (display-width logic in
-      `Text._get_wrapped_text`), the rotated multiline block, and the
-      `rotation_mode="anchor"` box. Port `lib/matplotlib/text.py`
-      (`_get_layout`, `_get_wrapped_text`, rotation/anchor handling)
-      faithfully; the unrotated alignment grid already matches. 2026-06-13
-      closure: `wrappedTextLines` now preserves Matplotlib literal-space
-      splitting and `ceil(width)` checks; the gallery uses `Wrap: true` like
-      the Python fixture; rotated multiline lines use `_get_layout`-style
-      block-level rotated offsets before converting to the AGG backend's
-      bottom-center anchor; `Axes.Text` defaults to unclipped like upstream.
-      The golden was regenerated and the catalog tolerance ratcheted to
-      `MinPSNR=50`, `MaxMeanAbs=1`, `MaxRMSE=5`.
-      - [x] **W4.1 — Baseline, visual triage, and text-layout probes.**
-            Regenerate/inspect
-            `TestReferenceCompare/text_layout_gallery`; compare the committed
-            diff artifact against `testdata/matplotlib_ref/text_layout_gallery.png`
-            and classify each remaining pixel cluster as wrapping, multiline
-            line placement, rotated bbox placement, or renderer glyph ink.
-            Preserve the example shape. If the visual diff is not enough, add
-            only env-gated diagnostics in `test/diagnostics_test.go` that log
-            the Go anchor point, wrap width, wrapped lines, per-line
-            width/height/descent, multiline block rect/baselines, rotated bbox
-            path, and draw origin/pivot for the three W4 text artists. Compare
-            those values to temporary prints from
-            `third_party/matplotlib/lib/matplotlib/text.py` and
-            `test/parity/text_layout_gallery/plot.py`.
-      - [x] **W4.2 — Matplotlib-style `wrap=True` line breaking.**
-            Port `Text._get_wrap_line_width`, `_get_dist_to_box`,
-            `_get_rendered_text_width`, and `_get_wrapped_text` from
-            `third_party/matplotlib/lib/matplotlib/text.py` into
-            `core/text.go`'s `textAutoWrapWidth`, `textDistanceToBox`, and
-            `wrappedTextLines`. Match upstream details that affect the wrap
-            point: figure-window extent, rotation treated as anchor mode for
-            wrap-width calculation, `ceil(width)` for candidate lines, splitting
-            user text on literal spaces instead of `strings.Fields`, forced
-            newline handling, and no word splitting for one over-wide word.
-            Focused coverage now exercises the literal-space and `ceil(width)`
-            behavior directly, alongside the existing fixed-width and
-            figure-box wrap tests.
-      - [x] **W4.3 — Make the gallery exercise automatic wrapping.**
-            After W4.2 makes `TextOptions.Wrap` match upstream, update
-            `examples/text_layout_gallery/example.go` so the wrapped sample uses
-            `Wrap: true` instead of the current explicit `WrapWidth: 170`. This
-            keeps the Go example aligned with
-            `test/parity/text_layout_gallery/plot.py`; do not choose a custom
-            width to hide residuals.
-      - [x] **W4.4 — Port `_get_layout` multiline metrics and offsets.**
-            Reconcile `core/text.go`'s `measureMultilineTextBlock` and
-            `drawMultilineText` with Matplotlib's `_get_layout`: compute the
-            `"lp"` full-font extent once, use `min_dy = (lp_h - lp_d) *
-            linespacing`, promote each line's height/descent with `max(h, lp_h)`
-            / `max(d, lp_d)`, place baselines with the same `thisy` sequence,
-            and apply `multialignment` offsets against the maximum line width.
-            Focused coverage now checks the rotated `"rotation\nmode"` block
-            against Matplotlib's line offsets; MathText/TeX behavior remains on
-            the existing path.
-      - [x] **W4.5 — Port rotation-mode anchor bbox semantics.**
-            Rework the rotated single-line and multiline bbox path in
-            `core/text.go` (`textRotationLayoutAlignments`,
-            `tickLabelDrawOriginFromP`, `rotatedTextBackendAnchorFromP`,
-            `drawTextBBoxRotated`, `drawMultilineTextBBoxRotated`) against
-            upstream `_get_layout` and `update_bbox_position_size`. For
-            `rotation_mode="anchor"`, align the unrotated bbox first, transform
-            the alignment offset through the rotation matrix, then draw the bbox
-            and glyphs from the same display-space offset. Verify with focused
-            tests for the gallery `"anchor"` sample and the rotated
-            `"rotation\nmode"` block.
-      - [x] **W4.6 — Verify, regold, and ratchet.**
-            Regold only after the core ports and the `Wrap: true` example
-            cleanup. Run
-            `go test ./test -run 'TestReferenceCompare/text_layout_gallery$'`
-            plus neighboring text cases (`text_labels_strict`, `title_strict`,
-            `text_annotation_matrix`, `figure_labels_composition`,
-            `mathtext_gallery`, `mathtext_inline_labels`). Update the
-            `text_layout_gallery` catalog tolerance downward from its current
-            broad value only after the rendered-vs-reference RMSE is under the
-            W4 target.
-- [ ] **W5 — the 5–7.3 band cleanup.** Original W5 scope covered
+## Completed Work
+
+- [x] **W1 — mplot3d structural parity.** Closed the mplot3d family by porting
+      contour alpha behavior, 3D tick-space / `MaxNLocator` handoff, shaded 3D
+      fills, and filled-contour antialias semantics. The main gallery and all
+      targeted 3D cases are now below `RMSE 5`.
+- [x] **W2 — geo, polar, radar, and projection-toolkit parity.** Closed the
+      projection family by matching polar radial-label transforms, geo theta
+      formatting, `rlabel_position`, frame/spine semantics, AGG-style snap-auto
+      gridline rendering, Lambert text half-tie rounding, Skew-T grid/spine
+      placement, and axisartist/reference-line dash behavior.
+- [x] **W3 — ticks, scales, dates, units, and inset placement.** Ported the
+      large structural pieces: `MultipleLocator`, `AutoMinorLocator`, log locator
+      and formatter handoff, date locator/formatter behavior, concise date label
+      selection, category inset placement, category/unit conversion, and custom
+      unit formatter behavior. This work must now be revisited because the
+      current regression sweep shows several W3-family cases back above `RMSE 5`.
+- [x] **W4 — text wrapping and rotated multiline layout.** Closed
+      `text_layout_gallery` by porting Matplotlib-style wrap width calculation,
+      literal-space wrapping, multiline `_get_layout` metrics, rotation-mode
+      anchor bbox semantics, and unclipped default `Axes.Text` behavior.
+- [x] **W5 — 5-7.3 cleanup band.** Closed all original W5 cases below `RMSE 5`:
       `layout_bbox_helpers`, `plot_variants`, `axes_convenience_helpers`,
       `legend_layout_matrix`, `line2d_markers`, `fill_stacked`,
       `specialty_depth`, `mesh_contour_tri`, `mixed_raster_vector`,
@@ -464,581 +183,103 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
       `annotation_legend_offsetbox_gallery`, `clip_path_batch`,
       `mathtext_inline_labels`, `annotation_composition`, `fill_variants`,
       `mathtext_basic`, `specialty_artists`, and
-      `axes_option_breadth_17_75_3`
-      (`unstructured_showcase` dropped to 4.2 via the W1 antialiasing port).
-      Shared root causes have been the expected ones: legend/offsetbox layout,
-      fill-edge handling, label placement, marker semantics, and contour/image
-      placement. Keep fixing by upstream code parity (`legend.py`,
-      `offsetbox.py`, `axes/_axes.py`, `collections.py`, `contour.py`,
-      `image.py`) rather than fixture-specific tuning.
-      Current open work is W5-wide verification, regold, and tolerance
-      ratcheting.
-      - [x] **W5 status ledger — closed below RMSE 5.** Closed in W5:
-            `layout_bbox_helpers` 0.78, `axes_convenience_helpers` 3.09,
-            `plot_variants` 3.74, `line2d_markers` 4.80,
-            `specialty_artists` 4.62, `specialty_depth` 4.33,
-            `fill_stacked` 1.86, `fill_variants` 3.16, `fill_basic` 0.24,
-            `mesh_contour_tri` 2.32, `mathtext_basic` 4.77,
-            `annotation_composition` 1.42, `mathtext_inline_labels` 4.10,
-            `axes_option_breadth_17_75_3` 3.70,
-            `annotation_legend_offsetbox_gallery` 4.48, and
-            `widgets_gallery` 4.55, `arrays_showcase` 2.82,
-            `clip_path_batch` 4.58, `mixed_raster_vector` 3.06, and
-            `legend_layout_matrix` 4.98.
-      - [x] **W5 status ledger — remaining open cases.** No known W5 cases
-            remain above RMSE 5 after the latest focused remeasure.
-      - [x] **W5.1 — Baseline, visual triage, and clustering.** Regenerate and
-            inspect focused `TestReferenceCompare` output for every W5 case;
-            use the committed diff artifacts under
-            `testdata/_artifacts/reference_compare/` plus temporary visual
-            side-by-side inspection to classify each residual as bbox/layout,
-            legend/offsetbox, annotation placement, line/marker stroke,
-            fill/collection geometry, contour/mesh labeling, raster/image
-            compositing, or MathText/text-placement tail. Add only env-gated
-            probes in `test/diagnostics_test.go`, and record the cluster result
-            directly in this W5 section before changing core behavior.
-            2026-06-13 baseline (`go test ./test -run
-            'TestReferenceCompare/(layout_bbox_helpers|plot_variants|axes_convenience_helpers|legend_layout_matrix|line2d_markers|fill_stacked|specialty_depth|mesh_contour_tri|mixed_raster_vector|arrays_showcase|widgets_gallery|fill_basic|annotation_legend_offsetbox_gallery|clip_path_batch|mathtext_inline_labels|annotation_composition|fill_variants|mathtext_basic|specialty_artists|axes_option_breadth_17_75_3)$'
-            -count=1 -v` plus `TestAGGNativeReferenceCompare/clip_path_batch`):
-            `layout_bbox_helpers` 7.32, `axes_convenience_helpers` 7.21,
-            `legend_layout_matrix` 7.14, `plot_variants` 7.08,
-            `line2d_markers` 6.96, `fill_stacked` 6.94,
-            `specialty_depth` 6.92, `mesh_contour_tri` 6.91,
-            `annotation_legend_offsetbox_gallery` 6.56,
-            `arrays_showcase` 6.31, `mixed_raster_vector` 6.31,
-            `fill_basic` 6.06, `clip_path_batch` 5.99,
-            `mathtext_inline_labels` 5.88, `annotation_composition` 5.79,
-            `fill_variants` 5.51, `mathtext_basic` 5.33,
-            `specialty_artists` 5.31,
-            `axes_option_breadth_17_75_3` 5.26; `widgets_gallery` is already
-            below the W5 target at 4.63 and should be ratcheted after neighboring
-            widget/layout checks stay green.
-            Visual cluster: bbox/offsetbox/legend packing =
-            `layout_bbox_helpers`, `legend_layout_matrix`,
-            `annotation_legend_offsetbox_gallery`; annotation/text placement =
-            `annotation_composition`, `mathtext_basic`,
-            `mathtext_inline_labels`; lines/markers/bar labels =
-            `line2d_markers`, `plot_variants`,
-            `axes_option_breadth_17_75_3`; fill/collection edges =
-            `fill_basic`, `fill_stacked`, `fill_variants`, `clip_path_batch`;
-            contour/mesh/image = `mesh_contour_tri`, `arrays_showcase`;
-            specialty/statistical artists = `axes_convenience_helpers`,
-            `specialty_depth`, `specialty_artists`; raster/vector composition =
-            `mixed_raster_vector`.
-      - [ ] **W5.2 — Legend, offsetbox, and bbox helper layout.** Tackle
-            `layout_bbox_helpers`, `legend_layout_matrix`,
-            `annotation_legend_offsetbox_gallery`, and any W5.1 cases clustered
-            with them by porting the first divergent bbox/packing computations
-            from `third_party/matplotlib/lib/matplotlib/{legend,offsetbox}.py`
-            and adjacent text/bbox helpers into `core/legend.go`,
-            `core/offsetbox.go`, `core/annotation.go`, and `internal/geom`.
-            Verify helper-only unit coverage before regolding gallery cases.
-            - [x] **W5.2.1 — Scatter legend sample offsets.** Port
-                  `HandlerNpoints.get_xdata` and `Legend._scatteryoffsets`;
-                  covered by
-                  `TestLegendScatterSampleCentersUseMatplotlibOffsets`.
-            - [x] **W5.2.2 — Patch dash scaling and bbox helper closure.**
-                  Port Matplotlib patch dash scaling and restore upstream dash
-                  units in `layout_bbox_helpers`; case is now RMSE 0.779.
-            - [x] **W5.2.3 — Legend marker metadata.** Carry source marker
-                  size/prototype into errorbar and scatter legend handlers;
-                  covered by
-                  `TestLegendErrorBarMarkerSampleUsesOriginalMarkerSize` and
-                  `TestLegendScatterSampleUsesSourceCollectionSize`.
-            - [x] **W5.2.4 — OffsetImage/BboxImage interpolation defaults.**
-                  Match Matplotlib `antialiased` defaults for anchored packer
-                  images and `AnnotationBbox` image content while preserving
-                  explicit interpolation.
-            - [x] **W5.2.5 — Annotation/legend point-unit widths.** Convert
-                  explicit annotation gallery linewidths and default
-                  `AnnotationBbox` frame/arrow widths to Matplotlib point
-                  units.
-            - [x] **W5.2.6 — Anchored packer alignment default.** Preserve the
-                  Matplotlib/Go center default when `AnchoredPackerOptions` is
-                  supplied without explicit alignment; this moved
-                  `annotation_legend_offsetbox_gallery` to RMSE 4.48.
-            - [x] **W5.2.7 — Remaining legend matrix residual.** Closed
-                  `legend_layout_matrix` below RMSE 5 by matching additional
-                  Matplotlib legend and errorbar handler semantics.
-            2026-06-13 progress: ported Matplotlib
-            `legend_handler.HandlerNpoints.get_xdata` /
-            `Legend._scatteryoffsets` behavior for scatter legend handles:
-            multi-point marker samples now keep the upstream x padding and use
-            the `[3/8, 4/8, 2.5/8]` vertical offsets inside the default
-            0.7-fontsize handle box (`TestLegendScatterSampleCentersUseMatplotlibOffsets`).
-            This makes the `legend_layout_matrix` scatter sample visually match
-            the reference, but focused current-render checks still show the
-            W5.2 cases at essentially the same overall PSNR/MeanAbs; remaining
-            residual is concentrated in thin frame/text/handler strokes and
-            anchored offsetbox/text packing.
-            2026-06-13 progress: ported Matplotlib patch dash scaling from
-            `patches.Patch.set_linestyle` / `set_linewidth`, which route patch
-            linestyles through `lines._scale_dashes(..., linewidth)`. Go patches
-            now keep renderer-unit dashes by default but can opt into
-            `DashUnitsMatplotlib` (`TestPatchDashesCanUseMatplotlibLineWidthScaling`,
-            `TestPatchDashesDefaultToRendererUnits`); the `layout_bbox_helpers`
-            parity fixture now uses the original `(6, 4)` linestyle tuple units
-            instead of pre-scaled renderer lengths. Live current-render metrics
-            after the change: `layout_bbox_helpers` PSNR 53.3 dB, MeanAbs 0.30,
-            RMSE 0.779 (below target; was 7.32), while
-            `legend_layout_matrix` remains RMSE 7.175 and
-            `annotation_legend_offsetbox_gallery` remains RMSE 6.563.
-            2026-06-13 progress: tightened legend marker handlers by carrying
-            source marker sizes into errorbar and scatter entries. Errorbar
-            legend entries now reuse Line2D marker path metadata and original
-            point marker size (`TestLegendErrorBarMarkerSampleUsesOriginalMarkerSize`);
-            scatter legend entries now preserve the PathCollection marker
-            prototype and source `sqrt(size)` marker diameter before applying
-            `markerscale` (`TestLegendScatterSampleUsesSourceCollectionSize`).
-            `legend_layout_matrix` current reference RMSE moved 7.14 → 6.76;
-            remaining visible residual is dominated by text/hatch/thin-stroke
-            pixels rather than large legend layout displacement.
-            2026-06-13 progress: matched Matplotlib `OffsetImage` /
-            `BboxImage` default interpolation for anchored packer images and
-            `AnnotationBbox` image content. Empty image interpolation now
-            resolves to the upstream rc default `antialiased` only for
-            OffsetImage-style drawing, while explicit image interpolation is
-            preserved (`TestAnchoredPackerImageDefaultsToMatplotlibAntialiasedInterpolation`,
-            `TestAnchoredPackerImagePreservesExplicitInterpolation`,
-            `TestAnnotationBboxImageDefaultsToMatplotlibAntialiasedInterpolation`,
-            `TestAnnotationBboxImagePreservesExplicitInterpolation`).
-            `annotation_legend_offsetbox_gallery` current reference RMSE moved
-            6.56 → 6.52; remaining W5.2 residual is mostly text, hatch, image
-            kernel, and thin-stroke pixels rather than large offsetbox geometry.
-            2026-06-13 update: improved the annotation/legend gallery and
-            refreshed stale legend goldens after shared marker fixes. The
-            `annotation_legend_offsetbox_gallery` showcase now converts
-            Matplotlib point-unit explicit linewidths in the Go example
-            (`linewidth`, arrow width, bbox frame width, drawing-area patch
-            widths, and proxy patch edge width) and `AnnotationBbox` defaults
-            its frame/arrow linewidths to Matplotlib's 1 pt
-            (`TestAnnotationBboxDefaultWidthsMatchMatplotlibPoints`).
-            Current reference RMSE moved 6.53 → 5.32 but remains above target;
-            the residual is concentrated in thin antialiased text/stroke edges.
-            `legend_layout_matrix` was regolded after the errorbar cap
-            semantics fix and moved 6.49 → 6.32; it remains above target with
-            residual legend/hatch/thin-stroke pixels.
-            2026-06-13 update: moved
-            `annotation_legend_offsetbox_gallery` below the W5 target,
-            5.32 → 4.48. Root cause was `AnchoredPackerOptions` zero-value
-            merging: any supplied options struct silently overwrote the
-            Matplotlib/Go center default with `PackAlignStart`, putting the
-            HPacker text one pad too high. `PackAlignDefault` now represents an
-            omitted alignment, preserving center while explicit
-            `PackAlignStart` remains available
-            (`TestAnchoredPackerOptionsKeepMatplotlibCenterAlignDefault`).
-            2026-06-13 update: matched Matplotlib
-            `HandlerErrorbar`'s full-width legend line span. Go previously
-            inset the line by one pixel at each end, while upstream `Line2D`
-            uses the full handle box (`TestLegendDrawsErrorBarSampleWithCaps`).
-            Direct PNG comparison of the refreshed golden moved
-            `legend_layout_matrix` 6.32 → 6.30; it remains above target and is
-            now dominated by text/hatch/thin-stroke antialias residual. Focused
-            Go image-test verification is temporarily blocked by unresolved
-            conflict markers in the local `../agg_go` replace dependency; the
-            released `agg_go v0.2.31` is too old for this checkout's
-            `SetAntiAliased` / `GetAntiAliased` calls.
-            2026-06-13 update: aligned explicit legend proxy/handler hatch
-            defaults with Matplotlib patch semantics. `LegendEntryOptions`
-            patch samples now inherit hatch color from the edge color and use
-            the rc hatch linewidth default when no explicit hatch style is
-            supplied (`TestLegendPatchSampleDefaultsHatchStyleLikeMatplotlib`);
-            the `legend_layout_matrix` proxy fixture no longer overrides those
-            defaults. Refreshed reference RMSE moved 6.30 → 6.28. The case
-            remains above target, with the remaining diff concentrated in
-            legend text, thin strokes, and antialiasing.
-            2026-06-13 update: closed `legend_layout_matrix` below the W5
-            target, 6.28 → 4.98. Root causes were legend frame path semantics,
-            errorbar legend marker/cap stroke width, and line/errorbar legend
-            sample stroke semantics: legend frames now use Matplotlib
-            `BoxStyle.Round`-style quadratic corners, errorbar cap/marker
-            strokes use the default 1 pt marker edge width, solid legend lines
-            preserve Line2D's projecting cap, and legend line/errorbar samples
-            opt into `SnapAuto`
-            (`TestLegendFrameUsesMatplotlibRoundBoxStyle`,
-            `TestLegendErrorBarMarkerEdgeWidthUsesMarkerDefault`,
-            `TestLegendErrorBarCapWidthUsesMarkerDefault`,
-            `TestLegendLineSampleCopiesLine2DStrokeCaps`,
-            `TestLegendLineSampleUsesMatplotlibAutoSnap`,
-            `TestLegendErrorBarSampleUsesMatplotlibAutoSnap`).
-      - [x] **W5.3 — Axes helpers, lines, markers, and label placement.** Tackle
-            `plot_variants`, `axes_convenience_helpers`, `line2d_markers`,
-            `specialty_artists`, `specialty_depth`, and
-            `axes_option_breadth_17_75_3` where W5.1 identifies shared
-            line/marker/label placement causes. Compare `core/line.go`,
-            `core/axes*.go`, marker-path generation, zorder/depth ordering, and
-            autoscale/sticky-edge behavior against upstream
-            `lib/matplotlib/{axes/_axes.py,lines.py,markers.py,artist.py}`.
-            - [x] **W5.3.1 — Violin/stat helpers and collection snapping.**
-                  Close `axes_convenience_helpers` by porting violin defaults
-                  and `LineCollection` `SnapAuto` behavior.
-            - [x] **W5.3.2 — Plot variants dashes, caps, steps, spans, and
-                  bar labels.** Close `plot_variants` and contribute to
-                  `axes_option_breadth_17_75_3`.
-            - [x] **W5.3.3 — Line2D marker parity.** Close `line2d_markers`
-                  through explicit capstyle, marker normalization, half-filled
-                  marker edges, legend marker snap/stroke, and mathtext marker
-                  deferral.
-            - [x] **W5.3.4 — Specialty artists stale golden.** Refresh
-                  `specialty_artists` after shared helper/artist parity fixes;
-                  no extra core fix was needed.
-            - [x] **W5.3.5 — Specialty depth defaults.** Close
-                  `specialty_depth` through errorbar limit/cap marker semantics,
-                  hexbin edge widths, and boxplot defaults.
-            - [x] **W5.3.6 — Axes option breadth remeasure.** Confirm
-                  `axes_option_breadth_17_75_3` is below target after shared
-                  bar-label and fill fixes.
-            2026-06-13 progress: moved `axes_convenience_helpers` below the W5
-            target by porting Matplotlib violin/statistical helper defaults and
-            collection snapping. `Axes.Violin` now reuses one default cycle color
-            for all precomputed violin bodies, draws bodies with no edge by
-            default, and uses that same default color for summary lines
-            (`TestAxesViolinUsesPrecomputedStats`); the Go parity fixture now
-            mirrors the Python reference instead of overriding those defaults.
-            `LineCollection` paints now use `SnapAuto` like upstream
-            `snap=None` collections (`TestLineCollectionDrawUsesMatplotlibAutoSnap`).
-            `axes_convenience_helpers` current reference RMSE moved 7.21 → 3.09.
-            Also ported measured Matplotlib defaults for legend Line2D samples
-            (butt caps, 1 pt frame linewidth) and errorbar line/marker-edge
-            widths (`TestLegendLineSampleCopiesLine2DStrokeCaps`,
-            `TestLegendDefaultsMatchMatplotlibSpacing`,
-            `TestErrorBarDefaultLineWidthMatchesMatplotlib`,
-            `TestErrorBarMarkerEdgeWidthDefaultsToMatplotlibMarkerEdgeWidth`);
-            these moved `legend_layout_matrix` 6.76 → 6.49, slightly moved
-            `line2d_markers` 6.96 → 6.92, and moved
-            `axes_option_breadth_17_75_3` 5.26 → 5.24. Current W5.3 scoreboard:
-            `axes_convenience_helpers` 3.09, `axes_option_breadth_17_75_3`
-            5.24, `specialty_artists` 5.31, `legend_layout_matrix` 6.49,
-            `line2d_markers` 6.92, `specialty_depth` 6.92,
-            `plot_variants` 7.08.
-            2026-06-13 update: moved `plot_variants` below the W5 target,
-            7.08 → 3.69, by matching Matplotlib point-unit dash arrays in the
-            fixture (`TestReferenceLineDashesMatchMatplotlibPointUnits`),
-            Matplotlib solid/dashed cap defaults for `Line2D`/`axline`
-            (`TestLine2D_DefaultSolidCapstyleMatchesMatplotlib`,
-            `TestLine2D_DashedCapstyleMatchesMatplotlib`,
-            `TestAxesAxLine_UsesMatplotlibSolidCapstyle`), open filled
-            `StepPatch` paths (`TestStairs2D_DrawFilled`), `axvspan` patch
-            z-order/edge defaults (`TestAxesAxVSpan_DrawsFilledRect`,
-            `TestAxesAxVSpan_DefaultZOrderMatchesMatplotlibPatch`), and
-            point-unit/outward `bar_label` padding
-            (`TestAxesBarLabel_Placement`). Fresh W5 scoreboard:
-            `fill_stacked` 6.94, `line2d_markers` 6.92, `specialty_depth`
-            6.92, `mesh_contour_tri` 6.91, `annotation_legend_offsetbox_gallery`
-            6.53, `legend_layout_matrix` 6.49, `arrays_showcase` 6.31,
-            `mixed_raster_vector` 6.31, `fill_basic` 6.06,
-            `clip_path_batch` 5.99, `mathtext_inline_labels` 5.88,
-            `annotation_composition` 5.79, `fill_variants` 5.51,
-            `mathtext_basic` 5.33, `specialty_artists` 5.31,
-            `axes_option_breadth_17_75_3` 5.24, and below-target
-            `widgets_gallery` 4.63, `plot_variants` 3.69,
-            `axes_convenience_helpers` 3.09, `layout_bbox_helpers` 0.78.
-            2026-06-13 update: moved `line2d_markers` below the W5 target,
-            6.92 → 4.80, by matching Matplotlib's explicit `solid_capstyle`
-            fixture usage (`TestLine2D_ExplicitSolidCapstyleOverridesDefault`,
-            `TestPlotLinesMirrorMatplotlibButtCapstyle`), custom marker path
-            normalization (`TestScatterCustomMarkerPathNormalizesLikeMatplotlib`),
-            half-filled `Line2D` marker edge passes
-            (`TestLine2DHalfFilledMarkerDrawsSplitHalvesWithEdges`), legend
-            marker stroke/snap style
-            (`TestLegendLineMarkerSampleCopiesMarkerStrokeStyle`,
-            `TestLegendLineMarkerSampleCopiesMatplotlibSnapPolicy`), and
-            renderer-deferred mathtext legend marker paths
-            (`TestLegendLineMathTextMarkerDefersPathToRenderer`). Current
-            W5.3 below-target set: `line2d_markers` 4.80,
-            `plot_variants` 3.69, `axes_convenience_helpers` 3.09,
-            `layout_bbox_helpers` 0.78.
-            2026-06-13 update: refreshed the stale `specialty_artists` golden
-            after the earlier W5 helper/artist parity fixes; no additional core
-            change was needed. Current reference RMSE moved 5.31 → 4.86
-            (`TestGolden/specialty_artists`, `TestMatplotlibRef/specialty_artists`,
-            `TestReferenceCompare/specialty_artists`).
-            2026-06-13 update: moved `specialty_depth` below the W5 target,
-            6.92 → 4.27. The main root causes were errorbar limit and cap
-            marker semantics: Matplotlib uses filled `CARET*BASE` Line2D
-            markers for limit indicators and treats `capsize` as half of the
-            cap marker length (`markersize=2*capsize`), while the Go path had
-            open stroked carets and full-length caps. Also aligned default
-            point-unit linewidths for hexbin polygon edges and boxplot
-            sub-artists while keeping violin body strokes at the rendered
-            reference-matching collection width. Guard coverage:
-            `TestErrorBarLimitCaretUsesEndpointAsBase`,
-            `TestErrorBarUpperLimitCaretPointsDownFromEndpoint`,
-            `TestErrorBarCapSizeIsHalfMarkerLength`,
-            `TestAxesHexbinAggregatesValues`,
-            `TestAxesBoxPlotDefaultMedianStyleMatchesMatplotlib`, and
-            `TestAxesViolinplotAddsCollections`.
-      - [ ] **W5.4 — Fill and collection edge semantics.** Tackle
-            `fill_basic`, `fill_variants`, `fill_stacked`, `clip_path_batch`,
-            and any related residual in `mixed_raster_vector` by translating the
-            upstream fill/collection path construction, edgecolor defaults,
-            clipping, sticky edges, and antialias flags from
-            `lib/matplotlib/{axes/_axes.py,collections.py,patches.py}` into the
-            local fill, patch, and collection paths. Do not tune example data or
-            case-specific tolerances.
-            - [x] **W5.4.1 — Fill fixture argument parity.** Align
-                  `fill_stacked`, `fill_variants`, and `fill_basic` source
-                  argument order with the Python references.
-            - [x] **W5.4.2 — Thin fill edge snapping.** Port fill collection
-                  edge snapping for thin stroked fill paths while leaving thick
-                  fill edges on existing auto handling.
-            - [x] **W5.4.3 — Single-region fill placement.** Match the
-                  single-path `FillBetweenPolyCollection` device-space
-                  half-pixel placement; `fill_basic` is now RMSE 0.24.
-            - [x] **W5.4.4 — Clip path batch closure.** Remeasure
-                  `clip_path_batch` after the fill/collection changes and close
-                  it below RMSE 5.
-            - [ ] **W5.4.5 — Mixed raster/vector collection contribution.**
-                  Determine whether any remaining `mixed_raster_vector` RMSE
-                  comes from fill/collection edge semantics; leave pure
-                  raster/vector compositing residue to W5.7.
-            2026-06-13 note: aligned the `fill_stacked` parity fixture and the
-            mirrored `fill_variants` panel with the Python source argument order
-            for the first layer, `fill_between(x, 0, layer1)`, guarded by
-            `TestPlotFirstLayerMatchesMatplotlibArgumentOrder`. This is a
-            source-parity cleanup; before the renderer-side snap fix below, the
-            rendered RMSE for `fill_stacked` remained 6.94, confirming the
-            visible residual was dominated by fill boundary rasterization rather
-            than fixture data.
-            2026-06-13 update: ported fill collection edge snapping for thin
-            stroked fill paths while leaving thicker fill edges on the existing
-            auto path handling (`TestFill2DDrawUsesMatplotlibFillCollectionSnap`,
-            `TestFill2DDrawLeavesThickFillEdgesUnsnapped`). Also aligned the
-            `fill_basic` showcase with Python's `fill_between(x, 0, y)` argument
-            order (`TestPlotMatchesMatplotlibFillBetweenArgumentOrder`). Current
-            fill-cluster RMSEs: `fill_stacked` 6.94 → 1.86, `fill_variants`
-            5.51 → 3.16, `plot_variants` 3.69 → 1.98, and
-            `axes_option_breadth_17_75_3` 5.24 → 3.95. `fill_basic` remains
-            6.06; its residual is a separate thick-edge antialias/rasterization
-            mismatch rather than a fixture-order or linewidth-unit mismatch.
-            2026-06-13 correction: Matplotlib's
-            `FillBetweenPolyCollection` display vertices are the raw
-            data-to-display transform, not a half-pixel stamped-marker offset.
-            Removed the stale single-region `(+0.5, -0.5)` placement shim and
-            kept multi-region masks on the same raw transformed vertices
-            (`TestFill2DSingleRegionUsesMatplotlibTransformedVertices`,
-            `TestFill2DMultiRegionUsesMatplotlibGenericCollectionPlacement`).
-            The refreshed fill-cluster goldens are now below target:
-            `fill_basic` 0.24, `fill_stacked` 1.86, `fill_variants` 3.16,
-            and `plot_variants` 3.74.
-            2026-06-13 update: moved `clip_path_batch` below the W5 target.
-            The residual was draw order, not clip geometry or scalar mapping:
-            rectangular grids now use Matplotlib's default
-            `axes.axisbelow='line'` z-order of 1.5, so y-grid lines draw above
-            default patch/collection artists like the clipped native quad mesh
-            and below line artists (`TestGridZOrderMatchesMatplotlibAxisbelowLine`).
-            Refreshed native AGG comparison:
-            `TestAGGNativeReferenceCompare/clip_path_batch` RMSE 4.58,
-            PSNR 51.80 dB.
-      - [ ] **W5.5 — Contour, triangulation, and mesh labels.** Tackle
-            `mesh_contour_tri` and any W5.1-linked residuals in
-            `arrays_showcase` by comparing `core/contour*`, triangulation, image
-            normalization, and label-placement paths against upstream
-            `lib/matplotlib/{contour.py,tri/_tricontour.py,image.py,colors.py}`.
-            Preserve the W1 binary-coverage antialias behavior and isolate any
-            remaining mismatch to geometry, color normalization, or label
-            placement before changing rendering code.
-            - [x] **W5.5.1 — Mesh/tri contour closure.** Close
-                  `mesh_contour_tri` by fixing tricontour z-order, closed-loop
-                  contour label placement, and structured `Contourf` band
-                  polygons.
-            - [x] **W5.5.2 — Arrays showcase contour-label residual.**
-                  Close the `arrays_showcase` structural contour-label
-                  placement difference against upstream contour label selection.
-            - [x] **W5.5.3 — Arrays image/color normalization check.**
-                  Verify that the remaining `arrays_showcase` residue is below
-                  target after contour-label closure.
-            2026-06-13 update: moved `mesh_contour_tri` below the W5 target.
-            The residual had three contour-side causes: explicit `TriContour`
-            sets inherited z=0 and rendered below tripcolor/triplot instead of
-            Matplotlib line z-order; closed structured contour loops were
-            stitched with a different start point, moving inline labels to the
-            lower half of the loop; and rectilinear `Contourf` was routed
-            through triangle band polygons instead of structured quad/marching
-            square band polygons, overfilling the below-low corner regions.
-            Guard coverage: `TestAxesTriangulationHelpers`,
-            `TestContourInlineLabelsMatchMatplotlibMeshFixturePositions`, and
-            `TestContourfUsesStructuredGridBandPolygons`. Current reference
-            RMSE moved 6.91 → 2.87.
-            2026-06-13 update: reduced `arrays_showcase` 6.46 → 5.83 by
-            matching Matplotlib `spy()` matrix-axis presentation. `spy()` now
-            keeps bottom x tick marks visible while moving x tick labels to the
-            top, and bottom x-label placement accounts for the tick-extended
-            spine extent when bottom labels are absent
-            (`TestAxesSpyLeavesXLabelAtBottomWithTopTicks`,
-            `TestDrawAxesLabels_XLabelUsesTickExtentWhenLabelsAreOnTop`). The
-            remaining refreshed diff is dominated by mesh contour labels.
-            A direct contourpy comparison showed the relevant level-0.6
-            structured contour components have the same vertices but opposite
-            open-polyline orientation on the two upper boundary-touching paths:
-            Go labels at `(3, 4.799...)` / `(5.705..., 5)` while Matplotlib
-            labels at `(3.294..., 5)` / `(6, 4.799...)`. A scalar-side
-            orientation heuristic was tested and rejected because it did not
-            fix those labels and disturbed neighboring label choices; the next
-            W5.5.2 step should compare and port contourpy's open-path
-            generation/order more directly.
-            2026-06-13 update: closed `arrays_showcase` below the W5 target.
-            The final residual was contour label anchoring, not image/color
-            normalization: rotated inline contour labels now use the shared
-            center-aligned backend anchor mapping instead of a height-only
-            manual anchor (`TestContourRotatedTextAnchorKeepsCenterFixed`).
-            Focused verification after refreshing the golden:
-            `TestReferenceCompare/arrays_showcase` RMSE 2.82, PSNR 53.78 dB.
-      - [x] **W5.6 — Annotation and MathText tail cases.** Tackle
-            `annotation_composition`, `mathtext_inline_labels`, and
-            `mathtext_basic` only after W5.2/W5.3 have ruled out shared
-            bbox/label placement causes. Compare annotation arrow/text offset
-            transforms against `lib/matplotlib/text.py` and
-            `lib/matplotlib/patches.py`; compare any remaining MathText residue
-            against `lib/matplotlib/_mathtext.py` without retargeting the
-            already-closed MathText family.
-            - [x] **W5.6.1 — MathText bbox padding.** Close `mathtext_basic`
-                  by matching fractional `Text.set_bbox` padding semantics.
-            - [x] **W5.6.2 — Annotation multiline baseline.** Close
-                  `annotation_composition` by anchoring baseline-aligned
-                  multiline text to the last line's baseline.
-            - [x] **W5.6.3 — Inline MathText y-label placement.** Close
-                  `mathtext_inline_labels` by matching y-label anchor placement
-                  to Matplotlib tick/spine bbox and label-pad behavior.
-            2026-06-13 update: moved `mathtext_basic` below the W5 target,
-            5.33 → 4.77, by matching Matplotlib `Text.set_bbox` semantics for
-            fractional `boxstyle` padding: explicit `TextBBoxOptions.Padding`
-            values below 1 now scale by the rendered font size while pixel
-            padding values ≥ 1 keep their previous display-pixel meaning
-            (`TestTextBBoxFractionalPaddingScalesByFontSize`). The refreshed
-            fixture passes live Matplotlib comparison at PSNR 60.8 dB and
-            MeanAbs 0.05. At that checkpoint, remaining W5.6 targets were
-            `mathtext_inline_labels` 5.88 and `annotation_composition` 5.79.
-            2026-06-13 update: moved `annotation_composition` below the W5
-            target, 5.79 → 1.42, by matching Matplotlib multiline text baseline
-            alignment: baseline-aligned multiline text anchors the last line's
-            baseline, not the first (`TestMultilineBaselineAlignsLastLineLikeMatplotlib`).
-            The remaining fixture diff is localized to arrow antialiasing and
-            is well below the W5 threshold. At that checkpoint, the remaining
-            W5.6 target was `mathtext_inline_labels` 5.88.
-            2026-06-13 update: moved `mathtext_inline_labels` below the W5
-            target, 5.88 → 4.10, by matching the left y-label anchor to
-            Matplotlib's device-pixel tick/spine bbox placement before applying
-            the label pad (`TestDrawAxesLabels_YLabelUsesTickBoundsAndLabelPad`,
-            `TestDrawAxesLabels_YLabelUsesTickPaddingWhenFormatterSuppressesLabels`).
-            W5.6 is now below target: `mathtext_basic` 4.77,
-            `annotation_composition` 1.42, `mathtext_inline_labels` 4.10.
-      - [ ] **W5.7 — Widgets, raster/vector mixing, and image arrays.** Tackle
-            `widgets_gallery`, `mixed_raster_vector`, and `arrays_showcase`
-            residuals not covered by W5.4/W5.5 by checking widget artist layout,
-            image interpolation/origin/extents, rasterization boundaries, and
-            compositing order against upstream `widgets.py`, `image.py`,
-            `axes/_axes.py`, and backend mixed-mode rendering paths.
-            - [x] **W5.7.1 — Widgets status.** `widgets_gallery` is already
-                  below the W5 target at RMSE 4.63; keep it in W5.8 ratcheting.
-            - [x] **W5.7.2 — Polar arc geometry in mixed raster/vector.**
-                  Replace sampled polar ring/spine paths with Matplotlib-style
-                  cubic `Path.arc` geometry; this reduced
-                  `mixed_raster_vector` but did not close it.
-            - [x] **W5.7.3 — Mixed raster/vector residual decision.** Closed
-                  `mixed_raster_vector` below target after isolating the final
-                  residual to polar title baseline snapping.
-            - [x] **W5.7.4 — Arrays showcase image-side residue.** After W5.5
-                  contour-label work, `arrays_showcase` is below target; no
-                  separate image/interpolation/colorbar fix is currently needed.
-            - [ ] **W5.7.5 — Raster/image neighboring checks.** Run focused
-                  W5.7 cases plus neighboring `image_*`, `imshow_*`,
-                  `matshow_basic`, `spy_*`, `large_scatter`,
-                  `mixed_collection`, and `quad_mesh` reference compares before
-                  regolding.
-            2026-06-13 update: reduced `mixed_raster_vector` slightly by
-            replacing sampled polar ring/spine paths with Matplotlib-style
-            cubic `Path.arc` geometry for circular polar arcs. Guard coverage:
-            `TestPolarGridAndTicksUseCurvedGeometry` now expects the closed
-            16-cubic polar circle path used by `Path.arc(0, 360)`. Current
-            reference RMSE moved 6.31 → 6.26, so the case remains above target;
-            the remaining visible residual is dominated by one-pixel
-            antialias/stroke differences in polar grid/spine, line, text, and
-            scatter marker edges. `arrays_showcase` remains above target with a
-            structural contour-label placement residual.
-            2026-06-13 update: matched Matplotlib's representative legend size
-            for variable-size scatter collections. For a one-point scatter
-            legend, Go now uses `0.5*(min(size)+max(size))` before applying the
-            marker scale instead of the first collection size
-            (`TestLegendScatterSampleUsesMatplotlibVariableSizeRepresentative`).
-            Refreshed `mixed_raster_vector` moved 6.26 → 6.25. Visual/region
-            probes show the polar data area is already below RMSE 5; the
-            remaining full-image residual is dominated by the polar title,
-            legend text/sample antialiasing, and thin vector strokes.
-            2026-06-13 update: closed `mixed_raster_vector` by snapping the
-            polar title baseline upward to Matplotlib's rasterized pixel row
-            (`TestPolarTitleBaselineSnapsUpToMatplotlibPixelRow`). Focused
-            verification:
-            `RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run
-            'Test(Golden|MatplotlibRef|ReferenceCompare)/mixed_raster_vector$'
-            -count=1 -v`; refreshed reference compare is RMSE 3.06, PSNR
-            55.50 dB.
-      - [ ] **W5.8 — Verify, regold, and ratchet.** After each root-cause group
-            lands, regold only the affected cases, run focused
-            `TestReferenceCompare` targets plus neighboring cases in the same
-            catalog family, and update per-case tolerances only downward or with
-            a documented frozen exception. The W5 exit target is every listed
-            case at `RMSE <= 5` or explicitly classified as a remaining
-            non-core-renderer exception.
-            - [x] **W5.8.1 — Fresh W5 scoreboard.** Re-ran the complete W5
-                  `TestReferenceCompare` regex on 2026-06-13 after closing
-                  `legend_layout_matrix` and refreshing the stale
-                  `fill_variants` / `plot_variants` goldens. Every W5 case is
-                  now below RMSE 5; highest current cases are
-                  `legend_layout_matrix` 4.98, `line2d_markers` 4.80,
-                  `mathtext_basic` 4.77, `specialty_artists` 4.62,
-                  `widgets_gallery` 4.55, `annotation_legend_offsetbox_gallery`
-                  4.48, and `specialty_depth` 4.33.
-            - [ ] **W5.8.2 — Regold closed cases only.** Regold W5 cases only
-                  after their root-cause fix is in core behavior or the example
-                  has been restored to upstream source parity.
-            - [ ] **W5.8.3 — Ratchet W5 tolerances.** Update
-                  `internal/examplecatalog.Case` rows for closed W5 cases to
-                  actual metrics plus small headroom; remove broad overrides
-                  where defaults are sufficient.
-            - [ ] **W5.8.4 — Document any frozen exceptions.** If
-                  `mixed_raster_vector`, `clip_path_batch`, or other remaining
-                  cases stay above RMSE 5 due to backend antialiasing rather
-                  than core parity, document the exception and its validation
-                  cluster instead of leaving the W5 task vague.
+      `axes_option_breadth_17_75_3`.
 
-## Method (code parity, per failing case)
+## Current Regressions
+
+Measured on 2026-06-13 with:
+
+```bash
+RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run 'TestReferenceCompare/(stat_variants|errorbar_basic|date_concise_intraday_labels|units_categories|axes_grid1_showcase|scale_function_defaults|ticks_scales_formatters_gallery|named_colors|formatter_log_mathtext_labels)$' -count=1 -v
+```
+
+- [ ] `stat_variants`: RMSE 7.40, PSNR 50.28 dB, MeanAbs 0.52. Current catalog
+      tolerance is loose enough that the subtest passes, but it is above the
+      Phase 2 target. Start from statistical helper defaults and stack/violin/
+      boxplot collection rendering.
+- [ ] `errorbar_basic`: RMSE 6.98, PSNR 55.61 dB, MeanAbs 0.13. Subtest passes
+      under existing tolerance but regressed above target. Start from data
+      errorbar cap, marker-edge, limit-caret, legend, and line snap semantics.
+- [ ] `date_concise_intraday_labels`: RMSE 6.67, PSNR 58.18 dB, MeanAbs 0.10.
+      Subtest passes under the documented `MaxRMSE=7.0` exception, but it is no
+      longer under the Phase 2 target. Re-check `ConciseDateFormatter` tick-level
+      selection, offset suppression, and label baseline/rotation placement.
+- [ ] `units_categories`: RMSE 6.36, PSNR 56.54 dB, MeanAbs 0.21. This currently
+      fails its ratcheted catalog tolerance (`MinPSNR=57.0`, `MaxMeanAbs=0.15`,
+      `MaxRMSE=5.0`). Re-check category unit mapping, tick placement, bar/text
+      layout, and any shared W3 category inset assumptions.
+- [ ] `axes_grid1_showcase`: RMSE 6.25, PSNR 50.22 dB, MeanAbs 0.22. Subtest
+      passes under older broad tolerance but is above target. Start from divider,
+      image-grid, inset, anchored artist, and colorbar layout against
+      `mpl_toolkits.axes_grid1`.
+- [ ] `scale_function_defaults`: RMSE 6.06, PSNR 59.03 dB, MeanAbs 0.08. This
+      currently fails its ratcheted catalog tolerance (`MinPSNR=63.0`,
+      `MaxMeanAbs=0.05`, `MaxRMSE=3.5`). Re-check function-scale transform,
+      inverse transform sampling, autoscale, and default locator/formatter
+      installation.
+- [ ] `ticks_scales_formatters_gallery`: RMSE 5.80, PSNR 56.05 dB, MeanAbs 0.13.
+      Subtest passes under the documented `MaxRMSE=7.0` exception, but remains
+      above the Phase 2 target. Re-check the W3 gallery panels after fixing the
+      focused `scale_function_defaults`, `units_categories`, and formatter cases.
+- [ ] `named_colors`: RMSE 5.39, PSNR 49.57 dB, MeanAbs 0.50. Subtest passes
+      under existing broad color tolerance but is above target. Re-check named
+      color table values, swatch geometry, text placement, and color conversion
+      edge cases.
+- [ ] `formatter_log_mathtext_labels`: RMSE 5.28, PSNR 60.65 dB, MeanAbs 0.05.
+      Subtest passes under existing broad formatter tolerance but is above
+      target. Re-check `LogFormatterMathtext` exponent formatting, label-only-base
+      behavior, minor-threshold sparsity, and MathText baseline placement.
+
+## Remaining Work
+
+- [ ] **R1 — Reproduce and classify each regression visually.** Regenerate the
+      focused artifacts, inspect golden/reference/diff side-by-side, and classify
+      each case as geometry, locator/formatter, text placement, color conversion,
+      collection/path stroke, image/layout, or backend antialiasing. Add only
+      env-gated diagnostics in `test/diagnostics_test.go` when pixel inspection
+      is not enough.
+- [ ] **R2 — Fix failing catalog rows first.** Prioritize
+      `scale_function_defaults` and `units_categories` because they currently
+      fail their ratcheted tolerances, then handle the above-target cases that
+      still pass only due to broad tolerances.
+- [ ] **R3 — Re-open W3 where needed.** The date/unit/scale/formatter regressions
+      likely share W3 code paths. Compare against
+      `third_party/matplotlib/lib/matplotlib/{ticker,scale,dates,category,units}.py`
+      and fix the shared computation rather than patching individual fixtures.
+- [ ] **R4 — Re-check showcase/layout families.** For `axes_grid1_showcase`, use
+      `third_party/matplotlib/lib/mpl_toolkits/axes_grid1` as the source of
+      truth. For `stat_variants` and `errorbar_basic`, compare against
+      `axes/_axes.py`, `collections.py`, `lines.py`, and `legend_handler.py`.
+      For `named_colors`, compare against `matplotlib.colors` data and
+      conversion behavior.
+- [ ] **R5 — Full reference sweep and tolerance ratchet.** After fixes, run the
+      full optional `TestReferenceCompare` catalog, regold only cases whose core
+      behavior changed, and ratchet `internal/examplecatalog.Case` tolerances to
+      actual metrics plus small headroom. Remove broad tolerances where defaults
+      are enough; keep exceptions only when documented as frozen renderer-level
+      differences.
+
+## Method
 
 1. Inspect the committed diff artifact
-   (`testdata/_artifacts/reference_compare/{id}_golden_vs_matplotlib_ref_diff.png`;
-   regenerate with `just parity-viewer-print` or
-   `go test ./test -run TestReferenceCompare`). Classify the residual:
-   geometry, placement, text, or anti-aliasing.
-2. Locate the upstream code path in `third_party/matplotlib`. Instrument both
-   sides to find the *first diverging intermediate value* — Python via
-   `PYTHONPATH=. python3 test/matplotlib_ref/plots/<id>.py` with temporary
-   prints, Go via an env-gated probe in `test/diagnostics_test.go`.
-3. Make the Go side a faithful idiomatic translation of the upstream
-   computation. Cite the upstream file/function in the commit message so every
-   fix carries its provenance.
-4. Regold, confirm the metric *and* the visual diff, and check neighboring
-   cases for regressions (`TestReferenceCompare` full run).
-
-## Tolerance ratchet (new)
-
-The committed per-case tolerances are far looser than today's actuals (e.g.
-`mathtext_gallery` MaxRMSE 55 vs actual 2.3, `widgets_gallery` 120 vs 6.2,
-`text_annotation_matrix` 42 vs 4.7), so the suite currently cannot catch large
-regressions on already-good cases.
-
-- [ ] After each workstream lands, ratchet the affected rows down to
-      ≈ actual + small headroom.
-- [ ] End state: closed cases use the package defaults (no per-row override);
-      overrides remain only on documented, frozen exceptions.
+   (`testdata/_artifacts/reference_compare/{id}_golden_vs_matplotlib_ref_diff.png`)
+   or regenerate the focused `TestReferenceCompare` output.
+2. Locate the upstream Matplotlib code path and instrument both sides to find the
+   first diverging intermediate value. Use temporary Python prints with
+   `PYTHONPATH=.` and env-gated Go diagnostics; do not commit probes unless they
+   are generally useful diagnostics.
+3. Port the upstream computation faithfully and idiomatically into the Go core.
+   Prefer shared behavior fixes over fixture changes.
+4. Regold only after the core fix is in place, verify the metric and the visual
+   diff, and run neighboring catalog cases for regressions.
 
 **Exit criteria:**
 
-- [ ] `TestReferenceCompare` records no catalog case above `RMSE 5` except those
-      with a documented, frozen tolerance exception.
-- [ ] Every parity fix names the upstream matplotlib code it translates
-      (commit-message provenance), and is validated against the visual diff,
-      not just the metric delta.
-- [ ] Catalog tolerances are ratcheted so a regression of any closed case
+- [ ] No `TestReferenceCompare` catalog case is above `RMSE 5` except documented,
+      frozen renderer-level exceptions.
+- [ ] The current regression list above is either below `RMSE 5` or has a clear,
+      reviewed exception with the responsible validation cluster recorded.
+- [ ] Catalog tolerances are tight enough that a regression of any closed case
       fails CI.
 
 ---
