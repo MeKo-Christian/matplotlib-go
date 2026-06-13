@@ -78,6 +78,8 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 		LineCap:   render.CapButt,
 		Snap:      render.SnapAuto,
 	}
+	capPaint := paint
+	capPaint.LineWidth = pointsToPixels(rc, 1)
 
 	for i, pt := range e.XY {
 		if !e.errorEveryApplies(i) {
@@ -113,20 +115,20 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 				if xLow > 0 && !xUpLimit {
 					leftTop := addPixelOffset(ctx, left, 0, -capHalf)
 					leftBottom := addPixelOffset(ctx, left, 0, capHalf)
-					r.Path(linePath(ctx, leftTop, leftBottom), &paint)
+					r.Path(linePath(ctx, leftTop, leftBottom), &capPaint)
 				}
 				if xHigh > 0 && !xLoLimit {
 					rightTop := addPixelOffset(ctx, right, 0, -capHalf)
 					rightBottom := addPixelOffset(ctx, right, 0, capHalf)
-					r.Path(linePath(ctx, rightTop, rightBottom), &paint)
+					r.Path(linePath(ctx, rightTop, rightBottom), &capPaint)
 				}
 				if xLoLimit && xHigh > 0 {
 					drawLimitCaret(r, ctx, right, 1, 0, limitMarkerSizePx, &paint)
-					drawErrorbarCapMarker(r, ctx, pt, true, capHalf, &paint)
+					drawErrorbarCapMarker(r, ctx, pt, true, capHalf, &capPaint)
 				}
 				if xUpLimit && xLow > 0 {
 					drawLimitCaret(r, ctx, left, -1, 0, limitMarkerSizePx, &paint)
-					drawErrorbarCapMarker(r, ctx, pt, true, capHalf, &paint)
+					drawErrorbarCapMarker(r, ctx, pt, true, capHalf, &capPaint)
 				}
 			}
 		}
@@ -142,20 +144,20 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 				if yLow > 0 && !upLimit {
 					lowerLeft := addPixelOffset(ctx, lower, -capHalf, 0)
 					lowerRight := addPixelOffset(ctx, lower, capHalf, 0)
-					r.Path(linePath(ctx, lowerLeft, lowerRight), &paint)
+					r.Path(linePath(ctx, lowerLeft, lowerRight), &capPaint)
 				}
 				if yHigh > 0 && !loLimit {
 					upperLeft := addPixelOffset(ctx, upper, -capHalf, 0)
 					upperRight := addPixelOffset(ctx, upper, capHalf, 0)
-					r.Path(linePath(ctx, upperLeft, upperRight), &paint)
+					r.Path(linePath(ctx, upperLeft, upperRight), &capPaint)
 				}
 				if loLimit && yHigh > 0 {
 					drawLimitCaret(r, ctx, upper, 0, 1, limitMarkerSizePx, &paint)
-					drawErrorbarCapMarker(r, ctx, pt, false, capHalf, &paint)
+					drawErrorbarCapMarker(r, ctx, pt, false, capHalf, &capPaint)
 				}
 				if upLimit && yLow > 0 {
 					drawLimitCaret(r, ctx, lower, 0, -1, limitMarkerSizePx, &paint)
-					drawErrorbarCapMarker(r, ctx, pt, false, capHalf, &paint)
+					drawErrorbarCapMarker(r, ctx, pt, false, capHalf, &capPaint)
 				}
 			}
 		}

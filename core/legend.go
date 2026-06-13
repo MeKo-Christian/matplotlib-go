@@ -108,6 +108,7 @@ type legendEntry struct {
 	errorbarX       bool
 	errorbarY       bool
 	errorbarCapSize float64
+	errorbarCapWidth float64
 }
 
 type legendEntryProvider interface {
@@ -1097,6 +1098,7 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, entry legendEntry, 
 			LineJoin:  entry.lineJoin,
 			LineCap:   entry.lineCap,
 			Dashes:    entry.dashes,
+			Snap:      render.SnapAuto,
 		})
 		if entry.lineMarkerSet {
 			l.drawMarkerSample(r, entry, center, l.markerSampleScale(entry, 5))
@@ -1115,6 +1117,11 @@ func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
 		Dashes:    entry.dashes,
+		Snap:      render.SnapAuto,
+	}
+	capPaint := paint
+	if entry.errorbarCapWidth > 0 {
+		capPaint.LineWidth = entry.errorbarCapWidth
 	}
 	r.Path(geom.Path{
 		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
@@ -1141,11 +1148,11 @@ func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample
 		r.Path(geom.Path{
 			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
 			V: []geom.Pt{{X: top.X - capHalf, Y: top.Y}, {X: top.X + capHalf, Y: top.Y}},
-		}, &paint)
+		}, &capPaint)
 		r.Path(geom.Path{
 			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
 			V: []geom.Pt{{X: bottom.X - capHalf, Y: bottom.Y}, {X: bottom.X + capHalf, Y: bottom.Y}},
-		}, &paint)
+		}, &capPaint)
 	}
 	if entry.errorbarX {
 		left := geom.Pt{X: sample.Min.X + sample.W()*0.25, Y: center.Y}
@@ -1157,11 +1164,11 @@ func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample
 		r.Path(geom.Path{
 			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
 			V: []geom.Pt{{X: left.X, Y: left.Y - capHalf}, {X: left.X, Y: left.Y + capHalf}},
-		}, &paint)
+		}, &capPaint)
 		r.Path(geom.Path{
 			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
 			V: []geom.Pt{{X: right.X, Y: right.Y - capHalf}, {X: right.X, Y: right.Y + capHalf}},
-		}, &paint)
+		}, &capPaint)
 	}
 	if entry.lineMarkerSet {
 		l.drawMarkerSample(r, entry, center, l.markerSampleScale(entry, 5))

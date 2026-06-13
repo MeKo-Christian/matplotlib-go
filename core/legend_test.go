@@ -222,11 +222,64 @@ func TestLegendLineSampleCopiesLine2DStrokeCaps(t *testing.T) {
 	if len(r.paints) == 0 {
 		t.Fatal("legend sample did not draw a line")
 	}
-	if got := r.paints[0].LineCap; got != render.CapButt {
-		t.Fatalf("legend line cap = %v, want Line2D default %v", got, render.CapButt)
+	if got := r.paints[0].LineCap; got != render.CapSquare {
+		t.Fatalf("legend solid line cap = %v, want Line2D default %v", got, render.CapSquare)
 	}
 	if got := r.paints[0].LineJoin; got != render.JoinRound {
 		t.Fatalf("legend line join = %v, want Line2D default %v", got, render.JoinRound)
+	}
+}
+
+func TestLegendDashedLineSampleUsesMatplotlibButtCap(t *testing.T) {
+	line := &Line2D{
+		Label:  "dashed",
+		Col:    render.Color{A: 1},
+		W:      2,
+		Dashes: []float64{4, 2},
+	}
+	entry, ok := line.legendEntry()
+	if !ok {
+		t.Fatal("line legend entry not collected")
+	}
+
+	legend := NewLegend(nil)
+	var r legendRecordingRenderer
+	legend.drawSample(&r, entry, geom.Rect{
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 40, Y: 32},
+	})
+
+	if len(r.paints) == 0 {
+		t.Fatal("legend sample did not draw a line")
+	}
+	if got := r.paints[0].LineCap; got != render.CapButt {
+		t.Fatalf("legend dashed line cap = %v, want Matplotlib dash cap %v", got, render.CapButt)
+	}
+}
+
+func TestLegendLineSampleUsesMatplotlibAutoSnap(t *testing.T) {
+	line := &Line2D{
+		Label: "line",
+		Col:   render.Color{A: 1},
+		W:     2,
+	}
+	entry, ok := line.legendEntry()
+	if !ok {
+		t.Fatal("line legend entry not collected")
+	}
+
+	legend := NewLegend(nil)
+	var r legendRecordingRenderer
+	legend.drawSample(&r, entry, geom.Rect{
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 40, Y: 32},
+	})
+
+	if len(r.paints) == 0 {
+		t.Fatal("legend sample did not draw a line")
+	}
+	if got := r.paints[0].Snap; got != render.SnapAuto {
+		t.Fatalf("legend line snap = %v, want Matplotlib auto snap %v", got, render.SnapAuto)
 	}
 }
 
@@ -284,6 +337,63 @@ func TestLegendErrorBarMarkerEdgeWidthUsesMarkerDefault(t *testing.T) {
 	want := pointsToPixels(style.Default, 1)
 	if !floatApprox(entry.markerEdgeWidth, want, 1e-9) {
 		t.Fatalf("legend errorbar marker edge width = %v, want Matplotlib lines.markeredgewidth 1 pt = %v px", entry.markerEdgeWidth, want)
+	}
+}
+
+func TestLegendErrorBarCapWidthUsesMarkerDefault(t *testing.T) {
+	errBar := &ErrorBar{
+		Label:     "errorbar caps",
+		Color:     render.Color{A: 1},
+		LineWidth: 2.0,
+		XErr:      []float64{0.2},
+		YErr:      []float64{0.4},
+		CapSize:   6,
+	}
+	entry, ok := errBar.legendEntry()
+	if !ok {
+		t.Fatal("errorbar legend entry not collected")
+	}
+
+	legend := NewLegend(nil)
+	var r legendRecordingRenderer
+	legend.drawSample(&r, entry, geom.Rect{
+		Min: geom.Pt{X: 0, Y: 0},
+		Max: geom.Pt{X: 40, Y: 20},
+	})
+
+	want := pointsToPixels(style.Default, 1)
+	for _, idx := range []int{2, 3, 5, 6} {
+		if got := r.paints[idx].LineWidth; !floatApprox(got, want, 1e-9) {
+			t.Fatalf("legend errorbar cap paint %d line width = %v, want Matplotlib markeredgewidth 1 pt = %v px", idx, got, want)
+		}
+	}
+}
+
+func TestLegendErrorBarSampleUsesMatplotlibAutoSnap(t *testing.T) {
+	errBar := &ErrorBar{
+		Label:     "errorbar snap",
+		Color:     render.Color{A: 1},
+		LineWidth: 2.0,
+		XErr:      []float64{0.2},
+		YErr:      []float64{0.4},
+		CapSize:   6,
+	}
+	entry, ok := errBar.legendEntry()
+	if !ok {
+		t.Fatal("errorbar legend entry not collected")
+	}
+
+	legend := NewLegend(nil)
+	var r legendRecordingRenderer
+	legend.drawSample(&r, entry, geom.Rect{
+		Min: geom.Pt{X: 0, Y: 0},
+		Max: geom.Pt{X: 40, Y: 20},
+	})
+
+	for i, paint := range r.paints {
+		if got := paint.Snap; got != render.SnapAuto {
+			t.Fatalf("legend errorbar paint %d snap = %v, want Matplotlib auto snap %v", i, got, render.SnapAuto)
+		}
 	}
 }
 

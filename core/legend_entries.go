@@ -36,13 +36,17 @@ func legendEntryFromPatchStyle(label string, face, edge render.Color, edgeWidth 
 }
 
 func legendEntryFromLine(label string, color render.Color, width float64, dashes []float64) legendEntry {
+	lineCap := render.CapSquare
+	if len(dashes) > 0 {
+		lineCap = render.CapButt
+	}
 	return legendEntry{
 		Label:     label,
 		kind:      legendEntryLine,
 		lineColor: color,
 		lineWidth: width,
 		lineJoin:  render.JoinRound,
-		lineCap:   render.CapButt,
+		lineCap:   lineCap,
 		dashes:    append([]float64(nil), dashes...),
 	}
 }
@@ -250,6 +254,7 @@ func (e *ErrorBar) legendEntry() (legendEntry, bool) {
 	entry.errorbarX = errorbarHasX(e)
 	entry.errorbarY = errorbarHasY(e)
 	entry.errorbarCapSize = e.CapSize
+	entry.errorbarCapWidth = pointsToPixels(style.Default, 1)
 	if e.MarkerSet {
 		markerLine := &Line2D{
 			Marker:     e.Marker,
@@ -268,6 +273,7 @@ func (e *ErrorBar) legendEntry() (legendEntry, bool) {
 		entry.markerFill = color
 		entry.markerEdge = color
 		entry.markerEdgeWidth = markerLine.resolvedMarkerEdgeWidth(nil)
+		entry.errorbarCapWidth = entry.markerEdgeWidth
 		entry.markerSize = markerLine.resolvedMarkerSize(nil)
 		markerScatter := Scatter2D{Marker: e.Marker}
 		entry.markerLineJoin = markerScatter.markerLineJoin()
