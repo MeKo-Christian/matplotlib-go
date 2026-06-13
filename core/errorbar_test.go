@@ -196,6 +196,28 @@ func TestErrorBarCapSizeIsHalfMarkerLength(t *testing.T) {
 	}
 }
 
+func TestErrorBarCapWidthUsesMatplotlibMarkerEdgeWidth(t *testing.T) {
+	errBar := &ErrorBar{
+		XY:        []geom.Pt{{X: 1, Y: 2}},
+		XErr:      []float64{0.2},
+		YErr:      []float64{0.4},
+		LineWidth: 2.0,
+		CapSize:   6,
+		Color:     render.Color{A: 1},
+	}
+	r := &recordingRenderer{}
+	ctx := createTestDrawContext()
+
+	errBar.Draw(r, ctx)
+
+	want := pointsToPixels(ctx.RC, 1)
+	for _, idx := range []int{1, 2, 4, 5} {
+		if got := r.pathCalls[idx].paint.LineWidth; !floatApprox(got, want, 1e-9) {
+			t.Fatalf("cap path %d line width = %v, want Matplotlib markeredgewidth 1 pt = %v px", idx, got, want)
+		}
+	}
+}
+
 func TestErrorBarSegmentsUseMatplotlibSnapAuto(t *testing.T) {
 	errBar := &ErrorBar{
 		XY:        []geom.Pt{{X: 1, Y: 2}},

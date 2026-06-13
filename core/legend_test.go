@@ -267,6 +267,26 @@ func TestLegendErrorBarMarkerSampleUsesOriginalMarkerSize(t *testing.T) {
 	}
 }
 
+func TestLegendErrorBarMarkerEdgeWidthUsesMarkerDefault(t *testing.T) {
+	errBar := &ErrorBar{
+		Label:      "errorbar markers",
+		Color:      render.Color{A: 1},
+		LineWidth:  2.0,
+		Marker:     MarkerSquare,
+		MarkerSet:  true,
+		MarkerSize: 5,
+	}
+	entry, ok := errBar.legendEntry()
+	if !ok {
+		t.Fatal("errorbar legend entry not collected")
+	}
+
+	want := pointsToPixels(style.Default, 1)
+	if !floatApprox(entry.markerEdgeWidth, want, 1e-9) {
+		t.Fatalf("legend errorbar marker edge width = %v, want Matplotlib lines.markeredgewidth 1 pt = %v px", entry.markerEdgeWidth, want)
+	}
+}
+
 func TestLegendDrawRendersLabelsAndSamples(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{

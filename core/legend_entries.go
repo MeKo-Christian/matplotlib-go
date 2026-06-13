@@ -267,7 +267,7 @@ func (e *ErrorBar) legendEntry() (legendEntry, bool) {
 		entry.markerLineOnly = markerLineOnly(markerLine.resolvedMarkerStyle())
 		entry.markerFill = color
 		entry.markerEdge = color
-		entry.markerEdgeWidth = e.LineWidth
+		entry.markerEdgeWidth = markerLine.resolvedMarkerEdgeWidth(nil)
 		entry.markerSize = markerLine.resolvedMarkerSize(nil)
 		markerScatter := Scatter2D{Marker: e.Marker}
 		entry.markerLineJoin = markerScatter.markerLineJoin()
