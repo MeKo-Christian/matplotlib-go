@@ -167,12 +167,14 @@ func ConfigureCompositionTicks(ax *core.Axes, xTicks, yTicks []float64, yFormat 
 }
 
 func AddReferenceYGrid(ax *core.Axes) {
+	ax.SetAxisBelow(true)
 	grid := ax.AddGrid(core.AxisLeft)
 	grid.Color = render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1}
 	grid.LineWidth = 0.5
 }
 
 func AddReferenceXYGrid(ax *core.Axes) {
+	ax.SetAxisBelow(true)
 	xGrid := ax.AddGrid(core.AxisBottom)
 	xGrid.Color = render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1}
 	xGrid.LineWidth = 0.5

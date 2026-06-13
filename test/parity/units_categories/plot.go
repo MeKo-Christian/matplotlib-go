@@ -40,6 +40,7 @@ func Plot() *core.Figure {
 	right := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.58, Y: 0.20}, Max: geom.Pt{X: 0.94, Y: 0.86}})
 	right.SetTitle("Categorical Y")
 	right.SetXLabel("Hours")
+	right.SetAxisBelow(true)
 	xGrid := right.AddGrid(core.AxisBottom)
 	xGrid.Color = render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1}
 	xGrid.LineWidth = 0.5

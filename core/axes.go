@@ -42,11 +42,13 @@ type Axes struct {
 	ColorCycle      *color.ColorCycle
 	PatchColorCycle *color.ColorCycle
 
-	aspectMode  string
-	aspectValue float64
-	boxAspect   float64
-	xLabelSide  AxisSide
-	yLabelSide  AxisSide
+	aspectMode   string
+	aspectValue  float64
+	boxAspect    float64
+	axisBelowSet bool
+	axisBelowZ   float64
+	xLabelSide   AxisSide
+	yLabelSide   AxisSide
 
 	shareX *Axes
 	shareY *Axes
