@@ -578,6 +578,51 @@ func TestDrawAxesLabels_XLabelUsesTickBoundsAndLabelPad(t *testing.T) {
 	}
 }
 
+func TestDrawAxesLabels_XLabelUsesTickExtentWhenLabelsAreOnTop(t *testing.T) {
+	ax := &Axes{
+		XAxis:  NewXAxis(),
+		XLabel: "Group",
+	}
+	ax.XAxis.ShowTicks = true
+	ax.XAxis.ShowLabels = false
+	ax.XAxis.Locator = staticLocator{2}
+	ax.XAxis.Formatter = NullFormatter{}
+
+	ctx := createTestDrawContext()
+	ctx.RC.DPI = 72
+	px := geom.Rect{
+		Min: geom.Pt{X: 50, Y: 350},
+		Max: geom.Pt{X: 150, Y: 450},
+	}
+
+	r := &axesLabelRecordingRenderer{}
+	if err := r.Begin(geom.Rect{}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	defer r.End()
+
+	drawAxesLabels(ax, r, ctx, px, figureTextAlignment{})
+
+	if len(r.texts) != 1 || r.texts[0] != "Group" {
+		t.Fatalf("unexpected text draws: %v", r.texts)
+	}
+
+	layout := measureSingleLineTextLayout(r, "Group", axisLabelFontSize(ctx), ctx.RC.FontKey)
+	bottomExtent := xLabelSpinePixelY(AxisBottom, px) - ax.XAxis.TickSize*tickOutsidePaddingFactor(ax.XAxis)
+	want := alignedSingleLineOrigin(
+		geom.Pt{
+			X: ctx.TransAxes().Apply(geom.Pt{X: 0.5, Y: 0}).X,
+			Y: bottomExtent - axisLabelPadPx(ctx),
+		},
+		layout,
+		TextAlignCenter,
+		textLayoutVAlignTop,
+	)
+	if r.origins[0] != want {
+		t.Fatalf("xlabel origin = %+v, want tick-extended %+v", r.origins[0], want)
+	}
+}
+
 func TestDrawAxesLabels_YLabelRightUsesRightTickBounds(t *testing.T) {
 	ax := &Axes{
 		YAxis:      NewYAxis(),

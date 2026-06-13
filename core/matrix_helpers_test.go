@@ -180,6 +180,9 @@ func TestAxesSpyLeavesXLabelAtBottomWithTopTicks(t *testing.T) {
 	if ax.effectiveXLabelSide() != AxisBottom {
 		t.Fatalf("spy xlabel side = %v, want bottom like Matplotlib", ax.effectiveXLabelSide())
 	}
+	if ax.XAxis == nil || !ax.XAxis.ShowTicks || ax.XAxis.ShowLabels {
+		t.Fatal("spy should keep bottom x tick marks visible while moving tick labels to the top")
+	}
 	if ax.XAxisTop == nil || !ax.XAxisTop.ShowTicks || !ax.XAxisTop.ShowLabels {
 		t.Fatal("spy should place ticks and tick labels on the top axis")
 	}

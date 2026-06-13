@@ -529,6 +529,151 @@ func TestContourInlineLabelsMatchMatplotlibMeshFixturePositions(t *testing.T) {
 	}
 }
 
+func TestStructuredContourOpenBoundaryPathsMatchContourpyOrder(t *testing.T) {
+	const (
+		rows = 8
+		cols = 10
+	)
+	data := make([][]float64, rows)
+	for y := 0; y < rows; y++ {
+		data[y] = make([]float64, cols)
+		yy := float64(y) / float64(rows-1)
+		for x := 0; x < cols; x++ {
+			xx := float64(x) / float64(cols-1)
+			data[y][x] = 0.55 + 0.25*math.Sin((xx*2.3+0.35)*math.Pi) + 0.20*math.Cos((yy*2.8-0.35*0.4)*math.Pi)
+		}
+	}
+
+	x := []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+	y := []float64{0, 1, 2, 3, 4, 5, 6, 7}
+	polylines, levels := contourGridPolylines(x, y, data, []float64{0.6})
+
+	got := [][]geom.Pt{}
+	for i, level := range levels {
+		if math.Abs(level-0.6) <= 1e-9 {
+			got = append(got, polylines[i])
+		}
+	}
+	want := [][]geom.Pt{
+		{
+			{X: 3.2944010458613353, Y: 0},
+			{X: 3, Y: 0.939110067830601},
+			{X: 2.9862606219581256, Y: 1},
+			{X: 2, Y: 1.825533129695295},
+			{X: 1.6886888892082657, Y: 2},
+			{X: 1, Y: 2.899329368532861},
+			{X: 0, Y: 2.763194516755538},
+		},
+		{
+			{X: 9, Y: 2.763194516755539},
+			{X: 8, Y: 2.89932936853286},
+			{X: 7.311311110791736, Y: 2},
+			{X: 7, Y: 1.8255331296952941},
+			{X: 6.013739378041875, Y: 1},
+			{X: 6, Y: 0.9391100678305987},
+			{X: 5.705598954138664, Y: 0},
+		},
+		{
+			{X: 0, Y: 3.1383144172489397},
+			{X: 1, Y: 3.0588001575583688},
+			{X: 2, Y: 3.8215311550581923},
+			{X: 2.1566630410641783, Y: 4},
+			{X: 3, Y: 4.799189389904025},
+			{X: 3.2944010458613353, Y: 5},
+			{X: 3, Y: 5.939110067830604},
+			{X: 2.986260621958126, Y: 6},
+			{X: 2, Y: 6.8255331296952955},
+			{X: 1.6886888892082672, Y: 7},
+		},
+		{
+			{X: 7.311311110791734, Y: 7},
+			{X: 7, Y: 6.825533129695295},
+			{X: 6.0137393780418735, Y: 6},
+			{X: 6, Y: 5.939110067830603},
+			{X: 5.705598954138665, Y: 5},
+			{X: 6, Y: 4.799189389904026},
+			{X: 6.843336958935823, Y: 4},
+			{X: 7, Y: 3.8215311550581936},
+			{X: 8, Y: 3.0588001575583696},
+			{X: 9, Y: 3.138314417248939},
+		},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("level 0.6 polylines = %d, want %d: %+v", len(got), len(want), got)
+	}
+	for i := range want {
+		if len(got[i]) != len(want[i]) {
+			t.Fatalf("polyline %d length = %d, want %d: %+v", i, len(got[i]), len(want[i]), got[i])
+		}
+		for j := range want[i] {
+			if !pointsApprox(got[i][j], want[i][j], 1e-9) {
+				t.Fatalf("polyline %d point %d = %+v, want contourpy %+v (polyline %+v)", i, j, got[i][j], want[i][j], got[i])
+			}
+		}
+	}
+}
+
+func TestContourInlineLabelsMatchMatplotlibArraysShowcaseLevel06(t *testing.T) {
+	const (
+		rows = 8
+		cols = 10
+	)
+	data := make([][]float64, rows)
+	for y := 0; y < rows; y++ {
+		data[y] = make([]float64, cols)
+		yy := float64(y) / float64(rows-1)
+		for x := 0; x < cols; x++ {
+			xx := float64(x) / float64(cols-1)
+			data[y][x] = 0.55 + 0.25*math.Sin((xx*2.3+0.35)*math.Pi) + 0.20*math.Cos((yy*2.8-0.35*0.4)*math.Pi)
+		}
+	}
+
+	fig := NewFigure(1240, 620)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.37, Y: 0.14}, Max: geom.Pt{X: 0.63, Y: 0.88}})
+	ax.SetXLim(0, cols)
+	ax.SetYLim(0, rows)
+	contours := ax.Contour(data, ContourOptions{
+		Levels:     []float64{0.6},
+		X:          []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+		Y:          []float64{0, 1, 2, 3, 4, 5, 6, 7},
+		LabelLines: true,
+	})
+	if contours == nil || contours.Lines == nil {
+		t.Fatal("expected contour lines")
+	}
+
+	ctx := AxesDrawContext(ax, fig)
+	_, _, _, labels := contourInlineLabelSegmentsForLevels(
+		contours.Lines,
+		contours.lineLevels,
+		nil,
+		contours.LabelFormatter,
+		10,
+		5,
+		&recordingRenderer{},
+		ctx,
+	)
+
+	want := []geom.Pt{
+		{X: 2, Y: 1.825533129695295},
+		{X: 7, Y: 1.8255331296952941},
+		{X: 3.2944010458613353, Y: 5},
+		{X: 6, Y: 4.799189389904026},
+	}
+	got := []geom.Pt{}
+	for _, label := range labels {
+		got = append(got, label.Position)
+	}
+	if len(got) != len(want) {
+		t.Fatalf("level 0.6 label positions = %+v, want %+v", got, want)
+	}
+	for i, wantPos := range want {
+		if !pointsApprox(got[i], wantPos, 1e-9) {
+			t.Fatalf("level 0.6 label %d = %+v, want Matplotlib %+v (all labels %+v)", i, got[i], wantPos, labels)
+		}
+	}
+}
+
 func TestContourfUsesStructuredGridBandPolygons(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax := fig.AddAxes(unitRect())

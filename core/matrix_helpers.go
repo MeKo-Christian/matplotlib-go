@@ -452,7 +452,7 @@ func applyMatrixAxisPresentation(a *Axes) {
 		return
 	}
 	if a.XAxis != nil {
-		a.XAxis.ShowTicks = false
+		a.XAxis.ShowTicks = true
 		a.XAxis.ShowLabels = false
 	}
 	if top := a.TopAxis(); top != nil {

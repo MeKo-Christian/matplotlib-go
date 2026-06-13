@@ -1106,7 +1106,7 @@ func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample
 	}
 	r.Path(geom.Path{
 		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
-		V: []geom.Pt{{X: sample.Min.X + 1, Y: center.Y}, {X: sample.Max.X - 1, Y: center.Y}},
+		V: []geom.Pt{{X: sample.Min.X, Y: center.Y}, {X: sample.Max.X, Y: center.Y}},
 	}, &paint)
 
 	capHalf := entry.errorbarCapSize / 2

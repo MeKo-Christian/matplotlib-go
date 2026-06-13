@@ -216,6 +216,8 @@ func xLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 		if xAxis != nil {
 			if tickBounds, ok := axisTickLabelBounds(xAxis, r, ctx); ok {
 				topExtent = math.Max(topExtent, tickBounds.Max.Y)
+			} else if xAxis.ShowTicks {
+				topExtent += xAxis.TickSize * tickOutsidePaddingFactor(xAxis)
 			}
 		}
 		if aligned, ok := alignment.xLabelExtents[alignmentKey(side, xLabelSpinePixelY(side, px))]; ok {
@@ -229,6 +231,8 @@ func xLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 	if xAxis != nil {
 		if tickBounds, ok := axisTickLabelBounds(xAxis, r, ctx); ok {
 			bottomExtent = math.Min(bottomExtent, tickBounds.Min.Y)
+		} else if xAxis.ShowTicks {
+			bottomExtent -= xAxis.TickSize * tickOutsidePaddingFactor(xAxis)
 		}
 	}
 	if aligned, ok := alignment.xLabelExtents[alignmentKey(side, xLabelSpinePixelY(side, px))]; ok {

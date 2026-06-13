@@ -765,11 +765,91 @@ func contourGridPolylines(x, y []float64, data [][]float64, levels []float64) ([
 			if len(polyline) < 2 {
 				continue
 			}
+			polyline = orientStructuredOpenBoundaryPolyline(polyline, x, y)
 			polylines = append(polylines, polyline)
 			polylineLevels = append(polylineLevels, level)
 		}
 	}
 	return polylines, polylineLevels
+}
+
+type contourBoundarySide uint8
+
+const (
+	contourBoundaryNone contourBoundarySide = iota
+	contourBoundaryLeft
+	contourBoundaryRight
+	contourBoundaryBottom
+	contourBoundaryTop
+)
+
+func orientStructuredOpenBoundaryPolyline(polyline []geom.Pt, x, y []float64) []geom.Pt {
+	if len(polyline) < 2 || contourPolylineClosed(polyline) || len(x) == 0 || len(y) == 0 {
+		return polyline
+	}
+	first := structuredBoundarySide(polyline[0], x, y)
+	last := structuredBoundarySide(polyline[len(polyline)-1], x, y)
+	if first == contourBoundaryNone || last == contourBoundaryNone || first == last {
+		return polyline
+	}
+	if structuredBoundarySideCount(polyline, x, y) != 2 {
+		return polyline
+	}
+	desired, ok := contourpyOpenBoundaryStartSide(first, last)
+	if !ok || first == desired {
+		return polyline
+	}
+	if last == desired {
+		return reversePoints(polyline)
+	}
+	return polyline
+}
+
+func structuredBoundarySideCount(polyline []geom.Pt, x, y []float64) int {
+	sides := map[contourBoundarySide]bool{}
+	for _, pt := range polyline {
+		side := structuredBoundarySide(pt, x, y)
+		if side != contourBoundaryNone {
+			sides[side] = true
+		}
+	}
+	return len(sides)
+}
+
+func contourpyOpenBoundaryStartSide(a, b contourBoundarySide) (contourBoundarySide, bool) {
+	switch {
+	case boundarySidePair(a, b, contourBoundaryBottom, contourBoundaryLeft):
+		return contourBoundaryBottom, true
+	case boundarySidePair(a, b, contourBoundaryBottom, contourBoundaryRight):
+		return contourBoundaryRight, true
+	case boundarySidePair(a, b, contourBoundaryLeft, contourBoundaryTop):
+		return contourBoundaryLeft, true
+	case boundarySidePair(a, b, contourBoundaryTop, contourBoundaryRight):
+		return contourBoundaryTop, true
+	default:
+		return contourBoundaryNone, false
+	}
+}
+
+func boundarySidePair(a, b, c, d contourBoundarySide) bool {
+	return (a == c && b == d) || (a == d && b == c)
+}
+
+func structuredBoundarySide(pt geom.Pt, x, y []float64) contourBoundarySide {
+	minX, maxX := math.Min(x[0], x[len(x)-1]), math.Max(x[0], x[len(x)-1])
+	minY, maxY := math.Min(y[0], y[len(y)-1]), math.Max(y[0], y[len(y)-1])
+	switch {
+	case math.Abs(pt.X-minX) <= 1e-9:
+		return contourBoundaryLeft
+	case math.Abs(pt.X-maxX) <= 1e-9:
+		return contourBoundaryRight
+	case math.Abs(pt.Y-minY) <= 1e-9:
+		return contourBoundaryBottom
+	case math.Abs(pt.Y-maxY) <= 1e-9:
+		return contourBoundaryTop
+	default:
+		return contourBoundaryNone
+	}
 }
 
 func contourBandPolygons(tri Triangulation, values, levels []float64, opt ContourOptions, mapping ScalarMapInfo, alpha float64) ([][]geom.Pt, []render.Color) {

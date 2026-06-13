@@ -510,6 +510,9 @@ func TestLegendDrawsErrorBarSampleWithCaps(t *testing.T) {
 	if countHorizontalLegendSegments(r.paths) < 3 {
 		t.Fatalf("errorbar legend sample should include line and two caps, got paths %+v", r.paths)
 	}
+	if !floatApprox(r.paths[0].V[0].X, sample.Min.X, 1e-9) || !floatApprox(r.paths[0].V[1].X, sample.Max.X, 1e-9) {
+		t.Fatalf("errorbar legend line = %+v, want Matplotlib full handle span [%g, %g]", r.paths[0], sample.Min.X, sample.Max.X)
+	}
 	if !floatApprox(r.paths[1].V[0].Y, sample.Min.Y, 1e-9) || !floatApprox(r.paths[1].V[1].Y, sample.Max.Y, 1e-9) {
 		t.Fatalf("errorbar legend stem = %+v, want full 0.5-font extent over sample [%g, %g]", r.paths[1], sample.Min.Y, sample.Max.Y)
 	}

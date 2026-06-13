@@ -346,13 +346,37 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `third_party/matplotlib/lib/matplotlib/units.py`. Confirm tick
             labels are produced once, at the same display positions as upstream,
             and that `units_custom_converter` still passes.
-      - [ ] **W3.9 — Verification and tolerance ratchet.** After the core fixes,
+      - [x] **W3.9 — Verification and tolerance ratchet.** After the core fixes,
             regold `ticks_scales_formatters_gallery` and
             `date_concise_intraday_labels`; run their focused
             `TestReferenceCompare` targets plus neighboring locator/unit/date
             cases (`locator_*`, `scale_*`, `units_*`, `date_*`,
             `ticks_styling_surface`). Update tolerances only downward unless a
             documented upstream-incompatible exception remains.
+            2026-06-13 closure: regenerated the two W3 goldens with
+            `just golden-update
+            'TestGolden/(ticks_scales_formatters_gallery|date_concise_intraday_labels)$'`.
+            Fresh `TestReferenceCompare` metrics for the W3 set:
+            `ticks_scales_formatters_gallery` RMSE 5.80 / PSNR 56.05 /
+            MeanAbs 0.13, `date_concise_intraday_labels` RMSE 6.67 /
+            PSNR 58.18 / MeanAbs 0.10, `locator_fixed_index_labels` RMSE 0.06,
+            `locator_linear_labels` 0.06,
+            `locator_log_minor_threshold_labels` 1.41,
+            `locator_maxn_edge_labels` 4.30, `scale_asinh_ticks` 1.76,
+            `scale_function_defaults` 2.62, `scale_logit_ticks` 3.14,
+            `scale_symlog_ticks` 0.14, `ticks_styling_surface` 2.08,
+            `date_month_year_labels` 0.12, `units_overview` 0.30,
+            `units_dates` 0.86, `units_categories` 4.44, and
+            `units_custom_converter` 0.12. The two headline W3 cases remain
+            just above RMSE 5 after regolding; their catalog rows are ratcheted
+            from broad tolerances to tight documented `MaxRMSE=7.0`
+            exceptions because the remaining tail is text/tick rasterization,
+            not locator, formatter, date, category, or unit geometry. Neighboring
+            W3 locator/scale/unit/date rows were ratcheted to measured values
+            plus small headroom. Post-ratchet `./test` rerun is temporarily
+            blocked by unresolved conflict markers in the local `../agg_go`
+            replace dependency; `go test ./internal/examplecatalog` still
+            passes after the catalog edit.
 - [x] **W4 — text layout: wrapping and rotated multiline. DONE 2026-06-13**
       `text_layout_gallery` 14.6→**3.32**. The diff isolated the residual to: the wrap
       point of `wrap=True` text (display-width logic in
@@ -448,9 +472,8 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
       `offsetbox.py`, `axes/_axes.py`, `collections.py`, `contour.py`,
       `image.py`) rather than fixture-specific tuning.
       Current open work is narrow: `legend_layout_matrix`,
-      `annotation_legend_offsetbox_gallery`, `mixed_raster_vector`,
-      `arrays_showcase`, `clip_path_batch` remeasurement/closure, and W5-wide
-      regold/tolerance ratcheting.
+      `mixed_raster_vector`, `arrays_showcase`, `clip_path_batch`
+      remeasurement/closure, and W5-wide regold/tolerance ratcheting.
       - [x] **W5 status ledger — closed below RMSE 5.** Closed in W5:
             `layout_bbox_helpers` 0.78, `axes_convenience_helpers` 3.09,
             `plot_variants` 3.69, `line2d_markers` 4.80,
@@ -464,7 +487,8 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
       - [ ] **W5 status ledger — remaining open cases.** Finish or remeasure:
             `legend_layout_matrix` (last recorded 6.32),
             `mixed_raster_vector` (last recorded 6.26), `arrays_showcase`
-            (still above target with structural contour-label residual), and
+            (last recorded 5.83 with remaining structural contour-label
+            residual), and
             `clip_path_batch` (last baseline 5.99; verify after fill/collection
             work before deciding whether a core fix is still needed).
       - [x] **W5.1 — Baseline, visual triage, and clustering.** Regenerate and
@@ -538,7 +562,7 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
                   supplied without explicit alignment; this moved
                   `annotation_legend_offsetbox_gallery` to RMSE 4.48.
             - [ ] **W5.2.7 — Remaining legend matrix residual.** Close or
-                  classify `legend_layout_matrix` (last recorded RMSE 6.32),
+                  classify `legend_layout_matrix` (last recorded RMSE 6.30),
                   with focus on residual legend/hatch/thin-stroke/text pixels.
                   Re-run the focused reference compare before choosing a core
                   fix or documenting a renderer exception.
@@ -609,6 +633,17 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             omitted alignment, preserving center while explicit
             `PackAlignStart` remains available
             (`TestAnchoredPackerOptionsKeepMatplotlibCenterAlignDefault`).
+            2026-06-13 update: matched Matplotlib
+            `HandlerErrorbar`'s full-width legend line span. Go previously
+            inset the line by one pixel at each end, while upstream `Line2D`
+            uses the full handle box (`TestLegendDrawsErrorBarSampleWithCaps`).
+            Direct PNG comparison of the refreshed golden moved
+            `legend_layout_matrix` 6.32 → 6.30; it remains above target and is
+            now dominated by text/hatch/thin-stroke antialias residual. Focused
+            Go image-test verification is temporarily blocked by unresolved
+            conflict markers in the local `../agg_go` replace dependency; the
+            released `agg_go v0.2.31` is too old for this checkout's
+            `SetAntiAliased` / `GetAntiAliased` calls.
       - [x] **W5.3 — Axes helpers, lines, markers, and label placement.** Tackle
             `plot_variants`, `axes_convenience_helpers`, `line2d_markers`,
             `specialty_artists`, `specialty_depth`, and
@@ -724,6 +759,24 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `lib/matplotlib/{axes/_axes.py,collections.py,patches.py}` into the
             local fill, patch, and collection paths. Do not tune example data or
             case-specific tolerances.
+            - [x] **W5.4.1 — Fill fixture argument parity.** Align
+                  `fill_stacked`, `fill_variants`, and `fill_basic` source
+                  argument order with the Python references.
+            - [x] **W5.4.2 — Thin fill edge snapping.** Port fill collection
+                  edge snapping for thin stroked fill paths while leaving thick
+                  fill edges on existing auto handling.
+            - [x] **W5.4.3 — Single-region fill placement.** Match the
+                  single-path `FillBetweenPolyCollection` device-space
+                  half-pixel placement; `fill_basic` is now RMSE 0.24.
+            - [ ] **W5.4.4 — Clip path batch closure.** Remeasure
+                  `clip_path_batch` after the fill/collection changes (last
+                  baseline RMSE 5.99). If still above target, isolate whether
+                  the residual is clip geometry, quadmesh placement, or AGG
+                  antialias coverage.
+            - [ ] **W5.4.5 — Mixed raster/vector collection contribution.**
+                  Determine whether any remaining `mixed_raster_vector` RMSE
+                  comes from fill/collection edge semantics; leave pure
+                  raster/vector compositing residue to W5.7.
             2026-06-13 note: aligned the `fill_stacked` parity fixture and the
             mirrored `fill_variants` panel with the Python source argument order
             for the first layer, `fill_between(x, 0, layer1)`, guarded by
@@ -761,6 +814,18 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             Preserve the W1 binary-coverage antialias behavior and isolate any
             remaining mismatch to geometry, color normalization, or label
             placement before changing rendering code.
+            - [x] **W5.5.1 — Mesh/tri contour closure.** Close
+                  `mesh_contour_tri` by fixing tricontour z-order, closed-loop
+                  contour label placement, and structured `Contourf` band
+                  polygons.
+            - [ ] **W5.5.2 — Arrays showcase contour-label residual.**
+                  Isolate the `arrays_showcase` structural contour-label
+                  placement difference against upstream contour label selection
+                  before changing image or renderer behavior.
+            - [ ] **W5.5.3 — Arrays image/color normalization check.**
+                  After W5.5.2, verify that remaining `arrays_showcase`
+                  residual is not image origin, interpolation, normalization,
+                  or colorbar placement.
             2026-06-13 update: moved `mesh_contour_tri` below the W5 target.
             The residual had three contour-side causes: explicit `TriContour`
             sets inherited z=0 and rendered below tripcolor/triplot instead of
@@ -773,7 +838,24 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `TestContourInlineLabelsMatchMatplotlibMeshFixturePositions`, and
             `TestContourfUsesStructuredGridBandPolygons`. Current reference
             RMSE moved 6.91 → 2.87.
-      - [ ] **W5.6 — Annotation and MathText tail cases.** Tackle
+            2026-06-13 update: reduced `arrays_showcase` 6.46 → 5.83 by
+            matching Matplotlib `spy()` matrix-axis presentation. `spy()` now
+            keeps bottom x tick marks visible while moving x tick labels to the
+            top, and bottom x-label placement accounts for the tick-extended
+            spine extent when bottom labels are absent
+            (`TestAxesSpyLeavesXLabelAtBottomWithTopTicks`,
+            `TestDrawAxesLabels_XLabelUsesTickExtentWhenLabelsAreOnTop`). The
+            remaining refreshed diff is dominated by mesh contour labels.
+            A direct contourpy comparison showed the relevant level-0.6
+            structured contour components have the same vertices but opposite
+            open-polyline orientation on the two upper boundary-touching paths:
+            Go labels at `(3, 4.799...)` / `(5.705..., 5)` while Matplotlib
+            labels at `(3.294..., 5)` / `(6, 4.799...)`. A scalar-side
+            orientation heuristic was tested and rejected because it did not
+            fix those labels and disturbed neighboring label choices; the next
+            W5.5.2 step should compare and port contourpy's open-path
+            generation/order more directly.
+      - [x] **W5.6 — Annotation and MathText tail cases.** Tackle
             `annotation_composition`, `mathtext_inline_labels`, and
             `mathtext_basic` only after W5.2/W5.3 have ruled out shared
             bbox/label placement causes. Compare annotation arrow/text offset
@@ -781,6 +863,14 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `lib/matplotlib/patches.py`; compare any remaining MathText residue
             against `lib/matplotlib/_mathtext.py` without retargeting the
             already-closed MathText family.
+            - [x] **W5.6.1 — MathText bbox padding.** Close `mathtext_basic`
+                  by matching fractional `Text.set_bbox` padding semantics.
+            - [x] **W5.6.2 — Annotation multiline baseline.** Close
+                  `annotation_composition` by anchoring baseline-aligned
+                  multiline text to the last line's baseline.
+            - [x] **W5.6.3 — Inline MathText y-label placement.** Close
+                  `mathtext_inline_labels` by matching y-label anchor placement
+                  to Matplotlib tick/spine bbox and label-pad behavior.
             2026-06-13 update: moved `mathtext_basic` below the W5 target,
             5.33 → 4.77, by matching Matplotlib `Text.set_bbox` semantics for
             fractional `boxstyle` padding: explicit `TextBBoxOptions.Padding`
@@ -788,15 +878,15 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             padding values ≥ 1 keep their previous display-pixel meaning
             (`TestTextBBoxFractionalPaddingScalesByFontSize`). The refreshed
             fixture passes live Matplotlib comparison at PSNR 60.8 dB and
-            MeanAbs 0.05. Remaining W5.6 targets: `mathtext_inline_labels`
-            5.88 and `annotation_composition` 5.79.
+            MeanAbs 0.05. At that checkpoint, remaining W5.6 targets were
+            `mathtext_inline_labels` 5.88 and `annotation_composition` 5.79.
             2026-06-13 update: moved `annotation_composition` below the W5
             target, 5.79 → 1.42, by matching Matplotlib multiline text baseline
             alignment: baseline-aligned multiline text anchors the last line's
             baseline, not the first (`TestMultilineBaselineAlignsLastLineLikeMatplotlib`).
             The remaining fixture diff is localized to arrow antialiasing and
-            is well below the W5 threshold. Remaining W5.6 target:
-            `mathtext_inline_labels` 5.88.
+            is well below the W5 threshold. At that checkpoint, the remaining
+            W5.6 target was `mathtext_inline_labels` 5.88.
             2026-06-13 update: moved `mathtext_inline_labels` below the W5
             target, 5.88 → 4.10, by matching the left y-label anchor to
             Matplotlib's device-pixel tick/spine bbox placement before applying
@@ -810,6 +900,24 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             image interpolation/origin/extents, rasterization boundaries, and
             compositing order against upstream `widgets.py`, `image.py`,
             `axes/_axes.py`, and backend mixed-mode rendering paths.
+            - [x] **W5.7.1 — Widgets status.** `widgets_gallery` is already
+                  below the W5 target at RMSE 4.63; keep it in W5.8 ratcheting.
+            - [x] **W5.7.2 — Polar arc geometry in mixed raster/vector.**
+                  Replace sampled polar ring/spine paths with Matplotlib-style
+                  cubic `Path.arc` geometry; this reduced
+                  `mixed_raster_vector` but did not close it.
+            - [ ] **W5.7.3 — Mixed raster/vector residual decision.** Finish
+                  `mixed_raster_vector` (last RMSE 6.26) or document a frozen
+                  renderer exception if the remaining one-pixel
+                  antialias/stroke differences are not a core geometry bug.
+            - [ ] **W5.7.4 — Arrays showcase image-side residue.** After W5.5
+                  contour-label work, close or classify any remaining
+                  `arrays_showcase` image/interpolation/colorbar residual.
+            - [ ] **W5.7.5 — Raster/image neighboring checks.** Run focused
+                  W5.7 cases plus neighboring `image_*`, `imshow_*`,
+                  `matshow_basic`, `spy_*`, `large_scatter`,
+                  `mixed_collection`, and `quad_mesh` reference compares before
+                  regolding.
             2026-06-13 update: reduced `mixed_raster_vector` slightly by
             replacing sampled polar ring/spine paths with Matplotlib-style
             cubic `Path.arc` geometry for circular polar arcs. Guard coverage:
@@ -827,6 +935,21 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             a documented frozen exception. The W5 exit target is every listed
             case at `RMSE <= 5` or explicitly classified as a remaining
             non-core-renderer exception.
+            - [ ] **W5.8.1 — Fresh W5 scoreboard.** Re-run the complete W5
+                  `TestReferenceCompare` regex after the open W5.2/W5.4/W5.5/W5.7
+                  items and update the status ledger with current metrics.
+            - [ ] **W5.8.2 — Regold closed cases only.** Regold W5 cases only
+                  after their root-cause fix is in core behavior or the example
+                  has been restored to upstream source parity.
+            - [ ] **W5.8.3 — Ratchet W5 tolerances.** Update
+                  `internal/examplecatalog.Case` rows for closed W5 cases to
+                  actual metrics plus small headroom; remove broad overrides
+                  where defaults are sufficient.
+            - [ ] **W5.8.4 — Document any frozen exceptions.** If
+                  `mixed_raster_vector`, `clip_path_batch`, or other remaining
+                  cases stay above RMSE 5 due to backend antialiasing rather
+                  than core parity, document the exception and its validation
+                  cluster instead of leaving the W5 task vague.
 
 ## Method (code parity, per failing case)
 

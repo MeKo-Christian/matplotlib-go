@@ -175,6 +175,11 @@ func xLabelExtent(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, s
 			return math.Max(extent, tickBounds.Max.Y)
 		}
 		return math.Min(extent, tickBounds.Min.Y)
+	} else if xAxis.ShowTicks {
+		if side == AxisTop {
+			return extent + xAxis.TickSize*tickOutsidePaddingFactor(xAxis)
+		}
+		return extent - xAxis.TickSize*tickOutsidePaddingFactor(xAxis)
 	}
 	return extent
 }
