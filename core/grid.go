@@ -23,7 +23,7 @@ type Grid struct {
 	MinorDashes    []float64    // dash pattern for minor grid (nil = solid)
 	Locator        Locator      // major tick locator (nil = owning axis locator, then LinearLocator)
 	MinorLocator   Locator      // minor tick locator (nil = owning axis minor locator, then MinorLinearLocator{N:5})
-	z              float64      // z-order (should be behind data)
+	z              float64      // z-order
 }
 
 // NewGrid creates a new grid for the specified axis.
@@ -38,7 +38,7 @@ func NewGrid(axis AxisSide) *Grid {
 		Alpha:          0, // use Color.A
 		Major:          true,
 		Minor:          false,
-		z:              -1000, // behind everything else
+		z:              1.5, // Matplotlib default axes.axisbelow='line'.
 	}
 }
 

@@ -15,9 +15,6 @@ func (a *Axes) AddGrid(axis AxisSide) *Grid {
 	grid.MinorLineWidth = rc.MinorGridLineWidth
 	grid.Dashes = styleCloneDashes(rc.GridDashes)
 	grid.MinorDashes = styleCloneDashes(rc.MinorGridDashes)
-	if isPolarProjection(a.projection) {
-		grid.z = 1.5
-	}
 	a.Add(grid)
 	return grid
 }

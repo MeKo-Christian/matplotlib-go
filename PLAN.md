@@ -483,13 +483,11 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `annotation_composition` 1.42, `mathtext_inline_labels` 4.10,
             `axes_option_breadth_17_75_3` 3.95,
             `annotation_legend_offsetbox_gallery` 4.48, and
-            `widgets_gallery` 4.63, and `arrays_showcase` 2.82.
+            `widgets_gallery` 4.63, `arrays_showcase` 2.82, and
+            `clip_path_batch` 4.58.
       - [ ] **W5 status ledger — remaining open cases.** Finish or remeasure:
             `legend_layout_matrix` (last recorded 6.28) and
-            `mixed_raster_vector` (last recorded 6.25). `clip_path_batch`
-            needs catalog/test discovery follow-up: the historical baseline was
-            5.99, but the current focused `TestReferenceCompare/clip_path_batch`
-            command reports no subtest to run in this checkout.
+            `mixed_raster_vector` (last recorded 6.25).
       - [x] **W5.1 — Baseline, visual triage, and clustering.** Regenerate and
             inspect focused `TestReferenceCompare` output for every W5 case;
             use the committed diff artifacts under
@@ -776,11 +774,9 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             - [x] **W5.4.3 — Single-region fill placement.** Match the
                   single-path `FillBetweenPolyCollection` device-space
                   half-pixel placement; `fill_basic` is now RMSE 0.24.
-            - [ ] **W5.4.4 — Clip path batch closure.** Remeasure
-                  `clip_path_batch` after the fill/collection changes (last
-                  baseline RMSE 5.99). If still above target, isolate whether
-                  the residual is clip geometry, quadmesh placement, or AGG
-                  antialias coverage.
+            - [x] **W5.4.4 — Clip path batch closure.** Remeasure
+                  `clip_path_batch` after the fill/collection changes and close
+                  it below RMSE 5.
             - [ ] **W5.4.5 — Mixed raster/vector collection contribution.**
                   Determine whether any remaining `mixed_raster_vector` RMSE
                   comes from fill/collection edge semantics; leave pure
@@ -814,6 +810,15 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             (`TestFill2DSingleRegionUsesMatplotlibCollectionPlacement`,
             `TestFill2DMultiRegionUsesMatplotlibGenericCollectionPlacement`).
             `fill_basic` current reference RMSE moved 6.06 → 0.24.
+            2026-06-13 update: moved `clip_path_batch` below the W5 target.
+            The residual was draw order, not clip geometry or scalar mapping:
+            rectangular grids now use Matplotlib's default
+            `axes.axisbelow='line'` z-order of 1.5, so y-grid lines draw above
+            default patch/collection artists like the clipped native quad mesh
+            and below line artists (`TestGridZOrderMatchesMatplotlibAxisbelowLine`).
+            Refreshed native AGG comparison:
+            `TestAGGNativeReferenceCompare/clip_path_batch` RMSE 4.58,
+            PSNR 51.80 dB.
       - [ ] **W5.5 — Contour, triangulation, and mesh labels.** Tackle
             `mesh_contour_tri` and any W5.1-linked residuals in
             `arrays_showcase` by comparing `core/contour*`, triangulation, image

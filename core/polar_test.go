@@ -94,6 +94,14 @@ func TestPolarGridZOrderMatchesMatplotlibAxisbelowLine(t *testing.T) {
 	}
 }
 
+func TestGridZOrderMatchesMatplotlibAxisbelowLine(t *testing.T) {
+	grid := NewGrid(AxisLeft)
+
+	if !(grid.Z() > defaultPatchZ && grid.Z() < defaultLineZ) {
+		t.Fatalf("grid z-order = %v, want Matplotlib axisbelow='line' between patch %v and line %v", grid.Z(), defaultPatchZ, defaultLineZ)
+	}
+}
+
 func TestPolarPlotKeepsProjectionDomain(t *testing.T) {
 	fig := NewFigure(400, 400)
 	ax := fig.AddPolarAxes(unitRect())
