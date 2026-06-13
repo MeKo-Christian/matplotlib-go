@@ -315,7 +315,7 @@ func TestLine2DLineOnlyMarkerDrawsStrokeOnly(t *testing.T) {
 	}
 }
 
-func TestLine2DHalfFilledMarkerDrawsSplitFillAndWholeEdge(t *testing.T) {
+func TestLine2DHalfFilledMarkerDrawsSplitHalvesWithEdges(t *testing.T) {
 	markerStyle := NewMarkerStyle(MarkerCircle)
 	markerStyle.FillStyle = MarkerFillLeft
 	line := &Line2D{
@@ -341,8 +341,8 @@ func TestLine2DHalfFilledMarkerDrawsSplitFillAndWholeEdge(t *testing.T) {
 	}
 	line.drawMarkers(r, ctx)
 
-	if len(r.pathCalls) != 3 {
-		t.Fatalf("path calls = %d, want primary fill, alternate fill, whole edge", len(r.pathCalls))
+	if len(r.pathCalls) != 2 {
+		t.Fatalf("path calls = %d, want primary and alternate half markers", len(r.pathCalls))
 	}
 	if got, want := r.pathCalls[0].paint.Fill, line.MarkerFaceColor; got != want {
 		t.Fatalf("primary half fill = %+v, want %+v", got, want)
@@ -350,17 +350,13 @@ func TestLine2DHalfFilledMarkerDrawsSplitFillAndWholeEdge(t *testing.T) {
 	if got, want := r.pathCalls[1].paint.Fill, (render.Color{G: 1, A: 0.75}); got != want {
 		t.Fatalf("alternate half fill = %+v, want %+v", got, want)
 	}
-	if got := r.pathCalls[0].paint.Stroke.A; got != 0 {
-		t.Fatalf("primary half stroke alpha = %v, want 0", got)
-	}
-	if got := r.pathCalls[2].paint.Fill.A; got != 0 {
-		t.Fatalf("edge pass fill alpha = %v, want 0", got)
-	}
-	if got, want := r.pathCalls[2].paint.Stroke, line.MarkerEdgeColor; got != want {
-		t.Fatalf("edge stroke = %+v, want %+v", got, want)
-	}
-	if got, want := len(r.pathCalls[2].path.C), len(line.markerPrototypePath(nil, nil).C); got != want {
-		t.Fatalf("edge path commands = %d, want whole marker command count %d", got, want)
+	for i := range r.pathCalls {
+		if got, want := r.pathCalls[i].paint.Stroke, line.MarkerEdgeColor; got != want {
+			t.Fatalf("half marker %d stroke = %+v, want Matplotlib edge %+v", i, got, want)
+		}
+		if got := r.pathCalls[i].paint.LineWidth; got != pointsToPixels(ctx.RC, line.MarkerEdgeWidth) {
+			t.Fatalf("half marker %d edge width = %v, want %v", i, got, pointsToPixels(ctx.RC, line.MarkerEdgeWidth))
+		}
 	}
 }
 

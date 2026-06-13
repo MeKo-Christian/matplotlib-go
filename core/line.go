@@ -546,10 +546,10 @@ func (l *Line2D) drawMarkers(r render.Renderer, ctx *DrawContext) {
 	}
 
 	if spec.HasAlt {
-		transparent := render.Color{}
-		newCollection(spec.Path, l.resolvedMarkerFaceColor(), transparent, 0, false).Draw(r, ctx)
-		newCollection(spec.AltPath, l.resolvedMarkerFaceColorAlt(), transparent, 0, false).Draw(r, ctx)
-		newCollection(spec.EdgePath, transparent, l.resolvedMarkerEdgeColor(), l.resolvedMarkerEdgeWidth(ctx), false).Draw(r, ctx)
+		edge := l.resolvedMarkerEdgeColor()
+		edgeWidth := l.resolvedMarkerEdgeWidth(ctx)
+		newCollection(spec.Path, l.resolvedMarkerFaceColor(), edge, edgeWidth, false).Draw(r, ctx)
+		newCollection(spec.AltPath, l.resolvedMarkerFaceColorAlt(), edge, edgeWidth, false).Draw(r, ctx)
 		return
 	}
 

@@ -1210,31 +1210,23 @@ func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center g
 		lineCap = render.CapButt
 	}
 	markerPath := entry.markerPath
+	markerScale := radius
 	if len(markerPath.C) == 0 {
 		sampleScatter := Scatter2D{Marker: entry.marker}
-		markerPath = sampleScatter.createMarkerPath(center, radius)
-	} else {
-		markerPath = scaleAndTranslatePath(markerPath, radius, center)
+		markerPath = sampleScatter.markerPrototypePath()
+		markerScale = radius * stemMarkerScale
 	}
 	if entry.markerHasAlt {
-		r.Path(markerPath, &render.Paint{
-			Fill:     entry.markerFill,
-			LineJoin: lineJoin,
-			LineCap:  lineCap,
+		drawLegendMarkerPath(r, markerPath, center, markerScale, render.Paint{
+			Fill:      entry.markerFill,
+			Stroke:    entry.markerEdge,
+			LineWidth: entry.markerEdgeWidth,
+			LineJoin:  lineJoin,
+			LineCap:   lineCap,
 		})
 		if len(entry.markerAltPath.C) > 0 {
-			r.Path(scaleAndTranslatePath(entry.markerAltPath, radius, center), &render.Paint{
-				Fill:     entry.markerAltFill,
-				LineJoin: lineJoin,
-				LineCap:  lineCap,
-			})
-		}
-		edgePath := entry.markerEdgePath
-		if len(edgePath.C) == 0 {
-			edgePath = entry.markerPath
-		}
-		if len(edgePath.C) > 0 {
-			r.Path(scaleAndTranslatePath(edgePath, radius, center), &render.Paint{
+			drawLegendMarkerPath(r, entry.markerAltPath, center, radius, render.Paint{
+				Fill:      entry.markerAltFill,
 				Stroke:    entry.markerEdge,
 				LineWidth: entry.markerEdgeWidth,
 				LineJoin:  lineJoin,
@@ -1251,13 +1243,22 @@ func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center g
 		}
 		fill.A = 0
 	}
-	r.Path(markerPath, &render.Paint{
+	drawLegendMarkerPath(r, markerPath, center, markerScale, render.Paint{
 		Fill:      fill,
 		Stroke:    edge,
 		LineWidth: entry.markerEdgeWidth,
 		LineJoin:  lineJoin,
 		LineCap:   lineCap,
 	})
+}
+
+func drawLegendMarkerPath(r render.Renderer, markerPath geom.Path, center geom.Pt, scale float64, paint render.Paint) {
+	if len(markerPath.C) == 0 || scale <= 0 {
+		return
+	}
+	paint.Snap = render.SnapAuto
+	path := scaleAndTranslatePath(markerPath, scale, center)
+	r.Path(path, &paint)
 }
 
 func pixelRectPath(r geom.Rect) geom.Path {
