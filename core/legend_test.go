@@ -140,6 +140,46 @@ func TestLegendLineMarkerSampleCopiesMarkerStrokeStyle(t *testing.T) {
 	}
 }
 
+func TestLegendLineMarkerSampleCopiesMatplotlibSnapPolicy(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		marker MarkerType
+		want   render.SnapMode
+	}{
+		{name: "square", marker: MarkerSquare, want: render.SnapAuto},
+		{name: "circle", marker: MarkerCircle, want: 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			line := &Line2D{
+				Label:      tc.name,
+				Col:        render.Color{A: 1},
+				W:          1.5,
+				Marker:     tc.marker,
+				MarkerSet:  true,
+				MarkerSize: 9,
+			}
+			entry, ok := line.legendEntry()
+			if !ok {
+				t.Fatal("line marker legend entry not collected")
+			}
+
+			legend := NewLegend(nil)
+			var r legendRecordingRenderer
+			legend.drawSample(&r, entry, geom.Rect{
+				Min: geom.Pt{X: 0, Y: 0},
+				Max: geom.Pt{X: 40, Y: 20},
+			})
+
+			if len(r.paints) < 2 {
+				t.Fatalf("legend sample paints = %d, want line plus marker", len(r.paints))
+			}
+			if got := r.paints[1].Snap; got != tc.want {
+				t.Fatalf("legend %s marker snap = %v, want %v", tc.name, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestLegendLineSampleCopiesLine2DStrokeCaps(t *testing.T) {
 	line := &Line2D{
 		Label: "line",

@@ -514,6 +514,37 @@ func (s *Scatter2D) markerLineCap() render.LineCap {
 	return render.CapButt
 }
 
+func markerSnapMode(style MarkerStyle, markerSizePx float64) render.SnapMode {
+	threshold, ok := markerSnapThreshold(style)
+	if !ok || markerSizePx < threshold {
+		return 0
+	}
+	return render.SnapAuto
+}
+
+func markerSnapThreshold(style MarkerStyle) (float64, bool) {
+	if style.Tuple != nil || style.MathText != "" || len(style.Path.C) > 0 {
+		return 0, false
+	}
+	switch style.Type {
+	case MarkerCircle, MarkerPoint:
+		return math.Inf(1), true
+	case MarkerSquare:
+		return 2, true
+	case MarkerTriangle, MarkerTriangleDown, MarkerTriangleLeft, MarkerTriangleRight,
+		MarkerDiamond, MarkerThinDiamond, MarkerPentagon, MarkerStar, MarkerOctagon,
+		MarkerFilledPlus, MarkerFilledX:
+		return 5, true
+	case MarkerPlus, MarkerVLine, MarkerHLine, MarkerTickLeft, MarkerTickRight, MarkerTickUp, MarkerTickDown:
+		return 1, true
+	case MarkerCross, MarkerCaretLeft, MarkerCaretRight, MarkerCaretUp, MarkerCaretDown,
+		MarkerCaretLeftBase, MarkerCaretRightBase, MarkerCaretUpBase, MarkerCaretDownBase:
+		return 3, true
+	default:
+		return 0, false
+	}
+}
+
 func markerLineOnly(style MarkerStyle) bool {
 	if style.Tuple != nil {
 		return style.Tuple.Style == MarkerTupleAsterisk

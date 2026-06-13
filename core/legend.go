@@ -95,6 +95,7 @@ type legendEntry struct {
 	markerSize      float64
 	markerLineJoin  render.LineJoin
 	markerLineCap   render.LineCap
+	markerSnap      render.SnapMode
 
 	patchFill       render.Color
 	patchEdge       render.Color
@@ -1217,7 +1218,7 @@ func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center g
 		markerScale = radius * stemMarkerScale
 	}
 	if entry.markerHasAlt {
-		drawLegendMarkerPath(r, markerPath, center, markerScale, render.Paint{
+		drawLegendMarkerPath(r, markerPath, center, markerScale, entry.markerSnap, render.Paint{
 			Fill:      entry.markerFill,
 			Stroke:    entry.markerEdge,
 			LineWidth: entry.markerEdgeWidth,
@@ -1225,7 +1226,7 @@ func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center g
 			LineCap:   lineCap,
 		})
 		if len(entry.markerAltPath.C) > 0 {
-			drawLegendMarkerPath(r, entry.markerAltPath, center, radius, render.Paint{
+			drawLegendMarkerPath(r, entry.markerAltPath, center, radius, entry.markerSnap, render.Paint{
 				Fill:      entry.markerAltFill,
 				Stroke:    entry.markerEdge,
 				LineWidth: entry.markerEdgeWidth,
@@ -1243,7 +1244,7 @@ func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center g
 		}
 		fill.A = 0
 	}
-	drawLegendMarkerPath(r, markerPath, center, markerScale, render.Paint{
+	drawLegendMarkerPath(r, markerPath, center, markerScale, entry.markerSnap, render.Paint{
 		Fill:      fill,
 		Stroke:    edge,
 		LineWidth: entry.markerEdgeWidth,
@@ -1252,10 +1253,11 @@ func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center g
 	})
 }
 
-func drawLegendMarkerPath(r render.Renderer, markerPath geom.Path, center geom.Pt, scale float64, paint render.Paint) {
+func drawLegendMarkerPath(r render.Renderer, markerPath geom.Path, center geom.Pt, scale float64, snap render.SnapMode, paint render.Paint) {
 	if len(markerPath.C) == 0 || scale <= 0 {
 		return
 	}
+	paint.Snap = snap
 	path := scaleAndTranslatePath(markerPath, scale, center)
 	r.Path(path, &paint)
 }

@@ -35,6 +35,7 @@ func legendEntryFromLine(label string, color render.Color, width float64, dashes
 
 func legendEntryFromMarker(label string, marker MarkerType, markerPath geom.Path, fill, edge render.Color, edgeWidth float64) legendEntry {
 	scatter := Scatter2D{Marker: marker}
+	markerSize := 0.0
 	return legendEntry{
 		Label:           label,
 		kind:            legendEntryMarker,
@@ -45,6 +46,7 @@ func legendEntryFromMarker(label string, marker MarkerType, markerPath geom.Path
 		markerEdgeWidth: edgeWidth,
 		markerLineJoin:  scatter.markerLineJoin(),
 		markerLineCap:   scatter.markerLineCap(),
+		markerSnap:      markerSnapMode(scatter.resolvedMarkerStyle(), markerSize),
 	}
 }
 
@@ -70,6 +72,7 @@ func (l *Line2D) legendEntry() (legendEntry, bool) {
 		markerScatter := Scatter2D{Marker: l.Marker, MarkerStyle: l.MarkerStyle, MarkerPath: l.MarkerPath}
 		entry.markerLineJoin = markerScatter.markerLineJoin()
 		entry.markerLineCap = markerScatter.markerLineCap()
+		entry.markerSnap = markerSnapMode(l.resolvedMarkerStyle(), entry.markerSize)
 	}
 	return entry, true
 }
@@ -110,6 +113,7 @@ func (s *Scatter2D) legendEntry() (legendEntry, bool) {
 	entry.markerSize = pointsToPixels(style.Default, math.Sqrt(size))
 	entry.markerLineJoin = s.markerLineJoin()
 	entry.markerLineCap = s.markerLineCap()
+	entry.markerSnap = markerSnapMode(s.resolvedMarkerStyle(), entry.markerSize)
 	return entry, true
 }
 
@@ -215,6 +219,7 @@ func (e *ErrorBar) legendEntry() (legendEntry, bool) {
 		markerScatter := Scatter2D{Marker: e.Marker}
 		entry.markerLineJoin = markerScatter.markerLineJoin()
 		entry.markerLineCap = markerScatter.markerLineCap()
+		entry.markerSnap = markerSnapMode(markerLine.resolvedMarkerStyle(), entry.markerSize)
 	}
 	return entry, true
 }
