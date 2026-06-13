@@ -198,11 +198,81 @@ func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
 
 // Contourf draws filled contour bands over a rectilinear scalar grid.
 func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet {
-	tri, values, ok := contourGridTriangulation(data, opts)
+	xCoords, yCoords, values, ok := contourGridCoordsValues(data, opts)
 	if !ok {
 		return nil
 	}
-	return a.buildContourSet(tri, values, true, opts...)
+	var opt ContourOptions
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	levels := contourLevels(values, opt.Levels, opt.LevelCount, true)
+	if len(levels) < 2 {
+		return nil
+	}
+
+	alpha := meshAlpha(opt.Alpha)
+	cmapName := ""
+	if opt.Colormap != nil {
+		cmapName = *opt.Colormap
+	}
+	mapping, err := ResolveScalarMapValues(values, ScalarMapConfig{
+		Colormap: cmapName,
+		Norm:     opt.Norm,
+	})
+	if err != nil {
+		return nil
+	}
+	if opt.Norm == nil {
+		mapping.Norm = Normalize{VMin: levels[0], VMax: levels[len(levels)-1]}
+		mapping.VMin = levels[0]
+		mapping.VMax = levels[len(levels)-1]
+	}
+
+	polygons, faceColors := contourGridBandPolygons(xCoords, yCoords, data, levels, opt, mapping, alpha)
+	if len(polygons) == 0 {
+		return nil
+	}
+	cmap := ""
+	vmin := 0.0
+	vmax := 0.0
+	if opt.Color == nil && len(opt.Colors) == 0 {
+		cmap = mapping.Colormap
+		vmin = mapping.VMin
+		vmax = mapping.VMax
+	}
+	norm := mapping.Norm
+	if cmap == "" {
+		norm = nil
+	}
+	set := &ContourSet{
+		Levels:         append([]float64(nil), levels...),
+		LabelFormatter: contourFormatter(opt.LabelFormatter),
+		LabelFontSize:  valueOrDefaultFloat(opt.LabelFontSize, 10),
+	}
+	if opt.LabelColor != nil {
+		set.LabelColor = *opt.LabelColor
+	}
+	set.Fills = &PolyCollection{
+		PatchCollection: PatchCollection{
+			Collection: Collection{
+				Coords:    Coords(CoordData),
+				Label:     opt.Label,
+				Alpha:     1,
+				Colormap:  cmap,
+				Norm:      norm,
+				VMin:      vmin,
+				VMax:      vmax,
+				Antialias: render.AntialiasOff,
+			},
+			FaceColors: faceColors,
+			LineJoin:   render.JoinMiter,
+			LineCap:    render.CapButt,
+		},
+		Polygons: polygons,
+	}
+	a.Add(set)
+	return set
 }
 
 // TriContour draws isolines over an explicit triangulation.
@@ -325,7 +395,13 @@ func (c *ContourSet) Z() float64 {
 	if c == nil {
 		return 0
 	}
-	return c.z
+	if c.z != 0 {
+		return c.z
+	}
+	if c.Lines != nil {
+		return defaultLineZ
+	}
+	return defaultPatchZ
 }
 
 // ScalarMap exposes the contour fill's scalar mapping for colorbars.
@@ -1782,8 +1858,29 @@ func stitchContourSegments(segments [][]geom.Pt) [][]geom.Pt {
 				break
 			}
 		}
-		out = append(out, polyline)
+		out = append(out, rotateClosedContourPolylineToMatplotlibStart(polyline))
 	}
+	return out
+}
+
+func rotateClosedContourPolylineToMatplotlibStart(polyline []geom.Pt) []geom.Pt {
+	if !contourPolylineClosed(polyline) {
+		return polyline
+	}
+	body := polyline[:len(polyline)-1]
+	if len(body) == 0 {
+		return polyline
+	}
+	start := 0
+	for i := 1; i < len(body); i++ {
+		if body[i].Y < body[start].Y || (body[i].Y == body[start].Y && body[i].X < body[start].X) {
+			start = i
+		}
+	}
+	out := make([]geom.Pt, 0, len(polyline))
+	out = append(out, body[start:]...)
+	out = append(out, body[:start]...)
+	out = append(out, out[0])
 	return out
 }
 

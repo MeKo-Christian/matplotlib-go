@@ -1065,17 +1065,18 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		flierColor = *opt.FlierColor
 	}
 
-	edgeWidth := 1.0
+	defaultLineWidth := pointsToPixels(a.resolvedRC(), 1)
+	edgeWidth := defaultLineWidth
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
 	}
 
-	whiskerWidth := 1.0
+	whiskerWidth := defaultLineWidth
 	if opt.WhiskerWidth != nil {
 		whiskerWidth = *opt.WhiskerWidth
 	}
 
-	medianWidth := 1.0
+	medianWidth := defaultLineWidth
 	if opt.MedianWidth != nil {
 		medianWidth = *opt.MedianWidth
 	}
@@ -1114,7 +1115,7 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 	if opt.FlierEdgeColor != nil {
 		flierEdgeColor = *opt.FlierEdgeColor
 	}
-	flierEdgeWidth := 1.0
+	flierEdgeWidth := defaultLineWidth
 	if opt.FlierEdgeWidth != nil {
 		flierEdgeWidth = *opt.FlierEdgeWidth
 	}

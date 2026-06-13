@@ -475,6 +475,93 @@ func TestAxesContourAndContourf(t *testing.T) {
 	}
 }
 
+func TestContourInlineLabelsMatchMatplotlibMeshFixturePositions(t *testing.T) {
+	fig := NewFigure(980, 620)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.57, Y: 0.57}, Max: geom.Pt{X: 0.96, Y: 0.93}})
+	ax.SetXLim(0, 4)
+	ax.SetYLim(0, 4)
+	data := [][]float64{
+		{0.0, 0.4, 0.8, 0.4, 0.0},
+		{0.2, 0.8, 1.3, 0.8, 0.2},
+		{0.3, 1.0, 1.7, 1.0, 0.3},
+		{0.2, 0.8, 1.3, 0.8, 0.2},
+		{0.0, 0.4, 0.8, 0.4, 0.0},
+	}
+
+	contours := ax.Contour(data, ContourOptions{
+		Levels:     []float64{0.4, 0.8, 1.2, 1.6},
+		LabelLines: true,
+	})
+	if contours == nil || contours.Lines == nil {
+		t.Fatal("expected contour lines")
+	}
+	ctx := AxesDrawContext(ax, fig)
+	_, _, _, labels := contourInlineLabelSegmentsForLevels(
+		contours.Lines,
+		contours.lineLevels,
+		nil,
+		contours.LabelFormatter,
+		10,
+		5,
+		&recordingRenderer{},
+		ctx,
+	)
+
+	want := map[float64]geom.Pt{
+		0.8: {X: 2, Y: 4},
+		1.2: {X: 2, Y: 3.2},
+		1.6: {X: 2, Y: 2.25},
+	}
+	got := map[float64]geom.Pt{}
+	for _, label := range labels {
+		if _, ok := want[label.Level]; ok {
+			got[label.Level] = label.Position
+		}
+	}
+	for level, wantPos := range want {
+		gotPos, ok := got[level]
+		if !ok {
+			t.Fatalf("missing inline contour label for level %v in %+v", level, labels)
+		}
+		if !pointsApprox(gotPos, wantPos, 1e-9) {
+			t.Fatalf("inline contour label level %v position = %+v, want Matplotlib %+v (all labels %+v)", level, gotPos, wantPos, labels)
+		}
+	}
+}
+
+func TestContourfUsesStructuredGridBandPolygons(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax := fig.AddAxes(unitRect())
+	data := [][]float64{
+		{0.0, 0.4, 0.8, 0.4, 0.0},
+		{0.2, 0.8, 1.3, 0.8, 0.2},
+		{0.3, 1.0, 1.7, 1.0, 0.3},
+		{0.2, 0.8, 1.3, 0.8, 0.2},
+		{0.0, 0.4, 0.8, 0.4, 0.0},
+	}
+	levels := []float64{0.2, 0.6, 1.0, 1.4, 1.8}
+
+	filled := ax.Contourf(data, ContourOptions{Levels: levels})
+	if filled == nil || filled.Fills == nil {
+		t.Fatal("expected structured contourf fills")
+	}
+	x, y, values, ok := contourGridCoordsValues(data, []ContourOptions{{Levels: levels}})
+	if !ok {
+		t.Fatal("expected valid grid contour coordinates")
+	}
+	mapping, err := ResolveScalarMapValues(values, ScalarMapConfig{})
+	if err != nil {
+		t.Fatalf("resolve scalar map: %v", err)
+	}
+	mapping.Norm = Normalize{VMin: levels[0], VMax: levels[len(levels)-1]}
+	mapping.VMin = levels[0]
+	mapping.VMax = levels[len(levels)-1]
+	wantPolygons, _ := contourGridBandPolygons(x, y, data, levels, ContourOptions{Levels: levels}, mapping, 1)
+	if got, want := len(filled.Fills.Polygons), len(wantPolygons); got != want {
+		t.Fatalf("contourf polygon count = %d, want structured grid count %d", got, want)
+	}
+}
+
 func TestContourLevelsUseNiceLocatorForImplicitCounts(t *testing.T) {
 	levels := contourLevels([]float64{0.287, 1.0}, nil, 6, false)
 	want := []float64{0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1.05}
@@ -760,10 +847,16 @@ func TestTriangulationArtists(t *testing.T) {
 	if contours == nil || contours.Lines == nil {
 		t.Fatal("expected tricontour lines")
 	}
+	if got, want := contours.Z(), defaultLineZ; got != want {
+		t.Fatalf("tricontour default z = %v, want line z %v so isolines draw above filled collections", got, want)
+	}
 
 	filled := ax.TriContourf(tri, []float64{0, 1, 2, 3}, ContourOptions{Levels: []float64{0, 1, 2, 3}})
 	if filled == nil || filled.Fills == nil {
 		t.Fatal("expected tricontourf fills")
+	}
+	if got, want := filled.Z(), defaultPatchZ; got != want {
+		t.Fatalf("tricontourf default z = %v, want patch z %v", got, want)
 	}
 }
 

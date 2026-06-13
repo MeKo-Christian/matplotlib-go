@@ -120,17 +120,7 @@ func polarArcPath(center geom.Pt, radius, start, end float64, segments int, clos
 		span = 2 * math.Pi
 	}
 
-	path := geom.Path{}
-	for i := 0; i <= segments; i++ {
-		t := float64(i) / float64(segments)
-		angle := start + span*t
-		pt := polarPixelPoint(center, radius, angle)
-		if i == 0 {
-			path.MoveTo(pt)
-		} else {
-			path.LineTo(pt)
-		}
-	}
+	path := matplotlibArcPath(center, radius, start*180/math.Pi, (start+span)*180/math.Pi)
 	if closePath {
 		path.Close()
 	}

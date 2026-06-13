@@ -60,7 +60,7 @@ func addAnnotationLegendPanel(ax *core.Axes) {
 	}
 	blue := render.Color{R: 0.12, G: 0.31, B: 0.68, A: 1}
 	orange := render.Color{R: 0.86, G: 0.43, B: 0.16, A: 1}
-	lineWidth := 2.0
+	lineWidth := pt(2)
 	ax.Plot(x, sin, core.PlotOptions{Color: &blue, LineWidth: &lineWidth, Label: "sin(x)"})
 	ax.Plot(x, cos, core.PlotOptions{Color: &orange, LineWidth: &lineWidth, Label: "0.65 cos(0.8x)"})
 
@@ -75,7 +75,7 @@ func addAnnotationLegendPanel(ax *core.Axes) {
 		ArrowStyle:      arrow,
 		ConnectionStyle: arc,
 		ArrowColor:      blue,
-		ArrowWidth:      1.2,
+		ArrowWidth:      pt(1.2),
 		BBox:            galleryBox(10, 0.28, render.Color{R: 0.92, G: 0.97, B: 1.00, A: 0.90}, blue),
 	})
 	ax.AnnotationBbox("offset box", 5.65, -0.25, core.AnnotationBboxOptions{
@@ -100,7 +100,7 @@ func addAnnotationLegendPanel(ax *core.Axes) {
 		Sample:    core.LegendSamplePatch,
 		FaceColor: render.Color{R: 0.94, G: 0.78, B: 0.38, A: 0.95},
 		EdgeColor: render.Color{R: 0.46, G: 0.30, B: 0.08, A: 1},
-		EdgeWidth: 1.1,
+		EdgeWidth: pt(1.1),
 		Hatch:     "//",
 	})
 }
@@ -136,7 +136,7 @@ func addOffsetBoxPanel(ax *core.Axes) {
 	area.AddPath(localTrianglePath(), render.Paint{
 		Fill:      render.Color{R: 0.84, G: 0.44, B: 0.18, A: 0.88},
 		Stroke:    render.Color{R: 0.43, G: 0.20, B: 0.08, A: 1},
-		LineWidth: 1,
+		LineWidth: pt(1),
 	})
 
 	packer := ax.AddAnchoredPacker(core.PackHorizontal, core.AnchoredPackerOptions{
@@ -153,7 +153,7 @@ func addOffsetBoxPanel(ax *core.Axes) {
 	packer.AddDrawingArea(18, 18).AddPath(localDiamondPath(), render.Paint{
 		Fill:      render.Color{R: 0.25, G: 0.62, B: 0.78, A: 0.9},
 		Stroke:    render.Color{R: 0.08, G: 0.25, B: 0.35, A: 1},
-		LineWidth: 1,
+		LineWidth: pt(1),
 	})
 	packer.AddImage(smallAnnotationImage(), 1.35)
 	packer.AddText("HPacker")
@@ -178,7 +178,7 @@ func galleryBox(fontSize, pad float64, face, edge render.Color) *core.TextBBoxOp
 	return &core.TextBBoxOptions{
 		FaceColor:    face,
 		EdgeColor:    edge,
-		LineWidth:    0.9,
+		LineWidth:    pt(0.9),
 		Padding:      fontSize * pad * DPI / 72,
 		CornerRadius: 5,
 	}

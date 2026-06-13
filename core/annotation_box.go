@@ -77,12 +77,13 @@ func (a *Axes) AnnotationBbox(text string, x, y float64, opts ...AnnotationBboxO
 	if a == nil {
 		return nil
 	}
+	rc := a.resolvedRC()
 	cfg := AnnotationBboxOptions{
 		XYCoords:  Coords(CoordData),
 		BoxCoords: Coords(CoordData),
 		FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
 		EdgeColor: render.Color{R: 0, G: 0, B: 0, A: 1},
-		LineWidth: 1,
+		LineWidth: pointsToPixels(rc, 1),
 	}
 	frameOn := true
 	cfg.FrameOn = &frameOn
@@ -94,7 +95,7 @@ func (a *Axes) AnnotationBbox(text string, x, y float64, opts ...AnnotationBboxO
 	defaultConnectionStyle, _ := ConnectionStyleFromString("arc3")
 	cfg.ArrowStyle = defaultArrowStyle
 	cfg.ConnectionStyle = defaultConnectionStyle
-	cfg.ArrowWidth = 1.25
+	cfg.ArrowWidth = pointsToPixels(rc, 1)
 	cfg.ArrowHeadSize = 8
 
 	if len(opts) > 0 {

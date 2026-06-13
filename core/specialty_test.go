@@ -77,6 +77,9 @@ func TestAxesHexbinAggregatesValues(t *testing.T) {
 	if len(hex.EdgeColors) != len(hex.FaceColors) {
 		t.Fatalf("hex edge colors len = %d, want face-colored edges for %d faces", len(hex.EdgeColors), len(hex.FaceColors))
 	}
+	if got, want := hex.EdgeWidth, pointsToPixels(fig.RC, 1); !floatApprox(got, want, 1e-12) {
+		t.Fatalf("hex default linewidth = %v px, want Matplotlib patch.linewidth %v px", got, want)
+	}
 	mapping := hex.ScalarMap()
 	if mapping.Colormap != "viridis" || mapping.VMin != 2 || mapping.VMax != 9 {
 		t.Fatalf("unexpected scalar map %+v", mapping)
@@ -308,6 +311,9 @@ func TestAxesViolinplotAddsCollections(t *testing.T) {
 	}
 	if got := violins.Bodies.FaceColors[0].A; got != 1 {
 		t.Fatalf("violin face color alpha = %v, want unmodified color alpha before collection alpha", got)
+	}
+	if got := violins.Bodies.EdgeWidth; got != 1 {
+		t.Fatalf("violin body edge width = %v, want Matplotlib-rendered 1 px collection stroke", got)
 	}
 }
 

@@ -167,7 +167,7 @@ func TestErrorBarMarkerEdgeWidthDefaultsToMatplotlibMarkerEdgeWidth(t *testing.T
 	}
 }
 
-func TestErrorBarCapSizeIsFullPixelLength(t *testing.T) {
+func TestErrorBarCapSizeIsHalfMarkerLength(t *testing.T) {
 	errBar := &ErrorBar{
 		XY:        []geom.Pt{{X: 1, Y: 2}},
 		XErr:      []float64{0.2},
@@ -190,8 +190,8 @@ func TestErrorBarCapSizeIsFullPixelLength(t *testing.T) {
 			t.Fatalf("cap path %d vertices = %d, want 2", idx, len(path.V))
 		}
 		got := math.Hypot(path.V[1].X-path.V[0].X, path.V[1].Y-path.V[0].Y)
-		if math.Abs(got-6) > 1e-9 {
-			t.Fatalf("cap path %d length = %.6f px, want 6 px", idx, got)
+		if math.Abs(got-12) > 1e-9 {
+			t.Fatalf("cap path %d length = %.6f px, want 12 px from Matplotlib markersize=2*capsize", idx, got)
 		}
 	}
 }
@@ -238,11 +238,14 @@ func TestErrorBarLimitCaretUsesEndpointAsBase(t *testing.T) {
 	if len(caret) != 3 {
 		t.Fatalf("caret vertices = %d, want 3", len(caret))
 	}
-	if got := r.pathCalls[1].paint.Fill; got.A != 0 {
-		t.Fatalf("limit caret fill alpha = %v, want open stroked Matplotlib caret marker", got.A)
+	if got, want := r.pathCalls[1].paint.Fill, errBar.Color; got != want {
+		t.Fatalf("limit caret fill = %+v, want filled Matplotlib marker color %+v", got, want)
+	}
+	if got := r.pathCalls[1].paint.LineJoin; got != render.JoinMiter {
+		t.Fatalf("limit caret join = %v, want Matplotlib marker miter join", got)
 	}
 	if cmds := r.pathCalls[1].path.C; len(cmds) == 0 || cmds[len(cmds)-1] == geom.ClosePath {
-		t.Fatalf("limit caret commands = %v, want open stroked marker path", cmds)
+		t.Fatalf("limit caret commands = %v, want filled open marker path", cmds)
 	}
 	endpoint := ctx.DataToPixel.Apply(geom.Pt{X: 1, Y: 2})
 	if caret[0].Y != endpoint.Y || caret[2].Y != endpoint.Y {
@@ -251,8 +254,8 @@ func TestErrorBarLimitCaretUsesEndpointAsBase(t *testing.T) {
 	if got, want := math.Abs(caret[2].X-caret[0].X), 16.0; math.Abs(got-want) > 1e-9 {
 		t.Fatalf("caret base width = %.3f px, want %.3f px from markersize=2*capsize", got, want)
 	}
-	if caret[1].Y >= endpoint.Y {
-		t.Fatalf("lower-limit caret tip y = %.3f, want above endpoint %.3f in display space", caret[1].Y, endpoint.Y)
+	if caret[1].Y <= endpoint.Y {
+		t.Fatalf("lower-limit caret tip y = %.3f, want below endpoint %.3f before backend flip", caret[1].Y, endpoint.Y)
 	}
 }
 
@@ -278,8 +281,8 @@ func TestErrorBarUpperLimitCaretPointsDownFromEndpoint(t *testing.T) {
 	if caret[0].Y != endpoint.Y || caret[2].Y != endpoint.Y {
 		t.Fatalf("caret base y = %.3f, %.3f; want endpoint y %.3f", caret[0].Y, caret[2].Y, endpoint.Y)
 	}
-	if caret[1].Y <= endpoint.Y {
-		t.Fatalf("upper-limit caret tip y = %.3f, want below endpoint %.3f in display space", caret[1].Y, endpoint.Y)
+	if caret[1].Y >= endpoint.Y {
+		t.Fatalf("upper-limit caret tip y = %.3f, want above endpoint %.3f before backend flip", caret[1].Y, endpoint.Y)
 	}
 }
 

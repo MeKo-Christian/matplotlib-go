@@ -77,16 +77,35 @@ func (f *Fill2D) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 	}
 
-	for _, region := range f.fillRegions() {
+	regions := f.fillRegions()
+	useSinglePathPlacement := len(regions) == 1
+	for _, region := range regions {
 		fillPath := f.createFillPathForRegion(region, ctx)
 		if len(fillPath.C) == 0 {
 			continue
 		}
-		for i := range fillPath.V {
-			fillPath.V[i].X += 0.5
-			fillPath.V[i].Y -= 0.5
+		if useSinglePathPlacement && fillPathUsesMatplotlibSinglePathCollectionPlacement(fillPath, ctx) {
+			applyMatplotlibSinglePathCollectionPlacement(&fillPath)
 		}
 		r.Path(fillPath, &paint)
+	}
+}
+
+func fillPathUsesMatplotlibSinglePathCollectionPlacement(path geom.Path, ctx *DrawContext) bool {
+	if ctx == nil || ctx.FigureRect.W() <= 0 || ctx.FigureRect.H() <= 0 {
+		return true
+	}
+	bounds, ok := pathBounds(path)
+	if !ok {
+		return false
+	}
+	return bounds.W() < ctx.FigureRect.W() && bounds.H() < ctx.FigureRect.H()
+}
+
+func applyMatplotlibSinglePathCollectionPlacement(path *geom.Path) {
+	for i := range path.V {
+		path.V[i].X += 0.5
+		path.V[i].Y -= 0.5
 	}
 }
 

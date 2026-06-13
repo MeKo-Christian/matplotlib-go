@@ -157,8 +157,19 @@ func TestPolarGridAndTicksUseCurvedGeometry(t *testing.T) {
 	var foundCircle bool
 	var foundSpoke bool
 	for _, call := range r.pathCalls {
-		if len(call.path.C) > 0 && call.path.C[len(call.path.C)-1] == geom.ClosePath && len(call.path.V) >= polarCircleSegments {
-			foundCircle = true
+		if len(call.path.C) == 18 &&
+			call.path.C[0] == geom.MoveTo &&
+			call.path.C[len(call.path.C)-1] == geom.ClosePath {
+			allCubic := true
+			for _, cmd := range call.path.C[1 : len(call.path.C)-1] {
+				if cmd != geom.CubicTo {
+					allCubic = false
+					break
+				}
+			}
+			if allCubic {
+				foundCircle = true
+			}
 		}
 		if len(call.path.C) == 2 && len(call.path.V) == 2 {
 			p1, p2 := call.path.V[0], call.path.V[1]

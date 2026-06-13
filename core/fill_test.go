@@ -432,6 +432,53 @@ func TestFillBetweenWhereSplitsContiguousRegions(t *testing.T) {
 	}
 }
 
+func TestFill2DSingleRegionUsesMatplotlibCollectionPlacement(t *testing.T) {
+	fill := &Fill2D{
+		X:     []float64{0, 1},
+		Y1:    []float64{1, 1},
+		Y2:    []float64{0, 0},
+		Color: render.Color{A: 1},
+	}
+	ctx := createTestDrawContext()
+	ctx.FigureRect = geom.Rect{Max: geom.Pt{X: 500, Y: 500}}
+	r := &recordingRenderer{}
+
+	fill.Draw(r, ctx)
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("path calls = %d, want 1", len(r.pathCalls))
+	}
+	want := ctx.DataToPixel.Apply(geom.Pt{X: 0, Y: 0})
+	want.X += 0.5
+	want.Y -= 0.5
+	if got := r.pathCalls[0].path.V[0]; got != want {
+		t.Fatalf("single-region first vertex = %+v, want Matplotlib optimized collection placement %+v", got, want)
+	}
+}
+
+func TestFill2DMultiRegionUsesMatplotlibGenericCollectionPlacement(t *testing.T) {
+	fill := &Fill2D{
+		X:     []float64{0, 1, 2, 3, 4},
+		Y1:    []float64{1, 1, 1, 1, 1},
+		Y2:    []float64{0, 0, 0, 0, 0},
+		Where: []bool{true, true, false, true, true},
+		Color: render.Color{A: 1},
+	}
+	ctx := createTestDrawContext()
+	ctx.FigureRect = geom.Rect{Max: geom.Pt{X: 500, Y: 500}}
+	r := &recordingRenderer{}
+
+	fill.Draw(r, ctx)
+
+	if len(r.pathCalls) != 2 {
+		t.Fatalf("path calls = %d, want two drawable contiguous regions", len(r.pathCalls))
+	}
+	want := ctx.DataToPixel.Apply(geom.Pt{X: 0, Y: 0})
+	if got := r.pathCalls[0].path.V[0]; got != want {
+		t.Fatalf("multi-region first vertex = %+v, want Matplotlib generic collection placement %+v", got, want)
+	}
+}
+
 func TestFillBetweenWhereInterpolatesCrossingBoundary(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(unitRect())
 	fill := ax.FillBetween(

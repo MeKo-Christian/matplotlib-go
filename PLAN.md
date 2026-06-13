@@ -538,6 +538,19 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `annotation_legend_offsetbox_gallery` current reference RMSE moved
             6.56 → 6.52; remaining W5.2 residual is mostly text, hatch, image
             kernel, and thin-stroke pixels rather than large offsetbox geometry.
+            2026-06-13 update: improved the annotation/legend gallery and
+            refreshed stale legend goldens after shared marker fixes. The
+            `annotation_legend_offsetbox_gallery` showcase now converts
+            Matplotlib point-unit explicit linewidths in the Go example
+            (`linewidth`, arrow width, bbox frame width, drawing-area patch
+            widths, and proxy patch edge width) and `AnnotationBbox` defaults
+            its frame/arrow linewidths to Matplotlib's 1 pt
+            (`TestAnnotationBboxDefaultWidthsMatchMatplotlibPoints`).
+            Current reference RMSE moved 6.53 → 5.32 but remains above target;
+            the residual is concentrated in thin antialiased text/stroke edges.
+            `legend_layout_matrix` was regolded after the errorbar cap
+            semantics fix and moved 6.49 → 6.32; it remains above target with
+            residual legend/hatch/thin-stroke pixels.
       - [ ] **W5.3 — Axes helpers, lines, markers, and label placement.** Tackle
             `plot_variants`, `axes_convenience_helpers`, `line2d_markers`,
             `specialty_artists`, `specialty_depth`, and
@@ -611,6 +624,21 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             change was needed. Current reference RMSE moved 5.31 → 4.86
             (`TestGolden/specialty_artists`, `TestMatplotlibRef/specialty_artists`,
             `TestReferenceCompare/specialty_artists`).
+            2026-06-13 update: moved `specialty_depth` below the W5 target,
+            6.92 → 4.27. The main root causes were errorbar limit and cap
+            marker semantics: Matplotlib uses filled `CARET*BASE` Line2D
+            markers for limit indicators and treats `capsize` as half of the
+            cap marker length (`markersize=2*capsize`), while the Go path had
+            open stroked carets and full-length caps. Also aligned default
+            point-unit linewidths for hexbin polygon edges and boxplot
+            sub-artists while keeping violin body strokes at the rendered
+            reference-matching collection width. Guard coverage:
+            `TestErrorBarLimitCaretUsesEndpointAsBase`,
+            `TestErrorBarUpperLimitCaretPointsDownFromEndpoint`,
+            `TestErrorBarCapSizeIsHalfMarkerLength`,
+            `TestAxesHexbinAggregatesValues`,
+            `TestAxesBoxPlotDefaultMedianStyleMatchesMatplotlib`, and
+            `TestAxesViolinplotAddsCollections`.
       - [ ] **W5.4 — Fill and collection edge semantics.** Tackle
             `fill_basic`, `fill_variants`, `fill_stacked`, `clip_path_batch`,
             and any related residual in `mixed_raster_vector` by translating the
@@ -638,6 +666,16 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `axes_option_breadth_17_75_3` 5.24 → 3.95. `fill_basic` remains
             6.06; its residual is a separate thick-edge antialias/rasterization
             mismatch rather than a fixture-order or linewidth-unit mismatch.
+            2026-06-13 update: moved `fill_basic` below the W5 target by
+            matching Matplotlib's single-path `FillBetweenPolyCollection`
+            renderer placement. Matplotlib's optimized collection path renders a
+            single polygon as a stamped marker with a device-space half-pixel
+            offset; in the Go y-up core coordinates that is `(+0.5, -0.5)`
+            before the AGG backend y-flip. The fix is scoped to one-region fill
+            paths and leaves multi-region masks on generic collection placement
+            (`TestFill2DSingleRegionUsesMatplotlibCollectionPlacement`,
+            `TestFill2DMultiRegionUsesMatplotlibGenericCollectionPlacement`).
+            `fill_basic` current reference RMSE moved 6.06 → 0.24.
       - [ ] **W5.5 — Contour, triangulation, and mesh labels.** Tackle
             `mesh_contour_tri` and any W5.1-linked residuals in
             `arrays_showcase` by comparing `core/contour*`, triangulation, image
@@ -646,6 +684,18 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             Preserve the W1 binary-coverage antialias behavior and isolate any
             remaining mismatch to geometry, color normalization, or label
             placement before changing rendering code.
+            2026-06-13 update: moved `mesh_contour_tri` below the W5 target.
+            The residual had three contour-side causes: explicit `TriContour`
+            sets inherited z=0 and rendered below tripcolor/triplot instead of
+            Matplotlib line z-order; closed structured contour loops were
+            stitched with a different start point, moving inline labels to the
+            lower half of the loop; and rectilinear `Contourf` was routed
+            through triangle band polygons instead of structured quad/marching
+            square band polygons, overfilling the below-low corner regions.
+            Guard coverage: `TestAxesTriangulationHelpers`,
+            `TestContourInlineLabelsMatchMatplotlibMeshFixturePositions`, and
+            `TestContourfUsesStructuredGridBandPolygons`. Current reference
+            RMSE moved 6.91 → 2.87.
       - [ ] **W5.6 — Annotation and MathText tail cases.** Tackle
             `annotation_composition`, `mathtext_inline_labels`, and
             `mathtext_basic` only after W5.2/W5.3 have ruled out shared

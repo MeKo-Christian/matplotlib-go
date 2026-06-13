@@ -55,7 +55,7 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 		capSizePx = 0
 	}
 	limitMarkerSizePx := capSizePx * 2
-	capHalf := capSizePx * 0.5
+	capHalf := capSizePx
 
 	alpha := e.Alpha
 	if alpha <= 0 {
@@ -324,33 +324,22 @@ func drawLimitCaret(r render.Renderer, ctx *DrawContext, basePt geom.Pt, dirX, d
 		return
 	}
 	base := ctx.DataToPixel.Apply(basePt)
-	length := markerSize * 0.75
-	half := markerSize * 0.5
-	var p1, apex, p2 geom.Pt
+	var marker geom.Path
 	switch {
 	case dirX > 0:
-		p1 = geom.Pt{X: base.X, Y: base.Y - half}
-		apex = geom.Pt{X: base.X + length, Y: base.Y}
-		p2 = geom.Pt{X: base.X, Y: base.Y + half}
+		marker = markerCaretPath(90, true)
 	case dirX < 0:
-		p1 = geom.Pt{X: base.X, Y: base.Y - half}
-		apex = geom.Pt{X: base.X - length, Y: base.Y}
-		p2 = geom.Pt{X: base.X, Y: base.Y + half}
+		marker = markerCaretPath(270, true)
 	case dirY > 0:
-		p1 = geom.Pt{X: base.X - half, Y: base.Y}
-		apex = geom.Pt{X: base.X, Y: base.Y - length}
-		p2 = geom.Pt{X: base.X + half, Y: base.Y}
+		marker = markerCaretPath(180, true)
 	default:
-		p1 = geom.Pt{X: base.X - half, Y: base.Y}
-		apex = geom.Pt{X: base.X, Y: base.Y + length}
-		p2 = geom.Pt{X: base.X + half, Y: base.Y}
+		marker = markerCaretPath(0, true)
 	}
 	markerPaint := *paint
-	markerPaint.Fill = render.Color{}
-	r.Path(geom.Path{
-		C: []geom.Cmd{geom.MoveTo, geom.LineTo, geom.LineTo},
-		V: []geom.Pt{p1, apex, p2},
-	}, &markerPaint)
+	markerPaint.Fill = paint.Stroke
+	markerPaint.LineJoin = render.JoinMiter
+	markerPaint.LineCap = render.CapButt
+	r.Path(scaleAndTranslatePath(marker, markerSize, base), &markerPaint)
 }
 
 func drawErrorbarCapMarker(r render.Renderer, ctx *DrawContext, dataPt geom.Pt, vertical bool, halfSize float64, paint *render.Paint) {

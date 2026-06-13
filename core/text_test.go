@@ -2146,6 +2146,23 @@ func TestAnnotationBboxDrawsTextFrameAndArrow(t *testing.T) {
 	}
 }
 
+func TestAnnotationBboxDefaultWidthsMatchMatplotlibPoints(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(unitRect())
+
+	box := ax.AnnotationBbox("box", 0.25, 0.75, AnnotationBboxOptions{Arrow: true})
+	if box == nil {
+		t.Fatal("AnnotationBbox returned nil")
+	}
+	want := pointsToPixels(fig.RC, 1)
+	if box.LineWidth != want {
+		t.Fatalf("annotation-box linewidth = %v, want Matplotlib 1 pt = %v px", box.LineWidth, want)
+	}
+	if box.ArrowWidth != want {
+		t.Fatalf("annotation-box arrow linewidth = %v, want Matplotlib 1 pt = %v px", box.ArrowWidth, want)
+	}
+}
+
 func TestAnnotationBboxArrowStartsFromBoxRelposBeforePatchClip(t *testing.T) {
 	ctx := createTestDrawContext()
 	boxPos := geom.Pt{X: 0.44, Y: 0.64}

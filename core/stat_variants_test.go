@@ -213,8 +213,8 @@ func TestAxesBoxPlotDefaultMedianStyleMatchesMatplotlib(t *testing.T) {
 	if box.MedianColor != wantColor {
 		t.Fatalf("median color = %+v, want Matplotlib boxplot.medianprops.color C1 %+v", box.MedianColor, wantColor)
 	}
-	if box.MedianWidth != 1.0 {
-		t.Fatalf("median width = %v, want Matplotlib boxplot.medianprops.linewidth 1.0", box.MedianWidth)
+	if got, want := box.MedianWidth, pointsToPixels(ax.resolvedRC(), 1); got != want {
+		t.Fatalf("median width = %v, want Matplotlib boxplot.medianprops.linewidth %v px", got, want)
 	}
 }
 

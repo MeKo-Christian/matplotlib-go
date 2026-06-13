@@ -501,7 +501,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 
 	edgeWidth := b.EdgeWidth
 	if edgeWidth <= 0 {
-		edgeWidth = 1.0
+		edgeWidth = pointsToPixels(ctx.RC, 1)
 	}
 	whiskerWidth := b.WhiskerWidth
 	if whiskerWidth <= 0 {
@@ -517,7 +517,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 	flierEdgeWidth := b.FlierEdgeWidth
 	if flierEdgeWidth <= 0 {
-		flierEdgeWidth = math.Max(1.0, whiskerWidth*0.6)
+		flierEdgeWidth = math.Max(pointsToPixels(ctx.RC, 1), whiskerWidth*0.6)
 	}
 	alpha := b.Alpha
 	if alpha <= 0 {

@@ -67,7 +67,7 @@ func (a *Axes) Hexbin(x, y []float64, opts ...HexbinOptions) *HexbinCollection {
 		MinCount:  1,
 		Colormap:  "viridis",
 		Alpha:     1,
-		LineWidth: 0.75,
+		LineWidth: pointsToPixels(a.resolvedRC(), 1),
 	}
 	if len(opts) > 0 {
 		cfg = opts[0]
@@ -84,7 +84,7 @@ func (a *Axes) Hexbin(x, y []float64, opts ...HexbinOptions) *HexbinCollection {
 			cfg.Alpha = 1
 		}
 		if cfg.LineWidth <= 0 {
-			cfg.LineWidth = 0.75
+			cfg.LineWidth = pointsToPixels(a.resolvedRC(), 1)
 		}
 	}
 	xscale := normalizeHexScale(cfg.XScale)
