@@ -327,7 +327,7 @@ func (l *Legend) draw(r render.Renderer, ctx *DrawContext) {
 	if l.FrameOn {
 		boxPath := pixelRectPath(box)
 		if l.CornerRadius > 0 {
-			boxPath = roundedRectPath(box, l.CornerRadius)
+			boxPath = matplotlibRoundBoxPath(box, l.CornerRadius)
 		}
 		r.Path(boxPath, &render.Paint{
 			Fill:      l.BackgroundColor,

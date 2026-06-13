@@ -682,6 +682,29 @@ func TestLegendFrameUsesMatplotlibSnapAuto(t *testing.T) {
 	t.Fatal("legend frame paint was not drawn")
 }
 
+func TestLegendFrameUsesMatplotlibRoundBoxStyle(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.1, Y: 0.1},
+		Max: geom.Pt{X: 0.9, Y: 0.9},
+	})
+	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	legend := ax.AddLegend()
+
+	var r legendRecordingRenderer
+	DrawFigure(fig, &r)
+
+	for i, paint := range r.paints {
+		if paint.Fill == legend.BackgroundColor && paint.Stroke == legend.BorderColor && paint.LineWidth == legend.BorderWidth {
+			if got := countPathCmd(r.paths[i], geom.QuadTo); got != 4 {
+				t.Fatalf("legend frame quadratic corners = %d, want Matplotlib BoxStyle.Round with four CURVE3 corners; commands=%v", got, r.paths[i].C)
+			}
+			return
+		}
+	}
+	t.Fatal("legend frame path was not drawn")
+}
+
 func TestLegendSampleCentersUseMatplotlibHandleBaseline(t *testing.T) {
 	legend := NewLegend(nil)
 	legend.Location = LegendUpperLeft

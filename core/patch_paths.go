@@ -161,6 +161,35 @@ func roundedRectPath(rect geom.Rect, radius float64) geom.Path {
 	return path
 }
 
+func matplotlibRoundBoxPath(rect geom.Rect, radius float64) geom.Path {
+	rect = normalizeRect(rect)
+	if rect.W() == 0 || rect.H() == 0 {
+		return geom.Path{}
+	}
+	maxRadius := math.Min(rect.W(), rect.H()) / 2
+	if radius <= 0 {
+		return patchRectPath(rect)
+	}
+	if radius > maxRadius {
+		radius = maxRadius
+	}
+
+	left, bottom := rect.Min.X, rect.Min.Y
+	right, top := rect.Max.X, rect.Max.Y
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: left + radius, Y: bottom})
+	path.LineTo(geom.Pt{X: right - radius, Y: bottom})
+	path.QuadTo(geom.Pt{X: right, Y: bottom}, geom.Pt{X: right, Y: bottom + radius})
+	path.LineTo(geom.Pt{X: right, Y: top - radius})
+	path.QuadTo(geom.Pt{X: right, Y: top}, geom.Pt{X: right - radius, Y: top})
+	path.LineTo(geom.Pt{X: left + radius, Y: top})
+	path.QuadTo(geom.Pt{X: left, Y: top}, geom.Pt{X: left, Y: top - radius})
+	path.LineTo(geom.Pt{X: left, Y: bottom + radius})
+	path.QuadTo(geom.Pt{X: left, Y: bottom}, geom.Pt{X: left + radius, Y: bottom})
+	path.Close()
+	return path
+}
+
 func ellipsePath(width, height float64) geom.Path {
 	rx := math.Abs(width) / 2
 	ry := math.Abs(height) / 2

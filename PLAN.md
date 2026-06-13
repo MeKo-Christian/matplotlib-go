@@ -471,9 +471,8 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
       placement. Keep fixing by upstream code parity (`legend.py`,
       `offsetbox.py`, `axes/_axes.py`, `collections.py`, `contour.py`,
       `image.py`) rather than fixture-specific tuning.
-      Current open work is narrow: `legend_layout_matrix`,
-      `mixed_raster_vector`, `clip_path_batch` remeasurement/closure, and
-      W5-wide regold/tolerance ratcheting.
+      Current open work is narrow: `legend_layout_matrix` and W5-wide
+      regold/tolerance ratcheting.
       - [x] **W5 status ledger — closed below RMSE 5.** Closed in W5:
             `layout_bbox_helpers` 0.78, `axes_convenience_helpers` 3.09,
             `plot_variants` 3.69, `line2d_markers` 4.80,
@@ -483,11 +482,10 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `annotation_composition` 1.42, `mathtext_inline_labels` 4.10,
             `axes_option_breadth_17_75_3` 3.95,
             `annotation_legend_offsetbox_gallery` 4.48, and
-            `widgets_gallery` 4.63, `arrays_showcase` 2.82, and
-            `clip_path_batch` 4.58.
+            `widgets_gallery` 4.63, `arrays_showcase` 2.82,
+            `clip_path_batch` 4.58, and `mixed_raster_vector` 3.06.
       - [ ] **W5 status ledger — remaining open cases.** Finish or remeasure:
-            `legend_layout_matrix` (last recorded 6.28) and
-            `mixed_raster_vector` (last recorded 6.25).
+            `legend_layout_matrix` (last recorded 6.28).
       - [x] **W5.1 — Baseline, visual triage, and clustering.** Regenerate and
             inspect focused `TestReferenceCompare` output for every W5 case;
             use the committed diff artifacts under
@@ -955,6 +953,14 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             probes show the polar data area is already below RMSE 5; the
             remaining full-image residual is dominated by the polar title,
             legend text/sample antialiasing, and thin vector strokes.
+            2026-06-13 update: closed `mixed_raster_vector` by snapping the
+            polar title baseline upward to Matplotlib's rasterized pixel row
+            (`TestPolarTitleBaselineSnapsUpToMatplotlibPixelRow`). Focused
+            verification:
+            `RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run
+            'Test(Golden|MatplotlibRef|ReferenceCompare)/mixed_raster_vector$'
+            -count=1 -v`; refreshed reference compare is RMSE 3.06, PSNR
+            55.50 dB.
       - [ ] **W5.8 — Verify, regold, and ratchet.** After each root-cause group
             lands, regold only the affected cases, run focused
             `TestReferenceCompare` targets plus neighboring cases in the same
