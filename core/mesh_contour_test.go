@@ -1463,17 +1463,17 @@ func TestContourRotatedTextAnchorKeepsCenterFixed(t *testing.T) {
 	angle := math.Pi / 6
 	layout := singleLineTextLayout{
 		TextLineLayout: render.TextLineLayout{
-			Height: 12,
+			Width:   24,
+			Height:  12,
+			Ascent:  9,
+			Descent: 3,
 		},
 	}
 
 	anchor := contourRotatedTextAnchor(center, layout, angle)
-	got := geom.Pt{
-		X: anchor.X - 6*math.Sin(angle),
-		Y: anchor.Y - 6*math.Cos(angle),
-	}
-	if !approx(got.X, center.X, 1e-12) || !approx(got.Y, center.Y, 1e-12) {
-		t.Fatalf("rotated center = %+v, want %+v", got, center)
+	want := rotatedTextBackendAnchorFromP(center, layout, TextAlignCenter, textLayoutVAlignCenter, angle, false)
+	if !pointsApprox(anchor, want, 1e-12) {
+		t.Fatalf("contour rotated text anchor = %+v, want center-aligned backend anchor %+v", anchor, want)
 	}
 }
 

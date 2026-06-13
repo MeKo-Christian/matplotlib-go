@@ -1806,19 +1806,7 @@ func contourInterpolateAtClosedCPL(points []geom.Pt, cpls []float64, target floa
 }
 
 func contourRotatedTextAnchor(center geom.Pt, layout singleLineTextLayout, angle float64) geom.Pt {
-	height := layout.Height
-	if layout.HaveInkBounds && layout.InkBounds.H > 0 {
-		height = layout.InkBounds.H
-	}
-	if height <= 0 {
-		return center
-	}
-
-	halfHeight := height * 0.5
-	return geom.Pt{
-		X: center.X + halfHeight*math.Sin(angle),
-		Y: center.Y + halfHeight*math.Cos(angle),
-	}
+	return rotatedTextBackendAnchorFromP(center, layout, TextAlignCenter, textLayoutVAlignCenter, angle, false)
 }
 
 func contourCumulativeDisplayLengths(points []geom.Pt) []float64 {
