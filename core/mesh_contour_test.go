@@ -613,6 +613,86 @@ func TestStructuredContourOpenBoundaryPathsMatchContourpyOrder(t *testing.T) {
 	}
 }
 
+func TestStructuredContourClosedPathStartMatchesContourpyOrder(t *testing.T) {
+	const (
+		rows = 8
+		cols = 10
+	)
+	data := make([][]float64, rows)
+	for y := 0; y < rows; y++ {
+		data[y] = make([]float64, cols)
+		yy := float64(y) / float64(rows-1)
+		for x := 0; x < cols; x++ {
+			xx := float64(x) / float64(cols-1)
+			data[y][x] = 0.55 + 0.25*math.Sin((xx*2.3+0.35)*math.Pi) + 0.20*math.Cos((yy*2.8-0.35*0.4)*math.Pi)
+		}
+	}
+
+	x := []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+	y := []float64{0, 1, 2, 3, 4, 5, 6, 7}
+	tests := []struct {
+		name  string
+		level float64
+		want  []geom.Pt
+	}{
+		{
+			name:  "small loop",
+			level: 0.15,
+			want: []geom.Pt{
+				{X: 4, Y: 2.734446720898368},
+				{X: 3.81083871078257, Y: 3},
+				{X: 4, Y: 3.1551055422834224},
+				{X: 5, Y: 3.1551055422834224},
+				{X: 5.18916128921743, Y: 3},
+				{X: 5, Y: 2.7344467208983674},
+				{X: 4, Y: 2.734446720898368},
+			},
+		},
+		{
+			name:  "mid loop",
+			level: 0.45,
+			want: []geom.Pt{
+				{X: 3, Y: 1.6315577244440652},
+				{X: 2.5598249700346554, Y: 2},
+				{X: 2.047105137818292, Y: 3},
+				{X: 2.9249223106066436, Y: 4},
+				{X: 3, Y: 4.071147346184701},
+				{X: 4, Y: 4.753246180135713},
+				{X: 5, Y: 4.753246180135713},
+				{X: 6, Y: 4.071147346184701},
+				{X: 6.075077689393357, Y: 4},
+				{X: 6.952894862181708, Y: 3},
+				{X: 6.440175029965345, Y: 2},
+				{X: 6, Y: 1.6315577244440647},
+				{X: 5, Y: 1.0290800106575034},
+				{X: 4, Y: 1.0290800106575034},
+				{X: 3, Y: 1.6315577244440652},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			polylines, levels := contourGridPolylines(x, y, data, []float64{tc.level})
+			var got []geom.Pt
+			for i, level := range levels {
+				if math.Abs(level-tc.level) <= 1e-9 && contourPolylineClosed(polylines[i]) {
+					got = polylines[i]
+					break
+				}
+			}
+			if len(got) != len(tc.want) {
+				t.Fatalf("level %v closed path length = %d, want %d: %+v", tc.level, len(got), len(tc.want), got)
+			}
+			for i := range tc.want {
+				if !pointsApprox(got[i], tc.want[i], 1e-6) {
+					t.Fatalf("level %v closed path point %d = %+v, want contourpy %+v (path %+v)", tc.level, i, got[i], tc.want[i], got)
+				}
+			}
+		})
+	}
+}
+
 func TestContourInlineLabelsMatchMatplotlibArraysShowcaseLevel06(t *testing.T) {
 	const (
 		rows = 8

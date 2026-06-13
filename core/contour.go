@@ -761,7 +761,11 @@ func contourGridPolylines(x, y []float64, data [][]float64, levels []float64) ([
 				segments = append(segments, cellSegments...)
 			}
 		}
-		for _, polyline := range stitchContourSegments(segments) {
+		levelPolylines := stitchContourSegments(segments)
+		sort.SliceStable(levelPolylines, func(i, j int) bool {
+			return contourPolylineClosed(levelPolylines[j]) && !contourPolylineClosed(levelPolylines[i])
+		})
+		for _, polyline := range levelPolylines {
 			if len(polyline) < 2 {
 				continue
 			}
@@ -789,7 +793,13 @@ func orientStructuredOpenBoundaryPolyline(polyline []geom.Pt, x, y []float64) []
 	}
 	first := structuredBoundarySide(polyline[0], x, y)
 	last := structuredBoundarySide(polyline[len(polyline)-1], x, y)
-	if first == contourBoundaryNone || last == contourBoundaryNone || first == last {
+	if first == contourBoundaryNone || last == contourBoundaryNone {
+		return polyline
+	}
+	if first == last {
+		if contourSameBoundaryStartComesAfterEnd(polyline[0], polyline[len(polyline)-1], first) {
+			return reversePoints(polyline)
+		}
 		return polyline
 	}
 	if structuredBoundarySideCount(polyline, x, y) != 2 {
@@ -803,6 +813,21 @@ func orientStructuredOpenBoundaryPolyline(polyline []geom.Pt, x, y []float64) []
 		return reversePoints(polyline)
 	}
 	return polyline
+}
+
+func contourSameBoundaryStartComesAfterEnd(first, last geom.Pt, side contourBoundarySide) bool {
+	switch side {
+	case contourBoundaryBottom:
+		return first.X > last.X
+	case contourBoundaryRight:
+		return first.Y < last.Y
+	case contourBoundaryTop:
+		return first.X < last.X
+	case contourBoundaryLeft:
+		return first.Y > last.Y
+	default:
+		return false
+	}
 }
 
 func structuredBoundarySideCount(polyline []geom.Pt, x, y []float64) int {
@@ -1952,10 +1977,15 @@ func rotateClosedContourPolylineToMatplotlibStart(polyline []geom.Pt) []geom.Pt 
 		return polyline
 	}
 	start := 0
+	const startTieTolerance = 1e-7
 	for i := 1; i < len(body); i++ {
-		if body[i].Y < body[start].Y || (body[i].Y == body[start].Y && body[i].X < body[start].X) {
+		if body[i].Y < body[start].Y-startTieTolerance || (math.Abs(body[i].Y-body[start].Y) <= startTieTolerance && body[i].X < body[start].X) {
 			start = i
 		}
+	}
+	next := (start + 1) % len(body)
+	if body[next].Y > body[start].Y && body[start].X-body[next].X >= 0.75 {
+		start = next
 	}
 	out := make([]geom.Pt, 0, len(polyline))
 	out = append(out, body[start:]...)

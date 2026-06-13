@@ -264,7 +264,7 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `go test ./core -run 'TestAxesAx(HLine_UsesBlendedCoordinates|HLine_ScalesDashesLikeMatplotlibLine2D|HLine_UsesMatplotlibLine2DSnap|Line_ClipsToCurrentView)$|TestSpinePixelEndpoints(RightBoundaryUsesMatplotlibPathSnapper|RightBoundaryRoundsPastHalfPixel|HorizontalBoundariesUseDeviceSpaceSnap)$'`,
             targeted `TestGolden` update for the projection cases, and
             `TestReferenceCompare/(geo_lambert_axes|projection_toolkit_gallery|axisartist_showcase|geo_mollweide_axes|geo_aitoff_axes|geo_hammer_axes|polar_axes|radar_basic|skewt_basic)$`.
-- [ ] **W3 — ticks, scales, and inset placement.**
+- [x] **W3 — ticks, scales, and inset placement.**
       `ticks_scales_formatters_gallery` 17.6, `date_concise_intraday_labels`
       5.8. Focus on the large, structural differences first: tick locations,
       axes rectangles, and text/formatter output. Small line/grid blending
