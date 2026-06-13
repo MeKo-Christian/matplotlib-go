@@ -422,6 +422,13 @@ func TestAxes_SetScaleInstallsFunctionLogLocatorDefaults(t *testing.T) {
 	if formatter, ok := axes.XAxis.Formatter.(LogFormatterMathText); !ok || !formatter.SciNotation {
 		t.Fatalf("x formatter = %#v, want scientific LogFormatterMathText", axes.XAxis.Formatter)
 	}
+	minor, ok := axes.XAxis.MinorLocator.(LogLocator)
+	if !ok {
+		t.Fatalf("x minor locator = %T, want LogLocator", axes.XAxis.MinorLocator)
+	}
+	if minor.Base != 10 || minor.SubsMode != "auto" {
+		t.Fatalf("x minor locator = %+v, want base 10 auto subs", minor)
+	}
 }
 
 func TestAxes_SetLimPreservesScaleType(t *testing.T) {

@@ -208,7 +208,7 @@ func configureScaleAxis(axis *Axis, scaleName string, cfg transform.ScaleOptions
 		if len(cfg.Subs) > 0 {
 			axis.MinorLocator = LogLocator{Base: cfg.Base, Minor: true, Subs: cfg.Subs}
 		} else {
-			axis.MinorLocator = nil
+			axis.MinorLocator = LogLocator{Base: cfg.Base, Minor: true, SubsMode: "auto"}
 		}
 	case "symlog":
 		axis.Locator = SymLogLocator{Base: cfg.Base, LinThresh: cfg.LinThresh}

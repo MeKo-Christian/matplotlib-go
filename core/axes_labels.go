@@ -276,7 +276,6 @@ func yLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 	if aligned, ok := alignment.yLabelExtents[alignmentKey(side, spinePixelX(side, px))]; ok {
 		leftExtent = aligned
 	}
-	leftExtent = math.Ceil(leftExtent)
 	anchor.X = leftExtent - axisLabelPadPx(ctx)
 	return anchor
 }
