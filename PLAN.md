@@ -432,21 +432,41 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `text_layout_gallery` catalog tolerance downward from its current
             broad value only after the rendered-vs-reference RMSE is under the
             W4 target.
-- [ ] **W5 — the 5–7.3 band (≈ 21 cases).** `layout_bbox_helpers` 7.3,
-      `plot_variants` 7.2, `axes_convenience_helpers` 7.2, `legend_layout_matrix`
-      7.1, `line2d_markers` 7.0, `fill_stacked` 6.9, `specialty_depth` 6.9,
-      `mesh_contour_tri` 6.9 (improved from 7.1 by the W1 antialiasing port;
-      remaining residual is contour band geometry/labels), `mixed_raster_vector`
-      6.4, `arrays_showcase` 6.3, `widgets_gallery` 6.2, `fill_basic` 6.1,
-      `annotation_legend_offsetbox_gallery` 6.0, `clip_path_batch` 6.0,
-      `mathtext_inline_labels` 5.9, `annotation_composition` 5.8,
-      `fill_variants` 5.5, `mathtext_basic` 5.3,
-      `specialty_artists` 5.3, `axes_option_breadth_17_75_3` 5.3
+- [ ] **W5 — the 5–7.3 band cleanup.** Original W5 scope covered
+      `layout_bbox_helpers`, `plot_variants`, `axes_convenience_helpers`,
+      `legend_layout_matrix`, `line2d_markers`, `fill_stacked`,
+      `specialty_depth`, `mesh_contour_tri`, `mixed_raster_vector`,
+      `arrays_showcase`, `widgets_gallery`, `fill_basic`,
+      `annotation_legend_offsetbox_gallery`, `clip_path_batch`,
+      `mathtext_inline_labels`, `annotation_composition`, `fill_variants`,
+      `mathtext_basic`, `specialty_artists`, and
+      `axes_option_breadth_17_75_3`
       (`unstructured_showcase` dropped to 4.2 via the W1 antialiasing port).
-      Expect a few shared root causes (legend/offsetbox layout, fill-edge
-      handling, label placement) rather than independent bugs: diagnose each
-      diff first, group by root cause, then fix each group as an upstream port
-      (`legend.py`, `offsetbox.py`, collection/fill paths).
+      Shared root causes have been the expected ones: legend/offsetbox layout,
+      fill-edge handling, label placement, marker semantics, and contour/image
+      placement. Keep fixing by upstream code parity (`legend.py`,
+      `offsetbox.py`, `axes/_axes.py`, `collections.py`, `contour.py`,
+      `image.py`) rather than fixture-specific tuning.
+      Current open work is narrow: `legend_layout_matrix`,
+      `annotation_legend_offsetbox_gallery`, `mixed_raster_vector`,
+      `arrays_showcase`, `clip_path_batch` remeasurement/closure, and W5-wide
+      regold/tolerance ratcheting.
+      - [x] **W5 status ledger — closed below RMSE 5.** Closed in W5:
+            `layout_bbox_helpers` 0.78, `axes_convenience_helpers` 3.09,
+            `plot_variants` 3.69, `line2d_markers` 4.80,
+            `specialty_artists` 4.86, `specialty_depth` 4.27,
+            `fill_stacked` 1.86, `fill_variants` 3.16, `fill_basic` 0.24,
+            `mesh_contour_tri` 2.87, `mathtext_basic` 4.77,
+            `annotation_composition` 1.42, `mathtext_inline_labels` 4.10,
+            `axes_option_breadth_17_75_3` 3.95,
+            `annotation_legend_offsetbox_gallery` 4.48, and
+            `widgets_gallery` 4.63.
+      - [ ] **W5 status ledger — remaining open cases.** Finish or remeasure:
+            `legend_layout_matrix` (last recorded 6.32),
+            `mixed_raster_vector` (last recorded 6.26), `arrays_showcase`
+            (still above target with structural contour-label residual), and
+            `clip_path_batch` (last baseline 5.99; verify after fill/collection
+            work before deciding whether a core fix is still needed).
       - [x] **W5.1 — Baseline, visual triage, and clustering.** Regenerate and
             inspect focused `TestReferenceCompare` output for every W5 case;
             use the committed diff artifacts under
@@ -493,6 +513,35 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             and adjacent text/bbox helpers into `core/legend.go`,
             `core/offsetbox.go`, `core/annotation.go`, and `internal/geom`.
             Verify helper-only unit coverage before regolding gallery cases.
+            - [x] **W5.2.1 — Scatter legend sample offsets.** Port
+                  `HandlerNpoints.get_xdata` and `Legend._scatteryoffsets`;
+                  covered by
+                  `TestLegendScatterSampleCentersUseMatplotlibOffsets`.
+            - [x] **W5.2.2 — Patch dash scaling and bbox helper closure.**
+                  Port Matplotlib patch dash scaling and restore upstream dash
+                  units in `layout_bbox_helpers`; case is now RMSE 0.779.
+            - [x] **W5.2.3 — Legend marker metadata.** Carry source marker
+                  size/prototype into errorbar and scatter legend handlers;
+                  covered by
+                  `TestLegendErrorBarMarkerSampleUsesOriginalMarkerSize` and
+                  `TestLegendScatterSampleUsesSourceCollectionSize`.
+            - [x] **W5.2.4 — OffsetImage/BboxImage interpolation defaults.**
+                  Match Matplotlib `antialiased` defaults for anchored packer
+                  images and `AnnotationBbox` image content while preserving
+                  explicit interpolation.
+            - [x] **W5.2.5 — Annotation/legend point-unit widths.** Convert
+                  explicit annotation gallery linewidths and default
+                  `AnnotationBbox` frame/arrow widths to Matplotlib point
+                  units.
+            - [x] **W5.2.6 — Anchored packer alignment default.** Preserve the
+                  Matplotlib/Go center default when `AnchoredPackerOptions` is
+                  supplied without explicit alignment; this moved
+                  `annotation_legend_offsetbox_gallery` to RMSE 4.48.
+            - [ ] **W5.2.7 — Remaining legend matrix residual.** Close or
+                  classify `legend_layout_matrix` (last recorded RMSE 6.32),
+                  with focus on residual legend/hatch/thin-stroke/text pixels.
+                  Re-run the focused reference compare before choosing a core
+                  fix or documenting a renderer exception.
             2026-06-13 progress: ported Matplotlib
             `legend_handler.HandlerNpoints.get_xdata` /
             `Legend._scatteryoffsets` behavior for scatter legend handles:
@@ -551,7 +600,16 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `legend_layout_matrix` was regolded after the errorbar cap
             semantics fix and moved 6.49 → 6.32; it remains above target with
             residual legend/hatch/thin-stroke pixels.
-      - [ ] **W5.3 — Axes helpers, lines, markers, and label placement.** Tackle
+            2026-06-13 update: moved
+            `annotation_legend_offsetbox_gallery` below the W5 target,
+            5.32 → 4.48. Root cause was `AnchoredPackerOptions` zero-value
+            merging: any supplied options struct silently overwrote the
+            Matplotlib/Go center default with `PackAlignStart`, putting the
+            HPacker text one pad too high. `PackAlignDefault` now represents an
+            omitted alignment, preserving center while explicit
+            `PackAlignStart` remains available
+            (`TestAnchoredPackerOptionsKeepMatplotlibCenterAlignDefault`).
+      - [x] **W5.3 — Axes helpers, lines, markers, and label placement.** Tackle
             `plot_variants`, `axes_convenience_helpers`, `line2d_markers`,
             `specialty_artists`, `specialty_depth`, and
             `axes_option_breadth_17_75_3` where W5.1 identifies shared
@@ -559,6 +617,25 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             `core/axes*.go`, marker-path generation, zorder/depth ordering, and
             autoscale/sticky-edge behavior against upstream
             `lib/matplotlib/{axes/_axes.py,lines.py,markers.py,artist.py}`.
+            - [x] **W5.3.1 — Violin/stat helpers and collection snapping.**
+                  Close `axes_convenience_helpers` by porting violin defaults
+                  and `LineCollection` `SnapAuto` behavior.
+            - [x] **W5.3.2 — Plot variants dashes, caps, steps, spans, and
+                  bar labels.** Close `plot_variants` and contribute to
+                  `axes_option_breadth_17_75_3`.
+            - [x] **W5.3.3 — Line2D marker parity.** Close `line2d_markers`
+                  through explicit capstyle, marker normalization, half-filled
+                  marker edges, legend marker snap/stroke, and mathtext marker
+                  deferral.
+            - [x] **W5.3.4 — Specialty artists stale golden.** Refresh
+                  `specialty_artists` after shared helper/artist parity fixes;
+                  no extra core fix was needed.
+            - [x] **W5.3.5 — Specialty depth defaults.** Close
+                  `specialty_depth` through errorbar limit/cap marker semantics,
+                  hexbin edge widths, and boxplot defaults.
+            - [x] **W5.3.6 — Axes option breadth remeasure.** Confirm
+                  `axes_option_breadth_17_75_3` is below target after shared
+                  bar-label and fill fixes.
             2026-06-13 progress: moved `axes_convenience_helpers` below the W5
             target by porting Matplotlib violin/statistical helper defaults and
             collection snapping. `Axes.Violin` now reuses one default cycle color
@@ -733,6 +810,16 @@ remain above RMSE 5**, covered by workstreams W2b–W5.
             image interpolation/origin/extents, rasterization boundaries, and
             compositing order against upstream `widgets.py`, `image.py`,
             `axes/_axes.py`, and backend mixed-mode rendering paths.
+            2026-06-13 update: reduced `mixed_raster_vector` slightly by
+            replacing sampled polar ring/spine paths with Matplotlib-style
+            cubic `Path.arc` geometry for circular polar arcs. Guard coverage:
+            `TestPolarGridAndTicksUseCurvedGeometry` now expects the closed
+            16-cubic polar circle path used by `Path.arc(0, 360)`. Current
+            reference RMSE moved 6.31 → 6.26, so the case remains above target;
+            the remaining visible residual is dominated by one-pixel
+            antialias/stroke differences in polar grid/spine, line, text, and
+            scatter marker edges. `arrays_showcase` remains above target with a
+            structural contour-label placement residual.
       - [ ] **W5.8 — Verify, regold, and ratchet.** After each root-cause group
             lands, regold only the affected cases, run focused
             `TestReferenceCompare` targets plus neighboring cases in the same

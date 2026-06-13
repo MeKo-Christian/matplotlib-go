@@ -21,8 +21,10 @@ const (
 type PackAlignment uint8
 
 const (
+	// PackAlignDefault keeps Matplotlib's packer default alignment.
+	PackAlignDefault PackAlignment = iota
 	// PackAlignStart aligns children to the top or left edge.
-	PackAlignStart PackAlignment = iota
+	PackAlignStart
 	// PackAlignCenter centers children along the cross axis.
 	PackAlignCenter
 	// PackAlignEnd aligns children to the bottom or right edge.
@@ -136,7 +138,9 @@ func newAnchoredPacker(orientation PackOrientation, rc style.RC, opts ...Anchore
 		if opt.FrameOn != nil {
 			cfg.FrameOn = cloneBool(opt.FrameOn)
 		}
-		cfg.Align = opt.Align
+		if opt.Align != PackAlignDefault {
+			cfg.Align = opt.Align
+		}
 		if opt.BackgroundColor != (render.Color{}) {
 			cfg.BackgroundColor = opt.BackgroundColor
 		}
@@ -342,12 +346,14 @@ func (a *AnchoredPacker) childRects(content geom.Rect, sizes []geom.Pt, ctx *Dra
 // (left, or bottom under y-up).
 func alignedPackMin(start, span, childSpan float64, align PackAlignment) float64 {
 	switch align {
+	case PackAlignStart:
+		return start
 	case PackAlignEnd:
 		return start + span - childSpan
-	case PackAlignCenter:
+	case PackAlignCenter, PackAlignDefault:
 		return start + (span-childSpan)/2
 	default:
-		return start
+		return start + (span-childSpan)/2
 	}
 }
 
@@ -357,10 +363,12 @@ func alignedPackMinY(start, span, childSpan float64, align PackAlignment) float6
 	switch align {
 	case PackAlignEnd:
 		return start
-	case PackAlignCenter:
+	case PackAlignCenter, PackAlignDefault:
 		return start + (span-childSpan)/2
-	default: // PackAlignStart -> top
+	case PackAlignStart:
 		return start + span - childSpan
+	default:
+		return start + (span-childSpan)/2
 	}
 }
 

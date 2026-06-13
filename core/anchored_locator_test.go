@@ -418,6 +418,25 @@ func TestAnchoredPackerPacksDrawingAreaAndTextHorizontally(t *testing.T) {
 	}
 }
 
+func TestAnchoredPackerOptionsKeepMatplotlibCenterAlignDefault(t *testing.T) {
+	packer := newAnchoredPacker(PackHorizontal, styleRCForAnchoredTextTest(), AnchoredPackerOptions{
+		Location: LegendLowerLeft,
+		Padding:  4,
+		Inset:    8,
+		Sep:      6,
+	})
+	if got := packer.Align; got != PackAlignCenter {
+		t.Fatalf("default packer align with options = %v, want Matplotlib center", got)
+	}
+
+	start := newAnchoredPacker(PackHorizontal, styleRCForAnchoredTextTest(), AnchoredPackerOptions{
+		Align: PackAlignStart,
+	})
+	if got := start.Align; got != PackAlignStart {
+		t.Fatalf("explicit start packer align = %v, want PackAlignStart", got)
+	}
+}
+
 func TestAnchoredPackerPacksChildrenVertically(t *testing.T) {
 	topStroke := render.Color{R: 0.1, G: 0.5, B: 0.2, A: 1}
 	bottomStroke := render.Color{R: 0.2, G: 0.1, B: 0.7, A: 1}
