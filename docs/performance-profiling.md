@@ -46,6 +46,14 @@ Selected catalog render benchmarks, `benchtime=10x`:
 | --- | ---: | ---: | ---: |
 | `BenchmarkLargeScatter100KDraw` | 604,604,763 | 366,167,259 | 3,724,508 |
 
+P2 renderer-reuse smoke benchmark after the AGG reuse path landed,
+`benchtime=1x`:
+
+| Case | ns/op | B/op | allocs/op |
+| --- | ---: | ---: | ---: |
+| `BenchmarkLargeScatter100KDraw` | 462,756,293 | 132,824,952 | 2,429,696 |
+| `BenchmarkLargeScatter100KRedrawReuseRenderer` | 460,516,167 | 125,008,520 | 2,423,092 |
+
 The selected catalog cases are below the sub-second typical-plot target on this
 machine. The 100k scatter stress case is also below one second, but allocation
 volume is high enough to make GC pressure the main risk for repeated or
@@ -178,3 +186,22 @@ Implemented on 2026-06-14:
   A focused `benchtime=1x` smoke row for `BenchmarkLargeScatter100KDraw` moved
   again to about 524 ms/op, 135 MB/op, and 2.43M allocs/op. Longer benchmark
   sweeps should set the final guarded threshold.
+
+## P2 Progress
+
+Implemented on 2026-06-14:
+
+- `agg.Renderer.Clear` resets the reusable AGG surface, renderer clip state, and
+  active clip box before the next frame. Long-running apps can keep one renderer
+  per stable canvas size, call `Clear(fig.RC.FigureBackground())`, then call
+  `core.DrawFigure(fig, renderer)` for each redraw instead of constructing a
+  fresh renderer.
+- `agg.Renderer.ImageView` exposes a non-owning view over the AGG buffer for
+  callers that only need to encode, copy to a UI surface, or benchmark the
+  result. `GetImage` remains the owned-copy API.
+- `SavePNG` and the render benchmark harness now use the zero-copy view where an
+  owned Go image is unnecessary. The reused renderer benchmark is
+  `BenchmarkLargeScatter100KRedrawReuseRenderer`.
+- A focused `benchtime=1x` smoke run moved the 100k scatter redraw path from
+  about 463 ms/op, 133 MB/op, and 2.43M allocs/op for one-shot rendering to
+  about 461 ms/op, 125 MB/op, and 2.42M allocs/op with a reused renderer.

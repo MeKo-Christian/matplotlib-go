@@ -401,14 +401,14 @@ point are already done.)*
         path-collection markers. Target: materially reduce B/op and allocs/op
         before chasing rasterizer CPU.
 
-- [ ] **P2 — Surface and image-copy reuse for repeated renders.** Catalog
+- [x] **P2 — Surface and image-copy reuse for repeated renders.** Catalog
       allocations show fresh AGG surfaces and `GetImage` copies are a major
       source of bytes allocated. This is acceptable for one-shot export but
       not ideal for interactive or animation redraw loops.
-  - [ ] Add a benchmark that redraws the same figure into a reused renderer.
-  - [ ] Document or expose a supported renderer-reuse path for long-running
+  - [x] Add a benchmark that redraws the same figure into a reused renderer.
+  - [x] Document or expose a supported renderer-reuse path for long-running
         apps. Target: avoid allocating a new surface for every redraw.
-  - [ ] Avoid `GetImage` copies in benchmark/save paths that do not need an
+  - [x] Avoid `GetImage` copies in benchmark/save paths that do not need an
         owned Go image.
 
 - [ ] **P2 — Cache scalar mapping setup.** `ScalarMapInfo.Color` /

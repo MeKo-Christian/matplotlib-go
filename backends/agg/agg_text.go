@@ -703,6 +703,24 @@ func (r *Renderer) GetImage() *image.RGBA {
 	return r.ctx.GetImage().ToGoImage()
 }
 
+// ImageView returns a non-owning RGBA view over the renderer's AGG buffer.
+// Mutating the returned image mutates the renderer, and a later Clear or draw
+// call may overwrite its pixels. Use GetImage when an owned snapshot is needed.
+func (r *Renderer) ImageView() *image.RGBA {
+	if r == nil || r.ctx == nil || r.ctx.image == nil {
+		return nil
+	}
+	img := r.ctx.GetImage()
+	if img == nil {
+		return nil
+	}
+	return &image.RGBA{
+		Pix:    img.Data,
+		Stride: img.Stride(),
+		Rect:   image.Rect(0, 0, img.Width(), img.Height()),
+	}
+}
+
 // SavePNG saves the rendered image to a PNG file.
 //
 // The AGG render buffer holds straight (non-premultiplied) alpha, so GetImage
@@ -713,7 +731,7 @@ func (r *Renderer) GetImage() *image.RGBA {
 // transparent surface. Reinterpret the identical byte layout as NRGBA so the
 // straight values are written verbatim.
 func (r *Renderer) SavePNG(path string) error {
-	img := r.GetImage()
+	img := r.ImageView()
 	nrgba := &image.NRGBA{Pix: img.Pix, Stride: img.Stride, Rect: img.Rect}
 	file, err := os.Create(path)
 	if err != nil {

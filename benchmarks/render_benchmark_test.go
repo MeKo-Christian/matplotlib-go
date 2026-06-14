@@ -53,6 +53,19 @@ func BenchmarkLargeScatter100KDraw(b *testing.B) {
 	}
 }
 
+func BenchmarkLargeScatter100KRedrawReuseRenderer(b *testing.B) {
+	fig := largeScatterFigure(100_000)
+	r := newAGGRenderer(fig)
+	bg := fig.RC.FigureBackground()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		r.Clear(bg)
+		core.DrawFigure(fig, r)
+		benchmarkImageSink = r.ImageView()
+	}
+}
+
 func BenchmarkLargeScatter100KBuildAndDraw(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -102,11 +115,16 @@ func largeScatterFigure(n int) *core.Figure {
 }
 
 func drawAGG(fig *core.Figure) image.Image {
-	r, err := agg.New(int(fig.SizePx.X), int(fig.SizePx.Y), render.Color{R: 1, G: 1, B: 1, A: 1})
+	r := newAGGRenderer(fig)
+	core.DrawFigure(fig, r)
+	return r.ImageView()
+}
+
+func newAGGRenderer(fig *core.Figure) *agg.Renderer {
+	r, err := agg.New(int(fig.SizePx.X), int(fig.SizePx.Y), fig.RC.FigureBackground())
 	if err != nil {
 		panic(err)
 	}
 	r.SetResolution(uint(math.Round(fig.RC.DPI)))
-	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r
 }

@@ -193,6 +193,24 @@ func (r *Renderer) Resolution() uint {
 	return r.resolution
 }
 
+// Clear resets the reusable renderer surface to c and clears transient drawing
+// state left by the previous frame. It is intended for repeated redraw loops
+// that keep one renderer for a stable canvas size.
+func (r *Renderer) Clear(c render.Color) {
+	if r == nil || r.ctx == nil {
+		return
+	}
+	r.began = false
+	r.viewport = geom.Rect{}
+	r.stack = r.stack[:0]
+	r.clipRect = nil
+	r.clipPaths = r.clipPaths[:0]
+	r.filterStack = nil
+	r.clipDepth = 0
+	r.ctx.ClipBox(0, 0, float64(r.width), float64(r.height))
+	r.ctx.Clear(renderColorToAGG(c))
+}
+
 // Begin starts a drawing session with the given viewport.
 func (r *Renderer) Begin(viewport geom.Rect) error {
 	if r.began {
