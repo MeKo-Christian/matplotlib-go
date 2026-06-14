@@ -160,7 +160,7 @@ func (a *Axes) adjustedLayout(f *Figure) geom.Rect {
 	if target <= 0 || math.IsNaN(target) || math.IsInf(target, 0) {
 		return px
 	}
-	return rectWithAspect(px, target)
+	return rectWithAspectInFigureFraction(a.RectFraction, target, f)
 }
 
 func (a *Axes) adjustedColorbarLayout(f *Figure, px geom.Rect) geom.Rect {
@@ -219,4 +219,25 @@ func rectWithAspect(r geom.Rect, target float64) geom.Rect {
 		r.Max.X -= pad
 	}
 	return r
+}
+
+func rectWithAspectInFigureFraction(r geom.Rect, boxAspect float64, f *Figure) geom.Rect {
+	if f == nil || f.SizePx.X <= 0 || f.SizePx.Y <= 0 || boxAspect <= 0 {
+		return rectWithAspect(r, boxAspect)
+	}
+	figAspect := f.SizePx.Y / f.SizePx.X
+	if figAspect <= 0 || math.IsNaN(figAspect) || math.IsInf(figAspect, 0) {
+		return rectWithAspect(r, boxAspect)
+	}
+	frac := rectWithAspect(r, boxAspect/figAspect)
+	return geom.Rect{
+		Min: geom.Pt{
+			X: f.SizePx.X * frac.Min.X,
+			Y: f.SizePx.Y * frac.Min.Y,
+		},
+		Max: geom.Pt{
+			X: f.SizePx.X * frac.Max.X,
+			Y: f.SizePx.Y * frac.Max.Y,
+		},
+	}
 }

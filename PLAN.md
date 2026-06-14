@@ -139,20 +139,22 @@ reference, or carries a documented, frozen tolerance exception. The route remain
 example-source workarounds, fixture-specific core branches, catalog-ID
 conditionals, or unexplained empirical constants.
 
-**Current status (2026-06-13):** the original Phase 2 structural work is mostly
-complete. W1-W5 closed the old high-residual families: mplot3d, projections,
-axisartist/projection-toolkit leftovers, text wrapping/rotated layout, MathText
-and annotation tails, legend/offsetbox layout, fills/collections, contour/mesh,
-arrays, widgets, and mixed raster/vector. The latest full W5 scoreboard is below
-`RMSE 5`; highest W5 cases were `legend_layout_matrix` 4.98,
-`line2d_markers` 4.80, `mathtext_basic` 4.77, `specialty_artists` 4.62,
-`widgets_gallery` 4.55, `annotation_legend_offsetbox_gallery` 4.48, and
-`specialty_depth` 4.33.
+**Current status (2026-06-14):** Phase 2 is closed against the current
+Matplotlib 3.10.9 reference set. W1-W5 closed the old high-residual families:
+mplot3d, projections, axisartist/projection-toolkit leftovers, text
+wrapping/rotated layout, MathText and annotation tails, legend/offsetbox layout,
+fills/collections, contour/mesh, arrays, widgets, and mixed raster/vector. The
+June 14 full optional `TestReferenceCompare` sweep has no catalog row above
+`RMSE 5`; the highest rows are `date_concise_intraday_labels` 4.99,
+`legend_layout_matrix` 4.98, `imshow_transformed` 4.97,
+`geo_mollweide_axes` 4.92, `spectrum_variants` 4.85, `boxplot_basic` 4.84,
+`line2d_markers` 4.80, `formatter_engineering_labels` 4.80, and
+`mathtext_basic` 4.77. The AGG-native reference sweep is also below `RMSE 5`;
+its highest row is `clip_path_batch` at 4.58.
 
-Phase 2 is still open because a fresh focused sweep shows regressions outside the
-closed W5 queue. Some currently pass only because their catalog tolerances are
-still loose, so treat the list below as the active Phase 2 work queue before any
-final tolerance ratchet.
+The June 13 regression queue is retained below as closure history. The catalog
+RMSE tolerances have been ratcheted to the refreshed metrics plus small headroom,
+with all reference-comparable rows capped at or below `RMSE 5`.
 
 ## Completed Work
 
@@ -168,9 +170,9 @@ final tolerance ratchet.
 - [x] **W3 — ticks, scales, dates, units, and inset placement.** Ported the
       large structural pieces: `MultipleLocator`, `AutoMinorLocator`, log locator
       and formatter handoff, date locator/formatter behavior, concise date label
-      selection, category inset placement, category/unit conversion, and custom
-      unit formatter behavior. This work must now be revisited because the
-      current regression sweep shows several W3-family cases back above `RMSE 5`.
+      selection, category inset placement, category/unit conversion, custom unit
+      formatter behavior, function-log minor tick defaults, and W3 category grid
+      z-order. The refreshed full sweep is below `RMSE 5`.
 - [x] **W4 — text wrapping and rotated multiline layout.** Closed
       `text_layout_gallery` by porting Matplotlib-style wrap width calculation,
       literal-space wrapping, multiline `_get_layout` metrics, rotation-mode
@@ -193,71 +195,80 @@ Measured on 2026-06-13 with:
 RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run 'TestReferenceCompare/(stat_variants|errorbar_basic|date_concise_intraday_labels|units_categories|axes_grid1_showcase|scale_function_defaults|ticks_scales_formatters_gallery|named_colors|formatter_log_mathtext_labels)$' -count=1 -v
 ```
 
-- [ ] `stat_variants`: RMSE 7.40, PSNR 50.28 dB, MeanAbs 0.52. Current catalog
-      tolerance is loose enough that the subtest passes, but it is above the
-      Phase 2 target. Start from statistical helper defaults and stack/violin/
-      boxplot collection rendering.
-- [ ] `errorbar_basic`: RMSE 6.98, PSNR 55.61 dB, MeanAbs 0.13. Subtest passes
-      under existing tolerance but regressed above target. Start from data
-      errorbar cap, marker-edge, limit-caret, legend, and line snap semantics.
-- [ ] `date_concise_intraday_labels`: RMSE 6.67, PSNR 58.18 dB, MeanAbs 0.10.
-      Subtest passes under the documented `MaxRMSE=7.0` exception, but it is no
-      longer under the Phase 2 target. Re-check `ConciseDateFormatter` tick-level
-      selection, offset suppression, and label baseline/rotation placement.
-- [ ] `units_categories`: RMSE 6.36, PSNR 56.54 dB, MeanAbs 0.21. This currently
-      fails its ratcheted catalog tolerance (`MinPSNR=57.0`, `MaxMeanAbs=0.15`,
-      `MaxRMSE=5.0`). Re-check category unit mapping, tick placement, bar/text
-      layout, and any shared W3 category inset assumptions.
-- [ ] `axes_grid1_showcase`: RMSE 6.25, PSNR 50.22 dB, MeanAbs 0.22. Subtest
-      passes under older broad tolerance but is above target. Start from divider,
-      image-grid, inset, anchored artist, and colorbar layout against
-      `mpl_toolkits.axes_grid1`.
+- [x] `stat_variants`: fixed on 2026-06-14. The mismatch was grid z-order over
+      filled statistical patches; the Go showcase now mirrors Matplotlib's
+      `set_axisbelow(True)` before adding each y-grid. Updated committed
+      golden/reference metric: RMSE 4.49, PSNR 53.24 dB, MeanAbs 0.24.
+- [x] `errorbar_basic`: fixed on 2026-06-14. Go errorbar cap rendering now
+      treats the stored cap size as the total Matplotlib marker length in
+      pixels instead of a half-length, matching `axes/_axes.py` where cap
+      markersize is `2*capsize`. Updated committed golden/reference metric:
+      RMSE 2.81, PSNR 64.40 dB, MeanAbs 0.04.
+- [x] `date_concise_intraday_labels`: below target in the refreshed 2026-06-14
+      sweep after shared W3/text-layout fixes. Current committed
+      golden/reference metric: RMSE 4.99, PSNR 60.74 dB, MeanAbs 0.06.
+- [x] `units_categories`: fixed on 2026-06-13. The remaining mismatch was grid
+      z-order, not category mapping: Matplotlib's `set_axisbelow(True)` places
+      grids at z=0.5 below default bar patches. Go now exposes `SetAxisBelow`
+      and the fixture applies it. Updated committed golden/reference metric:
+      RMSE 4.44, PSNR 59.72 dB, MeanAbs 0.03.
+- [x] `axes_grid1_showcase`: fixed on 2026-06-14. The remaining mismatch was
+      axes/image chrome around the small RGB panels: equal-aspect axes now use
+      Matplotlib's figure-fraction anchoring, AGG nearest image placement keeps
+      half-pixel top anchors on the Matplotlib side of the rounding boundary,
+      and Y spine snapping preserves half-pixel centers. Updated committed
+      golden/reference metric: RMSE 1.85, PSNR 52.30 dB, MeanAbs 0.13.
 - [x] `scale_function_defaults`: fixed on 2026-06-13. Go now installs
       Matplotlib-style default auto minor `LogLocator` ticks for `functionlog`
       scales and uses the unsnapped Matplotlib y-label bbox extent. Updated
       committed golden/reference metric: RMSE 0.56, PSNR 62.53 dB, MeanAbs
       0.02.
-- [ ] `ticks_scales_formatters_gallery`: RMSE 5.80, PSNR 56.05 dB, MeanAbs 0.13.
-      Subtest passes under the documented `MaxRMSE=7.0` exception, but remains
-      above the Phase 2 target. Re-check the W3 gallery panels after fixing the
-      focused `scale_function_defaults`, `units_categories`, and formatter cases.
-- [ ] `named_colors`: RMSE 5.39, PSNR 49.57 dB, MeanAbs 0.50. Subtest passes
-      under existing broad color tolerance but is above target. Re-check named
-      color table values, swatch geometry, text placement, and color conversion
-      edge cases.
-- [ ] `formatter_log_mathtext_labels`: RMSE 5.28, PSNR 60.65 dB, MeanAbs 0.05.
-      Subtest passes under existing broad formatter tolerance but is above
-      target. Re-check `LogFormatterMathtext` exponent formatting, label-only-base
-      behavior, minor-threshold sparsity, and MathText baseline placement.
+- [x] `ticks_scales_formatters_gallery`: below target in the refreshed
+      2026-06-14 sweep after the focused W3 rows moved. Current committed
+      golden/reference metric: RMSE 4.76, PSNR 56.77 dB, MeanAbs 0.11.
+- [x] `named_colors`: below target in the refreshed 2026-06-14 sweep. Current
+      committed golden/reference metric: RMSE 4.26, PSNR 49.74 dB, MeanAbs
+      0.47.
+- [x] `formatter_log_mathtext_labels`: below target in the refreshed
+      2026-06-14 sweep. Current committed golden/reference metric: RMSE 4.53,
+      PSNR 59.05 dB, MeanAbs 0.06.
 
 ## Remaining Work
 
-- [ ] **R1 — Reproduce and classify each regression visually.** Regenerate the
+- [x] **R1 — Reproduce and classify each regression visually.** Regenerate the
       focused artifacts, inspect golden/reference/diff side-by-side, and classify
       each case as geometry, locator/formatter, text placement, color conversion,
       collection/path stroke, image/layout, or backend antialiasing. Add only
       env-gated diagnostics in `test/diagnostics_test.go` when pixel inspection
       is not enough.
-- [ ] **R2 — Fix failing catalog rows first.** Prioritize
+- [x] **R2 — Fix failing catalog rows first.** Prioritize
       `scale_function_defaults` and `units_categories` because they currently
       fail their ratcheted tolerances, then handle the above-target cases that
       still pass only due to broad tolerances.
-- [ ] **R3 — Re-open W3 where needed.** The date/unit/scale/formatter regressions
+- [x] **R3 — Re-open W3 where needed.** The date/unit/scale/formatter regressions
       likely share W3 code paths. Compare against
       `third_party/matplotlib/lib/matplotlib/{ticker,scale,dates,category,units}.py`
       and fix the shared computation rather than patching individual fixtures.
-- [ ] **R4 — Re-check showcase/layout families.** For `axes_grid1_showcase`, use
+- [x] **R4 — Re-check showcase/layout families.** For `axes_grid1_showcase`, use
       `third_party/matplotlib/lib/mpl_toolkits/axes_grid1` as the source of
       truth. For `stat_variants` and `errorbar_basic`, compare against
       `axes/_axes.py`, `collections.py`, `lines.py`, and `legend_handler.py`.
       For `named_colors`, compare against `matplotlib.colors` data and
       conversion behavior.
-- [ ] **R5 — Full reference sweep and tolerance ratchet.** After fixes, run the
+- [x] **R5 — Full reference sweep and tolerance ratchet.** After fixes, run the
       full optional `TestReferenceCompare` catalog, regold only cases whose core
       behavior changed, and ratchet `internal/examplecatalog.Case` tolerances to
       actual metrics plus small headroom. Remove broad tolerances where defaults
       are enough; keep exceptions only when documented as frozen renderer-level
       differences.
+
+Closed on 2026-06-14 with:
+
+```bash
+RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run '^TestReferenceCompare$' -count=1 -v
+RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run '^TestAGGNativeReferenceCompare$' -count=1 -v
+rtk proxy go test ./core ./backends/agg -count=1
+```
 
 ## Method
 
@@ -275,11 +286,11 @@ RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run 'TestReferenceCompa
 
 **Exit criteria:**
 
-- [ ] No `TestReferenceCompare` catalog case is above `RMSE 5` except documented,
+- [x] No `TestReferenceCompare` catalog case is above `RMSE 5` except documented,
       frozen renderer-level exceptions.
-- [ ] The current regression list above is either below `RMSE 5` or has a clear,
+- [x] The current regression list above is either below `RMSE 5` or has a clear,
       reviewed exception with the responsible validation cluster recorded.
-- [ ] Catalog tolerances are tight enough that a regression of any closed case
+- [x] Catalog tolerances are tight enough that a regression of any closed case
       fails CI.
 
 ---

@@ -699,6 +699,33 @@ func TestAxes_SetAspectAndBoxAspectAffectLayout(t *testing.T) {
 	}
 }
 
+func TestAxes_EqualAspectLayoutMatchesMatplotlibFractionAnchoring(t *testing.T) {
+	fig := NewFigure(1100, 720)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.66, Y: 0.34},
+		Max: geom.Pt{X: 0.75, Y: 0.56},
+	})
+	ax.SetXLim(-0.5, 27.5)
+	ax.SetYLim(27.5, -0.5)
+	if err := ax.SetAspect("equal"); err != nil {
+		t.Fatalf("SetAspect(equal): %v", err)
+	}
+
+	got := ax.adjustedLayout(fig)
+	if got.Min.Y != 274.50000000000006 || got.Max.Y != 373.50000000000006 {
+		t.Fatalf("equal-aspect y bounds = %.17g..%.17g, want Matplotlib fraction-anchored 274.50000000000006..373.50000000000006", got.Min.Y, got.Max.Y)
+	}
+}
+
+func TestSnapDisplayYPreservesMatplotlibHalfPixelSpineCenters(t *testing.T) {
+	if got := snapDisplayY(274.5); got != 274.5 {
+		t.Fatalf("snapDisplayY(274.5) = %.17g, want 274.5", got)
+	}
+	if got := snapDisplayY(373.50000000000006); got != 373.5 {
+		t.Fatalf("snapDisplayY(373.50000000000006) = %.17g, want 373.5", got)
+	}
+}
+
 func TestAxes_TickParamsLocatorParamsAndMinorTicks(t *testing.T) {
 	axes := &Axes{
 		XAxis:      NewXAxis(),
@@ -838,13 +865,13 @@ func TestSpinePixelEndpointsHorizontalBoundariesUseDeviceSpaceSnap(t *testing.T)
 	}
 
 	b1, b2 := spinePixelEndpoints(AxisBottom, px)
-	if b1.Y != 66.5 || b2.Y != 66.5 {
-		t.Fatalf("bottom spine y = %v..%v, want Matplotlib device-snapped center 66.5", b1.Y, b2.Y)
+	if b1.Y != 67.5 || b2.Y != 67.5 {
+		t.Fatalf("bottom spine y = %v..%v, want Matplotlib half-pixel center 67.5", b1.Y, b2.Y)
 	}
 
 	t1, t2 := spinePixelEndpoints(AxisTop, px)
-	if t1.Y != 267.5 || t2.Y != 267.5 {
-		t.Fatalf("top spine y = %v..%v, want Matplotlib device-snapped center 267.5", t1.Y, t2.Y)
+	if t1.Y != 268.5 || t2.Y != 268.5 {
+		t.Fatalf("top spine y = %v..%v, want Matplotlib half-pixel center 268.5", t1.Y, t2.Y)
 	}
 }
 

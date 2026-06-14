@@ -29,6 +29,7 @@ func Plot() *core.Figure {
 	stackAx.SetTitle("StackPlot")
 	stackAx.SetXLim(0, 5)
 	stackAx.SetYLim(0, 7)
+	stackAx.SetAxisBelow(true)
 	stackAx.AddYGrid()
 	stackAx.StackPlot(
 		[]float64{0, 1, 2, 3, 4, 5},
@@ -51,6 +52,7 @@ func Plot() *core.Figure {
 	ecdfAx.SetTitle("ECDF")
 	ecdfAx.SetXLim(0, 8)
 	ecdfAx.SetYLim(0, 1.05)
+	ecdfAx.SetAxisBelow(true)
 	ecdfAx.AddYGrid()
 	ecdfAx.ECDF(
 		[]float64{1.2, 1.8, 2.0, 2.0, 3.1, 3.7, 4.3, 5.0, 5.8, 6.6, 7.0},
@@ -65,6 +67,7 @@ func Plot() *core.Figure {
 	cumulativeAx.SetTitle("Cumulative Step Hist")
 	cumulativeAx.SetXLim(0, 6)
 	cumulativeAx.SetYLim(0, 1.05)
+	cumulativeAx.SetAxisBelow(true)
 	cumulativeAx.AddYGrid()
 	cumulativeAx.Hist(
 		[]float64{0.4, 0.7, 1.2, 1.4, 2.1, 2.6, 3.1, 3.2, 4.0, 4.8, 5.2},
@@ -83,6 +86,7 @@ func Plot() *core.Figure {
 	multiAx.SetTitle("Stacked Multi-Hist")
 	multiAx.SetXLim(0, 6)
 	multiAx.SetYLim(0, 6)
+	multiAx.SetAxisBelow(true)
 	multiAx.AddYGrid()
 	multiAx.HistMulti(
 		[][]float64{

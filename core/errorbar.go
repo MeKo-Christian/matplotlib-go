@@ -54,8 +54,8 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 	if capSizePx < 0 {
 		capSizePx = 0
 	}
-	limitMarkerSizePx := capSizePx * 2
-	capHalf := capSizePx
+	limitMarkerSizePx := capSizePx
+	capHalf := capSizePx / 2
 
 	alpha := e.Alpha
 	if alpha <= 0 {

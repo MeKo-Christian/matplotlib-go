@@ -185,6 +185,45 @@ func TestAggImageNearestNonIntegerUpscaleAlignsTopEdgeLikeMatplotlib(t *testing.
 	}
 }
 
+func TestAggImageNearestHalfPixelAxesImageTopMatchesMatplotlib(t *testing.T) {
+	src := image.NewRGBA(image.Rect(0, 0, 28, 28))
+	for y := 0; y < 28; y++ {
+		for x := 0; x < 28; x++ {
+			src.SetRGBA(x, y, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+		}
+	}
+	for x := 0; x < 28; x++ {
+		src.SetRGBA(x, 0, color.RGBA{A: 255})
+	}
+
+	raster := render.NewImageData(src)
+	raster.SetInterpolation("nearest")
+
+	r, err := New(1100, 720, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 1100, Y: 720}}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	r.Image(raster, geom.Rect{
+		Min: geom.Pt{X: 726, Y: 274.5},
+		Max: geom.Pt{X: 825, Y: 373.5},
+	})
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	got := r.GetImage()
+	bounds, _, ok := inkBounds(got, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	if !ok {
+		t.Fatal("expected rendered black image pixels")
+	}
+	if bounds.Min.Y != 346 {
+		t.Fatalf("half-pixel nearest image top y = %v, want Matplotlib y=346 (bounds=%v)", bounds.Min.Y, bounds)
+	}
+}
+
 func TestAggClipRectUsesMatplotlibHalfUpQuantizationForImages(t *testing.T) {
 	src := image.NewRGBA(image.Rect(0, 0, 16, 16))
 	for y := 0; y < 16; y++ {

@@ -293,7 +293,10 @@ func nearestScaledImageForDirectDraw(img render.Image, x, y, w, h float64) (*agg
 		return nil, 0, 0, 0, 0, false
 	}
 	drawX := math.Round(x)
-	roundedY := math.Round(y)
+	// AxesImage geometry often arrives one ulp above Matplotlib's C++ input
+	// after Go-side fraction math; keep exact half-pixel top anchors on the
+	// Matplotlib-rendered side of the boundary.
+	roundedY := math.Floor(y + 0.5 - 1e-9)
 	dstW := int(math.Ceil(w))
 	dstH := int(math.Ceil(h))
 	if dstW <= 0 || dstH <= 0 {
