@@ -61,6 +61,15 @@ test: freetype261-build
 test-optional-visual: freetype261-build
     RUN_OPTIONAL_VISUAL_TESTS=true CGO_ENABLED=1 go test -tags freetype ./...
 
+bench-render: freetype261-build
+    mkdir -p testdata/_artifacts/perf
+    set -o pipefail; CGO_ENABLED=1 go test ./benchmarks -bench 'BenchmarkCatalogRender|BenchmarkLargeScatter100K' -benchtime="${BENCHTIME:-1x}" -run '^$$' -count=1 -benchmem | tee testdata/_artifacts/perf/render-bench.txt
+
+profile-render: freetype261-build
+    mkdir -p testdata/_artifacts/perf
+    set -o pipefail; CGO_ENABLED=1 go test ./benchmarks -bench 'BenchmarkCatalogRender' -benchtime="${CATALOG_BENCHTIME:-10x}" -run '^$$' -count=1 -benchmem -cpuprofile testdata/_artifacts/perf/catalog_cpu.pprof -memprofile testdata/_artifacts/perf/catalog_mem.pprof | tee testdata/_artifacts/perf/catalog-bench.txt
+    set -o pipefail; CGO_ENABLED=1 go test ./benchmarks -bench 'BenchmarkLargeScatter100KDraw$$' -benchtime="${SCATTER_BENCHTIME:-5x}" -run '^$$' -count=1 -benchmem -cpuprofile testdata/_artifacts/perf/scatter100k_cpu.pprof -memprofile testdata/_artifacts/perf/scatter100k_mem.pprof | tee testdata/_artifacts/perf/scatter100k-bench.txt
+
 # --- FreeType 2.6.1 (matplotlib's pinned version) ---------------------------
 # matplotlib generates every reference image with FreeType 2.6.1. The AGG
 # backend statically links that same vendored FreeType by DEFAULT (the cgo

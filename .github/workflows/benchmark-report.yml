@@ -1,0 +1,46 @@
+name: Benchmark Report
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  benchmark-report:
+    name: Render Benchmark Report
+    runs-on: ubuntu-22.04
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install just
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Run render benchmarks
+        run: just bench-render
+
+      - name: Generate render profiles
+        run: just profile-render
+
+      - name: Upload benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-benchmark-report
+          path: testdata/_artifacts/perf
+          if-no-files-found: warn
+          retention-days: 14

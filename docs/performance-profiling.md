@@ -8,18 +8,18 @@ in `benchmarks/render_benchmark_test.go`.
 ## Commands
 
 ```bash
-go test ./benchmarks -bench 'BenchmarkCatalogRender|BenchmarkLargeScatter100K' -benchtime=1x -run '^$' -count=1 -benchmem
+just bench-render
+BENCHTIME=10x just bench-render
 
-go test ./benchmarks -bench 'BenchmarkCatalogRender' -benchtime=10x -run '^$' -count=1 -benchmem \
-  -cpuprofile testdata/_artifacts/perf/catalog_cpu.pprof \
-  -memprofile testdata/_artifacts/perf/catalog_mem.pprof
-
-go test ./benchmarks -bench 'BenchmarkLargeScatter100KDraw$' -benchtime=5x -run '^$' -count=1 -benchmem \
-  -cpuprofile testdata/_artifacts/perf/scatter100k_cpu.pprof \
-  -memprofile testdata/_artifacts/perf/scatter100k_mem.pprof
+just profile-render
+CATALOG_BENCHTIME=1x SCATTER_BENCHTIME=1x just profile-render
 ```
 
-Profiles are written under `testdata/_artifacts/perf/`.
+Benchmark reports and profiles are written under `testdata/_artifacts/perf/`.
+GitHub Actions also runs `.github/workflows/benchmark-report.yml` as a
+report-only workflow and uploads that directory as the
+`render-benchmark-report` artifact. The workflow is intentionally non-blocking
+until baseline variance is known.
 
 ## Baseline Results
 

@@ -356,14 +356,72 @@ point are already done.)*
 
 ### 4.2 Performance Pass
 
-- ⚪ **Profiling sweep across the catalog:** first representative catalog +
-      100k scatter profiles are recorded in `docs/performance-profiling.md`.
-      Current hotspots are AGG native FreeType measurement, text
-      shaping/fallback allocations, renderer surface/image copies, and
-      path-collection marker batching allocations.
-- ⚪ **Reusable benchmark suite:** initial harness lives under `benchmarks/`;
-      CI regression tracking is still open.
-- [ ] Documented memory-usage targets and a tuning guide for long-running apps.
+- [x] **P0 — Keep profiling repeatable and visible.** Initial harness lives under
+      `benchmarks/`; first representative catalog + 100k scatter profiles are
+      recorded in `docs/performance-profiling.md`. Remaining work:
+  - [x] Add a `just bench-render` target that runs the representative catalog
+        and 100k scatter benchmarks with `-benchmem`.
+  - [x] Add a `just profile-render` target that writes CPU/heap profiles under
+        `testdata/_artifacts/perf/` without requiring developers to remember
+        the long `go test` invocations.
+  - [x] Add CI regression tracking for the benchmark suite. Start as a
+        report-only artifact, then promote to guarded thresholds once baseline
+        variance is known. Implemented by
+        `.github/workflows/benchmark-report.yml`.
+
+- [ ] **P1 — Low-risk text hot-path wins.** Catalog CPU is dominated by AGG
+      native FreeType text measurement (`withNativeFreetypeRun` /
+      `FT_Load_Glyph` / `FT_New_Face`) and allocation profiles show expensive
+      text shaping/fallback churn. Do these before invasive renderer changes:
+  - [ ] Cache native FreeType face setup or measured text-run metrics by
+        font-path, size, DPI, hinting factor, and text. Target: reduce
+        catalog CPU share for `withNativeFreetypeRun` and repeated
+        `FT_New_Face` calls without changing strict text parity.
+  - [ ] Memoize `fontFaceSupportsRune(face, rune)` and avoid repeated
+        `fontFaceCacheKey` / `filepath.Clean` work inside text shaping loops.
+        Target: reduce `ShapeTextRuns` / fallback allocation volume on
+        `text_layout_gallery`, `mathtext_gallery`, and dense tick-label cases.
+  - [ ] Reuse short-lived shaping buffers where safe (`sfnt.Buffer`, feature
+        slices, glyph slices). Keep the API immutable to callers.
+
+- [ ] **P1 — Reduce 100k scatter allocation pressure.** The 100k scatter
+      benchmark is under one second on the profiling machine but allocates
+      ~366 MB and ~3.7M objects per draw. The dominant source is per-marker
+      path cloning/transformation in `PathCollection.drawPathCollection`,
+      `applyAffinePath`, and AGG `devPath`.
+  - [ ] Add a focused benchmark threshold row for `BenchmarkLargeScatter100KDraw`
+        so regressions are visible before optimizing.
+  - [ ] Add a renderer/backend fast path for repeated marker prototypes that
+        transforms marker vertices into backend scratch storage instead of
+        allocating a full `geom.Path` per point.
+  - [ ] Remove or reuse the extra AGG y-flip clone (`devPath`) for batched
+        path-collection markers. Target: materially reduce B/op and allocs/op
+        before chasing rasterizer CPU.
+
+- [ ] **P2 — Surface and image-copy reuse for repeated renders.** Catalog
+      allocations show fresh AGG surfaces and `GetImage` copies are a major
+      source of bytes allocated. This is acceptable for one-shot export but
+      not ideal for interactive or animation redraw loops.
+  - [ ] Add a benchmark that redraws the same figure into a reused renderer.
+  - [ ] Document or expose a supported renderer-reuse path for long-running
+        apps. Target: avoid allocating a new surface for every redraw.
+  - [ ] Avoid `GetImage` copies in benchmark/save paths that do not need an
+        owned Go image.
+
+- [ ] **P2 — Cache scalar mapping setup.** `ScalarMapInfo.Color` /
+      `color.GetColormap` is smaller than text and path batching but visible in
+      image/collection-heavy catalog rows.
+  - [ ] Cache resolved colormap and norm state on scalar-mapped artists for
+        draw-time reuse.
+  - [ ] Add focused benchmarks for scalar-mapped image, scatter, and mesh rows.
+
+- [ ] **Memory targets and tuning guide.** Convert the measured baselines into
+      user-facing guidance:
+  - [ ] Define v1.0 memory targets for typical catalog plots, 100k scatter, and
+        repeated interactive redraw.
+  - [ ] Document practical tuning advice: renderer reuse, avoiding unnecessary
+        `GetImage`, batching markers, text-heavy tick-label costs, and backend
+        selection tradeoffs.
 
 ### 4.3 Release Readiness
 
