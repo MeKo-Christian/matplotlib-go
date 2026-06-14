@@ -54,6 +54,15 @@ P2 renderer-reuse smoke benchmark after the AGG reuse path landed,
 | `BenchmarkLargeScatter100KDraw` | 462,756,293 | 132,824,952 | 2,429,696 |
 | `BenchmarkLargeScatter100KRedrawReuseRenderer` | 460,516,167 | 125,008,520 | 2,423,092 |
 
+P2 scalar-mapping smoke benchmarks after the resolved-colormap cache landed,
+`benchtime=1x`:
+
+| Case | ns/op | B/op | allocs/op |
+| --- | ---: | ---: | ---: |
+| `BenchmarkScalarMappedImageColors` | 2,405,271 | 0 | 0 |
+| `BenchmarkScalarMappedScatterColors` | 7,144,169 | 0 | 0 |
+| `BenchmarkScalarMappedQuadMeshColors` | 1,178,998 | 0 | 0 |
+
 The selected catalog cases are below the sub-second typical-plot target on this
 machine. The 100k scatter stress case is also below one second, but allocation
 volume is high enough to make GC pressure the main risk for repeated or
@@ -68,6 +77,38 @@ artifacts establish normal variance.
 | Benchmark | Time budget | Allocation budget | Object budget |
 | --- | ---: | ---: | ---: |
 | `BenchmarkLargeScatter100KDraw` | 700 ms/op | 400 MB/op | 4,000,000 allocs/op |
+
+## Memory Targets And Tuning Guide
+
+These are v1.0 guidance targets for the AGG backend on the profiling machine,
+not hard CI gates yet. Treat them as review thresholds when changing renderer,
+collection, image, or text code.
+
+| Scenario | Benchmark or proxy | v1.0 memory target | Notes |
+| --- | --- | ---: | --- |
+| Typical catalog plots | `BenchmarkCatalogRender` rows such as `basic_line`, `scatter_gallery`, `mesh_contour_tri`, and `mplot3d_gallery` | <= 25 MB/op for ordinary gallery-scale plots | Current selected rows range from about 2.8 MB/op to 21.2 MB/op. Catalog additions that exceed this should document the reason, such as large raster inputs or intentionally dense text. |
+| 100k scatter stress | `BenchmarkLargeScatter100KDraw` | <= 150 MB/op and <= 2.6M allocs/op | The post-P1/P2 smoke row is about 133 MB/op one-shot and 125 MB/op with renderer reuse. Keep this below the loose regression budget and tighten after several CI artifacts establish variance. |
+| Repeated redraw | `BenchmarkLargeScatter100KRedrawReuseRenderer` | <= 130 MB/op with stable canvas size | Repeated redraw should reuse the AGG renderer and avoid owned image copies unless the caller needs to retain the frame. The current smoke row is about 125 MB/op. |
+| Scalar-mapped color loops | `BenchmarkScalarMappedImageColors`, `BenchmarkScalarMappedScatterColors`, `BenchmarkScalarMappedQuadMeshColors` | 0 B/op after scalar-map setup | Per-value mapping on a resolved scalar map should remain allocation-free. |
+
+Practical tuning advice:
+
+- Reuse renderers for long-running views. Keep one `agg.Renderer` per stable
+  canvas size, call `agg.Renderer.Clear(fig.RC.FigureBackground())`, then draw
+  the next frame into the same surface.
+- Avoid `GetImage` when ownership is unnecessary. Prefer
+  `agg.Renderer.ImageView` for PNG encoding, UI upload, or benchmark inspection
+  where the caller consumes the frame before the next `Clear`.
+- Batch markers through collection paths instead of many independent artists.
+  `PathCollection` can route repeated marker prototypes through `MarkerBatch`,
+  which avoids per-point full-path allocation in the backend fast path.
+- Text-heavy tick labels are still the main CPU risk. Reduce tick density,
+  avoid unnecessary redraws of unchanged axes, and profile text-heavy catalog
+  additions with `just profile-render`.
+- Backend selection matters. The default AGG backend is the parity backend and
+  should be used for golden/reference-sensitive work. Simpler or future
+  interactive backends may trade byte-for-byte parity for lower redraw overhead;
+  measure with the same benchmark shape before switching.
 
 ## Hotspots
 
@@ -205,3 +246,19 @@ Implemented on 2026-06-14:
 - A focused `benchtime=1x` smoke run moved the 100k scatter redraw path from
   about 463 ms/op, 133 MB/op, and 2.43M allocs/op for one-shot rendering to
   about 461 ms/op, 125 MB/op, and 2.42M allocs/op with a reused renderer.
+
+## P2 Scalar-Mapping Progress
+
+Implemented on 2026-06-14:
+
+- `ScalarMapInfo.Resolved` now caches the resolved colormap alongside the
+  resolved colormap name and normalizer/range state. Per-value `Color` calls on
+  a resolved mapping no longer call `color.GetColormap`, which avoids repeated
+  name normalization and reversed-colormap reconstruction in image, scatter, and
+  mesh mapping loops.
+- Focused benchmarks now cover scalar-mapped image grids, scatter arrays, and
+  quad-mesh cell averages:
+  `BenchmarkScalarMappedImageColors`, `BenchmarkScalarMappedScatterColors`, and
+  `BenchmarkScalarMappedQuadMeshColors`.
+- A focused `benchtime=1x` smoke run reported zero allocations for all three
+  per-value scalar mapping loops after setup.

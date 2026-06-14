@@ -411,18 +411,18 @@ point are already done.)*
   - [x] Avoid `GetImage` copies in benchmark/save paths that do not need an
         owned Go image.
 
-- [ ] **P2 — Cache scalar mapping setup.** `ScalarMapInfo.Color` /
+- [x] **P2 — Cache scalar mapping setup.** `ScalarMapInfo.Color` /
       `color.GetColormap` is smaller than text and path batching but visible in
       image/collection-heavy catalog rows.
-  - [ ] Cache resolved colormap and norm state on scalar-mapped artists for
+  - [x] Cache resolved colormap and norm state on scalar-mapped artists for
         draw-time reuse.
-  - [ ] Add focused benchmarks for scalar-mapped image, scatter, and mesh rows.
+  - [x] Add focused benchmarks for scalar-mapped image, scatter, and mesh rows.
 
-- [ ] **Memory targets and tuning guide.** Convert the measured baselines into
+- [x] **Memory targets and tuning guide.** Convert the measured baselines into
       user-facing guidance:
-  - [ ] Define v1.0 memory targets for typical catalog plots, 100k scatter, and
+  - [x] Define v1.0 memory targets for typical catalog plots, 100k scatter, and
         repeated interactive redraw.
-  - [ ] Document practical tuning advice: renderer reuse, avoiding unnecessary
+  - [x] Document practical tuning advice: renderer reuse, avoiding unnecessary
         `GetImage`, batching markers, text-heavy tick-label costs, and backend
         selection tradeoffs.
 

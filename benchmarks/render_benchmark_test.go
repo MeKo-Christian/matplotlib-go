@@ -14,6 +14,7 @@ import (
 )
 
 var benchmarkImageSink image.Image
+var benchmarkColorSink render.Color
 
 func BenchmarkCatalogRender(b *testing.B) {
 	cases := []string{
@@ -73,19 +74,60 @@ func BenchmarkLargeScatter100KBuildAndDraw(b *testing.B) {
 	}
 }
 
-func BenchmarkScalarMappedImageDraw(b *testing.B) {
-	fig := scalarMappedImageFigure(180, 180)
-	benchmarkRepeatedDraw(b, fig)
+func BenchmarkScalarMappedImageColors(b *testing.B) {
+	data := scalarGrid(128, 128)
+	mapping, err := core.ResolveScalarMapGrid(data, core.ScalarMapConfig{Colormap: "viridis_r"})
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		var sink render.Color
+		for _, row := range data {
+			for _, value := range row {
+				sink = mapping.Color(value, 1)
+			}
+		}
+		benchmarkColorSink = sink
+	}
 }
 
-func BenchmarkScalarMappedScatterDraw(b *testing.B) {
-	fig := scalarMappedScatterFigure(50_000)
-	benchmarkRepeatedDraw(b, fig)
+func BenchmarkScalarMappedScatterColors(b *testing.B) {
+	values := scalarValues(50_000)
+	mapping, err := core.ResolveScalarMapValues(values, core.ScalarMapConfig{Colormap: "plasma_r"})
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		var sink render.Color
+		for _, value := range values {
+			sink = mapping.Color(value, 0.72)
+		}
+		benchmarkColorSink = sink
+	}
 }
 
-func BenchmarkScalarMappedQuadMeshDraw(b *testing.B) {
-	fig := scalarMappedQuadMeshFigure(140, 140)
-	benchmarkRepeatedDraw(b, fig)
+func BenchmarkScalarMappedQuadMeshColors(b *testing.B) {
+	data := scalarGrid(96, 96)
+	mapping, err := core.ResolveScalarMapGrid(data, core.ScalarMapConfig{Colormap: "magma_r"})
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		var sink render.Color
+		for y := 0; y+1 < len(data); y++ {
+			for x := 0; x+1 < len(data[y]); x++ {
+				value := (data[y][x] + data[y][x+1] + data[y+1][x] + data[y+1][x+1]) * 0.25
+				sink = mapping.Color(value, 1)
+			}
+		}
+		benchmarkColorSink = sink
+	}
 }
 
 func benchmarkRepeatedDraw(b *testing.B, fig *core.Figure) {
@@ -196,6 +238,14 @@ func scalarGrid(rows, cols int) [][]float64 {
 		data[y] = row
 	}
 	return data
+}
+
+func scalarValues(n int) []float64 {
+	values := make([]float64, n)
+	for i := range values {
+		values[i] = math.Sin(float64(i)*0.015) + math.Cos(float64(i)*0.009)
+	}
+	return values
 }
 
 func drawAGG(fig *core.Figure) image.Image {

@@ -82,9 +82,9 @@ func TestPerformanceP2RendererReuseIsDocumented(t *testing.T) {
 func TestPerformanceP2ScalarMappingCacheIsDocumented(t *testing.T) {
 	notes := readTextFile(t, "docs/performance-profiling.md")
 	for _, want := range []string{
-		"`BenchmarkScalarMappedImageDraw`",
-		"`BenchmarkScalarMappedScatterDraw`",
-		"`BenchmarkScalarMappedQuadMeshDraw`",
+		"`BenchmarkScalarMappedImageColors`",
+		"`BenchmarkScalarMappedScatterColors`",
+		"`BenchmarkScalarMappedQuadMeshColors`",
 		"`ScalarMapInfo.Resolved`",
 		"caches the resolved colormap",
 	} {
@@ -98,6 +98,36 @@ func TestPerformanceP2ScalarMappingCacheIsDocumented(t *testing.T) {
 		"[x] **P2 — Cache scalar mapping setup.**",
 		"[x] Cache resolved colormap and norm state on scalar-mapped artists",
 		"[x] Add focused benchmarks for scalar-mapped image, scatter, and mesh rows.",
+	} {
+		if !strings.Contains(plan, want) {
+			t.Fatalf("plan missing %q", want)
+		}
+	}
+}
+
+func TestPerformanceP2MemoryTargetsAndTuningGuideIsDocumented(t *testing.T) {
+	notes := readTextFile(t, "docs/performance-profiling.md")
+	for _, want := range []string{
+		"## Memory Targets And Tuning Guide",
+		"Typical catalog plots",
+		"`BenchmarkLargeScatter100KDraw`",
+		"`BenchmarkLargeScatter100KRedrawReuseRenderer`",
+		"Repeated redraw",
+		"Avoid `GetImage`",
+		"Batch markers",
+		"Text-heavy tick labels",
+		"Backend selection",
+	} {
+		if !strings.Contains(notes, want) {
+			t.Fatalf("performance notes missing %q", want)
+		}
+	}
+
+	plan := readTextFile(t, "PLAN.md")
+	for _, want := range []string{
+		"[x] **Memory targets and tuning guide.**",
+		"[x] Define v1.0 memory targets for typical catalog plots, 100k scatter, and",
+		"[x] Document practical tuning advice: renderer reuse, avoiding unnecessary",
 	} {
 		if !strings.Contains(plan, want) {
 			t.Fatalf("plan missing %q", want)
