@@ -956,3 +956,34 @@ func validPublicSurfaceParityStatus(status PublicSurfaceParityStatus) bool {
 		return false
 	}
 }
+
+// TestAllUpstreamPublicRowsAreClassified guards Phase 3: every row in the
+// committed upstream_public_surface.json must have a parity classification so
+// docs/matplotlib-parity-status.md remains complete.
+func TestAllUpstreamPublicRowsAreClassified(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	for _, row := range artifact.Rows {
+		if _, ok := PublicSurfaceParityForRow(row); !ok {
+			t.Errorf("upstream public surface row %q has no parity classification; add an entry in public_surface_parity.go", row.ID)
+		}
+	}
+}
+
+// TestPartialAndOmissionRowsHaveNotes guards Phase 3: every partial,
+// not-started, and intentional-omission row must carry a note explaining the
+// rationale and (for partial/not-started) the remaining work.
+func TestPartialAndOmissionRowsHaveNotes(t *testing.T) {
+	artifact := loadPublicSurfaceArtifact(t)
+	for _, surface := range artifact.Rows {
+		row, ok := PublicSurfaceParityForRow(surface)
+		if !ok {
+			continue // covered by TestAllUpstreamPublicRowsAreClassified
+		}
+		switch row.Status {
+		case PublicSurfacePartial, PublicSurfaceNotStarted, PublicSurfaceIntentionalOmission:
+			if row.Note == "" {
+				t.Errorf("%s (status=%s) has no note; add a rationale and next-action in public_surface_parity.go", surface.ID, row.Status)
+			}
+		}
+	}
+}

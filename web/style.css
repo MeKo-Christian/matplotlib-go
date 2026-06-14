@@ -104,6 +104,32 @@ body {
   color: var(--ink-soft);
 }
 
+.docs-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.docs-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  color: var(--accent-strong);
+  background: var(--button-secondary-bg);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.docs-links a:hover {
+  color: var(--ink-strong);
+  background: var(--theme-hover-bg);
+}
+
 .workspace {
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);

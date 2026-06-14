@@ -103,7 +103,113 @@ func MatplotlibParityStatusMarkdown(publicSurface []PublicSurfaceRow) string {
 		[]markdownTableAlign{markdownTableLeft, markdownTableLeft, markdownTableLeft, markdownTableLeft, markdownTableLeft, markdownTableLeft},
 		openRows,
 	)
+
+	b.WriteString("\n## Per-Family Status\n\n")
+	b.WriteString("One table per upstream feature family. Columns: upstream API or registry item, Go status, local API file(s), parity fixture, user example, browser demo, remaining work.\n\n")
+	writePerFamilyTables(&b, publicRows)
 	return b.String()
+}
+
+func writePerFamilyTables(b *strings.Builder, rows []PublicSurfaceParity) {
+	// Group rows by feature family.
+	familyRows := make(map[string][]PublicSurfaceParity)
+	for _, row := range rows {
+		familyRows[row.FeatureCoverageID] = append(familyRows[row.FeatureCoverageID], row)
+	}
+	families := make([]string, 0, len(familyRows))
+	for f := range familyRows {
+		families = append(families, f)
+	}
+	sort.Strings(families)
+
+	// Build lookup: catalogID → active demo IDs.
+	catalogToDemos := make(map[string][]string)
+	for _, demo := range BrowserDemoCoverageRows() {
+		if demo.Status != BrowserDemoActive {
+			continue
+		}
+		demoID := demo.ActiveWebDemoID
+		if demoID == "" {
+			continue
+		}
+		for _, catalogID := range demo.CatalogIDs {
+			catalogToDemos[catalogID] = append(catalogToDemos[catalogID], demoID)
+		}
+	}
+
+	for _, family := range families {
+		frows := familyRows[family]
+		sort.Slice(frows, func(i, j int) bool { return frows[i].UpstreamID < frows[j].UpstreamID })
+
+		b.WriteString("### " + family + "\n\n")
+
+		tableRows := make([][]string, 0, len(frows))
+		for _, row := range frows {
+			localAPI := "-"
+			if len(row.GoFiles) > 0 {
+				localAPI = strings.Join(row.GoFiles, ", ")
+			}
+
+			fixture := strings.Join(row.CatalogIDs, ", ")
+			if fixture == "" {
+				fixture = "-"
+			}
+
+			example := strings.Join(row.ExampleIDs, ", ")
+			if example == "" {
+				example = "-"
+			}
+
+			// Collect unique active browser demos for this row's catalog cases.
+			demoSet := make(map[string]bool)
+			for _, catalogID := range row.CatalogIDs {
+				for _, demo := range catalogToDemos[catalogID] {
+					demoSet[demo] = true
+				}
+			}
+			demoList := make([]string, 0, len(demoSet))
+			for demo := range demoSet {
+				demoList = append(demoList, demo)
+			}
+			sort.Strings(demoList)
+			browserDemo := strings.Join(demoList, ", ")
+			if browserDemo == "" {
+				browserDemo = "-"
+			}
+
+			remaining := "-"
+			switch row.Status {
+			case PublicSurfacePartial, PublicSurfaceNotStarted:
+				remaining = row.Note
+			case PublicSurfaceIntentionalOmission:
+				remaining = row.Note
+				if remaining == "" {
+					remaining = "intentional omission"
+				}
+			}
+
+			tableRows = append(tableRows, []string{
+				markdownEscapeUpstreamID(row.UpstreamID),
+				string(row.Status),
+				markdownEscape(localAPI),
+				markdownEscape(fixture),
+				markdownEscape(example),
+				markdownEscape(browserDemo),
+				markdownEscape(remaining),
+			})
+		}
+
+		writeMarkdownTable(
+			b,
+			[]string{"Upstream", "Status", "Local API", "Fixtures", "Examples", "Browser demo", "Remaining work"},
+			[]markdownTableAlign{
+				markdownTableLeft, markdownTableLeft, markdownTableLeft,
+				markdownTableLeft, markdownTableLeft, markdownTableLeft, markdownTableLeft,
+			},
+			tableRows,
+		)
+		b.WriteString("\n")
+	}
 }
 
 func writeStatusSummary(b *strings.Builder, rows []PublicSurfaceParity) {
