@@ -66,7 +66,7 @@ import (
 	example_axes_control_surface "github.com/cwbudde/matplotlib-go/test/parity/axes_control_surface"
 	example_axes_convenience_helpers "github.com/cwbudde/matplotlib-go/test/parity/axes_convenience_helpers"
 	example_axes_grid1_showcase "github.com/cwbudde/matplotlib-go/test/parity/axes_grid1_showcase"
-	example_axes_option_breadth_17_75_3 "github.com/cwbudde/matplotlib-go/test/parity/axes_option_breadth_17_75_3"
+	example_axes_option_breadth "github.com/cwbudde/matplotlib-go/test/parity/axes_option_breadth"
 	example_axes_top_right_inverted "github.com/cwbudde/matplotlib-go/test/parity/axes_top_right_inverted"
 	example_axisartist_showcase "github.com/cwbudde/matplotlib-go/test/parity/axisartist_showcase"
 	example_bar_basic "github.com/cwbudde/matplotlib-go/test/parity/bar_basic"
@@ -300,7 +300,7 @@ var renderByID = map[string]func() image.Image{
 	"axes_top_right_inverted":             example_axes_top_right_inverted.Render,
 	"axes_control_surface":                example_axes_control_surface.Render,
 	"axes_convenience_helpers":            example_axes_convenience_helpers.Render,
-	"axes_option_breadth_17_75_3":         example_axes_option_breadth_17_75_3.Render,
+	"axes_option_breadth":                 example_axes_option_breadth.Render,
 	"transform_coordinates":               example_transform_coordinates.Render,
 	"transform_annotation_modes":          example_transform_annotation_modes.Render,
 	"path_clipped_transformed":            example_path_clipped_transformed.Render,
@@ -406,7 +406,7 @@ var figureByID = map[string]func() *core.Figure{
 	"path_effects":                        example_path_effects.Plot,
 	"pattern_gradient_effects":            example_pattern_gradient_effects.Plot,
 	"arrays_showcase":                     showcase_arrays_showcase.Plot,
-	"axes_option_breadth_17_75_3":         example_axes_option_breadth_17_75_3.Plot,
+	"axes_option_breadth":                 example_axes_option_breadth.Plot,
 	"axes_grid1_showcase":                 showcase_axes_grid1_showcase.Plot,
 	"axes_control_surface":                showcase_axes_control_surface.Plot,
 	"transform_annotation_modes":          example_transform_annotation_modes.Plot,

@@ -56,7 +56,7 @@ named_colors
 named_colors_gallery
 axes_top_right_inverted
 axes_control_surface
-axes_option_breadth_17_75_3
+axes_option_breadth
 transform_coordinates
 transform_annotation_modes
 path_clipped_transformed

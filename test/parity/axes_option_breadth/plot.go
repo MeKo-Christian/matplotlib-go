@@ -1,4 +1,4 @@
-package axes_option_breadth_17_75_3
+package axes_option_breadth
 
 import (
 	"image"

@@ -185,7 +185,7 @@ with all reference-comparable rows capped at or below `RMSE 5`.
       `annotation_legend_offsetbox_gallery`, `clip_path_batch`,
       `mathtext_inline_labels`, `annotation_composition`, `fill_variants`,
       `mathtext_basic`, `specialty_artists`, and
-      `axes_option_breadth_17_75_3`.
+      `axes_option_breadth`.
 
 ## Current Regressions
 
@@ -208,7 +208,7 @@ RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run 'TestReferenceCompa
       reference workaround that halved `capsize` was removed. Targeted
       `TestGolden` and `TestReferenceCompare` pass for `errorbar_basic`,
       `specialty_depth`, `legend_layout_matrix`, and
-      `axes_option_breadth_17_75_3`.
+      `axes_option_breadth`.
 - [x] `date_concise_intraday_labels`: below target in the refreshed 2026-06-14
       sweep after shared W3/text-layout fixes. Current committed
       golden/reference metric: RMSE 4.99, PSNR 60.74 dB, MeanAbs 0.06.

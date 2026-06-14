@@ -91,7 +91,7 @@ grammar. Multi-dataset histogram inputs, broad alias normalization, masked
 array input objects, and exact Python container/property mutation semantics
 remain partial.
 
-The parity fixture `axes_option_breadth_17_75_3` exercises visible scatter,
+The parity fixture `axes_option_breadth` exercises visible scatter,
 bar-label, fill-between, and errorbar option behavior against Matplotlib 3.10.9
 reference output. Collection and mesh mutable-setter behavior is covered by
 focused unit tests and existing mesh/colorbar fixtures where it produces

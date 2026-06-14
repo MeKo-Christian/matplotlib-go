@@ -10,7 +10,7 @@ except ModuleNotFoundError:
     from common import *  # noqa: F401,F403
 
 
-def axes_option_breadth_17_75_3(out_dir):
+def axes_option_breadth(out_dir):
     fig = make_fig_px(840, 540)
 
     scatter_ax = fig.add_axes(go_rect(0.07, 0.58, 0.46, 0.92))
@@ -87,7 +87,7 @@ def axes_option_breadth_17_75_3(out_dir):
         errorevery=(1, 2),
     )
 
-    save(fig, out_dir, "axes_option_breadth_17_75_3")
+    save(fig, out_dir, "axes_option_breadth")
 
 
-PLOT = axes_option_breadth_17_75_3
+PLOT = axes_option_breadth
