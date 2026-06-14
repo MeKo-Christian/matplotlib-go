@@ -105,9 +105,9 @@ type legendEntry struct {
 	patchHatchColor render.Color
 	patchHatchWidth float64
 
-	errorbarX       bool
-	errorbarY       bool
-	errorbarCapSize float64
+	errorbarX        bool
+	errorbarY        bool
+	errorbarCapSize  float64
 	errorbarCapWidth float64
 }
 
@@ -1131,8 +1131,6 @@ func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample
 	capHalf := entry.errorbarCapSize / 2
 	if capHalf <= 0 {
 		capHalf = 3
-	} else {
-		capHalf = entry.errorbarCapSize
 	}
 	if entry.errorbarY {
 		errSize := fontPx * 0.5

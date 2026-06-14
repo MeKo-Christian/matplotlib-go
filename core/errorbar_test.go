@@ -196,6 +196,36 @@ func TestErrorBarCapSizeIsTotalMarkerLength(t *testing.T) {
 	}
 }
 
+func TestErrorBarLimitCaretDrawsWhenCapsDisabled(t *testing.T) {
+	errBar := &ErrorBar{
+		XY:        []geom.Pt{{X: 1, Y: 1}},
+		YErrUpper: []float64{1},
+		LoLimits:  []bool{true},
+		CapSize:   0,
+		LineWidth: 1,
+		Color:     render.Color{A: 1},
+	}
+	r := &recordingRenderer{}
+	ctx := createTestDrawContext()
+
+	errBar.Draw(r, ctx)
+
+	if len(r.pathCalls) != 2 {
+		t.Fatalf("path calls = %d, want stem and Matplotlib limit caret even with capsize=0", len(r.pathCalls))
+	}
+	caret := r.pathCalls[1].path.V
+	if len(caret) != 3 {
+		t.Fatalf("caret vertices = %d, want 3", len(caret))
+	}
+	endpoint := ctx.DataToPixel.Apply(geom.Pt{X: 1, Y: 2})
+	if caret[0].Y != endpoint.Y || caret[2].Y != endpoint.Y {
+		t.Fatalf("caret base y = %.3f, %.3f; want endpoint y %.3f", caret[0].Y, caret[2].Y, endpoint.Y)
+	}
+	if got, want := math.Abs(caret[2].X-caret[0].X), pointsToPixels(ctx.RC, 6); !floatApprox(got, want, 1e-9) {
+		t.Fatalf("default limit caret base width = %.3f px, want Matplotlib lines.markersize %.3f px", got, want)
+	}
+}
+
 func TestErrorBarCapWidthUsesMatplotlibMarkerEdgeWidth(t *testing.T) {
 	errBar := &ErrorBar{
 		XY:        []geom.Pt{{X: 1, Y: 2}},
@@ -261,13 +291,13 @@ func TestErrorBarLimitCaretUsesEndpointAsBase(t *testing.T) {
 		t.Fatalf("caret vertices = %d, want 3", len(caret))
 	}
 	if got, want := r.pathCalls[1].paint.Fill, errBar.Color; got != want {
-		t.Fatalf("limit caret fill = %+v, want filled Matplotlib marker color %+v", got, want)
+		t.Fatalf("limit caret fill = %+v, want Matplotlib Agg marker color %+v", got, want)
 	}
 	if got := r.pathCalls[1].paint.LineJoin; got != render.JoinMiter {
 		t.Fatalf("limit caret join = %v, want Matplotlib marker miter join", got)
 	}
 	if cmds := r.pathCalls[1].path.C; len(cmds) == 0 || cmds[len(cmds)-1] == geom.ClosePath {
-		t.Fatalf("limit caret commands = %v, want filled open marker path", cmds)
+		t.Fatalf("limit caret commands = %v, want open Matplotlib marker path", cmds)
 	}
 	endpoint := ctx.DataToPixel.Apply(geom.Pt{X: 1, Y: 2})
 	if caret[0].Y != endpoint.Y || caret[2].Y != endpoint.Y {
@@ -374,6 +404,27 @@ func TestAxes_ErrorBar(t *testing.T) {
 	}
 }
 
+func TestAxesErrorBarDefaultsMatchMatplotlib(t *testing.T) {
+	fig := NewFigure(640, 360)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+
+	errBar := ax.ErrorBar(
+		[]float64{1, 2},
+		[]float64{3, 4},
+		nil,
+		[]float64{0.2},
+	)
+	if errBar == nil {
+		t.Fatal("expected non-nil error bar")
+	}
+	if errBar.LineWidth != 0 {
+		t.Fatalf("default Axes.ErrorBar line width = %v, want renderer Matplotlib default", errBar.LineWidth)
+	}
+	if errBar.CapSize != 0 {
+		t.Fatalf("default Axes.ErrorBar cap size = %v, want Matplotlib errorbar.capsize=0", errBar.CapSize)
+	}
+}
+
 func TestAxes_ErrorBar_Options(t *testing.T) {
 	fig := NewFigure(640, 360)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
@@ -406,7 +457,7 @@ func TestAxes_ErrorBar_Options(t *testing.T) {
 	if errBar.LineWidth != lineWidth {
 		t.Errorf("expected line width %v, got %v", lineWidth, errBar.LineWidth)
 	}
-	if want := pointsToPixels(fig.RC, capSize); errBar.CapSize != want {
+	if want := pointsToPixels(fig.RC, 2*capSize); errBar.CapSize != want {
 		t.Errorf("expected cap size %v px, got %v", want, errBar.CapSize)
 	}
 	if errBar.Alpha != alpha {
@@ -414,6 +465,26 @@ func TestAxes_ErrorBar_Options(t *testing.T) {
 	}
 	if !errBar.NoDataLine {
 		t.Error("expected NoDataLine option to be applied")
+	}
+}
+
+func TestAxesErrorBarCapSizeUsesMatplotlibMarkerLength(t *testing.T) {
+	fig := NewFigure(640, 360)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	capSize := 6.0
+
+	errBar := ax.ErrorBar(
+		[]float64{1},
+		[]float64{2},
+		nil,
+		[]float64{0.2},
+		ErrorBarOptions{CapSize: &capSize},
+	)
+	if errBar == nil {
+		t.Fatal("expected non-nil error bar")
+	}
+	if want := pointsToPixels(fig.RC, 2*capSize); errBar.CapSize != want {
+		t.Fatalf("cap marker length = %v px, want Matplotlib markersize=2*capsize = %v px", errBar.CapSize, want)
 	}
 }
 
@@ -474,8 +545,8 @@ func TestErrorBarErrorEverySkipsErrorStemsButKeepsDataLine(t *testing.T) {
 	if !hasErrorBarDataLine(r.pathCalls, ctx, errBar.XY) {
 		t.Fatal("errorevery should not thin the data line")
 	}
-	if got, want := countNonDataLinePaths(r.pathCalls, ctx, errBar.XY), 9; got != want {
-		t.Fatalf("errorbar-only path count = %d, want stems/caps for indices 0,2,4 (%d)", got, want)
+	if got, want := countNonDataLinePaths(r.pathCalls, ctx, errBar.XY), 3; got != want {
+		t.Fatalf("errorbar-only path count = %d, want stems for indices 0,2,4 with default capsize=0 (%d)", got, want)
 	}
 }
 
@@ -498,8 +569,8 @@ func TestErrorBarErrorEveryStartMatchesTupleForm(t *testing.T) {
 	ctx := createTestDrawContext()
 	errBar.Draw(r, ctx)
 
-	if got, want := countNonDataLinePaths(r.pathCalls, ctx, errBar.XY), 6; got != want {
-		t.Fatalf("errorbar-only path count = %d, want stems/caps for indices 1,3 (%d)", got, want)
+	if got, want := countNonDataLinePaths(r.pathCalls, ctx, errBar.XY), 2; got != want {
+		t.Fatalf("errorbar-only path count = %d, want stems for indices 1,3 with default capsize=0 (%d)", got, want)
 	}
 	if got := ax.ErrorBar([]float64{0, 1}, []float64{1, 2}, nil, []float64{0.1}, ErrorBarOptions{ErrorEvery: -1}); got != nil {
 		t.Fatal("negative ErrorEvery should be rejected")

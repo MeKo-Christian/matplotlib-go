@@ -199,11 +199,16 @@ RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run 'TestReferenceCompa
       filled statistical patches; the Go showcase now mirrors Matplotlib's
       `set_axisbelow(True)` before adding each y-grid. Updated committed
       golden/reference metric: RMSE 4.49, PSNR 53.24 dB, MeanAbs 0.24.
-- [x] `errorbar_basic`: fixed on 2026-06-14. Go errorbar cap rendering now
-      treats the stored cap size as the total Matplotlib marker length in
-      pixels instead of a half-length, matching `axes/_axes.py` where cap
-      markersize is `2*capsize`. Updated committed golden/reference metric:
-      RMSE 2.81, PSNR 64.40 dB, MeanAbs 0.04.
+- [x] `errorbar_basic`: fixed on 2026-06-14 and tightened again on
+      2026-06-14. Go `Axes.ErrorBar` now matches Matplotlib's public
+      `capsize` semantics (`Line2D` cap marker length is `2*capsize`), default
+      `errorbar.capsize=0`, default errorbar linewidth delegation, and limit
+      caret drawing when caps are disabled; the legend errorbar sample now uses
+      the converted cap marker length without doubling it again. The old Python
+      reference workaround that halved `capsize` was removed. Targeted
+      `TestGolden` and `TestReferenceCompare` pass for `errorbar_basic`,
+      `specialty_depth`, `legend_layout_matrix`, and
+      `axes_option_breadth_17_75_3`.
 - [x] `date_concise_intraday_labels`: below target in the refreshed 2026-06-14
       sweep after shared W3/text-layout fixes. Current committed
       golden/reference metric: RMSE 4.99, PSNR 60.74 dB, MeanAbs 0.06.

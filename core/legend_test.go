@@ -678,7 +678,7 @@ func TestLegendDrawsErrorBarSampleWithCaps(t *testing.T) {
 	entry, ok := (&ErrorBar{
 		Label:     "errs",
 		YErr:      []float64{0.2},
-		CapSize:   6,
+		CapSize:   12,
 		Color:     render.Color{R: 0.1, G: 0.2, B: 0.7, A: 1},
 		LineWidth: 2,
 	}).legendEntry()

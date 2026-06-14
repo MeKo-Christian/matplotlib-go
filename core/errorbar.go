@@ -55,6 +55,9 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 		capSizePx = 0
 	}
 	limitMarkerSizePx := capSizePx
+	if limitMarkerSizePx <= 0 {
+		limitMarkerSizePx = pointsToPixels(rc, 6)
+	}
 	capHalf := capSizePx / 2
 
 	alpha := e.Alpha
@@ -87,6 +90,8 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 		xLow, xHigh := resolveErrorRange(e.XErr, e.XErrLower, e.XErrUpper, i)
 		yLow, yHigh := resolveErrorRange(e.YErr, e.YErrLower, e.YErrUpper, i)
+		hasXErr := xLow > 0 || xHigh > 0
+		hasYErr := yLow > 0 || yHigh > 0
 		xLoLimit := resolveBool(e.XLoLimits, i)
 		xUpLimit := resolveBool(e.XUpLimits, i)
 		loLimit := resolveBool(e.LoLimits, i)
@@ -104,7 +109,7 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 			yHigh = 0
 		}
 
-		if xLow > 0 || xHigh > 0 {
+		if hasXErr {
 			left := geom.Pt{X: pt.X - xLow, Y: pt.Y}
 			right := geom.Pt{X: pt.X + xHigh, Y: pt.Y}
 			if left != right {
@@ -122,18 +127,22 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 					rightBottom := addPixelOffset(ctx, right, 0, capHalf)
 					r.Path(linePath(ctx, rightTop, rightBottom), &capPaint)
 				}
-				if xLoLimit && xHigh > 0 {
-					drawLimitCaret(r, ctx, right, 1, 0, limitMarkerSizePx, &paint)
+			}
+			if xLoLimit {
+				drawLimitCaret(r, ctx, right, 1, 0, limitMarkerSizePx, &paint)
+				if capHalf > 0 {
 					drawErrorbarCapMarker(r, ctx, pt, true, capHalf, &capPaint)
 				}
-				if xUpLimit && xLow > 0 {
-					drawLimitCaret(r, ctx, left, -1, 0, limitMarkerSizePx, &paint)
+			}
+			if xUpLimit {
+				drawLimitCaret(r, ctx, left, -1, 0, limitMarkerSizePx, &paint)
+				if capHalf > 0 {
 					drawErrorbarCapMarker(r, ctx, pt, true, capHalf, &capPaint)
 				}
 			}
 		}
 
-		if yLow > 0 || yHigh > 0 {
+		if hasYErr {
 			lower := geom.Pt{X: pt.X, Y: pt.Y - yLow}
 			upper := geom.Pt{X: pt.X, Y: pt.Y + yHigh}
 			if lower != upper {
@@ -151,12 +160,16 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 					upperRight := addPixelOffset(ctx, upper, capHalf, 0)
 					r.Path(linePath(ctx, upperLeft, upperRight), &capPaint)
 				}
-				if loLimit && yHigh > 0 {
-					drawLimitCaret(r, ctx, upper, 0, 1, limitMarkerSizePx, &paint)
+			}
+			if loLimit {
+				drawLimitCaret(r, ctx, upper, 0, 1, limitMarkerSizePx, &paint)
+				if capHalf > 0 {
 					drawErrorbarCapMarker(r, ctx, pt, false, capHalf, &capPaint)
 				}
-				if upLimit && yLow > 0 {
-					drawLimitCaret(r, ctx, lower, 0, -1, limitMarkerSizePx, &paint)
+			}
+			if upLimit {
+				drawLimitCaret(r, ctx, lower, 0, -1, limitMarkerSizePx, &paint)
+				if capHalf > 0 {
 					drawErrorbarCapMarker(r, ctx, pt, false, capHalf, &capPaint)
 				}
 			}

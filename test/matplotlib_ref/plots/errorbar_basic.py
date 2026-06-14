@@ -34,7 +34,6 @@ def errorbar_basic(out_dir):
         c=[TAB10[2]],
         linewidths=0,
     )
-    cap = (6 * 72.0 / DPI) / 2
     ax.errorbar(
         x,
         y,
@@ -43,7 +42,7 @@ def errorbar_basic(out_dir):
         fmt="none",
         ecolor=(0, 0, 0, 1),
         elinewidth=lw(1.2),
-        capsize=cap,
+        capsize=6,
     )
     save(fig, out_dir, "errorbar_basic")
 
