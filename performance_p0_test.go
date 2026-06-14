@@ -79,6 +79,32 @@ func TestPerformanceP2RendererReuseIsDocumented(t *testing.T) {
 	}
 }
 
+func TestPerformanceP2ScalarMappingCacheIsDocumented(t *testing.T) {
+	notes := readTextFile(t, "docs/performance-profiling.md")
+	for _, want := range []string{
+		"`BenchmarkScalarMappedImageDraw`",
+		"`BenchmarkScalarMappedScatterDraw`",
+		"`BenchmarkScalarMappedQuadMeshDraw`",
+		"`ScalarMapInfo.Resolved`",
+		"caches the resolved colormap",
+	} {
+		if !strings.Contains(notes, want) {
+			t.Fatalf("performance notes missing %q", want)
+		}
+	}
+
+	plan := readTextFile(t, "PLAN.md")
+	for _, want := range []string{
+		"[x] **P2 — Cache scalar mapping setup.**",
+		"[x] Cache resolved colormap and norm state on scalar-mapped artists",
+		"[x] Add focused benchmarks for scalar-mapped image, scatter, and mesh rows.",
+	} {
+		if !strings.Contains(plan, want) {
+			t.Fatalf("plan missing %q", want)
+		}
+	}
+}
+
 func readTextFile(t *testing.T, path string) string {
 	t.Helper()
 	data, err := os.ReadFile(path)

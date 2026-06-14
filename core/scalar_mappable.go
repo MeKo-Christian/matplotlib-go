@@ -21,6 +21,9 @@ type ScalarMapInfo struct {
 	VMin     float64
 	VMax     float64
 	Norm     ScalarNormalizer
+
+	resolvedColormap     matcolor.Colormap
+	resolvedColormapName string
 }
 
 func scalarMapConfigured(m ScalarMapInfo) bool {
@@ -39,6 +42,10 @@ type ScalarMapConfig struct {
 func (m ScalarMapInfo) Resolved() ScalarMapInfo {
 	if m.Colormap == "" {
 		m.Colormap = "viridis"
+	}
+	if m.resolvedColormapName != m.Colormap || m.resolvedColormap.Name() == "" {
+		m.resolvedColormap = matcolor.GetColormap(m.Colormap)
+		m.resolvedColormapName = m.Colormap
 	}
 	if m.Norm != nil {
 		if vmin, vmax := m.Norm.Range(); isFinite(vmin) && isFinite(vmax) {
@@ -67,7 +74,7 @@ func (m ScalarMapInfo) Normalize(v float64) float64 {
 // Color maps a scalar into a display color using the configured colormap.
 func (m ScalarMapInfo) Color(v, alpha float64) render.Color {
 	m = m.Resolved()
-	color := matcolor.GetColormap(m.Colormap).AtValue(m.normalizeRaw(v))
+	color := m.resolvedColormap.AtValue(m.normalizeRaw(v))
 	color.A *= clampOneToOne(alpha)
 	return color
 }

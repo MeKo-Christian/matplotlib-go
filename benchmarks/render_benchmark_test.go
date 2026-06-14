@@ -73,6 +73,34 @@ func BenchmarkLargeScatter100KBuildAndDraw(b *testing.B) {
 	}
 }
 
+func BenchmarkScalarMappedImageDraw(b *testing.B) {
+	fig := scalarMappedImageFigure(180, 180)
+	benchmarkRepeatedDraw(b, fig)
+}
+
+func BenchmarkScalarMappedScatterDraw(b *testing.B) {
+	fig := scalarMappedScatterFigure(50_000)
+	benchmarkRepeatedDraw(b, fig)
+}
+
+func BenchmarkScalarMappedQuadMeshDraw(b *testing.B) {
+	fig := scalarMappedQuadMeshFigure(140, 140)
+	benchmarkRepeatedDraw(b, fig)
+}
+
+func benchmarkRepeatedDraw(b *testing.B, fig *core.Figure) {
+	b.Helper()
+	r := newAGGRenderer(fig)
+	bg := fig.RC.FigureBackground()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		r.Clear(bg)
+		core.DrawFigure(fig, r)
+		benchmarkImageSink = r.ImageView()
+	}
+}
+
 func largeScatterFigure(n int) *core.Figure {
 	fig := core.NewFigure(980, 620, style.WithDPI(100))
 	ax := fig.AddAxes(geom.Rect{
@@ -112,6 +140,62 @@ func largeScatterFigure(n int) *core.Figure {
 		Marker:    core.MarkerCircle,
 	})
 	return fig
+}
+
+func scalarMappedImageFigure(rows, cols int) *core.Figure {
+	fig := core.NewFigure(720, 520, style.WithDPI(100))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.08, Y: 0.12}, Max: geom.Pt{X: 0.92, Y: 0.90}})
+	data := scalarGrid(rows, cols)
+	cmap := "viridis_r"
+	ax.Image(data, core.ImageOptions{Colormap: &cmap})
+	return fig
+}
+
+func scalarMappedScatterFigure(n int) *core.Figure {
+	fig := core.NewFigure(900, 560, style.WithDPI(100))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.08, Y: 0.12}, Max: geom.Pt{X: 0.94, Y: 0.90}})
+	ax.SetXLim(-2, 102)
+	ax.SetYLim(-2, 102)
+	x := make([]float64, 0, n)
+	y := make([]float64, 0, n)
+	scalars := make([]float64, 0, n)
+	for i := 0; i < n; i++ {
+		xv := math.Mod(float64(i)*0.61803398875, 100)
+		yv := math.Mod(float64(i)*0.41421356237, 100)
+		x = append(x, xv+0.1*math.Sin(float64(i)*0.011))
+		y = append(y, yv+0.1*math.Cos(float64(i)*0.013))
+		scalars = append(scalars, math.Sin(float64(i)*0.015)+math.Cos(float64(i)*0.009))
+	}
+	size := core.ScatterAreaFromRadius(1.8, fig.RC.DPI)
+	cmap := "plasma_r"
+	ax.Scatter(x, y, core.ScatterOptions{
+		ScalarValues: scalars,
+		Colormap:     cmap,
+		Size:         &size,
+		EdgeColor:    &render.Color{A: 0},
+	})
+	return fig
+}
+
+func scalarMappedQuadMeshFigure(rows, cols int) *core.Figure {
+	fig := core.NewFigure(720, 520, style.WithDPI(100))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.08, Y: 0.12}, Max: geom.Pt{X: 0.92, Y: 0.90}})
+	data := scalarGrid(rows, cols)
+	cmap := "magma_r"
+	ax.PColorMesh(data, core.MeshOptions{Colormap: &cmap})
+	return fig
+}
+
+func scalarGrid(rows, cols int) [][]float64 {
+	data := make([][]float64, rows)
+	for y := range data {
+		row := make([]float64, cols)
+		for x := range row {
+			row[x] = math.Sin(float64(x)*0.05) + math.Cos(float64(y)*0.04) + 0.2*math.Sin(float64(x+y)*0.02)
+		}
+		data[y] = row
+	}
+	return data
 }
 
 func drawAGG(fig *core.Figure) image.Image {

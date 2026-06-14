@@ -316,3 +316,24 @@ func TestScalarMapInfoRoutesBadUnderAndOverColorsThroughColormap(t *testing.T) {
 		t.Fatalf("over color = %+v, want %+v", got, over)
 	}
 }
+
+func TestScalarMapInfoResolvedCachesColormapLookup(t *testing.T) {
+	mapping := ScalarMapInfo{
+		Colormap: "viridis_r",
+		Norm:     Normalize{VMin: 0, VMax: 1},
+	}.Resolved()
+
+	if got, want := mapping.resolvedColormapName, "viridis_r"; got != want {
+		t.Fatalf("resolvedColormapName = %q, want %q", got, want)
+	}
+	if got, want := mapping.resolvedColormap.Name(), "viridis_r"; got != want {
+		t.Fatalf("resolvedColormap.Name() = %q, want %q", got, want)
+	}
+
+	allocs := testing.AllocsPerRun(1000, func() {
+		_ = mapping.Color(0.25, 1)
+	})
+	if allocs != 0 {
+		t.Fatalf("pre-resolved ScalarMapInfo.Color allocs/run = %v, want 0", allocs)
+	}
+}
