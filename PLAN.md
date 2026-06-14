@@ -384,7 +384,7 @@ point are already done.)*
   - [x] Reuse short-lived shaping buffers where safe (`sfnt.Buffer`, feature
         slices, glyph slices). Keep the API immutable to callers.
 
-- [ ] **P1 — Reduce 100k scatter allocation pressure.** The 100k scatter
+- [x] **P1 — Reduce 100k scatter allocation pressure.** The 100k scatter
       benchmark is under one second on the profiling machine but allocates
       ~366 MB and ~3.7M objects per draw. The dominant source is per-marker
       path cloning/transformation in `PathCollection.drawPathCollection`,
@@ -394,10 +394,10 @@ point are already done.)*
   - [x] Combine display-space marker scale+translate into one affine path
         application, removing one full `geom.Path` allocation from the
         `PathInDisplay` scatter path.
-  - [ ] Add a renderer/backend fast path for repeated marker prototypes that
+  - [x] Add a renderer/backend fast path for repeated marker prototypes that
         transforms marker vertices into backend scratch storage instead of
         allocating a full `geom.Path` per point.
-  - [ ] Remove or reuse the extra AGG y-flip clone (`devPath`) for batched
+  - [x] Remove or reuse the extra AGG y-flip clone (`devPath`) for batched
         path-collection markers. Target: materially reduce B/op and allocs/op
         before chasing rasterizer CPU.
 

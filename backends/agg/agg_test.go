@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"reflect"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/geom"
@@ -1018,6 +1019,55 @@ func TestDrawMarkersBatchDrawsVisibleMarkers(t *testing.T) {
 	}
 	if got := img.RGBAAt(25, 25); got.B < 200 {
 		t.Fatalf("second marker center = %+v, want blue", got)
+	}
+}
+
+func TestTransformMarkerPathDeviceCombinesTransformAndFlip(t *testing.T) {
+	r := mustNew(t, 40, 40)
+	marker := geom.Path{}
+	marker.MoveTo(geom.Pt{X: -1, Y: -2})
+	marker.LineTo(geom.Pt{X: 1, Y: 2})
+
+	got := r.transformMarkerPathDevice(marker, geom.Affine{A: 2, D: 3}, geom.Pt{X: 10, Y: 12})
+	wantDisplay := transformMarkerPath(marker, geom.Affine{A: 2, D: 3}, geom.Pt{X: 10, Y: 12})
+	want := r.devPath(wantDisplay)
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("transformMarkerPathDevice = %+v, want %+v", got, want)
+	}
+
+	pathSink := geom.Path{}
+	allocs := testing.AllocsPerRun(1000, func() {
+		pathSink = r.transformMarkerPathDevice(marker, geom.Affine{A: 2, D: 3}, geom.Pt{X: 10, Y: 12})
+	})
+	if pathSink.Validate() && allocs > 0 {
+		t.Fatalf("transformMarkerPathDevice allocations = %.2f, want 0 after scratch warmup", allocs)
+	}
+}
+
+func TestPreparePathForPaintKeepsFinitePathStorage(t *testing.T) {
+	r := mustNew(t, 40, 40)
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 1, Y: 1})
+	path.LineTo(geom.Pt{X: 5, Y: 5})
+	paint := render.Paint{Fill: render.Color{A: 1}}
+
+	got, ok := r.preparePathForPaint(path, &paint)
+	if !ok {
+		t.Fatal("preparePathForPaint returned !ok for finite path")
+	}
+	if len(got.V) == 0 || &got.V[0] != &path.V[0] {
+		t.Fatalf("preparePathForPaint rebuilt finite path vertices: got=%p want=%p", &got.V[0], &path.V[0])
+	}
+
+	pathSink := geom.Path{}
+	allocs := testing.AllocsPerRun(1000, func() {
+		pathSink, ok = r.preparePathForPaint(path, &paint)
+	})
+	if !ok || len(pathSink.C) == 0 {
+		t.Fatal("preparePathForPaint failed during allocation check")
+	}
+	if allocs > 0 {
+		t.Fatalf("preparePathForPaint finite-path allocations = %.2f, want 0", allocs)
 	}
 }
 

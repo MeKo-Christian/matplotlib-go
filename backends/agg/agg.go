@@ -67,6 +67,7 @@ type Renderer struct {
 	outlineText               *agglib.FreeTypeOutlineText
 	texManager                *tex.Manager
 	texErr                    error
+	markerScratch             geom.Path
 }
 
 // state represents a saved graphics state.

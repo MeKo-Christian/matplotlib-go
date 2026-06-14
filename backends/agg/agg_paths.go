@@ -23,6 +23,25 @@ func transformMarkerPath(path geom.Path, affine geom.Affine, offset geom.Pt) geo
 	return out
 }
 
+func (r *Renderer) transformMarkerPathDevice(path geom.Path, affine geom.Affine, offset geom.Pt) geom.Path {
+	if r == nil || len(path.C) == 0 {
+		return geom.Path{}
+	}
+	out := &r.markerScratch
+	out.C = path.C
+	if cap(out.V) < len(path.V) {
+		out.V = make([]geom.Pt, len(path.V))
+	} else {
+		out.V = out.V[:len(path.V)]
+	}
+	h := float64(r.height)
+	for i, pt := range path.V {
+		pt = affine.Apply(pt)
+		out.V[i] = geom.Pt{X: pt.X + offset.X, Y: h - (pt.Y + offset.Y)}
+	}
+	return *out
+}
+
 func (r *Renderer) drawGouraudTriangle(tri *render.GouraudTriangle) {
 	if tri == nil {
 		return
@@ -238,7 +257,9 @@ func (r *Renderer) applyAntialiasMode(mode render.AntialiasMode) func() {
 const defaultPathChunkVertices = 32768
 
 func (r *Renderer) preparePathForPaint(path geom.Path, paint *render.Paint) (geom.Path, bool) {
-	path = removeNonFinitePathVertices(path)
+	if pathHasNonFiniteVertices(path) {
+		path = removeNonFinitePathVertices(path)
+	}
 	if len(path.C) == 0 || !path.Validate() {
 		return geom.Path{}, false
 	}
@@ -252,6 +273,15 @@ func (r *Renderer) preparePathForPaint(path geom.Path, paint *render.Paint) (geo
 		path = simplifyLinePath(path, paint.SimplifyThreshold)
 	}
 	return path, len(path.C) > 0
+}
+
+func pathHasNonFiniteVertices(path geom.Path) bool {
+	for _, pt := range path.V {
+		if !finitePt(pt) {
+			return true
+		}
+	}
+	return false
 }
 
 func removeNonFinitePathVertices(path geom.Path) geom.Path {

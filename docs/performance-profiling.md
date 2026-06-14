@@ -171,3 +171,10 @@ Implemented on 2026-06-14:
   `BenchmarkLargeScatter100KDraw` to about 323 MB/op and 3.52M allocs/op on the
   profiling machine. Run a longer `BENCHTIME=10x just bench-render` sweep before
   tightening the regression budget.
+- `PathCollection` now routes single-prototype display-space markers through
+  `MarkerBatch` even when size, face color, edge color, and linewidth vary per
+  item. AGG consumes that batch with renderer scratch storage, applying marker
+  transform and y-flip in one pass and avoiding the extra `devPath` clone.
+  A focused `benchtime=1x` smoke row for `BenchmarkLargeScatter100KDraw` moved
+  again to about 524 ms/op, 135 MB/op, and 2.43M allocs/op. Longer benchmark
+  sweeps should set the final guarded threshold.

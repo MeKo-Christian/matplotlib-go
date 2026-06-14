@@ -209,7 +209,7 @@ func TestPathCollectionOffsetCoordsControlBoundsForDisplayPaths(t *testing.T) {
 	}
 }
 
-func TestPathCollectionUsesPathCollectionBatchForVaryingPerItemStyle(t *testing.T) {
+func TestPathCollectionUsesMarkerBatchForVaryingPerItemStyle(t *testing.T) {
 	pc := &PathCollection{
 		Collection:    Collection{Alpha: 0.5},
 		Path:          polygonPath([]geom.Pt{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: 1}}, true),
@@ -230,20 +230,20 @@ func TestPathCollectionUsesPathCollectionBatchForVaryingPerItemStyle(t *testing.
 	r := &batchRecordingRenderer{returnNative: true}
 	pc.Draw(r, createTestDrawContext())
 
-	if len(r.markerBatches) != 0 {
-		t.Fatalf("marker batches = %d, want none for varying collection state", len(r.markerBatches))
+	if len(r.markerBatches) != 1 {
+		t.Fatalf("marker batches = %d, want 1", len(r.markerBatches))
 	}
-	if len(r.pathCollectionBatches) != 1 {
-		t.Fatalf("path collection batches = %d, want 1", len(r.pathCollectionBatches))
-	}
-	if len(r.pathCollectionBatches[0].Items) != 2 {
-		t.Fatalf("path collection items = %d, want 2", len(r.pathCollectionBatches[0].Items))
+	if len(r.pathCollectionBatches) != 0 {
+		t.Fatalf("path collection batches = %d, want 0", len(r.pathCollectionBatches))
 	}
 	if len(r.pathCalls) != 0 {
 		t.Fatalf("fallback path calls = %d, want 0", len(r.pathCalls))
 	}
 
-	items := r.pathCollectionBatches[0].Items
+	items := r.markerBatches[0].Items
+	if len(items) != 2 {
+		t.Fatalf("marker items = %d, want 2", len(items))
+	}
 	if got, want := items[0].Paint.Fill.A, 0.4; math.Abs(got-want) > 1e-12 {
 		t.Fatalf("first fill alpha = %v, want %v", got, want)
 	}
@@ -255,6 +255,12 @@ func TestPathCollectionUsesPathCollectionBatchForVaryingPerItemStyle(t *testing.
 	}
 	if got, want := items[1].Paint.LineWidth, 2.5; got != want {
 		t.Fatalf("second linewidth = %v, want %v", got, want)
+	}
+	if got, want := items[0].Transform.A, 2.0; got != want {
+		t.Fatalf("first marker scale = %v, want %v", got, want)
+	}
+	if got, want := items[1].Transform.A, 3.0; got != want {
+		t.Fatalf("second marker scale = %v, want %v", got, want)
 	}
 }
 
@@ -348,12 +354,12 @@ func TestPathCollectionEdgeColorsFaceStyleUsesFaceColorsForStroke(t *testing.T) 
 	r := &batchRecordingRenderer{returnNative: true}
 	pc.Draw(r, createTestDrawContext())
 
-	if len(r.pathCollectionBatches) != 1 {
-		t.Fatalf("path collection batches = %d, want 1", len(r.pathCollectionBatches))
+	if len(r.markerBatches) != 1 {
+		t.Fatalf("marker batches = %d, want 1", len(r.markerBatches))
 	}
-	items := r.pathCollectionBatches[0].Items
+	items := r.markerBatches[0].Items
 	if len(items) != 2 {
-		t.Fatalf("path collection items = %d, want 2", len(items))
+		t.Fatalf("marker items = %d, want 2", len(items))
 	}
 	for i, item := range items {
 		if item.Paint.Stroke != item.Paint.Fill {
@@ -473,7 +479,7 @@ func TestPathCollectionFallsBackWhenMarkerBatchDeclines(t *testing.T) {
 	}
 }
 
-func TestPathCollectionFallsBackWhenPathCollectionBatchDeclines(t *testing.T) {
+func TestPathCollectionFallsBackWhenMarkerAndPathCollectionBatchesDecline(t *testing.T) {
 	pc := &PathCollection{
 		Path:          polygonPath([]geom.Pt{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: 1}}, true),
 		Offsets:       []geom.Pt{{X: 1, Y: 2}, {X: 4, Y: 5}},
@@ -488,8 +494,8 @@ func TestPathCollectionFallsBackWhenPathCollectionBatchDeclines(t *testing.T) {
 	r := &batchRecordingRenderer{returnNative: false}
 	pc.Draw(r, createTestDrawContext())
 
-	if len(r.markerBatches) != 0 {
-		t.Fatalf("marker batches = %d, want none for varying path collection", len(r.markerBatches))
+	if len(r.markerBatches) != 1 {
+		t.Fatalf("marker batches = %d, want attempted native marker batch", len(r.markerBatches))
 	}
 	if len(r.pathCollectionBatches) != 1 {
 		t.Fatalf("path collection batches = %d, want attempted native path collection", len(r.pathCollectionBatches))

@@ -324,9 +324,6 @@ func (c *PathCollection) singlePathMarkerOptimization() bool {
 	if c.hasHatches() {
 		return false
 	}
-	if len(c.Sizes) > 1 || len(c.FaceColors) > 1 || len(c.EdgeColors) > 1 || len(c.EdgeWidths) > 1 {
-		return false
-	}
 	return true
 }
 

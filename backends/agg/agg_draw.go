@@ -446,12 +446,10 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 		item := &batch.Items[i]
 		markerPaint := item.Paint
 		markerPaint.Snap = render.SnapAuto
-		// Build the marker at its y-up display offset, then flip to device.
-		path := transformMarkerPath(batch.Marker, item.Transform, item.Offset)
+		path := r.transformMarkerPathDevice(batch.Marker, item.Transform, item.Offset)
 		if len(path.C) == 0 {
 			continue
 		}
-		path = r.devPath(path)
 		// Snapping does not commute with the y-flip, so apply pixel-centering in
 		// device space against the device-space offset to stay net-neutral.
 		if !shouldSnapPath(batch.Marker, &markerPaint) {
