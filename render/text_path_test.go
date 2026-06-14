@@ -383,6 +383,38 @@ func TestFontManagerResolveTextRunsUsesRequestedFace(t *testing.T) {
 	}
 }
 
+func TestFontFaceSupportsRuneCachesByCanonicalFaceAndRune(t *testing.T) {
+	manager := withDejaVuFontManager(t)
+	face, ok := manager.FindFont(FontProperties{Families: []string{"DejaVu Sans"}})
+	if !ok {
+		t.Fatal("FindFont(DejaVu Sans) failed")
+	}
+
+	fontFaceRuneSupportCacheMu.Lock()
+	fontFaceRuneSupportCache = map[fontFaceRuneSupportKey]bool{}
+	fontFaceRuneSupportCacheMu.Unlock()
+
+	if !fontFaceSupportsRune(face, 'A') {
+		t.Fatal("fontFaceSupportsRune(DejaVu Sans, A) = false, want true")
+	}
+	if !fontFaceSupportsRune(face, 'A') {
+		t.Fatal("cached fontFaceSupportsRune(DejaVu Sans, A) = false, want true")
+	}
+
+	key := fontFaceCacheKey(face)
+	if key == "" {
+		t.Fatal("fontFaceCacheKey returned empty key")
+	}
+	fontFaceRuneSupportCacheMu.RLock()
+	defer fontFaceRuneSupportCacheMu.RUnlock()
+	if len(fontFaceRuneSupportCache) != 1 {
+		t.Fatalf("fontFaceRuneSupportCache has %d entries, want 1", len(fontFaceRuneSupportCache))
+	}
+	if got, ok := fontFaceRuneSupportCache[fontFaceRuneSupportKey{faceKey: key, r: 'A'}]; !ok || !got {
+		t.Fatalf("fontFaceRuneSupportCache[%q, %q] = %v, %v; want true, true", key, 'A', got, ok)
+	}
+}
+
 func TestTextPathAndLayoutUseEmbeddedFontFace(t *testing.T) {
 	face, ok := embeddedFontFace("DejaVu Sans", FontProperties{Style: FontStyleNormal, Weight: 400})
 	if !ok {

@@ -369,19 +369,19 @@ point are already done.)*
         variance is known. Implemented by
         `.github/workflows/benchmark-report.yml`.
 
-- [ ] **P1 — Low-risk text hot-path wins.** Catalog CPU is dominated by AGG
+- [x] **P1 — Low-risk text hot-path wins.** Catalog CPU is dominated by AGG
       native FreeType text measurement (`withNativeFreetypeRun` /
       `FT_Load_Glyph` / `FT_New_Face`) and allocation profiles show expensive
       text shaping/fallback churn. Do these before invasive renderer changes:
-  - [ ] Cache native FreeType face setup or measured text-run metrics by
+  - [x] Cache native FreeType face setup or measured text-run metrics by
         font-path, size, DPI, hinting factor, and text. Target: reduce
         catalog CPU share for `withNativeFreetypeRun` and repeated
         `FT_New_Face` calls without changing strict text parity.
-  - [ ] Memoize `fontFaceSupportsRune(face, rune)` and avoid repeated
+  - [x] Memoize `fontFaceSupportsRune(face, rune)` and avoid repeated
         `fontFaceCacheKey` / `filepath.Clean` work inside text shaping loops.
         Target: reduce `ShapeTextRuns` / fallback allocation volume on
         `text_layout_gallery`, `mathtext_gallery`, and dense tick-label cases.
-  - [ ] Reuse short-lived shaping buffers where safe (`sfnt.Buffer`, feature
+  - [x] Reuse short-lived shaping buffers where safe (`sfnt.Buffer`, feature
         slices, glyph slices). Keep the API immutable to callers.
 
 - [ ] **P1 — Reduce 100k scatter allocation pressure.** The 100k scatter
@@ -389,8 +389,11 @@ point are already done.)*
       ~366 MB and ~3.7M objects per draw. The dominant source is per-marker
       path cloning/transformation in `PathCollection.drawPathCollection`,
       `applyAffinePath`, and AGG `devPath`.
-  - [ ] Add a focused benchmark threshold row for `BenchmarkLargeScatter100KDraw`
+  - [x] Add a focused benchmark threshold row for `BenchmarkLargeScatter100KDraw`
         so regressions are visible before optimizing.
+  - [x] Combine display-space marker scale+translate into one affine path
+        application, removing one full `geom.Path` allocation from the
+        `PathInDisplay` scatter path.
   - [ ] Add a renderer/backend fast path for repeated marker prototypes that
         transforms marker vertices into backend scratch storage instead of
         allocating a full `geom.Path` per point.

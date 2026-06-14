@@ -13,9 +13,16 @@ import (
 )
 
 var (
-	textPathFontCacheMu sync.RWMutex
-	textPathFontCache   = map[string]*sfnt.Font{}
+	textPathFontCacheMu        sync.RWMutex
+	textPathFontCache          = map[string]*sfnt.Font{}
+	fontFaceRuneSupportCacheMu sync.RWMutex
+	fontFaceRuneSupportCache   = map[fontFaceRuneSupportKey]bool{}
 )
+
+type fontFaceRuneSupportKey struct {
+	faceKey string
+	r       rune
+}
 
 // TextPath converts text to filled glyph outline paths at a baseline origin.
 //
@@ -52,6 +59,10 @@ func loadTextPathFontFace(face FontFace) (*sfnt.Font, error) {
 	if key == "" {
 		return nil, errors.New("render: font face has no path or embedded data")
 	}
+	return loadTextPathFontFaceByKey(face, key)
+}
+
+func loadTextPathFontFaceByKey(face FontFace, key string) (*sfnt.Font, error) {
 	textPathFontCacheMu.RLock()
 	if cached, ok := textPathFontCache[key]; ok {
 		textPathFontCacheMu.RUnlock()
@@ -110,16 +121,37 @@ func textRunsPath(runs []FontRun, origin geom.Pt, size float64) (geom.Path, bool
 }
 
 func fontFaceSupportsRune(face FontFace, r rune) bool {
-	if fontFaceCacheKey(face) == "" || r == utf8.RuneError {
+	key := fontFaceCacheKey(face)
+	if key == "" || r == utf8.RuneError {
 		return false
 	}
-	fontData, err := loadTextPathFontFace(face)
+	return fontFaceSupportsRuneWithKey(face, key, r)
+}
+
+func fontFaceSupportsRuneWithKey(face FontFace, faceKey string, r rune) bool {
+	if faceKey == "" || r == utf8.RuneError {
+		return false
+	}
+	cacheKey := fontFaceRuneSupportKey{faceKey: faceKey, r: r}
+	fontFaceRuneSupportCacheMu.RLock()
+	if supported, ok := fontFaceRuneSupportCache[cacheKey]; ok {
+		fontFaceRuneSupportCacheMu.RUnlock()
+		return supported
+	}
+	fontFaceRuneSupportCacheMu.RUnlock()
+
+	fontData, err := loadTextPathFontFaceByKey(face, faceKey)
 	if err != nil {
 		return false
 	}
 	var buf sfnt.Buffer
 	glyphIndex, err := fontData.GlyphIndex(&buf, r)
-	return err == nil && glyphIndex != 0
+	supported := err == nil && glyphIndex != 0
+
+	fontFaceRuneSupportCacheMu.Lock()
+	fontFaceRuneSupportCache[cacheKey] = supported
+	fontFaceRuneSupportCacheMu.Unlock()
+	return supported
 }
 
 func appendGlyphSegments(path *geom.Path, segments sfnt.Segments, origin geom.Pt) {

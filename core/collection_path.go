@@ -505,12 +505,11 @@ func (c *PathCollection) displayPathAt(ctx *DrawContext, i int, base geom.Path) 
 	scale := c.sizeAt(i)
 	offset := c.offsetAt(i)
 	if c.PathInDisplay {
-		path := scaleAndTranslatePath(base, scale, geom.Pt{})
 		tr := c.offsetTransformFor(ctx)
 		if tr != nil {
 			offset = tr.Apply(offset)
 		}
-		return applyAffinePath(path, translateAffine(offset))
+		return scaleAndTranslatePath(base, scale, offset)
 	}
 	path := scaleAndTranslatePath(base, scale, offset)
 	return buildArtistDisplayPath(ctx, c, c.Coords, path, geom.Identity())

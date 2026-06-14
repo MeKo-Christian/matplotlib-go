@@ -2,12 +2,15 @@ package core
 
 import (
 	"math"
+	"reflect"
 	"testing"
 
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/internal/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
+
+var pathCollectionDisplayPathSink geom.Path
 
 func TestPathCollectionDrawAndBounds(t *testing.T) {
 	pc := &PathCollection{
@@ -36,6 +39,28 @@ func TestPathCollectionDrawAndBounds(t *testing.T) {
 	}
 	if bounds.Max.X <= 4 || bounds.Max.Y <= 5 {
 		t.Fatalf("expected bounds expansion around second offset, got %+v", bounds)
+	}
+}
+
+func TestPathCollectionDisplayPathInDisplayCombinesScaleAndTranslate(t *testing.T) {
+	pc := &PathCollection{
+		Path:          markerRectanglePath(-0.5, -0.5, 0.5, 0.5),
+		Offsets:       []geom.Pt{{X: 10, Y: 20}},
+		Size:          3,
+		PathInDisplay: true,
+	}
+
+	got := pc.displayPathAt(nil, 0, pc.Path)
+	want := scaleAndTranslatePath(pc.Path, 3, geom.Pt{X: 10, Y: 20})
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("displayPathAt = %+v, want %+v", got, want)
+	}
+
+	allocs := testing.AllocsPerRun(1000, func() {
+		pathCollectionDisplayPathSink = pc.displayPathAt(nil, 0, pc.Path)
+	})
+	if allocs > 2 {
+		t.Fatalf("displayPathAt PathInDisplay allocations = %.2f, want <= 2", allocs)
 	}
 }
 

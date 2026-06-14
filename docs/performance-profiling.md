@@ -51,6 +51,16 @@ machine. The 100k scatter stress case is also below one second, but allocation
 volume is high enough to make GC pressure the main risk for repeated or
 interactive rendering.
 
+## Regression Budgets
+
+These budgets are intentionally loose while CI is report-only. They make the
+first P1 target explicit and should be tightened after several benchmark
+artifacts establish normal variance.
+
+| Benchmark | Time budget | Allocation budget | Object budget |
+| --- | ---: | ---: | ---: |
+| `BenchmarkLargeScatter100KDraw` | 700 ms/op | 400 MB/op | 4,000,000 allocs/op |
+
 ## Hotspots
 
 ### 1. Text measurement through native FreeType
@@ -144,3 +154,20 @@ and path-collection issues.
    y-flip clones.
 4. Add renderer/surface reuse APIs for repeated interactive renders.
 5. Cache resolved colormap/norm state for scalar-mapped artists.
+
+## P1 Progress
+
+Implemented on 2026-06-14:
+
+- AGG native FreeType measurement now caches measured text-run bounds/metrics by
+  font path, text, size, DPI, and hinting factor. This avoids repeated
+  `FT_New_Face` / glyph-load measurement work for repeated tick labels and for
+  `MeasureText` + `MeasureTextBounds` pairs.
+- Text fallback now memoizes `fontFaceSupportsRune(face, rune)` by canonical
+  face key and rune, and `ShapeTextRuns` reuses its local `sfnt.Buffer` across
+  resolved runs.
+- Display-space scatter markers now combine scale and translation into one
+  affine path application. The focused `benchtime=1x` smoke row moved
+  `BenchmarkLargeScatter100KDraw` to about 323 MB/op and 3.52M allocs/op on the
+  profiling machine. Run a longer `BENCHTIME=10x just bench-render` sweep before
+  tightening the regression budget.

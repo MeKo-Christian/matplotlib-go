@@ -63,6 +63,7 @@ import (
 	"image"
 	"image/draw"
 	"math"
+	"sync"
 	"unsafe"
 
 	agglib "github.com/cwbudde/agg_go"
@@ -75,6 +76,24 @@ type nativeFreetypeRun struct {
 	bbox    C.FT_BBox
 	advance float64
 }
+
+type nativeFreetypeMeasureKey struct {
+	fontPath      string
+	text          string
+	size          float64
+	dpi           uint
+	hintingFactor int
+}
+
+type nativeFreetypeMeasureCacheEntry struct {
+	bounds  render.TextBounds
+	metrics render.TextMetrics
+}
+
+var (
+	nativeFreetypeMeasureCacheMu sync.RWMutex
+	nativeFreetypeMeasureCache   = map[nativeFreetypeMeasureKey]nativeFreetypeMeasureCacheEntry{}
+)
 
 func (r *Renderer) drawNativeFreetypeText(text string, face render.FontFace, origin geom.Pt, size float64, textColor render.Color) bool {
 	if r.ctx == nil || text == "" || face.Path == "" || size <= 0 {
@@ -296,6 +315,23 @@ func (r *Renderer) measureNativeFreetypeTextRun(text string, face render.FontFac
 	if dpi == 0 {
 		dpi = 72
 	}
+	if hintingFactor <= 0 {
+		hintingFactor = 1
+	}
+	key := nativeFreetypeMeasureKey{
+		fontPath:      face.Path,
+		text:          text,
+		size:          size,
+		dpi:           dpi,
+		hintingFactor: hintingFactor,
+	}
+	nativeFreetypeMeasureCacheMu.RLock()
+	if cached, ok := nativeFreetypeMeasureCache[key]; ok {
+		nativeFreetypeMeasureCacheMu.RUnlock()
+		return cached.bounds, cached.metrics, true
+	}
+	nativeFreetypeMeasureCacheMu.RUnlock()
+
 	var bounds render.TextBounds
 	var metrics render.TextMetrics
 	ok := withNativeFreetypeRun(face.Path, text, size, dpi, hintingFactor, func(run nativeFreetypeRun) bool {
@@ -308,6 +344,11 @@ func (r *Renderer) measureNativeFreetypeTextRun(text string, face render.FontFac
 		metrics = render.TextMetrics{W: run.advance}
 		return true
 	})
+	if ok {
+		nativeFreetypeMeasureCacheMu.Lock()
+		nativeFreetypeMeasureCache[key] = nativeFreetypeMeasureCacheEntry{bounds: bounds, metrics: metrics}
+		nativeFreetypeMeasureCacheMu.Unlock()
+	}
 	return bounds, metrics, ok
 }
 

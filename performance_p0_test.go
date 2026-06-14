@@ -38,6 +38,21 @@ func TestPerformanceP0Plumbing(t *testing.T) {
 	}
 }
 
+func TestPerformanceP1ScatterThresholdIsDocumented(t *testing.T) {
+	notes := readTextFile(t, "docs/performance-profiling.md")
+	for _, want := range []string{
+		"## Regression Budgets",
+		"`BenchmarkLargeScatter100KDraw`",
+		"700 ms/op",
+		"400 MB/op",
+		"4,000,000 allocs/op",
+	} {
+		if !strings.Contains(notes, want) {
+			t.Fatalf("performance notes missing %q", want)
+		}
+	}
+}
+
 func readTextFile(t *testing.T, path string) string {
 	t.Helper()
 	data, err := os.ReadFile(path)

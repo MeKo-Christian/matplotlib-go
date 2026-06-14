@@ -123,6 +123,7 @@ func ShapeTextRuns(runs []FontRun, origin geom.Pt, size float64, opts TextShapin
 		havePrevious  bool
 		clusterOffset int
 		laidOutGlyphs bool
+		buf           sfnt.Buffer
 	)
 
 	for _, inputRun := range runs {
@@ -147,7 +148,6 @@ func ShapeTextRuns(runs []FontRun, origin geom.Pt, size float64, opts TextShapin
 		runHaveBounds := false
 		var runMinX, runMinY, runMaxX, runMaxY float64
 
-		var buf sfnt.Buffer
 		inputGlyphs, ok := shapeRunInputGlyphs(fontData, &buf, inputRun.Text, clusterOffset)
 		if !ok {
 			return ShapedText{}, false

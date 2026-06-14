@@ -89,6 +89,51 @@ func TestRasterTextWidthTracksRendererDPI(t *testing.T) {
 	}
 }
 
+func TestMeasureNativeFreetypeTextRunCachesMetrics(t *testing.T) {
+	r := mustNew(t, 200, 100)
+	if r.defaultFontFace.Path == "" {
+		t.Fatal("default font face has no path-backed FreeType resource")
+	}
+	r.SetResolution(96)
+
+	nativeFreetypeMeasureCacheMu.Lock()
+	nativeFreetypeMeasureCache = map[nativeFreetypeMeasureKey]nativeFreetypeMeasureCacheEntry{}
+	nativeFreetypeMeasureCacheMu.Unlock()
+
+	const (
+		text          = "Basic Bars"
+		size          = 12.0
+		hintingFactor = matplotlibTextHintingFactor
+	)
+	firstBounds, firstMetrics, ok := r.measureNativeFreetypeTextRun(text, r.defaultFontFace, size, hintingFactor)
+	if !ok {
+		t.Fatal("first measureNativeFreetypeTextRun failed")
+	}
+	secondBounds, secondMetrics, ok := r.measureNativeFreetypeTextRun(text, r.defaultFontFace, size, hintingFactor)
+	if !ok {
+		t.Fatal("second measureNativeFreetypeTextRun failed")
+	}
+	if firstBounds != secondBounds || firstMetrics != secondMetrics {
+		t.Fatalf("cached metrics changed: first bounds=%+v metrics=%+v second bounds=%+v metrics=%+v", firstBounds, firstMetrics, secondBounds, secondMetrics)
+	}
+
+	key := nativeFreetypeMeasureKey{
+		fontPath:      r.defaultFontFace.Path,
+		text:          text,
+		size:          size,
+		dpi:           96,
+		hintingFactor: hintingFactor,
+	}
+	nativeFreetypeMeasureCacheMu.RLock()
+	defer nativeFreetypeMeasureCacheMu.RUnlock()
+	if len(nativeFreetypeMeasureCache) != 1 {
+		t.Fatalf("nativeFreetypeMeasureCache has %d entries, want 1", len(nativeFreetypeMeasureCache))
+	}
+	if cached, ok := nativeFreetypeMeasureCache[key]; !ok || cached.bounds != firstBounds || cached.metrics != firstMetrics {
+		t.Fatalf("nativeFreetypeMeasureCache[%+v] = %+v, %v; want bounds=%+v metrics=%+v", key, cached, ok, firstBounds, firstMetrics)
+	}
+}
+
 func TestRasterTextKerningMatchesSharedGlyphLayout(t *testing.T) {
 	r := mustNew(t, 260, 120)
 	fontKey := fontReference(r.defaultFontFace)

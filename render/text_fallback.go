@@ -23,6 +23,10 @@ func (m *FontManager) ResolveTextRuns(text, fontKey string) ([]FontRun, bool) {
 	if !ok {
 		return nil, false
 	}
+	primaryKey := fontFaceCacheKey(primary)
+	if primaryKey == "" {
+		return nil, false
+	}
 
 	fallbacks := m.fallbackFaces(primary)
 	var runs []FontRun
@@ -46,14 +50,18 @@ func (m *FontManager) ResolveTextRuns(text, fontKey string) ([]FontRun, bool) {
 		text = text[n:]
 
 		face := primary
-		if !fontFaceSupportsRune(primary, r) {
-			face = firstFaceSupportingRune(fallbacks, r)
-			if fontFaceCacheKey(face) == "" {
+		faceKey := primaryKey
+		if !fontFaceSupportsRuneWithKey(primary, primaryKey, r) {
+			fallbackFace, fallbackKey := firstFaceSupportingRune(fallbacks, r)
+			if fallbackKey == "" {
 				face = primary
+				faceKey = primaryKey
+			} else {
+				face = fallbackFace
+				faceKey = fallbackKey
 			}
 		}
 
-		faceKey := fontFaceCacheKey(face)
 		if currentKey != "" && faceKey != currentKey {
 			flush()
 		}
@@ -90,11 +98,12 @@ func (m *FontManager) fallbackFaces(primary FontFace) []FontFace {
 	return faces
 }
 
-func firstFaceSupportingRune(faces []FontFace, r rune) FontFace {
+func firstFaceSupportingRune(faces []FontFace, r rune) (FontFace, string) {
 	for _, face := range faces {
-		if fontFaceSupportsRune(face, r) {
-			return face
+		key := fontFaceCacheKey(face)
+		if fontFaceSupportsRuneWithKey(face, key, r) {
+			return face, key
 		}
 	}
-	return FontFace{}
+	return FontFace{}, ""
 }
