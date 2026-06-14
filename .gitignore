@@ -11,10 +11,15 @@ testdata/_artifacts/
 # Temporary files
 *.tmp
 *.temp
+*.log
+coverage.out
+*.prof
+*.pprof
 
 # Build outputs
 matplotlib-go
 parityviewer
+*.test
 *.exe
 web/main.wasm
 web/wasm_exec.js
@@ -28,5 +33,8 @@ Thumbs.db
 .codex
 .claude/
 
-# Cache
+# Local tool state and caches
+.trunk/
+.pytest_cache/
+.ruff_cache/
 __pycache__/

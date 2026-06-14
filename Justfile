@@ -118,7 +118,7 @@ golden-update TEST="": freetype261-build
     if [ -n "{{TEST}}" ]; then \
       CGO_ENABLED=1 go test -tags freetype -count=1 -run "{{TEST}}" ./test -update-golden; \
     else \
-      CGO_ENABLED=1 go test -tags freetype -count=1 -run '^Test.*_Golden$$' ./test -update-golden; \
+      CGO_ENABLED=1 go test -tags freetype -count=1 -run '^TestGolden$$' ./test -update-golden; \
     fi
 
 text-parity-backend: freetype261-build
@@ -128,13 +128,13 @@ text-parity-core:
     CGO_ENABLED=1 go test ./core -run "TestTitleFontSizeUsesTitleOnlyCompensation|TestDrawAxesLabels_YLabelUsesTickBoundsAndLabelPad|TestTickLabelPositionUsesBoundsForBottomXAxis|TestTickLabelPositionUsesBoundsForLeftYAxis|TestTickLabelPositionUsesFontHeightMetricsForBottomXAxis|TestTickLabelPositionUsesBottomAlignmentForTopXAxis|TestTickLabelPositionUsesCenterBaselineForRightYAxis|TestAlignedTextOrigin|TestAxesTextDrawsNormalizedContent|TestAnnotationDrawOverlayRendersArrowAndText|TestAxesTextSupportsAxesAndBlendedCoordinates" -count=1 -v
 
 text-parity-canaries: freetype261-build
-    CGO_ENABLED=1 go test -tags freetype ./test -run "TestMpl_BarBasicTickLabels|TestMpl_BarBasicTitle|TestMpl_HistStrategies|TestTextLabelsStrict_MatplotlibRef|TestTitleStrict_MatplotlibRef" -count=1 -v
+    RUN_OPTIONAL_VISUAL_TESTS=true CGO_ENABLED=1 go test -tags freetype ./test -run 'TestMatplotlibRef/(bar_basic_tick_labels|bar_basic_title|hist_strategies|text_labels_strict|title_strict)$$' -count=1 -v
 
 text-parity-golden: freetype261-build
-    CGO_ENABLED=1 go test -tags freetype ./test -run "TestBarBasicTickLabels_Golden|TestBarBasicTitle_Golden|TestHistStrategies_Golden|TestTextLabelsStrict_Golden|TestTitleStrict_Golden" -count=1 -update-golden -v
+    CGO_ENABLED=1 go test -tags freetype ./test -run 'TestGolden/(bar_basic_tick_labels|bar_basic_title|hist_strategies|text_labels_strict|title_strict)$$' -count=1 -update-golden -v
 
 text-parity-compare: freetype261-build
-    CGO_ENABLED=1 go test -tags freetype ./test -run "TestReferenceImages_GoldenVsMatplotlibRef/bar_basic_tick_labels|TestReferenceImages_GoldenVsMatplotlibRef/bar_basic_title|TestReferenceImages_GoldenVsMatplotlibRef/hist_strategies|TestTextLabelsStrict_MatplotlibRef|TestTitleStrict_MatplotlibRef" -count=1 -v
+    RUN_OPTIONAL_VISUAL_TESTS=true CGO_ENABLED=1 go test -tags freetype ./test -run 'TestReferenceCompare/(bar_basic_tick_labels|bar_basic_title|hist_strategies|text_labels_strict|title_strict)$$' -count=1 -v
 
 backend-info:
     @go run ./examples/backends/info/main.go 2>/dev/null || echo "Backend info example not yet available"

@@ -63,8 +63,8 @@ func TestAGGNativeMatplotlibRef(t *testing.T) {
 }
 
 // runStrictMatplotlibRef enforces tight PSNR/MeanAbs tolerances for the
-// hand-curated text/title strict cases, matching the historical behaviour of
-// TestTextLabelsStrict_MatplotlibRef and TestTitleStrict_MatplotlibRef.
+// hand-curated text/title strict cases, matching the historical standalone
+// strict-test behavior.
 func runStrictMatplotlibRef(t *testing.T, name string) {
 	t.Helper()
 

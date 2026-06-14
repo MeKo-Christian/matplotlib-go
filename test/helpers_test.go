@@ -115,8 +115,8 @@ var optionalVisualGoldenIDs = map[string]bool{
 	"axes_grid1_showcase":     true,
 }
 
-// optionalVisualMplRefIDs gates matplotlib_ref tests that historically lived
-// in test/text_strict_test.go and were always RUN_OPTIONAL_VISUAL_TESTS-gated.
+// optionalVisualMplRefIDs gates strict matplotlib_ref cases that are expensive
+// enough to keep behind RUN_OPTIONAL_VISUAL_TESTS.
 var optionalVisualMplRefIDs = map[string]bool{
 	"text_labels_strict": true,
 	"title_strict":       true,
