@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -47,8 +48,8 @@ func TestNewGoldenUpdateCommandIncludesFreetypeTag(t *testing.T) {
 	if !slices.Contains(cmd.Env, goldenUpdateOptionalVisualTestsEnv+"=true") {
 		t.Fatalf("Env missing %s=true: %v", goldenUpdateOptionalVisualTestsEnv, cmd.Env)
 	}
-	if !slices.Contains(cmd.Env, "GOCACHE=/tmp/mpl-parity-gocache") {
-		t.Fatalf("Env missing fallback GOCACHE: %v", cmd.Env)
+	if !slices.Contains(cmd.Env, "GOCACHE="+goldenUpdateDefaultGoCache()) {
+		t.Fatalf("Env missing configured GOCACHE: %v", cmd.Env)
 	}
 }
 
@@ -56,6 +57,37 @@ func TestRerenderAllArtifactsUsesGoldenOnlyPattern(t *testing.T) {
 	cmd := newGoldenUpdateCommand("/tmp/repo", goldenUpdateRunPatternAll)
 	if !slices.Contains(cmd.Args, goldenUpdateRunPatternAll) {
 		t.Fatalf("Args missing all-goldens run pattern: %v", cmd.Args)
+	}
+}
+
+func TestNewParityRenderCommandRendersSingleIDToGoldenDir(t *testing.T) {
+	t.Setenv("GOCACHE", "")
+
+	cmd := newParityRenderCommand("/tmp/repo", "errorbar_basic")
+
+	if cmd.Dir != "/tmp/repo" {
+		t.Fatalf("Dir = %q, want %q", cmd.Dir, "/tmp/repo")
+	}
+	requiredArgs := []string{
+		"run",
+		"-tags",
+		goldenUpdateBuildTag,
+		"./test/parity/cmd",
+		"--id",
+		"errorbar_basic",
+		"--output-dir",
+		filepath.Join("testdata", "golden"),
+	}
+	for _, arg := range requiredArgs {
+		if !slices.Contains(cmd.Args, arg) {
+			t.Fatalf("Args missing %q: %v", arg, cmd.Args)
+		}
+	}
+	if !slices.Contains(cmd.Env, "CGO_ENABLED=1") {
+		t.Fatalf("Env missing CGO_ENABLED=1: %v", cmd.Env)
+	}
+	if !slices.Contains(cmd.Env, "GOCACHE="+goldenUpdateDefaultGoCache()) {
+		t.Fatalf("Env missing configured GOCACHE: %v", cmd.Env)
 	}
 }
 

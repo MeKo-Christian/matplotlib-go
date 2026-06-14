@@ -26,6 +26,7 @@ import (
 const (
 	goldenUpdateBuildTag               = "freetype"
 	goldenUpdateOptionalVisualTestsEnv = "RUN_OPTIONAL_VISUAL_TESTS"
+	goldenUpdateFallbackGoCache        = "/tmp/mpl-parity-gocache"
 	rerenderAllButtonPlaceholder       = "__RERENDER_ALL_BUTTON__"
 	goldenUpdateRunPatternAll          = "^TestGolden$"
 	goldenUpdateTimeout                = 5 * time.Minute
@@ -223,7 +224,7 @@ func rerenderArtifact(repoRoot, name string) error {
 	if name == "" {
 		return errors.New("missing name")
 	}
-	return runGoGoldenUpdate(repoRoot, testNameFromCaseName(name))
+	return runGoParityRender(repoRoot, name)
 }
 
 func rerenderAllArtifacts(repoRoot string) error {
@@ -259,6 +260,29 @@ func runGoGoldenUpdate(repoRoot, runPattern string) error {
 	return nil
 }
 
+func runGoParityRender(repoRoot, name string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), goldenUpdateTimeout)
+	defer cancel()
+
+	cmd := newParityRenderCommandContext(ctx, repoRoot, name)
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(out.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			return fmt.Errorf("go run timed out after %s for %q: %s", goldenUpdateTimeout, name, msg)
+		}
+		return fmt.Errorf("go run failed: %w: %s", err, msg)
+	}
+	return nil
+}
+
 func newGoldenUpdateCommand(repoRoot, runPattern string) *exec.Cmd {
 	return newGoldenUpdateCommandContext(context.Background(), repoRoot, runPattern)
 }
@@ -273,14 +297,52 @@ func newGoldenUpdateCommandContext(ctx context.Context, repoRoot, runPattern str
 	cmd := exec.CommandContext(ctx, "go", args...)
 	cmd.Dir = repoRoot
 
-	cmd.Env = os.Environ()
-	cmd.Env = setEnv(cmd.Env, "CGO_ENABLED", "1")
+	cmd.Env = goCommandEnv()
 	cmd.Env = setEnv(cmd.Env, goldenUpdateOptionalVisualTestsEnv, "true")
-	if cacheDir, hasCache := os.LookupEnv("GOCACHE"); !hasCache || strings.TrimSpace(cacheDir) == "" {
-		cmd.Env = setEnv(cmd.Env, "GOCACHE", "/tmp/mpl-parity-gocache")
-	}
 
 	return cmd
+}
+
+func newParityRenderCommand(repoRoot, name string) *exec.Cmd {
+	return newParityRenderCommandContext(context.Background(), repoRoot, name)
+}
+
+func newParityRenderCommandContext(ctx context.Context, repoRoot, name string) *exec.Cmd {
+	args := []string{
+		"run",
+		"-tags",
+		goldenUpdateBuildTag,
+		"./test/parity/cmd",
+		"--id",
+		name,
+		"--output-dir",
+		filepath.Join("testdata", "golden"),
+	}
+
+	cmd := exec.CommandContext(ctx, "go", args...)
+	cmd.Dir = repoRoot
+	cmd.Env = goCommandEnv()
+
+	return cmd
+}
+
+func goCommandEnv() []string {
+	env := os.Environ()
+	env = setEnv(env, "CGO_ENABLED", "1")
+	if cacheDir, hasCache := os.LookupEnv("GOCACHE"); !hasCache || strings.TrimSpace(cacheDir) == "" {
+		env = setEnv(env, "GOCACHE", goldenUpdateDefaultGoCache())
+	}
+	return env
+}
+
+func goldenUpdateDefaultGoCache() string {
+	out, err := exec.Command("go", "env", "GOCACHE").Output()
+	if err == nil {
+		if cacheDir := strings.TrimSpace(string(out)); cacheDir != "" {
+			return cacheDir
+		}
+	}
+	return goldenUpdateFallbackGoCache
 }
 
 func setEnv(env []string, key, value string) []string {
