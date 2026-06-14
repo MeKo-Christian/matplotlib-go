@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // DPIAware is implemented by renderers that adapt text/layout behavior to DPI.

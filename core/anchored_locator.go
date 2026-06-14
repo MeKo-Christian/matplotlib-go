@@ -1,6 +1,6 @@
 package core
 
-import "github.com/cwbudde/matplotlib-go/internal/geom"
+import "github.com/cwbudde/matplotlib-go/geom"
 
 // AnchoredBoxLocator resolves a display-space box inside a clip rect.
 type AnchoredBoxLocator interface {

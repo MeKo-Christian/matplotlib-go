@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cwbudde/matplotlib-go/color"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/transform"
 )

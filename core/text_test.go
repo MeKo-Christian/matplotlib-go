@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	mt "github.com/cwbudde/mathtext"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/transform"

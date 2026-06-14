@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 

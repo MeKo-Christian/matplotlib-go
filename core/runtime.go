@@ -1,6 +1,6 @@
 package core
 
-import "github.com/cwbudde/matplotlib-go/internal/geom"
+import "github.com/cwbudde/matplotlib-go/geom"
 
 // DisplayRect reports the figure display rectangle in pixels.
 func (f *Figure) DisplayRect() geom.Rect {

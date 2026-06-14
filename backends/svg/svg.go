@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/cwbudde/matplotlib-go/backends/internal/mixedraster"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 	tex "github.com/cwbudde/matplotlib-go/internal/tex"
 	"github.com/cwbudde/matplotlib-go/render"
 )

@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	agglib "github.com/cwbudde/agg_go"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 

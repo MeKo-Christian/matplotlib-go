@@ -9,7 +9,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/canvas"
 	"github.com/cwbudde/matplotlib-go/core"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // rasterFakeCanvas is a deterministic canvas.RasterCanvas: each Draw paints a

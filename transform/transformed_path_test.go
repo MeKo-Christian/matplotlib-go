@@ -3,7 +3,7 @@ package transform
 import (
 	"testing"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 func TestTransformedPathCachesAndInvalidates(t *testing.T) {

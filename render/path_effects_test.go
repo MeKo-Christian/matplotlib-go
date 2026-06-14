@@ -5,7 +5,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 func TestDrawPathWithEffectsReplaysStrokeThenNormal(t *testing.T) {

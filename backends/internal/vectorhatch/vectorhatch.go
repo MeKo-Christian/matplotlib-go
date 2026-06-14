@@ -4,7 +4,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 const tileSide = 72.0

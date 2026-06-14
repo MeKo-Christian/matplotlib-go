@@ -1,6 +1,6 @@
 package transform
 
-import "github.com/cwbudde/matplotlib-go/internal/geom"
+import "github.com/cwbudde/matplotlib-go/geom"
 
 // TransformedPath caches a path transformed through a transform graph.
 //

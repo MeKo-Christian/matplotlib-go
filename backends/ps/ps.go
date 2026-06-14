@@ -11,7 +11,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/backends/internal/mixedraster"
 	"github.com/cwbudde/matplotlib-go/backends/internal/vectorhatch"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 

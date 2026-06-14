@@ -1,6 +1,6 @@
 package agg
 
-import "github.com/cwbudde/matplotlib-go/internal/geom"
+import "github.com/cwbudde/matplotlib-go/geom"
 
 // The core "display space" is y-UP (origin bottom-left, +Y up), matching
 // matplotlib. The AGG device buffer is y-DOWN (origin top-left, +Y down). This

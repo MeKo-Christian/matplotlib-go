@@ -4,7 +4,7 @@ import (
 	"sync/atomic"
 
 	"github.com/cwbudde/matplotlib-go/core"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // Figure aliases the plotting figure type for runtime-facing APIs.

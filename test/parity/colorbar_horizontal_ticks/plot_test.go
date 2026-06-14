@@ -3,7 +3,7 @@ package colorbar_horizontal_ticks
 import (
 	"testing"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 func TestPlotUsesDirectAxesGeometry(t *testing.T) {

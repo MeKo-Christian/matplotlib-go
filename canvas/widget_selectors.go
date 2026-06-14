@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/core"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 type selectorDragKind uint8

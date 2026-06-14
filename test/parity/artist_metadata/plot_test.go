@@ -3,7 +3,7 @@ package artist_metadata
 import (
 	"testing"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 func TestDataToDisplayMatchesMatplotlibYUpDisplay(t *testing.T) {

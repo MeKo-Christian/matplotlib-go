@@ -120,7 +120,7 @@ var featureCoverageRows = []FeatureCoverage{
 		Title:                   "Transforms and Coordinate Systems",
 		UpstreamModules:         []string{"transforms.py", "bezier.py", "path.py"},
 		UpstreamGalleryFamilies: []string{"subplots_axes_and_figures", "text_labels_and_annotations"},
-		GoFiles:                 []string{"transform/transform.go", "transform/graph.go", "transform/node.go", "internal/geom/geom.go"},
+		GoFiles:                 []string{"transform/transform.go", "transform/graph.go", "transform/node.go", "geom/geom.go"},
 		CatalogIDs:              []string{"transform_coordinates", "transform_annotation_modes", "path_clipped_transformed", "layout_bbox_helpers", "annotation_composition", "imshow_transformed"},
 		ExampleIDs:              []string{"annotation_composition"},
 		WebDemoIDs:              []string{"axes"},

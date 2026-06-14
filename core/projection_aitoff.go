@@ -3,7 +3,7 @@ package core
 import (
 	"math"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // aitoffDataTransform implements the Aitoff projection.

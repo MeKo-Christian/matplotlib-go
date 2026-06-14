@@ -1,6 +1,6 @@
 package gobasic
 
-import "github.com/cwbudde/matplotlib-go/internal/geom"
+import "github.com/cwbudde/matplotlib-go/geom"
 
 // The core "display space" is y-UP (origin bottom-left, +Y up), matching
 // matplotlib. The gobasic raster buffer (image.RGBA) is y-DOWN (origin

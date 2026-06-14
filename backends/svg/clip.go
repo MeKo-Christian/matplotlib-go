@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cwbudde/matplotlib-go/backends/internal/mixedraster"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 func (r *Renderer) ClipRect(rect geom.Rect) {

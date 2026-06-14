@@ -3,7 +3,7 @@ package core
 import (
 	"math"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 func polygonSelectorPathFromData(points []geom.Pt, ctx *DrawContext) geom.Path {

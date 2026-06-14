@@ -12,7 +12,7 @@ import (
 	"unicode/utf8"
 
 	agglib "github.com/cwbudde/agg_go"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"

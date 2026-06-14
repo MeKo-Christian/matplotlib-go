@@ -4,7 +4,7 @@ import (
 	"errors"
 	"image"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // DefaultHatchSpacing matches Matplotlib's default hatch density of six

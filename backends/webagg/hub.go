@@ -6,7 +6,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // clientSink is the narrow contract a hub uses to push bytes to one

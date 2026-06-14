@@ -431,8 +431,13 @@ point are already done.)*
 - [ ] Semantic-version policy decision and `CHANGELOG.md` baseline.
 - [ ] Final golden / reference regeneration pass with per-case tolerances frozen
       for v1.0.
-- [ ] Public API stability audit: rename or hide any symbol not intended for the
-      v1.0 surface.
+- [x] Public API stability audit: rename or hide any symbol not intended for the
+      v1.0 surface. Closed on 2026-06-14 by freezing the stable exported Go API
+      in `test/testdata/public_api/stable_public_api.json`, adding a CI-style
+      audit test for accidental exported-surface drift, and promoting geometry
+      primitives from `internal/geom` to the public `geom` package so renderer,
+      transform, canvas, backend, and pyplot signatures do not expose
+      unimportable internal types.
 - [ ] CI gate: `just fmt && just lint && just test` plus catalog-driven parity
       checks all pass on the release branch.
 - [ ] Tag v1.0.

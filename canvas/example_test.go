@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cwbudde/matplotlib-go/canvas"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // Example connects a handler to a Dispatcher and emits a mouse-press event to

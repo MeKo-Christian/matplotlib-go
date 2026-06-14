@@ -3,7 +3,7 @@ package render
 import (
 	"testing"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 type textLayoutRenderer struct {

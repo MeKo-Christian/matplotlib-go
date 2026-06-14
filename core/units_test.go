@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 func TestAxesPlotUnits_ConfiguresDateAxis(t *testing.T) {

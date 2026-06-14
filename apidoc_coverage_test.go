@@ -9,7 +9,25 @@ import (
 )
 
 func TestStablePublicPackagesHaveGoDocAndExamples(t *testing.T) {
-	stable := []string{
+	for _, importPath := range stablePublicPackageDirs() {
+		importPath := importPath
+		t.Run(importPath, func(t *testing.T) {
+			pkg, err := build.ImportDir(importPath, build.ImportComment)
+			if err != nil {
+				t.Fatalf("load package: %v", err)
+			}
+			if strings.TrimSpace(pkg.Doc) == "" {
+				t.Fatalf("missing package documentation")
+			}
+			if !hasExternalExampleFile(t, importPath, pkg.Name) {
+				t.Fatalf("missing external worked example in package %q", importPath)
+			}
+		})
+	}
+}
+
+func stablePublicPackageDirs() []string {
+	return []string{
 		".",
 		"animation",
 		"backends",
@@ -27,26 +45,11 @@ func TestStablePublicPackagesHaveGoDocAndExamples(t *testing.T) {
 		"canvas",
 		"color",
 		"core",
+		"geom",
 		"pyplot",
 		"render",
 		"style",
 		"transform",
-	}
-
-	for _, importPath := range stable {
-		importPath := importPath
-		t.Run(importPath, func(t *testing.T) {
-			pkg, err := build.ImportDir(importPath, build.ImportComment)
-			if err != nil {
-				t.Fatalf("load package: %v", err)
-			}
-			if strings.TrimSpace(pkg.Doc) == "" {
-				t.Fatalf("missing package documentation")
-			}
-			if !hasExternalExampleFile(t, importPath, pkg.Name) {
-				t.Fatalf("missing external worked example in package %q", importPath)
-			}
-		})
 	}
 }
 

@@ -23,7 +23,7 @@ extern "C" {
 typedef struct MgSkSurface MgSkSurface;
 
 /* Path verb codes. These mirror the values the Go side emits when translating
- * internal/geom.Cmd; they are part of the ABI contract, not Skia's own enum. */
+ * geom.Cmd; they are part of the ABI contract, not Skia's own enum. */
 enum {
     MGSK_VERB_MOVE  = 0,
     MGSK_VERB_LINE  = 1,

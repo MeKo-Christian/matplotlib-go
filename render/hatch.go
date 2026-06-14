@@ -4,7 +4,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // DrawHatchFallback expands Paint hatch metadata into ordinary clipped stroke

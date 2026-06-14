@@ -4,7 +4,7 @@
 
 - `cmd/`: Cobra CLI (`root.go`, `version.go`).
 - `core/`, `transform/`, `render/`, `style/`, `color/`: plotting primitives and systems.
-- `internal/geom/`: geometry types (points, rects, paths, affine).
+- `geom/`: public geometry types (points, rects, paths, affine).
 - `examples/`: runnable samples (when added).
 - `test/`: testing docs/assets; unit tests live next to code as `*_test.go`.
 - `main.go`: CLI entry.
@@ -26,7 +26,7 @@
 
 ## Testing Guidelines
 
-- Place tests beside code: `render/render_test.go`, `internal/geom/geom_test.go` patterns.
+- Place tests beside code: `render/render_test.go`, `geom/geom_test.go` patterns.
 - Name tests `TestXxx(t *testing.T)`; prefer table-driven tests for variations.
 - Aim for deterministic behavior (no randomness without fixed seeds); avoid timing-based assertions.
 - Run all packages: `go test ./...`. For verbose: `go test -v ./...`.
@@ -79,4 +79,4 @@ matplotlib generates every reference image with **FreeType 2.6.1** (its pinned v
 
 - Core concepts mirror Matplotlib: `Figure → Axes → Artists`; rendering is backend-agnostic.
 - The shared renderer contract lives in `render/`, with optional capability interfaces for backend-specific features like text drawing, transformed images, DPI-aware text metrics, and PNG export.
-- Current focus areas include geometry (`internal/geom`), transforms (`transform`), and keeping backend capabilities/documentation aligned with what each renderer actually implements.
+- Current focus areas include geometry (`geom`), transforms (`transform`), and keeping backend capabilities/documentation aligned with what each renderer actually implements.

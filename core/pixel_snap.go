@@ -3,7 +3,7 @@ package core
 import (
 	"math"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 func rectFromPoints(p1, p2 geom.Pt) (geom.Rect, bool) {

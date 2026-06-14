@@ -18,7 +18,7 @@ Thanks for your interest in contributing! This project aims to build a Matplotli
 
 ## Style
 
-- Keep packages cohesive: `core`, `transform`, `render`, `style`, `color`, and `internal/geom`.
+- Keep packages cohesive: `core`, `transform`, `render`, `style`, `color`, and `geom`.
 - Avoid global state; prefer explicit values and options.
 - Ensure determinism and clear, stable APIs.
 

@@ -8,7 +8,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"golang.org/x/image/vector"
 )

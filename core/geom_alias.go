@@ -1,11 +1,10 @@
 package core
 
-import "github.com/cwbudde/matplotlib-go/internal/geom"
+import "github.com/cwbudde/matplotlib-go/geom"
 
-// Public aliases for the core geometry types so that external modules can
-// construct rectangles and points without depending on the internal/geom
-// package directly. These are exact type aliases, so values are
-// interchangeable with geom.Rect / geom.Pt at no runtime cost.
+// Public aliases for the most common geometry types used by the core plotting
+// API. These are exact type aliases, so values are interchangeable with
+// geom.Rect / geom.Pt at no runtime cost.
 type (
 	// Pt is a 2D point matching geom.Pt.
 	Pt = geom.Pt

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // fakeCanvas implements FigureCanvas in memory; it lets the connect /

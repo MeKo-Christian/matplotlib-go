@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	plotcanvas "github.com/cwbudde/matplotlib-go/canvas"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // HandleClientMessage decodes a JSON event from a client and applies

@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/backends/internal/vectorhatch"
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"golang.org/x/image/font/sfnt"
 )

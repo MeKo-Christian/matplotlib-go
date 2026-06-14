@@ -1,7 +1,7 @@
 package render
 
 import (
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 	"golang.org/x/image/font/sfnt"
 )
 

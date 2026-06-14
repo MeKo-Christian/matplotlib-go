@@ -4,7 +4,7 @@ import (
 	"image"
 	"testing"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // Compile-time assertion also present in render.go, kept here to guard against accidental changes.

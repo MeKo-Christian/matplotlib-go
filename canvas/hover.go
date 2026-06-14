@@ -3,7 +3,7 @@ package canvas
 import (
 	"sync"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // AxesHoverTracker synthesizes axes enter / leave lifecycle events from a

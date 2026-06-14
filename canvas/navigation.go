@@ -5,7 +5,7 @@ import (
 	"math"
 	"sync"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // NavigationMode selects which interaction the [Navigation] helper performs in

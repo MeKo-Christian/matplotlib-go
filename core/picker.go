@@ -3,7 +3,7 @@ package core
 import (
 	"math"
 
-	"github.com/cwbudde/matplotlib-go/internal/geom"
+	"github.com/cwbudde/matplotlib-go/geom"
 )
 
 // PickInfo carries optional extra detail about a successful pick — for example

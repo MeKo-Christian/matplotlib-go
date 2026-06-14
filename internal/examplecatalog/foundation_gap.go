@@ -102,7 +102,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CoverageID:      "transforms",
 		Title:           "Transform, BBox, and transformed-path breadth",
 		UpstreamModules: []string{"transforms.py", "path.py", "bezier.py"},
-		GoFiles:         []string{"transform/transform.go", "transform/graph.go", "transform/node.go", "internal/geom/geom.go"},
+		GoFiles:         []string{"transform/transform.go", "transform/graph.go", "transform/node.go", "geom/geom.go"},
 		CurrentEquivalent: "Go has affine, separable, blended, chained, offset, display-rect, scale, " +
 			"and graph-backed transforms plus rect/path primitives with BBox-style union, " +
 			"intersection, expansion/padding, point containment, affine transformed bounds, and " +
