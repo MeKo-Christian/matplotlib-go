@@ -63,8 +63,7 @@ func TestAxisSpinePositionDataMovesXAxisSpine(t *testing.T) {
 	}
 	spine := r.pathCalls[0].path.V
 	wantY := ctx.DataToPixel.Apply(geom.Pt{X: 0, Y: 3}).Y
-	// Display space is y-up: spine endpoints snap to round(y) - 0.5.
-	wantY = math.Round(wantY) - 0.5
+	wantY = snapDisplayY(wantY, figureSnapHeight(ctx))
 	if !floatApprox(spine[0].Y, wantY, 1e-9) || !floatApprox(spine[1].Y, wantY, 1e-9) {
 		t.Fatalf("floating x spine = %+v", spine)
 	}

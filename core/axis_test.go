@@ -717,12 +717,15 @@ func TestAxes_EqualAspectLayoutMatchesMatplotlibFractionAnchoring(t *testing.T) 
 	}
 }
 
-func TestSnapDisplayYPreservesMatplotlibHalfPixelSpineCenters(t *testing.T) {
-	if got := snapDisplayY(274.5); got != 274.5 {
-		t.Fatalf("snapDisplayY(274.5) = %.17g, want 274.5", got)
+func TestSnapDisplayYMatchesMatplotlibDeviceSpacePathSnapper(t *testing.T) {
+	if got := snapDisplayY(268.5, 900); got != 267.5 {
+		t.Fatalf("snapDisplayY(268.5, 900) = %.17g, want device-space snapped 267.5", got)
 	}
-	if got := snapDisplayY(373.50000000000006); got != 373.5 {
-		t.Fatalf("snapDisplayY(373.50000000000006) = %.17g, want 373.5", got)
+	if got := snapDisplayY(67.49999999999996, 900); got != 66.5 {
+		t.Fatalf("snapDisplayY(67.49999999999996, 900) = %.17g, want device-space snapped 66.5", got)
+	}
+	if got := snapDisplayY(373.50000000000006, 720); got != 373.5 {
+		t.Fatalf("snapDisplayY(373.50000000000006, 720) = %.17g, want device-space snapped 373.5", got)
 	}
 }
 
@@ -859,19 +862,48 @@ func TestSpinePixelEndpointsRightBoundaryRoundsPastHalfPixel(t *testing.T) {
 }
 
 func TestSpinePixelEndpointsHorizontalBoundariesUseDeviceSpaceSnap(t *testing.T) {
+	ctx := &DrawContext{FigureRect: geom.Rect{
+		Min: geom.Pt{},
+		Max: geom.Pt{X: 1320, Y: 900},
+	}}
 	px := geom.Rect{
 		Min: geom.Pt{X: 499.4, Y: 67.50000000000001},
 		Max: geom.Pt{X: 847.0, Y: 268.5},
 	}
 
-	b1, b2 := spinePixelEndpoints(AxisBottom, px)
-	if b1.Y != 67.5 || b2.Y != 67.5 {
-		t.Fatalf("bottom spine y = %v..%v, want Matplotlib half-pixel center 67.5", b1.Y, b2.Y)
+	b1, b2 := spinePixelEndpoints(AxisBottom, px, ctx)
+	if b1.Y != 66.5 || b2.Y != 66.5 {
+		t.Fatalf("bottom spine y = %v..%v, want Matplotlib device-space center 66.5", b1.Y, b2.Y)
 	}
 
-	t1, t2 := spinePixelEndpoints(AxisTop, px)
-	if t1.Y != 268.5 || t2.Y != 268.5 {
-		t.Fatalf("top spine y = %v..%v, want Matplotlib half-pixel center 268.5", t1.Y, t2.Y)
+	t1, t2 := spinePixelEndpoints(AxisTop, px, ctx)
+	if t1.Y != 267.5 || t2.Y != 267.5 {
+		t.Fatalf("top spine y = %v..%v, want Matplotlib device-space center 267.5", t1.Y, t2.Y)
+	}
+}
+
+func TestDrawFrameUsesDeviceSpaceSnapForFallbackTopSpine(t *testing.T) {
+	ctx := &DrawContext{
+		Clip: geom.Rect{
+			Min: geom.Pt{X: 499.4, Y: 67.50000000000001},
+			Max: geom.Pt{X: 847.0, Y: 268.5},
+		},
+		FigureRect: geom.Rect{
+			Min: geom.Pt{},
+			Max: geom.Pt{X: 1320, Y: 900},
+		},
+	}
+	axis := NewXAxis()
+	r := &recordingRenderer{}
+
+	DrawFrame(r, ctx, axis, true, false)
+
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("frame path calls = %d, want 1", len(r.pathCalls))
+	}
+	got := r.pathCalls[0].path.V
+	if len(got) != 2 || got[0].Y != 267.5 || got[1].Y != 267.5 {
+		t.Fatalf("fallback top spine vertices = %+v, want y=267.5", got)
 	}
 }
 

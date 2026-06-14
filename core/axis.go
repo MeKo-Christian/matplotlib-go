@@ -247,15 +247,19 @@ func (a *Axis) drawSpine(r render.Renderer, ctx *DrawContext) {
 }
 
 // spinePixelEndpoints returns the two pixel-space endpoints for a spine on the
-// given side of px. This is the most honest translation of Matplotlib 3.10.9's
-// AGG PathSnapper for axis-aligned, 1 px-ish spines: SNAP_AUTO rounds display
-// coordinates with floor(coord+0.5)+0.5, so RMSE regressions after this point
-// should be chased in layout/geometry instead of by weakening the snap.
-func spinePixelEndpoints(side AxisSide, px geom.Rect) (geom.Pt, geom.Pt) {
+// given side of px. Matplotlib's AGG backend appends the y-flip to the path
+// transform before PathSnapper runs, so X can be snapped in display space but Y
+// must emulate device-space snapping and then convert back to y-up display
+// coordinates.
+func spinePixelEndpoints(side AxisSide, px geom.Rect, contexts ...*DrawContext) (geom.Pt, geom.Pt) {
+	var ctx *DrawContext
+	if len(contexts) > 0 {
+		ctx = contexts[0]
+	}
 	x1 := snapDisplayX(px.Min.X)
-	y1 := snapDisplayY(px.Min.Y)
+	y1 := snapDisplayY(px.Min.Y, figureSnapHeight(ctx))
 	x2 := snapDisplayX(px.Max.X)
-	y2 := snapDisplayY(px.Max.Y)
+	y2 := snapDisplayY(px.Max.Y, figureSnapHeight(ctx))
 
 	switch side {
 	case AxisBottom:
@@ -274,8 +278,23 @@ func snapDisplayX(x float64) float64 {
 	return math.Floor(x+0.5) + 0.5
 }
 
-func snapDisplayY(y float64) float64 {
-	return math.Floor(y+0.5) - 0.5
+func snapDisplayY(y float64, heights ...float64) float64 {
+	if len(heights) > 0 && heights[0] > 0 {
+		height := heights[0]
+		deviceY := height - y
+		return height - (math.Floor(deviceY+0.5) + 0.5)
+	}
+	return math.Floor(y+0.5) + 0.5
+}
+
+func figureSnapHeight(ctx *DrawContext) float64 {
+	if ctx == nil {
+		return 0
+	}
+	if ctx.FigureRect.H() > 0 {
+		return ctx.FigureRect.Max.Y
+	}
+	return 0
 }
 
 // drawTicks draws tick marks at the specified positions.
@@ -359,11 +378,11 @@ func DrawFrame(r render.Renderer, ctx *DrawContext, ref *Axis, drawTop, drawRigh
 	}
 
 	if drawTop {
-		p1, p2 := spinePixelEndpoints(AxisTop, ctx.Clip)
+		p1, p2 := spinePixelEndpoints(AxisTop, ctx.Clip, ctx)
 		drawLine(p1, p2)
 	}
 	if drawRight {
-		p1, p2 := spinePixelEndpoints(AxisRight, ctx.Clip)
+		p1, p2 := spinePixelEndpoints(AxisRight, ctx.Clip, ctx)
 		drawLine(p1, p2)
 	}
 }
@@ -752,7 +771,7 @@ func axisSpinePixelEndpoints(axis *Axis, ctx *DrawContext, px geom.Rect) (geom.P
 		return geom.Pt{}, geom.Pt{}
 	}
 	if ctx == nil || axis.SpinePositionMode == AxisSpinePositionBoundary {
-		return spinePixelEndpoints(axis.Side, px)
+		return spinePixelEndpoints(axis.Side, px, ctx)
 	}
 
 	switch axis.Side {
@@ -763,8 +782,8 @@ func axisSpinePixelEndpoints(axis *Axis, ctx *DrawContext, px geom.Rect) (geom.P
 		p2 := ctx.DataToPixel.Apply(geom.Pt{X: xMax, Y: y})
 		p1.X = math.Round(p1.X) + 0.5
 		p2.X = math.Round(p2.X) + 0.5
-		p1.Y = math.Round(p1.Y) - 0.5
-		p2.Y = math.Round(p2.Y) - 0.5
+		p1.Y = snapDisplayY(p1.Y, figureSnapHeight(ctx))
+		p2.Y = snapDisplayY(p2.Y, figureSnapHeight(ctx))
 		return p1, p2
 	case AxisLeft, AxisRight:
 		yMin, yMax := ctx.DataToPixel.YScale.Domain()
@@ -773,8 +792,8 @@ func axisSpinePixelEndpoints(axis *Axis, ctx *DrawContext, px geom.Rect) (geom.P
 		p2 := ctx.DataToPixel.Apply(geom.Pt{X: x, Y: yMax})
 		p1.X = math.Round(p1.X) + 0.5
 		p2.X = math.Round(p2.X) + 0.5
-		p1.Y = math.Round(p1.Y) - 0.5
-		p2.Y = math.Round(p2.Y) - 0.5
+		p1.Y = snapDisplayY(p1.Y, figureSnapHeight(ctx))
+		p2.Y = snapDisplayY(p2.Y, figureSnapHeight(ctx))
 		return p1, p2
 	default:
 		return geom.Pt{}, geom.Pt{}
