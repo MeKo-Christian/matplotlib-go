@@ -5,9 +5,9 @@ calls a backend-agnostic `render.Renderer`, and a concrete backend turns those
 calls into pixels or vector output. This guide explains **which backend to use
 when** and shows the capability differences that drive the choice.
 
-For the registry API and how to add a backend, see
-[`docs/backends.md`](backends.md). For the renderer contract itself, see the
-GoDoc for package `render`.
+For the renderer contract itself, see the GoDoc for package `render`. For
+interactive canvases and event payloads, see
+[`interactive-backends.md`](interactive-backends.md).
 
 ## TL;DR
 
@@ -174,6 +174,63 @@ Override the auto-selection at run time without recompiling:
 ```sh
 MATPLOTLIB_BACKEND=svg go run ./yourprogram
 ```
+
+## Registry API
+
+Backends register themselves through package imports. A typical application
+imports the registry and the backend set it wants available:
+
+```go
+import (
+    "github.com/cwbudde/matplotlib-go/backends"
+    _ "github.com/cwbudde/matplotlib-go/backends/all"
+)
+```
+
+Create a renderer from a selected backend:
+
+```go
+backend, err := backends.GetBestBackend(nil)
+if err != nil {
+    return err
+}
+
+renderer, err := backends.Create(backend, backends.SimpleConfig(800, 600, white))
+if err != nil {
+    return err
+}
+```
+
+Use `core.SaveFig`, `pyplot.Savefig`, or backend manager save helpers for
+format-specific output. Save options share the `render.SaveOption` surface, so
+SVG, PDF, PostScript, and PGF options pass through the same call path and are
+validated against the selected file extension.
+
+## Adding a Backend
+
+New backends live under `backends/<name>/` and implement the shared
+`render.Renderer` contract plus any optional capability interfaces they
+support. Register the backend in `init`:
+
+```go
+const NewBackend = backends.Backend("newbackend")
+
+func init() {
+    backends.Register(NewBackend, &backends.BackendInfo{
+        Name: "New Backend",
+        Capabilities: []backends.Capability{
+            backends.TextShaping,
+        },
+        Factory: func(config backends.Config) (render.Renderer, error) {
+            return New(config)
+        },
+        Available: checkAvailability(),
+    })
+}
+```
+
+Prefer capability checks over backend-name checks in callers. That keeps new
+backends useful without adding routing branches across core plotting code.
 
 ## Decision checklist
 

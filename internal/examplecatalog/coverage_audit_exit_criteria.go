@@ -51,7 +51,7 @@ var coverageAuditExitCriteria = []AuditExitCriterion{
 		Evidence: []string{
 			"internal/examplecatalog.DemoBreadthGaps",
 			"internal/examplecatalog.TestHighPriorityDemoBreadthGapsPointToThinCoverage",
-			"docs/phase-9a-coverage-audit.md",
+			"PLAN.md",
 		},
 		FollowUp: "Promote high- and medium-priority DemoBreadthGaps into targeted demo implementation phases.",
 	},
