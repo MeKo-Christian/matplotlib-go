@@ -108,6 +108,13 @@ type MathTextImageDrawer interface {
 	DrawMathTextImage(glyphs []MathGlyphPlacement, rects []MathRectPlacement, anchor geom.Pt, boxAscent, boxDescent float64, textColor Color) bool
 }
 
+// RotatedMathTextImageDrawer is implemented by raster backends that can rotate
+// the flattened mathtext image the same way Matplotlib's AGG draw_text_image
+// path does. origin is the expression baseline-left origin in display space.
+type RotatedMathTextImageDrawer interface {
+	DrawMathTextImageRotated(glyphs []MathGlyphPlacement, rects []MathRectPlacement, origin geom.Pt, boxAscent, boxDescent, angle float64, textColor Color) bool
+}
+
 // TextFontMetricer is implemented by renderers that can report font-wide line
 // metrics separately from the ink bounds of a particular string.
 type TextFontMetricer interface {

@@ -33,6 +33,12 @@ func (r *Renderer) DrawMathTextImage(_ []render.MathGlyphPlacement, _ []render.M
 	return false
 }
 
+// DrawMathTextImageRotated is unavailable without cgo FreeType; returning false
+// makes core fall back to vector mathtext paths.
+func (r *Renderer) DrawMathTextImageRotated(_ []render.MathGlyphPlacement, _ []render.MathRectPlacement, _ geom.Pt, _, _, _ float64, _ render.Color) bool {
+	return false
+}
+
 func (r *Renderer) measureNativeFreetypeTextBounds(_ string, _ render.FontFace, _ float64, _ int) (render.TextBounds, bool) {
 	return render.TextBounds{}, false
 }

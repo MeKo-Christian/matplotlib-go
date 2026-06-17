@@ -385,23 +385,7 @@ func drawMathTextLayout(r render.Renderer, textRen render.TextDrawer, layout Mat
 	// subpixel path below.
 	if rasterBackend {
 		if imgDrawer, ok := textRen.(render.MathTextImageDrawer); ok {
-			glyphs := make([]render.MathGlyphPlacement, 0, len(layout.Runs))
-			for _, run := range layout.Runs {
-				glyphs = append(glyphs, render.MathGlyphPlacement{
-					Text:     run.Text,
-					FontSize: run.FontSize,
-					FontKey:  resolveRunFontKey(run, fontKey),
-					Ox:       run.Offset.X,
-					Oy:       run.Offset.Y,
-				})
-			}
-			rects := make([]render.MathRectPlacement, 0, len(layout.Rules))
-			for _, rule := range layout.Rules {
-				rects = append(rects, render.MathRectPlacement{
-					X1: rule.Rect.Min.X, Y1: rule.Rect.Min.Y,
-					X2: rule.Rect.Max.X, Y2: rule.Rect.Max.Y,
-				})
-			}
+			glyphs, rects := mathTextImagePlacements(layout, fontKey)
 			if imgDrawer.DrawMathTextImage(glyphs, rects, origin, layout.Ascent, layout.Descent, textColor) {
 				return
 			}
@@ -434,7 +418,42 @@ func drawMathTextLayoutRotated(r render.Renderer, layout MathTextLayout, anchor 
 		X: anchor.X - layout.Width/2,
 		Y: anchor.Y - layout.Descent,
 	}
+	if _, rasterBackend := r.(render.RGBAExporter); rasterBackend {
+		if imgDrawer, ok := r.(render.RotatedMathTextImageDrawer); ok {
+			glyphs, rects := mathTextImagePlacements(layout, fontKey)
+			cosT := math.Cos(angle)
+			sinT := math.Sin(angle)
+			drawOrigin := geom.Pt{
+				X: anchor.X - (layout.Width/2*cosT - layout.Descent*sinT),
+				Y: anchor.Y - (layout.Width/2*sinT + layout.Descent*cosT),
+			}
+			if imgDrawer.DrawMathTextImageRotated(glyphs, rects, drawOrigin, layout.Ascent, layout.Descent, angle, textColor) {
+				return true
+			}
+		}
+	}
 	return drawMathTextLayoutPathTransformed(r, layout, origin, anchor, angle, textColor, fontKey)
+}
+
+func mathTextImagePlacements(layout MathTextLayout, fontKey string) ([]render.MathGlyphPlacement, []render.MathRectPlacement) {
+	glyphs := make([]render.MathGlyphPlacement, 0, len(layout.Runs))
+	for _, run := range layout.Runs {
+		glyphs = append(glyphs, render.MathGlyphPlacement{
+			Text:     run.Text,
+			FontSize: run.FontSize,
+			FontKey:  resolveRunFontKey(run, fontKey),
+			Ox:       run.Offset.X,
+			Oy:       run.Offset.Y,
+		})
+	}
+	rects := make([]render.MathRectPlacement, 0, len(layout.Rules))
+	for _, rule := range layout.Rules {
+		rects = append(rects, render.MathRectPlacement{
+			X1: rule.Rect.Min.X, Y1: rule.Rect.Min.Y,
+			X2: rule.Rect.Max.X, Y2: rule.Rect.Max.Y,
+		})
+	}
+	return glyphs, rects
 }
 
 func drawMathTextLayoutVertical(r render.Renderer, layout MathTextLayout, center geom.Pt, textColor render.Color, fontKey string) bool {

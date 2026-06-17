@@ -670,13 +670,7 @@ func (r *Renderer) DrawMathTextImage(glyphs []render.MathGlyphPlacement, rects [
 	}
 	hf := matplotlibTextHintingFactor
 
-	type placed struct {
-		g    nativeMathGlyph
-		ox   float64
-		oy   float64
-		have bool
-	}
-	rendered := make([]placed, len(glyphs))
+	rendered := make([]placedNativeMathGlyph, len(glyphs))
 
 	// Bounding box over glyph ink, rects, and the origin (0), with the -1/+1
 	// border, in layout y-down space. Glyph ink top = oy - ymax, bottom = oy - ymin.
@@ -701,7 +695,7 @@ func (r *Renderer) DrawMathTextImage(glyphs []render.MathGlyphPlacement, rects [
 		if !ok {
 			return false
 		}
-		rendered[i] = placed{g: g, ox: gp.Ox, oy: gp.Oy, have: true}
+		rendered[i] = placedNativeMathGlyph{g: g, ox: gp.Ox, oy: gp.Oy, have: true}
 		shipY := boxAscent + gp.Oy
 		xmin = math.Min(xmin, gp.Ox+g.xmin)
 		xmax = math.Max(xmax, gp.Ox+g.xmax)
@@ -765,6 +759,205 @@ func (r *Renderer) DrawMathTextImage(glyphs []render.MathGlyphPlacement, rects [
 		r.fillDeviceRect(x0, top, x1+1, top+height+1, textColor)
 	}
 	return true
+}
+
+// DrawMathTextImageRotated follows matplotlib's RendererAgg.draw_mathtext:
+// rasterize the complete mathtext output first, round the baseline/descent
+// adjusted bottom-left, then rotate the image through draw_text_image semantics.
+func (r *Renderer) DrawMathTextImageRotated(glyphs []render.MathGlyphPlacement, rects []render.MathRectPlacement, origin geom.Pt, boxAscent, boxDescent, angle float64, textColor render.Color) bool {
+	if r.ctx == nil || math.IsNaN(angle) || math.IsInf(angle, 0) {
+		return false
+	}
+	img, ok := r.mathTextAlphaImage(glyphs, rects, boxAscent, boxDescent)
+	if !ok {
+		return false
+	}
+	src := image.NewRGBA(img.mask.Bounds())
+	draw.DrawMask(src, src.Bounds(), image.NewUniform(renderColorToRGBA(textColor)), image.Point{}, img.mask, image.Point{}, draw.Over)
+	aggImg, err := agglib.NewImageFromStandardImage(src)
+	if err != nil {
+		return false
+	}
+
+	baselineDev := float64(r.height) - origin.Y
+	sinT := math.Sin(angle)
+	cosT := math.Cos(angle)
+	imageHeight := float64(img.mask.Bounds().Dy())
+	x := pythonRound(origin.X + img.descent*sinT)
+	y := pythonRound(baselineDev+img.descent*cosT) + 1
+	if math.Abs(math.Abs(sinT)-1) < 1e-9 && math.Abs(cosT) < 1e-9 {
+		// Matplotlib renders rotated text images through RendererAgg::draw_text_image's
+		// scanline path. agg_go exposes transformed image drawing through an Agg2D
+		// parallelogram helper whose integer-grid coverage lands one device pixel
+		// above/left for quarter-turn grayscale text images; compensate here so the
+		// raster image origin follows draw_text_image rather than generic image draws.
+		x += 2 * math.Copysign(1, sinT)
+		y++
+	}
+	transform := agglib.NewTransformationsFromValues(
+		cosT,
+		-sinT,
+		sinT,
+		cosT,
+		x-imageHeight*sinT,
+		y-imageHeight*cosT,
+	)
+
+	prevBlendMode := r.ctx.GetBlendMode()
+	prevFilter := r.ctx.GetImageFilter()
+	prevResample := r.ctx.GetImageResample()
+	defer func() {
+		r.ctx.SetBlendMode(prevBlendMode)
+		r.ctx.SetImageFilter(prevFilter)
+		r.ctx.SetImageResample(prevResample)
+	}()
+	r.ctx.SetBlendMode(agglib.BlendSrcOver)
+	r.ctx.SetImageFilter(agglib.Spline36)
+	r.ctx.SetImageResample(resampleForFilter(agglib.Spline36))
+
+	return r.ctx.DrawImageTransformed(aggImg, transform) == nil
+}
+
+type mathTextAlphaImage struct {
+	mask    *image.Alpha
+	descent float64
+}
+
+type placedNativeMathGlyph struct {
+	g    nativeMathGlyph
+	ox   float64
+	oy   float64
+	have bool
+}
+
+func (r *Renderer) mathTextAlphaImage(glyphs []render.MathGlyphPlacement, rects []render.MathRectPlacement, boxAscent, boxDescent float64) (mathTextAlphaImage, bool) {
+	if len(glyphs)+len(rects) == 0 {
+		return mathTextAlphaImage{}, false
+	}
+
+	rendered := make([]placedNativeMathGlyph, len(glyphs))
+
+	// Bounding box over glyph ink, rects, and the origin (0), with the -1/+1
+	// border, in layout y-down space. Glyph ink top = oy - ymax, bottom = oy - ymin.
+	xmin, ymin := 0.0, 0.0
+	xmax, ymax := 0.0, 0.0
+	for i, gp := range glyphs {
+		runes := []rune(gp.Text)
+		if len(runes) != 1 {
+			continue
+		}
+		var fontPath string
+		r.withTemporaryFontKey(func() {
+			font := r.configureTextFont(gp.FontSize, gp.FontKey)
+			if font.backend == textBackendRaster {
+				fontPath = font.face.Path
+			}
+		})
+		if fontPath == "" {
+			return mathTextAlphaImage{}, false
+		}
+		g, ok := r.nativeFreetypeMathGlyph(runes[0], fontPath, gp.FontSize, matplotlibTextHintingFactor)
+		if !ok {
+			return mathTextAlphaImage{}, false
+		}
+		rendered[i] = placedNativeMathGlyph{g: g, ox: gp.Ox, oy: gp.Oy, have: true}
+		shipY := boxAscent + gp.Oy
+		xmin = math.Min(xmin, gp.Ox+g.xmin)
+		xmax = math.Max(xmax, gp.Ox+g.xmax)
+		ymin = math.Min(ymin, shipY-g.ymax)
+		ymax = math.Max(ymax, shipY-g.ymin)
+	}
+	for _, rc := range rects {
+		xmin = math.Min(xmin, rc.X1)
+		xmax = math.Max(xmax, rc.X2)
+		ymin = math.Min(ymin, boxAscent+rc.Y1)
+		ymax = math.Max(ymax, boxAscent+rc.Y2)
+	}
+	xmin -= 1
+	ymin -= 1
+	xmax += 1
+	ymax += 1
+
+	totalH := ymax - ymin
+	parseDescent := totalH - boxAscent
+	parseH := totalH - boxDescent
+	imageHeight := int(math.Ceil(parseH + math.Max(parseDescent, 0)))
+	imageWidth := int(math.Ceil(xmax - xmin))
+	if imageWidth <= 0 || imageHeight <= 0 {
+		return mathTextAlphaImage{}, false
+	}
+	mask := image.NewAlpha(image.Rect(0, 0, imageWidth, imageHeight))
+
+	for i := range rendered {
+		p := &rendered[i]
+		if !p.have || p.g.mask == nil {
+			continue
+		}
+		gx := int(p.ox-xmin) + p.g.bitmapLeft
+		gy := int((boxAscent + p.oy - ymin) - p.g.iceberg)
+		overAlphaMask(mask, p.g.mask, gx, gy)
+	}
+
+	for _, rc := range rects {
+		y1 := boxAscent + rc.Y1 - ymin
+		y2 := boxAscent + rc.Y2 - ymin
+		height := int(y2-y1) - 1
+		if height < 0 {
+			height = 0
+		}
+		var yy int
+		if height == 0 {
+			yy = int((y1+y2)/2 - 0.5)
+		} else {
+			yy = int(y1)
+		}
+		x0 := int(rc.X1 - xmin)
+		x1 := int(math.Ceil(rc.X2 - xmin))
+		fillAlphaRect(mask, x0, yy, x1+1, yy+height+1)
+	}
+
+	return mathTextAlphaImage{mask: mask, descent: parseDescent}, true
+}
+
+func fillAlphaRect(mask *image.Alpha, x0, y0, x1, y1 int) {
+	if mask == nil {
+		return
+	}
+	bounds := mask.Bounds()
+	rect := image.Rect(x0, y0, x1, y1).Intersect(bounds)
+	for y := rect.Min.Y; y < rect.Max.Y; y++ {
+		row := mask.PixOffset(rect.Min.X, y)
+		for x := rect.Min.X; x < rect.Max.X; x++ {
+			mask.Pix[row+x-rect.Min.X] = 0xff
+		}
+	}
+}
+
+func overAlphaMask(dst, src *image.Alpha, x0, y0 int) {
+	if dst == nil || src == nil {
+		return
+	}
+	dstBounds := dst.Bounds()
+	srcBounds := src.Bounds()
+	for sy := srcBounds.Min.Y; sy < srcBounds.Max.Y; sy++ {
+		dy := y0 + sy - srcBounds.Min.Y
+		if dy < dstBounds.Min.Y || dy >= dstBounds.Max.Y {
+			continue
+		}
+		for sx := srcBounds.Min.X; sx < srcBounds.Max.X; sx++ {
+			dx := x0 + sx - srcBounds.Min.X
+			if dx < dstBounds.Min.X || dx >= dstBounds.Max.X {
+				continue
+			}
+			srcA := uint32(src.Pix[src.PixOffset(sx, sy)])
+			if srcA == 0 {
+				continue
+			}
+			di := dst.PixOffset(dx, dy)
+			dstA := uint32(dst.Pix[di])
+			dst.Pix[di] = uint8(srcA + dstA*(255-srcA)/255)
+		}
+	}
 }
 
 // fillDeviceRect blends a solid color over the half-open device rect

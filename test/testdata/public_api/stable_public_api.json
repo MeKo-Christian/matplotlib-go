@@ -751,6 +751,10 @@
           "declaration": "func (Renderer) DrawMathTextImage(glyphs []render.MathGlyphPlacement, rects []render.MathRectPlacement, anchor geom.Pt, boxAscent, boxDescent float64, textColor render.Color) bool"
         },
         {
+          "id": "method Renderer.DrawMathTextImageRotated",
+          "declaration": "func (Renderer) DrawMathTextImageRotated(glyphs []render.MathGlyphPlacement, rects []render.MathRectPlacement, origin geom.Pt, boxAscent, boxDescent, angle float64, textColor render.Color) bool"
+        },
+        {
           "id": "method Renderer.DrawPathCollection",
           "declaration": "func (Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool"
         },
@@ -10332,6 +10336,10 @@
         {
           "id": "type RendererModeReporter",
           "declaration": "type RendererModeReporter interface{ RendererModeLabel func() string }"
+        },
+        {
+          "id": "type RotatedMathTextImageDrawer",
+          "declaration": "type RotatedMathTextImageDrawer interface{ DrawMathTextImageRotated func(glyphs []MathGlyphPlacement, rects []MathRectPlacement, origin geom.Pt, boxAscent, boxDescent, angle float64, textColor Color) bool }"
         },
         {
           "id": "type RotatedTeXDrawer",

@@ -109,7 +109,7 @@ var cases = []Case{
 	{ID: "mathtext_fractions", Topic: "mathtext", Title: "MathText Fractions", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 4.5},
 	{ID: "mathtext_integrals", Topic: "mathtext", Title: "MathText Operators", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 0.3},
 	{ID: "mathtext_matrices", Topic: "mathtext", Title: "MathText Matrices", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 0.5},
-	{ID: "mathtext_inline_labels", Topic: "mathtext", Title: "MathText Inline Labels", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 4.6},
+	{ID: "mathtext_inline_labels", Topic: "mathtext", Title: "MathText Inline Labels", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 4.0},
 	{ID: "mathtext_gallery", Topic: "mathtext", Title: "MathText Gallery", Description: "Fractions, roots, operators, fences, matrices, and inline MathText labels in one browsable figure.", Showcase: true, Width: 900, Height: 560, MinPSNR: 16.0, MaxMeanAbs: 35.0, MaxRMSE: 2.6},
 	{ID: "text_layout_gallery", Topic: "text", Title: "Text Layout Gallery", Description: "Alignment, rotation, multiline layout, wrapping, and text bbox styling in one gallery.", Showcase: true, Width: 900, Height: 560, MinPSNR: 50.0, MaxMeanAbs: 1.0, MaxRMSE: 5.0},
 	{ID: "image_heatmap", Topic: "image", Title: "Heatmap Image", Description: "A gridded image plot with a colorbar and axis labels for matrix-style data.", WebDemoID: "heatmap", Showcase: true, SVGGoldenFamily: "image", GoBasicSmokeFamily: "image", SkiaParityFamily: "image", MaxRMSE: 1.3},
