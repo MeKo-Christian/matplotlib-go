@@ -336,7 +336,7 @@ func (l *Legend) draw(r render.Renderer, ctx *DrawContext) {
 			LineWidth: l.BorderWidth,
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
-			Snap:      render.SnapOn,
+			Snap:      render.SnapAuto,
 		})
 	}
 

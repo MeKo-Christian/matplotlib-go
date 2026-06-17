@@ -458,6 +458,37 @@ func TestPathPipelineSnapsWithLineWidthAwareAlignment(t *testing.T) {
 	}
 }
 
+func TestPathPipelineAutoSnapsRoundedRectCorners(t *testing.T) {
+	var rounded geom.Path
+	rounded.MoveTo(geom.Pt{X: 1.2, Y: 2.2})
+	rounded.LineTo(geom.Pt{X: 8.8, Y: 2.2})
+	rounded.QuadTo(geom.Pt{X: 10.2, Y: 2.2}, geom.Pt{X: 10.2, Y: 3.6})
+	rounded.LineTo(geom.Pt{X: 10.2, Y: 8.8})
+	rounded.QuadTo(geom.Pt{X: 10.2, Y: 10.2}, geom.Pt{X: 8.8, Y: 10.2})
+	rounded.LineTo(geom.Pt{X: 1.2, Y: 10.2})
+	rounded.QuadTo(geom.Pt{X: -0.2, Y: 10.2}, geom.Pt{X: -0.2, Y: 8.8})
+	rounded.LineTo(geom.Pt{X: -0.2, Y: 3.6})
+	rounded.QuadTo(geom.Pt{X: -0.2, Y: 2.2}, geom.Pt{X: 1.2, Y: 2.2})
+	rounded.Close()
+
+	if !shouldSnapPath(rounded, &render.Paint{Snap: render.SnapAuto}) {
+		t.Fatal("SnapAuto should snap rounded rectangle paths with axis-aligned corner curves")
+	}
+	snapped := snapPath(rounded, &render.Paint{Snap: render.SnapAuto, Stroke: render.Color{A: 1}, LineWidth: 1})
+	for _, pt := range snapped.V {
+		if math.Abs(pt.X-math.Floor(pt.X)-0.5) > 1e-9 || math.Abs(pt.Y-math.Floor(pt.Y)-0.5) > 1e-9 {
+			t.Fatalf("rounded rectangle vertex was not snapped to half-pixel center: %+v", pt)
+		}
+	}
+
+	var arbitrary geom.Path
+	arbitrary.MoveTo(geom.Pt{X: 1, Y: 2})
+	arbitrary.QuadTo(geom.Pt{X: 3, Y: 4}, geom.Pt{X: 5, Y: 6})
+	if shouldSnapPath(arbitrary, &render.Paint{Snap: render.SnapAuto}) {
+		t.Fatal("SnapAuto should not snap arbitrary curved paths")
+	}
+}
+
 func TestPathPipelineSimplifiesLinePaths(t *testing.T) {
 	var p geom.Path
 	p.MoveTo(geom.Pt{X: 0, Y: 0})

@@ -554,6 +554,8 @@ func shouldSnapPath(path geom.Path, paint *render.Paint) bool {
 	vi := 0
 	var last geom.Pt
 	haveLast := false
+	lineCount := 0
+	curveCount := 0
 	for _, cmd := range path.C {
 		switch cmd {
 		case geom.MoveTo:
@@ -572,15 +574,53 @@ func shouldSnapPath(path geom.Path, paint *render.Paint) bool {
 			if haveLast && math.Abs(last.X-to.X) >= 1e-4 && math.Abs(last.Y-to.Y) >= 1e-4 {
 				return false
 			}
+			lineCount++
 			last = to
 			haveLast = true
-		case geom.QuadTo, geom.CubicTo:
-			return false
+		case geom.QuadTo:
+			if vi+1 >= len(path.V) || !haveLast {
+				return false
+			}
+			ctrl := path.V[vi]
+			to := path.V[vi+1]
+			vi += 2
+			if !isAxisAlignedCornerQuad(last, ctrl, to) {
+				return false
+			}
+			curveCount++
+			last = to
+			haveLast = true
+		case geom.CubicTo:
+			if vi+2 >= len(path.V) || !haveLast {
+				return false
+			}
+			c1 := path.V[vi]
+			c2 := path.V[vi+1]
+			to := path.V[vi+2]
+			vi += 3
+			if !isAxisAlignedCornerCubic(last, c1, c2, to) {
+				return false
+			}
+			curveCount++
+			last = to
+			haveLast = true
 		case geom.ClosePath:
 			haveLast = false
 		}
 	}
-	return true
+	return curveCount == 0 || (lineCount >= 4 && curveCount >= 4)
+}
+
+func isAxisAlignedCornerQuad(from, ctrl, to geom.Pt) bool {
+	const eps = 1e-4
+	return (math.Abs(ctrl.Y-from.Y) < eps && math.Abs(ctrl.X-to.X) < eps) ||
+		(math.Abs(ctrl.X-from.X) < eps && math.Abs(ctrl.Y-to.Y) < eps)
+}
+
+func isAxisAlignedCornerCubic(from, c1, c2, to geom.Pt) bool {
+	const eps = 1e-4
+	return (math.Abs(c1.Y-from.Y) < eps && math.Abs(c2.X-to.X) < eps) ||
+		(math.Abs(c1.X-from.X) < eps && math.Abs(c2.Y-to.Y) < eps)
 }
 
 func snapPath(path geom.Path, paint *render.Paint) geom.Path {
