@@ -494,9 +494,33 @@ func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
 		if !item.Antialiased {
 			paint.Antialias = render.AntialiasOff
 		}
-		r.Path(item.Path, &paint)
+		path := item.Path
+		if r.shouldUseSinglePathCollectionPlacement(batch, item, &paint) {
+			path = translatePath(path, 0.5, -0.5)
+		}
+		r.Path(path, &paint)
 	}
 	return true
+}
+
+func (r *Renderer) shouldUseSinglePathCollectionPlacement(batch render.PathCollectionBatch, item *render.PathCollectionItem, paint *render.Paint) bool {
+	if len(batch.Items) != 1 || item == nil || paint == nil {
+		return false
+	}
+	if item.Hatch != "" || paint.Hatch != "" || len(paint.PathEffects) > 0 {
+		return false
+	}
+	devicePath := r.devPath(item.Path)
+	return !shouldSnapPath(devicePath, paint)
+}
+
+func translatePath(path geom.Path, dx, dy float64) geom.Path {
+	out := path
+	out.V = make([]geom.Pt, len(path.V))
+	for i, pt := range path.V {
+		out.V[i] = geom.Pt{X: pt.X + dx, Y: pt.Y + dy}
+	}
+	return out
 }
 
 // DrawQuadMesh renders pcolor/pcolormesh-style quadrilateral cells.

@@ -78,12 +78,32 @@ func (f *Fill2D) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 
 	regions := f.fillRegions()
+	paths := make([]geom.Path, 0, len(regions))
 	for _, region := range regions {
 		fillPath := f.createFillPathForRegion(region, ctx)
 		if len(fillPath.C) == 0 {
 			continue
 		}
-		r.Path(fillPath, &paint)
+		paths = append(paths, fillPath)
+	}
+	if len(paths) == 0 {
+		return
+	}
+	if drawer, ok := r.(render.PathCollectionDrawer); ok {
+		batch := render.PathCollectionBatch{Items: make([]render.PathCollectionItem, 0, len(paths))}
+		for _, path := range paths {
+			batch.Items = append(batch.Items, render.PathCollectionItem{
+				Path:        path,
+				Paint:       paint,
+				Antialiased: true,
+			})
+		}
+		if drawer.DrawPathCollection(batch) {
+			return
+		}
+	}
+	for _, path := range paths {
+		r.Path(path, &paint)
 	}
 }
 

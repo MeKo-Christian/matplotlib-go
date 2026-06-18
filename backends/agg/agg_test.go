@@ -458,6 +458,45 @@ func TestPathPipelineSnapsWithLineWidthAwareAlignment(t *testing.T) {
 	}
 }
 
+func TestDrawPathCollectionSingleUnsnappedPathUsesMarkerCachePlacement(t *testing.T) {
+	r, err := New(640, 360, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatalf("New renderer: %v", err)
+	}
+	defer r.End()
+
+	var p geom.Path
+	p.MoveTo(geom.Pt{X: 115.2, Y: 144})
+	p.LineTo(geom.Pt{X: 115.2, Y: 108})
+	p.LineTo(geom.Pt{X: 320, Y: 108})
+	p.LineTo(geom.Pt{X: 524.8, Y: 108})
+	p.LineTo(geom.Pt{X: 524.8, Y: 165.6})
+	p.LineTo(geom.Pt{X: 320, Y: 309.6})
+	p.LineTo(geom.Pt{X: 115.2, Y: 144})
+	p.Close()
+
+	ok := r.DrawPathCollection(render.PathCollectionBatch{Items: []render.PathCollectionItem{{
+		Path: p,
+		Paint: render.Paint{
+			Fill:      render.Color{R: 0.3, G: 0.7, B: 0.9, A: 0.7},
+			Stroke:    render.Color{R: 0.1, G: 0.3, B: 0.5, A: 1},
+			LineWidth: 2,
+			LineJoin:  render.JoinRound,
+			LineCap:   render.CapButt,
+			Snap:      render.SnapAuto,
+		},
+		Antialiased: true,
+	}}})
+	if !ok {
+		t.Fatal("DrawPathCollection returned false")
+	}
+
+	got := r.GetImage().RGBAAt(320, 253)
+	if got == (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
+		t.Fatalf("collection baseline edge pixel at y=253 stayed white; want Matplotlib draw_markers half-pixel coverage")
+	}
+}
+
 func TestPathPipelineAutoSnapsRoundedRectCorners(t *testing.T) {
 	var rounded geom.Path
 	rounded.MoveTo(geom.Pt{X: 1.2, Y: 2.2})

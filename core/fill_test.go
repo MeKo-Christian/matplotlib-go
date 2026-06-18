@@ -560,6 +560,43 @@ func TestFill2DDrawUsesMatplotlibFillCollectionSnap(t *testing.T) {
 	}
 }
 
+func TestFill2DDrawUsesPathCollectionBatchWhenAvailable(t *testing.T) {
+	fill := &Fill2D{
+		X:         []float64{0, 1, 2},
+		Y1:        []float64{1, 2, 1},
+		Y2:        []float64{0, 0, 0},
+		Color:     render.Color{A: 1},
+		EdgeColor: render.Color{A: 1},
+		EdgeWidth: 2,
+	}
+	r := &fillPathCollectionRecorder{}
+
+	fill.Draw(r, createTestDrawContext())
+
+	if len(r.batches) != 1 {
+		t.Fatalf("path collection batches = %d, want 1", len(r.batches))
+	}
+	if len(r.pathCalls) != 0 {
+		t.Fatalf("fallback path calls = %d, want native path collection", len(r.pathCalls))
+	}
+	if got := len(r.batches[0].Items); got != 1 {
+		t.Fatalf("batch items = %d, want one fill polygon", got)
+	}
+	if got := r.batches[0].Items[0].Paint.LineWidth; got != 2 {
+		t.Fatalf("batch linewidth = %v, want 2", got)
+	}
+}
+
+type fillPathCollectionRecorder struct {
+	recordingRenderer
+	batches []render.PathCollectionBatch
+}
+
+func (r *fillPathCollectionRecorder) DrawPathCollection(batch render.PathCollectionBatch) bool {
+	r.batches = append(r.batches, batch)
+	return true
+}
+
 func TestFill2DDrawLeavesThickFillEdgesUnsnapped(t *testing.T) {
 	fill := &Fill2D{
 		X:         []float64{0, 1, 2},
