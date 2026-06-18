@@ -107,6 +107,84 @@ func TestLegendLineMarkerSampleUsesOriginalMarkerSize(t *testing.T) {
 	}
 }
 
+func TestLegendLineMarkerSampleCentersOnHandleBox(t *testing.T) {
+	line := &Line2D{
+		Label:      "line markers",
+		Col:        render.Color{A: 1},
+		W:          1.5,
+		Marker:     MarkerCircle,
+		MarkerSet:  true,
+		MarkerSize: 12,
+	}
+	entry, ok := line.legendEntry()
+	if !ok {
+		t.Fatal("line marker legend entry not collected")
+	}
+
+	sample := geom.Rect{
+		Min: geom.Pt{X: 0, Y: 0},
+		Max: geom.Pt{X: 40, Y: 20},
+	}
+	legend := NewLegend(nil)
+	var r legendRecordingRenderer
+	legend.drawSample(&r, entry, sample)
+
+	if len(r.paths) < 2 {
+		t.Fatalf("legend sample paths = %d, want line plus marker", len(r.paths))
+	}
+	markerBounds, ok := r.paths[1].Bounds()
+	if !ok {
+		t.Fatal("legend marker path has no bounds")
+	}
+	got := geom.Pt{
+		X: markerBounds.Min.X + markerBounds.W()/2,
+		Y: markerBounds.Min.Y + markerBounds.H()/2,
+	}
+	want := geom.Pt{
+		X: sample.Min.X + sample.W()/2,
+		Y: sample.Min.Y + sample.H()/2,
+	}
+	if !floatApprox(got.X, want.X, 1e-9) || !floatApprox(got.Y, want.Y, 1e-9) {
+		t.Fatalf("legend marker center = %+v, want handle center %+v", got, want)
+	}
+}
+
+func TestLegendLineMarkerSampleUsesMarkerBatchWhenAvailable(t *testing.T) {
+	line := &Line2D{
+		Label:      "line markers",
+		Col:        render.Color{A: 1},
+		W:          1.5,
+		Marker:     MarkerCircle,
+		MarkerSet:  true,
+		MarkerSize: 12,
+	}
+	entry, ok := line.legendEntry()
+	if !ok {
+		t.Fatal("line marker legend entry not collected")
+	}
+
+	legend := NewLegend(nil)
+	var r legendMarkerBatchRecordingRenderer
+	legend.drawSample(&r, entry, geom.Rect{
+		Min: geom.Pt{X: 0, Y: 0},
+		Max: geom.Pt{X: 40, Y: 20},
+	})
+
+	if len(r.markerBatches) != 1 {
+		t.Fatalf("legend marker batches = %d, want 1", len(r.markerBatches))
+	}
+	batch := r.markerBatches[0]
+	if len(batch.Items) != 1 {
+		t.Fatalf("legend marker batch items = %d, want 1", len(batch.Items))
+	}
+	if got, want := batch.Items[0].Offset, (geom.Pt{X: 20, Y: 10}); got != want {
+		t.Fatalf("legend marker batch offset = %+v, want handle center %+v", got, want)
+	}
+	if got, want := batch.Items[0].Transform.A, pointsToPixels(style.Default, line.MarkerSize); !floatApprox(got, want, 1e-9) {
+		t.Fatalf("legend marker batch scale = %v, want marker size %v", got, want)
+	}
+}
+
 func TestLegendLineMarkerSampleCopiesMarkerStrokeStyle(t *testing.T) {
 	tuple := NewTupleMarkerStyle(5, MarkerTupleStar, 18)
 	line := &Line2D{
@@ -1260,6 +1338,16 @@ type legendRecordingRenderer struct {
 	paints      []render.Paint
 	texts       []string
 	textOrigins map[string]geom.Pt
+}
+
+type legendMarkerBatchRecordingRenderer struct {
+	legendRecordingRenderer
+	markerBatches []render.MarkerBatch
+}
+
+func (r *legendMarkerBatchRecordingRenderer) DrawMarkers(batch render.MarkerBatch) bool {
+	r.markerBatches = append(r.markerBatches, batch)
+	return true
 }
 
 type legendClipTrackingRenderer struct {

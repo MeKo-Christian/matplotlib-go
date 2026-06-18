@@ -1078,7 +1078,7 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, entry legendEntry, 
 		patch.drawStyledPath(r, pixelRectPath(patchRect), geom.Path{})
 	case legendEntryMarker:
 		for _, pt := range l.markerSampleCenters(sample, center) {
-			l.drawMarkerSample(r, entry, pt, l.markerSampleScale(entry, 5))
+			l.drawMarkerSample(r, entry, pt, l.markerSampleScale(entry, 5), true)
 		}
 	default:
 		lineWidth := entry.lineWidth
@@ -1101,7 +1101,7 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, entry legendEntry, 
 			Snap:      render.SnapAuto,
 		})
 		if entry.lineMarkerSet {
-			l.drawMarkerSample(r, entry, center, l.markerSampleScale(entry, 5))
+			l.drawMarkerSample(r, entry, center, l.markerSampleScale(entry, 5), false)
 		}
 	}
 }
@@ -1169,7 +1169,7 @@ func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample
 		}, &capPaint)
 	}
 	if entry.lineMarkerSet {
-		l.drawMarkerSample(r, entry, center, l.markerSampleScale(entry, 5))
+		l.drawMarkerSample(r, entry, center, l.markerSampleScale(entry, 5), false)
 	}
 }
 
@@ -1219,9 +1219,11 @@ func (l *Legend) markerSampleCenters(sample geom.Rect, center geom.Pt) []geom.Pt
 	return centers
 }
 
-func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center geom.Pt, radius float64) {
-	center.X += 0.5
-	center.Y += 0.5
+func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center geom.Pt, radius float64, offsetCenter bool) {
+	if offsetCenter {
+		center.X += 0.5
+		center.Y += 0.5
+	}
 	lineJoin := entry.markerLineJoin
 	if lineJoin == 0 {
 		lineJoin = render.JoinRound
@@ -1280,6 +1282,19 @@ func drawLegendMarkerPath(r render.Renderer, markerPath geom.Path, center geom.P
 		return
 	}
 	paint.Snap = snap
+	if drawer, ok := r.(render.MarkerDrawer); ok {
+		if drawer.DrawMarkers(render.MarkerBatch{
+			Marker: markerPath,
+			Items: []render.MarkerItem{{
+				Offset:      center,
+				Transform:   geom.Affine{A: scale, D: scale},
+				Paint:       paint,
+				Antialiased: true,
+			}},
+		}) {
+			return
+		}
+	}
 	path := scaleAndTranslatePath(markerPath, scale, center)
 	r.Path(path, &paint)
 }

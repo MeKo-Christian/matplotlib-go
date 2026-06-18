@@ -72,7 +72,7 @@ var cases = []Case{
 	{ID: "dashes", Topic: "lines", Title: "Dash Patterns", Description: "Multiple line styles showing dash arrays, cap styles, and legend labeling.", Showcase: true, MaxRMSE: 1.6},
 	{ID: "lines_markers_gallery", Topic: "lines", Title: "Line and Marker Style Gallery", Description: "A combined gallery of dash arrays, line joins and caps, a built-in marker grid with open-fill markers, and a multi-series legend.", WebDemoID: "lines", Showcase: true, Width: 840, Height: 620, MinPSNR: 50.0, MaxMeanAbs: 1.0, MaxRMSE: 2.8},
 	{ID: "line2d_semantics", Topic: "lines", Title: "Line2D Semantics", FixtureOnly: true, MinPSNR: 34.0, MaxMeanAbs: 8.0, MaxRMSE: 1.0},
-	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 5.0},
+	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 3.0},
 	{ID: "path_effects", Topic: "effects", Title: "Path Effects", FixtureOnly: true, MinPSNR: 18.0, MaxMeanAbs: 24.0, MaxRMSE: 3.4, SkiaParityFamily: "effects"},
 	{ID: "pattern_gradient_effects", Topic: "effects", Title: "Pattern and Gradient Effects", FixtureOnly: true, MinPSNR: 16.0, MaxMeanAbs: 1.0, MaxRMSE: 4.6, SkiaParityFamily: "effects"},
 	{ID: "scatter_basic", Topic: "scatter", Title: "Basic Scatter", Description: "A compact scatter plot with variable marker size, color, alpha, and axes labels.", Showcase: true, GoBasicSmokeFamily: "scatter", SkiaParityFamily: "scatter", MaxRMSE: 0.3},

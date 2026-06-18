@@ -146,9 +146,9 @@ wrapping/rotated layout, MathText and annotation tails, legend/offsetbox layout,
 fills/collections, contour/mesh, arrays, widgets, and mixed raster/vector. The
 June 14 full optional `TestReferenceCompare` sweep has no catalog row above
 `RMSE 5`; the highest rows are `date_concise_intraday_labels` 4.99,
-`legend_layout_matrix` 4.98, `imshow_transformed` 4.97,
-`geo_mollweide_axes` 4.92, `spectrum_variants` 4.85, `boxplot_basic` 4.84,
-`line2d_markers` 4.80, `formatter_engineering_labels` 4.80, and
+`imshow_transformed` 4.97, `geo_mollweide_axes` 4.92,
+`legend_layout_matrix` 4.86, `spectrum_variants` 4.85, `boxplot_basic` 4.84,
+`formatter_engineering_labels` 4.80, and
 `mathtext_basic` 4.77. The AGG-native reference sweep is also below `RMSE 5`;
 its highest row is `clip_path_batch` at 4.58.
 
@@ -186,6 +186,10 @@ with all reference-comparable rows capped at or below `RMSE 5`.
       `mathtext_inline_labels`, `annotation_composition`, `fill_variants`,
       `mathtext_basic`, `specialty_artists`, and
       `axes_option_breadth`.
+      `line2d_markers` was tightened again on 2026-06-18 by routing Line2D
+      legend marker samples through the backend marker-batch path and matching
+      Matplotlib's handler center semantics; current committed metric: RMSE
+      2.77, PSNR 59.56 dB, MeanAbs 0.04.
 
 ## Current Regressions
 
