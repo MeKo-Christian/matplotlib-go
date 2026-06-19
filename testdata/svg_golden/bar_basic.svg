@@ -38,9 +38,9 @@ preserveAspectRatio="xMidYMid meet">
   <text x="48.893163" y="155.430769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
   <text x="48.893163" y="97.830769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">8</text>
   <text x="43.508547" y="40.230769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">10</text>
-  <path d="M 64.5 36.5 L 576.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 64.5 324.5 L 64.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <path d="M 64.5 324.5 L 576.5 324.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 64.5 324.5 L 64.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 64.5 36.5 L 576.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <path d="M 576.5 324.5 L 576.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <text x="287.692307" y="27.666667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Basic Bars</text>
 </svg>

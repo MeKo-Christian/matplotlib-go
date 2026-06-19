@@ -26,7 +26,7 @@ func TestTransformedImageBackendMatrixIsDocumented(t *testing.T) {
 		filepath.Join("..", "backends", "gobasic", "init.go"): {
 			"backends.ImageTransform",
 		},
-		filepath.Join("..", "backends", "gobasic", "gobasic.go"): {
+		filepath.Join("..", "backends", "gobasic", "images.go"): {
 			"func (r *Renderer) ImageTransformed",
 			"drawBitmapScaledWithAlpha",
 			"drawBitmapTransformed",
@@ -196,7 +196,7 @@ func TestTransformedImageInterpolationKernelAlignmentIsDocumented(t *testing.T) 
 			"TestAggImage_AutoInterpolationUsesHanningForNonIntegerScale",
 			"TestAggImage_AllMatplotlibInterpolationNamesRender",
 		},
-		filepath.Join("..", "backends", "gobasic", "gobasic.go"): {
+		filepath.Join("..", "backends", "gobasic", "images.go"): {
 			"nearestScaledSourceIndex",
 			"math.Round((float64(rel)+0.5)*float64(srcSize)/float64(dstSize) - 0.5)",
 		},

@@ -43,9 +43,9 @@ preserveAspectRatio="xMidYMid meet">
   <text x="82.893163" y="231.564102" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4</text>
   <text x="82.893163" y="155.097436" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">5</text>
   <text x="82.893163" y="78.630769" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
-  <path d="M 98.5 74.5 L 921.5 74.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 98.5 533.5 L 98.5 74.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <path d="M 98.5 533.5 L 921.5 533.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 98.5 533.5 L 98.5 74.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 98.5 74.5 L 921.5 74.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <path d="M 921.5 533.5 L 921.5 74.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <text x="402.984615" y="66.066667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">RendererAgg mixed path collection</text>
 </svg>

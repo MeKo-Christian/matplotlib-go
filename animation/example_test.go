@@ -17,6 +17,7 @@ func (c *exampleCanvas) Draw() error          { return nil }
 func (c *exampleCanvas) Resize(_, _ int) error {
 	return nil
 }
+
 func (c *exampleCanvas) Connect(canvas.EventType, canvas.Handler) canvas.ConnectionID {
 	return 0
 }

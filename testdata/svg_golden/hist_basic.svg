@@ -49,9 +49,9 @@ preserveAspectRatio="xMidYMid meet">
   <text x="56.308547" y="145.667771" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">80</text>
   <text x="50.923932" y="101.827022" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">100</text>
   <text x="50.923932" y="57.986273" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">120</text>
-  <path d="M 77.5 36.5 L 608.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 77.5 317.5 L 77.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <path d="M 77.5 317.5 L 608.5 317.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 77.5 317.5 L 77.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 77.5 36.5 L 608.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <path d="M 608.5 317.5 L 608.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <text x="293.938462" y="27.666667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Basic Histogram</text>
 </svg>

@@ -326,7 +326,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CoverageID:      "pyplot-state",
 		Title:           "Pyplot wrapper and stateful migration surface",
 		UpstreamModules: []string{"pyplot.py", "_pylab_helpers.py"},
-		GoFiles:         []string{"pyplot/pyplot.go", "pyplot/pyplot_test.go", "canvas/canvas.go"},
+		GoFiles:         []string{"pyplot/pyplot.go", "pyplot/pyplot_registry_layout_test.go", "pyplot/pyplot_wrappers_test.go", "canvas/canvas.go"},
 		CurrentEquivalent: "Go has a pyplot package with figure/current-axes state, common plot wrappers, " +
 			"text, annotation, reference-line, span, axis-limit, and axis-scale wrappers, rc helpers, savefig, show, and pause hooks. " +
 			"Phase 17.6.7 audited the wrapper surface against vendored pyplot.py/_pylab_helpers.py: state transitions, " +

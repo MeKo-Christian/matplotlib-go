@@ -2825,7 +2825,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		featureCoverageID: "widgets-events-animation",
 		status:            PublicSurfaceIntentionalOmission,
 		goFiles:           []string{"canvas/tool.go", "canvas/navigation.go", "canvas/dispatcher.go"},
-		note:              "ToolBase and the implemented home/back/forward/pan/zoom/save tools have explicit idiomatic-equivalent rows. The remaining backend_tools classes (ConfigureSubplotsBase, ToolHelpBase, ToolCursorPosition/ToolSetCursor/Cursors, ToolFullScreen, ToolCopyToClipboardBase, ToolGrid/ToolMinorGrid, ToolQuit/ToolQuitAll, RubberbandBase, ToolXScale/ToolYScale/AxisScaleBase, and the ViewsPositions/ZoomPan base/toggle helpers plus add_tools_to_* wiring) are GUI tool-manager behaviors intentionally omitted for v1.0; Go provides navigation idiomatically through canvas/navigation.go and canvas/toolbar.go (Phase 17.6.8).",
+		note:              "ToolBase and the implemented home/back/forward/pan/zoom/save tools have explicit idiomatic-equivalent rows. The remaining backend tools classes (ConfigureSubplotsBase, ToolHelpBase, ToolCursorPosition/ToolSetCursor/Cursors, ToolFullScreen, ToolCopyToClipboardBase, ToolGrid/ToolMinorGrid, ToolQuit/ToolQuitAll, RubberbandBase, ToolXScale/ToolYScale/AxisScaleBase, and the ViewsPositions/ZoomPan base/toggle helpers plus add-tools-to wiring) are GUI tool-manager behaviors intentionally omitted for v1.0; Go provides navigation idiomatically through canvas/navigation.go and canvas/toolbar.go (Phase 17.6.8).",
 	},
 	{
 		idPrefix:          "widgets",

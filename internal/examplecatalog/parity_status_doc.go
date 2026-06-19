@@ -269,6 +269,8 @@ func writeClosureSummary(b *strings.Builder, rows []PublicSurfaceParity) {
 func markdownEscape(value string) string {
 	value = strings.ReplaceAll(value, "\n", " ")
 	value = strings.ReplaceAll(value, "|", "\\|")
+	value = strings.ReplaceAll(value, "*", "\\*")
+	value = markdownEscapeLeadingUnderscores(value)
 	return value
 }
 
@@ -283,6 +285,32 @@ func markdownEscapeUpstreamID(value string) string {
 		b.WriteRune(r)
 	}
 	return b.String()
+}
+
+func markdownEscapeLeadingUnderscores(value string) string {
+	var b strings.Builder
+	b.Grow(len(value))
+	for i, r := range value {
+		if r == '_' && markdownUnderscoreCanOpenEmphasis(value, i) {
+			b.WriteByte('\\')
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
+
+func markdownUnderscoreCanOpenEmphasis(value string, idx int) bool {
+	if idx+1 >= len(value) || !markdownASCIIAlnum(value[idx+1]) {
+		return false
+	}
+	if idx == 0 {
+		return true
+	}
+	return !markdownASCIIAlnum(value[idx-1]) && value[idx-1] != '\\'
+}
+
+func markdownASCIIAlnum(b byte) bool {
+	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
 }
 
 func writeMarkdownTable(b *strings.Builder, headers []string, aligns []markdownTableAlign, rows [][]string) {

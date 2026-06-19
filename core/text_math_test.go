@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	mt "github.com/cwbudde/mathtext"
-
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )

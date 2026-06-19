@@ -27,41 +27,41 @@ Machine: Linux amd64, Intel Core i7-1255U.
 
 Selected catalog render benchmarks, `benchtime=10x`:
 
-| Case | ns/op | B/op | allocs/op |
-| --- | ---: | ---: | ---: |
-| `basic_line` | 18,118,878 | 2,803,944 | 4,852 |
-| `lines_markers_gallery` | 53,205,720 | 7,943,089 | 20,795 |
-| `scatter_gallery` | 64,560,622 | 6,931,000 | 19,348 |
-| `image_variants_gallery` | 145,327,965 | 18,769,086 | 465,069 |
-| `mesh_contour_tri` | 77,675,508 | 10,107,532 | 33,912 |
-| `triangulation_gallery` | 135,610,916 | 15,872,982 | 50,518 |
-| `mplot3d_gallery` | 154,059,404 | 21,140,244 | 115,285 |
-| `text_layout_gallery` | 41,318,026 | 9,493,024 | 22,868 |
-| `mathtext_gallery` | 58,320,050 | 6,304,180 | 14,395 |
-| `widgets_gallery` | 49,179,709 | 10,869,548 | 26,804 |
+| Case                     |       ns/op |       B/op | allocs/op |
+| ------------------------ | ----------: | ---------: | --------: |
+| `basic_line`             |  18,118,878 |  2,803,944 |     4,852 |
+| `lines_markers_gallery`  |  53,205,720 |  7,943,089 |    20,795 |
+| `scatter_gallery`        |  64,560,622 |  6,931,000 |    19,348 |
+| `image_variants_gallery` | 145,327,965 | 18,769,086 |   465,069 |
+| `mesh_contour_tri`       |  77,675,508 | 10,107,532 |    33,912 |
+| `triangulation_gallery`  | 135,610,916 | 15,872,982 |    50,518 |
+| `mplot3d_gallery`        | 154,059,404 | 21,140,244 |   115,285 |
+| `text_layout_gallery`    |  41,318,026 |  9,493,024 |    22,868 |
+| `mathtext_gallery`       |  58,320,050 |  6,304,180 |    14,395 |
+| `widgets_gallery`        |  49,179,709 | 10,869,548 |    26,804 |
 
 100k scatter stress benchmark, `benchtime=5x`:
 
-| Case | ns/op | B/op | allocs/op |
-| --- | ---: | ---: | ---: |
+| Case                            |       ns/op |        B/op | allocs/op |
+| ------------------------------- | ----------: | ----------: | --------: |
 | `BenchmarkLargeScatter100KDraw` | 604,604,763 | 366,167,259 | 3,724,508 |
 
 P2 renderer-reuse smoke benchmark after the AGG reuse path landed,
 `benchtime=1x`:
 
-| Case | ns/op | B/op | allocs/op |
-| --- | ---: | ---: | ---: |
-| `BenchmarkLargeScatter100KDraw` | 462,756,293 | 132,824,952 | 2,429,696 |
+| Case                                           |       ns/op |        B/op | allocs/op |
+| ---------------------------------------------- | ----------: | ----------: | --------: |
+| `BenchmarkLargeScatter100KDraw`                | 462,756,293 | 132,824,952 | 2,429,696 |
 | `BenchmarkLargeScatter100KRedrawReuseRenderer` | 460,516,167 | 125,008,520 | 2,423,092 |
 
 P2 scalar-mapping smoke benchmarks after the resolved-colormap cache landed,
 `benchtime=1x`:
 
-| Case | ns/op | B/op | allocs/op |
-| --- | ---: | ---: | ---: |
-| `BenchmarkScalarMappedImageColors` | 2,405,271 | 0 | 0 |
-| `BenchmarkScalarMappedScatterColors` | 7,144,169 | 0 | 0 |
-| `BenchmarkScalarMappedQuadMeshColors` | 1,178,998 | 0 | 0 |
+| Case                                  |     ns/op | B/op | allocs/op |
+| ------------------------------------- | --------: | ---: | --------: |
+| `BenchmarkScalarMappedImageColors`    | 2,405,271 |    0 |         0 |
+| `BenchmarkScalarMappedScatterColors`  | 7,144,169 |    0 |         0 |
+| `BenchmarkScalarMappedQuadMeshColors` | 1,178,998 |    0 |         0 |
 
 The selected catalog cases are below the sub-second typical-plot target on this
 machine. The 100k scatter stress case is also below one second, but allocation
@@ -74,9 +74,9 @@ These budgets are intentionally loose while CI is report-only. They make the
 first P1 target explicit and should be tightened after several benchmark
 artifacts establish normal variance.
 
-| Benchmark | Time budget | Allocation budget | Object budget |
-| --- | ---: | ---: | ---: |
-| `BenchmarkLargeScatter100KDraw` | 700 ms/op | 400 MB/op | 4,000,000 allocs/op |
+| Benchmark                       | Time budget | Allocation budget |       Object budget |
+| ------------------------------- | ----------: | ----------------: | ------------------: |
+| `BenchmarkLargeScatter100KDraw` |   700 ms/op |         400 MB/op | 4,000,000 allocs/op |
 
 ## Memory Targets And Tuning Guide
 
@@ -84,12 +84,12 @@ These are v1.0 guidance targets for the AGG backend on the profiling machine,
 not hard CI gates yet. Treat them as review thresholds when changing renderer,
 collection, image, or text code.
 
-| Scenario | Benchmark or proxy | v1.0 memory target | Notes |
-| --- | --- | ---: | --- |
-| Typical catalog plots | `BenchmarkCatalogRender` rows such as `basic_line`, `scatter_gallery`, `mesh_contour_tri`, and `mplot3d_gallery` | <= 25 MB/op for ordinary gallery-scale plots | Current selected rows range from about 2.8 MB/op to 21.2 MB/op. Catalog additions that exceed this should document the reason, such as large raster inputs or intentionally dense text. |
-| 100k scatter stress | `BenchmarkLargeScatter100KDraw` | <= 150 MB/op and <= 2.6M allocs/op | The post-P1/P2 smoke row is about 133 MB/op one-shot and 125 MB/op with renderer reuse. Keep this below the loose regression budget and tighten after several CI artifacts establish variance. |
-| Repeated redraw | `BenchmarkLargeScatter100KRedrawReuseRenderer` | <= 130 MB/op with stable canvas size | Repeated redraw should reuse the AGG renderer and avoid owned image copies unless the caller needs to retain the frame. The current smoke row is about 125 MB/op. |
-| Scalar-mapped color loops | `BenchmarkScalarMappedImageColors`, `BenchmarkScalarMappedScatterColors`, `BenchmarkScalarMappedQuadMeshColors` | 0 B/op after scalar-map setup | Per-value mapping on a resolved scalar map should remain allocation-free. |
+| Scenario                  | Benchmark or proxy                                                                                               |                           v1.0 memory target | Notes                                                                                                                                                                                          |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Typical catalog plots     | `BenchmarkCatalogRender` rows such as `basic_line`, `scatter_gallery`, `mesh_contour_tri`, and `mplot3d_gallery` | <= 25 MB/op for ordinary gallery-scale plots | Current selected rows range from about 2.8 MB/op to 21.2 MB/op. Catalog additions that exceed this should document the reason, such as large raster inputs or intentionally dense text.        |
+| 100k scatter stress       | `BenchmarkLargeScatter100KDraw`                                                                                  |           <= 150 MB/op and <= 2.6M allocs/op | The post-P1/P2 smoke row is about 133 MB/op one-shot and 125 MB/op with renderer reuse. Keep this below the loose regression budget and tighten after several CI artifacts establish variance. |
+| Repeated redraw           | `BenchmarkLargeScatter100KRedrawReuseRenderer`                                                                   |         <= 130 MB/op with stable canvas size | Repeated redraw should reuse the AGG renderer and avoid owned image copies unless the caller needs to retain the frame. The current smoke row is about 125 MB/op.                              |
+| Scalar-mapped color loops | `BenchmarkScalarMappedImageColors`, `BenchmarkScalarMappedScatterColors`, `BenchmarkScalarMappedQuadMeshColors`  |                0 B/op after scalar-map setup | Per-value mapping on a resolved scalar map should remain allocation-free.                                                                                                                      |
 
 Practical tuning advice:
 

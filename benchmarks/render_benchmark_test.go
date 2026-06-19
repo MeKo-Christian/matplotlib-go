@@ -13,8 +13,10 @@ import (
 	"github.com/cwbudde/matplotlib-go/test/parity"
 )
 
-var benchmarkImageSink image.Image
-var benchmarkColorSink render.Color
+var (
+	benchmarkImageSink image.Image
+	benchmarkColorSink render.Color
+)
 
 func BenchmarkCatalogRender(b *testing.B) {
 	cases := []string{

@@ -19,56 +19,56 @@ Captured from the tracked tree before decomposition work began.
 
 ### Large Go Files
 
-| Lines | File |
-|---:|---|
-| 4834 | `core/axes3d_test.go` |
-| 3037 | `internal/examplecatalog/public_surface_parity.go` |
-| 3002 | `core/text_test.go` |
-| 2171 | `core/axis_test.go` |
-| 2049 | `core/contour.go` |
-| 1803 | `pyplot/pyplot.go` |
-| 1779 | `core/axis.go` |
-| 1614 | `pyplot/pyplot_test.go` |
-| 1612 | `canvas/widget_interaction_test.go` |
-| 1601 | `cmd/parityviewer/main.go` |
-| 1587 | `core/text.go` |
-| 1547 | `core/axes3d_contour_surface.go` |
-| 1524 | `core/mesh_contour_test.go` |
-| 1496 | `core/legend_test.go` |
-| 1464 | `core/patch_test.go` |
-| 1409 | `backends/svg/svg_test.go` |
-| 1394 | `backends/agg/agg_test.go` |
-| 1340 | `core/arrow_patch.go` |
-| 1327 | `core/legend.go` |
-| 1311 | `core/plot.go` |
-| 1295 | `core/colorbar.go` |
-| 1280 | `backends/pdf/pdf_test.go` |
-| 1242 | `core/scatter.go` |
-| 1174 | `backends/ps/ps.go` |
-| 1139 | `core/colorbar_test.go` |
-| 1139 | `backends/gobasic/gobasic.go` |
-| 1129 | `color/named_colors_data.go` |
-| 1122 | `core/collection_test.go` |
-| 1106 | `backends/agg/freetype_native.go` |
-| 1096 | `backends/agg/agg_paths.go` |
-| 1051 | `test/diagnostics_test.go` |
-| 1051 | `style/mplstyle.go` |
-| 1048 | `backends/pgf/pgf.go` |
+| Lines | File                                               |
+| ----: | -------------------------------------------------- |
+|  4834 | `core/axes3d_test.go`                              |
+|  3037 | `internal/examplecatalog/public_surface_parity.go` |
+|  3002 | `core/text_test.go`                                |
+|  2171 | `core/axis_test.go`                                |
+|  2049 | `core/contour.go`                                  |
+|  1803 | `pyplot/pyplot.go`                                 |
+|  1779 | `core/axis.go`                                     |
+|  1614 | `pyplot/pyplot_test.go`                            |
+|  1612 | `canvas/widget_interaction_test.go`                |
+|  1601 | `cmd/parityviewer/main.go`                         |
+|  1587 | `core/text.go`                                     |
+|  1547 | `core/axes3d_contour_surface.go`                   |
+|  1524 | `core/mesh_contour_test.go`                        |
+|  1496 | `core/legend_test.go`                              |
+|  1464 | `core/patch_test.go`                               |
+|  1409 | `backends/svg/svg_test.go`                         |
+|  1394 | `backends/agg/agg_test.go`                         |
+|  1340 | `core/arrow_patch.go`                              |
+|  1327 | `core/legend.go`                                   |
+|  1311 | `core/plot.go`                                     |
+|  1295 | `core/colorbar.go`                                 |
+|  1280 | `backends/pdf/pdf_test.go`                         |
+|  1242 | `core/scatter.go`                                  |
+|  1174 | `backends/ps/ps.go`                                |
+|  1139 | `core/colorbar_test.go`                            |
+|  1139 | `backends/gobasic/gobasic.go`                      |
+|  1129 | `color/named_colors_data.go`                       |
+|  1122 | `core/collection_test.go`                          |
+|  1106 | `backends/agg/freetype_native.go`                  |
+|  1096 | `backends/agg/agg_paths.go`                        |
+|  1051 | `test/diagnostics_test.go`                         |
+|  1051 | `style/mplstyle.go`                                |
+|  1048 | `backends/pgf/pgf.go`                              |
 
 ### Large Non-Go Artifacts
 
-| Size | File |
-|---:|---|
-| 2136 KiB | `docs/matplotlib-parity-status.md` |
-| 1340 KiB | `testdata/svg_golden/mathtext_basic.svg` |
-| 440 KiB | `test/testdata/public_api/stable_public_api.json` |
-| 344 KiB | `testdata/matplotlib_ref/mplot3d_gallery.png` |
-| 324 KiB | `testdata/matplotlib_ref/projection_toolkit_gallery.png` |
-| 300 KiB | `testdata/matplotlib_ref/imshow_interpolation_matrix.png` |
-| 296 KiB | `testdata/golden/mplot3d_gallery.png` |
-| 292 KiB | `testdata/golden/projection_toolkit_gallery.png` |
-| 264 KiB | `testdata/svg_golden/mixed_raster_vector.svg` |
-| 264 KiB | `testdata/golden/imshow_interpolation_matrix.png` |
+|     Size | File                                                      |
+| -------: | --------------------------------------------------------- |
+| 2136 KiB | `docs/matplotlib-parity-status.md`                        |
+| 1340 KiB | `testdata/svg_golden/mathtext_basic.svg`                  |
+|  440 KiB | `test/testdata/public_api/stable_public_api.json`         |
+|  344 KiB | `testdata/matplotlib_ref/mplot3d_gallery.png`             |
+|  324 KiB | `testdata/matplotlib_ref/projection_toolkit_gallery.png`  |
+|  300 KiB | `testdata/matplotlib_ref/imshow_interpolation_matrix.png` |
+|  296 KiB | `testdata/golden/mplot3d_gallery.png`                     |
+|  292 KiB | `testdata/golden/projection_toolkit_gallery.png`          |
+|  264 KiB | `testdata/svg_golden/mixed_raster_vector.svg`             |
+|  264 KiB | `testdata/golden/imshow_interpolation_matrix.png`         |
 
 ## Decomposition Rules
 
@@ -86,8 +86,85 @@ Captured from the tracked tree before decomposition work began.
 Phase 4 L7 keeps the large generated/catalog artifacts intact and documents why
 they are exceptions to the 1k-line source target:
 
-| File | Decision | Rationale | Drift guard |
-|---|---|---|---|
+| File                                               | Decision                   | Rationale                                                                                                                                                                                                                                                                                                                                                                                                                           | Drift guard                                                                                                                                                                                                                                                                                                     |
+| -------------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `internal/examplecatalog/public_surface_parity.go` | Keep-large curated catalog | The file is hand-maintained parity classification data, not raw generated output. It cross-links upstream public-surface rows to local feature coverage, catalog cases, examples, implementation files, closure phases, and rationale notes. Splitting it by module would make duplicate/overlapping public-surface decisions harder to review and would separate related override/rule decisions from the exported lookup helpers. | `TestAllUpstreamPublicRowsAreClassified`, `TestPartialAndOmissionRowsHaveNotes`, and the landmark public-surface tests keep the catalog complete and documented against `test/testdata/parity_surface/upstream_public_surface.json`, which is generated by `internal/examplecatalog/extract_public_surface.py`. |
-| `color/named_colors_data.go` | Keep-large generated table | The file is generated from `third_party/matplotlib/lib/matplotlib/_color_data.py` and embedded as Go string tables so runtime color lookup has no Python or `third_party` dependency. Artificially sharding CSS4/Tableau/xkcd rows would not improve review quality because the source of truth is upstream Matplotlib data. | `TestNamedColorInventoryMatchesMatplotlibTables` compares the committed Go tables against the vendored Matplotlib `_color_data.py`; `TestNamedColorCatalogSizesMatchMatplotlib` locks the expected table sizes. |
-| Golden/reference PNG, SVG, PDF, and JSON fixtures | Keep intact | Binary and serialized fixtures are review artifacts. Splitting or repacking them would add fixture plumbing without reducing behavior risk. | Existing golden/reference, SVG/PDF comparison, and public API artifact tests validate these files at their natural granularity. |
+| `color/named_colors_data.go`                       | Keep-large generated table | The file is generated from `third_party/matplotlib/lib/matplotlib/_color_data.py` and embedded as Go string tables so runtime color lookup has no Python or `third_party` dependency. Artificially sharding CSS4/Tableau/xkcd rows would not improve review quality because the source of truth is upstream Matplotlib data.                                                                                                        | `TestNamedColorInventoryMatchesMatplotlibTables` compares the committed Go tables against the vendored Matplotlib `_color_data.py`; `TestNamedColorCatalogSizesMatchMatplotlib` locks the expected table sizes.                                                                                                 |
+| Golden/reference PNG, SVG, PDF, and JSON fixtures  | Keep intact                | Binary and serialized fixtures are review artifacts. Splitting or repacking them would add fixture plumbing without reducing behavior risk.                                                                                                                                                                                                                                                                                         | Existing golden/reference, SVG/PDF comparison, and public API artifact tests validate these files at their natural granularity.                                                                                                                                                                                 |
+
+## L8 Verification Snapshot
+
+Captured after the Phase 4 split batches. The remaining large files are either
+catalog/fixture data covered above or behavior families whose extra split would
+currently add more cross-file coupling than review clarity.
+
+```text
+just large-file-audit
+
+Large tracked Go files (>= 1000 lines)
+   3039 internal/examplecatalog/public_surface_parity.go
+   1730 core/axes3d_wire_surface_test.go
+   1340 core/arrow_patch.go
+   1311 core/plot.go
+   1242 core/scatter.go
+   1139 core/colorbar_test.go
+   1129 color/named_colors_data.go
+   1122 core/collection_test.go
+   1051 style/mplstyle.go
+
+Large tracked non-Go artifacts (>= 256 KiB)
+   2136K docs/matplotlib-parity-status.md
+   1340K testdata/svg_golden/mathtext_basic.svg
+    440K test/testdata/public_api/stable_public_api.json
+    344K testdata/matplotlib_ref/mplot3d_gallery.png
+    324K testdata/matplotlib_ref/projection_toolkit_gallery.png
+    300K testdata/matplotlib_ref/imshow_interpolation_matrix.png
+    296K testdata/golden/mplot3d_gallery.png
+    292K testdata/golden/projection_toolkit_gallery.png
+    264K testdata/golden/imshow_interpolation_matrix.png
+```
+
+### Remaining Large Go Source Decisions
+
+- `core/axes3d_wire_surface_test.go`: keep-large behavior family. The file now
+  contains only the 3D wireframe, surface, trisurf, and voxel tests from the
+  former monolithic `axes3d_test.go`. These tests share 3D setup, projection
+  assumptions, and rendered polygon ordering assertions; another split would
+  separate closely related mplot3d surface-family cases. Drift guard:
+  `go test ./core -run 'TestAxes3D(Wireframe|Surface|TriSurf|Voxel)'` and the
+  catalog mplot3d parity rows.
+- `core/arrow_patch.go`: keep-large public API family. Arrow patches combine
+  Matplotlib-compatible connection styles, arrow styles, mutation scaling,
+  clipping, and the `FancyArrowPatch` artist. The helpers are tightly coupled to
+  shared path construction semantics, while the patch source files around it
+  already hold the simpler patch families. Drift guard:
+  `go test ./core -run 'Test(Arrow|Connection|FancyArrowPatch)'`.
+- `core/plot.go`: keep-large plotting primitive family. This file remains the
+  central Line2D and plot-family implementation. It keeps style cycling,
+  marker/stroke options, draw-time marker batching, autoscale behavior, and
+  legend handle integration in one review unit; moving more pieces would create
+  package-local helper traffic without reducing an algorithmic hotspot. Drift
+  guard: `go test ./core -run 'Test(Line|Plot|Dashes|Marker)'` plus line/plot
+  catalog parity rows.
+- `core/scatter.go`: keep-large collection primitive family. Scatter owns the
+  public scatter options, scalar-mappable integration, marker sizing/color
+  resolution, legend sampling, picking, and draw dispatch. Those pieces share
+  collection state and should move together if a future collection-layer
+  refactor happens. Drift guard: `go test ./core -run 'TestScatter'` and
+  scatter catalog parity rows.
+- `core/colorbar_test.go`: keep-large test family. Production colorbar code is
+  split into layout, scale, and draw files. The remaining test file is a compact
+  integration suite that exercises those pieces together, including mutable
+  mappable and formatter behavior that is less clear when split away from its
+  shared fixtures. Drift guard: `go test ./core -run 'TestColorbar'` and
+  colorbar catalog parity rows.
+- `core/collection_test.go`: keep-large test family. Collection rendering tests
+  intentionally stay together because they share recorder helpers and validate
+  cross-collection contracts for path, patch, line, and scalar-mapped
+  collections. Drift guard: `go test ./core -run 'Test.*Collection'` and
+  collection catalog parity rows.
+- `style/mplstyle.go`: keep-large parser family. The file is a self-contained
+  Matplotlib `.mplstyle` parser and rc translation table. Splitting the parser
+  from the key/value conversion tables would make review harder unless a future
+  style-system refactor introduces a generated table or schema. Drift guard:
+  `go test ./style`.

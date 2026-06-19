@@ -48,8 +48,8 @@ tested, and stable:
   `TestReferenceCompare` with per-case tolerances; public-surface inventory and
   classification map; catalog-backed CLI and browser galleries.
 
-*Former Phases 1–6, 8A, 9–19 are complete; see git history for the detailed
-per-phase implementation logs.*
+_Former Phases 1–6, 8A, 9–19 are complete; see git history for the detailed
+per-phase implementation logs._
 
 ---
 
@@ -125,8 +125,8 @@ mode — no longer external-access-blocked, just unbuilt.
 
 - [ ] Skia is a viable secondary raster backend: native batch primitives + real
       GPU acceleration available under `skiacgo`/`skiagpu`, with parity-checked
-      output and truthful per-mode capability reporting. *(Wrapper + first native
-      primitives done; remaining items above.)*
+      output and truthful per-mode capability reporting. _(Wrapper + first native
+      primitives done; remaining items above.)_
 
 ---
 
@@ -403,7 +403,7 @@ large generated/catalog artifacts that affect review quality:
         selectors, cursor, and picking.
   - [x] Diagnostics: split or annotate `test/diagnostics_test.go` by diagnostic
         family if it keeps growing, while preserving env-gated behavior.
-- [ ] **L3 — Split algorithm-heavy core files.** Split `core/contour.go` into
+- [x] **L3 — Split algorithm-heavy core files.** Split `core/contour.go` into
       API/set construction, level selection, line extraction, filled-band
       geometry, label placement, and geometry helpers. Then split `core/axis.go`
       into types/defaults, spine/frame drawing, ticks, tick-label layout, and
@@ -520,20 +520,20 @@ large generated/catalog artifacts that affect review quality:
       data that intentionally stays large, or introduce source data plus
       generation checks. For goldens and binary fixtures, keep files intact and
       avoid artificial splitting.
-- [ ] **L8 — Verify and commit in small batches.** Each batch should be mostly
+- [x] **L8 — Verify and commit in small batches.** Each batch should be mostly
       move-only and end with `just fmt` plus targeted `go test` commands. Before
       closing the phase, run `just fmt && just lint && just test` and a focused
       optional parity sweep for files that touched rendering behavior.
 
 **Exit criteria:**
 
-- [ ] No non-generated Go source file above 1k lines remains without an explicit
+- [x] No non-generated Go source file above 1k lines remains without an explicit
       reason recorded in `docs/large-file-decomposition.md`.
-- [ ] Large tests are grouped by behavior family, with shared helpers moved into
+- [x] Large tests are grouped by behavior family, with shared helpers moved into
       dedicated helper files.
-- [ ] Generated/catalog/fixture files have an explicit keep-large, generate, or
+- [x] Generated/catalog/fixture files have an explicit keep-large, generate, or
       shard decision documented.
-- [ ] Full formatting, linting, unit tests, and relevant parity checks pass after
+- [x] Full formatting, linting, unit tests, and relevant parity checks pass after
       the decomposition.
 
 ---
@@ -542,10 +542,10 @@ large generated/catalog artifacts that affect review quality:
 
 **Goal:** make the project consumable by users who have not followed the
 development thread, establish performance baselines, and tag a stable v1.0.
-*(The Matplotlib migration guide, the backend-selection guide
+_(The Matplotlib migration guide, the backend-selection guide
 `docs/backend-selection.md`, the showcase caption/snippet review, the
 intentional-divergence "anti-gallery", and the README browser-gallery entry
-point are already done.)*
+point are already done.)_
 
 ### 5.1 API Documentation
 
