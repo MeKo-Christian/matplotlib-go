@@ -89,17 +89,19 @@ func (f *Fill2D) Draw(r render.Renderer, ctx *DrawContext) {
 	if len(paths) == 0 {
 		return
 	}
-	if drawer, ok := r.(render.PathCollectionDrawer); ok {
-		batch := render.PathCollectionBatch{Items: make([]render.PathCollectionItem, 0, len(paths))}
-		for _, path := range paths {
-			batch.Items = append(batch.Items, render.PathCollectionItem{
-				Path:        path,
-				Paint:       paint,
-				Antialiased: true,
-			})
-		}
-		if drawer.DrawPathCollection(batch) {
-			return
+	if len(paths) > 1 {
+		if drawer, ok := r.(render.PathCollectionDrawer); ok {
+			batch := render.PathCollectionBatch{Items: make([]render.PathCollectionItem, 0, len(paths))}
+			for _, path := range paths {
+				batch.Items = append(batch.Items, render.PathCollectionItem{
+					Path:        path,
+					Paint:       paint,
+					Antialiased: true,
+				})
+			}
+			if drawer.DrawPathCollection(batch) {
+				return
+			}
 		}
 	}
 	for _, path := range paths {

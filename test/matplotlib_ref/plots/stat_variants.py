@@ -47,19 +47,9 @@ def stat_variants(out_dir):
     ecdf_ax.set_ylim(0, 1.05)
     ecdf_ax.grid(axis="y")
     ecdf_ax.set_axisbelow(True)
-    ecdf_samples = np.array([1.2, 1.8, 2.0, 2.0, 3.1, 3.7, 4.3, 5.0, 5.8, 6.6, 7.0])
-    ecdf_values = np.sort(ecdf_samples)
-    unique_values = []
-    probabilities = []
-    for idx, value in enumerate(ecdf_values):
-        if idx + 1 < len(ecdf_values) and ecdf_values[idx + 1] == value:
-            continue
-        unique_values.append(value)
-        probabilities.append((idx + 1) / len(ecdf_values))
-    ecdf_ax.step(
-        [unique_values[0]] + unique_values,
-        [0] + probabilities,
-        where="post",
+    ecdf_ax.ecdf(
+        [1.2, 1.8, 2.0, 2.0, 3.1, 3.7, 4.3, 5.0, 5.8, 6.6, 7.0],
+        compress=True,
         color=(0.18, 0.36, 0.75, 1),
         linewidth=lw(2),
     )

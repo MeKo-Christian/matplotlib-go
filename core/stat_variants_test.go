@@ -318,7 +318,7 @@ func TestAxesECDF_ComputesSortedStepData(t *testing.T) {
 	}
 }
 
-func TestAxesECDF_CompressKeepsDuplicateProbabilities(t *testing.T) {
+func TestAxesECDF_CompressMatchesMatplotlibFirstDuplicate(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 
 	line := ax.ECDF([]float64{3, 1, 2, 2}, ECDFOptions{Compress: true})
@@ -328,7 +328,7 @@ func TestAxesECDF_CompressKeepsDuplicateProbabilities(t *testing.T) {
 	want := []geom.Pt{
 		{X: 1, Y: 0},
 		{X: 1, Y: 0.25},
-		{X: 2, Y: 0.75},
+		{X: 2, Y: 0.5},
 		{X: 3, Y: 1},
 	}
 	if len(line.XY) != len(want) {
@@ -372,6 +372,9 @@ func TestHist2D_StepFilledDrawsClosedPath(t *testing.T) {
 	call := r.pathCalls[0]
 	if call.paint.Fill.A == 0 || call.paint.Stroke.A == 0 {
 		t.Fatalf("unexpected paint = %+v", call.paint)
+	}
+	if call.paint.Snap != render.SnapAuto {
+		t.Fatalf("stepfilled snap = %v, want Matplotlib patch SnapAuto", call.paint.Snap)
 	}
 	if len(call.path.C) == 0 || call.path.C[len(call.path.C)-1] != geom.ClosePath {
 		t.Fatalf("expected closed path, got %+v", call.path.C)

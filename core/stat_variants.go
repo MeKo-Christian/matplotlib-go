@@ -116,7 +116,7 @@ func (a *Axes) ECDF(data []float64, opts ...ECDFOptions) *Line2D {
 	if opt.Compress {
 		values = make([]float64, 0, total)
 		for i := 0; i < total; i++ {
-			if i+1 < total && samples[i+1] == samples[i] {
+			if i > 0 && samples[i-1] == samples[i] {
 				continue
 			}
 			values = append(values, samples[i])

@@ -124,13 +124,13 @@ func TestHist2D_Draw_AlphaOverridesColorAlpha(t *testing.T) {
 
 	r := &recordingRenderer{}
 	hist.Draw(r, createTestDrawContext())
-	if len(r.pathCalls) < 2 {
-		t.Fatalf("path calls = %d, want fill and stroke calls", len(r.pathCalls))
+	if len(r.pathCalls) < 1 {
+		t.Fatalf("path calls = %d, want at least one patch call", len(r.pathCalls))
 	}
 	if got := r.pathCalls[0].paint.Fill.A; got != hist.Alpha {
 		t.Fatalf("drawn fill alpha = %v, want explicit alpha override %v", got, hist.Alpha)
 	}
-	if got := r.pathCalls[1].paint.Stroke.A; got != hist.Alpha {
+	if got := r.pathCalls[0].paint.Stroke.A; got != hist.Alpha {
 		t.Fatalf("drawn stroke alpha = %v, want explicit alpha override %v", got, hist.Alpha)
 	}
 }

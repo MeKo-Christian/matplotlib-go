@@ -83,7 +83,7 @@ func TestBar2D_Draw_SnapsFillAndStrokeRects(t *testing.T) {
 	}
 }
 
-func TestHist2D_Draw_SnapsFillAndStrokeRects(t *testing.T) {
+func TestHist2D_Draw_UsesMatplotlibPatchSnapAuto(t *testing.T) {
 	hist := &Hist2D{
 		Data:      []float64{1, 1.5},
 		BinEdges:  []float64{0, 2},
@@ -95,24 +95,22 @@ func TestHist2D_Draw_SnapsFillAndStrokeRects(t *testing.T) {
 	r := &recordingRenderer{}
 	hist.Draw(r, createFractionalDrawContext())
 
-	if len(r.pathCalls) != 2 {
-		t.Fatalf("expected fill and stroke path calls, got %d", len(r.pathCalls))
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("expected one patch path call, got %d", len(r.pathCalls))
 	}
 
-	fill := r.pathCalls[0].path.V
-	if len(fill) != 4 {
-		t.Fatalf("expected 4 fill vertices, got %d", len(fill))
+	path := r.pathCalls[0].path.V
+	if len(path) != 4 {
+		t.Fatalf("expected 4 patch vertices, got %d", len(path))
 	}
-	if fill[0] != (geom.Pt{X: 50, Y: 430}) || fill[2] != (geom.Pt{X: 69, Y: 450}) {
-		t.Fatalf("unexpected snapped histogram fill vertices: %+v", fill)
+	if !pointAlmostEqual(path[0], geom.Pt{X: 50.2, Y: 430.16}) || !pointAlmostEqual(path[2], geom.Pt{X: 69.26, Y: 449.7}) {
+		t.Fatalf("unexpected unsnapped histogram patch vertices: %+v", path)
 	}
+	if got := r.pathCalls[0].paint.Snap; got != render.SnapAuto {
+		t.Fatalf("histogram patch snap = %v, want SnapAuto", got)
+	}
+}
 
-	stroke := r.pathCalls[1].path.V
-	if len(stroke) != 4 {
-		t.Fatalf("expected 4 stroke vertices, got %d", len(stroke))
-	}
-	// y-up stroke snap offsets Y by -0.5 (round - 0.5).
-	if stroke[0] != (geom.Pt{X: 50.5, Y: 429.5}) || stroke[2] != (geom.Pt{X: 69.5, Y: 449.5}) {
-		t.Fatalf("unexpected snapped histogram stroke vertices: %+v", stroke)
-	}
+func pointAlmostEqual(got, want geom.Pt) bool {
+	return almostEqualFloat(got.X, want.X) && almostEqualFloat(got.Y, want.Y)
 }

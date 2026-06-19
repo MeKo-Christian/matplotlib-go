@@ -40,11 +40,10 @@ func Plot() *core.Figure {
 		},
 		core.StackPlotOptions{
 			Colors: []render.Color{
-				{R: 0.20, G: 0.55, B: 0.75, A: 1},
-				{R: 0.90, G: 0.48, B: 0.18, A: 1},
-				{R: 0.35, G: 0.66, B: 0.42, A: 1},
+				{R: 0.20, G: 0.55, B: 0.75, A: 0.76},
+				{R: 0.90, G: 0.48, B: 0.18, A: 0.76},
+				{R: 0.35, G: 0.66, B: 0.42, A: 0.76},
 			},
-			Alpha: common.FloatPtr(0.76),
 		},
 	)
 

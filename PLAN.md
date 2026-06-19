@@ -204,10 +204,12 @@ Measured on 2026-06-13 with:
 RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run 'TestReferenceCompare/(stat_variants|errorbar_basic|date_concise_intraday_labels|units_categories|axes_grid1_showcase|scale_function_defaults|ticks_scales_formatters_gallery|named_colors|formatter_log_mathtext_labels)$' -count=1 -v
 ```
 
-- [x] `stat_variants`: fixed on 2026-06-14. The mismatch was grid z-order over
-      filled statistical patches; the Go showcase now mirrors Matplotlib's
-      `set_axisbelow(True)` before adding each y-grid. Updated committed
-      golden/reference metric: RMSE 4.49, PSNR 53.24 dB, MeanAbs 0.24.
+- [x] `stat_variants`: fixed on 2026-06-14 and tightened below RMSE 3 on
+      2026-06-19. The Go showcase now mirrors Matplotlib's alpha placement and
+      `Axes.ecdf(..., compress=True)` semantics; filled histogram and
+      fill-between paths use Matplotlib-style patch snapping/placement instead
+      of one-off example code. Updated committed golden/reference metric:
+      RMSE 2.60, PSNR 57.77 dB, MeanAbs 0.10.
 - [x] `errorbar_basic`: fixed on 2026-06-14 and tightened again on
       2026-06-14. Go `Axes.ErrorBar` now matches Matplotlib's public
       `capsize` semantics (`Line2D` cap marker length is `2*capsize`), default

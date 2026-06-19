@@ -562,9 +562,10 @@ func TestFill2DDrawUsesMatplotlibFillCollectionSnap(t *testing.T) {
 
 func TestFill2DDrawUsesPathCollectionBatchWhenAvailable(t *testing.T) {
 	fill := &Fill2D{
-		X:         []float64{0, 1, 2},
-		Y1:        []float64{1, 2, 1},
-		Y2:        []float64{0, 0, 0},
+		X:         []float64{0, 1, 2, 3, 4},
+		Y1:        []float64{1, 2, 1, 2, 1},
+		Y2:        []float64{0, 0, 0, 0, 0},
+		Where:     []bool{true, true, false, true, true},
 		Color:     render.Color{A: 1},
 		EdgeColor: render.Color{A: 1},
 		EdgeWidth: 2,
@@ -579,8 +580,8 @@ func TestFill2DDrawUsesPathCollectionBatchWhenAvailable(t *testing.T) {
 	if len(r.pathCalls) != 0 {
 		t.Fatalf("fallback path calls = %d, want native path collection", len(r.pathCalls))
 	}
-	if got := len(r.batches[0].Items); got != 1 {
-		t.Fatalf("batch items = %d, want one fill polygon", got)
+	if got := len(r.batches[0].Items); got != 2 {
+		t.Fatalf("batch items = %d, want two fill polygons", got)
 	}
 	if got := r.batches[0].Items[0].Paint.LineWidth; got != 2 {
 		t.Fatalf("batch linewidth = %v, want 2", got)

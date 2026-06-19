@@ -422,24 +422,26 @@ func (h *Hist2D) Draw(r render.Renderer, ctx *DrawContext) {
 			continue
 		}
 
-		fillPath := snappedFillRectPath(rect)
-		if len(fillPath.C) == 0 {
+		path := pixelRectPath(rect)
+		if len(path.C) == 0 {
 			continue
 		}
-		if fillColor.A > 0 {
-			r.Path(fillPath, &render.Paint{Fill: fillColor})
+		paint := render.Paint{
+			Snap: render.SnapAuto,
 		}
 		if h.EdgeWidth > 0 && edgeColor.A > 0 {
-			strokePath := snappedStrokeRectPath(rect)
-			if len(strokePath.C) > 0 {
-				r.Path(strokePath, &render.Paint{
-					Stroke:    edgeColor,
-					LineWidth: h.EdgeWidth,
-					LineJoin:  render.JoinMiter,
-					LineCap:   render.CapSquare,
-				})
-			}
+			paint.Stroke = edgeColor
+			paint.LineWidth = h.EdgeWidth
+			paint.LineJoin = render.JoinMiter
+			paint.LineCap = render.CapButt
 		}
+		if fillColor.A > 0 {
+			paint.Fill = fillColor
+		}
+		if paint.Fill.A == 0 && paint.Stroke.A == 0 {
+			continue
+		}
+		r.Path(path, &paint)
 	}
 }
 
@@ -509,6 +511,7 @@ func (h *Hist2D) drawStepHistogram(r render.Renderer, ctx *DrawContext, fillColo
 	}
 
 	paint := render.Paint{}
+	paint.Snap = render.SnapAuto
 	if h.HistType == HistTypeStepFilled && fillColor.A > 0 {
 		paint.Fill = fillColor
 	}
