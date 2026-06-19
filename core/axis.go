@@ -28,6 +28,7 @@ const (
 	defaultTickSizePt    = 3.5
 	defaultTickSizePx    = defaultTickSizePt * 100.0 / 72.0
 	defaultTickPadPt     = 3.5
+	offsetTextPadPt      = 3.0
 )
 
 // TickLabelStyle captures axis-owned label placement and orientation.
@@ -619,22 +620,32 @@ func (a *Axis) drawTickOffsetText(r render.Renderer, ctx *DrawContext, ticks []f
 	style = normalizeTickLabelStyle(style)
 	fontSize := tickLabelFontSizeForStyle(a, style, ctx)
 	fontKey := tickLabelFontKey(style, ctx)
-	labelPadPx := tickLabelPadForAxisSize(a, tickSize, style, ctx)
 	layout := measureSingleLineTextLayout(r, label, fontSize, fontKey, ctx.RC.UseTeX)
-	gap := 0.3 * fontSize
+	offsetPadPx := pointsToPixels(styleOrCurrentRC(ctx), offsetTextPadPt)
+	labelBounds, haveLabelBounds := tickLabelBoundsForLevel(a, r, ctx, ticks, formatter, style, tickSize, isXAxis)
 
 	var anchor geom.Pt
+	vAlign := textLayoutVAlignTop
 	switch a.Side {
 	case AxisBottom:
-		anchor = geom.Pt{X: ctx.Clip.Max.X, Y: ctx.Clip.Min.Y - labelPadPx - layout.Height - gap}
+		bottom := ctx.Clip.Min.Y
+		if haveLabelBounds {
+			bottom = labelBounds.Min.Y
+		}
+		anchor = geom.Pt{X: ctx.Clip.Max.X, Y: bottom - offsetPadPx}
 	case AxisTop:
-		anchor = geom.Pt{X: ctx.Clip.Max.X, Y: ctx.Clip.Max.Y + labelPadPx + layout.Height + gap}
+		top := ctx.Clip.Max.Y
+		if haveLabelBounds {
+			top = labelBounds.Max.Y
+		}
+		anchor = geom.Pt{X: ctx.Clip.Max.X, Y: top + offsetPadPx}
+		vAlign = textLayoutVAlignBottom
 	default:
 		return
 	}
 	origin := geom.Pt{
 		X: anchor.X - textHorizontalOriginOffset(layout, TextAlignRight),
-		Y: anchor.Y + textBaselineOffset(layout, textLayoutVAlignTop),
+		Y: anchor.Y + textBaselineOffset(layout, vAlign),
 	}
 	drawDisplayText(textRen, label, origin, fontSize, labelColor, fontKey, ctx.RC.UseTeX)
 }

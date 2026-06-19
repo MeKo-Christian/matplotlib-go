@@ -172,10 +172,9 @@ var cases = []Case{
 	{ID: "specialty_depth", Topic: "statistics", Title: "Specialty Depth", FixtureOnly: true, MinPSNR: 22.0, MaxMeanAbs: 20.0, MaxRMSE: 4.8},
 	{ID: "stem_plot", Topic: "specialty", Title: "Stem Plot", Optional: true, MaxRMSE: 4.3},
 	{ID: "specialty_artists", Topic: "specialty", Title: "Specialty Artists", Optional: true, WebDemoID: "specialty", Description: "Event plots, hexbin, pie charts, stem plots, tables, and Sankey-style flows.", Showcase: true, GoBasicSmokeFamily: "specialty", MaxRMSE: 5.0},
-	// W3.9 ratchet: regenerated golden-vs-reference RMSE is 4.99. Tick
-	// sequence and formatter selection now match; the visible tail is text-edge
-	// rasterization on dense intraday labels.
-	{ID: "date_concise_intraday_labels", Topic: "units", Title: "Concise Intraday Date Labels", FixtureOnly: true, Width: 720, Height: 360, MinPSNR: 60.0, MaxMeanAbs: 0.08, MaxRMSE: 5.0},
+	// W3.10 ratchet: X-axis concise-date offset text now follows Matplotlib's
+	// ticklabel-bounds placement rule, reducing the committed RMSE to 0.05.
+	{ID: "date_concise_intraday_labels", Topic: "units", Title: "Concise Intraday Date Labels", FixtureOnly: true, Width: 720, Height: 360, MinPSNR: 73.0, MaxMeanAbs: 0.01, MaxRMSE: 0.1},
 	{ID: "date_month_year_labels", Topic: "units", Title: "Month and Year Date Labels", FixtureOnly: true, Width: 720, Height: 360, MinPSNR: 70.0, MaxMeanAbs: 0.05, MaxRMSE: 0.5},
 	{ID: "units_overview", Topic: "units", Title: "Dates and Categories", Optional: true, WebDemoID: "units", Description: "Time-aware axes, categorical bars, and horizontal categorical bars.", Showcase: true, GoBasicSmokeFamily: "units", MinPSNR: 68.0, MaxMeanAbs: 0.10, MaxRMSE: 1.0},
 	{ID: "units_dates", Topic: "units", Title: "Date Units", Optional: true, MinPSNR: 53.0, MaxMeanAbs: 0.15, MaxRMSE: 1.5},

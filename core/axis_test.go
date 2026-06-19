@@ -18,6 +18,26 @@ func (s staticLocator) Ticks(min, max float64, count int) []float64 {
 	return append([]float64(nil), s...)
 }
 
+type offsetFormatterForTest struct {
+	labels []string
+	offset string
+}
+
+func (f offsetFormatterForTest) Format(x float64) string {
+	return fmt.Sprintf("%.0f", x)
+}
+
+func (f offsetFormatterForTest) FormatTick(_ float64, index int, _ []float64) string {
+	if index >= 0 && index < len(f.labels) {
+		return f.labels[index]
+	}
+	return ""
+}
+
+func (f offsetFormatterForTest) OffsetText([]float64) string {
+	return f.offset
+}
+
 func TestAxis_Draw(t *testing.T) {
 	// Test drawing a basic X axis
 	axis := NewXAxis()
@@ -1603,6 +1623,50 @@ func TestAxis_DrawTickLabels_DrawsConciseDateOffsetText(t *testing.T) {
 	first := r.origins[0]
 	if !(offset.X > first.X && offset.Y < first.Y) {
 		t.Fatalf("offset origin = %+v, want bottom-right below labels starting at %+v", offset, first)
+	}
+}
+
+func TestAxis_DrawTickLabels_PositionsOffsetTextFromTickLabelBounds(t *testing.T) {
+	axis := NewXAxis()
+	axis.Locator = staticLocator{0, 10}
+	axis.Formatter = offsetFormatterForTest{
+		labels: []string{"left", "right"},
+		offset: "offset",
+	}
+
+	ctx := createTestDrawContext()
+	ctx.RC.DPI = 100
+	axis.TickSize = pointsToPixels(ctx.RC, defaultTickSizePt)
+	bottom := ctx.DataToPixel.Apply(geom.Pt{X: 0, Y: getSpinePosition(axis, ctx)}).Y
+	ctx.Clip.Min.Y = bottom
+	ctx.Clip.Max.X = 500
+
+	var r axisLabelRecordingRenderer
+	if err := r.Begin(geom.Rect{}); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+	axis.DrawTickLabels(&r, ctx)
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	if len(r.texts) != 3 {
+		t.Fatalf("drawn labels = %v, want two tick labels plus offset", r.texts)
+	}
+
+	fontSize := tickLabelFontSize(axis, ctx)
+	labelPad := tickLabelPadPx(axis, ctx)
+	tickLabelLineHeight := pointsToPixels(ctx.RC, fontSize)
+	offsetPad := pointsToPixels(ctx.RC, 3)
+	offsetAscent := fontSize * 0.8
+	offsetWidth := float64(len("offset")) * fontSize * 0.5
+	want := geom.Pt{
+		X: ctx.Clip.Max.X - offsetWidth,
+		Y: bottom - labelPad - tickLabelLineHeight - offsetPad - offsetAscent,
+	}
+	got := r.origins[len(r.origins)-1]
+	if math.Abs(got.X-want.X) > 1e-9 || math.Abs(got.Y-want.Y) > 1e-9 {
+		t.Fatalf("offset origin = %+v, want Matplotlib ticklabel-bounds origin %+v", got, want)
 	}
 }
 

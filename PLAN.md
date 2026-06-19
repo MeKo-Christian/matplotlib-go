@@ -145,11 +145,11 @@ mplot3d, projections, axisartist/projection-toolkit leftovers, text
 wrapping/rotated layout, MathText and annotation tails, legend/offsetbox layout,
 fills/collections, contour/mesh, arrays, widgets, and mixed raster/vector. The
 June 14 full optional `TestReferenceCompare` sweep has no catalog row above
-`RMSE 5`; the highest rows are `date_concise_intraday_labels` 4.99,
-`imshow_transformed` 4.97, `geo_mollweide_axes` 4.92,
+`RMSE 5`; after the 2026-06-18 concise-date offset placement fix, the
+highest rows are `imshow_transformed` 4.97, `geo_mollweide_axes` 4.92,
 `legend_layout_matrix` 4.86, `spectrum_variants` 4.85, `boxplot_basic` 4.84,
-`formatter_engineering_labels` 4.80, and
-`mathtext_basic` 4.77. The AGG-native reference sweep is also below `RMSE 5`;
+`formatter_engineering_labels` 4.80, and `mathtext_basic` 4.77. The
+AGG-native reference sweep is also below `RMSE 5`;
 its highest row is `clip_path_batch` at 4.58.
 
 The June 13 regression queue is retained below as closure history. The catalog
@@ -213,9 +213,12 @@ RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run 'TestReferenceCompa
       `TestGolden` and `TestReferenceCompare` pass for `errorbar_basic`,
       `specialty_depth`, `legend_layout_matrix`, and
       `axes_option_breadth`.
-- [x] `date_concise_intraday_labels`: below target in the refreshed 2026-06-14
-      sweep after shared W3/text-layout fixes. Current committed
-      golden/reference metric: RMSE 4.99, PSNR 60.74 dB, MeanAbs 0.06.
+- [x] `date_concise_intraday_labels`: tightened on 2026-06-18 by porting
+      Matplotlib's X-axis offset-text placement rule: the offset anchor is
+      derived from the bottom tick-label bounding-box union plus the fixed
+      3 pt `OFFSETTEXTPAD`, rather than an approximate tick-pad/font-size gap.
+      Current committed golden/reference metric: RMSE 0.05, PSNR 74.01 dB,
+      MeanAbs 0.00.
 - [x] `units_categories`: fixed on 2026-06-13. The remaining mismatch was grid
       z-order, not category mapping: Matplotlib's `set_axisbelow(True)` places
       grids at z=0.5 below default bar patches. Go now exposes `SetAxisBelow`
