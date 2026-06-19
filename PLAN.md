@@ -339,7 +339,206 @@ referencing a non-catalog family, both fail CI).
 
 ---
 
-# Phase 4: Documentation, Performance, and v1.0 Release
+# Phase 4: Large File Decomposition
+
+**Goal:** reduce the highest-maintenance source and test files into focused
+units without changing behavior, public API, golden fixtures, or catalog
+semantics. This phase is deliberately mechanical: move code by responsibility,
+keep package boundaries stable, and verify after every batch so parity work does
+not get mixed with structural churn.
+
+## Scope
+
+Target files are the tracked Go files at or above roughly 1k lines and the
+large generated/catalog artifacts that affect review quality:
+
+- Production hotspots: `core/contour.go`, `core/axis.go`, `core/text.go`,
+  `core/axes3d_contour_surface.go`, `core/legend.go`, `core/colorbar.go`,
+  `core/plot.go`, `core/scatter.go`, `core/arrow_patch.go`,
+  `style/mplstyle.go`, `pyplot/pyplot.go`, `cmd/parityviewer/main.go`,
+  `backends/agg/{agg_paths.go,freetype_native.go}`, `backends/gobasic`,
+  `backends/ps`, and `backends/pgf`.
+- Test hotspots: `core/axes3d_test.go`, `core/text_test.go`,
+  `core/axis_test.go`, `core/mesh_contour_test.go`, `core/legend_test.go`,
+  `core/patch_test.go`, backend test files, `pyplot/pyplot_test.go`,
+  `canvas/widget_interaction_test.go`, and `test/diagnostics_test.go`.
+- Data/catalog files: `internal/examplecatalog/public_surface_parity.go`,
+  `color/named_colors_data.go`, `docs/matplotlib-parity-status.md`, and the
+  large JSON/SVG/PNG fixtures. Treat these as generated or fixture-like unless
+  review pain justifies a generator or sharded loader.
+
+## Work Plan
+
+- [x] **L1 — Add a repeatable large-file audit.** Add a small documented command
+      or `just` target that reports tracked Go files above 1k lines and tracked
+      non-Go artifacts above 256 KiB. Record the initial inventory in
+      `docs/large-file-decomposition.md` so future splits are measured against a
+      stable baseline.
+- [ ] **L2 — Split tests first.** Split large `*_test.go` files by behavior
+      family while keeping package names and helper visibility unchanged. Start
+      with `core/axes3d_test.go`, then `core/text_test.go`,
+      `core/axis_test.go`, `core/mesh_contour_test.go`, and the backend test
+      files. Run the affected package tests after each file family.
+  - [x] `core/axes3d_test.go`: split into projection/view/limits,
+        scatter-mappables-colorbar, wire/surface/trisurf/voxels, frame/ticks/text,
+        contour, and shared `axes3d_test_helpers.go`.
+  - [ ] `core/text_test.go`: split into draw/layout, multiline layout, bbox,
+        annotation, MathText/TeX, and shared text recorder/helper files.
+  - [ ] `core/axis_test.go`: split into limits/scales, ticks/formatters,
+        label positioning, grid/spines/frame, polar, and shared axis test
+        helpers.
+  - [ ] `core/mesh_contour_test.go`: split mesh/pcolor/hist2d tests from
+        contour/clabel/tri-contour tests.
+  - [ ] `core/legend_test.go`: split entry collection, layout/draw, sample
+        drawing, best placement, and helper recorders.
+  - [ ] `core/patch_test.go`: split rectangle/fancybox, connection styles,
+        arrow styles, connection patch, and miscellaneous patch classes.
+  - [ ] Backend tests: split `backends/svg/svg_test.go`,
+        `backends/agg/agg_test.go`, and `backends/pdf/pdf_test.go` by lifecycle,
+        paths/hatches, markers/batches, images, text/fonts, and clipping or
+        serialization.
+  - [ ] Stateful/runtime tests: split `pyplot/pyplot_test.go` by registry/layout,
+        wrappers, backend/show/save, and rc/style; split
+        `canvas/widget_interaction_test.go` by buttons/sliders, check/radio/textbox,
+        selectors, cursor, and picking.
+  - [ ] Diagnostics: split or annotate `test/diagnostics_test.go` by diagnostic
+        family if it keeps growing, while preserving env-gated behavior.
+- [ ] **L3 — Split algorithm-heavy core files.** Split `core/contour.go` into
+      API/set construction, level selection, line extraction, filled-band
+      geometry, label placement, and geometry helpers. Then split `core/axis.go`
+      into types/defaults, spine/frame drawing, ticks, tick-label layout, and
+      polar helpers. These are the highest-value production splits because they
+      currently mix public API, drawing, geometry algorithms, and layout logic.
+  - [ ] `core/contour.go`: extract public API and `ContourSet` construction into
+        `contour_api.go`.
+  - [ ] `core/contour.go`: extract coordinate normalization, triangulation, and
+        level/locator helpers into `contour_levels.go`.
+  - [ ] `core/contour.go`: extract line segment generation, stitching, structured
+        grid ordering, and boundary orientation into `contour_lines.go`.
+  - [ ] `core/contour.go`: extract filled band polygon clipping, saddle handling,
+        triangle bands, and color mapping into `contour_filled.go`.
+  - [ ] `core/contour.go`: extract clabel placement, inline erasing, label angle,
+        formatter, and text-width helpers into `contour_labels.go`.
+  - [ ] `core/axis.go`: extract axis side/type definitions and constructors into
+        `axis_types.go`.
+  - [ ] `core/axis.go`: extract spine/frame drawing, snapping, and spine position
+        helpers into `axis_spine.go`.
+  - [ ] `core/axis.go`: extract major/minor tick drawing, tick target counts, and
+        tick direction/style helpers into `axis_ticks.go`.
+  - [ ] `core/axis.go`: extract tick-label drawing, offset text, label bounds, and
+        label-origin math into `axis_ticklabels.go`.
+  - [ ] `core/axis.go`: extract polar spine/tick/tick-label behavior into
+        `axis_polar.go`.
+- [ ] **L4 — Split text, 3D, and presentation helpers.** Split `core/text.go`
+      into text/annotation API, multiline layout, bbox drawing, annotation
+      arrows, and coordinate helpers. Split `core/axes3d_contour_surface.go`
+      into 3D contour lines, filled contours, surface/trisurf generation, and
+      compound contour path helpers. Split `core/legend.go` and
+      `core/colorbar.go` by layout, mapping/configuration, drawing, and helper
+      responsibilities.
+  - [ ] `core/text.go`: extract text/annotation option structs, constructors, and
+        public methods into `text_api.go`.
+  - [ ] `core/text.go`: extract single-line/multiline measurement, rotated
+        layout, wrapping, and alignment helpers into `text_layout.go`.
+  - [ ] `core/text.go`: extract bbox rectangle/path calculation and bbox drawing
+        into `text_bbox.go`.
+  - [ ] `core/text.go`: extract annotation arrow drawing, arrow clipping, and
+        coordinate conversion helpers into `annotation.go`.
+  - [ ] `core/axes3d_contour_surface.go`: extract 3D contour line and
+        tri-contour line projection helpers into `axes3d_contour.go`.
+  - [ ] `core/axes3d_contour_surface.go`: extract filled contour, tri-filled
+        contour, compound path, and band-polygon helpers into
+        `axes3d_contourf.go`.
+  - [ ] `core/axes3d_contour_surface.go`: extract surface, trisurf, sampling, and
+        surface polygon projection helpers into `axes3d_surface.go`.
+  - [ ] `core/legend.go`: extract layout calculation and best-placement avoidance
+        into `legend_layout.go`.
+  - [ ] `core/legend.go`: extract entry collection, handler overrides, stem
+        detection, and option-to-entry conversion into `legend_entries.go`.
+  - [ ] `core/legend.go`: extract line/scatter/errorbar/patch sample drawing into
+        `legend_samples.go`.
+  - [ ] `core/colorbar.go`: extract placement and parent-axes geometry into
+        `colorbar_layout.go`.
+  - [ ] `core/colorbar.go`: extract scale/tick/boundary mapping and extension
+        value helpers into `colorbar_scale.go`.
+  - [ ] `core/colorbar.go`: extract draw, overlay, outline, extension path, and
+        divider rendering into `colorbar_draw.go`.
+- [ ] **L5 — Split facade and tool entrypoints.** Split `pyplot/pyplot.go` into
+      registry/current-state management, figure/axes helpers, plotting wrappers,
+      rc/style helpers, and backend/show/save management. Split
+      `cmd/parityviewer/main.go` into CLI flags, case loading, image comparison,
+      rerender commands, and HTML rendering.
+  - [ ] `pyplot/pyplot.go`: extract figure registry, current figure/axes,
+        manager cache, close/clear, and reset-for-tests behavior into
+        `state.go`.
+  - [ ] `pyplot/pyplot.go`: extract figure, axes, subplot, mosaic, divider,
+        parasite, and 3D axes helpers into `layout.go`.
+  - [ ] `pyplot/pyplot.go`: extract stateful plotting wrappers by family:
+        lines/scatter/3D, bars/fills/stats/errorbar, images/mesh/signal,
+        contour/triangulation, vector fields, widgets/specialty.
+  - [ ] `pyplot/pyplot.go`: extract labels, limits, ticks, scales, grid,
+        colorbar, legend, and figure text wrappers into `axes_wrappers.go`.
+  - [ ] `pyplot/pyplot.go`: extract rc/style helpers into `rc.go`.
+  - [ ] `pyplot/pyplot.go`: extract backend selection, savefig, show/draw/pause,
+        event connect/disconnect, and show-handler canvas into `backend.go`.
+  - [ ] `cmd/parityviewer/main.go`: extract flag parsing and repo/path option
+        resolution into `cli.go`.
+  - [ ] `cmd/parityviewer/main.go`: extract directory/parity case loading and
+        printed case summaries into `cases.go`.
+  - [ ] `cmd/parityviewer/main.go`: extract rerender command construction and
+        execution into `rerender.go`.
+  - [ ] `cmd/parityviewer/main.go`: extract image loading, compositing, metrics,
+        raw diff, amplified diff, and PNG encoding into `images.go`.
+  - [ ] `cmd/parityviewer/main.go`: extract HTML page/card rendering and CSS
+        constants into `html.go`.
+- [ ] **L6 — Split backend implementation files.** Split AGG path preparation,
+      snapping/simplification/chunking, hatching, FreeType measurement, text
+      drawing, and MathText rasterization into focused files. Apply the same
+      pattern to GoBasic, PS, and PGF: renderer lifecycle, paths, images, text,
+      document serialization, and shared utility helpers.
+  - [ ] `backends/agg/agg_paths.go`: extract path preparation, finite filtering,
+        bounds/culling, snapping, simplification, chunking, Gouraud color math,
+        and hatching into focused files.
+  - [ ] `backends/agg/freetype_native.go`: split native text drawing,
+        measurement/cache, FreeType run/C interop, MathText image rendering, and
+        alpha-mask utilities.
+  - [ ] `backends/gobasic/gobasic.go`: split renderer lifecycle/state,
+        path rasterization/clipping masks, image transforms/scaling, text
+        rendering, blending, and utility conversion helpers.
+  - [ ] `backends/ps/ps.go`: split renderer lifecycle/rasterization, path and
+        hatch serialization, marker/path procedure reuse, images, text/font
+        paths, document output, and PostScript formatting utilities.
+  - [ ] `backends/pgf/pgf.go`: split renderer lifecycle/rasterization, path and
+        hatch serialization, marker/path macro reuse, images, text/TeX escaping,
+        document options, and PGF formatting utilities.
+  - [ ] Keep backend split batches backend-local and verify with targeted package
+        tests such as `go test ./backends/agg`, `go test ./backends/gobasic`,
+        `go test ./backends/ps`, and `go test ./backends/pgf`.
+- [ ] **L7 — Decide generated-data strategy.** For
+      `internal/examplecatalog/public_surface_parity.go` and
+      `color/named_colors_data.go`, either document them as generated/catalog
+      data that intentionally stays large, or introduce source data plus
+      generation checks. For goldens and binary fixtures, keep files intact and
+      avoid artificial splitting.
+- [ ] **L8 — Verify and commit in small batches.** Each batch should be mostly
+      move-only and end with `just fmt` plus targeted `go test` commands. Before
+      closing the phase, run `just fmt && just lint && just test` and a focused
+      optional parity sweep for files that touched rendering behavior.
+
+**Exit criteria:**
+
+- [ ] No non-generated Go source file above 1k lines remains without an explicit
+      reason recorded in `docs/large-file-decomposition.md`.
+- [ ] Large tests are grouped by behavior family, with shared helpers moved into
+      dedicated helper files.
+- [ ] Generated/catalog/fixture files have an explicit keep-large, generate, or
+      shard decision documented.
+- [ ] Full formatting, linting, unit tests, and relevant parity checks pass after
+      the decomposition.
+
+---
+
+# Phase 5: Documentation, Performance, and v1.0 Release
 
 **Goal:** make the project consumable by users who have not followed the
 development thread, establish performance baselines, and tag a stable v1.0.
@@ -348,7 +547,7 @@ development thread, establish performance baselines, and tag a stable v1.0.
 intentional-divergence "anti-gallery", and the README browser-gallery entry
 point are already done.)*
 
-### 4.1 API Documentation
+### 5.1 API Documentation
 
 - [x] Package-level GoDoc passes for every stable public package, with a worked
       example per package. Guarded by
@@ -361,7 +560,7 @@ point are already done.)*
       to pkg.go.dev, README, examples gallery, backend selection, migration
       notes, and parity status.
 
-### 4.2 Performance Pass
+### 5.2 Performance Pass
 
 - [x] **P0 — Keep profiling repeatable and visible.** Initial harness lives under
       `benchmarks/`; first representative catalog + 100k scatter profiles are
@@ -433,7 +632,7 @@ point are already done.)*
         `GetImage`, batching markers, text-heavy tick-label costs, and backend
         selection tradeoffs.
 
-### 4.3 Release Readiness
+### 5.3 Release Readiness
 
 - [ ] Semantic-version policy decision and `CHANGELOG.md` baseline.
 - [ ] Final golden / reference regeneration pass with per-case tolerances frozen
@@ -513,5 +712,6 @@ documented v1.0 release. **Phase 1** hardens the backend matrix (mostly the
 deferred external Skia binding); **Phase 2** closes the remaining visual parity
 gap via code parity with upstream (chiefly mplot3d, projections, ticks/scales,
 and text layout — MathText is closed); **Phase 3** finishes and guards the
-parity status report; **Phase 4** delivers documentation, performance
-baselines, and the v1.0 release.
+parity status report; **Phase 4** decomposes the largest source, test, and
+catalog files into focused units; **Phase 5** delivers documentation,
+performance baselines, and the v1.0 release.

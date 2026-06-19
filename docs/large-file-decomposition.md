@@ -1,0 +1,82 @@
+# Large File Decomposition
+
+This note records the baseline for Phase 4 L1 in `PLAN.md`: split the largest
+source and test files into focused units without changing behavior.
+
+Run the audit with `just large-file-audit`:
+
+```bash
+just large-file-audit
+```
+
+The command reports Git-tracked Go files at or above 1000 lines and tracked
+non-Go artifacts at or above 256 KiB. It intentionally ignores untracked build
+outputs and local diagnostic artifacts.
+
+## Baseline Inventory
+
+Captured from the tracked tree before decomposition work began.
+
+### Large Go Files
+
+| Lines | File |
+|---:|---|
+| 4834 | `core/axes3d_test.go` |
+| 3037 | `internal/examplecatalog/public_surface_parity.go` |
+| 3002 | `core/text_test.go` |
+| 2171 | `core/axis_test.go` |
+| 2049 | `core/contour.go` |
+| 1803 | `pyplot/pyplot.go` |
+| 1779 | `core/axis.go` |
+| 1614 | `pyplot/pyplot_test.go` |
+| 1612 | `canvas/widget_interaction_test.go` |
+| 1601 | `cmd/parityviewer/main.go` |
+| 1587 | `core/text.go` |
+| 1547 | `core/axes3d_contour_surface.go` |
+| 1524 | `core/mesh_contour_test.go` |
+| 1496 | `core/legend_test.go` |
+| 1464 | `core/patch_test.go` |
+| 1409 | `backends/svg/svg_test.go` |
+| 1394 | `backends/agg/agg_test.go` |
+| 1340 | `core/arrow_patch.go` |
+| 1327 | `core/legend.go` |
+| 1311 | `core/plot.go` |
+| 1295 | `core/colorbar.go` |
+| 1280 | `backends/pdf/pdf_test.go` |
+| 1242 | `core/scatter.go` |
+| 1174 | `backends/ps/ps.go` |
+| 1139 | `core/colorbar_test.go` |
+| 1139 | `backends/gobasic/gobasic.go` |
+| 1129 | `color/named_colors_data.go` |
+| 1122 | `core/collection_test.go` |
+| 1106 | `backends/agg/freetype_native.go` |
+| 1096 | `backends/agg/agg_paths.go` |
+| 1051 | `test/diagnostics_test.go` |
+| 1051 | `style/mplstyle.go` |
+| 1048 | `backends/pgf/pgf.go` |
+
+### Large Non-Go Artifacts
+
+| Size | File |
+|---:|---|
+| 2136 KiB | `docs/matplotlib-parity-status.md` |
+| 1340 KiB | `testdata/svg_golden/mathtext_basic.svg` |
+| 440 KiB | `test/testdata/public_api/stable_public_api.json` |
+| 344 KiB | `testdata/matplotlib_ref/mplot3d_gallery.png` |
+| 324 KiB | `testdata/matplotlib_ref/projection_toolkit_gallery.png` |
+| 300 KiB | `testdata/matplotlib_ref/imshow_interpolation_matrix.png` |
+| 296 KiB | `testdata/golden/mplot3d_gallery.png` |
+| 292 KiB | `testdata/golden/projection_toolkit_gallery.png` |
+| 264 KiB | `testdata/svg_golden/mixed_raster_vector.svg` |
+| 264 KiB | `testdata/golden/imshow_interpolation_matrix.png` |
+
+## Decomposition Rules
+
+- Prefer move-only splits by responsibility; do not combine behavior changes
+  with file decomposition.
+- Keep package boundaries and public API stable unless a later PLAN item
+  explicitly authorizes an API change.
+- Split tests by behavior family first, moving shared test helpers into
+  dedicated helper files when multiple split files need them.
+- Treat generated catalogs, color tables, and golden/reference fixtures as
+  large-by-design unless the phase records a generator or sharding decision.
