@@ -335,7 +335,7 @@ func TestTransformedImageVectorBackendBehaviorIsDocumented(t *testing.T) {
 			"matrixTransform(r.deviceFlip().Mul(transform))",
 			"clipIDs:   r.currentClipIDs()",
 		},
-		filepath.Join("..", "backends", "svg", "svg_test.go"): {
+		filepath.Join("..", "backends", "svg", "svg_images_test.go"): {
 			"TestImageTransformedEmitsMatrixAttribute",
 			"TestImageTransformedHonorsClip",
 			"TestImageSerializesEmbeddedPNGAndNormalizesDestinationRect",
@@ -345,10 +345,12 @@ func TestTransformedImageVectorBackendBehaviorIsDocumented(t *testing.T) {
 			"writeImageInvocation(matrix, name)",
 			"RGBA images with alpha get a grayscale soft mask",
 		},
-		filepath.Join("..", "backends", "pdf", "pdf_test.go"): {
+		filepath.Join("..", "backends", "pdf", "pdf_images_test.go"): {
 			"TestImageEmitsXObjectResourceAndDrawOperator",
 			"TestImageWithAlphaEmitsSoftMask",
 			"TestImageTransformedEmitsAffineImageMatrix",
+		},
+		filepath.Join("..", "backends", "pdf", "pdf_clipping_test.go"): {
 			"TestRendererClipRectEmitsRectangleClip",
 			"TestRendererClipPathEmitsClipOperators",
 		},

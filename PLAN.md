@@ -409,25 +409,25 @@ large generated/catalog artifacts that affect review quality:
       into types/defaults, spine/frame drawing, ticks, tick-label layout, and
       polar helpers. These are the highest-value production splits because they
       currently mix public API, drawing, geometry algorithms, and layout logic.
-  - [ ] `core/contour.go`: extract public API and `ContourSet` construction into
+  - [x] `core/contour.go`: extract public API and `ContourSet` construction into
         `contour_api.go`.
-  - [ ] `core/contour.go`: extract coordinate normalization, triangulation, and
+  - [x] `core/contour.go`: extract coordinate normalization, triangulation, and
         level/locator helpers into `contour_levels.go`.
-  - [ ] `core/contour.go`: extract line segment generation, stitching, structured
+  - [x] `core/contour.go`: extract line segment generation, stitching, structured
         grid ordering, and boundary orientation into `contour_lines.go`.
-  - [ ] `core/contour.go`: extract filled band polygon clipping, saddle handling,
+  - [x] `core/contour.go`: extract filled band polygon clipping, saddle handling,
         triangle bands, and color mapping into `contour_filled.go`.
-  - [ ] `core/contour.go`: extract clabel placement, inline erasing, label angle,
+  - [x] `core/contour.go`: extract clabel placement, inline erasing, label angle,
         formatter, and text-width helpers into `contour_labels.go`.
-  - [ ] `core/axis.go`: extract axis side/type definitions and constructors into
+  - [x] `core/axis.go`: extract axis side/type definitions and constructors into
         `axis_types.go`.
-  - [ ] `core/axis.go`: extract spine/frame drawing, snapping, and spine position
+  - [x] `core/axis.go`: extract spine/frame drawing, snapping, and spine position
         helpers into `axis_spine.go`.
-  - [ ] `core/axis.go`: extract major/minor tick drawing, tick target counts, and
+  - [x] `core/axis.go`: extract major/minor tick drawing, tick target counts, and
         tick direction/style helpers into `axis_ticks.go`.
-  - [ ] `core/axis.go`: extract tick-label drawing, offset text, label bounds, and
+  - [x] `core/axis.go`: extract tick-label drawing, offset text, label bounds, and
         label-origin math into `axis_ticklabels.go`.
-  - [ ] `core/axis.go`: extract polar spine/tick/tick-label behavior into
+  - [x] `core/axis.go`: extract polar spine/tick/tick-label behavior into
         `axis_polar.go`.
 - [ ] **L4 — Split text, 3D, and presentation helpers.** Split `core/text.go`
       into text/annotation API, multiline layout, bbox drawing, annotation
