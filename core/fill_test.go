@@ -432,7 +432,7 @@ func TestFillBetweenWhereSplitsContiguousRegions(t *testing.T) {
 	}
 }
 
-func TestFill2DSingleRegionUsesMatplotlibTransformedVertices(t *testing.T) {
+func TestFill2DSingleRegionUsesMatplotlibCollectionPath(t *testing.T) {
 	fill := &Fill2D{
 		X:     []float64{0, 1},
 		Y1:    []float64{1, 1},
@@ -441,18 +441,23 @@ func TestFill2DSingleRegionUsesMatplotlibTransformedVertices(t *testing.T) {
 	}
 	ctx := createTestDrawContext()
 	ctx.FigureRect = geom.Rect{Max: geom.Pt{X: 500, Y: 500}}
-	r := &recordingRenderer{}
+	r := &batchRecordingRenderer{returnNative: true}
 
 	fill.Draw(r, ctx)
 
-	if len(r.pathCalls) != 1 {
-		t.Fatalf("path calls = %d, want 1", len(r.pathCalls))
+	if len(r.pathCalls) != 0 {
+		t.Fatalf("fallback path calls = %d, want native collection path", len(r.pathCalls))
+	}
+	if len(r.pathCollectionBatches) != 1 {
+		t.Fatalf("path collection batches = %d, want Matplotlib FillBetweenPolyCollection draw path", len(r.pathCollectionBatches))
+	}
+	items := r.pathCollectionBatches[0].Items
+	if len(items) != 1 {
+		t.Fatalf("path collection items = %d, want one fill_between polygon", len(items))
 	}
 	want := ctx.DataToPixel.Apply(geom.Pt{X: 0, Y: 0})
-	want.X += 0.5
-	want.Y -= 0.5
-	if got := r.pathCalls[0].path.V[0]; got != want {
-		t.Fatalf("single-region first vertex = %+v, want Matplotlib single-path collection placement %+v", got, want)
+	if got := items[0].Path.V[0]; got != want {
+		t.Fatalf("single-region first vertex = %+v, want Matplotlib transformed vertex %+v before backend placement", got, want)
 	}
 }
 
@@ -466,15 +471,22 @@ func TestFill2DMultiRegionUsesMatplotlibGenericCollectionPlacement(t *testing.T)
 	}
 	ctx := createTestDrawContext()
 	ctx.FigureRect = geom.Rect{Max: geom.Pt{X: 500, Y: 500}}
-	r := &recordingRenderer{}
+	r := &batchRecordingRenderer{returnNative: true}
 
 	fill.Draw(r, ctx)
 
-	if len(r.pathCalls) != 2 {
-		t.Fatalf("path calls = %d, want two drawable contiguous regions", len(r.pathCalls))
+	if len(r.pathCalls) != 0 {
+		t.Fatalf("fallback path calls = %d, want native collection path", len(r.pathCalls))
+	}
+	if len(r.pathCollectionBatches) != 1 {
+		t.Fatalf("path collection batches = %d, want one FillBetweenPolyCollection-style batch", len(r.pathCollectionBatches))
+	}
+	items := r.pathCollectionBatches[0].Items
+	if len(items) != 2 {
+		t.Fatalf("path collection items = %d, want two drawable contiguous regions", len(items))
 	}
 	want := ctx.DataToPixel.Apply(geom.Pt{X: 0, Y: 0})
-	if got := r.pathCalls[0].path.V[0]; got != want {
+	if got := items[0].Path.V[0]; got != want {
 		t.Fatalf("multi-region first vertex = %+v, want Matplotlib generic collection placement %+v", got, want)
 	}
 }

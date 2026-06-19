@@ -89,44 +89,21 @@ func (f *Fill2D) Draw(r render.Renderer, ctx *DrawContext) {
 	if len(paths) == 0 {
 		return
 	}
-	if len(paths) == 1 && fillPathUsesMatplotlibSinglePathCollectionPlacement(paths[0], ctx) {
-		applyMatplotlibSinglePathCollectionPlacement(&paths[0])
-	}
-	if len(paths) > 1 {
-		if drawer, ok := r.(render.PathCollectionDrawer); ok {
-			batch := render.PathCollectionBatch{Items: make([]render.PathCollectionItem, 0, len(paths))}
-			for _, path := range paths {
-				batch.Items = append(batch.Items, render.PathCollectionItem{
-					Path:        path,
-					Paint:       paint,
-					Antialiased: true,
-				})
-			}
-			if drawer.DrawPathCollection(batch) {
-				return
-			}
+	if drawer, ok := r.(render.PathCollectionDrawer); ok {
+		batch := render.PathCollectionBatch{Items: make([]render.PathCollectionItem, 0, len(paths))}
+		for _, path := range paths {
+			batch.Items = append(batch.Items, render.PathCollectionItem{
+				Path:        path,
+				Paint:       paint,
+				Antialiased: true,
+			})
+		}
+		if drawer.DrawPathCollection(batch) {
+			return
 		}
 	}
 	for _, path := range paths {
 		r.Path(path, &paint)
-	}
-}
-
-func fillPathUsesMatplotlibSinglePathCollectionPlacement(path geom.Path, ctx *DrawContext) bool {
-	if ctx == nil || ctx.FigureRect.W() <= 0 || ctx.FigureRect.H() <= 0 {
-		return true
-	}
-	bounds, ok := pathBounds(path)
-	if !ok {
-		return false
-	}
-	return bounds.W() < ctx.FigureRect.W() && bounds.H() < ctx.FigureRect.H()
-}
-
-func applyMatplotlibSinglePathCollectionPlacement(path *geom.Path) {
-	for i := range path.V {
-		path.V[i].X += 0.5
-		path.V[i].Y -= 0.5
 	}
 }
 
