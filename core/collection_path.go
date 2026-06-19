@@ -214,7 +214,7 @@ func (c *PathCollection) SetArray(values []float64) error {
 	if c == nil {
 		return nil
 	}
-	if err := c.Collection.setArray(values); err != nil {
+	if err := c.setArray(values); err != nil {
 		return err
 	}
 	c.refreshScalarMappedColors()
@@ -227,7 +227,7 @@ func (c *PathCollection) SetColormap(name string) {
 	if c == nil {
 		return
 	}
-	c.Collection.setColormap(name)
+	c.setColormap(name)
 	c.refreshScalarMappedColors()
 }
 
@@ -237,7 +237,7 @@ func (c *PathCollection) SetNorm(norm ScalarNormalizer) error {
 	if c == nil {
 		return nil
 	}
-	if err := c.Collection.setNorm(norm); err != nil {
+	if err := c.setNorm(norm); err != nil {
 		return err
 	}
 	c.refreshScalarMappedColors()
@@ -249,7 +249,7 @@ func (c *PathCollection) SetCLim(vmin, vmax float64) error {
 	if c == nil {
 		return nil
 	}
-	if err := c.Collection.setCLim(vmin, vmax); err != nil {
+	if err := c.setCLim(vmin, vmax); err != nil {
 		return err
 	}
 	c.refreshScalarMappedColors()

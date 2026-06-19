@@ -81,21 +81,21 @@ func (a *Axes) TextBox(label, value string, opts ...TextBoxOptions) *TextBox {
 }
 
 func (t *TextBox) OnSubmit(cb TextBoxSubmitCallback) WidgetCallbackID {
-	if t == nil || any(cb) == nil {
+	if t == nil || cb == nil {
 		return 0
 	}
 	return t.onSubmit.add(cb)
 }
 
 func (t *TextBox) OnCancel(cb TextBoxSubmitCallback) WidgetCallbackID {
-	if t == nil || any(cb) == nil {
+	if t == nil || cb == nil {
 		return 0
 	}
 	return t.onCancel.add(cb)
 }
 
 func (t *TextBox) OnChange(cb TextBoxChangeCallback) WidgetCallbackID {
-	if t == nil || any(cb) == nil {
+	if t == nil || cb == nil {
 		return 0
 	}
 	return t.onChange.add(cb)

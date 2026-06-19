@@ -362,7 +362,6 @@ func (w *WidgetInteraction) selectorMoveDeltaForKey(ev KeyEvent, key string, axe
 		delta.Y = 0
 	case "up":
 		delta.X = 0
-		delta.Y = delta.Y
 	case "down":
 		delta.X = 0
 		delta.Y = -delta.Y

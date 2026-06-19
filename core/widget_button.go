@@ -68,7 +68,7 @@ func (a *Axes) Button(label string, opts ...ButtonOptions) *Button {
 }
 
 func (b *Button) OnClicked(cb ButtonCallback) WidgetCallbackID {
-	if b == nil || any(cb) == nil {
+	if b == nil || cb == nil {
 		return 0
 	}
 	return b.onClicked.add(cb)

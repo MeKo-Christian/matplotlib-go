@@ -294,8 +294,8 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 				w.draggingSelector.spanMove = true
 				w.draggingSelector.spanStart = widget.Start
 				w.draggingSelector.spanEnd = widget.End
-			} else if widget.SetSpan(selectorData, selectorData) {
-				changed = true
+			} else {
+				widget.SetSpan(selectorData, selectorData)
 			}
 			changed = true
 		}
@@ -313,8 +313,8 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 				square:       mouse.Modifiers&ModifierShift != 0,
 				center:       mouse.Modifiers&ModifierControl != 0,
 			}
-			if !widget.Active && widget.SetBounds(data, data) {
-				changed = true
+			if !widget.Active {
+				widget.SetBounds(data, data)
 			}
 			changed = true
 		}
@@ -332,8 +332,8 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 				square:       mouse.Modifiers&ModifierShift != 0,
 				center:       mouse.Modifiers&ModifierControl != 0,
 			}
-			if !widget.Active && widget.SetBounds(data, data) {
-				changed = true
+			if !widget.Active {
+				widget.SetBounds(data, data)
 			}
 			changed = true
 		}
@@ -405,9 +405,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 				pressData: data,
 			}
 			widget.Clear()
-			if widget.Begin(data) {
-				changed = true
-			}
+			widget.Begin(data)
 			changed = true
 		}
 	default:

@@ -238,6 +238,9 @@ func (c *ConnectionPatch) connectionDisplayPath(ctx *DrawContext) geom.Path {
 }
 
 func (a *FancyArrowPatch) displayParts(ctx *DrawContext, path geom.Path) []arrowPathPart {
+	if a == nil {
+		return nil
+	}
 	style := a.ArrowStyle
 	if style.Name == "" {
 		style, _ = ArrowStyleFromString("simple")
@@ -254,7 +257,7 @@ func (a *FancyArrowPatch) displayParts(ctx *DrawContext, path geom.Path) []arrow
 		lineWidth = 1
 	}
 	aspect := 1.0
-	if a != nil && a.MutationAspect > 0 {
+	if a.MutationAspect > 0 {
 		aspect = a.MutationAspect
 	}
 	if aspect == 1 {

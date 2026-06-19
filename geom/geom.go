@@ -449,7 +449,7 @@ func (p Path) ClippedToRect(rect Rect, curveSteps int) Path {
 			current = to
 		case ClosePath:
 			if hasCurrent {
-				hasLastOut, lastOut = appendClippedLine(&out, rect, current, subpathStart, hasLastOut, lastOut)
+				_, _ = appendClippedLine(&out, rect, current, subpathStart, hasLastOut, lastOut)
 			}
 			current = subpathStart
 			hasCurrent = false

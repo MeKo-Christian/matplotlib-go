@@ -265,7 +265,7 @@ func (s *StepPatch) localPath() geom.Path {
 	if len(s.Values) == 0 || len(s.Edges) != len(s.Values)+1 {
 		return geom.Path{}
 	}
-	vertical := strings.ToLower(s.Orientation) != "horizontal"
+	vertical := !strings.EqualFold(s.Orientation, "horizontal")
 	xy := func(edge, value float64) geom.Pt {
 		if vertical {
 			return geom.Pt{X: edge, Y: value}

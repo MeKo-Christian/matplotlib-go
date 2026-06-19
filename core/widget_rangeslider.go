@@ -93,7 +93,7 @@ func (a *Axes) RangeSlider(label string, min, max, low, high float64, opts ...Ra
 }
 
 func (s *RangeSlider) OnChanged(cb RangeSliderCallback) WidgetCallbackID {
-	if s == nil || any(cb) == nil {
+	if s == nil || cb == nil {
 		return 0
 	}
 	return s.onChanged.add(cb)

@@ -202,7 +202,7 @@ func TestPathEffectFilterUsesOffscreenSurface(t *testing.T) {
 	if got := r.GetImage().RGBAAt(30, 30); got.R == 0 {
 		t.Fatalf("expected filtered path center to contain red, got %+v", got)
 	}
-	if got := r.GetImage().RGBAAt(19, 30); got.R == 0 || got.G >= 255 {
+	if got := r.GetImage().RGBAAt(19, 30); got.R == 0 || got.G == 255 {
 		t.Fatalf("expected blurred red edge over green background, got %+v", got)
 	}
 }

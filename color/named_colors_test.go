@@ -247,9 +247,10 @@ func stripUpstreamLineComment(line string) string {
 		switch line[i] {
 		case '\'', '"':
 			if i == 0 || line[i-1] != '\\' {
-				if quote == 0 {
+				switch quote {
+				case 0:
 					quote = line[i]
-				} else if quote == line[i] {
+				case line[i]:
 					quote = 0
 				}
 			}
@@ -300,9 +301,10 @@ func extractUpstreamDictBlock(t *testing.T, src, name string) string {
 		switch src[i] {
 		case '\'', '"':
 			if i == 0 || src[i-1] != '\\' {
-				if quote == 0 {
+				switch quote {
+				case 0:
 					quote = src[i]
-				} else if quote == src[i] {
+				case src[i]:
 					quote = 0
 				}
 			}

@@ -72,7 +72,7 @@ func (a *Axes) RadioButtons(labels []string, active int, opts ...RadioButtonsOpt
 }
 
 func (r *RadioButtons) OnChanged(cb RadioButtonsCallback) WidgetCallbackID {
-	if r == nil || any(cb) == nil {
+	if r == nil || cb == nil {
 		return 0
 	}
 	return r.onChanged.add(cb)

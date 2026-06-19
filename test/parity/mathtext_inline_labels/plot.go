@@ -35,7 +35,7 @@ func Plot() *core.Figure {
 
 	lineWidth := 2.0
 	blue := render.Color{R: 31.0 / 255.0, G: 119.0 / 255.0, B: 180.0 / 255.0, A: 1}
-	orange := render.Color{R: 255.0 / 255.0, G: 127.0 / 255.0, B: 14.0 / 255.0, A: 1}
+	orange := render.Color{R: 1, G: 127.0 / 255.0, B: 14.0 / 255.0, A: 1}
 	ax.Plot(x, y1, core.PlotOptions{Color: &blue, LineWidth: &lineWidth, Label: `state $x_i(t)$`})
 	ax.Plot(x, y2, core.PlotOptions{Color: &orange, LineWidth: &lineWidth, Label: `state $y_i(t)$`})
 	ax.SetTitle(`Inline labels: $\omega_n$ response`)

@@ -109,14 +109,14 @@ func (c *LineCollection) SetArray(values []float64) error {
 		return nil
 	}
 	if len(values) == 0 {
-		c.Collection.ScalarValues = nil
+		c.ScalarValues = nil
 		c.SetStale(true)
 		return nil
 	}
 	if len(c.Segments) > 0 && len(values) != len(c.Segments) {
 		return fmt.Errorf("line collection scalar array has %d values, want %d", len(values), len(c.Segments))
 	}
-	if err := c.Collection.setArray(values); err != nil {
+	if err := c.setArray(values); err != nil {
 		return err
 	}
 	c.refreshScalarMappedColors()
@@ -128,7 +128,7 @@ func (c *LineCollection) SetColormap(name string) {
 	if c == nil {
 		return
 	}
-	c.Collection.setColormap(name)
+	c.setColormap(name)
 	c.refreshScalarMappedColors()
 }
 
@@ -137,7 +137,7 @@ func (c *LineCollection) SetNorm(norm ScalarNormalizer) error {
 	if c == nil {
 		return nil
 	}
-	if err := c.Collection.setNorm(norm); err != nil {
+	if err := c.setNorm(norm); err != nil {
 		return err
 	}
 	c.refreshScalarMappedColors()
@@ -149,7 +149,7 @@ func (c *LineCollection) SetCLim(vmin, vmax float64) error {
 	if c == nil {
 		return nil
 	}
-	if err := c.Collection.setCLim(vmin, vmax); err != nil {
+	if err := c.setCLim(vmin, vmax); err != nil {
 		return err
 	}
 	c.refreshScalarMappedColors()

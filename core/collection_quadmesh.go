@@ -65,17 +65,17 @@ func (m *QuadMesh) SetArray(values []float64) error {
 		return fmt.Errorf("mesh geometry is incomplete")
 	}
 	if len(values) == 0 {
-		m.Collection.ScalarValues = nil
+		m.ScalarValues = nil
 		m.SetStale(true)
 		return nil
 	}
 	if len(values) != rows*cols {
 		return fmt.Errorf("mesh scalar array has %d values, want %d for %dx%d %s mesh", len(values), rows*cols, rows, cols, m.resolvedShading())
 	}
-	if err := m.Collection.setArray(values); err != nil {
+	if err := m.setArray(values); err != nil {
 		return err
 	}
-	m.Values = reshapeMeshValues(m.Collection.ScalarValues, rows, cols)
+	m.Values = reshapeMeshValues(m.ScalarValues, rows, cols)
 	m.refreshScalarMappedColors()
 	return nil
 }
@@ -85,7 +85,7 @@ func (m *QuadMesh) SetColormap(name string) {
 	if m == nil {
 		return
 	}
-	m.Collection.setColormap(name)
+	m.setColormap(name)
 	m.refreshScalarMappedColors()
 }
 
@@ -94,7 +94,7 @@ func (m *QuadMesh) SetNorm(norm ScalarNormalizer) error {
 	if m == nil {
 		return nil
 	}
-	if err := m.Collection.setNorm(norm); err != nil {
+	if err := m.setNorm(norm); err != nil {
 		return err
 	}
 	m.refreshScalarMappedColors()
@@ -106,7 +106,7 @@ func (m *QuadMesh) SetCLim(vmin, vmax float64) error {
 	if m == nil {
 		return nil
 	}
-	if err := m.Collection.setCLim(vmin, vmax); err != nil {
+	if err := m.setCLim(vmin, vmax); err != nil {
 		return err
 	}
 	m.refreshScalarMappedColors()

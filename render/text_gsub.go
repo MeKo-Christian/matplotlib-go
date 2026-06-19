@@ -292,8 +292,7 @@ func gsubFeatureLookupIndices(featureList []byte, wanted map[string]bool) []uint
 		if record+6 > len(featureList) {
 			return out
 		}
-		tag := string(featureList[record : record+4])
-		if !wanted[tag] {
+		if !wanted[string(featureList[record:record+4])] {
 			continue
 		}
 		featureOffset := int(be16(featureList, record+4))

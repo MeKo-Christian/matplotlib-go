@@ -35,7 +35,7 @@ func testData(delta float64) (xs, ys []float64, z [][]float64) {
 			x := axis[xi]
 			y := axis[yi]
 			z1 := math.Exp(-(x*x+y*y)/2) / (2 * math.Pi)
-			z2 := math.Exp(-(math.Pow((x-1)/1.5, 2)+math.Pow((y-1)/0.5, 2))/2) /
+			z2 := math.Exp(-((x-1)/1.5*((x-1)/1.5)+(y-1)/0.5*((y-1)/0.5))/2) /
 				(2 * math.Pi * 0.5 * 1.5)
 			z[yi][xi] = (z2 - z1) * 500
 		}

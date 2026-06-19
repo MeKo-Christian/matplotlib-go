@@ -98,7 +98,7 @@ func (a *Axes) Slider(label string, min, max, value float64, opts ...SliderOptio
 }
 
 func (s *Slider) OnChanged(cb SliderCallback) WidgetCallbackID {
-	if s == nil || any(cb) == nil {
+	if s == nil || cb == nil {
 		return 0
 	}
 	return s.onChanged.add(cb)

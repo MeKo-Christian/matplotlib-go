@@ -77,7 +77,7 @@ func (a *Axes) CheckButtons(labels []string, active []bool, opts ...CheckButtons
 }
 
 func (c *CheckButtons) OnChanged(cb CheckButtonsCallback) WidgetCallbackID {
-	if c == nil || any(cb) == nil {
+	if c == nil || cb == nil {
 		return 0
 	}
 	return c.onChanged.add(cb)

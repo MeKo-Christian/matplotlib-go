@@ -286,7 +286,7 @@ func writeForcedOpacity(b *strings.Builder, paint render.Paint) {
 }
 
 func filterKey(name string, radius float64) string {
-	return strings.Join([]string{name, formatFloat(radius)}, "\x00")
+	return name + "\x00" + formatFloat(radius)
 }
 
 func writeFilterDef(b *strings.Builder, filter filterDef) {

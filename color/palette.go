@@ -8,7 +8,7 @@ type Palette []render.Color
 // Tab10 is the default matplotlib tab10 color palette.
 var Tab10 = Palette{
 	{R: 31.0 / 255.0, G: 119.0 / 255.0, B: 180.0 / 255.0, A: 1},  // blue
-	{R: 255.0 / 255.0, G: 127.0 / 255.0, B: 14.0 / 255.0, A: 1},  // orange
+	{R: 1, G: 127.0 / 255.0, B: 14.0 / 255.0, A: 1},              // orange
 	{R: 44.0 / 255.0, G: 160.0 / 255.0, B: 44.0 / 255.0, A: 1},   // green
 	{R: 214.0 / 255.0, G: 39.0 / 255.0, B: 40.0 / 255.0, A: 1},   // red
 	{R: 148.0 / 255.0, G: 103.0 / 255.0, B: 189.0 / 255.0, A: 1}, // purple

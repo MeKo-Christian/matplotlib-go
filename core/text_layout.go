@@ -45,7 +45,7 @@ func measureSingleLineTextLayoutParseMath(r render.Renderer, text string, size f
 
 	if parseMath {
 		if layout, ok := layoutDisplayText(r, text, size, fontKey); ok {
-			width, ascent, descent := layout.Width, layout.Ascent, layout.Descent
+			width, descent := layout.Width, layout.Descent
 			height := layout.Height
 			// On the Agg raster backend, matplotlib aligns mathtext by the
 			// ink-image bbox (get_text_width_height_descent → to_raster), not the
@@ -54,7 +54,7 @@ func measureSingleLineTextLayoutParseMath(r render.Renderer, text string, size f
 			// metrics (matplotlib's to_vector path).
 			if _, isRaster := r.(render.RGBAExporter); isRaster {
 				if w, a, d, ok := mathLayoutImageMetrics(r, layout, fontKey); ok {
-					width, ascent, descent, height = w, a, d, a+d
+					width, _, descent, height = w, a, d, a+d
 				}
 			}
 			lp := r.MeasureText("lp", size, fontKey)
@@ -64,7 +64,7 @@ func measureSingleLineTextLayoutParseMath(r render.Renderer, text string, size f
 			if lp.Descent > descent {
 				descent = lp.Descent
 			}
-			ascent = height - descent
+			ascent := height - descent
 			if ascent < 0 {
 				ascent = 0
 			}

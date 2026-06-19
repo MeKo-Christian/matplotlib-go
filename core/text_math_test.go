@@ -335,8 +335,8 @@ func TestLayoutMathTextSupportsFencedDelimiters(t *testing.T) {
 		if !strings.HasPrefix(run.FontKey, "STIXSize") {
 			continue
 		}
-		switch {
-		case leftSize == 0:
+		switch leftSize {
+		case 0:
 			leftSize = run.FontSize
 		default:
 			rightSize = run.FontSize
@@ -360,8 +360,8 @@ func TestLayoutMathTextSupportsMiddleDelimiters(t *testing.T) {
 		if !strings.HasPrefix(run.FontKey, "STIXSize") {
 			continue
 		}
-		switch {
-		case leftSize == 0:
+		switch leftSize {
+		case 0:
 			leftSize = run.FontSize
 			leftX = run.Offset.X
 		default:

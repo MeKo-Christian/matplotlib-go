@@ -418,7 +418,7 @@ func (l failingStartEventLoop) CallSoon(cb func() error) error {
 }
 
 func (l failingStartEventLoop) NewTimer(time.Duration, func() error) canvas.Timer {
-	return failingStartTimer{err: l.err}
+	return failingStartTimer(l)
 }
 
 type sequenceStartTimer struct {
