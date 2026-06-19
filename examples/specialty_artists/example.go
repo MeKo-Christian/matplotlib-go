@@ -39,6 +39,7 @@ func Plot() *core.Figure {
 			{R: 0.84, G: 0.38, B: 0.16, A: 1},
 			{R: 0.20, G: 0.63, B: 0.42, A: 1},
 		},
+		LineWidth: 1.5,
 	})
 
 	hexAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.39, Y: 0.57}, Max: geom.Pt{X: 0.66, Y: 0.94}})

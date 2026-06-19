@@ -170,7 +170,9 @@ var cases = []Case{
 	{ID: "stat_variants", Topic: "statistics", Title: "Statistical Views", Optional: true, WebDemoID: "statistics", Description: "Box plots, violin plots, empirical CDFs, and stack plots.", Showcase: true, GoBasicSmokeFamily: "statistics", MinPSNR: 52.0, MaxMeanAbs: 0.35, MaxRMSE: 2.8},
 	{ID: "specialty_depth", Topic: "statistics", Title: "Specialty Depth", FixtureOnly: true, MinPSNR: 22.0, MaxMeanAbs: 20.0, MaxRMSE: 4.8},
 	{ID: "stem_plot", Topic: "specialty", Title: "Stem Plot", Optional: true, MaxRMSE: 4.3},
-	{ID: "specialty_artists", Topic: "specialty", Title: "Specialty Artists", Optional: true, WebDemoID: "specialty", Description: "Event plots, hexbin, pie charts, stem plots, tables, and Sankey-style flows.", Showcase: true, GoBasicSmokeFamily: "specialty", MaxRMSE: 5.0},
+	// Table cell text now follows Matplotlib's Text advance alignment; refreshed
+	// golden-vs-reference RMSE is 1.74.
+	{ID: "specialty_artists", Topic: "specialty", Title: "Specialty Artists", Optional: true, WebDemoID: "specialty", Description: "Event plots, hexbin, pie charts, stem plots, tables, and Sankey-style flows.", Showcase: true, GoBasicSmokeFamily: "specialty", MaxRMSE: 2.0},
 	// W3.10 ratchet: X-axis concise-date offset text now follows Matplotlib's
 	// ticklabel-bounds placement rule, reducing the committed RMSE to 0.05.
 	{ID: "date_concise_intraday_labels", Topic: "units", Title: "Concise Intraday Date Labels", FixtureOnly: true, Width: 720, Height: 360, MinPSNR: 73.0, MaxMeanAbs: 0.01, MaxRMSE: 0.1},

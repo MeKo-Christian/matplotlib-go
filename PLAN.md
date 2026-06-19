@@ -175,6 +175,12 @@ now matches Matplotlib's fixed-precision zero handling for `EngFormatter`
 (`places=1` renders `0.0 Hz`, not `0 Hz`). The refreshed golden/reference
 comparison is `RMSE 2.04`, and the catalog cap is tightened to `MaxRMSE 3.0`.
 
+**Specialty artists update (2026-06-19):** `specialty_artists` now keeps the
+Go eventplot linewidth explicit alongside the Matplotlib fixture and table cell
+text follows Matplotlib's normal `Text` advance alignment instead of a
+table-specific ink-bounds correction. The refreshed golden/reference comparison
+is `RMSE 1.74`, and the catalog cap is tightened to `MaxRMSE 2.0`.
+
 The June 13 regression queue is retained below as closure history. The catalog
 RMSE tolerances have been ratcheted to the refreshed metrics plus small headroom,
 with all reference-comparable rows capped at or below `RMSE 5`.

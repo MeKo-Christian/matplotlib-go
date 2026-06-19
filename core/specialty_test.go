@@ -536,7 +536,7 @@ func TestAxesTableHonorsAlignmentPadding(t *testing.T) {
 	}
 }
 
-func TestAxesTableCentersTextUsingInkBounds(t *testing.T) {
+func TestAxesTableCentersTextUsingTextAdvance(t *testing.T) {
 	table := (&Axes{}).Table(TableOptions{
 		CellText: [][]string{{"ink"}},
 		BBox:     geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}},
@@ -563,8 +563,8 @@ func TestAxesTableCentersTextUsingInkBounds(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected table text draw, got %v", renderer.texts)
 	}
-	if got, want := origin.X, 29.0; !floatApprox(got, want, 1e-12) {
-		t.Fatalf("centered table text origin x = %v, want ink bounds centered at cell anchor: %v", got, want)
+	if got, want := origin.X, 31.0; !floatApprox(got, want, 1e-12) {
+		t.Fatalf("centered table text origin x = %v, want text advance centered at cell anchor: %v", got, want)
 	}
 }
 

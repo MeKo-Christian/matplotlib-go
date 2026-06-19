@@ -118,11 +118,11 @@ def specialty_artists(out_dir):
     )
     sankey_ax.add_patch(trunk)
     flows = [
-        ("Waste", -2, -1, (0.84, 0.15, 0.16, 0.75)),
-        ("CPU", 3, 1, (0.17, 0.63, 0.17, 0.75)),
-        ("Cache", 1.5, 1, (1.00, 0.50, 0.05, 0.75)),
+        ("Waste", -2, (0.84, 0.15, 0.16, 0.75)),
+        ("CPU", 3, (0.17, 0.63, 0.17, 0.75)),
+        ("Cache", 1.5, (1.00, 0.50, 0.05, 0.75)),
     ]
-    for idx, (label, flow, orient, color) in enumerate(flows):
+    for idx, (label, flow, color) in enumerate(flows):
         width = abs(flow) * 0.018
         y = 0.40 + idx * 0.095
         x0 = 0.36

@@ -413,20 +413,7 @@ func (t *Table) measuredRowLabelWidth(r render.Renderer, ctx *DrawContext) (floa
 }
 
 func alignedTableTextOrigin(anchor geom.Pt, layout singleLineTextLayout, hAlign TextAlign) geom.Pt {
-	origin := alignedSingleLineOrigin(anchor, layout, hAlign, textLayoutVAlignCenter)
-	if !layout.HaveInkBounds || layout.InkBounds.W <= 0 {
-		return origin
-	}
-
-	switch hAlign {
-	case TextAlignLeft:
-		origin.X = anchor.X - layout.InkBounds.X
-	case TextAlignRight:
-		origin.X = anchor.X - layout.InkBounds.X - layout.InkBounds.W
-	default:
-		origin.X = anchor.X - layout.InkBounds.X - layout.InkBounds.W/2
-	}
-	return origin
+	return alignedSingleLineOrigin(anchor, layout, hAlign, textLayoutVAlignCenter)
 }
 
 // Bounds returns an empty rect so table placement does not affect autoscaling.
