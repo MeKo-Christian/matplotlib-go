@@ -321,7 +321,7 @@ func TestImage_DrawAngleZeroCallsImage(t *testing.T) {
 	}
 }
 
-func TestImage_DrawRotatedCallsImageTransformed(t *testing.T) {
+func TestImage_DrawRotatedScalarUsesPrefilteredImage(t *testing.T) {
 	angle := 30.0
 	i := &Image2D{
 		Data:     [][]float64{{0, 1}},
@@ -342,11 +342,14 @@ func TestImage_DrawRotatedCallsImageTransformed(t *testing.T) {
 		t.Fatalf("end: %v", err)
 	}
 
-	if r.transformedCalls != 1 {
-		t.Fatalf("expected ImageTransformed to be called once, got %d", r.transformedCalls)
+	if r.imageCalls != 1 {
+		t.Fatalf("expected prefiltered Image to be called once, got %d", r.imageCalls)
 	}
-	if r.imageCalls != 0 {
-		t.Fatalf("expected Image not to be called when transform renderer is available, got %d", r.imageCalls)
+	if r.transformedCalls != 0 {
+		t.Fatalf("expected scalar rotation to avoid backend ImageTransformed, got %d", r.transformedCalls)
+	}
+	if r.lastImageWidth <= 2 || r.lastImageHeight <= 1 {
+		t.Fatalf("prefiltered image size = %dx%d, want transformed display-sized raster", r.lastImageWidth, r.lastImageHeight)
 	}
 }
 
@@ -510,7 +513,7 @@ func TestImage2D_DrawCeilsRasterSizeAndKeepsMatplotlibAnchor(t *testing.T) {
 	}
 }
 
-func TestImage2D_DrawPropagatesInterpolationWhenBackendResamples(t *testing.T) {
+func TestImage2D_DrawRotatedBilinearUsesScalarDataStage(t *testing.T) {
 	bilinear := "bilinear"
 	angle := 15.0
 	ax := &Axes{}
@@ -536,11 +539,14 @@ func TestImage2D_DrawPropagatesInterpolationWhenBackendResamples(t *testing.T) {
 		t.Fatalf("end: %v", err)
 	}
 
-	if rec.transformedCalls != 1 {
-		t.Fatalf("transformedCalls = %d, want 1", rec.transformedCalls)
+	if rec.imageCalls != 1 {
+		t.Fatalf("imageCalls = %d, want 1", rec.imageCalls)
 	}
-	if rec.lastInterpolation != "bilinear" {
-		t.Fatalf("lastInterpolation = %q, want bilinear", rec.lastInterpolation)
+	if rec.transformedCalls != 0 {
+		t.Fatalf("transformedCalls = %d, want 0", rec.transformedCalls)
+	}
+	if rec.lastInterpolation != "nearest" {
+		t.Fatalf("lastInterpolation = %q, want nearest after scalar-stage transformed resampling", rec.lastInterpolation)
 	}
 }
 

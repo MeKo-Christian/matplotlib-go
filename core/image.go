@@ -20,28 +20,33 @@ func (i *Image2D) Draw(r render.Renderer, ctx *DrawContext) {
 	if dst.W() <= 0 || dst.H() <= 0 {
 		return
 	}
-	dst = matplotlibImageDrawRect(dst)
+	drawDst := matplotlibImageDrawRect(dst)
 
-	raster, ok := i.rasterizeForRect(dst)
+	raster, ok := i.rasterizeForRect(drawDst)
 	if !ok {
 		return
 	}
 
 	angleRad := i.AngleDeg * math.Pi / 180
 	if angleRad == 0 {
-		r.Image(raster, dst)
+		r.Image(raster, drawDst)
+		return
+	}
+
+	anchor := i.rotationAnchor(ctx, dst)
+	if transformed, transformedDst, ok := i.rasterizeTransformed(ctx, anchor, angleRad); ok {
+		r.Image(transformed, transformedDst)
 		return
 	}
 
 	if tr, ok := r.(render.ImageTransformer); ok {
-		anchor := i.rotationAnchor(ctx, dst)
-		transform := imageTransform(dst, raster, anchor, angleRad)
-		tr.ImageTransformed(raster, dst, transform)
+		transform := imageTransform(drawDst, raster, anchor, angleRad)
+		tr.ImageTransformed(raster, drawDst, transform)
 		return
 	}
 
 	// Fallback: ignore rotation and render axis-aligned image.
-	r.Image(raster, dst)
+	r.Image(raster, drawDst)
 }
 
 func matplotlibImageDrawRect(dst geom.Rect) geom.Rect {
@@ -148,6 +153,161 @@ func (i *Image2D) rasterizeToSize(targetWidth, targetHeight int) (render.Image, 
 	data.SetInterpolation(i.Interpolation)
 	data.SetAlpha(clampOneToOne(i.Alpha))
 	return data, true
+}
+
+func (i *Image2D) rasterizeTransformed(ctx *DrawContext, anchor geom.Pt, angle float64) (render.Image, geom.Rect, bool) {
+	if i == nil || ctx == nil {
+		return nil, geom.Rect{}, false
+	}
+	rows, cols := scalarImageDimensions(i.Data)
+	if rows == 0 || cols == 0 {
+		return nil, geom.Rect{}, false
+	}
+	filter, ok := scalarImageFilterForInterpolation(i.Interpolation, cols, rows, cols, rows)
+	if !ok {
+		switch normalizedImageInterpolation(i.Interpolation) {
+		case "", "nearest", "none":
+			filter = scalarImageFilter{}
+		default:
+			return nil, geom.Rect{}, false
+		}
+	}
+
+	srcToDisplay, ok := i.sourceToDisplayAffine(ctx, anchor, angle, cols, rows)
+	if !ok {
+		return nil, geom.Rect{}, false
+	}
+	inv, ok := srcToDisplay.Invert()
+	if !ok {
+		return nil, geom.Rect{}, false
+	}
+
+	bounds := transformedSourceBounds(srcToDisplay, float64(cols), float64(rows))
+	if !ctx.Clip.Empty() {
+		bounds = bounds.Intersect(ctx.Clip)
+	}
+	if bounds.Empty() {
+		return nil, geom.Rect{}, false
+	}
+
+	outW := int(math.Ceil(bounds.W()))
+	outH := int(math.Ceil(bounds.H()))
+	if outW <= 0 || outH <= 0 {
+		return nil, geom.Rect{}, false
+	}
+	outRect := geom.Rect{
+		Min: geom.Pt{X: math.Floor(bounds.Min.X), Y: math.Ceil(bounds.Min.Y)},
+	}
+	outRect.Max = geom.Pt{X: outRect.Min.X + float64(outW), Y: outRect.Min.Y + float64(outH)}
+
+	mapping := i.ScalarMap().Resolved()
+	img := image.NewRGBA(image.Rect(0, 0, outW, outH))
+	for y := 0; y < outH; y++ {
+		displayY := outRect.Max.Y - (float64(y) + 0.5)
+		for x := 0; x < outW; x++ {
+			displayX := outRect.Min.X + float64(x) + 0.5
+			src := inv.Apply(geom.Pt{X: displayX, Y: displayY})
+			if !transformedSourceInRange(src, rows, cols) {
+				continue
+			}
+
+			rowCoord := src.Y - 0.5
+			if i.Origin == ImageOriginUpper {
+				rowCoord = float64(rows) - src.Y - 0.5
+			}
+			colCoord := src.X - 0.5
+			v, ok := transformedScalarSample(i.Data, rowCoord, colCoord, filter)
+			if !ok {
+				continue
+			}
+			c := mapping.Color(v, 1)
+			c.A *= clampOneToOne(i.Alpha)
+			img.Set(x, y, toRGBAColor(c))
+		}
+	}
+
+	data := render.NewImageData(img)
+	data.SetInterpolation("nearest")
+	data.SetAlpha(1)
+	return data, outRect, true
+}
+
+func (i *Image2D) sourceToDisplayAffine(ctx *DrawContext, anchor geom.Pt, angle float64, cols, rows int) (geom.Affine, bool) {
+	if ctx == nil || cols <= 0 || rows <= 0 {
+		return geom.Affine{}, false
+	}
+	y0 := i.YMin
+	y1 := i.YMax
+	if i.Origin == ImageOriginUpper {
+		y0, y1 = i.YMax, i.YMin
+	}
+	p00 := ctx.DataToPixel.Apply(geom.Pt{X: i.XMin, Y: y0})
+	p10 := ctx.DataToPixel.Apply(geom.Pt{X: i.XMax, Y: y0})
+	p01 := ctx.DataToPixel.Apply(geom.Pt{X: i.XMin, Y: y1})
+
+	rot := displayRotation(anchor, angle)
+	p00 = rot.Apply(p00)
+	p10 = rot.Apply(p10)
+	p01 = rot.Apply(p01)
+
+	return geom.Affine{
+		A: (p10.X - p00.X) / float64(cols),
+		B: (p10.Y - p00.Y) / float64(cols),
+		C: (p01.X - p00.X) / float64(rows),
+		D: (p01.Y - p00.Y) / float64(rows),
+		E: p00.X,
+		F: p00.Y,
+	}, true
+}
+
+func displayRotation(anchor geom.Pt, angle float64) geom.Affine {
+	cos := math.Cos(angle)
+	sin := math.Sin(angle)
+	return geom.Affine{
+		A: cos,
+		B: sin,
+		C: -sin,
+		D: cos,
+		E: anchor.X - cos*anchor.X + sin*anchor.Y,
+		F: anchor.Y - sin*anchor.X - cos*anchor.Y,
+	}
+}
+
+func transformedSourceBounds(t geom.Affine, width, height float64) geom.Rect {
+	points := []geom.Pt{
+		t.Apply(geom.Pt{}),
+		t.Apply(geom.Pt{X: width}),
+		t.Apply(geom.Pt{Y: height}),
+		t.Apply(geom.Pt{X: width, Y: height}),
+	}
+	minX, maxX := points[0].X, points[0].X
+	minY, maxY := points[0].Y, points[0].Y
+	for _, p := range points[1:] {
+		minX = minF(minX, p.X)
+		maxX = maxF(maxX, p.X)
+		minY = minF(minY, p.Y)
+		maxY = maxF(maxY, p.Y)
+	}
+	return geom.Rect{Min: geom.Pt{X: minX, Y: minY}, Max: geom.Pt{X: maxX, Y: maxY}}
+}
+
+func transformedScalarSample(data [][]float64, rowCoord, colCoord float64, filter scalarImageFilter) (float64, bool) {
+	if filter.weight == nil || filter.radius <= 0 {
+		return scalarAt(data, int(math.Floor(rowCoord+0.5)), int(math.Floor(colCoord+0.5)))
+	}
+	return filteredScalarSample(data, rowCoord, colCoord, filter)
+}
+
+func transformedSourceInRange(src geom.Pt, rows, cols int) bool {
+	if rows <= 0 || cols <= 0 {
+		return false
+	}
+	const negativeEdgeTolerance = 1.0 / 200.0
+	const positiveEdgeTolerance = 1.0 / 58.0
+	return src.X >= -negativeEdgeTolerance &&
+		src.X <= float64(cols)+positiveEdgeTolerance &&
+		src.Y >= -negativeEdgeTolerance &&
+		src.Y <= float64(rows)+positiveEdgeTolerance
 }
 
 func (i *Image2D) scaledScalarValue(dstY, dstX, targetHeight, targetWidth, rows, cols int) (float64, bool) {

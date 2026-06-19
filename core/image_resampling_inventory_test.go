@@ -253,7 +253,7 @@ func TestTransformedImageTransformAndExtentAlignmentIsDocumented(t *testing.T) {
 		},
 		filepath.Join("..", "core", "image.go"): {
 			"matplotlibImageDrawRect",
-			"imageTransform(dst, raster, anchor, angleRad)",
+			"rasterizeTransformed(ctx, anchor, angleRad)",
 			"rotationAnchor(ctx, dst)",
 		},
 		filepath.Join("..", "core", "image_test.go"): {
