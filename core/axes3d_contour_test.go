@@ -54,6 +54,38 @@ func TestAxes3DTriContourAndTriContourfCreateCollections(t *testing.T) {
 	}
 }
 
+func TestAxes3DContourDefaultLineWidthMatchesMatplotlib(t *testing.T) {
+	fig := NewFigure(640, 480)
+	ax, err := fig.AddAxes3D(unitRect())
+	if err != nil {
+		t.Fatalf("AddAxes3D: %v", err)
+	}
+
+	x := []float64{0, 1}
+	y := []float64{0, 1}
+	z := [][]float64{{0, 1}, {1, 2}}
+	contour := ax.Contour(x, y, z, PlotOptions{Levels: []float64{0.5}})
+	if contour == nil {
+		t.Fatal("Contour returned nil")
+	}
+	if got, want := contour.LineWidth, 2.0; got != want {
+		t.Fatalf("Contour default line width = %v, want Matplotlib 1.5 pt at 100 DPI rounded to %v px", got, want)
+	}
+
+	tri := Triangulation{
+		X:         []float64{0, 1, 0},
+		Y:         []float64{0, 0, 1},
+		Triangles: [][3]int{{0, 1, 2}},
+	}
+	triContour := ax.TriContour(tri, []float64{0, 1, 1}, PlotOptions{Levels: []float64{0.5}})
+	if triContour == nil {
+		t.Fatal("TriContour returned nil")
+	}
+	if got, want := triContour.LineWidth, 2.0; got != want {
+		t.Fatalf("TriContour default line width = %v, want Matplotlib 1.5 pt at 100 DPI rounded to %v px", got, want)
+	}
+}
+
 func TestAxes3DContourfDefaultsToOpaqueFacesLikeMatplotlib(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax, err := fig.AddAxes3D(unitRect())

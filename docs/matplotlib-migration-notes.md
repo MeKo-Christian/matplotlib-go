@@ -1319,16 +1319,13 @@ golden, and matplotlib reference): `mplot3d_errorbar3d`, `mplot3d_contour3d`,
 sources structurally close and shares identical input data so only rendering
 differences remain. The structured-contour cases reuse the
 `get_test_data(0.25)` dual-Gaussian grid with explicit levels and matched
-`vmin`/`vmax`; the triangulated-contour cases reuse the `mplot3d_trisurf3d`
-polar fan point cloud and rely on auto-Delaunay so the Go `core.Triangulation`
-mesh and matplotlib's qhull mesh agree. All seven join the existing `mplot3d_*`
-family in `optionalVisualGoldenIDs` and use the shared 3D tolerance band
-(`MinPSNR` 30, `MaxMeanAbs` 8-12, `MaxRMSE` 18), except `mplot3d_text3d`
-which now carries a tighter `MaxRMSE` 2 after the 3D frame/tick/label
-projection limits were aligned with Matplotlib.
+`vmin`/`vmax`; `mplot3d_tricontour3d` now mirrors Matplotlib's upstream
+staggered polar grid, masked triangulation, default levels, and 45 degree
+elevation. All seven join the existing `mplot3d_*` family in
+`optionalVisualGoldenIDs` and use per-case tolerances in the catalog.
 
 Measured golden-vs-reference metrics: contour3d RMSE 3.17 / PSNR 52.0,
-contourf3d RMSE 6.06 / PSNR 45.4, tricontour3d RMSE 4.62 / PSNR 52.0,
+contourf3d RMSE 6.06 / PSNR 45.4, tricontour3d RMSE 2.22 / PSNR 50.5,
 tricontourf3d RMSE 13.0 / PSNR 46.5, bar2d_zdir RMSE 1.09 / PSNR 56.8, and
 text3d RMSE 0.66 / PSNR 61.1.
 

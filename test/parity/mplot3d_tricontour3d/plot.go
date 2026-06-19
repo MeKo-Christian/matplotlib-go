@@ -16,37 +16,47 @@ const (
 	DPI    = 100
 )
 
-// fanMesh builds the same polar fan point cloud used by mplot3d_trisurf3d so the
-// auto-Delaunay triangulation matches matplotlib's for an unstructured grid.
-func fanMesh() (x, y, z []float64) {
+// tricontourMesh mirrors Matplotlib's mplot3d/tricontour3d.py gallery example.
+func tricontourMesh() (core.Triangulation, []float64) {
 	const (
-		nRadii  = 8
-		nAngles = 36
+		nAngles   = 48
+		nRadii    = 8
+		minRadius = 0.25
 	)
 	radii := make([]float64, nRadii)
 	for i := range radii {
-		radii[i] = 0.125 + (float64(i)/float64(nRadii-1))*(1.0-0.125)
-	}
-	angles := make([]float64, nAngles)
-	for i := range angles {
-		angles[i] = 2 * math.Pi * float64(i) / float64(nAngles)
+		radii[i] = minRadius + (float64(i)/float64(nRadii-1))*(0.95-minRadius)
 	}
 
-	x = make([]float64, 1+nRadii*nAngles)
-	y = make([]float64, len(x))
-	z = make([]float64, len(x))
-	index := 1
-	for _, angle := range angles {
-		for _, radius := range radii {
+	x := make([]float64, nAngles*nRadii)
+	y := make([]float64, len(x))
+	z := make([]float64, len(x))
+	index := 0
+	for angleIdx := range nAngles {
+		baseAngle := 2 * math.Pi * float64(angleIdx) / float64(nAngles)
+		for radiusIdx, radius := range radii {
+			angle := baseAngle
+			if radiusIdx%2 == 1 {
+				angle += math.Pi / nAngles
+			}
 			x[index] = radius * math.Cos(angle)
 			y[index] = radius * math.Sin(angle)
+			z[index] = math.Cos(radius) * math.Cos(3*angle)
 			index++
 		}
 	}
-	for i := range x {
-		z[i] = math.Sin(-(x[i] * y[i]))
+
+	tri, err := core.NewTriangulation(x, y)
+	if err != nil {
+		panic(err)
 	}
-	return x, y, z
+	tri.Mask = make([]bool, len(tri.Triangles))
+	for i, triangle := range tri.Triangles {
+		cx := (tri.X[triangle[0]] + tri.X[triangle[1]] + tri.X[triangle[2]]) / 3
+		cy := (tri.Y[triangle[0]] + tri.Y[triangle[1]] + tri.Y[triangle[2]]) / 3
+		tri.Mask[i] = math.Hypot(cx, cy) < minRadius
+	}
+	return tri, z
 }
 
 // Plot builds the showcase figure (backend-agnostic).
@@ -60,16 +70,12 @@ func Plot() *core.Figure {
 		panic(err)
 	}
 
-	x, y, z := fanMesh()
+	tri, z := tricontourMesh()
 	cmap := "CMRmap"
-	vmin := -0.45
-	vmax := 0.45
-	ax.TriContour(core.Triangulation{X: x, Y: y}, z, core.PlotOptions{
+	ax.TriContour(tri, z, core.PlotOptions{
 		Colormap: &cmap,
-		Levels:   []float64{-0.45, -0.3, -0.15, 0, 0.15, 0.3, 0.45},
-		VMin:     &vmin,
-		VMax:     &vmax,
 	})
+	ax.SetView(45, -60)
 	return fig
 }
 

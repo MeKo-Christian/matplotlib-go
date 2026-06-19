@@ -201,7 +201,7 @@ var cases = []Case{
 	{ID: "mplot3d_quiver3d", Topic: "mplot3d", Title: "3D Quiver", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 3.7},
 	{ID: "mplot3d_contour3d", Topic: "mplot3d", Title: "3D Contour", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 3.5},
 	{ID: "mplot3d_contourf3d", Topic: "mplot3d", Title: "3D Filled Contour", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 1.2},
-	{ID: "mplot3d_tricontour3d", Topic: "mplot3d", Title: "3D Triangulated Contour", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 5.0},
+	{ID: "mplot3d_tricontour3d", Topic: "mplot3d", Title: "3D Triangulated Contour", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 2.8},
 	{ID: "mplot3d_tricontourf3d", Topic: "mplot3d", Title: "3D Triangulated Filled Contour", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 2.0},
 	{ID: "mplot3d_bar2d_zdir", Topic: "mplot3d", Title: "3D Planar 2D Bars", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 30.0, MaxMeanAbs: 8.0, MaxRMSE: 1.2},
 	{ID: "mplot3d_text3d", Topic: "mplot3d", Title: "3D Text Labels", FixtureOnly: true, Width: 720, Height: 560, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 2.0},

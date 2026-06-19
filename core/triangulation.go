@@ -17,6 +17,18 @@ type Triangulation struct {
 	Mask      []bool
 }
 
+// NewTriangulation returns a Delaunay triangulation for the supplied points.
+func NewTriangulation(x, y []float64) (Triangulation, error) {
+	tri, ok := autoTriangulate(Triangulation{
+		X: append([]float64(nil), x...),
+		Y: append([]float64(nil), y...),
+	})
+	if !ok {
+		return Triangulation{}, fmt.Errorf("could not triangulate %d point(s)", min(len(x), len(y)))
+	}
+	return tri, nil
+}
+
 // TriPlotOptions configures triplot rendering.
 type TriPlotOptions struct {
 	Color     *render.Color

@@ -17,7 +17,7 @@ func (a *Axes3D) Contour(x, y []float64, z [][]float64, opts ...PlotOptions) *Li
 	}
 
 	color := a.NextColor()
-	lineWidth := 1.0
+	lineWidth := 2.0
 	alpha := 1.0
 	label := ""
 	colorOverride := false
@@ -119,7 +119,7 @@ func (a *Axes3D) TriContour(tri Triangulation, z []float64, opts ...PlotOptions)
 	}
 
 	color := a.NextColor()
-	lineWidth := 1.0
+	lineWidth := 2.0
 	alpha := 1.0
 	colorOverride := false
 	if opt.Color != nil {

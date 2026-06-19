@@ -20,26 +20,27 @@ def mplot3d_tricontour3d(out_dir):
     fig = make_fig_px(720, 560)
     ax = fig.add_axes(go_rect(0.12, 0.16, 0.88, 0.88), projection="3d")
 
-    # Same polar fan point cloud as mplot3d_trisurf3d; rely on auto-Delaunay so
-    # the triangulation matches the Go core.Triangulation auto-mesh.
+    n_angles = 48
     n_radii = 8
-    n_angles = 36
-    radii = np.linspace(0.125, 1.0, n_radii)
-    angles = np.linspace(0, 2 * math.pi, n_angles, endpoint=False)[:, np.newaxis]
+    min_radius = 0.25
 
-    x = np.append(0, (radii * np.cos(angles)).flatten())
-    y = np.append(0, (radii * np.sin(angles)).flatten())
-    z = np.sin(-(x * y))
+    radii = np.linspace(min_radius, 0.95, n_radii)
+    angles = np.linspace(0, 2 * math.pi, n_angles, endpoint=False)
+    angles = np.repeat(angles[..., np.newaxis], n_radii, axis=1)
+    angles[:, 1::2] += math.pi / n_angles
 
-    ax.tricontour(
-        x,
-        y,
-        z,
-        levels=[-0.45, -0.3, -0.15, 0, 0.15, 0.3, 0.45],
-        cmap="CMRmap",
-        vmin=-0.45,
-        vmax=0.45,
+    x = (radii * np.cos(angles)).flatten()
+    y = (radii * np.sin(angles)).flatten()
+    z = (np.cos(radii) * np.cos(3 * angles)).flatten()
+
+    triang = mtri.Triangulation(x, y)
+    triang.set_mask(
+        np.hypot(x[triang.triangles].mean(axis=1), y[triang.triangles].mean(axis=1))
+        < min_radius
     )
+
+    ax.tricontour(triang, z, cmap="CMRmap")
+    ax.view_init(elev=45.0)
 
     save(fig, out_dir, "mplot3d_tricontour3d")
 

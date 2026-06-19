@@ -3592,6 +3592,10 @@
           "declaration": "func NewSankey(ax *Axes, opts ...SankeyOptions) *Sankey"
         },
         {
+          "id": "func NewTriangulation",
+          "declaration": "func NewTriangulation(x, y []float64) (Triangulation, error)"
+        },
+        {
           "id": "func NewTupleMarkerStyle",
           "declaration": "func NewTupleMarkerStyle(numsides int, style MarkerTupleStyle, angleDeg float64) MarkerStyle"
         },

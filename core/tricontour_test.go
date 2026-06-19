@@ -32,6 +32,33 @@ func TestTriContourfSkipsMaskedTriangles(t *testing.T) {
 	}
 }
 
+func TestNewTriangulationBuildsDelaunayMesh(t *testing.T) {
+	tri, err := NewTriangulation(
+		[]float64{0, 1, 0, 1},
+		[]float64{0, 0, 1, 1},
+	)
+	if err != nil {
+		t.Fatalf("NewTriangulation: %v", err)
+	}
+	if len(tri.Triangles) != 2 {
+		t.Fatalf("triangles = %v, want two triangles covering the square", tri.Triangles)
+	}
+	if len(tri.X) != 4 || len(tri.Y) != 4 {
+		t.Fatalf("coordinate lengths = %d/%d, want copied input coordinates", len(tri.X), len(tri.Y))
+	}
+
+	tri.X[0] = 99
+	originalX := []float64{0, 1, 0, 1}
+	tri, err = NewTriangulation(originalX, []float64{0, 0, 1, 1})
+	if err != nil {
+		t.Fatalf("NewTriangulation after mutation: %v", err)
+	}
+	originalX[0] = 42
+	if tri.X[0] != 0 {
+		t.Fatalf("NewTriangulation retained caller slice: got x[0]=%v, want independent copy", tri.X[0])
+	}
+}
+
 func TestTriangulationArtists(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax := fig.AddAxes(geom.Rect{
