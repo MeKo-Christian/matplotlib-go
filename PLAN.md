@@ -463,33 +463,33 @@ large generated/catalog artifacts that affect review quality:
         value helpers into `colorbar_scale.go`.
   - [x] `core/colorbar.go`: extract draw, overlay, outline, extension path, and
         divider rendering into `colorbar_draw.go`.
-- [ ] **L5 — Split facade and tool entrypoints.** Split `pyplot/pyplot.go` into
+- [x] **L5 — Split facade and tool entrypoints.** Split `pyplot/pyplot.go` into
       registry/current-state management, figure/axes helpers, plotting wrappers,
       rc/style helpers, and backend/show/save management. Split
       `cmd/parityviewer/main.go` into CLI flags, case loading, image comparison,
       rerender commands, and HTML rendering.
-  - [ ] `pyplot/pyplot.go`: extract figure registry, current figure/axes,
+  - [x] `pyplot/pyplot.go`: extract figure registry, current figure/axes,
         manager cache, close/clear, and reset-for-tests behavior into
         `state.go`.
-  - [ ] `pyplot/pyplot.go`: extract figure, axes, subplot, mosaic, divider,
+  - [x] `pyplot/pyplot.go`: extract figure, axes, subplot, mosaic, divider,
         parasite, and 3D axes helpers into `layout.go`.
-  - [ ] `pyplot/pyplot.go`: extract stateful plotting wrappers by family:
+  - [x] `pyplot/pyplot.go`: extract stateful plotting wrappers by family:
         lines/scatter/3D, bars/fills/stats/errorbar, images/mesh/signal,
         contour/triangulation, vector fields, widgets/specialty.
-  - [ ] `pyplot/pyplot.go`: extract labels, limits, ticks, scales, grid,
+  - [x] `pyplot/pyplot.go`: extract labels, limits, ticks, scales, grid,
         colorbar, legend, and figure text wrappers into `axes_wrappers.go`.
-  - [ ] `pyplot/pyplot.go`: extract rc/style helpers into `rc.go`.
-  - [ ] `pyplot/pyplot.go`: extract backend selection, savefig, show/draw/pause,
+  - [x] `pyplot/pyplot.go`: extract rc/style helpers into `rc.go`.
+  - [x] `pyplot/pyplot.go`: extract backend selection, savefig, show/draw/pause,
         event connect/disconnect, and show-handler canvas into `backend.go`.
-  - [ ] `cmd/parityviewer/main.go`: extract flag parsing and repo/path option
+  - [x] `cmd/parityviewer/main.go`: extract flag parsing and repo/path option
         resolution into `cli.go`.
-  - [ ] `cmd/parityviewer/main.go`: extract directory/parity case loading and
+  - [x] `cmd/parityviewer/main.go`: extract directory/parity case loading and
         printed case summaries into `cases.go`.
-  - [ ] `cmd/parityviewer/main.go`: extract rerender command construction and
+  - [x] `cmd/parityviewer/main.go`: extract rerender command construction and
         execution into `rerender.go`.
-  - [ ] `cmd/parityviewer/main.go`: extract image loading, compositing, metrics,
+  - [x] `cmd/parityviewer/main.go`: extract image loading, compositing, metrics,
         raw diff, amplified diff, and PNG encoding into `images.go`.
-  - [ ] `cmd/parityviewer/main.go`: extract HTML page/card rendering and CSS
+  - [x] `cmd/parityviewer/main.go`: extract HTML page/card rendering and CSS
         constants into `html.go`.
 - [ ] **L6 — Split backend implementation files.** Split AGG path preparation,
       snapping/simplification/chunking, hatching, FreeType measurement, text

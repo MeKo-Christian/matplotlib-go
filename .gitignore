@@ -19,6 +19,8 @@ coverage.out
 # Build outputs
 matplotlib-go
 parityviewer
+!cmd/parityviewer/
+!cmd/parityviewer/*.go
 *.test
 *.exe
 web/main.wasm
