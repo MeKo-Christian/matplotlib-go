@@ -555,6 +555,27 @@ func TestAnnotateSupportsSeparateTextCoordinateSpace(t *testing.T) {
 	}
 }
 
+func TestAnnotationOffsetPointsConvertAtDrawTime(t *testing.T) {
+	ctx := createTestDrawContext()
+	annotation := &Annotation{
+		Point:       geom.Pt{X: 0.25, Y: 0.75},
+		Coords:      Coords(CoordAxes),
+		OffsetX:     72,
+		OffsetY:     -36,
+		OffsetUnits: AnnotationOffsetPoints,
+	}
+
+	base := transformedPoint(ctx, annotation.Coords, annotation.Point, 0, 0)
+	anchor := annotation.textAnchor(ctx)
+	want := geom.Pt{
+		X: base.X + pointsToPixels(ctx.RC, 72),
+		Y: base.Y - pointsToPixels(ctx.RC, 36),
+	}
+	if math.Hypot(anchor.X-want.X, anchor.Y-want.Y) > 1e-9 {
+		t.Fatalf("annotation point offset anchor = %+v, want %+v", anchor, want)
+	}
+}
+
 func TestAnnotationBboxDrawsTextFrameAndArrow(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(unitRect())

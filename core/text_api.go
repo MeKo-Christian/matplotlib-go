@@ -79,6 +79,16 @@ type TextBBoxOptions struct {
 	CornerRadius float64
 }
 
+// AnnotationOffsetUnits controls how AnnotationOptions.OffsetX/Y are converted.
+type AnnotationOffsetUnits uint8
+
+const (
+	// AnnotationOffsetPixels interprets OffsetX/Y as display pixels.
+	AnnotationOffsetPixels AnnotationOffsetUnits = iota
+	// AnnotationOffsetPoints interprets OffsetX/Y as typographic points.
+	AnnotationOffsetPoints
+)
+
 // AnnotationOptions configures an Annotation artist.
 type AnnotationOptions struct {
 	Coords CoordinateSpec
@@ -88,9 +98,12 @@ type AnnotationOptions struct {
 	TextPosition *geom.Pt
 	// TextCoords controls TextPosition's coordinate space. The zero value is
 	// data coordinates.
-	TextCoords      CoordinateSpec
-	OffsetX         float64
-	OffsetY         float64
+	TextCoords CoordinateSpec
+	OffsetX    float64
+	OffsetY    float64
+	// OffsetUnits controls whether OffsetX/Y are display pixels or typographic
+	// points. The zero value preserves the historical pixel behavior.
+	OffsetUnits     AnnotationOffsetUnits
 	FontSize        float64
 	Color           render.Color
 	ArrowColor      render.Color
@@ -161,6 +174,7 @@ type Annotation struct {
 	TextCoords      CoordinateSpec
 	OffsetX         float64
 	OffsetY         float64
+	OffsetUnits     AnnotationOffsetUnits
 	FontSize        float64
 	Color           render.Color
 	ArrowColor      render.Color
@@ -311,6 +325,7 @@ func (a *Axes) Annotate(text string, x, y float64, opts ...AnnotationOptions) *A
 		TextCoords:      opt.TextCoords,
 		OffsetX:         opt.OffsetX,
 		OffsetY:         opt.OffsetY,
+		OffsetUnits:     opt.OffsetUnits,
 		FontSize:        opt.FontSize,
 		Color:           opt.Color,
 		ArrowColor:      opt.ArrowColor,

@@ -2728,6 +2728,14 @@
           "declaration": "const AnimatedFilterOnlyAnimated"
         },
         {
+          "id": "const AnnotationOffsetPixels",
+          "declaration": "const AnnotationOffsetPixels AnnotationOffsetUnits = iota"
+        },
+        {
+          "id": "const AnnotationOffsetPoints",
+          "declaration": "const AnnotationOffsetPoints"
+        },
+        {
           "id": "const AxisBottom",
           "declaration": "const AxisBottom AxisSide = iota"
         },
@@ -7229,7 +7237,7 @@
         },
         {
           "id": "type Annotation",
-          "declaration": "type Annotation struct{ ArtistRasterization; Point geom.Pt; Content string; TextPosition *geom.Pt; TextCoords CoordinateSpec; OffsetX float64; OffsetY float64; FontSize float64; Color render.Color; ArrowColor render.Color; ArrowWidth float64; ArrowHeadSize float64; ArrowStyle ArrowStyle; ConnectionStyle ConnectionStyle; HAlign TextAlign; VAlign TextVerticalAlign; Angle float64; Coords CoordinateSpec; FontKey string; BBox *TextBBoxOptions; Linespacing float64; FontProperties *render.FontProperties; ParseMath *bool; AnnotationClip *bool }"
+          "declaration": "type Annotation struct{ ArtistRasterization; Point geom.Pt; Content string; TextPosition *geom.Pt; TextCoords CoordinateSpec; OffsetX float64; OffsetY float64; OffsetUnits AnnotationOffsetUnits; FontSize float64; Color render.Color; ArrowColor render.Color; ArrowWidth float64; ArrowHeadSize float64; ArrowStyle ArrowStyle; ConnectionStyle ConnectionStyle; HAlign TextAlign; VAlign TextVerticalAlign; Angle float64; Coords CoordinateSpec; FontKey string; BBox *TextBBoxOptions; Linespacing float64; FontProperties *render.FontProperties; ParseMath *bool; AnnotationClip *bool }"
         },
         {
           "id": "type AnnotationBbox",
@@ -7240,8 +7248,12 @@
           "declaration": "type AnnotationBboxOptions struct{ XYCoords CoordinateSpec; BoxCoords CoordinateSpec; BoxPosition *geom.Pt; BoxAlignment *geom.Pt; FrameOn *bool; Padding float64; Image render.Image; ImageZoom float64; FaceColor render.Color; EdgeColor render.Color; LineWidth float64; TextColor render.Color; FontSize float64; FontKey string; FontProperties *render.FontProperties; Arrow bool; ArrowColor render.Color; ArrowWidth float64; ArrowHeadSize float64; ArrowStyle ArrowStyle; ConnectionStyle ConnectionStyle; AnnotationClip *bool }"
         },
         {
+          "id": "type AnnotationOffsetUnits",
+          "declaration": "type AnnotationOffsetUnits uint8"
+        },
+        {
           "id": "type AnnotationOptions",
-          "declaration": "type AnnotationOptions struct{ Coords CoordinateSpec; TextPosition *geom.Pt; TextCoords CoordinateSpec; OffsetX float64; OffsetY float64; FontSize float64; Color render.Color; ArrowColor render.Color; ArrowWidth float64; ArrowHeadSize float64; ArrowStyle ArrowStyle; ConnectionStyle ConnectionStyle; HAlign TextAlign; VAlign TextVerticalAlign; Angle float64; FontKey string; BBox *TextBBoxOptions; Linespacing float64; FontProperties *render.FontProperties; ParseMath *bool; AnnotationClip *bool }"
+          "declaration": "type AnnotationOptions struct{ Coords CoordinateSpec; TextPosition *geom.Pt; TextCoords CoordinateSpec; OffsetX float64; OffsetY float64; OffsetUnits AnnotationOffsetUnits; FontSize float64; Color render.Color; ArrowColor render.Color; ArrowWidth float64; ArrowHeadSize float64; ArrowStyle ArrowStyle; ConnectionStyle ConnectionStyle; HAlign TextAlign; VAlign TextVerticalAlign; Angle float64; FontKey string; BBox *TextBBoxOptions; Linespacing float64; FontProperties *render.FontProperties; ParseMath *bool; AnnotationClip *bool }"
         },
         {
           "id": "type Annulus",

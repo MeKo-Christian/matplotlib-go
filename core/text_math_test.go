@@ -439,8 +439,8 @@ func TestLayoutMathTextSupportsStyleSwitches(t *testing.T) {
 	if romanKey == "" || sansKey == "" || monoKey == "" {
 		t.Fatalf("missing styled run font keys: %+v", layout.Runs)
 	}
-	if !strings.Contains(romanKey, "serif") {
-		t.Fatalf("roman style did not resolve serif font key: %q", romanKey)
+	if !strings.Contains(romanKey, "dejavusans") && !strings.Contains(romanKey, "dejavu sans") {
+		t.Fatalf("roman style did not resolve through default DejaVu Sans math fontset: %q", romanKey)
 	}
 	if !strings.Contains(sansKey, "sans") {
 		t.Fatalf("sans style did not resolve sans font key: %q", sansKey)
@@ -473,6 +473,32 @@ func TestLayoutMathTextUsesFontPropertiesMathFontFamily(t *testing.T) {
 	}
 	if !strings.Contains(xKey, "dejavuserif") && !strings.Contains(xKey, "dejavu serif") {
 		t.Fatalf("math font family did not route default math through DejaVu Serif: %q", xKey)
+	}
+}
+
+func TestLayoutMathTextRomanHonorsExplicitSerifMathFontFamily(t *testing.T) {
+	var r textRecordingRenderer
+	fontKey := render.FontPropertiesKey(render.FontProperties{
+		Families:       []string{"DejaVu Sans"},
+		MathFontFamily: "dejavuserif",
+	})
+	layout, ok := LayoutMathText(&r, `\mathrm{max}`, 20, fontKey)
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+
+	var romanKey string
+	for _, run := range layout.Runs {
+		if strings.TrimSpace(run.Text) == "max" {
+			romanKey = strings.ToLower(run.FontKey)
+			break
+		}
+	}
+	if romanKey == "" {
+		t.Fatalf("missing roman run: %+v", layout.Runs)
+	}
+	if !strings.Contains(romanKey, "dejavuserif") && !strings.Contains(romanKey, "dejavu serif") {
+		t.Fatalf("explicit serif math font family did not route roman text through DejaVu Serif: %q", romanKey)
 	}
 }
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -37,6 +37,7 @@ func Plot() *core.Figure {
 	ax.SetTitle(`MathText $\alpha^2 + \beta_i$`)
 	ax.SetXLabel(`phase $\theta$`)
 	ax.SetYLabel(`amplitude $\frac{1}{\sqrt{2}}$`)
+	arrowStyle, _ := core.ArrowStyleFromString("->")
 	ax.Text(0.98, 0.92, `$x_{\mathrm{max}}$`, core.TextOptions{
 		Coords:   core.Coords(core.CoordAxes),
 		HAlign:   core.TextAlignRight,
@@ -44,11 +45,13 @@ func Plot() *core.Figure {
 		FontSize: 12,
 	})
 	ax.Annotate(`$\Delta y \approx \frac{1}{2}$`, 3.2, 0.35, core.AnnotationOptions{
-		OffsetX:    common.ReferencePointsToPixels(34),
-		OffsetY:    common.ReferencePointsToPixels(-26),
-		FontSize:   12,
-		ArrowColor: render.Color{R: 0, G: 0, B: 0, A: 1},
-		ArrowWidth: 1,
+		OffsetX:     34,
+		OffsetY:     -26,
+		OffsetUnits: core.AnnotationOffsetPoints,
+		FontSize:    12,
+		ArrowColor:  render.Color{R: 0, G: 0, B: 0, A: 1},
+		ArrowWidth:  1,
+		ArrowStyle:  arrowStyle,
 	})
 	ax.Text(0.03, 0.93, `$\omega_n = 2\pi f_n$`, core.TextOptions{
 		Coords:   core.Coords(core.CoordAxes),

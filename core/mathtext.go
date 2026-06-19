@@ -133,7 +133,7 @@ func (mathTextFontResolver) ResolveMathFontKey(base string, request mt.FontReque
 	props := render.ParseFontProperties(base)
 	if len(request.Families) > 0 {
 		props.File = ""
-		props.Families = append([]string(nil), request.Families...)
+		props.Families = mathFontRequestFamilies(props.MathFontFamily, request.Families)
 	} else if families := mathFontFamilyFallbacks(props.MathFontFamily); len(families) > 0 {
 		props.File = ""
 		props.Families = families
@@ -154,6 +154,30 @@ func (mathTextFontResolver) ResolveMathFontKey(base string, request mt.FontReque
 		return props.File
 	}
 	return base
+}
+
+func mathFontRequestFamilies(mathFontFamily string, requested []string) []string {
+	families := append([]string(nil), requested...)
+	if len(families) == 0 || !isDejaVuSerifRomanRequest(families) {
+		return families
+	}
+	switch strings.ToLower(strings.TrimSpace(mathFontFamily)) {
+	case "", "dejavusans", "dejavu sans":
+		return []string{"DejaVu Sans", "sans-serif"}
+	case "dejavuserif", "dejavu serif":
+		return []string{"DejaVu Serif", "serif"}
+	case "cm", "computer modern":
+		return []string{"cmr10", "Computer Modern Roman"}
+	case "stix", "stixsans":
+		return []string{"STIXGeneral"}
+	default:
+		return families
+	}
+}
+
+func isDejaVuSerifRomanRequest(families []string) bool {
+	first := strings.ToLower(strings.TrimSpace(families[0]))
+	return first == "dejavu serif" || first == "dejavuserif"
 }
 
 func mathFontFamilyFallbacks(family string) []string {

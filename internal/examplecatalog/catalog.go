@@ -105,7 +105,7 @@ var cases = []Case{
 	{ID: "axes_option_breadth", Topic: "axes", Title: "Axes Option Breadth", Description: "Scatter scalar styling, edge-aligned stacked bars with labels, fill-between masks/steps/interpolation, and errorevery sampling.", FixtureOnly: true, MinPSNR: 24.0, MaxMeanAbs: 18.0, MaxRMSE: 4.1},
 	{ID: "text_labels_strict", Topic: "text", Title: "Strict Text Labels", Optional: true, SVGGoldenFamily: "text_layout", GoBasicSmokeFamily: "text", SkiaParityFamily: "text", MaxRMSE: 0.3},
 	{ID: "title_strict", Topic: "text", Title: "Strict Title", MaxRMSE: 0.3},
-	{ID: "mathtext_basic", Topic: "mathtext", Title: "MathText Basic", FixtureOnly: true, SVGGoldenFamily: "mathtext", GoBasicSmokeFamily: "mathtext", SkiaParityFamily: "mathtext", MaxRMSE: 5.0},
+	{ID: "mathtext_basic", Topic: "mathtext", Title: "MathText Basic", FixtureOnly: true, SVGGoldenFamily: "mathtext", GoBasicSmokeFamily: "mathtext", SkiaParityFamily: "mathtext", MaxRMSE: 2.8},
 	{ID: "mathtext_fractions", Topic: "mathtext", Title: "MathText Fractions", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 4.5},
 	{ID: "mathtext_integrals", Topic: "mathtext", Title: "MathText Operators", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 0.3},
 	{ID: "mathtext_matrices", Topic: "mathtext", Title: "MathText Matrices", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 0.5},

@@ -1,14 +1,12 @@
 package mathtext_basic
 
 import (
-	"math"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/core"
-	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
 )
 
-func TestPlotConvertsAnnotationOffsetPoints(t *testing.T) {
+func TestPlotUsesAnnotationOffsetPoints(t *testing.T) {
 	fig := Plot()
 	if len(fig.Children) != 1 {
 		t.Fatalf("axes count = %d, want 1", len(fig.Children))
@@ -25,10 +23,11 @@ func TestPlotConvertsAnnotationOffsetPoints(t *testing.T) {
 		t.Fatal("math annotation not found")
 	}
 
-	wantX := common.ReferencePointsToPixels(34)
-	wantY := common.ReferencePointsToPixels(-26)
-	if math.Abs(annotation.OffsetX-wantX) > 1e-9 || math.Abs(annotation.OffsetY-wantY) > 1e-9 {
-		t.Fatalf("annotation offset = (%g, %g), want points converted to pixels (%g, %g)",
-			annotation.OffsetX, annotation.OffsetY, wantX, wantY)
+	if annotation.OffsetX != 34 || annotation.OffsetY != -26 || annotation.OffsetUnits != core.AnnotationOffsetPoints {
+		t.Fatalf("annotation offset = (%g, %g) units=%v, want raw point offsets (34, -26)",
+			annotation.OffsetX, annotation.OffsetY, annotation.OffsetUnits)
+	}
+	if annotation.ArrowStyle.Name != "->" {
+		t.Fatalf("annotation arrow style = %q, want ->", annotation.ArrowStyle.Name)
 	}
 }

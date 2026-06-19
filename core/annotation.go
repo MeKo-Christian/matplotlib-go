@@ -103,13 +103,26 @@ func multilineTextBlockRect(r render.Renderer, ctx *DrawContext, anchor geom.Pt,
 }
 
 func (a *Annotation) textAnchor(ctx *DrawContext) geom.Pt {
+	offset := a.offsetPixels(ctx)
 	if a != nil && a.TextPosition != nil {
-		return transformedPoint(ctx, a.TextCoords, *a.TextPosition, a.OffsetX, a.OffsetY)
+		return transformedPoint(ctx, a.TextCoords, *a.TextPosition, offset.X, offset.Y)
 	}
 	if a == nil {
 		return geom.Pt{}
 	}
-	return transformedPoint(ctx, a.Coords, a.Point, a.OffsetX, a.OffsetY)
+	return transformedPoint(ctx, a.Coords, a.Point, offset.X, offset.Y)
+}
+
+func (a *Annotation) offsetPixels(ctx *DrawContext) geom.Pt {
+	if a == nil {
+		return geom.Pt{}
+	}
+	offset := geom.Pt{X: a.OffsetX, Y: a.OffsetY}
+	if a.OffsetUnits == AnnotationOffsetPoints && ctx != nil {
+		offset.X = pointsToPixels(ctx.RC, offset.X)
+		offset.Y = pointsToPixels(ctx.RC, offset.Y)
+	}
+	return offset
 }
 
 func (a *Annotation) drawArrow(r render.Renderer, ctx *DrawContext, start, target geom.Pt) {

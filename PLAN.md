@@ -148,9 +148,16 @@ June 14 full optional `TestReferenceCompare` sweep has no catalog row above
 `RMSE 5`; after the 2026-06-18 concise-date offset placement fix, the
 highest rows are `imshow_transformed` 4.97, `geo_mollweide_axes` 4.92,
 `boxplot_basic` 4.84, `formatter_engineering_labels` 4.80, and
-`mathtext_basic` 4.77. The
+`ticks_scales_formatters_gallery` 4.76. The
 AGG-native reference sweep is also below `RMSE 5`;
 its highest row is `clip_path_batch` at 4.58.
+
+**MathText basic update (2026-06-19):** `mathtext_basic` now keeps the Go
+fixture parallel to Matplotlib's `textcoords="offset points"` and
+`arrowstyle="->"` annotation setup, and the core MathText resolver routes
+`\mathrm` through Matplotlib's active math font family (`dejavusans` by
+default). The refreshed golden/reference comparison is `RMSE 2.49`, and the
+catalog cap is tightened to `MaxRMSE 2.8`.
 
 **Spectrum update (2026-06-19):** `spectrum_variants` now uses the same
 off-bin two-component signal in Python and Go so phase bins are well-defined,

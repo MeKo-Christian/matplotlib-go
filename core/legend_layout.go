@@ -228,7 +228,7 @@ func (l *Legend) legendAvoidanceData(ctx *DrawContext) legendAvoidanceData {
 			data.points = append(data.points, transformedPoint(ctx, a.Coords, a.Position, a.OffsetX, a.OffsetY))
 		case *Annotation:
 			target := transformedPoint(ctx, a.Coords, a.Point, 0, 0)
-			text := transformedPoint(ctx, a.Coords, a.Point, a.OffsetX, a.OffsetY)
+			text := a.textAnchor(ctx)
 			data.points = append(data.points, target, text)
 		case *AnnotationBbox:
 			target := transformedPoint(ctx, a.XYCoords, a.Point, 0, 0)
