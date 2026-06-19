@@ -35,6 +35,8 @@ func TestColorbarParentAndLayoutModesAreDocumented(t *testing.T) {
 			"func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable",
 			"f.AddAxes(rect)",
 			"ax.colorbarParent = parent",
+		},
+		filepath.Join("..", "core", "colorbar_layout.go"): {
 			"func colorbarUsesResolvedSlot(fig *Figure, parent *Axes) bool",
 			"func colorbarBaseRect(parent *Axes) geom.Rect",
 		},
@@ -114,6 +116,8 @@ func TestColorbarSizeAndAnchorOptionsAreDocumented(t *testing.T) {
 			"Anchor      *geom.Pt",
 			"Location    string",
 			"Orientation string",
+		},
+		filepath.Join("..", "core", "colorbar_layout.go"): {
 			"defaultColorbarFraction          = 0.15",
 			"defaultColorbarPadding           = 0.05",
 			"defaultHorizontalColorbarPadding = 0.15",

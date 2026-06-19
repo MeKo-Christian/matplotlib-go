@@ -55,6 +55,8 @@ func TestColorbarMutableMappableUpdateContractIsDocumented(t *testing.T) {
 		filepath.Join("..", "core", "colorbar.go"): {
 			"Mappable    ScalarMappable",
 			"mappable.ScalarMap().Resolved()",
+		},
+		filepath.Join("..", "core", "colorbar_scale.go"): {
 			"func syncColorbarMapping(ax *Axes)",
 			"mapping := cb.currentMapping()",
 			"configureColorbarScale(ax, mapping, ax.colorbarLocation, ax.colorbarTicks, ax.colorbarBounds, ax.colorbarExtend)",

@@ -429,39 +429,39 @@ large generated/catalog artifacts that affect review quality:
         label-origin math into `axis_ticklabels.go`.
   - [x] `core/axis.go`: extract polar spine/tick/tick-label behavior into
         `axis_polar.go`.
-- [ ] **L4 — Split text, 3D, and presentation helpers.** Split `core/text.go`
+- [x] **L4 — Split text, 3D, and presentation helpers.** Split `core/text.go`
       into text/annotation API, multiline layout, bbox drawing, annotation
       arrows, and coordinate helpers. Split `core/axes3d_contour_surface.go`
       into 3D contour lines, filled contours, surface/trisurf generation, and
       compound contour path helpers. Split `core/legend.go` and
       `core/colorbar.go` by layout, mapping/configuration, drawing, and helper
       responsibilities.
-  - [ ] `core/text.go`: extract text/annotation option structs, constructors, and
+  - [x] `core/text.go`: extract text/annotation option structs, constructors, and
         public methods into `text_api.go`.
-  - [ ] `core/text.go`: extract single-line/multiline measurement, rotated
+  - [x] `core/text.go`: extract single-line/multiline measurement, rotated
         layout, wrapping, and alignment helpers into `text_layout.go`.
-  - [ ] `core/text.go`: extract bbox rectangle/path calculation and bbox drawing
+  - [x] `core/text.go`: extract bbox rectangle/path calculation and bbox drawing
         into `text_bbox.go`.
-  - [ ] `core/text.go`: extract annotation arrow drawing, arrow clipping, and
+  - [x] `core/text.go`: extract annotation arrow drawing, arrow clipping, and
         coordinate conversion helpers into `annotation.go`.
-  - [ ] `core/axes3d_contour_surface.go`: extract 3D contour line and
+  - [x] `core/axes3d_contour_surface.go`: extract 3D contour line and
         tri-contour line projection helpers into `axes3d_contour.go`.
-  - [ ] `core/axes3d_contour_surface.go`: extract filled contour, tri-filled
+  - [x] `core/axes3d_contour_surface.go`: extract filled contour, tri-filled
         contour, compound path, and band-polygon helpers into
         `axes3d_contourf.go`.
-  - [ ] `core/axes3d_contour_surface.go`: extract surface, trisurf, sampling, and
+  - [x] `core/axes3d_contour_surface.go`: extract surface, trisurf, sampling, and
         surface polygon projection helpers into `axes3d_surface.go`.
-  - [ ] `core/legend.go`: extract layout calculation and best-placement avoidance
+  - [x] `core/legend.go`: extract layout calculation and best-placement avoidance
         into `legend_layout.go`.
-  - [ ] `core/legend.go`: extract entry collection, handler overrides, stem
+  - [x] `core/legend.go`: extract entry collection, handler overrides, stem
         detection, and option-to-entry conversion into `legend_entries.go`.
-  - [ ] `core/legend.go`: extract line/scatter/errorbar/patch sample drawing into
+  - [x] `core/legend.go`: extract line/scatter/errorbar/patch sample drawing into
         `legend_samples.go`.
-  - [ ] `core/colorbar.go`: extract placement and parent-axes geometry into
+  - [x] `core/colorbar.go`: extract placement and parent-axes geometry into
         `colorbar_layout.go`.
-  - [ ] `core/colorbar.go`: extract scale/tick/boundary mapping and extension
+  - [x] `core/colorbar.go`: extract scale/tick/boundary mapping and extension
         value helpers into `colorbar_scale.go`.
-  - [ ] `core/colorbar.go`: extract draw, overlay, outline, extension path, and
+  - [x] `core/colorbar.go`: extract draw, overlay, outline, extension path, and
         divider rendering into `colorbar_draw.go`.
 - [ ] **L5 — Split facade and tool entrypoints.** Split `pyplot/pyplot.go` into
       registry/current-state management, figure/axes helpers, plotting wrappers,

@@ -35,12 +35,16 @@ func TestColorbarBoundariesAndExtensionsAreDocumented(t *testing.T) {
 			"Spacing     string",
 			"DrawEdges   bool",
 			"ExtendRect  bool",
+		},
+		filepath.Join("..", "core", "colorbar_draw.go"): {
+			"func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRect bool)",
+			"func drawColorbarBoundaryDividers",
+		},
+		filepath.Join("..", "core", "colorbar_scale.go"): {
 			"func colorbarOptionBoundaries(values, boundaries []float64) []float64",
 			"func colorbarInteriorBoundaries(boundaries []float64, extend string) []float64",
 			"func normalizeColorbarSpacing(spacing string) string",
-			"func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRect bool)",
 			"func (c *Colorbar) boundaryExtensionValue(mapping ScalarMapInfo, overRange bool) (float64, bool)",
-			"func drawColorbarBoundaryDividers",
 		},
 		filepath.Join("..", "core", "colorbar_test.go"): {
 			"TestFigureAddColorbarUsesBoundaryNormTicks",
@@ -142,6 +146,8 @@ func TestColorbarTickAndLabelFormattingIsDocumented(t *testing.T) {
 			"Ticks       []float64",
 			"Label       string",
 			"Orientation string",
+		},
+		filepath.Join("..", "core", "colorbar_scale.go"): {
 			"func configureColorbarScale",
 			"target.Locator = FixedLocator{TicksList: cloneFloat64s(boundaries)}",
 			"target.Formatter = ScalarFormatter{Prec: 6}",

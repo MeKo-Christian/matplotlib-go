@@ -2,11 +2,352 @@ package core
 
 import (
 	"math"
+	"reflect"
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
+
+type legendEntryKind uint8
+
+const (
+	legendEntryLine legendEntryKind = iota
+	legendEntryMarker
+	legendEntryPatch
+	legendEntryErrorBar
+)
+
+// LegendSample selects the sample style for an explicit legend entry.
+type LegendSample uint8
+
+const (
+	// LegendSampleLine draws a line sample for an explicit legend entry.
+	LegendSampleLine LegendSample = iota
+	// LegendSampleMarker draws marker samples for an explicit legend entry.
+	LegendSampleMarker
+	// LegendSamplePatch draws a filled patch sample for an explicit legend entry.
+	LegendSamplePatch
+)
+
+// LegendEntryOptions configures an explicit legend entry, useful for proxy-like
+// entries that are not collected from an artist.
+type LegendEntryOptions struct {
+	Sample LegendSample
+
+	Color     render.Color
+	LineWidth float64
+	Dashes    []float64
+
+	Marker          MarkerType
+	MarkerPath      geom.Path
+	MarkerFaceColor render.Color
+	MarkerEdgeColor render.Color
+	MarkerEdgeWidth float64
+
+	FaceColor  render.Color
+	EdgeColor  render.Color
+	EdgeWidth  float64
+	Hatch      string
+	HatchColor render.Color
+	HatchWidth float64
+}
+
+type legendEntry struct {
+	Label string
+
+	kind legendEntryKind
+
+	lineColor     render.Color
+	lineWidth     float64
+	lineJoin      render.LineJoin
+	lineCap       render.LineCap
+	dashes        []float64
+	lineMarkerSet bool
+
+	marker          MarkerType
+	markerStyle     MarkerStyle
+	markerPath      geom.Path
+	markerAltPath   geom.Path
+	markerEdgePath  geom.Path
+	markerHasAlt    bool
+	markerLineOnly  bool
+	markerFill      render.Color
+	markerAltFill   render.Color
+	markerEdge      render.Color
+	markerEdgeWidth float64
+	markerSize      float64
+	markerLineJoin  render.LineJoin
+	markerLineCap   render.LineCap
+	markerSnap      render.SnapMode
+
+	patchFill       render.Color
+	patchEdge       render.Color
+	patchEdgeWidth  float64
+	patchHatch      string
+	patchHatchColor render.Color
+	patchHatchWidth float64
+
+	errorbarX        bool
+	errorbarY        bool
+	errorbarCapSize  float64
+	errorbarCapWidth float64
+}
+
+type legendEntryProvider interface {
+	legendEntry() (legendEntry, bool)
+}
+
+type legendHandlerOverride struct {
+	artist Artist
+	entry  legendEntry
+}
+
+// AddEntry appends an explicit proxy-like entry to the legend.
+func (l *Legend) AddEntry(label string, opts LegendEntryOptions) *Legend {
+	if l == nil || !legendLabelVisible(label) {
+		return l
+	}
+	l.entries = append(l.entries, legendEntryFromOptions(label, opts))
+	return l
+}
+
+// SetHandler overrides the legend sample for a collected artist using the same
+// typed sample options as explicit proxy entries.
+func (l *Legend) SetHandler(art Artist, opts LegendEntryOptions) *Legend {
+	if l == nil || art == nil {
+		return l
+	}
+	entry := legendEntryFromOptions("", opts)
+	for i := range l.handlers {
+		if sameLegendArtist(l.handlers[i].artist, art) {
+			l.handlers[i].entry = entry
+			return l
+		}
+	}
+	l.handlers = append(l.handlers, legendHandlerOverride{artist: art, entry: entry})
+	return l
+}
+
+// ClearHandler removes a custom legend sample override for a collected artist.
+func (l *Legend) ClearHandler(art Artist) *Legend {
+	if l == nil || art == nil {
+		return l
+	}
+	for i := range l.handlers {
+		if sameLegendArtist(l.handlers[i].artist, art) {
+			l.handlers = append(l.handlers[:i], l.handlers[i+1:]...)
+			return l
+		}
+	}
+	return l
+}
+
+func (l *Legend) collectEntries() []legendEntry {
+	if l == nil {
+		return nil
+	}
+
+	switch {
+	case l.Axes != nil:
+		return l.collectLegendEntries(l.Axes.Artists)
+	case l.Figure != nil:
+		var entries []legendEntry
+		for _, ax := range l.Figure.Children {
+			entries = append(entries, l.collectLegendEntries(ax.Artists)...)
+		}
+		return entries
+	default:
+		return nil
+	}
+}
+
+func collectLegendEntries(artists []Artist) []legendEntry {
+	return (*Legend)(nil).collectLegendEntries(artists)
+}
+
+func (l *Legend) collectLegendEntries(artists []Artist) []legendEntry {
+	entries := make([]legendEntry, 0, len(artists))
+	deferredErrorBars := make([]Artist, 0)
+	for i := 0; i < len(artists); i++ {
+		art := artists[i]
+		if entry, ok := l.stemLegendEntryAt(artists, i); ok {
+			entries = append(entries, entry)
+			i++
+			continue
+		}
+		if _, ok := art.(*ErrorBar); ok {
+			deferredErrorBars = append(deferredErrorBars, art)
+			continue
+		}
+		if entry, ok := l.legendEntryForArtist(art); ok {
+			entries = append(entries, entry)
+		}
+	}
+	for _, art := range deferredErrorBars {
+		if entry, ok := l.legendEntryForArtist(art); ok {
+			entries = append(entries, entry)
+		}
+	}
+	return entries
+}
+
+func (l *Legend) legendEntryForArtist(art Artist) (legendEntry, bool) {
+	switch art.(type) {
+	case *Legend:
+		return legendEntry{}, false
+	default:
+		provider, ok := art.(legendEntryProvider)
+		if !ok {
+			return legendEntry{}, false
+		}
+		label := ArtistLabel(art)
+		if !legendLabelVisible(label) {
+			return legendEntry{}, false
+		}
+		if entry, ok := l.handlerEntryFor(art, label); ok {
+			return entry, true
+		}
+		entry, ok := provider.legendEntry()
+		if !ok {
+			return legendEntry{}, false
+		}
+		entry.Label = label
+		return entry, true
+	}
+}
+
+func (l *Legend) stemLegendEntryAt(artists []Artist, i int) (legendEntry, bool) {
+	if i+1 >= len(artists) {
+		return legendEntry{}, false
+	}
+	stems, ok := artists[i].(*LineCollection)
+	if !ok || !lineCollectionLooksLikeStems(stems) {
+		return legendEntry{}, false
+	}
+	markers, ok := artists[i+1].(*PathCollection)
+	if !ok {
+		return legendEntry{}, false
+	}
+	label := stems.label()
+	if label == "" || label != markers.label() || !legendLabelVisible(label) {
+		return legendEntry{}, false
+	}
+	if _, ok := l.handlerEntryFor(stems, label); ok {
+		return legendEntry{}, false
+	}
+	if _, ok := l.handlerEntryFor(markers, label); ok {
+		return legendEntry{}, false
+	}
+
+	lineEntry, ok := stems.legendEntry()
+	if !ok {
+		return legendEntry{}, false
+	}
+	markerEntry, ok := markers.legendEntry()
+	if !ok {
+		return legendEntry{}, false
+	}
+
+	entry := lineEntry
+	entry.kind = legendEntryErrorBar
+	entry.errorbarY = true
+	entry.lineMarkerSet = true
+	entry.marker = markerEntry.marker
+	entry.markerPath = markerEntry.markerPath
+	entry.markerAltPath = markerEntry.markerAltPath
+	entry.markerEdgePath = markerEntry.markerEdgePath
+	entry.markerHasAlt = markerEntry.markerHasAlt
+	entry.markerLineOnly = markerEntry.markerLineOnly
+	entry.markerFill = markerEntry.markerFill
+	entry.markerAltFill = markerEntry.markerAltFill
+	entry.markerEdge = markerEntry.markerEdge
+	entry.markerEdgeWidth = markerEntry.markerEdgeWidth
+	return entry, true
+}
+
+func lineCollectionLooksLikeStems(stems *LineCollection) bool {
+	if stems == nil || len(stems.Segments) == 0 {
+		return false
+	}
+	vertical := 0
+	horizontal := 0
+	for _, segment := range stems.Segments {
+		if len(segment) != 2 {
+			return false
+		}
+		dx := math.Abs(segment[1].X - segment[0].X)
+		dy := math.Abs(segment[1].Y - segment[0].Y)
+		switch {
+		case dx <= 1e-12 && dy > 1e-12:
+			vertical++
+		case dy <= 1e-12 && dx > 1e-12:
+			horizontal++
+		default:
+			return false
+		}
+	}
+	return vertical == len(stems.Segments) || horizontal == len(stems.Segments)
+}
+
+func (l *Legend) handlerEntryFor(art Artist, label string) (legendEntry, bool) {
+	if l == nil || art == nil {
+		return legendEntry{}, false
+	}
+	for _, handler := range l.handlers {
+		if sameLegendArtist(handler.artist, art) {
+			entry := handler.entry
+			entry.Label = label
+			return entry, true
+		}
+	}
+	return legendEntry{}, false
+}
+
+func sameLegendArtist(a, b Artist) bool {
+	if a == nil || b == nil {
+		return false
+	}
+	av := reflect.ValueOf(a)
+	bv := reflect.ValueOf(b)
+	if av.Kind() != reflect.Pointer || bv.Kind() != reflect.Pointer || av.Type() != bv.Type() {
+		return false
+	}
+	return av.Pointer() == bv.Pointer()
+}
+
+func legendEntryFromOptions(label string, opts LegendEntryOptions) legendEntry {
+	switch opts.Sample {
+	case LegendSampleMarker:
+		return legendEntryFromMarker(
+			label,
+			opts.Marker,
+			opts.MarkerPath,
+			defaultVisibleColor(opts.MarkerFaceColor),
+			defaultVisibleColor(opts.MarkerEdgeColor),
+			opts.MarkerEdgeWidth,
+		)
+	case LegendSamplePatch:
+		return legendEntryFromPatchStyle(
+			label,
+			opts.FaceColor,
+			opts.EdgeColor,
+			opts.EdgeWidth,
+			opts.Hatch,
+			opts.HatchColor,
+			opts.HatchWidth,
+		)
+	default:
+		return legendEntryFromLine(label, defaultVisibleColor(opts.Color), opts.LineWidth, opts.Dashes)
+	}
+}
+
+func defaultVisibleColor(color render.Color) render.Color {
+	if color == (render.Color{}) {
+		return render.Color{A: 1}
+	}
+	return color
+}
 
 func legendEntryFromPatchStyle(label string, face, edge render.Color, edgeWidth float64, hatch string, hatchColor render.Color, hatchWidth float64) legendEntry {
 	if hatch != "" {
