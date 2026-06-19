@@ -147,10 +147,15 @@ fills/collections, contour/mesh, arrays, widgets, and mixed raster/vector. The
 June 14 full optional `TestReferenceCompare` sweep has no catalog row above
 `RMSE 5`; after the 2026-06-18 concise-date offset placement fix, the
 highest rows are `imshow_transformed` 4.97, `geo_mollweide_axes` 4.92,
-`legend_layout_matrix` 4.86, `spectrum_variants` 4.85, `boxplot_basic` 4.84,
+`legend_layout_matrix` 4.86, `boxplot_basic` 4.84,
 `formatter_engineering_labels` 4.80, and `mathtext_basic` 4.77. The
 AGG-native reference sweep is also below `RMSE 5`;
 its highest row is `clip_path_batch` at 4.58.
+
+**Spectrum update (2026-06-19):** `spectrum_variants` now uses the same
+off-bin two-component signal in Python and Go so phase bins are well-defined,
+and the stacked axes have enough vertical space for Matplotlib's automatic
+`Frequency` labels. The refreshed golden/reference comparison is `RMSE 1.15`.
 
 The June 13 regression queue is retained below as closure history. The catalog
 RMSE tolerances have been ratcheted to the refreshed metrics plus small headroom,

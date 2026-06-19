@@ -16,7 +16,7 @@ except ModuleNotFoundError:
 
 def spectrum_signal():
     t = np.arange(128, dtype=np.float64) / 64.0
-    return np.sin(2 * np.pi * 5 * t) + 0.35 * np.cos(2 * np.pi * 12 * t + 0.4)
+    return np.sin(2 * np.pi * 5.25 * t) + 0.35 * np.cos(2 * np.pi * 12.4 * t + 0.4)
 
 
 def plot_spectrum_variants(out_dir):
@@ -24,7 +24,7 @@ def plot_spectrum_variants(out_dir):
     x = spectrum_signal()
     window = np.ones(len(x), dtype=np.float64)
 
-    mag_ax = fig.add_axes(go_rect(0.08, 0.68, 0.96, 0.93))
+    mag_ax = fig.add_axes(go_rect(0.08, 0.72, 0.96, 0.93))
     mag_ax.set_title("Magnitude Spectrum")
     mag_ax.magnitude_spectrum(
         x,
@@ -36,7 +36,7 @@ def plot_spectrum_variants(out_dir):
     )
     mag_ax.grid(axis="y")
 
-    angle_ax = fig.add_axes(go_rect(0.08, 0.38, 0.96, 0.63))
+    angle_ax = fig.add_axes(go_rect(0.08, 0.41, 0.96, 0.62))
     angle_ax.set_title("Angle Spectrum")
     angle_ax.angle_spectrum(
         x,
@@ -49,7 +49,7 @@ def plot_spectrum_variants(out_dir):
     )
     angle_ax.grid(axis="y")
 
-    phase_ax = fig.add_axes(go_rect(0.08, 0.08, 0.96, 0.33))
+    phase_ax = fig.add_axes(go_rect(0.08, 0.10, 0.96, 0.31))
     phase_ax.set_title("Phase Spectrum")
     phase_ax.phase_spectrum(
         x,

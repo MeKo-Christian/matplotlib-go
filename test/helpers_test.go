@@ -293,7 +293,7 @@ func runMplTest(t *testing.T, name string) {
 		t.Fatalf("image comparison failed: %v", err)
 	}
 
-	t.Logf("PSNR=%.1f dB  MeanAbs=%.2f  MaxDiff=%d", diff.PSNR, diff.MeanAbs, diff.MaxDiff)
+	t.Logf("PSNR=%.1f dB  MeanAbs=%.2f  RMSE=%.2f  MaxDiff=%d", diff.PSNR, diff.MeanAbs, diff.RMSE, diff.MaxDiff)
 
 	artifactsDir := matplotlibArtifactsDir(t)
 	if err := imagecmp.SavePNG(got, filepath.Join(artifactsDir, name+"_go.png")); err != nil {

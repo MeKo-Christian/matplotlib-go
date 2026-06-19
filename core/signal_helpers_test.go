@@ -168,6 +168,25 @@ func TestMagnitudeSpectrumSidesScaleAndFrequencyOffset(t *testing.T) {
 	}
 }
 
+func TestSingleSpectrumOneSidedEvenNyquistFrequencyMatchesMatplotlib(t *testing.T) {
+	freqs, values := computeMagnitudeSpectrum([]float64{1, 0, -1, 0}, SignalSpectrumOptions{
+		Fs:     8,
+		Fc:     10,
+		Window: "none",
+		Sides:  SignalSpectrumSidesOneSided,
+	})
+
+	wantFreqs := []float64{10, 12, 14}
+	if len(freqs) != len(wantFreqs) || len(values) != len(wantFreqs) {
+		t.Fatalf("spectrum size = (%d, %d), want %d", len(freqs), len(values), len(wantFreqs))
+	}
+	for i, want := range wantFreqs {
+		if math.Abs(freqs[i]-want) > 1e-12 {
+			t.Fatalf("freq[%d] = %v, want Matplotlib fftfreq bin %v", i, freqs[i], want)
+		}
+	}
+}
+
 func TestAxesMagnitudeSpectrumPlotsDBButReturnsLinearValues(t *testing.T) {
 	samples := make([]float64, 8)
 	for i := range samples {

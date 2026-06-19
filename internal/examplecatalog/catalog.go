@@ -164,10 +164,9 @@ var cases = []Case{
 	{ID: "patch_style_matrix", Topic: "patches", Title: "Patch Style Matrix", FixtureOnly: true, MinPSNR: 22.0, MaxMeanAbs: 20.0, MaxRMSE: 4.2},
 	{ID: "mesh_contour_tri", Topic: "mesh", Title: "Meshes and Contours", Optional: true, WebDemoID: "mesh", Description: "PColorMesh, contour/contourf, Hist2D, triplot, tripcolor, and tricontour.", Showcase: true, GoBasicSmokeFamily: "mesh", MinPSNR: 37.5, MaxMeanAbs: 7.5, SkiaParityFamily: "mesh", MaxRMSE: 2.6},
 	{ID: "plot_variants", Topic: "variants", Title: "Plot Variants", Optional: true, WebDemoID: "variants", Description: "Step, stairs, reference lines, spans, broken bars, and stacked bars.", Showcase: true, GoBasicSmokeFamily: "variants", MinPSNR: 35.0, MaxMeanAbs: 6.5, MaxRMSE: 4.2},
-	// Phase 2 ratchet: regenerated golden-vs-reference RMSE is 4.85 after the
-	// renderer and text parity work, so the old broad spectrum exception is no
-	// longer needed.
-	{ID: "spectrum_variants", Topic: "signal", Title: "Spectrum Variants", FixtureOnly: true, GoBasicSmokeFamily: "signal", MinPSNR: 35.0, MaxMeanAbs: 6.5, MaxRMSE: 5.0},
+	// Phase 2 ratchet: off-bin fixture signal avoids undefined phase residues;
+	// regenerated golden-vs-reference RMSE is 1.15.
+	{ID: "spectrum_variants", Topic: "signal", Title: "Spectrum Variants", FixtureOnly: true, GoBasicSmokeFamily: "signal", MinPSNR: 60.0, MaxMeanAbs: 0.10, MaxRMSE: 1.5},
 	{ID: "stat_variants", Topic: "statistics", Title: "Statistical Views", Optional: true, WebDemoID: "statistics", Description: "Box plots, violin plots, empirical CDFs, and stack plots.", Showcase: true, GoBasicSmokeFamily: "statistics", MinPSNR: 52.0, MaxMeanAbs: 0.35, MaxRMSE: 5.0},
 	{ID: "specialty_depth", Topic: "statistics", Title: "Specialty Depth", FixtureOnly: true, MinPSNR: 22.0, MaxMeanAbs: 20.0, MaxRMSE: 4.8},
 	{ID: "stem_plot", Topic: "specialty", Title: "Stem Plot", Optional: true, MaxRMSE: 4.3},
