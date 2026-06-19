@@ -145,10 +145,9 @@ mplot3d, projections, axisartist/projection-toolkit leftovers, text
 wrapping/rotated layout, MathText and annotation tails, legend/offsetbox layout,
 fills/collections, contour/mesh, arrays, widgets, and mixed raster/vector. The
 June 14 full optional `TestReferenceCompare` sweep has no catalog row above
-`RMSE 5`; after the 2026-06-18 concise-date offset placement fix, the
+`RMSE 5`; after the 2026-06-20 overlapping-axes patch draw-order fix, the
 highest rows are `imshow_transformed` 4.97, `geo_mollweide_axes` 4.92,
-`boxplot_basic` 4.84, `formatter_engineering_labels` 4.80, and
-`ticks_scales_formatters_gallery` 4.76. The
+`boxplot_basic` 4.84, and `formatter_engineering_labels` 4.80. The
 AGG-native reference sweep is also below `RMSE 5`;
 its highest row is `clip_path_batch` at 4.58.
 
@@ -266,9 +265,10 @@ RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run 'TestReferenceCompa
       scales and uses the unsnapped Matplotlib y-label bbox extent. Updated
       committed golden/reference metric: RMSE 0.56, PSNR 62.53 dB, MeanAbs
       0.02.
-- [x] `ticks_scales_formatters_gallery`: below target in the refreshed
-      2026-06-14 sweep after the focused W3 rows moved. Current committed
-      golden/reference metric: RMSE 4.76, PSNR 56.77 dB, MeanAbs 0.11.
+- [x] `ticks_scales_formatters_gallery`: tightened below RMSE 3 on 2026-06-20
+      by drawing same-background axes patches when later axes overlap earlier
+      axes, matching Matplotlib inset occlusion semantics. Current committed
+      golden/reference metric: RMSE 2.80, PSNR 57.34 dB, MeanAbs 0.08.
 - [x] `named_colors`: below target in the refreshed 2026-06-14 sweep. Current
       committed golden/reference metric: RMSE 4.26, PSNR 49.74 dB, MeanAbs
       0.47.

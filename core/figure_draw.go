@@ -23,6 +23,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 	syncAxesLocators(fig, r)
 	alignment := computeFigureTextAlignment(fig, r, vp)
 
+	drawnAxes := make([]geom.Rect, 0, len(fig.Children))
 	for _, ax := range fig.Children {
 		px := ax.adjustedLayout(fig)
 		xAxis := ax.effectiveXAxis()
@@ -67,7 +68,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 			continue
 		}
 
-		if ctx.RC.AxesBackground != fig.RC.FigureBackground() {
+		if shouldDrawAxesBackground(ctx.RC.AxesBackground, fig.RC.FigureBackground(), px, drawnAxes) {
 			backgroundPath := pixelRectPath(px)
 			if framePath, ok := projectionFramePath(ctx.Projection, px); ok {
 				backgroundPath = framePath
@@ -76,6 +77,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 				Fill: ctx.RC.AxesBackground,
 			})
 		}
+		drawnAxes = append(drawnAxes, px)
 
 		// Draw only clipped content (data and grids) while the axes clip is active.
 		r.Save()
@@ -175,6 +177,21 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 	if opts.AnimatedFilter != AnimatedFilterOnlyAnimated {
 		drawFigureLabels(fig, r, vp)
 	}
+}
+
+func shouldDrawAxesBackground(axesBackground, figureBackground render.Color, px geom.Rect, previous []geom.Rect) bool {
+	if axesBackground.A <= 0 {
+		return false
+	}
+	if axesBackground != figureBackground {
+		return true
+	}
+	for _, other := range previous {
+		if rectsOverlap(px, other) {
+			return true
+		}
+	}
+	return false
 }
 
 func setRendererResolution(r render.Renderer, dpi float64) {

@@ -149,10 +149,8 @@ var cases = []Case{
 	{ID: "scale_logit_ticks", Topic: "axes", Title: "Logit Scale Ticks", FixtureOnly: true, Width: 720, Height: 400, MinPSNR: 57.0, MaxMeanAbs: 0.10, MaxRMSE: 4.0},
 	{ID: "scale_symlog_ticks", Topic: "axes", Title: "Symlog Scale Ticks", FixtureOnly: true, Width: 720, Height: 400, MinPSNR: 64.0, MaxMeanAbs: 0.05, MaxRMSE: 0.5},
 	{ID: "ticks_styling_surface", Topic: "axes", Title: "Tick Styling Surface", FixtureOnly: true, Width: 720, Height: 420, MinPSNR: 50.0, MaxMeanAbs: 0.30, MaxRMSE: 3.0},
-	// W3.9 ratchet: regenerated golden-vs-reference RMSE is 4.76. The
-	// remaining residual is a narrow text/tick antialiasing tail after the
-	// locator, formatter, date, category, and unit geometry fixes.
-	{ID: "ticks_scales_formatters_gallery", Topic: "axes", Title: "Ticks, Scales, and Formatters Gallery", Description: "A focused gallery covering major and minor locators, log and signed scales, formatter families, date labels, category labels, and custom units.", Optional: true, Width: 1320, Height: 900, Showcase: true, MinPSNR: 56.0, MaxMeanAbs: 0.15, MaxRMSE: 4.9},
+	// Axes-patch draw-order ratchet: regenerated golden-vs-reference RMSE is 2.80.
+	{ID: "ticks_scales_formatters_gallery", Topic: "axes", Title: "Ticks, Scales, and Formatters Gallery", Description: "A focused gallery covering major and minor locators, log and signed scales, formatter families, date labels, category labels, and custom units.", Optional: true, Width: 1320, Height: 900, Showcase: true, MinPSNR: 57.0, MaxMeanAbs: 0.10, MaxRMSE: 2.9},
 	{ID: "artist_metadata", Topic: "artist", Title: "Artist Metadata", FixtureOnly: true, MinPSNR: 40.0, MaxMeanAbs: 4.0, MaxRMSE: 1.7},
 	{ID: "gridspec_composition", Topic: "composition", Title: "Figure Composition", WebDemoID: "composition", Description: "GridSpec spans, figure-level labels, figure legends, anchored text, and colorbars.", Showcase: true, GoBasicSmokeFamily: "layout", MinPSNR: 35.0, MaxMeanAbs: 8.0, MaxRMSE: 0.8},
 	{ID: "figure_labels_composition", Topic: "composition", Title: "Figure Labels", Description: "A multi-axes figure with shared figure title, x label, y label, and legend placement.", WebDemoID: "subplots", Showcase: true, MinPSNR: 32.0, MaxMeanAbs: 9.0, MaxRMSE: 2.0},
