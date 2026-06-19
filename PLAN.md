@@ -374,7 +374,7 @@ large generated/catalog artifacts that affect review quality:
       non-Go artifacts above 256 KiB. Record the initial inventory in
       `docs/large-file-decomposition.md` so future splits are measured against a
       stable baseline.
-- [ ] **L2 — Split tests first.** Split large `*_test.go` files by behavior
+- [x] **L2 — Split tests first.** Split large `*_test.go` files by behavior
       family while keeping package names and helper visibility unchanged. Start
       with `core/axes3d_test.go`, then `core/text_test.go`,
       `core/axis_test.go`, `core/mesh_contour_test.go`, and the backend test
@@ -382,26 +382,26 @@ large generated/catalog artifacts that affect review quality:
   - [x] `core/axes3d_test.go`: split into projection/view/limits,
         scatter-mappables-colorbar, wire/surface/trisurf/voxels, frame/ticks/text,
         contour, and shared `axes3d_test_helpers.go`.
-  - [ ] `core/text_test.go`: split into draw/layout, multiline layout, bbox,
+  - [x] `core/text_test.go`: split into draw/layout, multiline layout, bbox,
         annotation, MathText/TeX, and shared text recorder/helper files.
-  - [ ] `core/axis_test.go`: split into limits/scales, ticks/formatters,
+  - [x] `core/axis_test.go`: split into limits/scales, ticks/formatters,
         label positioning, grid/spines/frame, polar, and shared axis test
         helpers.
-  - [ ] `core/mesh_contour_test.go`: split mesh/pcolor/hist2d tests from
+  - [x] `core/mesh_contour_test.go`: split mesh/pcolor/hist2d tests from
         contour/clabel/tri-contour tests.
-  - [ ] `core/legend_test.go`: split entry collection, layout/draw, sample
+  - [x] `core/legend_test.go`: split entry collection, layout/draw, sample
         drawing, best placement, and helper recorders.
-  - [ ] `core/patch_test.go`: split rectangle/fancybox, connection styles,
+  - [x] `core/patch_test.go`: split rectangle/fancybox, connection styles,
         arrow styles, connection patch, and miscellaneous patch classes.
-  - [ ] Backend tests: split `backends/svg/svg_test.go`,
+  - [x] Backend tests: split `backends/svg/svg_test.go`,
         `backends/agg/agg_test.go`, and `backends/pdf/pdf_test.go` by lifecycle,
         paths/hatches, markers/batches, images, text/fonts, and clipping or
         serialization.
-  - [ ] Stateful/runtime tests: split `pyplot/pyplot_test.go` by registry/layout,
+  - [x] Stateful/runtime tests: split `pyplot/pyplot_test.go` by registry/layout,
         wrappers, backend/show/save, and rc/style; split
         `canvas/widget_interaction_test.go` by buttons/sliders, check/radio/textbox,
         selectors, cursor, and picking.
-  - [ ] Diagnostics: split or annotate `test/diagnostics_test.go` by diagnostic
+  - [x] Diagnostics: split or annotate `test/diagnostics_test.go` by diagnostic
         family if it keeps growing, while preserving env-gated behavior.
 - [ ] **L3 — Split algorithm-heavy core files.** Split `core/contour.go` into
       API/set construction, level selection, line extraction, filled-band
