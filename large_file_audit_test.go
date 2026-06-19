@@ -44,6 +44,41 @@ func TestLargeFileAuditPlumbingIsDocumented(t *testing.T) {
 	}
 }
 
+func TestGeneratedDataStrategyIsDocumented(t *testing.T) {
+	doc := readTextFile(t, "docs/large-file-decomposition.md")
+	for _, want := range []string{
+		"## Generated and Fixture Data Strategy",
+		"`internal/examplecatalog/public_surface_parity.go`",
+		"Keep-large curated catalog",
+		"`test/testdata/parity_surface/upstream_public_surface.json`",
+		"`internal/examplecatalog/extract_public_surface.py`",
+		"`color/named_colors_data.go`",
+		"Keep-large generated table",
+		"`third_party/matplotlib/lib/matplotlib/_color_data.py`",
+		"`TestNamedColorInventoryMatchesMatplotlibTables`",
+		"Golden/reference PNG, SVG, PDF, and JSON fixtures",
+	} {
+		if !strings.Contains(doc, want) {
+			t.Fatalf("large-file decomposition doc missing L7 decision detail %q", want)
+		}
+	}
+
+	plan := readTextFile(t, "PLAN.md")
+	if !strings.Contains(plan, "[x] **L7 — Decide generated-data strategy.**") {
+		t.Fatal("PLAN.md does not mark the Phase 4 L7 generated-data strategy done")
+	}
+
+	publicSurface := readTextFile(t, "internal/examplecatalog/public_surface_parity.go")
+	if !strings.Contains(publicSurface, "curated parity catalog") {
+		t.Fatal("public_surface_parity.go should identify itself as curated catalog data")
+	}
+
+	namedColors := readTextFile(t, "color/named_colors_data.go")
+	if !strings.HasPrefix(namedColors, "// Code generated from third_party/matplotlib/lib/matplotlib/_color_data.py; DO NOT EDIT.") {
+		t.Fatal("named_colors_data.go should retain its generated-source header")
+	}
+}
+
 func TestContourAPISplitIsTracked(t *testing.T) {
 	api := readTextFile(t, "core/contour_api.go")
 	for _, want := range []string{

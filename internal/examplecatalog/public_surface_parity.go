@@ -1,3 +1,5 @@
+// This curated parity catalog is intentionally kept as a single large file.
+// See docs/large-file-decomposition.md for the Phase 4 L7 decision.
 package examplecatalog
 
 import (

@@ -491,30 +491,30 @@ large generated/catalog artifacts that affect review quality:
         raw diff, amplified diff, and PNG encoding into `images.go`.
   - [x] `cmd/parityviewer/main.go`: extract HTML page/card rendering and CSS
         constants into `html.go`.
-- [ ] **L6 — Split backend implementation files.** Split AGG path preparation,
+- [x] **L6 — Split backend implementation files.** Split AGG path preparation,
       snapping/simplification/chunking, hatching, FreeType measurement, text
       drawing, and MathText rasterization into focused files. Apply the same
       pattern to GoBasic, PS, and PGF: renderer lifecycle, paths, images, text,
       document serialization, and shared utility helpers.
-  - [ ] `backends/agg/agg_paths.go`: extract path preparation, finite filtering,
+  - [x] `backends/agg/agg_paths.go`: extract path preparation, finite filtering,
         bounds/culling, snapping, simplification, chunking, Gouraud color math,
         and hatching into focused files.
-  - [ ] `backends/agg/freetype_native.go`: split native text drawing,
+  - [x] `backends/agg/freetype_native.go`: split native text drawing,
         measurement/cache, FreeType run/C interop, MathText image rendering, and
         alpha-mask utilities.
-  - [ ] `backends/gobasic/gobasic.go`: split renderer lifecycle/state,
+  - [x] `backends/gobasic/gobasic.go`: split renderer lifecycle/state,
         path rasterization/clipping masks, image transforms/scaling, text
         rendering, blending, and utility conversion helpers.
-  - [ ] `backends/ps/ps.go`: split renderer lifecycle/rasterization, path and
+  - [x] `backends/ps/ps.go`: split renderer lifecycle/rasterization, path and
         hatch serialization, marker/path procedure reuse, images, text/font
         paths, document output, and PostScript formatting utilities.
-  - [ ] `backends/pgf/pgf.go`: split renderer lifecycle/rasterization, path and
+  - [x] `backends/pgf/pgf.go`: split renderer lifecycle/rasterization, path and
         hatch serialization, marker/path macro reuse, images, text/TeX escaping,
         document options, and PGF formatting utilities.
-  - [ ] Keep backend split batches backend-local and verify with targeted package
+  - [x] Keep backend split batches backend-local and verify with targeted package
         tests such as `go test ./backends/agg`, `go test ./backends/gobasic`,
         `go test ./backends/ps`, and `go test ./backends/pgf`.
-- [ ] **L7 — Decide generated-data strategy.** For
+- [x] **L7 — Decide generated-data strategy.** For
       `internal/examplecatalog/public_surface_parity.go` and
       `color/named_colors_data.go`, either document them as generated/catalog
       data that intentionally stays large, or introduce source data plus
