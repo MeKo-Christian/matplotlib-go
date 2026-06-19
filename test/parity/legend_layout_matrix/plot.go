@@ -61,7 +61,7 @@ func Plot() *core.Figure {
 	legend.Location = core.LegendUpperLeft
 	legend.Title = "Collected"
 	legend.NumColumns = 2
-	legend.ColumnSpacing = 28
+	legend.ColumnSpacing = common.ReferencePointsToPixels(2.0 * legend.FontSize)
 	legend.MarkerScale = 1.8
 	legend.ScatterPoints = 3
 	legend.SetHandler(handlerLine, core.LegendEntryOptions{

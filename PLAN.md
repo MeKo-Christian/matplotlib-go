@@ -147,8 +147,8 @@ fills/collections, contour/mesh, arrays, widgets, and mixed raster/vector. The
 June 14 full optional `TestReferenceCompare` sweep has no catalog row above
 `RMSE 5`; after the 2026-06-18 concise-date offset placement fix, the
 highest rows are `imshow_transformed` 4.97, `geo_mollweide_axes` 4.92,
-`legend_layout_matrix` 4.86, `boxplot_basic` 4.84,
-`formatter_engineering_labels` 4.80, and `mathtext_basic` 4.77. The
+`boxplot_basic` 4.84, `formatter_engineering_labels` 4.80, and
+`mathtext_basic` 4.77. The
 AGG-native reference sweep is also below `RMSE 5`;
 its highest row is `clip_path_batch` at 4.58.
 
@@ -156,6 +156,17 @@ its highest row is `clip_path_batch` at 4.58.
 off-bin two-component signal in Python and Go so phase bins are well-defined,
 and the stacked axes have enough vertical space for Matplotlib's automatic
 `Frequency` labels. The refreshed golden/reference comparison is `RMSE 1.15`.
+
+**Legend update (2026-06-19):** `legend_layout_matrix` now converts
+Matplotlib's `columnspacing=2.0` from font-size units to pixels exactly in the
+Go fixture, removing the rounded 28 px spacing drift. The refreshed
+golden/reference comparison is `RMSE 2.92`, and the catalog cap is tightened to
+`MaxRMSE 3.0`.
+
+**Engineering formatter update (2026-06-19):** `formatter_engineering_labels`
+now matches Matplotlib's fixed-precision zero handling for `EngFormatter`
+(`places=1` renders `0.0 Hz`, not `0 Hz`). The refreshed golden/reference
+comparison is `RMSE 2.04`, and the catalog cap is tightened to `MaxRMSE 3.0`.
 
 The June 13 regression queue is retained below as closure history. The catalog
 RMSE tolerances have been ratcheted to the refreshed metrics plus small headroom,

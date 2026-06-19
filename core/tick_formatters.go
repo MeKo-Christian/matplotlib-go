@@ -232,8 +232,13 @@ func (f EngFormatter) Format(x float64) string {
 	if sep == "" && !f.SepSet {
 		sep = " "
 	}
+	fixedPlaces := f.PlacesSet || f.Places > 0
 	if x == 0 {
-		return f.formatEngineeringValue("0", sep, "")
+		value := "0"
+		if fixedPlaces {
+			value = strconv.FormatFloat(0, 'f', f.Places, 64)
+		}
+		return f.formatEngineeringValue(value, sep, "")
 	}
 	if math.IsNaN(x) || math.IsInf(x, 0) {
 		return (ScalarFormatter{Prec: 6}).Format(x)
@@ -253,7 +258,6 @@ func (f EngFormatter) Format(x float64) string {
 	if f.UseUnicodeMicro && exp == -6 {
 		prefix = "µ"
 	}
-	fixedPlaces := f.PlacesSet || f.Places > 0
 	if fixedPlaces && math.Abs(parseFormattedFloat(strconv.FormatFloat(scaled, 'f', f.Places, 64))) >= 1000 && exp < maxEngineeringExp {
 		scaled /= 1000
 		exp += 3

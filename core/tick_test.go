@@ -668,6 +668,9 @@ func TestEngFormatterMatplotlibStyleDefaults(t *testing.T) {
 	if got := (EngFormatter{Unit: "Hz"}).Format(0); got != "0 Hz" {
 		t.Fatalf("EngFormatter zero with unit = %q, want %q", got, "0 Hz")
 	}
+	if got := (EngFormatter{Unit: "Hz", Places: 1}).Format(0); got != "0.0 Hz" {
+		t.Fatalf("EngFormatter zero with fixed places = %q, want %q", got, "0.0 Hz")
+	}
 	if got := (EngFormatter{Unit: "Hz", SepSet: true}).Format(0); got != "0Hz" {
 		t.Fatalf("EngFormatter explicit empty separator at zero = %q, want %q", got, "0Hz")
 	}
@@ -686,8 +689,8 @@ func TestEngFormatterEdgeBehavior(t *testing.T) {
 	if got := (EngFormatter{Places: 1, Sep: " "}).Format(1e31); got != "10.0 Q" {
 		t.Fatalf("EngFormatter extreme prefix = %q, want %q", got, "10.0 Q")
 	}
-	if got := (EngFormatter{Places: 1, Sep: " "}).Format(0); got != "0" {
-		t.Fatalf("EngFormatter zero without suffix = %q, want %q", got, "0")
+	if got := (EngFormatter{Places: 1, Sep: " "}).Format(0); got != "0.0" {
+		t.Fatalf("EngFormatter zero without suffix = %q, want %q", got, "0.0")
 	}
 	if got := (EngFormatter{Places: 1, Sep: " ", Unit: "Hz", UseMathText: true}).FormatEng(-1200); got != `$\mathdefault{−1.2}$ kHz` {
 		t.Fatalf("EngFormatter mathtext alias = %q", got)
