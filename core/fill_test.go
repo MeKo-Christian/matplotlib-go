@@ -449,8 +449,10 @@ func TestFill2DSingleRegionUsesMatplotlibTransformedVertices(t *testing.T) {
 		t.Fatalf("path calls = %d, want 1", len(r.pathCalls))
 	}
 	want := ctx.DataToPixel.Apply(geom.Pt{X: 0, Y: 0})
+	want.X += 0.5
+	want.Y -= 0.5
 	if got := r.pathCalls[0].path.V[0]; got != want {
-		t.Fatalf("single-region first vertex = %+v, want Matplotlib transformed vertex %+v", got, want)
+		t.Fatalf("single-region first vertex = %+v, want Matplotlib single-path collection placement %+v", got, want)
 	}
 }
 
