@@ -56,16 +56,25 @@ func snapRectAxis(minVal, maxVal float64, centerOnPixels bool, offsetSign float6
 		return 0, 0, false
 	}
 
-	snap := math.Round
 	offset := 0.0
 	if centerOnPixels {
 		offset = 0.5 * offsetSign
 	}
 
-	minSnap := snap(minVal) + offset
-	maxSnap := snap(maxVal) + offset
+	minSnap := roundPixelHalfTie(minVal) + offset
+	maxSnap := roundPixelHalfTie(maxVal) + offset
 	if maxSnap <= minSnap {
 		maxSnap = minSnap + 1
 	}
 	return minSnap, maxSnap, true
+}
+
+func roundPixelHalfTie(v float64) float64 {
+	if v >= 0 {
+		floor := math.Floor(v)
+		if math.Abs((v-floor)-0.5) <= 1e-9 {
+			return floor + 1
+		}
+	}
+	return math.Round(v)
 }

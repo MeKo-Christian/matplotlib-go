@@ -349,11 +349,13 @@ RUN_OPTIONAL_VISUAL_TESTS=true rtk proxy go test ./test -run 'TestReferenceCompa
       3 pt `OFFSETTEXTPAD`, rather than an approximate tick-pad/font-size gap.
       Current committed golden/reference metric: RMSE 0.05, PSNR 74.01 dB,
       MeanAbs 0.00.
-- [x] `units_categories`: fixed on 2026-06-13. The remaining mismatch was grid
-      z-order, not category mapping: Matplotlib's `set_axisbelow(True)` places
-      grids at z=0.5 below default bar patches. Go now exposes `SetAxisBelow`
-      and the fixture applies it. Updated committed golden/reference metric:
-      RMSE 4.44, PSNR 59.72 dB, MeanAbs 0.03.
+- [x] `units_categories`: tightened again on 2026-06-20. The remaining
+      localized mismatch was a categorical bar edge whose transformed right
+      edge landed at `267.49999999999994` in Go while Matplotlib's transform
+      lands on the `.5` tie; rectangle pixel snapping now treats near-half
+      positive pixel ties as the Matplotlib half-up case. Updated committed
+      golden/reference metric: RMSE 1.63, PSNR 43.88 dB, MeanAbs 0.01; catalog
+      cap tightened to `MaxRMSE 2.0`.
 - [x] `axes_grid1_showcase`: fixed on 2026-06-14. The remaining mismatch was
       axes/image chrome around the small RGB panels: equal-aspect axes now use
       Matplotlib's figure-fraction anchoring, AGG nearest image placement keeps

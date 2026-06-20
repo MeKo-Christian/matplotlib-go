@@ -47,7 +47,20 @@ func TestSnapPixelRect(t *testing.T) {
 	}
 }
 
-func TestBar2D_Draw_SnapsFillAndStrokeRects(t *testing.T) {
+func TestSnapPixelRectTreatsNearHalfTiesLikeMatplotlibTransformOutput(t *testing.T) {
+	rect, ok := snapPixelRect(geom.Rect{
+		Min: geom.Pt{X: 215.50000000000003, Y: 126},
+		Max: geom.Pt{X: 267.49999999999994, Y: 288},
+	}, false)
+	if !ok {
+		t.Fatal("expected snapped rect")
+	}
+	if rect.Min.X != 216 || rect.Max.X != 268 {
+		t.Fatalf("half-tie snapped x = (%v, %v), want (216, 268)", rect.Min.X, rect.Max.X)
+	}
+}
+
+func TestBar2D_DrawSnapsFillAndStrokeRectsLikeMatplotlibBars(t *testing.T) {
 	bar := &Bar2D{
 		X:           []float64{1},
 		Heights:     []float64{2.25},
@@ -80,6 +93,13 @@ func TestBar2D_Draw_SnapsFillAndStrokeRects(t *testing.T) {
 	// y-up stroke snap offsets Y by -0.5 (round - 0.5).
 	if stroke[0] != (geom.Pt{X: 56.5, Y: 427.5}) || stroke[2] != (geom.Pt{X: 64.5, Y: 449.5}) {
 		t.Fatalf("unexpected snapped stroke vertices: %+v", stroke)
+	}
+	paint := r.pathCalls[1].paint
+	if paint.Stroke != bar.EdgeColor || paint.LineWidth != bar.EdgeWidth {
+		t.Fatalf("stroke paint = %+v, want edge color/linewidth from bar", paint)
+	}
+	if paint.LineJoin != render.JoinMiter || paint.LineCap != render.CapButt {
+		t.Fatalf("bar stroke style = join %v cap %v, want Matplotlib miter/butt", paint.LineJoin, paint.LineCap)
 	}
 }
 

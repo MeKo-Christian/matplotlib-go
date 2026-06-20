@@ -86,7 +86,7 @@ func (b *Bar2D) Draw(r render.Renderer, ctx *DrawContext) {
 		fillColor.A *= alpha
 		edgeColor.A *= alpha
 
-		// Create rectangle path based on orientation
+		// Create rectangle path based on orientation.
 		var fillPath, strokePath geom.Path
 		if b.Orientation == BarVertical {
 			fillPath, strokePath = b.createVerticalBarPaths(x, height, width, baseline, ctx)
@@ -107,7 +107,7 @@ func (b *Bar2D) Draw(r render.Renderer, ctx *DrawContext) {
 				Stroke:    edgeColor,
 				LineWidth: b.EdgeWidth,
 				LineJoin:  render.JoinMiter,
-				LineCap:   render.CapSquare,
+				LineCap:   render.CapButt,
 			})
 		}
 	}

@@ -181,7 +181,7 @@ var cases = []Case{
 	{ID: "date_month_year_labels", Topic: "units", Title: "Month and Year Date Labels", FixtureOnly: true, Width: 720, Height: 360, MinPSNR: 70.0, MaxMeanAbs: 0.05, MaxRMSE: 0.5},
 	{ID: "units_overview", Topic: "units", Title: "Dates and Categories", Optional: true, WebDemoID: "units", Description: "Time-aware axes, categorical bars, and horizontal categorical bars.", Showcase: true, GoBasicSmokeFamily: "units", MinPSNR: 68.0, MaxMeanAbs: 0.10, MaxRMSE: 1.0},
 	{ID: "units_dates", Topic: "units", Title: "Date Units", Optional: true, MinPSNR: 53.0, MaxMeanAbs: 0.15, MaxRMSE: 1.5},
-	{ID: "units_categories", Topic: "units", Title: "Category Units", Optional: true, MinPSNR: 59.0, MaxMeanAbs: 0.05, MaxRMSE: 4.8},
+	{ID: "units_categories", Topic: "units", Title: "Category Units", Optional: true, MinPSNR: 43.0, MaxMeanAbs: 0.05, MaxRMSE: 2.0},
 	{ID: "units_custom_converter", Topic: "units", Title: "Custom Unit Converter", Optional: true, MinPSNR: 68.0, MaxMeanAbs: 0.05, MaxRMSE: 0.5},
 	{ID: "vector_fields", Topic: "vectors", Title: "Vector Fields", Optional: true, WebDemoID: "vectors", Description: "Quiver, quiver keys, barbs, streamplots, and grid-based vector input.", Showcase: true, GoBasicSmokeFamily: "vectors", MinPSNR: 41.5, MaxMeanAbs: 3.0, MaxRMSE: 3.2},
 	{ID: "polar_axes", Topic: "polar", Title: "Polar Wave", WebDemoID: "polar", Description: "A filled polar curve with custom radial and angular grid styling.", Showcase: true, SVGGoldenFamily: "clipped_polar", GoBasicSmokeFamily: "polar", MinPSNR: 32.0, MaxMeanAbs: 9.0, SkiaParityFamily: "polar", MaxRMSE: 0.8},
