@@ -39,6 +39,50 @@ func TestLayoutMathTextSuppressesOperatorSpacingInLimitScripts(t *testing.T) {
 	}
 }
 
+func TestLayoutMathTextLogitOneMinusLabelMatchesMatplotlib(t *testing.T) {
+	r, err := agg.New(120, 80, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.SetResolution(100)
+	if _, ok := r.MeasureMathGlyphRun("1", 10, "DejaVu Sans"); !ok {
+		t.Skip("pixel-exact MathText glyph metrics unavailable")
+	}
+
+	layout, ok := core.LayoutMathText(r, `\mathdefault{1-10^{-1}}`, 10, "DejaVu Sans")
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+
+	one := mathTextRunByIndex(t, layout.Runs, "1", 0)
+	binaryMinus := mathTextRunByIndex(t, layout.Runs, "−", 0)
+	secondOne := mathTextRunByIndex(t, layout.Runs, "1", 1)
+	zero := mathTextRunByIndex(t, layout.Runs, "0", 0)
+	exponentMinus := mathTextRunByIndex(t, layout.Runs, "−", 1)
+	exponentOne := mathTextRunByIndex(t, layout.Runs, "1", 2)
+
+	// Matplotlib 3.10.9 MathTextParser("path") VectorParse for
+	// $\mathdefault{1-10^{-1}}$ at 10 pt / 100 dpi:
+	// width=59, glyph x positions 0, 11.530884, 25.859802, 34.6875,
+	// 43.649182, 51.787195. The exponent's unary minus is intentionally not
+	// padded as a binary operator.
+	check := func(name string, got, want float64) {
+		t.Helper()
+		if math.Abs(got-want) > 0.75 {
+			t.Fatalf("%s x = %.3f, want %.3f; width=%.3f runs=%+v", name, got, want, layout.Width, layout.Runs)
+		}
+	}
+	check("leading 1", one.Offset.X, 0)
+	check("binary minus", binaryMinus.Offset.X, 11.530884)
+	check("second 1", secondOne.Offset.X, 25.859802)
+	check("zero", zero.Offset.X, 34.6875)
+	check("exponent minus", exponentMinus.Offset.X, 43.649182)
+	check("exponent 1", exponentOne.Offset.X, 51.787195)
+	if math.Abs(layout.Width-59) > 1.0 {
+		t.Fatalf("layout width = %.3f, want 59; runs=%+v", layout.Width, layout.Runs)
+	}
+}
+
 func TestLayoutMathTextRulelessGenfracVectorMetricsMatchMatplotlib(t *testing.T) {
 	r, err := agg.New(300, 160, render.Color{R: 1, G: 1, B: 1, A: 1})
 	if err != nil {

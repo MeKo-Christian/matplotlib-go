@@ -306,7 +306,7 @@ func (a *Axis) geoTickLabelBounds(r render.Renderer, ctx *DrawContext) (geom.Rec
 		if !ok {
 			continue
 		}
-		bounds, ok := textInkRect(origin, layout)
+		bounds, ok := geoTickLabelDisplayRect(a.Side, origin, layout, math.Max(layout.Height, pointsToPixels(ctx.RC, fontSize)))
 		if !ok {
 			continue
 		}
@@ -321,6 +321,30 @@ func (a *Axis) geoTickLabelBounds(r render.Renderer, ctx *DrawContext) (geom.Rec
 		}
 	}
 	return union, have
+}
+
+func geoTickLabelDisplayRect(side AxisSide, origin geom.Pt, layout singleLineTextLayout, lineHeight float64) (geom.Rect, bool) {
+	var (
+		hAlign TextAlign
+		vAlign textLayoutVerticalAlign
+	)
+	switch side {
+	case AxisBottom:
+		hAlign, vAlign = TextAlignCenter, textLayoutVAlignBottom
+	case AxisTop:
+		hAlign, vAlign = TextAlignCenter, textLayoutVAlignTop
+	case AxisLeft:
+		hAlign, vAlign = TextAlignRight, textLayoutVAlignCenter
+	case AxisRight:
+		hAlign, vAlign = TextAlignLeft, textLayoutVAlignCenter
+	default:
+		return geom.Rect{}, false
+	}
+	anchor := geom.Pt{
+		X: origin.X + textHorizontalOriginOffset(layout, hAlign),
+		Y: origin.Y - textBaselineOffset(layout, vAlign),
+	}
+	return alignedTextLayoutRect(anchor, layout, hAlign, vAlign, lineHeight)
 }
 
 func geoAxisDomain(a *Axis, ctx *DrawContext) (minVal, maxVal float64, isXAxis bool, ok bool) {

@@ -225,6 +225,65 @@ func TestGeoXAxisLabelUsesFrameBottomNotEquatorTickBounds(t *testing.T) {
 	}
 }
 
+func TestGeoYAxisTickLabelBoundsUseLineBox(t *testing.T) {
+	fig := NewFigure(720, 420)
+	ax, err := fig.AddAxesProjection(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.14},
+		Max: geom.Pt{X: 0.92, Y: 0.86},
+	}, "mollweide")
+	if err != nil {
+		t.Fatalf("AddAxesProjection(mollweide): %v", err)
+	}
+	ax.YAxis.Locator = FixedLocator{TicksList: []float64{0}}
+	ax.YAxis.Formatter = FuncFormatter(func(float64) string { return "latitude" })
+
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	r := &shortInkBoundsRenderer{}
+	bounds, ok := ax.YAxis.geoTickLabelBounds(r, ctx)
+	if !ok {
+		t.Fatal("geoTickLabelBounds returned !ok")
+	}
+
+	label := "latitude"
+	fontSize := tickLabelFontSize(ax.YAxis, ctx)
+	layout := measureSingleLineTextLayout(r, label, fontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
+	anchor := geoLatitudeLabelPoint(ctx, -math.Pi, 0)
+	anchor.X -= geoYAxisLabelPadPx
+	lineHeight := math.Max(layout.Height, pointsToPixels(ctx.RC, fontSize))
+	want := geom.Rect{
+		Min: geom.Pt{X: anchor.X - layout.Width, Y: anchor.Y - lineHeight/2},
+		Max: geom.Pt{X: anchor.X, Y: anchor.Y + lineHeight/2},
+	}
+	if !approxRect(bounds, want, 1e-9) {
+		t.Fatalf("geo y tick label bounds = %+v, want line box %+v", bounds, want)
+	}
+
+	origin := alignedSingleLineOrigin(anchor, layout, TextAlignRight, textLayoutVAlignCenter)
+	inkRect, ok := textInkRect(origin, layout)
+	if !ok {
+		t.Fatal("textInkRect returned !ok")
+	}
+	if approxRect(bounds, inkRect, 1e-9) {
+		t.Fatalf("geo y tick label bounds unexpectedly used ink box %+v", inkRect)
+	}
+}
+
+type shortInkBoundsRenderer struct {
+	textRecordingRenderer
+}
+
+func (r *shortInkBoundsRenderer) MeasureTextBounds(text string, size float64, _ string) (render.TextBounds, bool) {
+	if text == "" || size <= 0 {
+		return render.TextBounds{}, false
+	}
+	return render.TextBounds{
+		X: size * 0.2,
+		Y: -size * 0.6,
+		W: float64(len(text)) * size * 0.2,
+		H: size * 0.5,
+	}, true
+}
+
 func TestGeoProjection_CarriesNamedTransform(t *testing.T) {
 	p := newMollweideProjection()
 	if p.transform == nil {
