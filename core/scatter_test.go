@@ -308,7 +308,7 @@ func TestScatterRadialMarkerPrototypesUseMatplotlibYUpOrientation(t *testing.T) 
 		{name: "star", style: NewMarkerStyle(MarkerStar)},
 		{name: "tuple polygon", style: NewTupleMarkerStyle(5, MarkerTuplePolygon, 0)},
 		{name: "tuple star", style: NewTupleMarkerStyle(5, MarkerTupleStar, 0)},
-		{name: "tuple asterisk", style: NewTupleMarkerStyle(6, MarkerTupleAsterisk, 0), vertexIndex: 1},
+		{name: "tuple asterisk", style: NewTupleMarkerStyle(6, MarkerTupleAsterisk, 0)},
 	} {
 		path := (&Scatter2D{MarkerStyle: tc.style}).markerPrototypePath()
 		if len(path.V) <= tc.vertexIndex {
@@ -317,6 +317,38 @@ func TestScatterRadialMarkerPrototypesUseMatplotlibYUpOrientation(t *testing.T) 
 		if got := path.V[tc.vertexIndex].Y; got <= 0 {
 			t.Fatalf("%s orientation vertex y = %v, want positive y-up Matplotlib orientation", tc.name, got)
 		}
+	}
+}
+
+func TestScatterVerticalTickMarkersUseMatplotlibYUpOrientation(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		marker   MarkerType
+		wantSign float64
+	}{
+		{name: "tick up", marker: MarkerTickUp, wantSign: 1},
+		{name: "tick down", marker: MarkerTickDown, wantSign: -1},
+	} {
+		path := (&Scatter2D{Marker: tc.marker}).markerPrototypePath()
+		if len(path.V) < 2 {
+			t.Fatalf("%s marker produced too few vertices: %+v", tc.name, path.V)
+		}
+		if got := path.V[1].Y; got*tc.wantSign <= 0 {
+			t.Fatalf("%s marker end y = %v, want sign %v in y-up marker coordinates", tc.name, got, tc.wantSign)
+		}
+	}
+}
+
+func TestScatterPixelMarkerDisablesCollectionSnapLikeMatplotlib(t *testing.T) {
+	scatter := &Scatter2D{
+		XY:     []geom.Pt{{X: 1, Y: 1}},
+		Marker: MarkerPixel,
+		Color:  render.Color{R: 1, A: 1},
+		Size:   36,
+	}
+	pc := scatter.toPathCollection(&render.NullRenderer{}, createTestDrawContext())
+	if !pc.SnapSet || pc.Snap != render.SnapOff {
+		t.Fatalf("pixel marker snap = (%v, %v), want explicit SnapOff", pc.Snap, pc.SnapSet)
 	}
 }
 
@@ -353,23 +385,24 @@ func TestScatterCaretMarkersUseMatplotlibMiterJoin(t *testing.T) {
 	}
 }
 
-func TestScatterCaretMarkersRetainMatplotlibScatterFill(t *testing.T) {
+func TestScatterCaretMarkersIgnoreExplicitEdgeColorLikeMatplotlib(t *testing.T) {
 	for _, marker := range []MarkerType{
 		MarkerCaretLeft, MarkerCaretRight, MarkerCaretUp, MarkerCaretDown,
 		MarkerCaretLeftBase, MarkerCaretRightBase, MarkerCaretUpBase, MarkerCaretDownBase,
 	} {
 		scatter := &Scatter2D{
-			XY:     []geom.Pt{{X: 1, Y: 1}},
-			Marker: marker,
-			Color:  render.Color{R: 0.2, G: 0.4, B: 0.8, A: 1},
-			Size:   36,
+			XY:        []geom.Pt{{X: 1, Y: 1}},
+			Marker:    marker,
+			Color:     render.Color{R: 0.2, G: 0.4, B: 0.8, A: 1},
+			EdgeColor: render.Color{R: 1, A: 1},
+			Size:      36,
 		}
 		pc := scatter.toPathCollection(&render.NullRenderer{}, createTestDrawContext())
 		if pc.LineOnly {
-			t.Fatalf("caret marker %v path collection is line-only; want filled open path like Matplotlib scatter", marker)
+			t.Fatalf("caret marker %v path collection is line-only; want filled open path for current marker geometry", marker)
 		}
-		if pc.FaceColor.A == 0 {
-			t.Fatalf("caret marker %v face alpha = 0, want visible fill like Matplotlib scatter", marker)
+		if pc.EdgeColor != scatter.Color {
+			t.Fatalf("caret marker %v edge = %+v, want face color %+v", marker, pc.EdgeColor, scatter.Color)
 		}
 	}
 }
@@ -515,15 +548,33 @@ func TestMarkerStyleFillNoneUsesFaceAsStrokeFallback(t *testing.T) {
 			Type:      MarkerCircle,
 			FillStyle: MarkerFillNone,
 		},
-		Color: render.Color{R: 0.25, G: 0.5, B: 0.75, A: 1},
-		Size:  36,
+		Color:     render.Color{R: 0.25, G: 0.5, B: 0.75, A: 1},
+		EdgeColor: render.Color{R: 1, A: 1},
+		Size:      36,
 	}
 	pc := scatter.toPathCollection(&render.NullRenderer{}, createTestDrawContext())
 	if pc.FaceColor.A != 0 {
 		t.Fatalf("fillstyle none face alpha = %v, want 0", pc.FaceColor.A)
 	}
-	if pc.EdgeColor.A == 0 {
-		t.Fatal("fillstyle none should fall back to face color for the outline")
+	if pc.EdgeColor != scatter.Color {
+		t.Fatalf("fillstyle none edge = %+v, want face color %+v despite explicit edge", pc.EdgeColor, scatter.Color)
+	}
+}
+
+func TestScatterLineOnlyMarkerIgnoresExplicitEdgeColorLikeMatplotlib(t *testing.T) {
+	scatter := &Scatter2D{
+		XY:        []geom.Pt{{X: 1, Y: 1}},
+		Marker:    MarkerPlus,
+		Color:     render.Color{R: 0.25, G: 0.5, B: 0.75, A: 1},
+		EdgeColor: render.Color{R: 1, A: 1},
+		Size:      36,
+	}
+	pc := scatter.toPathCollection(&render.NullRenderer{}, createTestDrawContext())
+	if !pc.LineOnly {
+		t.Fatal("plus marker should render as a line-only collection")
+	}
+	if pc.EdgeColor != scatter.Color {
+		t.Fatalf("line-only marker edge = %+v, want face color %+v despite explicit edge", pc.EdgeColor, scatter.Color)
 	}
 }
 

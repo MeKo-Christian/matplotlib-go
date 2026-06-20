@@ -570,6 +570,39 @@ func TestAxes_RightAxisCreatesExplicitAxis(t *testing.T) {
 	}
 }
 
+func TestAxes_TwinXRightAxisUsesTwinYDomain(t *testing.T) {
+	fig := NewFigure(760, 360)
+	host := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.58, Y: 0.14}, Max: geom.Pt{X: 0.95, Y: 0.78}})
+	host.SetXLim(0, 10)
+	host.SetYLim(0, 20)
+
+	twin := host.TwinX()
+	if twin == nil {
+		t.Fatal("TwinX() returned nil")
+	}
+	twin.SetYLim(0, 100)
+
+	hostYMin, hostYMax := host.effectiveYScale().Domain()
+	if hostYMin != 0 || hostYMax != 20 {
+		t.Fatalf("host y domain = (%v, %v), want (0, 20)", hostYMin, hostYMax)
+	}
+	twinYMin, twinYMax := twin.effectiveYScale().Domain()
+	if twinYMin != 0 || twinYMax != 100 {
+		t.Fatalf("twin y domain = (%v, %v), want (0, 100)", twinYMin, twinYMax)
+	}
+
+	ctx := newAxesDrawContext(twin, fig, fig.DisplayRect(), twin.adjustedLayout(fig))
+	ctxYMin, ctxYMax := ctx.DataToPixel.YScale.Domain()
+	if ctxYMin != 0 || ctxYMax != 100 {
+		t.Fatalf("twin draw-context y domain = (%v, %v), want (0, 100)", ctxYMin, ctxYMax)
+	}
+	right := twin.RightAxis()
+	ticks := visibleTicks(right.Locator.Ticks(ctxYMin, ctxYMax, right.majorTickTargetCountForContext(ctx, false)), ctxYMin, ctxYMax)
+	if len(ticks) != 6 || ticks[0] != 0 || ticks[len(ticks)-1] != 100 {
+		t.Fatalf("twin right-axis ticks = %v, want six ticks spanning 0..100", ticks)
+	}
+}
+
 func TestAxes_SetAxisSides(t *testing.T) {
 	axes := &Axes{
 		XAxis:      NewXAxis(),

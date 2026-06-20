@@ -146,7 +146,7 @@ func patchEffects(ax *core.Axes) {
 			EdgeWidth: 2.2,
 			LineJoin:  render.JoinRound,
 			PathEffects: []render.PathEffect{
-				render.StrokePathEffect(render.Color{R: 1, G: 0.92, B: 0.58, A: 0.95}, 9, geom.Pt{X: 4, Y: -4}),
+				render.StrokePathEffect(render.Color{R: 1, G: 0.92, B: 0.58, A: 0.95}, 9, geom.Pt{X: 4, Y: 4}),
 				render.NormalPathEffect(),
 			},
 		},
@@ -159,7 +159,7 @@ func patchEffects(ax *core.Axes) {
 		Patch: core.Patch{
 			FaceColor: render.Color{R: 0.10, G: 0.28, B: 0.74, A: 1},
 			PathEffects: []render.PathEffect{
-				render.SimplePatchShadowPathEffect(geom.Pt{X: 8, Y: 8}, render.Color{R: 0.08, G: 0.12, B: 0.24, A: 0.45}, 0.45, 0.35),
+				render.SimplePatchShadowPathEffect(geom.Pt{X: 8, Y: -8}, render.Color{R: 0.08, G: 0.12, B: 0.24, A: 0.45}, 0.45, 0.35),
 				render.NormalPathEffect(),
 			},
 		},

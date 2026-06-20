@@ -248,7 +248,8 @@ func (l MultipleLocator) Ticks(minVal, maxVal float64, _ int) []float64 {
 	return dedupeTicks(ticks)
 }
 
-// MaxNLocator places up to N+1 nice ticks across the view limits.
+// MaxNLocator places nice ticks across the view limits using Matplotlib's
+// MaxNLocator step and offset selection.
 type MaxNLocator struct {
 	N         int
 	Integer   bool
@@ -265,18 +266,11 @@ func (l MaxNLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 	if math.IsNaN(minVal) || math.IsNaN(maxVal) || math.IsInf(minVal, 0) || math.IsInf(maxVal, 0) {
 		return nil
 	}
-	if minVal == maxVal {
-		expand := math.Max(1, math.Abs(minVal))*1e-13 + 1e-14
-		minVal -= expand
-		maxVal += expand
-	}
-	if minVal > maxVal {
-		minVal, maxVal = maxVal, minVal
-	}
 	if l.Symmetric {
 		bound := math.Max(math.Abs(minVal), math.Abs(maxVal))
 		minVal, maxVal = -bound, bound
 	}
+	minVal, maxVal = nonsingularRange(minVal, maxVal, 1e-13, 1e-14)
 
 	maxIntervals := l.N
 	if maxIntervals <= 0 {
@@ -286,33 +280,8 @@ func (l MaxNLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 		maxIntervals = 6
 	}
 
-	span := maxVal - minVal
-	raw := span / float64(maxIntervals)
-	if l.RawStepScale > 0 {
-		raw *= l.RawStepScale
-	}
-	if raw <= 0 || math.IsInf(raw, 0) || math.IsNaN(raw) {
-		return []float64{minVal, maxVal}
-	}
-
-	step := niceStepCeil(raw, l.normalizedSteps())
-	integerCount := math.Floor(maxVal) - math.Ceil(minVal) + 1
-	integerMode := l.Integer && integerCount >= float64(l.minTicks())
-	if integerMode && step < 1 {
-		step = 1
-	}
-
-	ticks := generateBoundedTicks(minVal, maxVal, step)
-	if integerMode {
-		filtered := ticks[:0]
-		for _, tick := range ticks {
-			if approx(tick, math.Round(tick), 1e-9) {
-				filtered = append(filtered, math.Round(tick))
-			}
-		}
-		ticks = filtered
-	}
-	return l.pruneTicks(dedupeTicksByStep(ticks, step))
+	ticks := l.rawTicks(minVal, maxVal, maxIntervals)
+	return l.pruneTicks(dedupeTicksByStep(ticks, tickStep(ticks)))
 }
 
 func (l MaxNLocator) normalizedSteps() []float64 {
@@ -337,6 +306,179 @@ func (l MaxNLocator) normalizedSteps() []float64 {
 		out = append(out, 10)
 	}
 	return out
+}
+
+func (l *MaxNLocator) extendedSteps() []float64 {
+	steps := l.normalizedSteps()
+	out := make([]float64, 0, len(steps)*2)
+	for _, step := range steps[:len(steps)-1] {
+		out = append(out, 0.1*step)
+	}
+	out = append(out, steps...)
+	out = append(out, 10*steps[1])
+	return out
+}
+
+func (l *MaxNLocator) rawTicks(vmin, vmax float64, maxIntervals int) []float64 {
+	if maxIntervals <= 0 {
+		return nil
+	}
+	scale, offset := maxNScaleRange(vmin, vmax, maxIntervals)
+	scaledMin := vmin - offset
+	scaledMax := vmax - offset
+	steps := l.extendedSteps()
+	for i, step := range steps {
+		steps[i] = step * scale
+	}
+	if l.Integer {
+		filtered := steps[:0]
+		for _, step := range steps {
+			if step < 1 || math.Abs(step-math.Round(step)) < 0.001 {
+				filtered = append(filtered, step)
+			}
+		}
+		steps = filtered
+	}
+	if len(steps) == 0 {
+		return nil
+	}
+
+	rawStep := (scaledMax - scaledMin) / float64(maxIntervals)
+	if l.RawStepScale > 0 {
+		rawStep *= l.RawStepScale
+	}
+	if rawStep <= 0 || math.IsInf(rawStep, 0) || math.IsNaN(rawStep) {
+		return []float64{vmin, vmax}
+	}
+
+	stepIndex := len(steps) - 1
+	for i, step := range steps {
+		if step >= rawStep {
+			stepIndex = i
+			break
+		}
+	}
+
+	minTicks := l.minTicks()
+	var ticks []float64
+	for i := stepIndex; i >= 0; i-- {
+		step := steps[i]
+		if l.Integer && math.Floor(scaledMax)-math.Ceil(scaledMin) >= float64(minTicks-1) && step < 1 {
+			step = 1
+		}
+		bestMin := math.Floor(scaledMin/step) * step
+		edge := maxNEdgeInteger{step: step, offset: offset}
+		low := edge.le(scaledMin - bestMin)
+		high := edge.ge(scaledMax - bestMin)
+		ticks = ticksFromStep(low, high, step, bestMin+offset)
+		if countTicksInRange(ticks, vmin, vmax) >= minTicks {
+			break
+		}
+	}
+	return ticks
+}
+
+func nonsingularRange(vmin, vmax, expander, tiny float64) (float64, float64) {
+	if vmax < vmin {
+		vmin, vmax = vmax, vmin
+	}
+	maxAbs := math.Max(math.Abs(vmin), math.Abs(vmax))
+	if maxAbs < (1e6/tiny)*math.SmallestNonzeroFloat64 {
+		return -expander, expander
+	}
+	if vmax-vmin <= maxAbs*tiny {
+		if vmax == 0 && vmin == 0 {
+			return -expander, expander
+		}
+		vmin -= expander * math.Abs(vmin)
+		vmax += expander * math.Abs(vmax)
+	}
+	return vmin, vmax
+}
+
+func maxNScaleRange(vmin, vmax float64, n int) (scale, offset float64) {
+	dv := math.Abs(vmax - vmin)
+	if dv == 0 || n <= 0 {
+		return 1, 0
+	}
+	mean := (vmax + vmin) / 2
+	if math.Abs(mean)/dv < 100 {
+		offset = 0
+	} else {
+		offset = math.Copysign(math.Pow(10, math.Floor(math.Log10(math.Abs(mean)))), mean)
+	}
+	scale = math.Pow(10, math.Floor(math.Log10(dv/float64(n))))
+	return scale, offset
+}
+
+type maxNEdgeInteger struct {
+	step   float64
+	offset float64
+}
+
+func (e maxNEdgeInteger) closeTo(multiple, edge float64) bool {
+	tol := 1e-10
+	if e.offset > 0 {
+		digits := math.Log10(math.Abs(e.offset) / e.step)
+		tol = math.Max(1e-10, math.Pow(10, digits-12))
+		tol = math.Min(0.4999, tol)
+	}
+	return math.Abs(multiple-edge) < tol
+}
+
+func (e maxNEdgeInteger) le(x float64) float64 {
+	d, m := floorDivMod(x, e.step)
+	if e.closeTo(m/e.step, 1) {
+		return d + 1
+	}
+	return d
+}
+
+func (e maxNEdgeInteger) ge(x float64) float64 {
+	d, m := floorDivMod(x, e.step)
+	if e.closeTo(m/e.step, 0) {
+		return d
+	}
+	return d + 1
+}
+
+func floorDivMod(x, step float64) (float64, float64) {
+	d := math.Floor(x / step)
+	return d, x - d*step
+}
+
+func ticksFromStep(low, high, step, offsetBestMin float64) []float64 {
+	if high < low {
+		return nil
+	}
+	n := int(math.Round(high-low)) + 1
+	ticks := make([]float64, 0, n)
+	zeroTol := 1e-12 * math.Abs(step)
+	for i := 0; i < n; i++ {
+		tick := (low+float64(i))*step + offsetBestMin
+		if approx(tick, 0, zeroTol) {
+			tick = 0
+		}
+		ticks = append(ticks, tick)
+	}
+	return ticks
+}
+
+func countTicksInRange(ticks []float64, vmin, vmax float64) int {
+	count := 0
+	for _, tick := range ticks {
+		if tick >= vmin && tick <= vmax {
+			count++
+		}
+	}
+	return count
+}
+
+func tickStep(ticks []float64) float64 {
+	if len(ticks) < 2 {
+		return 0
+	}
+	return math.Abs(ticks[1] - ticks[0])
 }
 
 func (l MaxNLocator) minTicks() int {

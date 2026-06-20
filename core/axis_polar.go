@@ -296,3 +296,96 @@ func (a *Axis) polarTickLabelBoundsForLevel(r render.Renderer, ctx *DrawContext,
 
 	return union, have
 }
+
+func (a *Axis) polarThetaTickLabelWindowBounds(r render.Renderer, ctx *DrawContext) (geom.Rect, bool) {
+	if a == nil || ctx == nil || ctx.DataToPixel.XScale == nil {
+		return geom.Rect{}, false
+	}
+
+	type polarLabel struct {
+		ticks    []float64
+		format   Formatter
+		style    TickLabelStyle
+		tickSize float64
+	}
+
+	levels := []polarLabel{}
+	if a.ShowLabels {
+		levels = append(levels, polarLabel{
+			ticks:    polarThetaTicks(a, ctx.DataToPixel.XScale, false),
+			format:   a.Formatter,
+			style:    a.MajorLabelStyle,
+			tickSize: a.TickSize,
+		})
+	}
+	if a.ShowMinorLabels {
+		levels = append(levels, polarLabel{
+			ticks:    polarThetaTicks(a, ctx.DataToPixel.XScale, true),
+			format:   a.MinorFormatter,
+			style:    a.MinorLabelStyle,
+			tickSize: a.minorTickSize(),
+		})
+	}
+
+	var (
+		union geom.Rect
+		have  bool
+	)
+	for _, level := range levels {
+		bounds, ok := a.polarThetaTickLabelWindowBoundsForLevel(r, ctx, level.ticks, level.format, level.style, level.tickSize)
+		if !ok {
+			continue
+		}
+		if !have {
+			union = bounds
+			have = true
+			continue
+		}
+		union = geom.Rect{
+			Min: geom.Pt{X: math.Min(union.Min.X, bounds.Min.X), Y: math.Min(union.Min.Y, bounds.Min.Y)},
+			Max: geom.Pt{X: math.Max(union.Max.X, bounds.Max.X), Y: math.Max(union.Max.Y, bounds.Max.Y)},
+		}
+	}
+	return union, have
+}
+
+func (a *Axis) polarThetaTickLabelWindowBoundsForLevel(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64) (geom.Rect, bool) {
+	if formatter == nil || len(ticks) == 0 {
+		return geom.Rect{}, false
+	}
+
+	center, outerRadius := polarCenterAndRadius(ctx.Clip)
+	style = normalizeTickLabelStyle(style)
+	fontSize := tickLabelFontSizeForStyle(a, style, ctx)
+	fontKey := tickLabelFontKey(style, ctx)
+	lineHeightMin := pointsToPixels(ctx.RC, fontSize)
+
+	var (
+		union geom.Rect
+		have  bool
+	)
+	for i, tick := range ticks {
+		label := formatTickLabelForTicks(formatter, tick, i, ticks)
+		if label == "" {
+			continue
+		}
+		layout := measureSingleLineTextLayout(r, label, fontSize, fontKey, ctx.RC.UseTeX)
+		angle := polarAngleForTheta(ctx.Projection, ctx.DataToPixel.XScale, tick)
+		anchor := polarPixelPoint(center, outerRadius+polarThetaTickLabelPadPx(a, tickSize, style, ctx), angle)
+		lineHeight := math.Max(layout.Height, lineHeightMin)
+		bounds, ok := alignedTextLayoutRect(anchor, layout, TextAlignCenter, textLayoutVAlignCenter, lineHeight)
+		if !ok {
+			continue
+		}
+		if !have {
+			union = bounds
+			have = true
+			continue
+		}
+		union = geom.Rect{
+			Min: geom.Pt{X: math.Min(union.Min.X, bounds.Min.X), Y: math.Min(union.Min.Y, bounds.Min.Y)},
+			Max: geom.Pt{X: math.Max(union.Max.X, bounds.Max.X), Y: math.Max(union.Max.Y, bounds.Max.Y)},
+		}
+	}
+	return union, have
+}

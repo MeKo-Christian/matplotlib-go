@@ -30,6 +30,29 @@ func TestReferenceLineDashesMatchMatplotlibPointUnits(t *testing.T) {
 	assertDashSeq(t, segments[1].Dashes, wantVLine)
 }
 
+func TestPlotPlacesGridsBelowFilledArtists(t *testing.T) {
+	fig := Plot()
+	if len(fig.Children) != 4 {
+		t.Fatalf("figure children = %d, want four showcase axes", len(fig.Children))
+	}
+	for i, ax := range fig.Children {
+		var grids int
+		for _, art := range ax.Artists {
+			grid, ok := art.(*core.Grid)
+			if !ok {
+				continue
+			}
+			grids++
+			if !(grid.Z() < 1) {
+				t.Fatalf("axes %d grid z-order = %v, want below Matplotlib patch z-order", i, grid.Z())
+			}
+		}
+		if grids == 0 {
+			t.Fatalf("axes %d has no grid artist", i)
+		}
+	}
+}
+
 func assertDashSeq(t *testing.T, got, want []float64) {
 	t.Helper()
 	if len(got) != len(want) {

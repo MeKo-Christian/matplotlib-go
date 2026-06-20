@@ -242,6 +242,8 @@ type MarkerItem struct {
 	Offset      geom.Pt
 	Transform   geom.Affine
 	Paint       Paint
+	Snap        SnapMode
+	SnapSet     bool
 	Antialiased bool
 }
 

@@ -93,6 +93,14 @@ func TestAxesBxpCreatesComponentArtistsAndTicks(t *testing.T) {
 	if len(container.Caps) != 4 || len(container.Fliers) != 1 || len(container.Means) != 1 {
 		t.Fatalf("unexpected optional component counts caps=%d fliers=%d means=%d", len(container.Caps), len(container.Fliers), len(container.Means))
 	}
+	if got := container.Means[0]; got.Marker != MarkerTriangle || got.MarkerSize != 6 || got.MarkerFaceColor != matcolor.Tab10[2] || got.MarkerEdgeColor != matcolor.Tab10[2] {
+		t.Fatalf("mean marker style = marker %v size %v face %+v edge %+v, want Matplotlib default C2 triangle",
+			got.Marker, got.MarkerSize, got.MarkerFaceColor, got.MarkerEdgeColor)
+	}
+	if got := container.Fliers[0]; got.Marker != MarkerCircle || got.MarkerSize != 6 || got.MarkerFaceSpec.Mode != MarkerColorNone || got.MarkerEdgeColor != (render.Color{R: 0, G: 0, B: 0, A: 1}) {
+		t.Fatalf("flier marker style = marker %v size %v face mode %v edge %+v, want Matplotlib default open black circle",
+			got.Marker, got.MarkerSize, got.MarkerFaceSpec.Mode, got.MarkerEdgeColor)
+	}
 	if container.Medians[0].Label != "stats" || container.Medians[1].Label != "" {
 		t.Fatalf("median labels = %q, %q; want first legend label only", container.Medians[0].Label, container.Medians[1].Label)
 	}
@@ -235,6 +243,51 @@ func TestAxesBoxPlotSubArtistsUseMatplotlibPathSnapping(t *testing.T) {
 		if call.paint.Snap != render.SnapAuto {
 			t.Fatalf("path call %d snap = %v, want SnapAuto like Matplotlib PathPatch/Line2D", i, call.paint.Snap)
 		}
+	}
+}
+
+func TestAxesBoxPlotAlphaAppliesOnlyToBoxPatchLikeMatplotlib(t *testing.T) {
+	alpha := 0.4
+	black := render.Color{A: 1}
+	box := &BoxPlot2D{
+		Data:           []float64{1, 2, 3, 4, 100},
+		Position:       1,
+		Width:          0.6,
+		Color:          render.Color{R: 0.25, G: 0.55, B: 0.82, A: 1},
+		EdgeColor:      black,
+		WhiskerColor:   black,
+		CapColor:       black,
+		MedianColor:    black,
+		FlierColor:     black,
+		FlierEdgeColor: black,
+		EdgeWidth:      1,
+		WhiskerWidth:   1,
+		MedianWidth:    1,
+		FlierEdgeWidth: 1,
+		FlierSize:      4,
+		Alpha:          alpha,
+		ShowFliers:     true,
+	}
+
+	renderer := &recordingRenderer{}
+	box.Draw(renderer, createTestDrawContext())
+
+	if len(renderer.pathCalls) != 7 {
+		t.Fatalf("got %d path calls, want box, whiskers, caps, median, and one flier", len(renderer.pathCalls))
+	}
+	if got := renderer.pathCalls[0].paint.Fill.A; got != alpha {
+		t.Fatalf("box fill alpha = %v, want %v", got, alpha)
+	}
+	if got := renderer.pathCalls[0].paint.Stroke.A; got != alpha {
+		t.Fatalf("box edge alpha = %v, want %v", got, alpha)
+	}
+	for i, call := range renderer.pathCalls[1:] {
+		if call.paint.Stroke.A != 1 {
+			t.Fatalf("non-box path %d stroke alpha = %v, want opaque like Matplotlib Line2D/fliers", i+1, call.paint.Stroke.A)
+		}
+	}
+	if got := renderer.pathCalls[len(renderer.pathCalls)-1].paint.Fill.A; got != 1 {
+		t.Fatalf("flier fill alpha = %v, want opaque like Matplotlib flierprops", got)
 	}
 }
 

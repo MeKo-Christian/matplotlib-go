@@ -13,6 +13,11 @@ import (
 // display coordinates; it is flipped to the y-down device buffer once here, then
 // the device-space pipeline runs unchanged.
 func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
+	if render.DrawPathWithEffects(r, p, paint, func(path geom.Path, effectPaint *render.Paint) {
+		r.pathDevice(r.devPath(path), effectPaint)
+	}) {
+		return
+	}
 	r.pathDevice(r.devPath(p), paint)
 }
 
@@ -33,7 +38,9 @@ func (r *Renderer) pathDevice(p geom.Path, paint *render.Paint) {
 
 // DrawPathWithEffects applies renderer-neutral path effect passes.
 func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
-	return render.DrawPathWithEffects(r, r.devPath(p), paint, r.pathDevice)
+	return render.DrawPathWithEffects(r, p, paint, func(path geom.Path, effectPaint *render.Paint) {
+		r.pathDevice(r.devPath(path), effectPaint)
+	})
 }
 
 func (r *Renderer) drawPathDirect(p geom.Path, paint *render.Paint) {
@@ -445,7 +452,11 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 	for i := range batch.Items {
 		item := &batch.Items[i]
 		markerPaint := item.Paint
-		markerPaint.Snap = render.SnapAuto
+		if item.SnapSet {
+			markerPaint.Snap = item.Snap
+		} else {
+			markerPaint.Snap = render.SnapAuto
+		}
 		path := r.transformMarkerPathDevice(batch.Marker, item.Transform, item.Offset)
 		if len(path.C) == 0 {
 			continue

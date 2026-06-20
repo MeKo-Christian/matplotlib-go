@@ -34,6 +34,8 @@ type PathCollection struct {
 	LineCap         render.LineCap
 	LineCapSet      bool
 	LineOnly        bool
+	Snap            render.SnapMode
+	SnapSet         bool
 	offsetCoordsSet bool
 }
 
@@ -74,7 +76,7 @@ func (c *PathCollection) Draw(r render.Renderer, ctx *DrawContext) {
 			continue
 		}
 
-		paint := collectionPaint(fill, edge, width, c.lineJoin(), c.lineCap(), nil)
+		paint := c.collectionPaint(fill, edge, width, nil)
 		paint.PathEffects = cloneRenderPathEffects(c.PathEffects)
 		paint.Hatch = hatch
 		paint.HatchColor = hatchColor
@@ -307,7 +309,9 @@ func (c *PathCollection) drawMarkers(r render.Renderer, ctx *DrawContext) bool {
 		batch.Items = append(batch.Items, render.MarkerItem{
 			Offset:      offset,
 			Transform:   geom.Affine{A: scale, D: scale},
-			Paint:       collectionPaint(fill, edge, width, c.lineJoin(), c.lineCap(), nil),
+			Paint:       c.collectionPaint(fill, edge, width, nil),
+			Snap:        c.Snap,
+			SnapSet:     c.SnapSet,
 			Antialiased: c.antialiased(),
 		})
 	}
@@ -378,7 +382,7 @@ func (c *PathCollection) drawPathCollection(r render.Renderer, ctx *DrawContext)
 		}
 		batch.Items = append(batch.Items, render.PathCollectionItem{
 			Path:         path,
-			Paint:        collectionPaint(fill, edge, width, c.lineJoin(), c.lineCap(), nil),
+			Paint:        c.collectionPaint(fill, edge, width, nil),
 			Hatch:        hatch,
 			HatchColor:   hatchColor,
 			HatchWidth:   hatchWidth,
@@ -390,6 +394,14 @@ func (c *PathCollection) drawPathCollection(r render.Renderer, ctx *DrawContext)
 		return false
 	}
 	return drawer.DrawPathCollection(batch)
+}
+
+func (c *PathCollection) collectionPaint(fill, edge render.Color, width float64, dashes []float64) render.Paint {
+	paint := collectionPaint(fill, edge, width, c.lineJoin(), c.lineCap(), dashes)
+	if c != nil && c.SnapSet {
+		paint.Snap = c.Snap
+	}
+	return paint
 }
 
 func (c *PathCollection) lineJoin() render.LineJoin {

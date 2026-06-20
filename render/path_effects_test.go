@@ -69,6 +69,37 @@ func TestDrawPathWithEffectsDerivesPatchShadowColor(t *testing.T) {
 	if draws[0].paint.Stroke.A != 0 {
 		t.Fatalf("patch shadow unexpectedly stroked: %+v", draws[0].paint.Stroke)
 	}
+	if !draws[0].paint.ForceAlpha || draws[0].paint.Alpha != 0.5 {
+		t.Fatalf("shadow forced alpha = (%v, %v), want (true, 0.5)", draws[0].paint.ForceAlpha, draws[0].paint.Alpha)
+	}
+}
+
+func TestDrawPathWithEffectsShadowColorPreservesExplicitAlphaBeforeGCOverride(t *testing.T) {
+	path := testEffectLinePath()
+	path.Close()
+	paint := Paint{
+		Fill: Color{A: 1},
+		PathEffects: []PathEffect{
+			SimplePatchShadowPathEffect(
+				geom.Pt{},
+				Color{R: 0.1, G: 0.2, B: 0.3, A: 0.8},
+				0.45,
+				0.25,
+			),
+		},
+	}
+
+	var draws []effectDraw
+	DrawPathWithEffects(&NullRenderer{}, path, &paint, recordEffectDraw(&draws))
+	if len(draws) != 1 {
+		t.Fatalf("draw count = %d, want 1", len(draws))
+	}
+	if got, want := draws[0].paint.Fill, (Color{R: 0.1, G: 0.2, B: 0.3, A: 0.8}); got != want {
+		t.Fatalf("explicit shadow fill = %+v, want %+v before forced alpha", got, want)
+	}
+	if !draws[0].paint.ForceAlpha || draws[0].paint.Alpha != 0.45 {
+		t.Fatalf("shadow forced alpha = (%v, %v), want (true, 0.45)", draws[0].paint.ForceAlpha, draws[0].paint.Alpha)
+	}
 }
 
 func TestDrawPathWithEffectsBuildsTickedStroke(t *testing.T) {

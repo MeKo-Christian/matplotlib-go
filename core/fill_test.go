@@ -569,8 +569,8 @@ func TestFill2DDrawUsesMatplotlibFillCollectionSnap(t *testing.T) {
 	if len(r.pathCalls) != 1 {
 		t.Fatalf("path calls = %d, want 1", len(r.pathCalls))
 	}
-	if got := r.pathCalls[0].paint.Snap; got != render.SnapOn {
-		t.Fatalf("fill paint snap = %v, want Matplotlib fill collection edge snapping", got)
+	if got := r.pathCalls[0].paint.Snap; got != render.SnapAuto {
+		t.Fatalf("fill paint snap = %v, want Matplotlib fill collection auto snapping", got)
 	}
 }
 

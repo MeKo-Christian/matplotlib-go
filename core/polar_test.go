@@ -28,6 +28,14 @@ func (r *polarTextRenderer) DrawText(text string, origin geom.Pt, _ float64, _ r
 	r.origins = append(r.origins, origin)
 }
 
+type polarBoundedTextRenderer struct {
+	polarTextRenderer
+}
+
+func (r *polarBoundedTextRenderer) MeasureTextBounds(text string, size float64, _ string) (render.TextBounds, bool) {
+	return render.TextBounds{X: 0, Y: -0.7 * size, W: float64(len(text)) * size * 0.5, H: 0.7 * size}, true
+}
+
 func TestAddPolarAxesConfiguresProjection(t *testing.T) {
 	fig := NewFigure(400, 400)
 	ax := fig.AddPolarAxes(unitRect())
@@ -317,7 +325,35 @@ func TestPolarRadialLabelPositionAffectsTicksAndLabels(t *testing.T) {
 	}
 }
 
-func TestPolarTitleBaselineSnapsUpToMatplotlibPixelRow(t *testing.T) {
+func TestPolarXLabelAnchorUsesThetaTickTextWindowExtent(t *testing.T) {
+	fig := NewFigure(720, 720)
+	ax := fig.AddPolarAxes(geom.Rect{
+		Min: geom.Pt{X: 0.12, Y: 0.10},
+		Max: geom.Pt{X: 0.88, Y: 0.88},
+	})
+	ax.SetYLim(0, 1.1)
+	ax.XAxis.Formatter = FuncFormatter(func(float64) string { return "270°" })
+
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	r := &polarBoundedTextRenderer{}
+
+	center, outerRadius := polarCenterAndRadius(ax.adjustedLayout(fig))
+	fontSize := tickLabelFontSizeForStyle(ax.XAxis, TickLabelStyle{}, ctx)
+	lineHeight := math.Max(r.MeasureText("270°", fontSize, ctx.RC.FontKey).H, pointsToPixels(ctx.RC, fontSize))
+	tick := 3 * math.Pi / 2
+	anchor := polarPixelPoint(center, outerRadius+polarThetaTickLabelPadPx(ax.XAxis, ax.XAxis.TickSize, TickLabelStyle{}, ctx), tick)
+	wantLabelAnchorY := anchor.Y - lineHeight/2 - axisLabelPadPx(ctx)
+
+	got, vAlign := xLabelAnchorPoint(ax, r, ctx, ax.adjustedLayout(fig), AxisBottom, figureTextAlignment{})
+	if vAlign != textLayoutVAlignTop {
+		t.Fatalf("polar x-label vertical alignment = %v, want top", vAlign)
+	}
+	if !approx(got.Y, wantLabelAnchorY, 1e-9) {
+		t.Fatalf("polar x-label anchor Y = %v, want full theta tick text window extent %v", got.Y, wantLabelAnchorY)
+	}
+}
+
+func TestPolarTitleBaselineUsesMatplotlibTopExtentAndPad(t *testing.T) {
 	fig := NewFigure(640, 640)
 	ax := fig.AddPolarAxes(geom.Rect{
 		Min: geom.Pt{X: 0.12, Y: 0.12},

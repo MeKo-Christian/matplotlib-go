@@ -25,6 +25,9 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 
 	drawnAxes := make([]geom.Rect, 0, len(fig.Children))
 	for _, ax := range fig.Children {
+		if isSecondaryAxes(ax) {
+			continue
+		}
 		px := ax.adjustedLayout(fig)
 		xAxis := ax.effectiveXAxis()
 		yAxis := ax.effectiveYAxis()
@@ -109,6 +112,8 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 			}
 		}
 
+		drawSecondaryChildAxes(ax, fig, r, vp, opts, alignment)
+
 		// Matplotlib draws Axis objects (ticks and tick labels, zorder 1.5)
 		// before Spine artists (zorder 2.5). This matters at endpoint ticks:
 		// the spine overpaints the tick cap by a single coverage level.
@@ -177,6 +182,97 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 	if opts.AnimatedFilter != AnimatedFilterOnlyAnimated {
 		drawFigureLabels(fig, r, vp)
 	}
+}
+
+func drawSecondaryChildAxes(parent *Axes, fig *Figure, r render.Renderer, vp geom.Rect, opts DrawOptions, alignment figureTextAlignment) {
+	if parent == nil || fig == nil {
+		return
+	}
+	for _, child := range parent.childAxes {
+		if !isSecondaryAxes(child) {
+			continue
+		}
+		px := child.adjustedLayout(fig)
+		ctx := newAxesDrawContext(child, fig, vp, px)
+		ctx.DrawOptions = opts
+		setRendererResolution(r, ctx.RC.DPI)
+
+		r.Save()
+		r.ClipRect(px)
+		if framePath, ok := projectionFramePath(ctx.Projection, px); ok {
+			r.ClipPath(framePath)
+		}
+		for _, art := range sortedArtistDrawOrder(child.Artists) {
+			if _, ok := art.(*Legend); ok {
+				continue
+			}
+			drawArtist(r, ctx, art)
+		}
+		for _, art := range sortedArtistDrawOrder(child.WidgetArtists) {
+			drawArtist(r, ctx, art)
+		}
+		r.Restore()
+
+		for _, art := range sortedArtistDrawOrder(child.Artists) {
+			if overlay, ok := art.(OverlayArtist); ok {
+				drawOverlayArtist(r, ctx, art, overlay)
+			}
+		}
+		for _, art := range sortedArtistDrawOrder(child.WidgetArtists) {
+			if overlay, ok := art.(OverlayArtist); ok {
+				drawOverlayArtist(r, ctx, art, overlay)
+			}
+		}
+
+		for _, axis := range []*Axis{
+			child.effectiveXAxis(),
+			child.effectiveYAxis(),
+			child.effectiveTopAxis(),
+			child.effectiveRightAxis(),
+		} {
+			if axis == nil {
+				continue
+			}
+			axis.DrawTicks(r, ctx)
+			axis.DrawTickLabels(r, ctx)
+		}
+		for _, extraAxis := range child.ExtraAxes {
+			if extraAxis == nil {
+				continue
+			}
+			extraAxis.DrawTicks(r, ctx)
+			extraAxis.DrawTickLabels(r, ctx)
+		}
+		for _, axis := range []*Axis{
+			child.effectiveXAxis(),
+			child.effectiveYAxis(),
+			child.effectiveTopAxis(),
+			child.effectiveRightAxis(),
+		} {
+			if axis != nil {
+				axis.Draw(r, ctx)
+			}
+		}
+		for _, extraAxis := range child.ExtraAxes {
+			if extraAxis != nil {
+				extraAxis.Draw(r, ctx)
+			}
+		}
+		drawAxesLabels(child, r, ctx, px, alignment)
+	}
+}
+
+func isSecondaryAxes(ax *Axes) bool {
+	if ax == nil {
+		return false
+	}
+	if _, ok := ax.XScale.(linkedSecondaryScale); ok {
+		return true
+	}
+	if _, ok := ax.YScale.(linkedSecondaryScale); ok {
+		return true
+	}
+	return false
 }
 
 func shouldDrawAxesBackground(axesBackground, figureBackground render.Color, px geom.Rect, previous []geom.Rect) bool {

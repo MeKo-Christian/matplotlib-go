@@ -199,6 +199,31 @@ func TestRadarTitleClearsTopThetaLabel(t *testing.T) {
 	}
 }
 
+func TestRadarTitleBaselineUsesUnsnappedMatplotlibTitlePad(t *testing.T) {
+	fig := NewFigure(640, 640)
+	ax, err := fig.AddRadarAxes(geom.Rect{
+		Min: geom.Pt{X: 0.12, Y: 0.12},
+		Max: geom.Pt{X: 0.88, Y: 0.88},
+	}, []string{"Speed", "Power", "Range", "Handling", "Comfort"})
+	if err != nil {
+		t.Fatalf("AddRadarAxes: %v", err)
+	}
+	ax.SetTitle("Radar Projection")
+
+	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+	r := &polarTextRenderer{}
+	drawAxesLabels(ax, r, ctx, ax.adjustedLayout(fig), figureTextAlignment{})
+
+	if len(r.texts) != 1 || r.texts[0] != "Radar Projection" {
+		t.Fatalf("unexpected title draws: %v", r.texts)
+	}
+
+	wantY := titleTopExtent(ax, r, ctx, ax.adjustedLayout(fig)) + pointsToPixels(ctx.RC, 6)
+	if !approx(r.origins[0].Y, wantY, 1e-9) {
+		t.Fatalf("radar title baseline Y = %v, want unsnapped top extent plus titlepad %v", r.origins[0].Y, wantY)
+	}
+}
+
 func TestRadarVariableCountValidation(t *testing.T) {
 	fig := NewFigure(400, 400)
 	if _, err := fig.AddRadarAxes(unitRect(), []string{"A", "B"}); err == nil {

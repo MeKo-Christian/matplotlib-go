@@ -68,6 +68,9 @@ func TestAxes_TwinAxes(t *testing.T) {
 	if twinX.XAxis.ShowTicks || twinX.XAxis.ShowLabels {
 		t.Fatal("TwinX() should hide the duplicate primary x-axis")
 	}
+	if !twinX.ShowFrame || !twinX.XAxis.ShowSpine || !twinX.YAxis.ShowSpine {
+		t.Fatal("TwinX() should keep the foreground frame spines visible like Matplotlib")
+	}
 
 	twinY := ax.TwinY()
 	if twinY == nil {
@@ -81,6 +84,9 @@ func TestAxes_TwinAxes(t *testing.T) {
 	}
 	if twinY.YAxis.ShowTicks || twinY.YAxis.ShowLabels {
 		t.Fatal("TwinY() should hide the duplicate primary y-axis")
+	}
+	if !twinY.ShowFrame || !twinY.XAxis.ShowSpine || !twinY.YAxis.ShowSpine {
+		t.Fatal("TwinY() should keep the foreground frame spines visible like Matplotlib")
 	}
 }
 

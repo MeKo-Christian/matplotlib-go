@@ -153,15 +153,17 @@ func (a *Axes) Bxp(stats []BxpStat, opts ...BxpOptions) *BxpContainer {
 	if opt.MeanColor != nil {
 		meanColor = *opt.MeanColor
 	}
-	flierColor := color
+	flierEdgeColor := render.Color{R: 0, G: 0, B: 0, A: 1}
+	flierFaceColor := render.Color{}
 	if opt.FlierColor != nil {
-		flierColor = *opt.FlierColor
+		flierEdgeColor = *opt.FlierColor
+		flierFaceColor = *opt.FlierColor
 	}
 	lineWidth := 1.0
 	if opt.LineWidth != nil && *opt.LineWidth > 0 {
 		lineWidth = *opt.LineWidth
 	}
-	markerSize := 3.5
+	markerSize := 6.0
 	if opt.MarkerSize != nil && *opt.MarkerSize > 0 {
 		markerSize = *opt.MarkerSize
 	}
@@ -222,7 +224,13 @@ func (a *Axes) Bxp(stats []BxpStat, opts ...BxpOptions) *BxpContainer {
 					meanColor, lineWidth, "",
 				))
 			} else {
-				container.Means = append(container.Means, a.addBxpMarker(violinPoint(pos, *stat.Mean, orientation), meanColor, markerSize))
+				container.Means = append(container.Means, a.addBxpMarker(
+					violinPoint(pos, *stat.Mean, orientation),
+					MarkerTriangle,
+					meanColor,
+					meanColor,
+					markerSize,
+				))
 			}
 		}
 		if showFliers && len(stat.Fliers) > 0 {
@@ -233,7 +241,13 @@ func (a *Axes) Bxp(stats []BxpStat, opts ...BxpOptions) *BxpContainer {
 				}
 			}
 			if len(points) > 0 {
-				container.Fliers = append(container.Fliers, a.addBxpMarkers(points, flierColor, markerSize))
+				container.Fliers = append(container.Fliers, a.addBxpMarkers(
+					points,
+					MarkerCircle,
+					flierFaceColor,
+					flierEdgeColor,
+					markerSize,
+				))
 			}
 		}
 	}
@@ -255,20 +269,23 @@ func (a *Axes) addBxpLine(points []geom.Pt, color render.Color, width float64, l
 	return line
 }
 
-func (a *Axes) addBxpMarker(point geom.Pt, color render.Color, size float64) *Line2D {
-	return a.addBxpMarkers([]geom.Pt{point}, color, size)
+func (a *Axes) addBxpMarker(point geom.Pt, marker MarkerType, face, edge render.Color, size float64) *Line2D {
+	return a.addBxpMarkers([]geom.Pt{point}, marker, face, edge, size)
 }
 
-func (a *Axes) addBxpMarkers(points []geom.Pt, color render.Color, size float64) *Line2D {
+func (a *Axes) addBxpMarkers(points []geom.Pt, marker MarkerType, face, edge render.Color, size float64) *Line2D {
 	line := &Line2D{
 		XY:              points,
-		Col:             color,
-		Marker:          MarkerCircle,
+		Col:             edge,
+		Marker:          marker,
 		MarkerSet:       true,
 		MarkerSize:      size,
-		MarkerFaceColor: color,
-		MarkerEdgeColor: color,
+		MarkerFaceColor: face,
+		MarkerEdgeColor: edge,
 		z:               2.1,
+	}
+	if face.A <= 0 {
+		line.SetMarkerFaceColorNone()
 	}
 	a.Add(line)
 	return line
@@ -529,11 +546,11 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 
 	boxColor := applyAlpha(b.Color, alpha)
 	edgeColor := applyAlpha(b.EdgeColor, alpha)
-	medianColor := applyAlpha(b.MedianColor, alpha)
-	whiskerColor := applyAlpha(b.WhiskerColor, alpha)
-	capColor := applyAlpha(b.CapColor, alpha)
-	flierColor := applyAlpha(b.FlierColor, alpha)
-	flierEdgeColor := applyAlpha(b.FlierEdgeColor, alpha)
+	medianColor := b.MedianColor
+	whiskerColor := b.WhiskerColor
+	capColor := b.CapColor
+	flierColor := b.FlierColor
+	flierEdgeColor := b.FlierEdgeColor
 
 	xLeft := b.Position - boxWidth/2
 	xRight := b.Position + boxWidth/2

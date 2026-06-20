@@ -24,6 +24,7 @@ func Plot() *core.Figure {
 	stepAx.SetTitle("Step + Stairs")
 	stepAx.SetXLim(0, 6)
 	stepAx.SetYLim(0, 5.2)
+	stepAx.SetAxisBelow(true)
 	stepAx.AddYGrid()
 	stepWhere := core.StepWherePost
 	stepAx.Step(
@@ -53,6 +54,7 @@ func Plot() *core.Figure {
 	fillAx.SetTitle("FillBetweenX + Refs")
 	fillAx.SetXLim(0, 7)
 	fillAx.SetYLim(0, 6)
+	fillAx.SetAxisBelow(true)
 	fillAx.AddXGrid()
 	fillAx.FillBetweenX(
 		[]float64{0.4, 1.2, 2.0, 2.8, 3.6, 4.4, 5.2},
@@ -91,6 +93,7 @@ func Plot() *core.Figure {
 	brokenAx.SetTitle("broken_barh")
 	brokenAx.SetXLim(0, 10)
 	brokenAx.SetYLim(0, 4.4)
+	brokenAx.SetAxisBelow(true)
 	brokenAx.AddXGrid()
 	brokenAx.BrokenBarH(
 		[][2]float64{{0.8, 1.6}, {3.1, 2.2}, {6.5, 1.3}},
@@ -125,6 +128,7 @@ func Plot() *core.Figure {
 	stackAx.SetTitle("Stacked Bars + Labels")
 	stackAx.SetXLim(0.4, 4.6)
 	stackAx.SetYLim(0, 7.6)
+	stackAx.SetAxisBelow(true)
 	stackAx.AddYGrid()
 	x := []float64{1, 2, 3, 4}
 	base := []float64{0, 0, 0, 0}

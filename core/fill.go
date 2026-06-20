@@ -72,9 +72,6 @@ func (f *Fill2D) Draw(r render.Renderer, ctx *DrawContext) {
 		paint.LineWidth = f.EdgeWidth
 		paint.LineJoin = render.JoinRound
 		paint.LineCap = render.CapButt
-		if f.EdgeWidth <= 1.5 {
-			paint.Snap = render.SnapOn
-		}
 	}
 
 	regions := f.fillRegions()

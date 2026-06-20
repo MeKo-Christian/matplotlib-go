@@ -191,6 +191,58 @@ func TestMaxNLocatorKeepsTinyAndOffsetTicksDistinct(t *testing.T) {
 	}
 }
 
+func TestMaxNLocatorMatchesMatplotlibEdgeCases(t *testing.T) {
+	cases := []struct {
+		name   string
+		loc    MaxNLocator
+		minVal float64
+		maxVal float64
+		want   []float64
+	}{
+		{
+			name:   "degenerate view",
+			loc:    MaxNLocator{N: 2, Steps: []float64{1, 2, 2.5, 5, 10}},
+			minVal: 2,
+			maxVal: 2,
+			want:   []float64{1.9999999999998, 2, 2.0000000000002},
+		},
+		{
+			name:   "prune both",
+			loc:    MaxNLocator{N: 5, Prune: "both"},
+			minVal: -3,
+			maxVal: 7,
+			want:   []float64{-2, 0, 2, 4, 6},
+		},
+		{
+			name:   "large offset",
+			loc:    MaxNLocator{N: 4},
+			minVal: 1_000_000,
+			maxVal: 1_000_004,
+			want:   []float64{1_000_000, 1_000_001, 1_000_002, 1_000_003, 1_000_004},
+		},
+		{
+			name:   "relaxed integer",
+			loc:    MaxNLocator{N: 4, Integer: true, MinTicks: 3},
+			minVal: 0.2,
+			maxVal: 0.8,
+			want:   []float64{0.15, 0.30, 0.45, 0.60, 0.75, 0.90},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := tc.loc.Ticks(tc.minVal, tc.maxVal, 0)
+			if len(got) != len(tc.want) {
+				t.Fatalf("ticks = %v, want %v", got, tc.want)
+			}
+			for i := range tc.want {
+				if math.Abs(got[i]-tc.want[i]) > 1e-10 {
+					t.Fatalf("tick %d = %.17g, want %.17g (all ticks %v)", i, got[i], tc.want[i], got)
+				}
+			}
+		})
+	}
+}
+
 func TestIndexLocator_Basic(t *testing.T) {
 	ticks := (IndexLocator{Base: 3, Offset: 1}).Ticks(0, 10, 0)
 	want := []float64{1, 4, 7, 10}

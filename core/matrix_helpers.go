@@ -150,7 +150,7 @@ func (a *Axes) MatShow(data [][]float64, opts ...MatShowOptions) *Image2D {
 	if !a.YInverted() {
 		a.InvertY()
 	}
-	applyMatrixAxisPresentation(a, false)
+	applyMatrixAxisPresentation(a, true)
 	if boolValue(cfg.IntegerTicks, true) {
 		applyMatrixTicks(a, rows, cols)
 	}

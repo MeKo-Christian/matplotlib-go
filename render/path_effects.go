@@ -93,6 +93,12 @@ func shadowEffectPaint(base Paint, effect PathEffect) Paint {
 	out.FillGradient = GradientFill{}
 	out.Hatch = ""
 	out.HatchColor = Color{}
+	alpha := effect.ShadowAlpha
+	if alpha <= 0 {
+		alpha = 0.3
+	}
+	out.ForceAlpha = true
+	out.Alpha = alpha
 	out.Fill = Color{}
 	out.Stroke = Color{}
 	if effect.Fill.A > 0 {

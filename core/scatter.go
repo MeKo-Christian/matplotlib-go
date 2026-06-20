@@ -367,9 +367,9 @@ func (s *Scatter2D) markerPrototypePathForContext(r render.Renderer, ctx *DrawCo
 	case MarkerTickRight:
 		return markerLinePath(0, 0, 1, 0)
 	case MarkerTickUp:
-		return markerLinePath(0, 0, 0, -1)
-	case MarkerTickDown:
 		return markerLinePath(0, 0, 0, 1)
+	case MarkerTickDown:
+		return markerLinePath(0, 0, 0, -1)
 	case MarkerCaretLeft:
 		return markerCaretPath(270, false)
 	case MarkerCaretRight:
@@ -410,6 +410,7 @@ func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathC
 
 	style := s.resolvedMarkerStyle()
 	lineOnly := markerLineOnly(style)
+	edgeUsesFace := markerScatterEdgeUsesFace(&style)
 	lineWidth := s.EdgeWidth
 	if lineOnly && lineWidth <= 0 && ctx != nil && ctx.RC.LineWidth > 0 {
 		lineWidth = ctx.RC.LineWidth
@@ -429,15 +430,21 @@ func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathC
 	}
 
 	faceColor := s.Color
+	faceColors := append([]render.Color(nil), s.Colors...)
 	edgeColor := s.EdgeColor
-	if lineOnly && edgeColor.A <= 0 {
+	edgeColors := append([]render.Color(nil), s.EdgeColors...)
+	edgeColorsFace := s.EdgeColorsFace
+	if edgeUsesFace {
 		edgeColor = faceColor
+		edgeColors = cloneRenderColors(faceColors)
+		edgeColorsFace = true
 	}
 	if style.FillStyle == MarkerFillNone {
-		if edgeColor.A <= 0 {
-			edgeColor = faceColor
-		}
-		faceColor.A = 0
+		edgeColor = faceColor
+		edgeColors = cloneRenderColors(faceColors)
+		edgeColorsFace = true
+		faceColor = render.Color{}
+		faceColors = nil
 	}
 
 	pc := &PathCollection{
@@ -450,7 +457,7 @@ func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathC
 			Norm:                s.Norm,
 			VMin:                s.VMin,
 			VMax:                s.VMax,
-			EdgeColorsFace:      s.EdgeColorsFace,
+			EdgeColorsFace:      edgeColorsFace,
 			PathEffects:         cloneRenderPathEffects(s.PathEffects),
 			scalarCLimSet:       s.scalarCLimSet,
 		},
@@ -459,9 +466,9 @@ func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathC
 		Size:          size,
 		Sizes:         sizes,
 		PathInDisplay: true,
-		FaceColors:    append([]render.Color(nil), s.Colors...),
+		FaceColors:    faceColors,
 		FaceColor:     faceColor,
-		EdgeColors:    append([]render.Color(nil), s.EdgeColors...),
+		EdgeColors:    edgeColors,
 		EdgeColor:     edgeColor,
 		EdgeWidth:     lineWidth,
 		LineJoin:      s.markerLineJoin(),
@@ -470,18 +477,27 @@ func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathC
 		LineCapSet:    true,
 		LineOnly:      lineOnly,
 	}
-	if s.EdgeColorsFace && len(pc.FaceColors) > 0 {
+	if snap, ok := markerCollectionSnapMode(&style); ok {
+		pc.Snap = snap
+		pc.SnapSet = true
+	}
+	if pc.EdgeColorsFace && len(pc.FaceColors) > 0 {
 		pc.EdgeColors = cloneRenderColors(pc.FaceColors)
 	}
 	if len(s.ScalarValues) > 0 {
 		_ = pc.SetArray(s.ScalarValues)
 		if len(s.Colors) > 0 {
-			pc.FaceColors = append([]render.Color(nil), s.Colors...)
-			if pc.EdgeColorsFace {
-				pc.EdgeColors = cloneRenderColors(pc.FaceColors)
+			if style.FillStyle == MarkerFillNone {
+				pc.FaceColors = nil
+				pc.EdgeColors = cloneRenderColors(s.Colors)
+			} else {
+				pc.FaceColors = cloneRenderColors(s.Colors)
+				if pc.EdgeColorsFace {
+					pc.EdgeColors = cloneRenderColors(pc.FaceColors)
+				}
 			}
 		}
-		if len(s.EdgeColors) > 0 {
+		if len(s.EdgeColors) > 0 && !edgeUsesFace && style.FillStyle != MarkerFillNone {
 			pc.EdgeColors = append([]render.Color(nil), s.EdgeColors...)
 		}
 	}
@@ -545,6 +561,18 @@ func markerSnapThreshold(style MarkerStyle) (float64, bool) {
 	}
 }
 
+func markerCollectionSnapMode(style *MarkerStyle) (render.SnapMode, bool) {
+	if style == nil || style.Tuple != nil || style.MathText != "" || len(style.Path.C) > 0 {
+		return 0, false
+	}
+	switch style.Type {
+	case MarkerPixel:
+		return render.SnapOff, true
+	default:
+		return 0, false
+	}
+}
+
 func markerLineOnly(style MarkerStyle) bool {
 	if style.Tuple != nil {
 		return style.Tuple.Style == MarkerTupleAsterisk
@@ -552,6 +580,25 @@ func markerLineOnly(style MarkerStyle) bool {
 	switch style.Type {
 	case MarkerPlus, MarkerCross, MarkerTriDown, MarkerTriUp, MarkerTriLeft, MarkerTriRight,
 		MarkerVLine, MarkerHLine, MarkerTickLeft, MarkerTickRight, MarkerTickUp, MarkerTickDown:
+		return true
+	default:
+		return false
+	}
+}
+
+func markerScatterEdgeUsesFace(style *MarkerStyle) bool {
+	if style == nil {
+		return false
+	}
+	if markerLineOnly(*style) {
+		return true
+	}
+	if style.Tuple != nil {
+		return false
+	}
+	switch style.Type {
+	case MarkerCaretLeft, MarkerCaretRight, MarkerCaretUp, MarkerCaretDown,
+		MarkerCaretLeftBase, MarkerCaretRightBase, MarkerCaretUpBase, MarkerCaretDownBase:
 		return true
 	default:
 		return false
@@ -966,19 +1013,10 @@ func markerTuplePath(tuple MarkerTuple) geom.Path {
 	case MarkerTupleStar:
 		return markerStarPath(tuple.NumSides, 0.5, 90+tuple.AngleDeg, true)
 	case MarkerTupleAsterisk:
-		path := geom.Path{}
 		if tuple.NumSides < 2 {
-			return path
+			return geom.Path{}
 		}
-		angle := (90 + tuple.AngleDeg) * math.Pi / 180
-		step := math.Pi / float64(tuple.NumSides)
-		for i := 0; i < tuple.NumSides; i++ {
-			theta := angle + float64(i)*step
-			p := geom.Pt{X: 0.5 * math.Cos(theta), Y: 0.5 * math.Sin(theta)}
-			path.MoveTo(geom.Pt{X: -p.X, Y: -p.Y})
-			path.LineTo(p)
-		}
-		return path
+		return markerStarPath(tuple.NumSides, 0, 90+tuple.AngleDeg, true)
 	default:
 		return geom.Path{}
 	}

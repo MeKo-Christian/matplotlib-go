@@ -87,7 +87,7 @@ func renderTextDropShadowFixture(t *testing.T) image.Image {
 		HAlign:   core.TextAlignCenter,
 		VAlign:   core.TextVAlignMiddle,
 		PathEffects: []render.PathEffect{
-			render.SimplePatchShadowPathEffect(geom.Pt{X: 5, Y: 6}, render.Color{R: 0.02, G: 0.03, B: 0.04, A: 0.9}, 0.55, 0.25),
+			render.SimplePatchShadowPathEffect(geom.Pt{X: 5, Y: -6}, render.Color{R: 0.02, G: 0.03, B: 0.04, A: 0.9}, 0.55, 0.25),
 			render.NormalPathEffect(),
 		},
 	})
@@ -172,7 +172,7 @@ func drawScatterMarkerShadow(r *Renderer) {
 			Stroke:    render.Color{R: 0.04, G: 0.06, B: 0.08, A: 1},
 			LineWidth: 1.4,
 			PathEffects: []render.PathEffect{
-				render.SimplePatchShadowPathEffect(geom.Pt{X: 5, Y: 7}, render.Color{R: 0.02, G: 0.03, B: 0.04, A: 0.7}, 0.5, 0.3),
+				render.SimplePatchShadowPathEffect(geom.Pt{X: 5, Y: -7}, render.Color{R: 0.02, G: 0.03, B: 0.04, A: 0.7}, 0.5, 0.3),
 				render.NormalPathEffect(),
 			},
 		})
@@ -194,7 +194,7 @@ func drawPolygonEffectStack(r *Renderer) {
 		LineWidth: 2.2,
 		LineJoin:  render.JoinRound,
 		PathEffects: []render.PathEffect{
-			render.SimplePatchShadowPathEffect(geom.Pt{X: 7, Y: 8}, render.Color{R: 0.02, G: 0.03, B: 0.04, A: 0.7}, 0.45, 0.35),
+			render.SimplePatchShadowPathEffect(geom.Pt{X: 7, Y: -8}, render.Color{R: 0.02, G: 0.03, B: 0.04, A: 0.7}, 0.45, 0.35),
 			render.PathPatchPathEffect(render.Color{R: 0.95, G: 0.92, B: 0.82, A: 0.75}, render.Color{R: 0.83, G: 0.20, B: 0.19, A: 1}, 6, geom.Pt{}),
 			render.NormalPathEffect(),
 		},

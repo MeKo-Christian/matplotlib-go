@@ -168,9 +168,6 @@ func SimplePatchShadowPathEffect(offset geom.Pt, shadow Color, alpha, rho float6
 	if rho <= 0 {
 		rho = 0.3
 	}
-	if shadow.A > 0 {
-		shadow.A *= alpha
-	}
 	return PathEffect{
 		Kind:        PathEffectShadow,
 		Offset:      offset,
@@ -188,9 +185,6 @@ func SimpleLineShadowPathEffect(offset geom.Pt, shadow Color, alpha, rho float64
 	}
 	if rho <= 0 {
 		rho = 0.3
-	}
-	if shadow.A > 0 {
-		shadow.A *= alpha
 	}
 	return PathEffect{
 		Kind:        PathEffectShadow,

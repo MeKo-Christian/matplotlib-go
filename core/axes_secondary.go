@@ -14,16 +14,13 @@ func (a *Axes) TwinX() *Axes {
 	}
 	twin.shareX = a.xScaleRoot()
 	if twin.XAxis != nil {
-		twin.XAxis.ShowSpine = false
 		twin.XAxis.ShowTicks = false
 		twin.XAxis.ShowLabels = false
 	}
 	if twin.YAxis != nil {
-		twin.YAxis.ShowSpine = false
 		twin.YAxis.ShowTicks = false
 		twin.YAxis.ShowLabels = false
 	}
-	twin.ShowFrame = false
 	twin.RightAxis()
 	return twin
 }
@@ -35,16 +32,13 @@ func (a *Axes) TwinY() *Axes {
 	}
 	twin.shareY = a.yScaleRoot()
 	if twin.YAxis != nil {
-		twin.YAxis.ShowSpine = false
 		twin.YAxis.ShowTicks = false
 		twin.YAxis.ShowLabels = false
 	}
 	if twin.XAxis != nil {
-		twin.XAxis.ShowSpine = false
 		twin.XAxis.ShowTicks = false
 		twin.XAxis.ShowLabels = false
 	}
-	twin.ShowFrame = false
 	twin.TopAxis()
 	return twin
 }

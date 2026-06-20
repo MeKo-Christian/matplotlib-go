@@ -193,7 +193,7 @@ func titleAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rec
 		topExtent = aligned
 	}
 	y := topExtent + titlePadPx
-	if isPolarProjection(ctx.Projection) {
+	if isPolarProjection(ctx.Projection) && !isRadarProjection(ctx.Projection) {
 		y = math.Ceil(y)
 	}
 	return geom.Pt{
@@ -218,7 +218,7 @@ func xLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 	if side == AxisTop {
 		topExtent := xLabelSpinePixelY(AxisTop, px)
 		if xAxis != nil {
-			if tickBounds, ok := axisTickLabelBounds(xAxis, r, ctx); ok {
+			if tickBounds, ok := xLabelTickLabelBounds(ax, xAxis, r, ctx); ok {
 				topExtent = math.Max(topExtent, tickBounds.Max.Y)
 			} else if xAxis.ShowTicks {
 				topExtent += xAxis.TickSize * tickOutsidePaddingFactor(xAxis)
@@ -233,7 +233,7 @@ func xLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 
 	bottomExtent := xLabelSpinePixelY(AxisBottom, px)
 	if xAxis != nil {
-		if tickBounds, ok := axisTickLabelBounds(xAxis, r, ctx); ok {
+		if tickBounds, ok := xLabelTickLabelBounds(ax, xAxis, r, ctx); ok {
 			bottomExtent = math.Min(bottomExtent, tickBounds.Min.Y)
 		} else if xAxis.ShowTicks {
 			bottomExtent -= xAxis.TickSize * tickOutsidePaddingFactor(xAxis)
@@ -244,6 +244,13 @@ func xLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 	}
 	anchor.Y = bottomExtent - axisLabelPadPx(ctx)
 	return anchor, textLayoutVAlignTop
+}
+
+func xLabelTickLabelBounds(ax *Axes, xAxis *Axis, r render.Renderer, ctx *DrawContext) (geom.Rect, bool) {
+	if ax != nil && isPolarProjection(ax.projection) {
+		return xAxis.polarThetaTickLabelWindowBounds(r, ctx)
+	}
+	return axisTickLabelBounds(xAxis, r, ctx)
 }
 
 func yLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, side AxisSide, alignment figureTextAlignment) geom.Pt {

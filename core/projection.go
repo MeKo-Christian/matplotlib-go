@@ -110,6 +110,11 @@ func isPolarProjection(proj Projection) bool {
 	return ok
 }
 
+func isRadarProjection(proj Projection) bool {
+	p, ok := polarProjectionFor(proj)
+	return ok && p.isRadar()
+}
+
 type projectionFrameProvider interface {
 	FramePath(clip geom.Rect) geom.Path
 	ContainsDisplayPoint(clip geom.Rect, p geom.Pt) bool

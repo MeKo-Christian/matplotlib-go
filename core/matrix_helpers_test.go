@@ -27,8 +27,8 @@ func TestAxesMatShowConfiguresMatrixView(t *testing.T) {
 	if !ax.YInverted() {
 		t.Fatal("MatShow() should invert the y-axis")
 	}
-	if ax.XAxis == nil || ax.XAxis.ShowTicks || ax.XAxis.ShowLabels {
-		t.Fatal("MatShow() should hide bottom x ticks and labels")
+	if ax.XAxis == nil || !ax.XAxis.ShowTicks || ax.XAxis.ShowLabels {
+		t.Fatal("MatShow() should keep bottom x ticks visible and bottom labels hidden")
 	}
 	if ax.XAxisTop == nil || !ax.XAxisTop.ShowTicks || !ax.XAxisTop.ShowLabels {
 		t.Fatal("MatShow() should show top x ticks and labels")
@@ -197,6 +197,18 @@ func TestAxesSpyLeavesXLabelAtBottomWithTopTicks(t *testing.T) {
 	}
 	if r.origins[0].Y >= xLabelSpinePixelY(AxisBottom, px) {
 		t.Fatalf("spy xlabel origin Y = %.3f, want below bottom spine %.3f", r.origins[0].Y, xLabelSpinePixelY(AxisBottom, px))
+	}
+}
+
+func TestAxesMatShowKeepsBottomTicksWithTopLabels(t *testing.T) {
+	ax := NewFigure(400, 300).AddAxes(unitRect())
+	ax.MatShow([][]float64{{1, 0}, {0, 1}}, MatShowOptions{})
+
+	if ax.XAxis == nil || !ax.XAxis.ShowTicks || ax.XAxis.ShowLabels {
+		t.Fatal("matshow should keep bottom x tick marks visible while moving tick labels to the top")
+	}
+	if ax.XAxisTop == nil || !ax.XAxisTop.ShowTicks || !ax.XAxisTop.ShowLabels {
+		t.Fatal("matshow should place ticks and tick labels on the top axis")
 	}
 }
 

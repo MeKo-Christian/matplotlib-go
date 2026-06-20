@@ -79,15 +79,11 @@ func Plot() *core.Figure {
 		x := float64(i%7) + 1
 		y := float64(6 - i/7)
 		color := palette[i%len(palette)]
-		markerEdge := edge
-		if markerGridLineOnly(markerStyle) || markerStyle.FillStyle == core.MarkerFillNone {
-			markerEdge = color
-		}
 		scatter := &core.Scatter2D{
 			XY:          []geom.Pt{{X: x, Y: y}},
 			Size:        core.ScatterAreaFromRadius(8.0, style.Default.DPI),
 			Color:       color,
-			EdgeColor:   markerEdge,
+			EdgeColor:   edge,
 			EdgeWidth:   edgeWidth,
 			MarkerStyle: markerStyle,
 			Alpha:       1.0,
@@ -95,21 +91,6 @@ func Plot() *core.Figure {
 		ax.Add(scatter)
 	}
 	return fig
-}
-
-func markerGridLineOnly(style core.MarkerStyle) bool {
-	if style.Tuple != nil {
-		return style.Tuple.Style == core.MarkerTupleAsterisk
-	}
-	switch style.Type {
-	case core.MarkerPlus, core.MarkerCross, core.MarkerTriDown, core.MarkerTriUp, core.MarkerTriLeft, core.MarkerTriRight,
-		core.MarkerVLine, core.MarkerHLine, core.MarkerTickLeft, core.MarkerTickRight, core.MarkerTickUp, core.MarkerTickDown,
-		core.MarkerCaretLeft, core.MarkerCaretRight, core.MarkerCaretUp, core.MarkerCaretDown,
-		core.MarkerCaretLeftBase, core.MarkerCaretRightBase, core.MarkerCaretUpBase, core.MarkerCaretDownBase:
-		return true
-	default:
-		return false
-	}
 }
 
 // Render is the AGG-rendered showcase image.
