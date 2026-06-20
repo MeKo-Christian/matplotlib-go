@@ -102,6 +102,7 @@ func (f *Figure) addAxesWithProjection(r geom.Rect, proj Projection, opts ...sty
 		XAxis:           NewXAxis(),
 		YAxis:           NewYAxis(),
 		ShowFrame:       true,
+		PatchVisible:    true,
 		ColorCycle:      color.NewColorCycle(effective.Palette()),
 		PatchColorCycle: color.NewColorCycle(effective.Palette()),
 		aspectMode:      "auto",

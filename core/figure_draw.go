@@ -68,7 +68,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 			continue
 		}
 
-		if shouldDrawAxesBackground(ctx.RC.AxesBackground, fig.RC.FigureBackground(), px, drawnAxes) {
+		if ax.PatchVisible && shouldDrawAxesBackground(ctx.RC.AxesBackground, fig.RC.FigureBackground(), px, drawnAxes) {
 			backgroundPath := pixelRectPath(px)
 			if framePath, ok := projectionFramePath(ctx.Projection, px); ok {
 				backgroundPath = framePath

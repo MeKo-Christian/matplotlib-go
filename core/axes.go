@@ -24,12 +24,13 @@ type Axes struct {
 	widgetZsorted bool
 
 	// Axis control
-	XAxis      *Axis // bottom x-axis
-	YAxis      *Axis // left y-axis
-	XAxisTop   *Axis // optional top x-axis
-	YAxisRight *Axis // optional right y-axis
-	ExtraAxes  []*Axis
-	ShowFrame  bool // draw top and right border lines when no explicit top/right axis exists
+	XAxis        *Axis // bottom x-axis
+	YAxis        *Axis // left y-axis
+	XAxisTop     *Axis // optional top x-axis
+	YAxisRight   *Axis // optional right y-axis
+	ExtraAxes    []*Axis
+	ShowFrame    bool // draw top and right border lines when no explicit top/right axis exists
+	PatchVisible bool // draw the axes background patch
 
 	// Text labels
 	Title  string // title above the plot

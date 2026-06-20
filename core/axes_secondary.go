@@ -72,6 +72,9 @@ func (a *Axes) newOverlayAxes() *Axes {
 	overlay.aspectMode = a.aspectMode
 	overlay.aspectValue = a.aspectValue
 	overlay.boxAspect = a.boxAspect
+	// Matplotlib's twinx/twiny overlay axes hide their patch so host artists
+	// remain visible through the overlay.
+	overlay.PatchVisible = false
 	a.childAxes = append(a.childAxes, overlay)
 	return overlay
 }
