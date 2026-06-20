@@ -237,7 +237,7 @@ var cases = []Case{
 	{ID: "mixed_raster_vector", Topic: "raster", Title: "Mixed Raster Vector Output", Description: "A polar mixed-output example with rasterized dense scatter points and vector-preserved line, text, axes, legend, SVG, and PDF artifacts.", Showcase: true, Width: 640, Height: 640, SVGGoldenFamily: "mixed_raster", MinPSNR: 32.0, MaxMeanAbs: 9.0, MaxRMSE: 3.4},
 	{ID: "quad_mesh", Topic: "raster", Title: "Quad Mesh Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"quadmeshbatch"}, MinPSNR: 48.0, MaxMeanAbs: 1.0, MaxRMSE: 1.6},
 	{ID: "gouraud_triangles", Topic: "raster", Title: "Gouraud Triangles", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"gouraudtrianglebatch"}, MinPSNR: 25.0, MaxMeanAbs: 18.0, MaxRMSE: 4.4},
-	{ID: "clip_path_batch", Topic: "raster", Title: "Clip Path Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathclip", "quadmeshbatch"}, MinPSNR: 45.0, MaxMeanAbs: 1.0, MaxRMSE: 5.0},
+	{ID: "clip_path_batch", Topic: "raster", Title: "Clip Path Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathclip", "quadmeshbatch"}, MinPSNR: 45.0, MaxMeanAbs: 1.0, MaxRMSE: 3.0},
 }
 
 // Cases returns every cataloged parity example/fixture.

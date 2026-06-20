@@ -146,6 +146,37 @@ func TestAxesPColorMeshDisablesAntialiasingLikeMatplotlib(t *testing.T) {
 	}
 }
 
+func TestAxesPColorMeshSupportsExplicitAntialiasing(t *testing.T) {
+	ax := &Axes{
+		XScale: transform.NewLinear(0, 2),
+		YScale: transform.NewLinear(0, 2),
+		XAxis:  NewXAxis(),
+		YAxis:  NewYAxis(),
+	}
+	width := 0.75
+	edge := render.Color{A: 1}
+	antialias := true
+	mesh := ax.PColorMesh([][]float64{{0, 1}}, MeshOptions{
+		XEdges:    []float64{0, 1, 2},
+		YEdges:    []float64{0, 1},
+		EdgeColor: &edge,
+		EdgeWidth: &width,
+		Antialias: &antialias,
+	})
+	if mesh == nil {
+		t.Fatal("expected pcolormesh mesh")
+	}
+
+	r := &batchRecordingRenderer{returnNative: true}
+	mesh.Draw(r, createTestDrawContext())
+	if len(r.quadMeshBatches) != 1 || len(r.quadMeshBatches[0].Cells) == 0 {
+		t.Fatalf("expected one native quad mesh batch, got %v", r.quadMeshBatches)
+	}
+	if !r.quadMeshBatches[0].Cells[0].Antialiased {
+		t.Fatal("explicit antialiasing should enable pcolormesh antialiasing")
+	}
+}
+
 func TestPColorMeshShadingAutoUsesCenterCoordinates(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})

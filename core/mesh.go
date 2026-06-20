@@ -29,6 +29,7 @@ type MeshOptions struct {
 	Alpha     *float64
 	EdgeColor *render.Color
 	EdgeWidth *float64
+	Antialias *bool
 	Label     string
 }
 
@@ -107,6 +108,13 @@ func (a *Axes) pcolorMesh(data [][]float64, snap render.SnapMode, antialias rend
 	edgeWidth := 0.0
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
+	}
+	if opt.Antialias != nil {
+		if *opt.Antialias {
+			antialias = render.AntialiasDefault
+		} else {
+			antialias = render.AntialiasOff
+		}
 	}
 
 	edgeColor := render.Color{}

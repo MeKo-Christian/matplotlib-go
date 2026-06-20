@@ -30,6 +30,8 @@ type ArtistRasterization struct {
 	hasClipRect   bool
 	clipPath      geom.Path
 	hasClipPath   bool
+	clipPathSpec  CoordinateSpec
+	hasClipSpec   bool
 	clipPathTrans geom.Affine
 	hasClipTrans  bool
 	transform     transform.T
@@ -48,6 +50,8 @@ type ArtistClip struct {
 	HasClipRect       bool
 	ClipPath          geom.Path
 	HasClipPath       bool
+	ClipPathCoords    CoordinateSpec
+	HasClipPathCoords bool
 	ClipPathTransform geom.Affine
 	HasClipPathTrans  bool
 }
@@ -207,6 +211,23 @@ func (a *ArtistRasterization) SetClipPath(path geom.Path) {
 	}
 	a.clipPath = cloneArtistClipPath(path)
 	a.hasClipPath = true
+	a.clipPathSpec = CoordinateSpec{}
+	a.hasClipSpec = false
+	a.stale = true
+}
+
+// SetClipPathCoords stores an explicit path clip in the given coordinate
+// system. The coordinate transform is resolved at draw time.
+func (a *ArtistRasterization) SetClipPathCoords(path geom.Path, coords CoordinateSpec) {
+	if a == nil {
+		return
+	}
+	a.clipPath = cloneArtistClipPath(path)
+	a.hasClipPath = true
+	a.clipPathSpec = coords
+	a.hasClipSpec = true
+	a.clipPathTrans = geom.Affine{}
+	a.hasClipTrans = false
 	a.stale = true
 }
 
@@ -217,6 +238,8 @@ func (a *ArtistRasterization) ClearClipPath() {
 	}
 	a.clipPath = geom.Path{}
 	a.hasClipPath = false
+	a.clipPathSpec = CoordinateSpec{}
+	a.hasClipSpec = false
 	a.clipPathTrans = geom.Affine{}
 	a.hasClipTrans = false
 	a.stale = true
@@ -229,6 +252,8 @@ func (a *ArtistRasterization) SetClipPathTransform(transform geom.Affine) {
 	}
 	a.clipPathTrans = transform
 	a.hasClipTrans = true
+	a.clipPathSpec = CoordinateSpec{}
+	a.hasClipSpec = false
 	a.stale = true
 }
 
@@ -253,6 +278,8 @@ func (a *ArtistRasterization) ArtistClip() ArtistClip {
 		HasClipRect:       a.hasClipRect,
 		ClipPath:          cloneArtistClipPath(a.clipPath),
 		HasClipPath:       a.hasClipPath,
+		ClipPathCoords:    a.clipPathSpec,
+		HasClipPathCoords: a.hasClipSpec,
 		ClipPathTransform: a.clipPathTrans,
 		HasClipPathTrans:  a.hasClipTrans,
 	}
@@ -424,7 +451,7 @@ func drawArtist(r render.Renderer, ctx *DrawContext, art Artist) {
 	draw := func() {
 		drawRasterizedArtist(r, ctx, art)
 	}
-	drawWithArtistClip(r, art, draw)
+	drawWithArtistClip(r, ctx, art, draw)
 }
 
 // drawSelectByAnimated returns whether art should be drawn under the current
@@ -481,7 +508,7 @@ func drawOverlayArtist(r render.Renderer, ctx *DrawContext, art Artist, overlay 
 	draw := func() {
 		drawRasterizedOverlayArtist(r, ctx, art, overlay)
 	}
-	drawWithArtistClip(r, art, draw)
+	drawWithArtistClip(r, ctx, art, draw)
 }
 
 func drawRasterizedOverlayArtist(r render.Renderer, ctx *DrawContext, art Artist, overlay OverlayArtist) {
@@ -499,7 +526,7 @@ func drawRasterizedOverlayArtist(r render.Renderer, ctx *DrawContext, art Artist
 	overlay.DrawOverlay(r, ctx)
 }
 
-func drawWithArtistClip(r render.Renderer, art Artist, draw func()) {
+func drawWithArtistClip(r render.Renderer, ctx *DrawContext, art Artist, draw func()) {
 	clip, ok := artistClipOptions(art)
 	if !ok {
 		draw()
@@ -510,18 +537,41 @@ func drawWithArtistClip(r render.Renderer, art Artist, draw func()) {
 		r.ClipRect(clip.ClipRect)
 	}
 	if clip.HasClipPath {
-		if clip.HasClipPathTrans {
-			if transformer, ok := r.(render.ClipPathTransformer); ok {
-				transformer.ClipPathTransformed(clip.ClipPath, clip.ClipPathTransform)
-			} else {
-				r.ClipPath(applyAffinePath(clip.ClipPath, clip.ClipPathTransform))
-			}
-		} else {
-			r.ClipPath(clip.ClipPath)
-		}
+		applyArtistClipPath(r, ctx, clip)
 	}
 	draw()
 	r.Restore()
+}
+
+func applyArtistClipPath(r render.Renderer, ctx *DrawContext, clip ArtistClip) {
+	switch {
+	case clip.HasClipPathCoords:
+		if ctx == nil {
+			r.ClipPath(clip.ClipPath)
+			return
+		}
+		if affine, ok := ctx.AffineTransformFor(clip.ClipPathCoords); ok {
+			clipPathTransformed(r, clip.ClipPath, affine)
+			return
+		}
+		if tr := ctx.TransformFor(clip.ClipPathCoords); tr != nil {
+			r.ClipPath(applyTransformPath(clip.ClipPath, tr))
+			return
+		}
+		r.ClipPath(clip.ClipPath)
+	case clip.HasClipPathTrans:
+		clipPathTransformed(r, clip.ClipPath, clip.ClipPathTransform)
+	default:
+		r.ClipPath(clip.ClipPath)
+	}
+}
+
+func clipPathTransformed(r render.Renderer, path geom.Path, affine geom.Affine) {
+	if transformer, ok := r.(render.ClipPathTransformer); ok {
+		transformer.ClipPathTransformed(path, affine)
+		return
+	}
+	r.ClipPath(applyAffinePath(path, affine))
 }
 
 func artistClipOptions(art Artist) (ArtistClip, bool) {

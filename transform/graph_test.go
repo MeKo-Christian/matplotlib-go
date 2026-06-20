@@ -73,6 +73,55 @@ func TestOffsetTransformRoundTrip(t *testing.T) {
 	}
 }
 
+func TestAsAffineExtractsKnownLinearGraphs(t *testing.T) {
+	tr := NewOffset(
+		Chain{
+			A: NewScaleTransform(NewLinear(2, 6), NewLinear(-1, 3)),
+			B: NewDisplayRectTransform(geom.Rect{
+				Min: geom.Pt{X: 10, Y: 100},
+				Max: geom.Pt{X: 50, Y: 220},
+			}),
+		},
+		geom.Pt{X: 7, Y: -3},
+	)
+
+	affine, ok := AsAffine(tr)
+	if !ok {
+		t.Fatal("AsAffine rejected a linear transform graph")
+	}
+
+	for _, pt := range []geom.Pt{
+		{X: 2, Y: -1},
+		{X: 4.5, Y: 2},
+		{X: 6, Y: 3},
+	} {
+		got := affine.Apply(pt)
+		want := tr.Apply(pt)
+		if !approxPt(got, want, 1e-9) {
+			t.Fatalf("affine.Apply(%+v) = %+v, want %+v", pt, got, want)
+		}
+	}
+}
+
+func TestAsAffineRejectsNonlinearGraphs(t *testing.T) {
+	tr := NewScaleTransform(NewLog(1, 100, 10), NewLinear(0, 1))
+	if affine, ok := AsAffine(tr); ok {
+		t.Fatalf("AsAffine accepted nonlinear transform: %+v", affine)
+	}
+}
+
+func TestAsAffineTreatsNilScaleAsIdentity(t *testing.T) {
+	affine, ok := AsAffine(NewScaleTransform(nil, NewLinear(0, 2)))
+	if !ok {
+		t.Fatal("AsAffine rejected nil scale identity axis")
+	}
+	got := affine.Apply(geom.Pt{X: 3, Y: 1})
+	want := geom.Pt{X: 3, Y: 0.5}
+	if !approxPt(got, want, 1e-9) {
+		t.Fatalf("affine.Apply = %+v, want %+v", got, want)
+	}
+}
+
 func TestFrozenTransformSnapshotsCachedGraph(t *testing.T) {
 	var source TransformNode
 	builds := 0

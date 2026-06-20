@@ -27,6 +27,82 @@ func (a AffineT) Invert(p geom.Pt) (geom.Pt, bool) {
 	return inv.Apply(p), true
 }
 
+// AsAffine returns t as an affine matrix when the transform graph is known to
+// be affine. Nonlinear scales or unknown transform implementations return false.
+func AsAffine(t T) (geom.Affine, bool) {
+	switch v := Frozen(t).(type) {
+	case nil:
+		return geom.Identity(), true
+	case AffineT:
+		return v.M, true
+	case SeparableT:
+		xScale, xOffset, ok := affineAxis(v.XAxis())
+		if !ok {
+			return geom.Affine{}, false
+		}
+		yScale, yOffset, ok := affineAxis(v.YAxis())
+		if !ok {
+			return geom.Affine{}, false
+		}
+		return geom.Affine{A: xScale, D: yScale, E: xOffset, F: yOffset}, true
+	case Chain:
+		a, ok := AsAffine(v.A)
+		if !ok {
+			return geom.Affine{}, false
+		}
+		b, ok := AsAffine(v.B)
+		if !ok {
+			return geom.Affine{}, false
+		}
+		return b.Mul(a), true
+	case OffsetT:
+		base, ok := AsAffine(v.Base)
+		if !ok {
+			return geom.Affine{}, false
+		}
+		return geom.Affine{A: 1, D: 1, E: v.Delta.X, F: v.Delta.Y}.Mul(base), true
+	default:
+		return geom.Affine{}, false
+	}
+}
+
+func affineAxis(axis AxisTransform) (scale, offset float64, ok bool) {
+	switch v := axisOrIdentity(axis).(type) {
+	case identityAxis:
+		return 1, 0, true
+	case LinearAxis:
+		return v.Scale, v.Offset, true
+	case ScaleAxis:
+		if v.Scale == nil {
+			return 1, 0, true
+		}
+		linear, ok := v.Scale.(Linear)
+		if !ok {
+			return 0, 0, false
+		}
+		axis := NewLinearAxis(linear.Min, linear.Max, 0, 1)
+		return axis.Scale, axis.Offset, true
+	case OffsetAxis:
+		scale, offset, ok := affineAxis(v.Base)
+		if !ok {
+			return 0, 0, false
+		}
+		return scale, offset + v.Delta, true
+	case ComposedAxis:
+		aScale, aOffset, ok := affineAxis(v.A)
+		if !ok {
+			return 0, 0, false
+		}
+		bScale, bOffset, ok := affineAxis(v.B)
+		if !ok {
+			return 0, 0, false
+		}
+		return bScale * aScale, bScale*aOffset + bOffset, true
+	default:
+		return 0, 0, false
+	}
+}
+
 // Scale maps a scalar domain to unit space [0..1] and back.
 type Scale interface {
 	Fwd(x float64) float64

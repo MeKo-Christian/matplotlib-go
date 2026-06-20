@@ -166,6 +166,13 @@ func (ctx *DrawContext) TransformFor(spec CoordinateSpec) transform.T {
 	return transform.Blend(xTrans, yTrans)
 }
 
+// AffineTransformFor returns the coordinate transform as an affine matrix when
+// the active transform graph is linear. Nonlinear projections or scales return
+// false, matching Matplotlib's split between transformed paths and affine tails.
+func (ctx *DrawContext) AffineTransformFor(spec CoordinateSpec) (geom.Affine, bool) {
+	return transform.AsAffine(ctx.TransformFor(spec))
+}
+
 func (ctx *DrawContext) transformForSpace(space CoordinateSpace) transform.T {
 	switch space {
 	case CoordAxes:

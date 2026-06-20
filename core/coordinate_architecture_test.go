@@ -78,6 +78,18 @@ func TestTransformForCoordinateSpecsExposeExpectedTransforms(t *testing.T) {
 		t.Fatalf("CoordFigure TransformFor = %+v, want %+v", got, ctx.TransFigure().Apply(geom.Pt{X: 0.25, Y: 0.75}))
 	}
 
+	affine, ok := ctx.AffineTransformFor(Coords(CoordData))
+	if !ok {
+		t.Fatal("AffineTransformFor(CoordData) rejected linear data transform")
+	}
+	for _, pt := range []geom.Pt{{X: 0, Y: -5}, {X: 2.5, Y: 0}, {X: 10, Y: 5}} {
+		got := affine.Apply(pt)
+		want := ctx.TransData().Apply(pt)
+		if got != want {
+			t.Fatalf("AffineTransformFor(CoordData).Apply(%+v) = %+v, want %+v", pt, got, want)
+		}
+	}
+
 	// Display space is y-up: CoordFigure y=0.25 maps to 0.25*500 from the bottom.
 	blended := ctx.TransformFor(BlendCoords(CoordData, CoordFigure)).Apply(geom.Pt{X: 5, Y: 0.25})
 	if blended.X != 150 || blended.Y != 125 {
@@ -95,6 +107,9 @@ func TestCoordinateTransformsRejectMixedProjectionStateWithoutSeparability(t *te
 	}
 	if got := ctx.TransformFor(BlendCoords(CoordData, CoordAxes)); got != nil {
 		t.Fatalf("non-affine projection should reject mixed CoordData/CoordAxes transforms, got %#v", got)
+	}
+	if affine, ok := ctx.AffineTransformFor(Coords(CoordData)); ok {
+		t.Fatalf("non-affine projection should reject affine extraction, got %+v", affine)
 	}
 
 	projectionPoint := ctx.TransformFor(Coords(CoordData)).Apply(geom.Pt{X: math.Pi / 2, Y: 1})

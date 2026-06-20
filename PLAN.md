@@ -148,8 +148,9 @@ June 14 full optional `TestReferenceCompare` sweep has no catalog row above
 `RMSE 5`; after the 2026-06-20 overlapping-axes patch draw-order fix, the
 highest rows are `imshow_transformed` 4.97, `geo_mollweide_axes` 4.92,
 `boxplot_basic` 4.84, and `formatter_engineering_labels` 4.80. The
-AGG-native reference sweep is also below `RMSE 5`;
-its highest row is `clip_path_batch` at 4.58.
+AGG-native reference sweep is also below `RMSE 5`; after the 2026-06-20
+`clip_path_batch` clip-path/core-parity update, that fixture is at `RMSE 1.47`
+with a tightened `MaxRMSE 3.0` gate.
 
 **MathText basic update (2026-06-19):** `mathtext_basic` now keeps the Go
 fixture parallel to Matplotlib's `textcoords="offset points"` and

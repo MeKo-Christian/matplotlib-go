@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 type clipTestArtist struct {
@@ -198,6 +199,58 @@ func TestArtistClipPathUsesTransformCapability(t *testing.T) {
 	assertStringSliceEqual(t, ren.events, wantEvents)
 	if len(ren.transforms) != 1 || ren.transforms[0] != transform {
 		t.Fatalf("clip path transforms = %v, want [%v]", ren.transforms, transform)
+	}
+}
+
+func TestArtistClipPathCoordsResolveAffineAtDrawTime(t *testing.T) {
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 1, Y: 1})
+	path.LineTo(geom.Pt{X: 2, Y: 2})
+	affine := geom.Affine{A: 10, D: 20, E: 3, F: 4}
+	art := &clipTestArtist{
+		draw: func(r render.Renderer) {
+			r.(*transformedClipRecordingRenderer).events = append(r.(*transformedClipRecordingRenderer).events, "draw")
+		},
+	}
+	art.SetClipPathCoords(path, Coords(CoordData))
+
+	ren := &transformedClipRecordingRenderer{}
+	drawArtist(ren, &DrawContext{
+		DataToPixel: Transform2D{DataToAxes: transform.NewAffine(affine)},
+	}, art)
+
+	wantEvents := []string{"save", "clipPathTransformed", "draw", "restore"}
+	assertStringSliceEqual(t, ren.events, wantEvents)
+	if len(ren.transforms) != 1 || ren.transforms[0] != affine {
+		t.Fatalf("clip path coordinate transform = %v, want [%v]", ren.transforms, affine)
+	}
+}
+
+func TestArtistClipPathCoordsFallbackTransformsNonAffinePath(t *testing.T) {
+	path := geom.Path{}
+	path.MoveTo(geom.Pt{X: 1, Y: 1})
+	path.LineTo(geom.Pt{X: 10, Y: 2})
+	tr := transform.NewScaleTransform(transform.NewLog(1, 10, 10), transform.NewLinear(1, 3))
+	art := &clipTestArtist{
+		draw: func(r render.Renderer) {
+			r.(*clipRecordingRenderer).events = append(r.(*clipRecordingRenderer).events, "draw")
+		},
+	}
+	art.SetClipPathCoords(path, Coords(CoordData))
+
+	ren := &clipRecordingRenderer{}
+	drawArtist(ren, &DrawContext{
+		DataToPixel: Transform2D{DataToAxes: tr},
+	}, art)
+
+	wantEvents := []string{"save", "clipPath", "draw", "restore"}
+	assertStringSliceEqual(t, ren.events, wantEvents)
+	if len(ren.paths) != 1 {
+		t.Fatalf("clip path count = %d, want 1", len(ren.paths))
+	}
+	wantFirst := tr.Apply(path.V[0])
+	if ren.paths[0].V[0] != wantFirst {
+		t.Fatalf("transformed first clip point = %v, want %v", ren.paths[0].V[0], wantFirst)
 	}
 }
 
