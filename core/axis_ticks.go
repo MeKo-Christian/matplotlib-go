@@ -216,10 +216,6 @@ func axisTickSegment(axis *Axis, spine geom.Pt, tickSize float64, isXAxis bool) 
 	if axis == nil {
 		return spine, spine
 	}
-	if tickSize > 0 {
-		tickSize = math.Round(tickSize)
-	}
-
 	outward := tickSize
 	if (axis.Side == AxisTop) || (axis.Side == AxisLeft) {
 		outward = -tickSize

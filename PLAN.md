@@ -272,6 +272,14 @@ radar projection example through `Axes._update_title_position`, while the
 built-in polar title raster row remains unchanged. Refreshed `radar_basic`
 metric: RMSE 0.32, MeanAbs 0.09; catalog cap is tightened to `MaxRMSE 0.5`.
 
+**Geo tick-label bounds update (2026-06-20):** geographic y-axis label
+placement now uses tick-label display-window extents for the labelpad
+calculation, matching `YAxis._update_label_position` over
+`Text.get_window_extent()` in Matplotlib instead of basing the extent on glyph
+ink bounds. Refreshed metrics: `geo_mollweide_axes` RMSE 2.23,
+`geo_aitoff_axes` RMSE 0.64, and `geo_hammer_axes` RMSE 0.66; all three catalog
+caps are tightened to `MaxRMSE 3.0`.
+
 **Current sweep note (2026-06-20):** the full optional `TestGolden` sweep passes
 after refreshing the fill-snap-affected visuals. A full `TestReferenceCompare`
 sweep reports `stat_variants` at RMSE 3.24, so its catalog cap is set to
