@@ -104,9 +104,13 @@ func snapPath(path geom.Path, paint *render.Paint) geom.Path {
 	}
 	for i, pt := range out.V {
 		out.V[i] = geom.Pt{
-			X: math.Floor(pt.X+0.5) + snapValue,
-			Y: math.Floor(pt.Y+0.5) + snapValue,
+			X: snapPathCoordinate(pt.X) + snapValue,
+			Y: snapPathCoordinate(pt.Y) + snapValue,
 		}
 	}
 	return out
+}
+
+func snapPathCoordinate(v float64) float64 {
+	return math.Floor(v + 0.5 + 1e-9)
 }

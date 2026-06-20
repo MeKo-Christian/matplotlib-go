@@ -135,6 +135,17 @@ func TestPathPipelineSnapsWithLineWidthAwareAlignment(t *testing.T) {
 	}
 }
 
+func TestPathPipelineSnapsNearHalfPixelTransformTiesLikeMatplotlib(t *testing.T) {
+	var p geom.Path
+	p.MoveTo(geom.Pt{X: 267.49999999999994, Y: 126.2})
+	p.LineTo(geom.Pt{X: 267.49999999999994, Y: 287.8})
+
+	got := snapPath(p, &render.Paint{Snap: render.SnapAuto, Stroke: render.Color{A: 1}, LineWidth: 1})
+	if got.V[0].X != 268.5 || got.V[1].X != 268.5 {
+		t.Fatalf("near-half transform tie snapped to X vertices %v, want 268.5 like Matplotlib PathSnapper", got.V)
+	}
+}
+
 func TestDrawPathCollectionSingleUnsnappedPathUsesMarkerCachePlacement(t *testing.T) {
 	r, err := New(640, 360, render.Color{R: 1, G: 1, B: 1, A: 1})
 	if err != nil {
