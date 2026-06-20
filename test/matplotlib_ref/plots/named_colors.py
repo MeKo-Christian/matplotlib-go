@@ -30,7 +30,7 @@ def named_colors(out_dir):
         "C3",
         (0.15, 0.45, 0.65, 1),
     ]
-    ax.bar(x, heights, width=0.68, color=colors, edgecolor=(0.12, 0.12, 0.12), linewidth=1)
+    ax.bar(x, heights, width=0.68, color=colors, edgecolor=(0.12, 0.12, 0.12), linewidth=lw(1.0))
     ax.set_xticks(x, ["hex", "gray", "tab", "css", "xkcd", "C3", "tuple"])
     ax.set_yticks([0, 2, 4, 6, 8])
     save(fig, out_dir, "named_colors")

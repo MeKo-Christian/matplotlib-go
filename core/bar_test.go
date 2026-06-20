@@ -322,6 +322,20 @@ func TestBar2D_NegativeValues(t *testing.T) {
 	}
 }
 
+func TestAxesBarPreservesEdgeWidthPixelsForMatplotlibRefHelpers(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	edgeWidth := 1.0
+
+	bar := ax.Bar([]float64{1}, []float64{3}, BarOptions{EdgeWidth: &edgeWidth})
+	if bar == nil {
+		t.Fatal("Bar returned nil")
+	}
+	if got := bar.EdgeWidth; got != edgeWidth {
+		t.Fatalf("bar edge width = %v, want Go renderer pixel width %v", got, edgeWidth)
+	}
+}
+
 func TestBar2D_EdgeColors(t *testing.T) {
 	// Test with edge colors and width
 	bar := &Bar2D{

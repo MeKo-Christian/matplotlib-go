@@ -87,33 +87,36 @@ func (b *Bar2D) Draw(r render.Renderer, ctx *DrawContext) {
 		edgeColor.A *= alpha
 
 		// Create rectangle path based on orientation.
-		var fillPath, strokePath geom.Path
+		var path geom.Path
 		if b.Orientation == BarVertical {
-			fillPath, strokePath = b.createVerticalBarPaths(x, height, width, baseline, ctx)
+			path = b.createVerticalBarPath(x, height, width, baseline, ctx)
 		} else {
-			fillPath, strokePath = b.createHorizontalBarPaths(x, height, width, baseline, ctx)
+			path = b.createHorizontalBarPath(x, height, width, baseline, ctx)
 		}
 
-		if len(fillPath.C) == 0 {
+		if len(path.C) == 0 {
 			continue // skip invalid bars
 		}
 
-		if fillColor.A > 0 {
-			r.Path(fillPath, &render.Paint{Fill: fillColor})
+		paint := render.Paint{
+			Snap: render.SnapAuto,
 		}
-
-		if b.EdgeWidth > 0 && edgeColor.A > 0 && len(strokePath.C) > 0 {
-			r.Path(strokePath, &render.Paint{
-				Stroke:    edgeColor,
-				LineWidth: b.EdgeWidth,
-				LineJoin:  render.JoinMiter,
-				LineCap:   render.CapButt,
-			})
+		if fillColor.A > 0 {
+			paint.Fill = fillColor
+		}
+		if b.EdgeWidth > 0 && edgeColor.A > 0 {
+			paint.Stroke = edgeColor
+			paint.LineWidth = b.EdgeWidth
+			paint.LineJoin = render.JoinMiter
+			paint.LineCap = render.CapButt
+		}
+		if paint.Fill.A > 0 || paint.Stroke.A > 0 {
+			r.Path(path, &paint)
 		}
 	}
 }
 
-func (b *Bar2D) createVerticalBarPaths(x, height, width, baseline float64, ctx *DrawContext) (geom.Path, geom.Path) {
+func (b *Bar2D) createVerticalBarPath(x, height, width, baseline float64, ctx *DrawContext) geom.Path {
 	// Calculate rectangle corners in data space
 	halfWidth := width / 2
 	left := x - halfWidth
@@ -131,12 +134,12 @@ func (b *Bar2D) createVerticalBarPaths(x, height, width, baseline float64, ctx *
 	px1 := ctx.DataToPixel.Apply(geom.Pt{X: right, Y: top})
 	rect, ok := rectFromPoints(px0, px1)
 	if !ok {
-		return geom.Path{}, geom.Path{}
+		return geom.Path{}
 	}
-	return snappedFillRectPath(rect), snappedStrokeRectPath(rect)
+	return pixelRectPath(rect)
 }
 
-func (b *Bar2D) createHorizontalBarPaths(y, height, width, baseline float64, ctx *DrawContext) (geom.Path, geom.Path) {
+func (b *Bar2D) createHorizontalBarPath(y, height, width, baseline float64, ctx *DrawContext) geom.Path {
 	// For horizontal bars:
 	// y is the y-position (center)
 	// height is the length (width) of the bar
@@ -157,9 +160,9 @@ func (b *Bar2D) createHorizontalBarPaths(y, height, width, baseline float64, ctx
 	px1 := ctx.DataToPixel.Apply(geom.Pt{X: right, Y: top})
 	rect, ok := rectFromPoints(px0, px1)
 	if !ok {
-		return geom.Path{}, geom.Path{}
+		return geom.Path{}
 	}
-	return snappedFillRectPath(rect), snappedStrokeRectPath(rect)
+	return pixelRectPath(rect)
 }
 
 // Z returns the z-order for sorting.

@@ -48,16 +48,15 @@ func Plot() *core.Figure {
 	}
 
 	x := []float64{1, 2, 3, 4, 5, 6, 7}
-	bar := &core.Bar2D{
-		X:           x,
-		Heights:     []float64{2.4, 3.4, 4.3, 5.2, 6.1, 4.8, 3.7},
-		Width:       0.68,
-		Colors:      colors,
-		EdgeColor:   render.Color{R: 0.12, G: 0.12, B: 0.12, A: 1},
-		EdgeWidth:   1,
-		Orientation: core.BarVertical,
-	}
-	ax.Add(bar)
+	width := 0.68
+	edgeColor := render.Color{R: 0.12, G: 0.12, B: 0.12, A: 1}
+	edgeWidth := 1.0
+	ax.Bar(x, []float64{2.4, 3.4, 4.3, 5.2, 6.1, 4.8, 3.7}, core.BarOptions{
+		Width:     &width,
+		Colors:    colors,
+		EdgeColor: &edgeColor,
+		EdgeWidth: &edgeWidth,
+	})
 	ax.XAxis.Locator = core.FixedLocator{TicksList: x}
 	ax.XAxis.Formatter = core.FixedFormatter{Labels: labels}
 	ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 2, 4, 6, 8}}

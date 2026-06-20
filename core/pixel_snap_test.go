@@ -60,7 +60,7 @@ func TestSnapPixelRectTreatsNearHalfTiesLikeMatplotlibTransformOutput(t *testing
 	}
 }
 
-func TestBar2D_DrawSnapsFillAndStrokeRectsLikeMatplotlibBars(t *testing.T) {
+func TestBar2D_DrawUsesSingleSnapAutoPatchPathForFilledStrokedBars(t *testing.T) {
 	bar := &Bar2D{
 		X:           []float64{1},
 		Heights:     []float64{2.25},
@@ -74,32 +74,27 @@ func TestBar2D_DrawSnapsFillAndStrokeRectsLikeMatplotlibBars(t *testing.T) {
 	r := &recordingRenderer{}
 	bar.Draw(r, createFractionalDrawContext())
 
-	if len(r.pathCalls) != 2 {
-		t.Fatalf("expected fill and stroke path calls, got %d", len(r.pathCalls))
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("expected one combined fill/stroke path call, got %d", len(r.pathCalls))
 	}
 
-	fill := r.pathCalls[0].path.V
-	if len(fill) != 4 {
-		t.Fatalf("expected 4 fill vertices, got %d", len(fill))
+	path := r.pathCalls[0].path.V
+	if len(path) != 4 {
+		t.Fatalf("expected 4 bar vertices, got %d", len(path))
 	}
-	if fill[0] != (geom.Pt{X: 56, Y: 428}) || fill[2] != (geom.Pt{X: 64, Y: 450}) {
-		t.Fatalf("unexpected snapped fill vertices: %+v", fill)
+	if !pointAlmostEqual(path[0], geom.Pt{X: 55.918, Y: 427.7175}) ||
+		!pointAlmostEqual(path[2], geom.Pt{X: 63.542, Y: 449.7}) {
+		t.Fatalf("unexpected unsnapped bar vertices: %+v", path)
 	}
-
-	stroke := r.pathCalls[1].path.V
-	if len(stroke) != 4 {
-		t.Fatalf("expected 4 stroke vertices, got %d", len(stroke))
-	}
-	// y-up stroke snap offsets Y by -0.5 (round - 0.5).
-	if stroke[0] != (geom.Pt{X: 56.5, Y: 427.5}) || stroke[2] != (geom.Pt{X: 64.5, Y: 449.5}) {
-		t.Fatalf("unexpected snapped stroke vertices: %+v", stroke)
-	}
-	paint := r.pathCalls[1].paint
-	if paint.Stroke != bar.EdgeColor || paint.LineWidth != bar.EdgeWidth {
-		t.Fatalf("stroke paint = %+v, want edge color/linewidth from bar", paint)
+	paint := r.pathCalls[0].paint
+	if paint.Fill != bar.Color || paint.Stroke != bar.EdgeColor || paint.LineWidth != bar.EdgeWidth {
+		t.Fatalf("bar paint = %+v, want combined face/edge paint", paint)
 	}
 	if paint.LineJoin != render.JoinMiter || paint.LineCap != render.CapButt {
 		t.Fatalf("bar stroke style = join %v cap %v, want Matplotlib miter/butt", paint.LineJoin, paint.LineCap)
+	}
+	if paint.Snap != render.SnapAuto {
+		t.Fatalf("bar snap = %v, want SnapAuto like Matplotlib Patch.draw", paint.Snap)
 	}
 }
 
