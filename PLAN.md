@@ -267,32 +267,50 @@ the 3D naming traps now warn + document the real APIs. Remaining tails:
 `Violin`/`Grid` alpha need a `*float64` API change, and a mathtext strict-mode
 toggle is still open._
 
-## Phase 7: Formatter, Layout & Date Fidelity
+## Phase 7: Formatter, Layout & Date Fidelity ✅
 
 **Goal:** close the highest-impact divergences on ordinary linear plots and
 layouts — defaults a typical Matplotlib script relies on.
 
-- [ ] **`ScalarFormatter` offset / ×10ⁿ multiplier text** rendered by default on
-      both axes (`core/tick_formatters.go:73`; wire the existing
-      `OffsetFormatter` plumbing, drop the X-only guard at
-      `axis_ticklabels.go:104`).
-- [ ] **Real `constrained_layout` solver** (`LayoutGrid` constraint propagation
-      with suptitle/colorbar/legend reservations) distinct from `tight_layout`
-      (`core/layout_engine.go:182`) — or document that both are the same
-      approximation.
-- [ ] **Date convention:** adopt Matplotlib days-since-epoch and ship
-      `date2num`/`num2date`/`set_epoch` (`core/date_tick.go:892`) — or document
-      the Unix-seconds divergence prominently.
-- [ ] **Per-axes margins:** `Margins`/`SetXMargin`/`SetYMargin` and
-      `autolimit_mode='round_numbers'` rounding (`core/axes_autoscale.go:84`).
-- [ ] **Aspect:** `adjustable='datalim'`, `SetAdjustable`, `anchor`
-      (`core/axes_limits.go:144`).
-- [ ] **Axis-length-aware bins:** `AutoLocator`/`LogLocator` `nbins='auto'`
-      (`tick_locators.go:521,666`); date-locator `nonsingular` expansion.
-- [ ] **`label_outer()`** + automatic inner shared-axes tick-label suppression.
+- [x] **`ScalarFormatter` offset / ×10ⁿ multiplier text** rendered by default on
+      both axes. `ScalarFormatter` now ports Matplotlib's
+      `set_locs`/`_compute_offset`/`_set_order_of_magnitude`/`_set_format`/
+      `get_offset` (`core/tick_formatters.go`): it factors a shared additive
+      offset and order-of-magnitude into axis offset text (`OffsetText`) and
+      renders ticks at uniform precision. The X-only guard at
+      `axis_ticklabels.go` is dropped and left/right (Y-axis) offset positioning
+      added. The `formatter_scalar_scientific_labels` fixture + reference were
+      retargeted from a `FuncFormatter` workaround to the real `ScalarFormatter`
+      (Go output now byte-matches Matplotlib's offset rendering).
+- [x] **Real `constrained_layout` solver** — a `LayoutGrid` constraint
+      propagation solver (`core/layoutgrid.go`, ported from
+      `_layoutgrid.py`/`_constrained_layout.py`) with per-margin variables,
+      a twice-run solve, and suptitle/colorbar/legend reservations. Only
+      `LayoutEngineConstrained` routes through it; `tight_layout` keeps its
+      greedy heuristic, so the two engines now genuinely differ.
+- [x] **Date convention:** adopted Matplotlib days-since-epoch and shipped
+      `Date2Num`/`Num2Date`/`SetEpoch`/`GetEpoch` (`core/dates.go`); the internal
+      converters in `core/date_tick.go` use days with microsecond rounding (like
+      `num2date`), and `internal/parityutil` reuses `Date2Num` so fixtures agree.
+- [x] **Per-axes margins:** `Margins`/`SetXMargin`/`SetYMargin` and
+      `SetAutolimitMode("round_numbers")` snap-to-locator rounding
+      (`core/axes_autoscale.go`).
+- [x] **Aspect:** `SetAdjustable("box"|"datalim")`, `SetAnchor` (cardinal
+      anchors), anchor-aware box positioning, and a `datalim` data-limit
+      expansion applied from autoscale (`core/axes_limits.go`).
+- [x] **Axis-length-aware bins:** `MaxNLocator`/`AutoLocator` opt-in
+      `NbinsAuto` clamps the axis-length-aware target count to
+      `[max(1,minTicks-1), 9]` (`tick_locators.go`); date-locator `nonsingular`
+      (~4-year) expansion in `DateLocator` (`date_tick.go`).
+- [x] **`label_outer()`** + inner shared-axes tick-label / offset / axis-label
+      suppression via per-Axes flags consulted at draw time (`core/gridspec.go`,
+      `figure_draw.go`, `axes_labels.go`) — non-mutating so shared `*Axis`
+      artists are unaffected.
 
-**Exit criterion:** large/offset-magnitude linear data and constrained-layout
-figures match Matplotlib defaults within parity tolerance.
+**Exit criterion:** ✅ large/offset-magnitude linear data and date figures match
+the Matplotlib references at RMSE ≤ ~2; the two layout engines diverge as
+intended. (Pre-existing, unrelated branch drift remains in some SVG goldens and
+a few non-Phase-7 reference-compare rows.)
 
 ## Phase 8: MathText & Text Completeness
 

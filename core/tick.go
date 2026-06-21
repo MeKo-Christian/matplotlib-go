@@ -40,11 +40,8 @@ type OffsetFormatter interface {
 
 func formatTickLabelForTicks(formatter Formatter, tick float64, index int, ticks []float64) string {
 	label := formatTickLabel(formatter, tick, index, ticks)
-	if scalarFormatter, ok := formatter.(ScalarFormatter); ok && len(ticks) >= 2 {
-		step := ticks[1] - ticks[0]
-		if step > 0 {
-			label = formatScalarTickLabel(scalarFormatter, tick, step)
-		}
+	if scalarFormatter, ok := formatter.(ScalarFormatter); ok && len(ticks) >= 1 {
+		label = formatScalarTickLabelCtx(scalarFormatter, tick, newScalarTickContext(scalarFormatter, ticks))
 	}
 	return label
 }

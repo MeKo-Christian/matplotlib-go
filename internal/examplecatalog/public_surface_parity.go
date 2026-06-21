@@ -503,7 +503,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface", "formatter_scalar_scientific_labels"},
-		Note:              "Go ScalarFormatter covers fixed-minus, step-aware precision, scientific suppression, inclusive power limits, MathText-style scientific labels, and deterministic locale-independent formatting; formatter_scalar_scientific_labels covers visible scientific tick output. Axis-level offset text is intentionally omitted for v1.0; use FuncFormatter for explicit offset labels.",
+		Note:              "Go ScalarFormatter covers fixed-minus, step-aware precision, scientific suppression, inclusive power limits, MathText-style scientific labels, and deterministic locale-independent formatting; it also factors a shared additive offset and ×10ⁿ order-of-magnitude into axis offset text on both axes (Matplotlib ScalarFormatter.set_locs/get_offset), rendered by default. formatter_scalar_scientific_labels validates the offset/scientific tick output against the real Matplotlib ScalarFormatter.",
 	},
 	{
 		ID:                "ticker-eng-formatter",

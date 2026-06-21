@@ -911,3 +911,77 @@ func TestLogitFormatter(t *testing.T) {
 		t.Fatalf("minor LogitFormatter.Format = %q, want empty", got)
 	}
 }
+
+func TestScalarFormatterOffsetText(t *testing.T) {
+	cases := []struct {
+		name  string
+		f     ScalarFormatter
+		ticks []float64
+		want  string
+	}{
+		{
+			name:  "order of magnitude 1e6",
+			ticks: []float64{0, 2e5, 4e5, 6e5, 8e5, 1e6},
+			want:  "1e6",
+		},
+		{
+			name:  "small magnitude 1e-5",
+			ticks: []float64{0, 1e-5, 2e-5, 3e-5},
+			want:  "1e-5",
+		},
+		{
+			name:  "no offset, in-range magnitude",
+			ticks: []float64{0, 1000, 2000, 3000, 4000, 5000},
+			want:  "",
+		},
+		{
+			name:  "additive offset",
+			ticks: []float64{1.0001e6, 1.0002e6, 1.0003e6},
+			want:  "+1e6",
+		},
+		{
+			name:  "mathtext order of magnitude",
+			f:     ScalarFormatter{UseMathText: true},
+			ticks: []float64{0, 2e5, 4e5, 6e5, 8e5, 1e6},
+			want:  `$\times\mathdefault{10^{6}}\mathdefault{}$`,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := tc.f.OffsetText(tc.ticks)
+			want := scalarFixMinus(tc.want)
+			if got != want {
+				t.Fatalf("OffsetText(%v) = %q, want %q", tc.ticks, got, want)
+			}
+		})
+	}
+}
+
+func TestScalarTickContextFormatting(t *testing.T) {
+	f := ScalarFormatter{}
+	ticks := []float64{0, 2e5, 4e5, 6e5, 8e5, 1e6}
+	ctx := newScalarTickContext(f, ticks)
+	want := []string{"0.0", "0.2", "0.4", "0.6", "0.8", "1.0"}
+	for i, tick := range ticks {
+		got := formatScalarTickLabelCtx(f, tick, ctx)
+		if got != scalarFixMinus(want[i]) {
+			t.Fatalf("tick %v = %q, want %q", tick, got, want[i])
+		}
+	}
+}
+
+func TestMaxNLocatorNbinsAutoClampsTargetCount(t *testing.T) {
+	loc := MaxNLocator{NbinsAuto: true}
+	// A very large axis-length-aware target count is clamped to at most 9 bins.
+	ticks := loc.Ticks(0, 100, 50)
+	if len(ticks) == 0 {
+		t.Fatal("expected ticks")
+	}
+	if got := len(ticks) - 1; got > 9 {
+		t.Fatalf("nbins='auto' should yield <= 9 intervals, got %d", got)
+	}
+	// No axis context still places ticks (falls back to the upper bound).
+	if got := (MaxNLocator{NbinsAuto: true}).Ticks(0, 100, 0); len(got) < 2 {
+		t.Fatalf("nbins='auto' with no context should still place ticks, got %v", got)
+	}
+}

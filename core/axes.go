@@ -46,10 +46,28 @@ type Axes struct {
 	aspectMode   string
 	aspectValue  float64
 	boxAspect    float64
+	adjustable   string // "" => "box"; "datalim" shifts data limits instead of the display rect
+	anchor       string // "" => "C"; cardinal anchor for aspect-shrunk axes
 	axisBelowSet bool
 	axisBelowZ   float64
 	xLabelSide   AxisSide
 	yLabelSide   AxisSide
+
+	// Per-axes autoscale margins (Phase 7). nil => fall back to
+	// defaultAutoScaleMargin (0.05); a non-nil value (including 0) is honored.
+	xMargin       *float64
+	yMargin       *float64
+	autolimitMode string // "" => "data"; "round_numbers" snaps limits to round values
+
+	// label_outer / shared-axes suppression (Phase 7). Hide redundant tick
+	// labels (and offset text) / axis labels on inner shared subplots without
+	// mutating the possibly-shared Axis artist.
+	hideXTickLabels     bool
+	hideYTickLabels     bool
+	hideTopTickLabels   bool
+	hideRightTickLabels bool
+	hideXLabel          bool
+	hideYLabel          bool
 
 	shareX *Axes
 	shareY *Axes

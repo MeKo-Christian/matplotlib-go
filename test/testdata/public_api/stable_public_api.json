@@ -3484,6 +3484,10 @@
           "declaration": "func Coords(space CoordinateSpace) CoordinateSpec"
         },
         {
+          "id": "func Date2Num",
+          "declaration": "func Date2Num(t time.Time) float64"
+        },
+        {
           "id": "func DrawFigure",
           "declaration": "func DrawFigure(fig *Figure, r render.Renderer)"
         },
@@ -3522,6 +3526,10 @@
         {
           "id": "func FillToBaselineX",
           "declaration": "func FillToBaselineX(y, x []float64, baseline float64, color render.Color) *Fill2D"
+        },
+        {
+          "id": "func GetEpoch",
+          "declaration": "func GetEpoch() time.Time"
         },
         {
           "id": "func ImRead",
@@ -3616,6 +3624,10 @@
           "declaration": "func NoMarkerColor() MarkerColorSpec"
         },
         {
+          "id": "func Num2Date",
+          "declaration": "func Num2Date(v float64, loc *time.Location) time.Time"
+        },
+        {
           "id": "func RadarAngles",
           "declaration": "func RadarAngles(n int) []float64"
         },
@@ -3670,6 +3682,10 @@
         {
           "id": "func SetArtistLabel",
           "declaration": "func SetArtistLabel(art Artist, label string)"
+        },
+        {
+          "id": "func SetEpoch",
+          "declaration": "func SetEpoch(t time.Time) error"
         },
         {
           "id": "func SliceMarkers",
@@ -4026,6 +4042,10 @@
         {
           "id": "method ArtistRasterization.SetClipPath",
           "declaration": "func (ArtistRasterization) SetClipPath(path geom.Path)"
+        },
+        {
+          "id": "method ArtistRasterization.SetClipPathCoords",
+          "declaration": "func (ArtistRasterization) SetClipPathCoords(path geom.Path, coords CoordinateSpec)"
         },
         {
           "id": "method ArtistRasterization.SetClipPathTransform",
@@ -4408,6 +4428,10 @@
           "declaration": "func (Axes) InvertY()"
         },
         {
+          "id": "method Axes.LabelOuter",
+          "declaration": "func (Axes) LabelOuter()"
+        },
+        {
           "id": "method Axes.LassoSelector",
           "declaration": "func (Axes) LassoSelector(opts ...LassoSelectorOptions) *LassoSelector"
         },
@@ -4422,6 +4446,10 @@
         {
           "id": "method Axes.MagnitudeSpectrum",
           "declaration": "func (Axes) MagnitudeSpectrum(samples []float64, opts ...SignalSpectrumOptions) *SpectrumResult"
+        },
+        {
+          "id": "method Axes.Margins",
+          "declaration": "func (Axes) Margins(x, y float64)"
         },
         {
           "id": "method Axes.MatShow",
@@ -4592,8 +4620,20 @@
           "declaration": "func (Axes) SemilogY(x, y []float64, opts ...PlotOptions) *Line2D"
         },
         {
+          "id": "method Axes.SetAdjustable",
+          "declaration": "func (Axes) SetAdjustable(adjustable string) error"
+        },
+        {
+          "id": "method Axes.SetAnchor",
+          "declaration": "func (Axes) SetAnchor(anchor string) error"
+        },
+        {
           "id": "method Axes.SetAspect",
           "declaration": "func (Axes) SetAspect(mode string, value ...float64) error"
+        },
+        {
+          "id": "method Axes.SetAutolimitMode",
+          "declaration": "func (Axes) SetAutolimitMode(mode string)"
         },
         {
           "id": "method Axes.SetAxesLocator",
@@ -4676,6 +4716,10 @@
           "declaration": "func (Axes) SetXLimLog(minVal, maxVal, base float64)"
         },
         {
+          "id": "method Axes.SetXMargin",
+          "declaration": "func (Axes) SetXMargin(m float64)"
+        },
+        {
           "id": "method Axes.SetXScale",
           "declaration": "func (Axes) SetXScale(name string, opts ...transform.ScaleOption) error"
         },
@@ -4702,6 +4746,10 @@
         {
           "id": "method Axes.SetYLimLog",
           "declaration": "func (Axes) SetYLimLog(minVal, maxVal, base float64)"
+        },
+        {
+          "id": "method Axes.SetYMargin",
+          "declaration": "func (Axes) SetYMargin(m float64)"
         },
         {
           "id": "method Axes.SetYScale",
@@ -5406,6 +5454,10 @@
         {
           "id": "method DayLocator.Ticks",
           "declaration": "func (DayLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method DrawContext.AffineTransformFor",
+          "declaration": "func (DrawContext) AffineTransformFor(spec CoordinateSpec) (geom.Affine, bool)"
         },
         {
           "id": "method DrawContext.TransAxes",
@@ -6680,6 +6732,10 @@
           "declaration": "func (ScalarFormatter) Format(x float64) string"
         },
         {
+          "id": "method ScalarFormatter.OffsetText",
+          "declaration": "func (ScalarFormatter) OffsetText(ticks []float64) string"
+        },
+        {
           "id": "method ScalarMapInfo.Color",
           "declaration": "func (ScalarMapInfo) Color(v, alpha float64) render.Color"
         },
@@ -6938,6 +6994,22 @@
         {
           "id": "method SubplotSpec.GridSpec",
           "declaration": "func (SubplotSpec) GridSpec(nRows, nCols int, opts ...GridSpecOption) *GridSpec"
+        },
+        {
+          "id": "method SubplotSpec.IsFirstCol",
+          "declaration": "func (SubplotSpec) IsFirstCol() bool"
+        },
+        {
+          "id": "method SubplotSpec.IsFirstRow",
+          "declaration": "func (SubplotSpec) IsFirstRow() bool"
+        },
+        {
+          "id": "method SubplotSpec.IsLastCol",
+          "declaration": "func (SubplotSpec) IsLastCol() bool"
+        },
+        {
+          "id": "method SubplotSpec.IsLastRow",
+          "declaration": "func (SubplotSpec) IsLastRow() bool"
         },
         {
           "id": "method SubplotSpec.Rect",
@@ -7289,7 +7361,7 @@
         },
         {
           "id": "type ArtistClip",
-          "declaration": "type ArtistClip struct{ ClipOn bool; ClipRect geom.Rect; HasClipRect bool; ClipPath geom.Path; HasClipPath bool; ClipPathTransform geom.Affine; HasClipPathTrans bool }"
+          "declaration": "type ArtistClip struct{ ClipOn bool; ClipRect geom.Rect; HasClipRect bool; ClipPath geom.Path; HasClipPath bool; ClipPathCoords CoordinateSpec; HasClipPathCoords bool; ClipPathTransform geom.Affine; HasClipPathTrans bool }"
         },
         {
           "id": "type ArtistFunc",
@@ -7341,7 +7413,7 @@
         },
         {
           "id": "type Axes",
-          "declaration": "type Axes struct{ RectFraction geom.Rect; RC *style.RC; XScale transform.Scale; YScale transform.Scale; Artists []Artist; WidgetArtists []Artist; XAxis *Axis; YAxis *Axis; XAxisTop *Axis; YAxisRight *Axis; ExtraAxes []*Axis; ShowFrame bool; Title string; XLabel string; YLabel string; ColorCycle *color.ColorCycle; PatchColorCycle *color.ColorCycle }"
+          "declaration": "type Axes struct{ RectFraction geom.Rect; RC *style.RC; XScale transform.Scale; YScale transform.Scale; Artists []Artist; WidgetArtists []Artist; XAxis *Axis; YAxis *Axis; XAxisTop *Axis; YAxisRight *Axis; ExtraAxes []*Axis; ShowFrame bool; PatchVisible bool; Title string; XLabel string; YLabel string; ColorCycle *color.ColorCycle; PatchColorCycle *color.ColorCycle }"
         },
         {
           "id": "type Axes3D",
@@ -7973,11 +8045,11 @@
         },
         {
           "id": "type MaxNLocator",
-          "declaration": "type MaxNLocator struct{ N int; Integer bool; Steps []float64; Symmetric bool; Prune string; MinTicks int; RawStepScale float64 }"
+          "declaration": "type MaxNLocator struct{ N int; Integer bool; Steps []float64; Symmetric bool; Prune string; MinTicks int; NbinsAuto bool; RawStepScale float64 }"
         },
         {
           "id": "type MeshOptions",
-          "declaration": "type MeshOptions struct{ XEdges []float64; YEdges []float64; Mask [][]bool; Shading MeshShading; Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Alpha *float64; EdgeColor *render.Color; EdgeWidth *float64; Label string }"
+          "declaration": "type MeshOptions struct{ XEdges []float64; YEdges []float64; Mask [][]bool; Shading MeshShading; Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Alpha *float64; EdgeColor *render.Color; EdgeWidth *float64; Antialias *bool; Label string }"
         },
         {
           "id": "type MeshShading",
@@ -8073,7 +8145,7 @@
         },
         {
           "id": "type PathCollection",
-          "declaration": "type PathCollection struct{ Collection; Path geom.Path; Paths []geom.Path; Offsets []geom.Pt; OffsetCoords CoordinateSpec; Sizes []float64; Size float64; PathInDisplay bool; FaceColors []render.Color; FaceColor render.Color; EdgeColors []render.Color; EdgeColor render.Color; EdgeWidths []float64; EdgeWidth float64; Hatches []string; Hatch string; HatchColors []render.Color; HatchColor render.Color; HatchWidths []float64; HatchWidth float64; LineJoin render.LineJoin; LineJoinSet bool; LineCap render.LineCap; LineCapSet bool; LineOnly bool }"
+          "declaration": "type PathCollection struct{ Collection; Path geom.Path; Paths []geom.Path; Offsets []geom.Pt; OffsetCoords CoordinateSpec; Sizes []float64; Size float64; PathInDisplay bool; FaceColors []render.Color; FaceColor render.Color; EdgeColors []render.Color; EdgeColor render.Color; EdgeWidths []float64; EdgeWidth float64; Hatches []string; Hatch string; HatchColors []render.Color; HatchColor render.Color; HatchWidths []float64; HatchWidth float64; LineJoin render.LineJoin; LineJoinSet bool; LineCap render.LineCap; LineCapSet bool; LineOnly bool; Snap render.SnapMode; SnapSet bool }"
         },
         {
           "id": "type PathPatch",
@@ -8249,7 +8321,7 @@
         },
         {
           "id": "type ScalarFormatter",
-          "declaration": "type ScalarFormatter struct{ Prec int; PowerLimits [2]int; UsePowerLimits bool; DisableScientific bool; UseMathText bool }"
+          "declaration": "type ScalarFormatter struct{ Prec int; PowerLimits [2]int; UsePowerLimits bool; DisableScientific bool; UseMathText bool; DisableOffset bool; OffsetThreshold int }"
         },
         {
           "id": "type ScalarMapConfig",
@@ -10167,7 +10239,7 @@
         },
         {
           "id": "type MarkerItem",
-          "declaration": "type MarkerItem struct{ Offset geom.Pt; Transform geom.Affine; Paint Paint; Antialiased bool }"
+          "declaration": "type MarkerItem struct{ Offset geom.Pt; Transform geom.Affine; Paint Paint; Snap SnapMode; SnapSet bool; Antialiased bool }"
         },
         {
           "id": "type MathGlyphMeasurer",
@@ -10784,6 +10856,10 @@
         {
           "id": "const NonPositiveMask",
           "declaration": "const NonPositiveMask NonPositiveMode = \"mask\""
+        },
+        {
+          "id": "func AsAffine",
+          "declaration": "func AsAffine(t T) (geom.Affine, bool)"
         },
         {
           "id": "func Blend",

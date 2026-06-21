@@ -62,9 +62,10 @@ func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float
 	fontKey := tickLabelFontKey(style, ctx)
 	labelPadPx := tickLabelPadForAxisSize(a, tickSize, style, ctx)
 
-	step := 0.0
-	if len(ticks) >= 2 {
-		step = ticks[1] - ticks[0]
+	scalarFormatter, hasScalar := formatter.(ScalarFormatter)
+	var scalarCtx scalarTickContext
+	if hasScalar {
+		scalarCtx = newScalarTickContext(scalarFormatter, ticks)
 	}
 
 	var rotRen render.RotatedTextDrawer
@@ -74,8 +75,8 @@ func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float
 
 	for i, tickValue := range ticks {
 		label := formatTickLabel(formatter, tickValue, i, ticks)
-		if scalarFormatter, ok := formatter.(ScalarFormatter); ok && step > 0 {
-			label = formatScalarTickLabel(scalarFormatter, tickValue, step)
+		if hasScalar {
+			label = formatScalarTickLabelCtx(scalarFormatter, tickValue, scalarCtx)
 		}
 		if label == "" {
 			continue
@@ -101,7 +102,7 @@ func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float
 
 func (a *Axis) drawTickOffsetText(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64, labelColor render.Color, isXAxis bool) {
 	textRen, ok := r.(render.TextDrawer)
-	if !ok || formatter == nil || !isXAxis {
+	if !ok || formatter == nil {
 		return
 	}
 	offsetter, ok := formatter.(OffsetFormatter)
@@ -121,6 +122,7 @@ func (a *Axis) drawTickOffsetText(r render.Renderer, ctx *DrawContext, ticks []f
 	labelBounds, haveLabelBounds := tickLabelBoundsForLevel(a, r, ctx, ticks, formatter, style, tickSize, isXAxis)
 
 	var anchor geom.Pt
+	hAlign := TextAlignRight
 	vAlign := textLayoutVAlignTop
 	switch a.Side {
 	case AxisBottom:
@@ -136,11 +138,21 @@ func (a *Axis) drawTickOffsetText(r render.Renderer, ctx *DrawContext, ticks []f
 		}
 		anchor = geom.Pt{X: ctx.Clip.Max.X, Y: top + offsetPadPx}
 		vAlign = textLayoutVAlignBottom
+	case AxisLeft:
+		// Matplotlib places the y-axis offset text above the top of the axis,
+		// left-aligned to the left spine.
+		anchor = geom.Pt{X: ctx.Clip.Min.X, Y: ctx.Clip.Max.Y + offsetPadPx}
+		hAlign = TextAlignLeft
+		vAlign = textLayoutVAlignBottom
+	case AxisRight:
+		anchor = geom.Pt{X: ctx.Clip.Max.X, Y: ctx.Clip.Max.Y + offsetPadPx}
+		hAlign = TextAlignRight
+		vAlign = textLayoutVAlignBottom
 	default:
 		return
 	}
 	origin := geom.Pt{
-		X: anchor.X - textHorizontalOriginOffset(layout, TextAlignRight),
+		X: anchor.X - textHorizontalOriginOffset(layout, hAlign),
 		Y: anchor.Y + textBaselineOffset(layout, vAlign),
 	}
 	drawDisplayText(textRen, label, origin, fontSize, labelColor, fontKey, ctx.RC.UseTeX)
@@ -396,15 +408,16 @@ func tickLabelBoundsForLevel(a *Axis, r render.Renderer, ctx *DrawContext, ticks
 		have  bool
 	)
 
-	step := 0.0
-	if len(ticks) >= 2 {
-		step = ticks[1] - ticks[0]
+	scalarFormatter, hasScalar := formatter.(ScalarFormatter)
+	var scalarCtx scalarTickContext
+	if hasScalar {
+		scalarCtx = newScalarTickContext(scalarFormatter, ticks)
 	}
 
 	for i, tickValue := range ticks {
 		label := formatTickLabel(formatter, tickValue, i, ticks)
-		if scalarFormatter, ok := formatter.(ScalarFormatter); ok && step > 0 {
-			label = formatScalarTickLabel(scalarFormatter, tickValue, step)
+		if hasScalar {
+			label = formatScalarTickLabelCtx(scalarFormatter, tickValue, scalarCtx)
 		}
 		if label == "" {
 			continue

@@ -935,3 +935,37 @@ func TestPlotAutoScalePreservesOnlyExplicitAxis(t *testing.T) {
 		t.Fatalf("y limits = [%v, %v], want [-55, 55]", yMin, yMax)
 	}
 }
+
+func TestPerAxesMargins(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	ax.Plot([]float64{0, 10}, []float64{0, 10})
+
+	ax.SetXMargin(0.1)
+	ax.SetYMargin(0)
+
+	xMin, xMax := ax.XScale.Domain()
+	yMin, yMax := ax.YScale.Domain()
+	if !floatApprox(xMin, -1, 1e-12) || !floatApprox(xMax, 11, 1e-12) {
+		t.Fatalf("x limits with 0.1 margin = [%v, %v], want [-1, 11]", xMin, xMax)
+	}
+	if !floatApprox(yMin, 0, 1e-12) || !floatApprox(yMax, 10, 1e-12) {
+		t.Fatalf("y limits with 0 margin = [%v, %v], want [0, 10]", yMin, yMax)
+	}
+}
+
+func TestRoundNumbersAutolimit(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	ax.Plot([]float64{0.3, 9.7}, []float64{0.3, 9.7})
+	ax.SetAutolimitMode("round_numbers")
+
+	xMin, xMax := ax.XScale.Domain()
+	t.Logf("round_numbers x limits = [%v, %v]", xMin, xMax)
+	if xMin > 0.3 || xMax < 9.7 {
+		t.Fatalf("round_numbers limits [%v, %v] must contain data [0.3, 9.7]", xMin, xMax)
+	}
+	if xMin != math.Trunc(xMin) || xMax != math.Trunc(xMax) {
+		t.Fatalf("round_numbers limits [%v, %v] should be whole numbers", xMin, xMax)
+	}
+}

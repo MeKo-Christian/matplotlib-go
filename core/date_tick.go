@@ -14,9 +14,7 @@ func (l DateLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 	if math.IsNaN(minVal) || math.IsNaN(maxVal) || math.IsInf(minVal, 0) || math.IsInf(maxVal, 0) {
 		return nil
 	}
-	if minVal > maxVal {
-		minVal, maxVal = maxVal, minVal
-	}
+	minVal, maxVal = dateNonsingular(minVal, maxVal)
 	if targetCount <= 0 {
 		targetCount = 6
 	}
@@ -346,8 +344,8 @@ func (l MicrosecondLocator) Ticks(minVal, maxVal float64, targetCount int) []flo
 		interval = 1
 	}
 
-	minUs := int64(math.Ceil(minVal * 1e6))
-	maxUs := int64(math.Floor(maxVal * 1e6))
+	minUs := int64(math.Ceil(minVal * microsecondsPerDay))
+	maxUs := int64(math.Floor(maxVal * microsecondsPerDay))
 	step := int64(interval)
 	start := ceilDivInt64(minUs, step) * step
 	if start > maxUs {
@@ -364,7 +362,7 @@ func (l MicrosecondLocator) Ticks(minVal, maxVal float64, targetCount int) []flo
 	}
 	ticks := make([]float64, 0, estimated)
 	for value, i := start, 0; value <= maxUs && i < guard; value, i = value+step, i+1 {
-		ticks = append(ticks, float64(value)/1e6)
+		ticks = append(ticks, float64(value)/microsecondsPerDay)
 	}
 	return dedupeTicks(ticks)
 }
@@ -872,33 +870,72 @@ func isoWeekStart(year, week int) time.Time {
 }
 
 func chooseDateLabelLayout(minVal, maxVal float64) string {
+	// span is in date-number units, i.e. days since the epoch.
 	span := math.Abs(maxVal - minVal)
+	const (
+		oneSecond = 1.0 / 86400.0
+		oneMinute = 60.0 * oneSecond
+	)
 	switch {
-	case span >= 2*365*24*3600:
+	case span >= 2*365: // ~2 years
 		return "2006"
-	case span >= 90*24*3600:
+	case span >= 90: // 90 days
 		return "Jan 2006"
-	case span >= 2*24*3600:
+	case span >= 2: // 2 days
 		return "2006-01-02"
-	case span >= 24*3600:
+	case span >= 1: // 1 day
 		return "2006-01-02 15:04"
-	case span >= 60:
+	case span >= oneMinute:
 		return "15:04"
 	default:
 		return "15:04:05"
 	}
 }
 
+// dateNonsingular expands a degenerate date range, mirroring
+// AutoDateLocator.nonsingular: non-finite ranges fall back to a one-day window
+// and an exactly-singular range expands to roughly a four-year period.
+func dateNonsingular(minVal, maxVal float64) (float64, float64) {
+	const daysPerYear = 365.2425
+	if math.IsNaN(minVal) || math.IsNaN(maxVal) || math.IsInf(minVal, 0) || math.IsInf(maxVal, 0) {
+		return 0, 1 // 1970-01-01 .. 1970-01-02
+	}
+	if maxVal < minVal {
+		minVal, maxVal = maxVal, minVal
+	}
+	if minVal == maxVal {
+		minVal -= daysPerYear * 2
+		maxVal += daysPerYear * 2
+	}
+	return minVal, maxVal
+}
+
+// Date numbers follow Matplotlib's convention: floating-point days since a
+// configurable epoch (default 1970-01-01T00:00:00Z). See core/dates.go for the
+// public Date2Num / Num2Date / SetEpoch / GetEpoch surface.
+var (
+	dateEpoch     = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+	dateEpochUsed bool // set once any conversion happens; locks SetEpoch.
+)
+
+const (
+	nanosPerDay        = 24.0 * 60.0 * 60.0 * 1e9
+	microsecondsPerDay = 24.0 * 60.0 * 60.0 * 1e6
+)
+
 func timeToDateNumber(t time.Time) float64 {
-	t = t.UTC()
-	return float64(t.Unix()) + float64(t.Nanosecond())/1e9
+	dateEpochUsed = true
+	return float64(t.UTC().Sub(dateEpoch)) / nanosPerDay
 }
 
 func dateNumberToTime(v float64, loc *time.Location) time.Time {
+	dateEpochUsed = true
 	if loc == nil {
 		loc = time.UTC
 	}
-	sec, frac := math.Modf(v)
-	nsec := int64(math.Round(frac * 1e9))
-	return time.Unix(int64(sec), nsec).In(loc)
+	// Round to the nearest microsecond, like Matplotlib's num2date: fractional
+	// days are not exactly representable in float64, so nanosecond rounding
+	// leaves a sub-microsecond drift (e.g. 02:40:00 -> 02:39:59.9999997).
+	micros := int64(math.Round(v * microsecondsPerDay))
+	return dateEpoch.Add(time.Duration(micros) * time.Microsecond).In(loc)
 }

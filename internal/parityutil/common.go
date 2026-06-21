@@ -44,8 +44,9 @@ func RegisterTestDistanceUnits() {
 }
 
 func ReferenceDateNumber(t time.Time) float64 {
-	t = t.UTC()
-	return float64(t.Unix()) + float64(t.Nanosecond())/1e9
+	// Mirror core's date convention (days since the epoch) so fixtures that set
+	// axis limits agree with PlotUnits-converted data.
+	return core.Date2Num(t)
 }
 
 func ReferencePointsToPixels(Points float64) float64 {
