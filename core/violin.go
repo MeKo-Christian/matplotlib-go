@@ -82,7 +82,7 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 	}
 	cfg := ViolinOptions{
 		EdgeWidth: 1,
-		Alpha:     0.65,
+		Alpha:     0.3,
 		Points:    100,
 	}
 	if len(opts) > 0 {
@@ -91,7 +91,7 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 			cfg.EdgeWidth = 1
 		}
 		if cfg.Alpha <= 0 {
-			cfg.Alpha = 0.65
+			cfg.Alpha = 0.3
 		}
 		if cfg.Points < 8 {
 			cfg.Points = 100
@@ -214,6 +214,9 @@ func (a *Axes) renderViolin(stats []ViolinStat, cfg ViolinStatsOptions, defaultS
 		polygons = append(polygons, polygon)
 
 		color := colorAt(defaultFaceColor, cfg.Colors, i)
+		if cfg.Alpha > 0 && cfg.Alpha <= 1 {
+			color.A = 1
+		}
 		faceColors = append(faceColors, color)
 
 		if specialtyBool(cfg.ShowMeans, false) {
@@ -242,6 +245,9 @@ func (a *Axes) renderViolin(stats []ViolinStat, cfg ViolinStatsOptions, defaultS
 	edgeColor := render.Color{}
 	if cfg.EdgeColor != nil {
 		edgeColor = *cfg.EdgeColor
+		if cfg.Alpha > 0 && cfg.Alpha <= 1 {
+			edgeColor.A = 1
+		}
 	}
 	lineColor := defaultLineColor
 	if cfg.LineColor != nil {

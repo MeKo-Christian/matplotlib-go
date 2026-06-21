@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -18,14 +19,8 @@ const (
 // Plot builds the showcase figure (backend-agnostic).
 func Plot() *core.Figure {
 	fig := core.NewFigure(840, 620)
-	grid := fig.Subplots(
-		2,
-		2,
-		core.WithSubplotPadding(0.08, 0.97, 0.10, 0.93),
-		core.WithSubplotSpacing(0.10, 0.14),
-	)
 
-	stackAx := grid[0][0]
+	stackAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.08, Y: 0.585}, Max: geom.Pt{X: 0.475, Y: 0.93}})
 	stackAx.SetTitle("StackPlot")
 	stackAx.SetXLim(0, 5)
 	stackAx.SetYLim(0, 7)
@@ -47,7 +42,7 @@ func Plot() *core.Figure {
 		},
 	)
 
-	ecdfAx := grid[0][1]
+	ecdfAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.575, Y: 0.585}, Max: geom.Pt{X: 0.97, Y: 0.93}})
 	ecdfAx.SetTitle("ECDF")
 	ecdfAx.SetXLim(0, 8)
 	ecdfAx.SetYLim(0, 1.05)
@@ -62,7 +57,7 @@ func Plot() *core.Figure {
 		},
 	)
 
-	cumulativeAx := grid[1][0]
+	cumulativeAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.08, Y: 0.10}, Max: geom.Pt{X: 0.475, Y: 0.445}})
 	cumulativeAx.SetTitle("Cumulative Step Hist")
 	cumulativeAx.SetXLim(0, 6)
 	cumulativeAx.SetYLim(0, 1.05)
@@ -81,7 +76,7 @@ func Plot() *core.Figure {
 		},
 	)
 
-	multiAx := grid[1][1]
+	multiAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.575, Y: 0.10}, Max: geom.Pt{X: 0.97, Y: 0.445}})
 	multiAx.SetTitle("Stacked Multi-Hist")
 	multiAx.SetXLim(0, 6)
 	multiAx.SetYLim(0, 6)

@@ -452,6 +452,7 @@ func TestAxesViolinValidatesPrecomputedStats(t *testing.T) {
 
 func TestAxesViolinplotSideOrientationQuantilesAndBandwidthMethod(t *testing.T) {
 	ax := NewFigure(640, 480).AddAxes(geom.Rect{})
+	edge := render.Color{R: 0.12, G: 0.12, B: 0.12, A: 0.9}
 	violins := ax.Violinplot([][]float64{
 		{1, 2, 3, 4, 5},
 	}, ViolinOptions{
@@ -459,9 +460,20 @@ func TestAxesViolinplotSideOrientationQuantilesAndBandwidthMethod(t *testing.T) 
 		Side:            "high",
 		Quantiles:       [][]float64{{0.25, 0.75}},
 		BandwidthMethod: "scott",
+		Colors:          []render.Color{{R: 0.30, G: 0.60, B: 0.78, A: 0.58}},
+		EdgeColor:       &edge,
 	})
 	if violins == nil || violins.Bodies == nil || len(violins.Bodies.Polygons) != 1 {
 		t.Fatal("expected horizontal violin body")
+	}
+	if got := violins.Bodies.Alpha; got != 0.3 {
+		t.Fatalf("default violinplot body alpha = %v, want Matplotlib alpha=0.3", got)
+	}
+	if got := violins.Bodies.FaceColors[0].A; got != 1 {
+		t.Fatalf("violin face color stored alpha = %v, want collection alpha override to use unpremultiplied color", got)
+	}
+	if got := violins.Bodies.EdgeColor.A; got != 1 {
+		t.Fatalf("violin edge color stored alpha = %v, want collection alpha override to use unpremultiplied color", got)
 	}
 	for _, pt := range violins.Bodies.Polygons[0] {
 		if pt.Y < 1 {
