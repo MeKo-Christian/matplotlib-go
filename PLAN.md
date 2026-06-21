@@ -371,8 +371,15 @@ match Matplotlib defaults, not just the happy path.
       (Matplotlib's is unseeded, so no byte-exact parity image); `sym` parsing is
       a minimal color+marker shorthand (structured options remain the primary
       surface).
-- [ ] **StackPlot** `wiggle`/`weighted_wiggle`/`sym` baselines
-      (`core/stat_variants.go:48`).
+- [x] **StackPlot** `wiggle`/`weighted_wiggle`/`sym` baselines
+      (`core/stat_variants.go`): `StackPlotOptions.BaselineMode` selects the
+      `StackBaselineZero`/`Sym`/`Wiggle`/`WeightedWiggle` layouts as a faithful
+      port of Matplotlib's `stackplot.py` baselines. Color cycling now consumes
+      exactly one property-cycle entry per layer (previously two), matching
+      Matplotlib. New `stackplot_streamgraph` parity case covers the
+      `weighted_wiggle` (streamgraph) layout with default colors; the baseline
+      math is unit-tested in `core/stat_variants_test.go`. `hatch` list cycling
+      and `sticky_edges` remain out of scope.
 - [ ] **Contour** `negative_linestyles` (default dashing), `extend`,
       `linestyles`, and contourf `hatches` (`core/contour_api.go`); `clabel`
       `fmt` (dict/callable/format-string) + `rightside_up`.

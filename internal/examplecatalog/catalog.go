@@ -90,6 +90,10 @@ var cases = []Case{
 	{ID: "fill_basic", Topic: "fill", Title: "Fill to Baseline", Description: "A filled region under a smooth curve, useful for area-chart and alpha blending checks.", Showcase: true, MinPSNR: 45.0, MaxMeanAbs: 6.0, MaxRMSE: 0.5},
 	{ID: "fill_between", Topic: "fill", Title: "Fill Between Curves", GoBasicSmokeFamily: "fill", SkiaParityFamily: "fill", MaxRMSE: 0.2},
 	{ID: "fill_stacked", Topic: "fill", Title: "Stacked Fill", MaxRMSE: 0.2},
+	// Dense 4-layer streamgraph: interiors match exactly (PSNR ~51 dB, MeanAbs
+	// ~0.43); RMSE is driven entirely by sub-pixel anti-aliasing seams along the
+	// many steep diagonal boundaries between adjacent saturated fills.
+	{ID: "stackplot_streamgraph", Topic: "fill", Title: "Streamgraph (weighted_wiggle)", Description: "A stackplot using the weighted_wiggle baseline (streamgraph layout) with default property-cycle colors.", Optional: true, MinPSNR: 44.0, MaxMeanAbs: 2.0, MaxRMSE: 7.0},
 	{ID: "fill_variants", Topic: "fill", Title: "Fill Variants Gallery", Description: "A combined gallery of fill_between, fill_betweenx, stacked fills, and translucent overlapping areas.", WebDemoID: "fills", Showcase: true, Width: 840, Height: 620, MinPSNR: 45.0, MaxMeanAbs: 1.5, MaxRMSE: 1.2},
 	{ID: "errorbar_basic", Topic: "errorbar", Title: "Error Bars", Description: "Symmetric and asymmetric error bars with caps, marker styling, and legend output.", WebDemoID: "errorbars", Showcase: true, SVGGoldenFamily: "errorbar", GoBasicSmokeFamily: "errorbar", SkiaParityFamily: "errorbar", MinPSNR: 64.0, MaxMeanAbs: 0.06, MaxRMSE: 3.0},
 	{ID: "multi_series_basic", Topic: "multi", Title: "Multiple Series", Description: "Several labeled lines sharing one axes, demonstrating color cycling and legends.", Showcase: true, SkiaParityFamily: "line", MaxRMSE: 0.8},

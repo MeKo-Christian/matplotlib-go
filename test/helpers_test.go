@@ -69,6 +69,7 @@ func goldenWriteDir() string {
 var optionalVisualGoldenIDs = map[string]bool{
 	"boxplot_basic":           true,
 	"boxplot_default":         true,
+	"stackplot_streamgraph":   true,
 	"specialty_depth":         true,
 	"errorbar_basic":          true,
 	"text_labels_strict":      true,

@@ -7,14 +7,31 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
+// StackBaseline selects how Axes.StackPlot computes the bottom of the first
+// layer, mirroring Matplotlib's stackplot “baseline“ parameter.
+type StackBaseline int
+
+const (
+	// StackBaselineZero is a constant-zero baseline: a plain stacked area plot.
+	StackBaselineZero StackBaseline = iota
+	// StackBaselineSym is symmetric around zero (sometimes called "ThemeRiver").
+	StackBaselineSym
+	// StackBaselineWiggle minimizes the sum of the squared layer slopes.
+	StackBaselineWiggle
+	// StackBaselineWeightedWiggle is the streamgraph layout, weighting the wiggle
+	// by the size of each layer (http://leebyron.com/streamgraph/).
+	StackBaselineWeightedWiggle
+)
+
 // StackPlotOptions configures Axes.StackPlot.
 type StackPlotOptions struct {
-	Colors    []render.Color
-	Alpha     *float64
-	EdgeColor *render.Color
-	EdgeWidth *float64
-	Baseline  []float64
-	Labels    []string
+	Colors       []render.Color
+	Alpha        *float64
+	EdgeColor    *render.Color
+	EdgeWidth    *float64
+	BaselineMode StackBaseline // baseline computation; defaults to StackBaselineZero
+	Baseline     []float64     // explicit per-point offset, used only in StackBaselineZero mode
+	Labels       []string
 }
 
 // ECDFOptions configures Axes.ECDF.
@@ -65,28 +82,46 @@ func (a *Axes) StackPlot(x []float64, ys [][]float64, opts ...StackPlotOptions) 
 	}
 
 	xs := append([]float64(nil), x[:n]...)
-	baseline := make([]float64, n)
-	copy(baseline, opt.Baseline)
+	m := len(ys)
 
-	fills := make([]*Fill2D, 0, len(ys))
-	for i, y := range ys {
-		lower := append([]float64(nil), baseline...)
+	// cum[i][j] is the running cumulative sum over layers, i.e. numpy's
+	// np.cumsum(y, axis=0). It is the unshifted top of layer i at point j.
+	cum := make([][]float64, m)
+	for i := range ys {
+		cum[i] = make([]float64, n)
+		for j := 0; j < n; j++ {
+			cum[i][j] = ys[i][j]
+			if i > 0 {
+				cum[i][j] += cum[i-1][j]
+			}
+		}
+	}
+
+	firstLine := stackFirstLine(ys, cum, n, m, opt)
+
+	// level[i][j] is the shifted top of layer i (cum[i][j] + firstLine[j]).
+	fills := make([]*Fill2D, 0, m)
+	lower := append([]float64(nil), firstLine...)
+	for i := 0; i < m; i++ {
 		upper := make([]float64, n)
 		for j := 0; j < n; j++ {
-			upper[j] = lower[j] + y[j]
-			baseline[j] = upper[j]
+			upper[j] = cum[i][j] + firstLine[j]
 		}
 
-		color := a.NextColor()
+		// Pass an explicit color when provided; otherwise leave it nil so
+		// FillBetweenPlot advances the property cycle exactly once per layer,
+		// matching Matplotlib's stackplot (one cycle color per series).
+		var colorPtr *render.Color
 		if i < len(opt.Colors) {
-			color = opt.Colors[i]
+			c := opt.Colors[i]
+			colorPtr = &c
 		}
 		label := ""
 		if i < len(opt.Labels) {
 			label = opt.Labels[i]
 		}
 		fill := a.FillBetweenPlot(xs, lower, upper, FillOptions{
-			Color:     &color,
+			Color:     colorPtr,
 			EdgeColor: opt.EdgeColor,
 			EdgeWidth: opt.EdgeWidth,
 			Alpha:     opt.Alpha,
@@ -95,8 +130,68 @@ func (a *Axes) StackPlot(x []float64, ys [][]float64, opts ...StackPlotOptions) 
 		if fill != nil {
 			fills = append(fills, fill)
 		}
+		lower = upper
 	}
 	return fills
+}
+
+// stackFirstLine computes the bottom edge of the first stacked layer per the
+// selected baseline mode, faithfully porting matplotlib's stackplot baselines.
+func stackFirstLine(ys, cum [][]float64, n, m int, opt StackPlotOptions) []float64 {
+	firstLine := make([]float64, n)
+
+	switch opt.BaselineMode {
+	case StackBaselineSym:
+		// first_line = -sum(y, 0) * 0.5
+		for j := 0; j < n; j++ {
+			firstLine[j] = -0.5 * cum[m-1][j]
+		}
+
+	case StackBaselineWiggle:
+		// first_line = (y * (m - 0.5 - arange(m))).sum(0) / -m
+		for j := 0; j < n; j++ {
+			var s float64
+			for i := 0; i < m; i++ {
+				s += ys[i][j] * (float64(m) - 0.5 - float64(i))
+			}
+			firstLine[j] = -s / float64(m)
+		}
+
+	case StackBaselineWeightedWiggle:
+		// Streamgraph layout (http://leebyron.com/streamgraph/).
+		var center float64
+		for j := 0; j < n; j++ {
+			total := cum[m-1][j]
+			var invTotal float64
+			if total > 0 {
+				invTotal = 1.0 / total
+			}
+			var contrib float64
+			for i := 0; i < m; i++ {
+				// increase = hstack((y[:, 0:1], diff(y)))
+				increase := ys[i][j]
+				if j > 0 {
+					increase = ys[i][j] - ys[i][j-1]
+				}
+				// below_size = total - stack + 0.5*y
+				belowSize := total - cum[i][j] + 0.5*ys[i][j]
+				// move_up = below_size * inv_total, forced to 0.5 at j == 0
+				moveUp := belowSize * invTotal
+				if j == 0 {
+					moveUp = 0.5
+				}
+				contrib += (moveUp - 0.5) * increase
+			}
+			// center = cumsum(center.sum(0)); first_line = center - 0.5*total
+			center += contrib
+			firstLine[j] = center - 0.5*total
+		}
+
+	default: // StackBaselineZero
+		copy(firstLine, opt.Baseline)
+	}
+
+	return firstLine
 }
 
 // ECDF draws an empirical cumulative distribution function from raw samples.

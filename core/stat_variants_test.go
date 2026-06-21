@@ -32,6 +32,91 @@ func TestAxesStackPlot_CumulativeLayers(t *testing.T) {
 	assertFloatSlices(t, "second upper", fills[1].Y2, []float64{5, 7, 9})
 }
 
+func TestAxesStackPlot_Baselines(t *testing.T) {
+	// Two layers over three points. cum[0] = {1,2,3}, cum[1] = {5,7,9}.
+	ys := [][]float64{
+		{1, 2, 3},
+		{4, 5, 6},
+	}
+
+	tests := []struct {
+		name  string
+		mode  StackBaseline
+		lower [][]float64 // expected fills[i].Y1
+		upper [][]float64 // expected fills[i].Y2
+	}{
+		{
+			name: "zero",
+			mode: StackBaselineZero,
+			lower: [][]float64{
+				{0, 0, 0},
+				{1, 2, 3},
+			},
+			upper: [][]float64{
+				{1, 2, 3},
+				{5, 7, 9},
+			},
+		},
+		{
+			// first_line = -0.5*sum = {-2.5,-3.5,-4.5}
+			name: "sym",
+			mode: StackBaselineSym,
+			lower: [][]float64{
+				{-2.5, -3.5, -4.5},
+				{-1.5, -1.5, -1.5},
+			},
+			upper: [][]float64{
+				{-1.5, -1.5, -1.5},
+				{2.5, 3.5, 4.5},
+			},
+		},
+		{
+			// first_line = -(1/2)*sum_i y_i*(1.5-i) = {-1.75,-2.75,-3.75}
+			name: "wiggle",
+			mode: StackBaselineWiggle,
+			lower: [][]float64{
+				{-1.75, -2.75, -3.75},
+				{-0.75, -0.75, -0.75},
+			},
+			upper: [][]float64{
+				{-0.75, -0.75, -0.75},
+				{3.25, 4.25, 5.25},
+			},
+		},
+		{
+			// Streamgraph: first_line = {-2.5, 3/14-3.5, 8/21-4.5}.
+			name: "weighted_wiggle",
+			mode: StackBaselineWeightedWiggle,
+			lower: [][]float64{
+				{-2.5, 3.0/14 - 3.5, 8.0/21 - 4.5},
+				{-1.5, 3.0/14 - 1.5, 8.0/21 - 1.5},
+			},
+			upper: [][]float64{
+				{-1.5, 3.0/14 - 1.5, 8.0/21 - 1.5},
+				{2.5, 3.0/14 + 3.5, 8.0/21 + 4.5},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+			fills := ax.StackPlot(
+				[]float64{0, 1, 2},
+				ys,
+				StackPlotOptions{BaselineMode: tc.mode},
+			)
+			if len(fills) != 2 {
+				t.Fatalf("got %d fills, want 2", len(fills))
+			}
+			for i := range fills {
+				assertFloatSlicesApprox(t, "lower", fills[i].Y1, tc.lower[i])
+				assertFloatSlicesApprox(t, "upper", fills[i].Y2, tc.upper[i])
+			}
+		})
+	}
+}
+
 func TestAxesBoxPlots_CreatesMultipleBoxes(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 	width := 0.55
@@ -459,6 +544,19 @@ func TestAxesHistMulti_UsesSharedEdgesAndStackedBaselines(t *testing.T) {
 	assertFloatSlices(t, "edges0", edges0, []float64{0, 1, 2})
 	assertFloatSlices(t, "edges1", edges1, []float64{0, 1, 2})
 	assertFloatSlices(t, "baselines", hists[1].Baselines, counts0)
+}
+
+func assertFloatSlicesApprox(t *testing.T, name string, got, want []float64) {
+	t.Helper()
+	const tol = 1e-9
+	if len(got) != len(want) {
+		t.Fatalf("%s length = %d, want %d (%v)", name, len(got), len(want), got)
+	}
+	for i := range want {
+		if d := got[i] - want[i]; d > tol || d < -tol {
+			t.Fatalf("%s[%d] = %v, want %v (all %v)", name, i, got[i], want[i], got)
+		}
+	}
 }
 
 func assertFloatSlices(t *testing.T, name string, got, want []float64) {

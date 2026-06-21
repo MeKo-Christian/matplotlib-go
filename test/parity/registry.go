@@ -200,6 +200,7 @@ import (
 	example_spectrum_variants "github.com/cwbudde/matplotlib-go/test/parity/spectrum_variants"
 	example_spy_image "github.com/cwbudde/matplotlib-go/test/parity/spy_image"
 	example_spy_marker "github.com/cwbudde/matplotlib-go/test/parity/spy_marker"
+	example_stackplot_streamgraph "github.com/cwbudde/matplotlib-go/test/parity/stackplot_streamgraph"
 	example_stat_variants "github.com/cwbudde/matplotlib-go/test/parity/stat_variants"
 	example_stem_plot "github.com/cwbudde/matplotlib-go/test/parity/stem_plot"
 	example_text_annotation_matrix "github.com/cwbudde/matplotlib-go/test/parity/text_annotation_matrix"
@@ -333,6 +334,7 @@ var renderByID = map[string]func() image.Image{
 	"mesh_contour_tri":                    example_mesh_contour_tri.Render,
 	"plot_variants":                       example_plot_variants.Render,
 	"spectrum_variants":                   example_spectrum_variants.Render,
+	"stackplot_streamgraph":               example_stackplot_streamgraph.Render,
 	"stat_variants":                       example_stat_variants.Render,
 	"specialty_depth":                     example_specialty_depth.Render,
 	"stem_plot":                           example_stem_plot.Render,
