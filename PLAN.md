@@ -188,6 +188,180 @@ User-facing memory targets and tuning guide documented.
 
 ---
 
+# Phases 6–11: Parity-Breadth Closure
+
+These phases are derived from the independent fidelity review in
+[`REVIEW.md`](REVIEW.md) (2026-06-21). The review's verdict: the numerical and
+rendering **core is faithful** (transforms, locators, contours, 3D projection,
+norms, mathtext layout, FreeType text — verified line-for-line), but **breadth
+is incomplete** — the long tail of Matplotlib kwargs/modes is missing across
+nearly every subsystem, and several degradations are **silent**. The generated
+`docs/matplotlib-parity-status.md` self-classifies most families as
+"partial / thin"; these phases close that gap.
+
+**Relationship to v1.0:** Phase 5 ships the release *mechanics*. Phases 6–10
+close the *parity* the project advertises and should land before a v1.0 that
+claims Matplotlib parity, **or** the parity claim must be explicitly scoped in
+docs ("the common path matches" vs "the full API is present"). Phase 11 is
+deferred infrastructure depth. Ordered by impact (Phase 6 first).
+
+## Phase 6: Silent-Failure Hardening & API Correctness
+
+**Goal:** eliminate the worst UX failure mode — silently-wrong output with no
+diagnostic. These are cheap, high-value, and gate trust in everything else.
+
+- [ ] **MathText** raises or warns on unknown commands instead of echoing them
+      as literal text (`mathtext .../parser.go:228`); add a strict (error) vs
+      lenient (warn-and-echo) mode toggle.
+- [ ] **`alpha=0` vs unset:** switch `Bar`/`Hist`/`Fill` alpha to `*float64`
+      (or sentinel `NaN`) so a user-requested fully-transparent fill is honored
+      (`core/plot.go:486`, `bar.go:77`).
+- [ ] **Unknown colormap** errors or warns instead of falling back to viridis;
+      make lookup case-sensitive (`color/colormap.go:391,428`).
+- [ ] **Gouraud QuadMesh** logs/warns when downgrading to flat cell colors
+      (`core/collection_quadmesh.go:214`).
+- [ ] **Invalid artist input** (length mismatch, etc.) returns an `error` /
+      logs a reason instead of a bare `nil` artist.
+- [ ] **3D naming traps:** implement or rename `PlotSurface`
+      (currently aliased to a line strip, `core/axes3d.go:382`) and `Voxel`
+      (edges-only, `axes3d_bar_voxel.go:340`).
+
+**Exit criterion:** no core artist silently discards user intent; every
+unsupported input path produces a diagnostic.
+
+## Phase 7: Formatter, Layout & Date Fidelity
+
+**Goal:** close the highest-impact divergences on ordinary linear plots and
+layouts — defaults a typical Matplotlib script relies on.
+
+- [ ] **`ScalarFormatter` offset / ×10ⁿ multiplier text** rendered by default on
+      both axes (`core/tick_formatters.go:73`; wire the existing
+      `OffsetFormatter` plumbing, drop the X-only guard at
+      `axis_ticklabels.go:104`).
+- [ ] **Real `constrained_layout` solver** (`LayoutGrid` constraint propagation
+      with suptitle/colorbar/legend reservations) distinct from `tight_layout`
+      (`core/layout_engine.go:182`) — or document that both are the same
+      approximation.
+- [ ] **Date convention:** adopt Matplotlib days-since-epoch and ship
+      `date2num`/`num2date`/`set_epoch` (`core/date_tick.go:892`) — or document
+      the Unix-seconds divergence prominently.
+- [ ] **Per-axes margins:** `Margins`/`SetXMargin`/`SetYMargin` and
+      `autolimit_mode='round_numbers'` rounding (`core/axes_autoscale.go:84`).
+- [ ] **Aspect:** `adjustable='datalim'`, `SetAdjustable`, `anchor`
+      (`core/axes_limits.go:144`).
+- [ ] **Axis-length-aware bins:** `AutoLocator`/`LogLocator` `nbins='auto'`
+      (`tick_locators.go:521,666`); date-locator `nonsingular` expansion.
+- [ ] **`label_outer()`** + automatic inner shared-axes tick-label suppression.
+
+**Exit criterion:** large/offset-magnitude linear data and constrained-layout
+figures match Matplotlib defaults within parity tolerance.
+
+## Phase 8: MathText & Text Completeness
+
+**Goal:** raise mathtext from ~13% symbol coverage to real-world usability and
+fix text fallback.
+
+- [ ] **Expand the `tex2uni` symbol table** toward the full 632 entries
+      (arrows, relations, binary ops, `\cdots`/`\vdots`/`\ddots`, `\var*` Greek)
+      (`mathtext .../normalize_tables.go:50`).
+- [ ] **Math alphabets** `\mathbb \mathcal \mathfrak \mathscr \boldsymbol \bm`
+      mapped to the Unicode Mathematical Alphanumeric block.
+- [ ] **Accent model:** centered separate-glyph accents over the nucleus;
+      add `\widehat \widetilde \overbrace \underbrace \overline`-as-rule
+      `\stackrel \substack \overset \underset \not`.
+- [ ] **Per-glyph multi-font fallback** — walk the family list per missing glyph
+      instead of one font per family (`render/font_manager.go:757`); no tofu.
+- [ ] **Bridge `Text(bbox=boxstyle=…)`** to the existing `FancyBboxPatch`
+      styles (sawtooth/arrow/circle) (`core/text_bbox.go`, `patch_fancybbox.go`).
+- [ ] Track mathtext coverage with a symbol-table parity test.
+
+**Exit criterion:** common Matplotlib labels render without literal-echo;
+symbol coverage is measured and reported.
+
+## Phase 9: Plot, Colormap & Norm Configuration Breadth
+
+**Goal:** close the per-artist configuration tail so common scientific plots
+match Matplotlib defaults, not just the happy path.
+
+- [ ] **Boxplot:** `patch_artist=False` unfilled default, orientation, and
+      `showbox`/`showcaps`/`showmeans`/`meanline`/`sym` on the high-level artist
+      (`core/boxplot.go:558`); honor `bootstrap` CI; percentile-*value* whisker
+      semantics.
+- [ ] **StackPlot** `wiggle`/`weighted_wiggle`/`sym` baselines
+      (`core/stat_variants.go:48`).
+- [ ] **Contour** `negative_linestyles` (default dashing), `extend`,
+      `linestyles`, and contourf `hatches` (`core/contour_api.go`); `clabel`
+      `fmt` (dict/callable/format-string) + `rightside_up`.
+- [ ] **Colorbar** norm-aware locators for SymLog/Power/TwoSlope/Centered +
+      `NoNorm` IndexLocator (`core/colorbar_scale.go:118`); `extendfrac`; minor
+      ticks.
+- [ ] **Image:** native RGBA `imshow` for `(M,N,3/4)` arrays, image `aspect`,
+      and image normalization (`core/image.go:97`).
+- [ ] **Norms/cmaps:** `FuncNorm`, `MultiNorm`, `petroff10` colormap.
+- [ ] **Misc artist kwargs:** `Stem` orientation, errorbar `capthick`, scatter
+      `plotnonfinite`, `LineCollection` linestyle-string → dash conversion.
+
+**Exit criterion:** contour, colorbar, boxplot, and image cases match
+Matplotlib default styling.
+
+## Phase 10: Backend, Renderer & Styling Completion
+
+**Goal:** finish the renderer/backend semantics and grow the styling system from
+its current ~13% rcParam coverage.
+
+- [ ] **Vector text metrics:** replace the crude `MeasureText` stubs in PDF/PS/
+      PGF/SVG with the shared FreeType font manager (`backends/pdf/pdf_text.go:46`,
+      `backends/svg/text.go:53`, etc.) so rotated/vertical anchoring matches AGG.
+- [ ] **Antialiased Gouraud** via agg_go `span_gouraud_rgba`
+      (`backends/agg/agg_gouraud.go:10`); **>3-stop gradients**
+      (`gradients.go:34`).
+- [ ] **Sketch/xkcd** rendering pass — currently a no-op despite full contract
+      plumbing (`render/render.go:277`).
+- [ ] **PS/PGF** gradient + pattern fills; PGF clip-path and vertical-text
+      interfaces.
+- [ ] **`url`/`gid` metadata** in `GraphicsContext` for clickable vector output;
+      finish `RestoreRegion` y-flip (`backends/agg/agg.go:360`) for blit/anim.
+- [ ] **rcParams coverage** for `savefig.*`, `pdf.*`/`ps.*`/`svg.*`,
+      `animation.*`, `boxplot.*`, `mathtext.*`, `hatch.*`, `image.*`, `date.*`
+      (`style/mplstyle.go:31`).
+- [ ] **Cyclers** for `linestyle`/`marker`/`linewidth`; bundle the common
+      `.mplstyle` sheets (`seaborn-*`, `fivethirtyeight`, `bmh`,
+      `Solarize_Light2`) (`style/theme.go:23`).
+
+**Exit criterion:** vector text parity with AGG, antialiased Gouraud, and broad
+rcParam + stylesheet coverage.
+
+## Phase 11: Deferred Infrastructure Depth ⚠️
+
+**Goal:** lower-priority structural depth surfaced by the review; not required
+for the v1.0 parity claim but worth tracking so it does not vanish into "future
+work."
+
+- [ ] **Bézier toolkit** (`bezier.py` equivalent): `split_bezier`, arc-length,
+      offset/parallel curves, `inside_circle` — used by fancy arrows and
+      annotation connectors.
+- [ ] **Path-generator helpers** in `geom`: `unit_circle`, `arc`, `wedge`,
+      4-cubic circle approximation (currently rebuilt ad hoc in `core/`).
+- [ ] **Triangulation library** (`tri/`: Delaunay, `TriFinder`,
+      `TriInterpolator`) instead of per-call implementations.
+- [ ] **Live bbox-linked transforms** (`BboxTransformTo`) so axes resize
+      invalidates rather than rebuilds the transform graph.
+- [ ] **Open transform type set:** a `get_affine()` capability interface so a
+      third-party `T` can participate in flattening (`transform/transform.go:32`).
+- [ ] **Exploit the affine/non-affine cache split** in `TransformedPath`
+      (declared but unused, `transform/transformed_path.go:13`).
+- [ ] **Path simplifier:** replace Douglas–Peucker with Matplotlib's single-pass
+      running-segment algorithm for pixel parity on dense lines
+      (`backends/agg/agg_path_simplify.go:5`).
+- [ ] Teardown API: `Axes.cla()`/`clear()`/`remove()`, `Figure.delaxes`/`clf`;
+      `setp`/`getp`/`findobj` introspection.
+
+**Exit criterion:** geometry primitives and the transform graph reach
+Matplotlib's structural flexibility; no per-call reimplementations of shared
+infrastructure.
+
+---
+
 # Development Guidelines
 
 ## Backend Strategy
@@ -242,4 +416,9 @@ This roadmap reflects the work remaining to bring matplotlib-go to a stable,
 documented v1.0 release. **Phase 1** finalizes GPU acceleration for the Skia
 backend (CPU native primitives are done); **Phases 2–4** are closed. **Phase 5**
 is in the final stretch — documentation and performance work is done; only the
-release mechanics (changelog, CI gate, v1.0 tag) remain.
+release mechanics (changelog, CI gate, v1.0 tag) remain. **Phases 6–11** are the
+parity-breadth closure derived from [`REVIEW.md`](REVIEW.md): Phase 6 hardens
+silent-failure modes, Phases 7–10 close the missing Matplotlib configuration
+breadth that gates the parity claim, and Phase 11 tracks deferred infrastructure
+depth. They are ordered by impact and should land before — or explicitly scope —
+a v1.0 that advertises Matplotlib parity.

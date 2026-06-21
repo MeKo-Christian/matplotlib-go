@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -398,6 +399,7 @@ func GetColormap(name string) Colormap {
 			return cmap.Reversed(key)
 		}
 	}
+	diag.Warnf("unknown colormap %q; falling back to %q", name, defaultColormapName)
 	return colormaps[defaultColormapName]
 }
 
