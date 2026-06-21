@@ -1207,6 +1207,14 @@ func TestAxes3DBar3DCreatesSegments(t *testing.T) {
 	if got, want := collection.Alpha, 0.0; got != want {
 		t.Fatalf("default Bar3D edge alpha = %v, want Matplotlib default edgecolors-none alpha %v", got, want)
 	}
+	if got := collection.Color.A; got != 0 {
+		t.Fatalf("default Bar3D edge color alpha = %v, want Matplotlib default edgecolors none", got)
+	}
+	edgeRecorder := &batchRecordingRenderer{}
+	collection.Draw(edgeRecorder, newAxesDrawContext(ax.Axes, fig, fig.DisplayRect(), ax.adjustedLayout(fig)))
+	if len(edgeRecorder.pathCalls) != 0 {
+		t.Fatalf("default Bar3D drew %d edge paths, want none like Matplotlib edgecolors=[]", len(edgeRecorder.pathCalls))
+	}
 	foundFaces := false
 	for _, artist := range ax.Artists {
 		polys, ok := artist.(*PolyCollection)
@@ -1266,17 +1274,19 @@ func TestAxes3DBar3DSingleColorAppliesAlphaShadingAndStaysNonMappable(t *testing
 	if got, want := len(faces.FaceColors), 6; got != want {
 		t.Fatalf("Bar3D face colors = %d, want %d", got, want)
 	}
-	shaded := false
-	for i, got := range faces.FaceColors {
-		if !approx(got.A, color.A*alpha, 1e-12) {
-			t.Fatalf("Bar3D face color %d alpha = %v, want %v", i, got.A, color.A*alpha)
-		}
-		if got.R != color.R || got.G != color.G || got.B != color.B {
-			shaded = true
-		}
+	wantFaceColors := []render.Color{
+		{R: 0.083333, G: 0.166667, B: 0.250000, A: 0.4},
+		{R: 0.176667, G: 0.353333, B: 0.530000, A: 0.4},
+		{R: 0.106667, G: 0.213333, B: 0.320000, A: 0.4},
+		{R: 0.153333, G: 0.306667, B: 0.460000, A: 0.4},
+		{R: 0.083333, G: 0.166667, B: 0.250000, A: 0.4},
+		{R: 0.176667, G: 0.353333, B: 0.530000, A: 0.4},
 	}
-	if !shaded {
-		t.Fatalf("Bar3D face colors = %+v, want Matplotlib-style shaded single color", faces.FaceColors)
+	for i, got := range faces.FaceColors {
+		want := wantFaceColors[i]
+		if !approx(got.R, want.R, 1e-6) || !approx(got.G, want.G, 1e-6) || !approx(got.B, want.B, 1e-6) || !approx(got.A, want.A, 1e-12) {
+			t.Fatalf("Bar3D face color %d = %+v, want Matplotlib shaded color %+v", i, got, want)
+		}
 	}
 	if array := faces.GetArray(); len(array) != 0 {
 		t.Fatalf("Bar3D face scalar array = %v, want non-scalar-mappable PolyCollection", array)

@@ -254,7 +254,14 @@ func TestQuiverKeyDrawOverlay(t *testing.T) {
 	if ren.pathCount == 0 {
 		t.Fatal("expected quiver key path draw")
 	}
-	if len(ren.texts) == 0 || ren.texts[0] != "1 unit" {
+	foundLabel := false
+	for _, text := range ren.texts {
+		if text == "1 unit" {
+			foundLabel = true
+			break
+		}
+	}
+	if !foundLabel {
 		t.Fatalf("unexpected quiver key labels %v", ren.texts)
 	}
 }

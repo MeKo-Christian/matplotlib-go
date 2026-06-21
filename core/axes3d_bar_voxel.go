@@ -191,7 +191,7 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *Lin
 			z:      barZ,
 		},
 		Segments:  segments,
-		Color:     color,
+		Color:     bar3DEdgeColor(color, edgeAlpha),
 		LineWidth: lineWidth,
 		LineJoin:  render.JoinRound,
 		LineCap:   render.CapRound,
@@ -204,6 +204,14 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *Lin
 		}
 	}, limitsChanged)
 	return collection
+}
+
+func bar3DEdgeColor(color render.Color, alpha float64) render.Color {
+	if alpha > 0 {
+		return color
+	}
+	color.A = 0
+	return color
 }
 
 func bar3DFaceBaseColors(defaultColor render.Color, colors []render.Color, alpha float64, bars int) []render.Color {
