@@ -11,7 +11,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # Linux only: the golden/reference parity set is calibrated against the
+        # vendored FreeType 2.6.1 on Linux, so the raster goldens are not
+        # portable to macOS rasterization.
+        os: [ubuntu-latest]
         # go.mod requires Go 1.25 (via golang.org/x/* dependencies), so the
         # toolchain is pinned there; the runner downloads it automatically.
         go: ["1.25"]
