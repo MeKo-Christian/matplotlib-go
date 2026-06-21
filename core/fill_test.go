@@ -328,8 +328,13 @@ func TestFillPlotExplicitAlphaOverridesColorAlpha(t *testing.T) {
 	if fill == nil {
 		t.Fatal("expected fill artist")
 	}
-	if fill.Alpha != alpha {
-		t.Fatalf("stored Alpha = %v, want %v", fill.Alpha, alpha)
+	// An explicit alpha is baked into the resolved color (so alpha=0 is
+	// honored); the legacy float64 Alpha field stays at its 0 "unset" sentinel.
+	if fill.Alpha != 0 {
+		t.Fatalf("stored Alpha = %v, want 0 sentinel (alpha baked into color)", fill.Alpha)
+	}
+	if fill.Color.A != alpha {
+		t.Fatalf("baked color alpha = %v, want explicit alpha %v", fill.Color.A, alpha)
 	}
 
 	r := &recordingRenderer{}

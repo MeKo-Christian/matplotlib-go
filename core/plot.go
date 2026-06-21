@@ -482,10 +482,16 @@ func (a *Axes) Bar(x, heights []float64, opts ...BarOptions) *Bar2D {
 		edgeWidth = *opt.EdgeWidth
 	}
 
-	// Get alpha
-	alpha := 0.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
+	// Alpha override: an explicit value (including 0 for fully transparent) is
+	// baked into the resolved colors so it is honored, while a nil alpha leaves
+	// each color's own alpha intact.
+	color = bakeExplicitAlpha(color, opt.Alpha)
+	edgeColor = bakeExplicitAlpha(edgeColor, opt.Alpha)
+	for i := range colors {
+		colors[i] = bakeExplicitAlpha(colors[i], opt.Alpha)
+	}
+	for i := range edgeColors {
+		edgeColors[i] = bakeExplicitAlpha(edgeColors[i], opt.Alpha)
 	}
 
 	// Get baseline
@@ -522,7 +528,6 @@ func (a *Axes) Bar(x, heights []float64, opts ...BarOptions) *Bar2D {
 		EdgeColor:   edgeColor,
 		EdgeColors:  edgeColors,
 		EdgeWidth:   edgeWidth,
-		Alpha:       alpha,
 		Baseline:    baseline,
 		Orientation: orientation,
 		Label:       opt.Label,
@@ -535,6 +540,18 @@ func (a *Axes) Bar(x, heights []float64, opts ...BarOptions) *Bar2D {
 
 func validBarOptionLength(length, n int) bool {
 	return length == 1 || length == n
+}
+
+// bakeExplicitAlpha returns c with its alpha replaced by *alpha when alpha is an
+// explicit value in [0,1]. An explicit 0 yields a fully transparent color; a nil
+// alpha leaves the color (and its own alpha channel) untouched. Baking the
+// override into the resolved color at construction lets artists honor an
+// explicit alpha=0 — which a plain float64 "0 means unset" field cannot express.
+func bakeExplicitAlpha(c render.Color, alpha *float64) render.Color {
+	if alpha != nil && *alpha >= 0 && *alpha <= 1 {
+		c.A = *alpha
+	}
+	return c
 }
 
 // BarH creates a horizontal bar chart and sets orientation to horizontal.
@@ -588,10 +605,8 @@ func (a *Axes) Fill(x, y []float64, opts ...FillOptions) *PolyCollection {
 		edgeWidth = *opt.EdgeWidth
 	}
 
-	alpha := 0.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
-	}
+	color = bakeExplicitAlpha(color, opt.Alpha)
+	edgeColor = bakeExplicitAlpha(edgeColor, opt.Alpha)
 
 	fill := &PolyCollection{
 		PatchCollection: PatchCollection{
@@ -609,9 +624,6 @@ func (a *Axes) Fill(x, y []float64, opts ...FillOptions) *PolyCollection {
 		Polygons: [][]geom.Pt{points},
 	}
 
-	if alpha > 0 {
-		fill.FaceColors[0].A *= alpha
-	}
 	a.Add(fill)
 	a.autoScaleIfEnabled(defaultAutoScaleMargin)
 	return fill
@@ -651,10 +663,8 @@ func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) *Fill2D {
 		edgeWidth = *opt.EdgeWidth
 	}
 
-	alpha := 0.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
-	}
+	color = bakeExplicitAlpha(color, opt.Alpha)
+	edgeColor = bakeExplicitAlpha(edgeColor, opt.Alpha)
 
 	fill := &Fill2D{
 		X:           y,
@@ -667,7 +677,6 @@ func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) *Fill2D {
 		Color:       color,
 		EdgeColor:   edgeColor,
 		EdgeWidth:   edgeWidth,
-		Alpha:       alpha,
 		Label:       opt.Label,
 	}
 
@@ -721,12 +730,10 @@ func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) *Fill2D
 		edgeWidth = *opt.EdgeWidth
 	}
 
-	// Get alpha. When omitted, preserve the color's own alpha, matching
-	// Matplotlib's fill_between behavior.
-	alpha := 0.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
-	}
+	// When alpha is omitted, preserve the color's own alpha, matching
+	// Matplotlib's fill_between behavior; an explicit value (including 0) wins.
+	color = bakeExplicitAlpha(color, opt.Alpha)
+	edgeColor = bakeExplicitAlpha(edgeColor, opt.Alpha)
 
 	// Create fill
 	fill := &Fill2D{
@@ -739,7 +746,6 @@ func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) *Fill2D
 		Color:       color,
 		EdgeColor:   edgeColor,
 		EdgeWidth:   edgeWidth,
-		Alpha:       alpha,
 		Label:       opt.Label,
 	}
 
@@ -1279,12 +1285,10 @@ func (a *Axes) FillToBaselinePlot(x, y []float64, opts ...FillOptions) *Fill2D {
 		edgeWidth = *opt.EdgeWidth
 	}
 
-	// Get alpha. When omitted, preserve the color's own alpha, matching
-	// Matplotlib's fill_between behavior.
-	alpha := 0.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
-	}
+	// When alpha is omitted, preserve the color's own alpha, matching
+	// Matplotlib's fill_between behavior; an explicit value (including 0) wins.
+	color = bakeExplicitAlpha(color, opt.Alpha)
+	edgeColor = bakeExplicitAlpha(edgeColor, opt.Alpha)
 
 	// Get baseline
 	baseline := 0.0
@@ -1301,7 +1305,6 @@ func (a *Axes) FillToBaselinePlot(x, y []float64, opts ...FillOptions) *Fill2D {
 		Color:     color,
 		EdgeColor: edgeColor,
 		EdgeWidth: edgeWidth,
-		Alpha:     alpha,
 		Label:     opt.Label,
 	}
 

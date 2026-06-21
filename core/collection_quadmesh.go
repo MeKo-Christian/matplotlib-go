@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -19,6 +20,11 @@ type QuadMesh struct {
 	Shading MeshShading
 	Values  [][]float64
 	Snap    render.SnapMode
+
+	// gouraudDowngradeWarned records that we have already warned about a
+	// Gouraud request being downgraded to flat shading, so redraws (e.g. in
+	// animations) do not spam the warning sink.
+	gouraudDowngradeWarned bool
 }
 
 // Draw renders the quad mesh.
@@ -26,8 +32,17 @@ func (m *QuadMesh) Draw(r render.Renderer, ctx *DrawContext) {
 	if m == nil {
 		return
 	}
-	if m.drawGouraudMesh(r, ctx) {
-		return
+	if m.Shading == MeshShadingGouraud {
+		if m.drawGouraudMesh(r, ctx) {
+			return
+		}
+		// Gouraud was requested but could not be honored. When the renderer
+		// simply lacks the capability, surface the silent downgrade to flat
+		// shading (once) so the divergence from Matplotlib is visible.
+		if _, ok := r.(render.GouraudTriangleDrawer); !ok && !m.gouraudDowngradeWarned {
+			m.gouraudDowngradeWarned = true
+			diag.Warnf("QuadMesh: renderer %T lacks Gouraud triangle support; falling back to flat cell shading", r)
+		}
 	}
 	if m.drawQuadMesh(r, ctx) {
 		return
