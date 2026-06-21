@@ -199,8 +199,8 @@ nearly every subsystem, and several degradations are **silent**. The generated
 `docs/matplotlib-parity-status.md` self-classifies most families as
 "partial / thin"; these phases close that gap.
 
-**Relationship to v1.0:** Phase 5 ships the release *mechanics*. Phases 6–10
-close the *parity* the project advertises and should land before a v1.0 that
+**Relationship to v1.0:** Phase 5 ships the release _mechanics_. Phases 6–10
+close the _parity_ the project advertises and should land before a v1.0 that
 claims Matplotlib parity, **or** the parity claim must be explicitly scoped in
 docs ("the common path matches" vs "the full API is present"). Phase 11 is
 deferred infrastructure depth. Ordered by impact (Phase 6 first).
@@ -359,7 +359,7 @@ match Matplotlib defaults, not just the happy path.
 
 - [ ] **Boxplot:** `patch_artist=False` unfilled default, orientation, and
       `showbox`/`showcaps`/`showmeans`/`meanline`/`sym` on the high-level artist
-      (`core/boxplot.go:558`); honor `bootstrap` CI; percentile-*value* whisker
+      (`core/boxplot.go:558`); honor `bootstrap` CI; percentile-_value_ whisker
       semantics.
 - [ ] **StackPlot** `wiggle`/`weighted_wiggle`/`sym` baselines
       (`core/stat_variants.go:48`).
