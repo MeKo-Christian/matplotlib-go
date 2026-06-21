@@ -438,8 +438,8 @@ func specialtyHexbinMarginals(x, y []float64, cfg HexbinOptions, xscale, yscale 
 	if gridY <= 0 {
 		gridY = max(1, int(float64(gridX)/math.Sqrt(3)))
 	}
-	hbar := specialtyMarginalBars(x, cfg.C, xMin, xMax, gridX, xscale, true, cfg.Reduce, mapping, cfg.Alpha)
-	vbar := specialtyMarginalBars(y, cfg.C, yMin, yMax, 2*gridY, yscale, false, cfg.Reduce, mapping, cfg.Alpha)
+	hbar := specialtyMarginalBars(x, cfg.C, xMin, xMax, gridX, xscale, true, cfg.Reduce, mapping, cfg.Alpha, cfg.LineWidth)
+	vbar := specialtyMarginalBars(y, cfg.C, yMin, yMax, 2*gridY, yscale, false, cfg.Reduce, mapping, cfg.Alpha, cfg.LineWidth)
 	return hbar, vbar
 }
 
@@ -465,7 +465,7 @@ func finiteMarginalRange(values []float64, scale string) (float64, float64) {
 	return minValue, maxValue
 }
 
-func specialtyMarginalBars(values, cvalues []float64, minValue, maxValue float64, bins int, scale string, horizontal bool, reduce string, mapping ScalarMapInfo, alpha float64) *PolyCollection {
+func specialtyMarginalBars(values, cvalues []float64, minValue, maxValue float64, bins int, scale string, horizontal bool, reduce string, mapping ScalarMapInfo, alpha, lineWidth float64) *PolyCollection {
 	if bins <= 0 || minValue == maxValue {
 		return nil
 	}
@@ -516,7 +516,7 @@ func specialtyMarginalBars(values, cvalues []float64, minValue, maxValue float64
 			Collection: Collection{Coords: coords, Alpha: 1, z: 2.1},
 			FaceColors: colors,
 			EdgeColors: colors,
-			EdgeWidth:  0,
+			EdgeWidth:  lineWidth,
 		},
 		Polygons: polys,
 	}

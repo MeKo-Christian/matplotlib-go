@@ -1116,7 +1116,16 @@ func TestStemContainerAddsArtists(t *testing.T) {
 	if got, want := container.MarkerCollection.Size, pointsToPixels(ax.resolvedRC(), 6); !approx(got, want, 1e-12) {
 		t.Fatalf("stem marker size = %v, want Matplotlib 6 point Line2D marker diameter %v", got, want)
 	}
+	if got, want := container.StemLines.LineWidth, pointsToPixels(ax.resolvedRC(), 1.5); !approx(got, want, 1e-12) {
+		t.Fatalf("stem line width = %v, want Matplotlib default 1.5 pt = %v px", got, want)
+	}
+	if got, want := container.MarkerCollection.EdgeWidth, pointsToPixels(ax.resolvedRC(), 1); !approx(got, want, 1e-12) {
+		t.Fatalf("stem marker edge width = %v, want Matplotlib default 1 pt = %v px", got, want)
+	}
 	if got, want := container.Baseline.Col, palette[3]; got != want {
 		t.Fatalf("stem baseline color = %+v, want Matplotlib basefmt C3 %+v", got, want)
+	}
+	if got, want := container.Baseline.W, pointsToPixels(ax.resolvedRC(), 1.5); !approx(got, want, 1e-12) {
+		t.Fatalf("stem baseline width = %v, want Matplotlib default 1.5 pt = %v px", got, want)
 	}
 }

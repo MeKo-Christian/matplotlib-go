@@ -500,7 +500,7 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *StemContainer
 	}
 	color.A *= alpha
 
-	lineWidth := 1.5
+	lineWidth := pointsToPixels(a.resolvedRC(), 1.5)
 	if opt.LineWidth != nil {
 		lineWidth = *opt.LineWidth
 	}
@@ -517,7 +517,7 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *StemContainer
 		markerEdgeColor = *opt.MarkerEdgeColor
 		markerEdgeColor.A *= alpha
 	}
-	markerEdgeWidth := lineWidth * 0.8
+	markerEdgeWidth := pointsToPixels(a.resolvedRC(), 1)
 	if opt.MarkerEdgeWidth != nil {
 		markerEdgeWidth = *opt.MarkerEdgeWidth
 	}
@@ -709,7 +709,7 @@ func (a *Axes3D) Quiver(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *Li
 		alpha = *opt.Alpha
 	}
 	color.A *= alpha
-	lineWidth := 1.5
+	lineWidth := pointsToPixels(a.resolvedRC(), 1.5)
 	if opt.LineWidth != nil {
 		lineWidth = *opt.LineWidth
 	}

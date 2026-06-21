@@ -148,6 +148,14 @@ func TestAxesHexbinLogBinsReducersAndMarginals(t *testing.T) {
 	if !(hex.HBar.Z() > hex.Z() && hex.VBar.Z() > hex.Z()) {
 		t.Fatalf("marginal z orders h=%v v=%v hex=%v, want marginals above main hexbin like Matplotlib draw order", hex.HBar.Z(), hex.VBar.Z(), hex.Z())
 	}
+	wantLineWidth := pointsToPixels(ax.resolvedRC(), 1)
+	if !floatApprox(hex.HBar.EdgeWidth, wantLineWidth, 1e-12) || !floatApprox(hex.VBar.EdgeWidth, wantLineWidth, 1e-12) {
+		t.Fatalf("marginal edge widths h=%v v=%v, want Matplotlib PolyCollection default %v", hex.HBar.EdgeWidth, hex.VBar.EdgeWidth, wantLineWidth)
+	}
+	if len(hex.HBar.EdgeColors) != len(hex.HBar.FaceColors) || len(hex.VBar.EdgeColors) != len(hex.VBar.FaceColors) {
+		t.Fatalf("marginal edge colors should mirror face colors like edgecolors='face': h=%d/%d v=%d/%d",
+			len(hex.HBar.EdgeColors), len(hex.HBar.FaceColors), len(hex.VBar.EdgeColors), len(hex.VBar.FaceColors))
+	}
 }
 
 func TestAxesHexbinLogScaleBuildsHexagonsInLogSpace(t *testing.T) {

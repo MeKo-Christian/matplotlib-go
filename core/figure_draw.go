@@ -86,7 +86,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 		// Spine artists (zorder 2.5) together. Keep the axes clip active only
 		// for regular artist bands; ticks and spines can protrude past it.
 		drawClippedAxesArtistsInZRange(r, ctx, px, ax.Artists, math.Inf(-1), 1.5, true)
-		drawClippedAxesArtistsInZRange(r, ctx, px, widgetArtistsAsArtists(ax.WidgetArtists), math.Inf(-1), 1.5, false)
+		drawClippedAxesArtistsInZRange(r, ctx, px, ax.WidgetArtists, math.Inf(-1), 1.5, false)
 
 		if xAxis != nil {
 			xAxis.DrawTicks(r, ctx)
@@ -112,7 +112,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 		}
 
 		drawClippedAxesArtistsInZRange(r, ctx, px, ax.Artists, 1.5, 2.5, true)
-		drawClippedAxesArtistsInZRange(r, ctx, px, widgetArtistsAsArtists(ax.WidgetArtists), 1.5, 2.5, false)
+		drawClippedAxesArtistsInZRange(r, ctx, px, ax.WidgetArtists, 1.5, 2.5, false)
 
 		// Draw spines outside the clip so they can straddle the axes edge the
 		// same way Matplotlib does.
@@ -148,7 +148,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 		}
 
 		drawClippedAxesArtistsInZRange(r, ctx, px, ax.Artists, 2.5, math.Inf(1), true)
-		drawClippedAxesArtistsInZRange(r, ctx, px, widgetArtistsAsArtists(ax.WidgetArtists), 2.5, math.Inf(1), false)
+		drawClippedAxesArtistsInZRange(r, ctx, px, ax.WidgetArtists, 2.5, math.Inf(1), false)
 
 		for _, art := range sortedArtistDrawOrder(ax.Artists) {
 			if overlay, ok := art.(OverlayArtist); ok {
@@ -219,17 +219,6 @@ func drawClippedAxesArtistsInZRange(r render.Renderer, ctx *DrawContext, px geom
 		drawArtist(r, ctx, art)
 	}
 	r.Restore()
-}
-
-func widgetArtistsAsArtists(widgets []WidgetArtist) []Artist {
-	if len(widgets) == 0 {
-		return nil
-	}
-	artists := make([]Artist, 0, len(widgets))
-	for _, widget := range widgets {
-		artists = append(artists, widget)
-	}
-	return artists
 }
 
 func drawSecondaryChildAxes(parent *Axes, fig *Figure, r render.Renderer, vp geom.Rect, opts DrawOptions, alignment figureTextAlignment) {

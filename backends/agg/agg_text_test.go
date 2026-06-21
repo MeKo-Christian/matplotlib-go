@@ -41,6 +41,16 @@ func TestMeasureText(t *testing.T) {
 	}
 }
 
+func TestMeasureTextZeroTickWidthMatchesMatplotlibAgg(t *testing.T) {
+	r := mustNew(t, 100, 100)
+	r.SetResolution(100)
+
+	metrics := r.MeasureText("0", 10, "")
+	if math.Abs(metrics.W-8.75) > 0.25 {
+		t.Fatalf("MeasureText(\"0\", 10).W = %v, want Matplotlib Agg width 8.75", metrics.W)
+	}
+}
+
 func TestGlyphRunRendersShapedGlyphs(t *testing.T) {
 	r := mustNew(t, 220, 120)
 	viewport := geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 220, Y: 120}}
