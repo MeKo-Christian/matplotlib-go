@@ -176,7 +176,11 @@ User-facing memory targets and tuning guide documented.
       against accidental surface drift; geometry primitives promoted from
       `internal/geom` to the public `geom` package.
 - [ ] CI gate: `just fmt && just lint && just test` plus catalog-driven parity
-      checks all pass on the release branch.
+      checks all pass on the release branch. The GitHub Actions workflows now
+      build (cgo system deps + vendored FreeType) and the `build`/`vet`/`fmt`/
+      `lint` jobs are green; the remaining `go test ./...` failures (pre-existing,
+      never CI-validated) are catalogued in
+      [`docs/ci-known-test-failures.md`](docs/ci-known-test-failures.md).
 - [ ] Tag v1.0.
 
 **Exit criteria:**
