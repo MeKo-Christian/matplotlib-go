@@ -204,8 +204,8 @@ func TestLoadCasesFromDirectories(t *testing.T) {
 	if result.Cases[0].RefWidth != 2 || result.Cases[0].ActHeight != 2 {
 		t.Fatalf("unexpected case dimensions: %+v", result.Cases[0])
 	}
-	if result.Cases[0].RefB64 == "" || result.Cases[0].ActB64 == "" || result.Cases[0].RawDiffB64 == "" || result.Cases[0].AmpDiffB64 == "" {
-		t.Fatalf("expected base64 payloads to be populated: %+v", result.Cases[0])
+	if result.Cases[0].RefImageURL == "" || result.Cases[0].ActImageURL == "" || result.Cases[0].RawDiffURL == "" || result.Cases[0].AmpDiffURL == "" {
+		t.Fatalf("expected lazy image URLs to be populated: %+v", result.Cases[0])
 	}
 
 	filtered, err := loadCasesFromDirectories(baseDir, artifactDir, "ta", "ze")

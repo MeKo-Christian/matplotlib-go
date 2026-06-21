@@ -21,6 +21,13 @@ type metrics struct {
 }
 
 func buildEntry(suite, baseline, name, baselinePath, artifactPath string) (caseEntry, error) {
+	cacheKey, hasCacheKey := newCaseEntryCacheKey(baselinePath, artifactPath)
+	if hasCacheKey {
+		if cached, ok := defaultCaseEntryCache.lookup(cacheKey); ok {
+			return caseEntryFromCached(suite, baseline, name, cached), nil
+		}
+	}
+
 	ref, err := readPNGAsRGBA(baselinePath)
 	if err != nil {
 		return caseEntry{}, fmt.Errorf("read baseline: %w", err)
@@ -30,46 +37,41 @@ func buildEntry(suite, baseline, name, baselinePath, artifactPath string) (caseE
 		return caseEntry{}, fmt.Errorf("read artifact: %w", err)
 	}
 
-	rawDiff := rawDiffImage(ref, act)
-	ampDiff := amplifiedDiffImage(ref, act)
 	stats := compareImages(ref, act)
-
-	refB64, err := pngToBase64(compositeOverSolid(ref, color.RGBA{R: 255, G: 255, B: 255, A: 255}))
-	if err != nil {
-		return caseEntry{}, err
+	cached := cachedCaseEntry{
+		Stats:     stats,
+		RefWidth:  ref.Bounds().Dx(),
+		RefHeight: ref.Bounds().Dy(),
+		ActWidth:  act.Bounds().Dx(),
+		ActHeight: act.Bounds().Dy(),
 	}
-	actB64, err := pngToBase64(compositeOverSolid(act, color.RGBA{R: 255, G: 255, B: 255, A: 255}))
-	if err != nil {
-		return caseEntry{}, err
-	}
-	rawDiffB64, err := pngToBase64(rawDiff)
-	if err != nil {
-		return caseEntry{}, err
-	}
-	ampDiffB64, err := pngToBase64(ampDiff)
-	if err != nil {
-		return caseEntry{}, err
+	if hasCacheKey {
+		defaultCaseEntryCache.store(cacheKey, cached)
 	}
 
+	return caseEntryFromCached(suite, baseline, name, cached), nil
+}
+
+func caseEntryFromCached(suite, baseline, name string, cached cachedCaseEntry) caseEntry {
 	return caseEntry{
 		Suite:       suite,
 		Baseline:    baseline,
 		Name:        name,
-		RMSE:        stats.RMSE,
-		AvgDiff:     stats.AvgDiff,
-		MaxDiff:     stats.MaxDiff,
-		DiffPixels:  stats.DiffPixels,
-		TotalPixels: stats.TotalPixels,
-		DiffRatio:   stats.DiffRatio,
-		RefWidth:    ref.Bounds().Dx(),
-		RefHeight:   ref.Bounds().Dy(),
-		ActWidth:    act.Bounds().Dx(),
-		ActHeight:   act.Bounds().Dy(),
-		RefB64:      refB64,
-		ActB64:      actB64,
-		RawDiffB64:  rawDiffB64,
-		AmpDiffB64:  ampDiffB64,
-	}, nil
+		RMSE:        cached.Stats.RMSE,
+		AvgDiff:     cached.Stats.AvgDiff,
+		MaxDiff:     cached.Stats.MaxDiff,
+		DiffPixels:  cached.Stats.DiffPixels,
+		TotalPixels: cached.Stats.TotalPixels,
+		DiffRatio:   cached.Stats.DiffRatio,
+		RefWidth:    cached.RefWidth,
+		RefHeight:   cached.RefHeight,
+		ActWidth:    cached.ActWidth,
+		ActHeight:   cached.ActHeight,
+		RefImageURL: imageURL(suite, baseline, name, "baseline"),
+		ActImageURL: imageURL(suite, baseline, name, "artifact"),
+		RawDiffURL:  imageURL(suite, baseline, name, "diff-raw"),
+		AmpDiffURL:  imageURL(suite, baseline, name, "diff-amp"),
+	}
 }
 
 func compareImages(ref, act *image.RGBA) metrics {

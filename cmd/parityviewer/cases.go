@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -23,10 +24,10 @@ type caseEntry struct {
 	RefHeight   int
 	ActWidth    int
 	ActHeight   int
-	RefB64      string
-	ActB64      string
-	RawDiffB64  string
-	AmpDiffB64  string
+	RefImageURL string
+	ActImageURL string
+	RawDiffURL  string
+	AmpDiffURL  string
 }
 
 type loadResult struct {
@@ -149,6 +150,15 @@ func loadCasesFromDirectorySources(sources []directorySource, nameFilter, namePr
 	})
 
 	return result, nil
+}
+
+func imageURL(suite, baseline, name, kind string) string {
+	values := url.Values{}
+	values.Set("suite", suite)
+	values.Set("baseline", baseline)
+	values.Set("name", name)
+	values.Set("kind", kind)
+	return "/image?" + values.Encode()
 }
 
 func loadCasesFromParityDir(parityDir, nameFilter, namePrefix string) (loadResult, error) {

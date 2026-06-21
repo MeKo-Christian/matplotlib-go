@@ -1,11 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 )
 
 func main() {
@@ -13,6 +13,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("parse cli options: %v", err)
 	}
+	rerenderManager := newRerenderJobManager(func(ctx context.Context, names []string, progress func(string)) error {
+		return rerenderArtifacts(opts.RepoRoot, names, progress)
+	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
@@ -27,42 +30,13 @@ func main() {
 		renderPage(w, result, buildViewOptionsWithExtra(opts.UseParity, opts.IncludeWebdemo, opts.RepoRoot, opts.ArtifactDir))
 	})
 	http.HandleFunc("/rerender", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		if err := r.ParseForm(); err != nil {
-			http.Error(w, "bad request", http.StatusBadRequest)
-			return
-		}
-
-		if r.FormValue("all") == "1" {
-			if err := ensureRerenderSupportedWithExtra(opts.UseParity, opts.IncludeWebdemo, opts.RepoRoot, opts.ArtifactDir); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-			if err := rerenderAllArtifacts(opts.RepoRoot); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-
-		name := strings.TrimSpace(r.FormValue("name"))
-		if name == "" {
-			http.Error(w, "missing name parameter", http.StatusBadRequest)
-			return
-		}
-		if err := ensureRerenderSupportedWithExtra(opts.UseParity, opts.IncludeWebdemo, opts.RepoRoot, opts.ArtifactDir); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		if err := rerenderArtifact(opts.RepoRoot, name); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		w.WriteHeader(http.StatusNoContent)
+		handleRerender(w, r, buildViewOptionsWithExtra(opts.UseParity, opts.IncludeWebdemo, opts.RepoRoot, opts.ArtifactDir), rerenderManager)
+	})
+	http.HandleFunc("/rerender/status", func(w http.ResponseWriter, r *http.Request) {
+		handleRerenderStatus(w, r, rerenderManager)
+	})
+	http.HandleFunc("/image", func(w http.ResponseWriter, r *http.Request) {
+		handleImage(w, r, opts)
 	})
 
 	if opts.PrintOnly {

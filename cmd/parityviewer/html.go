@@ -149,7 +149,7 @@ func renderCard(w io.Writer, entry *caseEntry, opts viewOptions) {
 	fmt.Fprint(w, `<label>Baseline</label>`)
 	fmt.Fprint(w, `<div class="zoom-surface">`)
 	fmt.Fprint(w, `<div class="zoom-transform">`)
-	fmt.Fprintf(w, `<img class="parity-image" src="data:image/png;base64,%s" alt="baseline">`, entry.RefB64)
+	fmt.Fprintf(w, `<img class="parity-image" data-src="%s" alt="baseline">`, htmlEscape(entry.RefImageURL))
 	fmt.Fprint(w, `</div><div class="zoom-selection"></div></div>`)
 	fmt.Fprint(w, `</div>`)
 
@@ -157,7 +157,7 @@ func renderCard(w io.Writer, entry *caseEntry, opts viewOptions) {
 	fmt.Fprint(w, `<label>Artifact</label>`)
 	fmt.Fprint(w, `<div class="zoom-surface">`)
 	fmt.Fprint(w, `<div class="zoom-transform">`)
-	fmt.Fprintf(w, `<img class="parity-image" src="data:image/png;base64,%s" alt="artifact">`, entry.ActB64)
+	fmt.Fprintf(w, `<img class="parity-image" data-src="%s" alt="artifact">`, htmlEscape(entry.ActImageURL))
 	fmt.Fprint(w, `</div><div class="zoom-selection"></div></div>`)
 	fmt.Fprint(w, `</div>`)
 
@@ -165,18 +165,18 @@ func renderCard(w io.Writer, entry *caseEntry, opts viewOptions) {
 	fmt.Fprint(w, `<label>Overlay</label>`)
 	fmt.Fprint(w, `<div class="slider-wrap zoom-surface">`)
 	fmt.Fprint(w, `<div class="zoom-transform zoom-base-layer">`)
-	fmt.Fprintf(w, `<img class="base" src="data:image/png;base64,%s" alt="base">`, entry.RefB64)
+	fmt.Fprintf(w, `<img class="base" data-src="%s" alt="base">`, htmlEscape(entry.RefImageURL))
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div class="slider-overlay">`)
 	fmt.Fprint(w, `<div class="zoom-transform zoom-overlay-layer">`)
-	fmt.Fprintf(w, `<img src="data:image/png;base64,%s" alt="overlay">`, entry.ActB64)
+	fmt.Fprintf(w, `<img data-src="%s" alt="overlay">`, htmlEscape(entry.ActImageURL))
 	fmt.Fprint(w, `</div></div><div class="slider-divider"></div><div class="zoom-selection"></div></div></div>`)
 
 	fmt.Fprint(w, `<div class="img-col col-amp">`)
 	fmt.Fprint(w, `<label>Diff amplified</label>`)
 	fmt.Fprint(w, `<div class="zoom-surface">`)
 	fmt.Fprint(w, `<div class="zoom-transform">`)
-	fmt.Fprintf(w, `<img class="parity-image" src="data:image/png;base64,%s" alt="amplified-diff">`, entry.AmpDiffB64)
+	fmt.Fprintf(w, `<img class="parity-image" data-src="%s" alt="amplified-diff">`, htmlEscape(entry.AmpDiffURL))
 	fmt.Fprint(w, `</div><div class="zoom-selection"></div></div>`)
 	fmt.Fprint(w, `</div>`)
 
@@ -184,7 +184,7 @@ func renderCard(w io.Writer, entry *caseEntry, opts viewOptions) {
 	fmt.Fprint(w, `<label>Diff raw</label>`)
 	fmt.Fprint(w, `<div class="zoom-surface">`)
 	fmt.Fprint(w, `<div class="zoom-transform">`)
-	fmt.Fprintf(w, `<img class="parity-image" src="data:image/png;base64,%s" alt="raw-diff">`, entry.RawDiffB64)
+	fmt.Fprintf(w, `<img class="parity-image" data-src="%s" alt="raw-diff">`, htmlEscape(entry.RawDiffURL))
 	fmt.Fprint(w, `</div><div class="zoom-selection"></div></div>`)
 	fmt.Fprint(w, `</div>`)
 
@@ -256,6 +256,9 @@ body { background: #101216; color: #d7dce4; font-family: ui-monospace, SFMono-Re
 .controls input, .controls select { background: #171b22; color: #d7dce4; border: 1px solid #334155; padding: 5px 8px; font-family: inherit; font-size: 12px; border-radius: 6px; }
 .controls label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #aeb8c8; }
 .header-meta { margin-top: 8px; color: #93a1b5; font-size: 12px; }
+.rerender-progress { display: none; align-items: center; gap: 8px; margin-top: 8px; color: #93a1b5; font-size: 12px; }
+.rerender-progress.is-active { display: flex; }
+.rerender-progress progress { width: 220px; height: 10px; accent-color: #7cf0a5; }
 #summary { margin-left: auto; color: #93a1b5; font-size: 12px; }
 .container { padding: 12px; }
 .card { background: #141922; border: 1px solid #293241; margin-bottom: 10px; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
@@ -336,6 +339,10 @@ code { color: #f4f7fb; }
     __RERENDER_ALL_BUTTON__
     <label><input type="checkbox" id="original-size" onchange="setOriginalSize(this.checked)"> Original size</label>
     <span id="summary"></span>
+  </div>
+  <div id="rerender-progress-row" class="rerender-progress">
+    <progress id="rerender-progress" value="0" max="1"></progress>
+    <span id="rerender-progress-text">Idle</span>
   </div>
 `
 
@@ -530,17 +537,78 @@ const pageFooter = `</div>
     });
   }
 
-  function rerenderArtifact(name) {
+  function loadCardImages(card) {
+    if (!card) return;
+    card.querySelectorAll('img[data-src]').forEach(function(img) {
+      if (img.getAttribute('src')) return;
+      img.setAttribute('src', img.dataset.src);
+    });
+  }
+
+  function updateRerenderProgress(status) {
+    var row = document.getElementById('rerender-progress-row');
+    var bar = document.getElementById('rerender-progress');
+    var text = document.getElementById('rerender-progress-text');
+    if (!row || !bar || !text) return;
+    row.classList.add('is-active');
+    var total = Number(status.total || 0);
+    var completed = Number(status.completed || 0);
+    bar.max = total > 0 ? total : 1;
+    bar.value = Math.min(completed, bar.max);
+    var current = status.current ? ' · ' + status.current : '';
+    if (status.status === 'failed') {
+      text.textContent = 'Failed after ' + completed + ' / ' + total + current;
+      return;
+    }
+    if (status.status === 'done') {
+      text.textContent = 'Completed ' + completed + ' / ' + total;
+      return;
+    }
+    text.textContent = 'Rendering ' + completed + ' / ' + total + current;
+  }
+
+  function startRerender(names) {
+    var params = new URLSearchParams();
+    names.forEach(function(name) {
+      params.append('name', name);
+    });
     return fetch('/rerender', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-      body: new URLSearchParams({ name: name }).toString()
+      body: params.toString()
     }).then(function(response) {
       if (!response.ok) {
         return response.text().then(function(text) {
           throw new Error(text || 'rerender failed');
         });
       }
+      return response.json();
+    });
+  }
+
+  function pollRerenderJob(jobID) {
+    return fetch('/rerender/status?id=' + encodeURIComponent(jobID), {
+      headers: { 'Accept': 'application/json' }
+    }).then(function(response) {
+      if (!response.ok) {
+        return response.text().then(function(text) {
+          throw new Error(text || 'rerender status failed');
+        });
+      }
+      return response.json();
+    }).then(function(status) {
+      updateRerenderProgress(status);
+      if (status.status === 'done') {
+        return status;
+      }
+      if (status.status === 'failed') {
+        throw new Error(status.error || 'rerender failed');
+      }
+      return new Promise(function(resolve) {
+        window.setTimeout(resolve, 500);
+      }).then(function() {
+        return pollRerenderJob(jobID);
+      });
     });
   }
 
@@ -552,7 +620,11 @@ const pageFooter = `</div>
 
   document.querySelectorAll('.card-header').forEach(function(header) {
     header.addEventListener('click', function() {
-      header.closest('.card').classList.toggle('open');
+      var card = header.closest('.card');
+      card.classList.toggle('open');
+      if (card.classList.contains('open')) {
+        loadCardImages(card);
+      }
       saveViewerState();
     });
   });
@@ -567,7 +639,10 @@ const pageFooter = `</div>
       if (!name) return;
       saveViewerState();
       setRerenderButtonsDisabled(true);
-      rerenderArtifact(name).then(function() {
+      startRerender([name]).then(function(job) {
+        updateRerenderProgress(job);
+        return pollRerenderJob(job.job_id || job.id);
+      }).then(function() {
         navigateToFreshPage();
       }).catch(function(err) {
         window.alert(err.message);
@@ -580,14 +655,15 @@ const pageFooter = `</div>
   bulkButton.addEventListener('click', function() {
     saveViewerState();
     setRerenderButtonsDisabled(true);
-    var cards = Array.from(document.querySelectorAll('.card'));
-    var chain = Promise.resolve();
-    cards.forEach(function(card) {
-      var name = card.dataset.name || '';
-      if (!name) return;
-      chain = chain.then(function() { return rerenderArtifact(name); });
+    var names = Array.from(document.querySelectorAll('.card')).map(function(card) {
+      return card.dataset.name || '';
+    }).filter(function(name) {
+      return !!name;
     });
-    chain.then(function() {
+    return startRerender(names).then(function(job) {
+      updateRerenderProgress(job);
+      return pollRerenderJob(job.job_id || job.id);
+    }).then(function() {
       navigateToFreshPage();
     }).catch(function(err) {
       window.alert(err.message);
@@ -793,6 +869,7 @@ const pageFooter = `</div>
   window.setResampleMode = setResampleMode;
 
   restoreViewerState();
+  document.querySelectorAll('.card.open').forEach(loadCardImages);
   bindViewerStatePersistence();
   sortCards();
   setDiffMode(document.getElementById('diff-mode').value);

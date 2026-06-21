@@ -5,10 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -30,6 +32,21 @@ func rerenderArtifact(repoRoot, name string) error {
 
 func rerenderAllArtifacts(repoRoot string) error {
 	return runGoGoldenUpdate(repoRoot, goldenUpdateRunPatternAll)
+}
+
+func rerenderArtifacts(repoRoot string, names []string, progress func(string)) error {
+	names = normalizeCaseNames(names)
+	if len(names) == 0 {
+		return errors.New("missing name")
+	}
+	if len(names) == 1 {
+		err := runGoParityRender(repoRoot, names[0])
+		if err == nil && progress != nil {
+			progress(names[0])
+		}
+		return err
+	}
+	return runGoParityRenderBatch(repoRoot, names, progress)
 }
 
 func runGoGoldenUpdate(repoRoot, runPattern string) error {
@@ -84,6 +101,32 @@ func runGoParityRender(repoRoot, name string) error {
 	return nil
 }
 
+func runGoParityRenderBatch(repoRoot string, names []string, progress func(string)) error {
+	ctx, cancel := context.WithTimeout(context.Background(), goldenUpdateTimeout)
+	defer cancel()
+
+	cmd := newParityRenderBatchCommandContext(ctx, repoRoot, names)
+
+	var out bytes.Buffer
+	progressWriter := newProgressLineWriter(names, progress)
+	writer := io.MultiWriter(&out, progressWriter)
+	cmd.Stdout = writer
+	cmd.Stderr = &out
+
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(out.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			return fmt.Errorf("go run timed out after %s for %q: %s", goldenUpdateTimeout, strings.Join(names, ","), msg)
+		}
+		return fmt.Errorf("go run failed: %w: %s", err, msg)
+	}
+	progressWriter.flush()
+	return nil
+}
+
 func newGoldenUpdateCommand(repoRoot, runPattern string) *exec.Cmd {
 	return newGoldenUpdateCommandContext(context.Background(), repoRoot, runPattern)
 }
@@ -116,6 +159,29 @@ func newParityRenderCommandContext(ctx context.Context, repoRoot, name string) *
 		"./test/parity/cmd",
 		"--id",
 		name,
+		"--output-dir",
+		filepath.Join("testdata", "golden"),
+	}
+
+	cmd := exec.CommandContext(ctx, "go", args...)
+	cmd.Dir = repoRoot
+	cmd.Env = goCommandEnv()
+
+	return cmd
+}
+
+func newParityRenderBatchCommand(repoRoot string, names []string) *exec.Cmd {
+	return newParityRenderBatchCommandContext(context.Background(), repoRoot, names)
+}
+
+func newParityRenderBatchCommandContext(ctx context.Context, repoRoot string, names []string) *exec.Cmd {
+	args := []string{
+		"run",
+		"-tags",
+		goldenUpdateBuildTag,
+		"./test/parity/cmd",
+		"--ids",
+		strings.Join(normalizeCaseNames(names), ","),
 		"--output-dir",
 		filepath.Join("testdata", "golden"),
 	}
@@ -163,4 +229,65 @@ func setEnv(env []string, key, value string) []string {
 
 func testNameFromCaseName(name string) string {
 	return "^TestGolden/" + name + "$"
+}
+
+func normalizeCaseNames(names []string) []string {
+	out := make([]string, 0, len(names))
+	seen := map[string]bool{}
+	for _, name := range names {
+		name = strings.TrimSpace(name)
+		if name == "" || seen[name] {
+			continue
+		}
+		seen[name] = true
+		out = append(out, name)
+	}
+	return out
+}
+
+type progressLineWriter struct {
+	mu        sync.Mutex
+	buf       []byte
+	names     []string
+	completed int
+	progress  func(string)
+}
+
+func newProgressLineWriter(names []string, progress func(string)) *progressLineWriter {
+	return &progressLineWriter{names: normalizeCaseNames(names), progress: progress}
+}
+
+func (w *progressLineWriter) Write(p []byte) (int, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for _, b := range p {
+		if b == '\n' {
+			w.handleLine(string(w.buf))
+			w.buf = w.buf[:0]
+			continue
+		}
+		w.buf = append(w.buf, b)
+	}
+	return len(p), nil
+}
+
+func (w *progressLineWriter) flush() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if len(w.buf) > 0 {
+		w.handleLine(string(w.buf))
+		w.buf = w.buf[:0]
+	}
+}
+
+func (w *progressLineWriter) handleLine(line string) {
+	if w.progress == nil || !strings.HasPrefix(strings.TrimSpace(line), "wrote ") {
+		return
+	}
+	if w.completed >= len(w.names) {
+		return
+	}
+	name := w.names[w.completed]
+	w.completed++
+	w.progress(name)
 }

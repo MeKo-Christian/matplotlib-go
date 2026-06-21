@@ -147,7 +147,8 @@ func TestPageFooterPersistsOpenCardsAcrossReload(t *testing.T) {
 		"state.openCards = Array.from(document.querySelectorAll('.card.open')).map(cardStateKey);",
 		"var openCards = Array.isArray(state.openCards) ? state.openCards : [];",
 		"card.classList.toggle('open', openCardSet.has(cardStateKey(card)));",
-		"header.closest('.card').classList.toggle('open');",
+		"card.classList.toggle('open');",
+		"loadCardImages(card);",
 		"saveViewerState();",
 	}
 	for _, snippet := range requiredSnippets {
@@ -162,7 +163,7 @@ func TestPageFooterUsesCacheBustingNavigationAfterRerender(t *testing.T) {
 		"function navigateToFreshPage() {",
 		"url.searchParams.set('_pv', String(Date.now()));",
 		"window.location.assign(url.toString());",
-		"rerenderArtifact(name).then(function() {",
+		"startRerender([name]).then(function(job) {",
 		"navigateToFreshPage();",
 	}
 	for _, snippet := range requiredSnippets {
