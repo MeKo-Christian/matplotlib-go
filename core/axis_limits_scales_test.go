@@ -786,3 +786,24 @@ func TestAxes_AspectDatalimExpandsDataLimits(t *testing.T) {
 		t.Fatalf("datalim expansion must keep data visible: y=[%.3f,%.3f]", yMin, yMax)
 	}
 }
+
+func TestAxes_AspectDatalimReappliedWhenAspectSetAfterAdjustable(t *testing.T) {
+	fig := NewFigure(600, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	ax.Plot([]float64{0, 10}, []float64{0, 1})
+	// Reverse order: adjustable selected before the aspect. SetAspect must
+	// re-apply the datalim expansion; otherwise the data scale stays unequal.
+	if err := ax.SetAdjustable("datalim"); err != nil {
+		t.Fatalf("SetAdjustable(datalim): %v", err)
+	}
+	if err := ax.SetAspect("equal"); err != nil {
+		t.Fatalf("SetAspect(equal): %v", err)
+	}
+	xMin, xMax := ax.XScale.Domain()
+	yMin, yMax := ax.YScale.Domain()
+	xspan := math.Abs(xMax - xMin)
+	yspan := math.Abs(yMax - yMin)
+	if !floatApprox(xspan, yspan, 1e-6) {
+		t.Fatalf("datalim not equalized when aspect set after adjustable: xspan=%.6f yspan=%.6f", xspan, yspan)
+	}
+}

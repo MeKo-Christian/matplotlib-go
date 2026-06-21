@@ -281,3 +281,19 @@ func TestLabelOuterSuppressesInnerLabels(t *testing.T) {
 		t.Fatalf("bottom-right should hide y labels (not first col)")
 	}
 }
+
+func TestTickLabelsHiddenForLayoutHonorsLabelOuter(t *testing.T) {
+	fig := NewFigure(800, 600)
+	gs := fig.GridSpec(2, 2)
+	tl := gs.Cell(0, 0).AddAxes() // first row, first col
+	tl.LabelOuter()
+	// Inner bottom edge is hidden, so the layout pass must not reserve space for
+	// the bottom x tick labels.
+	if !tl.tickLabelsHiddenForLayout(tl.effectiveXAxis()) {
+		t.Fatal("bottom x tick labels should be hidden for layout after LabelOuter")
+	}
+	// The first column keeps its y tick labels, so layout still reserves them.
+	if tl.tickLabelsHiddenForLayout(tl.effectiveYAxis()) {
+		t.Fatal("first-column y tick labels should remain reserved in layout")
+	}
+}

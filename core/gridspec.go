@@ -464,6 +464,27 @@ func (a *Axes) LabelOuter() {
 	}
 }
 
+// tickLabelsHiddenForLayout reports whether the given axis's tick labels are
+// suppressed (e.g. by LabelOuter) on this Axes, so the layout pass should not
+// reserve space for them. Mirrors the axis→hide-flag pairing used at draw time
+// in figure_draw.go.
+func (a *Axes) tickLabelsHiddenForLayout(axis *Axis) bool {
+	if a == nil || axis == nil {
+		return false
+	}
+	switch axis {
+	case a.effectiveXAxis():
+		return a.hideXTickLabels
+	case a.effectiveYAxis():
+		return a.hideYTickLabels
+	case a.effectiveTopAxis():
+		return a.hideTopTickLabels
+	case a.effectiveRightAxis():
+		return a.hideRightTickLabels
+	}
+	return false
+}
+
 // SubFigure converts the subplot span into a composition region.
 func (spec SubplotSpec) SubFigure() *SubFigure {
 	if spec.figure == nil {

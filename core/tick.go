@@ -38,12 +38,20 @@ type OffsetFormatter interface {
 	OffsetText(ticks []float64) string
 }
 
-func formatTickLabelForTicks(formatter Formatter, tick float64, index int, ticks []float64) string {
-	label := formatTickLabel(formatter, tick, index, ticks)
+// tickLabelFormatter returns a per-tick label function for a fixed tick
+// sequence. Any ScalarFormatter context is computed once up front, so formatting
+// a whole sequence in a loop stays O(n) instead of recomputing the shared
+// context (offset, order of magnitude, precision) for every tick.
+func tickLabelFormatter(formatter Formatter, ticks []float64) func(tick float64, index int) string {
 	if scalarFormatter, ok := formatter.(ScalarFormatter); ok && len(ticks) >= 1 {
-		label = formatScalarTickLabelCtx(scalarFormatter, tick, newScalarTickContext(scalarFormatter, ticks))
+		ctx := newScalarTickContext(scalarFormatter, ticks)
+		return func(tick float64, _ int) string {
+			return formatScalarTickLabelCtx(scalarFormatter, tick, ctx)
+		}
 	}
-	return label
+	return func(tick float64, index int) string {
+		return formatTickLabel(formatter, tick, index, ticks)
+	}
 }
 
 func formatTickLabel(formatter Formatter, x float64, index int, ticks []float64) string {

@@ -3,6 +3,7 @@ package core
 import (
 	"math"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -913,23 +914,42 @@ func dateNonsingular(minVal, maxVal float64) (float64, float64) {
 // Date numbers follow Matplotlib's convention: floating-point days since a
 // configurable epoch (default 1970-01-01T00:00:00Z). See core/dates.go for the
 // public Date2Num / Num2Date / SetEpoch / GetEpoch surface.
-var (
-	dateEpoch     = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
-	dateEpochUsed bool // set once any conversion happens; locks SetEpoch.
-)
+var dateEpoch = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+
+// dateEpochUsed is set once any conversion happens; it locks SetEpoch. It is
+// atomic so concurrent conversions (or a conversion racing SetEpoch) are
+// data-race free under the Go race detector.
+var dateEpochUsed atomic.Bool
 
 const (
 	nanosPerDay        = 24.0 * 60.0 * 60.0 * 1e9
 	microsecondsPerDay = 24.0 * 60.0 * 60.0 * 1e6
+	secondsPerDay      = 24.0 * 60.0 * 60.0
+
+	// maxDurationMicros / minDurationMicros bound the microsecond offset for
+	// which micros*1000 still fits a time.Duration (int64 nanoseconds). Beyond
+	// this the time.Duration paths below saturate (~292 years from the epoch).
+	maxDurationMicros = math.MaxInt64 / 1000
+	minDurationMicros = math.MinInt64 / 1000
 )
 
 func timeToDateNumber(t time.Time) float64 {
-	dateEpochUsed = true
-	return float64(t.UTC().Sub(dateEpoch)) / nanosPerDay
+	dateEpochUsed.Store(true)
+	t = t.UTC()
+	// Common (in-range) path: identical to the historical computation, which the
+	// date-parity fixtures are calibrated against. time.Time.Sub saturates beyond
+	// ~292 years from the epoch, so for those extreme offsets fall back to
+	// time.Duration-free arithmetic via Unix seconds (a full-range int64 count).
+	if d := t.Sub(dateEpoch); d != time.Duration(math.MaxInt64) && d != time.Duration(math.MinInt64) {
+		return float64(d) / nanosPerDay
+	}
+	secs := t.Unix() - dateEpoch.Unix()
+	fracNanos := int64(t.Nanosecond()) - int64(dateEpoch.Nanosecond())
+	return float64(secs)/secondsPerDay + float64(fracNanos)/nanosPerDay
 }
 
 func dateNumberToTime(v float64, loc *time.Location) time.Time {
-	dateEpochUsed = true
+	dateEpochUsed.Store(true)
 	if loc == nil {
 		loc = time.UTC
 	}
@@ -937,5 +957,12 @@ func dateNumberToTime(v float64, loc *time.Location) time.Time {
 	// days are not exactly representable in float64, so nanosecond rounding
 	// leaves a sub-microsecond drift (e.g. 02:40:00 -> 02:39:59.9999997).
 	micros := int64(math.Round(v * microsecondsPerDay))
+	// In-range path is identical to before; large offsets would overflow
+	// time.Duration(micros)*time.Microsecond, so add them via Unix seconds.
+	if micros > maxDurationMicros || micros < minDurationMicros {
+		secs := micros / 1_000_000
+		rem := micros % 1_000_000
+		return time.Unix(dateEpoch.Unix()+secs, int64(dateEpoch.Nanosecond())+rem*1000).In(loc)
+	}
 	return dateEpoch.Add(time.Duration(micros) * time.Microsecond).In(loc)
 }

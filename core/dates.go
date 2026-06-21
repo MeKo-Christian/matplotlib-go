@@ -34,7 +34,7 @@ func GetEpoch() time.Time {
 // epoch unchanged. Choosing an epoch close to the data of interest preserves
 // floating-point precision for sub-second resolution far from 1970.
 func SetEpoch(t time.Time) error {
-	if dateEpochUsed {
+	if dateEpochUsed.Load() {
 		return errors.New("core: SetEpoch must be called before any date conversion or plotting")
 	}
 	dateEpoch = t.UTC()

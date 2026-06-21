@@ -252,6 +252,9 @@ func measureAxesDecorationPadding(ax *Axes, fig *Figure, r render.Renderer, vp g
 	union := px
 
 	for _, axis := range []*Axis{ax.effectiveXAxis(), ax.effectiveYAxis(), ax.effectiveTopAxis(), ax.effectiveRightAxis()} {
+		if ax.tickLabelsHiddenForLayout(axis) {
+			continue
+		}
 		if bounds, ok := axisTickLabelBounds(axis, r, ctx); ok {
 			union = unionRect(union, bounds)
 		}
@@ -260,11 +263,15 @@ func measureAxesDecorationPadding(ax *Axes, fig *Figure, r render.Renderer, vp g
 	if bounds, ok := titleBounds(ax, r, ctx, px, alignment); ok {
 		union = unionRect(union, bounds)
 	}
-	if bounds, ok := xLabelBounds(ax, r, ctx, px, alignment); ok {
-		union = unionRect(union, bounds)
+	if !ax.hideXLabel {
+		if bounds, ok := xLabelBounds(ax, r, ctx, px, alignment); ok {
+			union = unionRect(union, bounds)
+		}
 	}
-	if bounds, ok := yLabelBounds(ax, r, ctx, px, alignment); ok {
-		union = unionRect(union, bounds)
+	if !ax.hideYLabel {
+		if bounds, ok := yLabelBounds(ax, r, ctx, px, alignment); ok {
+			union = unionRect(union, bounds)
+		}
 	}
 
 	// Display space is y-up: the visual top edge is px.Max.Y and the bottom edge

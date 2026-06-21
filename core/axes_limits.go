@@ -107,6 +107,11 @@ func (a *Axes) SetAspect(mode string, value ...float64) error {
 	default:
 		return fmt.Errorf("unsupported aspect mode %q", mode)
 	}
+	// When adjustable is already 'datalim', a later aspect change must re-expand
+	// the data limits; otherwise setting adjustable before the aspect leaves the
+	// scale unequal. applyAspectDatalim is idempotent and a no-op unless
+	// adjustable == "datalim", so it is safe to call for every aspect mode.
+	a.applyAspectDatalim()
 	return nil
 }
 
