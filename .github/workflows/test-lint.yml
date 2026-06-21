@@ -8,22 +8,21 @@ on:
 jobs:
   golangci:
     name: golangci-lint
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        go: ["1.22", "1.23", "1.24"]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
-      - name: Install golangci-lint
+          # Must be >= the go.mod directive (1.25): golangci-lint is built from
+          # source here so its embedded Go version satisfies the module target.
+          go-version: "1.25"
+      - name: Install build dependencies
+        uses: ./.github/actions/setup-cgo-deps
+      - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
+          version: v1.64.8
+          # goinstall builds the linter with the Go toolchain above, so it is
+          # not the prebuilt go1.24 binary that rejects a go 1.25 module.
+          install-mode: goinstall
           args: --timeout=5m

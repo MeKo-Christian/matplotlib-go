@@ -12,18 +12,22 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        go: ["1.22", "1.23", "1.24"]
+        # go.mod requires Go 1.25 (via golang.org/x/* dependencies), so the
+        # toolchain is pinned there; the runner downloads it automatically.
+        go: ["1.25"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
+      - name: Install build dependencies
+        uses: ./.github/actions/setup-cgo-deps
       - name: Build
-        run: go build -tags freetype ./...
+        run: CGO_ENABLED=1 go build -tags freetype ./...
       - name: Vet
-        run: go vet -tags freetype ./...
+        run: CGO_ENABLED=1 go vet -tags freetype ./...
       - name: Test
-        run: go test -tags freetype ./...
+        run: CGO_ENABLED=1 go test -tags freetype ./...
       - name: Upload test artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v4
