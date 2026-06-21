@@ -526,6 +526,9 @@ func clipConnectionPathToPatch(ctx *DrawContext, path geom.Path, patch Artist, s
 	if !pointInPolygon(endpoint, polygon) {
 		return path
 	}
+	if clipped, ok := clipQuadraticConnectionPathToPolygon(path, polygon, start); ok {
+		return clipped
+	}
 	boundary, ok := connectionPatchBoundaryPoint(path, polygon, start)
 	if !ok {
 		return path
@@ -538,6 +541,78 @@ func clipConnectionPathToPatch(ctx *DrawContext, path geom.Path, patch Artist, s
 		out.V[len(out.V)-1] = boundary
 	}
 	return out
+}
+
+func clipQuadraticConnectionPathToPolygon(path geom.Path, polygon []geom.Pt, start bool) (geom.Path, bool) {
+	p0, p1, p2, ok := quadraticConnectionPoints(path)
+	if !ok {
+		return geom.Path{}, false
+	}
+	t, ok := quadraticBoundaryT(p0, p1, p2, polygon, start)
+	if !ok {
+		return geom.Path{}, false
+	}
+	out := path
+	out.V = append([]geom.Pt(nil), path.V...)
+	if start {
+		out.V[0] = quadraticPoint(p0, p1, p2, t)
+		out.V[1] = lerpPoint(p1, p2, t)
+	} else {
+		out.V[1] = lerpPoint(p0, p1, t)
+		out.V[2] = quadraticPoint(p0, p1, p2, t)
+	}
+	return out, true
+}
+
+func quadraticBoundaryT(start, ctrl, end geom.Pt, polygon []geom.Pt, clipStart bool) (float64, bool) {
+	const samples = 128
+	if clipStart {
+		if !pointInPolygon(start, polygon) {
+			return 0, false
+		}
+		insideT := 0.0
+		for i := 1; i <= samples; i++ {
+			t := float64(i) / samples
+			if pointInPolygon(quadraticPoint(start, ctrl, end, t), polygon) {
+				insideT = t
+				continue
+			}
+			outsideT := t
+			for j := 0; j < 32; j++ {
+				mid := (insideT + outsideT) / 2
+				if pointInPolygon(quadraticPoint(start, ctrl, end, mid), polygon) {
+					insideT = mid
+				} else {
+					outsideT = mid
+				}
+			}
+			return insideT, true
+		}
+		return 0, false
+	}
+
+	if !pointInPolygon(end, polygon) {
+		return 0, false
+	}
+	insideT := 1.0
+	for i := samples - 1; i >= 0; i-- {
+		t := float64(i) / samples
+		if pointInPolygon(quadraticPoint(start, ctrl, end, t), polygon) {
+			insideT = t
+			continue
+		}
+		outsideT := t
+		for j := 0; j < 32; j++ {
+			mid := (insideT + outsideT) / 2
+			if pointInPolygon(quadraticPoint(start, ctrl, end, mid), polygon) {
+				insideT = mid
+			} else {
+				outsideT = mid
+			}
+		}
+		return insideT, true
+	}
+	return 0, false
 }
 
 func connectionPatchBoundaryPoint(path geom.Path, polygon []geom.Pt, start bool) (geom.Pt, bool) {

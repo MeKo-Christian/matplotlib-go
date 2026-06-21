@@ -421,27 +421,48 @@ func applyHexbinBins(values []float64, cfg HexbinOptions) []float64 {
 
 func specialtyHexbinMarginals(x, y []float64, cfg HexbinOptions, xscale, yscale string, mapping ScalarMapInfo) (*PolyCollection, *PolyCollection) {
 	extent := cfg.Extent
-	if extent == nil {
-		tx, ty := specialtyHexbinScaledPoints(x, y, xscale, yscale)
-		rect := finitePointRect(tx, ty)
-		extent = &rect
+	xMin, xMax := finiteMarginalRange(x, xscale)
+	yMin, yMax := finiteMarginalRange(y, yscale)
+	if extent != nil {
+		xMin, xMax = extent.Min.X, extent.Max.X
+		yMin, yMax = extent.Min.Y, extent.Max.Y
+		if xscale == "log" {
+			xMin, xMax = math.Pow(10, xMin), math.Pow(10, xMax)
+		}
+		if yscale == "log" {
+			yMin, yMax = math.Pow(10, yMin), math.Pow(10, yMax)
+		}
 	}
 	gridX := max(1, cfg.GridSizeX)
 	gridY := cfg.GridSizeY
 	if gridY <= 0 {
 		gridY = max(1, int(float64(gridX)/math.Sqrt(3)))
 	}
-	xMin, xMax := extent.Min.X, extent.Max.X
-	yMin, yMax := extent.Min.Y, extent.Max.Y
-	if xscale == "log" {
-		xMin, xMax = math.Pow(10, xMin), math.Pow(10, xMax)
-	}
-	if yscale == "log" {
-		yMin, yMax = math.Pow(10, yMin), math.Pow(10, yMax)
-	}
 	hbar := specialtyMarginalBars(x, cfg.C, xMin, xMax, gridX, xscale, true, cfg.Reduce, mapping, cfg.Alpha)
 	vbar := specialtyMarginalBars(y, cfg.C, yMin, yMax, 2*gridY, yscale, false, cfg.Reduce, mapping, cfg.Alpha)
 	return hbar, vbar
+}
+
+func finiteMarginalRange(values []float64, scale string) (float64, float64) {
+	if scale != "log" {
+		return finiteRange(values)
+	}
+	minValue := math.Inf(1)
+	maxValue := math.Inf(-1)
+	for _, value := range values {
+		if !isFinite(value) || value <= 0 {
+			continue
+		}
+		minValue = math.Min(minValue, value)
+		maxValue = math.Max(maxValue, value)
+	}
+	if math.IsInf(minValue, 1) || math.IsInf(maxValue, -1) {
+		return 1, 10
+	}
+	if minValue == maxValue {
+		return minValue, minValue * 10
+	}
+	return minValue, maxValue
 }
 
 func specialtyMarginalBars(values, cvalues []float64, minValue, maxValue float64, bins int, scale string, horizontal bool, reduce string, mapping ScalarMapInfo, alpha float64) *PolyCollection {
@@ -512,25 +533,22 @@ func marginalBinEdges(minValue, maxValue float64, bins int, scale string) []floa
 		for i := range edges {
 			edges[i] = math.Pow(10, lo+(hi-lo)*float64(i)/float64(bins))
 		}
+		edges[0] = minValue
+		edges[len(edges)-1] = maxValue
 		return edges
 	}
 	for i := range edges {
 		edges[i] = minValue + (maxValue-minValue)*float64(i)/float64(bins)
 	}
+	edges[0] = minValue
+	edges[len(edges)-1] = maxValue
 	return edges
 }
 
 func marginalBinIndex(edges []float64, value float64) int {
-	idx := slices.IndexFunc(edges, func(edge float64) bool {
-		return value < edge
+	return slices.IndexFunc(edges, func(edge float64) bool {
+		return value <= edge
 	}) - 1
-	if idx < 0 && len(edges) > 0 && value == edges[0] {
-		return 0
-	}
-	if idx == len(edges)-1 && value == edges[len(edges)-1] {
-		return idx - 1
-	}
-	return idx
 }
 
 func reduceMarginalValues(values []float64, reduce string) float64 {

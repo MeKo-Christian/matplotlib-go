@@ -82,41 +82,12 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 		}
 		drawnAxes = append(drawnAxes, px)
 
-		// Draw only clipped content (data and grids) while the axes clip is active.
-		r.Save()
-		r.ClipRect(px)
-		if framePath, ok := projectionFramePath(ctx.Projection, px); ok {
-			r.ClipPath(framePath)
-		}
+		// Matplotlib sorts regular artists, Axis objects (zorder 1.5), and
+		// Spine artists (zorder 2.5) together. Keep the axes clip active only
+		// for regular artist bands; ticks and spines can protrude past it.
+		drawClippedAxesArtistsInZRange(r, ctx, px, ax.Artists, math.Inf(-1), 1.5, true)
+		drawClippedAxesArtistsInZRange(r, ctx, px, widgetArtistsAsArtists(ax.WidgetArtists), math.Inf(-1), 1.5, false)
 
-		for _, art := range sortedArtistDrawOrder(ax.Artists) {
-			if _, ok := art.(*Legend); ok {
-				continue
-			}
-			drawArtist(r, ctx, art)
-		}
-		for _, art := range sortedArtistDrawOrder(ax.WidgetArtists) {
-			drawArtist(r, ctx, art)
-		}
-
-		r.Restore()
-
-		for _, art := range sortedArtistDrawOrder(ax.Artists) {
-			if overlay, ok := art.(OverlayArtist); ok {
-				drawOverlayArtist(r, ctx, art, overlay)
-			}
-		}
-		for _, art := range sortedArtistDrawOrder(ax.WidgetArtists) {
-			if overlay, ok := art.(OverlayArtist); ok {
-				drawOverlayArtist(r, ctx, art, overlay)
-			}
-		}
-
-		drawSecondaryChildAxes(ax, fig, r, vp, opts, alignment)
-
-		// Matplotlib draws Axis objects (ticks and tick labels, zorder 1.5)
-		// before Spine artists (zorder 2.5). This matters at endpoint ticks:
-		// the spine overpaints the tick cap by a single coverage level.
 		if xAxis != nil {
 			xAxis.DrawTicks(r, ctx)
 			xAxis.DrawTickLabels(r, ctx)
@@ -139,6 +110,9 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 				extraAxis.DrawTickLabels(r, ctx)
 			}
 		}
+
+		drawClippedAxesArtistsInZRange(r, ctx, px, ax.Artists, 1.5, 2.5, true)
+		drawClippedAxesArtistsInZRange(r, ctx, px, widgetArtistsAsArtists(ax.WidgetArtists), 1.5, 2.5, false)
 
 		// Draw spines outside the clip so they can straddle the axes edge the
 		// same way Matplotlib does.
@@ -173,6 +147,22 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 			DrawFrame(r, ctx, ref, topAxis == nil, rightAxis == nil)
 		}
 
+		drawClippedAxesArtistsInZRange(r, ctx, px, ax.Artists, 2.5, math.Inf(1), true)
+		drawClippedAxesArtistsInZRange(r, ctx, px, widgetArtistsAsArtists(ax.WidgetArtists), 2.5, math.Inf(1), false)
+
+		for _, art := range sortedArtistDrawOrder(ax.Artists) {
+			if overlay, ok := art.(OverlayArtist); ok {
+				drawOverlayArtist(r, ctx, art, overlay)
+			}
+		}
+		for _, art := range sortedArtistDrawOrder(ax.WidgetArtists) {
+			if overlay, ok := art.(OverlayArtist); ok {
+				drawOverlayArtist(r, ctx, art, overlay)
+			}
+		}
+
+		drawSecondaryChildAxes(ax, fig, r, vp, opts, alignment)
+
 		// Draw axes text labels outside the clip rect.
 		drawAxesLabels(ax, r, ctx, px, alignment)
 	}
@@ -182,6 +172,64 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 	if opts.AnimatedFilter != AnimatedFilterOnlyAnimated {
 		drawFigureLabels(fig, r, vp)
 	}
+}
+
+func drawClippedAxesArtistsInZRange(r render.Renderer, ctx *DrawContext, px geom.Rect, artists []Artist, minZ, maxZ float64, skipLegends bool) {
+	if len(artists) == 0 {
+		return
+	}
+	drawOrder := sortedArtistDrawOrder(artists)
+	shouldDraw := false
+	for _, art := range drawOrder {
+		if art == nil {
+			continue
+		}
+		if skipLegends {
+			if _, ok := art.(*Legend); ok {
+				continue
+			}
+		}
+		z := art.Z()
+		if z >= minZ && z < maxZ {
+			shouldDraw = true
+			break
+		}
+	}
+	if !shouldDraw {
+		return
+	}
+	r.Save()
+	r.ClipRect(px)
+	if framePath, ok := projectionFramePath(ctx.Projection, px); ok {
+		r.ClipPath(framePath)
+	}
+	for _, art := range drawOrder {
+		if art == nil {
+			continue
+		}
+		if skipLegends {
+			if _, ok := art.(*Legend); ok {
+				continue
+			}
+		}
+		z := art.Z()
+		if z < minZ || z >= maxZ {
+			continue
+		}
+		drawArtist(r, ctx, art)
+	}
+	r.Restore()
+}
+
+func widgetArtistsAsArtists(widgets []WidgetArtist) []Artist {
+	if len(widgets) == 0 {
+		return nil
+	}
+	artists := make([]Artist, 0, len(widgets))
+	for _, widget := range widgets {
+		artists = append(artists, widget)
+	}
+	return artists
 }
 
 func drawSecondaryChildAxes(parent *Axes, fig *Figure, r render.Renderer, vp geom.Rect, opts DrawOptions, alignment figureTextAlignment) {

@@ -85,7 +85,7 @@ func (a *Axes) StackPlot(x []float64, ys [][]float64, opts ...StackPlotOptions) 
 		if i < len(opt.Labels) {
 			label = opt.Labels[i]
 		}
-		fill := a.FillBetweenPlot(xs, upper, lower, FillOptions{
+		fill := a.FillBetweenPlot(xs, lower, upper, FillOptions{
 			Color:     &color,
 			EdgeColor: opt.EdgeColor,
 			EdgeWidth: opt.EdgeWidth,

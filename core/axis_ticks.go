@@ -139,11 +139,12 @@ func (a *Axis) majorTickTargetCountForContext(ctx *DrawContext, isXAxis bool) in
 	if dpi <= 0 {
 		dpi = 100
 	}
-	lengthPx := ctx.Clip.H()
+	clip := sharedRootTickClip(a, ctx, isXAxis)
+	lengthPx := clip.H()
 	labelSize := ctx.RC.TickLabelSize("y")
 	labelAspect := 2.0
 	if isXAxis {
-		lengthPx = ctx.Clip.W()
+		lengthPx = clip.W()
 		labelSize = ctx.RC.TickLabelSize("x")
 		labelAspect = 3.0
 	}
@@ -161,6 +162,54 @@ func (a *Axis) majorTickTargetCountForContext(ctx *DrawContext, isXAxis bool) in
 		return capacity
 	}
 	return target
+}
+
+func sharedRootTickClip(axis *Axis, ctx *DrawContext, isXAxis bool) geom.Rect {
+	if axis == nil || ctx == nil || ctx.Axes == nil {
+		return ctx.Clip
+	}
+	root := (*Axes)(nil)
+	if isXAxis && ctx.Axes.shareX != nil && ctx.Axes.XAxis == axis {
+		root = ctx.Axes.xScaleRoot()
+	}
+	if !isXAxis && ctx.Axes.shareY != nil && ctx.Axes.YAxis == axis {
+		root = ctx.Axes.yScaleRoot()
+	}
+	if root == nil && ctx.Axes.figure != nil {
+		bestClip := ctx.Clip
+		bestLength := bestClip.H()
+		if isXAxis {
+			bestLength = bestClip.W()
+		}
+		for _, candidate := range ctx.Axes.figure.Children {
+			if candidate == nil {
+				continue
+			}
+			if isXAxis && candidate.XAxis != axis {
+				continue
+			}
+			if !isXAxis && candidate.YAxis != axis {
+				continue
+			}
+			candidateClip := candidate.adjustedLayout(candidate.figure)
+			candidateLength := candidateClip.H()
+			if isXAxis {
+				candidateLength = candidateClip.W()
+			}
+			if candidateLength > bestLength {
+				bestLength = candidateLength
+				root = candidate
+				bestClip = candidateClip
+			}
+		}
+		if root == nil {
+			return bestClip
+		}
+	}
+	if root == nil || root == ctx.Axes || root.figure == nil {
+		return ctx.Clip
+	}
+	return root.adjustedLayout(root.figure)
 }
 
 func (a *Axis) minorTickTargetCountForContext(ctx *DrawContext, isXAxis bool) int {

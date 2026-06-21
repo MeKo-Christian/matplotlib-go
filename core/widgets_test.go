@@ -120,8 +120,10 @@ func assertColorEqual(t *testing.T, got, want render.Color, label string) {
 }
 
 func TestWidgetVisualStyleProvidesGeometryDefaults(t *testing.T) {
-	goDefaults := widgetDefaultsForRC(style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualGo)))
-	mplDefaults := widgetDefaultsForRC(style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib)))
+	goRC := style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualGo))
+	mplRC := style.Apply(style.Default, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
+	goDefaults := widgetDefaultsForRC(goRC)
+	mplDefaults := widgetDefaultsForRC(mplRC)
 
 	if goDefaults.ButtonRadius <= 0 {
 		t.Fatalf("Go button radius = %v, want rounded native button chrome", goDefaults.ButtonRadius)
@@ -134,6 +136,30 @@ func TestWidgetVisualStyleProvidesGeometryDefaults(t *testing.T) {
 	}
 	if mplDefaults.SliderTrackYMin != 0.25 || mplDefaults.SliderTrackYMax != 0.75 {
 		t.Fatalf("Matplotlib slider track fractions = [%v, %v], want [0.25, 0.75]", mplDefaults.SliderTrackYMin, mplDefaults.SliderTrackYMax)
+	}
+	if !approx(mplDefaults.SliderHandleSize, pointsToPixels(mplRC, 10), 1e-12) {
+		t.Fatalf("Matplotlib slider handle size = %v, want 10 pt in pixels", mplDefaults.SliderHandleSize)
+	}
+	if !approx(mplDefaults.SliderHandleLine, pointsToPixels(mplRC, 1), 1e-12) {
+		t.Fatalf("Matplotlib slider handle edge width = %v, want 1 pt in pixels", mplDefaults.SliderHandleLine)
+	}
+	if !approx(mplDefaults.SliderInitLine, pointsToPixels(mplRC, 1), 1e-12) {
+		t.Fatalf("Matplotlib slider init line width = %v, want 1 pt in pixels", mplDefaults.SliderInitLine)
+	}
+	if !approx(mplDefaults.CheckBoxMaxSize, pointsToPixels(mplRC, mplRC.FontSize/2), 1e-12) {
+		t.Fatalf("Matplotlib checkbox marker size = %v, want half default font size in pixels", mplDefaults.CheckBoxMaxSize)
+	}
+	if !approx(mplDefaults.CheckBoxLineWidth, pointsToPixels(mplRC, 1), 1e-12) {
+		t.Fatalf("Matplotlib checkbox frame width = %v, want 1 pt in pixels", mplDefaults.CheckBoxLineWidth)
+	}
+	if !approx(mplDefaults.CheckMarkWidth, pointsToPixels(mplRC, 1), 1e-12) {
+		t.Fatalf("Matplotlib check mark width = %v, want 1 pt in pixels", mplDefaults.CheckMarkWidth)
+	}
+	if !approx(mplDefaults.RadioOuterSize, pointsToPixels(mplRC, mplRC.FontSize/2), 1e-12) {
+		t.Fatalf("Matplotlib radio marker size = %v, want half default font size in pixels", mplDefaults.RadioOuterSize)
+	}
+	if !approx(mplDefaults.RadioLineWidth, pointsToPixels(mplRC, 1), 1e-12) {
+		t.Fatalf("Matplotlib radio edge width = %v, want 1 pt in pixels", mplDefaults.RadioLineWidth)
 	}
 	if mplDefaults.RadioOuterSize >= goDefaults.RadioOuterSize {
 		t.Fatalf("Matplotlib radio size = %v, want smaller than Go native %v", mplDefaults.RadioOuterSize, goDefaults.RadioOuterSize)

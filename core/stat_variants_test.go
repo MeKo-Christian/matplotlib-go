@@ -26,10 +26,10 @@ func TestAxesStackPlot_CumulativeLayers(t *testing.T) {
 	if fills[0].Label != "a" || fills[1].Label != "b" {
 		t.Fatalf("labels = %q, %q", fills[0].Label, fills[1].Label)
 	}
-	assertFloatSlices(t, "first lower", fills[0].Y2, []float64{0, 0, 0})
-	assertFloatSlices(t, "first upper", fills[0].Y1, []float64{1, 2, 3})
-	assertFloatSlices(t, "second lower", fills[1].Y2, []float64{1, 2, 3})
-	assertFloatSlices(t, "second upper", fills[1].Y1, []float64{5, 7, 9})
+	assertFloatSlices(t, "first lower", fills[0].Y1, []float64{0, 0, 0})
+	assertFloatSlices(t, "first upper", fills[0].Y2, []float64{1, 2, 3})
+	assertFloatSlices(t, "second lower", fills[1].Y1, []float64{1, 2, 3})
+	assertFloatSlices(t, "second upper", fills[1].Y2, []float64{5, 7, 9})
 }
 
 func TestAxesBoxPlots_CreatesMultipleBoxes(t *testing.T) {

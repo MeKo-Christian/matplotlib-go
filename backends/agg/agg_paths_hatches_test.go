@@ -185,7 +185,7 @@ func TestDrawPathCollectionSingleUnsnappedPathUsesMarkerCachePlacement(t *testin
 	}
 }
 
-func TestPathPipelineAutoSnapsRoundedRectCorners(t *testing.T) {
+func TestPathPipelineAutoDoesNotSnapCurvedPathsLikeMatplotlib(t *testing.T) {
 	var rounded geom.Path
 	rounded.MoveTo(geom.Pt{X: 1.2, Y: 2.2})
 	rounded.LineTo(geom.Pt{X: 8.8, Y: 2.2})
@@ -198,10 +198,13 @@ func TestPathPipelineAutoSnapsRoundedRectCorners(t *testing.T) {
 	rounded.QuadTo(geom.Pt{X: -0.2, Y: 2.2}, geom.Pt{X: 1.2, Y: 2.2})
 	rounded.Close()
 
-	if !shouldSnapPath(rounded, &render.Paint{Snap: render.SnapAuto}) {
-		t.Fatal("SnapAuto should snap rounded rectangle paths with axis-aligned corner curves")
+	if shouldSnapPath(rounded, &render.Paint{Snap: render.SnapAuto}) {
+		t.Fatal("SnapAuto should not snap curved paths; Matplotlib PathSnapper returns false for curve3/curve4")
 	}
-	snapped := snapPath(rounded, &render.Paint{Snap: render.SnapAuto, Stroke: render.Color{A: 1}, LineWidth: 1})
+	if !shouldSnapPath(rounded, &render.Paint{Snap: render.SnapOn}) {
+		t.Fatal("SnapOn should still force snapping curved paths")
+	}
+	snapped := snapPath(rounded, &render.Paint{Snap: render.SnapOn, Stroke: render.Color{A: 1}, LineWidth: 1})
 	for _, pt := range snapped.V {
 		if math.Abs(pt.X-math.Floor(pt.X)-0.5) > 1e-9 || math.Abs(pt.Y-math.Floor(pt.Y)-0.5) > 1e-9 {
 			t.Fatalf("rounded rectangle vertex was not snapped to half-pixel center: %+v", pt)

@@ -33,6 +33,9 @@ func TestPlotUsesMatplotlibReferenceAxesLayout(t *testing.T) {
 	assertRectEqual(t, fig.Children[0].RectFraction, geom.Rect{Min: geom.Pt{X: 0.06, Y: 0.36}, Max: geom.Pt{X: 0.70, Y: 0.92}}, "main axes")
 	assertRectEqual(t, fig.Children[1].RectFraction, geom.Rect{Min: geom.Pt{X: 0.76, Y: 0.36}, Max: geom.Pt{X: 0.94, Y: 0.92}}, "aux axes")
 	assertRectEqual(t, fig.Children[2].RectFraction, geom.Rect{Min: geom.Pt{X: 0.06, Y: 0.23}, Max: geom.Pt{X: 0.22, Y: 0.30}}, "button axes")
+	if fig.Children[1].XAxis != fig.Children[0].XAxis {
+		t.Fatal("aux axes should share the main x-axis object like Matplotlib sharex")
+	}
 }
 
 func findWidget[T any](fig *core.Figure) T {

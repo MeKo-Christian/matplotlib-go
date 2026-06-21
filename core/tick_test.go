@@ -243,6 +243,19 @@ func TestMaxNLocatorMatchesMatplotlibEdgeCases(t *testing.T) {
 	}
 }
 
+func TestAutoLocatorMatchesMatplotlibPiDomainWithAutoBins(t *testing.T) {
+	ticks := (AutoLocator{}).Ticks(0, 2*math.Pi, 9)
+	want := []float64{0, 1, 2, 3, 4, 5, 6, 7}
+	if len(ticks) != len(want) {
+		t.Fatalf("ticks = %v, want %v", ticks, want)
+	}
+	for i := range want {
+		if math.Abs(ticks[i]-want[i]) > 1e-12 {
+			t.Fatalf("tick %d = %v, want %v (all ticks %v)", i, ticks[i], want[i], ticks)
+		}
+	}
+}
+
 func TestIndexLocator_Basic(t *testing.T) {
 	ticks := (IndexLocator{Base: 3, Offset: 1}).Ticks(0, 10, 0)
 	want := []float64{1, 4, 7, 10}

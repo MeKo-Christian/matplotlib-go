@@ -319,7 +319,7 @@ func configureColorbarAxes(ax *Axes, location, label string) {
 		}
 	default:
 		right := ax.RightAxis()
-		right.ShowSpine = true
+		right.ShowSpine = false
 		right.ShowTicks = true
 		right.ShowLabels = true
 		right.MinorLocator = nil

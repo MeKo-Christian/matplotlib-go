@@ -201,6 +201,9 @@ func clipConnectionPathToRect(path geom.Path, rect geom.Rect, start bool) geom.P
 	if !pointInPolygon(endpoint, polygon) {
 		return path
 	}
+	if clipped, ok := clipQuadraticConnectionPathToPolygon(path, polygon, start); ok {
+		return clipped
+	}
 	boundary, ok := connectionPatchBoundaryPoint(path, polygon, start)
 	if !ok {
 		return path

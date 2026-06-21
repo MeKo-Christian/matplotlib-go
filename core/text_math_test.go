@@ -192,11 +192,11 @@ func TestMathTextRasterMetricsPreserveFractionalWidth(t *testing.T) {
 		Height:  15.0,
 		Runs: []MathTextLayoutRun{
 			{Text: "1", Offset: mt.Pt{X: 0.0, Y: 0.0}, FontSize: 10.0},
-			{Text: "−", Offset: mt.Pt{X: 11.530884, Y: 0.0}, FontSize: 10.0},
-			{Text: "1", Offset: mt.Pt{X: 25.859802, Y: 0.0}, FontSize: 10.0},
+			{Text: "−", Offset: mt.Pt{X: 11.5308837890625, Y: 0.0}, FontSize: 10.0},
+			{Text: "1", Offset: mt.Pt{X: 25.85980224609375, Y: 0.0}, FontSize: 10.0},
 			{Text: "0", Offset: mt.Pt{X: 34.6875, Y: 0.0}, FontSize: 10.0},
-			{Text: "−", Offset: mt.Pt{X: 43.649182, Y: -5.0}, FontSize: 7.0},
-			{Text: "1", Offset: mt.Pt{X: 51.787195, Y: -5.0}, FontSize: 7.0},
+			{Text: "−", Offset: mt.Pt{X: 43.65519775390625, Y: -5.6}, FontSize: 7.0},
+			{Text: "1", Offset: mt.Pt{X: 51.79321044921875, Y: -5.6}, FontSize: 7.0},
 		},
 	}
 
@@ -211,6 +211,20 @@ func TestMathTextRasterMetricsPreserveFractionalWidth(t *testing.T) {
 	// origin, so truncating to the path width moves this label by one pixel.
 	if math.Abs(width-59.0432104492) > 0.01 {
 		t.Fatalf("raster metrics width = %.10f, want 59.0432104492", width)
+	}
+}
+
+func TestMathTextMeasureTextUsesGlyphAdvanceForMathSpacing(t *testing.T) {
+	r := mathRasterLogitWidthRenderer{}
+
+	metrics := (mathTextMeasurer{r: &r}).MeasureText("m", 10, "DejaVu Sans")
+
+	// Matplotlib 3.10.9 Parser._make_space computes binary-operator spacing
+	// from the unhinted advance of italic "m" (13.5159301758 at 10 pt / 100
+	// dpi), not from the hinted bitmap width (13.5). The difference is tiny,
+	// but centered AGG labels round on it.
+	if math.Abs(metrics.W-13.5159301758) > 0.001 {
+		t.Fatalf("mathtext m width = %.10f, want glyph advance 13.5159301758", metrics.W)
 	}
 }
 

@@ -153,6 +153,19 @@ func TestAxesLocatorParamsMajorCountBypassesAdaptiveTickCapacity(t *testing.T) {
 	}
 }
 
+func TestSharedXAxisUsesRootTickCapacity(t *testing.T) {
+	fig := NewFigure(1100, 760)
+	root := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.06, Y: 0.36}, Max: geom.Pt{X: 0.70, Y: 0.92}})
+	shared := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.76, Y: 0.36}, Max: geom.Pt{X: 0.94, Y: 0.92}})
+	shared.shareX = root
+	shared.XAxis = root.XAxis
+
+	ctx := newAxesDrawContext(shared, fig, fig.DisplayRect(), shared.adjustedLayout(fig))
+	if got, want := shared.XAxis.majorTickTargetCountForContext(ctx, true), 9; got != want {
+		t.Fatalf("shared x tick target = %v, want root-axis target %v", got, want)
+	}
+}
+
 func TestAxes_TickParamsAppliesLabelStyle(t *testing.T) {
 	axes := &Axes{XAxis: NewXAxis()}
 

@@ -254,19 +254,30 @@ func (mathRasterLogitWidthRenderer) GetImage() *image.RGBA {
 	return image.NewRGBA(image.Rect(0, 0, 1, 1))
 }
 
+func (mathRasterLogitWidthRenderer) MeasureText(text string, _ float64, _ string) render.TextMetrics {
+	if text == "m" {
+		return render.TextMetrics{W: 13.5, H: 10, Ascent: 8, Descent: 2}
+	}
+	return render.TextMetrics{W: 8, H: 10, Ascent: 8, Descent: 2}
+}
+
 func (mathRasterLogitWidthRenderer) MeasureMathGlyphRun(text string, size float64, _ string) ([]render.MathGlyphMetric, bool) {
 	metric := render.MathGlyphMetric{}
 	switch {
 	case text == "1" && math.Abs(size-10) < 0.01:
-		metric = render.MathGlyphMetric{Xmin: 0, Xmax: 8.0, Ymin: 0, Ymax: 10}
+		metric = render.MathGlyphMetric{Advance: 8.82769775390625, Xmin: 1.5625, Xmax: 7.625, Ymin: 0, Ymax: 10}
 	case text == "0" && math.Abs(size-10) < 0.01:
-		metric = render.MathGlyphMetric{Xmin: 0, Xmax: 8.0, Ymin: 0, Ymax: 10}
+		metric = render.MathGlyphMetric{Advance: 8.82769775390625, Xmin: 0.875, Xmax: 7.8125, Ymin: 0, Ymax: 10}
 	case text == "−" && math.Abs(size-10) < 0.01:
-		metric = render.MathGlyphMetric{Xmin: 0, Xmax: 10.0, Ymin: 4, Ymax: 6}
+		metric = render.MathGlyphMetric{Advance: 11.625732421875, Xmin: 1.46875, Xmax: 10.15625, Ymin: 4, Ymax: 6}
 	case text == "−" && math.Abs(size-7) < 0.01:
-		metric = render.MathGlyphMetric{Xmin: 0, Xmax: 6.0, Ymin: 2, Ymax: 4}
+		metric = render.MathGlyphMetric{Advance: 8.16943359375, Xmin: 1.015625, Xmax: 7.125, Ymin: 2, Ymax: 4}
 	case text == "1" && math.Abs(size-7) < 0.01:
-		metric = render.MathGlyphMetric{Xmin: 0, Xmax: 5.212805, Ymin: 0, Ymax: 7}
+		metric = render.MathGlyphMetric{Advance: 6.2032470703125, Xmin: 1.046875, Xmax: 5.25, Ymin: 0, Ymax: 7}
+	case text == "m" && math.Abs(size-10) < 0.01:
+		metric = render.MathGlyphMetric{Advance: 13.51593017578125, Xmin: 0.484375, Xmax: 12.5625, Ymin: 0, Ymax: 8}
+	case text == "x" && math.Abs(size-10) < 0.01:
+		metric = render.MathGlyphMetric{Advance: 8.211181640625, Xmin: 0.40625, Xmax: 7.765625, Ymin: 0, Ymax: 8}
 	default:
 		return nil, false
 	}

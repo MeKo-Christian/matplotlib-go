@@ -187,6 +187,45 @@ func TestAxesHexbinLogScaleBuildsHexagonsInLogSpace(t *testing.T) {
 	}
 }
 
+func TestAxesHexbinLogMarginalsIncludeMaxEndpointLikeMatplotlib(t *testing.T) {
+	ax := NewFigure(640, 480).AddAxes(geom.Rect{})
+
+	hex := ax.Hexbin(
+		[]float64{1.2, 1.8, 2.6, 4.0, 6.5, 9.0, 14, 22, 35, 58, 92},
+		[]float64{1.1, 2.2, 3.0, 5.5, 7.0, 12, 20, 28, 48, 80, 105},
+		HexbinOptions{
+			GridSizeX: 6,
+			C:         []float64{1, 3, 2, 5, 7, 6, 11, 14, 18, 23, 30},
+			Reduce:    "max",
+			Bins:      "log",
+			XScale:    "log",
+			YScale:    "log",
+			Marginals: true,
+		},
+	)
+	if hex == nil || hex.HBar == nil || hex.VBar == nil {
+		t.Fatal("expected log hexbin with marginal bars")
+	}
+
+	mapping := hex.ScalarMap()
+	wantH := []float64{3, 5, 7, 11, 18, 30}
+	wantV := []float64{3, 2, 7, 11, 18, 30}
+	assertMarginalColors := func(name string, got []render.Color, wantValues []float64) {
+		t.Helper()
+		if len(got) != len(wantValues) {
+			t.Fatalf("%s colors = %d, want %d", name, len(got), len(wantValues))
+		}
+		for i, value := range wantValues {
+			want := mapping.Color(value, 1)
+			if got[i] != want {
+				t.Fatalf("%s color[%d] = %+v, want scalar-mapped value %.1f color %+v", name, i, got[i], value, want)
+			}
+		}
+	}
+	assertMarginalColors("hbar", hex.HBar.FaceColors, wantH)
+	assertMarginalColors("vbar", hex.VBar.FaceColors, wantV)
+}
+
 func TestAxesPieCreatesWedgesAndLabels(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax := fig.AddAxes(geom.Rect{

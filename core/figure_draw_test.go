@@ -63,6 +63,53 @@ func TestTwinAxesPatchIsInvisibleLikeMatplotlib(t *testing.T) {
 	}
 }
 
+func TestDrawFigureSortsTextBBoxesAboveSpinesLikeMatplotlib(t *testing.T) {
+	fig := NewFigure(220, 160)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	ax.SetXLim(0, 1)
+	ax.SetYLim(0, 1)
+	ax.XAxis.ShowTicks = false
+	ax.XAxis.ShowLabels = false
+	ax.YAxis.ShowTicks = false
+	ax.YAxis.ShowLabels = false
+
+	boxFace := render.Color{R: 1, G: 0, B: 1, A: 1}
+	ax.Text(0.92, 0.5, "bbox", TextOptions{
+		HAlign: TextAlignLeft,
+		VAlign: TextVAlignMiddle,
+		BBox: &TextBBoxOptions{
+			FaceColor:    boxFace,
+			EdgeColor:    render.Color{A: 1},
+			LineWidth:    1,
+			Padding:      4,
+			CornerRadius: 2,
+		},
+	})
+
+	var r textRecordingRenderer
+	DrawFigure(fig, &r)
+
+	bboxIndex := -1
+	lastSpineIndex := -1
+	for i, call := range r.pathCalls {
+		if call.paint.Fill == boxFace {
+			bboxIndex = i
+		}
+		if call.paint.Stroke == (render.Color{A: 1}) && call.paint.Fill.A == 0 && call.paint.LineWidth > 0 {
+			lastSpineIndex = i
+		}
+	}
+	if bboxIndex < 0 {
+		t.Fatalf("text bbox path not drawn; calls=%+v", r.pathCalls)
+	}
+	if lastSpineIndex < 0 {
+		t.Fatalf("spine/frame path not drawn; calls=%+v", r.pathCalls)
+	}
+	if !(lastSpineIndex < bboxIndex) {
+		t.Fatalf("text bbox draw index = %d, last spine/frame index = %d; want Matplotlib zorder with text above spines", bboxIndex, lastSpineIndex)
+	}
+}
+
 func hideAxesChrome(ax *Axes) {
 	ax.ShowFrame = false
 	for _, axis := range []*Axis{ax.XAxis, ax.YAxis, ax.XAxisTop, ax.YAxisRight} {

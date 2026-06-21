@@ -26,6 +26,15 @@ type mathTextMeasurer struct {
 
 func (m mathTextMeasurer) MeasureText(text string, size float64, fontKey string) mt.Metrics {
 	metrics := m.r.MeasureText(text, size, fontKey)
+	if infos, ok := m.GlyphRun(text, size, fontKey); ok {
+		advance := 0.0
+		for _, info := range infos {
+			advance += info.KernToPrev + info.Advance
+		}
+		if advance > 0 {
+			metrics.W = advance
+		}
+	}
 	ascent := metrics.Ascent
 	descent := metrics.Descent
 	boundsY := 0.0

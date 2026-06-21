@@ -63,6 +63,9 @@ func TestFigureAddColorbarConfiguresAxes(t *testing.T) {
 	if !cbAx.YAxisRight.ShowLabels || !cbAx.YAxisRight.ShowTicks {
 		t.Fatalf("expected visible right-side colorbar ticks and labels, got %+v", cbAx.YAxisRight)
 	}
+	if cbAx.YAxisRight.ShowSpine {
+		t.Fatalf("expected right-side colorbar axis spine hidden; Matplotlib draws only the colorbar outline spine")
+	}
 	if cbAx.YAxis.ShowLabels || cbAx.YAxis.ShowTicks {
 		t.Fatalf("expected hidden left-side colorbar ticks and labels, got %+v", cbAx.YAxis)
 	}

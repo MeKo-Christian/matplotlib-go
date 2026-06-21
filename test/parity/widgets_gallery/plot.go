@@ -85,6 +85,7 @@ func Plot() *core.Figure {
 	mainAx.AxHLine(0.35, core.HLineOptions{Color: &refColor, LineWidth: &refWidth, Alpha: &refAlpha})
 
 	auxAx := fig.AddAxes(axesRect(0.76, 0.36, 0.18, 0.56))
+	auxAx.XAxis = mainAx.XAxis
 	auxAx.SetTitle("shared cursor")
 	auxAx.SetXLim(0, 2*math.Pi)
 	auxAx.SetYLim(-1, 1)
