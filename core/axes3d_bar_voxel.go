@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -336,8 +337,16 @@ func (a *Axes3D) Voxels(filled [][][]bool, opts ...VoxelOptions) map[[3]int]*Pol
 	return collections
 }
 
-// Voxel projects unstructured rectangular prisms as wireframe voxels.
+// Voxel projects unstructured rectangular prisms as wireframe voxels by
+// delegating to [Axes3D.Bar3D]; it draws edges only, not filled cubes. For
+// Matplotlib's filled voxels() — a boolean occupancy grid rendered as shaded
+// solid cubes — use [Axes3D.Voxels] instead. The name is retained for
+// backwards compatibility.
 func (a *Axes3D) Voxel(x, y, z, dx, dy, dz []float64, opts ...PlotOptions) *LineCollection {
+	if a != nil && !a.voxelWarned {
+		a.voxelWarned = true
+		diag.Warnf("Axes3D.Voxel draws wireframe prisms, not filled cubes; use Axes3D.Voxels(grid) for filled voxels")
+	}
 	if len(opts) == 0 {
 		return a.Bar3D(x, y, z, dx, dy, dz)
 	}

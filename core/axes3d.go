@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -51,6 +52,11 @@ type Axes3D struct {
 	viewSet      [3]bool
 	zMargin      float64
 	reprojectors []func()
+
+	// One-shot guards for the misleadingly-named placeholder helpers so the
+	// nudge toward the real APIs is emitted once per axes, not per call.
+	plotSurfaceWarned bool
+	voxelWarned       bool
 }
 
 type axes3DFrame struct {
@@ -377,9 +383,16 @@ func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...ScatterOptions) *Scatter2D
 	return scatter
 }
 
-// PlotSurface creates a placeholder mesh-like line-strip by plotting the input
-// sequence as connected edges.
+// PlotSurface draws the input sequence as a connected 3D line strip. Despite
+// the name it does NOT render a Matplotlib-style surface: it takes flat 1D
+// slices and delegates to [Axes3D.Plot3D]. For an actual surface from a 2D
+// height grid use [Axes3D.Surface] (or [Axes3D.Trisurf] for an unstructured
+// triangulation). The name is retained for backwards compatibility.
 func (a *Axes3D) PlotSurface(x, y, z []float64, opts ...PlotOptions) *Line2D {
+	if a != nil && !a.plotSurfaceWarned {
+		a.plotSurfaceWarned = true
+		diag.Warnf("Axes3D.PlotSurface draws a line strip, not a surface; use Axes3D.Surface(x, y, z) for a real surface")
+	}
 	return a.Plot3D(x, y, z, opts...)
 }
 

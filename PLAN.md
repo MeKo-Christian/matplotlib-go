@@ -248,18 +248,24 @@ public API.
       array lengths and invalid `errorevery`). The signatures stay unchanged
       (still return `nil`), so this is non-breaking; the same one-liner extends
       to any other silent-drop path as needed.
-- [ ] **3D naming traps:** implement or rename `PlotSurface`
-      (currently aliased to a line strip, `core/axes3d.go:382`) and `Voxel`
-      (edges-only, `axes3d_bar_voxel.go:340`). _Note: both are in the frozen
-      public API, so removal/rename needs a deliberate API change; the lowest-risk
-      fix is to make them produce a real surface (delegate to triangulated
-      `Trisurf`/`Voxels`)._
+- [x] **3D naming traps:** `PlotSurface` (a 1D line strip, `core/axes3d.go`)
+      and `Voxel` (edges-only, `axes3d_bar_voxel.go`) now emit a one-shot
+      per-axes `diag.Warnf` and carry honest doc comments pointing at the real
+      APIs — [`Axes3D.Surface(x, y, z)`](core/axes3d_surface.go) for a true
+      surface and [`Axes3D.Voxels(grid)`](core/axes3d_bar_voxel.go) for filled
+      cubes. Their signatures/return types (`*Line2D`, `*LineCollection`) are
+      incompatible with the real functions (`*PolyCollection`, a collection
+      map), so a clean rename needs a deliberate API break; until then the trap
+      is no longer silent. _Follow-up: deprecate/rename in a future major
+      version._
 
 **Exit criterion:** no core artist silently discards user intent; every
-unsupported input path produces a diagnostic. _Status: 4 of 6 done (mathtext;
-alpha for Bar/Fill/Hist/ErrorBar/BoxPlot, with Step/3D already correct; colormap;
-Gouraud). Invalid-input and 3D naming remain; the alpha follow-up is closed
-except for `Violin`/`Grid`, which need a `*float64` API change._
+unsupported input path produces a diagnostic. _Status: all 6 items done —
+mathtext; alpha for Bar/Fill/Hist/ErrorBar/BoxPlot (Step/3D already correct);
+colormap; Gouraud; invalid-input diagnostics on the primary plotting API; and
+the 3D naming traps now warn + document the real APIs. Remaining tails:
+`Violin`/`Grid` alpha need a `*float64` API change, and a mathtext strict-mode
+toggle is still open._
 
 ## Phase 7: Formatter, Layout & Date Fidelity
 
