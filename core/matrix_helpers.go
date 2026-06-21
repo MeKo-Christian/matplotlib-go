@@ -196,7 +196,9 @@ func (a *Axes) ImShow(data [][]float64, opts ...ImShowOptions) *Image2D {
 			cfg.Label = opt.Label
 		}
 		cfg.Extent = opt.Extent
-		cfg.Interpolation = opt.Interpolation
+		if opt.Interpolation != nil {
+			cfg.Interpolation = opt.Interpolation
+		}
 	}
 
 	xMin := -0.5

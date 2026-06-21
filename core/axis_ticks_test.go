@@ -8,14 +8,6 @@ import (
 	"github.com/cwbudde/matplotlib-go/style"
 )
 
-func TestDefaultMinorTickSizeMatchesMatplotlib(t *testing.T) {
-	axis := NewXAxis()
-	want := pointsToPixels(style.Default, 2.0)
-	if !floatApprox(axis.MinorTickSize, want, 1e-12) {
-		t.Fatalf("default minor tick size = %v, want Matplotlib 2 pt = %v px", axis.MinorTickSize, want)
-	}
-}
-
 func TestAxes_TickParamsLocatorParamsAndMinorTicks(t *testing.T) {
 	axes := &Axes{
 		XAxis:      NewXAxis(),

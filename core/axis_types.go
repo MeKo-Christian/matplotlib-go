@@ -16,13 +16,11 @@ const (
 // The default figure DPI is 100, so store the pixel equivalent for axes
 // constructed without a figure-backed RC.
 const (
-	defaultAxisLineWidth   = 0.8 * 100.0 / 72.0
-	defaultTickSizePt      = 3.5
-	defaultTickSizePx      = defaultTickSizePt * 100.0 / 72.0
-	defaultMinorTickSizePt = 2.0
-	defaultMinorTickSizePx = defaultMinorTickSizePt * 100.0 / 72.0
-	defaultTickPadPt       = 3.5
-	offsetTextPadPt        = 3.0
+	defaultAxisLineWidth = 0.8 * 100.0 / 72.0
+	defaultTickSizePt    = 3.5
+	defaultTickSizePx    = defaultTickSizePt * 100.0 / 72.0
+	defaultTickPadPt     = 3.5
+	offsetTextPadPt      = 3.0
 )
 
 // TickLabelStyle captures axis-owned label placement and orientation.
@@ -114,7 +112,6 @@ func NewXAxis() *Axis {
 		TickLineCap:       render.CapButt,
 		TickLineJoin:      render.JoinMiter,
 		TickSize:          defaultTickSizePx,
-		MinorTickSize:     defaultMinorTickSizePx,
 		MajorTickCount:    9,
 		MinorTickCount:    30,
 		TickDirection:     TickDirectionOut,
@@ -140,7 +137,6 @@ func NewYAxis() *Axis {
 		TickLineCap:       render.CapButt,
 		TickLineJoin:      render.JoinMiter,
 		TickSize:          defaultTickSizePx,
-		MinorTickSize:     defaultMinorTickSizePx,
 		MajorTickCount:    9,
 		MinorTickCount:    30,
 		TickDirection:     TickDirectionOut,

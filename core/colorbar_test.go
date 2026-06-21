@@ -1055,16 +1055,36 @@ func TestColorbarDrawSnapsRangeLegendToPixels(t *testing.T) {
 	}
 }
 
+func TestColorbarBodyCellsDisableAntialiasingLikeMatplotlib(t *testing.T) {
+	var r colorbarRecordingRenderer
+	clip := geom.Rect{
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 42, Y: 80},
+	}
+
+	(&Colorbar{Colormap: "inferno", Alpha: 1, BorderColor: render.Color{A: 1}, BorderWidth: 1}).Draw(&r, &DrawContext{Clip: clip})
+
+	if len(r.antialiasModes) < 256 {
+		t.Fatalf("path count = %d, want at least 256 color cells", len(r.antialiasModes))
+	}
+	for i := 0; i < 256; i++ {
+		if got := r.antialiasModes[i]; got != render.AntialiasOff {
+			t.Fatalf("cell %d antialias = %v, want AntialiasOff", i, got)
+		}
+	}
+}
+
 type colorbarRecordingRenderer struct {
 	render.NullRenderer
-	imageCount  int
-	pathCount   int
-	texts       []string
-	imageRects  []geom.Rect
-	paths       []geom.Path
-	fills       []render.Color
-	strokes     []render.Color
-	strokePaths []geom.Path
+	imageCount     int
+	pathCount      int
+	texts          []string
+	imageRects     []geom.Rect
+	paths          []geom.Path
+	fills          []render.Color
+	strokes        []render.Color
+	strokePaths    []geom.Path
+	antialiasModes []render.AntialiasMode
 }
 
 func (r *colorbarRecordingRenderer) Image(_ render.Image, dst geom.Rect) {
@@ -1077,6 +1097,7 @@ func (r *colorbarRecordingRenderer) Path(path geom.Path, paint *render.Paint) {
 	r.paths = append(r.paths, path)
 	if paint != nil {
 		r.fills = append(r.fills, paint.Fill)
+		r.antialiasModes = append(r.antialiasModes, paint.Antialias)
 		if paint.LineWidth > 0 {
 			r.strokes = append(r.strokes, paint.Stroke)
 			r.strokePaths = append(r.strokePaths, path)

@@ -396,6 +396,22 @@ func TestImShow_ExtentOverridesCenteredPixelDefault(t *testing.T) {
 	}
 }
 
+func TestImShow_DefaultInterpolationMatchesMatplotlib(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(unitRect())
+	img := ax.ImShow([][]float64{{0, 1}, {2, 3}}, ImShowOptions{
+		Extent: &[4]float64{0, 2, 0, 2},
+		Origin: ImageOriginLower,
+		Aspect: "auto",
+	})
+	if img == nil {
+		t.Fatal("ImShow returned nil")
+	}
+	if img.Interpolation != "antialiased" {
+		t.Fatalf("ImShow default interpolation = %q, want Matplotlib rc default antialiased", img.Interpolation)
+	}
+}
+
 func TestImShow_ExtentDrivesAxesLimits(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(unitRect())

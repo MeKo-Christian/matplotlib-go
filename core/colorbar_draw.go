@@ -162,7 +162,7 @@ func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 				Fill:      col,
 				LineJoin:  render.JoinMiter,
 				LineCap:   render.CapButt,
-				Antialias: render.AntialiasDefault,
+				Antialias: render.AntialiasOff,
 			})
 		}
 		if c.DrawEdges {
@@ -182,7 +182,7 @@ func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 				Fill:      col,
 				LineJoin:  render.JoinMiter,
 				LineCap:   render.CapButt,
-				Antialias: render.AntialiasDefault,
+				Antialias: render.AntialiasOff,
 			})
 		}
 	}

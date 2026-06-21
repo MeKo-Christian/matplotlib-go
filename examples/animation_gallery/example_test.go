@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/animation"
+	"github.com/cwbudde/matplotlib-go/core"
 )
 
 func TestRenderProducesNonBlankImage(t *testing.T) {
@@ -107,6 +108,31 @@ func TestFrameRenderersProduceContent(t *testing.T) {
 				t.Fatalf("%s frame render is blank", name)
 			}
 		})
+	}
+}
+
+func TestSubplotsHeatmapUsesMatplotlibImShowSemantics(t *testing.T) {
+	fig := buildSubplotsFigure(GoldenFrame)
+	var images []*core.Image2D
+	for _, ax := range fig.Children {
+		for _, artist := range ax.Artists {
+			if img, ok := artist.(*core.Image2D); ok {
+				images = append(images, img)
+			}
+		}
+	}
+	if len(images) != 1 {
+		t.Fatalf("subplot frame image artists = %d, want 1", len(images))
+	}
+	img := images[0]
+	if img.Interpolation != "antialiased" {
+		t.Fatalf("subplot heatmap interpolation = %q, want Matplotlib imshow default antialiased", img.Interpolation)
+	}
+	if img.Origin != core.ImageOriginLower {
+		t.Fatalf("subplot heatmap origin = %v, want lower", img.Origin)
+	}
+	if img.XMin != 0 || img.XMax != imCols || img.YMin != 0 || img.YMax != imRows {
+		t.Fatalf("subplot heatmap extent = [%v %v %v %v], want [0 %d 0 %d]", img.XMin, img.XMax, img.YMin, img.YMax, imCols, imRows)
 	}
 }
 

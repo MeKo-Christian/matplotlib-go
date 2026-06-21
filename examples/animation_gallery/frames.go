@@ -148,17 +148,14 @@ func addScatterFrame(ax *core.Axes, frame int) *core.Scatter2D {
 // addImshowFrame attaches the frame-N heatmap to ax.
 func addImshowFrame(ax *core.Axes, frame int) *core.Image2D {
 	cmap := "viridis"
-	xmin, xmax := 0.0, float64(imCols)
-	ymin, ymax := 0.0, float64(imRows)
-	img := ax.Image(imshowFrameZ(frame), core.ImageOptions{
+	extent := [4]float64{0, float64(imCols), 0, float64(imRows)}
+	img := ax.ImShow(imshowFrameZ(frame), core.ImShowOptions{
 		Colormap: &cmap,
 		VMin:     ptr(-1.0),
 		VMax:     ptr(1.0),
-		XMin:     &xmin,
-		XMax:     &xmax,
-		YMin:     &ymin,
-		YMax:     &ymax,
 		Origin:   core.ImageOriginLower,
+		Extent:   &extent,
+		Aspect:   "auto",
 	})
 	ax.SetXLim(0, float64(imCols))
 	ax.SetYLim(0, float64(imRows))
