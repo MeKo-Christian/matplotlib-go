@@ -460,8 +460,13 @@ func TestAxes_ErrorBar_Options(t *testing.T) {
 	if want := pointsToPixels(fig.RC, 2*capSize); errBar.CapSize != want {
 		t.Errorf("expected cap size %v px, got %v", want, errBar.CapSize)
 	}
-	if errBar.Alpha != alpha {
-		t.Errorf("expected alpha %v, got %v", alpha, errBar.Alpha)
+	// The explicit alpha is baked into the stroke color; the Alpha field stays
+	// at the 0 "unset" sentinel.
+	if errBar.Alpha != 0 {
+		t.Errorf("expected Alpha sentinel 0, got %v", errBar.Alpha)
+	}
+	if errBar.Color.A != alpha {
+		t.Errorf("expected baked color alpha %v, got %v", alpha, errBar.Color.A)
 	}
 	if !errBar.NoDataLine {
 		t.Error("expected NoDataLine option to be applied")

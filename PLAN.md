@@ -210,24 +210,56 @@ deferred infrastructure depth. Ordered by impact (Phase 6 first).
 **Goal:** eliminate the worst UX failure mode — silently-wrong output with no
 diagnostic. These are cheap, high-value, and gate trust in everything else.
 
-- [ ] **MathText** raises or warns on unknown commands instead of echoing them
-      as literal text (`mathtext .../parser.go:228`); add a strict (error) vs
-      lenient (warn-and-echo) mode toggle.
-- [ ] **`alpha=0` vs unset:** switch `Bar`/`Hist`/`Fill` alpha to `*float64`
-      (or sentinel `NaN`) so a user-requested fully-transparent fill is honored
-      (`core/plot.go:486`, `bar.go:77`).
-- [ ] **Unknown colormap** errors or warns instead of falling back to viridis;
-      make lookup case-sensitive (`color/colormap.go:391,428`).
-- [ ] **Gouraud QuadMesh** logs/warns when downgrading to flat cell colors
-      (`core/collection_quadmesh.go:214`).
-- [ ] **Invalid artist input** (length mismatch, etc.) returns an `error` /
-      logs a reason instead of a bare `nil` artist.
+Foundation: a shared, swappable warning sink lives in `internal/diag`
+(`diag.Warnf` / `diag.SetHandler`) so low-level (`color`) and high-level (`core`)
+packages can surface non-fatal problems without coupling or enlarging the
+public API.
+
+- [x] **MathText** warns on unknown commands instead of silently echoing them.
+      The engine reports each unrecognized command through
+      `mathtext.SetUnknownCommandHandler` (`../mathtext/unknown_command.go`,
+      called from `parser.go` default case); `core` wires it to `diag.Warnf`,
+      deduplicated per command name (`core/mathtext_warn.go`). Shipped in
+      `github.com/cwbudde/mathtext v0.2.0` (no `replace` directive). _Follow-up:
+      a strict (error) mode toggle._
+- [x] **`alpha=0` vs unset (Bar + Fill family):** an explicit alpha (including
+      0 for fully transparent) is baked into the resolved colors at construction
+      via `bakeExplicitAlpha`, so it is honored while a nil alpha preserves the
+      color's own channel (`core/plot.go` — `Bar`, `Fill`, `FillBetween`,
+      `FillToBaselinePlot`, `FillBetweenX`, plus `Hist`, `ErrorBar`, `BoxPlot`,
+      and `BoxPlots`). `Step` (delegates to `Plot`) and the 3D bar/voxel paths
+      (`Axes3D.Bar`, `Bar3D`, `Voxels`) already multiplied the explicit alpha
+      into their colors at construction, so they honor 0 too — locked in by
+      regression tests in `core/alpha_zero_artists_test.go`. _Remaining:
+      `Violin` and `Grid` expose a plain `float64` alpha option where 0 is
+      structurally indistinguishable from "unset"; honoring an explicit 0 there
+      needs a deliberate API change to `*float64` (frozen public API)._
+- [x] **Unknown colormap** warns (via `diag.Warnf`) before falling back to
+      viridis (`color/colormap.go` `GetColormap`). _Follow-up: case-sensitive
+      lookup is deferred — the registry stores lowercase keys, so strict casing
+      risks regressing existing callers; revisit with a rename table._
+- [x] **Gouraud QuadMesh** warns once (per artist) when downgrading to flat
+      cell colors because the renderer lacks `GouraudTriangleDrawer`
+      (`core/collection_quadmesh.go`).
+- [x] **Invalid artist input** (length mismatch, etc.) logs a reason via
+      `diag.Warnf` instead of returning a bare `nil` artist. Wired into the
+      primary plotting API: `Scatter` (x/y size), `Hist` (weights length),
+      `FillBetween`/`FillBetweenX` (`where` length), `ErrorBar` (error/limit
+      array lengths and invalid `errorevery`). The signatures stay unchanged
+      (still return `nil`), so this is non-breaking; the same one-liner extends
+      to any other silent-drop path as needed.
 - [ ] **3D naming traps:** implement or rename `PlotSurface`
       (currently aliased to a line strip, `core/axes3d.go:382`) and `Voxel`
-      (edges-only, `axes3d_bar_voxel.go:340`).
+      (edges-only, `axes3d_bar_voxel.go:340`). _Note: both are in the frozen
+      public API, so removal/rename needs a deliberate API change; the lowest-risk
+      fix is to make them produce a real surface (delegate to triangulated
+      `Trisurf`/`Voxels`)._
 
 **Exit criterion:** no core artist silently discards user intent; every
-unsupported input path produces a diagnostic.
+unsupported input path produces a diagnostic. _Status: 4 of 6 done (mathtext;
+alpha for Bar/Fill/Hist/ErrorBar/BoxPlot, with Step/3D already correct; colormap;
+Gouraud). Invalid-input and 3D naming remain; the alpha follow-up is closed
+except for `Violin`/`Grid`, which need a `*float64` API change._
 
 ## Phase 7: Formatter, Layout & Date Fidelity
 

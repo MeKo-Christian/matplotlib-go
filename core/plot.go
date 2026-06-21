@@ -5,6 +5,7 @@ import (
 
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
@@ -237,6 +238,7 @@ func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 		return nil
 	}
 	if len(x) != len(y) {
+		diag.Warnf("Scatter: x and y must be the same size (got %d and %d); skipping", len(x), len(y))
 		return nil
 	}
 
@@ -645,6 +647,7 @@ func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) *Fill2D {
 		opt = opts[0]
 	}
 	if len(opt.Where) > 0 && len(opt.Where) != len(y) {
+		diag.Warnf("FillBetween: where length %d must match y length %d; skipping", len(opt.Where), len(y))
 		return nil
 	}
 
@@ -710,6 +713,7 @@ func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) *Fill2D
 		opt = opts[0]
 	}
 	if len(opt.Where) > 0 && len(opt.Where) != len(x) {
+		diag.Warnf("FillBetweenX: where length %d must match x length %d; skipping", len(opt.Where), len(x))
 		return nil
 	}
 
@@ -784,6 +788,7 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) *Hist2D {
 		opt = opts[0]
 	}
 	if len(opt.Weights) > 0 && len(opt.Weights) != len(data) {
+		diag.Warnf("Hist: weights length %d must match data length %d; skipping", len(opt.Weights), len(data))
 		return nil
 	}
 
@@ -806,10 +811,12 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) *Hist2D {
 		edgeWidth = 1.5
 	}
 
-	alpha := 0.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
-	}
+	// Bake an explicit alpha (including 0 for fully transparent) into the
+	// resolved colors so it is honored; the Alpha field stays at the 0
+	// "unset" sentinel and Draw's override is a no-op. A nil alpha preserves
+	// each color's own channel.
+	color = bakeExplicitAlpha(color, opt.Alpha)
+	edgeColor = bakeExplicitAlpha(edgeColor, opt.Alpha)
 
 	hist := &Hist2D{
 		Data:              data,
@@ -826,7 +833,6 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) *Hist2D {
 		Color:             color,
 		EdgeColor:         edgeColor,
 		EdgeWidth:         edgeWidth,
-		Alpha:             alpha,
 		Label:             opt.Label,
 	}
 
@@ -883,10 +889,9 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 		capSizePx = pointsToPixels(a.resolvedRC(), 2*(*opt.CapSize))
 	}
 
-	alpha := 1.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
-	}
+	// Bake an explicit alpha (including 0) into the stroke color; the Alpha
+	// field stays unset so Draw's alpha multiplier is the identity.
+	color = bakeExplicitAlpha(color, opt.Alpha)
 
 	n := len(x)
 	if len(y) < n {
@@ -897,9 +902,11 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 		!validErrorValues(opt.YErrLower, n) || !validErrorValues(opt.YErrUpper, n) ||
 		!validBoolValues(opt.LoLimits, n) || !validBoolValues(opt.UpLimits, n) ||
 		!validBoolValues(opt.XLoLimits, n) || !validBoolValues(opt.XUpLimits, n) {
+		diag.Warnf("ErrorBar: error/limit arrays must each be empty or length %d; skipping", n)
 		return nil
 	}
 	if opt.ErrorEvery < 0 || (opt.ErrorEvery == 0 && opt.ErrorEveryStart != 0) || opt.ErrorEveryStart < 0 {
+		diag.Warnf("ErrorBar: invalid errorevery (every=%d, start=%d); skipping", opt.ErrorEvery, opt.ErrorEveryStart)
 		return nil
 	}
 	errorEvery := opt.ErrorEvery
@@ -927,7 +934,6 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 		Color:           color,
 		LineWidth:       lineWidth,
 		CapSize:         capSizePx,
-		Alpha:           alpha,
 		Label:           opt.Label,
 		NoDataLine:      opt.NoDataLine,
 		ErrorEvery:      errorEvery,
@@ -1096,10 +1102,11 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		flierSize = *opt.FlierSize
 	}
 
-	alpha := 1.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
-	}
+	// Bake an explicit alpha (including 0) into the box fill and edge colors —
+	// the only colors Draw applies alpha to — leaving the Alpha field unset so
+	// its multiplier is the identity.
+	color = bakeExplicitAlpha(color, opt.Alpha)
+	edgeColor = bakeExplicitAlpha(edgeColor, opt.Alpha)
 
 	showFliers := true
 	if opt.ShowFliers != nil {
@@ -1142,7 +1149,6 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		CapWidth:           capWidth,
 		FlierSize:          flierSize,
 		FlierEdgeWidth:     flierEdgeWidth,
-		Alpha:              alpha,
 		ShowFliers:         showFliers,
 		Notch:              notch,
 		Bootstrap:          opt.Bootstrap,
