@@ -521,6 +521,13 @@ func (r *Renderer) shouldUseSinglePathCollectionPlacement(batch render.PathColle
 	if item.Hatch != "" || paint.Hatch != "" || len(paint.PathEffects) > 0 {
 		return false
 	}
+	// The half-pixel placement only matches Matplotlib for stroked paths (where
+	// the edge governs the boundary pixels). A pure fill with no visible edge —
+	// e.g. stackplot/fill_between without an edgecolor — must stay at the
+	// unsnapped path position, exactly like a line drawn via Path().
+	if paint.Stroke.A <= 0 || paint.LineWidth <= 0 {
+		return false
+	}
 	devicePath := r.devPath(item.Path)
 	return !shouldSnapPath(devicePath, paint)
 }

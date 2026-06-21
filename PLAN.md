@@ -379,7 +379,12 @@ match Matplotlib defaults, not just the happy path.
       Matplotlib. New `stackplot_streamgraph` parity case covers the
       `weighted_wiggle` (streamgraph) layout with default colors; the baseline
       math is unit-tested in `core/stat_variants_test.go`. `hatch` list cycling
-      and `sticky_edges` remain out of scope.
+      and `sticky_edges` remain out of scope. Also fixed an AGG-backend bug
+      (`backends/agg/agg_draw.go`): the single-path-collection half-pixel
+      placement offset (`translatePath(0.5, -0.5)`) was applied to _unstroked_
+      fills, shifting `fill_between`/`stackplot` polygons ~0.5px off Matplotlib;
+      it is now gated on a visible stroke, dropping streamgraph parity from
+      RMSE 6.15 → 0.07 with no change to stroked fills.
 - [ ] **Contour** `negative_linestyles` (default dashing), `extend`,
       `linestyles`, and contourf `hatches` (`core/contour_api.go`); `clabel`
       `fmt` (dict/callable/format-string) + `rightside_up`.
