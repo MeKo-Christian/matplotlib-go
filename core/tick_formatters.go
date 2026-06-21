@@ -68,21 +68,321 @@ func formatScalarTickLabel(f ScalarFormatter, x, step float64) string {
 }
 
 // ScalarFormatter formats numbers with fixed precision and trims trailing zeros.
-// Uses scientific notation if |x| >= 1e6 or (0 < |x| <= 1e-4), unless
-// custom power limits or scientific suppression are configured. Formatting is
-// locale-independent and does not emit Matplotlib-style axis offset text; use a
-// FuncFormatter when a plot needs explicit offset labels.
+// The single-value Format method uses scientific notation if |x| >= 1e6 or
+// (0 < |x| <= 1e-4), unless custom power limits or scientific suppression are
+// configured.
+//
+// When formatting a *sequence* of ticks (the axis path), the formatter mirrors
+// Matplotlib's ScalarFormatter: it factors a shared additive offset and/or a
+// ×10ⁿ order-of-magnitude out of the ticks into axis offset text (see
+// OffsetText) and renders the ticks with uniform fixed precision. Both
+// behaviours are enabled by default; set DisableOffset to suppress the additive
+// offset and DisableScientific to suppress the order-of-magnitude multiplier.
 type ScalarFormatter struct {
 	Prec int
 
 	// PowerLimits follows Matplotlib's inclusive scientific-notation
 	// thresholds when UsePowerLimits is true: exponents <= min or >= max use
-	// scientific notation.
+	// scientific notation. When UsePowerLimits is false the Matplotlib default
+	// limits (-5, 5) drive the tick-sequence order-of-magnitude selection.
 	PowerLimits    [2]int
 	UsePowerLimits bool
 
 	DisableScientific bool
 	UseMathText       bool
+
+	// DisableOffset suppresses the shared additive offset in the tick-sequence
+	// path (Matplotlib's useOffset=False).
+	DisableOffset bool
+	// OffsetThreshold mirrors Matplotlib's axes.formatter.offset_threshold:
+	// the minimum number of leading digits an offset must save before it is
+	// applied. Zero selects the Matplotlib default (4).
+	OffsetThreshold int
+}
+
+// scalarTickContext holds the offset / order-of-magnitude / precision that
+// Matplotlib's ScalarFormatter.set_locs derives from a tick sequence.
+type scalarTickContext struct {
+	offset  float64
+	oom     int
+	sigfigs int
+	valid   bool
+}
+
+func scalarEffectivePowerLimits(f ScalarFormatter) (int, int) {
+	if f.UsePowerLimits {
+		return f.PowerLimits[0], f.PowerLimits[1]
+	}
+	return -5, 5 // Matplotlib axes.formatter.limits default.
+}
+
+func scalarOffsetThreshold(f ScalarFormatter) int {
+	if f.OffsetThreshold > 0 {
+		return f.OffsetThreshold
+	}
+	return 4 // Matplotlib axes.formatter.offset_threshold default.
+}
+
+func finiteTicksCopy(ticks []float64) []float64 {
+	out := make([]float64, 0, len(ticks))
+	for _, t := range ticks {
+		if !math.IsNaN(t) && !math.IsInf(t, 0) {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// newScalarTickContext ports ScalarFormatter.set_locs: compute the shared
+// offset, the order of magnitude, and the fixed precision for a tick sequence.
+// The ticks passed are the already-visible major (or minor) ticks.
+func newScalarTickContext(f ScalarFormatter, ticks []float64) scalarTickContext {
+	locs := finiteTicksCopy(ticks)
+	if len(locs) == 0 {
+		return scalarTickContext{}
+	}
+	ctx := scalarTickContext{valid: true}
+	if !f.DisableOffset {
+		ctx.offset = scalarComputeOffset(f, locs)
+	}
+	ctx.oom = scalarOrderOfMagnitude(f, locs, ctx.offset)
+	ctx.sigfigs = scalarSetFormat(locs, ctx.offset, ctx.oom)
+	return ctx
+}
+
+// scalarComputeOffset ports ScalarFormatter._compute_offset.
+func scalarComputeOffset(f ScalarFormatter, locs []float64) float64 {
+	lmin, lmax := locs[0], locs[0]
+	for _, v := range locs {
+		if v < lmin {
+			lmin = v
+		}
+		if v > lmax {
+			lmax = v
+		}
+	}
+	// Only use an offset when every tick has the same (non-zero-straddling) sign.
+	if lmin == lmax || (lmin <= 0 && 0 <= lmax) {
+		return 0
+	}
+	absMin, absMax := math.Abs(lmin), math.Abs(lmax)
+	if absMin > absMax {
+		absMin, absMax = absMax, absMin
+	}
+	sign := math.Copysign(1, lmin)
+
+	oomMax := math.Ceil(math.Log10(absMax))
+	// Smallest power of ten at which floor(absMin/10^oom) != floor(absMax/10^oom).
+	oom := oomMax
+	for o := oomMax; ; o-- {
+		if floorDiv(absMin, o) != floorDiv(absMax, o) {
+			oom = o + 1
+			break
+		}
+		if o < oomMax-50 { // numerical safety net
+			oom = o
+			break
+		}
+	}
+	if (absMax-absMin)/math.Pow10(int(oom)) <= 1e-2 {
+		for o := oomMax; ; o-- {
+			if floorDiv(absMax, o)-floorDiv(absMin, o) > 1 {
+				oom = o + 1
+				break
+			}
+			if o < oomMax-50 {
+				oom = o
+				break
+			}
+		}
+	}
+	n := scalarOffsetThreshold(f) - 1
+	if floorDiv(absMax, oom) >= math.Pow10(n) {
+		return sign * floorDiv(absMax, oom) * math.Pow10(int(oom))
+	}
+	return 0
+}
+
+// floorDiv returns floor(value / 10**oom), matching Python's // operator used
+// in ScalarFormatter._compute_offset.
+func floorDiv(value, oom float64) float64 {
+	return math.Floor(value / math.Pow10(int(oom)))
+}
+
+// scalarOrderOfMagnitude ports ScalarFormatter._set_order_of_magnitude.
+func scalarOrderOfMagnitude(f ScalarFormatter, locs []float64, offset float64) int {
+	if f.DisableScientific {
+		return 0
+	}
+	lo, hi := scalarEffectivePowerLimits(f)
+	if lo == hi && lo != 0 {
+		return lo
+	}
+	var oom int
+	if offset != 0 {
+		minVal, maxVal := locs[0], locs[0]
+		for _, v := range locs {
+			if v < minVal {
+				minVal = v
+			}
+			if v > maxVal {
+				maxVal = v
+			}
+		}
+		span := maxVal - minVal
+		if span <= 0 {
+			return 0
+		}
+		oom = int(math.Floor(math.Log10(span)))
+	} else {
+		var val float64
+		for _, v := range locs {
+			if a := math.Abs(v); a > val {
+				val = a
+			}
+		}
+		if val == 0 {
+			return 0
+		}
+		oom = int(math.Floor(math.Log10(val)))
+	}
+	switch {
+	case oom <= lo:
+		return oom
+	case oom >= hi:
+		return oom
+	default:
+		return 0
+	}
+}
+
+// scalarSetFormat ports ScalarFormatter._set_format, returning the number of
+// fractional digits used to render every (scaled) tick.
+func scalarSetFormat(locs []float64, offset float64, oom int) int {
+	scale := math.Pow10(oom)
+	scaled := make([]float64, len(locs))
+	for i, v := range locs {
+		scaled[i] = (v - offset) / scale
+	}
+	minVal, maxVal := scaled[0], scaled[0]
+	maxAbs := 0.0
+	for _, v := range scaled {
+		if v < minVal {
+			minVal = v
+		}
+		if v > maxVal {
+			maxVal = v
+		}
+		if a := math.Abs(v); a > maxAbs {
+			maxAbs = a
+		}
+	}
+	locRange := maxVal - minVal
+	if locRange == 0 {
+		locRange = maxAbs
+	}
+	if locRange == 0 {
+		locRange = 1
+	}
+	locRangeOOM := int(math.Floor(math.Log10(locRange)))
+	sigfigs := 3 - locRangeOOM
+	if sigfigs < 0 {
+		sigfigs = 0
+	}
+	thresh := 1e-3 * math.Pow10(locRangeOOM)
+	for sigfigs >= 0 {
+		maxErr := 0.0
+		for _, v := range scaled {
+			if e := math.Abs(v - roundDecimals(v, sigfigs)); e > maxErr {
+				maxErr = e
+			}
+		}
+		if maxErr < thresh {
+			sigfigs--
+		} else {
+			break
+		}
+	}
+	return sigfigs + 1
+}
+
+// roundDecimals rounds to n decimal places using banker's rounding to match
+// numpy.round used in ScalarFormatter._set_format.
+func roundDecimals(x float64, n int) float64 {
+	scale := math.Pow10(n)
+	return math.RoundToEven(x*scale) / scale
+}
+
+// formatScalarTickLabelCtx renders a single tick using a precomputed context,
+// porting ScalarFormatter.__call__.
+func formatScalarTickLabelCtx(f ScalarFormatter, x float64, ctx scalarTickContext) string {
+	if !ctx.valid {
+		return f.Format(x)
+	}
+	xp := (x - ctx.offset) / math.Pow10(ctx.oom)
+	if math.Abs(xp) < 1e-8 {
+		xp = 0
+	}
+	s := scalarFixMinus(strconv.FormatFloat(xp, 'f', ctx.sigfigs, 64))
+	if f.UseMathText {
+		return `$\mathdefault{` + s + `}$`
+	}
+	return s
+}
+
+// OffsetText ports ScalarFormatter.get_offset: the shared offset / ×10ⁿ text
+// rendered alongside the axis. Returns "" when no offset or magnitude applies.
+func (f ScalarFormatter) OffsetText(ticks []float64) string {
+	ctx := newScalarTickContext(f, ticks)
+	if !ctx.valid || (ctx.offset == 0 && ctx.oom == 0) {
+		return ""
+	}
+	offsetStr := ""
+	if ctx.offset != 0 {
+		offsetStr = scalarFormatData(f, ctx.offset)
+		if ctx.offset > 0 {
+			offsetStr = "+" + offsetStr
+		}
+	}
+	sciStr := ""
+	if ctx.oom != 0 {
+		if f.UseMathText {
+			sciStr = scalarFormatData(f, math.Pow10(ctx.oom))
+		} else {
+			sciStr = fmt.Sprintf("1e%d", ctx.oom)
+		}
+	}
+	if f.UseMathText {
+		if sciStr != "" {
+			sciStr = `\times\mathdefault{` + sciStr + `}`
+		}
+		return scalarFixMinus("$" + sciStr + `\mathdefault{` + offsetStr + `}$`)
+	}
+	return scalarFixMinus(sciStr + offsetStr)
+}
+
+// scalarFormatData ports ScalarFormatter.format_data.
+func scalarFormatData(f ScalarFormatter, value float64) string {
+	e := int(math.Floor(math.Log10(math.Abs(value))))
+	s := roundDecimals(value/math.Pow10(e), 10)
+	var significand string
+	if s == math.Trunc(s) {
+		significand = strconv.FormatFloat(s, 'f', 0, 64)
+	} else {
+		significand = strconv.FormatFloat(s, 'g', 10, 64)
+	}
+	if e == 0 {
+		return significand
+	}
+	exponent := strconv.Itoa(e)
+	if f.UseMathText {
+		expStr := "10^{" + exponent + "}"
+		if s == 1 {
+			return expStr
+		}
+		return significand + ` \times ` + expStr
+	}
+	return significand + "e" + exponent
 }
 
 func (f ScalarFormatter) Format(x float64) string {

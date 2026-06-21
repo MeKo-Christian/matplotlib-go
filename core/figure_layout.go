@@ -144,6 +144,9 @@ func titleTopExtentForAxes(ax *Axes, r render.Renderer, ctx *DrawContext, px geo
 		if candidate == nil || !candidate.ShowLabels {
 			continue
 		}
+		if ax.tickLabelsHiddenForLayout(candidate) {
+			continue
+		}
 		if !isPolarProjection(ctx.Projection) && candidate.Side != AxisTop {
 			continue
 		}
@@ -151,7 +154,7 @@ func titleTopExtentForAxes(ax *Axes, r render.Renderer, ctx *DrawContext, px geo
 			extent = math.Max(extent, tickBounds.Max.Y)
 		}
 	}
-	if ax.XLabel != "" && ax.effectiveXLabelSide() == AxisTop {
+	if ax.XLabel != "" && !ax.hideXLabel && ax.effectiveXLabelSide() == AxisTop {
 		layout := measureSingleLineTextLayout(r, ax.XLabel, axisLabelFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
 		anchor, vAlign := xLabelAnchorPoint(ax, r, ctx, px, AxisTop, figureTextAlignment{})
 		origin := alignedSingleLineOrigin(anchor, layout, TextAlignCenter, vAlign)
@@ -170,11 +173,11 @@ func xLabelExtent(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, s
 	if xAxis == nil {
 		return extent
 	}
-	if tickBounds, ok := axisTickLabelBounds(xAxis, r, ctx); ok {
+	if bounds, ok := axisTickLabelBounds(xAxis, r, ctx); ok && !ax.tickLabelsHiddenForLayout(xAxis) {
 		if side == AxisTop {
-			return math.Max(extent, tickBounds.Max.Y)
+			return math.Max(extent, bounds.Max.Y)
 		}
-		return math.Min(extent, tickBounds.Min.Y)
+		return math.Min(extent, bounds.Min.Y)
 	} else if xAxis.ShowTicks {
 		if side == AxisTop {
 			return extent + xAxis.TickSize*tickOutsidePaddingFactor(xAxis)
@@ -190,11 +193,11 @@ func yLabelExtent(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, s
 	if yAxis == nil {
 		return extent
 	}
-	if tickBounds, ok := axisTickLabelBounds(yAxis, r, ctx); ok {
+	if bounds, ok := axisTickLabelBounds(yAxis, r, ctx); ok && !ax.tickLabelsHiddenForLayout(yAxis) {
 		if side == AxisRight {
-			return math.Max(extent, tickBounds.Max.X)
+			return math.Max(extent, bounds.Max.X)
 		}
-		return math.Min(extent, tickBounds.Min.X)
+		return math.Min(extent, bounds.Min.X)
 	}
 	return extent
 }

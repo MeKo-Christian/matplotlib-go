@@ -257,9 +257,33 @@ type MaxNLocator struct {
 	Symmetric bool
 	Prune     string
 	MinTicks  int
+	// NbinsAuto selects Matplotlib's nbins='auto': the maximum interval count is
+	// derived from the axis-length-aware target count, clamped to
+	// [max(1, MinTicks-1), 9]. It takes effect only when N <= 0.
+	NbinsAuto bool
 	// RawStepScale mirrors Matplotlib's axis-specific raw-step adjustments.
 	// Zero means no adjustment.
 	RawStepScale float64
+}
+
+// clampAutoNbins reproduces Matplotlib's nbins='auto' clamp:
+// np.clip(get_tick_space(), max(1, min_n_ticks-1), 9). A non-positive space
+// (no axis context) falls back to the upper bound, matching upstream.
+func clampAutoNbins(space, minTicks int) int {
+	lo := minTicks - 1
+	if lo < 1 {
+		lo = 1
+	}
+	if space <= 0 {
+		space = 9
+	}
+	if space < lo {
+		return lo
+	}
+	if space > 9 {
+		return 9
+	}
+	return space
 }
 
 func (l MaxNLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
@@ -273,6 +297,9 @@ func (l MaxNLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 	minVal, maxVal = nonsingularRange(minVal, maxVal, 1e-13, 1e-14)
 
 	maxIntervals := l.N
+	if maxIntervals <= 0 && l.NbinsAuto {
+		maxIntervals = clampAutoNbins(targetCount, l.MinTicks)
+	}
 	if maxIntervals <= 0 {
 		maxIntervals = targetCount
 	}

@@ -251,3 +251,49 @@ func assertRectApprox(t *testing.T, got, want geom.Rect) {
 		t.Fatalf("unexpected rect: got %+v want %+v", got, want)
 	}
 }
+
+func TestLabelOuterSuppressesInnerLabels(t *testing.T) {
+	fig := NewFigure(800, 600)
+	gs := fig.GridSpec(2, 2)
+	// Top-left (0,0): first row, first col.
+	tl := gs.Cell(0, 0).AddAxes()
+	// Bottom-right (1,1): last row, last col.
+	br := gs.Cell(1, 1).AddAxes()
+	for _, ax := range []*Axes{tl, br} {
+		ax.SetXLabel("x")
+		ax.SetYLabel("y")
+		ax.LabelOuter()
+	}
+	// Top-left: inner bottom (not last row) -> hide x tick labels + xlabel.
+	if !tl.hideXTickLabels || !tl.hideXLabel {
+		t.Fatalf("top-left should hide x labels (not last row): %+v", tl.hideXTickLabels)
+	}
+	// Top-left is first col -> keep y labels.
+	if tl.hideYTickLabels || tl.hideYLabel {
+		t.Fatalf("top-left (first col) should keep y labels")
+	}
+	// Bottom-right is last row -> keep x labels.
+	if br.hideXTickLabels || br.hideXLabel {
+		t.Fatalf("bottom-right (last row) should keep x labels")
+	}
+	// Bottom-right not first col -> hide y labels.
+	if !br.hideYTickLabels || !br.hideYLabel {
+		t.Fatalf("bottom-right should hide y labels (not first col)")
+	}
+}
+
+func TestTickLabelsHiddenForLayoutHonorsLabelOuter(t *testing.T) {
+	fig := NewFigure(800, 600)
+	gs := fig.GridSpec(2, 2)
+	tl := gs.Cell(0, 0).AddAxes() // first row, first col
+	tl.LabelOuter()
+	// Inner bottom edge is hidden, so the layout pass must not reserve space for
+	// the bottom x tick labels.
+	if !tl.tickLabelsHiddenForLayout(tl.effectiveXAxis()) {
+		t.Fatal("bottom x tick labels should be hidden for layout after LabelOuter")
+	}
+	// The first column keeps its y tick labels, so layout still reserves them.
+	if tl.tickLabelsHiddenForLayout(tl.effectiveYAxis()) {
+		t.Fatal("first-column y tick labels should remain reserved in layout")
+	}
+}

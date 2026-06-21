@@ -38,16 +38,13 @@ def formatter_scalar_scientific_labels(out_dir):
 
 
 def scalar_scientific_formatter():
-    formatter = mticker.ScalarFormatter(useMathText=True, useOffset=False)
+    # The Go port's core.ScalarFormatter now mirrors Matplotlib's ScalarFormatter
+    # offset / order-of-magnitude factoring (Phase 7), so the reference uses the
+    # real ScalarFormatter rather than a per-tick FuncFormatter workaround.
+    formatter = mticker.ScalarFormatter(useMathText=True)
     formatter.set_scientific(True)
     formatter.set_powerlimits((0, 0))
-
-    def label(value, _pos):
-        if value == 0:
-            return r"$\mathdefault{0}$"
-        return r"$\mathdefault{" + formatter.format_data(value).replace(" ", "") + "}$"
-
-    return mticker.FuncFormatter(label)
+    return formatter
 
 
 PLOT = formatter_scalar_scientific_labels

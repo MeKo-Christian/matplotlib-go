@@ -419,6 +419,72 @@ func (spec SubplotSpec) AddAxes(opts ...SubplotAxesOption) *Axes {
 	return ax
 }
 
+// IsFirstRow reports whether the span touches the top row of its grid.
+func (spec SubplotSpec) IsFirstRow() bool {
+	return spec.grid != nil && spec.rowStart == 0
+}
+
+// IsLastRow reports whether the span touches the bottom row of its grid.
+func (spec SubplotSpec) IsLastRow() bool {
+	return spec.grid != nil && spec.rowEnd == spec.grid.nRows
+}
+
+// IsFirstCol reports whether the span touches the leftmost column of its grid.
+func (spec SubplotSpec) IsFirstCol() bool {
+	return spec.grid != nil && spec.colStart == 0
+}
+
+// IsLastCol reports whether the span touches the rightmost column of its grid.
+func (spec SubplotSpec) IsLastCol() bool {
+	return spec.grid != nil && spec.colEnd == spec.grid.nCols
+}
+
+// LabelOuter hides tick labels (and the offset text and axis label) on the
+// inner edges of a gridded subplot, leaving them only on the bottom row and the
+// leftmost column — mirroring Matplotlib's Axes.label_outer for the default
+// bottom/left label positions. It is a no-op for axes not created from a grid.
+func (a *Axes) LabelOuter() {
+	if a == nil || a.subplotSpec == nil {
+		return
+	}
+	ss := a.subplotSpec
+	if !ss.IsLastRow() {
+		a.hideXTickLabels = true
+		a.hideXLabel = true
+	}
+	if !ss.IsFirstRow() {
+		a.hideTopTickLabels = true
+	}
+	if !ss.IsFirstCol() {
+		a.hideYTickLabels = true
+		a.hideYLabel = true
+	}
+	if !ss.IsLastCol() {
+		a.hideRightTickLabels = true
+	}
+}
+
+// tickLabelsHiddenForLayout reports whether the given axis's tick labels are
+// suppressed (e.g. by LabelOuter) on this Axes, so the layout pass should not
+// reserve space for them. Mirrors the axis→hide-flag pairing used at draw time
+// in figure_draw.go.
+func (a *Axes) tickLabelsHiddenForLayout(axis *Axis) bool {
+	if a == nil || axis == nil {
+		return false
+	}
+	switch axis {
+	case a.effectiveXAxis():
+		return a.hideXTickLabels
+	case a.effectiveYAxis():
+		return a.hideYTickLabels
+	case a.effectiveTopAxis():
+		return a.hideTopTickLabels
+	case a.effectiveRightAxis():
+		return a.hideRightTickLabels
+	}
+	return false
+}
+
 // SubFigure converts the subplot span into a composition region.
 func (spec SubplotSpec) SubFigure() *SubFigure {
 	if spec.figure == nil {

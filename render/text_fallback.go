@@ -16,7 +16,8 @@ func (m *FontManager) ResolveTextRuns(text, fontKey string) ([]FontRun, bool) {
 		return nil, false
 	}
 
-	primary, ok := m.FindFont(ParseFontProperties(fontKey))
+	props := ParseFontProperties(fontKey)
+	primary, ok := m.FindFont(props)
 	if !ok && fontKey == "" {
 		primary, ok = m.FindFont(ParseFontProperties("DejaVu Sans"))
 	}
@@ -28,7 +29,7 @@ func (m *FontManager) ResolveTextRuns(text, fontKey string) ([]FontRun, bool) {
 		return nil, false
 	}
 
-	fallbacks := m.fallbackFaces(primary)
+	fallbacks := m.fallbackFaces(primaryKey, props.Families)
 	var runs []FontRun
 	var current FontFace
 	var currentKey string
@@ -74,27 +75,46 @@ func (m *FontManager) ResolveTextRuns(text, fontKey string) ([]FontRun, bool) {
 	return runs, len(runs) > 0
 }
 
-func (m *FontManager) fallbackFaces(primary FontFace) []FontFace {
+// fontFamilyMathFallback is a math-capable font appended to every fallback
+// chain. STIXGeneral covers the Unicode Mathematical Alphanumeric block
+// (U+1D400…) and a broad range of math symbols that the DejaVu text fonts lack,
+// so MathText glyphs (e.g. from \mathbb, \mathfrak, expanded \tex2uni symbols)
+// resolve to a real glyph instead of tofu.
+const fontFamilyMathFallback = "STIXGeneral"
+
+// fallbackFaces builds the per-glyph fallback chain: the caller's other
+// requested families (so the full family list is walked per missing glyph, not
+// just the first match), then the generic families, then the math-capable font.
+// The primary face is excluded; results are deduplicated by cache key.
+func (m *FontManager) fallbackFaces(primaryKey string, requestedFamilies []string) []FontFace {
 	var faces []FontFace
 	seen := map[string]struct{}{}
-	if key := fontFaceCacheKey(primary); key != "" {
-		seen[key] = struct{}{}
+	if primaryKey != "" {
+		seen[primaryKey] = struct{}{}
 	}
-	for _, family := range []string{fontFamilySansSerif, fontFamilySerif, fontFamilyMonospace} {
-		face, ok := m.FindFont(FontProperties{Families: []string{family}})
-		if !ok {
-			continue
+	add := func(families ...string) {
+		for _, family := range families {
+			if family == "" {
+				continue
+			}
+			face, ok := m.FindFont(FontProperties{Families: []string{family}})
+			if !ok {
+				continue
+			}
+			key := fontFaceCacheKey(face)
+			if key == "" {
+				continue
+			}
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			faces = append(faces, face)
 		}
-		key := fontFaceCacheKey(face)
-		if key == "" {
-			continue
-		}
-		if _, ok := seen[key]; ok {
-			continue
-		}
-		seen[key] = struct{}{}
-		faces = append(faces, face)
 	}
+	add(requestedFamilies...)
+	add(fontFamilySansSerif, fontFamilySerif, fontFamilyMonospace)
+	add(fontFamilyMathFallback)
 	return faces
 }
 

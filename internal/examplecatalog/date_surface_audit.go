@@ -14,14 +14,26 @@ var dateSurfaceAuditRows = []DateSurfaceAudit{
 	{
 		UpstreamID: "dates.py:function:date2num",
 		Status:     PublicSurfaceDirectEquivalent,
-		GoFiles:    []string{"core/units.go"},
-		Note:       "Go converts time.Time values to Matplotlib date numbers when unit conversion configures date axes.",
+		GoFiles:    []string{"core/dates.go", "core/units.go"},
+		Note:       "core.Date2Num converts time.Time to Matplotlib date numbers (days since the configurable epoch); the same conversion backs date-axis unit configuration.",
 	},
 	{
 		UpstreamID: "dates.py:function:num2date",
 		Status:     PublicSurfaceDirectEquivalent,
-		GoFiles:    []string{"core/units.go", "core/date_tick.go"},
-		Note:       "Go converts Matplotlib date numbers back to time.Time in UTC or a caller-provided location for date locators and formatters.",
+		GoFiles:    []string{"core/dates.go", "core/date_tick.go"},
+		Note:       "core.Num2Date converts Matplotlib date numbers back to time.Time in UTC or a caller-provided location (microsecond-rounded like upstream); locators and formatters use the same conversion.",
+	},
+	{
+		UpstreamID: "dates.py:function:set_epoch",
+		Status:     PublicSurfaceDirectEquivalent,
+		GoFiles:    []string{"core/dates.go"},
+		Note:       "core.SetEpoch sets the date epoch and, like upstream, errors once any conversion has occurred.",
+	},
+	{
+		UpstreamID: "dates.py:function:get_epoch",
+		Status:     PublicSurfaceDirectEquivalent,
+		GoFiles:    []string{"core/dates.go"},
+		Note:       "core.GetEpoch returns the current date epoch (default 1970-01-01T00:00:00Z).",
 	},
 	{
 		UpstreamID: "dates.py:class:DateFormatter",

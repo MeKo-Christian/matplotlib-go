@@ -1,0 +1,32 @@
+name: Setup cgo build dependencies
+description: >
+  Install the system libraries required by the cgo dependencies (agg_go's
+  FreeType/HarfBuzz text path and the Gio frontend's X11/Wayland/GL/Vulkan
+  bindings) and build the vendored static FreeType 2.6.1 used for matplotlib
+  pixel parity. Requires the repository to be checked out first.
+
+runs:
+  using: composite
+  steps:
+    - name: Install Linux system dependencies
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          pkg-config \
+          libfreetype-dev libharfbuzz-dev \
+          libwayland-dev wayland-protocols \
+          libx11-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev \
+          libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev \
+          libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev libffi-dev \
+          libvulkan-dev
+
+    - name: Install macOS system dependencies
+      if: runner.os == 'macOS'
+      shell: bash
+      run: brew install freetype harfbuzz pkg-config
+
+    - name: Build vendored FreeType 2.6.1
+      shell: bash
+      run: bash third_party/freetype/build.sh

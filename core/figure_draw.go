@@ -89,19 +89,27 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 
 		if xAxis != nil {
 			xAxis.DrawTicks(r, ctx)
-			xAxis.DrawTickLabels(r, ctx)
+			if !ax.hideXTickLabels {
+				xAxis.DrawTickLabels(r, ctx)
+			}
 		}
 		if yAxis != nil {
 			yAxis.DrawTicks(r, ctx)
-			yAxis.DrawTickLabels(r, ctx)
+			if !ax.hideYTickLabels {
+				yAxis.DrawTickLabels(r, ctx)
+			}
 		}
 		if topAxis != nil {
 			topAxis.DrawTicks(r, ctx)
-			topAxis.DrawTickLabels(r, ctx)
+			if !ax.hideTopTickLabels {
+				topAxis.DrawTickLabels(r, ctx)
+			}
 		}
 		if rightAxis != nil {
 			rightAxis.DrawTicks(r, ctx)
-			rightAxis.DrawTickLabels(r, ctx)
+			if !ax.hideRightTickLabels {
+				rightAxis.DrawTickLabels(r, ctx)
+			}
 		}
 		for _, extraAxis := range ax.ExtraAxes {
 			if extraAxis != nil {
@@ -259,17 +267,22 @@ func drawSecondaryChildAxes(parent *Axes, fig *Figure, r render.Renderer, vp geo
 			}
 		}
 
-		for _, axis := range []*Axis{
-			child.effectiveXAxis(),
-			child.effectiveYAxis(),
-			child.effectiveTopAxis(),
-			child.effectiveRightAxis(),
+		for _, ai := range []struct {
+			axis   *Axis
+			hidden bool
+		}{
+			{child.effectiveXAxis(), child.hideXTickLabels},
+			{child.effectiveYAxis(), child.hideYTickLabels},
+			{child.effectiveTopAxis(), child.hideTopTickLabels},
+			{child.effectiveRightAxis(), child.hideRightTickLabels},
 		} {
-			if axis == nil {
+			if ai.axis == nil {
 				continue
 			}
-			axis.DrawTicks(r, ctx)
-			axis.DrawTickLabels(r, ctx)
+			ai.axis.DrawTicks(r, ctx)
+			if !ai.hidden {
+				ai.axis.DrawTickLabels(r, ctx)
+			}
 		}
 		for _, extraAxis := range child.ExtraAxes {
 			if extraAxis == nil {

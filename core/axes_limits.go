@@ -107,7 +107,74 @@ func (a *Axes) SetAspect(mode string, value ...float64) error {
 	default:
 		return fmt.Errorf("unsupported aspect mode %q", mode)
 	}
+	// When adjustable is already 'datalim', a later aspect change must re-expand
+	// the data limits; otherwise setting adjustable before the aspect leaves the
+	// scale unequal. applyAspectDatalim is idempotent and a no-op unless
+	// adjustable == "datalim", so it is safe to call for every aspect mode.
+	a.applyAspectDatalim()
 	return nil
+}
+
+// SetAdjustable selects how an aspect constraint is satisfied: "box" (the
+// default — shrink the axes rectangle) or "datalim" (keep the box and expand the
+// data limits). Mirrors Matplotlib Axes.set_adjustable; "datalim" is rejected on
+// shared axes, matching upstream.
+func (a *Axes) SetAdjustable(adjustable string) error {
+	if a == nil {
+		return nil
+	}
+	switch strings.ToLower(strings.TrimSpace(adjustable)) {
+	case "", "box":
+		a.adjustable = ""
+	case "datalim":
+		if a.shareX != nil || a.shareY != nil {
+			return fmt.Errorf("adjustable 'datalim' is incompatible with shared axes")
+		}
+		a.adjustable = "datalim"
+	default:
+		return fmt.Errorf("unsupported adjustable %q", adjustable)
+	}
+	a.autoScaleIfEnabled(defaultAutoScaleMargin)
+	return nil
+}
+
+// SetAnchor sets how an aspect-shrunk axes is positioned within its original
+// rectangle, using Matplotlib's cardinal anchor names ("C", "N", "NE", "E",
+// "SE", "S", "SW", "W", "NW").
+func (a *Axes) SetAnchor(anchor string) error {
+	if a == nil {
+		return nil
+	}
+	name := strings.ToUpper(strings.TrimSpace(anchor))
+	if name == "" {
+		name = "C"
+	}
+	if _, ok := anchorCoefs[name]; !ok {
+		return fmt.Errorf("unsupported anchor %q", anchor)
+	}
+	a.anchor = name
+	return nil
+}
+
+// anchorCoefs maps Matplotlib anchor names to the (cx, cy) fraction of the
+// leftover space placed below/left of the shrunk box (Bbox.coefs).
+var anchorCoefs = map[string][2]float64{
+	"C":  {0.5, 0.5},
+	"SW": {0, 0},
+	"S":  {0.5, 0},
+	"SE": {1, 0},
+	"E":  {1, 0.5},
+	"NE": {1, 1},
+	"N":  {0.5, 1},
+	"NW": {0, 1},
+	"W":  {0, 0.5},
+}
+
+func (a *Axes) anchorCoef() (float64, float64) {
+	if c, ok := anchorCoefs[a.anchor]; ok {
+		return c[0], c[1]
+	}
+	return 0.5, 0.5 // default center anchor
 }
 
 func (a *Axes) SetAxisEqual() {
@@ -146,6 +213,11 @@ func (a *Axes) adjustedLayout(f *Figure) geom.Rect {
 	if a.colorbarParent != nil {
 		return a.adjustedColorbarLayout(f, px)
 	}
+	// adjustable='datalim' keeps the full axes box; the aspect is satisfied by
+	// expanding data limits during autoscale (see applyAspectDatalim).
+	if a.adjustable == "datalim" && a.boxAspect <= 0 {
+		return px
+	}
 	target := 0.0
 	if a.boxAspect > 0 {
 		target = a.boxAspect
@@ -160,7 +232,8 @@ func (a *Axes) adjustedLayout(f *Figure) geom.Rect {
 	if target <= 0 || math.IsNaN(target) || math.IsInf(target, 0) {
 		return px
 	}
-	return rectWithAspectInFigureFraction(a.RectFraction, target, f)
+	cx, cy := a.anchorCoef()
+	return rectWithAspectInFigureFraction(a.RectFraction, target, f, cx, cy)
 }
 
 func (a *Axes) adjustedColorbarLayout(f *Figure, px geom.Rect) geom.Rect {
@@ -187,6 +260,59 @@ func (a *Axes) adjustedColorbarLayout(f *Figure, px geom.Rect) geom.Rect {
 	return px
 }
 
+// applyAspectDatalim enforces an equal/ratio aspect with adjustable='datalim'
+// by expanding (never shrinking) the data limits around their center so the
+// visible pixels-per-data scale matches on both axes. It is idempotent: once the
+// ratio is satisfied within tolerance it makes no further change. Mirrors the
+// datalim branch of Matplotlib's Axes.apply_aspect.
+func (a *Axes) applyAspectDatalim() {
+	if a == nil || a.adjustable != "datalim" || a.figure == nil || a.boxAspect > 0 {
+		return
+	}
+	var aspect float64
+	switch a.aspectMode {
+	case "equal":
+		aspect = 1
+	case "ratio":
+		aspect = a.aspectValue
+	default:
+		return
+	}
+	if aspect <= 0 {
+		return
+	}
+	f := a.figure
+	boxWpx := a.RectFraction.W() * f.SizePx.X
+	boxHpx := a.RectFraction.H() * f.SizePx.Y
+	if boxWpx <= 0 || boxHpx <= 0 {
+		return
+	}
+	dataRatio := (boxHpx / boxWpx) / aspect
+
+	xMin, xMax := currentScaleDomain(a.effectiveXScale())
+	yMin, yMax := currentScaleDomain(a.effectiveYScale())
+	xsize := math.Abs(xMax - xMin)
+	ysize := math.Abs(yMax - yMin)
+	if xsize <= 0 || ysize <= 0 {
+		return
+	}
+	yExpander := dataRatio*xsize/ysize - 1.0
+	if math.Abs(yExpander) < 0.005 {
+		return
+	}
+	if yExpander > 0 {
+		target := dataRatio * xsize
+		yc := 0.5 * (yMin + yMax)
+		a.YScale = replaceScaleDomain(a.YScale, yc-target/2, yc+target/2)
+		a.refreshUnitAxis(false)
+	} else {
+		target := ysize / dataRatio
+		xc := 0.5 * (xMin + xMax)
+		a.XScale = replaceScaleDomain(a.XScale, xc-target/2, xc+target/2)
+		a.refreshUnitAxis(true)
+	}
+}
+
 func (a *Axes) dataAspectTarget(aspect float64) float64 {
 	if a == nil || aspect <= 0 {
 		return 0
@@ -201,7 +327,9 @@ func (a *Axes) dataAspectTarget(aspect float64) float64 {
 	return aspect * ySpan / xSpan
 }
 
-func rectWithAspect(r geom.Rect, target float64) geom.Rect {
+// rectWithAspect shrinks r to the target height/width ratio and positions the
+// shrunk box using the (cx, cy) anchor coefficients (0.5, 0.5 == centered).
+func rectWithAspect(r geom.Rect, target, cx, cy float64) geom.Rect {
 	if target <= 0 {
 		return r
 	}
@@ -209,27 +337,27 @@ func rectWithAspect(r geom.Rect, target float64) geom.Rect {
 	switch {
 	case cur > target:
 		newH := r.W() * target
-		pad := (r.H() - newH) / 2
-		r.Min.Y += pad
-		r.Max.Y -= pad
+		pad := r.H() - newH
+		r.Min.Y += pad * cy
+		r.Max.Y = r.Min.Y + newH
 	case cur < target:
 		newW := r.H() / target
-		pad := (r.W() - newW) / 2
-		r.Min.X += pad
-		r.Max.X -= pad
+		pad := r.W() - newW
+		r.Min.X += pad * cx
+		r.Max.X = r.Min.X + newW
 	}
 	return r
 }
 
-func rectWithAspectInFigureFraction(r geom.Rect, boxAspect float64, f *Figure) geom.Rect {
+func rectWithAspectInFigureFraction(r geom.Rect, boxAspect float64, f *Figure, cx, cy float64) geom.Rect {
 	if f == nil || f.SizePx.X <= 0 || f.SizePx.Y <= 0 || boxAspect <= 0 {
-		return rectWithAspect(r, boxAspect)
+		return rectWithAspect(r, boxAspect, cx, cy)
 	}
 	figAspect := f.SizePx.Y / f.SizePx.X
 	if figAspect <= 0 || math.IsNaN(figAspect) || math.IsInf(figAspect, 0) {
-		return rectWithAspect(r, boxAspect)
+		return rectWithAspect(r, boxAspect, cx, cy)
 	}
-	frac := rectWithAspect(r, boxAspect/figAspect)
+	frac := rectWithAspect(r, boxAspect/figAspect, cx, cy)
 	return geom.Rect{
 		Min: geom.Pt{
 			X: f.SizePx.X * frac.Min.X,

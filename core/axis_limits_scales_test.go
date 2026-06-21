@@ -740,3 +740,70 @@ func TestAxes_EqualAspectLayoutMatchesMatplotlibFractionAnchoring(t *testing.T) 
 		t.Fatalf("equal-aspect y bounds = %.17g..%.17g, want Matplotlib fraction-anchored 274.50000000000006..373.50000000000006", got.Min.Y, got.Max.Y)
 	}
 }
+
+func TestAxes_AspectAnchorPositionsShrunkBox(t *testing.T) {
+	mk := func(anchor string) geom.Rect {
+		fig := NewFigure(1100, 720)
+		ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.66, Y: 0.34}, Max: geom.Pt{X: 0.75, Y: 0.56}})
+		ax.SetXLim(-0.5, 27.5)
+		ax.SetYLim(27.5, -0.5)
+		_ = ax.SetAspect("equal")
+		if err := ax.SetAnchor(anchor); err != nil {
+			t.Fatalf("SetAnchor(%q): %v", anchor, err)
+		}
+		return ax.adjustedLayout(fig)
+	}
+	sw := mk("SW")
+	c := mk("C")
+	ne := mk("NE")
+	// The box is shrunk vertically; SW pins it to the bottom, NE to the top.
+	if !(sw.Min.Y < c.Min.Y && c.Min.Y < ne.Min.Y) {
+		t.Fatalf("anchor ordering wrong: SW=%.3f C=%.3f NE=%.3f", sw.Min.Y, c.Min.Y, ne.Min.Y)
+	}
+	// Heights stay equal regardless of anchor.
+	if !floatApprox(sw.H(), ne.H(), 1e-6) {
+		t.Fatalf("anchor changed height: SW=%.3f NE=%.3f", sw.H(), ne.H())
+	}
+}
+
+func TestAxes_AspectDatalimExpandsDataLimits(t *testing.T) {
+	fig := NewFigure(600, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	ax.Plot([]float64{0, 10}, []float64{0, 1})
+	_ = ax.SetAspect("equal")
+	if err := ax.SetAdjustable("datalim"); err != nil {
+		t.Fatalf("SetAdjustable(datalim): %v", err)
+	}
+	xMin, xMax := ax.XScale.Domain()
+	yMin, yMax := ax.YScale.Domain()
+	xspan := math.Abs(xMax - xMin)
+	yspan := math.Abs(yMax - yMin)
+	// Square pixel box + equal aspect => equal data spans (y expanded to match x).
+	if !floatApprox(xspan, yspan, 1e-6) {
+		t.Fatalf("datalim did not equalize spans: xspan=%.6f yspan=%.6f", xspan, yspan)
+	}
+	if yMin > 0 || yMax < 1 {
+		t.Fatalf("datalim expansion must keep data visible: y=[%.3f,%.3f]", yMin, yMax)
+	}
+}
+
+func TestAxes_AspectDatalimReappliedWhenAspectSetAfterAdjustable(t *testing.T) {
+	fig := NewFigure(600, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	ax.Plot([]float64{0, 10}, []float64{0, 1})
+	// Reverse order: adjustable selected before the aspect. SetAspect must
+	// re-apply the datalim expansion; otherwise the data scale stays unequal.
+	if err := ax.SetAdjustable("datalim"); err != nil {
+		t.Fatalf("SetAdjustable(datalim): %v", err)
+	}
+	if err := ax.SetAspect("equal"); err != nil {
+		t.Fatalf("SetAspect(equal): %v", err)
+	}
+	xMin, xMax := ax.XScale.Domain()
+	yMin, yMax := ax.YScale.Domain()
+	xspan := math.Abs(xMax - xMin)
+	yspan := math.Abs(yMax - yMin)
+	if !floatApprox(xspan, yspan, 1e-6) {
+		t.Fatalf("datalim not equalized when aspect set after adjustable: xspan=%.6f yspan=%.6f", xspan, yspan)
+	}
+}
