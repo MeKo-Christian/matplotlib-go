@@ -32,6 +32,9 @@ jobs:
       - name: Install build dependencies
         uses: ./.github/actions/setup-cgo-deps
 
+      - name: Provision matplotlib parity source
+        run: bash third_party/fetch-matplotlib.sh
+
       - name: Verify module integrity
         run: go mod verify
 
