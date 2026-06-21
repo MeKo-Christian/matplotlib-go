@@ -204,6 +204,22 @@ func TestAxes_TickParamsAppliesDirection(t *testing.T) {
 	}
 }
 
+func TestAxisDefaultMinorTickLineWidthMatchesMatplotlib(t *testing.T) {
+	want := 0.6 * 100.0 / 72.0
+
+	for name, axis := range map[string]*Axis{
+		"x": NewXAxis(),
+		"y": NewYAxis(),
+	} {
+		if got := axis.MinorTickLineWidth; got != want {
+			t.Fatalf("%s axis default minor tick width = %v, want %v", name, got, want)
+		}
+		if got := axis.minorTickLineWidth(); got != want {
+			t.Fatalf("%s axis resolved minor tick width = %v, want %v", name, got, want)
+		}
+	}
+}
+
 func TestAxes_TickParamsResetRestoresAxisOwnedDefaults(t *testing.T) {
 	axes := &Axes{XAxis: NewXAxis()}
 	color := render.Color{R: 0.7, G: 0.2, B: 0.1, A: 1}
@@ -246,7 +262,7 @@ func TestAxes_TickParamsResetRestoresAxisOwnedDefaults(t *testing.T) {
 	if axes.XAxis.TickSize != newLength || axes.XAxis.MinorTickSize != 0 {
 		t.Fatalf("reset tick sizes = major %v minor %v, want major override %v and default minor", axes.XAxis.TickSize, axes.XAxis.MinorTickSize, newLength)
 	}
-	if axes.XAxis.TickLineWidth != 0 || axes.XAxis.MinorTickLineWidth != 0 {
+	if axes.XAxis.TickLineWidth != 0 || axes.XAxis.MinorTickLineWidth != 0.6*100.0/72.0 {
 		t.Fatalf("reset tick widths = major %v minor %v, want defaults", axes.XAxis.TickLineWidth, axes.XAxis.MinorTickLineWidth)
 	}
 	if axes.XAxis.TickDirection != TickDirectionOut || !axes.XAxis.ShowLabels || axes.XAxis.ShowMinorLabels {

@@ -83,6 +83,42 @@ func TestLayoutMathTextLogitOneMinusLabelMatchesMatplotlib(t *testing.T) {
 	}
 }
 
+func TestLayoutMathTextScientificMantissaMatchesMatplotlib(t *testing.T) {
+	r, err := agg.New(140, 80, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.SetResolution(100)
+	if _, ok := r.MeasureMathGlyphRun("1", 10, "DejaVu Sans"); !ok {
+		t.Skip("pixel-exact MathText glyph metrics unavailable")
+	}
+
+	layout, ok := core.LayoutMathText(r, `\mathdefault{1.2\times10^{3}}`, 10, "DejaVu Sans")
+	if !ok {
+		t.Fatal("LayoutMathText returned !ok")
+	}
+
+	firstOne := mathTextRunByIndex(t, layout.Runs, "1", 0)
+	dot := mathTextRunByIndex(t, layout.Runs, ".", 0)
+	two := mathTextRunByIndex(t, layout.Runs, "2", 0)
+	times := mathTextRunByIndex(t, layout.Runs, "×", 0)
+	exponent := mathTextRunByIndex(t, layout.Runs, "3", 0)
+
+	// Matplotlib 3.10.9 MathTextParser("path") VectorParse for
+	// $\mathdefault{1.2\times10^{3}}$ at 10 pt / 100 dpi.
+	check := func(name string, got, want float64) {
+		t.Helper()
+		if math.Abs(got-want) > 0.1 {
+			t.Fatalf("%s x = %.6f, want %.6f; width=%.3f runs=%+v", name, got, want, layout.Width, layout.Runs)
+		}
+	}
+	check("leading 1", firstOne.Offset.X, 0)
+	check("decimal point", dot.Offset.X, 8.82769775390625)
+	check("mantissa 2", two.Offset.X, 12.4881591796875)
+	check("times", times.Offset.X, 24.01904296875)
+	check("exponent 3", exponent.Offset.X, 56.13734130859375)
+}
+
 func TestLayoutMathTextRulelessGenfracVectorMetricsMatchMatplotlib(t *testing.T) {
 	r, err := agg.New(300, 160, render.Color{R: 1, G: 1, B: 1, A: 1})
 	if err != nil {

@@ -183,6 +183,37 @@ func TestMathTextRasterMetricsUseMatplotlibShipCoordinates(t *testing.T) {
 	}
 }
 
+func TestMathTextRasterMetricsPreserveFractionalWidth(t *testing.T) {
+	r := mathRasterLogitWidthRenderer{}
+	layout := MathTextLayout{
+		Width:   59.0,
+		Ascent:  14.0,
+		Descent: 1.0,
+		Height:  15.0,
+		Runs: []MathTextLayoutRun{
+			{Text: "1", Offset: mt.Pt{X: 0.0, Y: 0.0}, FontSize: 10.0},
+			{Text: "−", Offset: mt.Pt{X: 11.530884, Y: 0.0}, FontSize: 10.0},
+			{Text: "1", Offset: mt.Pt{X: 25.859802, Y: 0.0}, FontSize: 10.0},
+			{Text: "0", Offset: mt.Pt{X: 34.6875, Y: 0.0}, FontSize: 10.0},
+			{Text: "−", Offset: mt.Pt{X: 43.649182, Y: -5.0}, FontSize: 7.0},
+			{Text: "1", Offset: mt.Pt{X: 51.787195, Y: -5.0}, FontSize: 7.0},
+		},
+	}
+
+	width, _, _, ok := mathLayoutImageMetrics(&r, layout, "DejaVu Sans")
+	if !ok {
+		t.Fatal("mathLayoutImageMetrics returned !ok")
+	}
+
+	// Matplotlib 3.10.9 MathTextParser("agg").parse for
+	// $\mathdefault{1-10^{-1}}$ at 10 pt / 100 dpi reports this fractional
+	// width. Centered tick labels use it before the backend rounds the image
+	// origin, so truncating to the path width moves this label by one pixel.
+	if math.Abs(width-59.0432104492) > 0.01 {
+		t.Fatalf("raster metrics width = %.10f, want 59.0432104492", width)
+	}
+}
+
 func TestMixedMathTextLineMetricsIncludePlainLPDescent(t *testing.T) {
 	r := inlineMathLineMetricRenderer{}
 	layout := measureSingleLineTextLayoutParseMath(&r, `time $t$`, 10, "DejaVu Sans", true)

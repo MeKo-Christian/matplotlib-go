@@ -182,6 +182,10 @@ type mathRasterMetricRenderer struct {
 	render.NullRenderer
 }
 
+type mathRasterLogitWidthRenderer struct {
+	render.NullRenderer
+}
+
 type inlineMathLineMetricRenderer struct {
 	render.NullRenderer
 }
@@ -239,6 +243,30 @@ func (mathRasterMetricRenderer) MeasureMathGlyphRun(text string, size float64, _
 		metric = render.MathGlyphMetric{Xmin: 1.1875, Xmax: 8.6250, Ymin: 0, Ymax: 12}
 	case "y":
 		metric = render.MathGlyphMetric{Xmin: -0.7969, Xmax: 19.2969, Ymin: -7, Ymax: 18}
+	default:
+		return nil, false
+	}
+	metric.Iceberg = metric.Ymax
+	return []render.MathGlyphMetric{metric}, true
+}
+
+func (mathRasterLogitWidthRenderer) GetImage() *image.RGBA {
+	return image.NewRGBA(image.Rect(0, 0, 1, 1))
+}
+
+func (mathRasterLogitWidthRenderer) MeasureMathGlyphRun(text string, size float64, _ string) ([]render.MathGlyphMetric, bool) {
+	metric := render.MathGlyphMetric{}
+	switch {
+	case text == "1" && math.Abs(size-10) < 0.01:
+		metric = render.MathGlyphMetric{Xmin: 0, Xmax: 8.0, Ymin: 0, Ymax: 10}
+	case text == "0" && math.Abs(size-10) < 0.01:
+		metric = render.MathGlyphMetric{Xmin: 0, Xmax: 8.0, Ymin: 0, Ymax: 10}
+	case text == "−" && math.Abs(size-10) < 0.01:
+		metric = render.MathGlyphMetric{Xmin: 0, Xmax: 10.0, Ymin: 4, Ymax: 6}
+	case text == "−" && math.Abs(size-7) < 0.01:
+		metric = render.MathGlyphMetric{Xmin: 0, Xmax: 6.0, Ymin: 2, Ymax: 4}
+	case text == "1" && math.Abs(size-7) < 0.01:
+		metric = render.MathGlyphMetric{Xmin: 0, Xmax: 5.212805, Ymin: 0, Ymax: 7}
 	default:
 		return nil, false
 	}
