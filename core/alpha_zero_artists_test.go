@@ -80,8 +80,9 @@ func TestBoxPlotHonorsExplicitZeroAlpha(t *testing.T) {
 	data := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 	zero := 0.0
+	patchArtist := true
 	transparent := &recordingRenderer{}
-	box := newAlphaTestAxes().BoxPlot(data, BoxPlotOptions{Color: &red, EdgeColor: &red, Alpha: &zero})
+	box := newAlphaTestAxes().BoxPlot(data, BoxPlotOptions{PatchArtist: &patchArtist, Color: &red, EdgeColor: &red, Alpha: &zero})
 	box.Draw(transparent, ctx)
 	maxFill := 0.0
 	for _, c := range transparent.pathCalls {
@@ -94,7 +95,7 @@ func TestBoxPlotHonorsExplicitZeroAlpha(t *testing.T) {
 	}
 
 	opaque := &recordingRenderer{}
-	newAlphaTestAxes().BoxPlot(data, BoxPlotOptions{Color: &red, EdgeColor: &red}).Draw(opaque, ctx)
+	newAlphaTestAxes().BoxPlot(data, BoxPlotOptions{PatchArtist: &patchArtist, Color: &red, EdgeColor: &red}).Draw(opaque, ctx)
 	ctlFill := 0.0
 	for _, c := range opaque.pathCalls {
 		if c.paint.Fill.A > ctlFill {

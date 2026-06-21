@@ -985,8 +985,18 @@ type BoxPlotOptions struct {
 	ShowFliers   *bool         // whether to draw outliers
 	Label        string        // series label for legend
 
+	PatchArtist *bool         // fill the box (Matplotlib patch_artist=True); default is unfilled
+	Orientation *string       // "vertical" (default) or "horizontal"
+	ShowBox     *bool         // whether to draw the box (default true)
+	ShowCaps    *bool         // whether to draw the whisker caps (default true)
+	ShowMeans   *bool         // whether to draw the mean
+	MeanLine    *bool         // draw the mean as a line across the box instead of a marker
+	MeanColor   *render.Color // mean line/marker color
+	Whis        *float64      // IQR multiplier for whiskers (default 1.5)
+	Sym         *string       // Matplotlib flier format string, e.g. "b+"; "" disables fliers
+
 	Notch              *bool       // draw a notched box using the confidence interval
-	Bootstrap          int         // accepted for Matplotlib API parity; deterministic CI fallback is used
+	Bootstrap          int         // number of bootstrap resamples for the notch CI (0 = analytic)
 	ConfidenceInterval *[2]float64 // custom median confidence interval for notches
 	CustomMedian       *float64    // override the computed median
 	WhiskerPercentiles *[2]float64 // percentile whisker range, e.g. [5, 95]
@@ -1012,8 +1022,18 @@ type BoxPlotsOptions struct {
 	FlierSize    *float64       // outlier marker size in points
 	Alpha        *float64       // alpha transparency
 	ShowFliers   *bool          // whether to draw outliers
-	ManageTicks  *bool          // whether to place x ticks at box positions
+	ManageTicks  *bool          // whether to place position ticks at box positions
 	Labels       []string       // series labels for legend
+
+	PatchArtist *bool         // fill the boxes (Matplotlib patch_artist=True); default is unfilled
+	Orientation *string       // "vertical" (default) or "horizontal"
+	ShowBox     *bool         // whether to draw the box (default true)
+	ShowCaps    *bool         // whether to draw the whisker caps (default true)
+	ShowMeans   *bool         // whether to draw the mean
+	MeanLine    *bool         // draw the mean as a line across the box instead of a marker
+	MeanColor   *render.Color // mean line/marker color
+	Whis        *float64      // IQR multiplier for whiskers (default 1.5)
+	Sym         *string       // Matplotlib flier format string, e.g. "b+"; "" disables fliers
 
 	Notch               *bool
 	Bootstrap           int
@@ -1046,7 +1066,14 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		width = *opt.Width
 	}
 
-	color := a.NextColor()
+	// Matplotlib's default boxplot is patch_artist=False: an unfilled box that
+	// does not consume the color cycle. Only fill (and default the facecolor to
+	// white) when patch_artist is requested.
+	patchArtist := opt.PatchArtist != nil && *opt.PatchArtist
+	color := render.Color{}
+	if patchArtist {
+		color = render.Color{R: 1, G: 1, B: 1, A: 1}
+	}
 	if opt.Color != nil {
 		color = *opt.Color
 	}
@@ -1059,6 +1086,11 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 	medianColor := matcolor.Tab10[1]
 	if opt.MedianColor != nil {
 		medianColor = *opt.MedianColor
+	}
+
+	meanColor := matcolor.Tab10[2]
+	if opt.MeanColor != nil {
+		meanColor = *opt.MeanColor
 	}
 
 	whiskerColor := edgeColor
@@ -1097,7 +1129,7 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		capWidth = *opt.CapWidth
 	}
 
-	flierSize := 3.5
+	flierSize := 6.0
 	if opt.FlierSize != nil {
 		flierSize = *opt.FlierSize
 	}
@@ -1111,6 +1143,20 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 	showFliers := true
 	if opt.ShowFliers != nil {
 		showFliers = *opt.ShowFliers
+	}
+	showBox := true
+	if opt.ShowBox != nil {
+		showBox = *opt.ShowBox
+	}
+	showCaps := true
+	if opt.ShowCaps != nil {
+		showCaps = *opt.ShowCaps
+	}
+	showMeans := opt.ShowMeans != nil && *opt.ShowMeans
+	meanLine := opt.MeanLine != nil && *opt.MeanLine
+	orientation := ""
+	if opt.Orientation != nil {
+		orientation = *opt.Orientation
 	}
 	notch := false
 	if opt.Notch != nil {
@@ -1132,6 +1178,23 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		flierEdgeWidth = *opt.FlierEdgeWidth
 	}
 
+	// Matplotlib's sym shorthand overrides the flier marker/color; sym="" hides
+	// fliers entirely. Structured FlierMarker/FlierColor options take precedence.
+	if opt.Sym != nil {
+		if *opt.Sym == "" {
+			showFliers = false
+		} else {
+			marker, symColor, hasMarker, hasColor := parseBoxplotSym(*opt.Sym)
+			if hasMarker && opt.FlierMarker == nil {
+				flierMarker = marker
+			}
+			if hasColor && opt.FlierColor == nil {
+				flierColor = symColor
+				flierEdgeColor = symColor
+			}
+		}
+	}
+
 	box := &BoxPlot2D{
 		Data:               data,
 		Position:           position,
@@ -1139,6 +1202,7 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		Color:              color,
 		EdgeColor:          edgeColor,
 		MedianColor:        medianColor,
+		MeanColor:          meanColor,
 		WhiskerColor:       whiskerColor,
 		CapColor:           capColor,
 		FlierColor:         flierColor,
@@ -1149,9 +1213,16 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		CapWidth:           capWidth,
 		FlierSize:          flierSize,
 		FlierEdgeWidth:     flierEdgeWidth,
+		PatchArtist:        patchArtist,
+		Orientation:        orientation,
+		ShowBox:            showBox,
+		ShowCaps:           showCaps,
 		ShowFliers:         showFliers,
+		ShowMeans:          showMeans,
+		MeanLine:           meanLine,
 		Notch:              notch,
 		Bootstrap:          opt.Bootstrap,
+		Whis:               opt.Whis,
 		ConfidenceInterval: opt.ConfidenceInterval,
 		CustomMedian:       opt.CustomMedian,
 		WhiskerPercentiles: opt.WhiskerPercentiles,
@@ -1194,6 +1265,7 @@ func (a *Axes) BoxPlots(datasets [][]float64, opts ...BoxPlotsOptions) []*BoxPlo
 			Width:              width,
 			EdgeColor:          opt.EdgeColor,
 			MedianColor:        opt.MedianColor,
+			MeanColor:          opt.MeanColor,
 			WhiskerColor:       opt.WhiskerColor,
 			CapColor:           opt.CapColor,
 			FlierColor:         opt.FlierColor,
@@ -1203,13 +1275,21 @@ func (a *Axes) BoxPlots(datasets [][]float64, opts ...BoxPlotsOptions) []*BoxPlo
 			CapWidth:           opt.CapWidth,
 			FlierSize:          opt.FlierSize,
 			Alpha:              opt.Alpha,
+			PatchArtist:        opt.PatchArtist,
+			Orientation:        opt.Orientation,
+			ShowBox:            opt.ShowBox,
+			ShowCaps:           opt.ShowCaps,
 			ShowFliers:         opt.ShowFliers,
+			ShowMeans:          opt.ShowMeans,
+			MeanLine:           opt.MeanLine,
 			Notch:              opt.Notch,
 			Bootstrap:          opt.Bootstrap,
+			Whis:               opt.Whis,
 			WhiskerPercentiles: opt.WhiskerPercentiles,
 			FlierMarker:        opt.FlierMarker,
 			FlierEdgeColor:     opt.FlierEdgeColor,
 			FlierEdgeWidth:     opt.FlierEdgeWidth,
+			Sym:                opt.Sym,
 		}
 		if i < len(opt.ConfidenceIntervals) {
 			ci := opt.ConfidenceIntervals[i]
@@ -1234,10 +1314,17 @@ func (a *Axes) BoxPlots(datasets [][]float64, opts ...BoxPlotsOptions) []*BoxPlo
 	if opt.ManageTicks != nil {
 		manageTicks = *opt.ManageTicks
 	}
-	if manageTicks && len(positions) > 0 && a.XAxis != nil {
-		// Matplotlib boxplot(..., manage_ticks=True) places x ticks at the box
-		// positions by default.
-		a.XAxis.Locator = FixedLocator{TicksList: positions}
+	if manageTicks && len(positions) > 0 {
+		// Matplotlib boxplot(..., manage_ticks=True) places the position-axis ticks
+		// at the box positions by default — the y axis for horizontal orientation.
+		horizontal := opt.Orientation != nil && normalizeViolinOrientation(*opt.Orientation) == "horizontal"
+		if horizontal {
+			if a.YAxis != nil {
+				a.YAxis.Locator = FixedLocator{TicksList: positions}
+			}
+		} else if a.XAxis != nil {
+			a.XAxis.Locator = FixedLocator{TicksList: positions}
+		}
 	}
 	return boxes
 }
@@ -1260,6 +1347,41 @@ func matplotlibBoxPlotDefaultWidth(n int, positions []float64) float64 {
 		return 0.15
 	}
 	return math.Min(0.5, math.Max(0.15, 0.15*(maxPos-minPos)))
+}
+
+// boxplotSymColors maps Matplotlib's single-letter color shorthands to RGBA.
+var boxplotSymColors = map[byte]render.Color{
+	'b': {R: 0, G: 0, B: 1, A: 1},
+	'g': {R: 0, G: 0.5, B: 0, A: 1},
+	'r': {R: 1, G: 0, B: 0, A: 1},
+	'c': {R: 0, G: 0.75, B: 0.75, A: 1},
+	'm': {R: 0.75, G: 0, B: 0.75, A: 1},
+	'y': {R: 0.75, G: 0.75, B: 0, A: 1},
+	'k': {R: 0, G: 0, B: 0, A: 1},
+	'w': {R: 1, G: 1, B: 1, A: 1},
+}
+
+// parseBoxplotSym splits a Matplotlib flier format string (e.g. "b+", "ro")
+// into a marker and color, mirroring _process_plot_format for the subset that
+// boxplot's sym shorthand uses. A leading or trailing single-letter color code
+// is recognized; the remainder is parsed as a marker via MarkerTypeFromString.
+func parseBoxplotSym(sym string) (marker MarkerType, color render.Color, hasMarker, hasColor bool) {
+	rest := sym
+	if rest != "" {
+		if c, ok := boxplotSymColors[rest[0]]; ok {
+			color, hasColor = c, true
+			rest = rest[1:]
+		} else if c, ok := boxplotSymColors[rest[len(rest)-1]]; ok {
+			color, hasColor = c, true
+			rest = rest[:len(rest)-1]
+		}
+	}
+	if rest != "" {
+		if m, ok := MarkerTypeFromString(rest); ok {
+			marker, hasMarker = m, true
+		}
+	}
+	return marker, color, hasMarker, hasColor
 }
 
 // FillToBaselinePlot creates a fill from a curve to baseline with automatic color cycling.

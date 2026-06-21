@@ -266,6 +266,9 @@ func TestAxesBoxPlotAlphaAppliesOnlyToBoxPatchLikeMatplotlib(t *testing.T) {
 		FlierEdgeWidth: 1,
 		FlierSize:      4,
 		Alpha:          alpha,
+		PatchArtist:    true,
+		ShowBox:        true,
+		ShowCaps:       true,
 		ShowFliers:     true,
 	}
 

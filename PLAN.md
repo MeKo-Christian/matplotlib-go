@@ -361,10 +361,16 @@ fast-follow items._
 **Goal:** close the per-artist configuration tail so common scientific plots
 match Matplotlib defaults, not just the happy path.
 
-- [ ] **Boxplot:** `patch_artist=False` unfilled default, orientation, and
-      `showbox`/`showcaps`/`showmeans`/`meanline`/`sym` on the high-level artist
-      (`core/boxplot.go:558`); honor `bootstrap` CI; percentile-_value_ whisker
-      semantics.
+- [x] **Boxplot:** `patch_artist=False` unfilled default (no color-cycle
+      consumption), orientation, and `showbox`/`showcaps`/`showmeans`/`meanline`/
+      `sym` on the high-level artist (`core/boxplot.go`, `core/plot.go`); honor
+      `bootstrap` CI; configurable scalar `whis` + percentile-value whisker
+      semantics (Q1/Q3-clamped per `cbook.boxplot_stats`). New `boxplot_default`
+      parity case covers the unfilled default styling; orientation/means/bootstrap
+      covered by `core/boxplot_test.go`. Caveat: `bootstrap` uses a seeded RNG
+      (Matplotlib's is unseeded, so no byte-exact parity image); `sym` parsing is
+      a minimal color+marker shorthand (structured options remain the primary
+      surface).
 - [ ] **StackPlot** `wiggle`/`weighted_wiggle`/`sym` baselines
       (`core/stat_variants.go:48`).
 - [ ] **Contour** `negative_linestyles` (default dashing), `extend`,

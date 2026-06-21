@@ -28,6 +28,7 @@ hist_basic
 hist_density
 hist_strategies
 boxplot_basic
+boxplot_default
 text_labels_strict
 title_strict
 mathtext_basic

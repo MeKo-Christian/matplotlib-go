@@ -51,10 +51,12 @@ func Plot() *core.Figure {
 	flierSize := 4.0
 	showFliers := true
 	manageTicks := false
+	patchArtist := true
 	ax.BoxPlots(datasets, core.BoxPlotsOptions{
 		Positions:    positions,
 		Width:        &boxWidth,
 		Colors:       colors,
+		PatchArtist:  &patchArtist,
 		EdgeColor:    &black,
 		MedianColor:  &black,
 		WhiskerColor: &black,

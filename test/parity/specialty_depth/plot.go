@@ -65,12 +65,14 @@ func Plot() *core.Figure {
 	median2 := 4.6
 	flierSize := 4.0
 	flierMarker := core.MarkerDiamond
+	patchArtist := true
 	boxes := boxAx.BoxPlots(
 		[][]float64{
 			{1.1, 1.8, 2.2, 2.6, 2.9, 3.1, 3.7, 6.8},
 			{2.4, 3.1, 3.7, 4.3, 4.8, 5.2, 5.9, 7.2},
 		},
 		core.BoxPlotsOptions{
+			PatchArtist:         &patchArtist,
 			Notch:               &notch,
 			WhiskerPercentiles:  &whiskers,
 			ConfidenceIntervals: [][2]float64{ci1, ci2},

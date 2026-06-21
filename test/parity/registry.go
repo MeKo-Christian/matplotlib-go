@@ -81,6 +81,7 @@ import (
 	example_basic_line_labels "github.com/cwbudde/matplotlib-go/test/parity/basic_line_labels"
 	example_boundarynorm_pcolormesh "github.com/cwbudde/matplotlib-go/test/parity/boundarynorm_pcolormesh"
 	example_boxplot_basic "github.com/cwbudde/matplotlib-go/test/parity/boxplot_basic"
+	example_boxplot_default "github.com/cwbudde/matplotlib-go/test/parity/boxplot_default"
 	example_clip_path_batch "github.com/cwbudde/matplotlib-go/test/parity/clip_path_batch"
 	example_collection_mutable_scalarmap "github.com/cwbudde/matplotlib-go/test/parity/collection_mutable_scalarmap"
 	example_colorbar_boundary_values "github.com/cwbudde/matplotlib-go/test/parity/colorbar_boundary_values"
@@ -270,6 +271,7 @@ var renderByID = map[string]func() image.Image{
 	"hist_density":                        example_hist_density.Render,
 	"hist_strategies":                     example_hist_strategies.Render,
 	"boxplot_basic":                       example_boxplot_basic.Render,
+	"boxplot_default":                     example_boxplot_default.Render,
 	"text_labels_strict":                  example_text_labels_strict.Render,
 	"title_strict":                        example_title_strict.Render,
 	"image_heatmap":                       example_image_heatmap.Render,

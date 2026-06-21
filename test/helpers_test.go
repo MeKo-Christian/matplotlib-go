@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 
@@ -67,6 +68,7 @@ func goldenWriteDir() string {
 // flag (e.g. specialty_depth was gated despite being FixtureOnly, not Optional).
 var optionalVisualGoldenIDs = map[string]bool{
 	"boxplot_basic":           true,
+	"boxplot_default":         true,
 	"specialty_depth":         true,
 	"errorbar_basic":          true,
 	"text_labels_strict":      true,
@@ -204,28 +206,71 @@ var (
 	mplErr  error
 )
 
+// Matplotlib pins these versions for every committed reference image. The AGG
+// backend links the same FreeType, so the golden/reference corpus is only
+// self-consistent when references are generated with this exact toolchain.
+// Generating with any other matplotlib/FreeType silently rewrites the PNGs with
+// different text metrics and hinting (e.g. 3.6.3/2.13.2 flips ~0.5% of pixels
+// even on a bare line plot), so the version guard below refuses to proceed.
+const (
+	pinnedMatplotlibVersion = "3.10.9"
+	pinnedFreeTypeVersion   = "2.6.1"
+)
+
+// pythonMatplotlibVersions reports the matplotlib and FreeType versions an
+// interpreter would render with, or an error if it lacks a usable matplotlib.
+func pythonMatplotlibVersions(py string) (mplVersion, freetypeVersion string, err error) {
+	const probe = "import matplotlib, matplotlib.ft2font as f; print(matplotlib.__version__); print(f.__freetype_version__)"
+	out, err := exec.Command(py, "-c", probe).Output()
+	if err != nil {
+		return "", "", err
+	}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	if len(lines) < 2 {
+		return "", "", fmt.Errorf("unexpected version probe output: %q", string(out))
+	}
+	return strings.TrimSpace(lines[0]), strings.TrimSpace(lines[1]), nil
+}
+
+// matplotlibPythonPath finds an interpreter whose matplotlib/FreeType match the
+// pinned reference toolchain. It prefers the PATH python3 over the system
+// /usr/bin/python3 (which on some hosts ships an older matplotlib) and, crucially,
+// refuses to return a version-mismatched interpreter — a wrong toolchain would
+// corrupt every regenerated reference image rather than fail loudly.
 func matplotlibPythonPath() (string, error) {
 	candidates := []string{}
 	if env := os.Getenv("MATPLOTLIB_GO_PYTHON"); env != "" {
 		candidates = append(candidates, env)
 	}
-	candidates = append(candidates, "/usr/bin/python3")
 	if pyPath, err := exec.LookPath("python3"); err == nil {
 		candidates = append(candidates, pyPath)
 	}
+	candidates = append(candidates, "/usr/bin/python3")
 
 	seen := map[string]bool{}
+	var report []string
 	for _, candidate := range candidates {
 		if candidate == "" || seen[candidate] {
 			continue
 		}
 		seen[candidate] = true
-		cmd := exec.Command(candidate, "-c", "import matplotlib.ft2font")
-		if err := cmd.Run(); err == nil {
+		mplVer, ftVer, err := pythonMatplotlibVersions(candidate)
+		if err != nil {
+			report = append(report, fmt.Sprintf("  %s: no usable matplotlib (%v)", candidate, err))
+			continue
+		}
+		if mplVer == pinnedMatplotlibVersion && ftVer == pinnedFreeTypeVersion {
 			return candidate, nil
 		}
+		report = append(report, fmt.Sprintf("  %s: matplotlib %s / FreeType %s", candidate, mplVer, ftVer))
 	}
-	return "", fmt.Errorf("no Python interpreter with matplotlib found; set MATPLOTLIB_GO_PYTHON")
+	return "", fmt.Errorf(
+		"no Python interpreter with the pinned matplotlib %s / FreeType %s found; "+
+			"generating references with a different toolchain corrupts testdata/matplotlib_ref/*.png.\n"+
+			"Checked:\n%s\n"+
+			"Set MATPLOTLIB_GO_PYTHON to an interpreter with the pinned versions.",
+		pinnedMatplotlibVersion, pinnedFreeTypeVersion, strings.Join(report, "\n"),
+	)
 }
 
 // ensureRefs regenerates reference images when -update-matplotlib is set,

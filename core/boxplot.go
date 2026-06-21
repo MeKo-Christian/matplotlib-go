@@ -2,6 +2,7 @@ package core
 
 import (
 	"math"
+	"math/rand"
 	"sort"
 	"strconv"
 
@@ -28,10 +29,18 @@ type BoxPlot2D struct {
 	CapWidth           float64 // cap length in data units
 	FlierSize          float64 // outlier marker size in points
 	FlierEdgeWidth     float64
-	Alpha              float64 // alpha transparency (0-1, 0 means 1.0)
-	ShowFliers         bool    // whether to draw outliers
-	Notch              bool    // whether to draw a notched median confidence interval
-	Bootstrap          int     // stored for API parity; deterministic CI fallback is used
+	Alpha              float64      // alpha transparency (0-1, 0 means 1.0)
+	PatchArtist        bool         // when true, fill the box (Matplotlib patch_artist=True); default is unfilled
+	Orientation        string       // "vertical" (default) or "horizontal"
+	ShowBox            bool         // whether to draw the box (Matplotlib showbox)
+	ShowCaps           bool         // whether to draw the whisker caps (Matplotlib showcaps)
+	ShowFliers         bool         // whether to draw outliers
+	ShowMeans          bool         // whether to draw the mean (Matplotlib showmeans)
+	MeanLine           bool         // draw the mean as a line across the box instead of a marker
+	MeanColor          render.Color // mean line/marker color
+	Notch              bool         // whether to draw a notched median confidence interval
+	Bootstrap          int          // number of bootstrap resamples for the notch CI (0 = analytic fallback)
+	Whis               *float64     // IQR multiplier for the whiskers (nil = Matplotlib default 1.5)
 	ConfidenceInterval *[2]float64
 	CustomMedian       *float64
 	WhiskerPercentiles *[2]float64
@@ -50,6 +59,7 @@ type boxPlotStats struct {
 	q1           float64
 	median       float64
 	q3           float64
+	mean         float64
 	lowerWhisker float64
 	upperWhisker float64
 	ciLow        float64
@@ -378,18 +388,19 @@ func (b *BoxPlot2D) compute() {
 	b.hasData = true
 }
 
-func computeBoxPlotStats(sorted []float64) boxPlotStats {
+func computeBoxPlotStats(sorted []float64, whis float64) boxPlotStats {
 	stats := boxPlotStats{
 		min:    sorted[0],
 		max:    sorted[len(sorted)-1],
 		q1:     percentileSorted(sorted, 25),
 		median: percentileSorted(sorted, 50),
 		q3:     percentileSorted(sorted, 75),
+		mean:   meanSorted(sorted),
 	}
 
 	iqr := stats.q3 - stats.q1
-	lowerFence := stats.q1 - 1.5*iqr
-	upperFence := stats.q3 + 1.5*iqr
+	lowerFence := stats.q1 - whis*iqr
+	upperFence := stats.q3 + whis*iqr
 
 	stats.lowerWhisker = stats.q1
 	for _, v := range sorted {
@@ -416,8 +427,23 @@ func computeBoxPlotStats(sorted []float64) boxPlotStats {
 	return stats
 }
 
+func meanSorted(sorted []float64) float64 {
+	if len(sorted) == 0 {
+		return math.NaN()
+	}
+	sum := 0.0
+	for _, v := range sorted {
+		sum += v
+	}
+	return sum / float64(len(sorted))
+}
+
 func (b *BoxPlot2D) computeBoxPlotStats(sorted []float64) boxPlotStats {
-	stats := computeBoxPlotStats(sorted)
+	whis := 1.5
+	if b.Whis != nil && isFinite(*b.Whis) && *b.Whis > 0 {
+		whis = *b.Whis
+	}
+	stats := computeBoxPlotStats(sorted, whis)
 	if b.CustomMedian != nil && isFinite(*b.CustomMedian) {
 		stats.median = *b.CustomMedian
 	}
@@ -428,17 +454,28 @@ func (b *BoxPlot2D) computeBoxPlotStats(sorted []float64) boxPlotStats {
 		hi = math.Max(0, math.Min(100, hi))
 		lowerFence := percentileSorted(sorted, lo)
 		upperFence := percentileSorted(sorted, hi)
+		// Matplotlib clamps the whisker to the quartile when the nearest inlier
+		// lands inside the box: whislo = q1 if min(inliers) > q1, else min(inliers)
+		// (symmetric for the high side). See cbook.boxplot_stats.
 		stats.lowerWhisker = stats.q1
 		for _, v := range sorted {
 			if v >= lowerFence {
-				stats.lowerWhisker = v
+				if v > stats.q1 {
+					stats.lowerWhisker = stats.q1
+				} else {
+					stats.lowerWhisker = v
+				}
 				break
 			}
 		}
 		stats.upperWhisker = stats.q3
 		for i := len(sorted) - 1; i >= 0; i-- {
 			if sorted[i] <= upperFence {
-				stats.upperWhisker = sorted[i]
+				if sorted[i] < stats.q3 {
+					stats.upperWhisker = stats.q3
+				} else {
+					stats.upperWhisker = sorted[i]
+				}
 				break
 			}
 		}
@@ -449,7 +486,11 @@ func (b *BoxPlot2D) computeBoxPlotStats(sorted []float64) boxPlotStats {
 			}
 		}
 	}
-	stats.ciLow, stats.ciHigh = boxPlotMedianCI(sorted, stats)
+	if b.Bootstrap > 0 {
+		stats.ciLow, stats.ciHigh = bootstrapMedianCI(sorted, b.Bootstrap)
+	} else {
+		stats.ciLow, stats.ciHigh = boxPlotMedianCI(sorted, stats)
+	}
 	if b.ConfidenceInterval != nil && isFinite(b.ConfidenceInterval[0]) && isFinite(b.ConfidenceInterval[1]) {
 		stats.ciLow = math.Min(b.ConfidenceInterval[0], b.ConfidenceInterval[1])
 		stats.ciHigh = math.Max(b.ConfidenceInterval[0], b.ConfidenceInterval[1])
@@ -464,6 +505,34 @@ func boxPlotMedianCI(sorted []float64, stats boxPlotStats) (float64, float64) {
 	}
 	delta := 1.57 * iqr / math.Sqrt(float64(len(sorted)))
 	return stats.median - delta, stats.median + delta
+}
+
+// bootstrapMedianCI mirrors Matplotlib's cbook._bootstrap_median: it draws n
+// bootstrap resamples (with replacement) of the data, takes each resample's
+// median, and returns the 2.5/97.5 percentiles of those medians as the notch
+// confidence interval. Matplotlib seeds np.random globally (so its result is
+// non-deterministic); we seed a local RNG with the sample size for reproducible
+// output that exercises the same algorithm.
+func bootstrapMedianCI(sorted []float64, n int) (float64, float64) {
+	m := len(sorted)
+	if m == 0 {
+		return math.NaN(), math.NaN()
+	}
+	if m == 1 || n <= 0 {
+		return sorted[0], sorted[0]
+	}
+	rng := rand.New(rand.NewSource(int64(m)))
+	medians := make([]float64, n)
+	resample := make([]float64, m)
+	for i := 0; i < n; i++ {
+		for j := 0; j < m; j++ {
+			resample[j] = sorted[rng.Intn(m)]
+		}
+		sort.Float64s(resample)
+		medians[i] = percentileSorted(resample, 50)
+	}
+	sort.Float64s(medians)
+	return percentileSorted(medians, 2.5), percentileSorted(medians, 97.5)
 }
 
 func percentileSorted(sorted []float64, p float64) float64 {
@@ -530,7 +599,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 	flierSize := b.FlierSize
 	if flierSize <= 0 {
-		flierSize = 3.5
+		flierSize = 6
 	}
 	flierEdgeWidth := b.FlierEdgeWidth
 	if flierEdgeWidth <= 0 {
@@ -544,9 +613,13 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 		alpha = 1.0
 	}
 
+	orient := normalizeViolinOrientation(b.Orientation)
+	pt := func(posAxis, valAxis float64) geom.Pt { return violinPoint(posAxis, valAxis, orient) }
+
 	boxColor := applyAlpha(b.Color, alpha)
 	edgeColor := applyAlpha(b.EdgeColor, alpha)
 	medianColor := b.MedianColor
+	meanColor := b.MeanColor
 	whiskerColor := b.WhiskerColor
 	capColor := b.CapColor
 	flierColor := b.FlierColor
@@ -555,19 +628,25 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 	xLeft := b.Position - boxWidth/2
 	xRight := b.Position + boxWidth/2
 
-	boxPath := b.boxPath(ctx, xLeft, xRight)
-	if len(boxPath.C) > 0 {
-		paint := render.Paint{
-			Fill:     boxColor,
-			LineJoin: render.JoinMiter,
-			LineCap:  render.CapButt,
-			Snap:     render.SnapAuto,
+	if b.ShowBox {
+		boxPath := b.boxPath(ctx, xLeft, xRight, orient)
+		if len(boxPath.C) > 0 {
+			paint := render.Paint{
+				LineJoin: render.JoinMiter,
+				LineCap:  render.CapButt,
+				Snap:     render.SnapAuto,
+			}
+			// Matplotlib only fills the box when patch_artist=True; the default
+			// boxplot draws an unfilled Line2D outline.
+			if b.PatchArtist {
+				paint.Fill = boxColor
+			}
+			if edgeWidth > 0 && edgeColor.A > 0 {
+				paint.Stroke = edgeColor
+				paint.LineWidth = edgeWidth
+			}
+			r.Path(boxPath, &paint)
 		}
-		if edgeWidth > 0 && edgeColor.A > 0 {
-			paint.Stroke = edgeColor
-			paint.LineWidth = edgeWidth
-		}
-		r.Path(boxPath, &paint)
 	}
 
 	if whiskerWidth > 0 && whiskerColor.A > 0 {
@@ -578,20 +657,22 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 			LineCap:   render.CapButt,
 			Snap:      render.SnapAuto,
 		}
-		r.Path(linePath(ctx, geom.Pt{X: b.Position, Y: b.stats.lowerWhisker}, geom.Pt{X: b.Position, Y: b.stats.q1}), &whiskerPaint)
-		r.Path(linePath(ctx, geom.Pt{X: b.Position, Y: b.stats.q3}, geom.Pt{X: b.Position, Y: b.stats.upperWhisker}), &whiskerPaint)
+		r.Path(linePath(ctx, pt(b.Position, b.stats.lowerWhisker), pt(b.Position, b.stats.q1)), &whiskerPaint)
+		r.Path(linePath(ctx, pt(b.Position, b.stats.q3), pt(b.Position, b.stats.upperWhisker)), &whiskerPaint)
 
-		capPaint := render.Paint{
-			Stroke:    capColor,
-			LineWidth: whiskerWidth,
-			LineJoin:  render.JoinMiter,
-			LineCap:   render.CapButt,
-			Snap:      render.SnapAuto,
+		if b.ShowCaps {
+			capPaint := render.Paint{
+				Stroke:    capColor,
+				LineWidth: whiskerWidth,
+				LineJoin:  render.JoinMiter,
+				LineCap:   render.CapButt,
+				Snap:      render.SnapAuto,
+			}
+			capLeft := b.Position - capWidth/2
+			capRight := b.Position + capWidth/2
+			r.Path(linePath(ctx, pt(capLeft, b.stats.lowerWhisker), pt(capRight, b.stats.lowerWhisker)), &capPaint)
+			r.Path(linePath(ctx, pt(capLeft, b.stats.upperWhisker), pt(capRight, b.stats.upperWhisker)), &capPaint)
 		}
-		capLeft := b.Position - capWidth/2
-		capRight := b.Position + capWidth/2
-		r.Path(linePath(ctx, geom.Pt{X: capLeft, Y: b.stats.lowerWhisker}, geom.Pt{X: capRight, Y: b.stats.lowerWhisker}), &capPaint)
-		r.Path(linePath(ctx, geom.Pt{X: capLeft, Y: b.stats.upperWhisker}, geom.Pt{X: capRight, Y: b.stats.upperWhisker}), &capPaint)
 	}
 
 	if medianWidth > 0 && medianColor.A > 0 {
@@ -608,7 +689,33 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 			medianLeft = b.Position - notchInset
 			medianRight = b.Position + notchInset
 		}
-		r.Path(linePath(ctx, geom.Pt{X: medianLeft, Y: b.stats.median}, geom.Pt{X: medianRight, Y: b.stats.median}), &medianPaint)
+		r.Path(linePath(ctx, pt(medianLeft, b.stats.median), pt(medianRight, b.stats.median)), &medianPaint)
+	}
+
+	if b.ShowMeans && isFinite(b.stats.mean) && meanColor.A > 0 {
+		if b.MeanLine {
+			meanPaint := render.Paint{
+				Stroke:    meanColor,
+				LineWidth: medianWidth,
+				LineJoin:  render.JoinMiter,
+				LineCap:   render.CapButt,
+				Snap:      render.SnapAuto,
+			}
+			r.Path(linePath(ctx, pt(xLeft, b.stats.mean), pt(xRight, b.stats.mean)), &meanPaint)
+		} else {
+			meanPaint := render.Paint{
+				Fill:      meanColor,
+				Stroke:    meanColor,
+				LineWidth: flierEdgeWidth,
+				LineJoin:  render.JoinRound,
+				LineCap:   render.CapRound,
+				Snap:      render.SnapAuto,
+			}
+			scatter := Scatter2D{Marker: MarkerTriangle}
+			sizePx := pointsToPixels(ctx.RC, flierSize)
+			center := ctx.DataToPixel.Apply(pt(b.Position, b.stats.mean))
+			r.Path(scaleAndTranslatePath(scatter.markerPrototypePath(), sizePx, center), &meanPaint)
+		}
 	}
 
 	if b.ShowFliers {
@@ -630,31 +737,40 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 		scatter := Scatter2D{Marker: marker}
 		flierSizePx := pointsToPixels(ctx.RC, flierSize)
 		for _, v := range b.stats.outliers {
-			pt := ctx.DataToPixel.Apply(geom.Pt{X: b.Position, Y: v})
-			r.Path(scaleAndTranslatePath(scatter.markerPrototypePath(), flierSizePx, pt), &flierPaint)
+			center := ctx.DataToPixel.Apply(pt(b.Position, v))
+			r.Path(scaleAndTranslatePath(scatter.markerPrototypePath(), flierSizePx, center), &flierPaint)
 		}
 	}
 }
 
-func (b *BoxPlot2D) boxPath(ctx *DrawContext, xLeft, xRight float64) geom.Path {
+func (b *BoxPlot2D) boxPath(ctx *DrawContext, xLeft, xRight float64, orient string) geom.Path {
 	if !b.Notch {
-		return rectPath(ctx, geom.Pt{X: xLeft, Y: b.stats.q1}, geom.Pt{X: xRight, Y: b.stats.q3})
+		if orient != "horizontal" {
+			return rectPath(ctx, geom.Pt{X: xLeft, Y: b.stats.q1}, geom.Pt{X: xRight, Y: b.stats.q3})
+		}
+		points := []geom.Pt{
+			violinPoint(xLeft, b.stats.q1, orient),
+			violinPoint(xRight, b.stats.q1, orient),
+			violinPoint(xRight, b.stats.q3, orient),
+			violinPoint(xLeft, b.stats.q3, orient),
+		}
+		return polygonDisplayPath(ctx, points, true)
 	}
 	xMid := b.Position
 	notchInset := (xRight - xLeft) * 0.25
 	ciLow := math.Max(b.stats.q1, math.Min(b.stats.q3, b.stats.ciLow))
 	ciHigh := math.Max(b.stats.q1, math.Min(b.stats.q3, b.stats.ciHigh))
 	points := []geom.Pt{
-		{X: xLeft, Y: b.stats.q1},
-		{X: xRight, Y: b.stats.q1},
-		{X: xRight, Y: ciLow},
-		{X: xMid + notchInset, Y: b.stats.median},
-		{X: xRight, Y: ciHigh},
-		{X: xRight, Y: b.stats.q3},
-		{X: xLeft, Y: b.stats.q3},
-		{X: xLeft, Y: ciHigh},
-		{X: xMid - notchInset, Y: b.stats.median},
-		{X: xLeft, Y: ciLow},
+		violinPoint(xLeft, b.stats.q1, orient),
+		violinPoint(xRight, b.stats.q1, orient),
+		violinPoint(xRight, ciLow, orient),
+		violinPoint(xMid+notchInset, b.stats.median, orient),
+		violinPoint(xRight, ciHigh, orient),
+		violinPoint(xRight, b.stats.q3, orient),
+		violinPoint(xLeft, b.stats.q3, orient),
+		violinPoint(xLeft, ciHigh, orient),
+		violinPoint(xMid-notchInset, b.stats.median, orient),
+		violinPoint(xLeft, ciLow, orient),
 	}
 	return polygonDisplayPath(ctx, points, true)
 }
@@ -764,6 +880,12 @@ func (b *BoxPlot2D) Bounds(_ *DrawContext) geom.Rect {
 	capWidth = math.Abs(capWidth)
 	halfSpan := math.Max(boxWidth, capWidth) / 2
 
+	if normalizeViolinOrientation(b.Orientation) == "horizontal" {
+		return geom.Rect{
+			Min: geom.Pt{X: b.stats.min, Y: b.Position - halfSpan},
+			Max: geom.Pt{X: b.stats.max, Y: b.Position + halfSpan},
+		}
+	}
 	return geom.Rect{
 		Min: geom.Pt{X: b.Position - halfSpan, Y: b.stats.min},
 		Max: geom.Pt{X: b.Position + halfSpan, Y: b.stats.max},
