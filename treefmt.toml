@@ -25,6 +25,10 @@ includes = ["*.html", "*.css", "*.yaml", "*.yml", "*.js", "*.json", "*.md"]
 excludes = [
   ".release-please-manifest.json",
   "docs/matplotlib-migration-notes.md",
+  # Generated from MatplotlibParityStatusMarkdown (cmd/paritystatusdoc);
+  # prettier's table-column alignment fights the generator output and
+  # breaks TestMatplotlibParityStatusDocIsCurrent.
+  "docs/matplotlib-parity-status.md",
 ]
 
 ### Go
