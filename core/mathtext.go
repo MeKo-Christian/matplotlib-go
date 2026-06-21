@@ -3,6 +3,7 @@ package core
 import (
 	"math"
 	"strings"
+	"unicode"
 
 	mt "github.com/cwbudde/mathtext"
 	"github.com/cwbudde/matplotlib-go/geom"
@@ -82,7 +83,30 @@ func (m mathTextMeasurer) GlyphRun(text string, size float64, fontKey string) ([
 			KernToPrev: gm.KernToPrev,
 		}
 	}
+	applyMatplotlibDecimalKern(out, []rune(text), size, m.DPI())
 	return out, true
+}
+
+func applyMatplotlibDecimalKern(infos []mt.GlyphInfo, runes []rune, size, dpi float64) {
+	if len(infos) != len(runes) || len(infos) < 3 {
+		return
+	}
+	if dpi <= 0 {
+		dpi = 100
+	}
+	// Matplotlib's math parser compacts decimal literals: in "1.2", the digit
+	// after the decimal point is shifted left by 0.075 pt at 72 dpi, scaled to
+	// the expression DPI. This matches MathTextParser("path") glyph positions
+	// for numeric mantissas used by ScalarFormatter.
+	adjust := math.Round(size*dpi/100.0*0.075*4.0) / 4.0
+	if adjust == 0 {
+		return
+	}
+	for i := 2; i < len(runes); i++ {
+		if runes[i-1] == '.' && unicode.IsDigit(runes[i-2]) && unicode.IsDigit(runes[i]) {
+			infos[i].KernToPrev -= adjust
+		}
+	}
 }
 
 // mathLayoutImageMetrics computes matplotlib's RasterParse (get_text_width_height_descent)
