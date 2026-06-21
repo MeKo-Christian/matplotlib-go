@@ -13,7 +13,7 @@ require (
 	codeberg.org/go-fonts/dejavu v0.4.0
 	gioui.org v0.10.0
 	github.com/cwbudde/agg_go v0.3.1
-	github.com/cwbudde/mathtext v0.2.0
+	github.com/cwbudde/mathtext v0.3.0
 	golang.org/x/net v0.56.0
 	golang.org/x/text v0.38.0
 )
@@ -35,5 +35,3 @@ require (
 	golang.org/x/sys v0.46.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
-
-replace github.com/cwbudde/mathtext => /mnt/projekte/Code/mathtext

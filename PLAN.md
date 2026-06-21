@@ -317,22 +317,40 @@ a few non-Phase-7 reference-compare rows.)
 **Goal:** raise mathtext from ~13% symbol coverage to real-world usability and
 fix text fallback.
 
-- [ ] **Expand the `tex2uni` symbol table** toward the full 632 entries
-      (arrows, relations, binary ops, `\cdots`/`\vdots`/`\ddots`, `\var*` Greek)
-      (`mathtext .../normalize_tables.go:50`).
-- [ ] **Math alphabets** `\mathbb \mathcal \mathfrak \mathscr \boldsymbol \bm`
-      mapped to the Unicode Mathematical Alphanumeric block.
+The **core completeness wave** (symbols, alphabets, per-glyph fallback, coverage
+test) is **done** in `github.com/cwbudde/mathtext v0.3.0` (no `replace`); the
+accent overhaul and the `Text(bbox=…)` bridge remain as a fast-follow.
+
+- [x] **Expand the `tex2uni` symbol table** to the full 632 entries (arrows,
+      relations, binary ops, `\cdots`/`\vdots`/`\ddots`, `\var*` Greek). The
+      complete matplotlib table is generated into `mathtext/tex_tables.go` and
+      consulted as a final fallback in both the layout parser
+      (`parser.go:parseCommandNode`) and the plain-text normalizer
+      (`normalize.go:parseCommand`), so existing hand-tuned maps still win; the
+      binary-operator/relation/arrow classes (`tex_spacing.go`) drive operator
+      spacing.
+- [x] **Math alphabets** `\mathbb \mathcal \mathfrak \mathscr \boldsymbol \bm`
+      mapped to the Unicode Mathematical Alphanumeric block with the
+      Letterlike-Symbols reserved holes (`mathtext/alphabets.go`).
 - [ ] **Accent model:** centered separate-glyph accents over the nucleus;
       add `\widehat \widetilde \overbrace \underbrace \overline`-as-rule
-      `\stackrel \substack \overset \underset \not`.
-- [ ] **Per-glyph multi-font fallback** — walk the family list per missing glyph
-      instead of one font per family (`render/font_manager.go:757`); no tofu.
+      `\stackrel \substack \overset \underset \not`. _(deferred fast-follow)_
+- [x] **Per-glyph multi-font fallback** — `render/text_fallback.go`
+      `ResolveTextRuns` walks the requested family list, then generics, then
+      `STIXGeneral` per missing glyph, so Mathematical-Alphanumeric/symbol
+      glyphs DejaVu lacks resolve to STIX instead of tofu.
 - [ ] **Bridge `Text(bbox=boxstyle=…)`** to the existing `FancyBboxPatch`
       styles (sawtooth/arrow/circle) (`core/text_bbox.go`, `patch_fancybbox.go`).
-- [ ] Track mathtext coverage with a symbol-table parity test.
+      _(deferred fast-follow)_
+- [x] Track mathtext coverage with a symbol-table parity test
+      (`mathtext/coverage_test.go` against the vendored
+      `testdata/tex2uni_symbols.json`; currently 100%).
 
 **Exit criterion:** common Matplotlib labels render without literal-echo;
-symbol coverage is measured and reported.
+symbol coverage is measured and reported. _Status: met for the core wave —
+632/632 symbols + the six math alphabets resolve to glyphs; coverage is asserted
+≥95% (100% today). Accents and the bbox→FancyBboxPatch bridge are the remaining
+fast-follow items._
 
 ## Phase 9: Plot, Colormap & Norm Configuration Breadth
 
