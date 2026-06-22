@@ -72,11 +72,49 @@ func matplotlibImageDrawRect(dst geom.Rect) geom.Rect {
 }
 
 func (i *Image2D) rasterize() (render.Image, bool) {
+	if i != nil && i.rgba != nil {
+		return i.rasterizeRGBA()
+	}
 	return i.rasterizeToSize(0, 0)
 }
 
+// rasterizeRGBA wraps pre-colored RGBA pixels for the renderer, applying the
+// origin flip and per-image alpha. The backend handles any resampling to the
+// destination rect, so true-color images skip the scalar data-stage prefilter.
+func (i *Image2D) rasterizeRGBA() (render.Image, bool) {
+	if i == nil || i.rgba == nil {
+		return nil, false
+	}
+	b := i.rgba.Bounds()
+	if b.Dx() <= 0 || b.Dy() <= 0 {
+		return nil, false
+	}
+	out := i.rgba
+	if i.Origin == ImageOriginLower {
+		// Bitmap row 0 is drawn at the top edge; origin 'lower' wants array row
+		// 0 at the bottom, so flip vertically (mirrors the scalar pixelY flip).
+		out = flipRGBAVertical(i.rgba)
+	}
+	data := render.NewImageData(out)
+	data.SetInterpolation(i.Interpolation)
+	data.SetAlpha(clampOneToOne(i.Alpha))
+	return data, true
+}
+
+func flipRGBAVertical(src *image.RGBA) *image.RGBA {
+	b := src.Bounds()
+	w, h := b.Dx(), b.Dy()
+	dst := image.NewRGBA(image.Rect(0, 0, w, h))
+	for y := range h {
+		for x := range w {
+			dst.SetRGBA(x, h-1-y, src.RGBAAt(b.Min.X+x, b.Min.Y+y))
+		}
+	}
+	return dst
+}
+
 func (i *Image2D) rasterizeForRect(dst geom.Rect) (render.Image, bool) {
-	if i == nil || i.AngleDeg != 0 {
+	if i == nil || i.rgba != nil || i.AngleDeg != 0 {
 		return i.rasterize()
 	}
 	rows, cols := scalarImageDimensions(i.Data)
@@ -156,7 +194,9 @@ func (i *Image2D) rasterizeToSize(targetWidth, targetHeight int) (render.Image, 
 }
 
 func (i *Image2D) rasterizeTransformed(ctx *DrawContext, anchor geom.Pt, angle float64) (render.Image, geom.Rect, bool) {
-	if i == nil || ctx == nil {
+	if i == nil || ctx == nil || i.rgba != nil {
+		// True-color images carry no scalar Data to resample here; let Draw fall
+		// back to the renderer's ImageTransformer using the wrapped bitmap.
 		return nil, geom.Rect{}, false
 	}
 	rows, cols := scalarImageDimensions(i.Data)

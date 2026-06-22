@@ -150,7 +150,7 @@ var demoBreadthGaps = []DemoBreadthGap{
 		Topic:       "image",
 		Title:       "Image Interpolation, Alpha, Matshow, and Spy",
 		Priority:    DemoBreadthHigh,
-		CatalogIDs:  []string{"image_heatmap", "imshow_clipped", "imshow_transformed", "imshow_bilinear", "imshow_bicubic", "imshow_interpolation_matrix", "image_alpha", "matshow_basic", "spy_marker", "spy_image", "arrays_showcase", "image_variants_gallery"},
+		CatalogIDs:  []string{"image_heatmap", "imshow_clipped", "imshow_rgb", "imshow_transformed", "imshow_bilinear", "imshow_bicubic", "imshow_interpolation_matrix", "image_alpha", "matshow_basic", "spy_marker", "spy_image", "arrays_showcase", "image_variants_gallery"},
 		ShowcaseIDs: []string{"image_heatmap", "arrays_showcase", "image_variants_gallery"},
 		WebDemoIDs:  []string{"matrix"},
 		TargetFeatures: []string{

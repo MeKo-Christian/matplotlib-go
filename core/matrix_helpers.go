@@ -1,9 +1,11 @@
 package core
 
 import (
+	"image"
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -229,20 +231,171 @@ func (a *Axes) ImShow(data [][]float64, opts ...ImShowOptions) *Image2D {
 		return nil
 	}
 
-	if cfg.Aspect != "" {
-		_ = a.SetAspect(cfg.Aspect)
+	a.finishImshow(xMin, xMax, yMin, yMax, cfg.Aspect, cfg.Origin, cfg.Extent != nil)
+	return img
+}
+
+// finishImshow applies the aspect, axis limits, and origin-driven y-inversion
+// shared by ImShow, ImShowRGB, and ImShowImage. When extentGiven is true the
+// caller supplied an explicit extent, so the automatic origin y-flip is skipped.
+func (a *Axes) finishImshow(xMin, xMax, yMin, yMax float64, aspect string, origin ImageOrigin, extentGiven bool) {
+	if aspect != "" {
+		_ = a.SetAspect(aspect)
 	}
 	a.SetXLim(xMin, xMax)
 	a.SetYLim(yMin, yMax)
-	if cfg.Extent == nil {
-		if cfg.Origin == ImageOriginUpper && !a.YInverted() {
-			a.InvertY()
-		}
-		if cfg.Origin == ImageOriginLower && a.YInverted() {
-			a.InvertY()
-		}
+	if extentGiven {
+		return
 	}
+	if origin == ImageOriginUpper && !a.YInverted() {
+		a.InvertY()
+	}
+	if origin == ImageOriginLower && a.YInverted() {
+		a.InvertY()
+	}
+}
+
+// ImShowRGBOptions configures Axes.ImShowRGB and Axes.ImShowImage.
+//
+// Unlike ImShowOptions it has no Colormap/Norm/VMin/VMax: the input is already
+// colored, so matplotlib bypasses the scalar-mapping pipeline for RGB/RGBA
+// images (third_party/matplotlib/lib/matplotlib/image.py).
+type ImShowRGBOptions struct {
+	// Alpha multiplies the image's per-pixel alpha in [0,1].
+	Alpha  *float64
+	Aspect string
+	Origin ImageOrigin
+	// Extent overrides the centered-pixel default with explicit
+	// (left, right, bottom, top) data coordinates.
+	Extent *[4]float64
+	// Interpolation selects the resampling filter. Nil uses Matplotlib's rc
+	// default "antialiased"; a pointer to "" defers to the renderer default.
+	Interpolation *string
+	Label         string
+}
+
+func resolveImShowRGBOptions(opts []ImShowRGBOptions) ImShowRGBOptions {
+	defaultInterpolation := "antialiased"
+	cfg := ImShowRGBOptions{
+		Aspect:        "equal",
+		Origin:        ImageOriginUpper,
+		Interpolation: &defaultInterpolation,
+	}
+	if len(opts) == 0 {
+		return cfg
+	}
+	opt := opts[0]
+	if opt.Alpha != nil {
+		cfg.Alpha = opt.Alpha
+	}
+	if opt.Aspect != "" {
+		cfg.Aspect = opt.Aspect
+	}
+	cfg.Origin = opt.Origin
+	cfg.Extent = opt.Extent
+	if opt.Interpolation != nil {
+		cfg.Interpolation = opt.Interpolation
+	}
+	if opt.Label != "" {
+		cfg.Label = opt.Label
+	}
+	return cfg
+}
+
+// ImShowRGB renders a pre-colored (M,N,3) or (M,N,4) float array (channel
+// values in [0,1]) as a true-color image, bypassing the colormap+norm path.
+// Out-of-range channel values are clipped to [0,1] (with a warning), mirroring
+// matplotlib's imshow. A (M,N,1) array is squeezed and routed to the scalar
+// ImShow colormap path.
+func (a *Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) *Image2D {
+	if a == nil {
+		return nil
+	}
+	cfg := resolveImShowRGBOptions(opts)
+
+	rgba, kind, err := normalizeRGBArray(data)
+	if err != nil {
+		diag.Warnf("ImShowRGB: %v; skipping", err)
+		return nil
+	}
+	if kind == rgbArrayScalar {
+		return a.ImShow(squeezeScalarArray(data), ImShowOptions{
+			Alpha:         cfg.Alpha,
+			Aspect:        cfg.Aspect,
+			Origin:        cfg.Origin,
+			Extent:        cfg.Extent,
+			Interpolation: cfg.Interpolation,
+			Label:         cfg.Label,
+		})
+	}
+	return a.imshowRGBA(rgba, cfg)
+}
+
+// ImShowImage renders a native Go image (e.g. the output of core.ImRead) as a
+// true-color image, bypassing the colormap+norm path. The image's row 0 is
+// placed at the top for the default ImageOriginUpper.
+func (a *Axes) ImShowImage(img image.Image, opts ...ImShowRGBOptions) *Image2D {
+	if a == nil || img == nil {
+		return nil
+	}
+	rgba := toRGBA(img)
+	if rgba == nil || rgba.Bounds().Dx() == 0 || rgba.Bounds().Dy() == 0 {
+		return nil
+	}
+	return a.imshowRGBA(rgba, resolveImShowRGBOptions(opts))
+}
+
+// imshowRGBA is the shared tail for ImShowRGB/ImShowImage: it sets the extent,
+// builds the true-color Image2D, and applies aspect/limits/origin.
+func (a *Axes) imshowRGBA(rgba *image.RGBA, cfg ImShowRGBOptions) *Image2D {
+	b := rgba.Bounds()
+	cols := b.Dx()
+	rows := b.Dy()
+	if cols == 0 || rows == 0 {
+		return nil
+	}
+
+	xMin := -0.5
+	xMax := float64(cols) - 0.5
+	yMin := -0.5
+	yMax := float64(rows) - 0.5
+	if cfg.Extent != nil {
+		xMin = cfg.Extent[0]
+		xMax = cfg.Extent[1]
+		yMin = cfg.Extent[2]
+		yMax = cfg.Extent[3]
+	}
+
+	img := a.imageRGBA(rgba, ImageOptions{
+		Alpha:         cfg.Alpha,
+		XMin:          &xMin,
+		XMax:          &xMax,
+		YMin:          &yMin,
+		YMax:          &yMax,
+		Origin:        cfg.Origin,
+		Label:         cfg.Label,
+		Interpolation: cfg.Interpolation,
+	})
+	if img == nil {
+		return nil
+	}
+	a.finishImshow(xMin, xMax, yMin, yMax, cfg.Aspect, cfg.Origin, cfg.Extent != nil)
 	return img
+}
+
+// squeezeScalarArray collapses an (M,N,1) array to (M,N) for the scalar path.
+func squeezeScalarArray(data [][][]float64) [][]float64 {
+	out := make([][]float64, len(data))
+	for y, row := range data {
+		flat := make([]float64, len(row))
+		for x, px := range row {
+			if len(px) > 0 {
+				flat[x] = px[0]
+			}
+		}
+		out[y] = flat
+	}
+	return out
 }
 
 // Spy visualizes the sparsity pattern of a matrix.

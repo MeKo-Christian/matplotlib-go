@@ -243,8 +243,8 @@ func TestTransformedImageInterpolationKernelAlignmentIsDocumented(t *testing.T) 
 func TestTransformedImageTransformAndExtentAlignmentIsDocumented(t *testing.T) {
 	sourceRequirements := map[string][]string{
 		filepath.Join("..", "core", "matrix_helpers.go"): {
-			"if cfg.Extent == nil {",
-			"cfg.Origin == ImageOriginUpper",
+			"if extentGiven {",
+			"origin == ImageOriginUpper",
 			"a.InvertY()",
 		},
 		filepath.Join("..", "core", "matrix_helpers_test.go"): {

@@ -129,6 +129,7 @@ import (
 	example_imshow_bilinear "github.com/cwbudde/matplotlib-go/test/parity/imshow_bilinear"
 	example_imshow_clipped "github.com/cwbudde/matplotlib-go/test/parity/imshow_clipped"
 	example_imshow_interpolation_matrix "github.com/cwbudde/matplotlib-go/test/parity/imshow_interpolation_matrix"
+	example_imshow_rgb "github.com/cwbudde/matplotlib-go/test/parity/imshow_rgb"
 	example_imshow_transformed "github.com/cwbudde/matplotlib-go/test/parity/imshow_transformed"
 	example_joins_caps "github.com/cwbudde/matplotlib-go/test/parity/joins_caps"
 	example_large_scatter "github.com/cwbudde/matplotlib-go/test/parity/large_scatter"
@@ -282,6 +283,7 @@ var renderByID = map[string]func() image.Image{
 	"image_heatmap":                       example_image_heatmap.Render,
 	"image_variants_gallery":              example_image_variants_gallery.Render,
 	"imshow_clipped":                      example_imshow_clipped.Render,
+	"imshow_rgb":                          example_imshow_rgb.Render,
 	"imshow_transformed":                  example_imshow_transformed.Render,
 	"imshow_bilinear":                     example_imshow_bilinear.Render,
 	"imshow_bicubic":                      example_imshow_bicubic.Render,
@@ -503,6 +505,7 @@ var figureByID = map[string]func() *core.Figure{
 	"triangulation_gallery":               showcase_triangulation_gallery.Plot,
 	"widgets_gallery":                     example_widgets_gallery.Plot,
 	"imshow_clipped":                      example_imshow_clipped.Plot,
+	"imshow_rgb":                          example_imshow_rgb.Plot,
 	"imshow_transformed":                  example_imshow_transformed.Plot,
 	"imshow_interpolation_matrix":         example_imshow_interpolation_matrix.Plot,
 }

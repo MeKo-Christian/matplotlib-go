@@ -41,6 +41,7 @@ text_layout_gallery
 image_heatmap
 image_variants_gallery
 imshow_clipped
+imshow_rgb
 imshow_transformed
 imshow_bilinear
 imshow_bicubic

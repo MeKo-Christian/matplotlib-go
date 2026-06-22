@@ -432,8 +432,19 @@ match Matplotlib defaults, not just the happy path.
       `colorbar_extendfrac` (RMSE 0.87); TwoSlope gallery ticks now match mpl.
       _Deferred: gradient-`NoNorm`-without-values auto extendfrac (5% fallback);
       `NoNorm` value-count ambiguity makes it unit-test-only._
-- [ ] **Image:** native RGBA `imshow` for `(M,N,3/4)` arrays, image `aspect`,
-      and image normalization (`core/image.go:97`).
+- [x] **Image:** native RGB/RGBA `imshow` for `(M,N,3/4)` arrays plus Go
+      `image.Image` input, bypassing colormap+norm. New `Axes.ImShowRGB`
+      (float `[0,1]` arrays) and `Axes.ImShowImage` (`image.Image`, e.g.
+      `ImRead` output) with `ImShowRGBOptions` (`core/matrix_helpers.go`); the
+      array path ports matplotlib's `_normalize_image_array` clip/dtype handling
+      (`core/image_rgba.go`), `(M,N,1)` squeezes to the scalar colormap path.
+      Pre-colored pixels ride a new `Image2D.rgba` field and a true-color
+      rasterize branch (`core/image.go`, `core/image_api.go`); origin flip and
+      per-pixel alpha (multiplied by the scalar `Alpha`) are preserved. Image
+      `aspect` and scalar `norm` were already shipped via `ImShow`/`MatShow`
+      (default `aspect="equal"`, full `norm` family). New `imshow_rgb` parity
+      case (RMSE 0.23) plus `core/image_rgba_test.go` cover RGB/RGBA
+      classification, clipping, origin, and alpha.
 - [ ] **Norms/cmaps:** `FuncNorm`, `MultiNorm`, `petroff10` colormap.
 - [ ] **Misc artist kwargs:** `Stem` orientation, errorbar `capthick`, scatter
       `plotnonfinite`, `LineCollection` linestyle-string → dash conversion.

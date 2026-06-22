@@ -1,6 +1,7 @@
 package core
 
 import (
+	"image"
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
@@ -79,7 +80,11 @@ type Image2D struct {
 	// Interpolation is the resampling filter name (matplotlib imshow style).
 	// An empty string means the renderer's default.
 	Interpolation string
-	z             float64
+	// rgba holds pre-colored pixels for native RGB/RGBA imshow. When non-nil
+	// the colormap+norm path is bypassed and Data is nil. The origin flip (for
+	// ImageOriginLower) is applied at rasterization time, not baked in here.
+	rgba *image.RGBA
+	z    float64
 }
 
 // Bounds returns the image extent in data space.
@@ -100,7 +105,10 @@ func (i *Image2D) Z() float64 {
 
 // ScalarMap exposes the image's scalar mapping for helpers such as colorbars.
 func (i *Image2D) ScalarMap() ScalarMapInfo {
-	if i == nil {
+	if i == nil || i.rgba != nil {
+		// True-color (RGB/RGBA) images are not scalar-mapped, so they expose no
+		// colormap/norm for colorbars (mirrors matplotlib: RGB images are not
+		// ScalarMappable-colored).
 		return ScalarMapInfo{}
 	}
 	return ScalarMapInfo{
@@ -133,24 +141,6 @@ func (a *Axes) Image(data [][]float64, opts ...ImageOptions) *Image2D {
 		return nil
 	}
 
-	xMin := 0.0
-	xMax := float64(cols)
-	yMin := 0.0
-	yMax := float64(rows)
-
-	if opt.XMin != nil && !math.IsNaN(*opt.XMin) && !math.IsInf(*opt.XMin, 0) {
-		xMin = *opt.XMin
-	}
-	if opt.XMax != nil && !math.IsNaN(*opt.XMax) && !math.IsInf(*opt.XMax, 0) {
-		xMax = *opt.XMax
-	}
-	if opt.YMin != nil && !math.IsNaN(*opt.YMin) && !math.IsInf(*opt.YMin, 0) {
-		yMin = *opt.YMin
-	}
-	if opt.YMax != nil && !math.IsNaN(*opt.YMax) && !math.IsInf(*opt.YMax, 0) {
-		yMax = *opt.YMax
-	}
-
 	cmap := "viridis"
 	if opt.Colormap != nil {
 		cmap = *opt.Colormap
@@ -165,55 +155,117 @@ func (a *Axes) Image(data [][]float64, opts ...ImageOptions) *Image2D {
 		return nil
 	}
 
-	alpha := 1.0
-	if opt.Alpha != nil {
-		alpha = clampOneToOne(*opt.Alpha)
-	}
-
-	angle := 0.0
-	if opt.Angle != nil {
-		angle = *opt.Angle
-	}
-
-	anchor := opt.RotationAnchor
-	rotateX := 0.0
-	rotateY := 0.0
-	if anchor == ImageAnchorCustom {
-		if opt.RotationAnchorX != nil {
-			rotateX = *opt.RotationAnchorX
-		}
-		if opt.RotationAnchorY != nil {
-			rotateY = *opt.RotationAnchorY
-		}
-	}
-
-	interp := ""
-	if opt.Interpolation != nil {
-		interp = *opt.Interpolation
-	}
-
+	g := resolveImageGeometry(opt, cols, rows)
 	image := &Image2D{
 		Data:          data,
 		Colormap:      mapping.Colormap,
 		Norm:          mapping.Norm,
 		VMin:          mapping.VMin,
 		VMax:          mapping.VMax,
-		Alpha:         alpha,
-		XMin:          xMin,
-		XMax:          xMax,
-		YMin:          yMin,
-		YMax:          yMax,
+		Alpha:         g.alpha,
+		XMin:          g.xMin,
+		XMax:          g.xMax,
+		YMin:          g.yMin,
+		YMax:          g.yMax,
 		Origin:        opt.Origin,
-		AngleDeg:      angle,
-		RotateAt:      anchor,
-		RotateX:       rotateX,
-		RotateY:       rotateY,
+		AngleDeg:      g.angle,
+		RotateAt:      g.anchor,
+		RotateX:       g.rotateX,
+		RotateY:       g.rotateY,
 		Label:         opt.Label,
-		Interpolation: interp,
+		Interpolation: g.interp,
 		z:             imageDefaultZ,
 	}
 	a.Add(image)
 	return image
+}
+
+// imageGeometry collects the extent/alpha/rotation/interpolation fields shared
+// by the scalar Image and the true-color imageRGBA constructors.
+type imageGeometry struct {
+	xMin, xMax, yMin, yMax float64
+	alpha, angle           float64
+	anchor                 ImageAnchor
+	rotateX, rotateY       float64
+	interp                 string
+}
+
+// resolveImageGeometry derives the placement-related Image2D fields from
+// ImageOptions, defaulting the extent to the pixel grid [0,cols]×[0,rows].
+func resolveImageGeometry(opt ImageOptions, cols, rows int) imageGeometry {
+	g := imageGeometry{
+		xMin:   0,
+		xMax:   float64(cols),
+		yMin:   0,
+		yMax:   float64(rows),
+		alpha:  1,
+		anchor: opt.RotationAnchor,
+	}
+	if opt.XMin != nil && !math.IsNaN(*opt.XMin) && !math.IsInf(*opt.XMin, 0) {
+		g.xMin = *opt.XMin
+	}
+	if opt.XMax != nil && !math.IsNaN(*opt.XMax) && !math.IsInf(*opt.XMax, 0) {
+		g.xMax = *opt.XMax
+	}
+	if opt.YMin != nil && !math.IsNaN(*opt.YMin) && !math.IsInf(*opt.YMin, 0) {
+		g.yMin = *opt.YMin
+	}
+	if opt.YMax != nil && !math.IsNaN(*opt.YMax) && !math.IsInf(*opt.YMax, 0) {
+		g.yMax = *opt.YMax
+	}
+	if opt.Alpha != nil {
+		g.alpha = clampOneToOne(*opt.Alpha)
+	}
+	if opt.Angle != nil {
+		g.angle = *opt.Angle
+	}
+	if g.anchor == ImageAnchorCustom {
+		if opt.RotationAnchorX != nil {
+			g.rotateX = *opt.RotationAnchorX
+		}
+		if opt.RotationAnchorY != nil {
+			g.rotateY = *opt.RotationAnchorY
+		}
+	}
+	if opt.Interpolation != nil {
+		g.interp = *opt.Interpolation
+	}
+	return g
+}
+
+// imageRGBA constructs an Image2D backed by pre-colored RGBA pixels, bypassing
+// the colormap+norm path. It mirrors Image's option handling minus the scalar
+// mapping. The extent defaults to the pixel grid unless overridden via opt.
+func (a *Axes) imageRGBA(rgba *image.RGBA, opt ImageOptions) *Image2D {
+	if a == nil || rgba == nil {
+		return nil
+	}
+	b := rgba.Bounds()
+	cols := b.Dx()
+	rows := b.Dy()
+	if cols == 0 || rows == 0 {
+		return nil
+	}
+
+	g := resolveImageGeometry(opt, cols, rows)
+	img := &Image2D{
+		rgba:          rgba,
+		Alpha:         g.alpha,
+		XMin:          g.xMin,
+		XMax:          g.xMax,
+		YMin:          g.yMin,
+		YMax:          g.yMax,
+		Origin:        opt.Origin,
+		AngleDeg:      g.angle,
+		RotateAt:      g.anchor,
+		RotateX:       g.rotateX,
+		RotateY:       g.rotateY,
+		Label:         opt.Label,
+		Interpolation: g.interp,
+		z:             imageDefaultZ,
+	}
+	a.Add(img)
+	return img
 }
 
 func clampOneToOne(v float64) float64 {

@@ -117,6 +117,7 @@ var cases = []Case{
 	{ID: "image_heatmap", Topic: "image", Title: "Heatmap Image", Description: "A gridded image plot with a colorbar and axis labels for matrix-style data.", WebDemoID: "heatmap", Showcase: true, SVGGoldenFamily: "image", GoBasicSmokeFamily: "image", SkiaParityFamily: "image", MaxRMSE: 1.3},
 	{ID: "image_variants_gallery", Topic: "image", Title: "Image Variants Gallery", Description: "Side-by-side interpolation modes, alpha image overlays, MatShow ticks, and spy marker/image modes.", Showcase: true, Width: 1080, Height: 720, MinPSNR: 20.0, MaxMeanAbs: 28.0, MaxRMSE: 2.7},
 	{ID: "imshow_clipped", Topic: "image", Title: "Clipped Imshow", FixtureOnly: true, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 3.6},
+	{ID: "imshow_rgb", Topic: "image", Title: "RGB/RGBA Imshow", FixtureOnly: true, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 3.0},
 	{ID: "imshow_transformed", Topic: "image", Title: "Transformed Imshow", FixtureOnly: true, Width: 420, Height: 420, MinPSNR: 24.0, MaxMeanAbs: 18.0, MaxRMSE: 2.9},
 	{ID: "imshow_bilinear", Topic: "image", Title: "Bilinear Imshow", FixtureOnly: true, Width: 256, Height: 256, MinPSNR: 30.0, MaxMeanAbs: 16.0, MaxRMSE: 1.2},
 	{ID: "imshow_bicubic", Topic: "image", Title: "Bicubic Imshow", FixtureOnly: true, Width: 256, Height: 256, MinPSNR: 30.0, MaxMeanAbs: 16.0, MaxRMSE: 1.6},
