@@ -310,13 +310,14 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CoverageID:      "colors-cm",
 		Title:           "Advanced colors, norms, and LightSource",
 		UpstreamModules: []string{"colors.py", "cm.py", "_cm.py", "_cm_listed.py", "_color_data.py"},
-		GoFiles:         []string{"color/colormap.go", "color/listed_colormaps.go", "color/named_colors.go", "core/norm.go"},
+		GoFiles:         []string{"color/colormap.go", "color/listed_colormaps.go", "color/named_colors.go", "color/petroff.go", "core/norm.go"},
 		CurrentEquivalent: "Go has named colors, listed and segmented colormaps, reversed/resampled " +
-			"colormaps, and common norms including LogNorm, SymLogNorm, PowerNorm, TwoSlopeNorm, " +
-			"CenteredNorm, BoundaryNorm, AsinhNorm, and NoNorm.",
-		Gap: "FuncNorm is represented by custom ScalarNormalizer implementations; MultiNorm, " +
-			"multivar/bivar colormaps, LightSource, and edge-case color conversion behavior remain " +
-			"outside the narrow v1.0 surface until a visible fixture needs them.",
+			"colormaps, the petroff10 color sequence, and common norms including FuncNorm, LogNorm, " +
+			"SymLogNorm, PowerNorm, TwoSlopeNorm, CenteredNorm, BoundaryNorm, AsinhNorm, and NoNorm.",
+		Gap: "MultiNorm, multivar/bivar colormaps, LightSource, and edge-case color conversion " +
+			"behavior remain outside the narrow v1.0 surface until a visible fixture needs them. " +
+			"MultiNorm in particular is a Matplotlib 3.11 feature (absent from the 3.10.9 reference) " +
+			"that depends on the deferred multivariate-colormap machinery.",
 		Decision: GapDecisionIdiomaticEquivalent,
 		Rationale: "AsinhNorm is implemented because it improves image and colorbar parity directly; " +
 			"less common multivariate color machinery does not fit the current single-scalar mapping API.",

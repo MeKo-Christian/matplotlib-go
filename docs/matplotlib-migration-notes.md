@@ -199,7 +199,7 @@ norm surface to Go as follows:
 | `CenteredNorm`  | `core.CenteredNorm`                            | none                                            | function colorbar scale through the norm inverse                  |
 | `BoundaryNorm`  | `core.BoundaryNorm`                            | none                                            | boundary ticks, boundaries, values, and extensions                |
 | `NoNorm`        | `core.NoNorm`                                  | none                                            | index-style scalar map on a linear colorbar axis                  |
-| `FuncNorm`      | custom `core.ScalarNormalizer` implementations | `function`, `functionlog` scales exist for axes | accepted through the interface, with no concrete `FuncNorm` clone |
+| `FuncNorm`      | `core.FuncNorm`                                | `function`, `functionlog` scales exist for axes | function colorbar scale through the norm inverse                  |
 
 This keeps axes scales and color normalization deliberately separate: axis
 `function`/`functionlog` scales do not automatically become color norms, and
@@ -218,11 +218,17 @@ visible examples:
 - `asinh_norm_image` covers `AsinhNorm` image mapping and its colorbar scale.
 
 No supported parity fixture currently requires `FuncNorm`, `MultiNorm`, or a
-multi-stage normalization pipeline. `FuncNorm` remains represented by custom
-`ScalarNormalizer` implementations until a fixture needs a concrete typed
-constructor and callback policy. `MultiNorm` is not present as a Matplotlib
-3.10.9 `colors.py` public class, so any later multi-stage norm support should
-be driven by a visible example rather than added speculatively.
+multi-stage normalization pipeline. As of Phase 9 `FuncNorm` is implemented as
+the concrete `core.FuncNorm` type and is covered by focused unit tests
+(`core/funcnorm_test.go`); it has no transpiler-backed golden because its
+arbitrary Go forward/inverse callbacks do not transpile to a Matplotlib
+reference script. `MultiNorm` stays deferred: it is not present as a Matplotlib
+3.10.9 `colors.py` public class (it was introduced in 3.11), it requires
+tuple-valued component arrays that no Go artist accepts, and it depends on the
+multivariate/bivariate colormap machinery that remains an intentional omission
+(see the Bivar/Multivar sections below). Any later `MultiNorm` support should be
+driven by a multivariate-colormap consumer and a visible example rather than
+added speculatively.
 
 Known norm deviations to resolve before broadening the surface are Matplotlib's
 mutable scalar-mappable callback lifecycle, exact `clip` edge behavior for
@@ -266,43 +272,53 @@ existing `ScalarNormalizer` interface:
 This deliberately does not share the axis `transform.Scale` callback shape.
 Axis scales map data coordinates into axes fraction space, while color norms
 also carry scalar-map range, validation, autoscale, and colorbar identity
-metadata. Until a supported fixture needs Matplotlib-compatible `FuncNorm`
-construction, no concrete `FuncNorm` type is added; callers that need arbitrary
-normalization should provide a typed `ScalarNormalizer` implementation.
+metadata. Phase 9 adds a concrete `core.FuncNorm` type that implements this
+`ScalarNormalizer` interface: it carries `Forward`/`Reverse` callbacks plus
+`VMin`/`VMax`/`Clip`, normalizes `Forward(value)` between `Forward(VMin)` and
+`Forward(VMax)`, and reverses through `Reverse`. Callers may still provide any
+other typed `ScalarNormalizer` implementation for bespoke normalization.
 
 ## Phase 17.6.5 FuncNorm Omission Ledger
 
-`FuncNorm` is an intentional omission as a concrete Go type. The affected
-examples are currently none: no supported parity fixture requires it.
-`asinh_norm_image`, `twoslope_norm_image`, `lognorm_imshow`, and
-`boundarynorm_pcolormesh` are covered by concrete typed norms, and the other
-supported colorbar examples use explicit `Normalize` or `BoundaryNorm`
-behavior.
+**Superseded by Phase 9.** This section originally recorded `FuncNorm` as an
+intentional omission. Phase 9 implemented it as the concrete `core.FuncNorm`
+type, so the omission no longer holds; the ledger is retained as history.
 
-The rationale is API scope. Matplotlib's `FuncNorm` is array-like, transform
-scale-backed, mask-aware, and callback-friendly; adding that surface without a
-fixture would create a broad compatibility promise that the current typed API
-does not need. The fallback recommendation is to implement `ScalarNormalizer`
-directly for custom color normalization. Axis-level custom transforms continue
-to use `transform.Scale` through `function` and `functionlog`, which remains
-separate from scalar-mappable color normalization.
+The earlier rationale was API scope: Matplotlib's `FuncNorm` is array-like,
+transform scale-backed, mask-aware, and callback-friendly, and there was
+no supported parity fixture for it. `asinh_norm_image`, `twoslope_norm_image`,
+`lognorm_imshow`, and `boundarynorm_pcolormesh` are covered by concrete typed
+norms, and the other supported colorbar examples use explicit `Normalize` or
+`BoundaryNorm` behavior.
+
+Phase 9 adds `core.FuncNorm` with `Forward`/`Reverse` callbacks and
+`VMin`/`VMax`/`Clip`, mirroring Matplotlib's scale-backed forward/inverse
+mapping (clip clamps in data space, then transforms). It is covered by
+`core/funcnorm_test.go`; no transpiler-backed golden exists because arbitrary
+Go callbacks do not transpile to a Matplotlib reference script. Callers who do
+not need `FuncNorm` can still implement `ScalarNormalizer` directly for custom
+color normalization. Axis-level custom transforms continue to use
+`transform.Scale` through `function` and `functionlog`, which remains separate
+from scalar-mappable color normalization.
 
 ## Phase 17.6.5 Norm Public Surface Metadata
 
 The public-surface ledger now gives norm behavior explicit rows instead of
 leaving it inside the broad `colors.py` partial classification. `Normalize`,
 `SymLogNorm`, `PowerNorm`, `TwoSlopeNorm`, `CenteredNorm`, `BoundaryNorm`,
-`NoNorm`, and `AsinhNorm` are marked `idiomatic-equivalent`: Go exposes their
-behavior as concrete `ScalarNormalizer` values rather than Matplotlib's mutable
-normalizer classes, and the focused norm/scalar-mappable tests plus the
-`asinh_norm_image`, `twoslope_norm_image`, `boundarynorm_pcolormesh`,
-`colorbar_boundary_values`, and `colorbar_extensions` fixtures cover the
-currently supported behavior.
+`NoNorm`, `AsinhNorm`, and (as of Phase 9) `FuncNorm` are marked
+`idiomatic-equivalent`: Go exposes their behavior as concrete
+`ScalarNormalizer` values rather than Matplotlib's mutable normalizer classes,
+and the focused norm/scalar-mappable tests plus the `asinh_norm_image`,
+`twoslope_norm_image`, `boundarynorm_pcolormesh`, `colorbar_boundary_values`,
+and `colorbar_extensions` fixtures cover the currently supported behavior.
 
-`FuncNorm` and `make_norm_from_scale` are marked `intentional-omission` as
-public Go constructors. The supported route for arbitrary color normalization
-is still a caller-provided `ScalarNormalizer`, while axis-level custom
-transforms continue to use `transform.Scale`. `LogNorm` remains covered by the
+`make_norm_from_scale` remains marked `intentional-omission` as a public Go
+constructor: Go exposes concrete norm values (including `core.FuncNorm`) instead
+of Matplotlib's dynamic scale-to-norm class factory. The supported route for
+arbitrary color normalization is `core.FuncNorm` or any caller-provided
+`ScalarNormalizer`, while axis-level custom transforms continue to use
+`transform.Scale`. `LogNorm` remains covered by the
 norm inventory and `lognorm_imshow`; Matplotlib 3.10.9 generates it through
 `make_norm_from_scale`, so the committed public-surface extraction does not
 carry a separate `colors.py:class:LogNorm` row.
@@ -1172,8 +1188,9 @@ IDs are attached to image, colorbar, colors-cm, Normalize, BoundaryNorm,
 AsinhNorm, TwoSlopeNorm, pyplot imshow, pyplot colorbar, current-image, and
 current-mappable rows.
 
-Intentional omissions remain recorded for FuncNorm as a concrete type,
-LightSource, bivariate colormaps, and multivariate colormaps. Migration notes
+Intentional omissions remain recorded for LightSource, bivariate colormaps, and
+multivariate colormaps. (Phase 9 superseded the earlier FuncNorm omission by
+implementing the concrete `core.FuncNorm` type.) Migration notes
 summarize typed Go API differences for dynamic Python color inputs,
 callback-driven colorbar updates, custom colorbar formatters, gridspec and
 multi-parent colorbar helpers, and omitted shaded-relief or multi-component

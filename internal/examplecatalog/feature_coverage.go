@@ -236,7 +236,7 @@ var featureCoverageRows = []FeatureCoverage{
 		Title:                   "Colors, Colormaps, and Norms",
 		UpstreamModules:         []string{"colors.py", "cm.py", "_cm.py", "_cm_listed.py", "_color_data.py"},
 		UpstreamGalleryFamilies: []string{"color"},
-		GoFiles:                 []string{"color/colormap.go", "color/listed_colormaps.go", "color/named_colors.go", "core/norm.go"},
+		GoFiles:                 []string{"color/colormap.go", "color/listed_colormaps.go", "color/named_colors.go", "color/petroff.go", "core/norm.go"},
 		CatalogIDs:              []string{"colormap_diverging", "colormap_qualitative", "colormap_cyclic", "colormap_families_gallery", "named_colors", "named_colors_gallery", "asinh_norm_image", "lognorm_imshow", "twoslope_norm_image"},
 		ExampleIDs:              []string{"colormap_families_gallery", "named_colors_gallery"},
 		WebDemoIDs:              []string{"colorbars"},
@@ -245,7 +245,7 @@ var featureCoverageRows = []FeatureCoverage{
 		UserShowcase:            CoveragePartial,
 		BrowserDemo:             CoveragePending,
 		Breadth:                 BreadthThin,
-		Notes: "Named colors, listed/segmented/reversed/resampled colormaps, and common norms (Log/SymLog/Power/TwoSlope/Centered/Boundary/Asinh/NoNorm) exist, covered by colormap_diverging/qualitative/cyclic, colormap_families_gallery, named_colors_gallery, named_colors, and the norm image fixtures. " +
+		Notes: "Named colors, listed/segmented/reversed/resampled colormaps, the petroff10 color sequence, and common norms (Func/Log/SymLog/Power/TwoSlope/Centered/Boundary/Asinh/NoNorm) exist, covered by colormap_diverging/qualitative/cyclic, colormap_families_gallery, named_colors_gallery, named_colors, and the norm image fixtures. " +
 			"Remaining partial scope is MultiNorm, multivar/bivar colormaps, LightSource, and edge-case color conversion, kept outside the single-scalar mapping API until a visible fixture needs them, tracked as the colors-norms-lightsource foundation gap.",
 	},
 	{

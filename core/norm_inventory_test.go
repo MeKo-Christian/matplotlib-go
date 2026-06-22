@@ -169,7 +169,7 @@ func TestFuncNormGoCallbackShapeDecisionIsDocumented(t *testing.T) {
 		"`Validate() error`",
 		"`NormName() string`",
 		"does not share the axis `transform.Scale` callback shape",
-		"no concrete `FuncNorm` type is added",
+		"a concrete `core.FuncNorm` type",
 	}
 	for _, phrase := range required {
 		if !strings.Contains(doc, phrase) {
@@ -211,8 +211,7 @@ func TestNormMetadataDocsAndStatusAreCurrent(t *testing.T) {
 	required := []string{
 		"Phase 17.6.5 Norm Public Surface Metadata",
 		"`idiomatic-equivalent`",
-		"`FuncNorm` and `make_norm_from_scale`",
-		"`intentional-omission`",
+		"`make_norm_from_scale` remains marked `intentional-omission`",
 		"`LogNorm` remains covered by the",
 		"norm inventory and `lognorm_imshow`",
 	}
@@ -340,9 +339,9 @@ var normInventory = []normInventoryEntry{
 	},
 	{
 		upstream:      "FuncNorm",
+		goNorm:        FuncNorm{Forward: func(v float64) float64 { return v }, Reverse: func(v float64) float64 { return v }, VMin: 0, VMax: 1},
 		scaleNames:    []string{"function", "functionlog"},
-		colorbarRoute: "custom ScalarNormalizer values are accepted, but no concrete FuncNorm type is exported",
-		omission:      "represented by caller-provided ScalarNormalizer implementations rather than a Matplotlib FuncNorm clone",
+		colorbarRoute: "function colorbar scale via norm inverse",
 	},
 	{
 		upstream:      "SymLogNorm",

@@ -181,7 +181,7 @@ func TestImageHandlerServesArtifactAndGeneratedDiff(t *testing.T) {
 		ArtifactDir: artifactDir,
 	}
 	for _, kind := range []string{"artifact", "diff-raw"} {
-		req := httptest.NewRequest(http.MethodGet, "/image?suite=plots&baseline="+filepath.Base(baseDir)+"&name=basic_line&kind="+kind, nil)
+		req := httptest.NewRequest(http.MethodGet, "/image?suite=plots&baseline="+filepath.Base(baseDir)+"&name=basic_line&kind="+kind, http.NoBody)
 		rec := httptest.NewRecorder()
 
 		handleImage(rec, req, opts)

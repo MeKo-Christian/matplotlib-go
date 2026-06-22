@@ -319,6 +319,96 @@ func asinhNormInverse(value, width float64) float64 {
 	return width * math.Sinh(value/width)
 }
 
+// FuncNorm normalizes values through an arbitrary monotonic forward function
+// and its inverse, mirroring Matplotlib's scale-backed FuncNorm
+// (make_norm_from_scale over scale.FuncScale). Values are mapped by
+// normalizing Forward(value) between Forward(VMin) and Forward(VMax); Inverse
+// reverses that mapping through Reverse.
+type FuncNorm struct {
+	// Forward must be monotonic; Reverse is its inverse. Both are required.
+	Forward func(float64) float64
+	Reverse func(float64) float64
+	VMin    float64
+	VMax    float64
+	Clip    bool
+}
+
+func (n FuncNorm) Map(value float64) float64 {
+	if n.Forward == nil {
+		return math.NaN()
+	}
+	if !isFinite(value) || !isFinite(n.VMin) || !isFinite(n.VMax) {
+		return math.NaN()
+	}
+	if n.VMin == n.VMax {
+		return 0
+	}
+	if n.Clip {
+		value = math.Max(n.VMin, math.Min(value, n.VMax))
+	}
+	tmin, tmax := n.Forward(n.VMin), n.Forward(n.VMax)
+	if !isFinite(tmin) || !isFinite(tmax) || tmin == tmax {
+		return math.NaN()
+	}
+	out := (n.Forward(value) - tmin) / (tmax - tmin)
+	if math.IsInf(out, 0) {
+		return math.NaN()
+	}
+	return out
+}
+
+func (n FuncNorm) Inverse(value float64) (float64, bool) {
+	if n.Forward == nil || n.Reverse == nil || !isFinite(n.VMin) || !isFinite(n.VMax) {
+		return 0, false
+	}
+	tmin, tmax := n.Forward(n.VMin), n.Forward(n.VMax)
+	if !isFinite(tmin) || !isFinite(tmax) {
+		return 0, false
+	}
+	return n.Reverse(value*(tmax-tmin) + tmin), true
+}
+
+func (n FuncNorm) Autoscale(values []float64) ScalarNormalizer {
+	vmin, vmax := n.VMin, n.VMax
+	if n.Forward == nil {
+		return n
+	}
+	dataMin := math.Inf(1)
+	dataMax := math.Inf(-1)
+	for _, value := range values {
+		if !isFinite(value) || !isFinite(n.Forward(value)) {
+			continue
+		}
+		dataMin = minF(dataMin, value)
+		dataMax = maxF(dataMax, value)
+	}
+	if math.IsInf(dataMin, 1) || math.IsInf(dataMax, -1) {
+		dataMin, dataMax = 0, 1
+	}
+	if !isFinite(vmin) {
+		vmin = dataMin
+	}
+	if !isFinite(vmax) {
+		vmax = dataMax
+	}
+	n.VMin, n.VMax = vmin, vmax
+	return n
+}
+
+func (n FuncNorm) Range() (float64, float64) { return n.VMin, n.VMax }
+
+func (n FuncNorm) Validate() error {
+	if n.Forward == nil || n.Reverse == nil {
+		return fmt.Errorf("func norm requires forward and inverse functions")
+	}
+	if isFinite(n.VMin) && isFinite(n.VMax) && n.VMin > n.VMax {
+		return fmt.Errorf("minvalue must be less than or equal to maxvalue")
+	}
+	return nil
+}
+
+func (n FuncNorm) NormName() string { return "function" }
+
 // PowerNorm applies a power-law transform after linear normalization.
 type PowerNorm struct {
 	Gamma float64

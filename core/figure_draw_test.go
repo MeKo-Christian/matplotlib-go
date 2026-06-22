@@ -105,7 +105,7 @@ func TestDrawFigureSortsTextBBoxesAboveSpinesLikeMatplotlib(t *testing.T) {
 	if lastSpineIndex < 0 {
 		t.Fatalf("spine/frame path not drawn; calls=%+v", r.pathCalls)
 	}
-	if !(lastSpineIndex < bboxIndex) {
+	if lastSpineIndex >= bboxIndex {
 		t.Fatalf("text bbox draw index = %d, last spine/frame index = %d; want Matplotlib zorder with text above spines", bboxIndex, lastSpineIndex)
 	}
 }

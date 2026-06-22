@@ -2550,6 +2550,14 @@
           "declaration": "func CSS4Colors() map[string]render.Color"
         },
         {
+          "id": "func ColorSequence",
+          "declaration": "func ColorSequence(name string) (Palette, bool)"
+        },
+        {
+          "id": "func ColorSequenceNames",
+          "declaration": "func ColorSequenceNames() []string"
+        },
+        {
           "id": "func ColormapNames",
           "declaration": "func ColormapNames() []string"
         },
@@ -2584,6 +2592,10 @@
         {
           "id": "func NewListedColormap",
           "declaration": "func NewListedColormap(name string, colors []render.Color) Colormap"
+        },
+        {
+          "id": "func RegisterColorSequence",
+          "declaration": "func RegisterColorSequence(name string, palette Palette)"
         },
         {
           "id": "func RegisterColormap",
@@ -2704,6 +2716,10 @@
         {
           "id": "type ToRGBAOption",
           "declaration": "type ToRGBAOption func(*toRGBAConfig)"
+        },
+        {
+          "id": "var Petroff10",
+          "declaration": "var Petroff10 = Palette{ {R: 0x3f / 255.0, G: 0x90 / 255.0, B: 0xda / 255.0, A: 1}, {R: 0xff / 255.0, G: 0xa9 / 255.0, B: 0x0e / 255.0, A: 1}, {R: 0xbd / 255.0, G: 0x1f / 255.0, B: 0x01 / 255.0, A: 1}, {R: 0x94 / 255.0, G: 0xa4 / 255.0, B: 0xa2 / 255.0, A: 1}, {R: 0x83 / 255.0, G: 0x2d / 255.0, B: 0xb6 / 255.0, A: 1}, {R: 0xa9 / 255.0, G: 0x6b / 255.0, B: 0x59 / 255.0, A: 1}, {R: 0xe7 / 255.0, G: 0x63 / 255.0, B: 0x00 / 255.0, A: 1}, {R: 0xb9 / 255.0, G: 0xac / 255.0, B: 0x70 / 255.0, A: 1}, {R: 0x71 / 255.0, G: 0x75 / 255.0, B: 0x81 / 255.0, A: 1}, {R: 0x92 / 255.0, G: 0xda / 255.0, B: 0xdd / 255.0, A: 1}, }"
         },
         {
           "id": "var Tab10",
@@ -5824,6 +5840,30 @@
           "declaration": "func (FuncFormatter) Format(x float64) string"
         },
         {
+          "id": "method FuncNorm.Autoscale",
+          "declaration": "func (FuncNorm) Autoscale(values []float64) ScalarNormalizer"
+        },
+        {
+          "id": "method FuncNorm.Inverse",
+          "declaration": "func (FuncNorm) Inverse(value float64) (float64, bool)"
+        },
+        {
+          "id": "method FuncNorm.Map",
+          "declaration": "func (FuncNorm) Map(value float64) float64"
+        },
+        {
+          "id": "method FuncNorm.NormName",
+          "declaration": "func (FuncNorm) NormName() string"
+        },
+        {
+          "id": "method FuncNorm.Range",
+          "declaration": "func (FuncNorm) Range() (float64, float64)"
+        },
+        {
+          "id": "method FuncNorm.Validate",
+          "declaration": "func (FuncNorm) Validate() error"
+        },
+        {
           "id": "method Grid.Bounds",
           "declaration": "func (Grid) Bounds(*DrawContext) geom.Rect"
         },
@@ -7822,6 +7862,10 @@
         {
           "id": "type FuncFormatter",
           "declaration": "type FuncFormatter func(float64) string"
+        },
+        {
+          "id": "type FuncNorm",
+          "declaration": "type FuncNorm struct{ Forward func(float64) float64; Reverse func(float64) float64; VMin float64; VMax float64; Clip bool }"
         },
         {
           "id": "type Grid",

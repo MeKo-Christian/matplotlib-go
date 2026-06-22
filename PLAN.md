@@ -475,7 +475,28 @@ match Matplotlib defaults, not just the happy path.
       (default `aspect="equal"`, full `norm` family). New `imshow_rgb` parity
       case (RMSE 0.23) plus `core/image_rgba_test.go` cover RGB/RGBA
       classification, clipping, origin, and alpha.
-- [ ] **Norms/cmaps:** `FuncNorm`, `MultiNorm`, `petroff10` colormap.
+- [x] **Norms/cmaps:** `FuncNorm` and the `petroff10` color sequence are
+      implemented; `MultiNorm` is deferred. `core.FuncNorm` (`core/norm.go`)
+      ports Matplotlib's scale-backed forward/inverse normalizer: `Forward`/
+      `Reverse` callbacks plus `VMin`/`VMax`/`Clip`, normalizing
+      `Forward(value)` between `Forward(VMin)` and `Forward(VMax)` (clip clamps
+      in data space, then transforms), with inverse, transform-domain-finite
+      autoscale, and validation; unit-tested in `core/funcnorm_test.go`. No
+      transpiler-backed golden exists because arbitrary Go callbacks do not
+      transpile to a Matplotlib reference script. `color.Petroff10`
+      (`color/petroff.go`) adds the ten-color `petroff10` sequence
+      (byte-identical to `matplotlib._cm._petroff10_data`), a `color_sequences`-
+      style registry (`ColorSequence`/`RegisterColorSequence`/
+      `ColorSequenceNames`, seeded with `petroff10` and `tab10`), and registers
+      `petroff10` as a `ListedColormap` so `GetColormap("petroff10")` resolves;
+      kept out of `matplotlibListedColormapNames` because upstream petroff10 is
+      a color sequence, not a registered colormap. The FuncNorm public-surface
+      row flips from intentional-omission to idiomatic-equivalent. _Deferred:
+      `MultiNorm` is a Matplotlib 3.11 feature (absent from the 3.10.9
+      reference) that needs tuple-valued component arrays no Go artist accepts
+      and depends on the deferred multivariate/bivariate colormap machinery; it
+      stays an intentional omission until a multivariate-colormap consumer and a
+      visible fixture exist._
 - [ ] **Misc artist kwargs:** `Stem` orientation, errorbar `capthick`, scatter
       `plotnonfinite`, `LineCollection` linestyle-string → dash conversion.
 
