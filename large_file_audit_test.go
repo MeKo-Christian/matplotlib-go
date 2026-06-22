@@ -194,8 +194,8 @@ func TestContourLinesSplitIsTracked(t *testing.T) {
 func TestContourFilledSplitIsTracked(t *testing.T) {
 	filled := readTextFile(t, "core/contour_filled.go")
 	for _, want := range []string{
-		"func contourBandPolygons(tri Triangulation, values, levels []float64, opt ContourOptions, mapping ScalarMapInfo, alpha float64) ([][]geom.Pt, []render.Color)",
-		"func contourGridBandPolygons(x, y []float64, data [][]float64, levels []float64, opt ContourOptions, mapping ScalarMapInfo, alpha float64) ([][]geom.Pt, []render.Color)",
+		"func contourBandPolygons(tri Triangulation, values, levels []float64, opt ContourOptions, mapping ScalarMapInfo, alpha float64) ([][]geom.Pt, []render.Color, []string)",
+		"func contourGridBandPolygons(x, y []float64, data [][]float64, levels []float64, opt ContourOptions, mapping ScalarMapInfo, alpha float64) ([][]geom.Pt, []render.Color, []string)",
 		"func contourCellBandPolygons(points [4]geom.Pt, values [4]float64, low, high float64) [][]geom.Pt",
 		"func contourCellBandPolygon(points [4]geom.Pt, values [4]float64, low, high float64) []geom.Pt",
 		"func contourSaddleBandPolygons(points [4]geom.Pt, values [4]float64, low, high float64) [][]geom.Pt",
@@ -243,7 +243,7 @@ func TestContourFilledSplitIsTracked(t *testing.T) {
 func TestContourLabelsSplitIsTracked(t *testing.T) {
 	labels := readTextFile(t, "core/contour_labels.go")
 	for _, want := range []string{
-		"func contourLabels(polylines [][]geom.Pt, levels []float64, colors []render.Color, formatter Formatter) []contourLabel",
+		"func contourLabels(polylines [][]geom.Pt, levels []float64, colors []render.Color, formatter Formatter, rightSideUp bool) []contourLabel",
 		"func (c *ContourSet) clabelLineIndices(levels []float64) ([]int, bool)",
 		"func (c *ContourSet) clabelPlaceAutomatic(indices []int, opt ClabelOptions) []contourLabel",
 		"func (c *ContourSet) clabelPlaceManual(indices []int, opt ClabelOptions) []contourLabel",
@@ -251,12 +251,11 @@ func TestContourLabelsSplitIsTracked(t *testing.T) {
 		"func (c *ContourSet) clabelColor(segmentIndex int, level float64, labelIndex int, opt ClabelOptions) render.Color",
 		"func publicContourLabels(labels []contourLabel) []ContourLabel",
 		"func uniqueLevelsForIndices(levels []float64, indices []int) []float64",
-		"func firstFormatter(primary, fallback Formatter) Formatter",
-		"func contourInlineLabelSegmentsForLevels(lines *LineCollection, levels, selectedLevels []float64, formatter Formatter, fontSize, inlineSpacing float64, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, []contourLabel)",
+		"func contourInlineLabelSegmentsForLevels(lines *LineCollection, levels, selectedLevels []float64, formatter Formatter, fontSize, inlineSpacing float64, rightSideUp bool, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, [][]float64, []contourLabel)",
 		"func contourLabelWidth(text string, fontSize float64, r render.Renderer, ctx *DrawContext) float64",
 		"func contourLocateLabel(line []geom.Pt, labelWidth float64, placed []geom.Pt) (geom.Pt, int)",
-		"func splitContourPolylineForLabel(data, screen []geom.Pt, labelIdx int, labelWidth, spacing float64) (float64, [][]geom.Pt)",
-		"func splitClosedContourPolylineForLabel(data, screen []geom.Pt, cpls []float64, labelIdx int, labelWidth, spacing float64) (float64, [][]geom.Pt)",
+		"func splitContourPolylineForLabel(data, screen []geom.Pt, labelIdx int, labelWidth, spacing float64, rightSideUp bool) (float64, [][]geom.Pt)",
+		"func splitClosedContourPolylineForLabel(data, screen []geom.Pt, cpls []float64, labelIdx int, labelWidth, spacing float64, rightSideUp bool) (float64, [][]geom.Pt)",
 		"func contourRotatedTextAnchor(center geom.Pt, layout singleLineTextLayout, angle float64) geom.Pt",
 		"func contourFormatter(formatter Formatter) Formatter",
 		"func polylineLabelPlacement(polyline []geom.Pt) (geom.Pt, float64)",

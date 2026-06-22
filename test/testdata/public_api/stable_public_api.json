@@ -3384,6 +3384,22 @@
           "declaration": "const SignalSpectrumSidesTwoSided SignalSpectrumSides = \"twosided\""
         },
         {
+          "id": "const StackBaselineSym",
+          "declaration": "const StackBaselineSym"
+        },
+        {
+          "id": "const StackBaselineWeightedWiggle",
+          "declaration": "const StackBaselineWeightedWiggle"
+        },
+        {
+          "id": "const StackBaselineWiggle",
+          "declaration": "const StackBaselineWiggle"
+        },
+        {
+          "id": "const StackBaselineZero",
+          "declaration": "const StackBaselineZero StackBaseline = iota"
+        },
+        {
           "id": "const StepWhereMid",
           "declaration": "const StepWhereMid"
         },
@@ -4410,6 +4426,14 @@
         {
           "id": "method Axes.ImShow",
           "declaration": "func (Axes) ImShow(data [][]float64, opts ...ImShowOptions) *Image2D"
+        },
+        {
+          "id": "method Axes.ImShowImage",
+          "declaration": "func (Axes) ImShowImage(img image.Image, opts ...ImShowRGBOptions) *Image2D"
+        },
+        {
+          "id": "method Axes.ImShowRGB",
+          "declaration": "func (Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) *Image2D"
         },
         {
           "id": "method Axes.Image",
@@ -7521,15 +7545,15 @@
         },
         {
           "id": "type BoxPlot2D",
-          "declaration": "type BoxPlot2D struct{ Data []float64; Position float64; Width float64; Color render.Color; EdgeColor render.Color; MedianColor render.Color; WhiskerColor render.Color; CapColor render.Color; FlierColor render.Color; FlierEdgeColor render.Color; EdgeWidth float64; WhiskerWidth float64; MedianWidth float64; CapWidth float64; FlierSize float64; FlierEdgeWidth float64; Alpha float64; ShowFliers bool; Notch bool; Bootstrap int; ConfidenceInterval *[2]float64; CustomMedian *float64; WhiskerPercentiles *[2]float64; FlierMarker MarkerType; Label string }"
+          "declaration": "type BoxPlot2D struct{ Data []float64; Position float64; Width float64; Color render.Color; EdgeColor render.Color; MedianColor render.Color; WhiskerColor render.Color; CapColor render.Color; FlierColor render.Color; FlierEdgeColor render.Color; EdgeWidth float64; WhiskerWidth float64; MedianWidth float64; CapWidth float64; FlierSize float64; FlierEdgeWidth float64; Alpha float64; PatchArtist bool; Orientation string; ShowBox bool; ShowCaps bool; ShowFliers bool; ShowMeans bool; MeanLine bool; MeanColor render.Color; Notch bool; Bootstrap int; Whis *float64; ConfidenceInterval *[2]float64; CustomMedian *float64; WhiskerPercentiles *[2]float64; FlierMarker MarkerType; Label string }"
         },
         {
           "id": "type BoxPlotOptions",
-          "declaration": "type BoxPlotOptions struct{ Position *float64; Width *float64; Color *render.Color; EdgeColor *render.Color; MedianColor *render.Color; WhiskerColor *render.Color; CapColor *render.Color; FlierColor *render.Color; EdgeWidth *float64; WhiskerWidth *float64; MedianWidth *float64; CapWidth *float64; FlierSize *float64; Alpha *float64; ShowFliers *bool; Label string; Notch *bool; Bootstrap int; ConfidenceInterval *[2]float64; CustomMedian *float64; WhiskerPercentiles *[2]float64; FlierMarker *MarkerType; FlierEdgeColor *render.Color; FlierEdgeWidth *float64 }"
+          "declaration": "type BoxPlotOptions struct{ Position *float64; Width *float64; Color *render.Color; EdgeColor *render.Color; MedianColor *render.Color; WhiskerColor *render.Color; CapColor *render.Color; FlierColor *render.Color; EdgeWidth *float64; WhiskerWidth *float64; MedianWidth *float64; CapWidth *float64; FlierSize *float64; Alpha *float64; ShowFliers *bool; Label string; PatchArtist *bool; Orientation *string; ShowBox *bool; ShowCaps *bool; ShowMeans *bool; MeanLine *bool; MeanColor *render.Color; Whis *float64; Sym *string; Notch *bool; Bootstrap int; ConfidenceInterval *[2]float64; CustomMedian *float64; WhiskerPercentiles *[2]float64; FlierMarker *MarkerType; FlierEdgeColor *render.Color; FlierEdgeWidth *float64 }"
         },
         {
           "id": "type BoxPlotsOptions",
-          "declaration": "type BoxPlotsOptions struct{ Positions []float64; Width *float64; Colors []render.Color; EdgeColor *render.Color; MedianColor *render.Color; WhiskerColor *render.Color; CapColor *render.Color; FlierColor *render.Color; EdgeWidth *float64; WhiskerWidth *float64; MedianWidth *float64; CapWidth *float64; FlierSize *float64; Alpha *float64; ShowFliers *bool; ManageTicks *bool; Labels []string; Notch *bool; Bootstrap int; ConfidenceIntervals [][2]float64; CustomMedians []float64; WhiskerPercentiles *[2]float64; FlierMarker *MarkerType; FlierEdgeColor *render.Color; FlierEdgeWidth *float64 }"
+          "declaration": "type BoxPlotsOptions struct{ Positions []float64; Width *float64; Colors []render.Color; EdgeColor *render.Color; MedianColor *render.Color; WhiskerColor *render.Color; CapColor *render.Color; FlierColor *render.Color; EdgeWidth *float64; WhiskerWidth *float64; MedianWidth *float64; CapWidth *float64; FlierSize *float64; Alpha *float64; ShowFliers *bool; ManageTicks *bool; Labels []string; PatchArtist *bool; Orientation *string; ShowBox *bool; ShowCaps *bool; ShowMeans *bool; MeanLine *bool; MeanColor *render.Color; Whis *float64; Sym *string; Notch *bool; Bootstrap int; ConfidenceIntervals [][2]float64; CustomMedians []float64; WhiskerPercentiles *[2]float64; FlierMarker *MarkerType; FlierEdgeColor *render.Color; FlierEdgeWidth *float64 }"
         },
         {
           "id": "type BoxStyle",
@@ -7593,7 +7617,7 @@
         },
         {
           "id": "type ClabelOptions",
-          "declaration": "type ClabelOptions struct{ Levels []float64; Formatter Formatter; FontSize *float64; Color *render.Color; Colors []render.Color; Inline *bool; InlineSpacing float64; ManualPositions []geom.Pt }"
+          "declaration": "type ClabelOptions struct{ Levels []float64; Formatter Formatter; FontSize *float64; Color *render.Color; Colors []render.Color; Inline *bool; InlineSpacing float64; ManualPositions []geom.Pt; FormatString string; FormatDict map[float64]string; RightSideUp *bool }"
         },
         {
           "id": "type Collection",
@@ -7601,11 +7625,11 @@
         },
         {
           "id": "type Colorbar",
-          "declaration": "type Colorbar struct{ Mapping ScalarMapInfo; Mappable ScalarMappable; Colormap string; Extend string; Orientation string; Boundaries []float64; Values []float64; Spacing string; DrawEdges bool; ExtendRect bool; Alpha float64; BorderColor render.Color; BorderWidth float64 }"
+          "declaration": "type Colorbar struct{ Mapping ScalarMapInfo; Mappable ScalarMappable; Colormap string; Extend string; Orientation string; Boundaries []float64; Values []float64; Spacing string; DrawEdges bool; ExtendRect bool; ExtendFracMin float64; ExtendFracMax float64; Alpha float64; BorderColor render.Color; BorderWidth float64 }"
         },
         {
           "id": "type ColorbarOptions",
-          "declaration": "type ColorbarOptions struct{ Width float64; Padding float64; Aspect float64; Shrink float64; Anchor *geom.Pt; Label string; Colormap *string; VMin *float64; VMax *float64; Extend string; Location string; Orientation string; Ticks []float64; Boundaries []float64; Values []float64; Spacing string; DrawEdges bool; ExtendRect bool }"
+          "declaration": "type ColorbarOptions struct{ Width float64; Padding float64; Aspect float64; Shrink float64; Anchor *geom.Pt; Label string; Colormap *string; VMin *float64; VMax *float64; Extend string; Location string; Orientation string; Ticks []float64; Boundaries []float64; Values []float64; Spacing string; DrawEdges bool; ExtendRect bool; ExtendFrac []float64; ExtendFracAuto bool; MinorTicks bool }"
         },
         {
           "id": "type ConciseDateFormatter",
@@ -7625,7 +7649,7 @@
         },
         {
           "id": "type ContourOptions",
-          "declaration": "type ContourOptions struct{ X []float64; Y []float64; XEdges []float64; YEdges []float64; Levels []float64; LevelCount int; Colormap *string; Norm ScalarNormalizer; Colors []render.Color; Color *render.Color; LineWidth *float64; Alpha *float64; LabelLines bool; LabelFormatter Formatter; LabelFontSize *float64; LabelColor *render.Color; Label string }"
+          "declaration": "type ContourOptions struct{ X []float64; Y []float64; XEdges []float64; YEdges []float64; Levels []float64; LevelCount int; Colormap *string; Norm ScalarNormalizer; Colors []render.Color; Color *render.Color; LineWidth *float64; Alpha *float64; LabelLines bool; LabelFormatter Formatter; LabelFontSize *float64; LabelColor *render.Color; Label string; LineStyles []string; NegativeLineStyles *string; Extend string; Hatches []string }"
         },
         {
           "id": "type ContourSet",
@@ -7866,6 +7890,10 @@
         {
           "id": "type ImShowOptions",
           "declaration": "type ImShowOptions struct{ Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Alpha *float64; Aspect string; Origin ImageOrigin; Label string; Extent *[4]float64; Interpolation *string }"
+        },
+        {
+          "id": "type ImShowRGBOptions",
+          "declaration": "type ImShowRGBOptions struct{ Alpha *float64; Aspect string; Origin ImageOrigin; Extent *[4]float64; Interpolation *string; Label string }"
         },
         {
           "id": "type Image2D",
@@ -8432,8 +8460,12 @@
           "declaration": "type SpyResult struct{ Image *Image2D; Markers *PathCollection; Indices []geom.Pt }"
         },
         {
+          "id": "type StackBaseline",
+          "declaration": "type StackBaseline int"
+        },
+        {
           "id": "type StackPlotOptions",
-          "declaration": "type StackPlotOptions struct{ Colors []render.Color; Alpha *float64; EdgeColor *render.Color; EdgeWidth *float64; Baseline []float64; Labels []string }"
+          "declaration": "type StackPlotOptions struct{ Colors []render.Color; Alpha *float64; EdgeColor *render.Color; EdgeWidth *float64; BaselineMode StackBaseline; Baseline []float64; Labels []string }"
         },
         {
           "id": "type Stairs2D",

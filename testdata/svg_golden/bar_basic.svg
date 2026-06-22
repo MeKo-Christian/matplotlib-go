@@ -7,11 +7,11 @@ preserveAspectRatio="xMidYMid meet">
     <clipPath id="clip1" clipPathUnits="userSpaceOnUse"><rect x="64" y="36" width="512" height="288" /></clipPath>
   </defs>
   <rect x="0" y="0" width="100%" height="100%" fill="rgb(255,255,255)" />
-  <g clip-path="url(#clip1)"><path d="M 124 324 L 175 324 L 175 238 L 124 238 Z" fill="rgb(51,153,204)" stroke="none" /></g>
-  <g clip-path="url(#clip1)"><path d="M 209 324 L 260 324 L 260 122 L 209 122 Z" fill="rgb(51,153,204)" stroke="none" /></g>
-  <g clip-path="url(#clip1)"><path d="M 294 324 L 346 324 L 346 266 L 294 266 Z" fill="rgb(51,153,204)" stroke="none" /></g>
-  <g clip-path="url(#clip1)"><path d="M 380 324 L 431 324 L 431 94 L 380 94 Z" fill="rgb(51,153,204)" stroke="none" /></g>
-  <g clip-path="url(#clip1)"><path d="M 465 324 L 516 324 L 516 180 L 465 180 Z" fill="rgb(51,153,204)" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 123.733333 324 L 174.933333 324 L 174.933333 237.6 L 123.733333 237.6 Z" fill="rgb(51,153,204)" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 209.066667 324 L 260.266667 324 L 260.266667 122.4 L 209.066667 122.4 Z" fill="rgb(51,153,204)" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 294.4 324 L 345.6 324 L 345.6 266.4 L 294.4 266.4 Z" fill="rgb(51,153,204)" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 379.733333 324 L 430.933333 324 L 430.933333 93.6 L 379.733333 93.6 Z" fill="rgb(51,153,204)" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 465.066667 324 L 516.266667 324 L 516.266667 180 L 465.066667 180 Z" fill="rgb(51,153,204)" stroke="none" /></g>
   <path d="M 64.5 324.5 L 64.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
   <path d="M 149.5 324.5 L 149.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
   <path d="M 235.5 324.5 L 235.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />

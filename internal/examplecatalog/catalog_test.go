@@ -531,6 +531,7 @@ func TestParityFixValidationTargetsNameClusters(t *testing.T) {
 		"patch_showcase",
 		"patch_style_matrix",
 		"mesh_contour_tri",
+		"contour_styles",
 		"plot_variants",
 		"spectrum_variants",
 		"specialty_depth",

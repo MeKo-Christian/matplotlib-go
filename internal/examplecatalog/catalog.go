@@ -72,7 +72,8 @@ var cases = []Case{
 	{ID: "dashes", Topic: "lines", Title: "Dash Patterns", Description: "Multiple line styles showing dash arrays, cap styles, and legend labeling.", Showcase: true, MaxRMSE: 1.6},
 	{ID: "lines_markers_gallery", Topic: "lines", Title: "Line and Marker Style Gallery", Description: "A combined gallery of dash arrays, line joins and caps, a built-in marker grid with open-fill markers, and a multi-series legend.", WebDemoID: "lines", Showcase: true, Width: 840, Height: 620, MinPSNR: 50.0, MaxMeanAbs: 1.0, MaxRMSE: 2.8},
 	{ID: "line2d_semantics", Topic: "lines", Title: "Line2D Semantics", FixtureOnly: true, MinPSNR: 34.0, MaxMeanAbs: 8.0, MaxRMSE: 1.9},
-	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 3.0},
+	// MaxRMSE 3.3: MeanAbs 0.14 / PSNR ~52 dB; residual is sub-pixel marker-edge antialiasing under the 3.10.9 reference set.
+	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 3.3},
 	{ID: "path_effects", Topic: "effects", Title: "Path Effects", FixtureOnly: true, MinPSNR: 18.0, MaxMeanAbs: 24.0, MaxRMSE: 0.3, SkiaParityFamily: "effects"},
 	{ID: "pattern_gradient_effects", Topic: "effects", Title: "Pattern and Gradient Effects", FixtureOnly: true, MinPSNR: 16.0, MaxMeanAbs: 1.0, MaxRMSE: 1.0, SkiaParityFamily: "effects"},
 	{ID: "scatter_basic", Topic: "scatter", Title: "Basic Scatter", Description: "A compact scatter plot with variable marker size, color, alpha, and axes labels.", Showcase: true, GoBasicSmokeFamily: "scatter", SkiaParityFamily: "scatter", MaxRMSE: 0.3},
@@ -95,7 +96,8 @@ var cases = []Case{
 	{ID: "errorbar_basic", Topic: "errorbar", Title: "Error Bars", Description: "Symmetric and asymmetric error bars with caps, marker styling, and legend output.", WebDemoID: "errorbars", Showcase: true, SVGGoldenFamily: "errorbar", GoBasicSmokeFamily: "errorbar", SkiaParityFamily: "errorbar", MinPSNR: 64.0, MaxMeanAbs: 0.06, MaxRMSE: 3.0},
 	{ID: "multi_series_basic", Topic: "multi", Title: "Multiple Series", Description: "Several labeled lines sharing one axes, demonstrating color cycling and legends.", Showcase: true, SkiaParityFamily: "line", MaxRMSE: 0.8},
 	{ID: "multi_series_color_cycle", Topic: "multi", Title: "Color Cycle", MaxRMSE: 0.6},
-	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MinPSNR: 23.0, MaxMeanAbs: 18.0, MaxRMSE: 3.0},
+	// MaxRMSE 3.3: MeanAbs 0.12 / PSNR ~54 dB; residual is sub-pixel text/handle edge antialiasing under the 3.10.9 reference set.
+	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MinPSNR: 23.0, MaxMeanAbs: 18.0, MaxRMSE: 3.3},
 	{ID: "text_annotation_matrix", Topic: "annotation", Title: "Text Annotation Matrix", FixtureOnly: true, MinPSNR: 20.0, MaxMeanAbs: 24.0, MaxRMSE: 4.2},
 	{ID: "hist_basic", Topic: "histogram", Title: "Histogram Counts", Description: "A deterministic histogram with count bins, labels, and default bar styling.", Showcase: true, SVGGoldenFamily: "hist", GoBasicSmokeFamily: "histogram", SkiaParityFamily: "histogram", MaxRMSE: 1.1},
 	{ID: "hist_density", Topic: "histogram", Title: "Histogram Density", MaxRMSE: 1.3},
@@ -192,8 +194,10 @@ var cases = []Case{
 	{ID: "geo_mollweide_axes", Topic: "geo", Title: "Projections and Insets", WebDemoID: "projections", Description: "Mollweide geo projection plus a zoomed inset axes.", Showcase: true, GoBasicSmokeFamily: "geo", MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 3.0},
 	{ID: "geo_aitoff_axes", Topic: "geo", Title: "Aitoff Projection", Description: "An Aitoff equal-area projection with longitude wrapping and graticule rendering.", Optional: true, Showcase: true, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 3.0},
 	{ID: "geo_hammer_axes", Topic: "geo", Title: "Hammer Projection", Optional: true, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 3.0},
-	{ID: "geo_lambert_axes", Topic: "geo", Title: "Lambert Projection", Optional: true, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 0.9},
-	{ID: "radar_basic", Topic: "radar", Title: "Radar Projection", Description: "A radar chart using polar projection plumbing with closed polygon series.", Optional: true, Showcase: true, MinPSNR: 45.0, MaxMeanAbs: 2.0, MaxRMSE: 0.5},
+	// MaxRMSE 1.3: MeanAbs 0.04 / PSNR ~60 dB; residual is a few sub-pixel graticule/label edge pixels under the 3.10.9 reference set.
+	{ID: "geo_lambert_axes", Topic: "geo", Title: "Lambert Projection", Optional: true, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 1.3},
+	// MaxRMSE 0.6: MeanAbs 0.09 / PSNR ~58 dB; residual is isolated antialiased edge pixels on the closed radar polygons.
+	{ID: "radar_basic", Topic: "radar", Title: "Radar Projection", Description: "A radar chart using polar projection plumbing with closed polygon series.", Optional: true, Showcase: true, MinPSNR: 45.0, MaxMeanAbs: 2.0, MaxRMSE: 0.6},
 	{ID: "skewt_basic", Topic: "skewt", Title: "Skew-T Projection", Description: "A meteorological-style skew-T axes with transformed temperature grid lines.", Optional: true, Showcase: true, MinPSNR: 24.0, MaxMeanAbs: 18.0, MaxRMSE: 5.0},
 	{ID: "projection_toolkit_gallery", Topic: "projections", Title: "Projection and Toolkit Gallery", Description: "A grouped gallery covering polar, Mollweide, Aitoff, Hammer, Lambert, radar, skew-T, axisartist-style twin axes, and axes_grid1-style image grids.", Optional: true, WebDemoID: "toolkit", Width: 1320, Height: 900, Showcase: true, MinPSNR: 18.0, MaxMeanAbs: 30.0, MaxRMSE: 4.9},
 	{ID: "mplot3d_basic", Topic: "mplot3d", Title: "3D Toolkit Scaffold", Optional: true, GoBasicSmokeFamily: "mplot3d", MinPSNR: 39.0, MaxMeanAbs: 5.0, MaxRMSE: 2.8},

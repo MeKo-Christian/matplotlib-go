@@ -158,6 +158,7 @@ var validationClusters = []ValidationCluster{
 		Description: "Structured and unstructured contour/triangulation behavior, contour labels, and mixed mesh compositions.",
 		CaseIDs: []string{
 			"mesh_contour_tri",
+			"contour_styles",
 			"unstructured_showcase",
 			"triangulation_gallery",
 			"arrays_showcase",

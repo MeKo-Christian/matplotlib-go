@@ -142,6 +142,23 @@ by behavior family, algorithm-heavy core files (`contour`, `axis`, `text`,
 `pgf`). Full `just fmt && just lint && just test` and optional parity checks
 pass after decomposition.
 
+**Completed-batch ledger** (guards the split via the `*SplitIsTracked` tests):
+
+- [x] **L1 — Add a repeatable large-file audit.** `just large-file-audit` plus
+      `docs/large-file-decomposition.md` capture the baseline inventory and rules.
+- [x] `core/contour.go`: extract public API and `ContourSet` construction into `core/contour_api.go`.
+- [x] `core/contour.go`: extract coordinate normalization, triangulation, and level selection into `core/contour_levels.go`.
+- [x] `core/contour.go`: extract line segment generation, stitching, structured boundary handling, and polyline rotation into `core/contour_lines.go`.
+- [x] `core/contour.go`: extract filled band polygon clipping, saddle handling, and band colors into `core/contour_filled.go`.
+- [x] `core/contour.go`: extract clabel placement, inline erasing, label angle, and label width helpers into `core/contour_labels.go`.
+- [x] `core/axis.go`: extract axis side/type definitions and constructors into `core/axis_types.go`.
+- [x] `core/axis.go`: extract spine/frame drawing, snapping, and spine position helpers into `core/axis_spine.go`.
+- [x] `core/axis.go`: extract major/minor tick drawing, tick target counts, and tick styling into `core/axis_ticks.go`.
+- [x] `core/axis.go`: extract tick-label drawing, offset text, label bounds, and alignment helpers into `core/axis_ticklabels.go`.
+- [x] `core/axis.go`: extract polar spine/tick/tick-label behavior into `core/axis_polar.go`.
+- [x] **L7 — Decide generated-data strategy.** Keep-large curated catalog and
+      generated tables are documented with drift guards in `docs/large-file-decomposition.md`.
+
 ---
 
 # Phase 5: Documentation, Performance, and v1.0 Release
@@ -165,6 +182,19 @@ measurement caching, font-face rune-support memoization, shaping buffer reuse,
 100k scatter allocation pressure (combined affine path, marker prototype fast
 path, devPath reuse), surface/image-copy reuse, and scalar-map setup caching.
 User-facing memory targets and tuning guide documented.
+
+**Completed P2 work** (guarded by the `TestPerformanceP2*` doc tests):
+
+- [x] **P2 — Surface and image-copy reuse for repeated renders.**
+  - [x] Add a benchmark that redraws the same figure into a reused renderer.
+  - [x] Document or expose a supported renderer-reuse path (`agg.Renderer.Clear` + `agg.Renderer.ImageView`).
+  - [x] Avoid `GetImage` copies in benchmark/save paths via the non-owning image view.
+- [x] **P2 — Cache scalar mapping setup.**
+  - [x] Cache resolved colormap and norm state on scalar-mapped artists (`ScalarMapInfo.Resolved`).
+  - [x] Add focused benchmarks for scalar-mapped image, scatter, and mesh rows.
+- [x] **Memory targets and tuning guide.**
+  - [x] Define v1.0 memory targets for typical catalog plots, 100k scatter, and repeated-redraw and scalar-mapping scenarios.
+  - [x] Document practical tuning advice: renderer reuse, avoiding unnecessary `GetImage` copies, marker batching, and backend selection.
 
 ### 5.3 Release Readiness
 
