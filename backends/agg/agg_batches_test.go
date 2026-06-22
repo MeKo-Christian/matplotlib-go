@@ -1,6 +1,7 @@
 package agg
 
 import (
+	"image"
 	"image/color"
 	"math"
 	"reflect"
@@ -207,6 +208,71 @@ func TestDrawGouraudTrianglesInterpolatesVertexColors(t *testing.T) {
 	}
 	if got.R <= got.G || got.R <= got.B {
 		t.Fatalf("triangle sample near red vertex = %+v, want red-dominant interpolation", got)
+	}
+}
+
+// TestDrawGouraudTrianglesAntialiasesEdges verifies that the antialiased batch
+// path produces partial-coverage fringe pixels along a slanted triangle edge,
+// where the binary (Antialiased=false) path leaves a hard background/triangle
+// step. Rendering the same triangle both ways and finding a pixel that is pure
+// background under the binary path but partially blended under the AA path
+// proves edge antialiasing is active.
+func renderGouraudTriangleFlag(t *testing.T, antialiased bool) *image.RGBA {
+	t.Helper()
+	r := mustNew(t, 60, 60)
+	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 60, Y: 60}}); err != nil {
+		t.Fatalf("Begin failed: %v", err)
+	}
+	solid := render.Color{R: 0.1, G: 0.2, B: 0.8, A: 1}
+	ok := r.DrawGouraudTriangles(render.GouraudTriangleBatch{
+		Antialiased: antialiased,
+		Triangles: []render.GouraudTriangle{
+			{
+				P: [3]geom.Pt{
+					{X: 5, Y: 5},
+					{X: 45, Y: 5},
+					{X: 5, Y: 45},
+				},
+				Color: [3]render.Color{solid, solid, solid},
+			},
+		},
+	})
+	if !ok {
+		t.Fatal("DrawGouraudTriangles returned false")
+	}
+	if err := r.End(); err != nil {
+		t.Fatalf("End failed: %v", err)
+	}
+	out := image.NewRGBA(image.Rect(0, 0, 60, 60))
+	copy(out.Pix, r.GetImage().Pix)
+	out.Stride = r.GetImage().Stride
+	return out
+}
+
+func TestDrawGouraudTrianglesAntialiasesEdges(t *testing.T) {
+	aa := renderGouraudTriangleFlag(t, true)
+	binary := renderGouraudTriangleFlag(t, false)
+
+	white := color.RGBA{R: 255, G: 255, B: 255, A: 255}
+	fringe := 0
+	for y := 0; y < 60; y++ {
+		for x := 0; x < 60; x++ {
+			b := binary.RGBAAt(x, y)
+			a := aa.RGBAAt(x, y)
+			// A fringe pixel: pure background under the binary path, but a
+			// partial (non-background, non-fully-saturated) blend under AA.
+			if b == white && a != white {
+				// Partial coverage: the AA pixel is a blend toward the triangle
+				// color, so at least one channel sits strictly between the
+				// triangle color and white.
+				if a.R > 0 && a.R < 255 || a.B > 100 && a.B < 255 {
+					fringe++
+				}
+			}
+		}
+	}
+	if fringe == 0 {
+		t.Fatal("antialiased Gouraud produced no edge-fringe pixels; AA path appears inactive")
 	}
 }
 

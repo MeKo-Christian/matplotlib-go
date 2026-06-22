@@ -3,6 +3,7 @@ package agg
 import (
 	"math"
 
+	agglib "github.com/cwbudde/agg_go"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -10,11 +11,24 @@ import (
 // SupportsGradientFill reports that the AGG backend renders Paint.FillGradient
 // natively via Agg2D's linear and radial gradient span generators.
 //
-// The current AGG bridge supports two-stop linear and radial gradients. For
-// gradients with more than two stops, the first and last stops drive the
-// linear gradient endpoints; the radial path additionally uses the middle stop
-// when exactly three stops are supplied via the multi-stop variant.
+// Both linear and radial gradients honor an arbitrary number of color stops:
+// two-stop gradients use the fast profile path, while three-or-more stops build
+// a full gradient LUT from every stop (FillLinearGradientStops /
+// FillRadialGradientStops).
 func (r *Renderer) SupportsGradientFill() bool { return true }
+
+// gradientStopsToAGG maps the renderer's display-space gradient stops to AGG's
+// GradientStop slice, applying the paint's forced alpha per stop.
+func gradientStopsToAGG(stops []render.GradientStop, paint *render.Paint) []agglib.GradientStop {
+	out := make([]agglib.GradientStop, len(stops))
+	for i, s := range stops {
+		out[i] = agglib.GradientStop{
+			Position: s.Offset,
+			Color:    renderColorToAGG(colorWithForcedAlpha(s.Color, paint)),
+		}
+	}
+	return out
+}
 
 // SupportsPatternFill reports that the AGG backend consumes Paint.FillPattern
 // by replaying the pattern tile through AGG path drawing under the destination
@@ -43,6 +57,14 @@ func (r *Renderer) applyGradientFill(paint *render.Paint) bool {
 	// span generator is aligned with the rasterized path. Radius is unsigned.
 	switch g.Kind {
 	case render.LinearGradient:
+		if len(stops) >= 3 {
+			r.ctx.SetFillLinearGradientStops(
+				g.Start.X, r.devY(g.Start.Y),
+				g.End.X, r.devY(g.End.Y),
+				gradientStopsToAGG(stops, paint),
+			)
+			return true
+		}
 		r.ctx.SetFillLinearGradient(
 			g.Start.X, r.devY(g.Start.Y),
 			g.End.X, r.devY(g.End.Y),
@@ -52,12 +74,9 @@ func (r *Renderer) applyGradientFill(paint *render.Paint) bool {
 		return true
 	case render.RadialGradient:
 		if len(stops) >= 3 {
-			mid := colorWithForcedAlpha(stops[len(stops)/2].Color, paint)
-			r.ctx.SetFillRadialGradientMultiStop(
+			r.ctx.SetFillRadialGradientStops(
 				g.Center.X, r.devY(g.Center.Y), g.Radius,
-				renderColorToAGG(first),
-				renderColorToAGG(mid),
-				renderColorToAGG(last),
+				gradientStopsToAGG(stops, paint),
 			)
 			return true
 		}

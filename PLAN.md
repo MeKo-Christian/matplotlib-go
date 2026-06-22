@@ -533,9 +533,28 @@ its current ~13% rcParam coverage.
 - [ ] **Vector text metrics:** replace the crude `MeasureText` stubs in PDF/PS/
       PGF/SVG with the shared FreeType font manager (`backends/pdf/pdf_text.go:46`,
       `backends/svg/text.go:53`, etc.) so rotated/vertical anchoring matches AGG.
-- [ ] **Antialiased Gouraud** via agg_go `span_gouraud_rgba`
-      (`backends/agg/agg_gouraud.go:10`); **>3-stop gradients**
-      (`gradients.go:34`).
+- [x] **Antialiased Gouraud** + **multi-stop gradients**. Gouraud triangles now
+      rasterize through agg_go's antialiased `Agg2D.GouraudTriangle`
+      (`span_gouraud_rgba`, dilation 0.5 to match Matplotlib's `_backend_agg.h`)
+      when the batch's `Antialiased` flag is set; the binary point-sampled loop
+      remains for `Antialiased=false` (`backends/agg/agg_gouraud.go`,
+      `agg_draw.go`, `surface.go`). `gouraud_triangles` parity vs the Matplotlib
+      reference drops **RMSE 3.95 → 0.26** (MaxDiff 227 → 2); `pcolormesh_gouraud`
+      is unchanged (continuous mesh, no exposed AA edges). Gradients honor an
+      arbitrary number of stops: radial via the existing
+      `FillRadialGradientStops` and linear via a new
+      `Agg2D.FillLinearGradientStops` (mirrors `FillLinearGradient` but builds the
+      LUT from every stop via `buildNStopGradient`) added to agg_go
+      (`internal/agg2d/gradient.go`, `agg.go`, float twins) — previously the
+      linear path silently dropped interior stops and radial collapsed ≥3 stops
+      to first/middle/last (`backends/agg/gradients.go`). Catalog tolerance for
+      `gouraud_triangles` ratcheted to `MaxRMSE 0.6`. Unit coverage:
+      `TestDrawGouraudTrianglesAntialiasesEdges`,
+      `TestLinearGradientFourStopsHonorsInteriorColors`,
+      `TestRadialGradientFourStopsHonorsInteriorColors`, and agg_go
+      `TestFillLinearGradientStops`. _Landing note: the linear-stops consumption
+      requires publishing agg_go **v0.3.2** (the new method) + a `go.mod` bump;
+      antialiased Gouraud and radial multi-stop build against the stock v0.3.1._
 - [ ] **Sketch/xkcd** rendering pass — currently a no-op despite full contract
       plumbing (`render/render.go:277`).
 - [ ] **PS/PGF** gradient + pattern fills; PGF clip-path and vertical-text

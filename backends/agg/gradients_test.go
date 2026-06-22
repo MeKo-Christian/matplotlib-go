@@ -116,6 +116,99 @@ func TestRadialGradientFillProducesCenterToEdgeFalloff(t *testing.T) {
 	}
 }
 
+// TestLinearGradientFourStopsHonorsInteriorColors verifies that a >2-stop linear
+// gradient renders every interior stop (via FillLinearGradientStops), not just
+// the endpoints. The interior green and blue stops only appear if all stops are
+// fed into the gradient LUT.
+func TestLinearGradientFourStopsHonorsInteriorColors(t *testing.T) {
+	r := mustNew(t, 60, 10)
+	viewport := geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 60, Y: 10}}
+	if err := r.Begin(viewport); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+
+	var rect geom.Path
+	rect.MoveTo(geom.Pt{X: 0, Y: 0})
+	rect.LineTo(geom.Pt{X: 60, Y: 0})
+	rect.LineTo(geom.Pt{X: 60, Y: 10})
+	rect.LineTo(geom.Pt{X: 0, Y: 10})
+	rect.Close()
+
+	r.Path(rect, &render.Paint{
+		FillGradient: render.GradientFill{
+			Kind:  render.LinearGradient,
+			Start: geom.Pt{X: 0, Y: 5},
+			End:   geom.Pt{X: 60, Y: 5},
+			Stops: []render.GradientStop{
+				{Offset: 0, Color: render.Color{R: 1, A: 1}},
+				{Offset: 1.0 / 3.0, Color: render.Color{G: 1, A: 1}},
+				{Offset: 2.0 / 3.0, Color: render.Color{B: 1, A: 1}},
+				{Offset: 1, Color: render.Color{R: 1, A: 1}},
+			},
+		},
+	})
+
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	// Green stop sits at x = 60/3 = 20; blue stop at x = 40.
+	gR, gG, gB, _ := pixelAt(t, r, 20, 5)
+	if gG <= gR || gG <= gB {
+		t.Fatalf("interior green stop missing at x=20: got (R=%d,G=%d,B=%d)", gR, gG, gB)
+	}
+	bR, bG, bB, _ := pixelAt(t, r, 40, 5)
+	if bB <= bR || bB <= bG {
+		t.Fatalf("interior blue stop missing at x=40: got (R=%d,G=%d,B=%d)", bR, bG, bB)
+	}
+}
+
+// TestRadialGradientFourStopsHonorsInteriorColors verifies that a >3-stop radial
+// gradient feeds every stop into the LUT (FillRadialGradientStops) rather than
+// collapsing to first/middle/last.
+func TestRadialGradientFourStopsHonorsInteriorColors(t *testing.T) {
+	r := mustNew(t, 60, 60)
+	viewport := geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 60, Y: 60}}
+	if err := r.Begin(viewport); err != nil {
+		t.Fatalf("Begin: %v", err)
+	}
+
+	var rect geom.Path
+	rect.MoveTo(geom.Pt{X: 0, Y: 0})
+	rect.LineTo(geom.Pt{X: 60, Y: 0})
+	rect.LineTo(geom.Pt{X: 60, Y: 60})
+	rect.LineTo(geom.Pt{X: 0, Y: 60})
+	rect.Close()
+
+	r.Path(rect, &render.Paint{
+		FillGradient: render.GradientFill{
+			Kind:   render.RadialGradient,
+			Center: geom.Pt{X: 30, Y: 30},
+			Radius: 30,
+			Stops: []render.GradientStop{
+				{Offset: 0, Color: render.Color{R: 1, G: 1, B: 1, A: 1}},
+				{Offset: 1.0 / 3.0, Color: render.Color{R: 1, A: 1}},
+				{Offset: 2.0 / 3.0, Color: render.Color{G: 1, A: 1}},
+				{Offset: 1, Color: render.Color{B: 1, A: 1}},
+			},
+		},
+	})
+
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+
+	// Sample along +x from the center at the red (r≈10) and green (r≈20) rings.
+	rR, rG, rB, _ := pixelAt(t, r, 40, 30)
+	if rR <= rG || rR <= rB {
+		t.Fatalf("red ring (offset 1/3) missing at r=10: got (R=%d,G=%d,B=%d)", rR, rG, rB)
+	}
+	gR, gG, gB, _ := pixelAt(t, r, 50, 30)
+	if gG <= gR || gG <= gB {
+		t.Fatalf("green ring (offset 2/3) missing at r=20: got (R=%d,G=%d,B=%d)", gR, gG, gB)
+	}
+}
+
 func TestSolidFillStillWorksAfterGradient(t *testing.T) {
 	// Renderer must reset the fill source between draws so subsequent solid
 	// fills are not painted through the gradient span generator.

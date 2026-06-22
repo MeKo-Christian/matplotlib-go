@@ -152,6 +152,13 @@ func (s *aggSurface) SetFillLinearGradient(x1, y1, x2, y2 float64, c1, c2 agglib
 	s.painter.FillLinearGradient(x1, y1, x2, y2, c1, c2, profile)
 }
 
+// SetFillLinearGradientStops configures a linear gradient from an arbitrary
+// sorted slice of color stops (Position 0 = start point, Position 1 = end
+// point), supporting any number of intermediate stops.
+func (s *aggSurface) SetFillLinearGradientStops(x1, y1, x2, y2 float64, stops []agglib.GradientStop) {
+	s.painter.FillLinearGradientStops(x1, y1, x2, y2, stops)
+}
+
 // SetFillRadialGradient configures a two-color radial gradient as the active
 // fill source. Subsequent Fill() calls sample colors from the center color
 // (c1) at the focal point outward to c2 at the radius boundary.
@@ -164,6 +171,21 @@ func (s *aggSurface) SetFillRadialGradient(cx, cy, radius float64, c1, c2 agglib
 // the radius.
 func (s *aggSurface) SetFillRadialGradientMultiStop(cx, cy, radius float64, c1, c2, c3 agglib.Color) {
 	s.painter.FillRadialGradientMultiStop(cx, cy, radius, c1, c2, c3)
+}
+
+// SetFillRadialGradientStops configures a radial gradient from an arbitrary
+// sorted slice of color stops (Position 0 = center, Position 1 = edge),
+// supporting any number of intermediate stops.
+func (s *aggSurface) SetFillRadialGradientStops(cx, cy, radius float64, stops []agglib.GradientStop) {
+	s.painter.FillRadialGradientStops(cx, cy, radius, stops)
+}
+
+// GouraudTriangle renders an antialiased Gouraud-shaded triangle (smoothly
+// interpolating the three vertex colors) directly into the shared image buffer
+// via AGG's span_gouraud_rgba generator. Coordinates are device-space; d is the
+// AGG numerical-stability dilation (Matplotlib uses 0.5).
+func (s *aggSurface) GouraudTriangle(x1, y1, x2, y2, x3, y3 float64, c1, c2, c3 agglib.Color, d float64) {
+	s.painter.GouraudTriangle(x1, y1, x2, y2, x3, y3, c1, c2, c3, d)
 }
 
 func (s *aggSurface) SetStrokeColor(c agglib.Color) {

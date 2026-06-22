@@ -606,13 +606,19 @@ func (r *Renderer) DrawGouraudTriangles(batch render.GouraudTriangleBatch) bool 
 	}
 	draw := func() {
 		for i := range devBatch.Triangles {
-			r.drawGouraudTriangle(&devBatch.Triangles[i])
+			r.drawGouraudTriangle(&devBatch.Triangles[i], batch.Antialiased)
 		}
 	}
 	if r.hasClipPath() {
 		bounds, haveBounds := gouraudTriangleBatchBounds(devBatch)
 		r.withClipPathMask(bounds, haveBounds, draw)
 	} else {
+		// The antialiased path rasterizes through the painter, which honors its
+		// own clip box; sync it to the current rect clip first. The binary path
+		// applies r.clipRect itself per pixel.
+		if batch.Antialiased {
+			r.applyClipRect()
+		}
 		draw()
 	}
 	return true

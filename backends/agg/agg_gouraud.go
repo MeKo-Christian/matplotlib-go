@@ -7,8 +7,21 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-func (r *Renderer) drawGouraudTriangle(tri *render.GouraudTriangle) {
+// gouraudDilation matches Matplotlib's AGG backend, which dilates each Gouraud
+// triangle by 0.5 subpixels for numerically stable, seam-free antialiased
+// rasterization (span_gen.triangle(..., 0.5) in _backend_agg.h).
+const gouraudDilation = 0.5
+
+// drawGouraudTriangle renders one interpolated-color triangle. When antialiased
+// is true it routes through AGG's span_gouraud_rgba generator (the Matplotlib
+// path); otherwise it falls back to the binary point-sampled rasterizer for
+// crisp, coverage-free cells.
+func (r *Renderer) drawGouraudTriangle(tri *render.GouraudTriangle, antialiased bool) {
 	if tri == nil {
+		return
+	}
+	if antialiased {
+		r.drawGouraudTriangleAA(tri)
 		return
 	}
 	img := r.ctx.image
@@ -66,6 +79,29 @@ func (r *Renderer) drawGouraudTriangle(tri *render.GouraudTriangle) {
 			blendPixelRGBA(img.Data[off:off+4], src)
 		}
 	}
+}
+
+// drawGouraudTriangleAA renders an antialiased Gouraud triangle through the AGG
+// painter's span_gouraud_rgba generator, compositing into the shared buffer
+// (r.ctx may be a clip-mask temp surface). Vertices are already in device space
+// and clipping is established by the caller (applyClipRect / withClipPathMask).
+func (r *Renderer) drawGouraudTriangleAA(tri *render.GouraudTriangle) {
+	if r.ctx == nil || r.ctx.image == nil {
+		return
+	}
+	area := edgeFunction(tri.P[0], tri.P[1], tri.P[2])
+	if area == 0 || math.IsNaN(area) || math.IsInf(area, 0) {
+		return
+	}
+	r.ctx.GouraudTriangle(
+		tri.P[0].X, tri.P[0].Y,
+		tri.P[1].X, tri.P[1].Y,
+		tri.P[2].X, tri.P[2].Y,
+		renderColorToAGG(tri.Color[0]),
+		renderColorToAGG(tri.Color[1]),
+		renderColorToAGG(tri.Color[2]),
+		gouraudDilation,
+	)
 }
 
 func edgeFunction(a, b, c geom.Pt) float64 {
