@@ -202,6 +202,7 @@ import (
 	example_scatter_gallery "github.com/cwbudde/matplotlib-go/test/parity/scatter_gallery"
 	example_scatter_marker_types "github.com/cwbudde/matplotlib-go/test/parity/scatter_marker_types"
 	example_scatter_plotnonfinite "github.com/cwbudde/matplotlib-go/test/parity/scatter_plotnonfinite"
+	example_sketch_xkcd "github.com/cwbudde/matplotlib-go/test/parity/sketch_xkcd"
 	example_skewt_basic "github.com/cwbudde/matplotlib-go/test/parity/skewt_basic"
 	example_specialty_artists "github.com/cwbudde/matplotlib-go/test/parity/specialty_artists"
 	example_specialty_depth "github.com/cwbudde/matplotlib-go/test/parity/specialty_depth"
@@ -254,6 +255,7 @@ var renderByID = map[string]func() image.Image{
 	"line2d_markers":                      example_line2d_markers.Render,
 	"path_effects":                        example_path_effects.Render,
 	"pattern_gradient_effects":            example_pattern_gradient_effects.Render,
+	"sketch_xkcd":                         example_sketch_xkcd.Render,
 	"scatter_basic":                       example_scatter_basic.Render,
 	"scatter_marker_types":                example_scatter_marker_types.Render,
 	"scatter_advanced":                    example_scatter_advanced.Render,
@@ -426,6 +428,7 @@ var figureByID = map[string]func() *core.Figure{
 	"line2d_semantics":                    example_line2d_semantics.Plot,
 	"path_effects":                        example_path_effects.Plot,
 	"pattern_gradient_effects":            example_pattern_gradient_effects.Plot,
+	"sketch_xkcd":                         example_sketch_xkcd.Plot,
 	"arrays_showcase":                     showcase_arrays_showcase.Plot,
 	"axes_option_breadth":                 example_axes_option_breadth.Plot,
 	"axes_grid1_showcase":                 showcase_axes_grid1_showcase.Plot,

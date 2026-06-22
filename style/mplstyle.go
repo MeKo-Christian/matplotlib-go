@@ -64,6 +64,7 @@ var supportedMPLStyleKeys = []string{
 	"lines.linewidth",
 	"path.simplify",
 	"path.simplify_threshold",
+	"path.sketch",
 	"text.color",
 	"text.usetex",
 	"xtick.color",
@@ -286,6 +287,12 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
 		}
 		state.rc.AggPathChunkSize = parsed
+	case "path.sketch":
+		parsed, err := parseMPLSketch(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.PathSketch = parsed
 	case "font.family":
 		parsed, err := parseMPLFontFamily(value)
 		if err != nil {
@@ -776,6 +783,34 @@ func parseMPLInt(value string) (int, error) {
 		return 0, fmt.Errorf("invalid int %q", value)
 	}
 	return parsed, nil
+}
+
+// parseMPLSketch mirrors matplotlib's validate_sketch: "none" disables the
+// filter (zero value); otherwise the value is a (scale, length, randomness)
+// triple, with or without surrounding parentheses.
+func parseMPLSketch(value string) (render.SketchParams, error) {
+	normalized := normalizeMPLValue(value)
+	if strings.EqualFold(strings.TrimSpace(normalized), "none") || normalized == "" {
+		return render.SketchParams{}, nil
+	}
+	normalized = strings.TrimSpace(strings.TrimPrefix(strings.TrimSuffix(normalized, ")"), "("))
+	parts := splitOutsideQuotes(normalized, ',')
+	if len(parts) != 3 {
+		return render.SketchParams{}, fmt.Errorf("expected (scale, length, randomness) tuple, got %q", value)
+	}
+	scale, err := parseMPLFloat(parts[0])
+	if err != nil {
+		return render.SketchParams{}, err
+	}
+	length, err := parseMPLFloat(parts[1])
+	if err != nil {
+		return render.SketchParams{}, err
+	}
+	randomness, err := parseMPLFloat(parts[2])
+	if err != nil {
+		return render.SketchParams{}, err
+	}
+	return render.SketchParams{Scale: scale, Length: length, Randomness: randomness}, nil
 }
 
 func parseMPLBool(value string) (bool, error) {

@@ -534,7 +534,7 @@ its current ~13% rcParam coverage.
       PGF/SVG with the shared FreeType font manager (`backends/pdf/pdf_text.go:46`,
       `backends/svg/text.go:53`, etc.) so rotated/vertical anchoring matches AGG.
 - [x] **Antialiased Gouraud** + **multi-stop gradients**. Gouraud triangles now
-      rasterize through agg_go's antialiased `Agg2D.GouraudTriangle`
+      rasterize through agg*go's antialiased `Agg2D.GouraudTriangle`
       (`span_gouraud_rgba`, dilation 0.5 to match Matplotlib's `_backend_agg.h`)
       when the batch's `Antialiased` flag is set; the binary point-sampled loop
       remains for `Antialiased=false` (`backends/agg/agg_gouraud.go`,
@@ -552,11 +552,22 @@ its current ~13% rcParam coverage.
       `TestDrawGouraudTrianglesAntialiasesEdges`,
       `TestLinearGradientFourStopsHonorsInteriorColors`,
       `TestRadialGradientFourStopsHonorsInteriorColors`, and agg_go
-      `TestFillLinearGradientStops`. _Landing note: the linear-stops consumption
+      `TestFillLinearGradientStops`. \_Landing note: the linear-stops consumption
       requires publishing agg_go **v0.3.2** (the new method) + a `go.mod` bump;
-      antialiased Gouraud and radial multi-stop build against the stock v0.3.1._
-- [ ] **Sketch/xkcd** rendering pass — currently a no-op despite full contract
-      plumbing (`render/render.go:277`).
+      antialiased Gouraud and radial multi-stop build against the stock v0.3.1.*
+- [x] **Sketch/xkcd** rendering pass. Matplotlib's sketch filter (LCG RNG +
+      vpgen_segmentator + sinusoidal perturbation, faithfully ported from
+      `third_party/matplotlib/src/path_converters.h`) now lives in
+      `internal/sketch` and is applied in y-up display space at every backend's
+      `Path()` entry (AGG, gobasic, SVG, PDF, PS, PGF; Skia via its CPU
+      fallback). AGG skips snap/simplify when sketch is active so the dense
+      wiggle survives. A global default flows from the new `path.sketch` rcParam
+      / `style.WithXkcd()` via the `render.SketchAware` capability
+      (`SetDefaultSketch`, set by `core.DrawFigure`); per-artist overrides are
+      exposed on `Line2D.Sketch`/`Patch.Sketch` and win over the default. Parity
+      case `sketch_xkcd` matches the Matplotlib reference at PSNR ~47 dB /
+      MeanAbs ~1.4 (RNG-exact wiggle shape; residual is sub-pixel edge placement
+      because the port applies sketch ahead of the device-space snap).
 - [ ] **PS/PGF** gradient + pattern fills; PGF clip-path and vertical-text
       interfaces.
 - [ ] **`url`/`gid` metadata** in `GraphicsContext` for clickable vector output;

@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/sketch"
 	"github.com/cwbudde/matplotlib-go/render"
 	"golang.org/x/image/vector"
 )
@@ -14,6 +15,12 @@ import (
 // display coordinates; it is flipped to the y-down device buffer once here, then
 // the device-space pipeline runs unchanged.
 func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
+	// Sketch/xkcd perturbation runs in y-up display space, before the device flip.
+	if paint != nil {
+		if eff := render.EffectiveSketch(paint.Sketch, r.defaultSketch); render.SketchActive(eff) {
+			p = sketch.Apply(p, eff.Scale, eff.Length, eff.Randomness)
+		}
+	}
 	r.pathDevice(r.devPath(p), paint)
 }
 

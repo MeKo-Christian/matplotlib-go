@@ -16,17 +16,22 @@ type state struct {
 
 // Renderer implements render.Renderer using pure Go dependencies.
 type Renderer struct {
-	dst         *image.RGBA
-	viewport    geom.Rect
-	began       bool
-	stack       []state
-	clipRect    *geom.Rect
-	clipPaths   []geom.Path
-	clipMaskMap map[clipMaskKey]*image.Alpha
-	rasterizer  *vector.Rasterizer
-	lastFontKey string
-	resolution  uint
+	dst           *image.RGBA
+	viewport      geom.Rect
+	began         bool
+	stack         []state
+	clipRect      *geom.Rect
+	clipPaths     []geom.Path
+	clipMaskMap   map[clipMaskKey]*image.Alpha
+	rasterizer    *vector.Rasterizer
+	lastFontKey   string
+	resolution    uint
+	defaultSketch render.SketchParams
 }
+
+// SetDefaultSketch sets the sketch/xkcd perturbation applied to paths whose
+// paint does not carry its own. Implements render.SketchAware.
+func (r *Renderer) SetDefaultSketch(params render.SketchParams) { r.defaultSketch = params }
 
 type clipMaskKey struct {
 	width  int

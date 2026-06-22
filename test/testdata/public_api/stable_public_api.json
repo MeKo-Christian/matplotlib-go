@@ -875,6 +875,10 @@
           "declaration": "func (Renderer) SavePNG(path string) error"
         },
         {
+          "id": "method Renderer.SetDefaultSketch",
+          "declaration": "func (Renderer) SetDefaultSketch(params render.SketchParams)"
+        },
+        {
           "id": "method Renderer.SetEmergencyTextFallback",
           "declaration": "func (Renderer) SetEmergencyTextFallback(enabled bool)"
         },
@@ -1086,6 +1090,10 @@
           "declaration": "func (Renderer) SavePNG(path string) error"
         },
         {
+          "id": "method Renderer.SetDefaultSketch",
+          "declaration": "func (Renderer) SetDefaultSketch(params render.SketchParams)"
+        },
+        {
           "id": "method Renderer.SetResolution",
           "declaration": "func (Renderer) SetResolution(dpi uint)"
         },
@@ -1220,6 +1228,10 @@
           "declaration": "func (Renderer) SavePDFWithOptions(path string, opts render.PDFOptions) error"
         },
         {
+          "id": "method Renderer.SetDefaultSketch",
+          "declaration": "func (Renderer) SetDefaultSketch(params render.SketchParams)"
+        },
+        {
           "id": "method Renderer.SetPDFOptions",
           "declaration": "func (Renderer) SetPDFOptions(opts render.PDFOptions)"
         },
@@ -1350,6 +1362,10 @@
           "declaration": "func (Renderer) SavePGFWithOptions(path string, opts render.PGFOptions) error"
         },
         {
+          "id": "method Renderer.SetDefaultSketch",
+          "declaration": "func (Renderer) SetDefaultSketch(params render.SketchParams)"
+        },
+        {
           "id": "method Renderer.SetPGFOptions",
           "declaration": "func (Renderer) SetPGFOptions(opts render.PGFOptions)"
         },
@@ -1466,6 +1482,10 @@
         {
           "id": "method Renderer.SavePS",
           "declaration": "func (Renderer) SavePS(path string) error"
+        },
+        {
+          "id": "method Renderer.SetDefaultSketch",
+          "declaration": "func (Renderer) SetDefaultSketch(params render.SketchParams)"
         },
         {
           "id": "method Renderer.SetPSOptions",
@@ -1734,6 +1754,10 @@
         {
           "id": "method Renderer.SaveSVGWithOptions",
           "declaration": "func (Renderer) SaveSVGWithOptions(path string, opts render.SVGOptions) error"
+        },
+        {
+          "id": "method Renderer.SetDefaultSketch",
+          "declaration": "func (Renderer) SetDefaultSketch(params render.SketchParams)"
         },
         {
           "id": "method Renderer.SetResolution",
@@ -8013,7 +8037,7 @@
         },
         {
           "id": "type Line2D",
-          "declaration": "type Line2D struct{ ArtistRasterization; XY []geom.Pt; W float64; Col render.Color; Dashes []float64; DashUnits DashUnits; LineCap render.LineCap; LineCapSet bool; GapColor render.Color; GapColorSet bool; PathEffects []render.PathEffect; DrawStyle LineDrawStyle; Marker MarkerType; MarkerSet bool; MarkerStyle MarkerStyle; MarkerPath geom.Path; MarkerSize float64; MarkerFaceColor render.Color; MarkerEdgeColor render.Color; MarkerEdgeWidth float64; MarkerFaceSpec MarkerColorSpec; MarkerEdgeSpec MarkerColorSpec; MarkerFaceAlt MarkerColorSpec; MarkEvery int; MarkEverySpec MarkEverySpec; Label string }"
+          "declaration": "type Line2D struct{ ArtistRasterization; XY []geom.Pt; W float64; Col render.Color; Dashes []float64; DashUnits DashUnits; LineCap render.LineCap; LineCapSet bool; GapColor render.Color; GapColorSet bool; PathEffects []render.PathEffect; DrawStyle LineDrawStyle; Marker MarkerType; MarkerSet bool; MarkerStyle MarkerStyle; MarkerPath geom.Path; MarkerSize float64; MarkerFaceColor render.Color; MarkerEdgeColor render.Color; MarkerEdgeWidth float64; MarkerFaceSpec MarkerColorSpec; MarkerEdgeSpec MarkerColorSpec; MarkerFaceAlt MarkerColorSpec; MarkEvery int; MarkEverySpec MarkEverySpec; Label string; Sketch render.SketchParams }"
         },
         {
           "id": "type LineCollection",
@@ -8209,7 +8233,7 @@
         },
         {
           "id": "type Patch",
-          "declaration": "type Patch struct{ ArtistRasterization; FaceColor render.Color; EdgeColor render.Color; EdgeWidth float64; Alpha float64; Dashes []float64; DashUnits DashUnits; Label string; Hatch string; HatchColor render.Color; HatchWidth float64; HatchSpacing float64; PathEffects []render.PathEffect; LineJoin render.LineJoin; LineCap render.LineCap }"
+          "declaration": "type Patch struct{ ArtistRasterization; FaceColor render.Color; EdgeColor render.Color; EdgeWidth float64; Alpha float64; Dashes []float64; DashUnits DashUnits; Label string; Hatch string; HatchColor render.Color; HatchWidth float64; HatchSpacing float64; PathEffects []render.PathEffect; LineJoin render.LineJoin; LineCap render.LineCap; Sketch render.SketchParams }"
         },
         {
           "id": "type PatchCollection",
@@ -9834,6 +9858,10 @@
           "declaration": "func DrawPathWithEffects(renderer Renderer, path geom.Path, paint *Paint, draw func(geom.Path, *Paint)) bool"
         },
         {
+          "id": "func EffectiveSketch",
+          "declaration": "func EffectiveSketch(paint, def SketchParams) SketchParams"
+        },
+        {
           "id": "func FilterPathEffect",
           "declaration": "func FilterPathEffect(fill, stroke Color, linewidth float64, filter string, radius float64, offset geom.Pt) PathEffect"
         },
@@ -9912,6 +9940,10 @@
         {
           "id": "func SimplePatchShadowPathEffect",
           "declaration": "func SimplePatchShadowPathEffect(offset geom.Pt, shadow Color, alpha, rho float64) PathEffect"
+        },
+        {
+          "id": "func SketchActive",
+          "declaration": "func SketchActive(p SketchParams) bool"
         },
         {
           "id": "func StrokePathEffect",
@@ -10562,6 +10594,10 @@
           "declaration": "type ShapedText struct{ Runs []ShapedRun; Glyphs []ShapedGlyph; Advance geom.Pt; Bounds TextBounds }"
         },
         {
+          "id": "type SketchAware",
+          "declaration": "type SketchAware interface{ SetDefaultSketch func(params SketchParams) }"
+        },
+        {
           "id": "type SketchParams",
           "declaration": "type SketchParams struct{ Scale float64; Length float64; Randomness float64 }"
         },
@@ -10772,6 +10808,10 @@
           "declaration": "func WithLineWidth(w float64) Option"
         },
         {
+          "id": "func WithPathSketch",
+          "declaration": "func WithPathSketch(params render.SketchParams) Option"
+        },
+        {
           "id": "func WithTextColor",
           "declaration": "func WithTextColor(r, g, b, a float64) Option"
         },
@@ -10786,6 +10826,10 @@
         {
           "id": "func WithWidgetVisualStyle",
           "declaration": "func WithWidgetVisualStyle(widgetStyle WidgetVisualStyle) Option"
+        },
+        {
+          "id": "func WithXkcd",
+          "declaration": "func WithXkcd() Option"
         },
         {
           "id": "method RC.AxisLabelSize",
@@ -10857,7 +10901,7 @@
         },
         {
           "id": "type RC",
-          "declaration": "type RC struct{ DPI float64; FontKey string; FontSize float64; LineWidth float64; TextColor [4]float64; LineColor [4]float64; Background [4]float64; TickCountX int; TickCountY int; FigureWidth float64; FigureHeight float64; UseTeX bool; PathSimplify bool; PathSimplifyThreshold float64; AggPathChunkSize int; AxesBackground render.Color; AxesEdgeColor render.Color; AxesTitleColor render.Color; AxesLabelColor render.Color; AxisLineWidth float64; XTickColor render.Color; YTickColor render.Color; TitleFontSize float64; AxisLabelFontSize float64; XTickLabelFontSize float64; YTickLabelFontSize float64; GridColor render.Color; MinorGridColor render.Color; GridLineWidth float64; MinorGridLineWidth float64; GridDashes []float64; MinorGridDashes []float64; GridVisible bool; GridAxis string; GridWhich string; LegendBackground render.Color; LegendBorderColor render.Color; LegendTextColor render.Color; LegendFontSize float64; LegendFrameAlpha float64; LegendFrameOn bool; ColorCycle color.Palette; WidgetVisualStyle WidgetVisualStyle }"
+          "declaration": "type RC struct{ DPI float64; FontKey string; FontSize float64; LineWidth float64; TextColor [4]float64; LineColor [4]float64; Background [4]float64; TickCountX int; TickCountY int; FigureWidth float64; FigureHeight float64; UseTeX bool; PathSimplify bool; PathSimplifyThreshold float64; AggPathChunkSize int; PathSketch render.SketchParams; AxesBackground render.Color; AxesEdgeColor render.Color; AxesTitleColor render.Color; AxesLabelColor render.Color; AxisLineWidth float64; XTickColor render.Color; YTickColor render.Color; TitleFontSize float64; AxisLabelFontSize float64; XTickLabelFontSize float64; YTickLabelFontSize float64; GridColor render.Color; MinorGridColor render.Color; GridLineWidth float64; MinorGridLineWidth float64; GridDashes []float64; MinorGridDashes []float64; GridVisible bool; GridAxis string; GridWhich string; LegendBackground render.Color; LegendBorderColor render.Color; LegendTextColor render.Color; LegendFontSize float64; LegendFrameAlpha float64; LegendFrameOn bool; ColorCycle color.Palette; WidgetVisualStyle WidgetVisualStyle }"
         },
         {
           "id": "type StyleLibraryEntry",

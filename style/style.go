@@ -26,6 +26,9 @@ type RC struct {
 	PathSimplify          bool
 	PathSimplifyThreshold float64
 	AggPathChunkSize      int
+	// PathSketch is the global sketch/xkcd path perturbation applied to every
+	// drawn path. The zero value disables it (matplotlib's "path.sketch": None).
+	PathSketch render.SketchParams
 
 	AxesBackground     render.Color
 	AxesEdgeColor      render.Color
@@ -148,6 +151,19 @@ func WithFont(key string, size float64) Option {
 
 // WithLineWidth sets the default line width.
 func WithLineWidth(w float64) Option { return func(rc *RC) { rc.LineWidth = w } }
+
+// WithPathSketch sets the global sketch/xkcd path perturbation (matplotlib's
+// "path.sketch" rcParam). The zero value disables sketching.
+func WithPathSketch(params render.SketchParams) Option {
+	return func(rc *RC) { rc.PathSketch = params }
+}
+
+// WithXkcd enables matplotlib-style xkcd sketch rendering on every path, using
+// the same defaults as pyplot.xkcd(): scale=1, length=100, randomness=2. Note
+// the xkcd handwriting font is not bundled, so only the path wiggle is applied.
+func WithXkcd() Option {
+	return WithPathSketch(render.SketchParams{Scale: 1, Length: 100, Randomness: 2})
+}
 
 // WithTextColor sets the default text color as normalized sRGBA (0..1).
 func WithTextColor(r, g, b, a float64) Option {

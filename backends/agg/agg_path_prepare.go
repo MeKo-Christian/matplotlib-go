@@ -2,6 +2,7 @@ package agg
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/sketch"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -15,10 +16,15 @@ func (r *Renderer) preparePathForPaint(path geom.Path, paint *render.Paint) (geo
 	if r.pathOutsideVisibleArea(path, paint) {
 		return geom.Path{}, false
 	}
-	if shouldSnapPath(path, paint) {
+	// When sketch is active the path was already perturbed (in y-up space) at the
+	// Path() entry. Snapping and simplification would re-collapse or quantize the
+	// dense wiggle, so they are skipped — matching Matplotlib, which applies snap
+	// and simplify before the sketch filter, not after.
+	sketchActive := sketch.Active(paint.Sketch.Scale, paint.Sketch.Length, paint.Sketch.Randomness)
+	if !sketchActive && shouldSnapPath(path, paint) {
 		path = snapPath(path, paint)
 	}
-	if paint.Simplify && paint.SimplifyThreshold > 0 {
+	if !sketchActive && paint.Simplify && paint.SimplifyThreshold > 0 {
 		path = simplifyLinePath(path, paint.SimplifyThreshold)
 	}
 	return path, len(path.C) > 0

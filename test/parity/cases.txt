@@ -6,6 +6,7 @@ line2d_semantics
 line2d_markers
 path_effects
 pattern_gradient_effects
+sketch_xkcd
 scatter_basic
 scatter_marker_types
 scatter_advanced

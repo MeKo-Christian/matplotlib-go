@@ -6,6 +6,7 @@ import (
 
 	agglib "github.com/cwbudde/agg_go"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/sketch"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -13,12 +14,34 @@ import (
 // display coordinates; it is flipped to the y-down device buffer once here, then
 // the device-space pipeline runs unchanged.
 func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
+	// Apply the sketch/xkcd wiggle in y-up display space (matching Matplotlib's
+	// cleanup_path), before the device flip and before snap/simplify are skipped
+	// downstream. The effective params are stamped back into the paint so the
+	// device-space pipeline knows to skip snap/simplify.
+	p, paint = r.applySketch(p, paint)
 	if render.DrawPathWithEffects(r, p, paint, func(path geom.Path, effectPaint *render.Paint) {
 		r.pathDevice(r.devPath(path), effectPaint)
 	}) {
 		return
 	}
 	r.pathDevice(r.devPath(p), paint)
+}
+
+// applySketch perturbs the y-up display-space path with Matplotlib's sketch
+// filter when the paint (or the renderer default) requests it. When active it
+// returns a paint copy whose Sketch is the resolved value, so downstream code
+// can detect the active sketch; otherwise the inputs are returned unchanged.
+func (r *Renderer) applySketch(p geom.Path, paint *render.Paint) (geom.Path, *render.Paint) {
+	if paint == nil {
+		return p, nil
+	}
+	eff := render.EffectiveSketch(paint.Sketch, r.defaultSketch)
+	if !render.SketchActive(eff) {
+		return p, paint
+	}
+	pc := *paint
+	pc.Sketch = eff
+	return sketch.Apply(p, eff.Scale, eff.Length, eff.Randomness), &pc
 }
 
 // pathDevice draws a path that is already in y-down device coordinates.

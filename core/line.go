@@ -132,11 +132,12 @@ type Line2D struct {
 	MarkerFaceSpec  MarkerColorSpec
 	MarkerEdgeSpec  MarkerColorSpec
 	MarkerFaceAlt   MarkerColorSpec
-	MarkEvery       int           // optional every-N marker subset; <=1 draws every point
-	MarkEverySpec   MarkEverySpec // optional richer marker subset; overrides MarkEvery when set
-	Label           string        // series label for legend
-	z               float64       // z-order
-	pickRadius      float64       // pick tolerance in pixels (0 = default)
+	MarkEvery       int                 // optional every-N marker subset; <=1 draws every point
+	MarkEverySpec   MarkEverySpec       // optional richer marker subset; overrides MarkEvery when set
+	Label           string              // series label for legend
+	Sketch          render.SketchParams // per-artist sketch/xkcd override; zero inherits the figure default
+	z               float64             // z-order
+	pickRadius      float64             // pick tolerance in pixels (0 = default)
 }
 
 // Data returns cloned x and y data slices.
@@ -342,6 +343,7 @@ func (l *Line2D) Draw(r render.Renderer, ctx *DrawContext) {
 		paint.SimplifyThreshold = ctx.RC.PathSimplifyThreshold
 		paint.MaxChunkVertices = ctx.RC.AggPathChunkSize
 	}
+	paint.Sketch = l.Sketch
 	if l.GapColorSet && l.GapColor.A > 0 && l.W > 0 && len(dashes) >= 2 {
 		if gapPath := dashGapPath(p, dashes); len(gapPath.C) > 0 {
 			gapPaint := paint

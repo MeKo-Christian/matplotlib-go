@@ -20,19 +20,31 @@ import (
 // functional without claiming GPU acceleration or Skia-native optional paths.
 type Renderer struct {
 	*gobasic.Renderer
-	width       int
-	height      int
-	viewport    geom.Rect
-	resolution  uint
-	background  render.Color
-	bridge      surfaceBridge
-	stack       []trackedState
-	filterStack []filterState
-	clipRect    *geom.Rect
-	clipPaths   []geom.Path
-	useGPU      bool
-	sampleCount int
-	colorType   string
+	width         int
+	height        int
+	viewport      geom.Rect
+	resolution    uint
+	background    render.Color
+	bridge        surfaceBridge
+	stack         []trackedState
+	filterStack   []filterState
+	clipRect      *geom.Rect
+	clipPaths     []geom.Path
+	useGPU        bool
+	sampleCount   int
+	colorType     string
+	defaultSketch render.SketchParams
+}
+
+// SetDefaultSketch sets the sketch/xkcd perturbation applied to paths whose
+// paint does not carry its own. Implements render.SketchAware. Sketched draws
+// are routed through the CPU fallback (the only path that applies the wiggle),
+// so this also suppresses native batching while a default is active.
+func (r *Renderer) SetDefaultSketch(params render.SketchParams) {
+	if r == nil {
+		return
+	}
+	r.defaultSketch = params
 }
 
 type filterState struct {
@@ -223,6 +235,14 @@ func (r *Renderer) ClipPath(p geom.Path) {
 func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 	if r == nil || r.Renderer == nil || paint == nil {
 		return
+	}
+	// Resolve the renderer-default sketch into the paint so the native shader and
+	// hatch eligibility gates (which key off paint.Sketch) fall back to the CPU
+	// renderer, which is the path that actually applies the wiggle.
+	if eff := render.EffectiveSketch(paint.Sketch, r.defaultSketch); eff != paint.Sketch && render.SketchActive(eff) {
+		pc := *paint
+		pc.Sketch = eff
+		paint = &pc
 	}
 	if render.DrawPathWithEffects(r, p, paint, r.Path) {
 		return

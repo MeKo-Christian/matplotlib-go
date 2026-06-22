@@ -111,12 +111,17 @@ type Renderer struct {
 	filterIDCounter int
 	filterStack     []string
 
-	lastFontKey string
-	texManager  *tex.Manager
-	texErr      error
-	options     render.SVGOptions
-	raster      *mixedraster.Session
+	lastFontKey   string
+	texManager    *tex.Manager
+	texErr        error
+	options       render.SVGOptions
+	raster        *mixedraster.Session
+	defaultSketch render.SketchParams
 }
+
+// SetDefaultSketch sets the sketch/xkcd perturbation applied to paths whose
+// paint does not carry its own. Implements render.SketchAware.
+func (r *Renderer) SetDefaultSketch(params render.SketchParams) { r.defaultSketch = params }
 
 var (
 	_ render.Renderer                = (*Renderer)(nil)

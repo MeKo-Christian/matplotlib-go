@@ -16,6 +16,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 	_ = r.Begin(vp)
 	defer r.End()
 	setRendererResolution(r, fig.RC.DPI)
+	setRendererSketch(r, fig.RC.PathSketch)
 
 	prepareFigureLayout(fig, r, vp)
 	syncAxesLocators(fig, r)
@@ -344,5 +345,13 @@ func setRendererResolution(r render.Renderer, dpi float64) {
 	}
 	if setter, ok := r.(render.DPIAware); ok {
 		setter.SetResolution(uint(math.Round(dpi)))
+	}
+}
+
+// setRendererSketch pushes the global sketch/xkcd default onto renderers that
+// support it, so every path is perturbed unless an artist overrides per-paint.
+func setRendererSketch(r render.Renderer, params render.SketchParams) {
+	if setter, ok := r.(render.SketchAware); ok {
+		setter.SetDefaultSketch(params)
 	}
 }

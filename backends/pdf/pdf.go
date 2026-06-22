@@ -7,6 +7,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/backends/internal/mixedraster"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/sketch"
 	tex "github.com/cwbudde/matplotlib-go/internal/tex"
 	"github.com/cwbudde/matplotlib-go/render"
 	"golang.org/x/image/font/sfnt"
@@ -164,11 +165,16 @@ type Renderer struct {
 	// fields directly for that single call.
 	pdfOpts render.PDFOptions
 
-	lastFontKey string
-	texManager  *tex.Manager
-	texErr      error
-	raster      *mixedraster.Session
+	lastFontKey   string
+	texManager    *tex.Manager
+	texErr        error
+	raster        *mixedraster.Session
+	defaultSketch render.SketchParams
 }
+
+// SetDefaultSketch sets the sketch/xkcd perturbation applied to paths whose
+// paint does not carry its own. Implements render.SketchAware.
+func (r *Renderer) SetDefaultSketch(params render.SketchParams) { r.defaultSketch = params }
 
 // Compile-time interface assertions.
 var (
@@ -420,6 +426,10 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 	}
 	if render.DrawPathWithEffects(r, p, paint, r.Path) {
 		return
+	}
+	// Sketch/xkcd perturbation in y-up display space (PDF is natively y-up).
+	if eff := render.EffectiveSketch(paint.Sketch, r.defaultSketch); render.SketchActive(eff) {
+		p = sketch.Apply(p, eff.Scale, eff.Length, eff.Randomness)
 	}
 	hasHatch := paint.Hatch != "" && paint.HatchColor.A > 0
 	hasGradient := !hasHatch && paint.FillGradient.Kind != render.GradientNone && len(paint.FillGradient.Stops) > 0

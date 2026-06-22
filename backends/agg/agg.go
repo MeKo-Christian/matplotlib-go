@@ -68,7 +68,12 @@ type Renderer struct {
 	texManager                *tex.Manager
 	texErr                    error
 	markerScratch             geom.Path
+	defaultSketch             render.SketchParams
 }
+
+// SetDefaultSketch sets the sketch/xkcd perturbation applied to paths whose
+// paint does not carry its own. Implements render.SketchAware.
+func (r *Renderer) SetDefaultSketch(params render.SketchParams) { r.defaultSketch = params }
 
 // state represents a saved graphics state.
 type state struct {

@@ -13,6 +13,26 @@ type DPIAware interface {
 	SetResolution(dpi uint)
 }
 
+// SketchAware is implemented by renderers that honor a default sketch/xkcd path
+// perturbation. The default applies to every path whose paint does not carry an
+// explicit (per-artist) Sketch; a zero-value SketchParams disables it.
+type SketchAware interface {
+	SetDefaultSketch(params SketchParams)
+}
+
+// SketchActive reports whether sketch parameters will perturb a path. Matplotlib
+// treats scale==0 as "no sketch".
+func SketchActive(p SketchParams) bool { return p.Scale != 0 }
+
+// EffectiveSketch resolves the sketch parameters for a draw: an explicit
+// per-paint value wins, otherwise the renderer's default applies.
+func EffectiveSketch(paint, def SketchParams) SketchParams {
+	if paint != (SketchParams{}) {
+		return paint
+	}
+	return def
+}
+
 // DPIProvider is implemented by renderers that expose their current DPI, letting
 // mathtext layout compute matplotlib's exact fontsize*dpi/72 thickness.
 type DPIProvider interface {

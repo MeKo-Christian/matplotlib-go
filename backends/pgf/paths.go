@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/sketch"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -19,6 +20,10 @@ func (r *Renderer) Path(path geom.Path, paint *render.Paint) {
 	}
 	if render.DrawPathWithEffects(r, path, paint, r.Path) {
 		return
+	}
+	// Sketch/xkcd perturbation in y-up display space (PGF/TeX is natively y-up).
+	if eff := render.EffectiveSketch(paint.Sketch, r.defaultSketch); render.SketchActive(eff) {
+		path = sketch.Apply(path, eff.Scale, eff.Length, eff.Randomness)
 	}
 	hasHatch := paint.Hatch != "" && paint.HatchColor.A > 0
 	hasFill := paint.Fill.A > 0 || hasHatch

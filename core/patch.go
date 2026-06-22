@@ -48,7 +48,10 @@ type Patch struct {
 
 	LineJoin render.LineJoin
 	LineCap  render.LineCap
-	z        float64
+	// Sketch is a per-artist sketch/xkcd override; the zero value inherits the
+	// figure default.
+	Sketch render.SketchParams
+	z      float64
 }
 
 // AddPatch mirrors Matplotlib's patch-oriented API on top of the generic Add.
@@ -149,6 +152,7 @@ func (p *Patch) strokePaint(color render.Color) render.Paint {
 		Dashes:      patchDashesForPaint(p.Dashes, p.EdgeWidth, p.DashUnits),
 		PathEffects: cloneRenderPathEffects(p.PathEffects),
 		Snap:        render.SnapAuto,
+		Sketch:      p.Sketch,
 	}
 }
 
@@ -173,7 +177,7 @@ func (p *Patch) drawStyledPath(r render.Renderer, fillPath, strokePath geom.Path
 	}
 
 	if len(fillPath.C) > 0 {
-		paint := render.Paint{Fill: faceColor, Snap: render.SnapAuto}
+		paint := render.Paint{Fill: faceColor, Snap: render.SnapAuto, Sketch: p.Sketch}
 		paint.PathEffects = cloneRenderPathEffects(p.PathEffects)
 		if nativeHatch && p.Hatch != "" {
 			paint.Hatch = p.Hatch

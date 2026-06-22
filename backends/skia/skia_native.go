@@ -95,9 +95,14 @@ func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
 	if r == nil || len(batch.Items) == 0 {
 		return false
 	}
-	if nb, ok := r.bridge.(nativeBatchBridge); ok {
-		if nb.drawPathCollectionNative(r.GetImage(), batch, r.bridgeClipState()) {
-			return true
+	// A renderer-default sketch must perturb every item; native batching keys off
+	// per-item paint.Sketch and would miss it, so route through the per-item CPU
+	// path below when a default is active.
+	if !render.SketchActive(r.defaultSketch) {
+		if nb, ok := r.bridge.(nativeBatchBridge); ok {
+			if nb.drawPathCollectionNative(r.GetImage(), batch, r.bridgeClipState()) {
+				return true
+			}
 		}
 	}
 	for i := range batch.Items {

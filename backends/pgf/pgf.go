@@ -27,19 +27,24 @@ type Renderer struct {
 	background render.Color
 	resolution uint
 
-	began      bool
-	viewport   geom.Rect
-	content    strings.Builder
-	colorDefs  strings.Builder
-	document   []byte
-	stack      []state
-	clipRect   *geom.Rect
-	clipPaths  []geom.Path
-	raster     *mixedraster.Session
-	colorNames map[string]string
-	pathIDs    map[string]string
-	pgfOpts    render.PGFOptions
+	began         bool
+	viewport      geom.Rect
+	content       strings.Builder
+	colorDefs     strings.Builder
+	document      []byte
+	stack         []state
+	clipRect      *geom.Rect
+	clipPaths     []geom.Path
+	raster        *mixedraster.Session
+	colorNames    map[string]string
+	pathIDs       map[string]string
+	pgfOpts       render.PGFOptions
+	defaultSketch render.SketchParams
 }
+
+// SetDefaultSketch sets the sketch/xkcd perturbation applied to paths whose
+// paint does not carry its own. Implements render.SketchAware.
+func (r *Renderer) SetDefaultSketch(params render.SketchParams) { r.defaultSketch = params }
 
 var (
 	_ render.Renderer                = (*Renderer)(nil)
