@@ -249,7 +249,7 @@ func (a *Axes) adjustedColorbarLayout(f *Figure, px geom.Rect) geom.Rect {
 	} else {
 		aspect := resolvedColorbarAspect(a.colorbarAspect)
 		if aspect > 0 {
-			aspect *= colorbarExtensionShrink(a.colorbarExtend)
+			aspect *= colorbarExtensionShrink(a.colorbarExtend, a.colorbarExtendFracMin, a.colorbarExtendFracMax)
 			width = px.H() / aspect
 		}
 	}

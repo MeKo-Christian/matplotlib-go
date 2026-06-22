@@ -14,19 +14,21 @@ const (
 	defaultColorbarAspect            = 20.0
 )
 
-func insetColorbarRectForExtensions(fig *Figure, rect geom.Rect, extend, location string) geom.Rect {
+func insetColorbarRectForExtensions(fig *Figure, rect geom.Rect, extend, location string, fracMin, fracMax float64) geom.Rect {
 	extend = normalizeColorbarExtend(extend)
 	if extend == "neither" || rect.W() <= 0 || rect.H() <= 0 {
 		return rect
 	}
-	extensionCount := colorbarExtensionCount(extend)
+	hasMin := extend == "min" || extend == "both"
+	hasMax := extend == "max" || extend == "both"
+	total := colorbarExtendTotal(hasMin, hasMax, fracMin, fracMax)
 	if colorbarIsHorizontal(location) {
-		widthFrac := rect.W() * 0.05 / (1 + 0.05*extensionCount)
-		if extend == "min" || extend == "both" {
-			rect.Min.X += widthFrac
+		body := rect.W() / total
+		if hasMin {
+			rect.Min.X += fracMin * body
 		}
-		if extend == "max" || extend == "both" {
-			rect.Max.X -= widthFrac
+		if hasMax {
+			rect.Max.X -= fracMax * body
 		}
 		if rect.Min.X >= rect.Max.X {
 			return geom.Rect{}
@@ -34,12 +36,12 @@ func insetColorbarRectForExtensions(fig *Figure, rect geom.Rect, extend, locatio
 		return rect
 	}
 
-	heightFrac := rect.H() * 0.05 / (1 + 0.05*extensionCount)
-	if extend == "min" || extend == "both" {
-		rect.Min.Y += heightFrac
+	body := rect.H() / total
+	if hasMin {
+		rect.Min.Y += fracMin * body
 	}
-	if extend == "max" || extend == "both" {
-		rect.Max.Y -= heightFrac
+	if hasMax {
+		rect.Max.Y -= fracMax * body
 	}
 	if rect.Min.Y >= rect.Max.Y {
 		return geom.Rect{}
@@ -47,24 +49,63 @@ func insetColorbarRectForExtensions(fig *Figure, rect geom.Rect, extend, locatio
 	return rect
 }
 
-func colorbarExtensionShrink(extend string) float64 {
-	extensionCount := colorbarExtensionCount(extend)
-	if extensionCount <= 0 {
+func colorbarExtensionShrink(extend string, fracMin, fracMax float64) float64 {
+	extend = normalizeColorbarExtend(extend)
+	hasMin := extend == "min" || extend == "both"
+	hasMax := extend == "max" || extend == "both"
+	total := colorbarExtendTotal(hasMin, hasMax, fracMin, fracMax)
+	if total <= 1 {
 		return 1
 	}
-	return 1 / (1 + 0.05*extensionCount)
+	return 1 / total
 }
 
-func colorbarExtensionCount(extend string) float64 {
-	extend = normalizeColorbarExtend(extend)
-	extensionCount := 0.0
-	if extend == "min" || extend == "both" {
-		extensionCount++
+// colorbarExtendTotal returns the body-plus-extensions multiplier so a slot of
+// length L holds a body of L/total with min/max extensions of frac*body each.
+func colorbarExtendTotal(hasMin, hasMax bool, fracMin, fracMax float64) float64 {
+	total := 1.0
+	if hasMin {
+		total += fracMin
 	}
-	if extend == "max" || extend == "both" {
-		extensionCount++
+	if hasMax {
+		total += fracMax
 	}
-	return extensionCount
+	return total
+}
+
+// colorbarAutoExtendLengths mirrors matplotlib extendfrac='auto': uniform
+// spacing yields 1/(N-1) on both sides; proportional spacing sizes each side to
+// the first/last interior interval as a fraction of the interior span.
+func colorbarAutoExtendLengths(interior []float64, spacing string) (float64, float64) {
+	n := len(interior)
+	if n < 2 {
+		return 0.05, 0.05
+	}
+	uniform := 1.0 / float64(n-1)
+	if normalizeColorbarSpacing(spacing) == "uniform" {
+		return uniform, uniform
+	}
+	span := interior[n-1] - interior[0]
+	if span == 0 {
+		return uniform, uniform
+	}
+	return (interior[1] - interior[0]) / span, (interior[n-1] - interior[n-2]) / span
+}
+
+// colorbarExtendLengths resolves the per-side extension fractions, mirroring
+// colorbar.py _get_extension_lengths(frac, automin, automax, default=0.05).
+func colorbarExtendLengths(frac []float64, auto bool, automin, automax float64) (float64, float64) {
+	const def = 0.05
+	switch {
+	case auto:
+		return automin, automax
+	case len(frac) >= 2:
+		return frac[0], frac[1]
+	case len(frac) == 1:
+		return frac[0], frac[0]
+	default:
+		return def, def
+	}
 }
 
 func normalizeColorbarLocation(location, orientation string) string {

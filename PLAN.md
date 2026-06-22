@@ -413,9 +413,25 @@ match Matplotlib defaults, not just the happy path.
       port (Go's inline auto-label placement still differs on asymmetric loops;
       manual placement matches); colorbar extend triangles, log-scale extend,
       accent/`format_ticks` list semantics.*
-- [ ] **Colorbar** norm-aware locators for SymLog/Power/TwoSlope/Centered +
-      `NoNorm` IndexLocator (`core/colorbar_scale.go:118`); `extendfrac`; minor
-      ticks.
+- [x] **Colorbar** norm-aware locators for SymLog/Power/TwoSlope/Centered +
+      `NoNorm` IndexLocator (`core/colorbar_scale.go`); `extendfrac`; minor
+      ticks. Refactored `configureColorbarScale`/`configureHorizontalColorbarScale`
+      into a shared `applyColorbarNormScale` (via `colorbarAxisOps`) and added
+      per-norm cases: `SymLogNorm` → symlog scale + `SymmetricalLogLocator`
+      (major+minor, shown by default like log); `PowerNorm`/`TwoSlopeNorm`/
+      `CenteredNorm` → `FuncScale` with `AutoLocator` (mpl's function-scale
+      default, nice data-space ticks, replacing `LinearLocator`); `NoNorm` →
+      `IndexLocator{base: 1+⌊N/10⌋, offset: 0.5}`. `extendfrac` lands as
+      `ColorbarOptions.ExtendFrac` (scalar or per-side `[min,max]`) +
+      `ExtendFracAuto` (`'auto'`), threading per-side fractions through the
+      body inset, slot shrink, extension patches, and outline (replacing the
+      hard-coded 5%). Minor ticks: log/symlog/asinh show their scale minor
+      ticks by default; linear/function/boundary are opt-in via
+      `ColorbarOptions.MinorTicks` (`AutoMinorLocator`/boundary `FixedLocator`).
+      New parity cases `colorbar_symlog_ticks` (RMSE 0.65) and
+      `colorbar_extendfrac` (RMSE 0.87); TwoSlope gallery ticks now match mpl.
+      _Deferred: gradient-`NoNorm`-without-values auto extendfrac (5% fallback);
+      `NoNorm` value-count ambiguity makes it unit-test-only._
 - [ ] **Image:** native RGBA `imshow` for `(M,N,3/4)` arrays, image `aspect`,
       and image normalization (`core/image.go:97`).
 - [ ] **Norms/cmaps:** `FuncNorm`, `MultiNorm`, `petroff10` colormap.

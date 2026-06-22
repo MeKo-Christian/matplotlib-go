@@ -1034,9 +1034,13 @@ the covered fixtures.
 For out-of-range bins, under/over color routing is covered through
 `Colormap.AtValue` and explicit boundary extension values. Boundary ticks come
 from `FixedLocator`, boundary cell drawing supports uniform and proportional
-spacing, and drawedges adds internal dividers. The custom `extendfrac` and
-`extendfrac='auto'` remain documented residuals because the Go colorbar
-extension geometry currently uses the Matplotlib default 5% extension length.
+spacing, and drawedges adds internal dividers. Go now supports custom
+`extendfrac` through `ColorbarOptions.ExtendFrac` (scalar or per-side
+`[min, max]`) and `extendfrac='auto'` through `ColorbarOptions.ExtendFracAuto`,
+threading per-side extension lengths through the body inset, slot shrink,
+extension patches, and outline. Auto extension lengths for continuous
+(non-boundary) colorbars fall back to the 5% default and remain a documented
+residual.
 
 ## Phase 17.6.5 Colorbar Tick and Label Formatting
 
@@ -1047,16 +1051,23 @@ upstream. Matplotlib also exposes colorbar locator, formatter, minorlocator,
 and minorformatter properties that proxy the long axis.
 
 Go supports explicit major ticks through `ColorbarOptions.Ticks`. Go routes
-boundary, explicit boundary, log, asinh, and nonlinear norm colorbars to focused
-locators and formatters. Colorbar labels are placed on the active long axis for
-right, left, top, and bottom locations, and horizontal bottom colorbar tick
-fixtures are covered by `colorbar_horizontal_ticks`.
+boundary, explicit boundary, log, asinh, symlog, power, two-slope, centered,
+no-norm, and other nonlinear norm colorbars to focused locators and formatters
+(`SymmetricalLogLocator` for symlog, `AutoLocator` for power/two-slope/centered
+function scales, and `IndexLocator` for `NoNorm`). Colorbar labels are placed on
+the active long axis for right, left, top, and bottom locations, and horizontal
+bottom colorbar tick fixtures are covered by `colorbar_horizontal_ticks`.
 
-Go clears colorbar minor locators and does not expose colorbar minor tick
-controls. The custom colorbar formatter options, ticklocation independent from
-location, `set_ticks(labels=...)`, and minor formatter APIs remain documented
-residuals because supported examples rely on fixed major ticks, default scalar
-formatting, norm-driven log/asinh formatting, and location-driven tick sides.
+Log, symlog, and asinh colorbars show their scale's minor ticks by default
+(matching Matplotlib), while linear and function-scale colorbars have no minor
+ticks unless opted in. Go exposes opt-in colorbar minor ticks through
+`ColorbarOptions.MinorTicks`, which adds an `AutoMinorLocator` to linear/function
+scales and a boundary `FixedLocator` to boundary colorbars, mirroring
+Matplotlib's `minorticks_on()`. The custom colorbar formatter options,
+ticklocation independent from location, `set_ticks(labels=...)`, and minor
+formatter APIs remain documented residuals because supported examples rely on
+fixed major ticks, default scalar formatting, norm-driven log/asinh formatting,
+and location-driven tick sides.
 
 ## Phase 17.6.5 Colorbar Mutable Mappable Update Contract
 

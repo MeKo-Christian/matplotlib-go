@@ -239,6 +239,8 @@ var cases = []Case{
 	{ID: "lognorm_imshow", Topic: "colorbar", Title: "LogNorm Imshow", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0, MaxRMSE: 4.4},
 	{ID: "twoslope_norm_image", Topic: "colorbar", Title: "TwoSlopeNorm Image", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0, MaxRMSE: 1.1},
 	{ID: "colorbar_extensions", Topic: "colorbar", Title: "Colorbar Extensions", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0, MaxRMSE: 1.1},
+	{ID: "colorbar_extendfrac", Topic: "colorbar", Title: "Colorbar Extend Fraction", FixtureOnly: true, MinPSNR: 40.0, MaxMeanAbs: 2.0, MaxRMSE: 1.6},
+	{ID: "colorbar_symlog_ticks", Topic: "colorbar", Title: "SymLogNorm Colorbar", FixtureOnly: true, MinPSNR: 40.0, MaxMeanAbs: 2.0, MaxRMSE: 1.6},
 	{ID: "large_scatter", Topic: "raster", Title: "Large Scatter Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, MinPSNR: 55.0, MaxMeanAbs: 0.5, MaxRMSE: 2.7},
 	{ID: "mixed_collection", Topic: "raster", Title: "Mixed Path Collection", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, SVGGoldenFamily: "collection", GoBasicSmokeFamily: "collection", MinPSNR: 55.0, MaxMeanAbs: 0.5, MaxRMSE: 1.7},
 	{ID: "mixed_raster_vector", Topic: "raster", Title: "Mixed Raster Vector Output", Description: "A polar mixed-output example with rasterized dense scatter points and vector-preserved line, text, axes, legend, SVG, and PDF artifacts.", Showcase: true, Width: 640, Height: 640, SVGGoldenFamily: "mixed_raster", MinPSNR: 32.0, MaxMeanAbs: 9.0, MaxRMSE: 3.4},

@@ -25,24 +25,35 @@ type ColorbarOptions struct {
 	Spacing     string
 	DrawEdges   bool
 	ExtendRect  bool
+	// ExtendFrac sets the extension length as a fraction of the interior body.
+	// nil = matplotlib default (5%); [f] = both sides f; [min, max] = per-side.
+	ExtendFrac []float64
+	// ExtendFracAuto mirrors matplotlib extendfrac='auto' (extensions sized to
+	// the first/last boundary interval). Takes precedence over ExtendFrac.
+	ExtendFracAuto bool
+	// MinorTicks opts in to colorbar minor ticks (off by default, matching
+	// matplotlib's xtick/ytick.minor.visible default of False).
+	MinorTicks bool
 }
 
 // Colorbar renders a vertical gradient keyed to a scalar colormap.
 type Colorbar struct {
-	Mapping     ScalarMapInfo
-	Mappable    ScalarMappable
-	Colormap    string
-	Extend      string
-	Orientation string
-	Boundaries  []float64
-	Values      []float64
-	Spacing     string
-	DrawEdges   bool
-	ExtendRect  bool
-	Alpha       float64
-	BorderColor render.Color
-	BorderWidth float64
-	z           float64
+	Mapping       ScalarMapInfo
+	Mappable      ScalarMappable
+	Colormap      string
+	Extend        string
+	Orientation   string
+	Boundaries    []float64
+	Values        []float64
+	Spacing       string
+	DrawEdges     bool
+	ExtendRect    bool
+	ExtendFracMin float64
+	ExtendFracMax float64
+	Alpha         float64
+	BorderColor   render.Color
+	BorderWidth   float64
+	z             float64
 }
 
 // AddColorbar creates a dedicated axes to the right of a plot and populates it
@@ -101,11 +112,17 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 		padding = resolvedColorbarPadding(base, cfg.Padding, location)
 		slotThickness = resolvedColorbarSlotThickness(base, cfg.Width, location)
 	}
+	automin, automax := 0.05, 0.05
+	if cfg.ExtendFracAuto {
+		automin, automax = colorbarAutoExtendLengths(colorbarInteriorBoundaries(boundaries, extend), cfg.Spacing)
+	}
+	fracMin, fracMax := colorbarExtendLengths(cfg.ExtendFrac, cfg.ExtendFracAuto, automin, automax)
+
 	parentRect, rect := colorbarPlacementRect(f, base, thickness, slotThickness, padding, location, useResolvedSlot)
 	if !useResolvedSlot {
 		parent.RectFraction = parentRect
 	}
-	rect = insetColorbarRectForExtensions(f, rect, extend, location)
+	rect = insetColorbarRectForExtensions(f, rect, extend, location, fracMin, fracMax)
 	if rect.Min.X >= rect.Max.X {
 		return nil
 	}
@@ -124,6 +141,9 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	ax.colorbarLocation = location
 	ax.colorbarTicks = cloneFloat64s(cfg.Ticks)
 	ax.colorbarBounds = cloneFloat64s(boundaries)
+	ax.colorbarMinorTicks = cfg.MinorTicks
+	ax.colorbarExtendFracMin = fracMin
+	ax.colorbarExtendFracMax = fracMax
 	// matplotlib hides every rectangular spine of the colorbar axes and draws
 	// the border as a dedicated outline spine instead (colorbar.py:
 	// `for spine in self.ax.spines.values(): spine.set_visible(False)`).
@@ -132,20 +152,22 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	configureColorbarScale(ax, mapping, location, cfg.Ticks, boundaries, extend)
 
 	ax.Add(&Colorbar{
-		Mapping:     mapping,
-		Mappable:    mappable,
-		Colormap:    cmapOverride,
-		Extend:      extend,
-		Orientation: colorbarOrientation(location),
-		Boundaries:  cloneFloat64s(boundaries),
-		Values:      cloneFloat64s(cfg.Values),
-		Spacing:     normalizeColorbarSpacing(cfg.Spacing),
-		DrawEdges:   cfg.DrawEdges,
-		ExtendRect:  cfg.ExtendRect,
-		Alpha:       1,
-		BorderColor: f.RC.AxesEdgeColor,
-		BorderWidth: f.RC.AxisLineWidth,
-		z:           -10,
+		Mapping:       mapping,
+		Mappable:      mappable,
+		Colormap:      cmapOverride,
+		Extend:        extend,
+		Orientation:   colorbarOrientation(location),
+		Boundaries:    cloneFloat64s(boundaries),
+		Values:        cloneFloat64s(cfg.Values),
+		Spacing:       normalizeColorbarSpacing(cfg.Spacing),
+		DrawEdges:     cfg.DrawEdges,
+		ExtendRect:    cfg.ExtendRect,
+		ExtendFracMin: fracMin,
+		ExtendFracMax: fracMax,
+		Alpha:         1,
+		BorderColor:   f.RC.AxesEdgeColor,
+		BorderWidth:   f.RC.AxisLineWidth,
+		z:             -10,
 	})
 
 	return ax

@@ -85,15 +85,18 @@ type Axes struct {
 
 	childAxes []*Axes
 
-	colorbarParent   *Axes
-	colorbarWidth    float64
-	colorbarPadding  float64
-	colorbarAspect   float64
-	colorbarBase     geom.Rect
-	colorbarExtend   string
-	colorbarLocation string
-	colorbarTicks    []float64
-	colorbarBounds   []float64
+	colorbarParent        *Axes
+	colorbarWidth         float64
+	colorbarPadding       float64
+	colorbarAspect        float64
+	colorbarBase          geom.Rect
+	colorbarExtend        string
+	colorbarLocation      string
+	colorbarTicks         []float64
+	colorbarBounds        []float64
+	colorbarMinorTicks    bool
+	colorbarExtendFracMin float64
+	colorbarExtendFracMax float64
 
 	coordFormatter CoordFormatter
 }

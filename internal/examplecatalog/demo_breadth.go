@@ -172,7 +172,7 @@ var demoBreadthGaps = []DemoBreadthGap{
 		Topic:       "colorbar",
 		Title:       "Colorbar Norms and Extensions",
 		Priority:    DemoBreadthHigh,
-		CatalogIDs:  []string{"colorbar_composition", "asinh_norm_image", "boundarynorm_pcolormesh", "collection_mutable_scalarmap", "colorbar_boundary_values", "colorbar_horizontal_ticks", "lognorm_imshow", "twoslope_norm_image", "colorbar_extensions", "colorbar_variants_gallery"},
+		CatalogIDs:  []string{"colorbar_composition", "asinh_norm_image", "boundarynorm_pcolormesh", "collection_mutable_scalarmap", "colorbar_boundary_values", "colorbar_horizontal_ticks", "lognorm_imshow", "twoslope_norm_image", "colorbar_extensions", "colorbar_extendfrac", "colorbar_symlog_ticks", "colorbar_variants_gallery"},
 		ShowcaseIDs: []string{"colorbar_composition", "colorbar_variants_gallery"},
 		WebDemoIDs:  []string{"composition", "matrix"},
 		TargetFeatures: []string{

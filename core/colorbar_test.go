@@ -614,6 +614,9 @@ func TestFigureAddColorbarUsesFunctionScaleForTwoSlopeNorm(t *testing.T) {
 	if _, ok := cbAx.YScale.(transform.FuncScale); !ok {
 		t.Fatalf("colorbar y scale = %T, want transform.FuncScale for TwoSlopeNorm", cbAx.YScale)
 	}
+	if _, ok := cbAx.YAxisRight.Locator.(AutoLocator); !ok {
+		t.Fatalf("right colorbar locator = %T, want AutoLocator for TwoSlopeNorm", cbAx.YAxisRight.Locator)
+	}
 	if got := cbAx.YScale.Fwd(0); got < 0.49 || got > 0.51 {
 		t.Fatalf("TwoSlopeNorm colorbar center maps to %v, want about 0.5", got)
 	}
@@ -1160,4 +1163,221 @@ func pathOutsideRect(path geom.Path, rect geom.Rect) bool {
 		}
 	}
 	return false
+}
+
+func TestFigureAddColorbarUsesSymLogNormScale(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{
+		{-100, -1},
+		{1, 100},
+	}, ImageOptions{Norm: SymLogNorm{VMin: -100, VMax: 100, LinThresh: 1, LinScale: 1, Base: 10}})
+
+	cbAx := fig.AddColorbar(ax, img)
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	if _, ok := cbAx.YScale.(transform.SymLog); !ok {
+		t.Fatalf("colorbar y scale = %T, want transform.SymLog for SymLogNorm", cbAx.YScale)
+	}
+	loc, ok := cbAx.YAxisRight.Locator.(SymLogLocator)
+	if !ok {
+		t.Fatalf("right colorbar locator = %T, want SymLogLocator", cbAx.YAxisRight.Locator)
+	}
+	if loc.LinThresh != 1 {
+		t.Fatalf("SymLogLocator LinThresh = %v, want 1", loc.LinThresh)
+	}
+	if formatter, ok := cbAx.YAxisRight.Formatter.(LogFormatterMathText); !ok || !formatter.SciNotation {
+		t.Fatalf("right colorbar formatter = %#v, want scientific LogFormatterMathText", cbAx.YAxisRight.Formatter)
+	}
+}
+
+func TestFigureAddColorbarUsesAutoLocatorForPowerNorm(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{
+		{0, 4},
+		{16, 100},
+	}, ImageOptions{Norm: PowerNorm{Gamma: 0.5, VMin: 0, VMax: 100}})
+
+	cbAx := fig.AddColorbar(ax, img)
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	if _, ok := cbAx.YScale.(transform.FuncScale); !ok {
+		t.Fatalf("colorbar y scale = %T, want transform.FuncScale for PowerNorm", cbAx.YScale)
+	}
+	if _, ok := cbAx.YAxisRight.Locator.(AutoLocator); !ok {
+		t.Fatalf("right colorbar locator = %T, want AutoLocator", cbAx.YAxisRight.Locator)
+	}
+}
+
+func TestFigureAddColorbarUsesIndexLocatorForNoNorm(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{
+		{0, 3},
+		{6, 9},
+	}, ImageOptions{Norm: NoNorm{}})
+
+	cbAx := fig.AddColorbar(ax, img)
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	loc, ok := cbAx.YAxisRight.Locator.(IndexLocator)
+	if !ok {
+		t.Fatalf("right colorbar locator = %T, want IndexLocator for NoNorm", cbAx.YAxisRight.Locator)
+	}
+	if loc.Offset != 0.5 {
+		t.Fatalf("NoNorm IndexLocator Offset = %v, want 0.5", loc.Offset)
+	}
+	if loc.Base < 1 {
+		t.Fatalf("NoNorm IndexLocator Base = %v, want >= 1", loc.Base)
+	}
+}
+
+func TestColorbarExtendLengths(t *testing.T) {
+	cases := []struct {
+		name             string
+		frac             []float64
+		auto             bool
+		automin, automax float64
+		wantMin, wantMax float64
+	}{
+		{name: "default", wantMin: 0.05, wantMax: 0.05},
+		{name: "scalar", frac: []float64{0.2}, wantMin: 0.2, wantMax: 0.2},
+		{name: "pair", frac: []float64{0.1, 0.3}, wantMin: 0.1, wantMax: 0.3},
+		{name: "auto", auto: true, automin: 0.25, automax: 0.4, wantMin: 0.25, wantMax: 0.4},
+		{name: "auto-overrides-frac", frac: []float64{0.9}, auto: true, automin: 0.1, automax: 0.2, wantMin: 0.1, wantMax: 0.2},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			gotMin, gotMax := colorbarExtendLengths(tc.frac, tc.auto, tc.automin, tc.automax)
+			if gotMin != tc.wantMin || gotMax != tc.wantMax {
+				t.Fatalf("colorbarExtendLengths = (%v, %v), want (%v, %v)", gotMin, gotMax, tc.wantMin, tc.wantMax)
+			}
+		})
+	}
+}
+
+func TestColorbarExtendFracPerSideWidensExtensions(t *testing.T) {
+	var r colorbarRecordingRenderer
+	clip := geom.Rect{
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 42, Y: 80},
+	}
+	cb := &Colorbar{
+		Mapping:       ScalarMapInfo{Colormap: "gray", VMin: 0, VMax: 1}.Resolved(),
+		Extend:        "both",
+		ExtendFracMin: 0.2,
+		ExtendFracMax: 0.4,
+		Alpha:         1,
+		BorderColor:   render.Color{A: 1},
+		BorderWidth:   1,
+	}
+	ctx := &DrawContext{Clip: clip}
+	cb.Draw(&r, ctx)
+	cb.DrawOverlay(&r, ctx)
+
+	// paths[256] is the lower (min) extension triangle, paths[257] the upper (max).
+	minApex := r.paths[256].V[1].Y
+	maxApex := r.paths[257].V[2].Y
+	wantMin := clip.Min.Y - clip.H()*0.2
+	wantMax := clip.Max.Y + clip.H()*0.4
+	if minApex != wantMin {
+		t.Fatalf("min extension apex Y = %v, want %v", minApex, wantMin)
+	}
+	if maxApex != wantMax {
+		t.Fatalf("max extension apex Y = %v, want %v", maxApex, wantMax)
+	}
+}
+
+func TestColorbarMinorTicksLinearDefaultOff(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{
+		{0, 1},
+		{2, 3},
+	}, ImageOptions{Norm: Normalize{VMin: 0, VMax: 3}})
+
+	cbAx := fig.AddColorbar(ax, img)
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	if cbAx.YAxisRight.MinorLocator != nil {
+		t.Fatalf("default linear colorbar minor locator = %T, want nil", cbAx.YAxisRight.MinorLocator)
+	}
+}
+
+func TestColorbarSymLogMinorTicksOnByDefault(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{
+		{-100, -1},
+		{1, 100},
+	}, ImageOptions{Norm: SymLogNorm{VMin: -100, VMax: 100, LinThresh: 1, LinScale: 1, Base: 10}})
+
+	cbAx := fig.AddColorbar(ax, img)
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	// The symlog scale supplies a minor locator that matplotlib shows by default.
+	if _, ok := cbAx.YAxisRight.MinorLocator.(SymLogLocator); !ok {
+		t.Fatalf("default symlog colorbar minor locator = %T, want SymLogLocator", cbAx.YAxisRight.MinorLocator)
+	}
+}
+
+func TestColorbarMinorTicksEnabledInstallsLinearLocator(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{
+		{0, 1},
+		{2, 3},
+	}, ImageOptions{Norm: Normalize{VMin: 0, VMax: 3}})
+
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{MinorTicks: true})
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	if _, ok := cbAx.YAxisRight.MinorLocator.(AutoMinorLocator); !ok {
+		t.Fatalf("enabled linear colorbar minor locator = %T, want AutoMinorLocator", cbAx.YAxisRight.MinorLocator)
+	}
+}
+
+func TestColorbarMinorTicksEnabledUsesBoundaryLocator(t *testing.T) {
+	fig := NewFigure(900, 600)
+	ax := fig.AddAxes(geom.Rect{
+		Min: geom.Pt{X: 0.10, Y: 0.12},
+		Max: geom.Pt{X: 0.78, Y: 0.88},
+	})
+	img := ax.Image([][]float64{
+		{0, 1},
+		{2, 3},
+	}, ImageOptions{Norm: BoundaryNorm{Boundaries: []float64{0, 1, 2, 3}, NColors: 3}})
+
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{MinorTicks: true})
+	if cbAx == nil {
+		t.Fatal("expected colorbar axes")
+	}
+	if _, ok := cbAx.YAxisRight.MinorLocator.(FixedLocator); !ok {
+		t.Fatalf("enabled boundary colorbar minor locator = %T, want FixedLocator", cbAx.YAxisRight.MinorLocator)
+	}
 }

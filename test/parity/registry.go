@@ -87,8 +87,10 @@ import (
 	example_collection_mutable_scalarmap "github.com/cwbudde/matplotlib-go/test/parity/collection_mutable_scalarmap"
 	example_colorbar_boundary_values "github.com/cwbudde/matplotlib-go/test/parity/colorbar_boundary_values"
 	example_colorbar_composition "github.com/cwbudde/matplotlib-go/test/parity/colorbar_composition"
+	example_colorbar_extendfrac "github.com/cwbudde/matplotlib-go/test/parity/colorbar_extendfrac"
 	example_colorbar_extensions "github.com/cwbudde/matplotlib-go/test/parity/colorbar_extensions"
 	example_colorbar_horizontal_ticks "github.com/cwbudde/matplotlib-go/test/parity/colorbar_horizontal_ticks"
+	example_colorbar_symlog_ticks "github.com/cwbudde/matplotlib-go/test/parity/colorbar_symlog_ticks"
 	example_colorbar_variants_gallery "github.com/cwbudde/matplotlib-go/test/parity/colorbar_variants_gallery"
 	example_colormap_cyclic "github.com/cwbudde/matplotlib-go/test/parity/colormap_cyclic"
 	example_colormap_diverging "github.com/cwbudde/matplotlib-go/test/parity/colormap_diverging"
@@ -396,6 +398,8 @@ var renderByID = map[string]func() image.Image{
 	"lognorm_imshow":                      example_lognorm_imshow.Render,
 	"twoslope_norm_image":                 example_twoslope_norm_image.Render,
 	"colorbar_extensions":                 example_colorbar_extensions.Render,
+	"colorbar_extendfrac":                 example_colorbar_extendfrac.Render,
+	"colorbar_symlog_ticks":               example_colorbar_symlog_ticks.Render,
 	"large_scatter":                       example_large_scatter.Render,
 	"mixed_collection":                    example_mixed_collection.Render,
 	"mixed_raster_vector":                 example_mixed_raster_vector.Render,
@@ -446,6 +450,7 @@ var figureByID = map[string]func() *core.Figure{
 	"colorbar_variants_gallery":           showcase_colorbar_variants_gallery.Plot,
 	"colorbar_boundary_values":            example_colorbar_boundary_values.Plot,
 	"colorbar_horizontal_ticks":           example_colorbar_horizontal_ticks.Plot,
+	"colorbar_symlog_ticks":               example_colorbar_symlog_ticks.Plot,
 	"colormap_diverging":                  example_colormap_diverging.Plot,
 	"colormap_families_gallery":           showcase_colormap_families_gallery.Plot,
 	"contour_styles":                      showcase_contour_styles.Plot,

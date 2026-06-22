@@ -14,26 +14,36 @@ type colorbarExtensionPath struct {
 	OverRange bool
 }
 
-func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRect bool) []colorbarExtensionPath {
+// colorbarDrawExtendFracs returns the per-side extension fractions, defaulting
+// to matplotlib's 5% when neither was set (e.g. a Colorbar built directly).
+func colorbarDrawExtendFracs(c *Colorbar) (float64, float64) {
+	if c.ExtendFracMin <= 0 && c.ExtendFracMax <= 0 {
+		return 0.05, 0.05
+	}
+	return c.ExtendFracMin, c.ExtendFracMax
+}
+
+func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRect bool, fracMin, fracMax float64) []colorbarExtensionPath {
 	extend = normalizeColorbarExtend(extend)
 	if extend == "neither" || clip.W() <= 0 || clip.H() <= 0 {
 		return nil
 	}
 	out := make([]colorbarExtensionPath, 0, 2)
 	if orientation == "horizontal" {
-		width := clip.W() * 0.05
+		widthMin := clip.W() * fracMin
+		widthMax := clip.W() * fracMax
 		if extend == "min" || extend == "both" {
 			verts := []geom.Pt{
 				{X: clip.Min.X, Y: clip.Min.Y},
 				{X: clip.Min.X, Y: clip.Max.Y},
-				{X: clip.Min.X - width, Y: (clip.Min.Y + clip.Max.Y) * 0.5},
+				{X: clip.Min.X - widthMin, Y: (clip.Min.Y + clip.Max.Y) * 0.5},
 			}
 			if extendRect {
 				verts = []geom.Pt{
 					{X: clip.Min.X, Y: clip.Min.Y},
 					{X: clip.Min.X, Y: clip.Max.Y},
-					{X: clip.Min.X - width, Y: clip.Max.Y},
-					{X: clip.Min.X - width, Y: clip.Min.Y},
+					{X: clip.Min.X - widthMin, Y: clip.Max.Y},
+					{X: clip.Min.X - widthMin, Y: clip.Min.Y},
 				}
 			}
 			out = append(out, colorbarExtensionPath{
@@ -47,14 +57,14 @@ func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRe
 		if extend == "max" || extend == "both" {
 			verts := []geom.Pt{
 				{X: clip.Max.X, Y: clip.Min.Y},
-				{X: clip.Max.X + width, Y: (clip.Min.Y + clip.Max.Y) * 0.5},
+				{X: clip.Max.X + widthMax, Y: (clip.Min.Y + clip.Max.Y) * 0.5},
 				{X: clip.Max.X, Y: clip.Max.Y},
 			}
 			if extendRect {
 				verts = []geom.Pt{
 					{X: clip.Max.X, Y: clip.Min.Y},
-					{X: clip.Max.X + width, Y: clip.Min.Y},
-					{X: clip.Max.X + width, Y: clip.Max.Y},
+					{X: clip.Max.X + widthMax, Y: clip.Min.Y},
+					{X: clip.Max.X + widthMax, Y: clip.Max.Y},
 					{X: clip.Max.X, Y: clip.Max.Y},
 				}
 			}
@@ -69,17 +79,18 @@ func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRe
 		return out
 	}
 
-	height := clip.H() * 0.05
+	heightMin := clip.H() * fracMin
+	heightMax := clip.H() * fracMax
 	if extend == "min" || extend == "both" {
 		verts := []geom.Pt{
 			{X: clip.Min.X, Y: clip.Min.Y},
-			{X: (clip.Min.X + clip.Max.X) * 0.5, Y: clip.Min.Y - height},
+			{X: (clip.Min.X + clip.Max.X) * 0.5, Y: clip.Min.Y - heightMin},
 			{X: clip.Max.X, Y: clip.Min.Y},
 		}
 		if extendRect {
 			verts = []geom.Pt{
-				{X: clip.Min.X, Y: clip.Min.Y - height},
-				{X: clip.Max.X, Y: clip.Min.Y - height},
+				{X: clip.Min.X, Y: clip.Min.Y - heightMin},
+				{X: clip.Max.X, Y: clip.Min.Y - heightMin},
 				{X: clip.Max.X, Y: clip.Min.Y},
 				{X: clip.Min.X, Y: clip.Min.Y},
 			}
@@ -96,14 +107,14 @@ func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRe
 		verts := []geom.Pt{
 			{X: clip.Min.X, Y: clip.Max.Y},
 			{X: clip.Max.X, Y: clip.Max.Y},
-			{X: (clip.Min.X + clip.Max.X) * 0.5, Y: clip.Max.Y + height},
+			{X: (clip.Min.X + clip.Max.X) * 0.5, Y: clip.Max.Y + heightMax},
 		}
 		if extendRect {
 			verts = []geom.Pt{
 				{X: clip.Min.X, Y: clip.Max.Y},
 				{X: clip.Max.X, Y: clip.Max.Y},
-				{X: clip.Max.X, Y: clip.Max.Y + height},
-				{X: clip.Min.X, Y: clip.Max.Y + height},
+				{X: clip.Max.X, Y: clip.Max.Y + heightMax},
+				{X: clip.Min.X, Y: clip.Max.Y + heightMax},
 			}
 		}
 		out = append(out, colorbarExtensionPath{
@@ -249,7 +260,8 @@ func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	}
 
 	orientation := c.normalizedOrientation()
-	for _, ext := range colorbarExtensionPaths(ctx.Clip, c.Extend, orientation, c.ExtendRect) {
+	fracMin, fracMax := colorbarDrawExtendFracs(c)
+	for _, ext := range colorbarExtensionPaths(ctx.Clip, c.Extend, orientation, c.ExtendRect, fracMin, fracMax) {
 		col := render.Color{}
 		if value, ok := c.boundaryExtensionValue(mapping, ext.OverRange); ok {
 			col = mapping.Color(value, alpha)
@@ -269,7 +281,7 @@ func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 		})
 	}
 
-	outline := colorbarExtendedOutlinePath(ctx.Clip, c.Extend, orientation, c.ExtendRect)
+	outline := colorbarExtendedOutlinePath(ctx.Clip, c.Extend, orientation, c.ExtendRect, fracMin, fracMax)
 	if len(outline.C) > 0 {
 		r.Path(outline, &render.Paint{
 			Stroke:    c.BorderColor,
@@ -280,7 +292,7 @@ func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	}
 }
 
-func colorbarExtendedOutlinePath(clip geom.Rect, extend, orientation string, extendRect bool) geom.Path {
+func colorbarExtendedOutlinePath(clip geom.Rect, extend, orientation string, extendRect bool, fracMin, fracMax float64) geom.Path {
 	extend = normalizeColorbarExtend(extend)
 	if extend == "neither" || clip.W() <= 0 || clip.H() <= 0 {
 		return geom.Path{}
@@ -288,35 +300,32 @@ func colorbarExtendedOutlinePath(clip geom.Rect, extend, orientation string, ext
 	if extendRect {
 		outlineRect := clip
 		if orientation == "horizontal" {
-			width := clip.W() * 0.05
 			if extend == "min" || extend == "both" {
-				outlineRect.Min.X -= width
+				outlineRect.Min.X -= clip.W() * fracMin
 			}
 			if extend == "max" || extend == "both" {
-				outlineRect.Max.X += width
+				outlineRect.Max.X += clip.W() * fracMax
 			}
 		} else {
-			height := clip.H() * 0.05
 			if extend == "min" || extend == "both" {
-				outlineRect.Min.Y -= height
+				outlineRect.Min.Y -= clip.H() * fracMin
 			}
 			if extend == "max" || extend == "both" {
-				outlineRect.Max.Y += height
+				outlineRect.Max.Y += clip.H() * fracMax
 			}
 		}
 		return snappedStrokeRectPath(outlineRect)
 	}
 	if orientation == "horizontal" {
-		width := clip.W() * 0.05
 		left := clip.Min.X
 		leftTip := left
 		if extend == "min" || extend == "both" {
-			leftTip -= width
+			leftTip -= clip.W() * fracMin
 		}
 		right := clip.Max.X
 		rightTip := right
 		if extend == "max" || extend == "both" {
-			rightTip += width
+			rightTip += clip.W() * fracMax
 		}
 		midY := (clip.Min.Y + clip.Max.Y) * 0.5
 		verts := []geom.Pt{{X: left, Y: clip.Max.Y}}
@@ -331,16 +340,15 @@ func colorbarExtendedOutlinePath(clip geom.Rect, extend, orientation string, ext
 		return geom.Path{V: verts, C: closedPolygonCmds(len(verts))}
 	}
 
-	height := clip.H() * 0.05
 	bottom := clip.Min.Y
 	bottomTip := bottom
 	if extend == "min" || extend == "both" {
-		bottomTip -= height
+		bottomTip -= clip.H() * fracMin
 	}
 	top := clip.Max.Y
 	topTip := top
 	if extend == "max" || extend == "both" {
-		topTip += height
+		topTip += clip.H() * fracMax
 	}
 	midX := (clip.Min.X + clip.Max.X) * 0.5
 	verts := []geom.Pt{{X: clip.Min.X, Y: bottom}}

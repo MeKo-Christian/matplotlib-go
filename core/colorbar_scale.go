@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
@@ -95,69 +96,201 @@ func normalizeColorbarSpacing(spacing string) string {
 	}
 }
 
+// colorbarAxisOps bundles the orientation-specific operations so the per-norm
+// locator wiring can be written once for both vertical and horizontal colorbars.
+type colorbarAxisOps struct {
+	setLim    func(min, max float64)
+	setLimLog func(min, max, base float64)
+	setScale  func(s transform.Scale)
+	setManual func()
+	primary   *Axis
+	secondary *Axis
+	target    *Axis
+}
+
 func configureColorbarScale(ax *Axes, mapping ScalarMapInfo, location string, ticks, boundaries []float64, extend string) {
 	if ax == nil {
 		return
 	}
-	vmin, vmax := mapping.VMin, mapping.VMax
 	if colorbarIsHorizontal(location) {
-		configureHorizontalColorbarScale(ax, mapping, location, ticks, boundaries, extend)
+		configureHorizontalColorbarScale(ax, &mapping, location, ticks, boundaries, extend)
 		return
 	}
-	target := verticalColorbarAxis(ax, location)
+	ops := colorbarAxisOps{
+		setLim:    ax.SetYLim,
+		setLimLog: ax.SetYLimLog,
+		setScale:  func(s transform.Scale) { ax.YScale = s },
+		setManual: func() { ax.yLimitsManual = true },
+		primary:   ax.YAxis,
+		secondary: ax.YAxisRight,
+		target:    verticalColorbarAxis(ax, location),
+	}
+	applyColorbarNormScale(ax, ops, &mapping, location, ticks, boundaries, extend)
+}
+
+func configureHorizontalColorbarScale(ax *Axes, mapping *ScalarMapInfo, location string, ticks, boundaries []float64, extend string) {
+	target := ax.XAxis
+	if location == "top" {
+		target = ax.TopAxis()
+	}
+	ops := colorbarAxisOps{
+		setLim:    ax.SetXLim,
+		setLimLog: ax.SetXLimLog,
+		setScale:  func(s transform.Scale) { ax.XScale = s },
+		setManual: func() { ax.xLimitsManual = true },
+		primary:   ax.XAxis,
+		secondary: ax.XAxisTop,
+		target:    target,
+	}
+	applyColorbarNormScale(ax, ops, mapping, location, ticks, boundaries, extend)
+}
+
+// applyColorbarNormScale selects the colorbar axis scale, major/minor locators,
+// and formatter based on the norm type, mirroring matplotlib's
+// Colorbar._reset_locator_formatter_scale / _get_ticker_locator_formatter.
+func applyColorbarNormScale(ax *Axes, ops colorbarAxisOps, mapping *ScalarMapInfo, location string, ticks, boundaries []float64, extend string) {
+	vmin, vmax := mapping.VMin, mapping.VMax
+	target := ops.target
+
 	if len(boundaries) >= 2 {
 		inside := colorbarInteriorBoundaries(boundaries, extend)
-		ax.SetYLim(inside[0], inside[len(inside)-1])
+		ops.setLim(inside[0], inside[len(inside)-1])
 		if target != nil {
 			target.Locator = FixedLocator{TicksList: cloneFloat64s(boundaries)}
 			target.Formatter = ScalarFormatter{Prec: 6}
+			if ax.colorbarMinorTicks {
+				target.MinorLocator = FixedLocator{TicksList: cloneFloat64s(boundaries)}
+			}
 		}
 		applyExplicitColorbarTicks(ax, location, ticks)
+		finalizeColorbarMinorTicks(ax, ops)
 		return
 	}
+
 	switch norm := mapping.Norm.(type) {
 	case LogNorm:
 		base := 10.0
 		if vmin > 0 && vmax > 0 {
-			ax.SetYLimLog(vmin, vmax, base)
+			ops.setLimLog(vmin, vmax, base)
 		} else {
-			ax.SetYLim(vmin, vmax)
+			ops.setLim(vmin, vmax)
 		}
 		if target != nil {
 			target.Locator = LogLocator{Base: base}
 			target.Formatter = LogFormatterMathText{Base: base, SciNotation: true}
 		}
+	case SymLogNorm:
+		if isFinite(vmin) && isFinite(vmax) && vmin != vmax {
+			base := norm.Base
+			if base <= 1 {
+				base = 10
+			}
+			linThresh := norm.LinThresh
+			if linThresh <= 0 {
+				linThresh = 1
+			}
+			linScale := norm.LinScale
+			if linScale == 0 {
+				linScale = 1
+			}
+			ops.setScale(transform.NewSymLog(vmin, vmax, base, linThresh, linScale))
+			ops.setManual()
+			configureScaleAxes(ops.primary, ops.secondary, "symlog", transform.ResolveScaleOptions(
+				transform.WithScaleDomain(vmin, vmax),
+				transform.WithScaleBase(base),
+				transform.WithScaleLinThresh(linThresh),
+			))
+		} else {
+			ops.setLim(vmin, vmax)
+		}
 	case AsinhNorm:
 		if isFinite(vmin) && isFinite(vmax) && vmin != vmax {
 			linearWidth := asinhNormLinearWidth(norm.LinearWidth)
-			ax.YScale = transform.NewAsinh(vmin, vmax, linearWidth)
-			ax.yLimitsManual = true
-			configureScaleAxes(ax.YAxis, ax.YAxisRight, "asinh", transform.ResolveScaleOptions(
+			ops.setScale(transform.NewAsinh(vmin, vmax, linearWidth))
+			ops.setManual()
+			configureScaleAxes(ops.primary, ops.secondary, "asinh", transform.ResolveScaleOptions(
 				transform.WithScaleDomain(vmin, vmax),
 				transform.WithScaleBase(10),
 				transform.WithScaleLinearWidth(linearWidth),
 			))
 		} else {
-			ax.SetYLim(vmin, vmax)
+			ops.setLim(vmin, vmax)
 		}
 	case BoundaryNorm:
-		ax.SetYLim(vmin, vmax)
+		ops.setLim(vmin, vmax)
 		if target != nil {
 			target.Locator = FixedLocator{TicksList: append([]float64(nil), norm.Boundaries...)}
 			target.Formatter = ScalarFormatter{Prec: 6}
+			if ax.colorbarMinorTicks {
+				target.MinorLocator = FixedLocator{TicksList: append([]float64(nil), norm.Boundaries...)}
+			}
+		}
+	case NoNorm:
+		ops.setLim(vmin, vmax)
+		if target != nil {
+			base := 1 + math.Floor(float64(colorbarNoNormValueCount(ax, boundaries))/10.0)
+			if base < 1 {
+				base = 1
+			}
+			target.Locator = IndexLocator{Base: base, Offset: 0.5}
+			target.Formatter = ScalarFormatter{Prec: 6}
+		}
+	case PowerNorm, TwoSlopeNorm, CenteredNorm:
+		if isFinite(vmin) && isFinite(vmax) && vmin != vmax {
+			n := mapping.Norm
+			ops.setScale(transform.NewFuncScale(vmin, vmax, n.Map, n.Inverse))
+			ops.setManual()
+			configureScaleAxes(ops.primary, ops.secondary, "function", transform.ResolveScaleOptions())
+			// matplotlib's function-scale default major locator is AutoLocator
+			// (nice 1/2/2.5/5 ticks in data space), not LinearLocator.
+			if target != nil {
+				target.Locator = AutoLocator{}
+				target.Formatter = ScalarFormatter{Prec: 6}
+			}
+		} else {
+			ops.setLim(vmin, vmax)
 		}
 	default:
 		if isNonlinearColorbarNorm(mapping.Norm) && isFinite(vmin) && isFinite(vmax) && vmin != vmax {
-			norm := mapping.Norm
-			ax.YScale = transform.NewFuncScale(vmin, vmax, norm.Map, norm.Inverse)
-			ax.yLimitsManual = true
-			configureScaleAxes(ax.YAxis, ax.YAxisRight, "function", transform.ResolveScaleOptions())
+			n := mapping.Norm
+			ops.setScale(transform.NewFuncScale(vmin, vmax, n.Map, n.Inverse))
+			ops.setManual()
+			configureScaleAxes(ops.primary, ops.secondary, "function", transform.ResolveScaleOptions())
 			applyExplicitColorbarTicks(ax, location, ticks)
+			finalizeColorbarMinorTicks(ax, ops)
 			return
 		}
-		ax.SetYLim(vmin, vmax)
+		ops.setLim(vmin, vmax)
 	}
 	applyExplicitColorbarTicks(ax, location, ticks)
+	finalizeColorbarMinorTicks(ax, ops)
+}
+
+// colorbarNoNormValueCount mirrors len(self._values) for a NoNorm colorbar,
+// used to size the IndexLocator base (1 + int(N/10)).
+func colorbarNoNormValueCount(ax *Axes, boundaries []float64) int {
+	if len(boundaries) >= 2 {
+		return len(boundaries) - 1
+	}
+	if ax != nil && len(ax.colorbarBounds) >= 2 {
+		return len(ax.colorbarBounds) - 1
+	}
+	return 0
+}
+
+// finalizeColorbarMinorTicks handles opt-in colorbar minor ticks for scales that
+// do not supply their own minor locator. Log/symlog/asinh scales install a minor
+// locator that matplotlib shows by default, so those are left untouched. Linear
+// and function scales have no default minor locator; ColorbarOptions.MinorTicks
+// adds an AutoMinorLocator there, mirroring matplotlib's minorticks_on(). With
+// MinorTicks off (the default) the scale-supplied minor locator is preserved.
+func finalizeColorbarMinorTicks(ax *Axes, ops colorbarAxisOps) {
+	if ops.target == nil || ax == nil || !ax.colorbarMinorTicks {
+		return
+	}
+	if ops.target.MinorLocator == nil {
+		ops.target.MinorLocator = AutoMinorLocator{}
+	}
 }
 
 func verticalColorbarAxis(ax *Axes, location string) *Axis {
@@ -168,67 +301,6 @@ func verticalColorbarAxis(ax *Axes, location string) *Axis {
 		return ax.YAxis
 	}
 	return ax.RightAxis()
-}
-
-func configureHorizontalColorbarScale(ax *Axes, mapping ScalarMapInfo, location string, ticks, boundaries []float64, extend string) {
-	vmin, vmax := mapping.VMin, mapping.VMax
-	target := ax.XAxis
-	if location == "top" {
-		target = ax.TopAxis()
-	}
-	if len(boundaries) >= 2 {
-		inside := colorbarInteriorBoundaries(boundaries, extend)
-		ax.SetXLim(inside[0], inside[len(inside)-1])
-		if target != nil {
-			target.Locator = FixedLocator{TicksList: cloneFloat64s(boundaries)}
-			target.Formatter = ScalarFormatter{Prec: 6}
-		}
-		applyExplicitColorbarTicks(ax, location, ticks)
-		return
-	}
-	switch norm := mapping.Norm.(type) {
-	case LogNorm:
-		base := 10.0
-		if vmin > 0 && vmax > 0 {
-			ax.SetXLimLog(vmin, vmax, base)
-		} else {
-			ax.SetXLim(vmin, vmax)
-		}
-		if target != nil {
-			target.Locator = LogLocator{Base: base}
-			target.Formatter = LogFormatterMathText{Base: base, SciNotation: true}
-		}
-	case AsinhNorm:
-		if isFinite(vmin) && isFinite(vmax) && vmin != vmax {
-			linearWidth := asinhNormLinearWidth(norm.LinearWidth)
-			ax.XScale = transform.NewAsinh(vmin, vmax, linearWidth)
-			ax.xLimitsManual = true
-			configureScaleAxes(ax.XAxis, ax.XAxisTop, "asinh", transform.ResolveScaleOptions(
-				transform.WithScaleDomain(vmin, vmax),
-				transform.WithScaleBase(10),
-				transform.WithScaleLinearWidth(linearWidth),
-			))
-		} else {
-			ax.SetXLim(vmin, vmax)
-		}
-	case BoundaryNorm:
-		ax.SetXLim(vmin, vmax)
-		if target != nil {
-			target.Locator = FixedLocator{TicksList: append([]float64(nil), norm.Boundaries...)}
-			target.Formatter = ScalarFormatter{Prec: 6}
-		}
-	default:
-		if isNonlinearColorbarNorm(mapping.Norm) && isFinite(vmin) && isFinite(vmax) && vmin != vmax {
-			norm := mapping.Norm
-			ax.XScale = transform.NewFuncScale(vmin, vmax, norm.Map, norm.Inverse)
-			ax.xLimitsManual = true
-			configureScaleAxes(ax.XAxis, ax.XAxisTop, "function", transform.ResolveScaleOptions())
-			applyExplicitColorbarTicks(ax, location, ticks)
-			return
-		}
-		ax.SetXLim(vmin, vmax)
-	}
-	applyExplicitColorbarTicks(ax, location, ticks)
 }
 
 func applyExplicitColorbarTicks(ax *Axes, location string, ticks []float64) {

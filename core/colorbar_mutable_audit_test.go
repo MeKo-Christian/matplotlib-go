@@ -53,7 +53,7 @@ func TestColorbarMutableMappableUpdateContractIsDocumented(t *testing.T) {
 			"m.refreshScalarMappedColors()",
 		},
 		filepath.Join("..", "core", "colorbar.go"): {
-			"Mappable    ScalarMappable",
+			"Mappable      ScalarMappable",
 			"mappable.ScalarMap().Resolved()",
 		},
 		filepath.Join("..", "core", "colorbar_scale.go"): {

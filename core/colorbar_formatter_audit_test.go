@@ -37,7 +37,7 @@ func TestColorbarBoundariesAndExtensionsAreDocumented(t *testing.T) {
 			"ExtendRect  bool",
 		},
 		filepath.Join("..", "core", "colorbar_draw.go"): {
-			"func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRect bool)",
+			"func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRect bool, fracMin, fracMax float64)",
 			"func drawColorbarBoundaryDividers",
 		},
 		filepath.Join("..", "core", "colorbar_scale.go"): {
@@ -108,7 +108,8 @@ func TestColorbarBoundariesAndExtensionsAreDocumented(t *testing.T) {
 		"Go supports `ColorbarOptions.Boundaries`, `Values`, `Spacing`, `DrawEdges`, `Extend`, and `ExtendRect`",
 		"Go trims colorbar scale limits to interior boundaries when extensions are active",
 		"under/over color routing is covered through `Colormap.AtValue` and explicit boundary extension values",
-		"custom `extendfrac` and `extendfrac='auto'` remain documented residuals",
+		"Go now supports custom `extendfrac` through `ColorbarOptions.ExtendFrac`",
+		"`extendfrac='auto'` through `ColorbarOptions.ExtendFracAuto`",
 	}
 	for _, phrase := range requiredDocs {
 		if !strings.Contains(docText, phrase) {
@@ -153,6 +154,9 @@ func TestColorbarTickAndLabelFormattingIsDocumented(t *testing.T) {
 			"target.Formatter = ScalarFormatter{Prec: 6}",
 			"target.Locator = LogLocator{Base: base}",
 			"target.Formatter = LogFormatterMathText{Base: base, SciNotation: true}",
+			"case SymLogNorm:",
+			"target.Locator = AutoLocator{}",
+			"target.Locator = IndexLocator{Base: base, Offset: 0.5}",
 			"func applyExplicitColorbarTicks",
 			"formatter := ScalarFormatter{Prec: 6}",
 			"func configureColorbarAxes",
@@ -165,6 +169,9 @@ func TestColorbarTickAndLabelFormattingIsDocumented(t *testing.T) {
 		filepath.Join("..", "core", "colorbar_test.go"): {
 			"TestFigureAddColorbarUsesLogNormTicks",
 			"TestFigureAddColorbarUsesAsinhNormScale",
+			"TestFigureAddColorbarUsesSymLogNormScale",
+			"TestFigureAddColorbarUsesIndexLocatorForNoNorm",
+			"TestColorbarMinorTicksLinearDefaultOff",
 			"TestFigureAddLeftColorbarUsesLeftBoundaryTicks",
 			"TestFigureAddColorbarUsesExplicitTicks",
 			"TestHorizontalColorbarUsesExplicitTicks",
@@ -205,10 +212,10 @@ func TestColorbarTickAndLabelFormattingIsDocumented(t *testing.T) {
 		"`update_ticks` applies the long-axis major locator, minor locator, and major formatter",
 		"`set_ticks` supports labels and `minor=True` upstream",
 		"Go supports explicit major ticks through `ColorbarOptions.Ticks`",
-		"Go routes boundary, explicit boundary, log, asinh, and nonlinear norm colorbars to focused locators and formatters",
+		"Go routes boundary, explicit boundary, log, asinh, symlog, power, two-slope, centered, no-norm, and other nonlinear norm colorbars to focused locators and formatters",
 		"Colorbar labels are placed on the active long axis for right, left, top, and bottom locations",
 		"horizontal bottom colorbar tick fixtures are covered by `colorbar_horizontal_ticks`",
-		"Go clears colorbar minor locators and does not expose colorbar minor tick controls",
+		"Go exposes opt-in colorbar minor ticks through `ColorbarOptions.MinorTicks`",
 		"custom colorbar formatter options, ticklocation independent from location, `set_ticks(labels=...)`, and minor formatter APIs remain documented residuals",
 	}
 	for _, phrase := range requiredDocs {
@@ -230,7 +237,8 @@ func TestColorbarFormatterAndTickBreadthMilestoneIsClosed(t *testing.T) {
 	requiredDocs := []string{
 		"Phase 17.6.5 Colorbar Boundaries and Extensions",
 		"Phase 17.6.5 Colorbar Tick and Label Formatting",
-		"custom `extendfrac` and `extendfrac='auto'` remain documented residuals",
+		"Go now supports custom `extendfrac` through `ColorbarOptions.ExtendFrac`",
+		"`extendfrac='auto'` through `ColorbarOptions.ExtendFracAuto`",
 		"custom colorbar formatter options, ticklocation independent from location, `set_ticks(labels=...)`, and minor formatter APIs remain documented residuals",
 	}
 	for _, phrase := range requiredDocs {

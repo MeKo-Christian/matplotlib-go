@@ -137,6 +137,8 @@ colorbar_horizontal_ticks
 lognorm_imshow
 twoslope_norm_image
 colorbar_extensions
+colorbar_extendfrac
+colorbar_symlog_ticks
 large_scatter
 mixed_collection
 quad_mesh

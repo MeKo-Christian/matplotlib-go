@@ -532,11 +532,11 @@ func syncColorbarAxesMeasured(fig *Figure, r render.Renderer, vp geom.Rect) {
 				slotOffset = measureAxesDecorationPadding(parent, fig, r, vp, alignment).right / fig.SizePx.X
 			}
 			_, ax.RectFraction = colorbarPlacementRectWithSlotOffset(fig, base, thickness, slotThickness, padding, location, useResolvedSlot, slotOffset)
-			ax.RectFraction = insetColorbarRectForExtensions(fig, ax.RectFraction, ax.colorbarExtend, location)
+			ax.RectFraction = insetColorbarRectForExtensions(fig, ax.RectFraction, ax.colorbarExtend, location, ax.colorbarExtendFracMin, ax.colorbarExtendFracMax)
 			continue
 		}
 		parent.RectFraction, ax.RectFraction = colorbarPlacementRect(fig, base, thickness, slotThickness, padding, location, useResolvedSlot)
-		ax.RectFraction = insetColorbarRectForExtensions(fig, ax.RectFraction, ax.colorbarExtend, location)
+		ax.RectFraction = insetColorbarRectForExtensions(fig, ax.RectFraction, ax.colorbarExtend, location, ax.colorbarExtendFracMin, ax.colorbarExtendFracMax)
 	}
 }
 
