@@ -385,9 +385,23 @@ match Matplotlib defaults, not just the happy path.
       fills, shifting `fill_between`/`stackplot` polygons ~0.5px off Matplotlib;
       it is now gated on a visible stroke, dropping streamgraph parity from
       RMSE 6.15 → 0.07 with no change to stroked fills.
-- [ ] **Contour** `negative_linestyles` (default dashing), `extend`,
+- [x] **Contour** `negative_linestyles` (default dashing), `extend`,
       `linestyles`, and contourf `hatches` (`core/contour_api.go`); `clabel`
-      `fmt` (dict/callable/format-string) + `rightside_up`.
+      `fmt` (dict/callable/format-string) + `rightside_up`. `ContourOptions`
+      gained `LineStyles`/`NegativeLineStyles` (port of `_process_linestyles`:
+      monochrome contours dash negative levels by default), `Extend`
+      (`contourExtendedLevels` sentinel bands → colormap under/over via
+      `AtValue`), and `Hatches` (cycled per band; hatched contourf merges each
+      band into one compound path so the hatch tiles continuously, matching
+      Matplotlib's one-path-per-level model). `ClabelOptions` gained
+      `FormatString`/`FormatDict` (`get_text` port) and `RightSideUp`. Backend
+      fix: AGG hatch strokes are now always anti-aliased independent of the
+      fill's AA (contourf bands are `antialiased=False` but their hatch lines
+      are AA in Matplotlib) — dropped hatched-contourf reference RMSE 26→0.55.
+      New `contour_styles` parity case (RMSE 4.15); style resolution, extend,
+      hatch cycling, and label formatting unit-tested (`core/contour_styles_test.go`,
+      `core/contour_label_format_test.go`). _Deferred: colorbar extend triangles,
+      log-scale extend, accent/`format_ticks` list semantics._
 - [ ] **Colorbar** norm-aware locators for SymLog/Power/TwoSlope/Centered +
       `NoNorm` IndexLocator (`core/colorbar_scale.go:118`); `extendfrac`; minor
       ticks.

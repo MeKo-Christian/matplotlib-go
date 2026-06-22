@@ -1,17 +1,49 @@
 package core
 
 import (
+	"sort"
+
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-func contourBandPolygons(tri Triangulation, values, levels []float64, opt ContourOptions, mapping ScalarMapInfo, alpha float64) ([][]geom.Pt, []render.Color) {
+// contourExtendedLevels returns the level boundaries used for filled-band
+// geometry, inserting sentinel extremes for the requested extend mode so the
+// under/over bands are generated. The public levels are left untouched; the
+// colormap norm still spans the real first/last level, so the sentinel band
+// midpoints map to the colormap's under/over colors.
+func contourExtendedLevels(levels []float64, extend string) []float64 {
+	extendMin := extend == "min" || extend == "both"
+	extendMax := extend == "max" || extend == "both"
+	if !extendMin && !extendMax {
+		return levels
+	}
+	out := make([]float64, 0, len(levels)+2)
+	if extendMin {
+		out = append(out, -1e250)
+	}
+	out = append(out, levels...)
+	if extendMax {
+		out = append(out, 1e250)
+	}
+	return out
+}
+
+func contourBandPolygons(tri Triangulation, values, levels []float64, opt ContourOptions, mapping ScalarMapInfo, alpha float64) ([][]geom.Pt, []render.Color, []string) {
+	polygons, colors, hatches, _ := contourBandPolygonsBands(tri, values, levels, opt, mapping, alpha)
+	return polygons, colors, hatches
+}
+
+func contourBandPolygonsBands(tri Triangulation, values, levels []float64, opt ContourOptions, mapping ScalarMapInfo, alpha float64) ([][]geom.Pt, []render.Color, []string, []int) {
 	polygons := [][]geom.Pt{}
 	colors := []render.Color{}
+	hatches := []string{}
+	bands := []int{}
 	for levelIdx := 0; levelIdx+1 < len(levels); levelIdx++ {
 		low := levels[levelIdx]
 		high := levels[levelIdx+1]
 		color := contourBandColor(low, high, levelIdx, opt, mapping, alpha)
+		hatch := contourBandHatch(opt.Hatches, levelIdx)
 		for triIdx, triangle := range tri.Triangles {
 			if tri.masked(triIdx) {
 				continue
@@ -27,32 +59,42 @@ func contourBandPolygons(tri Triangulation, values, levels []float64, opt Contou
 			}
 			polygons = append(polygons, polygon)
 			colors = append(colors, color)
+			hatches = append(hatches, hatch)
+			bands = append(bands, levelIdx)
 		}
 	}
-	return polygons, colors
+	return polygons, colors, hatches, bands
 }
 
-func contourGridBandPolygons(x, y []float64, data [][]float64, levels []float64, opt ContourOptions, mapping ScalarMapInfo, alpha float64) ([][]geom.Pt, []render.Color) {
+func contourGridBandPolygons(x, y []float64, data [][]float64, levels []float64, opt ContourOptions, mapping ScalarMapInfo, alpha float64) ([][]geom.Pt, []render.Color, []string) {
+	polygons, colors, hatches, _ := contourGridBandPolygonsBands(x, y, data, levels, opt, mapping, alpha)
+	return polygons, colors, hatches
+}
+
+func contourGridBandPolygonsBands(x, y []float64, data [][]float64, levels []float64, opt ContourOptions, mapping ScalarMapInfo, alpha float64) ([][]geom.Pt, []render.Color, []string, []int) {
 	rows := len(data)
 	if rows < 2 || len(x) < 2 || len(y) < 2 || len(levels) < 2 {
-		return nil, nil
+		return nil, nil, nil, nil
 	}
 	cols := len(data[0])
 	if cols < 2 || len(x) < cols || len(y) < rows {
-		return nil, nil
+		return nil, nil, nil, nil
 	}
 	for row := 1; row < rows; row++ {
 		if len(data[row]) != cols {
-			return nil, nil
+			return nil, nil, nil, nil
 		}
 	}
 
 	polygons := [][]geom.Pt{}
 	colors := []render.Color{}
+	hatches := []string{}
+	bands := []int{}
 	for levelIdx := 0; levelIdx+1 < len(levels); levelIdx++ {
 		low := levels[levelIdx]
 		high := levels[levelIdx+1]
 		color := contourBandColor(low, high, levelIdx, opt, mapping, alpha)
+		hatch := contourBandHatch(opt.Hatches, levelIdx)
 		for row := 0; row+1 < rows; row++ {
 			for col := 0; col+1 < cols; col++ {
 				cellPolygons := contourCellBandPolygons(
@@ -77,11 +119,107 @@ func contourGridBandPolygons(x, y []float64, data [][]float64, levels []float64,
 					}
 					polygons = append(polygons, polygon)
 					colors = append(colors, color)
+					hatches = append(hatches, hatch)
+					bands = append(bands, levelIdx)
 				}
 			}
 		}
 	}
-	return polygons, colors
+	return polygons, colors, hatches, bands
+}
+
+// contourBandCompoundPaths groups per-cell band polygons into one compound path
+// per band so hatch patterns tile continuously across the whole filled region
+// (matching Matplotlib, which emits a single path per contourf level). It
+// returns the compound paths with their per-band face color and hatch. Bands
+// are emitted in ascending order; empty bands are skipped.
+func contourBandCompoundPaths(polygons [][]geom.Pt, colors []render.Color, hatches []string, bands []int) ([]geom.Path, []render.Color, []string) {
+	if len(polygons) == 0 || len(bands) != len(polygons) {
+		return nil, nil, nil
+	}
+	order := []int{}
+	byBand := map[int][]int{}
+	for i, band := range bands {
+		if _, seen := byBand[band]; !seen {
+			order = append(order, band)
+		}
+		byBand[band] = append(byBand[band], i)
+	}
+	sort.Ints(order)
+
+	paths := make([]geom.Path, 0, len(order))
+	faceColors := make([]render.Color, 0, len(order))
+	bandHatches := make([]string, 0, len(order))
+	for _, band := range order {
+		indices := byBand[band]
+		var compound geom.Path
+		for _, idx := range indices {
+			compound = appendPolygonSubpath(compound, polygons[idx])
+		}
+		if len(compound.C) == 0 {
+			continue
+		}
+		paths = append(paths, compound)
+		faceColors = append(faceColors, colors[indices[0]])
+		bandHatches = append(bandHatches, hatches[indices[0]])
+	}
+	return paths, faceColors, bandHatches
+}
+
+// appendPolygonSubpath appends a closed polygon as a subpath of dst.
+func appendPolygonSubpath(dst geom.Path, polygon []geom.Pt) geom.Path {
+	sub := polygonPath(polygon, true)
+	dst.C = append(dst.C, sub.C...)
+	dst.V = append(dst.V, sub.V...)
+	return dst
+}
+
+// contourBandHatch returns the hatch for band levelIdx, cycling the hatch list
+// (Matplotlib cycles hatches per filled region). An empty list yields "".
+func contourBandHatch(hatches []string, levelIdx int) string {
+	if len(hatches) == 0 {
+		return ""
+	}
+	return hatches[levelIdx%len(hatches)]
+}
+
+// contourHatchLineWidth is the hatch stroke width applied to contourf hatches,
+// matching Matplotlib's rcParams["hatch.linewidth"] (1.0 pt) expressed in the
+// project's device-pixel convention at the reference 100 DPI.
+const contourHatchLineWidth = 100.0 / 72.0
+
+// applyContourHatchStyle sets the default hatch color (black) and width on a
+// filled contour collection when hatches are present, mirroring Matplotlib's
+// rcParams["hatch.color"]/["hatch.linewidth"]. It is a no-op when no hatch
+// pattern is set, so unhatched contourf keeps the fast batched draw path.
+func applyContourHatchStyle(fills *PolyCollection, hatches []string) {
+	if fills == nil || !contourHatchesUsed(hatches) {
+		return
+	}
+	fills.HatchColor = render.Color{A: 1}
+	fills.HatchWidth = contourHatchLineWidth
+}
+
+func contourHatchesUsed(hatches []string) bool {
+	for _, h := range hatches {
+		if h != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// contourFillGeometry chooses the filled-contour geometry representation. When
+// hatches are present it merges each band's per-cell polygons into a single
+// compound path so the hatch tiles continuously (Matplotlib's one-path-per-band
+// model); otherwise it keeps the per-cell polygons for the existing fast,
+// seam-free solid-fill path. Exactly one of paths/polys is non-empty.
+func contourFillGeometry(polygons [][]geom.Pt, faceColors []render.Color, hatches []string, bands []int) (paths []geom.Path, polys [][]geom.Pt, colors []render.Color, hatchOut []string) {
+	if contourHatchesUsed(hatches) {
+		paths, colors, hatchOut = contourBandCompoundPaths(polygons, faceColors, hatches, bands)
+		return paths, nil, colors, hatchOut
+	}
+	return nil, polygons, faceColors, hatches
 }
 
 func contourCellBandPolygons(points [4]geom.Pt, values [4]float64, low, high float64) [][]geom.Pt {

@@ -24,6 +24,23 @@ type ContourOptions struct {
 	LabelFontSize  *float64
 	LabelColor     *render.Color
 	Label          string
+
+	// LineStyles assigns per-level stroke styles for contour lines
+	// ("solid", "dashed", "--", "dashdot", "-.", "dotted", ":"). The list is
+	// cycled (ceil-padded) and truncated to the level count; a single entry
+	// applies to every level. Has no effect on contourf.
+	LineStyles []string
+	// NegativeLineStyles overrides the style applied to negative levels of a
+	// monochrome contour when LineStyles is unset (default "dashed", matching
+	// rcParams["contour.negative_linestyle"]).
+	NegativeLineStyles *string
+	// Extend extends the filled (contourf) color mapping past the level range:
+	// "neither" (default), "min", "max", or "both". The extra bands use the
+	// colormap's under/over colors.
+	Extend string
+	// Hatches assigns hatch patterns to contourf bands, cycled per band
+	// (Matplotlib's contourf hatches). Empty disables hatching.
+	Hatches []string
 }
 
 type contourLabel struct {
@@ -45,6 +62,16 @@ type ClabelOptions struct {
 	Inline          *bool
 	InlineSpacing   float64
 	ManualPositions []geom.Pt
+
+	// FormatString applies %-style formatting to each level (e.g. "%1.2f"),
+	// matching a Matplotlib clabel fmt string.
+	FormatString string
+	// FormatDict maps a level to its label text, matching a Matplotlib clabel
+	// fmt dict; missing levels fall back to "%1.3f".
+	FormatDict map[float64]string
+	// RightSideUp keeps inline labels upright by constraining their rotation to
+	// [-90°, 90°]. Defaults to true when nil.
+	RightSideUp *bool
 }
 
 // ContourLabel stores the public metadata for a placed contour label.
@@ -70,6 +97,7 @@ type ContourSet struct {
 	labelLevels    []float64
 	labelInlineGap float64
 	inlineLabels   bool
+	rightSideUp    bool
 	z              float64
 }
 
@@ -97,7 +125,8 @@ func (c *ContourSet) Clabel(opts ...ClabelOptions) []ContourLabel {
 		return nil
 	}
 
-	c.LabelFormatter = contourFormatter(firstFormatter(opt.Formatter, c.LabelFormatter))
+	c.LabelFormatter = newContourLabelFormatter(opt, c.LabelFormatter)
+	c.rightSideUp = specialtyBool(opt.RightSideUp, true)
 	if opt.FontSize != nil && *opt.FontSize > 0 {
 		c.LabelFontSize = *opt.FontSize
 	} else if c.LabelFontSize <= 0 {
@@ -163,6 +192,7 @@ func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
 		Levels:         append([]float64(nil), levels...),
 		LabelFormatter: contourFormatter(opt.LabelFormatter),
 		LabelFontSize:  valueOrDefaultFloat(opt.LabelFontSize, 10),
+		rightSideUp:    true,
 		z:              defaultLineZ,
 	}
 	if opt.LabelColor != nil {
@@ -172,22 +202,25 @@ func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
 	for i, level := range polylineLevels {
 		colors[i] = contourLineColor(level, levels, opt, mapping, alpha, colorFallback)
 	}
+	styles := resolveContourLineStyles(levels, opt, contourMonochrome(opt))
+	dashPatterns := contourLineDashPatterns(polylineLevels, levels, styles, lineWidth)
 	set.Lines = &LineCollection{
 		Collection: Collection{
 			Coords: Coords(CoordData),
 			Label:  opt.Label,
 			Alpha:  1,
 		},
-		Segments:  polylines,
-		Colors:    colors,
-		LineWidth: lineWidth,
-		LineJoin:  render.JoinRound,
-		LineCap:   render.CapButt,
+		Segments:     polylines,
+		Colors:       colors,
+		LineWidth:    lineWidth,
+		DashPatterns: dashPatterns,
+		LineJoin:     render.JoinRound,
+		LineCap:      render.CapButt,
 	}
 	set.lineLevels = append([]float64(nil), polylineLevels...)
 	if opt.LabelLines {
 		set.inlineLabels = true
-		set.labels = contourLabels(polylines, polylineLevels, colors, set.LabelFormatter)
+		set.labels = contourLabels(polylines, polylineLevels, colors, set.LabelFormatter, set.rightSideUp)
 	}
 	a.Add(set)
 	return set
@@ -226,10 +259,12 @@ func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet {
 		mapping.VMax = levels[len(levels)-1]
 	}
 
-	polygons, faceColors := contourGridBandPolygons(xCoords, yCoords, data, levels, opt, mapping, alpha)
-	if len(polygons) == 0 {
+	geomLevels := contourExtendedLevels(levels, opt.Extend)
+	rawPolygons, rawColors, rawHatches, bands := contourGridBandPolygonsBands(xCoords, yCoords, data, geomLevels, opt, mapping, alpha)
+	if len(rawPolygons) == 0 {
 		return nil
 	}
+	fillPaths, polygons, faceColors, hatches := contourFillGeometry(rawPolygons, rawColors, rawHatches, bands)
 	cmap := ""
 	vmin := 0.0
 	vmax := 0.0
@@ -263,11 +298,14 @@ func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet {
 				Antialias: render.AntialiasOff,
 			},
 			FaceColors: faceColors,
+			Hatches:    hatches,
+			Paths:      fillPaths,
 			LineJoin:   render.JoinMiter,
 			LineCap:    render.CapButt,
 		},
 		Polygons: polygons,
 	}
+	applyContourHatchStyle(set.Fills, hatches)
 	a.Add(set)
 	return set
 }
@@ -356,7 +394,7 @@ func (c *ContourSet) drawInlineLabeledLines(r render.Renderer, ctx *DrawContext)
 	if inlineSpacing <= 0 {
 		inlineSpacing = 5
 	}
-	segments, colors, widths, labels := contourInlineLabelSegmentsForLevels(c.Lines, c.lineLevels, c.labelLevels, c.LabelFormatter, fontSize, inlineSpacing, r, ctx)
+	segments, colors, widths, dashes, labels := contourInlineLabelSegmentsForLevels(c.Lines, c.lineLevels, c.labelLevels, c.LabelFormatter, fontSize, inlineSpacing, c.rightSideUp, r, ctx)
 	c.labels = labels
 	if len(segments) == 0 {
 		return
@@ -367,6 +405,7 @@ func (c *ContourSet) drawInlineLabeledLines(r render.Renderer, ctx *DrawContext)
 	lines.Color = render.Color{}
 	lines.LineWidths = widths
 	lines.LineWidth = c.Lines.LineWidth
+	lines.DashPatterns = dashes
 	lines.Draw(r, ctx)
 }
 
@@ -467,6 +506,7 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 		Levels:         append([]float64(nil), levels...),
 		LabelFormatter: contourFormatter(opt.LabelFormatter),
 		LabelFontSize:  valueOrDefaultFloat(opt.LabelFontSize, 10),
+		rightSideUp:    true,
 		z:              0,
 	}
 	if opt.LabelColor != nil {
@@ -474,8 +514,10 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 	}
 
 	if filled {
-		polygons, faceColors := contourBandPolygons(tri, values, levels, opt, mapping, alpha)
-		if len(polygons) > 0 {
+		geomLevels := contourExtendedLevels(levels, opt.Extend)
+		rawPolygons, rawColors, rawHatches, bands := contourBandPolygonsBands(tri, values, geomLevels, opt, mapping, alpha)
+		fillPaths, polygons, faceColors, hatches := contourFillGeometry(rawPolygons, rawColors, rawHatches, bands)
+		if len(rawPolygons) > 0 {
 			cmap := ""
 			vmin := 0.0
 			vmax := 0.0
@@ -504,11 +546,14 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 						Antialias: render.AntialiasOff,
 					},
 					FaceColors: faceColors,
+					Hatches:    hatches,
+					Paths:      fillPaths,
 					LineJoin:   render.JoinMiter,
 					LineCap:    render.CapButt,
 				},
 				Polygons: polygons,
 			}
+			applyContourHatchStyle(set.Fills, hatches)
 		}
 	} else {
 		polylines, polylineLevels := contourPolylines(tri, values, levels)
@@ -517,22 +562,25 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 			for i, level := range polylineLevels {
 				colors[i] = contourLineColor(level, levels, opt, mapping, alpha, colorFallback)
 			}
+			styles := resolveContourLineStyles(levels, opt, contourMonochrome(opt))
+			dashPatterns := contourLineDashPatterns(polylineLevels, levels, styles, lineWidth)
 			set.Lines = &LineCollection{
 				Collection: Collection{
 					Coords: Coords(CoordData),
 					Label:  opt.Label,
 					Alpha:  1,
 				},
-				Segments:  polylines,
-				Colors:    colors,
-				LineWidth: lineWidth,
-				LineJoin:  render.JoinRound,
-				LineCap:   render.CapButt,
+				Segments:     polylines,
+				Colors:       colors,
+				LineWidth:    lineWidth,
+				DashPatterns: dashPatterns,
+				LineJoin:     render.JoinRound,
+				LineCap:      render.CapButt,
 			}
 			set.lineLevels = append([]float64(nil), polylineLevels...)
 			if opt.LabelLines {
 				set.inlineLabels = true
-				set.labels = contourLabels(polylines, polylineLevels, colors, set.LabelFormatter)
+				set.labels = contourLabels(polylines, polylineLevels, colors, set.LabelFormatter, set.rightSideUp)
 			}
 		}
 	}

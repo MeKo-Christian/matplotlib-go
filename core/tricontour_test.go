@@ -14,7 +14,7 @@ func TestTriContourfSkipsMaskedTriangles(t *testing.T) {
 		Mask:      []bool{true, false},
 	}
 	values := []float64{0, 1, 1, 2}
-	polygons, _ := contourBandPolygons(
+	polygons, _, _ := contourBandPolygons(
 		tri,
 		values,
 		[]float64{0.5, 1.5},

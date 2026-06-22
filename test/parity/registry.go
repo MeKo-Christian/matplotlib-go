@@ -23,6 +23,7 @@ import (
 	showcase_colorbar_composition "github.com/cwbudde/matplotlib-go/examples/colorbar_composition"
 	showcase_colorbar_variants_gallery "github.com/cwbudde/matplotlib-go/examples/colorbar_variants_gallery"
 	showcase_colormap_families_gallery "github.com/cwbudde/matplotlib-go/examples/colormap_families_gallery"
+	showcase_contour_styles "github.com/cwbudde/matplotlib-go/examples/contour_styles"
 	showcase_errorbar_basic "github.com/cwbudde/matplotlib-go/examples/errorbar_basic"
 	showcase_fill_variants "github.com/cwbudde/matplotlib-go/examples/fill_variants"
 	showcase_geo_mollweide_axes "github.com/cwbudde/matplotlib-go/examples/geo_mollweide_axes"
@@ -93,6 +94,7 @@ import (
 	example_colormap_diverging "github.com/cwbudde/matplotlib-go/test/parity/colormap_diverging"
 	example_colormap_families_gallery "github.com/cwbudde/matplotlib-go/test/parity/colormap_families_gallery"
 	example_colormap_qualitative "github.com/cwbudde/matplotlib-go/test/parity/colormap_qualitative"
+	example_contour_styles "github.com/cwbudde/matplotlib-go/test/parity/contour_styles"
 	example_dashes "github.com/cwbudde/matplotlib-go/test/parity/dashes"
 	example_date_concise_intraday_labels "github.com/cwbudde/matplotlib-go/test/parity/date_concise_intraday_labels"
 	example_date_month_year_labels "github.com/cwbudde/matplotlib-go/test/parity/date_month_year_labels"
@@ -290,6 +292,7 @@ var renderByID = map[string]func() image.Image{
 	"colormap_qualitative":                example_colormap_qualitative.Render,
 	"colormap_cyclic":                     example_colormap_cyclic.Render,
 	"colormap_families_gallery":           example_colormap_families_gallery.Render,
+	"contour_styles":                      example_contour_styles.Render,
 	"named_colors":                        example_named_colors.Render,
 	"named_colors_gallery":                example_named_colors_gallery.Render,
 	"mathtext_basic":                      example_mathtext_basic.Render,
@@ -445,6 +448,7 @@ var figureByID = map[string]func() *core.Figure{
 	"colorbar_horizontal_ticks":           example_colorbar_horizontal_ticks.Plot,
 	"colormap_diverging":                  example_colormap_diverging.Plot,
 	"colormap_families_gallery":           showcase_colormap_families_gallery.Plot,
+	"contour_styles":                      showcase_contour_styles.Plot,
 	"collection_mutable_scalarmap":        example_collection_mutable_scalarmap.Plot,
 	"errorbar_basic":                      showcase_errorbar_basic.Plot,
 	"fill_between":                        example_fill_between.Plot,

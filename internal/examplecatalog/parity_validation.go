@@ -35,6 +35,7 @@ var parityFixValidationTargets = []ParityFixValidationTarget{
 	{CaseID: "patch_showcase", ClusterIDs: []string{ValidationClusterPathStrokeMarker}},
 	{CaseID: "patch_style_matrix", ClusterIDs: []string{ValidationClusterPathStrokeMarker}},
 	{CaseID: "mesh_contour_tri", ClusterIDs: []string{ValidationClusterImageMeshColorbar, ValidationClusterContour}},
+	{CaseID: "contour_styles", ClusterIDs: []string{ValidationClusterContour}},
 	{CaseID: "plot_variants", ClusterIDs: []string{ValidationClusterPathStrokeMarker}},
 	{CaseID: "spectrum_variants", ClusterIDs: []string{ValidationClusterSignalUnitsVector}},
 	{CaseID: "specialty_depth", ClusterIDs: []string{ValidationClusterStatsSpecialty, ValidationClusterPathStrokeMarker}},

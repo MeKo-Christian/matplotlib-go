@@ -8,7 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-func contourLabels(polylines [][]geom.Pt, levels []float64, colors []render.Color, formatter Formatter) []contourLabel {
+func contourLabels(polylines [][]geom.Pt, levels []float64, colors []render.Color, formatter Formatter, rightSideUp bool) []contourLabel {
 	type candidate struct {
 		polyline []geom.Pt
 		color    render.Color
@@ -35,7 +35,7 @@ func contourLabels(polylines [][]geom.Pt, levels []float64, colors []render.Colo
 		labels = append(labels, contourLabel{
 			Text:     formatter.Format(level),
 			Position: position,
-			Angle:    normalizeLabelAngle(angle),
+			Angle:    applyRightSideUp(angle, rightSideUp),
 			Color:    candidate.color,
 			Level:    level,
 		})
@@ -81,7 +81,7 @@ func (c *ContourSet) clabelPlaceAutomatic(indices []int, opt ClabelOptions) []co
 		levels = append(levels, level)
 		colors = append(colors, c.clabelColor(idx, level, len(levels)-1, opt))
 	}
-	return contourLabels(polylines, levels, colors, c.LabelFormatter)
+	return contourLabels(polylines, levels, colors, c.LabelFormatter, c.rightSideUp)
 }
 
 func (c *ContourSet) clabelPlaceManual(indices []int, opt ClabelOptions) []contourLabel {
@@ -121,7 +121,7 @@ func (c *ContourSet) nearestContourLabelPoint(indices []int, point geom.Pt) (int
 			bestDist = dist
 			bestIdx = idx
 			bestPoint = projection
-			bestAngle = normalizeLabelAngle(math.Atan2(segment[i].Y-segment[i-1].Y, segment[i].X-segment[i-1].X))
+			bestAngle = applyRightSideUp(math.Atan2(segment[i].Y-segment[i-1].Y, segment[i].X-segment[i-1].X), c.rightSideUp)
 		}
 	}
 	return bestIdx, bestPoint, bestAngle, bestIdx >= 0
@@ -174,13 +174,6 @@ func contourLevelAvailable(levels []float64, level float64) bool {
 	return false
 }
 
-func firstFormatter(primary, fallback Formatter) Formatter {
-	if primary != nil {
-		return primary
-	}
-	return fallback
-}
-
 func projectPointToSegment(point, a, b geom.Pt) (geom.Pt, float64) {
 	dx := b.X - a.X
 	dy := b.Y - a.Y
@@ -195,19 +188,22 @@ func projectPointToSegment(point, a, b geom.Pt) (geom.Pt, float64) {
 }
 
 func contourInlineLabelSegments(lines *LineCollection, levels []float64, formatter Formatter, fontSize float64, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, []contourLabel) {
-	return contourInlineLabelSegmentsForLevels(lines, levels, nil, formatter, fontSize, 5, r, ctx)
+	segments, colors, widths, _, labels := contourInlineLabelSegmentsForLevels(lines, levels, nil, formatter, fontSize, 5, true, r, ctx)
+	return segments, colors, widths, labels
 }
 
-func contourInlineLabelSegmentsForLevels(lines *LineCollection, levels, selectedLevels []float64, formatter Formatter, fontSize, inlineSpacing float64, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, []contourLabel) {
+func contourInlineLabelSegmentsForLevels(lines *LineCollection, levels, selectedLevels []float64, formatter Formatter, fontSize, inlineSpacing float64, rightSideUp bool, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, [][]float64, []contourLabel) {
 	segments := make([][]geom.Pt, 0, len(lines.Segments))
 	colors := make([]render.Color, 0, len(lines.Segments))
 	widths := make([]float64, 0, len(lines.Segments))
+	dashes := make([][]float64, 0, len(lines.Segments))
 	labels := []contourLabel{}
 	placed := []geom.Pt{}
 
 	for i, segment := range lines.Segments {
 		color := colorAt(lines.Color, lines.Colors, i)
 		width := widthAt(lines.LineWidth, lines.LineWidths, i)
+		dash := dashesAt(lines.Dashes, lines.DashPatterns, i)
 		appendSegment := func(part []geom.Pt) {
 			if len(part) < 2 {
 				return
@@ -215,6 +211,7 @@ func contourInlineLabelSegmentsForLevels(lines *LineCollection, levels, selected
 			segments = append(segments, part)
 			colors = append(colors, color)
 			widths = append(widths, width)
+			dashes = append(dashes, dash)
 		}
 
 		if len(segment) < 2 || i >= len(levels) {
@@ -244,7 +241,7 @@ func contourInlineLabelSegmentsForLevels(lines *LineCollection, levels, selected
 			continue
 		}
 
-		angle, parts := splitContourPolylineForLabel(segment, screen, labelIdx, labelWidth, inlineSpacing)
+		angle, parts := splitContourPolylineForLabel(segment, screen, labelIdx, labelWidth, inlineSpacing, rightSideUp)
 		if len(parts) == 0 {
 			appendSegment(segment)
 			continue
@@ -262,7 +259,7 @@ func contourInlineLabelSegmentsForLevels(lines *LineCollection, levels, selected
 		})
 	}
 
-	return segments, colors, widths, labels
+	return segments, colors, widths, dashes, labels
 }
 
 func contourLabelWidth(text string, fontSize float64, r render.Renderer, ctx *DrawContext) float64 {
@@ -380,7 +377,7 @@ func contourLabelTooClose(pt geom.Pt, labelWidth float64, placed []geom.Pt) bool
 	return false
 }
 
-func splitContourPolylineForLabel(data, screen []geom.Pt, labelIdx int, labelWidth, spacing float64) (float64, [][]geom.Pt) {
+func splitContourPolylineForLabel(data, screen []geom.Pt, labelIdx int, labelWidth, spacing float64, rightSideUp bool) (float64, [][]geom.Pt) {
 	if len(data) < 2 || len(data) != len(screen) || labelIdx < 0 || labelIdx >= len(data) {
 		return 0, nil
 	}
@@ -390,7 +387,7 @@ func splitContourPolylineForLabel(data, screen []geom.Pt, labelIdx int, labelWid
 		return 0, nil
 	}
 	if contourPolylineClosed(screen) {
-		return splitClosedContourPolylineForLabel(data, screen, cpls, labelIdx, labelWidth, spacing)
+		return splitClosedContourPolylineForLabel(data, screen, cpls, labelIdx, labelWidth, spacing, rightSideUp)
 	}
 
 	center := cpls[labelIdx]
@@ -400,7 +397,7 @@ func splitContourPolylineForLabel(data, screen []geom.Pt, labelIdx int, labelWid
 	p1, ok1 := contourInterpolateAtCPL(screen, cpls, angleEnd)
 	angle := 0.0
 	if ok0 && ok1 {
-		angle = normalizeLabelAngle(math.Atan2(p1.Y-p0.Y, p1.X-p0.X))
+		angle = applyRightSideUp(math.Atan2(p1.Y-p0.Y, p1.X-p0.X), rightSideUp)
 	}
 
 	gapStart := center - labelWidth/2 - spacing
@@ -421,7 +418,7 @@ func splitContourPolylineForLabel(data, screen []geom.Pt, labelIdx int, labelWid
 	return angle, parts
 }
 
-func splitClosedContourPolylineForLabel(data, screen []geom.Pt, cpls []float64, labelIdx int, labelWidth, spacing float64) (float64, [][]geom.Pt) {
+func splitClosedContourPolylineForLabel(data, screen []geom.Pt, cpls []float64, labelIdx int, labelWidth, spacing float64, rightSideUp bool) (float64, [][]geom.Pt) {
 	total := cpls[len(cpls)-1]
 	gap := labelWidth + 2*spacing
 	if total <= 0 || gap >= total {
@@ -433,7 +430,7 @@ func splitClosedContourPolylineForLabel(data, screen []geom.Pt, cpls []float64, 
 	p1, ok1 := contourInterpolateAtClosedCPL(screen, cpls, center+labelWidth/2)
 	angle := 0.0
 	if ok0 && ok1 {
-		angle = normalizeLabelAngle(math.Atan2(p1.Y-p0.Y, p1.X-p0.X))
+		angle = applyRightSideUp(math.Atan2(p1.Y-p0.Y, p1.X-p0.X), rightSideUp)
 	}
 
 	gapStart := center - labelWidth/2 - spacing

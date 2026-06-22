@@ -69,13 +69,14 @@ func TestContourInlineLabelsMatchMatplotlibMeshFixturePositions(t *testing.T) {
 		t.Fatal("expected contour lines")
 	}
 	ctx := AxesDrawContext(ax, fig)
-	_, _, _, labels := contourInlineLabelSegmentsForLevels(
+	_, _, _, _, labels := contourInlineLabelSegmentsForLevels(
 		contours.Lines,
 		contours.lineLevels,
 		nil,
 		contours.LabelFormatter,
 		10,
 		5,
+		true,
 		&recordingRenderer{},
 		ctx,
 	)
@@ -299,13 +300,14 @@ func TestContourInlineLabelsMatchMatplotlibArraysShowcaseLevel06(t *testing.T) {
 	}
 
 	ctx := AxesDrawContext(ax, fig)
-	_, _, _, labels := contourInlineLabelSegmentsForLevels(
+	_, _, _, _, labels := contourInlineLabelSegmentsForLevels(
 		contours.Lines,
 		contours.lineLevels,
 		nil,
 		contours.LabelFormatter,
 		10,
 		5,
+		true,
 		&recordingRenderer{},
 		ctx,
 	)
@@ -360,13 +362,14 @@ func TestContourInlineLabelsMatchMatplotlibArraysShowcaseAllLevels(t *testing.T)
 	}
 
 	ctx := AxesDrawContext(ax, fig)
-	_, _, _, labels := contourInlineLabelSegmentsForLevels(
+	_, _, _, _, labels := contourInlineLabelSegmentsForLevels(
 		contours.Lines,
 		contours.lineLevels,
 		nil,
 		contours.LabelFormatter,
 		10,
 		5,
+		true,
 		&arraysShowcaseContourTextMetricRenderer{},
 		ctx,
 	)
@@ -427,7 +430,7 @@ func TestContourfUsesStructuredGridBandPolygons(t *testing.T) {
 	mapping.Norm = Normalize{VMin: levels[0], VMax: levels[len(levels)-1]}
 	mapping.VMin = levels[0]
 	mapping.VMax = levels[len(levels)-1]
-	wantPolygons, _ := contourGridBandPolygons(x, y, data, levels, ContourOptions{Levels: levels}, mapping, 1)
+	wantPolygons, _, _ := contourGridBandPolygons(x, y, data, levels, ContourOptions{Levels: levels}, mapping, 1)
 	if got, want := len(filled.Fills.Polygons), len(wantPolygons); got != want {
 		t.Fatalf("contourf polygon count = %d, want structured grid count %d", got, want)
 	}
@@ -459,7 +462,7 @@ func TestStructuredContourBandClipsSingleQuadLikeMatplotlib(t *testing.T) {
 	levels := []float64{0.5, 1.5}
 	mapping := ScalarMapInfo{Colormap: "viridis", VMin: 0.5, VMax: 1.5}
 
-	polygons, _ := contourGridBandPolygons(
+	polygons, _, _ := contourGridBandPolygons(
 		[]float64{0, 1},
 		[]float64{0, 1},
 		grid,
@@ -541,7 +544,7 @@ func TestStructuredContourBandSplitsSaddleQuadLikeMatplotlib(t *testing.T) {
 	levels := []float64{0.5, 1.5}
 	mapping := ScalarMapInfo{Colormap: "viridis", VMin: 0.5, VMax: 1.5}
 
-	polygons, _ := contourGridBandPolygons(
+	polygons, _, _ := contourGridBandPolygons(
 		[]float64{0, 1},
 		[]float64{0, 1},
 		grid,
@@ -582,7 +585,7 @@ func TestStructuredContourBandTouchesBoundaryLikeMatplotlib(t *testing.T) {
 	levels := []float64{0, 1}
 	mapping := ScalarMapInfo{Colormap: "viridis", VMin: 0, VMax: 1}
 
-	polygons, _ := contourGridBandPolygons(
+	polygons, _, _ := contourGridBandPolygons(
 		[]float64{0, 1},
 		[]float64{0, 1},
 		grid,
@@ -616,7 +619,7 @@ func TestStructuredContourBandLeavesInteriorHoleLikeMatplotlib(t *testing.T) {
 	levels := []float64{0.5, 1.5}
 	mapping := ScalarMapInfo{Colormap: "viridis", VMin: 0.5, VMax: 1.5}
 
-	polygons, _ := contourGridBandPolygons(
+	polygons, _, _ := contourGridBandPolygons(
 		[]float64{0, 1, 2},
 		[]float64{0, 1, 2},
 		grid,

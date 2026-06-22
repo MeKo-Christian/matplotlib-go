@@ -127,7 +127,7 @@ func TestContourInlineLabelAngleUsesMatplotlibDisplayConvention(t *testing.T) {
 		{X: 10, Y: 10},
 	}
 
-	angle, parts := splitContourPolylineForLabel(data, screen, 1, 4, 0)
+	angle, parts := splitContourPolylineForLabel(data, screen, 1, 4, 0, true)
 	if len(parts) == 0 {
 		t.Fatal("expected split contour parts")
 	}
@@ -146,7 +146,7 @@ func TestContourInlineLabelErasesAcrossClosedPathBoundary(t *testing.T) {
 	}
 	data := append([]geom.Pt(nil), screen...)
 
-	angle, parts := splitContourPolylineForLabel(data, screen, 0, 4, 1)
+	angle, parts := splitContourPolylineForLabel(data, screen, 0, 4, 1, true)
 	if got, want := len(parts), 1; got != want {
 		t.Fatalf("closed contour split parts = %d, want %d: %+v", got, want, parts)
 	}

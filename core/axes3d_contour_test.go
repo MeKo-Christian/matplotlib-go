@@ -223,7 +223,7 @@ func TestAxes3DContourfUsesExplicitZOffset(t *testing.T) {
 	mapping := resolveScalarMapValues(values, "viridis", nil, nil)
 	mapping.VMin = levels[0]
 	mapping.VMax = levels[len(levels)-1]
-	rawPolygons, _ := contourGridBandPolygons(x, y, z, levels, ContourOptions{}, mapping, 0.45)
+	rawPolygons, _, _ := contourGridBandPolygons(x, y, z, levels, ContourOptions{}, mapping, 0.45)
 	if len(rawPolygons) == 0 || len(rawPolygons[0]) == 0 {
 		t.Fatal("expected raw contour band polygons")
 	}
@@ -258,7 +258,7 @@ func TestAxes3DContourfUsesProjectedCollectionZLikeMatplotlib(t *testing.T) {
 	mapping := resolveScalarMapValues(values, "viridis", nil, nil)
 	mapping.VMin = levels[0]
 	mapping.VMax = levels[len(levels)-1]
-	rawPolygons, _ := contourGridBandPolygons(x, y, z, levels, ContourOptions{}, mapping, 0.45)
+	rawPolygons, _, _ := contourGridBandPolygons(x, y, z, levels, ContourOptions{}, mapping, 0.45)
 	depth := 0.0
 	first := true
 	for _, polygon := range rawPolygons {

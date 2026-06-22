@@ -55,7 +55,11 @@ func (r *Renderer) drawNativeHatch(clipPath geom.Path, paint *render.Paint) {
 			LineWidth: paint.HatchLineWidth,
 			LineJoin:  render.JoinRound,
 			LineCap:   render.CapSquare,
-			Antialias: paint.Antialias,
+			// Hatch strokes are always anti-aliased, matching Matplotlib's AGG
+			// hatch rendering. This is independent of the filled shape's own
+			// antialiasing (e.g. contourf bands draw with antialiased=False but
+			// their hatch lines remain anti-aliased).
+			Antialias: render.AntialiasOn,
 			Snap:      render.SnapOff,
 		}
 		if hatchPatternIsFilled(pattern) {

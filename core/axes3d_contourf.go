@@ -525,7 +525,7 @@ func (a *Axes3D) projectedContourFloorPolygons(x, y []float64, z [][]float64, al
 	if colorOverride != nil {
 		opt.Color = colorOverride
 	}
-	rawPolygons, colors := contourGridBandPolygons(x[:cols], y[:rows], z, levels, opt, mapping, alpha)
+	rawPolygons, colors, _ := contourGridBandPolygons(x[:cols], y[:rows], z, levels, opt, mapping, alpha)
 	if len(rawPolygons) == 0 {
 		return nil, nil, defaultPatchZ
 	}
@@ -787,7 +787,7 @@ func (a *Axes3D) projectedContourFillPolygons(x, y []float64, z [][]float64, opt
 	mapping := resolveScalarMapValues(values, "", nil, nil)
 	mapping.VMin = levels[0]
 	mapping.VMax = levels[len(levels)-1]
-	polygons, polygonColors := contourBandPolygons(tri, values, levels, opt, mapping, 1.0)
+	polygons, polygonColors, _ := contourBandPolygons(tri, values, levels, opt, mapping, 1.0)
 	if len(polygons) == 0 {
 		return nil, nil
 	}
