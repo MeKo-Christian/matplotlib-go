@@ -40,103 +40,67 @@ func (r *Renderer) writeGradientFill(w *strings.Builder, path geom.Path, paint *
 	if !hasGradientFill(paint) {
 		return false
 	}
-	bounds, ok := path.Bounds()
-	if !ok {
-		return false
-	}
 	g := paint.FillGradient
 	g.Stops = normalizeGradientStops(g.Stops)
 
 	switch g.Kind {
 	case render.LinearGradient:
-		return r.writeLinearGradientFill(w, path, &g, bounds)
+		return r.writeLinearGradientFill(w, path, &g)
 	case render.RadialGradient:
+		bounds, ok := path.Bounds()
+		if !ok {
+			return false
+		}
 		return r.writeRadialGradientFill(w, path, &g, bounds)
 	default:
 		return false
 	}
 }
 
-func (r *Renderer) writeLinearGradientFill(w *strings.Builder, path geom.Path, g *render.GradientFill, bounds geom.Rect) bool {
+// writeLinearGradientFill fills the path with a linear gradient using pgf's
+// \pgfshadepath, which rescales a 0–100bp shading to cover the current path's
+// bounding box, rotates it by the gradient angle, clips to the path and draws
+// it directly (no TeX box-model placement, so it never overflows or clips at
+// page edges). The gradient is fit to the path's extent along the Start→End
+// direction; matplotlib has no PGF gradient reference, so this bbox-fit
+// interpretation is the natural one.
+func (r *Renderer) writeLinearGradientFill(w *strings.Builder, path geom.Path, g *render.GradientFill) bool {
 	start := transformedGradientPoint(g.Start, g)
 	end := transformedGradientPoint(g.End, g)
 	dx := end.X - start.X
 	dy := end.Y - start.Y
-	length := math.Hypot(dx, dy)
-	if length == 0 {
+	if dx == 0 && dy == 0 {
 		return r.writeSolidGradientFill(w, path, sampleGradientColor(g.Stops, 0.5))
 	}
-	ux, uy := dx/length, dy/length
-	nx, ny := -uy, ux
+	angle := math.Atan2(dy, dx) * 180 / math.Pi
 
-	// Project the path's bounding-box corners onto the gradient axis (u) and its
-	// normal (n) to find the box that exactly covers the path along the gradient.
-	projMin, projMax := math.Inf(1), math.Inf(-1)
-	nMin, nMax := math.Inf(1), math.Inf(-1)
-	for _, c := range rectCorners(bounds) {
-		rx := c.X - start.X
-		ry := c.Y - start.Y
-		proj := rx*ux + ry*uy
-		nrm := rx*nx + ry*ny
-		projMin = math.Min(projMin, proj)
-		projMax = math.Max(projMax, proj)
-		nMin = math.Min(nMin, nrm)
-		nMax = math.Max(nMax, nrm)
-	}
-	wBox := projMax - projMin
-	hBox := nMax - nMin
-	if wBox <= 0 {
-		return r.writeSolidGradientFill(w, path, sampleGradientColor(g.Stops, (projMin+projMax)/(2*length)))
-	}
-
-	// Offsets covered by the box endpoints; values outside [0,1] clamp to the
-	// terminal stop colors (matching SVG/PDF Extend behavior).
-	a := projMin / length
-	b := projMax / length
-
-	type localStop struct {
-		pos   float64
-		color render.Color
-	}
-	stops := []localStop{{pos: 0, color: sampleGradientColor(g.Stops, a)}}
-	for _, s := range g.Stops {
-		if s.Offset > a && s.Offset < b {
-			stops = append(stops, localStop{
-				pos:   (s.Offset - a) / (b - a) * wBox,
-				color: s.Color,
-			})
-		}
-	}
-	stops = append(stops, localStop{pos: wBox, color: sampleGradientColor(g.Stops, b)})
-
+	// \pgfshadepath maps the path's bounding box onto the MIDDLE half of the
+	// declared 0..100bp shading: the path's lower-left corner lands at 25bp and
+	// its upper-right at 75bp (see the pgf manual for \pgfshadepath). So the
+	// gradient body must occupy 25..75bp, with the terminal colors padding
+	// 0..25bp and 75..100bp (the Extend behavior outside the gradient).
 	var spec strings.Builder
-	for i, s := range stops {
-		if i > 0 {
+	emit := func(pos float64, c render.Color) {
+		if spec.Len() > 0 {
 			spec.WriteString("; ")
 		}
-		fmt.Fprintf(&spec, "color(%spt)=(%s)", shortFloat(s.pos), r.colorName(s.color))
+		fmt.Fprintf(&spec, "color(%sbp)=(%s)", shortFloat(pos), r.colorName(c))
 	}
+	emit(0, sampleGradientColor(g.Stops, 0))
+	for _, s := range g.Stops {
+		emit(25+clamp01(s.Offset)*50, s.Color)
+	}
+	emit(100, sampleGradientColor(g.Stops, 1))
 
 	name := r.nextShadingName()
-	fmt.Fprintf(w, "\\pgfdeclarehorizontalshading{%s}{%spt}{%s}\n", name, shortFloat(hBox), spec.String())
-
-	centerX := start.X + (projMin+projMax)/2*ux + (nMin+nMax)/2*nx
-	centerY := start.Y + (projMin+projMax)/2*uy + (nMin+nMax)/2*ny
-	angle := math.Atan2(uy, ux) * 180 / math.Pi
-
-	w.WriteString("\\pgfscope\n")
+	fmt.Fprintf(w, "\\pgfdeclarehorizontalshading{%s}{100bp}{%s}\n", name, spec.String())
 	if !writePathOps(w, path) {
-		w.WriteString("\\endpgfscope\n")
 		return false
 	}
-	w.WriteString("\\pgfusepath{clip}\n")
-	rotate := ""
-	if angle != 0 {
-		rotate = "rotate=" + shortFloat(angle) + ","
-	}
-	fmt.Fprintf(w, "\\pgftext[%sat=\\pgfpoint{%spt}{%spt}]{\\pgfuseshading{%s}}\n",
-		rotate, shortFloat(centerX), shortFloat(centerY), name)
-	w.WriteString("\\endpgfscope\n")
+	fmt.Fprintf(w, "\\pgfshadepath{%s}{%s}\n", name, shortFloat(angle))
+	// \pgfshadepath leaves the path current; discard it so a following stroke
+	// pass starts from a clean path.
+	w.WriteString("\\pgfusepath{}\n")
 	return true
 }
 

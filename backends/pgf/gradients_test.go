@@ -52,10 +52,10 @@ func TestPGFLinearGradientEmitsHorizontalShading(t *testing.T) {
 	})
 	s := string(doc)
 	for _, want := range []string{
-		"\\pgfdeclarehorizontalshading{mplgpgfshading1}",
-		"\\pgfuseshading{mplgpgfshading1}",
-		"\\pgfusepath{clip}",
-		"color(0pt)=(",
+		"\\pgfdeclarehorizontalshading{mplgpgfshading1}{100bp}",
+		"\\pgfshadepath{mplgpgfshading1}{0}",
+		"color(0bp)=(",
+		"color(100bp)=(",
 	} {
 		if !strings.Contains(s, want) {
 			t.Fatalf("linear gradient output missing %q in\n%s", want, s)
@@ -77,8 +77,10 @@ func TestPGFLinearGradientRotatesForDiagonalAxis(t *testing.T) {
 			},
 		})
 	})
-	if !strings.Contains(string(doc), "rotate=") {
-		t.Fatalf("diagonal linear gradient should rotate the shading in\n%s", doc)
+	// Start (10,10) -> End (50,40): atan2(30,40) = 36.87°, so the shading is
+	// drawn at that non-zero angle via \pgfshadepath's rotation argument.
+	if !strings.Contains(string(doc), "\\pgfshadepath{mplgpgfshading1}{36") {
+		t.Fatalf("diagonal linear gradient should rotate the shading by ~36.87° in\n%s", doc)
 	}
 }
 

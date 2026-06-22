@@ -153,6 +153,28 @@ backend-info:
 cli:
     go run ./main.go --help
 
+# Render the vector-backend showcase (gradient/pattern/clip/vertical-text) to
+# PNG for visual spot-checks of the PS and PGF backends. Emits showcase.ps,
+# showcase.pgf and showcase.tex, then rasterizes them. Requires ghostscript
+# (gs) for PS and a LaTeX with pgf (pdflatex) + pdftoppm (poppler) for PGF;
+# any missing tool is skipped with a note. No cgo/FreeType needed.
+render-vector OUT="testdata/_artifacts/vector":
+    mkdir -p "{{OUT}}"
+    go run ./cmd/vectorshowcase --output-dir "{{OUT}}"
+    if command -v gs >/dev/null 2>&1; then \
+      gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -r150 -o "{{OUT}}/showcase_ps.png" "{{OUT}}/showcase.ps"; \
+      echo "wrote {{OUT}}/showcase_ps.png"; \
+    else \
+      echo "ghostscript (gs) not found; skipping PS->PNG (install: apt-get install ghostscript)"; \
+    fi
+    if command -v pdflatex >/dev/null 2>&1 && command -v pdftoppm >/dev/null 2>&1; then \
+      ( cd "{{OUT}}" && pdflatex -interaction=nonstopmode -halt-on-error showcase.tex >showcase_pdflatex.log 2>&1 ); \
+      pdftoppm -png -r 150 -singlefile "{{OUT}}/showcase.pdf" "{{OUT}}/showcase_pgf"; \
+      echo "wrote {{OUT}}/showcase_pgf.png"; \
+    else \
+      echo "pdflatex/pdftoppm not found; skipping PGF->PNG (install: apt-get install texlive-pictures poppler-utils)"; \
+    fi
+
 # Start parity comparison viewer for matplotlib-go golden vs reference images.
 parity-viewer PORT="8090" FILTER="": freetype261-build
     PORT={{PORT}} CGO_ENABLED=1 go run -tags freetype ./cmd/parityviewer --port {{PORT}} --name-filter "{{FILTER}}"

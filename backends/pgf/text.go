@@ -86,9 +86,10 @@ func (r *Renderer) DrawTextVertical(text string, center geom.Pt, size float64, t
 // used only for metric lookup. Implements render.FontVerticalTextDrawer.
 func (r *Renderer) DrawTextVerticalWithFont(text string, center geom.Pt, size float64, textColor render.Color, fontKey string) {
 	if rr := r.activeRaster(); rr != nil {
-		if textRen, ok := rr.(render.VerticalTextDrawer); ok {
+		switch textRen := rr.(type) {
+		case render.VerticalTextDrawer:
 			textRen.DrawTextVertical(text, center, size, textColor)
-		} else if textRen, ok := rr.(render.TextDrawer); ok {
+		case render.TextDrawer:
 			textRen.DrawText(text, center, size, textColor)
 		}
 		return
