@@ -18,8 +18,15 @@ type LineCollection struct {
 	LineWidth    float64
 	DashPatterns [][]float64
 	Dashes       []float64
-	LineJoin     render.LineJoin
-	LineCap      render.LineCap
+	// LineStyle / LineStyles accept Matplotlib linestyle strings ("-", "--",
+	// "-.", ":", or the named "solid"/"dashed"/"dashdot"/"dotted") and are
+	// converted to width-scaled dash patterns at draw time. Explicit numeric
+	// Dashes/DashPatterns take precedence; a per-item LineStyles entry overrides
+	// the scalar LineStyle.
+	LineStyle  string
+	LineStyles []string
+	LineJoin   render.LineJoin
+	LineCap    render.LineCap
 }
 
 // Draw renders the line collection.
@@ -39,6 +46,11 @@ func (c *LineCollection) Draw(r render.Renderer, ctx *DrawContext) {
 			continue
 		}
 		dashes := dashesAt(c.Dashes, c.DashPatterns, i)
+		if len(dashes) == 0 {
+			if style := stringAt(c.LineStyle, c.LineStyles, i); style != "" {
+				dashes = lineStyleToDashes(style, width)
+			}
+		}
 		lineJoin := c.LineJoin
 		if lineJoin == 0 {
 			lineJoin = render.JoinRound

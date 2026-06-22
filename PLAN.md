@@ -497,8 +497,30 @@ match Matplotlib defaults, not just the happy path.
       and depends on the deferred multivariate/bivariate colormap machinery; it
       stays an intentional omission until a multivariate-colormap consumer and a
       visible fixture exist._
-- [ ] **Misc artist kwargs:** `Stem` orientation, errorbar `capthick`, scatter
-      `plotnonfinite`, `LineCollection` linestyle-string → dash conversion.
+- [x] **Misc artist kwargs:** `Stem` orientation, errorbar `capthick`, scatter
+      `plotnonfinite`, `LineCollection` linestyle-string → dash conversion. All
+      four ship as faithful ports of the Matplotlib 3.10.9 kwargs with parity
+      fixtures. `StemOptions.Orientation` (`core/container.go`) swaps locs↔heads
+      and the baseline axis for `"horizontal"` (invalid values warn + default
+      vertical). `ErrorBarOptions.CapThick`/`ErrorBar.CapThick`
+      (`core/plot.go`, `core/errorbar.go`) set the cap-line width in points
+      (the cap markeredgewidth alias), replacing the hard-coded 1pt default.
+      `ScatterOptions.PlotNonfinite` (`core/plot.go`) adds a `_combine_masks`
+      port: by default any non-finite x/y/size/scalar/color masks the point;
+      with the flag, non-finite color/scalar values are kept and ride the
+      colormap "bad" color (already wired via `AtValue(NaN)` → bad, default
+      transparent), and only non-finite positions/sizes are dropped.
+      `LineCollection` gained `LineStyle`/`LineStyles` string fields
+      (`core/collection_line.go`) resolved to dash patterns via the promoted
+      shared helper `lineStyleToDashes` (`core/contour_styles.go`, formerly the
+      contour-only `contourLineStyleDashes`); explicit numeric dashes keep
+      precedence, and the support reaches `HLines`/`VLines` for free. New parity
+      cases `stem_horizontal` (RMSE 4.10), `errorbar_capthick` (RMSE 3.91 —
+      caps byte-match; residual is benign scatter-marker-center AA),
+      `scatter_plotnonfinite` (RMSE 0.04), and `linecollection_linestyle`
+      (RMSE 0.01); kwarg behavior unit-tested in `core/stem_orientation_test.go`,
+      `core/errorbar_test.go`, `core/scatter_test.go`, and
+      `core/collection_line_linestyle_test.go`.
 
 **Exit criterion:** contour, colorbar, boxplot, and image cases match
 Matplotlib default styling.

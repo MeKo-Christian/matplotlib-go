@@ -230,6 +230,11 @@ type ScatterOptions struct {
 	Alpha        *float64         // alpha transparency
 	Label        string           // series label for legend
 	AxLimClip    bool             // 3D scatter: hide points outside explicit axes limits
+	// PlotNonfinite mirrors Matplotlib's plotnonfinite kwarg. When false
+	// (default), points with a non-finite x/y/size/scalar/color are masked out.
+	// When true, points with non-finite color/scalar values are kept and ride
+	// the colormap's "bad" color; only non-finite positions/sizes are dropped.
+	PlotNonfinite bool
 }
 
 // Scatter creates a scatter plot with automatic shape/fill color cycling if no color is specified.
@@ -354,6 +359,13 @@ func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 		alpha = *opt.Alpha
 	}
 
+	// Drop points Matplotlib would mask for being non-finite (cbook._combine_masks
+	// in axes._axes.scatter). vmin/vmax above were autoscaled via finiteRange, so
+	// the scalar map already ignores the masked values.
+	points, sizes, colors, edgeColors, scalarValues = filterScatterFinite(
+		points, sizes, colors, edgeColors, scalarValues, opt.PlotNonfinite,
+	)
+
 	// Create scatter
 	scatter := &Scatter2D{
 		XY:           points,
@@ -390,6 +402,82 @@ func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 
 func validScatterOptionLength(length, n int) bool {
 	return length == 1 || length == n
+}
+
+// filterScatterFinite drops scatter points Matplotlib would mask for being
+// non-finite, rebuilding every per-point array in lockstep. Position and size
+// must always be finite to render; color/scalar finiteness only masks a point
+// when plotNonfinite is false (otherwise non-finite color/scalar values ride the
+// colormap's bad color). Per-point arrays that are nil (single-value fallbacks)
+// stay nil. Mirrors cbook._combine_masks used by axes._axes.scatter.
+func filterScatterFinite(points []geom.Pt, sizes []float64, colors, edgeColors []render.Color, scalars []float64, plotNonfinite bool) ([]geom.Pt, []float64, []render.Color, []render.Color, []float64) {
+	anyDropped := false
+	keep := make([]bool, len(points))
+	for i := range points {
+		ok := isFinite(points[i].X) && isFinite(points[i].Y)
+		if ok && i < len(sizes) && !isFinite(sizes[i]) {
+			ok = false
+		}
+		if ok && !plotNonfinite {
+			if i < len(scalars) && !isFinite(scalars[i]) {
+				ok = false
+			}
+			if ok && i < len(colors) && !renderColorFinite(colors[i]) {
+				ok = false
+			}
+			if ok && i < len(edgeColors) && !renderColorFinite(edgeColors[i]) {
+				ok = false
+			}
+		}
+		keep[i] = ok
+		if !ok {
+			anyDropped = true
+		}
+	}
+	if !anyDropped {
+		return points, sizes, colors, edgeColors, scalars
+	}
+
+	fp := make([]geom.Pt, 0, len(points))
+	var fs []float64
+	var fc, fe []render.Color
+	var fv []float64
+	if len(sizes) > 0 {
+		fs = make([]float64, 0, len(sizes))
+	}
+	if len(colors) > 0 {
+		fc = make([]render.Color, 0, len(colors))
+	}
+	if len(edgeColors) > 0 {
+		fe = make([]render.Color, 0, len(edgeColors))
+	}
+	if len(scalars) > 0 {
+		fv = make([]float64, 0, len(scalars))
+	}
+	for i := range points {
+		if !keep[i] {
+			continue
+		}
+		fp = append(fp, points[i])
+		if i < len(sizes) {
+			fs = append(fs, sizes[i])
+		}
+		if i < len(colors) {
+			fc = append(fc, colors[i])
+		}
+		if i < len(edgeColors) {
+			fe = append(fe, edgeColors[i])
+		}
+		if i < len(scalars) {
+			fv = append(fv, scalars[i])
+		}
+	}
+	return fp, fs, fc, fe, fv
+}
+
+// renderColorFinite reports whether every component of a color is finite.
+func renderColorFinite(c render.Color) bool {
+	return isFinite(c.R) && isFinite(c.G) && isFinite(c.B) && isFinite(c.A)
 }
 
 // BarOptions holds optional parameters for bar plots.
@@ -845,6 +933,7 @@ type ErrorBarOptions struct {
 	Color           *render.Color // if nil, uses automatic color cycling
 	LineWidth       *float64      // error bar line width (px); nil uses Matplotlib's default
 	CapSize         *float64      // Matplotlib capsize in points
+	CapThick        *float64      // Matplotlib capthick in points (cap line thickness); nil uses the 1pt default
 	Marker          *MarkerType   // optional data marker equivalent to Matplotlib fmt markers
 	MarkerSize      *float64      // marker size in points
 	Alpha           *float64      // alpha transparency
@@ -887,6 +976,11 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 	capSizePx := 0.0
 	if opt.CapSize != nil {
 		capSizePx = pointsToPixels(a.resolvedRC(), 2*(*opt.CapSize))
+	}
+
+	capThickPx := 0.0
+	if opt.CapThick != nil && *opt.CapThick > 0 {
+		capThickPx = pointsToPixels(a.resolvedRC(), *opt.CapThick)
 	}
 
 	// Bake an explicit alpha (including 0) into the stroke color; the Alpha
@@ -934,6 +1028,7 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 		Color:           color,
 		LineWidth:       lineWidth,
 		CapSize:         capSizePx,
+		CapThick:        capThickPx,
 		Label:           opt.Label,
 		NoDataLine:      opt.NoDataLine,
 		ErrorEvery:      errorEvery,

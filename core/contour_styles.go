@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// contourLineStyleDashes maps a Matplotlib line-style spec to a renderer dash
+// lineStyleToDashes maps a Matplotlib line-style spec to a renderer dash
 // pattern. The returned values are already scaled by lineWidth, matching
 // Matplotlib's scale_dashes (lines.py), because LineCollection.Draw forwards
 // dash patterns to the backend unscaled. A nil result means a solid stroke.
@@ -15,7 +15,10 @@ import (
 //	dashed:  3.7, 1.6
 //	dashdot: 6.4, 1.6, 1, 1.6
 //	dotted:  1, 1.65
-func contourLineStyleDashes(spec string, lineWidth float64) []float64 {
+//
+// Shared by the contour styling path and LineCollection's string linestyle
+// support.
+func lineStyleToDashes(spec string, lineWidth float64) []float64 {
 	var base []float64
 	switch strings.ToLower(strings.TrimSpace(spec)) {
 	case "", "-", "solid", "none":
@@ -111,7 +114,7 @@ func contourLineDashPatterns(polylineLevels, levels []float64, styles []string, 
 		if li >= 0 && li < len(styles) {
 			style = styles[li]
 		}
-		dashes[i] = contourLineStyleDashes(style, lineWidth)
+		dashes[i] = lineStyleToDashes(style, lineWidth)
 		if dashes[i] != nil {
 			any = true
 		}

@@ -1,9 +1,27 @@
 package core
 
 import (
+	"strings"
+
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 )
+
+// stemIsHorizontal normalizes Matplotlib's stem orientation kwarg. Empty and
+// "vertical" keep the default vertical stems; "horizontal" flips to horizontal
+// stems. Any other value warns and falls back to vertical.
+func stemIsHorizontal(orientation string) bool {
+	switch strings.ToLower(strings.TrimSpace(orientation)) {
+	case "", "vertical":
+		return false
+	case "horizontal":
+		return true
+	default:
+		diag.Warnf("Stem: invalid orientation %q; using \"vertical\"", orientation)
+		return false
+	}
+}
 
 // BarContainer groups the artist returned by a bar call with rectangle-like
 // patch views over each bar.
@@ -43,6 +61,11 @@ type StemOptions struct {
 	MarkerEdgeWidth *float64
 	Label           string
 	Alpha           *float64
+	// Orientation selects the stem direction, matching Matplotlib's stem
+	// orientation kwarg. "" and "vertical" keep stems along y (the default);
+	// "horizontal" runs stems along x with a vertical baseline. Any other value
+	// warns and falls back to vertical.
+	Orientation string
 }
 
 // Len reports the number of bars in the container.
@@ -299,14 +322,29 @@ func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
 		baselineWidth = *opt.BaselineWidth
 	}
 
+	horizontal := stemIsHorizontal(opt.Orientation)
+
 	segments := make([][]geom.Pt, 0, n)
 	offsets := make([]geom.Pt, 0, n)
 	for i := 0; i < n; i++ {
-		segments = append(segments, []geom.Pt{
-			{X: x[i], Y: baseline},
-			{X: x[i], Y: y[i]},
-		})
-		offsets = append(offsets, geom.Pt{X: x[i], Y: y[i]})
+		var foot, head geom.Pt
+		if horizontal {
+			// locs run along y; heads extend along x from a vertical baseline.
+			foot = geom.Pt{X: baseline, Y: x[i]}
+			head = geom.Pt{X: y[i], Y: x[i]}
+		} else {
+			foot = geom.Pt{X: x[i], Y: baseline}
+			head = geom.Pt{X: x[i], Y: y[i]}
+		}
+		segments = append(segments, []geom.Pt{foot, head})
+		offsets = append(offsets, head)
+	}
+
+	baselineStart := geom.Pt{X: x[0], Y: baseline}
+	baselineEnd := geom.Pt{X: x[n-1], Y: baseline}
+	if horizontal {
+		baselineStart = geom.Pt{X: baseline, Y: x[0]}
+		baselineEnd = geom.Pt{X: baseline, Y: x[n-1]}
 	}
 
 	markerPath := geom.Path{}
@@ -336,10 +374,7 @@ func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
 		LineOnly:      markerLineOnly(NewMarkerStyle(markerType)),
 	}
 	baselineArtist := &Line2D{
-		XY: []geom.Pt{
-			{X: x[0], Y: baseline},
-			{X: x[n-1], Y: baseline},
-		},
+		XY:    []geom.Pt{baselineStart, baselineEnd},
 		W:     baselineWidth,
 		Col:   baselineColor,
 		Label: "",

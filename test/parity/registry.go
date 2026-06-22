@@ -101,6 +101,7 @@ import (
 	example_date_concise_intraday_labels "github.com/cwbudde/matplotlib-go/test/parity/date_concise_intraday_labels"
 	example_date_month_year_labels "github.com/cwbudde/matplotlib-go/test/parity/date_month_year_labels"
 	example_errorbar_basic "github.com/cwbudde/matplotlib-go/test/parity/errorbar_basic"
+	example_errorbar_capthick "github.com/cwbudde/matplotlib-go/test/parity/errorbar_capthick"
 	example_figure_labels_composition "github.com/cwbudde/matplotlib-go/test/parity/figure_labels_composition"
 	example_fill_basic "github.com/cwbudde/matplotlib-go/test/parity/fill_basic"
 	example_fill_between "github.com/cwbudde/matplotlib-go/test/parity/fill_between"
@@ -137,6 +138,7 @@ import (
 	example_legend_layout_matrix "github.com/cwbudde/matplotlib-go/test/parity/legend_layout_matrix"
 	example_line2d_markers "github.com/cwbudde/matplotlib-go/test/parity/line2d_markers"
 	example_line2d_semantics "github.com/cwbudde/matplotlib-go/test/parity/line2d_semantics"
+	example_linecollection_linestyle "github.com/cwbudde/matplotlib-go/test/parity/linecollection_linestyle"
 	example_lines_markers_gallery "github.com/cwbudde/matplotlib-go/test/parity/lines_markers_gallery"
 	example_locator_fixed_index_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_fixed_index_labels"
 	example_locator_linear_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_linear_labels"
@@ -199,6 +201,7 @@ import (
 	example_scatter_basic "github.com/cwbudde/matplotlib-go/test/parity/scatter_basic"
 	example_scatter_gallery "github.com/cwbudde/matplotlib-go/test/parity/scatter_gallery"
 	example_scatter_marker_types "github.com/cwbudde/matplotlib-go/test/parity/scatter_marker_types"
+	example_scatter_plotnonfinite "github.com/cwbudde/matplotlib-go/test/parity/scatter_plotnonfinite"
 	example_skewt_basic "github.com/cwbudde/matplotlib-go/test/parity/skewt_basic"
 	example_specialty_artists "github.com/cwbudde/matplotlib-go/test/parity/specialty_artists"
 	example_specialty_depth "github.com/cwbudde/matplotlib-go/test/parity/specialty_depth"
@@ -207,6 +210,7 @@ import (
 	example_spy_marker "github.com/cwbudde/matplotlib-go/test/parity/spy_marker"
 	example_stackplot_streamgraph "github.com/cwbudde/matplotlib-go/test/parity/stackplot_streamgraph"
 	example_stat_variants "github.com/cwbudde/matplotlib-go/test/parity/stat_variants"
+	example_stem_horizontal "github.com/cwbudde/matplotlib-go/test/parity/stem_horizontal"
 	example_stem_plot "github.com/cwbudde/matplotlib-go/test/parity/stem_plot"
 	example_text_annotation_matrix "github.com/cwbudde/matplotlib-go/test/parity/text_annotation_matrix"
 	example_text_labels_strict "github.com/cwbudde/matplotlib-go/test/parity/text_labels_strict"
@@ -253,6 +257,10 @@ var renderByID = map[string]func() image.Image{
 	"scatter_basic":                       example_scatter_basic.Render,
 	"scatter_marker_types":                example_scatter_marker_types.Render,
 	"scatter_advanced":                    example_scatter_advanced.Render,
+	"scatter_plotnonfinite":               example_scatter_plotnonfinite.Render,
+	"stem_horizontal":                     example_stem_horizontal.Render,
+	"errorbar_capthick":                   example_errorbar_capthick.Render,
+	"linecollection_linestyle":            example_linecollection_linestyle.Render,
 	"scatter_gallery":                     example_scatter_gallery.Render,
 	"bar_basic_frame":                     example_bar_basic_frame.Render,
 	"bar_basic_ticks":                     example_bar_basic_ticks.Render,

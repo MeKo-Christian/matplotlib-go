@@ -7773,7 +7773,7 @@
         },
         {
           "id": "type ErrorBar",
-          "declaration": "type ErrorBar struct{ XY []geom.Pt; XErr []float64; YErr []float64; XErrLower []float64; XErrUpper []float64; YErrLower []float64; YErrUpper []float64; LoLimits []bool; UpLimits []bool; XLoLimits []bool; XUpLimits []bool; Color render.Color; LineWidth float64; CapSize float64; Marker MarkerType; MarkerSet bool; MarkerSize float64; Alpha float64; Label string; NoDataLine bool; ErrorEvery int; ErrorEveryStart int }"
+          "declaration": "type ErrorBar struct{ XY []geom.Pt; XErr []float64; YErr []float64; XErrLower []float64; XErrUpper []float64; YErrLower []float64; YErrUpper []float64; LoLimits []bool; UpLimits []bool; XLoLimits []bool; XUpLimits []bool; Color render.Color; LineWidth float64; CapSize float64; CapThick float64; Marker MarkerType; MarkerSet bool; MarkerSize float64; Alpha float64; Label string; NoDataLine bool; ErrorEvery int; ErrorEveryStart int }"
         },
         {
           "id": "type ErrorBar3DOptions",
@@ -7781,7 +7781,7 @@
         },
         {
           "id": "type ErrorBarOptions",
-          "declaration": "type ErrorBarOptions struct{ Color *render.Color; LineWidth *float64; CapSize *float64; Marker *MarkerType; MarkerSize *float64; Alpha *float64; Label string; NoDataLine bool; ErrorEvery int; ErrorEveryStart int; XErrLower []float64; XErrUpper []float64; YErrLower []float64; YErrUpper []float64; LoLimits []bool; UpLimits []bool; XLoLimits []bool; XUpLimits []bool }"
+          "declaration": "type ErrorBarOptions struct{ Color *render.Color; LineWidth *float64; CapSize *float64; CapThick *float64; Marker *MarkerType; MarkerSize *float64; Alpha *float64; Label string; NoDataLine bool; ErrorEvery int; ErrorEveryStart int; XErrLower []float64; XErrUpper []float64; YErrLower []float64; YErrUpper []float64; LoLimits []bool; UpLimits []bool; XLoLimits []bool; XUpLimits []bool }"
         },
         {
           "id": "type ErrorbarContainer",
@@ -8017,7 +8017,7 @@
         },
         {
           "id": "type LineCollection",
-          "declaration": "type LineCollection struct{ Collection; Segments [][]geom.Pt; Colors []render.Color; Color render.Color; LineWidths []float64; LineWidth float64; DashPatterns [][]float64; Dashes []float64; LineJoin render.LineJoin; LineCap render.LineCap }"
+          "declaration": "type LineCollection struct{ Collection; Segments [][]geom.Pt; Colors []render.Color; Color render.Color; LineWidths []float64; LineWidth float64; DashPatterns [][]float64; Dashes []float64; LineStyle string; LineStyles []string; LineJoin render.LineJoin; LineCap render.LineCap }"
         },
         {
           "id": "type LineDrawStyle",
@@ -8417,7 +8417,7 @@
         },
         {
           "id": "type ScatterOptions",
-          "declaration": "type ScatterOptions struct{ Color *render.Color; Colors []render.Color; ScalarValues []float64; Colormap string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Size *float64; Sizes []float64; Marker *MarkerType; MarkerStyle *MarkerStyle; MarkerPath *geom.Path; EdgeColor *render.Color; EdgeColors []render.Color; EdgeWidth *float64; Alpha *float64; Label string; AxLimClip bool }"
+          "declaration": "type ScatterOptions struct{ Color *render.Color; Colors []render.Color; ScalarValues []float64; Colormap string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Size *float64; Sizes []float64; Marker *MarkerType; MarkerStyle *MarkerStyle; MarkerPath *geom.Path; EdgeColor *render.Color; EdgeColors []render.Color; EdgeWidth *float64; Alpha *float64; Label string; AxLimClip bool; PlotNonfinite bool }"
         },
         {
           "id": "type SecondLocator",
@@ -8533,7 +8533,7 @@
         },
         {
           "id": "type StemOptions",
-          "declaration": "type StemOptions struct{ Color *render.Color; LineWidth *float64; Marker *MarkerType; MarkerPath *geom.Path; MarkerSize *float64; Baseline *float64; BaselineColor *render.Color; BaselineWidth *float64; MarkerEdgeColor *render.Color; MarkerEdgeWidth *float64; Label string; Alpha *float64 }"
+          "declaration": "type StemOptions struct{ Color *render.Color; LineWidth *float64; Marker *MarkerType; MarkerPath *geom.Path; MarkerSize *float64; Baseline *float64; BaselineColor *render.Color; BaselineWidth *float64; MarkerEdgeColor *render.Color; MarkerEdgeWidth *float64; Label string; Alpha *float64; Orientation string }"
         },
         {
           "id": "type StepOptions",

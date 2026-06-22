@@ -92,6 +92,10 @@ spectrum_variants
 stat_variants
 specialty_depth
 stem_plot
+stem_horizontal
+errorbar_capthick
+scatter_plotnonfinite
+linecollection_linestyle
 specialty_artists
 date_concise_intraday_labels
 date_month_year_labels

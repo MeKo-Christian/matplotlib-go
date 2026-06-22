@@ -887,3 +887,51 @@ func TestScatter2D_LargeDataset(t *testing.T) {
 		t.Error("Expected non-empty bounds for large dataset")
 	}
 }
+
+func TestScatterMasksNonfinitePositionByDefault(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	s := ax.Scatter([]float64{0, math.NaN(), 2}, []float64{0, 1, 2})
+	if s == nil {
+		t.Fatal("Scatter returned nil")
+	}
+	if got := len(s.XY); got != 2 {
+		t.Fatalf("scatter kept %d points, want 2 (NaN x dropped)", got)
+	}
+}
+
+func TestScatterMasksNonfiniteScalarByDefault(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	s := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1, 2},
+		ScatterOptions{ScalarValues: []float64{0.1, math.NaN(), 0.3}})
+	if got := len(s.XY); got != 2 {
+		t.Fatalf("scatter kept %d points, want 2 (NaN scalar dropped)", got)
+	}
+	if got := len(s.ScalarValues); got != 2 {
+		t.Fatalf("scalar values len %d, want 2 (kept in lockstep)", got)
+	}
+}
+
+func TestScatterPlotNonfiniteKeepsNonfiniteScalar(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	s := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1, 2},
+		ScatterOptions{ScalarValues: []float64{0.1, math.NaN(), 0.3}, PlotNonfinite: true})
+	if got := len(s.XY); got != 3 {
+		t.Fatalf("scatter kept %d points, want 3 (nonfinite scalar kept for bad color)", got)
+	}
+	if got := len(s.ScalarValues); got != 3 {
+		t.Fatalf("scalar values len %d, want 3", got)
+	}
+}
+
+func TestScatterPlotNonfiniteStillDropsNonfinitePosition(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	s := ax.Scatter([]float64{0, math.Inf(1), 2}, []float64{0, 1, 2},
+		ScatterOptions{PlotNonfinite: true})
+	if got := len(s.XY); got != 2 {
+		t.Fatalf("scatter kept %d points, want 2 (inf x dropped even with PlotNonfinite)", got)
+	}
+}

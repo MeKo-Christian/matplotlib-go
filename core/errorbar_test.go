@@ -592,3 +592,64 @@ func countNonDataLinePaths(calls []recordedPathCall, ctx *DrawContext, points []
 	}
 	return count
 }
+
+func TestErrorBarCapThickSetsField(t *testing.T) {
+	fig := NewFigure(400, 300)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	capThick := 3.0
+	capSize := 5.0
+	bar := ax.ErrorBar([]float64{1, 2}, []float64{1, 2}, nil, []float64{0.5, 0.5},
+		ErrorBarOptions{CapThick: &capThick, CapSize: &capSize})
+	if bar == nil {
+		t.Fatal("ErrorBar returned nil")
+	}
+	want := pointsToPixels(ax.resolvedRC(), capThick)
+	if bar.CapThick != want {
+		t.Fatalf("bar.CapThick = %v, want %v", bar.CapThick, want)
+	}
+}
+
+func TestErrorBarDrawUsesCapThick(t *testing.T) {
+	bar := &ErrorBar{
+		XY:        []geom.Pt{{X: 1, Y: 2}},
+		YErr:      []float64{0.5},
+		LineWidth: 2,
+		CapSize:   10,
+		CapThick:  7,
+		Color:     render.Color{A: 1},
+	}
+	r := &recordingRenderer{}
+	bar.Draw(r, createTestDrawContext())
+	found := false
+	for _, c := range r.pathCalls {
+		if c.paint.LineWidth == 7 {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("no cap path drawn with CapThick width 7; got %d paths", len(r.pathCalls))
+	}
+}
+
+func TestErrorBarDrawCapThickDefaultsToOnePoint(t *testing.T) {
+	bar := &ErrorBar{
+		XY:        []geom.Pt{{X: 1, Y: 2}},
+		YErr:      []float64{0.5},
+		LineWidth: 2,
+		CapSize:   10,
+		Color:     render.Color{A: 1},
+	}
+	ctx := createTestDrawContext()
+	r := &recordingRenderer{}
+	bar.Draw(r, ctx)
+	want := pointsToPixels(ctx.RC, 1)
+	found := false
+	for _, c := range r.pathCalls {
+		if c.paint.LineWidth == want {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("no cap path drawn with default width %v; got %d paths", want, len(r.pathCalls))
+	}
+}

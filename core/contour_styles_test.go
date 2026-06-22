@@ -101,14 +101,14 @@ func TestAxesContourfHatchesCyclePerBand(t *testing.T) {
 }
 
 func TestContourLineStyleDashes(t *testing.T) {
-	if got := contourLineStyleDashes("solid", 1); got != nil {
+	if got := lineStyleToDashes("solid", 1); got != nil {
 		t.Fatalf("solid dashes = %v, want nil", got)
 	}
-	if got := contourLineStyleDashes("-", 2); got != nil {
+	if got := lineStyleToDashes("-", 2); got != nil {
 		t.Fatalf("\"-\" dashes = %v, want nil", got)
 	}
 	// dashed base [3.7, 1.6] scaled by linewidth 2.
-	got := contourLineStyleDashes("dashed", 2)
+	got := lineStyleToDashes("dashed", 2)
 	want := []float64{7.4, 3.2}
 	if len(got) != len(want) {
 		t.Fatalf("dashed dashes = %v, want %v", got, want)
@@ -118,13 +118,13 @@ func TestContourLineStyleDashes(t *testing.T) {
 			t.Fatalf("dashed dashes = %v, want %v", got, want)
 		}
 	}
-	if got := contourLineStyleDashes("--", 1); len(got) != 2 {
+	if got := lineStyleToDashes("--", 1); len(got) != 2 {
 		t.Fatalf("\"--\" dashes = %v, want 2-element pattern", got)
 	}
-	if got := contourLineStyleDashes("dashdot", 1); len(got) != 4 {
+	if got := lineStyleToDashes("dashdot", 1); len(got) != 4 {
 		t.Fatalf("dashdot dashes = %v, want 4-element pattern", got)
 	}
-	if got := contourLineStyleDashes("dotted", 1); len(got) != 2 {
+	if got := lineStyleToDashes("dotted", 1); len(got) != 2 {
 		t.Fatalf("dotted dashes = %v, want 2-element pattern", got)
 	}
 }

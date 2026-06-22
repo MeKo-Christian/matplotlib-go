@@ -178,6 +178,11 @@ var cases = []Case{
 	{ID: "stat_variants", Topic: "statistics", Title: "Statistical Views", Optional: true, WebDemoID: "statistics", Description: "Box plots, violin plots, empirical CDFs, and stack plots.", Showcase: true, GoBasicSmokeFamily: "statistics", MinPSNR: 52.0, MaxMeanAbs: 0.35, MaxRMSE: 3.4},
 	{ID: "specialty_depth", Topic: "statistics", Title: "Specialty Depth", FixtureOnly: true, MinPSNR: 22.0, MaxMeanAbs: 20.0, MaxRMSE: 4.8},
 	{ID: "stem_plot", Topic: "specialty", Title: "Stem Plot", Optional: true, MaxRMSE: 4.3},
+	// Phase 9 "misc artist kwargs" parity fixtures.
+	{ID: "stem_horizontal", Topic: "specialty", Title: "Horizontal Stem", Description: "Stem plot with orientation=\"horizontal\": locs along y, heads along x from a vertical baseline.", FixtureOnly: true, MinPSNR: 40.0, MaxMeanAbs: 2.0, MaxRMSE: 4.5},
+	{ID: "errorbar_capthick", Topic: "errorbar", Title: "Error Bars (capthick)", Description: "Error bars whose caps use a thicker line than the bars via the capthick kwarg.", FixtureOnly: true, MinPSNR: 40.0, MaxMeanAbs: 2.0, MaxRMSE: 4.2},
+	{ID: "scatter_plotnonfinite", Topic: "scatter", Title: "Scatter (plotnonfinite)", Description: "Scatter with plotnonfinite=True: non-finite scalar values ride the colormap bad color while finite points map through viridis.", FixtureOnly: true, MinPSNR: 40.0, MaxMeanAbs: 2.0, MaxRMSE: 3.5},
+	{ID: "linecollection_linestyle", Topic: "specialty", Title: "Line Styles", Description: "Per-item LineCollection string linestyles (solid/dashed/dashdot/dotted) via hlines.", FixtureOnly: true, MinPSNR: 40.0, MaxMeanAbs: 2.0, MaxRMSE: 3.5},
 	// Table cell text now follows Matplotlib's Text advance alignment; refreshed
 	// golden-vs-reference RMSE is 1.74.
 	{ID: "specialty_artists", Topic: "specialty", Title: "Specialty Artists", Optional: true, WebDemoID: "specialty", Description: "Event plots, hexbin, pie charts, stem plots, tables, and Sankey-style flows.", Showcase: true, GoBasicSmokeFamily: "specialty", MaxRMSE: 2.0},

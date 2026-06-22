@@ -24,6 +24,7 @@ type ErrorBar struct {
 	Color           render.Color // stroke color
 	LineWidth       float64      // stroke width in pixels
 	CapSize         float64      // cap size in pixels
+	CapThick        float64      // cap line width in pixels (0 uses the 1pt default)
 	Marker          MarkerType   // optional data marker, matching Matplotlib fmt markers
 	MarkerSet       bool
 	MarkerSize      float64 // marker size in points
@@ -83,6 +84,9 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 	capPaint := paint
 	capPaint.LineWidth = pointsToPixels(rc, 1)
+	if e.CapThick > 0 {
+		capPaint.LineWidth = e.CapThick
+	}
 
 	for i, pt := range e.XY {
 		if !e.errorEveryApplies(i) {
