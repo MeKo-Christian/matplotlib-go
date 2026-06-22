@@ -398,10 +398,21 @@ match Matplotlib defaults, not just the happy path.
       fix: AGG hatch strokes are now always anti-aliased independent of the
       fill's AA (contourf bands are `antialiased=False` but their hatch lines
       are AA in Matplotlib) — dropped hatched-contourf reference RMSE 26→0.55.
-      New `contour_styles` parity case (RMSE 4.15); style resolution, extend,
-      hatch cycling, and label formatting unit-tested (`core/contour_styles_test.go`,
-      `core/contour_label_format_test.go`). _Deferred: colorbar extend triangles,
-      log-scale extend, accent/`format_ticks` list semantics._
+      Also ported contourpy's closed-loop start-vertex convention
+      (`rotateClosedLoopToContourpyStart`, `core/contour_lines.go`): Go's marching
+      squares produced the same vertices/winding as mpl2014 but rotated to a
+      different start, throwing dashed-contour dash phase ~anti-phase (RMSE 9);
+      aligning the start (bottom-boundary-tangent loops at their leftmost boundary
+      vertex; interior loops at the leftmost vertical-edge crossing in the
+      bottommost row-band) drops dashed parity to RMSE 0.07 with no regression
+      (mesh*contour_tri stays 2.32). New `contour_styles` parity case (RMSE 2.50,
+      negative dashing + `%.2f` labels + extend + hatches); style resolution,
+      extend, hatch cycling, label formatting, and the loop-start rule unit-tested
+      (`core/contour_styles_test.go`, `core/contour_label_format_test.go`,
+      `core/contour_loopstart_test.go`). \_Deferred: full contourpy `locate_label`
+      port (Go's inline auto-label placement still differs on asymmetric loops;
+      manual placement matches); colorbar extend triangles, log-scale extend,
+      accent/`format_ticks` list semantics.*
 - [ ] **Colorbar** norm-aware locators for SymLog/Power/TwoSlope/Centered +
       `NoNorm` IndexLocator (`core/colorbar_scale.go:118`); `extendfrac`; minor
       ticks.

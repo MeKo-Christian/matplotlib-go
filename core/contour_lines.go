@@ -70,6 +70,7 @@ func contourGridPolylines(x, y []float64, data [][]float64, levels []float64) ([
 			if len(polyline) < 2 {
 				continue
 			}
+			polyline = rotateClosedLoopToContourpyStart(polyline, x, y)
 			polyline = orientStructuredOpenBoundaryPolyline(polyline, x, y)
 			polylines = append(polylines, polyline)
 			polylineLevels = append(polylineLevels, level)
@@ -329,6 +330,96 @@ func stitchContourSegments(segments [][]geom.Pt) [][]geom.Pt {
 		out = append(out, rotateClosedContourPolylineToMatplotlibStart(polyline))
 	}
 	return out
+}
+
+// rotateClosedLoopToContourpyStart rotates a closed structured-grid contour loop
+// so it begins at the vertex Matplotlib's default contour generator (contourpy
+// "mpl2014") emits first. Go's marching squares yields the same vertex sequence
+// and winding as contourpy, only rotated to a different start; aligning the
+// start makes dash phase (and manual-label tangents) match Matplotlib.
+//
+// contourpy traces boundary-touching loops during its boundary pass and other
+// loops during its interior pass, so the start is:
+//   - the leftmost vertex on the bottom grid boundary, if the loop touches it;
+//   - otherwise the leftmost vertical-grid-edge crossing, ties broken by
+//     minimum y (contourpy's column-major interior cell scan).
+func rotateClosedLoopToContourpyStart(polyline []geom.Pt, x, y []float64) []geom.Pt {
+	if !contourPolylineClosed(polyline) || len(x) < 2 || len(y) < 2 {
+		return polyline
+	}
+	body := polyline[:len(polyline)-1]
+	if len(body) == 0 {
+		return polyline
+	}
+
+	yBottom := math.Min(y[0], y[len(y)-1])
+	best := -1
+	// Phase 1: a loop tangent to the bottom boundary starts at its leftmost
+	// bottom-boundary vertex.
+	for i, p := range body {
+		if math.Abs(p.Y-yBottom) <= 1e-7*(1+math.Abs(yBottom)) {
+			if best < 0 || p.X < body[best].X-1e-9 {
+				best = i
+			}
+		}
+	}
+	if best < 0 {
+		// Phase 2: interior loop — contourpy's row-major cell scan starts at the
+		// leftmost vertical-edge crossing in the bottommost row-band.
+		bestRow := 0
+		for i, p := range body {
+			if !onVerticalGridEdge(p.X, x) {
+				continue
+			}
+			row := gridRowBand(p.Y, y)
+			if best < 0 || row < bestRow ||
+				(row == bestRow && p.X < body[best].X-1e-9) {
+				best = i
+				bestRow = row
+			}
+		}
+	}
+	if best <= 0 {
+		return polyline
+	}
+	out := make([]geom.Pt, 0, len(polyline))
+	out = append(out, body[best:]...)
+	out = append(out, body[:best]...)
+	out = append(out, out[0])
+	return out
+}
+
+// onVerticalGridEdge reports whether px lies on one of the grid's vertical edges
+// (x equals a grid coordinate): a vertical-edge contour crossing.
+func onVerticalGridEdge(px float64, x []float64) bool {
+	for _, gx := range x {
+		if math.Abs(px-gx) <= 1e-7*(1+math.Abs(gx)) {
+			return true
+		}
+	}
+	return false
+}
+
+// gridRowBand returns the index of the grid row-band (cell row) bracketing py,
+// numbered from the bottom of the grid upward regardless of y ordering.
+func gridRowBand(py float64, y []float64) int {
+	ascending := y[len(y)-1] >= y[0]
+	for j := 0; j+1 < len(y); j++ {
+		lo, hi := y[j], y[j+1]
+		if !ascending {
+			lo, hi = hi, lo
+		}
+		if py >= lo-1e-9 && py <= hi+1e-9 {
+			if ascending {
+				return j
+			}
+			return len(y) - 2 - j
+		}
+	}
+	if py < math.Min(y[0], y[len(y)-1]) {
+		return 0
+	}
+	return len(y) - 2
 }
 
 func rotateClosedContourPolylineToMatplotlibStart(polyline []geom.Pt) []geom.Pt {

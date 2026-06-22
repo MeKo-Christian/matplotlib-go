@@ -38,14 +38,13 @@ def contour_styles(out_dir):
     line_ax.set_ylim(-3, 3)
     cs = line_ax.contour(
         xs, ys, z,
-        levels=[-0.35, 0.15, 0.3],
+        levels=[-0.3, -0.2, -0.1, 0.1, 0.2, 0.3],
         colors=[(0.0, 0.0, 0.0, 1.0)],
         linewidths=lw(1.5),
-        negative_linestyles="dotted",
     )
     line_ax.clabel(
         cs, fmt="%.2f", inline=False,
-        manual=[(-0.7, 0.2), (1.3, 0.0), (0.7, 0.5)],
+        manual=[(-0.7, 0.6), (-0.7, 1.21), (0.7, 0.6), (0.7, 1.21)],
     )
 
     # Right: filled contour with extend="both" (under/over bands) and hatches

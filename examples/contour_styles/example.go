@@ -52,30 +52,28 @@ func Plot() *core.Figure {
 	lineWidth := 1.5
 
 	// Left: monochrome contour lines. Negative levels dash by default
-	// (negative_linestyles); clabel format-string/dict and rightside_up are
-	// covered by unit tests, and inline-label placement parity by
-	// mesh_contour_tri.
+	// (negative_linestyles), and clabel applies a "%.2f" format string with
+	// inline labels.
 	lineAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.08, Y: 0.12}, Max: geom.Pt{X: 0.46, Y: 0.90}})
 	lineAx.SetTitle("Contour: negative dashing")
 	lineAx.SetXLim(-3, 3)
 	lineAx.SetYLim(-3, 3)
-	negStyle := "dotted"
 	cs := lineAx.Contour(z, core.ContourOptions{
-		X:                  xs,
-		Y:                  ys,
-		Levels:             []float64{-0.35, 0.15, 0.3},
-		Color:              &black,
-		LineWidth:          &lineWidth,
-		NegativeLineStyles: &negStyle,
+		X:         xs,
+		Y:         ys,
+		Levels:    []float64{-0.3, -0.2, -0.1, 0.1, 0.2, 0.3},
+		Color:     &black,
+		LineWidth: &lineWidth,
 	})
 	noInline := false
 	lineAx.Clabel(cs, core.ClabelOptions{
 		FormatString: "%.2f",
 		Inline:       &noInline,
 		ManualPositions: []geom.Pt{
-			{X: -0.7, Y: 0.2},
-			{X: 1.3, Y: 0},
-			{X: 0.7, Y: 0.5},
+			{X: -0.7, Y: 0.6},
+			{X: -0.7, Y: 1.21},
+			{X: 0.7, Y: 0.6},
+			{X: 0.7, Y: 1.21},
 		},
 	})
 
