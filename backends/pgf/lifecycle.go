@@ -54,6 +54,7 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.raster = nil
 	r.colorNames = map[string]string{}
 	r.pathIDs = map[string]string{}
+	r.shadingCounter = 0
 
 	r.writeDocumentComments(&r.content)
 	r.content.WriteString("\\begingroup\n")
@@ -158,5 +159,29 @@ func (r *Renderer) ClipPath(path geom.Path) {
 		return
 	}
 	r.clipPaths = append(r.clipPaths, mixedraster.ClonePath(path))
+	r.content.WriteString("\\pgfusepath{clip}\n")
+}
+
+// ClipPathTransformed installs a path clip after applying an affine transform
+// to the path, matching Matplotlib's PGF clip handling (the path is converted
+// through its transform before \pgfusepath{clip}). Implements
+// render.ClipPathTransformer.
+func (r *Renderer) ClipPathTransformed(path geom.Path, transform geom.Affine) {
+	if rr := r.activeRaster(); rr != nil {
+		if ct, ok := rr.(render.ClipPathTransformer); ok {
+			ct.ClipPathTransformed(path, transform)
+		} else {
+			rr.ClipPath(path.Transformed(normalizedAffine(transform)))
+		}
+		return
+	}
+	if !r.began {
+		return
+	}
+	transformed := path.Transformed(normalizedAffine(transform))
+	if !writePathOps(&r.content, transformed) {
+		return
+	}
+	r.clipPaths = append(r.clipPaths, mixedraster.ClonePath(transformed))
 	r.content.WriteString("\\pgfusepath{clip}\n")
 }

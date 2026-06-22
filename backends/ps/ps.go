@@ -50,6 +50,8 @@ var (
 	_ render.ImageTransformer        = (*Renderer)(nil)
 	_ render.MarkerDrawer            = (*Renderer)(nil)
 	_ render.NativeHatcher           = (*Renderer)(nil)
+	_ render.GradientFiller          = (*Renderer)(nil)
+	_ render.PatternFiller           = (*Renderer)(nil)
 	_ render.PathCollectionDrawer    = (*Renderer)(nil)
 	_ render.RasterizationController = (*Renderer)(nil)
 	_ render.TextPather              = (*Renderer)(nil)

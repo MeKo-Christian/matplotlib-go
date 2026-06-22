@@ -26,11 +26,34 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 		p = sketch.Apply(p, eff.Scale, eff.Length, eff.Randomness)
 	}
 	hasHatch := paint.Hatch != "" && paint.HatchColor.A > 0
-	hasFill := paint.Fill.A > 0 || hasHatch
+	hasGradient := !hasHatch && hasGradientFill(paint)
+	hasPattern := !hasHatch && !hasGradient && hasPatternFill(paint)
+	hasFill := paint.Fill.A > 0 || hasHatch || hasGradient || hasPattern
 	hasStroke := paint.Stroke.A > 0 && paint.LineWidth > 0
 	if !hasFill && !hasStroke {
 		return
 	}
+
+	// Gradient and pattern fills build (and clip to) their own path, so they are
+	// handled before the shared writePathOps pre-build below. An optional stroke
+	// outline is re-emitted afterwards, mirroring the AGG/PDF fill+stroke order.
+	if hasGradient || hasPattern {
+		if hasGradient {
+			r.writeGradientFill(&r.content, p, paint)
+		} else {
+			r.writePatternFill(&r.content, p, paint)
+		}
+		if hasStroke {
+			if !writePathOps(&r.content, p) {
+				return
+			}
+			writeStrokeColor(&r.content, paint.Stroke)
+			writeLineState(&r.content, paint)
+			r.content.WriteString("stroke\n")
+		}
+		return
+	}
+
 	if !writePathOps(&r.content, p) {
 		return
 	}

@@ -568,8 +568,23 @@ its current ~13% rcParam coverage.
       case `sketch_xkcd` matches the Matplotlib reference at PSNR ~47 dB /
       MeanAbs ~1.4 (RNG-exact wiggle shape; residual is sub-pixel edge placement
       because the port applies sketch ahead of the device-space snap).
-- [ ] **PS/PGF** gradient + pattern fills; PGF clip-path and vertical-text
-      interfaces.
+- [x] **PS/PGF** gradient + pattern fills; PGF clip-path and vertical-text
+      interfaces. **PS** now implements `render.GradientFiller`/`PatternFiller`
+      (`backends/ps/gradients.go`): gradients paint via Level-3 axial/radial
+      shading dictionaries (`shfill`) whose dict/function format is byte-shared
+      with the PDF backend (ShadingType 2/3 + FunctionType 2/3 stitching);
+      patterns tile the cell path inside a path clip (bg rect + fg fill/stroke,
+      mirroring AGG). **PGF** implements the same two fillers plus
+      `render.ClipPathTransformer` and `render.FontVerticalTextDrawer`
+      (`backends/pgf/gradients.go`, `lifecycle.go`, `text.go`): gradients are
+      fully vector via `\pgfdeclare{horizontal,radial}shading` + clip +
+      `\pgftext{\pgfuseshading}` (linear shadings rotated to the gradient axis,
+      box fitted to the path bbox; matplotlib's own PGF backend rasterizes
+      these), patterns tile within a `\pgfscope` clip, `ClipPathTransformed`
+      applies the affine before `\pgfusepath{clip}`, and vertical text stacks
+      glyphs centered to match PS/PDF. Both backends are y-up display space, so
+      gradient/clip geometry is emitted without a device flip. Unit coverage:
+      `backends/ps/gradients_test.go`, `backends/pgf/gradients_test.go`.
 - [ ] **`url`/`gid` metadata** in `GraphicsContext` for clickable vector output;
       finish `RestoreRegion` y-flip (`backends/agg/agg.go:360`) for blit/anim.
 - [ ] **rcParams coverage** for `savefig.*`, `pdf.*`/`ps.*`/`svg.*`,

@@ -27,19 +27,20 @@ type Renderer struct {
 	background render.Color
 	resolution uint
 
-	began         bool
-	viewport      geom.Rect
-	content       strings.Builder
-	colorDefs     strings.Builder
-	document      []byte
-	stack         []state
-	clipRect      *geom.Rect
-	clipPaths     []geom.Path
-	raster        *mixedraster.Session
-	colorNames    map[string]string
-	pathIDs       map[string]string
-	pgfOpts       render.PGFOptions
-	defaultSketch render.SketchParams
+	began          bool
+	viewport       geom.Rect
+	content        strings.Builder
+	colorDefs      strings.Builder
+	document       []byte
+	stack          []state
+	clipRect       *geom.Rect
+	clipPaths      []geom.Path
+	raster         *mixedraster.Session
+	colorNames     map[string]string
+	pathIDs        map[string]string
+	shadingCounter int
+	pgfOpts        render.PGFOptions
+	defaultSketch  render.SketchParams
 }
 
 // SetDefaultSketch sets the sketch/xkcd perturbation applied to paths whose
@@ -56,6 +57,10 @@ var (
 	_ render.FontTextDrawer          = (*Renderer)(nil)
 	_ render.FontRotatedTextDrawer   = (*Renderer)(nil)
 	_ render.NativeHatcher           = (*Renderer)(nil)
+	_ render.GradientFiller          = (*Renderer)(nil)
+	_ render.PatternFiller           = (*Renderer)(nil)
+	_ render.ClipPathTransformer     = (*Renderer)(nil)
+	_ render.FontVerticalTextDrawer  = (*Renderer)(nil)
 	_ render.RasterizationController = (*Renderer)(nil)
 	_ render.PGFOptionExporter       = (*Renderer)(nil)
 	_ render.PGFOptionSetter         = (*Renderer)(nil)

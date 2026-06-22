@@ -74,6 +74,39 @@ func (r *Renderer) DrawTextRotatedWithFont(text string, anchor geom.Pt, size, an
 	r.writeText(text, anchor, size, angle, textColor)
 }
 
+// DrawTextVertical draws vertical (stacked-glyph) text centered on the
+// supplied point, matching the PS/PDF backends. Implements
+// render.VerticalTextDrawer.
+func (r *Renderer) DrawTextVertical(text string, center geom.Pt, size float64, textColor render.Color) {
+	r.DrawTextVerticalWithFont(text, center, size, textColor, "")
+}
+
+// DrawTextVerticalWithFont draws vertical text with an explicit font key.
+// Font selection is left to LaTeX in this generator-only slice, so the key is
+// used only for metric lookup. Implements render.FontVerticalTextDrawer.
+func (r *Renderer) DrawTextVerticalWithFont(text string, center geom.Pt, size float64, textColor render.Color, fontKey string) {
+	if rr := r.activeRaster(); rr != nil {
+		if textRen, ok := rr.(render.VerticalTextDrawer); ok {
+			textRen.DrawTextVertical(text, center, size, textColor)
+		} else if textRen, ok := rr.(render.TextDrawer); ok {
+			textRen.DrawText(text, center, size, textColor)
+		}
+		return
+	}
+	if !r.began || text == "" || size <= 0 || textColor.A <= 0 {
+		return
+	}
+	runes := []rune(text)
+	lineHeight := r.MeasureText("M", size, fontKey).H
+	startY := center.Y - lineHeight*float64(len(runes)-1)/2
+	for i, ch := range runes {
+		s := string(ch)
+		metrics := r.MeasureText(s, size, fontKey)
+		origin := geom.Pt{X: center.X - metrics.W/2, Y: startY + float64(i)*lineHeight}
+		r.writeText(s, origin, size, 0, textColor)
+	}
+}
+
 func (r *Renderer) writeText(text string, origin geom.Pt, size, angle float64, textColor render.Color) {
 	if !r.began || text == "" || size <= 0 || textColor.A <= 0 {
 		return

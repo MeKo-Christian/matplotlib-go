@@ -26,7 +26,7 @@ func (r *Renderer) Path(path geom.Path, paint *render.Paint) {
 		path = sketch.Apply(path, eff.Scale, eff.Length, eff.Randomness)
 	}
 	hasHatch := paint.Hatch != "" && paint.HatchColor.A > 0
-	hasFill := paint.Fill.A > 0 || hasHatch
+	hasFill := paint.Fill.A > 0 || hasHatch || hasGradientFill(paint) || hasPatternFill(paint)
 	hasStroke := paint.Stroke.A > 0 && paint.LineWidth > 0
 	if !hasFill && !hasStroke {
 		return
@@ -92,8 +92,32 @@ func (r *Renderer) writePathPaintOps(w *strings.Builder, path geom.Path, paint *
 		return false
 	}
 	hasHatch := paint.Hatch != "" && paint.HatchColor.A > 0
-	hasFill := paint.Fill.A > 0 || hasHatch
+	hasGradient := !hasHatch && hasGradientFill(paint)
+	hasPattern := !hasHatch && !hasGradient && hasPatternFill(paint)
+	hasFill := paint.Fill.A > 0 || hasHatch || hasGradient || hasPattern
 	hasStroke := paint.Stroke.A > 0 && paint.LineWidth > 0
+
+	// Gradient and pattern fills build (and clip to) their own path; an optional
+	// stroke outline is re-emitted afterwards to match the fill+stroke order.
+	if hasGradient || hasPattern {
+		if hasGradient {
+			r.writeGradientFill(w, path, paint)
+		} else {
+			r.writePatternFill(w, path, paint)
+		}
+		if hasStroke {
+			if !writePathOps(w, path) {
+				return false
+			}
+			writeFillOpacity(w, 1)
+			writeStrokeOpacity(w, paint.Stroke.A)
+			writeStrokeColor(w, r.colorName(paint.Stroke))
+			writeLineState(w, paint)
+			w.WriteString("\\pgfusepath{stroke}\n")
+		}
+		return true
+	}
+
 	switch {
 	case hasHatch:
 		if paint.Fill.A > 0 {
