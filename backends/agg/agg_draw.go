@@ -6,7 +6,6 @@ import (
 
 	agglib "github.com/cwbudde/agg_go"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/sketch"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -14,11 +13,14 @@ import (
 // display coordinates; it is flipped to the y-down device buffer once here, then
 // the device-space pipeline runs unchanged.
 func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
-	// Apply the sketch/xkcd wiggle in y-up display space (matching Matplotlib's
-	// cleanup_path), before the device flip and before snap/simplify are skipped
-	// downstream. The effective params are stamped back into the paint so the
-	// device-space pipeline knows to skip snap/simplify.
-	p, paint = r.applySketch(p, paint)
+	// Resolve the effective sketch params (per-artist override winning over the
+	// renderer default) and stamp them into a paint copy. The actual wiggle is
+	// applied later, in y-down device space inside preparePathForPaint — matching
+	// Matplotlib, whose draw_path folds the (1,-1)+height device flip into the
+	// path transform BEFORE the snap → simplify → curve → sketch converter chain
+	// (src/_backend_agg.h::draw_path). Applying it here in y-up space would negate
+	// the perpendicular displacement and mirror the wiggle.
+	paint = r.resolveSketchPaint(paint)
 	if render.DrawPathWithEffects(r, p, paint, func(path geom.Path, effectPaint *render.Paint) {
 		r.pathDevice(r.devPath(path), effectPaint)
 	}) {
@@ -27,21 +29,21 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 	r.pathDevice(r.devPath(p), paint)
 }
 
-// applySketch perturbs the y-up display-space path with Matplotlib's sketch
-// filter when the paint (or the renderer default) requests it. When active it
-// returns a paint copy whose Sketch is the resolved value, so downstream code
-// can detect the active sketch; otherwise the inputs are returned unchanged.
-func (r *Renderer) applySketch(p geom.Path, paint *render.Paint) (geom.Path, *render.Paint) {
+// resolveSketchPaint returns paint with its Sketch field set to the effective
+// value (per-artist override falling back to the renderer default), so the
+// device-space pipeline can detect and apply an active sketch. When no sketch is
+// active the input paint is returned unchanged.
+func (r *Renderer) resolveSketchPaint(paint *render.Paint) *render.Paint {
 	if paint == nil {
-		return p, nil
+		return nil
 	}
 	eff := render.EffectiveSketch(paint.Sketch, r.defaultSketch)
-	if !render.SketchActive(eff) {
-		return p, paint
+	if eff == paint.Sketch {
+		return paint
 	}
 	pc := *paint
 	pc.Sketch = eff
-	return sketch.Apply(p, eff.Scale, eff.Length, eff.Randomness), &pc
+	return &pc
 }
 
 // pathDevice draws a path that is already in y-down device coordinates.

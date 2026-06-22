@@ -76,11 +76,11 @@ var cases = []Case{
 	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 3.3},
 	{ID: "path_effects", Topic: "effects", Title: "Path Effects", FixtureOnly: true, MinPSNR: 18.0, MaxMeanAbs: 24.0, MaxRMSE: 0.3, SkiaParityFamily: "effects"},
 	{ID: "pattern_gradient_effects", Topic: "effects", Title: "Pattern and Gradient Effects", FixtureOnly: true, MinPSNR: 16.0, MaxMeanAbs: 1.0, MaxRMSE: 1.0, SkiaParityFamily: "effects"},
-	// MaxRMSE 30 / PSNR ~47 dB / MeanAbs ~1.4: the sketch wiggle shape is RNG-exact
-	// vs Matplotlib, but high-contrast spine and horizontal-line edges carry a
-	// sub-pixel offset because Matplotlib snaps H/V paths before the sketch filter
-	// while the port applies sketch in y-up space ahead of the device-space snap.
-	{ID: "sketch_xkcd", Topic: "effects", Title: "Sketch / xkcd Mode", Description: "A sine curve and a flat reference line under Matplotlib's xkcd sketch mode, exercising the global path.sketch perturbation on spines, ticks, and lines.", FixtureOnly: true, MinPSNR: 44.0, MaxMeanAbs: 2.5, MaxRMSE: 30.0},
+	// MaxRMSE 10 / PSNR ~52 dB / MeanAbs ~0.3: the sketch wiggle is RNG- and
+	// phase-exact vs Matplotlib (the filter runs in y-down device space, after
+	// snap+simplify, exactly as Matplotlib's draw_path chain). The residual is
+	// sub-pixel antialiasing on the steep edges of the dense wiggle.
+	{ID: "sketch_xkcd", Topic: "effects", Title: "Sketch / xkcd Mode", Description: "A sine curve and a flat reference line under Matplotlib's xkcd sketch mode, exercising the global path.sketch perturbation on spines, ticks, and lines.", FixtureOnly: true, MinPSNR: 50.0, MaxMeanAbs: 0.6, MaxRMSE: 10.0},
 	{ID: "scatter_basic", Topic: "scatter", Title: "Basic Scatter", Description: "A compact scatter plot with variable marker size, color, alpha, and axes labels.", Showcase: true, GoBasicSmokeFamily: "scatter", SkiaParityFamily: "scatter", MaxRMSE: 0.3},
 	{ID: "scatter_marker_types", Topic: "scatter", Title: "Scatter Marker Types", MaxRMSE: 2.8},
 	{ID: "scatter_advanced", Topic: "scatter", Title: "Advanced Scatter", MaxRMSE: 0.3},

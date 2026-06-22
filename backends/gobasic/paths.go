@@ -15,13 +15,17 @@ import (
 // display coordinates; it is flipped to the y-down device buffer once here, then
 // the device-space pipeline runs unchanged.
 func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
-	// Sketch/xkcd perturbation runs in y-up display space, before the device flip.
+	dp := r.devPath(p)
+	// Sketch/xkcd perturbation runs in y-down device space (after the flip),
+	// matching Matplotlib's draw_path converter chain, which folds the
+	// (1,-1)+height device flip into the transform before sketching. Applying it
+	// in y-up space would negate the perpendicular wiggle.
 	if paint != nil {
 		if eff := render.EffectiveSketch(paint.Sketch, r.defaultSketch); render.SketchActive(eff) {
-			p = sketch.Apply(p, eff.Scale, eff.Length, eff.Randomness)
+			dp = sketch.Apply(dp, eff.Scale, eff.Length, eff.Randomness)
 		}
 	}
-	r.pathDevice(r.devPath(p), paint)
+	r.pathDevice(dp, paint)
 }
 
 // pathDevice draws a path that is already in y-down device coordinates.
