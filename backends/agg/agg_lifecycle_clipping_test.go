@@ -125,17 +125,26 @@ func TestRestoreRegionWithBBoxAndOffset(t *testing.T) {
 	}
 
 	r.Path(fullRectPath(90, 90), &render.Paint{Fill: render.Color{B: 1, A: 1}})
+	// bbox and offset are y-up display space. The crop selects the display
+	// sub-rect (10,20)-(20,30) of the captured region; the y-up offset (20,20)
+	// shifts it right by 20 and up by 20.
 	r.RestoreRegion(region, &geom.Rect{
-		Min: geom.Pt{X: 0, Y: 0},
-		Max: geom.Pt{X: 10, Y: 10},
+		Min: geom.Pt{X: 10, Y: 20},
+		Max: geom.Pt{X: 20, Y: 30},
 	}, geom.Pt{X: 20, Y: 20})
 	_ = r.End()
 
-	// Display space is y-up: the captured region sits at device rows 60-80, and
-	// the cropped top-left 10x10 restored at device offset (20,20) lands at
-	// device cols 30-40, rows 80-90.
-	if got := r.GetImage().RGBAAt(35, 85); got != (color.RGBA{R: 255, G: 0, B: 0, A: 255}) {
+	// Display space is y-up: the captured region sits at device rows 60-80. The
+	// selected display sub-rect (10,20)-(20,30) is the region's device top-left
+	// 10x10 (rows 60-70, cols 10-20). A y-up offset of (20,20) moves it right by
+	// 20 (cols 30-40) and up by 20 (device rows decrease to 40-50).
+	if got := r.GetImage().RGBAAt(35, 45); got != (color.RGBA{R: 255, G: 0, B: 0, A: 255}) {
 		t.Fatalf("expected partial restored pixel to be red, got %+v", got)
+	}
+	// The original captured location (device rows 60-70) was overwritten by the
+	// blue fill and not restored in place, so it stays blue.
+	if got := r.GetImage().RGBAAt(15, 65); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
+		t.Fatalf("expected original region location to remain blue, got %+v", got)
 	}
 	if got := r.GetImage().RGBAAt(5, 5); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
 		t.Fatalf("expected non-restored pixel to remain blue, got %+v", got)

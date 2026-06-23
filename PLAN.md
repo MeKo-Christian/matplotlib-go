@@ -601,7 +601,12 @@ its current ~13% rcParam coverage.
       `render/url_marker_test.go`, `core/url_metadata_test.go`,
       `backends/svg/svg_url_gid_test.go`, `backends/pdf/pdf_url_test.go`;
       verified end-to-end through `core.SaveSVG`/`SaveFig`.
-- [ ] finish `RestoreRegion` y-flip (`backends/agg/agg.go:360`) for blit/anim.
+- [x] finish `RestoreRegion` y-flip (`backends/agg/agg.go:371`) for blit/anim.
+      `RestoreRegion` now takes its `bbox` (absolute crop sub-rect) and `offset`
+      (translation delta) in y-up display space — flipped to the device buffer via
+      `devRect`, consistent with `CopyFromBBox` and the backend's y-up public
+      boundary. `region.Rect` stays device-space (matches matplotlib's
+      `BufferRegion.get_extents`). Covered by `TestRestoreRegionWithBBoxAndOffset`.
 - [ ] **rcParams coverage** for `savefig.*`, `pdf.*`/`ps.*`/`svg.*`,
       `animation.*`, `boxplot.*`, `mathtext.*`, `hatch.*`, `image.*`, `date.*`
       (`style/mplstyle.go:31`).

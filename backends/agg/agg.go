@@ -363,11 +363,13 @@ func (r *Renderer) CopyFromBBox(bbox geom.Rect) *BufferRegion {
 // RestoreRegion composits a previously captured buffer region back onto the
 // current surface. A nil bbox restores the full region.
 //
-// TODO(y-flip): region.Rect is captured in y-down device space by CopyFromBbox,
-// and the crop/offset arithmetic below operates in device/image-local space. If
-// callers ever pass bbox/offset in y-up display coordinates they must be flipped
-// here. This path is not exercised by the static PNG goldens, so it is left
-// device-space for now.
+// Both bbox and offset are y-up display-space, mirroring CopyFromBBox and the
+// rest of this backend's public boundary (see agg_flip.go). bbox is an absolute
+// display rectangle selecting which portion of the originally-captured region to
+// restore; offset is a display-space translation delta (+offset.Y moves the
+// restored content up on screen). region.Rect, by contrast, stays in y-down
+// device space (where region.Image row 0 maps to device row region.Rect.Min.Y),
+// matching matplotlib's BufferRegion.get_extents.
 func (r *Renderer) RestoreRegion(region *BufferRegion, bbox *geom.Rect, offset geom.Pt) {
 	if r == nil || region == nil || region.Image == nil || r.ctx == nil {
 		return
@@ -376,17 +378,19 @@ func (r *Renderer) RestoreRegion(region *BufferRegion, bbox *geom.Rect, offset g
 		return
 	}
 
+	imgW := region.Image.Bounds().Dx()
+	imgH := region.Image.Bounds().Dy()
+
 	minX, minY := 0, 0
-	maxX, maxY := region.Image.Bounds().Dx(), region.Image.Bounds().Dy()
+	maxX, maxY := imgW, imgH
 	if bbox != nil && bbox.W() > 0 && bbox.H() > 0 {
-		minX = int(math.Floor(bbox.Min.X))
-		minY = int(math.Floor(bbox.Min.Y))
-		maxX = int(math.Ceil(bbox.Max.X))
-		maxY = int(math.Ceil(bbox.Max.Y))
-		minX = maxInt(minX, 0)
-		minY = maxInt(minY, 0)
-		maxX = minInt(maxX, region.Image.Bounds().Dx())
-		maxY = minInt(maxY, region.Image.Bounds().Dy())
+		// bbox is an absolute y-up display rect; flip to device space and rebase
+		// to image-local coordinates using the device-space region origin.
+		devCrop := r.devRect(*bbox)
+		minX = maxInt(int(math.Floor(devCrop.Min.X-region.Rect.Min.X)), 0)
+		minY = maxInt(int(math.Floor(devCrop.Min.Y-region.Rect.Min.Y)), 0)
+		maxX = minInt(int(math.Ceil(devCrop.Max.X-region.Rect.Min.X)), imgW)
+		maxY = minInt(int(math.Ceil(devCrop.Max.Y-region.Rect.Min.Y)), imgH)
 		if minX >= maxX || minY >= maxY {
 			return
 		}
@@ -408,8 +412,10 @@ func (r *Renderer) RestoreRegion(region *BufferRegion, bbox *geom.Rect, offset g
 		copy(cropped.Pix[dstBase:dstBase+width*4], src.Pix[srcBase:srcBase+width*4])
 	}
 
+	// Place the cropped region in device space. The y-up offset translates the
+	// content upward for positive Y, i.e. toward smaller device rows.
 	drawX := region.Rect.Min.X + float64(minX) + offset.X
-	drawY := region.Rect.Min.Y + float64(minY) + offset.Y
+	drawY := region.Rect.Min.Y + float64(minY) - offset.Y
 	r.drawImageDirect(render.NewImageData(cropped), geom.Rect{
 		Min: geom.Pt{X: drawX, Y: drawY},
 		Max: geom.Pt{X: drawX + float64(width), Y: drawY + float64(height)},

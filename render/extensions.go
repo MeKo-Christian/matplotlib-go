@@ -217,8 +217,9 @@ type RGBAExporter interface {
 }
 
 // BufferRegion holds copied pixels and their destination rectangle in renderer
-// coordinates. It is the renderer-neutral equivalent of Matplotlib's
-// BufferRegion used by copy_from_bbox / restore_region.
+// (device) coordinates. It is the renderer-neutral equivalent of Matplotlib's
+// BufferRegion used by copy_from_bbox / restore_region; Rect matches matplotlib's
+// BufferRegion.get_extents (already y-flipped into the device buffer).
 type BufferRegion struct {
 	Image *image.RGBA
 	Rect  geom.Rect
@@ -226,6 +227,12 @@ type BufferRegion struct {
 
 // BufferRegioner is implemented by renderers that support blitting-style
 // region copy and restore.
+//
+// CopyFromBBox's bbox and RestoreRegion's bbox/offset are all expressed in y-up
+// display space; the renderer flips them into its device buffer. For
+// RestoreRegion, bbox is an absolute display rectangle selecting which portion of
+// the captured region to restore (nil restores all of it), and offset is a
+// display-space translation delta (+offset.Y moves the restored content up).
 type BufferRegioner interface {
 	CopyFromBBox(bbox geom.Rect) *BufferRegion
 	RestoreRegion(region *BufferRegion, bbox *geom.Rect, offset geom.Pt)
