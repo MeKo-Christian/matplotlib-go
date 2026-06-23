@@ -96,7 +96,7 @@ func (a *Axes3D) TriContourf(tri Triangulation, z []float64, opts ...PlotOptions
 		return nil
 	}
 	var ok bool
-	tri, ok = autoTriangulate(tri)
+	tri, ok = tri.EnsureTriangles()
 	if !ok {
 		return nil
 	}
@@ -416,11 +416,11 @@ func contourGridBandPolygonsForLevel(x, y []float64, data [][]float64, low, high
 func contourTriBandPolygons(tri Triangulation, values []float64, low, high float64) [][]geom.Pt {
 	polygons := make([][]geom.Pt, 0)
 	for triIdx, triangle := range tri.Triangles {
-		if tri.masked(triIdx) {
+		if tri.Masked(triIdx) {
 			continue
 		}
 		polygon := triangleBandPolygon(
-			[3]geom.Pt{tri.point(triangle[0]), tri.point(triangle[1]), tri.point(triangle[2])},
+			[3]geom.Pt{tri.Point(triangle[0]), tri.Point(triangle[1]), tri.Point(triangle[2])},
 			[3]float64{values[triangle[0]], values[triangle[1]], values[triangle[2]]},
 			low,
 			high,

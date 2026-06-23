@@ -50,6 +50,7 @@ func stablePublicPackageDirs() []string {
 		"render",
 		"style",
 		"transform",
+		"tri",
 	}
 }
 

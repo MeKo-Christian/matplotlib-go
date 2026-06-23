@@ -689,8 +689,33 @@ work."
       (RegularPolygon/CirclePolygon), and the circle/star hatches. (Left as-is:
       the 48-segment polygonal `ellipsePath` used by `Annulus` and the dead
       `boxplot.circlePath` — neither is a Bézier path generator.)
-- [ ] **Triangulation library** (`tri/`: Delaunay, `TriFinder`,
-      `TriInterpolator`) instead of per-call implementations.
+- [x] **Triangulation library** (`tri/`: Delaunay, `TriFinder`,
+      `TriInterpolator`) instead of per-call implementations. The `tri` package
+      now owns the `Triangulation` data structure (with `Edges`/`Neighbors`/
+      `PlaneCoefficients`), point location (brute-force + a faithful
+      `TrapezoidMapTriFinder` port of matplotlib's `src/tri/_tri.cpp`), field
+      interpolation (`LinearTriInterpolator` and a `CubicTriInterpolator`
+      reduced-HCT port with `min_E`/`geom`/`user` gradient estimation, verified
+      against matplotlib 3.10.9 to <1e-6), uniform mesh refinement
+      (`UniformTriRefiner`) and mesh analysis (`TriAnalyzer`: `CircleRatios`,
+      `GetFlatTriMask`, `ScaleFactors`). `core.Triangulation` is now a type alias
+      for `tri.Triangulation`; `core`'s 2D/3D tri-plot artists delegate to the
+      package. **Deliberate non-parity:** the Delaunay triangulation uses the
+      pre-existing pure-Go Bowyer–Watson algorithm rather than matplotlib's
+      Qhull backend, so the triangle _connectivity_ is not byte-for-byte
+      identical to matplotlib for cocircular inputs — only the downstream
+      rendering and interpolation match within tolerance. The rest of the `tri`
+      API targets full matplotlib parity.
+- [ ] **Qhull-faithful Delaunay** (follow-up to the triangulation library): the
+      `tri` package currently triangulates with the pure-Go Bowyer–Watson
+      algorithm, so the triangle _connectivity_ is not byte-for-byte identical
+      to matplotlib (which uses Qhull) for cocircular inputs. Port/bind Qhull's
+      2-D Delaunay (matching matplotlib's `qhull d Qt Qbb Qc Qz` options) so the
+      mesh connectivity also matches exactly. Swap it in behind
+      `tri.New`/`EnsureTriangles` while keeping Bowyer–Watson as a pure-Go,
+      cgo-free fallback. Weigh a cgo binding against a pure-Go Qhull port; only
+      needed if a downstream parity case is shown to diverge purely from the
+      triangulation step.
 - [ ] **Live bbox-linked transforms** (`BboxTransformTo`) so axes resize
       invalidates rather than rebuilds the transform graph.
 - [ ] **Open transform type set:** a `get_affine()` capability interface so a

@@ -7380,10 +7380,6 @@
           "declaration": "func (Transform2D) Invert(p geom.Pt) (geom.Pt, bool)"
         },
         {
-          "id": "method Triangulation.Validate",
-          "declaration": "func (Triangulation) Validate() error"
-        },
-        {
           "id": "method TwoSlopeNorm.Autoscale",
           "declaration": "func (TwoSlopeNorm) Autoscale(values []float64) ScalarNormalizer"
         },
@@ -8785,7 +8781,7 @@
         },
         {
           "id": "type Triangulation",
-          "declaration": "type Triangulation struct{ X []float64; Y []float64; Triangles [][3]int; Mask []bool }"
+          "declaration": "type Triangulation = tri.Triangulation"
         },
         {
           "id": "type TwoSlopeNorm",
@@ -11844,6 +11840,168 @@
         {
           "id": "var DefaultScaleRegistry",
           "declaration": "var DefaultScaleRegistry = func() *ScaleRegistry { r := NewScaleRegistry() registerBuiltInScales(r) return r }()"
+        }
+      ]
+    },
+    {
+      "import_path": ".",
+      "dir": "tri",
+      "symbols": [
+        {
+          "id": "const CubicGeom",
+          "declaration": "const CubicGeom"
+        },
+        {
+          "id": "const CubicMinE",
+          "declaration": "const CubicMinE CubicKind = iota"
+        },
+        {
+          "id": "const CubicUser",
+          "declaration": "const CubicUser"
+        },
+        {
+          "id": "func New",
+          "declaration": "func New(x, y []float64) (Triangulation, error)"
+        },
+        {
+          "id": "func NewBruteForceTriFinder",
+          "declaration": "func NewBruteForceTriFinder(t Triangulation) *BruteForceTriFinder"
+        },
+        {
+          "id": "func NewCubicTriInterpolator",
+          "declaration": "func NewCubicTriInterpolator(t Triangulation, z []float64, kind CubicKind, dzdx, dzdy []float64) (*CubicTriInterpolator, error)"
+        },
+        {
+          "id": "func NewLinearTriInterpolator",
+          "declaration": "func NewLinearTriInterpolator(t Triangulation, z []float64) (*LinearTriInterpolator, error)"
+        },
+        {
+          "id": "func NewTrapezoidMapTriFinder",
+          "declaration": "func NewTrapezoidMapTriFinder(t Triangulation) *TrapezoidMapTriFinder"
+        },
+        {
+          "id": "func NewTriAnalyzer",
+          "declaration": "func NewTriAnalyzer(t Triangulation) *TriAnalyzer"
+        },
+        {
+          "id": "func NewUniformTriRefiner",
+          "declaration": "func NewUniformTriRefiner(t Triangulation) *UniformTriRefiner"
+        },
+        {
+          "id": "method BruteForceTriFinder.Find",
+          "declaration": "func (BruteForceTriFinder) Find(x, y float64) int"
+        },
+        {
+          "id": "method CubicTriInterpolator.Gradient",
+          "declaration": "func (CubicTriInterpolator) Gradient(x, y float64) (float64, float64, bool)"
+        },
+        {
+          "id": "method CubicTriInterpolator.Interpolate",
+          "declaration": "func (CubicTriInterpolator) Interpolate(x, y float64) (float64, bool)"
+        },
+        {
+          "id": "method LinearTriInterpolator.Gradient",
+          "declaration": "func (LinearTriInterpolator) Gradient(x, y float64) (float64, float64, bool)"
+        },
+        {
+          "id": "method LinearTriInterpolator.Interpolate",
+          "declaration": "func (LinearTriInterpolator) Interpolate(x, y float64) (float64, bool)"
+        },
+        {
+          "id": "method TrapezoidMapTriFinder.Find",
+          "declaration": "func (TrapezoidMapTriFinder) Find(x, y float64) int"
+        },
+        {
+          "id": "method TriAnalyzer.CircleRatios",
+          "declaration": "func (TriAnalyzer) CircleRatios(rescale bool) []float64"
+        },
+        {
+          "id": "method TriAnalyzer.GetFlatTriMask",
+          "declaration": "func (TriAnalyzer) GetFlatTriMask(minCircleRatio float64, rescale bool) []bool"
+        },
+        {
+          "id": "method TriAnalyzer.ScaleFactors",
+          "declaration": "func (TriAnalyzer) ScaleFactors() (kx, ky float64)"
+        },
+        {
+          "id": "method Triangulation.Edges",
+          "declaration": "func (Triangulation) Edges() [][2]int"
+        },
+        {
+          "id": "method Triangulation.EnsureTriangles",
+          "declaration": "func (Triangulation) EnsureTriangles() (Triangulation, bool)"
+        },
+        {
+          "id": "method Triangulation.Masked",
+          "declaration": "func (Triangulation) Masked(triIdx int) bool"
+        },
+        {
+          "id": "method Triangulation.Neighbors",
+          "declaration": "func (Triangulation) Neighbors() [][3]int"
+        },
+        {
+          "id": "method Triangulation.PlaneCoefficients",
+          "declaration": "func (Triangulation) PlaneCoefficients(z []float64) ([][3]float64, error)"
+        },
+        {
+          "id": "method Triangulation.Point",
+          "declaration": "func (Triangulation) Point(idx int) geom.Pt"
+        },
+        {
+          "id": "method Triangulation.TriFinder",
+          "declaration": "func (Triangulation) TriFinder() TriFinder"
+        },
+        {
+          "id": "method Triangulation.Validate",
+          "declaration": "func (Triangulation) Validate() error"
+        },
+        {
+          "id": "method UniformTriRefiner.RefineField",
+          "declaration": "func (UniformTriRefiner) RefineField(z []float64, interp TriInterpolator, subdiv int) (Triangulation, []float64, error)"
+        },
+        {
+          "id": "method UniformTriRefiner.RefineTriangulation",
+          "declaration": "func (UniformTriRefiner) RefineTriangulation(subdiv int, returnTriIndex bool) (Triangulation, []int)"
+        },
+        {
+          "id": "type BruteForceTriFinder",
+          "declaration": "type BruteForceTriFinder struct{}"
+        },
+        {
+          "id": "type CubicKind",
+          "declaration": "type CubicKind int"
+        },
+        {
+          "id": "type CubicTriInterpolator",
+          "declaration": "type CubicTriInterpolator struct{}"
+        },
+        {
+          "id": "type LinearTriInterpolator",
+          "declaration": "type LinearTriInterpolator struct{}"
+        },
+        {
+          "id": "type TrapezoidMapTriFinder",
+          "declaration": "type TrapezoidMapTriFinder struct{}"
+        },
+        {
+          "id": "type TriAnalyzer",
+          "declaration": "type TriAnalyzer struct{}"
+        },
+        {
+          "id": "type TriFinder",
+          "declaration": "type TriFinder interface{ Find func(x, y float64) int }"
+        },
+        {
+          "id": "type TriInterpolator",
+          "declaration": "type TriInterpolator interface{ Interpolate func(x, y float64) (value float64, ok bool); Gradient func(x, y float64) (dzdx, dzdy float64, ok bool) }"
+        },
+        {
+          "id": "type Triangulation",
+          "declaration": "type Triangulation struct{ X []float64; Y []float64; Triangles [][3]int; Mask []bool }"
+        },
+        {
+          "id": "type UniformTriRefiner",
+          "declaration": "type UniformTriRefiner struct{}"
         }
       ]
     }

@@ -29,6 +29,15 @@ text = "viper.Bind"
 path = "cmd/.*\\.go"
 linters = ["gochecknoinits", "gochecknoglobals"]
 
+[[linters.exclusions.rules]]
+# The tri package keeps value semantics on purpose: Triangulation is four slice
+# headers (value receivers match the matplotlib-style API and the frozen public
+# signatures), and the cubic-element math passes small fixed-size matrices by
+# value for readability in tight numerical loops.
+path = "tri/.*\\.go"
+linters = ["gocritic"]
+text = "hugeParam"
+
 [linters.settings]
 
 [linters.settings.gocritic]

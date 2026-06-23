@@ -299,7 +299,7 @@ func (a *Axes3D) triangulation3DCollectionZ(tri Triangulation, z []float64) floa
 	}
 	depth := math.Inf(1)
 	for triIdx, t := range tri.Triangles {
-		if tri.masked(triIdx) {
+		if tri.Masked(triIdx) {
 			continue
 		}
 		for _, idx := range t {

@@ -106,7 +106,7 @@ func (a *Axes3D) TriContour(tri Triangulation, z []float64, opts ...PlotOptions)
 		return nil
 	}
 	var ok bool
-	tri, ok = autoTriangulate(tri)
+	tri, ok = tri.EnsureTriangles()
 	if !ok {
 		return nil
 	}

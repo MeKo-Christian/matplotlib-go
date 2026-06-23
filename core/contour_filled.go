@@ -46,11 +46,11 @@ func contourBandPolygonsBands(tri Triangulation, values, levels []float64, opt C
 		color := contourBandColor(low, high, levelIdx, opt, mapping, alpha)
 		hatch := contourBandHatch(opt.Hatches, levelIdx)
 		for triIdx, triangle := range tri.Triangles {
-			if tri.masked(triIdx) {
+			if tri.Masked(triIdx) {
 				continue
 			}
 			polygon := triangleBandPolygon(
-				[3]geom.Pt{tri.point(triangle[0]), tri.point(triangle[1]), tri.point(triangle[2])},
+				[3]geom.Pt{tri.Point(triangle[0]), tri.Point(triangle[1]), tri.Point(triangle[2])},
 				[3]float64{values[triangle[0]], values[triangle[1]], values[triangle[2]]},
 				low,
 				high,

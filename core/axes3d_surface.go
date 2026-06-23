@@ -289,7 +289,7 @@ func (a *Axes3D) Trisurf(tri Triangulation, z []float64, opts ...PlotOptions) *P
 		return nil
 	}
 	var ok bool
-	tri, ok = autoTriangulate(tri)
+	tri, ok = tri.EnsureTriangles()
 	if !ok {
 		return nil
 	}

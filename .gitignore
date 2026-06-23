@@ -40,3 +40,6 @@ Thumbs.db
 .pytest_cache/
 .ruff_cache/
 __pycache__/
+
+# Qhull source, vendored only as a porting reference for tri/qhull
+third_party/qhull-8.0.2/

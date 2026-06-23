@@ -246,11 +246,11 @@ func contourCellSegmentsForLevel(points [4]geom.Pt, values [4]float64, level flo
 func contourSegmentsForLevel(tri Triangulation, values []float64, level float64) [][]geom.Pt {
 	segments := make([][]geom.Pt, 0, len(tri.Triangles))
 	for triIdx, triangle := range tri.Triangles {
-		if tri.masked(triIdx) {
+		if tri.Masked(triIdx) {
 			continue
 		}
 		segment, ok := triangleContourSegment(
-			[3]geom.Pt{tri.point(triangle[0]), tri.point(triangle[1]), tri.point(triangle[2])},
+			[3]geom.Pt{tri.Point(triangle[0]), tri.Point(triangle[1]), tri.Point(triangle[2])},
 			[3]float64{values[triangle[0]], values[triangle[1]], values[triangle[2]]},
 			level,
 		)

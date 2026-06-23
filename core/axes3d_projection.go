@@ -213,7 +213,7 @@ func (a *Axes3D) projectTriangulationFaces(tri Triangulation, z []float64, baseC
 	values := make([]float64, 0, len(tri.Triangles))
 	collectionDepth := math.Inf(1)
 	for triIdx, t := range tri.Triangles {
-		if tri.masked(triIdx) {
+		if tri.Masked(triIdx) {
 			continue
 		}
 		polygon := make([]geom.Pt, 0, 3)
