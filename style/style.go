@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/color"
+	"github.com/cwbudde/matplotlib-go/cycler"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -57,7 +58,11 @@ type RC struct {
 	LegendFrameAlpha   float64
 	LegendFrameOn      bool
 	ColorCycle         color.Palette
-	WidgetVisualStyle  WidgetVisualStyle
+	// PropCycle holds the full axes.prop_cycle when it carries more than the
+	// color column (linestyle/marker/linewidth). When nil, automatic styling
+	// cycles ColorCycle only, preserving the historical color-only behavior.
+	PropCycle         *cycler.Cycler
+	WidgetVisualStyle WidgetVisualStyle
 
 	// Image holds image.* rcParams (imshow defaults).
 	Image ImageRC
@@ -469,6 +474,7 @@ type Option func(*RC)
 func Apply(base RC, opts ...Option) RC {
 	rc := base
 	rc.ColorCycle = clonePalette(rc.ColorCycle)
+	rc.PropCycle = rc.PropCycle.Clone()
 	rc.GridDashes = cloneDashes(rc.GridDashes)
 	rc.MinorGridDashes = cloneDashes(rc.MinorGridDashes)
 	rc.Animation.FFmpegArgs = cloneStrings(rc.Animation.FFmpegArgs)
@@ -580,9 +586,41 @@ func WithLegendColors(background, border, text render.Color) Option {
 	}
 }
 
-// WithColorCycle sets the automatic series color palette.
+// WithColorCycle sets the automatic series color palette. It clears any
+// multi-property PropCycle so styling reverts to color-only cycling.
 func WithColorCycle(palette color.Palette) Option {
-	return func(rc *RC) { rc.ColorCycle = clonePalette(palette) }
+	return func(rc *RC) {
+		rc.ColorCycle = clonePalette(palette)
+		rc.PropCycle = nil
+	}
+}
+
+// WithPropCycle sets the full axes.prop_cycle. The cycle's color column (if any)
+// is also mirrored into ColorCycle so existing color-only consumers and
+// RC.Palette stay consistent.
+func WithPropCycle(c *cycler.Cycler) Option {
+	return func(rc *RC) {
+		rc.PropCycle = c.Clone()
+		if palette := propCycleColors(c); len(palette) > 0 {
+			rc.ColorCycle = palette
+		}
+	}
+}
+
+// propCycleColors extracts the color column of a prop cycle as a palette,
+// returning nil when the cycle is absent or carries no color key.
+func propCycleColors(c *cycler.Cycler) color.Palette {
+	values := c.ByKey("color")
+	if len(values) == 0 {
+		return nil
+	}
+	palette := make(color.Palette, 0, len(values))
+	for _, v := range values {
+		if col, ok := v.(render.Color); ok {
+			palette = append(palette, col)
+		}
+	}
+	return palette
 }
 
 // WithTheme replaces the current RC with the named theme preset.
@@ -693,8 +731,14 @@ func (rc RC) LegendSize() float64 {
 	return 8
 }
 
-// Palette returns a copy of the configured automatic color cycle.
+// Palette returns a copy of the configured automatic color cycle. When a
+// multi-property PropCycle is set, its color column takes precedence so the
+// palette length matches the prop cycle (e.g. when "*" expands the color
+// column), keeping the color index aligned with the prop-cycle rows.
 func (rc RC) Palette() color.Palette {
+	if palette := propCycleColors(rc.PropCycle); len(palette) > 0 {
+		return palette
+	}
 	return clonePalette(rc.ColorCycle)
 }
 

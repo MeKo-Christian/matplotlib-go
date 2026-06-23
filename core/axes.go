@@ -256,6 +256,55 @@ func (a *Axes) PeekColor() render.Color {
 	return a.ColorCycle.Peek()
 }
 
+// LineProps carries one step of the axes.prop_cycle for a line artist. Color is
+// always present; the linestyle/marker/linewidth fields are set only when the
+// active prop cycle carries that property, so a caller applies them solely where
+// the user left the corresponding option unset. With a color-only prop cycle
+// (the default), the Has* flags are false and behavior matches NextColor.
+type LineProps struct {
+	Color        render.Color
+	LineStyle    string
+	HasLineStyle bool
+	Marker       string
+	HasMarker    bool
+	LineWidth    float64
+	HasLineWidth bool
+}
+
+// NextLineProps advances the shared color cycle and returns its color together
+// with any non-color properties (linestyle/marker/linewidth) carried by the
+// axes.prop_cycle for the same step. It is the line-artist counterpart of
+// NextColor; the two share the one ColorCycle index, so mixing them keeps the
+// cycle in lock-step.
+func (a *Axes) NextLineProps() LineProps {
+	if a.ColorCycle == nil {
+		a.ColorCycle = color.NewColorCycle(a.resolvedRC().Palette())
+	}
+	idx := a.ColorCycle.Index()
+	props := LineProps{Color: a.ColorCycle.Next()}
+	a.fillCycleProps(&props, idx)
+	return props
+}
+
+// fillCycleProps populates the non-color fields of props from the prop cycle
+// entry at index idx, when an axes.prop_cycle with extra properties is active.
+func (a *Axes) fillCycleProps(props *LineProps, idx int) {
+	pc := a.resolvedRC().PropCycle
+	if pc == nil || pc.Len() == 0 {
+		return
+	}
+	row := pc.Row(idx)
+	if v, ok := row["linestyle"].(string); ok {
+		props.LineStyle, props.HasLineStyle = v, true
+	}
+	if v, ok := row["marker"].(string); ok {
+		props.Marker, props.HasMarker = v, true
+	}
+	if v, ok := row["linewidth"].(float64); ok {
+		props.LineWidth, props.HasLineWidth = v, true
+	}
+}
+
 func (a *Axes) colorCycleAt(index int) render.Color {
 	palette := a.resolvedRC().Palette()
 	if len(palette) == 0 {

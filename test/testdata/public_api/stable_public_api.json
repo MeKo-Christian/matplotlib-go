@@ -4640,6 +4640,10 @@
           "declaration": "func (Axes) NextColor() render.Color"
         },
         {
+          "id": "method Axes.NextLineProps",
+          "declaration": "func (Axes) NextLineProps() LineProps"
+        },
+        {
           "id": "method Axes.NextPatchColor",
           "declaration": "func (Axes) NextPatchColor() render.Color"
         },
@@ -8128,6 +8132,10 @@
           "declaration": "type LineDrawStyle uint8"
         },
         {
+          "id": "type LineProps",
+          "declaration": "type LineProps struct{ Color render.Color; LineStyle string; HasLineStyle bool; Marker string; HasMarker bool; LineWidth float64; HasLineWidth bool }"
+        },
+        {
           "id": "type LinearLocator",
           "declaration": "type LinearLocator struct{ NumTicks int; Presets map[[2]float64][]float64 }"
         },
@@ -10896,6 +10904,10 @@
           "declaration": "func AvailableThemes() []string"
         },
         {
+          "id": "func BundledStyleNames",
+          "declaration": "func BundledStyleNames() []string"
+        },
+        {
           "id": "func CurrentDefaults",
           "declaration": "func CurrentDefaults() RC"
         },
@@ -11020,6 +11032,10 @@
           "declaration": "func WithPathSketch(params render.SketchParams) Option"
         },
         {
+          "id": "func WithPropCycle",
+          "declaration": "func WithPropCycle(c *cycler.Cycler) Option"
+        },
+        {
           "id": "func WithTextColor",
           "declaration": "func WithTextColor(r, g, b, a float64) Option"
         },
@@ -11141,7 +11157,7 @@
         },
         {
           "id": "type RC",
-          "declaration": "type RC struct{ DPI float64; FontKey string; FontSize float64; LineWidth float64; TextColor [4]float64; LineColor [4]float64; Background [4]float64; TickCountX int; TickCountY int; FigureWidth float64; FigureHeight float64; UseTeX bool; PathSimplify bool; PathSimplifyThreshold float64; AggPathChunkSize int; PathSketch render.SketchParams; AxesBackground render.Color; AxesEdgeColor render.Color; AxesTitleColor render.Color; AxesLabelColor render.Color; AxisLineWidth float64; XTickColor render.Color; YTickColor render.Color; TitleFontSize float64; AxisLabelFontSize float64; XTickLabelFontSize float64; YTickLabelFontSize float64; GridColor render.Color; MinorGridColor render.Color; GridLineWidth float64; MinorGridLineWidth float64; GridDashes []float64; MinorGridDashes []float64; GridVisible bool; GridAxis string; GridWhich string; LegendBackground render.Color; LegendBorderColor render.Color; LegendTextColor render.Color; LegendFontSize float64; LegendFrameAlpha float64; LegendFrameOn bool; ColorCycle color.Palette; WidgetVisualStyle WidgetVisualStyle; Image ImageRC; Hatch HatchRC; Boxplot BoxplotRC; Mathtext MathtextRC; Date DateRC; PDF PDFRC; PS PSRC; SVG SVGRC; Animation AnimationRC; Savefig SavefigRC }"
+          "declaration": "type RC struct{ DPI float64; FontKey string; FontSize float64; LineWidth float64; TextColor [4]float64; LineColor [4]float64; Background [4]float64; TickCountX int; TickCountY int; FigureWidth float64; FigureHeight float64; UseTeX bool; PathSimplify bool; PathSimplifyThreshold float64; AggPathChunkSize int; PathSketch render.SketchParams; AxesBackground render.Color; AxesEdgeColor render.Color; AxesTitleColor render.Color; AxesLabelColor render.Color; AxisLineWidth float64; XTickColor render.Color; YTickColor render.Color; TitleFontSize float64; AxisLabelFontSize float64; XTickLabelFontSize float64; YTickLabelFontSize float64; GridColor render.Color; MinorGridColor render.Color; GridLineWidth float64; MinorGridLineWidth float64; GridDashes []float64; MinorGridDashes []float64; GridVisible bool; GridAxis string; GridWhich string; LegendBackground render.Color; LegendBorderColor render.Color; LegendTextColor render.Color; LegendFontSize float64; LegendFrameAlpha float64; LegendFrameOn bool; ColorCycle color.Palette; PropCycle *cycler.Cycler; WidgetVisualStyle WidgetVisualStyle; Image ImageRC; Hatch HatchRC; Boxplot BoxplotRC; Mathtext MathtextRC; Date DateRC; PDF PDFRC; PS PSRC; SVG SVGRC; Animation AnimationRC; Savefig SavefigRC }"
         },
         {
           "id": "type SVGRC",

@@ -74,16 +74,27 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 		opt = opts[0]
 	}
 
-	// Get color (automatic cycling if not specified)
-	color := a.NextColor()
+	// Pull one step from the property cycle (color plus any
+	// linestyle/marker/linewidth carried by axes.prop_cycle).
+	cycle := a.NextLineProps()
+	color := cycle.Color
 	if opt.Color != nil {
 		color = *opt.Color
 	}
 
-	// Get line width
+	// Get line width: explicit option, else cycled linewidth, else default.
 	lineWidth := 2.0
+	if cycle.HasLineWidth {
+		lineWidth = cycle.LineWidth
+	}
 	if opt.LineWidth != nil {
 		lineWidth = *opt.LineWidth
+	}
+
+	// Resolve dashes: explicit option wins, otherwise honor a cycled linestyle.
+	dashes := opt.Dashes
+	if dashes == nil && cycle.HasLineStyle {
+		dashes = lineStyleToDashes(cycle.LineStyle, lineWidth)
 	}
 
 	// Create line
@@ -91,7 +102,7 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 		XY:        points,
 		W:         lineWidth,
 		Col:       color,
-		Dashes:    opt.Dashes,
+		Dashes:    dashes,
 		DrawStyle: LineDrawStyleDefault,
 		Label:     opt.Label,
 	}
@@ -105,6 +116,11 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	if opt.Marker != nil {
 		line.Marker = *opt.Marker
 		line.MarkerSet = true
+	} else if cycle.HasMarker {
+		if marker, ok := MarkerTypeFromString(cycle.Marker); ok && marker != MarkerNone {
+			line.Marker = marker
+			line.MarkerSet = true
+		}
 	}
 	if opt.MarkerStyle != nil {
 		line.MarkerStyle = *opt.MarkerStyle

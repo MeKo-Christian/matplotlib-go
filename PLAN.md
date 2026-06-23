@@ -625,15 +625,34 @@ its current ~13% rcParam coverage.
       `dpi` (vector + raster via new `agg.Renderer.Resize`/`render.Resizer`),
       `format` (extension-independent dispatch in `SaveFig`), and
       `bbox=tight`+`pad_inches` (raster pixel-crop in `core/savefig_tightbbox.go`;
-      vector formats return a clear unsupported error). **Store-only** (validated
-      + round-tripped, consumer pending, by design): `image.origin`/`aspect`/
+      vector formats return a clear unsupported error). **Store-only** (validated + round-tripped, consumer pending, by design): `image.origin`/`aspect`/
       `resample`/`lut`, `mathtext.default`+per-style font patterns, all `date.*`
       (blocked on a strftime→Go-layout converter), `svg.fonttype`/`image_inline`
       (port's SVG default is native text), and all `animation.*`. Public-API
       audit + doc coverage regenerated.
-- [ ] **Cyclers** for `linestyle`/`marker`/`linewidth`; bundle the common
+- [x] **Cyclers** for `linestyle`/`marker`/`linewidth`; bundle the common
       `.mplstyle` sheets (`seaborn-*`, `fivethirtyeight`, `bmh`,
-      `Solarize_Light2`) (`style/theme.go:23`).
+      `Solarize_Light2`) (`style/theme.go:23`). New top-level `cycler` package
+      ports Matplotlib's `Cycler` faithfully — `New`, `Concat` (`+`,
+      equal-length + disjoint keys), `Multiply` (`*`, outer product, left
+      slowest), `Row`/`ByKey`. `style.RC.PropCycle` carries the full
+      `axes.prop_cycle` (nil ⇒ historical color-only behavior); `WithPropCycle`
+      sets it and `RC.Palette()` derives the color column so the existing
+      `ColorCycle` index stays aligned. `parseMPLColorCycle` was generalized to
+      `parseMPLPropCycle`, parsing `+`/`*` and positional/keyword forms over
+      color/linestyle(ls)/marker/linewidth(lw). In core, `Axes.NextLineProps`
+      advances the one shared `ColorCycle` index and returns color plus any
+      cycled ls/marker/lw; `Plot` applies them only where the user left the
+      option unset (ls→`lineStyleToDashes`, marker→`MarkerTypeFromString`, lw→
+      `Line2D.W`). Matplotlib's standard stylelib (`style/stylelib/*.mplstyle`,
+      3.10.9) is embedded via `go:embed` and registered at init
+      **register-if-absent**, so the hand-tuned
+      `ggplot`/`dark_background`/`default`/`publication` built-ins (and their
+      goldens) are not clobbered; private `_*.mplstyle` sheets are skipped
+      (`classic` is currently skipped — its continuation-comment syntax is
+      unsupported by the parser). Covered by `cycler/cycler_test.go`, multi-key
+      parse tests in `style/mplstyle_test.go`, `style/stylelib_test.go`, and
+      `core/prop_cycle_test.go`; frozen public-API audit regenerated.
 
 **Exit criterion:** vector text parity with AGG, antialiased Gouraud, and broad
 rcParam + stylesheet coverage.

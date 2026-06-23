@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/cwbudde/matplotlib-go/color"
+	"github.com/cwbudde/matplotlib-go/cycler"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -469,11 +470,21 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 		state.labelFontSize = parsed
 		state.labelFontSizeSet = true
 	case "axes.prop_cycle":
-		parsed, err := parseMPLColorCycle(value, state.rc)
+		parsed, err := parseMPLPropCycle(value, &state.rc)
 		if err != nil {
 			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
 		}
-		state.rc.ColorCycle = parsed
+		if palette := propCycleColors(parsed); len(palette) > 0 {
+			state.rc.ColorCycle = palette
+		}
+		// Store the full cycle only when it carries more than color, so
+		// color-only sheets keep PropCycle nil (the historical behavior) and
+		// avoid forcing non-color consumers through the prop-cycle path.
+		if isColorOnlyCycle(parsed) {
+			state.rc.PropCycle = nil
+		} else {
+			state.rc.PropCycle = parsed
+		}
 	case "axes.grid":
 		parsed, err := parseMPLBool(value)
 		if err != nil {
@@ -1499,54 +1510,189 @@ func parseMPLColor(value string, rc RC) (render.Color, error) {
 	return color.ToRGBA(normalized, color.WithColorCycle(rc.Palette()), color.WithBareHex())
 }
 
-func parseMPLColorCycle(value string, rc RC) (color.Palette, error) {
-	normalized := strings.TrimSpace(value)
-	lower := strings.ToLower(normalized)
-	if !strings.HasPrefix(lower, "cycler(") || !strings.HasSuffix(normalized, ")") {
-		return nil, fmt.Errorf("unsupported cycler syntax %q", value)
+// parseMPLPropCycle parses an axes.prop_cycle expression into a Cycler,
+// porting Matplotlib's cycler grammar: a sum (+) and product (*) of cycler(...)
+// terms. "*" binds tighter than "+", matching Python operator precedence. Each
+// term is cycler(key, [...]) (positional) or cycler(key=[...]) (keyword). Keys
+// color/linestyle(ls)/marker/linewidth(lw) are normalized and typed; unknown
+// keys are stored verbatim as strings so faithful round-tripping is preserved.
+func parseMPLPropCycle(value string, rc *RC) (*cycler.Cycler, error) {
+	expr := strings.TrimSpace(value)
+	if expr == "" {
+		return nil, errors.New("empty cycler")
 	}
 
-	inner := strings.TrimSpace(normalized[len("cycler(") : len(normalized)-1])
+	// Split additive groups first; each group is a product of terms.
+	var result *cycler.Cycler
+	for _, group := range splitTopLevel(expr, '+') {
+		group = strings.TrimSpace(group)
+		if group == "" {
+			return nil, fmt.Errorf("unsupported cycler syntax %q", value)
+		}
+		var groupCycle *cycler.Cycler
+		for _, term := range splitTopLevel(group, '*') {
+			parsed, err := parseMPLCyclerTerm(term, rc)
+			if err != nil {
+				return nil, err
+			}
+			if groupCycle == nil {
+				groupCycle = parsed
+				continue
+			}
+			groupCycle, err = groupCycle.Multiply(parsed)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if result == nil {
+			result = groupCycle
+			continue
+		}
+		var err error
+		if result, err = result.Concat(groupCycle); err != nil {
+			return nil, err
+		}
+	}
+	if result == nil || result.Len() == 0 {
+		return nil, errors.New("empty cycler")
+	}
+	return result, nil
+}
+
+// parseMPLCyclerTerm parses a single cycler(...) term into a one-key Cycler.
+func parseMPLCyclerTerm(term string, rc *RC) (*cycler.Cycler, error) {
+	term = strings.TrimSpace(term)
+	lower := strings.ToLower(term)
+	if !strings.HasPrefix(lower, "cycler(") || !strings.HasSuffix(term, ")") {
+		return nil, fmt.Errorf("unsupported cycler syntax %q", term)
+	}
+	inner := strings.TrimSpace(term[len("cycler(") : len(term)-1])
 	if inner == "" {
 		return nil, errors.New("empty cycler")
 	}
 
-	var rawList string
-	switch {
-	case strings.HasPrefix(inner, "'color'"), strings.HasPrefix(inner, `"color"`):
-		commaIdx := strings.Index(inner, ",")
-		if commaIdx < 0 {
-			return nil, fmt.Errorf("unsupported cycler syntax %q", value)
+	var rawKey, rawList string
+	switch inner[0] {
+	case '\'', '"':
+		// Positional: cycler('color', [...]).
+		parts := splitTopLevel(inner, ',')
+		if len(parts) < 2 {
+			return nil, fmt.Errorf("unsupported cycler syntax %q", term)
 		}
-		rawList = strings.TrimSpace(inner[commaIdx+1:])
-	case strings.HasPrefix(strings.ToLower(inner), "color"):
-		eqIdx := strings.Index(inner, "=")
-		if eqIdx < 0 {
-			return nil, fmt.Errorf("unsupported cycler syntax %q", value)
-		}
-		rawList = strings.TrimSpace(inner[eqIdx+1:])
+		rawKey = normalizeMPLValue(parts[0])
+		rawList = strings.TrimSpace(strings.Join(parts[1:], ","))
 	default:
-		return nil, fmt.Errorf("unsupported cycler key in %q", value)
+		// Keyword: cycler(color=[...]).
+		left, right, ok := strings.Cut(inner, "=")
+		if !ok {
+			return nil, fmt.Errorf("unsupported cycler syntax %q", term)
+		}
+		rawKey = strings.TrimSpace(left)
+		rawList = strings.TrimSpace(right)
 	}
 
+	key := normalizeCyclerKey(rawKey)
+	if key == "" {
+		return nil, fmt.Errorf("unsupported cycler key in %q", term)
+	}
 	if !strings.HasPrefix(rawList, "[") || !strings.HasSuffix(rawList, "]") {
-		return nil, fmt.Errorf("unsupported color list %q", rawList)
+		return nil, fmt.Errorf("unsupported cycler value list %q", rawList)
 	}
-
 	items := splitOutsideQuotes(rawList[1:len(rawList)-1], ',')
-	if len(items) == 0 {
-		return nil, errors.New("empty color cycle")
+	if len(items) == 0 || (len(items) == 1 && items[0] == "") {
+		return nil, errors.New("empty cycler value list")
 	}
 
-	palette := make(color.Palette, 0, len(items))
+	values := make([]any, 0, len(items))
 	for _, item := range items {
-		parsed, err := parseMPLColor(item, rc)
+		v, err := parseMPLCyclerValue(key, item, rc)
 		if err != nil {
 			return nil, err
 		}
-		palette = append(palette, parsed)
+		values = append(values, v)
 	}
-	return palette, nil
+	return cycler.New(key, values...), nil
+}
+
+// parseMPLCyclerValue parses one list element according to the property's type:
+// colors via parseMPLColor, numeric widths/sizes via float, everything else as a
+// dequoted string (linestyle, marker, and unknown keys).
+func parseMPLCyclerValue(key, item string, rc *RC) (any, error) {
+	switch key {
+	case "color":
+		return parseMPLColor(item, *rc)
+	case "linewidth", "markersize", "markeredgewidth":
+		return strconv.ParseFloat(normalizeMPLValue(item), 64)
+	default:
+		return normalizeMPLValue(item), nil
+	}
+}
+
+// normalizeCyclerKey maps Matplotlib property aliases to canonical names.
+func normalizeCyclerKey(key string) string {
+	switch strings.ToLower(strings.TrimSpace(key)) {
+	case "color", "c":
+		return "color"
+	case "linestyle", "ls":
+		return "linestyle"
+	case "marker":
+		return "marker"
+	case "linewidth", "lw":
+		return "linewidth"
+	case "markersize", "ms":
+		return "markersize"
+	case "markeredgewidth", "mew":
+		return "markeredgewidth"
+	case "":
+		return ""
+	default:
+		return strings.ToLower(strings.TrimSpace(key))
+	}
+}
+
+// isColorOnlyCycle reports whether the cycle carries no property beyond color.
+func isColorOnlyCycle(c *cycler.Cycler) bool {
+	keys := c.Keys()
+	if len(keys) == 0 {
+		return true
+	}
+	for _, k := range keys {
+		if k != "color" {
+			return false
+		}
+	}
+	return true
+}
+
+// splitTopLevel splits s on sep, ignoring separators nested inside (), [], or
+// quotes. It returns the single trimmed input when no top-level separator is
+// found.
+func splitTopLevel(s string, sep rune) []string {
+	parts := make([]string, 0, 4)
+	var current strings.Builder
+	depth := 0
+	inQuote := rune(0)
+	for _, r := range s {
+		switch {
+		case inQuote != 0:
+			if r == inQuote {
+				inQuote = 0
+			}
+		case r == '\'' || r == '"':
+			inQuote = r
+		case r == '(' || r == '[':
+			depth++
+		case r == ')' || r == ']':
+			depth--
+		case r == sep && depth == 0:
+			parts = append(parts, strings.TrimSpace(current.String()))
+			current.Reset()
+			continue
+		}
+		current.WriteRune(r)
+	}
+	parts = append(parts, strings.TrimSpace(current.String()))
+	return parts
 }
 
 func splitOutsideQuotes(value string, sep rune) []string {

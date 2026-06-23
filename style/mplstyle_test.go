@@ -120,6 +120,64 @@ axes.prop_cycle: cycler(color=['003FFF', '03ED3A'])
 	if got, want := theme.RC.Palette()[1], mustParseTestColor(t, "03ED3A"); got != want {
 		t.Fatalf("palette[1] = %+v, want %+v", got, want)
 	}
+	if theme.RC.PropCycle != nil {
+		t.Fatalf("color-only cycle should leave PropCycle nil, got %+v", theme.RC.PropCycle)
+	}
+}
+
+func TestParseMPLStyleMultiPropertyCycleConcat(t *testing.T) {
+	src := `
+axes.prop_cycle: cycler('color', ['FF0000', '00FF00']) + cycler('linestyle', ['-', '--'])
+`
+	theme, _, err := ParseMPLStyle("custom", src)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+	pc := theme.RC.PropCycle
+	if pc == nil {
+		t.Fatal("expected non-nil PropCycle for multi-property cycle")
+	}
+	if pc.Len() != 2 {
+		t.Fatalf("cycle len = %d, want 2", pc.Len())
+	}
+	if got, ok := pc.Row(0)["linestyle"].(string); !ok || got != "-" {
+		t.Fatalf("row0 linestyle = %v, want -", pc.Row(0)["linestyle"])
+	}
+	if got, ok := pc.Row(1)["linestyle"].(string); !ok || got != "--" {
+		t.Fatalf("row1 linestyle = %v, want --", pc.Row(1)["linestyle"])
+	}
+	// The color column still drives the palette.
+	if got, want := theme.RC.Palette()[0], mustParseTestColor(t, "FF0000"); got != want {
+		t.Fatalf("palette[0] = %+v, want %+v", got, want)
+	}
+}
+
+func TestParseMPLStyleMultiPropertyCycleProduct(t *testing.T) {
+	src := `
+axes.prop_cycle: cycler('color', ['FF0000', '00FF00']) * cycler('linewidth', [1.0, 2.0])
+`
+	theme, _, err := ParseMPLStyle("custom", src)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+	pc := theme.RC.PropCycle
+	if pc == nil || pc.Len() != 4 {
+		t.Fatalf("product cycle len = %d, want 4", pc.Len())
+	}
+	// Left (color) varies slowest: (red,1),(red,2),(green,1),(green,2).
+	if got := pc.Row(0)["linewidth"].(float64); got != 1.0 {
+		t.Fatalf("row0 linewidth = %v, want 1.0", got)
+	}
+	if got := pc.Row(1)["linewidth"].(float64); got != 2.0 {
+		t.Fatalf("row1 linewidth = %v, want 2.0", got)
+	}
+	palette := theme.RC.Palette()
+	if got, want := palette[0], mustParseTestColor(t, "FF0000"); got != want {
+		t.Fatalf("palette[0] = %+v, want red", got)
+	}
+	if got, want := palette[2], mustParseTestColor(t, "00FF00"); got != want {
+		t.Fatalf("palette[2] = %+v, want green", got)
+	}
 }
 
 func TestParseMPLStyleBroaderCoverage(t *testing.T) {
