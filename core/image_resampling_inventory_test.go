@@ -333,6 +333,11 @@ func TestTransformedImageVectorBackendBehaviorIsDocumented(t *testing.T) {
 			"preserveAspectRatio=\"none\"",
 			"uri := \"data:image/png;base64,\" + encoded",
 			"matrixTransform(r.deviceFlip().Mul(transform))",
+			"r.nodes = append(r.nodes, r.newNode(",
+		},
+		filepath.Join("..", "backends", "svg", "svg.go"): {
+			// newNode centralizes clip/filter/url/gid stamping for every
+			// emitted node, including images.
 			"clipIDs:   r.currentClipIDs()",
 		},
 		filepath.Join("..", "backends", "svg", "svg_images_test.go"): {

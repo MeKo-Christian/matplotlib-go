@@ -585,8 +585,23 @@ its current ~13% rcParam coverage.
       glyphs centered to match PS/PDF. Both backends are y-up display space, so
       gradient/clip geometry is emitted without a device flip. Unit coverage:
       `backends/ps/gradients_test.go`, `backends/pgf/gradients_test.go`.
-- [ ] **`url`/`gid` metadata** in `GraphicsContext` for clickable vector output;
-      finish `RestoreRegion` y-flip (`backends/agg/agg.go:360`) for blit/anim.
+- [x] **`url`/`gid` metadata** in `GraphicsContext` for clickable vector output.
+      Mirrors matplotlib's `Artist.set_url`/`set_gid`: a `render.URLMarker`
+      capability (`SetURL`/`URL`/`SetGID`/`GID`) carries the active hyperlink
+      target and element id; `core.drawArtist` snapshots/restores them around
+      every artist draw (`core/rasterization.go`), and metadata lives on the
+      embedded `ArtistRasterization` so all artists gain `SetURL`/`SetGID` for
+      free. The **SVG** backend stamps each emitted node via a shared
+      `newNode` helper and wraps it in `<a xlink:href>` + `<g id>`
+      (`backends/svg/svg.go`, `export.go`); the **PDF** backend records
+      `/Link` URI annotations (rect from `pathBounds`/measured text box) and
+      emits an `/Annots` array on the page (`backends/pdf/pdf.go`,
+      `pdf_document.go`), mirroring matplotlib's `_get_link_annotation`. PS/PGF
+      ignore url (matplotlib's PS backend likewise). Unit coverage:
+      `render/url_marker_test.go`, `core/url_metadata_test.go`,
+      `backends/svg/svg_url_gid_test.go`, `backends/pdf/pdf_url_test.go`;
+      verified end-to-end through `core.SaveSVG`/`SaveFig`.
+- [ ] finish `RestoreRegion` y-flip (`backends/agg/agg.go:360`) for blit/anim.
 - [ ] **rcParams coverage** for `savefig.*`, `pdf.*`/`ps.*`/`svg.*`,
       `animation.*`, `boxplot.*`, `mathtext.*`, `hatch.*`, `image.*`, `date.*`
       (`style/mplstyle.go:31`).

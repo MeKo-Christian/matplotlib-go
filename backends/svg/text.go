@@ -200,11 +200,7 @@ func (r *Renderer) renderTextNode(text string, x, y, size float64, textColor ren
 	content.WriteString(escapeText(text))
 	content.WriteString("</text>")
 
-	r.nodes = append(r.nodes, svgNode{
-		content:   content.String(),
-		clipIDs:   r.currentClipIDs(),
-		filterIDs: r.currentFilterIDs(),
-	})
+	r.nodes = append(r.nodes, r.newNode(content.String()))
 }
 
 func (r *Renderer) renderTextPathNode(text string, origin geom.Pt, size float64, textColor render.Color, affine geom.Affine, hasAffine bool) {

@@ -39,6 +39,8 @@ type ArtistRasterization struct {
 	transformSpec CoordinateSpec
 	hasTransSpec  bool
 	stale         bool
+	url           string
+	gid           string
 }
 
 // ArtistClip stores explicit clipping metadata for an artist. ClipOn defaults
@@ -353,6 +355,42 @@ func (a *ArtistRasterization) Stale() bool {
 	return a != nil && a.stale
 }
 
+// SetURL sets the hyperlink target applied to this artist in clickable vector
+// output (SVG, PDF). An empty string clears it. Mirrors matplotlib
+// Artist.set_url.
+func (a *ArtistRasterization) SetURL(url string) {
+	if a == nil {
+		return
+	}
+	a.url = url
+}
+
+// URL returns the artist's hyperlink target, or "" if none is set.
+func (a *ArtistRasterization) URL() string {
+	if a == nil {
+		return ""
+	}
+	return a.url
+}
+
+// SetGID sets the element id applied to this artist in identifiable vector
+// output (SVG id attribute). An empty string clears it. Mirrors matplotlib
+// Artist.set_gid.
+func (a *ArtistRasterization) SetGID(gid string) {
+	if a == nil {
+		return
+	}
+	a.gid = gid
+}
+
+// GID returns the artist's element id, or "" if none is set.
+func (a *ArtistRasterization) GID() string {
+	if a == nil {
+		return ""
+	}
+	return a.gid
+}
+
 // SetRasterized toggles rasterized output for this artist when a vector
 // renderer supports mixed raster/vector embedding.
 func (a *ArtistRasterization) SetRasterized(enabled bool) {
@@ -406,6 +444,11 @@ type artistTransformProvider interface {
 	ArtistTransform() ArtistTransform
 }
 
+type urlMetadataProvider interface {
+	URL() string
+	GID() string
+}
+
 func artistTransformFor(ctx *DrawContext, art any, fallback CoordinateSpec) transform.T {
 	if provider, ok := art.(artistTransformProvider); ok {
 		options := provider.ArtistTransform()
@@ -448,10 +491,44 @@ func drawArtist(r render.Renderer, ctx *DrawContext, art Artist) {
 	if !drawSelectByAnimated(ctx, art) {
 		return
 	}
+	if restore := applyArtistURLMetadata(r, art); restore != nil {
+		defer restore()
+	}
 	draw := func() {
 		drawRasterizedArtist(r, ctx, art)
 	}
 	drawWithArtistClip(r, ctx, art, draw)
+}
+
+// applyArtistURLMetadata sets the renderer's active url/gid from the artist's
+// clickable-vector metadata, returning a function that restores the previous
+// values. It snapshots/restores so nested artists (e.g. collection children)
+// do not clobber an enclosing artist's url/gid. Returns nil when the renderer
+// does not support URLMarker or the artist carries no metadata.
+func applyArtistURLMetadata(r render.Renderer, art Artist) func() {
+	marker, ok := r.(render.URLMarker)
+	if !ok {
+		return nil
+	}
+	provider, ok := art.(urlMetadataProvider)
+	if !ok {
+		return nil
+	}
+	url, gid := provider.URL(), provider.GID()
+	if url == "" && gid == "" {
+		return nil
+	}
+	prevURL, prevGID := marker.URL(), marker.GID()
+	if url != "" {
+		marker.SetURL(url)
+	}
+	if gid != "" {
+		marker.SetGID(gid)
+	}
+	return func() {
+		marker.SetURL(prevURL)
+		marker.SetGID(prevGID)
+	}
 }
 
 // drawSelectByAnimated returns whether art should be drawn under the current

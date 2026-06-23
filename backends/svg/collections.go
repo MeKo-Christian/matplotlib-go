@@ -71,11 +71,7 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 		return true
 	}
 
-	r.nodes = append(r.nodes, svgNode{
-		content:   b.String(),
-		clipIDs:   r.currentClipIDs(),
-		filterIDs: r.currentFilterIDs(),
-	})
+	r.nodes = append(r.nodes, r.newNode(b.String()))
 	return true
 }
 
@@ -151,11 +147,7 @@ func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
 		return true
 	}
 
-	r.nodes = append(r.nodes, svgNode{
-		content:   b.String(),
-		clipIDs:   r.currentClipIDs(),
-		filterIDs: r.currentFilterIDs(),
-	})
+	r.nodes = append(r.nodes, r.newNode(b.String()))
 	return true
 }
 

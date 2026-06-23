@@ -20,6 +20,20 @@ type SketchAware interface {
 	SetDefaultSketch(params SketchParams)
 }
 
+// URLMarker is implemented by vector backends that emit clickable or
+// identifiable output. It carries the active hyperlink target (url) and element
+// id (gid) that apply to subsequent draws, mirroring matplotlib's
+// GraphicsContext.get_url/get_gid. Higher-level code (see core.drawArtist) sets
+// these around an artist's draw and restores the previous values afterwards;
+// backends stamp the current values onto each emitted element (SVG wraps
+// elements in <a xlink:href> and stamps id=; PDF emits /Link annotations).
+type URLMarker interface {
+	SetURL(url string)
+	URL() string
+	SetGID(gid string)
+	GID() string
+}
+
 // SketchActive reports whether sketch parameters will perturb a path. Matplotlib
 // treats scale==0 as "no sketch".
 func SketchActive(p SketchParams) bool { return p.Scale != 0 }

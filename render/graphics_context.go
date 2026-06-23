@@ -32,6 +32,12 @@ type GraphicsContext struct {
 	Sketch            SketchParams
 	ForceAlpha        bool
 	ForcedAlpha       float64
+	// URL and GID carry per-element clickable-hyperlink and identifier
+	// metadata for vector backends, mirroring matplotlib's
+	// GraphicsContext.get_url/get_gid. Backends consume them via the URLMarker
+	// capability; an empty string means "no url/gid".
+	URL string
+	GID string
 }
 
 // NewGraphicsContext returns a graphics context with opaque alpha.
@@ -138,6 +144,20 @@ func (gc GraphicsContext) WithPathEffects(effects ...PathEffect) GraphicsContext
 // WithSketch returns a context with sketch/jitter parameters.
 func (gc GraphicsContext) WithSketch(params SketchParams) GraphicsContext {
 	gc.Sketch = params
+	return gc
+}
+
+// WithURL returns a context carrying a hyperlink target for clickable vector
+// output (SVG <a>, PDF /Link annotation). An empty string clears it.
+func (gc GraphicsContext) WithURL(url string) GraphicsContext {
+	gc.URL = url
+	return gc
+}
+
+// WithGID returns a context carrying an element id for identifiable vector
+// output (SVG id attribute). An empty string clears it.
+func (gc GraphicsContext) WithGID(gid string) GraphicsContext {
+	gc.GID = gid
 	return gc
 }
 

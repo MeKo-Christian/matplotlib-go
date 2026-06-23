@@ -27,6 +27,11 @@ type svgNode struct {
 	clipIDs []string
 	// filterIDs lists active SVG filter defs in outer-to-inner order.
 	filterIDs []string
+	// url, when non-empty, wraps the node in an <a xlink:href="…"> hyperlink.
+	url string
+	// gid, when non-empty, wraps the node in a <g id="…"> group so the element
+	// is identifiable/clickable, mirroring matplotlib's gc.get_gid handling.
+	gid string
 }
 
 type clipDef struct {
@@ -117,7 +122,35 @@ type Renderer struct {
 	options       render.SVGOptions
 	raster        *mixedraster.Session
 	defaultSketch render.SketchParams
+
+	curURL string // active hyperlink target stamped onto emitted nodes
+	curGID string // active element id stamped onto emitted nodes
 }
+
+// newNode builds an svgNode for content emitted under the current clip, filter,
+// and url/gid state. All node-append sites route through this so clickable
+// metadata is applied uniformly.
+func (r *Renderer) newNode(content string) svgNode {
+	return svgNode{
+		content:   content,
+		clipIDs:   r.currentClipIDs(),
+		filterIDs: r.currentFilterIDs(),
+		url:       r.curURL,
+		gid:       r.curGID,
+	}
+}
+
+// SetURL implements render.URLMarker.
+func (r *Renderer) SetURL(url string) { r.curURL = url }
+
+// URL implements render.URLMarker.
+func (r *Renderer) URL() string { return r.curURL }
+
+// SetGID implements render.URLMarker.
+func (r *Renderer) SetGID(gid string) { r.curGID = gid }
+
+// GID implements render.URLMarker.
+func (r *Renderer) GID() string { return r.curGID }
 
 // SetDefaultSketch sets the sketch/xkcd perturbation applied to paths whose
 // paint does not carry its own. Implements render.SketchAware.
@@ -143,6 +176,7 @@ var (
 	_ render.PathEffectFilterDrawer  = (*Renderer)(nil)
 	_ render.RasterizationController = (*Renderer)(nil)
 	_ render.SVGExporter             = (*Renderer)(nil)
+	_ render.URLMarker               = (*Renderer)(nil)
 )
 
 func New(w, h int, bg render.Color) (*Renderer, error) {
@@ -208,6 +242,8 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.filterIDCounter = 0
 	r.filterStack = nil
 	r.lastFontKey = ""
+	r.curURL = ""
+	r.curGID = ""
 	return nil
 }
 

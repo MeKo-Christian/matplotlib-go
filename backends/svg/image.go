@@ -94,11 +94,7 @@ func (r *Renderer) renderImageNode(rgba *image.RGBA, dst geom.Rect, transform st
 	}
 	b.WriteString(` />`)
 
-	r.nodes = append(r.nodes, svgNode{
-		content:   b.String(),
-		clipIDs:   r.currentClipIDs(),
-		filterIDs: r.currentFilterIDs(),
-	})
+	r.nodes = append(r.nodes, r.newNode(b.String()))
 }
 
 func encodeImage(img *image.RGBA) (string, error) {

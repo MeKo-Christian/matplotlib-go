@@ -61,11 +61,7 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 
 	b.WriteString(" />")
 
-	r.nodes = append(r.nodes, svgNode{
-		content:   b.String(),
-		clipIDs:   r.currentClipIDs(),
-		filterIDs: r.currentFilterIDs(),
-	})
+	r.nodes = append(r.nodes, r.newNode(b.String()))
 }
 
 func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {

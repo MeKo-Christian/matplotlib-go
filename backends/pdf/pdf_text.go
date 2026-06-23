@@ -357,7 +357,39 @@ func (r *Renderer) drawEmbeddedText(text string, origin geom.Pt, size float64, t
 			pdfCIDHexString(cids),
 		)
 	}
+	r.recordTextLinkAnnotation(text, origin, size, fontKey, transform)
 	return true
+}
+
+// recordTextLinkAnnotation appends a /Link annotation covering an embedded-text
+// run when a hyperlink target is active. The text box is built from measured
+// metrics in display space, then its corners are transformed so rotated text
+// still yields a covering axis-aligned rectangle (matplotlib uses QuadPoints
+// for the exact quad; an enclosing rect is a faithful approximation).
+func (r *Renderer) recordTextLinkAnnotation(text string, origin geom.Pt, size float64, fontKey string, transform geom.Affine) {
+	if r.curURL == "" {
+		return
+	}
+	m := r.MeasureText(text, size, fontKey)
+	if m.W <= 0 || m.H <= 0 {
+		return
+	}
+	corners := [4]geom.Pt{
+		{X: origin.X, Y: origin.Y - m.Descent},
+		{X: origin.X + m.W, Y: origin.Y - m.Descent},
+		{X: origin.X + m.W, Y: origin.Y + m.Ascent},
+		{X: origin.X, Y: origin.Y + m.Ascent},
+	}
+	tr := transform
+	if tr == (geom.Affine{}) {
+		tr = geom.Affine{A: 1, D: 1}
+	}
+	p0 := tr.Apply(corners[0])
+	rect := geom.Rect{Min: p0, Max: p0}
+	for _, c := range corners[1:] {
+		rect = rect.Union(geom.Rect{Min: tr.Apply(c), Max: tr.Apply(c)})
+	}
+	r.annotations = append(r.annotations, pdfLinkAnnotation{rect: rect, url: r.curURL})
 }
 
 func (r *Renderer) registerEmbeddedTextRun(run render.ShapedRun) (string, []uint16, bool) {
@@ -433,7 +465,7 @@ func (r *Renderer) SavePDFWithOptions(path string, opts render.PDFOptions) error
 	if !r.began && len(r.document) == 0 {
 		return errors.New("pdf: SavePDFWithOptions called before End")
 	}
-	doc, err := buildDocument(r.width, r.height, r.content.Bytes(), r.images, r.hatchPatterns, r.fillPatterns, r.shadings, r.forms, r.alphaStates, r.fonts, opts)
+	doc, err := buildDocument(r.width, r.height, r.content.Bytes(), r.images, r.hatchPatterns, r.fillPatterns, r.shadings, r.forms, r.alphaStates, r.fonts, r.annotations, opts)
 	if err != nil {
 		return err
 	}

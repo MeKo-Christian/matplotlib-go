@@ -20,13 +20,15 @@ import (
 
 // buildDocument assembles the PDF bytes for one page given the encoded
 // content stream.
-func buildDocument(width, height int, contentStream []byte, images []pdfImage, hatches []pdfHatchPattern, fillPatterns []pdfFillPattern, shadings []pdfShading, forms []pdfFormXObject, alphaStates []pdfAlphaState, fonts []pdfEmbeddedFont, opts render.PDFOptions) ([]byte, error) {
+func buildDocument(width, height int, contentStream []byte, images []pdfImage, hatches []pdfHatchPattern, fillPatterns []pdfFillPattern, shadings []pdfShading, forms []pdfFormXObject, alphaStates []pdfAlphaState, fonts []pdfEmbeddedFont, annotations []pdfLinkAnnotation, opts render.PDFOptions) ([]byte, error) {
 	imageObjects := assignImageObjects(images, 6)
 	hatchObjects := assignHatchObjects(hatches, nextImageObjectID(imageObjects, 6))
 	fillPatternObjects := assignFillPatternObjects(fillPatterns, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6)))
 	shadingObjects := assignShadingObjects(shadings, nextFillPatternObjectID(fillPatternObjects, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6))))
 	formObjects := assignFormObjects(forms, nextShadingObjectID(shadingObjects, nextFillPatternObjectID(fillPatternObjects, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6)))))
 	fontObjects := assignFontObjects(fonts, nextFormObjectID(formObjects, nextShadingObjectID(shadingObjects, nextFillPatternObjectID(fillPatternObjects, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6))))))
+	// Link annotations occupy the object ids following the font objects.
+	firstAnnotID := nextFontObjectID(fontObjects, nextFormObjectID(formObjects, nextShadingObjectID(shadingObjects, nextFillPatternObjectID(fillPatternObjects, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6))))))
 	// We emit five fixed indirect objects, followed by image XObjects:
 	//   1: /Catalog
 	//   2: /Pages
@@ -45,8 +47,19 @@ func buildDocument(width, height int, contentStream []byte, images []pdfImage, h
 	w.endObject()
 
 	w.beginObject(3)
-	fmt.Fprintf(&w.buf, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %d %d] /Contents 4 0 R /Resources %s >>",
+	fmt.Fprintf(&w.buf, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %d %d] /Contents 4 0 R /Resources %s",
 		width, height, pageResources(imageObjects, hatchObjects, fillPatternObjects, shadingObjects, formObjects, alphaStates, fontObjects))
+	if len(annotations) > 0 {
+		w.buf.WriteString(" /Annots [")
+		for i := range annotations {
+			if i > 0 {
+				w.buf.WriteString(" ")
+			}
+			fmt.Fprintf(&w.buf, "%d 0 R", firstAnnotID+i)
+		}
+		w.buf.WriteString("]")
+	}
+	w.writeString(" >>")
 	w.endObject()
 
 	// Compress the content stream with FlateDecode for determinism and size.
@@ -96,6 +109,9 @@ func buildDocument(width, height int, contentStream []byte, images []pdfImage, h
 		if err := w.writeEmbeddedFontObjects(font); err != nil {
 			return nil, err
 		}
+	}
+	for i, annot := range annotations {
+		w.writeLinkAnnotation(firstAnnotID+i, annot)
 	}
 
 	xrefOffset := w.buf.Len()
@@ -708,6 +724,33 @@ func nextFormObjectID(forms []pdfFormXObjectObject, firstID int) int {
 	for _, form := range forms {
 		if form.objectID >= nextID {
 			nextID = form.objectID + 1
+		}
+	}
+	return nextID
+}
+
+// writeLinkAnnotation emits a /Link annotation with a /URI action covering the
+// annotation's device-space rectangle. Mirrors matplotlib's
+// _get_link_annotation (Border [0 0 0] = no visible border).
+func (w *pdfWriter) writeLinkAnnotation(id int, annot pdfLinkAnnotation) {
+	w.beginObject(id)
+	fmt.Fprintf(
+		&w.buf,
+		"<< /Type /Annot /Subtype /Link /Rect [%s %s %s %s] /Border [0 0 0] /A << /S /URI /URI %s >> >>",
+		shortFloat(annot.rect.Min.X),
+		shortFloat(annot.rect.Min.Y),
+		shortFloat(annot.rect.Max.X),
+		shortFloat(annot.rect.Max.Y),
+		pdfLiteralString(annot.url),
+	)
+	w.endObject()
+}
+
+func nextFontObjectID(fonts []pdfEmbeddedFontObject, firstID int) int {
+	nextID := firstID
+	for _, font := range fonts {
+		if font.toUnicodeID >= nextID {
+			nextID = font.toUnicodeID + 1
 		}
 	}
 	return nextID

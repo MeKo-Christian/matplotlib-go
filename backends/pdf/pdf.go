@@ -103,6 +103,14 @@ type pdfAlphaState struct {
 	fillAlpha   float64
 }
 
+// pdfLinkAnnotation records a clickable URI link covering a device-space
+// rectangle, mirroring matplotlib's _get_link_annotation. PDF coordinates are
+// y-up like the renderer's display space, so the rect is stored verbatim.
+type pdfLinkAnnotation struct {
+	rect geom.Rect
+	url  string
+}
+
 type pdfEmbeddedFont struct {
 	name      string
 	face      render.FontFace
@@ -170,6 +178,36 @@ type Renderer struct {
 	texErr        error
 	raster        *mixedraster.Session
 	defaultSketch render.SketchParams
+
+	annotations []pdfLinkAnnotation // collected /Link URI annotations
+	curURL      string              // active hyperlink target for drawn elements
+	curGID      string              // active element id (no PDF equivalent; stored only)
+}
+
+// SetURL implements render.URLMarker.
+func (r *Renderer) SetURL(url string) { r.curURL = url }
+
+// URL implements render.URLMarker.
+func (r *Renderer) URL() string { return r.curURL }
+
+// SetGID implements render.URLMarker. PDF has no per-element id concept, so the
+// value is retained only for snapshot/restore symmetry with other backends.
+func (r *Renderer) SetGID(gid string) { r.curGID = gid }
+
+// GID implements render.URLMarker.
+func (r *Renderer) GID() string { return r.curGID }
+
+// recordLinkAnnotation appends a /Link annotation covering path p when a
+// hyperlink target is active.
+func (r *Renderer) recordLinkAnnotation(p geom.Path) {
+	if r.curURL == "" {
+		return
+	}
+	rect, ok := pathBounds(p)
+	if !ok {
+		return
+	}
+	r.annotations = append(r.annotations, pdfLinkAnnotation{rect: rect, url: r.curURL})
 }
 
 // SetDefaultSketch sets the sketch/xkcd perturbation applied to paths whose
@@ -199,6 +237,7 @@ var (
 	_ render.RasterizationController = (*Renderer)(nil)
 	_ render.PDFOptionExporter       = (*Renderer)(nil)
 	_ render.PDFOptionSetter         = (*Renderer)(nil)
+	_ render.URLMarker               = (*Renderer)(nil)
 )
 
 // New constructs a PDF renderer that produces a single-page document of the
@@ -260,6 +299,9 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.alphaIDs = map[string]string{}
 	r.fonts = r.fonts[:0]
 	r.fontIDs = map[string]string{}
+	r.annotations = r.annotations[:0]
+	r.curURL = ""
+	r.curGID = ""
 	r.lastFontKey = ""
 
 	// PDF's coordinate origin is bottom-left with +Y up, which matches the
@@ -285,7 +327,7 @@ func (r *Renderer) End() error {
 		return errors.New("pdf: End called before Begin")
 	}
 	r.began = false
-	doc, err := buildDocument(r.width, r.height, r.content.Bytes(), r.images, r.hatchPatterns, r.fillPatterns, r.shadings, r.forms, r.alphaStates, r.fonts, r.pdfOpts)
+	doc, err := buildDocument(r.width, r.height, r.content.Bytes(), r.images, r.hatchPatterns, r.fillPatterns, r.shadings, r.forms, r.alphaStates, r.fonts, r.annotations, r.pdfOpts)
 	if err != nil {
 		return err
 	}
@@ -439,6 +481,7 @@ func (r *Renderer) Path(p geom.Path, paint *render.Paint) {
 	if !hasFill && !hasStroke {
 		return
 	}
+	r.recordLinkAnnotation(p)
 	if hasGradient {
 		r.writeGradientFill(p, paint)
 		if hasStroke && writePathOps(&r.content, p) {

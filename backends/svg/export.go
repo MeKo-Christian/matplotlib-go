@@ -132,13 +132,19 @@ func (r *Renderer) renderSVG() string {
 	}
 
 	for _, node := range r.nodes {
-		if len(node.clipIDs) == 0 && len(node.filterIDs) == 0 {
-			b.WriteString("  ")
-			b.WriteString(node.content)
-			b.WriteString("\n")
-			continue
-		}
 		b.WriteString("  ")
+		// url wraps outermost as a hyperlink; gid wraps the element in an
+		// identified group; clip/filter groups wrap closest to the content.
+		if node.url != "" {
+			b.WriteString(`<a xlink:href="`)
+			b.WriteString(escapeText(node.url))
+			b.WriteString(`">`)
+		}
+		if node.gid != "" {
+			b.WriteString(`<g id="`)
+			b.WriteString(escapeText(node.gid))
+			b.WriteString(`">`)
+		}
 		for _, id := range node.clipIDs {
 			b.WriteString("<g clip-path=\"url(#")
 			b.WriteString(id)
@@ -155,6 +161,12 @@ func (r *Renderer) renderSVG() string {
 		}
 		for range node.clipIDs {
 			b.WriteString("</g>")
+		}
+		if node.gid != "" {
+			b.WriteString("</g>")
+		}
+		if node.url != "" {
+			b.WriteString("</a>")
 		}
 		b.WriteString("\n")
 	}

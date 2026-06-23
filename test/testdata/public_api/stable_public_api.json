@@ -1184,6 +1184,10 @@
           "declaration": "func (Renderer) End() error"
         },
         {
+          "id": "method Renderer.GID",
+          "declaration": "func (Renderer) GID() string"
+        },
+        {
           "id": "method Renderer.GlyphRun",
           "declaration": "func (Renderer) GlyphRun(run render.GlyphRun, textColor render.Color)"
         },
@@ -1232,12 +1236,20 @@
           "declaration": "func (Renderer) SetDefaultSketch(params render.SketchParams)"
         },
         {
+          "id": "method Renderer.SetGID",
+          "declaration": "func (Renderer) SetGID(gid string)"
+        },
+        {
           "id": "method Renderer.SetPDFOptions",
           "declaration": "func (Renderer) SetPDFOptions(opts render.PDFOptions)"
         },
         {
           "id": "method Renderer.SetResolution",
           "declaration": "func (Renderer) SetResolution(dpi uint)"
+        },
+        {
+          "id": "method Renderer.SetURL",
+          "declaration": "func (Renderer) SetURL(url string)"
         },
         {
           "id": "method Renderer.StartRasterized",
@@ -1268,6 +1280,10 @@
           "declaration": "func (Renderer) TextPath(text string, origin geom.Pt, size float64, fontKey string) (geom.Path, bool)"
         },
         {
+          "id": "method Renderer.URL",
+          "declaration": "func (Renderer) URL() string"
+        },
+        {
           "id": "type Renderer",
           "declaration": "type Renderer struct{}"
         }
@@ -1288,6 +1304,10 @@
         {
           "id": "method Renderer.ClipPath",
           "declaration": "func (Renderer) ClipPath(path geom.Path)"
+        },
+        {
+          "id": "method Renderer.ClipPathTransformed",
+          "declaration": "func (Renderer) ClipPathTransformed(path geom.Path, transform geom.Affine)"
         },
         {
           "id": "method Renderer.ClipRect",
@@ -1316,6 +1336,14 @@
         {
           "id": "method Renderer.DrawTextRotatedWithFont",
           "declaration": "func (Renderer) DrawTextRotatedWithFont(text string, anchor geom.Pt, size, angle float64, textColor render.Color, _ string)"
+        },
+        {
+          "id": "method Renderer.DrawTextVertical",
+          "declaration": "func (Renderer) DrawTextVertical(text string, center geom.Pt, size float64, textColor render.Color)"
+        },
+        {
+          "id": "method Renderer.DrawTextVerticalWithFont",
+          "declaration": "func (Renderer) DrawTextVerticalWithFont(text string, center geom.Pt, size float64, textColor render.Color, fontKey string)"
         },
         {
           "id": "method Renderer.DrawTextWithFont",
@@ -1382,8 +1410,16 @@
           "declaration": "func (Renderer) StopRasterized() bool"
         },
         {
+          "id": "method Renderer.SupportsGradientFill",
+          "declaration": "func (Renderer) SupportsGradientFill() bool"
+        },
+        {
           "id": "method Renderer.SupportsNativeHatch",
           "declaration": "func (Renderer) SupportsNativeHatch() bool"
+        },
+        {
+          "id": "method Renderer.SupportsPatternFill",
+          "declaration": "func (Renderer) SupportsPatternFill() bool"
         },
         {
           "id": "type Renderer",
@@ -1504,8 +1540,16 @@
           "declaration": "func (Renderer) StopRasterized() bool"
         },
         {
+          "id": "method Renderer.SupportsGradientFill",
+          "declaration": "func (Renderer) SupportsGradientFill() bool"
+        },
+        {
           "id": "method Renderer.SupportsNativeHatch",
           "declaration": "func (Renderer) SupportsNativeHatch() bool"
+        },
+        {
+          "id": "method Renderer.SupportsPatternFill",
+          "declaration": "func (Renderer) SupportsPatternFill() bool"
         },
         {
           "id": "method Renderer.TextPath",
@@ -1712,6 +1756,10 @@
           "declaration": "func (Renderer) End() error"
         },
         {
+          "id": "method Renderer.GID",
+          "declaration": "func (Renderer) GID() string"
+        },
+        {
           "id": "method Renderer.GlyphRun",
           "declaration": "func (Renderer) GlyphRun(run render.GlyphRun, textColor render.Color)"
         },
@@ -1760,12 +1808,20 @@
           "declaration": "func (Renderer) SetDefaultSketch(params render.SketchParams)"
         },
         {
+          "id": "method Renderer.SetGID",
+          "declaration": "func (Renderer) SetGID(gid string)"
+        },
+        {
           "id": "method Renderer.SetResolution",
           "declaration": "func (Renderer) SetResolution(dpi uint)"
         },
         {
           "id": "method Renderer.SetSVGOptions",
           "declaration": "func (Renderer) SetSVGOptions(opts render.SVGOptions)"
+        },
+        {
+          "id": "method Renderer.SetURL",
+          "declaration": "func (Renderer) SetURL(url string)"
         },
         {
           "id": "method Renderer.StartRasterized",
@@ -1794,6 +1850,10 @@
         {
           "id": "method Renderer.TextPath",
           "declaration": "func (Renderer) TextPath(text string, origin geom.Pt, size float64, fontKey string) (geom.Path, bool)"
+        },
+        {
+          "id": "method Renderer.URL",
+          "declaration": "func (Renderer) URL() string"
         },
         {
           "id": "type Renderer",
@@ -4076,6 +4136,10 @@
           "declaration": "func (ArtistRasterization) EffectiveAlpha(local float64) float64"
         },
         {
+          "id": "method ArtistRasterization.GID",
+          "declaration": "func (ArtistRasterization) GID() string"
+        },
+        {
           "id": "method ArtistRasterization.InLayout",
           "declaration": "func (ArtistRasterization) InLayout() bool"
         },
@@ -4112,6 +4176,10 @@
           "declaration": "func (ArtistRasterization) SetClipRect(rect geom.Rect)"
         },
         {
+          "id": "method ArtistRasterization.SetGID",
+          "declaration": "func (ArtistRasterization) SetGID(gid string)"
+        },
+        {
           "id": "method ArtistRasterization.SetInLayout",
           "declaration": "func (ArtistRasterization) SetInLayout(inLayout bool)"
         },
@@ -4136,12 +4204,20 @@
           "declaration": "func (ArtistRasterization) SetTransformCoords(spec CoordinateSpec)"
         },
         {
+          "id": "method ArtistRasterization.SetURL",
+          "declaration": "func (ArtistRasterization) SetURL(url string)"
+        },
+        {
           "id": "method ArtistRasterization.SetVisible",
           "declaration": "func (ArtistRasterization) SetVisible(visible bool)"
         },
         {
           "id": "method ArtistRasterization.Stale",
           "declaration": "func (ArtistRasterization) Stale() bool"
+        },
+        {
+          "id": "method ArtistRasterization.URL",
+          "declaration": "func (ArtistRasterization) URL() string"
         },
         {
           "id": "method ArtistRasterization.Visible",
@@ -10074,6 +10150,10 @@
           "declaration": "func (GraphicsContext) WithForcedAlpha(alpha float64) GraphicsContext"
         },
         {
+          "id": "method GraphicsContext.WithGID",
+          "declaration": "func (GraphicsContext) WithGID(gid string) GraphicsContext"
+        },
+        {
           "id": "method GraphicsContext.WithHatch",
           "declaration": "func (GraphicsContext) WithHatch(pattern string, color Color, linewidth float64) GraphicsContext"
         },
@@ -10100,6 +10180,10 @@
         {
           "id": "method GraphicsContext.WithTransform",
           "declaration": "func (GraphicsContext) WithTransform(tr transform.T) GraphicsContext"
+        },
+        {
+          "id": "method GraphicsContext.WithURL",
+          "declaration": "func (GraphicsContext) WithURL(url string) GraphicsContext"
         },
         {
           "id": "method ImageData.Alpha",
@@ -10307,7 +10391,7 @@
         },
         {
           "id": "type GraphicsContext",
-          "declaration": "type GraphicsContext struct{ Alpha float64; Transform transform.T; Paint Paint; ClipRect geom.Rect; HasClipRect bool; ClipPath geom.Path; HasClipPath bool; ClipPathTransform geom.Affine; HasClipPathTrans bool; Antialias AntialiasMode; Snap SnapMode; Hatch string; HatchColor Color; HatchLineWidth float64; HatchSpacing float64; CompositeMode CompositeMode; Rasterization Rasterization; Sketch SketchParams; ForceAlpha bool; ForcedAlpha float64 }"
+          "declaration": "type GraphicsContext struct{ Alpha float64; Transform transform.T; Paint Paint; ClipRect geom.Rect; HasClipRect bool; ClipPath geom.Path; HasClipPath bool; ClipPathTransform geom.Affine; HasClipPathTrans bool; Antialias AntialiasMode; Snap SnapMode; Hatch string; HatchColor Color; HatchLineWidth float64; HatchSpacing float64; CompositeMode CompositeMode; Rasterization Rasterization; Sketch SketchParams; ForceAlpha bool; ForcedAlpha float64; URL string; GID string }"
         },
         {
           "id": "type Image",
@@ -10660,6 +10744,10 @@
         {
           "id": "type TextShapingOptions",
           "declaration": "type TextShapingOptions struct{ FontKey string; Direction TextDirection; Script string; Language string; Features []TextFeature }"
+        },
+        {
+          "id": "type URLMarker",
+          "declaration": "type URLMarker interface{ SetURL func(url string); URL func() string; SetGID func(gid string); GID func() string }"
         },
         {
           "id": "type VerticalTextDrawer",
