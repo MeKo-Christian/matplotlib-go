@@ -11,14 +11,20 @@ func SavePDF(fig *Figure, r render.Renderer, path string, opts ...render.SaveOpt
 	if fig == nil {
 		return errors.New("savepdf: nil figure")
 	}
+	// Seed the font policy from pdf.* rcParams; explicit per-call options win.
+	opts = append([]render.SaveOption{render.WithPDFFontPolicy(pdfFontPolicyFromRC(fig.RC.PDF))}, opts...)
 	saveOptions := render.ResolveSaveOptions(opts...)
 	if err := saveOptions.ValidateForExtension(".pdf"); err != nil {
+		return err
+	}
+	eff, drawOpts, resolved := prepareSaveFigure(fig, r, &saveOptions.Figure)
+	if err := rejectTightBboxForVector(resolved.bboxTight, "PDF"); err != nil {
 		return err
 	}
 	if setter, ok := r.(render.PDFOptionSetter); ok {
 		setter.SetPDFOptions(saveOptions.PDF)
 	}
-	DrawFigure(fig, r)
+	DrawFigureWithOptions(eff, r, drawOpts)
 	if exporter, ok := r.(render.PDFOptionExporter); ok {
 		return exporter.SavePDFWithOptions(path, saveOptions.PDF)
 	}

@@ -3,9 +3,19 @@ package core
 import (
 	"image"
 	"math"
+	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
 )
+
+// imageInterpolationDefault maps the image.interpolation rcParam to the renderer
+// convention, where "auto" means the renderer chooses (empty string).
+func imageInterpolationDefault(interpolation string) string {
+	if strings.EqualFold(strings.TrimSpace(interpolation), "auto") {
+		return ""
+	}
+	return interpolation
+}
 
 // ImageOrigin selects how image rows map to the Y-axis direction.
 type ImageOrigin int
@@ -141,7 +151,8 @@ func (a *Axes) Image(data [][]float64, opts ...ImageOptions) *Image2D {
 		return nil
 	}
 
-	cmap := "viridis"
+	rc := a.resolvedRC()
+	cmap := rc.Image.Cmap
 	if opt.Colormap != nil {
 		cmap = *opt.Colormap
 	}
@@ -156,6 +167,9 @@ func (a *Axes) Image(data [][]float64, opts ...ImageOptions) *Image2D {
 	}
 
 	g := resolveImageGeometry(opt, cols, rows)
+	if opt.Interpolation == nil {
+		g.interp = imageInterpolationDefault(rc.Image.Interpolation)
+	}
 	image := &Image2D{
 		Data:          data,
 		Colormap:      mapping.Colormap,
@@ -248,6 +262,9 @@ func (a *Axes) imageRGBA(rgba *image.RGBA, opt ImageOptions) *Image2D {
 	}
 
 	g := resolveImageGeometry(opt, cols, rows)
+	if opt.Interpolation == nil {
+		g.interp = imageInterpolationDefault(a.resolvedRC().Image.Interpolation)
+	}
 	img := &Image2D{
 		rgba:          rgba,
 		Alpha:         g.alpha,

@@ -12,14 +12,20 @@ func SavePS(fig *Figure, r render.Renderer, path string, opts ...render.SaveOpti
 	if fig == nil {
 		return errors.New("saveps: nil figure")
 	}
+	// Seed the font policy from ps.* rcParams; explicit per-call options win.
+	opts = append([]render.SaveOption{render.WithPSFontPolicy(psFontPolicyFromRC(fig.RC.PS))}, opts...)
 	saveOptions := render.ResolveSaveOptions(opts...)
 	if err := saveOptions.ValidateForExtension(".ps"); err != nil {
+		return err
+	}
+	eff, drawOpts, resolved := prepareSaveFigure(fig, r, &saveOptions.Figure)
+	if err := rejectTightBboxForVector(resolved.bboxTight, "PostScript"); err != nil {
 		return err
 	}
 	if setter, ok := r.(render.PSOptionSetter); ok {
 		setter.SetPSOptions(saveOptions.PS)
 	}
-	DrawFigure(fig, r)
+	DrawFigureWithOptions(eff, r, drawOpts)
 	exporter, ok := r.(render.PSExporter)
 	if !ok {
 		return errors.New("PostScript export not supported for this renderer type")

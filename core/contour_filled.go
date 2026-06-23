@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 // contourExtendedLevels returns the level boundaries used for filled-band
@@ -183,21 +184,17 @@ func contourBandHatch(hatches []string, levelIdx int) string {
 	return hatches[levelIdx%len(hatches)]
 }
 
-// contourHatchLineWidth is the hatch stroke width applied to contourf hatches,
-// matching Matplotlib's rcParams["hatch.linewidth"] (1.0 pt) expressed in the
-// project's device-pixel convention at the reference 100 DPI.
-const contourHatchLineWidth = 100.0 / 72.0
-
-// applyContourHatchStyle sets the default hatch color (black) and width on a
-// filled contour collection when hatches are present, mirroring Matplotlib's
-// rcParams["hatch.color"]/["hatch.linewidth"]. It is a no-op when no hatch
+// applyContourHatchStyle sets the default hatch color and width on a filled
+// contour collection when hatches are present, mirroring Matplotlib's
+// rcParams["hatch.color"]/["hatch.linewidth"]. The defaults come from rc.Hatch
+// (linewidth in points converted to device pixels). It is a no-op when no hatch
 // pattern is set, so unhatched contourf keeps the fast batched draw path.
-func applyContourHatchStyle(fills *PolyCollection, hatches []string) {
-	if fills == nil || !contourHatchesUsed(hatches) {
+func applyContourHatchStyle(fills *PolyCollection, hatches []string, rc *style.RC) {
+	if fills == nil || rc == nil || !contourHatchesUsed(hatches) {
 		return
 	}
-	fills.HatchColor = render.Color{A: 1}
-	fills.HatchWidth = contourHatchLineWidth
+	fills.HatchColor = rc.Hatch.Color
+	fills.HatchWidth = pointsToPixels(*rc, rc.Hatch.LineWidth)
 }
 
 func contourHatchesUsed(hatches []string) bool {

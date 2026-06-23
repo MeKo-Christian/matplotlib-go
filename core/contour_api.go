@@ -305,7 +305,8 @@ func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet {
 		},
 		Polygons: polygons,
 	}
-	applyContourHatchStyle(set.Fills, hatches)
+	hatchRC := a.resolvedRC()
+	applyContourHatchStyle(set.Fills, hatches, &hatchRC)
 	a.Add(set)
 	return set
 }
@@ -553,7 +554,8 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 				},
 				Polygons: polygons,
 			}
-			applyContourHatchStyle(set.Fills, hatches)
+			hatchRC := a.resolvedRC()
+			applyContourHatchStyle(set.Fills, hatches, &hatchRC)
 		}
 	} else {
 		polylines, polylineLevels := contourPolylines(tri, values, levels)

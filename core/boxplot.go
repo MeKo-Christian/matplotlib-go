@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strconv"
 
-	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -128,6 +127,7 @@ func (a *Axes) Bxp(stats []BxpStat, opts ...BxpOptions) *BxpContainer {
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
+	rc := a.resolvedRC()
 	n := len(stats)
 	if !validOptionalList(opt.Positions, n) || !validOptionalScalarList(opt.Widths, n) || !validOptionalScalarList(opt.CapWidths, n) {
 		return nil
@@ -144,36 +144,36 @@ func (a *Axes) Bxp(stats []BxpStat, opts ...BxpOptions) *BxpContainer {
 		return math.Abs(widths[i]) * 0.5
 	})
 
-	showNotches := specialtyBool(opt.ShowNotches, false)
-	showMeans := specialtyBool(opt.ShowMeans, false)
-	showCaps := specialtyBool(opt.ShowCaps, true)
-	showBox := specialtyBool(opt.ShowBox, true)
-	showFliers := specialtyBool(opt.ShowFliers, true)
+	showNotches := specialtyBool(opt.ShowNotches, rc.Boxplot.Notch)
+	showMeans := specialtyBool(opt.ShowMeans, rc.Boxplot.ShowMeans)
+	showCaps := specialtyBool(opt.ShowCaps, rc.Boxplot.ShowCaps)
+	showBox := specialtyBool(opt.ShowBox, rc.Boxplot.ShowBox)
+	showFliers := specialtyBool(opt.ShowFliers, rc.Boxplot.ShowFliers)
 	manageTicks := specialtyBool(opt.ManageTicks, true)
 
 	color := render.Color{R: 0, G: 0, B: 0, A: 1}
 	if opt.Color != nil {
 		color = *opt.Color
 	}
-	medianColor := matcolor.Tab10[1]
+	medianColor := rc.Boxplot.MedianColor
 	if opt.MedianColor != nil {
 		medianColor = *opt.MedianColor
 	}
-	meanColor := matcolor.Tab10[2]
+	meanColor := rc.Boxplot.MeanColor
 	if opt.MeanColor != nil {
 		meanColor = *opt.MeanColor
 	}
-	flierEdgeColor := render.Color{R: 0, G: 0, B: 0, A: 1}
+	flierEdgeColor := rc.Boxplot.FlierColor
 	flierFaceColor := render.Color{}
 	if opt.FlierColor != nil {
 		flierEdgeColor = *opt.FlierColor
 		flierFaceColor = *opt.FlierColor
 	}
-	lineWidth := 1.0
+	lineWidth := rc.Boxplot.BoxLineWidth
 	if opt.LineWidth != nil && *opt.LineWidth > 0 {
 		lineWidth = *opt.LineWidth
 	}
-	markerSize := 6.0
+	markerSize := rc.Boxplot.FlierMarkerSize
 	if opt.MarkerSize != nil && *opt.MarkerSize > 0 {
 		markerSize = *opt.MarkerSize
 	}

@@ -216,6 +216,37 @@ func (r *Renderer) Clear(c render.Color) {
 	r.ctx.Clear(renderColorToAGG(c))
 }
 
+// Resize reallocates the renderer surface to a new pixel size. It implements
+// render.Resizer so the save pipeline can apply savefig.dpi on raster output
+// (where the canvas grows with resolution). The new surface starts cleared to
+// transparent; callers that need an opaque background should Clear afterwards.
+func (r *Renderer) Resize(width, height int) error {
+	if r == nil || r.ctx == nil {
+		return errors.New("agg: nil renderer")
+	}
+	if width <= 0 || height <= 0 {
+		return errors.New("agg: width and height must be positive")
+	}
+	if width == r.width && height == r.height {
+		return nil
+	}
+	r.ctx = newAggSurface(width, height)
+	r.width = width
+	r.height = height
+	r.began = false
+	r.viewport = geom.Rect{}
+	r.stack = r.stack[:0]
+	r.clipRect = nil
+	r.clipPaths = r.clipPaths[:0]
+	r.filterStack = nil
+	r.clipDepth = 0
+	r.ctx.SetResolution(r.resolution)
+	if r.fontPath != "" {
+		_ = r.ctx.ConfigureTextFont(r.fontPath, 12, r.resolution)
+	}
+	return nil
+}
+
 // Begin starts a drawing session with the given viewport.
 func (r *Renderer) Begin(viewport geom.Rect) error {
 	if r.began {

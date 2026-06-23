@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
@@ -43,6 +44,19 @@ const (
 
 type DrawOptions struct {
 	AnimatedFilter AnimatedFilter
+
+	// Transparent forces axes patch backgrounds to be transparent at save time
+	// (savefig.transparent). The figure background is handled by the save path.
+	Transparent bool
+	// FigureBackground, when non-nil, paints a full-viewport background fill
+	// before any content (used for savefig.facecolor on backends that cannot
+	// re-clear their surface).
+	FigureBackground *render.Color
+	// FigureEdge, when non-nil, strokes a border around the full viewport after
+	// the background fill (savefig.edgecolor).
+	FigureEdge *render.Color
+	// FigureEdgeWidth is the figure border stroke width in device pixels.
+	FigureEdgeWidth float64
 }
 
 type Transform2D struct {

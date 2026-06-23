@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -30,6 +31,16 @@ type MPLStyleReport struct {
 
 var supportedMPLStyleKeys = []string{
 	"agg.path.chunksize",
+	"animation.bitrate",
+	"animation.codec",
+	"animation.convert_args",
+	"animation.convert_path",
+	"animation.embed_limit",
+	"animation.ffmpeg_args",
+	"animation.ffmpeg_path",
+	"animation.frame_format",
+	"animation.html",
+	"animation.writer",
 	"axes.edgecolor",
 	"axes.facecolor",
 	"axes.grid",
@@ -41,6 +52,34 @@ var supportedMPLStyleKeys = []string{
 	"axes.prop_cycle",
 	"axes.titlecolor",
 	"axes.titlesize",
+	"boxplot.boxprops.linewidth",
+	"boxplot.capprops.linewidth",
+	"boxplot.flierprops.color",
+	"boxplot.flierprops.markeredgewidth",
+	"boxplot.flierprops.markersize",
+	"boxplot.meanline",
+	"boxplot.meanprops.color",
+	"boxplot.medianprops.color",
+	"boxplot.medianprops.linewidth",
+	"boxplot.notch",
+	"boxplot.patchartist",
+	"boxplot.showbox",
+	"boxplot.showcaps",
+	"boxplot.showfliers",
+	"boxplot.showmeans",
+	"boxplot.vertical",
+	"boxplot.whiskerprops.linewidth",
+	"boxplot.whiskers",
+	"date.autoformatter.day",
+	"date.autoformatter.hour",
+	"date.autoformatter.microsecond",
+	"date.autoformatter.minute",
+	"date.autoformatter.month",
+	"date.autoformatter.second",
+	"date.autoformatter.year",
+	"date.converter",
+	"date.epoch",
+	"date.interval_multiples",
 	"figure.dpi",
 	"figure.facecolor",
 	"figure.figsize",
@@ -54,6 +93,16 @@ var supportedMPLStyleKeys = []string{
 	"grid.major.linestyle",
 	"grid.minor.color",
 	"grid.minor.linestyle",
+	"hatch.color",
+	"hatch.linewidth",
+	"image.aspect",
+	"image.cmap",
+	"image.composite_image",
+	"image.interpolation",
+	"image.interpolation_stage",
+	"image.lut",
+	"image.origin",
+	"image.resample",
 	"legend.edgecolor",
 	"legend.facecolor",
 	"legend.framealpha",
@@ -62,9 +111,39 @@ var supportedMPLStyleKeys = []string{
 	"legend.labelcolor",
 	"lines.color",
 	"lines.linewidth",
+	"mathtext.bf",
+	"mathtext.bfit",
+	"mathtext.cal",
+	"mathtext.default",
+	"mathtext.fallback",
+	"mathtext.fontset",
+	"mathtext.it",
+	"mathtext.rm",
+	"mathtext.sf",
+	"mathtext.tt",
 	"path.simplify",
 	"path.simplify_threshold",
 	"path.sketch",
+	"pdf.compression",
+	"pdf.fonttype",
+	"pdf.inheritcolor",
+	"pdf.use14corefonts",
+	"ps.distiller.res",
+	"ps.fonttype",
+	"ps.papersize",
+	"ps.usedistiller",
+	"ps.useafm",
+	"savefig.bbox",
+	"savefig.dpi",
+	"savefig.edgecolor",
+	"savefig.facecolor",
+	"savefig.format",
+	"savefig.pad_inches",
+	"savefig.transparent",
+	"svg.fonttype",
+	"svg.hashsalt",
+	"svg.id",
+	"svg.image_inline",
 	"text.color",
 	"text.usetex",
 	"xtick.color",
@@ -522,6 +601,368 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 		}
 		state.yTickFontSize = parsed
 		state.yTickFontSizeSet = true
+	case "hatch.color":
+		parsed, err := parseMPLColor(value, state.rc)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Hatch.Color = parsed
+	case "hatch.linewidth":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Hatch.LineWidth = parsed
+	case "image.cmap":
+		normalized := normalizeMPLValue(value)
+		if normalized == "" {
+			return fmt.Errorf("parse %s on line %d: empty colormap", key, lineNo)
+		}
+		state.rc.Image.Cmap = normalized
+	case "image.interpolation":
+		state.rc.Image.Interpolation = normalizeMPLValue(value)
+	case "image.interpolation_stage":
+		parsed, err := parseMPLEnum(value, "auto", "data", "rgba")
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Image.InterpolationStage = parsed
+	case "image.origin":
+		parsed, err := parseMPLEnum(value, "upper", "lower")
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Image.Origin = parsed
+	case "image.aspect":
+		parsed, err := parseMPLAspect(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Image.Aspect = parsed
+	case "image.resample":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Image.Resample = parsed
+	case "image.composite_image":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Image.CompositeImage = parsed
+	case "image.lut":
+		parsed, err := parseMPLInt(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Image.LUT = parsed
+	case "mathtext.fontset":
+		parsed, err := parseMPLEnum(value, "dejavusans", "dejavuserif", "cm", "stix", "stixsans", "custom")
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Mathtext.Fontset = parsed
+	case "mathtext.default":
+		parsed, err := parseMPLEnum(value, "rm", "cal", "bfit", "it", "tt", "sf", "bf", "default", "bb", "frak", "scr", "regular")
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Mathtext.Default = parsed
+	case "mathtext.fallback":
+		parsed, err := parseMPLMathtextFallback(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Mathtext.Fallback = parsed
+	case "mathtext.bf":
+		state.rc.Mathtext.BF = normalizeMPLValue(value)
+	case "mathtext.bfit":
+		state.rc.Mathtext.BFit = normalizeMPLValue(value)
+	case "mathtext.cal":
+		state.rc.Mathtext.Cal = normalizeMPLValue(value)
+	case "mathtext.it":
+		state.rc.Mathtext.It = normalizeMPLValue(value)
+	case "mathtext.rm":
+		state.rc.Mathtext.RM = normalizeMPLValue(value)
+	case "mathtext.sf":
+		state.rc.Mathtext.SF = normalizeMPLValue(value)
+	case "mathtext.tt":
+		state.rc.Mathtext.TT = normalizeMPLValue(value)
+	case "boxplot.notch":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.Notch = parsed
+	case "boxplot.vertical":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.Vertical = parsed
+	case "boxplot.patchartist":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.PatchArtist = parsed
+	case "boxplot.meanline":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.MeanLine = parsed
+	case "boxplot.showmeans":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.ShowMeans = parsed
+	case "boxplot.showcaps":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.ShowCaps = parsed
+	case "boxplot.showbox":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.ShowBox = parsed
+	case "boxplot.showfliers":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.ShowFliers = parsed
+	case "boxplot.whiskers":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.Whiskers = parsed
+	case "boxplot.boxprops.linewidth":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.BoxLineWidth = parsed
+	case "boxplot.whiskerprops.linewidth":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.WhiskerLineWidth = parsed
+	case "boxplot.capprops.linewidth":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.CapLineWidth = parsed
+	case "boxplot.medianprops.linewidth":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.MedianLineWidth = parsed
+	case "boxplot.medianprops.color":
+		parsed, err := parseMPLColor(value, state.rc)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.MedianColor = parsed
+	case "boxplot.meanprops.color":
+		parsed, err := parseMPLColor(value, state.rc)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.MeanColor = parsed
+	case "boxplot.flierprops.color":
+		parsed, err := parseMPLColor(value, state.rc)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.FlierColor = parsed
+	case "boxplot.flierprops.markersize":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.FlierMarkerSize = parsed
+	case "boxplot.flierprops.markeredgewidth":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Boxplot.FlierEdgeWidth = parsed
+	case "date.autoformatter.year":
+		state.rc.Date.AutoYear = normalizeMPLValue(value)
+	case "date.autoformatter.month":
+		state.rc.Date.AutoMonth = normalizeMPLValue(value)
+	case "date.autoformatter.day":
+		state.rc.Date.AutoDay = normalizeMPLValue(value)
+	case "date.autoformatter.hour":
+		state.rc.Date.AutoHour = normalizeMPLValue(value)
+	case "date.autoformatter.minute":
+		state.rc.Date.AutoMinute = normalizeMPLValue(value)
+	case "date.autoformatter.second":
+		state.rc.Date.AutoSecond = normalizeMPLValue(value)
+	case "date.autoformatter.microsecond":
+		state.rc.Date.AutoMicrosecond = normalizeMPLValue(value)
+	case "date.epoch":
+		state.rc.Date.Epoch = normalizeMPLValue(value)
+	case "date.converter":
+		parsed, err := parseMPLEnum(value, "auto", "concise")
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Date.Converter = parsed
+	case "date.interval_multiples":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Date.IntervalMultiples = parsed
+	case "pdf.fonttype":
+		parsed, err := parseMPLFontType(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.PDF.FontType = parsed
+	case "pdf.use14corefonts":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.PDF.Use14CoreFonts = parsed
+	case "pdf.compression":
+		parsed, err := parseMPLInt(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.PDF.Compression = parsed
+	case "pdf.inheritcolor":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.PDF.InheritColor = parsed
+	case "ps.fonttype":
+		parsed, err := parseMPLFontType(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.PS.FontType = parsed
+	case "ps.useafm":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.PS.UseAFM = parsed
+	case "ps.papersize":
+		state.rc.PS.PaperSize = normalizeMPLValue(value)
+	case "ps.usedistiller":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.PS.UseDistiller = parsed
+	case "ps.distiller.res":
+		parsed, err := parseMPLInt(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.PS.DistillerRes = parsed
+	case "svg.fonttype":
+		parsed, err := parseMPLEnum(value, "none", "path")
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.SVG.FontType = parsed
+	case "svg.image_inline":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.SVG.ImageInline = parsed
+	case "svg.hashsalt":
+		state.rc.SVG.HashSalt = parseMPLStringOrNone(value)
+	case "svg.id":
+		state.rc.SVG.ID = parseMPLStringOrNone(value)
+	case "animation.html":
+		parsed, err := parseMPLEnum(value, "html5", "jshtml", "none")
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Animation.HTML = parsed
+	case "animation.writer":
+		state.rc.Animation.Writer = normalizeMPLValue(value)
+	case "animation.codec":
+		state.rc.Animation.Codec = normalizeMPLValue(value)
+	case "animation.bitrate":
+		parsed, err := parseMPLInt(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Animation.Bitrate = parsed
+	case "animation.frame_format":
+		parsed, err := parseMPLEnum(value, "png", "jpeg", "tiff", "raw", "rgba", "ppm", "sgi", "bmp", "pbm", "svg")
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Animation.FrameFormat = parsed
+	case "animation.ffmpeg_path":
+		state.rc.Animation.FFmpegPath = normalizeMPLValue(value)
+	case "animation.ffmpeg_args":
+		state.rc.Animation.FFmpegArgs = parseMPLStringList(value)
+	case "animation.convert_path":
+		state.rc.Animation.ConvertPath = normalizeMPLValue(value)
+	case "animation.convert_args":
+		state.rc.Animation.ConvertArgs = parseMPLStringList(value)
+	case "animation.embed_limit":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Animation.EmbedLimit = parsed
+	case "savefig.dpi":
+		parsed, err := parseMPLSavefigDPI(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Savefig.Dpi = parsed
+	case "savefig.facecolor":
+		if err := validateMPLSavefigColor(value, &state.rc); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Savefig.Facecolor = normalizeMPLValue(value)
+	case "savefig.edgecolor":
+		if err := validateMPLSavefigColor(value, &state.rc); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Savefig.Edgecolor = normalizeMPLValue(value)
+	case "savefig.transparent":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Savefig.Transparent = parsed
+	case "savefig.bbox":
+		parsed, err := parseMPLSavefigBbox(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Savefig.BboxInches = parsed
+	case "savefig.pad_inches":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Savefig.PadInches = parsed
+	case "savefig.format":
+		state.rc.Savefig.Format = strings.ToLower(normalizeMPLValue(value))
 	default:
 		report.Unsupported = append(report.Unsupported, MPLStyleIssue{
 			Line:  lineNo,
@@ -874,6 +1315,117 @@ func parseMPLFontSize(value string, base float64) (float64, error) {
 	default:
 		return 0, fmt.Errorf("invalid font size %q", value)
 	}
+}
+
+// parseMPLEnum validates value against a fixed set of lowercase options,
+// returning the normalized lowercase match.
+func parseMPLEnum(value string, options ...string) (string, error) {
+	normalized := strings.ToLower(normalizeMPLValue(value))
+	if slices.Contains(options, normalized) {
+		return normalized, nil
+	}
+	return "", fmt.Errorf("invalid value %q, want one of %s", value, strings.Join(options, ", "))
+}
+
+// parseMPLSavefigDPI parses a savefig.dpi value: a float, or "figure" (mapped
+// to 0, meaning "use the figure DPI").
+func parseMPLSavefigDPI(value string) (float64, error) {
+	if strings.EqualFold(normalizeMPLValue(value), "figure") {
+		return 0, nil
+	}
+	return parseMPLFloat(value)
+}
+
+// parseMPLSavefigBbox parses a savefig.bbox value: "standard"/"none" (stored as
+// empty) or "tight".
+func parseMPLSavefigBbox(value string) (string, error) {
+	switch strings.ToLower(normalizeMPLValue(value)) {
+	case "standard", "none", "":
+		return "", nil
+	case "tight":
+		return "tight", nil
+	default:
+		return "", fmt.Errorf("invalid savefig.bbox %q, want standard or tight", value)
+	}
+}
+
+// validateMPLSavefigColor accepts the "auto" sentinel or any valid color value.
+func validateMPLSavefigColor(value string, rc *RC) error {
+	if strings.EqualFold(normalizeMPLValue(value), "auto") {
+		return nil
+	}
+	return validateMPLColorValue(value, *rc, false)
+}
+
+// parseMPLStringList parses a comma-separated argument list (e.g. animation
+// writer args), trimming surrounding brackets. Empty input yields nil.
+func parseMPLStringList(value string) []string {
+	normalized := normalizeMPLValue(value)
+	normalized = strings.TrimSpace(strings.TrimPrefix(strings.TrimSuffix(normalized, "]"), "["))
+	if strings.TrimSpace(normalized) == "" {
+		return nil
+	}
+	parts := splitOutsideQuotes(normalized, ',')
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if trimmed := normalizeMPLValue(part); trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// parseMPLFontType validates a pdf/ps fonttype value (Type 3 or TrueType 42).
+func parseMPLFontType(value string) (int, error) {
+	parsed, err := parseMPLInt(value)
+	if err != nil {
+		return 0, err
+	}
+	if parsed != 3 && parsed != 42 {
+		return 0, fmt.Errorf("invalid fonttype %d, want 3 or 42", parsed)
+	}
+	return parsed, nil
+}
+
+// parseMPLStringOrNone returns the empty string for a "None" value (Matplotlib's
+// None sentinel) and the normalized string otherwise.
+func parseMPLStringOrNone(value string) string {
+	normalized := normalizeMPLValue(value)
+	if strings.EqualFold(normalized, "none") {
+		return ""
+	}
+	return normalized
+}
+
+// parseMPLMathtextFallback validates a mathtext.fallback value: "cm", "stix",
+// "stixsans", or "none"/"None" (stored as empty string).
+func parseMPLMathtextFallback(value string) (string, error) {
+	normalized := strings.ToLower(normalizeMPLValue(value))
+	switch normalized {
+	case "none", "":
+		return "", nil
+	case "cm", "stix", "stixsans":
+		return normalized, nil
+	default:
+		return "", fmt.Errorf("invalid mathtext.fallback %q, want cm, stix, stixsans, or None", value)
+	}
+}
+
+// parseMPLAspect validates an image.aspect value: "equal", "auto", or a numeric
+// ratio. The normalized string is returned for storage.
+func parseMPLAspect(value string) (string, error) {
+	normalized := strings.ToLower(normalizeMPLValue(value))
+	switch normalized {
+	case "equal", "auto":
+		return normalized, nil
+	}
+	if _, err := strconv.ParseFloat(normalized, 64); err == nil {
+		return normalized, nil
+	}
+	return "", fmt.Errorf("invalid aspect %q, want equal, auto, or a number", value)
 }
 
 func parseMPLGridAxis(value string) (string, error) {

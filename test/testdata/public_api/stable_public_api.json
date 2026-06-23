@@ -855,6 +855,10 @@
           "declaration": "func (Renderer) Path(p geom.Path, paint *render.Paint)"
         },
         {
+          "id": "method Renderer.Resize",
+          "declaration": "func (Renderer) Resize(width, height int) error"
+        },
+        {
           "id": "method Renderer.Resolution",
           "declaration": "func (Renderer) Resolution() uint"
         },
@@ -7845,7 +7849,7 @@
         },
         {
           "id": "type DrawOptions",
-          "declaration": "type DrawOptions struct{ AnimatedFilter AnimatedFilter }"
+          "declaration": "type DrawOptions struct{ AnimatedFilter AnimatedFilter; Transparent bool; FigureBackground *render.Color; FigureEdge *render.Color; FigureEdgeWidth float64 }"
         },
         {
           "id": "type ECDFOptions",
@@ -8874,8 +8878,48 @@
           "declaration": "const QuadTo"
         },
         {
+          "id": "func CheckIfParallel",
+          "declaration": "func CheckIfParallel(d1, d2 Pt, tolerance float64) int"
+        },
+        {
+          "id": "func FindBezierTIntersectingWithClosedPath",
+          "declaration": "func FindBezierTIntersectingWithClosedPath( pointAt func(float64) Pt, inside func(Pt) bool, t0, t1, tolerance float64, ) (float64, float64, bool)"
+        },
+        {
+          "id": "func FindControlPoints",
+          "declaration": "func FindControlPoints(c1, mm, c2 Pt) [3]Pt"
+        },
+        {
+          "id": "func GetCosSin",
+          "declaration": "func GetCosSin(p0, p1 Pt) (cos, sin float64)"
+        },
+        {
+          "id": "func GetIntersection",
+          "declaration": "func GetIntersection(c1 Pt, cosT1, sinT1 float64, c2 Pt, cosT2, sinT2 float64) (Pt, bool)"
+        },
+        {
+          "id": "func GetNormalPoints",
+          "declaration": "func GetNormalPoints(c Pt, cosT, sinT, length float64) (left, right Pt)"
+        },
+        {
+          "id": "func GetParallels",
+          "declaration": "func GetParallels(bezier2 [3]Pt, width float64) (left, right [3]Pt)"
+        },
+        {
           "id": "func Identity",
           "declaration": "func Identity() Affine"
+        },
+        {
+          "id": "func InsideCircle",
+          "declaration": "func InsideCircle(cx, cy, r float64) func(Pt) bool"
+        },
+        {
+          "id": "func MakeWedgedBezier2",
+          "declaration": "func MakeWedgedBezier2(bezier2 [3]Pt, width, w1, wm, w2 float64) (left, right [3]Pt)"
+        },
+        {
+          "id": "func NewBezierSegment",
+          "declaration": "func NewBezierSegment(points ...Pt) BezierSegment"
         },
         {
           "id": "func NullRect",
@@ -8884,6 +8928,14 @@
         {
           "id": "func RectFromPoints",
           "declaration": "func RectFromPoints(points ...Pt) (Rect, bool)"
+        },
+        {
+          "id": "func SplitBezierIntersectingWithClosedPath",
+          "declaration": "func SplitBezierIntersectingWithClosedPath( bezier []Pt, inside func(Pt) bool, tolerance float64, ) (left, right []Pt)"
+        },
+        {
+          "id": "func SplitDeCasteljau",
+          "declaration": "func SplitDeCasteljau(beta []Pt, t float64) (left, right []Pt)"
         },
         {
           "id": "func UnionRects",
@@ -8900,6 +8952,26 @@
         {
           "id": "method Affine.Mul",
           "declaration": "func (Affine) Mul(n Affine) Affine"
+        },
+        {
+          "id": "method BezierSegment.ArcLength",
+          "declaration": "func (BezierSegment) ArcLength(tolerance float64) float64"
+        },
+        {
+          "id": "method BezierSegment.AxisAlignedExtrema",
+          "declaration": "func (BezierSegment) AxisAlignedExtrema() (dims []int, roots []float64)"
+        },
+        {
+          "id": "method BezierSegment.Degree",
+          "declaration": "func (BezierSegment) Degree() int"
+        },
+        {
+          "id": "method BezierSegment.PointAt",
+          "declaration": "func (BezierSegment) PointAt(t float64) Pt"
+        },
+        {
+          "id": "method BezierSegment.PolynomialCoefficients",
+          "declaration": "func (BezierSegment) PolynomialCoefficients() []Pt"
         },
         {
           "id": "method Path.Bounds",
@@ -9024,6 +9096,10 @@
         {
           "id": "type Affine",
           "declaration": "type Affine struct{ A F64; B F64; C F64; D F64; E F64; F F64 }"
+        },
+        {
+          "id": "type BezierSegment",
+          "declaration": "type BezierSegment struct{ Points []Pt }"
         },
         {
           "id": "type Cmd",
@@ -10078,6 +10154,34 @@
           "declaration": "func WithSVGMetadata(metadata map[string]string) SVGOption"
         },
         {
+          "id": "func WithSaveBboxInches",
+          "declaration": "func WithSaveBboxInches(bbox string) FigureOption"
+        },
+        {
+          "id": "func WithSaveDPI",
+          "declaration": "func WithSaveDPI(dpi float64) FigureOption"
+        },
+        {
+          "id": "func WithSaveEdgecolor",
+          "declaration": "func WithSaveEdgecolor(c Color) FigureOption"
+        },
+        {
+          "id": "func WithSaveFacecolor",
+          "declaration": "func WithSaveFacecolor(c Color) FigureOption"
+        },
+        {
+          "id": "func WithSaveFormat",
+          "declaration": "func WithSaveFormat(format string) FigureOption"
+        },
+        {
+          "id": "func WithSavePadInches",
+          "declaration": "func WithSavePadInches(pad float64) FigureOption"
+        },
+        {
+          "id": "func WithSaveTransparent",
+          "declaration": "func WithSaveTransparent(transparent bool) FigureOption"
+        },
+        {
           "id": "func WithStrokePathEffects",
           "declaration": "func WithStrokePathEffects(stroke Color, linewidth float64, offset geom.Pt) []PathEffect"
         },
@@ -10278,6 +10382,10 @@
           "declaration": "type AntialiasMode uint8"
         },
         {
+          "id": "type BackgroundClearer",
+          "declaration": "type BackgroundClearer interface{ Clear func(Color) }"
+        },
+        {
           "id": "type BboxImageDrawer",
           "declaration": "type BboxImageDrawer interface{ DrawBboxImage func(img Image, bbox geom.Rect) bool }"
         },
@@ -10312,6 +10420,14 @@
         {
           "id": "type DPIProvider",
           "declaration": "type DPIProvider interface{ Resolution func() uint }"
+        },
+        {
+          "id": "type FigureOption",
+          "declaration": "type FigureOption func(*FigureOptions)"
+        },
+        {
+          "id": "type FigureOptions",
+          "declaration": "type FigureOptions struct{ DPI float64; HasDPI bool; Facecolor Color; HasFacecolor bool; Edgecolor Color; HasEdgecolor bool; Transparent bool; HasTransparent bool; BboxInches string; HasBbox bool; PadInches float64; HasPad bool; Format string }"
         },
         {
           "id": "type FilterRenderer",
@@ -10618,6 +10734,10 @@
           "declaration": "type RendererModeReporter interface{ RendererModeLabel func() string }"
         },
         {
+          "id": "type Resizer",
+          "declaration": "type Resizer interface{ Resize func(width, height int) error }"
+        },
+        {
           "id": "type RotatedMathTextImageDrawer",
           "declaration": "type RotatedMathTextImageDrawer interface{ DrawMathTextImageRotated func(glyphs []MathGlyphPlacement, rects []MathRectPlacement, origin geom.Pt, boxAscent, boxDescent, angle float64, textColor Color) bool }"
         },
@@ -10663,7 +10783,7 @@
         },
         {
           "id": "type SaveOptions",
-          "declaration": "type SaveOptions struct{ SVG SVGOptions; PDF PDFOptions; PS PSOptions; PGF PGFOptions }"
+          "declaration": "type SaveOptions struct{ SVG SVGOptions; PDF PDFOptions; PS PSOptions; PGF PGFOptions; Figure FigureOptions }"
         },
         {
           "id": "type ShapedGlyph",
@@ -10972,6 +11092,26 @@
           "declaration": "func (StyleLibraryError) Unwrap() []error"
         },
         {
+          "id": "type AnimationRC",
+          "declaration": "type AnimationRC struct{ HTML string; Writer string; Codec string; Bitrate int; FPS int; FrameFormat string; FFmpegPath string; FFmpegArgs []string; ConvertPath string; ConvertArgs []string; EmbedLimit float64 }"
+        },
+        {
+          "id": "type BoxplotRC",
+          "declaration": "type BoxplotRC struct{ Notch bool; Vertical bool; Whiskers float64; PatchArtist bool; ShowMeans bool; ShowCaps bool; ShowBox bool; ShowFliers bool; MeanLine bool; FlierColor render.Color; FlierMarkerSize float64; FlierEdgeWidth float64; BoxLineWidth float64; WhiskerLineWidth float64; CapLineWidth float64; MedianLineWidth float64; MedianColor render.Color; MeanColor render.Color }"
+        },
+        {
+          "id": "type DateRC",
+          "declaration": "type DateRC struct{ AutoYear string; AutoMonth string; AutoDay string; AutoHour string; AutoMinute string; AutoSecond string; AutoMicrosecond string; Epoch string; Converter string; IntervalMultiples bool }"
+        },
+        {
+          "id": "type HatchRC",
+          "declaration": "type HatchRC struct{ Color render.Color; LineWidth float64 }"
+        },
+        {
+          "id": "type ImageRC",
+          "declaration": "type ImageRC struct{ Cmap string; Interpolation string; InterpolationStage string; Origin string; Aspect string; Resample bool; LUT int; CompositeImage bool }"
+        },
+        {
           "id": "type MPLStyleIssue",
           "declaration": "type MPLStyleIssue struct{ Line int; Key string; Value string }"
         },
@@ -10980,8 +11120,20 @@
           "declaration": "type MPLStyleReport struct{ Applied []string; Unsupported []MPLStyleIssue }"
         },
         {
+          "id": "type MathtextRC",
+          "declaration": "type MathtextRC struct{ Fontset string; Default string; Fallback string; BF string; BFit string; Cal string; It string; RM string; SF string; TT string }"
+        },
+        {
           "id": "type Option",
           "declaration": "type Option func(*RC)"
+        },
+        {
+          "id": "type PDFRC",
+          "declaration": "type PDFRC struct{ FontType int; Use14CoreFonts bool; Compression int; InheritColor bool }"
+        },
+        {
+          "id": "type PSRC",
+          "declaration": "type PSRC struct{ FontType int; UseAFM bool; PaperSize string; UseDistiller bool; DistillerRes int }"
         },
         {
           "id": "type Params",
@@ -10989,7 +11141,15 @@
         },
         {
           "id": "type RC",
-          "declaration": "type RC struct{ DPI float64; FontKey string; FontSize float64; LineWidth float64; TextColor [4]float64; LineColor [4]float64; Background [4]float64; TickCountX int; TickCountY int; FigureWidth float64; FigureHeight float64; UseTeX bool; PathSimplify bool; PathSimplifyThreshold float64; AggPathChunkSize int; PathSketch render.SketchParams; AxesBackground render.Color; AxesEdgeColor render.Color; AxesTitleColor render.Color; AxesLabelColor render.Color; AxisLineWidth float64; XTickColor render.Color; YTickColor render.Color; TitleFontSize float64; AxisLabelFontSize float64; XTickLabelFontSize float64; YTickLabelFontSize float64; GridColor render.Color; MinorGridColor render.Color; GridLineWidth float64; MinorGridLineWidth float64; GridDashes []float64; MinorGridDashes []float64; GridVisible bool; GridAxis string; GridWhich string; LegendBackground render.Color; LegendBorderColor render.Color; LegendTextColor render.Color; LegendFontSize float64; LegendFrameAlpha float64; LegendFrameOn bool; ColorCycle color.Palette; WidgetVisualStyle WidgetVisualStyle }"
+          "declaration": "type RC struct{ DPI float64; FontKey string; FontSize float64; LineWidth float64; TextColor [4]float64; LineColor [4]float64; Background [4]float64; TickCountX int; TickCountY int; FigureWidth float64; FigureHeight float64; UseTeX bool; PathSimplify bool; PathSimplifyThreshold float64; AggPathChunkSize int; PathSketch render.SketchParams; AxesBackground render.Color; AxesEdgeColor render.Color; AxesTitleColor render.Color; AxesLabelColor render.Color; AxisLineWidth float64; XTickColor render.Color; YTickColor render.Color; TitleFontSize float64; AxisLabelFontSize float64; XTickLabelFontSize float64; YTickLabelFontSize float64; GridColor render.Color; MinorGridColor render.Color; GridLineWidth float64; MinorGridLineWidth float64; GridDashes []float64; MinorGridDashes []float64; GridVisible bool; GridAxis string; GridWhich string; LegendBackground render.Color; LegendBorderColor render.Color; LegendTextColor render.Color; LegendFontSize float64; LegendFrameAlpha float64; LegendFrameOn bool; ColorCycle color.Palette; WidgetVisualStyle WidgetVisualStyle; Image ImageRC; Hatch HatchRC; Boxplot BoxplotRC; Mathtext MathtextRC; Date DateRC; PDF PDFRC; PS PSRC; SVG SVGRC; Animation AnimationRC; Savefig SavefigRC }"
+        },
+        {
+          "id": "type SVGRC",
+          "declaration": "type SVGRC struct{ FontType string; ImageInline bool; HashSalt string; ID string }"
+        },
+        {
+          "id": "type SavefigRC",
+          "declaration": "type SavefigRC struct{ Dpi float64; Facecolor string; Edgecolor string; Transparent bool; BboxInches string; PadInches float64; Format string }"
         },
         {
           "id": "type StyleLibraryEntry",
@@ -11017,7 +11177,7 @@
         },
         {
           "id": "var Default",
-          "declaration": "var Default = RC{ DPI: 100, FontKey: \"DejaVu Sans\", FontSize: 10, LineWidth: 1.25, TextColor: [4]float64{0, 0, 0, 1}, LineColor: [4]float64{0, 0, 0, 1}, Background: [4]float64{1, 1, 1, 1}, TickCountX: 5, TickCountY: 5, FigureWidth: 6.4, FigureHeight: 4.8, UseTeX: false, PathSimplify: false, PathSimplifyThreshold: 1.0 / 9.0, AggPathChunkSize: 0, AxesBackground: render.Color{R: 1, G: 1, B: 1, A: 1}, AxesEdgeColor: render.Color{R: 0, G: 0, B: 0, A: 1}, AxesTitleColor: render.Color{R: 0, G: 0, B: 0, A: 1}, AxesLabelColor: render.Color{R: 0, G: 0, B: 0, A: 1}, AxisLineWidth: 0.8 * 100.0 / 72.0, XTickColor: render.Color{R: 0, G: 0, B: 0, A: 1}, YTickColor: render.Color{R: 0, G: 0, B: 0, A: 1}, TitleFontSize: 12, AxisLabelFontSize: 10, XTickLabelFontSize: 10, YTickLabelFontSize: 10, GridColor: render.Color{R: 0xb0 / 255.0, G: 0xb0 / 255.0, B: 0xb0 / 255.0, A: 1}, MinorGridColor: render.Color{R: 0xb0 / 255.0, G: 0xb0 / 255.0, B: 0xb0 / 255.0, A: 1}, GridLineWidth: 0.8 * 100.0 / 72.0, MinorGridLineWidth: 0.8 * 100.0 / 72.0, GridVisible: false, GridAxis: \"both\", GridWhich: \"major\", LegendBackground: render.Color{R: 1, G: 1, B: 1, A: 0.8}, LegendBorderColor: render.Color{R: 0.8, G: 0.8, B: 0.8, A: 0.8}, LegendTextColor: render.Color{R: 0, G: 0, B: 0, A: 1}, LegendFontSize: 10, LegendFrameAlpha: 0.8, LegendFrameOn: true, ColorCycle: color.Tab10, WidgetVisualStyle: WidgetVisualGo, }"
+          "declaration": "var Default = RC{ DPI: 100, FontKey: \"DejaVu Sans\", FontSize: 10, LineWidth: 1.25, TextColor: [4]float64{0, 0, 0, 1}, LineColor: [4]float64{0, 0, 0, 1}, Background: [4]float64{1, 1, 1, 1}, TickCountX: 5, TickCountY: 5, FigureWidth: 6.4, FigureHeight: 4.8, UseTeX: false, PathSimplify: false, PathSimplifyThreshold: 1.0 / 9.0, AggPathChunkSize: 0, AxesBackground: render.Color{R: 1, G: 1, B: 1, A: 1}, AxesEdgeColor: render.Color{R: 0, G: 0, B: 0, A: 1}, AxesTitleColor: render.Color{R: 0, G: 0, B: 0, A: 1}, AxesLabelColor: render.Color{R: 0, G: 0, B: 0, A: 1}, AxisLineWidth: 0.8 * 100.0 / 72.0, XTickColor: render.Color{R: 0, G: 0, B: 0, A: 1}, YTickColor: render.Color{R: 0, G: 0, B: 0, A: 1}, TitleFontSize: 12, AxisLabelFontSize: 10, XTickLabelFontSize: 10, YTickLabelFontSize: 10, GridColor: render.Color{R: 0xb0 / 255.0, G: 0xb0 / 255.0, B: 0xb0 / 255.0, A: 1}, MinorGridColor: render.Color{R: 0xb0 / 255.0, G: 0xb0 / 255.0, B: 0xb0 / 255.0, A: 1}, GridLineWidth: 0.8 * 100.0 / 72.0, MinorGridLineWidth: 0.8 * 100.0 / 72.0, GridVisible: false, GridAxis: \"both\", GridWhich: \"major\", LegendBackground: render.Color{R: 1, G: 1, B: 1, A: 0.8}, LegendBorderColor: render.Color{R: 0.8, G: 0.8, B: 0.8, A: 0.8}, LegendTextColor: render.Color{R: 0, G: 0, B: 0, A: 1}, LegendFontSize: 10, LegendFrameAlpha: 0.8, LegendFrameOn: true, ColorCycle: color.Tab10, WidgetVisualStyle: WidgetVisualGo, Image: ImageRC{ Cmap: \"viridis\", Interpolation: \"auto\", InterpolationStage: \"auto\", Origin: \"upper\", Aspect: \"equal\", Resample: true, LUT: 256, CompositeImage: true, }, Hatch: HatchRC{ Color: render.Color{R: 0, G: 0, B: 0, A: 1}, LineWidth: 1.0, }, Boxplot: BoxplotRC{ Notch: false, Vertical: true, Whiskers: 1.5, PatchArtist: false, ShowMeans: false, ShowCaps: true, ShowBox: true, ShowFliers: true, MeanLine: false, FlierColor: render.Color{R: 0, G: 0, B: 0, A: 1}, FlierMarkerSize: 6, FlierEdgeWidth: 1.0, BoxLineWidth: 1.0, WhiskerLineWidth: 1.0, CapLineWidth: 1.0, MedianLineWidth: 1.0, MedianColor: color.Tab10[1], MeanColor: color.Tab10[2], }, Mathtext: MathtextRC{ Fontset: \"dejavusans\", Default: \"it\", Fallback: \"cm\", BF: \"sans:bold\", BFit: \"sans:italic:bold\", Cal: \"cursive\", It: \"sans:italic\", RM: \"sans\", SF: \"sans\", TT: \"monospace\", }, Date: DateRC{ AutoYear: \"%Y\", AutoMonth: \"%Y-%m\", AutoDay: \"%Y-%m-%d\", AutoHour: \"%m-%d %H\", AutoMinute: \"%d %H:%M\", AutoSecond: \"%H:%M:%S\", AutoMicrosecond: \"%M:%S.%f\", Epoch: \"1970-01-01T00:00:00\", Converter: \"auto\", IntervalMultiples: true, }, PDF: PDFRC{ FontType: 3, Use14CoreFonts: false, Compression: 6, InheritColor: false, }, PS: PSRC{ FontType: 3, UseAFM: false, PaperSize: \"letter\", DistillerRes: 6000, }, SVG: SVGRC{ FontType: \"path\", ImageInline: true, HashSalt: \"\", ID: \"\", }, Animation: AnimationRC{ HTML: \"none\", Writer: \"ffmpeg\", Codec: \"h264\", Bitrate: -1, FPS: 0, FrameFormat: \"png\", FFmpegPath: \"ffmpeg\", ConvertPath: \"convert\", ConvertArgs: []string{\"-layers\", \"OptimizePlus\"}, EmbedLimit: 20.0, }, Savefig: SavefigRC{ Dpi: 0, Facecolor: \"auto\", Edgecolor: \"auto\", Transparent: false, BboxInches: \"\", PadInches: 0.1, Format: \"\", }, }"
         },
         {
           "id": "var ThemeDarkBackground",

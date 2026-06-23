@@ -17,6 +17,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 	defer r.End()
 	setRendererResolution(r, fig.RC.DPI)
 	setRendererSketch(r, fig.RC.PathSketch)
+	drawFigureBackground(r, vp, opts)
 
 	prepareFigureLayout(fig, r, vp)
 	syncAxesLocators(fig, r)
@@ -72,7 +73,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 			continue
 		}
 
-		if ax.PatchVisible && shouldDrawAxesBackground(ctx.RC.AxesBackground, fig.RC.FigureBackground(), px, drawnAxes) {
+		if ax.PatchVisible && !opts.Transparent && shouldDrawAxesBackground(ctx.RC.AxesBackground, fig.RC.FigureBackground(), px, drawnAxes) {
 			backgroundPath := pixelRectPath(px)
 			if framePath, ok := projectionFramePath(ctx.Projection, px); ok {
 				backgroundPath = framePath
@@ -322,6 +323,21 @@ func isSecondaryAxes(ax *Axes) bool {
 		return true
 	}
 	return false
+}
+
+// drawFigureBackground paints the save-time figure face fill and edge stroke
+// requested via DrawOptions (savefig.facecolor/edgecolor). It is a no-op for the
+// common case where neither override is set.
+func drawFigureBackground(r render.Renderer, vp geom.Rect, opts DrawOptions) {
+	if opts.FigureBackground != nil && opts.FigureBackground.A > 0 {
+		r.Path(pixelRectPath(vp), &render.Paint{Fill: *opts.FigureBackground})
+	}
+	if opts.FigureEdge != nil && opts.FigureEdge.A > 0 && opts.FigureEdgeWidth > 0 {
+		r.Path(pixelRectPath(vp), &render.Paint{
+			Stroke:    *opts.FigureEdge,
+			LineWidth: opts.FigureEdgeWidth,
+		})
+	}
 }
 
 func shouldDrawAxesBackground(axesBackground, figureBackground render.Color, px geom.Rect, previous []geom.Rect) bool {

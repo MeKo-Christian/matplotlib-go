@@ -3,7 +3,6 @@ package core
 import (
 	"math"
 
-	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -1151,6 +1150,8 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		opt = opts[0]
 	}
 
+	rc := a.resolvedRC()
+
 	position := 1.0
 	if opt.Position != nil {
 		position = *opt.Position
@@ -1164,7 +1165,10 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 	// Matplotlib's default boxplot is patch_artist=False: an unfilled box that
 	// does not consume the color cycle. Only fill (and default the facecolor to
 	// white) when patch_artist is requested.
-	patchArtist := opt.PatchArtist != nil && *opt.PatchArtist
+	patchArtist := rc.Boxplot.PatchArtist
+	if opt.PatchArtist != nil {
+		patchArtist = *opt.PatchArtist
+	}
 	color := render.Color{}
 	if patchArtist {
 		color = render.Color{R: 1, G: 1, B: 1, A: 1}
@@ -1178,12 +1182,12 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		edgeColor = *opt.EdgeColor
 	}
 
-	medianColor := matcolor.Tab10[1]
+	medianColor := rc.Boxplot.MedianColor
 	if opt.MedianColor != nil {
 		medianColor = *opt.MedianColor
 	}
 
-	meanColor := matcolor.Tab10[2]
+	meanColor := rc.Boxplot.MeanColor
 	if opt.MeanColor != nil {
 		meanColor = *opt.MeanColor
 	}
@@ -1203,18 +1207,17 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		flierColor = *opt.FlierColor
 	}
 
-	defaultLineWidth := pointsToPixels(a.resolvedRC(), 1)
-	edgeWidth := defaultLineWidth
+	edgeWidth := pointsToPixels(rc, rc.Boxplot.BoxLineWidth)
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
 	}
 
-	whiskerWidth := defaultLineWidth
+	whiskerWidth := pointsToPixels(rc, rc.Boxplot.WhiskerLineWidth)
 	if opt.WhiskerWidth != nil {
 		whiskerWidth = *opt.WhiskerWidth
 	}
 
-	medianWidth := defaultLineWidth
+	medianWidth := pointsToPixels(rc, rc.Boxplot.MedianLineWidth)
 	if opt.MedianWidth != nil {
 		medianWidth = *opt.MedianWidth
 	}
@@ -1224,7 +1227,7 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		capWidth = *opt.CapWidth
 	}
 
-	flierSize := 6.0
+	flierSize := rc.Boxplot.FlierMarkerSize
 	if opt.FlierSize != nil {
 		flierSize = *opt.FlierSize
 	}
@@ -1235,25 +1238,31 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 	color = bakeExplicitAlpha(color, opt.Alpha)
 	edgeColor = bakeExplicitAlpha(edgeColor, opt.Alpha)
 
-	showFliers := true
+	showFliers := rc.Boxplot.ShowFliers
 	if opt.ShowFliers != nil {
 		showFliers = *opt.ShowFliers
 	}
-	showBox := true
+	showBox := rc.Boxplot.ShowBox
 	if opt.ShowBox != nil {
 		showBox = *opt.ShowBox
 	}
-	showCaps := true
+	showCaps := rc.Boxplot.ShowCaps
 	if opt.ShowCaps != nil {
 		showCaps = *opt.ShowCaps
 	}
-	showMeans := opt.ShowMeans != nil && *opt.ShowMeans
-	meanLine := opt.MeanLine != nil && *opt.MeanLine
+	showMeans := rc.Boxplot.ShowMeans
+	if opt.ShowMeans != nil {
+		showMeans = *opt.ShowMeans
+	}
+	meanLine := rc.Boxplot.MeanLine
+	if opt.MeanLine != nil {
+		meanLine = *opt.MeanLine
+	}
 	orientation := ""
 	if opt.Orientation != nil {
 		orientation = *opt.Orientation
 	}
-	notch := false
+	notch := rc.Boxplot.Notch
 	if opt.Notch != nil {
 		notch = *opt.Notch
 	}
@@ -1261,14 +1270,14 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 	if opt.FlierMarker != nil {
 		flierMarker = *opt.FlierMarker
 	}
-	flierEdgeColor := edgeColor
+	flierEdgeColor := rc.Boxplot.FlierColor
 	if opt.FlierColor != nil {
 		flierEdgeColor = flierColor
 	}
 	if opt.FlierEdgeColor != nil {
 		flierEdgeColor = *opt.FlierEdgeColor
 	}
-	flierEdgeWidth := defaultLineWidth
+	flierEdgeWidth := pointsToPixels(rc, rc.Boxplot.FlierEdgeWidth)
 	if opt.FlierEdgeWidth != nil {
 		flierEdgeWidth = *opt.FlierEdgeWidth
 	}

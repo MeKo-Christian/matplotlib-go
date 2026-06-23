@@ -8,6 +8,7 @@ import (
 	mt "github.com/cwbudde/mathtext"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 // MathTextLayoutRun is one text draw in a laid-out MathText expression.
@@ -164,6 +165,11 @@ type mathTextFontResolver struct{}
 
 func (mathTextFontResolver) ResolveMathFontKey(base string, request mt.FontRequest) string {
 	props := render.ParseFontProperties(base)
+	if strings.TrimSpace(props.MathFontFamily) == "" {
+		// Default the math font set from rcParams["mathtext.fontset"] when the
+		// font key does not already encode one (matplotlib's mathtext.fontset).
+		props.MathFontFamily = style.CurrentDefaults().Mathtext.Fontset
+	}
 	if len(request.Families) > 0 {
 		props.File = ""
 		props.Families = mathFontRequestFamilies(props.MathFontFamily, request.Families)

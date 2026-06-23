@@ -607,9 +607,30 @@ its current ~13% rcParam coverage.
       `devRect`, consistent with `CopyFromBBox` and the backend's y-up public
       boundary. `region.Rect` stays device-space (matches matplotlib's
       `BufferRegion.get_extents`). Covered by `TestRestoreRegionWithBBoxAndOffset`.
-- [ ] **rcParams coverage** for `savefig.*`, `pdf.*`/`ps.*`/`svg.*`,
-      `animation.*`, `boxplot.*`, `mathtext.*`, `hatch.*`, `image.*`, `date.*`
-      (`style/mplstyle.go:31`).
+- [x] **rcParams coverage** for `savefig.*`, `pdf.*`/`ps.*`/`svg.*`,
+      `animation.*`, `boxplot.*`, `mathtext.*`, `hatch.*`, `image.*`, `date.*`.
+      All eight groups are parsed, validated, stored on nested `style.RC`
+      sub-structs (`ImageRC`/`HatchRC`/`BoxplotRC`/`MathtextRC`/`DateRC`/`PDFRC`/
+      `PSRC`/`SVGRC`/`AnimationRC`/`SavefigRC` in `style/style.go`), and
+      round-trip losslessly through `paramsFromRC` (guarded by
+      `TestCurrentParamsRoundTripsWithoutUnsupported`). **Functionally wired:**
+      `hatch.color`/`linewidth` (`core/contour_filled.go`), `image.cmap`/
+      `interpolation` (`core/image_api.go`), `boxplot.*` show-flags/widths/colors
+      (`core/boxplot.go`, `core/plot.go`), `mathtext.fontset` (`core/mathtext.go`
+      resolver), `pdf`/`ps` fonttype/useafm/use14corefonts → backend font policy
+      (`core/rcsaveopts.go`, seeded in `SavePDF`/`SavePS`). **`savefig.*` is
+      applied at save time:** `render.FigureOptions` + `WithSave*` options
+      (`render/extensions.go`) layered over `RC.Savefig` in `core/savefig_options.go`
+      drive `facecolor`/`edgecolor`/`transparent` (figure + axes patches),
+      `dpi` (vector + raster via new `agg.Renderer.Resize`/`render.Resizer`),
+      `format` (extension-independent dispatch in `SaveFig`), and
+      `bbox=tight`+`pad_inches` (raster pixel-crop in `core/savefig_tightbbox.go`;
+      vector formats return a clear unsupported error). **Store-only** (validated
+      + round-tripped, consumer pending, by design): `image.origin`/`aspect`/
+      `resample`/`lut`, `mathtext.default`+per-style font patterns, all `date.*`
+      (blocked on a strftime→Go-layout converter), `svg.fonttype`/`image_inline`
+      (port's SVG default is native text), and all `animation.*`. Public-API
+      audit + doc coverage regenerated.
 - [ ] **Cyclers** for `linestyle`/`marker`/`linewidth`; bundle the common
       `.mplstyle` sheets (`seaborn-*`, `fivethirtyeight`, `bmh`,
       `Solarize_Light2`) (`style/theme.go:23`).

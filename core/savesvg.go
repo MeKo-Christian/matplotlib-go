@@ -9,8 +9,15 @@ import (
 // SaveSVG saves a figure to an SVG file using the provided renderer.
 // This function draws the figure using the renderer and then exports to SVG.
 func SaveSVG(fig *Figure, r render.Renderer, path string, opts ...render.SaveOption) error {
+	if fig == nil {
+		return errors.New("savesvg: nil figure")
+	}
 	saveOptions := render.ResolveSaveOptions(opts...)
 	if err := saveOptions.ValidateForExtension(".svg"); err != nil {
+		return err
+	}
+	eff, drawOpts, resolved := prepareSaveFigure(fig, r, &saveOptions.Figure)
+	if err := rejectTightBboxForVector(resolved.bboxTight, "SVG"); err != nil {
 		return err
 	}
 	svgOptions := saveOptions.SVG
@@ -19,7 +26,7 @@ func SaveSVG(fig *Figure, r render.Renderer, path string, opts ...render.SaveOpt
 	}
 
 	// Draw the figure using the renderer.
-	DrawFigure(fig, r)
+	DrawFigureWithOptions(eff, r, drawOpts)
 
 	// Check if this renderer supports SVG export.
 	if exporter, ok := r.(render.SVGOptionExporter); ok {

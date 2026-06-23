@@ -414,11 +414,122 @@ type SaveOptions struct {
 	PDF PDFOptions
 	PS  PSOptions
 	PGF PGFOptions
+	// Figure holds format-agnostic save-time options (savefig.* rcParams).
+	Figure FigureOptions
 
-	hasSVG bool
-	hasPDF bool
-	hasPS  bool
-	hasPGF bool
+	hasSVG    bool
+	hasPDF    bool
+	hasPS     bool
+	hasPGF    bool
+	hasFigure bool
+}
+
+// FigureOptions holds format-agnostic, save-time figure options mirroring
+// Matplotlib's savefig.* rcParams. The Has* flags record which values were set
+// explicitly by the caller so they can override rcParams defaults.
+type FigureOptions struct {
+	// DPI overrides the render resolution at save time (savefig.dpi); 0 means
+	// "use the figure DPI".
+	DPI float64
+	// HasDPI reports whether DPI was set explicitly.
+	HasDPI bool
+	// Facecolor overrides the figure face color (savefig.facecolor).
+	Facecolor Color
+	// HasFacecolor reports whether Facecolor was set explicitly.
+	HasFacecolor bool
+	// Edgecolor overrides the figure edge color (savefig.edgecolor).
+	Edgecolor Color
+	// HasEdgecolor reports whether Edgecolor was set explicitly.
+	HasEdgecolor bool
+	// Transparent renders the figure (and axes) backgrounds transparent
+	// (savefig.transparent).
+	Transparent bool
+	// HasTransparent reports whether Transparent was set explicitly.
+	HasTransparent bool
+	// BboxInches selects the saved bounding box (savefig.bbox): "" (standard) or
+	// "tight".
+	BboxInches string
+	// HasBbox reports whether BboxInches was set explicitly.
+	HasBbox bool
+	// PadInches is the padding around a tight bbox, in inches (savefig.pad_inches).
+	PadInches float64
+	// HasPad reports whether PadInches was set explicitly.
+	HasPad bool
+	// Format overrides the output format independent of the path extension
+	// (savefig.format).
+	Format string
+}
+
+// FigureOption configures format-agnostic save-time options.
+type FigureOption func(*FigureOptions)
+
+func (f FigureOption) applySaveOptions(dst *SaveOptions) {
+	if f == nil {
+		return
+	}
+	f(&dst.Figure)
+	dst.hasFigure = true
+}
+
+// WithSaveDPI overrides the render resolution at save time (savefig.dpi).
+func WithSaveDPI(dpi float64) FigureOption {
+	return func(opts *FigureOptions) {
+		opts.DPI = dpi
+		opts.HasDPI = true
+	}
+}
+
+// WithSaveFacecolor overrides the figure face color at save time
+// (savefig.facecolor).
+func WithSaveFacecolor(c Color) FigureOption {
+	return func(opts *FigureOptions) {
+		opts.Facecolor = c
+		opts.HasFacecolor = true
+	}
+}
+
+// WithSaveEdgecolor overrides the figure edge color at save time
+// (savefig.edgecolor).
+func WithSaveEdgecolor(c Color) FigureOption {
+	return func(opts *FigureOptions) {
+		opts.Edgecolor = c
+		opts.HasEdgecolor = true
+	}
+}
+
+// WithSaveTransparent renders transparent figure/axes backgrounds at save time
+// (savefig.transparent).
+func WithSaveTransparent(transparent bool) FigureOption {
+	return func(opts *FigureOptions) {
+		opts.Transparent = transparent
+		opts.HasTransparent = true
+	}
+}
+
+// WithSaveBboxInches selects the saved bounding box (savefig.bbox): "" for the
+// standard box or "tight" to crop to content.
+func WithSaveBboxInches(bbox string) FigureOption {
+	return func(opts *FigureOptions) {
+		opts.BboxInches = bbox
+		opts.HasBbox = true
+	}
+}
+
+// WithSavePadInches sets the padding around a tight bbox in inches
+// (savefig.pad_inches).
+func WithSavePadInches(pad float64) FigureOption {
+	return func(opts *FigureOptions) {
+		opts.PadInches = pad
+		opts.HasPad = true
+	}
+}
+
+// WithSaveFormat overrides the output format independent of the path extension
+// (savefig.format).
+func WithSaveFormat(format string) FigureOption {
+	return func(opts *FigureOptions) {
+		opts.Format = format
+	}
 }
 
 // ResolveSaveOptions applies shared save options onto deterministic per-format
@@ -525,6 +636,24 @@ func (opts SaveOptions) applySaveOptions(dst *SaveOptions) {
 		dst.PGF = opts.PGF
 		dst.hasPGF = true
 	}
+	if opts.hasFigure {
+		dst.Figure = opts.Figure
+		dst.hasFigure = true
+	}
+}
+
+// BackgroundClearer is implemented by raster renderers that can re-clear their
+// surface to a new background color before drawing. The save pipeline uses it to
+// apply savefig.facecolor and savefig.transparent.
+type BackgroundClearer interface {
+	Clear(Color)
+}
+
+// Resizer is implemented by raster renderers that can reallocate their surface
+// to a new pixel size. The save pipeline uses it to apply savefig.dpi on raster
+// output (where the canvas grows with resolution).
+type Resizer interface {
+	Resize(width, height int) error
 }
 
 // SVGExporter is implemented by renderers that can export their output to SVG.

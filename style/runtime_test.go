@@ -66,6 +66,27 @@ func TestPushContextRestoresPreviousDefaults(t *testing.T) {
 	}
 }
 
+// TestCurrentParamsRoundTripsWithoutUnsupported guards the round-trip invariant:
+// every key serialized by paramsFromRC must be re-parseable by applyMPLStyleEntry
+// (and vice versa), so applying CurrentParams back onto the defaults reports no
+// unsupported keys. This single test covers all rcParam groups.
+func TestCurrentParamsRoundTripsWithoutUnsupported(t *testing.T) {
+	ResetDefaults()
+	t.Cleanup(ResetDefaults)
+
+	params := CurrentParams()
+	report, err := UpdateParams(params)
+	if err != nil {
+		t.Fatalf("UpdateParams(CurrentParams()) error = %v", err)
+	}
+	if len(report.Unsupported) != 0 {
+		t.Fatalf("round-trip produced unsupported keys: %+v", report.Unsupported)
+	}
+	if len(report.Applied) != len(params) {
+		t.Fatalf("applied %d keys, want %d", len(report.Applied), len(params))
+	}
+}
+
 func TestLoadRCFileReplacesCurrentDefaults(t *testing.T) {
 	ResetDefaults()
 	t.Cleanup(ResetDefaults)

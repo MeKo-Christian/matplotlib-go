@@ -191,7 +191,45 @@ func paramsFromRC(rc RC) Params {
 	params["axes.prop_cycle"] = formatMPLColorCycle(rc.Palette())
 	params["axes.titlecolor"] = formatMPLColor(rc.DefaultAxesTitleColor())
 	params["axes.titlesize"] = formatMPLFloat(rc.TitleSize())
+	params["boxplot.boxprops.linewidth"] = formatMPLFloat(rc.Boxplot.BoxLineWidth)
+	params["boxplot.capprops.linewidth"] = formatMPLFloat(rc.Boxplot.CapLineWidth)
+	params["boxplot.flierprops.color"] = formatMPLColor(rc.Boxplot.FlierColor)
+	params["boxplot.flierprops.markeredgewidth"] = formatMPLFloat(rc.Boxplot.FlierEdgeWidth)
+	params["boxplot.flierprops.markersize"] = formatMPLFloat(rc.Boxplot.FlierMarkerSize)
+	params["boxplot.meanline"] = formatMPLBool(rc.Boxplot.MeanLine)
+	params["boxplot.meanprops.color"] = formatMPLColor(rc.Boxplot.MeanColor)
+	params["boxplot.medianprops.color"] = formatMPLColor(rc.Boxplot.MedianColor)
+	params["boxplot.medianprops.linewidth"] = formatMPLFloat(rc.Boxplot.MedianLineWidth)
+	params["boxplot.notch"] = formatMPLBool(rc.Boxplot.Notch)
+	params["boxplot.patchartist"] = formatMPLBool(rc.Boxplot.PatchArtist)
+	params["boxplot.showbox"] = formatMPLBool(rc.Boxplot.ShowBox)
+	params["boxplot.showcaps"] = formatMPLBool(rc.Boxplot.ShowCaps)
+	params["boxplot.showfliers"] = formatMPLBool(rc.Boxplot.ShowFliers)
+	params["boxplot.showmeans"] = formatMPLBool(rc.Boxplot.ShowMeans)
+	params["boxplot.vertical"] = formatMPLBool(rc.Boxplot.Vertical)
+	params["boxplot.whiskerprops.linewidth"] = formatMPLFloat(rc.Boxplot.WhiskerLineWidth)
+	params["boxplot.whiskers"] = formatMPLFloat(rc.Boxplot.Whiskers)
+	params["date.autoformatter.day"] = rc.Date.AutoDay
+	params["date.autoformatter.hour"] = rc.Date.AutoHour
+	params["date.autoformatter.microsecond"] = rc.Date.AutoMicrosecond
+	params["date.autoformatter.minute"] = rc.Date.AutoMinute
+	params["date.autoformatter.month"] = rc.Date.AutoMonth
+	params["date.autoformatter.second"] = rc.Date.AutoSecond
+	params["date.autoformatter.year"] = rc.Date.AutoYear
+	params["date.converter"] = rc.Date.Converter
+	params["date.epoch"] = rc.Date.Epoch
+	params["date.interval_multiples"] = formatMPLBool(rc.Date.IntervalMultiples)
 	params["agg.path.chunksize"] = strconv.Itoa(rc.AggPathChunkSize)
+	params["animation.bitrate"] = strconv.Itoa(rc.Animation.Bitrate)
+	params["animation.codec"] = rc.Animation.Codec
+	params["animation.convert_args"] = strings.Join(rc.Animation.ConvertArgs, ", ")
+	params["animation.convert_path"] = rc.Animation.ConvertPath
+	params["animation.embed_limit"] = formatMPLFloat(rc.Animation.EmbedLimit)
+	params["animation.ffmpeg_args"] = strings.Join(rc.Animation.FFmpegArgs, ", ")
+	params["animation.ffmpeg_path"] = rc.Animation.FFmpegPath
+	params["animation.frame_format"] = rc.Animation.FrameFormat
+	params["animation.html"] = rc.Animation.HTML
+	params["animation.writer"] = rc.Animation.Writer
 	params["figure.dpi"] = formatMPLFloat(rc.DPI)
 	params["figure.facecolor"] = formatMPLColor(rc.FigureBackground())
 	params["figure.figsize"] = fmt.Sprintf("%s, %s", formatMPLFloat(rc.FigureWidth), formatMPLFloat(rc.FigureHeight))
@@ -205,6 +243,16 @@ func paramsFromRC(rc RC) Params {
 	params["grid.major.linestyle"] = formatMPLLineStyle(rc.GridDashes)
 	params["grid.minor.color"] = formatMPLColor(rc.MinorGridColor)
 	params["grid.minor.linestyle"] = formatMPLLineStyle(rc.MinorGridDashes)
+	params["hatch.color"] = formatMPLColor(rc.Hatch.Color)
+	params["hatch.linewidth"] = formatMPLFloat(rc.Hatch.LineWidth)
+	params["image.aspect"] = rc.Image.Aspect
+	params["image.cmap"] = rc.Image.Cmap
+	params["image.composite_image"] = formatMPLBool(rc.Image.CompositeImage)
+	params["image.interpolation"] = rc.Image.Interpolation
+	params["image.interpolation_stage"] = rc.Image.InterpolationStage
+	params["image.lut"] = strconv.Itoa(rc.Image.LUT)
+	params["image.origin"] = rc.Image.Origin
+	params["image.resample"] = formatMPLBool(rc.Image.Resample)
 	params["legend.edgecolor"] = formatMPLColor(rc.LegendBorderColor)
 	params["legend.facecolor"] = formatMPLColor(rc.LegendBackground)
 	params["legend.fontsize"] = formatMPLFloat(rc.LegendSize())
@@ -213,8 +261,38 @@ func paramsFromRC(rc RC) Params {
 	params["legend.labelcolor"] = formatMPLColor(rc.LegendTextColor)
 	params["lines.color"] = formatMPLColor(rc.DefaultLineColor())
 	params["lines.linewidth"] = formatMPLPoints(rc.LineWidth, rc.DPI)
+	params["mathtext.bf"] = rc.Mathtext.BF
+	params["mathtext.bfit"] = rc.Mathtext.BFit
+	params["mathtext.cal"] = rc.Mathtext.Cal
+	params["mathtext.default"] = rc.Mathtext.Default
+	params["mathtext.fallback"] = formatMPLMathtextFallback(rc.Mathtext.Fallback)
+	params["mathtext.fontset"] = rc.Mathtext.Fontset
+	params["mathtext.it"] = rc.Mathtext.It
+	params["mathtext.rm"] = rc.Mathtext.RM
+	params["mathtext.sf"] = rc.Mathtext.SF
+	params["mathtext.tt"] = rc.Mathtext.TT
 	params["path.simplify"] = formatMPLBool(rc.PathSimplify)
 	params["path.simplify_threshold"] = formatMPLFloat(rc.PathSimplifyThreshold)
+	params["pdf.compression"] = strconv.Itoa(rc.PDF.Compression)
+	params["pdf.fonttype"] = strconv.Itoa(rc.PDF.FontType)
+	params["pdf.inheritcolor"] = formatMPLBool(rc.PDF.InheritColor)
+	params["pdf.use14corefonts"] = formatMPLBool(rc.PDF.Use14CoreFonts)
+	params["ps.distiller.res"] = strconv.Itoa(rc.PS.DistillerRes)
+	params["ps.fonttype"] = strconv.Itoa(rc.PS.FontType)
+	params["ps.papersize"] = rc.PS.PaperSize
+	params["ps.useafm"] = formatMPLBool(rc.PS.UseAFM)
+	params["ps.usedistiller"] = formatMPLBool(rc.PS.UseDistiller)
+	params["savefig.bbox"] = formatMPLSavefigBbox(rc.Savefig.BboxInches)
+	params["savefig.dpi"] = formatMPLSavefigDPI(rc.Savefig.Dpi)
+	params["savefig.edgecolor"] = rc.Savefig.Edgecolor
+	params["savefig.facecolor"] = rc.Savefig.Facecolor
+	params["savefig.format"] = rc.Savefig.Format
+	params["savefig.pad_inches"] = formatMPLFloat(rc.Savefig.PadInches)
+	params["savefig.transparent"] = formatMPLBool(rc.Savefig.Transparent)
+	params["svg.fonttype"] = rc.SVG.FontType
+	params["svg.hashsalt"] = formatMPLStringOrNone(rc.SVG.HashSalt)
+	params["svg.id"] = formatMPLStringOrNone(rc.SVG.ID)
+	params["svg.image_inline"] = formatMPLBool(rc.SVG.ImageInline)
 	params["text.color"] = formatMPLColor(rc.DefaultTextColor())
 	params["text.usetex"] = formatMPLBool(rc.UseTeX)
 	params["xtick.color"] = formatMPLColor(rc.XTickColor)
@@ -229,6 +307,34 @@ func paramsFromRC(rc RC) Params {
 
 func formatMPLFloat(value float64) string {
 	return strconv.FormatFloat(value, 'f', -1, 64)
+}
+
+func formatMPLSavefigBbox(value string) string {
+	if strings.TrimSpace(value) == "" {
+		return "standard"
+	}
+	return value
+}
+
+func formatMPLSavefigDPI(dpi float64) string {
+	if dpi <= 0 {
+		return "figure"
+	}
+	return formatMPLFloat(dpi)
+}
+
+func formatMPLStringOrNone(value string) string {
+	if strings.TrimSpace(value) == "" {
+		return "None"
+	}
+	return value
+}
+
+func formatMPLMathtextFallback(value string) string {
+	if strings.TrimSpace(value) == "" {
+		return "None"
+	}
+	return value
 }
 
 func formatMPLBool(value bool) string {
