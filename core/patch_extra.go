@@ -368,13 +368,9 @@ func patchRegularPolygonPath(center geom.Pt, sides int, radius, orientationRad f
 	if sides < 3 || radius <= 0 {
 		return geom.Path{}
 	}
-	points := make([]geom.Pt, sides)
-	step := 2 * math.Pi / float64(sides)
-	for i := range points {
-		theta := orientationRad + float64(i)*step
-		points[i] = geom.Pt{X: center.X + radius*math.Cos(theta), Y: center.Y + radius*math.Sin(theta)}
-	}
-	return polygonPath(points, true)
+	return geom.UnitRegularPolygon(sides).Transformed(
+		unitPolyAffine(center, radius, orientationRad),
+	)
 }
 
 func rotationAffine(angleDeg float64) geom.Affine {

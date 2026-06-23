@@ -7,7 +7,9 @@ import (
 
 const (
 	patchCircleSegments = 48
-	patchArcKappa       = 0.5522847498307936
+	// patchArcKappa aliases geom.BezierCircleKappa so the 4-cubic circle
+	// approximation has a single source of truth in the geom package.
+	patchArcKappa = geom.BezierCircleKappa
 )
 
 // BoxStyle controls the shape used by FancyBboxPatch.

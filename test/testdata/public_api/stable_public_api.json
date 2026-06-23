@@ -8866,6 +8866,10 @@
       "dir": "geom",
       "symbols": [
         {
+          "id": "const BezierCircleKappa",
+          "declaration": "const BezierCircleKappa = 0.5522847498307936"
+        },
+        {
           "id": "const ClosePath",
           "declaration": "const ClosePath"
         },
@@ -8886,8 +8890,20 @@
           "declaration": "const QuadTo"
         },
         {
+          "id": "func Arc",
+          "declaration": "func Arc(theta1, theta2 float64, n int) Path"
+        },
+        {
           "id": "func CheckIfParallel",
           "declaration": "func CheckIfParallel(d1, d2 Pt, tolerance float64) int"
+        },
+        {
+          "id": "func Circle",
+          "declaration": "func Circle(center Pt, radius float64) Path"
+        },
+        {
+          "id": "func EllipseBezier",
+          "declaration": "func EllipseBezier(center Pt, rx, ry float64) Path"
         },
         {
           "id": "func FindBezierTIntersectingWithClosedPath",
@@ -8948,6 +8964,34 @@
         {
           "id": "func UnionRects",
           "declaration": "func UnionRects(rects ...Rect) (Rect, bool)"
+        },
+        {
+          "id": "func UnitCircle",
+          "declaration": "func UnitCircle() Path"
+        },
+        {
+          "id": "func UnitCircleRightHalf",
+          "declaration": "func UnitCircleRightHalf() Path"
+        },
+        {
+          "id": "func UnitRectangle",
+          "declaration": "func UnitRectangle() Path"
+        },
+        {
+          "id": "func UnitRegularAsterisk",
+          "declaration": "func UnitRegularAsterisk(numVertices int) Path"
+        },
+        {
+          "id": "func UnitRegularPolygon",
+          "declaration": "func UnitRegularPolygon(numVertices int) Path"
+        },
+        {
+          "id": "func UnitRegularStar",
+          "declaration": "func UnitRegularStar(numVertices int, innerCircle float64) Path"
+        },
+        {
+          "id": "func Wedge",
+          "declaration": "func Wedge(theta1, theta2 float64, n int) Path"
         },
         {
           "id": "method Affine.Apply",

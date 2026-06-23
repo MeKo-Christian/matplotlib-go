@@ -675,8 +675,20 @@ work."
       matplotlib 3.10.9 in `geom/bezier_test.go`; `core/arrow_patch.go` now
       delegates its wedge construction to `geom.MakeWedgedBezier2` instead of an
       ad-hoc reimplementation.
-- [ ] **Path-generator helpers** in `geom`: `unit_circle`, `arc`, `wedge`,
-      4-cubic circle approximation (currently rebuilt ad hoc in `core/`).
+- [x] **Path-generator helpers** in `geom` (`geom/path_generators.go`):
+      `UnitCircle`/`Circle` and `UnitCircleRightHalf` (8-/4-cubic Lancaster
+      approximation), `Arc`/`Wedge` (Masionobe algorithm, auto or explicit
+      segment count), the 4-cubic `EllipseBezier` (kappa), plus `UnitRectangle`,
+      `UnitRegularPolygon`, `UnitRegularStar`, and `UnitRegularAsterisk`. The
+      kappa constant is now exported once as `geom.BezierCircleKappa`. Values
+      verified against matplotlib 3.10.9 in `geom/path_generators_test.go`. The
+      ad-hoc reimplementations across `core/` and `render/` now delegate to
+      these: `ellipseBezierPath`, `matplotlibArcPath` (so pie/polar/`Arc` patch
+      follow transitively), the scatter circle/half-circle/regular-polygon/star
+      markers, the GeoAxes frame, `patchRegularPolygonPath`
+      (RegularPolygon/CirclePolygon), and the circle/star hatches. (Left as-is:
+      the 48-segment polygonal `ellipsePath` used by `Annulus` and the dead
+      `boxplot.circlePath` — neither is a Bézier path generator.)
 - [ ] **Triangulation library** (`tri/`: Delaunay, `TriFinder`,
       `TriInterpolator`) instead of per-call implementations.
 - [ ] **Live bbox-linked transforms** (`BboxTransformTo`) so axes resize

@@ -657,33 +657,9 @@ func splitCircleMarkerPath(fill MarkerFillStyle, size float64) geom.Path {
 	if r <= 0 {
 		return geom.Path{}
 	}
-	const magic = 0.2652031
-	sqrtHalf := math.Sqrt(0.5)
-	magic45 := sqrtHalf * magic
-
-	path := geom.Path{}
-	path.MoveTo(geom.Pt{X: 0, Y: -r})
-	path.CubicTo(
-		geom.Pt{X: magic * r, Y: -r},
-		geom.Pt{X: (sqrtHalf - magic45) * r, Y: -(sqrtHalf + magic45) * r},
-		geom.Pt{X: sqrtHalf * r, Y: -sqrtHalf * r},
-	)
-	path.CubicTo(
-		geom.Pt{X: (sqrtHalf + magic45) * r, Y: -(sqrtHalf - magic45) * r},
-		geom.Pt{X: r, Y: -magic * r},
-		geom.Pt{X: r, Y: 0},
-	)
-	path.CubicTo(
-		geom.Pt{X: r, Y: magic * r},
-		geom.Pt{X: (sqrtHalf + magic45) * r, Y: (sqrtHalf - magic45) * r},
-		geom.Pt{X: sqrtHalf * r, Y: sqrtHalf * r},
-	)
-	path.CubicTo(
-		geom.Pt{X: (sqrtHalf - magic45) * r, Y: (sqrtHalf + magic45) * r},
-		geom.Pt{X: magic * r, Y: r},
-		geom.Pt{X: 0, Y: r},
-	)
-	path.Close()
+	// The unfilled half is the right half of the unit circle scaled to radius r;
+	// it is rotated below to point in the requested fill direction.
+	path := geom.UnitCircleRightHalf().Transformed(geom.Affine{A: r, D: r})
 
 	angle := 0.0
 	switch fill {
@@ -844,41 +820,11 @@ func ScatterAreaFromRadius(radiusPx, dpi float64) float64 {
 	return math.Pi * radiusPt * radiusPt
 }
 
-// createCirclePath creates the same cubic unit-circle marker Matplotlib uses.
+// createCirclePath creates the same cubic unit-circle marker Matplotlib uses
+// (Path.circle, eight cubic Béziers). radius is a diameter-scale, matching the
+// other marker builders, so the circle radius is radius/2.
 func (s *Scatter2D) createCirclePath(center geom.Pt, radius float64) geom.Path {
-	const segments = 8
-	const control = 0.2652031
-	r := radius * 0.5
-	delta := 2 * math.Pi / segments
-
-	point := func(theta float64) geom.Pt {
-		return geom.Pt{
-			X: center.X + r*math.Cos(theta),
-			Y: center.Y + r*math.Sin(theta),
-		}
-	}
-	tangent := func(theta float64) geom.Pt {
-		return geom.Pt{X: -math.Sin(theta), Y: math.Cos(theta)}
-	}
-
-	path := geom.Path{}
-	theta0 := -math.Pi / 2
-	path.MoveTo(point(theta0))
-	for i := 0; i < segments; i++ {
-		theta1 := theta0 + delta
-		p0 := point(theta0)
-		p1 := point(theta1)
-		t0 := tangent(theta0)
-		t1 := tangent(theta1)
-		path.CubicTo(
-			geom.Pt{X: p0.X + control*r*t0.X, Y: p0.Y + control*r*t0.Y},
-			geom.Pt{X: p1.X - control*r*t1.X, Y: p1.Y - control*r*t1.Y},
-			p1,
-		)
-		theta0 = theta1
-	}
-	path.Close()
-	return path
+	return geom.Circle(center, radius*0.5)
 }
 
 func markerCirclePath(size float64) geom.Path {
@@ -905,14 +851,9 @@ func markerRegularPolygonPath(numsides int, angleDeg float64) geom.Path {
 	if numsides < 3 {
 		return geom.Path{}
 	}
-	points := make([]geom.Pt, numsides)
-	angle := angleDeg * math.Pi / 180
-	step := 2 * math.Pi / float64(numsides)
-	for i := range points {
-		theta := angle + float64(i)*step
-		points[i] = geom.Pt{X: 0.5 * math.Cos(theta), Y: 0.5 * math.Sin(theta)}
-	}
-	return polygonPath(points, true)
+	return geom.UnitRegularPolygon(numsides).Transformed(
+		unitPolyAffine(geom.Pt{}, 0.5, angleDeg*math.Pi/180),
+	)
 }
 
 func markerTrianglePath(angleDeg float64) geom.Path {
@@ -927,18 +868,13 @@ func markerStarPath(numsides int, innerCircle float64, angleDeg float64, close b
 	if numsides < 3 {
 		return geom.Path{}
 	}
-	points := make([]geom.Pt, 0, numsides*2)
-	angle := angleDeg * math.Pi / 180
-	step := math.Pi / float64(numsides)
-	for i := 0; i < numsides*2; i++ {
-		radius := 0.5
-		if i%2 == 1 {
-			radius *= innerCircle
-		}
-		theta := angle + float64(i)*step
-		points = append(points, geom.Pt{X: radius * math.Cos(theta), Y: radius * math.Sin(theta)})
+	path := geom.UnitRegularStar(numsides, innerCircle).Transformed(
+		unitPolyAffine(geom.Pt{}, 0.5, angleDeg*math.Pi/180),
+	)
+	if !close && len(path.C) > 0 && path.C[len(path.C)-1] == geom.ClosePath {
+		path.C = path.C[:len(path.C)-1]
 	}
-	return polygonPath(points, close)
+	return path
 }
 
 func markerTriPath(angleDeg float64) geom.Path {

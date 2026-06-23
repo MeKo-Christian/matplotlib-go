@@ -359,47 +359,12 @@ func matplotlibArcPath(center geom.Pt, radius, theta1, theta2 float64) geom.Path
 	if radius <= 0 {
 		return geom.Path{}
 	}
-	eta1Deg := theta1
-	eta2Deg := theta2 - 360*math.Floor((theta2-theta1)/360)
-	if theta2 != theta1 && eta2Deg <= eta1Deg {
-		eta2Deg += 360
-	}
-	eta1 := eta1Deg * math.Pi / 180
-	eta2 := eta2Deg * math.Pi / 180
-	n := int(math.Pow(2, math.Ceil((eta2-eta1)/(0.5*math.Pi))))
-	if n < 1 {
-		n = 1
-	}
-	deta := (eta2 - eta1) / float64(n)
-	t := math.Tan(0.5 * deta)
-	alpha := math.Sin(deta) * (math.Sqrt(4+3*t*t) - 1) / 3
-
-	path := geom.Path{}
-	start := geom.Pt{
-		X: center.X + radius*math.Cos(eta1),
-		Y: center.Y + radius*math.Sin(eta1),
-	}
-	path.MoveTo(start)
-	for i := 0; i < n; i++ {
-		a := eta1 + float64(i)*deta
-		b := a + deta
-		cosA, sinA := math.Cos(a), math.Sin(a)
-		cosB, sinB := math.Cos(b), math.Sin(b)
-		c1 := geom.Pt{
-			X: center.X + radius*(cosA-alpha*sinA),
-			Y: center.Y + radius*(sinA+alpha*cosA),
-		}
-		c2 := geom.Pt{
-			X: center.X + radius*(cosB+alpha*sinB),
-			Y: center.Y + radius*(sinB-alpha*cosB),
-		}
-		to := geom.Pt{
-			X: center.X + radius*cosB,
-			Y: center.Y + radius*sinB,
-		}
-		path.CubicTo(c1, c2, to)
-	}
-	return path
+	// geom.Arc builds the unit arc with Matplotlib's algorithm; scale to the
+	// requested radius and translate to center. radius*v + center is
+	// float-identical to baking center/radius into the vertex math.
+	return geom.Arc(theta1, theta2, 0).Transformed(geom.Affine{
+		A: radius, D: radius, E: center.X, F: center.Y,
+	})
 }
 
 func piePoint(center geom.Pt, radius, angleDeg float64) geom.Pt {

@@ -177,51 +177,12 @@ func geoEllipsePath(clip geom.Rect) geom.Path {
 	center := geom.Pt{X: clip.Min.X + clip.W()/2, Y: clip.Min.Y + clip.H()/2}
 	rx := clip.W() / 2
 	ry := clip.H() / 2
-	path := geom.Path{}
 	if rx <= 0 || ry <= 0 {
-		return path
+		return geom.Path{}
 	}
-	// Matplotlib's GeoAxes frame is a Circle patch, whose Path.circle uses
-	// eight cubic Bézier arcs with this Lancaster constant.
-	const magic = 0.2652031
-	sqrtHalf := math.Sqrt(0.5)
-	magic45 := sqrtHalf * magic
-	unit := []geom.Pt{
-		{X: 0, Y: -1},
-		{X: magic, Y: -1},
-		{X: sqrtHalf - magic45, Y: -sqrtHalf - magic45},
-		{X: sqrtHalf, Y: -sqrtHalf},
-		{X: sqrtHalf + magic45, Y: -sqrtHalf + magic45},
-		{X: 1, Y: -magic},
-		{X: 1, Y: 0},
-		{X: 1, Y: magic},
-		{X: sqrtHalf + magic45, Y: sqrtHalf - magic45},
-		{X: sqrtHalf, Y: sqrtHalf},
-		{X: sqrtHalf - magic45, Y: sqrtHalf + magic45},
-		{X: magic, Y: 1},
-		{X: 0, Y: 1},
-		{X: -magic, Y: 1},
-		{X: -sqrtHalf + magic45, Y: sqrtHalf + magic45},
-		{X: -sqrtHalf, Y: sqrtHalf},
-		{X: -sqrtHalf - magic45, Y: sqrtHalf - magic45},
-		{X: -1, Y: magic},
-		{X: -1, Y: 0},
-		{X: -1, Y: -magic},
-		{X: -sqrtHalf - magic45, Y: -sqrtHalf + magic45},
-		{X: -sqrtHalf, Y: -sqrtHalf},
-		{X: -sqrtHalf + magic45, Y: -sqrtHalf - magic45},
-		{X: -magic, Y: -1},
-		{X: 0, Y: -1},
-	}
-	scale := func(pt geom.Pt) geom.Pt {
-		return geom.Pt{X: center.X + pt.X*rx, Y: center.Y + pt.Y*ry}
-	}
-	path.MoveTo(scale(unit[0]))
-	for i := 1; i < len(unit); i += 3 {
-		path.CubicTo(scale(unit[i]), scale(unit[i+1]), scale(unit[i+2]))
-	}
-	path.Close()
-	return path
+	// Matplotlib's GeoAxes frame is a Circle patch (Path.circle, eight cubic
+	// Bézier arcs); scale the unit circle anisotropically into the clip rect.
+	return geom.UnitCircle().Transformed(geom.Affine{A: rx, D: ry, E: center.X, F: center.Y})
 }
 
 func drawGeoGridLine(r render.Renderer, ctx *DrawContext, axis AxisSide, tick float64, paint render.Paint) {

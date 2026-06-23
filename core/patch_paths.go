@@ -23,35 +23,7 @@ func linspace(start, end float64, count int) []float64 {
 }
 
 func ellipseBezierPath(center geom.Pt, rx, ry float64) geom.Path {
-	if rx <= 0 || ry <= 0 {
-		return geom.Path{}
-	}
-	kx := rx * patchArcKappa
-	ky := ry * patchArcKappa
-	path := geom.Path{}
-	path.MoveTo(geom.Pt{X: center.X + rx, Y: center.Y})
-	path.CubicTo(
-		geom.Pt{X: center.X + rx, Y: center.Y + ky},
-		geom.Pt{X: center.X + kx, Y: center.Y + ry},
-		geom.Pt{X: center.X, Y: center.Y + ry},
-	)
-	path.CubicTo(
-		geom.Pt{X: center.X - kx, Y: center.Y + ry},
-		geom.Pt{X: center.X - rx, Y: center.Y + ky},
-		geom.Pt{X: center.X - rx, Y: center.Y},
-	)
-	path.CubicTo(
-		geom.Pt{X: center.X - rx, Y: center.Y - ky},
-		geom.Pt{X: center.X - kx, Y: center.Y - ry},
-		geom.Pt{X: center.X, Y: center.Y - ry},
-	)
-	path.CubicTo(
-		geom.Pt{X: center.X + kx, Y: center.Y - ry},
-		geom.Pt{X: center.X + rx, Y: center.Y - ky},
-		geom.Pt{X: center.X + rx, Y: center.Y},
-	)
-	path.Close()
-	return path
+	return geom.EllipseBezier(center, rx, ry)
 }
 
 func approxPtCore(a, b geom.Pt, tol float64) bool {
@@ -206,6 +178,20 @@ func ellipsePath(width, height float64) geom.Path {
 		})
 	}
 	return polygonPath(points, true)
+}
+
+// unitPolyAffine returns the transform mapping geom's unit regular polygon/star
+// (outer radius 1, first vertex at +90°) to one with the given outer radius,
+// first-vertex angle (radians), and center. It composes a uniform scale with
+// the rotation that re-points the +90° baseline at angleRad.
+func unitPolyAffine(center geom.Pt, radius, angleRad float64) geom.Affine {
+	phi := angleRad - math.Pi/2
+	c, s := math.Cos(phi), math.Sin(phi)
+	return geom.Affine{
+		A: radius * c, B: radius * s,
+		C: -radius * s, D: radius * c,
+		E: center.X, F: center.Y,
+	}
 }
 
 func polygonPath(points []geom.Pt, close bool) geom.Path {

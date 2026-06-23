@@ -516,33 +516,12 @@ func shapeHatchPaths(bounds geom.Rect, spacing float64, build func(geom.Pt) geom
 }
 
 func circleHatchPath(center geom.Pt, radius float64, ring bool) geom.Path {
-	k := radius * 0.5522847498307936
-	path := geom.Path{}
-	path.MoveTo(geom.Pt{X: center.X + radius, Y: center.Y})
-	path.CubicTo(
-		geom.Pt{X: center.X + radius, Y: center.Y + k},
-		geom.Pt{X: center.X + k, Y: center.Y + radius},
-		geom.Pt{X: center.X, Y: center.Y + radius},
-	)
-	path.CubicTo(
-		geom.Pt{X: center.X - k, Y: center.Y + radius},
-		geom.Pt{X: center.X - radius, Y: center.Y + k},
-		geom.Pt{X: center.X - radius, Y: center.Y},
-	)
-	path.CubicTo(
-		geom.Pt{X: center.X - radius, Y: center.Y - k},
-		geom.Pt{X: center.X - k, Y: center.Y - radius},
-		geom.Pt{X: center.X, Y: center.Y - radius},
-	)
-	path.CubicTo(
-		geom.Pt{X: center.X + k, Y: center.Y - radius},
-		geom.Pt{X: center.X + radius, Y: center.Y - k},
-		geom.Pt{X: center.X + radius, Y: center.Y},
-	)
-	path.Close()
+	path := geom.EllipseBezier(center, radius, radius)
 	if ring {
 		inner := radius * 0.9
-		ik := inner * 0.5522847498307936
+		// Reversed winding so the ring renders as a hole under even-odd fill;
+		// geom.EllipseBezier only produces the counter-clockwise outline.
+		ik := inner * geom.BezierCircleKappa
 		path.MoveTo(geom.Pt{X: center.X + inner, Y: center.Y})
 		path.CubicTo(
 			geom.Pt{X: center.X + inner, Y: center.Y - ik},
@@ -570,26 +549,13 @@ func circleHatchPath(center geom.Pt, radius float64, ring bool) geom.Path {
 }
 
 func starHatchPath(center geom.Pt, outer, inner float64) geom.Path {
-	points := make([]geom.Pt, 0, 10)
-	for i := 0; i < 10; i++ {
-		radius := outer
-		if i%2 == 1 {
-			radius = inner
-		}
-		angle := -math.Pi/2 + float64(i)*math.Pi/5
-		points = append(points, geom.Pt{
-			X: center.X + radius*math.Cos(angle),
-			Y: center.Y + radius*math.Sin(angle),
-		})
+	if outer <= 0 {
+		return geom.Path{}
 	}
-	path := geom.Path{}
-	for i, pt := range points {
-		if i == 0 {
-			path.MoveTo(pt)
-		} else {
-			path.LineTo(pt)
-		}
-	}
-	path.Close()
-	return path
+	// A 5-point regular star pointing down. geom.UnitRegularStar points up
+	// (+90°, outer radius 1, inner ratio); the negative scale rotates it 180°
+	// to point down and scales the outer radius to `outer`.
+	return geom.UnitRegularStar(5, inner/outer).Transformed(geom.Affine{
+		A: -outer, D: -outer, E: center.X, F: center.Y,
+	})
 }
