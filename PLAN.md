@@ -623,9 +623,18 @@ rcParam + stylesheet coverage.
 for the v1.0 parity claim but worth tracking so it does not vanish into "future
 work."
 
-- [ ] **Bézier toolkit** (`bezier.py` equivalent): `split_bezier`, arc-length,
+- [x] **Bézier toolkit** (`bezier.py` equivalent): `split_bezier`, arc-length,
       offset/parallel curves, `inside_circle` — used by fancy arrows and
-      annotation connectors.
+      annotation connectors. Ported to `geom/bezier.go`: `BezierSegment`
+      (eval/`ArcLength`/`PolynomialCoefficients`/`AxisAlignedExtrema`),
+      `SplitDeCasteljau`, `GetParallels`, `MakeWedgedBezier2`, `InsideCircle`,
+      and the supporting helpers (`GetCosSin`, `GetNormalPoints`,
+      `GetIntersection`, `CheckIfParallel`, `FindControlPoints`,
+      `FindBezierTIntersectingWithClosedPath`,
+      `SplitBezierIntersectingWithClosedPath`). Values verified against
+      matplotlib 3.10.9 in `geom/bezier_test.go`; `core/arrow_patch.go` now
+      delegates its wedge construction to `geom.MakeWedgedBezier2` instead of an
+      ad-hoc reimplementation.
 - [ ] **Path-generator helpers** in `geom`: `unit_circle`, `arc`, `wedge`,
       4-cubic circle approximation (currently rebuilt ad hoc in `core/`).
 - [ ] **Triangulation library** (`tri/`: Delaunay, `TriFinder`,

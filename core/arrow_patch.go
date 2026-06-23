@@ -819,48 +819,15 @@ func wedgeArrowPathForConnection(path geom.Path, tailWidth, shrinkFactor float64
 	return out
 }
 
+// wedgedQuadraticBezier delegates to the shared geom Bézier toolkit
+// (make_wedged_bezier2), keeping the degeneracy guard so callers can fall back
+// to a straight wedge when the control polygon collapses.
 func wedgedQuadraticBezier(start, ctrl, end geom.Pt, width, w1, wm, w2 float64) ([3]geom.Pt, [3]geom.Pt, bool) {
-	dirStart := geom.Pt{X: ctrl.X - start.X, Y: ctrl.Y - start.Y}
-	dirEnd := geom.Pt{X: end.X - ctrl.X, Y: end.Y - ctrl.Y}
-	if dirStart == (geom.Pt{}) || dirEnd == (geom.Pt{}) {
+	if start == ctrl || ctrl == end {
 		return [3]geom.Pt{}, [3]geom.Pt{}, false
 	}
-
-	startPlus, startMinus := normalPoints(start, dirStart, width*w1)
-	endPlus, endMinus := normalPoints(end, dirEnd, width*w2)
-
-	c12 := geom.Pt{X: (start.X + ctrl.X) / 2, Y: (start.Y + ctrl.Y) / 2}
-	c23 := geom.Pt{X: (ctrl.X + end.X) / 2, Y: (ctrl.Y + end.Y) / 2}
-	mid := geom.Pt{X: (c12.X + c23.X) / 2, Y: (c12.Y + c23.Y) / 2}
-	midPlus, midMinus := normalPoints(mid, geom.Pt{X: c23.X - c12.X, Y: c23.Y - c12.Y}, width*wm)
-
-	return [3]geom.Pt{
-			startPlus,
-			quadraticControlThroughMidpoint(startPlus, midPlus, endPlus),
-			endPlus,
-		}, [3]geom.Pt{
-			startMinus,
-			quadraticControlThroughMidpoint(startMinus, midMinus, endMinus),
-			endMinus,
-		}, true
-}
-
-func normalPoints(center, direction geom.Pt, distance float64) (geom.Pt, geom.Pt) {
-	length := math.Hypot(direction.X, direction.Y)
-	if length == 0 || distance == 0 {
-		return center, center
-	}
-	cosT := direction.X / length
-	sinT := direction.Y / length
-	return geom.Pt{X: center.X + distance*sinT, Y: center.Y - distance*cosT},
-		geom.Pt{X: center.X - distance*sinT, Y: center.Y + distance*cosT}
-}
-
-func quadraticControlThroughMidpoint(start, mid, end geom.Pt) geom.Pt {
-	return geom.Pt{
-		X: 0.5 * (4*mid.X - (start.X + end.X)),
-		Y: 0.5 * (4*mid.Y - (start.Y + end.Y)),
-	}
+	plus, minus := geom.MakeWedgedBezier2([3]geom.Pt{start, ctrl, end}, width, w1, wm, w2)
+	return plus, minus, true
 }
 
 func quadraticConnectionPoints(path geom.Path) (geom.Pt, geom.Pt, geom.Pt, bool) {
