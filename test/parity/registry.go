@@ -145,6 +145,7 @@ import (
 	example_locator_log_minor_threshold_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_log_minor_threshold_labels"
 	example_locator_maxn_edge_labels "github.com/cwbudde/matplotlib-go/test/parity/locator_maxn_edge_labels"
 	example_lognorm_imshow "github.com/cwbudde/matplotlib-go/test/parity/lognorm_imshow"
+	example_mathtext_accents "github.com/cwbudde/matplotlib-go/test/parity/mathtext_accents"
 	example_mathtext_basic "github.com/cwbudde/matplotlib-go/test/parity/mathtext_basic"
 	example_mathtext_fractions "github.com/cwbudde/matplotlib-go/test/parity/mathtext_fractions"
 	example_mathtext_gallery "github.com/cwbudde/matplotlib-go/test/parity/mathtext_gallery"
@@ -309,6 +310,7 @@ var renderByID = map[string]func() image.Image{
 	"contour_styles":                      example_contour_styles.Render,
 	"named_colors":                        example_named_colors.Render,
 	"named_colors_gallery":                example_named_colors_gallery.Render,
+	"mathtext_accents":                    example_mathtext_accents.Render,
 	"mathtext_basic":                      example_mathtext_basic.Render,
 	"mathtext_fractions":                  example_mathtext_fractions.Render,
 	"mathtext_integrals":                  example_mathtext_integrals.Render,

@@ -352,8 +352,8 @@ a few non-Phase-7 reference-compare rows.)
 fix text fallback.
 
 The **core completeness wave** (symbols, alphabets, per-glyph fallback, coverage
-test) is **done** in `github.com/cwbudde/mathtext v0.3.0` (no `replace`); the
-accent overhaul and the `Text(bbox=…)` bridge remain as a fast-follow.
+test) plus the **accent model** are **done** in `github.com/cwbudde/mathtext
+v0.4.2` (no `replace`); the `Text(bbox=…)` bridge remains as a fast-follow.
 
 - [x] **Expand the `tex2uni` symbol table** to the full 632 entries (arrows,
       relations, binary ops, `\cdots`/`\vdots`/`\ddots`, `\var*` Greek). The
@@ -366,9 +366,17 @@ accent overhaul and the `Text(bbox=…)` bridge remain as a fast-follow.
 - [x] **Math alphabets** `\mathbb \mathcal \mathfrak \mathscr \boldsymbol \bm`
       mapped to the Unicode Mathematical Alphanumeric block with the
       Letterlike-Symbols reserved holes (`mathtext/alphabets.go`).
-- [ ] **Accent model:** centered separate-glyph accents over the nucleus;
-      add `\widehat \widetilde \overbrace \underbrace \overline`-as-rule
-      `\stackrel \substack \overset \underset \not`. _(deferred fast-follow)_
+- [x] **Accent model:** centered separate-glyph accents over the nucleus
+      (matplotlib `Parser.accent` port: ink-box `Accent` metrics, 1/4-pad
+      centering, 2*thickness gap) in `mathtext v0.4.2` (`mathtext/accent.go`).
+      Covers the full `_accent_map` (`\hat \bar \vec \dot \ddot \dddot \ddddot
+      \tilde \breve \grave \acute \mathring \overrightarrow \overleftarrow` and
+      the char forms `\^ \~ \' \. \" \``), wide accents `\widehat \widetilde
+      \widebar` (AutoWidthChar against the DejaVu/STIX sized-symbol variants),
+      `\overline`-as-rule, and `\overset \underset \substack`. Parity case
+      `mathtext_accents` (golden/ref/reference-compare all green). `\overbrace
+      \underbrace \stackrel \not` ship as **best-effort, non-parity** extensions
+      (no upstream matplotlib mathtext support).
 - [x] **Per-glyph multi-font fallback** — `render/text_fallback.go`
       `ResolveTextRuns` walks the requested family list, then generics, then
       `STIXGeneral` per missing glyph, so Mathematical-Alphanumeric/symbol
@@ -383,8 +391,8 @@ accent overhaul and the `Text(bbox=…)` bridge remain as a fast-follow.
 **Exit criterion:** common Matplotlib labels render without literal-echo;
 symbol coverage is measured and reported. _Status: met for the core wave —
 632/632 symbols + the six math alphabets resolve to glyphs; coverage is asserted
-≥95% (100% today). Accents and the bbox→FancyBboxPatch bridge are the remaining
-fast-follow items._
+≥95% (100% today). The centered accent model shipped in mathtext v0.4.2; the
+bbox→FancyBboxPatch bridge is the remaining fast-follow item._
 
 ## Phase 9: Plot, Colormap & Norm Configuration Breadth
 

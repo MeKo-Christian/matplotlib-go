@@ -8,14 +8,12 @@ gioui.org/cpu v0.0.0-20210808092351-bfe733dd3334/go.mod h1:A8M0Cn5o+vY5LTMlnRoK3
 gioui.org/shader v1.0.8 h1:6ks0o/A+b0ne7RzEqRZK5f4Gboz2CfG+mVliciy6+qA=
 gioui.org/shader v1.0.8/go.mod h1:mWdiME581d/kV7/iEhLmUgUK5iZ09XR5XpduXzbePVM=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
-github.com/cwbudde/agg_go v0.3.1 h1:Mh8ue5uxlwc+Ts9g6tXysnVGGoPcdYkTKO+7x1HrDsQ=
-github.com/cwbudde/agg_go v0.3.1/go.mod h1:v3HUTqN3emwGwTyx6v9ex0ZELB/PfxxtuLL4L3dcD6g=
 github.com/cwbudde/agg_go v0.3.2 h1:CR1crhhnALHSxZ57clwOGgLx07HEHGlpoXZ5umYun9c=
 github.com/cwbudde/agg_go v0.3.2/go.mod h1:v3HUTqN3emwGwTyx6v9ex0ZELB/PfxxtuLL4L3dcD6g=
 github.com/cwbudde/algo-fft v0.6.11 h1:XgyYQbnzVnGUwVJQPWDyCwMlPbS0ZeuQTAjHTJBpEig=
 github.com/cwbudde/algo-fft v0.6.11/go.mod h1:H5rJ7JNXvhe3kT4yc41TJB9DEnO7KlhHN7toLO+ZZXU=
-github.com/cwbudde/mathtext v0.3.0 h1:VTTa7M0YK3odHgbcDUnDN4J0eYtmc4+z2n8IS0N6Dqc=
-github.com/cwbudde/mathtext v0.3.0/go.mod h1:U+8ryw66DJYX8UerM5kgtA2QVG5Y+f/4m5eqZxKwD2k=
+github.com/cwbudde/mathtext v0.4.2 h1:Ny94Lcz16R5dIyTNZeFMnms2RJ9+S5zdJBkl1bEc8BE=
+github.com/cwbudde/mathtext v0.4.2/go.mod h1:U+8ryw66DJYX8UerM5kgtA2QVG5Y+f/4m5eqZxKwD2k=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=

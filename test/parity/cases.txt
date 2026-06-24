@@ -37,6 +37,7 @@ mathtext_fractions
 mathtext_integrals
 mathtext_matrices
 mathtext_inline_labels
+mathtext_accents
 mathtext_gallery
 text_layout_gallery
 image_heatmap
