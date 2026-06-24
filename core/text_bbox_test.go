@@ -229,3 +229,108 @@ func TestTextBBoxDrawsBehindAxesAndFigureText(t *testing.T) {
 		t.Fatalf("expected visible bbox fill and stroke, got %+v", r.pathPaints)
 	}
 }
+
+func TestParseBoxStyleSpec(t *testing.T) {
+	spec, err := parseBoxStyleSpec("round, pad=0.3, rounding_size=0.2")
+	if err != nil {
+		t.Fatalf("parse round spec: %v", err)
+	}
+	if spec.style != BoxStyleRound {
+		t.Fatalf("style = %v, want BoxStyleRound", spec.style)
+	}
+	if !spec.hasPad || !approx(spec.pad, 0.3, 1e-12) {
+		t.Fatalf("pad = %v (has=%v), want 0.3", spec.pad, spec.hasPad)
+	}
+	if !spec.hasRounding || !approx(spec.roundingSize, 0.2, 1e-12) {
+		t.Fatalf("rounding_size = %v (has=%v), want 0.2", spec.roundingSize, spec.hasRounding)
+	}
+
+	saw, err := parseBoxStyleSpec("sawtooth,tooth_size=0.1")
+	if err != nil {
+		t.Fatalf("parse sawtooth spec: %v", err)
+	}
+	if saw.style != BoxStyleSawtooth || !saw.hasTooth || !approx(saw.toothSize, 0.1, 1e-12) {
+		t.Fatalf("sawtooth spec = %+v", saw)
+	}
+	if saw.hasPad {
+		t.Fatalf("sawtooth spec should not carry pad: %+v", saw)
+	}
+
+	for _, bad := range []string{"nope", "round,bogus=1", "round,pad=abc", "round,pad"} {
+		if _, err := parseBoxStyleSpec(bad); err == nil {
+			t.Fatalf("expected error for %q", bad)
+		}
+	}
+}
+
+func TestResolvedTextBBoxOptionsAppliesStyleSpec(t *testing.T) {
+	ctx := createTestDrawContext()
+	got := resolvedTextBBoxOptions(TextBBoxOptions{Style: "sawtooth,pad=0.3,tooth_size=0.1"}, ctx, 12)
+	if got.BoxStyle != BoxStyleSawtooth {
+		t.Fatalf("BoxStyle = %v, want BoxStyleSawtooth", got.BoxStyle)
+	}
+	if want := pointsToPixels(ctx.RC, 0.1*12); !approx(got.ToothSize, want, 1e-9) {
+		t.Fatalf("ToothSize = %v, want %v (fraction scaled to px)", got.ToothSize, want)
+	}
+	if want := pointsToPixels(ctx.RC, 0.3*12); !approx(got.Padding, want, 1e-9) {
+		t.Fatalf("Padding = %v, want %v", got.Padding, want)
+	}
+}
+
+func TestResolvedTextBBoxOptionsFallsBackOnBadStyle(t *testing.T) {
+	ctx := createTestDrawContext()
+	got := resolvedTextBBoxOptions(TextBBoxOptions{Style: "not-a-style"}, ctx, 12)
+	if got.BoxStyle != BoxStyleSquare {
+		t.Fatalf("BoxStyle = %v, want BoxStyleSquare fallback", got.BoxStyle)
+	}
+}
+
+func bboxPathHasCurves(path geom.Path) bool {
+	for _, c := range path.C {
+		if c == geom.QuadTo || c == geom.CubicTo {
+			return true
+		}
+	}
+	return false
+}
+
+func TestTextBBoxStyledPathSquareIsPaddedRect(t *testing.T) {
+	local := geom.Rect{Max: geom.Pt{X: 20, Y: 10}}
+	path, snap := textBBoxStyledPath(local, TextBBoxOptions{Padding: 4})
+	if bboxPathHasCurves(path) {
+		t.Fatalf("square box should have no curves: %v", path.C)
+	}
+	if snap != render.SnapAuto {
+		t.Fatalf("square snap = %v, want SnapAuto", snap)
+	}
+	b, ok := pathBounds(path)
+	if !ok {
+		t.Fatal("square path has no bounds")
+	}
+	if !approx(b.Min.X, -4, 1e-9) || !approx(b.Min.Y, -4, 1e-9) ||
+		!approx(b.Max.X, 24, 1e-9) || !approx(b.Max.Y, 14, 1e-9) {
+		t.Fatalf("square bounds = %+v, want padded by 4", b)
+	}
+}
+
+func TestTextBBoxStyledPathRoundHasCurves(t *testing.T) {
+	local := geom.Rect{Max: geom.Pt{X: 20, Y: 10}}
+	path, snap := textBBoxStyledPath(local, TextBBoxOptions{Padding: 4, BoxStyle: BoxStyleRound, RoundingSize: 3})
+	if !bboxPathHasCurves(path) {
+		t.Fatalf("round box should contain curves: %v", path.C)
+	}
+	if snap != render.SnapOff {
+		t.Fatalf("round snap = %v, want SnapOff", snap)
+	}
+}
+
+func TestTextBBoxStyledPathLegacyCornerRadius(t *testing.T) {
+	local := geom.Rect{Max: geom.Pt{X: 20, Y: 10}}
+	path, snap := textBBoxStyledPath(local, TextBBoxOptions{Padding: 4, CornerRadius: 3})
+	if !bboxPathHasCurves(path) {
+		t.Fatalf("CornerRadius box should contain curves: %v", path.C)
+	}
+	if snap != render.SnapOff {
+		t.Fatalf("CornerRadius snap = %v, want SnapOff", snap)
+	}
+}

@@ -368,22 +368,29 @@ v0.4.2` (no `replace`); the `Text(bbox=…)` bridge remains as a fast-follow.
       Letterlike-Symbols reserved holes (`mathtext/alphabets.go`).
 - [x] **Accent model:** centered separate-glyph accents over the nucleus
       (matplotlib `Parser.accent` port: ink-box `Accent` metrics, 1/4-pad
-      centering, 2*thickness gap) in `mathtext v0.4.2` (`mathtext/accent.go`).
+      centering, 2\*thickness gap) in `mathtext v0.4.2` (`mathtext/accent.go`).
       Covers the full `_accent_map` (`\hat \bar \vec \dot \ddot \dddot \ddddot
-      \tilde \breve \grave \acute \mathring \overrightarrow \overleftarrow` and
+    \tilde \breve \grave \acute \mathring \overrightarrow \overleftarrow` and
       the char forms `\^ \~ \' \. \" \``), wide accents `\widehat \widetilde
-      \widebar` (AutoWidthChar against the DejaVu/STIX sized-symbol variants),
-      `\overline`-as-rule, and `\overset \underset \substack`. Parity case
-      `mathtext_accents` (golden/ref/reference-compare all green). `\overbrace
+      \widebar`(AutoWidthChar against the DejaVu/STIX sized-symbol variants),
+   `\overline`-as-rule, and `\overset \underset \substack`. Parity case
+    `mathtext_accents`(golden/ref/reference-compare all green).`\overbrace
       \underbrace \stackrel \not` ship as **best-effort, non-parity** extensions
       (no upstream matplotlib mathtext support).
 - [x] **Per-glyph multi-font fallback** — `render/text_fallback.go`
       `ResolveTextRuns` walks the requested family list, then generics, then
       `STIXGeneral` per missing glyph, so Mathematical-Alphanumeric/symbol
       glyphs DejaVu lacks resolve to STIX instead of tofu.
-- [ ] **Bridge `Text(bbox=boxstyle=…)`** to the existing `FancyBboxPatch`
+- [x] **Bridge `Text(bbox=boxstyle=…)`** to the existing `FancyBboxPatch`
       styles (sawtooth/arrow/circle) (`core/text_bbox.go`, `patch_fancybbox.go`).
-      _(deferred fast-follow)_
+      `TextBBoxOptions` now carries a Matplotlib boxstyle spec string (`Style`,
+      e.g. `"round,pad=0.3,rounding_size=0.2"`, parsed by `parseBoxStyleSpec` in
+      `core/text_bbox_style.go`) plus typed `BoxStyle`/`RoundingSize`/`ToothSize`/
+      `ArrowHeadWidth`/`ArrowHeadAngle` fields; all five Text/Annotation draw paths
+      route through `textBBoxStyledPath`, which reuses `FancyBboxPatch.boxStylePath`.
+      `CornerRadius` stays as a backward-compatible square-with-rounded-corners
+      shortcut. New `text_bbox_styles` parity case covers all ten styles
+      (golden byte-identical; matplotlib RMSE ≈ 0.83 / PSNR 59 dB).
 - [x] Track mathtext coverage with a symbol-table parity test
       (`mathtext/coverage_test.go` against the vendored
       `testdata/tex2uni_symbols.json`; currently 100%).
@@ -392,7 +399,9 @@ v0.4.2` (no `replace`); the `Text(bbox=…)` bridge remains as a fast-follow.
 symbol coverage is measured and reported. _Status: met for the core wave —
 632/632 symbols + the six math alphabets resolve to glyphs; coverage is asserted
 ≥95% (100% today). The centered accent model shipped in mathtext v0.4.2; the
-bbox→FancyBboxPatch bridge is the remaining fast-follow item._
+bbox→FancyBboxPatch bridge is now done (all ten boxstyles reachable from a Text
+bbox via a Matplotlib spec string, validated by the `text_bbox_styles` parity
+case). Phase 8 is complete._
 
 ## Phase 9: Plot, Colormap & Norm Configuration Breadth
 
@@ -895,7 +904,7 @@ an interactive/animation redraw loop.
 ### Key insights (why it's more than a drop-in)
 
 - **`refreshDataTransform` fires the wrong stage.** `core/axes_transform.go:
-  refreshDataTransform` currently invalidates `dataNode` with **`InvalidAffine`
+refreshDataTransform` currently invalidates `dataNode` with **`InvalidAffine`
   for every change**, including the "non-affine leg changed every draw" branch
   (log/symlog, polar/geo/3D). A split-aware consumer wired to `dataNode` would
   therefore reuse a **stale projection** on a log-domain/limits change and render
@@ -930,7 +939,7 @@ an interactive/animation redraw loop.
 5. (Optional, larger) Non-affine-leg change detection so log/polar resizes also
    reuse the projection.
 
-**Out of scope:** passing the affine *separately* to the agg backend so it
+**Out of scope:** passing the affine _separately_ to the agg backend so it
 composes with the device y-flip and does zero per-vertex affine work
 (matplotlib's deepest win) — needs a `render.Renderer` capability/signature
 change.

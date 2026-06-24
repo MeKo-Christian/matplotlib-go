@@ -8801,7 +8801,7 @@
         },
         {
           "id": "type TextBBoxOptions",
-          "declaration": "type TextBBoxOptions struct{ FaceColor render.Color; EdgeColor render.Color; LineWidth float64; Padding float64; CornerRadius float64 }"
+          "declaration": "type TextBBoxOptions struct{ FaceColor render.Color; EdgeColor render.Color; LineWidth float64; Padding float64; CornerRadius float64; Style string; BoxStyle BoxStyle; RoundingSize float64; ToothSize float64; ArrowHeadWidth float64; ArrowHeadAngle float64 }"
         },
         {
           "id": "type TextBox",

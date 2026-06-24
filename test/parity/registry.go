@@ -215,6 +215,7 @@ import (
 	example_stem_horizontal "github.com/cwbudde/matplotlib-go/test/parity/stem_horizontal"
 	example_stem_plot "github.com/cwbudde/matplotlib-go/test/parity/stem_plot"
 	example_text_annotation_matrix "github.com/cwbudde/matplotlib-go/test/parity/text_annotation_matrix"
+	example_text_bbox_styles "github.com/cwbudde/matplotlib-go/test/parity/text_bbox_styles"
 	example_text_labels_strict "github.com/cwbudde/matplotlib-go/test/parity/text_labels_strict"
 	example_text_layout_gallery "github.com/cwbudde/matplotlib-go/test/parity/text_layout_gallery"
 	example_ticks_scales_formatters_gallery "github.com/cwbudde/matplotlib-go/test/parity/ticks_scales_formatters_gallery"
@@ -284,6 +285,7 @@ var renderByID = map[string]func() image.Image{
 	"multi_series_color_cycle":            example_multi_series_color_cycle.Render,
 	"legend_layout_matrix":                example_legend_layout_matrix.Render,
 	"text_annotation_matrix":              example_text_annotation_matrix.Render,
+	"text_bbox_styles":                    example_text_bbox_styles.Render,
 	"hist_basic":                          example_hist_basic.Render,
 	"hist_density":                        example_hist_density.Render,
 	"hist_strategies":                     example_hist_strategies.Render,

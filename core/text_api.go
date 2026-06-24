@@ -70,13 +70,37 @@ type TextOptions struct {
 	PathEffects    []render.PathEffect
 }
 
-// TextBBoxOptions configures a rectangular background behind text.
+// TextBBoxOptions configures a styled background box behind text.
+//
+// The box geometry mirrors Matplotlib's Text bbox, which is drawn with a
+// FancyBboxPatch. Three ways to pick a shape are supported, in priority order:
+//
+//   - Style: a Matplotlib boxstyle spec string, e.g. "round,pad=0.3" or
+//     "sawtooth,pad=0.5,tooth_size=0.1". When non-empty it populates BoxStyle,
+//     Padding, RoundingSize, and ToothSize (parsed internally).
+//   - BoxStyle (+ the per-style params below): the typed enum alternative.
+//   - CornerRadius: a backward-compatible shortcut for a square box with rounded
+//     corners (only consulted when Style is empty and BoxStyle is BoxStyleSquare).
 type TextBBoxOptions struct {
 	FaceColor    render.Color
 	EdgeColor    render.Color
 	LineWidth    float64
 	Padding      float64
 	CornerRadius float64
+	// Style is a Matplotlib boxstyle spec such as "round,pad=0.3,rounding_size=0.2".
+	// When set it overrides BoxStyle/RoundingSize/ToothSize and (if it carries a
+	// pad) Padding.
+	Style string
+	// BoxStyle selects a FancyBboxPatch shape (square, round, sawtooth, arrows, …).
+	BoxStyle BoxStyle
+	// RoundingSize is the corner radius for BoxStyleRound / BoxStyleRound4.
+	RoundingSize float64
+	// ToothSize is the tooth amplitude for BoxStyleSawtooth / BoxStyleRoundtooth.
+	ToothSize float64
+	// ArrowHeadWidth and ArrowHeadAngle tune the arrow boxstyles (Go extension;
+	// Matplotlib's larrow/rarrow/darrow take only pad).
+	ArrowHeadWidth float64
+	ArrowHeadAngle float64
 }
 
 // AnnotationOffsetUnits controls how AnnotationOptions.OffsetX/Y are converted.
