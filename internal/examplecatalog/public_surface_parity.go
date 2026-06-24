@@ -806,7 +806,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"transform/transformed_path.go", "geom/geom.go"},
 		CatalogIDs:        []string{"transform_coordinates", "path_clipped_transformed", "annotation_composition"},
-		Note:              "Go TransformedPath covers clone-safe transformed-path caching with dependency invalidation. The affine/non-affine split is documented as a full-path cache until a visible non-affine renderer path needs partial caching.",
+		Note:              "Go TransformedPath covers clone-safe transformed-path caching with dependency invalidation and exploits the affine/non-affine split: the non-affine projection is cached and an affine-only invalidation (e.g. axes resize) only refreshes the trailing affine via TransformedPointsAndAffine/Affine, mirroring get_transformed_points_and_affine/get_affine.",
 	},
 	{
 		ID:                "transforms-transformed-patch-path",

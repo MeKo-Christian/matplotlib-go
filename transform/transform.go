@@ -83,6 +83,49 @@ func AsAffine(t T) (geom.Affine, bool) {
 	}
 }
 
+// splitAffine decomposes t into a non-affine remainder and the maximal trailing
+// affine such that t.Apply(p) == trailing.Apply(nonAffine.Apply(p)). A nil
+// nonAffine means the points pass through unchanged; fullyAffine reports
+// nonAffine == nil (the whole transform reduces to a single affine matrix).
+//
+// This mirrors Matplotlib's get_affine()/transform_non_affine() split: the
+// expensive non-affine projection can be cached while the cheap trailing affine
+// is re-applied each draw. The recursion reuses Frozen and AsAffine, so it
+// extracts exactly the same affine matrices the affine fast-path already trusts.
+func splitAffine(t T) (nonAffine T, trailing geom.Affine, fullyAffine bool) {
+	switch v := Frozen(t).(type) {
+	case nil:
+		return nil, geom.Identity(), true
+	case AffineT:
+		return nil, v.M, true
+	case SeparableT:
+		if m, ok := AsAffine(v); ok {
+			return nil, m, true
+		}
+		return v, geom.Identity(), false
+	case OffsetT:
+		baseNonAffine, baseAffine, baseFull := splitAffine(v.Base)
+		offset := geom.Affine{A: 1, D: 1, E: v.Delta.X, F: v.Delta.Y}
+		return baseNonAffine, offset.Mul(baseAffine), baseFull
+	case Chain:
+		bNonAffine, bAffine, bFull := splitAffine(v.B)
+		if bFull {
+			aNonAffine, aAffine, aFull := splitAffine(v.A)
+			return aNonAffine, bAffine.Mul(aAffine), aFull
+		}
+		// B has a non-affine remainder: the maximal trailing affine is B's
+		// trailing affine and the non-affine part is A followed by B's remainder.
+		return Chain{A: v.A, B: bNonAffine}, bAffine, false
+	default:
+		if ap, ok := v.(AffineProvider); ok {
+			if m, ok := ap.AsAffine(); ok {
+				return nil, m, true
+			}
+		}
+		return v, geom.Identity(), false
+	}
+}
+
 func affineAxis(axis AxisTransform) (scale, offset float64, ok bool) {
 	switch v := axisOrIdentity(axis).(type) {
 	case identityAxis:

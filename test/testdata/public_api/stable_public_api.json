@@ -11722,6 +11722,10 @@
           "declaration": "func (TransformNode) Version() uint64"
         },
         {
+          "id": "method TransformedPath.Affine",
+          "declaration": "func (TransformedPath) Affine() geom.Affine"
+        },
+        {
           "id": "method TransformedPath.CachedVersion",
           "declaration": "func (TransformedPath) CachedVersion() uint64"
         },
@@ -11744,6 +11748,10 @@
         {
           "id": "method TransformedPath.Transformed",
           "declaration": "func (TransformedPath) Transformed() geom.Path"
+        },
+        {
+          "id": "method TransformedPath.TransformedPointsAndAffine",
+          "declaration": "func (TransformedPath) TransformedPointsAndAffine() (geom.Path, geom.Affine)"
         },
         {
           "id": "type AffineProvider",
