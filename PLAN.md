@@ -752,7 +752,7 @@ work."
       unchanged. Golden/reference suites stay RMSE 0 (TransformedPath is not yet
       a renderer consumer). Wiring artists through it is deferred to **Phase 13**
       below.
-- ✅ **Path simplifier:** replaced Douglas–Peucker with Matplotlib's single-pass
+- [x] **Path simplifier:** replaced Douglas–Peucker with Matplotlib's single-pass
       running-segment algorithm for pixel parity on dense lines
       (`backends/agg/agg_path_simplify.go`).
 - [ ] Teardown API: `Axes.cla()`/`clear()`/`remove()`, `Figure.delaxes`/`clf`;
