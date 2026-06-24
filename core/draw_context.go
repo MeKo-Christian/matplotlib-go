@@ -64,6 +64,12 @@ type Transform2D struct {
 	YScale      transform.Scale
 	DataToAxes  transform.T
 	AxesToPixel transform.T
+	// composed is the persistent, cache-backed data->pixel transform (Phase 11
+	// live bbox-linked transforms). When non-nil it is the authoritative
+	// composition used by Apply/Invert/TransData; it is numerically identical to
+	// chaining DataToAxes with AxesToPixel, which the separable-decomposition
+	// fast-paths continue to rebuild from the component fields.
+	composed transform.T
 }
 
 func (t *Transform2D) Apply(p geom.Pt) geom.Pt {
@@ -85,6 +91,10 @@ func (t *Transform2D) Invert(p geom.Pt) (geom.Pt, bool) {
 func (t *Transform2D) transData() transform.T {
 	if t == nil {
 		return nil
+	}
+
+	if t.composed != nil {
+		return t.composed
 	}
 
 	dataToAxes := t.DataToAxes

@@ -99,6 +99,21 @@ type Axes struct {
 	colorbarExtendFracMax float64
 
 	coordFormatter CoordFormatter
+
+	// Persistent transform graph (Phase 11: live bbox-linked transforms).
+	// axesBbox holds the axes pixel rectangle; transAxes maps the unit square
+	// onto it via transform.BboxTransformTo. transData composes the data->axes
+	// leg with transAxes and is cached across draws: resizing the axes (or
+	// changing limits/scales) invalidates these nodes rather than rebuilding the
+	// whole graph. Lazily initialized by ensureTransforms.
+	axesBbox      *transform.Bbox
+	transAxes     *transform.BboxTransformTo
+	transData     *transform.CachedTransform
+	dataNode      transform.TransformNode
+	curDataToAxes transform.T
+	dataAffine    geom.Affine
+	dataAffineOK  bool
+	dataSnapSet   bool
 }
 
 func (a *Axes) Add(art Artist) {

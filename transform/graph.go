@@ -198,6 +198,12 @@ func Frozen(t T) T {
 		return OffsetT{Base: Frozen(v.Base), Delta: v.Delta}
 	case *CachedTransform:
 		return Frozen(v.Current())
+	case *BboxTransformTo:
+		return Frozen(v.current())
+	case *BboxTransformFrom:
+		return Frozen(v.current())
+	case *BboxTransform:
+		return Frozen(v.current())
 	default:
 		return t
 	}

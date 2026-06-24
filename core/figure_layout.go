@@ -39,12 +39,31 @@ func newAxesDrawContext(ax *Axes, fig *Figure, figureRect, clip geom.Rect) *Draw
 	if proj == nil {
 		proj, _ = lookupProjection("rectilinear")
 	}
+	rawDataToAxes := proj.DataToAxes(ax)
+
+	// Resolve the effective data->axes leg the same way Transform2D.transData
+	// does: a nil projection transform (e.g. 3D, which pre-projects in the
+	// artist) falls back to the per-axis scale transform. The raw value
+	// (possibly nil) is kept in the field so the separable-decomposition
+	// fast-paths behave exactly as before; the resolved value feeds the cache.
+	effectiveDataToAxes := rawDataToAxes
+	if effectiveDataToAxes == nil {
+		effectiveDataToAxes = transform.NewScaleTransform(ax.effectiveXScale(), ax.effectiveYScale())
+	}
+
+	// Point the persistent transform graph at the current geometry. Both calls
+	// invalidate downstream caches only when their input actually changed, so an
+	// unchanged axes (repeated draw / same size) reuses the cached affine.
+	ax.updateAxesBbox(clip)
+	ax.refreshDataTransform(effectiveDataToAxes)
+
 	return &DrawContext{
 		DataToPixel: Transform2D{
 			XScale:      ax.effectiveXScale(),
 			YScale:      ax.effectiveYScale(),
-			DataToAxes:  proj.DataToAxes(ax),
-			AxesToPixel: transform.NewDisplayRectTransform(clip),
+			DataToAxes:  rawDataToAxes,
+			AxesToPixel: ax.transAxes,
+			composed:    ax.transData,
 		},
 		Axes:       ax,
 		Projection: proj,

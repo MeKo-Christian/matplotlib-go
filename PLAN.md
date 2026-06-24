@@ -708,8 +708,27 @@ work."
       non-unique and the diagonal chosen may differ from Qhull's (always a valid
       Delaunay; rendering/interpolation match within tolerance). Closing that
       residual to byte-for-byte parity is tracked in **Phase 12** below.
-- [ ] **Live bbox-linked transforms** (`BboxTransformTo`) so axes resize
-      invalidates rather than rebuilds the transform graph.
+- [x] **Live bbox-linked transforms** (`BboxTransformTo`) so axes resize
+      invalidates rather than rebuilds the transform graph. The `transform`
+      package now owns a mutable `Bbox` node plus live `BboxTransformTo`/
+      `BboxTransformFrom`/`BboxTransform` separable transforms wired to the
+      existing `TransformNode` invalidation graph (`Bbox.Set` invalidates
+      dependents only when the rectangle actually changes; `Frozen`/`AsAffine`
+      resolve them to their current `SeparableT`). Each `Axes` holds a persistent
+      `axesBbox` + `transAxes` (`BboxTransformTo`) and a cache-backed `transData`
+      (`CachedTransform` chaining the data→axes leg with `transAxes`,
+      depending on the bbox node and a data-version node). `newAxesDrawContext`
+      now points the persistent graph at the current geometry through a single
+      invalidate-on-change gate (`updateAxesBbox` + `refreshDataTransform`)
+      instead of reconstructing `NewDisplayRectTransform` every frame — so a
+      same-size redraw reuses the cached affine and a resize/limit change
+      invalidates just the affected leg. Because `BboxTransformTo` is `Separable`
+      and numerically identical to `NewDisplayRectTransform`, the separable/
+      affine/blended fast-paths and the full golden+reference suites are
+      byte-identical (RMSE 0). The affine data leg is cached via an affine-equality
+      gate; non-affine legs (log/symlog, polar/geo/3D) keep the per-draw rebuild.
+      (Figure-level draw context is left on the static transform; it has no
+      persistent `Axes` to host the graph.)
 - [ ] **Open transform type set:** a `get_affine()` capability interface so a
       third-party `T` can participate in flattening (`transform/transform.go:32`).
 - [ ] **Exploit the affine/non-affine cache split** in `TransformedPath`

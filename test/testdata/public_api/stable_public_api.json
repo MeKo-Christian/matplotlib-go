@@ -11318,6 +11318,22 @@
           "declaration": "func NewAxes2D(xs, ys Scale, axesToPixel AffineT) Axes2D"
         },
         {
+          "id": "func NewBbox",
+          "declaration": "func NewBbox(rect geom.Rect) *Bbox"
+        },
+        {
+          "id": "func NewBboxTransform",
+          "declaration": "func NewBboxTransform(in, out *Bbox) *BboxTransform"
+        },
+        {
+          "id": "func NewBboxTransformFrom",
+          "declaration": "func NewBboxTransformFrom(box *Bbox) *BboxTransformFrom"
+        },
+        {
+          "id": "func NewBboxTransformTo",
+          "declaration": "func NewBboxTransformTo(box *Bbox) *BboxTransformTo"
+        },
+        {
           "id": "func NewCachedTransform",
           "declaration": "func NewCachedTransform(build func() T, dependencies ...*TransformNode) *CachedTransform"
         },
@@ -11468,6 +11484,18 @@
         {
           "id": "method Axes2D.Invert",
           "declaration": "func (Axes2D) Invert(p geom.Pt) (geom.Pt, bool)"
+        },
+        {
+          "id": "method Bbox.Node",
+          "declaration": "func (Bbox) Node() *TransformNode"
+        },
+        {
+          "id": "method Bbox.Rect",
+          "declaration": "func (Bbox) Rect() geom.Rect"
+        },
+        {
+          "id": "method Bbox.Set",
+          "declaration": "func (Bbox) Set(rect geom.Rect)"
         },
         {
           "id": "method CachedTransform.Apply",
@@ -11732,6 +11760,22 @@
         {
           "id": "type AxisTransform",
           "declaration": "type AxisTransform interface{ Forward func(v float64) float64; Inverse func(v float64) (float64, bool) }"
+        },
+        {
+          "id": "type Bbox",
+          "declaration": "type Bbox struct{ TransformNode }"
+        },
+        {
+          "id": "type BboxTransform",
+          "declaration": "type BboxTransform struct{}"
+        },
+        {
+          "id": "type BboxTransformFrom",
+          "declaration": "type BboxTransformFrom struct{}"
+        },
+        {
+          "id": "type BboxTransformTo",
+          "declaration": "type BboxTransformTo struct{}"
         },
         {
           "id": "type CachedTransform",
