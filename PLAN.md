@@ -739,8 +739,24 @@ work."
       the graph non-affine — the previous closed `default: return false`. The
       built-in set is unchanged, so all golden/reference output stays
       byte-identical (`transform/transform.go`).
-- [ ] **Exploit the affine/non-affine cache split** in `TransformedPath`
-      (declared but unused, `transform/transformed_path.go:13`).
+- [x] **Exploit the affine/non-affine cache split** in `TransformedPath`.
+      `transform.splitAffine` decomposes any `T` into its maximal trailing affine
+      plus a non-affine remainder (`t.Apply(p) == trailing.Apply(nonAffine.Apply(p))`),
+      reusing `Frozen`/`AsAffine`. `TransformedPath` now caches the non-affine
+      vertex pass and re-applies the trailing affine separately: an
+      `InvalidAffine` invalidation (e.g. `Bbox.Set` on resize/pan/zoom) refreshes
+      only the affine and reuses the cached projection, while
+      `InvalidNonAffine`/`InvalidAll` re-runs the full vertex pass — mirroring
+      Matplotlib's `get_transformed_points_and_affine`/`get_affine`. New
+      accessors `TransformedPointsAndAffine`/`Affine`; `Transformed()` semantics
+      unchanged. Golden/reference suites stay RMSE 0 (TransformedPath is not yet
+      a renderer consumer). _Follow-up (deferred):_ wiring artists (`Line2D`,
+      patches, collections) through a persistent `TransformedPath` only pays off
+      across repeated redraws, so it lands with an interactive/animation redraw
+      loop. It additionally needs `core/axes_transform.go:refreshDataTransform`
+      to fire `InvalidNonAffine` for non-affine data legs (it currently fires
+      `InvalidAffine` for every change) and the axes invalidation nodes plumbed
+      through `DrawContext`.
 - [ ] **Path simplifier:** replace Douglas–Peucker with Matplotlib's single-pass
       running-segment algorithm for pixel parity on dense lines
       (`backends/agg/agg_path_simplify.go:5`).
