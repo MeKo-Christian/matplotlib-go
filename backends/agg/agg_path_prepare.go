@@ -6,6 +6,11 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
+// minSimplifyVertices mirrors the threshold in Matplotlib's
+// Path._update_values: auto-simplification only kicks in once a path has at
+// least this many vertices.
+const minSimplifyVertices = 128
+
 func (r *Renderer) preparePathForPaint(path geom.Path, paint *render.Paint) (geom.Path, bool) {
 	if pathHasNonFiniteVertices(path) {
 		path = removeNonFinitePathVertices(path)
@@ -22,7 +27,11 @@ func (r *Renderer) preparePathForPaint(path geom.Path, paint *render.Paint) (geo
 	if shouldSnapPath(path, paint) {
 		path = snapPath(path, paint)
 	}
-	if paint.Simplify && paint.SimplifyThreshold > 0 {
+	// Matplotlib's Path._should_simplify only auto-simplifies paths with at
+	// least minSimplifyVertices vertices (the no-curves condition is handled
+	// inside simplifyLinePath). Below that the overhead is not worth it and the
+	// reference renderer leaves the path untouched, so we must too.
+	if paint.Simplify && paint.SimplifyThreshold > 0 && len(path.V) >= minSimplifyVertices {
 		path = simplifyLinePath(path, paint.SimplifyThreshold)
 	}
 	// The sketch/xkcd wiggle is applied last, in device space, so its sinusoidal
