@@ -11,8 +11,6 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/basicfont"
 )
 
 func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
@@ -50,6 +48,14 @@ func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
 	}
 }
 
+var (
+	_ render.TextBounder      = (*Renderer)(nil)
+	_ render.TextFontMetricer = (*Renderer)(nil)
+)
+
+// MeasureText returns single-line metrics from the shared pure-Go font shaper,
+// the same stack TextPath uses to emit glyphs, so anchoring matches the drawn
+// outlines (and the AGG raster backend) instead of the old 7x13 bitmap estimate.
 func (r *Renderer) MeasureText(text string, size float64, fontKey string) render.TextMetrics {
 	if text == "" || size <= 0 {
 		return render.TextMetrics{}
@@ -57,28 +63,24 @@ func (r *Renderer) MeasureText(text string, size float64, fontKey string) render
 	if fontKey != "" {
 		r.lastFontKey = fontKey
 	}
+	return render.MeasureTextMetrics(text, size, fontKey)
+}
 
-	scale := size / defaultFontHeight
-	if scale <= 0 {
-		return render.TextMetrics{}
+// MeasureTextBounds reports the ink bounds of text relative to the baseline
+// origin used for DrawText (render.TextBounder).
+func (r *Renderer) MeasureTextBounds(text string, size float64, fontKey string) (render.TextBounds, bool) {
+	if fontKey != "" {
+		r.lastFontKey = fontKey
 	}
+	return render.MeasureTextInkBounds(text, size, fontKey)
+}
 
-	face := basicfont.Face7x13
-	width := float64(font.MeasureString(face, text).Ceil())
-	height := float64(face.Metrics().Height.Ceil())
-	ascent := float64(face.Metrics().Ascent.Ceil())
-	desc := float64(face.Metrics().Descent.Ceil())
-
-	if width <= 0 || height <= 0 {
-		return render.TextMetrics{}
+// MeasureFontHeights reports font-wide vertical metrics (render.TextFontMetricer).
+func (r *Renderer) MeasureFontHeights(size float64, fontKey string) (render.FontHeightMetrics, bool) {
+	if fontKey != "" {
+		r.lastFontKey = fontKey
 	}
-
-	return render.TextMetrics{
-		W:       quantize(width * scale),
-		H:       quantize(height * scale),
-		Ascent:  quantize(ascent * scale),
-		Descent: quantize(desc * scale),
-	}
+	return render.MeasureFontHeightMetrics(size, fontKey)
 }
 
 func (r *Renderer) DrawText(text string, origin geom.Pt, size float64, textColor render.Color) {

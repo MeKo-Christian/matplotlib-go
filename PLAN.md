@@ -547,9 +547,27 @@ Matplotlib default styling.
 **Goal:** finish the renderer/backend semantics and grow the styling system from
 its current ~13% rcParam coverage.
 
-- [ ] **Vector text metrics:** replace the crude `MeasureText` stubs in PDF/PS/
-      PGF/SVG with the shared FreeType font manager (`backends/pdf/pdf_text.go:46`,
-      `backends/svg/text.go:53`, etc.) so rotated/vertical anchoring matches AGG.
+- [x] **Vector text metrics:** the crude `MeasureText` stubs in PDF/PS/PGF/SVG
+      (char-count × fixed-width, flat `0.8`/`0.2·size` ascent/descent; SVG's
+      7×13 bitmap) are replaced by the shared pure-Go font shaper the backends
+      already use to emit glyphs. New `render/text_metrics.go` adds
+      `MeasureTextMetrics` (advance width + per-string ink ascent/descent via
+      `LayoutTextGlyphs`), `MeasureTextInkBounds`, and `MeasureFontHeightMetrics`
+      (font-wide OS/2→hhea heights scaled by `size/unitsPerEm` — vector `size`
+      is already on-page ppem, so **no** `dpi/72` factor, unlike AGG's raster
+      path); these reuse the existing `loadFontFaceData`/`sfntTable` internals.
+      All four backends delegate `MeasureText` to it and now implement
+      `render.TextBounder` + `render.TextFontMetricer` (compile-guarded), so
+      `MeasureTextLineLayout` feeds the core anchoring math (`core/text.go`,
+      `tickLabelDrawOriginFromP`/`rotatedTextBackendAnchorFromP`) accurate ink
+      bounds and font heights — rotated/vertical labels now anchor like AGG and
+      descents are font-/string-correct. `MeasureMathGlyphRun` stays AGG-only
+      (FreeType `_get_info` hinting is not reproducible in pure Go); vector math
+      still improves via the new whole-run `MeasureTextBounds`. The AGG PNG
+      goldens are byte-identical (no leak into the raster path); `svg_golden`/
+      `pdf_golden` fixtures regenerated with text-position-only shifts toward
+      real-font centering. Unit coverage: `render/text_metrics_test.go`
+      (real-font width, descender sensitivity, font heights, ink bounds).
 - [x] **Antialiased Gouraud** + **multi-stop gradients**. Gouraud triangles now
       rasterize through agg*go's antialiased `Agg2D.GouraudTriangle`
       (`span_gouraud_rgba`, dilation 0.5 to match Matplotlib's `_backend_agg.h`)

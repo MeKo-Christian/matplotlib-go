@@ -32,7 +32,14 @@ func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
 	}
 }
 
-// MeasureText returns deterministic approximate text metrics for layout.
+var (
+	_ render.TextBounder      = (*Renderer)(nil)
+	_ render.TextFontMetricer = (*Renderer)(nil)
+)
+
+// MeasureText returns single-line metrics from the shared pure-Go font shaper,
+// the same stack TextPath uses to emit glyphs, so anchoring matches the drawn
+// outlines.
 func (r *Renderer) MeasureText(text string, size float64, fontKey string) render.TextMetrics {
 	if fontKey != "" {
 		r.lastFontKey = fontKey
@@ -40,10 +47,30 @@ func (r *Renderer) MeasureText(text string, size float64, fontKey string) render
 	if size <= 0 {
 		size = defaultFontHeight
 	}
-	width := 0.6 * size * float64(len([]rune(text)))
-	ascent := 0.8 * size
-	descent := 0.2 * size
-	return render.TextMetrics{W: width, H: ascent + descent, Ascent: ascent, Descent: descent}
+	return render.MeasureTextMetrics(text, size, fontKey)
+}
+
+// MeasureTextBounds reports the ink bounds of text relative to the baseline
+// origin used for DrawText (render.TextBounder).
+func (r *Renderer) MeasureTextBounds(text string, size float64, fontKey string) (render.TextBounds, bool) {
+	if fontKey != "" {
+		r.lastFontKey = fontKey
+	}
+	if size <= 0 {
+		size = defaultFontHeight
+	}
+	return render.MeasureTextInkBounds(text, size, fontKey)
+}
+
+// MeasureFontHeights reports font-wide vertical metrics (render.TextFontMetricer).
+func (r *Renderer) MeasureFontHeights(size float64, fontKey string) (render.FontHeightMetrics, bool) {
+	if fontKey != "" {
+		r.lastFontKey = fontKey
+	}
+	if size <= 0 {
+		size = defaultFontHeight
+	}
+	return render.MeasureFontHeightMetrics(size, fontKey)
 }
 
 // TextPath converts text to vector glyph outlines through the shared font

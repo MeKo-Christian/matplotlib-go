@@ -28,15 +28,36 @@ func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
 	}
 }
 
-// MeasureText returns deterministic approximate text metrics for layout.
-func (r *Renderer) MeasureText(text string, size float64, _ string) render.TextMetrics {
+var (
+	_ render.TextBounder      = (*Renderer)(nil)
+	_ render.TextFontMetricer = (*Renderer)(nil)
+)
+
+// MeasureText returns single-line metrics from the shared pure-Go font shaper.
+// PGF emits LaTeX text rather than glyph outlines, but shared metrics give the
+// vertical-text line stepping accurate, font-consistent dimensions.
+func (r *Renderer) MeasureText(text string, size float64, fontKey string) render.TextMetrics {
 	if size <= 0 {
 		size = defaultFontHeight
 	}
-	width := 0.6 * size * float64(len([]rune(text)))
-	ascent := 0.8 * size
-	descent := 0.2 * size
-	return render.TextMetrics{W: width, H: ascent + descent, Ascent: ascent, Descent: descent}
+	return render.MeasureTextMetrics(text, size, fontKey)
+}
+
+// MeasureTextBounds reports the ink bounds of text relative to the baseline
+// origin (render.TextBounder).
+func (r *Renderer) MeasureTextBounds(text string, size float64, fontKey string) (render.TextBounds, bool) {
+	if size <= 0 {
+		size = defaultFontHeight
+	}
+	return render.MeasureTextInkBounds(text, size, fontKey)
+}
+
+// MeasureFontHeights reports font-wide vertical metrics (render.TextFontMetricer).
+func (r *Renderer) MeasureFontHeights(size float64, fontKey string) (render.FontHeightMetrics, bool) {
+	if size <= 0 {
+		size = defaultFontHeight
+	}
+	return render.MeasureFontHeightMetrics(size, fontKey)
 }
 
 // DrawText draws text at a baseline origin.
