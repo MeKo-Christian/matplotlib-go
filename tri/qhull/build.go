@@ -8,8 +8,11 @@ import "math"
 // fixes the cocircular diagonal choice (each Delaunay cell is fanned from its
 // last-created vertex). Stages here: input projection to the paraboloid with the
 // Qz "infinity" point, Qbb last-coordinate scaling, the qh_maxmin tolerance/
-// extreme-point pass, and the qh_maxsimplex initial simplex. The incremental
-// qh_buildhull loop (which consumes this state) is layered on in build_hull.go.
+// extreme-point pass, and the qh_maxsimplex initial simplex. This is validated
+// (build_test.go) but not yet wired into Delaunay: the incremental qh_buildhull
+// loop that would consume it — and the cocircular coplanar-promotion needed for
+// byte-for-byte parity — are deferred (PLAN.md "Phase 12"). The shipped Delaunay
+// uses the robust exact-predicate engine in delaunay.go.
 //
 // Reference: third_party/qhull-8.0.2/src/libqhull_r/{geom2_r.c,poly2_r.c}.
 
@@ -165,7 +168,8 @@ func (q *qstate) detsimplex(apex int, base []int, dim int) (det float64, nearzer
 		det = det3(
 			r0[0]-a[0], r0[1]-a[1], r0[2]-a[2],
 			r1[0]-a[0], r1[1]-a[1], r1[2]-a[2],
-			r2[0]-a[0], r2[1]-a[1], r2[2]-a[2])
+			r2[0]-a[0], r2[1]-a[1], r2[2]-a[2],
+		)
 		nearzero = math.Abs(det) < 10*q.nearZero[2]
 	}
 	return det, nearzero

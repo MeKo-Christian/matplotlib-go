@@ -700,22 +700,14 @@ work."
       (`UniformTriRefiner`) and mesh analysis (`TriAnalyzer`: `CircleRatios`,
       `GetFlatTriMask`, `ScaleFactors`). `core.Triangulation` is now a type alias
       for `tri.Triangulation`; `core`'s 2D/3D tri-plot artists delegate to the
-      package. **Deliberate non-parity:** the Delaunay triangulation uses the
-      pre-existing pure-Go Bowyer–Watson algorithm rather than matplotlib's
-      Qhull backend, so the triangle _connectivity_ is not byte-for-byte
-      identical to matplotlib for cocircular inputs — only the downstream
-      rendering and interpolation match within tolerance. The rest of the `tri`
-      API targets full matplotlib parity.
-- [ ] **Qhull-faithful Delaunay** (follow-up to the triangulation library): the
-      `tri` package currently triangulates with the pure-Go Bowyer–Watson
-      algorithm, so the triangle _connectivity_ is not byte-for-byte identical
-      to matplotlib (which uses Qhull) for cocircular inputs. Port/bind Qhull's
-      2-D Delaunay (matching matplotlib's `qhull d Qt Qbb Qc Qz` options) so the
-      mesh connectivity also matches exactly. Swap it in behind
-      `tri.New`/`EnsureTriangles` while keeping Bowyer–Watson as a pure-Go,
-      cgo-free fallback. Weigh a cgo binding against a pure-Go Qhull port; only
-      needed if a downstream parity case is shown to diverge purely from the
-      triangulation step.
+      package. The Delaunay triangulation is computed by the pure-Go
+      `tri/qhull` engine using **exact geometric predicates** (`math/big.Rat`),
+      so the triangle _connectivity_ is the true Delaunay triangulation —
+      identical to matplotlib's Qhull backend for points in general position.
+      Cocircular inputs are the one residual: their Delaunay triangulation is
+      non-unique and the diagonal chosen may differ from Qhull's (always a valid
+      Delaunay; rendering/interpolation match within tolerance). Closing that
+      residual to byte-for-byte parity is tracked in **Phase 12** below.
 - [ ] **Live bbox-linked transforms** (`BboxTransformTo`) so axes resize
       invalidates rather than rebuilds the transform graph.
 - [ ] **Open transform type set:** a `get_affine()` capability interface so a
@@ -731,6 +723,87 @@ work."
 **Exit criterion:** geometry primitives and the transform graph reach
 Matplotlib's structural flexibility; no per-call reimplementations of shared
 infrastructure.
+
+---
+
+## Phase 12: Cocircular Qhull-Faithful Delaunay (deferred) 🔬
+
+**Goal:** make `tri/qhull`'s Delaunay byte-for-byte identical to matplotlib's
+Qhull backend (`qhull d Qt Qbb Qc Qz`, qhull 8.0.2) even for **cocircular**
+inputs (≥4 points on a common circle), where the Delaunay triangulation is
+non-unique. General-position connectivity already matches exactly via the
+exact-predicate engine; this phase only closes the cocircular diagonal choice.
+
+**Status:** deferred by decision — the residual is cosmetic (Qhull's cocircular
+diagonal is _arbitrary_; both diagonals are valid Delaunay, identical render and
+interpolation), and closing it requires porting Qhull's heaviest, most
+precision-sensitive machinery. The robust exact-predicate engine ships instead.
+
+### What's already done (foundation, in-tree)
+
+- **Differential harness + corpus:** `tri/qhull/corpus_test.go` +
+  `testdata/corpus.json` (61 cases, 27 general + 34 cocircular, generated from
+  live `matplotlib.tri` by `testdata/gen_corpus.py`). Compares the Go engine's
+  triangle **set** + neighbor **graph** to Qhull (canonical, order-independent).
+  General position passes 27/27; cocircular sits at 6/34 behind a ratchet const.
+- **Validated faithful port of the deterministic front of the pipeline**
+  (`tri/qhull/build.go` + `build_test.go`), all bit-matching Qhull: mean-subtract
+  → paraboloid lift → **Qz infinity point** (xy centroid, last coord
+  `1.1·maxboloid`) → `qh_maxmin` extremes/tolerances → **Qbb `qh_scalelast`**
+  (last coord → `[0, MAXabs_coord]`); `qh_distround` (`DISTround`); `det2`/`det3`/
+  `detsimplex`; and `qh_maxsimplex` (the `hull_dim=3` path). Example: the unit
+  square projects to exact `{(-0.5,-0.5,0)…(0,0,0.5)}`, `DISTround=6.937e-16`,
+  initial simplex append order `[p0,p1,p2,∞]` — all identical to Qhull.
+- **Reference + introspection tooling** (gitignored under
+  `third_party/qhull-8.0.2/`): the qhull 8.0.2 source (sha-matched download) plus
+  `introspect.c` (dumps vertex creation order `vid:pid` and facet vertex order
+  pre/post `qh_triangulate`) and `dump_state.c` (dumps projected coords, globals,
+  flags). These give ground truth to validate every stage.
+
+### Key insights (why it's hard)
+
+- **No geometric rule.** Qhull's cocircular diagonal is governed by its
+  incremental construction order, not geometry: the square's diagonal flips with
+  input reordering; a 4×4 grid uses different diagonals in adjacent cells.
+- **The fan rule.** Each Delaunay cell is fanned from its **last-created vertex**
+  (`qh_triangulate_facet` apex = `SETfirst_` of the facet's descending-id vertex
+  set). So the diagonal is fixed by the **vertex creation order**.
+- **Creation order needs the build.** Order = `qh_maxsimplex` simplex (3 input
+  pts + ∞) then `qh_buildhull`'s furthest-insertion. `qh_nextfurthest` walks the
+  facet list and takes each facet's furthest outside point — not global-furthest
+  — so it needs the real facet/hyperplane/horizon/cone structures.
+- **The blocker — coplanar promotion.** For cocircular inputs the lifted points
+  are **exactly coplanar** after Qbb scaling (e.g. all four unit-square points
+  land at `z=0`). The clean incremental hull would leave the extra points as
+  _coplanar_ (distance 0 < `MINoutside`) and never make them vertices — yet
+  Qhull's output has them as vertices splitting the cell. Confirmed flags
+  `MERGING=1 PREmerge=1 KEEPcoplanar=1`: the extra vertices and the diagonal come
+  from Qhull's **coplanar-promotion / premerge** path
+  (`qh_premerge`, `qh_check_maxout`, `qh_partitioncoplanar`, `qh_reducevertices`),
+  the largest and most precision-sensitive code in Qhull. A faithful float64 port
+  of it is the bulk of the remaining work (~2000+ lines, high FP-fidelity risk).
+
+### Remaining work (if revived)
+
+1. Finish the `qh_buildhull` loop: `qh_setfacetplane` (+`sethyperplane_det`/
+   `_gauss`), `qh_distplane`, `qh_initialhull`, `qh_partitionall`/
+   `qh_partitionpoint`, `qh_addpoint`/`qh_findhorizon`/`qh_makenewfacets`/
+   `qh_matchnewfacets`. Gate: the `introspect` VERTICES creation order matches
+   per general-position corpus case.
+2. Port the coplanar-promotion/premerge path (the blocker above). Gate: cocircular
+   corpus reaches 34/34; bump `cocircularRatchet` to the full count.
+3. Swap the engine in behind `tri.New`/`EnsureTriangles` (the exact-predicate
+   engine stays as a cgo-free, deterministic fallback). Re-run `just test`; any
+   cocircular golden that changes now matches matplotlib — regenerate it against
+   matplotlib (the parity source of truth).
+
+**Alternative if full fidelity proves intractable:** reproduce only Qhull's
+coplanar-promotion _order_ (the fan apex per cell) atop the exact-predicate cell
+subdivision — likely closes many but not all cocircular cases.
+
+**Exit criterion:** `go test ./tri/qhull/` differential harness reports 34/34
+cocircular (and 27/27 general) bit-for-bit against Qhull, with no regression in
+the `just test` parity goldens.
 
 ---
 

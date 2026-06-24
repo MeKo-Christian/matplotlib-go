@@ -4,12 +4,14 @@
 // interpolation ([LinearTriInterpolator], [CubicTriInterpolator]), uniform
 // mesh refinement ([UniformTriRefiner]) and mesh analysis ([TriAnalyzer]).
 //
-// It mirrors the public surface of matplotlib's matplotlib.tri module. One
-// deliberate deviation: the Delaunay triangulation is computed with a pure-Go
-// Bowyer–Watson algorithm rather than matplotlib's Qhull backend, so the mesh
-// connectivity is not guaranteed byte-for-byte identical to matplotlib for
-// cocircular inputs. Downstream rendering and interpolation match within
-// tolerance.
+// It mirrors the public surface of matplotlib's matplotlib.tri module. The
+// Delaunay triangulation is computed by the pure-Go [github.com/cwbudde/matplotlib-go/tri/qhull]
+// engine using exact geometric predicates, so the triangle connectivity is the
+// true Delaunay triangulation — identical to matplotlib's Qhull backend for
+// points in general position. For cocircular inputs the Delaunay triangulation
+// is non-unique; the diagonal chosen may differ from Qhull's internal (and
+// arbitrary) choice, but is always a valid Delaunay triangulation, so downstream
+// rendering and interpolation match within tolerance.
 package tri
 
 import (
