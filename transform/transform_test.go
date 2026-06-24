@@ -106,6 +106,71 @@ func TestAxes2D_RoundTrip(t *testing.T) {
 	}
 }
 
+// affineProviderStub is a third-party transform (defined outside the known set
+// of the transform package) that declares its exact affine representation via
+// the AffineProvider capability interface.
+type affineProviderStub struct {
+	m      geom.Affine
+	affine bool
+}
+
+func (s affineProviderStub) Apply(p geom.Pt) geom.Pt { return s.m.Apply(p) }
+
+func (s affineProviderStub) Invert(p geom.Pt) (geom.Pt, bool) {
+	inv, ok := s.m.Invert()
+	if !ok {
+		return geom.Pt{}, false
+	}
+	return inv.Apply(p), true
+}
+
+func (s affineProviderStub) AsAffine() (geom.Affine, bool) { return s.m, s.affine }
+
+// opaqueT is a third-party transform that does not implement AffineProvider.
+type opaqueT struct{}
+
+func (opaqueT) Apply(p geom.Pt) geom.Pt          { return p }
+func (opaqueT) Invert(p geom.Pt) (geom.Pt, bool) { return p, true }
+
+func TestAsAffine_ThirdPartyProvider(t *testing.T) {
+	m := geom.Affine{A: 2, D: 3, E: 5, F: 7}
+
+	got, ok := AsAffine(affineProviderStub{m: m, affine: true})
+	if !ok {
+		t.Fatalf("expected third-party AffineProvider to flatten to an affine")
+	}
+	if got != m {
+		t.Fatalf("affine mismatch: got %+v want %+v", got, m)
+	}
+}
+
+func TestAsAffine_ThirdPartyProviderNonAffine(t *testing.T) {
+	if _, ok := AsAffine(affineProviderStub{affine: false}); ok {
+		t.Fatalf("provider reporting non-affine must make AsAffine return false")
+	}
+}
+
+func TestAsAffine_OpaqueThirdPartyStaysNonAffine(t *testing.T) {
+	if _, ok := AsAffine(opaqueT{}); ok {
+		t.Fatalf("transform without AffineProvider must stay non-affine")
+	}
+}
+
+func TestAsAffine_ProviderInsideChain(t *testing.T) {
+	base := geom.Affine{A: 2, D: 2, E: 1, F: 1}
+	got, ok := AsAffine(Chain{
+		A: affineProviderStub{m: base, affine: true},
+		B: NewAffine(geom.Affine{A: 1, D: 1, E: 10, F: 20}),
+	})
+	if !ok {
+		t.Fatalf("chain containing an AffineProvider should flatten")
+	}
+	want := geom.Affine{A: 1, D: 1, E: 10, F: 20}.Mul(base)
+	if got != want {
+		t.Fatalf("chained affine mismatch: got %+v want %+v", got, want)
+	}
+}
+
 func TestEdgeCases(t *testing.T) {
 	// Degenerate linear domain
 	s := NewLinear(1, 1)

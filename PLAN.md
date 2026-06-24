@@ -729,8 +729,16 @@ work."
       gate; non-affine legs (log/symlog, polar/geo/3D) keep the per-draw rebuild.
       (Figure-level draw context is left on the static transform; it has no
       persistent `Axes` to host the graph.)
-- [ ] **Open transform type set:** a `get_affine()` capability interface so a
-      third-party `T` can participate in flattening (`transform/transform.go:32`).
+- [x] **Open transform type set:** the `transform.AffineProvider` capability
+      interface (`AsAffine() (geom.Affine, bool)`) mirrors Matplotlib's
+      `get_affine()`/`is_affine` pair, so a third-party `T` defined outside the
+      package can declare its exact affine representation. `AsAffine` now
+      consults it in the type-switch `default` arm: an unknown transform that
+      implements `AffineProvider` participates in flattening (directly and when
+      nested inside `Chain`/`OffsetT`), while one returning `(_, false)` keeps
+      the graph non-affine — the previous closed `default: return false`. The
+      built-in set is unchanged, so all golden/reference output stays
+      byte-identical (`transform/transform.go`).
 - [ ] **Exploit the affine/non-affine cache split** in `TransformedPath`
       (declared but unused, `transform/transformed_path.go:13`).
 - [ ] **Path simplifier:** replace Douglas–Peucker with Matplotlib's single-pass

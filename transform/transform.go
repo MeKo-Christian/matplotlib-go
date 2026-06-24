@@ -27,8 +27,22 @@ func (a AffineT) Invert(p geom.Pt) (geom.Pt, bool) {
 	return inv.Apply(p), true
 }
 
+// AffineProvider is the capability interface a transform implements to declare
+// its exact affine representation, mirroring Matplotlib's
+// Transform.get_affine()/is_affine pair. A transform that can be represented
+// exactly by a single affine matrix returns (matrix, true); one that cannot
+// (e.g. a nonlinear projection) returns (_, false).
+//
+// AsAffine consults this interface for any transform outside the package's
+// built-in set, so a third-party T can participate in affine flattening
+// instead of being treated as opaquely non-affine.
+type AffineProvider interface {
+	AsAffine() (geom.Affine, bool)
+}
+
 // AsAffine returns t as an affine matrix when the transform graph is known to
-// be affine. Nonlinear scales or unknown transform implementations return false.
+// be affine. Nonlinear scales return false; unknown transform implementations
+// are consulted via the AffineProvider interface and otherwise return false.
 func AsAffine(t T) (geom.Affine, bool) {
 	switch v := Frozen(t).(type) {
 	case nil:
@@ -62,6 +76,9 @@ func AsAffine(t T) (geom.Affine, bool) {
 		}
 		return geom.Affine{A: 1, D: 1, E: v.Delta.X, F: v.Delta.Y}.Mul(base), true
 	default:
+		if ap, ok := v.(AffineProvider); ok {
+			return ap.AsAffine()
+		}
 		return geom.Affine{}, false
 	}
 }

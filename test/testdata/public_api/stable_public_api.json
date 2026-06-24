@@ -11746,6 +11746,10 @@
           "declaration": "func (TransformedPath) Transformed() geom.Path"
         },
         {
+          "id": "type AffineProvider",
+          "declaration": "type AffineProvider interface{ AsAffine func() (geom.Affine, bool) }"
+        },
+        {
           "id": "type AffineT",
           "declaration": "type AffineT struct{ M geom.Affine }"
         },
