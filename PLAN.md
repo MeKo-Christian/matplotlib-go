@@ -750,13 +750,8 @@ work."
       Matplotlib's `get_transformed_points_and_affine`/`get_affine`. New
       accessors `TransformedPointsAndAffine`/`Affine`; `Transformed()` semantics
       unchanged. Golden/reference suites stay RMSE 0 (TransformedPath is not yet
-      a renderer consumer). _Follow-up (deferred):_ wiring artists (`Line2D`,
-      patches, collections) through a persistent `TransformedPath` only pays off
-      across repeated redraws, so it lands with an interactive/animation redraw
-      loop. It additionally needs `core/axes_transform.go:refreshDataTransform`
-      to fire `InvalidNonAffine` for non-affine data legs (it currently fires
-      `InvalidAffine` for every change) and the axes invalidation nodes plumbed
-      through `DrawContext`.
+      a renderer consumer). Wiring artists through it is deferred to **Phase 13**
+      below.
 - [ ] **Path simplifier:** replace Douglas–Peucker with Matplotlib's single-pass
       running-segment algorithm for pixel parity on dense lines
       (`backends/agg/agg_path_simplify.go:5`).
@@ -847,6 +842,86 @@ subdivision — likely closes many but not all cocircular cases.
 **Exit criterion:** `go test ./tri/qhull/` differential harness reports 34/34
 cocircular (and 27/27 general) bit-for-bit against Qhull, with no regression in
 the `just test` parity goldens.
+
+---
+
+## Phase 13: Cached Transformed Paths in the Render Path (deferred) 🔁
+
+**Goal:** make artists (`Line2D`, patches, collections) draw through a
+persistent `transform.TransformedPath` so a redraw that changes only the trailing
+affine (axes resize/pan/zoom) reuses the cached non-affine projection instead of
+re-running it per vertex — and an unchanged redraw skips the per-vertex transform
+entirely. This realizes, in the renderer, the affine/non-affine cache split that
+Phase 11 already built into `TransformedPath`.
+
+**Status:** deferred by decision — the payoff requires **repeated redraws** of the
+same artist (interactive pan/zoom or animation). The current pipeline draws each
+figure once to a PNG, so a cross-draw cache is never hit; wiring it in now adds
+hot-path complexity and parity risk for no runtime benefit. Revive this alongside
+an interactive/animation redraw loop.
+
+### What's already done (foundation, in-tree)
+
+- **`transform.splitAffine`** (`transform/transform.go`) decomposes any `T` into
+  its maximal trailing affine + non-affine remainder
+  (`t.Apply(p) == trailing.Apply(nonAffine.Apply(p))`), reusing `Frozen`/
+  `AsAffine`. Validated against every transform type incl. `Chain`/`OffsetT`
+  nesting and third-party `AffineProvider`.
+- **`transform.TransformedPath`** caches the non-affine vertex pass and re-applies
+  the trailing affine separately (`TransformedPointsAndAffine()`/`Affine()`;
+  `Transformed()` unchanged). `InvalidAffine` (e.g. `Bbox.Set`) refreshes only the
+  affine; `InvalidNonAffine`/`InvalidAll` re-runs the projection. Covered by
+  `TestSplitAffine` + `TestTransformedPathAffineNonAffineSplit`.
+- The persistent per-axes transform graph from Phase 11 (`axesBbox`/`transAxes`/
+  `transData` with `dataNode`) is the natural invalidation source to wire to.
+
+### Key insights (why it's more than a drop-in)
+
+- **`refreshDataTransform` fires the wrong stage.** `core/axes_transform.go:
+  refreshDataTransform` currently invalidates `dataNode` with **`InvalidAffine`
+  for every change**, including the "non-affine leg changed every draw" branch
+  (log/symlog, polar/geo/3D). A split-aware consumer wired to `dataNode` would
+  therefore reuse a **stale projection** on a log-domain/limits change and render
+  incorrectly. Fix first: fire `InvalidNonAffine` when the data leg is non-affine,
+  keep `InvalidAffine` only for the affine-leg/bbox case.
+- **Artists hold no axes/node reference.** `Line2D` (and the shared
+  `core/patch_paths.go:buildArtistDisplayPath`) get their transform only from the
+  per-draw `DrawContext`. To register a `TransformedPath` as a dependent of
+  `axesBbox.Node()`/`dataNode`, those nodes must be plumbed through `DrawContext`.
+- **Segmentation must stay on final points.** `Line2D.displayPath`
+  (`core/line.go:447`) interleaves NaN-segmentation with the per-vertex transform.
+  To stay byte-identical, apply the trailing affine to the cached non-affine
+  points, then run the **existing** finiteness/segmentation loop on the final
+  points (affine of finite is finite; affine of NaN is NaN, so the mask matches).
+- **Log/polar resize win needs leg-change detection.** Even after the stage fix,
+  non-affine legs are treated as "changed every draw" (the Phase 11 deferral), so
+  log/polar resizes re-project every draw. The real resize win for those needs a
+  cheap non-affine-leg equality check (e.g. a scale/version identity) — itself a
+  follow-up. The affine (linear-axes) and unchanged-redraw wins land without it.
+
+### Remaining work (if revived)
+
+1. Refine `refreshDataTransform` to fire `InvalidNonAffine` for non-affine data
+   legs (and `InvalidAffine` otherwise). Gate: existing `core/axes_transform_test.go`
+   stays green; add a test asserting a log-domain change invalidates non-affine.
+2. Expose the axes invalidation nodes (`axesBbox`/`dataNode`) on `DrawContext`.
+3. Pilot on `Line2D`: persistent `transformedPath` field, `SetPath` on data
+   change, dependency-wire to the nodes, draw via `TransformedPointsAndAffine` +
+   the unchanged segmentation loop. Gate: golden/reference RMSE 0.
+4. Extend the same pattern through `buildArtistDisplayPath` to patches and
+   collections. Re-run the parity gate after each.
+5. (Optional, larger) Non-affine-leg change detection so log/polar resizes also
+   reuse the projection.
+
+**Out of scope:** passing the affine *separately* to the agg backend so it
+composes with the device y-flip and does zero per-vertex affine work
+(matplotlib's deepest win) — needs a `render.Renderer` capability/signature
+change.
+
+**Exit criterion:** with an interactive/animation redraw loop in place, an
+affine-only redraw of a linear-axes artist re-runs no non-affine vertex pass
+(asserted via a counter probe), and the full `just test` golden+reference suite
+stays RMSE 0.
 
 ---
 
