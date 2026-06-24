@@ -14,10 +14,6 @@ import (
 // directly in Path.
 func (r *Renderer) SupportsNativeHatch() bool { return true }
 
-func (r *Renderer) writeHatchFill(path geom.Path, paint *render.Paint) {
-	r.writeHatchFillTo(&r.content, path, paint)
-}
-
 func (r *Renderer) writeHatchFillTo(w *strings.Builder, path geom.Path, paint *render.Paint) {
 	if paint == nil || paint.Hatch == "" || paint.HatchColor.A <= 0 {
 		return

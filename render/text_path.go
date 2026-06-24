@@ -50,10 +50,6 @@ func TextPath(text string, origin geom.Pt, size float64, fontKey string) (geom.P
 	return path, true
 }
 
-func loadTextPathFont(path string) (*sfnt.Font, error) {
-	return loadTextPathFontFace(FontFace{Path: path})
-}
-
 func loadTextPathFontFace(face FontFace) (*sfnt.Font, error) {
 	key := fontFaceCacheKey(face)
 	if key == "" {
