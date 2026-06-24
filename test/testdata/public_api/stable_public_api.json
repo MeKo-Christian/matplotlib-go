@@ -3648,8 +3648,24 @@
           "declaration": "func FillToBaselineX(y, x []float64, baseline float64, color render.Color) *Fill2D"
         },
         {
+          "id": "func Findobj",
+          "declaration": "func Findobj(root any, match func(Artist) bool) []Artist"
+        },
+        {
+          "id": "func FindobjType",
+          "declaration": "func FindobjType[T any](root any) []T"
+        },
+        {
           "id": "func GetEpoch",
           "declaration": "func GetEpoch() time.Time"
+        },
+        {
+          "id": "func Getp",
+          "declaration": "func Getp(art Artist, name string) (any, bool)"
+        },
+        {
+          "id": "func GetpAll",
+          "declaration": "func GetpAll(art Artist) map[string]any"
         },
         {
           "id": "func ImRead",
@@ -3806,6 +3822,10 @@
         {
           "id": "func SetEpoch",
           "declaration": "func SetEpoch(t time.Time) error"
+        },
+        {
+          "id": "func Setp",
+          "declaration": "func Setp(art Artist, props map[string]any)"
         },
         {
           "id": "func SliceMarkers",
@@ -4148,6 +4168,14 @@
           "declaration": "func (ArtistRasterization) InLayout() bool"
         },
         {
+          "id": "method ArtistRasterization.Property",
+          "declaration": "func (ArtistRasterization) Property(name string) (any, bool)"
+        },
+        {
+          "id": "method ArtistRasterization.PropertyNames",
+          "declaration": "func (ArtistRasterization) PropertyNames() []string"
+        },
+        {
           "id": "method ArtistRasterization.Rasterization",
           "declaration": "func (ArtistRasterization) Rasterization() render.Rasterization"
         },
@@ -4186,6 +4214,10 @@
         {
           "id": "method ArtistRasterization.SetInLayout",
           "declaration": "func (ArtistRasterization) SetInLayout(inLayout bool)"
+        },
+        {
+          "id": "method ArtistRasterization.SetProperty",
+          "declaration": "func (ArtistRasterization) SetProperty(name string, v any) bool"
         },
         {
           "id": "method ArtistRasterization.SetRasterization",
@@ -4424,8 +4456,16 @@
           "declaration": "func (Axes) CheckButtons(labels []string, active []bool, opts ...CheckButtonsOptions) *CheckButtons"
         },
         {
+          "id": "method Axes.Cla",
+          "declaration": "func (Axes) Cla()"
+        },
+        {
           "id": "method Axes.Clabel",
           "declaration": "func (Axes) Clabel(cs *ContourSet, opts ...ClabelOptions) []ContourLabel"
+        },
+        {
+          "id": "method Axes.Clear",
+          "declaration": "func (Axes) Clear()"
         },
         {
           "id": "method Axes.ClearBoxAspect",
@@ -4502,6 +4542,10 @@
         {
           "id": "method Axes.FillToBaselinePlot",
           "declaration": "func (Axes) FillToBaselinePlot(x, y []float64, opts ...FillOptions) *Fill2D"
+        },
+        {
+          "id": "method Axes.Findobj",
+          "declaration": "func (Axes) Findobj(match func(Artist) bool) []Artist"
         },
         {
           "id": "method Axes.FloatingXAxis",
@@ -4734,6 +4778,10 @@
         {
           "id": "method Axes.RectangleSelector",
           "declaration": "func (Axes) RectangleSelector(opts ...RectangleSelectorOptions) *RectangleSelector"
+        },
+        {
+          "id": "method Axes.Remove",
+          "declaration": "func (Axes) Remove()"
         },
         {
           "id": "method Axes.ResetColorCycle",
@@ -5816,12 +5864,28 @@
           "declaration": "func (Figure) AddWidgetAxes(r geom.Rect, opts ...style.Option) *Axes"
         },
         {
+          "id": "method Figure.Clear",
+          "declaration": "func (Figure) Clear()"
+        },
+        {
+          "id": "method Figure.Clf",
+          "declaration": "func (Figure) Clf()"
+        },
+        {
           "id": "method Figure.ConstrainedLayout",
           "declaration": "func (Figure) ConstrainedLayout()"
         },
         {
+          "id": "method Figure.DelAxes",
+          "declaration": "func (Figure) DelAxes(ax *Axes)"
+        },
+        {
           "id": "method Figure.DisplayRect",
           "declaration": "func (Figure) DisplayRect() geom.Rect"
+        },
+        {
+          "id": "method Figure.Findobj",
+          "declaration": "func (Figure) Findobj(match func(Artist) bool) []Artist"
         },
         {
           "id": "method Figure.GridSpec",
@@ -6192,6 +6256,14 @@
           "declaration": "func (Line2D) PickRadius() float64"
         },
         {
+          "id": "method Line2D.Property",
+          "declaration": "func (Line2D) Property(name string) (any, bool)"
+        },
+        {
+          "id": "method Line2D.PropertyNames",
+          "declaration": "func (Line2D) PropertyNames() []string"
+        },
+        {
           "id": "method Line2D.SetArtistLabel",
           "declaration": "func (Line2D) SetArtistLabel(label string)"
         },
@@ -6246,6 +6318,10 @@
         {
           "id": "method Line2D.SetPickRadius",
           "declaration": "func (Line2D) SetPickRadius(r float64)"
+        },
+        {
+          "id": "method Line2D.SetProperty",
+          "declaration": "func (Line2D) SetProperty(name string, v any) bool"
         },
         {
           "id": "method Line2D.SetXData",
@@ -8394,6 +8470,10 @@
         {
           "id": "type ProjectionFactory",
           "declaration": "type ProjectionFactory func() Projection"
+        },
+        {
+          "id": "type PropertyBag",
+          "declaration": "type PropertyBag interface{ Property func(name string) (any, bool); SetProperty func(name string, v any) bool; PropertyNames func() []string }"
         },
         {
           "id": "type Pt",

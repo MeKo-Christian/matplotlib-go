@@ -755,8 +755,17 @@ work."
 - [x] **Path simplifier:** replaced Douglas–Peucker with Matplotlib's single-pass
       running-segment algorithm for pixel parity on dense lines
       (`backends/agg/agg_path_simplify.go`).
-- [ ] Teardown API: `Axes.cla()`/`clear()`/`remove()`, `Figure.delaxes`/`clf`;
-      `setp`/`getp`/`findobj` introspection.
+- [x] **Teardown + introspection API.** `Axes.Clear`/`Cla`/`Remove`,
+      `Figure.DelAxes`/`Clear`/`Clf` (`core/axes.go`, `core/figure.go`):
+      construction and clear now share `(*Axes).resetToDefaults`, so a cleared
+      axes is byte-identical to a fresh one (golden suite RMSE 0); `DelAxes`
+      breaks share links and detaches the figure back-reference; `Axes3D`
+      inherits the teardown via embedding. Introspection (`core/introspection.go`):
+      lightweight reflection-free `Getp`/`Setp`/`GetpAll` over an optional
+      `PropertyBag` interface (baseline props on embedded `ArtistRasterization`,
+      `Line2D` demonstrates the per-type extension), plus `Findobj(root, match)`
+      tree traversal and the generic `FindobjType[T]` — mirroring Matplotlib's
+      `cla/clear/remove/delaxes/clf` and `setp/getp/findobj`.
 
 **Exit criterion:** geometry primitives and the transform graph reach
 Matplotlib's structural flexibility; no per-call reimplementations of shared

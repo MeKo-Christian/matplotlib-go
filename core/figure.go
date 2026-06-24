@@ -3,10 +3,8 @@ package core
 import (
 	"fmt"
 
-	"github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/style"
-	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 type Figure struct {
@@ -87,39 +85,80 @@ func (f *Figure) AddAxes3D(r geom.Rect, opts ...style.Option) (*Axes3D, error) {
 
 func (f *Figure) addAxesWithProjection(r geom.Rect, proj Projection, opts ...style.Option) *Axes {
 	var rc *style.RC
-	effective := f.RC
 	if len(opts) > 0 {
 		v := style.Apply(f.RC, opts...)
 		rc = &v
-		effective = v
 	}
 	ax := &Axes{
-		RectFraction:    r,
-		RC:              rc,
-		XScale:          transform.NewLinear(0, 1),
-		YScale:          transform.NewLinear(0, 1),
-		projection:      cloneProjection(proj),
-		XAxis:           NewXAxis(),
-		YAxis:           NewYAxis(),
-		ShowFrame:       true,
-		PatchVisible:    true,
-		ColorCycle:      color.NewColorCycle(effective.Palette()),
-		PatchColorCycle: color.NewColorCycle(effective.Palette()),
-		aspectMode:      "auto",
-		aspectValue:     1,
-		xLabelSide:      AxisBottom,
-		yLabelSide:      AxisLeft,
-		figure:          f,
+		RectFraction: r,
+		RC:           rc,
+		projection:   cloneProjection(proj),
+		figure:       f,
 	}
-	if ax.projection == nil {
-		ax.projection, _ = lookupProjection("rectilinear")
-	}
-	ax.projection.ConfigureAxes(ax)
-	ax.applyStyleDefaults(effective)
-	ax.addDefaultGrids(effective)
+	ax.resetToDefaults()
 	f.Children = append(f.Children, ax)
 	return ax
 }
+
+// DelAxes removes ax from the figure, mirroring Matplotlib's
+// Figure.delaxes/_remove_axes. The axes is dropped from the figure's child
+// list and from any parent axes' inset list, its back-reference is detached,
+// and share links pointing at it from the remaining axes are broken.
+//
+// Divergence from Matplotlib: rather than transferring locators/formatters to a
+// surviving shared sibling, the broken share links are simply cleared.
+func (f *Figure) DelAxes(ax *Axes) {
+	if f == nil || ax == nil {
+		return
+	}
+	f.Children = removeAxes(f.Children, ax)
+	for _, child := range f.Children {
+		if child == nil {
+			continue
+		}
+		if child.shareX == ax {
+			child.shareX = nil
+		}
+		if child.shareY == ax {
+			child.shareY = nil
+		}
+		child.childAxes = removeAxes(child.childAxes, ax)
+	}
+	ax.figure = nil
+	f.zsorted = false
+}
+
+// removeAxes returns axes with the first occurrence of target removed,
+// preserving order.
+func removeAxes(axes []*Axes, target *Axes) []*Axes {
+	for i, candidate := range axes {
+		if candidate == target {
+			return append(axes[:i:i], axes[i+1:]...)
+		}
+	}
+	return axes
+}
+
+// Clear clears the figure: every child axes is cleared and removed, all
+// figure-level artists are dropped, and the figure super-labels are reset.
+// Mirrors Matplotlib's Figure.clear.
+func (f *Figure) Clear() {
+	if f == nil {
+		return
+	}
+	for _, ax := range append([]*Axes(nil), f.Children...) {
+		ax.Clear()
+		f.DelAxes(ax)
+	}
+	f.Artists = nil
+	f.zsorted = false
+	f.SupTitle = ""
+	f.SupXLabel = ""
+	f.SupYLabel = ""
+}
+
+// Clf is a synonym for Clear, matching Matplotlib's Figure.clf.
+func (f *Figure) Clf() { f.Clear() }
 
 func (f *Figure) Add(art Artist) {
 	if f == nil {

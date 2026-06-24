@@ -346,6 +346,77 @@ func (a *Axes) PeekPatchColor() render.Color {
 	return a.PatchColorCycle.Peek()
 }
 
+// resetToDefaults clears all artist, limit, label, and scale state and
+// re-establishes the construction defaults. It preserves the axes' identity:
+// position (RectFraction), style override (RC), projection instance, parent
+// figure, sharing links, subplot spec, and the persistent transform graph.
+//
+// It is the shared body of both construction (addAxesWithProjection) and
+// Clear/Cla, so a cleared axes is byte-identical to a freshly created one.
+func (a *Axes) resetToDefaults() {
+	if a == nil {
+		return
+	}
+	effective := a.resolvedRC()
+	a.Artists, a.zsorted = nil, false
+	a.WidgetArtists, a.widgetZsorted = nil, false
+	a.XScale = transform.NewLinear(0, 1)
+	a.YScale = transform.NewLinear(0, 1)
+	a.XAxis, a.YAxis = NewXAxis(), NewYAxis()
+	a.XAxisTop, a.YAxisRight, a.ExtraAxes = nil, nil, nil
+	a.ShowFrame, a.PatchVisible = true, true
+	a.Title, a.XLabel, a.YLabel = "", "", ""
+	a.aspectMode, a.aspectValue, a.boxAspect = "auto", 1, 0
+	a.adjustable, a.anchor = "", ""
+	a.axisBelowSet, a.axisBelowZ = false, 0
+	a.xLabelSide, a.yLabelSide = AxisBottom, AxisLeft
+	a.xMargin, a.yMargin, a.autolimitMode = nil, nil, ""
+	a.hideXTickLabels, a.hideYTickLabels = false, false
+	a.hideTopTickLabels, a.hideRightTickLabels = false, false
+	a.hideXLabel, a.hideYLabel = false, false
+	a.xLimitsManual, a.yLimitsManual = false, false
+	a.xUnits, a.yUnits = nil, nil
+	a.coordFormatter = nil
+	// Invalidate the cached data->axes affine: the scales just reset, so the
+	// next refreshDataTransform must rebuild the data leg.
+	a.dataAffineOK, a.dataSnapSet = false, false
+	if a.ColorCycle == nil {
+		a.ColorCycle = color.NewColorCycle(effective.Palette())
+		a.PatchColorCycle = color.NewColorCycle(effective.Palette())
+	} else {
+		a.ResetColorCycle()
+	}
+	if a.projection == nil {
+		a.projection, _ = lookupProjection("rectilinear")
+	}
+	a.projection.ConfigureAxes(a)
+	a.applyStyleDefaults(effective)
+	a.addDefaultGrids(effective)
+}
+
+// Clear removes every artist from the axes and resets limits, scales, labels,
+// ticks, and the color cycle to their defaults, re-establishing the projection.
+// The axes keeps its figure position and parent. Mirrors Matplotlib's
+// Axes.clear.
+func (a *Axes) Clear() {
+	if a == nil {
+		return
+	}
+	a.resetToDefaults()
+}
+
+// Cla is a synonym for Clear, matching Matplotlib's Axes.cla.
+func (a *Axes) Cla() { a.Clear() }
+
+// Remove detaches the axes from its parent figure. Mirrors Matplotlib's
+// Artist.remove for an Axes (it routes through Figure.delaxes).
+func (a *Axes) Remove() {
+	if a == nil || a.figure == nil {
+		return
+	}
+	a.figure.DelAxes(a)
+}
+
 func (a *Axes) ResetColorCycle() {
 	if a.ColorCycle != nil {
 		a.ColorCycle.Reset()
