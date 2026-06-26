@@ -375,10 +375,14 @@ inputs (≥4 points on a common circle), where the Delaunay triangulation is
 non-unique. General-position connectivity already matches exactly via the
 exact-predicate engine; this phase only closes the cocircular diagonal choice.
 
-**Status:** deferred by decision — the residual is cosmetic (Qhull's cocircular
-diagonal is _arbitrary_; both diagonals are valid Delaunay, identical render and
-interpolation), and closing it requires porting Qhull's heaviest, most
-precision-sensitive machinery. The robust exact-predicate engine ships instead.
+**Status:** in progress. The residual is cosmetic (Qhull's cocircular diagonal is
+_arbitrary_; both diagonals are valid Delaunay, identical render and
+interpolation), so the robust exact-predicate engine still ships. **Stage 1 is
+done**: the diagonal-selection model (fan each cocircular cell from its
+last-created vertex) is proven to reproduce Qhull 34/34 + 27/27 when fed Qhull's
+true vertex creation order. The remaining work is _computing_ that order — a
+faithful `qh_buildhull` port (Stage 2) plus premerge's effect on the build order
+for ~9 cases (Stage 3), the heaviest, most precision-sensitive Qhull machinery.
 
 ### What's already done (foundation, in-tree)
 
@@ -399,48 +403,77 @@ precision-sensitive machinery. The robust exact-predicate engine ships instead.
   `third_party/qhull-8.0.2/`): the qhull 8.0.2 source (sha-matched download) plus
   `introspect.c` (dumps vertex creation order `vid:pid` and facet vertex order
   pre/post `qh_triangulate`) and `dump_state.c` (dumps projected coords, globals,
-  flags). These give ground truth to validate every stage.
+  flags). These give ground truth to validate every stage. `just qhull-corpus`
+  builds `introspect` and regenerates the fixtures.
+- **Stage 1 — the fan model, proven (`tri/qhull/fanfromorder.go` +
+  `fanfromorder_test.go`).** `delaunayFromOrder` takes the exact-predicate
+  triangulation, groups adjacent triangles whose four points are cocircular within
+  roundoff into convex cells (scale-invariant normalized in-circle residual <
+  `cocircularRelTol`, robust to the thin base triangles a single lifted-distance
+  test mis-scales), and re-fans each cell from its highest-creation-rank vertex
+  (`apex = {boundary edge, apex} ∀ edges not at apex`). Fed Qhull's **captured**
+  creation order (`testdata/creation_order.json`, from `introspect`),
+  `TestFanFromGroundTruthOrder` reproduces Qhull **34/34 cocircular + 27/27
+  general** bit-for-bit. This isolates all remaining work to _computing_ the
+  creation order.
 
 ### Key insights (why it's hard)
 
 - **No geometric rule.** Qhull's cocircular diagonal is governed by its
   incremental construction order, not geometry: the square's diagonal flips with
   input reordering; a 4×4 grid uses different diagonals in adjacent cells.
-- **The fan rule.** Each Delaunay cell is fanned from its **last-created vertex**
-  (`qh_triangulate_facet` apex = `SETfirst_` of the facet's descending-id vertex
-  set). So the diagonal is fixed by the **vertex creation order**.
+- **The fan rule** (now confirmed from source + proven end-to-end). Each Delaunay
+  cell is fanned from its **last-created vertex**: `qh_triangulate_facet` apex =
+  `SETfirst_(facet->vertices)` (poly2_r.c:3692), and Qhull keeps each facet's
+  vertex set inverse-sorted by `vertex->id` (poly2_r.c:25, asserted :777), with
+  `vertex->id = qh->vertex_id++` monotonic at creation. So the diagonal is fixed
+  entirely by the **vertex creation order** — and Stage 1 proves that order is the
+  _only_ missing input.
 - **Creation order needs the build.** Order = `qh_maxsimplex` simplex (3 input
-  pts + ∞) then `qh_buildhull`'s furthest-insertion. `qh_nextfurthest` walks the
-  facet list and takes each facet's furthest outside point — not global-furthest
-  — so it needs the real facet/hyperplane/horizon/cone structures.
-- **The blocker — coplanar promotion.** For cocircular inputs the lifted points
-  are **exactly coplanar** after Qbb scaling (e.g. all four unit-square points
-  land at `z=0`). The clean incremental hull would leave the extra points as
-  _coplanar_ (distance 0 < `MINoutside`) and never make them vertices — yet
-  Qhull's output has them as vertices splitting the cell. Confirmed flags
-  `MERGING=1 PREmerge=1 KEEPcoplanar=1`: the extra vertices and the diagonal come
-  from Qhull's **coplanar-promotion / premerge** path
-  (`qh_premerge`, `qh_check_maxout`, `qh_partitioncoplanar`, `qh_reducevertices`),
-  the largest and most precision-sensitive code in Qhull. A faithful float64 port
-  of it is the bulk of the remaining work (~2000+ lines, high FP-fidelity risk).
+  pts + ∞, already ported) then `qh_buildhull`'s furthest-insertion. `qh_nextfurthest`
+  walks the facet list and takes each facet's furthest outside point — not
+  global-furthest — so it needs the real facet/hyperplane/horizon/cone structures.
+- **Cocircular points are ordinary insertions, not `coplanarset` promotions**
+  (corrected). For the lifted Delaunay, a near-cocircular point is _outside_ the
+  tilted lower facets even while coplanar with the upper facet, so it enters via
+  the outsideset→`qh_addpoint` path and gets a normal `qh_newvertex` id; Qhull's
+  `qh_mergecycle` then folds its coplanar cone into the cell (changing facet
+  topology, which Stage 1 reconstructs independently). General position and most
+  cocircular cases therefore need **no** premerge for the order.
+- **Premerge still reorders ~9 cases.** Empirically (introspect with `Q0` vs the
+  default merge), the _creation order_ is identical for all 27 general cases and
+  most cocircular ones, but differs for ~13 larger cocircular cases (and a clean
+  no-merge hull fails or mis-fans ~9 of them: reg7/8/12, several big grids, rings).
+  Because `qh_premerge` runs _during_ `qh_addpoint`, its facet merges change which
+  point `qh_nextfurthest` emits next. So reaching 34/34 with a _computed_ order
+  needs premerge's effect on the build order — the remaining, FP-sensitive work.
 
 ### Remaining work (if revived)
 
-- [ ] Finish the `qh_buildhull` loop: `qh_setfacetplane` (+`sethyperplane_det`/
-      `_gauss`), `qh_distplane`, `qh_initialhull`, `qh_partitionall`/
-      `qh_partitionpoint`, `qh_addpoint`/`qh_findhorizon`/`qh_makenewfacets`/
-      `qh_matchnewfacets`. _Gate:_ the `introspect` VERTICES creation order matches
-      per general-position corpus case.
-- [ ] Port the coplanar-promotion/premerge path (the blocker above). _Gate:_
-      cocircular corpus reaches 34/34; bump `cocircularRatchet` to the full count.
-- [ ] Swap the engine in behind `tri.New`/`EnsureTriangles` (the exact-predicate
-      engine stays as a cgo-free, deterministic fallback). Re-run `just test`; any
-      cocircular golden that changes now matches matplotlib — regenerate it against
-      matplotlib (the parity source of truth).
+- [x] **Stage 1 — fan model proven** with captured creation order: 34/34
+      cocircular + 27/27 general (`TestFanFromGroundTruthOrder`). All remaining
+      work is now _computing_ the creation order.
+- [ ] **Stage 2 — port the `qh_buildhull` loop** to compute the order from
+      scratch: `qh_setfacetplane` (+`sethyperplane_det`/`_gauss`), `qh_distplane`,
+      `qh_initialhull`, `qh_partitionall`/`qh_partitionpoint`, `qh_addpoint`/
+      `qh_findhorizon`/`qh_makenewfacets`/`qh_matchnewfacets`, `qh_newvertex` ids.
+      _Gate:_ computed `VERTICES` order == captured for all 27 general cases (no
+      premerge involved there); feeding it to Stage 1 keeps 27/27 + the ~25
+      cocircular cases whose order is premerge-independent.
+- [ ] **Stage 3 — premerge's effect on build order** (`qh_premerge` →
+      `qh_mergecycle_all`/`qh_mergecycle` during `qh_addpoint`; the FP-sensitive
+      part). _Gate:_ computed order closes the remaining ~9 cases (reg7/8/12, big
+      grids, rings) → 34/34; bump `cocircularRatchet` (corpus_test.go) to 34. Note
+      the blocker is _build-order reordering_, not coplanar-vertex _promotion_
+      (cocircular points are ordinary insertions — see Key insights).
+- [ ] **Stage 4 — wire into `tri.New`/`EnsureTriangles`** (`tri/delaunay.go`); the
+      exact-predicate engine stays a cgo-free, deterministic fallback. Re-run
+      `just test`; any cocircular golden that changes now matches matplotlib —
+      regenerate it against matplotlib (the parity source of truth).
 
-**Alternative if full fidelity proves intractable:** reproduce only Qhull's
-coplanar-promotion _order_ (the fan apex per cell) atop the exact-predicate cell
-subdivision — likely closes many but not all cocircular cases.
+**Alternative if Stage 3 fidelity proves intractable:** Stage 1 + Stage 2 already
+deliver 27/27 general and ~25/34 cocircular from a _computed_ order (no premerge);
+bump the ratchet to whatever Stage 2 honestly reaches and document the residual.
 
 **Exit criterion:**
 

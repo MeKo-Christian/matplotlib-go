@@ -96,6 +96,22 @@ freetype261-build:
     bash third_party/freetype/build.sh
 # ---------------------------------------------------------------------------
 
+# Regenerate tri/qhull's differential ground truth from the vendored Qhull 8.0.2
+# source (gitignored under third_party/qhull-8.0.2/). Builds the introspection
+# tool, then rewrites testdata/creation_order.json (vertex creation order per
+# corpus case) used by the Qhull-faithful cocircular Delaunay tests. Regenerating
+# the full corpus.json additionally needs matplotlib (see testdata/gen_corpus.py).
+qhull-corpus:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    qh=third_party/qhull-8.0.2
+    if [ ! -d "$qh/src/libqhull_r" ]; then \
+      echo "vendored Qhull source missing at $qh (gitignored); cannot regenerate" >&2; exit 1; \
+    fi
+    bin="$(mktemp -d)/introspect"
+    cc -O2 -I "$qh/src" "$qh/introspect.c" "$qh"/src/libqhull_r/*.c -lm -o "$bin"
+    QHULL_INTROSPECT="$bin" python3 tri/qhull/testdata/gen_creation_order.py
+
 test-skia: freetype261-build
     CGO_ENABLED=1 go test -tags "skia freetype" ./...
 
