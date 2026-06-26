@@ -453,13 +453,16 @@ for ~9 cases (Stage 3), the heaviest, most precision-sensitive Qhull machinery.
 - [x] **Stage 1 — fan model proven** with captured creation order: 34/34
       cocircular + 27/27 general (`TestFanFromGroundTruthOrder`). All remaining
       work is now _computing_ the creation order.
-- [ ] **Stage 2 — port the `qh_buildhull` loop** to compute the order from
-      scratch: `qh_setfacetplane` (+`sethyperplane_det`/`_gauss`), `qh_distplane`,
-      `qh_initialhull`, `qh_partitionall`/`qh_partitionpoint`, `qh_addpoint`/
-      `qh_findhorizon`/`qh_makenewfacets`/`qh_matchnewfacets`, `qh_newvertex` ids.
-      _Gate:_ computed `VERTICES` order == captured for all 27 general cases (no
-      premerge involved there); feeding it to Stage 1 keeps 27/27 + the ~25
-      cocircular cases whose order is premerge-independent.
+- [x] **Stage 2 — `qh_buildhull` ported** (`tri/qhull/buildhull.go`): the
+      incremental lifted lower-hull — `qh_setfacetplane`/`sethyperplane_det` +
+      `qh_normalize2`, `qh_distplane`, `qh_createsimplex`/`qh_initialhull`,
+      `qh_partitionall`, the `qh_nextfurthest` facet-list walk, and `qh_addpoint`
+      (`qh_findhorizon` BFS, `qh_makenewfacets`/`qh_makenew_simplicial`,
+      `qh_matchnewfacets`, `qh_partitionvisible`), with `qh_newvertex` ids. The
+      self-contained engine `delaunayComputed` (no Qhull, no fixture) reaches
+      **27/27 general + 25/34 cocircular** (`TestDelaunayComputed`, ratchet 25);
+      all 61 build with no Gaussian-fallback degeneracy. The remaining 9 (reg7/8/12,
+      large grids, rings) are exactly the cases premerge reorders during the build.
 - [ ] **Stage 3 — premerge's effect on build order** (`qh_premerge` →
       `qh_mergecycle_all`/`qh_mergecycle` during `qh_addpoint`; the FP-sensitive
       part). _Gate:_ computed order closes the remaining ~9 cases (reg7/8/12, big

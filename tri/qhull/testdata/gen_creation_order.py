@@ -26,9 +26,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 def introspect_order(tool, x, y):
     """Return the real-point ids in ascending Qhull vertex->id (creation) order."""
     n = len(x)
-    stdin = f"{n}\n" + "\n".join(f"{xi!r} {yi!r}" for xi, yi in zip(x, y)) + "\n"
+    stdin = f"{n}\n" + "\n".join(f"{xi!r} {yi!r}" for xi, yi in zip(x, y, strict=True)) + "\n"
     out = subprocess.run([tool], input=stdin, capture_output=True, text=True, check=True).stdout
-    line = next(l for l in out.splitlines() if l.startswith("VERTICES"))
+    line = next(row for row in out.splitlines() if row.startswith("VERTICES"))
     # tokens are "vid:pointid"; the infinity point has pointid == n.
     pairs = [tok.split(":") for tok in line.split()[1:]]
     pairs = [(int(vid), int(pid)) for vid, pid in pairs]

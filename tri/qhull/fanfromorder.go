@@ -177,7 +177,7 @@ func oppositeVertex(t1, t2 [3]int) int {
 // triangles; the apex is the cell vertex with the highest creation rank; each
 // boundary edge not incident to the apex forms one anticlockwise triangle with
 // it. A singleton cell reproduces its own triangle.
-func fanCell(x, y []float64, tris [][3]int, cell []int, rank []int) [][3]int {
+func fanCell(x, y []float64, tris [][3]int, cell, rank []int) [][3]int {
 	boundary := cellBoundaryEdges(tris, cell)
 
 	apex := -1
