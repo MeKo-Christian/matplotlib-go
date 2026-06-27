@@ -572,29 +572,29 @@ vertex-set engine until the merge is complete.
         `qh_findbestnew == qh_findbest`; global-furthest/first-cone replacement crater
         general to 4–5/27; reversing cone-creation order craters everything; the exact
         `ridgeTo` materialisation I tried over- or under-sets vs Qhull.)
-        _Remaining (last 3: grid6x3, grid6x4, rings_0.5_1.0_5)._ **Exact rule now
-        verified from source** (`poly2_r.c:2505-2515`): `visible->f.replace =
-        newfacet2` (the `qh_makenew_nonsimplicial` **last** cone) iff
+        _Remaining (last 3: grid6x3, grid6x4, rings_0.5_1.0_5)._ **Root cause now
+        pinned by the QHATTACH oracle** (rebuilt patched qhull dumping every
+        REPL/CONE/MAKERIDGES; gitignored under `third_party/qhull-8.0.2`). Exact rule
+        (`poly2_r.c:2505-2515`): `visible->f.replace = newfacet2` (the
+        `qh_makenew_nonsimplicial` cone over a **materialised ridge**) iff
         `visible->ridges` is non-empty, else `newfacet` (the `qh_makenew_simplicial`
-        last cone) — in both paths simply _the last cone built for that visible
-        facet_, which `makeNewFacets` now records by overwriting `replace[vf]` per
-        cone. The one hypothesised mechanism for the last 3 — `qh_makeridges` on a
-        **simplicial neighbour touched twice in one merge cycle**
-        (`qh_mergecycle_neighbors`, `visitid==visit_id` branch) — was implemented
-        faithfully and **verified to NEVER fire on the 34-case corpus** (debug
-        counter), so the last 3 do **not** hinge on neighbour ridge materialisation.
-        They hinge purely on the **merged horizon's own ridge-append order**
-        (`qh_mergecycle_ridges`): for a non-simplicial merged-horizon `vf`, `boundary()`
-        does not yet reproduce that order, so its "last cone" ≠ Qhull's `newfacet2`.
-        The `mergehz` override pins the right cone for all but these 3. _Next (needs the
-        QHATTACH oracle):_ rebuild the patched qhull, read Qhull's actual `newfacet2`
-        for the 3 cases, and reproduce `qh_mergecycle_ridges`' ridge order in
-        `mergeInto`. _Gate:_ 31/34 → 34/34. (Verified dead-ends: `max_outside` stays at
-        roundoff so `qh_findbestnew == qh_findbest`; global-furthest/first-cone
-        replacement crater general to 4–5/27; reversing cone-creation order craters
-        everything; the exact `ridgeTo` materialisation over/under-sets vs Qhull;
-        pure last-cone without the `mergehz` override drops to 30/34.) Ridge now ties
-        the shipped vertex-set engine at 31/34-by-set.
+        last cone). The oracle showed the diverging visible facets flagged
+        `simplicial=1` **yet `hasridges=1`** — e.g. `vis[0,5,7] <- nf[6,5,7]` (a cone
+        over edge `[5,7]` that is none of its simplicial cones). Those ridges are
+        materialised during the **FULL premerge**: `qh_mergecycle` PLUS the
+        **degenerate/redundant** `qh_mergeneighbors`/`qh_mergesimplex` merges
+        (`merge_r.c:3634/3819`), which call `qh_makeridges` on facets sharing the ridge
+        edge. The previously-hypothesised `qh_mergecycle_neighbors` "touched twice"
+        path was implemented faithfully and **proven by the oracle to never fire** on
+        this corpus — so the gap is the degenerate-merge ridge propagation, which the
+        engine does not port. _Next:_ port `qh_premerge`'s `qh_makeridges` propagation
+        (the heavy, FP-sensitive path the plan always flagged). _Gate:_ 31/34 → 34/34.
+        (Verified dead-ends: `max_outside` stays at roundoff so `qh_findbestnew ==
+        qh_findbest`; global-furthest/first-cone replacement crater general to 4–5/27;
+        reversing cone-creation order craters everything; pure last-cone without the
+        `mergehz` override = 30/34; broad `!nb.simplicial` = 30/34 with a complementary
+        3 failing — confirming neither flag is the true `visible->ridges` discriminator.)
+        Ridge ties the shipped vertex-set engine at 31/34-by-set.
   - [ ] **3c.7 — close + lock.** Computed order = ground truth **61/61**
         (`QHULL_ORDER_STRICT=1`); switch `buildHullOrder`/`DelaunayMatched` to the
         ridge engine; `delaunayComputed` → 34/34 cocircular + 27/27 general; bump

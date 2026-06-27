@@ -96,22 +96,22 @@ func buildHullOrderRidge(q *qstate) ([]int, bool) {
 	// is strictly better than the simplicial-only build (31/34 vs 24/34 cocircular
 	// exact-order, fixing 7 cases and regressing none; general stays 27/27). The last
 	// 3 (grid6x3, grid6x4, rings_0.5_1.0_5) are tie-breaks among nearly-equidistant
-	// cocircular points. EXACT RULE (verified from poly2_r.c:2505-2515): a visible
-	// facet's replacement is newfacet2 (the qh_makenew_nonsimplicial last cone) iff
+	// cocircular points. EXACT RULE (verified from poly2_r.c:2505-2515 + a QHATTACH
+	// oracle dumping every REPL/CONE/MAKERIDGES): a visible facet's replacement is
+	// newfacet2 (the qh_makenew_nonsimplicial cone over a materialised ridge) iff
 	// visible->ridges is non-empty, else newfacet (the qh_makenew_simplicial last
-	// cone). In both paths it is simply "the last cone built for vf", and boundary()
-	// already yields the right order — so makeNewFacets records the last cone per vf.
-	// The mergehz override (below) pins the cone across a coplanar merged horizon for
-	// the cases where our merged-horizon ridge order does not yet reproduce
-	// qh_mergecycle_ridges' exact ridge-append order; that lands at 31/34. The other
-	// candidate mechanism — qh_makeridges on a simplicial neighbour touched twice in
-	// one merge cycle (poly2/merge_r.c qh_mergecycle_neighbors) — was implemented and
-	// verified to NEVER fire on the 34-case corpus, so the last 3 hinge purely on the
-	// merged horizon's ridge-append order, not on neighbour ridge materialisation.
-	// Closing them needs qh_mergecycle_ridges' exact append order (or the QHATTACH
-	// oracle to read Qhull's actual newfacet2 per case). 31/34 ties the shipped
-	// vertex-set engine (buildhull.go). QHULL_MERGE=0 falls back to the simplicial
-	// engine. See PLAN.md Stage 3c.6.
+	// cone). The oracle showed visible facets flagged simplicial=1 yet hasridges=1:
+	// their ridges were materialised during the FULL premerge (qh_mergecycle PLUS the
+	// degenerate/redundant qh_mergeneighbors/qh_mergesimplex merges, merge_r.c:3634/
+	// 3819) on facets sharing the ridge edge — NOT via the qh_mergecycle_neighbors
+	// "touched twice" path, which the oracle proved never fires on this corpus. So
+	// closing the last 3 needs a faithful port of qh_premerge's qh_makeridges
+	// propagation (the heavy, FP-sensitive path). The mergehz override below is a
+	// cheap stand-in pinning the cone across a coplanar merged horizon → 31/34 (pure
+	// last-cone without it = 30/34; broad !nb.simplicial = 30/34 with a complementary
+	// 3 failing). 31/34 ties the shipped vertex-set engine (buildhull.go).
+	// QHULL_MERGE=0 falls back to the simplicial engine. See PLAN.md Stage 3c.6 and
+	// the QHATTACH oracle in third_party/qhull-8.0.2 (gitignored).
 	h.mergeEnabled = os.Getenv("QHULL_MERGE") != "0"
 	h.minVisible = 2 * q.distRound // premerge_centrum, hull_dim<=3 with merging
 	h.maxCoplanar = h.minVisible
