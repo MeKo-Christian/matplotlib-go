@@ -377,14 +377,15 @@ exact-predicate engine; this phase only closes the cocircular diagonal choice.
 
 **Status:** in progress. The residual is cosmetic (Qhull's cocircular diagonal is
 _arbitrary_; both diagonals are valid Delaunay, identical render and
-interpolation), so the robust exact-predicate engine still ships. **Stages 1, 2
-and 3a are done**: the fan model is proven (34/34 + 27/27 from Qhull's true
-creation order), the `qh_buildhull` incremental hull is ported, and the faithful
-`qh_partitionall` greedy first-facet partition + one-time `qh_furthestnext`
-seeding bring the fully _computed_ engine to **28/34 cocircular + 27/27 general**.
-The last 6 cocircular cases need Stage 3b — the coplanarhorizon merge
-(`qh_premerge`→`qh_mergecycle`), the heaviest, most precision-sensitive piece (it
-makes facets non-simplicial).
+interpolation), so the robust exact-predicate engine still ships. **Stages 1, 2,
+3a and 3b are done**: the fan model is proven (34/34 + 27/27 from Qhull's true
+creation order), the `qh_buildhull` incremental hull is ported, the faithful
+`qh_partitionall` greedy first-facet partition + one-time `qh_furthestnext` seeding
+reach 28/34, and the non-simplicial coplanarhorizon merge (`qh_premerge`→
+`qh_mergecycle`) + first-clearly-outside `qh_findbestnew` + vertex-id cone ordering
+bring the fully _computed_ engine to **31/34 cocircular + 27/27 general**. The last
+3 (grid5x4, rings_1.0_2.0_6, rings_1.0_2.0_8) diverge only in the final 2-3
+insertions — tie-breaking that needs finer ridge-ordering fidelity (Stage 3c).
 
 ### What's already done (foundation, in-tree)
 
@@ -478,13 +479,21 @@ makes facets non-simplicial).
       one-time `qh_furthestnext` seeding. Lifts the computed engine to **28/34
       cocircular + 27/27 general** (`TestDelaunayComputed`, ratchet 28); shipped
       `Delaunay` still uses the exact engine.
-- [ ] **Stage 3b — coplanarhorizon merge** (`qh_premerge` → `qh_mergecycle`, run
-      _before_ `qh_partitionvisible` in `qh_addpoint`). The remaining 6 (grid4x4,
-      grid5x2, grid5x4, grid6x2, rings_1.0_2.0_6, rings_0.5_1.0_5) need a cone facet
-      coplanar with its horizon facet to be folded into it so the absorbed outside
-      points keep the horizon's list position. This makes facets non-simplicial —
-      the heaviest, most FP-sensitive piece. _Gate:_ computed order → 34/34; bump
-      `computedCocircularRatchet` and `cocircularRatchet` to 34.
+- [x] **Stage 3b — coplanarhorizon merge** (`tri/qhull/buildhull.go`): the
+      non-simplicial `qh_premerge`→`qh_mergecycle` merge (a coplanar cone facet is
+      folded into its horizon facet, which keeps its plane, moves to the tail and
+      becomes a new facet), plus the first-clearly-outside `qh_findbestnew` and
+      Qhull's vertex-id cone/horizon iteration order. Facets are modelled as vertex
+      _sets_ — boundary edges derived by in-plane angle-sort, neighbours rebuilt by
+      matching opposite directed edges — so the merge is a vertex-set union. Lifts
+      the computed engine to **31/34 cocircular + 27/27 general**
+      (`TestDelaunayComputed`, ratchet 31), no Gaussian-fallback degeneracy.
+- [ ] **Stage 3c — final tie-breaking** (the last 3: grid5x4, rings_1.0_2.0_6,
+      rings_1.0_2.0_8). These diverge only in the last 2-3 insertions — tie-breaking
+      among nearly-equidistant cocircular points in highly symmetric multi-ring /
+      large-grid configs. Closing them needs finer merge-to-tail / ridge ordering
+      fidelity than the vertex-set facet model reproduces (likely Qhull's explicit
+      ridge graph). _Gate:_ computed order → 34/34; bump both ratchets to 34.
 - [ ] **Stage 4 — wire into `tri.New`/`EnsureTriangles`** (`tri/delaunay.go`); the
       exact-predicate engine stays a cgo-free, deterministic fallback. Re-run
       `just test`; any cocircular golden that changes now matches matplotlib —
