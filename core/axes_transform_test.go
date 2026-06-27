@@ -88,4 +88,23 @@ func TestRefreshDataTransformInvalidationStage(t *testing.T) {
 	if got := probe.Invalid(); !got.Has(transform.InvalidNonAffine) {
 		t.Fatalf("non-affine leg: want InvalidNonAffine, got %v", got)
 	}
+
+	// Re-applying the same non-affine leg must NOT re-fire: an unchanged leg lets
+	// a split-aware consumer reuse its cached projection across draws (Phase 13
+	// leg-change detection). A structurally-equal rebuilt leg counts as unchanged.
+	probe.ClearInvalid()
+	logLegAgain := transform.NewScaleTransform(transform.NewLog(1, 10, 10), transform.NewLog(1, 10, 10))
+	ax.refreshDataTransform(logLegAgain)
+	if got := probe.Invalid(); got.Has(transform.InvalidNonAffine) {
+		t.Fatalf("unchanged non-affine leg: want no InvalidNonAffine, got %v", got)
+	}
+
+	// Changing the leg (different log domain) must re-fire InvalidNonAffine so the
+	// stale projection is rebuilt.
+	probe.ClearInvalid()
+	logLegChanged := transform.NewScaleTransform(transform.NewLog(1, 100, 10), transform.NewLog(1, 10, 10))
+	ax.refreshDataTransform(logLegChanged)
+	if got := probe.Invalid(); !got.Has(transform.InvalidNonAffine) {
+		t.Fatalf("changed non-affine leg: want InvalidNonAffine, got %v", got)
+	}
 }

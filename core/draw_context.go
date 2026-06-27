@@ -153,6 +153,23 @@ func (ctx *DrawContext) dataTransformDeps() []*transform.TransformNode {
 	return []*transform.TransformNode{ctx.Axes.axesBbox.Node(), &ctx.Axes.dataNode}
 }
 
+// dataLegIsNonAffine reports whether the axes data->axes leg currently has a
+// non-affine remainder. It reads the flag refreshDataTransform recorded, so it
+// avoids re-running an AsAffine traversal per artist (or per collection element).
+//
+// The flag describes the data leg specifically, so callers must only trust it
+// when the artist's resolved transform IS the data transform (i.e.
+// artistUsesDataCoords is true). It is the parity gate for the cached display
+// path: a fully-affine leg has no projection to cache and collapsing scale+bbox
+// into one matrix would diverge from the direct two-step chain by a last ULP,
+// so those keep the direct per-vertex path.
+func (ctx *DrawContext) dataLegIsNonAffine() bool {
+	if ctx == nil || ctx.Axes == nil || ctx.Axes.transData == nil {
+		return false
+	}
+	return ctx.Axes.dataSnapSet && !ctx.Axes.dataAffineOK
+}
+
 func (ctx *DrawContext) TransProjection() transform.T {
 	if ctx == nil {
 		return nil

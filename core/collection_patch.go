@@ -37,7 +37,7 @@ func (c *PatchCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		if len(path.C) == 0 {
 			continue
 		}
-		path = buildArtistDisplayPath(ctx, c, c.Coords, path, geom.Identity())
+		path = buildCachedDisplayPath(ctx, c.pathCacheSlot(i), c, c.Coords, path, geom.Identity())
 		patch := Patch{
 			FaceColor:   c.alphaColor(colorAt(c.FaceColor, c.FaceColors, i)),
 			EdgeColor:   c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, i)),
@@ -188,7 +188,7 @@ func (c *PatchCollection) drawPathCollection(r render.Renderer, ctx *DrawContext
 		if len(path.C) == 0 {
 			continue
 		}
-		path = buildArtistDisplayPath(ctx, c, c.Coords, path, geom.Identity())
+		path = buildCachedDisplayPath(ctx, c.pathCacheSlot(i), c, c.Coords, path, geom.Identity())
 		fill := c.alphaColor(colorAt(c.FaceColor, c.FaceColors, i))
 		edge := c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, i))
 		width := widthAt(c.EdgeWidth, c.EdgeWidths, i)

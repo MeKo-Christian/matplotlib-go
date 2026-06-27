@@ -416,18 +416,32 @@ re-running it per vertex — and an unchanged redraw skips the per-vertex transf
 entirely. This realizes, in the renderer, the affine/non-affine cache split that
 Phase 9 already built into `TransformedPath`.
 
-**Status:** **Line2D pilot shipped** (2026-06-28); the rest stays deferred. The
-full payoff still requires **repeated redraws** of the same artist (interactive
-pan/zoom or animation), which the single-PNG pipeline never triggers, so the
-formal exit criterion (interactive redraw loop) remains open. What landed: the
-`refreshDataTransform` stage fix, the axes invalidation nodes on `DrawContext`,
-and `Line2D` drawing data-coordinate paths through a persistent
-`transform.TransformedPath`. Parity is held at RMSE 0 by gating the cache to
-**genuine non-affine legs only** — for fully-affine (linear) axes the trailing
-affine would collapse scale+bbox into one matrix and diverge from the direct
-two-step chain by a ULP, and there is no projection to cache anyway, so those keep
-the direct path. The cache reuse is proven at the artist level by a counter probe;
-end-to-end log/polar reuse still needs the deferred non-affine-leg change check.
+**Status:** **Line2D pilot + leg-change detection + patch/collection rollout
+shipped** (2026-06-28). The only piece still open is the interactive/animation
+**redraw loop** that exercises repeated redraws of the same figure (the
+single-PNG pipeline never redraws), so the formal exit criterion stays open. What
+landed across the three passes:
+
+1. `refreshDataTransform` fires the stage matching the leg, the axes invalidation
+   nodes are on `DrawContext`, and `Line2D` draws data-coordinate paths through a
+   persistent `transform.TransformedPath` (the pilot).
+2. **Leg-change detection:** `refreshDataTransform` now compares the non-affine
+   leg structurally (`reflect.DeepEqual`) against the previous draw and fires
+   `InvalidNonAffine` only on an actual change, so an unchanged leg reuses the
+   projection through a full figure draw — a resize that only moves the axes bbox
+   refreshes the trailing affine alone. End-to-end reuse is proven by
+   `TestLine2DDisplayPathReusesProjectionThroughRefresh`.
+3. **Patch/collection rollout:** the shared `buildArtistDisplayPath` routes
+   data-coordinate draws through a centralized `displayPathCache`. Single-shape
+   patches inherit one cache via an interface method promoted from the embedded
+   `Patch`; the three collections keep one cache per element (`Collection`
+   grows a `[]displayPathCache`). Sources are rebuilt fresh each draw (collections
+   per element), so change detection is value-based (`pathsEqualValue`).
+
+Parity is held at RMSE 0 by gating the cache to **genuine non-affine legs only**
+(linear axes keep the direct path — see the ULP note below) and by applying the
+trailing affine **per axis** so a vertex outside the data domain (NaN under a log
+scale) keeps NaN local to one coordinate, exactly like the direct separable chain.
 
 ### What's already done (foundation, in-tree)
 
@@ -470,11 +484,21 @@ end-to-end log/polar reuse still needs the deferred non-affine-leg change check.
   `transform.AsAffine` reports a non-affine remainder; linear axes keep the direct
   path. For a genuine non-affine leg the trailing affine is the single bbox matrix,
   which matches the direct chain exactly.
-- **Log/polar resize win needs leg-change detection.** Even after the stage fix,
-  non-affine legs are treated as "changed every draw" (the Phase 9 deferral), so
-  log/polar resizes re-project every draw. The real resize win for those needs a
-  cheap non-affine-leg equality check (e.g. a scale/version identity) — itself a
-  follow-up. The affine (linear-axes) and unchanged-redraw wins land without it.
+- **Log/polar resize win via leg-change detection** (✅ done). `refreshDataTransform`
+  compares the rebuilt non-affine leg structurally against the previous draw
+  (`reflect.DeepEqual`, since legs are value transforms rebuilt fresh each draw)
+  and fires `InvalidNonAffine` only on a real change. `Log`/`Linear` encode the
+  view limits, so a limit change alters the leg (re-project) while a pure resize
+  leaves it untouched (reuse the projection, refresh only the bbox affine).
+  Func-based scales compare unequal and conservatively re-project.
+- **NaN must stay axis-local in the trailing affine** (parity gate, patch
+  rollout). The cached path applies the trailing affine; doing so via a full 2×3
+  matrix lets the zero cross-term poison a finite axis when the other is NaN
+  (`0*NaN == NaN`), so a log-domain-outside vertex `{10, NaN}` (direct, per-axis)
+  became `{NaN, NaN}`. `Line2D` never saw this (it culls non-finite points during
+  segmentation) but patches keep every vertex. Fix: `applyTrailingAffinePath`
+  applies a shear-free affine (the separable bbox) **per axis**, byte-identical to
+  the direct separable chain for finite coords and NaN-correct otherwise.
 
 ### Remaining work (if revived)
 
@@ -488,11 +512,15 @@ end-to-end log/polar reuse still needs the deferred non-affine-leg change check.
       change, dependency-wire to the nodes, draw via `TransformedPointsAndAffine` +
       the unchanged segmentation loop. Golden/reference RMSE 0 (cache gated to
       non-affine legs). Reuse proven by `TestLine2DDisplayPathReusesNonAffineProjection`.
-- [ ] Extend the same pattern through `buildArtistDisplayPath` to patches and
-      collections. Re-run the parity gate after each.
-- [ ] (Optional, larger) Non-affine-leg change detection so log/polar resizes also
-      reuse the projection (and so the reuse fires through a full figure draw, not
-      just a direct `displayPath` call).
+- [x] Extend the same pattern through `buildArtistDisplayPath` to patches and
+      collections (centralized `displayPathCache`; one slot per `Patch`, one per
+      collection element). Parity gate re-run: `TestBuildArtistDisplayPathCacheParity`
+      (incl. log-domain NaN vertices), `TestCollectionPerElementCacheReuse`.
+- [x] Non-affine-leg change detection so log/polar resizes also reuse the
+      projection and the reuse fires through a full figure draw, not just a direct
+      `displayPath` call (`reflect.DeepEqual` leg compare in `refreshDataTransform`;
+      `TestRefreshDataTransformInvalidationStage`,
+      `TestLine2DDisplayPathReusesProjectionThroughRefresh`).
 
 **Out of scope:** passing the affine _separately_ to the agg backend so it
 composes with the device y-flip and does zero per-vertex affine work
@@ -501,14 +529,16 @@ change.
 
 **Exit criterion:**
 
-- [~] Partially met. At the artist level, an affine-only redraw of a `Line2D` with
-      a non-affine leg re-runs no non-affine vertex pass (counter probe:
-      `TestLine2DDisplayPathReusesNonAffineProjection`), and the golden+reference
-      suite stays RMSE 0 (no new failures vs. the pre-existing branch baseline).
-      Still open: an interactive/animation redraw loop so the reuse fires through a
-      full figure redraw rather than a direct `displayPath` call (needs the
-      non-affine-leg change check above so the every-draw `refreshDataTransform`
-      stops re-projecting).
+- [~] Mechanism complete; only the redraw loop is missing. Reuse now fires through
+  a **full figure draw**: with leg-change detection the every-draw
+  `refreshDataTransform` no longer re-projects an unchanged non-affine leg, so a
+  resize that only moves the bbox reuses the cached projection for `Line2D`,
+  patches, and collections (`TestLine2DDisplayPathReusesProjectionThroughRefresh`,
+  `TestBuildArtistDisplayPathReusesProjection`, `TestCollectionPerElementCacheReuse`).
+  Golden+reference suite stays RMSE 0 (no new failures vs. the pre-existing branch
+  baseline). Still open: an interactive/animation redraw loop (or public re-render
+  API) that actually issues repeated figure draws — the single-PNG pipeline draws
+  once, so the win is currently exercised only by tests, not end users.
 
 ---
 

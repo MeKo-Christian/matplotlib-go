@@ -39,7 +39,7 @@ func (c *LineCollection) Draw(r render.Renderer, ctx *DrawContext) {
 			continue
 		}
 		path := polylinePath(segment)
-		path = buildArtistDisplayPath(ctx, c, c.Coords, path, geom.Identity())
+		path = buildCachedDisplayPath(ctx, c.pathCacheSlot(i), c, c.Coords, path, geom.Identity())
 		color := c.alphaColor(colorAt(c.Color, c.Colors, i))
 		width := widthAt(c.LineWidth, c.LineWidths, i)
 		if width <= 0 || color.A <= 0 {

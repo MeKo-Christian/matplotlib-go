@@ -35,6 +35,19 @@ func buildDisplayPath(ctx *DrawContext, coords CoordinateSpec, local geom.Path, 
 }
 
 func buildArtistDisplayPath(ctx *DrawContext, art any, fallback CoordinateSpec, local geom.Path, localToCoords geom.Affine) geom.Path {
+	var slot *displayPathCache
+	if h, ok := art.(displayPathCacher); ok {
+		slot = h.displayPathCacheSlot()
+	}
+	return buildCachedDisplayPath(ctx, slot, art, fallback, local, localToCoords)
+}
+
+// buildCachedDisplayPath is buildArtistDisplayPath with an explicit cache slot,
+// used by collections that keep one cache per element. When slot is non-nil and
+// the artist draws through a genuine non-affine data leg, the projection is
+// reused across affine-only redraws; otherwise it falls back to the direct
+// per-vertex transform (the byte-identical historical path).
+func buildCachedDisplayPath(ctx *DrawContext, slot *displayPathCache, art any, fallback CoordinateSpec, local geom.Path, localToCoords geom.Affine) geom.Path {
 	path := applyAffinePath(local, localToCoords)
 	if ctx == nil {
 		return path
@@ -42,6 +55,13 @@ func buildArtistDisplayPath(ctx *DrawContext, art any, fallback CoordinateSpec, 
 	tr := artistTransformFor(ctx, art, fallback)
 	if tr == nil {
 		return path
+	}
+	// Parity gate: cache only when the resolved transform is the data leg (so the
+	// recorded affine-ness flag describes tr) and that leg is non-affine.
+	if slot != nil && artistUsesDataCoords(art, fallback) && ctx.dataLegIsNonAffine() {
+		if cached, ok := slot.build(ctx, path, tr); ok {
+			return cached
+		}
 	}
 	return applyTransformPath(path, tr)
 }

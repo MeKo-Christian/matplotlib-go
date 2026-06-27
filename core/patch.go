@@ -54,6 +54,21 @@ type Patch struct {
 	// figure default.
 	Sketch render.SketchParams
 	z      float64
+
+	// pathCache holds the persistent display-path projection cache (Phase 13).
+	// Every artist embedding Patch reuses its non-affine projection across
+	// affine-only redraws; the zero value is an empty cache filled on first draw.
+	pathCache displayPathCache
+}
+
+// displayPathCacheSlot exposes the embedded display-path cache so the shared
+// buildArtistDisplayPath can reuse this artist's non-affine projection across
+// draws. Promoted to every type embedding Patch.
+func (p *Patch) displayPathCacheSlot() *displayPathCache {
+	if p == nil {
+		return nil
+	}
+	return &p.pathCache
 }
 
 // AddPatch mirrors Matplotlib's patch-oriented API on top of the generic Add.

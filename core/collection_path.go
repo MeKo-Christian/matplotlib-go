@@ -524,7 +524,7 @@ func (c *PathCollection) displayPathAt(ctx *DrawContext, i int, base geom.Path) 
 		return scaleAndTranslatePath(base, scale, offset)
 	}
 	path := scaleAndTranslatePath(base, scale, offset)
-	return buildArtistDisplayPath(ctx, c, c.Coords, path, geom.Identity())
+	return buildCachedDisplayPath(ctx, c.pathCacheSlot(i), c, c.Coords, path, geom.Identity())
 }
 
 func (c *PathCollection) refreshScalarMappedColors() {

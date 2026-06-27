@@ -27,6 +27,24 @@ type Collection struct {
 	PathEffects    []render.PathEffect
 	z              float64
 	scalarCLimSet  bool
+
+	// pathCaches holds one persistent display-path projection cache per element
+	// (Phase 13). Collections rebuild each element's source path every draw, so
+	// reuse across affine-only redraws relies on the value-based change detection
+	// in displayPathCache. Grown lazily by pathCacheSlot.
+	pathCaches []displayPathCache
+}
+
+// pathCacheSlot returns the persistent display-path cache for element i, growing
+// the backing slice as needed. A negative index yields nil (uncached).
+func (c *Collection) pathCacheSlot(i int) *displayPathCache {
+	if c == nil || i < 0 {
+		return nil
+	}
+	for len(c.pathCaches) <= i {
+		c.pathCaches = append(c.pathCaches, displayPathCache{})
+	}
+	return &c.pathCaches[i]
 }
 
 // AddCollection mirrors Matplotlib's collection-oriented API.

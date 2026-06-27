@@ -150,6 +150,63 @@ func TestLine2DDisplayPathReusesNonAffineProjection(t *testing.T) {
 	}
 }
 
+// TestLine2DDisplayPathReusesProjectionThroughRefresh is the end-to-end companion
+// to the artist-level probe above: it drives the every-draw refreshDataTransform
+// between draws (as a full figure draw does). With leg-change detection, an
+// unchanged non-affine leg no longer fires InvalidNonAffine, so a resize that only
+// moves the axes bbox reuses the cached projection; only an actual leg change
+// re-projects (Phase 13 leg-change detection).
+func TestLine2DDisplayPathReusesProjectionThroughRefresh(t *testing.T) {
+	applies := 0
+	counting := countingTransform{applies: &applies}
+	ax, ctx := newCacheTestAxesContext(counting, geom.Rect{Max: geom.Pt{X: 100, Y: 100}})
+
+	l := &Line2D{XY: []geom.Pt{{X: 0, Y: 0}, {X: 1, Y: 1}, {X: 2, Y: 0.5}, {X: 3, Y: 2}}}
+	n := len(l.XY)
+
+	first := l.displayPath(ctx)
+	if applies != n {
+		t.Fatalf("first draw: non-affine pass ran %d times, want %d", applies, n)
+	}
+
+	// Second "draw": resize the bbox AND re-run refreshDataTransform with an
+	// unchanged (structurally-equal) leg, exactly as the figure pipeline does.
+	ax.axesBbox.Set(geom.Rect{Max: geom.Pt{X: 200, Y: 150}})
+	ax.refreshDataTransform(counting)
+	second := l.displayPath(ctx)
+
+	if applies != n {
+		t.Fatalf("after resize + refresh with unchanged leg: non-affine pass ran %d times total, want %d (projection should be reused)", applies, n)
+	}
+	if pathsEqualExact(first, second) {
+		t.Fatal("resized redraw produced an identical path; trailing affine was not refreshed")
+	}
+
+	// Third "draw": the leg genuinely changes (different non-affine map), which
+	// must re-project.
+	ax.refreshDataTransform(scaledCountingTransform{applies: &applies})
+	_ = l.displayPath(ctx)
+	if applies != n+n {
+		t.Fatalf("after leg change: non-affine pass ran %d times total, want %d (projection should be rebuilt)", applies, n+n)
+	}
+}
+
+// scaledCountingTransform is a second, distinct non-affine transform so a leg
+// change is observable by reflect.DeepEqual (different dynamic type than
+// countingTransform).
+type scaledCountingTransform struct{ applies *int }
+
+func (c scaledCountingTransform) Apply(p geom.Pt) geom.Pt {
+	if c.applies != nil {
+		*c.applies++
+	}
+	return geom.Pt{X: p.X*4 + 3, Y: p.Y*5 - 1}
+}
+
+func (c scaledCountingTransform) Invert(p geom.Pt) (geom.Pt, bool) {
+	return geom.Pt{X: (p.X - 3) / 4, Y: (p.Y + 1) / 5}, true
+}
+
 // TestLine2DDisplayPathInvalidatesOnDataChange asserts that replacing the source
 // data re-runs the non-affine projection (the cache is keyed on the point
 // backing, not stale across SetData).

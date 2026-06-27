@@ -1,6 +1,8 @@
 package core
 
 import (
+	"reflect"
+
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
@@ -43,26 +45,32 @@ func (a *Axes) updateAxesBbox(clip geom.Rect) {
 //     comparing the flattened affine, so an unchanged graph reuses the cache and
 //     only an actual change fires transform.InvalidAffine (refresh the trailing
 //     affine, keep the cached non-affine vertex pass).
-//   - Non-affine leg (log/symlog scales, polar/geo/3D projections with mutable
-//     state): the leg is treated as changed every draw and fires
-//     transform.InvalidNonAffine so the vertex pass is re-run. Firing only
-//     InvalidAffine here would let a consumer reuse a stale projection on a
-//     log-domain/limits change.
-//
-// A non-affine leg is still re-projected every draw (no resize win yet); a cheap
-// non-affine-leg change check is a deferred follow-up.
+//   - Non-affine leg (log/symlog scales, polar/geo/skew projections): the change
+//     is detected by comparing the leg structurally against the previous draw's
+//     leg, so an unchanged leg reuses the cached non-affine vertex pass and only
+//     an actual change fires transform.InvalidNonAffine. A resize that only moves
+//     the axes bbox therefore refreshes the trailing affine alone (via the
+//     separate axesBbox node), reusing the projection. Firing InvalidNonAffine
+//     unconditionally would re-project every draw; firing only InvalidAffine
+//     would let a consumer reuse a stale projection on a log-domain/limits change.
 func (a *Axes) refreshDataTransform(dataToAxes transform.T) {
 	a.ensureTransforms()
+	prevLeg := a.curDataToAxes
 	a.curDataToAxes = dataToAxes
 
 	aff, ok := transform.AsAffine(dataToAxes)
 	if !ok {
-		// Non-affine leg: re-run the vertex pass. InvalidNonAffine also refreshes
-		// the trailing affine in TransformedPath.revalidate.
+		// Non-affine leg. Re-run the vertex pass only when the leg actually
+		// changed; InvalidNonAffine also refreshes the trailing affine in
+		// TransformedPath.revalidate. Legs are rebuilt fresh each draw, so this is
+		// a structural (value) comparison rather than pointer identity.
+		changed := !a.dataSnapSet || a.dataAffineOK || !legsEqual(prevLeg, dataToAxes)
 		a.dataAffine = aff
 		a.dataAffineOK = ok
 		a.dataSnapSet = true
-		a.dataNode.Invalidate(transform.InvalidNonAffine)
+		if changed {
+			a.dataNode.Invalidate(transform.InvalidNonAffine)
+		}
 		return
 	}
 	if !a.dataSnapSet || !a.dataAffineOK || aff != a.dataAffine {
@@ -71,4 +79,19 @@ func (a *Axes) refreshDataTransform(dataToAxes transform.T) {
 		a.dataSnapSet = true
 		a.dataNode.Invalidate(transform.InvalidAffine)
 	}
+}
+
+// legsEqual reports whether two data->axes legs are structurally identical, so an
+// unchanged non-affine leg can reuse its cached projection across draws.
+//
+// Legs are value transforms rebuilt fresh each draw (e.g. a SeparableT of log
+// scales, a polar/skew data transform), so this is a deep value comparison rather
+// than pointer identity. reflect.DeepEqual is used because some legs embed
+// non-comparable scales (FuncScale holds funcs) that would panic under ==; those
+// compare unequal here, conservatively forcing a re-projection.
+func legsEqual(a, b transform.T) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	return reflect.DeepEqual(a, b)
 }
