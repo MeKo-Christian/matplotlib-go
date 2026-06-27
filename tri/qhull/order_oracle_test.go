@@ -99,10 +99,10 @@ func TestComputedOrderRidge(t *testing.T) {
 		t.Errorf("ridge general exact-order regressed: %d/%d (must be %d)", st.pass, st.total, st.total)
 	}
 	// Cocircular ratchet: the faithful coplanar-horizon merge (newfacet2 leak +
-	// qh_makeridges matRidge propagation + qh_mergesimplex swap-remove ridge order)
-	// reaches 32/34 exact-order; the last 2 (grid5x4, rings_1.0_2.0_8) need deeper
-	// visible-set fidelity at a late step (Stage 3c.6d). Never lower.
-	const cocircularRidgeRatchet = 32
+	// per-merge qh_makeridges propagation + qh_mergesimplex swap-remove + pre-existing
+	// ridge ordering) reaches 33/34 exact-order; the last 1 (grid5x4) needs
+	// cross-addPoint merge-history fidelity (Stage 3c.6e). Never lower.
+	const cocircularRidgeRatchet = 33
 	if st := byCat["cocircular"]; st != nil && st.pass < cocircularRidgeRatchet {
 		t.Errorf("ridge cocircular exact-order regressed below ratchet: %d/%d < %d",
 			st.pass, st.total, cocircularRidgeRatchet)
