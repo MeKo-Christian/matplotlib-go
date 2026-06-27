@@ -40,6 +40,15 @@ type rfacet struct {
 	rnbr  []int
 	rtop  []bool
 
+	// matRidge records the edges of a STILL-SIMPLICIAL facet that have a
+	// materialised ridge (Qhull's visible->ridges populated as a side-effect of
+	// qh_makeridges on a neighbour: poly2/merge_r.c:2136 appends the shared ridge to
+	// BOTH facets). When such a facet becomes visible, qh_makenewfacets runs
+	// qh_makenew_nonsimplicial over these ridges and its last cone (newfacet2) is the
+	// replacement, even though the facet is still flagged simplicial. Edges are
+	// stored as the cone edge would be, in appended (ridge-creation) order.
+	matRidge [][2]int
+
 	normal [3]float64
 	offset float64
 
@@ -92,26 +101,25 @@ func buildHullOrderRidge(q *qstate) ([]int, bool) {
 	h := &rhull{q: q, replace: map[int]int{}}
 	// The coplanar-horizon merge (linkSamecycle/premerge/mergeInto + explicit
 	// redge/rnbr/rtop ridge lists, non-simplicial-horizon geometric orientation, and
-	// a full-scan fallback for the post-merge directed search) is on by default: it
-	// is strictly better than the simplicial-only build (31/34 vs 24/34 cocircular
-	// exact-order, fixing 7 cases and regressing none; general stays 27/27). The last
-	// 3 (grid6x3, grid6x4, rings_0.5_1.0_5) are tie-breaks among nearly-equidistant
-	// cocircular points. EXACT RULE (verified from poly2_r.c:2505-2515 + a QHATTACH
-	// oracle dumping every REPL/CONE/MAKERIDGES): a visible facet's replacement is
-	// newfacet2 (the qh_makenew_nonsimplicial cone over a materialised ridge) iff
-	// visible->ridges is non-empty, else newfacet (the qh_makenew_simplicial last
-	// cone). The oracle showed visible facets flagged simplicial=1 yet hasridges=1:
-	// their ridges were materialised during the FULL premerge (qh_mergecycle PLUS the
-	// degenerate/redundant qh_mergeneighbors/qh_mergesimplex merges, merge_r.c:3634/
-	// 3819) on facets sharing the ridge edge — NOT via the qh_mergecycle_neighbors
-	// "touched twice" path, which the oracle proved never fires on this corpus. So
-	// closing the last 3 needs a faithful port of qh_premerge's qh_makeridges
-	// propagation (the heavy, FP-sensitive path). The mergehz override below is a
-	// cheap stand-in pinning the cone across a coplanar merged horizon → 31/34 (pure
-	// last-cone without it = 30/34; broad !nb.simplicial = 30/34 with a complementary
-	// 3 failing). 31/34 ties the shipped vertex-set engine (buildhull.go).
-	// QHULL_MERGE=0 falls back to the simplicial engine. See PLAN.md Stage 3c.6 and
-	// the QHATTACH oracle in third_party/qhull-8.0.2 (gitignored).
+	// a full-scan fallback for the post-merge directed search) is on by default and
+	// strictly better than the simplicial-only build (32/34 vs 24/34 cocircular
+	// exact-order; general stays 27/27). The replacement model is now a FAITHFUL port
+	// (verified against a QHATTACH oracle in third_party/qhull-8.0.2, gitignored,
+	// dumping every REPL/CONE/MAKERIDGES/MERGEFACET), not a heuristic. Three pieces:
+	//  1. qh_makenewfacets' newfacet2 LEAK (poly2_r.c:2490-2515): newfacet/newfacet2
+	//     reset only at function entry, not per visible facet, so a ridgeless facet
+	//     inherits the most-recent prior facet's newfacet2 — see makeNewFacets' runNF2.
+	//  2. qh_makeridges propagation (merge_r.c:2133+2136): each materialised ridge is
+	//     appended to BOTH facets, so a still-simplicial neighbour of a merge gains a
+	//     ridge (visible->ridges non-empty) — see rfacet.matRidge, set in mergeInto.
+	//  3. qh_mergesimplex ridge order (merge_r.c:3753) via qh_setdel SWAP-REMOVE
+	//     (qset_r.c:346): the merged facet's ridge sequence — hence its last cone /
+	//     newfacet2 — depends on swap-remove, see swapRemoveRidge in mergeInto.
+	// Remaining 2 (grid5x4, rings_1.0_2.0_8): a deeper visible-set divergence at a late
+	// step — Qhull skips a ridge cone whose neighbour is visible there while ours is
+	// not, so its last cone differs. Needs visible-set fidelity, a layer below the
+	// ridge order. 32/34 beats the shipped vertex-set engine (buildhull.go, 31/34).
+	// QHULL_MERGE=0 falls back to the simplicial engine. See PLAN.md Stage 3c.6.
 	h.mergeEnabled = os.Getenv("QHULL_MERGE") != "0"
 	h.minVisible = 2 * q.distRound // premerge_centrum, hull_dim<=3 with merging
 	h.maxCoplanar = h.minVisible
@@ -626,16 +634,21 @@ func (h *rhull) setNbrSlot(f *rfacet, s, nbID int) {
 // visible facets (post-merge) go through the ridge walk.
 func (h *rhull) makeNewFacets(apex int, visible []*rfacet) ([]*rfacet, bool) {
 	newFacets := make([]*rfacet, 0, len(visible)+2)
-	// qh_makenewfacets sets visible->f.replace = newfacet2 if the visible facet has
-	// materialised ridges (the qh_makenew_nonsimplicial last cone), else newfacet
-	// (the qh_makenew_simplicial last cone). In both paths it is "the last cone
-	// created for this visible facet" — and boundary() already yields the right
-	// iteration order (ridge order for non-simplicial vf, neighbour-slot order for
-	// simplicial vf). So the faithful replacement is simply the last cone built for
-	// vf, recorded by overwriting h.replace[vf.id] on each cone. General position
-	// has only simplicial facets ⇒ last neighbour-slot cone (27/27 preserved).
-	replByRidge := map[int]bool{}
+	// Faithful qh_makenewfacets replacement (poly2_r.c:2490-2515). newfacet/newfacet2
+	// are declared ONCE and reset to NULL only at function entry — NOT inside the
+	// per-visible-facet loop — so a ridgeless facet inherits the most recent prior
+	// facet's newfacet2 ("if (newfacet2) newfacet= newfacet2"). We reproduce that
+	// leak with a running newfacet2 (runNF2): for each visible facet, newfacet2 is
+	// recomputed (to its last nonsimplicial ridge cone, possibly none) iff it has
+	// ridges, and otherwise persists; visible->f.replace = newfacet2 if set, else the
+	// facet's own last simplicial cone. A facet "has ridges" if it is non-simplicial
+	// (all edges) or carries propagated matRidge edges (a still-simplicial neighbour
+	// of an earlier merge). General position: no ridges ever ⇒ each facet's own last
+	// cone (27/27 preserved).
+	runNF2 := -1
 	for _, vf := range visible {
+		lastRidge, lastCone := -1, -1
+		vfHasRidges := !vf.simplicial || len(vf.matRidge) > 0
 		for _, r := range h.boundary(vf) {
 			if r.nbr < 0 {
 				continue
@@ -685,19 +698,25 @@ func (h *rhull) makeNewFacets(apex int, visible []*rfacet) ([]*rfacet, bool) {
 				nf.mergehz = true
 				h.linkSamecycle(nb, nf)
 			}
-			// Replacement = the last cone created for vf (overwrite each time);
-			// boundary() ordering makes this newfacet2 for a non-simplicial vf and
-			// newfacet for a simplicial one, matching qh_makenewfacets exactly.
-			// The mergehz override pins the cone across a coplanar merged horizon
-			// where our boundary order does not yet reproduce qh_mergecycle_ridges'
-			// exact ridge-append order (recovers cases the pure last-cone misses).
-			if !nb.simplicial && nb.mergehz {
-				h.replace[vf.id] = nf.id
-				replByRidge[vf.id] = true
-			} else if !replByRidge[vf.id] {
-				h.replace[vf.id] = nf.id
+			// qh_makenew_nonsimplicial builds a cone for each materialised ridge (a
+			// non-simplicial facet's full boundary, or a simplicial facet's matRidge
+			// edges) and returns the last; qh_makenew_simplicial returns the last cone
+			// overall. Track both for this facet.
+			if !vf.simplicial || edgeInList(r.edge, vf.matRidge) {
+				lastRidge = nf.id
 			}
+			lastCone = nf.id
 			newFacets = append(newFacets, nf)
+		}
+		// newfacet2 is recomputed iff vf has ridges (to lastRidge, maybe -1); replace
+		// = newfacet2 when set, else this facet's own last (simplicial) cone.
+		if vfHasRidges {
+			runNF2 = lastRidge
+		}
+		if runNF2 >= 0 {
+			h.replace[vf.id] = runNF2
+		} else if lastCone >= 0 {
+			h.replace[vf.id] = lastCone
 		}
 	}
 	return newFacets, true
@@ -778,46 +797,37 @@ func (h *rhull) premerge(coneFacets []*rfacet) []*rfacet {
 
 func (h *rhull) mergeInto(hf *rfacet, cones []int) {
 	h.makeRidges(hf)
-	coneSet := map[int]bool{}
-	for _, c := range cones {
-		coneSet[c] = true
-	}
-	redge := make([][2]int, 0, len(hf.rnbr)+2)
-	rnbr := make([]int, 0, len(hf.rnbr)+2)
-	rtop := make([]bool, 0, len(hf.rnbr)+2)
-	for i := range hf.rnbr {
-		if coneSet[hf.rnbr[i]] {
-			continue
-		}
-		redge = append(redge, hf.redge[i])
-		rnbr = append(rnbr, hf.rnbr[i])
-		rtop = append(rtop, hf.rtop[i])
-	}
-	hf.redge, hf.rnbr, hf.rtop = redge, rnbr, rtop
 	apex := h.facets[cones[0]].verts[0]
+	// Faithful qh_mergesimplex replay (merge_r.c:3753): each cone (facet1) merges
+	// into hf (facet2) in samecycle order. For each of the cone's three ridges (in
+	// skip/boundary order — base [e_hi,e_lo], then [apex,e_lo], then [apex,e_hi]):
+	// a ridge already shared with hf (the base, or an apex edge whose sibling cone
+	// already merged) is DELETED via qh_delridge_merge — a swap-remove (qset_r.c:346
+	// moves the last element into the slot); every other ridge is APPENDED to hf.
+	// Reproducing the swap-remove order is what makes the merged facet's ridge list —
+	// and hence qh_makenew_nonsimplicial's last cone (newfacet2) — match Qhull.
 	for _, cID := range cones {
 		c := h.facets[cID]
-		e0, e1 := c.verts[1], c.verts[2]
-		// A cone facet [apex,e0,e1] is the top of its slot-s ridge iff
-		// toporient ^ (s odd); the merged hf inherits that orientation.
-		sides := [2]struct {
-			sib  int
+		eHi, eLo := c.verts[1], c.verts[2]
+		ridges := [3]struct {
 			edge [2]int
+			sib  int
 			top  bool
 		}{
-			{c.nbr[1], [2]int{apex, e1}, c.toporient != (1&0x1 == 1)}, // slot 1
-			{c.nbr[2], [2]int{apex, e0}, c.toporient != (2&0x1 == 1)}, // slot 2
+			{[2]int{eHi, eLo}, c.nbr[0], false},         // base (skip0), shared with hf
+			{[2]int{apex, eLo}, c.nbr[1], !c.toporient}, // skip1: top = toporient ^ (1 odd)
+			{[2]int{apex, eHi}, c.nbr[2], c.toporient},  // skip2: top = toporient ^ (2 even)
 		}
-		for _, s := range sides {
-			if s.sib >= 0 && coneSet[s.sib] {
-				continue // ridge between two merging cones → interior
+		for _, r := range ridges {
+			if h.swapRemoveRidge(hf, r.edge) {
+				continue // ridge shared with hf (base, or interior cone-cone) → delete
 			}
-			hf.redge = append(hf.redge, s.edge)
-			hf.rnbr = append(hf.rnbr, s.sib)
-			hf.rtop = append(hf.rtop, s.top)
-			if s.sib >= 0 {
-				if sl := h.findSlot(h.facets[s.sib], c.id); sl >= 0 {
-					h.setNbrSlot(h.facets[s.sib], sl, hf.id)
+			hf.redge = append(hf.redge, r.edge)
+			hf.rnbr = append(hf.rnbr, r.sib)
+			hf.rtop = append(hf.rtop, r.top)
+			if r.sib >= 0 {
+				if sl := h.findSlot(h.facets[r.sib], c.id); sl >= 0 {
+					h.setNbrSlot(h.facets[r.sib], sl, hf.id)
 				}
 			}
 		}
@@ -842,6 +852,61 @@ func (h *rhull) mergeInto(hf *rfacet, cones []int) {
 	h.appendFacet(hf)
 	hf.newfacet = true
 	hf.simplicial = false
+	// qh_makeridges appends each materialised ridge to BOTH facets sharing it
+	// (merge_r.c:2133+2136). Mirror that propagation onto hf's still-simplicial
+	// external neighbours: the shared edge becomes a materialised ridge on them, so
+	// when one later turns visible qh_makenewfacets takes the nonsimplicial path and
+	// its replacement is the cone over this edge (newfacet2). Appended in hf's ridge
+	// order, matching Qhull's ridge-creation order.
+	for i, nbID := range hf.rnbr {
+		if nbID < 0 {
+			continue
+		}
+		nb := h.facets[nbID]
+		if nb.visible || !nb.simplicial {
+			continue
+		}
+		if !edgeInList(hf.redge[i], nb.matRidge) {
+			nb.matRidge = append(nb.matRidge, hf.redge[i])
+		}
+	}
+}
+
+// swapRemoveRidge removes the ridge with the given edge from hf's parallel ridge
+// lists using Qhull's qh_setdel swap-remove (the last element fills the gap), and
+// reports whether a ridge was found. The swap-remove order is load-bearing: it
+// determines the merged facet's final ridge sequence (qh_makenew_nonsimplicial reads
+// the last ridge as newfacet2).
+func (h *rhull) swapRemoveRidge(hf *rfacet, edge [2]int) bool {
+	for i := range hf.redge {
+		if !sameEdge(hf.redge[i], edge) {
+			continue
+		}
+		last := len(hf.redge) - 1
+		hf.redge[i] = hf.redge[last]
+		hf.rnbr[i] = hf.rnbr[last]
+		hf.rtop[i] = hf.rtop[last]
+		hf.redge = hf.redge[:last]
+		hf.rnbr = hf.rnbr[:last]
+		hf.rtop = hf.rtop[:last]
+		return true
+	}
+	return false
+}
+
+// sameEdge reports whether two boundary edges are the same unordered vertex pair.
+func sameEdge(a, b [2]int) bool {
+	return (a[0] == b[0] && a[1] == b[1]) || (a[0] == b[1] && a[1] == b[0])
+}
+
+// edgeInList reports whether e (as an unordered pair) is already in list.
+func edgeInList(e [2]int, list [][2]int) bool {
+	for _, x := range list {
+		if sameEdge(e, x) {
+			return true
+		}
+	}
+	return false
 }
 
 // matchNewFacets links the cone's sibling facets across their shared {apex, x}

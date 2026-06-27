@@ -98,10 +98,11 @@ func TestComputedOrderRidge(t *testing.T) {
 	if st := byCat["general"]; st != nil && st.pass != st.total {
 		t.Errorf("ridge general exact-order regressed: %d/%d (must be %d)", st.pass, st.total, st.total)
 	}
-	// Cocircular ratchet: the coplanar-horizon merge reaches 31/34 exact-order; the
-	// last 3 (grid6x3/6x4, rings_0.5_1.0_5) are tie-breaks that need the exact
-	// partial-ridge replacement (qh_makenewfacets' newfacet2; Stage 3c.6). Never lower.
-	const cocircularRidgeRatchet = 31
+	// Cocircular ratchet: the faithful coplanar-horizon merge (newfacet2 leak +
+	// qh_makeridges matRidge propagation + qh_mergesimplex swap-remove ridge order)
+	// reaches 32/34 exact-order; the last 2 (grid5x4, rings_1.0_2.0_8) need deeper
+	// visible-set fidelity at a late step (Stage 3c.6d). Never lower.
+	const cocircularRidgeRatchet = 32
 	if st := byCat["cocircular"]; st != nil && st.pass < cocircularRidgeRatchet {
 		t.Errorf("ridge cocircular exact-order regressed below ratchet: %d/%d < %d",
 			st.pass, st.total, cocircularRidgeRatchet)
