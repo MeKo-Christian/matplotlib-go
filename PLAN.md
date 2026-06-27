@@ -594,14 +594,28 @@ vertex-set engine until the merge is complete.
         `coplanarhorizon` via `qh_mergefacet→qh_mergesimplex` (NOT the
         degenerate/redundant path guessed earlier; and `qh_mergecycle_neighbors`
         "touched twice" proven to never fire). Fixed grid6x3/6x4 + rings_0.5_1.0_5.
-        _Remaining 2 (grid5x4, rings_1.0_2.0_8):_ a deeper **visible-set** divergence at
-        a late step — Qhull skips a ridge cone whose neighbour is _visible_ there while
-        ours is not, so the last cone differs (e.g. `vis[19,15,4,0]` → Qhull `nf[20,19,4]`
-        vs ours `nf[20,19,15]`). Needs visible-set fidelity, a layer below the ridge
-        order. _Gate:_ 32/34 → 34/34. (Verified dead-ends: `max_outside` stays at
-        roundoff so `qh_findbestnew == qh_findbest`; global-furthest/first-cone
-        replacement crater general to 4–5/27; reversing cone order craters everything.)
-        32/34 BEATS the shipped vertex-set engine (buildhull.go, 31/34-by-set).
+        _Remaining 2 (grid5x4, rings_1.0_2.0_8)._ Root cause refined (the earlier
+        "visible-set" note was wrong — all neighbours are non-visible). The merged
+        facet's first cone differs because its constituents lack a **pre-existing
+        materialised ridge** that Qhull gives them: `qh_makeridges` lists a facet's
+        pre-existing ridges FIRST (`merge_r.c:2090-2091`, appending only the missing
+        boundary ridges), and combined with the swap-remove this lands a different last
+        ridge. Oracle: for `vis[19,15,4,0]`, Qhull's `hf[15,4,0]` carried `[15,0]` and
+        cone `[19,15,4]` carried `[19,15]` at merge time → final ridge order
+        `[15,0],[4,0],[19,15],[19,4]` (last `[19,4]`, replacement `nf[20,19,4]`); ours
+        has both matRidge empty → `[4,0],[15,0],[19,4],[19,15]` (last `[19,15]`).
+        `makeRidges` now honours matRidge order (faithful groundwork, exercised when a
+        propagated-to facet later becomes a horizon — metric-neutral here). The true
+        blocker: Qhull propagates ridges **per-merge** (every `qh_mergesimplex`
+        `makeRidges`' both facets immediately), interleaved in `qh_all_merges`'
+        **MERGESET order** (`qh_compare_facetmerge`), accumulating across addPoints;
+        this engine propagates once per `mergeInto` in its own order, so the ridge
+        never reaches those facets in time. _Next:_ port the `qh_all_merges` driver
+        (mergeset ordering) + per-merge propagation. _Gate:_ 32/34 → 34/34. (Verified
+        dead-ends: `max_outside` stays at roundoff so `qh_findbestnew == qh_findbest`;
+        global-furthest/first-cone replacement crater general to 4–5/27; reversing cone
+        order craters everything.) 32/34 BEATS the shipped vertex-set engine
+        (buildhull.go, 31/34-by-set).
   - [ ] **3c.7 — close + lock.** Computed order = ground truth **61/61**
         (`QHULL_ORDER_STRICT=1`); switch `buildHullOrder`/`DelaunayMatched` to the
         ridge engine; `delaunayComputed` → 34/34 cocircular + 27/27 general; bump
