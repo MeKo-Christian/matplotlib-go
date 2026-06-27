@@ -20,7 +20,7 @@ require (
 
 require (
 	gioui.org/shader v1.0.8 // indirect
-	github.com/MeKo-Christian/qhull-go v0.1.0
+	github.com/cwbudde/qhull-go v0.1.0
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/go-text/typesetting v0.3.4 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
@@ -37,4 +37,4 @@ require (
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
-replace github.com/MeKo-Christian/qhull-go => ../qhull-go
+replace github.com/cwbudde/qhull-go => ../qhull-go

@@ -1,6 +1,6 @@
 package tri
 
-import qhull "github.com/MeKo-Christian/qhull-go"
+import qhull "github.com/cwbudde/qhull-go"
 
 // delaunayTriangles computes a Delaunay triangulation of the supplied points,
 // delegating to the qhull package. The triangle set (connectivity) is the true

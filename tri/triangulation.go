@@ -5,7 +5,7 @@
 // mesh refinement ([UniformTriRefiner]) and mesh analysis ([TriAnalyzer]).
 //
 // It mirrors the public surface of matplotlib's matplotlib.tri module. The
-// Delaunay triangulation is computed by the pure-Go [github.com/MeKo-Christian/qhull-go]
+// Delaunay triangulation is computed by the pure-Go [github.com/cwbudde/qhull-go]
 // engine using exact geometric predicates, so the triangle connectivity is the
 // true Delaunay triangulation — identical to matplotlib's Qhull backend for
 // points in general position. For cocircular inputs the Delaunay triangulation
