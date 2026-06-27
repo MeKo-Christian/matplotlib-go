@@ -31,11 +31,14 @@ type rfacet struct {
 	nbr   []int // parallel to verts: neighbour across ridge opposite verts[i]; -1 none
 
 	// Non-simplicial facets (post-merge) carry an explicit, ordered ridge list:
-	// redge[i] is the i-th boundary edge (2 vertices, descending id) and rnbr[i]
-	// the facet across it, in Qhull ridge-creation order. Simplicial facets leave
-	// these nil and use the parallel nbr array (redge[i] is implicitly verts\verts[i]).
+	// redge[i] is the i-th boundary edge (2 vertices, descending id), rnbr[i] the
+	// facet across it, and rtop[i] whether THIS facet is the ridge's top (the
+	// orientation qh_makenew_nonsimplicial reads to orient new cone facets), in
+	// Qhull ridge-creation order. Simplicial facets leave these nil and use the
+	// parallel nbr array (redge[i] is implicitly verts\verts[i]).
 	redge [][2]int
 	rnbr  []int
+	rtop  []bool
 
 	normal [3]float64
 	offset float64
@@ -78,6 +81,7 @@ type rhull struct {
 
 	samecycle    map[int][]int // horizon facet id → cone facets to merge into it
 	mergeHorizon []int         // horizon facet ids in first-encounter order
+	mergeMarked  []int         // facets flagged mergehz this addPoint (to clear)
 	mergeEnabled bool          // opt-in coplanar-horizon merge (WIP, Stage 3c.6)
 }
 
@@ -86,13 +90,18 @@ type rhull struct {
 // false on a degeneracy that would need the unported Gaussian fallback.
 func buildHullOrderRidge(q *qstate) ([]int, bool) {
 	h := &rhull{q: q, replace: map[int]int{}}
-	// The coplanar-horizon merge is implemented (linkSamecycle/premerge/mergeInto)
-	// but incomplete — it lacks the qh_partitioncoplanar promotion that keeps a
-	// cocircular cell's interior points pickable, so it currently drops them and
-	// regresses the merge cases. It is therefore opt-in (QHULL_MERGE=1) until 3c.6
-	// is finished; the default build is the faithful simplicial engine (27/27
-	// general + 24/34 cocircular exact-order). See PLAN.md Phase 12, Stage 3c.6.
-	h.mergeEnabled = os.Getenv("QHULL_MERGE") == "1"
+	// The coplanar-horizon merge (linkSamecycle/premerge/mergeInto + explicit
+	// redge/rnbr/rtop ridge lists, non-simplicial-horizon geometric orientation, and
+	// a full-scan fallback for the post-merge directed search) is on by default: it
+	// is strictly better than the simplicial-only build (30/34 vs 24/34 cocircular
+	// exact-order, fixing 6 cases and regressing none; general stays 27/27). The last
+	// 4 (grid6x3, grid6x4, rings_1.0_2.0_8, rings_0.5_1.0_5) are tie-breaks among
+	// nearly-equidistant cocircular points that need the merged facet's ridge/
+	// neighbour list in Qhull's exact qh_mergesimplex append order — that order sets
+	// the horizonskip parity / directed-walk order that picks one of two equally-
+	// valid facets. Set QHULL_MERGE=0 to fall back to the simplicial engine. See
+	// PLAN.md Phase 12, Stage 3c.6.
+	h.mergeEnabled = os.Getenv("QHULL_MERGE") != "0"
 	h.minVisible = 2 * q.distRound // premerge_centrum, hull_dim<=3 with merging
 	h.maxCoplanar = h.minVisible
 	h.minOutside = 2 * h.minVisible
@@ -488,6 +497,12 @@ func (h *rhull) addPoint(furthest int, seed *rfacet) bool {
 		f.newfacet = false
 		id = next
 	}
+	// coplanarhorizon is per-addPoint state (qh_findhorizon re-marks each time):
+	// clear it so a stale flag never triggers a merge in a later step.
+	for _, id := range h.mergeMarked {
+		h.facets[id].mergehz = false
+	}
+	h.mergeMarked = h.mergeMarked[:0]
 	return h.ok
 }
 
@@ -523,6 +538,7 @@ func (h *rhull) findHorizon(pt int, seed *rfacet) []*rfacet {
 				visible = append(visible, nb)
 			case d >= -h.maxCoplanar && h.mergeEnabled:
 				nb.mergehz = true
+				h.mergeMarked = append(h.mergeMarked, nb.id)
 			}
 		}
 	}
@@ -536,16 +552,19 @@ type ridgeRef struct {
 	edge [2]int
 	nbr  int
 	slot int
+	top  bool // whether f is this ridge's top (qh_makeridges orientation)
 }
 
 // boundary returns f's boundary ridges in Qhull iteration order: parallel
 // (inverse-id vertex) order for a simplicial facet — ridge k is the edge opposite
 // verts[k] — and the explicit ordered ridge list for a merged (non-simplicial) one.
+// top mirrors qh_makeridges: a simplicial facet is its ridge k's top iff
+// toporient ^ (k odd).
 func (h *rhull) boundary(f *rfacet) []ridgeRef {
 	if !f.simplicial {
 		out := make([]ridgeRef, len(f.rnbr))
 		for i := range f.rnbr {
-			out[i] = ridgeRef{f.redge[i], f.rnbr[i], i}
+			out[i] = ridgeRef{f.redge[i], f.rnbr[i], i, f.rtop[i]}
 		}
 		return out
 	}
@@ -560,7 +579,7 @@ func (h *rhull) boundary(f *rfacet) []ridgeRef {
 				j++
 			}
 		}
-		out[k] = ridgeRef{e, f.nbr[k], k}
+		out[k] = ridgeRef{e, f.nbr[k], k, f.toporient != (k&0x1 == 1)}
 	}
 	return out
 }
@@ -610,15 +629,34 @@ func (h *rhull) makeNewFacets(apex int, visible []*rfacet) ([]*rfacet, bool) {
 			nf := h.newFacet([]int{apex, r.edge[0], r.edge[1]})
 			nf.newfacet = true
 			horizonskip := h.findSlot(nb, vf.id)
-			// qh_makenew_simplicial toporient parity (from the horizon facet).
-			if nb.toporient {
-				nf.toporient = horizonskip&0x1 == 1
+			if vf.simplicial {
+				// qh_makenew_simplicial toporient parity (from the horizon facet).
+				if nb.toporient {
+					nf.toporient = horizonskip&0x1 == 1
+				} else {
+					nf.toporient = horizonskip&0x1 == 0
+				}
 			} else {
-				nf.toporient = horizonskip&0x1 == 0
+				// qh_makenew_nonsimplicial: orient from the ridge (top == visible).
+				nf.toporient = r.top
 			}
 			if !h.setFacetPlane(nf) {
 				h.ok = false
 				return nil, false
+			}
+			if !nb.simplicial {
+				// horizonskip parity (qh_makenew_simplicial) indexes the horizon's
+				// neighbour list, but a merged horizon's neighbour order does not yet
+				// match Qhull's qh_mergesimplex order, so the parity is unreliable.
+				// Non-simplicial horizons occur only in cocircular merge cases (never
+				// in general position), so orient these cone facets geometrically
+				// (interior below) without touching the proven simplicial path.
+				if h.distplane2(h.interior, nf) > 0 {
+					nf.toporient = !nf.toporient
+					nf.normal[0], nf.normal[1], nf.normal[2] = -nf.normal[0], -nf.normal[1], -nf.normal[2]
+					nf.offset = -nf.offset
+					nf.upper = nf.normal[2] > -h.q.distRound
+				}
 			}
 			h.appendFacet(nf)
 			nf.nbr[0] = nb.id                    // neighbour opposite apex = horizon facet
@@ -658,9 +696,11 @@ func (h *rhull) makeRidges(f *rfacet) {
 	b := h.boundary(f)
 	f.redge = make([][2]int, len(b))
 	f.rnbr = make([]int, len(b))
+	f.rtop = make([]bool, len(b))
 	for i, r := range b {
 		f.redge[i] = r.edge
 		f.rnbr[i] = r.nbr
+		f.rtop[i] = r.top
 	}
 	f.simplicial = false
 }
@@ -712,24 +752,29 @@ func (h *rhull) mergeInto(hf *rfacet, cones []int) {
 	}
 	redge := make([][2]int, 0, len(hf.rnbr)+2)
 	rnbr := make([]int, 0, len(hf.rnbr)+2)
+	rtop := make([]bool, 0, len(hf.rnbr)+2)
 	for i := range hf.rnbr {
 		if coneSet[hf.rnbr[i]] {
 			continue
 		}
 		redge = append(redge, hf.redge[i])
 		rnbr = append(rnbr, hf.rnbr[i])
+		rtop = append(rtop, hf.rtop[i])
 	}
-	hf.redge, hf.rnbr = redge, rnbr
+	hf.redge, hf.rnbr, hf.rtop = redge, rnbr, rtop
 	apex := h.facets[cones[0]].verts[0]
 	for _, cID := range cones {
 		c := h.facets[cID]
 		e0, e1 := c.verts[1], c.verts[2]
+		// A cone facet [apex,e0,e1] is the top of its slot-s ridge iff
+		// toporient ^ (s odd); the merged hf inherits that orientation.
 		sides := [2]struct {
 			sib  int
 			edge [2]int
+			top  bool
 		}{
-			{c.nbr[1], [2]int{apex, e1}}, // ridge {apex,e1} opposite verts[1]=e0
-			{c.nbr[2], [2]int{apex, e0}}, // ridge {apex,e0} opposite verts[2]=e1
+			{c.nbr[1], [2]int{apex, e1}, c.toporient != (1&0x1 == 1)}, // slot 1
+			{c.nbr[2], [2]int{apex, e0}, c.toporient != (2&0x1 == 1)}, // slot 2
 		}
 		for _, s := range sides {
 			if s.sib >= 0 && coneSet[s.sib] {
@@ -737,6 +782,7 @@ func (h *rhull) mergeInto(hf *rfacet, cones []int) {
 			}
 			hf.redge = append(hf.redge, s.edge)
 			hf.rnbr = append(hf.rnbr, s.sib)
+			hf.rtop = append(hf.rtop, s.top)
 			if s.sib >= 0 {
 				if sl := h.findSlot(h.facets[s.sib], c.id); sl >= 0 {
 					h.setNbrSlot(h.facets[s.sib], sl, hf.id)
@@ -936,6 +982,16 @@ func (h *rhull) partitionVisible(visible, newFacets []*rfacet) {
 // (and points that land on it) past the lower-facet picks.
 func (h *rhull) partitionPointInto(p, startID int) {
 	f, dist := h.findBest(p, startID)
+	if (f == nil || dist < h.minOutside) && h.mergeEnabled {
+		// After a merge the new-facet neighbour graph can be locally disconnected,
+		// so the directed qh_findbest walk may miss the facet a point is clearly
+		// outside of. Fall back to a full scan (qh_findbestnew's wider reach) so the
+		// point is not spuriously dropped. Faithful for a point outside exactly one
+		// facet, which is the case here.
+		if f2, d2 := h.findBestAll(p); f2 != nil && d2 >= h.minOutside {
+			f, dist = f2, d2
+		}
+	}
 	if f == nil || dist < h.minOutside {
 		return // coplanar/inside (qh_partitioncoplanar; dropped here)
 	}

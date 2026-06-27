@@ -540,23 +540,35 @@ vertex-set engine until the merge is complete.
         build order matches the captured ground truth **27/27 general + 24/34
         cocircular** (`TestComputedOrderRidge`, general hard-gated). Per-step oracle:
         `stepdump.c` + the `QHSTEP` patch.
-  - [~] **3c.6 — re-port `qh_mergecycle` on the ridge graph (partial, opt-in).**
-        The coplanar-horizon merge is ported (`linkSamecycle`/`premerge`/`mergeInto`
-        + explicit `redge`/`rnbr` ridge lists via `makeRidges`, and a unified
-        `boundary()` so non-simplicial facets walk their ordered ridges): a cone
-        facet across a coplanar horizon ridge is folded into the horizon facet, which
-        absorbs the apex at position 0, drops the shared/interior ridges and vertices,
-        keeps its plane, and moves to the tail as a non-simplicial new facet; the
-        `qh_getreplacement` chain is followed through merged cones in
-        `partitionVisible`. It reproduces Qhull's order for the non-dropped points,
-        but is **blocked on the `qh_partitioncoplanar` coplanar-point layer**: a
-        cocircular cell's interior points lift coplanar with the merged facet and are
-        currently dropped (`dist < MINoutside`) instead of being kept in the facet's
-        coplanar set and promoted to vertices — so the merge regresses (21/34) and is
-        gated behind `QHULL_MERGE=1` (default off → faithful simplicial 24/34). _Next:_
-        track per-facet coplanar sets in `partitionPointInto`/`partitionVisible`
-        (KEEPcoplanar), redistribute them on merge, and promote so every input point
-        is still picked. _Gate:_ cocircular exact-order 24/34 → 34/34.
+  - [~] **3c.6 — coplanar-horizon merge ported, ON by default → 30/34.** The merge
+        — `linkSamecycle`/`premerge`/`mergeInto`, explicit `redge`/`rnbr`/`rtop` ridge
+        lists via `makeRidges`, a unified `boundary()` so non-simplicial facets walk
+        their ordered ridges, `qh_makenew_nonsimplicial` ridge-top orientation, the
+        `qh_getreplacement` chain through merged cones — is **strictly better than the
+        simplicial-only build (30/34 vs 24/34 cocircular, fixing 6 and regressing 0;
+        general stays 27/27)**, so it is on by default (`QHULL_MERGE=0` to disable).
+        A cone facet across a coplanar horizon ridge is folded into the horizon facet,
+        which absorbs the apex at position 0, drops the shared/interior ridges and
+        vertices, keeps its plane, and moves to the tail as a non-simplicial new facet.
+        Four bugs fixed this pass: (1) `mergehz` is per-addPoint state — must clear
+        each step (a stale flag caused runaway over-merging that collapsed the hull);
+        (2) cone facets from a non-simplicial visible facet need the ridge-top
+        orientation; (3) **the `horizonskip` parity is unreliable across a merged
+        horizon** (its neighbour order ≠ Qhull's yet) — orient those cone facets
+        geometrically (interior-below; safe because non-simplicial horizons occur only
+        in cocircular cases, never in the 27/27 general build); (4) the post-merge
+        new-facet neighbour graph can be locally disconnected, so the directed
+        `qh_findbest` walk misses a facet a point is clearly outside — added a
+        full-scan fallback. NB: the earlier "`qh_partitioncoplanar` coplanar-promotion"
+        framing was a red herring — points drop because the wrong facets exist.
+        _Remaining (last 4: grid6x3/6x4, rings_1.0_2.0_8, rings_0.5_1.0_5):_
+        tie-breaks among nearly-equidistant cocircular points. A point sits outside
+        two equally-valid cone facets; Qhull's directed walk reaches one, ours the
+        other, because the merged facet's ridge/neighbour list isn't in Qhull's exact
+        `qh_mergesimplex` append order. _Next:_ port that append order (cones merge
+        one-at-a-time via `qh_mergesimplex`; each appends its external ridges to the
+        horizon's `ridges`/`neighbors` in cone-ridge order) so the directed walk
+        order matches. _Gate:_ cocircular exact-order 30/34 → 34/34.
   - [ ] **3c.7 — close + lock.** Computed order = ground truth **61/61**
         (`QHULL_ORDER_STRICT=1`); switch `buildHullOrder`/`DelaunayMatched` to the
         ridge engine; `delaunayComputed` → 34/34 cocircular + 27/27 general; bump

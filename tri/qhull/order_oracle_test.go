@@ -94,10 +94,17 @@ func TestComputedOrderRidge(t *testing.T) {
 		t.Logf("ridge divergences (%d): %v", len(diverged), diverged)
 	}
 	// General position has a unique build with no merges; the faithful engine must
-	// reproduce its creation order exactly. Hard-gate it to prevent regression
-	// while the cocircular merge path (Stage 3c.6) is completed.
+	// reproduce its creation order exactly. Hard-gate it to prevent regression.
 	if st := byCat["general"]; st != nil && st.pass != st.total {
 		t.Errorf("ridge general exact-order regressed: %d/%d (must be %d)", st.pass, st.total, st.total)
+	}
+	// Cocircular ratchet: the coplanar-horizon merge reaches 30/34 exact-order; the
+	// last 4 (grid6x3/6x4, rings_1.0_2.0_8, rings_0.5_1.0_5) are tie-breaks that need
+	// the exact qh_mergesimplex ridge/neighbour order (Stage 3c.6). Never lower.
+	const cocircularRidgeRatchet = 30
+	if st := byCat["cocircular"]; st != nil && st.pass < cocircularRidgeRatchet {
+		t.Errorf("ridge cocircular exact-order regressed below ratchet: %d/%d < %d",
+			st.pass, st.total, cocircularRidgeRatchet)
 	}
 }
 
