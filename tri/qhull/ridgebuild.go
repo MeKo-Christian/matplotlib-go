@@ -96,11 +96,14 @@ func buildHullOrderRidge(q *qstate) ([]int, bool) {
 	// is strictly better than the simplicial-only build (30/34 vs 24/34 cocircular
 	// exact-order, fixing 6 cases and regressing none; general stays 27/27). The last
 	// 4 (grid6x3, grid6x4, rings_1.0_2.0_8, rings_0.5_1.0_5) are tie-breaks among
-	// nearly-equidistant cocircular points that need the merged facet's ridge/
-	// neighbour list in Qhull's exact qh_mergesimplex append order — that order sets
-	// the horizonskip parity / directed-walk order that picks one of two equally-
-	// valid facets. Set QHULL_MERGE=0 to fall back to the simplicial engine. See
-	// PLAN.md Phase 12, Stage 3c.6.
+	// nearly-equidistant cocircular points. Root cause (traced via the oracle's
+	// per-replace dump): a horizon facet of the seed sits within roundoff of the
+	// apex's plane, and Qhull classifies that ridge just-interior where we classify
+	// it horizon — so Qhull builds one fewer cone from the seed and its replacement
+	// (qh_makenewfacets' returned facet = last surviving cone) differs, sending the
+	// directed walk to the other of two equally-valid facets. Closing them needs that
+	// borderline visible/coplanar classification to match Qhull bit-for-bit. Set
+	// QHULL_MERGE=0 to fall back to the simplicial engine. See PLAN.md Stage 3c.6.
 	h.mergeEnabled = os.Getenv("QHULL_MERGE") != "0"
 	h.minVisible = 2 * q.distRound // premerge_centrum, hull_dim<=3 with merging
 	h.maxCoplanar = h.minVisible
@@ -869,7 +872,8 @@ func (h *rhull) findBest(pt, startID int) (*rfacet, float64) {
 	facet := start
 	for facet != nil {
 		var next *rfacet
-		for _, nbID := range facet.nbr {
+		for _, r := range h.boundary(facet) { // boundary handles merged (rnbr) facets
+			nbID := r.nbr
 			if nbID < 0 {
 				continue
 			}
@@ -922,7 +926,8 @@ func (h *rhull) findBestHorizon(pt int, start *rfacet, bestDist float64) (*rface
 	for len(queue) > 0 {
 		f := queue[0]
 		queue = queue[1:]
-		for _, nbID := range f.nbr {
+		for _, r := range h.boundary(f) { // boundary handles merged (rnbr) facets
+			nbID := r.nbr
 			if nbID < 0 {
 				continue
 			}
@@ -949,7 +954,10 @@ func (h *rhull) findBestHorizon(pt int, start *rfacet, bestDist float64) (*rface
 
 // partitionVisible redistributes each visible facet's orphaned outside points onto
 // the new facets (qh_partitionvisible), starting each point's directed best search
-// from the visible facet's replacement (qh_getreplacement).
+// from the visible facet's replacement (qh_getreplacement). qh.max_outside stays at
+// roundoff throughout these builds, so qh_findbestnew (used on merge steps) and
+// qh_findbest agree — both return the replacement when the point is clearly outside
+// it — so the only thing that distinguishes a merge step is the replacement choice.
 func (h *rhull) partitionVisible(visible, newFacets []*rfacet) {
 	for _, vf := range visible {
 		start, ok := h.replace[vf.id]
@@ -983,11 +991,8 @@ func (h *rhull) partitionVisible(visible, newFacets []*rfacet) {
 func (h *rhull) partitionPointInto(p, startID int) {
 	f, dist := h.findBest(p, startID)
 	if (f == nil || dist < h.minOutside) && h.mergeEnabled {
-		// After a merge the new-facet neighbour graph can be locally disconnected,
-		// so the directed qh_findbest walk may miss the facet a point is clearly
-		// outside of. Fall back to a full scan (qh_findbestnew's wider reach) so the
-		// point is not spuriously dropped. Faithful for a point outside exactly one
-		// facet, which is the case here.
+		// After a merge the directed walk may miss the facet a point is clearly
+		// outside of; fall back to a full scan so it is not spuriously dropped.
 		if f2, d2 := h.findBestAll(p); f2 != nil && d2 >= h.minOutside {
 			f, dist = f2, d2
 		}

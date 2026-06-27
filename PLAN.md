@@ -562,13 +562,20 @@ vertex-set engine until the merge is complete.
         full-scan fallback. NB: the earlier "`qh_partitioncoplanar` coplanar-promotion"
         framing was a red herring — points drop because the wrong facets exist.
         _Remaining (last 4: grid6x3/6x4, rings_1.0_2.0_8, rings_0.5_1.0_5):_
-        tie-breaks among nearly-equidistant cocircular points. A point sits outside
-        two equally-valid cone facets; Qhull's directed walk reaches one, ours the
-        other, because the merged facet's ridge/neighbour list isn't in Qhull's exact
-        `qh_mergesimplex` append order. _Next:_ port that append order (cones merge
-        one-at-a-time via `qh_mergesimplex`; each appends its external ridges to the
-        horizon's `ridges`/`neighbors` in cone-ridge order) so the directed walk
-        order matches. _Gate:_ cocircular exact-order 30/34 → 34/34.
+        tie-breaks among nearly-equidistant cocircular points. Root cause traced (via
+        a `QHATTACH` oracle patch that dumps `visible->f.replace`): the replacement
+        used to seed `qh_partitionvisible`'s directed walk is `qh_makenewfacets`'
+        returned facet = the **last cone created from the visible facet**. We and
+        Qhull agree on that rule, but disagree on **which cones get created**: a
+        horizon facet of the seed lies within roundoff of the apex's plane, and Qhull
+        classifies that ridge just-interior (one fewer cone from the seed) where we
+        classify it horizon. So our replacement differs, and the directed walk
+        early-returns at the wrong one of two equally-valid facets. `max_outside`
+        stays at roundoff throughout (verified), so `qh_findbestnew` vs `qh_findbest`
+        is NOT the difference — it is purely this borderline visible/coplanar
+        classification. _Next:_ make the borderline `MINvisible` classification match
+        Qhull bit-for-bit (likely a facet-plane/orientation detail for merged-region
+        facets), without disturbing the 27/27 general build. _Gate:_ 30/34 → 34/34.
   - [ ] **3c.7 — close + lock.** Computed order = ground truth **61/61**
         (`QHULL_ORDER_STRICT=1`); switch `buildHullOrder`/`DelaunayMatched` to the
         ridge engine; `delaunayComputed` → 34/34 cocircular + 27/27 general; bump
