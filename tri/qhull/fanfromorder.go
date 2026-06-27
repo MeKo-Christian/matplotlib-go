@@ -43,13 +43,66 @@ func delaunayFromOrder(x, y []float64, order []int) (triangles, neighbors [][3]i
 	}
 
 	cells := groupCocircularCells(project(x, y), base, baseNbrs)
+	out := fanCells(x, y, base, cells, rank)
+	return out, computeNeighbors(out), nil
+}
 
+// fanCells re-triangulates every cell as a fan from its last-created vertex and
+// returns the triangles in the deterministic (lexicographic) order Delaunay uses.
+func fanCells(x, y []float64, base [][3]int, cells [][]int, rank []int) [][3]int {
 	out := make([][3]int, 0, len(base))
 	for _, cell := range cells {
 		out = append(out, fanCell(x, y, base, cell, rank)...)
 	}
 	sortTriangles(out)
+	return out
+}
+
+// DelaunayMatched returns the Delaunay triangulation with matplotlib/Qhull's
+// cocircular diagonal choice resolved from the computed vertex creation order
+// (buildHullOrder + the per-cell fan). It is layered on the robust exact-predicate
+// Delaunay and degrades gracefully:
+//
+//   - General-position inputs have no cocircular cells, so the exact triangulation
+//     is already canonical and is returned directly (the order computation, which
+//     would be wasted, is skipped — this is also the fast path for large inputs).
+//   - When cocircular cells exist, the build order is computed and each cell is
+//     fanned from its last-created vertex, reproducing Qhull's diagonal.
+//   - If the order computation bails (an unported hull degeneracy), the exact
+//     triangulation — itself a valid Delaunay triangulation — is returned.
+//
+// Triangles are wound anticlockwise and returned in deterministic order, with the
+// same neighbour conventions as Delaunay.
+func DelaunayMatched(x, y []float64) (triangles, neighbors [][3]int, err error) {
+	base, baseNbrs, err := Delaunay(x, y)
+	if err != nil {
+		return nil, nil, err
+	}
+	cells := groupCocircularCells(project(x, y), base, baseNbrs)
+	if !hasMultiCell(cells) {
+		return base, baseNbrs, nil // general position: exact triangulation is canonical
+	}
+	order, ok := buildHullOrder(project(x, y))
+	if !ok {
+		return base, baseNbrs, nil // fallback: a valid Delaunay triangulation
+	}
+	rank, err := creationRank(order, len(x))
+	if err != nil {
+		return base, baseNbrs, nil
+	}
+	out := fanCells(x, y, base, cells, rank)
 	return out, computeNeighbors(out), nil
+}
+
+// hasMultiCell reports whether any cell merges more than one base triangle, i.e.
+// whether the input actually has a cocircular diagonal to resolve.
+func hasMultiCell(cells [][]int) bool {
+	for _, c := range cells {
+		if len(c) > 1 {
+			return true
+		}
+	}
+	return false
 }
 
 // creationRank inverts the creation-order permutation: rank[p] is the position of

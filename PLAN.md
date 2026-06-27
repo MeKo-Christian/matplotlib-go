@@ -494,10 +494,16 @@ insertions — tie-breaking that needs finer ridge-ordering fidelity (Stage 3c).
       large-grid configs. Closing them needs finer merge-to-tail / ridge ordering
       fidelity than the vertex-set facet model reproduces (likely Qhull's explicit
       ridge graph). _Gate:_ computed order → 34/34; bump both ratchets to 34.
-- [ ] **Stage 4 — wire into `tri.New`/`EnsureTriangles`** (`tri/delaunay.go`); the
-      exact-predicate engine stays a cgo-free, deterministic fallback. Re-run
-      `just test`; any cocircular golden that changes now matches matplotlib —
-      regenerate it against matplotlib (the parity source of truth).
+- [x] **Stage 4 — wired into `tri.delaunayTriangles`** via `qhull.DelaunayMatched`
+      (`tri/qhull/fanfromorder.go`, `tri/delaunay.go`): general position takes a
+      fast path returning the exact triangulation unchanged (the order computation
+      is skipped — no cost or risk on large inputs); cocircular inputs get the
+      computed fan; and if `buildHullOrder` bails the exact (still valid) Delaunay is
+      returned. Three optional-visual 3D goldens shifted to the new diagonal and were
+      verified against the matplotlib references (`TestReferenceCompare` PSNR
+      50–57 dB): `mplot3d_gallery` and `mplot3d_trisurf3d` regenerated (deterministic);
+      `mplot3d_tricontourf3d` left as-is — it is a pre-existing non-deterministic
+      optional-visual case (a 3D depth-order tie, orthogonal to triangulation).
 
 **Alternative if Stage 3 fidelity proves intractable:** Stage 1 + Stage 2 already
 deliver 27/27 general and ~25/34 cocircular from a _computed_ order (no premerge);
