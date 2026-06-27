@@ -4,10 +4,14 @@ import "testing"
 
 // computedCocircularRatchet is the minimum number of cocircular corpus cases the
 // fully self-contained engine (incremental hull order + cocircular fan, no Qhull
-// and no captured fixture) must reproduce. The clean (no-premerge) build closes
-// 25/34; the remaining cases need premerge's effect on the build order (PLAN.md
-// Phase 12, Stage 3). Bump as the port closes cases; never lower.
-const computedCocircularRatchet = 25
+// and no captured fixture) must reproduce. The clean build with Qhull's greedy
+// first-facet partition (qh_partitionall) and one-time furthest-facet seeding
+// (qh_furthestnext) closes 28/34; the remaining 6 (grid4x4, grid5x2, grid5x4,
+// grid6x2, rings_1.0_2.0_6, rings_0.5_1.0_5) need the coplanarhorizon merge
+// (qh_premerge → qh_mergecycle, run before qh_partitionvisible), which folds a
+// coplanar cone facet into its horizon facet and so changes the build order
+// (PLAN.md Phase 12, Stage 3). Bump as the port closes cases; never lower.
+const computedCocircularRatchet = 28
 
 // TestDelaunayComputed exercises delaunayComputed end-to-end against the
 // differential corpus. General position has a unique Delaunay, so it is a hard

@@ -143,6 +143,43 @@ func (h *hull) appendFacet(f *hullFacet) {
 	tail.prev = f.id
 }
 
+// prependFacet links f at the head of the facet list (just after the head
+// sentinel) and makes it facet_next (qh_prependfacet before qh.facet_next).
+func (h *hull) prependFacet(f *hullFacet) {
+	head := h.facets[h.headID]
+	next := head.next
+	head.next = f.id
+	f.prev = h.headID
+	f.next = next
+	h.facets[next].prev = f.id
+	h.nextID = f.id
+}
+
+// furthestNext mirrors qh_furthestnext: it moves the facet holding the globally
+// furthest outside point to the front of the list and makes it facet_next. Qhull
+// calls this once in qh_initbuild (after partitioning) to seed the build with the
+// overall furthest point; with PICKfurthest off, the subsequent qh_buildhull walk
+// is plain facet-list order. Ties go to the first such facet in list order
+// (strict > below), matching Qhull.
+func (h *hull) furthestNext() {
+	bestID := -1
+	bestDist := -math.MaxFloat64
+	for id := h.facets[h.headID].next; id != h.tailID; id = h.facets[id].next {
+		f := h.facets[id]
+		if f.visible || len(f.outside) == 0 {
+			continue
+		}
+		if f.furthest > bestDist {
+			bestDist, bestID = f.furthest, id
+		}
+	}
+	if bestID >= 0 {
+		f := h.facets[bestID]
+		h.removeFacet(f)
+		h.prependFacet(f)
+	}
+}
+
 // removeFacet unlinks f from the facet list, advancing facet_next past it.
 func (h *hull) removeFacet(f *hullFacet) {
 	if h.nextID == f.id {
@@ -309,8 +346,15 @@ func (h *hull) setNeighborAcrossSharedEdge(f, g *hullFacet) {
 
 // ---- partition (qh_partitionall) ----------------------------------------
 
-// partitionAll assigns every non-simplex point to the outside set of the facet it
-// is furthest above, mirroring qh_partitionall + qh_partitionpoint.
+// partitionAll mirrors qh_partitionall for the (!BESToutside, MERGING,
+// KEEPcoplanar) Delaunay config. Block 1 walks the facet list and assigns each
+// not-yet-claimed point to the FIRST facet it is clearly outside of (distance >=
+// distoutside), keeping that facet's running-furthest point deferred to the end of
+// its outside set; points not clearly outside any facet fall through. Block 2
+// re-partitions those leftovers with the best-facet search (qh_partitionpoint via
+// qh_findbestnew, which with no new facets reduces to the best live facet). This
+// greedy first-facet order — not a global furthest search — is what fixes the
+// vertex creation order for cocircular inputs.
 func (h *hull) partitionAll() {
 	inSimplex := make([]bool, h.q.n+1)
 	h.liveFacets(func(f *hullFacet) {
@@ -318,14 +362,72 @@ func (h *hull) partitionAll() {
 			inSimplex[v] = true
 		}
 	})
+	// pointset: non-simplex real points in ascending id order (the infinity point
+	// q.n is a simplex vertex, so it is excluded here).
+	pointset := make([]int, 0, h.q.n)
 	for p := 0; p <= h.q.n; p++ {
-		if inSimplex[p] {
+		if !inSimplex[p] {
+			pointset = append(pointset, p)
+		}
+	}
+	// distoutside = (USEfindbestnew?2:1) * max((MERGING?2:1)*MINoutside, max_outside).
+	// At partition time no merges have happened (USEfindbestnew false) and
+	// max_outside is 0, so distoutside = 2*MINoutside.
+	distoutside := 2 * h.minOutside
+
+	// Block 1: greedy first-facet assignment.
+	for id := h.facets[h.headID].next; id != h.tailID; id = h.facets[id].next {
+		f := h.facets[id]
+		if f.visible {
 			continue
 		}
-		f, dist := h.findBest(p)
-		if f != nil && dist >= h.minOutside {
-			h.addOutside(f, p, dist)
+		leftover := pointset[:0]
+		bestpoint := -1
+		var bestdist float64
+		for _, p := range pointset {
+			d := h.distplane(p, f)
+			if d < distoutside {
+				leftover = append(leftover, p)
+				continue
+			}
+			switch {
+			case bestpoint == -1:
+				bestpoint, bestdist = p, d
+			case d > bestdist:
+				f.outside = append(f.outside, bestpoint) // old best loses the last slot
+				bestpoint, bestdist = p, d
+			default:
+				f.outside = append(f.outside, p)
+			}
 		}
+		if bestpoint != -1 {
+			f.outside = append(f.outside, bestpoint) // furthest last
+			f.furthest = bestdist
+		}
+		pointset = leftover
+	}
+
+	// Block 2: leftover points re-partitioned by best-facet search.
+	for _, p := range pointset {
+		h.partitionPoint(p)
+	}
+}
+
+// partitionPoint mirrors qh_partitionpoint over the LIVE facet list (the
+// no-new-facets case used by qh_partitionall block 2): it finds the best facet for
+// the point and, if the point is outside it (dist >= MINoutside), appends it
+// keeping the furthest last, then — like Qhull — moves a freshly-occupied facet to
+// the tail so it is processed after qh.facet_next.
+func (h *hull) partitionPoint(p int) {
+	f, dist := h.findBest(p)
+	if f == nil || dist < h.minOutside {
+		return // coplanar/inside: dropped by the clean build (no premerge)
+	}
+	wasEmpty := len(f.outside) == 0
+	h.addOutside(f, p, dist)
+	if wasEmpty && h.nextID != f.id {
+		h.removeFacet(f)
+		h.appendFacet(f)
 	}
 }
 
@@ -379,6 +481,8 @@ func (h *hull) addOutside(f *hullFacet, p int, dist float64) {
 // furthest point. It reports false on an unsupported degeneracy.
 func (h *hull) buildLoop() bool {
 	h.ok = true
+	h.nextID = h.facets[h.headID].next // qh_buildhull: facet_next = facet_list
+	h.furthestNext()                   // qh_initbuild: seed with the overall furthest facet
 	for {
 		f := h.nextFurthest()
 		if f == nil {

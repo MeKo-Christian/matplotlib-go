@@ -377,12 +377,14 @@ exact-predicate engine; this phase only closes the cocircular diagonal choice.
 
 **Status:** in progress. The residual is cosmetic (Qhull's cocircular diagonal is
 _arbitrary_; both diagonals are valid Delaunay, identical render and
-interpolation), so the robust exact-predicate engine still ships. **Stage 1 is
-done**: the diagonal-selection model (fan each cocircular cell from its
-last-created vertex) is proven to reproduce Qhull 34/34 + 27/27 when fed Qhull's
-true vertex creation order. The remaining work is _computing_ that order — a
-faithful `qh_buildhull` port (Stage 2) plus premerge's effect on the build order
-for ~9 cases (Stage 3), the heaviest, most precision-sensitive Qhull machinery.
+interpolation), so the robust exact-predicate engine still ships. **Stages 1, 2
+and 3a are done**: the fan model is proven (34/34 + 27/27 from Qhull's true
+creation order), the `qh_buildhull` incremental hull is ported, and the faithful
+`qh_partitionall` greedy first-facet partition + one-time `qh_furthestnext`
+seeding bring the fully _computed_ engine to **28/34 cocircular + 27/27 general**.
+The last 6 cocircular cases need Stage 3b — the coplanarhorizon merge
+(`qh_premerge`→`qh_mergecycle`), the heaviest, most precision-sensitive piece (it
+makes facets non-simplicial).
 
 ### What's already done (foundation, in-tree)
 
@@ -440,13 +442,21 @@ for ~9 cases (Stage 3), the heaviest, most precision-sensitive Qhull machinery.
   `qh_mergecycle` then folds its coplanar cone into the cell (changing facet
   topology, which Stage 1 reconstructs independently). General position and most
   cocircular cases therefore need **no** premerge for the order.
-- **Premerge still reorders ~9 cases.** Empirically (introspect with `Q0` vs the
-  default merge), the _creation order_ is identical for all 27 general cases and
-  most cocircular ones, but differs for ~13 larger cocircular cases (and a clean
-  no-merge hull fails or mis-fans ~9 of them: reg7/8/12, several big grids, rings).
-  Because `qh_premerge` runs _during_ `qh_addpoint`, its facet merges change which
-  point `qh_nextfurthest` emits next. So reaching 34/34 with a _computed_ order
-  needs premerge's effect on the build order — the remaining, FP-sensitive work.
+- **The build order has three drivers, not just premerge (corrected by the Stage 3
+  trace).** Reproducing Qhull's `qhull d Qt Qbb Qc Qz` build order needs, in order
+  of discovery: (1) `qh_partitionall`'s **greedy first-facet** assignment — each
+  point joins the _first_ facet it is clearly outside of (`dist >= 2*MINoutside`),
+  not its globally-furthest facet, with the running-furthest deferred to the end of
+  the outside set; (2) the **one-time `qh_furthestnext`** in `qh_initbuild` that
+  moves the globally-furthest facet to the list head before the build (PICKfurthest
+  is _off_, so this is a single seeding, after which `qh_buildhull` walks plain
+  facet-list order); and (3) the **coplanarhorizon merge** — when the apex is
+  coplanar with a horizon facet (`qh_findhorizon` marks it, `dist` in
+  `[-MAXcoplanar, MINvisible]`), `qh_premerge`→`qh_mergecycle` folds the new cone
+  facet _into_ that horizon facet **before** `qh_partitionvisible`, so the absorbed
+  outside points keep the horizon facet's early list position instead of moving to
+  a tail facet. (1)+(2) are pure ordering and close 25→**28/34**; (3) is the
+  genuine premerge work (it makes facets non-simplicial) and closes the last 6.
 
 ### Remaining work (if revived)
 
@@ -460,15 +470,21 @@ for ~9 cases (Stage 3), the heaviest, most precision-sensitive Qhull machinery.
       (`qh_findhorizon` BFS, `qh_makenewfacets`/`qh_makenew_simplicial`,
       `qh_matchnewfacets`, `qh_partitionvisible`), with `qh_newvertex` ids. The
       self-contained engine `delaunayComputed` (no Qhull, no fixture) reaches
-      **27/27 general + 25/34 cocircular** (`TestDelaunayComputed`, ratchet 25);
-      all 61 build with no Gaussian-fallback degeneracy. The remaining 9 (reg7/8/12,
-      large grids, rings) are exactly the cases premerge reorders during the build.
-- [ ] **Stage 3 — premerge's effect on build order** (`qh_premerge` →
-      `qh_mergecycle_all`/`qh_mergecycle` during `qh_addpoint`; the FP-sensitive
-      part). _Gate:_ computed order closes the remaining ~9 cases (reg7/8/12, big
-      grids, rings) → 34/34; bump `cocircularRatchet` (corpus_test.go) to 34. Note
-      the blocker is _build-order reordering_, not coplanar-vertex _promotion_
-      (cocircular points are ordinary insertions — see Key insights).
+      **27/27 general + 25/34 cocircular** (`TestDelaunayComputed`); all 61 build
+      with no Gaussian-fallback degeneracy.
+- [x] **Stage 3a — faithful partition + furthest seeding** (`tri/qhull/buildhull.go`):
+      `qh_partitionall`'s greedy first-facet block (with `2*MINoutside` and the
+      deferred-furthest ordering) + block-2 leftover `qh_partitionpoint`, and the
+      one-time `qh_furthestnext` seeding. Lifts the computed engine to **28/34
+      cocircular + 27/27 general** (`TestDelaunayComputed`, ratchet 28); shipped
+      `Delaunay` still uses the exact engine.
+- [ ] **Stage 3b — coplanarhorizon merge** (`qh_premerge` → `qh_mergecycle`, run
+      _before_ `qh_partitionvisible` in `qh_addpoint`). The remaining 6 (grid4x4,
+      grid5x2, grid5x4, grid6x2, rings_1.0_2.0_6, rings_0.5_1.0_5) need a cone facet
+      coplanar with its horizon facet to be folded into it so the absorbed outside
+      points keep the horizon's list position. This makes facets non-simplicial —
+      the heaviest, most FP-sensitive piece. _Gate:_ computed order → 34/34; bump
+      `computedCocircularRatchet` and `cocircularRatchet` to 34.
 - [ ] **Stage 4 — wire into `tri.New`/`EnsureTriangles`** (`tri/delaunay.go`); the
       exact-predicate engine stays a cgo-free, deterministic fallback. Re-run
       `just test`; any cocircular golden that changes now matches matplotlib —
