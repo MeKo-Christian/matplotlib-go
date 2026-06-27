@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 // LineDrawStyle controls how consecutive data points are connected.
@@ -138,6 +139,15 @@ type Line2D struct {
 	Sketch          render.SketchParams // per-artist sketch/xkcd override; zero inherits the figure default
 	z               float64             // z-order
 	pickRadius      float64             // pick tolerance in pixels (0 = default)
+
+	// Persistent affine/non-affine cache for the data-coordinate draw path
+	// (Phase 13). transformedPath caches the non-affine projection of the source
+	// points; an affine-only redraw (axes resize/pan/zoom) reuses it. cacheTransform
+	// and cachePoints track the inputs the cache was built from so it is rebuilt
+	// only when the transform identity or the source point backing changes.
+	transformedPath *transform.TransformedPath
+	cacheTransform  transform.T
+	cachePoints     []geom.Pt
 }
 
 // Data returns cloned x and y data slices.
@@ -453,6 +463,106 @@ func (l *Line2D) displayPath(ctx *DrawContext) geom.Path {
 		points = interpolateFiniteLineSegments(points, geoGridSegments)
 	}
 	tr := artistTransformFor(ctx, l, Coords(CoordData))
+
+	// Cached fast path: when the line draws in data coordinates through the
+	// persistent axes transform graph, route the projection through a
+	// transform.TransformedPath so an affine-only redraw (axes resize/pan/zoom)
+	// reuses the cached non-affine vertex pass instead of re-projecting per
+	// vertex. Applying the trailing affine to the cached non-affine points and
+	// then segmenting on the final points is byte-equivalent to the direct loop:
+	// the (non-)affine of a non-finite point stays non-finite, so a single
+	// finiteness check on the final point matches the direct pre+post checks.
+	if final, ok := l.cachedDisplayPoints(ctx, points, tr); ok {
+		return segmentFinitePath(final)
+	}
+
+	return transformAndSegment(points, tr)
+}
+
+// cachedDisplayPoints returns the data points fully transformed through the
+// cached TransformedPath, reporting ok only when caching is eligible: the line
+// draws in data coordinates with no explicit transform override and the
+// persistent axes transform graph is available to drive invalidation. Other
+// cases (explicit transforms, axes/figure/blended coordinates, no graph) fall
+// back to the direct per-vertex transform.
+func (l *Line2D) cachedDisplayPoints(ctx *DrawContext, points []geom.Pt, tr transform.T) ([]geom.Pt, bool) {
+	if ctx == nil || tr == nil || !artistUsesDataCoords(l, Coords(CoordData)) {
+		return nil, false
+	}
+	deps := ctx.dataTransformDeps()
+	if len(deps) == 0 {
+		return nil, false
+	}
+	if _, fullyAffine := transform.AsAffine(tr); fullyAffine {
+		// A fully-affine transform (linear rectilinear axes) has no non-affine
+		// projection to cache, and collapsing scale+bbox into a single matrix
+		// would change the per-vertex arithmetic versus the direct two-step
+		// chain (last-ULP differences). Use the direct path so output stays
+		// byte-identical. The cache engages only when a genuine non-affine leg
+		// (log/symlog/polar/geo) is present, where the trailing affine is the
+		// single bbox matrix and matches the direct chain exactly.
+		return nil, false
+	}
+
+	src := geom.Path{V: points}
+	switch {
+	case l.transformedPath == nil || l.cacheTransform != tr:
+		l.transformedPath = transform.NewTransformedPath(src, tr, deps...)
+		l.cacheTransform = tr
+		l.cachePoints = points
+	case !samePointsHeader(l.cachePoints, points):
+		l.transformedPath.SetPath(src)
+		l.cachePoints = points
+	}
+
+	nonAffine, affine := l.transformedPath.TransformedPointsAndAffine()
+	final := make([]geom.Pt, len(nonAffine.V))
+	for i, v := range nonAffine.V {
+		final[i] = affine.Apply(v)
+	}
+	return final, true
+}
+
+// samePointsHeader reports whether two point slices share the same backing
+// array and length, a cheap O(1) check for "the source points did not change".
+// Default-style, non-geo lines reuse the stable l.XY backing across draws (so
+// the cache is reused); steps/geo styles allocate fresh slices each draw and so
+// reproject, which is correct if not optimal.
+func samePointsHeader(a, b []geom.Pt) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	if len(a) == 0 {
+		return true
+	}
+	return &a[0] == &b[0]
+}
+
+// segmentFinitePath builds a polyline path from already-transformed points,
+// breaking the path at every non-finite point (NaN/Inf gaps).
+func segmentFinitePath(points []geom.Pt) geom.Path {
+	p := geom.Path{}
+	inSegment := false
+	for _, q := range points {
+		if !finitePoint(q) {
+			inSegment = false
+			continue
+		}
+		if !inSegment {
+			p.C = append(p.C, geom.MoveTo)
+			inSegment = true
+		} else {
+			p.C = append(p.C, geom.LineTo)
+		}
+		p.V = append(p.V, q)
+	}
+	return p
+}
+
+// transformAndSegment applies tr to each point and segments on finiteness,
+// matching the historical Line2D draw path byte-for-byte (finiteness is checked
+// both before and after the transform).
+func transformAndSegment(points []geom.Pt, tr transform.T) geom.Path {
 	p := geom.Path{}
 	inSegment := false
 	for _, v := range points {

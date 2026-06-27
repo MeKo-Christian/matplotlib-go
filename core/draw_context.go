@@ -140,6 +140,19 @@ func (ctx *DrawContext) TransData() transform.T {
 	return ctx.DataToPixel.transData()
 }
 
+// dataTransformDeps returns the invalidation nodes a data-coords
+// transform.TransformedPath must depend on so it refreshes when the axes graph
+// moves: the axes pixel bbox (the affine leg, via Bbox.Set on resize/pan/zoom)
+// and the data leg node (refreshed by refreshDataTransform). It returns nil when
+// the persistent axes graph is not initialized, in which case callers fall back
+// to the uncached per-vertex path. Mirrors the wiring in Axes.ensureTransforms.
+func (ctx *DrawContext) dataTransformDeps() []*transform.TransformNode {
+	if ctx == nil || ctx.Axes == nil || ctx.Axes.transData == nil {
+		return nil
+	}
+	return []*transform.TransformNode{ctx.Axes.axesBbox.Node(), &ctx.Axes.dataNode}
+}
+
 func (ctx *DrawContext) TransProjection() transform.T {
 	if ctx == nil {
 		return nil

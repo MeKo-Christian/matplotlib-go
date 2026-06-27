@@ -36,17 +36,36 @@ func (a *Axes) updateAxesBbox(clip geom.Rect) {
 // refreshDataTransform records the current data->axes transform and invalidates
 // the cached transData only when that leg actually changed.
 //
-// For an affine data leg (linear rectilinear axes) the change is detected by
-// comparing the flattened affine, so an unchanged graph reuses the cache. For a
-// non-affine leg (log/symlog scales, polar/geo/3D projections with mutable
-// state) the leg is treated as changed every draw, preserving the previous
-// rebuild-every-draw behavior for those cases.
+// The invalidation stage matches the kind of leg, so a split-aware consumer
+// (transform.TransformedPath) refreshes the right sub-cache:
+//
+//   - Affine data leg (linear rectilinear axes): the change is detected by
+//     comparing the flattened affine, so an unchanged graph reuses the cache and
+//     only an actual change fires transform.InvalidAffine (refresh the trailing
+//     affine, keep the cached non-affine vertex pass).
+//   - Non-affine leg (log/symlog scales, polar/geo/3D projections with mutable
+//     state): the leg is treated as changed every draw and fires
+//     transform.InvalidNonAffine so the vertex pass is re-run. Firing only
+//     InvalidAffine here would let a consumer reuse a stale projection on a
+//     log-domain/limits change.
+//
+// A non-affine leg is still re-projected every draw (no resize win yet); a cheap
+// non-affine-leg change check is a deferred follow-up.
 func (a *Axes) refreshDataTransform(dataToAxes transform.T) {
 	a.ensureTransforms()
 	a.curDataToAxes = dataToAxes
 
 	aff, ok := transform.AsAffine(dataToAxes)
-	if !ok || !a.dataSnapSet || !a.dataAffineOK || aff != a.dataAffine {
+	if !ok {
+		// Non-affine leg: re-run the vertex pass. InvalidNonAffine also refreshes
+		// the trailing affine in TransformedPath.revalidate.
+		a.dataAffine = aff
+		a.dataAffineOK = ok
+		a.dataSnapSet = true
+		a.dataNode.Invalidate(transform.InvalidNonAffine)
+		return
+	}
+	if !a.dataSnapSet || !a.dataAffineOK || aff != a.dataAffine {
 		a.dataAffine = aff
 		a.dataAffineOK = ok
 		a.dataSnapSet = true

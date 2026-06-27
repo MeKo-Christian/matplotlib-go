@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 // drawNull renders the figure through a no-op renderer so the persistent
@@ -52,5 +53,39 @@ func TestAxesTransformInvalidatedOnResize(t *testing.T) {
 	after := ax.transData.Apply(geom.Pt{X: 1, Y: 1})
 	if approxPtCore(before, after, 1e-9) {
 		t.Fatalf("transData did not change after resize: %+v == %+v", before, after)
+	}
+}
+
+// TestRefreshDataTransformInvalidationStage asserts the invalidation stage fired
+// to dataNode matches the kind of data leg: an affine leg fires InvalidAffine,
+// while a non-affine leg (e.g. a log scale) fires InvalidNonAffine so a
+// split-aware consumer re-runs its non-affine vertex pass instead of reusing a
+// stale projection (Phase 13).
+func TestRefreshDataTransformInvalidationStage(t *testing.T) {
+	ax := &Axes{}
+	ax.ensureTransforms()
+
+	// A probe dependent observes exactly the stage propagated from dataNode.
+	var probe transform.TransformNode
+	ax.dataNode.AddDependent(&probe)
+
+	linear := transform.NewScaleTransform(transform.NewLinear(0, 1), transform.NewLinear(0, 1))
+	logLeg := transform.NewScaleTransform(transform.NewLog(1, 10, 10), transform.NewLog(1, 10, 10))
+
+	// Sanity: the log leg is genuinely non-affine.
+	if _, ok := transform.AsAffine(logLeg); ok {
+		t.Fatal("log scale leg unexpectedly reported as affine")
+	}
+
+	probe.ClearInvalid()
+	ax.refreshDataTransform(linear)
+	if got := probe.Invalid(); !got.Has(transform.InvalidAffine) || got.Has(transform.InvalidNonAffine) {
+		t.Fatalf("affine leg: want InvalidAffine only, got %v", got)
+	}
+
+	probe.ClearInvalid()
+	ax.refreshDataTransform(logLeg)
+	if got := probe.Invalid(); !got.Has(transform.InvalidNonAffine) {
+		t.Fatalf("non-affine leg: want InvalidNonAffine, got %v", got)
 	}
 }
