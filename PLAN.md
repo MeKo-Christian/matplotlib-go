@@ -561,21 +561,40 @@ vertex-set engine until the merge is complete.
         `qh_findbest` walk misses a facet a point is clearly outside — added a
         full-scan fallback. NB: the earlier "`qh_partitioncoplanar` coplanar-promotion"
         framing was a red herring — points drop because the wrong facets exist.
-        _Remaining (last 4: grid6x3/6x4, rings_1.0_2.0_8, rings_0.5_1.0_5):_
-        tie-breaks among nearly-equidistant cocircular points. Root cause traced (via
-        a `QHATTACH` oracle patch that dumps `visible->f.replace`): the replacement
-        used to seed `qh_partitionvisible`'s directed walk is `qh_makenewfacets`'
-        returned facet = the **last cone created from the visible facet**. We and
-        Qhull agree on that rule, but disagree on **which cones get created**: a
-        horizon facet of the seed lies within roundoff of the apex's plane, and Qhull
-        classifies that ridge just-interior (one fewer cone from the seed) where we
-        classify it horizon. So our replacement differs, and the directed walk
-        early-returns at the wrong one of two equally-valid facets. `max_outside`
-        stays at roundoff throughout (verified), so `qh_findbestnew` vs `qh_findbest`
-        is NOT the difference — it is purely this borderline visible/coplanar
-        classification. _Next:_ make the borderline `MINvisible` classification match
-        Qhull bit-for-bit (likely a facet-plane/orientation detail for merged-region
-        facets), without disturbing the 27/27 general build. _Gate:_ 30/34 → 34/34.
+        Replacement insight (closed grids 3×4/4×3/4×4/5×2/5×3/5×4, rings 1.0_2.0_6/8,
+        and reg12 → **31/34**): the seed of `qh_partitionvisible`'s directed walk is
+        `visible->f.replace` = `qh_makenewfacets`' returned facet. When the visible
+        facet is adjacent to a **merged** facet it carries a materialised ridge, so
+        Qhull runs `qh_makenew_nonsimplicial` too and sets the replacement to **that
+        ridge cone (newfacet2)**, not the last simplicial cone. Approximating "has a
+        ridge to nb" as "nb is a coplanar (`mergehz`) non-simplicial horizon" reaches
+        31/34. (Verified dead-ends along the way: `max_outside` stays at roundoff so
+        `qh_findbestnew == qh_findbest`; global-furthest/first-cone replacement crater
+        general to 4–5/27; reversing cone-creation order craters everything; the exact
+        `ridgeTo` materialisation I tried over- or under-sets vs Qhull.)
+        _Remaining (last 3: grid6x3, grid6x4, rings_0.5_1.0_5)._ **Exact rule now
+        verified from source** (`poly2_r.c:2505-2515`): `visible->f.replace =
+        newfacet2` (the `qh_makenew_nonsimplicial` **last** cone) iff
+        `visible->ridges` is non-empty, else `newfacet` (the `qh_makenew_simplicial`
+        last cone) — in both paths simply _the last cone built for that visible
+        facet_, which `makeNewFacets` now records by overwriting `replace[vf]` per
+        cone. The one hypothesised mechanism for the last 3 — `qh_makeridges` on a
+        **simplicial neighbour touched twice in one merge cycle**
+        (`qh_mergecycle_neighbors`, `visitid==visit_id` branch) — was implemented
+        faithfully and **verified to NEVER fire on the 34-case corpus** (debug
+        counter), so the last 3 do **not** hinge on neighbour ridge materialisation.
+        They hinge purely on the **merged horizon's own ridge-append order**
+        (`qh_mergecycle_ridges`): for a non-simplicial merged-horizon `vf`, `boundary()`
+        does not yet reproduce that order, so its "last cone" ≠ Qhull's `newfacet2`.
+        The `mergehz` override pins the right cone for all but these 3. _Next (needs the
+        QHATTACH oracle):_ rebuild the patched qhull, read Qhull's actual `newfacet2`
+        for the 3 cases, and reproduce `qh_mergecycle_ridges`' ridge order in
+        `mergeInto`. _Gate:_ 31/34 → 34/34. (Verified dead-ends: `max_outside` stays at
+        roundoff so `qh_findbestnew == qh_findbest`; global-furthest/first-cone
+        replacement crater general to 4–5/27; reversing cone-creation order craters
+        everything; the exact `ridgeTo` materialisation over/under-sets vs Qhull;
+        pure last-cone without the `mergehz` override drops to 30/34.) Ridge now ties
+        the shipped vertex-set engine at 31/34-by-set.
   - [ ] **3c.7 — close + lock.** Computed order = ground truth **61/61**
         (`QHULL_ORDER_STRICT=1`); switch `buildHullOrder`/`DelaunayMatched` to the
         ridge engine; `delaunayComputed` → 34/34 cocircular + 27/27 general; bump
