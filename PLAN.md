@@ -375,17 +375,43 @@ inputs (≥4 points on a common circle), where the Delaunay triangulation is
 non-unique. General-position connectivity already matches exactly via the
 exact-predicate engine; this phase only closes the cocircular diagonal choice.
 
-**Status:** in progress. The residual is cosmetic (Qhull's cocircular diagonal is
-_arbitrary_; both diagonals are valid Delaunay, identical render and
-interpolation), so the robust exact-predicate engine still ships. **Stages 1, 2,
-3a and 3b are done**: the fan model is proven (34/34 + 27/27 from Qhull's true
+**Status:** in progress — **full faithful port chosen** (close all 34). Stages 1,
+2, 3a and 3b are done: the fan model is proven (34/34 + 27/27 from Qhull's true
 creation order), the `qh_buildhull` incremental hull is ported, the faithful
 `qh_partitionall` greedy first-facet partition + one-time `qh_furthestnext` seeding
 reach 28/34, and the non-simplicial coplanarhorizon merge (`qh_premerge`→
 `qh_mergecycle`) + first-clearly-outside `qh_findbestnew` + vertex-id cone ordering
-bring the fully _computed_ engine to **31/34 cocircular + 27/27 general**. The last
-3 (grid5x4, rings_1.0_2.0_6, rings_1.0_2.0_8) diverge only in the final 2-3
-insertions — tie-breaking that needs finer ridge-ordering fidelity (Stage 3c).
+bring the fully _computed_ engine to **31/34 cocircular + 27/27 general** (by
+triangle set).
+
+**Root cause of the last 3 (established by per-step trace, 2026-06-26).** The
+divergence is _not_ confined to the final insertions, and it is _not_ the merge
+tolerance. Measured against the captured ground truth, the computed **exact build
+order** matches only **5/27 general + 31/34 cocircular**
+(`TestComputedOrderMatchesGroundTruth`) — general still passes by _set_ because its
+Delaunay is unique, which masks the order divergence. The per-step Qhull oracle
+(`third_party/qhull-8.0.2/stepdump.c` + the `QHSTEP` patch in `qh_buildhull`) shows
+the build orders diverge as early as **step 0**: the current facet model represents
+a facet as a _vertex set_ and re-derives its boundary edges and neighbours
+geometrically (angle-sort + opposite-edge matching), so it cannot reproduce the
+order in which Qhull **creates and appends** new facets — which is driven by
+Qhull's explicit **ridge graph** (`FOREACHridge_(visible->ridges)` in
+ridge-storage order) and `qh_matchnewfacets` hashing, not by geometry. Closing the
+last 3 requires replacing the vertex-set model with a faithful ridge-graph build so
+the computed creation order matches Qhull bit-for-bit (Stage 3c, decomposed below).
+
+**Update (faithful ridge engine landed, `tri/qhull/ridgebuild.go`).** The vertex-set
+model is superseded by a faithful incremental hull that keeps Qhull's own layout
+(inverse-id vertex set + parallel neighbour array, maintained incrementally) and
+ports `qh_createsimplex`/`qh_initialhull` (toporient + global flip),
+`qh_sethyperplane_det`/`qh_normalize2` orientation, `qh_makenew_simplicial`,
+`qh_findbest` (directed walk, `noupper=False`), `qh_findbesthorizon`, and the
+`qh_partitionpoint` facet_next bookkeeping. The computed build order now matches the
+captured ground truth **27/27 general** (was 5/27 — exact order now, not just the
+triangle set) **+ 24/34 cocircular** exact-order (`TestComputedOrderRidge`, general
+hard-gated). The remaining 10 cocircular cases are the merge cases (Stage 3c.6,
+partial/opt-in below). The shipped `Delaunay`/`DelaunayMatched` still use the
+vertex-set engine until the merge is complete.
 
 ### What's already done (foundation, in-tree)
 
@@ -488,12 +514,54 @@ insertions — tie-breaking that needs finer ridge-ordering fidelity (Stage 3c).
       matching opposite directed edges — so the merge is a vertex-set union. Lifts
       the computed engine to **31/34 cocircular + 27/27 general**
       (`TestDelaunayComputed`, ratchet 31), no Gaussian-fallback degeneracy.
-- [ ] **Stage 3c — final tie-breaking** (the last 3: grid5x4, rings_1.0_2.0_6,
-      rings_1.0_2.0_8). These diverge only in the last 2-3 insertions — tie-breaking
-      among nearly-equidistant cocircular points in highly symmetric multi-ring /
-      large-grid configs. Closing them needs finer merge-to-tail / ridge ordering
-      fidelity than the vertex-set facet model reproduces (likely Qhull's explicit
-      ridge graph). _Gate:_ computed order → 34/34; bump both ratchets to 34.
+- [ ] **Stage 3c — faithful ridge-graph build order → 34/34.** Replace the
+      vertex-set facet model with Qhull's explicit ridge graph so the computed vertex
+      creation order matches Qhull bit-for-bit. Decomposed (divide and conquer):
+  - [x] **3c.0 — exact-order oracle test.** `TestComputedOrderMatchesGroundTruth`
+        compares computed `buildHullOrder` against captured `creation_order.json`
+        per case (the tight loop; the fan model proves order ⇒ diagonal). Baseline
+        **5/27 general + 31/34 cocircular**. Per-step oracle: `stepdump.c` + the
+        `QHSTEP` patch dump the facet list + outside sets before every pick.
+  - [x] **3c.1–3c.5 — faithful simplicial build → 27/27 general exact-order.**
+        New `tri/qhull/ridgebuild.go` replaces the vertex-set model with Qhull's own
+        layout: each facet keeps a vertex set inverse-sorted by creation id and a
+        PARALLEL neighbour array (`nbr[i]` across the ridge opposite `verts[i]`),
+        maintained incrementally (no geometric rebuild). Ported faithfully:
+        `qh_createsimplex`/`qh_initialhull` (alternating `toporient` + global flip),
+        `qh_setfacetplane`→`qh_sethyperplane_det`+`qh_normalize2` (sign from
+        `toporient`, NOT an interior test — this is what orients the Qz infinity
+        "ceiling" facets correctly), `qh_makenew_simplicial` (FOREACHneighbor,
+        apex-first, horizon relink), the new-facet sibling matching, and — the
+        decisive correction — `qh_partitionvisible` uses **`qh_findbest`** (directed
+        greedy walk from the replacement; `qh_USEfindbestnew` is false for these
+        low-merge inputs), with `noupper=False` (a clearly-outside facet of EITHER
+        kind early-returns), the `qh_findbesthorizon` frontier fallback, and the
+        `qh_partitionpoint` `facet_next`/`isnewoutside` bookkeeping. Result: computed
+        build order matches the captured ground truth **27/27 general + 24/34
+        cocircular** (`TestComputedOrderRidge`, general hard-gated). Per-step oracle:
+        `stepdump.c` + the `QHSTEP` patch.
+  - [~] **3c.6 — re-port `qh_mergecycle` on the ridge graph (partial, opt-in).**
+        The coplanar-horizon merge is ported (`linkSamecycle`/`premerge`/`mergeInto`
+        + explicit `redge`/`rnbr` ridge lists via `makeRidges`, and a unified
+        `boundary()` so non-simplicial facets walk their ordered ridges): a cone
+        facet across a coplanar horizon ridge is folded into the horizon facet, which
+        absorbs the apex at position 0, drops the shared/interior ridges and vertices,
+        keeps its plane, and moves to the tail as a non-simplicial new facet; the
+        `qh_getreplacement` chain is followed through merged cones in
+        `partitionVisible`. It reproduces Qhull's order for the non-dropped points,
+        but is **blocked on the `qh_partitioncoplanar` coplanar-point layer**: a
+        cocircular cell's interior points lift coplanar with the merged facet and are
+        currently dropped (`dist < MINoutside`) instead of being kept in the facet's
+        coplanar set and promoted to vertices — so the merge regresses (21/34) and is
+        gated behind `QHULL_MERGE=1` (default off → faithful simplicial 24/34). _Next:_
+        track per-facet coplanar sets in `partitionPointInto`/`partitionVisible`
+        (KEEPcoplanar), redistribute them on merge, and promote so every input point
+        is still picked. _Gate:_ cocircular exact-order 24/34 → 34/34.
+  - [ ] **3c.7 — close + lock.** Computed order = ground truth **61/61**
+        (`QHULL_ORDER_STRICT=1`); switch `buildHullOrder`/`DelaunayMatched` to the
+        ridge engine; `delaunayComputed` → 34/34 cocircular + 27/27 general; bump
+        `computedCocircularRatchet` (and the fan ratchet) to 34; delete the
+        vertex-set model + per-step trace scaffolding. _Gate:_ both ratchets at 34.
 - [x] **Stage 4 — wired into `tri.delaunayTriangles`** via `qhull.DelaunayMatched`
       (`tri/qhull/fanfromorder.go`, `tri/delaunay.go`): general position takes a
       fast path returning the exact triangulation unchanged (the order computation
@@ -505,12 +573,10 @@ insertions — tie-breaking that needs finer ridge-ordering fidelity (Stage 3c).
       `mplot3d_tricontourf3d` left as-is — it is a pre-existing non-deterministic
       optional-visual case (a 3D depth-order tie, orthogonal to triangulation).
 
-**Alternative if Stage 3 fidelity proves intractable:** Stage 1 + Stage 2 already
-deliver 27/27 general and ~25/34 cocircular from a _computed_ order (no premerge);
-bump the ratchet to whatever Stage 2 honestly reaches and document the residual.
-
 **Exit criterion:**
 
+- [ ] `TestComputedOrderMatchesGroundTruth` reports 61/61 exact build-order match
+      (27/27 general + 34/34 cocircular) under `QHULL_ORDER_STRICT=1`.
 - [ ] `go test ./tri/qhull/` differential harness reports 34/34 cocircular (and
       27/27 general) bit-for-bit against Qhull, with no regression in the
       `just test` parity goldens.
