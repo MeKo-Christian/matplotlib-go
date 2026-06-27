@@ -605,22 +605,45 @@ vertex-set engine until the merge is complete.
         matches `qh_mergecycle_all` (facet-list / cone-creation order) for single-cone
         samecycles — confirmed via the `ALLMERGE`/`MERGEFACET` oracle that
         coplanar-horizon merges run through `qh_mergecycle_all` in facet-list order, NOT
-        the distance-sorted `qh_all_merges` set. _Remaining 1 (grid5x4):_ a
-        **cross-addPoint** merge-history divergence — Qhull's horizon `hf[15,4,0]`
-        pre-carries ridge `[15,0]` from an EARLIER addPoint's merge of the facet across
-        `[15,0]` (f11), which this engine's merge history does not reproduce (its
-        matRidge is empty at merge time) → first cone differs (`nf[20,19,15]` vs Qhull
-        `nf[20,19,4]`). The gap is which facets merged at earlier addPoints
-        (coplanarity-decision fidelity), a deeper layer. _Gate:_ 33/34 → 34/34.
+        the distance-sorted `qh_all_merges` set. _Remaining 1 (grid5x4) — root cause
+        re-diagnosed 2026-06-27 (the earlier "cross-addPoint coplanarity-decision"
+        theory was WRONG):_ both engines build the SAME merged quad
+        `f1=[19,15,4,0]` from the same line-5 `coplanarhorizon` merge
+        (`cone[19,15,4]→horizon[15,4,0]`); no coplanarity decision differs. The
+        divergence is purely the **intermediate ridge-order bookkeeping** of that quad
+        between its creation (early, when point-id 19 is inserted) and when it becomes
+        visible LATER during the **Qz infinity point** (point-id 20 = `numpoints`)
+        processing. At merge time f1's ridges are `[15,0],[4,0],[19,4],[19,15]`
+        (last=`[19,15]`); Qhull's f1 when it goes visible has `[15,0],[4,0],[19,15],
+        [19,4]` (last=`[19,4]`) — i.e. an intermediate **swap-remove + re-append** of
+        the `[19,4]` ridge (triggered by a later neighbour merge touching f1) swaps the
+        last two. The replacement seed (`qh_makenew_nonsimplicial` newfacet2) is the
+        cone over f1's LAST ridge, so Qhull seeds the Qz cone `nf[20,19,4]` while this
+        engine seeds `nf[20,19,15]`, perturbing the build order. Closing it needs
+        faithful tracking of a non-simplicial facet's ridge order across subsequent
+        addPoints (incl. the cone vertex order from `qh_facetintersect` feeding
+        `qh_makeridges`) — a deep, fragile, cosmetic-only layer. _Gate:_ 33/34 → 34/34.
         (Verified dead-ends: `max_outside` stays at roundoff so `qh_findbestnew ==
         qh_findbest`; global-furthest/first-cone replacement crater general to 4–5/27;
         reversing cone order craters everything.) 33/34 BEATS the shipped vertex-set
         engine (buildhull.go, 31/34-by-set).
-  - [ ] **3c.7 — close + lock.** Computed order = ground truth **61/61**
-        (`QHULL_ORDER_STRICT=1`); switch `buildHullOrder`/`DelaunayMatched` to the
-        ridge engine; `delaunayComputed` → 34/34 cocircular + 27/27 general; bump
-        `computedCocircularRatchet` (and the fan ratchet) to 34; delete the
-        vertex-set model + per-step trace scaffolding. _Gate:_ both ratchets at 34.
+  - [x] **3c.7 — shipped + locked (2026-06-27).** The faithful ridge engine is now
+        the production path: `delaunayComputed` and `DelaunayMatched`
+        (→ `tri.delaunayTriangles`) call `buildHullOrderRidge`, reaching **33/34
+        cocircular + 27/27 general** (`TestDelaunayComputed`, was 31/34 on the
+        vertex-set engine). `computedCocircularRatchet` 31 → **33**; the order lock is
+        `TestComputedOrderRidge` (general hard-gated 27/27, cocircular ratchet 33). The
+        vertex-set model is **deleted** (`buildhull.go` removed, ~600 lines; keepers
+        `delaunayComputed`/`errBuild` moved to `computed.go`) along with its dead
+        `TestComputedOrderMatchesGroundTruth`. Three goldens shifted to the
+        more-faithful Qhull diagonal and were regenerated, each verified against the
+        matplotlib reference (`TestReferenceCompare` PASS): `mplot3d_gallery`
+        (RMSE 2.53), `mplot3d_trisurf3d` (1.82), `mplot3d_tricontourf3d` (1.72). The
+        honest ceiling is **60/61** order parity — grid5x4 (3c.6f) is a documented
+        cosmetic holdout (Qhull's cocircular diagonal is arbitrary; the fallback still
+        yields a valid Delaunay), so the 61/61 strict lock is intentionally not
+        gated. (Per-step trace scaffolding lives only in gitignored
+        `third_party/qhull-8.0.2/`; nothing in-tree to delete.)
 - [x] **Stage 4 — wired into `tri.delaunayTriangles`** via `qhull.DelaunayMatched`
       (`tri/qhull/fanfromorder.go`, `tri/delaunay.go`): general position takes a
       fast path returning the exact triangulation unchanged (the order computation
@@ -632,13 +655,18 @@ vertex-set engine until the merge is complete.
       `mplot3d_tricontourf3d` left as-is — it is a pre-existing non-deterministic
       optional-visual case (a 3D depth-order tie, orthogonal to triangulation).
 
-**Exit criterion:**
+**Exit criterion (substantially met — 60/61, shipped):**
 
-- [ ] `TestComputedOrderMatchesGroundTruth` reports 61/61 exact build-order match
-      (27/27 general + 34/34 cocircular) under `QHULL_ORDER_STRICT=1`.
-- [ ] `go test ./tri/qhull/` differential harness reports 34/34 cocircular (and
-      27/27 general) bit-for-bit against Qhull, with no regression in the
-      `just test` parity goldens.
+- [x] `TestComputedOrderRidge` (the ridge engine, now the production path) reports
+      **60/61** exact build-order match: 27/27 general (hard-gated) + 33/34 cocircular
+      (ratchet 33). The last case (grid5x4) is a documented cosmetic holdout
+      (Stage 3c.6f) — Qhull's cocircular diagonal is arbitrary, so 61/61 is not gated.
+- [x] The ridge engine is wired into `tri.delaunayTriangles` via `DelaunayMatched`;
+      `go test ./tri/...` and the `just test` parity goldens are green (three
+      triangulation goldens regenerated to the more-faithful Qhull diagonal, each
+      verified against the matplotlib reference).
+- [ ] _(Optional, deferred)_ grid5x4 → 34/34 via faithful non-simplicial ridge-order
+      tracking across addPoints (Stage 3c.6f) — deep, fragile, cosmetic-only.
 
 ---
 

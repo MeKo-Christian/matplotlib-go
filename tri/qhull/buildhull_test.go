@@ -4,16 +4,15 @@ import "testing"
 
 // computedCocircularRatchet is the minimum number of cocircular corpus cases the
 // fully self-contained engine (incremental hull order + cocircular fan, no Qhull
-// and no captured fixture) must reproduce. The faithful build — greedy first-facet
-// partition (qh_partitionall), one-time furthest-facet seeding (qh_furthestnext),
-// the non-simplicial coplanarhorizon merge (qh_premerge → qh_mergecycle), the
-// first-clearly-outside qh_findbestnew, and Qhull's vertex-id cone/horizon
-// iteration order — closes 31/34. The remaining 3 (grid5x4, rings_1.0_2.0_6,
-// rings_1.0_2.0_8) diverge only in the last 2-3 insertions: tie-breaking among
-// nearly-equidistant cocircular points in highly symmetric multi-ring/large-grid
-// configs, which needs finer merge-to-tail ordering than the vertex-set facet
-// model reproduces (PLAN.md Phase 12, Stage 3b). Bump as cases close; never lower.
-const computedCocircularRatchet = 31
+// and no captured fixture) must reproduce. delaunayComputed now drives the faithful
+// ridge-graph engine (buildHullOrderRidge): Qhull's own facet layout (inverse-id
+// vertex set + parallel neighbour array) with the faithful coplanarhorizon merge
+// (newfacet2 leak + per-merge qh_makeridges propagation + qh_mergesimplex
+// swap-remove + pre-existing-ridge ordering) closes 33/34. The remaining 1
+// (grid5x4) diverges only in the intermediate ridge order of one merged quad
+// between its creation and the Qz infinity-point processing — a deep, cosmetic-only
+// fidelity layer (PLAN.md Phase 12, Stage 3c.6f). Bump as cases close; never lower.
+const computedCocircularRatchet = 33
 
 // TestDelaunayComputed exercises delaunayComputed end-to-end against the
 // differential corpus. General position has a unique Delaunay, so it is a hard

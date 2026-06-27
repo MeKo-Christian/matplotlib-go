@@ -60,7 +60,7 @@ func fanCells(x, y []float64, base [][3]int, cells [][]int, rank []int) [][3]int
 
 // DelaunayMatched returns the Delaunay triangulation with matplotlib/Qhull's
 // cocircular diagonal choice resolved from the computed vertex creation order
-// (buildHullOrder + the per-cell fan). It is layered on the robust exact-predicate
+// (buildHullOrderRidge + the per-cell fan). It is layered on the robust exact-predicate
 // Delaunay and degrades gracefully:
 //
 //   - General-position inputs have no cocircular cells, so the exact triangulation
@@ -82,7 +82,7 @@ func DelaunayMatched(x, y []float64) (triangles, neighbors [][3]int, err error) 
 	if !hasMultiCell(cells) {
 		return base, baseNbrs, nil // general position: exact triangulation is canonical
 	}
-	order, ok := buildHullOrder(project(x, y))
+	order, ok := buildHullOrderRidge(project(x, y))
 	if !ok {
 		return base, baseNbrs, nil // fallback: a valid Delaunay triangulation
 	}
