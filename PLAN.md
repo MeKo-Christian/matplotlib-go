@@ -257,64 +257,47 @@ design work does not vanish into "future work." (**Phase 12** is complete —
 shipped and extracted to `github.com/cwbudde/qhull-go`; its compact record stays
 below for provenance.)
 
-## Parity Follow-up: Sketch figure-patch fill-coverage (open) 🔁
+## Parity Follow-up: Sketch figure-patch fill-coverage (done) ✅
 
-**Status:** open. The `sketch_xkcd` case was taken from **RMSE 7.7 → 3.5** (2026-06-28)
-by enabling path simplification by default (`style.PathSimplify: true`, matching
-Matplotlib's `path.simplify=True`) — Matplotlib simplifies a line _before_ the
-sketch filter, so the segmentator+RNG must see the same simplified polyline or the
-wiggle desyncs. The sine wiggle is now **vertex-exact** vs Matplotlib and the result
-is visibly indistinguishable. This follow-up is the **last ~0.5 RMSE** (3.5 → ~1.8),
-which is **invisible on a white display** and was deferred by decision.
+**Status:** done (2026-06-28). `sketch_xkcd` reference-compare **RMSE 3.5 → 0.54**
+(MaxDiff 255 → 65, MeanAbs 0.03 → 0.01, PSNR 64.4 dB); `TestGolden` is now a perfect
+in-memory match (PSNR +Inf). No regressions: the change is gated to sketch-active
+renders, so every other golden is byte-identical. Catalog tolerance tightened to
+`MinPSNR 62 / MaxMeanAbs 0.05 / MaxRMSE 1.0` (was 60 / 0.1 / 4.0).
 
-**Root cause (fully diagnosed):** the residual is **42 fully-transparent
-(255,255,255,α=0) pixels on the canvas border** of the Matplotlib reference.
-Matplotlib applies the global `path.sketch` to the **figure background patch**
-(`figure.patch`, a full-canvas white Rectangle, drawn on a transparent RGBA buffer);
-its wiggled fill edges leave those 42 border pixels uncovered. Go instead paints the
-figure background as the raster backend's **opaque clear** (`agg.New(w,h,white)`),
-which a sketch can never perforate, so Go's border is fully opaque. (Confirmed
-read-only: a Matplotlib render with `path.sketch` has 42 sub-opaque border pixels;
-without it, 0.)
+**Root cause (was):** the residual was **42 fully-transparent (255,255,255,α=0)
+border pixels** in the Matplotlib reference. Matplotlib applies the global
+`path.sketch` to the **figure background patch** (`figure.patch`) drawn on a
+**transparent** RGBA buffer; its wiggled fill leaves those pixels uncovered. Go
+painted the background as the raster backend's **opaque clear** (`agg.New(w,h,white)`),
+which a sketch can never perforate.
 
-**What was tried and reverted** (the naive fix is not enough):
+**The missing insight (why the earlier attempt failed):** Matplotlib draws
+`figure.patch` with **`antialiased=False`** (confirmed by instrumenting
+`RendererAgg.draw_path`: `gc.get_antialiased()==0`). Binary/scanline-bin coverage is
+what makes the notches **hard 2px α=0 holes with zero partial-alpha pixels** — the
+reference has no gradient at all. The first attempt filled the patch **antialiased**,
+producing a soft ~45px coverage gradient (~1000 semi-transparent px) instead of the
+sharp notches, which is why it regressed. There was **no `../agg_go` fill-coverage
+bug**; the fix is simply to fill the patch with AA off. Go's `sketch.Apply` on the
+patch was already byte-exact (all 42 notch pixels land at the exact reference
+coordinates — see `backends/agg/figure_patch_sketch_test.go`).
 
-- Added a `render.TransparentClearer` capability + `agg` `ClearTransparent`, and had
-  `DrawFigure` clear the buffer transparent and repaint the figure facecolor as a
-  sketchable patch (`pixelRectPath(vp)`), gated to sketch-active renders.
-- Verified Go's `sketch.Apply` on the figure-patch rectangle is **byte-identical** to
-  Matplotlib's Sketch (1999 verts, exact coords — replicated the MSVC-LCG +
-  vpgen_segmentator + sine in Python and it matched Go to 4 decimals).
-- **Despite the identical sketched path, filling it diverges:** Go's AGG fill on the
-  transparent canvas leaves **~1000 semi-transparent border pixels** vs Matplotlib's
-  **42** (RGB _regressed_ 1.8 → 3.5, RGBA 6.5). So the blocker is **AGG fill coverage
-  on a transparent canvas**, not the sketch.
-- Also surfaced: `Renderer.GetImage()` returns **straight alpha in an `image.RGBA`**
-  (whose Go contract is premultiplied — see the `SavePNG`/NRGBA workaround comment in
-  `backends/agg/agg_text.go`). So `test/imagecmp.ComparePNG` (and any `image.RGBA`
-  consumer) mis-handles semi-transparent pixels: Matplotlib's reference loads as
-  NRGBA and gets premultiplied by `At()`, Go's mislabeled RGBA does not → transparent
-  pixels are compared inconsistently. This must be fixed for the metric to even be
-  trustworthy on transparent output.
+**What shipped:**
 
-**To actually close it (scoped):**
-
-1. Fix the straight-vs-premultiplied alpha contract: make `GetImage()` return a
-   correctly-labeled image (`image.NRGBA`, straight) — or have the parity harness
-   compare via `ImageView()`/NRGBA — so semi-transparent pixels round-trip and compare
-   correctly. Re-baseline; this alone may move the number.
-2. Understand why Matplotlib's filled figure patch border is near-opaque (only 42
-   sub-opaque px) while Go's identical path fills with a ~1px semi-transparent band:
-   compare Go AGG scanline fill coverage vs Matplotlib's vendored AGG
-   (`agg_rasterizer_scanline_aa` / `agg_scanline_p`) on the wiggly closed rectangle.
-   Likely an `../agg_go` fill-coverage parity issue (per AGENTS.md, fix `../agg_go`).
-3. Only then wire the transparent-canvas figure patch in `DrawFigure` (the reverted
-   `drawSketchedFigurePatch` approach is the right shape — gate to sketch-active so
-   non-sketch output is byte-identical).
-
-**Exit:** `sketch_xkcd` reference-compare RMSE < 3 (target ~1.8) with **no regression**
-to the other 10 dense-line goldens that now simplify, then tighten the catalog
-tolerance (`internal/examplecatalog/catalog.go`) accordingly.
+1. `render.TransparentClearer` capability + `agg.Renderer.ClearTransparent()` (clears
+   the buffer to straight white-transparent without disturbing the draw/clip stack).
+2. `core.drawSketchedFigurePatch` (in `figure_draw.go`): when the global sketch is
+   active, clear transparent and fill `pixelRectPath(vp)` with the figure facecolor at
+   **`AntialiasOff`** (the renderer's default sketch wiggles it). Gated to
+   sketch-active, so non-sketch figures keep the opaque-clear path byte-for-byte.
+3. Alpha contract: added `agg.Renderer.GetImageNRGBA()` — the straight-alpha buffer
+   correctly labeled as `image.NRGBA` (vs `GetImage()`'s `image.RGBA`, whose Go
+   contract is premultiplied). `sketch_xkcd`'s `Render()` returns it so the
+   transparent notch pixels round-trip through `png.Encode`/`ComparePNG`'s
+   premultiply consistently with the reference. Other examples are fully opaque
+   (RGBA==NRGBA), so `GetImage()` was left unchanged (244 callers, incl. the Skia
+   native bridge, rely on its `*image.RGBA` layout).
 
 ## Phase 10: Backend Deepening (Skia Native + GPU)
 

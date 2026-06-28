@@ -76,19 +76,18 @@ var cases = []Case{
 	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 3.3},
 	{ID: "path_effects", Topic: "effects", Title: "Path Effects", FixtureOnly: true, MinPSNR: 18.0, MaxMeanAbs: 24.0, MaxRMSE: 0.3, SkiaParityFamily: "effects"},
 	{ID: "pattern_gradient_effects", Topic: "effects", Title: "Pattern and Gradient Effects", FixtureOnly: true, MinPSNR: 16.0, MaxMeanAbs: 1.0, MaxRMSE: 1.0, SkiaParityFamily: "effects"},
-	// PSNR ~64 dB / MeanAbs ~0.03 / RMSE ~3.5: the sketch wiggle is now RNG-,
-	// phase- AND vertex-exact vs Matplotlib. The fix was enabling path
-	// simplification by default (style.PathSimplify, matching path.simplify=True):
-	// Matplotlib simplifies a line before the sketch filter, so the segmentator +
-	// RNG must see the same simplified polyline or the wiggle desyncs (this case
-	// went 7.7 -> 3.5 RMSE on that one change). The whole-image residual is 42
-	// fully-transparent canvas-border pixels: Matplotlib also sketches the figure
-	// background patch, whose wiggled fill leaves those pixels uncovered, while Go
-	// paints the figure background as the raster backend's opaque clear. Matching
-	// it needs a transparent-canvas figure patch + AGG fill-coverage/alpha work
-	// (see PLAN.md "Sketch figure-patch fill-coverage parity"); the difference is
-	// invisible on a white display.
-	{ID: "sketch_xkcd", Topic: "effects", Title: "Sketch / xkcd Mode", Description: "A sine curve and a flat reference line under Matplotlib's xkcd sketch mode, exercising the global path.sketch perturbation on spines, ticks, and lines.", FixtureOnly: true, MinPSNR: 60.0, MaxMeanAbs: 0.1, MaxRMSE: 4.0},
+	// PSNR ~64 dB / MeanAbs ~0.01 / RMSE ~0.5: the sketch wiggle is RNG-, phase-
+	// AND vertex-exact vs Matplotlib, and the figure background now matches too.
+	// Two fixes got here: (1) enabling path simplification by default
+	// (style.PathSimplify, matching path.simplify=True) — Matplotlib simplifies a
+	// line before the sketch filter, so the segmentator + RNG must see the same
+	// simplified polyline or the wiggle desyncs (7.7 -> 3.5 RMSE); (2) rendering the
+	// figure background the way Matplotlib does — a NON-antialiased figure patch
+	// (figure.patch, antialiased=False) composited over a transparent canvas, so the
+	// xkcd wiggle perforates the border with the same 42 fully-transparent notch
+	// pixels (3.5 -> 0.5 RMSE; the notches are byte-exact). The residual ~0.5 is the
+	// irreducible sub-pixel AA floor on the sine curve. See core.drawSketchedFigurePatch.
+	{ID: "sketch_xkcd", Topic: "effects", Title: "Sketch / xkcd Mode", Description: "A sine curve and a flat reference line under Matplotlib's xkcd sketch mode, exercising the global path.sketch perturbation on spines, ticks, and lines.", FixtureOnly: true, MinPSNR: 62.0, MaxMeanAbs: 0.05, MaxRMSE: 1.0},
 	{ID: "scatter_basic", Topic: "scatter", Title: "Basic Scatter", Description: "A compact scatter plot with variable marker size, color, alpha, and axes labels.", Showcase: true, GoBasicSmokeFamily: "scatter", SkiaParityFamily: "scatter", MaxRMSE: 0.3},
 	{ID: "scatter_marker_types", Topic: "scatter", Title: "Scatter Marker Types", MaxRMSE: 2.8},
 	{ID: "scatter_advanced", Topic: "scatter", Title: "Advanced Scatter", MaxRMSE: 0.3},

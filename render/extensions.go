@@ -34,6 +34,16 @@ type URLMarker interface {
 	GID() string
 }
 
+// TransparentClearer is implemented by raster renderers that can reset their
+// buffer pixels to a fully transparent state mid-frame, without disturbing the
+// current drawing/clip stack. Matplotlib renders the figure background as a
+// real, non-antialiased figure patch composited over a transparent RGBA buffer
+// (not an opaque clear); reproducing that lets a sketch/xkcd wiggle perforate
+// the canvas border exactly as the reference does.
+type TransparentClearer interface {
+	ClearTransparent()
+}
+
 // SketchActive reports whether sketch parameters will perturb a path. Matplotlib
 // treats scale==0 as "no sketch".
 func SketchActive(p SketchParams) bool { return p.Scale != 0 }

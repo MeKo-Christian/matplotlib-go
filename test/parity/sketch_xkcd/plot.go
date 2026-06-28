@@ -61,7 +61,12 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	// xkcd mode renders the figure background as Matplotlib does: a non-
+	// antialiased figure patch over a transparent canvas, so the sketch wiggle
+	// perforates the border with fully-transparent notch pixels. Return the
+	// buffer as straight-alpha NRGBA so those transparent pixels round-trip and
+	// compare correctly (GetImage would mislabel them as premultiplied RGBA).
+	return r.GetImageNRGBA()
 }
 
 func colorPtr(c render.Color) *render.Color { return &c }

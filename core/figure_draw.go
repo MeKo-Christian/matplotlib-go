@@ -17,7 +17,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 	defer r.End()
 	setRendererResolution(r, fig.RC.DPI)
 	setRendererSketch(r, fig.RC.PathSketch)
-	drawFigureBackground(r, vp, opts)
+	drawFigureBackground(r, vp, opts, fig)
 
 	prepareFigureLayout(fig, r, vp)
 	syncAxesLocators(fig, r)
@@ -328,7 +328,17 @@ func isSecondaryAxes(ax *Axes) bool {
 // drawFigureBackground paints the save-time figure face fill and edge stroke
 // requested via DrawOptions (savefig.facecolor/edgecolor). It is a no-op for the
 // common case where neither override is set.
-func drawFigureBackground(r render.Renderer, vp geom.Rect, opts DrawOptions) {
+//
+// When the global sketch/xkcd perturbation is active, the figure background is
+// instead reproduced the way Matplotlib draws it: as a real, non-antialiased
+// figure patch (figure.patch, antialiased=False) composited over a transparent
+// canvas. The xkcd wiggle then perforates the canvas border with the same
+// fully-transparent notch pixels the reference renderer produces, which an
+// opaque clear can never reproduce.
+func drawFigureBackground(r render.Renderer, vp geom.Rect, opts DrawOptions, fig *Figure) {
+	if drawSketchedFigurePatch(r, vp, opts, fig) {
+		return
+	}
 	if opts.FigureBackground != nil && opts.FigureBackground.A > 0 {
 		r.Path(pixelRectPath(vp), &render.Paint{Fill: *opts.FigureBackground})
 	}
@@ -338,6 +348,44 @@ func drawFigureBackground(r render.Renderer, vp geom.Rect, opts DrawOptions) {
 			LineWidth: opts.FigureEdgeWidth,
 		})
 	}
+}
+
+// drawSketchedFigurePatch reproduces Matplotlib's transparent-canvas figure
+// patch when the global sketch is active. It clears the buffer transparent and
+// fills the full-canvas rectangle with the figure facecolor using non-
+// antialiased (binary-coverage) fill — exactly as Matplotlib renders
+// figure.patch (antialiased=False). The renderer's default sketch (set from
+// fig.RC.PathSketch) wiggles the rectangle edges, so the border picks up the
+// same fully-transparent notch pixels as the reference. Returns false (leaving
+// the caller's opaque-clear path intact) unless the backend supports a
+// transparent clear and a sketch is genuinely active.
+func drawSketchedFigurePatch(r render.Renderer, vp geom.Rect, opts DrawOptions, fig *Figure) bool {
+	if fig == nil || !render.SketchActive(fig.RC.PathSketch) {
+		return false
+	}
+	clearer, ok := r.(render.TransparentClearer)
+	if !ok {
+		return false
+	}
+	face := fig.RC.FigureBackground()
+	if opts.FigureBackground != nil {
+		face = *opts.FigureBackground
+	}
+	clearer.ClearTransparent()
+	// A fully transparent figure (savefig transparent=True) draws no patch.
+	if !opts.Transparent && face.A > 0 {
+		r.Path(pixelRectPath(vp), &render.Paint{
+			Fill:      face,
+			Antialias: render.AntialiasOff,
+		})
+	}
+	if opts.FigureEdge != nil && opts.FigureEdge.A > 0 && opts.FigureEdgeWidth > 0 {
+		r.Path(pixelRectPath(vp), &render.Paint{
+			Stroke:    *opts.FigureEdge,
+			LineWidth: opts.FigureEdgeWidth,
+		})
+	}
+	return true
 }
 
 func shouldDrawAxesBackground(axesBackground, figureBackground render.Color, px geom.Rect, previous []geom.Rect) bool {

@@ -126,6 +126,7 @@ var (
 	_ render.GradientFiller         = (*Renderer)(nil)
 	_ render.PatternFiller          = (*Renderer)(nil)
 	_ render.PNGExporter            = (*Renderer)(nil)
+	_ render.TransparentClearer     = (*Renderer)(nil)
 )
 
 // New creates a new AGG renderer with the specified dimensions and background color.
@@ -214,6 +215,21 @@ func (r *Renderer) Clear(c render.Color) {
 	r.clipDepth = 0
 	r.ctx.ClipBox(0, 0, float64(r.width), float64(r.height))
 	r.ctx.Clear(renderColorToAGG(c))
+}
+
+// ClearTransparent resets the buffer pixels to white with zero alpha without
+// touching the drawing/clip stack, so a sketch-perturbed figure patch can be
+// composited over a transparent canvas mid-frame. It implements
+// render.TransparentClearer. Matplotlib renders the figure background as a
+// non-antialiased patch on a transparent RGBA buffer rather than an opaque
+// clear, so its xkcd wiggle perforates the canvas border; this lets the AGG
+// backend match that exactly. The RGB is white so fully-transparent border
+// pixels carry the same straight (255,255,255,0) value Matplotlib writes.
+func (r *Renderer) ClearTransparent() {
+	if r == nil || r.ctx == nil {
+		return
+	}
+	r.ctx.Clear(renderColorToAGG(render.Color{R: 1, G: 1, B: 1, A: 0}))
 }
 
 // Resize reallocates the renderer surface to a new pixel size. It implements
