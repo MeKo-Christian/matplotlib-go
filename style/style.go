@@ -337,7 +337,7 @@ var Default = RC{
 	FigureWidth:           6.4,
 	FigureHeight:          4.8,
 	UseTeX:                false,
-	PathSimplify:          false,
+	PathSimplify:          true,
 	PathSimplifyThreshold: 1.0 / 9.0,
 	AggPathChunkSize:      0,
 	AxesBackground:        render.Color{R: 1, G: 1, B: 1, A: 1},
