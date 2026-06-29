@@ -20,10 +20,13 @@ func TestAxisSetTickDirectionControlsTickSegment(t *testing.T) {
 		t.Fatalf("expected one outward tick path, got %d", len(r.pathCalls))
 	}
 	snappedTickSize := math.Round(axis.TickSize)
-	// Display space is y-up: the bottom spine snaps to 449.5 and outward ticks
-	// point away from the plot (downward = smaller Y).
+	// Ticks snap their base to the same device-space pixel grid as the spine
+	// (snapDisplayY), so the tick base coincides with the bottom spine. Display
+	// space is y-up: outward ticks point away from the plot (downward = smaller Y).
+	baseSpineY := getSpinePosition(axis, ctx)
+	baseY := snapDisplayY(axisTickDisplayPoint(axis, ctx, 1, true, baseSpineY).Y, figureSnapHeight(ctx))
 	outward := r.pathCalls[0].path.V
-	if !floatApprox(outward[0].Y, 449.5, 1e-9) || !floatApprox(outward[1].Y, 449.5-snappedTickSize, 1e-9) {
+	if !floatApprox(outward[0].Y, baseY, 1e-9) || !floatApprox(outward[1].Y, baseY-snappedTickSize, 1e-9) {
 		t.Fatalf("outward tick = %+v", outward)
 	}
 
@@ -33,7 +36,7 @@ func TestAxisSetTickDirectionControlsTickSegment(t *testing.T) {
 	}
 	axis.DrawTicks(&r, ctx)
 	inward := r.pathCalls[0].path.V
-	if !floatApprox(inward[0].Y, 449.5, 1e-9) || !floatApprox(inward[1].Y, 449.5+snappedTickSize, 1e-9) {
+	if !floatApprox(inward[0].Y, baseY, 1e-9) || !floatApprox(inward[1].Y, baseY+snappedTickSize, 1e-9) {
 		t.Fatalf("inward tick = %+v", inward)
 	}
 
@@ -43,7 +46,7 @@ func TestAxisSetTickDirectionControlsTickSegment(t *testing.T) {
 	}
 	axis.DrawTicks(&r, ctx)
 	inout := r.pathCalls[0].path.V
-	if !floatApprox(inout[0].Y, 449.5+snappedTickSize/2, 1e-9) || !floatApprox(inout[1].Y, 449.5-snappedTickSize/2, 1e-9) {
+	if !floatApprox(inout[0].Y, baseY+snappedTickSize/2, 1e-9) || !floatApprox(inout[1].Y, baseY-snappedTickSize/2, 1e-9) {
 		t.Fatalf("inout tick = %+v", inout)
 	}
 }
