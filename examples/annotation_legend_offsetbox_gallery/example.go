@@ -118,7 +118,6 @@ func addOffsetBoxPanel(ax *core.Axes) {
 		Location:        core.LegendUpperLeft,
 		Padding:         pt(4),
 		Inset:           pt(8),
-		RowGap:          2,
 		BackgroundColor: render.Color{R: 0.98, G: 0.98, B: 0.92, A: 0.94},
 		BorderColor:     render.Color{R: 0.45, G: 0.42, B: 0.16, A: 1},
 		BorderWidth:     pt(1),

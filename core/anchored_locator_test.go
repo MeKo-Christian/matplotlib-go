@@ -140,12 +140,8 @@ func TestAnchoredTextBoxMultilineHeightUsesMeasuredTextAreaMetrics(t *testing.T)
 	ctx.RC.DPI = 100
 	r := &anchoredTextMetricRenderer{}
 	lines := strings.Split(box.Content, "\n")
-	layouts := make([]singleLineTextLayout, len(lines))
-	for i, line := range lines {
-		layouts[i] = measureSingleLineTextLayout(r, line, box.FontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
-	}
 
-	got := box.layout(r, ctx, layouts, box.FontSize).patchBox
+	got := box.layout(r, ctx, lines, box.FontSize).patchBox
 
 	// Matplotlib TextArea("anchored\ntext", size=9) is 58.75 x 28 px at
 	// 100 DPI; AnchoredText pad=0.35 expands it by 4.375 px on each side.
@@ -165,10 +161,6 @@ func TestAnchoredTextOptionsMergeWithDefaults(t *testing.T) {
 		FontSize:        10,
 	})
 
-	ctx := &DrawContext{RC: styleRCForAnchoredTextTest()}
-	if got, want := box.resolvedRowGap(10, ctx), pointsToPixels(ctx.RC, 2); !floatApprox(got, want, 1e-9) {
-		t.Fatalf("resolved row gap = %v, want %v", got, want)
-	}
 	if box.BorderWidth != 1 {
 		t.Fatalf("border width = %v, want default 1", box.BorderWidth)
 	}
