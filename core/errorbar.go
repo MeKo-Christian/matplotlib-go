@@ -411,7 +411,7 @@ func faithfulCapPath(ctx *DrawContext, center geom.Pt, vertical bool, half, stro
 	xSnap := ebSnap(p.X)
 	// height - floor(height - p.Y + 0.5): the height term cancels, leaving a
 	// device-floored centre expressed back in y-up display space.
-	base := -math.Floor(0.5-p.Y+1e-9)
+	base := -math.Floor(0.5 - p.Y + 1e-9)
 	hHi := ebSnap(half)
 	hLo := ebSnap(-half)
 

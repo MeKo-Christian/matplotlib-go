@@ -41,41 +41,41 @@ preserveAspectRatio="xMidYMid meet">
   <text x="47.918403" y="39.798828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
   <g clip-path="url(#clip1)"><path d="M 137.142857 237.6 L 210.285714 204 L 283.428571 218.4 L 356.571429 175.2 L 429.714286 189.6 L 502.857143 146.4" fill="none" stroke="rgb(31,120,181)" stroke-width="2" stroke-linejoin="round" stroke-linecap="square" stroke-miterlimit="10" /></g>
   <g clip-path="url(#clip1)"><path d="M 122.514286 237.6 L 151.771429 237.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 122.514286 245.933333 L 122.514286 229.266667" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 151.771429 245.933333 L 151.771429 229.266667" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 123.5 246.5 L 123.5 230.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 152.5 246.5 L 152.5 230.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <g clip-path="url(#clip1)"><path d="M 137.142857 251.04 L 137.142857 224.16" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 128.809524 251.04 L 145.47619 251.04" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 128.809524 224.16 L 145.47619 224.16" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 129.5 251.5 L 145.5 251.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 129.5 224.5 L 145.5 224.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <g clip-path="url(#clip1)"><path d="M 192 204 L 228.571429 204" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 192 212.333333 L 192 195.666667" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 228.571429 212.333333 L 228.571429 195.666667" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 192.5 212.5 L 192.5 196.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 229.5 212.5 L 229.5 196.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <g clip-path="url(#clip1)"><path d="M 210.285714 213.6 L 210.285714 194.4" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 201.952381 213.6 L 218.619048 213.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 201.952381 194.4 L 218.619048 194.4" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 202.5 214.5 L 218.5 214.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 202.5 194.5 L 218.5 194.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <g clip-path="url(#clip1)"><path d="M 272.457143 218.4 L 294.4 218.4" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 272.457143 226.733333 L 272.457143 210.066667" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 294.4 226.733333 L 294.4 210.066667" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 272.5 226.5 L 272.5 210.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 294.5 226.5 L 294.5 210.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <g clip-path="url(#clip1)"><path d="M 283.428571 235.2 L 283.428571 201.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 275.095238 235.2 L 291.761905 235.2" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 275.095238 201.6 L 291.761905 201.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 275.5 235.5 L 291.5 235.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 275.5 202.5 L 291.5 202.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <g clip-path="url(#clip1)"><path d="M 340.48 175.2 L 372.662857 175.2" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 340.48 183.533333 L 340.48 166.866667" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 372.662857 183.533333 L 372.662857 166.866667" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 340.5 183.5 L 340.5 167.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 373.5 183.5 L 373.5 167.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <g clip-path="url(#clip1)"><path d="M 356.571429 186.72 L 356.571429 163.68" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 348.238095 186.72 L 364.904762 186.72" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 348.238095 163.68 L 364.904762 163.68" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 349.5 187.5 L 365.5 187.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 349.5 164.5 L 365.5 164.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <g clip-path="url(#clip1)"><path d="M 407.771429 189.6 L 451.657143 189.6" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 407.771429 197.933333 L 407.771429 181.266667" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 451.657143 197.933333 L 451.657143 181.266667" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 408.5 198.5 L 408.5 182.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 452.5 198.5 L 452.5 182.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <g clip-path="url(#clip1)"><path d="M 429.714286 204 L 429.714286 175.2" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 421.380952 204 L 438.047619 204" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 421.380952 175.2 L 438.047619 175.2" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 422.5 204.5 L 438.5 204.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 422.5 175.5 L 438.5 175.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <g clip-path="url(#clip1)"><path d="M 489.691429 146.4 L 516.022857 146.4" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 489.691429 154.733333 L 489.691429 138.066667" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 516.022857 154.733333 L 516.022857 138.066667" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 490.5 154.5 L 490.5 138.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 516.5 154.5 L 516.5 138.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <g clip-path="url(#clip1)"><path d="M 502.857143 156.96 L 502.857143 135.84" fill="none" stroke="rgb(0,0,0)" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 494.52381 156.96 L 511.190476 156.96" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 494.52381 135.84 L 511.190476 135.84" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 495.5 157.5 L 511.5 157.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 495.5 136.5 L 511.5 136.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="miter" stroke-linecap="butt" /></g>
   <path d="M 64.5 324.5 L 576.5 324.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <path d="M 64.5 324.5 L 64.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <path d="M 64.5 36.5 L 576.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />

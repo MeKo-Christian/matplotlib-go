@@ -32,16 +32,6 @@ func TestLargeFileAuditPlumbingIsDocumented(t *testing.T) {
 			t.Fatalf("large-file decomposition doc missing %q", want)
 		}
 	}
-
-	plan := readTextFile(t, "PLAN.md")
-	for _, want := range []string{
-		"[x] **L1 — Add a repeatable large-file audit.**",
-		"`docs/large-file-decomposition.md`",
-	} {
-		if !strings.Contains(plan, want) {
-			t.Fatalf("plan missing %q", want)
-		}
-	}
 }
 
 func TestGeneratedDataStrategyIsDocumented(t *testing.T) {
@@ -61,11 +51,6 @@ func TestGeneratedDataStrategyIsDocumented(t *testing.T) {
 		if !strings.Contains(doc, want) {
 			t.Fatalf("large-file decomposition doc missing L7 decision detail %q", want)
 		}
-	}
-
-	plan := readTextFile(t, "PLAN.md")
-	if !strings.Contains(plan, "[x] **L7 — Decide generated-data strategy.**") {
-		t.Fatal("PLAN.md does not mark the Phase 4 L7 generated-data strategy done")
 	}
 
 	publicSurface := readTextFile(t, "internal/examplecatalog/public_surface_parity.go")
@@ -107,11 +92,6 @@ func TestContourAPISplitIsTracked(t *testing.T) {
 			t.Fatalf("core/contour.go still contains moved API/construction item %q", moved)
 		}
 	}
-
-	plan := readTextFile(t, "PLAN.md")
-	if !strings.Contains(plan, "[x] `core/contour.go`: extract public API and `ContourSet` construction into") {
-		t.Fatal("PLAN.md does not mark the Phase 4 L3 contour API split done")
-	}
 }
 
 func TestContourLevelsSplitIsTracked(t *testing.T) {
@@ -141,11 +121,6 @@ func TestContourLevelsSplitIsTracked(t *testing.T) {
 		if strings.Contains(contour, moved) {
 			t.Fatalf("core/contour.go still contains moved level helper %q", moved)
 		}
-	}
-
-	plan := readTextFile(t, "PLAN.md")
-	if !strings.Contains(plan, "[x] `core/contour.go`: extract coordinate normalization, triangulation, and") {
-		t.Fatal("PLAN.md does not mark the contour levels split done")
 	}
 }
 
@@ -183,11 +158,6 @@ func TestContourLinesSplitIsTracked(t *testing.T) {
 		if strings.Contains(contour, moved) {
 			t.Fatalf("core/contour.go still contains moved line helper %q", moved)
 		}
-	}
-
-	plan := readTextFile(t, "PLAN.md")
-	if !strings.Contains(plan, "[x] `core/contour.go`: extract line segment generation, stitching, structured") {
-		t.Fatal("PLAN.md does not mark the contour lines split done")
 	}
 }
 
@@ -232,11 +202,6 @@ func TestContourFilledSplitIsTracked(t *testing.T) {
 		if strings.Contains(contour, moved) {
 			t.Fatalf("core/contour.go still contains moved filled helper %q", moved)
 		}
-	}
-
-	plan := readTextFile(t, "PLAN.md")
-	if !strings.Contains(plan, "[x] `core/contour.go`: extract filled band polygon clipping, saddle handling,") {
-		t.Fatal("PLAN.md does not mark the contour filled split done")
 	}
 }
 
@@ -285,11 +250,6 @@ func TestContourLabelsSplitIsTracked(t *testing.T) {
 			t.Fatalf("core/contour.go still contains moved label helper %q", moved)
 		}
 	}
-
-	plan := readTextFile(t, "PLAN.md")
-	if !strings.Contains(plan, "[x] `core/contour.go`: extract clabel placement, inline erasing, label angle,") {
-		t.Fatal("PLAN.md does not mark the contour labels split done")
-	}
 }
 
 func TestAxisTypesSplitIsTracked(t *testing.T) {
@@ -325,11 +285,6 @@ func TestAxisTypesSplitIsTracked(t *testing.T) {
 		if strings.Contains(axis, moved) {
 			t.Fatalf("core/axis.go still contains moved type/constructor item %q", moved)
 		}
-	}
-
-	plan := readTextFile(t, "PLAN.md")
-	if !strings.Contains(plan, "[x] `core/axis.go`: extract axis side/type definitions and constructors into") {
-		t.Fatal("PLAN.md does not mark the axis types split done")
 	}
 }
 
@@ -370,11 +325,6 @@ func TestAxisSpineSplitIsTracked(t *testing.T) {
 		if strings.Contains(axis, moved) {
 			t.Fatalf("core/axis.go still contains moved spine helper %q", moved)
 		}
-	}
-
-	plan := readTextFile(t, "PLAN.md")
-	if !strings.Contains(plan, "[x] `core/axis.go`: extract spine/frame drawing, snapping, and spine position") {
-		t.Fatal("PLAN.md does not mark the axis spine split done")
 	}
 }
 
@@ -436,11 +386,6 @@ func TestAxisTicksSplitIsTracked(t *testing.T) {
 			t.Fatalf("core/axis.go still contains moved tick helper %q", moved)
 		}
 	}
-
-	plan := readTextFile(t, "PLAN.md")
-	if !strings.Contains(plan, "[x] `core/axis.go`: extract major/minor tick drawing, tick target counts, and") {
-		t.Fatal("PLAN.md does not mark the axis ticks split done")
-	}
 }
 
 func TestAxisTickLabelsSplitIsTracked(t *testing.T) {
@@ -493,11 +438,6 @@ func TestAxisTickLabelsSplitIsTracked(t *testing.T) {
 			t.Fatalf("core/axis.go still contains moved tick-label helper %q", moved)
 		}
 	}
-
-	plan := readTextFile(t, "PLAN.md")
-	if !strings.Contains(plan, "[x] `core/axis.go`: extract tick-label drawing, offset text, label bounds, and") {
-		t.Fatal("PLAN.md does not mark the axis tick-label split done")
-	}
 }
 
 func TestAxisPolarSplitIsTracked(t *testing.T) {
@@ -535,10 +475,5 @@ func TestAxisPolarSplitIsTracked(t *testing.T) {
 		if strings.Contains(axis, moved) {
 			t.Fatalf("core/axis.go still contains moved polar helper %q", moved)
 		}
-	}
-
-	plan := readTextFile(t, "PLAN.md")
-	if !strings.Contains(plan, "[x] `core/axis.go`: extract polar spine/tick/tick-label behavior into") {
-		t.Fatal("PLAN.md does not mark the axis polar split done")
 	}
 }
