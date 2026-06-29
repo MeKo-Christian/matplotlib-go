@@ -1348,6 +1348,9 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		WhiskerPercentiles: opt.WhiskerPercentiles,
 		FlierMarker:        flierMarker,
 		Label:              opt.Label,
+		// Matplotlib draws boxplot artists at Line2D.zorder (2) so they render
+		// above default grids (axisbelow z=0.5/1.5); medians/means use 2.1.
+		z: 2,
 	}
 
 	a.Add(box)

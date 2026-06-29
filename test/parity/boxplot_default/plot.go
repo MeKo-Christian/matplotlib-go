@@ -44,6 +44,7 @@ func Plot() *core.Figure {
 		ManageTicks: &manageTicks,
 	})
 
+	ax.SetAxisBelow(true)
 	grid := ax.AddYGrid()
 	grid.Color = render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1}
 	grid.LineWidth = 0.5

@@ -650,11 +650,14 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 
 	if whiskerWidth > 0 && whiskerColor.A > 0 {
+		// Matplotlib boxplot lines inherit lines.solid_capstyle="projecting"
+		// (CapSquare), which extends free line ends by half the linewidth — the
+		// cap/median/whisker endpoints would otherwise fall half a pixel short.
 		whiskerPaint := render.Paint{
 			Stroke:    whiskerColor,
 			LineWidth: whiskerWidth,
 			LineJoin:  render.JoinMiter,
-			LineCap:   render.CapButt,
+			LineCap:   render.CapSquare,
 			Snap:      render.SnapAuto,
 		}
 		r.Path(linePath(ctx, pt(b.Position, b.stats.lowerWhisker), pt(b.Position, b.stats.q1)), &whiskerPaint)
@@ -665,7 +668,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 				Stroke:    capColor,
 				LineWidth: whiskerWidth,
 				LineJoin:  render.JoinMiter,
-				LineCap:   render.CapButt,
+				LineCap:   render.CapSquare,
 				Snap:      render.SnapAuto,
 			}
 			capLeft := b.Position - capWidth/2
@@ -680,7 +683,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 			Stroke:    medianColor,
 			LineWidth: medianWidth,
 			LineJoin:  render.JoinMiter,
-			LineCap:   render.CapButt,
+			LineCap:   render.CapSquare,
 			Snap:      render.SnapAuto,
 		}
 		medianLeft, medianRight := xLeft, xRight
@@ -698,7 +701,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 				Stroke:    meanColor,
 				LineWidth: medianWidth,
 				LineJoin:  render.JoinMiter,
-				LineCap:   render.CapButt,
+				LineCap:   render.CapSquare,
 				Snap:      render.SnapAuto,
 			}
 			r.Path(linePath(ctx, pt(xLeft, b.stats.mean), pt(xRight, b.stats.mean)), &meanPaint)
@@ -718,17 +721,9 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 	}
 
-	if b.ShowFliers {
+	if b.ShowFliers && len(b.stats.outliers) > 0 {
 		if flierColor.A <= 0 && flierEdgeColor.A <= 0 {
 			return
-		}
-		flierPaint := render.Paint{
-			Fill:      flierColor,
-			Stroke:    flierEdgeColor,
-			LineWidth: flierEdgeWidth,
-			LineJoin:  render.JoinRound,
-			LineCap:   render.CapRound,
-			Snap:      render.SnapAuto,
 		}
 		marker := b.FlierMarker
 		if marker == 0 {
@@ -736,11 +731,29 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 		scatter := Scatter2D{Marker: marker}
 		flierSizePx := pointsToPixels(ctx.RC, flierSize)
+		offsets := make([]geom.Pt, 0, len(b.stats.outliers))
 		for _, v := range b.stats.outliers {
-			center := ctx.DataToPixel.Apply(pt(b.Position, v))
-			collMarkerDbgf("FLIER pos=%.2f v=%.3f center=(%.4f,%.4f) sizePx=%.4f\n", b.Position, v, center.X, center.Y, flierSizePx)
-			r.Path(scaleAndTranslatePath(scatter.markerPrototypePath(), flierSizePx, center), &flierPaint)
+			offsets = append(offsets, pt(b.Position, v))
 		}
+		// Matplotlib draws fliers as Line2D markers, which the AGG backend
+		// rasterizes via draw_markers (snap the marker shape at the origin, then
+		// stamp it at the rounded device offset). Route them through the marker
+		// pipeline so they match the reference instead of hand-stamping a path.
+		fliers := &PathCollection{
+			Collection:    Collection{Coords: Coords(CoordData), Alpha: 1},
+			Path:          scatter.markerPrototypePath(),
+			Offsets:       offsets,
+			Size:          flierSizePx,
+			PathInDisplay: true,
+			FaceColor:     flierColor,
+			EdgeColor:     flierEdgeColor,
+			EdgeWidth:     flierEdgeWidth,
+			LineJoin:      render.JoinRound,
+			LineJoinSet:   true,
+			LineCap:       render.CapRound,
+			LineCapSet:    true,
+		}
+		fliers.Draw(r, ctx)
 	}
 }
 

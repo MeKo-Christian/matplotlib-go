@@ -1,10 +1,8 @@
 package agg
 
 import (
-	"fmt"
 	"image"
 	"math"
-	"os"
 
 	agglib "github.com/cwbudde/agg_go"
 	"github.com/cwbudde/matplotlib-go/geom"
@@ -473,9 +471,6 @@ func extractImageAlpha(img render.Image) float64 {
 
 // DrawMarkers renders one marker path at many display-space offsets.
 func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
-	if os.Getenv("MARKERDBG") != "" {
-		fmt.Fprintf(os.Stderr, "MARKERDBG ENTER markerC=%d items=%d\n", len(batch.Marker.C), len(batch.Items))
-	}
 	if len(batch.Marker.C) == 0 || len(batch.Items) == 0 {
 		return false
 	}
@@ -515,10 +510,6 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 				Y: math.Floor(offDev.Y+0.5) + 0.5,
 			}
 		}
-		if os.Getenv("MARKERDBG") != "" {
-			fmt.Fprintf(os.Stderr, "MARKERDBG offDev=(%.3f,%.3f) stamp=(%.3f,%.3f) snap=%v offset=(%.3f,%.3f)\n",
-				offDev.X, offDev.Y, stamp.X, stamp.Y, shouldSnapPath(shape, &markerPaint), item.Offset.X, item.Offset.Y)
-		}
 		path := translatePath(shape, stamp.X, stamp.Y)
 		paint := markerPaint
 		// The shape is already snapped (or intentionally centred); prevent the
@@ -535,15 +526,6 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 
 // DrawPathCollection renders a display-space path collection.
 func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
-	if os.Getenv("MARKERDBG") != "" {
-		fmt.Fprintf(os.Stderr, "MARKERDBG PATHCOLL items=%d\n", len(batch.Items))
-		for i := range batch.Items {
-			it := &batch.Items[i]
-			if len(it.Path.V) > 0 {
-				fmt.Fprintf(os.Stderr, "  item v0=(%.3f,%.3f) nverts=%d stroke=%v lw=%.3f\n", it.Path.V[0].X, it.Path.V[0].Y, len(it.Path.V), it.Paint.Stroke, it.Paint.LineWidth)
-			}
-		}
-	}
 	if len(batch.Items) == 0 {
 		return false
 	}

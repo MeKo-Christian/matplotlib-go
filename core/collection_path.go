@@ -1,21 +1,10 @@
 package core
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
-
-var collMarkerDbg = os.Getenv("MARKERDBG") != ""
-
-func collMarkerDbgf(format string, a ...interface{}) {
-	if collMarkerDbg {
-		fmt.Fprintf(os.Stderr, format, a...)
-	}
-}
 
 // PathCollection draws repeated or per-item paths with per-item offsets and
 // styling, forming the basis for scatter-like artists.
@@ -69,25 +58,6 @@ func (c *PathCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		path := c.displayPathAt(ctx, i, base)
 		if len(path.C) == 0 {
 			continue
-		}
-		if collMarkerDbg && len(path.V) > 0 {
-			minx, miny, maxx, maxy := path.V[0].X, path.V[0].Y, path.V[0].X, path.V[0].Y
-			for _, v := range path.V {
-				if v.X < minx {
-					minx = v.X
-				}
-				if v.X > maxx {
-					maxx = v.X
-				}
-				if v.Y < miny {
-					miny = v.Y
-				}
-				if v.Y > maxy {
-					maxy = v.Y
-				}
-			}
-			collMarkerDbgf("COLLFALLBACK i=%d center=(%.3f,%.3f) bbox=[%.2f,%.2f..%.2f,%.2f] nverts=%d offset=(%.3f,%.3f)\n",
-				i, (minx+maxx)/2, (miny+maxy)/2, minx, miny, maxx, maxy, len(path.V), c.offsetAt(i).X, c.offsetAt(i).Y)
 		}
 
 		fill := c.faceColorAt(i)
