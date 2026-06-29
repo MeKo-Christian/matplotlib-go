@@ -87,6 +87,14 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 	if e.CapThick > 0 {
 		capPaint.LineWidth = e.CapThick
 	}
+	// Matplotlib draws the caps as Line2D markers ('|' for x-error, '_' for
+	// y-error). Its draw_markers floors the marker centre to the device pixel
+	// grid and snaps the marker half-extent to an integer separately, then sums
+	// them — it does NOT snap a stroked segment's two endpoints independently.
+	// faithfulCapPath reproduces that geometry directly, so the cap paths are
+	// pre-snapped and must skip the generic per-vertex snapper.
+	capLinePaint := capPaint
+	capLinePaint.Snap = render.SnapOff
 
 	for i, pt := range e.XY {
 		if !e.errorEveryApplies(i) {
@@ -122,14 +130,10 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 
 			if capHalf > 0 {
 				if xLow > 0 && !xUpLimit {
-					leftTop := addPixelOffset(ctx, left, 0, -capHalf)
-					leftBottom := addPixelOffset(ctx, left, 0, capHalf)
-					r.Path(linePath(ctx, leftTop, leftBottom), &capPaint)
+					r.Path(faithfulCapPath(ctx, left, true, capHalf, capLinePaint.LineWidth), &capLinePaint)
 				}
 				if xHigh > 0 && !xLoLimit {
-					rightTop := addPixelOffset(ctx, right, 0, -capHalf)
-					rightBottom := addPixelOffset(ctx, right, 0, capHalf)
-					r.Path(linePath(ctx, rightTop, rightBottom), &capPaint)
+					r.Path(faithfulCapPath(ctx, right, true, capHalf, capLinePaint.LineWidth), &capLinePaint)
 				}
 			}
 			if xLoLimit {
@@ -155,14 +159,10 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 
 			if capHalf > 0 {
 				if yLow > 0 && !upLimit {
-					lowerLeft := addPixelOffset(ctx, lower, -capHalf, 0)
-					lowerRight := addPixelOffset(ctx, lower, capHalf, 0)
-					r.Path(linePath(ctx, lowerLeft, lowerRight), &capPaint)
+					r.Path(faithfulCapPath(ctx, lower, false, capHalf, capLinePaint.LineWidth), &capLinePaint)
 				}
 				if yHigh > 0 && !loLimit {
-					upperLeft := addPixelOffset(ctx, upper, -capHalf, 0)
-					upperRight := addPixelOffset(ctx, upper, capHalf, 0)
-					r.Path(linePath(ctx, upperLeft, upperRight), &capPaint)
+					r.Path(faithfulCapPath(ctx, upper, false, capHalf, capLinePaint.LineWidth), &capLinePaint)
 				}
 			}
 			if loLimit {
@@ -380,23 +380,51 @@ func drawErrorbarCapMarker(r render.Renderer, ctx *DrawContext, dataPt geom.Pt, 
 	}, paint)
 }
 
-func addPixelOffset(ctx *DrawContext, dataPt geom.Pt, dxPx, dyPx float64) geom.Pt {
-	basePx := ctx.DataToPixel.Apply(dataPt)
-	targetPx := geom.Pt{
-		X: basePx.X + dxPx,
-		Y: basePx.Y + dyPx,
-	}
-
-	dataSpace, ok := invertToData(ctx, targetPx)
-	if !ok {
-		return dataPt
-	}
-	return dataSpace
+// ebSnap mirrors the AGG backend's PathSnapper rounding (Matplotlib's
+// floor(v + 0.5)): vertices land on integer pixel boundaries.
+func ebSnap(v float64) float64 {
+	return math.Floor(v + 0.5 + 1e-9)
 }
 
-func invertToData(ctx *DrawContext, px geom.Pt) (geom.Pt, bool) {
-	if ctx == nil {
-		return geom.Pt{}, false
+// faithfulCapPath builds a single error-bar cap segment in y-up display space,
+// reproducing Matplotlib's cap-as-marker geometry exactly.
+//
+// Matplotlib renders caps as Line2D markers ('|' for x-error, '_' for
+// y-error). In src/_backend_agg.h::draw_markers the marker offset (the cap
+// centre) is floored to the device pixel grid, while the marker's own vertices
+// are snapped to integers independently by the PathSnapper, and the two are then
+// summed. A stroked segment drawn through the un-floored centre instead snaps its
+// two endpoints jointly, which rounds asymmetrically whenever the centre sits on
+// a half-pixel and the half-extent is non-integral — pushing the cap a pixel off.
+//
+// The (1,-1)+height device flip cancels algebraically, so the result is computed
+// purely from the display-space data point: base is the device-floored centre
+// mapped back to display, xSnap is the floored centre column, and hHi/hLo are the
+// snapped marker half-extents. snapValue follows the same odd-stroke-width rule as
+// the backend snapper. The path is pre-snapped, so callers draw it with Snap off.
+func faithfulCapPath(ctx *DrawContext, center geom.Pt, vertical bool, half, strokeWidth float64) geom.Path {
+	p := ctx.DataToPixel.Apply(center)
+	snapValue := 0.0
+	if int(math.Round(strokeWidth))%2 != 0 {
+		snapValue = 0.5
 	}
-	return ctx.DataToPixel.Invert(px)
+	xSnap := ebSnap(p.X)
+	// height - floor(height - p.Y + 0.5): the height term cancels, leaving a
+	// device-floored centre expressed back in y-up display space.
+	base := -math.Floor(0.5-p.Y+1e-9)
+	hHi := ebSnap(half)
+	hLo := ebSnap(-half)
+
+	var a, b geom.Pt
+	if vertical {
+		a = geom.Pt{X: xSnap + snapValue, Y: base - hHi - snapValue}
+		b = geom.Pt{X: xSnap + snapValue, Y: base - hLo - snapValue}
+	} else {
+		a = geom.Pt{X: xSnap + hLo + snapValue, Y: base - snapValue}
+		b = geom.Pt{X: xSnap + hHi + snapValue, Y: base - snapValue}
+	}
+	return geom.Path{
+		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+		V: []geom.Pt{a, b},
+	}
 }

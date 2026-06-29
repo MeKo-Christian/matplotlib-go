@@ -262,10 +262,27 @@ func TestErrorBarSegmentsUseMatplotlibSnapAuto(t *testing.T) {
 
 	errBar.Draw(r, ctx)
 
+	// The bar segments rely on the backend's SnapAuto pixel snapper, exactly
+	// like Matplotlib's vlines/hlines. The caps are drawn as pre-snapped marker
+	// geometry (see faithfulCapPath) and must therefore opt out of the generic
+	// per-vertex snapper with SnapOff, mirroring Matplotlib's draw_markers which
+	// floors the marker centre and snaps the marker half-extent separately.
+	var bars, caps int
 	for i, call := range r.pathCalls {
-		if call.paint.Snap != render.SnapAuto {
-			t.Fatalf("errorbar path %d snap mode = %v, want Matplotlib SnapAuto", i, call.paint.Snap)
+		switch call.paint.Snap {
+		case render.SnapAuto:
+			bars++
+		case render.SnapOff:
+			caps++
+		default:
+			t.Fatalf("errorbar path %d snap mode = %v, want SnapAuto (bar) or SnapOff (cap)", i, call.paint.Snap)
 		}
+	}
+	if bars != 2 {
+		t.Fatalf("errorbar SnapAuto bar segments = %d, want 2 (x and y bars)", bars)
+	}
+	if caps != 4 {
+		t.Fatalf("errorbar SnapOff cap segments = %d, want 4 (two x caps, two y caps)", caps)
 	}
 }
 
