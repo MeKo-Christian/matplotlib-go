@@ -30,9 +30,12 @@ def stem_plot(out_dir):
         bottom=0.3,
     )
     stem_color = (0.15, 0.42, 0.73)
-    plt.setp(stemlines, color=stem_color, linewidth=lw(1.5))
+    # Stem and baseline line widths are left at Matplotlib's default
+    # (rcParams["lines.linewidth"] = 1.5 points), matching the Go example which
+    # does not override StemOptions.LineWidth / BaselineWidth.
+    plt.setp(stemlines, color=stem_color)
     plt.setp(markerline, color=stem_color, markerfacecolor=stem_color, markeredgecolor=stem_color, markersize=7)
-    plt.setp(baseline, color=(0.32, 0.32, 0.32), linewidth=lw(1.5))
+    plt.setp(baseline, color=(0.32, 0.32, 0.32))
 
     save(fig, out_dir, "stem_plot")
 
