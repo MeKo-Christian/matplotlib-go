@@ -20,6 +20,30 @@ func transformMarkerPath(path geom.Path, affine geom.Affine, offset geom.Pt) geo
 	return out
 }
 
+// markerShapeDevice builds the marker shape in y-down device orientation,
+// centred at the origin (no offset applied). It mirrors Matplotlib's
+// marker_trans *= scale(1,-1): the marker affine is applied and the Y axis is
+// negated so the shape is oriented for the device buffer. The result reuses
+// markerScratch and is intended to be snapped (around the origin) and then
+// stamped at the rounded device offset, matching draw_markers in _backend_agg.h.
+func (r *Renderer) markerShapeDevice(path geom.Path, affine geom.Affine) geom.Path {
+	if r == nil || len(path.C) == 0 {
+		return geom.Path{}
+	}
+	out := &r.markerScratch
+	out.C = path.C
+	if cap(out.V) < len(path.V) {
+		out.V = make([]geom.Pt, len(path.V))
+	} else {
+		out.V = out.V[:len(path.V)]
+	}
+	for i, pt := range path.V {
+		pt = affine.Apply(pt)
+		out.V[i] = geom.Pt{X: pt.X, Y: -pt.Y}
+	}
+	return *out
+}
+
 func (r *Renderer) transformMarkerPathDevice(path geom.Path, affine geom.Affine, offset geom.Pt) geom.Path {
 	if r == nil || len(path.C) == 0 {
 		return geom.Path{}

@@ -482,25 +482,39 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 		} else {
 			markerPaint.Snap = render.SnapAuto
 		}
-		path := r.transformMarkerPathDevice(batch.Marker, item.Transform, item.Offset)
-		if len(path.C) == 0 {
+		// Mirror Matplotlib's draw_markers: build the marker shape centred at the
+		// origin (in y-down device orientation), snap it there, then stamp it at
+		// the rounded device offset. Snapping the shape together with the offset
+		// (a single combined floor) lets the offset's fractional part corrupt the
+		// corner rounding, shifting axis-aligned markers by 1px in one axis.
+		shape := r.markerShapeDevice(batch.Marker, item.Transform)
+		if len(shape.C) == 0 {
 			continue
 		}
-		// Snapping does not commute with the y-flip, so apply pixel-centering in
-		// device space against the device-space offset to stay net-neutral.
-		if !shouldSnapPath(batch.Marker, &markerPaint) {
-			offDev := r.devPt(item.Offset)
-			snapped := geom.Pt{
+		offDev := r.devPt(item.Offset)
+		var stamp geom.Pt
+		if shouldSnapPath(shape, &markerPaint) {
+			// Snap the shape around the origin (floor(v+0.5)+snapValue) and stamp
+			// it at floor(offset+0.5) — the +0.5 folds in Matplotlib's
+			// translate(0.5, height+0.5) device shift before the truncating floor.
+			shape = snapPath(shape, &markerPaint)
+			stamp = geom.Pt{
+				X: math.Floor(offDev.X + 0.5),
+				Y: math.Floor(offDev.Y + 0.5),
+			}
+		} else {
+			// Non-snapping markers (e.g. circles) are centred on the pixel so they
+			// sit symmetrically around the point they refer to.
+			stamp = geom.Pt{
 				X: math.Floor(offDev.X+0.5) + 0.5,
 				Y: math.Floor(offDev.Y+0.5) + 0.5,
 			}
-			delta := geom.Pt{X: snapped.X - offDev.X, Y: snapped.Y - offDev.Y}
-			for vi := range path.V {
-				path.V[vi].X += delta.X
-				path.V[vi].Y += delta.Y
-			}
 		}
+		path := translatePath(shape, stamp.X, stamp.Y)
 		paint := markerPaint
+		// The shape is already snapped (or intentionally centred); prevent the
+		// path pipeline from re-snapping the stamped device coordinates.
+		paint.Snap = render.SnapOff
 		if !item.Antialiased {
 			paint.Antialias = render.AntialiasOff
 		}
