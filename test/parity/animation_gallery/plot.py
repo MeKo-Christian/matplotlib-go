@@ -30,7 +30,7 @@ def animation_gallery(out_dir):
     ax.set_ylabel("signal")
     ax.set_xlim(0, 2 * math.pi)
     ax.set_ylim(-1.35, 1.35)
-    ax.grid(axis="y", color=(0.85, 0.85, 0.85), linewidth=0.8)
+    ax.grid(axis="y")
     for frame in [0, 4, 8]:
         x, y = _sine_frame(frame)
         color = (0.28, 0.28, 0.28, 0.45)
@@ -46,7 +46,7 @@ def animation_gallery(out_dir):
     ax2.set_ylabel("value")
     ax2.set_xlim(-0.5, 3.5)
     ax2.set_ylim(0, 3.5)
-    ax2.grid(axis="y", color=(0.85, 0.85, 0.85), linewidth=0.8)
+    ax2.grid(axis="y")
     series = [
         ([(0, 0.7), (1, 1.4), (2, 0.9), (3, 1.8)], (0.84, 0.35, 0.18), "frame 0"),
         ([(0, 1.3), (1, 2.2), (2, 1.6), (3, 2.7)], (0.20, 0.58, 0.34), "frame 1"),
