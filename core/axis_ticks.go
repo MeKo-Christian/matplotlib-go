@@ -84,15 +84,15 @@ func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, ti
 	if isXAxis {
 		spineY := getSpinePosition(a, ctx)
 		spinePixel := axisTickDisplayPoint(a, ctx, tickValue, true, spineY)
-		spinePixel.X = math.Round(spinePixel.X) + 0.5
-		spinePixel.Y = math.Round(spinePixel.Y) - 0.5
+		spinePixel.X = snapDisplayX(spinePixel.X)
+		spinePixel.Y = snapDisplayY(spinePixel.Y, figureSnapHeight(ctx))
 
 		p1, p2 = axisTickSegment(a, spinePixel, tickSize, true)
 	} else {
 		spineX := getSpinePosition(a, ctx)
 		spinePixel := axisTickDisplayPoint(a, ctx, tickValue, false, spineX)
-		spinePixel.X = math.Round(spinePixel.X) + 0.5
-		spinePixel.Y = math.Round(spinePixel.Y) - 0.5
+		spinePixel.X = snapDisplayX(spinePixel.X)
+		spinePixel.Y = snapDisplayY(spinePixel.Y, figureSnapHeight(ctx))
 
 		p1, p2 = axisTickSegment(a, spinePixel, tickSize, false)
 	}

@@ -421,14 +421,14 @@ func (g *Grid) drawLine(r render.Renderer, ctx *DrawContext, tickValue float64, 
 		// Matplotlib gridlines are Line2D artists with snap=None; AGG's
 		// PathSnapper then auto-snaps horizontal/vertical paths to pixel centers
 		// (third_party/matplotlib/src/path_converters.h).
-		x := math.Round(p1.X) + 0.5
+		x := snapDisplayX(p1.X)
 		p1.X = x
 		p2.X = x
 	} else {
 		xMin, xMax := ctx.DataToPixel.XScale.Domain()
 		p1 = ctx.DataToPixel.Apply(geom.Pt{X: xMin, Y: tickValue})
 		p2 = ctx.DataToPixel.Apply(geom.Pt{X: xMax, Y: tickValue})
-		y := math.Round(p1.Y) - 0.5
+		y := snapDisplayY(p1.Y, figureSnapHeight(ctx))
 		p1.Y = y
 		p2.Y = y
 	}
