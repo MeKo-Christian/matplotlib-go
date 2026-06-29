@@ -738,6 +738,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 		flierSizePx := pointsToPixels(ctx.RC, flierSize)
 		for _, v := range b.stats.outliers {
 			center := ctx.DataToPixel.Apply(pt(b.Position, v))
+			collMarkerDbgf("FLIER pos=%.2f v=%.3f center=(%.4f,%.4f) sizePx=%.4f\n", b.Position, v, center.X, center.Y, flierSizePx)
 			r.Path(scaleAndTranslatePath(scatter.markerPrototypePath(), flierSizePx, center), &flierPaint)
 		}
 	}
