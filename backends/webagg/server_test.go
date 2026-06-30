@@ -101,7 +101,7 @@ func TestWebSocketHandshake(t *testing.T) {
 	}
 	defer conn.Close()
 
-	want := []string{"resize", "figure_label", "image_mode", "refresh"}
+	want := []string{"resize", "figure_label", "image_mode", "refresh", "history_buttons"}
 	for _, w := range want {
 		var data []byte
 		if err := websocket.Message.Receive(conn, &data); err != nil {
@@ -169,7 +169,7 @@ func TestWebSocketDrivesPanScrollAndPick(t *testing.T) {
 		t.Fatalf("ws dial: %v", err)
 	}
 	defer conn.Close()
-	for range 5 {
+	for range 6 {
 		var discard []byte
 		if err := websocket.Message.Receive(conn, &discard); err != nil {
 			t.Fatalf("initial receive: %v", err)

@@ -1699,7 +1699,7 @@
         },
         {
           "id": "type BridgeInfo",
-          "declaration": "type BridgeInfo struct{ Binding BindingStrategy; Mode RenderMode; NativeSurface bool; SupportsShaders bool; Description string }"
+          "declaration": "type BridgeInfo struct{ Binding BindingStrategy; Mode RenderMode; NativeSurface bool; Accelerated bool; SupportsShaders bool; Description string }"
         },
         {
           "id": "type CIBackendPolicy",
@@ -2436,6 +2436,10 @@
           "declaration": "func (Navigation) SetMode(mode NavigationMode)"
         },
         {
+          "id": "method Navigation.SetRubberbandHandler",
+          "declaration": "func (Navigation) SetRubberbandHandler(handler func(rect geom.Rect, active bool))"
+        },
+        {
           "id": "method Navigation.SetScrollFactor",
           "declaration": "func (Navigation) SetScrollFactor(factor float64) error"
         },
@@ -2698,6 +2702,10 @@
           "declaration": "func GetColormap(name string) Colormap"
         },
         {
+          "id": "func GetColormapStrict",
+          "declaration": "func GetColormapStrict(name string) (Colormap, error)"
+        },
+        {
           "id": "func NamedColors",
           "declaration": "func NamedColors() map[string]render.Color"
         },
@@ -2844,6 +2852,10 @@
         {
           "id": "type ToRGBAOption",
           "declaration": "type ToRGBAOption func(*toRGBAConfig)"
+        },
+        {
+          "id": "var ErrUnknownColormap",
+          "declaration": "var ErrUnknownColormap = errors.New(\"unknown colormap\")"
         },
         {
           "id": "var Petroff10",
@@ -10188,6 +10200,10 @@
         {
           "id": "func FontPropertiesKey",
           "declaration": "func FontPropertiesKey(props FontProperties) string"
+        },
+        {
+          "id": "func GlyphIDToRune",
+          "declaration": "func GlyphIDToRune(fontKey string, gid uint32) (rune, bool)"
         },
         {
           "id": "func LayoutTextGlyphRuns",

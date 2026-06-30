@@ -132,6 +132,8 @@ func (m *Manager) handleToolbarButton(name string) error {
 	if err := m.tb.Trigger(action); err != nil {
 		return err
 	}
+	// Reflect any change to the back/forward enabled state back to clients.
+	m.broadcastHistoryButtons()
 	return nil
 }
 

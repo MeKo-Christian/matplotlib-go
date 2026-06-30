@@ -59,9 +59,16 @@ type NativePathRequirement struct {
 
 // BridgeInfo describes the concrete bridge used by one renderer instance.
 type BridgeInfo struct {
-	Binding         BindingStrategy
-	Mode            RenderMode
-	NativeSurface   bool
+	Binding       BindingStrategy
+	Mode          RenderMode
+	NativeSurface bool
+	// Accelerated reports whether rasterization runs on a real GPU render
+	// target (SkSurface::MakeRenderTarget). It is false for every bridge that
+	// exists today — the CPU readback scaffold and the cgo raster SkSurface are
+	// both CPU-side — and gates Renderer.GPU() so that method stays truthful
+	// until a native GPU surface path lands. Mode may still be ModeGPU while
+	// this is false (GPU mode requested/selected, but not hardware-accelerated).
+	Accelerated     bool
 	SupportsShaders bool
 	Description     string
 }

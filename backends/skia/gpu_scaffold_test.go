@@ -25,8 +25,13 @@ func TestGPUScaffoldRendersThroughCPUReadback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(UseGPU:true) under skiagpu = %v, want success", err)
 	}
-	if !r.GPU() {
-		t.Fatal("GPU() = false, want true under skiagpu build tag")
+	// GPU() must stay false: the surface is the CPU readback scaffold, not a
+	// hardware-accelerated GPU render target. Only the render *mode* is GPU.
+	if r.GPU() {
+		t.Fatal("GPU() = true, want false (CPU readback scaffold has no GPU surface)")
+	}
+	if !r.GPUModeRequested() {
+		t.Fatal("GPUModeRequested() = false, want true under skiagpu build tag")
 	}
 
 	info := r.BridgeInfo()
@@ -35,6 +40,9 @@ func TestGPUScaffoldRendersThroughCPUReadback(t *testing.T) {
 	}
 	if info.NativeSurface {
 		t.Fatal("BridgeInfo().NativeSurface = true, want false (CPU readback scaffold)")
+	}
+	if info.Accelerated {
+		t.Fatal("BridgeInfo().Accelerated = true, want false (no native GPU render target yet)")
 	}
 
 	if got := BackendStrategy().GPUStatus; got != StatusPlanned {

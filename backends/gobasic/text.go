@@ -3,13 +3,19 @@ package gobasic
 import (
 	"image"
 	"math"
+	"sync"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-// GlyphRun renders glyph IDs as code points where available.
-// The mapping is a practical fallback for renderers that expose only glyph IDs.
+var gobasicGlyphResolveWarnOnce sync.Once
+
+// GlyphRun renders a run of glyphs by resolving each glyph index back to a rune
+// through the font's cmap. render.Glyph.ID is a font glyph index, so it must be
+// reverse-mapped rather than cast directly with rune(id), which would draw a
+// wrong character for any non-trivial font.
 func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
 	if len(run.Glyphs) == 0 {
 		return
@@ -23,8 +29,13 @@ func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
 
 	for _, glyph := range run.Glyphs {
 		advance := glyph.Advance
-		ch := rune(glyph.ID)
-		if ch > 0 {
+		ch, resolved := render.GlyphIDToRune(run.FontKey, glyph.ID)
+		if glyph.ID != 0 && !resolved {
+			gobasicGlyphResolveWarnOnce.Do(func() {
+				diag.Warnf("gobasic: could not resolve glyph index %d to a rune via the font cmap; skipping", glyph.ID)
+			})
+		}
+		if resolved && ch > 0 {
 			_ = r.MeasureText(string(ch), size, run.FontKey)
 			r.DrawText(string(ch), geom.Pt{
 				X: penX + glyph.Offset.X,

@@ -112,23 +112,40 @@ func (r *Renderer) registerPathEffectFilter(effect render.PathEffect) (string, b
 	if radius <= 0 {
 		radius = 1
 	}
-	key := filterKey(name, radius)
+	def := filterDef{name: name, radius: radius}
+	if name == "shadow" {
+		// Carry the offset and darkness so the shadow is a true offset, blurred,
+		// semi-transparent copy (feDropShadow) rather than a symmetric blur.
+		def.dx = effect.Offset.X
+		def.dy = effect.Offset.Y
+		def.opacity = effect.ShadowAlpha
+		if def.opacity <= 0 {
+			def.opacity = 1
+		}
+		if effect.ShadowRho > 0 {
+			def.radius = effect.ShadowRho
+		}
+	}
+	key := filterDefKey(def)
 	if id, ok := r.filterDefs[key]; ok {
 		return id, true
 	}
 
 	r.filterIDCounter++
 	id := r.defID("filter", key, r.filterIDCounter)
+	def.id = id
 	r.filterDefs[key] = id
-	r.filterOrder = append(r.filterOrder, filterDef{id: id, name: name, radius: radius})
+	r.filterOrder = append(r.filterOrder, def)
 	return id, true
 }
 
 func normalizePathEffectFilter(effect render.PathEffect) (string, bool) {
 	name := strings.ToLower(strings.TrimSpace(effect.Filter))
 	switch name {
-	case "blur", "gaussian", "gaussian-blur", "shadow":
+	case "blur", "gaussian", "gaussian-blur":
 		return "blur", true
+	case "shadow", "drop-shadow":
+		return "shadow", true
 	default:
 		return "", false
 	}
@@ -287,8 +304,9 @@ func writeForcedOpacity(b *strings.Builder, paint render.Paint) {
 	}
 }
 
-func filterKey(name string, radius float64) string {
-	return name + "\x00" + formatFloat(radius)
+func filterDefKey(def filterDef) string {
+	return def.name + "\x00" + formatFloat(def.radius) + "\x00" +
+		formatFloat(def.dx) + "\x00" + formatFloat(def.dy) + "\x00" + formatFloat(def.opacity)
 }
 
 func writeFilterDef(b *strings.Builder, filter filterDef) {
@@ -299,6 +317,16 @@ func writeFilterDef(b *strings.Builder, filter filterDef) {
 	case "blur":
 		b.WriteString(`<feGaussianBlur`)
 		writeFloatAttr(b, "stdDeviation", filter.radius)
+		b.WriteString(` />`)
+	case "shadow":
+		// A true drop shadow: offset, blurred, semi-transparent copy under the
+		// source. feDropShadow is part of the SVG filter set and avoids the
+		// earlier collapse to a plain symmetric blur that dropped the offset.
+		b.WriteString(`<feDropShadow`)
+		writeFloatAttr(b, "dx", filter.dx)
+		writeFloatAttr(b, "dy", filter.dy)
+		writeFloatAttr(b, "stdDeviation", filter.radius)
+		writeFloatAttr(b, "flood-opacity", clamp01(filter.opacity))
 		b.WriteString(` />`)
 	default:
 		b.WriteString(`<feComposite operator="over" />`)

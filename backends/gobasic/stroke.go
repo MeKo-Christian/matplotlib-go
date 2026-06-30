@@ -146,6 +146,14 @@ func strokeSubpath(p geom.Path, paint *render.Paint) geom.Path {
 		result.C = append(result.C, geom.ClosePath)
 	}
 
+	// Add outer-corner fillers for round/bevel joins at interior vertices. The
+	// body connects joins with bevel points, so these subpaths supply the curved
+	// or chamfered corner that the body omits. Miter joins return an empty path.
+	for i := 1; i < len(segments); i++ {
+		filler := calculateJoinFiller(segments[i-1], segments[i], halfWidth, paint.LineJoin)
+		result = appendPath(result, filler)
+	}
+
 	if !isClosed {
 		// Add end cap
 		endCap := calculateCap(segments[len(segments)-1], false, halfWidth, paint.LineCap)
@@ -292,56 +300,114 @@ func calculateJoin(prev, curr segment, halfWidth float64, joinStyle render.LineJ
 			}
 		}
 
-	case render.JoinRound:
-		// Calculate the angle between segments to determine arc
-		prevDir := geom.Pt{X: prev.End.X - prev.Start.X, Y: prev.End.Y - prev.Start.Y}
-		currDir := geom.Pt{X: curr.End.X - curr.Start.X, Y: curr.End.Y - curr.Start.Y}
-
-		// Normalize directions
-		prevLen := math.Sqrt(prevDir.X*prevDir.X + prevDir.Y*prevDir.Y)
-		currLen := math.Sqrt(currDir.X*currDir.X + currDir.Y*currDir.Y)
-
-		if prevLen > 0 && currLen > 0 {
-			prevDir.X /= prevLen
-			prevDir.Y /= prevLen
-			currDir.X /= currLen
-			currDir.Y /= currLen
-
-			// Calculate angle between directions using dot product and cross product
-			dot := prevDir.X*currDir.X + prevDir.Y*currDir.Y
-			cross := prevDir.X*currDir.Y - prevDir.Y*currDir.X
-			angle := math.Atan2(cross, dot)
-
-			if math.Abs(angle) > 0.01 { // Only create round join if there's significant angle
-				// Use miter intersection as approximation for round join center
-				leftMiter := intersectLines(
-					geom.Pt{X: prev.Start.X + prevNormal.X, Y: prev.Start.Y + prevNormal.Y},
-					geom.Pt{X: prev.End.X + prevNormal.X, Y: prev.End.Y + prevNormal.Y},
-					geom.Pt{X: curr.Start.X + currNormal.X, Y: curr.Start.Y + currNormal.Y},
-					geom.Pt{X: curr.End.X + currNormal.X, Y: curr.End.Y + currNormal.Y},
-				)
-				rightMiter := intersectLines(
-					geom.Pt{X: prev.Start.X - prevNormal.X, Y: prev.Start.Y - prevNormal.Y},
-					geom.Pt{X: prev.End.X - prevNormal.X, Y: prev.End.Y - prevNormal.Y},
-					geom.Pt{X: curr.Start.X - currNormal.X, Y: curr.Start.Y - currNormal.Y},
-					geom.Pt{X: curr.End.X - currNormal.X, Y: curr.End.Y - currNormal.Y},
-				)
-
-				// Use the miter points if they're reasonable, otherwise default to bevel
-				if distance(joinPt, leftMiter) < miterLimit*halfWidth {
-					left = leftMiter
-				}
-				if distance(joinPt, rightMiter) < miterLimit*halfWidth {
-					right = rightMiter
-				}
-			}
+	case render.JoinRound, render.JoinBevel:
+		// The outer (convex) corner is chamfered/rounded by calculateJoinFiller,
+		// so the body keeps the bevel point there. The inner (concave) corner,
+		// however, must use the miter intersection: the two offset edges overlap
+		// on that side and a bevel point would leave a visible notch. The inner
+		// side is the one whose miter intersection sits closer to the join.
+		leftMiter := intersectLines(
+			geom.Pt{X: prev.Start.X + prevNormal.X, Y: prev.Start.Y + prevNormal.Y},
+			geom.Pt{X: prev.End.X + prevNormal.X, Y: prev.End.Y + prevNormal.Y},
+			geom.Pt{X: curr.Start.X + currNormal.X, Y: curr.Start.Y + currNormal.Y},
+			geom.Pt{X: curr.End.X + currNormal.X, Y: curr.End.Y + currNormal.Y},
+		)
+		rightMiter := intersectLines(
+			geom.Pt{X: prev.Start.X - prevNormal.X, Y: prev.Start.Y - prevNormal.Y},
+			geom.Pt{X: prev.End.X - prevNormal.X, Y: prev.End.Y - prevNormal.Y},
+			geom.Pt{X: curr.Start.X - currNormal.X, Y: curr.Start.Y - currNormal.Y},
+			geom.Pt{X: curr.End.X - currNormal.X, Y: curr.End.Y - currNormal.Y},
+		)
+		if distance(joinPt, leftMiter) <= distance(joinPt, rightMiter) {
+			left = quantizePt(leftMiter) // left is the inner side
+		} else {
+			right = quantizePt(rightMiter) // right is the inner side
 		}
-
-	case render.JoinBevel:
-		// Already set to bevel above
 	}
 
 	return left, right
+}
+
+// calculateJoinFiller generates the corner geometry that fills the outer wedge
+// of a line join. The main stroke body connects each interior vertex with bevel
+// points, so for round and bevel joins this filler covers the gap left at the
+// convex corner. It is appended as a separate filled subpath (like caps); the
+// vector rasterizer unions it with the body. Miter joins are realized directly
+// by the body's miter intersection points and need no filler, so this returns an
+// empty path for them.
+func calculateJoinFiller(prev, curr segment, halfWidth float64, joinStyle render.LineJoin) geom.Path {
+	if joinStyle != render.JoinRound && joinStyle != render.JoinBevel {
+		return geom.Path{}
+	}
+
+	// Unit directions to find the turn (convex) side.
+	prevDir := geom.Pt{X: prev.End.X - prev.Start.X, Y: prev.End.Y - prev.Start.Y}
+	currDir := geom.Pt{X: curr.End.X - curr.Start.X, Y: curr.End.Y - curr.Start.Y}
+	prevLen := math.Sqrt(prevDir.X*prevDir.X + prevDir.Y*prevDir.Y)
+	currLen := math.Sqrt(currDir.X*currDir.X + currDir.Y*currDir.Y)
+	if prevLen == 0 || currLen == 0 {
+		return geom.Path{}
+	}
+	prevDir.X /= prevLen
+	prevDir.Y /= prevLen
+	currDir.X /= currLen
+	currDir.Y /= currLen
+
+	cross := prevDir.X*currDir.Y - prevDir.Y*currDir.X
+	if math.Abs(cross) < 1e-9 {
+		return geom.Path{} // collinear: no corner to fill
+	}
+
+	prevNormal := segmentNormal(prev, halfWidth)
+	currNormal := segmentNormal(curr, halfWidth)
+	joinPt := prev.End // == curr.Start
+
+	// A left turn (cross > 0) bulges on the right (-normal) side; a right turn
+	// bulges on the left (+normal) side.
+	sign := 1.0
+	if cross > 0 {
+		sign = -1.0
+	}
+	prevOuter := quantizePt(geom.Pt{X: joinPt.X + sign*prevNormal.X, Y: joinPt.Y + sign*prevNormal.Y})
+	currOuter := quantizePt(geom.Pt{X: joinPt.X + sign*currNormal.X, Y: joinPt.Y + sign*currNormal.Y})
+	center := quantizePt(joinPt)
+
+	if joinStyle == render.JoinBevel {
+		return geom.Path{
+			C: []geom.Cmd{geom.MoveTo, geom.LineTo, geom.LineTo, geom.ClosePath},
+			V: []geom.Pt{center, prevOuter, currOuter},
+		}
+	}
+
+	// Round join: sweep an arc of radius halfWidth from prevOuter to currOuter
+	// around the join point, taking the short (outer-wedge) way.
+	startAng := math.Atan2(prevOuter.Y-center.Y, prevOuter.X-center.X)
+	endAng := math.Atan2(currOuter.Y-center.Y, currOuter.X-center.X)
+	delta := endAng - startAng
+	for delta <= -math.Pi {
+		delta += 2 * math.Pi
+	}
+	for delta > math.Pi {
+		delta -= 2 * math.Pi
+	}
+
+	// Adaptive subdivision: scale segment count with both the sweep and radius.
+	numSegments := int(math.Max(2, math.Min(32, math.Abs(delta)/math.Pi*float64(int(math.Max(8, math.Min(32, halfWidth*2)))))))
+
+	result := geom.Path{
+		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
+		V: []geom.Pt{center, prevOuter},
+	}
+	for i := 1; i <= numSegments; i++ {
+		a := startAng + delta*float64(i)/float64(numSegments)
+		result.C = append(result.C, geom.LineTo)
+		result.V = append(result.V, quantizePt(geom.Pt{
+			X: center.X + halfWidth*math.Cos(a),
+			Y: center.Y + halfWidth*math.Sin(a),
+		}))
+	}
+	result.C = append(result.C, geom.ClosePath)
+	return result
 }
 
 // calculateCap generates the cap geometry for the start or end of a path.

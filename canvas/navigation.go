@@ -40,11 +40,12 @@ type Navigation struct {
 	rect     geom.Rect
 	hasRect  bool
 
-	figure   *Figure
-	draw     func() error
-	scrollK  float64
-	connects []ConnectionID
-	dispatch *Dispatcher
+	figure       *Figure
+	draw         func() error
+	scrollK      float64
+	connects     []ConnectionID
+	dispatch     *Dispatcher
+	onRubberband func(rect geom.Rect, active bool)
 }
 
 type navHomeLimits struct {
@@ -79,6 +80,19 @@ func (n *Navigation) SetScrollFactor(factor float64) error {
 	return nil
 }
 
+// SetRubberbandHandler registers a callback invoked while a zoom rectangle is
+// being dragged (active=true with the current rect in figure pixels) and once
+// when the drag ends (active=false, to clear the overlay). Backends use it to
+// stream a rubber-band overlay to the client. Pass nil to remove the handler.
+func (n *Navigation) SetRubberbandHandler(handler func(rect geom.Rect, active bool)) {
+	if n == nil {
+		return
+	}
+	n.mu.Lock()
+	n.onRubberband = handler
+	n.mu.Unlock()
+}
+
 // SetMode changes the active interaction mode. A NavZoom→NavPan switch (or
 // either→NavNone) drops any in-progress drag without applying it.
 func (n *Navigation) SetMode(mode NavigationMode) {
@@ -86,13 +100,18 @@ func (n *Navigation) SetMode(mode NavigationMode) {
 		return
 	}
 	n.mu.Lock()
+	cleared := n.mode != mode && n.hasRect
 	if n.mode != mode {
 		n.dragging = false
 		n.hasRect = false
 		n.dragAxes = nil
 	}
 	n.mode = mode
+	cb := n.onRubberband
 	n.mu.Unlock()
+	if cleared && cb != nil {
+		cb(geom.Rect{}, false) // abandon any in-progress rectangle overlay
+	}
 }
 
 // Mode returns the active interaction mode.
@@ -207,6 +226,13 @@ func (n *Navigation) handleMove(mouse MouseEvent) {
 	case NavZoom:
 		n.rect = normalizeDragRect(n.dragFrom, mouse.Position)
 		n.hasRect = true
+		rect := n.rect
+		cb := n.onRubberband
+		n.mu.Unlock()
+		if cb != nil {
+			cb(rect, true)
+		}
+		return
 	}
 	n.mu.Unlock()
 }
@@ -223,7 +249,13 @@ func (n *Navigation) handleRelease(mouse MouseEvent) error {
 	n.dragging = false
 	n.dragAxes = nil
 	n.hasRect = false
+	cb := n.onRubberband
 	n.mu.Unlock()
+
+	// Clear any rubber-band overlay now that the drag is finished.
+	if mode == NavZoom && cb != nil {
+		cb(geom.Rect{}, false)
+	}
 
 	switch mode {
 	case NavPan:

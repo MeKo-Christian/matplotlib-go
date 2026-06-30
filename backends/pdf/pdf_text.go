@@ -7,15 +7,20 @@ import (
 	"image/color"
 	"math"
 	"os"
+	"sync"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	tex "github.com/cwbudde/matplotlib-go/internal/tex"
 	"github.com/cwbudde/matplotlib-go/render"
 	"golang.org/x/image/font/sfnt"
 )
 
-// GlyphRun draws shaped glyphs as filled outlines. GlyphRun only carries glyph
-// IDs, so this remains a practical fallback for simple code-point-shaped runs.
+var pdfGlyphResolveWarnOnce sync.Once
+
+// GlyphRun draws shaped glyphs as filled outlines, resolving each glyph index
+// back to a rune through the font's cmap. render.Glyph.ID is a font glyph index,
+// not a code point, so it must be reverse-mapped rather than cast directly.
 func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
 	if len(run.Glyphs) == 0 {
 		return
@@ -30,14 +35,19 @@ func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
 	penX := run.Origin.X
 	penY := run.Origin.Y
 	for _, glyph := range run.Glyphs {
-		if glyph.ID != 0 {
-			text := string(rune(glyph.ID))
+		ch, ok := render.GlyphIDToRune(run.FontKey, glyph.ID)
+		if glyph.ID != 0 && !ok {
+			pdfGlyphResolveWarnOnce.Do(func() {
+				diag.Warnf("pdf: could not resolve glyph index %d to a rune via the font cmap; skipping", glyph.ID)
+			})
+		}
+		if ok {
 			origin := geom.Pt{X: penX + glyph.Offset.X, Y: penY + glyph.Offset.Y}
-			r.DrawTextWithFont(text, origin, size, textColor, r.lastFontKey)
+			r.DrawTextWithFont(string(ch), origin, size, textColor, r.lastFontKey)
 		}
 		advance := glyph.Advance
-		if advance <= 0 && glyph.ID != 0 {
-			advance = r.MeasureText(string(rune(glyph.ID)), size, r.lastFontKey).W
+		if advance <= 0 && ok {
+			advance = r.MeasureText(string(ch), size, r.lastFontKey).W
 		}
 		penX += advance
 	}

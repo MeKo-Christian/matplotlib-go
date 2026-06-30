@@ -5,13 +5,17 @@ import (
 	"image/png"
 	"math"
 	"os"
+	"sync"
 
 	agglib "github.com/cwbudde/agg_go"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 	"golang.org/x/image/font/sfnt"
 	"golang.org/x/image/math/fixed"
 )
+
+var aggGlyphResolveWarnOnce sync.Once
 
 // GlyphRun draws a run of glyphs.
 func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
@@ -101,7 +105,14 @@ func (r *Renderer) drawGlyphRunLegacy(run render.GlyphRun, textColor render.Colo
 			X: run.Origin.X + glyph.Offset.X,
 			Y: run.Origin.Y + glyph.Offset.Y,
 		}
-		if r.drawTextPathFallback(string(rune(glyph.ID)), origin, size, textColor, fontPath) {
+		ch, ok := render.GlyphIDToRune(run.FontKey, glyph.ID)
+		if !ok {
+			aggGlyphResolveWarnOnce.Do(func() {
+				diag.Warnf("agg: could not resolve glyph index %d to a rune via the font cmap; skipping", glyph.ID)
+			})
+			continue
+		}
+		if r.drawTextPathFallback(string(ch), origin, size, textColor, fontPath) {
 			drawn = true
 		}
 	}

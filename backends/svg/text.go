@@ -8,10 +8,14 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 )
+
+var svgGlyphResolveWarnOnce sync.Once
 
 func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
 	if len(run.Glyphs) == 0 {
@@ -38,11 +42,24 @@ func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
 			continue
 		}
 
-		r.DrawText(string(rune(glyph.ID)), geom.Pt{X: penX + glyph.Offset.X, Y: penY + glyph.Offset.Y}, size, textColor)
+		// render.Glyph.ID is a font glyph index; reverse the cmap to a rune
+		// rather than casting it directly.
+		ch, ok := render.GlyphIDToRune(run.FontKey, glyph.ID)
+		if !ok {
+			svgGlyphResolveWarnOnce.Do(func() {
+				diag.Warnf("svg: could not resolve glyph index %d to a rune via the font cmap; skipping", glyph.ID)
+			})
+			if glyph.Advance > 0 {
+				penX += glyph.Advance
+			}
+			continue
+		}
+
+		r.DrawText(string(ch), geom.Pt{X: penX + glyph.Offset.X, Y: penY + glyph.Offset.Y}, size, textColor)
 
 		advance := glyph.Advance
 		if advance <= 0 {
-			advance = r.MeasureText(string(rune(glyph.ID)), size, run.FontKey).W
+			advance = r.MeasureText(string(ch), size, run.FontKey).W
 		}
 		penX += advance
 	}

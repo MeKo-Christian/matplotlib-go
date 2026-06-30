@@ -166,6 +166,47 @@ func TestPathEffectFilterEmitsNativeSVGFilter(t *testing.T) {
 	}
 }
 
+// TestPathEffectShadowEmitsDropShadow verifies a "shadow" filter renders as a
+// true feDropShadow (offset + blur + opacity) rather than collapsing to a plain
+// symmetric feGaussianBlur that dropped the offset.
+func TestPathEffectShadowEmitsDropShadow(t *testing.T) {
+	content := renderSVGDocument(t, func(r *Renderer) {
+		var path geom.Path
+		path.MoveTo(geom.Pt{X: 20, Y: 70})
+		path.LineTo(geom.Pt{X: 160, Y: 70})
+		r.Path(path, &render.Paint{
+			Stroke:    render.Color{B: 1, A: 1},
+			LineWidth: 2,
+			PathEffects: []render.PathEffect{
+				render.FilterPathEffect(
+					render.Color{},
+					render.Color{A: 1},
+					8,
+					"shadow",
+					3,
+					geom.Pt{X: 3, Y: 4},
+				),
+				render.NormalPathEffect(),
+			},
+		})
+	})
+
+	for _, want := range []string{
+		`<feDropShadow`,
+		`dx="3"`,
+		`dy="4"`,
+		`stdDeviation="3"`,
+		`flood-opacity="1"`,
+	} {
+		if !strings.Contains(content, want) {
+			t.Fatalf("expected SVG fragment %q in %q", want, content)
+		}
+	}
+	if strings.Contains(content, "feGaussianBlur") {
+		t.Fatalf("shadow filter should not collapse to feGaussianBlur: %q", content)
+	}
+}
+
 func TestRenderSVGEmitsDefaultEmptyMetadata(t *testing.T) {
 	content := renderSVGDocument(t, func(r *Renderer) {
 		r.DrawText("plain", geom.Pt{X: 10, Y: 20}, 12, render.Color{A: 1})

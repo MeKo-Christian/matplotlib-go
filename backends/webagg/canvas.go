@@ -153,9 +153,41 @@ func NewManager(opts Options) (*Manager, error) {
 	m.tb.SetMessageHandler(func(message string) {
 		m.hub.broadcastJSON(&outboundEvent{Type: MsgMessage, Message: message})
 	})
+	m.nav.SetRubberbandHandler(m.broadcastRubberband)
 	m.home = snapshotHome(opts.Figure)
 	m.attachStaleCallbacks()
 	return m, nil
+}
+
+// broadcastRubberband streams the zoom-to-rect overlay to every client. While a
+// zoom drag is in progress it sends the rectangle corners; on release (active
+// false) it sends negative corners, which the client treats as "erase overlay".
+// The coordinates round-trip the client's own canvas space (top-left origin),
+// so no axis flip is needed.
+func (m *Manager) broadcastRubberband(rect geom.Rect, active bool) {
+	if !active {
+		neg := -1.0
+		m.hub.broadcastJSON(&outboundEvent{Type: MsgRubberband, X0: &neg, Y0: &neg, X1: &neg, Y1: &neg})
+		return
+	}
+	x0, y0 := rect.Min.X, rect.Min.Y
+	x1, y1 := rect.Max.X, rect.Max.Y
+	m.hub.broadcastJSON(&outboundEvent{Type: MsgRubberband, X0: &x0, Y0: &y0, X1: &x1, Y1: &y1})
+}
+
+// historyButtonsEvent reports the current enabled state of the back/forward
+// navigation buttons. The field names (Back/Forward) match what the JS client
+// reads off the message.
+func (m *Manager) historyButtonsEvent() *outboundEvent {
+	back := m.tb.ActionEnabled(plotcanvas.ToolbarBack)
+	fwd := m.tb.ActionEnabled(plotcanvas.ToolbarForward)
+	return &outboundEvent{Type: MsgHistoryButtons, Back: &back, HistFwd: &fwd}
+}
+
+// broadcastHistoryButtons pushes the current back/forward button state to every
+// client.
+func (m *Manager) broadcastHistoryButtons() {
+	m.hub.broadcastJSON(m.historyButtonsEvent())
 }
 
 // Figure returns the wrapped figure.

@@ -104,10 +104,6 @@ func normalizeObjectBody(body []byte) (string, error) {
 	if streamIdx < 0 {
 		return normalizeTokens(body), nil
 	}
-	endStreamIdx := bytes.Index(body[streamIdx+len("stream"):], []byte("endstream"))
-	if endStreamIdx < 0 {
-		return "", fmt.Errorf("stream has no endstream")
-	}
 	dict := body[:streamIdx]
 	streamStart := streamIdx + len("stream")
 	if streamStart < len(body) && body[streamStart] == '\r' {
@@ -118,8 +114,22 @@ func normalizeObjectBody(body []byte) (string, error) {
 	} else if streamStart < len(body) && body[streamStart] == '\n' {
 		streamStart++
 	}
-	streamEnd := streamIdx + len("stream") + endStreamIdx
-	streamData := bytes.TrimRight(body[streamStart:streamEnd], "\r\n")
+
+	// Prefer the declared /Length to bound the stream: binary stream data (e.g.
+	// a FlateDecode-compressed image) can contain the literal bytes
+	// "endstream", and scanning for that token would truncate the stream early
+	// and corrupt the decode. Fall back to the token scan only when /Length is
+	// absent or an indirect reference we can't resolve here.
+	var streamData []byte
+	if n, ok := streamDeclaredLength(dict); ok && streamStart+n <= len(body) {
+		streamData = body[streamStart : streamStart+n]
+	} else {
+		endStreamIdx := bytes.Index(body[streamStart:], []byte("endstream"))
+		if endStreamIdx < 0 {
+			return "", fmt.Errorf("stream has no endstream")
+		}
+		streamData = bytes.TrimRight(body[streamStart:streamStart+endStreamIdx], "\r\n")
+	}
 	decoded := streamData
 	if hasFlateDecode(dict) {
 		var err error
@@ -132,6 +142,34 @@ func normalizeObjectBody(body []byte) (string, error) {
 		return normalizeStreamDict(dict) + "\nstream\n" + binaryStreamDigest(decoded) + "\nendstream", nil
 	}
 	return normalizeStreamDict(dict) + "\nstream\n" + normalizeTokens(decoded) + "\nendstream", nil
+}
+
+// streamDeclaredLength returns the direct integer value of the /Length entry in
+// a stream dictionary. It deliberately ignores indirect references
+// (/Length n g R), returning ok=false so the caller falls back to scanning for
+// the endstream token.
+func streamDeclaredLength(dict []byte) (int, bool) {
+	tokens := pdfTokens(dict)
+	for i := 0; i < len(tokens); i++ {
+		if tokens[i] != "/Length" || i+1 >= len(tokens) {
+			continue
+		}
+		n, err := strconv.Atoi(tokens[i+1])
+		if err != nil {
+			return 0, false
+		}
+		// Indirect reference "n g R" — cannot resolve from the dict alone.
+		if i+3 < len(tokens) && tokens[i+3] == "R" {
+			if _, err := strconv.Atoi(tokens[i+2]); err == nil {
+				return 0, false
+			}
+		}
+		if n < 0 {
+			return 0, false
+		}
+		return n, true
+	}
+	return 0, false
 }
 
 func hasFlateDecode(dict []byte) bool {

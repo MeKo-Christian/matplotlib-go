@@ -72,6 +72,11 @@ type filterDef struct {
 	id     string
 	name   string
 	radius float64
+	// dx, dy, and opacity carry the drop-shadow parameters for the "shadow"
+	// filter (unused by the plain "blur" filter).
+	dx      float64
+	dy      float64
+	opacity float64
 }
 
 type Renderer struct {

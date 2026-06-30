@@ -65,12 +65,17 @@ func TestPathPaintStateSemantics(t *testing.T) {
 		bevel := renderLineJoin(render.JoinBevel)
 		miter := renderLineJoin(render.JoinMiter)
 
-		// Display space is y-up (H=70): the chevron apex at display (50,15) maps to
-		// device (50,55), so the outer-corner region [4,22) flips to [48,66).
-		bevelPixels := countNonBackgroundPixels(bevel, image.Rect(42, 48, 59, 66), semanticWhite)
-		miterPixels := countNonBackgroundPixels(miter, image.Rect(42, 48, 59, 66), semanticWhite)
+		// The chevron apex is at display (50,15) -> device (50,55) and points up,
+		// so its outer corner extends toward smaller device-y. The miter join
+		// keeps a sharp spike there while the bevel join is chamfered flat, so the
+		// spike band just above the apex (device y in [38,50)) carries strictly
+		// more miter ink than bevel. Sampling deeper into the body (closer to the
+		// apex row) would find both joins fully covered and indistinguishable.
+		spike := image.Rect(42, 38, 59, 50)
+		bevelPixels := countNonBackgroundPixels(bevel, spike, semanticWhite)
+		miterPixels := countNonBackgroundPixels(miter, spike, semanticWhite)
 		if miterPixels <= bevelPixels {
-			t.Fatalf("expected miter join to occupy more outer-corner pixels than bevel, got miter=%d bevel=%d", miterPixels, bevelPixels)
+			t.Fatalf("expected miter join to occupy more outer-corner spike pixels than bevel, got miter=%d bevel=%d", miterPixels, bevelPixels)
 		}
 	})
 }

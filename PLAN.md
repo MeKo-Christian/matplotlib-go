@@ -646,43 +646,53 @@ tests cover the colormap strict variant and the `Setp` warning.
   this is a perf non-win, not a silent-wrong-output footgun, so it is the lowest
   priority in this bucket.
 
-## Phase 15: Backend Honesty & Capability Verification ⚪
+## Phase 15: Backend Honesty & Capability Verification 🧪
 
 **Goal:** stop advertising capabilities the backend doesn't actually provide, and
 make the verification layer catch the gap. The review's strongest "facade" findings
 live here, all off the AGG happy-path.
 
-- [ ] `backends/registry.go:98` — `VerifyRendererCapabilities` /
-  `capabilityRuntimeChecks` test _interface presence_ (type assertion), not
-  behavior, so they rubber-stamp every stub below. Make the checks behavioral, OR
-  have stub renderers decline the native capability interfaces they can't honor.
-- [ ] `backends/skia/` — the default (untagged) backend is a no-op stub
-  (`skia_stub.go:16,65`) yet under `-tags skia` it registers the **full native
-  capability set** while running on an embedded `*gobasic.Renderer`. Make the
-  capability registration reflect what each build tier actually does.
-- [ ] Skia "GPU" honesty — `GPU()` returns true under `-tags skiagpu` but the
-  surface is always the CPU readback bridge (`backends/skia/strategy.go:142`;
-  `MakeRenderTarget` is `StatusDeferred`; `FlushGPU`/`GetSurface` are no-op/`nil` at
-  `skia.go:380,393`). Relabel the mode as CPU-readback and gate `GPU()` truthfully
-  until a real `SkSurface::MakeRenderTarget` path exists. (Ties into **Phase 10**.)
-- [ ] `backends/gobasic/stroke.go:316,340` — `JoinRound` draws no arc (reuses the
-  miter point) and `JoinBevel` is an empty case. Implement real round/bevel join
-  geometry in the **default pure-Go** renderer.
-- [ ] `backends/gobasic` `pathDevice` — copies ~7 of ~27 `Paint` fields (drops
-  `CompositeMode`/`Alpha`/`FillPattern`/`FillGradient`/`Antialias`/`Snap`). Carry
-  the full paint state; add gradient support or stop omitting it silently.
-- [ ] Systemic `GlyphRun` bug — every backend reinterprets a glyph **ID** as a
-  Unicode rune (`gobasic/text.go:24`, `agg/agg_text.go:104`, plus pdf/svg/pgf).
-  Resolve glyph IDs through the font's cmap instead of `rune(glyph.ID)`.
-- [ ] `backends/webagg/protocol.go:26` — `MsgRubberband`/`MsgHistoryButtons` are
-  consumed by the JS client but never emitted by the Go server (zoom-box & history
-  buttons never work). Emit them, or remove the dead client handlers.
-- [ ] `backends/desktop/gio/doc.go:4` — the doc claims `New` returns
-  `ErrNotImplemented` and importing is a no-op, but `gio.go` is a real backend.
-  Fix the doc to match reality.
-- [ ] `backends/svg/path.go:127` (`shadow`→`blur` collapse) and
-  `backends/pgf/text.go:70` (discards `fontKey`) — fix or document as known
-  vector-backend limitations.
+**Status (2026-07-01):** all nine items shipped. Verification is now behavioral
+(unprobeable, non-intrinsic claims fail instead of rubber-stamping); Skia
+registration/GPU honesty is test-locked; the pure-Go renderer grew real
+round/bevel joins, full paint carry-forward + unsupported-fill warnings; the
+glyph-ID→rune cmap resolver replaced the `rune(id)` cast across all five
+backends; webagg now emits rubberband + history-button events; the stale gio doc
+was removed; and SVG drop-shadow + the documented PGF font limitation closed the
+vector-backend gaps. Zero golden regressions.
+
+- [x] `backends/registry.go` — `VerifyRendererCapabilities` is now behavioral: a
+  claimed capability must pass its runtime check or be one of three intrinsic,
+  always-present capabilities (`AntiAliasing`/`SubPixel`/`PathClip`); any
+  unprobeable, non-intrinsic claim is a verification failure rather than a silent
+  pass. Guarded by `TestVerifyRendererCapabilitiesRejectsUnprobeableClaim`.
+- [x] `backends/skia/` — registration honesty: item 1 now enforces that every
+  registered skia capability is actually implemented, and `skia_render_test.go`
+  locks that the CPU tier reports the bridged batch caps as `CapabilityBridged`
+  (not native) and never advertises `GPUAccel`. `init.go` documents the bridge.
+- [x] Skia "GPU" honesty — `GPU()` is gated on a new `BridgeInfo.Accelerated`
+  flag that is false for every current bridge (CPU readback + cgo raster
+  surface), so it returns false until a real `SkSurface::MakeRenderTarget` path
+  lands; GPU _mode_ selection moved to `GPUModeRequested()`/`BridgeInfo().Mode`.
+- [x] `backends/gobasic/stroke.go` — `JoinRound` now emits an adaptive arc fan
+  and `JoinBevel` a corner triangle via `calculateJoinFiller`, appended as filled
+  subpaths. Guarded by `TestJoinFillerGeometry`.
+- [x] `backends/gobasic` `pathDevice` — carries the full `Paint` via struct copy
+  (no more lossy reconstruction) and emits a one-shot `diag.Warnf` when a paint
+  arrives with an unsupported gradient/pattern/composite fill.
+- [x] Systemic `GlyphRun` bug — added `render.GlyphIDToRune` (cached cmap
+  reverse-lookup); gobasic/agg/svg/pdf/ps/pgf now resolve glyph indices through
+  it (one-shot warn on failure) instead of casting `rune(glyph.ID)`. Guarded by
+  `TestGlyphIDToRuneRoundTrip`.
+- [x] `backends/webagg` — the server now emits `rubberband` (via a new
+  `Navigation.SetRubberbandHandler`) during/after zoom drags and `history_buttons`
+  (on connect + after toolbar actions). Guarded by `TestRubberbandEmittedDuringZoomDrag`.
+- [x] `backends/desktop/gio` — removed the stale `doc.go`; `gio.go` already
+  carries the accurate package doc for the real, registered backend.
+- [x] `backends/svg/path.go` — the `shadow` filter now emits a true
+  `feDropShadow` (offset + blur + opacity) instead of collapsing to a symmetric
+  blur. `backends/pgf/text.go` documents the intentional LaTeX-owned font
+  selection as a known limitation. Guarded by `TestPathEffectShadowEmitsDropShadow`.
 
 ## Phase 16: rcParams Honesty & Coverage ⚪
 

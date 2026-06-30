@@ -46,6 +46,58 @@ func TestStrokeToPath_SimpleLineJoins(t *testing.T) {
 	}
 }
 
+// TestJoinFillerGeometry verifies that round and bevel joins emit real corner
+// geometry rather than collapsing to the bevel/miter point: a bevel join yields
+// a triangle and a round join yields an arc fan whose points lie on the join
+// radius. An L-shaped path (right then up) turns left, so the convex corner is
+// on the -normal (bottom-right) side at the vertex (10, 0).
+func TestJoinFillerGeometry(t *testing.T) {
+	const halfWidth = 1.0
+	prev := segment{Start: geom.Pt{X: 0, Y: 0}, End: geom.Pt{X: 10, Y: 0}}
+	curr := segment{Start: geom.Pt{X: 10, Y: 0}, End: geom.Pt{X: 10, Y: 10}}
+	joinPt := geom.Pt{X: 10, Y: 0}
+
+	// Miter joins are realized by the body; the filler is empty.
+	if f := calculateJoinFiller(prev, curr, halfWidth, render.JoinMiter); len(f.V) != 0 {
+		t.Fatalf("miter filler should be empty, got %d vertices", len(f.V))
+	}
+
+	// Bevel: a single triangle (center + two outer corners).
+	bevel := calculateJoinFiller(prev, curr, halfWidth, render.JoinBevel)
+	if len(bevel.V) != 3 {
+		t.Fatalf("bevel filler should be a triangle, got %d vertices: %+v", len(bevel.V), bevel.V)
+	}
+	for i, v := range bevel.V {
+		if i == 0 {
+			continue // center == joinPt
+		}
+		if d := math.Hypot(v.X-joinPt.X, v.Y-joinPt.Y); math.Abs(d-halfWidth) > 1e-6 {
+			t.Fatalf("bevel outer point %d distance %.6f, want %.1f", i, d, halfWidth)
+		}
+		if v.Y > joinPt.Y+1e-9 {
+			t.Fatalf("bevel outer point %d should be on the convex (-y) side: %+v", i, v)
+		}
+	}
+
+	// Round: an arc fan with more than the bevel's two outer points, all on the
+	// radius and on the convex side.
+	round := calculateJoinFiller(prev, curr, halfWidth, render.JoinRound)
+	if len(round.V) <= 3 {
+		t.Fatalf("round filler should fan more than a triangle, got %d vertices", len(round.V))
+	}
+	for i, v := range round.V {
+		if i == 0 {
+			continue // center
+		}
+		if d := math.Hypot(v.X-joinPt.X, v.Y-joinPt.Y); math.Abs(d-halfWidth) > 1e-6 {
+			t.Fatalf("round arc point %d distance %.6f, want %.1f", i, d, halfWidth)
+		}
+		if v.Y > joinPt.Y+1e-9 {
+			t.Fatalf("round arc point %d should be on the convex (-y) side: %+v", i, v)
+		}
+	}
+}
+
 func TestStrokeToPath_LineCaps(t *testing.T) {
 	// Test different line cap styles
 	testCases := []struct {

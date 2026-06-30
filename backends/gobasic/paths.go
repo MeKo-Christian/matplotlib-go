@@ -4,8 +4,10 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"sync"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/internal/sketch"
 	"github.com/cwbudde/matplotlib-go/render"
 	"golang.org/x/image/vector"
@@ -43,21 +45,29 @@ func (r *Renderer) pathDevice(p geom.Path, paint *render.Paint) {
 	// Quantize path coordinates for deterministic rendering
 	p = quantizePath(p)
 
-	// Quantize paint parameters for consistency
-	quantizedPaint := &render.Paint{
-		LineWidth:  quantize(paint.LineWidth),
-		LineJoin:   paint.LineJoin,
-		LineCap:    paint.LineCap,
-		MiterLimit: quantize(paint.MiterLimit),
-		Stroke:     paint.Stroke,
-		Fill:       paint.Fill,
-		Dashes:     make([]float64, len(paint.Dashes)),
+	// Carry the full paint state forward, then quantize the numeric stroke
+	// parameters in place. Reconstructing a paint from a hand-picked subset of
+	// fields silently dropped Alpha/CompositeMode/Antialias/Snap/FillPattern/
+	// FillGradient; copying the struct preserves them for any downstream pass
+	// that consults them. Dashes are reallocated before mutation so the caller's
+	// slice is never modified.
+	quantized := *paint
+	quantized.LineWidth = quantize(paint.LineWidth)
+	quantized.MiterLimit = quantize(paint.MiterLimit)
+	if len(paint.Dashes) > 0 {
+		dashes := make([]float64, len(paint.Dashes))
+		for i, dash := range paint.Dashes {
+			dashes[i] = quantize(dash)
+		}
+		quantized.Dashes = dashes
 	}
+	quantizedPaint := &quantized
 
-	// Quantize dash pattern
-	for i, dash := range paint.Dashes {
-		quantizedPaint.Dashes[i] = quantize(dash)
-	}
+	// gobasic rasterizes solid fills and strokes only (it advertises neither
+	// GradientFill nor PatternFill). Warn once if a paint reaches it carrying a
+	// fill feature it cannot honor, so the omission is a signal rather than a
+	// silent blank fill.
+	warnUnsupportedGobasicPaint(paint)
 
 	// Fill first if requested
 	if quantizedPaint.Fill.A > 0 {
@@ -73,6 +83,38 @@ func (r *Renderer) pathDevice(p geom.Path, paint *render.Paint) {
 // DrawPathWithEffects applies renderer-neutral path effect passes.
 func (r *Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool {
 	return render.DrawPathWithEffects(r, r.devPath(p), paint, r.pathDevice)
+}
+
+var (
+	gobasicGradientWarnOnce  sync.Once
+	gobasicPatternWarnOnce   sync.Once
+	gobasicCompositeWarnOnce sync.Once
+)
+
+// warnUnsupportedGobasicPaint emits a one-shot diagnostic when a paint carries a
+// fill feature the pure-Go renderer cannot honor. gobasic does not advertise
+// GradientFill or PatternFill, and only the SourceOver composite model, so these
+// are dropped during rasterization; the warning makes that visible instead of
+// rendering a silently wrong (or blank) fill.
+func warnUnsupportedGobasicPaint(paint *render.Paint) {
+	if paint == nil {
+		return
+	}
+	if paint.FillGradient.Kind != render.GradientNone {
+		gobasicGradientWarnOnce.Do(func() {
+			diag.Warnf("gobasic: gradient fills are not supported; drawing solid fill instead")
+		})
+	}
+	if paint.FillPattern.ID != "" || len(paint.FillPattern.Path.C) > 0 {
+		gobasicPatternWarnOnce.Do(func() {
+			diag.Warnf("gobasic: pattern fills are not supported; drawing solid fill instead")
+		})
+	}
+	if paint.CompositeMode != render.CompositeSourceOver {
+		gobasicCompositeWarnOnce.Do(func() {
+			diag.Warnf("gobasic: composite mode %d is not supported; using source-over", paint.CompositeMode)
+		})
+	}
 }
 
 // fillPath fills a path with the given color.

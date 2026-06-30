@@ -17,6 +17,8 @@ var (
 	textPathFontCache          = map[string]*sfnt.Font{}
 	fontFaceRuneSupportCacheMu sync.RWMutex
 	fontFaceRuneSupportCache   = map[fontFaceRuneSupportKey]bool{}
+	glyphReverseCmapMu         sync.RWMutex
+	glyphReverseCmapCache      = map[string]map[uint32]rune{}
 )
 
 type fontFaceRuneSupportKey struct {
@@ -48,6 +50,66 @@ func TextPath(text string, origin geom.Pt, size float64, fontKey string) (geom.P
 		return geom.Path{}, false
 	}
 	return path, true
+}
+
+// GlyphIDToRune resolves a font glyph index (the value carried in
+// render.Glyph.ID) back to the Unicode scalar that maps to it under the font's
+// cmap, for the font selected by fontKey. It returns false when the font cannot
+// be loaded or no rune maps to the glyph (e.g. a ligature or a .notdef index).
+//
+// render.Glyph.ID is a glyph index, not a code point: backends that can only
+// draw strings (SVG/PDF/PS/PGF and the AGG legacy fallback) must reverse the
+// cmap to recover a drawable rune rather than casting the index directly with
+// rune(id), which yields a wrong character for any non-trivial font. The reverse
+// map is built once per font (over the Basic Multilingual Plane plus the
+// supplementary range matplotlib's bundled fonts use) and cached.
+func GlyphIDToRune(fontKey string, gid uint32) (rune, bool) {
+	if gid == 0 {
+		return 0, false
+	}
+	face, ok := DefaultFontManager().FindFont(ParseFontProperties(fontKey))
+	if !ok {
+		return 0, false
+	}
+	key := fontFaceCacheKey(face)
+	if key == "" {
+		return 0, false
+	}
+
+	glyphReverseCmapMu.RLock()
+	table, ok := glyphReverseCmapCache[key]
+	glyphReverseCmapMu.RUnlock()
+	if !ok {
+		table = buildGlyphReverseCmap(face, key)
+	}
+	r, ok := table[gid]
+	return r, ok
+}
+
+// buildGlyphReverseCmap parses the font and inverts its cmap (rune -> glyph
+// index) into a glyph index -> rune table, caching the result by face key. The
+// first rune mapping to a given glyph wins, which keeps the lowest code point
+// for glyphs shared by several runes.
+func buildGlyphReverseCmap(face FontFace, key string) map[uint32]rune {
+	table := map[uint32]rune{}
+	if fontData, err := loadTextPathFontFaceByKey(face, key); err == nil {
+		var buf sfnt.Buffer
+		// 0x0000–0xFFFF covers the BMP; 0x10000–0x1FFFF covers the supplementary
+		// math/symbol planes the bundled DejaVu/STIX fonts populate.
+		for r := rune(0x20); r <= 0x1FFFF; r++ {
+			idx, err := fontData.GlyphIndex(&buf, r)
+			if err != nil || idx == 0 {
+				continue
+			}
+			if _, seen := table[uint32(idx)]; !seen {
+				table[uint32(idx)] = r
+			}
+		}
+	}
+	glyphReverseCmapMu.Lock()
+	glyphReverseCmapCache[key] = table
+	glyphReverseCmapMu.Unlock()
+	return table
 }
 
 func loadTextPathFontFace(face FontFace) (*sfnt.Font, error) {

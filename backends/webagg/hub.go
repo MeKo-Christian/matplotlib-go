@@ -72,6 +72,9 @@ func (h *hub) register(sink clientSink) (uint64, error) {
 	if err := sendJSONTo(sink, &outboundEvent{Type: MsgRefresh}); err != nil {
 		return id, err
 	}
+	if err := sendJSONTo(sink, h.mgr.historyButtonsEvent()); err != nil {
+		return id, err
+	}
 	// Push the first frame so the client has something to paint with.
 	return id, h.broadcastFrame()
 }

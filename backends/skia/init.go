@@ -11,6 +11,13 @@ func init() {
 	fallbackCapabilities := []backends.Capability(nil)
 	saveFormats := map[string]backends.SaveHandler(nil)
 	if available {
+		// These are the capabilities the skia-tagged tier genuinely provides.
+		// In the pure-Go build (no skiacgo) the batch/transform/hatch entries are
+		// satisfied through the embedded gobasic CPU surface, so they report as
+		// CapabilityBridged (not native Skia) via RendererCapabilityStatus; only
+		// the skiacgo build flips them to native. GPU acceleration is
+		// deliberately absent here — see GPU() honesty in skia.go and the
+		// StatusDeferred GPU requirement in strategy.go.
 		capabilities = []backends.Capability{
 			backends.AntiAliasing,
 			backends.PatternFill,

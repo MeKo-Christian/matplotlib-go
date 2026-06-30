@@ -398,9 +398,27 @@ func (r *Renderer) FlushGPU() {
 	// TODO: Call GrDirectContext::flushAndSubmit()
 }
 
-// GPU returns true if this renderer is using GPU acceleration.
+// GPU reports whether rendering is actually hardware-accelerated through a
+// native Skia GPU render target. This is currently always false: even under the
+// skiagpu build the surface is the deterministic CPU readback scaffold (the cgo
+// build adds a native *raster* SkSurface, still CPU-side), and
+// SkSurface::MakeRenderTarget is StatusDeferred — see strategy.go. The flag is
+// driven by BridgeInfo().Accelerated so GPU() becomes truthful automatically
+// once a real GPU surface path lands. To query the *requested/selected* render
+// mode, use RendererModeLabel or BridgeInfo().Mode instead.
 func (r *Renderer) GPU() bool {
-	return r.useGPU
+	if r == nil || r.bridge == nil {
+		return false
+	}
+	return r.bridge.Info().Accelerated
+}
+
+// GPUModeRequested reports whether the renderer was configured for the GPU
+// render-mode scaffold (skiagpu build + SkiaConfig.UseGPU). Rendering still runs
+// through the CPU readback bridge; this only reflects the selected mode, not
+// hardware acceleration. Use GPU() for the truthful acceleration state.
+func (r *Renderer) GPUModeRequested() bool {
+	return r != nil && r.useGPU
 }
 
 // SampleCount returns the MSAA sample count.

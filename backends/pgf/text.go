@@ -4,12 +4,17 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"sync"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-// GlyphRun draws glyph IDs as fallback text when possible.
+var pgfGlyphResolveWarnOnce sync.Once
+
+// GlyphRun draws a run of glyphs, resolving each glyph index back to a rune
+// through the font's cmap (render.Glyph.ID is a glyph index, not a code point).
 func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
 	if !r.began || len(run.Glyphs) == 0 || run.Size <= 0 || textColor.A <= 0 {
 		return
@@ -17,12 +22,18 @@ func (r *Renderer) GlyphRun(run render.GlyphRun, textColor render.Color) {
 	penX := run.Origin.X
 	penY := run.Origin.Y
 	for _, glyph := range run.Glyphs {
-		if glyph.ID != 0 {
-			r.DrawTextWithFont(string(rune(glyph.ID)), geom.Pt{X: penX + glyph.Offset.X, Y: penY + glyph.Offset.Y}, run.Size, textColor, run.FontKey)
+		ch, ok := render.GlyphIDToRune(run.FontKey, glyph.ID)
+		if glyph.ID != 0 && !ok {
+			pgfGlyphResolveWarnOnce.Do(func() {
+				diag.Warnf("pgf: could not resolve glyph index %d to a rune via the font cmap; skipping", glyph.ID)
+			})
+		}
+		if ok {
+			r.DrawTextWithFont(string(ch), geom.Pt{X: penX + glyph.Offset.X, Y: penY + glyph.Offset.Y}, run.Size, textColor, run.FontKey)
 		}
 		advance := glyph.Advance
-		if advance == 0 && glyph.ID != 0 {
-			advance = r.MeasureText(string(rune(glyph.ID)), run.Size, run.FontKey).W
+		if advance == 0 && ok {
+			advance = r.MeasureText(string(ch), run.Size, run.FontKey).W
 		}
 		penX += advance
 	}
@@ -65,8 +76,14 @@ func (r *Renderer) DrawText(text string, origin geom.Pt, size float64, textColor
 	r.DrawTextWithFont(text, origin, size, textColor, "")
 }
 
-// DrawTextWithFont draws text with an explicit font key. Font selection is
-// intentionally left to LaTeX in this generator-only slice.
+// DrawTextWithFont draws text with an explicit font key.
+//
+// Known limitation: the fontKey is intentionally ignored for drawing. PGF emits
+// LaTeX \pgftext, and font family/shape selection is owned by the LaTeX preamble
+// (matplotlib's own pgf backend works the same way), so there is no per-run font
+// switch to emit here. The key is still honored by the Measure* methods for
+// Go-side metric lookups (vertical-text line stepping, anchoring), so layout
+// stays font-consistent even though the glyph rendering defers to LaTeX.
 func (r *Renderer) DrawTextWithFont(text string, origin geom.Pt, size float64, textColor render.Color, _ string) {
 	if rr := r.activeRaster(); rr != nil {
 		if textRen, ok := rr.(render.TextDrawer); ok {
