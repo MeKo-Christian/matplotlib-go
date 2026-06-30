@@ -47,7 +47,7 @@ def text_annotation_matrix(out_dir):
             "boxstyle": "round,pad=0.3",
             "facecolor": (0.88, 0.92, 1.00, 0.85),
             "edgecolor": (0.20, 0.32, 0.68, 1.0),
-            "linewidth": lw(1.0),
+            "linewidth": 1.0,
         },
     )
     ax.text(
@@ -63,7 +63,7 @@ def text_annotation_matrix(out_dir):
             "boxstyle": "square,pad=0.25",
             "facecolor": (1.00, 0.90, 0.78, 0.72),
             "edgecolor": (0.65, 0.35, 0.12, 1.0),
-            "linewidth": lw(0.8),
+            "linewidth": 0.8,
         },
     )
 
@@ -80,13 +80,13 @@ def text_annotation_matrix(out_dir):
             "boxstyle": "square,pad=0.25",
             "facecolor": (0.92, 0.97, 0.92, 0.92),
             "edgecolor": (0.23, 0.48, 0.20, 1.0),
-            "linewidth": lw(1.0),
+            "linewidth": 1.0,
         },
         arrowprops={
             "arrowstyle": "-|>,head_length=0.35,head_width=0.20",
             "connectionstyle": "arc3,rad=0.25",
             "color": (0.18, 0.39, 0.70, 1.0),
-            "linewidth": lw(1.2),
+            "linewidth": 1.2,
             "mutation_scale": 9,
         },
     )
@@ -107,11 +107,11 @@ def text_annotation_matrix(out_dir):
         box_alignment=(0.5, 0.5),
         pad=0.35,
         frameon=True,
-        arrowprops={"arrowstyle": "-|>", "color": (0.45, 0.24, 0.62, 1.0), "linewidth": lw(1.25)},
+        arrowprops={"arrowstyle": "-|>", "color": (0.45, 0.24, 0.62, 1.0), "linewidth": 1.25},
         bboxprops={
             "facecolor": (0.96, 0.90, 1.00, 0.92),
             "edgecolor": (0.45, 0.24, 0.62, 1.0),
-            "linewidth": lw(1.0),
+            "linewidth": 1.0,
         },
     )
     ax.add_artist(ab_text)
@@ -127,11 +127,11 @@ def text_annotation_matrix(out_dir):
         boxcoords="data",
         pad=0.25,
         frameon=True,
-        arrowprops={"arrowstyle": "-|>", "color": (0.25, 0.25, 0.25, 1.0), "linewidth": lw(1.25)},
+        arrowprops={"arrowstyle": "-|>", "color": (0.25, 0.25, 0.25, 1.0), "linewidth": 1.25},
         bboxprops={
             "facecolor": (1.0, 1.0, 1.0, 0.95),
             "edgecolor": (0.25, 0.25, 0.25, 1.0),
-            "linewidth": lw(1.0),
+            "linewidth": 1.0,
         },
     )
     ax.add_artist(ab_img)
@@ -154,7 +154,7 @@ def text_annotation_matrix(out_dir):
         closed=True,
         facecolor=(0.83, 0.44, 0.18, 0.85),
         edgecolor=(0.43, 0.20, 0.08, 1.0),
-        linewidth=lw(1.0),
+        linewidth=1.0,
     ))
     drawing.patch.set_facecolor((0.98, 0.96, 0.88, 0.92))
     drawing.patch.set_edgecolor((0.45, 0.36, 0.14, 1.0))
@@ -166,7 +166,7 @@ def text_annotation_matrix(out_dir):
         closed=True,
         facecolor=(0.25, 0.62, 0.78, 0.9),
         edgecolor=(0.08, 0.25, 0.35, 1.0),
-        linewidth=lw(1.0),
+        linewidth=1.0,
     ))
     packed = HPacker(
         children=[da, TextArea("HPack", textprops={"fontsize": 9, "color": (0.10, 0.24, 0.35, 1.0)})],

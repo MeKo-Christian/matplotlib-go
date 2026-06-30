@@ -13,7 +13,7 @@ func (a *Axis) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 	if framePath, ok := projectionFramePath(ctx.Projection, ctx.Clip); ok {
 		if a.ShowSpine && (a.Side == AxisBottom || a.Side == AxisTop) {
-			paint := axisStrokePaint(a, false)
+			paint := axisStrokePaint(a, ctx, false)
 			paint.LineCap = render.CapButt
 			r.Path(framePath, &paint)
 		}

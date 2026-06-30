@@ -41,7 +41,7 @@ def scatter_marker_types(out_dir):
         y = 6 - i // 7
         color = TAB10[i % len(TAB10)]
         ax.scatter([x], [y], s=ss(8), c=[color], marker=marker,
-                   linewidths=lw(1.2), edgecolors=[edge])
+                   linewidths=1.2, edgecolors=[edge])
     save(fig, out_dir, "scatter_marker_types")
 
 PLOT = scatter_marker_types

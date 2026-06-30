@@ -39,21 +39,21 @@ def axes_control_surface(out_dir):
         axis="both",
         which="major",
         colors=tick_color,
-        length=lw(7),
-        width=lw(1.2),
+        length=px2pt(7),
+        width=1.2,
     )
     left.tick_params(
         axis="both",
         which="minor",
         colors=tick_color,
-        length=lw(4),
-        width=lw(0.9),
+        length=px2pt(4),
+        width=0.9,
     )
     left.plot(
         [-0.5, 0.8, 2.2, 4.2],
         [-0.2, 1.0, 2.1, 4.4],
         color=(0.10, 0.32, 0.76),
-        linewidth=lw(2.0),
+        linewidth=2.0,
     )
     left.scatter(
         [0.0, 1.5, 3.5, 4.5],
@@ -61,7 +61,7 @@ def axes_control_surface(out_dir):
         s=ss(8),
         c=[(0.92, 0.48, 0.20, 0.92)],
         edgecolors=[(0.52, 0.22, 0.08, 1.0)],
-        linewidths=lw(1.0),
+        linewidths=1.0,
     )
 
     right = fig.add_axes(go_rect(0.58, 0.14, 0.95, 0.78))
@@ -72,7 +72,7 @@ def axes_control_surface(out_dir):
         [0, 2, 4, 6, 8, 10],
         [2, 6, 9, 13, 16, 19],
         color=(0.12, 0.45, 0.72),
-        linewidth=lw(2.0),
+        linewidth=2.0,
     )
 
     twin = right.twinx()
@@ -83,7 +83,7 @@ def axes_control_surface(out_dir):
         [0, 2, 4, 6, 8, 10],
         [10, 22, 38, 58, 81, 96],
         color=(0.80, 0.22, 0.22),
-        linewidth=lw(1.8),
+        linewidth=1.8,
     )
 
     sec = right.secondary_xaxis("top", functions=(lambda x: x * 10, lambda x: x / 10))

@@ -112,7 +112,7 @@ func SliceMarkers(start, stop, step int) MarkEverySpec {
 type Line2D struct {
 	ArtistRasterization
 	XY              []geom.Pt    // data space points
-	W               float64      // stroke width (px for now)
+	W               float64      // stroke width in points
 	Col             render.Color // stroke color
 	Dashes          []float64    // dash pattern (on/off pairs)
 	DashUnits       DashUnits    // unit system for Dashes
@@ -330,7 +330,12 @@ func (l *Line2D) Draw(r render.Renderer, ctx *DrawContext) {
 		return // nothing to draw
 	}
 
-	dashes := lineDashesForPaint(l.Dashes, l.W, l.DashUnits)
+	lineRC := style.Default
+	if ctx != nil {
+		lineRC = ctx.RC
+	}
+	widthPx := pointsToPixels(lineRC, l.W)
+	dashes := lineDashesForPaint(l.Dashes, widthPx, l.DashUnits)
 	lineCap := render.CapSquare
 	if len(dashes) > 0 {
 		lineCap = render.CapButt
@@ -339,13 +344,13 @@ func (l *Line2D) Draw(r render.Renderer, ctx *DrawContext) {
 		lineCap = l.LineCap
 	}
 	paint := render.Paint{
-		LineWidth:   l.W,
+		LineWidth:   widthPx,
 		LineJoin:    render.JoinRound, // Default to round joins
 		LineCap:     lineCap,
 		MiterLimit:  10.0, // Standard miter limit
 		Stroke:      l.ApplyArtistAlpha(l.Col),
 		Dashes:      dashes,
-		PathEffects: append([]render.PathEffect(nil), l.PathEffects...),
+		PathEffects: linePathEffects(ctx, l.PathEffects),
 		Snap:        render.SnapAuto,
 		Simplify:    ctx != nil && ctx.RC.PathSimplify,
 	}
@@ -1011,14 +1016,13 @@ func (l *Line2D) resolvedMarkerEdgeColor() render.Color {
 	}
 }
 
-func (l *Line2D) resolvedMarkerEdgeWidth(ctx *DrawContext) float64 {
+// resolvedMarkerEdgeWidth returns the marker edge width in points (matplotlib
+// markeredgewidth defaults to 1.0 pt). Callers convert to device pixels at the
+// Paint sink.
+func (l *Line2D) resolvedMarkerEdgeWidth(_ *DrawContext) float64 {
 	width := 1.0
 	if l != nil && l.MarkerEdgeWidth > 0 {
 		width = l.MarkerEdgeWidth
 	}
-	rc := style.Default
-	if ctx != nil {
-		rc = ctx.RC
-	}
-	return pointsToPixels(rc, width)
+	return width
 }

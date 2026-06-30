@@ -18,7 +18,7 @@ func (p *PathPatch) Draw(ren render.Renderer, ctx *DrawContext) {
 		return
 	}
 	path := buildArtistDisplayPath(ctx, p, p.Coords, p.Path, geom.Identity())
-	p.drawStyledPath(ren, path, geom.Path{})
+	p.drawStyledPath(ren, &ctx.RC, path, geom.Path{})
 }
 
 // Bounds returns the path's data-space bounding box when applicable.

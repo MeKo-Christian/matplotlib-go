@@ -268,7 +268,7 @@ func (a *Axes) renderViolin(stats []ViolinStat, cfg ViolinStatsOptions, defaultS
 	a.AddCollection(container.Bodies)
 
 	summaryCap := violinSummaryLineCap(side)
-	summaryLineWidth := pointsToPixels(a.figure.RC, 1.5)
+	summaryLineWidth := 1.5 // points; converted at the collection Paint sink
 	if len(meanSegments) > 0 {
 		container.Means = &LineCollection{
 			Collection: Collection{Alpha: 1, z: 2.3},

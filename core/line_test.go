@@ -559,7 +559,7 @@ func TestLine2DGapColorDrawsInverseDashPass(t *testing.T) {
 	if got := r.pathCalls[0].path.C; len(got) == 0 || got[0] != geom.MoveTo {
 		t.Fatalf("gap path commands = %v, want extracted path", got)
 	}
-	if got, want := r.pathCalls[1].paint.Dashes, []float64{8, 4, 2, 6}; len(got) != len(want) || got[0] != want[0] || got[1] != want[1] || got[2] != want[2] || got[3] != want[3] {
+	if got, want := r.pathCalls[1].paint.Dashes, []float64{8 * 100.0 / 72.0, 4 * 100.0 / 72.0, 2 * 100.0 / 72.0, 6 * 100.0 / 72.0}; len(got) != len(want) || !floatApprox(got[0], want[0], 1e-9) || !floatApprox(got[1], want[1], 1e-9) || !floatApprox(got[2], want[2], 1e-9) || !floatApprox(got[3], want[3], 1e-9) {
 		t.Fatalf("line dashes = %v, want %v", got, want)
 	}
 }
@@ -688,8 +688,8 @@ func TestLine2D_SetDashesUsesMatplotlibUnits(t *testing.T) {
 		t.Fatalf("expected one Path call, got %d", len(r.pathCalls))
 	}
 	got := r.pathCalls[0].paint.Dashes
-	want := []float64{30, 12}
-	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+	want := []float64{30 * 100.0 / 72.0, 12 * 100.0 / 72.0}
+	if len(got) != len(want) || !floatApprox(got[0], want[0], 1e-9) || !floatApprox(got[1], want[1], 1e-9) {
 		t.Fatalf("paint dashes = %v, want %v", got, want)
 	}
 }

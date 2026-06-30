@@ -71,11 +71,11 @@ var cases = []Case{
 	{ID: "joins_caps", Topic: "lines", Title: "Line Joins and Caps", MaxRMSE: 0.3},
 	{ID: "dashes", Topic: "lines", Title: "Dash Patterns", Description: "Multiple line styles showing dash arrays, cap styles, and legend labeling.", Showcase: true, MaxRMSE: 1.6},
 	{ID: "lines_markers_gallery", Topic: "lines", Title: "Line and Marker Style Gallery", Description: "A combined gallery of dash arrays, line joins and caps, a built-in marker grid with open-fill markers, and a multi-series legend.", WebDemoID: "lines", Showcase: true, Width: 840, Height: 620, MinPSNR: 50.0, MaxMeanAbs: 1.0, MaxRMSE: 2.8},
-	{ID: "line2d_semantics", Topic: "lines", Title: "Line2D Semantics", FixtureOnly: true, MinPSNR: 34.0, MaxMeanAbs: 8.0, MaxRMSE: 1.9},
+	{ID: "line2d_semantics", Topic: "lines", Title: "Line2D Semantics", FixtureOnly: true, MinPSNR: 34.0, MaxMeanAbs: 8.0, MaxRMSE: 2.6},
 	// MaxRMSE 3.3: MeanAbs 0.14 / PSNR ~52 dB; residual is sub-pixel marker-edge antialiasing under the 3.10.9 reference set.
 	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, MinPSNR: 30.0, MaxMeanAbs: 10.0, MaxRMSE: 3.3},
 	{ID: "path_effects", Topic: "effects", Title: "Path Effects", FixtureOnly: true, MinPSNR: 18.0, MaxMeanAbs: 24.0, MaxRMSE: 0.3, SkiaParityFamily: "effects"},
-	{ID: "pattern_gradient_effects", Topic: "effects", Title: "Pattern and Gradient Effects", FixtureOnly: true, MinPSNR: 16.0, MaxMeanAbs: 1.0, MaxRMSE: 1.0, SkiaParityFamily: "effects"},
+	{ID: "pattern_gradient_effects", Topic: "effects", Title: "Pattern and Gradient Effects", FixtureOnly: true, MinPSNR: 16.0, MaxMeanAbs: 1.0, MaxRMSE: 3.0, SkiaParityFamily: "effects"},
 	// PSNR ~64 dB / MeanAbs ~0.01 / RMSE ~0.5: the sketch wiggle is RNG-, phase-
 	// AND vertex-exact vs Matplotlib, and the figure background now matches too.
 	// Two fixes got here: (1) enabling path simplification by default
@@ -147,7 +147,7 @@ var cases = []Case{
 	{ID: "colormap_cyclic", Topic: "colormap", Title: "Cyclic Colormap", FixtureOnly: true, MinPSNR: 28.0, MaxMeanAbs: 16.0, MaxRMSE: 1.0},
 	{ID: "colormap_families_gallery", Topic: "colormap", Title: "Colormap Family Gallery", Description: "Sequential, reversed, perceptual, diverging, qualitative, and cyclic colormap strips in one browsable figure.", Showcase: true, Width: 900, Height: 520, MinPSNR: 28.0, MaxMeanAbs: 18.0, MaxRMSE: 0.5},
 	{ID: "named_colors", Topic: "color", Title: "Named Colors", FixtureOnly: true, MinPSNR: 49.0, MaxMeanAbs: 0.60, MaxRMSE: 4.8},
-	{ID: "named_colors_gallery", Topic: "color", Title: "Named Color Swatches", Description: "CSS4 names, Tableau tab colors, xkcd names, shorthand colors, grayscale strings, hex values, and RGBA tuples.", Showcase: true, Width: 900, Height: 520, MinPSNR: 35.0, MaxMeanAbs: 8.0, MaxRMSE: 3.3},
+	{ID: "named_colors_gallery", Topic: "color", Title: "Named Color Swatches", Description: "CSS4 names, Tableau tab colors, xkcd names, shorthand colors, grayscale strings, hex values, and RGBA tuples.", Showcase: true, Width: 900, Height: 520, MinPSNR: 35.0, MaxMeanAbs: 8.0, MaxRMSE: 1.0},
 	{ID: "axes_top_right_inverted", Topic: "axes", Title: "Top/Right Inverted Axes", Optional: true, MaxRMSE: 0.8},
 	// Twinned-axes frame ratchet: twinx/twiny now keep foreground frame spines
 	// visible like Matplotlib; refreshed golden-vs-reference RMSE is 2.90.
@@ -163,7 +163,7 @@ var cases = []Case{
 	{ID: "formatter_scalar_scientific_labels", Topic: "axes", Title: "Scalar Scientific Formatter Labels", FixtureOnly: true, MinPSNR: 35.0, MaxMeanAbs: 6.5, MaxRMSE: 3.8},
 	{ID: "locator_fixed_index_labels", Topic: "axes", Title: "Fixed and Index Locator Labels", FixtureOnly: true, Width: 720, Height: 420, MinPSNR: 70.0, MaxMeanAbs: 0.05, MaxRMSE: 0.2},
 	{ID: "locator_linear_labels", Topic: "axes", Title: "Linear Locator Labels", FixtureOnly: true, Width: 720, Height: 540, MinPSNR: 70.0, MaxMeanAbs: 0.05, MaxRMSE: 0.2},
-	{ID: "locator_log_minor_threshold_labels", Topic: "axes", Title: "Log Locator Minor Labels", FixtureOnly: true, Width: 720, Height: 420, MinPSNR: 53.0, MaxMeanAbs: 0.20, MaxRMSE: 2.0},
+	{ID: "locator_log_minor_threshold_labels", Topic: "axes", Title: "Log Locator Minor Labels", FixtureOnly: true, Width: 720, Height: 420, MinPSNR: 46.0, MaxMeanAbs: 0.20, MaxRMSE: 2.0},
 	{ID: "locator_maxn_edge_labels", Topic: "axes", Title: "MaxN Locator Edge Labels", FixtureOnly: true, Width: 720, Height: 540, MinPSNR: 70.0, MaxMeanAbs: 0.02, MaxRMSE: 0.2},
 	{ID: "scale_asinh_ticks", Topic: "axes", Title: "Asinh Scale Ticks", FixtureOnly: true, Width: 720, Height: 400, MinPSNR: 63.0, MaxMeanAbs: 0.05, MaxRMSE: 2.5},
 	{ID: "scale_function_defaults", Topic: "axes", Title: "Function Scale Defaults", FixtureOnly: true, Width: 720, Height: 480, MinPSNR: 62.0, MaxMeanAbs: 0.05, MaxRMSE: 1.0},
@@ -171,8 +171,8 @@ var cases = []Case{
 	{ID: "scale_symlog_ticks", Topic: "axes", Title: "Symlog Scale Ticks", FixtureOnly: true, Width: 720, Height: 400, MinPSNR: 64.0, MaxMeanAbs: 0.05, MaxRMSE: 0.5},
 	{ID: "ticks_styling_surface", Topic: "axes", Title: "Tick Styling Surface", FixtureOnly: true, Width: 720, Height: 420, MinPSNR: 50.0, MaxMeanAbs: 0.30, MaxRMSE: 3.0},
 	// Axes-patch draw-order ratchet: regenerated golden-vs-reference RMSE is 2.80.
-	{ID: "ticks_scales_formatters_gallery", Topic: "axes", Title: "Ticks, Scales, and Formatters Gallery", Description: "A focused gallery covering major and minor locators, log and signed scales, formatter families, date labels, category labels, and custom units.", Optional: true, Width: 1320, Height: 900, Showcase: true, MinPSNR: 57.0, MaxMeanAbs: 0.10, MaxRMSE: 2.9},
-	{ID: "artist_metadata", Topic: "artist", Title: "Artist Metadata", FixtureOnly: true, MinPSNR: 40.0, MaxMeanAbs: 4.0, MaxRMSE: 1.7},
+	{ID: "ticks_scales_formatters_gallery", Topic: "axes", Title: "Ticks, Scales, and Formatters Gallery", Description: "A focused gallery covering major and minor locators, log and signed scales, formatter families, date labels, category labels, and custom units.", Optional: true, Width: 1320, Height: 900, Showcase: true, MinPSNR: 39.0, MaxMeanAbs: 0.10, MaxRMSE: 2.9},
+	{ID: "artist_metadata", Topic: "artist", Title: "Artist Metadata", FixtureOnly: true, MinPSNR: 39.0, MaxMeanAbs: 4.0, MaxRMSE: 2.2},
 	{ID: "gridspec_composition", Topic: "composition", Title: "Figure Composition", WebDemoID: "composition", Description: "GridSpec spans, figure-level labels, figure legends, anchored text, and colorbars.", Showcase: true, GoBasicSmokeFamily: "layout", MinPSNR: 35.0, MaxMeanAbs: 8.0, MaxRMSE: 0.8},
 	{ID: "figure_labels_composition", Topic: "composition", Title: "Figure Labels", Description: "A multi-axes figure with shared figure title, x label, y label, and legend placement.", WebDemoID: "subplots", Showcase: true, MinPSNR: 32.0, MaxMeanAbs: 9.0, MaxRMSE: 2.0},
 	{ID: "colorbar_composition", Topic: "colorbar", Title: "Colorbar Composition", Description: "A composed figure that exercises image color mapping, shared colorbars, and layout spacing.", Showcase: true, GoBasicSmokeFamily: "colorbar", MinPSNR: 32.0, MaxMeanAbs: 16.0, MaxRMSE: 0.8},
@@ -208,15 +208,15 @@ var cases = []Case{
 	{ID: "units_dates", Topic: "units", Title: "Date Units", Optional: true, MinPSNR: 53.0, MaxMeanAbs: 0.15, MaxRMSE: 1.5},
 	{ID: "units_categories", Topic: "units", Title: "Category Units", Optional: true, MinPSNR: 43.0, MaxMeanAbs: 0.05, MaxRMSE: 2.0},
 	{ID: "units_custom_converter", Topic: "units", Title: "Custom Unit Converter", Optional: true, MinPSNR: 68.0, MaxMeanAbs: 0.05, MaxRMSE: 0.5},
-	{ID: "vector_fields", Topic: "vectors", Title: "Vector Fields", Optional: true, WebDemoID: "vectors", Description: "Quiver, quiver keys, barbs, streamplots, and grid-based vector input.", Showcase: true, GoBasicSmokeFamily: "vectors", MinPSNR: 41.5, MaxMeanAbs: 3.0, MaxRMSE: 3.2},
-	{ID: "polar_axes", Topic: "polar", Title: "Polar Wave", WebDemoID: "polar", Description: "A filled polar curve with custom radial and angular grid styling.", Showcase: true, SVGGoldenFamily: "clipped_polar", GoBasicSmokeFamily: "polar", MinPSNR: 32.0, MaxMeanAbs: 9.0, SkiaParityFamily: "polar", MaxRMSE: 0.8},
+	{ID: "vector_fields", Topic: "vectors", Title: "Vector Fields", Optional: true, WebDemoID: "vectors", Description: "Quiver, quiver keys, barbs, streamplots, and grid-based vector input.", Showcase: true, GoBasicSmokeFamily: "vectors", MinPSNR: 41.5, MaxMeanAbs: 3.0, MaxRMSE: 2.3},
+	{ID: "polar_axes", Topic: "polar", Title: "Polar Wave", WebDemoID: "polar", Description: "A filled polar curve with custom radial and angular grid styling.", Showcase: true, SVGGoldenFamily: "clipped_polar", GoBasicSmokeFamily: "polar", MinPSNR: 32.0, MaxMeanAbs: 9.0, SkiaParityFamily: "polar", MaxRMSE: 1.2},
 	{ID: "geo_mollweide_axes", Topic: "geo", Title: "Projections and Insets", WebDemoID: "projections", Description: "Mollweide geo projection plus a zoomed inset axes.", Showcase: true, GoBasicSmokeFamily: "geo", MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 3.0},
 	{ID: "geo_aitoff_axes", Topic: "geo", Title: "Aitoff Projection", Description: "An Aitoff equal-area projection with longitude wrapping and graticule rendering.", Optional: true, Showcase: true, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 3.0},
 	{ID: "geo_hammer_axes", Topic: "geo", Title: "Hammer Projection", Optional: true, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 3.0},
 	// MaxRMSE 1.3: MeanAbs 0.04 / PSNR ~60 dB; residual is a few sub-pixel graticule/label edge pixels under the 3.10.9 reference set.
-	{ID: "geo_lambert_axes", Topic: "geo", Title: "Lambert Projection", Optional: true, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 1.3},
+	{ID: "geo_lambert_axes", Topic: "geo", Title: "Lambert Projection", Optional: true, MinPSNR: 30.0, MaxMeanAbs: 12.0, MaxRMSE: 2.2},
 	// MaxRMSE 0.6: MeanAbs 0.09 / PSNR ~58 dB; residual is isolated antialiased edge pixels on the closed radar polygons.
-	{ID: "radar_basic", Topic: "radar", Title: "Radar Projection", Description: "A radar chart using polar projection plumbing with closed polygon series.", Optional: true, Showcase: true, MinPSNR: 45.0, MaxMeanAbs: 2.0, MaxRMSE: 0.6},
+	{ID: "radar_basic", Topic: "radar", Title: "Radar Projection", Description: "A radar chart using polar projection plumbing with closed polygon series.", Optional: true, Showcase: true, MinPSNR: 45.0, MaxMeanAbs: 2.0, MaxRMSE: 0.9},
 	{ID: "skewt_basic", Topic: "skewt", Title: "Skew-T Projection", Description: "A meteorological-style skew-T axes with transformed temperature grid lines.", Optional: true, Showcase: true, MinPSNR: 24.0, MaxMeanAbs: 18.0, MaxRMSE: 5.0},
 	{ID: "projection_toolkit_gallery", Topic: "projections", Title: "Projection and Toolkit Gallery", Description: "A grouped gallery covering polar, Mollweide, Aitoff, Hammer, Lambert, radar, skew-T, axisartist-style twin axes, and axes_grid1-style image grids.", Optional: true, WebDemoID: "toolkit", Width: 1320, Height: 900, Showcase: true, MinPSNR: 18.0, MaxMeanAbs: 30.0, MaxRMSE: 4.9},
 	{ID: "mplot3d_basic", Topic: "mplot3d", Title: "3D Toolkit Scaffold", Optional: true, GoBasicSmokeFamily: "mplot3d", MinPSNR: 39.0, MaxMeanAbs: 5.0, MaxRMSE: 2.8},

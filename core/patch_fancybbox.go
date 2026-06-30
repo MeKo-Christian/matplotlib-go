@@ -30,7 +30,7 @@ func (b *FancyBboxPatch) Draw(ren render.Renderer, ctx *DrawContext) {
 		return
 	}
 	path := b.displayPath(ctx)
-	b.drawStyledPath(ren, path, geom.Path{})
+	b.drawStyledPath(ren, &ctx.RC, path, geom.Path{})
 }
 
 // Bounds returns the fancy bbox's data-space bounding box when applicable.

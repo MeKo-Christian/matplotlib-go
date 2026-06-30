@@ -13,11 +13,11 @@ const (
 )
 
 // Matplotlib defaults axes.linewidth to 0.8 pt and major ticks to 3.5 pt.
-// The default figure DPI is 100, so store the pixel equivalent for axes
-// constructed without a figure-backed RC.
+// Line/edge widths are stored in points (matplotlib semantics) and converted
+// to device pixels at draw time via pointsToPixels.
 const (
-	defaultAxisLineWidth      = 0.8 * 100.0 / 72.0
-	defaultMinorTickLineWidth = 0.6 * 100.0 / 72.0
+	defaultAxisLineWidth      = 0.8
+	defaultMinorTickLineWidth = 0.6
 	defaultTickSizePt         = 3.5
 	defaultTickSizePx         = defaultTickSizePt * 100.0 / 72.0
 	defaultTickPadPt          = 3.5

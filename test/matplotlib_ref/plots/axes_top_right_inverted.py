@@ -28,7 +28,7 @@ def axes_top_right_inverted(out_dir):
         [1, 3, 6, 8.5],
         [2, 4, 6.5, 8],
         color=(0.15, 0.35, 0.75),
-        linewidth=lw(2.2),
+        linewidth=2.2,
     )
     ax.scatter(
         [2, 5, 8],
@@ -37,7 +37,7 @@ def axes_top_right_inverted(out_dir):
         marker="D",
         c=[(0.85, 0.35, 0.20, 0.9)],
         edgecolors=[(0.45, 0.15, 0.05, 1.0)],
-        linewidths=lw(1.0),
+        linewidths=1.0,
     )
     save(fig, out_dir, "axes_top_right_inverted")
 

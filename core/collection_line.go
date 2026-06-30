@@ -41,11 +41,19 @@ func (c *LineCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		path := polylinePath(segment)
 		path = buildCachedDisplayPath(ctx, c.pathCacheSlot(i), c, c.Coords, path, geom.Identity())
 		color := c.alphaColor(colorAt(c.Color, c.Colors, i))
-		width := widthAt(c.LineWidth, c.LineWidths, i)
+		width := pointsToPixels(ctx.RC, widthAt(c.LineWidth, c.LineWidths, i))
 		if width <= 0 || color.A <= 0 {
 			continue
 		}
 		dashes := dashesAt(c.Dashes, c.DashPatterns, i)
+		if len(c.DashPatterns) > 0 && i < len(c.DashPatterns) && len(c.DashPatterns[i]) > 0 {
+			// DashPatterns are contour-sourced, pre-scaled to the line width in
+			// points; convert to device pixels to match the pixel stroke width.
+			scale := pointsToPixels(ctx.RC, 1.0)
+			for j := range dashes {
+				dashes[j] *= scale
+			}
+		}
 		if len(dashes) == 0 {
 			if style := stringAt(c.LineStyle, c.LineStyles, i); style != "" {
 				dashes = lineStyleToDashes(style, width)
@@ -65,7 +73,7 @@ func (c *LineCollection) Draw(r render.Renderer, ctx *DrawContext) {
 			LineJoin:    lineJoin,
 			LineCap:     lineCap,
 			Dashes:      dashes,
-			PathEffects: cloneRenderPathEffects(c.PathEffects),
+			PathEffects: devicePathEffects(ctx.RC, c.PathEffects),
 			Snap:        render.SnapAuto,
 		})
 	}

@@ -86,8 +86,8 @@ func TestPatchDashesCanUseMatplotlibLineWidthScaling(t *testing.T) {
 		t.Fatalf("expected one stroked path call, got %d", len(r.pathCalls))
 	}
 	got := r.pathCalls[0].paint.Dashes
-	want := []float64{10, 5}
-	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+	want := []float64{10 * 100.0 / 72.0, 5 * 100.0 / 72.0}
+	if len(got) != len(want) || !floatApprox(got[0], want[0], 1e-9) || !floatApprox(got[1], want[1], 1e-9) {
 		t.Fatalf("patch dashes = %v, want Matplotlib linewidth-scaled %v", got, want)
 	}
 }

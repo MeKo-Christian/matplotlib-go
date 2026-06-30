@@ -35,7 +35,7 @@ def scatter_advanced(out_dir):
         s=[ss(r) for r in radii],
         c=fills,
         edgecolors=edges,
-        linewidths=lw(2),
+        linewidths=2,
         alpha=0.8,
     )
     save(fig, out_dir, "scatter_advanced")

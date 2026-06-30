@@ -32,7 +32,7 @@ def plot_spectrum_variants(out_dir):
         window=window,
         scale="dB",
         color=(0.12, 0.47, 0.71),
-        linewidth=lw(1.8),
+        linewidth=1.8,
     )
     mag_ax.grid(axis="y")
 
@@ -45,7 +45,7 @@ def plot_spectrum_variants(out_dir):
         window=window,
         sides="twosided",
         color=(1.00, 0.50, 0.05),
-        linewidth=lw(1.8),
+        linewidth=1.8,
     )
     angle_ax.grid(axis="y")
 
@@ -57,7 +57,7 @@ def plot_spectrum_variants(out_dir):
         window=window,
         sides="onesided",
         color=(0.17, 0.63, 0.17),
-        linewidth=lw(1.8),
+        linewidth=1.8,
     )
     phase_ax.grid(axis="y")
 

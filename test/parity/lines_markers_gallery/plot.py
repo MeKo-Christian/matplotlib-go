@@ -36,7 +36,7 @@ def lines_markers_gallery(out_dir):
         (1, [2, 2],        (0,   0,   0.8)),
     ]
     for y_val, pattern, color in specs:
-        (line,) = dash_ax.plot([1, 9], [y_val, y_val], color=color, linewidth=lw(3))
+        (line,) = dash_ax.plot([1, 9], [y_val, y_val], color=color, linewidth=3)
         if pattern:
             line.set_dashes(pattern)
 
@@ -45,8 +45,8 @@ def lines_markers_gallery(out_dir):
     joins_ax.set_title("Line Joins and Caps")
     joins_ax.set_xlim(0, 10)
     joins_ax.set_ylim(0, 6)
-    joins_ax.plot([1, 3, 3, 5], [5, 5, 3, 3], color=(0.8, 0.2, 0.2), linewidth=lw(8))
-    joins_ax.plot([7, 9], [5, 5], color=(0.2, 0.2, 0.8), linewidth=lw(8))
+    joins_ax.plot([1, 3, 3, 5], [5, 5, 3, 3], color=(0.8, 0.2, 0.2), linewidth=8)
+    joins_ax.plot([7, 9], [5, 5], color=(0.2, 0.2, 0.8), linewidth=8)
 
     # Marker grid + open-fill marker.
     marker_ax = axes["markers"]
@@ -63,7 +63,7 @@ def lines_markers_gallery(out_dir):
         y = 2 - i // 6
         color = TAB10[i % len(TAB10)]
         marker_ax.scatter([x], [y], s=ss(9), c=[color], marker=marker,
-                          linewidths=lw(1.2), edgecolors=[edge])
+                          linewidths=1.2, edgecolors=[edge])
 
     # Multi-series legend.
     legend_ax = axes["legend"]
@@ -77,7 +77,7 @@ def lines_markers_gallery(out_dir):
         ("wave",    TAB10[2], [2.6, 3.6, 2.8, 3.8, 3.0, 4.0]),
     ]
     for label, color, ys in series:
-        legend_ax.plot(xs, ys, color=color, linewidth=lw(2), label=label)
+        legend_ax.plot(xs, ys, color=color, linewidth=2, label=label)
     legend_ax.legend(loc="upper right")
 
     save(fig, out_dir, "lines_markers_gallery")

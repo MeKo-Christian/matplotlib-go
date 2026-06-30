@@ -58,7 +58,7 @@ def arrays_showcase(out_dir):
         mesh_data,
         cmap="plasma",
         edgecolors="white",
-        linewidth=lw(0.65),
+        linewidth=0.65,
         shading="flat",
     )
     contour = ax_mesh.contour(
@@ -67,7 +67,7 @@ def arrays_showcase(out_dir):
         mesh_data,
         levels=6,
         colors=[(0.14, 0.10, 0.16, 0.95)],
-        linewidths=lw(1.1),
+        linewidths=1.1,
     )
     ax_mesh.clabel(contour, inline=True, fmt="%.3g", fontsize=10, colors=[(0.14, 0.10, 0.16, 0.95)])
 

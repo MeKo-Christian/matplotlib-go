@@ -25,11 +25,11 @@ def scale_function_defaults(out_dir):
     top.set_title("Function Scale Defaults")
     top.set_xlabel("sqrt-scaled x")
     top.set_ylabel("response")
-    top.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    top.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     top.set_axisbelow(True)
     x = [0, 4, 16, 36, 64, 100]
     y = [0.12, 0.25, 0.41, 0.58, 0.76, 0.90]
-    top.plot(x, y, color=(0.12, 0.47, 0.71), linewidth=lw(2.0))
+    top.plot(x, y, color=(0.12, 0.47, 0.71), linewidth=2.0)
     top.set_xlim(0, 100)
     top.set_ylim(0, 1)
     top.set_xscale("function", functions=(np.sqrt, np.square))
@@ -38,11 +38,11 @@ def scale_function_defaults(out_dir):
     bottom.set_title("Functionlog Scale Defaults")
     bottom.set_xlabel("sqrt-scaled log x")
     bottom.set_ylabel("response")
-    bottom.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    bottom.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     bottom.set_axisbelow(True)
     x = [1, 10, 100, 1000, 10000]
     y = [0.12, 0.31, 0.52, 0.72, 0.90]
-    bottom.plot(x, y, color=(0.12, 0.47, 0.71), linewidth=lw(2.0))
+    bottom.plot(x, y, color=(0.12, 0.47, 0.71), linewidth=2.0)
     bottom.set_xlim(1, 10000)
     bottom.set_ylim(0, 1)
     bottom.set_xscale("functionlog", functions=(np.sqrt, np.square), base=10)

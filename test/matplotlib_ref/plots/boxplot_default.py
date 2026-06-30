@@ -41,7 +41,7 @@ def boxplot_default(out_dir):
         manage_ticks=False,
     )
     ax.set_axisbelow(True)
-    ax.yaxis.grid(True, color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.yaxis.grid(True, color=(0.8, 0.8, 0.8), linewidth=0.5)
 
     save(fig, out_dir, "boxplot_default")
 

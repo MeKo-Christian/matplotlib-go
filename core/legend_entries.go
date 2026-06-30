@@ -595,7 +595,7 @@ func (e *ErrorBar) legendEntry() (legendEntry, bool) {
 	entry.errorbarX = errorbarHasX(e)
 	entry.errorbarY = errorbarHasY(e)
 	entry.errorbarCapSize = e.CapSize
-	entry.errorbarCapWidth = pointsToPixels(style.Default, 1)
+	entry.errorbarCapWidth = 1.0
 	if e.MarkerSet {
 		markerLine := &Line2D{
 			Marker:     e.Marker,

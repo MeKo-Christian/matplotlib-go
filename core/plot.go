@@ -83,7 +83,9 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	}
 
 	// Get line width: explicit option, else cycled linewidth, else default.
-	lineWidth := 2.0
+	// Default is matplotlib's lines.linewidth (1.5 points); converted to device
+	// pixels at the Line2D Paint sink.
+	lineWidth := 1.5
 	if cycle.HasLineWidth {
 		lineWidth = cycle.LineWidth
 	}
@@ -94,7 +96,7 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	// Resolve dashes: explicit option wins, otherwise honor a cycled linestyle.
 	dashes := opt.Dashes
 	if dashes == nil && cycle.HasLineStyle {
-		dashes = lineStyleToDashes(cycle.LineStyle, lineWidth)
+		dashes = lineStyleToDashes(cycle.LineStyle, pointsToPixels(a.resolvedRC(), lineWidth))
 	}
 
 	// Create line
@@ -993,9 +995,9 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 		capSizePx = pointsToPixels(a.resolvedRC(), 2*(*opt.CapSize))
 	}
 
-	capThickPx := 0.0
+	capThick := 0.0 // points; ErrorBar converts at its cap Paint sink
 	if opt.CapThick != nil && *opt.CapThick > 0 {
-		capThickPx = pointsToPixels(a.resolvedRC(), *opt.CapThick)
+		capThick = *opt.CapThick
 	}
 
 	// Bake an explicit alpha (including 0) into the stroke color; the Alpha
@@ -1043,7 +1045,7 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 		Color:           color,
 		LineWidth:       lineWidth,
 		CapSize:         capSizePx,
-		CapThick:        capThickPx,
+		CapThick:        capThick,
 		Label:           opt.Label,
 		NoDataLine:      opt.NoDataLine,
 		ErrorEvery:      errorEvery,
@@ -1223,17 +1225,17 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		flierColor = *opt.FlierColor
 	}
 
-	edgeWidth := pointsToPixels(rc, rc.Boxplot.BoxLineWidth)
+	edgeWidth := rc.Boxplot.BoxLineWidth // points; BoxPlot2D converts at its sinks
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
 	}
 
-	whiskerWidth := pointsToPixels(rc, rc.Boxplot.WhiskerLineWidth)
+	whiskerWidth := rc.Boxplot.WhiskerLineWidth // points
 	if opt.WhiskerWidth != nil {
 		whiskerWidth = *opt.WhiskerWidth
 	}
 
-	medianWidth := pointsToPixels(rc, rc.Boxplot.MedianLineWidth)
+	medianWidth := rc.Boxplot.MedianLineWidth // points
 	if opt.MedianWidth != nil {
 		medianWidth = *opt.MedianWidth
 	}
@@ -1293,7 +1295,7 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 	if opt.FlierEdgeColor != nil {
 		flierEdgeColor = *opt.FlierEdgeColor
 	}
-	flierEdgeWidth := pointsToPixels(rc, rc.Boxplot.FlierEdgeWidth)
+	flierEdgeWidth := rc.Boxplot.FlierEdgeWidth // points; BoxPlot2D converts at its sinks
 	if opt.FlierEdgeWidth != nil {
 		flierEdgeWidth = *opt.FlierEdgeWidth
 	}

@@ -19,7 +19,7 @@ func (p *Polygon) Draw(ren render.Renderer, ctx *DrawContext) {
 		return
 	}
 	path := buildArtistDisplayPath(ctx, p, p.Coords, polygonPath(p.XY, !p.Open), geom.Identity())
-	p.drawStyledPath(ren, path, geom.Path{})
+	p.drawStyledPath(ren, &ctx.RC, path, geom.Path{})
 }
 
 // Bounds returns the polygon's data-space bounding box when applicable.

@@ -1,7 +1,6 @@
 package core
 
 import (
-	"math"
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
@@ -415,20 +414,6 @@ func cloneMatrix(values [][]float64) [][]float64 {
 		out[i] = append([]float64(nil), values[i]...)
 	}
 	return out
-}
-
-func minSpacing(values []float64) float64 {
-	best := math.Inf(1)
-	for i := 1; i < len(values); i++ {
-		delta := values[i] - values[i-1]
-		if delta > 0 && delta < best {
-			best = delta
-		}
-	}
-	if math.IsInf(best, 1) {
-		return 0
-	}
-	return best
 }
 
 func resolvedStreamDensity(opt StreamplotOptions) (float64, float64) {

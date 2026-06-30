@@ -13,7 +13,7 @@ func (a *Axis) drawPolarSpine(r render.Renderer, ctx *DrawContext) {
 	}
 
 	center, radius := polarCenterAndRadius(ctx.Clip)
-	paint := axisStrokePaint(a, false)
+	paint := axisStrokePaint(a, ctx, false)
 
 	switch a.Side {
 	case AxisBottom, AxisTop:
@@ -48,8 +48,8 @@ func (a *Axis) drawPolarThetaTicks(r render.Renderer, ctx *DrawContext, ticks []
 		return
 	}
 	center, radius := polarCenterAndRadius(ctx.Clip)
-	paint := axisStrokePaint(a, true)
-	paint.LineWidth = lineWidth
+	paint := axisStrokePaint(a, ctx, true)
+	paint.LineWidth = pointsToPixels(ctx.RC, lineWidth)
 
 	for _, tick := range ticks {
 		angle := polarAngleForTheta(ctx.Projection, ctx.DataToPixel.XScale, tick)
@@ -65,8 +65,8 @@ func (a *Axis) drawPolarRadialTicks(r render.Renderer, ctx *DrawContext, ticks [
 		return
 	}
 	center, outerRadius := polarCenterAndRadius(ctx.Clip)
-	paint := axisStrokePaint(a, true)
-	paint.LineWidth = lineWidth
+	paint := axisStrokePaint(a, ctx, true)
+	paint.LineWidth = pointsToPixels(ctx.RC, lineWidth)
 	labelAngle := polarRadialLabelAngleForProjection(ctx.Projection)
 
 	for _, tick := range ticks {

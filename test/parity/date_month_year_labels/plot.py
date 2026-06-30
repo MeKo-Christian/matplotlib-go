@@ -20,7 +20,7 @@ def date_month_year_labels(out_dir):
     ax.set_title("Monthly + Yearly Date Labels")
     ax.set_xlabel("month")
     ax.set_ylabel("index")
-    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
 
     dates = [
@@ -29,7 +29,7 @@ def date_month_year_labels(out_dir):
         dt.datetime(2024, 1, 1),
         dt.datetime(2024, 7, 1),
     ]
-    ax.plot(dates, [2, 4, 3, 7], color=(0.12, 0.47, 0.71), linewidth=lw(2.0))
+    ax.plot(dates, [2, 4, 3, 7], color=(0.12, 0.47, 0.71), linewidth=2.0)
     ax.set_xlim(dates[0], dates[-1])
     ax.set_ylim(0, 8)
     ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1, 7]))

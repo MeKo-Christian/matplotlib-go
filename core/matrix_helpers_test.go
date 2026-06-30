@@ -340,7 +340,7 @@ func TestAxesSpyMarkerEdgeWidthUsesMatplotlibPointWidth(t *testing.T) {
 	if result == nil || result.Markers == nil {
 		t.Fatal("Spy(marker size) should use marker mode")
 	}
-	if got, want := result.Markers.EdgeWidth, pointsToPixels(fig.RC, 1); !almostEqualFloat(got, want) {
+	if got, want := result.Markers.EdgeWidth, 1.0; !almostEqualFloat(got, want) {
 		t.Fatalf("marker edge width = %v, want %v", got, want)
 	}
 }

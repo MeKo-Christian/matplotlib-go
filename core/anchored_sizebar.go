@@ -182,7 +182,7 @@ func (a *AnchoredSizeBar) Draw(r render.Renderer, ctx *DrawContext) {
 		r.Path(pixelRectPath(layout.frame), &render.Paint{
 			Fill:      a.BackgroundColor,
 			Stroke:    a.BorderColor,
-			LineWidth: a.BorderWidth,
+			LineWidth: pointsToPixels(ctx.RC, a.BorderWidth),
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
 			Snap:      render.SnapAuto,
@@ -191,7 +191,7 @@ func (a *AnchoredSizeBar) Draw(r render.Renderer, ctx *DrawContext) {
 	if layout.bar.H() > 0 {
 		paint := &render.Paint{
 			Stroke:    a.Color,
-			LineWidth: a.LineWidth,
+			LineWidth: pointsToPixels(ctx.RC, a.LineWidth),
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
 			Snap:      render.SnapAuto,
@@ -209,7 +209,7 @@ func (a *AnchoredSizeBar) Draw(r render.Renderer, ctx *DrawContext) {
 			},
 		}, &render.Paint{
 			Stroke:    a.Color,
-			LineWidth: a.LineWidth,
+			LineWidth: pointsToPixels(ctx.RC, a.LineWidth),
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
 		})

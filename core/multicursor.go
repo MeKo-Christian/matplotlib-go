@@ -105,7 +105,7 @@ func (c *MultiCursor) Draw(r render.Renderer, ctx *DrawContext) {
 	if c == nil || r == nil || ctx == nil || !c.show || len(c.Axes) == 0 || !axesContains(c.Axes, ctx.Axes) {
 		return
 	}
-	paint := render.Paint{Stroke: c.Color, LineWidth: c.LineWidth}
+	paint := render.Paint{Stroke: c.Color, LineWidth: pointsToPixels(ctx.RC, c.LineWidth)}
 	if c.Vertical {
 		r.Path(pixelLinePath(geom.Pt{X: c.FigureX, Y: ctx.Clip.Min.Y}, geom.Pt{X: c.FigureX, Y: ctx.Clip.Max.Y}), &paint)
 	}

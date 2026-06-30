@@ -22,12 +22,12 @@ def formatter_percent_labels(out_dir):
     ax.set_title("Percent Formatter")
     ax.set_xlabel("share")
     ax.set_ylabel("score")
-    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
 
     x = [-0.5, 0, 0.125, 0.5, 1.0]
     y = [0.15, 0.30, 0.42, 0.68, 0.86]
-    ax.plot(x, y, color=(0.12, 0.47, 0.71), linewidth=lw(2.0))
+    ax.plot(x, y, color=(0.12, 0.47, 0.71), linewidth=2.0)
     ax.set_xlim(-0.5, 1.0)
     ax.set_ylim(0, 1.0)
     ax.xaxis.set_major_locator(mticker.FixedLocator(x))

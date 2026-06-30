@@ -22,9 +22,9 @@ type ErrorBar struct {
 	XLoLimits       []bool       // x value is a lower limit
 	XUpLimits       []bool       // x value is an upper limit
 	Color           render.Color // stroke color
-	LineWidth       float64      // stroke width in pixels
+	LineWidth       float64      // stroke width in points
 	CapSize         float64      // cap size in pixels
-	CapThick        float64      // cap line width in pixels (0 uses the 1pt default)
+	CapThick        float64      // cap line width in points (0 uses the 1pt default)
 	Marker          MarkerType   // optional data marker, matching Matplotlib fmt markers
 	MarkerSet       bool
 	MarkerSize      float64 // marker size in points
@@ -46,9 +46,9 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 	if ctx != nil {
 		rc = ctx.RC
 	}
-	lineWidth := e.LineWidth
+	lineWidth := e.LineWidth // points
 	if lineWidth <= 0 {
-		lineWidth = pointsToPixels(rc, 1.5)
+		lineWidth = 1.5
 	}
 
 	capSizePx := e.CapSize
@@ -77,16 +77,17 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 
 	paint := render.Paint{
 		Stroke:    color,
-		LineWidth: lineWidth,
+		LineWidth: pointsToPixels(rc, lineWidth),
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
 		Snap:      render.SnapAuto,
 	}
 	capPaint := paint
-	capPaint.LineWidth = pointsToPixels(rc, 1)
+	capThick := 1.0 // points
 	if e.CapThick > 0 {
-		capPaint.LineWidth = e.CapThick
+		capThick = e.CapThick
 	}
+	capPaint.LineWidth = pointsToPixels(rc, capThick)
 	// Matplotlib draws the caps as Line2D markers ('|' for x-error, '_' for
 	// y-error). Its draw_markers floors the marker centre to the device pixel
 	// grid and snaps the marker half-extent to an integer separately, then sums
@@ -189,7 +190,7 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 		if path := line.displayPath(ctx); len(path.C) > 0 {
 			linePaint := render.Paint{
 				Stroke:    color,
-				LineWidth: lineWidth,
+				LineWidth: pointsToPixels(rc, lineWidth),
 				LineJoin:  render.JoinRound,
 				LineCap:   render.CapButt,
 				Snap:      render.SnapAuto,
@@ -209,7 +210,7 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 			Size:      e.MarkerSize * e.MarkerSize,
 			Color:     color,
 			EdgeColor: color,
-			EdgeWidth: pointsToPixels(rc, 1),
+			EdgeWidth: 1.0, // points; converted at the scatter/collection Paint sink
 			Alpha:     alpha,
 			Marker:    e.Marker,
 			z:         e.Z() + 0.05,

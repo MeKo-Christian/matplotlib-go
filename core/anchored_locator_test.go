@@ -191,7 +191,7 @@ func TestAnchoredSizeBarDrawsDataScaledBarAndLabel(t *testing.T) {
 	if !containsTextString(r.texts, "2 units") {
 		t.Fatalf("anchored size bar label not drawn, got %v", r.texts)
 	}
-	if !hasPathPaint(r.pathPaints, frameFill, frameEdge, 1) {
+	if !hasPathPaint(r.pathPaints, frameFill, frameEdge, pointsToPixels(ctx.RC, 1)) {
 		t.Fatalf("anchored size bar frame paint not found in %+v", r.pathPaints)
 	}
 	var gotBar geom.Path
@@ -235,7 +235,7 @@ func TestAnchoredDrawingAreaDrawsLocalPath(t *testing.T) {
 	r := &recordingRenderer{}
 	area.Draw(r, ctx)
 
-	if !recordedPaintExists(r.pathCalls, frameFill, frameEdge, 1) {
+	if !recordedPaintExists(r.pathCalls, frameFill, frameEdge, pointsToPixels(ctx.RC, 1)) {
 		t.Fatalf("anchored drawing area frame paint not found in %+v", r.pathCalls)
 	}
 	var child geom.Path

@@ -29,9 +29,9 @@ def sketch_xkcd(out_dir):
         ax.set_ylim(-1.2, 1.2)
 
         x = np.linspace(0, 10, 200)
-        ax.plot(x, np.sin(x), color=(0.12, 0.47, 0.71, 1), linewidth=lw(2),
+        ax.plot(x, np.sin(x), color=(0.12, 0.47, 0.71, 1), linewidth=2,
                 solid_capstyle="butt")
-        ax.plot([0, 10], [0, 0], color=(0.84, 0.15, 0.16, 1), linewidth=lw(2),
+        ax.plot([0, 10], [0, 0], color=(0.84, 0.15, 0.16, 1), linewidth=2,
                 solid_capstyle="butt")
 
         save(fig, out_dir, "sketch_xkcd")

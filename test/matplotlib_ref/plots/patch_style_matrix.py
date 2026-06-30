@@ -48,7 +48,7 @@ def patch_style_matrix(out_dir):
             boxstyle=style,
             facecolor=colors[col],
             edgecolor=(0.13, 0.15, 0.18, 1.0),
-            linewidth=lw(1.0),
+            linewidth=1.0,
             mutation_scale=1.0,
         ))
 
@@ -57,7 +57,7 @@ def patch_style_matrix(out_dir):
             (0.75 + i * 1.38, 3.58), 0.9, 0.78,
             facecolor=(0.92, 0.91, 0.84, 1.0),
             edgecolor=(0.18, 0.22, 0.25, 1.0),
-            linewidth=lw(0.85),
+            linewidth=0.85,
             hatch=hatch,
         )
         ax.add_patch(rect)
@@ -82,7 +82,7 @@ def patch_style_matrix(out_dir):
             mutation_scale=15,
             facecolor=face,
             edgecolor=edge,
-            linewidth=lw(1.25),
+            linewidth=1.25,
         ))
 
     save(fig, out_dir, "patch_style_matrix")

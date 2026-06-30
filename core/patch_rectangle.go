@@ -21,7 +21,7 @@ func (r *Rectangle) Draw(ren render.Renderer, ctx *DrawContext) {
 		return
 	}
 	path := buildArtistDisplayPath(ctx, r, r.Coords, rectanglePath(r.Width, r.Height), patchAffine(r.XY, r.Angle))
-	r.drawStyledPath(ren, path, geom.Path{})
+	r.drawStyledPath(ren, &ctx.RC, path, geom.Path{})
 }
 
 // Bounds returns the rectangle's data-space bounding box when applicable.

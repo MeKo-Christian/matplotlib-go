@@ -68,8 +68,8 @@ func TestAxes3DContourDefaultLineWidthMatchesMatplotlib(t *testing.T) {
 	if contour == nil {
 		t.Fatal("Contour returned nil")
 	}
-	if got, want := contour.LineWidth, 2.0; got != want {
-		t.Fatalf("Contour default line width = %v, want Matplotlib 1.5 pt at 100 DPI rounded to %v px", got, want)
+	if got, want := contour.LineWidth, 1.5; got != want {
+		t.Fatalf("Contour default line width = %v, want Matplotlib contour.linewidth/lines.linewidth default in points %v", got, want)
 	}
 
 	tri := Triangulation{
@@ -81,8 +81,8 @@ func TestAxes3DContourDefaultLineWidthMatchesMatplotlib(t *testing.T) {
 	if triContour == nil {
 		t.Fatal("TriContour returned nil")
 	}
-	if got, want := triContour.LineWidth, 2.0; got != want {
-		t.Fatalf("TriContour default line width = %v, want Matplotlib 1.5 pt at 100 DPI rounded to %v px", got, want)
+	if got, want := triContour.LineWidth, 1.5; got != want {
+		t.Fatalf("TriContour default line width = %v, want Matplotlib contour.linewidth/lines.linewidth default in points %v", got, want)
 	}
 }
 

@@ -24,7 +24,7 @@ def configure_axes(ax, title, color):
         [0.10, 0.38, 0.66, 0.90],
         [0.20, 0.76, 0.35, 0.82],
         color=color,
-        linewidth=lw(1.8),
+        linewidth=1.8,
     )
     ax.text(
         0.08,
@@ -58,7 +58,7 @@ def layout_bbox_helpers(out_dir):
         transform=fig.transFigure,
         facecolor=(0.95, 0.74, 0.20, 0.08),
         edgecolor=(0.42, 0.34, 0.12, 1.0),
-        linewidth=lw(1.4),
+        linewidth=1.4,
         linestyle=(0, (6, 4)),
         zorder=10,
     ))

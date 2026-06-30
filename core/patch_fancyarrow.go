@@ -29,7 +29,7 @@ func (a *FancyArrow) Draw(ren render.Renderer, ctx *DrawContext) {
 		return
 	}
 	path := buildArtistDisplayPath(ctx, a, a.Coords, a.localPath(), geom.Identity())
-	a.drawStyledPath(ren, path, geom.Path{})
+	a.drawStyledPath(ren, &ctx.RC, path, geom.Path{})
 }
 
 // Bounds returns the arrow's data-space bounding box when applicable.

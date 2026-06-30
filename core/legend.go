@@ -241,7 +241,7 @@ func (l *Legend) draw(r render.Renderer, ctx *DrawContext) {
 			fontPx := pointsToPixels(ctx.RC, fontSize)
 			sampleCenterY := labelOrigin.Y + 0.35*fontPx
 
-			l.drawSampleWithFontPixels(r, entry, geom.Rect{
+			l.drawSampleWithFontPixels(r, &ctx.RC, &entry, geom.Rect{
 				Min: geom.Pt{X: x, Y: sampleCenterY - fontPx/2},
 				Max: geom.Pt{X: x + l.SampleWidth, Y: sampleCenterY + fontPx/2},
 			}, fontPx)

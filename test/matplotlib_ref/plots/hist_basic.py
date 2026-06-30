@@ -24,7 +24,7 @@ def hist_basic(out_dir):
         bins="sturges",
         color=(0.26, 0.53, 0.80, 0.8),
         edgecolor=(0, 0, 0, 1),
-        linewidth=lw(0.8),
+        linewidth=0.8,
         rwidth=1.0,
     )
     # match AutoScale(0.05) margin

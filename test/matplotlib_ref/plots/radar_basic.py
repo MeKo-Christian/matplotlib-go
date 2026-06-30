@@ -82,11 +82,11 @@ def radar_basic(out_dir):
     ax.set_ylim(0, 1)
     ax.set_yticks([0.25, 0.5, 0.75, 1.0])
     ax.set_yticklabels(["25%", "50%", "75%", "100%"])
-    ax.xaxis.grid(True, color=(0.78, 0.80, 0.84, 1.0), linewidth=lw(0.8))
-    ax.yaxis.grid(True, color=(0.80, 0.83, 0.88, 1.0), linewidth=lw(0.8))
+    ax.xaxis.grid(True, color=(0.78, 0.80, 0.84, 1.0), linewidth=0.8)
+    ax.yaxis.grid(True, color=(0.80, 0.83, 0.88, 1.0), linewidth=0.8)
 
     ax.fill(closed_angles, closed_values, color=(0.18, 0.50, 0.82, 0.22))
-    ax.plot(closed_angles, closed_values, color=(0.15, 0.35, 0.70, 1.0), linewidth=lw(2.2), label="model A")
+    ax.plot(closed_angles, closed_values, color=(0.15, 0.35, 0.70, 1.0), linewidth=2.2, label="model A")
 
     save(fig, out_dir, "radar_basic")
 

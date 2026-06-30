@@ -29,8 +29,8 @@ def image_alpha(out_dir):
     ax.set_ylabel("row")
     ax.set_xlim(0, 6)
     ax.set_ylim(0, 6)
-    ax.plot([0, 6], [0, 6], color=(0.08, 0.08, 0.10, 1), linewidth=lw(2.0))
-    ax.plot([0, 6], [6, 0], color=(0.08, 0.08, 0.10, 1), linewidth=lw(2.0))
+    ax.plot([0, 6], [0, 6], color=(0.08, 0.08, 0.10, 1), linewidth=2.0)
+    ax.plot([0, 6], [6, 0], color=(0.08, 0.08, 0.10, 1), linewidth=2.0)
     ax.imshow(
         wave_image_data(6, 6),
         cmap="plasma",

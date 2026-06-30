@@ -26,7 +26,7 @@ def stem_horizontal(out_dir):
     ax.set_ylabel("Sample")
     ax.set_xlim(-0.2, 4.2)
     ax.set_ylim(0.5, 7.5)
-    ax.grid(True, axis="x", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, axis="x", color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
 
     markerline, stemlines, baseline = ax.stem(

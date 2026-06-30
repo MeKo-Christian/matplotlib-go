@@ -35,8 +35,8 @@ def animation_line_frame(out_dir):
 
     phase = FRAME * 0.30
     x = np.linspace(0, 2 * np.pi, 200)
-    ax.plot(x, np.sin(x + phase), color=TAB10[0], linewidth=lw(2.0))
-    ax.plot(x, 0.6 * np.cos(x + phase), color=TAB10[1], linewidth=lw(2.0))
+    ax.plot(x, np.sin(x + phase), color=TAB10[0], linewidth=2.0)
+    ax.plot(x, 0.6 * np.cos(x + phase), color=TAB10[1], linewidth=2.0)
 
     save(fig, out_dir, "animation_line_frame")
 

@@ -34,7 +34,7 @@ def figure_labels_composition(out_dir):
             ax.set_ylabel("local y")
             ax.set_xlim(0, 2 * math.pi)
             ax.set_ylim(-1.6, 1.6)
-            ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+            ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=0.5)
             ax.set_axisbelow(True)
 
     axs[0, 0].text(

@@ -28,23 +28,23 @@ def locator_log_minor_threshold_labels(out_dir):
         [1, 10, 100, 1000],
         [0.18, 0.39, 0.67, 0.88],
         color=(0.12, 0.47, 0.71),
-        linewidth=lw(2.0),
+        linewidth=2.0,
     )
     top.set_ylim(0, 1)
     top.set_xscale("log", base=10)
     top.set_xlim(1, 1000)
     top.xaxis.set_minor_locator(mticker.LogLocator(base=10, subs="auto"))
     top.yaxis.set_major_locator(mticker.FixedLocator([0, 0.5, 1.0]))
-    top.grid(True, axis="x", which="major", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    top.grid(True, axis="x", which="major", color=(0.8, 0.8, 0.8), linewidth=0.5)
     top.grid(
         True,
         axis="x",
         which="minor",
         color=(0.72, 0.76, 0.80, 0.55),
-        linewidth=lw(0.35),
+        linewidth=0.35,
         linestyle=(0, (1, 2)),
     )
-    top.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    top.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     top.set_axisbelow(True)
 
     bottom.set_title("LogLocator Base 2")
@@ -54,13 +54,13 @@ def locator_log_minor_threshold_labels(out_dir):
         [1, 2, 4, 8, 16, 32, 64],
         [0.14, 0.26, 0.38, 0.52, 0.68, 0.80, 0.91],
         color=(0.12, 0.47, 0.71),
-        linewidth=lw(2.0),
+        linewidth=2.0,
     )
     bottom.set_ylim(0, 1)
     bottom.set_xscale("log", base=2)
     bottom.set_xlim(1, 64)
     bottom.yaxis.set_major_locator(mticker.FixedLocator([0, 0.5, 1.0]))
-    bottom.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    bottom.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     bottom.set_axisbelow(True)
 
     save(fig, out_dir, "locator_log_minor_threshold_labels")

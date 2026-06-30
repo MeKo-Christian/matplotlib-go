@@ -39,7 +39,7 @@ def unstructured_showcase(out_dir):
     ax_mesh.set_xlim(-0.1, 3.1)
     ax_mesh.set_ylim(-0.15, 2.65)
     ax_mesh.set_aspect("equal")
-    ax_mesh.triplot(tri, color=(0.18, 0.24, 0.34, 1.0), linewidth=lw(1.35))
+    ax_mesh.triplot(tri, color=(0.18, 0.24, 0.34, 1.0), linewidth=1.35)
     ax_mesh.text(
         0.98,
         0.02,
@@ -63,7 +63,7 @@ def unstructured_showcase(out_dir):
         values,
         cmap="viridis",
         edgecolors="white",
-        linewidth=lw(0.6),
+        linewidth=0.6,
         shading="flat",
     )
     contour = ax_color.tricontour(
@@ -71,7 +71,7 @@ def unstructured_showcase(out_dir):
         values,
         levels=6,
         colors=[(0.08, 0.12, 0.18, 0.95)],
-        linewidths=lw(1.15),
+        linewidths=1.15,
     )
     ax_color.clabel(contour, inline=True, fmt="%.3g", fontsize=10, colors=[(0.08, 0.12, 0.18, 0.95)])
 
@@ -88,7 +88,7 @@ def unstructured_showcase(out_dir):
         values,
         levels=7,
         colors=[(1.0, 1.0, 1.0, 0.88)],
-        linewidths=lw(0.95),
+        linewidths=0.95,
     )
 
     fig.text(

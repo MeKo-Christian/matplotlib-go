@@ -147,7 +147,7 @@ func (s *SpanSelector) Draw(r render.Renderer, ctx *DrawContext) {
 			Max: geom.Pt{X: ctx.Clip.Max.X, Y: math.Max(p1.Y, p2.Y)},
 		}
 		if rect.W() > 0 && rect.H() > 0 {
-			r.Path(pixelRectPath(rect), &render.Paint{Fill: s.FillColor, Stroke: s.Color, LineWidth: s.LineWidth})
+			r.Path(pixelRectPath(rect), &render.Paint{Fill: s.FillColor, Stroke: s.Color, LineWidth: pointsToPixels(ctx.RC, s.LineWidth)})
 		}
 		return
 	}
@@ -160,7 +160,7 @@ func (s *SpanSelector) Draw(r render.Renderer, ctx *DrawContext) {
 	if rect.W() <= 0 || rect.H() <= 0 {
 		return
 	}
-	r.Path(pixelRectPath(rect), &render.Paint{Fill: s.FillColor, Stroke: s.Color, LineWidth: s.LineWidth})
+	r.Path(pixelRectPath(rect), &render.Paint{Fill: s.FillColor, Stroke: s.Color, LineWidth: pointsToPixels(ctx.RC, s.LineWidth)})
 }
 
 func (s *SpanSelector) Bounds(ctx *DrawContext) geom.Rect {

@@ -22,11 +22,11 @@ def transform_annotation_modes(out_dir):
     ax.set_ylabel("y")
     ax.set_xlim(0, 10)
     ax.set_ylim(0, 10)
-    ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
 
-    ax.plot([1, 3, 5, 7, 9], [1.5, 4, 3, 7, 8.5], color=(0.12, 0.47, 0.71), linewidth=lw(2.0))
-    arrowprops = dict(arrowstyle="->", color=(0.10, 0.10, 0.10), lw=lw(1.1))
+    ax.plot([1, 3, 5, 7, 9], [1.5, 4, 3, 7, 8.5], color=(0.12, 0.47, 0.71), linewidth=2.0)
+    arrowprops = dict(arrowstyle="->", color=(0.10, 0.10, 0.10), lw=1.1)
     text = dict(fontsize=10, color=(0.10, 0.10, 0.10))
 
     ax.annotate("data", xy=(3, 4), xycoords="data", xytext=(34, -30), textcoords="offset pixels", arrowprops=arrowprops, **text)

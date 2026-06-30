@@ -27,7 +27,7 @@ def dashes(out_dir):
         (1, [2, 2],           (0,   0,   0.8)),
     ]
     for y_val, pattern, color in specs:
-        (line,) = ax.plot([1, 9], [y_val, y_val], color=color, linewidth=lw(3))
+        (line,) = ax.plot([1, 9], [y_val, y_val], color=color, linewidth=3)
         if pattern:
             line.set_dashes(pattern)
 

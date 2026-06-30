@@ -60,7 +60,7 @@ type Hist2D struct {
 	Baselines         []float64    // optional per-bin baselines for stacked histograms
 	Color             render.Color // bar fill color
 	EdgeColor         render.Color // bar outline color
-	EdgeWidth         float64      // bar outline width in pixels (0 = no outline)
+	EdgeWidth         float64      // bar outline width in points (0 = no outline)
 	Alpha             float64      // alpha transparency (0-1, 0 means 1.0)
 	Label             string       // series label for legend
 	z                 float64      // z-order
@@ -431,7 +431,7 @@ func (h *Hist2D) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 		if h.EdgeWidth > 0 && edgeColor.A > 0 {
 			paint.Stroke = edgeColor
-			paint.LineWidth = h.EdgeWidth
+			paint.LineWidth = pointsToPixels(ctx.RC, h.EdgeWidth)
 			paint.LineJoin = render.JoinMiter
 			paint.LineCap = render.CapButt
 		}
@@ -517,7 +517,7 @@ func (h *Hist2D) drawStepHistogram(r render.Renderer, ctx *DrawContext, fillColo
 	}
 	if h.EdgeWidth > 0 && edgeColor.A > 0 {
 		paint.Stroke = edgeColor
-		paint.LineWidth = h.EdgeWidth
+		paint.LineWidth = pointsToPixels(ctx.RC, h.EdgeWidth)
 		paint.LineJoin = render.JoinMiter
 		paint.LineCap = render.CapButt
 	}

@@ -19,7 +19,7 @@ def annotation_composition(out_dir):
     ax.set_title("Text and Arrow Annotations")
     ax.set_xlabel("phase")
     ax.set_ylabel("response")
-    ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
 
     x = np.linspace(0, 6 * math.pi, 240)
@@ -37,7 +37,7 @@ def annotation_composition(out_dir):
         xytext=(48, -42),
         textcoords="offset pixels",
         fontsize=12,
-        arrowprops=dict(arrowstyle="->", color="black", lw=lw(1.0)),
+        arrowprops=dict(arrowstyle="->", color="black", lw=1.0),
     )
     ax.text(0.20, 0.90, "m∫T  φ x =  λ/4", transform=ax.transAxes, fontsize=12)
 

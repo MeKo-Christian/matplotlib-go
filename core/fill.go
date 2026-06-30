@@ -36,7 +36,7 @@ type Fill2D struct {
 	Orientation FillOrientation // vertical (fill_between) or horizontal (fill_betweenx)
 	Color       render.Color    // fill color
 	EdgeColor   render.Color    // edge color for outline (0 alpha means no edge)
-	EdgeWidth   float64         // edge width in pixels (0 means no edge)
+	EdgeWidth   float64         // edge width in points (0 means no edge)
 	Alpha       float64         // alpha transparency override (0-1), if 0 uses Color.A
 	Label       string          // series label for legend
 	z           float64         // z-order
@@ -69,7 +69,7 @@ func (f *Fill2D) Draw(r render.Renderer, ctx *DrawContext) {
 	// Add stroke if edge width is specified and edge color has alpha > 0
 	if f.EdgeWidth > 0 && edgeColor.A > 0 {
 		paint.Stroke = edgeColor
-		paint.LineWidth = f.EdgeWidth
+		paint.LineWidth = pointsToPixels(ctx.RC, f.EdgeWidth)
 		paint.LineJoin = render.JoinRound
 		paint.LineCap = render.CapButt
 	}

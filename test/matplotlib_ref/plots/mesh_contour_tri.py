@@ -37,7 +37,7 @@ def mesh_contour_tri(out_dir):
         xedges, yedges, data,
         shading="flat",
         edgecolors=[(0.95, 0.95, 0.95, 1.0)],
-        linewidth=lw(0.8),
+        linewidth=0.8,
     )
 
     contour_ax = axes["contour"]
@@ -59,7 +59,7 @@ def mesh_contour_tri(out_dir):
         xx, yy, contour_data,
         levels=[0.4, 0.8, 1.2, 1.6],
         colors=[(0.18, 0.18, 0.18, 1.0)],
-        linewidths=lw(1.0),
+        linewidths=1.0,
     )
     contour_ax.clabel(lines, fmt="%g", fontsize=10)
 
@@ -73,7 +73,7 @@ def mesh_contour_tri(out_dir):
         hx, hy,
         bins=[np.array([0, 1, 2, 3, 4], dtype=float), np.array([0, 1, 2, 3, 4], dtype=float)],
         edgecolor=(0.95, 0.95, 0.95, 1.0),
-        linewidth=lw(0.8),
+        linewidth=0.8,
     )
 
     tri_ax = axes["tri"]
@@ -85,8 +85,8 @@ def mesh_contour_tri(out_dir):
     tri = mtri.Triangulation(tx, ty, triangles=[[0, 1, 3], [1, 4, 3], [1, 2, 4], [2, 5, 4]])
     values = np.array([0.2, 0.8, 1.0, 1.5, 1.1, 0.6], dtype=float)
     tri_ax.tripcolor(tri, values, shading="flat")
-    tri_ax.triplot(tri, color=(0.15, 0.15, 0.15), linewidth=lw(1.0))
-    tri_ax.tricontour(tri, values, levels=[0.7, 1.1], colors=[(0.98, 0.98, 0.98, 1.0)], linewidths=lw(1.0))
+    tri_ax.triplot(tri, color=(0.15, 0.15, 0.15), linewidth=1.0)
+    tri_ax.tricontour(tri, values, levels=[0.7, 1.1], colors=[(0.98, 0.98, 0.98, 1.0)], linewidths=1.0)
 
     save(fig, out_dir, "mesh_contour_tri")
 

@@ -349,7 +349,7 @@ func TestLegendErrorBarMarkerEdgeWidthUsesMarkerDefault(t *testing.T) {
 		t.Fatal("errorbar legend entry not collected")
 	}
 
-	want := pointsToPixels(style.Default, 1)
+	want := 1.0 // points; converted at the Paint sink
 	if !floatApprox(entry.markerEdgeWidth, want, 1e-9) {
 		t.Fatalf("legend errorbar marker edge width = %v, want Matplotlib lines.markeredgewidth 1 pt = %v px", entry.markerEdgeWidth, want)
 	}

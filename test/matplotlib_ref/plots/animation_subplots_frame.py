@@ -50,8 +50,8 @@ def animation_subplots_frame(out_dir):
 
     phase = FRAME * 0.30
     x = np.linspace(0, 2 * np.pi, 200)
-    line_ax.plot(x, np.sin(x + phase), color=TAB10[0], linewidth=lw(2.0))
-    line_ax.plot(x, 0.6 * np.cos(x + phase), color=TAB10[1], linewidth=lw(2.0))
+    line_ax.plot(x, np.sin(x + phase), color=TAB10[0], linewidth=2.0)
+    line_ax.plot(x, 0.6 * np.cos(x + phase), color=TAB10[1], linewidth=2.0)
 
     heat_ax = fig.add_axes(go_rect(0.55, 0.15, 0.93, 0.88))
     heat_ax.set_title("Animated Heatmap")

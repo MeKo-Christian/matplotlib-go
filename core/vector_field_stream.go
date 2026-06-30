@@ -211,15 +211,15 @@ func (s *StreamplotSet) legendEntry() (legendEntry, bool) {
 
 func computeStreamTrajectories(grid streamplotGrid, opt StreamplotOptions, densityX, densityY float64) []streamTrajectory {
 	mask := newStreamplotMask(grid.x[0], grid.x[len(grid.x)-1], grid.y[0], grid.y[len(grid.y)-1], densityX, densityY)
-	minLength := optionFloat(opt.MinLength, 0.08)
+	minLength := optionFloat(opt.MinLength, 0.1)
 	maxLength := optionFloat(opt.MaxLength, 4.0)
 	if minLength <= 0 || maxLength <= 0 {
 		return nil
 	}
 	broken := optionBool(opt.BrokenStreamlines, true)
 	direction := normalizeStreamDirection(opt.IntegrationDirection)
-	step := 0.35 * math.Min(minSpacing(grid.x), minSpacing(grid.y))
-	if step <= 0 || !isFinite(step) {
+	ctx := newStreamGridContext(&grid, mask.nx, mask.ny)
+	if !ctx.valid() {
 		return nil
 	}
 
@@ -233,7 +233,7 @@ func computeStreamTrajectories(grid streamplotGrid, opt StreamplotOptions, densi
 		if !pointInsideGrid(start, grid) {
 			continue
 		}
-		traj, used := integrateStream(grid, mask, start, step, minLength, maxLength, direction, broken)
+		traj, used := integrateStream(&ctx, mask, start, minLength, maxLength, direction, broken)
 		if len(traj.points) < 2 {
 			continue
 		}
@@ -245,106 +245,235 @@ func computeStreamTrajectories(grid streamplotGrid, opt StreamplotOptions, densi
 	return trajectories
 }
 
-func integrateStream(grid streamplotGrid, mask *streamplotMask, start geom.Pt, step, minLength, maxLength float64, direction string, broken bool) (streamTrajectory, map[int]struct{}) {
+// streamGridContext carries the derived parameters needed to run Matplotlib's
+// adaptive RK12 streamline integrator (streamplot._integrate_rk12) in grid-index
+// coordinates, where the velocity field is normalised so the integration
+// parameter (arc length) is measured in axes coordinates.
+type streamGridContext struct {
+	grid   *streamplotGrid
+	nx, ny int
+	xmin   float64
+	ymin   float64
+	dx, dy float64
+	maxds  float64
+	maxErr float64
+}
+
+func newStreamGridContext(grid *streamplotGrid, maskNx, maskNy int) streamGridContext {
+	nx := len(grid.x)
+	ny := len(grid.y)
+	ctx := streamGridContext{grid: grid, nx: nx, ny: ny, maxErr: 0.003}
+	if nx < 2 || ny < 2 || maskNx < 1 || maskNy < 1 {
+		return ctx
+	}
+	ctx.xmin = grid.x[0]
+	ctx.ymin = grid.y[0]
+	ctx.dx = (grid.x[nx-1] - grid.x[0]) / float64(nx-1)
+	ctx.dy = (grid.y[ny-1] - grid.y[0]) / float64(ny-1)
+	ctx.maxds = math.Min(math.Min(1.0/float64(maskNx), 1.0/float64(maskNy)), 0.1)
+	return ctx
+}
+
+func (c *streamGridContext) valid() bool {
+	return c.nx >= 2 && c.ny >= 2 && c.dx != 0 && c.dy != 0 && c.maxds > 0
+}
+
+func (c *streamGridContext) gridToData(gx, gy float64) geom.Pt {
+	return geom.Pt{X: c.xmin + gx*c.dx, Y: c.ymin + gy*c.dy}
+}
+
+func (c *streamGridContext) dataToGrid(p geom.Pt) (float64, float64) {
+	return (p.X - c.xmin) / c.dx, (p.Y - c.ymin) / c.dy
+}
+
+func (c *streamGridContext) withinGrid(gx, gy float64) bool {
+	return gx >= 0 && gx <= float64(c.nx-1) && gy >= 0 && gy <= float64(c.ny-1)
+}
+
+const (
+	streamVelocityOK = iota
+	streamVelocityOutOfBounds
+	streamVelocityTerminate
+)
+
+// velocity mirrors streamplot.forward_time: it rescales the data-space vector
+// onto grid coordinates, normalises by the axes-coordinate speed so the
+// integration parameter equals axes arc length, then applies the direction sign.
+func (c *streamGridContext) velocity(gx, gy, sign float64) (float64, float64, int) {
+	if !c.withinGrid(gx, gy) {
+		return 0, 0, streamVelocityOutOfBounds
+	}
+	uData, vData, ok := interpolateStreamVector(*c.grid, c.gridToData(gx, gy))
+	if !ok {
+		return 0, 0, streamVelocityOutOfBounds
+	}
+	uGrid := uData / c.dx
+	vGrid := vData / c.dy
+	uAx := uGrid / float64(c.nx-1)
+	vAx := vGrid / float64(c.ny-1)
+	speed := math.Hypot(uAx, vAx)
+	if speed == 0 || !isFinite(speed) {
+		return 0, 0, streamVelocityTerminate
+	}
+	dtds := 1.0 / speed
+	return sign * uGrid * dtds, sign * vGrid * dtds, streamVelocityOK
+}
+
+func integrateStream(ctx *streamGridContext, mask *streamplotMask, start geom.Pt, minLength, maxLength float64, direction string, broken bool) (streamTrajectory, map[int]struct{}) {
 	switch direction {
 	case streamDirectionBackward:
-		points, used := streamDirection(grid, mask, start, step, maxLength, -1, broken)
-		if normalizedPathLength(points, grid) < minLength {
+		points, used, stotal := integrateStreamRK12(ctx, mask, start, maxLength, -1, broken)
+		if stotal <= minLength || len(points) < 2 {
 			return streamTrajectory{}, nil
 		}
+		reverseStreamPoints(points)
 		return streamTrajectory{points: points}, used
 	case streamDirectionForward:
-		points, used := streamDirection(grid, mask, start, step, maxLength, 1, broken)
-		if normalizedPathLength(points, grid) < minLength {
+		points, used, stotal := integrateStreamRK12(ctx, mask, start, maxLength, 1, broken)
+		if stotal <= minLength || len(points) < 2 {
 			return streamTrajectory{}, nil
 		}
-		return streamTrajectory{points: points}, used
+		// Matplotlib renders xyt[1:] for a forward-only line, dropping the seed.
+		return streamTrajectory{points: points[1:]}, used
 	default:
-		backward, usedBack := streamDirection(grid, mask, start, step, maxLength*0.5, -1, broken)
-		forward, usedForward := streamDirection(grid, mask, start, step, maxLength*0.5, 1, broken)
-		if len(backward) == 0 && len(forward) == 0 {
-			return streamTrajectory{}, nil
-		}
+		backward, usedBack, sBack := integrateStreamRK12(ctx, mask, start, maxLength, -1, broken)
+		forward, usedFwd, sFwd := integrateStreamRK12(ctx, mask, start, maxLength, 1, broken)
+		reverseStreamPoints(backward)
 		points := make([]geom.Pt, 0, len(backward)+len(forward))
-		for i := len(backward) - 1; i >= 0; i-- {
-			points = append(points, backward[i])
-		}
-		if len(forward) > 0 {
+		points = append(points, backward...)
+		if len(forward) > 1 {
 			points = append(points, forward[1:]...)
 		}
-		if normalizedPathLength(points, grid) < minLength {
+		if (sBack+sFwd) <= minLength || len(points) < 2 {
 			return streamTrajectory{}, nil
 		}
 		used := map[int]struct{}{}
 		for idx := range usedBack {
 			used[idx] = struct{}{}
 		}
-		for idx := range usedForward {
+		for idx := range usedFwd {
 			used[idx] = struct{}{}
 		}
 		return streamTrajectory{points: points}, used
 	}
 }
 
-func streamDirection(grid streamplotGrid, mask *streamplotMask, start geom.Pt, step, maxLength float64, sign float64, broken bool) ([]geom.Pt, map[int]struct{}) {
-	if !pointInsideGrid(start, grid) {
-		return nil, nil
+func reverseStreamPoints(points []geom.Pt) {
+	for i, j := 0, len(points)-1; i < j; i, j = i+1, j-1 {
+		points[i], points[j] = points[j], points[i]
 	}
-	points := []geom.Pt{start}
-	used := map[int]struct{}{mask.index(start): {}}
-	total := 0.0
-	current := start
-
-	for total < maxLength {
-		next, ok := streamStep(grid, current, step*sign)
-		if !ok || !pointInsideGrid(next, grid) {
-			break
-		}
-		idx := mask.index(next)
-		if broken {
-			if mask.used[idx] {
-				break
-			}
-			if _, ok := used[idx]; ok {
-				break
-			}
-		}
-		total += normalizedSegmentLength(current, next, grid)
-		if total > maxLength {
-			break
-		}
-		points = append(points, next)
-		used[idx] = struct{}{}
-		current = next
-	}
-	return points, used
 }
 
-func streamStep(grid streamplotGrid, point geom.Pt, step float64) (geom.Pt, bool) {
-	u1, v1, ok := interpolateStreamVector(grid, point)
-	if !ok {
-		return geom.Pt{}, false
+// integrateStreamRK12 ports streamplot._integrate_rk12: adaptive second-order
+// Runge-Kutta (Heun) integration with error-controlled step size, extended to
+// the domain boundary by a final Euler step. Returned points are in data
+// coordinates and include the seed as element 0; stotal is axes arc length.
+func integrateStreamRK12(ctx *streamGridContext, mask *streamplotMask, start geom.Pt, maxLength, sign float64, broken bool) ([]geom.Pt, map[int]struct{}, float64) {
+	gx, gy := ctx.dataToGrid(start)
+	ds := ctx.maxds
+	stotal := 0.0
+	currentCell := mask.index(start)
+	used := map[int]struct{}{currentCell: {}}
+	gridPts := make([][2]float64, 0, 64)
+
+	for {
+		if ctx.withinGrid(gx, gy) {
+			gridPts = append(gridPts, [2]float64{gx, gy})
+		} else {
+			if len(gridPts) > 0 {
+				if dsB, last, ok := streamEulerStep(ctx, gridPts[len(gridPts)-1], sign); ok {
+					gridPts = append(gridPts, last)
+					stotal += dsB
+				}
+			}
+			break
+		}
+
+		k1x, k1y, st1 := ctx.velocity(gx, gy, sign)
+		if st1 != streamVelocityOK {
+			break
+		}
+		k2x, k2y, st2 := ctx.velocity(gx+ds*k1x, gy+ds*k1y, sign)
+		if st2 == streamVelocityOutOfBounds {
+			if dsB, last, ok := streamEulerStep(ctx, gridPts[len(gridPts)-1], sign); ok {
+				gridPts = append(gridPts, last)
+				stotal += dsB
+			}
+			break
+		}
+		if st2 == streamVelocityTerminate {
+			break
+		}
+
+		dx1 := ds * k1x
+		dy1 := ds * k1y
+		dx2 := ds * 0.5 * (k1x + k2x)
+		dy2 := ds * 0.5 * (k1y + k2y)
+		errVal := math.Hypot((dx2-dx1)/float64(ctx.nx-1), (dy2-dy1)/float64(ctx.ny-1))
+
+		if errVal < ctx.maxErr {
+			gx += dx2
+			gy += dy2
+			if broken {
+				idx := mask.index(ctx.gridToData(gx, gy))
+				if idx != currentCell {
+					if mask.used[idx] {
+						break
+					}
+					if _, seen := used[idx]; seen {
+						break
+					}
+					used[idx] = struct{}{}
+					currentCell = idx
+				}
+			}
+			if stotal+ds > maxLength {
+				break
+			}
+			stotal += ds
+		}
+
+		if errVal == 0 {
+			ds = ctx.maxds
+		} else {
+			ds = math.Min(ctx.maxds, 0.85*ds*math.Sqrt(ctx.maxErr/errVal))
+		}
 	}
-	mag1 := math.Hypot(u1, v1)
-	if mag1 == 0 {
-		return geom.Pt{}, false
+
+	points := make([]geom.Pt, len(gridPts))
+	for i, g := range gridPts {
+		points[i] = ctx.gridToData(g[0], g[1])
 	}
-	mid := geom.Pt{
-		X: point.X + (u1/mag1)*(step*0.5),
-		Y: point.Y + (v1/mag1)*(step*0.5),
+	return points, used, stotal
+}
+
+// streamEulerStep extends the trajectory to the grid boundary with a single
+// Euler step, mirroring streamplot._euler_step.
+func streamEulerStep(ctx *streamGridContext, last [2]float64, sign float64) (float64, [2]float64, bool) {
+	gx, gy := last[0], last[1]
+	cx, cy, st := ctx.velocity(gx, gy, sign)
+	if st != streamVelocityOK {
+		return 0, last, false
 	}
-	u2, v2, ok := interpolateStreamVector(grid, mid)
-	if !ok {
-		return geom.Pt{}, false
+	dsx := math.Inf(1)
+	switch {
+	case cx < 0:
+		dsx = gx / -cx
+	case cx > 0:
+		dsx = (float64(ctx.nx-1) - gx) / cx
 	}
-	mag2 := math.Hypot(u2, v2)
-	if mag2 == 0 {
-		return geom.Pt{}, false
+	dsy := math.Inf(1)
+	switch {
+	case cy < 0:
+		dsy = gy / -cy
+	case cy > 0:
+		dsy = (float64(ctx.ny-1) - gy) / cy
 	}
-	return geom.Pt{
-		X: point.X + (u2/mag2)*step,
-		Y: point.Y + (v2/mag2)*step,
-	}, true
+	ds := math.Min(dsx, dsy)
+	if !isFinite(ds) || ds < 0 {
+		return 0, last, false
+	}
+	return ds, [2]float64{gx + cx*ds, gy + cy*ds}, true
 }
 
 func interpolateStreamVector(grid streamplotGrid, point geom.Pt) (float64, float64, bool) {
@@ -444,26 +573,6 @@ func locateInterval(values []float64, target float64) int {
 		return -1
 	}
 	return idx
-}
-
-func normalizedPathLength(points []geom.Pt, grid streamplotGrid) float64 {
-	total := 0.0
-	for i := 1; i < len(points); i++ {
-		total += normalizedSegmentLength(points[i-1], points[i], grid)
-	}
-	return total
-}
-
-func normalizedSegmentLength(a, b geom.Pt, grid streamplotGrid) float64 {
-	xspan := grid.x[len(grid.x)-1] - grid.x[0]
-	yspan := grid.y[len(grid.y)-1] - grid.y[0]
-	if xspan == 0 {
-		xspan = 1
-	}
-	if yspan == 0 {
-		yspan = 1
-	}
-	return math.Hypot((b.X-a.X)/xspan, (b.Y-a.Y)/yspan)
 }
 
 func sampleStreamArrows(trajectories []streamTrajectory, count int) ([]geom.Pt, []float64, []float64) {

@@ -27,7 +27,7 @@ def pcolor_flat(out_dir):
         shading="flat",
         cmap="plasma",
         edgecolors=[(0.96, 0.96, 0.96, 1)],
-        linewidth=lw(0.75),
+        linewidth=0.75,
     )
     ax.set_xlim(0, 5.2)
     ax.set_ylim(-0.2, 4.0)

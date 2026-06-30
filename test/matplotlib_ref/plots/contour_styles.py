@@ -40,7 +40,7 @@ def contour_styles(out_dir):
         xs, ys, z,
         levels=[-0.3, -0.2, -0.1, 0.1, 0.2, 0.3],
         colors=[(0.0, 0.0, 0.0, 1.0)],
-        linewidths=lw(1.5),
+        linewidths=1.5,
     )
     line_ax.clabel(
         cs, fmt="%.2f", inline=False,

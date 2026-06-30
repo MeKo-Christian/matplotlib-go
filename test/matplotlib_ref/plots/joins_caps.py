@@ -19,8 +19,8 @@ def joins_caps(out_dir):
     ax.set_title("Line Joins and Caps")
     ax.set_xlim(0, 10)
     ax.set_ylim(0, 6)
-    ax.plot([1, 3, 3, 5], [5, 5, 3, 3], color=(0.8, 0.2, 0.2), linewidth=lw(8))
-    ax.plot([7, 9], [5, 5], color=(0.2, 0.2, 0.8), linewidth=lw(8))
+    ax.plot([1, 3, 3, 5], [5, 5, 3, 3], color=(0.8, 0.2, 0.2), linewidth=8)
+    ax.plot([7, 9], [5, 5], color=(0.2, 0.2, 0.8), linewidth=8)
     save(fig, out_dir, "joins_caps")
 
 PLOT = joins_caps

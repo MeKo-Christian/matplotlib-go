@@ -21,7 +21,7 @@ def stem_plot(out_dir):
     ax.set_ylabel("Amplitude")
     ax.set_xlim(0.5, 7.5)
     ax.set_ylim(-0.2, 4.2)
-    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
     markerline, stemlines, baseline = ax.stem(
         [1, 2, 3, 4, 5, 6, 7],

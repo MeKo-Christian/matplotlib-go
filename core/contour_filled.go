@@ -194,7 +194,7 @@ func applyContourHatchStyle(fills *PolyCollection, hatches []string, rc *style.R
 		return
 	}
 	fills.HatchColor = rc.Hatch.Color
-	fills.HatchWidth = pointsToPixels(*rc, rc.Hatch.LineWidth)
+	fills.HatchWidth = rc.Hatch.LineWidth // points; converted at the collection hatch sink
 }
 
 func contourHatchesUsed(hatches []string) bool {

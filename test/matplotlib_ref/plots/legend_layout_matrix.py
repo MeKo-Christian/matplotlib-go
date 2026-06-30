@@ -31,7 +31,7 @@ def legend_layout_matrix(out_dir):
         [0.4, 1.4, 2.4, 3.4, 4.4, 5.4],
         [1.0, 1.7, 1.4, 2.2, 2.0, 2.7],
         color=blue,
-        linewidth=lw(2.0),
+        linewidth=2.0,
         label="line",
     )
     ax.scatter(
@@ -47,7 +47,7 @@ def legend_layout_matrix(out_dir):
         [0.85, 1.15, 0.95, 1.25],
         yerr=[0.22, 0.18, 0.25, 0.20],
         color=green,
-        linewidth=lw(2.0),
+        linewidth=2.0,
         capsize=5,
         marker="s",
         markersize=5,
@@ -57,7 +57,7 @@ def legend_layout_matrix(out_dir):
         [0.5, 1.6, 2.7, 3.8, 4.9],
         [4.5, 4.1, 4.35, 4.0, 4.25],
         color=purple,
-        linewidth=lw(2.0),
+        linewidth=2.0,
         label="handler patch",
     )
 
@@ -65,7 +65,7 @@ def legend_layout_matrix(out_dir):
     handler_proxy = mpatches.Patch(
         facecolor=(0.74, 0.52, 0.83, 0.85),
         edgecolor=purple,
-        linewidth=lw(1.2),
+        linewidth=1.2,
         hatch="/",
     )
     handles = [handler_proxy if handle is handler_line else handle for handle in handles]
@@ -86,7 +86,7 @@ def legend_layout_matrix(out_dir):
     proxy = mpatches.Patch(
         facecolor=(0.93, 0.77, 0.33, 0.92),
         edgecolor=(0.45, 0.30, 0.08, 1.0),
-        linewidth=lw(1.2),
+        linewidth=1.2,
         hatch="xx",
         label="proxy patch",
     )

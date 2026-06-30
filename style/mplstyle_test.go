@@ -52,13 +52,13 @@ patch.facecolor: 348ABD
 	if theme.RC.FontKey != "DejaVu Sans" || theme.RC.FontSize != 10 {
 		t.Fatalf("unexpected font settings: %+v", theme.RC)
 	}
-	if got, want := theme.RC.LineWidth, 2.0*100.0/72.0; !almostEqual(got, want) {
+	if got, want := theme.RC.LineWidth, 2.0; !almostEqual(got, want) {
 		t.Fatalf("line width = %v, want %v", got, want)
 	}
-	if got, want := theme.RC.AxisLineWidth, 1.0*100.0/72.0; !almostEqual(got, want) {
+	if got, want := theme.RC.AxisLineWidth, 1.0; !almostEqual(got, want) {
 		t.Fatalf("axis line width = %v, want %v", got, want)
 	}
-	if got, want := theme.RC.GridLineWidth, 0.5*100.0/72.0; !almostEqual(got, want) {
+	if got, want := theme.RC.GridLineWidth, 0.5; !almostEqual(got, want) {
 		t.Fatalf("grid line width = %v, want %v", got, want)
 	}
 	if got, want := theme.RC.MinorGridLineWidth, theme.RC.GridLineWidth; !almostEqual(got, want) {

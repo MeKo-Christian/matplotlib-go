@@ -34,9 +34,9 @@ def fill_variants(out_dir):
     y1 = [np.sin(t) for t in x]
     y2 = [0.8 * np.cos(t) for t in x]
     b_ax.fill_between(x, y1, y2, facecolor=(0.8, 0.3, 0.3, 0.6),
-                      edgecolor=(0.5, 0.1, 0.1, 1.0), linewidth=lw(1.5))
-    b_ax.plot(x, y1, color=(1, 0, 0), linewidth=lw(2))
-    b_ax.plot(x, y2, color=(0, 0, 1), linewidth=lw(2))
+                      edgecolor=(0.5, 0.1, 0.1, 1.0), linewidth=1.5)
+    b_ax.plot(x, y1, color=(1, 0, 0), linewidth=2)
+    b_ax.plot(x, y2, color=(0, 0, 1), linewidth=2)
 
     # Fill betweenx.
     bx_ax = axes["betweenx"]
@@ -49,7 +49,7 @@ def fill_variants(out_dir):
         [3.4, 4.1, 4.8, 5.1, 5.6, 6.0, 6.3],
         facecolor=(0.24, 0.68, 0.54, 0.72),
         edgecolor=(0.12, 0.38, 0.28, 1.0),
-        linewidth=lw(1.2),
+        linewidth=1.2,
     )
 
     # Stacked fills.
@@ -63,11 +63,11 @@ def fill_variants(out_dir):
     layer3 = [layer2[i] + 1.2 + 0.4 * np.cos(i) for i in range(len(layer1))]
     base = [0] * len(xs)
     s_ax.fill_between(xs, base, layer1, facecolor=(0.8, 0.2, 0.2, 0.8),
-                      edgecolor=(0.5, 0, 0, 1), linewidth=lw(1.0))
+                      edgecolor=(0.5, 0, 0, 1), linewidth=1.0)
     s_ax.fill_between(xs, layer1, layer2, facecolor=(0.2, 0.8, 0.2, 0.8),
-                      edgecolor=(0, 0.5, 0, 1), linewidth=lw(1.0))
+                      edgecolor=(0, 0.5, 0, 1), linewidth=1.0)
     s_ax.fill_between(xs, layer2, layer3, facecolor=(0.2, 0.2, 0.8, 0.8),
-                      edgecolor=(0, 0, 0.5, 1), linewidth=lw(1.0))
+                      edgecolor=(0, 0, 0.5, 1), linewidth=1.0)
 
     # Alpha overlap.
     a_ax = axes["alpha"]

@@ -25,7 +25,7 @@ type Bar2D struct {
 	Width       float64        // default bar width in data units
 	Color       render.Color   // default bar fill color
 	EdgeColor   render.Color   // default edge color for bar outlines
-	EdgeWidth   float64        // edge width in pixels (0 means no edge)
+	EdgeWidth   float64        // edge width in points (0 means no edge)
 	Alpha       float64        // alpha transparency (0-1), applied to both fill and edge
 	Baseline    float64        // baseline value (0 for most cases)
 	Orientation BarOrientation // vertical or horizontal bars
@@ -106,7 +106,7 @@ func (b *Bar2D) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 		if b.EdgeWidth > 0 && edgeColor.A > 0 {
 			paint.Stroke = edgeColor
-			paint.LineWidth = b.EdgeWidth
+			paint.LineWidth = pointsToPixels(ctx.RC, b.EdgeWidth)
 			paint.LineJoin = render.JoinMiter
 			paint.LineCap = render.CapButt
 		}

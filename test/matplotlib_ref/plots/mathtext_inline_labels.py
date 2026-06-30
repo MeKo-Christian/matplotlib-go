@@ -24,8 +24,8 @@ def mathtext_inline_labels(out_dir):
     y1 = [0.55 + 0.35 * math.sin(1.5 * t) for t in xs]
     y2 = [0.48 + 0.28 * math.cos(1.5 * t + 0.45) for t in xs]
 
-    ax.plot(xs, y1, linewidth=lw(2), color=TAB10[0], label=r"state $x_i(t)$")
-    ax.plot(xs, y2, linewidth=lw(2), color=TAB10[1], label=r"state $y_i(t)$")
+    ax.plot(xs, y1, linewidth=2, color=TAB10[0], label=r"state $x_i(t)$")
+    ax.plot(xs, y2, linewidth=2, color=TAB10[1], label=r"state $y_i(t)$")
     ax.set_title(r"Inline labels: $\omega_n$ response")
     ax.set_xlabel(r"time $t$")
     ax.set_ylabel(r"state $x_i(t)$")

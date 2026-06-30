@@ -101,7 +101,7 @@ func (s *Shadow) Draw(ren render.Renderer, ctx *DrawContext) {
 	if shadow.EdgeWidth <= 0 && src != nil {
 		shadow.EdgeWidth = src.EdgeWidth
 	}
-	shadow.drawStyledPath(ren, path, geom.Path{})
+	shadow.drawStyledPath(ren, &ctx.RC, path, geom.Path{})
 }
 
 // Bounds returns an empty rect because shadows should not affect autoscaling.
@@ -113,7 +113,7 @@ func (p *RegularPolygon) Draw(ren render.Renderer, ctx *DrawContext) {
 		return
 	}
 	path := buildArtistDisplayPath(ctx, p, p.Coords, p.localPath(), geom.Identity())
-	p.drawStyledPath(ren, path, geom.Path{})
+	p.drawStyledPath(ren, &ctx.RC, path, geom.Path{})
 }
 
 // Bounds returns data-space bounds when applicable.
@@ -135,7 +135,7 @@ func (c *CirclePolygon) Draw(ren render.Renderer, ctx *DrawContext) {
 		return
 	}
 	path := buildArtistDisplayPath(ctx, c, c.Coords, c.localPath(), geom.Identity())
-	c.drawStyledPath(ren, path, geom.Path{})
+	c.drawStyledPath(ren, &ctx.RC, path, geom.Path{})
 }
 
 // Bounds returns data-space bounds when applicable.
@@ -163,7 +163,7 @@ func (a *Arc) Draw(ren render.Renderer, ctx *DrawContext) {
 		return
 	}
 	path := buildArtistDisplayPath(ctx, a, a.Coords, a.localPath(), geom.Identity())
-	a.drawStyledPath(ren, geom.Path{}, path)
+	a.drawStyledPath(ren, &ctx.RC, geom.Path{}, path)
 }
 
 // Bounds returns data-space bounds when applicable.
@@ -189,7 +189,7 @@ func (a *Annulus) Draw(ren render.Renderer, ctx *DrawContext) {
 		return
 	}
 	path := buildArtistDisplayPath(ctx, a, a.Coords, a.localPath(), geom.Identity())
-	a.drawStyledPath(ren, path, geom.Path{})
+	a.drawStyledPath(ren, &ctx.RC, path, geom.Path{})
 }
 
 // Bounds returns data-space bounds when applicable.
@@ -249,7 +249,7 @@ func (s *StepPatch) Draw(ren render.Renderer, ctx *DrawContext) {
 		return
 	}
 	path := buildArtistDisplayPath(ctx, s, s.Coords, s.localPath(), geom.Identity())
-	s.drawStyledPath(ren, path, geom.Path{})
+	s.drawStyledPath(ren, &ctx.RC, path, geom.Path{})
 }
 
 // Bounds returns data-space bounds when applicable.

@@ -19,7 +19,7 @@ def units_dates(out_dir):
     ax.set_title("Date Units")
     ax.set_xlabel("Date")
     ax.set_ylabel("Requests")
-    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
 
     dates = [
@@ -36,7 +36,7 @@ def units_dates(out_dir):
         dates,
         [8, 12, 9, 15, 13],
         color=(0.12, 0.47, 0.71),
-        linewidth=lw(2.0),
+        linewidth=2.0,
     )
     ax.xaxis.set_major_locator(mdates.DayLocator(bymonthday=[5, 12, 19]))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%d %b"))

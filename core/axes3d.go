@@ -513,7 +513,7 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *StemContainer
 	}
 	color.A *= alpha
 
-	lineWidth := pointsToPixels(a.resolvedRC(), 1.5)
+	lineWidth := 1.5 // points; converted at the collection/line Paint sink
 	if opt.LineWidth != nil {
 		lineWidth = *opt.LineWidth
 	}
@@ -530,7 +530,7 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *StemContainer
 		markerEdgeColor = *opt.MarkerEdgeColor
 		markerEdgeColor.A *= alpha
 	}
-	markerEdgeWidth := pointsToPixels(a.resolvedRC(), 1)
+	markerEdgeWidth := 1.0 // points; converted at the collection Paint sink
 	if opt.MarkerEdgeWidth != nil {
 		markerEdgeWidth = *opt.MarkerEdgeWidth
 	}
@@ -722,7 +722,7 @@ func (a *Axes3D) Quiver(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *Li
 		alpha = *opt.Alpha
 	}
 	color.A *= alpha
-	lineWidth := pointsToPixels(a.resolvedRC(), 1.5)
+	lineWidth := 1.5 // points; converted at the collection Paint sink
 	if opt.LineWidth != nil {
 		lineWidth = *opt.LineWidth
 	}
@@ -828,7 +828,7 @@ func (a *Axes3D) Wireframe(x, y []float64, z [][]float64, opts ...PlotOptions) *
 	}
 
 	color := a.NextColor()
-	lineWidth := 2.0
+	lineWidth := 1.5 // points (matplotlib lines.linewidth default); converted at the collection Paint sink
 	alpha := 1.0
 	label := ""
 	if len(opts) > 0 {

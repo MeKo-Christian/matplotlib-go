@@ -11,7 +11,7 @@ import (
 // axes edge so the stroke can extend on both sides like Matplotlib's spines.
 func (a *Axis) drawSpine(r render.Renderer, ctx *DrawContext) {
 	px := ctx.Clip
-	lw := a.LineWidth
+	lw := pointsToPixels(ctx.RC, a.LineWidth)
 	p1, p2 := axisSpinePixelEndpoints(a, ctx, px)
 
 	paint := render.Paint{
@@ -69,6 +69,35 @@ func snapDisplayY(y float64, heights ...float64) float64 {
 	return math.Floor(y+0.5) + 0.5
 }
 
+// snapOffsetForWidth mirrors the AGG backend's PathSnapper parity rule: a stroke
+// whose rounded pixel width is odd is centred on a half-pixel (+0.5), while an
+// even width is centred on an integer pixel boundary (+0.0). Matplotlib applies
+// this same offset uniformly to every coordinate of a snapped axis-aligned path.
+func snapOffsetForWidth(lineWidthPx float64) float64 {
+	if lineWidthPx > 0 && int(math.Round(lineWidthPx))%2 != 0 {
+		return 0.5
+	}
+	return 0.0
+}
+
+// snapDisplayXForWidth snaps an x display coordinate with the width-parity offset
+// so even-width tick marks land on the pixel boundary exactly like Matplotlib.
+func snapDisplayXForWidth(x, lineWidthPx float64) float64 {
+	return math.Floor(x+0.5) + snapOffsetForWidth(lineWidthPx)
+}
+
+// snapDisplayYForWidth is the y-up analogue of snapDisplayXForWidth, emulating
+// device-space snapping ahead of the backend y-flip.
+func snapDisplayYForWidth(y, lineWidthPx float64, heights ...float64) float64 {
+	offset := snapOffsetForWidth(lineWidthPx)
+	if len(heights) > 0 && heights[0] > 0 {
+		height := heights[0]
+		deviceY := height - y
+		return height - (math.Floor(deviceY+0.5) + offset)
+	}
+	return math.Floor(y+0.5) + offset
+}
+
 func figureSnapHeight(ctx *DrawContext) float64 {
 	if ctx == nil {
 		return 0
@@ -89,7 +118,7 @@ func DrawFrame(r render.Renderer, ctx *DrawContext, ref *Axis, drawTop, drawRigh
 		return
 	}
 	paint := render.Paint{
-		LineWidth: ref.LineWidth,
+		LineWidth: pointsToPixels(ctx.RC, ref.LineWidth),
 		Stroke:    ref.Color,
 		LineCap:   ref.LineCap,
 		LineJoin:  ref.LineJoin,

@@ -81,18 +81,23 @@ func (a *Axis) drawMinorTicks(r render.Renderer, ctx *DrawContext, ticks []float
 func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, tickSize, lineWidth float64, stroke render.Color, isXAxis bool) {
 	var p1, p2 geom.Pt
 
+	// Snap with the tick's own stroke-width parity so even-width marks centre on
+	// the pixel boundary exactly like Matplotlib's PathSnapper (default 0.8pt
+	// ticks round to an odd pixel width and are unchanged from snapDisplay*).
+	lineWidthPx := pointsToPixels(ctx.RC, lineWidth)
+
 	if isXAxis {
 		spineY := getSpinePosition(a, ctx)
 		spinePixel := axisTickDisplayPoint(a, ctx, tickValue, true, spineY)
-		spinePixel.X = snapDisplayX(spinePixel.X)
-		spinePixel.Y = snapDisplayY(spinePixel.Y, figureSnapHeight(ctx))
+		spinePixel.X = snapDisplayXForWidth(spinePixel.X, lineWidthPx)
+		spinePixel.Y = snapDisplayYForWidth(spinePixel.Y, lineWidthPx, figureSnapHeight(ctx))
 
 		p1, p2 = axisTickSegment(a, spinePixel, tickSize, true)
 	} else {
 		spineX := getSpinePosition(a, ctx)
 		spinePixel := axisTickDisplayPoint(a, ctx, tickValue, false, spineX)
-		spinePixel.X = snapDisplayX(spinePixel.X)
-		spinePixel.Y = snapDisplayY(spinePixel.Y, figureSnapHeight(ctx))
+		spinePixel.X = snapDisplayXForWidth(spinePixel.X, lineWidthPx)
+		spinePixel.Y = snapDisplayYForWidth(spinePixel.Y, lineWidthPx, figureSnapHeight(ctx))
 
 		p1, p2 = axisTickSegment(a, spinePixel, tickSize, false)
 	}
@@ -106,7 +111,7 @@ func (a *Axis) drawSingleTick(r render.Renderer, ctx *DrawContext, tickValue, ti
 
 	// Draw the tick
 	paint := render.Paint{
-		LineWidth: lineWidth,
+		LineWidth: pointsToPixels(ctx.RC, lineWidth),
 		Stroke:    stroke,
 		LineCap:   a.TickLineCap,
 		LineJoin:  a.TickLineJoin,
@@ -318,7 +323,7 @@ func (a *Axis) SetTickDirection(direction string) error {
 	return nil
 }
 
-func axisStrokePaint(a *Axis, forTicks bool) render.Paint {
+func axisStrokePaint(a *Axis, ctx *DrawContext, forTicks bool) render.Paint {
 	if a == nil {
 		return render.Paint{}
 	}
@@ -331,7 +336,7 @@ func axisStrokePaint(a *Axis, forTicks bool) render.Paint {
 		stroke = a.tickColor()
 	}
 	return render.Paint{
-		LineWidth: a.LineWidth,
+		LineWidth: pointsToPixels(ctx.RC, a.LineWidth),
 		Stroke:    stroke,
 		LineCap:   lineCap,
 		LineJoin:  join,

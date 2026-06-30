@@ -11,10 +11,10 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 	if l != nil && l.FontSize > 0 {
 		fontSize = l.FontSize
 	}
-	l.drawSampleWithFontPixels(r, entry, sample, pointsToPixels(style.Default, fontSize))
+	l.drawSampleWithFontPixels(r, &style.Default, &entry, sample, pointsToPixels(style.Default, fontSize))
 }
 
-func (l *Legend) drawSampleWithFontPixels(r render.Renderer, entry legendEntry, sample geom.Rect, fontPx float64) {
+func (l *Legend) drawSampleWithFontPixels(r render.Renderer, rc *style.RC, entry *legendEntry, sample geom.Rect, fontPx float64) {
 	center := geom.Pt{
 		X: sample.Min.X + sample.W()/2,
 		Y: sample.Min.Y + sample.H()/2,
@@ -22,7 +22,7 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, entry legendEntry, 
 
 	switch entry.kind {
 	case legendEntryErrorBar:
-		l.drawErrorBarSample(r, entry, sample, center, fontPx)
+		l.drawErrorBarSample(r, rc, entry, sample, center, fontPx)
 	case legendEntryPatch:
 		// Matplotlib's HandlerPatch fills the legend handle box. The
 		// handleheight default is 0.7 font-size units, and the default
@@ -46,10 +46,10 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, entry legendEntry, 
 			LineJoin:   render.JoinMiter,
 			LineCap:    render.CapButt,
 		}
-		patch.drawStyledPath(r, pixelRectPath(patchRect), geom.Path{})
+		patch.drawStyledPath(r, rc, pixelRectPath(patchRect), geom.Path{})
 	case legendEntryMarker:
 		for _, pt := range l.markerSampleCenters(sample, center) {
-			l.drawMarkerSample(r, entry, pt, l.markerSampleScale(entry, 5), true)
+			l.drawMarkerSample(r, rc, entry, pt, l.markerSampleScale(*entry, 5), true)
 		}
 	default:
 		lineWidth := entry.lineWidth
@@ -65,26 +65,26 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, entry legendEntry, 
 		}
 		r.Path(path, &render.Paint{
 			Stroke:    entry.lineColor,
-			LineWidth: lineWidth,
+			LineWidth: pointsToPixels(*rc, lineWidth),
 			LineJoin:  entry.lineJoin,
 			LineCap:   entry.lineCap,
 			Dashes:    entry.dashes,
 			Snap:      render.SnapAuto,
 		})
 		if entry.lineMarkerSet {
-			l.drawMarkerSample(r, entry, center, l.markerSampleScale(entry, 5), false)
+			l.drawMarkerSample(r, rc, entry, center, l.markerSampleScale(*entry, 5), false)
 		}
 	}
 }
 
-func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample geom.Rect, center geom.Pt, fontPx float64) {
+func (l *Legend) drawErrorBarSample(r render.Renderer, rc *style.RC, entry *legendEntry, sample geom.Rect, center geom.Pt, fontPx float64) {
 	lineWidth := entry.lineWidth
 	if lineWidth <= 0 {
 		lineWidth = 1.5
 	}
 	paint := render.Paint{
 		Stroke:    entry.lineColor,
-		LineWidth: lineWidth,
+		LineWidth: pointsToPixels(*rc, lineWidth),
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
 		Dashes:    entry.dashes,
@@ -92,7 +92,7 @@ func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample
 	}
 	capPaint := paint
 	if entry.errorbarCapWidth > 0 {
-		capPaint.LineWidth = entry.errorbarCapWidth
+		capPaint.LineWidth = pointsToPixels(*rc, entry.errorbarCapWidth)
 	}
 	r.Path(geom.Path{
 		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
@@ -140,7 +140,7 @@ func (l *Legend) drawErrorBarSample(r render.Renderer, entry legendEntry, sample
 		}, &capPaint)
 	}
 	if entry.lineMarkerSet {
-		l.drawMarkerSample(r, entry, center, l.markerSampleScale(entry, 5), false)
+		l.drawMarkerSample(r, rc, entry, center, l.markerSampleScale(*entry, 5), false)
 	}
 }
 
@@ -190,11 +190,12 @@ func (l *Legend) markerSampleCenters(sample geom.Rect, center geom.Pt) []geom.Pt
 	return centers
 }
 
-func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center geom.Pt, radius float64, offsetCenter bool) {
+func (l *Legend) drawMarkerSample(r render.Renderer, rc *style.RC, entry *legendEntry, center geom.Pt, radius float64, offsetCenter bool) {
 	if offsetCenter {
 		center.X += 0.5
 		center.Y += 0.5
 	}
+	markerEdgeWidthPx := pointsToPixels(*rc, entry.markerEdgeWidth)
 	lineJoin := entry.markerLineJoin
 	if lineJoin == 0 {
 		lineJoin = render.JoinRound
@@ -216,7 +217,7 @@ func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center g
 		drawLegendMarkerPath(r, markerPath, center, markerScale, entry.markerSnap, render.Paint{
 			Fill:      entry.markerFill,
 			Stroke:    entry.markerEdge,
-			LineWidth: entry.markerEdgeWidth,
+			LineWidth: markerEdgeWidthPx,
 			LineJoin:  lineJoin,
 			LineCap:   lineCap,
 		})
@@ -224,7 +225,7 @@ func (l *Legend) drawMarkerSample(r render.Renderer, entry legendEntry, center g
 			drawLegendMarkerPath(r, entry.markerAltPath, center, radius, entry.markerSnap, render.Paint{
 				Fill:      entry.markerAltFill,
 				Stroke:    entry.markerEdge,
-				LineWidth: entry.markerEdgeWidth,
+				LineWidth: markerEdgeWidthPx,
 				LineJoin:  lineJoin,
 				LineCap:   lineCap,
 			})

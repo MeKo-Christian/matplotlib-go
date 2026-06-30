@@ -343,7 +343,7 @@ func TestAxisTicksSplitIsTracked(t *testing.T) {
 		"func axisTickDisplayPoint(a *Axis, ctx *DrawContext, tickValue float64, isXAxis bool, spineValue float64) geom.Pt",
 		"func axisTickSegment(axis *Axis, spine geom.Pt, tickSize float64, isXAxis bool) (geom.Pt, geom.Pt)",
 		"func (a *Axis) SetTickDirection(direction string) error",
-		"func axisStrokePaint(a *Axis, forTicks bool) render.Paint",
+		"func axisStrokePaint(a *Axis, ctx *DrawContext, forTicks bool) render.Paint",
 		"func (a *Axis) tickColor() render.Color",
 		"func (a *Axis) minorTickColor() render.Color",
 		"func (a *Axis) tickLineWidth() float64",

@@ -34,7 +34,7 @@ def plot_variants(out_dir):
         [1.1, 2.5, 1.7, 3.4, 2.9, 4.1, 3.6],
         where="post",
         color=(0.15, 0.39, 0.78),
-        linewidth=lw(2.0),
+        linewidth=2.0,
     )
     step_ax.stairs(
         [0.9, 1.7, 1.4, 2.6, 1.8, 2.2],
@@ -43,7 +43,7 @@ def plot_variants(out_dir):
         fill=True,
         facecolor=(0.91, 0.49, 0.20, 0.72),
         edgecolor=(0.58, 0.26, 0.08, 1.0),
-        linewidth=lw(1.5),
+        linewidth=1.5,
     )
 
     fill_ax = axes["fill"]
@@ -58,12 +58,12 @@ def plot_variants(out_dir):
         [3.4, 4.1, 4.8, 5.1, 5.6, 6.0, 6.3],
         facecolor=(0.24, 0.68, 0.54, 0.72),
         edgecolor=(0.12, 0.38, 0.28, 1.0),
-        linewidth=lw(1.2),
+        linewidth=1.2,
     )
     fill_ax.axvspan(2.2, 3.1, color=(0.92, 0.75, 0.18), alpha=0.20)
-    fill_ax.axhline(4.0, color=(0.52, 0.18, 0.18), linewidth=lw(1.2), dashes=[4 * 36.0 / DPI, 3 * 36.0 / DPI])
-    fill_ax.axvline(5.3, color=(0.18, 0.22, 0.55), linewidth=lw(1.2), dashes=[2 * 36.0 / DPI, 2 * 36.0 / DPI])
-    fill_ax.axline((0.9, 0.3), (6.4, 5.6), color=(0.22, 0.22, 0.22), linewidth=lw(1.1))
+    fill_ax.axhline(4.0, color=(0.52, 0.18, 0.18), linewidth=1.2, dashes=[4 * 36.0 / DPI, 3 * 36.0 / DPI])
+    fill_ax.axvline(5.3, color=(0.18, 0.22, 0.55), linewidth=1.2, dashes=[2 * 36.0 / DPI, 2 * 36.0 / DPI])
+    fill_ax.axline((0.9, 0.3), (6.4, 5.6), color=(0.22, 0.22, 0.22), linewidth=1.1)
 
     broken_ax = axes["broken"]
     broken_ax.set_title("broken_barh")

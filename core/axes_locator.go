@@ -242,7 +242,7 @@ func (i *InsetIndicator) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 
 	paint := render.Paint{
 		Stroke:    i.Color,
-		LineWidth: i.LineWidth,
+		LineWidth: pointsToPixels(ctx.RC, i.LineWidth),
 		LineCap:   render.CapButt,
 		LineJoin:  render.JoinMiter,
 	}

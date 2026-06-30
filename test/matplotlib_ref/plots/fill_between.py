@@ -27,10 +27,10 @@ def fill_between(out_dir):
         x, y1, y2,
         facecolor=(0.8, 0.3, 0.3, 0.6),
         edgecolor=(0.5, 0.1, 0.1, 1.0),
-        linewidth=lw(1.5),
+        linewidth=1.5,
     )
-    ax.plot(x, y1, color=(1, 0, 0), linewidth=lw(2))
-    ax.plot(x, y2, color=(0, 0, 1), linewidth=lw(2))
+    ax.plot(x, y1, color=(1, 0, 0), linewidth=2)
+    ax.plot(x, y2, color=(0, 0, 1), linewidth=2)
     save(fig, out_dir, "fill_between")
 
 PLOT = fill_between

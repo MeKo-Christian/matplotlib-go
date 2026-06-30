@@ -17,7 +17,7 @@ func (a *Axes3D) Contour(x, y []float64, z [][]float64, opts ...PlotOptions) *Li
 	}
 
 	color := a.NextColor()
-	lineWidth := 2.0
+	lineWidth := 1.5 // points (matplotlib contour.linewidth/lines.linewidth default); converted at the collection Paint sink
 	alpha := 1.0
 	label := ""
 	colorOverride := false
@@ -119,7 +119,7 @@ func (a *Axes3D) TriContour(tri Triangulation, z []float64, opts ...PlotOptions)
 	}
 
 	color := a.NextColor()
-	lineWidth := 2.0
+	lineWidth := 1.5 // points (matplotlib contour.linewidth/lines.linewidth default); converted at the collection Paint sink
 	alpha := 1.0
 	colorOverride := false
 	if opt.Color != nil {

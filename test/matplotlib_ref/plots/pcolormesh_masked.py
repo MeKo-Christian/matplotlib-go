@@ -40,7 +40,7 @@ def pcolormesh_masked(out_dir):
         data,
         cmap=cmap,
         edgecolors=[(0.98, 0.98, 0.98, 1)],
-        linewidth=lw(0.7),
+        linewidth=0.7,
     )
     ax.set_xlim(0, 5)
     ax.set_ylim(0, 4)

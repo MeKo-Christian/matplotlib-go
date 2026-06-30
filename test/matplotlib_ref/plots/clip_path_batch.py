@@ -67,7 +67,7 @@ def clip_path_batch(out_dir):
         vmax=1.15,
         alpha=0.84,
         edgecolors=[(0.97, 0.97, 0.97, 0.72)],
-        linewidth=lw(0.55),
+        linewidth=0.55,
         antialiased=True,
     )
     clip_path = clip_batch_path()
@@ -78,7 +78,7 @@ def clip_path_batch(out_dir):
         transform=ax.transData,
         facecolor="none",
         edgecolor=(0.05, 0.08, 0.12, 1),
-        linewidth=lw(2.0),
+        linewidth=2.0,
         joinstyle="miter",
     )
     ax.add_patch(outline)

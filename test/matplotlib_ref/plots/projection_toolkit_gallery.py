@@ -171,11 +171,11 @@ def add_polar(fig):
     ax.set_ylim(0, 1.15)
     ax.set_yticks([0.25, 0.5, 0.75, 1.0])
     ax.set_yticklabels(["25%", "50%", "75%", "100%"])
-    ax.grid(color=(0.80, 0.82, 0.86, 1.0), linewidth=lw(0.8))
+    ax.grid(color=(0.80, 0.82, 0.86, 1.0), linewidth=0.8)
     theta = np.linspace(0, 2 * math.pi, 241)
     radius = 0.62 + 0.28 * np.sin(3 * theta + 0.35)
     ax.fill(theta, radius, color=(0.18, 0.50, 0.82, 0.22))
-    ax.plot(theta, radius, color=(0.14, 0.34, 0.70, 1.0), linewidth=lw(2.0))
+    ax.plot(theta, radius, color=(0.14, 0.34, 0.70, 1.0), linewidth=2.0)
 
 
 def add_geo(fig, row, col, projection, title, lon_min, lon_max):
@@ -185,10 +185,10 @@ def add_geo(fig, row, col, projection, title, lon_min, lon_max):
     ax.set_ylabel("lat")
     if projection == "lambert":
         ax.set_xticks(np.arange(-120, 121, 30) * math.pi / 180.0)
-    ax.grid(color=(0.80, 0.82, 0.86, 1.0), linewidth=lw(0.7))
+    ax.grid(color=(0.80, 0.82, 0.86, 1.0), linewidth=0.7)
     lon = np.linspace(lon_min, lon_max, 241)
     lat = 0.35 * np.sin(3.0 * lon)
-    ax.plot(lon, lat, color=(0.14, 0.34, 0.70, 1.0), linewidth=lw(1.8))
+    ax.plot(lon, lat, color=(0.14, 0.34, 0.70, 1.0), linewidth=1.8)
 
 
 def add_radar(fig):
@@ -203,9 +203,9 @@ def add_radar(fig):
     ax.set_ylim(0, 1)
     ax.set_yticks([0.25, 0.5, 0.75, 1.0])
     ax.set_yticklabels(["25%", "50%", "75%", "100%"])
-    ax.grid(color=(0.80, 0.83, 0.88, 1.0), linewidth=lw(0.75))
+    ax.grid(color=(0.80, 0.83, 0.88, 1.0), linewidth=0.75)
     ax.fill(closed_angles, closed_values, color=(0.18, 0.50, 0.82, 0.22))
-    ax.plot(closed_angles, closed_values, color=(0.14, 0.34, 0.70, 1.0), linewidth=lw(2.0))
+    ax.plot(closed_angles, closed_values, color=(0.14, 0.34, 0.70, 1.0), linewidth=2.0)
 
 
 def add_skewt(fig):
@@ -218,12 +218,12 @@ def add_skewt(fig):
     ax.xaxis.set_minor_locator(MultipleLocator(10))
     ax.yaxis.set_major_locator(FixedLocator([200, 300, 500, 700, 850, 1000]))
     ax.yaxis.set_minor_formatter(NullFormatter())
-    ax.grid(color=(0.80, 0.82, 0.86, 1.0), linewidth=lw(0.75))
+    ax.grid(color=(0.80, 0.82, 0.86, 1.0), linewidth=0.75)
     pressure = np.array([1000, 925, 850, 700, 600, 500, 400, 300, 250, 200])
     temperature = np.array([24, 20, 15, 5, -4, -14, -28, -43, -51, -58])
     dewpoint = np.array([18, 14, 8, -4, -14, -25, -38, -50, -57, -64])
-    ax.plot(temperature, pressure, color=(0.78, 0.13, 0.16, 1.0), linewidth=lw(2.0), label="temp")
-    ax.plot(dewpoint, pressure, color=(0.05, 0.48, 0.28, 1.0), linewidth=lw(2.0), label="dew")
+    ax.plot(temperature, pressure, color=(0.78, 0.13, 0.16, 1.0), linewidth=2.0, label="temp")
+    ax.plot(dewpoint, pressure, color=(0.05, 0.48, 0.28, 1.0), linewidth=2.0, label="dew")
     ax.legend()
 
 
@@ -234,14 +234,14 @@ def add_axisartist(fig):
     ax.set_ylabel("signal")
     ax.set_xlim(-3.5, 3.5)
     ax.set_ylim(-1.3, 1.3)
-    ax.grid(axis="y", color=(0.80, 0.82, 0.86, 1.0), linewidth=lw(0.75))
+    ax.grid(axis="y", color=(0.80, 0.82, 0.86, 1.0), linewidth=0.75)
     x = np.linspace(-3.5, 3.5, 180)
-    ax.plot(x, np.sin(x), color=(0.14, 0.34, 0.70, 1.0), linewidth=lw(2.0), label="sin")
-    ax.axhline(0, color=(0.26, 0.26, 0.30, 1.0), linewidth=lw(1.2), dashes=[5 * 36.0 / DPI, 3 * 36.0 / DPI])
-    ax.axvline(0, color=(0.26, 0.26, 0.30, 1.0), linewidth=lw(1.2), dashes=[5 * 36.0 / DPI, 3 * 36.0 / DPI])
+    ax.plot(x, np.sin(x), color=(0.14, 0.34, 0.70, 1.0), linewidth=2.0, label="sin")
+    ax.axhline(0, color=(0.26, 0.26, 0.30, 1.0), linewidth=1.2, dashes=[5 * 36.0 / DPI, 3 * 36.0 / DPI])
+    ax.axvline(0, color=(0.26, 0.26, 0.30, 1.0), linewidth=1.2, dashes=[5 * 36.0 / DPI, 3 * 36.0 / DPI])
     right = ax.twinx()
     right.set_ylim(0, 100)
-    right.plot(x, 55 + 35 * np.cos(x * 0.8), color=(0.74, 0.28, 0.18, 1.0), linewidth=lw(2.0), label="scaled cos")
+    right.plot(x, 55 + 35 * np.cos(x * 0.8), color=(0.74, 0.28, 0.18, 1.0), linewidth=2.0, label="scaled cos")
     right.spines["right"].set_color((0.74, 0.28, 0.18, 1.0))
     right.tick_params(axis="y", colors=(0.74, 0.28, 0.18, 1.0))
     ax.text(

@@ -166,7 +166,7 @@ func (a *AnchoredTextBox) Draw(r render.Renderer, ctx *DrawContext) {
 	r.Path(boxPath, &render.Paint{
 		Fill:      a.BackgroundColor,
 		Stroke:    a.BorderColor,
-		LineWidth: a.BorderWidth,
+		LineWidth: pointsToPixels(ctx.RC, a.BorderWidth),
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
 		Snap:      snap,

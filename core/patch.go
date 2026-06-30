@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 const (
@@ -133,9 +134,11 @@ func (p *Patch) resolvedHatchColor() render.Color {
 	return patchAlphaColor(color, p.Alpha)
 }
 
+// resolvedHatchWidth returns the hatch line width in points (matplotlib
+// hatch.linewidth defaults to 1.0 pt). Callers convert to device pixels.
 func (p *Patch) resolvedHatchWidth() float64 {
 	if p == nil || p.HatchWidth <= 0 {
-		return 100.0 / 72.0
+		return 1.0
 	}
 	return p.HatchWidth
 }
@@ -160,14 +163,15 @@ func patchAlphaColor(color render.Color, alpha float64) render.Color {
 	return color
 }
 
-func (p *Patch) strokePaint(color render.Color) render.Paint {
+func (p *Patch) strokePaint(rc *style.RC, color render.Color) render.Paint {
+	widthPx := pointsToPixels(*rc, p.EdgeWidth)
 	return render.Paint{
 		Stroke:      color,
-		LineWidth:   p.EdgeWidth,
+		LineWidth:   widthPx,
 		LineJoin:    p.LineJoin,
 		LineCap:     p.LineCap,
-		Dashes:      patchDashesForPaint(p.Dashes, p.EdgeWidth, p.DashUnits),
-		PathEffects: cloneRenderPathEffects(p.PathEffects),
+		Dashes:      patchDashesForPaint(p.Dashes, widthPx, p.DashUnits),
+		PathEffects: devicePathEffects(*rc, p.PathEffects),
 		Snap:        render.SnapAuto,
 		Sketch:      p.Sketch,
 	}
@@ -177,7 +181,7 @@ func patchDashesForPaint(dashes []float64, edgeWidth float64, units DashUnits) [
 	return lineDashesForPaint(dashes, edgeWidth, units)
 }
 
-func (p *Patch) drawStyledPath(r render.Renderer, fillPath, strokePath geom.Path) {
+func (p *Patch) drawStyledPath(r render.Renderer, rc *style.RC, fillPath, strokePath geom.Path) {
 	if p == nil || r == nil {
 		return
 	}
@@ -188,6 +192,7 @@ func (p *Patch) drawStyledPath(r render.Renderer, fillPath, strokePath geom.Path
 	faceColor := p.resolvedFaceColor()
 	edgeColor := p.resolvedEdgeColor()
 	hasEdge := p.EdgeWidth > 0 && edgeColor.A > 0
+	edgeWidthPx := pointsToPixels(*rc, p.EdgeWidth)
 	nativeHatch := false
 	if hatcher, ok := r.(render.NativeHatcher); ok {
 		nativeHatch = hatcher.SupportsNativeHatch()
@@ -195,24 +200,24 @@ func (p *Patch) drawStyledPath(r render.Renderer, fillPath, strokePath geom.Path
 
 	if len(fillPath.C) > 0 {
 		paint := render.Paint{Fill: faceColor, Snap: render.SnapAuto, Sketch: p.Sketch}
-		paint.PathEffects = cloneRenderPathEffects(p.PathEffects)
+		paint.PathEffects = devicePathEffects(*rc, p.PathEffects)
 		if nativeHatch && p.Hatch != "" {
 			paint.Hatch = p.Hatch
 			paint.HatchColor = p.resolvedHatchColor()
-			paint.HatchLineWidth = p.resolvedHatchWidth()
+			paint.HatchLineWidth = pointsToPixels(*rc, p.resolvedHatchWidth())
 			paint.HatchSpacing = p.resolvedHatchSpacing()
 		}
 		combinedStroke := len(strokePath.C) == 0 && hasEdge
 		if combinedStroke {
 			if p.Hatch == "" {
-				paint = p.strokePaint(edgeColor)
+				paint = p.strokePaint(rc, edgeColor)
 				paint.Fill = faceColor
 			} else if nativeHatch {
 				paint.Stroke = edgeColor
-				paint.LineWidth = p.EdgeWidth
+				paint.LineWidth = edgeWidthPx
 				paint.LineJoin = p.LineJoin
 				paint.LineCap = p.LineCap
-				paint.Dashes = patchDashesForPaint(p.Dashes, p.EdgeWidth, p.DashUnits)
+				paint.Dashes = patchDashesForPaint(p.Dashes, edgeWidthPx, p.DashUnits)
 			}
 		}
 		if faceColor.A > 0 || combinedStroke || (nativeHatch && p.Hatch != "") {
@@ -222,25 +227,25 @@ func (p *Patch) drawStyledPath(r render.Renderer, fillPath, strokePath geom.Path
 
 	if len(fillPath.C) > 0 && p.Hatch != "" {
 		if !nativeHatch {
-			p.drawHatch(r, fillPath)
+			p.drawHatch(r, rc, fillPath)
 		}
 		if !nativeHatch && len(strokePath.C) == 0 && hasEdge {
-			paint := p.strokePaint(edgeColor)
+			paint := p.strokePaint(rc, edgeColor)
 			r.Path(fillPath, &paint)
 		}
 	}
 
 	if len(strokePath.C) > 0 && hasEdge {
-		paint := p.strokePaint(edgeColor)
+		paint := p.strokePaint(rc, edgeColor)
 		r.Path(strokePath, &paint)
 	}
 }
 
-func (p *Patch) drawHatch(r render.Renderer, clipPath geom.Path) {
+func (p *Patch) drawHatch(r render.Renderer, rc *style.RC, clipPath geom.Path) {
 	render.DrawHatchFallback(r, clipPath, render.Paint{
 		Hatch:          p.Hatch,
 		HatchColor:     p.resolvedHatchColor(),
-		HatchLineWidth: p.resolvedHatchWidth(),
+		HatchLineWidth: pointsToPixels(*rc, p.resolvedHatchWidth()),
 		HatchSpacing:   p.resolvedHatchSpacing(),
 	})
 }

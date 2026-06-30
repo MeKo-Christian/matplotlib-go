@@ -41,7 +41,7 @@ def quad_mesh(out_dir):
         vmin=-0.15,
         vmax=1.1,
         edgecolors=[(0.96, 0.96, 0.96, 1)],
-        linewidth=lw(0.65),
+        linewidth=0.65,
     )
     save(fig, out_dir, "quad_mesh")
 

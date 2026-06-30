@@ -121,13 +121,13 @@ def skewt_basic(out_dir):
     ax.yaxis.set_major_locator(FixedLocator([100, 200, 300, 500, 700, 850, 1000]))
     ax.yaxis.set_major_formatter(ScalarFormatter())
     ax.yaxis.set_minor_formatter(NullFormatter())
-    ax.grid(color=(0.82, 0.84, 0.88, 1.0), linewidth=lw(0.8))
+    ax.grid(color=(0.82, 0.84, 0.88, 1.0), linewidth=0.8)
 
     pressure = np.array([1000, 925, 850, 700, 600, 500, 400, 300, 250, 200])
     temperature = np.array([24, 20, 15, 5, -4, -14, -28, -43, -51, -58])
     dewpoint = np.array([18, 14, 8, -4, -14, -25, -38, -50, -57, -64])
-    ax.plot(temperature, pressure, color=(0.78, 0.13, 0.16, 1.0), linewidth=lw(2.4), label="temperature")
-    ax.plot(dewpoint, pressure, color=(0.05, 0.48, 0.28, 1.0), linewidth=lw(2.4), label="dewpoint")
+    ax.plot(temperature, pressure, color=(0.78, 0.13, 0.16, 1.0), linewidth=2.4, label="temperature")
+    ax.plot(dewpoint, pressure, color=(0.05, 0.48, 0.28, 1.0), linewidth=2.4, label="dewpoint")
     ax.legend()
 
     save(fig, out_dir, "skewt_basic")

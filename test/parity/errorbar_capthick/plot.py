@@ -35,7 +35,7 @@ def errorbar_capthick(out_dir):
         yerr=YERR,
         fmt="none",
         ecolor=(0, 0, 0, 1),
-        elinewidth=lw(1.2),
+        elinewidth=1.2,
         capsize=6,
         capthick=3.0,
     )

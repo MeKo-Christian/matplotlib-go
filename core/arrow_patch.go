@@ -143,9 +143,9 @@ func (a *FancyArrowPatch) Draw(ren render.Renderer, ctx *DrawContext) {
 			continue
 		}
 		if part.fillable {
-			patch.drawStyledPath(ren, part.path, geom.Path{})
+			patch.drawStyledPath(ren, &ctx.RC, part.path, geom.Path{})
 		} else {
-			patch.drawStyledPath(ren, geom.Path{}, part.path)
+			patch.drawStyledPath(ren, &ctx.RC, geom.Path{}, part.path)
 		}
 	}
 }
@@ -176,9 +176,9 @@ func (c *ConnectionPatch) Draw(ren render.Renderer, ctx *DrawContext) {
 			continue
 		}
 		if part.fillable {
-			patch.drawStyledPath(ren, part.path, geom.Path{})
+			patch.drawStyledPath(ren, &ctx.RC, part.path, geom.Path{})
 		} else {
-			patch.drawStyledPath(ren, geom.Path{}, part.path)
+			patch.drawStyledPath(ren, &ctx.RC, geom.Path{}, part.path)
 		}
 	}
 }

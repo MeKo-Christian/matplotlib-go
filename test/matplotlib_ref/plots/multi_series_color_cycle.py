@@ -23,7 +23,7 @@ def multi_series_color_cycle(out_dir):
     x = [2 * math.pi * i / (n - 1) for i in range(n)]
     for i, freq in enumerate([1, 2, 3, 4]):
         y = [math.sin(freq * v) for v in x]
-        ax.plot(x, y, color=TAB10[i], linewidth=lw(2))
+        ax.plot(x, y, color=TAB10[i], linewidth=2)
     save(fig, out_dir, "multi_series_color_cycle")
 
 PLOT = multi_series_color_cycle

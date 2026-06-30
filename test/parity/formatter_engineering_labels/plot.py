@@ -40,11 +40,11 @@ def add_panel(fig, rect, title, ticks, formatter):
     ax.set_title(title)
     ax.set_xlabel("value")
     ax.set_ylabel("score")
-    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
 
     y = [0.2 + 0.15 * i for i in range(len(ticks))]
-    ax.plot(ticks, y, color=(0.12, 0.47, 0.71), linewidth=lw(2.0))
+    ax.plot(ticks, y, color=(0.12, 0.47, 0.71), linewidth=2.0)
     ax.set_xlim(ticks[0], ticks[-1])
     ax.set_ylim(0, 1)
     ax.xaxis.set_major_locator(mticker.FixedLocator(ticks))

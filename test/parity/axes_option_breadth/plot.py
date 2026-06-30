@@ -24,7 +24,7 @@ def axes_option_breadth(out_dir):
         cmap="viridis",
         s=[ss(7), ss(10), ss(13), ss(16), ss(19)],
         edgecolors=[(0.08, 0.08, 0.08, 1)],
-        linewidths=lw(1.5),
+        linewidths=1.5,
     )
 
     bar_ax = fig.add_axes(go_rect(0.56, 0.58, 0.96, 0.92))
@@ -40,7 +40,7 @@ def axes_option_breadth(out_dir):
         align="edge",
         color=[(0.12, 0.47, 0.71, 1), (1.00, 0.50, 0.05, 1), (0.17, 0.63, 0.17, 1)],
         edgecolor=(0.10, 0.10, 0.10, 1),
-        linewidth=lw(1.0),
+        linewidth=1.0,
     )
     bar_ax.bar_label(base, fmt="%.1f", padding=2, fontsize=8)
     top = bar_ax.bar(
@@ -51,7 +51,7 @@ def axes_option_breadth(out_dir):
         align="edge",
         color=(0.58, 0.40, 0.74, 1),
         edgecolor=(0.10, 0.10, 0.10, 1),
-        linewidth=lw(1.0),
+        linewidth=1.0,
     )
     bar_ax.bar_label(top, fmt="%.1f", padding=2, fontsize=8)
 
@@ -68,7 +68,7 @@ def axes_option_breadth(out_dir):
         step="post",
         facecolor=(0.84, 0.15, 0.16, 0.55),
         edgecolor=(0.50, 0.05, 0.06, 0.55),
-        linewidth=lw(1.0),
+        linewidth=1.0,
     )
 
     error_ax = fig.add_axes(go_rect(0.56, 0.10, 0.96, 0.44))

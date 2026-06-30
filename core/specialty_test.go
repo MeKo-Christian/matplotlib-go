@@ -77,7 +77,7 @@ func TestAxesHexbinAggregatesValues(t *testing.T) {
 	if len(hex.EdgeColors) != len(hex.FaceColors) {
 		t.Fatalf("hex edge colors len = %d, want face-colored edges for %d faces", len(hex.EdgeColors), len(hex.FaceColors))
 	}
-	if got, want := hex.EdgeWidth, pointsToPixels(fig.RC, 1); !floatApprox(got, want, 1e-12) {
+	if got, want := hex.EdgeWidth, 1.0; !floatApprox(got, want, 1e-12) {
 		t.Fatalf("hex default linewidth = %v px, want Matplotlib patch.linewidth %v px", got, want)
 	}
 	mapping := hex.ScalarMap()
@@ -148,7 +148,7 @@ func TestAxesHexbinLogBinsReducersAndMarginals(t *testing.T) {
 	if !(hex.HBar.Z() > hex.Z() && hex.VBar.Z() > hex.Z()) {
 		t.Fatalf("marginal z orders h=%v v=%v hex=%v, want marginals above main hexbin like Matplotlib draw order", hex.HBar.Z(), hex.VBar.Z(), hex.Z())
 	}
-	wantLineWidth := pointsToPixels(ax.resolvedRC(), 1)
+	wantLineWidth := 1.0
 	if !floatApprox(hex.HBar.EdgeWidth, wantLineWidth, 1e-12) || !floatApprox(hex.VBar.EdgeWidth, wantLineWidth, 1e-12) {
 		t.Fatalf("marginal edge widths h=%v v=%v, want Matplotlib PolyCollection default %v", hex.HBar.EdgeWidth, hex.VBar.EdgeWidth, wantLineWidth)
 	}
@@ -685,7 +685,7 @@ func TestAxesTableUsesMatplotlibPatchLineWidthDefault(t *testing.T) {
 		t.Fatal("expected table artist")
 	}
 
-	if got, want := table.LineWidth, fig.RC.DPI/72.0; !floatApprox(got, want, 1e-12) {
+	if got, want := table.LineWidth, 1.0; !floatApprox(got, want, 1e-12) {
 		t.Fatalf("default table line width = %v, want matplotlib patch.linewidth 1pt at %v DPI = %v px", got, fig.RC.DPI, want)
 	}
 }

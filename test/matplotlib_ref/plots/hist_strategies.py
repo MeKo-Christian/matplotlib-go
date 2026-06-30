@@ -24,14 +24,14 @@ def hist_strategies(out_dir):
         data1, bins=15, density=False, weights=np.ones(len(data1)) / len(data1),
         color=(0.26, 0.53, 0.80, 0.6),
         edgecolor=(0, 0, 0, 1),
-        linewidth=lw(0.5),
+        linewidth=0.5,
         rwidth=1.0,
     )
     n2, _, _ = ax.hist(
         data2, bins=15, density=False, weights=np.ones(len(data2)) / len(data2),
         color=(0.90, 0.50, 0.10, 0.6),
         edgecolor=(0, 0, 0, 1),
-        linewidth=lw(0.5),
+        linewidth=0.5,
         rwidth=1.0,
     )
     all_data = np.concatenate([data1, data2])

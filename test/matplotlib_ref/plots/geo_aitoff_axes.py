@@ -26,12 +26,12 @@ def geo_aitoff_axes(out_dir):
     ax.xaxis.set_major_formatter(degree_formatter)
     ax.yaxis.set_major_formatter(degree_formatter)
 
-    ax.xaxis.grid(True, color=(0.78, 0.80, 0.84, 1.0), linewidth=lw(0.8))
-    ax.yaxis.grid(True, color=(0.78, 0.80, 0.84, 1.0), linewidth=lw(0.8))
+    ax.xaxis.grid(True, color=(0.78, 0.80, 0.84, 1.0), linewidth=0.8)
+    ax.yaxis.grid(True, color=(0.78, 0.80, 0.84, 1.0), linewidth=0.8)
 
     lon = np.linspace(-math.pi, math.pi, 361)
     lat = 0.35 * np.sin(3.0 * lon)
-    ax.plot(lon, lat, color=(0.14, 0.34, 0.70, 1.0), linewidth=lw(2.0))
+    ax.plot(lon, lat, color=(0.14, 0.34, 0.70, 1.0), linewidth=2.0)
 
     save(fig, out_dir, "geo_aitoff_axes")
 

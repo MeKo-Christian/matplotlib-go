@@ -143,7 +143,7 @@ func (p *PolygonSelector) Draw(r render.Renderer, ctx *DrawContext) {
 	if len(path.V) == 0 {
 		return
 	}
-	paint := &render.Paint{Stroke: p.EdgeColor, LineWidth: p.LineWidth}
+	paint := &render.Paint{Stroke: p.EdgeColor, LineWidth: pointsToPixels(ctx.RC, p.LineWidth)}
 	if p.Closed {
 		path.Close()
 		paint.Fill = p.FillColor

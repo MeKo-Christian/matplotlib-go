@@ -19,7 +19,7 @@ def multi_series_basic(out_dir):
     ax.set_title("Multi-Series Plot")
     ax.set_xlim(0, 8)
     ax.set_ylim(0, 6)
-    ax.plot([1, 2, 3, 4, 5, 6], [1.5, 2.8, 2.2, 3.5, 3.8, 4.2], color=TAB10[0], linewidth=lw(2))
+    ax.plot([1, 2, 3, 4, 5, 6], [1.5, 2.8, 2.2, 3.5, 3.8, 4.2], color=TAB10[0], linewidth=2)
     ax.scatter([1.5, 2.5, 3.5, 4.5, 5.5], [2.2, 3.1, 2.9, 4.1, 4.5],
                s=ss(8), c=[TAB10[1]], linewidths=0)
     ax.bar([2, 3, 4, 5], [3.8, 2.5, 4.8, 3.2], width=0.4, color=TAB10[2])

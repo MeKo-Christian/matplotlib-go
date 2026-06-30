@@ -35,7 +35,7 @@ def specialty_depth(out_dir):
         fmt="o",
         color=(0.12, 0.35, 0.70),
         ecolor=(0.12, 0.35, 0.70),
-        elinewidth=lw(1.4),
+        elinewidth=1.4,
         capsize=8,
         markersize=4,
     )
@@ -96,7 +96,7 @@ def specialty_depth(out_dir):
         shadow=True,
         startangle=30,
         colors=[(0.22, 0.55, 0.75), (0.90, 0.45, 0.18), (0.32, 0.64, 0.34)],
-        wedgeprops={"linewidth": lw(1.0), "edgecolor": "white"},
+        wedgeprops={"linewidth": 1.0, "edgecolor": "white"},
     )
     for wedge, hatch in zip(wedges, ["/", "x", "\\"]):
         wedge.set_hatch(hatch)

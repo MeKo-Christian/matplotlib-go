@@ -26,7 +26,7 @@ def errorbar_basic(out_dir):
     xerr = [0.20, 0.25, 0.15, 0.22, 0.30, 0.18]
     yerr = [0.28, 0.20, 0.35, 0.24, 0.30, 0.22]
 
-    ax.plot(x, y, color=TAB10[0], linewidth=lw(2))
+    ax.plot(x, y, color=TAB10[0], linewidth=2)
     ax.scatter(
         x,
         y,
@@ -41,7 +41,7 @@ def errorbar_basic(out_dir):
         yerr=yerr,
         fmt="none",
         ecolor=(0, 0, 0, 1),
-        elinewidth=lw(1.2),
+        elinewidth=1.2,
         capsize=6,
     )
     save(fig, out_dir, "errorbar_basic")

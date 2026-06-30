@@ -34,10 +34,10 @@ def animation_gallery(out_dir):
     for frame in [0, 4, 8]:
         x, y = _sine_frame(frame)
         color = (0.28, 0.28, 0.28, 0.45)
-        width = lw(1.2)
+        width = 1.2
         if frame == 8:
             color = (0.12, 0.34, 0.68, 1.0)
-            width = lw(2.3)
+            width = 2.3
         ax.plot(x, y, color=color, linewidth=width)
 
     ax2 = fig.add_axes([0.58, 0.16, 0.36, 0.74])
@@ -54,7 +54,7 @@ def animation_gallery(out_dir):
     ]
     for points, color, label in series:
         pts = np.array(points, dtype=float)
-        ax2.plot(pts[:, 0], pts[:, 1], color=color, linewidth=lw(2.1), label=label)
+        ax2.plot(pts[:, 0], pts[:, 1], color=color, linewidth=2.1, label=label)
     ax2.legend(loc="upper left", frameon=True)
 
     save(fig, out_dir, "animation_gallery")

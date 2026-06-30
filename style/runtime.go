@@ -187,7 +187,7 @@ func paramsFromRC(rc RC) Params {
 	params["axes.facecolor"] = formatMPLColor(rc.AxesBackground)
 	params["axes.labelcolor"] = formatMPLColor(rc.DefaultAxesLabelColor())
 	params["axes.labelsize"] = formatMPLFloat(rc.AxisLabelSize())
-	params["axes.linewidth"] = formatMPLPoints(rc.AxisLineWidth, rc.DPI)
+	params["axes.linewidth"] = formatMPLFloat(rc.AxisLineWidth)
 	params["axes.prop_cycle"] = formatMPLColorCycle(rc.Palette())
 	params["axes.titlecolor"] = formatMPLColor(rc.DefaultAxesTitleColor())
 	params["axes.titlesize"] = formatMPLFloat(rc.TitleSize())
@@ -237,7 +237,7 @@ func paramsFromRC(rc RC) Params {
 	params["font.size"] = formatMPLFloat(rc.FontSize)
 	params["grid.alpha"] = formatMPLFloat(rc.GridColor.A)
 	params["grid.color"] = formatMPLColor(rc.GridColor)
-	params["grid.linewidth"] = formatMPLPoints(rc.GridLineWidth, rc.DPI)
+	params["grid.linewidth"] = formatMPLFloat(rc.GridLineWidth)
 	params["grid.linestyle"] = formatMPLLineStyle(rc.GridDashes)
 	params["grid.major.color"] = formatMPLColor(rc.GridColor)
 	params["grid.major.linestyle"] = formatMPLLineStyle(rc.GridDashes)
@@ -260,7 +260,7 @@ func paramsFromRC(rc RC) Params {
 	params["legend.frameon"] = formatMPLBool(rc.LegendFrameOn)
 	params["legend.labelcolor"] = formatMPLColor(rc.LegendTextColor)
 	params["lines.color"] = formatMPLColor(rc.DefaultLineColor())
-	params["lines.linewidth"] = formatMPLPoints(rc.LineWidth, rc.DPI)
+	params["lines.linewidth"] = formatMPLFloat(rc.LineWidth)
 	params["mathtext.bf"] = rc.Mathtext.BF
 	params["mathtext.bfit"] = rc.Mathtext.BFit
 	params["mathtext.cal"] = rc.Mathtext.Cal
@@ -342,16 +342,6 @@ func formatMPLBool(value bool) string {
 		return "True"
 	}
 	return "False"
-}
-
-func formatMPLPoints(pixels, dpi float64) string {
-	if dpi <= 0 {
-		dpi = Default.DPI
-	}
-	if dpi <= 0 {
-		dpi = 72
-	}
-	return formatMPLFloat(pixels * 72.0 / dpi)
 }
 
 func formatMPLColor(color render.Color) string {

@@ -249,8 +249,8 @@ func TestAxesAxHLine_ScalesDashesLikeMatplotlibLine2D(t *testing.T) {
 		t.Fatalf("expected one path call, got %d", len(r.pathCalls))
 	}
 	got := r.pathCalls[0].paint.Dashes
-	want := []float64{2.52, 1.512}
-	if len(got) != len(want) || !floatApprox(got[0], want[0], 1e-12) || !floatApprox(got[1], want[1], 1e-12) {
+	want := []float64{2.52 * 100.0 / 72.0, 1.512 * 100.0 / 72.0}
+	if len(got) != len(want) || !floatApprox(got[0], want[0], 1e-9) || !floatApprox(got[1], want[1], 1e-9) {
 		t.Fatalf("reference-line dashes = %v, want Matplotlib linewidth-scaled %v", got, want)
 	}
 }

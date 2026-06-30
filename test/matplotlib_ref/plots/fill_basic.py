@@ -25,7 +25,7 @@ def fill_basic(out_dir):
         x, 0, y,
         facecolor=(0.3, 0.7, 0.9, 0.7),
         edgecolor=(0.1, 0.3, 0.5, 1.0),
-        linewidth=lw(2),
+        linewidth=2,
     )
     save(fig, out_dir, "fill_basic")
 

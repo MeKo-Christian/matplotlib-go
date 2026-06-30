@@ -114,7 +114,7 @@ func (l *LassoSelector) Draw(r render.Renderer, ctx *DrawContext) {
 	if len(path.V) == 0 {
 		return
 	}
-	r.Path(path, &render.Paint{Stroke: l.LineColor, LineWidth: l.LineWidth})
+	r.Path(path, &render.Paint{Stroke: l.LineColor, LineWidth: pointsToPixels(ctx.RC, l.LineWidth)})
 }
 
 func (l *LassoSelector) Bounds(ctx *DrawContext) geom.Rect {

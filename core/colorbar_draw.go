@@ -177,7 +177,7 @@ func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 			})
 		}
 		if c.DrawEdges {
-			drawColorbarBoundaryDividers(r, ctx.Clip, boundaries, c.Spacing, orientation, c.BorderColor, c.BorderWidth)
+			drawColorbarBoundaryDividers(r, ctx.Clip, boundaries, c.Spacing, orientation, c.BorderColor, pointsToPixels(ctx.RC, c.BorderWidth))
 		}
 	} else {
 		for i := 0; i < gradientHeight; i++ {
@@ -205,7 +205,7 @@ func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 		r.Path(outlinePath, &render.Paint{
 			Stroke:    c.BorderColor,
-			LineWidth: c.BorderWidth,
+			LineWidth: pointsToPixels(ctx.RC, c.BorderWidth),
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
 		})
@@ -285,7 +285,7 @@ func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	if len(outline.C) > 0 {
 		r.Path(outline, &render.Paint{
 			Stroke:    c.BorderColor,
-			LineWidth: c.BorderWidth,
+			LineWidth: pointsToPixels(ctx.RC, c.BorderWidth),
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
 		})

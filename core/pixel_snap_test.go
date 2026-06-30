@@ -72,7 +72,8 @@ func TestBar2D_DrawUsesSingleSnapAutoPatchPathForFilledStrokedBars(t *testing.T)
 	}
 
 	r := &recordingRenderer{}
-	bar.Draw(r, createFractionalDrawContext())
+	ctx := createFractionalDrawContext()
+	bar.Draw(r, ctx)
 
 	if len(r.pathCalls) != 1 {
 		t.Fatalf("expected one combined fill/stroke path call, got %d", len(r.pathCalls))
@@ -87,7 +88,7 @@ func TestBar2D_DrawUsesSingleSnapAutoPatchPathForFilledStrokedBars(t *testing.T)
 		t.Fatalf("unexpected unsnapped bar vertices: %+v", path)
 	}
 	paint := r.pathCalls[0].paint
-	if paint.Fill != bar.Color || paint.Stroke != bar.EdgeColor || paint.LineWidth != bar.EdgeWidth {
+	if paint.Fill != bar.Color || paint.Stroke != bar.EdgeColor || paint.LineWidth != pointsToPixels(ctx.RC, bar.EdgeWidth) {
 		t.Fatalf("bar paint = %+v, want combined face/edge paint", paint)
 	}
 	if paint.LineJoin != render.JoinMiter || paint.LineCap != render.CapButt {

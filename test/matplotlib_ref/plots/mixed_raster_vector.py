@@ -20,8 +20,8 @@ def mixed_raster_vector(out_dir):
     ax = fig.add_axes(go_rect(0.12, 0.12, 0.88, 0.88), projection="polar")
     ax.set_title("Mixed Raster / Vector")
     ax.set_ylim(0, 1.0)
-    ax.xaxis.grid(True, color=(0.82, 0.84, 0.88, 1.0), linewidth=lw(0.8))
-    ax.yaxis.grid(True, color=(0.84, 0.86, 0.90, 0.9), linewidth=lw(0.8))
+    ax.xaxis.grid(True, color=(0.82, 0.84, 0.88, 1.0), linewidth=0.8)
+    ax.yaxis.grid(True, color=(0.84, 0.86, 0.90, 0.9), linewidth=0.8)
 
     n = 240
     theta = []
@@ -46,7 +46,7 @@ def mixed_raster_vector(out_dir):
         s=sizes,
         c=colors,
         edgecolors=edges,
-        linewidths=lw(0.45),
+        linewidths=0.45,
         marker="o",
         label="raster cloud",
         rasterized=True,
@@ -58,7 +58,7 @@ def mixed_raster_vector(out_dir):
         line_theta,
         line_radius,
         color=(0.08, 0.16, 0.30, 1),
-        linewidth=lw(1.8),
+        linewidth=1.8,
         label="vector line",
     )
     ax.legend()

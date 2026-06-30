@@ -26,7 +26,7 @@ def vector_fields(out_dir):
     quiver_ax.set_title("Quiver + Key")
     quiver_ax.set_xlim(0, 6)
     quiver_ax.set_ylim(0, 5)
-    quiver_ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    quiver_ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=0.5)
     quiver_ax.set_axisbelow(True)
     qx, qy, qu, qv = [], [], [], []
     for row in range(4):
@@ -51,7 +51,7 @@ def vector_fields(out_dir):
     barb_ax.set_title("Barbs")
     barb_ax.set_xlim(0, 6)
     barb_ax.set_ylim(0, 5)
-    barb_ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    barb_ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=0.5)
     barb_ax.set_axisbelow(True)
     bx, by, bu, bv = [], [], [], []
     for row in range(4):
@@ -67,14 +67,14 @@ def vector_fields(out_dir):
         barbcolor=(0.47, 0.23, 0.12),
         flagcolor=(0.86, 0.52, 0.24),
         length=6.0,
-        linewidth=lw(1.0),
+        linewidth=1.0,
     )
 
     stream_ax = axes["stream"]
     stream_ax.set_title("Streamplot")
     stream_ax.set_xlim(0, 6)
     stream_ax.set_ylim(0, 5)
-    stream_ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    stream_ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=0.5)
     stream_ax.set_axisbelow(True)
     sx = np.array([0, 1, 2, 3, 4, 5, 6], dtype=float)
     sy = np.array([0, 1, 2, 3, 4, 5], dtype=float)
@@ -90,7 +90,7 @@ def vector_fields(out_dir):
         broken_streamlines=False,
         integration_direction="forward",
         color=(0.13, 0.53, 0.39),
-        linewidth=lw(1.5),
+        linewidth=1.5,
         arrowsize=1.0,
     )
 
@@ -98,7 +98,7 @@ def vector_fields(out_dir):
     xy_ax.set_title("Quiver XY")
     xy_ax.set_xlim(0, 6)
     xy_ax.set_ylim(0, 5)
-    xy_ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    xy_ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=0.5)
     xy_ax.set_axisbelow(True)
     xg = np.array([0.8, 1.8, 2.8, 3.8, 4.8], dtype=float)
     yg = np.array([0.8, 1.8, 2.8, 3.8], dtype=float)

@@ -22,12 +22,12 @@ def bar_grouped(out_dir):
     ax.bar(
         [1.2, 2.2, 3.2, 4.2, 5.2], [3, 7, 2, 8, 5],
         width=0.35, color=(0.8, 0.2, 0.2), edgecolor=(0.5, 0, 0),
-        linewidth=lw(1),
+        linewidth=1,
     )
     ax.bar(
         [1.8, 2.8, 3.8, 4.8, 5.8], [5, 4, 6, 3, 7],
         width=0.35, color=(0.2, 0.8, 0.2), edgecolor=(0, 0.5, 0),
-        linewidth=lw(1),
+        linewidth=1,
     )
     save(fig, out_dir, "bar_grouped")
 

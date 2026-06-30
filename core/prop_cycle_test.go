@@ -52,7 +52,7 @@ func TestPlotConsumesMultiPropertyCycle(t *testing.T) {
 	if got, want := second.Col, (render.Color{G: 1, A: 1}); got != want {
 		t.Fatalf("second color = %+v, want %+v", got, want)
 	}
-	if want := lineStyleToDashes("--", 3.0); !reflect.DeepEqual(second.Dashes, want) {
+	if want := lineStyleToDashes("--", (3.0 * 100.0 / 72.0)); !reflect.DeepEqual(second.Dashes, want) {
 		t.Fatalf("second dashes = %v, want %v", second.Dashes, want)
 	}
 	if !second.MarkerSet || second.Marker != MarkerSquare {
@@ -89,14 +89,15 @@ func TestPlotExplicitOptionsOverrideCycle(t *testing.T) {
 }
 
 func TestPlotColorOnlyCycleUnchanged(t *testing.T) {
-	// With no PropCycle (the default), lines keep the historical defaults:
-	// solid, no marker, width 2.0, colors from the palette.
+	// With no PropCycle (the default), lines keep the defaults: solid, no
+	// marker, width 1.5 points (matplotlib lines.linewidth), colors from the
+	// palette.
 	fig := NewFigure(640, 480)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 	palette := fig.RC.Palette()
 
 	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
-	if line.Dashes != nil || line.MarkerSet || line.W != 2.0 {
+	if line.Dashes != nil || line.MarkerSet || line.W != 1.5 {
 		t.Fatalf("color-only defaults changed: dashes=%v markerSet=%v w=%v", line.Dashes, line.MarkerSet, line.W)
 	}
 	if line.Col != palette[0] {

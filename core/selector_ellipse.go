@@ -131,7 +131,7 @@ func (e *EllipseSelector) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 	path := ellipsePath(width, height)
 	path = applyAffinePath(path, translateAffine(center))
-	r.Path(path, &render.Paint{Fill: e.FillColor, Stroke: e.EdgeColor, LineWidth: e.LineWidth})
+	r.Path(path, &render.Paint{Fill: e.FillColor, Stroke: e.EdgeColor, LineWidth: pointsToPixels(ctx.RC, e.LineWidth)})
 }
 
 func (e *EllipseSelector) Bounds(ctx *DrawContext) geom.Rect {

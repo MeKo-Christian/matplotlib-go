@@ -412,6 +412,7 @@ func (g *Grid) cartesianTargetTickCount(axis *Axis, minor bool, ctx *DrawContext
 
 // drawLine draws a single grid line.
 func (g *Grid) drawLine(r render.Renderer, ctx *DrawContext, tickValue float64, isXAxis bool, color render.Color, width float64, dashes []float64) {
+	width = pointsToPixels(ctx.RC, width)
 	var p1, p2 geom.Pt
 
 	if isXAxis {

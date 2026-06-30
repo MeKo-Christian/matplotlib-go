@@ -36,7 +36,7 @@ def artist_metadata(out_dir):
             transform=ax.transAxes,
             facecolor=(0.16, 0.68, 0.43, 0.65),
             edgecolor=(0.02, 0.25, 0.14, 1),
-            linewidth=lw(1),
+            linewidth=1,
         )
     )
 
@@ -44,7 +44,7 @@ def artist_metadata(out_dir):
         [0.6, 9.4],
         [1.4, 8.6],
         color=(0.10, 0.26, 0.78, 1),
-        linewidth=lw(8),
+        linewidth=8,
         alpha=0.45,
         solid_capstyle="butt",
     )
@@ -54,7 +54,7 @@ def artist_metadata(out_dir):
         [0.6, 9.4],
         [8.7, 1.3],
         color=(1.0, 0.0, 0.75, 1),
-        linewidth=lw(16),
+        linewidth=16,
         solid_capstyle="butt",
     )
     hidden.set_visible(False)
@@ -63,7 +63,7 @@ def artist_metadata(out_dir):
         [0.4, 9.6],
         [5.0, 5.0],
         color=(0.86, 0.12, 0.10, 0.70),
-        linewidth=lw(18),
+        linewidth=18,
         solid_capstyle="butt",
     )
     lo = ax.transData.transform((2.2, 4.45))

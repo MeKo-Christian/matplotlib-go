@@ -91,7 +91,7 @@ def triangulation_gallery(out_dir):
 
     ax = fig.add_axes(panel(0, 0))
     configure_tri_axes(ax, "Triplot")
-    ax.triplot(tri, color=(0.18, 0.24, 0.34, 1.0), linewidth=lw(1.25), label="triplot")
+    ax.triplot(tri, color=(0.18, 0.24, 0.34, 1.0), linewidth=1.25, label="triplot")
 
     ax = fig.add_axes(panel(0, 1))
     configure_tri_axes(ax, "Tripcolor + Tricontour")
@@ -101,14 +101,14 @@ def triangulation_gallery(out_dir):
         shading="flat",
         cmap="viridis",
         edgecolors="white",
-        linewidth=lw(0.55),
+        linewidth=0.55,
     )
     contour = ax.tricontour(
         tri,
         values,
         levels=6,
         colors=[(0.07, 0.10, 0.16, 0.95)],
-        linewidths=lw(1.05),
+        linewidths=1.05,
     )
     ax.clabel(contour, inline=True, fontsize=8, colors=[(0.07, 0.10, 0.16, 0.95)])
 
@@ -120,7 +120,7 @@ def triangulation_gallery(out_dir):
         values,
         levels=7,
         colors=[(1, 1, 1, 0.88)],
-        linewidths=lw(0.9),
+        linewidths=0.9,
     )
 
     ax = fig.add_axes(panel(1, 1))
@@ -134,7 +134,7 @@ def triangulation_gallery(out_dir):
         data,
         cmap=cmap,
         edgecolors="white",
-        linewidth=lw(0.55),
+        linewidth=0.55,
     )
 
     fig.text(

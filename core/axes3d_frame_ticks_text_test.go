@@ -427,10 +427,10 @@ func TestAxes3DFrameUsesRCLineWidthsLikeMatplotlib(t *testing.T) {
 	r := &axes3DLineWidthRecorder{}
 	DrawFigure(fig, r)
 
-	if !containsFloat64(r.widths, gridWidth) {
+	if !containsFloat64(r.widths, pointsToPixels(fig.RC, gridWidth)) {
 		t.Fatalf("3D frame stroke widths = %v, want grid linewidth from RC %.3g", r.widths, gridWidth)
 	}
-	if !containsFloat64(r.widths, axisWidth) {
+	if !containsFloat64(r.widths, pointsToPixels(fig.RC, axisWidth)) {
 		t.Fatalf("3D frame stroke widths = %v, want axis linewidth from RC %.3g", r.widths, axisWidth)
 	}
 }

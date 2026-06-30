@@ -22,7 +22,7 @@ func (e *Ellipse) Draw(ren render.Renderer, ctx *DrawContext) {
 	}
 	local := ellipsePath(e.Width, e.Height)
 	path := buildArtistDisplayPath(ctx, e, e.Coords, local, patchAffine(e.Center, e.Angle))
-	e.drawStyledPath(ren, path, geom.Path{})
+	e.drawStyledPath(ren, &ctx.RC, path, geom.Path{})
 }
 
 // Bounds returns the ellipse's data-space bounding box when applicable.

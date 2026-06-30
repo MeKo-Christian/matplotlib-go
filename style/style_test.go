@@ -24,7 +24,7 @@ func TestDefaults(t *testing.T) {
 	if got, want := d.MinorGridColor, d.GridColor; got != want {
 		t.Fatalf("minor grid color = %+v, want major grid color %+v", got, want)
 	}
-	if got, want := d.GridLineWidth, 0.8*d.DPI/72.0; math.Abs(got-want) > 1e-9 {
+	if got, want := d.GridLineWidth, 0.8; math.Abs(got-want) > 1e-9 {
 		t.Fatalf("grid line width = %v, want Matplotlib 0.8 pt at %v DPI = %v", got, d.DPI, want)
 	}
 	if got, want := d.MinorGridLineWidth, d.GridLineWidth; got != want {

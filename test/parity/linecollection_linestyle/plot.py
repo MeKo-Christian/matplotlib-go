@@ -31,7 +31,7 @@ def linecollection_linestyle(out_dir):
         9.5,
         colors=(0, 0, 0, 1),
         linestyles=LINESTYLES,
-        linewidth=lw(2),
+        linewidth=2,
     )
     save(fig, out_dir, "linecollection_linestyle")
 

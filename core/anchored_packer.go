@@ -229,7 +229,7 @@ func (a *AnchoredPacker) Draw(r render.Renderer, ctx *DrawContext) {
 		r.Path(pixelRectPath(layout.frame), &render.Paint{
 			Fill:      a.BackgroundColor,
 			Stroke:    a.BorderColor,
-			LineWidth: a.BorderWidth,
+			LineWidth: pointsToPixels(ctx.RC, a.BorderWidth),
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
 			Snap:      render.SnapAuto,

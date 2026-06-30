@@ -585,9 +585,9 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 	capWidth = math.Abs(capWidth)
 
-	edgeWidth := b.EdgeWidth
+	edgeWidth := b.EdgeWidth // points
 	if edgeWidth <= 0 {
-		edgeWidth = pointsToPixels(ctx.RC, 1)
+		edgeWidth = 1.0
 	}
 	whiskerWidth := b.WhiskerWidth
 	if whiskerWidth <= 0 {
@@ -601,9 +601,9 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 	if flierSize <= 0 {
 		flierSize = 6
 	}
-	flierEdgeWidth := b.FlierEdgeWidth
+	flierEdgeWidth := b.FlierEdgeWidth // points
 	if flierEdgeWidth <= 0 {
-		flierEdgeWidth = math.Max(pointsToPixels(ctx.RC, 1), whiskerWidth*0.6)
+		flierEdgeWidth = math.Max(1.0, whiskerWidth*0.6)
 	}
 	alpha := b.Alpha
 	if alpha <= 0 {
@@ -643,7 +643,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 			}
 			if edgeWidth > 0 && edgeColor.A > 0 {
 				paint.Stroke = edgeColor
-				paint.LineWidth = edgeWidth
+				paint.LineWidth = pointsToPixels(ctx.RC, edgeWidth)
 			}
 			r.Path(boxPath, &paint)
 		}
@@ -655,7 +655,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 		// cap/median/whisker endpoints would otherwise fall half a pixel short.
 		whiskerPaint := render.Paint{
 			Stroke:    whiskerColor,
-			LineWidth: whiskerWidth,
+			LineWidth: pointsToPixels(ctx.RC, whiskerWidth),
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapSquare,
 			Snap:      render.SnapAuto,
@@ -666,7 +666,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 		if b.ShowCaps {
 			capPaint := render.Paint{
 				Stroke:    capColor,
-				LineWidth: whiskerWidth,
+				LineWidth: pointsToPixels(ctx.RC, whiskerWidth),
 				LineJoin:  render.JoinMiter,
 				LineCap:   render.CapSquare,
 				Snap:      render.SnapAuto,
@@ -681,7 +681,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 	if medianWidth > 0 && medianColor.A > 0 {
 		medianPaint := render.Paint{
 			Stroke:    medianColor,
-			LineWidth: medianWidth,
+			LineWidth: pointsToPixels(ctx.RC, medianWidth),
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapSquare,
 			Snap:      render.SnapAuto,
@@ -699,7 +699,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 		if b.MeanLine {
 			meanPaint := render.Paint{
 				Stroke:    meanColor,
-				LineWidth: medianWidth,
+				LineWidth: pointsToPixels(ctx.RC, medianWidth),
 				LineJoin:  render.JoinMiter,
 				LineCap:   render.CapSquare,
 				Snap:      render.SnapAuto,
@@ -709,7 +709,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 			meanPaint := render.Paint{
 				Fill:      meanColor,
 				Stroke:    meanColor,
-				LineWidth: flierEdgeWidth,
+				LineWidth: pointsToPixels(ctx.RC, flierEdgeWidth),
 				LineJoin:  render.JoinRound,
 				LineCap:   render.CapRound,
 				Snap:      render.SnapAuto,

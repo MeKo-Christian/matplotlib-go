@@ -56,10 +56,10 @@ def path_effects(out_dir):
         xs,
         ys,
         color=(0.08, 0.34, 0.66, 1),
-        linewidth=lw(3),
+        linewidth=3,
         solid_capstyle="butt",
         solid_joinstyle="round",
-        path_effects=[pe.withStroke(linewidth=lw(10), foreground=(1, 1, 1, 0.96))],
+        path_effects=[pe.withStroke(linewidth=10, foreground=(1, 1, 1, 0.96))],
     )
 
     scatter_ax = _panel(fig, 0.06, 0.08, 0.47, 0.47)
@@ -74,7 +74,7 @@ def path_effects(out_dir):
             (0.94, 0.64, 0.18, 1),
         ],
         edgecolors=(0.04, 0.06, 0.08, 1),
-        linewidths=lw(1.4),
+        linewidths=1.4,
         path_effects=[
             pe.SimplePatchShadow(offset=_offset(4, 5), shadow_rgbFace=(0.02, 0.03, 0.04, 0.70), alpha=0.5, rho=0.3),
             pe.Normal(),
@@ -87,11 +87,11 @@ def path_effects(out_dir):
         closed=True,
         facecolor=(0.94, 0.77, 0.28, 1),
         edgecolor=(0.07, 0.20, 0.38, 1),
-        linewidth=lw(2.2),
+        linewidth=2.2,
         joinstyle="round",
         path_effects=[
             pe.SimplePatchShadow(offset=_offset(5, 6), shadow_rgbFace=(0.02, 0.03, 0.04, 0.70), alpha=0.45, rho=0.35),
-            pe.PathPatchEffect(facecolor=(0.95, 0.92, 0.82, 0.75), edgecolor=(0.83, 0.20, 0.19, 1), linewidth=lw(5.5), joinstyle="round"),
+            pe.PathPatchEffect(facecolor=(0.95, 0.92, 0.82, 0.75), edgecolor=(0.83, 0.20, 0.19, 1), linewidth=5.5, joinstyle="round"),
             pe.Normal(),
         ],
     )

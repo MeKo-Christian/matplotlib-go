@@ -41,7 +41,7 @@ func Plot() *core.Figure {
 				y[i] = math.Sin(xv+float64(row)*0.5) * (1 + float64(col)*0.2)
 			}
 			ax.Plot(x, y, core.PlotOptions{
-				LineWidth: common.FloatPtr(common.ReferencePointsToPixels(1.5)),
+				LineWidth: common.FloatPtr(1.5),
 				Label:     fmt.Sprintf("series %d", row*2+col+1),
 			})
 			ax.SetTitle(fmt.Sprintf("Panel %d", row*2+col+1))

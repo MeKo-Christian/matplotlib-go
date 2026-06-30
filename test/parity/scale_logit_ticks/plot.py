@@ -22,12 +22,12 @@ def scale_logit_ticks(out_dir):
     ax.set_title("Logit Scale Ticks")
     ax.set_xlabel("probability")
     ax.set_ylabel("score")
-    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
 
     x = [0.001, 0.01, 0.05, 0.2, 0.5, 0.8, 0.95, 0.99, 0.999]
     y = [0.12, 0.21, 0.34, 0.46, 0.55, 0.67, 0.78, 0.86, 0.91]
-    ax.plot(x, y, color=(0.12, 0.47, 0.71), linewidth=lw(2.0))
+    ax.plot(x, y, color=(0.12, 0.47, 0.71), linewidth=2.0)
     ax.set_xlim(0.001, 0.999)
     ax.set_ylim(0, 1)
     ax.set_xscale("logit")

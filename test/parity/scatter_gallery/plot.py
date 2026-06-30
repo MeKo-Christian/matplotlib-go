@@ -34,7 +34,7 @@ def scatter_gallery(out_dir):
         cmap="viridis",
         s=[ss(7), ss(10), ss(13), ss(16), ss(19)],
         edgecolors=[(0.08, 0.08, 0.08, 1)],
-        linewidths=lw(1.5),
+        linewidths=1.5,
     )
 
     # Variable size, single color.
@@ -48,7 +48,7 @@ def scatter_gallery(out_dir):
         c=[(0.12, 0.47, 0.71)],
         s=[ss(5), ss(9), ss(13), ss(17), ss(21), ss(25)],
         edgecolors=[(0.08, 0.08, 0.08, 1)],
-        linewidths=lw(1.0),
+        linewidths=1.0,
     )
 
     # Alpha blending of overlapping clusters.
@@ -85,7 +85,7 @@ def scatter_gallery(out_dir):
         y = 2 - i // 3
         color = TAB10[i % len(TAB10)]
         fam_ax.scatter([x], [y], s=ss(14), c=[color], marker=marker,
-                       edgecolors=[edge], linewidths=lw(1.2))
+                       edgecolors=[edge], linewidths=1.2)
 
     save(fig, out_dir, "scatter_gallery")
 

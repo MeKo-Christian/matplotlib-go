@@ -602,8 +602,8 @@ func TestFill2DDrawUsesPathCollectionBatchWhenAvailable(t *testing.T) {
 	if got := len(r.batches[0].Items); got != 2 {
 		t.Fatalf("batch items = %d, want two fill polygons", got)
 	}
-	if got := r.batches[0].Items[0].Paint.LineWidth; got != 2 {
-		t.Fatalf("batch linewidth = %v, want 2", got)
+	if got, want := r.batches[0].Items[0].Paint.LineWidth, (2 * 100.0 / 72.0); got != want {
+		t.Fatalf("batch linewidth = %v, want %v", got, want)
 	}
 }
 

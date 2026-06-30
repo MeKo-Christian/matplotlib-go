@@ -51,7 +51,7 @@ def stat_variants(out_dir):
         [1.2, 1.8, 2.0, 2.0, 3.1, 3.7, 4.3, 5.0, 5.8, 6.6, 7.0],
         compress=True,
         color=(0.18, 0.36, 0.75, 1),
-        linewidth=lw(2),
+        linewidth=2,
     )
 
     cumulative_ax = axes["cumulative"]
@@ -69,7 +69,7 @@ def stat_variants(out_dir):
         histtype="stepfilled",
         facecolor=(0.42, 0.62, 0.90, 0.55),
         edgecolor=(0.12, 0.25, 0.55, 1),
-        linewidth=lw(1.4),
+        linewidth=1.4,
     )
 
     multi_ax = axes["multi"]
@@ -92,7 +92,7 @@ def stat_variants(out_dir):
             (0.36, 0.62, 0.36, 0.8),
         ],
         edgecolor=(0.10, 0.10, 0.10, 1),
-        linewidth=lw(0.7),
+        linewidth=0.7,
     )
 
     save(fig, out_dir, "stat_variants")

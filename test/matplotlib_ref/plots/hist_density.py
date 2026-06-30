@@ -25,7 +25,7 @@ def hist_density(out_dir):
         density=True,
         color=(0.20, 0.65, 0.30, 0.8),
         edgecolor=(0, 0, 0, 1),
-        linewidth=lw(0.8),
+        linewidth=0.8,
         rwidth=1.0,
     )
     margin = 0.05 * (data.max() - data.min())

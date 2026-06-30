@@ -65,7 +65,7 @@ func (a *Axes) Table(opts ...TableOptions) *Table {
 		HeaderFillColor: render.Color{R: 1, G: 1, B: 1, A: 1},
 		CellFillColor:   render.Color{R: 1, G: 1, B: 1, A: 1},
 		EdgeColor:       render.Color{R: 0, G: 0, B: 0, A: 1},
-		LineWidth:       a.resolvedRC().DPI / 72.0,
+		LineWidth:       1.0, // points; converted at the Paint sink
 		CellLoc:         "right",
 		RowLoc:          "left",
 		ColLoc:          "center",
@@ -97,7 +97,7 @@ func (a *Axes) Table(opts ...TableOptions) *Table {
 			cfg.EdgeColor = render.Color{R: 0, G: 0, B: 0, A: 1}
 		}
 		if cfg.LineWidth <= 0 {
-			cfg.LineWidth = a.resolvedRC().DPI / 72.0
+			cfg.LineWidth = 1.0 // points; converted at the Paint sink
 		}
 		if cfg.CellLoc == "" {
 			cfg.CellLoc = "right"
@@ -320,7 +320,7 @@ func (t *Table) drawTable(r render.Renderer, ctx *DrawContext) {
 			r.Path(path, &render.Paint{
 				Fill:      cell.Fill,
 				Stroke:    t.EdgeColor,
-				LineWidth: t.LineWidth,
+				LineWidth: pointsToPixels(ctx.RC, t.LineWidth),
 				LineJoin:  render.JoinMiter,
 				LineCap:   render.CapButt,
 				Snap:      render.SnapAuto,

@@ -1061,10 +1061,10 @@ func finalizeMPLStyleState(state *mplStyleState) {
 	}
 
 	if state.lineWidthSet {
-		state.rc.LineWidth = mplPointsToPixels(state.lineWidthPt, state.rc.DPI)
+		state.rc.LineWidth = state.lineWidthPt
 	}
 	if state.axisLineWidthSet {
-		state.rc.AxisLineWidth = mplPointsToPixels(state.axisLineWidthPt, state.rc.DPI)
+		state.rc.AxisLineWidth = state.axisLineWidthPt
 	}
 	if state.fontSizeSet || state.titleFontSizeSet {
 		state.rc.TitleFontSize = maxFloat(8, state.rc.FontSize*1.2)
@@ -1091,7 +1091,7 @@ func finalizeMPLStyleState(state *mplStyleState) {
 		state.rc.YTickLabelFontSize = maxFloat(8, state.yTickFontSize)
 	}
 	if state.gridLineWidthSet {
-		width := mplPointsToPixels(state.gridLineWidthPt, state.rc.DPI)
+		width := state.gridLineWidthPt
 		state.rc.GridLineWidth = width
 		state.rc.MinorGridLineWidth = width
 	}
@@ -1771,14 +1771,4 @@ func cloneDashPattern(dashes []float64) []float64 {
 	cloned := make([]float64, len(dashes))
 	copy(cloned, dashes)
 	return cloned
-}
-
-func mplPointsToPixels(points, dpi float64) float64 {
-	if dpi <= 0 {
-		dpi = Default.DPI
-	}
-	if dpi <= 0 {
-		dpi = 72
-	}
-	return points * dpi / 72.0
 }

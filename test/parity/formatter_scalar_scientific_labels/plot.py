@@ -22,12 +22,12 @@ def formatter_scalar_scientific_labels(out_dir):
     ax.set_title("Scalar Scientific Formatter")
     ax.set_xlabel("value")
     ax.set_ylabel("score")
-    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
 
     x = [-1200, 0, 1200]
     y = [0.28, 0.62, 0.78]
-    ax.plot(x, y, color=(0.12, 0.47, 0.71), linewidth=lw(2.0))
+    ax.plot(x, y, color=(0.12, 0.47, 0.71), linewidth=2.0)
     ax.set_xlim(-1400, 1400)
     ax.set_ylim(0, 1)
     ax.xaxis.set_major_locator(mticker.FixedLocator(x))

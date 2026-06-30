@@ -23,7 +23,7 @@ def path_clipped_transformed(out_dir):
     ax.set_ylabel("Y")
     ax.set_xlim(0, 10)
     ax.set_ylim(0, 6)
-    ax.grid(True, color=(0.82, 0.82, 0.82, 1.0), linewidth=lw(0.5))
+    ax.grid(True, color=(0.82, 0.82, 0.82, 1.0), linewidth=0.5)
 
     vertices = [
         (-1.6, 0.8),
@@ -57,11 +57,11 @@ def path_clipped_transformed(out_dir):
         mpath.Path(vertices, codes),
         facecolor=(0.12, 0.47, 0.71, 0.38),
         edgecolor=(0.05, 0.20, 0.36, 1.0),
-        linewidth=lw(1.7),
+        linewidth=1.7,
         transform=ax.transData,
         clip_on=True,
     ))
-    ax.plot([0, 10], [0, 6], color=(0.84, 0.15, 0.16, 0.78), linewidth=lw(1.0))
+    ax.plot([0, 10], [0, 6], color=(0.84, 0.15, 0.16, 0.78), linewidth=1.0)
 
     save(fig, out_dir, "path_clipped_transformed")
 

@@ -480,9 +480,8 @@ func (a *Axes) Spy(data [][]float64, opts ...SpyOptions) *SpyResult {
 	}
 	path := (&Scatter2D{Marker: marker}).markerPrototypePath()
 	lineOnly := markerLineOnly(NewMarkerStyle(marker))
-	rc := a.resolvedRC()
 	markerSizePx := math.Ceil(cfg.MarkerSize * matrixMarkerDPI(a) / 72.0)
-	markerEdgeWidth := pointsToPixels(rc, 1)
+	markerEdgeWidth := 1.0 // points; converted at the collection Paint sink
 	pc := &PathCollection{
 		Collection: Collection{
 			Coords: Coords(CoordData),

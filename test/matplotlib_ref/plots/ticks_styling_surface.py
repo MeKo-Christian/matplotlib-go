@@ -48,23 +48,23 @@ def ticks_styling_surface(out_dir):
         axis="both",
         which="major",
         colors=(0.18, 0.42, 0.55, 1.0),
-        length=lw(8),
-        width=lw(1.4),
+        length=px2pt(8),
+        width=1.4,
         labelrotation=35,
     )
     ax.tick_params(
         axis="both",
         which="minor",
         colors=(0.45, 0.45, 0.45, 1.0),
-        length=lw(4),
-        width=lw(0.8),
+        length=px2pt(4),
+        width=0.8,
     )
     ax.grid(
         True,
         axis="both",
         which="major",
         color=(0.50, 0.60, 0.70, 0.65),
-        linewidth=lw(0.8),
+        linewidth=0.8,
         linestyle=(0, (4, 2)),
     )
     ax.grid(
@@ -72,14 +72,14 @@ def ticks_styling_surface(out_dir):
         axis="both",
         which="minor",
         color=(0.70, 0.74, 0.78, 0.45),
-        linewidth=lw(0.5),
+        linewidth=0.5,
         linestyle=(0, (1, 2)),
     )
     ax.plot(
         [0, 1.5, 3, 4.5, 6],
         [1, 4, 5.5, 9, 11],
         color=(0.12, 0.47, 0.71),
-        linewidth=lw(2.0),
+        linewidth=2.0,
     )
 
     save(fig, out_dir, "ticks_styling_surface")

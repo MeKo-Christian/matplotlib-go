@@ -43,10 +43,10 @@ def boxplot_basic(out_dir):
         widths=0.55,
         patch_artist=True,
         showfliers=True,
-        boxprops=dict(linewidth=lw(1.2), color=(0, 0, 0, 1)),
-        whiskerprops=dict(linewidth=lw(1.2), color=(0, 0, 0, 1)),
-        capprops=dict(linewidth=lw(1.2), color=(0, 0, 0, 1)),
-        medianprops=dict(linewidth=lw(1.8), color=(0, 0, 0, 1)),
+        boxprops=dict(linewidth=1.2, color=(0, 0, 0, 1)),
+        whiskerprops=dict(linewidth=1.2, color=(0, 0, 0, 1)),
+        capprops=dict(linewidth=1.2, color=(0, 0, 0, 1)),
+        medianprops=dict(linewidth=1.8, color=(0, 0, 0, 1)),
         flierprops=dict(
             marker="o",
             markerfacecolor=(0, 0, 0, 1),
@@ -56,7 +56,7 @@ def boxplot_basic(out_dir):
         manage_ticks=False,
     )
     ax.set_axisbelow(True)
-    ax.yaxis.grid(True, color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.yaxis.grid(True, color=(0.8, 0.8, 0.8), linewidth=0.5)
     for patch, color in zip(bp["boxes"], colors):
         patch.set_facecolor(color)
         patch.set_alpha(color[3])

@@ -52,7 +52,7 @@ func drawTextBBox(r render.Renderer, origin geom.Pt, layout singleLineTextLayout
 	r.Path(path, &render.Paint{
 		Fill:      cfg.FaceColor,
 		Stroke:    cfg.EdgeColor,
-		LineWidth: cfg.LineWidth,
+		LineWidth: pointsToPixels(ctx.RC, cfg.LineWidth),
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
 		Snap:      snap,
@@ -69,7 +69,7 @@ func drawTextBBoxRotated(r render.Renderer, anchor, drawOrigin geom.Pt, layout s
 	r.Path(path, &render.Paint{
 		Fill:      cfg.FaceColor,
 		Stroke:    cfg.EdgeColor,
-		LineWidth: cfg.LineWidth,
+		LineWidth: pointsToPixels(ctx.RC, cfg.LineWidth),
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
 	})
@@ -143,7 +143,7 @@ func drawMultilineTextBBox(r render.Renderer, rect geom.Rect, opt *TextBBoxOptio
 	r.Path(path, &render.Paint{
 		Fill:      cfg.FaceColor,
 		Stroke:    cfg.EdgeColor,
-		LineWidth: cfg.LineWidth,
+		LineWidth: pointsToPixels(ctx.RC, cfg.LineWidth),
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
 		Snap:      snap,
@@ -157,7 +157,7 @@ func drawMultilineTextBBoxRotated(r render.Renderer, rect geom.Rect, opt *TextBB
 	r.Path(path, &render.Paint{
 		Fill:      cfg.FaceColor,
 		Stroke:    cfg.EdgeColor,
-		LineWidth: cfg.LineWidth,
+		LineWidth: pointsToPixels(ctx.RC, cfg.LineWidth),
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
 	})
@@ -181,7 +181,7 @@ func drawMultilineTextBBoxRotatedMatplotlib(r render.Renderer, anchor geom.Pt, b
 	r.Path(path, &render.Paint{
 		Fill:      cfg.FaceColor,
 		Stroke:    cfg.EdgeColor,
-		LineWidth: cfg.LineWidth,
+		LineWidth: pointsToPixels(ctx.RC, cfg.LineWidth),
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
 	})
@@ -222,10 +222,9 @@ func resolvedTextBBoxOptions(opt TextBBoxOptions, ctx *DrawContext, fontSize flo
 		opt.EdgeColor = resolvedTextBBoxColor(opt.EdgeColor)
 	}
 	if opt.LineWidth <= 0 {
+		// Stored in points (matplotlib bbox patch linewidth default 1 pt);
+		// converted to device pixels at the Paint sinks.
 		opt.LineWidth = 1
-		if ctx != nil {
-			opt.LineWidth = pointsToPixels(ctx.RC, 1)
-		}
 	}
 	if opt.Padding <= 0 {
 		opt.Padding = 4

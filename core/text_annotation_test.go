@@ -247,7 +247,7 @@ func TestAnnotationDrawsTextBBox(t *testing.T) {
 	if !containsTextString(r.texts, "boxed") {
 		t.Fatalf("expected annotation text to draw, got %v", r.texts)
 	}
-	if !hasPathPaint(r.pathPaints, face, edge, 2) {
+	if !hasPathPaint(r.pathPaints, face, edge, pointsToPixels(fig.RC, 2)) {
 		t.Fatalf("annotation bbox paint not found in %+v", r.pathPaints)
 	}
 }
@@ -629,7 +629,7 @@ func TestAnnotationBboxDrawsTextFrameAndArrow(t *testing.T) {
 	if !approx(r.origins[0].X, wantOrigin.X, 1e-9) || !approx(r.origins[0].Y, wantOrigin.Y, 1e-9) {
 		t.Fatalf("annotation-box text origin = %+v, want %+v", r.origins[0], wantOrigin)
 	}
-	if !hasPathPaint(r.pathPaints, frameFill, frameEdge, 1.5) {
+	if !hasPathPaint(r.pathPaints, frameFill, frameEdge, pointsToPixels(ctx.RC, 1.5)) {
 		t.Fatalf("annotation-box frame paint not found in %+v", r.pathPaints)
 	}
 
@@ -653,7 +653,7 @@ func TestAnnotationBboxDefaultWidthsMatchMatplotlibPoints(t *testing.T) {
 	if box == nil {
 		t.Fatal("AnnotationBbox returned nil")
 	}
-	want := pointsToPixels(fig.RC, 1)
+	want := 1.0 // points; converted at the Paint sink
 	if box.LineWidth != want {
 		t.Fatalf("annotation-box linewidth = %v, want Matplotlib 1 pt = %v px", box.LineWidth, want)
 	}

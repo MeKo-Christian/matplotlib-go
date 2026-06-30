@@ -41,7 +41,7 @@ def large_scatter(out_dir):
         s=sizes,
         c=fills,
         edgecolors=edges,
-        linewidths=lw(0.75),
+        linewidths=0.75,
         marker="o",
         label="batched markers",
     )

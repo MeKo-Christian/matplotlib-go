@@ -70,14 +70,14 @@ func TestAxes_TickParamsLocatorParamsAndMinorTicks(t *testing.T) {
 	if len(r.pathCalls) != 3 {
 		t.Fatalf("expected spine, minor tick, and major tick path calls, got %d", len(r.pathCalls))
 	}
-	if got := r.pathCalls[0].paint.LineWidth; got != defaultAxisLineWidth {
-		t.Fatalf("spine line width = %v, want default %v", got, defaultAxisLineWidth)
+	if got, want := r.pathCalls[0].paint.LineWidth, pointsToPixels(ctx.RC, defaultAxisLineWidth); got != want {
+		t.Fatalf("spine line width = %v, want default %v", got, want)
 	}
-	if got := r.pathCalls[1].paint.LineWidth; got != minorWidth {
-		t.Fatalf("minor tick line width = %v, want %v", got, minorWidth)
+	if got, want := r.pathCalls[1].paint.LineWidth, pointsToPixels(ctx.RC, minorWidth); got != want {
+		t.Fatalf("minor tick line width = %v, want %v", got, want)
 	}
-	if got := r.pathCalls[2].paint.LineWidth; got != width {
-		t.Fatalf("major tick line width = %v, want %v", got, width)
+	if got, want := r.pathCalls[2].paint.LineWidth, pointsToPixels(ctx.RC, width); got != want {
+		t.Fatalf("major tick line width = %v, want %v", got, want)
 	}
 
 	if err := axes.MinorticksOff("x"); err != nil {
@@ -218,7 +218,9 @@ func TestAxes_TickParamsAppliesDirection(t *testing.T) {
 }
 
 func TestAxisDefaultMinorTickLineWidthMatchesMatplotlib(t *testing.T) {
-	want := 0.6 * 100.0 / 72.0
+	// Width fields are stored in points now (matplotlib minor tick 0.6 pt);
+	// pixel conversion happens at the Paint sink.
+	want := 0.6
 
 	for name, axis := range map[string]*Axis{
 		"x": NewXAxis(),
@@ -275,7 +277,7 @@ func TestAxes_TickParamsResetRestoresAxisOwnedDefaults(t *testing.T) {
 	if axes.XAxis.TickSize != newLength || axes.XAxis.MinorTickSize != 0 {
 		t.Fatalf("reset tick sizes = major %v minor %v, want major override %v and default minor", axes.XAxis.TickSize, axes.XAxis.MinorTickSize, newLength)
 	}
-	if axes.XAxis.TickLineWidth != 0 || axes.XAxis.MinorTickLineWidth != 0.6*100.0/72.0 {
+	if axes.XAxis.TickLineWidth != 0 || axes.XAxis.MinorTickLineWidth != 0.6 {
 		t.Fatalf("reset tick widths = major %v minor %v, want defaults", axes.XAxis.TickLineWidth, axes.XAxis.MinorTickLineWidth)
 	}
 	if axes.XAxis.TickDirection != TickDirectionOut || !axes.XAxis.ShowLabels || axes.XAxis.ShowMinorLabels {

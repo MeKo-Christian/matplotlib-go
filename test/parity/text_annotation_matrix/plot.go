@@ -124,7 +124,7 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 		BoxPadding:      0,
 		BackgroundColor: render.Color{R: 0.98, G: 0.98, B: 0.94, A: 0.92},
 		BorderColor:     render.Color{R: 0.45, G: 0.45, B: 0.24, A: 1},
-		BorderWidth:     pt(1),
+		BorderWidth:     1,
 		TextColor:       render.Color{R: 0.18, G: 0.18, B: 0.10, A: 1},
 		FontSize:        9,
 	})
@@ -148,7 +148,7 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 		Inset:           fontPad(10, 0.7),
 		BackgroundColor: render.Color{R: 0.98, G: 0.96, B: 0.88, A: 0.92},
 		BorderColor:     render.Color{R: 0.45, G: 0.36, B: 0.14, A: 1},
-		BorderWidth:     pt(1),
+		BorderWidth:     1,
 	})
 	area.AddPath(localTrianglePath(), render.Paint{
 		Fill:      render.Color{R: 0.83, G: 0.44, B: 0.18, A: 0.85},
@@ -163,7 +163,7 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 		Sep:             pt(5),
 		BackgroundColor: render.Color{R: 0.93, G: 0.97, B: 1.00, A: 0.92},
 		BorderColor:     render.Color{R: 0.16, G: 0.37, B: 0.54, A: 1},
-		BorderWidth:     pt(1),
+		BorderWidth:     1,
 		FontSize:        9,
 		TextColor:       render.Color{R: 0.10, G: 0.24, B: 0.35, A: 1},
 	})
@@ -184,8 +184,8 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 		FillBar:         &fill,
 		BackgroundColor: render.Color{R: 1, G: 1, B: 1, A: 0.82},
 		BorderColor:     render.Color{R: 0.20, G: 0.20, B: 0.20, A: 1},
-		BorderWidth:     pt(1),
-		LineWidth:       pt(1),
+		BorderWidth:     1,
+		LineWidth:       1,
 		Color:           render.Color{R: 0.08, G: 0.08, B: 0.08, A: 1},
 		FontSize:        9,
 	})

@@ -283,7 +283,7 @@ func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
 	}
 	color.A *= alpha
 
-	lineWidth := pointsToPixels(a.resolvedRC(), 1.5)
+	lineWidth := 1.5 // points; converted at the collection Paint sink
 	if opt.LineWidth != nil {
 		lineWidth = *opt.LineWidth
 	}
@@ -301,7 +301,7 @@ func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
 		markerEdgeColor = *opt.MarkerEdgeColor
 		markerEdgeColor.A *= alpha
 	}
-	markerEdgeWidth := pointsToPixels(a.resolvedRC(), 1)
+	markerEdgeWidth := 1.0 // points; converted at the collection Paint sink
 	if opt.MarkerEdgeWidth != nil {
 		markerEdgeWidth = *opt.MarkerEdgeWidth
 	}

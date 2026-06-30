@@ -20,7 +20,7 @@ func (c *Circle) Draw(ren render.Renderer, ctx *DrawContext) {
 	}
 	local := ellipsePath(c.Radius*2, c.Radius*2)
 	path := buildArtistDisplayPath(ctx, c, c.Coords, local, translateAffine(c.Center))
-	c.drawStyledPath(ren, path, geom.Path{})
+	c.drawStyledPath(ren, &ctx.RC, path, geom.Path{})
 }
 
 // Bounds returns the circle's data-space bounding box when applicable.

@@ -87,7 +87,7 @@ def mixed_collection(out_dir):
         (0.20, 0.20, 0.20, 1),
         (0.36, 0.36, 0.04, 1),
     ]
-    widths = [lw(v) for v in [1.1, 1.6, 1.0, 1.8, 1.2, 1.4, 1.0, 1.6, 1.2]]
+    widths = [v for v in [1.1, 1.6, 1.0, 1.8, 1.2, 1.4, 1.0, 1.6, 1.2]]
     patches = [mpatches.PathPatch(path) for path in paths]
     collection = mcoll.PatchCollection(
         patches,

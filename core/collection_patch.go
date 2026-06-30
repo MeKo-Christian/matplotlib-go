@@ -55,7 +55,7 @@ func (c *PatchCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		if patch.LineCap == 0 {
 			patch.LineCap = render.CapButt
 		}
-		patch.drawStyledPath(r, path, geom.Path{})
+		patch.drawStyledPath(r, &ctx.RC, path, geom.Path{})
 	}
 }
 
@@ -208,10 +208,10 @@ func (c *PatchCollection) drawPathCollection(r render.Renderer, ctx *DrawContext
 		}
 		batch.Items = append(batch.Items, render.PathCollectionItem{
 			Path:         path,
-			Paint:        collectionPaint(fill, edge, width, lineJoin, lineCap, nil),
+			Paint:        collectionPaint(fill, edge, pointsToPixels(ctx.RC, width), lineJoin, lineCap, nil),
 			Hatch:        hatch,
 			HatchColor:   hatchColor,
-			HatchWidth:   hatchWidth,
+			HatchWidth:   pointsToPixels(ctx.RC, hatchWidth),
 			HatchSpacing: render.DefaultHatchSpacing,
 			Antialiased:  c.antialiased(),
 		})

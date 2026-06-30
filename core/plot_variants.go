@@ -430,7 +430,7 @@ func (s *Stairs2D) Draw(r render.Renderer, ctx *DrawContext) {
 		paint := render.Paint{Fill: fillColor, Snap: render.SnapAuto}
 		if s.LineWidth > 0 && strokeColor.A > 0 {
 			paint.Stroke = strokeColor
-			paint.LineWidth = s.LineWidth
+			paint.LineWidth = pointsToPixels(ctx.RC, s.LineWidth)
 			paint.LineJoin = render.JoinMiter
 			paint.LineCap = render.CapButt
 		}
@@ -443,7 +443,7 @@ func (s *Stairs2D) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 	r.Path(s.stepPath(n, ctx), &render.Paint{
 		Stroke:    strokeColor,
-		LineWidth: s.LineWidth,
+		LineWidth: pointsToPixels(ctx.RC, s.LineWidth),
 		LineJoin:  render.JoinMiter,
 		LineCap:   render.CapButt,
 		Snap:      render.SnapAuto,
@@ -511,12 +511,13 @@ func (s *Segment2D) Draw(r render.Renderer, ctx *DrawContext) {
 			transformedPoint(ctx, s.Coords, s.End, 0, 0),
 		},
 	}
+	segWidthPx := pointsToPixels(ctx.RC, s.LineWidth)
 	r.Path(path, &render.Paint{
 		Stroke:    s.Color,
-		LineWidth: s.LineWidth,
+		LineWidth: segWidthPx,
 		LineJoin:  render.JoinRound,
 		LineCap:   render.CapButt,
-		Dashes:    lineDashesForPaint(s.Dashes, s.LineWidth, DashUnitsMatplotlib),
+		Dashes:    lineDashesForPaint(s.Dashes, segWidthPx, DashUnitsMatplotlib),
 		Snap:      render.SnapAuto,
 	})
 }
@@ -543,7 +544,7 @@ func (s *Span2D) Draw(r render.Renderer, ctx *DrawContext) {
 	paint := render.Paint{Fill: s.Color}
 	if s.EdgeWidth > 0 && s.EdgeColor.A > 0 {
 		paint.Stroke = s.EdgeColor
-		paint.LineWidth = s.EdgeWidth
+		paint.LineWidth = pointsToPixels(ctx.RC, s.EdgeWidth)
 		paint.LineJoin = render.JoinMiter
 		paint.LineCap = render.CapButt
 	}
@@ -574,10 +575,10 @@ func (l *InfiniteLine2D) Draw(r render.Renderer, ctx *DrawContext) {
 		V: []geom.Pt{start, end},
 	}, &render.Paint{
 		Stroke:    l.Color,
-		LineWidth: l.LineWidth,
+		LineWidth: pointsToPixels(ctx.RC, l.LineWidth),
 		LineJoin:  render.JoinRound,
 		LineCap:   lineCap,
-		Dashes:    lineDashesForPaint(l.Dashes, l.LineWidth, DashUnitsMatplotlib),
+		Dashes:    lineDashesForPaint(l.Dashes, pointsToPixels(ctx.RC, l.LineWidth), DashUnitsMatplotlib),
 		Snap:      render.SnapAuto,
 	})
 }
@@ -775,7 +776,7 @@ func (a *Axes) newSpan(start, end geom.Pt, coords CoordinateSpec, opt SpanOption
 			edgeColor.A *= *opt.Alpha
 		}
 	}
-	edgeWidth := pointsToPixels(rc, 1)
+	edgeWidth := 1.0 // points; converted at the Span2D Paint sink
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
 	}

@@ -84,7 +84,7 @@ func (c *Cursor) Draw(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 	pt := ctx.DataToPixel.Apply(geom.Pt{X: c.X, Y: c.Y})
-	paint := render.Paint{Stroke: c.Color, LineWidth: c.LineWidth}
+	paint := render.Paint{Stroke: c.Color, LineWidth: pointsToPixels(ctx.RC, c.LineWidth)}
 	if c.Vertical {
 		r.Path(pixelLinePath(geom.Pt{X: pt.X, Y: ctx.Clip.Min.Y}, geom.Pt{X: pt.X, Y: ctx.Clip.Max.Y}), &paint)
 	}

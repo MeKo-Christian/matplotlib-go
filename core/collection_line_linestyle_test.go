@@ -21,7 +21,7 @@ func TestLineCollectionLineStyleStringToDash(t *testing.T) {
 	if len(r.pathCalls) != 1 {
 		t.Fatalf("got %d path calls, want 1", len(r.pathCalls))
 	}
-	want := lineStyleToDashes("--", 2)
+	want := lineStyleToDashes("--", (2 * 100.0 / 72.0))
 	if !reflect.DeepEqual(r.pathCalls[0].paint.Dashes, want) {
 		t.Fatalf("dashes = %v, want %v", r.pathCalls[0].paint.Dashes, want)
 	}
@@ -65,7 +65,7 @@ func TestLineCollectionPerItemLineStyles(t *testing.T) {
 	if r.pathCalls[0].paint.Dashes != nil {
 		t.Errorf("solid linestyle should have nil dashes, got %v", r.pathCalls[0].paint.Dashes)
 	}
-	want := lineStyleToDashes(":", 1)
+	want := lineStyleToDashes(":", (1 * 100.0 / 72.0))
 	if !reflect.DeepEqual(r.pathCalls[1].paint.Dashes, want) {
 		t.Fatalf("dotted dashes = %v, want %v", r.pathCalls[1].paint.Dashes, want)
 	}

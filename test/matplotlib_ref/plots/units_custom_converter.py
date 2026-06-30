@@ -19,19 +19,19 @@ def units_custom_converter(out_dir):
     ax.set_title("Custom Distance Units")
     ax.set_xlabel("Distance")
     ax.set_ylabel("Pace")
-    ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
 
     distances = [5, 10, 21.1, 30, 42.2]
     pace = [6.4, 5.9, 5.3, 5.1, 5.4]
-    ax.plot(distances, pace, color=(0.55, 0.34, 0.29), linewidth=lw(1.4))
+    ax.plot(distances, pace, color=(0.55, 0.34, 0.29), linewidth=1.4)
     ax.scatter(
         distances,
         pace,
         s=ss(8),
         c=[(0.17, 0.63, 0.17, 0.92)],
         edgecolors=[(0.09, 0.36, 0.09, 1.0)],
-        linewidths=lw(1.0),
+        linewidths=1.0,
     )
     ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, _: f"{x:.0f} km"))
     ax.margins(x=0.08, y=0.08)

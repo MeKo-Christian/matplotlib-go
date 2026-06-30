@@ -24,27 +24,27 @@ def patch_showcase(out_dir):
         (0.6, 0.7), 1.5, 1.0,
         facecolor=(0.95, 0.70, 0.23, 0.86),
         edgecolor=(0.48, 0.27, 0.08, 1.0),
-        linewidth=lw(1.1),
+        linewidth=1.1,
         hatch="/",
     ))
     left.add_patch(mpatches.Circle(
         (3.0, 1.25), 0.56,
         facecolor=(0.22, 0.57, 0.82, 0.82),
         edgecolor=(0.11, 0.29, 0.44, 1.0),
-        linewidth=lw(1.0),
+        linewidth=1.0,
     ))
     left.add_patch(mpatches.Ellipse(
         (4.8, 2.75), 1.55, 0.95, angle=28,
         facecolor=(0.23, 0.72, 0.51, 0.80),
         edgecolor=(0.10, 0.36, 0.24, 1.0),
-        linewidth=lw(1.0),
+        linewidth=1.0,
     ))
     left.add_patch(mpatches.Polygon(
         [[2.15, 3.2], [2.85, 2.25], [1.35, 2.45]],
         closed=True,
         facecolor=(0.84, 0.34, 0.34, 0.82),
         edgecolor=(0.48, 0.14, 0.14, 1.0),
-        linewidth=lw(1.0),
+        linewidth=1.0,
     ))
 
     middle = fig.add_axes(go_rect(0.37, 0.16, 0.63, 0.88))
@@ -58,7 +58,7 @@ def patch_showcase(out_dir):
         head_length=0.62,
         facecolor=(0.91, 0.42, 0.22, 0.88),
         edgecolor=(0.58, 0.22, 0.10, 1.0),
-        linewidth=lw(1.0),
+        linewidth=1.0,
         length_includes_head=True,
     ))
     star_vertices = [
@@ -70,7 +70,7 @@ def patch_showcase(out_dir):
         mpath.Path(star_vertices, star_codes),
         facecolor=(0.76, 0.76, 0.86, 0.72),
         edgecolor=(0.29, 0.29, 0.45, 1.0),
-        linewidth=lw(1.0),
+        linewidth=1.0,
         hatch="x",
     ))
 
@@ -83,7 +83,7 @@ def patch_showcase(out_dir):
         boxstyle="round,pad=0.14,rounding_size=0.24",
         facecolor=(0.29, 0.67, 0.78, 0.28),
         edgecolor=(0.10, 0.37, 0.45, 1.0),
-        linewidth=lw(1.0),
+        linewidth=1.0,
         hatch="/",
     ))
     right.add_patch(mpatches.FancyBboxPatch(
@@ -91,7 +91,7 @@ def patch_showcase(out_dir):
         boxstyle="square,pad=0.10",
         facecolor=(0.96, 0.87, 0.60, 0.82),
         edgecolor=(0.50, 0.39, 0.12, 1.0),
-        linewidth=lw(1.0),
+        linewidth=1.0,
     ))
 
     save(fig, out_dir, "patch_showcase")

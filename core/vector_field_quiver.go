@@ -600,7 +600,7 @@ func (k *QuiverKey) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	r.Path(path, &render.Paint{
 		Fill:      fill,
 		Stroke:    edge,
-		LineWidth: q.EdgeWidth,
+		LineWidth: pointsToPixels(ctx.RC, q.EdgeWidth),
 		LineJoin:  render.JoinRound,
 		LineCap:   render.CapRound,
 	})

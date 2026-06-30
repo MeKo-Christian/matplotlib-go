@@ -32,7 +32,7 @@ def histogram_variants(out_dir):
     c_ax.set_ylim(0, 70)
     data_c = normal_data(1, 0, 400, 5.0, 1.5)
     c_ax.hist(data_c, bins=18, color=(0.26, 0.53, 0.80, 0.85),
-              edgecolor=black, linewidth=lw(0.8), rwidth=1.0)
+              edgecolor=black, linewidth=0.8, rwidth=1.0)
 
     # Density.
     d_ax = axes["density"]
@@ -41,7 +41,7 @@ def histogram_variants(out_dir):
     d_ax.set_ylim(0, 0.35)
     data_d = normal_data(42, 0, 500, 5.0, 1.5)
     d_ax.hist(data_d, bins=20, density=True, color=(0.20, 0.65, 0.30, 0.8),
-              edgecolor=black, linewidth=lw(0.8), rwidth=1.0)
+              edgecolor=black, linewidth=0.8, rwidth=1.0)
 
     # Cumulative counts.
     cu_ax = axes["cumulative"]
@@ -50,7 +50,7 @@ def histogram_variants(out_dir):
     cu_ax.set_ylim(0, 420)
     data_cu = normal_data(1, 0, 400, 5.0, 1.5)
     cu_ax.hist(data_cu, bins=18, cumulative=True, color=(0.55, 0.35, 0.75, 0.85),
-               edgecolor=black, linewidth=lw(0.8), rwidth=1.0)
+               edgecolor=black, linewidth=0.8, rwidth=1.0)
 
     # Multiple overlapping probability histograms.
     m_ax = axes["multiple"]
@@ -60,9 +60,9 @@ def histogram_variants(out_dir):
     data1 = normal_data(42, 0, 300, 4.0, 1.0)
     data2 = normal_data(7, 0, 300, 7.0, 1.2)
     m_ax.hist(data1, bins=15, density=False, weights=np.ones(len(data1)) / len(data1),
-              color=(0.26, 0.53, 0.80, 0.6), edgecolor=black, linewidth=lw(0.5), rwidth=1.0)
+              color=(0.26, 0.53, 0.80, 0.6), edgecolor=black, linewidth=0.5, rwidth=1.0)
     m_ax.hist(data2, bins=15, density=False, weights=np.ones(len(data2)) / len(data2),
-              color=(0.90, 0.50, 0.10, 0.6), edgecolor=black, linewidth=lw(0.5), rwidth=1.0)
+              color=(0.90, 0.50, 0.10, 0.6), edgecolor=black, linewidth=0.5, rwidth=1.0)
 
     save(fig, out_dir, "histogram_variants")
 

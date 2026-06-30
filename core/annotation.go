@@ -172,9 +172,9 @@ func (a *Annotation) drawArrowPath(r render.Renderer, ctx *DrawContext, path geo
 			continue
 		}
 		if part.fillable {
-			patch.drawStyledPath(r, part.path, geom.Path{})
+			patch.drawStyledPath(r, &ctx.RC, part.path, geom.Path{})
 		} else {
-			patch.drawStyledPath(r, geom.Path{}, part.path)
+			patch.drawStyledPath(r, &ctx.RC, geom.Path{}, part.path)
 		}
 	}
 }

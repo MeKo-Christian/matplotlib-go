@@ -620,9 +620,9 @@ func TestErrorBarCapThickSetsField(t *testing.T) {
 	if bar == nil {
 		t.Fatal("ErrorBar returned nil")
 	}
-	want := pointsToPixels(ax.resolvedRC(), capThick)
-	if bar.CapThick != want {
-		t.Fatalf("bar.CapThick = %v, want %v", bar.CapThick, want)
+	// CapThick is stored in points now; pixel conversion happens at the sink.
+	if bar.CapThick != capThick {
+		t.Fatalf("bar.CapThick = %v, want %v", bar.CapThick, capThick)
 	}
 }
 
@@ -636,15 +636,18 @@ func TestErrorBarDrawUsesCapThick(t *testing.T) {
 		Color:     render.Color{A: 1},
 	}
 	r := &recordingRenderer{}
-	bar.Draw(r, createTestDrawContext())
+	ctx := createTestDrawContext()
+	bar.Draw(r, ctx)
+	// CapThick is points; the rendered cap stroke is converted to device pixels.
+	wantWidth := pointsToPixels(ctx.RC, 7)
 	found := false
 	for _, c := range r.pathCalls {
-		if c.paint.LineWidth == 7 {
+		if c.paint.LineWidth == wantWidth {
 			found = true
 		}
 	}
 	if !found {
-		t.Fatalf("no cap path drawn with CapThick width 7; got %d paths", len(r.pathCalls))
+		t.Fatalf("no cap path drawn with CapThick width %v; got %d paths", wantWidth, len(r.pathCalls))
 	}
 }
 

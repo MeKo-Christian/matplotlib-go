@@ -76,11 +76,11 @@ func (c *PathCollection) Draw(r render.Renderer, ctx *DrawContext) {
 			continue
 		}
 
-		paint := c.collectionPaint(fill, edge, width, nil)
-		paint.PathEffects = cloneRenderPathEffects(c.PathEffects)
+		paint := c.collectionPaint(fill, edge, pointsToPixels(ctx.RC, width), nil)
+		paint.PathEffects = devicePathEffects(ctx.RC, c.PathEffects)
 		paint.Hatch = hatch
 		paint.HatchColor = hatchColor
-		paint.HatchLineWidth = hatchWidth
+		paint.HatchLineWidth = pointsToPixels(ctx.RC, hatchWidth)
 		paint.HatchSpacing = render.DefaultHatchSpacing
 		if !c.antialiased() {
 			paint.Antialias = render.AntialiasOff
@@ -309,7 +309,7 @@ func (c *PathCollection) drawMarkers(r render.Renderer, ctx *DrawContext) bool {
 		batch.Items = append(batch.Items, render.MarkerItem{
 			Offset:      offset,
 			Transform:   geom.Affine{A: scale, D: scale},
-			Paint:       c.collectionPaint(fill, edge, width, nil),
+			Paint:       c.collectionPaint(fill, edge, pointsToPixels(ctx.RC, width), nil),
 			Snap:        c.Snap,
 			SnapSet:     c.SnapSet,
 			Antialiased: c.antialiased(),
@@ -382,10 +382,10 @@ func (c *PathCollection) drawPathCollection(r render.Renderer, ctx *DrawContext)
 		}
 		batch.Items = append(batch.Items, render.PathCollectionItem{
 			Path:         path,
-			Paint:        c.collectionPaint(fill, edge, width, nil),
+			Paint:        c.collectionPaint(fill, edge, pointsToPixels(ctx.RC, width), nil),
 			Hatch:        hatch,
 			HatchColor:   hatchColor,
-			HatchWidth:   hatchWidth,
+			HatchWidth:   pointsToPixels(ctx.RC, hatchWidth),
 			HatchSpacing: render.DefaultHatchSpacing,
 			Antialiased:  c.antialiased(),
 		})

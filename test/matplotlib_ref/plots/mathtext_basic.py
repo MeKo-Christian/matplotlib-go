@@ -23,7 +23,7 @@ def mathtext_basic(out_dir):
     xs = [i / (n - 1) * 4 * math.pi for i in range(n)]
     ys = [math.sin(t) * math.exp(-0.08 * t) for t in xs]
 
-    ax.plot(xs, ys, linewidth=lw(2), color=TAB10[0])
+    ax.plot(xs, ys, linewidth=2, color=TAB10[0])
     ax.set_title(r"MathText $\alpha^2 + \beta_i$")
     ax.set_xlabel(r"phase $\theta$")
     ax.set_ylabel(r"amplitude $\frac{1}{\sqrt{2}}$")
@@ -42,7 +42,7 @@ def mathtext_basic(out_dir):
         xytext=(34, -26),
         textcoords="offset points",
         fontsize=12,
-        arrowprops={"arrowstyle": "->", "linewidth": lw(1), "color": "black"},
+        arrowprops={"arrowstyle": "->", "linewidth": 1, "color": "black"},
     )
     ax.text(
         0.03,

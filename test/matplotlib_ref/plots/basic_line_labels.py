@@ -26,7 +26,7 @@ def basic_line_labels(out_dir):
         [0, 1, 3, 6, 10],
         [0, 0.2, 0.9, 0.4, 0.8],
         color="black",
-        linewidth=lw(2),
+        linewidth=2,
     )
     save(fig, out_dir, "basic_line_labels")
 

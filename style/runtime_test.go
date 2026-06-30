@@ -30,7 +30,7 @@ func TestUpdateParamsMutatesCurrentDefaults(t *testing.T) {
 	if got := rc.AxesBackground; got.R != 0x11/255.0 || got.G != 0x22/255.0 || got.B != 0x33/255.0 {
 		t.Fatalf("axes facecolor = %+v", got)
 	}
-	if got, want := rc.LineWidth, 2.5*144.0/72.0; !almostEqual(got, want) {
+	if got, want := rc.LineWidth, 2.5; !almostEqual(got, want) {
 		t.Fatalf("line width = %v, want %v", got, want)
 	}
 }

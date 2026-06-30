@@ -124,7 +124,7 @@ func (s *RectangleSelector) Draw(r render.Renderer, ctx *DrawContext) {
 	if rect.W() <= 0 || rect.H() <= 0 {
 		return
 	}
-	r.Path(pixelRectPath(rect), &render.Paint{Fill: s.FillColor, Stroke: s.EdgeColor, LineWidth: s.LineWidth})
+	r.Path(pixelRectPath(rect), &render.Paint{Fill: s.FillColor, Stroke: s.EdgeColor, LineWidth: pointsToPixels(ctx.RC, s.LineWidth)})
 }
 
 func (s *RectangleSelector) Bounds(ctx *DrawContext) geom.Rect {

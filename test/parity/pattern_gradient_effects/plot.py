@@ -39,7 +39,7 @@ def _linear_gradient(ax):
     row = np.concatenate([left, right], axis=0)
     img = np.repeat(row[None, :, :], 100, axis=0)
     ax.imshow(img, extent=(42, 205, 142, 42), interpolation="bilinear")
-    ax.add_patch(mpatches.Rectangle((42, 42), 163, 100, facecolor="none", edgecolor=(0.06, 0.08, 0.10), linewidth=lw(1.8)))
+    ax.add_patch(mpatches.Rectangle((42, 42), 163, 100, facecolor="none", edgecolor=(0.06, 0.08, 0.10), linewidth=1.8))
 
 
 def _radial_gradient(ax):
@@ -51,7 +51,7 @@ def _radial_gradient(ax):
     c1 = np.array((0.08, 0.50, 0.36, 1))
     img = c0[None, None, :] * (1 - t[:, :, None]) + c1[None, None, :] * t[:, :, None]
     ax.imshow(img, extent=(235, 398, 142, 42), interpolation="bilinear")
-    ax.add_patch(mpatches.Rectangle((235, 42), 163, 100, facecolor="none", edgecolor=(0.06, 0.08, 0.10), linewidth=lw(1.8)))
+    ax.add_patch(mpatches.Rectangle((235, 42), 163, 100, facecolor="none", edgecolor=(0.06, 0.08, 0.10), linewidth=1.8))
 
 
 def _pattern(ax):
@@ -60,7 +60,7 @@ def _pattern(ax):
         closed=True,
         facecolor=(0.93, 0.94, 0.98, 1),
         edgecolor=(0.06, 0.08, 0.10, 1),
-        linewidth=lw(1.8),
+        linewidth=1.8,
         hatch="///",
     )
     ax.add_patch(poly)
@@ -83,10 +83,10 @@ def pattern_gradient_effects(out_dir):
         88,
         facecolor=(0.12, 0.56, 0.40, 1),
         edgecolor=(0.02, 0.09, 0.16, 1),
-        linewidth=lw(2.2),
+        linewidth=2.2,
         joinstyle="round",
         path_effects=[
-            pe.Stroke(linewidth=lw(9), foreground=(1, 0.92, 0.58, 0.95), offset=_offset(4, -4)),
+            pe.Stroke(linewidth=9, foreground=(1, 0.92, 0.58, 0.95), offset=_offset(4, -4)),
             pe.Normal(),
         ],
     )

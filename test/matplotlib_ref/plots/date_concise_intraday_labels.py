@@ -20,12 +20,12 @@ def date_concise_intraday_labels(out_dir):
     ax.set_title("Concise Intraday Dates")
     ax.set_xlabel("time")
     ax.set_ylabel("requests")
-    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
 
     start = dt.datetime(2024, 1, 2, 0, 0, 0)
     times = [start + dt.timedelta(hours=h) for h in [0, 6, 12, 18]]
-    ax.plot(times, [8, 11, 9, 14], color=(0.12, 0.47, 0.71), linewidth=lw(2.0))
+    ax.plot(times, [8, 11, 9, 14], color=(0.12, 0.47, 0.71), linewidth=2.0)
     ax.set_xlim(times[0], times[-1])
     ax.set_ylim(0, 16)
     locator = mdates.HourLocator(byhour=[0, 6, 12, 18])

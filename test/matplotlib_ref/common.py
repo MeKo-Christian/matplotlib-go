@@ -155,9 +155,26 @@ def go_rect(min_x, min_y, max_x, max_y):
     return [min_x, min_y, max_x - min_x, max_y - min_y]
 
 
-def lw(go_width_px):
-    """Go line width (pixels) → matplotlib linewidth (points)."""
-    return go_width_px * 72.0 / DPI
+def lw(width_pt):
+    """Deprecated identity passthrough.
+
+    The Go port now stores line widths in points (matplotlib semantics) and
+    converts to device pixels at draw time, so references use matplotlib's
+    native point values directly. Kept as a no-op safety net for any
+    remaining call site.
+    """
+    return width_pt
+
+
+def px2pt(px):
+    """Convert a Go pixel-space length to matplotlib points.
+
+    A few quantities (notably tick *length*) are still stored in device pixels
+    by the Go port and coupled to its pixel-based label layout, so references
+    bridge them px→pt. (Line/edge widths are now points end-to-end and need no
+    bridge.) TODO: make tick length points-based and drop this.
+    """
+    return px * 72.0 / DPI
 
 
 def ss(go_radius_px):
@@ -199,7 +216,7 @@ def _composition_configure_axes(ax, title, x, y, color):
     ax.set_xlabel("x", fontsize=10)
     ax.set_ylabel("y", fontsize=10)
     ax.tick_params(labelsize=10)
-    ax.plot(x, y, color=color, linewidth=lw(2.0), label=title)
+    ax.plot(x, y, color=color, linewidth=2.0, label=title)
     ax.margins(0.10)
 
 __all__ = [name for name in globals() if not name.startswith("__")]

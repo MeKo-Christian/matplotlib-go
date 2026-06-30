@@ -53,7 +53,7 @@ def animation_scatter_frame(out_dir):
         vmax=0.95,
         s=sizes,
         edgecolors=[(0.12, 0.12, 0.14, 1)],
-        linewidths=lw(1.2),
+        linewidths=1.2,
     )
 
     save(fig, out_dir, "animation_scatter_frame")

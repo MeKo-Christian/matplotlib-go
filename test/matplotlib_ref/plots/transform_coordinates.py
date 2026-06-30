@@ -21,14 +21,14 @@ def transform_coordinates(out_dir):
     ax.set_ylabel("Y")
     ax.set_xlim(0, 10)
     ax.set_ylim(0, 10)
-    ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
 
     ax.plot(
         [1.0, 2.5, 4.5, 7.0, 8.8],
         [1.5, 3.2, 5.6, 6.4, 8.2],
         color=(0.14, 0.37, 0.74),
-        linewidth=lw(2.2),
+        linewidth=2.2,
     )
     ax.scatter(
         [2.5, 7.0, 8.8],
@@ -37,7 +37,7 @@ def transform_coordinates(out_dir):
         marker="D",
         c=[(0.88, 0.42, 0.16, 0.92)],
         edgecolors=[(0.45, 0.18, 0.05, 1.0)],
-        linewidths=lw(1.0),
+        linewidths=1.0,
     )
 
     text_kwargs = dict(fontsize=11, color=(0.10, 0.10, 0.10))
@@ -63,7 +63,7 @@ def transform_coordinates(out_dir):
         color=(0.10, 0.10, 0.10),
         ha="right",
         va="top",
-        arrowprops=dict(arrowstyle="->", color=(0.10, 0.10, 0.10), lw=lw(1.25)),
+        arrowprops=dict(arrowstyle="->", color=(0.10, 0.10, 0.10), lw=1.25),
     )
 
     save(fig, out_dir, "transform_coordinates")

@@ -27,9 +27,9 @@ def axes_convenience_helpers(out_dir):
             {"med": 3.4, "q1": 2.5, "q3": 4.2, "whislo": 1.5, "whishi": 5.0, "mean": 3.6, "fliers": [], "label": "B"},
         ],
         showmeans=True,
-        boxprops={"color": (0.18, 0.36, 0.70, 1), "linewidth": lw(1)},
-        whiskerprops={"color": (0.18, 0.36, 0.70, 1), "linewidth": lw(1)},
-        capprops={"color": (0.18, 0.36, 0.70, 1), "linewidth": lw(1)},
+        boxprops={"color": (0.18, 0.36, 0.70, 1), "linewidth": 1},
+        whiskerprops={"color": (0.18, 0.36, 0.70, 1), "linewidth": 1},
+        capprops={"color": (0.18, 0.36, 0.70, 1), "linewidth": 1},
     )
 
     violin_ax = fig.add_axes(go_rect(0.38, 0.58, 0.61, 0.92))
@@ -49,8 +49,8 @@ def axes_convenience_helpers(out_dir):
     line_ax.set_title("H/VLines")
     line_ax.set_xlim(0, 5)
     line_ax.set_ylim(0, 5)
-    line_ax.hlines([1, 2.5, 4], [0.5], [4.5], colors=[(0.12, 0.30, 0.72, 1)], linewidth=lw(1.4))
-    line_ax.vlines([1, 2.5, 4], [0.6], [4.4], colors=[(0.75, 0.18, 0.16, 1)], linewidth=lw(1.4))
+    line_ax.hlines([1, 2.5, 4], [0.5], [4.5], colors=[(0.12, 0.30, 0.72, 1)], linewidth=1.4)
+    line_ax.vlines([1, 2.5, 4], [0.6], [4.4], colors=[(0.75, 0.18, 0.16, 1)], linewidth=1.4)
 
     contour_ax = fig.add_axes(go_rect(0.18, 0.08, 0.82, 0.43))
     contour_ax.set_title("Clabel")
@@ -60,7 +60,7 @@ def axes_convenience_helpers(out_dir):
         [[0, 1, 2, 3], [1, 2, 3, 4], [2, 3, 4, 5], [3, 4, 5, 6]],
         levels=[2, 3, 4],
         colors=[(0.13, 0.20, 0.35, 1)],
-        linewidths=lw(1),
+        linewidths=1,
     )
     contour_ax.clabel(contour, levels=[3], fontsize=9, colors=[(0.05, 0.05, 0.05, 1)])
 

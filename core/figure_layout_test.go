@@ -448,7 +448,7 @@ func TestConstrainedLayoutReservesColorbarSpaceAndTracksParent(t *testing.T) {
 func TestConstrainedColorbarSlotOffsetUsesDeviceSnappedSpineWidth(t *testing.T) {
 	fig := NewFigure(1000, 700)
 	fig.ConstrainedLayout()
-	fig.RC.AxisLineWidth = 0.8 * 100 / 72
+	fig.RC.AxisLineWidth = 0.8 // points; converted to device pixels at the sink
 	base := geom.Rect{
 		Min: geom.Pt{X: 0.051069777777777776, Y: 0.06777825396825397},
 		Max: geom.Pt{X: 0.8464725805555557, Y: 0.9621423809523809},
@@ -457,7 +457,7 @@ func TestConstrainedColorbarSlotOffsetUsesDeviceSnappedSpineWidth(t *testing.T) 
 	got := constrainedColorbarSlotOffset(fig, base) * fig.SizePx.X
 	want := constrainedLayoutPadPx(fig) +
 		0.5*constrainedLayoutDefaultSpacePx(base.W()*fig.SizePx.X, 1) +
-		math.Round(fig.RC.AxisLineWidth)
+		math.Round(pointsToPixels(fig.RC, fig.RC.AxisLineWidth))
 	if !floatApprox(got, want, 1e-12) {
 		t.Fatalf("constrained colorbar slot offset = %v px, want device-snapped spine offset %v px", got, want)
 	}

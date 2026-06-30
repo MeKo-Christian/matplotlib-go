@@ -250,10 +250,10 @@ func TestPathCollectionUsesPathCollectionForVaryingPerItemStyle(t *testing.T) {
 	if got, want := items[1].Paint.Stroke.A, 0.35; math.Abs(got-want) > 1e-12 {
 		t.Fatalf("second stroke alpha = %v, want %v", got, want)
 	}
-	if got, want := items[0].Paint.LineWidth, 1.25; got != want {
+	if got, want := items[0].Paint.LineWidth, (1.25 * 100.0 / 72.0); got != want {
 		t.Fatalf("first linewidth = %v, want %v", got, want)
 	}
-	if got, want := items[1].Paint.LineWidth, 2.5; got != want {
+	if got, want := items[1].Paint.LineWidth, (2.5 * 100.0 / 72.0); got != want {
 		t.Fatalf("second linewidth = %v, want %v", got, want)
 	}
 	firstBounds, ok := pathBounds(items[0].Path)
@@ -339,7 +339,7 @@ func TestPathCollectionLineOnlyUsesFaceColorAsStrokeWhenEdgeUnset(t *testing.T) 
 	if got, want := paint.Stroke, (render.Color{R: 0.3, G: 0.4, B: 0.5, A: 0.4}); got != want {
 		t.Fatalf("line-only stroke = %+v, want %+v", got, want)
 	}
-	if got, want := paint.LineWidth, 1.5; got != want {
+	if got, want := paint.LineWidth, (1.5 * 100.0 / 72.0); got != want {
 		t.Fatalf("line-only linewidth = %v, want %v", got, want)
 	}
 }
@@ -550,8 +550,8 @@ func TestPathCollectionNativeBatchCarriesHatchAntialiasAndSnap(t *testing.T) {
 	if got, want := item.HatchColor, (render.Color{R: 1, A: 0.5}); got != want {
 		t.Fatalf("hatch color = %+v, want %+v", got, want)
 	}
-	if item.HatchWidth != 1.25 {
-		t.Fatalf("hatch width = %v, want 1.25", item.HatchWidth)
+	if want := (1.25 * 100.0 / 72.0); item.HatchWidth != want {
+		t.Fatalf("hatch width = %v, want %v", item.HatchWidth, want)
 	}
 	if item.Antialiased {
 		t.Fatal("batch item antialias = true, want false")
@@ -813,8 +813,8 @@ func TestPatchCollectionNativeBatchCarriesHatchAntialiasAndSnap(t *testing.T) {
 	if got, want := item.HatchColor, (render.Color{G: 1, A: 0.5}); got != want {
 		t.Fatalf("hatch color = %+v, want %+v", got, want)
 	}
-	if item.HatchWidth != 2 {
-		t.Fatalf("hatch width = %v, want 2", item.HatchWidth)
+	if want := (2 * 100.0 / 72.0); item.HatchWidth != want {
+		t.Fatalf("hatch width = %v, want %v", item.HatchWidth, want)
 	}
 	if item.Antialiased {
 		t.Fatal("batch item antialias = true, want false")
@@ -1116,16 +1116,16 @@ func TestStemContainerAddsArtists(t *testing.T) {
 	if got, want := container.MarkerCollection.Size, pointsToPixels(ax.resolvedRC(), 6); !approx(got, want, 1e-12) {
 		t.Fatalf("stem marker size = %v, want Matplotlib 6 point Line2D marker diameter %v", got, want)
 	}
-	if got, want := container.StemLines.LineWidth, pointsToPixels(ax.resolvedRC(), 1.5); !approx(got, want, 1e-12) {
+	if got, want := container.StemLines.LineWidth, 1.5; !approx(got, want, 1e-12) {
 		t.Fatalf("stem line width = %v, want Matplotlib default 1.5 pt = %v px", got, want)
 	}
-	if got, want := container.MarkerCollection.EdgeWidth, pointsToPixels(ax.resolvedRC(), 1); !approx(got, want, 1e-12) {
+	if got, want := container.MarkerCollection.EdgeWidth, 1.0; !approx(got, want, 1e-12) {
 		t.Fatalf("stem marker edge width = %v, want Matplotlib default 1 pt = %v px", got, want)
 	}
 	if got, want := container.Baseline.Col, palette[3]; got != want {
 		t.Fatalf("stem baseline color = %+v, want Matplotlib basefmt C3 %+v", got, want)
 	}
-	if got, want := container.Baseline.W, pointsToPixels(ax.resolvedRC(), 1.5); !approx(got, want, 1e-12) {
+	if got, want := container.Baseline.W, 1.5; !approx(got, want, 1e-12) {
 		t.Fatalf("stem baseline width = %v, want Matplotlib default 1.5 pt = %v px", got, want)
 	}
 }

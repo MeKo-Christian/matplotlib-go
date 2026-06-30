@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
@@ -46,7 +47,7 @@ func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
 			drawOrigin := tickLabelDrawOriginFromP(anchor, layout, hAlign, vAlign, angle, anchorMode)
 			rotAnchor := rotatedTextBackendAnchorFromP(anchor, layout, hAlign, vAlign, angle, anchorMode)
 			drawTextBBoxRotated(r, anchor, drawOrigin, layout, t.BBox, ctx, fontSize, t.Angle)
-			if len(t.PathEffects) > 0 && drawTextPathEffects(r, content, drawOrigin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
+			if len(t.PathEffects) > 0 && drawTextPathEffects(r, ctx.RC, content, drawOrigin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
 				return
 			}
 			drawDisplayTextRotatedParseMath(rotated, content, rotAnchor, fontSize, angle, textColor, fontKey, parseMath, ctx.RC.UseTeX)
@@ -54,7 +55,7 @@ func (t *Text) drawText(r render.Renderer, ctx *DrawContext) {
 		}
 	}
 	drawTextBBox(r, origin, layout, t.BBox, ctx, fontSize)
-	if len(t.PathEffects) > 0 && drawTextPathEffects(r, content, origin, origin, fontSize, 0, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
+	if len(t.PathEffects) > 0 && drawTextPathEffects(r, ctx.RC, content, origin, origin, fontSize, 0, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
 		return
 	}
 	drawDisplayTextParseMath(textRen, content, origin, fontSize, textColor, fontKey, parseMath, ctx.RC.UseTeX)
@@ -89,7 +90,7 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 						Y: anchor.Y + rotatedBlock.LineOffsets[i].Y,
 					}
 					rotAnchor := rotatedTextBackendAnchorForOrigin(origin, rotatedBlock.Layouts[i], angle)
-					if len(t.PathEffects) > 0 && drawTextPathEffects(r, line, origin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
+					if len(t.PathEffects) > 0 && drawTextPathEffects(r, ctx.RC, line, origin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
 						continue
 					}
 					drawDisplayTextRotatedParseMath(rotated, line, rotAnchor, fontSize, angle, textColor, fontKey, parseMath, ctx.RC.UseTeX)
@@ -134,21 +135,21 @@ func (t *Text) drawMultilineText(r render.Renderer, textRen render.TextDrawer, c
 			if rotated, ok := r.(render.RotatedTextDrawer); ok {
 				angle := t.Angle * math.Pi / 180
 				rotAnchor := textRotationAnchor(origin, block.Layouts[i], lineAlign, textLayoutVAlignBaseline, angle, t.RotationMode)
-				if len(t.PathEffects) > 0 && drawTextPathEffects(r, line, origin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
+				if len(t.PathEffects) > 0 && drawTextPathEffects(r, ctx.RC, line, origin, rotAnchor, fontSize, angle, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
 					continue
 				}
 				drawDisplayTextRotatedParseMath(rotated, line, rotAnchor, fontSize, angle, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 				continue
 			}
 		}
-		if len(t.PathEffects) > 0 && drawTextPathEffects(r, line, origin, origin, fontSize, 0, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
+		if len(t.PathEffects) > 0 && drawTextPathEffects(r, ctx.RC, line, origin, origin, fontSize, 0, textColor, fontKey, ctx.RC.UseTeX, t.PathEffects) {
 			continue
 		}
 		drawDisplayTextParseMath(textRen, line, origin, fontSize, textColor, fontKey, parseMath, ctx.RC.UseTeX)
 	}
 }
 
-func drawTextPathEffects(r render.Renderer, text string, origin, pivot geom.Pt, size, angle float64, textColor render.Color, fontKey string, useTeX bool, effects []render.PathEffect) bool {
+func drawTextPathEffects(r render.Renderer, rc style.RC, text string, origin, pivot geom.Pt, size, angle float64, textColor render.Color, fontKey string, useTeX bool, effects []render.PathEffect) bool {
 	if r == nil || len(effects) == 0 || useTeX {
 		return false
 	}
@@ -170,7 +171,7 @@ func drawTextPathEffects(r render.Renderer, text string, origin, pivot geom.Pt, 
 
 	paint := render.Paint{
 		Fill:        textColor,
-		PathEffects: cloneRenderPathEffects(effects),
+		PathEffects: devicePathEffects(rc, effects),
 	}
 	for _, path := range paths {
 		r.Path(path, &paint)

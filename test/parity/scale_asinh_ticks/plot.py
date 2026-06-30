@@ -22,12 +22,12 @@ def scale_asinh_ticks(out_dir):
     ax.set_title("Asinh Scale Ticks")
     ax.set_xlabel("signed value")
     ax.set_ylabel("response")
-    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     ax.set_axisbelow(True)
 
     x = [-1000, -100, -10, -1, 0, 1, 10, 100, 1000]
     y = [0.12, 0.22, 0.33, 0.45, 0.52, 0.60, 0.71, 0.82, 0.90]
-    ax.plot(x, y, color=(0.12, 0.47, 0.71), linewidth=lw(2.0))
+    ax.plot(x, y, color=(0.12, 0.47, 0.71), linewidth=2.0)
     ax.set_xlim(-1000, 1000)
     ax.set_ylim(0, 1)
     ax.set_xscale("asinh", base=10, linear_width=1)

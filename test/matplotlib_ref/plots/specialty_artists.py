@@ -28,7 +28,7 @@ def specialty_artists(out_dir):
     event_ax.set_title("Eventplot")
     event_ax.set_xlim(0, 10)
     event_ax.set_ylim(0.4, 3.6)
-    event_ax.grid(True, axis="x", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    event_ax.grid(True, axis="x", color=(0.8, 0.8, 0.8), linewidth=0.5)
     event_ax.set_axisbelow(True)
     event_ax.eventplot(
         [
@@ -43,7 +43,7 @@ def specialty_artists(out_dir):
             (0.84, 0.38, 0.16, 1.0),
             (0.20, 0.63, 0.42, 1.0),
         ],
-        linewidths=lw(1.5),
+        linewidths=1.5,
     )
 
     hex_ax = axes["hexbin"]
@@ -65,14 +65,14 @@ def specialty_artists(out_dir):
         labeldistance=1.08,
         explode=[0, 0.04, 0, 0.02],
         colors=TAB10[:4],
-        wedgeprops={"linewidth": lw(1.0), "edgecolor": "white"},
+        wedgeprops={"linewidth": 1.0, "edgecolor": "white"},
     )
 
     violin_ax = axes["violin"]
     violin_ax.set_title("Violin")
     violin_ax.set_xlim(0.4, 3.6)
     violin_ax.set_ylim(0.8, 5.2)
-    violin_ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=lw(0.5))
+    violin_ax.grid(True, axis="y", color=(0.8, 0.8, 0.8), linewidth=0.5)
     violin_ax.set_axisbelow(True)
     parts = violin_ax.violinplot(
         [
@@ -114,7 +114,7 @@ def specialty_artists(out_dir):
         transform=sankey_ax.transAxes,
         facecolor=(0.12, 0.47, 0.71, 0.75),
         edgecolor=(0.10, 0.10, 0.10, 1.0),
-        linewidth=lw(1.0),
+        linewidth=1.0,
     )
     sankey_ax.add_patch(trunk)
     flows = [
@@ -137,7 +137,7 @@ def specialty_artists(out_dir):
             (x0, 0.50 - width / 2),
         ]
         path = mpath.Path(verts)
-        sankey_ax.add_patch(mpatches.PathPatch(path, transform=sankey_ax.transAxes, facecolor=color, edgecolor=(0.10, 0.10, 0.10), linewidth=lw(1.0)))
+        sankey_ax.add_patch(mpatches.PathPatch(path, transform=sankey_ax.transAxes, facecolor=color, edgecolor=(0.10, 0.10, 0.10), linewidth=1.0))
         sankey_ax.text(0.70, y, label, transform=sankey_ax.transAxes, va="center", fontsize=10)
 
     save(fig, out_dir, "specialty_artists")
