@@ -24,7 +24,11 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 	for i := range batch.Items {
 		item := batch.Items[i]
 		marker := affinePath(batch.Marker, normalizedAffine(item.Transform))
-		if !marker.Validate() || len(marker.C) == 0 || !paintVisible(&item.Paint) {
+		if !marker.Validate() || len(marker.C) == 0 {
+			continue
+		}
+		if !paintVisible(&item.Paint) {
+			warnGradientCollectionDrop(&item.Paint)
 			continue
 		}
 		name := r.registerMarkerProcedure(marker, &item.Paint)
@@ -68,6 +72,7 @@ func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
 			paint.HatchSpacing = item.HatchSpacing
 		}
 		if !paintVisible(&paint) {
+			warnGradientCollectionDrop(&paint)
 			continue
 		}
 		name := r.registerPathProcedure("P", item.Path, &paint)

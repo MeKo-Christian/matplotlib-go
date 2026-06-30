@@ -1,6 +1,7 @@
 package color
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/diag"
@@ -32,5 +33,28 @@ func TestGetColormapDoesNotWarnForKnownName(t *testing.T) {
 
 	if len(warnings) != 0 {
 		t.Fatalf("expected no warnings for known colormaps, got %v", warnings)
+	}
+}
+
+func TestGetColormapStrictErrorsOnUnknownName(t *testing.T) {
+	// Strict variant never warns and never falls back; it returns the error.
+	restore := diag.SetHandler(func(string) { t.Fatal("strict lookup must not warn") })
+	defer restore()
+
+	if _, err := GetColormapStrict("definitely-not-a-real-colormap"); !errors.Is(err, ErrUnknownColormap) {
+		t.Fatalf("GetColormapStrict err = %v, want ErrUnknownColormap", err)
+	}
+}
+
+func TestGetColormapStrictReturnsKnownAndReversed(t *testing.T) {
+	cm, err := GetColormapStrict("viridis")
+	if err != nil {
+		t.Fatalf("GetColormapStrict(viridis) err = %v", err)
+	}
+	if cm.Name() != "viridis" {
+		t.Fatalf("name = %q, want viridis", cm.Name())
+	}
+	if _, err := GetColormapStrict("plasma_r"); err != nil {
+		t.Fatalf("GetColormapStrict(plasma_r) err = %v, want nil", err)
 	}
 }

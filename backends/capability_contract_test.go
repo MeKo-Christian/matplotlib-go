@@ -252,3 +252,34 @@ func TestVerifyRendererCapabilities(t *testing.T) {
 		t.Fatal("expected VerifyRendererCapabilities(nil renderer) to fail")
 	}
 }
+
+// TestVerifyRendererCapabilitiesRejectsUnprobeableClaim guards the rubber-stamp
+// fix: a capability that has neither a runtime check nor an intrinsic
+// classification can no longer pass verification just because it is listed.
+func TestVerifyRendererCapabilitiesRejectsUnprobeableClaim(t *testing.T) {
+	reg := NewRegistry()
+	// GPUAccel has no entry in capabilityRuntimeChecks and is not intrinsic, so
+	// claiming it without any backing contract must be rejected.
+	reg.Register(Backend("liar"), &BackendInfo{
+		Name:         "Liar Backend",
+		Available:    true,
+		Capabilities: []Capability{GPUAccel},
+		Factory:      func(Config) (render.Renderer, error) { return &capabilityRendererBase{}, nil },
+	})
+	// PathClip is intrinsic to the base Renderer contract, so it verifies with no
+	// dedicated optional interface.
+	reg.Register(Backend("intrinsic"), &BackendInfo{
+		Name:         "Intrinsic Backend",
+		Available:    true,
+		Capabilities: []Capability{PathClip, AntiAliasing},
+		Factory:      func(Config) (render.Renderer, error) { return &capabilityRendererBase{}, nil },
+	})
+	withDefaultRegistry(t, reg)
+
+	if err := VerifyRendererCapabilities(Backend("liar"), &capabilityRendererBase{}); err == nil {
+		t.Fatal("expected an unprobeable, non-intrinsic capability claim to fail verification")
+	}
+	if err := VerifyRendererCapabilities(Backend("intrinsic"), &capabilityRendererBase{}); err != nil {
+		t.Fatalf("intrinsic capabilities should verify without an optional interface: %v", err)
+	}
+}

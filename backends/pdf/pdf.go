@@ -740,6 +740,7 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 		paint := item.Paint
 		paintOp := paintOperator(&paint)
 		if paintOp == "" {
+			warnGradientCollectionDrop(&paint)
 			continue
 		}
 		name := r.registerFormXObject("M", marker, paintOp, &paint)
@@ -782,6 +783,7 @@ func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
 		}
 		paintOp := paintOperator(&paint)
 		if paintOp == "" {
+			warnGradientCollectionDrop(&paint)
 			continue
 		}
 		name := r.registerFormXObject("P", item.Path, paintOp, &paint)

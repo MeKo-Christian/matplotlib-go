@@ -2,8 +2,10 @@ package core
 
 import (
 	"math"
+	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -264,10 +266,12 @@ func (i *Image2D) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	return false, PickInfo{}
 }
 
-// Contains reports whether p (in figure pixels) lies within a heuristic
-// bounding box around the text anchor. Matplotlib computes the exact glyph
-// bbox via the active font; without metrics here we approximate using
-// FontSize and the rune count of the content.
+// Contains reports whether p (in figure pixels) lies within the bounding box
+// of the text. Glyph metrics come from the shared sfnt shaper
+// (render.MeasureTextMetrics) using the resolved font, matching Matplotlib's
+// exact-bbox behavior rather than the old FontSize×rune-count heuristic. If the
+// font cannot be shaped (font-less environments) MeasureTextMetrics falls back
+// to a proportional estimate, so this never panics.
 func (t *Text) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	if t == nil || ctx == nil || t.Content == "" {
 		return false, PickInfo{}
@@ -284,11 +288,35 @@ func (t *Text) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	if fontSize <= 0 {
 		fontSize = 12
 	}
-	// rough advance width — average glyph is ~0.5em.
-	width := fontSize * 0.5 * float64(textRuneCount(t.Content))
-	height := fontSize
+	fontKey := resolvedTextFontKey(t.FontKey, t.FontProperties, ctx)
+
+	// Measure each line with the real font; the bounding box width is the widest
+	// line advance and the height stacks the per-line ascent+descent.
+	lines := strings.Split(t.Content, "\n")
+	var width, ascent, descent float64
+	for i, line := range lines {
+		m := render.MeasureTextMetrics(line, fontSize, fontKey)
+		if m.W > width {
+			width = m.W
+		}
+		if i == 0 {
+			ascent = m.Ascent
+		}
+		if i == len(lines)-1 {
+			descent = m.Descent
+		}
+		if i > 0 {
+			// Interior line break advances by a full line height.
+			ascent += m.Ascent + m.Descent
+		}
+	}
+	height := ascent + descent
 	if width <= 0 {
 		width = fontSize
+	}
+	if height <= 0 {
+		height = fontSize
+		ascent, descent = fontSize*0.8, fontSize*0.2
 	}
 
 	var minX, maxX, minY, maxY float64
@@ -307,19 +335,12 @@ func (t *Text) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 		minY, maxY = anchor.Y-height/2, anchor.Y+height/2
 	case TextVAlignBottom:
 		minY, maxY = anchor.Y-height, anchor.Y
-	default: // TextVAlignBaseline — most of the glyph sits above the baseline.
-		minY, maxY = anchor.Y-height*0.8, anchor.Y+height*0.2
+	default: // TextVAlignBaseline — split the box at the first-line baseline
+		// (display space is y-down, so ascent extends to smaller Y).
+		minY, maxY = anchor.Y-ascent, anchor.Y+descent
 	}
 	if p.X >= minX && p.X <= maxX && p.Y >= minY && p.Y <= maxY {
 		return true, PickInfo{}
 	}
 	return false, PickInfo{}
-}
-
-func textRuneCount(s string) int {
-	n := 0
-	for range s {
-		n++
-	}
-	return n
 }

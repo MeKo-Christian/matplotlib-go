@@ -5,10 +5,16 @@ import (
 	"image/color"
 	"math"
 	"strings"
+	"sync"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 )
+
+// rotatedImageFallbackWarnOnce guards a single diagnostic for the case where a
+// renderer can rotate neither via rasterizeTransformed nor ImageTransformer.
+var rotatedImageFallbackWarnOnce sync.Once
 
 // Draw renders the rasterized image through the renderer.
 func (i *Image2D) Draw(r render.Renderer, ctx *DrawContext) {
@@ -45,7 +51,13 @@ func (i *Image2D) Draw(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 
-	// Fallback: ignore rotation and render axis-aligned image.
+	// Fallback: the renderer supports neither rasterizeTransformed nor
+	// ImageTransformer, so the rotation cannot be honored. Warn once (rather
+	// than silently mis-rendering) and draw the image axis-aligned. The AGG
+	// backend implements both paths, so this never fires there.
+	rotatedImageFallbackWarnOnce.Do(func() {
+		diag.Warnf("image rotation (%.3g deg) not supported by renderer %T; drawing axis-aligned", i.AngleDeg, r)
+	})
 	r.Image(raster, drawDst)
 }
 

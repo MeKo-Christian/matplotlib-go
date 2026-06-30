@@ -11,12 +11,36 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/cwbudde/matplotlib-go/backends/internal/vectorhatch"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 	"golang.org/x/image/font/sfnt"
 )
+
+// gradientCollectionDropWarnOnce guards a single diagnostic for gradient- or
+// pattern-filled path-collection / marker items that the Form XObject path
+// cannot yet render and therefore skips.
+var gradientCollectionDropWarnOnce sync.Once
+
+// warnGradientCollectionDrop emits a one-shot diagnostic when a collection or
+// marker item is skipped solely because its only fill is a gradient/pattern.
+// This replaces a silent drop (the item simply vanished from the page).
+func warnGradientCollectionDrop(paint *render.Paint) {
+	if paint == nil {
+		return
+	}
+	grad := paint.FillGradient.Kind != render.GradientNone && len(paint.FillGradient.Stops) > 0
+	pat := paint.FillPattern.ID != "" || len(paint.FillPattern.Path.V) > 0
+	if !grad && !pat {
+		return
+	}
+	gradientCollectionDropWarnOnce.Do(func() {
+		diag.Warnf("pdf: gradient/pattern-filled path-collection or marker items are not yet supported and were skipped")
+	})
+}
 
 // writePathOps emits PDF path-construction operators for path p. Returns
 // false if the path is empty or invalid.

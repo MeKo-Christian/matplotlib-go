@@ -1,6 +1,9 @@
 package core
 
-import "github.com/cwbudde/matplotlib-go/render"
+import (
+	"github.com/cwbudde/matplotlib-go/internal/diag"
+	"github.com/cwbudde/matplotlib-go/render"
+)
 
 // This file ports Matplotlib's artist introspection helpers — setp/getp and
 // findobj — to idiomatic Go.
@@ -70,8 +73,11 @@ func GetpAll(art Artist) map[string]any {
 // Setp assigns each named property on art, mirroring Matplotlib's
 // setp(obj, **kwargs). The "label" property is routed through the shared
 // ArtistLabelSetter interface; all other keys fall through to PropertyBag.
-// Unrecognized keys are silently ignored, matching the no-op behavior of the
-// existing label accessors on artists that do not support a property.
+//
+// Unrecognized keys (or values of the wrong type for a recognized key) emit a
+// one-shot diagnostic via internal/diag rather than being silently dropped:
+// Matplotlib raises AttributeError, and silently swallowing a typo'd property is
+// a quiet-failure footgun for callers porting real scripts.
 func Setp(art Artist, props map[string]any) {
 	if art == nil {
 		return
@@ -84,9 +90,10 @@ func Setp(art Artist, props map[string]any) {
 				continue
 			}
 		}
-		if hasBag {
-			bag.SetProperty(name, v)
+		if hasBag && bag.SetProperty(name, v) {
+			continue
 		}
+		diag.Warnf("setp: artist %T has no settable property %q (value ignored)", art, name)
 	}
 }
 

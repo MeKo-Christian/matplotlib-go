@@ -94,6 +94,18 @@ const (
 	CapabilityNative      CapabilityStatus = "native"
 )
 
+// intrinsicCapabilities are satisfied by the base render.Renderer contract
+// (every renderer clips) or are rendering-quality hints with no dedicated
+// optional interface, so they carry no behavioral probe in
+// capabilityRuntimeChecks. Every other claimed capability must be backed by a
+// runtime check: VerifyRendererCapabilities treats an unprobeable, non-intrinsic
+// claim as a verification failure rather than silently rubber-stamping it.
+var intrinsicCapabilities = map[Capability]bool{
+	AntiAliasing: true,
+	SubPixel:     true,
+	PathClip:     true,
+}
+
 // capabilityRuntimeChecks ties selected capabilities to concrete renderer interfaces.
 var capabilityRuntimeChecks = map[Capability]func(render.Renderer) bool{
 	DPIAware: func(r render.Renderer) bool {
@@ -554,8 +566,19 @@ func (r *Registry) VerifyRendererCapabilities(backend Backend, renderer render.R
 		return fmt.Errorf("backends: unknown backend %s", backend)
 	}
 	for _, capability := range info.Capabilities {
-		if !r.SupportsRendererCapability(backend, renderer, capability) {
-			return fmt.Errorf("backends: backend %s does not fully implement capability %s", backend, capability)
+		check, hasCheck := capabilityRuntimeChecks[capability]
+		switch {
+		case hasCheck:
+			if !check(renderer) {
+				return fmt.Errorf("backends: backend %s does not fully implement capability %s", backend, capability)
+			}
+		case intrinsicCapabilities[capability]:
+			// Part of the base render.Renderer contract or a quality hint with
+			// no separate interface; nothing to probe behaviorally.
+		default:
+			// No behavioral probe and not intrinsic: the claim cannot be
+			// verified, so refuse to rubber-stamp it.
+			return fmt.Errorf("backends: backend %s claims capability %s with no verifiable contract", backend, capability)
 		}
 	}
 	return nil

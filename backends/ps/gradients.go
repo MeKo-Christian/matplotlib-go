@@ -5,10 +5,29 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 )
+
+// gradientCollectionDropWarnOnce guards a single diagnostic for gradient- or
+// pattern-filled path-collection / marker items skipped by the reusable-
+// procedure path (which, unlike the main Path entry point, cannot emit shading).
+var gradientCollectionDropWarnOnce sync.Once
+
+// warnGradientCollectionDrop emits a one-shot diagnostic when a collection or
+// marker item is skipped solely because its only fill is a gradient/pattern,
+// replacing a silent drop.
+func warnGradientCollectionDrop(paint *render.Paint) {
+	if !hasGradientFill(paint) && !hasPatternFill(paint) {
+		return
+	}
+	gradientCollectionDropWarnOnce.Do(func() {
+		diag.Warnf("ps: gradient/pattern-filled path-collection or marker items are not yet supported and were skipped")
+	})
+}
 
 // SupportsGradientFill reports that the PostScript backend renders
 // Paint.FillGradient natively via Level-3 axial/radial shading dictionaries

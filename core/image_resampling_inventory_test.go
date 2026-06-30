@@ -11,7 +11,7 @@ func TestTransformedImageBackendMatrixIsDocumented(t *testing.T) {
 	sourceRequirements := map[string][]string{
 		filepath.Join("..", "core", "image.go"): {
 			"if tr, ok := r.(render.ImageTransformer); ok",
-			"Fallback: ignore rotation and render axis-aligned image.",
+			"the rotation cannot be honored",
 			"data.SetInterpolation(i.Interpolation)",
 		},
 		filepath.Join("..", "backends", "agg", "init.go"): {

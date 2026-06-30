@@ -7,8 +7,10 @@ snapshot in `third_party/matplotlib` so uncovered areas stay explicit instead of
 sliding into a vague "future work" bucket.
 
 Phases are ordered **closed first, open last**: Phases 1–9 are complete; the
-remaining open work (Skia GPU, the v1.0 release stretch, and two deferred
-infrastructure phases) is collected at the end under **Remaining Work**.
+remaining open work — Skia GPU (10), the v1.0 release stretch (11), two deferred
+infrastructure phases (12–13), and the second-review closure phases (14–18, from
+the 2026-06-30 [`REVIEW.md`](REVIEW.md)) — is collected at the end under
+**Remaining Work** and **Second Fidelity-Review Closure**.
 
 ---
 
@@ -581,6 +583,173 @@ change.
   baseline). Still open: an interactive/animation redraw loop (or public re-render
   API) that actually issues repeated figure draws — the single-PNG pipeline draws
   once, so the win is currently exercised only by tests, not end users.
+
+---
+
+# Phases 14–18: Second Fidelity-Review Closure (2026-06-30)
+
+These phases are derived from the second independent fidelity review in
+[`REVIEW.md`](REVIEW.md) (2026-06-30), an adversarial subagent audit run after the
+Phase 4–9 breadth work. Its verdict: matplotlib-go is **a faithful port with a
+scaffolding fringe, not a facade** — the numerical cores, the mathtext engine, the
+Qhull triangulation, and the parity harness (which compares against *real*
+matplotlib output and gates CI) are genuinely faithful. The remaining problems are
+**concentrated and locatable**: a handful of silent-degradation footguns that
+survived Phase 4, the secondary backends and the capability layer that advertises
+more than it delivers, ~52 parsed-but-ignored rcParams, a few concrete algorithmic
+bugs, and two holes in the parity harness. Phases 14–18 close those.
+
+> **Note on overlap with Phase 4/8:** Phase 4 claimed the silent-failure class was
+> closed, but the 2026-06-30 audit found several paths still silent (unknown
+> colormap still falls back to viridis with only a debug warn; `Setp` still
+> swallows unknown keys). Phase 8's vector-`MeasureText` fix is **confirmed real**.
+> These phases pick up the genuine residuals, not the parts already done.
+
+## Phase 14: Silent-Failure Hardening, Round 2 🧪
+
+**Goal:** turn the remaining silent-wrong-output paths into loud errors or honest
+warnings. This is the highest-value, lowest-cost bucket — each item is a small diff
+with direct impact on anyone porting a real matplotlib script.
+
+**Status (2026-07-01):** the four silent-degradation footguns plus the
+`Text.Contains` metrics fix are **shipped**; the two genuinely-larger items (the
+case-folding rework and the blit redraw) are descoped to Phase 17/15 with the
+rationale recorded below. Parity suite green (zero golden regressions); new unit
+tests cover the colormap strict variant and the `Setp` warning.
+
+- [x] `color/colormap.go` — added `GetColormapStrict(name) (Colormap, error)` +
+  exported `ErrUnknownColormap`; `GetColormap` now delegates to it and keeps the
+  warn-then-viridis lenient fallback. Tests: `TestGetColormapStrict*`. _Deferred to
+  Phase 17:_ stopping case-folding (`"Blues"=="blues"`) needs the builtin maps
+  re-registered under canonical mixed-case names — a larger, parity-risky change
+  (documented in the `GetColormapStrict` doc comment).
+- [x] `core/introspection.go` — `Setp` now emits a one-shot `diag.Warnf` for
+  unrecognized keys (and wrong-typed values) via the existing `SetProperty` bool,
+  instead of silently dropping them. Test: `TestSetpWarnsOnUnknownProperty`.
+- [x] `backends/pdf/pdf.go` (+`pdf_write.go`) & `backends/ps/procedures.go`
+  (+`gradients.go`) — gradient/pattern-filled marker & path-collection items now
+  emit a one-shot `diag.Warnf` (`warnGradientCollectionDrop`) when skipped, instead
+  of vanishing undrawn. (A real gradient-XObject/procedure fill stays future work.)
+- [x] `core/picker_contains.go` — `Text.Contains` now measures the glyph bbox via
+  the shared sfnt shaper (`render.MeasureTextMetrics`, per-line width + real
+  ascent/descent) using the resolved font key, replacing the `FontSize × rune-count`
+  heuristic. Removed the now-orphaned `textRuneCount`.
+- [x] `core/image.go` — the rotation-ignoring fallback now emits a one-shot
+  `diag.Warnf` (`rotatedImageFallbackWarnOnce`) naming the renderer type; benign on
+  AGG (which implements both transform paths), no longer silent-wrong on thin
+  backends.
+- [ ] `animation/animation.go:578` — the Blit "fast path" calls full `cnv.Draw()`
+  anyway (zero blit benefit). **Deferred:** a real overlay redraw needs an
+  only-animated canvas `Draw` entry point (`AnimatedFilterOnlyAnimated` plumbed
+  through `canvas.FigureCanvas`), which is backend work better tracked with Phase 15;
+  dropping the public `cfg.Blit` flag is an API break. Output is already correct —
+  this is a perf non-win, not a silent-wrong-output footgun, so it is the lowest
+  priority in this bucket.
+
+## Phase 15: Backend Honesty & Capability Verification ⚪
+
+**Goal:** stop advertising capabilities the backend doesn't actually provide, and
+make the verification layer catch the gap. The review's strongest "facade" findings
+live here, all off the AGG happy-path.
+
+- [ ] `backends/registry.go:98` — `VerifyRendererCapabilities` /
+  `capabilityRuntimeChecks` test _interface presence_ (type assertion), not
+  behavior, so they rubber-stamp every stub below. Make the checks behavioral, OR
+  have stub renderers decline the native capability interfaces they can't honor.
+- [ ] `backends/skia/` — the default (untagged) backend is a no-op stub
+  (`skia_stub.go:16,65`) yet under `-tags skia` it registers the **full native
+  capability set** while running on an embedded `*gobasic.Renderer`. Make the
+  capability registration reflect what each build tier actually does.
+- [ ] Skia "GPU" honesty — `GPU()` returns true under `-tags skiagpu` but the
+  surface is always the CPU readback bridge (`backends/skia/strategy.go:142`;
+  `MakeRenderTarget` is `StatusDeferred`; `FlushGPU`/`GetSurface` are no-op/`nil` at
+  `skia.go:380,393`). Relabel the mode as CPU-readback and gate `GPU()` truthfully
+  until a real `SkSurface::MakeRenderTarget` path exists. (Ties into **Phase 10**.)
+- [ ] `backends/gobasic/stroke.go:316,340` — `JoinRound` draws no arc (reuses the
+  miter point) and `JoinBevel` is an empty case. Implement real round/bevel join
+  geometry in the **default pure-Go** renderer.
+- [ ] `backends/gobasic` `pathDevice` — copies ~7 of ~27 `Paint` fields (drops
+  `CompositeMode`/`Alpha`/`FillPattern`/`FillGradient`/`Antialias`/`Snap`). Carry
+  the full paint state; add gradient support or stop omitting it silently.
+- [ ] Systemic `GlyphRun` bug — every backend reinterprets a glyph **ID** as a
+  Unicode rune (`gobasic/text.go:24`, `agg/agg_text.go:104`, plus pdf/svg/pgf).
+  Resolve glyph IDs through the font's cmap instead of `rune(glyph.ID)`.
+- [ ] `backends/webagg/protocol.go:26` — `MsgRubberband`/`MsgHistoryButtons` are
+  consumed by the JS client but never emitted by the Go server (zoom-box & history
+  buttons never work). Emit them, or remove the dead client handlers.
+- [ ] `backends/desktop/gio/doc.go:4` — the doc claims `New` returns
+  `ErrNotImplemented` and importing is a no-op, but `gio.go` is a real backend.
+  Fix the doc to match reality.
+- [ ] `backends/svg/path.go:127` (`shadow`→`blur` collapse) and
+  `backends/pgf/text.go:70` (discards `fontKey`) — fix or document as known
+  vector-backend limitations.
+
+## Phase 16: rcParams Honesty & Coverage ⚪
+
+**Goal:** end the "parse-then-ignore" pattern. Of matplotlib's ~309 rcParams, ~122
+are parsed and only ~70 honored — ~52 are stored and never read, giving users false
+confidence a setting took effect.
+
+- [ ] Audit the ~52 dead params and split them: those worth honoring vs those to
+  leave store-only. The worst offenders (all parsed → stored → never consumed):
+  `date.*` (`style/mplstyle.go:811`), `animation.*` (`:905`), `pdf.*`/`ps.*`/`svg.*`
+  (`:839–903`), 6 of 8 `image.*` (`:635–665`), 9 of 10 `mathtext.*` (`:677–701`).
+- [ ] Minimum bar: emit a one-shot `diag.Warnf` the first time a known-but-unhonored
+  rcParam is _set to a non-default value_, so the silence becomes a signal.
+- [ ] Honor the high-value subset where the drawing code already exists:
+  `image.origin`/`image.aspect`/`image.resample`, `mathtext.default`/`.rm`/`.it`/…,
+  `date.*` tick formatting.
+- [ ] Expand parsing toward the not-yet-parsed common params (`lines.dash_capstyle`,
+  `lines.solid_joinstyle`, `markers.fillstyle`, `axes.spines.*`, `xtick.direction`,
+  `figure.subplot.*`, `font.weight`/`font.stretch`) — prioritize by parity-case
+  impact, not raw count.
+
+## Phase 17: Artist Breadth & Algorithmic Correctness ⚪
+
+**Goal:** fix the concrete divergences the audit pinned down and fill the narrow
+artist gaps that have no workaround.
+
+- [ ] `core/tick_locators.go:683` — `LogLocator` default stride uses
+  `ceil(numDecades/numTicks)` vs matplotlib's `numdec//numticks + 1` (off-by-a-
+  decade on dense log axes). Port the integer formula; add the "≤1 minor tick →
+  AutoLocator" fallback.
+- [ ] `core/contour_lines.go:215` — saddle disambiguation keys off `above[0]` with
+  fixed corner order and never computes the cell-center mean that mpl2014 uses,
+  emitting all four crossings as one polyline. Port the cell-mean saddle split (the
+  single most likely source of contour parity drift). Add an ambiguous-saddle
+  parity case.
+- [ ] 2D `bar(yerr=/xerr=)` — `BarOptions` (`core/plot.go:508`) has no error field
+  (only 3D `ErrorBar3D` does). Add error bars to the 2D bar path + an example.
+- [ ] `hist(log=)` — add a `Log` field to `HistOptions` + an example exercising it.
+- [ ] mathtext `cm`/`stix` fontsets — `core/mathtext.go:208` only remaps the font
+  _family_ over the single DejaVu Unicode table; port matplotlib's
+  `BakomaFonts`/`StixFonts` per-fontset glyph maps so non-DejaVu fontsets are
+  parity-exact (currently only the DejaVu default is). Larger effort; scope first.
+- [ ] `core/norm.go` `TwoSlopeNorm` — out-of-range should map to ±inf
+  (`np.interp` left/right), not finite extrapolation; align log/logit clip
+  semantics (`scale_registry.go:636`) with mpl's `clip` default and `-1000` floor.
+- [ ] Transform type-set breadth — add `ScaledTranslation`, `TransformWrapper`, and
+  `Affine2D`-style `rotate/skew` builders; the separable→affine extraction is
+  diagonal-only (`transform/transform.go:61`), so rotation/shear need manual matrix
+  construction today. Triage against real demand before building.
+- [ ] Add the ~3 missing accents vs matplotlib's 20-entry `_accent_map` (mathtext
+  module).
+
+## Phase 18: Parity-Harness Rigor ⚪
+
+**Goal:** close the two real holes in an otherwise-honest harness so a live-render
+regression cannot pass green.
+
+- [ ] `test/helpers_test.go:406` — `TestReferenceCompare` asserts on two committed
+  files (golden vs ref); it renders `got` but never compares it. Compare the **live
+  render** against the matplotlib reference (or assert `live == golden` in the same
+  test) so the chain doesn't depend on `TestGolden` running.
+- [ ] 49 optional-visual cases skip `TestGolden` (live-vs-golden) in default CI
+  (`test/helpers_test.go:69–119`), so a live regression on the 3D/geo/gallery cases
+  stays green. Either run their live-render check in CI or document the gap loudly.
+- [ ] Tolerance cleanup — the `MinPSNR 10 / MaxMeanAbs 95` overrides on big gallery
+  cases never bind (the always-present `MaxRMSE` binds first); remove the redundant
+  "theater" thresholds so the catalog reflects the gate that actually applies.
 
 ---
 

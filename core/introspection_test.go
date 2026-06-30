@@ -3,6 +3,8 @@ package core
 import (
 	"slices"
 	"testing"
+
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 )
 
 func TestGetpSetpRoundtrip(t *testing.T) {
@@ -45,6 +47,25 @@ func TestLine2DPropertyExtension(t *testing.T) {
 	}
 	if v, ok := Getp(line, "visible"); !ok || v != false {
 		t.Fatalf("Getp visible (delegated) = %v, %v; want false, true", v, ok)
+	}
+}
+
+func TestSetpWarnsOnUnknownProperty(t *testing.T) {
+	var warnings []string
+	restore := diag.SetHandler(func(m string) { warnings = append(warnings, m) })
+	defer restore()
+
+	line := &Line2D{}
+	Setp(line, map[string]any{
+		"linewidth":    2.5,  // recognized: must not warn
+		"notaproperty": true, // unrecognized: must warn
+	})
+
+	if line.W != 2.5 {
+		t.Fatalf("recognized property was not applied: Line2D.W = %v", line.W)
+	}
+	if len(warnings) != 1 {
+		t.Fatalf("want exactly one warning (for the unknown key), got %d: %v", len(warnings), warnings)
 	}
 }
 
