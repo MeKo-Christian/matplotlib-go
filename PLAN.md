@@ -756,14 +756,21 @@ golden regressions; new unit tests cover the warn-on-non-default and dedup paths
     `scatter.edgecolors`; `contour.*`. (`hist.bins` shipped with Phase 19:
     parsed, exported via `Params`, and consumed by `Axes.Hist`.)
     Prioritize by parity-case impact, not raw count.
-- [ ] **Minimum bar for unparsed-but-known keys:** a key present in matplotlib
-      3.10.9's rcsetup but not parsed here should trigger the same one-shot
-      `maybeWarnUnhonoredRCParam`-style warning instead of landing silently in
-      `report.Unsupported`. Ship a known-upstream-key table so silence means
-      "genuinely unknown key", never "known key we ignore".
-- [ ] **Explicit non-goals (document, don't parse):** `path.snap`,
-      `text.hinting`, `polaraxes.grid`, `axes3d.*` — record in the
-      unhonored/unparsed report with rationale.
+- [x] **Minimum bar for unparsed-but-known keys:** shipped in
+      `style/unparsed.go` — `knownUpstreamRCParams` carries all 321 user-facing
+      matplotlib 3.10.9 rcParam keys (generated from `sorted(matplotlib.rcParams)`,
+      internal `_internal.classic_mode` dropped); the `applyMPLStyleEntry`
+      fallthrough now emits a one-shot `maybeWarnUnparsedRCParam` warning for
+      known-but-unparsed keys before recording them in `report.Unsupported`, so
+      silence means "genuinely unknown key". Guard tests pin table size and
+      consistency with `supportedMPLStyleKeys`/`unhonoredRCParams`
+      (`TestUnparsed*`, `TestKnownUpstreamRCParamsConsistency`).
+- [x] **Explicit non-goals (document, don't parse):** `path.snap`,
+      `text.hinting`/`text.hinting_factor`, `polaraxes.grid`, `axes3d.*` are
+      registered in `nonGoalRCParams` (`style/unparsed.go`) with per-key
+      rationale (parity-pinned snapping/hinting, unmodeled polar-grid toggle,
+      fixed 3D pane/navigation behavior); their one-shot warning carries the
+      rationale instead of the generic "not parsed" text.
 
 ## Phase 17: Artist Breadth & Algorithmic Correctness ⚪
 

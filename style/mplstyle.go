@@ -985,6 +985,7 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 	case "savefig.format":
 		state.rc.Savefig.Format = strings.ToLower(normalizeMPLValue(value))
 	default:
+		maybeWarnUnparsedRCParam(key)
 		report.Unsupported = append(report.Unsupported, MPLStyleIssue{
 			Line:  lineNo,
 			Key:   key,
