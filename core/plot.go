@@ -19,7 +19,8 @@ type PlotOptions struct {
 	LineWidth       *float64 // if nil, uses default
 	LineCap         *render.LineCap
 	EdgeWidth       *float64
-	Dashes          []float64 // dash pattern
+	Dashes          []float64 // dash pattern in pixels; overrides LineStyle
+	LineStyle       LineStyle // typed matplotlib linestyle ("-", "--", "-.", ":", "none"); "" = unset
 	DrawStyle       *LineDrawStyle
 	Marker          *MarkerType
 	MarkerStyle     *MarkerStyle

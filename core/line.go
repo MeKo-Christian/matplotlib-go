@@ -2,6 +2,7 @@ package core
 
 import (
 	"math"
+	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -18,6 +19,34 @@ const (
 	LineDrawStyleStepsMid
 	LineDrawStyleStepsPost
 )
+
+// LineStyle is a Matplotlib linestyle spec for line plots. The constants
+// cover the named rcParams values; full-name spellings ("dashed", "dotted",
+// "dashdot", "solid") are accepted too. The empty string means "unset" (solid
+// unless the property cycle carries a linestyle), matching PlotOptions'
+// zero-value semantics.
+type LineStyle string
+
+const (
+	LineStyleSolid   LineStyle = "-"
+	LineStyleDashed  LineStyle = "--"
+	LineStyleDashDot LineStyle = "-."
+	LineStyleDotted  LineStyle = ":"
+	// LineStyleNone suppresses the line segments entirely (markers-only plot),
+	// matplotlib's linestyle "none".
+	LineStyleNone LineStyle = "none"
+)
+
+// isNone reports whether the style suppresses line drawing (matplotlib
+// accepts "none"/"None" and blank-space spellings; the empty string is
+// "unset", not none).
+func (s LineStyle) isNone() bool {
+	if s == "" {
+		return false // unset
+	}
+	trimmed := strings.TrimSpace(strings.ToLower(string(s)))
+	return trimmed == "none" || trimmed == "" // " " also means none in matplotlib
+}
 
 // DashUnits describes the unit system used by Line2D.Dashes.
 type DashUnits uint8

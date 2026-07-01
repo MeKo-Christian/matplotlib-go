@@ -82,6 +82,44 @@ func TestDefaultScatterSizeMatchesMatplotlib(t *testing.T) {
 	}
 }
 
+func TestDefaultMinorTickSizeMatchesMatplotlib(t *testing.T) {
+	// rcParams["xtick.minor.size"] == rcParams["ytick.minor.size"] == 2.0 pt.
+	if defaultMinorTickSizePt != 2.0 {
+		t.Fatalf("defaultMinorTickSizePt = %v, want 2.0", defaultMinorTickSizePt)
+	}
+	want := 2.0 * 100.0 / 72.0
+	for _, ax := range []*Axis{NewXAxis(), NewYAxis()} {
+		if got := ax.minorTickSize(); math.Abs(got-want) > 1e-12 {
+			t.Fatalf("side %v minorTickSize = %v px, want %v (2.0 pt at 100 DPI)", ax.Side, got, want)
+		}
+	}
+}
+
+func TestDefaultMinorTickPadMatchesMatplotlib(t *testing.T) {
+	// rcParams["xtick.minor.pad"] == rcParams["ytick.minor.pad"] == 3.4 pt
+	// vs the major 3.5 pt.
+	ax := NewXAxis()
+	ctx := createTestDrawContext()
+
+	majorPad := tickLabelPadForAxisSize(ax, 0, ax.MajorLabelStyle, ctx)
+	minorPad := tickLabelPadForAxisSize(ax, 0, ax.MinorLabelStyle, ctx)
+	if want := 3.5 * ctx.RC.DPI / 72.0; math.Abs(majorPad-want) > 1e-12 {
+		t.Fatalf("major pad = %v px, want %v (3.5 pt)", majorPad, want)
+	}
+	if want := 3.4 * ctx.RC.DPI / 72.0; math.Abs(minorPad-want) > 1e-12 {
+		t.Fatalf("minor pad = %v px, want %v (3.4 pt)", minorPad, want)
+	}
+}
+
+func TestTickLabelPadNoContextAssumes100DPI(t *testing.T) {
+	// The no-context fallback uses matplotlib's default figure DPI of 100,
+	// not 96.
+	got := tickLabelPadForSize(0, TickLabelStyle{}, nil)
+	if want := 3.5 * 100.0 / 72.0; math.Abs(got-want) > 1e-12 {
+		t.Fatalf("no-context tick label pad = %v px, want %v", got, want)
+	}
+}
+
 func TestMPLStyleHistBinsReachesHist(t *testing.T) {
 	data := make([]float64, 200)
 	for i := range data {
