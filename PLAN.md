@@ -694,18 +694,30 @@ vector-backend gaps. Zero golden regressions.
   blur. `backends/pgf/text.go` documents the intentional LaTeX-owned font
   selection as a known limitation. Guarded by `TestPathEffectShadowEmitsDropShadow`.
 
-## Phase 16: rcParams Honesty & Coverage ⚪
+## Phase 16: rcParams Honesty & Coverage 🧪
 
 **Goal:** end the "parse-then-ignore" pattern. Of matplotlib's ~309 rcParams, ~122
 are parsed and only ~70 honored — ~52 are stored and never read, giving users false
 confidence a setting took effect.
 
-- [ ] Audit the ~52 dead params and split them: those worth honoring vs those to
-  leave store-only. The worst offenders (all parsed → stored → never consumed):
-  `date.*` (`style/mplstyle.go:811`), `animation.*` (`:905`), `pdf.*`/`ps.*`/`svg.*`
-  (`:839–903`), 6 of 8 `image.*` (`:635–665`), 9 of 10 `mathtext.*` (`:677–701`).
-- [ ] Minimum bar: emit a one-shot `diag.Warnf` the first time a known-but-unhonored
-  rcParam is _set to a non-default value_, so the silence becomes a signal.
+**Status (2026-07-01):** the audit + minimum-bar warning are **shipped**; honoring
+the high-value subset and expanding parsing are deferred to a later pass. Zero
+golden regressions; new unit tests cover the warn-on-non-default and dedup paths.
+
+- [x] Audited the dead params: **51** parsed-but-never-consumed keys, captured as
+  the data-driven source of truth in `style/unhonored.go` (`unhonoredRCParams`):
+  `image.*` (6: origin/aspect/resample/interpolation_stage/lut/composite_image),
+  `mathtext.*` (9: default/fallback/bf/bfit/cal/it/rm/sf/tt), `date.*` (10),
+  `pdf.*` (4), `ps.*` (5), `svg.*` (4), `animation.*` (11), `boxplot.*`
+  (2: vertical/whiskers). Correction to the prior audit: `boxplot.notch` and
+  `boxplot.patchartist` _are_ consumed (`core/plot.go`); their stale "Stored only"
+  doc comments were fixed.
+- [x] Minimum bar: `maybeWarnUnhonoredRCParam` emits a one-shot `diag.Warnf` (deduped
+  per key, process-global) the first time an unhonored rcParam is _set to a
+  non-default value_, injected at the `applyMPLStyleEntry` success path so it covers
+  `.mplstyle` files, `UpdateParams`, `PushContext`, and `LoadRCFile`. Tests:
+  `TestUnhonoredRCParam*` (warn-on-non-default, silent-on-default, dedup, via
+  UpdateParams, honored-params-silent, audit guards).
 - [ ] Honor the high-value subset where the drawing code already exists:
   `image.origin`/`image.aspect`/`image.resample`, `mathtext.default`/`.rm`/`.it`/…,
   `date.*` tick formatting.

@@ -123,13 +123,15 @@ type HatchRC struct {
 
 // BoxplotRC mirrors the wired subset of Matplotlib's boxplot.* rcParams.
 type BoxplotRC struct {
-	// Notch draws notched boxes (boxplot.notch). Stored only.
+	// Notch draws notched boxes (boxplot.notch).
 	Notch bool
-	// Vertical orients boxes vertically (boxplot.vertical). Stored only.
+	// Vertical orients boxes vertically (boxplot.vertical). Stored only:
+	// BoxPlot2D is always vertical (see unhonoredRCParams).
 	Vertical bool
-	// Whiskers sets the whisker length convention (boxplot.whiskers). Stored only.
+	// Whiskers sets the whisker length convention (boxplot.whiskers). Stored only:
+	// the whisker length is not yet configurable (see unhonoredRCParams).
 	Whiskers float64
-	// PatchArtist draws boxes as filled patches (boxplot.patchartist). Stored only.
+	// PatchArtist draws boxes as filled patches (boxplot.patchartist).
 	PatchArtist bool
 	// ShowMeans shows the mean marker/line (boxplot.showmeans).
 	ShowMeans bool

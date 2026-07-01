@@ -984,6 +984,7 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 	}
 
 	report.Applied = append(report.Applied, key)
+	maybeWarnUnhonoredRCParam(key, &state.rc)
 	return nil
 }
 
