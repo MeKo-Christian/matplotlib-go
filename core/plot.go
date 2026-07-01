@@ -4,6 +4,7 @@ import (
 	"math"
 	"strings"
 
+	mplcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -321,7 +322,11 @@ func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 
 	// Get size. Matplotlib's scatter "s" parameter is marker area in points^2;
 	// the default is lines.markersize^2 with lines.markersize = 6 pt.
+	rcScatter := a.resolvedRC()
 	size := 36.0
+	if ms := rcScatter.Lines.MarkerSize; ms > 0 && ms != 6 {
+		size = ms * ms
+	}
 	if opt.Size != nil {
 		size = *opt.Size
 	}
@@ -337,14 +342,31 @@ func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 		}
 	}
 
-	// Get marker type
+	// Get marker type: explicit option, else a non-default scatter.marker rc
+	// value, else matplotlib's circle default.
 	marker := MarkerCircle
+	if rcMarker := rcScatter.Scatter.Marker; rcMarker != "" && rcMarker != "o" {
+		if m, ok := MarkerTypeFromString(rcMarker); ok && m != MarkerNone {
+			marker = m
+		}
+	}
 	if opt.Marker != nil {
 		marker = *opt.Marker
 	}
 
-	// Matplotlib defaults scatter marker edges to "face" with linewidth 1.
+	// Matplotlib defaults scatter marker edges to "face" with linewidth 1;
+	// the scatter.edgecolors rcParam overrides that default ("none" or a
+	// color), and an explicit EdgeColor option overrides both.
 	edgeColor := color
+	edgeFollowsFace := true
+	if ec := rcScatter.Scatter.EdgeColors; ec != "" && !strings.EqualFold(ec, "face") {
+		edgeFollowsFace = false
+		if strings.EqualFold(ec, "none") {
+			edgeColor = render.Color{}
+		} else if parsed, err := mplcolor.ToRGBA(ec); err == nil {
+			edgeColor = parsed
+		}
+	}
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
 	}
@@ -355,7 +377,7 @@ func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 		}
 		if len(opt.Colors) == 1 {
 			color = opt.Colors[0]
-			if opt.EdgeColor == nil {
+			if opt.EdgeColor == nil && edgeFollowsFace {
 				edgeColor = color
 			}
 		} else {
@@ -1039,9 +1061,16 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 		lineWidth = *opt.LineWidth
 	}
 
+	// Cap size: explicit option, else the errorbar.capsize rc value
+	// (matplotlib default 0 — no caps).
 	capSizePx := 0.0
-	if opt.CapSize != nil {
+	switch {
+	case opt.CapSize != nil:
 		capSizePx = pointsToPixels(a.resolvedRC(), 2*(*opt.CapSize))
+	default:
+		if rcCap := a.resolvedRC().Errorbar.CapSize; rcCap > 0 {
+			capSizePx = pointsToPixels(a.resolvedRC(), 2*rcCap)
+		}
 	}
 
 	capThick := 0.0 // points; ErrorBar converts at its cap Paint sink

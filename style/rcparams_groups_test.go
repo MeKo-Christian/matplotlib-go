@@ -305,3 +305,40 @@ func TestLinesRCParamsRejectInvalid(t *testing.T) {
 		}
 	}
 }
+
+func TestArtistDefaultRCParams(t *testing.T) {
+	src := "scatter.marker: s\nscatter.edgecolors: black\nerrorbar.capsize: 3\n"
+	theme, report, err := ParseMPLStyle("artists", src)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+	if len(report.Unsupported) != 0 {
+		t.Fatalf("unexpected unsupported: %+v", report.Unsupported)
+	}
+	if theme.RC.Scatter.Marker != "s" {
+		t.Fatalf("scatter.marker = %q, want s", theme.RC.Scatter.Marker)
+	}
+	if theme.RC.Scatter.EdgeColors != "black" {
+		t.Fatalf("scatter.edgecolors = %q, want black", theme.RC.Scatter.EdgeColors)
+	}
+	if theme.RC.Errorbar.CapSize != 3 {
+		t.Fatalf("errorbar.capsize = %v, want 3", theme.RC.Errorbar.CapSize)
+	}
+}
+
+func TestArtistDefaultRCParamsDefaults(t *testing.T) {
+	if Default.Scatter.Marker != "o" || Default.Scatter.EdgeColors != "face" || Default.Errorbar.CapSize != 0 {
+		t.Fatalf("artist defaults = %+v/%+v, want o/face/0", Default.Scatter, Default.Errorbar)
+	}
+}
+
+func TestArtistDefaultRCParamsRejectInvalid(t *testing.T) {
+	for _, src := range []string{
+		"scatter.edgecolors: notacolor\n",
+		"errorbar.capsize: -1\n",
+	} {
+		if _, _, err := ParseMPLStyle("bad", src); err == nil {
+			t.Errorf("ParseMPLStyle(%q) succeeded, want error", src)
+		}
+	}
+}

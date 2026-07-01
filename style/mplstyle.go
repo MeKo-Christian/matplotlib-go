@@ -86,6 +86,7 @@ var supportedMPLStyleKeys = []string{
 	"date.converter",
 	"date.epoch",
 	"date.interval_multiples",
+	"errorbar.capsize",
 	"figure.dpi",
 	"figure.facecolor",
 	"figure.figsize",
@@ -151,6 +152,8 @@ var supportedMPLStyleKeys = []string{
 	"savefig.format",
 	"savefig.pad_inches",
 	"savefig.transparent",
+	"scatter.edgecolors",
+	"scatter.marker",
 	"svg.fonttype",
 	"svg.hashsalt",
 	"svg.id",
@@ -454,6 +457,29 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 			return fmt.Errorf("parse %s on line %d: marker edge width must be non-negative, got %v", key, lineNo, parsed)
 		}
 		state.rc.Lines.MarkerEdgeWidth = parsed
+	case "scatter.marker":
+		marker := normalizeMPLValue(value)
+		if marker == "" {
+			return fmt.Errorf("parse %s on line %d: empty marker", key, lineNo)
+		}
+		state.rc.Scatter.Marker = marker
+	case "scatter.edgecolors":
+		normalized := normalizeMPLValue(value)
+		if !strings.EqualFold(normalized, "face") && !strings.EqualFold(normalized, "none") {
+			if err := validateMPLColorValue(value, state.rc, false); err != nil {
+				return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+			}
+		}
+		state.rc.Scatter.EdgeColors = normalized
+	case "errorbar.capsize":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		if parsed < 0 {
+			return fmt.Errorf("parse %s on line %d: cap size must be non-negative, got %v", key, lineNo, parsed)
+		}
+		state.rc.Errorbar.CapSize = parsed
 	case "hist.bins":
 		parsed, err := parseMPLHistBins(value)
 		if err != nil {

@@ -777,8 +777,11 @@ golden regressions; new unit tests cover the warn-on-non-default and dedup paths
   - patches: no `PatchRC` exists at all (`patch.linewidth`/`facecolor`/
     `edgecolor`/`force_edgecolor`/`antialiased`);
   - font: `font.weight`/`style`/`variant`/`stretch` + family-list values;
-  - artist-default rc keys: `errorbar.capsize`, `scatter.marker`,
-    `scatter.edgecolors`; `contour.*`. (`hist.bins` shipped with Phase 19:
+  - artist-default rc keys: ~~`errorbar.capsize`, `scatter.marker`,
+    `scatter.edgecolors`~~ — **shipped 2026-07-02** (`RC.Scatter`/`RC.Errorbar`
+    groups; Axes.Scatter seeds marker/edge color — plus default size from
+    `lines.markersize`² — and Axes.ErrorBar seeds cap size; explicit options
+    win). Still open: `contour.*`. (`hist.bins` shipped with Phase 19:
     parsed, exported via `Params`, and consumed by `Axes.Hist`.)
     Prioritize by parity-case impact, not raw count.
 - [x] **Minimum bar for unparsed-but-known keys:** shipped in

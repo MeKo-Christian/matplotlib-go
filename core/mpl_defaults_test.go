@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
 
@@ -414,5 +415,71 @@ func TestMPLStyleLinesStyleNoneSuppressesLine(t *testing.T) {
 	}
 	if !line.MarkerSet {
 		t.Fatal("marker not set despite lines.marker: o")
+	}
+}
+
+func TestMPLStyleScatterDefaultsReachScatter(t *testing.T) {
+	src := "scatter.marker: s\nscatter.edgecolors: none\nlines.markersize: 10\n"
+	theme, report, err := style.ParseMPLStyle("test", src)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle: %v", err)
+	}
+	if len(report.Unsupported) > 0 {
+		t.Fatalf("unsupported entries: %+v", report.Unsupported)
+	}
+
+	fig := NewFigure(100, 100, style.WithTheme(theme))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	sc := ax.Scatter([]float64{0, 1}, []float64{0, 1})
+	if sc == nil {
+		t.Fatal("Scatter returned nil")
+	}
+	if sc.Marker != MarkerSquare {
+		t.Fatalf("marker = %v, want MarkerSquare from scatter.marker", sc.Marker)
+	}
+	if sc.EdgeColor.A != 0 {
+		t.Fatalf("edge color = %+v, want transparent from scatter.edgecolors: none", sc.EdgeColor)
+	}
+	// matplotlib's scatter default size is lines.markersize^2.
+	if sc.Size != 100 {
+		t.Fatalf("size = %v, want 100 (lines.markersize^2)", sc.Size)
+	}
+
+	// Explicit options still win.
+	marker := MarkerCircle
+	edge := render.Color{R: 1, A: 1}
+	size := 25.0
+	sc2 := ax.Scatter([]float64{0, 1}, []float64{1, 0}, ScatterOptions{
+		Marker: &marker, EdgeColor: &edge, Size: &size,
+	})
+	if sc2.Marker != MarkerCircle || sc2.EdgeColor != edge || sc2.Size != 25 {
+		t.Fatalf("explicit scatter options lost: %v/%+v/%v", sc2.Marker, sc2.EdgeColor, sc2.Size)
+	}
+}
+
+func TestMPLStyleErrorbarCapsizeReachesErrorBar(t *testing.T) {
+	theme, _, err := style.ParseMPLStyle("test", "errorbar.capsize: 3\n")
+	if err != nil {
+		t.Fatalf("ParseMPLStyle: %v", err)
+	}
+
+	fig := NewFigure(100, 100, style.WithTheme(theme))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	eb := ax.ErrorBar([]float64{0, 1}, []float64{0, 1}, nil, []float64{0.1, 0.1})
+	if eb == nil {
+		t.Fatal("ErrorBar returned nil")
+	}
+	// 3 pt caps at DPI 100: 2*3 pt * (100/72) px/pt.
+	want := 6.0 * 100 / 72
+	if !floatApprox(eb.CapSize, want, 1e-9) {
+		t.Fatalf("cap size = %v px, want %v from errorbar.capsize", eb.CapSize, want)
+	}
+
+	// Default rc keeps caps off.
+	fig2 := NewFigure(100, 100)
+	ax2 := fig2.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	eb2 := ax2.ErrorBar([]float64{0, 1}, []float64{0, 1}, nil, []float64{0.1, 0.1})
+	if eb2.CapSize != 0 {
+		t.Fatalf("default cap size = %v, want 0", eb2.CapSize)
 	}
 }

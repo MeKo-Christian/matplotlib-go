@@ -74,6 +74,10 @@ type RC struct {
 	// Lines holds line-artist lines.* rcParams (width/color live in the flat
 	// LineWidth/LineColor fields above).
 	Lines LinesRC
+	// Scatter holds scatter.* rcParams (scatter artist defaults).
+	Scatter ScatterRC
+	// Errorbar holds errorbar.* rcParams (errorbar artist defaults).
+	Errorbar ErrorbarRC
 	// Image holds image.* rcParams (imshow defaults).
 	Image ImageRC
 	// Hatch holds hatch.* rcParams (hatch pattern defaults).
@@ -137,6 +141,24 @@ type LinesRC struct {
 	// indistinguishable from Line2D's unset state (which falls back to the
 	// 1 pt default) and is therefore ignored.
 	MarkerEdgeWidth float64
+}
+
+// ScatterRC mirrors Matplotlib's scatter.* rcParams.
+type ScatterRC struct {
+	// Marker is the default scatter marker (scatter.marker). Consumed by
+	// Axes.Scatter.
+	Marker string
+	// EdgeColors is the default marker edge color (scatter.edgecolors):
+	// "face" (match the face color), "none", or a color. Consumed by
+	// Axes.Scatter.
+	EdgeColors string
+}
+
+// ErrorbarRC mirrors Matplotlib's errorbar.* rcParams.
+type ErrorbarRC struct {
+	// CapSize is the default error bar cap length in points
+	// (errorbar.capsize). Consumed by Axes.ErrorBar.
+	CapSize float64
 }
 
 // ImageRC mirrors Matplotlib's image.* rcParams used as imshow defaults.
@@ -442,6 +464,13 @@ var Default = RC{
 		Marker:          "None",
 		MarkerSize:      6,
 		MarkerEdgeWidth: 1,
+	},
+	Scatter: ScatterRC{
+		Marker:     "o",
+		EdgeColors: "face",
+	},
+	Errorbar: ErrorbarRC{
+		CapSize: 0,
 	},
 	Image: ImageRC{
 		Cmap:               "viridis",

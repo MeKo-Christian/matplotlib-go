@@ -180,6 +180,9 @@ func normalizeRCEnvPath(path string) string {
 func paramsFromRC(rc RC) Params {
 	params := make(Params, len(supportedMPLStyleKeys))
 
+	params["errorbar.capsize"] = formatMPLFloat(rc.Errorbar.CapSize)
+	params["scatter.edgecolors"] = rc.Scatter.EdgeColors
+	params["scatter.marker"] = rc.Scatter.Marker
 	params["lines.linestyle"] = rc.Lines.LineStyle
 	params["lines.marker"] = rc.Lines.Marker
 	params["lines.markeredgewidth"] = formatMPLFloat(rc.Lines.MarkerEdgeWidth)
