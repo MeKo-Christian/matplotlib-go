@@ -180,6 +180,10 @@ func normalizeRCEnvPath(path string) string {
 func paramsFromRC(rc RC) Params {
 	params := make(Params, len(supportedMPLStyleKeys))
 
+	params["lines.linestyle"] = rc.Lines.LineStyle
+	params["lines.marker"] = rc.Lines.Marker
+	params["lines.markeredgewidth"] = formatMPLFloat(rc.Lines.MarkerEdgeWidth)
+	params["lines.markersize"] = formatMPLFloat(rc.Lines.MarkerSize)
 	params["axes.autolimit_mode"] = rc.Axes.AutolimitMode
 	params["axes.axisbelow"] = rc.Axes.AxisBelow
 	params["axes.unicode_minus"] = formatMPLBool(rc.Axes.UnicodeMinus)

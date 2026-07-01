@@ -117,7 +117,11 @@ var supportedMPLStyleKeys = []string{
 	"legend.fontsize",
 	"legend.labelcolor",
 	"lines.color",
+	"lines.linestyle",
 	"lines.linewidth",
+	"lines.marker",
+	"lines.markeredgewidth",
+	"lines.markersize",
 	"mathtext.bf",
 	"mathtext.bfit",
 	"mathtext.cal",
@@ -420,6 +424,36 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 		}
 		state.lineWidthPt = parsed
 		state.lineWidthSet = true
+	case "lines.linestyle":
+		parsed, err := parseMPLLineStyleName(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Lines.LineStyle = parsed
+	case "lines.marker":
+		marker := normalizeMPLValue(value)
+		if marker == "" {
+			marker = "None"
+		}
+		state.rc.Lines.Marker = marker
+	case "lines.markersize":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		if parsed < 0 {
+			return fmt.Errorf("parse %s on line %d: marker size must be non-negative, got %v", key, lineNo, parsed)
+		}
+		state.rc.Lines.MarkerSize = parsed
+	case "lines.markeredgewidth":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		if parsed < 0 {
+			return fmt.Errorf("parse %s on line %d: marker edge width must be non-negative, got %v", key, lineNo, parsed)
+		}
+		state.rc.Lines.MarkerEdgeWidth = parsed
 	case "hist.bins":
 		parsed, err := parseMPLHistBins(value)
 		if err != nil {
@@ -1497,6 +1531,26 @@ func parseMPLMathtextFallback(value string) (string, error) {
 		return normalized, nil
 	default:
 		return "", fmt.Errorf("invalid mathtext.fallback %q, want cm, stix, stixsans, or None", value)
+	}
+}
+
+// parseMPLLineStyleName validates a lines.linestyle value and returns the
+// canonical short form. Matplotlib additionally accepts on-off dash tuples,
+// which are not supported here.
+func parseMPLLineStyleName(value string) (string, error) {
+	switch strings.ToLower(normalizeMPLValue(value)) {
+	case "-", "solid":
+		return "-", nil
+	case "--", "dashed":
+		return "--", nil
+	case "-.", "dashdot":
+		return "-.", nil
+	case ":", "dotted":
+		return ":", nil
+	case "", " ", "none":
+		return "none", nil
+	default:
+		return "", fmt.Errorf("unsupported linestyle %q", value)
 	}
 }
 

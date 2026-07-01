@@ -2,6 +2,7 @@ package core
 
 import (
 	"math"
+	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
@@ -99,8 +100,10 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	}
 
 	// Resolve dashes: an explicit dash pattern wins, then the typed LineStyle
-	// option, then a cycled linestyle. LineStyleNone suppresses the line
-	// entirely (markers-only), like matplotlib's linestyle "none".
+	// option, then a cycled linestyle, then a non-default lines.linestyle rc
+	// value. LineStyleNone (or rc "none") suppresses the line entirely
+	// (markers-only), like matplotlib's linestyle "none".
+	rcLines := a.resolvedRC().Lines
 	dashes := opt.Dashes
 	switch {
 	case dashes != nil:
@@ -110,6 +113,12 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 		dashes = lineStyleToDashes(string(opt.LineStyle), pointsToPixels(a.resolvedRC(), lineWidth))
 	case cycle.HasLineStyle:
 		dashes = lineStyleToDashes(cycle.LineStyle, pointsToPixels(a.resolvedRC(), lineWidth))
+	case rcLines.LineStyle != "" && rcLines.LineStyle != "-":
+		if LineStyle(rcLines.LineStyle).isNone() {
+			lineWidth = 0
+		} else {
+			dashes = lineStyleToDashes(rcLines.LineStyle, pointsToPixels(a.resolvedRC(), lineWidth))
+		}
 	}
 
 	// Create line
@@ -136,6 +145,12 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 			line.Marker = marker
 			line.MarkerSet = true
 		}
+	} else if rcMarker := rcLines.Marker; rcMarker != "" && !strings.EqualFold(rcMarker, "none") {
+		// A non-default lines.marker rc value seeds the default marker.
+		if marker, ok := MarkerTypeFromString(rcMarker); ok && marker != MarkerNone {
+			line.Marker = marker
+			line.MarkerSet = true
+		}
 	}
 	if opt.MarkerStyle != nil {
 		line.MarkerStyle = *opt.MarkerStyle
@@ -145,6 +160,10 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	}
 	if opt.MarkerSize != nil {
 		line.MarkerSize = *opt.MarkerSize
+	} else if rcLines.MarkerSize > 0 && rcLines.MarkerSize != 6 {
+		// Line2D treats 0 as "use the 6 pt default", so only a non-default
+		// lines.markersize rc value needs seeding.
+		line.MarkerSize = rcLines.MarkerSize
 	}
 	line.MarkerFaceColor = color
 	if opt.MarkerFaceColor != nil {
@@ -165,6 +184,10 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	}
 	if opt.MarkerEdgeWidth != nil {
 		line.MarkerEdgeWidth = *opt.MarkerEdgeWidth
+	} else if rcLines.MarkerEdgeWidth > 0 && rcLines.MarkerEdgeWidth != 1 {
+		// Line2D treats 0 as "use the 1 pt default", so only a non-default
+		// lines.markeredgewidth rc value needs seeding.
+		line.MarkerEdgeWidth = rcLines.MarkerEdgeWidth
 	}
 	line.MarkEvery = opt.MarkEvery
 	if opt.MarkEverySpec != nil {

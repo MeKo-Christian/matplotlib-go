@@ -71,6 +71,9 @@ type RC struct {
 	// Axes holds behavior-related axes.* rcParams (grid/label styling has
 	// dedicated flat RC fields above).
 	Axes AxesRC
+	// Lines holds line-artist lines.* rcParams (width/color live in the flat
+	// LineWidth/LineColor fields above).
+	Lines LinesRC
 	// Image holds image.* rcParams (imshow defaults).
 	Image ImageRC
 	// Hatch holds hatch.* rcParams (hatch pattern defaults).
@@ -114,6 +117,26 @@ type AxesRC struct {
 	// hyphen (axes.unicode_minus). Consumed by the scalar tick formatters
 	// (core/tick_formatters.go).
 	UnicodeMinus bool
+}
+
+// LinesRC mirrors line-artist lines.* rcParams beyond the flat LineWidth and
+// LineColor fields.
+type LinesRC struct {
+	// LineStyle is the default line style (lines.linestyle): "-", "--",
+	// "-.", ":", or "none". Consumed by Axes.Plot for lines without an
+	// explicit or cycled style.
+	LineStyle string
+	// Marker is the default marker (lines.marker); "None" draws no marker.
+	// Consumed by Axes.Plot.
+	Marker string
+	// MarkerSize is the default marker size in points (lines.markersize).
+	// Consumed by Axes.Plot.
+	MarkerSize float64
+	// MarkerEdgeWidth is the default marker edge width in points
+	// (lines.markeredgewidth). Consumed by Axes.Plot. A zero rc value is
+	// indistinguishable from Line2D's unset state (which falls back to the
+	// 1 pt default) and is therefore ignored.
+	MarkerEdgeWidth float64
 }
 
 // ImageRC mirrors Matplotlib's image.* rcParams used as imshow defaults.
@@ -413,6 +436,12 @@ var Default = RC{
 		YMargin:       0.05,
 		AutolimitMode: "data",
 		UnicodeMinus:  true,
+	},
+	Lines: LinesRC{
+		LineStyle:       "-",
+		Marker:          "None",
+		MarkerSize:      6,
+		MarkerEdgeWidth: 1,
 	},
 	Image: ImageRC{
 		Cmap:               "viridis",

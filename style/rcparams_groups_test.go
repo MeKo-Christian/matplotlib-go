@@ -265,3 +265,43 @@ func TestAxesBehaviorRCParamsRejectInvalid(t *testing.T) {
 		}
 	}
 }
+
+func TestLinesRCParams(t *testing.T) {
+	src := "lines.linestyle: dashed\nlines.marker: o\nlines.markersize: 10\nlines.markeredgewidth: 2.5\n"
+	theme, report, err := ParseMPLStyle("lines", src)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+	if len(report.Unsupported) != 0 {
+		t.Fatalf("unexpected unsupported: %+v", report.Unsupported)
+	}
+	l := theme.RC.Lines
+	if l.LineStyle != "--" {
+		t.Fatalf("linestyle = %q, want -- (canonical form of dashed)", l.LineStyle)
+	}
+	if l.Marker != "o" {
+		t.Fatalf("marker = %q, want o", l.Marker)
+	}
+	if l.MarkerSize != 10 || l.MarkerEdgeWidth != 2.5 {
+		t.Fatalf("marker size/edge = %v/%v, want 10/2.5", l.MarkerSize, l.MarkerEdgeWidth)
+	}
+}
+
+func TestLinesRCParamsDefaults(t *testing.T) {
+	l := Default.Lines
+	if l.LineStyle != "-" || l.Marker != "None" || l.MarkerSize != 6 || l.MarkerEdgeWidth != 1 {
+		t.Fatalf("Default.Lines = %+v, want matplotlib defaults (-/None/6/1)", l)
+	}
+}
+
+func TestLinesRCParamsRejectInvalid(t *testing.T) {
+	for _, src := range []string{
+		"lines.linestyle: wavy\n",
+		"lines.markersize: -1\n",
+		"lines.markeredgewidth: -0.5\n",
+	} {
+		if _, _, err := ParseMPLStyle("bad", src); err == nil {
+			t.Errorf("ParseMPLStyle(%q) succeeded, want error", src)
+		}
+	}
+}

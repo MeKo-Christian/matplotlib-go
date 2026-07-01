@@ -350,3 +350,69 @@ func TestMPLStyleUnicodeMinusReachesTickLabels(t *testing.T) {
 		t.Fatalf("negative tick label = %q, want ASCII hyphen with axes.unicode_minus: False", got)
 	}
 }
+
+func TestMPLStyleLinesStyleAndMarkersReachPlot(t *testing.T) {
+	src := "lines.linestyle: --\nlines.marker: o\nlines.markersize: 10\nlines.markeredgewidth: 2.5\n"
+	theme, report, err := style.ParseMPLStyle("test", src)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle: %v", err)
+	}
+	if len(report.Unsupported) > 0 {
+		t.Fatalf("unsupported entries: %+v", report.Unsupported)
+	}
+
+	fig := NewFigure(100, 100, style.WithTheme(theme))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	if line == nil {
+		t.Fatal("Plot returned nil")
+	}
+	if len(line.Dashes) == 0 {
+		t.Fatal("lines.linestyle: -- did not produce a dash pattern")
+	}
+	if !line.MarkerSet || line.Marker != MarkerCircle {
+		t.Fatalf("marker = %v (set=%v), want MarkerCircle from lines.marker", line.Marker, line.MarkerSet)
+	}
+	if line.MarkerSize != 10 {
+		t.Fatalf("marker size = %v, want 10 from lines.markersize", line.MarkerSize)
+	}
+	if line.MarkerEdgeWidth != 2.5 {
+		t.Fatalf("marker edge width = %v, want 2.5 from lines.markeredgewidth", line.MarkerEdgeWidth)
+	}
+
+	// Explicit options still win over the rc values.
+	solid := LineStyle("-")
+	marker := MarkerTriangleUp
+	size := 4.0
+	line2 := ax.Plot([]float64{0, 1}, []float64{1, 0}, PlotOptions{
+		LineStyle:  solid,
+		Marker:     &marker,
+		MarkerSize: &size,
+	})
+	if len(line2.Dashes) != 0 {
+		t.Fatalf("explicit solid linestyle still produced dashes %v", line2.Dashes)
+	}
+	if line2.Marker != MarkerTriangleUp || line2.MarkerSize != 4 {
+		t.Fatalf("explicit marker options lost: %v/%v", line2.Marker, line2.MarkerSize)
+	}
+}
+
+func TestMPLStyleLinesStyleNoneSuppressesLine(t *testing.T) {
+	theme, _, err := style.ParseMPLStyle("test", "lines.linestyle: none\nlines.marker: o\n")
+	if err != nil {
+		t.Fatalf("ParseMPLStyle: %v", err)
+	}
+
+	fig := NewFigure(100, 100, style.WithTheme(theme))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	if line == nil {
+		t.Fatal("Plot returned nil")
+	}
+	if line.W != 0 {
+		t.Fatalf("line width = %v, want 0 (markers-only) from lines.linestyle: none", line.W)
+	}
+	if !line.MarkerSet {
+		t.Fatal("marker not set despite lines.marker: o")
+	}
+}

@@ -766,9 +766,12 @@ golden regressions; new unit tests cover the warn-on-non-default and dedup paths
     `unicode_minus`; zero golden churn — only non-default rc values apply).
     Still open: `titlepad`, `labelpad`, `titlelocation`, `spines.*`,
     `axes.formatter.*` (limits/use_mathtext/useoffset/offset_threshold);
-  - lines/markers: `lines.linestyle`, `marker`, `markersize`,
-    `markeredgewidth`, the three `*_pattern` keys, `scale_dashes`,
-    cap/join styles, `markers.fillstyle`, `lines.antialiased`;
+  - lines/markers: ~~`lines.linestyle`, `marker`, `markersize`,
+    `markeredgewidth`~~ — **shipped 2026-07-02** (`RC.Lines` group; Axes.Plot
+    seeds dash pattern / marker / sizes from non-default rc values, explicit
+    options and prop-cycle entries still win). Still open: the three
+    `*_pattern` keys, `scale_dashes`, cap/join styles, `markers.fillstyle`,
+    `lines.antialiased`;
   - figure: `edgecolor`, `frameon`, `subplot.*`, `autolayout`,
     `constrained_layout.*`, `titlesize`/`titleweight`;
   - patches: no `PatchRC` exists at all (`patch.linewidth`/`facecolor`/
