@@ -8,9 +8,13 @@ sliding into a vague "future work" bucket.
 
 Phases are ordered **closed first, open last**: Phases 1–9 are complete; the
 remaining open work — Skia GPU (10), the v1.0 release stretch (11), two deferred
-infrastructure phases (12–13), and the second-review closure phases (14–18, from
-the 2026-06-30 [`REVIEW.md`](REVIEW.md)) — is collected at the end under
-**Remaining Work** and **Second Fidelity-Review Closure**.
+infrastructure phases (12–13), the second-review closure phases (14–18, from
+the 2026-06-30 [`REVIEW.md`](REVIEW.md)), and the third-audit closure phases
+(19–21, from the 2026-07-01 review appended to the same file) — is collected at
+the end under **Remaining Work**, **Second Fidelity-Review Closure**, and
+**Third-Audit Closure & Pre-v1.0 Break**. Phase 11 (v1.0 release) executes
+**last**: Phases 19–21 include a breaking API rework and tolerance re-freeze
+that the release must postdate.
 
 ---
 
@@ -353,10 +357,16 @@ parity diagnostics (`TestNonTextResidualDiagnostics`) are in place.
 
 ---
 
-## Phase 11: Documentation, Performance, and v1.0 Release
+## Phase 11: Documentation, Performance, and v1.0 Release (LAST — after Phases 16–21)
 
 **Goal:** make the project consumable by users who have not followed the
 development thread, establish performance baselines, and tag a stable v1.0.
+
+> **Ordering (2026-07-01):** this phase executes **last**. Phase 20 is a
+> deliberate pre-v1.0 breaking rework of the public API, so the "Public API
+> stability audit ✅" checkbox below froze the _pre-break_ surface — Phase 20.4
+> re-freezes it. The final golden/tolerance freeze must postdate Phases 19 and
+> 21, and the changelog must include Phase 20's breaking section.
 
 ### 11.1 API Documentation ✅
 
@@ -592,7 +602,7 @@ These phases are derived from the second independent fidelity review in
 [`REVIEW.md`](REVIEW.md) (2026-06-30), an adversarial subagent audit run after the
 Phase 4–9 breadth work. Its verdict: matplotlib-go is **a faithful port with a
 scaffolding fringe, not a facade** — the numerical cores, the mathtext engine, the
-Qhull triangulation, and the parity harness (which compares against *real*
+Qhull triangulation, and the parity harness (which compares against _real_
 matplotlib output and gates CI) are genuinely faithful. The remaining problems are
 **concentrated and locatable**: a handful of silent-degradation footguns that
 survived Phase 4, the secondary backends and the capability layer that advertises
@@ -618,33 +628,34 @@ rationale recorded below. Parity suite green (zero golden regressions); new unit
 tests cover the colormap strict variant and the `Setp` warning.
 
 - [x] `color/colormap.go` — added `GetColormapStrict(name) (Colormap, error)` +
-  exported `ErrUnknownColormap`; `GetColormap` now delegates to it and keeps the
-  warn-then-viridis lenient fallback. Tests: `TestGetColormapStrict*`. _Deferred to
-  Phase 17:_ stopping case-folding (`"Blues"=="blues"`) needs the builtin maps
-  re-registered under canonical mixed-case names — a larger, parity-risky change
-  (documented in the `GetColormapStrict` doc comment).
+      exported `ErrUnknownColormap`; `GetColormap` now delegates to it and keeps the
+      warn-then-viridis lenient fallback. Tests: `TestGetColormapStrict*`. _Deferred to
+      Phase 17:_ stopping case-folding (`"Blues"=="blues"`) needs the builtin maps
+      re-registered under canonical mixed-case names — a larger, parity-risky change
+      (documented in the `GetColormapStrict` doc comment).
 - [x] `core/introspection.go` — `Setp` now emits a one-shot `diag.Warnf` for
-  unrecognized keys (and wrong-typed values) via the existing `SetProperty` bool,
-  instead of silently dropping them. Test: `TestSetpWarnsOnUnknownProperty`.
+      unrecognized keys (and wrong-typed values) via the existing `SetProperty` bool,
+      instead of silently dropping them. Test: `TestSetpWarnsOnUnknownProperty`.
 - [x] `backends/pdf/pdf.go` (+`pdf_write.go`) & `backends/ps/procedures.go`
-  (+`gradients.go`) — gradient/pattern-filled marker & path-collection items now
-  emit a one-shot `diag.Warnf` (`warnGradientCollectionDrop`) when skipped, instead
-  of vanishing undrawn. (A real gradient-XObject/procedure fill stays future work.)
+      (+`gradients.go`) — gradient/pattern-filled marker & path-collection items now
+      emit a one-shot `diag.Warnf` (`warnGradientCollectionDrop`) when skipped, instead
+      of vanishing undrawn. (A real gradient-XObject/procedure fill stays future work.)
 - [x] `core/picker_contains.go` — `Text.Contains` now measures the glyph bbox via
-  the shared sfnt shaper (`render.MeasureTextMetrics`, per-line width + real
-  ascent/descent) using the resolved font key, replacing the `FontSize × rune-count`
-  heuristic. Removed the now-orphaned `textRuneCount`.
+      the shared sfnt shaper (`render.MeasureTextMetrics`, per-line width + real
+      ascent/descent) using the resolved font key, replacing the `FontSize × rune-count`
+      heuristic. Removed the now-orphaned `textRuneCount`.
 - [x] `core/image.go` — the rotation-ignoring fallback now emits a one-shot
-  `diag.Warnf` (`rotatedImageFallbackWarnOnce`) naming the renderer type; benign on
-  AGG (which implements both transform paths), no longer silent-wrong on thin
-  backends.
+      `diag.Warnf` (`rotatedImageFallbackWarnOnce`) naming the renderer type; benign on
+      AGG (which implements both transform paths), no longer silent-wrong on thin
+      backends.
 - [ ] `animation/animation.go:578` — the Blit "fast path" calls full `cnv.Draw()`
-  anyway (zero blit benefit). **Deferred:** a real overlay redraw needs an
-  only-animated canvas `Draw` entry point (`AnimatedFilterOnlyAnimated` plumbed
-  through `canvas.FigureCanvas`), which is backend work better tracked with Phase 15;
-  dropping the public `cfg.Blit` flag is an API break. Output is already correct —
-  this is a perf non-win, not a silent-wrong-output footgun, so it is the lowest
-  priority in this bucket.
+      anyway (zero blit benefit). **Deferred:** a real overlay redraw needs an
+      only-animated canvas `Draw` entry point (`AnimatedFilterOnlyAnimated` plumbed
+      through `canvas.FigureCanvas`), which is backend work better tracked with Phase 15;
+      dropping the public `cfg.Blit` flag is an API break. Output is already correct —
+      this is a perf non-win, not a silent-wrong-output footgun, so it is the lowest
+      priority in this bucket. _If the `cfg.Blit` API question is ever acted on, it
+      folds into Phase 20's breaking window rather than a standalone break._
 
 ## Phase 15: Backend Honesty & Capability Verification 🧪
 
@@ -662,37 +673,37 @@ was removed; and SVG drop-shadow + the documented PGF font limitation closed the
 vector-backend gaps. Zero golden regressions.
 
 - [x] `backends/registry.go` — `VerifyRendererCapabilities` is now behavioral: a
-  claimed capability must pass its runtime check or be one of three intrinsic,
-  always-present capabilities (`AntiAliasing`/`SubPixel`/`PathClip`); any
-  unprobeable, non-intrinsic claim is a verification failure rather than a silent
-  pass. Guarded by `TestVerifyRendererCapabilitiesRejectsUnprobeableClaim`.
+      claimed capability must pass its runtime check or be one of three intrinsic,
+      always-present capabilities (`AntiAliasing`/`SubPixel`/`PathClip`); any
+      unprobeable, non-intrinsic claim is a verification failure rather than a silent
+      pass. Guarded by `TestVerifyRendererCapabilitiesRejectsUnprobeableClaim`.
 - [x] `backends/skia/` — registration honesty: item 1 now enforces that every
-  registered skia capability is actually implemented, and `skia_render_test.go`
-  locks that the CPU tier reports the bridged batch caps as `CapabilityBridged`
-  (not native) and never advertises `GPUAccel`. `init.go` documents the bridge.
+      registered skia capability is actually implemented, and `skia_render_test.go`
+      locks that the CPU tier reports the bridged batch caps as `CapabilityBridged`
+      (not native) and never advertises `GPUAccel`. `init.go` documents the bridge.
 - [x] Skia "GPU" honesty — `GPU()` is gated on a new `BridgeInfo.Accelerated`
-  flag that is false for every current bridge (CPU readback + cgo raster
-  surface), so it returns false until a real `SkSurface::MakeRenderTarget` path
-  lands; GPU _mode_ selection moved to `GPUModeRequested()`/`BridgeInfo().Mode`.
+      flag that is false for every current bridge (CPU readback + cgo raster
+      surface), so it returns false until a real `SkSurface::MakeRenderTarget` path
+      lands; GPU _mode_ selection moved to `GPUModeRequested()`/`BridgeInfo().Mode`.
 - [x] `backends/gobasic/stroke.go` — `JoinRound` now emits an adaptive arc fan
-  and `JoinBevel` a corner triangle via `calculateJoinFiller`, appended as filled
-  subpaths. Guarded by `TestJoinFillerGeometry`.
+      and `JoinBevel` a corner triangle via `calculateJoinFiller`, appended as filled
+      subpaths. Guarded by `TestJoinFillerGeometry`.
 - [x] `backends/gobasic` `pathDevice` — carries the full `Paint` via struct copy
-  (no more lossy reconstruction) and emits a one-shot `diag.Warnf` when a paint
-  arrives with an unsupported gradient/pattern/composite fill.
+      (no more lossy reconstruction) and emits a one-shot `diag.Warnf` when a paint
+      arrives with an unsupported gradient/pattern/composite fill.
 - [x] Systemic `GlyphRun` bug — added `render.GlyphIDToRune` (cached cmap
-  reverse-lookup); gobasic/agg/svg/pdf/ps/pgf now resolve glyph indices through
-  it (one-shot warn on failure) instead of casting `rune(glyph.ID)`. Guarded by
-  `TestGlyphIDToRuneRoundTrip`.
+      reverse-lookup); gobasic/agg/svg/pdf/ps/pgf now resolve glyph indices through
+      it (one-shot warn on failure) instead of casting `rune(glyph.ID)`. Guarded by
+      `TestGlyphIDToRuneRoundTrip`.
 - [x] `backends/webagg` — the server now emits `rubberband` (via a new
-  `Navigation.SetRubberbandHandler`) during/after zoom drags and `history_buttons`
-  (on connect + after toolbar actions). Guarded by `TestRubberbandEmittedDuringZoomDrag`.
+      `Navigation.SetRubberbandHandler`) during/after zoom drags and `history_buttons`
+      (on connect + after toolbar actions). Guarded by `TestRubberbandEmittedDuringZoomDrag`.
 - [x] `backends/desktop/gio` — removed the stale `doc.go`; `gio.go` already
-  carries the accurate package doc for the real, registered backend.
+      carries the accurate package doc for the real, registered backend.
 - [x] `backends/svg/path.go` — the `shadow` filter now emits a true
-  `feDropShadow` (offset + blur + opacity) instead of collapsing to a symmetric
-  blur. `backends/pgf/text.go` documents the intentional LaTeX-owned font
-  selection as a known limitation. Guarded by `TestPathEffectShadowEmitsDropShadow`.
+      `feDropShadow` (offset + blur + opacity) instead of collapsing to a symmetric
+      blur. `backends/pgf/text.go` documents the intentional LaTeX-owned font
+      selection as a known limitation. Guarded by `TestPathEffectShadowEmitsDropShadow`.
 
 ## Phase 16: rcParams Honesty & Coverage 🧪
 
@@ -705,26 +716,54 @@ the high-value subset and expanding parsing are deferred to a later pass. Zero
 golden regressions; new unit tests cover the warn-on-non-default and dedup paths.
 
 - [x] Audited the dead params: **51** parsed-but-never-consumed keys, captured as
-  the data-driven source of truth in `style/unhonored.go` (`unhonoredRCParams`):
-  `image.*` (6: origin/aspect/resample/interpolation_stage/lut/composite_image),
-  `mathtext.*` (9: default/fallback/bf/bfit/cal/it/rm/sf/tt), `date.*` (10),
-  `pdf.*` (4), `ps.*` (5), `svg.*` (4), `animation.*` (11), `boxplot.*`
-  (2: vertical/whiskers). Correction to the prior audit: `boxplot.notch` and
-  `boxplot.patchartist` _are_ consumed (`core/plot.go`); their stale "Stored only"
-  doc comments were fixed.
+      the data-driven source of truth in `style/unhonored.go` (`unhonoredRCParams`):
+      `image.*` (6: origin/aspect/resample/interpolation*stage/lut/composite_image),
+      `mathtext.*` (9: default/fallback/bf/bfit/cal/it/rm/sf/tt), `date.*` (10),
+      `pdf.*` (4), `ps.*` (5), `svg.*` (4), `animation.*` (11), `boxplot.*`
+      (2: vertical/whiskers). Correction to the prior audit: `boxplot.notch` and
+      `boxplot.patchartist` \_are* consumed (`core/plot.go`); their stale "Stored only"
+      doc comments were fixed.
 - [x] Minimum bar: `maybeWarnUnhonoredRCParam` emits a one-shot `diag.Warnf` (deduped
-  per key, process-global) the first time an unhonored rcParam is _set to a
-  non-default value_, injected at the `applyMPLStyleEntry` success path so it covers
-  `.mplstyle` files, `UpdateParams`, `PushContext`, and `LoadRCFile`. Tests:
-  `TestUnhonoredRCParam*` (warn-on-non-default, silent-on-default, dedup, via
-  UpdateParams, honored-params-silent, audit guards).
+      per key, process-global) the first time an unhonored rcParam is _set to a
+      non-default value_, injected at the `applyMPLStyleEntry` success path so it covers
+      `.mplstyle` files, `UpdateParams`, `PushContext`, and `LoadRCFile`. Tests:
+      `TestUnhonoredRCParam*` (warn-on-non-default, silent-on-default, dedup, via
+      UpdateParams, honored-params-silent, audit guards).
 - [ ] Honor the high-value subset where the drawing code already exists:
-  `image.origin`/`image.aspect`/`image.resample`, `mathtext.default`/`.rm`/`.it`/…,
-  `date.*` tick formatting.
-- [ ] Expand parsing toward the not-yet-parsed common params (`lines.dash_capstyle`,
-  `lines.solid_joinstyle`, `markers.fillstyle`, `axes.spines.*`, `xtick.direction`,
-  `figure.subplot.*`, `font.weight`/`font.stretch`) — prioritize by parity-case
-  impact, not raw count.
+      `image.origin`/`image.aspect`/`image.resample`, `mathtext.default`/`.rm`/`.it`/…,
+      `date.*` tick formatting.
+- [ ] **Third-audit unparsed inventory (2026-07-01, REVIEW.md §3 of the third
+      review).** Entire families never reach the `RC` struct and land silently in
+      `report.Unsupported` (`style/mplstyle.go:977`):
+  - ticks: `{x,y}tick.direction`, major/minor `size`/`width`/`pad`,
+    `minor.visible`, side toggles (`top`/`bottom`/`left`/`right`), label sides,
+    `alignment` — the Go defaults are hardcoded-correct but non-overridable;
+  - legend layout (14 params: `loc`, `fancybox`, `shadow`, `numpoints`,
+    `scatterpoints`, `markerscale`, `title_fontsize`, `borderpad`,
+    `labelspacing`, `handlelength`, `handleheight`, `handletextpad`,
+    `borderaxespad`, `columnspacing`);
+  - axes: `axisbelow`, `titlepad`, `labelpad`, `titlelocation`, `spines.*`,
+    `xmargin`/`ymargin`, `autolimit_mode`, `unicode_minus`,
+    `axes.formatter.*` (limits/use_mathtext/useoffset/offset_threshold);
+  - lines/markers: `lines.linestyle`, `marker`, `markersize`,
+    `markeredgewidth`, the three `*_pattern` keys, `scale_dashes`,
+    cap/join styles, `markers.fillstyle`, `lines.antialiased`;
+  - figure: `edgecolor`, `frameon`, `subplot.*`, `autolayout`,
+    `constrained_layout.*`, `titlesize`/`titleweight`;
+  - patches: no `PatchRC` exists at all (`patch.linewidth`/`facecolor`/
+    `edgecolor`/`force_edgecolor`/`antialiased`);
+  - font: `font.weight`/`style`/`variant`/`stretch` + family-list values;
+  - artist-default rc keys: `errorbar.capsize`, `hist.bins` (default fix in
+    Phase 19), `scatter.marker`, `scatter.edgecolors`; `contour.*`.
+    Prioritize by parity-case impact, not raw count.
+- [ ] **Minimum bar for unparsed-but-known keys:** a key present in matplotlib
+      3.10.9's rcsetup but not parsed here should trigger the same one-shot
+      `maybeWarnUnhonoredRCParam`-style warning instead of landing silently in
+      `report.Unsupported`. Ship a known-upstream-key table so silence means
+      "genuinely unknown key", never "known key we ignore".
+- [ ] **Explicit non-goals (document, don't parse):** `path.snap`,
+      `text.hinting`, `polaraxes.grid`, `axes3d.*` — record in the
+      unhonored/unparsed report with rationale.
 
 ## Phase 17: Artist Breadth & Algorithmic Correctness ⚪
 
@@ -732,46 +771,292 @@ golden regressions; new unit tests cover the warn-on-non-default and dedup paths
 artist gaps that have no workaround.
 
 - [ ] `core/tick_locators.go:683` — `LogLocator` default stride uses
-  `ceil(numDecades/numTicks)` vs matplotlib's `numdec//numticks + 1` (off-by-a-
-  decade on dense log axes). Port the integer formula; add the "≤1 minor tick →
-  AutoLocator" fallback.
+      `ceil(numDecades/numTicks)` vs matplotlib's `numdec//numticks + 1` (off-by-a-
+      decade on dense log axes). Port the integer formula; add the "≤1 minor tick →
+      AutoLocator" fallback.
 - [ ] `core/contour_lines.go:215` — saddle disambiguation keys off `above[0]` with
-  fixed corner order and never computes the cell-center mean that mpl2014 uses,
-  emitting all four crossings as one polyline. Port the cell-mean saddle split (the
-  single most likely source of contour parity drift). Add an ambiguous-saddle
-  parity case.
+      fixed corner order and never computes the cell-center mean that mpl2014 uses,
+      emitting all four crossings as one polyline. Port the cell-mean saddle split (the
+      single most likely source of contour parity drift). Add an ambiguous-saddle
+      parity case.
 - [ ] 2D `bar(yerr=/xerr=)` — `BarOptions` (`core/plot.go:508`) has no error field
-  (only 3D `ErrorBar3D` does). Add error bars to the 2D bar path + an example.
+      (only 3D `ErrorBar3D` does). Add error bars to the 2D bar path + an example.
 - [ ] `hist(log=)` — add a `Log` field to `HistOptions` + an example exercising it.
 - [ ] mathtext `cm`/`stix` fontsets — `core/mathtext.go:208` only remaps the font
-  _family_ over the single DejaVu Unicode table; port matplotlib's
-  `BakomaFonts`/`StixFonts` per-fontset glyph maps so non-DejaVu fontsets are
-  parity-exact (currently only the DejaVu default is). Larger effort; scope first.
+      _family_ over the single DejaVu Unicode table; port matplotlib's
+      `BakomaFonts`/`StixFonts` per-fontset glyph maps so non-DejaVu fontsets are
+      parity-exact (currently only the DejaVu default is). Larger effort; scope first.
 - [ ] `core/norm.go` `TwoSlopeNorm` — out-of-range should map to ±inf
-  (`np.interp` left/right), not finite extrapolation; align log/logit clip
-  semantics (`scale_registry.go:636`) with mpl's `clip` default and `-1000` floor.
+      (`np.interp` left/right), not finite extrapolation; align log/logit clip
+      semantics (`scale_registry.go:636`) with mpl's `clip` default and `-1000` floor.
 - [ ] Transform type-set breadth — add `ScaledTranslation`, `TransformWrapper`, and
-  `Affine2D`-style `rotate/skew` builders; the separable→affine extraction is
-  diagonal-only (`transform/transform.go:61`), so rotation/shear need manual matrix
-  construction today. Triage against real demand before building.
+      `Affine2D`-style `rotate/skew` builders; the separable→affine extraction is
+      diagonal-only (`transform/transform.go:61`), so rotation/shear need manual matrix
+      construction today. Triage against real demand before building.
 - [ ] Add the ~3 missing accents vs matplotlib's 20-entry `_accent_map` (mathtext
-  module).
+      module).
+
+**Third-audit additions (2026-07-01, REVIEW.md third review §2), all
+file:line-verified on both sides:**
+
+- [ ] `core/vector_field_quiver.go:346` — quiver default scale uses
+      `mean/(0.18·min(W,H)/√N)`; port matplotlib's `1.8·amean·sn/span` with
+      `sn = clip(√N, 8, 25)` (`quiver.py:681`). Changes every default-scaled
+      quiver figure — regen goldens.
+- [ ] `core/axes_autoscale.go:92` — margins are applied in data space, not
+      transform space (`axes/_base.py:3064`), so log/symlog margins are wrong.
+      Also drop non-positive limits before log autoscale (`_base.py:3017`) and
+      replace the ad-hoc zero-span expansion (`span=1` + linear margin) with
+      `nonsingular(expander=0.05·|v|)` semantics.
+- [ ] `core/axes_autoscale.go:51` — artists whose bounds are exactly
+      `{0,0,0,0}` are skipped, so a single point at the origin is ignored by
+      autoscale. Use an explicit has-data flag, not a zero-bbox sentinel.
+- [ ] `core/axis_types.go:57` — spine `set_position(('outward', pts))` and
+      `(('axes', frac))` are missing; only boundary + data modes exist. Port both
+      (the standard detached/centered-spine idioms).
+- [ ] `core/date_tick.go:648` — `AutoDateLocator` DAILY interval table is
+      `{1,2,4,7,14}` vs matplotlib's `{1,2,3,7,14,21}`. Fix the table. (The full
+      rrule alignment simplification stays a documented divergence.)
+- [ ] `core/pie.go:245` — pie axes framing is radius-scaled
+      (`padding := Radius*1.25`); matplotlib uses a fixed `±1.25 + center` data
+      window regardless of radius. Port the fixed framing.
+- [ ] `core/layoutgrid.go:239` / `:448` — nested-mosaic constrained_layout is
+      not modeled and outside legend/colorbar space is approximated. **Triage:**
+      scope the shared-margin modeling cost; if not justified by a parity case,
+      close as a documented limitation in `docs/matplotlib-parity-status.md`.
+- [ ] `core/axes3d_contour.go:10` — stale "placeholder wireframe contour"
+      comment over a real projected-contour implementation; fix the doc.
 
 ## Phase 18: Parity-Harness Rigor ⚪
 
 **Goal:** close the two real holes in an otherwise-honest harness so a live-render
-regression cannot pass green.
+regression cannot pass green. **Ordering:** the two harness-hole items (live-render
+compare, optional-visual CI) execute **before** Phases 19–21 — those phases
+regenerate goldens and rely on the harness to catch regressions honestly.
 
 - [ ] `test/helpers_test.go:406` — `TestReferenceCompare` asserts on two committed
-  files (golden vs ref); it renders `got` but never compares it. Compare the **live
-  render** against the matplotlib reference (or assert `live == golden` in the same
-  test) so the chain doesn't depend on `TestGolden` running.
+      files (golden vs ref); it renders `got` but never compares it. Compare the **live
+      render** against the matplotlib reference (or assert `live == golden` in the same
+      test) so the chain doesn't depend on `TestGolden` running.
 - [ ] 49 optional-visual cases skip `TestGolden` (live-vs-golden) in default CI
-  (`test/helpers_test.go:69–119`), so a live regression on the 3D/geo/gallery cases
-  stays green. Either run their live-render check in CI or document the gap loudly.
+      (`test/helpers_test.go:69–119`), so a live regression on the 3D/geo/gallery cases
+      stays green. Either run their live-render check in CI or document the gap loudly.
 - [ ] Tolerance cleanup — the `MinPSNR 10 / MaxMeanAbs 95` overrides on big gallery
-  cases never bind (the always-present `MaxRMSE` binds first); remove the redundant
-  "theater" thresholds so the catalog reflects the gate that actually applies.
+      cases never bind (the always-present `MaxRMSE` binds first); remove the redundant
+      "theater" thresholds so the catalog reflects the gate that actually applies.
+      _Third-audit expansion (2026-07-01):_ `widgets_gallery` and `animation_gallery`
+      run with `MinPSNR 10 / MaxMeanAbs 95` — effectively **disabled** gates, not just
+      redundant ones. The mechanical removal of the theater thresholds happens here;
+      the actual re-tightening of these two plus the ~23 loose cases is owned by
+      Phase 21 (visual QA sweep), which does the final ratchet.
+
+**Third-audit additions (2026-07-01, REVIEW.md third review §4):**
+
+- [ ] **Zero-fixture public APIs** — these ship with no parity case or example,
+      so a regression is invisible to the harness. Add catalog fixtures (matplotlib
+      reference + golden) for: `PSD`, `Specgram`, `Cohere`, `CSD` (HIGH — real
+      Welch-segmentation/detrend/window numerics behind them);
+      `LogLog`/`SemilogX`/`SemilogY`, `SecondaryYAxis`, `TwinY` (MED);
+      `AxLineSlope`, single-series `BoxPlot` (LOW). HIGH group first.
+
+---
+
+# Phases 19–21: Third-Audit Closure & Pre-v1.0 Break (2026-07-01)
+
+Derived from the third audit (2026-07-01, appended to [`REVIEW.md`](REVIEW.md)):
+three parallel subagent audits over defaults, algorithms, and API/organization,
+excluding everything Phases 14–18 already track. Maintainer decisions: (1) the
+**breaking** Go-idiomatic API rework happens **before v1.0** and the API JSON is
+re-frozen afterwards; (2) the `core/` god-package is **split** before the
+freeze; (3) a **Claude-driven visual QA sweep** closes the loose-tolerance
+cases. Fold-ins from the same audit extend Phases 16, 17, and 18.
+
+**Ordering:** Phase 18's harness holes first (so regens are honestly gated) →
+the image-affecting fidelity phases 16/17/19 (each regenerates its own goldens;
+19 last of the three — it owns the broadest regen sweep) → Phase 20 (whose
+regression gate is _goldens byte-identical throughout_, hence after all image
+churn) → Phase 21 (QA fixes change pixels; also inspects the renderer in its
+final pre-v1.0 state) → Phase 11 (release, LAST). Phase 10 (Skia) is parallel —
+it never touches AGG goldens or the core API — and must simply land or be
+descoped before the tag.
+
+## Phase 19: Default-Value Fidelity & Golden Regeneration
+
+**Goal:** an unstyled plot must use matplotlib 3.10.9's defaults. Today three
+headline defaults diverge and one rc default is dead code. Every fix here moves
+Go output _toward_ the committed matplotlib references, so this phase
+regenerates goldens (never references) and should tighten tolerances.
+
+- [ ] `lines.linewidth` — two coupled bugs: `style/style.go:333` defaults
+      `RC.LineWidth` to **1.25** (mpl: 1.5) and `core/plot.go:87` hardcodes
+      `lineWidth := 1.5` without reading `RC.LineWidth` (only the scatter
+      edge-width fallback reads it), so `lines.linewidth` in an `.mplstyle` is a
+      no-op for lines. Fix the default to 1.5 AND route `plot()` through the rc
+      value.
+- [ ] hist default bins — `core/histogram.go:285` / `core/plot.go:929` default
+      to auto-selection (Sturges <1000 else Scott); matplotlib defaults to fixed
+      **10** (rc `hist.bins`, `_axes.py:7033`). Also fix `'auto'` semantics to
+      numpy's `min(fd, sturges)` bin width, FD IQR to interpolated (linear)
+      percentiles instead of nearest-rank, and Scott to ddof=0. Wire the
+      `hist.bins` rc key (Phase 16 cross-ref).
+- [ ] scatter default size — `core/scatter.go:802`: unset size renders
+      **invisible** (zero area); matplotlib uses `s = 36` pt². Default to 36.
+- [ ] minor ticks — size 2.1 → **2.0** (`core/axis_ticks.go:73`); distinguish
+      minor pad **3.4** from major 3.5 (`core/axis_types.go:23`).
+- [ ] tick-label pad DPI fallback 96 → **100** (`core/axis_ticklabels.go:203`).
+- [ ] `PlotOptions` — add a typed linestyle field (`"--"`, `":"`, …); today
+      only `Dashes []float64` exists, so the most common mpl idiom has no direct
+      spelling. (Use the typed-constant enum style from day one so Phase 20
+      doesn't have to re-break it.)
+- [ ] **Golden regen pass:** rerun `-update-golden` for affected cases;
+      matplotlib references are untouched (they already embody these defaults).
+      Assert per-case reference-compare RMSE is non-increasing; ratchet tolerances
+      where cases improve.
+
+**Size:** M. **Depends on:** Phase 18's harness-hole items.
+
+**Exit criterion:**
+
+- [ ] Unit tests assert the five default values against matplotlib 3.10.9
+      literals; `lines.linewidth` from an `.mplstyle` visibly changes `plot()`
+      output; goldens regenerated with no reference-compare regression.
+
+## Phase 20: Go-Idiomatic API Rework & `core/` Split (BREAKING, pre-v1.0)
+
+**Goal:** one coordinated breaking pass — the only one before v1.0 — that makes
+the API Go-idiomatic, splits the `core/` god-package (60,369 lines, 173 files,
+1,529 exported symbols = 51% of the 3,019-symbol public surface), and
+re-freezes the API afterwards. **Rendering behavior is untouched: goldens stay
+byte-identical throughout — that invariant is the phase's regression gate**
+(which is why Phase 19's golden churn must land first).
+
+Regen workflow (after every stage, final freeze at the end):
+`UPDATE_PUBLIC_API_AUDIT=1` regenerates
+`test/testdata/public_api/stable_public_api.json`; the
+`internal/examplecatalog/public_surface_parity.go` local-API strings are
+remapped and `docs/matplotlib-parity-status.md` regenerated
+(`go run ./cmd/paritystatusdoc`; guards `TestAllUpstreamPublicRowsAreClassified`,
+`TestPartialAndOmissionRowsHaveNotes`); doc-coupled string tests
+(`stable_test_names_test.go`, `apidoc_coverage_test.go`,
+`TestStablePublicPackagesHaveGoDocAndExamples`) updated in the same commit as
+each move.
+
+### 20.0 Ship-first, non-breaking (can land immediately, even before Phase 19)
+
+- [ ] **DATA RACE:** `color/colormap.go:388` `RegisterColormap` mutates the
+      package-global `colormaps` map with no mutex while draws read it. Add an
+      RWMutex over the registry (lookup paths included) and a `-race` test.
+
+### 20.1 Surface tiering (decision stage, no code)
+
+- [ ] Classify all 3,019 frozen symbols keep / demote / delete in a design doc.
+      Demotion candidates from the audit: the introspection cluster
+      (`Setp`/`Getp`/`GetpAll`/`Findobj`/`FindobjType` — Python-isms duplicating
+      typed setters), the `*Units` any-variants (superseded by the unified error
+      convention in 20.3), and render-extension interfaces only backends consume
+      (→ tiered or internal). Symbols marked delete are removed during 20.2,
+      never moved.
+
+### 20.2 Package split (mechanical stage)
+
+- [ ] `core/axes3d*.go` + 3D projection files → new `plot3d` package
+      (~98 exported symbols, ~7k lines).
+- [ ] `core/tick_locators.go` (1,149) + `core/tick_formatters.go` (1,045) +
+      `core/date_tick.go` (968) → new `ticker` package (~3,162 lines), mirroring
+      matplotlib's own `ticker`/`dates` boundary where natural.
+- [ ] `core/widget_*.go` + selector files → new `widgets` package (~2.5k
+      lines; conceptually belongs beside `canvas/`).
+- [ ] Gate: `go build ./... && just test` green, goldens **byte-identical**,
+      full regen workflow run. Refresh the stale
+      `docs/large-file-decomposition.md` snapshot (plot.go +256 lines,
+      mplstyle.go +724 since recorded) and re-run `just large-file-audit`.
+
+### 20.3 Idiomatic conventions (semantic stage, per-package after the split)
+
+- [ ] **One error convention.** Today plot methods return artist-only +
+      `diag.Warnf` on bad input (16 sites, e.g. `core/plot.go:263,755,821,896,1016`)
+      while `*Units` variants return `(T, error)`. Adopt `(T, error)` everywhere;
+      fold the `*Units` variants into the primary methods (per 20.1);
+      `diag.Warnf` remains for degradations only, never for rejected input.
+- [ ] **Options model.** 83 Options structs, 408 pointer-to-primitive optional
+      fields, and `opts ...FooOptions` that silently uses only the first element.
+      Decide one pattern (single-struct arg or functional options), make extra
+      variadic elements impossible or an error, and replace string enums
+      (`Orientation`, `LineStyle`, `Location`, `Where`, `Colormap`,
+      `Interpolation *string` at `core/image.go:68`) with the existing
+      typed-constant pattern (`SignalSpectrumScale` style).
+- [ ] **io.Writer surface.** Add `Figure.Save(path)` / `Figure.WriteTo(w,
+format)` / `Figure.Image()`; delete the hand-rolled 8-line agg dance from
+      every example (the 3,019-symbol surface currently has zero `io.Writer`).
+- [ ] **Naming.** `GetX()` getters → `X()`; resolve exported-mutable-field vs
+      setter duplication (pick one per type); drop/demote Python-ism names per
+      20.1.
+- [ ] **Concurrency contract.** Document what is and is not safe (global rc
+      state, registries, Figure); pyplot examples stop discarding errors under
+      the new convention.
+- [ ] **Dedup (falls out of the redesign):** shared alpha-baking helper (~62
+      duplicated sites), option-unpack helper (replaced by the options model),
+      single scalar-map resolution path (Scatter2D vs Collection).
+
+### 20.4 Re-freeze
+
+- [ ] Final `UPDATE_PUBLIC_API_AUDIT=1` regen + classification remap + parity
+      status doc regen; migration notes for every break in
+      `docs/matplotlib-migration-notes.md`; CHANGELOG "breaking" section drafted
+      for Phase 11.
+
+**Size:** XL (largest remaining phase; 20.2 and each 20.3 bullet are
+independently executable sessions once 20.1's doc exists).
+**Depends on:** Phase 19 (goldens must be stable so byte-identical is the gate).
+
+**Exit criteria:**
+
+- [ ] `core/` no longer contains plot3d/ticker/widgets; every plot method
+      returns `(T, error)`; no raw-string enum fields in options; `Figure.Save`
+      exists and examples use it; `stable_public_api.json` re-frozen and the CI
+      audit green; goldens byte-identical to the Phase 19 baseline.
+
+## Phase 21: Claude-Driven Visual QA Sweep (loose-tolerance closure)
+
+**Goal:** visual inspection of every case whose gate is loose enough to hide a
+real divergence — including the "RMSE passes but the output doesn't look right"
+class — ending in a per-case disposition and a final tolerance ratchet that
+Phase 11 freezes. Runs after 16/17/19 (which change images) and after 20 (whose
+golden-stability gate must not be disturbed).
+
+- [ ] **Re-arm the disabled gates:** `widgets_gallery` and `animation_gallery`
+      (`MinPSNR 10 / MaxMeanAbs 95`) get real, binding thresholds after visual
+      review (the mechanical removal of the theater thresholds is Phase 18's).
+- [ ] **MaxRMSE ≥ 4 queue (~23 cases):** side-by-side vs the matplotlib
+      reference, classify the residual (real divergence → fix; acceptable
+      rasterization/text difference → documented exception; "the Python original
+      looks bad too" → upstream-difference note), then ratchet: `skewt_basic`,
+      `annotation_legend_offsetbox_gallery`, `text_bbox_styles`,
+      `text_layout_gallery`, `mathtext_accents`, `mathtext_fractions`,
+      `mathtext_inline_labels`, `projection_toolkit_gallery`, `specialty_depth`,
+      `formatter_log_mathtext_labels`, `named_colors`, `stem_plot`,
+      `stem_horizontal`, `lognorm_imshow`, `colorbar_variants_gallery`,
+      `errorbar_capthick`, `patch_style_matrix`, `text_annotation_matrix`,
+      `scatter_gallery`, `animation_subplots_frame`, `animation_line_frame`,
+      `animation_scatter_frame`, `mplot3d_stem3d`, `scale_logit_ticks`.
+- [ ] **Low-PSNR, low-RMSE dense galleries** (where RMSE alone is a weak
+      gate): `mathtext_gallery` (PSNR 16 / MeanAbs 35), `image_variants_gallery`,
+      `triangulation_gallery`, `pcolormesh_gouraud` — inspect and add a binding
+      PSNR floor where warranted.
+- [ ] **Deliverable:** a per-case disposition table (fixed / exception with
+      rationale / upstream-difference) committed alongside the catalog; every
+      reviewed case's tolerance ratcheted to actual + small headroom.
+
+**Size:** L (breadth-heavy, low per-case depth; parallelizable by gallery).
+**Depends on:** Phases 16, 17, 19 (image-affecting) and 20 (freeze stability).
+**Feeds:** Phase 11's "final golden/reference regeneration pass with per-case
+tolerances frozen for v1.0".
+
+**Exit criterion:**
+
+- [ ] No catalog case has an effectively-disabled gate; every case with
+      MaxRMSE ≥ 4 has a written disposition; the tolerance set handed to Phase 11
+      is the ratcheted one.
 
 ---
 
@@ -832,8 +1117,12 @@ closure (1–3) and the parity-breadth closure derived from [`REVIEW.md`](REVIEW
 mathtext/text completeness, plot/colormap/norm breadth, backend/renderer/styling
 completion, and deferred infrastructure depth). The remaining open work is
 collected at the end: **Phase 10** finalizes GPU acceleration for the Skia backend
-(CPU native primitives are done); **Phase 11** is the final v1.0 stretch —
-documentation and performance work is done, only the release mechanics (changelog,
-CI gate, v1.0 tag) remain; and **Phases 12 & 13** track genuinely-deferred
+(CPU native primitives are done); **Phases 12 & 13** track genuinely-deferred
 infrastructure depth (cocircular Qhull parity, renderer-wired cached transformed
-paths).
+paths); **Phases 14–18** close the second fidelity review (2026-06-30); and
+**Phases 19–21** close the third audit (2026-07-01) — default-value fidelity,
+the one coordinated pre-v1.0 breaking pass (Go-idiomatic API rework + `core/`
+split + re-freeze), and the visual QA sweep. **Phase 11** is the final v1.0
+stretch and executes **last**: documentation and performance work is done, but
+the release mechanics (changelog, CI gate, final freeze, v1.0 tag) must postdate
+the Phase 20 re-freeze and the Phase 21 tolerance ratchet.
