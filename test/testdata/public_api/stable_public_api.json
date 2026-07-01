@@ -7989,7 +7989,7 @@
         },
         {
           "id": "type DateLocator",
-          "declaration": "type DateLocator struct{ Location *time.Location }"
+          "declaration": "type DateLocator struct{ Location *time.Location; IntervalMultiples *bool }"
         },
         {
           "id": "type DayLocator",

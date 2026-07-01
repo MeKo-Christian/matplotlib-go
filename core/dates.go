@@ -22,21 +22,24 @@ func Num2Date(v float64, loc *time.Location) time.Time {
 	return dateNumberToTime(v, loc)
 }
 
-// GetEpoch returns the current date epoch.
+// GetEpoch returns the current date epoch, resolving the date.epoch rcParam
+// if no epoch has been fixed yet. Like Matplotlib's get_epoch, calling it
+// locks the epoch: a later SetEpoch fails.
 func GetEpoch() time.Time {
-	return dateEpoch
+	return currentDateEpoch()
 }
 
 // SetEpoch sets the reference epoch used for all date<->number conversions.
 //
 // Like Matplotlib's set_epoch, it must be called before any date conversion or
 // date plotting has occurred; otherwise it returns an error and leaves the
-// epoch unchanged. Choosing an epoch close to the data of interest preserves
-// floating-point precision for sub-second resolution far from 1970.
+// epoch unchanged. It overrides the date.epoch rcParam. Choosing an epoch
+// close to the data of interest preserves floating-point precision for
+// sub-second resolution far from 1970.
 func SetEpoch(t time.Time) error {
-	if dateEpochUsed.Load() {
+	utc := t.UTC()
+	if !dateEpochState.CompareAndSwap(nil, &utc) {
 		return errors.New("core: SetEpoch must be called before any date conversion or plotting")
 	}
-	dateEpoch = t.UTC()
 	return nil
 }

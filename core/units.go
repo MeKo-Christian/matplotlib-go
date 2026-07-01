@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 var timeType = reflect.TypeOf(time.Time{})
@@ -429,9 +431,16 @@ func (a *Axes) refreshUnitAxis(isX bool) {
 func (s *axisUnitsState) axisInfo(minVal, maxVal float64) AxisInfo {
 	switch s.kind {
 	case unitAxisDate:
+		// The date.converter rcParam switches the default formatter family,
+		// mirroring matplotlib's _SwitchableDateConverter which consults the
+		// rc value on every axisinfo call.
+		var formatter Formatter = AutoDateFormatter{Min: minVal, Max: maxVal, Location: s.location}
+		if strings.EqualFold(strings.TrimSpace(style.CurrentDefaults().Date.Converter), "concise") {
+			formatter = ConciseDateFormatter{Location: s.location}
+		}
 		return AxisInfo{
 			Locator:        DateLocator{Location: s.location},
-			Formatter:      AutoDateFormatter{Min: minVal, Max: maxVal, Location: s.location},
+			Formatter:      formatter,
 			MinorLocator:   nil,
 			MinorFormatter: nil,
 		}

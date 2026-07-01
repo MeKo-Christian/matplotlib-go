@@ -5,10 +5,18 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 type DateLocator struct {
 	Location *time.Location
+	// IntervalMultiples overrides the date.interval_multiples rcParam (nil
+	// reads the rc value, default true). When true, ticks snap to multiples
+	// of the chosen interval (e.g. day 1/8/15/22 for a 7-day step); when
+	// false, ticks start at the first unit boundary inside the range and the
+	// daily interval table gains matplotlib's {3, 21} steps.
+	IntervalMultiples *bool
 }
 
 func (l DateLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
@@ -26,8 +34,17 @@ func (l DateLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 		return []float64{minVal}
 	}
 
-	interval := chooseDateTickInterval(minTime, maxTime, targetCount)
-	current := interval.align(minTime)
+	intervalMultiples := l.intervalMultiples()
+	interval := chooseDateTickInterval(minTime, maxTime, targetCount, intervalMultiples)
+	var current time.Time
+	if intervalMultiples {
+		current = interval.align(minTime)
+	} else {
+		// Without interval multiples, matplotlib's rrule starts stepping from
+		// the first unit boundary in the range instead of snapping ticks to
+		// step multiples; aligning with step 1 truncates to the unit.
+		current = dateTickInterval{unit: interval.unit, step: 1}.align(minTime)
+	}
 	if current.Before(minTime) {
 		current = interval.next(current)
 	}
@@ -50,6 +67,15 @@ func (l DateLocator) location() *time.Location {
 		return l.Location
 	}
 	return time.UTC
+}
+
+// intervalMultiples resolves the effective interval-multiples flag: the
+// explicit field wins, otherwise the date.interval_multiples rcParam.
+func (l DateLocator) intervalMultiples() bool {
+	if l.IntervalMultiples != nil {
+		return *l.IntervalMultiples
+	}
+	return style.CurrentDefaults().Date.IntervalMultiples
 }
 
 type DayLocator struct {
@@ -437,8 +463,48 @@ type AutoDateFormatter struct {
 }
 
 func (f AutoDateFormatter) Format(x float64) string {
+	// A non-default date.autoformatter.* rcParam overrides the built-in Go
+	// layout for its resolution bucket; the rc values are strftime formats.
+	if format, ok := autoDateFormatterRCFormat(f.Min, f.Max); ok {
+		return strftimeFormat(dateNumberToTime(x, f.location()), format)
+	}
 	layout := chooseDateLabelLayout(f.Min, f.Max)
 	return DateFormatter{Layout: layout, Location: f.location()}.Format(x)
+}
+
+// autoDateFormatterRCFormat returns the date.autoformatter.* strftime format
+// covering the span's resolution bucket when the user set it to a non-default
+// value. The built-in defaults keep the calibrated Go layouts of
+// chooseDateLabelLayout (which deviate slightly from matplotlib's default
+// strftime table), so only explicit rc overrides switch the format source.
+func autoDateFormatterRCFormat(minVal, maxVal float64) (string, bool) {
+	rc := style.CurrentDefaults()
+	def := &style.Default
+	pick := func(cur, defv string) (string, bool) {
+		return cur, cur != "" && cur != defv
+	}
+
+	span := math.Abs(maxVal - minVal)
+	const (
+		oneSecond = 1.0 / 86400.0
+		oneMinute = 60.0 * oneSecond
+	)
+	switch {
+	case span >= 2*365:
+		return pick(rc.Date.AutoYear, def.Date.AutoYear)
+	case span >= 90:
+		return pick(rc.Date.AutoMonth, def.Date.AutoMonth)
+	case span >= 2:
+		return pick(rc.Date.AutoDay, def.Date.AutoDay)
+	case span >= 1:
+		return pick(rc.Date.AutoHour, def.Date.AutoHour)
+	case span >= oneMinute:
+		return pick(rc.Date.AutoMinute, def.Date.AutoMinute)
+	case span >= oneSecond:
+		return pick(rc.Date.AutoSecond, def.Date.AutoSecond)
+	default:
+		return pick(rc.Date.AutoMicrosecond, def.Date.AutoMicrosecond)
+	}
 }
 
 func (f AutoDateFormatter) location() *time.Location {
@@ -617,7 +683,7 @@ type dateTickInterval struct {
 	step int
 }
 
-func chooseDateTickInterval(minTime, maxTime time.Time, targetCount int) dateTickInterval {
+func chooseDateTickInterval(minTime, maxTime time.Time, targetCount int, intervalMultiples bool) dateTickInterval {
 	if !maxTime.After(minTime) {
 		return dateTickInterval{unit: "day", step: 1}
 	}
@@ -642,10 +708,17 @@ func chooseDateTickInterval(minTime, maxTime time.Time, targetCount int) dateTic
 		{dateTickInterval{unit: "microsecond"}, int(maxTime.Sub(minTime) / time.Microsecond), 8},
 	}
 
+	// The daily interval table depends on date.interval_multiples: matplotlib
+	// swaps AutoDateLocator's default {1,2,3,7,14,21} for {1,2,4,7,14} so day
+	// ticks land on clean multiples (dates.py:1308-1312).
+	dayIntervals := []int{1, 2, 3, 7, 14, 21}
+	if intervalMultiples {
+		dayIntervals = []int{1, 2, 4, 7, 14}
+	}
 	intervals := map[string][]int{
 		"year":        {1, 2, 4, 5, 10, 20, 40, 50, 100, 200, 400, 500, 1000, 2000, 4000, 5000, 10000},
 		"month":       {1, 2, 3, 4, 6},
-		"day":         {1, 2, 4, 7, 14},
+		"day":         dayIntervals,
 		"hour":        {1, 2, 3, 4, 6, 12},
 		"minute":      {1, 5, 10, 15, 30},
 		"second":      {1, 5, 10, 15, 30},
@@ -914,12 +987,45 @@ func dateNonsingular(minVal, maxVal float64) (float64, float64) {
 // Date numbers follow Matplotlib's convention: floating-point days since a
 // configurable epoch (default 1970-01-01T00:00:00Z). See core/dates.go for the
 // public Date2Num / Num2Date / SetEpoch / GetEpoch surface.
-var dateEpoch = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+//
+// dateEpochState is nil until the epoch is resolved: either explicitly via
+// SetEpoch, or lazily on the first conversion from the date.epoch rcParam
+// (mirroring matplotlib's get_epoch(): `_epoch = _val_or_rc(_epoch,
+// 'date.epoch')`). A non-nil pointer also locks SetEpoch. The atomic pointer
+// keeps concurrent conversions (or a conversion racing SetEpoch) data-race
+// free under the Go race detector.
+var dateEpochState atomic.Pointer[time.Time]
 
-// dateEpochUsed is set once any conversion happens; it locks SetEpoch. It is
-// atomic so concurrent conversions (or a conversion racing SetEpoch) are
-// data-race free under the Go race detector.
-var dateEpochUsed atomic.Bool
+// currentDateEpoch returns the epoch, resolving the date.epoch rcParam on the
+// first conversion. After this call the epoch is locked.
+func currentDateEpoch() time.Time {
+	if p := dateEpochState.Load(); p != nil {
+		return *p
+	}
+	epoch := parseDateEpochString(style.CurrentDefaults().Date.Epoch)
+	// If another goroutine resolved concurrently, its value wins; both read the
+	// same rc string, so the outcome is identical either way.
+	dateEpochState.CompareAndSwap(nil, &epoch)
+	return *dateEpochState.Load()
+}
+
+// parseDateEpochString parses a date.epoch rcParam value (ISO 8601 without a
+// timezone, e.g. "1970-01-01T00:00:00"). Invalid or empty values fall back to
+// the matplotlib default epoch 1970-01-01T00:00:00Z.
+func parseDateEpochString(value string) time.Time {
+	value = strings.TrimSpace(value)
+	for _, layout := range []string{
+		"2006-01-02T15:04:05.999999999",
+		"2006-01-02T15:04:05",
+		"2006-01-02T15:04",
+		"2006-01-02",
+	} {
+		if t, err := time.ParseInLocation(layout, value, time.UTC); err == nil {
+			return t
+		}
+	}
+	return time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+}
 
 const (
 	nanosPerDay        = 24.0 * 60.0 * 60.0 * 1e9
@@ -934,22 +1040,22 @@ const (
 )
 
 func timeToDateNumber(t time.Time) float64 {
-	dateEpochUsed.Store(true)
+	epoch := currentDateEpoch()
 	t = t.UTC()
 	// Common (in-range) path: identical to the historical computation, which the
 	// date-parity fixtures are calibrated against. time.Time.Sub saturates beyond
 	// ~292 years from the epoch, so for those extreme offsets fall back to
 	// time.Duration-free arithmetic via Unix seconds (a full-range int64 count).
-	if d := t.Sub(dateEpoch); d != time.Duration(math.MaxInt64) && d != time.Duration(math.MinInt64) {
+	if d := t.Sub(epoch); d != time.Duration(math.MaxInt64) && d != time.Duration(math.MinInt64) {
 		return float64(d) / nanosPerDay
 	}
-	secs := t.Unix() - dateEpoch.Unix()
-	fracNanos := int64(t.Nanosecond()) - int64(dateEpoch.Nanosecond())
+	secs := t.Unix() - epoch.Unix()
+	fracNanos := int64(t.Nanosecond()) - int64(epoch.Nanosecond())
 	return float64(secs)/secondsPerDay + float64(fracNanos)/nanosPerDay
 }
 
 func dateNumberToTime(v float64, loc *time.Location) time.Time {
-	dateEpochUsed.Store(true)
+	epoch := currentDateEpoch()
 	if loc == nil {
 		loc = time.UTC
 	}
@@ -962,7 +1068,7 @@ func dateNumberToTime(v float64, loc *time.Location) time.Time {
 	if micros > maxDurationMicros || micros < minDurationMicros {
 		secs := micros / 1_000_000
 		rem := micros % 1_000_000
-		return time.Unix(dateEpoch.Unix()+secs, int64(dateEpoch.Nanosecond())+rem*1000).In(loc)
+		return time.Unix(epoch.Unix()+secs, int64(epoch.Nanosecond())+rem*1000).In(loc)
 	}
-	return dateEpoch.Add(time.Duration(micros) * time.Microsecond).In(loc)
+	return epoch.Add(time.Duration(micros) * time.Microsecond).In(loc)
 }

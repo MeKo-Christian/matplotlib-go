@@ -1,6 +1,7 @@
 package style
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -25,15 +26,15 @@ func captureWarnings(t *testing.T) *[]string {
 func TestUnhonoredRCParamWarnsOnNonDefault(t *testing.T) {
 	msgs := captureWarnings(t)
 
-	// date.epoch is store-only; set it to a non-default value.
-	if _, _, err := ParseMPLStyle("t.mplstyle", "date.epoch: 0000-12-31T00:00:00\n"); err != nil {
+	// image.lut is store-only; set it to a non-default value.
+	if _, _, err := ParseMPLStyle("t.mplstyle", "image.lut: 128\n"); err != nil {
 		t.Fatalf("ParseMPLStyle() error = %v", err)
 	}
 
 	if len(*msgs) != 1 {
 		t.Fatalf("got %d warnings, want 1: %v", len(*msgs), *msgs)
 	}
-	if !strings.Contains((*msgs)[0], "date.epoch") {
+	if !strings.Contains((*msgs)[0], "image.lut") {
 		t.Errorf("warning %q does not mention the rcParam key", (*msgs)[0])
 	}
 	if !strings.Contains((*msgs)[0], "not honored") {
@@ -45,7 +46,7 @@ func TestUnhonoredRCParamSilentOnDefaultValue(t *testing.T) {
 	msgs := captureWarnings(t)
 
 	// Setting the param to its library default is a no-op-as-intended; do not warn.
-	src := "date.epoch: " + Default.Date.Epoch + "\n"
+	src := fmt.Sprintf("image.lut: %d\n", Default.Image.LUT)
 	if _, _, err := ParseMPLStyle("t.mplstyle", src); err != nil {
 		t.Fatalf("ParseMPLStyle() error = %v", err)
 	}
@@ -123,6 +124,8 @@ func TestHonoredRCParamsNotInRegistry(t *testing.T) {
 		"mathtext.fontset",
 		"boxplot.notch", "boxplot.patchartist",
 		"boxplot.showmeans", "boxplot.showcaps", "boxplot.showbox", "boxplot.showfliers",
+		"date.epoch", "date.converter", "date.interval_multiples",
+		"date.autoformatter.year", "date.autoformatter.day",
 	}
 	for _, key := range honored {
 		if _, ok := unhonoredRCParams[key]; ok {

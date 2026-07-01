@@ -201,7 +201,8 @@ type MathtextRC struct {
 }
 
 // DateRC mirrors Matplotlib's date.* rcParams. Auto* formatters are stored as
-// strftime strings (stored only pending a strftime-to-Go-layout converter).
+// strftime strings; non-default values override AutoDateFormatter's built-in
+// layout for their resolution bucket (core/date_tick.go, strftime-interpreted).
 type DateRC struct {
 	// AutoYear formats year-scale ticks (date.autoformatter.year).
 	AutoYear string
@@ -218,13 +219,14 @@ type DateRC struct {
 	// AutoMicrosecond formats microsecond-scale ticks
 	// (date.autoformatter.microsecond).
 	AutoMicrosecond string
-	// Epoch is the date epoch (date.epoch). Stored only.
+	// Epoch is the date epoch (date.epoch), resolved lazily by the first
+	// date conversion (core.GetEpoch mirrors matplotlib get_epoch).
 	Epoch string
 	// Converter selects the date converter (date.converter): "auto" or
-	// "concise". Stored only.
+	// "concise". Consumed by the date axis default formatter (core/units.go).
 	Converter string
 	// IntervalMultiples snaps ticks to interval multiples
-	// (date.interval_multiples). Stored only.
+	// (date.interval_multiples). Consumed by core.DateLocator.
 	IntervalMultiples bool
 }
 

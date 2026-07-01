@@ -58,17 +58,8 @@ var unhonoredRCParams = map[string]unhonoredRCParam{
 	"mathtext.sf":       {differs: func(rc, def *RC) bool { return rc.Mathtext.SF != def.Mathtext.SF }},
 	"mathtext.tt":       {differs: func(rc, def *RC) bool { return rc.Mathtext.TT != def.Mathtext.TT }},
 
-	// date.* — none consumed (no strftime->Go-layout converter / date converter wired yet).
-	"date.autoformatter.year":        {differs: func(rc, def *RC) bool { return rc.Date.AutoYear != def.Date.AutoYear }},
-	"date.autoformatter.month":       {differs: func(rc, def *RC) bool { return rc.Date.AutoMonth != def.Date.AutoMonth }},
-	"date.autoformatter.day":         {differs: func(rc, def *RC) bool { return rc.Date.AutoDay != def.Date.AutoDay }},
-	"date.autoformatter.hour":        {differs: func(rc, def *RC) bool { return rc.Date.AutoHour != def.Date.AutoHour }},
-	"date.autoformatter.minute":      {differs: func(rc, def *RC) bool { return rc.Date.AutoMinute != def.Date.AutoMinute }},
-	"date.autoformatter.second":      {differs: func(rc, def *RC) bool { return rc.Date.AutoSecond != def.Date.AutoSecond }},
-	"date.autoformatter.microsecond": {differs: func(rc, def *RC) bool { return rc.Date.AutoMicrosecond != def.Date.AutoMicrosecond }},
-	"date.epoch":                     {differs: func(rc, def *RC) bool { return rc.Date.Epoch != def.Date.Epoch }},
-	"date.converter":                 {differs: func(rc, def *RC) bool { return rc.Date.Converter != def.Date.Converter }},
-	"date.interval_multiples":        {differs: func(rc, def *RC) bool { return rc.Date.IntervalMultiples != def.Date.IntervalMultiples }},
+	// date.* — all consumed: autoformatter.* + interval_multiples + converter
+	// in core/date_tick.go & core/units.go, epoch lazily via core.GetEpoch.
 
 	// pdf.* — the PDF backend uses render.Config.PDF, not RC.PDF; none consumed.
 	"pdf.fonttype":       {differs: func(rc, def *RC) bool { return rc.PDF.FontType != def.PDF.FontType }},
