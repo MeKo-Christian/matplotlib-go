@@ -719,8 +719,8 @@ golden regressions; new unit tests cover the warn-on-non-default and dedup paths
       the data-driven source of truth in `style/unhonored.go` (`unhonoredRCParams`):
       `image.*` (6: origin/aspect/resample/interpolation*stage/lut/composite_image),
       `mathtext.*`(9: default/fallback/bf/bfit/cal/it/rm/sf/tt),`date._`(10),
- `pdf._`(4),`ps._`(5),`svg._`(4),`animation._`(11),`boxplot._`    (2: vertical/whiskers). Correction to the prior audit:`boxplot.notch`and
- `boxplot.patchartist` \_are* consumed (`core/plot.go`); their stale "Stored only"
+`pdf._`(4),`ps._`(5),`svg._`(4),`animation._`(11),`boxplot._`    (2: vertical/whiskers). Correction to the prior audit:`boxplot.notch`and
+`boxplot.patchartist` \_are* consumed (`core/plot.go`); their stale "Stored only"
       doc comments were fixed.
 - [x] Minimum bar: `maybeWarnUnhonoredRCParam` emits a one-shot `diag.Warnf` (deduped
       per key, process-global) the first time an unhonored rcParam is _set to a
@@ -752,8 +752,9 @@ golden regressions; new unit tests cover the warn-on-non-default and dedup paths
   - patches: no `PatchRC` exists at all (`patch.linewidth`/`facecolor`/
     `edgecolor`/`force_edgecolor`/`antialiased`);
   - font: `font.weight`/`style`/`variant`/`stretch` + family-list values;
-  - artist-default rc keys: `errorbar.capsize`, `hist.bins` (default fix in
-    Phase 19), `scatter.marker`, `scatter.edgecolors`; `contour.*`.
+  - artist-default rc keys: `errorbar.capsize`, `scatter.marker`,
+    `scatter.edgecolors`; `contour.*`. (`hist.bins` shipped with Phase 19:
+    parsed, exported via `Params`, and consumed by `Axes.Hist`.)
     Prioritize by parity-case impact, not raw count.
 - [ ] **Minimum bar for unparsed-but-known keys:** a key present in matplotlib
       3.10.9's rcsetup but not parsed here should trigger the same one-shot
@@ -897,46 +898,83 @@ final pre-v1.0 state) → Phase 11 (release, LAST). Phase 10 (Skia) is parallel 
 it never touches AGG goldens or the core API — and must simply land or be
 descoped before the tag.
 
-## Phase 19: Default-Value Fidelity & Golden Regeneration
+## Phase 19: Default-Value Fidelity & Golden Regeneration ✅
 
 **Goal:** an unstyled plot must use matplotlib 3.10.9's defaults. Today three
 headline defaults diverge and one rc default is dead code. Every fix here moves
 Go output _toward_ the committed matplotlib references, so this phase
 regenerates goldens (never references) and should tighten tolerances.
 
-- [ ] `lines.linewidth` — two coupled bugs: `style/style.go:333` defaults
+- [x] `lines.linewidth` — two coupled bugs: `style/style.go:333` defaults
       `RC.LineWidth` to **1.25** (mpl: 1.5) and `core/plot.go:87` hardcodes
       `lineWidth := 1.5` without reading `RC.LineWidth` (only the scatter
       edge-width fallback reads it), so `lines.linewidth` in an `.mplstyle` is a
       no-op for lines. Fix the default to 1.5 AND route `plot()` through the rc
       value.
-- [ ] hist default bins — `core/histogram.go:285` / `core/plot.go:929` default
+      _Shipped 2026-07-02:_ `RC.LineWidth` default 1.25 → 1.5; `Plot()` seeds
+      its width from `resolvedRC().LineWidth` (option > cycle > rc > 1.5).
+      `TestMPLStyleLinesLinewidthReachesPlot` proves the `.mplstyle` route.
+- [x] hist default bins — `core/histogram.go:285` / `core/plot.go:929` default
       to auto-selection (Sturges <1000 else Scott); matplotlib defaults to fixed
       **10** (rc `hist.bins`, `_axes.py:7033`). Also fix `'auto'` semantics to
       numpy's `min(fd, sturges)` bin width, FD IQR to interpolated (linear)
       percentiles instead of nearest-rank, and Scott to ddof=0. Wire the
       `hist.bins` rc key (Phase 16 cross-ref).
-- [ ] scatter default size — `core/scatter.go:802`: unset size renders
+      _Shipped 2026-07-02:_ new zero-value `BinStrategyDefault` = 10 bins
+      (`BinStrategyAuto` and the rest shift by one but keep their names);
+      auto/Scott/FD are width-based ports of numpy's `_hist_bin_*` (verified
+      against numpy 1.26.4 in `TestHist2D_AllBinStrategies` and
+      `TestBinStrategiesMatchNumpyOnSkewedData`); zero-width estimators now
+      yield 1 bin like numpy (was: Sturges fallback). `hist.bins` is parsed
+      (`int` or `auto` → `style.HistBinsAuto`), exported via `Params`, and
+      consumed by `Axes.Hist`.
+- [x] scatter default size — `core/scatter.go:802`: unset size renders
       **invisible** (zero area); matplotlib uses `s = 36` pt². Default to 36.
-- [ ] minor ticks — size 2.1 → **2.0** (`core/axis_ticks.go:73`); distinguish
+      _Shipped 2026-07-02:_ `Scatter2D.effectiveSize()` defaults the draw path;
+      `Axes.Scatter` and the legend path already defaulted to 36, so only
+      directly-constructed `Scatter2D` artists change.
+- [x] minor ticks — size 2.1 → **2.0** (`core/axis_ticks.go:73`); distinguish
       minor pad **3.4** from major 3.5 (`core/axis_types.go:23`).
-- [ ] tick-label pad DPI fallback 96 → **100** (`core/axis_ticklabels.go:203`).
-- [ ] `PlotOptions` — add a typed linestyle field (`"--"`, `":"`, …); today
+      _Shipped 2026-07-02:_ `minorTickSize()` falls back to a fixed 2.0 pt
+      (was `TickSize*0.6`); new `TickLabelStyle.PadPt` carries the pad in
+      points, with `MinorLabelStyle` constructed at 3.4 pt.
+- [x] tick-label pad DPI fallback 96 → **100** (`core/axis_ticklabels.go:203`).
+      _Shipped 2026-07-02_ (no-context fallback only; rendered output always
+      has a ctx).
+- [x] `PlotOptions` — add a typed linestyle field (`"--"`, `":"`, …); today
       only `Dashes []float64` exists, so the most common mpl idiom has no direct
       spelling. (Use the typed-constant enum style from day one so Phase 20
       doesn't have to re-break it.)
-- [ ] **Golden regen pass:** rerun `-update-golden` for affected cases;
+      _Shipped 2026-07-02:_ `type LineStyle string` with
+      `LineStyleSolid/Dashed/DashDot/Dotted/None` constants;
+      `PlotOptions.LineStyle` resolves after explicit `Dashes` and before the
+      property cycle; `LineStyleNone` suppresses the stroke (markers-only),
+      like matplotlib's `"none"`.
+- [x] **Golden regen pass:** rerun `-update-golden` for affected cases;
       matplotlib references are untouched (they already embody these defaults).
       Assert per-case reference-compare RMSE is non-increasing; ratchet tolerances
       where cases improve.
+      _Verified 2026-07-02 — zero golden churn._ All 173 golden cases and the
+      reference compares pass byte-identical on the fixed code: the divergent
+      defaults were dead or already-patched-over paths (`Plot()` hardcoded the
+      correct 1.5; every hist parity case passes explicit bins; `Axes.Scatter`
+      already defaulted 36; the 2.1→2.0 pt minor-tick change is absorbed by
+      endpoint snapping in every current case, and no case draws minor
+      labels). Nothing to regenerate, no tolerance moved — Phase 20's
+      goldens-byte-identical gate starts from this unchanged baseline.
 
 **Size:** M. **Depends on:** Phase 18's harness-hole items.
 
 **Exit criterion:**
 
-- [ ] Unit tests assert the five default values against matplotlib 3.10.9
+- [x] Unit tests assert the five default values against matplotlib 3.10.9
       literals; `lines.linewidth` from an `.mplstyle` visibly changes `plot()`
       output; goldens regenerated with no reference-compare regression.
+      _Met 2026-07-02:_ `core/mpl_defaults_test.go` pins linewidth 1.5,
+      hist.bins 10, scatter s=36, minor size 2.0 pt / pad 3.4 pt, and the
+      100-DPI pad fallback, plus the `.mplstyle` → `plot()` route for
+      `lines.linewidth` and `hist.bins`; goldens needed no regeneration (see
+      above) and the full golden/reference suite is green.
 
 ## Phase 20: Go-Idiomatic API Rework & `core/` Split (BREAKING, pre-v1.0)
 
