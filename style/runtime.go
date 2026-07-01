@@ -245,6 +245,7 @@ func paramsFromRC(rc RC) Params {
 	params["grid.minor.linestyle"] = formatMPLLineStyle(rc.MinorGridDashes)
 	params["hatch.color"] = formatMPLColor(rc.Hatch.Color)
 	params["hatch.linewidth"] = formatMPLFloat(rc.Hatch.LineWidth)
+	params["hist.bins"] = formatMPLHistBins(rc.HistBins)
 	params["image.aspect"] = rc.Image.Aspect
 	params["image.cmap"] = rc.Image.Cmap
 	params["image.composite_image"] = formatMPLBool(rc.Image.CompositeImage)
@@ -307,6 +308,16 @@ func paramsFromRC(rc RC) Params {
 
 func formatMPLFloat(value float64) string {
 	return strconv.FormatFloat(value, 'f', -1, 64)
+}
+
+func formatMPLHistBins(bins int) string {
+	if bins == HistBinsAuto {
+		return "auto"
+	}
+	if bins == 0 {
+		bins = 10
+	}
+	return strconv.Itoa(bins)
 }
 
 func formatMPLSavefigBbox(value string) string {

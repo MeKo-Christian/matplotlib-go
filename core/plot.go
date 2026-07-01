@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -82,10 +83,13 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 		color = *opt.Color
 	}
 
-	// Get line width: explicit option, else cycled linewidth, else default.
-	// Default is matplotlib's lines.linewidth (1.5 points); converted to device
-	// pixels at the Line2D Paint sink.
+	// Get line width: explicit option, else cycled linewidth, else the
+	// lines.linewidth rc value (matplotlib default 1.5 points); converted to
+	// device pixels at the Line2D Paint sink.
 	lineWidth := 1.5
+	if rcW := a.resolvedRC().LineWidth; rcW > 0 {
+		lineWidth = rcW
+	}
 	if cycle.HasLineWidth {
 		lineWidth = cycle.LineWidth
 	}
@@ -865,7 +869,7 @@ func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) *Fill2D
 
 // HistOptions holds optional parameters for histogram plots.
 type HistOptions struct {
-	Bins              int         // number of bins (0 = auto)
+	Bins              int         // number of bins (0 = hist.bins rc default, 10)
 	BinEdges          []float64   // explicit bin edges (overrides Bins)
 	Range             *HistRange  // explicit histogram range; ignored when BinEdges is set
 	Weights           []float64   // per-sample weights, same length as data when provided
@@ -897,6 +901,19 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) *Hist2D {
 		return nil
 	}
 
+	// With no explicit bins, edges, or strategy, honor the hist.bins rcParam
+	// (matplotlib default: 10 fixed bins; 'auto' selects numpy's estimator).
+	bins := opt.Bins
+	binStrat := opt.BinStrat
+	if bins <= 0 && len(opt.BinEdges) < 2 && binStrat == BinStrategyDefault {
+		switch rcBins := a.resolvedRC().HistBins; {
+		case rcBins == style.HistBinsAuto:
+			binStrat = BinStrategyAuto
+		case rcBins > 0:
+			bins = rcBins
+		}
+	}
+
 	color := a.NextColor()
 	if opt.Color != nil {
 		color = *opt.Color
@@ -926,10 +943,10 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) *Hist2D {
 	hist := &Hist2D{
 		Data:              data,
 		Weights:           append([]float64(nil), opt.Weights...),
-		Bins:              opt.Bins,
+		Bins:              bins,
 		BinEdges:          opt.BinEdges,
 		Range:             opt.Range,
-		BinStrat:          opt.BinStrat,
+		BinStrat:          binStrat,
 		Norm:              opt.Norm,
 		Cumulative:        opt.Cumulative,
 		ReverseCumulative: opt.ReverseCumulative,

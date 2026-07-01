@@ -392,28 +392,70 @@ func TestAxesHistPreservesColorAlphaWhenAlphaOmitted(t *testing.T) {
 }
 
 func TestHist2D_AllBinStrategies(t *testing.T) {
+	// Expected bin counts verified against numpy 1.26.4:
+	// np.histogram_bin_edges(np.arange(200) % 50, bins=<estimator>).
 	data := make([]float64, 200)
 	for i := range data {
 		data[i] = float64(i % 50)
 	}
 
-	strategies := []BinStrategy{
-		BinStrategyAuto,
-		BinStrategySturges,
-		BinStrategyScott,
-		BinStrategyFD,
-		BinStrategySqrt,
+	cases := []struct {
+		name  string
+		start BinStrategy
+		want  int
+	}{
+		{"default", BinStrategyDefault, 10}, // matplotlib hist.bins default
+		{"auto", BinStrategyAuto, 9},
+		{"sturges", BinStrategySturges, 9},
+		{"scott", BinStrategyScott, 6},
+		{"fd", BinStrategyFD, 6},
+		{"sqrt", BinStrategySqrt, 15},
 	}
 
-	for _, start := range strategies {
+	for _, tc := range cases {
 		hist := &Hist2D{
 			Data:     data,
-			BinStrat: start,
+			BinStrat: tc.start,
 			Color:    render.Color{R: 0.5, G: 0.5, B: 0.5, A: 1},
 		}
 		_, counts := hist.BinCounts()
-		if len(counts) == 0 {
-			t.Errorf("strategy %d produced 0 bins", start)
+		if len(counts) != tc.want {
+			t.Errorf("strategy %s produced %d bins, want %d", tc.name, len(counts), tc.want)
 		}
+	}
+}
+
+func TestBinStrategiesMatchNumpyOnSkewedData(t *testing.T) {
+	// Quadratic data exercises the interpolated-percentile IQR (FD) and the
+	// ddof=0 std (Scott). Expected counts from numpy 1.26.4:
+	// np.histogram_bin_edges([0.1*i*i for i in range(37)], bins=<estimator>).
+	data := make([]float64, 37)
+	for i := range data {
+		data[i] = 0.1 * float64(i) * float64(i)
+	}
+
+	cases := []struct {
+		name  string
+		start BinStrategy
+		want  int
+	}{
+		{"auto", BinStrategyAuto, 7},
+		{"scott", BinStrategyScott, 4},
+		{"fd", BinStrategyFD, 4},
+	}
+	for _, tc := range cases {
+		hist := &Hist2D{Data: data, BinStrat: tc.start}
+		_, counts := hist.BinCounts()
+		if len(counts) != tc.want {
+			t.Errorf("strategy %s produced %d bins, want %d", tc.name, len(counts), tc.want)
+		}
+	}
+
+	// The pieces numpy composes those counts from.
+	if got, want := computeIQR(data), 64.80000000000001; math.Abs(got-want) > 1e-9 {
+		t.Errorf("interpolated IQR = %v, want %v", got, want)
+	}
+	if got, want := stddevPop(data), 39.764054119267065; math.Abs(got-want) > 1e-9 {
+		t.Errorf("stddevPop = %v, want %v", got, want)
 	}
 }

@@ -404,6 +404,17 @@ func (s *Scatter2D) resolvedMarkerStyle() MarkerStyle {
 	return MarkerStyle{Type: s.Marker, FillStyle: MarkerFillFull}
 }
 
+// effectiveSize returns the default marker area in points^2, falling back to
+// matplotlib's scatter default s = lines.markersize^2 = 6^2 = 36 when neither
+// Size nor per-point Sizes are set (an unset Size otherwise renders the
+// markers with zero area, i.e. invisible).
+func (s *Scatter2D) effectiveSize() float64 {
+	if s.Size == 0 && len(s.Sizes) == 0 {
+		return 36
+	}
+	return s.Size
+}
+
 func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathCollection {
 	alpha := s.Alpha
 	alpha = s.EffectiveAlpha(alpha)
@@ -416,7 +427,7 @@ func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathC
 		lineWidth = ctx.RC.LineWidth
 	}
 
-	size := scatterAreaScale(s.Size, ctx)
+	size := scatterAreaScale(s.effectiveSize(), ctx)
 	var sizes []float64
 	if len(s.Sizes) > 0 {
 		sizes = make([]float64, len(s.XY))

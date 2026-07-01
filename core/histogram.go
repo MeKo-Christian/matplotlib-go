@@ -9,15 +9,23 @@ import (
 )
 
 // BinStrategy specifies how to automatically determine histogram bin count.
+// The individual strategies port numpy's histogram_bin_edges estimators
+// (numpy/lib/_histograms_impl.py), which matplotlib delegates to.
 type BinStrategy uint8
 
 const (
-	BinStrategyAuto    BinStrategy = iota // Sturges for n<1000, Scott otherwise
-	BinStrategySturges                    // ceil(log2(n)) + 1
-	BinStrategyScott                      // 3.49 * std * n^(-1/3)
-	BinStrategyFD                         // 2 * IQR * n^(-1/3) (Freedman-Diaconis)
-	BinStrategySqrt                       // ceil(sqrt(n))
+	// BinStrategyDefault (the zero value) mirrors matplotlib's rc default
+	// hist.bins = 10 fixed bins (matplotlib _axes.py hist()).
+	BinStrategyDefault BinStrategy = iota
+	BinStrategyAuto                // numpy 'auto': min(fd, sturges) bin width
+	BinStrategySturges             // width = ptp / (log2(n) + 1)
+	BinStrategyScott               // width = (24*sqrt(pi)/n)^(1/3) * std (ddof=0)
+	BinStrategyFD                  // width = 2 * IQR * n^(-1/3) (Freedman-Diaconis)
+	BinStrategySqrt                // ceil(sqrt(n)) bins
 )
+
+// defaultHistBins is matplotlib's rc default hist.bins.
+const defaultHistBins = 10
 
 // HistNorm specifies how to normalize histogram bin heights.
 type HistNorm uint8
@@ -49,7 +57,7 @@ const (
 type Hist2D struct {
 	Data              []float64    // raw data values
 	Weights           []float64    // per-sample weights; nil means each sample has weight 1
-	Bins              int          // number of bins (0 = auto)
+	Bins              int          // number of bins (0 = BinStrat decides; default 10)
 	BinEdges          []float64    // explicit bin edges; overrides Bins when len > 1
 	Range             *HistRange   // explicit histogram range; ignored when BinEdges is set
 	BinStrat          BinStrategy  // automatic binning strategy (used when Bins==0 and BinEdges==nil)
@@ -274,19 +282,18 @@ func autoBinCount(data []float64, start BinStrategy) int {
 	}
 
 	switch start {
+	case BinStrategyAuto:
+		return binsFromWidth(data, autoBinWidth(data))
 	case BinStrategySturges:
 		return sturgesBins(n)
 	case BinStrategyScott:
-		return scottBins(data)
+		return binsFromWidth(data, scottBinWidth(data))
 	case BinStrategyFD:
-		return fdBins(data)
+		return binsFromWidth(data, fdBinWidth(data))
 	case BinStrategySqrt:
 		return int(math.Ceil(math.Sqrt(float64(n))))
-	default: // BinStrategyAuto
-		if n < 1000 {
-			return sturgesBins(n)
-		}
-		return scottBins(data)
+	default: // BinStrategyDefault: matplotlib rc hist.bins = 10
+		return defaultHistBins
 	}
 }
 
@@ -297,11 +304,13 @@ func sturgesBins(n int) int {
 	return int(math.Ceil(math.Log2(float64(n)))) + 1
 }
 
-func scottBins(data []float64) int {
-	n := len(data)
-	sigma := stddev(data)
-	if sigma == 0 {
-		return sturgesBins(n)
+// binsFromWidth converts an estimated bin width to a bin count over the data
+// range, like numpy's _get_bin_edges: ceil(ptp / width), and a single bin when
+// the estimator returns zero width (e.g. FD with zero IQR, Scott with zero
+// std). Only 'auto' falls back to Sturges, inside autoBinWidth itself.
+func binsFromWidth(data []float64, width float64) int {
+	if width <= 0 || math.IsNaN(width) || math.IsInf(width, 0) {
+		return 1
 	}
 	minV, maxV := data[0], data[0]
 	for _, v := range data[1:] {
@@ -312,22 +321,30 @@ func scottBins(data []float64) int {
 			maxV = v
 		}
 	}
-	h := 3.49 * sigma * math.Pow(float64(n), -1.0/3.0)
-	if h <= 0 {
-		return sturgesBins(n)
-	}
-	k := int(math.Ceil((maxV - minV) / h))
+	k := int(math.Ceil((maxV - minV) / width))
 	if k < 1 {
 		return 1
 	}
 	return k
 }
 
-func fdBins(data []float64) int {
+// autoBinWidth ports numpy's _hist_bin_auto: the minimum of the
+// Freedman-Diaconis and Sturges bin widths, falling back to Sturges when the
+// IQR (and hence the FD width) is zero.
+func autoBinWidth(data []float64) float64 {
+	fd := fdBinWidth(data)
+	sturges := sturgesBinWidth(data)
+	if fd > 0 && fd < sturges {
+		return fd
+	}
+	return sturges
+}
+
+// sturgesBinWidth ports numpy's _hist_bin_sturges: ptp / (log2(n) + 1).
+func sturgesBinWidth(data []float64) float64 {
 	n := len(data)
-	iqr := computeIQR(data)
-	if iqr == 0 {
-		return sturgesBins(n)
+	if n == 0 {
+		return 0
 	}
 	minV, maxV := data[0], data[0]
 	for _, v := range data[1:] {
@@ -338,19 +355,32 @@ func fdBins(data []float64) int {
 			maxV = v
 		}
 	}
-	h := 2.0 * iqr * math.Pow(float64(n), -1.0/3.0)
-	if h <= 0 {
-		return sturgesBins(n)
-	}
-	k := int(math.Ceil((maxV - minV) / h))
-	if k < 1 {
-		return 1
-	}
-	return k
+	return (maxV - minV) / (math.Log2(float64(n)) + 1)
 }
 
-func stddev(data []float64) float64 {
-	if len(data) < 2 {
+// scottBinWidth ports numpy's _hist_bin_scott:
+// (24*sqrt(pi)/n)^(1/3) * std(x) with population std (ddof=0).
+func scottBinWidth(data []float64) float64 {
+	n := len(data)
+	if n == 0 {
+		return 0
+	}
+	return math.Cbrt(24.0*math.Sqrt(math.Pi)/float64(n)) * stddevPop(data)
+}
+
+// fdBinWidth ports numpy's _hist_bin_fd: 2 * IQR * n^(-1/3), with the IQR
+// taken from linearly interpolated percentiles (numpy's default method).
+func fdBinWidth(data []float64) float64 {
+	n := len(data)
+	if n == 0 {
+		return 0
+	}
+	return 2.0 * computeIQR(data) * math.Pow(float64(n), -1.0/3.0)
+}
+
+// stddevPop is the population standard deviation (ddof=0), matching np.std.
+func stddevPop(data []float64) float64 {
+	if len(data) == 0 {
 		return 0
 	}
 	mean := 0.0
@@ -363,18 +393,35 @@ func stddev(data []float64) float64 {
 		d := v - mean
 		variance += d * d
 	}
-	variance /= float64(len(data) - 1)
+	variance /= float64(len(data))
 	return math.Sqrt(variance)
 }
 
+// computeIQR returns the interquartile range using numpy's default
+// linear-interpolation percentile method.
 func computeIQR(data []float64) float64 {
 	sorted := make([]float64, len(data))
 	copy(sorted, data)
 	sort.Float64s(sorted)
+	return percentileLinear(sorted, 0.75) - percentileLinear(sorted, 0.25)
+}
+
+// percentileLinear computes the q-th quantile (q in [0, 1]) of sorted data
+// with linear interpolation between the two nearest order statistics,
+// matching np.percentile's default "linear" method.
+func percentileLinear(sorted []float64, q float64) float64 {
 	n := len(sorted)
-	q1 := sorted[n/4]
-	q3 := sorted[3*n/4]
-	return q3 - q1
+	if n == 0 {
+		return math.NaN()
+	}
+	if n == 1 {
+		return sorted[0]
+	}
+	idx := float64(n-1) * q
+	lo := int(math.Floor(idx))
+	hi := int(math.Ceil(idx))
+	frac := idx - float64(lo)
+	return sorted[lo]*(1-frac) + sorted[hi]*frac
 }
 
 // Draw renders the histogram bars.

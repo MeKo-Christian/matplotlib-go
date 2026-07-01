@@ -68,10 +68,7 @@ func (a *Axis) drawTicks(r render.Renderer, ctx *DrawContext, ticks []float64, i
 
 // drawMinorTicks draws smaller tick marks at the specified positions.
 func (a *Axis) drawMinorTicks(r render.Renderer, ctx *DrawContext, ticks []float64, isXAxis bool) {
-	sz := a.MinorTickSize
-	if sz <= 0 {
-		sz = a.TickSize * 0.6
-	}
+	sz := a.minorTickSize()
 	for _, tickValue := range ticks {
 		a.drawSingleTick(r, ctx, tickValue, sz, a.minorTickLineWidth(), a.minorTickColor(), isXAxis)
 	}
@@ -415,11 +412,13 @@ func tickLevelSize(level TickLevel, fallback float64) float64 {
 	return fallback
 }
 
+// minorTickSize falls back to matplotlib's xtick.minor.size / ytick.minor.size
+// default of 2.0 pt when no explicit minor tick size is set.
 func (a *Axis) minorTickSize() float64 {
 	if a.MinorTickSize > 0 {
 		return a.MinorTickSize
 	}
-	return a.TickSize * 0.6
+	return defaultMinorTickSizePx
 }
 
 func (a *Axis) AddTickLevel(level TickLevel) {

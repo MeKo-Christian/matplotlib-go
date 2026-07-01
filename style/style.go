@@ -23,6 +23,10 @@ type RC struct {
 	FigureWidth  float64
 	FigureHeight float64
 	UseTeX       bool
+	// HistBins is the hist.bins rcParam: the default bin count for Hist when
+	// no bins are given (matplotlib default 10). HistBinsAuto selects numpy's
+	// 'auto' estimator; 0 means unset (callers fall back to the default 10).
+	HistBins int
 
 	PathSimplify          bool
 	PathSimplifyThreshold float64
@@ -325,12 +329,16 @@ const (
 	WidgetVisualMatplotlib WidgetVisualStyle = "matplotlib"
 )
 
+// HistBinsAuto is the RC.HistBins sentinel for matplotlib's hist.bins: auto
+// (numpy's 'auto' bin estimator).
+const HistBinsAuto = -1
+
 // Default contains the library defaults. Copy and apply options to customize.
 var Default = RC{
 	DPI:                   100,
 	FontKey:               "DejaVu Sans",
 	FontSize:              10,
-	LineWidth:             1.25,
+	LineWidth:             1.5,
 	TextColor:             [4]float64{0, 0, 0, 1},
 	LineColor:             [4]float64{0, 0, 0, 1},
 	Background:            [4]float64{1, 1, 1, 1},
@@ -339,6 +347,7 @@ var Default = RC{
 	FigureWidth:           6.4,
 	FigureHeight:          4.8,
 	UseTeX:                false,
+	HistBins:              10,
 	PathSimplify:          true,
 	PathSimplifyThreshold: 1.0 / 9.0,
 	AggPathChunkSize:      0,

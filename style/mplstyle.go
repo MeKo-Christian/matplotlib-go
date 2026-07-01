@@ -96,6 +96,7 @@ var supportedMPLStyleKeys = []string{
 	"grid.minor.linestyle",
 	"hatch.color",
 	"hatch.linewidth",
+	"hist.bins",
 	"image.aspect",
 	"image.cmap",
 	"image.composite_image",
@@ -187,6 +188,8 @@ type mplStyleState struct {
 
 	lineWidthPt      float64
 	lineWidthSet     bool
+	histBins         int
+	histBinsSet      bool
 	axisLineWidthPt  float64
 	axisLineWidthSet bool
 	titleFontSize    float64
@@ -412,6 +415,13 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 		}
 		state.lineWidthPt = parsed
 		state.lineWidthSet = true
+	case "hist.bins":
+		parsed, err := parseMPLHistBins(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.histBins = parsed
+		state.histBinsSet = true
 	case "axes.facecolor":
 		if err := validateMPLColorValue(value, state.rc, false); err != nil {
 			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
@@ -1064,6 +1074,9 @@ func finalizeMPLStyleState(state *mplStyleState) {
 	if state.lineWidthSet {
 		state.rc.LineWidth = state.lineWidthPt
 	}
+	if state.histBinsSet {
+		state.rc.HistBins = state.histBins
+	}
 	if state.axisLineWidthSet {
 		state.rc.AxisLineWidth = state.axisLineWidthPt
 	}
@@ -1234,6 +1247,25 @@ func parseMPLInt(value string) (int, error) {
 	parsed, err := strconv.Atoi(normalized)
 	if err != nil {
 		return 0, fmt.Errorf("invalid int %q", value)
+	}
+	return parsed, nil
+}
+
+// parseMPLHistBins mirrors matplotlib's validate_hist_bins for the values this
+// port supports: a positive bin count or the 'auto' estimator (mapped to
+// HistBinsAuto). The other named estimators and explicit edge lists are
+// rejected.
+func parseMPLHistBins(value string) (int, error) {
+	normalized := normalizeMPLValue(value)
+	if strings.EqualFold(strings.TrimSpace(normalized), "auto") {
+		return HistBinsAuto, nil
+	}
+	parsed, err := strconv.Atoi(normalized)
+	if err != nil {
+		return 0, fmt.Errorf("invalid hist.bins %q (want a positive int or 'auto')", value)
+	}
+	if parsed < 1 {
+		return 0, fmt.Errorf("invalid hist.bins %q (want a positive int or 'auto')", value)
 	}
 	return parsed, nil
 }

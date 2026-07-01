@@ -200,9 +200,14 @@ func tickLabelPadForSize(tickSize float64, style TickLabelStyle, ctx *DrawContex
 }
 
 func tickLabelPadForAxisSize(a *Axis, tickSize float64, style TickLabelStyle, ctx *DrawContext) float64 {
-	padPx := defaultTickPadPt * 96.0 / 72.0
+	padPt := defaultTickPadPt
+	if style.PadPt > 0 {
+		padPt = style.PadPt
+	}
+	// No-context fallback assumes matplotlib's default figure DPI of 100.
+	padPx := padPt * 100.0 / 72.0
 	if ctx != nil && ctx.RC.DPI > 0 {
-		padPx = defaultTickPadPt * ctx.RC.DPI / 72.0
+		padPx = padPt * ctx.RC.DPI / 72.0
 	}
 	if style.Pad > 0 {
 		padPx = style.Pad
@@ -743,6 +748,12 @@ func resolvedTickLabelLayoutAlignments(side AxisSide, style TickLabelStyle, isXA
 
 func defaultTickLabelStyle() TickLabelStyle {
 	return TickLabelStyle{AutoAlign: true}
+}
+
+// defaultMinorTickLabelStyle carries matplotlib's minor tick pad
+// (xtick.minor.pad / ytick.minor.pad = 3.4 pt vs the major 3.5 pt).
+func defaultMinorTickLabelStyle() TickLabelStyle {
+	return TickLabelStyle{AutoAlign: true, PadPt: defaultMinorTickPadPt}
 }
 
 func normalizeTickLabelStyle(style TickLabelStyle) TickLabelStyle {

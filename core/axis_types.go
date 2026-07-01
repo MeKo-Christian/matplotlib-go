@@ -20,14 +20,21 @@ const (
 	defaultMinorTickLineWidth = 0.6
 	defaultTickSizePt         = 3.5
 	defaultTickSizePx         = defaultTickSizePt * 100.0 / 72.0
+	defaultMinorTickSizePt    = 2.0 // matplotlib xtick.minor.size / ytick.minor.size
+	defaultMinorTickSizePx    = defaultMinorTickSizePt * 100.0 / 72.0
 	defaultTickPadPt          = 3.5
+	defaultMinorTickPadPt     = 3.4 // matplotlib xtick.minor.pad / ytick.minor.pad
 	offsetTextPadPt           = 3.0
 )
 
 // TickLabelStyle captures axis-owned label placement and orientation.
 type TickLabelStyle struct {
-	Rotation  float64
-	Pad       float64
+	Rotation float64
+	Pad      float64
+	// PadPt is the label pad in points used when Pad (device pixels) is
+	// unset; 0 falls back to matplotlib's major default 3.5 (minor label
+	// styles carry 3.4, mirroring xtick.minor.pad).
+	PadPt     float64
 	HAlign    TextAlign
 	VAlign    TextVerticalAlign
 	FontSize  float64
@@ -83,7 +90,7 @@ type Axis struct {
 	MinorTickLineWidth  float64
 	Dashes              []float64
 	TickSize            float64 // length of major tick marks (in pixels)
-	MinorTickSize       float64 // length of minor tick marks (in pixels); 0 uses TickSize*0.6
+	MinorTickSize       float64 // length of minor tick marks (in pixels); 0 uses the 2.0 pt matplotlib default
 	MajorTickCount      int     // target major tick count for automatic locators
 	MinorTickCount      int     // target minor tick count for automatic locators
 	majorTickCountFixed bool
@@ -122,7 +129,7 @@ func NewXAxis() *Axis {
 		ShowTicks:          true,
 		ShowLabels:         true,
 		MajorLabelStyle:    defaultTickLabelStyle(),
-		MinorLabelStyle:    defaultTickLabelStyle(),
+		MinorLabelStyle:    defaultMinorTickLabelStyle(),
 	}
 }
 
@@ -148,6 +155,6 @@ func NewYAxis() *Axis {
 		ShowTicks:          true,
 		ShowLabels:         true,
 		MajorLabelStyle:    defaultTickLabelStyle(),
-		MinorLabelStyle:    defaultTickLabelStyle(),
+		MinorLabelStyle:    defaultMinorTickLabelStyle(),
 	}
 }
