@@ -62,5 +62,5 @@ func init() {
 	// sequence upstream, not a registered colormap).
 	colors := make([]render.Color, len(Petroff10))
 	copy(colors, Petroff10)
-	colormaps[normalizeColormapName("petroff10")] = NewListedColormap("petroff10", colors)
+	RegisterColormap("petroff10", NewListedColormap("petroff10", colors))
 }

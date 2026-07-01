@@ -718,10 +718,9 @@ golden regressions; new unit tests cover the warn-on-non-default and dedup paths
 - [x] Audited the dead params: **51** parsed-but-never-consumed keys, captured as
       the data-driven source of truth in `style/unhonored.go` (`unhonoredRCParams`):
       `image.*` (6: origin/aspect/resample/interpolation*stage/lut/composite_image),
-      `mathtext.*` (9: default/fallback/bf/bfit/cal/it/rm/sf/tt), `date.*` (10),
-      `pdf.*` (4), `ps.*` (5), `svg.*` (4), `animation.*` (11), `boxplot.*`
-      (2: vertical/whiskers). Correction to the prior audit: `boxplot.notch` and
-      `boxplot.patchartist` \_are* consumed (`core/plot.go`); their stale "Stored only"
+      `mathtext.*`(9: default/fallback/bf/bfit/cal/it/rm/sf/tt),`date._`(10),
+   `pdf._`(4),`ps._`(5),`svg._`(4),`animation._`(11),`boxplot._`    (2: vertical/whiskers). Correction to the prior audit:`boxplot.notch`and
+   `boxplot.patchartist` \_are* consumed (`core/plot.go`); their stale "Stored only"
       doc comments were fixed.
 - [x] Minimum bar: `maybeWarnUnhonoredRCParam` emits a one-shot `diag.Warnf` (deduped
       per key, process-global) the first time an unhonored rcParam is _set to a
@@ -943,9 +942,15 @@ each move.
 
 ### 20.0 Ship-first, non-breaking (can land immediately, even before Phase 19)
 
-- [ ] **DATA RACE:** `color/colormap.go:388` `RegisterColormap` mutates the
-      package-global `colormaps` map with no mutex while draws read it. Add an
-      RWMutex over the registry (lookup paths included) and a `-race` test.
+- [x] **DATA RACE:** `color/colormap.go:388` `RegisterColormap` mutated the
+      package-global `colormaps` map with no mutex while draws read it.
+      **Shipped 2026-07-01:** `colormapMu sync.RWMutex` guards every map access
+      (`RegisterColormap` write-locks; the `GetColormap` fallback,
+      `GetColormapStrict`, and `ColormapNames` read-lock); the two `init()`
+      writers (`petroff.go`, `listed_colormaps.go`) now route through
+      `RegisterColormap` so the every-access-holds-the-lock invariant is
+      greppable. Guarded by `TestColormapRegistryConcurrentAccess`, which fails
+      under `-race` without the lock (verified red first).
 
 ### 20.1 Surface tiering (decision stage, no code)
 

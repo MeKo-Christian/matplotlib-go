@@ -6,6 +6,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -251,6 +252,10 @@ func NewListedColormap(name string, colors []render.Color) Colormap {
 
 var defaultColormapName = "viridis"
 
+// colormapMu guards colormaps. Every read or write of the map must hold it:
+// draws resolve colormaps concurrently with user RegisterColormap calls.
+var colormapMu sync.RWMutex
+
 var colormaps = map[string]Colormap{
 	"viridis": {
 		name: "viridis",
@@ -384,14 +389,17 @@ var colormaps = map[string]Colormap{
 	},
 }
 
-// RegisterColormap adds a named colormap to the runtime registry.
+// RegisterColormap adds a named colormap to the runtime registry. It is safe
+// for concurrent use with the lookup functions.
 func RegisterColormap(name string, cmap Colormap) {
 	key := normalizeColormapName(name)
 	if key == "" {
 		return
 	}
 	cmap.name = key
+	colormapMu.Lock()
 	colormaps[key] = cmap
+	colormapMu.Unlock()
 }
 
 // GetColormap returns a colormap by name. Unknown names warn (via internal/diag)
@@ -403,7 +411,10 @@ func GetColormap(name string) Colormap {
 		return cmap
 	}
 	diag.Warnf("unknown colormap %q; falling back to %q", name, defaultColormapName)
-	return colormaps[defaultColormapName]
+	colormapMu.RLock()
+	cmap := colormaps[defaultColormapName]
+	colormapMu.RUnlock()
+	return cmap
 }
 
 // GetColormapStrict returns the colormap registered under name, or a wrapped
@@ -418,6 +429,8 @@ func GetColormap(name string) Colormap {
 // work in PLAN.md.
 func GetColormapStrict(name string) (Colormap, error) {
 	key := normalizeColormapName(name)
+	colormapMu.RLock()
+	defer colormapMu.RUnlock()
 	if cmap, ok := colormaps[key]; ok {
 		return cmap, nil
 	}
@@ -436,10 +449,12 @@ func DefaultColormap() Colormap {
 
 // ColormapNames returns the registered base colormap names in sorted order.
 func ColormapNames() []string {
+	colormapMu.RLock()
 	names := make([]string, 0, len(colormaps))
 	for name := range colormaps {
 		names = append(names, name)
 	}
+	colormapMu.RUnlock()
 	sort.Strings(names)
 	return names
 }

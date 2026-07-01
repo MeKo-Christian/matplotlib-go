@@ -760,7 +760,7 @@ const matplotlibListedColormapRGB = "" +
 func init() {
 	listed := mustDecodeListedColormaps(matplotlibListedColormapRGB, matplotlibListedColormapNames)
 	for name, colors := range listed {
-		colormaps[normalizeColormapName(name)] = Colormap{name: normalizeColormapName(name), listed: colors}
+		RegisterColormap(name, Colormap{listed: colors})
 	}
 }
 
