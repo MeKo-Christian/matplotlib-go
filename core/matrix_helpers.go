@@ -3,6 +3,7 @@ package core
 import (
 	"image"
 	"math"
+	"strconv"
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
@@ -34,9 +35,15 @@ type ImShowOptions struct {
 	VMin     *float64
 	VMax     *float64
 	Alpha    *float64
-	Aspect   string
-	Origin   ImageOrigin
-	Label    string
+	// Aspect sets the axes aspect ("equal", "auto", or a numeric ratio).
+	// Empty uses the image.aspect rc default.
+	Aspect string
+	// Origin places the [0,0] index at the upper or lower corner.
+	// ImageOriginUpper is the zero value and doubles as "unset": the
+	// image.origin rc default applies. With a non-default rc of "lower",
+	// upper cannot be forced per call until the options grow a tri-state.
+	Origin ImageOrigin
+	Label  string
 	// Extent overrides the centered-pixel default with explicit
 	// (left, right, bottom, top) data coordinates.
 	Extent *[4]float64
@@ -167,10 +174,11 @@ func (a *Axes) ImShow(data [][]float64, opts ...ImShowOptions) *Image2D {
 		return nil
 	}
 
+	rc := a.resolvedRC()
 	defaultInterpolation := "antialiased"
 	cfg := ImShowOptions{
-		Aspect:        "equal",
-		Origin:        ImageOriginUpper,
+		Aspect:        imshowAspectDefault(&rc),
+		Origin:        imageOriginFromRC(&rc),
 		Interpolation: &defaultInterpolation,
 	}
 	if len(opts) > 0 {
@@ -193,7 +201,9 @@ func (a *Axes) ImShow(data [][]float64, opts ...ImShowOptions) *Image2D {
 		if opt.Aspect != "" {
 			cfg.Aspect = opt.Aspect
 		}
-		cfg.Origin = opt.Origin
+		if opt.Origin != ImageOriginUpper {
+			cfg.Origin = opt.Origin
+		}
 		if opt.Label != "" {
 			cfg.Label = opt.Label
 		}
@@ -240,7 +250,12 @@ func (a *Axes) ImShow(data [][]float64, opts ...ImShowOptions) *Image2D {
 // caller supplied an explicit extent, so the automatic origin y-flip is skipped.
 func (a *Axes) finishImshow(xMin, xMax, yMin, yMax float64, aspect string, origin ImageOrigin, extentGiven bool) {
 	if aspect != "" {
-		_ = a.SetAspect(aspect)
+		// image.aspect (and the Aspect option) also admit a numeric ratio.
+		if ratio, err := strconv.ParseFloat(aspect, 64); err == nil {
+			_ = a.SetAspect("ratio", ratio)
+		} else {
+			_ = a.SetAspect(aspect)
+		}
 	}
 	a.SetXLim(xMin, xMax)
 	a.SetYLim(yMin, yMax)
@@ -262,8 +277,13 @@ func (a *Axes) finishImshow(xMin, xMax, yMin, yMax float64, aspect string, origi
 // images (third_party/matplotlib/lib/matplotlib/image.py).
 type ImShowRGBOptions struct {
 	// Alpha multiplies the image's per-pixel alpha in [0,1].
-	Alpha  *float64
+	Alpha *float64
+	// Aspect sets the axes aspect ("equal", "auto", or a numeric ratio).
+	// Empty uses the image.aspect rc default.
 	Aspect string
+	// Origin places the [0,0] index at the upper or lower corner.
+	// ImageOriginUpper is the zero value and doubles as "unset": the
+	// image.origin rc default applies (see ImShowOptions.Origin).
 	Origin ImageOrigin
 	// Extent overrides the centered-pixel default with explicit
 	// (left, right, bottom, top) data coordinates.
@@ -274,11 +294,12 @@ type ImShowRGBOptions struct {
 	Label         string
 }
 
-func resolveImShowRGBOptions(opts []ImShowRGBOptions) ImShowRGBOptions {
+func (a *Axes) resolveImShowRGBOptions(opts []ImShowRGBOptions) ImShowRGBOptions {
+	rc := a.resolvedRC()
 	defaultInterpolation := "antialiased"
 	cfg := ImShowRGBOptions{
-		Aspect:        "equal",
-		Origin:        ImageOriginUpper,
+		Aspect:        imshowAspectDefault(&rc),
+		Origin:        imageOriginFromRC(&rc),
 		Interpolation: &defaultInterpolation,
 	}
 	if len(opts) == 0 {
@@ -291,7 +312,9 @@ func resolveImShowRGBOptions(opts []ImShowRGBOptions) ImShowRGBOptions {
 	if opt.Aspect != "" {
 		cfg.Aspect = opt.Aspect
 	}
-	cfg.Origin = opt.Origin
+	if opt.Origin != ImageOriginUpper {
+		cfg.Origin = opt.Origin
+	}
 	cfg.Extent = opt.Extent
 	if opt.Interpolation != nil {
 		cfg.Interpolation = opt.Interpolation
@@ -311,7 +334,7 @@ func (a *Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) *Image2D 
 	if a == nil {
 		return nil
 	}
-	cfg := resolveImShowRGBOptions(opts)
+	cfg := a.resolveImShowRGBOptions(opts)
 
 	rgba, kind, err := normalizeRGBArray(data)
 	if err != nil {
@@ -342,7 +365,7 @@ func (a *Axes) ImShowImage(img image.Image, opts ...ImShowRGBOptions) *Image2D {
 	if rgba == nil || rgba.Bounds().Dx() == 0 || rgba.Bounds().Dy() == 0 {
 		return nil
 	}
-	return a.imshowRGBA(rgba, resolveImShowRGBOptions(opts))
+	return a.imshowRGBA(rgba, a.resolveImShowRGBOptions(opts))
 }
 
 // imshowRGBA is the shared tail for ImShowRGB/ImShowImage: it sets the extent,

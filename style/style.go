@@ -101,10 +101,12 @@ type ImageRC struct {
 	// (image.interpolation_stage): "auto", "data", or "rgba". Stored only.
 	InterpolationStage string
 	// Origin places the [0,0] index at the upper or lower corner
-	// (image.origin): "upper" or "lower". Stored only.
+	// (image.origin): "upper" or "lower". Consumed by the imshow
+	// front-ends (core/matrix_helpers.go).
 	Origin string
 	// Aspect is the default axes aspect for images (image.aspect):
-	// "equal", "auto", or a numeric ratio. Stored only.
+	// "equal", "auto", or a numeric ratio. Consumed by the imshow
+	// front-ends (core/matrix_helpers.go).
 	Aspect string
 	// Resample enables resampling when scaling images (image.resample).
 	// Stored only.

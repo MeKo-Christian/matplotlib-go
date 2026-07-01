@@ -180,3 +180,100 @@ func TestMPLStyleLinesLinewidthReachesPlot(t *testing.T) {
 		t.Fatalf("explicit LineWidth = %v, want 0.7", line.W)
 	}
 }
+
+func TestMPLStyleImageOriginReachesImShow(t *testing.T) {
+	theme, report, err := style.ParseMPLStyle("test", "image.origin: lower\n")
+	if err != nil {
+		t.Fatalf("ParseMPLStyle: %v", err)
+	}
+	if len(report.Unsupported) > 0 {
+		t.Fatalf("unsupported entries: %+v", report.Unsupported)
+	}
+
+	data := [][]float64{{0, 1}, {2, 3}}
+
+	fig := NewFigure(100, 100, style.WithTheme(theme))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	img := ax.ImShow(data)
+	if img == nil {
+		t.Fatal("ImShow returned nil")
+	}
+	if img.Origin != ImageOriginLower {
+		t.Fatalf("ImShow origin = %v, want ImageOriginLower from image.origin", img.Origin)
+	}
+	if ax.YInverted() {
+		t.Fatal("image.origin: lower must not invert the y-axis")
+	}
+
+	// MatShow pins origin=upper regardless of rc, mirroring matplotlib matshow.
+	ax2 := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	mat := ax2.MatShow(data)
+	if mat == nil {
+		t.Fatal("MatShow returned nil")
+	}
+	if mat.Origin != ImageOriginUpper {
+		t.Fatalf("MatShow origin = %v, want ImageOriginUpper regardless of rc", mat.Origin)
+	}
+}
+
+func TestMPLStyleImageOriginReachesImShowRGB(t *testing.T) {
+	theme, _, err := style.ParseMPLStyle("test", "image.origin: lower\n")
+	if err != nil {
+		t.Fatalf("ParseMPLStyle: %v", err)
+	}
+
+	rgb := [][][]float64{
+		{{1, 0, 0}, {0, 1, 0}},
+		{{0, 0, 1}, {1, 1, 1}},
+	}
+
+	fig := NewFigure(100, 100, style.WithTheme(theme))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	img := ax.ImShowRGB(rgb)
+	if img == nil {
+		t.Fatal("ImShowRGB returned nil")
+	}
+	if img.Origin != ImageOriginLower {
+		t.Fatalf("ImShowRGB origin = %v, want ImageOriginLower from image.origin", img.Origin)
+	}
+}
+
+func TestMPLStyleImageAspectReachesImShow(t *testing.T) {
+	data := [][]float64{{0, 1}, {2, 3}}
+
+	cases := []struct {
+		style     string
+		wantMode  string
+		wantValue float64
+	}{
+		{"image.aspect: auto\n", "auto", 1},
+		{"image.aspect: 3.0\n", "ratio", 3},
+	}
+	for _, tc := range cases {
+		theme, report, err := style.ParseMPLStyle("test", tc.style)
+		if err != nil {
+			t.Fatalf("ParseMPLStyle(%q): %v", tc.style, err)
+		}
+		if len(report.Unsupported) > 0 {
+			t.Fatalf("ParseMPLStyle(%q) unsupported entries: %+v", tc.style, report.Unsupported)
+		}
+
+		fig := NewFigure(100, 100, style.WithTheme(theme))
+		ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+		if img := ax.ImShow(data); img == nil {
+			t.Fatal("ImShow returned nil")
+		}
+		if ax.aspectMode != tc.wantMode || ax.aspectValue != tc.wantValue {
+			t.Fatalf("%q ImShow aspect = %s/%v, want %s/%v", tc.style, ax.aspectMode, ax.aspectValue, tc.wantMode, tc.wantValue)
+		}
+
+		// An explicit option still wins over the rc value.
+		ax2 := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+		if img := ax2.ImShow(data, ImShowOptions{Aspect: "equal"}); img == nil {
+			t.Fatal("ImShow returned nil")
+		}
+		if ax2.aspectMode != "equal" {
+			t.Fatalf("explicit Aspect=equal got mode %q", ax2.aspectMode)
+		}
+	}
+}

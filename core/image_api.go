@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 // imageInterpolationDefault maps the image.interpolation rcParam to the renderer
@@ -15,6 +16,24 @@ func imageInterpolationDefault(interpolation string) string {
 		return ""
 	}
 	return interpolation
+}
+
+// imageOriginFromRC maps the image.origin rcParam ("upper"/"lower") to the
+// ImageOrigin enum. Unknown values fall back to upper, the matplotlib default.
+func imageOriginFromRC(rc *style.RC) ImageOrigin {
+	if strings.EqualFold(strings.TrimSpace(rc.Image.Origin), "lower") {
+		return ImageOriginLower
+	}
+	return ImageOriginUpper
+}
+
+// imshowAspectDefault returns the image.aspect rcParam ("equal", "auto", or a
+// numeric ratio), falling back to matplotlib's "equal" default when unset.
+func imshowAspectDefault(rc *style.RC) string {
+	if aspect := strings.TrimSpace(rc.Image.Aspect); aspect != "" {
+		return aspect
+	}
+	return "equal"
 }
 
 // ImageOrigin selects how image rows map to the Y-axis direction.

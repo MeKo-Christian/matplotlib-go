@@ -119,7 +119,7 @@ func TestUnhonoredRCParamsAreParseable(t *testing.T) {
 // drawing/backend code must not be listed as unhonored.
 func TestHonoredRCParamsNotInRegistry(t *testing.T) {
 	honored := []string{
-		"image.cmap", "image.interpolation",
+		"image.cmap", "image.interpolation", "image.origin", "image.aspect",
 		"mathtext.fontset",
 		"boxplot.notch", "boxplot.patchartist",
 		"boxplot.showmeans", "boxplot.showcaps", "boxplot.showbox", "boxplot.showfliers",

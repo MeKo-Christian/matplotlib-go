@@ -37,10 +37,12 @@ type unhonoredRCParam struct {
 // (e.g. image.cmap, image.interpolation, mathtext.fontset, boxplot.notch,
 // boxplot.patchartist) are intentionally absent.
 var unhonoredRCParams = map[string]unhonoredRCParam{
-	// image.* — only cmap and interpolation are consumed (core/image_api.go).
+	// image.* — cmap and interpolation are consumed in core/image_api.go;
+	// origin and aspect in the imshow front-ends (core/matrix_helpers.go).
+	// image.resample stays unhonored: the Go raster path has no adaptive
+	// (downscale-aware) resampling engine to toggle — it structurally matches
+	// matplotlib's resample=False branch only.
 	"image.interpolation_stage": {differs: func(rc, def *RC) bool { return rc.Image.InterpolationStage != def.Image.InterpolationStage }},
-	"image.origin":              {differs: func(rc, def *RC) bool { return rc.Image.Origin != def.Image.Origin }},
-	"image.aspect":              {differs: func(rc, def *RC) bool { return rc.Image.Aspect != def.Image.Aspect }},
 	"image.resample":            {differs: func(rc, def *RC) bool { return rc.Image.Resample != def.Image.Resample }},
 	"image.composite_image":     {differs: func(rc, def *RC) bool { return rc.Image.CompositeImage != def.Image.CompositeImage }},
 	"image.lut":                 {differs: func(rc, def *RC) bool { return rc.Image.LUT != def.Image.LUT }},
