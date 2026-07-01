@@ -392,6 +392,33 @@ func (a *Axes) resetToDefaults() {
 	a.projection.ConfigureAxes(a)
 	a.applyStyleDefaults(effective)
 	a.addDefaultGrids(effective)
+	a.applyRCBehaviorDefaults(&effective)
+}
+
+// applyRCBehaviorDefaults seeds per-axes behavior state from the axes.*
+// rcParams, mirroring matplotlib's Axes.__init__/cla reading rcParams. Only
+// values differing from the library defaults are applied, so the default path
+// stays identical to the historical hardcoded behavior; explicit setter calls
+// still override the seeded values.
+func (a *Axes) applyRCBehaviorDefaults(rc *style.RC) {
+	switch strings.ToLower(strings.TrimSpace(rc.Axes.AxisBelow)) {
+	case "true":
+		a.SetAxisBelow(true)
+	case "false":
+		a.SetAxisBelow(false)
+	}
+	def := &style.Default
+	if rc.Axes.XMargin != def.Axes.XMargin {
+		v := rc.Axes.XMargin
+		a.xMargin = &v
+	}
+	if rc.Axes.YMargin != def.Axes.YMargin {
+		v := rc.Axes.YMargin
+		a.yMargin = &v
+	}
+	if strings.EqualFold(strings.TrimSpace(rc.Axes.AutolimitMode), "round_numbers") {
+		a.autolimitMode = "round_numbers"
+	}
 }
 
 // Clear removes every artist from the axes and resets limits, scales, labels,

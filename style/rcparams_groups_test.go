@@ -221,3 +221,47 @@ func TestBoxplotRCParams(t *testing.T) {
 		t.Fatalf("median color = %+v, want red", got)
 	}
 }
+
+func TestAxesBehaviorRCParams(t *testing.T) {
+	src := "axes.axisbelow: True\naxes.xmargin: 0.2\naxes.ymargin: 0\naxes.autolimit_mode: round_numbers\naxes.unicode_minus: False\n"
+	theme, report, err := ParseMPLStyle("axesbehavior", src)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+	if len(report.Unsupported) != 0 {
+		t.Fatalf("unexpected unsupported: %+v", report.Unsupported)
+	}
+	a := theme.RC.Axes
+	if a.AxisBelow != "True" {
+		t.Fatalf("axisbelow = %q, want True", a.AxisBelow)
+	}
+	if a.XMargin != 0.2 || a.YMargin != 0 {
+		t.Fatalf("margins = %v/%v, want 0.2/0", a.XMargin, a.YMargin)
+	}
+	if a.AutolimitMode != "round_numbers" {
+		t.Fatalf("autolimit_mode = %q, want round_numbers", a.AutolimitMode)
+	}
+	if a.UnicodeMinus {
+		t.Fatal("unicode_minus = true, want false")
+	}
+}
+
+func TestAxesBehaviorRCParamsDefaults(t *testing.T) {
+	a := Default.Axes
+	if a.AxisBelow != "line" || a.XMargin != 0.05 || a.YMargin != 0.05 ||
+		a.AutolimitMode != "data" || !a.UnicodeMinus {
+		t.Fatalf("Default.Axes = %+v, want matplotlib defaults (line/0.05/0.05/data/true)", a)
+	}
+}
+
+func TestAxesBehaviorRCParamsRejectInvalid(t *testing.T) {
+	for _, src := range []string{
+		"axes.axisbelow: sometimes\n",
+		"axes.xmargin: -0.6\n",
+		"axes.autolimit_mode: nearest\n",
+	} {
+		if _, _, err := ParseMPLStyle("bad", src); err == nil {
+			t.Errorf("ParseMPLStyle(%q) succeeded, want error", src)
+		}
+	}
+}

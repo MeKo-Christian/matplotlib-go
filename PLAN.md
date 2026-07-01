@@ -759,8 +759,12 @@ golden regressions; new unit tests cover the warn-on-non-default and dedup paths
     `scatterpoints`, `markerscale`, `title_fontsize`, `borderpad`,
     `labelspacing`, `handlelength`, `handleheight`, `handletextpad`,
     `borderaxespad`, `columnspacing`);
-  - axes: `axisbelow`, `titlepad`, `labelpad`, `titlelocation`, `spines.*`,
-    `xmargin`/`ymargin`, `autolimit_mode`, `unicode_minus`,
+  - axes: ~~`axisbelow`, `xmargin`/`ymargin`, `autolimit_mode`,
+    `unicode_minus`~~ — **shipped 2026-07-02** (`RC.Axes` group, parsed +
+    consumed: axes seed `SetAxisBelow`/margins/`autolimitMode` from rc at
+    creation in `applyRCBehaviorDefaults`, `scalarFixMinus` consults
+    `unicode_minus`; zero golden churn — only non-default rc values apply).
+    Still open: `titlepad`, `labelpad`, `titlelocation`, `spines.*`,
     `axes.formatter.*` (limits/use_mathtext/useoffset/offset_threshold);
   - lines/markers: `lines.linestyle`, `marker`, `markersize`,
     `markeredgewidth`, the three `*_pattern` keys, `scale_dashes`,

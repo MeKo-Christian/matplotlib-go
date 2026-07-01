@@ -68,6 +68,9 @@ type RC struct {
 	PropCycle         *cycler.Cycler
 	WidgetVisualStyle WidgetVisualStyle
 
+	// Axes holds behavior-related axes.* rcParams (grid/label styling has
+	// dedicated flat RC fields above).
+	Axes AxesRC
 	// Image holds image.* rcParams (imshow defaults).
 	Image ImageRC
 	// Hatch holds hatch.* rcParams (hatch pattern defaults).
@@ -88,6 +91,29 @@ type RC struct {
 	Animation AnimationRC
 	// Savefig holds savefig.* rcParams (save-time output defaults).
 	Savefig SavefigRC
+}
+
+// AxesRC mirrors behavior-related axes.* rcParams. Color/size styling for
+// axes lives in the flat RC fields (AxesBackground, AxisLineWidth, ...).
+type AxesRC struct {
+	// AxisBelow places grid lines and ticks relative to artists
+	// (axes.axisbelow): "line" (below lines, above patches — the default),
+	// "True" (below everything), or "False" (above everything). Consumed at
+	// axes creation (core.Axes.applyRCDefaults).
+	AxisBelow string
+	// XMargin and YMargin are the autoscale padding fractions
+	// (axes.xmargin / axes.ymargin). Non-default values seed new axes'
+	// margins (core.Axes.applyRCDefaults).
+	XMargin float64
+	YMargin float64
+	// AutolimitMode finalizes autoscaled limits (axes.autolimit_mode):
+	// "data" (tight to the padded range) or "round_numbers". Consumed at
+	// axes creation (core.Axes.applyRCDefaults).
+	AutolimitMode string
+	// UnicodeMinus renders negative tick labels with U+2212 instead of a
+	// hyphen (axes.unicode_minus). Consumed by the scalar tick formatters
+	// (core/tick_formatters.go).
+	UnicodeMinus bool
 }
 
 // ImageRC mirrors Matplotlib's image.* rcParams used as imshow defaults.
@@ -381,6 +407,13 @@ var Default = RC{
 	LegendFrameOn:         true,
 	ColorCycle:            color.Tab10,
 	WidgetVisualStyle:     WidgetVisualGo,
+	Axes: AxesRC{
+		AxisBelow:     "line",
+		XMargin:       0.05,
+		YMargin:       0.05,
+		AutolimitMode: "data",
+		UnicodeMinus:  true,
+	},
 	Image: ImageRC{
 		Cmap:               "viridis",
 		Interpolation:      "auto",

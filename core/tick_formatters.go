@@ -5,6 +5,8 @@ import (
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 const maxEngineeringExp = 30
@@ -443,7 +445,12 @@ func formatScalarScientific(x float64, prec int, useMathText bool) string {
 	return scalarFixMinus(fmt.Sprintf("%s%se%+d", sign, m, exp))
 }
 
+// scalarFixMinus swaps ASCII hyphens for U+2212 MINUS SIGN, matplotlib's
+// fix_minus. The axes.unicode_minus rcParam (default true) turns it off.
 func scalarFixMinus(s string) string {
+	if !style.CurrentDefaults().Axes.UnicodeMinus {
+		return s
+	}
 	return strings.ReplaceAll(s, "-", "−")
 }
 

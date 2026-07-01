@@ -180,6 +180,11 @@ func normalizeRCEnvPath(path string) string {
 func paramsFromRC(rc RC) Params {
 	params := make(Params, len(supportedMPLStyleKeys))
 
+	params["axes.autolimit_mode"] = rc.Axes.AutolimitMode
+	params["axes.axisbelow"] = rc.Axes.AxisBelow
+	params["axes.unicode_minus"] = formatMPLBool(rc.Axes.UnicodeMinus)
+	params["axes.xmargin"] = formatMPLFloat(rc.Axes.XMargin)
+	params["axes.ymargin"] = formatMPLFloat(rc.Axes.YMargin)
 	params["axes.grid"] = formatMPLBool(rc.GridVisible)
 	params["axes.grid.axis"] = rc.GridAxis
 	params["axes.grid.which"] = rc.GridWhich

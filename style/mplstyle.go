@@ -42,6 +42,8 @@ var supportedMPLStyleKeys = []string{
 	"animation.frame_format",
 	"animation.html",
 	"animation.writer",
+	"axes.autolimit_mode",
+	"axes.axisbelow",
 	"axes.edgecolor",
 	"axes.facecolor",
 	"axes.grid",
@@ -53,6 +55,9 @@ var supportedMPLStyleKeys = []string{
 	"axes.prop_cycle",
 	"axes.titlecolor",
 	"axes.titlesize",
+	"axes.unicode_minus",
+	"axes.xmargin",
+	"axes.ymargin",
 	"boxplot.boxprops.linewidth",
 	"boxplot.capprops.linewidth",
 	"boxplot.flierprops.color",
@@ -495,6 +500,42 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 		} else {
 			state.rc.PropCycle = parsed
 		}
+	case "axes.axisbelow":
+		normalized := strings.ToLower(normalizeMPLValue(value))
+		if normalized == "line" {
+			state.rc.Axes.AxisBelow = "line"
+		} else {
+			parsed, err := parseMPLBool(value)
+			if err != nil {
+				return fmt.Errorf("parse %s on line %d: expected bool or 'line': %w", key, lineNo, err)
+			}
+			state.rc.Axes.AxisBelow = formatMPLBool(parsed)
+		}
+	case "axes.xmargin", "axes.ymargin":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		if parsed <= -0.5 {
+			return fmt.Errorf("parse %s on line %d: margin must be greater than -0.5, got %v", key, lineNo, parsed)
+		}
+		if key == "axes.xmargin" {
+			state.rc.Axes.XMargin = parsed
+		} else {
+			state.rc.Axes.YMargin = parsed
+		}
+	case "axes.autolimit_mode":
+		normalized := strings.ToLower(normalizeMPLValue(value))
+		if normalized != "data" && normalized != "round_numbers" {
+			return fmt.Errorf("parse %s on line %d: expected 'data' or 'round_numbers', got %q", key, lineNo, value)
+		}
+		state.rc.Axes.AutolimitMode = normalized
+	case "axes.unicode_minus":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Axes.UnicodeMinus = parsed
 	case "axes.grid":
 		parsed, err := parseMPLBool(value)
 		if err != nil {

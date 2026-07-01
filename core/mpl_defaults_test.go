@@ -277,3 +277,76 @@ func TestMPLStyleImageAspectReachesImShow(t *testing.T) {
 		}
 	}
 }
+
+func TestMPLStyleAxisBelowReachesGrid(t *testing.T) {
+	theme, report, err := style.ParseMPLStyle("test", "axes.axisbelow: True\naxes.grid: True\n")
+	if err != nil {
+		t.Fatalf("ParseMPLStyle: %v", err)
+	}
+	if len(report.Unsupported) > 0 {
+		t.Fatalf("unsupported entries: %+v", report.Unsupported)
+	}
+
+	fig := NewFigure(100, 100, style.WithTheme(theme))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	found := false
+	for _, art := range ax.Artists {
+		if grid, ok := art.(*Grid); ok {
+			found = true
+			if grid.z != 0.5 {
+				t.Fatalf("grid z = %v, want 0.5 from axes.axisbelow: True", grid.z)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("no grid artist found")
+	}
+}
+
+func TestMPLStyleMarginsReachAutoscale(t *testing.T) {
+	theme, _, err := style.ParseMPLStyle("test", "axes.xmargin: 0.1\naxes.ymargin: 0\n")
+	if err != nil {
+		t.Fatalf("ParseMPLStyle: %v", err)
+	}
+
+	fig := NewFigure(100, 100, style.WithTheme(theme))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	ax.Plot([]float64{0, 10}, []float64{0, 10})
+
+	xMin, xMax := ax.XScale.Domain()
+	yMin, yMax := ax.YScale.Domain()
+	if !floatApprox(xMin, -1, 1e-12) || !floatApprox(xMax, 11, 1e-12) {
+		t.Fatalf("x limits = [%v, %v], want [-1, 11] from axes.xmargin", xMin, xMax)
+	}
+	if !floatApprox(yMin, 0, 1e-12) || !floatApprox(yMax, 10, 1e-12) {
+		t.Fatalf("y limits = [%v, %v], want [0, 10] from axes.ymargin", yMin, yMax)
+	}
+}
+
+func TestMPLStyleAutolimitModeReachesAxes(t *testing.T) {
+	theme, _, err := style.ParseMPLStyle("test", "axes.autolimit_mode: round_numbers\n")
+	if err != nil {
+		t.Fatalf("ParseMPLStyle: %v", err)
+	}
+
+	fig := NewFigure(100, 100, style.WithTheme(theme))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	if ax.autolimitMode != "round_numbers" {
+		t.Fatalf("autolimitMode = %q, want round_numbers", ax.autolimitMode)
+	}
+}
+
+func TestMPLStyleUnicodeMinusReachesTickLabels(t *testing.T) {
+	t.Cleanup(style.ResetDefaults)
+
+	if got := formatScalarTickLabel(ScalarFormatter{}, -1, 1); got != "−1" {
+		t.Fatalf("default negative tick label = %q, want unicode minus", got)
+	}
+
+	if _, err := style.UpdateParams(style.Params{"axes.unicode_minus": "False"}); err != nil {
+		t.Fatalf("UpdateParams: %v", err)
+	}
+	if got := formatScalarTickLabel(ScalarFormatter{}, -1, 1); got != "-1" {
+		t.Fatalf("negative tick label = %q, want ASCII hyphen with axes.unicode_minus: False", got)
+	}
+}
