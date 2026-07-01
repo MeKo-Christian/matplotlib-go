@@ -42,8 +42,8 @@ Keep these cases in the loop for text-rendering changes:
 - `text_labels_strict`
 - `title_strict`
 
-The strict text cases are optional visual tests. Set
-`RUN_OPTIONAL_VISUAL_TESTS=true` when you want them to execute instead of skip.
+The strict text cases run unconditionally (the historical
+`RUN_OPTIONAL_VISUAL_TESTS` gate was removed in Phase 18).
 
 ## Commands
 
@@ -65,9 +65,9 @@ just text-parity-golden
 The equivalent catalog selectors are:
 
 ```bash
-RUN_OPTIONAL_VISUAL_TESTS=true go test ./test -run 'TestMatplotlibRef/(bar_basic_tick_labels|bar_basic_title|hist_strategies|text_labels_strict|title_strict)$' -count=1 -v
+go test ./test -run 'TestMatplotlibRef/(bar_basic_tick_labels|bar_basic_title|hist_strategies|text_labels_strict|title_strict)$' -count=1 -v
 go test ./test -run 'TestGolden/(bar_basic_tick_labels|bar_basic_title|hist_strategies|text_labels_strict|title_strict)$' -count=1 -update-golden -v
-RUN_OPTIONAL_VISUAL_TESTS=true go test ./test -run 'TestReferenceCompare/(bar_basic_tick_labels|bar_basic_title|hist_strategies|text_labels_strict|title_strict)$' -count=1 -v
+go test ./test -run 'TestReferenceCompare/(bar_basic_tick_labels|bar_basic_title|hist_strategies|text_labels_strict|title_strict)$' -count=1 -v
 ```
 
 When a comparison fails, inspect the generated files under

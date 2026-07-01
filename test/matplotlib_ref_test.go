@@ -39,8 +39,7 @@ func TestMatplotlibRef(t *testing.T) {
 			continue
 		}
 		t.Run(c.ID, func(t *testing.T) {
-			if optionalVisualMplRefIDs[c.ID] {
-				requireOptionalVisualTests(t)
+			if strictMplRefIDs[c.ID] {
 				runStrictMatplotlibRef(t, c.ID)
 				return
 			}

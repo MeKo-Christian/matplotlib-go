@@ -38,8 +38,8 @@ The `test/` directory is flat and catalog-driven — do not add per-case test fu
 - **Source of truth:** `internal/examplecatalog.Case` carries the ID, factory, and per-case tolerances (`MinPSNR`, `MaxMeanAbs`, `MaxRMSE`; zero = defaults).
 - **New parity case:** add a catalog row, drop `test/testdata/golden/{id}.png`, optionally drop `test/testdata/matplotlib_ref/{id}.png` + `test/matplotlib_ref/plots/{id}.py`. `TestGolden`, `TestMatplotlibRef`, and `TestReferenceCompare` discover it automatically. No test code edits needed.
 - **Run one case:** `go test ./test/ -run TestGolden/{id}` (or `TestMatplotlibRef/{id}`, `TestReferenceCompare/{id}`); regex works too.
-- **File responsibilities:** `helpers_test.go` (shared helpers + optional-visual gating maps), `golden_test.go` / `matplotlib_ref_test.go` / `reference_compare_test.go` (single subtest-loop each), `diagnostics_test.go` (env-gated dev probes — add new diagnostics here, not as new files), `contour_compare_test.go` and `artifact_test.go` (kept separate; bespoke).
-- **Optional-visual gating** (e.g., FreeType-only fixtures): add the case ID to `optionalVisualGoldenIDs` / `optionalVisualMplRefIDs` in `helpers_test.go`.
+- **File responsibilities:** `helpers_test.go` (shared helpers), `golden_test.go` / `matplotlib_ref_test.go` / `reference_compare_test.go` (single subtest-loop each), `diagnostics_test.go` (env-gated dev probes — add new diagnostics here, not as new files), `contour_compare_test.go` and `artifact_test.go` (kept separate; bespoke).
+- **No optional-visual gating:** every golden/reference case runs unconditionally (the historical `RUN_OPTIONAL_VISUAL_TESTS` gate was removed in Phase 18; renders cost ~0.05 s each). The strict text cases route through `strictMplRefIDs` in `helpers_test.go` for tighter thresholds, not for skipping.
 - **Backend-conditional tests:** prefer a runtime skip (e.g., `agg.NativeFreetypeVersion() == ""`) over a `//go:build` constraint so the file compiles in all configurations. See `TestBarTextDiagnostic`.
 
 ## Parity testing

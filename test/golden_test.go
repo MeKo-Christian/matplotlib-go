@@ -3,8 +3,7 @@ package test
 // Golden image regression tests.
 //
 // TestGolden iterates the example catalog and runs runGoldenTest per case,
-// skipping cases that don't have a committed PNG in testdata/golden/. Cases
-// listed in optionalVisualGoldenIDs are gated by RUN_OPTIONAL_VISUAL_TESTS=true.
+// skipping cases that don't have a committed PNG in testdata/golden/.
 //
 // To regenerate goldens for all cases (or a subset via -run):
 //
@@ -26,9 +25,6 @@ func TestGolden(t *testing.T) {
 			continue
 		}
 		t.Run(c.ID, func(t *testing.T) {
-			if optionalVisualGoldenIDs[c.ID] {
-				requireOptionalVisualTests(t)
-			}
 			runGoldenTest(t, c.ID)
 		})
 	}

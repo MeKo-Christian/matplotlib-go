@@ -58,9 +58,6 @@ build-skia: freetype261-build
 test: freetype261-build
     CGO_ENABLED=1 go test -tags freetype ./...
 
-test-optional-visual: freetype261-build
-    RUN_OPTIONAL_VISUAL_TESTS=true CGO_ENABLED=1 go test -tags freetype ./...
-
 bench-render: freetype261-build
     mkdir -p testdata/_artifacts/perf
     set -o pipefail; CGO_ENABLED=1 go test ./benchmarks -bench 'BenchmarkCatalogRender|BenchmarkLargeScatter100K' -benchtime="${BENCHTIME:-1x}" -run '^$$' -count=1 -benchmem | tee testdata/_artifacts/perf/render-bench.txt
@@ -155,13 +152,13 @@ text-parity-core:
     CGO_ENABLED=1 go test ./core -run "TestTitleFontSizeUsesTitleOnlyCompensation|TestDrawAxesLabels_YLabelUsesTickBoundsAndLabelPad|TestTickLabelPositionUsesBoundsForBottomXAxis|TestTickLabelPositionUsesBoundsForLeftYAxis|TestTickLabelPositionUsesFontHeightMetricsForBottomXAxis|TestTickLabelPositionUsesBottomAlignmentForTopXAxis|TestTickLabelPositionUsesCenterBaselineForRightYAxis|TestAlignedTextOrigin|TestAxesTextDrawsNormalizedContent|TestAnnotationDrawOverlayRendersArrowAndText|TestAxesTextSupportsAxesAndBlendedCoordinates" -count=1 -v
 
 text-parity-canaries: freetype261-build
-    RUN_OPTIONAL_VISUAL_TESTS=true CGO_ENABLED=1 go test -tags freetype ./test -run 'TestMatplotlibRef/(bar_basic_tick_labels|bar_basic_title|hist_strategies|text_labels_strict|title_strict)$$' -count=1 -v
+    CGO_ENABLED=1 go test -tags freetype ./test -run 'TestMatplotlibRef/(bar_basic_tick_labels|bar_basic_title|hist_strategies|text_labels_strict|title_strict)$$' -count=1 -v
 
 text-parity-golden: freetype261-build
     CGO_ENABLED=1 go test -tags freetype ./test -run 'TestGolden/(bar_basic_tick_labels|bar_basic_title|hist_strategies|text_labels_strict|title_strict)$$' -count=1 -update-golden -v
 
 text-parity-compare: freetype261-build
-    RUN_OPTIONAL_VISUAL_TESTS=true CGO_ENABLED=1 go test -tags freetype ./test -run 'TestReferenceCompare/(bar_basic_tick_labels|bar_basic_title|hist_strategies|text_labels_strict|title_strict)$$' -count=1 -v
+    CGO_ENABLED=1 go test -tags freetype ./test -run 'TestReferenceCompare/(bar_basic_tick_labels|bar_basic_title|hist_strategies|text_labels_strict|title_strict)$$' -count=1 -v
 
 backend-info:
     @go run ./examples/backends/info/main.go 2>/dev/null || echo "Backend info example not yet available"

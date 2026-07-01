@@ -44,8 +44,6 @@ const (
 	referenceCompareTolerance  = 1
 	referenceCompareMinPSNR    = 44.0
 	referenceCompareMaxMeanAbs = 2.50
-
-	optionalVisualTestsEnv = "RUN_OPTIONAL_VISUAL_TESTS"
 )
 
 // goldenReadPath returns the golden PNG path for id. The AGG backend links the
@@ -61,80 +59,18 @@ func goldenWriteDir() string {
 	return "golden"
 }
 
-// optionalVisualGoldenIDs lists catalog cases whose golden tests are gated by
-// RUN_OPTIONAL_VISUAL_TESTS=true. Cases not in this set always run. The set
-// reflects the historical gating that lived in golden_test.go and the small
-// fixture/showcase files; it does not perfectly track the catalog's Optional
-// flag (e.g. specialty_depth was gated despite being FixtureOnly, not Optional).
-var optionalVisualGoldenIDs = map[string]bool{
-	"boxplot_basic":           true,
-	"boxplot_default":         true,
-	"stackplot_streamgraph":   true,
-	"specialty_depth":         true,
-	"errorbar_basic":          true,
-	"text_labels_strict":      true,
-	"axes_top_right_inverted": true,
-	"axes_control_surface":    true,
-	"transform_coordinates":   true,
-	"plot_variants":           true,
-	"spectrum_variants":       true,
-	"stat_variants":           true,
-	"units_overview":          true,
-	"units_dates":             true,
-	"units_categories":        true,
-	"units_custom_converter":  true,
-	"patch_showcase":          true,
-	"mesh_contour_tri":        true,
-	"stem_plot":               true,
-	"specialty_artists":       true,
-	"vector_fields":           true,
-	"geo_aitoff_axes":         true,
-	"geo_hammer_axes":         true,
-	"geo_lambert_axes":        true,
-	"radar_basic":             true,
-	"skewt_basic":             true,
-	"mplot3d_basic":           true,
-	"mplot3d_terrain":         true,
-	"mplot3d_plot3d":          true,
-	"mplot3d_scatter3d":       true,
-	"mplot3d_surface3d":       true,
-	"mplot3d_wire3d":          true,
-	"mplot3d_trisurf3d":       true,
-	"mplot3d_bar3d":           true,
-	"mplot3d_voxels":          true,
-	"mplot3d_quiver3d":        true,
-	"mplot3d_errorbar3d":      true,
-	"mplot3d_stem3d":          true,
-	"mplot3d_fill_between3d":  true,
-	"mplot3d_contour3d":       true,
-	"mplot3d_contourf3d":      true,
-	"mplot3d_tricontour3d":    true,
-	"mplot3d_tricontourf3d":   true,
-	"mplot3d_bar2d_zdir":      true,
-	"mplot3d_text3d":          true,
-	"unstructured_showcase":   true,
-	"arrays_showcase":         true,
-	"axisartist_showcase":     true,
-	"axes_grid1_showcase":     true,
-}
-
-// optionalVisualMplRefIDs gates strict matplotlib_ref cases that are expensive
-// enough to keep behind RUN_OPTIONAL_VISUAL_TESTS.
-var optionalVisualMplRefIDs = map[string]bool{
+// strictMplRefIDs routes hand-curated text/title cases to the tight
+// PSNR/MeanAbs strict check instead of the loose runMplTest floor.
+//
+// Historical note (Phase 18, 2026-07-01): these two plus 49 golden cases used
+// to skip in default CI behind RUN_OPTIONAL_VISUAL_TESTS=true. The gate
+// predated the vendored FreeType 2.6.1 default (glyph rasterization now
+// byte-matches the references) and each render costs ~0.05 s, so every case
+// now runs unconditionally — a live-render regression can no longer hide
+// behind a skipped test.
+var strictMplRefIDs = map[string]bool{
 	"text_labels_strict": true,
 	"title_strict":       true,
-}
-
-// ----------------------------------------------------------------------------
-// Optional-test gate
-// ----------------------------------------------------------------------------
-
-func requireOptionalVisualTests(t *testing.T) {
-	t.Helper()
-	if os.Getenv(optionalVisualTestsEnv) == "true" {
-		return
-	}
-	t.Skip("skipping optional visual parity test (set RUN_OPTIONAL_VISUAL_TESTS=true to run)")
 }
 
 // ----------------------------------------------------------------------------
@@ -402,6 +338,25 @@ func runReferenceCompareTest(t *testing.T, c *examplecatalog.Case) {
 	savePNGOrFail(t, got, filepath.Join(artifactsDir, c.ID+"_rendered.png"))
 	savePNGOrFail(t, golden, filepath.Join(artifactsDir, c.ID+"_golden.png"))
 	savePNGOrFail(t, matplotlibRef, filepath.Join(artifactsDir, c.ID+"_matplotlib_ref.png"))
+
+	// The live render must byte-match the committed golden (≤1 LSB) so this
+	// test alone catches a live regression — the golden-vs-reference compare
+	// below only relates two committed files. Skipped under -update-golden,
+	// where goldens are being rewritten in the same run.
+	if !*updateGolden {
+		liveDiff, err := imagecmp.ComparePNG(got, golden, 1)
+		if err != nil {
+			t.Fatalf("compare live render and golden %s: %v", goldenPath, err)
+		}
+		if !liveDiff.Identical {
+			liveDiffPath := filepath.Join(artifactsDir, c.ID+"_rendered_vs_golden_diff.png")
+			if err := imagecmp.SaveDiffImage(got, golden, 1, liveDiffPath); err != nil {
+				t.Fatalf("save diff image %s: %v", liveDiffPath, err)
+			}
+			t.Fatalf("live render diverges from golden %s: MaxDiff=%d MeanAbs=%.2f RMSE=%.2f (diff: %s)",
+				goldenPath, liveDiff.MaxDiff, liveDiff.MeanAbs, liveDiff.RMSE, liveDiffPath)
+		}
+	}
 
 	diff, err := imagecmp.ComparePNG(golden, matplotlibRef, referenceCompareTolerance)
 	if err != nil {
