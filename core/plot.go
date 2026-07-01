@@ -98,9 +98,17 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 		lineWidth = *opt.LineWidth
 	}
 
-	// Resolve dashes: explicit option wins, otherwise honor a cycled linestyle.
+	// Resolve dashes: an explicit dash pattern wins, then the typed LineStyle
+	// option, then a cycled linestyle. LineStyleNone suppresses the line
+	// entirely (markers-only), like matplotlib's linestyle "none".
 	dashes := opt.Dashes
-	if dashes == nil && cycle.HasLineStyle {
+	switch {
+	case dashes != nil:
+	case opt.LineStyle.isNone():
+		lineWidth = 0
+	case opt.LineStyle != "":
+		dashes = lineStyleToDashes(string(opt.LineStyle), pointsToPixels(a.resolvedRC(), lineWidth))
+	case cycle.HasLineStyle:
 		dashes = lineStyleToDashes(cycle.LineStyle, pointsToPixels(a.resolvedRC(), lineWidth))
 	}
 

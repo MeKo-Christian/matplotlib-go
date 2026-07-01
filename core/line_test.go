@@ -592,6 +592,43 @@ func TestLine2DMarkEverySpecForms(t *testing.T) {
 	}
 }
 
+func TestAxesPlotTypedLineStyle(t *testing.T) {
+	fig := NewFigure(100, 100)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+
+	// "--" resolves to matplotlib's dashed pattern (3.7, 1.6) scaled by the
+	// line width in pixels (1.5 pt at 100 DPI).
+	line := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: LineStyleDashed})
+	if line == nil {
+		t.Fatal("Plot returned nil")
+	}
+	widthPx := 1.5 * 100.0 / 72.0
+	want := []float64{3.7 * widthPx, 1.6 * widthPx}
+	if len(line.Dashes) != 2 || math.Abs(line.Dashes[0]-want[0]) > 1e-12 || math.Abs(line.Dashes[1]-want[1]) > 1e-12 {
+		t.Fatalf("LineStyleDashed dashes = %v, want %v", line.Dashes, want)
+	}
+
+	// An explicit dash pattern overrides the typed style.
+	line = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: LineStyleDotted, Dashes: []float64{9, 9}})
+	if len(line.Dashes) != 2 || line.Dashes[0] != 9 || line.Dashes[1] != 9 {
+		t.Fatalf("explicit Dashes = %v, want [9 9]", line.Dashes)
+	}
+
+	// "none" suppresses the line stroke entirely (markers-only plot).
+	line = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: LineStyleNone})
+	if line.W != 0 || line.Dashes != nil {
+		t.Fatalf("LineStyleNone line: W = %v, Dashes = %v; want 0 and nil", line.W, line.Dashes)
+	}
+
+	// Solid and unset both keep a solid stroke.
+	for _, ls := range []LineStyle{"", LineStyleSolid} {
+		line = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: ls})
+		if line.W != 1.5 || line.Dashes != nil {
+			t.Fatalf("LineStyle %q: W = %v, Dashes = %v; want 1.5 and nil", ls, line.W, line.Dashes)
+		}
+	}
+}
+
 func TestAxesPlotConfiguresLineMarkers(t *testing.T) {
 	fig := NewFigure(100, 100)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
