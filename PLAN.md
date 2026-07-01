@@ -728,9 +728,27 @@ golden regressions; new unit tests cover the warn-on-non-default and dedup paths
       `.mplstyle` files, `UpdateParams`, `PushContext`, and `LoadRCFile`. Tests:
       `TestUnhonoredRCParam*` (warn-on-non-default, silent-on-default, dedup, via
       UpdateParams, honored-params-silent, audit guards).
-- [ ] Honor the high-value subset where the drawing code already exists:
-      `image.origin`/`image.aspect`/`image.resample`, `mathtext.default`/`.rm`/`.it`/…,
-      `date.*` tick formatting.
+- [x] Honor the high-value subset where the drawing code already exists
+      (2026-07-02, zero golden churn):
+  - `image.origin`/`image.aspect` are consumed by the imshow front-ends
+    (`core/matrix_helpers.go`); MatShow keeps hardcoded upper/equal like
+    matplotlib matshow. `image.resample` stays unhonored **by design**: the Go
+    raster path has no adaptive downscale resampling engine to toggle (it
+    structurally matches mpl's `resample=False` branch only) — noted in
+    `style/unhonored.go`.
+  - all ten `date.*` keys: `date.epoch` resolves lazily on first conversion
+    (mirrors `get_epoch()`), `date.interval_multiples` drives
+    `DateLocator` (incl. the `{1,2,3,7,14,21}` daily table for False),
+    `date.autoformatter.*` override AutoDateFormatter buckets via a new
+    strftime interpreter (`core/strftime.go`), `date.converter: concise`
+    switches the default axis formatter.
+  - `mathtext.default`/`.rm`/`.it`/… remain **blocked upstream**: the
+    `cwbudde/mathtext` engine (v0.4.4) exposes no hook for the implicit-italic
+    default or per-class family names (`parser.go` hardcodes them;
+    `Options`/`FontResolver` carry no fontset table). Honoring these needs a
+    mathtext library release first; `mathtext.cal`/`.bfit`/`fallback` further
+    depend on the Phase 17 per-fontset glyph maps. Keys stay in the
+    unhonored registry so the one-shot warning keeps firing.
 - [ ] **Third-audit unparsed inventory (2026-07-01, REVIEW.md §3 of the third
       review).** Entire families never reach the `RC` struct and land silently in
       `report.Unsupported` (`style/mplstyle.go:977`):

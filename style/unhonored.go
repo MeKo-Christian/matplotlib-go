@@ -47,7 +47,11 @@ var unhonoredRCParams = map[string]unhonoredRCParam{
 	"image.composite_image":     {differs: func(rc, def *RC) bool { return rc.Image.CompositeImage != def.Image.CompositeImage }},
 	"image.lut":                 {differs: func(rc, def *RC) bool { return rc.Image.LUT != def.Image.LUT }},
 
-	// mathtext.* — only fontset is consumed (core/mathtext.go).
+	// mathtext.* — only fontset is consumed (core/mathtext.go). Honoring the
+	// rest is blocked upstream: the cwbudde/mathtext engine exposes no hook
+	// for the implicit-italic default or per-class family names (PLAN.md
+	// Phase 16), and cal/bfit/fallback additionally need per-fontset glyph
+	// maps (Phase 17).
 	"mathtext.default":  {differs: func(rc, def *RC) bool { return rc.Mathtext.Default != def.Mathtext.Default }},
 	"mathtext.fallback": {differs: func(rc, def *RC) bool { return rc.Mathtext.Fallback != def.Mathtext.Fallback }},
 	"mathtext.bf":       {differs: func(rc, def *RC) bool { return rc.Mathtext.BF != def.Mathtext.BF }},
