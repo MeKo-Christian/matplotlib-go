@@ -14,6 +14,8 @@ github.com/cwbudde/algo-fft v0.6.11 h1:XgyYQbnzVnGUwVJQPWDyCwMlPbS0ZeuQTAjHTJBpE
 github.com/cwbudde/algo-fft v0.6.11/go.mod h1:H5rJ7JNXvhe3kT4yc41TJB9DEnO7KlhHN7toLO+ZZXU=
 github.com/cwbudde/mathtext v0.4.4 h1:ztU/OnxGpLTbvukpLCNqyLyR6abtDd8cs/jXxVJalrU=
 github.com/cwbudde/mathtext v0.4.4/go.mod h1:U+8ryw66DJYX8UerM5kgtA2QVG5Y+f/4m5eqZxKwD2k=
+github.com/cwbudde/qhull-go v0.1.0 h1:xededYDzEFqV/HPNQToH+oZwoMwmPEoqmDrKket87uA=
+github.com/cwbudde/qhull-go v0.1.0/go.mod h1:S5kseVfeEObgl1XoL1UAi+eNMr7lnrJmuPJolqAHmF8=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=
