@@ -45,6 +45,7 @@ func stablePublicPackageDirs() []string {
 		"canvas",
 		"color",
 		"core",
+		"diag",
 		"geom",
 		"pyplot",
 		"render",

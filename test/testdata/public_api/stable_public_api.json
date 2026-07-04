@@ -9019,6 +9019,16 @@
     },
     {
       "import_path": ".",
+      "dir": "diag",
+      "symbols": [
+        {
+          "id": "func SetHandler",
+          "declaration": "func SetHandler(fn func(string)) (restore func())"
+        }
+      ]
+    },
+    {
+      "import_path": ".",
       "dir": "geom",
       "symbols": [
         {
