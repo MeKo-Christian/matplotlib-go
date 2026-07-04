@@ -5,6 +5,8 @@ import (
 	"io/fs"
 	"path"
 	"strings"
+
+	"github.com/cwbudde/matplotlib-go/internal/diag"
 )
 
 // bundledStyleLib embeds Matplotlib's standard .mplstyle library (mpl-data/
@@ -31,6 +33,18 @@ func init() {
 // the golden images that depend on them — authoritative, while still shipping
 // the broader Matplotlib library.
 func registerBundledStyles() {
+	// The bundled sheets are a fixed, known set; warning about their unparsed
+	// or unhonored rcParams on every process start would print ~50 stderr
+	// lines of pure noise to every consumer before their own code runs.
+	// Silence diagnostics for the duration of the bundled parse, then reset
+	// the one-shot warning dedup so the same keys in user-supplied sheets
+	// parsed later still warn.
+	restore := diag.SetHandler(nil)
+	defer func() {
+		restore()
+		resetUnhonoredRCParamWarnings()
+	}()
+
 	entries, err := fs.ReadDir(bundledStyleLib, "stylelib")
 	if err != nil {
 		return
