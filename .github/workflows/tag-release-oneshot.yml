@@ -1,11 +1,13 @@
-# One-shot helper: creates the v0.3.1 release tag via workflow_dispatch.
-# The tag targets the PR #9 merge commit. This file is removed again right
-# after the tag exists; it is not part of the tagged tree (the tag points
-# at an earlier commit).
+# One-shot helper: creates the v0.3.1 release tag when this trigger branch
+# is pushed. The tag targets the PR #9 merge commit. This branch and the
+# workflow file are removed again right after the tag exists; the tag points
+# at an earlier commit, so none of this is part of the tagged tree.
 name: tag-release-oneshot
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - claude/trigger-tag-v0-3-1
 
 permissions:
   contents: write
