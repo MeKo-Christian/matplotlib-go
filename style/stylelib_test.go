@@ -1,6 +1,9 @@
 package style
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestBundledStylesRegistered(t *testing.T) {
 	// First color of each sheet's axes.prop_cycle, from Matplotlib 3.10.9.
@@ -39,6 +42,40 @@ func TestBundledStylesDoNotOverrideBuiltins(t *testing.T) {
 				t.Errorf("built-in theme %q was overridden by an embedded sheet", name)
 			}
 		}
+	}
+}
+
+func TestRegisterBundledStylesEmitsNoWarnings(t *testing.T) {
+	// The bundled sheets are a fixed, known set; parsing them at init must not
+	// spam consumers' stderr with unparsed/unhonored rcParam warnings.
+	// registerBundledStyles is idempotent (already-registered themes are
+	// skipped before registration but still parsed), so re-running it here
+	// exercises the same parse path as package init.
+	msgs := captureWarnings(t)
+
+	registerBundledStyles()
+
+	if len(*msgs) != 0 {
+		t.Fatalf("got %d warnings from bundled style registration, want 0: %v", len(*msgs), *msgs)
+	}
+}
+
+func TestUserSheetsStillWarnAfterBundledRegistration(t *testing.T) {
+	// The suppressed init-time parse must not consume the one-shot warning
+	// dedup: a user-supplied sheet setting a key that also appears in the
+	// bundled sheets still warns.
+	msgs := captureWarnings(t)
+
+	registerBundledStyles()
+	if _, _, err := ParseMPLStyle("user.mplstyle", "patch.antialiased: False\n"); err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+
+	if len(*msgs) != 1 {
+		t.Fatalf("got %d warnings for user sheet, want 1: %v", len(*msgs), *msgs)
+	}
+	if !strings.Contains((*msgs)[0], "patch.antialiased") {
+		t.Errorf("warning %q does not mention the rcParam key", (*msgs)[0])
 	}
 }
 

@@ -713,11 +713,11 @@ confidence a setting took effect.
 
 **Status (2026-07-02):** audit, both minimum-bar warnings (unhonored-parsed AND
 known-but-unparsed incl. non-goal rationale), the high-value honoring subset
-(image origin/aspect, all date.*), and three parsed-inventory families (axes
+(image origin/aspect, all date._), and three parsed-inventory families (axes
 behavior, lines artist defaults, scatter/errorbar artist defaults) are
 **shipped** — all with zero golden churn (only non-default rc values change
 behavior). Open: the remaining unparsed families below (ticks, legend layout,
-figure, patches, font, contour.*, axes.formatter.*, spines) and the
+figure, patches, font, contour._, axes.formatter.\*, spines) and the
 mathtext honoring blocked on a cwbudde/mathtext library hook.
 
 - [x] Audited the dead params: **51** parsed-but-never-consumed keys, captured as
