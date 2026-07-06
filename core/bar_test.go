@@ -447,3 +447,124 @@ func TestBar2D_Bounds_Vertical(t *testing.T) {
 		t.Errorf("Expected MaxY = %v, got %v", expectedMaxY, bounds.Max.Y)
 	}
 }
+
+func TestBarErrorBarsPlacementLikeMatplotlib(t *testing.T) {
+	// Vertical bars: error anchors sit at the bar center (x) and top (baseline +
+	// height), matching matplotlib bar()'s ex=left+0.5w, ey=bottom+h.
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	x := []float64{0, 1, 2}
+	heights := []float64{3, 8, 6}
+	yErr := []float64{0.5, 1.0, 0.75}
+
+	bar := ax.Bar(x, heights, BarOptions{YErr: yErr})
+	if bar == nil {
+		t.Fatal("Bar() returned nil")
+	}
+	if bar.errorbar == nil {
+		t.Fatal("expected an attached error bar when YErr is set")
+	}
+	eb := bar.errorbar
+	if len(eb.XY) != len(x) {
+		t.Fatalf("error bar point count = %d, want %d", len(eb.XY), len(x))
+	}
+	for i := range x {
+		wantX, wantY := x[i], heights[i]
+		if math.Abs(eb.XY[i].X-wantX) > 1e-12 || math.Abs(eb.XY[i].Y-wantY) > 1e-12 {
+			t.Fatalf("vertical error anchor[%d] = (%v, %v), want (%v, %v)",
+				i, eb.XY[i].X, eb.XY[i].Y, wantX, wantY)
+		}
+	}
+	// ecolor defaults to black ('k').
+	if (eb.Color != render.Color{R: 0, G: 0, B: 0, A: 1}) {
+		t.Fatalf("default error color = %+v, want black", eb.Color)
+	}
+	// fmt="none": no connecting data line.
+	if !eb.NoDataLine {
+		t.Fatal("error bar should suppress its data line (NoDataLine)")
+	}
+	// The container surfaces the error bar.
+	if c := bar.Container(); c == nil || c.Errorbar == nil || c.Errorbar.Errorbar != eb {
+		t.Fatal("BarContainer should expose the attached error bar")
+	}
+	// Autoscale includes the upward error reach: top bar 8 + err 1.0 = 9.
+	if _, yMax := ax.YScale.Domain(); yMax < 9.0-1e-9 {
+		t.Fatalf("autoscale y-max = %v, want >= 9 (error reach included)", yMax)
+	}
+
+	// Horizontal bars: anchors at the bar end (x) and center (y).
+	figH := NewFigure(800, 600)
+	axH := figH.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	xErr := []float64{0.4, 0.6}
+	barH := axH.BarH([]float64{0, 1}, []float64{4, 7}, BarOptions{XErr: xErr})
+	if barH == nil || barH.errorbar == nil {
+		t.Fatal("BarH with XErr should attach an error bar")
+	}
+	wantAnchors := []geom.Pt{{X: 4, Y: 0}, {X: 7, Y: 1}}
+	for i, want := range wantAnchors {
+		got := barH.errorbar.XY[i]
+		if math.Abs(got.X-want.X) > 1e-12 || math.Abs(got.Y-want.Y) > 1e-12 {
+			t.Fatalf("horizontal error anchor[%d] = %+v, want %+v", i, got, want)
+		}
+	}
+}
+
+func TestBarErrorKwColorIsPreserved(t *testing.T) {
+	// An ErrorKw.Color passthrough must survive when no top-level ECol is set
+	// (matplotlib error_kw precedence); the default black must not clobber it.
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	red := render.Color{R: 1, G: 0, B: 0, A: 1}
+	bar := ax.Bar([]float64{0, 1, 2}, []float64{3, 8, 6}, BarOptions{
+		YErr:    []float64{0.5, 1, 0.75},
+		ErrorKw: &ErrorBarOptions{Color: &red},
+	})
+	if bar.errorbar == nil {
+		t.Fatal("expected an attached error bar")
+	}
+	if bar.errorbar.Color != red {
+		t.Fatalf("error color = %+v, want ErrorKw red %+v", bar.errorbar.Color, red)
+	}
+
+	// A top-level ECol still wins over the ErrorKw color.
+	blue := render.Color{R: 0, G: 0, B: 1, A: 1}
+	bar2 := ax.Bar([]float64{0, 1}, []float64{3, 8}, BarOptions{
+		YErr:    []float64{0.5, 1},
+		ECol:    &blue,
+		ErrorKw: &ErrorBarOptions{Color: &red},
+	})
+	if bar2.errorbar.Color != blue {
+		t.Fatalf("error color = %+v, want ECol blue %+v (ECol beats ErrorKw)", bar2.errorbar.Color, blue)
+	}
+}
+
+func TestBarErrorBarsDoNotAdvanceColorCycle(t *testing.T) {
+	// The hidden fmt="none" error-bar helper must not consume the axes color
+	// cycle, so a series added after a bar-with-errors gets the same color it
+	// would without YErr.
+	withErr := NewFigure(800, 600)
+	axE := withErr.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	axE.Bar([]float64{0, 1, 2}, []float64{3, 8, 6}, BarOptions{YErr: []float64{0.5, 1, 0.75}})
+	afterErr := axE.NextColor()
+
+	noErr := NewFigure(800, 600)
+	axN := noErr.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	axN.Bar([]float64{0, 1, 2}, []float64{3, 8, 6})
+	afterNoErr := axN.NextColor()
+
+	if afterErr != afterNoErr {
+		t.Fatalf("color after bar+yerr = %+v, want same as bar without yerr %+v (error bars advanced the cycle)", afterErr, afterNoErr)
+	}
+}
+
+func TestBarWithoutErrorDataHasNoErrorBar(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	bar := ax.Bar([]float64{0, 1, 2}, []float64{3, 8, 6})
+	if bar.errorbar != nil {
+		t.Fatal("bar without error data should not create an error bar")
+	}
+	if c := bar.Container(); c.Errorbar != nil {
+		t.Fatal("container should have a nil Errorbar when no error data was given")
+	}
+}
