@@ -847,7 +847,15 @@ artist gaps that have no workaround.
       parity case `bar_yerr` (golden byte-identical; matplotlib-ref RMSE 0.03 /
       PSNR 79.7 dB). Zero churn on existing bar goldens (error fields default off).
       _Shipped 2026-07-06._
-- [ ] `hist(log=)` — add a `Log` field to `HistOptions` + an example exercising it.
+- [x] `hist(log=)` — `HistOptions` (`core/plot.go`) gained a `Log bool` field;
+      `Hist()` now calls `SetYScale("log", WithScaleNonPositive(NonPositiveClip))`
+      when set, matching matplotlib's `hist(log=True)` → `set_yscale('log',
+    nonpositive='clip')` (histograms here are vertical-only, so it always targets
+      the y axis; the clip keeps the zero baseline finite instead of masking to NaN).
+      Tests: `TestHistLogSetsYScaleToLog` + `TestHistWithoutLogKeepsLinearYScale`.
+      New Showcase example `examples/hist_log` + parity case `hist_log` (golden
+      byte-identical; matplotlib-ref RMSE 0.36 / PSNR 57.5 dB). Zero churn on the
+      existing hist goldens (`Log` defaults off). _Shipped 2026-07-06._
 - [ ] mathtext `cm`/`stix` fontsets — `core/mathtext.go:208` only remaps the font
       _family_ over the single DejaVu Unicode table; port matplotlib's
       `BakomaFonts`/`StixFonts` per-fontset glyph maps so non-DejaVu fontsets are

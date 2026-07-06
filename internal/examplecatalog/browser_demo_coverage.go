@@ -273,6 +273,15 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		CatalogIDs:      []string{"hist_basic"},
 	},
 	{
+		ID:              "showcase-hist_log",
+		Title:           "Logarithmic Histogram Browser Coverage",
+		Status:          BrowserDemoActive,
+		Action:          "cover through the histogram web demo backed by the histogram variants gallery",
+		Rationale:       "The log-scale histogram showcase is represented by the broader catalog-backed histogram variants browser panel.",
+		ActiveWebDemoID: "histogram",
+		CatalogIDs:      []string{"hist_log"},
+	},
+	{
 		ID:              "showcase-histogram_variants",
 		Title:           "Histogram Variants Gallery Browser Coverage",
 		Status:          BrowserDemoActive,

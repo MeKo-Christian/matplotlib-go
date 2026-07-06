@@ -45,6 +45,7 @@ import (
 	geo_mollweide_axes "github.com/cwbudde/matplotlib-go/examples/geo_mollweide_axes"
 	gridspec_composition "github.com/cwbudde/matplotlib-go/examples/gridspec_composition"
 	hist_basic "github.com/cwbudde/matplotlib-go/examples/hist_basic"
+	hist_log "github.com/cwbudde/matplotlib-go/examples/hist_log"
 	histogram_variants "github.com/cwbudde/matplotlib-go/examples/histogram_variants"
 	image_heatmap "github.com/cwbudde/matplotlib-go/examples/image_heatmap"
 	image_variants_gallery "github.com/cwbudde/matplotlib-go/examples/image_variants_gallery"
@@ -105,6 +106,7 @@ var registry = map[string]func() *core.Figure{
 	"geo_mollweide_axes":                  geo_mollweide_axes.Plot,
 	"gridspec_composition":                gridspec_composition.Plot,
 	"hist_basic":                          hist_basic.Plot,
+	"hist_log":                            hist_log.Plot,
 	"histogram_variants":                  histogram_variants.Plot,
 	"image_heatmap":                       image_heatmap.Plot,
 	"image_variants_gallery":              image_variants_gallery.Plot,

@@ -1020,6 +1020,7 @@ type HistOptions struct {
 	Norm              HistNorm    // normalization mode
 	Cumulative        bool        // accumulate bin heights from left to right
 	ReverseCumulative bool        // accumulate from right to left, matching cumulative < 0
+	Log               bool        // set the count (y) axis to log scale, matching matplotlib hist(log=True)
 	HistType          HistType    // bar, step, or filled step presentation
 	Baselines         []float64   // optional per-bin baselines for stacked histograms
 	Color             *render.Color
@@ -1102,6 +1103,15 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) *Hist2D {
 	}
 
 	a.Add(hist)
+
+	// matplotlib's hist(log=True) sets the count axis to a log scale with
+	// nonpositive='clip', so the zero bar baseline clips to the axis floor
+	// instead of masking to NaN. Histograms here are vertical-only (no
+	// orientation field), so this always targets the y axis.
+	if opt.Log {
+		_ = a.SetYScale("log", transform.WithScaleNonPositive(transform.NonPositiveClip))
+	}
+
 	return hist
 }
 

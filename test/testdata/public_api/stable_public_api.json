@@ -8177,7 +8177,7 @@
         },
         {
           "id": "type HistOptions",
-          "declaration": "type HistOptions struct{ Bins int; BinEdges []float64; Range *HistRange; Weights []float64; BinStrat BinStrategy; Norm HistNorm; Cumulative bool; ReverseCumulative bool; HistType HistType; Baselines []float64; Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Label string }"
+          "declaration": "type HistOptions struct{ Bins int; BinEdges []float64; Range *HistRange; Weights []float64; BinStrat BinStrategy; Norm HistNorm; Cumulative bool; ReverseCumulative bool; Log bool; HistType HistType; Baselines []float64; Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Label string }"
         },
         {
           "id": "type HistRange",
