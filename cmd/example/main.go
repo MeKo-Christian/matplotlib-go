@@ -61,6 +61,7 @@ import (
 	plot_variants "github.com/cwbudde/matplotlib-go/examples/plot_variants"
 	polar_axes "github.com/cwbudde/matplotlib-go/examples/polar_axes"
 	projection_toolkit_gallery "github.com/cwbudde/matplotlib-go/examples/projection_toolkit_gallery"
+	quiver_autoscale "github.com/cwbudde/matplotlib-go/examples/quiver_autoscale"
 	radar_basic "github.com/cwbudde/matplotlib-go/examples/radar_basic"
 	scatter_basic "github.com/cwbudde/matplotlib-go/examples/scatter_basic"
 	scatter_gallery "github.com/cwbudde/matplotlib-go/examples/scatter_gallery"
@@ -107,6 +108,7 @@ var registry = map[string]func() *core.Figure{
 	"gridspec_composition":                gridspec_composition.Plot,
 	"hist_basic":                          hist_basic.Plot,
 	"hist_log":                            hist_log.Plot,
+	"quiver_autoscale":                    quiver_autoscale.Plot,
 	"histogram_variants":                  histogram_variants.Plot,
 	"image_heatmap":                       image_heatmap.Plot,
 	"image_variants_gallery":              image_variants_gallery.Plot,

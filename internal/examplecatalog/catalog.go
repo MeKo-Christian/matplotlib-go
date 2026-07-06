@@ -211,6 +211,7 @@ var cases = []Case{
 	{ID: "units_categories", Topic: "units", Title: "Category Units", Optional: true, MaxMeanAbs: 0.05, MaxRMSE: 2.0},
 	{ID: "units_custom_converter", Topic: "units", Title: "Custom Unit Converter", Optional: true, MinPSNR: 68.0, MaxMeanAbs: 0.05, MaxRMSE: 0.5},
 	{ID: "vector_fields", Topic: "vectors", Title: "Vector Fields", Optional: true, WebDemoID: "vectors", Description: "Quiver, quiver keys, barbs, streamplots, and grid-based vector input.", Showcase: true, GoBasicSmokeFamily: "vectors", MaxRMSE: 2.3},
+	{ID: "quiver_autoscale", Topic: "vectors", Title: "Quiver Default Scale", FixtureOnly: true, Width: 640, Height: 360, MaxRMSE: 2.0},
 	{ID: "polar_axes", Topic: "polar", Title: "Polar Wave", WebDemoID: "polar", Description: "A filled polar curve with custom radial and angular grid styling.", Showcase: true, SVGGoldenFamily: "clipped_polar", GoBasicSmokeFamily: "polar", SkiaParityFamily: "polar", MaxRMSE: 1.2},
 	{ID: "geo_mollweide_axes", Topic: "geo", Title: "Projections and Insets", WebDemoID: "projections", Description: "Mollweide geo projection plus a zoomed inset axes.", Showcase: true, GoBasicSmokeFamily: "geo", MaxRMSE: 3.0},
 	{ID: "geo_aitoff_axes", Topic: "geo", Title: "Aitoff Projection", Description: "An Aitoff equal-area projection with longitude wrapping and graticule rendering.", Optional: true, Showcase: true, MaxRMSE: 3.0},
