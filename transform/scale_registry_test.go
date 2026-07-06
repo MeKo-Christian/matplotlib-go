@@ -202,6 +202,20 @@ func TestLogitScale_NonPositiveHandling(t *testing.T) {
 	}
 }
 
+func TestNewLogit_RepairsDegenerateDomain(t *testing.T) {
+	// A degenerate (0, 1) domain must be repaired into (eps, 1-eps) so the axis
+	// endpoints do not fall on the ∓1000 clip sentinel and collapse every
+	// probability toward the midpoint.
+	s := NewLogit(0, 1, NonPositiveClip, 1e-6)
+	if s.Min <= 0 || s.Max >= 1 || s.Min >= s.Max {
+		t.Fatalf("NewLogit(0,1) domain = (%v, %v), want repaired into (0,1)", s.Min, s.Max)
+	}
+	// 0.01 sits well below the center; a collapsed scale would map it near 0.5.
+	if got := s.Fwd(0.01); got >= 0.45 {
+		t.Fatalf("NewLogit(0,1).Fwd(0.01) = %v, want well below the midpoint (uncollapsed)", got)
+	}
+}
+
 func TestFunctionScale(t *testing.T) {
 	scale, err := NewScale(
 		"function",

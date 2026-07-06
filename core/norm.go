@@ -485,6 +485,11 @@ func (n TwoSlopeNorm) Map(value float64) float64 {
 }
 
 func (n TwoSlopeNorm) Inverse(value float64) (float64, bool) {
+	// Signal "not invertible" for partially-initialized bounds, consistent with
+	// Map (returns NaN) and the other norms' Inverse (return ok=false).
+	if !isFinite(n.VMin) || !isFinite(n.VCenter) || !isFinite(n.VMax) {
+		return 0, false
+	}
 	// Mirror the forward ±inf extrapolation (colors.py TwoSlopeNorm.inverse uses
 	// np.interp(value, [0, 0.5, 1], [vmin, vcenter, vmax], left=-inf, right=inf)).
 	if value < 0 {

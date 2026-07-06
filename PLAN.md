@@ -849,9 +849,10 @@ artist gaps that have no workaround.
       _Shipped 2026-07-06._
 - [x] `hist(log=)` — `HistOptions` (`core/plot.go`) gained a `Log bool` field;
       `Hist()` now calls `SetYScale("log", WithScaleNonPositive(NonPositiveClip))`
-      when set, matching matplotlib's `hist(log=True)` → `set_yscale('log',
-nonpositive='clip')` (histograms here are vertical-only, so it always targets
-      the y axis; the clip keeps the zero baseline finite instead of masking to NaN).
+      when set, matching matplotlib's `hist(log=True)` →
+      `set_yscale('log', nonpositive='clip')` (histograms here are vertical-only, so
+      it always targets the y axis; the clip keeps the zero baseline finite instead
+      of masking to NaN).
       Tests: `TestHistLogSetsYScaleToLog` + `TestHistWithoutLogKeepsLinearYScale`.
       New Showcase example `examples/hist_log` + parity case `hist_log` (golden
       byte-identical; matplotlib-ref RMSE 0.36 / PSNR 57.5 dB). Zero churn on the

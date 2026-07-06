@@ -401,6 +401,11 @@ func NewLogit(minVal, maxVal float64, nonPositive NonPositiveMode, clipEpsilon f
 	if clipEpsilon <= 0 || clipEpsilon >= 0.5 {
 		clipEpsilon = 1e-6
 	}
+	// Repair the domain endpoints into (0, 1) up front — same as WithDomain and
+	// the registry factory. Otherwise a degenerate domain like (0, 1) would be
+	// fed straight into transform(Min)/transform(Max), which now emit the ∓1000
+	// clip sentinel and collapse every probability toward the axis midpoint.
+	minVal, maxVal = normalizeLogitDomain(minVal, maxVal, clipEpsilon)
 	return Logit{
 		Min:         minVal,
 		Max:         maxVal,
