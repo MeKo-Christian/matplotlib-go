@@ -509,6 +509,54 @@ func TestBarErrorBarsPlacementLikeMatplotlib(t *testing.T) {
 	}
 }
 
+func TestBarErrorKwColorIsPreserved(t *testing.T) {
+	// An ErrorKw.Color passthrough must survive when no top-level ECol is set
+	// (matplotlib error_kw precedence); the default black must not clobber it.
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	red := render.Color{R: 1, G: 0, B: 0, A: 1}
+	bar := ax.Bar([]float64{0, 1, 2}, []float64{3, 8, 6}, BarOptions{
+		YErr:    []float64{0.5, 1, 0.75},
+		ErrorKw: &ErrorBarOptions{Color: &red},
+	})
+	if bar.errorbar == nil {
+		t.Fatal("expected an attached error bar")
+	}
+	if bar.errorbar.Color != red {
+		t.Fatalf("error color = %+v, want ErrorKw red %+v", bar.errorbar.Color, red)
+	}
+
+	// A top-level ECol still wins over the ErrorKw color.
+	blue := render.Color{R: 0, G: 0, B: 1, A: 1}
+	bar2 := ax.Bar([]float64{0, 1}, []float64{3, 8}, BarOptions{
+		YErr:    []float64{0.5, 1},
+		ECol:    &blue,
+		ErrorKw: &ErrorBarOptions{Color: &red},
+	})
+	if bar2.errorbar.Color != blue {
+		t.Fatalf("error color = %+v, want ECol blue %+v (ECol beats ErrorKw)", bar2.errorbar.Color, blue)
+	}
+}
+
+func TestBarErrorBarsDoNotAdvanceColorCycle(t *testing.T) {
+	// The hidden fmt="none" error-bar helper must not consume the axes color
+	// cycle, so a series added after a bar-with-errors gets the same color it
+	// would without YErr.
+	withErr := NewFigure(800, 600)
+	axE := withErr.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	axE.Bar([]float64{0, 1, 2}, []float64{3, 8, 6}, BarOptions{YErr: []float64{0.5, 1, 0.75}})
+	afterErr := axE.NextColor()
+
+	noErr := NewFigure(800, 600)
+	axN := noErr.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	axN.Bar([]float64{0, 1, 2}, []float64{3, 8, 6})
+	afterNoErr := axN.NextColor()
+
+	if afterErr != afterNoErr {
+		t.Fatalf("color after bar+yerr = %+v, want same as bar without yerr %+v (error bars advanced the cycle)", afterErr, afterNoErr)
+	}
+}
+
 func TestBarWithoutErrorDataHasNoErrorBar(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})

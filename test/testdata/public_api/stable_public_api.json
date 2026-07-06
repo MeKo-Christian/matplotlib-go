@@ -2786,6 +2786,10 @@
           "declaration": "func (ColorCycle) Reset()"
         },
         {
+          "id": "method ColorCycle.SetIndex",
+          "declaration": "func (ColorCycle) SetIndex(index int)"
+        },
+        {
           "id": "method Colormap.At",
           "declaration": "func (Colormap) At(t float64) render.Color"
         },

@@ -753,19 +753,25 @@ func (b *Bar2D) addErrorBars(a *Axes, opt *BarOptions) {
 	}
 
 	// Start from the ErrorKw passthrough (asymmetric errors, errorevery, …); the
-	// bar-level ecolor/capsize/capthick/label take precedence (matplotlib
-	// error_kw.setdefault semantics).
+	// bar-level fields then apply with fmt="none" data-line suppression.
 	var eb ErrorBarOptions
 	if opt.ErrorKw != nil {
 		eb = *opt.ErrorKw
 	}
 	eb.NoDataLine = true
 	eb.Label = ""
-	ecolor := render.Color{R: 0, G: 0, B: 0, A: 1} // matplotlib default 'k'
-	if opt.ECol != nil {
-		ecolor = *opt.ECol
+	// ecolor precedence mirrors matplotlib's error_kw.setdefault: an explicit
+	// ECol wins, else an ErrorKw.Color passthrough is preserved, else the default
+	// black ('k'). Never clobber a caller-supplied ErrorKw color.
+	switch {
+	case opt.ECol != nil:
+		ecolor := *opt.ECol
+		eb.Color = &ecolor
+	case eb.Color != nil:
+		// keep the ErrorKw passthrough color
+	default:
+		eb.Color = &render.Color{R: 0, G: 0, B: 0, A: 1}
 	}
-	eb.Color = &ecolor
 	if opt.CapSize != nil {
 		eb.CapSize = opt.CapSize
 	}
@@ -773,7 +779,17 @@ func (b *Bar2D) addErrorBars(a *Axes, opt *BarOptions) {
 		eb.CapThick = opt.CapThick
 	}
 
+	// Bar error bars are matplotlib's hidden fmt="none" helper and must not
+	// consume the axes color cycle. Axes.ErrorBar advances the cycle
+	// unconditionally, so snapshot and restore the index around the call.
+	savedCycleIndex := 0
+	if a.ColorCycle != nil {
+		savedCycleIndex = a.ColorCycle.Index()
+	}
 	b.errorbar = a.ErrorBar(ex, ey, opt.XErr, opt.YErr, eb)
+	if a.ColorCycle != nil {
+		a.ColorCycle.SetIndex(savedCycleIndex)
+	}
 }
 
 func validBarOptionLength(length, n int) bool {
