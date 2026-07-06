@@ -620,6 +620,66 @@ func (r *vectorTextRenderer) MeasureText(text string, size float64, _ string) re
 	}
 }
 
+// TestQuiverDefaultScaleMatchesMatplotlib locks the default (unset-scale) quiver
+// autoscale to matplotlib 3.10.9's quiver.py:673-681 formula
+// scale = 1.8 * amean * sn / span, with sn = max(10, sqrt(N)) and span = 1 for the
+// default units="width". The value was verified against system matplotlib 3.10.9
+// (span==1.0, self.N==total arrows, scale==1.8*amean*sn) for both sub-cases.
+// Because baseDisplayLengthAt folds dotsPerUnit("width")==Clip.W() into the mean and
+// the target divides it back out, the expected scale is clip-independent.
+func TestQuiverDefaultScaleMatchesMatplotlib(t *testing.T) {
+	cases := []struct {
+		name string
+		n    int
+	}{
+		{"small-N-floor", 4},  // sn = max(10, sqrt(4)) = 10 (floor engaged)
+		{"large-N-sqrt", 144}, // sn = sqrt(144) = 12
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fig := NewFigure(400, 300)
+			ax := fig.AddAxes(geom.Rect{
+				Min: geom.Pt{X: 0.1, Y: 0.1},
+				Max: geom.Pt{X: 0.9, Y: 0.9},
+			})
+			ax.SetXLim(0, 10)
+			ax.SetYLim(0, 10)
+			ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
+
+			anchors := make([]geom.Pt, tc.n)
+			us := make([]float64, tc.n)
+			vs := make([]float64, tc.n)
+			var sumMag float64
+			for i := 0; i < tc.n; i++ {
+				u := float64(1 + i%3) // 1,2,3,1,2,3,...
+				v := float64(1 + i%2) // 1,2,1,2,...
+				anchors[i] = geom.Pt{X: float64(i % 10), Y: float64(i / 10)}
+				us[i], vs[i] = u, v
+				sumMag += math.Hypot(u, v)
+			}
+			amean := sumMag / float64(tc.n)
+			sn := math.Sqrt(float64(tc.n))
+			if sn < 10 {
+				sn = 10
+			}
+			want := 1.8 * amean * sn // matplotlib scale (span==1 for units="width")
+
+			q := &Quiver{
+				Anchors: anchors,
+				U:       us,
+				V:       vs,
+				Angles:  quiverAnglesUV,
+				// ScaleUnits/Units default to "width"; ScaleSet=false; forceLengthPx=0.
+			}
+			got := q.renderState(ctx).scale
+			if math.Abs(got-want) > 1e-9*math.Max(1, math.Abs(want)) {
+				t.Fatalf("default quiver scale = %.12g, want 1.8*amean*sn = %.12g (amean=%.6g sn=%.6g)",
+					got, want, amean, sn)
+			}
+		})
+	}
+}
+
 func intPtr(v int) *int {
 	return &v
 }

@@ -343,10 +343,19 @@ func (q *Quiver) renderState(ctx *DrawContext) vectorRenderState {
 				mean += value
 			}
 			mean /= float64(len(baseLengths))
-			target := 0.18 * math.Min(ctx.Clip.W(), ctx.Clip.H())
-			if len(baseLengths) > 1 {
-				target /= math.Max(1, math.Sqrt(float64(len(baseLengths))))
+			// matplotlib quiver default autoscale (quiver.py:673-681):
+			//   sn    = max(10, sqrt(N))          # N = total arrow count (self.N)
+			//   scale = 1.8 * amean * sn / span   # span = 1 for the default units="width"
+			// Here mean is in pixels (amean * dotsPerUnit("width") == amean * Clip.W()),
+			// so the equivalent pixel-space target arrow length is
+			//   target = Clip.W() / (1.8 * sn)   and   scale = mean / target.
+			// sn uses the total anchor count (matplotlib's self.N), while mean averages
+			// only the finite/positive arrows (matplotlib's unmasked a[~Umask].mean()).
+			sn := math.Sqrt(float64(len(q.Anchors)))
+			if sn < 10 {
+				sn = 10
 			}
+			target := ctx.Clip.W() / (1.8 * sn)
 			if target <= 0 {
 				target = 1
 			}
