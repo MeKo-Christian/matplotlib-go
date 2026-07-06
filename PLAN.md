@@ -810,10 +810,15 @@ mathtext honoring blocked on a cwbudde/mathtext library hook.
 **Goal:** fix the concrete divergences the audit pinned down and fill the narrow
 artist gaps that have no workaround.
 
-- [ ] `core/tick_locators.go:683` — `LogLocator` default stride uses
-      `ceil(numDecades/numTicks)` vs matplotlib's `numdec//numticks + 1` (off-by-a-
-      decade on dense log axes). Port the integer formula; add the "≤1 minor tick →
-      AutoLocator" fallback.
+- [x] `core/tick_locators.go` — `LogLocator` default stride now uses matplotlib's
+      `numDecades/numTicks + 1` (integer floor-div) instead of `ceil(numDecades/numTicks)`;
+      the two only diverge when `numDecades` is an exact multiple of `numTicks` (Go and
+      mpl share the same floating-point `numdec`, so the common few-decade axes were
+      already stride-correct — **zero golden churn**). Added the "≤1 in-view minor tick →
+      `AutoLocator`" fallback (mirrors `ticker.py` LogLocator.tick*values). Tests:
+      `TestLogLocatorStrideAndInvalidDomains` gained `base10-/base2-exact-multiple` cases
+      (verified against matplotlib 3.10.9) and `TestLogLocatorMinorFallsBackToAutoLocator`.
+      \_Shipped 2026-07-06.*
 - [ ] `core/contour_lines.go:215` — saddle disambiguation keys off `above[0]` with
       fixed corner order and never computes the cell-center mean that mpl2014 uses,
       emitting all four crossings as one polyline. Port the cell-mean saddle split (the
@@ -854,12 +859,19 @@ file:line-verified on both sides:**
 - [ ] `core/axis_types.go:57` — spine `set_position(('outward', pts))` and
       `(('axes', frac))` are missing; only boundary + data modes exist. Port both
       (the standard detached/centered-spine idioms).
-- [ ] `core/date_tick.go:648` — `AutoDateLocator` DAILY interval table is
-      `{1,2,4,7,14}` vs matplotlib's `{1,2,3,7,14,21}`. Fix the table. (The full
-      rrule alignment simplification stays a documented divergence.)
-- [ ] `core/pie.go:245` — pie axes framing is radius-scaled
-      (`padding := Radius*1.25`); matplotlib uses a fixed `±1.25 + center` data
-      window regardless of radius. Port the fixed framing.
+- [x] `core/date_tick.go` — DAILY interval table: **already correct** (the audit
+      note was stale). `chooseDateTickInterval` (date_tick.go:711-726) already carries
+      **both** matplotlib tables keyed on `date.interval_multiples`: `{1,2,3,7,14,21}`
+      for `False` and `{1,2,4,7,14}` for `True` (the AutoDateLocator default), byte-matching
+      `dates.py:1300/1312`. Covered by `date_rc_test.go:35/79`. No change needed.
+      (The full rrule alignment simplification stays a documented divergence.)
+- [x] `core/pie.go` — pie framing is now radius-independent: the default (`frame=false`)
+      pie uses a fixed `±1.25 + center` data window regardless of radius (was
+      `Radius*1.25`), and `frame=true` keeps the frame and lets autoscale fit the wedges,
+      matching matplotlib's pie() `_request_autoscale_view()` / fixed-xlim branches.
+      Test: `TestAxesPieFixedWindowIsRadiusIndependent` (radii 0.5/1/2, off-origin center).
+      Zero golden churn (`specialty_artists` uses the default radius, so the window was
+      already `≈±1.25`). _Shipped 2026-07-06._
 - [ ] `core/layoutgrid.go:239` / `:448` — nested-mosaic constrained_layout is
       not modeled and outside legend/colorbar space is approximated. **Triage:**
       scope the shared-margin modeling cost; if not justified by a parity case,

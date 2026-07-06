@@ -242,11 +242,17 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 	}
 
 	if cfg.Coords == Coords(CoordData) {
-		padding := cfg.Radius * 1.25
-		a.SetXLim(cfg.Center.X-padding, cfg.Center.X+padding)
-		a.SetYLim(cfg.Center.Y-padding, cfg.Center.Y+padding)
 		a.SetAxisEqual()
-		if !specialtyBool(cfg.Frame, false) {
+		if specialtyBool(cfg.Frame, false) {
+			// frame=true: keep the frame and let autoscale fit the wedges,
+			// mirroring matplotlib's pie() self._request_autoscale_view().
+		} else {
+			// Default frame=false: a fixed ±1.25 data window around the
+			// center, independent of radius, with the frame hidden. Matches
+			// matplotlib's xlim/ylim = (-1.25 + center, 1.25 + center); the
+			// window must not scale with the pie radius.
+			a.SetXLim(cfg.Center.X-1.25, cfg.Center.X+1.25)
+			a.SetYLim(cfg.Center.Y-1.25, cfg.Center.Y+1.25)
 			hideAxesFrame(a)
 		}
 	}

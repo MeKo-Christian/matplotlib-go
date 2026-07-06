@@ -265,6 +265,32 @@ func TestAxesPieCreatesWedgesAndLabels(t *testing.T) {
 	}
 }
 
+func TestAxesPieFixedWindowIsRadiusIndependent(t *testing.T) {
+	// matplotlib frames a default (frame=false) pie with a fixed data window of
+	// (-1.25 + center, 1.25 + center) on both axes, regardless of the wedge
+	// radius. Assert the window does not scale with a non-default radius.
+	for _, radius := range []float64{0.5, 1, 2} {
+		fig := NewFigure(640, 480)
+		ax := fig.AddAxes(geom.Rect{
+			Min: geom.Pt{X: 0.1, Y: 0.1},
+			Max: geom.Pt{X: 0.9, Y: 0.9},
+		})
+		center := geom.Pt{X: 0.3, Y: -0.4}
+		if pie := ax.Pie([]float64{1, 1, 2}, PieOptions{Radius: radius, Center: center}); pie == nil {
+			t.Fatalf("radius %.1f: expected pie container", radius)
+		}
+		xMin, xMax := ax.XScale.Domain()
+		yMin, yMax := ax.YScale.Domain()
+		const tol = 1e-9
+		if math.Abs(xMin-(center.X-1.25)) > tol || math.Abs(xMax-(center.X+1.25)) > tol {
+			t.Fatalf("radius %.1f: x window = [%.4f, %.4f], want [%.4f, %.4f]", radius, xMin, xMax, center.X-1.25, center.X+1.25)
+		}
+		if math.Abs(yMin-(center.Y-1.25)) > tol || math.Abs(yMax-(center.Y+1.25)) > tol {
+			t.Fatalf("radius %.1f: y window = [%.4f, %.4f], want [%.4f, %.4f]", radius, yMin, yMax, center.Y-1.25, center.Y+1.25)
+		}
+	}
+}
+
 func TestAxesPieAdvancedOptionsAndPieLabel(t *testing.T) {
 	ax := NewFigure(640, 480).AddAxes(geom.Rect{})
 	normalize := false

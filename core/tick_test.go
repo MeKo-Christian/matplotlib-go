@@ -382,6 +382,24 @@ func TestLogLocatorStrideAndInvalidDomains(t *testing.T) {
 			want:   []float64{1e-3, 1, 1e3, 1e6, 1e9, 1e12, 1e15},
 		},
 		{
+			// numdec (8) is an exact multiple of numticks (4): matplotlib's
+			// numdec//numticks+1 gives stride 3, one wider than a plain
+			// ceil(8/4)=2. Verified against matplotlib 3.10.9.
+			name:   "base10-exact-multiple",
+			loc:    LogLocator{Base: 10, NumTicks: 4},
+			minVal: 1,
+			maxVal: 1e8,
+			want:   []float64{1e-3, 1, 1e3, 1e6, 1e9, 1e12},
+		},
+		{
+			// base-2 exact-multiple case (numdec 8, numticks 4 -> stride 3).
+			name:   "base2-exact-multiple",
+			loc:    LogLocator{Base: 2, NumTicks: 4},
+			minVal: 1,
+			maxVal: 256,
+			want:   []float64{0.125, 1, 8, 64, 512, 4096},
+		},
+		{
 			name:   "inverted-domain",
 			loc:    LogLocator{Base: 10},
 			minVal: 100,
@@ -406,6 +424,27 @@ func TestLogLocatorStrideAndInvalidDomains(t *testing.T) {
 	}
 	if got := (LogLocator{Base: 1}).Ticks(1, 100, 0); len(got) != 0 {
 		t.Fatalf("invalid-base log ticks = %v, want none", got)
+	}
+}
+
+// TestLogLocatorMinorFallsBackToAutoLocator mirrors matplotlib's
+// LogLocator.tick_values fallback: a genuine minor locator (more than one sub)
+// whose major stride is 1 but yields at most one in-view tick hands off to
+// AutoLocator instead of returning a near-empty set.
+func TestLogLocatorMinorFallsBackToAutoLocator(t *testing.T) {
+	loc := LogLocator{Base: 10, Subs: []float64{2, 3, 4, 5, 6, 7, 8, 9}}
+	got := loc.Ticks(1.0, 1.5, 0)
+	want := (AutoLocator{}).Ticks(1.0, 1.5, 0)
+	if len(want) == 0 {
+		t.Fatalf("AutoLocator produced no ticks for [1,1.5]; test premise invalid")
+	}
+	if len(got) != len(want) {
+		t.Fatalf("log minor fallback ticks = %v, want AutoLocator %v", got, want)
+	}
+	for i := range want {
+		if math.Abs(got[i]-want[i]) > 1e-12*math.Max(1, math.Abs(want[i])) {
+			t.Fatalf("log minor fallback tick %d = %.17g, want AutoLocator %.17g (%v)", i, got[i], want[i], want)
+		}
 	}
 }
 

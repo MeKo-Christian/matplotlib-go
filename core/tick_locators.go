@@ -680,10 +680,11 @@ func (l LogLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 
 	stride := 1
 	if numDecades > 0 {
-		stride = int(math.Ceil(float64(numDecades) / float64(numTicks)))
-		if stride < 1 {
-			stride = 1
-		}
+		// Decades between major ticks. Matplotlib's non-classic default
+		// (ticker.py LogLocator.tick_values): numdec // numticks + 1. This
+		// differs from a plain ceil(numdec/numticks) only when numdec is an
+		// exact multiple of numticks, where matplotlib takes one wider stride.
+		stride = numDecades/numTicks + 1
 		if stride >= numDecades {
 			stride = max(1, numDecades-1)
 		}
@@ -713,6 +714,20 @@ func (l LogLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
 			out = append(out, v)
 			last = v
 			first = false
+		}
+	}
+	// Matplotlib fallback (ticker.py LogLocator.tick_values): a genuine minor
+	// locator (more than one sub) whose major stride is 1 but yields at most one
+	// tick inside the view is too sparse, so it hands off to AutoLocator.
+	if len(multipliers) > 1 && stride == 1 {
+		inView := 0
+		for _, v := range out {
+			if v >= minVal && v <= maxVal {
+				inView++
+			}
+		}
+		if inView <= 1 {
+			return AutoLocator{}.Ticks(minVal, maxVal, targetCount)
 		}
 	}
 	return out
