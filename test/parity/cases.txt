@@ -26,6 +26,7 @@ multi_series_color_cycle
 legend_layout_matrix
 text_annotation_matrix
 hist_basic
+hist_log
 hist_density
 hist_strategies
 boxplot_basic
