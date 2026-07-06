@@ -29,6 +29,7 @@ import (
 	showcase_geo_mollweide_axes "github.com/cwbudde/matplotlib-go/examples/geo_mollweide_axes"
 	showcase_gridspec_composition "github.com/cwbudde/matplotlib-go/examples/gridspec_composition"
 	showcase_hist_basic "github.com/cwbudde/matplotlib-go/examples/hist_basic"
+	showcase_hist_log "github.com/cwbudde/matplotlib-go/examples/hist_log"
 	showcase_histogram_variants "github.com/cwbudde/matplotlib-go/examples/histogram_variants"
 	showcase_image_heatmap "github.com/cwbudde/matplotlib-go/examples/image_heatmap"
 	showcase_image_variants_gallery "github.com/cwbudde/matplotlib-go/examples/image_variants_gallery"
@@ -121,6 +122,7 @@ import (
 	example_hist2d_weighted_density "github.com/cwbudde/matplotlib-go/test/parity/hist2d_weighted_density"
 	example_hist_basic "github.com/cwbudde/matplotlib-go/test/parity/hist_basic"
 	example_hist_density "github.com/cwbudde/matplotlib-go/test/parity/hist_density"
+	example_hist_log "github.com/cwbudde/matplotlib-go/test/parity/hist_log"
 	example_hist_strategies "github.com/cwbudde/matplotlib-go/test/parity/hist_strategies"
 	example_histogram_variants "github.com/cwbudde/matplotlib-go/test/parity/histogram_variants"
 	example_image_alpha "github.com/cwbudde/matplotlib-go/test/parity/image_alpha"
@@ -287,6 +289,7 @@ var renderByID = map[string]func() image.Image{
 	"text_annotation_matrix":              example_text_annotation_matrix.Render,
 	"text_bbox_styles":                    example_text_bbox_styles.Render,
 	"hist_basic":                          example_hist_basic.Render,
+	"hist_log":                            example_hist_log.Render,
 	"hist_density":                        example_hist_density.Render,
 	"hist_strategies":                     example_hist_strategies.Render,
 	"boxplot_basic":                       example_boxplot_basic.Render,
@@ -480,6 +483,7 @@ var figureByID = map[string]func() *core.Figure{
 	"scatter_gallery":                     showcase_scatter_gallery.Plot,
 	"lines_markers_gallery":               showcase_lines_markers_gallery.Plot,
 	"hist_basic":                          showcase_hist_basic.Plot,
+	"hist_log":                            showcase_hist_log.Plot,
 	"mesh_contour_tri":                    showcase_mesh_contour_tri.Plot,
 	"image_heatmap":                       showcase_image_heatmap.Plot,
 	"image_variants_gallery":              showcase_image_variants_gallery.Plot,

@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 func TestHist2D_Draw_Basic(t *testing.T) {
@@ -353,6 +354,42 @@ func TestAxes_Hist_Options(t *testing.T) {
 	}
 	if hist.Label != "test" {
 		t.Errorf("expected label 'test', got %q", hist.Label)
+	}
+}
+
+func TestHistLogSetsYScaleToLog(t *testing.T) {
+	fig := NewFigure(640, 360)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+
+	if _, ok := ax.YScale.(transform.Linear); !ok {
+		t.Fatalf("precondition: y scale = %T, want transform.Linear", ax.YScale)
+	}
+
+	hist := ax.Hist([]float64{1, 2, 2, 3, 3, 3, 4, 4, 5}, HistOptions{Log: true})
+	if hist == nil {
+		t.Fatal("expected non-nil histogram")
+	}
+
+	logScale, ok := ax.YScale.(transform.Log)
+	if !ok {
+		t.Fatalf("Log=true y scale = %T, want transform.Log", ax.YScale)
+	}
+	// matplotlib uses nonpositive='clip', so the zero baseline stays finite
+	// under the log forward transform instead of masking to NaN.
+	if got := logScale.Fwd(0); math.IsNaN(got) || math.IsInf(got, 0) {
+		t.Fatalf("clipped log forward of 0 should stay finite, got %v", got)
+	}
+}
+
+func TestHistWithoutLogKeepsLinearYScale(t *testing.T) {
+	fig := NewFigure(640, 360)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+
+	if hist := ax.Hist([]float64{1, 2, 3, 4, 5}); hist == nil {
+		t.Fatal("expected non-nil histogram")
+	}
+	if _, ok := ax.YScale.(transform.Linear); !ok {
+		t.Fatalf("default y scale = %T, want transform.Linear", ax.YScale)
 	}
 }
 

@@ -112,6 +112,7 @@ var cases = []Case{
 	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MaxRMSE: 3.3},
 	{ID: "text_annotation_matrix", Topic: "annotation", Title: "Text Annotation Matrix", FixtureOnly: true, MaxRMSE: 4.2},
 	{ID: "hist_basic", Topic: "histogram", Title: "Histogram Counts", Description: "A deterministic histogram with count bins, labels, and default bar styling.", Showcase: true, SVGGoldenFamily: "hist", GoBasicSmokeFamily: "histogram", SkiaParityFamily: "histogram", MaxRMSE: 1.1},
+	{ID: "hist_log", Topic: "histogram", Title: "Logarithmic Histogram", Description: "A count histogram on a logarithmic y axis, matching matplotlib hist(log=True).", Showcase: true, MaxRMSE: 1.1},
 	{ID: "hist_density", Topic: "histogram", Title: "Histogram Density", MaxRMSE: 1.3},
 	{ID: "hist_strategies", Topic: "histogram", Title: "Histogram Strategies", MaxRMSE: 2.0},
 	{ID: "histogram_variants", Topic: "histogram", Title: "Histogram Variants Gallery", Description: "A combined gallery of count, density, cumulative, and overlapping probability histograms over deterministic samples.", WebDemoID: "histogram", Showcase: true, Width: 840, Height: 620, MinPSNR: 45.0, MaxMeanAbs: 1.5, MaxRMSE: 1.6},
