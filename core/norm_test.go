@@ -156,6 +156,21 @@ func TestCenteredAndNonlinearNormsMatchUpstreamAudit(t *testing.T) {
 			t.Fatalf("TwoSlopeNorm.Inverse(%v) = %v ok=%v, want %v ok=true", value, got, ok, want)
 		}
 	}
+	// Out-of-range values extrapolate to ±inf so the colormap routes them to the
+	// under/over colors, matching np.interp(..., left=-inf, right=inf) in
+	// matplotlib's TwoSlopeNorm.__call__/inverse.
+	if got := twoSlope.Map(-5); !math.IsInf(got, -1) {
+		t.Fatalf("TwoSlopeNorm.Map(below vmin) = %v, want -inf", got)
+	}
+	if got := twoSlope.Map(3); !math.IsInf(got, 1) {
+		t.Fatalf("TwoSlopeNorm.Map(above vmax) = %v, want +inf", got)
+	}
+	if got, ok := twoSlope.Inverse(-0.1); !ok || !math.IsInf(got, -1) {
+		t.Fatalf("TwoSlopeNorm.Inverse(<0) = %v ok=%v, want -inf ok=true", got, ok)
+	}
+	if got, ok := twoSlope.Inverse(1.1); !ok || !math.IsInf(got, 1) {
+		t.Fatalf("TwoSlopeNorm.Inverse(>1) = %v ok=%v, want +inf ok=true", got, ok)
+	}
 	autoscaled := (TwoSlopeNorm{VCenter: 0, VMin: math.NaN(), VMax: math.NaN()}).Autoscale([]float64{2, 4}).(TwoSlopeNorm)
 	if autoscaled.VMin != -4 || autoscaled.VMax != 4 {
 		t.Fatalf("TwoSlopeNorm autoscaled range = %v..%v, want -4..4", autoscaled.VMin, autoscaled.VMax)

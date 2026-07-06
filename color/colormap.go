@@ -137,11 +137,14 @@ func (c Colormap) At(t float64) render.Color {
 }
 
 // AtValue returns a color for a possibly out-of-range normalized value.
-// NaN/Inf values use the bad color, values below zero use under, and values
-// above one use over. When under/over are not configured, the colormap
-// endpoints are used, matching Matplotlib's default behavior.
+// NaN uses the bad color, values below zero use under (this includes -inf), and
+// values above one use over (this includes +inf). This mirrors Matplotlib's
+// Colormap.__call__, where a norm emits -inf/+inf for out-of-range inputs and
+// only masked (NaN) values map to the bad color. When under/over/bad are not
+// configured, the colormap endpoints (bad → transparent) are used, matching
+// Matplotlib's default behavior.
 func (c Colormap) AtValue(t float64) render.Color {
-	if math.IsNaN(t) || math.IsInf(t, 0) {
+	if math.IsNaN(t) {
 		if c.hasBad {
 			return c.bad
 		}

@@ -468,6 +468,16 @@ func (n TwoSlopeNorm) Map(value float64) float64 {
 	if !isFinite(value) || !isFinite(n.VMin) || !isFinite(n.VCenter) || !isFinite(n.VMax) {
 		return math.NaN()
 	}
+	// Matplotlib extrapolates out-of-range values to ±inf via
+	// np.interp(..., left=-inf, right=inf) over [vmin, vcenter, vmax]
+	// (colors.py TwoSlopeNorm.__call__), so the colormap can route them to the
+	// under/over colors rather than clamping.
+	if value < n.VMin {
+		return math.Inf(-1)
+	}
+	if value > n.VMax {
+		return math.Inf(1)
+	}
 	if value <= n.VCenter {
 		return 0.5 * (value - n.VMin) / (n.VCenter - n.VMin)
 	}
@@ -475,6 +485,14 @@ func (n TwoSlopeNorm) Map(value float64) float64 {
 }
 
 func (n TwoSlopeNorm) Inverse(value float64) (float64, bool) {
+	// Mirror the forward ±inf extrapolation (colors.py TwoSlopeNorm.inverse uses
+	// np.interp(value, [0, 0.5, 1], [vmin, vcenter, vmax], left=-inf, right=inf)).
+	if value < 0 {
+		return math.Inf(-1), true
+	}
+	if value > 1 {
+		return math.Inf(1), true
+	}
 	if value <= 0.5 {
 		return n.VMin + (value/0.5)*(n.VCenter-n.VMin), true
 	}
