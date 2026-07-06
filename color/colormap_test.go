@@ -265,6 +265,15 @@ func TestColormapAtValueUsesBadUnderAndOverColors(t *testing.T) {
 	if got := c.AtValue(0.5); got.R < 0.49 || got.R > 0.51 {
 		t.Fatalf("in-range color = %#v, want midpoint", got)
 	}
+	// A norm emits -inf/+inf for out-of-range inputs (e.g. TwoSlopeNorm); these
+	// route to under/over, not the bad color (only NaN is bad), matching
+	// matplotlib's Colormap.__call__.
+	if got := c.AtValue(math.Inf(-1)); got != under {
+		t.Fatalf("-inf color = %#v, want under %#v", got, under)
+	}
+	if got := c.AtValue(math.Inf(1)); got != over {
+		t.Fatalf("+inf color = %#v, want over %#v", got, over)
+	}
 }
 
 func TestColormapAtValueDefaultsBadTransparentAndUnderOverEndpoints(t *testing.T) {
@@ -281,6 +290,12 @@ func TestColormapAtValueDefaultsBadTransparentAndUnderOverEndpoints(t *testing.T
 	}
 	if got, want := c.AtValue(2), c.At(1); got != want {
 		t.Fatalf("default over = %#v, want high endpoint %#v", got, want)
+	}
+	if got, want := c.AtValue(math.Inf(-1)), c.At(0); got != want {
+		t.Fatalf("default -inf = %#v, want low endpoint %#v", got, want)
+	}
+	if got, want := c.AtValue(math.Inf(1)), c.At(1); got != want {
+		t.Fatalf("default +inf = %#v, want high endpoint %#v", got, want)
 	}
 }
 
@@ -329,8 +344,8 @@ func TestScalarColormapLookupCoversShapeAlphaAndBadValues(t *testing.T) {
 		want render.Color
 	}{
 		{t: math.NaN(), want: bad},
-		{t: math.Inf(1), want: bad},
-		{t: math.Inf(-1), want: bad},
+		{t: math.Inf(1), want: over},
+		{t: math.Inf(-1), want: under},
 		{t: -0.01, want: under},
 		{t: 1.01, want: over},
 	} {

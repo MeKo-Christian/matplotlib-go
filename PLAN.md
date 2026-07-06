@@ -849,9 +849,10 @@ artist gaps that have no workaround.
       _Shipped 2026-07-06._
 - [x] `hist(log=)` — `HistOptions` (`core/plot.go`) gained a `Log bool` field;
       `Hist()` now calls `SetYScale("log", WithScaleNonPositive(NonPositiveClip))`
-      when set, matching matplotlib's `hist(log=True)` → `set_yscale('log',
-    nonpositive='clip')` (histograms here are vertical-only, so it always targets
-      the y axis; the clip keeps the zero baseline finite instead of masking to NaN).
+      when set, matching matplotlib's `hist(log=True)` →
+      `set_yscale('log', nonpositive='clip')` (histograms here are vertical-only, so
+      it always targets the y axis; the clip keeps the zero baseline finite instead
+      of masking to NaN).
       Tests: `TestHistLogSetsYScaleToLog` + `TestHistWithoutLogKeepsLinearYScale`.
       New Showcase example `examples/hist_log` + parity case `hist_log` (golden
       byte-identical; matplotlib-ref RMSE 0.36 / PSNR 57.5 dB). Zero churn on the
@@ -860,9 +861,23 @@ artist gaps that have no workaround.
       _family_ over the single DejaVu Unicode table; port matplotlib's
       `BakomaFonts`/`StixFonts` per-fontset glyph maps so non-DejaVu fontsets are
       parity-exact (currently only the DejaVu default is). Larger effort; scope first.
-- [ ] `core/norm.go` `TwoSlopeNorm` — out-of-range should map to ±inf
-      (`np.interp` left/right), not finite extrapolation; align log/logit clip
-      semantics (`scale_registry.go:636`) with mpl's `clip` default and `-1000` floor.
+- [x] `core/norm.go` `TwoSlopeNorm` — out-of-range now maps to ±inf. `Map`/`Inverse`
+      extrapolate `< VMin`/`> VMax` (and `< 0`/`> 1` for the inverse) to ∓inf, matching
+      `np.interp(..., left=-inf, right=inf)` in `colors.py` TwoSlopeNorm. Coupled fix in
+      `color/colormap.go` `AtValue`: `-inf`→under, `+inf`→over, only `NaN`→bad (was: all
+      `Inf`→bad), so the default under/over color falls back to `At(0)`/`At(1)` exactly as
+      matplotlib's `Colormap.__call__`. `twoslope_norm_image` golden stays byte-identical
+      (below-vmin cells already routed to `At(0)`). Log/logit clip semantics aligned too:
+      `Log.Fwd`/`Logit.transform` now pin the non-positive/out-of-range **log-space output**
+      to the ∓1000 sentinel (matplotlib `scale.py`) before normalizing, instead of
+      substituting a near-boundary input value; and matplotlib's LogScale default
+      `nonpositive='clip'` is honored via a new unspecified-mode resolver (`resolveLogNonPositive`)
+      plus `NewLog` defaulting to clip (logit default stays `mask`). `logClipFloor` is kept
+      for domain repair only. Tests: out-of-range ±inf in `norm_test.go`, three-way Inf
+      routing in `colormap_test.go`, sentinel/off-axis + default-clip in
+      `scale_registry_test.go`. Only golden churn: `hist_log` regenerated — its
+      matplotlib-ref parity **improved** from RMSE 0.36 to **0.16** (PSNR 57.5→68.0 dB).
+      _Shipped 2026-07-06._
 - [ ] Transform type-set breadth — add `ScaledTranslation`, `TransformWrapper`, and
       `Affine2D`-style `rotate/skew` builders; the separable→affine extraction is
       diagonal-only (`transform/transform.go:61`), so rotation/shear need manual matrix

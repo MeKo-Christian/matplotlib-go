@@ -211,7 +211,9 @@ type Log struct {
 }
 
 func NewLog(minVal, maxVal, base float64) Log {
-	return Log{Min: minVal, Max: maxVal, Base: base, NonPositive: NonPositiveMask}
+	// Matplotlib's LogScale defaults to nonpositive='clip' (scale.py), so
+	// non-positive data lands far below the axis rather than being masked away.
+	return Log{Min: minVal, Max: maxVal, Base: base, NonPositive: NonPositiveClip}
 }
 
 func (s Log) Domain() (float64, float64) { return s.Min, s.Max }
@@ -234,20 +236,27 @@ func (s Log) valid() bool {
 	return true
 }
 
+// logClipSentinel mirrors matplotlib's LogTransform clip value: non-positive
+// inputs have their log-space output pinned to -1000 (scale.py) so, once
+// normalized, the point falls far below the axis and is viewport-clipped.
+const logClipSentinel = -1000.0
+
 func (s Log) Fwd(x float64) float64 {
 	if !s.valid() {
 		return 0
 	}
+	lb := math.Log(s.Base)
+	lo := math.Log(s.Min) / lb
+	hi := math.Log(s.Max) / lb
+	var vx float64
 	if x <= 0 { // outside domain
 		if s.NonPositive != NonPositiveClip {
 			return math.NaN()
 		}
-		x = logClipFloor(s.Min, s.Max, s.Base)
+		vx = logClipSentinel
+	} else {
+		vx = math.Log(x) / lb
 	}
-	lb := math.Log(s.Base)
-	lo := math.Log(s.Min) / lb
-	hi := math.Log(s.Max) / lb
-	vx := math.Log(x) / lb
 	return (vx - lo) / (hi - lo)
 }
 

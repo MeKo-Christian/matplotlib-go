@@ -122,8 +122,43 @@ func TestLogitScale_RoundTrip(t *testing.T) {
 
 func TestLogScale_NonPositiveClip(t *testing.T) {
 	s := Log{Min: 1, Max: 100, Base: 10, NonPositive: NonPositiveClip}
-	if got := s.Fwd(-5); math.IsNaN(got) || math.IsInf(got, 0) {
+	// Non-positive input pins the log-space output to the -1000 sentinel
+	// (matplotlib scale.py), so the normalized coordinate is finite but lands
+	// far below the [0,1] axis span and is viewport-clipped.
+	got := s.Fwd(-5)
+	if math.IsNaN(got) || math.IsInf(got, 0) {
 		t.Fatalf("clipped log forward should stay finite, got %v", got)
+	}
+	if got >= 0 {
+		t.Fatalf("clipped log forward = %v, want far below 0 (off-axis)", got)
+	}
+	// mask mode masks the same input to NaN instead.
+	mask := Log{Min: 1, Max: 100, Base: 10, NonPositive: NonPositiveMask}
+	if masked := mask.Fwd(-5); !math.IsNaN(masked) {
+		t.Fatalf("masked log forward should be NaN, got %v", masked)
+	}
+}
+
+func TestLog_DefaultNonPositiveIsClip(t *testing.T) {
+	// Matplotlib's LogScale defaults to nonpositive='clip'. Both the direct
+	// constructor and the registry factory (no explicit WithScaleNonPositive)
+	// must clip, not mask.
+	if got := NewLog(1, 100, 10).Fwd(-5); math.IsNaN(got) {
+		t.Fatalf("NewLog default forward of non-positive = NaN, want finite clip")
+	}
+	scale, err := NewScale("log", WithScaleDomain(1, 100), WithScaleBase(10))
+	if err != nil {
+		t.Fatalf("NewScale(log): %v", err)
+	}
+	logScale, ok := scale.(Log)
+	if !ok {
+		t.Fatalf("scale type = %T, want Log", scale)
+	}
+	if logScale.NonPositive != NonPositiveClip {
+		t.Fatalf("default log NonPositive = %q, want %q", logScale.NonPositive, NonPositiveClip)
+	}
+	if got := logScale.Fwd(-5); math.IsNaN(got) {
+		t.Fatalf("default log factory forward of non-positive = NaN, want finite clip")
 	}
 }
 
@@ -157,8 +192,27 @@ func TestLogitScale_NonPositiveHandling(t *testing.T) {
 	}
 
 	clip := NewLogit(0.01, 0.99, NonPositiveClip, 1e-6)
-	if got := clip.Fwd(-0.5); math.IsNaN(got) || math.IsInf(got, 0) {
-		t.Fatalf("clipped logit forward should stay finite, got %v", got)
+	// Below 0 clips the logit output to -1000, above 1 to +1000 (matplotlib
+	// scale.py), so normalized coordinates land far below/above the axis.
+	if got := clip.Fwd(-0.5); math.IsNaN(got) || math.IsInf(got, 0) || got >= 0 {
+		t.Fatalf("clipped logit forward below 0 = %v, want finite and off the bottom", got)
+	}
+	if got := clip.Fwd(1.5); math.IsNaN(got) || math.IsInf(got, 0) || got <= 1 {
+		t.Fatalf("clipped logit forward above 1 = %v, want finite and off the top", got)
+	}
+}
+
+func TestNewLogit_RepairsDegenerateDomain(t *testing.T) {
+	// A degenerate (0, 1) domain must be repaired into (eps, 1-eps) so the axis
+	// endpoints do not fall on the ∓1000 clip sentinel and collapse every
+	// probability toward the midpoint.
+	s := NewLogit(0, 1, NonPositiveClip, 1e-6)
+	if s.Min <= 0 || s.Max >= 1 || s.Min >= s.Max {
+		t.Fatalf("NewLogit(0,1) domain = (%v, %v), want repaired into (0,1)", s.Min, s.Max)
+	}
+	// 0.01 sits well below the center; a collapsed scale would map it near 0.5.
+	if got := s.Fwd(0.01); got >= 0.45 {
+		t.Fatalf("NewLogit(0,1).Fwd(0.01) = %v, want well below the midpoint (uncollapsed)", got)
 	}
 }
 

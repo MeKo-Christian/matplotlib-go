@@ -45,7 +45,9 @@ func DefaultScaleOptions() ScaleOptions {
 		LinearScale: 1,
 		LinearWidth: 1,
 		ClipEpsilon: 1e-6,
-		NonPositive: NonPositiveMask,
+		// Unspecified: each scale factory resolves its own matplotlib default
+		// (log → clip, logit → mask). WithScaleNonPositive overrides it.
+		NonPositive: "",
 	}
 }
 
@@ -226,7 +228,7 @@ func registerBuiltInScales(r *ScaleRegistry) {
 			Min:         minVal,
 			Max:         maxVal,
 			Base:        opts.Base,
-			NonPositive: normalizeNonPositive(opts.NonPositive),
+			NonPositive: resolveLogNonPositive(opts.NonPositive),
 		}, nil
 	})
 	r.MustRegister("symlog", func(opts ScaleOptions) (Scale, error) {
@@ -399,6 +401,11 @@ func NewLogit(minVal, maxVal float64, nonPositive NonPositiveMode, clipEpsilon f
 	if clipEpsilon <= 0 || clipEpsilon >= 0.5 {
 		clipEpsilon = 1e-6
 	}
+	// Repair the domain endpoints into (0, 1) up front — same as WithDomain and
+	// the registry factory. Otherwise a degenerate domain like (0, 1) would be
+	// fed straight into transform(Min)/transform(Max), which now emit the ∓1000
+	// clip sentinel and collapse every probability toward the axis midpoint.
+	minVal, maxVal = normalizeLogitDomain(minVal, maxVal, clipEpsilon)
 	return Logit{
 		Min:         minVal,
 		Max:         maxVal,
@@ -433,11 +440,19 @@ func (s Logit) Inv(u float64) (float64, bool) {
 }
 
 func (s Logit) transform(x float64) (float64, bool) {
-	x, ok := s.normalize(x)
-	if !ok {
+	if x > 0 && x < 1 {
+		return math.Log(x / (1 - x)), true
+	}
+	// Out-of-range: matplotlib's LogitTransform clips the transformed output to
+	// ∓1000 (scale.py) in clip mode, or masks (NaN) otherwise, rather than
+	// substituting a near-boundary probability.
+	if s.NonPositive != NonPositiveClip {
 		return 0, false
 	}
-	return math.Log(x / (1 - x)), true
+	if x <= 0 {
+		return logClipSentinel, true
+	}
+	return -logClipSentinel, true
 }
 
 func (s Logit) inverse(y float64) (float64, bool) {
@@ -600,6 +615,16 @@ func normalizeNonPositive(mode NonPositiveMode) NonPositiveMode {
 	default:
 		return NonPositiveMask
 	}
+}
+
+// resolveLogNonPositive applies matplotlib's LogScale default (nonpositive='clip',
+// scale.py) when the caller left the mode unspecified; an explicit mask/clip is
+// honored as-is.
+func resolveLogNonPositive(mode NonPositiveMode) NonPositiveMode {
+	if mode == "" {
+		return NonPositiveClip
+	}
+	return normalizeNonPositive(mode)
 }
 
 func normalizeLogDomain(minVal, maxVal, base float64) (float64, float64) {
