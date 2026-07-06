@@ -836,7 +836,7 @@ artist gaps that have no workaround.
       provide the regression lock. _Shipped 2026-07-06._
 - [x] 2D `bar(yerr=/xerr=)` — `BarOptions` (`core/plot.go`) gained `XErr`/`YErr`
       symmetric errors plus `ECol`/`CapSize`/`CapThick` and an `ErrorKw
-    *ErrorBarOptions` passthrough (asymmetric errors, errorevery). `Bar()` now
+*ErrorBarOptions` passthrough (asymmetric errors, errorevery). `Bar()` now
       builds a matplotlib-faithful error bar anchored at the bar top (vertical) /
       end (horizontal) — `ex=center, ey=baseline+height` — via the reused
       `Axes.ErrorBar` constructor (fmt="none", ecolor default black, capsize from
