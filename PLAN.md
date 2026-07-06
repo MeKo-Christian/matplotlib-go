@@ -888,10 +888,24 @@ artist gaps that have no workaround.
 **Third-audit additions (2026-07-01, REVIEW.md third review §2), all
 file:line-verified on both sides:**
 
-- [ ] `core/vector_field_quiver.go:346` — quiver default scale uses
-      `mean/(0.18·min(W,H)/√N)`; port matplotlib's `1.8·amean·sn/span` with
-      `sn = clip(√N, 8, 25)` (`quiver.py:681`). Changes every default-scaled
-      quiver figure — regen goldens.
+- [x] `core/vector_field_quiver.go` — quiver default (unset-scale) autoscale now
+      ports matplotlib's `scale = 1.8·amean·sn/span` (`quiver.py:673-681`), replacing
+      the home-grown `0.18·min(W,H)/√N` heuristic. **Note (stale audit):** the audit
+      said `sn = clip(√N, 8, 25)`, but the vendored/installed matplotlib **3.10.9**
+      (`quiver.py:674`) uses `sn = max(10, √N)` — that clip form is the separate
+      _width_ default (`quiver.py:562`, already mirrored). We port the parity-correct
+      `max(10, √N)` (verified against system matplotlib 3.10.9: `span==1` for the
+      default `units="width"`, `scale==1.8·amean·sn`). In the Go pixel-space form
+      (`mean = amean·Clip.W()`) this is `target = Clip.W()/(1.8·sn)`, `scale = mean/target`.
+      `sn` uses the total anchor count (matplotlib `self.N`); `mean` averages only
+      finite/positive arrows. Tests: `TestQuiverDefaultScaleMatchesMatplotlib` (exact
+      value, sn-floor + √N sub-cases). New parity case `quiver_autoscale` (golden
+      byte-identical; matplotlib-ref RMSE 1.61 / PSNR 62.6 dB). Zero churn on existing
+      quiver goldens (every current 2D quiver sets an explicit scale). _Follow-up:_
+      full per-`units`/`scale_units` generality (matplotlib's `span` for
+      height/dots/inches, `a = lengths` for the `angles='xy'`+`scale_units='xy'` combo)
+      is unmodeled — the default width-units path is exact and is what parity uses.
+      _Shipped 2026-07-07._
 - [ ] `core/axes_autoscale.go:92` — margins are applied in data space, not
       transform space (`axes/_base.py:3064`), so log/symlog margins are wrong.
       Also drop non-positive limits before log autoscale (`_base.py:3017`) and
