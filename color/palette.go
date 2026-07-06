@@ -71,6 +71,20 @@ func (c *ColorCycle) Index() int {
 	return c.index
 }
 
+// SetIndex restores the cycle to a given position (modulo palette length),
+// typically to undo a speculative advance. A negative index wraps from the end.
+func (c *ColorCycle) SetIndex(index int) {
+	if len(c.palette) == 0 {
+		c.index = 0
+		return
+	}
+	idx := index % len(c.palette)
+	if idx < 0 {
+		idx += len(c.palette)
+	}
+	c.index = idx
+}
+
 // Length returns the number of colors in the palette.
 func (c *ColorCycle) Length() int {
 	return len(c.palette)

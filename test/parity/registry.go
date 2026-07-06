@@ -79,6 +79,7 @@ import (
 	example_bar_grouped "github.com/cwbudde/matplotlib-go/test/parity/bar_grouped"
 	example_bar_horizontal "github.com/cwbudde/matplotlib-go/test/parity/bar_horizontal"
 	example_bar_variants "github.com/cwbudde/matplotlib-go/test/parity/bar_variants"
+	example_bar_yerr "github.com/cwbudde/matplotlib-go/test/parity/bar_yerr"
 	example_basic_line "github.com/cwbudde/matplotlib-go/test/parity/basic_line"
 	example_basic_line_labels "github.com/cwbudde/matplotlib-go/test/parity/basic_line_labels"
 	example_boundarynorm_pcolormesh "github.com/cwbudde/matplotlib-go/test/parity/boundarynorm_pcolormesh"
@@ -275,6 +276,7 @@ var renderByID = map[string]func() image.Image{
 	"bar_basic":                           example_bar_basic.Render,
 	"bar_horizontal":                      example_bar_horizontal.Render,
 	"bar_grouped":                         example_bar_grouped.Render,
+	"bar_yerr":                            example_bar_yerr.Render,
 	"bar_variants":                        example_bar_variants.Render,
 	"fill_variants":                       example_fill_variants.Render,
 	"histogram_variants":                  example_histogram_variants.Render,

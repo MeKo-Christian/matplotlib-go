@@ -31,6 +31,7 @@ type Bar2D struct {
 	Orientation BarOrientation // vertical or horizontal bars
 	Label       string         // series label for legend
 	z           float64        // z-order
+	errorbar    *ErrorBar      // optional error bars from bar(yerr=/xerr=)
 }
 
 // Draw renders bars by creating filled rectangles for each bar.

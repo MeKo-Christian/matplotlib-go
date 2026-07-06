@@ -100,6 +100,7 @@ var cases = []Case{
 	{ID: "bar_horizontal", Topic: "bar", Title: "Horizontal Bars", MaxRMSE: 0.3},
 	{ID: "bar_grouped", Topic: "bar", Title: "Grouped Bars", MaxRMSE: 0.5},
 	{ID: "bar_variants", Topic: "bar", Title: "Bar Variants Gallery", Description: "A combined gallery of vertical bars with tick labels, horizontal bars, grouped bars, and stacked bars with bar labels.", WebDemoID: "bars", Showcase: true, Width: 840, Height: 620, MinPSNR: 45.0, MaxMeanAbs: 1.5, MaxRMSE: 2.4},
+	{ID: "bar_yerr", Topic: "bar", Title: "Bars with Error Bars", MinPSNR: 72.0, MaxMeanAbs: 0.02, MaxRMSE: 0.1},
 	{ID: "fill_basic", Topic: "fill", Title: "Fill to Baseline", Description: "A filled region under a smooth curve, useful for area-chart and alpha blending checks.", Showcase: true, MinPSNR: 45.0, MaxRMSE: 0.5},
 	{ID: "fill_between", Topic: "fill", Title: "Fill Between Curves", GoBasicSmokeFamily: "fill", SkiaParityFamily: "fill", MaxRMSE: 0.2},
 	{ID: "fill_stacked", Topic: "fill", Title: "Stacked Fill", MaxRMSE: 0.2},

@@ -834,8 +834,19 @@ artist gaps that have no workaround.
       the existing contour goldens (`contour_styles` et al.) don't cross an exact
       ambiguous saddle, so the exact-value unit tests (not a redundant pixel golden)
       provide the regression lock. _Shipped 2026-07-06._
-- [ ] 2D `bar(yerr=/xerr=)` — `BarOptions` (`core/plot.go:508`) has no error field
-      (only 3D `ErrorBar3D` does). Add error bars to the 2D bar path + an example.
+- [x] 2D `bar(yerr=/xerr=)` — `BarOptions` (`core/plot.go`) gained `XErr`/`YErr`
+      symmetric errors plus `ECol`/`CapSize`/`CapThick` and an `ErrorKw
+*ErrorBarOptions` passthrough (asymmetric errors, errorevery). `Bar()` now
+      builds a matplotlib-faithful error bar anchored at the bar top (vertical) /
+      end (horizontal) — `ex=center, ey=baseline+height` — via the reused
+      `Axes.ErrorBar` constructor (fmt="none", ecolor default black, capsize from
+      the `errorbar.capsize` rc), added before autoscale so error extents widen the
+      limits, and surfaced through the pre-existing `BarContainer.Errorbar` slot.
+      Tests: `TestBarErrorBarsPlacementLikeMatplotlib` (anchor/color/container/
+      autoscale exact-value lock) + `TestBarWithoutErrorDataHasNoErrorBar`. New
+      parity case `bar_yerr` (golden byte-identical; matplotlib-ref RMSE 0.03 /
+      PSNR 79.7 dB). Zero churn on existing bar goldens (error fields default off).
+      _Shipped 2026-07-06._
 - [x] `hist(log=)` — `HistOptions` (`core/plot.go`) gained a `Log bool` field;
       `Hist()` now calls `SetYScale("log", WithScaleNonPositive(NonPositiveClip))`
       when set, matching matplotlib's `hist(log=True)` → `set_yscale('log',
