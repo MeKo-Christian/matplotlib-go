@@ -7805,7 +7805,7 @@
         },
         {
           "id": "type BarOptions",
-          "declaration": "type BarOptions struct{ Color *render.Color; Colors []render.Color; Width *float64; Widths []float64; EdgeColor *render.Color; EdgeColors []render.Color; EdgeWidth *float64; Alpha *float64; Baseline *float64; Baselines []float64; Orientation *BarOrientation; Align *BarAlign; Label string }"
+          "declaration": "type BarOptions struct{ Color *render.Color; Colors []render.Color; Width *float64; Widths []float64; EdgeColor *render.Color; EdgeColors []render.Color; EdgeWidth *float64; Alpha *float64; Baseline *float64; Baselines []float64; Orientation *BarOrientation; Align *BarAlign; Label string; XErr []float64; YErr []float64; ECol *render.Color; CapSize *float64; CapThick *float64; ErrorKw *ErrorBarOptions }"
         },
         {
           "id": "type BarOrientation",

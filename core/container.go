@@ -143,9 +143,10 @@ func (b *Bar2D) Container() *BarContainer {
 		return nil
 	}
 	return &BarContainer{
-		Bar:     b,
-		Patches: b.Rectangles(),
-		Label:   b.Label,
+		Bar:      b,
+		Patches:  b.Rectangles(),
+		Errorbar: b.errorbar.Container(),
+		Label:    b.Label,
 	}
 }
 

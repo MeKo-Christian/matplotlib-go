@@ -577,6 +577,16 @@ type BarOptions struct {
 	Orientation *BarOrientation // vertical or horizontal
 	Align       *BarAlign       // center or edge alignment
 	Label       string          // series label for legend
+
+	// Error bars (matplotlib bar(yerr=/xerr=)). When any error data is present,
+	// bars draw error bars anchored at the bar top (vertical) or end
+	// (horizontal), matching matplotlib's placement.
+	XErr     []float64        // symmetric x errors (per-bar or scalar broadcast)
+	YErr     []float64        // symmetric y errors (per-bar or scalar broadcast)
+	ECol     *render.Color    // error-bar color; nil = matplotlib default black ('k')
+	CapSize  *float64         // cap size in points; nil = errorbar.capsize rc value
+	CapThick *float64         // cap line thickness in points; nil = 1pt default
+	ErrorKw  *ErrorBarOptions // passthrough for asymmetric errors, errorevery, etc.
 }
 
 // Bar creates a bar plot with automatic color cycling if no color is specified.
@@ -699,8 +709,71 @@ func (a *Axes) Bar(x, heights []float64, opts ...BarOptions) *Bar2D {
 	}
 
 	a.Add(bar)
+	// Error bars, matplotlib bar(yerr=/xerr=): anchor at the bar top (vertical)
+	// or end (horizontal), drawn with fmt="none" and ecolor default black. Added
+	// before autoscale so the error extents widen the data limits.
+	bar.addErrorBars(a, &opt)
 	a.autoScaleIfEnabled(defaultAutoScaleMargin)
 	return bar
+}
+
+// barHasErrorData reports whether the bar options carry any error information,
+// either the direct symmetric fields or asymmetric arrays via ErrorKw.
+func barHasErrorData(opt *BarOptions) bool {
+	if len(opt.XErr) > 0 || len(opt.YErr) > 0 {
+		return true
+	}
+	if kw := opt.ErrorKw; kw != nil {
+		if len(kw.XErrLower) > 0 || len(kw.XErrUpper) > 0 ||
+			len(kw.YErrLower) > 0 || len(kw.YErrUpper) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// addErrorBars constructs and attaches matplotlib-faithful error bars for a bar
+// chart. The anchor points are the bar tops (vertical) or ends (horizontal); the
+// heavy lifting (array validation, errorbar.capsize rc resolution, fmt="none"
+// data-line suppression) is reused from Axes.ErrorBar.
+func (b *Bar2D) addErrorBars(a *Axes, opt *BarOptions) {
+	if b == nil || !barHasErrorData(opt) {
+		return
+	}
+	n := min(len(b.X), len(b.Heights))
+	ex := make([]float64, n)
+	ey := make([]float64, n)
+	for i := range n {
+		end := b.baselineAt(i) + b.Heights[i]
+		if b.Orientation == BarHorizontal {
+			ex[i], ey[i] = end, b.X[i]
+		} else {
+			ex[i], ey[i] = b.X[i], end
+		}
+	}
+
+	// Start from the ErrorKw passthrough (asymmetric errors, errorevery, …); the
+	// bar-level ecolor/capsize/capthick/label take precedence (matplotlib
+	// error_kw.setdefault semantics).
+	var eb ErrorBarOptions
+	if opt.ErrorKw != nil {
+		eb = *opt.ErrorKw
+	}
+	eb.NoDataLine = true
+	eb.Label = ""
+	ecolor := render.Color{R: 0, G: 0, B: 0, A: 1} // matplotlib default 'k'
+	if opt.ECol != nil {
+		ecolor = *opt.ECol
+	}
+	eb.Color = &ecolor
+	if opt.CapSize != nil {
+		eb.CapSize = opt.CapSize
+	}
+	if opt.CapThick != nil {
+		eb.CapThick = opt.CapThick
+	}
+
+	b.errorbar = a.ErrorBar(ex, ey, opt.XErr, opt.YErr, eb)
 }
 
 func validBarOptionLength(length, n int) bool {
