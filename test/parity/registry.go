@@ -43,6 +43,7 @@ import (
 	showcase_plot_variants "github.com/cwbudde/matplotlib-go/examples/plot_variants"
 	showcase_polar_axes "github.com/cwbudde/matplotlib-go/examples/polar_axes"
 	showcase_projection_toolkit_gallery "github.com/cwbudde/matplotlib-go/examples/projection_toolkit_gallery"
+	showcase_quiver_autoscale "github.com/cwbudde/matplotlib-go/examples/quiver_autoscale"
 	showcase_radar_basic "github.com/cwbudde/matplotlib-go/examples/radar_basic"
 	showcase_scatter_basic "github.com/cwbudde/matplotlib-go/examples/scatter_basic"
 	showcase_scatter_gallery "github.com/cwbudde/matplotlib-go/examples/scatter_gallery"
@@ -196,6 +197,7 @@ import (
 	example_polar_axes "github.com/cwbudde/matplotlib-go/test/parity/polar_axes"
 	example_projection_toolkit_gallery "github.com/cwbudde/matplotlib-go/test/parity/projection_toolkit_gallery"
 	example_quad_mesh "github.com/cwbudde/matplotlib-go/test/parity/quad_mesh"
+	example_quiver_autoscale "github.com/cwbudde/matplotlib-go/test/parity/quiver_autoscale"
 	example_radar_basic "github.com/cwbudde/matplotlib-go/test/parity/radar_basic"
 	example_scale_asinh_ticks "github.com/cwbudde/matplotlib-go/test/parity/scale_asinh_ticks"
 	example_scale_function_defaults "github.com/cwbudde/matplotlib-go/test/parity/scale_function_defaults"
@@ -292,6 +294,7 @@ var renderByID = map[string]func() image.Image{
 	"text_bbox_styles":                    example_text_bbox_styles.Render,
 	"hist_basic":                          example_hist_basic.Render,
 	"hist_log":                            example_hist_log.Render,
+	"quiver_autoscale":                    example_quiver_autoscale.Render,
 	"hist_density":                        example_hist_density.Render,
 	"hist_strategies":                     example_hist_strategies.Render,
 	"boxplot_basic":                       example_boxplot_basic.Render,
@@ -486,6 +489,7 @@ var figureByID = map[string]func() *core.Figure{
 	"lines_markers_gallery":               showcase_lines_markers_gallery.Plot,
 	"hist_basic":                          showcase_hist_basic.Plot,
 	"hist_log":                            showcase_hist_log.Plot,
+	"quiver_autoscale":                    showcase_quiver_autoscale.Plot,
 	"mesh_contour_tri":                    showcase_mesh_contour_tri.Plot,
 	"image_heatmap":                       showcase_image_heatmap.Plot,
 	"image_variants_gallery":              showcase_image_variants_gallery.Plot,
