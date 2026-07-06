@@ -213,18 +213,27 @@ func contourCellSegmentsForLevel(points [4]geom.Pt, values [4]float64, level flo
 	}
 
 	if above[0] == above[2] && above[1] == above[3] && above[0] != above[1] {
-		order := []int{3, 2, 1, 0}
-		if above[0] {
-			order = []int{0, 3, 2, 1}
+		// Saddle cell: opposite corners share a sign, adjacent corners differ, so
+		// all four edges are crossed and the level splits the cell into two
+		// separate segments. Matplotlib/contourpy disambiguates with the bilinear
+		// value at the cell centre (the mean of the four corners): the diagonal
+		// corner-pair whose sign differs from the centre is isolated, each corner
+		// joined across its two incident edges. The centre uses a strict compare
+		// so an exact centre==level tie resolves as "below" (matches contourpy).
+		// Edge indices: 0=bottom(0-1), 1=right(1-2), 2=top(2-3), 3=left(3-0).
+		centerAbove := (values[0]+values[1]+values[2]+values[3])/4 > level
+		pairs := [2][2]int{{0, 1}, {2, 3}} // isolate corners 1 and 3
+		if above[0] != centerAbove {
+			pairs = [2][2]int{{0, 3}, {1, 2}} // isolate corners 0 and 2
 		}
-		polyline := make([]geom.Pt, 0, 4)
-		for _, edgeIdx := range order {
-			if edgeHit[edgeIdx] && !containsPoint(polyline, edgePoints[edgeIdx]) {
-				polyline = append(polyline, edgePoints[edgeIdx])
+		segments := make([][]geom.Pt, 0, 2)
+		for _, pair := range pairs {
+			if edgeHit[pair[0]] && edgeHit[pair[1]] {
+				segments = append(segments, []geom.Pt{edgePoints[pair[0]], edgePoints[pair[1]]})
 			}
 		}
-		if len(polyline) >= 2 {
-			return [][]geom.Pt{polyline}
+		if len(segments) == 2 {
+			return segments
 		}
 	}
 

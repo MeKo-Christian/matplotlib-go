@@ -492,21 +492,87 @@ func TestStructuredContourLineClipsSingleSaddleQuadLikeMatplotlib(t *testing.T) 
 		{0, 1},
 		{1, 0},
 	}
+	// Symmetric saddle (cell-centre mean == level): matplotlib/contourpy splits
+	// it into TWO separate segments, not one 4-point polyline. Verified against
+	// matplotlib 3.10.9: contour([[0,1],[1,0]], levels=[0.5]) yields the two
+	// segments {(0,0.5)-(0.5,1)} and {(1,0.5)-(0.5,0)}.
 	polylines, levels := contourGridPolylines([]float64{0, 1}, []float64{0, 1}, grid, []float64{0.5})
-	if got, want := len(polylines), 1; got != want {
-		t.Fatalf("structured contour polylines = %d, want one Matplotlib saddle path", got)
+	if got, want := len(polylines), 2; got != want {
+		t.Fatalf("structured saddle polylines = %d, want two Matplotlib segments: %+v", got, polylines)
 	}
-	if got, want := len(levels), 1; got != want || levels[0] != 0.5 {
-		t.Fatalf("structured contour levels = %v, want [0.5]", levels)
+	for i, level := range levels {
+		if level != 0.5 {
+			t.Fatalf("structured contour level %d = %v, want 0.5", i, level)
+		}
 	}
-	want := []geom.Pt{
-		{X: 0, Y: 0.5},
-		{X: 0.5, Y: 1},
-		{X: 1, Y: 0.5},
-		{X: 0.5, Y: 0},
+	want := [][]geom.Pt{
+		{{X: 1, Y: 0.5}, {X: 0.5, Y: 0}},
+		{{X: 0, Y: 0.5}, {X: 0.5, Y: 1}},
 	}
-	if !pointsEqual(polylines[0], want, 1e-12) {
-		t.Fatalf("structured saddle contour = %+v, want Matplotlib path %+v", polylines[0], want)
+	for i := range want {
+		if !pointsEqual(polylines[i], want[i], 1e-12) {
+			t.Fatalf("structured saddle segment %d = %+v, want Matplotlib %+v", i, polylines[i], want[i])
+		}
+	}
+}
+
+// TestStructuredContourSaddleSplitUsesCellMean covers the two asymmetric saddles
+// that resolve to opposite diagonal pairings depending on the cell-centre mean.
+// Both expected segment sets were captured from matplotlib 3.10.9
+// contour(...).allsegs. Segments are compared unordered/undirected because the
+// stitcher may emit them in either orientation.
+func TestStructuredContourSaddleSplitUsesCellMean(t *testing.T) {
+	const sixth = 1.0 / 6.0
+	closePt := func(a, b geom.Pt) bool {
+		return math.Abs(a.X-b.X) <= 1e-9 && math.Abs(a.Y-b.Y) <= 1e-9
+	}
+	hasSegment := func(polylines [][]geom.Pt, a, b geom.Pt) bool {
+		for _, p := range polylines {
+			if len(p) != 2 {
+				continue
+			}
+			if (closePt(p[0], a) && closePt(p[1], b)) || (closePt(p[0], b) && closePt(p[1], a)) {
+				return true
+			}
+		}
+		return false
+	}
+	cases := []struct {
+		name string
+		data [][]float64
+		want [2][2]geom.Pt
+	}{
+		{
+			// centre mean 0.55 > level 0.5: isolate the below diagonal (corners 0 & 2).
+			name: "mean-above-isolates-diagonal-0-2",
+			data: [][]float64{{0, 1}, {1, 0.2}},
+			want: [2][2]geom.Pt{
+				{{X: 0.5, Y: 0}, {X: 0, Y: 0.5}},
+				{{X: 1, Y: 0.625}, {X: 0.625, Y: 1}},
+			},
+		},
+		{
+			// centre mean 0.30 < level 0.5: isolate the above diagonal (corners 1 & 3).
+			name: "mean-below-isolates-diagonal-1-3",
+			data: [][]float64{{0, 0.6}, {0.6, 0}},
+			want: [2][2]geom.Pt{
+				{{X: 5 * sixth, Y: 0}, {X: 1, Y: sixth}},
+				{{X: sixth, Y: 1}, {X: 0, Y: 5 * sixth}},
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			polylines, _ := contourGridPolylines([]float64{0, 1}, []float64{0, 1}, tc.data, []float64{0.5})
+			if len(polylines) != 2 {
+				t.Fatalf("saddle polylines = %d, want 2 Matplotlib segments: %+v", len(polylines), polylines)
+			}
+			for _, seg := range tc.want {
+				if !hasSegment(polylines, seg[0], seg[1]) {
+					t.Fatalf("missing Matplotlib saddle segment %+v in %+v", seg, polylines)
+				}
+			}
+		})
 	}
 }
 
@@ -522,17 +588,19 @@ func TestAxesContourUsesStructuredGridLinesLikeMatplotlib(t *testing.T) {
 	if contours == nil || contours.Lines == nil {
 		t.Fatal("expected contour lines")
 	}
-	if got, want := len(contours.Lines.Segments), 1; got != want {
-		t.Fatalf("public contour segments = %d, want one structured saddle path: %+v", got, contours.Lines.Segments)
+	// The symmetric saddle splits into two segments (see the unit test above);
+	// the public Contour path surfaces both, matching matplotlib.
+	if got, want := len(contours.Lines.Segments), 2; got != want {
+		t.Fatalf("public contour segments = %d, want two structured saddle segments: %+v", got, contours.Lines.Segments)
 	}
-	want := []geom.Pt{
-		{X: 0, Y: 0.5},
-		{X: 0.5, Y: 1},
-		{X: 1, Y: 0.5},
-		{X: 0.5, Y: 0},
+	want := [][]geom.Pt{
+		{{X: 1, Y: 0.5}, {X: 0.5, Y: 0}},
+		{{X: 0, Y: 0.5}, {X: 0.5, Y: 1}},
 	}
-	if !pointsEqual(contours.Lines.Segments[0], want, 1e-12) {
-		t.Fatalf("public structured contour = %+v, want Matplotlib path %+v", contours.Lines.Segments[0], want)
+	for i := range want {
+		if !pointsEqual(contours.Lines.Segments[i], want[i], 1e-12) {
+			t.Fatalf("public structured contour segment %d = %+v, want Matplotlib %+v", i, contours.Lines.Segments[i], want[i])
+		}
 	}
 }
 

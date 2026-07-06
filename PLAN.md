@@ -819,11 +819,21 @@ artist gaps that have no workaround.
       `TestLogLocatorStrideAndInvalidDomains` gained `base10-/base2-exact-multiple` cases
       (verified against matplotlib 3.10.9) and `TestLogLocatorMinorFallsBackToAutoLocator`.
       \_Shipped 2026-07-06.*
-- [ ] `core/contour_lines.go:215` — saddle disambiguation keys off `above[0]` with
-      fixed corner order and never computes the cell-center mean that mpl2014 uses,
-      emitting all four crossings as one polyline. Port the cell-mean saddle split (the
-      single most likely source of contour parity drift). Add an ambiguous-saddle
-      parity case.
+- [x] `core/contour_lines.go` — saddle disambiguation now computes the cell-centre
+      mean (bilinear centre value) and splits the ambiguous cell into **two** segments,
+      isolating the diagonal corner-pair whose sign differs from the centre, instead of
+      keying off `above[0]` and emitting all four crossings as one polyline. The centre
+      uses a strict `mean > level` compare so an exact `mean == level` tie resolves as
+      "below" — verified against matplotlib 3.10.9 `contour(...).allsegs` for the
+      symmetric tie and both asymmetric pairings; the split direction matches the
+      already-correct filled-contour path (`contourGridBandPolygons`). Tests:
+      `TestStructuredContourLineClipsSingleSaddleQuadLikeMatplotlib` and
+      `TestAxesContourUsesStructuredGridLinesLikeMatplotlib` corrected from the old
+      single-polyline expectation to two segments, plus new
+      `TestStructuredContourSaddleSplitUsesCellMean` (both pairings). Zero golden churn —
+      the existing contour goldens (`contour_styles` et al.) don't cross an exact
+      ambiguous saddle, so the exact-value unit tests (not a redundant pixel golden)
+      provide the regression lock. _Shipped 2026-07-06._
 - [ ] 2D `bar(yerr=/xerr=)` — `BarOptions` (`core/plot.go:508`) has no error field
       (only 3D `ErrorBar3D` does). Add error bars to the 2D bar path + an example.
 - [ ] `hist(log=)` — add a `Log` field to `HistOptions` + an example exercising it.
