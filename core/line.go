@@ -420,26 +420,14 @@ func (l *Line2D) Z() float64 {
 
 // Bounds returns the bounding box of all points in data space.
 func (l *Line2D) Bounds(*DrawContext) geom.Rect {
-	if len(l.XY) == 0 || !artistUsesDataCoords(l, Coords(CoordData)) {
-		return geom.Rect{}
+	return l.autoscaleBounds(nil).bounds
+}
+
+func (l *Line2D) autoscaleBounds(*DrawContext) autoscaleBoundsInfo {
+	if l == nil || len(l.XY) == 0 || !artistUsesDataCoords(l, Coords(CoordData)) {
+		return autoscaleBoundsInfo{}
 	}
-	var r geom.Rect
-	ok := false
-	for _, pt := range l.XY {
-		if !finitePoint(pt) {
-			continue
-		}
-		if !ok {
-			r = geom.Rect{Min: pt, Max: pt}
-			ok = true
-			continue
-		}
-		r = expandRect(r, pt)
-	}
-	if !ok {
-		return geom.Rect{}
-	}
-	return r
+	return pointAutoscaleBounds(l.XY)
 }
 
 func (l *Line2D) pathPoints() []geom.Pt {

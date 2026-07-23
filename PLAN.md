@@ -906,14 +906,27 @@ file:line-verified on both sides:**
       height/dots/inches, `a = lengths` for the `angles='xy'`+`scale_units='xy'` combo)
       is unmodeled — the default width-units path is exact and is what parity uses.
       _Shipped 2026-07-07._
-- [ ] `core/axes_autoscale.go:92` — margins are applied in data space, not
-      transform space (`axes/_base.py:3064`), so log/symlog margins are wrong.
-      Also drop non-positive limits before log autoscale (`_base.py:3017`) and
-      replace the ad-hoc zero-span expansion (`span=1` + linear margin) with
-      `nonsingular(expander=0.05·|v|)` semantics.
-- [ ] `core/axes_autoscale.go:51` — artists whose bounds are exactly
-      `{0,0,0,0}` are skipped, so a single point at the origin is ignored by
-      autoscale. Use an explicit has-data flag, not a zero-bbox sentinel.
+- [x] `core/axes_autoscale.go` — autoscale margins now expand in scale-transform
+      space and inverse-map back to data coordinates, matching
+      `axes/_base.py:3064`: log padding is multiplicative and symlog padding
+      follows the signed-log transform. The pre-margin domain now ports locator
+      nonsingular behavior (generic `transforms.nonsingular(expander=.05)`;
+      `LogLocator` positive filtering, minimum-positive replacement, adjacent
+      decades for a lone point, and `[1, base]` for all-nonpositive data).
+      The same upstream probe corrected the registry's symlog default
+      `linthresh` from 1 to matplotlib 3.10.9's 2 (explicit overrides remain
+      unchanged).
+      Exact-value tests were probed against matplotlib 3.10.9 for linear origin
+      and nonzero points, four log-domain cases, and symlog; all 173 catalog
+      goldens/references remain green with zero fixture churn. _Shipped
+      2026-07-23._
+- [x] `core/axes_autoscale.go` — zero-valued bounds no longer conflate an
+      origin-only data artist with “no data”: the autoscale collector has an
+      explicit bounds-presence record plus per-axis minimum-positive values,
+      implemented by `Line2D` and `Scatter2D` from their finite point data.
+      `TestAutoScaleSingleOriginPointMatchesMatplotlib` locks matplotlib's
+      `[-0.055, 0.055]` default window and the scatter variant covers the same
+      zero-rectangle ambiguity. _Shipped 2026-07-23._
 - [ ] `core/axis_types.go:57` — spine `set_position(('outward', pts))` and
       `(('axes', frac))` are missing; only boundary + data modes exist. Port both
       (the standard detached/centered-spine idioms).

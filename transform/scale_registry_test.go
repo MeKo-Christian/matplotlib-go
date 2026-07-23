@@ -23,6 +23,25 @@ func TestScaleRegistryBuiltins(t *testing.T) {
 	}
 }
 
+func TestScaleRegistrySymLogDefaultsMatchMatplotlib(t *testing.T) {
+	scale, err := NewScale("symlog")
+	if err != nil {
+		t.Fatalf("NewScale(symlog): %v", err)
+	}
+	symlog, ok := scale.(SymLog)
+	if !ok {
+		t.Fatalf("NewScale(symlog) = %T, want SymLog", scale)
+	}
+	if symlog.Base != 10 || symlog.LinThresh != 2 || symlog.LinearScale != 1 {
+		t.Fatalf(
+			"symlog defaults = base %v, linthresh %v, linscale %v; want 10, 2, 1",
+			symlog.Base,
+			symlog.LinThresh,
+			symlog.LinearScale,
+		)
+	}
+}
+
 func TestNewScale_LogNormalizesDefaultDomain(t *testing.T) {
 	scale, err := NewScale("log")
 	if err != nil {

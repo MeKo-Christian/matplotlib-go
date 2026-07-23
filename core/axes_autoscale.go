@@ -3,7 +3,21 @@ package core
 import (
 	"math"
 	"sort"
+
+	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/transform"
 )
+
+type autoscaleBoundsInfo struct {
+	bounds       geom.Rect
+	hasData      bool
+	minPositiveX float64
+	minPositiveY float64
+}
+
+type autoscaleBoundsProvider interface {
+	autoscaleBounds(*DrawContext) autoscaleBoundsInfo
+}
 
 func (a *Axes) AutoScale(margin float64) {
 	a.autoScaleAxis(true, margin, true)
@@ -42,21 +56,28 @@ func (a *Axes) autoScaleAxis(isX bool, margin float64, respectManual bool) {
 	}
 
 	var minVal, maxVal float64
+	minPositive := math.Inf(1)
 	var stickies []float64
 	first := true
 
 	for _, ax := range a.autoscaleAxesForTarget(isX, target) {
 		for _, art := range ax.Artists {
-			b := art.Bounds(nil)
-			if b.W() == 0 && b.H() == 0 && b.Min.X == 0 && b.Min.Y == 0 {
-				continue // skip zero-bounds artists (grids, etc.)
+			info := artistAutoscaleBounds(art)
+			if !info.hasData {
+				continue
 			}
+			b := info.bounds
 			lo, hi := b.Min.X, b.Max.X
+			artMinPositive := info.minPositiveX
 			if !isX {
 				lo, hi = b.Min.Y, b.Max.Y
+				artMinPositive = info.minPositiveY
 			}
 			if math.IsNaN(lo) || math.IsNaN(hi) || math.IsInf(lo, 0) || math.IsInf(hi, 0) {
 				continue
+			}
+			if artMinPositive > 0 && artMinPositive < minPositive {
+				minPositive = artMinPositive
 			}
 			if sticky, ok := art.(StickyEdgeArtist); ok {
 				xSticky, ySticky := sticky.StickyEdges()
@@ -83,14 +104,17 @@ func (a *Axes) autoScaleAxis(isX bool, margin float64, respectManual bool) {
 		return // no data artists
 	}
 
-	span := maxVal - minVal
-	if span == 0 {
-		span = 1 // avoid zero-span
+	scale := target.XScale
+	if !isX {
+		scale = target.YScale
 	}
+	minVal, maxVal = autoscaleNonsingularDomain(scale, minVal, maxVal, minPositive)
 	effMargin := a.effectiveMargin(isX, margin)
+	if isLogScale(scale) {
+		stickies = positiveFinite(stickies)
+	}
 	lowerSticky, upperSticky := stickyBounds(minVal, maxVal, stickies)
-	minVal -= span * effMargin
-	maxVal += span * effMargin
+	minVal, maxVal = transformedMarginDomain(scale, minVal, maxVal, effMargin)
 	if !math.IsNaN(lowerSticky) && minVal < lowerSticky {
 		minVal = lowerSticky
 	}
@@ -109,6 +133,179 @@ func (a *Axes) autoScaleAxis(isX bool, margin float64, respectManual bool) {
 		target.YScale = replaceScaleDomain(target.YScale, minVal, maxVal)
 		target.refreshUnitAxis(false)
 	}
+}
+
+func artistAutoscaleBounds(art Artist) autoscaleBoundsInfo {
+	if provider, ok := art.(autoscaleBoundsProvider); ok {
+		return provider.autoscaleBounds(nil)
+	}
+	bounds := art.Bounds(nil)
+	// A zero rectangle is historically how non-data artists report no bounds.
+	// Data artists that can legitimately occupy only the origin implement
+	// autoscaleBoundsProvider so that presence is explicit instead.
+	if bounds == (geom.Rect{}) {
+		return autoscaleBoundsInfo{}
+	}
+	return autoscaleBoundsInfo{
+		bounds:       bounds,
+		hasData:      true,
+		minPositiveX: minimumPositive(bounds.Min.X, bounds.Max.X),
+		minPositiveY: minimumPositive(bounds.Min.Y, bounds.Max.Y),
+	}
+}
+
+func pointAutoscaleBounds(points []geom.Pt) autoscaleBoundsInfo {
+	info := autoscaleBoundsInfo{
+		minPositiveX: math.Inf(1),
+		minPositiveY: math.Inf(1),
+	}
+	for _, point := range points {
+		if !finitePoint(point) {
+			continue
+		}
+		if !info.hasData {
+			info.bounds = geom.Rect{Min: point, Max: point}
+			info.hasData = true
+		} else {
+			info.bounds = expandRect(info.bounds, point)
+		}
+		if point.X > 0 && point.X < info.minPositiveX {
+			info.minPositiveX = point.X
+		}
+		if point.Y > 0 && point.Y < info.minPositiveY {
+			info.minPositiveY = point.Y
+		}
+	}
+	return info
+}
+
+// autoscaleNonsingularDomain mirrors Locator.nonsingular. Log axes use
+// LogLocator's positive-domain and adjacent-decade behavior; the remaining
+// scales use transforms.nonsingular(expander=.05).
+func autoscaleNonsingularDomain(
+	scale transform.Scale,
+	minVal, maxVal, minPositive float64,
+) (float64, float64) {
+	if logScale, ok := underlyingLogScale(scale); ok {
+		if minVal > maxVal {
+			minVal, maxVal = maxVal, minVal
+		}
+		switch {
+		case !isFiniteNumber(minVal) || !isFiniteNumber(maxVal), maxVal <= 0:
+			return 1, logScale.Base
+		case minVal <= 0:
+			if !isFiniteNumber(minPositive) {
+				minPositive = 1e-300
+			}
+			minVal = minPositive
+		}
+		if minVal == maxVal {
+			return decadeLess(minVal, logScale.Base), decadeGreater(maxVal, logScale.Base)
+		}
+		return minVal, maxVal
+	}
+	return nonsingularAutoscaleDomain(minVal, maxVal)
+}
+
+func nonsingularAutoscaleDomain(minVal, maxVal float64) (float64, float64) {
+	const (
+		expander              = 0.05
+		tiny                  = 1e-15
+		smallestNormalFloat64 = 0x1p-1022
+	)
+	if !isFiniteNumber(minVal) || !isFiniteNumber(maxVal) {
+		return -expander, expander
+	}
+	if maxVal < minVal {
+		minVal, maxVal = maxVal, minVal
+	}
+	maxAbs := math.Max(math.Abs(minVal), math.Abs(maxVal))
+	if maxAbs < (1e6/tiny)*smallestNormalFloat64 {
+		return -expander, expander
+	}
+	if maxVal-minVal <= maxAbs*tiny {
+		if minVal == 0 && maxVal == 0 {
+			return -expander, expander
+		}
+		minVal -= expander * math.Abs(minVal)
+		maxVal += expander * math.Abs(maxVal)
+	}
+	return minVal, maxVal
+}
+
+func transformedMarginDomain(
+	scale transform.Scale,
+	minVal, maxVal, margin float64,
+) (float64, float64) {
+	marginScale := replaceScaleDomain(scale, minVal, maxVal)
+	minTransformed := marginScale.Fwd(minVal)
+	maxTransformed := marginScale.Fwd(maxVal)
+	delta := (maxTransformed - minTransformed) * margin
+	if !isFiniteNumber(delta) {
+		return minVal, maxVal
+	}
+	lower, lowerOK := marginScale.Inv(minTransformed - delta)
+	upper, upperOK := marginScale.Inv(maxTransformed + delta)
+	if !lowerOK || !upperOK || !isFiniteNumber(lower) || !isFiniteNumber(upper) {
+		return minVal, maxVal
+	}
+	return lower, upper
+}
+
+func underlyingLogScale(scale transform.Scale) (transform.Log, bool) {
+	switch value := scale.(type) {
+	case transform.Log:
+		return value, true
+	case invertedScale:
+		return underlyingLogScale(value.base)
+	default:
+		return transform.Log{}, false
+	}
+}
+
+func isLogScale(scale transform.Scale) bool {
+	_, ok := underlyingLogScale(scale)
+	return ok
+}
+
+func decadeLess(value, base float64) float64 {
+	less := math.Pow(base, math.Floor(math.Log(value)/math.Log(base)))
+	if less == value {
+		less /= base
+	}
+	return less
+}
+
+func decadeGreater(value, base float64) float64 {
+	greater := math.Pow(base, math.Ceil(math.Log(value)/math.Log(base)))
+	if greater == value {
+		greater *= base
+	}
+	return greater
+}
+
+func minimumPositive(values ...float64) float64 {
+	minimum := math.Inf(1)
+	for _, value := range values {
+		if value > 0 && value < minimum {
+			minimum = value
+		}
+	}
+	return minimum
+}
+
+func positiveFinite(values []float64) []float64 {
+	out := values[:0]
+	for _, value := range values {
+		if value > 0 && isFiniteNumber(value) {
+			out = append(out, value)
+		}
+	}
+	return out
+}
+
+func isFiniteNumber(value float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0)
 }
 
 // effectiveMargin returns the per-axes autoscale margin, falling back to the

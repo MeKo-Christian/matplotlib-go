@@ -41,7 +41,7 @@ func DefaultScaleOptions() ScaleOptions {
 		DomainMin:   0,
 		DomainMax:   1,
 		Base:        10,
-		LinThresh:   1,
+		LinThresh:   2,
 		LinearScale: 1,
 		LinearWidth: 1,
 		ClipEpsilon: 1e-6,

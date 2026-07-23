@@ -1197,31 +1197,12 @@ func (s *Scatter2D) Z() float64 {
 
 // Bounds returns the data-space bounding box of all marker centers.
 func (s *Scatter2D) Bounds(*DrawContext) geom.Rect {
-	if len(s.XY) == 0 {
-		return geom.Rect{}
-	}
+	return s.autoscaleBounds(nil).bounds
+}
 
-	// Initialize bounds with first point
-	bounds := geom.Rect{
-		Min: s.XY[0],
-		Max: s.XY[0],
+func (s *Scatter2D) autoscaleBounds(*DrawContext) autoscaleBoundsInfo {
+	if s == nil || len(s.XY) == 0 || !artistUsesDataCoords(s, Coords(CoordData)) {
+		return autoscaleBoundsInfo{}
 	}
-
-	// Expand bounds to include all points
-	for _, pt := range s.XY[1:] {
-		if pt.X < bounds.Min.X {
-			bounds.Min.X = pt.X
-		}
-		if pt.Y < bounds.Min.Y {
-			bounds.Min.Y = pt.Y
-		}
-		if pt.X > bounds.Max.X {
-			bounds.Max.X = pt.X
-		}
-		if pt.Y > bounds.Max.Y {
-			bounds.Max.Y = pt.Y
-		}
-	}
-
-	return bounds
+	return pointAutoscaleBounds(s.XY)
 }
