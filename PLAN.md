@@ -457,22 +457,20 @@ explicit. All nine audit findings closed with zero golden regressions.
 are parsed and only ~70 honored — ~52 are stored and never read, giving users false
 confidence a setting took effect.
 
-**Status (2026-07-02):** audit, both minimum-bar warnings (unhonored-parsed AND
-known-but-unparsed incl. non-goal rationale), the high-value honoring subset
-(image origin/aspect, all date._), and three parsed-inventory families (axes
-behavior, lines artist defaults, scatter/errorbar artist defaults) are
-**shipped** — all with zero golden churn (only non-default rc values change
-behavior). Open: the remaining unparsed families below (ticks, legend layout,
-figure, patches, font, contour._, axes.formatter.\*, spines) and the
-mathtext honoring blocked on a cwbudde/mathtext library hook.
+**Status (2026-07-24):** audit, both minimum-bar warnings, the high-value
+image/date subset, axes/line/scatter/errorbar defaults, and the complete tick
+and legend families are shipped with zero default golden churn. The remaining
+families are itemized below; MathText honoring is blocked on a
+`cwbudde/mathtext` library hook and Phase 17 fontset work.
 
 - [x] Audited the dead params: **51** parsed-but-never-consumed keys, captured as
       the data-driven source of truth in `style/unhonored.go` (`unhonoredRCParams`):
-      `image.*` (6: origin/aspect/resample/interpolation*stage/lut/composite_image),
-      `mathtext.*`(9: default/fallback/bf/bfit/cal/it/rm/sf/tt),`date._`(10),
-`pdf._`(4),`ps._`(5),`svg._`(4),`animation._`(11),`boxplot._`    (2: vertical/whiskers). Correction to the prior audit:`boxplot.notch`and
-`boxplot.patchartist` \_are* consumed (`core/plot.go`); their stale "Stored only"
-      doc comments were fixed.
+      image (6: origin/aspect/resample/interpolation-stage/lut/composite_image),
+      mathtext (9: default/fallback/bf/bfit/cal/it/rm/sf/tt), date (10), PDF
+      (4), PS (5), SVG (4), animation (11), and boxplot (2:
+      vertical/whiskers). Correction to the prior audit: `boxplot.notch` and
+      `boxplot.patchartist` **are** consumed (`core/plot.go`);
+      their stale “Stored only” comments were fixed.
 - [x] Minimum bar: `maybeWarnUnhonoredRCParam` emits a one-shot `diag.Warnf` (deduped
       per key, process-global) the first time an unhonored rcParam is _set to a
       non-default value_, injected at the `applyMPLStyleEntry` success path so it covers
@@ -493,48 +491,6 @@ mathtext honoring blocked on a cwbudde/mathtext library hook.
     `date.autoformatter.*` override AutoDateFormatter buckets via a new
     strftime interpreter (`core/strftime.go`), `date.converter: concise`
     switches the default axis formatter.
-  - `mathtext.default`/`.rm`/`.it`/… remain **blocked upstream**: the
-    `cwbudde/mathtext` engine (v0.4.4) exposes no hook for the implicit-italic
-    default or per-class family names (`parser.go` hardcodes them;
-    `Options`/`FontResolver` carry no fontset table). Honoring these needs a
-    mathtext library release first; `mathtext.cal`/`.bfit`/`fallback` further
-    depend on the Phase 17 per-fontset glyph maps. Keys stay in the
-    unhonored registry so the one-shot warning keeps firing.
-- [ ] **Third-audit unparsed inventory (2026-07-01, REVIEW.md §3 of the third
-      review).** Entire families never reach the `RC` struct and land silently in
-      `report.Unsupported` (`style/mplstyle.go:977`):
-  - ticks: `{x,y}tick.direction`, major/minor `size`/`width`/`pad`,
-    `minor.visible`, side toggles (`top`/`bottom`/`left`/`right`), label sides,
-    `alignment` — the Go defaults are hardcoded-correct but non-overridable;
-  - legend layout (14 params: `loc`, `fancybox`, `shadow`, `numpoints`,
-    `scatterpoints`, `markerscale`, `title_fontsize`, `borderpad`,
-    `labelspacing`, `handlelength`, `handleheight`, `handletextpad`,
-    `borderaxespad`, `columnspacing`);
-  - axes: ~~`axisbelow`, `xmargin`/`ymargin`, `autolimit_mode`,
-    `unicode_minus`~~ — **shipped 2026-07-02** (`RC.Axes` group, parsed +
-    consumed: axes seed `SetAxisBelow`/margins/`autolimitMode` from rc at
-    creation in `applyRCBehaviorDefaults`, `scalarFixMinus` consults
-    `unicode_minus`; zero golden churn — only non-default rc values apply).
-    Still open: `titlepad`, `labelpad`, `titlelocation`, `spines.*`,
-    `axes.formatter.*` (limits/use_mathtext/useoffset/offset_threshold);
-  - lines/markers: ~~`lines.linestyle`, `marker`, `markersize`,
-    `markeredgewidth`~~ — **shipped 2026-07-02** (`RC.Lines` group; Axes.Plot
-    seeds dash pattern / marker / sizes from non-default rc values, explicit
-    options and prop-cycle entries still win). Still open: the three
-    `*_pattern` keys, `scale_dashes`, cap/join styles, `markers.fillstyle`,
-    `lines.antialiased`;
-  - figure: `edgecolor`, `frameon`, `subplot.*`, `autolayout`,
-    `constrained_layout.*`, `titlesize`/`titleweight`;
-  - patches: no `PatchRC` exists at all (`patch.linewidth`/`facecolor`/
-    `edgecolor`/`force_edgecolor`/`antialiased`);
-  - font: `font.weight`/`style`/`variant`/`stretch` + family-list values;
-  - artist-default rc keys: ~~`errorbar.capsize`, `scatter.marker`,
-    `scatter.edgecolors`~~ — **shipped 2026-07-02** (`RC.Scatter`/`RC.Errorbar`
-    groups; Axes.Scatter seeds marker/edge color — plus default size from
-    `lines.markersize`² — and Axes.ErrorBar seeds cap size; explicit options
-    win). Still open: `contour.*`. (`hist.bins` shipped with Phase 19:
-    parsed, exported via `Params`, and consumed by `Axes.Hist`.)
-    Prioritize by parity-case impact, not raw count.
 - [x] **Minimum bar for unparsed-but-known keys:** shipped in
       `style/unparsed.go` — `knownUpstreamRCParams` carries all 321 user-facing
       matplotlib 3.10.9 rcParam keys (generated from `sorted(matplotlib.rcParams)`,
@@ -550,6 +506,71 @@ mathtext honoring blocked on a cwbudde/mathtext library hook.
       rationale (parity-pinned snapping/hinting, unmodeled polar-grid toggle,
       fixed 3D pane/navigation behavior); their one-shot warning carries the
       rationale instead of the generic "not parsed" text.
+
+### Remaining work
+
+Already shipped: axes behavior (`axisbelow`, margins, `autolimit_mode`,
+`unicode_minus`), primary line/marker defaults, scatter/errorbar defaults, and
+`hist.bins`. For every item below: add typed `RC` storage and matplotlib-default
+values, parse and validate `.mplstyle` input, consume the value in the relevant
+artist/layout path while preserving explicit-option precedence, and add parser +
+behavior tests. Default values must not churn existing goldens.
+
+- [x] **P1 — Tick geometry and visibility.** Honor `{x,y}tick.direction`;
+      `major/minor.{size,width,pad}`; `minor.{visible,ndivs}`; x-side
+      `{top,bottom,labeltop,labelbottom}` and per-major/minor side toggles;
+      y-side `{left,right,labelleft,labelright}` and per-major/minor side
+      toggles; and `{x,y}tick.alignment`. **Shipped 2026-07-24:** typed
+      `TickAxisRC`/`TickLevelRC`, all 36 parser/serializer keys, independent
+      major/minor side visibility, DPI-aware sizes, explicit-option precedence,
+      and Matplotlib's automatic 4/5 minor subdivision rule. Focused style/core
+      tests and the catalog golden gate are green.
+- [x] **P1 — Legend layout.** Honor `legend.loc`, `fancybox`, `shadow`,
+      `numpoints`, `scatterpoints`, `markerscale`, `title_fontsize`, `borderpad`,
+      `labelspacing`, `handlelength`, `handleheight`, `handletextpad`,
+      `borderaxespad`, and `columnspacing`. **Shipped 2026-07-24:** typed
+      `LegendRC` storage plus parser/runtime round-tripping for all 14 keys;
+      axes/figure legends seed named placement, frame shape/shadow, line/scatter
+      sample counts and scaling, title size, and DPI-aware font-relative layout
+      while later explicit legend-field changes still win. Focused style/core
+      tests and the catalog golden/reference gate are green.
+- [ ] **P1 — Axes title and label placement.** Honor `axes.titlepad`,
+      `titlelocation`, `titleweight`, `titley`, `labelpad`, and `labelweight`;
+      explicit title/label options must continue to win.
+- [ ] **P1 — Scalar formatter defaults.** Honor all six
+      `axes.formatter.*` keys: `limits`, `min_exponent`, `offset_threshold`,
+      `use_locale`, `use_mathtext`, and `useoffset`.
+- [ ] **P1 — Spine visibility.** Honor `axes.spines.{top,bottom,left,right}` at
+      axes creation without overriding later explicit spine changes.
+- [ ] **P2 — Line and marker rendering defaults.** Honor
+      `lines.{dashdot_pattern,dashed_pattern,dotted_pattern,scale_dashes}`,
+      dash/solid cap and join styles, `markerfacecolor`, `markeredgecolor`,
+      `markers.fillstyle`, and `lines.antialiased`.
+- [ ] **P2 — Figure defaults and layout seeds.** Honor `figure.edgecolor`,
+      `frameon`, all six `subplot.*` margins/spacings, `autolayout`, the five
+      `constrained_layout.*` controls, `titlesize`, `titleweight`, `labelsize`,
+      and `labelweight`. Classify `figure.hooks`, `max_open_warning`, and
+      `raise_window` as supported behavior or documented headless non-goals.
+- [ ] **P2 — Patch defaults.** Add `PatchRC` and honor
+      `patch.{linewidth,facecolor,edgecolor,force_edgecolor,antialiased}` across
+      standalone patches and patch-producing plot methods; explicit paint/options
+      must win.
+- [ ] **P2 — Font defaults and fallback lists.** Honor
+      `font.{weight,style,variant,stretch}` and retain ordered
+      `font.{serif,sans-serif,cursive,fantasy,monospace}` fallback lists instead
+      of collapsing `font.family` to one name.
+- [ ] **P2 — Contour defaults.** Honor `contour.algorithm`, `corner_mask`,
+      `linewidth`, and `negative_linestyle` in structured/triangular line and
+      filled contour paths where applicable.
+- [ ] **Blocked — MathText rcParams.** Honor `mathtext.default`, `fallback`,
+      `bf`, `bfit`, `cal`, `it`, `rm`, `sf`, and `tt` after
+      `cwbudde/mathtext` exposes implicit-style and per-class font hooks.
+      `cal`/`bfit`/`fallback` also depend on Phase 17's per-fontset glyph maps;
+      keep warning through `unhonoredRCParams` until then.
+- [ ] **Phase 16 exit gate.** Verify every completed key above is parsed or
+      explicitly honored (while remaining in the upstream-key audit table), move
+      intentional omissions into `nonGoalRCParams` with rationale, and run focused
+      style tests plus the full golden/reference suite.
 
 ## Phase 17: Artist Breadth & Algorithmic Correctness ⚪
 

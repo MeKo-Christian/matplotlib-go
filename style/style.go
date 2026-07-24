@@ -74,6 +74,12 @@ type RC struct {
 	// Lines holds line-artist lines.* rcParams (width/color live in the flat
 	// LineWidth/LineColor fields above).
 	Lines LinesRC
+	// XTick and YTick hold tick geometry, placement, and visibility rcParams.
+	XTick TickAxisRC
+	YTick TickAxisRC
+	// Legend holds legend placement, geometry, and visibility rcParams beyond
+	// the flat color/font/frame fields above.
+	Legend LegendRC
 	// Scatter holds scatter.* rcParams (scatter artist defaults).
 	Scatter ScatterRC
 	// Errorbar holds errorbar.* rcParams (errorbar artist defaults).
@@ -141,6 +147,51 @@ type LinesRC struct {
 	// indistinguishable from Line2D's unset state (which falls back to the
 	// 1 pt default) and is therefore ignored.
 	MarkerEdgeWidth float64
+}
+
+// TickAxisRC mirrors the axis-wide xtick.* or ytick.* rcParams. Primary means
+// bottom for x and left for y; Secondary means top for x and right for y.
+type TickAxisRC struct {
+	Direction      string
+	Alignment      string
+	Primary        bool
+	Secondary      bool
+	LabelPrimary   bool
+	LabelSecondary bool
+	Major          TickLevelRC
+	Minor          TickLevelRC
+}
+
+// TickLevelRC mirrors the major/minor tick geometry and per-side visibility.
+// NDivs is used only by Minor; zero selects Matplotlib's automatic subdivision.
+type TickLevelRC struct {
+	Size      float64
+	Width     float64
+	Pad       float64
+	Primary   bool
+	Secondary bool
+	Visible   bool
+	NDivs     int
+}
+
+// LegendRC mirrors legend layout rcParams. Dimension values are expressed in
+// legend-font-size units, as in Matplotlib. TitleFontSize is zero when
+// legend.title_fontsize is None, which makes legend titles use FontSize.
+type LegendRC struct {
+	Location      string
+	FancyBox      bool
+	Shadow        bool
+	NumPoints     int
+	ScatterPoints int
+	MarkerScale   float64
+	TitleFontSize float64
+	BorderPad     float64
+	LabelSpacing  float64
+	HandleLength  float64
+	HandleHeight  float64
+	HandleTextPad float64
+	BorderAxesPad float64
+	ColumnSpacing float64
 }
 
 // ScatterRC mirrors Matplotlib's scatter.* rcParams.
@@ -464,6 +515,38 @@ var Default = RC{
 		Marker:          "None",
 		MarkerSize:      6,
 		MarkerEdgeWidth: 1,
+	},
+	XTick: TickAxisRC{
+		Direction:    "out",
+		Alignment:    "center",
+		Primary:      true,
+		LabelPrimary: true,
+		Major:        TickLevelRC{Size: 3.5, Width: 0.8, Pad: 3.5, Primary: true, Secondary: true, Visible: true},
+		Minor:        TickLevelRC{Size: 2.0, Width: 0.6, Pad: 3.4, Primary: true, Secondary: true},
+	},
+	YTick: TickAxisRC{
+		Direction:    "out",
+		Alignment:    "center_baseline",
+		Primary:      true,
+		LabelPrimary: true,
+		Major:        TickLevelRC{Size: 3.5, Width: 0.8, Pad: 3.5, Primary: true, Secondary: true, Visible: true},
+		Minor:        TickLevelRC{Size: 2.0, Width: 0.6, Pad: 3.4, Primary: true, Secondary: true},
+	},
+	Legend: LegendRC{
+		Location:      "best",
+		FancyBox:      true,
+		Shadow:        false,
+		NumPoints:     1,
+		ScatterPoints: 1,
+		MarkerScale:   1,
+		TitleFontSize: 0,
+		BorderPad:     0.4,
+		LabelSpacing:  0.5,
+		HandleLength:  2,
+		HandleHeight:  0.7,
+		HandleTextPad: 0.8,
+		BorderAxesPad: 0.5,
+		ColumnSpacing: 2,
 	},
 	Scatter: ScatterRC{
 		Marker:     "o",

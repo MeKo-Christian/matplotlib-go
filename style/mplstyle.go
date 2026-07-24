@@ -111,12 +111,26 @@ var supportedMPLStyleKeys = []string{
 	"image.lut",
 	"image.origin",
 	"image.resample",
+	"legend.borderaxespad",
+	"legend.borderpad",
+	"legend.columnspacing",
 	"legend.edgecolor",
 	"legend.facecolor",
+	"legend.fancybox",
 	"legend.framealpha",
 	"legend.frameon",
 	"legend.fontsize",
+	"legend.handleheight",
+	"legend.handlelength",
+	"legend.handletextpad",
 	"legend.labelcolor",
+	"legend.labelspacing",
+	"legend.loc",
+	"legend.markerscale",
+	"legend.numpoints",
+	"legend.scatterpoints",
+	"legend.shadow",
+	"legend.title_fontsize",
 	"lines.color",
 	"lines.linestyle",
 	"lines.linewidth",
@@ -160,12 +174,48 @@ var supportedMPLStyleKeys = []string{
 	"svg.image_inline",
 	"text.color",
 	"text.usetex",
+	"xtick.alignment",
+	"xtick.bottom",
 	"xtick.color",
+	"xtick.direction",
+	"xtick.labelbottom",
 	"xtick.labelcolor",
 	"xtick.labelsize",
+	"xtick.labeltop",
+	"xtick.major.bottom",
+	"xtick.major.pad",
+	"xtick.major.size",
+	"xtick.major.top",
+	"xtick.major.width",
+	"xtick.minor.bottom",
+	"xtick.minor.ndivs",
+	"xtick.minor.pad",
+	"xtick.minor.size",
+	"xtick.minor.top",
+	"xtick.minor.visible",
+	"xtick.minor.width",
+	"xtick.top",
+	"ytick.alignment",
 	"ytick.color",
+	"ytick.direction",
+	"ytick.labelleft",
 	"ytick.labelcolor",
+	"ytick.labelright",
 	"ytick.labelsize",
+	"ytick.left",
+	"ytick.major.left",
+	"ytick.major.pad",
+	"ytick.major.right",
+	"ytick.major.size",
+	"ytick.major.width",
+	"ytick.minor.left",
+	"ytick.minor.ndivs",
+	"ytick.minor.pad",
+	"ytick.minor.right",
+	"ytick.minor.size",
+	"ytick.minor.visible",
+	"ytick.minor.width",
+	"ytick.right",
 }
 
 type mplStyleState struct {
@@ -248,6 +298,8 @@ type mplStyleState struct {
 	legendFrameAlphaSet bool
 	legendFrameOn       bool
 	legendFrameOnSet    bool
+	legendTitleFont     string
+	legendTitleFontSet  bool
 }
 
 // SupportedMPLStyleKeys returns the subset of rcParams understood by the loader.
@@ -341,6 +393,13 @@ func newMPLStyleState(base RC) mplStyleState {
 func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, report *MPLStyleReport) error {
 	if state == nil || report == nil {
 		return errors.New("nil mplstyle state")
+	}
+	if handled, err := applyMPLTickStyleEntry(&state.rc, key, value); handled {
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		report.Applied = append(report.Applied, key)
+		return nil
 	}
 
 	switch key {
@@ -709,6 +768,70 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 		}
 		state.legendFrameOn = parsed
 		state.legendFrameOnSet = true
+	case "legend.loc":
+		parsed, err := parseMPLLegendLocation(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Legend.Location = parsed
+	case "legend.fancybox":
+		if err := parseMPLBoolInto(value, &state.rc.Legend.FancyBox); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "legend.shadow":
+		if err := parseMPLBoolInto(value, &state.rc.Legend.Shadow); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "legend.numpoints":
+		parsed, err := parseMPLInt(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Legend.NumPoints = parsed
+	case "legend.scatterpoints":
+		parsed, err := parseMPLInt(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Legend.ScatterPoints = parsed
+	case "legend.markerscale":
+		if err := parseMPLFloatInto(value, &state.rc.Legend.MarkerScale); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "legend.title_fontsize":
+		if _, err := parseMPLFontSizeOrNone(value, state.rc.FontSize); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.legendTitleFont = normalizeMPLValue(value)
+		state.legendTitleFontSet = true
+	case "legend.borderpad":
+		if err := parseMPLFloatInto(value, &state.rc.Legend.BorderPad); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "legend.labelspacing":
+		if err := parseMPLFloatInto(value, &state.rc.Legend.LabelSpacing); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "legend.handlelength":
+		if err := parseMPLFloatInto(value, &state.rc.Legend.HandleLength); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "legend.handleheight":
+		if err := parseMPLFloatInto(value, &state.rc.Legend.HandleHeight); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "legend.handletextpad":
+		if err := parseMPLFloatInto(value, &state.rc.Legend.HandleTextPad); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "legend.borderaxespad":
+		if err := parseMPLFloatInto(value, &state.rc.Legend.BorderAxesPad); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "legend.columnspacing":
+		if err := parseMPLFloatInto(value, &state.rc.Legend.ColumnSpacing); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
 	case "xtick.labelsize":
 		parsed, err := parseMPLFontSize(value, state.rc.FontSize)
 		if err != nil {
@@ -1100,6 +1223,113 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 	return nil
 }
 
+func applyMPLTickStyleEntry(rc *RC, key, value string) (bool, error) {
+	if rc == nil {
+		return false, nil
+	}
+	var axis *TickAxisRC
+	var suffix string
+	switch {
+	case strings.HasPrefix(key, "xtick."):
+		axis = &rc.XTick
+		suffix = strings.TrimPrefix(key, "xtick.")
+	case strings.HasPrefix(key, "ytick."):
+		axis = &rc.YTick
+		suffix = strings.TrimPrefix(key, "ytick.")
+	default:
+		return false, nil
+	}
+
+	switch suffix {
+	case "direction":
+		parsed, err := parseMPLEnum(value, "in", "inout", "out")
+		if err == nil {
+			axis.Direction = parsed
+		}
+		return true, err
+	case "alignment":
+		values := []string{"center", "left", "right"}
+		if axis == &rc.YTick {
+			values = []string{"baseline", "bottom", "center", "center_baseline", "top"}
+		}
+		parsed, err := parseMPLEnum(value, values...)
+		if err == nil {
+			axis.Alignment = parsed
+		}
+		return true, err
+	case "bottom", "left":
+		return true, parseMPLBoolInto(value, &axis.Primary)
+	case "top", "right":
+		return true, parseMPLBoolInto(value, &axis.Secondary)
+	case "labelbottom", "labelleft":
+		return true, parseMPLBoolInto(value, &axis.LabelPrimary)
+	case "labeltop", "labelright":
+		return true, parseMPLBoolInto(value, &axis.LabelSecondary)
+	case "major.bottom", "major.left":
+		return true, parseMPLBoolInto(value, &axis.Major.Primary)
+	case "major.top", "major.right":
+		return true, parseMPLBoolInto(value, &axis.Major.Secondary)
+	case "minor.bottom", "minor.left":
+		return true, parseMPLBoolInto(value, &axis.Minor.Primary)
+	case "minor.top", "minor.right":
+		return true, parseMPLBoolInto(value, &axis.Minor.Secondary)
+	case "minor.visible":
+		return true, parseMPLBoolInto(value, &axis.Minor.Visible)
+	case "major.size":
+		return true, parseMPLFloatInto(value, &axis.Major.Size)
+	case "major.width":
+		return true, parseMPLFloatInto(value, &axis.Major.Width)
+	case "major.pad":
+		return true, parseMPLFloatInto(value, &axis.Major.Pad)
+	case "minor.size":
+		return true, parseMPLFloatInto(value, &axis.Minor.Size)
+	case "minor.width":
+		return true, parseMPLFloatInto(value, &axis.Minor.Width)
+	case "minor.pad":
+		return true, parseMPLFloatInto(value, &axis.Minor.Pad)
+	case "minor.ndivs":
+		parsed, err := parseMPLMinorTickNDivs(value)
+		if err == nil {
+			axis.Minor.NDivs = parsed
+		}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func parseMPLBoolInto(value string, target *bool) error {
+	parsed, err := parseMPLBool(value)
+	if err != nil {
+		return err
+	}
+	*target = parsed
+	return nil
+}
+
+func parseMPLFloatInto(value string, target *float64) error {
+	parsed, err := parseMPLFloat(value)
+	if err != nil {
+		return err
+	}
+	*target = parsed
+	return nil
+}
+
+func parseMPLMinorTickNDivs(value string) (int, error) {
+	if strings.EqualFold(normalizeMPLValue(value), "auto") {
+		return 0, nil
+	}
+	parsed, err := parseMPLInt(value)
+	if err != nil {
+		return 0, errors.New(`expected "auto" or a non-negative integer`)
+	}
+	if parsed < 0 {
+		return 0, errors.New(`expected "auto" or a non-negative integer`)
+	}
+	return parsed, nil
+}
+
 func finalizeMPLStyleState(state *mplStyleState) {
 	if state == nil {
 		return
@@ -1284,6 +1514,11 @@ func finalizeMPLStyleState(state *mplStyleState) {
 			state.rc.LegendBorderColor.A = 0
 		}
 	}
+	if state.legendTitleFontSet {
+		if parsed, err := parseMPLFontSizeOrNone(state.legendTitleFont, state.rc.FontSize); err == nil {
+			state.rc.Legend.TitleFontSize = parsed
+		}
+	}
 }
 
 func splitMPLStyleLine(raw string) (string, string, bool) {
@@ -1351,6 +1586,39 @@ func parseMPLInt(value string) (int, error) {
 		return 0, fmt.Errorf("invalid int %q", value)
 	}
 	return parsed, nil
+}
+
+func parseMPLLegendLocation(value string) (string, error) {
+	normalized := strings.ToLower(normalizeMPLValue(value))
+	names := [...]string{
+		"best",
+		"upper right",
+		"upper left",
+		"lower left",
+		"lower right",
+		"right",
+		"center left",
+		"center right",
+		"lower center",
+		"upper center",
+		"center",
+	}
+	for _, name := range names {
+		if normalized == name {
+			return name, nil
+		}
+	}
+	if code, err := strconv.Atoi(normalized); err == nil && code >= 0 && code < len(names) {
+		return names[code], nil
+	}
+	return "", fmt.Errorf("invalid legend location %q", value)
+}
+
+func parseMPLFontSizeOrNone(value string, base float64) (float64, error) {
+	if strings.EqualFold(normalizeMPLValue(value), "none") {
+		return 0, nil
+	}
+	return parseMPLFontSize(value, base)
 }
 
 // parseMPLHistBins mirrors matplotlib's validate_hist_bins for the values this

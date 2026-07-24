@@ -102,6 +102,98 @@ patch.facecolor: 348ABD
 	}
 }
 
+func TestParseMPLStyleTickGeometryAndVisibility(t *testing.T) {
+	src := `
+xtick.direction: in
+xtick.alignment: right
+xtick.bottom: true
+xtick.top: true
+xtick.labelbottom: false
+xtick.labeltop: true
+xtick.major.size: 7
+xtick.major.width: 1.25
+xtick.major.pad: 6
+xtick.major.bottom: true
+xtick.major.top: false
+xtick.minor.size: 4
+xtick.minor.width: 0.5
+xtick.minor.pad: 2
+xtick.minor.visible: true
+xtick.minor.ndivs: 3
+xtick.minor.bottom: false
+xtick.minor.top: true
+ytick.direction: inout
+ytick.alignment: top
+ytick.left: false
+ytick.right: true
+ytick.labelleft: false
+ytick.labelright: true
+ytick.major.size: 8
+ytick.major.width: 1.5
+ytick.major.pad: 5
+ytick.major.left: true
+ytick.major.right: true
+ytick.minor.size: 3
+ytick.minor.width: 0.75
+ytick.minor.pad: 1
+ytick.minor.visible: true
+ytick.minor.ndivs: auto
+ytick.minor.left: true
+ytick.minor.right: false
+`
+	theme, report, err := ParseMPLStyle("ticks", src)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+	if len(report.Unsupported) != 0 {
+		t.Fatalf("unsupported tick params: %+v", report.Unsupported)
+	}
+	if got, want := len(report.Applied), 36; got != want {
+		t.Fatalf("applied tick params = %d, want %d", got, want)
+	}
+
+	x := theme.RC.XTick
+	if x.Direction != "in" || x.Alignment != "right" ||
+		!x.Primary || !x.Secondary || x.LabelPrimary || !x.LabelSecondary {
+		t.Fatalf("x tick axis params = %+v", x)
+	}
+	if x.Major.Size != 7 || x.Major.Width != 1.25 || x.Major.Pad != 6 ||
+		!x.Major.Primary || x.Major.Secondary {
+		t.Fatalf("x major params = %+v", x.Major)
+	}
+	if x.Minor.Size != 4 || x.Minor.Width != 0.5 || x.Minor.Pad != 2 ||
+		!x.Minor.Visible || x.Minor.NDivs != 3 || x.Minor.Primary || !x.Minor.Secondary {
+		t.Fatalf("x minor params = %+v", x.Minor)
+	}
+
+	y := theme.RC.YTick
+	if y.Direction != "inout" || y.Alignment != "top" ||
+		y.Primary || !y.Secondary || y.LabelPrimary || !y.LabelSecondary {
+		t.Fatalf("y tick axis params = %+v", y)
+	}
+	if y.Major.Size != 8 || y.Major.Width != 1.5 || y.Major.Pad != 5 ||
+		!y.Major.Primary || !y.Major.Secondary {
+		t.Fatalf("y major params = %+v", y.Major)
+	}
+	if y.Minor.Size != 3 || y.Minor.Width != 0.75 || y.Minor.Pad != 1 ||
+		!y.Minor.Visible || y.Minor.NDivs != 0 || !y.Minor.Primary || y.Minor.Secondary {
+		t.Fatalf("y minor params = %+v", y.Minor)
+	}
+}
+
+func TestParseMPLStyleRejectsInvalidTickParams(t *testing.T) {
+	for _, src := range []string{
+		"xtick.direction: sideways\n",
+		"xtick.alignment: baseline\n",
+		"ytick.alignment: right\n",
+		"ytick.minor.ndivs: -1\n",
+	} {
+		if _, _, err := ParseMPLStyle("ticks", src); err == nil {
+			t.Fatalf("ParseMPLStyle(%q) succeeded, want validation error", src)
+		}
+	}
+}
+
 func TestParseMPLStyleCyclerKeywordForm(t *testing.T) {
 	src := `
 axes.prop_cycle: cycler(color=['003FFF', '03ED3A'])
@@ -177,6 +269,89 @@ axes.prop_cycle: cycler('color', ['FF0000', '00FF00']) * cycler('linewidth', [1.
 	}
 	if got, want := palette[2], mustParseTestColor(t, "00FF00"); got != want {
 		t.Fatalf("palette[2] = %+v, want green", got)
+	}
+}
+
+func TestParseMPLStyleLegendLayout(t *testing.T) {
+	src := `
+font.size: 10
+legend.loc: lower left
+legend.fancybox: false
+legend.shadow: true
+legend.numpoints: 3
+legend.scatterpoints: 2
+legend.markerscale: 1.75
+legend.title_fontsize: large
+legend.borderpad: 0.6
+legend.labelspacing: 0.7
+legend.handlelength: 2.5
+legend.handleheight: 0.9
+legend.handletextpad: 1.1
+legend.borderaxespad: 0.8
+legend.columnspacing: 2.4
+`
+	theme, report, err := ParseMPLStyle("legend-layout", src)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+	if len(report.Unsupported) != 0 {
+		t.Fatalf("unsupported legend params: %+v", report.Unsupported)
+	}
+
+	got := theme.RC.Legend
+	if got.Location != "lower left" || got.FancyBox || !got.Shadow {
+		t.Fatalf("unexpected legend placement/frame defaults: %+v", got)
+	}
+	if got.NumPoints != 3 || got.ScatterPoints != 2 {
+		t.Fatalf("unexpected legend point counts: %+v", got)
+	}
+	if !almostEqual(got.MarkerScale, 1.75) || !almostEqual(got.TitleFontSize, 12) {
+		t.Fatalf("unexpected legend marker/title sizes: %+v", got)
+	}
+	wantDimensions := []float64{0.6, 0.7, 2.5, 0.9, 1.1, 0.8, 2.4}
+	gotDimensions := []float64{
+		got.BorderPad,
+		got.LabelSpacing,
+		got.HandleLength,
+		got.HandleHeight,
+		got.HandleTextPad,
+		got.BorderAxesPad,
+		got.ColumnSpacing,
+	}
+	if !equalFloatSlices(gotDimensions, wantDimensions) {
+		t.Fatalf("legend dimensions = %v, want %v", gotDimensions, wantDimensions)
+	}
+}
+
+func TestParseMPLStyleLegendTitleFontSizeNoneAndNumericLocation(t *testing.T) {
+	theme, report, err := ParseMPLStyle("legend-special-values", `
+legend.loc: 9
+legend.title_fontsize: None
+`)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+	if len(report.Unsupported) != 0 {
+		t.Fatalf("unsupported legend params: %+v", report.Unsupported)
+	}
+	if got := theme.RC.Legend.Location; got != "upper center" {
+		t.Fatalf("legend location = %q, want upper center", got)
+	}
+	if got := theme.RC.Legend.TitleFontSize; got != 0 {
+		t.Fatalf("legend title fontsize = %v, want None sentinel 0", got)
+	}
+}
+
+func TestParseMPLStyleLegendRelativeTitleSizeIsOrderIndependent(t *testing.T) {
+	theme, _, err := ParseMPLStyle("legend-title-order", `
+legend.title_fontsize: large
+font.size: 20
+`)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+	if got, want := theme.RC.Legend.TitleFontSize, 24.0; !almostEqual(got, want) {
+		t.Fatalf("legend title fontsize = %v, want %v", got, want)
 	}
 }
 

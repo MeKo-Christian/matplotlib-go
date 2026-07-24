@@ -603,17 +603,30 @@ type AutoMinorLocator struct {
 }
 
 func (l AutoMinorLocator) Ticks(minVal, maxVal float64, targetCount int) []float64 {
-	n := l.N
-	if n <= 1 {
-		n = 5
-	}
-
 	major := l.Major
 	if major == nil {
 		major = AutoLocator{}
 	}
 	majors := major.Ticks(minVal, maxVal, targetCount)
 	if len(majors) < 2 {
+		return nil
+	}
+	n := l.N
+	if n == 0 {
+		// Matplotlib's "auto" rc mode chooses five subdivisions for the
+		// decimal-friendly 1/2.5/5/10 mantissas and four otherwise.
+		majorStep := math.Abs(majors[1] - majors[0])
+		exponent := math.Log10(majorStep)
+		mantissa := math.Pow(10, exponent-math.Floor(exponent))
+		n = 4
+		for _, candidate := range []float64{1, 2.5, 5, 10} {
+			if approx(mantissa, candidate, 1e-10) {
+				n = 5
+				break
+			}
+		}
+	}
+	if n <= 1 {
 		return nil
 	}
 

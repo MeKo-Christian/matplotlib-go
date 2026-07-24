@@ -268,10 +268,24 @@ func paramsFromRC(rc RC) Params {
 	params["image.resample"] = formatMPLBool(rc.Image.Resample)
 	params["legend.edgecolor"] = formatMPLColor(rc.LegendBorderColor)
 	params["legend.facecolor"] = formatMPLColor(rc.LegendBackground)
+	params["legend.fancybox"] = formatMPLBool(rc.Legend.FancyBox)
 	params["legend.fontsize"] = formatMPLFloat(rc.LegendSize())
 	params["legend.framealpha"] = formatMPLFloat(rc.LegendFrameAlpha)
 	params["legend.frameon"] = formatMPLBool(rc.LegendFrameOn)
+	params["legend.borderaxespad"] = formatMPLFloat(rc.Legend.BorderAxesPad)
+	params["legend.borderpad"] = formatMPLFloat(rc.Legend.BorderPad)
+	params["legend.columnspacing"] = formatMPLFloat(rc.Legend.ColumnSpacing)
+	params["legend.handleheight"] = formatMPLFloat(rc.Legend.HandleHeight)
+	params["legend.handlelength"] = formatMPLFloat(rc.Legend.HandleLength)
+	params["legend.handletextpad"] = formatMPLFloat(rc.Legend.HandleTextPad)
 	params["legend.labelcolor"] = formatMPLColor(rc.LegendTextColor)
+	params["legend.labelspacing"] = formatMPLFloat(rc.Legend.LabelSpacing)
+	params["legend.loc"] = rc.Legend.Location
+	params["legend.markerscale"] = formatMPLFloat(rc.Legend.MarkerScale)
+	params["legend.numpoints"] = strconv.Itoa(rc.Legend.NumPoints)
+	params["legend.scatterpoints"] = strconv.Itoa(rc.Legend.ScatterPoints)
+	params["legend.shadow"] = formatMPLBool(rc.Legend.Shadow)
+	params["legend.title_fontsize"] = formatMPLOptionalFontSize(rc.Legend.TitleFontSize)
 	params["lines.color"] = formatMPLColor(rc.DefaultLineColor())
 	params["lines.linewidth"] = formatMPLFloat(rc.LineWidth)
 	params["mathtext.bf"] = rc.Mathtext.BF
@@ -308,18 +322,68 @@ func paramsFromRC(rc RC) Params {
 	params["svg.image_inline"] = formatMPLBool(rc.SVG.ImageInline)
 	params["text.color"] = formatMPLColor(rc.DefaultTextColor())
 	params["text.usetex"] = formatMPLBool(rc.UseTeX)
+	params["xtick.alignment"] = rc.XTick.Alignment
+	params["xtick.bottom"] = formatMPLBool(rc.XTick.Primary)
 	params["xtick.color"] = formatMPLColor(rc.XTickColor)
+	params["xtick.direction"] = rc.XTick.Direction
+	params["xtick.labelbottom"] = formatMPLBool(rc.XTick.LabelPrimary)
 	params["xtick.labelcolor"] = formatMPLColor(rc.XTickColor)
 	params["xtick.labelsize"] = formatMPLFloat(rc.TickLabelSize("x"))
+	params["xtick.labeltop"] = formatMPLBool(rc.XTick.LabelSecondary)
+	params["xtick.major.bottom"] = formatMPLBool(rc.XTick.Major.Primary)
+	params["xtick.major.pad"] = formatMPLFloat(rc.XTick.Major.Pad)
+	params["xtick.major.size"] = formatMPLFloat(rc.XTick.Major.Size)
+	params["xtick.major.top"] = formatMPLBool(rc.XTick.Major.Secondary)
+	params["xtick.major.width"] = formatMPLFloat(rc.XTick.Major.Width)
+	params["xtick.minor.bottom"] = formatMPLBool(rc.XTick.Minor.Primary)
+	params["xtick.minor.ndivs"] = formatMPLMinorTickNDivs(rc.XTick.Minor.NDivs)
+	params["xtick.minor.pad"] = formatMPLFloat(rc.XTick.Minor.Pad)
+	params["xtick.minor.size"] = formatMPLFloat(rc.XTick.Minor.Size)
+	params["xtick.minor.top"] = formatMPLBool(rc.XTick.Minor.Secondary)
+	params["xtick.minor.visible"] = formatMPLBool(rc.XTick.Minor.Visible)
+	params["xtick.minor.width"] = formatMPLFloat(rc.XTick.Minor.Width)
+	params["xtick.top"] = formatMPLBool(rc.XTick.Secondary)
+	params["ytick.alignment"] = rc.YTick.Alignment
 	params["ytick.color"] = formatMPLColor(rc.YTickColor)
+	params["ytick.direction"] = rc.YTick.Direction
+	params["ytick.labelleft"] = formatMPLBool(rc.YTick.LabelPrimary)
 	params["ytick.labelcolor"] = formatMPLColor(rc.YTickColor)
+	params["ytick.labelright"] = formatMPLBool(rc.YTick.LabelSecondary)
 	params["ytick.labelsize"] = formatMPLFloat(rc.TickLabelSize("y"))
+	params["ytick.left"] = formatMPLBool(rc.YTick.Primary)
+	params["ytick.major.left"] = formatMPLBool(rc.YTick.Major.Primary)
+	params["ytick.major.pad"] = formatMPLFloat(rc.YTick.Major.Pad)
+	params["ytick.major.right"] = formatMPLBool(rc.YTick.Major.Secondary)
+	params["ytick.major.size"] = formatMPLFloat(rc.YTick.Major.Size)
+	params["ytick.major.width"] = formatMPLFloat(rc.YTick.Major.Width)
+	params["ytick.minor.left"] = formatMPLBool(rc.YTick.Minor.Primary)
+	params["ytick.minor.ndivs"] = formatMPLMinorTickNDivs(rc.YTick.Minor.NDivs)
+	params["ytick.minor.pad"] = formatMPLFloat(rc.YTick.Minor.Pad)
+	params["ytick.minor.right"] = formatMPLBool(rc.YTick.Minor.Secondary)
+	params["ytick.minor.size"] = formatMPLFloat(rc.YTick.Minor.Size)
+	params["ytick.minor.visible"] = formatMPLBool(rc.YTick.Minor.Visible)
+	params["ytick.minor.width"] = formatMPLFloat(rc.YTick.Minor.Width)
+	params["ytick.right"] = formatMPLBool(rc.YTick.Secondary)
 
 	return params
 }
 
 func formatMPLFloat(value float64) string {
 	return strconv.FormatFloat(value, 'f', -1, 64)
+}
+
+func formatMPLOptionalFontSize(value float64) string {
+	if value <= 0 {
+		return "None"
+	}
+	return formatMPLFloat(value)
+}
+
+func formatMPLMinorTickNDivs(ndivs int) string {
+	if ndivs <= 0 {
+		return "auto"
+	}
+	return strconv.Itoa(ndivs)
 }
 
 func formatMPLHistBins(bins int) string {

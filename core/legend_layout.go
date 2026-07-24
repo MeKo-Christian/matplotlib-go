@@ -39,7 +39,7 @@ func (l *Legend) layoutEntries(labelLayouts []singleLineTextLayout, rowHeights [
 		return legendLayout{}
 	}
 	columnSpacing := l.ColumnSpacing
-	if columnSpacing <= 0 && ctx != nil {
+	if columnSpacing <= 0 && !l.defaultsSet && ctx != nil {
 		columnSpacing = 2.0 * pointsToPixels(ctx.RC, fontSize)
 	}
 	layout := legendLayout{
@@ -80,6 +80,16 @@ func (l *Legend) layoutEntries(labelLayouts []singleLineTextLayout, rowHeights [
 		layout.Width += columnSpacing * float64(len(layout.Columns)-1)
 	}
 	return layout
+}
+
+func (l *Legend) handleMetrics(fontPx float64) (height, descent float64) {
+	handleHeight := l.HandleHeight
+	if handleHeight <= 0 && !l.defaultsSet {
+		handleHeight = 0.7
+	}
+	descent = 0.35 * fontPx * (handleHeight - 0.7)
+	height = fontPx*handleHeight - descent
+	return height, descent
 }
 
 func (l *Legend) effectiveNumColumns(entryCount int) int {

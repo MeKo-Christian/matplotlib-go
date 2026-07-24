@@ -43,11 +43,14 @@ type Legend struct {
 	SampleTextGap   float64
 	ColumnSpacing   float64
 	NumColumns      int
+	NumPoints       int
 	MarkerScale     float64
 	ScatterPoints   int
+	HandleHeight    float64
 	Title           string
 	TitleFontSize   float64
 	FrameOn         bool
+	Shadow          bool
 	CornerRadius    float64
 	BackgroundColor render.Color
 	BorderColor     render.Color
@@ -55,6 +58,7 @@ type Legend struct {
 	BorderWidth     float64
 	FontSize        float64
 	z               float64
+	defaultsSet     bool
 }
 
 // NewLegend creates a legend bound to the provided axes.
@@ -65,27 +69,40 @@ func NewLegend(ax *Axes) *Legend {
 	}
 	fontSize := rc.LegendSize()
 	fontPx := pointsToPixels(rc, fontSize)
+	titleFontSize := rc.Legend.TitleFontSize
+	if titleFontSize <= 0 {
+		titleFontSize = rc.FontSize
+	}
+	cornerRadius := 0.0
+	if rc.Legend.FancyBox {
+		cornerRadius = 0.2 * fontPx
+	}
 	return &Legend{
 		Axes:            ax,
-		Location:        LegendBest,
+		Location:        legendLocationFromRC(rc.Legend.Location),
 		Locator:         nil,
-		Padding:         0.4 * fontPx,
-		Inset:           0.5 * fontPx,
-		RowGap:          0.5 * fontPx,
-		SampleWidth:     2.0 * fontPx,
-		SampleTextGap:   0.8 * fontPx,
-		ColumnSpacing:   2.0 * fontPx,
+		Padding:         rc.Legend.BorderPad * fontPx,
+		Inset:           rc.Legend.BorderAxesPad * fontPx,
+		RowGap:          rc.Legend.LabelSpacing * fontPx,
+		SampleWidth:     rc.Legend.HandleLength * fontPx,
+		SampleTextGap:   rc.Legend.HandleTextPad * fontPx,
+		ColumnSpacing:   rc.Legend.ColumnSpacing * fontPx,
 		NumColumns:      1,
-		MarkerScale:     1,
-		ScatterPoints:   1,
-		FrameOn:         true,
-		CornerRadius:    0.2 * fontPx,
+		NumPoints:       rc.Legend.NumPoints,
+		MarkerScale:     rc.Legend.MarkerScale,
+		ScatterPoints:   rc.Legend.ScatterPoints,
+		HandleHeight:    rc.Legend.HandleHeight,
+		TitleFontSize:   titleFontSize,
+		FrameOn:         rc.LegendFrameOn,
+		Shadow:          rc.Legend.Shadow,
+		CornerRadius:    cornerRadius,
 		BackgroundColor: rc.LegendBackground,
 		BorderColor:     rc.LegendBorderColor,
 		TextColor:       rc.LegendTextColor,
 		BorderWidth:     pointsToPixels(rc, 1),
 		FontSize:        fontSize,
 		z:               1_000,
+		defaultsSet:     true,
 	}
 }
 
@@ -97,27 +114,71 @@ func NewFigureLegend(fig *Figure) *Legend {
 	}
 	fontSize := rc.LegendSize()
 	fontPx := pointsToPixels(rc, fontSize)
+	titleFontSize := rc.Legend.TitleFontSize
+	if titleFontSize <= 0 {
+		titleFontSize = rc.FontSize
+	}
+	location := legendLocationFromRC(rc.Legend.Location)
+	if location == LegendBest {
+		location = LegendUpperRight
+	}
+	cornerRadius := 0.0
+	if rc.Legend.FancyBox {
+		cornerRadius = 0.2 * fontPx
+	}
 	return &Legend{
 		Figure:          fig,
-		Location:        LegendUpperRight,
+		Location:        location,
 		Locator:         nil,
-		Padding:         0.4 * fontPx,
-		Inset:           0.5 * fontPx,
-		RowGap:          0.5 * fontPx,
-		SampleWidth:     2.0 * fontPx,
-		SampleTextGap:   0.8 * fontPx,
-		ColumnSpacing:   2.0 * fontPx,
+		Padding:         rc.Legend.BorderPad * fontPx,
+		Inset:           rc.Legend.BorderAxesPad * fontPx,
+		RowGap:          rc.Legend.LabelSpacing * fontPx,
+		SampleWidth:     rc.Legend.HandleLength * fontPx,
+		SampleTextGap:   rc.Legend.HandleTextPad * fontPx,
+		ColumnSpacing:   rc.Legend.ColumnSpacing * fontPx,
 		NumColumns:      1,
-		MarkerScale:     1,
-		ScatterPoints:   1,
-		FrameOn:         true,
-		CornerRadius:    0.2 * fontPx,
+		NumPoints:       rc.Legend.NumPoints,
+		MarkerScale:     rc.Legend.MarkerScale,
+		ScatterPoints:   rc.Legend.ScatterPoints,
+		HandleHeight:    rc.Legend.HandleHeight,
+		TitleFontSize:   titleFontSize,
+		FrameOn:         rc.LegendFrameOn,
+		Shadow:          rc.Legend.Shadow,
+		CornerRadius:    cornerRadius,
 		BackgroundColor: rc.LegendBackground,
 		BorderColor:     rc.LegendBorderColor,
 		TextColor:       rc.LegendTextColor,
 		BorderWidth:     pointsToPixels(rc, 1),
 		FontSize:        fontSize,
 		z:               1_000,
+		defaultsSet:     true,
+	}
+}
+
+func legendLocationFromRC(location string) LegendLocation {
+	switch location {
+	case "upper right":
+		return LegendUpperRight
+	case "upper left":
+		return LegendUpperLeft
+	case "lower right":
+		return LegendLowerRight
+	case "lower left":
+		return LegendLowerLeft
+	case "right":
+		return LegendRight
+	case "center left":
+		return LegendCenterLeft
+	case "center right":
+		return LegendCenterRight
+	case "lower center":
+		return LegendLowerCenter
+	case "upper center":
+		return LegendUpperCenter
+	case "center":
+		return LegendCenter
+	default:
+		return LegendBest
 	}
 }
 
@@ -174,6 +235,10 @@ func (l *Legend) draw(r render.Renderer, ctx *DrawContext) {
 		layout := measureSingleLineTextLayout(r, entry.Label, fontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
 		labelLayouts[i] = layout
 		rowHeights[i] = legendRowHeight(layout, fontSize, ctx)
+		handleHeight, _ := l.handleMetrics(pointsToPixels(ctx.RC, fontSize))
+		if rowHeights[i] < handleHeight {
+			rowHeights[i] = handleHeight
+		}
 	}
 
 	layout := l.layoutEntries(labelLayouts, rowHeights, ctx, fontSize)
@@ -194,6 +259,32 @@ func (l *Legend) draw(r render.Renderer, ctx *DrawContext) {
 		boxPath := pixelRectPath(box)
 		if l.CornerRadius > 0 {
 			boxPath = matplotlibRoundBoxPath(box, l.CornerRadius)
+		}
+		if l.Shadow {
+			shadowBox := box
+			shadowOffset := pointsToPixels(ctx.RC, 2)
+			shadowBox.Min.X += shadowOffset
+			shadowBox.Max.X += shadowOffset
+			shadowBox.Min.Y -= shadowOffset
+			shadowBox.Max.Y -= shadowOffset
+			shadowPath := pixelRectPath(shadowBox)
+			if l.CornerRadius > 0 {
+				shadowPath = matplotlibRoundBoxPath(shadowBox, l.CornerRadius)
+			}
+			shadowColor := render.Color{
+				R: l.BackgroundColor.R * 0.3,
+				G: l.BackgroundColor.G * 0.3,
+				B: l.BackgroundColor.B * 0.3,
+				A: 0.5,
+			}
+			r.Path(shadowPath, &render.Paint{
+				Fill:      shadowColor,
+				Stroke:    shadowColor,
+				LineWidth: l.BorderWidth,
+				LineJoin:  render.JoinMiter,
+				LineCap:   render.CapButt,
+				Snap:      render.SnapAuto,
+			})
 		}
 		r.Path(boxPath, &render.Paint{
 			Fill:      l.BackgroundColor,
@@ -239,12 +330,12 @@ func (l *Legend) draw(r render.Renderer, ctx *DrawContext) {
 				textLayoutVAlignCenter,
 			)
 			fontPx := pointsToPixels(ctx.RC, fontSize)
-			sampleCenterY := labelOrigin.Y + 0.35*fontPx
+			handleHeight, handleDescent := l.handleMetrics(fontPx)
 
 			l.drawSampleWithFontPixels(r, &ctx.RC, &entry, geom.Rect{
-				Min: geom.Pt{X: x, Y: sampleCenterY - fontPx/2},
-				Max: geom.Pt{X: x + l.SampleWidth, Y: sampleCenterY + fontPx/2},
-			}, fontPx)
+				Min: geom.Pt{X: x, Y: labelOrigin.Y - handleDescent},
+				Max: geom.Pt{X: x + l.SampleWidth, Y: labelOrigin.Y - handleDescent + handleHeight},
+			}, fontPx, true)
 
 			drawDisplayText(
 				textRen,
@@ -307,6 +398,10 @@ func (l *Legend) boxRect(r render.Renderer, ctx *DrawContext) (geom.Rect, bool) 
 		layout := measureSingleLineTextLayout(r, entry.Label, fontSize, ctx.RC.FontKey, ctx.RC.UseTeX)
 		labelLayouts[i] = layout
 		rowHeights[i] = legendRowHeight(layout, fontSize, ctx)
+		handleHeight, _ := l.handleMetrics(pointsToPixels(ctx.RC, fontSize))
+		if rowHeights[i] < handleHeight {
+			rowHeights[i] = handleHeight
+		}
 	}
 
 	layout := l.layoutEntries(labelLayouts, rowHeights, ctx, fontSize)

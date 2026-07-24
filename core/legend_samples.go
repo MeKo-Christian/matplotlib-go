@@ -11,10 +11,10 @@ func (l *Legend) drawSample(r render.Renderer, entry legendEntry, sample geom.Re
 	if l != nil && l.FontSize > 0 {
 		fontSize = l.FontSize
 	}
-	l.drawSampleWithFontPixels(r, &style.Default, &entry, sample, pointsToPixels(style.Default, fontSize))
+	l.drawSampleWithFontPixels(r, &style.Default, &entry, sample, pointsToPixels(style.Default, fontSize), false)
 }
 
-func (l *Legend) drawSampleWithFontPixels(r render.Renderer, rc *style.RC, entry *legendEntry, sample geom.Rect, fontPx float64) {
+func (l *Legend) drawSampleWithFontPixels(r render.Renderer, rc *style.RC, entry *legendEntry, sample geom.Rect, fontPx float64, sampleIsHandleBox bool) {
 	center := geom.Pt{
 		X: sample.Min.X + sample.W()/2,
 		Y: sample.Min.Y + sample.H()/2,
@@ -25,16 +25,12 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, rc *style.RC, entry
 		l.drawErrorBarSample(r, rc, entry, sample, center, fontPx)
 	case legendEntryPatch:
 		// Matplotlib's HandlerPatch fills the legend handle box. The
-		// handleheight default is 0.7 font-size units, and the default
-		// handlelength is 2.0 font-size units, so it occupies 70% of the
-		// row height and the full handle width.
-		handleHeight := sample.H() * 0.7
-		if handleHeight <= 0 {
-			handleHeight = sample.H()
-		}
-		patchRect := geom.Rect{
-			Min: geom.Pt{X: sample.Min.X, Y: center.Y - handleHeight/2},
-			Max: geom.Pt{X: sample.Max.X, Y: center.Y + handleHeight/2},
+		// handleheight is already reflected in the supplied handle box.
+		patchRect := sample
+		if !sampleIsHandleBox {
+			handleHeight := sample.H() * 0.7
+			patchRect.Min.Y = center.Y - handleHeight/2
+			patchRect.Max.Y = center.Y + handleHeight/2
 		}
 		patch := Patch{
 			FaceColor:  entry.patchFill,
@@ -48,7 +44,7 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, rc *style.RC, entry
 		}
 		patch.drawStyledPath(r, rc, pixelRectPath(patchRect), geom.Path{})
 	case legendEntryMarker:
-		for _, pt := range l.markerSampleCenters(sample, center) {
+		for _, pt := range l.markerSampleCentersForHandle(sample, center, sampleIsHandleBox) {
 			l.drawMarkerSample(r, rc, entry, pt, l.markerSampleScale(*entry, 5), true)
 		}
 	default:
@@ -56,11 +52,18 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, rc *style.RC, entry
 		if lineWidth <= 0 {
 			lineWidth = 1.5
 		}
+		lineMarkerCenters := l.lineMarkerSampleCenters(sample, center, fontPx)
+		lineStart := geom.Pt{X: sample.Min.X, Y: center.Y}
+		lineEnd := geom.Pt{X: sample.Max.X, Y: center.Y}
+		if len(lineMarkerCenters) > 1 {
+			lineStart.X = lineMarkerCenters[0].X
+			lineEnd.X = lineMarkerCenters[len(lineMarkerCenters)-1].X
+		}
 		path := geom.Path{
 			C: []geom.Cmd{geom.MoveTo, geom.LineTo},
 			V: []geom.Pt{
-				{X: sample.Min.X, Y: center.Y},
-				{X: sample.Max.X, Y: center.Y},
+				lineStart,
+				lineEnd,
 			},
 		}
 		r.Path(path, &render.Paint{
@@ -72,7 +75,9 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, rc *style.RC, entry
 			Snap:      render.SnapAuto,
 		})
 		if entry.lineMarkerSet {
-			l.drawMarkerSample(r, rc, entry, center, l.markerSampleScale(*entry, 5), false)
+			for _, pt := range lineMarkerCenters {
+				l.drawMarkerSample(r, rc, entry, pt, l.markerSampleScale(*entry, 5), false)
+			}
 		}
 	}
 }
@@ -140,7 +145,9 @@ func (l *Legend) drawErrorBarSample(r render.Renderer, rc *style.RC, entry *lege
 		}, &capPaint)
 	}
 	if entry.lineMarkerSet {
-		l.drawMarkerSample(r, rc, entry, center, l.markerSampleScale(*entry, 5), false)
+		for _, pt := range l.lineMarkerSampleCenters(sample, center, fontPx) {
+			l.drawMarkerSample(r, rc, entry, pt, l.markerSampleScale(*entry, 5), false)
+		}
 	}
 }
 
@@ -150,16 +157,23 @@ func (l *Legend) markerSampleScale(entry legendEntry, base float64) float64 {
 		scale = entry.markerSize
 	}
 	markerScale := 1.0
-	if l != nil && l.MarkerScale > 0 {
+	if l != nil && (l.MarkerScale > 0 || l.defaultsSet) {
 		markerScale = l.MarkerScale
 	}
 	return scale * markerScale
 }
 
 func (l *Legend) markerSampleCenters(sample geom.Rect, center geom.Pt) []geom.Pt {
+	return l.markerSampleCentersForHandle(sample, center, false)
+}
+
+func (l *Legend) markerSampleCentersForHandle(sample geom.Rect, center geom.Pt, sampleIsHandleBox bool) []geom.Pt {
 	points := 1
-	if l != nil && l.ScatterPoints > 0 {
+	if l != nil && (l.ScatterPoints > 0 || l.defaultsSet) {
 		points = l.ScatterPoints
+	}
+	if points <= 0 {
+		return nil
 	}
 	if points <= 1 {
 		return []geom.Pt{center}
@@ -179,13 +193,42 @@ func (l *Legend) markerSampleCenters(sample geom.Rect, center geom.Pt) []geom.Pt
 			// Matplotlib's HandlerPathCollection uses Legend._scatteryoffsets
 			// [3/8, 4/8, 2.5/8] within a default 0.7-fontsize handle box.
 			offsets := [...]float64{3.0 / 8.0, 4.0 / 8.0, 2.5 / 8.0}
-			handleHeight := sample.H() * 0.7
+			handleHeight := sample.H()
+			if !sampleIsHandleBox {
+				handleHeight *= 0.7
+			}
 			y = center.Y - handleHeight/2 + offsets[i%len(offsets)]*handleHeight
 		}
 		centers[i] = geom.Pt{
 			X: sample.Min.X + pad + step*float64(i),
 			Y: y,
 		}
+	}
+	return centers
+}
+
+func (l *Legend) lineMarkerSampleCenters(sample geom.Rect, center geom.Pt, fontPx float64) []geom.Pt {
+	points := 1
+	if l != nil && (l.NumPoints > 0 || l.defaultsSet) {
+		points = l.NumPoints
+	}
+	if points <= 0 {
+		return nil
+	}
+	if points == 1 {
+		return []geom.Pt{center}
+	}
+	pad := 0.3 * fontPx
+	if pad*2 > sample.W() {
+		pad = sample.W() / 2
+	}
+	centers := make([]geom.Pt, points)
+	step := 0.0
+	if points > 1 {
+		step = (sample.W() - 2*pad) / float64(points-1)
+	}
+	for i := range centers {
+		centers[i] = geom.Pt{X: sample.Min.X + pad + step*float64(i), Y: center.Y}
 	}
 	return centers
 }

@@ -201,7 +201,7 @@ func tickLabelPadForSize(tickSize float64, style TickLabelStyle, ctx *DrawContex
 
 func tickLabelPadForAxisSize(a *Axis, tickSize float64, style TickLabelStyle, ctx *DrawContext) float64 {
 	padPt := defaultTickPadPt
-	if style.PadPt > 0 {
+	if style.padPtSet || style.PadPt > 0 {
 		padPt = style.PadPt
 	}
 	// No-context fallback assumes matplotlib's default figure DPI of 100.

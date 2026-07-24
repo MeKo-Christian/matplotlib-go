@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 type TickParams struct {
@@ -278,15 +279,29 @@ func (a *Axes) TickParams(params TickParams) error {
 			switch which {
 			case "major":
 				axis.TickLineWidth = *params.Width
+				axis.tickLineWidthSet = true
 			case "minor":
 				axis.MinorTickLineWidth = *params.Width
+				axis.minorTickLineWidthSet = true
 			case "both":
 				axis.TickLineWidth = *params.Width
 				axis.MinorTickLineWidth = *params.Width
+				axis.tickLineWidthSet = true
+				axis.minorTickLineWidthSet = true
 			}
 		}
 		if params.ShowTicks != nil {
-			axis.ShowTicks = *params.ShowTicks
+			switch which {
+			case "major":
+				axis.ShowTicks = *params.ShowTicks
+			case "minor":
+				axis.ShowMinorTicks = *params.ShowTicks
+				axis.minorTickVisibilitySet = true
+			case "both":
+				axis.ShowTicks = *params.ShowTicks
+				axis.ShowMinorTicks = *params.ShowTicks
+				axis.minorTickVisibilitySet = false
+			}
 		}
 		if params.Direction != nil {
 			if err := axis.SetTickDirection(*params.Direction); err != nil {
@@ -310,9 +325,11 @@ func (a *Axes) TickParams(params TickParams) error {
 				axis.TickSize = *params.Length
 			case "minor":
 				axis.MinorTickSize = *params.Length
+				axis.minorTickSizeSet = true
 			case "both":
 				axis.TickSize = *params.Length
 				axis.MinorTickSize = *params.Length
+				axis.minorTickSizeSet = true
 			}
 		}
 		switch which {
@@ -349,13 +366,18 @@ func resetAxisTickParams(axis *Axis) {
 	axis.TickLineJoin = defaults.TickLineJoin
 	axis.TickLineWidth = defaults.TickLineWidth
 	axis.MinorTickLineWidth = defaults.MinorTickLineWidth
+	axis.tickLineWidthSet = defaults.tickLineWidthSet
+	axis.minorTickLineWidthSet = defaults.minorTickLineWidthSet
 	axis.TickSize = defaults.TickSize
 	axis.MinorTickSize = defaults.MinorTickSize
+	axis.minorTickSizeSet = defaults.minorTickSizeSet
 	axis.MajorTickCount = defaults.MajorTickCount
 	axis.MinorTickCount = defaults.MinorTickCount
 	axis.majorTickCountFixed = defaults.majorTickCountFixed
 	axis.TickDirection = defaults.TickDirection
 	axis.ShowTicks = defaults.ShowTicks
+	axis.ShowMinorTicks = defaults.ShowMinorTicks
+	axis.minorTickVisibilitySet = defaults.minorTickVisibilitySet
 	axis.ShowLabels = defaults.ShowLabels
 	axis.ShowMinorLabels = defaults.ShowMinorLabels
 	axis.MajorLabelStyle = defaults.MajorLabelStyle
@@ -366,36 +388,37 @@ func (a *Axes) applyTickSideParams(params TickParams) {
 	if a == nil {
 		return
 	}
+	which := normalizeTickWhich(params.Which)
 	if axisAllowsX(params.Axis) {
 		if params.Bottom != nil {
 			if *params.Bottom && a.XAxis == nil {
 				a.XAxis = NewXAxis()
 			}
-			if a.XAxis != nil {
-				a.XAxis.ShowTicks = *params.Bottom
-			}
+			setAxisTickVisibility(a.XAxis, which, *params.Bottom)
 		}
 		if params.Top != nil {
+			var axis *Axis
 			if *params.Top {
-				a.TopAxis().ShowTicks = true
-			} else if a.XAxisTop != nil {
-				a.XAxisTop.ShowTicks = false
+				axis = a.ensureTickSideAxis(AxisTop)
+			} else {
+				axis = a.XAxisTop
 			}
+			setAxisTickVisibility(axis, which, *params.Top)
 		}
 		if params.LabelBottom != nil {
 			if *params.LabelBottom && a.XAxis == nil {
 				a.XAxis = NewXAxis()
 			}
-			if a.XAxis != nil {
-				a.XAxis.ShowLabels = *params.LabelBottom
-			}
+			setAxisTickLabelVisibility(a.XAxis, which, *params.LabelBottom)
 		}
 		if params.LabelTop != nil {
+			var axis *Axis
 			if *params.LabelTop {
-				a.TopAxis().ShowLabels = true
-			} else if a.XAxisTop != nil {
-				a.XAxisTop.ShowLabels = false
+				axis = a.ensureTickSideAxis(AxisTop)
+			} else {
+				axis = a.XAxisTop
 			}
+			setAxisTickLabelVisibility(axis, which, *params.LabelTop)
 		}
 	}
 	if axisAllowsY(params.Axis) {
@@ -403,32 +426,88 @@ func (a *Axes) applyTickSideParams(params TickParams) {
 			if *params.Left && a.YAxis == nil {
 				a.YAxis = NewYAxis()
 			}
-			if a.YAxis != nil {
-				a.YAxis.ShowTicks = *params.Left
-			}
+			setAxisTickVisibility(a.YAxis, which, *params.Left)
 		}
 		if params.Right != nil {
+			var axis *Axis
 			if *params.Right {
-				a.RightAxis().ShowTicks = true
-			} else if a.YAxisRight != nil {
-				a.YAxisRight.ShowTicks = false
+				axis = a.ensureTickSideAxis(AxisRight)
+			} else {
+				axis = a.YAxisRight
 			}
+			setAxisTickVisibility(axis, which, *params.Right)
 		}
 		if params.LabelLeft != nil {
 			if *params.LabelLeft && a.YAxis == nil {
 				a.YAxis = NewYAxis()
 			}
-			if a.YAxis != nil {
-				a.YAxis.ShowLabels = *params.LabelLeft
-			}
+			setAxisTickLabelVisibility(a.YAxis, which, *params.LabelLeft)
 		}
 		if params.LabelRight != nil {
+			var axis *Axis
 			if *params.LabelRight {
-				a.RightAxis().ShowLabels = true
-			} else if a.YAxisRight != nil {
-				a.YAxisRight.ShowLabels = false
+				axis = a.ensureTickSideAxis(AxisRight)
+			} else {
+				axis = a.YAxisRight
 			}
+			setAxisTickLabelVisibility(axis, which, *params.LabelRight)
 		}
+	}
+}
+
+func (a *Axes) ensureTickSideAxis(side AxisSide) *Axis {
+	var axis *Axis
+	switch side {
+	case AxisTop:
+		if a.XAxisTop != nil {
+			return a.XAxisTop
+		}
+		axis = a.TopAxis()
+	case AxisRight:
+		if a.YAxisRight != nil {
+			return a.YAxisRight
+		}
+		axis = a.RightAxis()
+	default:
+		return nil
+	}
+	axis.ShowTicks = false
+	axis.ShowMinorTicks = false
+	axis.minorTickVisibilitySet = true
+	axis.ShowLabels = false
+	axis.ShowMinorLabels = false
+	return axis
+}
+
+func setAxisTickVisibility(axis *Axis, which string, visible bool) {
+	if axis == nil {
+		return
+	}
+	switch which {
+	case "major":
+		axis.ShowTicks = visible
+	case "minor":
+		axis.ShowMinorTicks = visible
+		axis.minorTickVisibilitySet = true
+	case "both":
+		axis.ShowTicks = visible
+		axis.ShowMinorTicks = visible
+		axis.minorTickVisibilitySet = false
+	}
+}
+
+func setAxisTickLabelVisibility(axis *Axis, which string, visible bool) {
+	if axis == nil {
+		return
+	}
+	switch which {
+	case "major":
+		axis.ShowLabels = visible
+	case "minor":
+		axis.ShowMinorLabels = visible
+	case "both":
+		axis.ShowLabels = visible
+		axis.ShowMinorLabels = visible
 	}
 }
 
@@ -505,6 +584,132 @@ func (a *Axes) applyTickGridParams(params TickParams, which string) {
 			}
 		}
 	}
+}
+
+func (a *Axes) applyRCTickDefaults(rc *style.RC) {
+	if a == nil || rc == nil {
+		return
+	}
+	a.applyRCTickAxisDefaults(rc, &rc.XTick, true)
+	a.applyRCTickAxisDefaults(rc, &rc.YTick, false)
+}
+
+func (a *Axes) applyRCTickAxisDefaults(rc *style.RC, cfg *style.TickAxisRC, isX bool) {
+	if cfg == nil {
+		return
+	}
+
+	var primary *Axis
+	if isX {
+		primary = a.XAxis
+	} else {
+		primary = a.YAxis
+	}
+	majorPrimary := cfg.Primary && cfg.Major.Primary
+	minorPrimary := cfg.Primary && cfg.Minor.Primary
+	labelMajorPrimary := cfg.LabelPrimary && cfg.Major.Primary
+	labelMinorPrimary := cfg.Minor.Visible && cfg.LabelPrimary && cfg.Minor.Primary
+	configureAxisFromTickRC(primary, rc, cfg, isX,
+		majorPrimary, minorPrimary, labelMajorPrimary, labelMinorPrimary)
+
+	majorSecondary := cfg.Secondary && cfg.Major.Secondary
+	minorSecondary := cfg.Secondary && cfg.Minor.Secondary
+	labelMajorSecondary := cfg.LabelSecondary && cfg.Major.Secondary
+	labelMinorSecondary := cfg.Minor.Visible && cfg.LabelSecondary && cfg.Minor.Secondary
+	if !majorSecondary && !minorSecondary && !labelMajorSecondary && !labelMinorSecondary {
+		return
+	}
+
+	side := AxisRight
+	if isX {
+		side = AxisTop
+	}
+	secondary := a.ensureTickSideAxis(side)
+	configureAxisFromTickRC(secondary, rc, cfg, isX,
+		majorSecondary, minorSecondary, labelMajorSecondary, labelMinorSecondary)
+}
+
+func configureAxisFromTickRC(axis *Axis, rc *style.RC, cfg *style.TickAxisRC, isX, majorTicks, minorTicks, majorLabels, minorLabels bool) {
+	if axis == nil || rc == nil || cfg == nil {
+		return
+	}
+	axis.TickSize = pointsToPixels(*rc, cfg.Major.Size)
+	axis.MinorTickSize = pointsToPixels(*rc, cfg.Minor.Size)
+	axis.minorTickSizeSet = true
+	axis.TickLineWidth = cfg.Major.Width
+	axis.MinorTickLineWidth = cfg.Minor.Width
+	axis.tickLineWidthSet = true
+	axis.minorTickLineWidthSet = true
+	axis.MajorLabelStyle.PadPt = cfg.Major.Pad
+	axis.MajorLabelStyle.padPtSet = true
+	axis.MinorLabelStyle.PadPt = cfg.Minor.Pad
+	axis.MinorLabelStyle.padPtSet = true
+	axis.ShowTicks = majorTicks
+	axis.ShowMinorTicks = minorTicks
+	axis.minorTickVisibilitySet = majorTicks != minorTicks
+	axis.ShowLabels = majorLabels
+	axis.ShowMinorLabels = minorLabels
+	_ = axis.SetTickDirection(cfg.Direction)
+	applyRCTickAlignment(axis, cfg.Alignment, isX)
+
+	if cfg.Minor.Visible {
+		enableMinorTicks(axis)
+		if auto, ok := axis.MinorLocator.(AutoMinorLocator); ok {
+			auto.N = cfg.Minor.NDivs
+			axis.MinorLocator = auto
+		}
+	}
+}
+
+func applyRCTickAlignment(axis *Axis, alignment string, isX bool) {
+	if axis == nil {
+		return
+	}
+	if isX {
+		if alignment == style.Default.XTick.Alignment {
+			return
+		}
+		hAlign := TextAlignCenter
+		switch alignment {
+		case "left":
+			hAlign = TextAlignLeft
+		case "right":
+			hAlign = TextAlignRight
+		}
+		vAlign := TextVAlignTop
+		if axis.Side == AxisTop {
+			vAlign = TextVAlignBottom
+		}
+		setTickLevelAlignment(&axis.MajorLabelStyle, hAlign, vAlign)
+		setTickLevelAlignment(&axis.MinorLabelStyle, hAlign, vAlign)
+		return
+	}
+	if alignment == style.Default.YTick.Alignment {
+		return
+	}
+	vAlign := TextVAlignMiddle
+	switch alignment {
+	case "baseline":
+		vAlign = TextVAlignBaseline
+	case "bottom":
+		vAlign = TextVAlignBottom
+	case "center_baseline":
+		vAlign = TextVAlignCenterBaseline
+	case "top":
+		vAlign = TextVAlignTop
+	}
+	hAlign := TextAlignRight
+	if axis.Side == AxisRight {
+		hAlign = TextAlignLeft
+	}
+	setTickLevelAlignment(&axis.MajorLabelStyle, hAlign, vAlign)
+	setTickLevelAlignment(&axis.MinorLabelStyle, hAlign, vAlign)
+}
+
+func setTickLevelAlignment(labelStyle *TickLabelStyle, hAlign TextAlign, vAlign TextVerticalAlign) {
+	labelStyle.HAlign = hAlign
+	labelStyle.VAlign = vAlign
+	labelStyle.AutoAlign = false
 }
 
 func gridMatchesAxisSpec(grid *Grid, spec string) bool {

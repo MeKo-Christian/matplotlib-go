@@ -35,6 +35,7 @@ type TickLabelStyle struct {
 	// unset; 0 falls back to matplotlib's major default 3.5 (minor label
 	// styles carry 3.4, mirroring xtick.minor.pad).
 	PadPt     float64
+	padPtSet  bool
 	HAlign    TextAlign
 	VAlign    TextVerticalAlign
 	FontSize  float64
@@ -73,40 +74,45 @@ const (
 
 // Axis renders axis spines, ticks, and labels for a single dimension.
 type Axis struct {
-	Side                AxisSide     // which side of the plot
-	Locator             Locator      // major tick position calculator
-	MinorLocator        Locator      // minor tick position calculator (nil = no minor ticks)
-	Formatter           Formatter    // major tick label formatter
-	MinorFormatter      Formatter    // optional minor tick label formatter
-	Color               render.Color // axis spine color, and tick/label color unless overridden
-	TickColor           *render.Color
-	TickLabelColor      *render.Color
-	MinorTickColor      *render.Color // minor tick mark color (nil falls back to TickColor)
-	MinorTickLabelColor *render.Color // minor tick label color (nil falls back to MinorTickColor)
-	LineWidth           float64       // width of axis spine
-	LineCap             render.LineCap
-	LineJoin            render.LineJoin
-	TickLineCap         render.LineCap
-	TickLineJoin        render.LineJoin
-	TickLineWidth       float64
-	MinorTickLineWidth  float64
-	Dashes              []float64
-	TickSize            float64 // length of major tick marks (in pixels)
-	MinorTickSize       float64 // length of minor tick marks (in pixels); 0 uses the 2.0 pt matplotlib default
-	MajorTickCount      int     // target major tick count for automatic locators
-	MinorTickCount      int     // target minor tick count for automatic locators
-	majorTickCountFixed bool
-	TickDirection       TickDirection
-	SpinePositionMode   AxisSpinePositionMode
-	SpinePosition       float64 // data value, axes fraction, or outward points according to SpinePositionMode
-	ShowSpine           bool    // whether to draw the axis line
-	ShowTicks           bool    // whether to draw major/minor tick marks
-	ShowLabels          bool    // whether to draw major tick labels
-	ShowMinorLabels     bool    // whether to draw minor tick labels
-	MajorLabelStyle     TickLabelStyle
-	MinorLabelStyle     TickLabelStyle
-	ExtraTickLevels     []TickLevel
-	z                   float64 // z-order
+	Side                   AxisSide     // which side of the plot
+	Locator                Locator      // major tick position calculator
+	MinorLocator           Locator      // minor tick position calculator (nil = no minor ticks)
+	Formatter              Formatter    // major tick label formatter
+	MinorFormatter         Formatter    // optional minor tick label formatter
+	Color                  render.Color // axis spine color, and tick/label color unless overridden
+	TickColor              *render.Color
+	TickLabelColor         *render.Color
+	MinorTickColor         *render.Color // minor tick mark color (nil falls back to TickColor)
+	MinorTickLabelColor    *render.Color // minor tick label color (nil falls back to MinorTickColor)
+	LineWidth              float64       // width of axis spine
+	LineCap                render.LineCap
+	LineJoin               render.LineJoin
+	TickLineCap            render.LineCap
+	TickLineJoin           render.LineJoin
+	TickLineWidth          float64
+	MinorTickLineWidth     float64
+	tickLineWidthSet       bool
+	minorTickLineWidthSet  bool
+	Dashes                 []float64
+	TickSize               float64 // length of major tick marks (in pixels)
+	MinorTickSize          float64 // length of minor tick marks (in pixels); 0 uses the 2.0 pt matplotlib default
+	minorTickSizeSet       bool
+	MajorTickCount         int // target major tick count for automatic locators
+	MinorTickCount         int // target minor tick count for automatic locators
+	majorTickCountFixed    bool
+	TickDirection          TickDirection
+	SpinePositionMode      AxisSpinePositionMode
+	SpinePosition          float64 // data value, axes fraction, or outward points according to SpinePositionMode
+	ShowSpine              bool    // whether to draw the axis line
+	ShowTicks              bool    // whether to draw major tick marks
+	ShowMinorTicks         bool    // whether to draw minor tick marks
+	minorTickVisibilitySet bool
+	ShowLabels             bool // whether to draw major tick labels
+	ShowMinorLabels        bool // whether to draw minor tick labels
+	MajorLabelStyle        TickLabelStyle
+	MinorLabelStyle        TickLabelStyle
+	ExtraTickLevels        []TickLevel
+	z                      float64 // z-order
 }
 
 // NewXAxis creates an axis for the bottom (x-axis).
@@ -129,6 +135,7 @@ func NewXAxis() *Axis {
 		SpinePositionMode:  AxisSpinePositionBoundary,
 		ShowSpine:          true,
 		ShowTicks:          true,
+		ShowMinorTicks:     true,
 		ShowLabels:         true,
 		MajorLabelStyle:    defaultTickLabelStyle(),
 		MinorLabelStyle:    defaultMinorTickLabelStyle(),
@@ -155,6 +162,7 @@ func NewYAxis() *Axis {
 		SpinePositionMode:  AxisSpinePositionBoundary,
 		ShowSpine:          true,
 		ShowTicks:          true,
+		ShowMinorTicks:     true,
 		ShowLabels:         true,
 		MajorLabelStyle:    defaultTickLabelStyle(),
 		MinorLabelStyle:    defaultMinorTickLabelStyle(),

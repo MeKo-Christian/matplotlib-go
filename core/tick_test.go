@@ -644,6 +644,38 @@ func TestMaxNLocator_RespectsIntervalBudget(t *testing.T) {
 	}
 }
 
+func TestAutoMinorLocator_AutoSubdivisionMatchesMatplotlib(t *testing.T) {
+	tests := []struct {
+		name  string
+		major Locator
+		want  []float64
+	}{
+		{
+			name:  "decimal-friendly-step-uses-five",
+			major: MultipleLocator{Base: 2.5},
+			want:  []float64{0.5, 1, 1.5, 2, 3, 3.5, 4, 4.5, 5.5, 6},
+		},
+		{
+			name:  "other-step-uses-four",
+			major: MultipleLocator{Base: 3},
+			want:  []float64{0.75, 1.5, 2.25, 3.75, 4.5, 5.25},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := (AutoMinorLocator{Major: tc.major}).Ticks(0, 6, 0)
+			if len(got) != len(tc.want) {
+				t.Fatalf("ticks = %v, want %v", got, tc.want)
+			}
+			for i := range tc.want {
+				if math.Abs(got[i]-tc.want[i]) > 1e-12 {
+					t.Fatalf("tick %d = %v, want %v (all %v)", i, got[i], tc.want[i], got)
+				}
+			}
+		})
+	}
+}
+
 func TestAutoMinorLocator_SubdividesAutoMajors(t *testing.T) {
 	ticks := (AutoMinorLocator{N: 4}).Ticks(0, 10, 5)
 	if len(ticks) == 0 {

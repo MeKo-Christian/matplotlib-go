@@ -389,6 +389,7 @@ func (a *Axes) resetToDefaults() {
 	if a.projection == nil {
 		a.projection, _ = lookupProjection("rectilinear")
 	}
+	a.applyRCTickDefaults(&effective)
 	a.projection.ConfigureAxes(a)
 	a.applyStyleDefaults(effective)
 	a.addDefaultGrids(effective)

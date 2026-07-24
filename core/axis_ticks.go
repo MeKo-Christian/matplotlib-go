@@ -27,17 +27,22 @@ func (a *Axis) DrawTicks(r render.Renderer, ctx *DrawContext) {
 		domainMin, domainMax = ctx.DataToPixel.YScale.Domain()
 	}
 
-	if a.ShowTicks {
-		// Minor ticks first
-		if a.MinorLocator != nil {
-			minorLoc := locatorWithMajorContext(a.MinorLocator, a.Locator)
-			minorTicks := visibleTicks(minorLoc.Ticks(domainMin, domainMax, a.minorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
-			if len(minorTicks) > 0 {
-				a.drawMinorTicks(r, ctx, minorTicks, isXAxis)
-			}
+	// Minor ticks first.
+	showMinorTicks := a.ShowMinorTicks
+	if !a.minorTickVisibilitySet {
+		// Preserve the historical direct-field contract: ShowTicks=false hides
+		// both levels unless TickParams/rcParams explicitly split them.
+		showMinorTicks = a.ShowTicks
+	}
+	if showMinorTicks && a.MinorLocator != nil {
+		minorLoc := locatorWithMajorContext(a.MinorLocator, a.Locator)
+		minorTicks := visibleTicks(minorLoc.Ticks(domainMin, domainMax, a.minorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
+		if len(minorTicks) > 0 {
+			a.drawMinorTicks(r, ctx, minorTicks, isXAxis)
 		}
+	}
 
-		// Major ticks
+	if a.ShowTicks {
 		ticks := visibleTicks(a.Locator.Ticks(domainMin, domainMax, a.majorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
 		if len(ticks) > 0 {
 			a.drawTicks(r, ctx, ticks, isXAxis)
@@ -405,6 +410,9 @@ func (a *Axis) tickLineWidth() float64 {
 	if a == nil {
 		return 0
 	}
+	if a.tickLineWidthSet {
+		return a.TickLineWidth
+	}
 	if a.TickLineWidth > 0 {
 		return a.TickLineWidth
 	}
@@ -414,6 +422,9 @@ func (a *Axis) tickLineWidth() float64 {
 func (a *Axis) minorTickLineWidth() float64 {
 	if a == nil {
 		return 0
+	}
+	if a.minorTickLineWidthSet {
+		return a.MinorTickLineWidth
 	}
 	if a.MinorTickLineWidth > 0 {
 		return a.MinorTickLineWidth
@@ -431,6 +442,9 @@ func tickLevelSize(level TickLevel, fallback float64) float64 {
 // minorTickSize falls back to matplotlib's xtick.minor.size / ytick.minor.size
 // default of 2.0 pt when no explicit minor tick size is set.
 func (a *Axis) minorTickSize() float64 {
+	if a != nil && a.minorTickSizeSet {
+		return a.MinorTickSize
+	}
 	if a.MinorTickSize > 0 {
 		return a.MinorTickSize
 	}
