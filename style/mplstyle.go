@@ -92,6 +92,10 @@ var supportedMPLStyleKeys = []string{
 	"boxplot.vertical",
 	"boxplot.whiskerprops.linewidth",
 	"boxplot.whiskers",
+	"contour.algorithm",
+	"contour.corner_mask",
+	"contour.linewidth",
+	"contour.negative_linestyle",
 	"date.autoformatter.day",
 	"date.autoformatter.hour",
 	"date.autoformatter.microsecond",
@@ -104,10 +108,37 @@ var supportedMPLStyleKeys = []string{
 	"date.interval_multiples",
 	"errorbar.capsize",
 	"figure.dpi",
+	"figure.edgecolor",
 	"figure.facecolor",
 	"figure.figsize",
+	"figure.frameon",
+	"figure.autolayout",
+	"figure.constrained_layout.use",
+	"figure.constrained_layout.h_pad",
+	"figure.constrained_layout.w_pad",
+	"figure.constrained_layout.hspace",
+	"figure.constrained_layout.wspace",
+	"figure.subplot.left",
+	"figure.subplot.right",
+	"figure.subplot.bottom",
+	"figure.subplot.top",
+	"figure.subplot.wspace",
+	"figure.subplot.hspace",
+	"figure.titlesize",
+	"figure.titleweight",
+	"figure.labelsize",
+	"figure.labelweight",
+	"font.cursive",
 	"font.family",
+	"font.fantasy",
+	"font.monospace",
+	"font.sans-serif",
+	"font.serif",
 	"font.size",
+	"font.stretch",
+	"font.style",
+	"font.variant",
+	"font.weight",
 	"grid.alpha",
 	"grid.color",
 	"grid.linewidth",
@@ -147,12 +178,29 @@ var supportedMPLStyleKeys = []string{
 	"legend.scatterpoints",
 	"legend.shadow",
 	"legend.title_fontsize",
+	"lines.antialiased",
 	"lines.color",
+	"lines.dash_capstyle",
+	"lines.dash_joinstyle",
+	"lines.dashdot_pattern",
+	"lines.dashed_pattern",
+	"lines.dotted_pattern",
 	"lines.linestyle",
 	"lines.linewidth",
 	"lines.marker",
+	"lines.markeredgecolor",
 	"lines.markeredgewidth",
+	"lines.markerfacecolor",
 	"lines.markersize",
+	"lines.scale_dashes",
+	"lines.solid_capstyle",
+	"lines.solid_joinstyle",
+	"markers.fillstyle",
+	"patch.antialiased",
+	"patch.edgecolor",
+	"patch.facecolor",
+	"patch.force_edgecolor",
+	"patch.linewidth",
 	"mathtext.bf",
 	"mathtext.bfit",
 	"mathtext.cal",
@@ -238,18 +286,25 @@ type mplStyleState struct {
 	rc RC
 
 	fontSizeSet bool
+	fontSet     bool
 
-	figureFaceValue string
-	figureFaceSet   bool
-	figureWidth     float64
-	figureHeight    float64
-	figureSizeSet   bool
-	textColorValue  string
-	textColorSet    bool
-	textUseTeX      bool
-	textUseTeXSet   bool
-	lineColorValue  string
-	lineColorSet    bool
+	figureFaceValue      string
+	figureFaceSet        bool
+	figureEdgeValue      string
+	figureEdgeSet        bool
+	figureTitleSizeValue string
+	figureTitleSizeSet   bool
+	figureLabelSizeValue string
+	figureLabelSizeSet   bool
+	figureWidth          float64
+	figureHeight         float64
+	figureSizeSet        bool
+	textColorValue       string
+	textColorSet         bool
+	textUseTeX           bool
+	textUseTeXSet        bool
+	lineColorValue       string
+	lineColorSet         bool
 
 	axesFaceValue   string
 	axesFaceSet     bool
@@ -431,6 +486,12 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 		}
 		state.figureFaceValue = normalizeMPLValue(value)
 		state.figureFaceSet = true
+	case "figure.edgecolor":
+		if err := validateMPLColorValue(value, state.rc, false); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.figureEdgeValue = normalizeMPLValue(value)
+		state.figureEdgeSet = true
 	case "figure.figsize":
 		width, height, err := parseMPLFigureSize(value)
 		if err != nil {
@@ -439,6 +500,67 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 		state.figureWidth = width
 		state.figureHeight = height
 		state.figureSizeSet = true
+	case "figure.frameon":
+		if err := parseMPLBoolInto(value, &state.rc.Figure.FrameOn); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "figure.autolayout":
+		if err := parseMPLBoolInto(value, &state.rc.Figure.AutoLayout); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "figure.constrained_layout.use":
+		if err := parseMPLBoolInto(value, &state.rc.Figure.Constrained.Use); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "figure.constrained_layout.h_pad", "figure.constrained_layout.w_pad",
+		"figure.constrained_layout.hspace", "figure.constrained_layout.wspace",
+		"figure.subplot.left", "figure.subplot.right", "figure.subplot.bottom",
+		"figure.subplot.top", "figure.subplot.wspace", "figure.subplot.hspace":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		switch key {
+		case "figure.constrained_layout.h_pad":
+			state.rc.Figure.Constrained.HPad = parsed
+		case "figure.constrained_layout.w_pad":
+			state.rc.Figure.Constrained.WPad = parsed
+		case "figure.constrained_layout.hspace":
+			state.rc.Figure.Constrained.HSpace = parsed
+		case "figure.constrained_layout.wspace":
+			state.rc.Figure.Constrained.WSpace = parsed
+		case "figure.subplot.left":
+			state.rc.Figure.Subplot.Left = parsed
+		case "figure.subplot.right":
+			state.rc.Figure.Subplot.Right = parsed
+		case "figure.subplot.bottom":
+			state.rc.Figure.Subplot.Bottom = parsed
+		case "figure.subplot.top":
+			state.rc.Figure.Subplot.Top = parsed
+		case "figure.subplot.wspace":
+			state.rc.Figure.Subplot.WSpace = parsed
+		case "figure.subplot.hspace":
+			state.rc.Figure.Subplot.HSpace = parsed
+		}
+	case "figure.titlesize", "figure.labelsize":
+		if _, err := parseMPLFontSize(value, state.rc.FontSize); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		if key == "figure.titlesize" {
+			state.figureTitleSizeValue, state.figureTitleSizeSet = normalizeMPLValue(value), true
+		} else {
+			state.figureLabelSizeValue, state.figureLabelSizeSet = normalizeMPLValue(value), true
+		}
+	case "figure.titleweight", "figure.labelweight":
+		parsed, err := parseMPLFontWeight(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		if key == "figure.titleweight" {
+			state.rc.Figure.TitleWeight = parsed
+		} else {
+			state.rc.Figure.LabelWeight = parsed
+		}
 	case "path.simplify":
 		parsed, err := parseMPLBool(value)
 		if err != nil {
@@ -464,11 +586,58 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 		}
 		state.rc.PathSketch = parsed
 	case "font.family":
-		parsed, err := parseMPLFontFamily(value)
+		parsed, err := parseMPLFontFamilyList(value)
 		if err != nil {
 			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
 		}
-		state.rc.FontKey = parsed
+		state.rc.Font.Family = parsed
+		state.fontSet = true
+	case "font.serif", "font.sans-serif", "font.cursive", "font.fantasy", "font.monospace":
+		parsed, err := parseMPLFontFamilyList(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		switch key {
+		case "font.serif":
+			state.rc.Font.Serif = parsed
+		case "font.sans-serif":
+			state.rc.Font.SansSerif = parsed
+		case "font.cursive":
+			state.rc.Font.Cursive = parsed
+		case "font.fantasy":
+			state.rc.Font.Fantasy = parsed
+		case "font.monospace":
+			state.rc.Font.Monospace = parsed
+		}
+		state.fontSet = true
+	case "font.style":
+		parsed, err := parseMPLFontStyle(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Font.Style = parsed
+		state.fontSet = true
+	case "font.variant":
+		parsed, err := parseMPLFontVariant(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Font.Variant = parsed
+		state.fontSet = true
+	case "font.weight":
+		parsed, err := parseMPLFontWeight(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Font.Weight = parsed
+		state.fontSet = true
+	case "font.stretch":
+		parsed, err := parseMPLFontStretch(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Font.Stretch = parsed
+		state.fontSet = true
 	case "font.size":
 		parsed, err := parseMPLFontSize(value, state.rc.FontSize)
 		if err != nil {
@@ -532,6 +701,102 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 			return fmt.Errorf("parse %s on line %d: marker edge width must be non-negative, got %v", key, lineNo, parsed)
 		}
 		state.rc.Lines.MarkerEdgeWidth = parsed
+	case "lines.dashed_pattern":
+		parsed, err := parseMPLFloatList(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Lines.DashedPattern = parsed
+	case "lines.dashdot_pattern":
+		parsed, err := parseMPLFloatList(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Lines.DashDotPattern = parsed
+	case "lines.dotted_pattern":
+		parsed, err := parseMPLFloatList(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Lines.DottedPattern = parsed
+	case "lines.scale_dashes":
+		if err := parseMPLBoolInto(value, &state.rc.Lines.ScaleDashes); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "lines.dash_capstyle":
+		parsed, err := parseMPLLineCap(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Lines.DashCap = parsed
+	case "lines.solid_capstyle":
+		parsed, err := parseMPLLineCap(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Lines.SolidCap = parsed
+	case "lines.dash_joinstyle":
+		parsed, err := parseMPLLineJoin(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Lines.DashJoin = parsed
+	case "lines.solid_joinstyle":
+		parsed, err := parseMPLLineJoin(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Lines.SolidJoin = parsed
+	case "lines.markerfacecolor":
+		parsed, err := parseMPLMarkerColor(value, &state.rc)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Lines.MarkerFaceColor = parsed
+	case "lines.markeredgecolor":
+		parsed, err := parseMPLMarkerColor(value, &state.rc)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Lines.MarkerEdgeColor = parsed
+	case "markers.fillstyle":
+		parsed, err := parseMPLMarkerFillStyle(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Lines.MarkerFillStyle = parsed
+	case "lines.antialiased":
+		if err := parseMPLBoolInto(value, &state.rc.Lines.Antialiased); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "patch.linewidth":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		if parsed < 0 {
+			return fmt.Errorf("parse %s on line %d: linewidth must be non-negative, got %v", key, lineNo, parsed)
+		}
+		state.rc.Patch.LineWidth = parsed
+	case "patch.facecolor":
+		if err := validateMPLColorValue(value, state.rc, false); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Patch.FaceColorRaw = normalizeMPLValue(value)
+	case "patch.edgecolor":
+		parsed, err := parseMPLColor(value, state.rc)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Patch.EdgeColor = parsed
+	case "patch.force_edgecolor":
+		if err := parseMPLBoolInto(value, &state.rc.Patch.ForceEdgeColor); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "patch.antialiased":
+		if err := parseMPLBoolInto(value, &state.rc.Patch.Antialiased); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
 	case "scatter.marker":
 		marker := normalizeMPLValue(value)
 		if marker == "" {
@@ -730,6 +995,40 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
 		}
 		state.rc.Axes.UnicodeMinus = parsed
+	case "contour.algorithm":
+		normalized := strings.ToLower(normalizeMPLValue(value))
+		switch normalized {
+		case "mpl2005", "mpl2014", "serial", "threaded":
+			state.rc.Contour.Algorithm = normalized
+		default:
+			return fmt.Errorf("parse %s on line %d: invalid contour algorithm %q", key, lineNo, value)
+		}
+	case "contour.corner_mask":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Contour.CornerMask = parsed
+	case "contour.linewidth":
+		if strings.EqualFold(normalizeMPLValue(value), "none") {
+			state.rc.Contour.LineWidth = 0
+			state.rc.Contour.LineWidthSet = false
+			break
+		}
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Contour.LineWidth = parsed
+		state.rc.Contour.LineWidthSet = true
+	case "contour.negative_linestyle":
+		normalized := strings.ToLower(normalizeMPLValue(value))
+		switch normalized {
+		case "-", "solid", "--", "dashed", "-.", "dashdot", ":", "dotted":
+			state.rc.Contour.NegativeLineStyle = normalized
+		default:
+			return fmt.Errorf("parse %s on line %d: invalid contour linestyle %q", key, lineNo, value)
+		}
 	case "axes.formatter.limits":
 		parsed, err := parseMPLIntPair(value)
 		if err != nil {
@@ -1445,9 +1744,22 @@ func finalizeMPLStyleState(state *mplStyleState) {
 			state.rc.Background = [4]float64{parsed.R, parsed.G, parsed.B, parsed.A}
 		}
 	}
+	if state.rc.Patch.FaceColorRaw != "" {
+		if parsed, err := parseMPLColor(state.rc.Patch.FaceColorRaw, state.rc); err == nil {
+			state.rc.Patch.FaceColor = parsed
+		}
+	}
+	if state.figureEdgeSet {
+		if parsed, err := parseMPLColor(state.figureEdgeValue, state.rc); err == nil {
+			state.rc.Figure.EdgeColor = parsed
+		}
+	}
 	if state.figureSizeSet {
 		state.rc.FigureWidth = state.figureWidth
 		state.rc.FigureHeight = state.figureHeight
+	}
+	if state.fontSet {
+		state.rc.FontKey = fontKeyFromRC(&state.rc.Font)
 	}
 	if state.textColorSet {
 		if parsed, err := parseMPLColor(state.textColorValue, state.rc); err == nil {
@@ -1516,6 +1828,20 @@ func finalizeMPLStyleState(state *mplStyleState) {
 	}
 	if state.axisLineWidthSet {
 		state.rc.AxisLineWidth = state.axisLineWidthPt
+	}
+	if state.figureTitleSizeSet {
+		if parsed, err := parseMPLFontSize(state.figureTitleSizeValue, state.rc.FontSize); err == nil {
+			state.rc.Figure.TitleSize = parsed
+		}
+	} else if state.fontSizeSet {
+		state.rc.Figure.TitleSize = state.rc.FontSize * 1.2
+	}
+	if state.figureLabelSizeSet {
+		if parsed, err := parseMPLFontSize(state.figureLabelSizeValue, state.rc.FontSize); err == nil {
+			state.rc.Figure.LabelSize = parsed
+		}
+	} else if state.fontSizeSet {
+		state.rc.Figure.LabelSize = state.rc.FontSize * 1.2
 	}
 	if state.fontSizeSet || state.titleFontSizeSet {
 		state.rc.TitleFontSize = maxFloat(8, state.rc.FontSize*1.2)
@@ -1716,6 +2042,7 @@ func parseMPLFontWeight(value string) (int, error) {
 	weights := map[string]int{
 		"ultralight": 100,
 		"light":      200,
+		"lighter":    300,
 		"normal":     400,
 		"regular":    400,
 		"book":       400,
@@ -1725,6 +2052,7 @@ func parseMPLFontWeight(value string) (int, error) {
 		"demibold":   600,
 		"demi":       600,
 		"bold":       700,
+		"bolder":     700,
 		"heavy":      800,
 		"extra bold": 800,
 		"black":      900,
@@ -1736,7 +2064,113 @@ func parseMPLFontWeight(value string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("invalid font weight %q", value)
 	}
+	if weight < 1 || weight > 1000 {
+		return 0, fmt.Errorf("font weight %d outside [1, 1000]", weight)
+	}
 	return weight, nil
+}
+
+func parseMPLFontStyle(value string) (render.FontStyle, error) {
+	switch strings.ToLower(normalizeMPLValue(value)) {
+	case "normal", "roman":
+		return render.FontStyleNormal, nil
+	case "italic":
+		return render.FontStyleItalic, nil
+	case "oblique":
+		return render.FontStyleOblique, nil
+	default:
+		return "", fmt.Errorf("invalid font style %q", value)
+	}
+}
+
+func parseMPLFontVariant(value string) (string, error) {
+	switch normalized := strings.ToLower(normalizeMPLValue(value)); normalized {
+	case "normal", "small-caps", "small_caps":
+		if normalized == "small_caps" {
+			return "small-caps", nil
+		}
+		return normalized, nil
+	default:
+		return "", fmt.Errorf("invalid font variant %q", value)
+	}
+}
+
+func parseMPLFontStretch(value string) (string, error) {
+	normalized := strings.ToLower(normalizeMPLValue(value))
+	valid := map[string]struct{}{
+		"ultra-condensed": {}, "extra-condensed": {}, "condensed": {},
+		"semi-condensed": {}, "normal": {}, "semi-expanded": {},
+		"expanded": {}, "extra-expanded": {}, "ultra-expanded": {},
+		"wider": {}, "narrower": {},
+	}
+	if _, ok := valid[normalized]; ok {
+		return normalized, nil
+	}
+	numeric, err := strconv.Atoi(normalized)
+	if err == nil && numeric >= 0 && numeric <= 1000 {
+		return strconv.Itoa(numeric), nil
+	}
+	return "", fmt.Errorf("invalid font stretch %q", value)
+}
+
+func fontKeyFromRC(font *FontRC) string {
+	if font == nil {
+		return ""
+	}
+	families := expandRCFontFamilies(font)
+	if (font.Style == "" || font.Style == render.FontStyleNormal) &&
+		(font.Weight == 0 || font.Weight == 400) &&
+		(font.Stretch == "" || font.Stretch == "normal") &&
+		(font.Variant == "" || font.Variant == "normal") {
+		return strings.Join(families, ", ")
+	}
+	props := render.FontProperties{
+		Families: families,
+		Style:    font.Style,
+		Weight:   font.Weight,
+		Stretch:  font.Stretch,
+		Variant:  font.Variant,
+	}
+	return render.FontPropertiesKey(props)
+}
+
+func expandRCFontFamilies(font *FontRC) []string {
+	if font == nil {
+		return nil
+	}
+	var expanded []string
+	seen := make(map[string]struct{})
+	add := func(families []string) {
+		for _, family := range families {
+			family = strings.TrimSpace(family)
+			if family == "" {
+				continue
+			}
+			key := strings.ToLower(family)
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			expanded = append(expanded, family)
+		}
+	}
+	for _, family := range font.Family {
+		switch strings.ToLower(strings.TrimSpace(family)) {
+		case "serif":
+			add(font.Serif)
+		case "sans-serif", "sans serif", "sans":
+			add(font.SansSerif)
+		case "cursive":
+			add(font.Cursive)
+		case "fantasy":
+			add(font.Fantasy)
+		case "monospace", "mono":
+			add(font.Monospace)
+		default:
+			add([]string{family})
+		}
+	}
+	return expanded
 }
 
 func parseMPLLegendLocation(value string) (string, error) {
@@ -2046,29 +2480,25 @@ func parseMPLLineStyle(value string) ([]float64, error) {
 	}
 }
 
-func parseMPLFontFamily(value string) (string, error) {
+func parseMPLFontFamilyList(value string) ([]string, error) {
 	normalized := normalizeMPLValue(value)
 	if normalized == "" {
-		return "", errors.New("empty font family")
+		return nil, errors.New("empty font family")
 	}
 	if strings.HasPrefix(normalized, "[") && strings.HasSuffix(normalized, "]") {
-		items := splitOutsideQuotes(normalized[1:len(normalized)-1], ',')
-		for _, item := range items {
-			candidate := normalizeMPLValue(item)
-			if candidate != "" {
-				return candidate, nil
-			}
-		}
-		return "", errors.New("empty font family list")
+		normalized = normalized[1 : len(normalized)-1]
 	}
 	items := splitOutsideQuotes(normalized, ',')
-	if len(items) > 0 {
-		first := normalizeMPLValue(items[0])
-		if first != "" {
-			return first, nil
+	families := make([]string, 0, len(items))
+	for _, item := range items {
+		if family := normalizeMPLValue(item); family != "" {
+			families = append(families, family)
 		}
 	}
-	return normalized, nil
+	if len(families) == 0 {
+		return nil, errors.New("empty font family list")
+	}
+	return families, nil
 }
 
 func parseMPLColor(value string, rc RC) (render.Color, error) {
@@ -2082,6 +2512,76 @@ func parseMPLColor(value string, rc RC) (render.Color, error) {
 	}
 
 	return color.ToRGBA(normalized, color.WithColorCycle(rc.Palette()), color.WithBareHex())
+}
+
+func parseMPLFloatList(value string) ([]float64, error) {
+	parts := splitOutsideQuotes(normalizeMPLValue(value), ',')
+	if len(parts) == 0 {
+		return nil, errors.New("empty float list")
+	}
+	out := make([]float64, 0, len(parts))
+	for _, part := range parts {
+		v, err := parseMPLFloat(part)
+		if err != nil {
+			return nil, fmt.Errorf("invalid float list: %w", err)
+		}
+		out = append(out, v)
+	}
+	return out, nil
+}
+
+func parseMPLLineCap(value string) (render.LineCap, error) {
+	switch strings.ToLower(normalizeMPLValue(value)) {
+	case "butt":
+		return render.CapButt, nil
+	case "round":
+		return render.CapRound, nil
+	case "projecting", "square":
+		return render.CapSquare, nil
+	default:
+		return 0, errors.New(`expected "butt", "round", or "projecting"`)
+	}
+}
+
+func parseMPLLineJoin(value string) (render.LineJoin, error) {
+	switch strings.ToLower(normalizeMPLValue(value)) {
+	case "miter":
+		return render.JoinMiter, nil
+	case "round":
+		return render.JoinRound, nil
+	case "bevel":
+		return render.JoinBevel, nil
+	default:
+		return 0, errors.New(`expected "miter", "round", or "bevel"`)
+	}
+}
+
+func parseMPLMarkerColor(value string, rc *RC) (MarkerColorRC, error) {
+	normalized := normalizeMPLValue(value)
+	switch {
+	case strings.EqualFold(normalized, "auto"):
+		return MarkerColorRC{Mode: MarkerColorAuto}, nil
+	case strings.EqualFold(normalized, "none"):
+		return MarkerColorRC{Mode: MarkerColorNone}, nil
+	default:
+		if rc == nil {
+			return MarkerColorRC{}, errors.New("nil rc")
+		}
+		parsed, err := parseMPLColor(normalized, *rc)
+		if err != nil {
+			return MarkerColorRC{}, err
+		}
+		return MarkerColorRC{Mode: MarkerColorExplicit, Color: parsed, Raw: normalized}, nil
+	}
+}
+
+func parseMPLMarkerFillStyle(value string) (MarkerFillStyle, error) {
+	switch normalized := MarkerFillStyle(strings.ToLower(normalizeMPLValue(value))); normalized {
+	case MarkerFillFull, MarkerFillLeft, MarkerFillRight, MarkerFillBottom, MarkerFillTop, MarkerFillNone:
+		return normalized, nil
+	default:
+		return "", errors.New(`expected "full", "left", "right", "bottom", "top", or "none"`)
+	}
 }
 
 // parseMPLPropCycle parses an axes.prop_cycle expression into a Cycler,

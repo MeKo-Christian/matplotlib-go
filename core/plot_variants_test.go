@@ -381,8 +381,8 @@ func TestAxesAxVSpan_DrawsFilledRect(t *testing.T) {
 	if r.pathCalls[0].paint.Fill.A == 0 {
 		t.Fatalf("expected non-transparent fill paint")
 	}
-	if r.pathCalls[0].paint.Stroke.A == 0 || r.pathCalls[0].paint.LineWidth != pointsToPixels(ax.resolvedRC(), 1) {
-		t.Fatalf("span edge paint = %+v, want Matplotlib same-color 1pt edge", r.pathCalls[0].paint)
+	if r.pathCalls[0].paint.Stroke.A != 0 {
+		t.Fatalf("span edge paint = %+v, want Matplotlib's transparent default patch edge", r.pathCalls[0].paint)
 	}
 }
 

@@ -140,34 +140,43 @@ func SliceMarkers(start, stop, step int) MarkEverySpec {
 // Line2D is a polyline artist with optional Matplotlib-style data markers.
 type Line2D struct {
 	ArtistRasterization
-	XY              []geom.Pt    // data space points
-	W               float64      // stroke width in points
-	Col             render.Color // stroke color
-	Dashes          []float64    // dash pattern (on/off pairs)
-	DashUnits       DashUnits    // unit system for Dashes
-	LineCap         render.LineCap
-	LineCapSet      bool
-	GapColor        render.Color // optional dashed-line gap color
-	GapColorSet     bool
-	PathEffects     []render.PathEffect
-	DrawStyle       LineDrawStyle // optional step-style connection mode
-	Marker          MarkerType    // optional data marker
-	MarkerSet       bool          // true when Marker should be drawn
-	MarkerStyle     MarkerStyle   // optional rich marker style
-	MarkerPath      geom.Path     // optional custom marker path in normalized marker space
-	MarkerSize      float64       // marker size in points, 0 uses Matplotlib's 6 pt default
-	MarkerFaceColor render.Color  // marker fill, 0 alpha falls back to line color
-	MarkerEdgeColor render.Color  // marker edge, 0 alpha falls back to line color
-	MarkerEdgeWidth float64       // marker edge width in points, 0 uses Matplotlib's 1 pt default
-	MarkerFaceSpec  MarkerColorSpec
-	MarkerEdgeSpec  MarkerColorSpec
-	MarkerFaceAlt   MarkerColorSpec
-	MarkEvery       int                 // optional every-N marker subset; <=1 draws every point
-	MarkEverySpec   MarkEverySpec       // optional richer marker subset; overrides MarkEvery when set
-	Label           string              // series label for legend
-	Sketch          render.SketchParams // per-artist sketch/xkcd override; zero inherits the figure default
-	z               float64             // z-order
-	pickRadius      float64             // pick tolerance in pixels (0 = default)
+	XY                []geom.Pt    // data space points
+	W                 float64      // stroke width in points
+	Col               render.Color // stroke color
+	Dashes            []float64    // dash pattern (on/off pairs)
+	DashUnits         DashUnits    // unit system for Dashes
+	LineCap           render.LineCap
+	LineCapSet        bool
+	LineJoin          render.LineJoin
+	LineJoinSet       bool
+	DashCap           render.LineCap
+	DashJoin          render.LineJoin
+	SolidCap          render.LineCap
+	SolidJoin         render.LineJoin
+	RCStrokeStylesSet bool
+	Antialiased       bool
+	AntialiasedSet    bool
+	GapColor          render.Color // optional dashed-line gap color
+	GapColorSet       bool
+	PathEffects       []render.PathEffect
+	DrawStyle         LineDrawStyle // optional step-style connection mode
+	Marker            MarkerType    // optional data marker
+	MarkerSet         bool          // true when Marker should be drawn
+	MarkerStyle       MarkerStyle   // optional rich marker style
+	MarkerPath        geom.Path     // optional custom marker path in normalized marker space
+	MarkerSize        float64       // marker size in points, 0 uses Matplotlib's 6 pt default
+	MarkerFaceColor   render.Color  // marker fill, 0 alpha falls back to line color
+	MarkerEdgeColor   render.Color  // marker edge, 0 alpha falls back to line color
+	MarkerEdgeWidth   float64       // marker edge width in points, 0 uses Matplotlib's 1 pt default
+	MarkerFaceSpec    MarkerColorSpec
+	MarkerEdgeSpec    MarkerColorSpec
+	MarkerFaceAlt     MarkerColorSpec
+	MarkEvery         int                 // optional every-N marker subset; <=1 draws every point
+	MarkEverySpec     MarkEverySpec       // optional richer marker subset; overrides MarkEvery when set
+	Label             string              // series label for legend
+	Sketch            render.SketchParams // per-artist sketch/xkcd override; zero inherits the figure default
+	z                 float64             // z-order
+	pickRadius        float64             // pick tolerance in pixels (0 = default)
 
 	// Persistent affine/non-affine cache for the data-coordinate draw path
 	// (Phase 13). transformedPath caches the non-affine projection of the source
@@ -366,15 +375,28 @@ func (l *Line2D) Draw(r render.Renderer, ctx *DrawContext) {
 	widthPx := pointsToPixels(lineRC, l.W)
 	dashes := lineDashesForPaint(l.Dashes, widthPx, l.DashUnits)
 	lineCap := render.CapSquare
+	lineJoin := render.JoinRound
+	if l.RCStrokeStylesSet {
+		lineCap = l.SolidCap
+		lineJoin = l.SolidJoin
+	}
 	if len(dashes) > 0 {
 		lineCap = render.CapButt
+		lineJoin = render.JoinRound
+		if l.RCStrokeStylesSet {
+			lineCap = l.DashCap
+			lineJoin = l.DashJoin
+		}
 	}
 	if l.LineCapSet {
 		lineCap = l.LineCap
 	}
+	if l.LineJoinSet {
+		lineJoin = l.LineJoin
+	}
 	paint := render.Paint{
 		LineWidth:   widthPx,
-		LineJoin:    render.JoinRound, // Default to round joins
+		LineJoin:    lineJoin,
 		LineCap:     lineCap,
 		MiterLimit:  10.0, // Standard miter limit
 		Stroke:      l.ApplyArtistAlpha(l.Col),
@@ -382,6 +404,12 @@ func (l *Line2D) Draw(r render.Renderer, ctx *DrawContext) {
 		PathEffects: linePathEffects(ctx, l.PathEffects),
 		Snap:        render.SnapAuto,
 		Simplify:    ctx != nil && ctx.RC.PathSimplify,
+	}
+	if l.AntialiasedSet {
+		paint.Antialias = render.AntialiasOff
+		if l.Antialiased {
+			paint.Antialias = render.AntialiasOn
+		}
 	}
 	if ctx != nil {
 		paint.SimplifyThreshold = ctx.RC.PathSimplifyThreshold
@@ -657,12 +685,20 @@ func (l *Line2D) drawMarkers(r render.Renderer, ctx *DrawContext) {
 	}
 
 	newCollection := func(path geom.Path, face, edge render.Color, edgeWidth float64, lineOnly bool) *PathCollection {
+		antialias := render.AntialiasDefault
+		if l.AntialiasedSet {
+			antialias = render.AntialiasOff
+			if l.Antialiased {
+				antialias = render.AntialiasOn
+			}
+		}
 		return &PathCollection{
 			Collection: Collection{
 				ArtistRasterization: l.ArtistRasterization,
 				Coords:              Coords(CoordData),
 				Alpha:               1,
 				PathEffects:         cloneRenderPathEffects(l.PathEffects),
+				Antialias:           antialias,
 			},
 			Path:          path,
 			Offsets:       points,

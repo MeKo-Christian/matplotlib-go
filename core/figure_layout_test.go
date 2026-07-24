@@ -455,8 +455,8 @@ func TestConstrainedColorbarSlotOffsetUsesDeviceSnappedSpineWidth(t *testing.T) 
 	}
 
 	got := constrainedColorbarSlotOffset(fig, base) * fig.SizePx.X
-	want := constrainedLayoutPadPx(fig) +
-		0.5*constrainedLayoutDefaultSpacePx(base.W()*fig.SizePx.X, 1) +
+	want := layoutPadPx(fig, LayoutEngineConstrained) +
+		0.5*constrainedLayoutDefaultSpacePx(fig, base.W()*fig.SizePx.X, 1, true) +
 		math.Round(pointsToPixels(fig.RC, fig.RC.AxisLineWidth))
 	if !floatApprox(got, want, 1e-12) {
 		t.Fatalf("constrained colorbar slot offset = %v px, want device-snapped spine offset %v px", got, want)

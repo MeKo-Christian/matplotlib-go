@@ -267,8 +267,8 @@ func solveConstrainedGrid(fig *Figure, r render.Renderer, vp geom.Rect, grid *Gr
 	// Inter-cell spacing (wspace/hspace) is split between adjacent cells and
 	// lives in the "cb" margins. If the spacing is smaller than the pad, the
 	// pad is used instead (Matplotlib get_margin_from_padding).
-	wSpaceHalf := constrainedLayoutDefaultSpacePx(parentPx.W(), grid.nCols) / 2
-	hSpaceHalf := constrainedLayoutDefaultSpacePx(parentPx.H(), grid.nRows) / 2
+	wSpaceHalf := constrainedLayoutDefaultSpacePx(fig, parentPx.W(), grid.nCols, true) / 2
+	hSpaceHalf := constrainedLayoutDefaultSpacePx(fig, parentPx.H(), grid.nRows, false) / 2
 
 	for col := 0; col < grid.nCols; col++ {
 		left := wPad

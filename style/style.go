@@ -74,6 +74,12 @@ type RC struct {
 	// Lines holds line-artist lines.* rcParams (width/color live in the flat
 	// LineWidth/LineColor fields above).
 	Lines LinesRC
+	// Patch holds patch-artist patch.* defaults.
+	Patch PatchRC
+	// Font holds the default font properties and ordered generic-family
+	// fallback lists. FontKey is the renderer-facing serialization of these
+	// values and remains available for backwards compatibility.
+	Font FontRC
 	// XTick and YTick hold tick geometry, placement, and visibility rcParams.
 	XTick TickAxisRC
 	YTick TickAxisRC
@@ -88,6 +94,8 @@ type RC struct {
 	Image ImageRC
 	// Hatch holds hatch.* rcParams (hatch pattern defaults).
 	Hatch HatchRC
+	// Contour holds contour.* defaults for structured and triangular contours.
+	Contour ContourRC
 	// Boxplot holds boxplot.* rcParams (boxplot artist defaults).
 	Boxplot BoxplotRC
 	// Mathtext holds mathtext.* rcParams (math rendering font defaults).
@@ -104,6 +112,37 @@ type RC struct {
 	Animation AnimationRC
 	// Savefig holds savefig.* rcParams (save-time output defaults).
 	Savefig SavefigRC
+	// Figure holds figure patch, subplot, layout, and super-label defaults.
+	Figure FigureRC
+}
+
+// FigureRC mirrors figure.* defaults consumed when a Figure and its managed
+// subplot grids are created.
+type FigureRC struct {
+	EdgeColor   render.Color
+	FrameOn     bool
+	AutoLayout  bool
+	TitleSize   float64
+	TitleWeight int
+	LabelSize   float64
+	LabelWeight int
+	Subplot     FigureSubplotRC
+	Constrained FigureConstrainedLayoutRC
+}
+
+// FigureSubplotRC holds the initial Figure.subplot parameters. WSpace and
+// HSpace use Matplotlib's units: fractions of the average Axes width/height.
+type FigureSubplotRC struct {
+	Left, Right, Bottom, Top float64
+	WSpace, HSpace           float64
+}
+
+// FigureConstrainedLayoutRC holds constrained-layout defaults. Pad values are
+// inches and spacing values are fractions, matching Matplotlib.
+type FigureConstrainedLayoutRC struct {
+	Use            bool
+	HPad, WPad     float64
+	HSpace, WSpace float64
 }
 
 // AxesRC mirrors behavior-related axes.* rcParams. Color/size styling for
@@ -202,6 +241,106 @@ type LinesRC struct {
 	// indistinguishable from Line2D's unset state (which falls back to the
 	// 1 pt default) and is therefore ignored.
 	MarkerEdgeWidth float64
+	// DashedPattern, DashDotPattern, and DottedPattern are the unscaled
+	// on/off sequences in points selected by the corresponding named
+	// linestyle.
+	DashedPattern  []float64
+	DashDotPattern []float64
+	DottedPattern  []float64
+	// ScaleDashes scales named dash sequences by the line width.
+	ScaleDashes bool
+	// DashCap/Join and SolidCap/Join select stroke geometry according to
+	// whether the resolved linestyle is dashed or solid.
+	DashCap   render.LineCap
+	DashJoin  render.LineJoin
+	SolidCap  render.LineCap
+	SolidJoin render.LineJoin
+	// MarkerFaceColor and MarkerEdgeColor are the default marker colors.
+	MarkerFaceColor MarkerColorRC
+	MarkerEdgeColor MarkerColorRC
+	// MarkerFillStyle is markers.fillstyle.
+	MarkerFillStyle MarkerFillStyle
+	// Antialiased is lines.antialiased.
+	Antialiased bool
+}
+
+// PatchRC mirrors Matplotlib's patch.* defaults. LineWidth is expressed in
+// points. ForceEdgeColor makes an omitted patch edge use EdgeColor; otherwise
+// filled patches default to no visible edge.
+type PatchRC struct {
+	LineWidth float64
+	FaceColor render.Color
+	// FaceColorRaw preserves dynamic cycle references such as C0. FaceColor is
+	// the resolved value for the current PropCycle/ColorCycle.
+	FaceColorRaw   string
+	EdgeColor      render.Color
+	ForceEdgeColor bool
+	Antialiased    bool
+}
+
+// DefaultPatchFaceColor resolves patch.facecolor against the current property
+// cycle. This keeps the default C0 dynamic when callers replace ColorCycle
+// directly rather than through an mplstyle parse.
+func (r *RC) DefaultPatchFaceColor() render.Color {
+	if r == nil {
+		return render.Color{}
+	}
+	if r.Patch.FaceColorRaw != "" {
+		if resolved, err := color.ToRGBA(
+			r.Patch.FaceColorRaw,
+			color.WithColorCycle(r.Palette()),
+			color.WithBareHex(),
+		); err == nil {
+			return resolved
+		}
+	}
+	return r.Patch.FaceColor
+}
+
+// MarkerColorMode identifies the special marker color values accepted by
+// lines.markerfacecolor and lines.markeredgecolor.
+type MarkerColorMode uint8
+
+const (
+	MarkerColorAuto MarkerColorMode = iota
+	MarkerColorExplicit
+	MarkerColorNone
+)
+
+// MarkerColorRC is a typed rcParam marker color. Raw preserves cycle colors
+// such as C1 for resolution against the final axes.prop_cycle.
+type MarkerColorRC struct {
+	Mode  MarkerColorMode
+	Color render.Color
+	Raw   string
+}
+
+// MarkerFillStyle is the typed markers.fillstyle value.
+type MarkerFillStyle string
+
+const (
+	MarkerFillFull   MarkerFillStyle = "full"
+	MarkerFillLeft   MarkerFillStyle = "left"
+	MarkerFillRight  MarkerFillStyle = "right"
+	MarkerFillBottom MarkerFillStyle = "bottom"
+	MarkerFillTop    MarkerFillStyle = "top"
+	MarkerFillNone   MarkerFillStyle = "none"
+)
+
+// FontRC mirrors Matplotlib's font.* defaults. Family is the ordered
+// font.family request; the five named lists expand generic family entries
+// without discarding later fallbacks.
+type FontRC struct {
+	Family    []string
+	Style     render.FontStyle
+	Variant   string
+	Weight    int
+	Stretch   string
+	Serif     []string
+	SansSerif []string
+	Cursive   []string
+	Fantasy   []string
+	Monospace []string
 }
 
 // TickAxisRC mirrors the axis-wide xtick.* or ytick.* rcParams. Primary means
@@ -302,6 +441,23 @@ type HatchRC struct {
 	Color render.Color
 	// LineWidth is the default hatch line width in points (hatch.linewidth).
 	LineWidth float64
+}
+
+// ContourRC mirrors Matplotlib's contour.* rcParams.
+type ContourRC struct {
+	// Algorithm selects the structured contour generator: "mpl2005",
+	// "mpl2014", "serial", or "threaded".
+	Algorithm string
+	// CornerMask retains the valid triangular portion of a structured grid
+	// cell containing exactly one masked/non-finite corner.
+	CornerMask bool
+	// LineWidth is the contour line width in points when LineWidthSet is true.
+	// When unset, contour lines inherit RC.LineWidth (lines.linewidth).
+	LineWidth    float64
+	LineWidthSet bool
+	// NegativeLineStyle is the linestyle for negative levels in monochrome
+	// line contours when no explicit per-call linestyle is supplied.
+	NegativeLineStyle string
 }
 
 // BoxplotRC mirrors the wired subset of Matplotlib's boxplot.* rcParams.
@@ -584,6 +740,56 @@ var Default = RC{
 		Marker:          "None",
 		MarkerSize:      6,
 		MarkerEdgeWidth: 1,
+		DashedPattern:   []float64{3.7, 1.6},
+		DashDotPattern:  []float64{6.4, 1.6, 1, 1.6},
+		DottedPattern:   []float64{1, 1.65},
+		ScaleDashes:     true,
+		DashCap:         render.CapButt,
+		DashJoin:        render.JoinRound,
+		SolidCap:        render.CapSquare,
+		SolidJoin:       render.JoinRound,
+		MarkerFaceColor: MarkerColorRC{Mode: MarkerColorAuto},
+		MarkerEdgeColor: MarkerColorRC{Mode: MarkerColorAuto},
+		MarkerFillStyle: MarkerFillFull,
+		Antialiased:     true,
+	},
+	Patch: PatchRC{
+		LineWidth:      1,
+		FaceColor:      render.Color{R: 0x1f / 255.0, G: 0x77 / 255.0, B: 0xb4 / 255.0, A: 1},
+		FaceColorRaw:   "C0",
+		EdgeColor:      render.Color{R: 0, G: 0, B: 0, A: 1},
+		ForceEdgeColor: false,
+		Antialiased:    true,
+	},
+	Font: FontRC{
+		Family:  []string{"sans-serif"},
+		Style:   render.FontStyleNormal,
+		Variant: "normal",
+		Weight:  400,
+		Stretch: "normal",
+		Serif: []string{
+			"DejaVu Serif", "Bitstream Vera Serif", "Computer Modern Roman",
+			"New Century Schoolbook", "Century Schoolbook L", "Utopia",
+			"ITC Bookman", "Bookman", "Nimbus Roman No9 L", "Times New Roman",
+			"Times", "Palatino", "Charter", "serif",
+		},
+		SansSerif: []string{
+			"DejaVu Sans", "Bitstream Vera Sans", "Computer Modern Sans Serif",
+			"Lucida Grande", "Verdana", "Geneva", "Lucid", "Arial", "Helvetica",
+			"Avant Garde", "sans-serif",
+		},
+		Cursive: []string{
+			"Apple Chancery", "Textile", "Zapf Chancery", "Sand", "Script MT",
+			"Felipa", "Comic Neue", "Comic Sans MS", "cursive",
+		},
+		Fantasy: []string{
+			"Chicago", "Charcoal", "Impact", "Western", "xkcd script", "fantasy",
+		},
+		Monospace: []string{
+			"DejaVu Sans Mono", "Bitstream Vera Sans Mono",
+			"Computer Modern Typewriter", "Andale Mono", "Nimbus Mono L",
+			"Courier New", "Courier", "Fixed", "Terminal", "monospace",
+		},
 	},
 	XTick: TickAxisRC{
 		Direction:    "out",
@@ -637,6 +843,11 @@ var Default = RC{
 	Hatch: HatchRC{
 		Color:     render.Color{R: 0, G: 0, B: 0, A: 1},
 		LineWidth: 1.0,
+	},
+	Contour: ContourRC{
+		Algorithm:         "mpl2014",
+		CornerMask:        true,
+		NegativeLineStyle: "dashed",
 	},
 	Boxplot: BoxplotRC{
 		Notch:            false,
@@ -721,6 +932,21 @@ var Default = RC{
 		PadInches:   0.1,
 		Format:      "",
 	},
+	Figure: FigureRC{
+		EdgeColor:   render.Color{R: 1, G: 1, B: 1, A: 1},
+		FrameOn:     true,
+		TitleSize:   12,
+		TitleWeight: 400,
+		LabelSize:   12,
+		LabelWeight: 400,
+		Subplot: FigureSubplotRC{
+			Left: 0.125, Right: 0.9, Bottom: 0.11, Top: 0.88,
+			WSpace: 0.2, HSpace: 0.2,
+		},
+		Constrained: FigureConstrainedLayoutRC{
+			HPad: 0.04167, WPad: 0.04167, HSpace: 0.02, WSpace: 0.02,
+		},
+	},
 }
 
 // Option mutates an RC. Options should be applied on a copy derived from Default.
@@ -735,8 +961,17 @@ func Apply(base RC, opts ...Option) RC {
 	rc.PropCycle = rc.PropCycle.Clone()
 	rc.GridDashes = cloneDashes(rc.GridDashes)
 	rc.MinorGridDashes = cloneDashes(rc.MinorGridDashes)
+	rc.Lines.DashedPattern = cloneDashes(rc.Lines.DashedPattern)
+	rc.Lines.DashDotPattern = cloneDashes(rc.Lines.DashDotPattern)
+	rc.Lines.DottedPattern = cloneDashes(rc.Lines.DottedPattern)
 	rc.Animation.FFmpegArgs = cloneStrings(rc.Animation.FFmpegArgs)
 	rc.Animation.ConvertArgs = cloneStrings(rc.Animation.ConvertArgs)
+	rc.Font.Family = cloneStrings(rc.Font.Family)
+	rc.Font.Serif = cloneStrings(rc.Font.Serif)
+	rc.Font.SansSerif = cloneStrings(rc.Font.SansSerif)
+	rc.Font.Cursive = cloneStrings(rc.Font.Cursive)
+	rc.Font.Fantasy = cloneStrings(rc.Font.Fantasy)
+	rc.Font.Monospace = cloneStrings(rc.Font.Monospace)
 	for _, opt := range opts {
 		if opt != nil {
 			opt(&rc)
@@ -752,6 +987,18 @@ func WithDPI(d float64) Option { return func(rc *RC) { rc.DPI = d } }
 func WithFont(key string, size float64) Option {
 	return func(rc *RC) {
 		rc.FontKey, rc.FontSize = key, size
+		props := render.ParseFontProperties(key)
+		if len(props.Families) > 0 {
+			rc.Font.Family = cloneStrings(props.Families)
+		}
+		rc.Font.Style = props.Style
+		rc.Font.Weight = props.Weight
+		if props.Stretch != "" {
+			rc.Font.Stretch = props.Stretch
+		}
+		if props.Variant != "" {
+			rc.Font.Variant = props.Variant
+		}
 		rc.TitleFontSize = maxFloat(8, size*1.2)
 		rc.AxisLabelFontSize = maxFloat(8, size)
 		rc.XTickLabelFontSize = maxFloat(8, size)
@@ -958,6 +1205,28 @@ func (rc RC) AxisLabelSize() float64 {
 		return maxFloat(8, rc.FontSize)
 	}
 	return 8
+}
+
+// FigureTitleSize returns the configured super-title size.
+func (rc *RC) FigureTitleSize() float64 {
+	if rc == nil {
+		return 12
+	}
+	if rc.Figure.TitleSize > 0 {
+		return rc.Figure.TitleSize
+	}
+	return rc.TitleSize()
+}
+
+// FigureLabelSize returns the configured super-label size.
+func (rc *RC) FigureLabelSize() float64 {
+	if rc == nil {
+		return 12
+	}
+	if rc.Figure.LabelSize > 0 {
+		return rc.Figure.LabelSize
+	}
+	return rc.FigureTitleSize()
 }
 
 // TickLabelSize returns the configured tick-label size for the requested axis.

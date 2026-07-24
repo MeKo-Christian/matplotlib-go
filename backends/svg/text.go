@@ -198,6 +198,19 @@ func (r *Renderer) renderTextNode(text string, x, y, size float64, textColor ren
 	writeFloatAttr(&content, "y", r.flipY(y))
 	writeFloatAttr(&content, "font-size", size)
 	writeAttr(&content, "font-family", r.svgFontFamily(r.lastFontKey))
+	props := render.ParseFontProperties(r.lastFontKey)
+	if props.Style != "" && props.Style != render.FontStyleNormal {
+		writeAttr(&content, "font-style", string(props.Style))
+	}
+	if props.Weight > 0 && props.Weight != 400 {
+		writeAttr(&content, "font-weight", strconv.Itoa(props.Weight))
+	}
+	if props.Stretch != "" && props.Stretch != "normal" {
+		writeAttr(&content, "font-stretch", props.Stretch)
+	}
+	if props.Variant != "" && props.Variant != "normal" {
+		writeAttr(&content, "font-variant", props.Variant)
+	}
 	writeAttr(&content, "fill", colorToHex(textColor))
 	alpha := clamp01(textColor.A)
 	if alpha < 1 {

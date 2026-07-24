@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 func TestErrorBar_Draw_Basic(t *testing.T) {
@@ -165,6 +166,46 @@ func TestErrorBarMarkerEdgeWidthDefaultsToMatplotlibMarkerEdgeWidth(t *testing.T
 	if !floatApprox(got, want, 1e-9) {
 		t.Fatalf("default errorbar marker edge width = %v, want Matplotlib 1 pt = %v px", got, want)
 	}
+}
+
+func TestErrorBarMarkerUsesLineMarkerRCDefaults(t *testing.T) {
+	errBar := &ErrorBar{
+		XY:         []geom.Pt{{X: 1, Y: 2}},
+		Color:      render.Color{B: 1, A: 1},
+		Marker:     MarkerCircle,
+		MarkerSet:  true,
+		MarkerSize: 4.5,
+	}
+	r := &recordingRenderer{}
+	ctx := createTestDrawContext()
+	ctx.RC.Lines.MarkerFaceColor = style.MarkerColorRC{
+		Mode:  style.MarkerColorExplicit,
+		Color: render.Color{R: 1, A: 1},
+	}
+	ctx.RC.Lines.MarkerEdgeColor = style.MarkerColorRC{Mode: style.MarkerColorNone}
+	ctx.RC.Lines.MarkerFillStyle = style.MarkerFillTop
+	ctx.RC.Lines.Antialiased = false
+
+	errBar.Draw(r, ctx)
+	if len(r.pathCalls) == 0 {
+		t.Fatal("errorbar marker drew no paths")
+	}
+	for _, call := range r.pathCalls {
+		if call.paint.Fill.A <= 0 {
+			continue
+		}
+		if call.paint.Fill.R != 1 || call.paint.Fill.G != 0 || call.paint.Fill.B != 0 {
+			t.Fatalf("errorbar marker face = %+v, want rc red", call.paint.Fill)
+		}
+		if call.paint.Stroke.A != 0 {
+			t.Fatalf("errorbar marker edge = %+v, want rc none", call.paint.Stroke)
+		}
+		if call.paint.Antialias != render.AntialiasOff {
+			t.Fatalf("errorbar marker antialias = %v, want off", call.paint.Antialias)
+		}
+		return
+	}
+	t.Fatal("errorbar marker emitted no fill path")
 }
 
 func TestErrorBarCapSizeIsTotalMarkerLength(t *testing.T) {

@@ -136,6 +136,10 @@ func (a *Axes) Add(art Artist) {
 	if a == nil {
 		return
 	}
+	if line, ok := art.(*Line2D); ok {
+		rc := a.resolvedRC()
+		applyLineRCDefaults(line, &rc)
+	}
 	if _, ok := art.(WidgetArtist); ok {
 		a.AddWidget(art)
 		return

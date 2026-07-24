@@ -277,7 +277,14 @@ func figureLabelFontSize(ctx *DrawContext) float64 {
 	if ctx == nil {
 		return 12
 	}
-	return ctx.RC.TitleSize()
+	return ctx.RC.FigureLabelSize()
+}
+
+func figureTitleFontSize(ctx *DrawContext) float64 {
+	if ctx == nil {
+		return 12
+	}
+	return ctx.RC.FigureTitleSize()
 }
 
 func titleAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, alignment figureTextAlignment) geom.Pt {

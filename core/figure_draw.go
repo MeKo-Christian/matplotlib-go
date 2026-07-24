@@ -346,19 +346,32 @@ func isSecondaryAxes(ax *Axes) bool {
 // fully-transparent notch pixels the reference renderer produces, which an
 // opaque clear can never reproduce.
 func drawFigureBackground(r render.Renderer, vp geom.Rect, opts DrawOptions, fig *Figure) {
-	if opts.AnimatedFilter == AnimatedFilterOnlyAnimated {
+	if opts.AnimatedFilter == AnimatedFilterOnlyAnimated || fig == nil || !fig.RC.Figure.FrameOn {
 		return
 	}
 	if drawSketchedFigurePatch(r, vp, opts, fig) {
 		return
 	}
-	if opts.FigureBackground != nil && opts.FigureBackground.A > 0 {
-		r.Path(pixelRectPath(vp), &render.Paint{Fill: *opts.FigureBackground})
+	face := fig.RC.FigureBackground()
+	if opts.FigureBackground != nil {
+		face = *opts.FigureBackground
 	}
-	if opts.FigureEdge != nil && opts.FigureEdge.A > 0 && opts.FigureEdgeWidth > 0 {
+	if opts.FigureBackground != nil && !opts.Transparent && face.A > 0 {
+		r.Path(pixelRectPath(vp), &render.Paint{Fill: face, Antialias: render.AntialiasOff})
+	}
+	edge := fig.RC.Figure.EdgeColor
+	edgeWidth := 0.0
+	if opts.FigureEdge != nil {
+		edge = *opts.FigureEdge
+		if opts.FigureEdgeWidth > 0 {
+			edgeWidth = opts.FigureEdgeWidth
+		}
+	}
+	if edge.A > 0 && edgeWidth > 0 {
 		r.Path(pixelRectPath(vp), &render.Paint{
-			Stroke:    *opts.FigureEdge,
-			LineWidth: opts.FigureEdgeWidth,
+			Stroke:    edge,
+			LineWidth: edgeWidth,
+			Antialias: render.AntialiasOff,
 		})
 	}
 }
@@ -392,10 +405,18 @@ func drawSketchedFigurePatch(r render.Renderer, vp geom.Rect, opts DrawOptions, 
 			Antialias: render.AntialiasOff,
 		})
 	}
-	if opts.FigureEdge != nil && opts.FigureEdge.A > 0 && opts.FigureEdgeWidth > 0 {
+	edge := fig.RC.Figure.EdgeColor
+	edgeWidth := 0.0
+	if opts.FigureEdge != nil {
+		edge = *opts.FigureEdge
+		if opts.FigureEdgeWidth > 0 {
+			edgeWidth = opts.FigureEdgeWidth
+		}
+	}
+	if edge.A > 0 && edgeWidth > 0 {
 		r.Path(pixelRectPath(vp), &render.Paint{
-			Stroke:    *opts.FigureEdge,
-			LineWidth: opts.FigureEdgeWidth,
+			Stroke:    edge,
+			LineWidth: edgeWidth,
 		})
 	}
 	return true

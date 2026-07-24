@@ -69,9 +69,10 @@ type Hist2D struct {
 	Color             render.Color // bar fill color
 	EdgeColor         render.Color // bar outline color
 	EdgeWidth         float64      // bar outline width in points (0 = no outline)
-	Alpha             float64      // alpha transparency (0-1, 0 means 1.0)
-	Label             string       // series label for legend
-	z                 float64      // z-order
+	Antialias         render.AntialiasMode
+	Alpha             float64 // alpha transparency (0-1, 0 means 1.0)
+	Label             string  // series label for legend
+	z                 float64 // z-order
 
 	// Computed lazily on first Draw/Bounds call.
 	computed bool
@@ -474,7 +475,8 @@ func (h *Hist2D) Draw(r render.Renderer, ctx *DrawContext) {
 			continue
 		}
 		paint := render.Paint{
-			Snap: render.SnapAuto,
+			Snap:      render.SnapAuto,
+			Antialias: h.Antialias,
 		}
 		if h.EdgeWidth > 0 && edgeColor.A > 0 {
 			paint.Stroke = edgeColor
@@ -557,8 +559,7 @@ func (h *Hist2D) drawStepHistogram(r render.Renderer, ctx *DrawContext, fillColo
 		return
 	}
 
-	paint := render.Paint{}
-	paint.Snap = render.SnapAuto
+	paint := render.Paint{Snap: render.SnapAuto, Antialias: h.Antialias}
 	if h.HistType == HistTypeStepFilled && fillColor.A > 0 {
 		paint.Fill = fillColor
 	}

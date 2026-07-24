@@ -271,6 +271,31 @@ func TestFontFamilyVariants(t *testing.T) {
 	}
 }
 
+func TestNativeTextEmitsStructuredFontProperties(t *testing.T) {
+	fontKey := render.FontPropertiesKey(render.FontProperties{
+		Families: []string{"First Face", "Second Face", "serif"},
+		Style:    render.FontStyleItalic,
+		Weight:   700,
+		Stretch:  "condensed",
+		Variant:  "small-caps",
+	})
+	content := renderSVGDocument(t, func(r *Renderer) {
+		r.MeasureText("styled", 14, fontKey)
+		r.DrawText("styled", geom.Pt{X: 10, Y: 30}, 14, render.Color{A: 1})
+	})
+	for _, attr := range []string{
+		`font-family="First Face, Second Face, serif"`,
+		`font-style="italic"`,
+		`font-weight="700"`,
+		`font-stretch="condensed"`,
+		`font-variant="small-caps"`,
+	} {
+		if !strings.Contains(content, attr) {
+			t.Errorf("SVG text missing %s: %s", attr, content)
+		}
+	}
+}
+
 func TestDrawTextEmbedsDirectFontFile(t *testing.T) {
 	dir := t.TempDir()
 	fontPath := filepath.Join(dir, "DejaVuSans.ttf")

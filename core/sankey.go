@@ -266,7 +266,6 @@ func (s *Sankey) Add(flows []float64, opts ...SankeyAddOptions) *SankeyDiagram {
 	trunkHeight := math.Max(gain, -loss)
 	trunk := &Rectangle{
 		Patch: Patch{
-			FaceColor: render.Color{},
 			EdgeColor: edgeColor,
 			EdgeWidth: 0,
 			z:         2,
@@ -276,6 +275,7 @@ func (s *Sankey) Add(flows []float64, opts ...SankeyAddOptions) *SankeyDiagram {
 		Height: trunkHeight,
 		Coords: s.opts.Coords,
 	}
+	trunk.SetFaceColor(render.Color{})
 	extent, haveExtent := sankeyExtent(path.V, labelLocations, showFlow)
 	if !haveExtent {
 		extent = geom.Rect{Min: center, Max: center}

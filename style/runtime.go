@@ -184,9 +184,29 @@ func paramsFromRC(rc RC) Params {
 	params["scatter.edgecolors"] = rc.Scatter.EdgeColors
 	params["scatter.marker"] = rc.Scatter.Marker
 	params["lines.linestyle"] = rc.Lines.LineStyle
+	params["lines.antialiased"] = formatMPLBool(rc.Lines.Antialiased)
+	params["lines.dash_capstyle"] = formatMPLLineCap(rc.Lines.DashCap)
+	params["lines.dash_joinstyle"] = formatMPLLineJoin(rc.Lines.DashJoin)
+	params["lines.dashdot_pattern"] = formatMPLFloatList(rc.Lines.DashDotPattern)
+	params["lines.dashed_pattern"] = formatMPLFloatList(rc.Lines.DashedPattern)
+	params["lines.dotted_pattern"] = formatMPLFloatList(rc.Lines.DottedPattern)
 	params["lines.marker"] = rc.Lines.Marker
+	params["lines.markeredgecolor"] = formatMPLMarkerColor(rc.Lines.MarkerEdgeColor)
 	params["lines.markeredgewidth"] = formatMPLFloat(rc.Lines.MarkerEdgeWidth)
+	params["lines.markerfacecolor"] = formatMPLMarkerColor(rc.Lines.MarkerFaceColor)
 	params["lines.markersize"] = formatMPLFloat(rc.Lines.MarkerSize)
+	params["lines.scale_dashes"] = formatMPLBool(rc.Lines.ScaleDashes)
+	params["lines.solid_capstyle"] = formatMPLLineCap(rc.Lines.SolidCap)
+	params["lines.solid_joinstyle"] = formatMPLLineJoin(rc.Lines.SolidJoin)
+	params["markers.fillstyle"] = string(rc.Lines.MarkerFillStyle)
+	params["patch.antialiased"] = formatMPLBool(rc.Patch.Antialiased)
+	params["patch.edgecolor"] = formatMPLColor(rc.Patch.EdgeColor)
+	params["patch.facecolor"] = rc.Patch.FaceColorRaw
+	if params["patch.facecolor"] == "" {
+		params["patch.facecolor"] = formatMPLColor(rc.Patch.FaceColor)
+	}
+	params["patch.force_edgecolor"] = formatMPLBool(rc.Patch.ForceEdgeColor)
+	params["patch.linewidth"] = formatMPLFloat(rc.Patch.LineWidth)
 	params["axes.autolimit_mode"] = rc.Axes.AutolimitMode
 	params["axes.axisbelow"] = rc.Axes.AxisBelow
 	params["axes.formatter.limits"] = fmt.Sprintf("%d, %d", rc.Axes.Formatter.Limits[0], rc.Axes.Formatter.Limits[1])
@@ -237,6 +257,10 @@ func paramsFromRC(rc RC) Params {
 	params["boxplot.vertical"] = formatMPLBool(rc.Boxplot.Vertical)
 	params["boxplot.whiskerprops.linewidth"] = formatMPLFloat(rc.Boxplot.WhiskerLineWidth)
 	params["boxplot.whiskers"] = formatMPLFloat(rc.Boxplot.Whiskers)
+	params["contour.algorithm"] = rc.Contour.Algorithm
+	params["contour.corner_mask"] = formatMPLBool(rc.Contour.CornerMask)
+	params["contour.linewidth"] = formatMPLOptionalFloat(rc.Contour.LineWidth, rc.Contour.LineWidthSet)
+	params["contour.negative_linestyle"] = rc.Contour.NegativeLineStyle
 	params["date.autoformatter.day"] = rc.Date.AutoDay
 	params["date.autoformatter.hour"] = rc.Date.AutoHour
 	params["date.autoformatter.microsecond"] = rc.Date.AutoMicrosecond
@@ -259,10 +283,37 @@ func paramsFromRC(rc RC) Params {
 	params["animation.html"] = rc.Animation.HTML
 	params["animation.writer"] = rc.Animation.Writer
 	params["figure.dpi"] = formatMPLFloat(rc.DPI)
+	params["figure.edgecolor"] = formatMPLColor(rc.Figure.EdgeColor)
 	params["figure.facecolor"] = formatMPLColor(rc.FigureBackground())
 	params["figure.figsize"] = fmt.Sprintf("%s, %s", formatMPLFloat(rc.FigureWidth), formatMPLFloat(rc.FigureHeight))
-	params["font.family"] = rc.FontKey
+	params["figure.frameon"] = formatMPLBool(rc.Figure.FrameOn)
+	params["figure.autolayout"] = formatMPLBool(rc.Figure.AutoLayout)
+	params["figure.constrained_layout.use"] = formatMPLBool(rc.Figure.Constrained.Use)
+	params["figure.constrained_layout.h_pad"] = formatMPLFloat(rc.Figure.Constrained.HPad)
+	params["figure.constrained_layout.w_pad"] = formatMPLFloat(rc.Figure.Constrained.WPad)
+	params["figure.constrained_layout.hspace"] = formatMPLFloat(rc.Figure.Constrained.HSpace)
+	params["figure.constrained_layout.wspace"] = formatMPLFloat(rc.Figure.Constrained.WSpace)
+	params["figure.subplot.left"] = formatMPLFloat(rc.Figure.Subplot.Left)
+	params["figure.subplot.right"] = formatMPLFloat(rc.Figure.Subplot.Right)
+	params["figure.subplot.bottom"] = formatMPLFloat(rc.Figure.Subplot.Bottom)
+	params["figure.subplot.top"] = formatMPLFloat(rc.Figure.Subplot.Top)
+	params["figure.subplot.wspace"] = formatMPLFloat(rc.Figure.Subplot.WSpace)
+	params["figure.subplot.hspace"] = formatMPLFloat(rc.Figure.Subplot.HSpace)
+	params["figure.titlesize"] = formatMPLFloat(rc.FigureTitleSize())
+	params["figure.titleweight"] = strconv.Itoa(rc.Figure.TitleWeight)
+	params["figure.labelsize"] = formatMPLFloat(rc.FigureLabelSize())
+	params["figure.labelweight"] = strconv.Itoa(rc.Figure.LabelWeight)
+	params["font.family"] = strings.Join(rc.Font.Family, ", ")
+	params["font.serif"] = strings.Join(rc.Font.Serif, ", ")
+	params["font.sans-serif"] = strings.Join(rc.Font.SansSerif, ", ")
+	params["font.cursive"] = strings.Join(rc.Font.Cursive, ", ")
+	params["font.fantasy"] = strings.Join(rc.Font.Fantasy, ", ")
+	params["font.monospace"] = strings.Join(rc.Font.Monospace, ", ")
 	params["font.size"] = formatMPLFloat(rc.FontSize)
+	params["font.style"] = string(rc.Font.Style)
+	params["font.variant"] = rc.Font.Variant
+	params["font.weight"] = strconv.Itoa(rc.Font.Weight)
+	params["font.stretch"] = rc.Font.Stretch
 	params["grid.alpha"] = formatMPLFloat(rc.GridColor.A)
 	params["grid.color"] = formatMPLColor(rc.GridColor)
 	params["grid.linewidth"] = formatMPLFloat(rc.GridLineWidth)
@@ -463,6 +514,50 @@ func formatMPLColor(color render.Color) string {
 		return fmt.Sprintf("#%02x%02x%02x", r, g, b)
 	}
 	return fmt.Sprintf("#%02x%02x%02x%02x", r, g, b, a)
+}
+
+func formatMPLFloatList(values []float64) string {
+	parts := make([]string, len(values))
+	for i, value := range values {
+		parts[i] = formatMPLFloat(value)
+	}
+	return strings.Join(parts, ", ")
+}
+
+func formatMPLLineCap(lineCap render.LineCap) string {
+	switch lineCap {
+	case render.CapRound:
+		return "round"
+	case render.CapSquare:
+		return "projecting"
+	default:
+		return "butt"
+	}
+}
+
+func formatMPLLineJoin(join render.LineJoin) string {
+	switch join {
+	case render.JoinRound:
+		return "round"
+	case render.JoinBevel:
+		return "bevel"
+	default:
+		return "miter"
+	}
+}
+
+func formatMPLMarkerColor(spec MarkerColorRC) string {
+	switch spec.Mode {
+	case MarkerColorNone:
+		return "none"
+	case MarkerColorExplicit:
+		if spec.Raw != "" {
+			return spec.Raw
+		}
+		return formatMPLColor(spec.Color)
+	default:
+		return "auto"
+	}
 }
 
 func formatMPLLineStyle(dashes []float64) string {

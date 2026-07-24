@@ -98,7 +98,7 @@ func contourGridBandPolygonsBands(x, y []float64, data [][]float64, levels []flo
 		hatch := contourBandHatch(opt.Hatches, levelIdx)
 		for row := 0; row+1 < rows; row++ {
 			for col := 0; col+1 < cols; col++ {
-				cellPolygons := contourCellBandPolygons(
+				cellPolygons := contourCellBandPolygonsCornerMask(
 					[4]geom.Pt{
 						{X: x[col], Y: y[row]},
 						{X: x[col+1], Y: y[row]},
@@ -113,6 +113,7 @@ func contourGridBandPolygonsBands(x, y []float64, data [][]float64, levels []flo
 					},
 					low,
 					high,
+					opt.CornerMask != nil && *opt.CornerMask,
 				)
 				for _, polygon := range cellPolygons {
 					if len(polygon) < 3 {
@@ -127,6 +128,33 @@ func contourGridBandPolygonsBands(x, y []float64, data [][]float64, levels []flo
 		}
 	}
 	return polygons, colors, hatches, bands
+}
+
+func contourCellBandPolygonsCornerMask(points [4]geom.Pt, values [4]float64, low, high float64, cornerMask bool) [][]geom.Pt {
+	finite := 0
+	var trianglePoints [3]geom.Pt
+	var triangleValues [3]float64
+	for i, value := range values {
+		if !isFinite(value) {
+			continue
+		}
+		if finite < len(trianglePoints) {
+			trianglePoints[finite] = points[i]
+			triangleValues[finite] = value
+		}
+		finite++
+	}
+	if finite == 4 {
+		return contourCellBandPolygons(points, values, low, high)
+	}
+	if !cornerMask || finite != 3 {
+		return nil
+	}
+	polygon := triangleBandPolygon(trianglePoints, triangleValues, low, high)
+	if len(polygon) < 3 {
+		return nil
+	}
+	return [][]geom.Pt{polygon}
 }
 
 // contourBandCompoundPaths groups per-cell band polygons into one compound path

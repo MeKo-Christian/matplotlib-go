@@ -42,11 +42,15 @@ patch.facecolor: 348ABD
 	if theme.Name != "ggplot" {
 		t.Fatalf("theme name = %q, want ggplot", theme.Name)
 	}
-	if len(report.Applied) != 20 {
-		t.Fatalf("applied count = %d, want 20", len(report.Applied))
+	if len(report.Applied) != 21 {
+		t.Fatalf("applied count = %d, want 21", len(report.Applied))
 	}
-	if len(report.Unsupported) != 1 || report.Unsupported[0].Key != "patch.facecolor" {
+	if len(report.Unsupported) != 0 {
 		t.Fatalf("unexpected unsupported report: %+v", report.Unsupported)
+	}
+	if got := theme.RC.Patch.FaceColor; !almostEqual(got.R, 0x34/255.0) ||
+		!almostEqual(got.G, 0x8a/255.0) || !almostEqual(got.B, 0xbd/255.0) {
+		t.Fatalf("patch face color = %+v", got)
 	}
 
 	if theme.RC.FontKey != "DejaVu Sans" || theme.RC.FontSize != 10 {

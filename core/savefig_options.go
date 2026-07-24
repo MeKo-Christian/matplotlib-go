@@ -109,7 +109,7 @@ func prepareSaveFigure(fig *Figure, r render.Renderer, figOpts *render.FigureOpt
 
 	var effBg render.Color
 	switch {
-	case resolved.transparent:
+	case resolved.transparent || !fig.RC.Figure.FrameOn:
 		effBg = render.Color{}
 	case resolved.hasFacecolor:
 		effBg = resolved.facecolor
@@ -118,8 +118,8 @@ func prepareSaveFigure(fig *Figure, r render.Renderer, figOpts *render.FigureOpt
 	}
 	eff.RC.Background = [4]float64{effBg.R, effBg.G, effBg.B, effBg.A}
 
-	drawOpts := DrawOptions{Transparent: resolved.transparent}
-	if clearer, ok := r.(render.BackgroundClearer); ok && (resolved.transparent || resolved.hasFacecolor || resized) {
+	drawOpts := DrawOptions{Transparent: resolved.transparent || !fig.RC.Figure.FrameOn}
+	if clearer, ok := r.(render.BackgroundClearer); ok && (resolved.transparent || !fig.RC.Figure.FrameOn || resolved.hasFacecolor || resized) {
 		// A resized surface starts transparent, so it must be re-cleared to the
 		// effective background even when no face color override was requested.
 		clearer.Clear(effBg)

@@ -3,6 +3,8 @@ package core
 import (
 	"math"
 	"strings"
+
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 // lineStyleToDashes maps a Matplotlib line-style spec to a renderer dash
@@ -19,25 +21,36 @@ import (
 // Shared by the contour styling path and LineCollection's string linestyle
 // support.
 func lineStyleToDashes(spec string, lineWidth float64) []float64 {
+	return lineStyleToDashesRC(spec, lineWidth, lineWidth, &style.Default.Lines)
+}
+
+func lineStyleToDashesRC(spec string, lineWidth, pointPx float64, rc *style.LinesRC) []float64 {
+	if rc == nil {
+		rc = &style.Default.Lines
+	}
 	var base []float64
 	switch strings.ToLower(strings.TrimSpace(spec)) {
 	case "", "-", "solid", "none":
 		return nil
 	case "--", "dashed":
-		base = []float64{3.7, 1.6}
+		base = rc.DashedPattern
 	case "-.", "dashdot":
-		base = []float64{6.4, 1.6, 1, 1.6}
+		base = rc.DashDotPattern
 	case ":", "dotted":
-		base = []float64{1, 1.65}
+		base = rc.DottedPattern
 	default:
 		return nil
 	}
-	if lineWidth <= 0 {
-		lineWidth = 1
+	scale := pointPx
+	if rc.ScaleDashes {
+		scale = lineWidth
+	}
+	if scale <= 0 {
+		scale = 1
 	}
 	out := make([]float64, len(base))
 	for i, v := range base {
-		out[i] = v * lineWidth
+		out[i] = v * scale
 	}
 	return out
 }
@@ -102,7 +115,12 @@ func resolveContourLineStyles(levels []float64, opt ContourOptions, monochrome b
 
 // contourLineDashPatterns builds the per-polyline dash patterns for a contour
 // line collection from the resolved per-level styles.
-func contourLineDashPatterns(polylineLevels, levels []float64, styles []string, lineWidth float64) [][]float64 {
+func contourLineDashPatterns(
+	polylineLevels, levels []float64,
+	styles []string,
+	lineWidth float64,
+	linesRC *style.LinesRC,
+) [][]float64 {
 	if len(styles) == 0 {
 		return nil
 	}
@@ -114,7 +132,7 @@ func contourLineDashPatterns(polylineLevels, levels []float64, styles []string, 
 		if li >= 0 && li < len(styles) {
 			style = styles[li]
 		}
-		dashes[i] = lineStyleToDashes(style, lineWidth)
+		dashes[i] = lineStyleToDashesRC(style, lineWidth, 1, linesRC)
 		if dashes[i] != nil {
 			any = true
 		}

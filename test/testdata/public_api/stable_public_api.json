@@ -6688,6 +6688,18 @@
           "declaration": "func (Patch) SetArtistLabel(label string)"
         },
         {
+          "id": "method Patch.SetEdgeColor",
+          "declaration": "func (Patch) SetEdgeColor(color render.Color)"
+        },
+        {
+          "id": "method Patch.SetEdgeWidth",
+          "declaration": "func (Patch) SetEdgeWidth(width float64)"
+        },
+        {
+          "id": "method Patch.SetFaceColor",
+          "declaration": "func (Patch) SetFaceColor(color render.Color)"
+        },
+        {
           "id": "method Patch.Z",
           "declaration": "func (Patch) Z() float64"
         },
@@ -7845,7 +7857,7 @@
         },
         {
           "id": "type Bar2D",
-          "declaration": "type Bar2D struct{ ArtistRasterization; X []float64; Heights []float64; Widths []float64; Baselines []float64; Colors []render.Color; EdgeColors []render.Color; Width float64; Color render.Color; EdgeColor render.Color; EdgeWidth float64; Alpha float64; Baseline float64; Orientation BarOrientation; Label string }"
+          "declaration": "type Bar2D struct{ ArtistRasterization; X []float64; Heights []float64; Widths []float64; Baselines []float64; Colors []render.Color; EdgeColors []render.Color; Width float64; Color render.Color; EdgeColor render.Color; EdgeWidth float64; Antialias render.AntialiasMode; Alpha float64; Baseline float64; Orientation BarOrientation; Label string }"
         },
         {
           "id": "type Bar3DOptions",
@@ -7869,7 +7881,7 @@
         },
         {
           "id": "type BarOptions",
-          "declaration": "type BarOptions struct{ Color *render.Color; Colors []render.Color; Width *float64; Widths []float64; EdgeColor *render.Color; EdgeColors []render.Color; EdgeWidth *float64; Alpha *float64; Baseline *float64; Baselines []float64; Orientation *BarOrientation; Align *BarAlign; Label string; XErr []float64; YErr []float64; ECol *render.Color; CapSize *float64; CapThick *float64; ErrorKw *ErrorBarOptions }"
+          "declaration": "type BarOptions struct{ Color *render.Color; Colors []render.Color; Width *float64; Widths []float64; EdgeColor *render.Color; EdgeColors []render.Color; EdgeWidth *float64; Alpha *float64; Antialiased *bool; Baseline *float64; Baselines []float64; Orientation *BarOrientation; Align *BarAlign; Label string; XErr []float64; YErr []float64; ECol *render.Color; CapSize *float64; CapThick *float64; ErrorKw *ErrorBarOptions }"
         },
         {
           "id": "type BarOrientation",
@@ -8009,11 +8021,11 @@
         },
         {
           "id": "type ContourOptions",
-          "declaration": "type ContourOptions struct{ X []float64; Y []float64; XEdges []float64; YEdges []float64; Levels []float64; LevelCount int; Colormap *string; Norm ScalarNormalizer; Colors []render.Color; Color *render.Color; LineWidth *float64; Alpha *float64; LabelLines bool; LabelFormatter Formatter; LabelFontSize *float64; LabelColor *render.Color; Label string; LineStyles []string; NegativeLineStyles *string; Extend string; Hatches []string }"
+          "declaration": "type ContourOptions struct{ X []float64; Y []float64; XEdges []float64; YEdges []float64; Levels []float64; LevelCount int; Colormap *string; Norm ScalarNormalizer; Colors []render.Color; Color *render.Color; LineWidth *float64; Alpha *float64; LabelLines bool; LabelFormatter Formatter; LabelFontSize *float64; LabelColor *render.Color; Label string; Algorithm string; CornerMask *bool; LineStyles []string; NegativeLineStyles *string; Extend string; Hatches []string }"
         },
         {
           "id": "type ContourSet",
-          "declaration": "type ContourSet struct{ ArtistRasterization; Levels []float64; Lines *LineCollection; Fills *PolyCollection; LabelFormatter Formatter; LabelFontSize float64; LabelColor render.Color }"
+          "declaration": "type ContourSet struct{ ArtistRasterization; Levels []float64; Algorithm string; CornerMask bool; Lines *LineCollection; Fills *PolyCollection; LabelFormatter Formatter; LabelFontSize float64; LabelColor render.Color }"
         },
         {
           "id": "type CoordFormatter",
@@ -8137,7 +8149,7 @@
         },
         {
           "id": "type Fill2D",
-          "declaration": "type Fill2D struct{ ArtistRasterization; X []float64; Y1 []float64; Y2 []float64; Where []bool; Interpolate bool; Step FillStep; Baseline float64; Orientation FillOrientation; Color render.Color; EdgeColor render.Color; EdgeWidth float64; Alpha float64; Label string }"
+          "declaration": "type Fill2D struct{ ArtistRasterization; X []float64; Y1 []float64; Y2 []float64; Where []bool; Interpolate bool; Step FillStep; Baseline float64; Orientation FillOrientation; Color render.Color; EdgeColor render.Color; EdgeWidth float64; Antialias render.AntialiasMode; Alpha float64; Label string }"
         },
         {
           "id": "type FillBetween3DMode",
@@ -8153,7 +8165,7 @@
         },
         {
           "id": "type FillOptions",
-          "declaration": "type FillOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Baseline *float64; Where []bool; Interpolate bool; Step FillStep; Label string }"
+          "declaration": "type FillOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Antialiased *bool; Baseline *float64; Where []bool; Interpolate bool; Step FillStep; Label string }"
         },
         {
           "id": "type FillOrientation",
@@ -8209,7 +8221,7 @@
         },
         {
           "id": "type HSpanOptions",
-          "declaration": "type HSpanOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; XMin *float64; XMax *float64 }"
+          "declaration": "type HSpanOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Antialiased *bool; XMin *float64; XMax *float64 }"
         },
         {
           "id": "type HexbinCollection",
@@ -8221,7 +8233,7 @@
         },
         {
           "id": "type Hist2D",
-          "declaration": "type Hist2D struct{ Data []float64; Weights []float64; Bins int; BinEdges []float64; Range *HistRange; BinStrat BinStrategy; Norm HistNorm; Cumulative bool; ReverseCumulative bool; HistType HistType; Baselines []float64; Color render.Color; EdgeColor render.Color; EdgeWidth float64; Alpha float64; Label string }"
+          "declaration": "type Hist2D struct{ Data []float64; Weights []float64; Bins int; BinEdges []float64; Range *HistRange; BinStrat BinStrategy; Norm HistNorm; Cumulative bool; ReverseCumulative bool; HistType HistType; Baselines []float64; Color render.Color; EdgeColor render.Color; EdgeWidth float64; Antialias render.AntialiasMode; Alpha float64; Label string }"
         },
         {
           "id": "type Hist2DOptions",
@@ -8237,7 +8249,7 @@
         },
         {
           "id": "type HistOptions",
-          "declaration": "type HistOptions struct{ Bins int; BinEdges []float64; Range *HistRange; Weights []float64; BinStrat BinStrategy; Norm HistNorm; Cumulative bool; ReverseCumulative bool; Log bool; HistType HistType; Baselines []float64; Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Label string }"
+          "declaration": "type HistOptions struct{ Bins int; BinEdges []float64; Range *HistRange; Weights []float64; BinStrat BinStrategy; Norm HistNorm; Cumulative bool; ReverseCumulative bool; Log bool; HistType HistType; Baselines []float64; Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Antialiased *bool; Label string }"
         },
         {
           "id": "type HistRange",
@@ -8333,7 +8345,7 @@
         },
         {
           "id": "type Line2D",
-          "declaration": "type Line2D struct{ ArtistRasterization; XY []geom.Pt; W float64; Col render.Color; Dashes []float64; DashUnits DashUnits; LineCap render.LineCap; LineCapSet bool; GapColor render.Color; GapColorSet bool; PathEffects []render.PathEffect; DrawStyle LineDrawStyle; Marker MarkerType; MarkerSet bool; MarkerStyle MarkerStyle; MarkerPath geom.Path; MarkerSize float64; MarkerFaceColor render.Color; MarkerEdgeColor render.Color; MarkerEdgeWidth float64; MarkerFaceSpec MarkerColorSpec; MarkerEdgeSpec MarkerColorSpec; MarkerFaceAlt MarkerColorSpec; MarkEvery int; MarkEverySpec MarkEverySpec; Label string; Sketch render.SketchParams }"
+          "declaration": "type Line2D struct{ ArtistRasterization; XY []geom.Pt; W float64; Col render.Color; Dashes []float64; DashUnits DashUnits; LineCap render.LineCap; LineCapSet bool; LineJoin render.LineJoin; LineJoinSet bool; DashCap render.LineCap; DashJoin render.LineJoin; SolidCap render.LineCap; SolidJoin render.LineJoin; RCStrokeStylesSet bool; Antialiased bool; AntialiasedSet bool; GapColor render.Color; GapColorSet bool; PathEffects []render.PathEffect; DrawStyle LineDrawStyle; Marker MarkerType; MarkerSet bool; MarkerStyle MarkerStyle; MarkerPath geom.Path; MarkerSize float64; MarkerFaceColor render.Color; MarkerEdgeColor render.Color; MarkerEdgeWidth float64; MarkerFaceSpec MarkerColorSpec; MarkerEdgeSpec MarkerColorSpec; MarkerFaceAlt MarkerColorSpec; MarkEvery int; MarkEverySpec MarkEverySpec; Label string; Sketch render.SketchParams }"
         },
         {
           "id": "type LineCollection",
@@ -8537,7 +8549,7 @@
         },
         {
           "id": "type Patch",
-          "declaration": "type Patch struct{ ArtistRasterization; FaceColor render.Color; EdgeColor render.Color; EdgeWidth float64; Alpha float64; Dashes []float64; DashUnits DashUnits; Label string; Hatch string; HatchColor render.Color; HatchWidth float64; HatchSpacing float64; PathEffects []render.PathEffect; LineJoin render.LineJoin; LineCap render.LineCap; Sketch render.SketchParams }"
+          "declaration": "type Patch struct{ ArtistRasterization; FaceColor render.Color; EdgeColor render.Color; EdgeWidth float64; Alpha float64; Dashes []float64; DashUnits DashUnits; Label string; Hatch string; HatchColor render.Color; HatchWidth float64; HatchSpacing float64; PathEffects []render.PathEffect; LineJoin render.LineJoin; LineCap render.LineCap; Antialias render.AntialiasMode; Sketch render.SketchParams }"
         },
         {
           "id": "type PatchCollection",
@@ -8573,11 +8585,11 @@
         },
         {
           "id": "type PieOptions",
-          "declaration": "type PieOptions struct{ Center geom.Pt; Radius float64; Width float64; StartAngle float64; CounterClockwise *bool; Colors []render.Color; Labels []string; Explode []float64; AutoPct string; LabelDistance float64; PctDistance float64; RotateLabels bool; Normalize *bool; Hatch string; Hatches []string; HatchColor render.Color; HatchWidth float64; Shadow bool; ShadowOffset geom.Pt; ShadowColor render.Color; EdgeColor *render.Color; LineWidth float64; Alpha float64; Coords CoordinateSpec; Frame *bool }"
+          "declaration": "type PieOptions struct{ Center geom.Pt; Radius float64; Width float64; StartAngle float64; CounterClockwise *bool; Colors []render.Color; Labels []string; Explode []float64; AutoPct string; LabelDistance float64; PctDistance float64; RotateLabels bool; Normalize *bool; Hatch string; Hatches []string; HatchColor render.Color; HatchWidth float64; Shadow bool; ShadowOffset geom.Pt; ShadowColor render.Color; EdgeColor *render.Color; LineWidth float64; Antialiased *bool; Alpha float64; Coords CoordinateSpec; Frame *bool }"
         },
         {
           "id": "type PlotOptions",
-          "declaration": "type PlotOptions struct{ Color *render.Color; EdgeColor *render.Color; LineWidth *float64; LineCap *render.LineCap; EdgeWidth *float64; Dashes []float64; LineStyle LineStyle; DrawStyle *LineDrawStyle; Marker *MarkerType; MarkerStyle *MarkerStyle; MarkerPath *geom.Path; MarkerSize *float64; MarkerFaceColor *render.Color; MarkerEdgeColor *render.Color; MarkerFaceSpec *MarkerColorSpec; MarkerEdgeSpec *MarkerColorSpec; MarkerFaceAlt *MarkerColorSpec; MarkerEdgeWidth *float64; MarkEvery int; MarkEverySpec *MarkEverySpec; Label string; Alpha *float64; LevelCount int; Levels []float64; ZDir string; Offset *float64; RStride *int; CStride *int; RCount *int; CCount *int; FaceColors []render.Color; Shade *bool; Antialiased *bool; Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; AxLimClip bool }"
+          "declaration": "type PlotOptions struct{ Color *render.Color; EdgeColor *render.Color; LineWidth *float64; LineCap *render.LineCap; LineJoin *render.LineJoin; EdgeWidth *float64; Dashes []float64; LineStyle LineStyle; DrawStyle *LineDrawStyle; Marker *MarkerType; MarkerStyle *MarkerStyle; MarkerPath *geom.Path; MarkerSize *float64; MarkerFaceColor *render.Color; MarkerEdgeColor *render.Color; MarkerFaceSpec *MarkerColorSpec; MarkerEdgeSpec *MarkerColorSpec; MarkerFaceAlt *MarkerColorSpec; MarkerEdgeWidth *float64; MarkEvery int; MarkEverySpec *MarkEverySpec; Label string; Alpha *float64; LevelCount int; Levels []float64; ZDir string; Offset *float64; RStride *int; CStride *int; RCount *int; CCount *int; FaceColors []render.Color; Shade *bool; Antialiased *bool; Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; AxLimClip bool }"
         },
         {
           "id": "type PolyCollection",
@@ -8797,11 +8809,11 @@
         },
         {
           "id": "type Span2D",
-          "declaration": "type Span2D struct{ Start geom.Pt; End geom.Pt; Coords CoordinateSpec; Color render.Color; EdgeColor render.Color; EdgeWidth float64 }"
+          "declaration": "type Span2D struct{ Start geom.Pt; End geom.Pt; Coords CoordinateSpec; Color render.Color; EdgeColor render.Color; EdgeWidth float64; Antialias render.AntialiasMode }"
         },
         {
           "id": "type SpanOptions",
-          "declaration": "type SpanOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64 }"
+          "declaration": "type SpanOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Antialiased *bool }"
         },
         {
           "id": "type SpanSelector",
@@ -9029,7 +9041,7 @@
         },
         {
           "id": "type VSpanOptions",
-          "declaration": "type VSpanOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; YMin *float64; YMax *float64 }"
+          "declaration": "type VSpanOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Antialiased *bool; YMin *float64; YMax *float64 }"
         },
         {
           "id": "type ViolinContainer",
@@ -11186,6 +11198,42 @@
           "declaration": "const HistBinsAuto = -1"
         },
         {
+          "id": "const MarkerColorAuto",
+          "declaration": "const MarkerColorAuto MarkerColorMode = iota"
+        },
+        {
+          "id": "const MarkerColorExplicit",
+          "declaration": "const MarkerColorExplicit"
+        },
+        {
+          "id": "const MarkerColorNone",
+          "declaration": "const MarkerColorNone"
+        },
+        {
+          "id": "const MarkerFillBottom",
+          "declaration": "const MarkerFillBottom MarkerFillStyle = \"bottom\""
+        },
+        {
+          "id": "const MarkerFillFull",
+          "declaration": "const MarkerFillFull MarkerFillStyle = \"full\""
+        },
+        {
+          "id": "const MarkerFillLeft",
+          "declaration": "const MarkerFillLeft MarkerFillStyle = \"left\""
+        },
+        {
+          "id": "const MarkerFillNone",
+          "declaration": "const MarkerFillNone MarkerFillStyle = \"none\""
+        },
+        {
+          "id": "const MarkerFillRight",
+          "declaration": "const MarkerFillRight MarkerFillStyle = \"right\""
+        },
+        {
+          "id": "const MarkerFillTop",
+          "declaration": "const MarkerFillTop MarkerFillStyle = \"top\""
+        },
+        {
           "id": "const WidgetVisualGo",
           "declaration": "const WidgetVisualGo WidgetVisualStyle = \"go\""
         },
@@ -11374,12 +11422,24 @@
           "declaration": "func (RC) DefaultLineColor() render.Color"
         },
         {
+          "id": "method RC.DefaultPatchFaceColor",
+          "declaration": "func (RC) DefaultPatchFaceColor() render.Color"
+        },
+        {
           "id": "method RC.DefaultTextColor",
           "declaration": "func (RC) DefaultTextColor() render.Color"
         },
         {
           "id": "method RC.FigureBackground",
           "declaration": "func (RC) FigureBackground() render.Color"
+        },
+        {
+          "id": "method RC.FigureLabelSize",
+          "declaration": "func (RC) FigureLabelSize() float64"
+        },
+        {
+          "id": "method RC.FigureTitleSize",
+          "declaration": "func (RC) FigureTitleSize() float64"
         },
         {
           "id": "method RC.LegendSize",
@@ -11418,12 +11478,32 @@
           "declaration": "type BoxplotRC struct{ Notch bool; Vertical bool; Whiskers float64; PatchArtist bool; ShowMeans bool; ShowCaps bool; ShowBox bool; ShowFliers bool; MeanLine bool; FlierColor render.Color; FlierMarkerSize float64; FlierEdgeWidth float64; BoxLineWidth float64; WhiskerLineWidth float64; CapLineWidth float64; MedianLineWidth float64; MedianColor render.Color; MeanColor render.Color }"
         },
         {
+          "id": "type ContourRC",
+          "declaration": "type ContourRC struct{ Algorithm string; CornerMask bool; LineWidth float64; LineWidthSet bool; NegativeLineStyle string }"
+        },
+        {
           "id": "type DateRC",
           "declaration": "type DateRC struct{ AutoYear string; AutoMonth string; AutoDay string; AutoHour string; AutoMinute string; AutoSecond string; AutoMicrosecond string; Epoch string; Converter string; IntervalMultiples bool }"
         },
         {
           "id": "type ErrorbarRC",
           "declaration": "type ErrorbarRC struct{ CapSize float64 }"
+        },
+        {
+          "id": "type FigureConstrainedLayoutRC",
+          "declaration": "type FigureConstrainedLayoutRC struct{ Use bool; HPad float64; WPad float64; HSpace float64; WSpace float64 }"
+        },
+        {
+          "id": "type FigureRC",
+          "declaration": "type FigureRC struct{ EdgeColor render.Color; FrameOn bool; AutoLayout bool; TitleSize float64; TitleWeight int; LabelSize float64; LabelWeight int; Subplot FigureSubplotRC; Constrained FigureConstrainedLayoutRC }"
+        },
+        {
+          "id": "type FigureSubplotRC",
+          "declaration": "type FigureSubplotRC struct{ Left float64; Right float64; Bottom float64; Top float64; WSpace float64; HSpace float64 }"
+        },
+        {
+          "id": "type FontRC",
+          "declaration": "type FontRC struct{ Family []string; Style render.FontStyle; Variant string; Weight int; Stretch string; Serif []string; SansSerif []string; Cursive []string; Fantasy []string; Monospace []string }"
         },
         {
           "id": "type FormatterRC",
@@ -11443,7 +11523,7 @@
         },
         {
           "id": "type LinesRC",
-          "declaration": "type LinesRC struct{ LineStyle string; Marker string; MarkerSize float64; MarkerEdgeWidth float64 }"
+          "declaration": "type LinesRC struct{ LineStyle string; Marker string; MarkerSize float64; MarkerEdgeWidth float64; DashedPattern []float64; DashDotPattern []float64; DottedPattern []float64; ScaleDashes bool; DashCap render.LineCap; DashJoin render.LineJoin; SolidCap render.LineCap; SolidJoin render.LineJoin; MarkerFaceColor MarkerColorRC; MarkerEdgeColor MarkerColorRC; MarkerFillStyle MarkerFillStyle; Antialiased bool }"
         },
         {
           "id": "type MPLStyleIssue",
@@ -11452,6 +11532,18 @@
         {
           "id": "type MPLStyleReport",
           "declaration": "type MPLStyleReport struct{ Applied []string; Unsupported []MPLStyleIssue }"
+        },
+        {
+          "id": "type MarkerColorMode",
+          "declaration": "type MarkerColorMode uint8"
+        },
+        {
+          "id": "type MarkerColorRC",
+          "declaration": "type MarkerColorRC struct{ Mode MarkerColorMode; Color render.Color; Raw string }"
+        },
+        {
+          "id": "type MarkerFillStyle",
+          "declaration": "type MarkerFillStyle string"
         },
         {
           "id": "type MathtextRC",
@@ -11474,8 +11566,12 @@
           "declaration": "type Params map[string]string"
         },
         {
+          "id": "type PatchRC",
+          "declaration": "type PatchRC struct{ LineWidth float64; FaceColor render.Color; FaceColorRaw string; EdgeColor render.Color; ForceEdgeColor bool; Antialiased bool }"
+        },
+        {
           "id": "type RC",
-          "declaration": "type RC struct{ DPI float64; FontKey string; FontSize float64; LineWidth float64; TextColor [4]float64; LineColor [4]float64; Background [4]float64; TickCountX int; TickCountY int; FigureWidth float64; FigureHeight float64; UseTeX bool; HistBins int; PathSimplify bool; PathSimplifyThreshold float64; AggPathChunkSize int; PathSketch render.SketchParams; AxesBackground render.Color; AxesEdgeColor render.Color; AxesTitleColor render.Color; AxesLabelColor render.Color; AxisLineWidth float64; XTickColor render.Color; YTickColor render.Color; TitleFontSize float64; AxisLabelFontSize float64; XTickLabelFontSize float64; YTickLabelFontSize float64; GridColor render.Color; MinorGridColor render.Color; GridLineWidth float64; MinorGridLineWidth float64; GridDashes []float64; MinorGridDashes []float64; GridVisible bool; GridAxis string; GridWhich string; LegendBackground render.Color; LegendBorderColor render.Color; LegendTextColor render.Color; LegendFontSize float64; LegendFrameAlpha float64; LegendFrameOn bool; ColorCycle color.Palette; PropCycle *cycler.Cycler; WidgetVisualStyle WidgetVisualStyle; Axes AxesRC; Lines LinesRC; XTick TickAxisRC; YTick TickAxisRC; Legend LegendRC; Scatter ScatterRC; Errorbar ErrorbarRC; Image ImageRC; Hatch HatchRC; Boxplot BoxplotRC; Mathtext MathtextRC; Date DateRC; PDF PDFRC; PS PSRC; SVG SVGRC; Animation AnimationRC; Savefig SavefigRC }"
+          "declaration": "type RC struct{ DPI float64; FontKey string; FontSize float64; LineWidth float64; TextColor [4]float64; LineColor [4]float64; Background [4]float64; TickCountX int; TickCountY int; FigureWidth float64; FigureHeight float64; UseTeX bool; HistBins int; PathSimplify bool; PathSimplifyThreshold float64; AggPathChunkSize int; PathSketch render.SketchParams; AxesBackground render.Color; AxesEdgeColor render.Color; AxesTitleColor render.Color; AxesLabelColor render.Color; AxisLineWidth float64; XTickColor render.Color; YTickColor render.Color; TitleFontSize float64; AxisLabelFontSize float64; XTickLabelFontSize float64; YTickLabelFontSize float64; GridColor render.Color; MinorGridColor render.Color; GridLineWidth float64; MinorGridLineWidth float64; GridDashes []float64; MinorGridDashes []float64; GridVisible bool; GridAxis string; GridWhich string; LegendBackground render.Color; LegendBorderColor render.Color; LegendTextColor render.Color; LegendFontSize float64; LegendFrameAlpha float64; LegendFrameOn bool; ColorCycle color.Palette; PropCycle *cycler.Cycler; WidgetVisualStyle WidgetVisualStyle; Axes AxesRC; Lines LinesRC; Patch PatchRC; Font FontRC; XTick TickAxisRC; YTick TickAxisRC; Legend LegendRC; Scatter ScatterRC; Errorbar ErrorbarRC; Image ImageRC; Hatch HatchRC; Contour ContourRC; Boxplot BoxplotRC; Mathtext MathtextRC; Date DateRC; PDF PDFRC; PS PSRC; SVG SVGRC; Animation AnimationRC; Savefig SavefigRC; Figure FigureRC }"
         },
         {
           "id": "type SVGRC",
@@ -11527,7 +11623,7 @@
         },
         {
           "id": "var Default",
-          "declaration": "var Default = RC{ DPI: 100, FontKey: \"DejaVu Sans\", FontSize: 10, LineWidth: 1.5, TextColor: [4]float64{0, 0, 0, 1}, LineColor: [4]float64{0, 0, 0, 1}, Background: [4]float64{1, 1, 1, 1}, TickCountX: 5, TickCountY: 5, FigureWidth: 6.4, FigureHeight: 4.8, UseTeX: false, HistBins: 10, PathSimplify: true, PathSimplifyThreshold: 1.0 / 9.0, AggPathChunkSize: 0, AxesBackground: render.Color{R: 1, G: 1, B: 1, A: 1}, AxesEdgeColor: render.Color{R: 0, G: 0, B: 0, A: 1}, AxesTitleColor: render.Color{R: 0, G: 0, B: 0, A: 1}, AxesLabelColor: render.Color{R: 0, G: 0, B: 0, A: 1}, AxisLineWidth: 0.8, XTickColor: render.Color{R: 0, G: 0, B: 0, A: 1}, YTickColor: render.Color{R: 0, G: 0, B: 0, A: 1}, TitleFontSize: 12, AxisLabelFontSize: 10, XTickLabelFontSize: 10, YTickLabelFontSize: 10, GridColor: render.Color{R: 0xb0 / 255.0, G: 0xb0 / 255.0, B: 0xb0 / 255.0, A: 1}, MinorGridColor: render.Color{R: 0xb0 / 255.0, G: 0xb0 / 255.0, B: 0xb0 / 255.0, A: 1}, GridLineWidth: 0.8, MinorGridLineWidth: 0.8, GridVisible: false, GridAxis: \"both\", GridWhich: \"major\", LegendBackground: render.Color{R: 1, G: 1, B: 1, A: 0.8}, LegendBorderColor: render.Color{R: 0.8, G: 0.8, B: 0.8, A: 0.8}, LegendTextColor: render.Color{R: 0, G: 0, B: 0, A: 1}, LegendFontSize: 10, LegendFrameAlpha: 0.8, LegendFrameOn: true, ColorCycle: color.Tab10, WidgetVisualStyle: WidgetVisualGo, Axes: AxesRC{ AxisBelow: \"line\", XMargin: 0.05, YMargin: 0.05, AutolimitMode: \"data\", UnicodeMinus: true, Formatter: FormatterRC{ Limits: [2]int{-5, 6}, MinExponent: 0, OffsetThreshold: 4, UseLocale: false, UseMathText: false, UseOffset: true, }, Spines: SpineRC{Top: true, Bottom: true, Left: true, Right: true}, TitleLocation: \"center\", TitlePad: 6, TitleWeight: 400, LabelPad: 4, LabelWeight: 400, }, Lines: LinesRC{ LineStyle: \"-\", Marker: \"None\", MarkerSize: 6, MarkerEdgeWidth: 1, }, XTick: TickAxisRC{ Direction: \"out\", Alignment: \"center\", Primary: true, LabelPrimary: true, Major: TickLevelRC{Size: 3.5, Width: 0.8, Pad: 3.5, Primary: true, Secondary: true, Visible: true}, Minor: TickLevelRC{Size: 2.0, Width: 0.6, Pad: 3.4, Primary: true, Secondary: true}, }, YTick: TickAxisRC{ Direction: \"out\", Alignment: \"center_baseline\", Primary: true, LabelPrimary: true, Major: TickLevelRC{Size: 3.5, Width: 0.8, Pad: 3.5, Primary: true, Secondary: true, Visible: true}, Minor: TickLevelRC{Size: 2.0, Width: 0.6, Pad: 3.4, Primary: true, Secondary: true}, }, Legend: LegendRC{ Location: \"best\", FancyBox: true, Shadow: false, NumPoints: 1, ScatterPoints: 1, MarkerScale: 1, TitleFontSize: 0, BorderPad: 0.4, LabelSpacing: 0.5, HandleLength: 2, HandleHeight: 0.7, HandleTextPad: 0.8, BorderAxesPad: 0.5, ColumnSpacing: 2, }, Scatter: ScatterRC{ Marker: \"o\", EdgeColors: \"face\", }, Errorbar: ErrorbarRC{ CapSize: 0, }, Image: ImageRC{ Cmap: \"viridis\", Interpolation: \"auto\", InterpolationStage: \"auto\", Origin: \"upper\", Aspect: \"equal\", Resample: true, LUT: 256, CompositeImage: true, }, Hatch: HatchRC{ Color: render.Color{R: 0, G: 0, B: 0, A: 1}, LineWidth: 1.0, }, Boxplot: BoxplotRC{ Notch: false, Vertical: true, Whiskers: 1.5, PatchArtist: false, ShowMeans: false, ShowCaps: true, ShowBox: true, ShowFliers: true, MeanLine: false, FlierColor: render.Color{R: 0, G: 0, B: 0, A: 1}, FlierMarkerSize: 6, FlierEdgeWidth: 1.0, BoxLineWidth: 1.0, WhiskerLineWidth: 1.0, CapLineWidth: 1.0, MedianLineWidth: 1.0, MedianColor: color.Tab10[1], MeanColor: color.Tab10[2], }, Mathtext: MathtextRC{ Fontset: \"dejavusans\", Default: \"it\", Fallback: \"cm\", BF: \"sans:bold\", BFit: \"sans:italic:bold\", Cal: \"cursive\", It: \"sans:italic\", RM: \"sans\", SF: \"sans\", TT: \"monospace\", }, Date: DateRC{ AutoYear: \"%Y\", AutoMonth: \"%Y-%m\", AutoDay: \"%Y-%m-%d\", AutoHour: \"%m-%d %H\", AutoMinute: \"%d %H:%M\", AutoSecond: \"%H:%M:%S\", AutoMicrosecond: \"%M:%S.%f\", Epoch: \"1970-01-01T00:00:00\", Converter: \"auto\", IntervalMultiples: true, }, PDF: PDFRC{ FontType: 3, Use14CoreFonts: false, Compression: 6, InheritColor: false, }, PS: PSRC{ FontType: 3, UseAFM: false, PaperSize: \"letter\", DistillerRes: 6000, }, SVG: SVGRC{ FontType: \"path\", ImageInline: true, HashSalt: \"\", ID: \"\", }, Animation: AnimationRC{ HTML: \"none\", Writer: \"ffmpeg\", Codec: \"h264\", Bitrate: -1, FPS: 0, FrameFormat: \"png\", FFmpegPath: \"ffmpeg\", ConvertPath: \"convert\", ConvertArgs: []string{\"-layers\", \"OptimizePlus\"}, EmbedLimit: 20.0, }, Savefig: SavefigRC{ Dpi: 0, Facecolor: \"auto\", Edgecolor: \"auto\", Transparent: false, BboxInches: \"\", PadInches: 0.1, Format: \"\", }, }"
+          "declaration": "var Default = RC{ DPI: 100, FontKey: \"DejaVu Sans\", FontSize: 10, LineWidth: 1.5, TextColor: [4]float64{0, 0, 0, 1}, LineColor: [4]float64{0, 0, 0, 1}, Background: [4]float64{1, 1, 1, 1}, TickCountX: 5, TickCountY: 5, FigureWidth: 6.4, FigureHeight: 4.8, UseTeX: false, HistBins: 10, PathSimplify: true, PathSimplifyThreshold: 1.0 / 9.0, AggPathChunkSize: 0, AxesBackground: render.Color{R: 1, G: 1, B: 1, A: 1}, AxesEdgeColor: render.Color{R: 0, G: 0, B: 0, A: 1}, AxesTitleColor: render.Color{R: 0, G: 0, B: 0, A: 1}, AxesLabelColor: render.Color{R: 0, G: 0, B: 0, A: 1}, AxisLineWidth: 0.8, XTickColor: render.Color{R: 0, G: 0, B: 0, A: 1}, YTickColor: render.Color{R: 0, G: 0, B: 0, A: 1}, TitleFontSize: 12, AxisLabelFontSize: 10, XTickLabelFontSize: 10, YTickLabelFontSize: 10, GridColor: render.Color{R: 0xb0 / 255.0, G: 0xb0 / 255.0, B: 0xb0 / 255.0, A: 1}, MinorGridColor: render.Color{R: 0xb0 / 255.0, G: 0xb0 / 255.0, B: 0xb0 / 255.0, A: 1}, GridLineWidth: 0.8, MinorGridLineWidth: 0.8, GridVisible: false, GridAxis: \"both\", GridWhich: \"major\", LegendBackground: render.Color{R: 1, G: 1, B: 1, A: 0.8}, LegendBorderColor: render.Color{R: 0.8, G: 0.8, B: 0.8, A: 0.8}, LegendTextColor: render.Color{R: 0, G: 0, B: 0, A: 1}, LegendFontSize: 10, LegendFrameAlpha: 0.8, LegendFrameOn: true, ColorCycle: color.Tab10, WidgetVisualStyle: WidgetVisualGo, Axes: AxesRC{ AxisBelow: \"line\", XMargin: 0.05, YMargin: 0.05, AutolimitMode: \"data\", UnicodeMinus: true, Formatter: FormatterRC{ Limits: [2]int{-5, 6}, MinExponent: 0, OffsetThreshold: 4, UseLocale: false, UseMathText: false, UseOffset: true, }, Spines: SpineRC{Top: true, Bottom: true, Left: true, Right: true}, TitleLocation: \"center\", TitlePad: 6, TitleWeight: 400, LabelPad: 4, LabelWeight: 400, }, Lines: LinesRC{ LineStyle: \"-\", Marker: \"None\", MarkerSize: 6, MarkerEdgeWidth: 1, DashedPattern: []float64{3.7, 1.6}, DashDotPattern: []float64{6.4, 1.6, 1, 1.6}, DottedPattern: []float64{1, 1.65}, ScaleDashes: true, DashCap: render.CapButt, DashJoin: render.JoinRound, SolidCap: render.CapSquare, SolidJoin: render.JoinRound, MarkerFaceColor: MarkerColorRC{Mode: MarkerColorAuto}, MarkerEdgeColor: MarkerColorRC{Mode: MarkerColorAuto}, MarkerFillStyle: MarkerFillFull, Antialiased: true, }, Patch: PatchRC{ LineWidth: 1, FaceColor: render.Color{R: 0x1f / 255.0, G: 0x77 / 255.0, B: 0xb4 / 255.0, A: 1}, FaceColorRaw: \"C0\", EdgeColor: render.Color{R: 0, G: 0, B: 0, A: 1}, ForceEdgeColor: false, Antialiased: true, }, Font: FontRC{ Family: []string{\"sans-serif\"}, Style: render.FontStyleNormal, Variant: \"normal\", Weight: 400, Stretch: \"normal\", Serif: []string{ \"DejaVu Serif\", \"Bitstream Vera Serif\", \"Computer Modern Roman\", \"New Century Schoolbook\", \"Century Schoolbook L\", \"Utopia\", \"ITC Bookman\", \"Bookman\", \"Nimbus Roman No9 L\", \"Times New Roman\", \"Times\", \"Palatino\", \"Charter\", \"serif\", }, SansSerif: []string{ \"DejaVu Sans\", \"Bitstream Vera Sans\", \"Computer Modern Sans Serif\", \"Lucida Grande\", \"Verdana\", \"Geneva\", \"Lucid\", \"Arial\", \"Helvetica\", \"Avant Garde\", \"sans-serif\", }, Cursive: []string{ \"Apple Chancery\", \"Textile\", \"Zapf Chancery\", \"Sand\", \"Script MT\", \"Felipa\", \"Comic Neue\", \"Comic Sans MS\", \"cursive\", }, Fantasy: []string{ \"Chicago\", \"Charcoal\", \"Impact\", \"Western\", \"xkcd script\", \"fantasy\", }, Monospace: []string{ \"DejaVu Sans Mono\", \"Bitstream Vera Sans Mono\", \"Computer Modern Typewriter\", \"Andale Mono\", \"Nimbus Mono L\", \"Courier New\", \"Courier\", \"Fixed\", \"Terminal\", \"monospace\", }, }, XTick: TickAxisRC{ Direction: \"out\", Alignment: \"center\", Primary: true, LabelPrimary: true, Major: TickLevelRC{Size: 3.5, Width: 0.8, Pad: 3.5, Primary: true, Secondary: true, Visible: true}, Minor: TickLevelRC{Size: 2.0, Width: 0.6, Pad: 3.4, Primary: true, Secondary: true}, }, YTick: TickAxisRC{ Direction: \"out\", Alignment: \"center_baseline\", Primary: true, LabelPrimary: true, Major: TickLevelRC{Size: 3.5, Width: 0.8, Pad: 3.5, Primary: true, Secondary: true, Visible: true}, Minor: TickLevelRC{Size: 2.0, Width: 0.6, Pad: 3.4, Primary: true, Secondary: true}, }, Legend: LegendRC{ Location: \"best\", FancyBox: true, Shadow: false, NumPoints: 1, ScatterPoints: 1, MarkerScale: 1, TitleFontSize: 0, BorderPad: 0.4, LabelSpacing: 0.5, HandleLength: 2, HandleHeight: 0.7, HandleTextPad: 0.8, BorderAxesPad: 0.5, ColumnSpacing: 2, }, Scatter: ScatterRC{ Marker: \"o\", EdgeColors: \"face\", }, Errorbar: ErrorbarRC{ CapSize: 0, }, Image: ImageRC{ Cmap: \"viridis\", Interpolation: \"auto\", InterpolationStage: \"auto\", Origin: \"upper\", Aspect: \"equal\", Resample: true, LUT: 256, CompositeImage: true, }, Hatch: HatchRC{ Color: render.Color{R: 0, G: 0, B: 0, A: 1}, LineWidth: 1.0, }, Contour: ContourRC{ Algorithm: \"mpl2014\", CornerMask: true, NegativeLineStyle: \"dashed\", }, Boxplot: BoxplotRC{ Notch: false, Vertical: true, Whiskers: 1.5, PatchArtist: false, ShowMeans: false, ShowCaps: true, ShowBox: true, ShowFliers: true, MeanLine: false, FlierColor: render.Color{R: 0, G: 0, B: 0, A: 1}, FlierMarkerSize: 6, FlierEdgeWidth: 1.0, BoxLineWidth: 1.0, WhiskerLineWidth: 1.0, CapLineWidth: 1.0, MedianLineWidth: 1.0, MedianColor: color.Tab10[1], MeanColor: color.Tab10[2], }, Mathtext: MathtextRC{ Fontset: \"dejavusans\", Default: \"it\", Fallback: \"cm\", BF: \"sans:bold\", BFit: \"sans:italic:bold\", Cal: \"cursive\", It: \"sans:italic\", RM: \"sans\", SF: \"sans\", TT: \"monospace\", }, Date: DateRC{ AutoYear: \"%Y\", AutoMonth: \"%Y-%m\", AutoDay: \"%Y-%m-%d\", AutoHour: \"%m-%d %H\", AutoMinute: \"%d %H:%M\", AutoSecond: \"%H:%M:%S\", AutoMicrosecond: \"%M:%S.%f\", Epoch: \"1970-01-01T00:00:00\", Converter: \"auto\", IntervalMultiples: true, }, PDF: PDFRC{ FontType: 3, Use14CoreFonts: false, Compression: 6, InheritColor: false, }, PS: PSRC{ FontType: 3, UseAFM: false, PaperSize: \"letter\", DistillerRes: 6000, }, SVG: SVGRC{ FontType: \"path\", ImageInline: true, HashSalt: \"\", ID: \"\", }, Animation: AnimationRC{ HTML: \"none\", Writer: \"ffmpeg\", Codec: \"h264\", Bitrate: -1, FPS: 0, FrameFormat: \"png\", FFmpegPath: \"ffmpeg\", ConvertPath: \"convert\", ConvertArgs: []string{\"-layers\", \"OptimizePlus\"}, EmbedLimit: 20.0, }, Savefig: SavefigRC{ Dpi: 0, Facecolor: \"auto\", Edgecolor: \"auto\", Transparent: false, BboxInches: \"\", PadInches: 0.1, Format: \"\", }, Figure: FigureRC{ EdgeColor: render.Color{R: 1, G: 1, B: 1, A: 1}, FrameOn: true, TitleSize: 12, TitleWeight: 400, LabelSize: 12, LabelWeight: 400, Subplot: FigureSubplotRC{ Left: 0.125, Right: 0.9, Bottom: 0.11, Top: 0.88, WSpace: 0.2, HSpace: 0.2, }, Constrained: FigureConstrainedLayoutRC{ HPad: 0.04167, WPad: 0.04167, HSpace: 0.02, WSpace: 0.02, }, }, }"
         },
         {
           "id": "var ThemeDarkBackground",

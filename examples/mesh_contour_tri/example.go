@@ -48,6 +48,10 @@ func Plot() *core.Figure {
 		{0.0, 0.4, 0.8, 0.4, 0.0},
 	}
 	contourLevels := []float64{0.2, 0.6, 1.0, 1.4, 1.8}
+	// Keep the catalog pair explicit: the Matplotlib reference script passes
+	// linewidths=1.0 for both contour and tricontour. The library default
+	// correctly follows contour.linewidth -> lines.linewidth (1.5).
+	contourLineWidth := 1.0
 	contourAx.Contourf(contourData, core.ContourOptions{
 		Levels: contourLevels,
 	})
@@ -55,6 +59,7 @@ func Plot() *core.Figure {
 		Levels:     []float64{0.4, 0.8, 1.2, 1.6},
 		LabelLines: true,
 		Color:      &render.Color{R: 0.18, G: 0.18, B: 0.18, A: 1},
+		LineWidth:  &contourLineWidth,
 	})
 
 	histAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.07, Y: 0.10}, Max: geom.Pt{X: 0.46, Y: 0.46}})
@@ -88,8 +93,9 @@ func Plot() *core.Figure {
 		LineWidth: &triLineWidth,
 	})
 	triAx.TriContour(tri, []float64{0.2, 0.8, 1.0, 1.5, 1.1, 0.6}, core.ContourOptions{
-		Levels: []float64{0.7, 1.1},
-		Color:  &render.Color{R: 0.98, G: 0.98, B: 0.98, A: 1},
+		Levels:    []float64{0.7, 1.1},
+		Color:     &render.Color{R: 0.98, G: 0.98, B: 0.98, A: 1},
+		LineWidth: &contourLineWidth,
 	})
 	return fig
 }

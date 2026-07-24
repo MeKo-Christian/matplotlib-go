@@ -67,14 +67,14 @@ func TestUserSheetsStillWarnAfterBundledRegistration(t *testing.T) {
 	msgs := captureWarnings(t)
 
 	registerBundledStyles()
-	if _, _, err := ParseMPLStyle("user.mplstyle", "patch.antialiased: False\n"); err != nil {
+	if _, _, err := ParseMPLStyle("user.mplstyle", "text.antialiased: False\n"); err != nil {
 		t.Fatalf("ParseMPLStyle() error = %v", err)
 	}
 
 	if len(*msgs) != 1 {
 		t.Fatalf("got %d warnings for user sheet, want 1: %v", len(*msgs), *msgs)
 	}
-	if !strings.Contains((*msgs)[0], "patch.antialiased") {
+	if !strings.Contains((*msgs)[0], "text.antialiased") {
 		t.Errorf("warning %q does not mention the rcParam key", (*msgs)[0])
 	}
 }

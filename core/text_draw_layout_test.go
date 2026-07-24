@@ -2,10 +2,12 @@ package core
 
 import (
 	"math"
+	"reflect"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 func TestDrawDisplayTextUsesExplicitFontDrawer(t *testing.T) {
@@ -384,6 +386,42 @@ func TestTextArtistFontKeyOverridesRCFontKey(t *testing.T) {
 	}
 }
 
+func TestTextArtistUsesRCFontPropertiesAndFallbackOrder(t *testing.T) {
+	theme, _, err := style.ParseMPLStyle("font-rc", `
+font.family: serif, Backup Face
+font.serif: First Serif, Second Serif
+font.style: italic
+font.variant: small-caps
+font.weight: 700
+font.stretch: condensed
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := createTestDrawContext()
+	ctx.RC = theme.RC
+	text := &Text{
+		Position: geom.Pt{X: 1, Y: 1},
+		Content:  "plain",
+		FontSize: 12,
+		ClipOn:   true,
+	}
+	r := &fontAwareTextRecordingRenderer{}
+
+	text.Draw(r, ctx)
+
+	if len(r.fontTextCalls) != 1 {
+		t.Fatalf("expected one font-aware text draw, got %+v", r.fontTextCalls)
+	}
+	props := render.ParseFontProperties(r.fontTextCalls[0].fontKey)
+	wantFamilies := []string{"First Serif", "Second Serif", "Backup Face"}
+	if !reflect.DeepEqual(props.Families, wantFamilies) ||
+		props.Style != render.FontStyleItalic || props.Variant != "small-caps" ||
+		props.Weight != 700 || props.Stretch != "condensed" {
+		t.Fatalf("rc font properties = %+v, want families %v with italic small-caps 700 condensed", props, wantFamilies)
+	}
+}
+
 func TestTextArtistFontPropertiesOverrideRCFontKey(t *testing.T) {
 	ctx := createTestDrawContext()
 	ctx.RC.FontKey = "RC Font"
@@ -438,8 +476,10 @@ func TestTextArtistFontPropertiesRouteFeatureOptions(t *testing.T) {
 	if props.Stretch != "condensed" || props.Variant != "small-caps" || props.Language != "de" {
 		t.Fatalf("text extended font properties = %+v, want condensed small-caps de", props)
 	}
-	if len(props.Features) != 1 || props.Features[0] != (render.TextFeature{Tag: "liga", Value: 0}) {
-		t.Fatalf("text font features = %+v, want liga=0", props.Features)
+	if len(props.Features) != 2 ||
+		props.Features[0] != (render.TextFeature{Tag: "liga", Value: 0}) ||
+		props.Features[1] != (render.TextFeature{Tag: "smcp", Value: 1}) {
+		t.Fatalf("text font features = %+v, want liga=0 smcp=1", props.Features)
 	}
 }
 

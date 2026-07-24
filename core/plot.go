@@ -20,6 +20,7 @@ type PlotOptions struct {
 	EdgeColor       *render.Color
 	LineWidth       *float64 // if nil, uses default
 	LineCap         *render.LineCap
+	LineJoin        *render.LineJoin
 	EdgeWidth       *float64
 	Dashes          []float64 // dash pattern in pixels; overrides LineStyle
 	LineStyle       LineStyle // typed matplotlib linestyle ("-", "--", "-.", ":", "none"); "" = unset
@@ -104,36 +105,48 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	// option, then a cycled linestyle, then a non-default lines.linestyle rc
 	// value. LineStyleNone (or rc "none") suppresses the line entirely
 	// (markers-only), like matplotlib's linestyle "none".
-	rcLines := a.resolvedRC().Lines
+	resolvedRC := a.resolvedRC()
+	rcLines := resolvedRC.Lines
+	widthPx := pointsToPixels(resolvedRC, lineWidth)
+	pointPx := pointsToPixels(resolvedRC, 1)
 	dashes := opt.Dashes
 	switch {
 	case dashes != nil:
 	case opt.LineStyle.isNone():
 		lineWidth = 0
 	case opt.LineStyle != "":
-		dashes = lineStyleToDashes(string(opt.LineStyle), pointsToPixels(a.resolvedRC(), lineWidth))
+		dashes = lineStyleToDashesRC(string(opt.LineStyle), widthPx, pointPx, &rcLines)
 	case cycle.HasLineStyle:
-		dashes = lineStyleToDashes(cycle.LineStyle, pointsToPixels(a.resolvedRC(), lineWidth))
+		dashes = lineStyleToDashesRC(cycle.LineStyle, widthPx, pointPx, &rcLines)
 	case rcLines.LineStyle != "" && rcLines.LineStyle != "-":
 		if LineStyle(rcLines.LineStyle).isNone() {
 			lineWidth = 0
 		} else {
-			dashes = lineStyleToDashes(rcLines.LineStyle, pointsToPixels(a.resolvedRC(), lineWidth))
+			dashes = lineStyleToDashesRC(rcLines.LineStyle, widthPx, pointPx, &rcLines)
 		}
 	}
 
 	// Create line
 	line := &Line2D{
-		XY:        points,
-		W:         lineWidth,
-		Col:       color,
-		Dashes:    dashes,
-		DrawStyle: LineDrawStyleDefault,
-		Label:     opt.Label,
+		XY:                points,
+		W:                 lineWidth,
+		Col:               color,
+		Dashes:            dashes,
+		DrawStyle:         LineDrawStyleDefault,
+		Label:             opt.Label,
+		DashCap:           rcLines.DashCap,
+		DashJoin:          rcLines.DashJoin,
+		SolidCap:          rcLines.SolidCap,
+		SolidJoin:         rcLines.SolidJoin,
+		RCStrokeStylesSet: true,
 	}
 	if opt.LineCap != nil {
 		line.LineCap = *opt.LineCap
 		line.LineCapSet = true
+	}
+	if opt.LineJoin != nil {
+		line.LineJoin = *opt.LineJoin
+		line.LineJoinSet = true
 	}
 	if opt.DrawStyle != nil {
 		line.DrawStyle = *opt.DrawStyle
@@ -155,6 +168,9 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	}
 	if opt.MarkerStyle != nil {
 		line.MarkerStyle = *opt.MarkerStyle
+	} else if line.MarkerSet {
+		line.MarkerStyle = NewMarkerStyle(line.Marker)
+		line.MarkerStyle.FillStyle = markerFillStyleFromRC(rcLines.MarkerFillStyle)
 	}
 	if opt.MarkerPath != nil {
 		line.MarkerPath = *opt.MarkerPath
@@ -169,16 +185,27 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	line.MarkerFaceColor = color
 	if opt.MarkerFaceColor != nil {
 		line.MarkerFaceColor = *opt.MarkerFaceColor
+		line.MarkerFaceSpec = ExplicitMarkerColor(*opt.MarkerFaceColor)
+	} else if opt.MarkerFaceSpec == nil {
+		line.MarkerFaceSpec = markerColorSpecFromRC(rcLines.MarkerFaceColor, &resolvedRC)
 	}
 	line.MarkerEdgeColor = color
 	if opt.MarkerEdgeColor != nil {
 		line.MarkerEdgeColor = *opt.MarkerEdgeColor
+		line.MarkerEdgeSpec = ExplicitMarkerColor(*opt.MarkerEdgeColor)
+	} else if opt.MarkerEdgeSpec == nil {
+		line.MarkerEdgeSpec = markerColorSpecFromRC(rcLines.MarkerEdgeColor, &resolvedRC)
 	}
 	if opt.MarkerFaceSpec != nil {
 		line.MarkerFaceSpec = *opt.MarkerFaceSpec
 	}
 	if opt.MarkerEdgeSpec != nil {
 		line.MarkerEdgeSpec = *opt.MarkerEdgeSpec
+	}
+	line.Antialiased = rcLines.Antialiased
+	line.AntialiasedSet = true
+	if opt.Antialiased != nil {
+		line.Antialiased = *opt.Antialiased
 	}
 	if opt.MarkerFaceAlt != nil {
 		line.MarkerFaceAlt = *opt.MarkerFaceAlt
@@ -204,11 +231,95 @@ func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 		if opt.MarkerEdgeColor == nil {
 			line.MarkerEdgeColor.A = *opt.Alpha
 		}
+		if line.MarkerFaceSpec.Mode == MarkerColorExplicit {
+			line.MarkerFaceSpec.Color.A = *opt.Alpha
+		}
+		if line.MarkerEdgeSpec.Mode == MarkerColorExplicit {
+			line.MarkerEdgeSpec.Color.A = *opt.Alpha
+		}
+		if line.MarkerFaceAlt.Mode == MarkerColorExplicit {
+			line.MarkerFaceAlt.Color.A = *opt.Alpha
+		}
 	}
 
 	a.Add(line)
 	a.autoScaleIfEnabled(defaultAutoScaleMargin)
 	return line
+}
+
+func markerFillStyleFromRC(fill style.MarkerFillStyle) MarkerFillStyle {
+	switch fill {
+	case style.MarkerFillLeft:
+		return MarkerFillLeft
+	case style.MarkerFillRight:
+		return MarkerFillRight
+	case style.MarkerFillBottom:
+		return MarkerFillBottom
+	case style.MarkerFillTop:
+		return MarkerFillTop
+	case style.MarkerFillNone:
+		return MarkerFillNone
+	default:
+		return MarkerFillFull
+	}
+}
+
+func markerColorSpecFromRC(spec style.MarkerColorRC, rc *style.RC) MarkerColorSpec {
+	switch spec.Mode {
+	case style.MarkerColorNone:
+		return NoMarkerColor()
+	case style.MarkerColorExplicit:
+		if spec.Raw != "" {
+			if resolved, err := mplcolor.ToRGBA(spec.Raw, mplcolor.WithColorCycle(rc.Palette()), mplcolor.WithBareHex()); err == nil {
+				return ExplicitMarkerColor(resolved)
+			}
+		}
+		return ExplicitMarkerColor(spec.Color)
+	default:
+		return AutoMarkerColor()
+	}
+}
+
+// applyLineRCDefaults seeds Line2D constructor defaults for artists built by
+// helpers other than Axes.Plot. Explicit common cap/join fields and marker
+// colors/specs remain dominant at draw time.
+func applyLineRCDefaults(line *Line2D, rc *style.RC) {
+	if line == nil || rc == nil {
+		return
+	}
+	rcLines := rc.Lines
+	if !line.RCStrokeStylesSet {
+		line.DashCap = rcLines.DashCap
+		line.DashJoin = rcLines.DashJoin
+		line.SolidCap = rcLines.SolidCap
+		line.SolidJoin = rcLines.SolidJoin
+		line.RCStrokeStylesSet = true
+	}
+	if !line.AntialiasedSet {
+		line.Antialiased = rcLines.Antialiased
+		line.AntialiasedSet = true
+	}
+	if !line.hasMarkers() {
+		return
+	}
+	if line.MarkerSize <= 0 && rcLines.MarkerSize > 0 {
+		line.MarkerSize = rcLines.MarkerSize
+	}
+	if line.MarkerEdgeWidth <= 0 && rcLines.MarkerEdgeWidth > 0 {
+		line.MarkerEdgeWidth = rcLines.MarkerEdgeWidth
+	}
+	if line.MarkerStyle.Tuple == nil && line.MarkerStyle.MathText == "" &&
+		len(line.MarkerStyle.Path.C) == 0 && line.MarkerStyle.Type == 0 &&
+		line.MarkerStyle.FillStyle == 0 {
+		line.MarkerStyle = NewMarkerStyle(line.Marker)
+		line.MarkerStyle.FillStyle = markerFillStyleFromRC(rcLines.MarkerFillStyle)
+	}
+	if line.MarkerFaceSpec.Mode == MarkerColorDefault && line.MarkerFaceColor == (render.Color{}) {
+		line.MarkerFaceSpec = markerColorSpecFromRC(rcLines.MarkerFaceColor, rc)
+	}
+	if line.MarkerEdgeSpec.Mode == MarkerColorDefault && line.MarkerEdgeColor == (render.Color{}) {
+		line.MarkerEdgeSpec = markerColorSpecFromRC(rcLines.MarkerEdgeColor, rc)
+	}
 }
 
 // SemilogX is a convenience wrapper for creating a line plot on a logarithmic
@@ -572,6 +683,7 @@ type BarOptions struct {
 	EdgeColors  []render.Color  // per-bar edge colors
 	EdgeWidth   *float64        // edge width
 	Alpha       *float64        // alpha transparency
+	Antialiased *bool           // nil uses patch.antialiased
 	Baseline    *float64        // baseline value
 	Baselines   []float64       // per-bar baseline/left values
 	Orientation *BarOrientation // vertical or horizontal
@@ -625,7 +737,11 @@ func (a *Axes) Bar(x, heights []float64, opts ...BarOptions) *Bar2D {
 	}
 
 	// Get edge properties
-	edgeColor := render.Color{R: 0, G: 0, B: 0, A: 0} // transparent by default
+	rcPatch := a.resolvedRC().Patch
+	edgeColor := render.Color{}
+	if rcPatch.ForceEdgeColor {
+		edgeColor = rcPatch.EdgeColor
+	}
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
 	}
@@ -652,7 +768,7 @@ func (a *Axes) Bar(x, heights []float64, opts ...BarOptions) *Bar2D {
 		}
 	}
 
-	edgeWidth := 0.0
+	edgeWidth := rcPatch.LineWidth
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
 	}
@@ -703,6 +819,7 @@ func (a *Axes) Bar(x, heights []float64, opts ...BarOptions) *Bar2D {
 		EdgeColor:   edgeColor,
 		EdgeColors:  edgeColors,
 		EdgeWidth:   edgeWidth,
+		Antialias:   patchAntialiasMode(&rcPatch, opt.Antialiased),
 		Baseline:    baseline,
 		Orientation: orientation,
 		Label:       opt.Label,
@@ -849,12 +966,16 @@ func (a *Axes) Fill(x, y []float64, opts ...FillOptions) *PolyCollection {
 		color = *opt.Color
 	}
 
-	edgeColor := render.Color{R: 0, G: 0, B: 0, A: 0}
+	rcPatch := a.resolvedRC().Patch
+	edgeColor := render.Color{}
+	if rcPatch.ForceEdgeColor {
+		edgeColor = rcPatch.EdgeColor
+	}
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
 	}
 
-	edgeWidth := 0.0
+	edgeWidth := rcPatch.LineWidth
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
 	}
@@ -865,8 +986,9 @@ func (a *Axes) Fill(x, y []float64, opts ...FillOptions) *PolyCollection {
 	fill := &PolyCollection{
 		PatchCollection: PatchCollection{
 			Collection: Collection{
-				Label: opt.Label,
-				Alpha: 1,
+				Label:     opt.Label,
+				Alpha:     1,
+				Antialias: patchAntialiasMode(&rcPatch, opt.Antialiased),
 				// matplotlib's fill() returns Polygon patches (Patch.zorder=1),
 				// which draw below gridlines (axisbelow='line' puts the axis at 1.5).
 				z: 1,
@@ -908,12 +1030,16 @@ func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) *Fill2D {
 		color = *opt.Color
 	}
 
-	edgeColor := render.Color{R: 0, G: 0, B: 0, A: 0}
+	rcPatch := a.resolvedRC().Patch
+	edgeColor := render.Color{}
+	if rcPatch.ForceEdgeColor {
+		edgeColor = rcPatch.EdgeColor
+	}
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
 	}
 
-	edgeWidth := 0.0
+	edgeWidth := rcPatch.LineWidth
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
 	}
@@ -932,6 +1058,7 @@ func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) *Fill2D {
 		Color:       color,
 		EdgeColor:   edgeColor,
 		EdgeWidth:   edgeWidth,
+		Antialias:   patchAntialiasMode(&rcPatch, opt.Antialiased),
 		Label:       opt.Label,
 	}
 
@@ -946,11 +1073,23 @@ type FillOptions struct {
 	EdgeColor   *render.Color // edge color
 	EdgeWidth   *float64      // edge width
 	Alpha       *float64      // alpha transparency
+	Antialiased *bool         // nil uses patch.antialiased
 	Baseline    *float64      // baseline value
 	Where       []bool        // fill only contiguous regions where adjacent points are true
 	Interpolate bool          // interpolate region boundaries at curve crossings
 	Step        FillStep      // optional step mode
 	Label       string        // series label for legend
+}
+
+func patchAntialiasMode(rc *style.PatchRC, explicit *bool) render.AntialiasMode {
+	enabled := rc == nil || rc.Antialiased
+	if explicit != nil {
+		enabled = *explicit
+	}
+	if enabled {
+		return render.AntialiasOn
+	}
+	return render.AntialiasOff
 }
 
 // FillBetweenPlot creates a fill between two curves with automatic color cycling.
@@ -976,12 +1115,16 @@ func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) *Fill2D
 	}
 
 	// Get edge properties
-	edgeColor := render.Color{R: 0, G: 0, B: 0, A: 0} // transparent by default
+	rcPatch := a.resolvedRC().Patch
+	edgeColor := render.Color{}
+	if rcPatch.ForceEdgeColor {
+		edgeColor = rcPatch.EdgeColor
+	}
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
 	}
 
-	edgeWidth := 0.0
+	edgeWidth := rcPatch.LineWidth
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
 	}
@@ -1002,6 +1145,7 @@ func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) *Fill2D
 		Color:       color,
 		EdgeColor:   edgeColor,
 		EdgeWidth:   edgeWidth,
+		Antialias:   patchAntialiasMode(&rcPatch, opt.Antialiased),
 		Label:       opt.Label,
 	}
 
@@ -1027,6 +1171,7 @@ type HistOptions struct {
 	EdgeColor         *render.Color
 	EdgeWidth         *float64
 	Alpha             *float64
+	Antialiased       *bool
 	Label             string
 }
 
@@ -1063,18 +1208,22 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) *Hist2D {
 		color = *opt.Color
 	}
 
-	edgeColor := render.Color{R: 0, G: 0, B: 0, A: 0}
+	rcPatch := a.resolvedRC().Patch
+	edgeColor := render.Color{}
+	if rcPatch.ForceEdgeColor {
+		edgeColor = rcPatch.EdgeColor
+	}
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
 	} else if opt.HistType != HistTypeBar {
 		edgeColor = color
 	}
 
-	edgeWidth := 0.0
+	edgeWidth := rcPatch.LineWidth
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
 	} else if opt.HistType != HistTypeBar {
-		edgeWidth = 1.5
+		edgeWidth = rcPatch.LineWidth
 	}
 
 	// Bake an explicit alpha (including 0 for fully transparent) into the
@@ -1099,6 +1248,7 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) *Hist2D {
 		Color:             color,
 		EdgeColor:         edgeColor,
 		EdgeWidth:         edgeWidth,
+		Antialias:         patchAntialiasMode(&rcPatch, opt.Antialiased),
 		Label:             opt.Label,
 	}
 
@@ -1705,12 +1855,16 @@ func (a *Axes) FillToBaselinePlot(x, y []float64, opts ...FillOptions) *Fill2D {
 	}
 
 	// Get edge properties
-	edgeColor := render.Color{R: 0, G: 0, B: 0, A: 0} // transparent by default
+	rcPatch := a.resolvedRC().Patch
+	edgeColor := render.Color{}
+	if rcPatch.ForceEdgeColor {
+		edgeColor = rcPatch.EdgeColor
+	}
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
 	}
 
-	edgeWidth := 0.0
+	edgeWidth := rcPatch.LineWidth
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
 	}
@@ -1735,6 +1889,7 @@ func (a *Axes) FillToBaselinePlot(x, y []float64, opts ...FillOptions) *Fill2D {
 		Color:     color,
 		EdgeColor: edgeColor,
 		EdgeWidth: edgeWidth,
+		Antialias: patchAntialiasMode(&rcPatch, opt.Antialiased),
 		Label:     opt.Label,
 	}
 

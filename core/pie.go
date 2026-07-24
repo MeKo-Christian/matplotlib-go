@@ -33,6 +33,7 @@ type PieOptions struct {
 	ShadowColor      render.Color
 	EdgeColor        *render.Color
 	LineWidth        float64
+	Antialiased      *bool
 	Alpha            float64
 	Coords           CoordinateSpec
 	Frame            *bool
@@ -70,13 +71,14 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 	if a == nil || len(values) == 0 {
 		return nil
 	}
+	rc := a.resolvedRC()
 	cfg := PieOptions{
 		Center:        geom.Pt{},
 		Radius:        1,
 		StartAngle:    0,
 		LabelDistance: 1.1,
 		PctDistance:   0.6,
-		LineWidth:     1,
+		LineWidth:     rc.Patch.LineWidth,
 		Alpha:         1,
 		Coords:        Coords(CoordData),
 	}
@@ -92,7 +94,7 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 			cfg.PctDistance = 0.6
 		}
 		if cfg.LineWidth <= 0 {
-			cfg.LineWidth = 1
+			cfg.LineWidth = rc.Patch.LineWidth
 		}
 		if cfg.Alpha <= 0 {
 			cfg.Alpha = 1
@@ -119,7 +121,10 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 	}
 
 	container := &PieContainer{}
-	edgeColor := render.Color{R: 1, G: 1, B: 1, A: 1}
+	edgeColor := render.Color{}
+	if rc.Patch.ForceEdgeColor {
+		edgeColor = rc.Patch.EdgeColor
+	}
 	if cfg.EdgeColor != nil {
 		edgeColor = *cfg.EdgeColor
 	}
@@ -153,7 +158,7 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 		}
 		hatchWidth := cfg.HatchWidth
 		if hatchWidth <= 0 {
-			hatchWidth = 1
+			hatchWidth = rc.Hatch.LineWidth
 		}
 		if cfg.Shadow {
 			shadowOffset := cfg.ShadowOffset
@@ -174,6 +179,7 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 					// edgecolor to the darkened patch color.
 					EdgeColor: shadowColor,
 					EdgeWidth: cfg.LineWidth,
+					Antialias: patchAntialiasMode(&rc.Patch, cfg.Antialiased),
 					Alpha:     1,
 					Label:     "_nolegend_",
 					z:         1.8,
@@ -193,6 +199,7 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 				FaceColor:  color,
 				EdgeColor:  edgeColor,
 				EdgeWidth:  cfg.LineWidth,
+				Antialias:  patchAntialiasMode(&rc.Patch, cfg.Antialiased),
 				Alpha:      1,
 				Label:      stringAt("", cfg.Labels, i),
 				Hatch:      stringAt(cfg.Hatch, cfg.Hatches, i),

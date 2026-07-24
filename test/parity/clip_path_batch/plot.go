@@ -53,16 +53,17 @@ func Render() image.Image {
 	})
 	mesh.SetClipPathCoords(clipPath, core.Coords(core.CoordData))
 
-	ax.AddPatch(&core.PathPatch{
+	outline := &core.PathPatch{
 		Patch: core.Patch{
-			FaceColor: render.Color{},
 			EdgeColor: render.Color{R: 0.05, G: 0.08, B: 0.12, A: 1},
 			EdgeWidth: 2.0,
 			LineJoin:  render.JoinMiter,
 		},
 		Path:   clipPath,
 		Coords: core.Coords(core.CoordData),
-	})
+	}
+	outline.SetFaceColor(render.Color{})
+	ax.AddPatch(outline)
 
 	return common.RenderFixtureFigure(fig, 980, 620)
 }

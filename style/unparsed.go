@@ -394,6 +394,10 @@ var knownUpstreamRCParams = map[string]struct{}{
 var nonGoalRCParams = map[string]string{
 	"path.snap": "pixel snapping is baked into the renderers to byte-match matplotlib output; a global toggle would break golden parity",
 
+	"figure.hooks":            "Python import hooks have no Go or headless-rendering equivalent and are not executed",
+	"figure.max_open_warning": "the headless pyplot facade does not own GUI figure-manager resources, so an open-window warning threshold is not applicable",
+	"figure.raise_window":     "raising a GUI window is not applicable to the headless renderer API",
+
 	"text.hinting":        "text parity statically links FreeType 2.6.1 with matplotlib's autohinting setup; alternative hinting modes are not configurable",
 	"text.hinting_factor": "text parity pins matplotlib's hinting_factor=8; other factors would break glyph-level parity",
 

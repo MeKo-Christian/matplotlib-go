@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -63,8 +64,31 @@ func TestFontPropertiesKeyRoundTripsStructuredProperties(t *testing.T) {
 	if props.MathFontFamily != "dejavuserif" {
 		t.Fatalf("math font family = %q, want dejavuserif", props.MathFontFamily)
 	}
-	if len(props.Features) != 2 || props.Features[0] != (TextFeature{Tag: "liga", Value: 0}) || props.Features[1] != (TextFeature{Tag: "kern", Value: 1}) {
-		t.Fatalf("features = %+v, want liga=0 kern=1", props.Features)
+	if len(props.Features) != 3 ||
+		props.Features[0] != (TextFeature{Tag: "liga", Value: 0}) ||
+		props.Features[1] != (TextFeature{Tag: "kern", Value: 1}) ||
+		props.Features[2] != (TextFeature{Tag: "smcp", Value: 1}) {
+		t.Fatalf("features = %+v, want liga=0 kern=1 smcp=1", props.Features)
+	}
+}
+
+func TestFontStretchAndVariantAffectResolutionRequests(t *testing.T) {
+	props := normalizeFontProperties(FontProperties{
+		Families: []string{"DejaVu Sans"},
+		Stretch:  "condensed",
+		Variant:  "small-caps",
+		Weight:   700,
+	})
+	if !hasTextFeature(props.Features, "smcp") {
+		t.Fatalf("small-caps properties did not enable smcp: %+v", props)
+	}
+	if got := bundledDejaVuFontFilename("DejaVu Sans", props); got != "" {
+		t.Fatalf("condensed request silently selected normal-width bundled face %q", got)
+	}
+	patterns := fcMatchPatterns("DejaVu Sans", props)
+	if len(patterns) == 0 || !strings.Contains(patterns[0], ":weight=bold") ||
+		!strings.Contains(patterns[0], ":width=condensed") {
+		t.Fatalf("fontconfig patterns do not carry weight/stretch: %#v", patterns)
 	}
 }
 
@@ -210,11 +234,12 @@ func TestFontStyleMatchesRequestedRejectsRegularForItalic(t *testing.T) {
 
 func TestCSSFontFamilyVariants(t *testing.T) {
 	tests := map[string]string{
-		"serif":       "DejaVu Serif, serif",
-		"sans-serif":  "DejaVu Sans, Arial, sans-serif",
-		"monospace":   "DejaVu Sans Mono, monospace",
-		"mono_space":  "DejaVu Sans Mono, monospace",
-		"custom-font": "DejaVu Sans, Arial, sans-serif",
+		"serif":                          "DejaVu Serif, serif",
+		"sans-serif":                     "DejaVu Sans, Arial, sans-serif",
+		"monospace":                      "DejaVu Sans Mono, monospace",
+		"mono_space":                     "DejaVu Sans Mono, monospace",
+		"custom-font":                    "DejaVu Sans, Arial, sans-serif",
+		"First Face, Second Face, serif": "First Face, Second Face, serif",
 	}
 
 	for key, want := range tests {

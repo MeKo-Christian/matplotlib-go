@@ -26,6 +26,7 @@ type Bar2D struct {
 	Color       render.Color   // default bar fill color
 	EdgeColor   render.Color   // default edge color for bar outlines
 	EdgeWidth   float64        // edge width in points (0 means no edge)
+	Antialias   render.AntialiasMode
 	Alpha       float64        // alpha transparency (0-1), applied to both fill and edge
 	Baseline    float64        // baseline value (0 for most cases)
 	Orientation BarOrientation // vertical or horizontal bars
@@ -100,7 +101,8 @@ func (b *Bar2D) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 
 		paint := render.Paint{
-			Snap: render.SnapAuto,
+			Snap:      render.SnapAuto,
+			Antialias: b.Antialias,
 		}
 		if fillColor.A > 0 {
 			paint.Fill = fillColor

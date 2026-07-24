@@ -24,6 +24,10 @@ func contourPolylines(tri Triangulation, values, levels []float64) ([][]geom.Pt,
 }
 
 func contourGridPolylines(x, y []float64, data [][]float64, levels []float64) ([][]geom.Pt, []float64) {
+	return contourGridPolylinesCornerMask(x, y, data, levels, false)
+}
+
+func contourGridPolylinesCornerMask(x, y []float64, data [][]float64, levels []float64, cornerMask bool) ([][]geom.Pt, []float64) {
 	rows := len(data)
 	if rows < 2 || len(x) < 2 || len(y) < 2 {
 		return nil, nil
@@ -44,7 +48,7 @@ func contourGridPolylines(x, y []float64, data [][]float64, levels []float64) ([
 		var segments [][]geom.Pt
 		for row := 0; row+1 < rows; row++ {
 			for col := 0; col+1 < cols; col++ {
-				cellSegments := contourCellSegmentsForLevel(
+				cellSegments := contourCellSegmentsForLevelCornerMask(
 					[4]geom.Pt{
 						{X: x[col], Y: y[row]},
 						{X: x[col+1], Y: y[row]},
@@ -58,6 +62,7 @@ func contourGridPolylines(x, y []float64, data [][]float64, levels []float64) ([
 						data[row+1][col],
 					},
 					level,
+					cornerMask,
 				)
 				segments = append(segments, cellSegments...)
 			}
@@ -77,6 +82,33 @@ func contourGridPolylines(x, y []float64, data [][]float64, levels []float64) ([
 		}
 	}
 	return polylines, polylineLevels
+}
+
+func contourCellSegmentsForLevelCornerMask(points [4]geom.Pt, values [4]float64, level float64, cornerMask bool) [][]geom.Pt {
+	finite := 0
+	var trianglePoints [3]geom.Pt
+	var triangleValues [3]float64
+	for i, value := range values {
+		if !isFinite(value) {
+			continue
+		}
+		if finite < len(trianglePoints) {
+			trianglePoints[finite] = points[i]
+			triangleValues[finite] = value
+		}
+		finite++
+	}
+	if finite == 4 {
+		return contourCellSegmentsForLevel(points, values, level)
+	}
+	if !cornerMask || finite != 3 {
+		return nil
+	}
+	segment, ok := triangleContourSegment(trianglePoints, triangleValues, level)
+	if !ok {
+		return nil
+	}
+	return [][]geom.Pt{segment}
 }
 
 type contourBoundarySide uint8

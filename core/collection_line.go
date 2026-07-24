@@ -56,7 +56,12 @@ func (c *LineCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 		if len(dashes) == 0 {
 			if style := stringAt(c.LineStyle, c.LineStyles, i); style != "" {
-				dashes = lineStyleToDashes(style, width)
+				dashes = lineStyleToDashesRC(
+					style,
+					width,
+					pointsToPixels(ctx.RC, 1),
+					&ctx.RC.Lines,
+				)
 			}
 		}
 		lineJoin := c.LineJoin

@@ -63,14 +63,16 @@ func Plot() *core.Figure {
 	contourAx.SetTitle("Clabel")
 	contourAx.SetXLim(0, 3)
 	contourAx.SetYLim(0, 3)
+	contourLineWidth := 1.0
 	contours := contourAx.Contour([][]float64{
 		{0, 1, 2, 3},
 		{1, 2, 3, 4},
 		{2, 3, 4, 5},
 		{3, 4, 5, 6},
 	}, core.ContourOptions{
-		Levels: []float64{2, 3, 4},
-		Color:  colorPtr(render.Color{R: 0.13, G: 0.20, B: 0.35, A: 1}),
+		Levels:    []float64{2, 3, 4},
+		Color:     colorPtr(render.Color{R: 0.13, G: 0.20, B: 0.35, A: 1}),
+		LineWidth: &contourLineWidth,
 	})
 	fontSize := 9.0
 	contourAx.Clabel(contours, core.ClabelOptions{

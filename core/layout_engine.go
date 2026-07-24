@@ -193,8 +193,8 @@ func measuredGridOptions(fig *Figure, r render.Renderer, vp geom.Rect, grid *Gri
 	innerPadX := outerPadX
 	innerPadY := outerPadY
 	if fig.layoutEngine == LayoutEngineConstrained {
-		innerPadX = math.Max(constrainedLayoutDefaultSpacePx(parentPx.W(), grid.nCols), 2*outerPadX)
-		innerPadY = math.Max(constrainedLayoutDefaultSpacePx(parentPx.H(), grid.nRows), 2*outerPadY)
+		innerPadX = math.Max(constrainedLayoutDefaultSpacePx(fig, parentPx.W(), grid.nCols, true), 2*outerPadX)
+		innerPadY = math.Max(constrainedLayoutDefaultSpacePx(fig, parentPx.H(), grid.nRows, false), 2*outerPadY)
 	}
 	global := figureLayoutMarginsPx(fig, r, vp, fig.layoutEngine, layoutPass)
 	if !gridCoversWholeFigure(grid) {
@@ -337,13 +337,13 @@ func figureLabelMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engine L
 
 	ctx := newFigureDrawContext(fig, vp)
 	if fig.SupTitle != "" {
-		margins.top += figureLabelTightHeight(r, fig.SupTitle, titleFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX) + 2*pad
+		margins.top += figureLabelTightHeight(r, fig.SupTitle, figureTitleFontSize(ctx), fontKeyWithWeight(fig.RC.FontKey, fig.RC.Figure.TitleWeight), fig.RC.UseTeX) + 2*pad
 	}
 	if fig.SupXLabel != "" {
-		margins.bottom += figureLabelTightHeight(r, fig.SupXLabel, figureLabelFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX) + 2*pad
+		margins.bottom += figureLabelTightHeight(r, fig.SupXLabel, figureLabelFontSize(ctx), fontKeyWithWeight(fig.RC.FontKey, fig.RC.Figure.LabelWeight), fig.RC.UseTeX) + 2*pad
 	}
 	if fig.SupYLabel != "" {
-		margins.left += figureLabelTightHeight(r, fig.SupYLabel, figureLabelFontSize(ctx), fig.RC.FontKey, fig.RC.UseTeX) + 2*pad
+		margins.left += figureLabelTightHeight(r, fig.SupYLabel, figureLabelFontSize(ctx), fontKeyWithWeight(fig.RC.FontKey, fig.RC.Figure.LabelWeight), fig.RC.UseTeX) + 2*pad
 	}
 	return margins
 }
@@ -446,7 +446,11 @@ func layoutPadPx(fig *Figure, engine LayoutEngine) float64 {
 	}
 	switch engine {
 	case LayoutEngineConstrained:
-		return pointsToPixels(rc, matplotlibConstrainedLayoutPadPoints)
+		padInches := rc.Figure.Constrained.WPad
+		if padInches == 0 && rc.Figure == (style.FigureRC{}) {
+			padInches = matplotlibConstrainedLayoutPadPoints / 72
+		}
+		return padInches * rc.DPI
 	case LayoutEngineTight:
 		return pointsToPixels(rc, matplotlibTightLayoutPadFontSize*rc.FontSize)
 	default:
@@ -462,14 +466,26 @@ func constrainedLayoutPadPx(fig *Figure) float64 {
 	if rc.DPI <= 0 {
 		rc = style.CurrentDefaults()
 	}
-	return pointsToPixels(rc, matplotlibConstrainedLayoutPadPoints)
+	padInches := rc.Figure.Constrained.HPad
+	if padInches == 0 && rc.Figure == (style.FigureRC{}) {
+		padInches = matplotlibConstrainedLayoutPadPoints / 72
+	}
+	return padInches * rc.DPI
 }
 
-func constrainedLayoutDefaultSpacePx(parentSpanPx float64, cells int) float64 {
+func constrainedLayoutDefaultSpacePx(fig *Figure, parentSpanPx float64, cells int, horizontal bool) float64 {
 	if parentSpanPx <= 0 || cells <= 0 {
 		return 0
 	}
-	return parentSpanPx * matplotlibConstrainedLayoutSpace / float64(cells)
+	space := matplotlibConstrainedLayoutSpace
+	if fig != nil {
+		if horizontal {
+			space = fig.RC.Figure.Constrained.WSpace
+		} else {
+			space = fig.RC.Figure.Constrained.HSpace
+		}
+	}
+	return parentSpanPx * space / float64(cells)
 }
 
 func capLayoutGap(gap, inner float64, count int) float64 {

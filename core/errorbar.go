@@ -191,10 +191,14 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 			linePaint := render.Paint{
 				Stroke:    color,
 				LineWidth: pointsToPixels(rc, lineWidth),
-				LineJoin:  render.JoinRound,
-				LineCap:   render.CapButt,
+				LineJoin:  rc.Lines.SolidJoin,
+				LineCap:   rc.Lines.SolidCap,
 				Snap:      render.SnapAuto,
 				Simplify:  ctx != nil && ctx.RC.PathSimplify,
+			}
+			linePaint.Antialias = render.AntialiasOff
+			if rc.Lines.Antialiased {
+				linePaint.Antialias = render.AntialiasOn
 			}
 			if ctx != nil {
 				linePaint.SimplifyThreshold = ctx.RC.PathSimplifyThreshold
@@ -205,17 +209,22 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 
 	if e.MarkerSet && e.MarkerSize > 0 {
-		scatter := &Scatter2D{
-			XY:        append([]geom.Pt(nil), e.XY...),
-			Size:      e.MarkerSize * e.MarkerSize,
-			Color:     color,
-			EdgeColor: color,
-			EdgeWidth: 1.0, // points; converted at the scatter/collection Paint sink
-			Alpha:     alpha,
-			Marker:    e.Marker,
-			z:         e.Z() + 0.05,
+		markerLine := &Line2D{
+			XY:         append([]geom.Pt(nil), e.XY...),
+			Col:        color,
+			Marker:     e.Marker,
+			MarkerSet:  true,
+			MarkerSize: e.MarkerSize,
+			z:          e.Z() + 0.05,
 		}
-		scatter.Draw(r, ctx)
+		applyLineRCDefaults(markerLine, &rc)
+		if markerLine.MarkerFaceSpec.Mode == MarkerColorExplicit {
+			markerLine.MarkerFaceSpec.Color.A = color.A
+		}
+		if markerLine.MarkerEdgeSpec.Mode == MarkerColorExplicit {
+			markerLine.MarkerEdgeSpec.Color.A = color.A
+		}
+		markerLine.drawMarkers(r, ctx)
 	}
 }
 

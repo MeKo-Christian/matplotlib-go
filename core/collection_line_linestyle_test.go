@@ -27,6 +27,35 @@ func TestLineCollectionLineStyleStringToDash(t *testing.T) {
 	}
 }
 
+func TestLineCollectionNamedStyleUsesActiveRCDashPatternAndScaling(t *testing.T) {
+	lc := &LineCollection{
+		Collection: Collection{Coords: Coords(CoordData), Alpha: 1},
+		Segments:   [][]geom.Pt{{{X: 0, Y: 0}, {X: 5, Y: 5}}},
+		Color:      render.Color{A: 1},
+		LineWidth:  3,
+		LineStyle:  "--",
+	}
+	ctx := createTestDrawContext()
+	ctx.RC.Lines.DashedPattern = []float64{4, 2}
+	ctx.RC.Lines.ScaleDashes = false
+	r := &recordingRenderer{}
+	lc.Draw(r, ctx)
+	pointPx := pointsToPixels(ctx.RC, 1)
+	want := []float64{4 * pointPx, 2 * pointPx}
+	if len(r.pathCalls) != 1 || !reflect.DeepEqual(r.pathCalls[0].paint.Dashes, want) {
+		t.Fatalf("unscaled rc dashes = %v, want %v", r.pathCalls[0].paint.Dashes, want)
+	}
+
+	ctx.RC.Lines.ScaleDashes = true
+	r.pathCalls = nil
+	lc.Draw(r, ctx)
+	widthPx := pointsToPixels(ctx.RC, 3)
+	want = []float64{4 * widthPx, 2 * widthPx}
+	if len(r.pathCalls) != 1 || !reflect.DeepEqual(r.pathCalls[0].paint.Dashes, want) {
+		t.Fatalf("scaled rc dashes = %v, want %v", r.pathCalls[0].paint.Dashes, want)
+	}
+}
+
 func TestLineCollectionExplicitDashesOverrideLineStyle(t *testing.T) {
 	lc := &LineCollection{
 		Collection: Collection{Coords: Coords(CoordData), Alpha: 1},

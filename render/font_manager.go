@@ -216,6 +216,9 @@ func CSSFontFamily(fontKey string) string {
 	if len(families) == 0 {
 		return "DejaVu Sans, Arial, sans-serif"
 	}
+	if len(families) > 1 {
+		return strings.Join(families, ", ")
+	}
 	switch normalizeFontFamilyName(families[0]) {
 	case fontFamilySerif, "dejavuserif":
 		return "DejaVu Serif, serif"
@@ -242,7 +245,19 @@ func normalizeFontProperties(props FontProperties) FontProperties {
 	props.File = strings.TrimSpace(props.File)
 	props.Families = normalizeFontFamilies(props.Families)
 	props.Features = normalizeTextFeatures(props.Features)
+	if strings.EqualFold(props.Variant, "small-caps") && !hasTextFeature(props.Features, "smcp") {
+		props.Features = append(props.Features, TextFeature{Tag: "smcp", Value: 1})
+	}
 	return props
+}
+
+func hasTextFeature(features []TextFeature, tag string) bool {
+	for _, feature := range features {
+		if strings.EqualFold(strings.TrimSpace(feature.Tag), tag) {
+			return true
+		}
+	}
+	return false
 }
 
 func normalizeFontFamilies(families []string) []string {
@@ -516,6 +531,12 @@ func bundledMatplotlibFontPath(family string, props FontProperties) string {
 }
 
 func bundledDejaVuFontFilename(family string, props FontProperties) string {
+	if stretch := normalizeFontStretch(props.Stretch); stretch != "" && stretch != "normal" {
+		// Matplotlib's bundled font set has no condensed/expanded DejaVu
+		// faces. Let fontconfig select a width-matched system face instead of
+		// silently returning the bundled normal-width file.
+		return ""
+	}
 	bold := props.Weight >= 700
 	italic := props.Style == FontStyleItalic || props.Style == FontStyleOblique
 	switch normalizeFontFamilyName(family) {
@@ -693,18 +714,54 @@ func fcMatchPatterns(family string, props FontProperties) []string {
 		styles = []string{"Oblique", "Italic"}
 	}
 	patterns := make([]string, 0, len(styles)+3)
+	suffix := fontconfigPropertySuffix(&props)
 	for _, style := range styles {
-		patterns = append(patterns, family+":style="+style)
+		patterns = append(patterns, family+":style="+style+suffix)
 	}
 	if props.Style == "" || props.Style == FontStyleNormal {
 		patterns = append(
 			patterns,
-			family+":style=Book",
-			family+":style=Roman",
-			family,
+			family+":style=Book"+suffix,
+			family+":style=Roman"+suffix,
+			family+suffix,
 		)
 	}
 	return patterns
+}
+
+func fontconfigPropertySuffix(props *FontProperties) string {
+	if props == nil {
+		return ""
+	}
+	var suffix strings.Builder
+	switch {
+	case props.Weight >= 700:
+		suffix.WriteString(":weight=bold")
+	case props.Weight > 0 && props.Weight <= 300:
+		suffix.WriteString(":weight=light")
+	case props.Weight > 400 && props.Weight < 700:
+		suffix.WriteString(":weight=medium")
+	}
+	if stretch := normalizeFontStretch(props.Stretch); stretch != "" && stretch != "normal" {
+		suffix.WriteString(":width=")
+		suffix.WriteString(stretch)
+	}
+	return suffix.String()
+}
+
+func normalizeFontStretch(stretch string) string {
+	stretch = strings.ToLower(strings.TrimSpace(stretch))
+	switch stretch {
+	case "ultra-condensed", "extra-condensed", "condensed", "semi-condensed",
+		"normal", "semi-expanded", "expanded", "extra-expanded", "ultra-expanded":
+		return stretch
+	case "narrower":
+		return "condensed"
+	case "wider":
+		return "expanded"
+	default:
+		return stretch
+	}
 }
 
 func parseFCMatchOutput(out string) ([]string, string, string) {

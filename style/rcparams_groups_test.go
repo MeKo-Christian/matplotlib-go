@@ -1,6 +1,75 @@
 package style
 
-import "testing"
+import (
+	"math"
+	"testing"
+
+	"github.com/cwbudde/matplotlib-go/render"
+)
+
+func TestFigureRCParams(t *testing.T) {
+	theme, report, err := ParseMPLStyle("figure", `
+font.size: 20
+figure.edgecolor: red
+figure.frameon: false
+figure.subplot.left: 0.2
+figure.subplot.right: 0.8
+figure.subplot.bottom: 0.15
+figure.subplot.top: 0.85
+figure.subplot.wspace: 0.3
+figure.subplot.hspace: 0.4
+figure.autolayout: true
+figure.constrained_layout.use: true
+figure.constrained_layout.h_pad: 0.1
+figure.constrained_layout.w_pad: 0.2
+figure.constrained_layout.hspace: 0.03
+figure.constrained_layout.wspace: 0.04
+figure.titlesize: large
+figure.titleweight: bold
+figure.labelsize: 18
+figure.labelweight: light
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(report.Unsupported) != 0 {
+		t.Fatalf("unsupported = %v", report.Unsupported)
+	}
+	rc := theme.RC
+	if got := rc.Figure.EdgeColor; math.Abs(got.R-1) > 1e-12 || got.G != 0 || got.B != 0 {
+		t.Fatalf("edge color = %+v", got)
+	}
+	if rc.Figure.FrameOn {
+		t.Fatal("figure.frameon was not parsed")
+	}
+	if got, want := rc.Figure.Subplot, (FigureSubplotRC{Left: 0.2, Right: 0.8, Bottom: 0.15, Top: 0.85, WSpace: 0.3, HSpace: 0.4}); got != want {
+		t.Fatalf("subplot = %+v, want %+v", got, want)
+	}
+	if !rc.Figure.AutoLayout || !rc.Figure.Constrained.Use {
+		t.Fatalf("layout flags = %+v", rc.Figure)
+	}
+	if got, want := rc.Figure.Constrained, (FigureConstrainedLayoutRC{Use: true, HPad: 0.1, WPad: 0.2, HSpace: 0.03, WSpace: 0.04}); got != want {
+		t.Fatalf("constrained = %+v, want %+v", got, want)
+	}
+	if rc.Figure.TitleSize != 24 || rc.Figure.TitleWeight != 700 || rc.Figure.LabelSize != 18 || rc.Figure.LabelWeight != 200 {
+		t.Fatalf("figure labels = %+v", rc.Figure)
+	}
+
+	params := paramsFromRC(rc)
+	for _, key := range []string{
+		"figure.edgecolor", "figure.frameon", "figure.subplot.left",
+		"figure.subplot.right", "figure.subplot.bottom", "figure.subplot.top",
+		"figure.subplot.wspace", "figure.subplot.hspace", "figure.autolayout",
+		"figure.constrained_layout.use", "figure.constrained_layout.h_pad",
+		"figure.constrained_layout.w_pad", "figure.constrained_layout.hspace",
+		"figure.constrained_layout.wspace", "figure.titlesize",
+		"figure.titleweight", "figure.labelsize", "figure.labelweight",
+	} {
+		if _, ok := params[key]; !ok {
+			t.Errorf("serialized params missing %q", key)
+		}
+	}
+}
 
 func TestHatchRCParams(t *testing.T) {
 	src := "hatch.color: red\nhatch.linewidth: 2.5\n"
@@ -287,10 +356,54 @@ func TestLinesRCParams(t *testing.T) {
 	}
 }
 
+func TestFurtherLinesRCParams(t *testing.T) {
+	src := `lines.dashed_pattern: 4, 2
+lines.dashdot_pattern: 7, 2, 1, 2
+lines.dotted_pattern: 0.5, 1.5
+lines.scale_dashes: False
+lines.dash_capstyle: round
+lines.dash_joinstyle: bevel
+lines.solid_capstyle: butt
+lines.solid_joinstyle: miter
+lines.markerfacecolor: C2
+lines.markeredgecolor: none
+markers.fillstyle: left
+lines.antialiased: False
+`
+	theme, report, err := ParseMPLStyle("lines-more", src)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+	if len(report.Unsupported) != 0 {
+		t.Fatalf("unexpected unsupported: %+v", report.Unsupported)
+	}
+	l := theme.RC.Lines
+	if len(l.DashedPattern) != 2 || l.DashedPattern[0] != 4 || l.DashedPattern[1] != 2 {
+		t.Fatalf("dashed pattern = %v, want [4 2]", l.DashedPattern)
+	}
+	if len(l.DashDotPattern) != 4 || len(l.DottedPattern) != 2 {
+		t.Fatalf("dashdot/dotted patterns = %v/%v", l.DashDotPattern, l.DottedPattern)
+	}
+	if l.ScaleDashes || l.DashCap != render.CapRound || l.DashJoin != render.JoinBevel ||
+		l.SolidCap != render.CapButt || l.SolidJoin != render.JoinMiter {
+		t.Fatalf("line stroke defaults = %+v", l)
+	}
+	if l.MarkerFaceColor.Mode != MarkerColorExplicit || l.MarkerFaceColor.Raw != "C2" ||
+		l.MarkerEdgeColor.Mode != MarkerColorNone || l.MarkerFillStyle != MarkerFillLeft || l.Antialiased {
+		t.Fatalf("marker/AA defaults = %+v", l)
+	}
+}
+
 func TestLinesRCParamsDefaults(t *testing.T) {
 	l := Default.Lines
 	if l.LineStyle != "-" || l.Marker != "None" || l.MarkerSize != 6 || l.MarkerEdgeWidth != 1 {
 		t.Fatalf("Default.Lines = %+v, want matplotlib defaults (-/None/6/1)", l)
+	}
+	if !l.ScaleDashes || l.DashCap != render.CapButt || l.DashJoin != render.JoinRound ||
+		l.SolidCap != render.CapSquare || l.SolidJoin != render.JoinRound ||
+		l.MarkerFaceColor.Mode != MarkerColorAuto || l.MarkerEdgeColor.Mode != MarkerColorAuto ||
+		l.MarkerFillStyle != MarkerFillFull || !l.Antialiased {
+		t.Fatalf("Default.Lines further defaults = %+v", l)
 	}
 }
 
@@ -299,6 +412,11 @@ func TestLinesRCParamsRejectInvalid(t *testing.T) {
 		"lines.linestyle: wavy\n",
 		"lines.markersize: -1\n",
 		"lines.markeredgewidth: -0.5\n",
+		"lines.dash_capstyle: triangle\n",
+		"lines.dash_joinstyle: curve\n",
+		"markers.fillstyle: diagonal\n",
+		"lines.antialiased: maybe\n",
+		"lines.dashed_pattern: 3, nope\n",
 	} {
 		if _, _, err := ParseMPLStyle("bad", src); err == nil {
 			t.Errorf("ParseMPLStyle(%q) succeeded, want error", src)

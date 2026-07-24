@@ -81,7 +81,15 @@ func WithSubplotShareYMode(mode ShareMode) SubplotOption {
 	}
 }
 
-func defaultSubplotOptions() SubplotOptions {
+func defaultSubplotOptions(fig *Figure) SubplotOptions {
+	if fig != nil {
+		sp := fig.RC.Figure.Subplot
+		return SubplotOptions{
+			Left: sp.Left, Right: sp.Right, Bottom: sp.Bottom, Top: sp.Top,
+			WSpace: subplotSpacingSeed(sp.WSpace, 0.05),
+			HSpace: subplotSpacingSeed(sp.HSpace, 0.06),
+		}
+	}
 	return SubplotOptions{
 		Left:   matplotlibSubplotLeft,
 		Right:  matplotlibSubplotRight,
@@ -92,9 +100,15 @@ func defaultSubplotOptions() SubplotOptions {
 	}
 }
 
+// subplotSpacingSeed preserves the established default geometry while making
+// the Matplotlib rc spacing (whose default is 0.2) an effective layout seed.
+func subplotSpacingSeed(value, defaultGap float64) float64 {
+	return defaultGap * value / 0.2
+}
+
 // Subplots creates an nRows x nCols grid of axes with automatic layout.
 func (f *Figure) Subplots(nRows, nCols int, opts ...SubplotOption) [][]*Axes {
-	cfg := defaultSubplotOptions()
+	cfg := defaultSubplotOptions(f)
 	for _, opt := range opts {
 		opt(&cfg)
 	}

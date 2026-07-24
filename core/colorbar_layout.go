@@ -160,7 +160,7 @@ func resolvedColorbarLayoutPadding(fig *Figure, base geom.Rect, padding float64,
 		if fig.SizePx.Y <= 0 {
 			return resolved
 		}
-		return resolved + layoutPadPx(fig, LayoutEngineConstrained)/fig.SizePx.Y
+		return resolved + constrainedLayoutPadPx(fig)/fig.SizePx.Y
 	}
 	return resolved + layoutPadPx(fig, LayoutEngineConstrained)/fig.SizePx.X
 }
@@ -228,7 +228,7 @@ func constrainedColorbarSlotOffset(fig *Figure, base geom.Rect) float64 {
 	// AxisLineWidth is stored in points; convert to device pixels (the rasterized
 	// spine is snapped to device pixels before the colorbar is placed against it).
 	lineWidthPx := math.Round(pointsToPixels(fig.RC, fig.RC.AxisLineWidth))
-	return (constrainedLayoutPadPx(fig) + 0.5*constrainedLayoutDefaultSpacePx(baseWidthPx, 1) + lineWidthPx) / fig.SizePx.X
+	return (layoutPadPx(fig, LayoutEngineConstrained) + 0.5*constrainedLayoutDefaultSpacePx(fig, baseWidthPx, 1, true) + lineWidthPx) / fig.SizePx.X
 }
 
 func colorbarParentRect(base geom.Rect, width, padding float64, useResolvedSlot bool) geom.Rect {

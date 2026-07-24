@@ -70,16 +70,17 @@ func linearGradient(ax *core.Axes) {
 		Colormap:      &cmap,
 		Interpolation: &interp,
 	})
-	ax.AddPatch(&core.Rectangle{
+	frame := &core.Rectangle{
 		XY:     geom.Pt{X: 42, Y: 42},
 		Width:  163,
 		Height: 100,
 		Patch: core.Patch{
-			FaceColor: render.Color{},
 			EdgeColor: render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1},
 			EdgeWidth: 1.8,
 		},
-	})
+	}
+	frame.SetFaceColor(render.Color{})
+	ax.AddPatch(frame)
 }
 
 func radialGradient(ax *core.Axes) {
@@ -106,16 +107,17 @@ func radialGradient(ax *core.Axes) {
 		Colormap:      &cmap,
 		Interpolation: &interp,
 	})
-	ax.AddPatch(&core.Rectangle{
+	frame := &core.Rectangle{
 		XY:     geom.Pt{X: 235, Y: 42},
 		Width:  163,
 		Height: 100,
 		Patch: core.Patch{
-			FaceColor: render.Color{},
 			EdgeColor: render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1},
 			EdgeWidth: 1.8,
 		},
-	})
+	}
+	frame.SetFaceColor(render.Color{})
+	ax.AddPatch(frame)
 }
 
 func pattern(ax *core.Axes) {

@@ -69,30 +69,33 @@ type VLineOptions struct {
 
 // SpanOptions configures span helpers such as axhspan and axvspan.
 type SpanOptions struct {
-	Color     *render.Color
-	EdgeColor *render.Color
-	EdgeWidth *float64
-	Alpha     *float64
+	Color       *render.Color
+	EdgeColor   *render.Color
+	EdgeWidth   *float64
+	Alpha       *float64
+	Antialiased *bool
 }
 
 // HSpanOptions configures AxHSpan.
 type HSpanOptions struct {
-	Color     *render.Color
-	EdgeColor *render.Color
-	EdgeWidth *float64
-	Alpha     *float64
-	XMin      *float64
-	XMax      *float64
+	Color       *render.Color
+	EdgeColor   *render.Color
+	EdgeWidth   *float64
+	Alpha       *float64
+	Antialiased *bool
+	XMin        *float64
+	XMax        *float64
 }
 
 // VSpanOptions configures AxVSpan.
 type VSpanOptions struct {
-	Color     *render.Color
-	EdgeColor *render.Color
-	EdgeWidth *float64
-	Alpha     *float64
-	YMin      *float64
-	YMax      *float64
+	Color       *render.Color
+	EdgeColor   *render.Color
+	EdgeWidth   *float64
+	Alpha       *float64
+	Antialiased *bool
+	YMin        *float64
+	YMax        *float64
 }
 
 // BarLabelOptions configures bar-label placement.
@@ -137,6 +140,7 @@ type Span2D struct {
 	Color     render.Color
 	EdgeColor render.Color
 	EdgeWidth float64
+	Antialias render.AntialiasMode
 	z         float64
 }
 
@@ -318,7 +322,7 @@ func (a *Axes) AxHSpan(yMin, yMax float64, opts ...HSpanOptions) *Span2D {
 		geom.Pt{X: xMin, Y: yMin},
 		geom.Pt{X: xMax, Y: yMax},
 		BlendCoords(CoordAxes, CoordData),
-		SpanOptions{Color: opt.Color, EdgeColor: opt.EdgeColor, EdgeWidth: opt.EdgeWidth, Alpha: opt.Alpha},
+		SpanOptions{Color: opt.Color, EdgeColor: opt.EdgeColor, EdgeWidth: opt.EdgeWidth, Alpha: opt.Alpha, Antialiased: opt.Antialiased},
 	)
 	a.Add(span)
 	return span
@@ -342,7 +346,7 @@ func (a *Axes) AxVSpan(xMin, xMax float64, opts ...VSpanOptions) *Span2D {
 		geom.Pt{X: xMin, Y: yMin},
 		geom.Pt{X: xMax, Y: yMax},
 		BlendCoords(CoordData, CoordAxes),
-		SpanOptions{Color: opt.Color, EdgeColor: opt.EdgeColor, EdgeWidth: opt.EdgeWidth, Alpha: opt.Alpha},
+		SpanOptions{Color: opt.Color, EdgeColor: opt.EdgeColor, EdgeWidth: opt.EdgeWidth, Alpha: opt.Alpha, Antialiased: opt.Antialiased},
 	)
 	a.Add(span)
 	return span
@@ -541,7 +545,7 @@ func (s *Span2D) Draw(r render.Renderer, ctx *DrawContext) {
 		return
 	}
 
-	paint := render.Paint{Fill: s.Color}
+	paint := render.Paint{Fill: s.Color, Antialias: s.Antialias}
 	if s.EdgeWidth > 0 && s.EdgeColor.A > 0 {
 		paint.Stroke = s.EdgeColor
 		paint.LineWidth = pointsToPixels(ctx.RC, s.EdgeWidth)
@@ -760,23 +764,30 @@ func (a *Axes) newInfiniteLine(point, direction geom.Pt, opt ReferenceLineOption
 
 func (a *Axes) newSpan(start, end geom.Pt, coords CoordinateSpec, opt SpanOptions) *Span2D {
 	rc := a.resolvedRC()
-	color := rc.AxesEdgeColor
+	color := rc.DefaultPatchFaceColor()
 	if opt.Color != nil {
 		color = *opt.Color
 	}
-	alpha := 0.15
+	alpha := 1.0
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 		alpha = *opt.Alpha
 	}
 	color.A *= alpha
-	edgeColor := color
+	edgeColor := render.Color{}
+	if opt.Color != nil {
+		// Matplotlib's Patch color= alias sets both facecolor and edgecolor.
+		edgeColor = *opt.Color
+		edgeColor.A *= alpha
+	} else if rc.Patch.ForceEdgeColor {
+		edgeColor = rc.Patch.EdgeColor
+	}
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
 		if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 			edgeColor.A *= *opt.Alpha
 		}
 	}
-	edgeWidth := 1.0 // points; converted at the Span2D Paint sink
+	edgeWidth := rc.Patch.LineWidth // points; converted at the Span2D Paint sink
 	if opt.EdgeWidth != nil {
 		edgeWidth = *opt.EdgeWidth
 	}
@@ -788,6 +799,7 @@ func (a *Axes) newSpan(start, end geom.Pt, coords CoordinateSpec, opt SpanOption
 		Color:     color,
 		EdgeColor: edgeColor,
 		EdgeWidth: edgeWidth,
+		Antialias: patchAntialiasMode(&rc.Patch, opt.Antialiased),
 		z:         defaultPatchZ,
 	}
 }

@@ -143,7 +143,10 @@ func WithProjection(name string) SubplotAxesOption {
 
 // GridSpec creates a grid over the whole figure.
 func (f *Figure) GridSpec(nRows, nCols int, opts ...GridSpecOption) *GridSpec {
-	return newGridSpec(f, geom.Rect{Max: geom.Pt{X: 1, Y: 1}}, nil, nRows, nCols, opts...)
+	cfg := defaultSubplotOptions(f)
+	seeded := subplotGridSpecOptions(cfg.Left, cfg.Right, cfg.Bottom, cfg.Top, cfg.WSpace, cfg.HSpace)
+	seeded = append(seeded, opts...)
+	return newGridSpec(f, geom.Rect{Max: geom.Pt{X: 1, Y: 1}}, nil, nRows, nCols, seeded...)
 }
 
 // AddSubFigure creates a composition region inside the figure.
@@ -159,10 +162,11 @@ func (f *Figure) AddSubFigure(r geom.Rect) *SubFigure {
 
 // AddSubplot creates a subplot using Matplotlib-style row/column/index addressing.
 func (f *Figure) AddSubplot(nRows, nCols, index int, opts ...SubplotAxesOption) *Axes {
+	cfg := defaultSubplotOptions(f)
 	gs := f.GridSpec(
 		nRows,
 		nCols,
-		subplotGridSpecOptions(matplotlibSubplotLeft, matplotlibSubplotRight, matplotlibSubplotBottom, matplotlibSubplotTop, 0.05, 0.06)...,
+		subplotGridSpecOptions(cfg.Left, cfg.Right, cfg.Bottom, cfg.Top, cfg.WSpace, cfg.HSpace)...,
 	)
 	if gs == nil || index <= 0 || index > nRows*nCols {
 		return nil
@@ -192,10 +196,11 @@ func (f *Figure) AddSubplotSpec(spec SubplotSpec, opts ...SubplotAxesOption) *Ax
 
 // Subplot2Grid creates a subplot inside a logical grid using row/column spans.
 func (f *Figure) Subplot2Grid(shape [2]int, loc [2]int, rowSpan, colSpan int, opts ...SubplotAxesOption) *Axes {
+	cfg := defaultSubplotOptions(f)
 	gs := f.GridSpec(
 		shape[0],
 		shape[1],
-		subplotGridSpecOptions(matplotlibSubplotLeft, matplotlibSubplotRight, matplotlibSubplotBottom, matplotlibSubplotTop, 0.05, 0.06)...,
+		subplotGridSpecOptions(cfg.Left, cfg.Right, cfg.Bottom, cfg.Top, cfg.WSpace, cfg.HSpace)...,
 	)
 	if gs == nil {
 		return nil
@@ -312,10 +317,11 @@ func (sf *SubFigure) AddSubFigure(r geom.Rect) *SubFigure {
 
 // AddSubplot creates a subplot inside the subfigure using row/column/index addressing.
 func (sf *SubFigure) AddSubplot(nRows, nCols, index int, opts ...SubplotAxesOption) *Axes {
+	cfg := defaultSubplotOptions(sf.figure)
 	gs := sf.GridSpec(
 		nRows,
 		nCols,
-		subplotGridSpecOptions(matplotlibSubplotLeft, matplotlibSubplotRight, matplotlibSubplotBottom, matplotlibSubplotTop, 0.05, 0.06)...,
+		subplotGridSpecOptions(cfg.Left, cfg.Right, cfg.Bottom, cfg.Top, cfg.WSpace, cfg.HSpace)...,
 	)
 	if gs == nil || index <= 0 || index > nRows*nCols {
 		return nil
@@ -334,10 +340,11 @@ func (sf *SubFigure) AddSubplotSpec(spec SubplotSpec, opts ...SubplotAxesOption)
 
 // Subplot2Grid creates a subplot inside a logical subfigure grid using spans.
 func (sf *SubFigure) Subplot2Grid(shape [2]int, loc [2]int, rowSpan, colSpan int, opts ...SubplotAxesOption) *Axes {
+	cfg := defaultSubplotOptions(sf.figure)
 	gs := sf.GridSpec(
 		shape[0],
 		shape[1],
-		subplotGridSpecOptions(matplotlibSubplotLeft, matplotlibSubplotRight, matplotlibSubplotBottom, matplotlibSubplotTop, 0.05, 0.06)...,
+		subplotGridSpecOptions(cfg.Left, cfg.Right, cfg.Bottom, cfg.Top, cfg.WSpace, cfg.HSpace)...,
 	)
 	if gs == nil {
 		return nil

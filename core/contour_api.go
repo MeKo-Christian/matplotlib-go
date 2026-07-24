@@ -24,6 +24,15 @@ type ContourOptions struct {
 	LabelFontSize  *float64
 	LabelColor     *render.Color
 	Label          string
+	// Algorithm selects the structured contour generator semantics:
+	// "mpl2005", "mpl2014", "serial", or "threaded". Empty uses
+	// rcParams["contour.algorithm"]. It does not apply to triangular contours.
+	Algorithm string
+	// CornerMask controls whether a structured cell with exactly one
+	// masked/non-finite corner retains its valid triangular portion. Nil uses
+	// rcParams["contour.corner_mask"], except mpl2005 defaults it to false.
+	// It does not apply to triangular contours.
+	CornerMask *bool
 
 	// LineStyles assigns per-level stroke styles for contour lines
 	// ("solid", "dashed", "--", "dashdot", "-.", "dotted", ":"). The list is
@@ -87,6 +96,8 @@ type ContourLabel struct {
 type ContourSet struct {
 	ArtistRasterization
 	Levels         []float64
+	Algorithm      string
+	CornerMask     bool
 	Lines          *LineCollection
 	Fills          *PolyCollection
 	LabelFormatter Formatter
@@ -160,21 +171,22 @@ func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
+	algorithm, cornerMask, ok := a.resolveStructuredContourOptions(&opt)
+	if !ok {
+		return nil
+	}
 	levels := contourLevels(values, opt.Levels, opt.LevelCount, false)
 	if len(levels) == 0 {
 		return nil
 	}
 
-	polylines, polylineLevels := contourGridPolylines(xCoords, yCoords, data, levels)
+	polylines, polylineLevels := contourGridPolylinesCornerMask(xCoords, yCoords, data, levels, cornerMask)
 	if len(polylines) == 0 {
 		return nil
 	}
 
 	alpha := meshAlpha(opt.Alpha)
-	lineWidth := 1.0
-	if opt.LineWidth != nil {
-		lineWidth = *opt.LineWidth
-	}
+	lineWidth := *opt.LineWidth
 	colorFallback := a.NextColor()
 	cmapName := ""
 	if opt.Colormap != nil {
@@ -190,6 +202,8 @@ func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
 
 	set := &ContourSet{
 		Levels:         append([]float64(nil), levels...),
+		Algorithm:      algorithm,
+		CornerMask:     cornerMask,
 		LabelFormatter: contourFormatter(opt.LabelFormatter),
 		LabelFontSize:  valueOrDefaultFloat(opt.LabelFontSize, 10),
 		rightSideUp:    true,
@@ -203,7 +217,8 @@ func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
 		colors[i] = contourLineColor(level, levels, opt, mapping, alpha, colorFallback)
 	}
 	styles := resolveContourLineStyles(levels, opt, contourMonochrome(opt))
-	dashPatterns := contourLineDashPatterns(polylineLevels, levels, styles, lineWidth)
+	resolvedRC := a.resolvedRC()
+	dashPatterns := contourLineDashPatterns(polylineLevels, levels, styles, lineWidth, &resolvedRC.Lines)
 	set.Lines = &LineCollection{
 		Collection: Collection{
 			Coords: Coords(CoordData),
@@ -235,6 +250,10 @@ func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet {
 	var opt ContourOptions
 	if len(opts) > 0 {
 		opt = opts[0]
+	}
+	algorithm, cornerMask, ok := a.resolveStructuredContourOptions(&opt)
+	if !ok {
+		return nil
 	}
 	levels := contourLevels(values, opt.Levels, opt.LevelCount, true)
 	if len(levels) < 2 {
@@ -279,6 +298,8 @@ func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet {
 	}
 	set := &ContourSet{
 		Levels:         append([]float64(nil), levels...),
+		Algorithm:      algorithm,
+		CornerMask:     cornerMask,
 		LabelFormatter: contourFormatter(opt.LabelFormatter),
 		LabelFontSize:  valueOrDefaultFloat(opt.LabelFontSize, 10),
 	}
@@ -471,6 +492,7 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
+	a.resolveContourLineDefaults(&opt)
 
 	levels := contourLevels(values, opt.Levels, opt.LevelCount, filled)
 	if (!filled && len(levels) == 0) || (filled && len(levels) < 2) {
@@ -478,10 +500,7 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 	}
 
 	alpha := meshAlpha(opt.Alpha)
-	lineWidth := 1.0
-	if opt.LineWidth != nil {
-		lineWidth = *opt.LineWidth
-	}
+	lineWidth := *opt.LineWidth
 
 	colorFallback := a.NextColor()
 	cmapName := ""
@@ -565,7 +584,8 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 				colors[i] = contourLineColor(level, levels, opt, mapping, alpha, colorFallback)
 			}
 			styles := resolveContourLineStyles(levels, opt, contourMonochrome(opt))
-			dashPatterns := contourLineDashPatterns(polylineLevels, levels, styles, lineWidth)
+			resolvedRC := a.resolvedRC()
+			dashPatterns := contourLineDashPatterns(polylineLevels, levels, styles, lineWidth, &resolvedRC.Lines)
 			set.Lines = &LineCollection{
 				Collection: Collection{
 					Coords: Coords(CoordData),

@@ -271,12 +271,12 @@ func initialFigureArtistStackOffsets(fig *Figure, r render.Renderer, ctx *DrawCo
 		return offsets
 	}
 	if fig.SupTitle != "" {
-		offset := figureLabelTightHeight(r, fig.SupTitle, titleFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX) + figureLabelTopInsetPx(fig, ctx)
+		offset := figureLabelTightHeight(r, fig.SupTitle, figureTitleFontSize(ctx), fontKeyWithWeight(ctx.RC.FontKey, ctx.RC.Figure.TitleWeight), ctx.RC.UseTeX) + figureLabelTopInsetPx(fig, ctx)
 		offsets[LegendUpperLeft] = offset
 		offsets[LegendUpperRight] = offset
 	}
 	if fig.SupXLabel != "" {
-		offset := figureLabelTightHeight(r, fig.SupXLabel, figureLabelFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX) + figureLabelBottomInsetPx(fig, ctx)
+		offset := figureLabelTightHeight(r, fig.SupXLabel, figureLabelFontSize(ctx), fontKeyWithWeight(ctx.RC.FontKey, ctx.RC.Figure.LabelWeight), ctx.RC.UseTeX) + figureLabelBottomInsetPx(fig, ctx)
 		offsets[LegendLowerLeft] = offset
 		offsets[LegendLowerRight] = offset
 	}
@@ -339,13 +339,15 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 	ctx := newFigureDrawContext(fig, figureRect)
 	titleColor := fig.RC.DefaultAxesTitleColor()
 	labelColor := fig.RC.DefaultAxesLabelColor()
-	titleSize := titleFontSize(ctx)
+	titleSize := figureTitleFontSize(ctx)
 	labelSize := figureLabelFontSize(ctx)
+	titleFontKey := fontKeyWithWeight(fig.RC.FontKey, fig.RC.Figure.TitleWeight)
+	labelFontKey := fontKeyWithWeight(fig.RC.FontKey, fig.RC.Figure.LabelWeight)
 	centerX := figureRect.Min.X + figureRect.W()/2
 	centerY := figureRect.Min.Y + figureRect.H()/2
 
 	if fig.SupTitle != "" {
-		layout := measureSingleLineTextLayout(r, fig.SupTitle, titleSize, fig.RC.FontKey, fig.RC.UseTeX)
+		layout := measureSingleLineTextLayout(r, fig.SupTitle, titleSize, titleFontKey, fig.RC.UseTeX)
 		y := figureRect.Max.Y - figureLabelTopInsetPx(fig, ctx)
 		anchor := geom.Pt{
 			X: centerX,
@@ -357,13 +359,13 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 			alignedSingleLineOrigin(anchor, layout, TextAlignCenter, textLayoutVAlignTop),
 			titleSize,
 			titleColor,
-			fig.RC.FontKey,
+			titleFontKey,
 			fig.RC.UseTeX,
 		)
 	}
 
 	if fig.SupXLabel != "" {
-		layout := measureSingleLineTextLayout(r, fig.SupXLabel, labelSize, fig.RC.FontKey, fig.RC.UseTeX)
+		layout := measureSingleLineTextLayout(r, fig.SupXLabel, labelSize, labelFontKey, fig.RC.UseTeX)
 		y := figureRect.Min.Y + figureLabelBottomInsetPx(fig, ctx)
 		anchor := geom.Pt{
 			X: centerX,
@@ -375,13 +377,13 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 			alignedSingleLineOrigin(anchor, layout, TextAlignCenter, textLayoutVAlignBottom),
 			labelSize,
 			labelColor,
-			fig.RC.FontKey,
+			labelFontKey,
 			fig.RC.UseTeX,
 		)
 	}
 
 	if fig.SupYLabel != "" {
-		layout := measureSingleLineTextLayout(r, fig.SupYLabel, labelSize, fig.RC.FontKey, fig.RC.UseTeX)
+		layout := measureSingleLineTextLayout(r, fig.SupYLabel, labelSize, labelFontKey, fig.RC.UseTeX)
 		leftPad := figureLabelLeftInsetPx(fig, ctx)
 		p := geom.Pt{
 			X: figureRect.Min.X + leftPad,
@@ -390,9 +392,9 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 		switch ren := r.(type) {
 		case render.RotatedTextDrawer:
 			anchor := rotatedTextBackendAnchorFromP(p, layout, TextAlignLeft, textLayoutVAlignCenter, math.Pi/2, false)
-			drawDisplayTextRotated(ren, fig.SupYLabel, anchor, labelSize, math.Pi/2, labelColor, fig.RC.FontKey, fig.RC.UseTeX)
+			drawDisplayTextRotated(ren, fig.SupYLabel, anchor, labelSize, math.Pi/2, labelColor, labelFontKey, fig.RC.UseTeX)
 		case render.VerticalTextDrawer:
-			drawDisplayTextVertical(ren, fig.SupYLabel, p, labelSize, labelColor, fig.RC.FontKey)
+			drawDisplayTextVertical(ren, fig.SupYLabel, p, labelSize, labelColor, labelFontKey)
 		default:
 			drawDisplayText(
 				textRen,
@@ -400,7 +402,7 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 				alignedSingleLineOrigin(p, layout, TextAlignLeft, textLayoutVAlignCenter),
 				labelSize,
 				labelColor,
-				fig.RC.FontKey,
+				labelFontKey,
 				fig.RC.UseTeX,
 			)
 		}

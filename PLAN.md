@@ -457,12 +457,11 @@ explicit. All nine audit findings closed with zero golden regressions.
 are parsed and only ~70 honored — ~52 are stored and never read, giving users false
 confidence a setting took effect.
 
-**Status (2026-07-24):** audit, both minimum-bar warnings, the high-value
+**Status (2026-07-25):** audit, both minimum-bar warnings, the high-value
 image/date subset, axes/line/scatter/errorbar defaults, and the complete tick
 and legend families plus axes title/label placement and scalar formatter
-defaults and independent spine visibility are shipped with zero default golden
-churn. The remaining families are itemized below; MathText
-honoring is blocked on a
+defaults, independent spine visibility, and all five P2 families are shipped
+with zero default golden churn. MathText honoring remains blocked on a
 `cwbudde/mathtext` library hook and Phase 17 fontset work.
 
 - [x] Audited the dead params: **51** parsed-but-never-consumed keys, captured as
@@ -563,35 +562,57 @@ behavior tests. Default values must not churn existing goldens.
       top/right fallback frame edges and explicit top/right axes created later.
       Projection-specific frames retain their own defaults, explicit visibility
       changes win until `Clear`, and focused style/core tests are green.
-- [ ] **P2 — Line and marker rendering defaults.** Honor
+- [x] **P2 — Line and marker rendering defaults.** Honor
       `lines.{dashdot_pattern,dashed_pattern,dotted_pattern,scale_dashes}`,
       dash/solid cap and join styles, `markerfacecolor`, `markeredgecolor`,
-      `markers.fillstyle`, and `lines.antialiased`.
-- [ ] **P2 — Figure defaults and layout seeds.** Honor `figure.edgecolor`,
+      `markers.fillstyle`, and `lines.antialiased`. **Shipped 2026-07-25:**
+      typed parser/runtime state reaches plot lines, directly added lines,
+      errorbars, collections, and contours with point/device-correct dash
+      scaling, marker color/fill defaults, antialiasing, and explicit-option
+      precedence.
+- [x] **P2 — Figure defaults and layout seeds.** Honor `figure.edgecolor`,
       `frameon`, all six `subplot.*` margins/spacings, `autolayout`, the five
       `constrained_layout.*` controls, `titlesize`, `titleweight`, `labelsize`,
       and `labelweight`. Classify `figure.hooks`, `max_open_warning`, and
       `raise_window` as supported behavior or documented headless non-goals.
-- [ ] **P2 — Patch defaults.** Add `PatchRC` and honor
+      **Shipped 2026-07-25:** typed figure/layout state seeds GridSpec,
+      subplots, tight/constrained engines, figure labels, and frame drawing;
+      explicit layout options win, and the three GUI/Python-only controls have
+      documented headless non-goal rationales.
+- [x] **P2 — Patch defaults.** Add `PatchRC` and honor
       `patch.{linewidth,facecolor,edgecolor,force_edgecolor,antialiased}` across
       standalone patches and patch-producing plot methods; explicit paint/options
-      must win.
-- [ ] **P2 — Font defaults and fallback lists.** Honor
+      must win. **Shipped 2026-07-25:** dynamic `Cn` colors, standalone patch
+      and legend resolution, bars/fills/histograms/pies/spans, antialiasing,
+      and explicit transparent/zero-width setters are covered by focused
+      parser and rendering tests.
+- [x] **P2 — Font defaults and fallback lists.** Honor
       `font.{weight,style,variant,stretch}` and retain ordered
       `font.{serif,sans-serif,cursive,fantasy,monospace}` fallback lists instead
-      of collapsing `font.family` to one name.
-- [ ] **P2 — Contour defaults.** Honor `contour.algorithm`, `corner_mask`,
+      of collapsing `font.family` to one name. **Shipped 2026-07-25:** ordered
+      generic-family expansion and structured renderer keys preserve every
+      property; weight/style select faces, stretch reaches fontconfig,
+      small-caps enables OpenType shaping, and SVG live text emits the matching
+      CSS properties.
+- [x] **P2 — Contour defaults.** Honor `contour.algorithm`, `corner_mask`,
       `linewidth`, and `negative_linestyle` in structured/triangular line and
-      filled contour paths where applicable.
+      filled contour paths where applicable. **Shipped 2026-07-25:** typed
+      options and rc fallbacks cover structured and triangular paths,
+      single-masked-corner geometry, Matplotlib's mpl2005 corner-mask
+      restriction, line-width fallback, and monochrome negative styles.
 - [ ] **Blocked — MathText rcParams.** Honor `mathtext.default`, `fallback`,
       `bf`, `bfit`, `cal`, `it`, `rm`, `sf`, and `tt` after
       `cwbudde/mathtext` exposes implicit-style and per-class font hooks.
       `cal`/`bfit`/`fallback` also depend on Phase 17's per-fontset glyph maps;
       keep warning through `unhonoredRCParams` until then.
-- [ ] **Phase 16 exit gate.** Verify every completed key above is parsed or
+- [x] **Phase 16 exit gate.** Verify every completed key above is parsed or
       explicitly honored (while remaining in the upstream-key audit table), move
       intentional omissions into `nonGoalRCParams` with rationale, and run focused
-      style tests plus the full golden/reference suite.
+      style tests plus the full golden/reference suite. **Closed 2026-07-25:**
+      the supported/upstream/unhonored consistency guards are green, figure GUI
+      controls carry headless rationales, the frozen public API audit was
+      refreshed, all catalog goldens remained byte-identical, and `just test`
+      passes with pinned FreeType 2.6.1.
 
 ## Phase 17: Artist Breadth & Algorithmic Correctness ⚪
 

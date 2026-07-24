@@ -398,6 +398,171 @@ func TestMPLStyleLinesStyleAndMarkersReachPlot(t *testing.T) {
 	}
 }
 
+func TestMPLStyleFurtherLineDefaultsReachPlot(t *testing.T) {
+	src := `lines.linestyle: --
+lines.dashed_pattern: 4, 2
+lines.scale_dashes: False
+lines.dash_capstyle: round
+lines.dash_joinstyle: bevel
+lines.solid_capstyle: butt
+lines.solid_joinstyle: miter
+lines.marker: o
+lines.markerfacecolor: red
+lines.markeredgecolor: none
+markers.fillstyle: left
+lines.antialiased: False
+`
+	theme, report, err := style.ParseMPLStyle("test", src)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle: %v", err)
+	}
+	if len(report.Unsupported) > 0 {
+		t.Fatalf("unsupported entries: %+v", report.Unsupported)
+	}
+
+	fig := NewFigure(100, 100, style.WithTheme(theme))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	pointPx := theme.RC.DPI / 72
+	if len(line.Dashes) != 2 || math.Abs(line.Dashes[0]-4*pointPx) > 1e-9 ||
+		math.Abs(line.Dashes[1]-2*pointPx) > 1e-9 {
+		t.Fatalf("unscaled rc dashes = %v, want [%v %v]", line.Dashes, 4*pointPx, 2*pointPx)
+	}
+	if line.DashCap != render.CapRound || line.DashJoin != render.JoinBevel ||
+		line.SolidCap != render.CapButt || line.SolidJoin != render.JoinMiter {
+		t.Fatalf("rc cap/join styles = dash %v/%v solid %v/%v",
+			line.DashCap, line.DashJoin, line.SolidCap, line.SolidJoin)
+	}
+	if line.MarkerStyle.FillStyle != MarkerFillLeft {
+		t.Fatalf("marker fillstyle = %v, want left", line.MarkerStyle.FillStyle)
+	}
+	if got := line.resolvedMarkerFaceColor(); got.R != 1 || got.G != 0 || got.B != 0 || got.A != 1 {
+		t.Fatalf("marker face = %+v, want red", got)
+	}
+	if got := line.resolvedMarkerEdgeColor(); got.A != 0 {
+		t.Fatalf("marker edge = %+v, want none", got)
+	}
+	if line.Antialiased {
+		t.Fatal("line antialias = true, want false")
+	}
+
+	r := &recordingRenderer{}
+	line.Draw(r, &DrawContext{RC: theme.RC})
+	if len(r.pathCalls) == 0 {
+		t.Fatal("line draw produced no paths")
+	}
+	if got := r.pathCalls[0].paint; got.LineCap != render.CapRound ||
+		got.LineJoin != render.JoinBevel || got.Antialias != render.AntialiasOff {
+		t.Fatalf("line paint cap/join/AA = %v/%v/%v", got.LineCap, got.LineJoin, got.Antialias)
+	}
+}
+
+func TestExplicitLineOptionsOverrideFurtherRCDefaults(t *testing.T) {
+	theme, _, err := style.ParseMPLStyle("test", `lines.solid_capstyle: round
+lines.solid_joinstyle: bevel
+lines.marker: o
+lines.markerfacecolor: red
+markers.fillstyle: left
+lines.antialiased: False
+`)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle: %v", err)
+	}
+	fig := NewFigure(100, 100, style.WithTheme(theme))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	capStyle := render.CapButt
+	joinStyle := render.JoinMiter
+	antialiased := true
+	face := render.Color{B: 1, A: 1}
+	markerStyle := NewMarkerStyle(MarkerCircle)
+	markerStyle.FillStyle = MarkerFillTop
+	line := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
+		LineCap:         &capStyle,
+		LineJoin:        &joinStyle,
+		MarkerStyle:     &markerStyle,
+		MarkerFaceColor: &face,
+		Antialiased:     &antialiased,
+	})
+	if line.LineCap != render.CapButt || line.LineJoin != render.JoinMiter ||
+		line.MarkerStyle.FillStyle != MarkerFillTop || !line.Antialiased {
+		t.Fatalf("explicit line defaults lost: %+v", line)
+	}
+	if got := line.resolvedMarkerFaceColor(); got != face {
+		t.Fatalf("explicit marker face = %+v, want %+v", got, face)
+	}
+}
+
+func TestAxesAddSeedsLineRCDefaultsOutsidePlot(t *testing.T) {
+	theme, _, err := style.ParseMPLStyle("test", `lines.solid_capstyle: butt
+lines.solid_joinstyle: bevel
+lines.dash_capstyle: round
+lines.dash_joinstyle: miter
+lines.markerfacecolor: red
+lines.markeredgecolor: none
+markers.fillstyle: top
+lines.antialiased: False
+`)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle: %v", err)
+	}
+	fig := NewFigure(100, 100, style.WithTheme(theme))
+	ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
+	line := &Line2D{
+		XY:        []geom.Pt{{X: 0, Y: 0}, {X: 1, Y: 1}},
+		W:         1,
+		Col:       render.Color{B: 1, A: 1},
+		Marker:    MarkerCircle,
+		MarkerSet: true,
+	}
+	ax.Add(line)
+
+	if !line.RCStrokeStylesSet || line.SolidCap != render.CapButt ||
+		line.SolidJoin != render.JoinBevel || line.DashCap != render.CapRound ||
+		line.DashJoin != render.JoinMiter {
+		t.Fatalf("line rc stroke defaults = %+v", line)
+	}
+	if !line.AntialiasedSet || line.Antialiased {
+		t.Fatalf("line antialias = set:%v value:%v, want set false", line.AntialiasedSet, line.Antialiased)
+	}
+	if line.MarkerStyle.FillStyle != MarkerFillTop {
+		t.Fatalf("line marker fillstyle = %v, want top", line.MarkerStyle.FillStyle)
+	}
+	if got := line.resolvedMarkerFaceColor(); got.R != 1 || got.G != 0 || got.B != 0 || got.A != 1 {
+		t.Fatalf("line marker face = %+v, want rc red", got)
+	}
+	if got := line.resolvedMarkerEdgeColor(); got.A != 0 {
+		t.Fatalf("line marker edge = %+v, want rc none", got)
+	}
+}
+
+func TestAxesAddPreservesExplicitLineDefaults(t *testing.T) {
+	theme, _, err := style.ParseMPLStyle("test", `lines.markerfacecolor: red
+markers.fillstyle: left
+lines.antialiased: False
+`)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle: %v", err)
+	}
+	fig := NewFigure(100, 100, style.WithTheme(theme))
+	ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
+	explicitFace := render.Color{G: 1, A: 1}
+	line := &Line2D{
+		Marker:          MarkerCircle,
+		MarkerSet:       true,
+		MarkerStyle:     MarkerStyle{Type: MarkerCircle, FillStyle: MarkerFillRight},
+		MarkerFaceColor: explicitFace,
+		Antialiased:     true,
+		AntialiasedSet:  true,
+		LineCap:         render.CapRound,
+		LineCapSet:      true,
+	}
+	ax.Add(line)
+	if !line.Antialiased || line.MarkerStyle.FillStyle != MarkerFillRight ||
+		line.resolvedMarkerFaceColor() != explicitFace || line.LineCap != render.CapRound {
+		t.Fatalf("explicit line defaults lost after Add: %+v", line)
+	}
+}
+
 func TestMPLStyleLinesStyleNoneSuppressesLine(t *testing.T) {
 	theme, _, err := style.ParseMPLStyle("test", "lines.linestyle: none\nlines.marker: o\n")
 	if err != nil {

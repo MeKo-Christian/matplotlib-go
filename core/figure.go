@@ -22,6 +22,12 @@ type Figure struct {
 
 func NewFigure(w, h int, opts ...style.Option) *Figure {
 	rc := style.Apply(style.CurrentDefaults(), opts...)
+	engine := LayoutEngineNone
+	if rc.Figure.AutoLayout {
+		engine = LayoutEngineTight
+	} else if rc.Figure.Constrained.Use {
+		engine = LayoutEngineConstrained
+	}
 	return &Figure{
 		SizePx:       geom.Pt{X: float64(w), Y: float64(h)},
 		RC:           rc,
@@ -30,7 +36,7 @@ func NewFigure(w, h int, opts ...style.Option) *Figure {
 		SupTitle:     "",
 		SupXLabel:    "",
 		SupYLabel:    "",
-		layoutEngine: LayoutEngineNone,
+		layoutEngine: engine,
 	}
 }
 

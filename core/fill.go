@@ -37,9 +37,10 @@ type Fill2D struct {
 	Color       render.Color    // fill color
 	EdgeColor   render.Color    // edge color for outline (0 alpha means no edge)
 	EdgeWidth   float64         // edge width in points (0 means no edge)
-	Alpha       float64         // alpha transparency override (0-1), if 0 uses Color.A
-	Label       string          // series label for legend
-	z           float64         // z-order
+	Antialias   render.AntialiasMode
+	Alpha       float64 // alpha transparency override (0-1), if 0 uses Color.A
+	Label       string  // series label for legend
+	z           float64 // z-order
 }
 
 // Draw renders the filled area by creating a closed path.
@@ -62,8 +63,9 @@ func (f *Fill2D) Draw(r render.Renderer, ctx *DrawContext) {
 
 	// Create paint for fill area
 	paint := render.Paint{
-		Fill: fillColor,
-		Snap: render.SnapAuto,
+		Fill:      fillColor,
+		Snap:      render.SnapAuto,
+		Antialias: f.Antialias,
 	}
 
 	// Add stroke if edge width is specified and edge color has alpha > 0
@@ -92,7 +94,7 @@ func (f *Fill2D) Draw(r render.Renderer, ctx *DrawContext) {
 			batch.Items = append(batch.Items, render.PathCollectionItem{
 				Path:        path,
 				Paint:       paint,
-				Antialiased: true,
+				Antialiased: f.Antialias != render.AntialiasOff,
 			})
 		}
 		if drawer.DrawPathCollection(batch) {
