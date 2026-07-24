@@ -63,195 +63,19 @@ per-phase implementation logs._
 
 ---
 
-# Phase 1: Visual Parity Closure via Code Parity ✅
+# Phases 1–9: Completed Parity Foundation ✅
 
-**Closed 2026-06-14** (full `TestReferenceCompare` sweep). All catalog rows are
-below `RMSE 5` against the Matplotlib 3.10.9 reference set. High-residual
-families closed via waves W1–W5: mplot3d, projections, axisartist, text
-wrapping/rotated layout, MathText and annotation tails, legend/offsetbox, fills
-and collections, contour/mesh, arrays, widgets, and mixed raster/vector. A
-second sweep on 2026-06-20 closed the remaining above-5 rows (overlapping-axes
-draw order, fill snap, scatter markers, polar/geo label bounds, `MaxNLocator`
-edge labels, boxplot markers/alpha, matshow tick positions, and path-effect
-offset/alpha). Catalog tolerances are ratcheted to actual metrics plus small
-headroom. The one open follow-up (`stat_variants`, RMSE 3.24, cap `MaxRMSE 3.4`)
-is below threshold with a documented rasterization-boundary exception.
+All are complete; detailed implementation logs remain available in git history.
 
----
-
-# Phase 2: Parity Status Reporting ✅
-
-**Closed.** `docs/matplotlib-parity-status.md` is generated from machine
-inventories and is kept current by CI: `TestAllUpstreamPublicRowsAreClassified`
-guards unclassified rows; `TestPartialAndOmissionRowsHaveNotes` guards rows
-without rationale. Per-family status tables cover every upstream feature family
-with status, local API, fixture, and browser demo columns.
-
----
-
-# Phase 3: Large File Decomposition ✅
-
-**Closed.** All tracked Go files above 1k lines are split into focused units
-(or documented with an explicit keep-large decision in
-`docs/large-file-decomposition.md`). Decomposed in batches L1–L8: test files
-by behavior family, algorithm-heavy core files (`contour`, `axis`, `text`,
-`axes3d_contour_surface`, `legend`, `colorbar`), facade entrypoints (`pyplot`,
-`cmd/parityviewer`), and backend implementations (`agg`, `gobasic`, `ps`,
-`pgf`). The split is locked in by `just large-file-audit` plus the per-batch
-`*SplitIsTracked` guard tests, and curated/generated-data files are a documented
-keep-large exception with drift guards. Full `just fmt && just lint && just test`
-and optional parity checks pass after decomposition.
-
----
-
-# Phases 4–9: Parity-Breadth Closure
-
-These phases are derived from the independent fidelity review in
-[`REVIEW.md`](REVIEW.md) (2026-06-21). The review's verdict: the numerical and
-rendering **core is faithful** (transforms, locators, contours, 3D projection,
-norms, mathtext layout, FreeType text — verified line-for-line), but **breadth
-is incomplete** — the long tail of Matplotlib kwargs/modes is missing across
-nearly every subsystem, and several degradations are **silent**. The generated
-`docs/matplotlib-parity-status.md` self-classifies most families as
-"partial / thin"; these phases close that gap.
-
-**Relationship to v1.0:** Phase 11 ships the release _mechanics_. Phases 4–9
-closed the _parity_ the project advertises — silent-failure hardening (4),
-formatter/layout/date fidelity (5), mathtext/text completeness (6), plot/colormap/
-norm breadth (7), backend/renderer/styling completion (8), and the deferred
-infrastructure depth (9) — so the Matplotlib-parity claim is now backed by code,
-not scoped away. The genuinely-deferred residuals remain tracked in Phases 12 & 13.
-
-## Phase 4: Silent-Failure Hardening & API Correctness ✅
-
-**Closed.** Eliminated the worst UX failure mode — silently-wrong output with no
-diagnostic — built on a shared swappable warning sink in `internal/diag`
-(`diag.Warnf` / `diag.SetHandler`) that low- and high-level packages use without
-coupling or enlarging the public API. All six paths now surface lost intent:
-MathText warns on unknown commands instead of echoing them (shipped in
-`github.com/cwbudde/mathtext v0.2.0`); an explicit `alpha=0` is baked into the
-resolved colors at construction for the Bar/Fill/Hist/ErrorBar/BoxPlot families
-(Step and the 3D bar/voxel paths already honored it); an unknown colormap warns
-before the viridis fallback; Gouraud QuadMesh warns once when downgrading to flat
-cells; invalid artist input (length mismatches, bad `errorevery`) logs a reason
-instead of returning a bare `nil`; and the 3D naming traps `PlotSurface`/`Voxel`
-warn once and document the real APIs (`Axes3D.Surface`, `Axes3D.Voxels`).
-_Remaining (each needs a frozen-API break): `Violin`/`Grid` expose a plain
-`float64` alpha where 0 is indistinguishable from "unset" (needs `*float64`), and
-a mathtext strict (error) mode toggle is still open._
-
-## Phase 5: Formatter, Layout & Date Fidelity ✅
-
-**Closed.** Closed the highest-impact divergences on ordinary linear plots and
-layouts. `ScalarFormatter` now ports Matplotlib's
-`set_locs`/`_compute_offset`/`_set_order_of_magnitude`/`get_offset`, rendering
-the shared additive offset and ×10ⁿ multiplier as offset text on both axes at
-uniform tick precision; `constrained_layout` runs a real `LayoutGrid` constraint
-solver (ported from `_layoutgrid.py`/`_constrained_layout.py` with per-margin
-variables and suptitle/colorbar/legend reservations) that genuinely diverges from
-`tight_layout`'s greedy heuristic; dates adopt Matplotlib days-since-epoch via
-`Date2Num`/`Num2Date`/`SetEpoch`/`GetEpoch` with microsecond rounding; and
-per-axes `Margins`/`SetXMargin`/`SetYMargin` + `round_numbers` autolimit mode,
-`SetAdjustable`/`SetAnchor` aspect control, `NbinsAuto` axis-length-aware bin
-counts, and non-mutating `label_outer()` shared-axes suppression all land.
-Large/offset-magnitude and date figures match the references at RMSE ≤ ~2.
-
-## Phase 6: MathText & Text Completeness ✅
-
-**Closed.** Raised mathtext from ~13% to full symbol coverage and fixed text
-fallback, all shipped in `github.com/cwbudde/mathtext v0.4.2` (no `replace`). The
-complete 632-entry `tex2uni` table is generated and consulted as a final fallback
-in both the layout parser and the plain-text normalizer (with operator/relation/
-arrow spacing classes); the six math alphabets
-(`\mathbb \mathcal \mathfrak \mathscr \boldsymbol \bm`) map to the Unicode
-Mathematical-Alphanumeric block (Letterlike holes respected); a centered
-separate-glyph accent model faithfully ports `Parser.accent` (full `_accent_map`,
-char forms, wide accents, `\overline`-as-rule, `\overset`/`\underset`/`\substack`;
-`\overbrace`/`\underbrace`/`\stackrel`/`\not` ship best-effort non-parity);
-per-glyph multi-font fallback resolves Mathematical-Alphanumeric/symbol glyphs
-DejaVu lacks to STIXGeneral instead of tofu; and `Text(bbox=boxstyle=…)` bridges
-to the existing `FancyBboxPatch` styles via a Matplotlib boxstyle spec string.
-Coverage is asserted ≥95% (100% today) by a symbol-table parity test, and parity
-cases `mathtext_accents` and `text_bbox_styles` are green.
-
-## Phase 7: Plot, Colormap & Norm Configuration Breadth ✅
-
-**Closed.** Closed the per-artist configuration tail so common scientific plots
-match Matplotlib defaults, not just the happy path. Boxplot gains the
-`patch_artist=False` unfilled default (no color-cycle consumption), orientation,
-the `showbox`/`showcaps`/`showmeans`/`meanline`/`sym` flags, `bootstrap` CI, and
-percentile-clamped scalar `whis`; StackPlot gains `wiggle`/`weighted_wiggle`/`sym`
-baselines (faithful `stackplot.py` port) with one-property-cycle-entry-per-layer
-color cycling; Contour gains `negative_linestyles`, `extend`, `linestyles`,
-contourf `hatches`, and `clabel` `fmt`/`rightside_up`, plus the contourpy
-closed-loop start-vertex convention that fixes dashed-contour dash phase (RMSE
-9→0.07); Colorbar gains norm-aware locators (SymLog/Power/TwoSlope/Centered/NoNorm),
-`extendfrac`, and minor ticks; `imshow` gains native RGB/RGBA and `image.Image`
-input (`ImShowRGB`/`ImShowImage`) bypassing colormap+norm; and `FuncNorm` plus the
-`petroff10` color sequence and a `color_sequences`-style registry land. Misc
-kwargs (`Stem` orientation, errorbar `capthick`, scatter `plotnonfinite`,
-`LineCollection` linestyle strings) ship as faithful 3.10.9 ports. New parity
-cases — `boxplot_default`, `stackplot_streamgraph`, `contour_styles` (2.50),
-`colorbar_symlog_ticks` (0.65), `colorbar_extendfrac` (0.87), `imshow_rgb` (0.23),
-`stem_horizontal`, `errorbar_capthick`, `scatter_plotnonfinite` (0.04),
-`linecollection_linestyle` (0.01) — match Matplotlib styling, and two AGG backend
-fixes gate the single-path half-pixel offset on a visible stroke (streamgraph
-6.15→0.07) and always anti-alias contourf hatch strokes (hatched-contourf
-26→0.55). _Deferred: `MultiNorm` (a 3.11 feature needing multivariate colormaps),
-the full contourpy `locate_label` port, and long-tail kwargs (`hatch`-list
-cycling, `sticky_edges`)._
-
-## Phase 8: Backend, Renderer & Styling Completion ✅
-
-**Closed.** Finished the renderer/backend semantics and grew the styling system
-from ~13% rcParam coverage. The crude vector `MeasureText` stubs in PDF/PS/PGF/SVG
-are replaced by the shared pure-Go font shaper (`render/text_metrics.go`:
-`MeasureTextMetrics`/`MeasureTextInkBounds`/`MeasureFontHeightMetrics`), so vector
-backends anchor rotated/vertical text and report descents like AGG (PNG goldens
-byte-identical). Gouraud triangles rasterize through agg_go's antialiased
-`GouraudTriangle` (RMSE 3.95→0.26) and gradients honor an arbitrary number of
-stops (new `FillLinearGradientStops`, needing agg_go v0.3.2). Matplotlib's
-sketch/xkcd filter (LCG + segmentator + sine, ported from `path_converters.h`)
-applies in y-up display space across every backend, driven by the `path.sketch`
-rcParam / `style.WithXkcd()` (parity ~47 dB). PS/PGF gain gradient + pattern
-fills, and PGF gains clip-path + vertical-text interfaces (fully vector via
-`\pgfdeclare…shading`). `url`/`gid` metadata flows through `GraphicsContext` into
-clickable SVG `<a>`/`<g>` wrappers and PDF `/Link` annotations; `RestoreRegion`'s
-y-flip is finished for blit/anim. rcParams coverage now spans
-`savefig.*`/`pdf.*`/`ps.*`/`svg.*`/`animation.*`/`boxplot.*`/`mathtext.*`/`hatch.*`/
-`image.*`/`date.*` (all parsed + round-tripped; the high-impact groups functionally
-wired and `savefig.*` applied at save time; the rest store-only by design). A new
-top-level `cycler` package (faithful `Cycler` port with `+`/`*`) plus the embedded
-3.10.9 stylelib add linestyle/marker/linewidth cyclers and the standard `.mplstyle`
-sheets, registered **register-if-absent** so hand-tuned built-ins and their goldens
-are preserved (`classic` skipped: unsupported continuation-comment syntax).
-
-## Phase 9: Deferred Infrastructure Depth ✅
-
-**Closed.** Landed the lower-priority structural depth the review surfaced; the
-genuinely-deferred residuals were spun out into Phases 12 & 13 (cocircular Qhull
-parity and renderer-wired cached transformed paths). A Bézier toolkit
-(`geom/bezier.go`: `SplitDeCasteljau`, arc-length, `GetParallels`,
-`MakeWedgedBezier2`, `InsideCircle`, …) and path-generator helpers
-(`geom/path_generators.go`: `UnitCircle`/`Arc`/`Wedge`/`EllipseBezier`, regular
-polygons/stars) replace the ad-hoc reimplementations across `core`/`render`,
-verified against matplotlib 3.10.9. The `tri/` package now owns the
-`Triangulation` type, point location (`TrapezoidMapTriFinder`), interpolation
-(linear + reduced-HCT cubic), refinement, and analysis, with Delaunay
-connectivity computed by the standalone pure-Go `github.com/cwbudde/qhull-go`
-engine — identical to Qhull's `qhull d Qt Qbb Qc Qz` backend for general position
-and, via the faithful ridge build, for the cocircular diagonal too (Phase 12,
-shipped and extracted). Live bbox-linked transforms
-(`BboxTransformTo` wired to the `TransformNode` invalidation graph) give each Axes
-a persistent `axesBbox`/`transAxes`/`transData` graph that invalidates-on-change
-instead of rebuilding every draw (RMSE 0, affine leg cached); the `AffineProvider`
-capability opens the transform type set to third parties; `transform.splitAffine`/
-`TransformedPath` cache the affine/non-affine split (renderer wiring deferred to
-Phase 13); the path simplifier matches Matplotlib's single-pass algorithm; and a
-teardown/introspection API (`Clear`/`Cla`/`Remove`/`DelAxes`/`Clf`, `Getp`/`Setp`/
-`Findobj`/`FindobjType`) mirrors Matplotlib's lifecycle surface.
-
----
+- **Phase 1 — Visual parity:** all catalog cases closed below RMSE 5.
+- **Phase 2 — Reporting:** generated parity matrix plus CI coverage guards.
+- **Phase 3 — Decomposition:** oversized Go files split and audit-locked.
+- **Phase 4 — Correctness:** silent failures now handle or diagnose lost intent.
+- **Phase 5 — Fidelity:** formatters, layout, dates, margins, and axes completed.
+- **Phase 6 — Text:** MathText coverage, fallback, accents, and boxes completed.
+- **Phase 7 — Plot breadth:** key artist, contour, colorbar, and image gaps closed.
+- **Phase 8 — Backends/style:** metrics, effects, vectors, rcParams, cyclers done.
+- **Phase 9 — Infrastructure:** geometry, triangulation, transforms, lifecycle done.
 
 # Remaining Work (Open Phases)
 
@@ -426,38 +250,7 @@ User-facing memory targets and tuning guide documented.
 
 ## Phase 12: Cocircular Qhull-Faithful Delaunay ✅ (shipped & extracted)
 
-**Goal:** make the Delaunay triangulation byte-for-byte identical to matplotlib's
-Qhull backend (`qhull d Qt Qbb Qc Qz`, qhull 8.0.2), including **cocircular**
-inputs (≥4 points on a common circle) where the triangulation is non-unique and
-Qhull's diagonal is fixed by construction order, not geometry.
-
-**Outcome — done.** A faithful incremental **ridge-graph** hull (Qhull's own
-layout: inverse-id vertex sets + parallel neighbour arrays + explicit ridge
-lists, ported from `qh_createsimplex`/`qh_initialhull`, `qh_sethyperplane_det`,
-`qh_findbest`/`qh_findbesthorizon`, `qh_makenewfacets`, and the
-`qh_premerge`→`qh_mergecycle` coplanar-horizon merge) computes Qhull's exact
-**vertex creation order**; each cocircular cell is then re-fanned from its
-last-created vertex — proven to reproduce Qhull's diagonal. General position is
-exact (27/27); cocircular matches Qhull's exact build order. Wired into
-`tri.delaunayTriangles` (general position takes a fast exact path; cocircular gets
-the computed fan; falls back to the valid exact Delaunay if the order computation
-ever bails). Three 3D goldens shifted to the more-faithful diagonal and were
-regenerated against the matplotlib references.
-
-**Extracted to a standalone module (2026-06-27).** The package now lives at
-**`github.com/cwbudde/qhull-go` (v0.1.0, tagged & pushed)**; matplotlib-go depends
-on it via `go.mod` (local `replace => ../qhull-go` for co-development). The
-in-tree `tri/qhull/` copy and its gitignored Qhull oracle were deleted —
-connectivity is unchanged by the move, so no goldens changed.
-
-**grid5x4 holdout — closed upstream.** The lone 60/61 order-parity holdout
-(historical stage "3c.6f": intermediate ridge-order bookkeeping of a merged quad
-across `addPoint`s) is **resolved in qhull-go → 34/34 cocircular, 61/61 order**
-(faithful `qh_findbestnew` + a non-simplicial `findbestnew` flag).
-
-**Open in matplotlib-go: none.** Further qhull-go work (publishing polish, doc
-freeze, optional richer result type, dropping the local `replace`) is tracked in
-that repo's own `PLAN.md`.
+**Completed 2026-06-27.** The Qhull-faithful Delaunay engine now reproduces general and cocircular construction order and lives in `github.com/cwbudde/qhull-go` v0.1.0; `tri` consumes it, and further work is tracked in that repository.
 
 ---
 
@@ -1032,81 +825,7 @@ descoped before the tag.
 
 ## Phase 19: Default-Value Fidelity & Golden Regeneration ✅
 
-**Goal:** an unstyled plot must use matplotlib 3.10.9's defaults. Today three
-headline defaults diverge and one rc default is dead code. Every fix here moves
-Go output _toward_ the committed matplotlib references, so this phase
-regenerates goldens (never references) and should tighten tolerances.
-
-- [x] `lines.linewidth` — two coupled bugs: `style/style.go:333` defaults
-      `RC.LineWidth` to **1.25** (mpl: 1.5) and `core/plot.go:87` hardcodes
-      `lineWidth := 1.5` without reading `RC.LineWidth` (only the scatter
-      edge-width fallback reads it), so `lines.linewidth` in an `.mplstyle` is a
-      no-op for lines. Fix the default to 1.5 AND route `plot()` through the rc
-      value.
-      _Shipped 2026-07-02:_ `RC.LineWidth` default 1.25 → 1.5; `Plot()` seeds
-      its width from `resolvedRC().LineWidth` (option > cycle > rc > 1.5).
-      `TestMPLStyleLinesLinewidthReachesPlot` proves the `.mplstyle` route.
-- [x] hist default bins — `core/histogram.go:285` / `core/plot.go:929` default
-      to auto-selection (Sturges <1000 else Scott); matplotlib defaults to fixed
-      **10** (rc `hist.bins`, `_axes.py:7033`). Also fix `'auto'` semantics to
-      numpy's `min(fd, sturges)` bin width, FD IQR to interpolated (linear)
-      percentiles instead of nearest-rank, and Scott to ddof=0. Wire the
-      `hist.bins` rc key (Phase 16 cross-ref).
-      _Shipped 2026-07-02:_ new zero-value `BinStrategyDefault` = 10 bins
-      (`BinStrategyAuto` and the rest shift by one but keep their names);
-      auto/Scott/FD are width-based ports of numpy's `_hist_bin_*` (verified
-      against numpy 1.26.4 in `TestHist2D_AllBinStrategies` and
-      `TestBinStrategiesMatchNumpyOnSkewedData`); zero-width estimators now
-      yield 1 bin like numpy (was: Sturges fallback). `hist.bins` is parsed
-      (`int` or `auto` → `style.HistBinsAuto`), exported via `Params`, and
-      consumed by `Axes.Hist`.
-- [x] scatter default size — `core/scatter.go:802`: unset size renders
-      **invisible** (zero area); matplotlib uses `s = 36` pt². Default to 36.
-      _Shipped 2026-07-02:_ `Scatter2D.effectiveSize()` defaults the draw path;
-      `Axes.Scatter` and the legend path already defaulted to 36, so only
-      directly-constructed `Scatter2D` artists change.
-- [x] minor ticks — size 2.1 → **2.0** (`core/axis_ticks.go:73`); distinguish
-      minor pad **3.4** from major 3.5 (`core/axis_types.go:23`).
-      _Shipped 2026-07-02:_ `minorTickSize()` falls back to a fixed 2.0 pt
-      (was `TickSize*0.6`); new `TickLabelStyle.PadPt` carries the pad in
-      points, with `MinorLabelStyle` constructed at 3.4 pt.
-- [x] tick-label pad DPI fallback 96 → **100** (`core/axis_ticklabels.go:203`).
-      _Shipped 2026-07-02_ (no-context fallback only; rendered output always
-      has a ctx).
-- [x] `PlotOptions` — add a typed linestyle field (`"--"`, `":"`, …); today
-      only `Dashes []float64` exists, so the most common mpl idiom has no direct
-      spelling. (Use the typed-constant enum style from day one so Phase 20
-      doesn't have to re-break it.)
-      _Shipped 2026-07-02:_ `type LineStyle string` with
-      `LineStyleSolid/Dashed/DashDot/Dotted/None` constants;
-      `PlotOptions.LineStyle` resolves after explicit `Dashes` and before the
-      property cycle; `LineStyleNone` suppresses the stroke (markers-only),
-      like matplotlib's `"none"`.
-- [x] **Golden regen pass:** rerun `-update-golden` for affected cases;
-      matplotlib references are untouched (they already embody these defaults).
-      Assert per-case reference-compare RMSE is non-increasing; ratchet tolerances
-      where cases improve.
-      _Verified 2026-07-02 — zero golden churn._ All 173 golden cases and the
-      reference compares pass byte-identical on the fixed code: the divergent
-      defaults were dead or already-patched-over paths (`Plot()` hardcoded the
-      correct 1.5; every hist parity case passes explicit bins; `Axes.Scatter`
-      already defaulted 36; the 2.1→2.0 pt minor-tick change is absorbed by
-      endpoint snapping in every current case, and no case draws minor
-      labels). Nothing to regenerate, no tolerance moved — Phase 20's
-      goldens-byte-identical gate starts from this unchanged baseline.
-
-**Size:** M. **Depends on:** Phase 18's harness-hole items.
-
-**Exit criterion:**
-
-- [x] Unit tests assert the five default values against matplotlib 3.10.9
-      literals; `lines.linewidth` from an `.mplstyle` visibly changes `plot()`
-      output; goldens regenerated with no reference-compare regression.
-      _Met 2026-07-02:_ `core/mpl_defaults_test.go` pins linewidth 1.5,
-      hist.bins 10, scatter s=36, minor size 2.0 pt / pad 3.4 pt, and the
-      100-DPI pad fallback, plus the `.mplstyle` → `plot()` route for
-      `lines.linewidth` and `hist.bins`; goldens needed no regeneration (see
-      above) and the full golden/reference suite is green.
+**Completed 2026-07-02.** Matplotlib 3.10.9 defaults now govern line width, histogram bins, scatter size, minor ticks, and DPI fallback; typed line styles also landed. Focused tests pin the values, while all 173 goldens and reference comparisons remained unchanged and green.
 
 ## Phase 20: Go-Idiomatic API Rework & `core/` Split (BREAKING, pre-v1.0)
 
