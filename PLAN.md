@@ -418,91 +418,38 @@ bugs, and two holes in the parity harness. Phases 14–18 close those.
 
 ## Phase 14: Silent-Failure Hardening, Round 2 ✅
 
-**Goal:** turn the remaining silent-wrong-output paths into loud errors or honest
-warnings. This is the highest-value, lowest-cost bucket — each item is a small diff
-with direct impact on anyone porting a real matplotlib script.
+**Completed 2026-07-24.** Silent degradations now fail or warn honestly, text
+picking uses real metrics, and animation blitting performs true overlay redraws.
+Focused tests cover every item; parity remained green.
 
-**Status (2026-07-24):** all six scoped items are shipped. The colormap
-case-folding rework remains explicitly deferred to Phase 17; the animation blit
-path now performs real overlay-only redraws through WebAgg. Parity remains green,
-with focused tests covering every shipped behavior.
+- [x] Added strict colormap lookup (`GetColormapStrict`,
+      `ErrUnknownColormap`) while retaining the warned viridis fallback. Canonical
+      case-sensitive map names remain deferred to Phase 17.
+- [x] Added one-shot diagnostics for invalid `Setp` values, unsupported PDF/PS
+      gradient collections, and renderer fallbacks that ignore image rotation.
+- [x] Replaced `Text.Contains`' rune-count estimate with shaped multiline glyph
+      metrics.
+- [x] Implemented real WebAgg blitting: capture the static background, restore
+      it, draw only animated artists, then blit; unsupported canvases use a
+      correct full-redraw fallback.
 
-- [x] `color/colormap.go` — added `GetColormapStrict(name) (Colormap, error)` +
-      exported `ErrUnknownColormap`; `GetColormap` now delegates to it and keeps the
-      warn-then-viridis lenient fallback. Tests: `TestGetColormapStrict*`. _Deferred to
-      Phase 17:_ stopping case-folding (`"Blues"=="blues"`) needs the builtin maps
-      re-registered under canonical mixed-case names — a larger, parity-risky change
-      (documented in the `GetColormapStrict` doc comment).
-- [x] `core/introspection.go` — `Setp` now emits a one-shot `diag.Warnf` for
-      unrecognized keys (and wrong-typed values) via the existing `SetProperty` bool,
-      instead of silently dropping them. Test: `TestSetpWarnsOnUnknownProperty`.
-- [x] `backends/pdf/pdf.go` (+`pdf_write.go`) & `backends/ps/procedures.go`
-      (+`gradients.go`) — gradient/pattern-filled marker & path-collection items now
-      emit a one-shot `diag.Warnf` (`warnGradientCollectionDrop`) when skipped, instead
-      of vanishing undrawn. (A real gradient-XObject/procedure fill stays future work.)
-- [x] `core/picker_contains.go` — `Text.Contains` now measures the glyph bbox via
-      the shared sfnt shaper (`render.MeasureTextMetrics`, per-line width + real
-      ascent/descent) using the resolved font key, replacing the `FontSize × rune-count`
-      heuristic. Removed the now-orphaned `textRuneCount`.
-- [x] `core/image.go` — the rotation-ignoring fallback now emits a one-shot
-      `diag.Warnf` (`rotatedImageFallbackWarnOnce`) naming the renderer type; benign on
-      AGG (which implements both transform paths), no longer silent-wrong on thin
-      backends.
-- [x] `animation/animation.go` / `canvas/scheduler.go` / `backends/webagg` —
-      `Blit=true` now captures one non-animated background, restores it, draws only
-      animated artists through the optional `AnimatedDrawCanvas`, and blits without
-      a full redraw. The first frame includes its overlay; unsupported canvases take
-      a correct full-redraw fallback instead of dropping animation-managed artists.
-      Focused animation, WebAgg, and sketched-background tests lock the behavior.
-      _Shipped 2026-07-24._
+## Phase 15: Backend Honesty & Capability Verification ✅
 
-## Phase 15: Backend Honesty & Capability Verification 🧪
+**Completed 2026-07-01.** Backend claims are behaviorally verified, secondary
+backends report their real implementation tier, and known degradations are
+explicit. All nine audit findings closed with zero golden regressions.
 
-**Goal:** stop advertising capabilities the backend doesn't actually provide, and
-make the verification layer catch the gap. The review's strongest "facade" findings
-live here, all off the AGG happy-path.
-
-**Status (2026-07-01):** all nine items shipped. Verification is now behavioral
-(unprobeable, non-intrinsic claims fail instead of rubber-stamping); Skia
-registration/GPU honesty is test-locked; the pure-Go renderer grew real
-round/bevel joins, full paint carry-forward + unsupported-fill warnings; the
-glyph-ID→rune cmap resolver replaced the `rune(id)` cast across all five
-backends; webagg now emits rubberband + history-button events; the stale gio doc
-was removed; and SVG drop-shadow + the documented PGF font limitation closed the
-vector-backend gaps. Zero golden regressions.
-
-- [x] `backends/registry.go` — `VerifyRendererCapabilities` is now behavioral: a
-      claimed capability must pass its runtime check or be one of three intrinsic,
-      always-present capabilities (`AntiAliasing`/`SubPixel`/`PathClip`); any
-      unprobeable, non-intrinsic claim is a verification failure rather than a silent
-      pass. Guarded by `TestVerifyRendererCapabilitiesRejectsUnprobeableClaim`.
-- [x] `backends/skia/` — registration honesty: item 1 now enforces that every
-      registered skia capability is actually implemented, and `skia_render_test.go`
-      locks that the CPU tier reports the bridged batch caps as `CapabilityBridged`
-      (not native) and never advertises `GPUAccel`. `init.go` documents the bridge.
-- [x] Skia "GPU" honesty — `GPU()` is gated on a new `BridgeInfo.Accelerated`
-      flag that is false for every current bridge (CPU readback + cgo raster
-      surface), so it returns false until a real `SkSurface::MakeRenderTarget` path
-      lands; GPU _mode_ selection moved to `GPUModeRequested()`/`BridgeInfo().Mode`.
-- [x] `backends/gobasic/stroke.go` — `JoinRound` now emits an adaptive arc fan
-      and `JoinBevel` a corner triangle via `calculateJoinFiller`, appended as filled
-      subpaths. Guarded by `TestJoinFillerGeometry`.
-- [x] `backends/gobasic` `pathDevice` — carries the full `Paint` via struct copy
-      (no more lossy reconstruction) and emits a one-shot `diag.Warnf` when a paint
-      arrives with an unsupported gradient/pattern/composite fill.
-- [x] Systemic `GlyphRun` bug — added `render.GlyphIDToRune` (cached cmap
-      reverse-lookup); gobasic/agg/svg/pdf/ps/pgf now resolve glyph indices through
-      it (one-shot warn on failure) instead of casting `rune(glyph.ID)`. Guarded by
-      `TestGlyphIDToRuneRoundTrip`.
-- [x] `backends/webagg` — the server now emits `rubberband` (via a new
-      `Navigation.SetRubberbandHandler`) during/after zoom drags and `history_buttons`
-      (on connect + after toolbar actions). Guarded by `TestRubberbandEmittedDuringZoomDrag`.
-- [x] `backends/desktop/gio` — removed the stale `doc.go`; `gio.go` already
-      carries the accurate package doc for the real, registered backend.
-- [x] `backends/svg/path.go` — the `shadow` filter now emits a true
-      `feDropShadow` (offset + blur + opacity) instead of collapsing to a symmetric
-      blur. `backends/pgf/text.go` documents the intentional LaTeX-owned font
-      selection as a known limitation. Guarded by `TestPathEffectShadowEmitsDropShadow`.
+- [x] Capability verification rejects unprobeable non-intrinsic claims; Skia
+      reports bridged CPU features accurately and advertises GPU acceleration
+      only when `BridgeInfo.Accelerated` is true.
+- [x] GoBasic gained real round/bevel joins, lossless `Paint` carry-forward, and
+      warnings for unsupported gradient/pattern/composite fills.
+- [x] Added cached cmap-based `render.GlyphIDToRune`; AGG, GoBasic, SVG, PDF,
+      PS, and PGF no longer cast glyph IDs directly to runes.
+- [x] WebAgg emits rubberband and history-button events; stale Gio documentation
+      was removed.
+- [x] SVG shadows use `feDropShadow`; PGF documents its intentional
+      LaTeX-controlled font-selection limitation.
 
 ## Phase 16: rcParams Honesty & Coverage 🧪
 
