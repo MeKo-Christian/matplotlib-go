@@ -7,6 +7,27 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
+type transparentClearRecordingRenderer struct {
+	recordingRenderer
+	clearCount int
+}
+
+func (r *transparentClearRecordingRenderer) ClearTransparent() {
+	r.clearCount++
+}
+
+func TestAnimatedOverlayDoesNotClearSketchedFigureBackground(t *testing.T) {
+	fig := NewFigure(100, 80)
+	fig.RC.PathSketch = render.SketchParams{Scale: 1, Length: 80, Randomness: 2}
+	r := &transparentClearRecordingRenderer{}
+
+	DrawFigureWithOptions(fig, r, DrawOptions{AnimatedFilter: AnimatedFilterOnlyAnimated})
+
+	if r.clearCount != 0 {
+		t.Fatalf("transparent clears = %d, want 0 during animated overlay", r.clearCount)
+	}
+}
+
 func TestDrawFigureDrawsAxesPatchEvenWhenItMatchesFigureBackground(t *testing.T) {
 	fig := NewFigure(200, 200)
 	first := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})

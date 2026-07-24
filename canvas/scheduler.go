@@ -25,6 +25,15 @@ type BlitCanvas interface {
 	Blit(bbox geom.Rect) error
 }
 
+// AnimatedDrawCanvas is an optional FigureCanvas extension for drawing only
+// artists marked animated into the canvas's existing renderer buffer. It is
+// used after RestoreRegion and before Blit; implementations must not clear or
+// present the buffer as part of DrawAnimated.
+type AnimatedDrawCanvas interface {
+	FigureCanvas
+	DrawAnimated() error
+}
+
 // RasterCanvas is an optional FigureCanvas extension exposing the most recently
 // rendered frame as an RGBA buffer in display pixel order. It is the Go analogue
 // of reading matplotlib's Agg canvas buffer_rgba after a draw, and is used by the

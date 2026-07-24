@@ -2066,6 +2066,10 @@
           "declaration": "func (Manager) Draw() error"
         },
         {
+          "id": "method Manager.DrawAnimated",
+          "declaration": "func (Manager) DrawAnimated() error"
+        },
+        {
           "id": "method Manager.DrawIdle",
           "declaration": "func (Manager) DrawIdle() error"
         },
@@ -2518,6 +2522,10 @@
         {
           "id": "method WidgetInteraction.Detach",
           "declaration": "func (WidgetInteraction) Detach()"
+        },
+        {
+          "id": "type AnimatedDrawCanvas",
+          "declaration": "type AnimatedDrawCanvas interface{ FigureCanvas; DrawAnimated func() error }"
         },
         {
           "id": "type Axes",

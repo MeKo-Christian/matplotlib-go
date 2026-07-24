@@ -70,6 +70,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 					drawOverlayArtist(r, ctx, art, overlay)
 				}
 			}
+			drawSecondaryChildAxes(ax, fig, r, vp, opts, alignment)
 			continue
 		}
 
@@ -268,6 +269,9 @@ func drawSecondaryChildAxes(parent *Axes, fig *Figure, r render.Renderer, vp geo
 				drawOverlayArtist(r, ctx, art, overlay)
 			}
 		}
+		if opts.AnimatedFilter == AnimatedFilterOnlyAnimated {
+			continue
+		}
 
 		for _, ai := range []struct {
 			axis   *Axis
@@ -336,6 +340,9 @@ func isSecondaryAxes(ax *Axes) bool {
 // fully-transparent notch pixels the reference renderer produces, which an
 // opaque clear can never reproduce.
 func drawFigureBackground(r render.Renderer, vp geom.Rect, opts DrawOptions, fig *Figure) {
+	if opts.AnimatedFilter == AnimatedFilterOnlyAnimated {
+		return
+	}
 	if drawSketchedFigurePatch(r, vp, opts, fig) {
 		return
 	}

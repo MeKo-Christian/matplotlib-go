@@ -259,6 +259,25 @@ func (m *Manager) Draw() error {
 	return m.drawAndBroadcast()
 }
 
+// DrawAnimated renders only artists marked animated into the existing renderer
+// buffer. It does not broadcast; callers restore a background first and invoke
+// Blit afterwards to present the completed overlay.
+func (m *Manager) DrawAnimated() error {
+	if m.closed.Load() {
+		return nil
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.renderer == nil {
+		return errors.New("webagg: no renderer for animated draw")
+	}
+	core.DrawFigureWithOptions(m.figure, m.renderer, core.DrawOptions{
+		AnimatedFilter: core.AnimatedFilterOnlyAnimated,
+	})
+	m.pngStale = true
+	return nil
+}
+
 // DrawIdle schedules a redraw for the next idle turn. Repeated calls before the
 // idle callback runs collapse into one draw, matching Matplotlib's draw_idle
 // behavior for event storms.
@@ -672,6 +691,7 @@ func pixelBounds(rect geom.Rect, w, h int) (minX, minY, maxX, maxY int, ok bool)
 }
 
 var (
-	_ plotcanvas.DrawIdleCanvas = (*Manager)(nil)
-	_ plotcanvas.BlitCanvas     = (*Manager)(nil)
+	_ plotcanvas.DrawIdleCanvas     = (*Manager)(nil)
+	_ plotcanvas.BlitCanvas         = (*Manager)(nil)
+	_ plotcanvas.AnimatedDrawCanvas = (*Manager)(nil)
 )

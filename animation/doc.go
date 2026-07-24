@@ -9,10 +9,10 @@
 //
 // Artists marked with SetAnimated(true) are skipped by the figure's default
 // draw pass and drawn only on the animation's overlay pass. When a canvas
-// reports both BlitCanvas and BufferRegioner the animation captures a
-// background snapshot during Start, then on each frame restores the snapshot
-// and replays only the animated artists before blitting the affected region.
-// Backends without blit support fall back to a full canvas redraw per frame.
+// reports both BlitCanvas and AnimatedDrawCanvas the animation captures a
+// background snapshot on the first frame, then restores it, replays only the
+// animated artists, and blits the affected region. Backends without both
+// capabilities fall back to a full canvas redraw per frame.
 //
 // GIF, APNG, and self-contained HTML output are dependency-free through
 // GifWriter, APNGWriter, and HTMLWriter. MP4 and WebM output are optional:

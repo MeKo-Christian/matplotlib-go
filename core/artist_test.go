@@ -231,6 +231,31 @@ func TestDrawFigureWithOptionsOnlyAnimatedDrawsAnimatedOnly(t *testing.T) {
 	}
 }
 
+func TestDrawFigureWithOptionsOnlyAnimatedIncludesSecondaryAxes(t *testing.T) {
+	fig := NewFigure(100, 100)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
+	secondary, err := ax.SecondaryXAxis(
+		AxisTop,
+		func(x float64) float64 { return x },
+		func(x float64) (float64, bool) { return x, true },
+	)
+	if err != nil {
+		t.Fatalf("SecondaryXAxis: %v", err)
+	}
+	animatedDraws := 0
+	staticDraws := 0
+	animated := &metadataTestArtist{draws: &animatedDraws}
+	static := &metadataTestArtist{draws: &staticDraws}
+	animated.SetAnimated(true)
+	secondary.Add(animated)
+	secondary.Add(static)
+
+	DrawFigureWithOptions(fig, &render.NullRenderer{}, DrawOptions{AnimatedFilter: AnimatedFilterOnlyAnimated})
+	if animatedDraws != 1 || staticDraws != 0 {
+		t.Fatalf("secondary only-animated pass drew animated=%d static=%d, want 1/0", animatedDraws, staticDraws)
+	}
+}
+
 func TestDrawFigureWithOptionsAllDrawsBoth(t *testing.T) {
 	fig := NewFigure(100, 100)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})

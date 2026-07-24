@@ -271,6 +271,8 @@ func (a *Animation) Save(filename string, opts ...SaveOption) error {
 // drawSaveFrame renders one frame for Save without blitting, mirroring
 // Animation._draw_next_frame(data, blit=False): run the one-time init pass, call
 // the update function, mark the produced artists animated, and draw the figure.
+// drawFull temporarily includes those animation-managed artists in the ordinary
+// pass; calling Canvas.Draw directly would exclude them.
 func (a *Animation) drawSaveFrame(frame int, first bool) error {
 	if first && a.init != nil {
 		initial, err := a.init()
@@ -284,7 +286,7 @@ func (a *Animation) drawSaveFrame(frame int, first bool) error {
 		return err
 	}
 	a.registerAnimated(updated)
-	return a.cfg.Canvas.Draw()
+	return a.drawFull(a.cfg.Canvas)
 }
 
 // writerNameForFile maps a filename extension to a registered writer name.
@@ -525,15 +527,15 @@ func (a *Animation) drawFrame(first bool) error {
 	cnv := a.cfg.Canvas
 	a.mu.Unlock()
 
-	// Try the blit fast path: requires BlitCanvas + a renderer that
-	// implements BufferRegioner. For simplicity in Phase 6.1 we trigger
-	// a full canvas Draw when blit is disabled or unsupported.
+	// The blit path requires both buffer-region operations and an overlay-only
+	// draw entry point. Otherwise perform an honest full redraw with the
+	// animation-managed artists temporarily participating in the normal pass.
 	if useBlit {
 		if done, err := a.drawBlit(cnv, first); done {
 			return err
 		}
 	}
-	return cnv.Draw()
+	return a.drawFull(cnv)
 }
 
 // drawBlit returns done=true when the blit fast path handled the frame.
@@ -543,19 +545,27 @@ func (a *Animation) drawBlit(cnv canvas.FigureCanvas, first bool) (bool, error) 
 	if !ok {
 		return false, nil
 	}
+	overlay, ok := cnv.(canvas.AnimatedDrawCanvas)
+	if !ok {
+		return false, nil
+	}
+	fig := cnv.Figure()
+	if fig == nil {
+		return false, nil
+	}
+	bbox := geom.Rect{Max: geom.Pt{X: fig.SizePx.X, Y: fig.SizePx.Y}}
+	a.mu.Lock()
+	bg := a.background
+	blitReady := a.blitReady
+	a.mu.Unlock()
 	// Capture a background snapshot on the first frame by drawing the
-	// figure once with animated artists suppressed, then copying the full
-	// figure rect into a BufferRegion. After that, every frame restores
-	// the snapshot and draws only the animated overlay before blitting.
-	if first || !a.blitReady {
+	// figure once with animated artists suppressed, then copying the full figure
+	// rect into a BufferRegion. A resize invalidates both the renderer and the
+	// old-sized region, so recapture when its bounds no longer match.
+	if first || !blitReady || bg == nil || bg.Rect != bbox {
 		if err := cnv.Draw(); err != nil {
 			return true, err
 		}
-		fig := cnv.Figure()
-		if fig == nil {
-			return false, nil
-		}
-		bbox := geom.Rect{Max: geom.Pt{X: fig.SizePx.X, Y: fig.SizePx.Y}}
 		bg := blitter.CopyFromBBox(bbox)
 		if bg == nil {
 			// renderer does not support buffer regions; fall back.
@@ -565,28 +575,35 @@ func (a *Animation) drawBlit(cnv canvas.FigureCanvas, first bool) (bool, error) 
 		a.background = bg
 		a.blitReady = true
 		a.mu.Unlock()
-		return true, blitter.Blit(bbox)
+	} else {
+		if err := blitter.RestoreRegion(bg, &bbox, geom.Pt{}); err != nil {
+			return true, err
+		}
 	}
-	// Restore background then overlay animated artists by drawing the
-	// figure with AnimatedFilterOnlyAnimated through whichever Draw entry
-	// point we have. canvas.Draw is the public entry — for Phase 6.1 we
-	// rely on the canvas's regular Draw which redraws everything, then
-	// composite. Backends that want a true overlay pass must opt in via
-	// their own animation-aware Draw; until then, this is correctness with
-	// the blit overhead of a full redraw, which is still useful as the API
-	// surface and lets tests observe blit decisions.
-	fig := cnv.Figure()
-	bbox := geom.Rect{Max: geom.Pt{X: fig.SizePx.X, Y: fig.SizePx.Y}}
-	a.mu.Lock()
-	bg := a.background
-	a.mu.Unlock()
-	if bg != nil {
-		blitter.RestoreRegion(bg, &bbox, geom.Pt{})
-	}
-	if err := cnv.Draw(); err != nil {
+
+	if err := overlay.DrawAnimated(); err != nil {
 		return true, err
 	}
 	return true, blitter.Blit(bbox)
+}
+
+// drawFull temporarily returns animation-managed artists to the ordinary draw
+// pass. The animation keeps them marked animated between frames so background
+// snapshots exclude them, but a canvas without the overlay capability must
+// still render them during its full-redraw fallback.
+func (a *Animation) drawFull(cnv canvas.FigureCanvas) error {
+	a.mu.Lock()
+	artists := append([]core.Artist(nil), a.animatedArtists...)
+	a.mu.Unlock()
+	for _, art := range artists {
+		setAnimated(art, false)
+	}
+	defer func() {
+		for _, art := range artists {
+			setAnimated(art, true)
+		}
+	}()
+	return cnv.Draw()
 }
 
 func containsArtist(list []core.Artist, target core.Artist) bool {

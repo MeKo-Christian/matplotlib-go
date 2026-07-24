@@ -111,6 +111,15 @@ func (*testStaleArtist) Draw(render.Renderer, *core.DrawContext) {}
 func (*testStaleArtist) Z() float64                              { return 0 }
 func (*testStaleArtist) Bounds(*core.DrawContext) geom.Rect      { return geom.Rect{} }
 
+type animatedDrawTestArtist struct {
+	core.ArtistRasterization
+	draws int
+}
+
+func (a *animatedDrawTestArtist) Draw(render.Renderer, *core.DrawContext) { a.draws++ }
+func (*animatedDrawTestArtist) Z() float64                                { return 0 }
+func (*animatedDrawTestArtist) Bounds(*core.DrawContext) geom.Rect        { return geom.Rect{} }
+
 type blitTestRenderer struct {
 	img    *image.RGBA
 	begins int
@@ -486,6 +495,54 @@ func TestBlitBroadcastsRendererDamageWithoutFullDraw(t *testing.T) {
 	}
 	if renderer.begins != 1 {
 		t.Fatalf("full draw begins after blit = %d, want 1", renderer.begins)
+	}
+}
+
+func TestDrawAnimatedRendersOnlyAnimatedArtistsWithoutBroadcast(t *testing.T) {
+	var renderer *blitTestRenderer
+	fig := core.NewFigure(16, 12)
+	ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
+	static := &animatedDrawTestArtist{}
+	animated := &animatedDrawTestArtist{}
+	animated.SetAnimated(true)
+	ax.Add(static)
+	ax.Add(animated)
+
+	mgr, err := NewManager(Options{
+		Figure: fig,
+		Renderer: func(w, h int, bg render.Color) (RasterRenderer, error) {
+			r, err := newBlitTestRenderer(w, h, bg)
+			renderer = r
+			return r, err
+		},
+		HasBackground: true,
+		Background:    render.Color{R: 1, G: 1, B: 1, A: 1},
+	})
+	if err != nil {
+		t.Fatalf("NewManager: %v", err)
+	}
+	sink := &captureSink{}
+	if _, err := mgr.hub.register(sink); err != nil {
+		t.Fatalf("register: %v", err)
+	}
+	if static.draws != 1 || animated.draws != 0 {
+		t.Fatalf("initial draws static/animated = %d/%d, want 1/0", static.draws, animated.draws)
+	}
+	_, beforeBins := sink.snapshot()
+
+	if err := mgr.DrawAnimated(); err != nil {
+		t.Fatalf("DrawAnimated: %v", err)
+	}
+
+	_, afterBins := sink.snapshot()
+	if static.draws != 1 || animated.draws != 1 {
+		t.Fatalf("overlay draws static/animated = %d/%d, want 1/1", static.draws, animated.draws)
+	}
+	if len(afterBins) != len(beforeBins) {
+		t.Fatalf("DrawAnimated broadcast %d frames, want none", len(afterBins)-len(beforeBins))
+	}
+	if renderer == nil || renderer.begins != 2 {
+		t.Fatalf("renderer begins after overlay = %d, want 2", renderer.begins)
 	}
 }
 

@@ -81,11 +81,9 @@ All are complete; detailed implementation logs remain available in git history.
 
 The phases below still carry open to-do items and are ordered after the closed
 phases. **Phase 10** finishes Skia GPU mode; **Phase 11** is the v1.0 release
-stretch (docs and performance are done, only release mechanics remain); and
-**Phase 13** is deferred-by-decision infrastructure depth, kept here so the open
-design work does not vanish into "future work." (**Phase 12** is complete —
-shipped and extracted to `github.com/cwbudde/qhull-go`; its compact record stays
-below for provenance.)
+stretch (docs and performance are done, only release mechanics remain).
+**Phases 12 and 13 are complete**; their compact records stay below for
+provenance.
 
 ## Parity Follow-up: Sketch figure-patch fill-coverage (done) ✅
 
@@ -254,7 +252,7 @@ User-facing memory targets and tuning guide documented.
 
 ---
 
-## Phase 13: Cached Transformed Paths in the Render Path (deferred) 🔁
+## Phase 13: Cached Transformed Paths in the Render Path ✅
 
 **Goal:** make artists (`Line2D`, patches, collections) draw through a
 persistent `transform.TransformedPath` so a redraw that changes only the trailing
@@ -263,11 +261,13 @@ re-running it per vertex — and an unchanged redraw skips the per-vertex transf
 entirely. This realizes, in the renderer, the affine/non-affine cache split that
 Phase 9 already built into `TransformedPath`.
 
-**Status:** **Line2D pilot + leg-change detection + patch/collection rollout
-shipped** (2026-06-28). The only piece still open is the interactive/animation
-**redraw loop** that exercises repeated redraws of the same figure (the
-single-PNG pipeline never redraws), so the formal exit criterion stays open. What
-landed across the three passes:
+**Status:** **complete** (2026-07-24). The Line2D pilot, leg-change detection,
+patch/collection rollout, and the interactive animation redraw loop are shipped.
+WebAgg's animation path now captures a static background once and repeatedly
+drives `DrawFigureWithOptions(..., AnimatedFilterOnlyAnimated)` into the existing
+renderer before blitting. Unsupported canvases use a correct repeated full-draw
+fallback. This gives end users the persistent redraw loop the cache mechanism
+previously exercised only in tests. What landed across the four passes:
 
 1. `refreshDataTransform` fires the stage matching the leg, the axes invalidation
    nodes are on `DrawContext`, and `Line2D` draws data-coordinate paths through a
@@ -284,6 +284,11 @@ landed across the three passes:
    `Patch`; the three collections keep one cache per element (`Collection`
    grows a `[]displayPathCache`). Sources are rebuilt fresh each draw (collections
    per element), so change detection is value-based (`pathsEqualValue`).
+4. **Redraw loop:** animation blitting now restores the captured background,
+   redraws only animated artists through `canvas.AnimatedDrawCanvas`, and presents
+   the damaged region. WebAgg implements the overlay draw against its persistent
+   renderer; non-blitting canvases repeat full draws without losing
+   animation-managed artists.
 
 Parity is held at RMSE 0 by gating the cache to **genuine non-affine legs only**
 (linear axes keep the direct path — see the ULP note below) and by applying the
@@ -303,7 +308,7 @@ scale) keeps NaN local to one coordinate, exactly like the direct separable chai
   affine; `InvalidNonAffine`/`InvalidAll` re-runs the projection. Covered by
   `TestSplitAffine` + `TestTransformedPathAffineNonAffineSplit`.
 - The persistent per-axes transform graph from Phase 9 (`axesBbox`/`transAxes`/
-  `transData` with `dataNode`) is the natural invalidation source to wire to.
+  `transData` with `dataNode`) drives cache invalidation across redraws.
 
 ### Key insights (why it's more than a drop-in)
 
@@ -313,11 +318,11 @@ scale) keeps NaN local to one coordinate, exactly like the direct separable chai
   would reuse a **stale projection** on a log-domain/limits change. Now fires
   `InvalidNonAffine` for non-affine legs and `InvalidAffine` only for the
   affine-leg/bbox case (`TestRefreshDataTransformInvalidationStage`).
-- **Artists hold no axes/node reference** (✅ addressed for `Line2D`). Artists get
+- **Artists hold no axes/node reference** (✅ addressed). Artists get
   their transform only from the per-draw `DrawContext`; the invalidation nodes are
   now plumbed through `ctx.dataTransformDeps()` (`axesBbox.Node()` + `dataNode`),
-  which `Line2D` wires its `TransformedPath` to. The shared
-  `core/patch_paths.go:buildArtistDisplayPath` is not yet converted (deferred).
+  which `Line2D` and the shared patch/collection display-path cache wire their
+  `TransformedPath` instances to.
 - **Segmentation must stay on final points** (✅ done). `Line2D.displayPath`
   interleaved NaN-segmentation with the per-vertex transform; the cached path
   applies the trailing affine to the cached non-affine points, then runs the
@@ -347,7 +352,7 @@ scale) keeps NaN local to one coordinate, exactly like the direct separable chai
   applies a shear-free affine (the separable bbox) **per axis**, byte-identical to
   the direct separable chain for finite coords and NaN-correct otherwise.
 
-### Remaining work (if revived)
+### Completed work
 
 - [x] Refine `refreshDataTransform` to fire `InvalidNonAffine` for non-affine data
       legs (and `InvalidAffine` otherwise). `core/axes_transform_test.go` stays
@@ -368,6 +373,10 @@ scale) keeps NaN local to one coordinate, exactly like the direct separable chai
       `displayPath` call (`reflect.DeepEqual` leg compare in `refreshDataTransform`;
       `TestRefreshDataTransformInvalidationStage`,
       `TestLine2DDisplayPathReusesProjectionThroughRefresh`).
+- [x] Add the repeated redraw loop: `canvas.AnimatedDrawCanvas` plus WebAgg's
+      persistent-renderer implementation restore one captured background, draw
+      only animated artists, and blit each frame. Unsupported canvases fall back
+      to full draws that temporarily include animation-managed artists.
 
 **Out of scope:** passing the affine _separately_ to the agg backend so it
 composes with the device y-flip and does zero per-vertex affine work
@@ -376,16 +385,15 @@ change.
 
 **Exit criterion:**
 
-- [~] Mechanism complete; only the redraw loop is missing. Reuse now fires through
-  a **full figure draw**: with leg-change detection the every-draw
-  `refreshDataTransform` no longer re-projects an unchanged non-affine leg, so a
-  resize that only moves the bbox reuses the cached projection for `Line2D`,
-  patches, and collections (`TestLine2DDisplayPathReusesProjectionThroughRefresh`,
-  `TestBuildArtistDisplayPathReusesProjection`, `TestCollectionPerElementCacheReuse`).
-  Golden+reference suite stays RMSE 0 (no new failures vs. the pre-existing branch
-  baseline). Still open: an interactive/animation redraw loop (or public re-render
-  API) that actually issues repeated figure draws — the single-PNG pipeline draws
-  once, so the win is currently exercised only by tests, not end users.
+- [x] Mechanism and redraw loop complete. Reuse fires through a **full figure
+      draw**: with leg-change detection the every-draw
+      `refreshDataTransform` no longer re-projects an unchanged non-affine leg, so a
+      resize that only moves the bbox reuses the cached projection for `Line2D`,
+      patches, and collections (`TestLine2DDisplayPathReusesProjectionThroughRefresh`,
+      `TestBuildArtistDisplayPathReusesProjection`, `TestCollectionPerElementCacheReuse`).
+      The WebAgg animation loop now issues repeated overlay-only figure draws against
+      a persistent renderer, with full-redraw fallback for other canvases. Golden and
+      reference output remain unchanged.
 
 ---
 
@@ -408,17 +416,16 @@ bugs, and two holes in the parity harness. Phases 14–18 close those.
 > swallows unknown keys). Phase 8's vector-`MeasureText` fix is **confirmed real**.
 > These phases pick up the genuine residuals, not the parts already done.
 
-## Phase 14: Silent-Failure Hardening, Round 2 🧪
+## Phase 14: Silent-Failure Hardening, Round 2 ✅
 
 **Goal:** turn the remaining silent-wrong-output paths into loud errors or honest
 warnings. This is the highest-value, lowest-cost bucket — each item is a small diff
 with direct impact on anyone porting a real matplotlib script.
 
-**Status (2026-07-01):** the four silent-degradation footguns plus the
-`Text.Contains` metrics fix are **shipped**; the two genuinely-larger items (the
-case-folding rework and the blit redraw) are descoped to Phase 17/15 with the
-rationale recorded below. Parity suite green (zero golden regressions); new unit
-tests cover the colormap strict variant and the `Setp` warning.
+**Status (2026-07-24):** all six scoped items are shipped. The colormap
+case-folding rework remains explicitly deferred to Phase 17; the animation blit
+path now performs real overlay-only redraws through WebAgg. Parity remains green,
+with focused tests covering every shipped behavior.
 
 - [x] `color/colormap.go` — added `GetColormapStrict(name) (Colormap, error)` +
       exported `ErrUnknownColormap`; `GetColormap` now delegates to it and keeps the
@@ -441,14 +448,13 @@ tests cover the colormap strict variant and the `Setp` warning.
       `diag.Warnf` (`rotatedImageFallbackWarnOnce`) naming the renderer type; benign on
       AGG (which implements both transform paths), no longer silent-wrong on thin
       backends.
-- [ ] `animation/animation.go:578` — the Blit "fast path" calls full `cnv.Draw()`
-      anyway (zero blit benefit). **Deferred:** a real overlay redraw needs an
-      only-animated canvas `Draw` entry point (`AnimatedFilterOnlyAnimated` plumbed
-      through `canvas.FigureCanvas`), which is backend work better tracked with Phase 15;
-      dropping the public `cfg.Blit` flag is an API break. Output is already correct —
-      this is a perf non-win, not a silent-wrong-output footgun, so it is the lowest
-      priority in this bucket. _If the `cfg.Blit` API question is ever acted on, it
-      folds into Phase 20's breaking window rather than a standalone break._
+- [x] `animation/animation.go` / `canvas/scheduler.go` / `backends/webagg` —
+      `Blit=true` now captures one non-animated background, restores it, draws only
+      animated artists through the optional `AnimatedDrawCanvas`, and blits without
+      a full redraw. The first frame includes its overlay; unsupported canvases take
+      a correct full-redraw fallback instead of dropping animation-managed artists.
+      Focused animation, WebAgg, and sketched-background tests lock the behavior.
+      _Shipped 2026-07-24._
 
 ## Phase 15: Backend Honesty & Capability Verification 🧪
 
@@ -1029,9 +1035,9 @@ closure (1–3) and the parity-breadth closure derived from [`REVIEW.md`](REVIEW
 mathtext/text completeness, plot/colormap/norm breadth, backend/renderer/styling
 completion, and deferred infrastructure depth). The remaining open work is
 collected at the end: **Phase 10** finalizes GPU acceleration for the Skia backend
-(CPU native primitives are done); **Phases 12 & 13** track genuinely-deferred
-infrastructure depth (cocircular Qhull parity, renderer-wired cached transformed
-paths); **Phases 14–18** close the second fidelity review (2026-06-30); and
+(CPU native primitives are done); **Phases 12 and 13** record the completed
+cocircular Qhull and renderer-wired transformed-path work; **Phases 14–18** close
+the second fidelity review (2026-06-30); and
 **Phases 19–21** close the third audit (2026-07-01) — default-value fidelity,
 the one coordinated pre-v1.0 breaking pass (Go-idiomatic API rework + `core/`
 split + re-freeze), and the visual QA sweep. **Phase 11** is the final v1.0

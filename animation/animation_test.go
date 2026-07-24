@@ -20,6 +20,7 @@ type fakeCanvas struct {
 	fig       *core.Figure
 	drawCount int
 	drawErr   error
+	drawHook  func()
 }
 
 func newFakeCanvas() *fakeCanvas {
@@ -29,6 +30,9 @@ func newFakeCanvas() *fakeCanvas {
 func (f *fakeCanvas) Figure() *core.Figure { return f.fig }
 func (f *fakeCanvas) Draw() error {
 	f.drawCount++
+	if f.drawHook != nil {
+		f.drawHook()
+	}
 	return f.drawErr
 }
 
@@ -44,6 +48,8 @@ type blitFakeCanvas struct {
 	captureCount int
 	restoreCount int
 	blitCount    int
+	overlayCount int
+	overlayErr   error
 }
 
 func newBlitFakeCanvas() *blitFakeCanvas {
@@ -65,6 +71,27 @@ func (b *blitFakeCanvas) Blit(_ geom.Rect) error {
 	b.blitCount++
 	return nil
 }
+
+func (b *blitFakeCanvas) DrawAnimated() error {
+	b.overlayCount++
+	return b.overlayErr
+}
+
+type blitOnlyFakeCanvas struct {
+	*fakeCanvas
+	captureCount int
+}
+
+func (b *blitOnlyFakeCanvas) CopyFromBBox(bbox geom.Rect) *render.BufferRegion {
+	b.captureCount++
+	return &render.BufferRegion{Rect: bbox}
+}
+
+func (*blitOnlyFakeCanvas) RestoreRegion(*render.BufferRegion, *geom.Rect, geom.Pt) error {
+	return nil
+}
+
+func (*blitOnlyFakeCanvas) Blit(geom.Rect) error { return nil }
 
 // fakeArtist supports SetAnimated / Animated / SetVisible / Visible to mirror
 // the embedded ArtistRasterization that real core artists carry.
@@ -307,10 +334,74 @@ func TestBlitFastPathCapturesBackgroundAndOverlays(t *testing.T) {
 	if cnv.blitCount != 3 {
 		t.Fatalf("blit count = %d, want 3", cnv.blitCount)
 	}
+	if cnv.drawCount != 1 {
+		t.Fatalf("full draw count = %d, want 1 background draw", cnv.drawCount)
+	}
+	if cnv.overlayCount != 3 {
+		t.Fatalf("animated overlay count = %d, want 3", cnv.overlayCount)
+	}
+}
+
+func TestBlitRecapturesBackgroundAfterResize(t *testing.T) {
+	cnv := newBlitFakeCanvas()
+	anim, err := NewFuncAnimation(Config{Canvas: cnv, Frames: 2, Blit: true},
+		func(int) ([]core.Artist, error) { return nil, nil }, nil)
+	if err != nil {
+		t.Fatalf("NewFuncAnimation: %v", err)
+	}
+
+	if _, err := anim.Step(); err != nil {
+		t.Fatalf("Step 0: %v", err)
+	}
+	cnv.fig.SizePx = geom.Pt{X: 200, Y: 120}
+	if _, err := anim.Step(); err != nil {
+		t.Fatalf("Step 1: %v", err)
+	}
+
+	if cnv.drawCount != 2 {
+		t.Fatalf("full draw count = %d, want 2 background draws", cnv.drawCount)
+	}
+	if cnv.captureCount != 2 {
+		t.Fatalf("background capture count = %d, want 2 after resize", cnv.captureCount)
+	}
+	if cnv.restoreCount != 0 {
+		t.Fatalf("restore count = %d, want 0 when both frames capture", cnv.restoreCount)
+	}
+	if cnv.overlayCount != 2 || cnv.blitCount != 2 {
+		t.Fatalf("overlay/blit counts = %d/%d, want 2/2", cnv.overlayCount, cnv.blitCount)
+	}
 }
 
 func TestBlitFallsBackForNonBlitCanvas(t *testing.T) {
 	cnv := newFakeCanvas()
+	art := &fakeArtist{}
+	animatedDuringDraw := true
+	cnv.drawHook = func() {
+		animatedDuringDraw = animatedDuringDraw && art.Animated()
+	}
+	anim, err := NewFuncAnimation(Config{Canvas: cnv, Frames: 2, Blit: true},
+		func(int) ([]core.Artist, error) { return []core.Artist{art}, nil }, nil)
+	if err != nil {
+		t.Fatalf("NewFuncAnimation: %v", err)
+	}
+	for i := 0; i < 2; i++ {
+		if _, err := anim.Step(); err != nil {
+			t.Fatalf("Step %d: %v", i, err)
+		}
+	}
+	if cnv.drawCount != 2 {
+		t.Fatalf("draw count = %d, want 2 (blit fallback path)", cnv.drawCount)
+	}
+	if animatedDuringDraw {
+		t.Fatal("full-redraw fallback left the artist animated and therefore excluded")
+	}
+	if !art.Animated() {
+		t.Fatal("animation-managed artist was not restored to animated state after draw")
+	}
+}
+
+func TestBlitFallsBackWhenCanvasCannotDrawAnimatedOverlay(t *testing.T) {
+	cnv := &blitOnlyFakeCanvas{fakeCanvas: newFakeCanvas()}
 	anim, err := NewFuncAnimation(Config{Canvas: cnv, Frames: 2, Blit: true},
 		func(int) ([]core.Artist, error) { return nil, nil }, nil)
 	if err != nil {
@@ -322,7 +413,34 @@ func TestBlitFallsBackForNonBlitCanvas(t *testing.T) {
 		}
 	}
 	if cnv.drawCount != 2 {
-		t.Fatalf("draw count = %d, want 2 (blit fallback path)", cnv.drawCount)
+		t.Fatalf("draw count = %d, want 2 full-redraw fallbacks", cnv.drawCount)
+	}
+	if cnv.captureCount != 0 {
+		t.Fatalf("background captures = %d, want 0 without animated-overlay support", cnv.captureCount)
+	}
+}
+
+func TestDrawSaveFrameIncludesAnimationManagedArtists(t *testing.T) {
+	cnv := newFakeCanvas()
+	art := &fakeArtist{}
+	animatedDuringDraw := true
+	cnv.drawHook = func() {
+		animatedDuringDraw = art.Animated()
+	}
+	anim, err := NewFuncAnimation(Config{Canvas: cnv, Frames: 1},
+		func(int) ([]core.Artist, error) { return []core.Artist{art}, nil }, nil)
+	if err != nil {
+		t.Fatalf("NewFuncAnimation: %v", err)
+	}
+
+	if err := anim.drawSaveFrame(0, true); err != nil {
+		t.Fatalf("drawSaveFrame: %v", err)
+	}
+	if animatedDuringDraw {
+		t.Fatal("save draw left the animation-managed artist excluded")
+	}
+	if !art.Animated() {
+		t.Fatal("save draw did not restore the animation-managed artist state")
 	}
 }
 
