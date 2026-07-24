@@ -459,8 +459,9 @@ confidence a setting took effect.
 
 **Status (2026-07-24):** audit, both minimum-bar warnings, the high-value
 image/date subset, axes/line/scatter/errorbar defaults, and the complete tick
-and legend families are shipped with zero default golden churn. The remaining
-families are itemized below; MathText honoring is blocked on a
+and legend families plus axes title/label placement are shipped with zero
+default golden churn. The remaining families are itemized below; MathText
+honoring is blocked on a
 `cwbudde/mathtext` library hook and Phase 17 fontset work.
 
 - [x] Audited the dead params: **51** parsed-but-never-consumed keys, captured as
@@ -534,9 +535,16 @@ behavior tests. Default values must not churn existing goldens.
       sample counts and scaling, title size, and DPI-aware font-relative layout
       while later explicit legend-field changes still win. Focused style/core
       tests and the catalog golden/reference gate are green.
-- [ ] **P1 — Axes title and label placement.** Honor `axes.titlepad`,
+- [x] **P1 — Axes title and label placement.** Honor `axes.titlepad`,
       `titlelocation`, `titleweight`, `titley`, `labelpad`, and `labelweight`;
-      explicit title/label options must continue to win.
+      explicit title/label options must continue to win. **Shipped
+      2026-07-24:** all six keys have typed `AxesRC` storage and parser/runtime
+      round-tripping; axes creation seeds edge alignment, automatic versus
+      axes-relative title y, DPI-aware point padding, and resolved font
+      weights. Tight/constrained layout and 3D label placement consume the
+      same values. Explicit per-axes title/x-label/y-label setters win until
+      `Clear` restores rc defaults; focused style/core tests and the catalog
+      golden/reference gate are green.
 - [ ] **P1 — Scalar formatter defaults.** Honor all six
       `axes.formatter.*` keys: `limits`, `min_exponent`, `offset_threshold`,
       `use_locale`, `use_mathtext`, and `useoffset`.

@@ -417,25 +417,26 @@ func (a *Axes3D) draw3DAxisLabels(textRen render.TextDrawer, r render.Renderer, 
 	textColor := ctx.RC.DefaultAxesLabelColor()
 	projMins, projMaxs := a.projectionLimits()
 	centers, deltas := axes3DLabelCentersDeltas(ctx, mins, maxs)
+	labelPads := [3]float64{a.xLabelPadPt, a.yLabelPadPt, ctx.RC.Axes.LabelPad}
 	labelDeltas := vec3{}
 	for i := range 3 {
-		labelDeltas[i] = (4 + 21) * deltas[i]
+		labelDeltas[i] = (labelPads[i] + 21) * deltas[i]
 	}
 	axisLines := a.axisLineEdgePointPairs(mins, maxs, projMins, projMaxs)
 	if a.XLabel != "" {
 		pos := midpoint3D(axisLines[0][0], axisLines[0][1])
 		anchor := a.project3DLabelAnchor(ctx, move3DLabelFromCenter(pos, centers, labelDeltas, 0), projMins, projMaxs)
-		draw3DTextAtAnchor(textRen, r, ctx, a.XLabel, anchor, fontSize, textColor)
+		draw3DTextAtAnchor(textRen, r, ctx, a.XLabel, anchor, fontSize, textColor, xAxisLabelFontKey(a.Axes, ctx))
 	}
 	if a.YLabel != "" {
 		pos := midpoint3D(axisLines[1][0], axisLines[1][1])
 		anchor := a.project3DLabelAnchor(ctx, move3DLabelFromCenter(pos, centers, labelDeltas, 1), projMins, projMaxs)
-		draw3DTextAtAnchor(textRen, r, ctx, a.YLabel, anchor, fontSize, textColor)
+		draw3DTextAtAnchor(textRen, r, ctx, a.YLabel, anchor, fontSize, textColor, yAxisLabelFontKey(a.Axes, ctx))
 	}
 	if a.zLabel != "" {
 		pos := midpoint3D(axisLines[2][0], axisLines[2][1])
 		anchor := a.project3DLabelAnchor(ctx, move3DLabelFromCenter(pos, centers, labelDeltas, 2), projMins, projMaxs)
-		draw3DTextAtAnchor(textRen, r, ctx, a.zLabel, anchor, fontSize, textColor)
+		draw3DTextAtAnchor(textRen, r, ctx, a.zLabel, anchor, fontSize, textColor, fontKeyWithWeight(ctx.RC.FontKey, ctx.RC.Axes.LabelWeight))
 	}
 }
 
@@ -489,8 +490,13 @@ func (a *Axes3D) project3DLabelAnchor(ctx *DrawContext, pos, projMins, projMaxs 
 	return ctx.TransformFor(Coords(CoordData)).Apply(projected)
 }
 
-func draw3DTextAtAnchor(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, label string, anchor geom.Pt, fontSize float64, textColor render.Color) {
-	draw3DTextAtAnchorAligned(textRen, r, ctx, label, anchor, fontSize, textColor, textLayoutVAlignCenter)
+func draw3DTextAtAnchor(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, label string, anchor geom.Pt, fontSize float64, textColor render.Color, fontKey string) {
+	if label == "" {
+		return
+	}
+	layout := measureSingleLineTextLayout(r, label, fontSize, fontKey, ctx.RC.UseTeX)
+	origin := alignedSingleLineOrigin(anchor, layout, TextAlignCenter, textLayoutVAlignCenter)
+	drawDisplayText(textRen, label, origin, fontSize, textColor, fontKey, ctx.RC.UseTeX)
 }
 
 func draw3DTextAtAnchorAligned(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, label string, anchor geom.Pt, fontSize float64, textColor render.Color, vAlign textLayoutVerticalAlign) {

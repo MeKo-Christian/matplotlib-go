@@ -198,11 +198,17 @@ func paramsFromRC(rc RC) Params {
 	params["axes.edgecolor"] = formatMPLColor(rc.AxesEdgeColor)
 	params["axes.facecolor"] = formatMPLColor(rc.AxesBackground)
 	params["axes.labelcolor"] = formatMPLColor(rc.DefaultAxesLabelColor())
+	params["axes.labelpad"] = formatMPLFloat(rc.Axes.LabelPad)
 	params["axes.labelsize"] = formatMPLFloat(rc.AxisLabelSize())
+	params["axes.labelweight"] = strconv.Itoa(rc.Axes.LabelWeight)
 	params["axes.linewidth"] = formatMPLFloat(rc.AxisLineWidth)
 	params["axes.prop_cycle"] = formatMPLColorCycle(rc.Palette())
 	params["axes.titlecolor"] = formatMPLColor(rc.DefaultAxesTitleColor())
+	params["axes.titlelocation"] = rc.Axes.TitleLocation
+	params["axes.titlepad"] = formatMPLFloat(rc.Axes.TitlePad)
 	params["axes.titlesize"] = formatMPLFloat(rc.TitleSize())
+	params["axes.titleweight"] = strconv.Itoa(rc.Axes.TitleWeight)
+	params["axes.titley"] = formatMPLOptionalFloat(rc.Axes.TitleY, rc.Axes.TitleYSet)
 	params["boxplot.boxprops.linewidth"] = formatMPLFloat(rc.Boxplot.BoxLineWidth)
 	params["boxplot.capprops.linewidth"] = formatMPLFloat(rc.Boxplot.CapLineWidth)
 	params["boxplot.flierprops.color"] = formatMPLColor(rc.Boxplot.FlierColor)
@@ -374,6 +380,13 @@ func formatMPLFloat(value float64) string {
 
 func formatMPLOptionalFontSize(value float64) string {
 	if value <= 0 {
+		return "None"
+	}
+	return formatMPLFloat(value)
+}
+
+func formatMPLOptionalFloat(value float64, set bool) string {
+	if !set {
 		return "None"
 	}
 	return formatMPLFloat(value)

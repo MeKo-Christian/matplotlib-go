@@ -9,9 +9,9 @@ import (
 func TestUnparsedKnownRCParamWarns(t *testing.T) {
 	msgs := captureWarnings(t)
 
-	// axes.labelweight is a real matplotlib 3.10.9 rcParam that matplotlib-go
+	// axes.formatter.limits is a real matplotlib 3.10.9 rcParam that matplotlib-go
 	// does not parse; it must warn instead of vanishing silently.
-	_, report, err := ParseMPLStyle("t.mplstyle", "axes.labelweight: bold\n")
+	_, report, err := ParseMPLStyle("t.mplstyle", "axes.formatter.limits: -5, 6\n")
 	if err != nil {
 		t.Fatalf("ParseMPLStyle() error = %v", err)
 	}
@@ -19,15 +19,15 @@ func TestUnparsedKnownRCParamWarns(t *testing.T) {
 	if len(*msgs) != 1 {
 		t.Fatalf("got %d warnings, want 1: %v", len(*msgs), *msgs)
 	}
-	if !strings.Contains((*msgs)[0], "axes.labelweight") {
+	if !strings.Contains((*msgs)[0], "axes.formatter.limits") {
 		t.Errorf("warning %q does not mention the rcParam key", (*msgs)[0])
 	}
 	if !strings.Contains((*msgs)[0], "not parsed") {
 		t.Errorf("warning %q does not explain the param is unparsed", (*msgs)[0])
 	}
 	// The key still lands in the report so callers can inspect it.
-	if len(report.Unsupported) != 1 || report.Unsupported[0].Key != "axes.labelweight" {
-		t.Errorf("report.Unsupported = %v, want axes.labelweight", report.Unsupported)
+	if len(report.Unsupported) != 1 || report.Unsupported[0].Key != "axes.formatter.limits" {
+		t.Errorf("report.Unsupported = %v, want axes.formatter.limits", report.Unsupported)
 	}
 }
 
@@ -53,7 +53,7 @@ func TestUnparsedKnownRCParamWarnsOncePerKey(t *testing.T) {
 	msgs := captureWarnings(t)
 
 	for range 3 {
-		if _, _, err := ParseMPLStyle("t.mplstyle", "axes.labelpad: 5\n"); err != nil {
+		if _, _, err := ParseMPLStyle("t.mplstyle", "axes.formatter.use_locale: true\n"); err != nil {
 			t.Fatalf("ParseMPLStyle() error = %v", err)
 		}
 	}

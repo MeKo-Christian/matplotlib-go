@@ -43,15 +43,25 @@ type Axes struct {
 	ColorCycle      *color.ColorCycle
 	PatchColorCycle *color.ColorCycle
 
-	aspectMode   string
-	aspectValue  float64
-	boxAspect    float64
-	adjustable   string // "" => "box"; "datalim" shifts data limits instead of the display rect
-	anchor       string // "" => "C"; cardinal anchor for aspect-shrunk axes
-	axisBelowSet bool
-	axisBelowZ   float64
-	xLabelSide   AxisSide
-	yLabelSide   AxisSide
+	aspectMode      string
+	aspectValue     float64
+	boxAspect       float64
+	adjustable      string // "" => "box"; "datalim" shifts data limits instead of the display rect
+	anchor          string // "" => "C"; cardinal anchor for aspect-shrunk axes
+	axisBelowSet    bool
+	axisBelowZ      float64
+	xLabelSide      AxisSide
+	yLabelSide      AxisSide
+	titleLocation   string
+	titleY          float64
+	titleYSet       bool
+	titlePadPt      float64
+	titleWeight     int
+	xLabelPadPt     float64
+	yLabelPadPt     float64
+	xLabelWeight    int
+	yLabelWeight    int
+	textDefaultsSet bool
 
 	// Per-axes autoscale margins (Phase 7). nil => fall back to
 	// defaultAutoScaleMargin (0.05); a non-nil value (including 0) is honored.
@@ -370,6 +380,7 @@ func (a *Axes) resetToDefaults() {
 	a.adjustable, a.anchor = "", ""
 	a.axisBelowSet, a.axisBelowZ = false, 0
 	a.xLabelSide, a.yLabelSide = AxisBottom, AxisLeft
+	a.applyRCTextDefaults(&effective)
 	a.xMargin, a.yMargin, a.autolimitMode = nil, nil, ""
 	a.hideXTickLabels, a.hideYTickLabels = false, false
 	a.hideTopTickLabels, a.hideRightTickLabels = false, false

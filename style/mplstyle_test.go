@@ -355,6 +355,50 @@ font.size: 20
 	}
 }
 
+func TestParseMPLStyleAxesTitleAndLabelPlacement(t *testing.T) {
+	theme, report, err := ParseMPLStyle("axes-text-placement", `
+axes.titlelocation: right
+axes.titlepad: 9.5
+axes.titleweight: bold
+axes.titley: 0.83
+axes.labelpad: 7
+axes.labelweight: 650
+`)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+	if len(report.Unsupported) != 0 {
+		t.Fatalf("unexpected unsupported entries: %+v", report.Unsupported)
+	}
+	got := theme.RC.Axes
+	if got.TitleLocation != "right" || !almostEqual(got.TitlePad, 9.5) || got.TitleWeight != 700 {
+		t.Fatalf("unexpected axes title defaults: %+v", got)
+	}
+	if !got.TitleYSet || !almostEqual(got.TitleY, 0.83) {
+		t.Fatalf("unexpected axes title y default: value=%v set=%v", got.TitleY, got.TitleYSet)
+	}
+	if !almostEqual(got.LabelPad, 7) || got.LabelWeight != 650 {
+		t.Fatalf("unexpected axes label defaults: %+v", got)
+	}
+	params := paramsFromRC(theme.RC)
+	if params["axes.titlelocation"] != "right" || params["axes.titlepad"] != "9.5" ||
+		params["axes.titleweight"] != "700" || params["axes.titley"] != "0.83" ||
+		params["axes.labelpad"] != "7" || params["axes.labelweight"] != "650" {
+		t.Fatalf("unexpected runtime axes text params: %+v", params)
+	}
+
+	theme, _, err = ParseMPLStyle("axes-title-auto", "axes.titley: None\n")
+	if err != nil {
+		t.Fatalf("ParseMPLStyle(titley=None) error = %v", err)
+	}
+	if theme.RC.Axes.TitleYSet {
+		t.Fatalf("axes.titley None left explicit value enabled: %+v", theme.RC.Axes)
+	}
+	if got := paramsFromRC(theme.RC)["axes.titley"]; got != "None" {
+		t.Fatalf("serialized axes.titley = %q, want None", got)
+	}
+}
+
 func TestParseMPLStyleBroaderCoverage(t *testing.T) {
 	src := `
 font.size: 12

@@ -289,8 +289,9 @@ func titleBounds(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, al
 	if ax == nil || ax.Title == "" {
 		return geom.Rect{}, false
 	}
-	layout := measureSingleLineTextLayout(r, ax.Title, titleFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
-	return textInkRect(alignedSingleLineOrigin(titleAnchorPoint(ax, r, ctx, px, alignment), layout, TextAlignCenter, textLayoutVAlignBaseline), layout)
+	fontKey := axesTitleFontKey(ax, ctx)
+	layout := measureSingleLineTextLayout(r, ax.Title, titleFontSize(ctx), fontKey, ctx.RC.UseTeX)
+	return textInkRect(alignedSingleLineOrigin(titleAnchorPoint(ax, r, ctx, px, alignment), layout, axesTitleAlignment(ax), textLayoutVAlignBaseline), layout)
 }
 
 func xLabelBounds(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, alignment figureTextAlignment) (geom.Rect, bool) {
@@ -299,7 +300,7 @@ func xLabelBounds(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, a
 	}
 	side := ax.effectiveXLabelSide()
 	size := axisLabelFontSize(ctx)
-	layout := measureSingleLineTextLayout(r, ax.XLabel, size, ctx.RC.FontKey, ctx.RC.UseTeX)
+	layout := measureSingleLineTextLayout(r, ax.XLabel, size, xAxisLabelFontKey(ax, ctx), ctx.RC.UseTeX)
 	anchor, vAlign := xLabelAnchorPoint(ax, r, ctx, px, side, alignment)
 	lineHeight := math.Max(layout.Height, pointsToPixels(ctx.RC, size))
 	return alignedTextLayoutRect(anchor, layout, TextAlignCenter, vAlign, lineHeight)
@@ -311,7 +312,7 @@ func yLabelBounds(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, a
 	}
 	side := ax.effectiveYLabelSide()
 	size := axisLabelFontSize(ctx)
-	layout := measureSingleLineTextLayout(r, ax.YLabel, size, ctx.RC.FontKey, ctx.RC.UseTeX)
+	layout := measureSingleLineTextLayout(r, ax.YLabel, size, yAxisLabelFontKey(ax, ctx), ctx.RC.UseTeX)
 	lineHeight := math.Max(layout.Height, pointsToPixels(ctx.RC, size))
 	anchor := yLabelAnchorPoint(ax, r, ctx, px, side, alignment)
 	centerY := px.Min.Y + px.H()/2

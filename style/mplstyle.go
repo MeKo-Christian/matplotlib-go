@@ -50,11 +50,17 @@ var supportedMPLStyleKeys = []string{
 	"axes.grid.axis",
 	"axes.grid.which",
 	"axes.labelcolor",
+	"axes.labelpad",
 	"axes.labelsize",
+	"axes.labelweight",
 	"axes.linewidth",
 	"axes.prop_cycle",
 	"axes.titlecolor",
+	"axes.titlelocation",
+	"axes.titlepad",
 	"axes.titlesize",
+	"axes.titleweight",
+	"axes.titley",
 	"axes.unicode_minus",
 	"axes.xmargin",
 	"axes.ymargin",
@@ -564,12 +570,56 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 		}
 		state.labelColorValue = normalizeMPLValue(value)
 		state.labelColorSet = true
+	case "axes.labelpad":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Axes.LabelPad = parsed
+	case "axes.labelweight":
+		parsed, err := parseMPLFontWeight(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Axes.LabelWeight = parsed
 	case "axes.titlecolor":
 		if err := validateMPLColorValue(value, state.rc, false); err != nil {
 			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
 		}
 		state.titleColorValue = normalizeMPLValue(value)
 		state.titleColorSet = true
+	case "axes.titlelocation":
+		normalized := strings.ToLower(normalizeMPLValue(value))
+		switch normalized {
+		case "left", "center", "right":
+			state.rc.Axes.TitleLocation = normalized
+		default:
+			return fmt.Errorf("parse %s on line %d: invalid title location %q", key, lineNo, value)
+		}
+	case "axes.titlepad":
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Axes.TitlePad = parsed
+	case "axes.titleweight":
+		parsed, err := parseMPLFontWeight(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Axes.TitleWeight = parsed
+	case "axes.titley":
+		if strings.EqualFold(normalizeMPLValue(value), "none") {
+			state.rc.Axes.TitleY = 0
+			state.rc.Axes.TitleYSet = false
+			break
+		}
+		parsed, err := parseMPLFloat(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Axes.TitleY = parsed
+		state.rc.Axes.TitleYSet = true
 	case "xtick.color", "xtick.labelcolor":
 		if err := validateMPLColorValue(value, state.rc, false); err != nil {
 			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
@@ -1586,6 +1636,34 @@ func parseMPLInt(value string) (int, error) {
 		return 0, fmt.Errorf("invalid int %q", value)
 	}
 	return parsed, nil
+}
+
+func parseMPLFontWeight(value string) (int, error) {
+	normalized := normalizeMPLValue(value)
+	weights := map[string]int{
+		"ultralight": 100,
+		"light":      200,
+		"normal":     400,
+		"regular":    400,
+		"book":       400,
+		"medium":     500,
+		"roman":      500,
+		"semibold":   600,
+		"demibold":   600,
+		"demi":       600,
+		"bold":       700,
+		"heavy":      800,
+		"extra bold": 800,
+		"black":      900,
+	}
+	if weight, ok := weights[normalized]; ok {
+		return weight, nil
+	}
+	weight, err := strconv.Atoi(normalized)
+	if err != nil {
+		return 0, fmt.Errorf("invalid font weight %q", value)
+	}
+	return weight, nil
 }
 
 func parseMPLLegendLocation(value string) (string, error) {

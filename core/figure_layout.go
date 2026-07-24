@@ -174,7 +174,7 @@ func titleTopExtentForAxes(ax *Axes, r render.Renderer, ctx *DrawContext, px geo
 		}
 	}
 	if ax.XLabel != "" && !ax.hideXLabel && ax.effectiveXLabelSide() == AxisTop {
-		layout := measureSingleLineTextLayout(r, ax.XLabel, axisLabelFontSize(ctx), ctx.RC.FontKey, ctx.RC.UseTeX)
+		layout := measureSingleLineTextLayout(r, ax.XLabel, axisLabelFontSize(ctx), xAxisLabelFontKey(ax, ctx), ctx.RC.UseTeX)
 		anchor, vAlign := xLabelAnchorPoint(ax, r, ctx, px, AxisTop, figureTextAlignment{})
 		origin := alignedSingleLineOrigin(anchor, layout, TextAlignCenter, vAlign)
 		if layout.Ascent > 0 {

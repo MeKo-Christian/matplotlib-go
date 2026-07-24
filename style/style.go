@@ -127,6 +127,26 @@ type AxesRC struct {
 	// hyphen (axes.unicode_minus). Consumed by the scalar tick formatters
 	// (core/tick_formatters.go).
 	UnicodeMinus bool
+	// TitleLocation aligns the axes title at the left, center, or right edge
+	// (axes.titlelocation).
+	TitleLocation string
+	// TitlePad is the display-space gap above the axes title anchor, in points
+	// (axes.titlepad).
+	TitlePad float64
+	// TitleWeight is the numeric font weight used for axes titles
+	// (axes.titleweight; 400 is normal and 700 is bold).
+	TitleWeight int
+	// TitleY is the title's axes-relative vertical coordinate when TitleYSet
+	// is true (axes.titley). When false, title placement automatically clears
+	// top-axis decorations.
+	TitleY    float64
+	TitleYSet bool
+	// LabelPad is the gap between an axis label and its tick/spine extent, in
+	// points (axes.labelpad).
+	LabelPad float64
+	// LabelWeight is the numeric font weight used for x/y axis labels
+	// (axes.labelweight).
+	LabelWeight int
 }
 
 // LinesRC mirrors line-artist lines.* rcParams beyond the flat LineWidth and
@@ -509,6 +529,11 @@ var Default = RC{
 		YMargin:       0.05,
 		AutolimitMode: "data",
 		UnicodeMinus:  true,
+		TitleLocation: "center",
+		TitlePad:      6,
+		TitleWeight:   400,
+		LabelPad:      4,
+		LabelWeight:   400,
 	},
 	Lines: LinesRC{
 		LineStyle:       "-",
