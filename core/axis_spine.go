@@ -111,7 +111,7 @@ func figureSnapHeight(ctx *DrawContext) float64 {
 // DrawFrame draws fallback top/right border lines when those sides are not
 // represented by explicit axes.
 func DrawFrame(r render.Renderer, ctx *DrawContext, ref *Axis, drawTop, drawRight bool) {
-	if ref == nil || !ref.ShowSpine {
+	if ref == nil {
 		return
 	}
 	if !drawTop && !drawRight {

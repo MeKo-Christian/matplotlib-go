@@ -153,7 +153,13 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 			if ref == nil {
 				ref = rightAxis
 			}
-			DrawFrame(r, ctx, ref, topAxis == nil, rightAxis == nil)
+			DrawFrame(
+				r,
+				ctx,
+				ref,
+				topAxis == nil && ax.fallbackSpineVisible(AxisTop),
+				rightAxis == nil && ax.fallbackSpineVisible(AxisRight),
+			)
 		}
 
 		drawClippedAxesArtistsInZRange(r, ctx, px, ax.Artists, 2.5, math.Inf(1), true)

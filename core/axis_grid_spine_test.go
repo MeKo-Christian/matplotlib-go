@@ -91,6 +91,21 @@ func TestDrawFrameUsesDeviceSpaceSnapForFallbackTopSpine(t *testing.T) {
 	}
 }
 
+func TestDrawFrameVisibilityIsIndependentFromReferenceSpine(t *testing.T) {
+	ctx := &DrawContext{
+		Clip: geom.Rect{Max: geom.Pt{X: 100, Y: 80}},
+	}
+	axis := NewXAxis()
+	axis.ShowSpine = false
+	r := &recordingRenderer{}
+
+	DrawFrame(r, ctx, axis, true, true)
+
+	if len(r.pathCalls) != 2 {
+		t.Fatalf("frame path calls = %d, want independent top and right spines", len(r.pathCalls))
+	}
+}
+
 func TestAxes_TickParamsGridStyling(t *testing.T) {
 	axes := &Axes{XAxis: NewXAxis(), YAxis: NewYAxis()}
 	xGrid := axes.AddXGrid()

@@ -1678,7 +1678,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "pyplot-state",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"pyplot/pyplot.go", "core/artist.go"},
-		Note:              "Stateful pyplot Box toggles the current axes frame through Axes.ShowFrame. Remaining partial scope is Matplotlib's None/toggle shorthand and backend stale/draw side effects.",
+		Note:              "Stateful pyplot Box toggles all four current-axes spines through Axes.SetFrameOn; axes.spines.{top,bottom,left,right} independently seed rectilinear visibility at axes construction. Remaining partial scope is Matplotlib's None/toggle shorthand and backend stale/draw side effects.",
 	},
 	{
 		ID:                "pyplot-polar",
@@ -2352,7 +2352,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"core/artist.go", "core/axis.go", "core/figure_layout.go", "core/subplots.go"},
 		catalogIDs:        []string{"axes_control_surface", "transform_coordinates", "layout_bbox_helpers"},
 		exampleIDs:        []string{"axes_control_surface"},
-		note:              "Axes base methods are represented through typed axes state, limits, scales, labels, transforms, layout, and shared-axis helpers. Remaining option breadth and Python overload compatibility are owned by Phase 17.6.3.",
+		note:              "Axes base methods are represented through typed axes state, limits, scales, labels, transforms, layout, shared-axis helpers, frame toggling, and independently rc-configurable rectilinear spine visibility. Remaining option breadth and Python overload compatibility are owned by Phase 17.6.3.",
 	},
 	{
 		idPrefix:          "mplot3d-axes3d",

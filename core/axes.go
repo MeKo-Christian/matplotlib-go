@@ -31,6 +31,12 @@ type Axes struct {
 	ExtraAxes    []*Axis
 	ShowFrame    bool // draw top and right border lines when no explicit top/right axis exists
 	PatchVisible bool // draw the axes background patch
+	// Rectilinear top/right spines are normally lightweight fallback frame
+	// edges rather than explicit Axis objects. Keep their visibility separate
+	// so axes.spines.top and axes.spines.right remain independently configurable.
+	frameTopSpineVisible    bool
+	frameRightSpineVisible  bool
+	frameSpineVisibilitySet bool
 
 	// Text labels
 	Title  string // title above the plot
@@ -170,6 +176,9 @@ func (a *Axes) SetFrameOn(on bool) {
 		return
 	}
 	a.ShowFrame = on
+	a.frameTopSpineVisible = on
+	a.frameRightSpineVisible = on
+	a.frameSpineVisibilitySet = true
 	for _, axis := range []*Axis{a.XAxis, a.YAxis, a.XAxisTop, a.YAxisRight} {
 		if axis != nil {
 			axis.ShowSpine = on
@@ -375,6 +384,8 @@ func (a *Axes) resetToDefaults() {
 	a.XAxis, a.YAxis = NewXAxis(), NewYAxis()
 	a.XAxisTop, a.YAxisRight, a.ExtraAxes = nil, nil, nil
 	a.ShowFrame, a.PatchVisible = true, true
+	a.frameTopSpineVisible, a.frameRightSpineVisible = true, true
+	a.frameSpineVisibilitySet = true
 	a.Title, a.XLabel, a.YLabel = "", "", ""
 	a.aspectMode, a.aspectValue, a.boxAspect = "auto", 1, 0
 	a.adjustable, a.anchor = "", ""
@@ -402,10 +413,53 @@ func (a *Axes) resetToDefaults() {
 	}
 	a.applyRCTickDefaults(&effective)
 	a.projection.ConfigureAxes(a)
+	a.applyRCSpineDefaults(&effective)
 	a.applyRCFormatterDefaults(&effective)
 	a.applyStyleDefaults(effective)
 	a.addDefaultGrids(effective)
 	a.applyRCBehaviorDefaults(&effective)
+}
+
+// applyRCSpineDefaults seeds the four standard rectilinear spine artists.
+// Projection-specific frames (polar, geographic, and 3D) do not correspond to
+// axes.spines.{top,bottom,left,right} and retain their projection defaults.
+func (a *Axes) applyRCSpineDefaults(rc *style.RC) {
+	if a == nil || rc == nil {
+		return
+	}
+	switch a.projection.(type) {
+	case *polarProjection, *geoProjection, *axes3DProjection:
+		return
+	}
+	if a.XAxis != nil {
+		a.XAxis.ShowSpine = rc.Axes.Spines.Bottom
+	}
+	if a.YAxis != nil {
+		a.YAxis.ShowSpine = rc.Axes.Spines.Left
+	}
+	a.frameTopSpineVisible = rc.Axes.Spines.Top
+	a.frameRightSpineVisible = rc.Axes.Spines.Right
+	a.frameSpineVisibilitySet = true
+	if a.XAxisTop != nil {
+		a.XAxisTop.ShowSpine = rc.Axes.Spines.Top
+	}
+	if a.YAxisRight != nil {
+		a.YAxisRight.ShowSpine = rc.Axes.Spines.Right
+	}
+}
+
+func (a *Axes) fallbackSpineVisible(side AxisSide) bool {
+	if a == nil || !a.frameSpineVisibilitySet {
+		return true
+	}
+	switch side {
+	case AxisTop:
+		return a.frameTopSpineVisible
+	case AxisRight:
+		return a.frameRightSpineVisible
+	default:
+		return true
+	}
 }
 
 // applyRCBehaviorDefaults seeds per-axes behavior state from the axes.*

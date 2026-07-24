@@ -436,6 +436,33 @@ func TestParseMPLStyleAxesFormatterLimitsRejectsWrongArity(t *testing.T) {
 	}
 }
 
+func TestParseMPLStyleAxesSpineVisibility(t *testing.T) {
+	theme, report, err := ParseMPLStyle("axes-spines", `
+axes.spines.top: False
+axes.spines.bottom: true
+axes.spines.left: no
+axes.spines.right: yes
+`)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+	if len(report.Unsupported) != 0 {
+		t.Fatalf("unexpected unsupported entries: %+v", report.Unsupported)
+	}
+	got := theme.RC.Axes.Spines
+	want := SpineRC{Top: false, Bottom: true, Left: false, Right: true}
+	if got != want {
+		t.Fatalf("axes spine defaults = %+v, want %+v", got, want)
+	}
+	params := paramsFromRC(theme.RC)
+	if params["axes.spines.top"] != "False" ||
+		params["axes.spines.bottom"] != "True" ||
+		params["axes.spines.left"] != "False" ||
+		params["axes.spines.right"] != "True" {
+		t.Fatalf("unexpected runtime axes spine params: %+v", params)
+	}
+}
+
 func TestParseMPLStyleBroaderCoverage(t *testing.T) {
 	src := `
 font.size: 12

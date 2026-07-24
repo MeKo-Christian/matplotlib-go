@@ -130,6 +130,9 @@ type AxesRC struct {
 	// Formatter holds the axes.formatter.* defaults consumed by newly created
 	// scalar and logarithmic axis formatters.
 	Formatter FormatterRC
+	// Spines controls the initial visibility of the four rectilinear axes
+	// spines (axes.spines.{top,bottom,left,right}).
+	Spines SpineRC
 	// TitleLocation aligns the axes title at the left, center, or right edge
 	// (axes.titlelocation).
 	TitleLocation string
@@ -150,6 +153,14 @@ type AxesRC struct {
 	// LabelWeight is the numeric font weight used for x/y axis labels
 	// (axes.labelweight).
 	LabelWeight int
+}
+
+// SpineRC mirrors Matplotlib's axes.spines.* visibility rcParams.
+type SpineRC struct {
+	Top    bool
+	Bottom bool
+	Left   bool
+	Right  bool
 }
 
 // FormatterRC mirrors Matplotlib's axes.formatter.* rcParams.
@@ -561,6 +572,7 @@ var Default = RC{
 			UseMathText:     false,
 			UseOffset:       true,
 		},
+		Spines:        SpineRC{Top: true, Bottom: true, Left: true, Right: true},
 		TitleLocation: "center",
 		TitlePad:      6,
 		TitleWeight:   400,

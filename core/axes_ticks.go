@@ -50,6 +50,7 @@ func (a *Axes) TopAxis() *Axis {
 	}
 	if a.XAxisTop == nil {
 		a.XAxisTop = cloneAxisForSide(a.XAxis, AxisTop)
+		a.XAxisTop.ShowSpine = a.fallbackSpineVisible(AxisTop)
 	}
 	return a.XAxisTop
 }
@@ -60,6 +61,7 @@ func (a *Axes) RightAxis() *Axis {
 	}
 	if a.YAxisRight == nil {
 		a.YAxisRight = cloneAxisForSide(a.YAxis, AxisRight)
+		a.YAxisRight.ShowSpine = a.fallbackSpineVisible(AxisRight)
 	}
 	return a.YAxisRight
 }

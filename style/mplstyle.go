@@ -61,6 +61,10 @@ var supportedMPLStyleKeys = []string{
 	"axes.labelweight",
 	"axes.linewidth",
 	"axes.prop_cycle",
+	"axes.spines.bottom",
+	"axes.spines.left",
+	"axes.spines.right",
+	"axes.spines.top",
 	"axes.titlecolor",
 	"axes.titlelocation",
 	"axes.titlepad",
@@ -588,6 +592,21 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
 		}
 		state.rc.Axes.LabelWeight = parsed
+	case "axes.spines.top", "axes.spines.bottom", "axes.spines.left", "axes.spines.right":
+		parsed, err := parseMPLBool(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		switch key {
+		case "axes.spines.top":
+			state.rc.Axes.Spines.Top = parsed
+		case "axes.spines.bottom":
+			state.rc.Axes.Spines.Bottom = parsed
+		case "axes.spines.left":
+			state.rc.Axes.Spines.Left = parsed
+		case "axes.spines.right":
+			state.rc.Axes.Spines.Right = parsed
+		}
 	case "axes.titlecolor":
 		if err := validateMPLColorValue(value, state.rc, false); err != nil {
 			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)

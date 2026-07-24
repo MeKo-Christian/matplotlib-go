@@ -209,6 +209,10 @@ func paramsFromRC(rc RC) Params {
 	params["axes.labelweight"] = strconv.Itoa(rc.Axes.LabelWeight)
 	params["axes.linewidth"] = formatMPLFloat(rc.AxisLineWidth)
 	params["axes.prop_cycle"] = formatMPLColorCycle(rc.Palette())
+	params["axes.spines.bottom"] = formatMPLBool(rc.Axes.Spines.Bottom)
+	params["axes.spines.left"] = formatMPLBool(rc.Axes.Spines.Left)
+	params["axes.spines.right"] = formatMPLBool(rc.Axes.Spines.Right)
+	params["axes.spines.top"] = formatMPLBool(rc.Axes.Spines.Top)
 	params["axes.titlecolor"] = formatMPLColor(rc.DefaultAxesTitleColor())
 	params["axes.titlelocation"] = rc.Axes.TitleLocation
 	params["axes.titlepad"] = formatMPLFloat(rc.Axes.TitlePad)
