@@ -503,7 +503,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"core/tick.go"},
 		CatalogIDs:        []string{"axes_control_surface", "formatter_scalar_scientific_labels"},
-		Note:              "Go ScalarFormatter covers fixed-minus, step-aware precision, scientific suppression, inclusive power limits, MathText-style scientific labels, and deterministic locale-independent formatting; it also factors a shared additive offset and ×10ⁿ order-of-magnitude into axis offset text on both axes (Matplotlib ScalarFormatter.set_locs/get_offset), rendered by default. formatter_scalar_scientific_labels validates the offset/scientific tick output against the real Matplotlib ScalarFormatter.",
+		Note:              "Go ScalarFormatter covers fixed-minus, step-aware precision, scientific suppression, inclusive power limits, optional locale-aware grouping/decimal separators, and MathText-style scientific labels; it also factors a shared additive offset and ×10ⁿ order-of-magnitude into axis offset text on both axes (Matplotlib ScalarFormatter.set_locs/get_offset), rendered by default. All axes.formatter.* rc defaults seed newly created formatters, and formatter_scalar_scientific_labels validates the offset/scientific tick output against the real Matplotlib ScalarFormatter.",
 	},
 	{
 		ID:                "ticker-eng-formatter",
@@ -1629,7 +1629,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "pyplot-state",
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"pyplot/pyplot.go", "core/tick_formatters.go"},
-		Note:              "Stateful pyplot TickLabelFormat applies typed style, scilimits, and mathtext options to ScalarFormatter on the current axes, with explicit errors for unsupported axes/styles or non-scalar formatters. Remaining partial scope is Matplotlib's offset-text and locale toggles, which Go intentionally omits from ScalarFormatter.",
+		Note:              "Stateful pyplot TickLabelFormat applies typed style, scilimits, and mathtext options to ScalarFormatter on the current axes, with explicit errors for unsupported axes/styles or non-scalar formatters. ScalarFormatter itself supports offset text and locale-aware formatting through axes.formatter.* rc defaults; the pyplot convenience wrapper does not yet expose those two toggles directly.",
 	},
 	{
 		ID:                "pyplot-getp",

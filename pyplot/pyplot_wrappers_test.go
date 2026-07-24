@@ -376,6 +376,10 @@ func TestTickLabelFormatUpdatesCurrentScalarFormatters(t *testing.T) {
 	resetForTests()
 
 	ax := GCA()
+	yBefore, ok := ax.YAxis.Formatter.(core.ScalarFormatter)
+	if !ok {
+		t.Fatalf("initial y formatter = %T, want core.ScalarFormatter", ax.YAxis.Formatter)
+	}
 	useMathText := true
 	sciLimits := [2]int{-2, 3}
 	if err := TickLabelFormat(TickLabelFormatOptions{
@@ -399,8 +403,8 @@ func TestTickLabelFormatUpdatesCurrentScalarFormatters(t *testing.T) {
 	if !ok {
 		t.Fatalf("y formatter = %T, want core.ScalarFormatter", ax.YAxis.Formatter)
 	}
-	if yFmt.DisableScientific || yFmt.UseMathText || yFmt.UsePowerLimits {
-		t.Fatalf("TickLabelFormat(x) unexpectedly changed y scalar formatter: %+v", yFmt)
+	if yFmt != yBefore {
+		t.Fatalf("TickLabelFormat(x) changed y scalar formatter: got %+v, want %+v", yFmt, yBefore)
 	}
 
 	if err := TickLabelFormat(TickLabelFormatOptions{Axis: "both", Style: "scientific"}); err != nil {

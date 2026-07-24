@@ -384,6 +384,8 @@ func scalarFormatData(f ScalarFormatter, value float64) string {
 	}
 	exponent := scalarFormatInteger(f, e)
 	if f.UseMathText {
+		significand = scalarMathTextNumber(f, significand)
+		exponent = scalarMathTextNumber(f, exponent)
 		expStr := "10^{" + exponent + "}"
 		if s == 1 {
 			return expStr

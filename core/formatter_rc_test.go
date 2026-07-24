@@ -31,8 +31,14 @@ func TestAxesScalarFormatterConsumesRCDefaults(t *testing.T) {
 		if !formatter.UseLocale || !formatter.UseMathText {
 			t.Fatalf("formatter locale/mathtext defaults not consumed: %+v", formatter)
 		}
-		if got, want := formatter.Format(1234.5), `$\mathdefault{1.234{,}5}$`; got != want {
+		if got, want := formatter.Format(1234.5), "1.234,5"; got != want {
+			t.Fatalf("localized scalar label = %q, want %q", got, want)
+		}
+		if got, want := formatScalarTickLabel(formatter, 1234.5, 0.5), `$\mathdefault{1.234{,}5}$`; got != want {
 			t.Fatalf("localized MathText label = %q, want %q", got, want)
+		}
+		if got, want := scalarFormatData(formatter, 1.2e6), `1{,}2 \times 10^{6}`; got != want {
+			t.Fatalf("localized MathText offset component = %q, want %q", got, want)
 		}
 		if got := formatter.OffsetText([]float64{1_000_100, 1_000_200, 1_000_300}); got != "" {
 			t.Fatalf("useoffset=False produced offset text %q", got)

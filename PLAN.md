@@ -459,8 +459,9 @@ confidence a setting took effect.
 
 **Status (2026-07-24):** audit, both minimum-bar warnings, the high-value
 image/date subset, axes/line/scatter/errorbar defaults, and the complete tick
-and legend families plus axes title/label placement are shipped with zero
-default golden churn. The remaining families are itemized below; MathText
+and legend families plus axes title/label placement and scalar formatter
+defaults are shipped with zero default golden churn. The remaining families
+are itemized below; MathText
 honoring is blocked on a
 `cwbudde/mathtext` library hook and Phase 17 fontset work.
 
@@ -545,9 +546,16 @@ behavior tests. Default values must not churn existing goldens.
       same values. Explicit per-axes title/x-label/y-label setters win until
       `Clear` restores rc defaults; focused style/core tests and the catalog
       golden/reference gate are green.
-- [ ] **P1 — Scalar formatter defaults.** Honor all six
+- [x] **P1 — Scalar formatter defaults.** Honor all six
       `axes.formatter.*` keys: `limits`, `min_exponent`, `offset_threshold`,
-      `use_locale`, `use_mathtext`, and `useoffset`.
+      `use_locale`, `use_mathtext`, and `useoffset`. **Shipped 2026-07-24:**
+      all six keys have typed `FormatterRC` storage, parser/runtime
+      round-tripping, and Matplotlib 3.10.9 defaults. Newly created/reset
+      axes and later scale/colorbar formatter installation consume power
+      limits, log minimum exponent, offset policy/threshold, MathText, and
+      locale-aware separators; later explicit formatter replacement still
+      wins until `Clear` restores rc defaults. Focused style/core tests and
+      the catalog golden/reference gate are green.
 - [ ] **P1 — Spine visibility.** Honor `axes.spines.{top,bottom,left,right}` at
       axes creation without overriding later explicit spine changes.
 - [ ] **P2 — Line and marker rendering defaults.** Honor
