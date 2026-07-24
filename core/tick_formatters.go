@@ -62,9 +62,9 @@ func formatScalarTickLabel(f ScalarFormatter, x, step float64) string {
 		x = 0
 	}
 
-	label := scalarFixMinus(strconv.FormatFloat(x, 'f', prec, 64))
+	label := scalarFixMinus(scalarFormatFixed(f, x, prec))
 	if f.UseMathText {
-		return `$\mathdefault{` + label + `}$`
+		return scalarMathTextLabel(f, label)
 	}
 	return label
 }
@@ -92,6 +92,9 @@ type ScalarFormatter struct {
 
 	DisableScientific bool
 	UseMathText       bool
+	// UseLocale formats decimal and grouping separators according to LC_ALL,
+	// LC_NUMERIC, or LANG, matching axes.formatter.use_locale.
+	UseLocale bool
 
 	// DisableOffset suppresses the shared additive offset in the tick-sequence
 	// path (Matplotlib's useOffset=False).
@@ -100,6 +103,9 @@ type ScalarFormatter struct {
 	// the minimum number of leading digits an offset must save before it is
 	// applied. Zero selects the Matplotlib default (4).
 	OffsetThreshold int
+	// offsetThresholdSet distinguishes an rc-configured zero/negative
+	// threshold from ScalarFormatter's zero-value default.
+	offsetThresholdSet bool
 }
 
 // scalarTickContext holds the offset / order-of-magnitude / precision that
@@ -115,11 +121,11 @@ func scalarEffectivePowerLimits(f ScalarFormatter) (int, int) {
 	if f.UsePowerLimits {
 		return f.PowerLimits[0], f.PowerLimits[1]
 	}
-	return -5, 5 // Matplotlib axes.formatter.limits default.
+	return -5, 6 // Matplotlib axes.formatter.limits default.
 }
 
 func scalarOffsetThreshold(f ScalarFormatter) int {
-	if f.OffsetThreshold > 0 {
+	if f.offsetThresholdSet || f.OffsetThreshold > 0 {
 		return f.OffsetThreshold
 	}
 	return 4 // Matplotlib axes.formatter.offset_threshold default.
@@ -325,9 +331,9 @@ func formatScalarTickLabelCtx(f ScalarFormatter, x float64, ctx scalarTickContex
 	if math.Abs(xp) < 1e-8 {
 		xp = 0
 	}
-	s := scalarFixMinus(strconv.FormatFloat(xp, 'f', ctx.sigfigs, 64))
+	s := scalarFixMinus(scalarFormatFixed(f, xp, ctx.sigfigs))
 	if f.UseMathText {
-		return `$\mathdefault{` + s + `}$`
+		return scalarMathTextLabel(f, s)
 	}
 	return s
 }
@@ -369,14 +375,14 @@ func scalarFormatData(f ScalarFormatter, value float64) string {
 	s := roundDecimals(value/math.Pow10(e), 10)
 	var significand string
 	if s == math.Trunc(s) {
-		significand = strconv.FormatFloat(s, 'f', 0, 64)
+		significand = scalarFormatFixed(f, s, 0)
 	} else {
-		significand = strconv.FormatFloat(s, 'g', 10, 64)
+		significand = scalarFormatGeneral(f, s, 10)
 	}
 	if e == 0 {
 		return significand
 	}
-	exponent := strconv.Itoa(e)
+	exponent := scalarFormatInteger(f, e)
 	if f.UseMathText {
 		expStr := "10^{" + exponent + "}"
 		if s == 1 {
@@ -402,20 +408,15 @@ func (f ScalarFormatter) Format(x float64) string {
 		p = 0
 	}
 	if scalarFormatterUsesScientific(f, x) {
-		return formatScalarScientific(x, p, f.UseMathText)
+		return formatScalarScientific(f, x, p)
 	}
-	s := strconv.FormatFloat(x, 'f', p, 64)
-	// Trim trailing zeros and possible dot
-	if strings.ContainsAny(s, ".") {
-		s = strings.TrimRight(s, "0")
-		s = strings.TrimRight(s, ".")
-	}
+	s := scalarTrimFixed(scalarFormatFixed(f, x, p), p)
 	return scalarFixMinus(s)
 }
 
-func formatScalarScientific(x float64, prec int, useMathText bool) string {
+func formatScalarScientific(f ScalarFormatter, x float64, prec int) string {
 	if x == 0 {
-		if useMathText {
+		if f.UseMathText {
 			return `$\mathdefault{0}$`
 		}
 		return "0"
@@ -431,18 +432,19 @@ func formatScalarScientific(x float64, prec int, useMathText bool) string {
 		mantissa = 1
 		exp++
 	}
-	m := strconv.FormatFloat(mantissa, 'f', prec, 64)
-	if strings.ContainsAny(m, ".") {
-		m = strings.TrimRight(m, "0")
-		m = strings.TrimRight(m, ".")
-	}
-	if useMathText {
+	m := scalarTrimFixed(scalarFormatFixed(f, mantissa, prec), prec)
+	if f.UseMathText {
+		m = scalarMathTextNumber(f, m)
 		if m == "1" {
-			return scalarFixMinus(fmt.Sprintf(`$\mathdefault{%s10^{%d}}$`, sign, exp))
+			return scalarFixMinus(fmt.Sprintf(`$\mathdefault{%s10^{%s}}$`, sign, scalarFormatInteger(f, exp)))
 		}
-		return scalarFixMinus(fmt.Sprintf(`$\mathdefault{%s%s\times10^{%d}}$`, sign, m, exp))
+		return scalarFixMinus(fmt.Sprintf(`$\mathdefault{%s%s\times10^{%s}}$`, sign, m, scalarFormatInteger(f, exp)))
 	}
-	return scalarFixMinus(fmt.Sprintf("%s%se%+d", sign, m, exp))
+	expLabel := scalarFormatInteger(f, exp)
+	if exp > 0 {
+		expLabel = "+" + expLabel
+	}
+	return scalarFixMinus(fmt.Sprintf("%s%se%s", sign, m, expLabel))
 }
 
 // scalarFixMinus swaps ASCII hyphens for U+2212 MINUS SIGN, matplotlib's
@@ -728,6 +730,9 @@ func (f LogFormatterExponent) FormatTick(x float64, _ int, ticks []float64) stri
 type LogFormatterMathText struct {
 	Base        float64
 	SciNotation bool
+	// MinExponent displays values with smaller absolute exponents as plain
+	// numbers, mirroring axes.formatter.min_exponent.
+	MinExponent int
 
 	LabelOnlyBase     bool
 	MinorThresholds   [2]float64
@@ -754,6 +759,9 @@ func (f LogFormatterMathText) Format(x float64) string {
 	isDecade := approx(exponent, math.Round(exponent), 1e-10)
 	if isDecade {
 		exponent = math.Round(exponent)
+	}
+	if math.Abs(exponent) < float64(f.MinExponent) {
+		return fmt.Sprintf(`$\mathdefault{%s%g}$`, sign, x)
 	}
 	baseLabel := formatLogBase(base)
 	if f.SciNotation && !isDecade {

@@ -111,6 +111,9 @@ func (a *Axes) setScale(isX bool, name string, opts ...transform.ScaleOption) er
 		target.YScale = scale
 	}
 	configureScaleAxes(primary, secondary, name, cfg)
+	targetRC := target.resolvedRC()
+	applyRCFormatterDefaultsToAxis(primary, &targetRC)
+	applyRCFormatterDefaultsToAxis(secondary, &targetRC)
 	configureChildScaleAxes(target, isX, name, cfg)
 	target.refreshUnitAxis(isX)
 	return nil
@@ -171,11 +174,17 @@ func configureChildScaleAxes(root *Axes, isX bool, scaleName string, cfg transfo
 		if isX {
 			if child.shareX == root || childLinkedSecondaryScale(child.XScale, root, true) {
 				configureScaleAxes(child.XAxis, child.XAxisTop, scaleName, cfg)
+				childRC := child.resolvedRC()
+				applyRCFormatterDefaultsToAxis(child.XAxis, &childRC)
+				applyRCFormatterDefaultsToAxis(child.XAxisTop, &childRC)
 			}
 			continue
 		}
 		if child.shareY == root || childLinkedSecondaryScale(child.YScale, root, false) {
 			configureScaleAxes(child.YAxis, child.YAxisRight, scaleName, cfg)
+			childRC := child.resolvedRC()
+			applyRCFormatterDefaultsToAxis(child.YAxis, &childRC)
+			applyRCFormatterDefaultsToAxis(child.YAxisRight, &childRC)
 		}
 	}
 }

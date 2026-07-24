@@ -189,6 +189,12 @@ func paramsFromRC(rc RC) Params {
 	params["lines.markersize"] = formatMPLFloat(rc.Lines.MarkerSize)
 	params["axes.autolimit_mode"] = rc.Axes.AutolimitMode
 	params["axes.axisbelow"] = rc.Axes.AxisBelow
+	params["axes.formatter.limits"] = fmt.Sprintf("%d, %d", rc.Axes.Formatter.Limits[0], rc.Axes.Formatter.Limits[1])
+	params["axes.formatter.min_exponent"] = strconv.Itoa(rc.Axes.Formatter.MinExponent)
+	params["axes.formatter.offset_threshold"] = strconv.Itoa(rc.Axes.Formatter.OffsetThreshold)
+	params["axes.formatter.use_locale"] = formatMPLBool(rc.Axes.Formatter.UseLocale)
+	params["axes.formatter.use_mathtext"] = formatMPLBool(rc.Axes.Formatter.UseMathText)
+	params["axes.formatter.useoffset"] = formatMPLBool(rc.Axes.Formatter.UseOffset)
 	params["axes.unicode_minus"] = formatMPLBool(rc.Axes.UnicodeMinus)
 	params["axes.xmargin"] = formatMPLFloat(rc.Axes.XMargin)
 	params["axes.ymargin"] = formatMPLFloat(rc.Axes.YMargin)

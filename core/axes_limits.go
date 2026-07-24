@@ -42,6 +42,9 @@ func (a *Axes) SetXLimLog(minVal, maxVal, base float64) {
 		transform.WithScaleDomain(minVal, maxVal),
 		transform.WithScaleBase(base),
 	))
+	rc := target.resolvedRC()
+	applyRCFormatterDefaultsToAxis(target.XAxis, &rc)
+	applyRCFormatterDefaultsToAxis(target.XAxisTop, &rc)
 }
 
 func (a *Axes) SetYLimLog(minVal, maxVal, base float64) {
@@ -55,6 +58,9 @@ func (a *Axes) SetYLimLog(minVal, maxVal, base float64) {
 		transform.WithScaleDomain(minVal, maxVal),
 		transform.WithScaleBase(base),
 	))
+	rc := target.resolvedRC()
+	applyRCFormatterDefaultsToAxis(target.YAxis, &rc)
+	applyRCFormatterDefaultsToAxis(target.YAxisRight, &rc)
 }
 
 func (a *Axes) InvertX() {

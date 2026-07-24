@@ -399,6 +399,43 @@ axes.labelweight: 650
 	}
 }
 
+func TestParseMPLStyleAxesFormatterDefaults(t *testing.T) {
+	theme, report, err := ParseMPLStyle("axes-formatter", `
+axes.formatter.limits: -3, 7
+axes.formatter.min_exponent: 2
+axes.formatter.offset_threshold: 5
+axes.formatter.use_locale: True
+axes.formatter.use_mathtext: True
+axes.formatter.useoffset: False
+`)
+	if err != nil {
+		t.Fatalf("ParseMPLStyle() error = %v", err)
+	}
+	if len(report.Unsupported) != 0 {
+		t.Fatalf("unexpected unsupported entries: %+v", report.Unsupported)
+	}
+	got := theme.RC.Axes.Formatter
+	if got.Limits != [2]int{-3, 7} || got.MinExponent != 2 || got.OffsetThreshold != 5 ||
+		!got.UseLocale || !got.UseMathText || got.UseOffset {
+		t.Fatalf("unexpected axes formatter defaults: %+v", got)
+	}
+	params := paramsFromRC(theme.RC)
+	if params["axes.formatter.limits"] != "-3, 7" ||
+		params["axes.formatter.min_exponent"] != "2" ||
+		params["axes.formatter.offset_threshold"] != "5" ||
+		params["axes.formatter.use_locale"] != "True" ||
+		params["axes.formatter.use_mathtext"] != "True" ||
+		params["axes.formatter.useoffset"] != "False" {
+		t.Fatalf("unexpected runtime axes formatter params: %+v", params)
+	}
+}
+
+func TestParseMPLStyleAxesFormatterLimitsRejectsWrongArity(t *testing.T) {
+	if _, _, err := ParseMPLStyle("axes-formatter", "axes.formatter.limits: -5\n"); err == nil {
+		t.Fatal("ParseMPLStyle accepted one formatter limit, want error")
+	}
+}
+
 func TestParseMPLStyleBroaderCoverage(t *testing.T) {
 	src := `
 font.size: 12

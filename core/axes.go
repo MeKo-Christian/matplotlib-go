@@ -402,6 +402,7 @@ func (a *Axes) resetToDefaults() {
 	}
 	a.applyRCTickDefaults(&effective)
 	a.projection.ConfigureAxes(a)
+	a.applyRCFormatterDefaults(&effective)
 	a.applyStyleDefaults(effective)
 	a.addDefaultGrids(effective)
 	a.applyRCBehaviorDefaults(&effective)

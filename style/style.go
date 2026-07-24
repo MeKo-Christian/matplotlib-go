@@ -127,6 +127,9 @@ type AxesRC struct {
 	// hyphen (axes.unicode_minus). Consumed by the scalar tick formatters
 	// (core/tick_formatters.go).
 	UnicodeMinus bool
+	// Formatter holds the axes.formatter.* defaults consumed by newly created
+	// scalar and logarithmic axis formatters.
+	Formatter FormatterRC
 	// TitleLocation aligns the axes title at the left, center, or right edge
 	// (axes.titlelocation).
 	TitleLocation string
@@ -147,6 +150,27 @@ type AxesRC struct {
 	// LabelWeight is the numeric font weight used for x/y axis labels
 	// (axes.labelweight).
 	LabelWeight int
+}
+
+// FormatterRC mirrors Matplotlib's axes.formatter.* rcParams.
+type FormatterRC struct {
+	// Limits are the inclusive powers at which ScalarFormatter switches to
+	// scientific notation (axes.formatter.limits).
+	Limits [2]int
+	// MinExponent is the smallest absolute exponent displayed as a power by
+	// LogFormatterMathText (axes.formatter.min_exponent).
+	MinExponent int
+	// OffsetThreshold is the number of leading digits an additive offset must
+	// save before ScalarFormatter uses it (axes.formatter.offset_threshold).
+	OffsetThreshold int
+	// UseLocale localizes numeric separators (axes.formatter.use_locale).
+	UseLocale bool
+	// UseMathText wraps scalar labels and scientific notation in MathText
+	// (axes.formatter.use_mathtext).
+	UseMathText bool
+	// UseOffset enables automatic additive offsets
+	// (axes.formatter.useoffset).
+	UseOffset bool
 }
 
 // LinesRC mirrors line-artist lines.* rcParams beyond the flat LineWidth and
@@ -529,6 +553,14 @@ var Default = RC{
 		YMargin:       0.05,
 		AutolimitMode: "data",
 		UnicodeMinus:  true,
+		Formatter: FormatterRC{
+			Limits:          [2]int{-5, 6},
+			MinExponent:     0,
+			OffsetThreshold: 4,
+			UseLocale:       false,
+			UseMathText:     false,
+			UseOffset:       true,
+		},
 		TitleLocation: "center",
 		TitlePad:      6,
 		TitleWeight:   400,

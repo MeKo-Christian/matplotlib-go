@@ -46,6 +46,12 @@ var supportedMPLStyleKeys = []string{
 	"axes.axisbelow",
 	"axes.edgecolor",
 	"axes.facecolor",
+	"axes.formatter.limits",
+	"axes.formatter.min_exponent",
+	"axes.formatter.offset_threshold",
+	"axes.formatter.use_locale",
+	"axes.formatter.use_mathtext",
+	"axes.formatter.useoffset",
 	"axes.grid",
 	"axes.grid.axis",
 	"axes.grid.which",
@@ -705,6 +711,36 @@ func applyMPLStyleEntry(state *mplStyleState, key, value string, lineNo int, rep
 			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
 		}
 		state.rc.Axes.UnicodeMinus = parsed
+	case "axes.formatter.limits":
+		parsed, err := parseMPLIntPair(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Axes.Formatter.Limits = parsed
+	case "axes.formatter.min_exponent":
+		parsed, err := parseMPLInt(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Axes.Formatter.MinExponent = parsed
+	case "axes.formatter.offset_threshold":
+		parsed, err := parseMPLInt(value)
+		if err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+		state.rc.Axes.Formatter.OffsetThreshold = parsed
+	case "axes.formatter.use_locale":
+		if err := parseMPLBoolInto(value, &state.rc.Axes.Formatter.UseLocale); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "axes.formatter.use_mathtext":
+		if err := parseMPLBoolInto(value, &state.rc.Axes.Formatter.UseMathText); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
+	case "axes.formatter.useoffset":
+		if err := parseMPLBoolInto(value, &state.rc.Axes.Formatter.UseOffset); err != nil {
+			return fmt.Errorf("parse %s on line %d: %w", key, lineNo, err)
+		}
 	case "axes.grid":
 		parsed, err := parseMPLBool(value)
 		if err != nil {
@@ -1636,6 +1672,24 @@ func parseMPLInt(value string) (int, error) {
 		return 0, fmt.Errorf("invalid int %q", value)
 	}
 	return parsed, nil
+}
+
+func parseMPLIntPair(value string) ([2]int, error) {
+	var pair [2]int
+	normalized := normalizeMPLValue(value)
+	normalized = strings.TrimSpace(strings.TrimPrefix(strings.TrimSuffix(normalized, "]"), "["))
+	parts := splitOutsideQuotes(normalized, ',')
+	if len(parts) != 2 {
+		return pair, fmt.Errorf("expected two comma-separated integers, got %q", value)
+	}
+	for i, part := range parts {
+		parsed, err := parseMPLInt(part)
+		if err != nil {
+			return pair, err
+		}
+		pair[i] = parsed
+	}
+	return pair, nil
 }
 
 func parseMPLFontWeight(value string) (int, error) {

@@ -151,6 +151,10 @@ func configureHorizontalColorbarScale(ax *Axes, mapping *ScalarMapInfo, location
 func applyColorbarNormScale(ax *Axes, ops colorbarAxisOps, mapping *ScalarMapInfo, location string, ticks, boundaries []float64, extend string) {
 	vmin, vmax := mapping.VMin, mapping.VMax
 	target := ops.target
+	if ax != nil {
+		rc := ax.resolvedRC()
+		defer applyRCFormatterDefaultsToAxis(target, &rc)
+	}
 
 	if len(boundaries) >= 2 {
 		inside := colorbarInteriorBoundaries(boundaries, extend)
