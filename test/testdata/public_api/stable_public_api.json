@@ -2908,12 +2908,20 @@
           "declaration": "const AxisRight"
         },
         {
+          "id": "const AxisSpinePositionAxes",
+          "declaration": "const AxisSpinePositionAxes"
+        },
+        {
           "id": "const AxisSpinePositionBoundary",
           "declaration": "const AxisSpinePositionBoundary AxisSpinePositionMode = iota"
         },
         {
           "id": "const AxisSpinePositionData",
           "declaration": "const AxisSpinePositionData"
+        },
+        {
+          "id": "const AxisSpinePositionOutward",
+          "declaration": "const AxisSpinePositionOutward"
         },
         {
           "id": "const AxisTop",
@@ -5352,8 +5360,16 @@
           "declaration": "func (Axis) SetLineStyle(lineCap render.LineCap, join render.LineJoin, dashes ...float64)"
         },
         {
+          "id": "method Axis.SetSpinePositionAxes",
+          "declaration": "func (Axis) SetSpinePositionAxes(fraction float64)"
+        },
+        {
           "id": "method Axis.SetSpinePositionData",
           "declaration": "func (Axis) SetSpinePositionData(value float64)"
+        },
+        {
+          "id": "method Axis.SetSpinePositionOutward",
+          "declaration": "func (Axis) SetSpinePositionOutward(points float64)"
         },
         {
           "id": "method Axis.SetTickDirection",

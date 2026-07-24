@@ -216,7 +216,7 @@ func xLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 
 	xAxis := ax.axisForXLabelSide(side)
 	if side == AxisTop {
-		topExtent := xLabelSpinePixelY(AxisTop, px)
+		topExtent := xAxisSpinePixelY(xAxis, ctx, AxisTop, px)
 		if xAxis != nil {
 			if tickBounds, ok := xLabelTickLabelBounds(ax, xAxis, r, ctx); ok {
 				topExtent = math.Max(topExtent, tickBounds.Max.Y)
@@ -231,7 +231,7 @@ func xLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 		return anchor, textLayoutVAlignBaseline
 	}
 
-	bottomExtent := xLabelSpinePixelY(AxisBottom, px)
+	bottomExtent := xAxisSpinePixelY(xAxis, ctx, AxisBottom, px)
 	if xAxis != nil {
 		if tickBounds, ok := xLabelTickLabelBounds(ax, xAxis, r, ctx); ok {
 			bottomExtent = math.Min(bottomExtent, tickBounds.Min.Y)
@@ -259,7 +259,7 @@ func yLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 
 	yAxis := ax.axisForYLabelSide(side)
 	if side == AxisRight {
-		spineX := spinePixelX(AxisRight, px)
+		spineX := yAxisSpinePixelX(yAxis, ctx, AxisRight, px)
 		rightExtent := spineX
 		if tickBounds, ok := axisTickLabelBounds(yAxis, r, ctx); ok {
 			rightExtent = math.Max(rightExtent, tickBounds.Max.X)
@@ -273,7 +273,7 @@ func yLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 		return anchor
 	}
 
-	spineX := spinePixelX(AxisLeft, px)
+	spineX := yAxisSpinePixelX(yAxis, ctx, AxisLeft, px)
 	leftExtent := spineX
 	if tickBounds, ok := axisTickLabelBounds(yAxis, r, ctx); ok {
 		leftExtent = math.Min(leftExtent, tickBounds.Min.X)
@@ -285,6 +285,24 @@ func yLabelAnchorPoint(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Re
 	}
 	anchor.X = leftExtent - axisLabelPadPx(ctx)
 	return anchor
+}
+
+func xAxisSpinePixelY(axis *Axis, ctx *DrawContext, side AxisSide, px geom.Rect) float64 {
+	if axis != nil && axis.SpinePositionMode != AxisSpinePositionBoundary {
+		if position, ok := axisSpineDisplayCoordinate(axis, ctx); ok {
+			return position
+		}
+	}
+	return xLabelSpinePixelY(side, px)
+}
+
+func yAxisSpinePixelX(axis *Axis, ctx *DrawContext, side AxisSide, px geom.Rect) float64 {
+	if axis != nil && axis.SpinePositionMode != AxisSpinePositionBoundary {
+		if position, ok := axisSpineDisplayCoordinate(axis, ctx); ok {
+			return position
+		}
+	}
+	return spinePixelX(side, px)
 }
 
 func axisLabelPadPx(ctx *DrawContext) float64 {

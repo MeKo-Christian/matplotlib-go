@@ -213,6 +213,7 @@ import (
 	example_specialty_artists "github.com/cwbudde/matplotlib-go/test/parity/specialty_artists"
 	example_specialty_depth "github.com/cwbudde/matplotlib-go/test/parity/specialty_depth"
 	example_spectrum_variants "github.com/cwbudde/matplotlib-go/test/parity/spectrum_variants"
+	example_spine_positions "github.com/cwbudde/matplotlib-go/test/parity/spine_positions"
 	example_spy_image "github.com/cwbudde/matplotlib-go/test/parity/spy_image"
 	example_spy_marker "github.com/cwbudde/matplotlib-go/test/parity/spy_marker"
 	example_stackplot_streamgraph "github.com/cwbudde/matplotlib-go/test/parity/stackplot_streamgraph"
@@ -350,6 +351,7 @@ var renderByID = map[string]func() image.Image{
 	"scale_function_defaults":             example_scale_function_defaults.Render,
 	"scale_logit_ticks":                   example_scale_logit_ticks.Render,
 	"scale_symlog_ticks":                  example_scale_symlog_ticks.Render,
+	"spine_positions":                     example_spine_positions.Render,
 	"ticks_styling_surface":               example_ticks_styling_surface.Render,
 	"artist_metadata":                     example_artist_metadata.Render,
 	"gridspec_composition":                example_gridspec_composition.Render,
@@ -461,6 +463,7 @@ var figureByID = map[string]func() *core.Figure{
 	"scale_function_defaults":             example_scale_function_defaults.Plot,
 	"scale_logit_ticks":                   example_scale_logit_ticks.Plot,
 	"scale_symlog_ticks":                  example_scale_symlog_ticks.Plot,
+	"spine_positions":                     example_spine_positions.Plot,
 	"ticks_styling_surface":               example_ticks_styling_surface.Plot,
 	"axisartist_showcase":                 showcase_axisartist_showcase.Plot,
 	"asinh_norm_image":                    example_asinh_norm_image.Plot,

@@ -171,6 +171,7 @@ var cases = []Case{
 	{ID: "scale_function_defaults", Topic: "axes", Title: "Function Scale Defaults", FixtureOnly: true, Width: 720, Height: 480, MinPSNR: 62.0, MaxMeanAbs: 0.05, MaxRMSE: 1.0},
 	{ID: "scale_logit_ticks", Topic: "axes", Title: "Logit Scale Ticks", FixtureOnly: true, Width: 720, Height: 400, MinPSNR: 57.0, MaxMeanAbs: 0.10, MaxRMSE: 4.0},
 	{ID: "scale_symlog_ticks", Topic: "axes", Title: "Symlog Scale Ticks", FixtureOnly: true, Width: 720, Height: 400, MinPSNR: 64.0, MaxMeanAbs: 0.05, MaxRMSE: 0.5},
+	{ID: "spine_positions", Topic: "axes", Title: "Spine Position Modes", Description: "Axes-fraction and outward-point spine positions with their attached ticks and labels.", FixtureOnly: true, Width: 720, Height: 400, MaxRMSE: 1.0},
 	{ID: "ticks_styling_surface", Topic: "axes", Title: "Tick Styling Surface", FixtureOnly: true, Width: 720, Height: 420, MinPSNR: 50.0, MaxMeanAbs: 0.30, MaxRMSE: 3.0},
 	// Axes-patch draw-order ratchet: regenerated golden-vs-reference RMSE is 2.80.
 	{ID: "ticks_scales_formatters_gallery", Topic: "axes", Title: "Ticks, Scales, and Formatters Gallery", Description: "A focused gallery covering major and minor locators, log and signed scales, formatter families, date labels, category labels, and custom units.", Optional: true, Width: 1320, Height: 900, Showcase: true, MaxMeanAbs: 0.10, MaxRMSE: 2.9},

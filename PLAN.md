@@ -927,9 +927,18 @@ file:line-verified on both sides:**
       `TestAutoScaleSingleOriginPointMatchesMatplotlib` locks matplotlib's
       `[-0.055, 0.055]` default window and the scatter variant covers the same
       zero-rectangle ambiguity. _Shipped 2026-07-23._
-- [ ] `core/axis_types.go:57` — spine `set_position(('outward', pts))` and
-      `(('axes', frac))` are missing; only boundary + data modes exist. Port both
-      (the standard detached/centered-spine idioms).
+- [x] `core/axis_types.go` / `core/axis_spine.go` — spine positioning now
+      supports Matplotlib's `('outward', points)` and `('axes', fraction)`
+      modes through `SetSpinePositionOutward` / `SetSpinePositionAxes` and
+      typed `AxisSpinePositionMode` constants. A shared perpendicular
+      display-coordinate resolver keeps the spine, tick bases, tick labels,
+      and axis-label anchor together; outward distances convert points through
+      renderer DPI (negative values move inward), while axes fractions remain
+      unclamped like Matplotlib. Exact four-side geometry tests match
+      `spines.py:get_spine_transform`, including DPI scaling, and new catalog
+      case `spine_positions` visually/reference-checks both modes at RMSE 0.61 /
+      PSNR 74.1 dB. The intentional API addition is recorded in the frozen
+      public audit. _Shipped 2026-07-23._
 - [x] `core/date_tick.go` — DAILY interval table: **already correct** (the audit
       note was stale). `chooseDateTickInterval` (date_tick.go:711-726) already carries
       **both** matplotlib tables keyed on `date.interval_multiples`: `{1,2,3,7,14,21}`

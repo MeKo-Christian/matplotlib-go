@@ -254,13 +254,29 @@ func visibleTicks(ticks []float64, minVal, maxVal float64) []float64 {
 }
 
 func axisTickDisplayPoint(a *Axis, ctx *DrawContext, tickValue float64, isXAxis bool, spineValue float64) geom.Pt {
+	var point geom.Pt
 	if !isXAxis {
 		if pt, ok := skewYAxisDisplayPoint(a, ctx, tickValue); ok {
-			return pt
+			point = pt
+		} else {
+			point = ctx.DataToPixel.Apply(geom.Pt{X: spineValue, Y: tickValue})
 		}
-		return ctx.DataToPixel.Apply(geom.Pt{X: spineValue, Y: tickValue})
+	} else {
+		point = ctx.DataToPixel.Apply(geom.Pt{X: tickValue, Y: spineValue})
 	}
-	return ctx.DataToPixel.Apply(geom.Pt{X: tickValue, Y: spineValue})
+
+	if a != nil &&
+		(a.SpinePositionMode == AxisSpinePositionAxes ||
+			a.SpinePositionMode == AxisSpinePositionOutward) {
+		if position, ok := axisSpineDisplayCoordinate(a, ctx); ok {
+			if isXAxis {
+				point.Y = position
+			} else {
+				point.X = position
+			}
+		}
+	}
+	return point
 }
 
 func axisTickSegment(axis *Axis, spine geom.Pt, tickSize float64, isXAxis bool) (geom.Pt, geom.Pt) {

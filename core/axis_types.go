@@ -67,6 +67,8 @@ type AxisSpinePositionMode uint8
 const (
 	AxisSpinePositionBoundary AxisSpinePositionMode = iota
 	AxisSpinePositionData
+	AxisSpinePositionAxes
+	AxisSpinePositionOutward
 )
 
 // Axis renders axis spines, ticks, and labels for a single dimension.
@@ -96,11 +98,11 @@ type Axis struct {
 	majorTickCountFixed bool
 	TickDirection       TickDirection
 	SpinePositionMode   AxisSpinePositionMode
-	SpinePosition       float64
-	ShowSpine           bool // whether to draw the axis line
-	ShowTicks           bool // whether to draw major/minor tick marks
-	ShowLabels          bool // whether to draw major tick labels
-	ShowMinorLabels     bool // whether to draw minor tick labels
+	SpinePosition       float64 // data value, axes fraction, or outward points according to SpinePositionMode
+	ShowSpine           bool    // whether to draw the axis line
+	ShowTicks           bool    // whether to draw major/minor tick marks
+	ShowLabels          bool    // whether to draw major tick labels
+	ShowMinorLabels     bool    // whether to draw minor tick labels
 	MajorLabelStyle     TickLabelStyle
 	MinorLabelStyle     TickLabelStyle
 	ExtraTickLevels     []TickLevel

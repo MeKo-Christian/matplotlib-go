@@ -79,6 +79,7 @@ scale_asinh_ticks
 scale_function_defaults
 scale_logit_ticks
 scale_symlog_ticks
+spine_positions
 ticks_styling_surface
 artist_metadata
 gridspec_composition
