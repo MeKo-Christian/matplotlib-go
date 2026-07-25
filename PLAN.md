@@ -5,12 +5,12 @@ Completed implementation history is available in git.
 
 ## Execution Order
 
-1. Phase 18 (Skia GPU) can proceed independently.
-2. Phase 20 performs the breaking API and package rework.
-3. Phase 21 runs visual QA against the final pre-v1.0 renderer/API state.
-4. Phase 19 executes last: freeze, validate, and tag v1.0.
+1. Phase 1 completes Skia GPU support and can proceed independently.
+2. Phase 2 performs the breaking API and package rework.
+3. Phase 3 runs visual QA against the final pre-v1.0 renderer/API state.
+4. Phase 4 freezes, validates, and tags v1.0.
 
-## Phase 18: Backend Deepening (Skia Native + GPU)
+## Phase 1: Backend Deepening (Skia Native + GPU)
 
 **Goal:** make Skia a parity-checked secondary raster backend with truthful CPU
 and GPU capability reporting.
@@ -37,31 +37,11 @@ Native recipes must omit the `freetype` tag unless Skia was built with
 under `skiacgo`/`skiagpu`, output is parity-checked, and per-mode capability
 reporting reflects runtime behavior.
 
-## Phase 19: v1.0 Release (Last)
-
-**Goal:** publish a reproducible, documented, semantically versioned v1.0 after
-Phases 18, 20, and 21.
-
-- [ ] Decide and document the semantic-version policy; establish the
-      `CHANGELOG.md` baseline and include Phase 20's breaking changes.
-- [ ] After Phase 21, regenerate final goldens and Matplotlib references and
-      freeze per-case tolerances.
-- [ ] Re-run the post-Phase-20 public API freeze and confirm the exported
-      surface, migration notes, and parity-status documentation agree.
-- [ ] Make the release-branch gate fully green:
-      `just fmt && just lint && just test`, plus catalog-driven parity checks.
-      Resolve or reclassify every entry in
-      `docs/ci-known-test-failures.md`.
-- [ ] Verify a new user can install the module, follow the documentation, and
-      reproduce every showcase plot.
-- [ ] Confirm performance and parity baselines are active in CI.
-- [ ] Tag v1.0.
-
-## Phase 20: Go-Idiomatic API Rework and `core/` Split
+## Phase 2: Go-Idiomatic API Rework and `core/` Split
 
 **Goal:** perform the single coordinated pre-v1.0 breaking pass: make the API
 Go-idiomatic, split the `core/` package, and re-freeze the public surface.
-Rendering must remain byte-identical to the Phase 17 golden baseline.
+Rendering must remain byte-identical to the current pre-break golden baseline.
 
 After every stage, regenerate the frozen API with
 `UPDATE_PUBLIC_API_AUDIT=1`, remap
@@ -69,7 +49,7 @@ After every stage, regenerate the frozen API with
 `docs/matplotlib-parity-status.md` with `go run ./cmd/paritystatusdoc`, and
 update the coupled API/doc tests in the same commit.
 
-### 20.1 Surface Tiering
+### 2.1 Surface Tiering
 
 - [ ] Classify all 3,019 frozen symbols as keep, demote, or delete in a design
       document. Explicitly decide the fate of:
@@ -78,7 +58,7 @@ update the coupled API/doc tests in the same commit.
   - `*Units` variants that overlap the new error convention;
   - renderer-extension interfaces used only by backends.
 
-### 20.2 Package Split
+### 2.2 Package Split
 
 - [ ] Move `core/axes3d*.go` and 3D projection files into `plot3d`
       (approximately 98 exported symbols and 7k lines).
@@ -91,7 +71,7 @@ update the coupled API/doc tests in the same commit.
       refresh `docs/large-file-decomposition.md`, and run
       `just large-file-audit`.
 
-### 20.3 Idiomatic Conventions
+### 2.3 Idiomatic Conventions
 
 - [ ] Adopt one error convention: rejected plot input returns `(T, error)`;
       `diag.Warnf` remains only for accepted degradations. Fold redundant
@@ -109,22 +89,22 @@ update the coupled API/doc tests in the same commit.
 - [ ] Consolidate duplicated alpha baking, option unpacking, and scalar-map
       resolution paths.
 
-### 20.4 Re-freeze
+### 2.4 Re-freeze
 
 - [ ] Regenerate `stable_public_api.json`, remap public-surface
       classifications, regenerate the parity-status document, add migration
-      notes for every break, and draft the Phase 19 changelog section.
+      notes for every break, and draft the Phase 4 changelog section.
 
 **Done when:** `core/` no longer owns plot3d/ticker/widgets; plot methods use
 the chosen error and options conventions; no raw-string option enums remain;
 the new figure save surface is used by examples; the API is re-frozen; and all
-goldens remain byte-identical to Phase 17.
+goldens remain byte-identical to the pre-break baseline.
 
-## Phase 21: Visual QA and Tolerance Closure
+## Phase 3: Visual QA and Tolerance Closure
 
 **Goal:** inspect every case whose tolerance can hide a visible divergence,
-record its disposition, and hand Phase 19 a defensible frozen tolerance set.
-Run after Phase 20.
+record its disposition, and hand Phase 4 a defensible frozen tolerance set.
+Run after Phase 2.
 
 - [ ] Review `widgets_gallery` and `animation_gallery` and replace their
       remaining loose RMSE allowances with measured, binding thresholds.
@@ -151,8 +131,28 @@ Run after Phase 20.
       tolerance.
 
 **Done when:** no catalog case has an effectively disabled gate, every case
-with `MaxRMSE >= 4` has a written disposition, and Phase 19 receives the
+with `MaxRMSE >= 4` has a written disposition, and Phase 4 receives the
 ratcheted tolerance set.
+
+## Phase 4: v1.0 Release
+
+**Goal:** publish a reproducible, documented, semantically versioned v1.0 after
+Phases 1–3.
+
+- [ ] Decide and document the semantic-version policy; establish the
+      `CHANGELOG.md` baseline and include Phase 2's breaking changes.
+- [ ] After Phase 3, regenerate final goldens and Matplotlib references and
+      freeze per-case tolerances.
+- [ ] Re-run the post-Phase-2 public API freeze and confirm the exported
+      surface, migration notes, and parity-status documentation agree.
+- [ ] Make the release-branch gate fully green:
+      `just fmt && just lint && just test`, plus catalog-driven parity checks.
+      Resolve or reclassify every entry in
+      `docs/ci-known-test-failures.md`.
+- [ ] Verify a new user can install the module, follow the documentation, and
+      reproduce every showcase plot.
+- [ ] Confirm performance and parity baselines are active in CI.
+- [ ] Tag v1.0.
 
 ## Global Gates
 
