@@ -512,24 +512,22 @@ type MathtextRC struct {
 	// "dejavuserif", "cm", "stix", "stixsans", or "custom".
 	Fontset string
 	// Default is the default math font style (mathtext.default), e.g. "it".
-	// Stored only.
 	Default string
 	// Fallback is the fallback font set (mathtext.fallback); empty means None.
-	// Stored only.
 	Fallback string
-	// BF is the bold font pattern (mathtext.bf). Stored only.
+	// BF is the bold font pattern (mathtext.bf).
 	BF string
-	// BFit is the bold-italic font pattern (mathtext.bfit). Stored only.
+	// BFit is the bold-italic font pattern (mathtext.bfit).
 	BFit string
-	// Cal is the calligraphic font pattern (mathtext.cal). Stored only.
+	// Cal is the calligraphic font pattern (mathtext.cal).
 	Cal string
-	// It is the italic font pattern (mathtext.it). Stored only.
+	// It is the italic font pattern (mathtext.it).
 	It string
-	// RM is the roman font pattern (mathtext.rm). Stored only.
+	// RM is the roman font pattern (mathtext.rm).
 	RM string
-	// SF is the sans-serif font pattern (mathtext.sf). Stored only.
+	// SF is the sans-serif font pattern (mathtext.sf).
 	SF string
-	// TT is the typewriter font pattern (mathtext.tt). Stored only.
+	// TT is the typewriter font pattern (mathtext.tt).
 	TT string
 }
 

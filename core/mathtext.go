@@ -1,7 +1,11 @@
 package core
 
 import (
+	"fmt"
 	"math"
+	"path/filepath"
+	"reflect"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -161,14 +165,16 @@ func mathLayoutImageMetrics(r render.Renderer, layout MathTextLayout, fontKey st
 	return xmax - xmin, totalH - layout.Descent, totalH - layout.Ascent, true
 }
 
-type mathTextFontResolver struct{}
+type mathTextFontResolver struct {
+	rc style.MathtextRC
+}
 
-func (mathTextFontResolver) ResolveMathFontKey(base string, request mt.FontRequest) string {
+func (r mathTextFontResolver) ResolveMathFontKey(base string, request mt.FontRequest) string {
 	props := render.ParseFontProperties(base)
 	if strings.TrimSpace(props.MathFontFamily) == "" {
 		// Default the math font set from rcParams["mathtext.fontset"] when the
 		// font key does not already encode one (matplotlib's mathtext.fontset).
-		props.MathFontFamily = style.CurrentDefaults().Mathtext.Fontset
+		props.MathFontFamily = r.rc.Fontset
 	}
 	if len(request.Families) > 0 {
 		props.File = ""
@@ -193,6 +199,120 @@ func (mathTextFontResolver) ResolveMathFontKey(base string, request mt.FontReque
 		return props.File
 	}
 	return base
+}
+
+// mathTextProfileResolver adapts mathtext's semantic fontset profile to the
+// renderer's concrete font keys. Besides per-glyph resolution it deliberately
+// forwards Constants and SizedAlternatives: the mathtext layout engine detects
+// those optional capabilities on the GlyphResolver itself.
+type mathTextProfileResolver struct {
+	profile *mt.MathFontProfile
+}
+
+func (r mathTextProfileResolver) ResolveMathGlyph(base string, request mt.GlyphRequest) mt.GlyphResolution {
+	resolved := r.profile.ResolveMathGlyph(base, request)
+	resolved.FontKey = resolveMathTextFontPattern(resolved.FontKey)
+	return resolved
+}
+
+func (r mathTextProfileResolver) ResolveMathGlyphCandidates(
+	base string,
+	request mt.GlyphRequest,
+) []mt.GlyphResolution {
+	resolved := r.profile.ResolveMathGlyphCandidates(base, request)
+	for i := range resolved {
+		resolved[i].FontKey = resolveMathTextFontPattern(resolved[i].FontKey)
+	}
+	return resolved
+}
+
+func (r mathTextProfileResolver) Constants() mt.MathFontConstants {
+	return r.profile.Constants()
+}
+
+func (r mathTextProfileResolver) SizedAlternatives(symbol string) []mt.GlyphResolution {
+	resolved := r.profile.SizedAlternatives(symbol)
+	for i := range resolved {
+		resolved[i].FontKey = resolveMathTextFontPattern(resolved[i].FontKey)
+	}
+	return resolved
+}
+
+func resolveMathTextFontPattern(pattern string) string {
+	pattern = strings.TrimSpace(pattern)
+	if pattern == "" {
+		return ""
+	}
+	if strings.HasPrefix(pattern, "fontprops:") {
+		props := render.ParseFontProperties(pattern)
+		if face, ok := render.DefaultFontManager().FindFont(props); ok && face.Path != "" {
+			return filepath.Clean(face.Path)
+		}
+		return pattern
+	}
+	props := parseMathTextFontPattern(pattern)
+	if face, ok := render.DefaultFontManager().FindFont(props); ok && face.Path != "" {
+		return filepath.Clean(face.Path)
+	}
+	if key := render.FontPropertiesKey(props); key != "" {
+		return key
+	}
+	return pattern
+}
+
+func parseMathTextFontPattern(pattern string) render.FontProperties {
+	if props := render.ParseFontProperties(pattern); props.File != "" {
+		return props
+	}
+	parts := strings.Split(pattern, ":")
+	props := render.ParseFontProperties(strings.TrimSpace(parts[0]))
+	for _, raw := range parts[1:] {
+		part := strings.ToLower(strings.TrimSpace(raw))
+		key, value, hasValue := strings.Cut(part, "=")
+		if hasValue {
+			part = strings.TrimSpace(value)
+		}
+		switch key {
+		case "style", "slant":
+			switch part {
+			case "italic":
+				props.Style = render.FontStyleItalic
+			case "oblique":
+				props.Style = render.FontStyleOblique
+			case "normal", "roman":
+				props.Style = render.FontStyleNormal
+			}
+		case "weight":
+			props.Weight = parseMathTextFontWeight(part, props.Weight)
+		default:
+			switch part {
+			case "italic":
+				props.Style = render.FontStyleItalic
+			case "oblique":
+				props.Style = render.FontStyleOblique
+			case "bold":
+				props.Weight = 700
+			case "normal", "regular":
+				// A bare "normal" is both normal posture and regular weight.
+				props.Style = render.FontStyleNormal
+				props.Weight = 400
+			}
+		}
+	}
+	return props
+}
+
+func parseMathTextFontWeight(value string, fallback int) int {
+	switch value {
+	case "bold":
+		return 700
+	case "normal", "regular":
+		return 400
+	}
+	if weight, err := strconv.Atoi(value); err == nil && weight > 0 {
+		return weight
+	}
+	return fallback
 }
 
 func mathFontRequestFamilies(mathFontFamily string, requested []string) []string {
@@ -240,11 +360,53 @@ func mathFontFamilyFallbacks(family string) []string {
 	}
 }
 
-func mathTextOptions() mt.Options {
-	return mt.Options{
-		FontResolver: mathTextFontResolver{},
-		Cache:        mt.DefaultCache(),
+func mathTextOptions(r render.Renderer, fontKey string) mt.Options {
+	rc := style.CurrentDefaults().Mathtext
+	if explicit := strings.TrimSpace(render.ParseFontProperties(fontKey).MathFontFamily); explicit != "" {
+		switch mt.MathFontSet(explicit) {
+		case mt.MathFontSetDejaVuSans, mt.MathFontSetDejaVuSerif, mt.MathFontSetCM,
+			mt.MathFontSetSTIX, mt.MathFontSetSTIXSans, mt.MathFontSetCustom:
+			rc.Fontset = explicit
+		}
 	}
+	profile := mt.NewMathFontProfile(mt.MathFontSet(rc.Fontset))
+	profile.Fallback = mt.MathFontSet(rc.Fallback)
+	profile.Fonts = map[mt.FontClass]string{
+		mt.FontClassBold:         rc.BF,
+		mt.FontClassBoldItalic:   rc.BFit,
+		mt.FontClassCalligraphic: rc.Cal,
+		mt.FontClassItalic:       rc.It,
+		mt.FontClassRoman:        rc.RM,
+		mt.FontClassSans:         rc.SF,
+		mt.FontClassTypewriter:   rc.TT,
+	}
+	return mt.Options{
+		FontResolver:     mathTextFontResolver{rc: rc},
+		GlyphResolver:    mathTextProfileResolver{profile: profile},
+		DefaultFontClass: mt.FontClass(rc.Default),
+		Cache:            mt.DefaultCache(),
+		MeasurementKey:   mathTextRendererMeasurementKey(r, rc),
+	}
+}
+
+func mathTextRendererMeasurementKey(r render.Renderer, rc style.MathtextRC) string {
+	value := reflect.ValueOf(r)
+	if !value.IsValid() || value.Kind() != reflect.Pointer || value.IsNil() {
+		// A value renderer has no stable instance identity. Keep parsed-node
+		// caching, but leave final-layout caching disabled rather than sharing
+		// metrics across potentially different renderer configurations.
+		return ""
+	}
+	dpi := 0.0
+	if provider, ok := r.(render.DPIProvider); ok {
+		dpi = float64(provider.Resolution())
+	}
+	return fmt.Sprintf("%T@%x@%g\x1f%s", r, value.Pointer(), dpi, mathTextMeasurementKey(rc))
+}
+
+func mathTextMeasurementKey(rc style.MathtextRC) string {
+	return fmt.Sprintf("mplgo-mathtext-v1\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s",
+		rc.Fontset, rc.Default, rc.Fallback, rc.BF, rc.BFit, rc.Cal, rc.It, rc.RM, rc.SF, rc.TT)
 }
 
 func normalizeDisplayText(text string) string {
@@ -269,11 +431,11 @@ func displayTextForMathParsing(text string, parseMath bool) string {
 // LayoutMathText parses and lays out one MathText expression without requiring
 // dollar delimiters.
 func LayoutMathText(r render.Renderer, expr string, size float64, fontKey string) (MathTextLayout, bool) {
-	return mt.LayoutMathText(mathTextMeasurer{r: r}, expr, size, fontKey, mathTextOptions())
+	return mt.LayoutMathText(mathTextMeasurer{r: r}, expr, size, fontKey, mathTextOptions(r, fontKey))
 }
 
 func layoutDisplayText(r render.Renderer, text string, size float64, fontKey string) (MathTextLayout, bool) {
-	return mt.LayoutDisplay(mathTextMeasurer{r: r}, text, size, fontKey, mathTextOptions())
+	return mt.LayoutDisplay(mathTextMeasurer{r: r}, text, size, fontKey, mathTextOptions(r, fontKey))
 }
 
 func drawDisplayText(textRen render.TextDrawer, text string, origin geom.Pt, size float64, textColor render.Color, fontKey string, useTeX ...bool) {

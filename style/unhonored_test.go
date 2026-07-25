@@ -92,6 +92,15 @@ func TestHonoredRCParamsDoNotWarn(t *testing.T) {
 	src := strings.Join([]string{
 		"image.cmap: plasma",
 		"mathtext.fontset: cm",
+		"mathtext.default: rm",
+		"mathtext.fallback: stix",
+		"mathtext.bf: serif:bold",
+		"mathtext.bfit: serif:italic:bold",
+		"mathtext.cal: cursive",
+		"mathtext.it: serif:italic",
+		"mathtext.rm: serif",
+		"mathtext.sf: sans-serif",
+		"mathtext.tt: monospace",
 		"boxplot.notch: true",
 		"boxplot.patchartist: true",
 	}, "\n") + "\n"
@@ -121,7 +130,9 @@ func TestUnhonoredRCParamsAreParseable(t *testing.T) {
 func TestHonoredRCParamsNotInRegistry(t *testing.T) {
 	honored := []string{
 		"image.cmap", "image.interpolation", "image.origin", "image.aspect",
-		"mathtext.fontset",
+		"mathtext.fontset", "mathtext.default", "mathtext.fallback",
+		"mathtext.bf", "mathtext.bfit", "mathtext.cal", "mathtext.it",
+		"mathtext.rm", "mathtext.sf", "mathtext.tt",
 		"boxplot.notch", "boxplot.patchartist",
 		"boxplot.showmeans", "boxplot.showcaps", "boxplot.showbox", "boxplot.showfliers",
 		"date.epoch", "date.converter", "date.interval_multiples",

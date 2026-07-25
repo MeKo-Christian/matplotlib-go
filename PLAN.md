@@ -461,13 +461,14 @@ confidence a setting took effect.
 image/date subset, axes/line/scatter/errorbar defaults, and the complete tick
 and legend families plus axes title/label placement and scalar formatter
 defaults, independent spine visibility, and all five P2 families are shipped
-with zero default golden churn. MathText honoring remains blocked on a
-`cwbudde/mathtext` library hook and Phase 17 fontset work.
+with zero default golden churn. MathText rcParams and the Phase 17 CM/STIX
+fontset work are now shipped through the renderer-neutral font-profile hooks.
 
 - [x] Audited the dead params: **51** parsed-but-never-consumed keys, captured as
       the data-driven source of truth in `style/unhonored.go` (`unhonoredRCParams`):
       image (6: origin/aspect/resample/interpolation-stage/lut/composite_image),
-      mathtext (9: default/fallback/bf/bfit/cal/it/rm/sf/tt), date (10), PDF
+      mathtext (9 at audit time: default/fallback/bf/bfit/cal/it/rm/sf/tt;
+      subsequently honored and removed from the registry), date (10), PDF
       (4), PS (5), SVG (4), animation (11), and boxplot (2:
       vertical/whiskers). Correction to the prior audit: `boxplot.notch` and
       `boxplot.patchartist` **are** consumed (`core/plot.go`);
@@ -600,11 +601,15 @@ behavior tests. Default values must not churn existing goldens.
       options and rc fallbacks cover structured and triangular paths,
       single-masked-corner geometry, Matplotlib's mpl2005 corner-mask
       restriction, line-width fallback, and monochrome negative styles.
-- [ ] **Blocked — MathText rcParams.** Honor `mathtext.default`, `fallback`,
-      `bf`, `bfit`, `cal`, `it`, `rm`, `sf`, and `tt` after
-      `cwbudde/mathtext` exposes implicit-style and per-class font hooks.
-      `cal`/`bfit`/`fallback` also depend on Phase 17's per-fontset glyph maps;
-      keep warning through `unhonoredRCParams` until then.
+- [x] **MathText rcParams.** Honor `mathtext.default`, `fallback`, `bf`, `bfit`,
+      `cal`, `it`, `rm`, `sf`, and `tt`. **Shipped 2026-07-25:** the
+      `cwbudde/mathtext` profile API carries implicit and explicit semantic font
+      classes, per-glyph substitutions, fontset constants, and sized
+      alternatives. The core adapter snapshots all ten mathtext font settings,
+      resolves custom fontconfig-like patterns to exact renderer faces,
+      preserves per-text `MathFontFamily` precedence, and isolates cached
+      layouts by the complete profile. The nine keys no longer warn through
+      `unhonoredRCParams`.
 - [x] **Phase 16 exit gate.** Verify every completed key above is parsed or
       explicitly honored (while remaining in the upstream-key audit table), move
       intentional omissions into `nonGoalRCParams` with rationale, and run focused
@@ -666,10 +671,12 @@ artist gaps that have no workaround.
       New Showcase example `examples/hist_log` + parity case `hist_log` (golden
       byte-identical; matplotlib-ref RMSE 0.36 / PSNR 57.5 dB). Zero churn on the
       existing hist goldens (`Log` defaults off). _Shipped 2026-07-06._
-- [ ] mathtext `cm`/`stix` fontsets — `core/mathtext.go:208` only remaps the font
-      _family_ over the single DejaVu Unicode table; port matplotlib's
-      `BakomaFonts`/`StixFonts` per-fontset glyph maps so non-DejaVu fontsets are
-      parity-exact (currently only the DejaVu default is). Larger effort; scope first.
+- [x] mathtext `cm`/`stix` fontsets — ported Matplotlib's
+      `BakomaFonts`/`StixFonts` per-fontset glyph maps, virtual alphabets,
+      private-use faces, glyph fixes, font constants, and sized alternatives.
+      The core adapter resolves the profile's CM/STIX faces to the exact bundled
+      Matplotlib font files, including STIXNonUnicode variants. _Shipped
+      2026-07-25._
 - [x] `core/norm.go` `TwoSlopeNorm` — out-of-range now maps to ±inf. `Map`/`Inverse`
       extrapolate `< VMin`/`> VMax` (and `< 0`/`> 1` for the inverse) to ∓inf, matching
       `np.interp(..., left=-inf, right=inf)` in `colors.py` TwoSlopeNorm. Coupled fix in
@@ -691,8 +698,10 @@ artist gaps that have no workaround.
       `Affine2D`-style `rotate/skew` builders; the separable→affine extraction is
       diagonal-only (`transform/transform.go:61`), so rotation/shear need manual matrix
       construction today. Triage against real demand before building.
-- [ ] Add the ~3 missing accents vs matplotlib's 20-entry `_accent_map` (mathtext
-      module).
+- [x] Add the ~3 missing accents vs matplotlib's 20-entry `_accent_map`
+      (mathtext module). The library now covers all 20 accent entries plus all
+      three wide accents, with separate-glyph positioning and sized wide-accent
+      alternatives. _Shipped 2026-07-25._
 
 **Third-audit additions (2026-07-01, REVIEW.md third review §2), all
 file:line-verified on both sides:**

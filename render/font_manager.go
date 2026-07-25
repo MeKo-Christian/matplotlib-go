@@ -588,6 +588,17 @@ func bundledDejaVuFontFilename(family string, props FontProperties) string {
 		default:
 			return "STIXGeneral.ttf"
 		}
+	case "stixnonunicode", "stixnonuni":
+		switch {
+		case bold && italic:
+			return "STIXNonUniBolIta.ttf"
+		case bold:
+			return "STIXNonUniBol.ttf"
+		case italic:
+			return "STIXNonUniIta.ttf"
+		default:
+			return "STIXNonUni.ttf"
+		}
 	case "stixsizeonesym":
 		return "STIXSizOneSymReg.ttf"
 	case "stixsizetwosym":

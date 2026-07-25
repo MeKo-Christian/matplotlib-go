@@ -211,6 +211,43 @@ func TestFontManagerPrefersBundledMatplotlibDejaVuFont(t *testing.T) {
 	}
 }
 
+func TestFontManagerResolvesBundledSTIXNonUnicodeFaces(t *testing.T) {
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
+	}
+	fontDir := filepath.Join(filepath.Dir(file), "..", "third_party", "matplotlib", "lib", "matplotlib", "mpl-data", "fonts", "ttf")
+	tests := []struct {
+		name   string
+		family string
+		style  FontStyle
+		weight int
+		want   string
+	}{
+		{name: "regular", family: "STIXNonUnicode", style: FontStyleNormal, weight: 400, want: "STIXNonUni.ttf"},
+		{name: "short alias", family: "STIXNonUni", style: FontStyleNormal, weight: 400, want: "STIXNonUni.ttf"},
+		{name: "italic", family: "STIXNonUnicode", style: FontStyleItalic, weight: 400, want: "STIXNonUniIta.ttf"},
+		{name: "bold", family: "STIXNonUnicode", style: FontStyleNormal, weight: 700, want: "STIXNonUniBol.ttf"},
+		{name: "bold italic", family: "STIXNonUnicode", style: FontStyleItalic, weight: 700, want: "STIXNonUniBolIta.ttf"},
+	}
+
+	manager := NewFontManager()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			want := filepath.Clean(filepath.Join(fontDir, tt.want))
+			face, ok := manager.FindFont(FontProperties{
+				Families: []string{tt.family},
+				Style:    tt.style,
+				Weight:   tt.weight,
+			})
+			if !ok || filepath.Clean(face.Path) != want {
+				t.Fatalf("FindFont(%q, %q, %d) = %+v, %v; want %q",
+					tt.family, tt.style, tt.weight, face, ok, want)
+			}
+		})
+	}
+}
+
 func TestEmbeddedFontFaceDoesNotSatisfyStyledRequests(t *testing.T) {
 	if face, ok := embeddedFontFace("DejaVu Sans", FontProperties{Style: FontStyleItalic, Weight: 400}); ok {
 		t.Fatalf("embedded regular face satisfied italic request: %+v", face)

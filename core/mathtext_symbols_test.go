@@ -49,21 +49,22 @@ func TestLayoutMathTextResolvesExpandedSymbols(t *testing.T) {
 }
 
 // TestLayoutMathTextResolvesMathAlphabets verifies the \mathbb / \mathcal /
-// \mathfrak / \boldsymbol alphabets translate to the Unicode Mathematical
-// Alphanumeric block (resolved via the per-glyph font fallback at draw time).
+// \mathfrak / \boldsymbol alphabets resolve to Matplotlib's fontset-specific
+// glyph codes. Some STIX virtual alphabets use Letterlike Symbols or private-use
+// code points rather than the Unicode Mathematical Alphanumeric block.
 func TestLayoutMathTextResolvesMathAlphabets(t *testing.T) {
 	var r textRecordingRenderer
 	cases := []struct {
 		expr  string
 		glyph string
 	}{
-		{`\mathbb{R}`, "ℝ"},     // Letterlike-Symbols hole
-		{`\mathbb{D}`, "𝔻"},     // contiguous double-struck
-		{`\mathbb{1}`, "𝟙"},     // double-struck digit
-		{`\mathcal{L}`, "ℒ"},    // script hole
-		{`\mathfrak{g}`, "𝔤"},   // fraktur
-		{`\boldsymbol{x}`, "𝒙"}, // bold italic letter
-		{`\boldsymbol{2}`, "𝟐"}, // bold digit
+		{`\mathbb{R}`, "ℝ"},       // Letterlike-Symbols hole
+		{`\mathbb{D}`, "ⅅ"},       // STIX virtual double-struck italic D
+		{`\mathbb{1}`, "𝟙"},       // double-struck digit
+		{`\mathcal{L}`, "\ue238"}, // STIXNonUnicode script L
+		{`\mathfrak{g}`, "𝔤"},     // fraktur
+		{`\boldsymbol{x}`, "x"},   // bold-italic face carries the style
+		{`\boldsymbol{2}`, "2"},   // bold face carries the style
 	}
 	for _, tc := range cases {
 		layout, ok := LayoutMathText(&r, tc.expr, 20, "DejaVu Sans")

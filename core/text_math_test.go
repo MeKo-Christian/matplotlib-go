@@ -2,6 +2,7 @@ package core
 
 import (
 	"math"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -377,7 +378,7 @@ func TestLayoutMathTextSupportsFencedDelimiters(t *testing.T) {
 
 	var leftSize, rightSize float64
 	for _, run := range layout.Runs {
-		if !strings.HasPrefix(run.FontKey, "STIXSize") {
+		if !isSTIXSizeMathFontKey(run.FontKey) {
 			continue
 		}
 		switch leftSize {
@@ -402,7 +403,7 @@ func TestLayoutMathTextSupportsMiddleDelimiters(t *testing.T) {
 	var leftSize, rightSize float64
 	var leftX, rightX float64
 	for _, run := range layout.Runs {
-		if !strings.HasPrefix(run.FontKey, "STIXSize") {
+		if !isSTIXSizeMathFontKey(run.FontKey) {
 			continue
 		}
 		switch leftSize {
@@ -574,10 +575,10 @@ func TestLayoutMathTextSupportsMatrixEnvironments(t *testing.T) {
 	for _, run := range layout.Runs {
 		text := strings.TrimSpace(run.Text)
 		switch {
-		case strings.HasPrefix(run.FontKey, "STIXSize") && !sawLeft:
+		case isSTIXSizeMathFontKey(run.FontKey) && !sawLeft:
 			leftX = run.Offset.X
 			sawLeft = true
-		case strings.HasPrefix(run.FontKey, "STIXSize"):
+		case isSTIXSizeMathFontKey(run.FontKey):
 			rightX = run.Offset.X
 			sawRight = true
 		case text == "a":
@@ -609,6 +610,11 @@ func TestLayoutMathTextSupportsMatrixEnvironments(t *testing.T) {
 	if firstColBottomY <= firstColTopY {
 		t.Fatalf("expected second matrix row below first row: top=%v bottom=%v runs=%+v", firstColTopY, firstColBottomY, layout.Runs)
 	}
+}
+
+func isSTIXSizeMathFontKey(fontKey string) bool {
+	name := strings.ToLower(filepath.Base(fontKey))
+	return strings.HasPrefix(name, "stixsize") || strings.HasPrefix(name, "stixsiz")
 }
 
 func TestLayoutMathTextSupportsArrayEnvironments(t *testing.T) {
