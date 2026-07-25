@@ -246,7 +246,7 @@ func addAxesGridPanel(fig *core.Figure, rect geom.Rect) {
 			ax.SetTitle("Tile")
 			ax.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 12, 23}}
 			ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 12, 23}}
-			ax.ImShow(surface(24, 24, float64(row*2+col)))
+			ax.ImShow(surface(24, 24, float64(row*2+col)), core.ImShowOptions{})
 		}
 	}
 }

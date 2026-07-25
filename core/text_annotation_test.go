@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/transform"
@@ -203,7 +204,7 @@ func TestAnnotationDrawOverlayRendersArrowAndText(t *testing.T) {
 	ax.YAxis.ShowLabels = false
 	ax.ShowFrame = false
 
-	ax.Annotate("peak", 0.5, 0.5)
+	ax.Annotate("peak", 0.5, 0.5, AnnotationOptions{})
 
 	var r textRecordingRenderer
 	DrawFigure(fig, &r)
@@ -230,8 +231,8 @@ func TestAnnotationDrawsTextBBox(t *testing.T) {
 	face := render.Color{R: 1, G: 0.95, B: 0.8, A: 1}
 	edge := render.Color{R: 0.2, G: 0.1, B: 0.05, A: 1}
 	ax.Annotate("boxed", 0.5, 0.5, AnnotationOptions{
-		OffsetX: 10,
-		OffsetY: -8,
+		OffsetX: optional.Of(10.0),
+		OffsetY: optional.Of(-8.0),
 		BBox: &TextBBoxOptions{
 			FaceColor:    face,
 			EdgeColor:    edge,
@@ -257,8 +258,8 @@ func TestAnnotationDefaultAlignmentMatchesMatplotlib(t *testing.T) {
 	ax := fig.AddAxes(unitRect())
 
 	ann := ax.Annotate("label", 0.5, 0.5, AnnotationOptions{
-		OffsetX: -10,
-		OffsetY: -8,
+		OffsetX: optional.Of(-10.0),
+		OffsetY: optional.Of(-8.0),
 	})
 
 	if ann.HAlign != TextAlignLeft || ann.VAlign != TextVAlignBaseline {
@@ -454,18 +455,18 @@ func TestAnnotateRespectsConfiguredCoordinateSpaces(t *testing.T) {
 
 	ax.Annotate("data", 0.25, 0.75, AnnotationOptions{
 		Coords:  Coords(CoordData),
-		OffsetX: 10,
-		OffsetY: -15,
+		OffsetX: optional.Of(10.0),
+		OffsetY: optional.Of(-15.0),
 	})
 	ax.Annotate("axes", 0.5, 0.5, AnnotationOptions{
 		Coords:  Coords(CoordAxes),
-		OffsetX: -12,
-		OffsetY: 6,
+		OffsetX: optional.Of(-12.0),
+		OffsetY: optional.Of(6.0),
 	})
 	ax.Annotate("figure", 0.2, 0.3, AnnotationOptions{
 		Coords:  Coords(CoordFigure),
-		OffsetX: 7,
-		OffsetY: 4,
+		OffsetX: optional.Of(7.0),
+		OffsetY: optional.Of(4.0),
 	})
 
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
@@ -531,10 +532,10 @@ func TestAnnotateSupportsSeparateTextCoordinateSpace(t *testing.T) {
 
 	ax.Annotate("mixed", 0.25, 0.75, AnnotationOptions{
 		Coords:       Coords(CoordData),
-		TextPosition: &textPos,
+		TextPosition: optional.Of(textPos),
 		TextCoords:   Coords(CoordAxes),
-		OffsetX:      6,
-		OffsetY:      -4,
+		OffsetX:      optional.Of(6.0),
+		OffsetY:      optional.Of(-4.0),
 	})
 
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))

@@ -83,6 +83,11 @@ func TestErrorReturningEntryPointsRejectExtraOptions(t *testing.T) {
 	}
 }
 
+// TestPlainEntryPointsPanicOnExtraOptions covers the entry points that still
+// take their options as a variadic tail. Axes.ImShow, Axes.Stem, Axes.Annotate,
+// Axes.HLines, and Axes.VLines are absent on purpose: the Phase 2.3 options
+// model made them take exactly one option value, so a second one no longer
+// compiles and there is nothing left to reject at run time.
 func TestPlainEntryPointsPanicOnExtraOptions(t *testing.T) {
 	x := []float64{0, 1, 2}
 	y := []float64{0, 1, 2}
@@ -93,7 +98,6 @@ func TestPlainEntryPointsPanicOnExtraOptions(t *testing.T) {
 		call func(*Axes)
 	}{
 		{"Image", func(a *Axes) { a.Image(grid, ImageOptions{}, ImageOptions{}) }},
-		{"ImShow", func(a *Axes) { a.ImShow(grid, ImShowOptions{}, ImShowOptions{}) }},
 		{"MatShow", func(a *Axes) { a.MatShow(grid, MatShowOptions{}, MatShowOptions{}) }},
 		{"PColor", func(a *Axes) { a.PColor(grid, MeshOptions{}, MeshOptions{}) }},
 		{"PColorMesh", func(a *Axes) { a.PColorMesh(grid, MeshOptions{}, MeshOptions{}) }},
@@ -104,13 +108,9 @@ func TestPlainEntryPointsPanicOnExtraOptions(t *testing.T) {
 		{"LogLog", func(a *Axes) { a.LogLog(x, y, PlotOptions{}, PlotOptions{}) }},
 		{"Step", func(a *Axes) { a.Step(x, y, StepOptions{}, StepOptions{}) }},
 		{"Fill", func(a *Axes) { a.Fill(x, y, FillOptions{}, FillOptions{}) }},
-		{"Stem", func(a *Axes) { a.Stem(x, y, StemOptions{}, StemOptions{}) }},
 		{"Text", func(a *Axes) { a.Text(0, 0, "t", TextOptions{}, TextOptions{}) }},
-		{"Annotate", func(a *Axes) { a.Annotate("t", 0, 0, AnnotationOptions{}, AnnotationOptions{}) }},
 		{"AxHLine", func(a *Axes) { a.AxHLine(0, HLineOptions{}, HLineOptions{}) }},
 		{"AxVSpan", func(a *Axes) { a.AxVSpan(0, 1, VSpanOptions{}, VSpanOptions{}) }},
-		{"HLines", func(a *Axes) { a.HLines(y, x, x, LineCollection{}, LineCollection{}) }},
-		{"VLines", func(a *Axes) { a.VLines(x, y, y, LineCollection{}, LineCollection{}) }},
 		{"Pie", func(a *Axes) { a.Pie(x, PieOptions{}, PieOptions{}) }},
 		{"BoxPlot", func(a *Axes) { a.BoxPlot(x, BoxPlotOptions{}, BoxPlotOptions{}) }},
 		{"Hexbin", func(a *Axes) { a.Hexbin(x, y, HexbinOptions{}, HexbinOptions{}) }},

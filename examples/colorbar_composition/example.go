@@ -8,6 +8,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -39,10 +40,10 @@ func Plot() *core.Figure {
 	cmap := "inferno"
 	extent := [4]float64{0, float64(cols), 0, float64(rows)}
 	im := ax.ImShow(data, core.ImShowOptions{
-		Colormap: &cmap,
-		Origin:   core.ImageOriginLower,
-		Extent:   &extent,
-		Aspect:   "auto",
+		Colormap: optional.Of(cmap),
+		Origin:   optional.Of(core.ImageOriginLower),
+		Extent:   optional.Of(extent),
+		Aspect:   optional.Of("auto"),
 	})
 
 	ax.SetTitle("Heatmap with Colorbar")

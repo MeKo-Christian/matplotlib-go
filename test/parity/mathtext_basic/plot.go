@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -45,12 +46,12 @@ func Plot() *core.Figure {
 		FontSize: 12,
 	})
 	ax.Annotate(`$\Delta y \approx \frac{1}{2}$`, 3.2, 0.35, core.AnnotationOptions{
-		OffsetX:     34,
-		OffsetY:     -26,
+		OffsetX:     optional.Of(34.0),
+		OffsetY:     optional.Of(-26.0),
 		OffsetUnits: core.AnnotationOffsetPoints,
 		FontSize:    12,
 		ArrowColor:  render.Color{R: 0, G: 0, B: 0, A: 1},
-		ArrowWidth:  1,
+		ArrowWidth:  optional.Of(1.0),
 		ArrowStyle:  arrowStyle,
 	})
 	ax.Text(0.03, 0.93, `$\omega_n = 2\pi f_n$`, core.TextOptions{

@@ -4529,7 +4529,7 @@
         },
         {
           "id": "method Axes.Annotate",
-          "declaration": "func (Axes) Annotate(text string, x, y float64, opts ...AnnotationOptions) *Annotation"
+          "declaration": "func (Axes) Annotate(text string, x, y float64, opt AnnotationOptions) *Annotation"
         },
         {
           "id": "method Axes.AnnotatedHeatmap",
@@ -4705,7 +4705,7 @@
         },
         {
           "id": "method Axes.HLines",
-          "declaration": "func (Axes) HLines(y, xMin, xMax []float64, opts ...LineCollection) *LineCollection"
+          "declaration": "func (Axes) HLines(y, xMin, xMax []float64, opt LineCollectionOptions) *LineCollection"
         },
         {
           "id": "method Axes.Hexbin",
@@ -4733,7 +4733,7 @@
         },
         {
           "id": "method Axes.ImShow",
-          "declaration": "func (Axes) ImShow(data [][]float64, opts ...ImShowOptions) *Image2D"
+          "declaration": "func (Axes) ImShow(data [][]float64, opt ImShowOptions) *Image2D"
         },
         {
           "id": "method Axes.ImShowImage",
@@ -5125,7 +5125,7 @@
         },
         {
           "id": "method Axes.Stem",
-          "declaration": "func (Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer"
+          "declaration": "func (Axes) Stem(x, y []float64, opt StemOptions) *StemContainer"
         },
         {
           "id": "method Axes.Step",
@@ -5177,7 +5177,7 @@
         },
         {
           "id": "method Axes.VLines",
-          "declaration": "func (Axes) VLines(x, yMin, yMax []float64, opts ...LineCollection) *LineCollection"
+          "declaration": "func (Axes) VLines(x, yMin, yMax []float64, opt LineCollectionOptions) *LineCollection"
         },
         {
           "id": "method Axes.Violin",
@@ -6821,7 +6821,7 @@
         },
         {
           "id": "type AnnotationOptions",
-          "declaration": "type AnnotationOptions struct{ Coords CoordinateSpec; TextPosition *geom.Pt; TextCoords CoordinateSpec; OffsetX float64; OffsetY float64; OffsetUnits AnnotationOffsetUnits; FontSize float64; Color render.Color; ArrowColor render.Color; ArrowWidth float64; ArrowHeadSize float64; ArrowStyle ArrowStyle; ConnectionStyle ConnectionStyle; HAlign TextAlign; VAlign TextVerticalAlign; Angle float64; FontKey string; BBox *TextBBoxOptions; Linespacing float64; FontProperties *render.FontProperties; ParseMath *bool; AnnotationClip *bool }"
+          "declaration": "type AnnotationOptions struct{ Coords CoordinateSpec; TextPosition optional.Value[geom.Pt]; TextCoords CoordinateSpec; OffsetX optional.Value[float64]; OffsetY optional.Value[float64]; OffsetUnits AnnotationOffsetUnits; FontSize float64; Color render.Color; ArrowColor render.Color; ArrowWidth optional.Value[float64]; ArrowHeadSize optional.Value[float64]; ArrowStyle ArrowStyle; ConnectionStyle ConnectionStyle; HAlign TextAlign; VAlign TextVerticalAlign; Angle float64; FontKey string; BBox *TextBBoxOptions; Linespacing float64; FontProperties *render.FontProperties; ParseMath optional.Value[bool]; AnnotationClip optional.Value[bool] }"
         },
         {
           "id": "type Annulus",
@@ -7237,7 +7237,7 @@
         },
         {
           "id": "type ImShowOptions",
-          "declaration": "type ImShowOptions struct{ Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Alpha *float64; Aspect string; Origin ImageOrigin; Label string; Extent *[4]float64; Interpolation *string }"
+          "declaration": "type ImShowOptions struct{ Colormap optional.Value[string]; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; Alpha optional.Value[float64]; Aspect optional.Value[string]; Origin optional.Value[ImageOrigin]; Label string; Extent optional.Value[[4]float64]; Interpolation optional.Value[string] }"
         },
         {
           "id": "type ImShowRGBOptions",
@@ -7306,6 +7306,10 @@
         {
           "id": "type LineCollection",
           "declaration": "type LineCollection struct{ Collection; Segments [][]geom.Pt; Colors []render.Color; Color render.Color; LineWidths []float64; LineWidth float64; DashPatterns [][]float64; Dashes []float64; LineStyle string; LineStyles []string; LineJoin render.LineJoin; LineCap render.LineCap }"
+        },
+        {
+          "id": "type LineCollectionOptions",
+          "declaration": "type LineCollectionOptions struct{ Coords CoordinateSpec; Label string; Alpha optional.Value[float64]; Color optional.Value[render.Color]; Colors []render.Color; LineWidth optional.Value[float64]; LineWidths []float64; LineStyle string; LineStyles []string; Dashes []float64; DashPatterns [][]float64; LineCap render.LineCap; LineJoin render.LineJoin; Antialias render.AntialiasMode; PathEffects []render.PathEffect }"
         },
         {
           "id": "type LineDrawStyle",
@@ -7661,7 +7665,7 @@
         },
         {
           "id": "type StemOptions",
-          "declaration": "type StemOptions struct{ Color *render.Color; LineWidth *float64; Marker *MarkerType; MarkerPath *geom.Path; MarkerSize *float64; Baseline *float64; BaselineColor *render.Color; BaselineWidth *float64; MarkerEdgeColor *render.Color; MarkerEdgeWidth *float64; Label string; Alpha *float64; Orientation string }"
+          "declaration": "type StemOptions struct{ Color optional.Value[render.Color]; LineWidth optional.Value[float64]; Marker optional.Value[MarkerType]; MarkerPath optional.Value[geom.Path]; MarkerSize optional.Value[float64]; Baseline float64; BaselineColor optional.Value[render.Color]; BaselineWidth optional.Value[float64]; MarkerEdgeColor optional.Value[render.Color]; MarkerEdgeWidth optional.Value[float64]; Label string; Alpha optional.Value[float64]; Orientation string }"
         },
         {
           "id": "type StepOptions",
@@ -8285,6 +8289,28 @@
     },
     {
       "import_path": ".",
+      "dir": "optional",
+      "symbols": [
+        {
+          "id": "func FromPtr",
+          "declaration": "func FromPtr[T any](p *T) Value[T]"
+        },
+        {
+          "id": "func None",
+          "declaration": "func None[T any]() Value[T]"
+        },
+        {
+          "id": "func Of",
+          "declaration": "func Of[T any](v T) Value[T]"
+        },
+        {
+          "id": "type Value",
+          "declaration": "type Value struct{}"
+        }
+      ]
+    },
+    {
+      "import_path": ".",
       "dir": "plot3d",
       "symbols": [
         {
@@ -8539,7 +8565,7 @@
         },
         {
           "id": "func Annotate",
-          "declaration": "func Annotate(text string, x, y float64, opts ...core.AnnotationOptions) *core.Annotation"
+          "declaration": "func Annotate(text string, x, y float64, opt core.AnnotationOptions) *core.Annotation"
         },
         {
           "id": "func AnnotatedHeatmap",
@@ -8763,7 +8789,7 @@
         },
         {
           "id": "func HLines",
-          "declaration": "func HLines(y, xMin, xMax []float64, opts ...core.LineCollection) *core.LineCollection"
+          "declaration": "func HLines(y, xMin, xMax []float64, opt core.LineCollectionOptions) *core.LineCollection"
         },
         {
           "id": "func Hexbin",
@@ -8787,7 +8813,7 @@
         },
         {
           "id": "func ImShow",
-          "declaration": "func ImShow(data [][]float64, opts ...core.ImShowOptions) *core.Image2D"
+          "declaration": "func ImShow(data [][]float64, opt core.ImShowOptions) *core.Image2D"
         },
         {
           "id": "func Image",
@@ -8983,7 +9009,7 @@
         },
         {
           "id": "func Stem",
-          "declaration": "func Stem(x, y []float64, opts ...core.StemOptions) *core.StemContainer"
+          "declaration": "func Stem(x, y []float64, opt core.StemOptions) *core.StemContainer"
         },
         {
           "id": "func Step",
@@ -9091,7 +9117,7 @@
         },
         {
           "id": "func VLines",
-          "declaration": "func VLines(x, yMin, yMax []float64, opts ...core.LineCollection) *core.LineCollection"
+          "declaration": "func VLines(x, yMin, yMax []float64, opt core.LineCollectionOptions) *core.LineCollection"
         },
         {
           "id": "func Violin",

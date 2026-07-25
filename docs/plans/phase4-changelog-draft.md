@@ -52,6 +52,16 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
   `*optarg.TooManyError`; the rest panic, because the extra value can only come
   from a literal at the call site. No signature changed, and calls that pass
   zero or one option value behave exactly as before.
+- Adopted the final options model and migrated one API per artist family to it.
+  `Axes.ImShow`, `Axes.Stem`, `Axes.Annotate`, `Axes.HLines`, `Axes.VLines`, and
+  their pyplot wrappers now take exactly one options value instead of a variadic
+  tail, so extra option sets are a compile error. Their optional fields moved
+  from pointers and magic zero values to `optional.Value[T]`, which makes
+  previously inexpressible requests — alpha 0, a zero-width arrow, an annotation
+  offset of (0, 0), an explicit upper image origin against a `lower` rc — work.
+  `Axes.HLines`/`Axes.VLines` take the new `core.LineCollectionOptions` rather
+  than the `LineCollection` artist. See
+  `docs/plans/phase2-options-model.md`.
 
 ## Added
 
@@ -62,6 +72,9 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
   alpha composition primitive used by core and 3D artists.
 - Added `core.PlotOptions.ScalarMapConfig` so core and 3D plotting paths use
   one typed scalar-map configuration conversion.
+- Added the `optional` package. `optional.Value[T]` is the tri-state optional
+  field used by the migrated option structs, replacing pointer fields and
+  zero-value sentinels.
 - Added an explicit concurrency contract for rc state, registries, pyplot
   state, figures, axes, artists, and renderers.
 - Added synchronized backend, desktop-constructor, and color-sequence

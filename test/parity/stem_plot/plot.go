@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -34,10 +35,10 @@ func Plot() *core.Figure {
 		[]float64{1, 2, 3, 4, 5, 6, 7},
 		[]float64{0.9, 2.2, 1.6, 3.3, 2.4, 3.7, 2.1},
 		core.StemOptions{
-			Color:         &stemColor,
-			Baseline:      &baseline,
-			MarkerSize:    &markerSize,
-			BaselineColor: &render.Color{R: 0.32, G: 0.32, B: 0.32, A: 1},
+			Color:         optional.Of(stemColor),
+			Baseline:      baseline,
+			MarkerSize:    optional.Of(markerSize),
+			BaselineColor: optional.Of(render.Color{R: 0.32, G: 0.32, B: 0.32, A: 1}),
 		},
 	)
 	return fig

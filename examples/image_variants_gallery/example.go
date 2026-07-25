@@ -9,6 +9,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -50,13 +51,13 @@ func drawInterpolationPanel(fig *core.Figure, index int, mode string) {
 	vmin, vmax := 0.0, 1.0
 	extent := [4]float64{0, 16, 0, 16}
 	ax.ImShow(imageData(16), core.ImShowOptions{
-		Colormap:      &cmap,
-		VMin:          &vmin,
-		VMax:          &vmax,
-		Origin:        core.ImageOriginLower,
-		Extent:        &extent,
-		Aspect:        "auto",
-		Interpolation: &mode,
+		Colormap:      optional.Of(cmap),
+		VMin:          optional.Of(vmin),
+		VMax:          optional.Of(vmax),
+		Origin:        optional.Of(core.ImageOriginLower),
+		Extent:        optional.Of(extent),
+		Aspect:        optional.Of("auto"),
+		Interpolation: optional.Of(mode),
 	})
 }
 
@@ -69,8 +70,8 @@ func drawAlphaPanel(fig *core.Figure) {
 	overlayCmap := "magma"
 	alpha := 0.58
 	extent := [4]float64{0, 18, 0, 18}
-	ax.ImShow(checkerData(18), core.ImShowOptions{Colormap: &baseCmap, Origin: core.ImageOriginLower, Extent: &extent, Aspect: "auto"})
-	ax.ImShow(radialData(18), core.ImShowOptions{Colormap: &overlayCmap, Alpha: &alpha, Origin: core.ImageOriginLower, Extent: &extent, Aspect: "auto"})
+	ax.ImShow(checkerData(18), core.ImShowOptions{Colormap: optional.Of(baseCmap), Origin: optional.Of(core.ImageOriginLower), Extent: optional.Of(extent), Aspect: optional.Of("auto")})
+	ax.ImShow(radialData(18), core.ImShowOptions{Colormap: optional.Of(overlayCmap), Alpha: optional.Of(alpha), Origin: optional.Of(core.ImageOriginLower), Extent: optional.Of(extent), Aspect: optional.Of("auto")})
 }
 
 func drawMatshowPanel(fig *core.Figure) {

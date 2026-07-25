@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
@@ -85,7 +86,7 @@ func TestAxesImShowKeepsBottomXAxis(t *testing.T) {
 	img := ax.ImShow([][]float64{
 		{1, 2, 3},
 		{4, 5, 6},
-	})
+	}, ImShowOptions{})
 	if img == nil {
 		t.Fatal("ImShow() returned nil")
 	}
@@ -386,7 +387,7 @@ func TestImShow_ExtentOverridesCenteredPixelDefault(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(unitRect())
 	img := ax.ImShow([][]float64{{0, 1}, {2, 3}}, ImShowOptions{
-		Extent: &[4]float64{-2, 2, -1, 1},
+		Extent: optional.Of([4]float64{-2, 2, -1, 1}),
 	})
 	if img == nil {
 		t.Fatal("ImShow returned nil")
@@ -401,9 +402,9 @@ func TestImShow_DefaultInterpolationMatchesMatplotlib(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(unitRect())
 	img := ax.ImShow([][]float64{{0, 1}, {2, 3}}, ImShowOptions{
-		Extent: &[4]float64{0, 2, 0, 2},
-		Origin: ImageOriginLower,
-		Aspect: "auto",
+		Extent: optional.Of([4]float64{0, 2, 0, 2}),
+		Origin: optional.Of(ImageOriginLower),
+		Aspect: optional.Of("auto"),
 	})
 	if img == nil {
 		t.Fatal("ImShow returned nil")
@@ -417,7 +418,7 @@ func TestImShow_ExtentDrivesAxesLimits(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(unitRect())
 	_ = ax.ImShow([][]float64{{0, 1}}, ImShowOptions{
-		Extent: &[4]float64{10, 20, 30, 40},
+		Extent: optional.Of([4]float64{10, 20, 30, 40}),
 	})
 	xMin, xMax := ax.XScale.Domain()
 	yMin, yMax := ax.YScale.Domain()
@@ -434,8 +435,8 @@ func TestImShow_ExplicitExtentOriginUpperDoesNotInvertYLimits(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(unitRect())
 	img := ax.ImShow([][]float64{{0, 1}, {2, 3}}, ImShowOptions{
-		Extent: &[4]float64{10, 20, 30, 40},
-		Origin: ImageOriginUpper,
+		Extent: optional.Of([4]float64{10, 20, 30, 40}),
+		Origin: optional.Of(ImageOriginUpper),
 	})
 	if img == nil {
 		t.Fatal("ImShow returned nil")
@@ -453,7 +454,7 @@ func TestImShow_ExplicitExtentOriginUpperDoesNotInvertYLimits(t *testing.T) {
 func TestImShow_DefaultInterpolationUsesMatplotlibAntialiased(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(unitRect())
-	img := ax.ImShow([][]float64{{0, 1}, {2, 3}})
+	img := ax.ImShow([][]float64{{0, 1}, {2, 3}}, ImShowOptions{})
 	if img == nil {
 		t.Fatal("ImShow returned nil")
 	}
@@ -466,7 +467,7 @@ func TestImShow_InterpolationPropagatesToImage(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(unitRect())
 	bilinear := "bilinear"
-	img := ax.ImShow([][]float64{{0, 1}}, ImShowOptions{Interpolation: &bilinear})
+	img := ax.ImShow([][]float64{{0, 1}}, ImShowOptions{Interpolation: optional.Of(bilinear)})
 	if img.Interpolation != "bilinear" {
 		t.Fatalf("Interpolation = %q, want %q", img.Interpolation, "bilinear")
 	}

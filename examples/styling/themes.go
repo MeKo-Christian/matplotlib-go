@@ -79,7 +79,7 @@ func renderThemeExample(example themedExample) error {
 		Label: "Samples",
 	})
 
-	ax.Annotate("peak", 1.5, 0.99)
+	ax.Annotate("peak", 1.5, 0.99, core.AnnotationOptions{})
 	legend := ax.AddLegend()
 	legend.Location = core.LegendUpperLeft
 	_ = yGrid

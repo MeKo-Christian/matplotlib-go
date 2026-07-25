@@ -9,6 +9,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -57,13 +58,13 @@ func Plot() *core.Figure {
 		cmap := row.Name
 		vmin, vmax := row.VMin, row.VMax
 		ax.ImShow(row.Data, core.ImShowOptions{
-			Colormap:      &cmap,
-			VMin:          &vmin,
-			VMax:          &vmax,
-			Origin:        core.ImageOriginLower,
-			Extent:        &extent,
-			Aspect:        "auto",
-			Interpolation: &nearest,
+			Colormap:      optional.Of(cmap),
+			VMin:          optional.Of(vmin),
+			VMax:          optional.Of(vmax),
+			Origin:        optional.Of(core.ImageOriginLower),
+			Extent:        optional.Of(extent),
+			Aspect:        optional.Of("auto"),
+			Interpolation: optional.Of(nearest),
 		})
 		fig.Text(0.06, y1-height/2, row.Title, core.TextOptions{
 			HAlign:   core.TextAlignLeft,

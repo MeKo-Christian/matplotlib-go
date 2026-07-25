@@ -90,3 +90,10 @@ This step does not choose the final options representation; that is the next
 Phase 2.3 sub-bullet. When it lands, the variadic tails disappear and
 `internal/optarg` disappears with them. Until then it is the only place the
 "at most one" rule is written down.
+
+**Update.** The options model has since been chosen and documented in
+[phase2-options-model.md](phase2-options-model.md), and the pilot migrated
+`Axes.ImShow` (the example used above), `Axes.Stem`, `Axes.Annotate`,
+`Axes.HLines`, and `Axes.VLines` off their variadic tails. Those five now reject
+a second option value at compile time and no longer route through `optarg`. The
+rest of the surface still relies on this document's run-time rule.

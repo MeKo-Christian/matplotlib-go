@@ -10,6 +10,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/dates"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
@@ -245,8 +246,8 @@ func TestTextAndAnnotateDelegateToCurrentAxes(t *testing.T) {
 		HAlign:   core.TextAlignCenter,
 	})
 	annotation := Annotate("peak", 0.7, 0.3, core.AnnotationOptions{
-		OffsetX: 10,
-		OffsetY: -12,
+		OffsetX: optional.Of(10.0),
+		OffsetY: optional.Of(-12.0),
 	})
 
 	if text == nil {
@@ -603,24 +604,24 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	if arrow.XY != (geom.Pt{X: 0.2, Y: 0.3}) || arrow.DX != 1.5 || arrow.DY != -0.5 {
 		t.Fatalf("Arrow geometry = xy=%+v dx=%v dy=%v", arrow.XY, arrow.DX, arrow.DY)
 	}
-	hLines := HLines([]float64{1, 2}, []float64{0, 0.5}, []float64{3, 3.5})
+	hLines := HLines([]float64{1, 2}, []float64{0, 0.5}, []float64{3, 3.5}, core.LineCollectionOptions{})
 	if hLines == nil || len(hLines.Segments) != 2 {
 		t.Fatalf("HLines() = %#v, want two segments", hLines)
 	}
 	if hLines.Segments[1][0] != (geom.Pt{X: 0.5, Y: 2}) || hLines.Segments[1][1] != (geom.Pt{X: 3.5, Y: 2}) {
 		t.Fatalf("HLines second segment = %+v", hLines.Segments[1])
 	}
-	if hLinesBroadcast := HLines([]float64{3, 4}, []float64{-1}, []float64{1}); hLinesBroadcast == nil || len(hLinesBroadcast.Segments) != 2 {
+	if hLinesBroadcast := HLines([]float64{3, 4}, []float64{-1}, []float64{1}, core.LineCollectionOptions{}); hLinesBroadcast == nil || len(hLinesBroadcast.Segments) != 2 {
 		t.Fatalf("HLines broadcast = %#v, want two segments", hLinesBroadcast)
 	}
-	vLines := VLines([]float64{1, 2}, []float64{-1, -2}, []float64{1, 2})
+	vLines := VLines([]float64{1, 2}, []float64{-1, -2}, []float64{1, 2}, core.LineCollectionOptions{})
 	if vLines == nil || len(vLines.Segments) != 2 {
 		t.Fatalf("VLines() = %#v, want two segments", vLines)
 	}
 	if vLines.Segments[0][0] != (geom.Pt{X: 1, Y: -1}) || vLines.Segments[0][1] != (geom.Pt{X: 1, Y: 1}) {
 		t.Fatalf("VLines first segment = %+v", vLines.Segments[0])
 	}
-	if vLinesBroadcast := VLines([]float64{3, 4}, []float64{-2}, []float64{2}); vLinesBroadcast == nil || len(vLinesBroadcast.Segments) != 2 {
+	if vLinesBroadcast := VLines([]float64{3, 4}, []float64{-2}, []float64{2}, core.LineCollectionOptions{}); vLinesBroadcast == nil || len(vLinesBroadcast.Segments) != 2 {
 		t.Fatalf("VLines broadcast = %#v, want two segments", vLinesBroadcast)
 	}
 	if step := Step([]float64{0, 1, 2}, []float64{1, 3, 2}); step == nil {
@@ -777,7 +778,7 @@ func TestMatrixAndSignalHelpersDelegateToCurrentAxes(t *testing.T) {
 		{2, 3},
 	}
 	bilinear := "bilinear"
-	if img := ImShow(mat, core.ImShowOptions{Interpolation: &bilinear}); img == nil || img.Interpolation != "bilinear" {
+	if img := ImShow(mat, core.ImShowOptions{Interpolation: optional.Of(bilinear)}); img == nil || img.Interpolation != "bilinear" {
 		t.Fatalf("ImShow() = %#v, want image with bilinear interpolation", img)
 	}
 	if img := MatShow(mat); img == nil {

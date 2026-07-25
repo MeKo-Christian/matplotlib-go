@@ -5,7 +5,6 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 )
 
 // Plot delegates to the current axes.
@@ -135,8 +134,10 @@ func Text(x, y float64, text string, opts ...core.TextOptions) *core.Text {
 }
 
 // Annotate delegates to the current axes.
-func Annotate(text string, x, y float64, opts ...core.AnnotationOptions) *core.Annotation {
-	return GCA().Annotate(text, x, y, opts...)
+//
+//nolint:gocritic // AnnotationOptions is forwarded unchanged to the axes method.
+func Annotate(text string, x, y float64, opt core.AnnotationOptions) *core.Annotation {
+	return GCA().Annotate(text, x, y, opt)
 }
 
 // AxHLine delegates to the current axes.
@@ -170,47 +171,22 @@ func AxVSpan(xMin, xMax float64, opts ...core.VSpanOptions) *core.Span2D {
 }
 
 // HLines adds horizontal line segments to the current axes.
-func HLines(y, xMin, xMax []float64, opts ...core.LineCollection) *core.LineCollection {
-	return GCA().HLines(y, xMin, xMax, opts...)
+//
+//nolint:gocritic // LineCollectionOptions is forwarded unchanged to the axes method.
+func HLines(y, xMin, xMax []float64, opt core.LineCollectionOptions) *core.LineCollection {
+	return GCA().HLines(y, xMin, xMax, opt)
 }
 
 // VLines adds vertical line segments to the current axes.
-func VLines(x, yMin, yMax []float64, opts ...core.LineCollection) *core.LineCollection {
-	return GCA().VLines(x, yMin, yMax, opts...)
+//
+//nolint:gocritic // LineCollectionOptions is forwarded unchanged to the axes method.
+func VLines(x, yMin, yMax []float64, opt core.LineCollectionOptions) *core.LineCollection {
+	return GCA().VLines(x, yMin, yMax, opt)
 }
 
 // Stem delegates to the current axes.
-func Stem(x, y []float64, opts ...core.StemOptions) *core.StemContainer {
-	return GCA().Stem(x, y, opts...)
-}
-
-func addLineCollection(segments [][]geom.Pt, opts ...core.LineCollection) *core.LineCollection {
-	ax := GCA()
-	collection := core.LineCollection{
-		Collection: core.Collection{
-			Coords: core.Coords(core.CoordData),
-			Alpha:  1,
-		},
-		Segments:  segments,
-		Color:     ax.NextColor(),
-		LineWidth: 1,
-	}
-	if opt, ok := optarg.Optional("line collection", opts); ok {
-		collection = opt
-		collection.Segments = segments
-		if collection.Coords == (core.CoordinateSpec{}) {
-			collection.Coords = core.Coords(core.CoordData)
-		}
-		if collection.Alpha == 0 {
-			collection.Alpha = 1
-		}
-		if collection.Color.A == 0 && len(collection.Colors) == 0 {
-			collection.Color = ax.NextColor()
-		}
-		if collection.LineWidth == 0 && len(collection.LineWidths) == 0 {
-			collection.LineWidth = 1
-		}
-	}
-	ax.Add(&collection)
-	return &collection
+//
+//nolint:gocritic // StemOptions is forwarded unchanged to the axes method.
+func Stem(x, y []float64, opt core.StemOptions) *core.StemContainer {
+	return GCA().Stem(x, y, opt)
 }

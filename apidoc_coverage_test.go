@@ -48,6 +48,7 @@ func stablePublicPackageDirs() []string {
 		"dates",
 		"diag",
 		"geom",
+		"optional",
 		"plot3d",
 		"pyplot",
 		"render",

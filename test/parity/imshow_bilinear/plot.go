@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -43,12 +44,12 @@ func Render() image.Image {
 	vmin, vmax := 0.0, 1.0
 	extent := [4]float64{0, float64(n), 0, float64(n)}
 	ax.ImShow(data, core.ImShowOptions{
-		Colormap:      &cmap,
-		VMin:          &vmin,
-		VMax:          &vmax,
-		Origin:        core.ImageOriginLower,
-		Extent:        &extent,
-		Interpolation: &filter,
+		Colormap:      optional.Of(cmap),
+		VMin:          optional.Of(vmin),
+		VMax:          optional.Of(vmax),
+		Origin:        optional.Of(core.ImageOriginLower),
+		Extent:        optional.Of(extent),
+		Interpolation: optional.Of(filter),
 	})
 
 	r, err := agg.New(imshowInterpFigureWidth, imshowInterpFigureHeight, render.Color{R: 1, G: 1, B: 1, A: 1})

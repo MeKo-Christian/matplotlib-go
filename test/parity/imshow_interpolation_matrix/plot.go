@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -57,13 +58,13 @@ func Plot() *core.Figure {
 		ax.YAxis.ShowLabels = false
 		mode := mode
 		ax.ImShow(data, core.ImShowOptions{
-			Colormap:      &cmap,
-			VMin:          &vmin,
-			VMax:          &vmax,
-			Origin:        core.ImageOriginLower,
-			Extent:        &extent,
-			Aspect:        "auto",
-			Interpolation: &mode,
+			Colormap:      optional.Of(cmap),
+			VMin:          optional.Of(vmin),
+			VMax:          optional.Of(vmax),
+			Origin:        optional.Of(core.ImageOriginLower),
+			Extent:        optional.Of(extent),
+			Aspect:        optional.Of("auto"),
+			Interpolation: optional.Of(mode),
 		})
 	}
 	return fig

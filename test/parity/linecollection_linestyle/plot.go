@@ -9,6 +9,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -32,9 +33,9 @@ func Plot() *core.Figure {
 	ax.SetXLim(0, 10)
 	ax.SetYLim(0, 5)
 
-	ax.HLines(ys, []float64{0.5}, []float64{9.5}, core.LineCollection{
-		Color:      render.Color{R: 0, G: 0, B: 0, A: 1},
-		LineWidth:  2,
+	ax.HLines(ys, []float64{0.5}, []float64{9.5}, core.LineCollectionOptions{
+		Color:      optional.Of(render.Color{R: 0, G: 0, B: 0, A: 1}),
+		LineWidth:  optional.Of(2.0),
 		LineStyles: lineStyles,
 		LineCap:    render.CapButt,
 	})

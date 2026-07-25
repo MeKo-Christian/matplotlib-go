@@ -10,6 +10,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -154,12 +155,12 @@ func addImshowFrame(ax *core.Axes, frame int) *core.Image2D {
 	cmap := "viridis"
 	extent := [4]float64{0, float64(imCols), 0, float64(imRows)}
 	img := ax.ImShow(imshowFrameZ(frame), core.ImShowOptions{
-		Colormap: &cmap,
-		VMin:     ptr(-1.0),
-		VMax:     ptr(1.0),
-		Origin:   core.ImageOriginLower,
-		Extent:   &extent,
-		Aspect:   "auto",
+		Colormap: optional.Of(cmap),
+		VMin:     optional.Of(-1.0),
+		VMax:     optional.Of(1.0),
+		Origin:   optional.Of(core.ImageOriginLower),
+		Extent:   optional.Of(extent),
+		Aspect:   optional.Of("auto"),
 	})
 	ax.SetXLim(0, float64(imCols))
 	ax.SetYLim(0, float64(imRows))

@@ -96,7 +96,7 @@ update the coupled API/doc tests in the same commit.
       impossible or rejected. Replace raw-string enums with typed constants.
   - [x] Reject extra option values across the existing variadic surface as an
         intermediate safety step.
-  - [ ] Choose and document the final options representation, then migrate one
+  - [x] Choose and document the final options representation, then migrate one
         representative line, collection, image, and annotation API.
   - [ ] Migrate the remaining option families and replace option raw strings
         with typed constants.
@@ -169,7 +169,18 @@ come from a literal at the call site. Internal helpers that received an
 already-unpacked option set lost their variadic tails outright, so the frozen
 public API is unchanged by that pass; the rationale, the enforcement table, and
 the variadic parameters deliberately left alone are in
-`docs/plans/phase2-extra-option-rejection.md`. Core and
+`docs/plans/phase2-extra-option-rejection.md`. The final options
+representation is now chosen and documented in
+`docs/plans/phase2-options-model.md`: entry points take exactly one options
+value instead of a variadic tail, so extra option sets are a compile error, and
+optional fields are the new `optional.Value[T]` instead of pointers or magic
+zero values. One API per artist family is migrated end to end — `Axes.Stem`
+(line), `Axes.HLines`/`Axes.VLines` (collection, via the new
+`LineCollectionOptions` that stops using the `LineCollection` artist as its own
+options), `Axes.ImShow` (image), and `Axes.Annotate` (annotation) — together
+with their pyplot wrappers, with no golden fixture changes. `PlotOptions` is
+deliberately held back for the bulk migration because it is shared by 30 entry
+points across four families. Core and
 plot3d alpha multiplier paths share
 `render.Color.WithAlphaMultiplier`, and 3D scalar maps derive their
 configuration through

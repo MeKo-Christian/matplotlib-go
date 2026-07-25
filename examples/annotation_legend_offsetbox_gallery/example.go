@@ -10,6 +10,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -67,15 +68,15 @@ func addAnnotationLegendPanel(ax *core.Axes) {
 	arrow, _ := core.ArrowStyleFromString("-|>,head_length=0.35,head_width=0.20")
 	arc, _ := core.ConnectionStyleFromString("arc3,rad=0.25")
 	ax.Annotate("curved arrow\nbbox label", math.Pi/2, 1, core.AnnotationOptions{
-		OffsetX:         pt(68),
-		OffsetY:         pt(-42),
+		OffsetX:         optional.Of(pt(68)),
+		OffsetY:         optional.Of(pt(-42)),
 		FontSize:        10,
 		HAlign:          core.TextAlignCenter,
 		VAlign:          core.TextVAlignMiddle,
 		ArrowStyle:      arrow,
 		ConnectionStyle: arc,
 		ArrowColor:      blue,
-		ArrowWidth:      1.2,
+		ArrowWidth:      optional.Of(1.2),
 		BBox:            galleryBox(10, 0.28, render.Color{R: 0.92, G: 0.97, B: 1.00, A: 0.90}, blue),
 	})
 	ax.AnnotationBbox("offset box", 5.65, -0.25, core.AnnotationBboxOptions{

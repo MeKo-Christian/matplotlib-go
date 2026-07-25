@@ -184,6 +184,56 @@ No signature changed, so code that passes zero or one option value is
 unaffected. Code that passed two or more was already losing every value after
 the first; keep the last one and merge the rest by hand.
 
+### Options take exactly one value, and optional fields are `optional.Value[T]`
+
+`Axes.ImShow`, `Axes.Stem`, `Axes.Annotate`, `Axes.HLines`, `Axes.VLines`, and
+their `pyplot` wrappers no longer take a variadic option tail. They take exactly
+one options value, so a second one is a compile error rather than a run-time
+rejection. Calls that omitted the options pass the zero struct instead:
+
+```go
+ax.ImShow(data)                       // before
+ax.ImShow(data, core.ImShowOptions{}) // after
+```
+
+Their optional fields moved from pointers (and from "the zero value means
+unset") to `optional.Value[T]`, from the new top-level `optional` package. The
+temporaries the pointer spelling required are gone:
+
+```go
+interp := "bilinear"
+ax.ImShow(data, core.ImShowOptions{Interpolation: &interp})              // before
+ax.ImShow(data, core.ImShowOptions{Interpolation: optional.Of("bilinear")}) // after
+```
+
+Use `optional.Of(v)` to set a value, leave the field alone to request the
+default, and `optional.FromPtr(p)` when you already hold a pointer. On the
+reading side, `Get()`, `Or(fallback)`, `OrZero()`, `IsSet()`, and `Ptr()` are
+available.
+
+Fields whose zero value already _was_ the default became plain values rather
+than optionals: `StemOptions.Baseline` is now a `float64`, not a `*float64`.
+
+Two changes are worth checking in existing code:
+
+- `Axes.HLines` and `Axes.VLines` took a `core.LineCollection` — the artist —
+  as their options. They now take `core.LineCollectionOptions`, which drops
+  `Segments` (the call's positional arguments always overwrote it) and the
+  scalar-mapping fields. Move `Collection{Alpha: a}` to the top-level `Alpha`
+  field; build a `LineCollection` and call `Axes.AddCollection` if you need what
+  the options type omits.
+- An `AnnotationOptions` literal that set only one of `OffsetX`/`OffsetY` used
+  to get 0 for the other. The unset one now falls back to Matplotlib's default
+  offset, so set both explicitly if you relied on that.
+
+In exchange, values that the old spellings could not express now work:
+`Alpha: optional.Of(0.0)`, an annotation offset of `(0, 0)`, a zero-width arrow,
+and `Origin: optional.Of(core.ImageOriginUpper)` against an rc of
+`image.origin: lower`.
+
+See `docs/plans/phase2-options-model.md` for the model and which option families
+migrate next.
+
 The same getter pass removed the remaining exported `GetX` spellings:
 
 | Before                                      | After                                     |

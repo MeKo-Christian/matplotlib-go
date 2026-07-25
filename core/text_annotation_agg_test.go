@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -20,8 +21,8 @@ func TestAnnotationCurvedArrowMatchesMatplotlibGalleryPath(t *testing.T) {
 	arrow, _ := core.ArrowStyleFromString("-|>,head_length=0.35,head_width=0.20")
 	arc, _ := core.ConnectionStyleFromString("arc3,rad=0.25")
 	ax.Annotate("curved arrow\nbbox label", math.Pi/2, 1, core.AnnotationOptions{
-		OffsetX:         pointsToPixels(fig.RC.DPI, 68),
-		OffsetY:         pointsToPixels(fig.RC.DPI, -42),
+		OffsetX:         optional.Of(pointsToPixels(fig.RC.DPI, 68)),
+		OffsetY:         optional.Of(pointsToPixels(fig.RC.DPI, -42)),
 		OffsetUnits:     core.AnnotationOffsetPixels,
 		FontSize:        10,
 		HAlign:          core.TextAlignCenter,
@@ -29,7 +30,7 @@ func TestAnnotationCurvedArrowMatchesMatplotlibGalleryPath(t *testing.T) {
 		ArrowStyle:      arrow,
 		ConnectionStyle: arc,
 		ArrowColor:      blue,
-		ArrowWidth:      pointsToPixels(fig.RC.DPI, 1.2),
+		ArrowWidth:      optional.Of(pointsToPixels(fig.RC.DPI, 1.2)),
 		BBox: &core.TextBBoxOptions{
 			Padding:      pointsToPixels(fig.RC.DPI, 0.28*10),
 			FaceColor:    render.Color{R: 0.92, G: 0.97, B: 1, A: 0.9},

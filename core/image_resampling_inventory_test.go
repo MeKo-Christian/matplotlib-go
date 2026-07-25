@@ -453,8 +453,8 @@ func TestTransformedImageFixturePriorityIsDocumented(t *testing.T) {
 		filepath.Join("..", "test", "parity", "imshow_interpolation_matrix", "plot.go"): {
 			`"nearest", "none", "bilinear", "bicubic", "hanning"`,
 			`"antialiased", "auto"`,
-			"Extent:        &extent",
-			"Origin:        core.ImageOriginLower",
+			"Extent:        optional.Of(extent)",
+			"Origin:        optional.Of(core.ImageOriginLower)",
 		},
 		filepath.Join("..", "test", "parity", "imshow_interpolation_matrix", "plot.py"): {
 			"INTERPOLATION_MODES",
@@ -464,8 +464,8 @@ func TestTransformedImageFixturePriorityIsDocumented(t *testing.T) {
 		filepath.Join("..", "test", "parity", "imshow_clipped", "plot.go"): {
 			"ax.SetXLim(2, 6)",
 			"ax.SetYLim(1, 7)",
-			"Extent:        &extent",
-			"Origin:        core.ImageOriginLower",
+			"Extent:        optional.Of(extent)",
+			"Origin:        optional.Of(core.ImageOriginLower)",
 		},
 		filepath.Join("..", "test", "matplotlib_ref", "plots", "imshow_clipped.py"): {
 			"ax.set_xlim(2, 6)",

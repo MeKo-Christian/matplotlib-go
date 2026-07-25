@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/ticker"
@@ -202,7 +203,7 @@ func TestMPLStyleImageOriginReachesImShow(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	img := ax.ImShow(data)
+	img := ax.ImShow(data, ImShowOptions{})
 	if img == nil {
 		t.Fatal("ImShow returned nil")
 	}
@@ -271,7 +272,7 @@ func TestMPLStyleImageAspectReachesImShow(t *testing.T) {
 
 		fig := NewFigure(100, 100, style.WithTheme(theme))
 		ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-		if img := ax.ImShow(data); img == nil {
+		if img := ax.ImShow(data, ImShowOptions{}); img == nil {
 			t.Fatal("ImShow returned nil")
 		}
 		if ax.aspectMode != tc.wantMode || ax.aspectValue != tc.wantValue {
@@ -280,7 +281,7 @@ func TestMPLStyleImageAspectReachesImShow(t *testing.T) {
 
 		// An explicit option still wins over the rc value.
 		ax2 := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-		if img := ax2.ImShow(data, ImShowOptions{Aspect: "equal"}); img == nil {
+		if img := ax2.ImShow(data, ImShowOptions{Aspect: optional.Of("equal")}); img == nil {
 			t.Fatal("ImShow returned nil")
 		}
 		if ax2.aspectMode != "equal" {

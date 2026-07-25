@@ -27,8 +27,10 @@ func Image(data [][]float64, opts ...core.ImageOptions) *core.Image2D {
 }
 
 // ImShow delegates to the current axes.
-func ImShow(data [][]float64, opts ...core.ImShowOptions) *core.Image2D {
-	return GCA().ImShow(data, opts...)
+//
+//nolint:gocritic // ImShowOptions is forwarded unchanged to the axes method.
+func ImShow(data [][]float64, opt core.ImShowOptions) *core.Image2D {
+	return GCA().ImShow(data, opt)
 }
 
 // MatShow delegates to the current axes.

@@ -4,6 +4,7 @@
 
 - `core/`, `transform/`, `render/`, `style/`, `color/`, `cycler/`: plotting primitives and systems.
 - `geom/`: public geometry types (points, rects, paths, affine).
+- `optional/`: `optional.Value[T]`, the tri-state optional field used by option structs (see `docs/plans/phase2-options-model.md`).
 - `backends/`: renderer implementations (`agg` with native cgo FreeType, `skia`, …).
 - `canvas/`, `animation/`, `pyplot/`: canvas surface, animation support, pyplot-style convenience API.
 - `tri/`: triangulation (faithful Qhull-build-order Delaunay port).

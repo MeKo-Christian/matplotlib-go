@@ -8,6 +8,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -32,27 +33,33 @@ type MatShowOptions struct {
 // Mirrors matplotlib.axes.Axes.imshow keyword arguments
 // (third_party/matplotlib/lib/matplotlib/axes/_axes.py:6149).
 type ImShowOptions struct {
-	Colormap *string
-	Norm     ScalarNormalizer
-	VMin     *float64
-	VMax     *float64
-	Alpha    *float64
+	// Colormap names the colormap applied to the scalar data. Unset uses the
+	// image.cmap rc default.
+	Colormap optional.Value[string]
+	// Norm maps data values into [0,1] before the colormap is applied. A nil
+	// normalizer scales linearly between the data limits.
+	Norm ScalarNormalizer
+	// VMin and VMax pin the color limits. Unset derives them from the data.
+	VMin optional.Value[float64]
+	VMax optional.Value[float64]
+	// Alpha is the image opacity in [0,1]. Unset is fully opaque.
+	Alpha optional.Value[float64]
 	// Aspect sets the axes aspect ("equal", "auto", or a numeric ratio).
-	// Empty uses the image.aspect rc default.
-	Aspect string
-	// Origin places the [0,0] index at the upper or lower corner.
-	// ImageOriginUpper is the zero value and doubles as "unset": the
-	// image.origin rc default applies. With a non-default rc of "lower",
-	// upper cannot be forced per call until the options grow a tri-state.
-	Origin ImageOrigin
-	Label  string
+	// Unset uses the image.aspect rc default; an explicit "" leaves the
+	// current axes aspect alone.
+	Aspect optional.Value[string]
+	// Origin places the [0,0] index at the upper or lower corner. Unset uses
+	// the image.origin rc default.
+	Origin optional.Value[ImageOrigin]
+	// Label is the legend entry. Empty adds none.
+	Label string
 	// Extent overrides the centered-pixel default with explicit
 	// (left, right, bottom, top) data coordinates.
-	Extent *[4]float64
+	Extent optional.Value[[4]float64]
 	// Interpolation selects the resampling filter (e.g. "nearest",
-	// "bilinear", "bicubic"). Nil uses Matplotlib's rc default
-	// "antialiased"; a pointer to "" defers to the renderer default.
-	Interpolation *string
+	// "bilinear", "bicubic"). Unset uses Matplotlib's rc default
+	// "antialiased"; an explicit "" defers to the renderer default.
+	Interpolation optional.Value[string]
 }
 
 // SpyOptions configures Axes.Spy.
@@ -169,79 +176,46 @@ func (a *Axes) MatShow(data [][]float64, opts ...MatShowOptions) *Image2D {
 
 // ImShow renders a matrix with Matplotlib imshow-style image extents,
 // centered pixel coordinates, equal aspect, and the primary x-axis at bottom.
-func (a *Axes) ImShow(data [][]float64, opts ...ImShowOptions) *Image2D {
+//
+//nolint:gocritic // ImShowOptions is an immutable snapshot of the caller's options.
+func (a *Axes) ImShow(data [][]float64, opt ImShowOptions) *Image2D {
 	rows, cols, ok := finiteMatrixSize(data)
 	if !ok {
 		return nil
 	}
 
 	rc := a.resolvedRC()
-	defaultInterpolation := "antialiased"
-	cfg := ImShowOptions{
-		Aspect:        imshowAspectDefault(&rc),
-		Origin:        imageOriginFromRC(&rc),
-		Interpolation: &defaultInterpolation,
-	}
-	if opt, ok := optarg.Optional("imshow", opts); ok {
-		if opt.Colormap != nil {
-			cfg.Colormap = opt.Colormap
-		}
-		if opt.Norm != nil {
-			cfg.Norm = opt.Norm
-		}
-		if opt.VMin != nil {
-			cfg.VMin = opt.VMin
-		}
-		if opt.VMax != nil {
-			cfg.VMax = opt.VMax
-		}
-		if opt.Alpha != nil {
-			cfg.Alpha = opt.Alpha
-		}
-		if opt.Aspect != "" {
-			cfg.Aspect = opt.Aspect
-		}
-		if opt.Origin != ImageOriginUpper {
-			cfg.Origin = opt.Origin
-		}
-		if opt.Label != "" {
-			cfg.Label = opt.Label
-		}
-		cfg.Extent = opt.Extent
-		if opt.Interpolation != nil {
-			cfg.Interpolation = opt.Interpolation
-		}
-	}
+	aspect := opt.Aspect.Or(imshowAspectDefault(&rc))
+	origin := opt.Origin.Or(imageOriginFromRC(&rc))
+	interpolation := opt.Interpolation.Or("antialiased")
 
 	xMin := -0.5
 	xMax := float64(cols) - 0.5
 	yMin := -0.5
 	yMax := float64(rows) - 0.5
-	if cfg.Extent != nil {
-		xMin = cfg.Extent[0]
-		xMax = cfg.Extent[1]
-		yMin = cfg.Extent[2]
-		yMax = cfg.Extent[3]
+	extent, extentGiven := opt.Extent.Get()
+	if extentGiven {
+		xMin, xMax, yMin, yMax = extent[0], extent[1], extent[2], extent[3]
 	}
 	img := a.Image(data, ImageOptions{
-		Colormap:      cfg.Colormap,
-		Norm:          cfg.Norm,
-		VMin:          cfg.VMin,
-		VMax:          cfg.VMax,
-		Alpha:         cfg.Alpha,
+		Colormap:      opt.Colormap.Ptr(),
+		Norm:          opt.Norm,
+		VMin:          opt.VMin.Ptr(),
+		VMax:          opt.VMax.Ptr(),
+		Alpha:         opt.Alpha.Ptr(),
 		XMin:          &xMin,
 		XMax:          &xMax,
 		YMin:          &yMin,
 		YMax:          &yMax,
-		Origin:        cfg.Origin,
-		Label:         cfg.Label,
-		Interpolation: cfg.Interpolation,
+		Origin:        origin,
+		Label:         opt.Label,
+		Interpolation: &interpolation,
 	})
 	if img == nil {
 		return nil
 	}
 
-	a.finishImshow(xMin, xMax, yMin, yMax, cfg.Aspect, cfg.Origin, cfg.Extent != nil)
+	a.finishImshow(xMin, xMax, yMin, yMax, aspect, origin, extentGiven)
 	return img
 }
 
@@ -348,12 +322,14 @@ func (a *Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) (*Image2D
 		return nil, fmt.Errorf("imshow rgb: %w", err)
 	}
 	if kind == rgbArrayScalar {
+		// cfg already carries the rc-resolved values, so each one is passed as
+		// an explicit request rather than left for ImShow to resolve again.
 		img := a.ImShow(squeezeScalarArray(data), ImShowOptions{
-			Alpha:         cfg.Alpha,
-			Aspect:        cfg.Aspect,
-			Origin:        cfg.Origin,
-			Extent:        cfg.Extent,
-			Interpolation: cfg.Interpolation,
+			Alpha:         optional.FromPtr(cfg.Alpha),
+			Aspect:        optional.Of(cfg.Aspect),
+			Origin:        optional.Of(cfg.Origin),
+			Extent:        optional.FromPtr(cfg.Extent),
+			Interpolation: optional.FromPtr(cfg.Interpolation),
 			Label:         cfg.Label,
 		})
 		if img == nil {

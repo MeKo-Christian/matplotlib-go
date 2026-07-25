@@ -10,6 +10,7 @@ import (
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -42,11 +43,11 @@ func addImageNorm(fig *core.Figure, rect geom.Rect, title, cmap string, data [][
 	ax.YAxis.ShowLabels = false
 	extent := [4]float64{0, float64(len(data[0])), 0, float64(len(data))}
 	img := ax.ImShow(data, core.ImShowOptions{
-		Colormap: &cmap,
+		Colormap: optional.Of(cmap),
 		Norm:     norm,
-		Origin:   core.ImageOriginLower,
-		Extent:   &extent,
-		Aspect:   "auto",
+		Origin:   optional.Of(core.ImageOriginLower),
+		Extent:   optional.Of(extent),
+		Aspect:   optional.Of("auto"),
 	})
 	if img != nil {
 		fig.AddColorbar(ax, img, core.ColorbarOptions{Label: label, Padding: 0.03})

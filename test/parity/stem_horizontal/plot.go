@@ -9,6 +9,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -42,10 +43,10 @@ func Plot() *core.Figure {
 	markerSize := 7.0
 	ax.Stem(locs, heads, core.StemOptions{
 		Orientation:   "horizontal",
-		Color:         &stemColor,
-		Baseline:      &baseline,
-		MarkerSize:    &markerSize,
-		BaselineColor: &render.Color{R: 0.32, G: 0.32, B: 0.32, A: 1},
+		Color:         optional.Of(stemColor),
+		Baseline:      baseline,
+		MarkerSize:    optional.Of(markerSize),
+		BaselineColor: optional.Of(render.Color{R: 0.32, G: 0.32, B: 0.32, A: 1}),
 	})
 	return fig
 }

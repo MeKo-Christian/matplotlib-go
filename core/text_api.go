@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -118,22 +119,28 @@ const (
 type AnnotationOptions struct {
 	Coords CoordinateSpec
 	// TextPosition sets an explicit annotation text anchor, matching
-	// Matplotlib's xytext. When nil, the text anchor is the annotated point plus
-	// OffsetX/OffsetY in display pixels.
-	TextPosition *geom.Pt
+	// Matplotlib's xytext. Unset anchors the text at the annotated point plus
+	// OffsetX/OffsetY.
+	TextPosition optional.Value[geom.Pt]
 	// TextCoords controls TextPosition's coordinate space. The zero value is
 	// data coordinates.
 	TextCoords CoordinateSpec
-	OffsetX    float64
-	OffsetY    float64
+	// OffsetX and OffsetY shift the text from the annotated point. Unset uses
+	// Matplotlib's (28, -20) default offset; an explicit 0 means no shift on
+	// that axis.
+	OffsetX optional.Value[float64]
+	OffsetY optional.Value[float64]
 	// OffsetUnits controls whether OffsetX/Y are display pixels or typographic
 	// points. The zero value preserves the historical pixel behavior.
-	OffsetUnits     AnnotationOffsetUnits
-	FontSize        float64
-	Color           render.Color
-	ArrowColor      render.Color
-	ArrowWidth      float64
-	ArrowHeadSize   float64
+	OffsetUnits AnnotationOffsetUnits
+	FontSize    float64
+	Color       render.Color
+	ArrowColor  render.Color
+	// ArrowWidth is the arrow line width in points. Unset uses 1.25.
+	ArrowWidth optional.Value[float64]
+	// ArrowHeadSize is the arrow head length in points. Unset uses 8.
+	ArrowHeadSize optional.Value[float64]
+	// ArrowStyle and ConnectionStyle default to Matplotlib's "-|>" and "arc3".
 	ArrowStyle      ArrowStyle
 	ConnectionStyle ConnectionStyle
 	HAlign          TextAlign
@@ -145,8 +152,12 @@ type AnnotationOptions struct {
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
 	FontProperties *render.FontProperties
-	ParseMath      *bool
-	AnnotationClip *bool
+	// ParseMath enables mathtext parsing. Unset follows the rc default.
+	ParseMath optional.Value[bool]
+	// AnnotationClip clips the annotation to the axes. Unset follows
+	// Matplotlib's behavior of clipping only when the text is in data
+	// coordinates.
+	AnnotationClip optional.Value[bool]
 }
 
 // Text renders arbitrary text at a data-space position.
@@ -313,51 +324,34 @@ func (f *Figure) Text(x, y float64, text string, opts ...TextOptions) *Text {
 }
 
 // Annotate adds an arrow annotation pointing to a data-space point.
-func (a *Axes) Annotate(text string, x, y float64, opts ...AnnotationOptions) *Annotation {
-	opt := AnnotationOptions{
-		OffsetX:       28,
-		OffsetY:       -20,
-		ArrowWidth:    1.25,
-		ArrowHeadSize: 8,
+//
+//nolint:gocritic // AnnotationOptions is an immutable snapshot of the caller's options.
+func (a *Axes) Annotate(text string, x, y float64, opt AnnotationOptions) *Annotation {
+	arrowStyle := opt.ArrowStyle
+	if arrowStyle.Name == "" {
+		arrowStyle, _ = ArrowStyleFromString("-|>")
+		arrowStyle.HeadWidth = 0.36
 	}
-	defaultArrowStyle, _ := ArrowStyleFromString("-|>")
-	defaultArrowStyle.HeadWidth = 0.36
-	defaultConnectionStyle, _ := ConnectionStyleFromString("arc3")
-	if supplied, ok := optarg.Optional("annotate", opts); ok {
-		opt = supplied
-		if opt.OffsetX == 0 && opt.OffsetY == 0 {
-			opt.OffsetX = 28
-			opt.OffsetY = -20
-		}
-		if opt.ArrowWidth <= 0 {
-			opt.ArrowWidth = 1.25
-		}
-		if opt.ArrowHeadSize <= 0 {
-			opt.ArrowHeadSize = 8
-		}
-	}
-	if opt.ArrowStyle.Name == "" {
-		opt.ArrowStyle = defaultArrowStyle
-	}
-	if opt.ConnectionStyle.Name == "" {
-		opt.ConnectionStyle = defaultConnectionStyle
+	connectionStyle := opt.ConnectionStyle
+	if connectionStyle.Name == "" {
+		connectionStyle, _ = ConnectionStyleFromString("arc3")
 	}
 
 	artist := &Annotation{
 		Point:           geom.Pt{X: x, Y: y},
 		Content:         text,
-		TextPosition:    clonePoint(opt.TextPosition),
+		TextPosition:    opt.TextPosition.Ptr(),
 		TextCoords:      opt.TextCoords,
-		OffsetX:         opt.OffsetX,
-		OffsetY:         opt.OffsetY,
+		OffsetX:         opt.OffsetX.Or(28),
+		OffsetY:         opt.OffsetY.Or(-20),
 		OffsetUnits:     opt.OffsetUnits,
 		FontSize:        opt.FontSize,
 		Color:           opt.Color,
 		ArrowColor:      opt.ArrowColor,
-		ArrowWidth:      opt.ArrowWidth,
-		ArrowHeadSize:   opt.ArrowHeadSize,
-		ArrowStyle:      opt.ArrowStyle,
-		ConnectionStyle: opt.ConnectionStyle,
+		ArrowWidth:      opt.ArrowWidth.Or(1.25),
+		ArrowHeadSize:   opt.ArrowHeadSize.Or(8),
+		ArrowStyle:      arrowStyle,
+		ConnectionStyle: connectionStyle,
 		HAlign:          annotationHAlign(opt),
 		VAlign:          annotationVAlign(opt),
 		Angle:           opt.Angle,
@@ -366,8 +360,8 @@ func (a *Axes) Annotate(text string, x, y float64, opts ...AnnotationOptions) *A
 		BBox:            cloneTextBBoxOptions(opt.BBox),
 		Linespacing:     opt.Linespacing,
 		FontProperties:  cloneFontProperties(opt.FontProperties),
-		ParseMath:       cloneBool(opt.ParseMath),
-		AnnotationClip:  cloneBool(opt.AnnotationClip),
+		ParseMath:       opt.ParseMath.Ptr(),
+		AnnotationClip:  opt.AnnotationClip.Ptr(),
 		z:               900,
 	}
 	a.Add(artist)

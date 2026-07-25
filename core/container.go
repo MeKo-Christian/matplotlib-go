@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -50,18 +51,33 @@ type StemContainer struct {
 
 // StemOptions configures Axes.Stem.
 type StemOptions struct {
-	Color           *render.Color
-	LineWidth       *float64
-	Marker          *MarkerType
-	MarkerPath      *geom.Path
-	MarkerSize      *float64
-	Baseline        *float64
-	BaselineColor   *render.Color
-	BaselineWidth   *float64
-	MarkerEdgeColor *render.Color
-	MarkerEdgeWidth *float64
-	Label           string
-	Alpha           *float64
+	// Color is the stem line color. Unset takes the next color from the axes
+	// property cycle.
+	Color optional.Value[render.Color]
+	// LineWidth is the stem width in points. Unset is 1.5.
+	LineWidth optional.Value[float64]
+	// Marker selects the head marker. Unset is a filled circle.
+	Marker optional.Value[MarkerType]
+	// MarkerPath overrides Marker with an explicit path.
+	MarkerPath optional.Value[geom.Path]
+	// MarkerSize is the head marker size in points. Unset is 6.
+	MarkerSize optional.Value[float64]
+	// Baseline is the data-space value the stems rise from.
+	Baseline float64
+	// BaselineColor is the baseline color. Unset is the fourth color of the
+	// property cycle, matching Matplotlib.
+	BaselineColor optional.Value[render.Color]
+	// BaselineWidth is the baseline width in points. Unset follows LineWidth.
+	BaselineWidth optional.Value[float64]
+	// MarkerEdgeColor is the head marker outline color. Unset follows Color.
+	MarkerEdgeColor optional.Value[render.Color]
+	// MarkerEdgeWidth is the head marker outline width in points. Unset is 1.
+	MarkerEdgeWidth optional.Value[float64]
+	// Label is the legend entry. Empty adds none.
+	Label string
+	// Alpha is the stem opacity. Unset is fully opaque; a value outside [0,1]
+	// is ignored.
+	Alpha optional.Value[float64]
 	// Orientation selects the stem direction, matching Matplotlib's stem
 	// orientation kwarg. "" and "vertical" keep stems along y (the default);
 	// "horizontal" runs stems along x with a vertical baseline. Any other value
@@ -258,7 +274,9 @@ func (a *Axes) ErrorBarContainer(x, y, xErr, yErr []float64, opts ...ErrorBarOpt
 }
 
 // Stem renders a simple stem plot and returns a Matplotlib-style result container.
-func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
+//
+//nolint:gocritic // StemOptions is an immutable snapshot of the caller's options.
+func (a *Axes) Stem(x, y []float64, opt StemOptions) *StemContainer {
 	if a == nil || len(x) == 0 || len(y) == 0 {
 		return nil
 	}
@@ -271,56 +289,25 @@ func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
 		return nil
 	}
 
-	opt := optarg.One("stem", opts)
-
-	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
-	}
 	alpha := 1.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && v <= 1 {
+		alpha = v
 	}
-	color = color.WithAlphaMultiplier(alpha)
+	color := opt.Color.Or(a.NextColor()).WithAlphaMultiplier(alpha)
 
-	lineWidth := 1.5 // points; converted at the collection Paint sink
-	if opt.LineWidth != nil {
-		lineWidth = *opt.LineWidth
-	}
-
-	markerType := MarkerCircle
-	if opt.Marker != nil {
-		markerType = *opt.Marker
-	}
-	markerSize := 6.0
-	if opt.MarkerSize != nil {
-		markerSize = *opt.MarkerSize
-	}
+	// Widths are in points and converted at the collection Paint sink.
+	lineWidth := opt.LineWidth.Or(1.5)
+	markerType := opt.Marker.Or(MarkerCircle)
+	markerSize := opt.MarkerSize.Or(6)
 	markerEdgeColor := color
-	if opt.MarkerEdgeColor != nil {
-		markerEdgeColor = *opt.MarkerEdgeColor
-		markerEdgeColor = markerEdgeColor.WithAlphaMultiplier(alpha)
+	if explicit, ok := opt.MarkerEdgeColor.Get(); ok {
+		markerEdgeColor = explicit.WithAlphaMultiplier(alpha)
 	}
-	markerEdgeWidth := 1.0 // points; converted at the collection Paint sink
-	if opt.MarkerEdgeWidth != nil {
-		markerEdgeWidth = *opt.MarkerEdgeWidth
-	}
+	markerEdgeWidth := opt.MarkerEdgeWidth.Or(1)
 
-	baseline := 0.0
-	if opt.Baseline != nil {
-		baseline = *opt.Baseline
-	}
-	baselineColor := a.colorCycleAt(3)
-	if opt.BaselineColor != nil {
-		baselineColor = *opt.BaselineColor
-		baselineColor = baselineColor.WithAlphaMultiplier(alpha)
-	} else {
-		baselineColor = baselineColor.WithAlphaMultiplier(alpha)
-	}
-	baselineWidth := lineWidth
-	if opt.BaselineWidth != nil {
-		baselineWidth = *opt.BaselineWidth
-	}
+	baseline := opt.Baseline
+	baselineColor := opt.BaselineColor.Or(a.colorCycleAt(3)).WithAlphaMultiplier(alpha)
+	baselineWidth := opt.BaselineWidth.Or(lineWidth)
 
 	horizontal := stemIsHorizontal(opt.Orientation)
 
@@ -347,10 +334,7 @@ func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
 		baselineEnd = geom.Pt{X: baseline, Y: x[n-1]}
 	}
 
-	markerPath := geom.Path{}
-	if opt.MarkerPath != nil {
-		markerPath = *opt.MarkerPath
-	}
+	markerPath := opt.MarkerPath.OrZero()
 	if len(markerPath.C) == 0 {
 		scatter := Scatter2D{Marker: markerType}
 		markerPath = scatter.markerPrototypePath()

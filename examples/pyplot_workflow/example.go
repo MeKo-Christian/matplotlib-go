@@ -7,6 +7,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/pyplot"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -43,7 +44,7 @@ func Plot() *core.Figure {
 
 	must(pyplot.SCA(axes[0][1]))
 	pyplot.Scatter([]float64{0, 1, 2, 3, 4}, []float64{0.1, 1.3, 0.8, 1.9, 1.4}, core.ScatterOptions{Label: "samples"})
-	pyplot.Annotate("peak", 3, 1.9)
+	pyplot.Annotate("peak", 3, 1.9, core.AnnotationOptions{})
 	pyplot.Title("scatter")
 	pyplot.Legend()
 
@@ -56,7 +57,7 @@ func Plot() *core.Figure {
 
 	must(pyplot.SCA(axes[1][1]))
 	interp := "bilinear"
-	img := pyplot.ImShow(heatmap(), core.ImShowOptions{Interpolation: &interp})
+	img := pyplot.ImShow(heatmap(), core.ImShowOptions{Interpolation: optional.Of(interp)})
 	pyplot.Title("imshow")
 	pyplot.Colorbar(img)
 

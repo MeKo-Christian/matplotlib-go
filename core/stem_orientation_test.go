@@ -14,7 +14,7 @@ func TestStemHorizontalOrientationSwapsAxes(t *testing.T) {
 	y := []float64{3, 4, 5} // heads along x
 	baseline := 0.0
 
-	c := ax.Stem(x, y, StemOptions{Orientation: "horizontal", Baseline: &baseline})
+	c := ax.Stem(x, y, StemOptions{Orientation: "horizontal", Baseline: baseline})
 	if c == nil {
 		t.Fatal("Stem returned nil")
 	}
@@ -55,7 +55,7 @@ func TestStemVerticalOrientationDefault(t *testing.T) {
 
 	x := []float64{0, 1}
 	y := []float64{2, 3}
-	c := ax.Stem(x, y) // default vertical
+	c := ax.Stem(x, y, StemOptions{}) // default vertical
 	if c == nil {
 		t.Fatal("Stem returned nil")
 	}

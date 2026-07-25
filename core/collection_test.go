@@ -7,6 +7,7 @@ import (
 
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -611,11 +612,12 @@ func TestAxesHLinesBroadcastsEndpointsAndRegistersCollection(t *testing.T) {
 		[]float64{1, 2, 3},
 		[]float64{0},
 		[]float64{4},
-		LineCollection{
-			Collection: Collection{Label: "thresholds", Alpha: 0.75},
-			Color:      color,
-			LineWidth:  2.5,
-			LineCap:    render.CapSquare,
+		LineCollectionOptions{
+			Label:     "thresholds",
+			Alpha:     optional.Of(0.75),
+			Color:     optional.Of(color),
+			LineWidth: optional.Of(2.5),
+			LineCap:   render.CapSquare,
 		},
 	)
 
@@ -642,7 +644,7 @@ func TestAxesHLinesBroadcastsEndpointsAndRegistersCollection(t *testing.T) {
 func TestAxesVLinesBroadcastsExtentsAndRejectsMismatchedLengths(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 
-	lines := ax.VLines([]float64{1, 2}, []float64{-1}, []float64{3})
+	lines := ax.VLines([]float64{1, 2}, []float64{-1}, []float64{3}, LineCollectionOptions{})
 	if lines == nil {
 		t.Fatal("expected VLines collection")
 	}
@@ -652,10 +654,10 @@ func TestAxesVLinesBroadcastsExtentsAndRejectsMismatchedLengths(t *testing.T) {
 	if got := lines.Segments[0]; got[0] != (geom.Pt{X: 1, Y: -1}) || got[1] != (geom.Pt{X: 1, Y: 3}) {
 		t.Fatalf("first vertical segment = %+v", got)
 	}
-	if got := ax.VLines([]float64{1, 2}, []float64{0, 1, 2}, []float64{3}); got != nil {
+	if got := ax.VLines([]float64{1, 2}, []float64{0, 1, 2}, []float64{3}, LineCollectionOptions{}); got != nil {
 		t.Fatalf("VLines with mismatched lengths returned %#v, want nil", got)
 	}
-	if got := ax.HLines([]float64{1, 2}, []float64{0}, []float64{3, 4, 5}); got != nil {
+	if got := ax.HLines([]float64{1, 2}, []float64{0}, []float64{3, 4, 5}, LineCollectionOptions{}); got != nil {
 		t.Fatalf("HLines with mismatched lengths returned %#v, want nil", got)
 	}
 }

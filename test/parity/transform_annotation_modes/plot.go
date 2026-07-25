@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -33,31 +34,31 @@ func Plot() *core.Figure {
 
 	ax.Annotate("data", 3, 4, core.AnnotationOptions{
 		Coords:     core.Coords(core.CoordData),
-		OffsetX:    34,
-		OffsetY:    -30,
+		OffsetX:    optional.Of(34.0),
+		OffsetY:    optional.Of(-30.0),
 		FontSize:   10,
 		Color:      textColor,
 		ArrowColor: textColor,
-		ArrowWidth: 1.1,
+		ArrowWidth: optional.Of(1.1),
 	})
 	ax.Annotate("axes", 0.78, 0.74, core.AnnotationOptions{
 		Coords:     core.Coords(core.CoordAxes),
-		OffsetX:    -46,
-		OffsetY:    28,
+		OffsetX:    optional.Of(-46.0),
+		OffsetY:    optional.Of(28.0),
 		FontSize:   10,
 		Color:      textColor,
 		ArrowColor: textColor,
-		ArrowWidth: 1.1,
+		ArrowWidth: optional.Of(1.1),
 		HAlign:     core.TextAlignRight,
 	})
 	ax.Annotate("figure", 0.72, 0.24, core.AnnotationOptions{
 		Coords:     core.Coords(core.CoordFigure),
-		OffsetX:    42,
-		OffsetY:    24,
+		OffsetX:    optional.Of(42.0),
+		OffsetY:    optional.Of(24.0),
 		FontSize:   10,
 		Color:      textColor,
 		ArrowColor: textColor,
-		ArrowWidth: 1.1,
+		ArrowWidth: optional.Of(1.1),
 	})
 	return fig
 }

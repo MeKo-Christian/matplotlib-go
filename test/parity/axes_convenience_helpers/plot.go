@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -48,15 +49,15 @@ func Plot() *core.Figure {
 	lineAx.SetXLim(0, 5)
 	lineAx.SetYLim(0, 5)
 	lineColor := render.Color{R: 0.12, G: 0.30, B: 0.72, A: 1}
-	lineAx.HLines([]float64{1, 2.5, 4}, []float64{0.5}, []float64{4.5}, core.LineCollection{
-		Collection: core.Collection{Alpha: 1},
-		Color:      lineColor,
-		LineWidth:  1.4,
+	lineAx.HLines([]float64{1, 2.5, 4}, []float64{0.5}, []float64{4.5}, core.LineCollectionOptions{
+		Alpha:     optional.Of(1.0),
+		Color:     optional.Of(lineColor),
+		LineWidth: optional.Of(1.4),
 	})
-	lineAx.VLines([]float64{1, 2.5, 4}, []float64{0.6}, []float64{4.4}, core.LineCollection{
-		Collection: core.Collection{Alpha: 1},
-		Color:      render.Color{R: 0.75, G: 0.18, B: 0.16, A: 1},
-		LineWidth:  1.4,
+	lineAx.VLines([]float64{1, 2.5, 4}, []float64{0.6}, []float64{4.4}, core.LineCollectionOptions{
+		Alpha:     optional.Of(1.0),
+		Color:     optional.Of(render.Color{R: 0.75, G: 0.18, B: 0.16, A: 1}),
+		LineWidth: optional.Of(1.4),
 	})
 
 	contourAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.18, Y: 0.08}, Max: geom.Pt{X: 0.82, Y: 0.43}})

@@ -9,6 +9,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -41,7 +42,7 @@ func Plot() *core.Figure {
 		for col := range 2 {
 			ax := grid.At(row, col)
 			ax.SetTitle("Tile " + string(rune('1'+row)) + "," + string(rune('1'+col)))
-			ax.ImShow(surface(24, 24, float64(row*2+col)))
+			ax.ImShow(surface(24, 24, float64(row*2+col)), core.ImShowOptions{})
 			labelPad := fontPad(9, 0.25, fig.RC.DPI)
 			ax.Text(0.98, 0.02, "image grid", core.TextOptions{
 				Coords:   core.Coords(core.CoordAxes),
@@ -94,7 +95,7 @@ func Plot() *core.Figure {
 		channel.ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 10, 20}}
 		cmap := channel.cmap
 		channel.ax.ImShow(channelSurface(28, 28, idx), core.ImShowOptions{
-			Colormap: &cmap,
+			Colormap: optional.Of(cmap),
 		})
 	}
 

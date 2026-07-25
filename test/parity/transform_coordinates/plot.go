@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -91,12 +92,12 @@ func Plot() *core.Figure {
 	})
 	ax.Annotate("axes note", 0.82, 0.78, core.AnnotationOptions{
 		Coords:     core.Coords(core.CoordAxes),
-		OffsetX:    -48,
-		OffsetY:    -26,
+		OffsetX:    optional.Of(-48.0),
+		OffsetY:    optional.Of(-26.0),
 		FontSize:   10,
 		Color:      textColor,
 		ArrowColor: textColor,
-		ArrowWidth: 1.25,
+		ArrowWidth: optional.Of(1.25),
 		HAlign:     core.TextAlignRight,
 		VAlign:     core.TextVAlignTop,
 	})

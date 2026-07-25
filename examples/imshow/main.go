@@ -6,6 +6,7 @@ import (
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 func main() {
@@ -28,10 +29,10 @@ func main() {
 	cmap := "viridis"
 	ax.SetTitle("ImShow with Extent + Bilinear Interpolation")
 	ax.ImShow(data, core.ImShowOptions{
-		Colormap:      &cmap,
-		Aspect:        "equal",
-		Extent:        &[4]float64{-2, 2, -1, 1},
-		Interpolation: ptr("bilinear"),
+		Colormap:      optional.Of(cmap),
+		Aspect:        optional.Of("equal"),
+		Extent:        optional.Of([4]float64{-2, 2, -1, 1}),
+		Interpolation: optional.Of("bilinear"),
 	})
 
 	if err := fig.Save("imshow_extent.png"); err != nil {

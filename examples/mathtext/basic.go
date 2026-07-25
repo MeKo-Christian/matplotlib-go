@@ -7,6 +7,7 @@ import (
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 func main() {
@@ -38,8 +39,8 @@ func main() {
 		FontSize: 12,
 	})
 	ax.Annotate(`$\\Delta y \\approx \\frac{1}{2}$`, 3.2, 0.35, core.AnnotationOptions{
-		OffsetX:  34,
-		OffsetY:  -26,
+		OffsetX:  optional.Of(34.0),
+		OffsetY:  optional.Of(-26.0),
 		FontSize: 12,
 	})
 	ax.AddAnchoredText("$\\\\omega_n = 2\\\\pi f_n$", core.AnchoredTextOptions{
