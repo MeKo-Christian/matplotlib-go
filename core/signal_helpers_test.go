@@ -92,6 +92,86 @@ func TestAxesSignalAnalysisHelpers(t *testing.T) {
 	}
 }
 
+func TestAxesPowerSpectrumDisplayMatchesMatplotlib(t *testing.T) {
+	x := make([]float64, 256)
+	y := make([]float64, 256)
+	for i := range x {
+		time := float64(i) / 64
+		x[i] = math.Sin(2*math.Pi*8*time) +
+			0.35*math.Sin(2*math.Pi*15*time+0.2) +
+			0.1*math.Cos(2*math.Pi*3*time)
+		y[i] = 0.8*math.Sin(2*math.Pi*8*time+0.45) +
+			0.25*math.Sin(2*math.Pi*15*time-0.3) +
+			0.12*math.Cos(2*math.Pi*20*time)
+	}
+	opts := SignalSpectrumOptions{
+		Fs: 64, Fc: 2, NFFT: 64, NOverlap: 32, PadTo: 128,
+		Window: "hann", Detrend: SignalDetrendMean,
+	}
+
+	for name, testCase := range map[string]struct {
+		run      func(*Axes) *SpectrumResult
+		expected [3]float64
+	}{
+		"psd": {
+			run:      func(ax *Axes) *SpectrumResult { return ax.PSD(x, opts) },
+			expected: [3]float64{2.6620585620737396e-08, 0.32810728602295575, 0.04020410895017642},
+		},
+		"csd": {
+			run:      func(ax *Axes) *SpectrumResult { return ax.CSD(x, y, opts) },
+			expected: [3]float64{2.2555878280023126e-09, 0.26248334333136814, 0.028715938883848956},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			ax := NewFigure(400, 300).AddAxes(unitRect())
+			result := testCase.run(ax)
+			if result == nil || result.Line == nil || len(result.Values) == 0 {
+				t.Fatalf("%s returned no spectrum", name)
+			}
+			for expectedIndex, bin := range []int{0, 16, 30} {
+				if got, want := result.Values[bin], testCase.expected[expectedIndex]; math.Abs(got-want) > 1e-12 {
+					t.Fatalf("%s value[%d] = %.17g, want Matplotlib %.17g", name, bin, got, want)
+				}
+			}
+			if got := result.Frequencies[0]; math.Abs(got-2) > 1e-12 {
+				t.Fatalf("%s first frequency = %v, want Fc offset 2", name, got)
+			}
+			if got, want := result.Line.XY[0].Y, 10*math.Log10(result.Values[0]); math.Abs(got-want) > 1e-12 {
+				t.Fatalf("%s plotted value = %v, want 10*log10(raw) = %v", name, got, want)
+			}
+			if ax.XLabel != "Frequency" {
+				t.Fatalf("%s x label = %q, want Frequency", name, ax.XLabel)
+			}
+			if _, ok := ax.YAxis.Locator.(FixedLocator); !ok {
+				t.Fatalf("%s y locator = %T, want Matplotlib power-spectrum FixedLocator", name, ax.YAxis.Locator)
+			}
+		})
+	}
+}
+
+func TestAxesSpecgramUsesMatplotlibImageExtent(t *testing.T) {
+	ax := NewFigure(400, 300).AddAxes(unitRect())
+	result := ax.Specgram(sineWave(8, 64, 384, 0), SpecgramOptions{
+		Fs: 64, NFFT: 64, NOverlap: 48, PadTo: 128,
+	})
+	if result == nil || result.Image == nil {
+		t.Fatal("Specgram returned no image")
+	}
+	for name, values := range map[string]struct {
+		got  float64
+		want float64
+	}{
+		"xmin": {result.Image.XMin, 0.375},
+		"xmax": {result.Image.XMax, 5.625},
+		"ymin": {result.Image.YMin, 0},
+		"ymax": {result.Image.YMax, 32},
+	} {
+		if math.Abs(values.got-values.want) > 1e-12 {
+			t.Fatalf("Specgram %s = %v, want %v", name, values.got, values.want)
+		}
+	}
+}
+
 func TestAxesSpectrumVariants(t *testing.T) {
 	x := sineWave(5, 64, 128, math.Pi/6)
 	opts := SignalSpectrumOptions{

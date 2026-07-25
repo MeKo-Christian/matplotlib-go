@@ -295,6 +295,18 @@ func TestAxesBoxPlotsDefaultWidthMatchesMatplotlibPositions(t *testing.T) {
 	}
 }
 
+func TestAxesBoxPlotDefaultWidthMatchesMatplotlibSinglePosition(t *testing.T) {
+	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
+
+	box := ax.BoxPlot([]float64{1, 2, 3})
+	if box == nil {
+		t.Fatal("expected box plot")
+	}
+	if box.Width != 0.15 {
+		t.Fatalf("box width = %v, want Matplotlib single-position default 0.15", box.Width)
+	}
+}
+
 func TestAxesBoxPlotDefaultMedianStyleMatchesMatplotlib(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 

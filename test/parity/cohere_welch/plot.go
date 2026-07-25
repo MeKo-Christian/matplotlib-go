@@ -1,0 +1,52 @@
+package cohere_welch
+
+import (
+	"image"
+	"math"
+
+	"github.com/cwbudde/matplotlib-go/backends/agg"
+	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/render"
+)
+
+const (
+	Width  = 640
+	Height = 360
+)
+
+func Plot() *core.Figure {
+	fig := core.NewFigure(Width, Height)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.125, Y: 0.11}, Max: geom.Pt{X: 0.9, Y: 0.88}})
+	ax.SetTitle("Welch Coherence")
+	x, y := signals()
+	width := 1.5
+	ax.Cohere(x, y, core.SignalSpectrumOptions{
+		Fs: 64, Fc: 2, NFFT: 64, NOverlap: 32, PadTo: 128,
+		Window: "hann", Detrend: core.SignalDetrendMean,
+		PlotOptions: core.PlotOptions{Color: &render.Color{R: 0.17, G: 0.63, B: 0.17, A: 1}, LineWidth: &width},
+	})
+	return fig
+}
+
+func signals() ([]float64, []float64) {
+	x := make([]float64, 256)
+	y := make([]float64, 256)
+	for i := range x {
+		t := float64(i) / 64
+		carrier := math.Sin(2 * math.Pi * 8 * t)
+		x[i] = carrier + 0.35*math.Sin(2*math.Pi*15*t+0.2) + 0.18*math.Sin(2*math.Pi*1.25*t)
+		y[i] = 0.8*math.Sin(2*math.Pi*8*t+0.45) + 0.25*math.Cos(2*math.Pi*20*t) + 0.15*math.Cos(2*math.Pi*2.75*t)
+	}
+	return x, y
+}
+
+func Render() image.Image {
+	fig := Plot()
+	r, err := agg.New(Width, Height, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		panic(err)
+	}
+	core.DrawFigure(fig, r)
+	return r.GetImage()
+}

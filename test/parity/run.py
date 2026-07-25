@@ -12,7 +12,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 os.environ.setdefault("MPLCONFIGDIR", os.path.join(tempfile.gettempdir(), "matplotlib-go-cache"))
 
-from examples.parity import CASE_IDS, load_plot
+from test.parity import CASE_IDS, load_plot
 
 
 def requested_ids(raw: list[str] | None) -> list[str]:

@@ -119,8 +119,11 @@ var cases = []Case{
 	{ID: "histogram_variants", Topic: "histogram", Title: "Histogram Variants Gallery", Description: "A combined gallery of count, density, cumulative, and overlapping probability histograms over deterministic samples.", WebDemoID: "histogram", Showcase: true, Width: 840, Height: 620, MinPSNR: 45.0, MaxMeanAbs: 1.5, MaxRMSE: 1.6},
 	{ID: "boxplot_basic", Topic: "boxplot", Title: "Box Plot", Description: "Grouped box plots with whiskers, medians, outliers, and categorical labels.", Optional: true, Showcase: true, MaxMeanAbs: 2.0, MaxRMSE: 2.7},
 	{ID: "boxplot_default", Topic: "boxplot", Title: "Box Plot Default Styling", Description: "Box plots with Matplotlib default styling: unfilled boxes, C1 medians, and unfilled-circle fliers (patch_artist=False).", Optional: true, MaxMeanAbs: 2.0, MaxRMSE: 3.2},
+	{ID: "boxplot_single_series", Topic: "boxplot", Title: "Single-Series Box Plot", Description: "A focused parity fixture for the direct single-series BoxPlot API.", FixtureOnly: true, MinPSNR: 70.0, MaxMeanAbs: 0.02, MaxRMSE: 0.5},
 	{ID: "axes_convenience_helpers", Topic: "axes", Title: "Axes Convenience Helpers", Description: "Precomputed bxp and violin stats, hlines/vlines broadcasting, and post-hoc clabel convenience helpers.", FixtureOnly: true, MaxRMSE: 2.1},
+	{ID: "axes_log_plot_wrappers", Topic: "axes", Title: "Log Plot Wrappers", Description: "Focused visual coverage for SemilogX, SemilogY, and LogLog convenience plotting.", FixtureOnly: true, Width: 960, Height: 360, MinPSNR: 70.0, MaxMeanAbs: 0.02, MaxRMSE: 0.2},
 	{ID: "axes_option_breadth", Topic: "axes", Title: "Axes Option Breadth", Description: "Scatter scalar styling, edge-aligned stacked bars with labels, fill-between masks/steps/interpolation, and errorevery sampling.", FixtureOnly: true, MaxRMSE: 0.6},
+	{ID: "axes_secondary_y_twiny", Topic: "axes", Title: "Twin and Secondary Y Axes", Description: "Focused visual coverage for TwinY shared-y overlays and transformed SecondaryYAxis ticks.", FixtureOnly: true, Width: 760, Height: 400, MinPSNR: 58.0, MaxMeanAbs: 0.05, MaxRMSE: 0.8},
 	{ID: "text_labels_strict", Topic: "text", Title: "Strict Text Labels", Optional: true, SVGGoldenFamily: "text_layout", GoBasicSmokeFamily: "text", SkiaParityFamily: "text", MaxRMSE: 0.3},
 	{ID: "title_strict", Topic: "text", Title: "Strict Title", MaxRMSE: 0.3},
 	{ID: "mathtext_basic", Topic: "mathtext", Title: "MathText Basic", FixtureOnly: true, SVGGoldenFamily: "mathtext", GoBasicSmokeFamily: "mathtext", SkiaParityFamily: "mathtext", MaxRMSE: 2.8},
@@ -151,6 +154,7 @@ var cases = []Case{
 	{ID: "named_colors", Topic: "color", Title: "Named Colors", FixtureOnly: true, MinPSNR: 49.0, MaxMeanAbs: 0.60, MaxRMSE: 4.8},
 	{ID: "named_colors_gallery", Topic: "color", Title: "Named Color Swatches", Description: "CSS4 names, Tableau tab colors, xkcd names, shorthand colors, grayscale strings, hex values, and RGBA tuples.", Showcase: true, Width: 900, Height: 520, MaxRMSE: 1.0},
 	{ID: "axes_top_right_inverted", Topic: "axes", Title: "Top/Right Inverted Axes", Optional: true, MaxRMSE: 0.8},
+	{ID: "axline_slope", Topic: "axes", Title: "Slope-Defined AxLine", Description: "A focused parity fixture for an infinite line defined by a point and slope.", FixtureOnly: true, MinPSNR: 70.0, MaxMeanAbs: 0.02, MaxRMSE: 0.6},
 	// Twinned-axes frame ratchet: twinx/twiny now keep foreground frame spines
 	// visible like Matplotlib; refreshed golden-vs-reference RMSE is 2.90.
 	{ID: "axes_control_surface", Topic: "axes", Title: "Axes, Scales, and Twins", Optional: true, WebDemoID: "axes", Description: "Minor ticks, top/right axes, aspect controls, log scale, twin axes, and secondary axes.", Showcase: true, GoBasicSmokeFamily: "axes", MaxRMSE: 3.0},
@@ -192,6 +196,10 @@ var cases = []Case{
 	// Phase 2 ratchet: off-bin fixture signal avoids undefined phase residues;
 	// regenerated golden-vs-reference RMSE is 1.15.
 	{ID: "spectrum_variants", Topic: "signal", Title: "Spectrum Variants", FixtureOnly: true, GoBasicSmokeFamily: "signal", MinPSNR: 60.0, MaxMeanAbs: 0.10, MaxRMSE: 1.5},
+	{ID: "psd_welch", Topic: "signal", Title: "Welch Power Spectral Density", Description: "Direct PSD coverage with overlapping Hann-windowed, mean-detrended segments and zero padding.", FixtureOnly: true, Width: 640, Height: 360, MinPSNR: 61.0, MaxMeanAbs: 0.05, MaxRMSE: 0.3},
+	{ID: "specgram_psd", Topic: "signal", Title: "PSD Spectrogram", Description: "Direct Specgram coverage for an overlapping-window chirp rendered in decibels.", FixtureOnly: true, Width: 640, Height: 360, MinPSNR: 59.0, MaxMeanAbs: 0.05, MaxRMSE: 1.2},
+	{ID: "cohere_welch", Topic: "signal", Title: "Welch Coherence", Description: "Direct Cohere coverage for partially shared deterministic signals.", FixtureOnly: true, Width: 640, Height: 360, MinPSNR: 61.0, MaxMeanAbs: 0.05, MaxRMSE: 0.3},
+	{ID: "csd_welch", Topic: "signal", Title: "Welch Cross-Spectral Density", Description: "Direct CSD coverage with overlapping Hann-windowed, mean-detrended segments and zero padding.", FixtureOnly: true, Width: 640, Height: 360, MinPSNR: 61.0, MaxMeanAbs: 0.05, MaxRMSE: 0.3},
 	{ID: "stat_variants", Topic: "statistics", Title: "Statistical Views", Optional: true, WebDemoID: "statistics", Description: "Box plots, violin plots, empirical CDFs, and stack plots.", Showcase: true, GoBasicSmokeFamily: "statistics", MinPSNR: 52.0, MaxMeanAbs: 0.35, MaxRMSE: 3.4},
 	{ID: "specialty_depth", Topic: "statistics", Title: "Specialty Depth", FixtureOnly: true, MaxRMSE: 4.8},
 	{ID: "stem_plot", Topic: "specialty", Title: "Stem Plot", Optional: true, MaxRMSE: 4.3},

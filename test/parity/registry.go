@@ -69,9 +69,12 @@ import (
 	example_axes_control_surface "github.com/cwbudde/matplotlib-go/test/parity/axes_control_surface"
 	example_axes_convenience_helpers "github.com/cwbudde/matplotlib-go/test/parity/axes_convenience_helpers"
 	example_axes_grid1_showcase "github.com/cwbudde/matplotlib-go/test/parity/axes_grid1_showcase"
+	example_axes_log_plot_wrappers "github.com/cwbudde/matplotlib-go/test/parity/axes_log_plot_wrappers"
 	example_axes_option_breadth "github.com/cwbudde/matplotlib-go/test/parity/axes_option_breadth"
+	example_axes_secondary_y_twiny "github.com/cwbudde/matplotlib-go/test/parity/axes_secondary_y_twiny"
 	example_axes_top_right_inverted "github.com/cwbudde/matplotlib-go/test/parity/axes_top_right_inverted"
 	example_axisartist_showcase "github.com/cwbudde/matplotlib-go/test/parity/axisartist_showcase"
+	example_axline_slope "github.com/cwbudde/matplotlib-go/test/parity/axline_slope"
 	example_bar_basic "github.com/cwbudde/matplotlib-go/test/parity/bar_basic"
 	example_bar_basic_frame "github.com/cwbudde/matplotlib-go/test/parity/bar_basic_frame"
 	example_bar_basic_tick_labels "github.com/cwbudde/matplotlib-go/test/parity/bar_basic_tick_labels"
@@ -86,7 +89,9 @@ import (
 	example_boundarynorm_pcolormesh "github.com/cwbudde/matplotlib-go/test/parity/boundarynorm_pcolormesh"
 	example_boxplot_basic "github.com/cwbudde/matplotlib-go/test/parity/boxplot_basic"
 	example_boxplot_default "github.com/cwbudde/matplotlib-go/test/parity/boxplot_default"
+	example_boxplot_single_series "github.com/cwbudde/matplotlib-go/test/parity/boxplot_single_series"
 	example_clip_path_batch "github.com/cwbudde/matplotlib-go/test/parity/clip_path_batch"
+	example_cohere_welch "github.com/cwbudde/matplotlib-go/test/parity/cohere_welch"
 	example_collection_mutable_scalarmap "github.com/cwbudde/matplotlib-go/test/parity/collection_mutable_scalarmap"
 	example_colorbar_boundary_values "github.com/cwbudde/matplotlib-go/test/parity/colorbar_boundary_values"
 	example_colorbar_composition "github.com/cwbudde/matplotlib-go/test/parity/colorbar_composition"
@@ -100,6 +105,7 @@ import (
 	example_colormap_families_gallery "github.com/cwbudde/matplotlib-go/test/parity/colormap_families_gallery"
 	example_colormap_qualitative "github.com/cwbudde/matplotlib-go/test/parity/colormap_qualitative"
 	example_contour_styles "github.com/cwbudde/matplotlib-go/test/parity/contour_styles"
+	example_csd_welch "github.com/cwbudde/matplotlib-go/test/parity/csd_welch"
 	example_dashes "github.com/cwbudde/matplotlib-go/test/parity/dashes"
 	example_date_concise_intraday_labels "github.com/cwbudde/matplotlib-go/test/parity/date_concise_intraday_labels"
 	example_date_month_year_labels "github.com/cwbudde/matplotlib-go/test/parity/date_month_year_labels"
@@ -196,6 +202,7 @@ import (
 	example_plot_variants "github.com/cwbudde/matplotlib-go/test/parity/plot_variants"
 	example_polar_axes "github.com/cwbudde/matplotlib-go/test/parity/polar_axes"
 	example_projection_toolkit_gallery "github.com/cwbudde/matplotlib-go/test/parity/projection_toolkit_gallery"
+	example_psd_welch "github.com/cwbudde/matplotlib-go/test/parity/psd_welch"
 	example_quad_mesh "github.com/cwbudde/matplotlib-go/test/parity/quad_mesh"
 	example_quiver_autoscale "github.com/cwbudde/matplotlib-go/test/parity/quiver_autoscale"
 	example_radar_basic "github.com/cwbudde/matplotlib-go/test/parity/radar_basic"
@@ -210,6 +217,7 @@ import (
 	example_scatter_plotnonfinite "github.com/cwbudde/matplotlib-go/test/parity/scatter_plotnonfinite"
 	example_sketch_xkcd "github.com/cwbudde/matplotlib-go/test/parity/sketch_xkcd"
 	example_skewt_basic "github.com/cwbudde/matplotlib-go/test/parity/skewt_basic"
+	example_specgram_psd "github.com/cwbudde/matplotlib-go/test/parity/specgram_psd"
 	example_specialty_artists "github.com/cwbudde/matplotlib-go/test/parity/specialty_artists"
 	example_specialty_depth "github.com/cwbudde/matplotlib-go/test/parity/specialty_depth"
 	example_spectrum_variants "github.com/cwbudde/matplotlib-go/test/parity/spectrum_variants"
@@ -300,6 +308,7 @@ var renderByID = map[string]func() image.Image{
 	"hist_strategies":                     example_hist_strategies.Render,
 	"boxplot_basic":                       example_boxplot_basic.Render,
 	"boxplot_default":                     example_boxplot_default.Render,
+	"boxplot_single_series":               example_boxplot_single_series.Render,
 	"text_labels_strict":                  example_text_labels_strict.Render,
 	"title_strict":                        example_title_strict.Render,
 	"image_heatmap":                       example_image_heatmap.Render,
@@ -331,9 +340,12 @@ var renderByID = map[string]func() image.Image{
 	"text_layout_gallery":                 example_text_layout_gallery.Render,
 	"ticks_scales_formatters_gallery":     example_ticks_scales_formatters_gallery.Render,
 	"axes_top_right_inverted":             example_axes_top_right_inverted.Render,
+	"axline_slope":                        example_axline_slope.Render,
 	"axes_control_surface":                example_axes_control_surface.Render,
 	"axes_convenience_helpers":            example_axes_convenience_helpers.Render,
+	"axes_log_plot_wrappers":              example_axes_log_plot_wrappers.Render,
 	"axes_option_breadth":                 example_axes_option_breadth.Render,
+	"axes_secondary_y_twiny":              example_axes_secondary_y_twiny.Render,
 	"transform_coordinates":               example_transform_coordinates.Render,
 	"transform_annotation_modes":          example_transform_annotation_modes.Render,
 	"path_clipped_transformed":            example_path_clipped_transformed.Render,
@@ -365,6 +377,10 @@ var renderByID = map[string]func() image.Image{
 	"mesh_contour_tri":                    example_mesh_contour_tri.Render,
 	"plot_variants":                       example_plot_variants.Render,
 	"spectrum_variants":                   example_spectrum_variants.Render,
+	"psd_welch":                           example_psd_welch.Render,
+	"specgram_psd":                        example_specgram_psd.Render,
+	"cohere_welch":                        example_cohere_welch.Render,
+	"csd_welch":                           example_csd_welch.Render,
 	"stackplot_streamgraph":               example_stackplot_streamgraph.Render,
 	"stat_variants":                       example_stat_variants.Render,
 	"specialty_depth":                     example_specialty_depth.Render,
@@ -445,6 +461,8 @@ var figureByID = map[string]func() *core.Figure{
 	"sketch_xkcd":                         example_sketch_xkcd.Plot,
 	"arrays_showcase":                     showcase_arrays_showcase.Plot,
 	"axes_option_breadth":                 example_axes_option_breadth.Plot,
+	"axes_log_plot_wrappers":              example_axes_log_plot_wrappers.Plot,
+	"axes_secondary_y_twiny":              example_axes_secondary_y_twiny.Plot,
 	"axes_grid1_showcase":                 showcase_axes_grid1_showcase.Plot,
 	"axes_control_surface":                showcase_axes_control_surface.Plot,
 	"transform_annotation_modes":          example_transform_annotation_modes.Plot,
@@ -529,6 +547,10 @@ var figureByID = map[string]func() *core.Figure{
 	"mixed_raster_vector":                 showcase_mixed_raster_vector.Plot,
 	"mplot3d_gallery":                     showcase_mplot3d_gallery.Plot,
 	"spectrum_variants":                   example_spectrum_variants.Plot,
+	"psd_welch":                           example_psd_welch.Plot,
+	"specgram_psd":                        example_specgram_psd.Plot,
+	"cohere_welch":                        example_cohere_welch.Plot,
+	"csd_welch":                           example_csd_welch.Plot,
 	"unstructured_showcase":               showcase_unstructured_showcase.Plot,
 	"triangulation_gallery":               showcase_triangulation_gallery.Plot,
 	"widgets_gallery":                     example_widgets_gallery.Plot,

@@ -31,6 +31,7 @@ hist_density
 hist_strategies
 boxplot_basic
 boxplot_default
+boxplot_single_series
 text_labels_strict
 title_strict
 mathtext_basic
@@ -60,8 +61,11 @@ colormap_families_gallery
 named_colors
 named_colors_gallery
 axes_top_right_inverted
+axline_slope
 axes_control_surface
+axes_log_plot_wrappers
 axes_option_breadth
+axes_secondary_y_twiny
 transform_coordinates
 transform_annotation_modes
 path_clipped_transformed
@@ -93,6 +97,10 @@ patch_style_matrix
 mesh_contour_tri
 plot_variants
 spectrum_variants
+psd_welch
+specgram_psd
+cohere_welch
+csd_welch
 stat_variants
 specialty_depth
 stem_plot

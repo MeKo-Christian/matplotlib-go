@@ -1,0 +1,1 @@
+"""CSD Welch parity fixture."""

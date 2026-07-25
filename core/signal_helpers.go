@@ -124,12 +124,8 @@ func (a *Axes) Specgram(samples []float64, opts ...SpecgramOptions) *SpecgramRes
 		spectrum = scaleSpectrumDB(spectrum)
 	}
 
-	xMin, xMax := centersExtent(times, float64(nfft)/(2*fs))
-	df := fs / float64(padTo)
-	yMin, yMax := centersExtent(freqs, df*0.5)
-	if yMin < 0 {
-		yMin = 0
-	}
+	xMin, xMax := centersExtent(times, float64(nfft-noverlap)/(2*fs))
+	yMin, yMax := freqs[0], freqs[len(freqs)-1]
 	img := a.Image(spectrum, ImageOptions{
 		Colormap: cfg.Colormap,
 		VMin:     cfg.VMin,
@@ -163,7 +159,12 @@ func (a *Axes) PSD(samples []float64, opts ...SignalSpectrumOptions) *SpectrumRe
 	}
 	samples = finiteSeries(samples)
 	freqs, psd := computePSD(samples, cfg)
-	return plotSpectrumResult(a, freqs, psd, cfg.PlotOptions)
+	offsetFrequencies(freqs, cfg.Fc)
+	a.SetXLabel("Frequency")
+	a.SetYLabel("Power Spectral Density (dB/Hz)")
+	a.AddXGrid()
+	a.AddYGrid()
+	return plotPowerSpectrumResult(a, freqs, psd, cfg.PlotOptions)
 }
 
 // MagnitudeSpectrum computes a one-sided FFT magnitude spectrum and plots it.
@@ -224,7 +225,12 @@ func (a *Axes) CSD(x, y []float64, opts ...SignalSpectrumOptions) *SpectrumResul
 	}
 	x, y = finitePairs(x, y)
 	freqs, values := computeCSDMagnitude(x, y, cfg)
-	return plotSpectrumResult(a, freqs, values, cfg.PlotOptions)
+	offsetFrequencies(freqs, cfg.Fc)
+	a.SetXLabel("Frequency")
+	a.SetYLabel("Cross Spectrum Magnitude (dB)")
+	a.AddXGrid()
+	a.AddYGrid()
+	return plotPowerSpectrumResult(a, freqs, values, cfg.PlotOptions)
 }
 
 // Cohere computes magnitude-squared coherence and plots it.
@@ -235,6 +241,11 @@ func (a *Axes) Cohere(x, y []float64, opts ...SignalSpectrumOptions) *SpectrumRe
 	}
 	x, y = finitePairs(x, y)
 	freqs, values := computeCoherence(x, y, cfg)
+	offsetFrequencies(freqs, cfg.Fc)
+	a.SetXLabel("Frequency")
+	a.SetYLabel("Coherence")
+	a.AddXGrid()
+	a.AddYGrid()
 	return plotSpectrumResult(a, freqs, values, cfg.PlotOptions)
 }
 
@@ -321,6 +332,7 @@ func computeSpectrogram(samples []float64, cfg signalFFTConfig) ([]float64, []fl
 
 	for col, segment := range segments {
 		bins := oneSidedDFTPower(applyWindow(segment, window), cfg.PadTo)
+		scaleOneSidedPSD(bins, cfg.NFFT)
 		for row := range bins {
 			spectrum[row][col] = bins[row] / scale
 		}
@@ -346,7 +358,9 @@ func computePSD(samples []float64, opts SignalSpectrumOptions) ([]float64, []flo
 	}
 	out := make([]float64, len(fftFrequencies(cfg.Fs, cfg.PadTo)))
 	for _, segment := range segments {
+		segment = detrendSeries(segment, opts.Detrend)
 		power := oneSidedDFTPower(applyWindow(segment, window), cfg.PadTo)
+		scaleOneSidedPSD(power, cfg.NFFT)
 		for i := range power {
 			out[i] += power[i] / scale
 		}
@@ -374,15 +388,19 @@ func computeCSDMagnitude(x, y []float64, opts SignalSpectrumOptions) ([]float64,
 		scale = 1
 	}
 
-	out := make([]float64, len(fftFrequencies(cfg.Fs, cfg.PadTo)))
+	crossSum := make([]complex128, len(fftFrequencies(cfg.Fs, cfg.PadTo)))
 	for i := range segmentsX {
-		cross := oneSidedDFTCross(applyWindow(segmentsX[i], window), applyWindow(segmentsY[i], window), cfg.PadTo)
+		xSegment := detrendSeries(segmentsX[i], opts.Detrend)
+		ySegment := detrendSeries(segmentsY[i], opts.Detrend)
+		cross := oneSidedDFTCross(applyWindow(xSegment, window), applyWindow(ySegment, window), cfg.PadTo)
+		scaleOneSidedCross(cross, cfg.NFFT)
 		for k := range cross {
-			out[k] += cmplx.Abs(cross[k]) / scale
+			crossSum[k] += cross[k] / complex(scale, 0)
 		}
 	}
+	out := make([]float64, len(crossSum))
 	for i := range out {
-		out[i] /= float64(len(segmentsX))
+		out[i] = cmplx.Abs(crossSum[i] / complex(float64(len(segmentsX)), 0))
 	}
 	return fftFrequencies(cfg.Fs, cfg.PadTo), out
 }
@@ -561,11 +579,14 @@ func computeCoherence(x, y []float64, opts SignalSpectrumOptions) ([]float64, []
 	pyy := make([]float64, len(pxx))
 	pxy := make([]complex128, len(pxx))
 	for i := range segmentsX {
-		wx := applyWindow(segmentsX[i], window)
-		wy := applyWindow(segmentsY[i], window)
+		wx := applyWindow(detrendSeries(segmentsX[i], opts.Detrend), window)
+		wy := applyWindow(detrendSeries(segmentsY[i], opts.Detrend), window)
 		powerX := oneSidedDFTPower(wx, cfg.PadTo)
 		powerY := oneSidedDFTPower(wy, cfg.PadTo)
 		cross := oneSidedDFTCross(wx, wy, cfg.PadTo)
+		scaleOneSidedPSD(powerX, cfg.NFFT)
+		scaleOneSidedPSD(powerY, cfg.NFFT)
+		scaleOneSidedCross(cross, cfg.NFFT)
 		for k := range pxx {
 			pxx[k] += powerX[k]
 			pyy[k] += powerY[k]
@@ -640,6 +661,55 @@ func plotSpectrumResult(a *Axes, x, y []float64, opts PlotOptions) *SpectrumResu
 		Line:        line,
 		Frequencies: append([]float64(nil), x...),
 		Values:      append([]float64(nil), y...),
+	}
+}
+
+func plotPowerSpectrumResult(a *Axes, x, values []float64, opts PlotOptions) *SpectrumResult {
+	plotValues := make([]float64, len(values))
+	for i, value := range values {
+		if value <= 0 {
+			plotValues[i] = -120
+			continue
+		}
+		plotValues[i] = 10 * math.Log10(value)
+	}
+	result := plotSpectrumResult(a, x, plotValues, opts)
+	if result == nil {
+		return nil
+	}
+	setPowerSpectrumTicks(a)
+	result.Values = append([]float64(nil), values...)
+	return result
+}
+
+func setPowerSpectrumTicks(a *Axes) {
+	if a == nil || a.YAxis == nil || a.YScale == nil {
+		return
+	}
+	minVal, maxVal := a.YScale.Domain()
+	span := maxVal - minVal
+	if span <= 0 || !isFinite(span) {
+		return
+	}
+	step := math.Max(10*float64(int(math.Log10(span))), 1)
+	start := math.Floor(minVal)
+	stop := math.Ceil(maxVal) + 1
+	ticks := make([]float64, 0, int((stop-start)/step)+1)
+	for tick := start; tick <= stop; tick += step {
+		ticks = append(ticks, tick)
+	}
+	a.YAxis.Locator = FixedLocator{TicksList: ticks}
+	// Matplotlib's set_yticks expands the view interval just enough to keep all
+	// explicit ticks visible. Preserve the autoscaled side when it already
+	// encloses the outer tick.
+	if len(ticks) > 0 {
+		a.SetYLim(math.Min(minVal, ticks[0]), math.Max(maxVal, ticks[len(ticks)-1]))
+	}
+}
+
+func offsetFrequencies(frequencies []float64, offset float64) {
+	for i := range frequencies {
+		frequencies[i] += offset
 	}
 }
 
@@ -824,6 +894,26 @@ func oneSidedDFTCross(x, y []float64, n int) []complex128 {
 		out[i] = fx[i] * cmplx.Conj(fy[i])
 	}
 	return out
+}
+
+func scaleOneSidedPSD(values []float64, nfft int) {
+	end := len(values)
+	if nfft%2 == 0 && end > 0 {
+		end--
+	}
+	for i := 1; i < end; i++ {
+		values[i] *= 2
+	}
+}
+
+func scaleOneSidedCross(values []complex128, nfft int) {
+	end := len(values)
+	if nfft%2 == 0 && end > 0 {
+		end--
+	}
+	for i := 1; i < end; i++ {
+		values[i] *= 2
+	}
 }
 
 func fullDFT(samples []float64, n int) []complex128 {

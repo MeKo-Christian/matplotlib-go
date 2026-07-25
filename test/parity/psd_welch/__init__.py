@@ -1,0 +1,1 @@
+"""PSD Welch parity fixture."""

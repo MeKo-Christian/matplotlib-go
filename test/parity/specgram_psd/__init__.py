@@ -1,0 +1,1 @@
+"""PSD spectrogram parity fixture."""

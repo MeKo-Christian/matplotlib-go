@@ -1,0 +1,1 @@
+"""Coherence Welch parity fixture."""

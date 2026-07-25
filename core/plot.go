@@ -1502,7 +1502,10 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		position = *opt.Position
 	}
 
-	width := 0.6
+	// Matplotlib's bxp default is clip(0.15*ptp(positions), 0.15, 0.5).
+	// A direct BoxPlot has exactly one position, so ptp is zero and the
+	// resulting default width is 0.15.
+	width := 0.15
 	if opt.Width != nil {
 		width = *opt.Width
 	}
