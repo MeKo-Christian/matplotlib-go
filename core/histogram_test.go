@@ -317,15 +317,18 @@ func TestAxes_Hist(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
 	data := []float64{1, 2, 2, 3, 3, 3, 4, 5}
-	hist := ax.Hist(data)
+	hist, err := ax.Hist(data)
+	if err != nil {
+		t.Fatalf("Hist() returned error: %v", err)
+	}
 	if hist == nil {
 		t.Fatal("Hist should return non-nil for non-empty data")
 	}
 
-	// Test with empty data
-	got := ax.Hist([]float64{})
-	if got != nil {
-		t.Errorf("Hist with empty data should return nil")
+	// Empty data is rejected input, not an accepted degradation.
+	got, err := ax.Hist([]float64{})
+	if got != nil || err == nil {
+		t.Fatalf("Hist([]) = (%v, %v), want nil artist and an error", got, err)
 	}
 }
 
@@ -339,7 +342,7 @@ func TestAxes_Hist_Options(t *testing.T) {
 	alpha := 0.7
 	bins := 10
 
-	hist := ax.Hist([]float64{1, 2, 3, 4, 5}, HistOptions{
+	hist, err := ax.Hist([]float64{1, 2, 3, 4, 5}, HistOptions{
 		Bins:      bins,
 		Norm:      HistNormProbability,
 		Color:     &col,
@@ -348,6 +351,9 @@ func TestAxes_Hist_Options(t *testing.T) {
 		Alpha:     &alpha,
 		Label:     "test",
 	})
+	if err != nil {
+		t.Fatalf("Hist() returned error: %v", err)
+	}
 
 	if hist == nil {
 		t.Fatal("expected non-nil histogram")
@@ -365,7 +371,10 @@ func TestHistLogSetsYScaleToLog(t *testing.T) {
 		t.Fatalf("precondition: y scale = %T, want transform.Linear", ax.YScale)
 	}
 
-	hist := ax.Hist([]float64{1, 2, 2, 3, 3, 3, 4, 4, 5}, HistOptions{Log: true})
+	hist, err := ax.Hist([]float64{1, 2, 2, 3, 3, 3, 4, 4, 5}, HistOptions{Log: true})
+	if err != nil {
+		t.Fatalf("Hist() returned error: %v", err)
+	}
 	if hist == nil {
 		t.Fatal("expected non-nil histogram")
 	}
@@ -385,8 +394,8 @@ func TestHistWithoutLogKeepsLinearYScale(t *testing.T) {
 	fig := NewFigure(640, 360)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	if hist := ax.Hist([]float64{1, 2, 3, 4, 5}); hist == nil {
-		t.Fatal("expected non-nil histogram")
+	if hist, err := ax.Hist([]float64{1, 2, 3, 4, 5}); hist == nil || err != nil {
+		t.Fatalf("Hist() = (%v, %v), want a histogram and no error", hist, err)
 	}
 	if _, ok := ax.YScale.(transform.Linear); !ok {
 		t.Fatalf("default y scale = %T, want transform.Linear", ax.YScale)
@@ -397,11 +406,11 @@ func TestAxesHistRejectsMismatchedWeights(t *testing.T) {
 	fig := NewFigure(640, 360)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	got := ax.Hist([]float64{1, 2, 3}, HistOptions{
+	got, err := ax.Hist([]float64{1, 2, 3}, HistOptions{
 		Weights: []float64{1, 2},
 	})
-	if got != nil {
-		t.Fatal("Hist with mismatched weights should return nil")
+	if got != nil || err == nil {
+		t.Fatalf("Hist() with mismatched weights = (%v, %v), want nil artist and an error", got, err)
 	}
 }
 
@@ -410,7 +419,10 @@ func TestAxesHistPreservesColorAlphaWhenAlphaOmitted(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
 	col := render.Color{R: 0.2, G: 0.4, B: 0.8, A: 0.35}
-	hist := ax.Hist([]float64{1, 2, 2, 3}, HistOptions{Color: &col})
+	hist, err := ax.Hist([]float64{1, 2, 2, 3}, HistOptions{Color: &col})
+	if err != nil {
+		t.Fatalf("Hist() returned error: %v", err)
+	}
 	if hist == nil {
 		t.Fatal("expected non-nil histogram")
 	}

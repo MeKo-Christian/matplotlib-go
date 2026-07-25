@@ -71,7 +71,7 @@ func addFillBetweenXPanel(ax *core.Axes) {
 	ax.SetXLim(0, 7)
 	ax.SetYLim(0, 6)
 	edgeWidth := 1.2
-	ax.FillBetweenX(
+	_, _ = ax.FillBetweenX(
 		[]float64{0.4, 1.2, 2.0, 2.8, 3.6, 4.4, 5.2},
 		[]float64{1.3, 2.1, 1.7, 2.8, 2.2, 3.1, 2.6},
 		[]float64{3.4, 4.1, 4.8, 5.1, 5.6, 6.0, 6.3},

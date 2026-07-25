@@ -98,10 +98,13 @@ func TestNormalizeRGBArrayPreservesStraightAlpha(t *testing.T) {
 
 func TestImShowRGBBypassesColormap(t *testing.T) {
 	ax := &Axes{}
-	img := ax.ImShowRGB([][][]float64{
+	img, err := ax.ImShowRGB([][][]float64{
 		{{1, 0, 0}, {0, 1, 0}},
 		{{0, 0, 1}, {1, 1, 0}},
 	})
+	if err != nil {
+		t.Fatalf("ImShowRGB() returned error: %v", err)
+	}
 	if img == nil {
 		t.Fatal("expected image artist")
 	}
@@ -126,10 +129,13 @@ func TestImShowRGBBypassesColormap(t *testing.T) {
 
 func TestImShowRGBOriginLowerFlips(t *testing.T) {
 	ax := &Axes{}
-	img := ax.ImShowRGB([][][]float64{
+	img, err := ax.ImShowRGB([][][]float64{
 		{{1, 0, 0}},
 		{{0, 0, 1}},
 	}, ImShowRGBOptions{Origin: ImageOriginLower})
+	if err != nil {
+		t.Fatalf("ImShowRGB() returned error: %v", err)
+	}
 	if img == nil {
 		t.Fatal("expected image artist")
 	}
@@ -145,9 +151,12 @@ func TestImShowRGBOriginLowerFlips(t *testing.T) {
 
 func TestImShowRGBScalarSqueezeRoutesToColormap(t *testing.T) {
 	ax := &Axes{}
-	img := ax.ImShowRGB([][][]float64{
+	img, err := ax.ImShowRGB([][][]float64{
 		{{0}, {1}},
 	})
+	if err != nil {
+		t.Fatalf("ImShowRGB() returned error: %v", err)
+	}
 	if img == nil {
 		t.Fatal("expected image artist")
 	}

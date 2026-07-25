@@ -29,7 +29,7 @@ func Plot() *core.Figure {
 	errCap := 8.0
 	errMarker := core.MarkerCircle
 	errMarkerSize := 4.0
-	errAx.ErrorBar(
+	_, _ = errAx.ErrorBar(
 		[]float64{1, 2, 3, 4},
 		[]float64{1.2, 2.5, 3.1, 3.7},
 		nil,

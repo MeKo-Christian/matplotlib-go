@@ -34,7 +34,7 @@ func Plot() *core.Figure {
 	blue := render.Color{R: 0.26, G: 0.53, B: 0.80, A: 0.8}
 	black := render.Color{R: 0, G: 0, B: 0, A: 1}
 	ew := 0.8
-	ax.Hist(data, core.HistOptions{
+	_, _ = ax.Hist(data, core.HistOptions{
 		Color:     &blue,
 		EdgeColor: &black,
 		EdgeWidth: &ew,

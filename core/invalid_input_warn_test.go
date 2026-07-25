@@ -1,7 +1,6 @@
 package core
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/internal/diag"
@@ -43,21 +42,87 @@ func TestScatterValidInputDoesNotWarn(t *testing.T) {
 	}
 }
 
-// Hist with a weights slice whose length disagrees with the data is invalid
-// input in Matplotlib; surface a reason instead of silently dropping the artist.
-func TestHistWeightsMismatchWarns(t *testing.T) {
-	got, restore := captureWarnings()
-	defer restore()
+// Every plotting entry point that rejects input must report a reason through
+// the error channel and stay silent on the warning channel, which is reserved
+// for artists that are accepted with a documented degradation.
+func TestRejectedPlotInputReturnsErrorWithoutWarning(t *testing.T) {
+	tests := []struct {
+		name string
+		call func(*Axes) (bool, error) // reports whether an artist came back
+	}{
+		{
+			name: "hist mismatched weights",
+			call: func(ax *Axes) (bool, error) {
+				h, err := ax.Hist([]float64{1, 2, 3}, HistOptions{Weights: []float64{1, 1}})
+				return h != nil, err
+			},
+		},
+		{
+			name: "hist empty data",
+			call: func(ax *Axes) (bool, error) {
+				h, err := ax.Hist(nil)
+				return h != nil, err
+			},
+		},
+		{
+			name: "fill between mismatched where",
+			call: func(ax *Axes) (bool, error) {
+				f, err := ax.FillBetweenPlot([]float64{0, 1, 2}, []float64{0, 0, 0}, []float64{1, 1, 1},
+					FillOptions{Where: []bool{true, false}})
+				return f != nil, err
+			},
+		},
+		{
+			name: "fill between x mismatched lengths",
+			call: func(ax *Axes) (bool, error) {
+				f, err := ax.FillBetweenX([]float64{0, 1, 2}, []float64{0, 0}, []float64{1, 1, 1})
+				return f != nil, err
+			},
+		},
+		{
+			name: "errorbar negative errors",
+			call: func(ax *Axes) (bool, error) {
+				b, err := ax.ErrorBar([]float64{0, 1}, []float64{0, 1}, []float64{-1}, nil)
+				return b != nil, err
+			},
+		},
+		{
+			name: "errorbar invalid errorevery",
+			call: func(ax *Axes) (bool, error) {
+				b, err := ax.ErrorBar([]float64{0, 1}, []float64{0, 1}, nil, []float64{0.1},
+					ErrorBarOptions{ErrorEvery: -1})
+				return b != nil, err
+			},
+		},
+		{
+			name: "imshow rgb ragged rows",
+			call: func(ax *Axes) (bool, error) {
+				img, err := ax.ImShowRGB([][][]float64{
+					{{0, 0, 0}, {1, 1, 1}},
+					{{0, 0, 0}},
+				})
+				return img != nil, err
+			},
+		},
+	}
 
-	ax := newAlphaTestAxes()
-	weights := []float64{1, 1}
-	if h := ax.Hist([]float64{1, 2, 3}, HistOptions{Weights: weights}); h != nil {
-		t.Fatal("expected nil hist for mismatched weights")
-	}
-	if len(*got) == 0 {
-		t.Fatal("Hist weights mismatch produced no diagnostic")
-	}
-	if !strings.Contains(strings.ToLower((*got)[0]), "hist") {
-		t.Fatalf("warning %q should name the Hist call", (*got)[0])
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			warnings, restore := captureWarnings()
+			defer restore()
+
+			ax := newAlphaTestAxes()
+			before := len(ax.Artists)
+			added, err := tt.call(ax)
+			if err == nil || added {
+				t.Fatalf("call returned (artist=%v, %v), want no artist and an error", added, err)
+			}
+			if len(*warnings) != 0 {
+				t.Fatalf("rejected input should return an error, not warn: %v", *warnings)
+			}
+			if len(ax.Artists) != before {
+				t.Fatalf("artist count = %d, want %d — rejection must not mutate the axes", len(ax.Artists), before)
+			}
+		})
 	}
 }

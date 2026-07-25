@@ -31,17 +31,21 @@ func TestHistHonorsExplicitZeroAlpha(t *testing.T) {
 
 	zero := 0.0
 	transparent := &recordingRenderer{}
-	newAlphaTestAxes().
-		Hist(data, HistOptions{Color: &red, Alpha: &zero}).
-		Draw(transparent, ctx)
+	transparentHist, err := newAlphaTestAxes().Hist(data, HistOptions{Color: &red, Alpha: &zero})
+	if err != nil {
+		t.Fatalf("Hist() returned error: %v", err)
+	}
+	transparentHist.Draw(transparent, ctx)
 	if got := maxAnyAlpha(transparent); got != 0 {
 		t.Fatalf("Hist alpha=0 should draw nothing opaque, got max alpha %v", got)
 	}
 
 	opaque := &recordingRenderer{}
-	newAlphaTestAxes().
-		Hist(data, HistOptions{Color: &red}).
-		Draw(opaque, ctx)
+	opaqueHist, err := newAlphaTestAxes().Hist(data, HistOptions{Color: &red})
+	if err != nil {
+		t.Fatalf("Hist() returned error: %v", err)
+	}
+	opaqueHist.Draw(opaque, ctx)
 	if maxAnyAlpha(opaque) == 0 {
 		t.Fatal("control opaque hist drew nothing — harness problem")
 	}
@@ -57,17 +61,21 @@ func TestErrorBarHonorsExplicitZeroAlpha(t *testing.T) {
 
 	zero := 0.0
 	transparent := &recordingRenderer{}
-	newAlphaTestAxes().
-		ErrorBar(x, y, e, e, ErrorBarOptions{Color: &red, Alpha: &zero}).
-		Draw(transparent, ctx)
+	transparentBar, err := newAlphaTestAxes().ErrorBar(x, y, e, e, ErrorBarOptions{Color: &red, Alpha: &zero})
+	if err != nil {
+		t.Fatalf("ErrorBar() returned error: %v", err)
+	}
+	transparentBar.Draw(transparent, ctx)
 	if got := maxAnyAlpha(transparent); got != 0 {
 		t.Fatalf("ErrorBar alpha=0 should draw nothing opaque, got max alpha %v", got)
 	}
 
 	opaque := &recordingRenderer{}
-	newAlphaTestAxes().
-		ErrorBar(x, y, e, e, ErrorBarOptions{Color: &red}).
-		Draw(opaque, ctx)
+	opaqueBar, err := newAlphaTestAxes().ErrorBar(x, y, e, e, ErrorBarOptions{Color: &red})
+	if err != nil {
+		t.Fatalf("ErrorBar() returned error: %v", err)
+	}
+	opaqueBar.Draw(opaque, ctx)
 	if maxAnyAlpha(opaque) == 0 {
 		t.Fatal("control opaque error bar drew nothing — harness problem")
 	}

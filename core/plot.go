@@ -7,7 +7,6 @@ import (
 
 	mplcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/ticker"
@@ -1140,7 +1139,10 @@ func (b *Bar2D) addErrorBars(a *Axes, opt *BarOptions) {
 	if a.ColorCycle != nil {
 		savedCycleIndex = a.ColorCycle.Index()
 	}
-	b.errorbar = a.ErrorBar(ex, ey, opt.XErr, opt.YErr, eb)
+	// validateBarInput already rejected empty bars and every malformed error or
+	// limit array, so this call cannot fail; the container simply stays nil if
+	// it ever does.
+	b.errorbar, _ = a.ErrorBar(ex, ey, opt.XErr, opt.YErr, eb)
 	if a.ColorCycle != nil {
 		a.ColorCycle.SetIndex(savedCycleIndex)
 	}
@@ -1205,7 +1207,7 @@ func (a *Axes) FillBetween(xVals, y1Vals, y2Vals any, opts ...FillOptions) (*Fil
 		tx.rollback()
 		return nil, fmt.Errorf("fill between y2 values: %w", err)
 	}
-	if err := validateFillBetweenInput(x, y1, y2, &opt); err != nil {
+	if err := fillBetweenNames.validate(x, y1, y2, &opt); err != nil {
 		tx.rollback()
 		return nil, err
 	}
@@ -1215,20 +1217,41 @@ func (a *Axes) FillBetween(xVals, y1Vals, y2Vals any, opts ...FillOptions) (*Fil
 	return fill, nil
 }
 
-func validateFillBetweenInput(x, y1, y2 []float64, opt *FillOptions) error {
-	if len(x) == 0 || len(y1) == 0 || len(y2) == 0 {
-		return fmt.Errorf("fill between x, y1, and y2 values cannot be empty")
+// fillInputNames labels the three coordinate slices of a fill-between call so
+// the shared shape check can report the argument the caller actually passed.
+type fillInputNames struct {
+	call        string
+	independent string
+	first       string
+	second      string
+}
+
+var (
+	fillBetweenNames  = fillInputNames{call: "fill between", independent: "x", first: "y1", second: "y2"}
+	fillBetweenXNames = fillInputNames{call: "fill between x", independent: "y", first: "x1", second: "x2"}
+)
+
+// validate enforces the fill-between shape contract: three non-empty,
+// equal-length coordinate slices and a Where mask that is either empty or the
+// same length as the independent variable.
+func (n fillInputNames) validate(independent, first, second []float64, opt *FillOptions) error {
+	if len(independent) == 0 || len(first) == 0 || len(second) == 0 {
+		return fmt.Errorf("%s %s, %s, and %s values cannot be empty", n.call, n.independent, n.first, n.second)
 	}
-	if len(x) != len(y1) || len(x) != len(y2) {
+	if len(independent) != len(first) || len(independent) != len(second) {
 		return fmt.Errorf(
-			"fill between x, y1, and y2 must have the same length (got %d, %d, and %d)",
-			len(x),
-			len(y1),
-			len(y2),
+			"%s %s, %s, and %s must have the same length (got %d, %d, and %d)",
+			n.call,
+			n.independent,
+			n.first,
+			n.second,
+			len(independent),
+			len(first),
+			len(second),
 		)
 	}
-	if len(opt.Where) > 0 && len(opt.Where) != len(x) {
-		return fmt.Errorf("fill between Where must have length %d (got %d)", len(x), len(opt.Where))
+	if len(opt.Where) > 0 && len(opt.Where) != len(independent) {
+		return fmt.Errorf("%s Where must have length %d (got %d)", n.call, len(independent), len(opt.Where))
 	}
 	return nil
 }
@@ -1303,18 +1326,22 @@ func (a *Axes) FillToBaseline(x, y []float64, opts ...FillOptions) *Fill2D {
 }
 
 // FillBetweenX creates a horizontal fill between x-curves across y values.
-func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) *Fill2D {
-	if len(y) == 0 || len(x1) == 0 || len(x2) == 0 {
-		return nil
+//
+// Rejected input leaves the axes and its property cycle unchanged.
+func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) (*Fill2D, error) {
+	if a == nil {
+		return nil, fmt.Errorf("fill between x axes cannot be nil")
+	}
+	if len(opts) > 1 {
+		return nil, fmt.Errorf("fill between x accepts at most one FillOptions value")
 	}
 
 	var opt FillOptions
-	if len(opts) > 0 {
+	if len(opts) == 1 {
 		opt = opts[0]
 	}
-	if len(opt.Where) > 0 && len(opt.Where) != len(y) {
-		diag.Warnf("FillBetweenX: where length %d must match y length %d; skipping", len(opt.Where), len(y))
-		return nil
+	if err := fillBetweenXNames.validate(y, x1, x2, &opt); err != nil {
+		return nil, err
 	}
 
 	color := a.NextColor()
@@ -1356,7 +1383,7 @@ func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) *Fill2D {
 
 	a.Add(fill)
 	a.autoScaleIfEnabled(defaultAutoScaleMargin)
-	return fill
+	return fill, nil
 }
 
 // FillOptions holds optional parameters for fill plots.
@@ -1386,23 +1413,26 @@ func patchAntialiasMode(rc *style.PatchRC, explicit *bool) render.AntialiasMode 
 
 // FillBetweenPlot creates a fill between two curves with automatic color
 // cycling. It is the numeric-only entry point; FillBetween additionally
-// converts unit-carrying values and reports rejected input as an error.
-func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) *Fill2D {
-	if len(x) == 0 || len(y1) == 0 || len(y2) == 0 {
-		return nil
+// converts unit-carrying values.
+//
+// Rejected input leaves the axes and its property cycle unchanged.
+func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) (*Fill2D, error) {
+	if a == nil {
+		return nil, fmt.Errorf("fill between axes cannot be nil")
+	}
+	if len(opts) > 1 {
+		return nil, fmt.Errorf("fill between accepts at most one FillOptions value")
 	}
 
-	// Default options
 	var opt FillOptions
-	if len(opts) > 0 {
+	if len(opts) == 1 {
 		opt = opts[0]
 	}
-	if len(opt.Where) > 0 && len(opt.Where) != len(x) {
-		diag.Warnf("FillBetween: where length %d must match x length %d; skipping", len(opt.Where), len(x))
-		return nil
+	if err := fillBetweenNames.validate(x, y1, y2, &opt); err != nil {
+		return nil, err
 	}
 
-	return a.fillBetween(x, y1, y2, &opt)
+	return a.fillBetween(x, y1, y2, &opt), nil
 }
 
 func (a *Axes) fillBetween(x, y1, y2 []float64, opt *FillOptions) *Fill2D {
@@ -1474,18 +1504,25 @@ type HistOptions struct {
 }
 
 // Hist creates a histogram from raw data with automatic color cycling.
-func (a *Axes) Hist(data []float64, opts ...HistOptions) *Hist2D {
-	if len(data) == 0 {
-		return nil
+//
+// Rejected input leaves the axes and its property cycle unchanged.
+func (a *Axes) Hist(data []float64, opts ...HistOptions) (*Hist2D, error) {
+	if a == nil {
+		return nil, fmt.Errorf("hist axes cannot be nil")
+	}
+	if len(opts) > 1 {
+		return nil, fmt.Errorf("hist accepts at most one HistOptions value")
 	}
 
 	var opt HistOptions
-	if len(opts) > 0 {
+	if len(opts) == 1 {
 		opt = opts[0]
 	}
+	if len(data) == 0 {
+		return nil, fmt.Errorf("hist data cannot be empty")
+	}
 	if len(opt.Weights) > 0 && len(opt.Weights) != len(data) {
-		diag.Warnf("Hist: weights length %d must match data length %d; skipping", len(opt.Weights), len(data))
-		return nil
+		return nil, fmt.Errorf("hist Weights must have length %d (got %d)", len(data), len(opt.Weights))
 	}
 
 	// With no explicit bins, edges, or strategy, honor the hist.bins rcParam
@@ -1560,7 +1597,7 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) *Hist2D {
 		_ = a.SetYScale("log", transform.WithScaleNonPositive(transform.NonPositiveClip))
 	}
 
-	return hist
+	return hist, nil
 }
 
 // ErrorBarOptions holds optional parameters for error bar plots.
@@ -1588,14 +1625,26 @@ type ErrorBarOptions struct {
 }
 
 // ErrorBar renders symmetric or asymmetric error bars for x and/or y values.
-func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *ErrorBar {
-	if len(x) == 0 || len(y) == 0 {
-		return nil
+//
+// Rejected input leaves the axes and its property cycle unchanged.
+func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) (*ErrorBar, error) {
+	if a == nil {
+		return nil, fmt.Errorf("errorbar axes cannot be nil")
+	}
+	if len(opts) > 1 {
+		return nil, fmt.Errorf("errorbar accepts at most one ErrorBarOptions value")
 	}
 
 	var opt ErrorBarOptions
-	if len(opts) > 0 {
+	if len(opts) == 1 {
 		opt = opts[0]
+	}
+
+	// Validate before the property cycle advances so a rejected call leaves the
+	// axes untouched.
+	n := minInt(len(x), len(y))
+	if err := validateErrorBarInput(n, xErr, yErr, &opt); err != nil {
+		return nil, err
 	}
 
 	color := a.NextColor()
@@ -1629,22 +1678,6 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 	// field stays unset so Draw's alpha multiplier is the identity.
 	color = bakeExplicitAlpha(color, opt.Alpha)
 
-	n := len(x)
-	if len(y) < n {
-		n = len(y)
-	}
-	if !validErrorValues(xErr, n) || !validErrorValues(yErr, n) ||
-		!validErrorValues(opt.XErrLower, n) || !validErrorValues(opt.XErrUpper, n) ||
-		!validErrorValues(opt.YErrLower, n) || !validErrorValues(opt.YErrUpper, n) ||
-		!validBoolValues(opt.LoLimits, n) || !validBoolValues(opt.UpLimits, n) ||
-		!validBoolValues(opt.XLoLimits, n) || !validBoolValues(opt.XUpLimits, n) {
-		diag.Warnf("ErrorBar: error/limit arrays must each be empty or length %d; skipping", n)
-		return nil
-	}
-	if opt.ErrorEvery < 0 || (opt.ErrorEvery == 0 && opt.ErrorEveryStart != 0) || opt.ErrorEveryStart < 0 {
-		diag.Warnf("ErrorBar: invalid errorevery (every=%d, start=%d); skipping", opt.ErrorEvery, opt.ErrorEveryStart)
-		return nil
-	}
 	errorEvery := opt.ErrorEvery
 	if errorEvery == 0 {
 		errorEvery = 1
@@ -1684,7 +1717,33 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *Er
 		bar.MarkerSize = *opt.MarkerSize
 	}
 	a.Add(bar)
-	return bar
+	return bar, nil
+}
+
+// validateErrorBarInput rejects empty coordinates, error/limit arrays that are
+// neither scalar nor per-point, and out-of-range errorevery settings.
+func validateErrorBarInput(n int, xErr, yErr []float64, opt *ErrorBarOptions) error {
+	if n == 0 {
+		return fmt.Errorf("errorbar x and y values cannot be empty")
+	}
+	if !validErrorValues(xErr, n) || !validErrorValues(yErr, n) ||
+		!validErrorValues(opt.XErrLower, n) || !validErrorValues(opt.XErrUpper, n) ||
+		!validErrorValues(opt.YErrLower, n) || !validErrorValues(opt.YErrUpper, n) ||
+		!validBoolValues(opt.LoLimits, n) || !validBoolValues(opt.UpLimits, n) ||
+		!validBoolValues(opt.XLoLimits, n) || !validBoolValues(opt.XUpLimits, n) {
+		return fmt.Errorf(
+			"errorbar error and limit arrays must each be empty, scalar, or length %d with finite non-negative errors",
+			n,
+		)
+	}
+	if opt.ErrorEvery < 0 || (opt.ErrorEvery == 0 && opt.ErrorEveryStart != 0) || opt.ErrorEveryStart < 0 {
+		return fmt.Errorf(
+			"errorbar has an invalid errorevery (every=%d, start=%d)",
+			opt.ErrorEvery,
+			opt.ErrorEveryStart,
+		)
+	}
+	return nil
 }
 
 func validErrorValues(values []float64, n int) bool {

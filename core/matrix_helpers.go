@@ -1,12 +1,12 @@
 package core
 
 import (
+	"fmt"
 	"image"
 	"math"
 	"strconv"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -331,19 +331,23 @@ func (a *Axes) resolveImShowRGBOptions(opts []ImShowRGBOptions) ImShowRGBOptions
 // Out-of-range channel values are clipped to [0,1] (with a warning), mirroring
 // matplotlib's imshow. A (M,N,1) array is squeezed and routed to the scalar
 // ImShow colormap path.
-func (a *Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) *Image2D {
+//
+// Rejected input leaves the axes unchanged.
+func (a *Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) (*Image2D, error) {
 	if a == nil {
-		return nil
+		return nil, fmt.Errorf("imshow rgb axes cannot be nil")
+	}
+	if len(opts) > 1 {
+		return nil, fmt.Errorf("imshow rgb accepts at most one ImShowRGBOptions value")
 	}
 	cfg := a.resolveImShowRGBOptions(opts)
 
 	rgba, kind, err := normalizeRGBArray(data)
 	if err != nil {
-		diag.Warnf("ImShowRGB: %v; skipping", err)
-		return nil
+		return nil, fmt.Errorf("imshow rgb: %w", err)
 	}
 	if kind == rgbArrayScalar {
-		return a.ImShow(squeezeScalarArray(data), ImShowOptions{
+		img := a.ImShow(squeezeScalarArray(data), ImShowOptions{
 			Alpha:         cfg.Alpha,
 			Aspect:        cfg.Aspect,
 			Origin:        cfg.Origin,
@@ -351,8 +355,12 @@ func (a *Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) *Image2D 
 			Interpolation: cfg.Interpolation,
 			Label:         cfg.Label,
 		})
+		if img == nil {
+			return nil, fmt.Errorf("imshow rgb: single-channel data is not a finite, rectangular matrix")
+		}
+		return img, nil
 	}
-	return a.imshowRGBA(rgba, cfg)
+	return a.imshowRGBA(rgba, cfg), nil
 }
 
 // ImShowImage renders a native Go image (e.g. the output of core.ImRead) as a

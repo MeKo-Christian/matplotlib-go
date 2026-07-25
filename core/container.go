@@ -246,13 +246,14 @@ func (a *Axes) BarContainer(x, heights []float64, opts ...BarOptions) *BarContai
 	return bar.Container()
 }
 
-// ErrorBarContainer creates error bars and returns the corresponding result container.
-func (a *Axes) ErrorBarContainer(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *ErrorbarContainer {
-	errBar := a.ErrorBar(x, y, xErr, yErr, opts...)
-	if errBar == nil {
-		return nil
+// ErrorBarContainer creates error bars and returns the corresponding result
+// container. It reports the same rejections as Axes.ErrorBar.
+func (a *Axes) ErrorBarContainer(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) (*ErrorbarContainer, error) {
+	errBar, err := a.ErrorBar(x, y, xErr, yErr, opts...)
+	if err != nil {
+		return nil, err
 	}
-	return errBar.Container()
+	return errBar.Container(), nil
 }
 
 // Stem renders a simple stem plot and returns a Matplotlib-style result container.

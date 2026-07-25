@@ -70,7 +70,7 @@ func renderThemeExample(example themedExample) error {
 	xGrid.Minor = true // Mirrors Matplotlib's grid(True, which="both").
 	yGrid := ax.AddYGrid()
 
-	ax.FillBetweenPlot(x, shift(sinWave, envelope), shift(sinWave, negate(envelope)), core.FillOptions{
+	_, _ = ax.FillBetweenPlot(x, shift(sinWave, envelope), shift(sinWave, negate(envelope)), core.FillOptions{
 		Label: "Band",
 	})
 	_, _ = ax.Plot(x, sinWave, core.PlotOptions{Label: "sin(x)"})

@@ -116,7 +116,10 @@ func TestPatchProducingMethodsHonorRCAndExplicitZeroWidth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FillBetween() returned error: %v", err)
 	}
-	hist := ax.Hist([]float64{0, 1})
+	hist, err := ax.Hist([]float64{0, 1})
+	if err != nil {
+		t.Fatalf("Hist() returned error: %v", err)
+	}
 	span := ax.AxHSpan(0, 1)
 	if bar.EdgeWidth != 3 || bar.EdgeColor != fig.RC.Patch.EdgeColor ||
 		bar.Antialias != render.AntialiasOff {
@@ -148,7 +151,10 @@ func TestPatchProducingMethodsHonorRCAndExplicitZeroWidth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FillBetween() returned error: %v", err)
 	}
-	hist = ax.Hist([]float64{0, 1}, HistOptions{EdgeWidth: &zero})
+	hist, err = ax.Hist([]float64{0, 1}, HistOptions{EdgeWidth: &zero})
+	if err != nil {
+		t.Fatalf("Hist() returned error: %v", err)
+	}
 	span = ax.AxHSpan(0, 1, HSpanOptions{EdgeWidth: &zero})
 	if bar.EdgeWidth != 0 || fill.EdgeWidth != 0 || hist.EdgeWidth != 0 || span.EdgeWidth != 0 {
 		t.Fatalf("explicit zero widths = bar %v fill %v hist %v span %v", bar.EdgeWidth, fill.EdgeWidth, hist.EdgeWidth, span.EdgeWidth)

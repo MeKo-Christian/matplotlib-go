@@ -43,7 +43,10 @@ func TestDefaultHistBinsMatchesMatplotlib(t *testing.T) {
 
 	fig := NewFigure(100, 100)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	hist := ax.Hist(data)
+	hist, err := ax.Hist(data)
+	if err != nil {
+		t.Fatalf("Hist() returned error: %v", err)
+	}
 	if hist == nil {
 		t.Fatal("Hist returned nil")
 	}
@@ -145,7 +148,10 @@ func TestMPLStyleHistBinsReachesHist(t *testing.T) {
 		}
 		fig := NewFigure(100, 100, style.WithTheme(theme))
 		ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-		hist := ax.Hist(data)
+		hist, err := ax.Hist(data)
+		if err != nil {
+			t.Fatalf("Hist() returned error: %v", err)
+		}
 		if hist == nil {
 			t.Fatal("Hist returned nil")
 		}
@@ -231,7 +237,10 @@ func TestMPLStyleImageOriginReachesImShowRGB(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	img := ax.ImShowRGB(rgb)
+	img, err := ax.ImShowRGB(rgb)
+	if err != nil {
+		t.Fatalf("ImShowRGB() returned error: %v", err)
+	}
 	if img == nil {
 		t.Fatal("ImShowRGB returned nil")
 	}
@@ -631,7 +640,10 @@ func TestMPLStyleErrorbarCapsizeReachesErrorBar(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	eb := ax.ErrorBar([]float64{0, 1}, []float64{0, 1}, nil, []float64{0.1, 0.1})
+	eb, err := ax.ErrorBar([]float64{0, 1}, []float64{0, 1}, nil, []float64{0.1, 0.1})
+	if err != nil {
+		t.Fatalf("ErrorBar() returned error: %v", err)
+	}
 	if eb == nil {
 		t.Fatal("ErrorBar returned nil")
 	}
@@ -644,7 +656,10 @@ func TestMPLStyleErrorbarCapsizeReachesErrorBar(t *testing.T) {
 	// Default rc keeps caps off.
 	fig2 := NewFigure(100, 100)
 	ax2 := fig2.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	eb2 := ax2.ErrorBar([]float64{0, 1}, []float64{0, 1}, nil, []float64{0.1, 0.1})
+	eb2, err := ax2.ErrorBar([]float64{0, 1}, []float64{0, 1}, nil, []float64{0.1, 0.1})
+	if err != nil {
+		t.Fatalf("ErrorBar() returned error: %v", err)
+	}
 	if eb2.CapSize != 0 {
 		t.Fatalf("default cap size = %v, want 0", eb2.CapSize)
 	}

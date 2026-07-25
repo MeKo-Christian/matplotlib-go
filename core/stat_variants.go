@@ -120,7 +120,9 @@ func (a *Axes) StackPlot(x []float64, ys [][]float64, opts ...StackPlotOptions) 
 		if i < len(opt.Labels) {
 			label = opt.Labels[i]
 		}
-		fill := a.FillBetweenPlot(xs, lower, upper, FillOptions{
+		// xs, lower, and upper are all built at length n >= 2 with no Where
+		// mask, so the fill cannot be rejected here.
+		fill, _ := a.FillBetweenPlot(xs, lower, upper, FillOptions{
 			Color:     colorPtr,
 			EdgeColor: opt.EdgeColor,
 			EdgeWidth: opt.EdgeWidth,
@@ -307,7 +309,9 @@ func (a *Axes) HistMulti(data [][]float64, opts ...MultiHistOptions) []*Hist2D {
 			histOpt.Baselines = append([]float64(nil), baseline...)
 		}
 
-		hist := a.Hist(cleanSeries, histOpt)
+		// cleanSeries is non-empty and histOpt carries no weights, so the
+		// histogram cannot be rejected here.
+		hist, _ := a.Hist(cleanSeries, histOpt)
 		if hist == nil {
 			continue
 		}

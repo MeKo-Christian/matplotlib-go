@@ -48,7 +48,7 @@ func Plot() *core.Figure {
 		Size:      &pointSize,
 		EdgeWidth: &edgeWidth,
 	})
-	ax.ErrorBar(xs, ys, xErr, yErr, core.ErrorBarOptions{
+	_, _ = ax.ErrorBar(xs, ys, xErr, yErr, core.ErrorBarOptions{
 		Color:      &black,
 		LineWidth:  &errorWidth,
 		CapSize:    &capSize,

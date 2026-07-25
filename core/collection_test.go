@@ -1080,7 +1080,10 @@ func TestBarAndErrorbarContainers(t *testing.T) {
 		t.Fatalf("expected concrete rectangle bounds, got %+v", got)
 	}
 
-	errs := ax.ErrorBarContainer([]float64{1, 2}, []float64{3, 4}, []float64{0.1}, []float64{0.2}, ErrorBarOptions{Label: "errs"})
+	errs, err := ax.ErrorBarContainer([]float64{1, 2}, []float64{3, 4}, []float64{0.1}, []float64{0.2}, ErrorBarOptions{Label: "errs"})
+	if err != nil {
+		t.Fatalf("ErrorBarContainer() returned error: %v", err)
+	}
 	if errs == nil || errs.Len() != 2 {
 		t.Fatalf("unexpected errorbar container: %+v", errs)
 	}

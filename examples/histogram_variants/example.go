@@ -49,7 +49,7 @@ func addCountsPanel(ax *core.Axes) {
 	color := render.Color{R: 0.26, G: 0.53, B: 0.80, A: 0.85}
 	ew := 0.8
 	bins := 18
-	ax.Hist(data, core.HistOptions{Bins: bins, Color: &color, EdgeColor: &black, EdgeWidth: &ew})
+	_, _ = ax.Hist(data, core.HistOptions{Bins: bins, Color: &color, EdgeColor: &black, EdgeWidth: &ew})
 }
 
 // addDensityPanel mirrors the hist_density fixture content.
@@ -61,7 +61,7 @@ func addDensityPanel(ax *core.Axes) {
 	color := render.Color{R: 0.20, G: 0.65, B: 0.30, A: 0.8}
 	ew := 0.8
 	bins := 20
-	ax.Hist(data, core.HistOptions{Bins: bins, Norm: core.HistNormDensity, Color: &color, EdgeColor: &black, EdgeWidth: &ew})
+	_, _ = ax.Hist(data, core.HistOptions{Bins: bins, Norm: core.HistNormDensity, Color: &color, EdgeColor: &black, EdgeWidth: &ew})
 }
 
 // addCumulativePanel draws a cumulative-count histogram.
@@ -73,7 +73,7 @@ func addCumulativePanel(ax *core.Axes) {
 	color := render.Color{R: 0.55, G: 0.35, B: 0.75, A: 0.85}
 	ew := 0.8
 	bins := 18
-	ax.Hist(data, core.HistOptions{Bins: bins, Cumulative: true, Color: &color, EdgeColor: &black, EdgeWidth: &ew})
+	_, _ = ax.Hist(data, core.HistOptions{Bins: bins, Cumulative: true, Color: &color, EdgeColor: &black, EdgeWidth: &ew})
 }
 
 // addMultiplePanel mirrors the hist_strategies fixture content.
@@ -87,8 +87,8 @@ func addMultiplePanel(ax *core.Axes) {
 	orange := render.Color{R: 0.90, G: 0.50, B: 0.10, A: 0.6}
 	ew := 0.5
 	bins := 15
-	ax.Hist(data1, core.HistOptions{Bins: bins, Norm: core.HistNormProbability, Color: &blue, EdgeColor: &black, EdgeWidth: &ew})
-	ax.Hist(data2, core.HistOptions{Bins: bins, Norm: core.HistNormProbability, Color: &orange, EdgeColor: &black, EdgeWidth: &ew})
+	_, _ = ax.Hist(data1, core.HistOptions{Bins: bins, Norm: core.HistNormProbability, Color: &blue, EdgeColor: &black, EdgeWidth: &ew})
+	_, _ = ax.Hist(data2, core.HistOptions{Bins: bins, Norm: core.HistNormProbability, Color: &orange, EdgeColor: &black, EdgeWidth: &ew})
 }
 
 // Render is the AGG-rendered showcase image.

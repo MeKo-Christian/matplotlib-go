@@ -35,14 +35,14 @@ func Plot() *core.Figure {
 	bins := 15
 	prob := core.HistNormProbability
 
-	ax.Hist(data1, core.HistOptions{
+	_, _ = ax.Hist(data1, core.HistOptions{
 		Bins:      bins,
 		Norm:      prob,
 		Color:     &blue,
 		EdgeColor: &black,
 		EdgeWidth: &ew,
 	})
-	ax.Hist(data2, core.HistOptions{
+	_, _ = ax.Hist(data2, core.HistOptions{
 		Bins:      bins,
 		Norm:      prob,
 		Color:     &orange,

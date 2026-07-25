@@ -451,12 +451,15 @@ func TestAxes_ErrorBar(t *testing.T) {
 	fig := NewFigure(640, 360)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	errBar := ax.ErrorBar(
+	errBar, err := ax.ErrorBar(
 		[]float64{1, 2, 3},
 		[]float64{1.1, 2.2, 3.3},
 		[]float64{0.1},
 		nil,
 	)
+	if err != nil {
+		t.Fatalf("ErrorBar() returned error: %v", err)
+	}
 	if errBar == nil {
 		t.Fatal("ErrorBar should return non-nil for non-empty data")
 	}
@@ -466,12 +469,15 @@ func TestAxesErrorBarDefaultsMatchMatplotlib(t *testing.T) {
 	fig := NewFigure(640, 360)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	errBar := ax.ErrorBar(
+	errBar, err := ax.ErrorBar(
 		[]float64{1, 2},
 		[]float64{3, 4},
 		nil,
 		[]float64{0.2},
 	)
+	if err != nil {
+		t.Fatalf("ErrorBar() returned error: %v", err)
+	}
 	if errBar == nil {
 		t.Fatal("expected non-nil error bar")
 	}
@@ -491,7 +497,7 @@ func TestAxes_ErrorBar_Options(t *testing.T) {
 	lineWidth := 2.0
 	capSize := 6.0
 	alpha := 0.8
-	errBar := ax.ErrorBar(
+	errBar, err := ax.ErrorBar(
 		[]float64{1, 2},
 		[]float64{3, 4},
 		nil,
@@ -505,6 +511,9 @@ func TestAxes_ErrorBar_Options(t *testing.T) {
 			Label:      "test",
 		},
 	)
+	if err != nil {
+		t.Fatalf("ErrorBar() returned error: %v", err)
+	}
 
 	if errBar == nil {
 		t.Fatal("expected non-nil error bar")
@@ -536,13 +545,16 @@ func TestAxesErrorBarCapSizeUsesMatplotlibMarkerLength(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 	capSize := 6.0
 
-	errBar := ax.ErrorBar(
+	errBar, err := ax.ErrorBar(
 		[]float64{1},
 		[]float64{2},
 		nil,
 		[]float64{0.2},
 		ErrorBarOptions{CapSize: &capSize},
 	)
+	if err != nil {
+		t.Fatalf("ErrorBar() returned error: %v", err)
+	}
 	if errBar == nil {
 		t.Fatal("expected non-nil error bar")
 	}
@@ -554,7 +566,7 @@ func TestAxesErrorBarCapSizeUsesMatplotlibMarkerLength(t *testing.T) {
 func TestAxes_ErrorBar_AsymmetricLimitsAndValidation(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 
-	errBar := ax.ErrorBar(
+	errBar, err := ax.ErrorBar(
 		[]float64{10},
 		[]float64{5},
 		[]float64{1},
@@ -568,6 +580,9 @@ func TestAxes_ErrorBar_AsymmetricLimitsAndValidation(t *testing.T) {
 			UpLimits:  []bool{true},
 		},
 	)
+	if err != nil {
+		t.Fatalf("ErrorBar() returned error: %v", err)
+	}
 	if errBar == nil {
 		t.Fatal("expected asymmetric errorbar")
 	}
@@ -579,24 +594,27 @@ func TestAxes_ErrorBar_AsymmetricLimitsAndValidation(t *testing.T) {
 		t.Fatalf("bounds = %+v, want x[10,13] y[4,5]", bounds)
 	}
 
-	if got := ax.ErrorBar([]float64{1, 2}, []float64{1, 2}, []float64{-1}, nil); got != nil {
-		t.Fatal("negative symmetric errors should be rejected")
+	if got, err := ax.ErrorBar([]float64{1, 2}, []float64{1, 2}, []float64{-1}, nil); got != nil || err == nil {
+		t.Fatalf("negative symmetric errors = (%v, %v), want nil artist and an error", got, err)
 	}
-	if got := ax.ErrorBar([]float64{1, 2}, []float64{1, 2}, nil, nil, ErrorBarOptions{YErrUpper: []float64{1, 2, 3}}); got != nil {
-		t.Fatal("asymmetric errors with invalid length should be rejected")
+	if got, err := ax.ErrorBar([]float64{1, 2}, []float64{1, 2}, nil, nil, ErrorBarOptions{YErrUpper: []float64{1, 2, 3}}); got != nil || err == nil {
+		t.Fatalf("asymmetric errors with invalid length = (%v, %v), want nil artist and an error", got, err)
 	}
 }
 
 func TestErrorBarErrorEverySkipsErrorStemsButKeepsDataLine(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 	every := 2
-	errBar := ax.ErrorBar(
+	errBar, err := ax.ErrorBar(
 		[]float64{0, 1, 2, 3, 4},
 		[]float64{1, 2, 3, 4, 5},
 		nil,
 		[]float64{0.2},
 		ErrorBarOptions{ErrorEvery: every},
 	)
+	if err != nil {
+		t.Fatalf("ErrorBar() returned error: %v", err)
+	}
 	if errBar == nil {
 		t.Fatal("expected errorbar")
 	}
@@ -617,13 +635,16 @@ func TestErrorBarErrorEveryStartMatchesTupleForm(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 	every := 2
 	start := 1
-	errBar := ax.ErrorBar(
+	errBar, err := ax.ErrorBar(
 		[]float64{0, 1, 2, 3, 4},
 		[]float64{1, 2, 3, 4, 5},
 		nil,
 		[]float64{0.2},
 		ErrorBarOptions{ErrorEvery: every, ErrorEveryStart: start},
 	)
+	if err != nil {
+		t.Fatalf("ErrorBar() returned error: %v", err)
+	}
 	if errBar == nil {
 		t.Fatal("expected errorbar")
 	}
@@ -635,8 +656,8 @@ func TestErrorBarErrorEveryStartMatchesTupleForm(t *testing.T) {
 	if got, want := countNonDataLinePaths(r.pathCalls, ctx, errBar.XY), 2; got != want {
 		t.Fatalf("errorbar-only path count = %d, want stems for indices 1,3 with default capsize=0 (%d)", got, want)
 	}
-	if got := ax.ErrorBar([]float64{0, 1}, []float64{1, 2}, nil, []float64{0.1}, ErrorBarOptions{ErrorEvery: -1}); got != nil {
-		t.Fatal("negative ErrorEvery should be rejected")
+	if got, err := ax.ErrorBar([]float64{0, 1}, []float64{1, 2}, nil, []float64{0.1}, ErrorBarOptions{ErrorEvery: -1}); got != nil || err == nil {
+		t.Fatalf("negative ErrorEvery = (%v, %v), want nil artist and an error", got, err)
 	}
 }
 
@@ -656,8 +677,11 @@ func TestErrorBarCapThickSetsField(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 	capThick := 3.0
 	capSize := 5.0
-	bar := ax.ErrorBar([]float64{1, 2}, []float64{1, 2}, nil, []float64{0.5, 0.5},
+	bar, err := ax.ErrorBar([]float64{1, 2}, []float64{1, 2}, nil, []float64{0.5, 0.5},
 		ErrorBarOptions{CapThick: &capThick, CapSize: &capSize})
+	if err != nil {
+		t.Fatalf("ErrorBar() returned error: %v", err)
+	}
 	if bar == nil {
 		t.Fatal("ErrorBar returned nil")
 	}

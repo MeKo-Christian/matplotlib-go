@@ -31,7 +31,7 @@ func FillBetween(x, y1, y2 any, opts ...core.FillOptions) (*core.Fill2D, error) 
 }
 
 // FillBetweenX delegates to the current axes.
-func FillBetweenX(y, x1, x2 []float64, opts ...core.FillOptions) *core.Fill2D {
+func FillBetweenX(y, x1, x2 []float64, opts ...core.FillOptions) (*core.Fill2D, error) {
 	return GCA().FillBetweenX(y, x1, x2, opts...)
 }
 
@@ -41,7 +41,7 @@ func Fill(x, y []float64, opts ...core.FillOptions) *core.PolyCollection {
 }
 
 // Hist delegates to the current axes.
-func Hist(data []float64, opts ...core.HistOptions) *core.Hist2D {
+func Hist(data []float64, opts ...core.HistOptions) (*core.Hist2D, error) {
 	return GCA().Hist(data, opts...)
 }
 
@@ -66,7 +66,7 @@ func ECDF(data []float64, opts ...core.ECDFOptions) *core.Line2D {
 }
 
 // ErrorBar delegates to the current axes.
-func ErrorBar(x, y, xErr, yErr []float64, opts ...core.ErrorBarOptions) *core.ErrorBar {
+func ErrorBar(x, y, xErr, yErr []float64, opts ...core.ErrorBarOptions) (*core.ErrorBar, error) {
 	return GCA().ErrorBar(x, y, xErr, yErr, opts...)
 }
 

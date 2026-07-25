@@ -43,7 +43,7 @@ func Plot() *core.Figure {
 		Marker:    &circle,
 		Label:     "scatter",
 	})
-	ax.ErrorBar([]float64{1.0, 2.3, 3.6, 4.9}, []float64{0.85, 1.15, 0.95, 1.25}, nil, []float64{0.22, 0.18, 0.25, 0.20}, core.ErrorBarOptions{
+	_, _ = ax.ErrorBar([]float64{1.0, 2.3, 3.6, 4.9}, []float64{0.85, 1.15, 0.95, 1.25}, nil, []float64{0.22, 0.18, 0.25, 0.20}, core.ErrorBarOptions{
 		Color:      &green,
 		LineWidth:  &lineWidth,
 		CapSize:    &markerSize,

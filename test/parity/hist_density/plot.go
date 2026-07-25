@@ -31,7 +31,7 @@ func Plot() *core.Figure {
 	black := render.Color{R: 0, G: 0, B: 0, A: 1}
 	ew := 0.8
 	bins := 20
-	ax.Hist(data, core.HistOptions{
+	_, _ = ax.Hist(data, core.HistOptions{
 		Bins:      bins,
 		Norm:      core.HistNormDensity,
 		Color:     &green,

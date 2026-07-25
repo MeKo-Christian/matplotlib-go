@@ -205,6 +205,38 @@ func TestFillBetweenAcceptsUnitCapableValuesAndPropagatesErrors(t *testing.T) {
 	}
 }
 
+// The stateful wrappers over the newly error-returning entry points must
+// surface the rejection rather than hand back a silent nil artist.
+func TestStatWrappersPropagateRejectedInput(t *testing.T) {
+	tests := []struct {
+		name string
+		call func() (bool, error)
+	}{
+		{"FillBetweenX", func() (bool, error) {
+			f, err := FillBetweenX([]float64{0, 1, 2}, []float64{0, 1}, []float64{1, 2, 3})
+			return f != nil, err
+		}},
+		{"Hist", func() (bool, error) {
+			h, err := Hist([]float64{1, 2, 3}, core.HistOptions{Weights: []float64{1}})
+			return h != nil, err
+		}},
+		{"ErrorBar", func() (bool, error) {
+			b, err := ErrorBar([]float64{0, 1}, []float64{0, 1}, []float64{-1}, nil)
+			return b != nil, err
+		}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetForTests()
+			added, err := tt.call()
+			if err == nil || added {
+				t.Fatalf("%s() = (artist=%v, %v), want no artist and an error", tt.name, added, err)
+			}
+		})
+	}
+}
+
 func TestTextAndAnnotateDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 
@@ -561,8 +593,8 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	if fill := Fill([]float64{0, 1, 0}, []float64{0, 0, 1}); fill == nil {
 		t.Fatal("Fill() returned nil")
 	}
-	if fill := FillBetweenX([]float64{0, 1, 2}, []float64{0, 1, 0}, []float64{1, 2, 1}); fill == nil || fill.Orientation != core.FillHorizontal {
-		t.Fatalf("FillBetweenX() = %#v, want horizontal fill", fill)
+	if fill, err := FillBetweenX([]float64{0, 1, 2}, []float64{0, 1, 0}, []float64{1, 2, 1}); err != nil || fill == nil || fill.Orientation != core.FillHorizontal {
+		t.Fatalf("FillBetweenX() = (%#v, %v), want horizontal fill", fill, err)
 	}
 	arrow := Arrow(0.2, 0.3, 1.5, -0.5)
 	if arrow == nil {

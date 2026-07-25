@@ -63,7 +63,7 @@ func Plot() *core.Figure {
 	cumulativeAx.SetYLim(0, 1.05)
 	cumulativeAx.SetAxisBelow(true)
 	cumulativeAx.AddYGrid()
-	cumulativeAx.Hist(
+	_, _ = cumulativeAx.Hist(
 		[]float64{0.4, 0.7, 1.2, 1.4, 2.1, 2.6, 3.1, 3.2, 4.0, 4.8, 5.2},
 		core.HistOptions{
 			BinEdges:   []float64{0, 1, 2, 3, 4, 5, 6},

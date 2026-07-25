@@ -50,14 +50,14 @@ func Plot() *core.Figure {
 
 	axRGB := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.07, Y: 0.12}, Max: geom.Pt{X: 0.47, Y: 0.90}})
 	axRGB.SetTitle("RGB")
-	axRGB.ImShowRGB(rgbGradient(8, 8), core.ImShowRGBOptions{
+	_, _ = axRGB.ImShowRGB(rgbGradient(8, 8), core.ImShowRGBOptions{
 		Interpolation: &nearest,
 		Aspect:        auto,
 	})
 
 	axRGBA := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.55, Y: 0.12}, Max: geom.Pt{X: 0.95, Y: 0.90}})
 	axRGBA.SetTitle("RGBA")
-	axRGBA.ImShowRGB(rgbaBlocks(8, 8), core.ImShowRGBOptions{
+	_, _ = axRGBA.ImShowRGB(rgbaBlocks(8, 8), core.ImShowRGBOptions{
 		Interpolation: &nearest,
 		Aspect:        auto,
 	})

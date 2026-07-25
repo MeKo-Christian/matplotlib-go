@@ -375,12 +375,15 @@ func TestFillBetweenXPreservesColorAlphaWhenAlphaOmitted(t *testing.T) {
 	ax := fig.AddAxes(unitRect())
 
 	fillColor := render.Color{R: 0.24, G: 0.68, B: 0.54, A: 0.72}
-	fill := ax.FillBetweenX(
+	fill, err := ax.FillBetweenX(
 		[]float64{0, 1, 2},
 		[]float64{1, 2, 1},
 		[]float64{0, 1, 0},
 		FillOptions{Color: &fillColor},
 	)
+	if err != nil {
+		t.Fatalf("FillBetweenX() returned error: %v", err)
+	}
 	if fill == nil {
 		t.Fatal("expected fill artist")
 	}

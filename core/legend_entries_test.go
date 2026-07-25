@@ -104,7 +104,7 @@ func TestLegendCollectsErrorBarsAfterPlainArtistsLikeMatplotlibContainers(t *tes
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
 	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "line"})
-	ax.ErrorBar([]float64{0.5}, []float64{0.5}, nil, []float64{0.1}, ErrorBarOptions{Label: "errorbar"})
+	_, _ = ax.ErrorBar([]float64{0.5}, []float64{0.5}, nil, []float64{0.1}, ErrorBarOptions{Label: "errorbar"})
 	_, _ = ax.Plot([]float64{0, 1}, []float64{1, 2}, PlotOptions{Label: "handler"})
 
 	entries := ax.AddLegend().collectEntries()

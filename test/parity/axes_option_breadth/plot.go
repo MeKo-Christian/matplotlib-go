@@ -100,7 +100,7 @@ func Plot() *core.Figure {
 	markerSize := 4.5
 	capSize := 4.0
 	errorColor := render.Color{R: 0.09, G: 0.75, B: 0.81, A: 1}
-	errorAx.ErrorBar(
+	_, _ = errorAx.ErrorBar(
 		[]float64{0.8, 1.6, 2.4, 3.2, 4.0, 4.8},
 		[]float64{1.0, 2.0, 1.5, 3.3, 2.6, 4.0},
 		[]float64{0.18, 0.24, 0.20, 0.30, 0.22, 0.26},
