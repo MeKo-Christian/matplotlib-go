@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"image"
+	"image/draw"
 	"io"
 	"os"
 	"strings"
@@ -19,6 +20,10 @@ var figureOutputRenderers = struct {
 	factories map[string]FigureOutputRendererFactory
 }{
 	factories: make(map[string]FigureOutputRendererFactory),
+}
+
+type nrgbaExporter interface {
+	ImageNRGBA() *image.NRGBA
 }
 
 // RegisterFigureOutputRenderer registers a renderer factory for a file format.
@@ -91,9 +96,9 @@ func (f *Figure) WriteTo(w io.Writer, format string, opts ...render.SaveOption) 
 }
 
 // Image renders the figure with the registered PNG raster backend and returns
-// a detached RGBA image. Applications can import backends/all (or
-// backends/agg directly) to register the built-in raster backend. Mutating the
-// returned image does not affect later renders.
+// a detached, correctly premultiplied RGBA image. Applications can import
+// backends/all (or backends/agg directly) to register the built-in raster
+// backend. Mutating the returned image does not affect later renders.
 func (f *Figure) Image() (*image.RGBA, error) {
 	if f == nil {
 		return nil, fmt.Errorf("figure image: nil figure")
@@ -102,7 +107,16 @@ func (f *Figure) Image() (*image.RGBA, error) {
 	if err != nil {
 		return nil, fmt.Errorf("figure image: %w", err)
 	}
-	DrawFigure(f, r)
+	DrawFigureWithOptions(f, r, DrawOptions{Transparent: !f.RC.Figure.FrameOn})
+
+	if exporter, ok := r.(nrgbaExporter); ok {
+		src := exporter.ImageNRGBA()
+		if src == nil {
+			return nil, fmt.Errorf("figure image: raster backend returned no image")
+		}
+		return detachedRGBA(src), nil
+	}
+
 	exporter, ok := r.(render.RGBAExporter)
 	if !ok {
 		return nil, fmt.Errorf("figure image: PNG renderer does not expose an RGBA image")
@@ -111,9 +125,13 @@ func (f *Figure) Image() (*image.RGBA, error) {
 	if src == nil {
 		return nil, fmt.Errorf("figure image: raster backend returned no image")
 	}
+	return detachedRGBA(src), nil
+}
+
+func detachedRGBA(src image.Image) *image.RGBA {
 	dst := image.NewRGBA(src.Bounds())
-	copy(dst.Pix, src.Pix)
-	return dst, nil
+	draw.Draw(dst, dst.Bounds(), src, src.Bounds().Min, draw.Src)
+	return dst
 }
 
 func normalizeOutputFormat(format string) string {
@@ -130,6 +148,9 @@ func normalizeOutputFormat(format string) string {
 func (f *Figure) newOutputRenderer(ext string) (render.Renderer, error) {
 	width, height := int(f.SizePx.X), int(f.SizePx.Y)
 	background := f.RC.FigureBackground()
+	if !f.RC.Figure.FrameOn {
+		background = render.Color{}
+	}
 	ext = normalizeOutputFormat(ext)
 	figureOutputRenderers.RLock()
 	factory := figureOutputRenderers.factories[ext]
