@@ -26,7 +26,7 @@ func Plot() *core.Figure {
 	edgeOrange := render.Color{R: 0.60, G: 0.30, B: 0.03, A: 1}
 	barEdgeWidth := 1.0
 	barWidth := 0.8
-	_, err := left.BarUnits([]string{"draft", "review", "ship", "watch"}, []float64{3, 8, 6, 4}, core.BarOptions{
+	_, err := left.Bar([]string{"draft", "review", "ship", "watch"}, []float64{3, 8, 6, 4}, core.BarOptions{
 		Color:     &orange,
 		EdgeColor: &edgeOrange,
 		EdgeWidth: &barEdgeWidth,
@@ -47,7 +47,7 @@ func Plot() *core.Figure {
 	green := render.Color{R: 0.17, G: 0.63, B: 0.17, A: 1}
 	edgeGreen := render.Color{R: 0.09, G: 0.36, B: 0.09, A: 1}
 	orientation := core.BarHorizontal
-	_, err = right.BarUnits([]string{"north", "south", "east"}, []float64{4, 7, 5}, core.BarOptions{
+	_, err = right.BarH([]string{"north", "south", "east"}, []float64{4, 7, 5}, core.BarOptions{
 		Color:       &green,
 		EdgeColor:   &edgeGreen,
 		EdgeWidth:   &barEdgeWidth,

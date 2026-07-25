@@ -84,7 +84,7 @@ update the coupled API/doc tests in the same commit.
   - [x] Fold `PlotUnits` into a transactional, unit-capable `Plot`.
   - [x] Fold `ScatterUnits` into `Scatter`; reject conversion, shape, scalar-map,
         and extra-option errors without mutating axes or advancing the cycle.
-  - [ ] Fold `BarUnits` into `Bar`/`BarH`; preserve categorical-axis locator
+  - [x] Fold `BarUnits` into `Bar`/`BarH`; preserve categorical-axis locator
         behavior and make vertical/horizontal rejection transactional.
   - [ ] Fold `FillBetweenUnits` into `FillBetween`; validate all three converted
         inputs before constructing polygons or committing axis-unit state.
@@ -139,7 +139,7 @@ goldens remain byte-identical to the pre-break baseline.
 registry synchronization, example migration, API/parity remapping, migration
 notes, and the changelog draft are complete. No golden/reference fixture
 changed. Remaining Phase 2 work is the unified rejected-input error convention
-and the `BarUnits`/`FillBetweenUnits` folds, the
+and the `FillBetweenUnits` fold, the
 options/raw-enum conversion, mutable-field cleanup, and the remaining
 option/scalar-map consolidation paths. `Axes.PlotUnits` is now folded into the
 transactional, unit-capable `Axes.Plot` method, which returns `(*Line2D, error)`
@@ -147,14 +147,15 @@ and rejects extra option values; `PlotDate` and the corresponding pyplot
 wrappers propagate that error. `Axes.ScatterUnits` is likewise folded into the
 transactional, unit-capable `Axes.Scatter`; scalar-map and per-point shape
 validation happen before the scatter cycle advances, and `pyplot.Scatter`
-propagates errors. Core and plot3d alpha multiplier paths share
+propagates errors. `Axes.BarUnits` is now folded into transactional,
+unit-capable `Axes.Bar`/`BarH`; shape, orientation, per-bar, and error-bar
+validation happen before the property cycle advances, categorical position
+locators remain intact, and the pyplot wrappers propagate errors. Core and
+plot3d alpha multiplier paths share
 `render.Color.WithAlphaMultiplier`, and 3D scalar maps derive their
 configuration through
 `core.PlotOptions.ScalarMapConfig`, with no golden fixture changes. `just test`
-reaches only the
-pre-existing `mathtext_basic`, `mathtext_fractions`, and `mathtext_integrals`
-golden/reference failures (plus the existing `mathtext_basic` SVG
-font-family mismatch); all other packages pass.
+passes all packages, including the golden and Matplotlib-reference checks.
 
 ## Phase 3: Visual QA and Tolerance Closure
 

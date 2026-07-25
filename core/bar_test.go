@@ -181,7 +181,7 @@ func TestAxesBarHForcesHorizontalOrientation(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 	vertical := BarVertical
 
-	bar := ax.BarH([]float64{0, 1}, []float64{4, 7}, BarOptions{
+	bar, _ := ax.BarH([]float64{0, 1}, []float64{4, 7}, BarOptions{
 		Orientation: &vertical,
 		Label:       "horizontal",
 	})
@@ -202,7 +202,7 @@ func TestAxesBarEdgeAlignConvertsPositionsToCenters(t *testing.T) {
 	align := BarAlignEdge
 	width := 0.5
 
-	bar := ax.Bar([]float64{1, 2}, []float64{3, 4}, BarOptions{
+	bar, _ := ax.Bar([]float64{1, 2}, []float64{3, 4}, BarOptions{
 		Align: &align,
 		Width: &width,
 	})
@@ -231,7 +231,7 @@ func TestAxesBarAppliesPerBarWidthsColorsAndBaselines(t *testing.T) {
 	edgeColors := []render.Color{{B: 1, A: 1}, {R: 0.5, G: 0.5, A: 1}}
 	baselines := []float64{1, 3}
 
-	bar := ax.Bar([]float64{1, 2}, []float64{2, -1}, BarOptions{
+	bar, _ := ax.Bar([]float64{1, 2}, []float64{2, -1}, BarOptions{
 		Widths:     widths,
 		Colors:     colors,
 		EdgeColors: edgeColors,
@@ -327,7 +327,7 @@ func TestAxesBarPreservesEdgeWidthPixelsForMatplotlibRefHelpers(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 	edgeWidth := 1.0
 
-	bar := ax.Bar([]float64{1}, []float64{3}, BarOptions{EdgeWidth: &edgeWidth})
+	bar, _ := ax.Bar([]float64{1}, []float64{3}, BarOptions{EdgeWidth: &edgeWidth})
 	if bar == nil {
 		t.Fatal("Bar returned nil")
 	}
@@ -457,7 +457,7 @@ func TestBarErrorBarsPlacementLikeMatplotlib(t *testing.T) {
 	heights := []float64{3, 8, 6}
 	yErr := []float64{0.5, 1.0, 0.75}
 
-	bar := ax.Bar(x, heights, BarOptions{YErr: yErr})
+	bar, _ := ax.Bar(x, heights, BarOptions{YErr: yErr})
 	if bar == nil {
 		t.Fatal("Bar() returned nil")
 	}
@@ -496,7 +496,7 @@ func TestBarErrorBarsPlacementLikeMatplotlib(t *testing.T) {
 	figH := NewFigure(800, 600)
 	axH := figH.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 	xErr := []float64{0.4, 0.6}
-	barH := axH.BarH([]float64{0, 1}, []float64{4, 7}, BarOptions{XErr: xErr})
+	barH, _ := axH.BarH([]float64{0, 1}, []float64{4, 7}, BarOptions{XErr: xErr})
 	if barH == nil || barH.errorbar == nil {
 		t.Fatal("BarH with XErr should attach an error bar")
 	}
@@ -515,7 +515,7 @@ func TestBarErrorKwColorIsPreserved(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 	red := render.Color{R: 1, G: 0, B: 0, A: 1}
-	bar := ax.Bar([]float64{0, 1, 2}, []float64{3, 8, 6}, BarOptions{
+	bar, _ := ax.Bar([]float64{0, 1, 2}, []float64{3, 8, 6}, BarOptions{
 		YErr:    []float64{0.5, 1, 0.75},
 		ErrorKw: &ErrorBarOptions{Color: &red},
 	})
@@ -528,7 +528,7 @@ func TestBarErrorKwColorIsPreserved(t *testing.T) {
 
 	// A top-level ECol still wins over the ErrorKw color.
 	blue := render.Color{R: 0, G: 0, B: 1, A: 1}
-	bar2 := ax.Bar([]float64{0, 1}, []float64{3, 8}, BarOptions{
+	bar2, _ := ax.Bar([]float64{0, 1}, []float64{3, 8}, BarOptions{
 		YErr:    []float64{0.5, 1},
 		ECol:    &blue,
 		ErrorKw: &ErrorBarOptions{Color: &red},
@@ -560,7 +560,7 @@ func TestBarErrorBarsDoNotAdvanceColorCycle(t *testing.T) {
 func TestBarWithoutErrorDataHasNoErrorBar(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	bar := ax.Bar([]float64{0, 1, 2}, []float64{3, 8, 6})
+	bar, _ := ax.Bar([]float64{0, 1, 2}, []float64{3, 8, 6})
 	if bar.errorbar != nil {
 		t.Fatal("bar without error data should not create an error bar")
 	}

@@ -273,32 +273,6 @@ func cloneAxisUnitsState(state *axisUnitsState) *axisUnitsState {
 	return &cloned
 }
 
-// BarUnits converts bar positions using the axis units machinery. For
-// horizontal bars the first slice configures the y-axis instead of the x-axis.
-func (a *Axes) BarUnits(posVals, heights any, opts ...BarOptions) (*Bar2D, error) {
-	var opt BarOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
-
-	orientation := BarVertical
-	if opt.Orientation != nil {
-		orientation = *opt.Orientation
-	}
-
-	isXAxis := orientation == BarVertical
-	pos, err := a.convertValues(posVals, isXAxis)
-	if err != nil {
-		return nil, err
-	}
-	heightFloats, err := a.convertValues(heights, !isXAxis)
-	if err != nil {
-		return nil, err
-	}
-	a.applyCategoricalBarValueLocator(isXAxis)
-	return a.Bar(pos, heightFloats, opts...), nil
-}
-
 func (a *Axes) applyCategoricalBarValueLocator(categoryIsX bool) {
 	if a == nil {
 		return

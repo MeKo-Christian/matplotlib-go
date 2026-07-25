@@ -37,7 +37,7 @@ func Plot() *core.Figure {
 	capSize := 5.0
 	errWidth := 1.2
 
-	ax.Bar(x, heights, core.BarOptions{
+	_, _ = ax.Bar(x, heights, core.BarOptions{
 		Width:   &width,
 		Color:   &barColor,
 		YErr:    yErr,

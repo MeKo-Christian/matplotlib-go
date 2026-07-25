@@ -156,7 +156,7 @@ func addDateCategoryPanel(fig *core.Figure, rect geom.Rect) {
 	right.SetTitle("Categories")
 	right.XAxis.ShowLabels = false
 	right.YAxis.ShowLabels = true
-	if _, err := right.BarUnits([]string{"draft", "review", "ship"}, []float64{0.35, 0.75, 0.55}, core.BarOptions{Color: &gray, Width: ptr(0.72)}); err != nil {
+	if _, err := right.Bar([]string{"draft", "review", "ship"}, []float64{0.35, 0.75, 0.55}, core.BarOptions{Color: &gray, Width: ptr(0.72)}); err != nil {
 		panic(err)
 	}
 	right.SetYLim(0, 1)

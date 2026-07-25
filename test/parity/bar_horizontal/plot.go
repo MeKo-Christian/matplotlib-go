@@ -31,7 +31,7 @@ func Plot() *core.Figure {
 	height := 0.6
 	color := render.Color{R: 0.8, G: 0.4, B: 0.2, A: 1}
 	orientation := core.BarHorizontal
-	ax.Bar(y, widths, core.BarOptions{
+	_, _ = ax.Bar(y, widths, core.BarOptions{
 		Width:       &height,
 		Color:       &color,
 		Orientation: &orientation,

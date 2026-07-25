@@ -108,7 +108,10 @@ func TestPatchProducingMethodsHonorRCAndExplicitZeroWidth(t *testing.T) {
 	fig.RC.Patch.Antialiased = false
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 
-	bar := ax.Bar([]float64{0}, []float64{1})
+	bar, err := ax.Bar([]float64{0}, []float64{1})
+	if err != nil {
+		t.Fatalf("Bar() returned error: %v", err)
+	}
 	fill := ax.FillBetween([]float64{0, 1}, []float64{0, 0}, []float64{1, 1})
 	hist := ax.Hist([]float64{0, 1})
 	span := ax.AxHSpan(0, 1)
@@ -131,7 +134,10 @@ func TestPatchProducingMethodsHonorRCAndExplicitZeroWidth(t *testing.T) {
 	}
 
 	zero := 0.0
-	bar = ax.Bar([]float64{0}, []float64{1}, BarOptions{EdgeWidth: &zero})
+	bar, err = ax.Bar([]float64{0}, []float64{1}, BarOptions{EdgeWidth: &zero})
+	if err != nil {
+		t.Fatalf("Bar() returned error: %v", err)
+	}
 	fill = ax.FillBetween(
 		[]float64{0, 1}, []float64{0, 0}, []float64{1, 1},
 		FillOptions{EdgeWidth: &zero},

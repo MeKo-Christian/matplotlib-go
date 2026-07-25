@@ -6,12 +6,12 @@ import (
 )
 
 // Bar delegates to the current axes.
-func Bar(x, heights []float64, opts ...core.BarOptions) *core.Bar2D {
+func Bar(x, heights any, opts ...core.BarOptions) (*core.Bar2D, error) {
 	return GCA().Bar(x, heights, opts...)
 }
 
 // BarH delegates to the current axes.
-func BarH(y, widths []float64, opts ...core.BarOptions) *core.Bar2D {
+func BarH(y, widths any, opts ...core.BarOptions) (*core.Bar2D, error) {
 	return GCA().BarH(y, widths, opts...)
 }
 

@@ -52,7 +52,7 @@ func Plot() *core.Figure {
 	width := 0.68
 	edgeColor := render.Color{R: 0.12, G: 0.12, B: 0.12, A: 1}
 	edgeWidth := 1.0
-	ax.Bar(x, []float64{2.4, 3.4, 4.3, 5.2, 6.1, 4.8, 3.7}, core.BarOptions{
+	_, _ = ax.Bar(x, []float64{2.4, 3.4, 4.3, 5.2, 6.1, 4.8, 3.7}, core.BarOptions{
 		Width:     &width,
 		Colors:    colors,
 		EdgeColor: &edgeColor,

@@ -49,7 +49,7 @@ func Plot() *core.Figure {
 	widths := []float64{0.42, 0.58, 0.36}
 	barEdge := render.Color{R: 0.10, G: 0.10, B: 0.10, A: 1}
 	barEdgeWidth := 1.0
-	base := barAx.Bar([]float64{0.6, 1.7, 2.9}, []float64{2.0, 3.1, 1.6}, core.BarOptions{
+	base, _ := barAx.Bar([]float64{0.6, 1.7, 2.9}, []float64{2.0, 3.1, 1.6}, core.BarOptions{
 		Widths: widths,
 		Colors: []render.Color{
 			{R: 0.12, G: 0.47, B: 0.71, A: 1},
@@ -61,7 +61,7 @@ func Plot() *core.Figure {
 		Align:     &align,
 	})
 	barAx.BarLabel(base, nil, core.BarLabelOptions{Format: "%.1f", Padding: 2, FontSize: 8})
-	top := barAx.Bar([]float64{0.6, 1.7, 2.9}, []float64{1.3, 1.0, 1.8}, core.BarOptions{
+	top, _ := barAx.Bar([]float64{0.6, 1.7, 2.9}, []float64{1.3, 1.0, 1.8}, core.BarOptions{
 		Widths:    widths,
 		Baselines: []float64{2.0, 3.1, 1.6},
 		Color:     colorPtr(render.Color{R: 0.58, G: 0.40, B: 0.74, A: 1}),

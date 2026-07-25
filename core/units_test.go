@@ -230,16 +230,16 @@ func TestDateConverterRCSwitchesDefaultFormatter(t *testing.T) {
 	}
 }
 
-func TestAxesBarUnits_ConfiguresCategoricalXAxis(t *testing.T) {
+func TestAxesBar_ConfiguresCategoricalXAxis(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	bar, err := ax.BarUnits([]string{"alpha", "beta", "gamma"}, []float64{1, 3, 2})
+	bar, err := ax.Bar([]string{"alpha", "beta", "gamma"}, []float64{1, 3, 2})
 	if err != nil {
-		t.Fatalf("BarUnits returned error: %v", err)
+		t.Fatalf("Bar returned error: %v", err)
 	}
 	if bar == nil {
-		t.Fatal("BarUnits returned nil bar")
+		t.Fatal("Bar returned nil bar")
 	}
 
 	wantX := []float64{0, 1, 2}
@@ -266,19 +266,15 @@ func TestAxesBarUnits_ConfiguresCategoricalXAxis(t *testing.T) {
 	}
 }
 
-func TestAxesBarUnits_HorizontalConfiguresCategoricalYAxis(t *testing.T) {
+func TestAxesBarH_ConfiguresCategoricalYAxis(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	orientation := BarHorizontal
-
-	bar, err := ax.BarUnits([]string{"north", "south"}, []float64{4, 7}, BarOptions{
-		Orientation: &orientation,
-	})
+	bar, err := ax.BarH([]string{"north", "south"}, []float64{4, 7})
 	if err != nil {
-		t.Fatalf("BarUnits returned error: %v", err)
+		t.Fatalf("BarH returned error: %v", err)
 	}
 	if bar == nil {
-		t.Fatal("BarUnits returned nil bar")
+		t.Fatal("BarH returned nil bar")
 	}
 	if got := bar.X[1]; got != 1 {
 		t.Fatalf("horizontal categorical bar position = %v, want 1", got)
@@ -288,17 +284,133 @@ func TestAxesBarUnits_HorizontalConfiguresCategoricalYAxis(t *testing.T) {
 	}
 }
 
+func TestAxesBar_RejectedInputIsTransactional(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	originalXLocator := ax.XAxis.Locator
+	originalXFormatter := ax.XAxis.Formatter
+	originalYLocator := ax.YAxis.Locator
+	originalYFormatter := ax.YAxis.Formatter
+	originalCycle := ax.ColorCycle
+	originalCycleIndex := originalCycle.Index()
+
+	assertUnchanged := func(context string) {
+		t.Helper()
+		if ax.xUnits != nil || ax.yUnits != nil {
+			t.Fatalf("%s configured units: x=%v y=%v", context, ax.xUnits, ax.yUnits)
+		}
+		if !reflect.DeepEqual(ax.XAxis.Locator, originalXLocator) ||
+			!reflect.DeepEqual(ax.XAxis.Formatter, originalXFormatter) ||
+			!reflect.DeepEqual(ax.YAxis.Locator, originalYLocator) ||
+			!reflect.DeepEqual(ax.YAxis.Formatter, originalYFormatter) {
+			t.Fatalf(
+				"%s changed axis locator/formatter to x=%T/%T y=%T/%T",
+				context,
+				ax.XAxis.Locator,
+				ax.XAxis.Formatter,
+				ax.YAxis.Locator,
+				ax.YAxis.Formatter,
+			)
+		}
+		if len(ax.Artists) != 0 {
+			t.Fatalf("%s added %d artists", context, len(ax.Artists))
+		}
+		if ax.ColorCycle != originalCycle || ax.ColorCycle.Index() != originalCycleIndex {
+			t.Fatalf("%s replaced or advanced the property cycle", context)
+		}
+	}
+
+	rejections := []struct {
+		name string
+		call func() (*Bar2D, error)
+	}{
+		{
+			name: "vertical conversion",
+			call: func() (*Bar2D, error) {
+				return ax.Bar(
+					[]string{"draft", "review"},
+					[]struct{ value int }{{1}, {2}},
+				)
+			},
+		},
+		{
+			name: "horizontal conversion",
+			call: func() (*Bar2D, error) {
+				return ax.BarH(
+					[]string{"north", "south"},
+					[]struct{ value int }{{4}, {7}},
+				)
+			},
+		},
+		{
+			name: "mismatched shape",
+			call: func() (*Bar2D, error) {
+				return ax.Bar([]string{"draft", "review"}, []float64{1})
+			},
+		},
+		{
+			name: "per-bar option shape",
+			call: func() (*Bar2D, error) {
+				return ax.Bar(
+					[]string{"draft", "review"},
+					[]float64{1, 2},
+					BarOptions{Widths: []float64{0.2, 0.3, 0.4}},
+				)
+			},
+		},
+		{
+			name: "error-bar option shape",
+			call: func() (*Bar2D, error) {
+				return ax.Bar(
+					[]string{"draft", "review"},
+					[]float64{1, 2},
+					BarOptions{YErr: []float64{0.1, 0.2, 0.3}},
+				)
+			},
+		},
+		{
+			name: "invalid orientation",
+			call: func() (*Bar2D, error) {
+				orientation := BarOrientation(99)
+				return ax.Bar(
+					[]string{"draft", "review"},
+					[]float64{1, 2},
+					BarOptions{Orientation: &orientation},
+				)
+			},
+		},
+		{
+			name: "multiple options",
+			call: func() (*Bar2D, error) {
+				return ax.Bar(
+					[]string{"draft", "review"},
+					[]float64{1, 2},
+					BarOptions{},
+					BarOptions{},
+				)
+			},
+		},
+	}
+	for _, rejection := range rejections {
+		bar, err := rejection.call()
+		if err == nil || bar != nil {
+			t.Fatalf("%s Bar() = (%v, %v), want nil artist and error", rejection.name, bar, err)
+		}
+		assertUnchanged(rejection.name)
+	}
+}
+
 func TestAxesCategoryUnitsPreserveExplicitAxisInfoAfterRefresh(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	if _, err := ax.BarUnits([]string{"alpha", "beta"}, []float64{1, 2}); err != nil {
-		t.Fatalf("BarUnits returned error: %v", err)
+	if _, err := ax.Bar([]string{"alpha", "beta"}, []float64{1, 2}); err != nil {
+		t.Fatalf("Bar returned error: %v", err)
 	}
 
 	ax.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{10, 20}}
 	ax.XAxis.Formatter = ticker.FormatStrFormatter{Pattern: "manual %.0f"}
-	if _, err := ax.BarUnits([]string{"alpha", "beta", "gamma"}, []float64{1, 2, 3}); err != nil {
-		t.Fatalf("second BarUnits returned error: %v", err)
+	if _, err := ax.Bar([]string{"alpha", "beta", "gamma"}, []float64{1, 2, 3}); err != nil {
+		t.Fatalf("second Bar returned error: %v", err)
 	}
 
 	loc, ok := ax.XAxis.Locator.(ticker.FixedLocator)

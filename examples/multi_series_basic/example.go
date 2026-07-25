@@ -52,7 +52,7 @@ func Plot() *core.Figure {
 	)
 
 	width := 0.4
-	ax.Bar(
+	_, _ = ax.Bar(
 		[]float64{2, 3, 4, 5},
 		[]float64{3.8, 2.5, 4.8, 3.2},
 		core.BarOptions{

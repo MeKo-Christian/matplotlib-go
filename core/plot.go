@@ -824,8 +824,122 @@ type BarOptions struct {
 	ErrorKw  *ErrorBarOptions // passthrough for asymmetric errors, errorevery, etc.
 }
 
-// Bar creates a bar plot with automatic color cycling if no color is specified.
-func (a *Axes) Bar(x, heights []float64, opts ...BarOptions) *Bar2D {
+// Bar converts positions and heights through the axes units machinery and
+// creates a bar plot with automatic color cycling if no color is specified.
+//
+// Rejected input leaves the axes, its unit configuration, and its property
+// cycle unchanged.
+func (a *Axes) Bar(posVals, heightVals any, opts ...BarOptions) (*Bar2D, error) {
+	return a.barWithOrientation(posVals, heightVals, nil, opts...)
+}
+
+func (a *Axes) barWithOrientation(
+	posVals, heightVals any,
+	forcedOrientation *BarOrientation,
+	opts ...BarOptions,
+) (*Bar2D, error) {
+	if a == nil {
+		return nil, fmt.Errorf("bar axes cannot be nil")
+	}
+	if len(opts) > 1 {
+		return nil, fmt.Errorf("bar accepts at most one BarOptions value")
+	}
+
+	var opt BarOptions
+	if len(opts) == 1 {
+		opt = opts[0]
+	}
+	if forcedOrientation != nil {
+		orientation := *forcedOrientation
+		opt.Orientation = &orientation
+	}
+	orientation := BarVertical
+	if opt.Orientation != nil {
+		orientation = *opt.Orientation
+	}
+	if orientation != BarVertical && orientation != BarHorizontal {
+		return nil, fmt.Errorf("bar orientation must be BarVertical or BarHorizontal (got %d)", orientation)
+	}
+	if opt.Align != nil && *opt.Align != BarAlignCenter && *opt.Align != BarAlignEdge {
+		return nil, fmt.Errorf("bar alignment must be BarAlignCenter or BarAlignEdge (got %d)", *opt.Align)
+	}
+
+	tx := a.beginUnitConversion()
+	categoryIsX := orientation == BarVertical
+	positions, err := a.convertValues(posVals, categoryIsX)
+	if err != nil {
+		tx.rollback()
+		return nil, fmt.Errorf("bar positions: %w", err)
+	}
+	heights, err := a.convertValues(heightVals, !categoryIsX)
+	if err != nil {
+		tx.rollback()
+		return nil, fmt.Errorf("bar heights: %w", err)
+	}
+	if err := validateBarInput(positions, heights, &opt); err != nil {
+		tx.rollback()
+		return nil, err
+	}
+
+	a.applyCategoricalBarValueLocator(categoryIsX)
+	bar := a.bar(positions, heights, opt)
+	tx.commit()
+	return bar, nil
+}
+
+func validateBarInput(positions, heights []float64, opt *BarOptions) error {
+	if len(positions) == 0 || len(heights) == 0 {
+		return fmt.Errorf("bar positions and heights cannot be empty")
+	}
+	if len(positions) != len(heights) {
+		return fmt.Errorf(
+			"bar positions and heights must have the same length (got %d and %d)",
+			len(positions),
+			len(heights),
+		)
+	}
+
+	n := len(positions)
+	optionLengths := []struct {
+		name   string
+		length int
+	}{
+		{name: "Widths", length: len(opt.Widths)},
+		{name: "Colors", length: len(opt.Colors)},
+		{name: "EdgeColors", length: len(opt.EdgeColors)},
+		{name: "Baselines", length: len(opt.Baselines)},
+	}
+	for _, option := range optionLengths {
+		if option.length > 0 && !validBarOptionLength(option.length, n) {
+			return fmt.Errorf("bar %s must have length 1 or %d (got %d)", option.name, n, option.length)
+		}
+	}
+	if !validErrorValues(opt.XErr, n) || !validErrorValues(opt.YErr, n) {
+		return fmt.Errorf("bar XErr and YErr must each be empty or length 1 or %d, with finite non-negative values", n)
+	}
+	if opt.ErrorKw == nil {
+		return nil
+	}
+	kw := opt.ErrorKw
+	if !validErrorValues(kw.XErrLower, n) || !validErrorValues(kw.XErrUpper, n) ||
+		!validErrorValues(kw.YErrLower, n) || !validErrorValues(kw.YErrUpper, n) {
+		return fmt.Errorf("bar ErrorKw error arrays must each be empty or length 1 or %d, with finite non-negative values", n)
+	}
+	if !validBoolValues(kw.LoLimits, n) || !validBoolValues(kw.UpLimits, n) ||
+		!validBoolValues(kw.XLoLimits, n) || !validBoolValues(kw.XUpLimits, n) {
+		return fmt.Errorf("bar ErrorKw limit arrays must each be empty or length 1 or %d", n)
+	}
+	if kw.ErrorEvery < 0 || (kw.ErrorEvery == 0 && kw.ErrorEveryStart != 0) || kw.ErrorEveryStart < 0 {
+		return fmt.Errorf(
+			"bar ErrorKw errorevery is invalid (every=%d, start=%d)",
+			kw.ErrorEvery,
+			kw.ErrorEveryStart,
+		)
+	}
+	return nil
+}
+
+func (a *Axes) bar(x, heights []float64, opts ...BarOptions) *Bar2D {
 	if len(x) == 0 || len(heights) == 0 {
 		return nil
 	}
@@ -1048,15 +1162,11 @@ func bakeExplicitAlpha(c render.Color, alpha *float64) render.Color {
 	return c
 }
 
-// BarH creates a horizontal bar chart and sets orientation to horizontal.
-func (a *Axes) BarH(y, widths []float64, opts ...BarOptions) *Bar2D {
-	var opt BarOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+// BarH converts positions and widths through the axes units machinery and
+// creates a horizontal bar chart.
+func (a *Axes) BarH(yVals, widthVals any, opts ...BarOptions) (*Bar2D, error) {
 	orientation := BarHorizontal
-	opt.Orientation = &orientation
-	return a.Bar(y, widths, opt)
+	return a.barWithOrientation(yVals, widthVals, &orientation, opts...)
 }
 
 // FillBetween is a convenience alias for FillBetweenPlot.

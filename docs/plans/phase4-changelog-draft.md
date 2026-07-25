@@ -29,6 +29,10 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
 - Folded `Axes.ScatterUnits` into `Axes.Scatter`. The primary method and
   `pyplot.Scatter` now accept unit-capable slice values and return
   `(*Scatter2D, error)` with transactional rejection.
+- Folded `Axes.BarUnits` into `Axes.Bar` and `Axes.BarH`. The primary methods
+  and their pyplot wrappers now accept unit-capable slice values and return
+  `(*Bar2D, error)` with transactional rejection while preserving categorical
+  position-axis locators.
 
 ## Added
 

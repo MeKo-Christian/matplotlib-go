@@ -134,11 +134,11 @@ func Plot() *core.Figure {
 	base := []float64{0, 0, 0, 0}
 	seriesA := []float64{1.4, 2.2, 1.8, 2.5}
 	seriesB := []float64{2.1, 1.6, 2.4, 1.7}
-	bottom := stackAx.Bar(x, seriesA, core.BarOptions{
+	bottom, _ := stackAx.Bar(x, seriesA, core.BarOptions{
 		Baselines: base,
 		Color:     &render.Color{R: 0.16, G: 0.59, B: 0.49, A: 1},
 	})
-	top := stackAx.Bar(x, seriesB, core.BarOptions{
+	top, _ := stackAx.Bar(x, seriesB, core.BarOptions{
 		Baselines: seriesA,
 		Color:     &render.Color{R: 0.88, G: 0.47, B: 0.16, A: 1},
 	})

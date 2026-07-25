@@ -4573,7 +4573,7 @@
         },
         {
           "id": "method Axes.Bar",
-          "declaration": "func (Axes) Bar(x, heights []float64, opts ...BarOptions) *Bar2D"
+          "declaration": "func (Axes) Bar(posVals, heightVals any, opts ...BarOptions) (*Bar2D, error)"
         },
         {
           "id": "method Axes.BarContainer",
@@ -4581,15 +4581,11 @@
         },
         {
           "id": "method Axes.BarH",
-          "declaration": "func (Axes) BarH(y, widths []float64, opts ...BarOptions) *Bar2D"
+          "declaration": "func (Axes) BarH(yVals, widthVals any, opts ...BarOptions) (*Bar2D, error)"
         },
         {
           "id": "method Axes.BarLabel",
           "declaration": "func (Axes) BarLabel(bar *Bar2D, labels []string, opts ...BarLabelOptions) []*Text"
-        },
-        {
-          "id": "method Axes.BarUnits",
-          "declaration": "func (Axes) BarUnits(posVals, heights any, opts ...BarOptions) (*Bar2D, error)"
         },
         {
           "id": "method Axes.Barbs",
@@ -8595,11 +8591,11 @@
         },
         {
           "id": "func Bar",
-          "declaration": "func Bar(x, heights []float64, opts ...core.BarOptions) *core.Bar2D"
+          "declaration": "func Bar(x, heights any, opts ...core.BarOptions) (*core.Bar2D, error)"
         },
         {
           "id": "func BarH",
-          "declaration": "func BarH(y, widths []float64, opts ...core.BarOptions) *core.Bar2D"
+          "declaration": "func BarH(y, widths any, opts ...core.BarOptions) (*core.Bar2D, error)"
         },
         {
           "id": "func BarLabel",

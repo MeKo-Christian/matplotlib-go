@@ -163,6 +163,25 @@ func TestScatterAcceptsUnitCapableValuesAndPropagatesErrors(t *testing.T) {
 	}
 }
 
+func TestBarAcceptsUnitCapableValuesAndPropagatesErrors(t *testing.T) {
+	resetForTests()
+
+	bar, err := Bar([]string{"draft", "review"}, []float64{1, 2})
+	if err != nil {
+		t.Fatalf("Bar() returned error: %v", err)
+	}
+	if bar == nil {
+		t.Fatal("Bar() returned nil artist")
+	}
+	if _, ok := GCA().XAxis.Locator.(ticker.FixedLocator); !ok {
+		t.Fatalf("x-axis locator = %T, want ticker.FixedLocator", GCA().XAxis.Locator)
+	}
+
+	if rejected, err := BarH([]string{"north", "south"}, []float64{4}); err == nil || rejected != nil {
+		t.Fatalf("mismatched BarH() = (%v, %v), want nil artist and error", rejected, err)
+	}
+}
+
 func TestTextAndAnnotateDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 
@@ -513,8 +532,8 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 
 	resetForTests()
-	if bar := BarH([]float64{0, 1}, []float64{3, 4}); bar == nil || bar.Orientation != core.BarHorizontal {
-		t.Fatalf("BarH() = %#v, want horizontal bar", bar)
+	if bar, err := BarH([]float64{0, 1}, []float64{3, 4}); err != nil || bar == nil || bar.Orientation != core.BarHorizontal {
+		t.Fatalf("BarH() = (%#v, %v), want horizontal bar", bar, err)
 	}
 	if fill := Fill([]float64{0, 1, 0}, []float64{0, 0, 1}); fill == nil {
 		t.Fatal("Fill() returned nil")

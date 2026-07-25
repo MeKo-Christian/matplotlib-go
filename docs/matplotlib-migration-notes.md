@@ -74,6 +74,34 @@ scalar-map combinations, and more than one `ScatterOptions` value. Rejection
 does not add an artist, advance the scatter color cycle, or retain partial
 unit/locator/formatter changes.
 
+`Axes.BarUnits` was folded into `Axes.Bar` and `Axes.BarH`. Replace vertical
+bars:
+
+```go
+bar, err := ax.BarUnits(positions, heights, options)
+```
+
+with:
+
+```go
+bar, err := ax.Bar(positions, heights, options)
+```
+
+For horizontal categorical bars, use the orientation-specific entry point:
+
+```go
+bar, err := ax.BarH(positions, widths, options)
+```
+
+`Axes.Bar`, `Axes.BarH`, `pyplot.Bar`, and `pyplot.BarH` now accept
+unit-capable slice values and return `(*core.Bar2D, error)`. They reject nil
+axes, empty or mismatched inputs, unsupported value types, invalid
+orientation/alignment values, invalid per-bar or error-bar option lengths, and
+more than one `BarOptions` value. Rejection does not add an artist, advance the
+property cycle, or retain partial unit/locator/formatter changes. Successful
+categorical bars preserve the fixed category locator on the position axis and
+the automatic numeric locator on the value axis.
+
 The same getter pass removed the remaining exported `GetX` spellings:
 
 | Before                                      | After                                     |

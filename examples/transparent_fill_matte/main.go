@@ -57,7 +57,7 @@ func main() {
 	pink := render.Color{R: 233.0 / 255, G: 30.0 / 255, B: 99.0 / 255, A: 0.8}
 	orient := core.BarHorizontal
 	bw := 0.5
-	ax.Bar([]float64{0.5}, []float64{0.9}, core.BarOptions{Color: &pink, Width: &bw, Orientation: &orient})
+	_, _ = ax.Bar([]float64{0.5}, []float64{0.9}, core.BarOptions{Color: &pink, Width: &bw, Orientation: &orient})
 
 	r, _, err := backends.NewRenderer("agg", backends.Config{
 		Width:       width,

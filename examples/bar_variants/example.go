@@ -45,7 +45,7 @@ func addVerticalLabeledPanel(ax *core.Axes) {
 
 	color := render.Color{R: 0.20, G: 0.60, B: 0.80, A: 1}
 	width := 0.6
-	ax.Bar(
+	_, _ = ax.Bar(
 		[]float64{1, 2, 3, 4, 5},
 		[]float64{3, 7, 2, 8, 5},
 		core.BarOptions{Color: &color, Width: &width},
@@ -60,7 +60,7 @@ func addHorizontalPanel(ax *core.Axes) {
 	color := render.Color{R: 0.8, G: 0.4, B: 0.2, A: 1}
 	height := 0.6
 	orientation := core.BarHorizontal
-	ax.Bar(
+	_, _ = ax.Bar(
 		[]float64{1, 2, 3, 4, 5},
 		[]float64{3, 7, 2, 8, 5},
 		core.BarOptions{Width: &height, Color: &color, Orientation: &orientation},
@@ -104,11 +104,11 @@ func addStackedLabeledPanel(ax *core.Axes) {
 	base := []float64{0, 0, 0, 0}
 	seriesA := []float64{1.4, 2.2, 1.8, 2.5}
 	seriesB := []float64{2.1, 1.6, 2.4, 1.7}
-	bottom := ax.Bar(x, seriesA, core.BarOptions{
+	bottom, _ := ax.Bar(x, seriesA, core.BarOptions{
 		Baselines: base,
 		Color:     &render.Color{R: 0.16, G: 0.59, B: 0.49, A: 1},
 	})
-	top := ax.Bar(x, seriesB, core.BarOptions{
+	top, _ := ax.Bar(x, seriesB, core.BarOptions{
 		Baselines: seriesA,
 		Color:     &render.Color{R: 0.88, G: 0.47, B: 0.16, A: 1},
 	})

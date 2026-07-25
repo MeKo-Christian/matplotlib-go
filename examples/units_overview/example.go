@@ -56,7 +56,7 @@ func Plot() *core.Figure {
 	categoryAx.SetTitle("Categories")
 	categoryAx.SetYLabel("Count")
 	common.AddReferenceYGrid(categoryAx)
-	_, err = categoryAx.BarUnits(
+	_, err = categoryAx.Bar(
 		[]string{"alpha", "beta", "gamma", "delta"},
 		[]float64{4, 9, 6, 7},
 		core.BarOptions{

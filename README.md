@@ -58,7 +58,7 @@ methods. Supported chart classes include:
   alpha, and large collection support via `Scatter`.
 - **Bar and category charts:** vertical bars, horizontal bars, grouped bars,
   categorical/date/unit-aware bars, and bar labels via `Bar`, `BarH`,
-  `BarUnits`, and `BarLabel`.
+  and `BarLabel`.
 - **Area and filled-region charts:** filled polygons, fill-to-baseline,
   fill-between curves, horizontal fill-between, and stacked area charts via
   `Fill`, `FillToBaseline`, `FillBetween`, `FillBetweenX`, and `StackPlot`.

@@ -377,7 +377,7 @@ func (a *Axes) BrokenBarH(xRanges [][2]float64, yRange [2]float64, opts ...BarOp
 	opt.Width = float64Ptr(yRange[1])
 	opt.Baselines = baselines
 
-	return a.Bar(centers, widths, opt)
+	return a.bar(centers, widths, opt)
 }
 
 // BarLabel adds text labels to bars, either centered inside the bar or at the bar edge.

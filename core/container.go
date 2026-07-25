@@ -239,7 +239,7 @@ func (e *ErrorBar) Container() *ErrorbarContainer {
 
 // BarContainer creates bars and returns the corresponding result container.
 func (a *Axes) BarContainer(x, heights []float64, opts ...BarOptions) *BarContainer {
-	bar := a.Bar(x, heights, opts...)
+	bar := a.bar(x, heights, opts...)
 	if bar == nil {
 		return nil
 	}

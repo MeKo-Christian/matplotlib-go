@@ -33,17 +33,23 @@ func TestBarHonorsExplicitZeroAlpha(t *testing.T) {
 
 	zero := 0.0
 	transparent := &recordingRenderer{}
-	newAlphaTestAxes().
-		Bar([]float64{0, 1, 2}, []float64{1, 2, 3}, BarOptions{Color: &red, Alpha: &zero}).
-		Draw(transparent, ctx)
+	transparentBar, err := newAlphaTestAxes().
+		Bar([]float64{0, 1, 2}, []float64{1, 2, 3}, BarOptions{Color: &red, Alpha: &zero})
+	if err != nil {
+		t.Fatalf("Bar() returned error: %v", err)
+	}
+	transparentBar.Draw(transparent, ctx)
 	if got := maxFillAlpha(transparent); got != 0 {
 		t.Fatalf("Bar alpha=0 should draw no opaque fill, got max fill alpha %v", got)
 	}
 
 	opaque := &recordingRenderer{}
-	newAlphaTestAxes().
-		Bar([]float64{0, 1, 2}, []float64{1, 2, 3}, BarOptions{Color: &red}).
-		Draw(opaque, ctx)
+	opaqueBar, err := newAlphaTestAxes().
+		Bar([]float64{0, 1, 2}, []float64{1, 2, 3}, BarOptions{Color: &red})
+	if err != nil {
+		t.Fatalf("Bar() returned error: %v", err)
+	}
+	opaqueBar.Draw(opaque, ctx)
 	if maxFillAlpha(opaque) == 0 {
 		t.Fatal("control opaque bar drew no fill — harness problem, not a real pass")
 	}
@@ -53,7 +59,10 @@ func TestBarHalfAlphaApplied(t *testing.T) {
 	ax := newAlphaTestAxes()
 	half := 0.5
 	red := render.Color{R: 1, A: 1}
-	bar := ax.Bar([]float64{0}, []float64{1}, BarOptions{Color: &red, Alpha: &half})
+	bar, err := ax.Bar([]float64{0}, []float64{1}, BarOptions{Color: &red, Alpha: &half})
+	if err != nil {
+		t.Fatalf("Bar() returned error: %v", err)
+	}
 
 	r := &recordingRenderer{}
 	bar.Draw(r, createTestDrawContext())
@@ -66,7 +75,10 @@ func TestBarHalfAlphaApplied(t *testing.T) {
 func TestBarNilAlphaPreservesColorAlpha(t *testing.T) {
 	ax := newAlphaTestAxes()
 	semi := render.Color{R: 1, A: 0.8}
-	bar := ax.Bar([]float64{0}, []float64{1}, BarOptions{Color: &semi})
+	bar, err := ax.Bar([]float64{0}, []float64{1}, BarOptions{Color: &semi})
+	if err != nil {
+		t.Fatalf("Bar() returned error: %v", err)
+	}
 
 	r := &recordingRenderer{}
 	bar.Draw(r, createTestDrawContext())

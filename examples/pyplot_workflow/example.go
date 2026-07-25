@@ -48,7 +48,7 @@ func Plot() *core.Figure {
 	pyplot.Legend()
 
 	must(pyplot.SCA(axes[1][0]))
-	pyplot.Bar([]float64{0, 1, 2}, []float64{2.2, 3.0, 1.7}, core.BarOptions{Label: "counts"})
+	_, _ = pyplot.Bar([]float64{0, 1, 2}, []float64{2.2, 3.0, 1.7}, core.BarOptions{Label: "counts"})
 	pyplot.XLabel("group")
 	pyplot.YLabel("count")
 	pyplot.Title("bar")
