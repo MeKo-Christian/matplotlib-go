@@ -49,7 +49,7 @@ func Plot() *core.Figure {
 	fillColor := render.Color{R: 0.18, G: 0.50, B: 0.82, A: 0.22}
 	lineWidth := 2.2
 	ax.Fill(closedAngles, closedValues, core.FillOptions{Color: &fillColor})
-	ax.Plot(closedAngles, closedValues, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth, Label: "model A"})
+	_, _ = ax.Plot(closedAngles, closedValues, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth, Label: "model A"})
 	return fig
 }
 

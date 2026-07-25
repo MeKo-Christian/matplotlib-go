@@ -25,7 +25,7 @@ func Plot() *core.Figure {
 	ax.SetXLim(0, 10)
 	ax.SetYLim(0, 5)
 
-	mutated := ax.Plot(
+	mutated, _ := ax.Plot(
 		[]float64{0.6, 2.2, 3.8},
 		[]float64{4.65, 4.65, 4.65},
 		core.PlotOptions{
@@ -70,7 +70,7 @@ func Plot() *core.Figure {
 	x := []float64{0.7, 1.5, 2.3, 3.1, 3.9, 4.7, 5.5, 6.3, 7.1, 7.9, 8.7, 9.5}
 	y1 := []float64{1.1, 1.45, 1.2, 1.65, 1.35, 1.75, 1.45, 1.85, 1.55, 1.95, 1.65, 2.05}
 	markerA := core.MarkerCircle
-	lineA := ax.Plot(x, y1, core.PlotOptions{
+	lineA, _ := ax.Plot(x, y1, core.PlotOptions{
 		Color:      colorPtr(render.Color{R: 0.58, G: 0.40, B: 0.74, A: 1}),
 		LineWidth:  floatPtr(1.5),
 		Marker:     &markerA,
@@ -80,7 +80,7 @@ func Plot() *core.Figure {
 
 	y2 := []float64{0.55, 0.85, 0.65, 0.95, 0.75, 1.05, 0.85, 1.15, 0.95, 1.25, 1.05, 1.35}
 	markerB := core.MarkerSquare
-	lineB := ax.Plot(x, y2, core.PlotOptions{
+	lineB, _ := ax.Plot(x, y2, core.PlotOptions{
 		Color:      colorPtr(render.Color{R: 0.55, G: 0.34, B: 0.29, A: 1}),
 		LineWidth:  floatPtr(1.5),
 		Marker:     &markerB,

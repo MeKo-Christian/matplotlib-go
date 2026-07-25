@@ -39,7 +39,7 @@ func main() {
 	addr := flag.String("addr", ":8080", "HTTP listen address")
 	flag.Parse()
 
-	fig := basic_line.Plot()
+	fig, _ := basic_line.Plot()
 	mgr, err := webagg.NewManager(webagg.Options{
 		Figure: fig,
 		Renderer: func(w, h int, bg render.Color) (webagg.RasterRenderer, error) {

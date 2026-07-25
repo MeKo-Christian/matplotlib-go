@@ -48,7 +48,7 @@ func RegisterTestDistanceUnits() {
 
 func ReferenceDateNumber(t time.Time) float64 {
 	// Mirror the dates package convention (days since the epoch) so fixtures that set
-	// axis limits agree with PlotUnits-converted data.
+	// axis limits agree with Plot-converted data.
 	return dates.Date2Num(t)
 }
 
@@ -156,7 +156,7 @@ func ConfigureCompositionAxes(ax *core.Axes, title string, x, y []float64, c ren
 	ax.SetXLabel("x")
 	ax.SetYLabel("y")
 	width := 2.0
-	ax.Plot(x, y, core.PlotOptions{
+	_, _ = ax.Plot(x, y, core.PlotOptions{
 		Color:     &c,
 		LineWidth: &width,
 		Label:     title,
@@ -236,7 +236,7 @@ func PlotGeoProjectionAxes(projection, title string, lonMin, lonMax float64) *co
 
 	lineColor := render.Color{R: 0.14, G: 0.34, B: 0.70, A: 1}
 	lineWidth := 2.0
-	ax.Plot(lon, lat, core.PlotOptions{
+	_, _ = ax.Plot(lon, lat, core.PlotOptions{
 		Color:     &lineColor,
 		LineWidth: &lineWidth,
 	})

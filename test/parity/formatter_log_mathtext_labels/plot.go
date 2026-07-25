@@ -29,7 +29,7 @@ func Plot() *core.Figure {
 	y := []float64{0.18, 0.42, 0.66, 0.84}
 	color := render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}
 	width := 2.0
-	ax.Plot(x, y, core.PlotOptions{Color: &color, LineWidth: &width})
+	_, _ = ax.Plot(x, y, core.PlotOptions{Color: &color, LineWidth: &width})
 	ax.SetXLimLog(1, 1000, 10)
 	ax.SetYLim(0, 1)
 	ax.XAxis.Locator = ticker.FixedLocator{TicksList: x}

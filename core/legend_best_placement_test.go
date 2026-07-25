@@ -72,8 +72,8 @@ func TestLegendBestPlacementMatchesMathtextInlineLabels(t *testing.T) {
 		y1[i] = 0.55 + 0.35*math.Sin(1.5*t)
 		y2[i] = 0.48 + 0.28*math.Cos(1.5*t+0.45)
 	}
-	ax.Plot(x, y1, PlotOptions{Label: `state $x_i(t)$`})
-	ax.Plot(x, y2, PlotOptions{Label: `state $y_i(t)$`})
+	_, _ = ax.Plot(x, y1, PlotOptions{Label: `state $x_i(t)$`})
+	_, _ = ax.Plot(x, y2, PlotOptions{Label: `state $y_i(t)$`})
 	ax.Text(0.03, 0.88, `peak $\alpha_i^2$`, TextOptions{
 		Coords: Coords(CoordAxes),
 		HAlign: TextAlignLeft,

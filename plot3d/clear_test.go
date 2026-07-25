@@ -16,7 +16,7 @@ func TestAxes3DClearViaEmbedding(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddAxes: %v", err)
 	}
-	ax.Plot([]float64{0, 1}, []float64{0, 1})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1})
 	ax.Clear()
 	if got := len(ax.Artists); got != 0 {
 		t.Fatalf("after Axes3D.Clear: %d artists remain, want 0", got)

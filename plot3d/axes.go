@@ -325,13 +325,19 @@ func (a *Axes3D) Plot3D(x, y, z []float64, opts ...core.PlotOptions) *core.Line2
 	}
 
 	if len(opts) > 0 {
-		line := a.Plot(x2, y2, opt)
+		line, err := a.Plot(x2, y2, opt)
+		if err != nil {
+			return nil
+		}
 		a.add3DReprojector(func() {
 			reprojectLine3D(line, a.projectedData(x, y, z, opt.AxLimClip))
 		}, limitsChanged)
 		return line
 	}
-	line := a.Plot(x2, y2)
+	line, err := a.Plot(x2, y2)
+	if err != nil {
+		return nil
+	}
 	a.add3DReprojector(func() {
 		reprojectLine3D(line, a.projectedData(x, y, z, opt.AxLimClip))
 	}, limitsChanged)

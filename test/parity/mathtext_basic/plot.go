@@ -33,7 +33,7 @@ func Plot() *core.Figure {
 
 	lineWidth := 2.0
 	blue := render.Color{R: 31.0 / 255.0, G: 119.0 / 255.0, B: 180.0 / 255.0, A: 1}
-	ax.Plot(x, y, core.PlotOptions{Color: &blue, LineWidth: &lineWidth})
+	_, _ = ax.Plot(x, y, core.PlotOptions{Color: &blue, LineWidth: &lineWidth})
 	ax.SetTitle(`MathText $\alpha^2 + \beta_i$`)
 	ax.SetXLabel(`phase $\theta$`)
 	ax.SetYLabel(`amplitude $\frac{1}{\sqrt{2}}$`)

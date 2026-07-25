@@ -61,8 +61,8 @@ func addAnnotationLegendPanel(ax *core.Axes) {
 	blue := render.Color{R: 0.12, G: 0.31, B: 0.68, A: 1}
 	orange := render.Color{R: 0.86, G: 0.43, B: 0.16, A: 1}
 	lineWidth := 2.0
-	ax.Plot(x, sin, core.PlotOptions{Color: &blue, LineWidth: &lineWidth, Label: "sin(x)"})
-	ax.Plot(x, cos, core.PlotOptions{Color: &orange, LineWidth: &lineWidth, Label: "0.65 cos(0.8x)"})
+	_, _ = ax.Plot(x, sin, core.PlotOptions{Color: &blue, LineWidth: &lineWidth, Label: "sin(x)"})
+	_, _ = ax.Plot(x, cos, core.PlotOptions{Color: &orange, LineWidth: &lineWidth, Label: "0.65 cos(0.8x)"})
 
 	arrow, _ := core.ArrowStyleFromString("-|>,head_length=0.35,head_width=0.20")
 	arc, _ := core.ConnectionStyleFromString("arc3,rad=0.25")

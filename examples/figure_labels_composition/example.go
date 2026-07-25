@@ -40,7 +40,7 @@ func Plot() *core.Figure {
 				x[i] = xv
 				y[i] = math.Sin(xv+float64(row)*0.5) * (1 + float64(col)*0.2)
 			}
-			ax.Plot(x, y, core.PlotOptions{
+			_, _ = ax.Plot(x, y, core.PlotOptions{
 				LineWidth: common.FloatPtr(1.5),
 				Label:     fmt.Sprintf("series %d", row*2+col+1),
 			})

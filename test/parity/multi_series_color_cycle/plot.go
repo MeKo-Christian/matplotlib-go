@@ -41,7 +41,7 @@ func Plot() *core.Figure {
 		for j := 0; j < nPoints; j++ {
 			y[j] = math.Sin(float64(freq) * x[j])
 		}
-		ax.Plot(x, y, core.PlotOptions{
+		_, _ = ax.Plot(x, y, core.PlotOptions{
 			Color:     &tab10[seriesIdx],
 			LineWidth: &lineWidth,
 		})

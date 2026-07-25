@@ -13,7 +13,7 @@ func TestLegendDrawRendersLabelsAndSamples(t *testing.T) {
 		Min: geom.Pt{X: 0.1, Y: 0.1},
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
 	ax.Scatter([]float64{0.5}, []float64{0.5}, ScatterOptions{Label: "samples"})
 	ax.AddLegend()
 
@@ -34,10 +34,10 @@ func TestLegendDrawSupportsMultipleColumns(t *testing.T) {
 		Min: geom.Pt{X: 0.1, Y: 0.1},
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "a"})
-	ax.Plot([]float64{0, 1}, []float64{1, 2}, PlotOptions{Label: "b"})
-	ax.Plot([]float64{0, 1}, []float64{2, 3}, PlotOptions{Label: "c"})
-	ax.Plot([]float64{0, 1}, []float64{3, 4}, PlotOptions{Label: "d"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "a"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{1, 2}, PlotOptions{Label: "b"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{2, 3}, PlotOptions{Label: "c"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{3, 4}, PlotOptions{Label: "d"})
 	legend := ax.AddLegend()
 	legend.Location = LegendUpperLeft
 	legend.NumColumns = 2
@@ -77,7 +77,7 @@ func TestLegendDrawSupportsTitle(t *testing.T) {
 		Min: geom.Pt{X: 0.1, Y: 0.1},
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
 	legend := ax.AddLegend()
 	legend.Location = LegendUpperLeft
 	legend.Title = "Series"
@@ -114,7 +114,7 @@ func TestLegendFrameOnFalseSkipsFrameOnly(t *testing.T) {
 		Min: geom.Pt{X: 0.1, Y: 0.1},
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
 	legend := ax.AddLegend()
 	legend.Location = LegendUpperLeft
 	legend.FrameOn = false
@@ -139,7 +139,7 @@ func TestLegendFrameUsesMatplotlibSnapAuto(t *testing.T) {
 		Min: geom.Pt{X: 0.1, Y: 0.1},
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
 	legend := ax.AddLegend()
 
 	var r legendRecordingRenderer
@@ -162,7 +162,7 @@ func TestLegendFrameUsesMatplotlibRoundBoxStyle(t *testing.T) {
 		Min: geom.Pt{X: 0.1, Y: 0.1},
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
 	legend := ax.AddLegend()
 
 	var r legendRecordingRenderer
@@ -209,7 +209,7 @@ func TestAxesLegendDrawsOutsideAxesClip(t *testing.T) {
 	ax := fig.AddPolarAxes(unitRect())
 	ax.SetYLim(0, 1)
 	color := render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1}
-	ax.Plot([]float64{0, 1}, []float64{0.2, 0.8}, PlotOptions{
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0.2, 0.8}, PlotOptions{
 		Color: &color,
 		Label: "legend label",
 	})

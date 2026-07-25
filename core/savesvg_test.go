@@ -19,7 +19,7 @@ func TestSaveSVGWithSupportedRenderer(t *testing.T) {
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
 	ax.SetTitle("SaveSVG test")
-	ax.Plot([]float64{0, 10}, []float64{0, 1})
+	_, _ = ax.Plot([]float64{0, 10}, []float64{0, 1})
 
 	renderer, err := backends.Create(backends.SVG, backends.Config{
 		Width:      120,
@@ -64,7 +64,7 @@ func TestSaveSVGPassesSVGOptionsToRenderer(t *testing.T) {
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
 	ax.SetTitle("Path text")
-	ax.Plot([]float64{0, 10}, []float64{0, 1})
+	_, _ = ax.Plot([]float64{0, 10}, []float64{0, 1})
 
 	renderer, err := backends.Create(backends.SVG, backends.Config{
 		Width:      120,

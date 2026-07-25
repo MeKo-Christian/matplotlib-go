@@ -52,7 +52,7 @@ func Plot() *core.Figure {
 
 	lineColor := render.Color{R: 0.14, G: 0.34, B: 0.70, A: 1}
 	lineWidth := 2.0
-	ax.Plot(lon, lat, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth})
+	_, _ = ax.Plot(lon, lat, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth})
 	return fig
 }
 

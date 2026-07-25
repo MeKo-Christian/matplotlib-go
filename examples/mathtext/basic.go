@@ -27,7 +27,7 @@ func main() {
 		y[i] = math.Sin(t) * math.Exp(-0.08*t)
 	}
 
-	ax.Plot(x, y)
+	_, _ = ax.Plot(x, y)
 	ax.SetTitle(`MathText $\\alpha^2 + \\beta_i$`)
 	ax.SetXLabel(`phase $\\theta$`)
 	ax.SetYLabel(`amplitude $\\frac{1}{\\sqrt{2}}$`)

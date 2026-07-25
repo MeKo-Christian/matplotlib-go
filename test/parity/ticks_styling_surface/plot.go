@@ -127,7 +127,7 @@ func Plot() *core.Figure {
 
 	color := render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}
 	width := 2.0
-	ax.Plot(
+	_, _ = ax.Plot(
 		[]float64{0, 1.5, 3, 4.5, 6},
 		[]float64{1, 4, 5.5, 9, 11},
 		core.PlotOptions{Color: &color, LineWidth: &width},

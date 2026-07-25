@@ -46,8 +46,8 @@ func main() {
 		cosY[i] = math.Cos(x[i])
 	}
 
-	ax.Plot(x, sinY, core.PlotOptions{Label: "sin(x)"})
-	ax.Plot(x, cosY, core.PlotOptions{Label: "cos(x)"})
+	_, _ = ax.Plot(x, sinY, core.PlotOptions{Label: "sin(x)"})
+	_, _ = ax.Plot(x, cosY, core.PlotOptions{Label: "cos(x)"})
 
 	if err := fig.Save("spines.png"); err != nil {
 		fmt.Printf("Error: %v\n", err)

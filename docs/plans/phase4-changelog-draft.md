@@ -23,6 +23,9 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
 - Renamed the renderer drawing method `Image(image, destination)` to
   `DrawImage(image, destination)`; raster exporters now expose their buffer
   through `Image()`.
+- Folded `Axes.PlotUnits` into `Axes.Plot`. The primary method now accepts
+  unit-capable slice values and returns `(*Line2D, error)` for rejected input;
+  `PlotDate`, `pyplot.Plot`, and `pyplot.PlotDate` propagate the same error.
 
 ## Added
 

@@ -21,7 +21,7 @@ func TestDefaultLineWidthMatchesMatplotlib(t *testing.T) {
 
 	fig := NewFigure(100, 100)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
 	if line == nil {
 		t.Fatal("Plot returned nil")
 	}
@@ -167,7 +167,7 @@ func TestMPLStyleLinesLinewidthReachesPlot(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
 	if line == nil {
 		t.Fatal("Plot returned nil")
 	}
@@ -177,7 +177,7 @@ func TestMPLStyleLinesLinewidthReachesPlot(t *testing.T) {
 
 	// An explicit option still wins over the rc value.
 	w := 0.7
-	line = ax.Plot([]float64{0, 1}, []float64{1, 0}, PlotOptions{LineWidth: &w})
+	line, _ = ax.Plot([]float64{0, 1}, []float64{1, 0}, PlotOptions{LineWidth: &w})
 	if line.W != 0.7 {
 		t.Fatalf("explicit LineWidth = %v, want 0.7", line.W)
 	}
@@ -313,7 +313,7 @@ func TestMPLStyleMarginsReachAutoscale(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	ax.Plot([]float64{0, 10}, []float64{0, 10})
+	_, _ = ax.Plot([]float64{0, 10}, []float64{0, 10})
 
 	xMin, xMax := ax.XScale.Domain()
 	yMin, yMax := ax.YScale.Domain()
@@ -365,7 +365,7 @@ func TestMPLStyleLinesStyleAndMarkersReachPlot(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
 	if line == nil {
 		t.Fatal("Plot returned nil")
 	}
@@ -386,7 +386,7 @@ func TestMPLStyleLinesStyleAndMarkersReachPlot(t *testing.T) {
 	solid := LineStyle("-")
 	marker := MarkerTriangleUp
 	size := 4.0
-	line2 := ax.Plot([]float64{0, 1}, []float64{1, 0}, PlotOptions{
+	line2, _ := ax.Plot([]float64{0, 1}, []float64{1, 0}, PlotOptions{
 		LineStyle:  solid,
 		Marker:     &marker,
 		MarkerSize: &size,
@@ -423,7 +423,7 @@ lines.antialiased: False
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
 	pointPx := theme.RC.DPI / 72
 	if len(line.Dashes) != 2 || math.Abs(line.Dashes[0]-4*pointPx) > 1e-9 ||
 		math.Abs(line.Dashes[1]-2*pointPx) > 1e-9 {
@@ -477,7 +477,7 @@ lines.antialiased: False
 	face := render.Color{B: 1, A: 1}
 	markerStyle := NewMarkerStyle(MarkerCircle)
 	markerStyle.FillStyle = MarkerFillTop
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
 		LineCap:         &capStyle,
 		LineJoin:        &joinStyle,
 		MarkerStyle:     &markerStyle,
@@ -572,7 +572,7 @@ func TestMPLStyleLinesStyleNoneSuppressesLine(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
 	if line == nil {
 		t.Fatal("Plot returned nil")
 	}

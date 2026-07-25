@@ -4881,15 +4881,11 @@
         },
         {
           "id": "method Axes.Plot",
-          "declaration": "func (Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D"
+          "declaration": "func (Axes) Plot(xVals, yVals any, opts ...PlotOptions) (*Line2D, error)"
         },
         {
           "id": "method Axes.PlotDate",
-          "declaration": "func (Axes) PlotDate(xVals []time.Time, yVals []float64, opts ...PlotOptions) *Line2D"
-        },
-        {
-          "id": "method Axes.PlotUnits",
-          "declaration": "func (Axes) PlotUnits(xVals, yVals any, opts ...PlotOptions) (*Line2D, error)"
+          "declaration": "func (Axes) PlotDate(xVals []time.Time, yVals []float64, opts ...PlotOptions) (*Line2D, error)"
         },
         {
           "id": "method Axes.ProjectionName",
@@ -8903,7 +8899,7 @@
         },
         {
           "id": "func Plot",
-          "declaration": "func Plot(x, y []float64, opts ...core.PlotOptions) *core.Line2D"
+          "declaration": "func Plot(x, y any, opts ...core.PlotOptions) (*core.Line2D, error)"
         },
         {
           "id": "func Plot3D",
@@ -8911,7 +8907,7 @@
         },
         {
           "id": "func PlotDate",
-          "declaration": "func PlotDate(x []time.Time, y []float64, opts ...core.PlotOptions) *core.Line2D"
+          "declaration": "func PlotDate(x []time.Time, y []float64, opts ...core.PlotOptions) (*core.Line2D, error)"
         },
         {
           "id": "func Quiver",

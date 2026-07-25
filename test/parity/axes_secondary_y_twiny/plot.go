@@ -30,7 +30,7 @@ func Plot() *core.Figure {
 	host.SetTitle("TwinY")
 	host.SetXLabel("bottom x")
 	host.SetYLabel("shared y")
-	host.Plot(
+	_, _ = host.Plot(
 		[]float64{0, 1, 2, 3, 4},
 		[]float64{0, 1, 2, 3, 4},
 		core.PlotOptions{Color: &blue, LineWidth: &lineWidth},
@@ -45,7 +45,7 @@ func Plot() *core.Figure {
 	if twin == nil {
 		panic("TwinY returned nil")
 	}
-	twin.Plot(
+	_, _ = twin.Plot(
 		[]float64{10, 20, 30, 40, 50},
 		[]float64{4, 3, 2, 1, 0},
 		core.PlotOptions{Color: &orange, LineWidth: &lineWidth},
@@ -64,7 +64,7 @@ func Plot() *core.Figure {
 	primary.SetTitle("SecondaryYAxis")
 	primary.SetXLabel("sample")
 	primary.SetYLabel("Celsius")
-	primary.Plot(
+	_, _ = primary.Plot(
 		[]float64{0, 1, 2, 3, 4},
 		[]float64{0, 20, 40, 60, 100},
 		core.PlotOptions{Color: &blue, LineWidth: &lineWidth},

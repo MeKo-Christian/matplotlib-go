@@ -57,8 +57,8 @@ func plot(opts ...style.Option) *core.Figure {
 	orange := render.Color{R: 0.84, G: 0.35, B: 0.18, A: 1}
 	lwSignal := 2.2
 	lwMod := 1.7
-	mainAx.Plot(x, signal, core.PlotOptions{Color: &blue, LineWidth: &lwSignal, Label: "signal"})
-	mainAx.Plot(x, modulation, core.PlotOptions{Color: &orange, LineWidth: &lwMod, Label: "modulation"})
+	_, _ = mainAx.Plot(x, signal, core.PlotOptions{Color: &blue, LineWidth: &lwSignal, Label: "signal"})
+	_, _ = mainAx.Plot(x, modulation, core.PlotOptions{Color: &orange, LineWidth: &lwMod, Label: "modulation"})
 	mainAx.AddLegend()
 
 	span := widgets.NewSpanSelector(mainAx, "horizontal")
@@ -91,7 +91,7 @@ func plot(opts ...style.Option) *core.Figure {
 	auxAx.SetTitle("shared cursor")
 	auxAx.SetXLim(0, 2*math.Pi)
 	auxAx.SetYLim(-1, 1)
-	auxAx.Plot(x, modulation, core.PlotOptions{Color: &orange, LineWidth: &lwMod})
+	_, _ = auxAx.Plot(x, modulation, core.PlotOptions{Color: &orange, LineWidth: &lwMod})
 	auxAx.AddYGrid()
 	multi := widgets.NewMultiCursor(mainAx, auxAx)
 	multi.SetFigurePoint(geom.Pt{X: Width * 0.72, Y: Height * 0.32})

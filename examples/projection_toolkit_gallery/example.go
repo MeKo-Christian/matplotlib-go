@@ -93,7 +93,7 @@ func addPolarPanel(fig *core.Figure, rect geom.Rect) {
 	width := 2.0
 	fill := render.Color{R: 0.18, G: 0.50, B: 0.82, A: 0.22}
 	ax.Fill(theta, r, core.FillOptions{Color: &fill})
-	ax.Plot(theta, r, core.PlotOptions{Color: &blue, LineWidth: &width})
+	_, _ = ax.Plot(theta, r, core.PlotOptions{Color: &blue, LineWidth: &width})
 }
 
 func addGeoPanel(fig *core.Figure, rect geom.Rect, projection, title string, lonMin, lonMax float64) {
@@ -119,7 +119,7 @@ func addGeoPanel(fig *core.Figure, rect geom.Rect, projection, title string, lon
 		lat[i] = 0.35 * math.Sin(3*lon[i])
 	}
 	width := 1.8
-	ax.Plot(lon, lat, core.PlotOptions{Color: &blue, LineWidth: &width})
+	_, _ = ax.Plot(lon, lat, core.PlotOptions{Color: &blue, LineWidth: &width})
 }
 
 func addRadarPanel(fig *core.Figure, rect geom.Rect) {
@@ -144,7 +144,7 @@ func addRadarPanel(fig *core.Figure, rect geom.Rect) {
 	fill := render.Color{R: 0.18, G: 0.50, B: 0.82, A: 0.22}
 	width := 2.0
 	ax.Fill(closedAngles, closedValues, core.FillOptions{Color: &fill})
-	ax.Plot(closedAngles, closedValues, core.PlotOptions{Color: &blue, LineWidth: &width})
+	_, _ = ax.Plot(closedAngles, closedValues, core.PlotOptions{Color: &blue, LineWidth: &width})
 }
 
 func addSkewTPanel(fig *core.Figure, rect geom.Rect) {
@@ -175,8 +175,8 @@ func addSkewTPanel(fig *core.Figure, rect geom.Rect) {
 	temperature := []float64{24, 20, 15, 5, -4, -14, -28, -43, -51, -58}
 	dewpoint := []float64{18, 14, 8, -4, -14, -25, -38, -50, -57, -64}
 	width := 2.0
-	ax.Plot(temperature, pressure, core.PlotOptions{Color: &red, LineWidth: &width, Label: "temp"})
-	ax.Plot(dewpoint, pressure, core.PlotOptions{Color: &green, LineWidth: &width, Label: "dew"})
+	_, _ = ax.Plot(temperature, pressure, core.PlotOptions{Color: &red, LineWidth: &width, Label: "temp"})
+	_, _ = ax.Plot(dewpoint, pressure, core.PlotOptions{Color: &green, LineWidth: &width, Label: "dew"})
 	ax.AddLegend()
 }
 
@@ -199,7 +199,7 @@ func addAxisArtistPanel(fig *core.Figure, rect geom.Rect) {
 		cosScaled[i] = 55 + 35*math.Cos(x[i]*0.8)
 	}
 	width := 2.0
-	ax.Plot(x, sine, core.PlotOptions{Color: &blue, LineWidth: &width, Label: "sin"})
+	_, _ = ax.Plot(x, sine, core.PlotOptions{Color: &blue, LineWidth: &width, Label: "sin"})
 	referenceWidth := 1.2
 	reference := render.Color{R: 0.26, G: 0.26, B: 0.30, A: 1}
 	ax.AxHLine(0, core.HLineOptions{Color: &reference, LineWidth: &referenceWidth, Dashes: []float64{5 * 36.0 / DPI, 3 * 36.0 / DPI}})
@@ -208,7 +208,7 @@ func addAxisArtistPanel(fig *core.Figure, rect geom.Rect) {
 	overlay := ax.TwinX()
 	if overlay != nil {
 		overlay.SetYLim(0, 100)
-		overlay.Plot(x, cosScaled, core.PlotOptions{Color: &orange, LineWidth: &width, Label: "scaled cos"})
+		_, _ = overlay.Plot(x, cosScaled, core.PlotOptions{Color: &orange, LineWidth: &width, Label: "scaled cos"})
 		if right := overlay.RightAxis(); right != nil {
 			right.Color = orange
 		}

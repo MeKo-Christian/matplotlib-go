@@ -41,7 +41,7 @@ func Plot() *core.Figure {
 	edgeWidth := 0.0
 	errorCap := 6.0
 
-	ax.Plot(x, y, core.PlotOptions{
+	_, _ = ax.Plot(x, y, core.PlotOptions{
 		Color:     &lineColor,
 		LineWidth: &lineWidth,
 	})

@@ -41,7 +41,7 @@ func Plot() *core.Figure {
 	if _, err := ax.FillBetweenUnits(dateValues, lower, upper, core.FillOptions{Color: &fillColor}); err != nil {
 		panic(err)
 	}
-	if _, err := ax.PlotUnits(dateValues, []float64{8, 12, 9, 15, 13}, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth}); err != nil {
+	if _, err := ax.Plot(dateValues, []float64{8, 12, 9, 15, 13}, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth}); err != nil {
 		panic(err)
 	}
 	ax.XAxis.Locator = dates.DayLocator{ByMonthDay: []int{5, 12, 19}, Location: time.UTC}

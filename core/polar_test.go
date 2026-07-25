@@ -118,7 +118,7 @@ func TestPolarPlotKeepsProjectionDomain(t *testing.T) {
 		t.Fatal("expected polar axes")
 	}
 
-	ax.Plot([]float64{0, math.Pi}, []float64{0.2, 0.8})
+	_, _ = ax.Plot([]float64{0, math.Pi}, []float64{0.2, 0.8})
 
 	xMin, xMax := ax.XScale.Domain()
 	if !approx(xMin, 0, 1e-9) || !approx(xMax, 2*math.Pi, 1e-9) {

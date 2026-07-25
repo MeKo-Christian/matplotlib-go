@@ -159,28 +159,118 @@ func (s *categoryAxisState) axisInfo() AxisInfo {
 	}
 }
 
-// PlotUnits converts non-float slice data using the axis units machinery and
-// then draws a standard line artist.
-func (a *Axes) PlotUnits(xVals, yVals any, opts ...PlotOptions) (*Line2D, error) {
-	x, err := a.convertValues(xVals, true)
-	if err != nil {
-		return nil, err
-	}
-	y, err := a.convertValues(yVals, false)
-	if err != nil {
-		return nil, err
-	}
-	return a.Plot(x, y, opts...), nil
-}
-
 // PlotDate plots date-time x-values against numeric y-values and configures the
 // x-axis with date locators/formatters.
-func (a *Axes) PlotDate(xVals []time.Time, yVals []float64, opts ...PlotOptions) *Line2D {
-	line, err := a.PlotUnits(xVals, yVals, opts...)
-	if err != nil {
+func (a *Axes) PlotDate(xVals []time.Time, yVals []float64, opts ...PlotOptions) (*Line2D, error) {
+	return a.Plot(xVals, yVals, opts...)
+}
+
+type unitAxisSnapshot struct {
+	axis *Axis
+	info AxisInfo
+}
+
+type unitConversionTransaction struct {
+	xRoot      *Axes
+	yRoot      *Axes
+	xUnits     *axisUnitsState
+	yUnits     *axisUnitsState
+	axisStates []unitAxisSnapshot
+	active     bool
+}
+
+func (a *Axes) beginUnitConversion() *unitConversionTransaction {
+	tx := &unitConversionTransaction{active: true}
+	if a == nil {
+		return tx
+	}
+
+	tx.xRoot = a.axisRoot(true)
+	tx.yRoot = a.axisRoot(false)
+	if tx.xRoot != nil {
+		tx.xUnits = tx.xRoot.xUnits
+		tx.xRoot.xUnits = cloneAxisUnitsState(tx.xUnits)
+		tx.snapshotAxis(tx.xRoot.XAxis)
+		tx.snapshotAxis(tx.xRoot.XAxisTop)
+	}
+	if tx.yRoot != nil {
+		tx.yUnits = tx.yRoot.yUnits
+		tx.yRoot.yUnits = cloneAxisUnitsState(tx.yUnits)
+		tx.snapshotAxis(tx.yRoot.YAxis)
+		tx.snapshotAxis(tx.yRoot.YAxisRight)
+	}
+	return tx
+}
+
+func (tx *unitConversionTransaction) snapshotAxis(axis *Axis) {
+	if tx == nil || axis == nil {
+		return
+	}
+	for _, snapshot := range tx.axisStates {
+		if snapshot.axis == axis {
+			return
+		}
+	}
+	tx.axisStates = append(tx.axisStates, unitAxisSnapshot{
+		axis: axis,
+		info: AxisInfo{
+			Locator:        axis.Locator,
+			Formatter:      axis.Formatter,
+			MinorLocator:   axis.MinorLocator,
+			MinorFormatter: axis.MinorFormatter,
+		},
+	})
+}
+
+func (tx *unitConversionTransaction) commit() {
+	if tx != nil {
+		tx.active = false
+	}
+}
+
+func (tx *unitConversionTransaction) rollback() {
+	if tx == nil || !tx.active {
+		return
+	}
+	tx.active = false
+	if tx.xRoot != nil {
+		tx.xRoot.xUnits = tx.xUnits
+	}
+	if tx.yRoot != nil {
+		tx.yRoot.yUnits = tx.yUnits
+	}
+	for _, snapshot := range tx.axisStates {
+		snapshot.axis.Locator = snapshot.info.Locator
+		snapshot.axis.Formatter = snapshot.info.Formatter
+		snapshot.axis.MinorLocator = snapshot.info.MinorLocator
+		snapshot.axis.MinorFormatter = snapshot.info.MinorFormatter
+	}
+}
+
+func cloneAxisUnitsState(state *axisUnitsState) *axisUnitsState {
+	if state == nil {
 		return nil
 	}
-	return line
+	cloned := *state
+	cloned.categories.order = append([]string(nil), state.categories.order...)
+	if state.categories.positions != nil {
+		cloned.categories.positions = make(map[string]float64, len(state.categories.positions))
+		for label, position := range state.categories.positions {
+			cloned.categories.positions[label] = position
+		}
+	}
+	if state.applied != nil {
+		cloned.applied = make(map[*Axis]AxisInfo, len(state.applied))
+		for axis, info := range state.applied {
+			cloned.applied[axis] = info
+		}
+	}
+	if state.kind == unitAxisCustom {
+		if factory := DefaultUnitsRegistry.lookup(state.customType); factory != nil {
+			cloned.converter = factory()
+		}
+	}
+	return &cloned
 }
 
 // ScatterUnits converts non-float slice data using the axis units machinery

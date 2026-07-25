@@ -32,7 +32,7 @@ func Plot() *core.Figure {
 	circle := core.MarkerCircle
 	square := core.MarkerSquare
 
-	ax.Plot([]float64{0.4, 1.4, 2.4, 3.4, 4.4, 5.4}, []float64{1.0, 1.7, 1.4, 2.2, 2.0, 2.7}, core.PlotOptions{
+	_, _ = ax.Plot([]float64{0.4, 1.4, 2.4, 3.4, 4.4, 5.4}, []float64{1.0, 1.7, 1.4, 2.2, 2.0, 2.7}, core.PlotOptions{
 		Color:     &blue,
 		LineWidth: &lineWidth,
 		Label:     "line",
@@ -51,7 +51,7 @@ func Plot() *core.Figure {
 		MarkerSize: &markerSize,
 		Label:      "errorbar",
 	})
-	handlerLine := ax.Plot([]float64{0.5, 1.6, 2.7, 3.8, 4.9}, []float64{4.5, 4.1, 4.35, 4.0, 4.25}, core.PlotOptions{
+	handlerLine, _ := ax.Plot([]float64{0.5, 1.6, 2.7, 3.8, 4.9}, []float64{4.5, 4.1, 4.35, 4.0, 4.25}, core.PlotOptions{
 		Color:     &purple,
 		LineWidth: &lineWidth,
 		Label:     "handler patch",

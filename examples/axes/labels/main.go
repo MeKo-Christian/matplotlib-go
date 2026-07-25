@@ -43,7 +43,7 @@ func main() {
 		y[i] = math.Sin(x[i])
 	}
 
-	ax.Plot(x, y, core.PlotOptions{Label: "sin(x)"})
+	_, _ = ax.Plot(x, y, core.PlotOptions{Label: "sin(x)"})
 
 	if err := fig.Save("labels.png"); err != nil {
 		fmt.Printf("Error: %v\n", err)

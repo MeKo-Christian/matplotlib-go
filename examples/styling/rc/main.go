@@ -53,7 +53,9 @@ func main() {
 	ax.SetYLabel("sin(x)")
 	ax.AddXGrid()
 	ax.AddYGrid()
-	pyplot.Plot(x, y, core.PlotOptions{Label: "sin(x)"})
+	if _, err := pyplot.Plot(x, y, core.PlotOptions{Label: "sin(x)"}); err != nil {
+		log.Fatalf("plot rc defaults: %v", err)
+	}
 	pyplot.Legend()
 	if err := pyplot.Savefig(filepath.Join(*outputDir, "rc_defaults.png")); err != nil {
 		log.Fatalf("save rc_defaults.png: %v", err)
@@ -79,7 +81,10 @@ func main() {
 	ax.SetYLabel("sin(x)")
 	ax.AddXGrid()
 	ax.AddYGrid()
-	pyplot.Plot(x, y, core.PlotOptions{Label: "sin(x)"})
+	if _, err := pyplot.Plot(x, y, core.PlotOptions{Label: "sin(x)"}); err != nil {
+		restore()
+		log.Fatalf("plot rc context: %v", err)
+	}
 	pyplot.Legend()
 	if err := pyplot.Savefig(filepath.Join(*outputDir, "rc_context.png")); err != nil {
 		restore()

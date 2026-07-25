@@ -28,7 +28,7 @@ func Plot() *core.Figure {
 	top.SetXLabel("fixed positions")
 	top.SetYLabel("value")
 	common.AddReferenceYGrid(top)
-	top.Plot(
+	_, _ = top.Plot(
 		[]float64{-6, -4, -2, 0, 2, 4, 6},
 		[]float64{0.18, 0.34, 0.47, 0.62, 0.74, 0.86, 0.92},
 		core.PlotOptions{Color: &color, LineWidth: &width},
@@ -42,7 +42,7 @@ func Plot() *core.Figure {
 	bottom.SetXLabel("index")
 	bottom.SetYLabel("value")
 	common.AddReferenceYGrid(bottom)
-	bottom.Plot(
+	_, _ = bottom.Plot(
 		[]float64{0, 1, 2, 3, 4, 5, 6, 7, 8},
 		[]float64{0.15, 0.28, 0.36, 0.51, 0.63, 0.70, 0.82, 0.88, 0.93},
 		core.PlotOptions{Color: &color, LineWidth: &width},

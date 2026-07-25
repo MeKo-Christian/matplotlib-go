@@ -50,10 +50,10 @@ func Render() image.Image {
 func addAlignmentSamples(ax *core.Axes) {
 	crossColor := render.Color{R: 0.70, G: 0.70, B: 0.74, A: 1}
 	for _, x := range []float64{0.9, 1.6, 2.3} {
-		ax.Plot([]float64{x, x}, []float64{2.6, 3.5}, core.PlotOptions{Color: &crossColor})
+		_, _ = ax.Plot([]float64{x, x}, []float64{2.6, 3.5}, core.PlotOptions{Color: &crossColor})
 	}
 	for _, y := range []float64{2.75, 3.05, 3.35} {
-		ax.Plot([]float64{0.5, 2.7}, []float64{y, y}, core.PlotOptions{Color: &crossColor})
+		_, _ = ax.Plot([]float64{0.5, 2.7}, []float64{y, y}, core.PlotOptions{Color: &crossColor})
 	}
 	ax.Text(0.9, 3.35, "left/top", core.TextOptions{HAlign: core.TextAlignLeft, VAlign: core.TextVAlignTop, FontSize: 10})
 	ax.Text(1.6, 3.05, "center", core.TextOptions{HAlign: core.TextAlignCenter, VAlign: core.TextVAlignMiddle, FontSize: 10})

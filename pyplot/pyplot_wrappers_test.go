@@ -18,7 +18,9 @@ import (
 func TestStatefulHelpersDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 
-	Plot([]float64{0, 1, 2}, []float64{1, 2, 3}, core.PlotOptions{Label: "line"})
+	if _, err := Plot([]float64{0, 1, 2}, []float64{1, 2, 3}, core.PlotOptions{Label: "line"}); err != nil {
+		t.Fatalf("Plot() returned error: %v", err)
+	}
 	Title("Demo")
 	XLabel("time")
 	YLabel("value")
@@ -78,7 +80,10 @@ func TestPyplotWrappersShareCoreAxesPath(t *testing.T) {
 	// The artist returned by the pyplot wrapper must be identical to the one the
 	// current axes appended -- i.e. the wrapper added nothing of its own and
 	// delegated straight to Axes.Plot.
-	wrapperLine := Plot(x, y)
+	wrapperLine, err := Plot(x, y)
+	if err != nil {
+		t.Fatalf("Plot() returned error: %v", err)
+	}
 	ax := GCA()
 	if wrapperLine == nil {
 		t.Fatal("Plot() returned nil")
@@ -90,7 +95,7 @@ func TestPyplotWrappersShareCoreAxesPath(t *testing.T) {
 	// Calling the object-oriented API on the same current axes must use the same
 	// path and append an equivalent *core.Line2D, increasing the artist count by
 	// exactly one.
-	directLine := ax.Plot(x, y)
+	directLine, _ := ax.Plot(x, y)
 	if directLine == nil {
 		t.Fatal("GCA().Plot() returned nil")
 	}
@@ -117,6 +122,25 @@ func TestPyplotWrappersShareCoreAxesPath(t *testing.T) {
 	Suptitle("shared")
 	if got := GCF().SupTitle; got != "shared" {
 		t.Fatalf("pyplot.Suptitle delegated to %q, want %q", got, "shared")
+	}
+}
+
+func TestPlotAcceptsUnitCapableValues(t *testing.T) {
+	resetForTests()
+	x := []time.Time{
+		time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC),
+	}
+
+	line, err := Plot(x, []float64{1, 2})
+	if err != nil {
+		t.Fatalf("Plot() returned error: %v", err)
+	}
+	if line == nil {
+		t.Fatal("Plot() returned nil line")
+	}
+	if _, ok := GCA().XAxis.Locator.(dates.DateLocator); !ok {
+		t.Fatalf("x-axis locator = %T, want dates.DateLocator", GCA().XAxis.Locator)
 	}
 }
 
@@ -435,7 +459,7 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 		time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC),
 	}
-	if line := PlotDate(dateValues, []float64{1, 2}); line == nil {
+	if line, err := PlotDate(dateValues, []float64{1, 2}); err != nil || line == nil {
 		t.Fatal("PlotDate() returned nil")
 	}
 	if _, ok := GCA().XAxis.Locator.(dates.DateLocator); !ok {

@@ -33,8 +33,8 @@ func main() {
 		y2[i] = math.Cos(x[i])*1.5 + 0.5         // shifted cosine
 	}
 
-	ax.Plot(x, y1, core.PlotOptions{Label: "2.5·sin(x)"})
-	ax.Plot(x, y2, core.PlotOptions{Label: "1.5·cos(x)+0.5"})
+	_, _ = ax.Plot(x, y1, core.PlotOptions{Label: "2.5·sin(x)"})
+	_, _ = ax.Plot(x, y2, core.PlotOptions{Label: "1.5·cos(x)+0.5"})
 
 	// Auto-scale with 5% margin; no need to specify XScale/YScale manually.
 	ax.AutoScale(0.05)

@@ -35,6 +35,26 @@ Date conversion moved with the date tick API:
 `dates.Date2Num`/`Num2Date`/`SetEpoch`. The getter was made idiomatic during
 the move: replace `core.GetEpoch()` with `dates.Epoch()`.
 
+`Axes.PlotUnits` was folded into the primary plotting entry point. Replace:
+
+```go
+line, err := ax.PlotUnits(x, y, options)
+```
+
+with:
+
+```go
+line, err := ax.Plot(x, y, options)
+```
+
+`Axes.Plot` now accepts unit-capable slice values and returns
+`(*core.Line2D, error)`. It rejects nil axes, empty or mismatched inputs,
+unsupported value types, incompatible axis units, and more than one
+`PlotOptions` value. Rejection is transactional: it does not add an artist,
+advance the property cycle, or retain partial unit/locator/formatter changes.
+`PlotDate`, `pyplot.Plot`, and `pyplot.PlotDate` return the same error rather
+than suppressing it.
+
 The same getter pass removed the remaining exported `GetX` spellings:
 
 | Before                                      | After                                     |

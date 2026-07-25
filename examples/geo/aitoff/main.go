@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	fig := example.Plot()
+	fig, _ := example.Plot()
 	if err := fig.Save("geo_aitoff_axes.png"); err != nil {
 		log.Fatalf("save: %v", err)
 	}

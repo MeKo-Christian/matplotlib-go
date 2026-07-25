@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	fig := dashes.Plot()
+	fig, _ := dashes.Plot()
 	if err := fig.Save("dashes.png"); err != nil {
 		log.Fatalf("Failed to save PNG: %v", err)
 	}

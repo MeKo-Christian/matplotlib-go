@@ -31,7 +31,7 @@ func Plot() *core.Figure {
 	edge := render.Color{R: 0.09, G: 0.36, B: 0.09, A: 1}
 	lineWidth := 1.4
 	markerSize := core.ScatterAreaFromRadius(8.0, 100.0)
-	if _, err := ax.PlotUnits(distances, pace, core.PlotOptions{Color: &brown, LineWidth: &lineWidth}); err != nil {
+	if _, err := ax.Plot(distances, pace, core.PlotOptions{Color: &brown, LineWidth: &lineWidth}); err != nil {
 		panic(err)
 	}
 	if _, err := ax.ScatterUnits(distances, pace, core.ScatterOptions{Color: &green, EdgeColor: &edge, Size: &markerSize}); err != nil {

@@ -114,11 +114,16 @@ goldens remain byte-identical to the pre-break baseline.
 registry synchronization, example migration, API/parity remapping, migration
 notes, and the changelog draft are complete. No golden/reference fixture
 changed. Remaining Phase 2 work is the unified rejected-input error convention
-and `*Units` fold, the options/raw-enum conversion, mutable-field cleanup, and
-the remaining option/scalar-map consolidation paths. Core and plot3d alpha
-multiplier paths now share `render.Color.WithAlphaMultiplier`, and 3D scalar
-maps now derive their configuration through `core.PlotOptions.ScalarMapConfig`,
-with no golden fixture changes. `just test` reaches only the
+and the `ScatterUnits`/`BarUnits`/`FillBetweenUnits` folds, the
+options/raw-enum conversion, mutable-field cleanup, and the remaining
+option/scalar-map consolidation paths. `Axes.PlotUnits` is now folded into the
+transactional, unit-capable `Axes.Plot` method, which returns `(*Line2D, error)`
+and rejects extra option values; `PlotDate` and the corresponding pyplot
+wrappers propagate that error. Core and plot3d alpha multiplier paths share
+`render.Color.WithAlphaMultiplier`, and 3D scalar maps derive their
+configuration through
+`core.PlotOptions.ScalarMapConfig`, with no golden fixture changes. `just test`
+reaches only the
 pre-existing `mathtext_basic`, `mathtext_fractions`, and `mathtext_integrals`
 golden/reference failures (plus the existing `mathtext_basic` SVG
 font-family mismatch); all other packages pass.

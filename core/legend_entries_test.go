@@ -16,10 +16,10 @@ func TestLegendCollectEntries(t *testing.T) {
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
 
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "line"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "line"})
 	ax.Scatter([]float64{0.5}, []float64{0.5}, ScatterOptions{Label: "points"})
 	ax.Bar([]float64{1}, []float64{2}, BarOptions{Label: "bars"})
-	ax.Plot([]float64{0, 1}, []float64{1, 0})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{1, 0})
 
 	legend := ax.AddLegend()
 	entries := legend.collectEntries()
@@ -49,7 +49,7 @@ func TestLegendCollectsLineMarkers(t *testing.T) {
 	face := render.Color{R: 1, A: 0.7}
 	edge := render.Color{B: 1, A: 0.5}
 	edgeWidth := 2.0
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
 		Label:           "line markers",
 		Marker:          &marker,
 		MarkerFaceColor: &face,
@@ -76,9 +76,9 @@ func TestLegendDrawKeepsCollectionOrderAfterZSorting(t *testing.T) {
 		Min: geom.Pt{X: 0.1, Y: 0.1},
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "line"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "line"})
 	ax.Scatter([]float64{0.5}, []float64{0.5}, ScatterOptions{Label: "scatter"})
-	ax.Plot([]float64{0, 1}, []float64{1, 2}, PlotOptions{Label: "handler"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{1, 2}, PlotOptions{Label: "handler"})
 	legend := ax.AddLegend()
 	legend.Location = LegendUpperLeft
 	legend.NumColumns = 2
@@ -103,9 +103,9 @@ func TestLegendCollectsErrorBarsAfterPlainArtistsLikeMatplotlibContainers(t *tes
 		Min: geom.Pt{X: 0.1, Y: 0.1},
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "line"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "line"})
 	ax.ErrorBar([]float64{0.5}, []float64{0.5}, nil, []float64{0.1}, ErrorBarOptions{Label: "errorbar"})
-	ax.Plot([]float64{0, 1}, []float64{1, 2}, PlotOptions{Label: "handler"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{1, 2}, PlotOptions{Label: "handler"})
 
 	entries := ax.AddLegend().collectEntries()
 	labels := make([]string, len(entries))
@@ -169,7 +169,7 @@ func TestLegendSetHandlerOverridesCollectedArtistSample(t *testing.T) {
 		Min: geom.Pt{X: 0.1, Y: 0.1},
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "custom"})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "custom"})
 	legend := ax.AddLegend()
 	overrideFill := render.Color{R: 0.7, G: 0.2, B: 0.1, A: 1}
 	legend.SetHandler(line, LegendEntryOptions{

@@ -47,8 +47,8 @@ func Plot() *core.Figure {
 	orange := render.Color{R: 0.84, G: 0.35, B: 0.18, A: 1}
 	lwSignal := 2.2
 	lwMod := 1.7
-	mainAx.Plot(x, signal, core.PlotOptions{Color: &blue, LineWidth: &lwSignal, Label: "signal"})
-	mainAx.Plot(x, modulation, core.PlotOptions{Color: &orange, LineWidth: &lwMod, Label: "modulation"})
+	_, _ = mainAx.Plot(x, signal, core.PlotOptions{Color: &blue, LineWidth: &lwSignal, Label: "signal"})
+	_, _ = mainAx.Plot(x, modulation, core.PlotOptions{Color: &orange, LineWidth: &lwMod, Label: "modulation"})
 	mainAx.AddLegend()
 
 	spanAlpha := 0.18
@@ -93,7 +93,7 @@ func Plot() *core.Figure {
 	auxGrid := auxAx.AddYGrid()
 	auxGrid.Color = gridColor
 	auxGrid.LineWidth = gridWidth
-	auxAx.Plot(x, modulation, core.PlotOptions{Color: &orange, LineWidth: &lwMod})
+	_, _ = auxAx.Plot(x, modulation, core.PlotOptions{Color: &orange, LineWidth: &lwMod})
 	auxAx.AxVLine(4.45, core.VLineOptions{Color: &refColor, LineWidth: &refWidth, Alpha: &refAlpha})
 	auxAx.AxHLine(0.0, core.HLineOptions{Color: &refColor, LineWidth: &refWidth, Alpha: &refAlpha})
 

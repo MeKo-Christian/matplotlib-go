@@ -69,7 +69,7 @@ func configureAxes(ax *core.Axes, title, xlabel, ylabel string) {
 func addLocatorPanel(fig *core.Figure, rect geom.Rect) {
 	ax := fig.AddAxes(rect)
 	configureAxes(ax, "Major and Minor Locators", "MultipleLocator + minor ticks", "score")
-	ax.Plot(
+	_, _ = ax.Plot(
 		[]float64{0, 1.5, 3, 4.5, 6},
 		[]float64{0.12, 0.38, 0.58, 0.74, 0.90},
 		core.PlotOptions{Color: &blue, LineWidth: ptr(2.0)},
@@ -88,7 +88,7 @@ func addLocatorPanel(fig *core.Figure, rect geom.Rect) {
 func addLogPanel(fig *core.Figure, rect geom.Rect) {
 	ax := fig.AddAxes(rect)
 	configureAxes(ax, "Log Scale and Minor Grid", "base-10 log", "score")
-	ax.Plot(
+	_, _ = ax.Plot(
 		[]float64{1, 3, 10, 30, 100, 300, 1000},
 		[]float64{0.10, 0.22, 0.38, 0.55, 0.70, 0.82, 0.91},
 		core.PlotOptions{Color: &orange, LineWidth: ptr(2.0)},
@@ -109,7 +109,7 @@ func addScalePanel(fig *core.Figure, rect geom.Rect) {
 	ax := fig.AddAxes(rect)
 	configureAxes(ax, "Signed Scale Defaults", "symlog with signed markers", "response")
 	x := []float64{-1000, -100, -10, -1, 0, 1, 10, 100, 1000}
-	ax.Plot(x, []float64{0.12, 0.21, 0.32, 0.44, 0.51, 0.59, 0.70, 0.82, 0.91}, core.PlotOptions{Color: &green, LineWidth: ptr(2.0)})
+	_, _ = ax.Plot(x, []float64{0.12, 0.21, 0.32, 0.44, 0.51, 0.59, 0.70, 0.82, 0.91}, core.PlotOptions{Color: &green, LineWidth: ptr(2.0)})
 	ax.Scatter(x, []float64{0.15, 0.24, 0.35, 0.47, 0.54, 0.62, 0.73, 0.85, 0.94}, core.ScatterOptions{Color: &purple, Size: ptr(core.ScatterAreaFromRadius(4.5, DPI))})
 	_ = ax.SetXScale("symlog", transform.WithScaleBase(10), transform.WithScaleLinThresh(1))
 	ax.SetXLim(-1000, 1000)
@@ -120,7 +120,7 @@ func addFormatterPanel(fig *core.Figure, rect geom.Rect) {
 	ax := fig.AddAxes(rect)
 	configureAxes(ax, "Formatter Families", "position", "formatted values")
 	x := []float64{0, 1, 2, 3, 4}
-	ax.Plot(x, []float64{0.15, 0.32, 0.48, 0.66, 0.86}, core.PlotOptions{Color: &purple, LineWidth: ptr(2.0)})
+	_, _ = ax.Plot(x, []float64{0.15, 0.32, 0.48, 0.66, 0.86}, core.PlotOptions{Color: &purple, LineWidth: ptr(2.0)})
 	ax.SetXLim(0, 4)
 	ax.SetYLim(0, 1)
 	ax.XAxis.Locator = ticker.FixedLocator{TicksList: x}
@@ -141,7 +141,7 @@ func addDateCategoryPanel(fig *core.Figure, rect geom.Rect) {
 		time.Date(2024, 2, 14, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, 2, 20, 0, 0, 0, 0, time.UTC),
 	}
-	if _, err := ax.PlotUnits(dateValues, []float64{0.08, 0.38, 0.30, 0.48, 0.42}, core.PlotOptions{Color: &brown, LineWidth: ptr(2.0)}); err != nil {
+	if _, err := ax.Plot(dateValues, []float64{0.08, 0.38, 0.30, 0.48, 0.42}, core.PlotOptions{Color: &brown, LineWidth: ptr(2.0)}); err != nil {
 		panic(err)
 	}
 	ax.XAxis.Locator = dates.DayLocator{ByMonthDay: []int{1, 7, 14, 21}, Location: time.UTC}
@@ -167,7 +167,7 @@ func addCustomUnitPanel(fig *core.Figure, rect geom.Rect) {
 	configureAxes(ax, "Custom Unit Converter", "distance", "pace")
 	distances := []common.TestDistanceKM{5, 10, 21.1, 30, 42.2}
 	pace := []float64{0.75, 0.69, 0.58, 0.52, 0.60}
-	if _, err := ax.PlotUnits(distances, pace, core.PlotOptions{Color: &blue, LineWidth: ptr(2.0)}); err != nil {
+	if _, err := ax.Plot(distances, pace, core.PlotOptions{Color: &blue, LineWidth: ptr(2.0)}); err != nil {
 		panic(err)
 	}
 	if _, err := ax.ScatterUnits(distances, pace, core.ScatterOptions{Color: &green, EdgeColor: &blue, Size: ptr(core.ScatterAreaFromRadius(5.0, DPI))}); err != nil {

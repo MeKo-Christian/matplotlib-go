@@ -28,8 +28,8 @@ func main() {
 	}
 
 	// Legend entries are driven by artist labels, matching Matplotlib's legend().
-	ax.Plot(x, sine, core.PlotOptions{Label: "sin(x)"})
-	ax.Plot(x, cosine, core.PlotOptions{
+	_, _ = ax.Plot(x, sine, core.PlotOptions{Label: "sin(x)"})
+	_, _ = ax.Plot(x, cosine, core.PlotOptions{
 		Label:  "0.7 cos(2x)",
 		Dashes: []float64{8, 5},
 	})

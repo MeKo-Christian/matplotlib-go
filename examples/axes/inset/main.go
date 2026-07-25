@@ -27,7 +27,7 @@ func main() {
 	x, y := wave(400, 0, 10)
 	lineColor := render.Color{R: 0.12, G: 0.36, B: 0.72, A: 1}
 	lineWidth := 2.0
-	ax.Plot(x, y, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth})
+	_, _ = ax.Plot(x, y, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth})
 	ax.AddGrid(core.AxisBottom)
 	ax.AddGrid(core.AxisLeft)
 
@@ -40,7 +40,7 @@ func main() {
 		[2]float64{-0.2, 1.05},
 	)
 	inset.SetTitle("detail")
-	inset.Plot(x, y, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth})
+	_, _ = inset.Plot(x, y, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth})
 	inset.AddGrid(core.AxisBottom)
 	inset.AddGrid(core.AxisLeft)
 

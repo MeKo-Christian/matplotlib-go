@@ -48,7 +48,7 @@ func Plot() *core.Figure {
 	fillColor := render.Color{R: 0.36, G: 0.56, B: 0.92, A: 0.2}
 	lineWidth := 2.2
 
-	ax.Plot(theta, radius, core.PlotOptions{
+	_, _ = ax.Plot(theta, radius, core.PlotOptions{
 		Color:     &lineColor,
 		LineWidth: &lineWidth,
 		Label:     "r = 0.55 + 0.35 cos(5theta)",

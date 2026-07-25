@@ -47,7 +47,7 @@ func addPanel(fig *core.Figure, rect geom.Rect, title string, ticks []float64, f
 	}
 	color := render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}
 	width := 2.0
-	ax.Plot(ticks, y, core.PlotOptions{Color: &color, LineWidth: &width})
+	_, _ = ax.Plot(ticks, y, core.PlotOptions{Color: &color, LineWidth: &width})
 	ax.SetXLim(ticks[0], ticks[len(ticks)-1])
 	ax.SetYLim(0, 1)
 	ax.XAxis.Locator = ticker.FixedLocator{TicksList: ticks}

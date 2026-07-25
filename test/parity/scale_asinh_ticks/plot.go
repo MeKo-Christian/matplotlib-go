@@ -30,7 +30,7 @@ func Plot() *core.Figure {
 	y := []float64{0.12, 0.22, 0.33, 0.45, 0.52, 0.60, 0.71, 0.82, 0.90}
 	color := render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}
 	width := 2.0
-	ax.Plot(x, y, core.PlotOptions{Color: &color, LineWidth: &width})
+	_, _ = ax.Plot(x, y, core.PlotOptions{Color: &color, LineWidth: &width})
 
 	ax.SetXLim(-1000, 1000)
 	ax.SetYLim(0, 1)

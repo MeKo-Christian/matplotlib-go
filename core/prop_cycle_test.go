@@ -31,8 +31,8 @@ func TestPlotConsumesMultiPropertyCycle(t *testing.T) {
 	fig.RC.PropCycle = multiPropCycle(t)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 
-	first := ax.Plot([]float64{0, 1}, []float64{0, 1})
-	second := ax.Plot([]float64{0, 1}, []float64{1, 0})
+	first, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	second, _ := ax.Plot([]float64{0, 1}, []float64{1, 0})
 
 	// First step: solid line, circle marker, width 1.5.
 	if got, want := first.Col, (render.Color{R: 1, A: 1}); got != want {
@@ -71,7 +71,7 @@ func TestPlotExplicitOptionsOverrideCycle(t *testing.T) {
 	lw := 7.0
 	marker := MarkerTriangle
 	dashes := []float64{2, 2}
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
 		LineWidth: &lw,
 		Marker:    &marker,
 		Dashes:    dashes,
@@ -96,7 +96,7 @@ func TestPlotColorOnlyCycleUnchanged(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 	palette := fig.RC.Palette()
 
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
 	if line.Dashes != nil || line.MarkerSet || line.W != 1.5 {
 		t.Fatalf("color-only defaults changed: dashes=%v markerSet=%v w=%v", line.Dashes, line.MarkerSet, line.W)
 	}

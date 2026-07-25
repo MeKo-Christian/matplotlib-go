@@ -654,7 +654,7 @@ func plotSpectrumResult(a *Axes, x, y []float64, opts PlotOptions) *SpectrumResu
 	if len(x) == 0 || len(y) == 0 {
 		return nil
 	}
-	line := a.Plot(x, y, opts)
+	line := a.plot(x, y, opts)
 	if line == nil {
 		return nil
 	}
@@ -718,7 +718,7 @@ func plotCorrelationResult(a *Axes, lags, values []float64, opts PlotOptions) *C
 	if len(lags) == 0 || len(values) == 0 {
 		return nil
 	}
-	line := a.Plot(lags, values, opts)
+	line := a.plot(lags, values, opts)
 	if line == nil {
 		return nil
 	}

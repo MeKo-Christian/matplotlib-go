@@ -65,7 +65,7 @@ func Plot() *core.Figure {
 	}
 	lineColor := render.Color{R: 0.08, G: 0.16, B: 0.30, A: 1}
 	lineWidth := 1.8
-	ax.Plot(lineTheta, lineRadius, core.PlotOptions{
+	_, _ = ax.Plot(lineTheta, lineRadius, core.PlotOptions{
 		Color:     &lineColor,
 		LineWidth: &lineWidth,
 		Label:     "vector line",

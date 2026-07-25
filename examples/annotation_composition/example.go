@@ -39,7 +39,7 @@ func Plot() *core.Figure {
 		x[i] = xv
 		y[i] = math.Sin(xv)*math.Exp(-0.015*xv) + 0.2*math.Cos(0.5*xv)
 	}
-	ax.Plot(x, y, core.PlotOptions{Label: "signal"})
+	_, _ = ax.Plot(x, y, core.PlotOptions{Label: "signal"})
 	ax.SetXLim(0, 6*math.Pi)
 	ax.SetYLim(-1.2, 1.2)
 	ax.AddLegend()

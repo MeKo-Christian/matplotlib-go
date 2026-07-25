@@ -21,7 +21,7 @@ func main() {
 	addr := flag.String("addr", ":8080", "address for webagg")
 	flag.Parse()
 
-	fig := basic_line.Plot()
+	fig, _ := basic_line.Plot()
 	switch *backend {
 	case "headless":
 		manager, _, err := backends.NewManager("gobasic", backends.SimpleConfig(

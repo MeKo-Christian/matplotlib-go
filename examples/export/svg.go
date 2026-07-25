@@ -43,8 +43,8 @@ func main() {
 		y1[i] = 0.8 * (x[i] - 5)
 		y2[i] = 0.5 * (1 - x[i]/5)
 	}
-	ax.Plot(x, y1, core.PlotOptions{Label: "line 1"})
-	ax.Plot(x, y2, core.PlotOptions{Label: "line 2"})
+	_, _ = ax.Plot(x, y1, core.PlotOptions{Label: "line 1"})
+	_, _ = ax.Plot(x, y2, core.PlotOptions{Label: "line 2"})
 
 	// Add a legend and a rotated annotation so all text paths remain native text.
 	ax.Add(&core.Line2D{

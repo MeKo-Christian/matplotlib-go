@@ -32,7 +32,7 @@ func Plot() *core.Figure {
 	common.AddReferenceYGrid(top)
 	x := []float64{0, 4, 16, 36, 64, 100}
 	y := []float64{0.12, 0.25, 0.41, 0.58, 0.76, 0.90}
-	top.Plot(x, y, core.PlotOptions{Color: &color, LineWidth: &width})
+	_, _ = top.Plot(x, y, core.PlotOptions{Color: &color, LineWidth: &width})
 	top.SetXLim(0, 100)
 	top.SetYLim(0, 1)
 	_ = top.SetXScale(
@@ -50,7 +50,7 @@ func Plot() *core.Figure {
 	common.AddReferenceYGrid(bottom)
 	x = []float64{1, 10, 100, 1000, 10000}
 	y = []float64{0.12, 0.31, 0.52, 0.72, 0.90}
-	bottom.Plot(x, y, core.PlotOptions{Color: &color, LineWidth: &width})
+	_, _ = bottom.Plot(x, y, core.PlotOptions{Color: &color, LineWidth: &width})
 	bottom.SetXLim(1, 10000)
 	bottom.SetYLim(0, 1)
 	_ = bottom.SetXScale(

@@ -27,7 +27,7 @@ func Plot() *core.Figure {
 	buttCap := render.CapButt
 	filled := core.MarkerCircle
 	edgeAuto := core.AutoMarkerColor()
-	ax.Plot([]float64{0.7, 2.0, 3.3}, []float64{5.35, 5.65, 5.35}, core.PlotOptions{
+	_, _ = ax.Plot([]float64{0.7, 2.0, 3.3}, []float64{5.35, 5.65, 5.35}, core.PlotOptions{
 		Color:           colorPtr(render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}),
 		LineWidth:       floatPtr(1.5),
 		LineCap:         &buttCap,
@@ -41,7 +41,7 @@ func Plot() *core.Figure {
 
 	unfilled := core.MarkerSquare
 	faceNone := core.NoMarkerColor()
-	ax.Plot([]float64{4.2, 5.5, 6.8}, []float64{5.35, 5.65, 5.35}, core.PlotOptions{
+	_, _ = ax.Plot([]float64{4.2, 5.5, 6.8}, []float64{5.35, 5.65, 5.35}, core.PlotOptions{
 		Color:           colorPtr(render.Color{R: 0.17, G: 0.63, B: 0.17, A: 1}),
 		LineWidth:       floatPtr(1.5),
 		LineCap:         &buttCap,
@@ -54,7 +54,7 @@ func Plot() *core.Figure {
 	})
 
 	lineOnly := core.MarkerPlus
-	ax.Plot([]float64{7.6, 8.7, 9.8}, []float64{5.35, 5.65, 5.35}, core.PlotOptions{
+	_, _ = ax.Plot([]float64{7.6, 8.7, 9.8}, []float64{5.35, 5.65, 5.35}, core.PlotOptions{
 		Color:      colorPtr(render.Color{R: 0.84, G: 0.15, B: 0.16, A: 1}),
 		LineWidth:  floatPtr(1.5),
 		LineCap:    &buttCap,
@@ -68,7 +68,7 @@ func Plot() *core.Figure {
 	custom.LineTo(geom.Pt{X: 0.48, Y: 0.36})
 	custom.LineTo(geom.Pt{X: -0.48, Y: 0.36})
 	custom.Close()
-	ax.Plot([]float64{0.8, 2.1, 3.4}, []float64{3.85, 4.2, 3.85}, core.PlotOptions{
+	_, _ = ax.Plot([]float64{0.8, 2.1, 3.4}, []float64{3.85, 4.2, 3.85}, core.PlotOptions{
 		Color:           colorPtr(render.Color{R: 0.58, G: 0.40, B: 0.74, A: 1}),
 		LineWidth:       floatPtr(1.4),
 		LineCap:         &buttCap,
@@ -80,7 +80,7 @@ func Plot() *core.Figure {
 	})
 
 	tuple := core.NewTupleMarkerStyle(5, core.MarkerTupleStar, 18)
-	ax.Plot([]float64{4.3, 5.5, 6.7}, []float64{3.85, 4.2, 3.85}, core.PlotOptions{
+	_, _ = ax.Plot([]float64{4.3, 5.5, 6.7}, []float64{3.85, 4.2, 3.85}, core.PlotOptions{
 		Color:           colorPtr(render.Color{R: 0.55, G: 0.34, B: 0.29, A: 1}),
 		LineWidth:       floatPtr(1.4),
 		LineCap:         &buttCap,
@@ -92,7 +92,7 @@ func Plot() *core.Figure {
 	})
 
 	mathMarker := core.NewMathTextMarkerStyle("$f$")
-	ax.Plot([]float64{7.4, 8.6, 9.8}, []float64{3.85, 4.2, 3.85}, core.PlotOptions{
+	_, _ = ax.Plot([]float64{7.4, 8.6, 9.8}, []float64{3.85, 4.2, 3.85}, core.PlotOptions{
 		Color:           colorPtr(render.Color{R: 0.50, G: 0.50, B: 0.50, A: 1}),
 		LineWidth:       floatPtr(1.4),
 		LineCap:         &buttCap,
@@ -117,7 +117,7 @@ func Plot() *core.Figure {
 	for _, spec := range halfSpecs {
 		style := core.NewMarkerStyle(core.MarkerCircle)
 		style.FillStyle = spec.fill
-		ax.Plot([]float64{spec.x - 0.4, spec.x, spec.x + 0.4}, []float64{2.0, 2.32, 2.0}, core.PlotOptions{
+		_, _ = ax.Plot([]float64{spec.x - 0.4, spec.x, spec.x + 0.4}, []float64{2.0, 2.32, 2.0}, core.PlotOptions{
 			Color:           colorPtr(render.Color{R: 0.09, G: 0.75, B: 0.81, A: 1}),
 			LineWidth:       floatPtr(1.2),
 			LineCap:         &buttCap,

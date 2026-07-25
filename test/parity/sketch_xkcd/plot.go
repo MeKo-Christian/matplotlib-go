@@ -39,13 +39,13 @@ func Plot() *core.Figure {
 		xs[i] = x
 		ys[i] = math.Sin(x)
 	}
-	ax.Plot(xs, ys, core.PlotOptions{
+	_, _ = ax.Plot(xs, ys, core.PlotOptions{
 		Color:     colorPtr(render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}),
 		LineWidth: floatPtr(2),
 	})
 
 	// A straight reference line, to show the wiggle on an otherwise flat path.
-	ax.Plot([]float64{0, 10}, []float64{0, 0}, core.PlotOptions{
+	_, _ = ax.Plot([]float64{0, 10}, []float64{0, 0}, core.PlotOptions{
 		Color:     colorPtr(render.Color{R: 0.84, G: 0.15, B: 0.16, A: 1}),
 		LineWidth: floatPtr(2),
 	})

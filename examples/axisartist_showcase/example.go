@@ -47,7 +47,7 @@ func Plot() *core.Figure {
 
 	hostColor := render.Color{R: 0.14, G: 0.34, B: 0.72, A: 1}
 	hostWidth := 2.2
-	host.Plot(x, sine, core.PlotOptions{
+	_, _ = host.Plot(x, sine, core.PlotOptions{
 		Color:     &hostColor,
 		LineWidth: &hostWidth,
 		Label:     "sin(x)",
@@ -77,7 +77,7 @@ func Plot() *core.Figure {
 
 		overlayColor := render.Color{R: 0.74, G: 0.28, B: 0.18, A: 1}
 		overlayWidth := 1.8
-		overlay.Plot(x, cosScaled, core.PlotOptions{
+		_, _ = overlay.Plot(x, cosScaled, core.PlotOptions{
 			Color:     &overlayColor,
 			LineWidth: &overlayWidth,
 			Label:     "55 + 35 cos(0.8x)",

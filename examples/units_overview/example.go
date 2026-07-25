@@ -31,7 +31,7 @@ func Plot() *core.Figure {
 	dateAx.SetTitle("Dates")
 	dateAx.SetYLabel("Requests")
 	common.AddReferenceYGrid(dateAx)
-	_, err := dateAx.PlotUnits(
+	_, err := dateAx.Plot(
 		[]time.Time{
 			time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
 			time.Date(2024, time.January, 3, 0, 0, 0, 0, time.UTC),

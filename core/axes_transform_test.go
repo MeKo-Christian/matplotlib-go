@@ -18,7 +18,7 @@ func drawNull(fig *Figure) {
 func TestAxesTransformReusedWhenSizeUnchanged(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
 
 	drawNull(fig)
 	if ax.axesBbox == nil {
@@ -36,7 +36,7 @@ func TestAxesTransformReusedWhenSizeUnchanged(t *testing.T) {
 func TestAxesTransformInvalidatedOnResize(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
 
 	drawNull(fig)
 	v1 := ax.axesBbox.Version()

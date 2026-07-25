@@ -13,7 +13,7 @@ func testAxes() *Axes {
 
 func TestAxesClearResetsState(t *testing.T) {
 	ax := testAxes()
-	ax.Plot([]float64{0, 1, 2}, []float64{0, 1, 4})
+	_, _ = ax.Plot([]float64{0, 1, 2}, []float64{0, 1, 4})
 	ax.SetTitle("hello")
 	ax.XLabel = "x"
 	ax.YLabel = "y"
@@ -45,7 +45,7 @@ func TestAxesClearResetsState(t *testing.T) {
 
 func TestAxesClaAliasesClear(t *testing.T) {
 	ax := testAxes()
-	ax.Plot([]float64{0, 1}, []float64{0, 1})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1})
 	ax.Cla()
 	if got := len(ax.Artists); got != 0 {
 		t.Fatalf("after Cla: %d artists remain, want 0", got)

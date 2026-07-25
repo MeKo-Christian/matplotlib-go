@@ -39,8 +39,8 @@ func main() {
 	lineB := render.Color{R: 0.84, G: 0.34, B: 0.18, A: 1}
 	widthA := 2.2
 	widthB := 1.8
-	plot.Plot(x, y1, core.PlotOptions{Color: &lineA, LineWidth: &widthA, Label: "signal"})
-	plot.Plot(x, y2, core.PlotOptions{Color: &lineB, LineWidth: &widthB, Label: "modulation"})
+	_, _ = plot.Plot(x, y1, core.PlotOptions{Color: &lineA, LineWidth: &widthA, Label: "signal"})
+	_, _ = plot.Plot(x, y2, core.PlotOptions{Color: &lineB, LineWidth: &widthB, Label: "modulation"})
 	plot.AddLegend()
 	// AnchoredText stands in for Matplotlib text with a white bbox.
 	plot.AddAnchoredText("static widget showcase\nMatplotlib-style control strip", core.AnchoredTextOptions{

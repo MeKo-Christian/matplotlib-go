@@ -598,7 +598,7 @@ func TestAxesPlotTypedLineStyle(t *testing.T) {
 
 	// "--" resolves to matplotlib's dashed pattern (3.7, 1.6) scaled by the
 	// line width in pixels (1.5 pt at 100 DPI).
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: LineStyleDashed})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: LineStyleDashed})
 	if line == nil {
 		t.Fatal("Plot returned nil")
 	}
@@ -609,20 +609,20 @@ func TestAxesPlotTypedLineStyle(t *testing.T) {
 	}
 
 	// An explicit dash pattern overrides the typed style.
-	line = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: LineStyleDotted, Dashes: []float64{9, 9}})
+	line, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: LineStyleDotted, Dashes: []float64{9, 9}})
 	if len(line.Dashes) != 2 || line.Dashes[0] != 9 || line.Dashes[1] != 9 {
 		t.Fatalf("explicit Dashes = %v, want [9 9]", line.Dashes)
 	}
 
 	// "none" suppresses the line stroke entirely (markers-only plot).
-	line = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: LineStyleNone})
+	line, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: LineStyleNone})
 	if line.W != 0 || line.Dashes != nil {
 		t.Fatalf("LineStyleNone line: W = %v, Dashes = %v; want 0 and nil", line.W, line.Dashes)
 	}
 
 	// Solid and unset both keep a solid stroke.
 	for _, ls := range []LineStyle{"", LineStyleSolid} {
-		line = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: ls})
+		line, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: ls})
 		if line.W != 1.5 || line.Dashes != nil {
 			t.Fatalf("LineStyle %q: W = %v, Dashes = %v; want 1.5 and nil", ls, line.W, line.Dashes)
 		}
@@ -638,7 +638,7 @@ func TestAxesPlotConfiguresLineMarkers(t *testing.T) {
 	edge := render.Color{B: 1, A: 0.6}
 	edgeWidth := 2.0
 
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
 		Marker:          &marker,
 		MarkerSize:      &size,
 		MarkerFaceColor: &face,
@@ -877,7 +877,7 @@ func TestAutoScaleRespectsManualLimitsLikeMatplotlibMargins(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	ax.Plot([]float64{0, 10}, []float64{0.08, 0.48})
+	_, _ = ax.Plot([]float64{0, 10}, []float64{0.08, 0.48})
 	ax.SetYLim(0, 1)
 	ax.AutoScale(0.04)
 
@@ -909,7 +909,7 @@ func TestPlotAutoScalesWithDefaultMargin(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	ax.Plot([]float64{0, 10}, []float64{-1, 3})
+	_, _ = ax.Plot([]float64{0, 10}, []float64{-1, 3})
 
 	xMin, xMax := ax.XScale.Domain()
 	yMin, yMax := ax.YScale.Domain()
@@ -925,8 +925,8 @@ func TestPlotAutoScaleExpandsAcrossLines(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	ax.Plot([]float64{0, 1}, []float64{0, 1})
-	ax.Plot([]float64{-2, 4}, []float64{-3, 5})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1})
+	_, _ = ax.Plot([]float64{-2, 4}, []float64{-3, 5})
 
 	xMin, xMax := ax.XScale.Domain()
 	yMin, yMax := ax.YScale.Domain()
@@ -944,7 +944,7 @@ func TestPlotAutoScalePreservesExplicitLimits(t *testing.T) {
 
 	ax.SetXLim(0, 10)
 	ax.SetYLim(-2, 2)
-	ax.Plot([]float64{-100, 100}, []float64{-50, 50})
+	_, _ = ax.Plot([]float64{-100, 100}, []float64{-50, 50})
 
 	xMin, xMax := ax.XScale.Domain()
 	yMin, yMax := ax.YScale.Domain()
@@ -961,7 +961,7 @@ func TestPlotAutoScalePreservesOnlyExplicitAxis(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
 	ax.SetXLim(0, 10)
-	ax.Plot([]float64{-100, 100}, []float64{-50, 50})
+	_, _ = ax.Plot([]float64{-100, 100}, []float64{-50, 50})
 
 	xMin, xMax := ax.XScale.Domain()
 	yMin, yMax := ax.YScale.Domain()
@@ -976,7 +976,7 @@ func TestPlotAutoScalePreservesOnlyExplicitAxis(t *testing.T) {
 func TestPerAxesMargins(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	ax.Plot([]float64{0, 10}, []float64{0, 10})
+	_, _ = ax.Plot([]float64{0, 10}, []float64{0, 10})
 
 	ax.SetXMargin(0.1)
 	ax.SetYMargin(0)
@@ -994,7 +994,7 @@ func TestPerAxesMargins(t *testing.T) {
 func TestRoundNumbersAutolimit(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	ax.Plot([]float64{0.3, 9.7}, []float64{0.3, 9.7})
+	_, _ = ax.Plot([]float64{0.3, 9.7}, []float64{0.3, 9.7})
 	ax.SetAutolimitMode("round_numbers")
 
 	xMin, xMax := ax.XScale.Domain()

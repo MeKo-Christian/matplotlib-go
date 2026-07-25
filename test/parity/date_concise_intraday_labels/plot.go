@@ -37,7 +37,7 @@ func Plot() *core.Figure {
 	y := []float64{8, 11, 9, 14}
 	color := render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}
 	width := 2.0
-	if _, err := ax.PlotUnits(times, y, core.PlotOptions{Color: &color, LineWidth: &width}); err != nil {
+	if _, err := ax.Plot(times, y, core.PlotOptions{Color: &color, LineWidth: &width}); err != nil {
 		panic(err)
 	}
 	ax.SetXLim(common.ReferenceDateNumber(times[0]), common.ReferenceDateNumber(times[len(times)-1]))

@@ -33,7 +33,9 @@ func Plot() *core.Figure {
 	}
 
 	must(pyplot.SCA(axes[0][0]))
-	pyplot.Plot(x, y, core.PlotOptions{Label: "sin(x)"})
+	if _, err := pyplot.Plot(x, y, core.PlotOptions{Label: "sin(x)"}); err != nil {
+		panic(err)
+	}
 	pyplot.XLabel("x")
 	pyplot.YLabel("signal")
 	pyplot.Title("line")

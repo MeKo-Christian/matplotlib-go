@@ -61,9 +61,9 @@ func TestScatterUsesIndependentShapeColorCycle(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 	palette := fig.RC.Palette()
 
-	firstLine := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	firstLine, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
 	scatter := ax.Scatter([]float64{0.5}, []float64{0.5})
-	secondLine := ax.Plot([]float64{0, 1}, []float64{1, 0})
+	secondLine, _ := ax.Plot([]float64{0, 1}, []float64{1, 0})
 
 	if got, want := firstLine.Col, palette[0]; got != want {
 		t.Fatalf("first line color = %+v, want %+v", got, want)

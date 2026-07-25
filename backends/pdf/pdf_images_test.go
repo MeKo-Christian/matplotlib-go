@@ -15,7 +15,7 @@ import (
 func TestRasterizedArtistEmbedsImageAndKeepsVectorContent(t *testing.T) {
 	fig := core.NewFigure(200, 100)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.2, Y: 0.2}, Max: geom.Pt{X: 0.8, Y: 0.75}})
-	line := ax.Plot([]float64{0, 0.5, 1}, []float64{0, 1, 0})
+	line, _ := ax.Plot([]float64{0, 0.5, 1}, []float64{0, 1, 0})
 	line.SetRasterized(true)
 	ax.SetTitle("Vector title")
 

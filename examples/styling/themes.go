@@ -73,8 +73,8 @@ func renderThemeExample(example themedExample) error {
 	ax.FillBetweenPlot(x, shift(sinWave, envelope), shift(sinWave, negate(envelope)), core.FillOptions{
 		Label: "Band",
 	})
-	ax.Plot(x, sinWave, core.PlotOptions{Label: "sin(x)"})
-	ax.Plot(x, cosWave, core.PlotOptions{Label: "0.7 cos(0.7x)"})
+	_, _ = ax.Plot(x, sinWave, core.PlotOptions{Label: "sin(x)"})
+	_, _ = ax.Plot(x, cosWave, core.PlotOptions{Label: "0.7 cos(0.7x)"})
 	ax.Scatter([]float64{1.5, 4.8, 8.2}, []float64{0.99, -0.73, 0.94}, core.ScatterOptions{
 		Label: "Samples",
 	})

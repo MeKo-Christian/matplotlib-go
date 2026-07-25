@@ -167,7 +167,7 @@ func (a *Axes) Step(x, y []float64, opts ...StepOptions) *Line2D {
 	}
 	drawStyle := lineDrawStyleFromStepWhere(where)
 
-	return a.Plot(x, y, PlotOptions{
+	return a.plot(x, y, PlotOptions{
 		Color:     opt.Color,
 		LineWidth: opt.LineWidth,
 		Dashes:    opt.Dashes,

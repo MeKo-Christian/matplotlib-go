@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
-func TestAxesPlotUnits_ConfiguresDateAxis(t *testing.T) {
+func TestAxesPlot_ConfiguresDateAxis(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
@@ -21,12 +22,12 @@ func TestAxesPlotUnits_ConfiguresDateAxis(t *testing.T) {
 		time.Date(2024, time.January, 4, 0, 0, 0, 0, time.UTC),
 	}
 
-	line, err := ax.PlotUnits(timestamps, []float64{2, 3, 5})
+	line, err := ax.Plot(timestamps, []float64{2, 3, 5})
 	if err != nil {
-		t.Fatalf("PlotUnits returned error: %v", err)
+		t.Fatalf("Plot returned error: %v", err)
 	}
 	if line == nil {
-		t.Fatal("PlotUnits returned nil line")
+		t.Fatal("Plot returned nil line")
 	}
 	if got := line.XY[1].X; got != dates.Date2Num(timestamps[1]) {
 		t.Fatalf("converted x[1] = %v, want %v", got, dates.Date2Num(timestamps[1]))
@@ -44,6 +45,49 @@ func TestAxesPlotUnits_ConfiguresDateAxis(t *testing.T) {
 	}
 }
 
+func TestAxesPlot_RejectedInputIsTransactional(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	originalLocator := ax.XAxis.Locator
+	originalFormatter := ax.XAxis.Formatter
+	originalCycle := ax.ColorCycle
+	originalCycleIndex := originalCycle.Index()
+	timestamps := []time.Time{
+		time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC),
+	}
+
+	if line, err := ax.Plot(timestamps, []struct{ value int }{{1}, {2}}); err == nil || line != nil {
+		t.Fatalf("Plot() = (%v, %v), want nil artist and conversion error", line, err)
+	}
+	if ax.xUnits != nil || ax.yUnits != nil {
+		t.Fatalf("rejected Plot configured units: x=%v y=%v", ax.xUnits, ax.yUnits)
+	}
+	if !reflect.DeepEqual(ax.XAxis.Locator, originalLocator) || !reflect.DeepEqual(ax.XAxis.Formatter, originalFormatter) {
+		t.Fatalf("rejected Plot changed x-axis locator/formatter to %T/%T", ax.XAxis.Locator, ax.XAxis.Formatter)
+	}
+	if len(ax.Artists) != 0 {
+		t.Fatalf("rejected Plot added %d artists", len(ax.Artists))
+	}
+	if ax.ColorCycle != originalCycle || ax.ColorCycle.Index() != originalCycleIndex {
+		t.Fatal("rejected Plot replaced or advanced the property cycle")
+	}
+
+	if line, err := ax.Plot([]float64{0, 1}, []float64{1}); err == nil || line != nil {
+		t.Fatalf("mismatched Plot() = (%v, %v), want nil artist and length error", line, err)
+	}
+	if len(ax.Artists) != 0 || ax.ColorCycle != originalCycle || ax.ColorCycle.Index() != originalCycleIndex {
+		t.Fatal("mismatched Plot changed artists or property cycle")
+	}
+
+	if line, err := ax.Plot([]float64{0, 1}, []float64{1, 2}, PlotOptions{}, PlotOptions{}); err == nil || line != nil {
+		t.Fatalf("multi-option Plot() = (%v, %v), want nil artist and option-count error", line, err)
+	}
+	if len(ax.Artists) != 0 || ax.ColorCycle != originalCycle || ax.ColorCycle.Index() != originalCycleIndex {
+		t.Fatal("multi-option Plot changed artists or property cycle")
+	}
+}
+
 func TestAxesPlotDate_ConfiguresDateAxis(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
@@ -52,7 +96,10 @@ func TestAxesPlotDate_ConfiguresDateAxis(t *testing.T) {
 		time.Date(2024, time.March, 2, 0, 0, 0, 0, time.UTC),
 	}
 
-	line := ax.PlotDate(timestamps, []float64{1, 4})
+	line, err := ax.PlotDate(timestamps, []float64{1, 4})
+	if err != nil {
+		t.Fatalf("PlotDate() returned error: %v", err)
+	}
 	if line == nil {
 		t.Fatal("PlotDate() returned nil")
 	}
@@ -72,8 +119,8 @@ func TestAxesDateUnitsPreserveExplicitAxisInfoAfterAutoscale(t *testing.T) {
 		time.Date(2024, time.February, 10, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, time.February, 20, 0, 0, 0, 0, time.UTC),
 	}
-	if _, err := ax.PlotUnits(timestamps, []float64{1, 3, 2}); err != nil {
-		t.Fatalf("PlotUnits returned error: %v", err)
+	if _, err := ax.Plot(timestamps, []float64{1, 3, 2}); err != nil {
+		t.Fatalf("Plot returned error: %v", err)
 	}
 
 	ax.XAxis.Locator = dates.DayLocator{ByMonthDay: []int{5, 12, 19}, Location: time.UTC}
@@ -210,7 +257,7 @@ func (tripDistanceConverter) AxisInfo([]float64) AxisInfo {
 	}
 }
 
-func TestAxesPlotUnits_UsesRegisteredConverter(t *testing.T) {
+func TestAxesPlot_UsesRegisteredConverter(t *testing.T) {
 	if err := RegisterUnitConverter(tripDistance(0), func() UnitsConverter { return tripDistanceConverter{} }); err != nil {
 		t.Fatalf("RegisterUnitConverter: %v", err)
 	}
@@ -218,12 +265,12 @@ func TestAxesPlotUnits_UsesRegisteredConverter(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	line, err := ax.PlotUnits([]tripDistance{1.5, 2.5, 4}, []float64{2, 4, 8})
+	line, err := ax.Plot([]tripDistance{1.5, 2.5, 4}, []float64{2, 4, 8})
 	if err != nil {
-		t.Fatalf("PlotUnits returned error: %v", err)
+		t.Fatalf("Plot returned error: %v", err)
 	}
 	if line == nil {
-		t.Fatal("PlotUnits returned nil line")
+		t.Fatal("Plot returned nil line")
 	}
 	if got := line.XY[1].X; got != 2.5 {
 		t.Fatalf("converted custom x[1] = %v, want 2.5", got)

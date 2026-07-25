@@ -61,8 +61,8 @@ func main() {
 		y2[i] = 0.7 * math.Sin(2*x[i]+0.5)
 	}
 
-	ax.Plot(x, y1, core.PlotOptions{Label: "sin(x)"})
-	ax.Plot(x, y2, core.PlotOptions{Label: "0.7·sin(2x+0.5)"})
+	_, _ = ax.Plot(x, y1, core.PlotOptions{Label: "sin(x)"})
+	_, _ = ax.Plot(x, y2, core.PlotOptions{Label: "0.7·sin(2x+0.5)"})
 
 	if err := fig.Save("grid.png"); err != nil {
 		fmt.Printf("Error: %v\n", err)

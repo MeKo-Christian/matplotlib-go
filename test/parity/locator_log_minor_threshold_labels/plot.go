@@ -28,7 +28,7 @@ func Plot() *core.Figure {
 	top.SetTitle("LogLocator Auto Minor Grid")
 	top.SetXLabel("base 10")
 	top.SetYLabel("value")
-	top.Plot(
+	_, _ = top.Plot(
 		[]float64{1, 10, 100, 1000},
 		[]float64{0.18, 0.39, 0.67, 0.88},
 		core.PlotOptions{Color: &color, LineWidth: &width},
@@ -50,7 +50,7 @@ func Plot() *core.Figure {
 	bottom.SetTitle("LogLocator Base 2")
 	bottom.SetXLabel("base 2")
 	bottom.SetYLabel("value")
-	bottom.Plot(
+	_, _ = bottom.Plot(
 		[]float64{1, 2, 4, 8, 16, 32, 64},
 		[]float64{0.14, 0.26, 0.38, 0.52, 0.68, 0.80, 0.91},
 		core.PlotOptions{Color: &color, LineWidth: &width},

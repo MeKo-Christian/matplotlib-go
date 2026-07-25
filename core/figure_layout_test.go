@@ -85,7 +85,7 @@ func TestFigureLegendCollectsAcrossAxes(t *testing.T) {
 		Max: geom.Pt{X: 0.90, Y: 0.85},
 	})
 
-	left.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	_, _ = left.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
 	right.Scatter([]float64{0.5}, []float64{0.5}, ScatterOptions{Label: "samples"})
 	fig.AddLegend()
 
@@ -106,7 +106,7 @@ func TestFigureLegendStacksBelowSuptitle(t *testing.T) {
 		Min: geom.Pt{X: 0.10, Y: 0.15},
 		Max: geom.Pt{X: 0.90, Y: 0.85},
 	})
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
 	fig.SetSuptitle("Figure Title")
 	fig.AddLegend()
 
@@ -424,7 +424,7 @@ func TestConstrainedLayoutReservesOnlyExplicitOutsideFigureLegends(t *testing.T)
 		fig := NewFigure(600, 400)
 		fig.ConstrainedLayout()
 		ax := fig.AddSubplot(1, 1, 1)
-		ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+		_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
 		if addLegend {
 			legend := fig.AddLegend()
 			legend.Location = LegendCenterRight
@@ -477,7 +477,7 @@ func TestConstrainedLayoutNestedGridReservesColorbarAndOutsideLegend(t *testing.
 
 	outer := fig.GridSpec(1, 2)
 	left := outer.Cell(0, 0).AddAxes()
-	left.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	_, _ = left.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
 
 	inner := outer.Cell(0, 1).GridSpec(2, 1)
 	top := inner.Cell(0, 0).AddAxes()
@@ -525,10 +525,10 @@ func TestConstrainedLayoutKeepsNestedYAxisTickDensityReadable(t *testing.T) {
 	outer.Span(0, 0, 2, 1).AddAxes()
 	nested := outer.Cell(0, 1).GridSpec(2, 1, WithGridSpecSpacing(0, 0.12))
 	top := nested.Cell(0, 0).AddAxes()
-	top.Plot([]float64{0, 1, 2, 3}, []float64{3.4, 2.6, 2.9, 1.8})
+	_, _ = top.Plot([]float64{0, 1, 2, 3}, []float64{3.4, 2.6, 2.9, 1.8})
 	top.AutoScale(0.10)
 	bottom := nested.Cell(1, 0).AddAxes(WithSharedX(top))
-	bottom.Plot([]float64{0, 1, 2, 3}, []float64{1.0, 1.6, 1.3, 2.2})
+	_, _ = bottom.Plot([]float64{0, 1, 2, 3}, []float64{1.0, 1.6, 1.3, 2.2})
 	bottom.AutoScale(0.10)
 	outer.Cell(1, 1).SubFigure().AddSubplot(1, 1, 1)
 

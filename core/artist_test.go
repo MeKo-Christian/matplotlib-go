@@ -325,7 +325,7 @@ func TestSmallScatterDoesNotAutoRasterize(t *testing.T) {
 func TestUnsupportedFilterPathEffectAutoRasterizes(t *testing.T) {
 	fig := NewFigure(100, 100, style.WithDPI(96))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
 	line.PathEffects = []render.PathEffect{
 		render.FilterPathEffect(
 			render.Color{R: 1, A: 1},
@@ -378,7 +378,7 @@ func TestDenseContourAutoRasterizesWithFigureDPI(t *testing.T) {
 func TestFilterCapableRendererKeepsFilterPathEffectVector(t *testing.T) {
 	fig := NewFigure(100, 100)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
 	line.PathEffects = []render.PathEffect{
 		render.FilterPathEffect(
 			render.Color{R: 1, A: 1},
@@ -404,7 +404,7 @@ func TestFilterCapableRendererKeepsFilterPathEffectVector(t *testing.T) {
 func TestUnsupportedNativeFilterPathEffectAutoRasterizes(t *testing.T) {
 	fig := NewFigure(100, 100, style.WithDPI(110))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-	line := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
 	line.PathEffects = []render.PathEffect{
 		render.FilterPathEffect(
 			render.Color{R: 1, A: 1},

@@ -650,7 +650,7 @@ func styleRCForAnchoredTextTest() style.RC {
 func TestLegendBoxRectUsesLocator(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(unitRect())
-	ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
 
 	legend := ax.AddLegend()
 	legend.SetLocator(RelativeAnchoredBoxLocator{

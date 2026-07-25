@@ -33,7 +33,7 @@ func TestCrossBackendSemanticParity(t *testing.T) {
 			Max: geom.Pt{X: 0.9, Y: 0.9},
 		})
 		ax.SetTitle("semantic parity")
-		ax.Plot([]float64{0, 1, 2, 3}, []float64{0, 1, 0.5, 2})
+		_, _ = ax.Plot([]float64{0, 1, 2, 3}, []float64{0, 1, 0.5, 2})
 		ax.Scatter(
 			[]float64{0.5, 1.5, 2.5},
 			[]float64{0.25, 1.25, 0.75},

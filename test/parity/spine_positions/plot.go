@@ -52,7 +52,7 @@ func configureAxes(ax *core.Axes, title string) {
 
 	color := render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}
 	width := 2.0
-	ax.Plot(
+	_, _ = ax.Plot(
 		[]float64{-2, -1, 0, 1, 2},
 		[]float64{-1.4, -0.4, 0.1, 0.9, 1.6},
 		core.PlotOptions{Color: &color, LineWidth: &width},

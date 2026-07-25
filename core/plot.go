@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"math"
 	"strings"
 
@@ -76,8 +77,45 @@ func (o PlotOptions) ScalarMapConfig() ScalarMapConfig {
 	}
 }
 
-// Plot creates a line plot with automatic color cycling if no color is specified.
-func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
+// Plot converts x and y through the axes units machinery and creates a line
+// plot with automatic color cycling if no color is specified.
+//
+// Rejected input leaves the axes, its unit configuration, and its property
+// cycle unchanged.
+func (a *Axes) Plot(xVals, yVals any, opts ...PlotOptions) (*Line2D, error) {
+	if a == nil {
+		return nil, fmt.Errorf("plot axes cannot be nil")
+	}
+	if len(opts) > 1 {
+		return nil, fmt.Errorf("plot accepts at most one PlotOptions value")
+	}
+
+	tx := a.beginUnitConversion()
+	x, err := a.convertValues(xVals, true)
+	if err != nil {
+		tx.rollback()
+		return nil, fmt.Errorf("plot x values: %w", err)
+	}
+	y, err := a.convertValues(yVals, false)
+	if err != nil {
+		tx.rollback()
+		return nil, fmt.Errorf("plot y values: %w", err)
+	}
+	if len(x) == 0 || len(y) == 0 {
+		tx.rollback()
+		return nil, fmt.Errorf("plot x and y values cannot be empty")
+	}
+	if len(x) != len(y) {
+		tx.rollback()
+		return nil, fmt.Errorf("plot x and y must have the same length (got %d and %d)", len(x), len(y))
+	}
+
+	line := a.plot(x, y, opts...)
+	tx.commit()
+	return line, nil
+}
+
+func (a *Axes) plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	if len(x) == 0 || len(y) == 0 {
 		return nil
 	}
@@ -344,7 +382,7 @@ func applyLineRCDefaults(line *Line2D, rc *style.RC) {
 // SemilogX is a convenience wrapper for creating a line plot on a logarithmic
 // x-axis.
 func (a *Axes) SemilogX(x, y []float64, opts ...PlotOptions) *Line2D {
-	line := a.Plot(x, y, opts...)
+	line := a.plot(x, y, opts...)
 	if line == nil {
 		return nil
 	}
@@ -355,7 +393,7 @@ func (a *Axes) SemilogX(x, y []float64, opts ...PlotOptions) *Line2D {
 // SemilogY is a convenience wrapper for creating a line plot on a logarithmic
 // y-axis.
 func (a *Axes) SemilogY(x, y []float64, opts ...PlotOptions) *Line2D {
-	line := a.Plot(x, y, opts...)
+	line := a.plot(x, y, opts...)
 	if line == nil {
 		return nil
 	}
@@ -366,7 +404,7 @@ func (a *Axes) SemilogY(x, y []float64, opts ...PlotOptions) *Line2D {
 // LogLog is a convenience wrapper for creating a line plot on logarithmic x/y
 // axes.
 func (a *Axes) LogLog(x, y []float64, opts ...PlotOptions) *Line2D {
-	line := a.Plot(x, y, opts...)
+	line := a.plot(x, y, opts...)
 	if line == nil {
 		return nil
 	}

@@ -20,11 +20,11 @@ func Render() image.Image {
 
 	lineColor := render.Color{R: 0.08, G: 0.08, B: 0.10, A: 1}
 	lineWidth := 2.0
-	ax.Plot([]float64{0, 6}, []float64{0, 6}, core.PlotOptions{
+	_, _ = ax.Plot([]float64{0, 6}, []float64{0, 6}, core.PlotOptions{
 		Color:     &lineColor,
 		LineWidth: &lineWidth,
 	})
-	ax.Plot([]float64{0, 6}, []float64{6, 0}, core.PlotOptions{
+	_, _ = ax.Plot([]float64{0, 6}, []float64{6, 0}, core.PlotOptions{
 		Color:     &lineColor,
 		LineWidth: &lineWidth,
 	})

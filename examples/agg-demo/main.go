@@ -37,8 +37,8 @@ func main() {
 	}
 
 	// Leave colors on the default cycle so Go and Python demonstrate the same behavior.
-	ax.Plot(x, sinY, core.PlotOptions{Label: "sin(x)"})
-	ax.Plot(x, cosY, core.PlotOptions{Label: "cos(x)"})
+	_, _ = ax.Plot(x, sinY, core.PlotOptions{Label: "sin(x)"})
+	_, _ = ax.Plot(x, cosY, core.PlotOptions{Label: "cos(x)"})
 
 	ax.SetTitle("Sine and Cosine Waves")
 	ax.SetXLabel("x (radians)")

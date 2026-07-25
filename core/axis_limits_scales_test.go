@@ -491,7 +491,7 @@ func TestAxes_LogAutoscaleNormalizesNonPositiveData(t *testing.T) {
 		t.Fatalf("SetXScale(log): %v", err)
 	}
 
-	ax.Plot([]float64{-10, 1, 100}, []float64{1, 2, 3})
+	_, _ = ax.Plot([]float64{-10, 1, 100}, []float64{1, 2, 3})
 	ax.AutoScale(0)
 
 	logScale, ok := ax.XScale.(transform.Log)
@@ -794,7 +794,7 @@ func TestAxes_AspectAnchorPositionsShrunkBox(t *testing.T) {
 func TestAxes_AspectDatalimExpandsDataLimits(t *testing.T) {
 	fig := NewFigure(600, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	ax.Plot([]float64{0, 10}, []float64{0, 1})
+	_, _ = ax.Plot([]float64{0, 10}, []float64{0, 1})
 	_ = ax.SetAspect("equal")
 	if err := ax.SetAdjustable("datalim"); err != nil {
 		t.Fatalf("SetAdjustable(datalim): %v", err)
@@ -815,7 +815,7 @@ func TestAxes_AspectDatalimExpandsDataLimits(t *testing.T) {
 func TestAxes_AspectDatalimReappliedWhenAspectSetAfterAdjustable(t *testing.T) {
 	fig := NewFigure(600, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	ax.Plot([]float64{0, 10}, []float64{0, 1})
+	_, _ = ax.Plot([]float64{0, 10}, []float64{0, 1})
 	// Reverse order: adjustable selected before the aspect. SetAspect must
 	// re-apply the datalim expansion; otherwise the data scale stays unequal.
 	if err := ax.SetAdjustable("datalim"); err != nil {

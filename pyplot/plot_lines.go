@@ -8,12 +8,12 @@ import (
 )
 
 // Plot delegates to the current axes.
-func Plot(x, y []float64, opts ...core.PlotOptions) *core.Line2D {
+func Plot(x, y any, opts ...core.PlotOptions) (*core.Line2D, error) {
 	return GCA().Plot(x, y, opts...)
 }
 
 // PlotDate delegates to the current axes.
-func PlotDate(x []time.Time, y []float64, opts ...core.PlotOptions) *core.Line2D {
+func PlotDate(x []time.Time, y []float64, opts ...core.PlotOptions) (*core.Line2D, error) {
 	return GCA().PlotDate(x, y, opts...)
 }
 

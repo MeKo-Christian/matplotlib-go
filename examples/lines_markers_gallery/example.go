@@ -152,7 +152,7 @@ func addLegendPanel(ax *core.Axes) {
 		{"wave", tab10[2], []float64{2.6, 3.6, 2.8, 3.8, 3.0, 4.0}},
 	}
 	for _, s := range series {
-		ax.Plot(x, s.y, core.PlotOptions{
+		_, _ = ax.Plot(x, s.y, core.PlotOptions{
 			Color:     &s.col,
 			LineWidth: &lineWidth,
 			Label:     s.label,

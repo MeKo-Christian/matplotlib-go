@@ -32,7 +32,7 @@ func Plot() *core.Figure {
 	})
 
 	lineAx := panel(fig, 0.53, 0.55, 0.94, 0.93)
-	line := lineAx.Plot(pathEffectLineX(), pathEffectLineY(), core.PlotOptions{
+	line, _ := lineAx.Plot(pathEffectLineX(), pathEffectLineY(), core.PlotOptions{
 		Color:     colorPtr(render.Color{R: 0.08, G: 0.34, B: 0.66, A: 1}),
 		LineWidth: floatPtr(3),
 		LineCap:   lineCapPtr(render.CapButt),

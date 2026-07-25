@@ -30,7 +30,7 @@ func Plot() *core.Figure {
 
 	tab10 := color.Tab10
 	lineWidth := 2.0
-	ax.Plot(
+	_, _ = ax.Plot(
 		[]float64{1, 2, 3, 4, 5, 6},
 		[]float64{1.5, 2.8, 2.2, 3.5, 3.8, 4.2},
 		core.PlotOptions{

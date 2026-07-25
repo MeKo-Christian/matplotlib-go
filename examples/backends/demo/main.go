@@ -140,8 +140,8 @@ func createDemoFigure(width, height int) *core.Figure {
 		sinY[i] = math.Sin(x[i])
 		cosY[i] = math.Cos(x[i])
 	}
-	ax.Plot(x, sinY, core.PlotOptions{Label: "sin(x)"})
-	ax.Plot(x, cosY, core.PlotOptions{Label: "cos(x)"})
+	_, _ = ax.Plot(x, sinY, core.PlotOptions{Label: "sin(x)"})
+	_, _ = ax.Plot(x, cosY, core.PlotOptions{Label: "cos(x)"})
 	ax.AddLegend()
 
 	return fig

@@ -13,10 +13,13 @@ import (
 // it to a PNG file, mirroring the typical Matplotlib pyplot workflow.
 func Example() {
 	pyplot.FigureSized(640, 480)
-	pyplot.Plot(
+	if _, err := pyplot.Plot(
 		[]float64{0, 1, 2, 3, 4},
 		[]float64{0, 1, 4, 9, 16},
-	)
+	); err != nil {
+		fmt.Println("plot failed:", err)
+		return
+	}
 	pyplot.Title("y = x^2")
 	pyplot.XLabel("x")
 	pyplot.YLabel("y")
