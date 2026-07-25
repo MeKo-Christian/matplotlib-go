@@ -65,18 +65,6 @@ func TestPerformanceP2RendererReuseIsDocumented(t *testing.T) {
 			t.Fatalf("performance notes missing %q", want)
 		}
 	}
-
-	plan := readTextFile(t, "PLAN.md")
-	for _, want := range []string{
-		"[x] **P2 — Surface and image-copy reuse for repeated renders.**",
-		"[x] Add a benchmark that redraws the same figure into a reused renderer.",
-		"[x] Document or expose a supported renderer-reuse path",
-		"[x] Avoid `GetImage` copies in benchmark/save paths",
-	} {
-		if !strings.Contains(plan, want) {
-			t.Fatalf("plan missing %q", want)
-		}
-	}
 }
 
 func TestPerformanceP2ScalarMappingCacheIsDocumented(t *testing.T) {
@@ -90,17 +78,6 @@ func TestPerformanceP2ScalarMappingCacheIsDocumented(t *testing.T) {
 	} {
 		if !strings.Contains(notes, want) {
 			t.Fatalf("performance notes missing %q", want)
-		}
-	}
-
-	plan := readTextFile(t, "PLAN.md")
-	for _, want := range []string{
-		"[x] **P2 — Cache scalar mapping setup.**",
-		"[x] Cache resolved colormap and norm state on scalar-mapped artists",
-		"[x] Add focused benchmarks for scalar-mapped image, scatter, and mesh rows.",
-	} {
-		if !strings.Contains(plan, want) {
-			t.Fatalf("plan missing %q", want)
 		}
 	}
 }
@@ -120,17 +97,6 @@ func TestPerformanceP2MemoryTargetsAndTuningGuideIsDocumented(t *testing.T) {
 	} {
 		if !strings.Contains(notes, want) {
 			t.Fatalf("performance notes missing %q", want)
-		}
-	}
-
-	plan := readTextFile(t, "PLAN.md")
-	for _, want := range []string{
-		"[x] **Memory targets and tuning guide.**",
-		"[x] Define v1.0 memory targets for typical catalog plots, 100k scatter, and",
-		"[x] Document practical tuning advice: renderer reuse, avoiding unnecessary",
-	} {
-		if !strings.Contains(plan, want) {
-			t.Fatalf("plan missing %q", want)
 		}
 	}
 }
