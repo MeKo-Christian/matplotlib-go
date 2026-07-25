@@ -11700,6 +11700,10 @@
           "declaration": "func NewAffine(m geom.Affine) AffineT"
         },
         {
+          "id": "func NewAffine2D",
+          "declaration": "func NewAffine2D() AffineT"
+        },
+        {
           "id": "func NewAsinh",
           "declaration": "func NewAsinh(minVal, maxVal, linearWidth float64) Asinh"
         },
@@ -11780,12 +11784,20 @@
           "declaration": "func NewScaleWithOptions(name string, opts ScaleOptions) (Scale, error)"
         },
         {
+          "id": "func NewScaledTranslation",
+          "declaration": "func NewScaledTranslation(translation geom.Pt, scaleTransform T) *ScaledTranslation"
+        },
+        {
           "id": "func NewSeparable",
           "declaration": "func NewSeparable(x, y AxisTransform) SeparableT"
         },
         {
           "id": "func NewSymLog",
           "declaration": "func NewSymLog(minVal, maxVal, base, linThresh, linearScale float64) SymLog"
+        },
+        {
+          "id": "func NewTransformWrapper",
+          "declaration": "func NewTransformWrapper(child T) *TransformWrapper"
         },
         {
           "id": "func NewTransformedPath",
@@ -11850,6 +11862,30 @@
         {
           "id": "method AffineT.Invert",
           "declaration": "func (AffineT) Invert(p geom.Pt) (geom.Pt, bool)"
+        },
+        {
+          "id": "method AffineT.Rotate",
+          "declaration": "func (AffineT) Rotate(theta float64) AffineT"
+        },
+        {
+          "id": "method AffineT.RotateAround",
+          "declaration": "func (AffineT) RotateAround(center geom.Pt, theta float64) AffineT"
+        },
+        {
+          "id": "method AffineT.RotateAroundDegrees",
+          "declaration": "func (AffineT) RotateAroundDegrees(center geom.Pt, degrees float64) AffineT"
+        },
+        {
+          "id": "method AffineT.RotateDegrees",
+          "declaration": "func (AffineT) RotateDegrees(degrees float64) AffineT"
+        },
+        {
+          "id": "method AffineT.Skew",
+          "declaration": "func (AffineT) Skew(xShear, yShear float64) AffineT"
+        },
+        {
+          "id": "method AffineT.SkewDegrees",
+          "declaration": "func (AffineT) SkewDegrees(xShear, yShear float64) AffineT"
         },
         {
           "id": "method Asinh.Domain",
@@ -12056,6 +12092,18 @@
           "declaration": "func (ScaleRegistry) Register(name string, factory ScaleFactory) error"
         },
         {
+          "id": "method ScaledTranslation.Apply",
+          "declaration": "func (ScaledTranslation) Apply(p geom.Pt) geom.Pt"
+        },
+        {
+          "id": "method ScaledTranslation.AsAffine",
+          "declaration": "func (ScaledTranslation) AsAffine() (geom.Affine, bool)"
+        },
+        {
+          "id": "method ScaledTranslation.Invert",
+          "declaration": "func (ScaledTranslation) Invert(p geom.Pt) (geom.Pt, bool)"
+        },
+        {
           "id": "method SeparableT.Apply",
           "declaration": "func (SeparableT) Apply(p geom.Pt) geom.Pt"
         },
@@ -12110,6 +12158,26 @@
         {
           "id": "method TransformNode.Version",
           "declaration": "func (TransformNode) Version() uint64"
+        },
+        {
+          "id": "method TransformWrapper.Apply",
+          "declaration": "func (TransformWrapper) Apply(p geom.Pt) geom.Pt"
+        },
+        {
+          "id": "method TransformWrapper.AsAffine",
+          "declaration": "func (TransformWrapper) AsAffine() (geom.Affine, bool)"
+        },
+        {
+          "id": "method TransformWrapper.Child",
+          "declaration": "func (TransformWrapper) Child() T"
+        },
+        {
+          "id": "method TransformWrapper.Invert",
+          "declaration": "func (TransformWrapper) Invert(p geom.Pt) (geom.Pt, bool)"
+        },
+        {
+          "id": "method TransformWrapper.Set",
+          "declaration": "func (TransformWrapper) Set(child T)"
         },
         {
           "id": "method TransformedPath.Affine",
@@ -12260,6 +12328,10 @@
           "declaration": "type ScaleRegistry struct{}"
         },
         {
+          "id": "type ScaledTranslation",
+          "declaration": "type ScaledTranslation struct{ TransformNode }"
+        },
+        {
           "id": "type Separable",
           "declaration": "type Separable interface{ T; XAxis func() AxisTransform; YAxis func() AxisTransform }"
         },
@@ -12278,6 +12350,10 @@
         {
           "id": "type TransformNode",
           "declaration": "type TransformNode struct{}"
+        },
+        {
+          "id": "type TransformWrapper",
+          "declaration": "type TransformWrapper struct{ TransformNode }"
         },
         {
           "id": "type TransformedPath",

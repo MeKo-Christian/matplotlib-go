@@ -17,6 +17,10 @@ type AffineT struct{ M geom.Affine }
 
 func NewAffine(m geom.Affine) AffineT { return AffineT{M: m} }
 
+// NewAffine2D returns an identity affine transform suitable for fluent
+// rotation and skew composition.
+func NewAffine2D() AffineT { return NewAffine(geom.Identity()) }
+
 func (a AffineT) Apply(p geom.Pt) geom.Pt { return a.M.Apply(p) }
 
 func (a AffineT) Invert(p geom.Pt) (geom.Pt, bool) {
@@ -25,6 +29,168 @@ func (a AffineT) Invert(p geom.Pt) (geom.Pt, bool) {
 		return geom.Pt{}, false
 	}
 	return inv.Apply(p), true
+}
+
+// Rotate returns a copy with a counter-clockwise rotation, in radians,
+// left-composed with the current transform.
+func (a AffineT) Rotate(theta float64) AffineT {
+	sin, cos := math.Sincos(theta)
+	return NewAffine(geom.Affine{A: cos, B: sin, C: -sin, D: cos}.Mul(a.M))
+}
+
+// RotateDegrees is the degree-based form of Rotate.
+func (a AffineT) RotateDegrees(degrees float64) AffineT {
+	return a.Rotate(degrees * math.Pi / 180)
+}
+
+// RotateAround returns a copy rotated by theta radians around center.
+func (a AffineT) RotateAround(center geom.Pt, theta float64) AffineT {
+	toOrigin := geom.Affine{A: 1, D: 1, E: -center.X, F: -center.Y}
+	fromOrigin := geom.Affine{A: 1, D: 1, E: center.X, F: center.Y}
+	sin, cos := math.Sincos(theta)
+	rotation := geom.Affine{A: cos, B: sin, C: -sin, D: cos}
+	return NewAffine(fromOrigin.Mul(rotation).Mul(toOrigin).Mul(a.M))
+}
+
+// RotateAroundDegrees is the degree-based form of RotateAround.
+func (a AffineT) RotateAroundDegrees(center geom.Pt, degrees float64) AffineT {
+	return a.RotateAround(center, degrees*math.Pi/180)
+}
+
+// Skew returns a copy with x- and y-axis shear angles, in radians,
+// left-composed with the current transform.
+func (a AffineT) Skew(xShear, yShear float64) AffineT {
+	shear := geom.Affine{
+		A: 1,
+		B: math.Tan(yShear),
+		C: math.Tan(xShear),
+		D: 1,
+	}
+	return NewAffine(shear.Mul(a.M))
+}
+
+// SkewDegrees is the degree-based form of Skew.
+func (a AffineT) SkewDegrees(xShear, yShear float64) AffineT {
+	return a.Skew(xShear*math.Pi/180, yShear*math.Pi/180)
+}
+
+// ScaledTranslation translates by an offset after transforming that offset
+// through another transform. It mirrors Matplotlib's ScaledTranslation and is
+// useful for offsets expressed in points, inches, or another scaled space.
+type ScaledTranslation struct {
+	TransformNode
+	translation    geom.Pt
+	scaleTransform T
+}
+
+// NewScaledTranslation creates a live scaled translation. Changes propagated
+// by a dynamic scale transform invalidate this transform's dependents.
+func NewScaledTranslation(translation geom.Pt, scaleTransform T) *ScaledTranslation {
+	t := &ScaledTranslation{
+		translation:    translation,
+		scaleTransform: scaleTransform,
+	}
+	if node := dependencyNode(scaleTransform); node != nil {
+		node.AddDependent(&t.TransformNode)
+	}
+	return t
+}
+
+func (t *ScaledTranslation) delta() geom.Pt {
+	if t == nil {
+		return geom.Pt{}
+	}
+	if t.scaleTransform == nil {
+		return t.translation
+	}
+	return t.scaleTransform.Apply(t.translation)
+}
+
+// Apply applies the scaled translation.
+func (t *ScaledTranslation) Apply(p geom.Pt) geom.Pt {
+	delta := t.delta()
+	return geom.Pt{X: p.X + delta.X, Y: p.Y + delta.Y}
+}
+
+// Invert removes the scaled translation.
+func (t *ScaledTranslation) Invert(p geom.Pt) (geom.Pt, bool) {
+	delta := t.delta()
+	return geom.Pt{X: p.X - delta.X, Y: p.Y - delta.Y}, true
+}
+
+// AsAffine returns the current pure-translation matrix.
+func (t *ScaledTranslation) AsAffine() (geom.Affine, bool) {
+	delta := t.delta()
+	return geom.Affine{A: 1, D: 1, E: delta.X, F: delta.Y}, true
+}
+
+// TransformWrapper is a replaceable transform proxy that keeps a stable node
+// in a transform graph while its child changes.
+type TransformWrapper struct {
+	TransformNode
+	child T
+}
+
+// NewTransformWrapper creates a replaceable proxy around child.
+func NewTransformWrapper(child T) *TransformWrapper {
+	w := &TransformWrapper{}
+	w.setChild(child, false)
+	return w
+}
+
+// Child returns the currently wrapped transform.
+func (w *TransformWrapper) Child() T {
+	if w == nil {
+		return nil
+	}
+	return w.child
+}
+
+// Set replaces the wrapped transform and invalidates downstream dependents.
+// All T implementations are two-dimensional, so Matplotlib's dimension
+// compatibility condition is enforced by the interface itself.
+func (w *TransformWrapper) Set(child T) {
+	if w == nil {
+		return
+	}
+	w.setChild(child, true)
+}
+
+func (w *TransformWrapper) setChild(child T, invalidate bool) {
+	if node := dependencyNode(w.child); node != nil {
+		node.RemoveDependent(&w.TransformNode)
+	}
+	w.child = child
+	if node := dependencyNode(child); node != nil {
+		node.AddDependent(&w.TransformNode)
+	}
+	if invalidate {
+		w.Invalidate(InvalidAll)
+	}
+}
+
+// Apply delegates to the current child; a nil child is the identity.
+func (w *TransformWrapper) Apply(p geom.Pt) geom.Pt {
+	if w == nil || w.child == nil {
+		return p
+	}
+	return w.child.Apply(p)
+}
+
+// Invert delegates to the current child; a nil child is the identity.
+func (w *TransformWrapper) Invert(p geom.Pt) (geom.Pt, bool) {
+	if w == nil || w.child == nil {
+		return p, true
+	}
+	return w.child.Invert(p)
+}
+
+// AsAffine delegates affine extraction to the current child.
+func (w *TransformWrapper) AsAffine() (geom.Affine, bool) {
+	if w == nil || w.child == nil {
+		return geom.Identity(), true
+	}
+	return AsAffine(w.child)
 }
 
 // AffineProvider is the capability interface a transform implements to declare

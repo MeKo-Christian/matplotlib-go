@@ -486,13 +486,11 @@ zero-bound handling.
 - [x] Added outward/axes-relative spine positioning.
 - [x] Fixed radius-independent pie framing.
 - [x] Verified the daily date interval tables already match Matplotlib 3.10.9.
+- [x] Added scaled translations, replaceable transform wrappers, and immutable
+      affine rotation/skew builders.
 
 ### Remaining work
 
-- [ ] Transform type-set breadth — add `ScaledTranslation`, `TransformWrapper`, and
-      `Affine2D`-style `rotate/skew` builders; the separable→affine extraction is
-      diagonal-only (`transform/transform.go:61`), so rotation/shear need manual matrix
-      construction today. Triage against real demand before building.
 - [ ] `core/layoutgrid.go:239` / `:448` — nested-mosaic constrained_layout is
       not modeled and outside legend/colorbar space is approximated. **Triage:**
       scope the shared-margin modeling cost; if not justified by a parity case,

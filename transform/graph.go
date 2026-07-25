@@ -196,6 +196,17 @@ func Frozen(t T) T {
 		return SeparableT{X: frozenAxis(v.X), Y: frozenAxis(v.Y)}
 	case OffsetT:
 		return OffsetT{Base: Frozen(v.Base), Delta: v.Delta}
+	case *ScaledTranslation:
+		if v == nil {
+			return nil
+		}
+		matrix, _ := v.AsAffine()
+		return NewAffine(matrix)
+	case *TransformWrapper:
+		if v == nil {
+			return nil
+		}
+		return Frozen(v.Child())
 	case *CachedTransform:
 		return Frozen(v.Current())
 	case *BboxTransformTo:
@@ -207,6 +218,36 @@ func Frozen(t T) T {
 	default:
 		return t
 	}
+}
+
+func dependencyNode(t T) *TransformNode {
+	switch v := t.(type) {
+	case *ScaledTranslation:
+		if v != nil {
+			return &v.TransformNode
+		}
+	case *TransformWrapper:
+		if v != nil {
+			return &v.TransformNode
+		}
+	case *CachedTransform:
+		if v != nil {
+			return &v.TransformNode
+		}
+	case *BboxTransformTo:
+		if v != nil {
+			return &v.TransformNode
+		}
+	case *BboxTransformFrom:
+		if v != nil {
+			return &v.TransformNode
+		}
+	case *BboxTransform:
+		if v != nil {
+			return &v.TransformNode
+		}
+	}
+	return nil
 }
 
 func frozenAxis(axis AxisTransform) AxisTransform {
