@@ -4657,11 +4657,11 @@
         },
         {
           "id": "method Axes.ErrorBar",
-          "declaration": "func (Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *ErrorBar"
+          "declaration": "func (Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) (*ErrorBar, error)"
         },
         {
           "id": "method Axes.ErrorBarContainer",
-          "declaration": "func (Axes) ErrorBarContainer(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) *ErrorbarContainer"
+          "declaration": "func (Axes) ErrorBarContainer(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) (*ErrorbarContainer, error)"
         },
         {
           "id": "method Axes.Eventplot",
@@ -4677,11 +4677,11 @@
         },
         {
           "id": "method Axes.FillBetweenPlot",
-          "declaration": "func (Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) *Fill2D"
+          "declaration": "func (Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) (*Fill2D, error)"
         },
         {
           "id": "method Axes.FillBetweenX",
-          "declaration": "func (Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) *Fill2D"
+          "declaration": "func (Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) (*Fill2D, error)"
         },
         {
           "id": "method Axes.FillToBaseline",
@@ -4721,7 +4721,7 @@
         },
         {
           "id": "method Axes.Hist",
-          "declaration": "func (Axes) Hist(data []float64, opts ...HistOptions) *Hist2D"
+          "declaration": "func (Axes) Hist(data []float64, opts ...HistOptions) (*Hist2D, error)"
         },
         {
           "id": "method Axes.Hist2D",
@@ -4741,7 +4741,7 @@
         },
         {
           "id": "method Axes.ImShowRGB",
-          "declaration": "func (Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) *Image2D"
+          "declaration": "func (Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) (*Image2D, error)"
         },
         {
           "id": "method Axes.Image",
@@ -8703,7 +8703,7 @@
         },
         {
           "id": "func ErrorBar",
-          "declaration": "func ErrorBar(x, y, xErr, yErr []float64, opts ...core.ErrorBarOptions) *core.ErrorBar"
+          "declaration": "func ErrorBar(x, y, xErr, yErr []float64, opts ...core.ErrorBarOptions) (*core.ErrorBar, error)"
         },
         {
           "id": "func Eventplot",
@@ -8735,7 +8735,7 @@
         },
         {
           "id": "func FillBetweenX",
-          "declaration": "func FillBetweenX(y, x1, x2 []float64, opts ...core.FillOptions) *core.Fill2D"
+          "declaration": "func FillBetweenX(y, x1, x2 []float64, opts ...core.FillOptions) (*core.Fill2D, error)"
         },
         {
           "id": "func FloatingXAxis",
@@ -8771,7 +8771,7 @@
         },
         {
           "id": "func Hist",
-          "declaration": "func Hist(data []float64, opts ...core.HistOptions) *core.Hist2D"
+          "declaration": "func Hist(data []float64, opts ...core.HistOptions) (*core.Hist2D, error)"
         },
         {
           "id": "func Hist2D",

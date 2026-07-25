@@ -78,7 +78,7 @@ update the coupled API/doc tests in the same commit.
 
 ### 2.3 Idiomatic Conventions
 
-- [ ] Adopt one error convention: rejected plot input returns `(T, error)`;
+- [x] Adopt one error convention: rejected plot input returns `(T, error)`;
       `diag.Warnf` remains only for accepted degradations. Fold redundant
       `*Units` variants into primary methods.
   - [x] Fold `PlotUnits` into a transactional, unit-capable `Plot`.
@@ -88,7 +88,7 @@ update the coupled API/doc tests in the same commit.
         behavior and make vertical/horizontal rejection transactional.
   - [x] Fold `FillBetweenUnits` into `FillBetween`; validate all three converted
         inputs before constructing polygons or committing axis-unit state.
-  - [ ] Inventory the remaining warn-and-skip plotting entry points, convert
+  - [x] Inventory the remaining warn-and-skip plotting entry points, convert
         rejected input to errors, and retain warnings only where an artist is
         accepted with a documented degradation.
 - [ ] Replace the 83 variadic option structs and 408 pointer-to-primitive
@@ -138,8 +138,8 @@ goldens remain byte-identical to the pre-break baseline.
 `widgets` moves, figure output, getter naming, concurrency documentation,
 registry synchronization, example migration, API/parity remapping, migration
 notes, and the changelog draft are complete. No golden/reference fixture
-changed. All four `*Units` folds are done. Remaining Phase 2 work is the
-warn-and-skip inventory for the remaining plotting entry points, the
+changed. The error convention is closed: all four `*Units` folds are done and
+the warn-and-skip inventory is complete. Remaining Phase 2 work is the
 options/raw-enum conversion, mutable-field cleanup, and the remaining
 option/scalar-map consolidation paths. `Axes.PlotUnits` is now folded into the
 transactional, unit-capable `Axes.Plot` method, which returns `(*Line2D, error)`
@@ -153,9 +153,13 @@ validation happen before the property cycle advances, categorical position
 locators remain intact, and the pyplot wrappers propagate errors.
 `Axes.FillBetweenUnits` is folded into the transactional, unit-capable
 `Axes.FillBetween`, which converts and validates x, y1, y2, and the `Where`
-mask before committing axis units or adding a polygon; the numeric-only
-`FillBetweenPlot`/`FillBetweenX` paths keep their warn-and-skip behavior for
-the later inventory pass. Core and
+mask before committing axis units or adding a polygon. The warn-and-skip
+inventory then converted the last five rejecting entry points — `FillBetweenX`,
+`FillBetweenPlot`, `Hist`, `ErrorBar`, and `ImShowRGB`, plus
+`ErrorBarContainer` and the matching pyplot wrappers — to `(T, error)`, leaving
+`diag.Warnf` only for artists accepted with a documented degradation; the audit
+and the retained-warning rationale are in
+`docs/plans/phase2-warn-and-skip-inventory.md`. Core and
 plot3d alpha multiplier paths share
 `render.Color.WithAlphaMultiplier`, and 3D scalar maps derive their
 configuration through

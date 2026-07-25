@@ -120,9 +120,42 @@ mismatched inputs, unsupported value types, a `Where` mask whose length differs
 from the independent values, and more than one `FillOptions` value. All three
 inputs are converted before anything is committed, so a rejected `y2` leaves no
 partial x-axis unit configuration; rejection also does not add an artist or
-advance the property cycle. The numeric-only `Axes.FillBetweenPlot`,
-`Axes.FillBetweenX`, and `pyplot.FillBetweenX` keep their previous
-warn-and-skip behavior.
+advance the property cycle.
+
+The warn-and-skip plotting entry points now report rejected input the same way.
+`Axes.FillBetweenX`, `Axes.FillBetweenPlot`, `Axes.Hist`, `Axes.ErrorBar`,
+`Axes.ErrorBarContainer`, `Axes.ImShowRGB`, and the `pyplot.FillBetweenX`,
+`pyplot.Hist`, and `pyplot.ErrorBar` wrappers return `(T, error)` instead of
+warning through `diag` and handing back a nil artist. Replace:
+
+```go
+hist := ax.Hist(data, options)
+if hist == nil {
+	// the reason was only available in the warning log
+}
+```
+
+with:
+
+```go
+hist, err := ax.Hist(data, options)
+if err != nil {
+	return err
+}
+```
+
+These calls now reject nil axes, more than one options value, empty inputs,
+mismatched slice lengths (`Weights`, `Where`, and the error/limit arrays),
+non-finite or negative errors, invalid `ErrorEvery`/`ErrorEveryStart`, and
+malformed RGB(A) arrays. `Axes.ErrorBar` validates before the property cycle
+advances, so a rejected call no longer consumes a cycle color. Empty input is
+rejected rather than silently ignored: `ax.Hist(nil)` returns an error where it
+previously returned a bare nil.
+
+`diag.Warnf` is now reserved for calls that accept an artist with a degradation
+— unrecognized stem orientation, renderer capability fallbacks, RGB(A) channel
+clipping, unknown mathtext commands, and unresolvable text bbox styles. See
+`docs/plans/phase2-warn-and-skip-inventory.md` for the full audit.
 
 The same getter pass removed the remaining exported `GetX` spellings:
 

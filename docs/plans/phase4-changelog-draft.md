@@ -37,6 +37,15 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
   and `pyplot.FillBetween` now accept unit-capable slice values and return
   `(*Fill2D, error)`; all three inputs are validated before any axis-unit state
   is committed.
+- Converted the remaining warn-and-skip plotting entry points to the error
+  convention. `Axes.FillBetweenX`, `Axes.FillBetweenPlot`, `Axes.Hist`,
+  `Axes.ErrorBar`, `Axes.ErrorBarContainer`, `Axes.ImShowRGB`, and the
+  `pyplot.FillBetweenX`, `pyplot.Hist`, and `pyplot.ErrorBar` wrappers return
+  `(T, error)` instead of emitting a diagnostic and returning a nil artist.
+  Empty input, mismatched slice lengths, and extra option values are now
+  rejected, and `Axes.ErrorBar` validates before the property cycle advances.
+  `diag.Warnf` is reserved for artists accepted with a documented degradation;
+  the audit is in `docs/plans/phase2-warn-and-skip-inventory.md`.
 
 ## Added
 
