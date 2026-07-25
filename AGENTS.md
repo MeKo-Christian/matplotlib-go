@@ -43,7 +43,6 @@
 - Aim for deterministic behavior (no randomness without fixed seeds); avoid timing-based assertions.
 - Run all packages: `just test`. For verbose: `CGO_ENABLED=1 go test -tags freetype -v ./...`.
 - **Frozen public API:** changing the exported surface requires regenerating the frozen audit (`UPDATE_PUBLIC_API_AUDIT=1 go test -tags freetype -run TestStablePublicAPIMatchesFrozenAudit .`; golden in `test/testdata/public_api/`) and the parity-status doc (`go run ./cmd/paritystatusdoc`).
-- **PLAN.md coupling:** `performance_p0_test.go` string-matches completed `[x] **P2 —` bullets in `PLAN.md` — never reword those bullets.
 
 ## Parity test catalog
 

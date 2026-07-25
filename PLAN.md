@@ -451,325 +451,48 @@ explicit. All nine audit findings closed with zero golden regressions.
 - [x] SVG shadows use `feDropShadow`; PGF documents its intentional
       LaTeX-controlled font-selection limitation.
 
-## Phase 16: rcParams Honesty & Coverage 🧪
+## Phase 16: rcParams Honesty & Coverage ✅
 
-**Goal:** end the "parse-then-ignore" pattern. Of matplotlib's ~309 rcParams, ~122
-are parsed and only ~70 honored — ~52 are stored and never read, giving users false
-confidence a setting took effect.
+**Completed 2026-07-25:** audited 51 dead keys; warned on unsupported non-default
+values; classified intentional non-goals; and honored the targeted rcParams with
+explicit-option precedence and zero golden churn. Audit registries and rationales
+live in `style/{unhonored,unparsed}.go`.
 
-**Status (2026-07-25):** audit, both minimum-bar warnings, the high-value
-image/date subset, axes/line/scatter/errorbar defaults, and the complete tick
-and legend families plus axes title/label placement and scalar formatter
-defaults, independent spine visibility, and all five P2 families are shipped
-with zero default golden churn. MathText rcParams and the Phase 17 CM/STIX
-fontset work are now shipped through the renderer-neutral font-profile hooks.
-
-- [x] Audited the dead params: **51** parsed-but-never-consumed keys, captured as
-      the data-driven source of truth in `style/unhonored.go` (`unhonoredRCParams`):
-      image (6: origin/aspect/resample/interpolation-stage/lut/composite_image),
-      mathtext (9 at audit time: default/fallback/bf/bfit/cal/it/rm/sf/tt;
-      subsequently honored and removed from the registry), date (10), PDF
-      (4), PS (5), SVG (4), animation (11), and boxplot (2:
-      vertical/whiskers). Correction to the prior audit: `boxplot.notch` and
-      `boxplot.patchartist` **are** consumed (`core/plot.go`);
-      their stale “Stored only” comments were fixed.
-- [x] Minimum bar: `maybeWarnUnhonoredRCParam` emits a one-shot `diag.Warnf` (deduped
-      per key, process-global) the first time an unhonored rcParam is _set to a
-      non-default value_, injected at the `applyMPLStyleEntry` success path so it covers
-      `.mplstyle` files, `UpdateParams`, `PushContext`, and `LoadRCFile`. Tests:
-      `TestUnhonoredRCParam*` (warn-on-non-default, silent-on-default, dedup, via
-      UpdateParams, honored-params-silent, audit guards).
-- [x] Honor the high-value subset where the drawing code already exists
-      (2026-07-02, zero golden churn):
-  - `image.origin`/`image.aspect` are consumed by the imshow front-ends
-    (`core/matrix_helpers.go`); MatShow keeps hardcoded upper/equal like
-    matplotlib matshow. `image.resample` stays unhonored **by design**: the Go
-    raster path has no adaptive downscale resampling engine to toggle (it
-    structurally matches mpl's `resample=False` branch only) — noted in
-    `style/unhonored.go`.
-  - all ten `date.*` keys: `date.epoch` resolves lazily on first conversion
-    (mirrors `get_epoch()`), `date.interval_multiples` drives
-    `DateLocator` (incl. the `{1,2,3,7,14,21}` daily table for False),
-    `date.autoformatter.*` override AutoDateFormatter buckets via a new
-    strftime interpreter (`core/strftime.go`), `date.converter: concise`
-    switches the default axis formatter.
-- [x] **Minimum bar for unparsed-but-known keys:** shipped in
-      `style/unparsed.go` — `knownUpstreamRCParams` carries all 321 user-facing
-      matplotlib 3.10.9 rcParam keys (generated from `sorted(matplotlib.rcParams)`,
-      internal `_internal.classic_mode` dropped); the `applyMPLStyleEntry`
-      fallthrough now emits a one-shot `maybeWarnUnparsedRCParam` warning for
-      known-but-unparsed keys before recording them in `report.Unsupported`, so
-      silence means "genuinely unknown key". Guard tests pin table size and
-      consistency with `supportedMPLStyleKeys`/`unhonoredRCParams`
-      (`TestUnparsed*`, `TestKnownUpstreamRCParamsConsistency`).
-- [x] **Explicit non-goals (document, don't parse):** `path.snap`,
-      `text.hinting`/`text.hinting_factor`, `polaraxes.grid`, `axes3d.*` are
-      registered in `nonGoalRCParams` (`style/unparsed.go`) with per-key
-      rationale (parity-pinned snapping/hinting, unmodeled polar-grid toggle,
-      fixed 3D pane/navigation behavior); their one-shot warning carries the
-      rationale instead of the generic "not parsed" text.
-
-### Remaining work
-
-Already shipped: axes behavior (`axisbelow`, margins, `autolimit_mode`,
-`unicode_minus`), primary line/marker defaults, scatter/errorbar defaults, and
-`hist.bins`. For every item below: add typed `RC` storage and matplotlib-default
-values, parse and validate `.mplstyle` input, consume the value in the relevant
-artist/layout path while preserving explicit-option precedence, and add parser +
-behavior tests. Default values must not churn existing goldens.
-
-- [x] **P1 — Tick geometry and visibility.** Honor `{x,y}tick.direction`;
-      `major/minor.{size,width,pad}`; `minor.{visible,ndivs}`; x-side
-      `{top,bottom,labeltop,labelbottom}` and per-major/minor side toggles;
-      y-side `{left,right,labelleft,labelright}` and per-major/minor side
-      toggles; and `{x,y}tick.alignment`. **Shipped 2026-07-24:** typed
-      `TickAxisRC`/`TickLevelRC`, all 36 parser/serializer keys, independent
-      major/minor side visibility, DPI-aware sizes, explicit-option precedence,
-      and Matplotlib's automatic 4/5 minor subdivision rule. Focused style/core
-      tests and the catalog golden gate are green.
-- [x] **P1 — Legend layout.** Honor `legend.loc`, `fancybox`, `shadow`,
-      `numpoints`, `scatterpoints`, `markerscale`, `title_fontsize`, `borderpad`,
-      `labelspacing`, `handlelength`, `handleheight`, `handletextpad`,
-      `borderaxespad`, and `columnspacing`. **Shipped 2026-07-24:** typed
-      `LegendRC` storage plus parser/runtime round-tripping for all 14 keys;
-      axes/figure legends seed named placement, frame shape/shadow, line/scatter
-      sample counts and scaling, title size, and DPI-aware font-relative layout
-      while later explicit legend-field changes still win. Focused style/core
-      tests and the catalog golden/reference gate are green.
-- [x] **P1 — Axes title and label placement.** Honor `axes.titlepad`,
-      `titlelocation`, `titleweight`, `titley`, `labelpad`, and `labelweight`;
-      explicit title/label options must continue to win. **Shipped
-      2026-07-24:** all six keys have typed `AxesRC` storage and parser/runtime
-      round-tripping; axes creation seeds edge alignment, automatic versus
-      axes-relative title y, DPI-aware point padding, and resolved font
-      weights. Tight/constrained layout and 3D label placement consume the
-      same values. Explicit per-axes title/x-label/y-label setters win until
-      `Clear` restores rc defaults; focused style/core tests and the catalog
-      golden/reference gate are green.
-- [x] **P1 — Scalar formatter defaults.** Honor all six
-      `axes.formatter.*` keys: `limits`, `min_exponent`, `offset_threshold`,
-      `use_locale`, `use_mathtext`, and `useoffset`. **Shipped 2026-07-24:**
-      all six keys have typed `FormatterRC` storage, parser/runtime
-      round-tripping, and Matplotlib 3.10.9 defaults. Newly created/reset
-      axes and later scale/colorbar formatter installation consume power
-      limits, log minimum exponent, offset policy/threshold, MathText, and
-      locale-aware separators; later explicit formatter replacement still
-      wins until `Clear` restores rc defaults. Focused style/core tests and
-      the catalog golden/reference gate are green.
-- [x] **P1 — Spine visibility.** Honor `axes.spines.{top,bottom,left,right}` at
-      axes creation without overriding later explicit spine changes. **Shipped
-      2026-07-25:** typed `SpineRC` storage and parser/runtime round-tripping
-      seed all four independent rectilinear spines, including the lightweight
-      top/right fallback frame edges and explicit top/right axes created later.
-      Projection-specific frames retain their own defaults, explicit visibility
-      changes win until `Clear`, and focused style/core tests are green.
-- [x] **P2 — Line and marker rendering defaults.** Honor
-      `lines.{dashdot_pattern,dashed_pattern,dotted_pattern,scale_dashes}`,
-      dash/solid cap and join styles, `markerfacecolor`, `markeredgecolor`,
-      `markers.fillstyle`, and `lines.antialiased`. **Shipped 2026-07-25:**
-      typed parser/runtime state reaches plot lines, directly added lines,
-      errorbars, collections, and contours with point/device-correct dash
-      scaling, marker color/fill defaults, antialiasing, and explicit-option
-      precedence.
-- [x] **P2 — Figure defaults and layout seeds.** Honor `figure.edgecolor`,
-      `frameon`, all six `subplot.*` margins/spacings, `autolayout`, the five
-      `constrained_layout.*` controls, `titlesize`, `titleweight`, `labelsize`,
-      and `labelweight`. Classify `figure.hooks`, `max_open_warning`, and
-      `raise_window` as supported behavior or documented headless non-goals.
-      **Shipped 2026-07-25:** typed figure/layout state seeds GridSpec,
-      subplots, tight/constrained engines, figure labels, and frame drawing;
-      explicit layout options win, and the three GUI/Python-only controls have
-      documented headless non-goal rationales.
-- [x] **P2 — Patch defaults.** Add `PatchRC` and honor
-      `patch.{linewidth,facecolor,edgecolor,force_edgecolor,antialiased}` across
-      standalone patches and patch-producing plot methods; explicit paint/options
-      must win. **Shipped 2026-07-25:** dynamic `Cn` colors, standalone patch
-      and legend resolution, bars/fills/histograms/pies/spans, antialiasing,
-      and explicit transparent/zero-width setters are covered by focused
-      parser and rendering tests.
-- [x] **P2 — Font defaults and fallback lists.** Honor
-      `font.{weight,style,variant,stretch}` and retain ordered
-      `font.{serif,sans-serif,cursive,fantasy,monospace}` fallback lists instead
-      of collapsing `font.family` to one name. **Shipped 2026-07-25:** ordered
-      generic-family expansion and structured renderer keys preserve every
-      property; weight/style select faces, stretch reaches fontconfig,
-      small-caps enables OpenType shaping, and SVG live text emits the matching
-      CSS properties.
-- [x] **P2 — Contour defaults.** Honor `contour.algorithm`, `corner_mask`,
-      `linewidth`, and `negative_linestyle` in structured/triangular line and
-      filled contour paths where applicable. **Shipped 2026-07-25:** typed
-      options and rc fallbacks cover structured and triangular paths,
-      single-masked-corner geometry, Matplotlib's mpl2005 corner-mask
-      restriction, line-width fallback, and monochrome negative styles.
-- [x] **MathText rcParams.** Honor `mathtext.default`, `fallback`, `bf`, `bfit`,
-      `cal`, `it`, `rm`, `sf`, and `tt`. **Shipped 2026-07-25:** the
-      `cwbudde/mathtext` profile API carries implicit and explicit semantic font
-      classes, per-glyph substitutions, fontset constants, and sized
-      alternatives. The core adapter snapshots all ten mathtext font settings,
-      resolves custom fontconfig-like patterns to exact renderer faces,
-      preserves per-text `MathFontFamily` precedence, and isolates cached
-      layouts by the complete profile. The nine keys no longer warn through
-      `unhonoredRCParams`.
-- [x] **Phase 16 exit gate.** Verify every completed key above is parsed or
-      explicitly honored (while remaining in the upstream-key audit table), move
-      intentional omissions into `nonGoalRCParams` with rationale, and run focused
-      style tests plus the full golden/reference suite. **Closed 2026-07-25:**
-      the supported/upstream/unhonored consistency guards are green, figure GUI
-      controls carry headless rationales, the frozen public API audit was
-      refreshed, all catalog goldens remained byte-identical, and `just test`
-      passes with pinned FreeType 2.6.1.
+- [x] Honored tick, legend, axes label/title, scalar formatter, and spine
+      defaults.
+- [x] Honored line and marker styles across lines, errorbars, collections, and
+      contours.
+- [x] Applied figure and layout defaults; documented GUI-only controls as
+      headless non-goals.
+- [x] Applied patch defaults across standalone patches and plot-generated
+      patches.
+- [x] Preserved font properties and ordered generic-family fallback lists
+      through renderer selection.
+- [x] Applied contour defaults across structured and triangular contour paths.
+- [x] **MathText and exit gate:** all nine settings are honored; audit guards,
+      focused tests, API audit, and pinned-FreeType parity suites pass.
 
 ## Phase 17: Artist Breadth & Algorithmic Correctness ⚪
 
 **Goal:** fix the concrete divergences the audit pinned down and fill the narrow
 artist gaps that have no workaround.
 
-- [x] `core/tick_locators.go` — `LogLocator` default stride now uses matplotlib's
-      `numDecades/numTicks + 1` (integer floor-div) instead of `ceil(numDecades/numTicks)`;
-      the two only diverge when `numDecades` is an exact multiple of `numTicks` (Go and
-      mpl share the same floating-point `numdec`, so the common few-decade axes were
-      already stride-correct — **zero golden churn**). Added the "≤1 in-view minor tick →
-      `AutoLocator`" fallback (mirrors `ticker.py` LogLocator.tick*values). Tests:
-      `TestLogLocatorStrideAndInvalidDomains` gained `base10-/base2-exact-multiple` cases
-      (verified against matplotlib 3.10.9) and `TestLogLocatorMinorFallsBackToAutoLocator`.
-      \_Shipped 2026-07-06.*
-- [x] `core/contour_lines.go` — saddle disambiguation now computes the cell-centre
-      mean (bilinear centre value) and splits the ambiguous cell into **two** segments,
-      isolating the diagonal corner-pair whose sign differs from the centre, instead of
-      keying off `above[0]` and emitting all four crossings as one polyline. The centre
-      uses a strict `mean > level` compare so an exact `mean == level` tie resolves as
-      "below" — verified against matplotlib 3.10.9 `contour(...).allsegs` for the
-      symmetric tie and both asymmetric pairings; the split direction matches the
-      already-correct filled-contour path (`contourGridBandPolygons`). Tests:
-      `TestStructuredContourLineClipsSingleSaddleQuadLikeMatplotlib` and
-      `TestAxesContourUsesStructuredGridLinesLikeMatplotlib` corrected from the old
-      single-polyline expectation to two segments, plus new
-      `TestStructuredContourSaddleSplitUsesCellMean` (both pairings). Zero golden churn —
-      the existing contour goldens (`contour_styles` et al.) don't cross an exact
-      ambiguous saddle, so the exact-value unit tests (not a redundant pixel golden)
-      provide the regression lock. _Shipped 2026-07-06._
-- [x] 2D `bar(yerr=/xerr=)` — `BarOptions` (`core/plot.go`) gained `XErr`/`YErr`
-      symmetric errors plus `ECol`/`CapSize`/`CapThick` and an `ErrorKw
-*ErrorBarOptions` passthrough (asymmetric errors, errorevery). `Bar()` now
-      builds a matplotlib-faithful error bar anchored at the bar top (vertical) /
-      end (horizontal) — `ex=center, ey=baseline+height` — via the reused
-      `Axes.ErrorBar` constructor (fmt="none", ecolor default black, capsize from
-      the `errorbar.capsize` rc), added before autoscale so error extents widen the
-      limits, and surfaced through the pre-existing `BarContainer.Errorbar` slot.
-      Tests: `TestBarErrorBarsPlacementLikeMatplotlib` (anchor/color/container/
-      autoscale exact-value lock) + `TestBarWithoutErrorDataHasNoErrorBar`. New
-      parity case `bar_yerr` (golden byte-identical; matplotlib-ref RMSE 0.03 /
-      PSNR 79.7 dB). Zero churn on existing bar goldens (error fields default off).
-      _Shipped 2026-07-06._
-- [x] `hist(log=)` — `HistOptions` (`core/plot.go`) gained a `Log bool` field;
-      `Hist()` now calls `SetYScale("log", WithScaleNonPositive(NonPositiveClip))`
-      when set, matching matplotlib's `hist(log=True)` →
-      `set_yscale('log', nonpositive='clip')` (histograms here are vertical-only, so
-      it always targets the y axis; the clip keeps the zero baseline finite instead
-      of masking to NaN).
-      Tests: `TestHistLogSetsYScaleToLog` + `TestHistWithoutLogKeepsLinearYScale`.
-      New Showcase example `examples/hist_log` + parity case `hist_log` (golden
-      byte-identical; matplotlib-ref RMSE 0.36 / PSNR 57.5 dB). Zero churn on the
-      existing hist goldens (`Log` defaults off). _Shipped 2026-07-06._
-- [x] mathtext `cm`/`stix` fontsets — ported Matplotlib's
-      `BakomaFonts`/`StixFonts` per-fontset glyph maps, virtual alphabets,
-      private-use faces, glyph fixes, font constants, and sized alternatives.
-      The core adapter resolves the profile's CM/STIX faces to the exact bundled
-      Matplotlib font files, including STIXNonUnicode variants. _Shipped
-      2026-07-25._
-- [x] `core/norm.go` `TwoSlopeNorm` — out-of-range now maps to ±inf. `Map`/`Inverse`
-      extrapolate `< VMin`/`> VMax` (and `< 0`/`> 1` for the inverse) to ∓inf, matching
-      `np.interp(..., left=-inf, right=inf)` in `colors.py` TwoSlopeNorm. Coupled fix in
-      `color/colormap.go` `AtValue`: `-inf`→under, `+inf`→over, only `NaN`→bad (was: all
-      `Inf`→bad), so the default under/over color falls back to `At(0)`/`At(1)` exactly as
-      matplotlib's `Colormap.__call__`. `twoslope_norm_image` golden stays byte-identical
-      (below-vmin cells already routed to `At(0)`). Log/logit clip semantics aligned too:
-      `Log.Fwd`/`Logit.transform` now pin the non-positive/out-of-range **log-space output**
-      to the ∓1000 sentinel (matplotlib `scale.py`) before normalizing, instead of
-      substituting a near-boundary input value; and matplotlib's LogScale default
-      `nonpositive='clip'` is honored via a new unspecified-mode resolver (`resolveLogNonPositive`)
-      plus `NewLog` defaulting to clip (logit default stays `mask`). `logClipFloor` is kept
-      for domain repair only. Tests: out-of-range ±inf in `norm_test.go`, three-way Inf
-      routing in `colormap_test.go`, sentinel/off-axis + default-clip in
-      `scale_registry_test.go`. Only golden churn: `hist_log` regenerated — its
-      matplotlib-ref parity **improved** from RMSE 0.36 to **0.16** (PSNR 57.5→68.0 dB).
-      _Shipped 2026-07-06._
+**Completed:** corrected log tick selection, contour saddle splitting,
+`TwoSlopeNorm`/log clipping, quiver scaling, transformed-space autoscaling, and
+zero-bound handling.
+
+- [x] Added 2D bar errorbars and logarithmic histograms with parity cases.
+- [x] Ported CM/STIX MathText fontsets and the complete accent set.
+- [x] Added outward/axes-relative spine positioning.
+- [x] Fixed radius-independent pie framing.
+- [x] Verified the daily date interval tables already match Matplotlib 3.10.9.
+
+### Remaining work
+
 - [ ] Transform type-set breadth — add `ScaledTranslation`, `TransformWrapper`, and
       `Affine2D`-style `rotate/skew` builders; the separable→affine extraction is
       diagonal-only (`transform/transform.go:61`), so rotation/shear need manual matrix
       construction today. Triage against real demand before building.
-- [x] Add the ~3 missing accents vs matplotlib's 20-entry `_accent_map`
-      (mathtext module). The library now covers all 20 accent entries plus all
-      three wide accents, with separate-glyph positioning and sized wide-accent
-      alternatives. _Shipped 2026-07-25._
-
-**Third-audit additions (2026-07-01, REVIEW.md third review §2), all
-file:line-verified on both sides:**
-
-- [x] `core/vector_field_quiver.go` — quiver default (unset-scale) autoscale now
-      ports matplotlib's `scale = 1.8·amean·sn/span` (`quiver.py:673-681`), replacing
-      the home-grown `0.18·min(W,H)/√N` heuristic. **Note (stale audit):** the audit
-      said `sn = clip(√N, 8, 25)`, but the vendored/installed matplotlib **3.10.9**
-      (`quiver.py:674`) uses `sn = max(10, √N)` — that clip form is the separate
-      _width_ default (`quiver.py:562`, already mirrored). We port the parity-correct
-      `max(10, √N)` (verified against system matplotlib 3.10.9: `span==1` for the
-      default `units="width"`, `scale==1.8·amean·sn`). In the Go pixel-space form
-      (`mean = amean·Clip.W()`) this is `target = Clip.W()/(1.8·sn)`, `scale = mean/target`.
-      `sn` uses the total anchor count (matplotlib `self.N`); `mean` averages only
-      finite/positive arrows. Tests: `TestQuiverDefaultScaleMatchesMatplotlib` (exact
-      value, sn-floor + √N sub-cases). New parity case `quiver_autoscale` (golden
-      byte-identical; matplotlib-ref RMSE 1.61 / PSNR 62.6 dB). Zero churn on existing
-      quiver goldens (every current 2D quiver sets an explicit scale). _Follow-up:_
-      full per-`units`/`scale_units` generality (matplotlib's `span` for
-      height/dots/inches, `a = lengths` for the `angles='xy'`+`scale_units='xy'` combo)
-      is unmodeled — the default width-units path is exact and is what parity uses.
-      _Shipped 2026-07-07._
-- [x] `core/axes_autoscale.go` — autoscale margins now expand in scale-transform
-      space and inverse-map back to data coordinates, matching
-      `axes/_base.py:3064`: log padding is multiplicative and symlog padding
-      follows the signed-log transform. The pre-margin domain now ports locator
-      nonsingular behavior (generic `transforms.nonsingular(expander=.05)`;
-      `LogLocator` positive filtering, minimum-positive replacement, adjacent
-      decades for a lone point, and `[1, base]` for all-nonpositive data).
-      The same upstream probe corrected the registry's symlog default
-      `linthresh` from 1 to matplotlib 3.10.9's 2 (explicit overrides remain
-      unchanged).
-      Exact-value tests were probed against matplotlib 3.10.9 for linear origin
-      and nonzero points, four log-domain cases, and symlog; all 173 catalog
-      goldens/references remain green with zero fixture churn. _Shipped
-      2026-07-23._
-- [x] `core/axes_autoscale.go` — zero-valued bounds no longer conflate an
-      origin-only data artist with “no data”: the autoscale collector has an
-      explicit bounds-presence record plus per-axis minimum-positive values,
-      implemented by `Line2D` and `Scatter2D` from their finite point data.
-      `TestAutoScaleSingleOriginPointMatchesMatplotlib` locks matplotlib's
-      `[-0.055, 0.055]` default window and the scatter variant covers the same
-      zero-rectangle ambiguity. _Shipped 2026-07-23._
-- [x] `core/axis_types.go` / `core/axis_spine.go` — spine positioning now
-      supports Matplotlib's `('outward', points)` and `('axes', fraction)`
-      modes through `SetSpinePositionOutward` / `SetSpinePositionAxes` and
-      typed `AxisSpinePositionMode` constants. A shared perpendicular
-      display-coordinate resolver keeps the spine, tick bases, tick labels,
-      and axis-label anchor together; outward distances convert points through
-      renderer DPI (negative values move inward), while axes fractions remain
-      unclamped like Matplotlib. Exact four-side geometry tests match
-      `spines.py:get_spine_transform`, including DPI scaling, and new catalog
-      case `spine_positions` visually/reference-checks both modes at RMSE 0.61 /
-      PSNR 74.1 dB. The intentional API addition is recorded in the frozen
-      public audit. _Shipped 2026-07-23._
-- [x] `core/date_tick.go` — DAILY interval table: **already correct** (the audit
-      note was stale). `chooseDateTickInterval` (date_tick.go:711-726) already carries
-      **both** matplotlib tables keyed on `date.interval_multiples`: `{1,2,3,7,14,21}`
-      for `False` and `{1,2,4,7,14}` for `True` (the AutoDateLocator default), byte-matching
-      `dates.py:1300/1312`. Covered by `date_rc_test.go:35/79`. No change needed.
-      (The full rrule alignment simplification stays a documented divergence.)
-- [x] `core/pie.go` — pie framing is now radius-independent: the default (`frame=false`)
-      pie uses a fixed `±1.25 + center` data window regardless of radius (was
-      `Radius*1.25`), and `frame=true` keeps the frame and lets autoscale fit the wedges,
-      matching matplotlib's pie() `_request_autoscale_view()` / fixed-xlim branches.
-      Test: `TestAxesPieFixedWindowIsRadiusIndependent` (radii 0.5/1/2, off-origin center).
-      Zero golden churn (`specialty_artists` uses the default radius, so the window was
-      already `≈±1.25`). _Shipped 2026-07-06._
 - [ ] `core/layoutgrid.go:239` / `:448` — nested-mosaic constrained_layout is
       not modeled and outside legend/colorbar space is approximated. **Triage:**
       scope the shared-margin modeling cost; if not justified by a parity case,
