@@ -490,55 +490,22 @@ zero-bound handling.
 - [x] Aligned 3D contour documentation with its projected-contour
       implementation.
 
-## Phase 18: Parity-Harness Rigor ⚪
+## Phase 18: Parity-Harness Rigor ✅
 
-**Goal:** close the two real holes in an otherwise-honest harness so a live-render
-regression cannot pass green. **Ordering:** the two harness-hole items (live-render
-compare, optional-visual CI) execute **before** Phases 19–21 — those phases
-regenerate goldens and rely on the harness to catch regressions honestly.
+**Completed 2026-07-25.** Closed the live-render and optional-visual gaps,
+removed ineffective tolerances, and added direct parity coverage for every
+previously fixtureless public API identified by the third audit.
 
-- [x] `test/helpers_test.go:406` — `TestReferenceCompare` asserts on two committed
-      files (golden vs ref); it renders `got` but never compares it. Compare the **live
-      render** against the matplotlib reference (or assert `live == golden` in the same
-      test) so the chain doesn't depend on `TestGolden` running.
-      _Shipped 2026-07-01:_ `runReferenceCompareTest` now asserts `live == golden`
-      (≤1 LSB, skipped under `-update-golden`) before the golden-vs-ref compare and
-      writes a `_rendered_vs_golden_diff.png` artifact on failure. Verified
-      red→green with a doctored golden (old harness passed, new harness fails).
-- [x] 49 optional-visual cases skip `TestGolden` (live-vs-golden) in default CI
-      (`test/helpers_test.go:69–119`), so a live regression on the 3D/geo/gallery cases
-      stays green. Either run their live-render check in CI or document the gap loudly.
-      _Shipped 2026-07-01:_ the `RUN_OPTIONAL_VISUAL_TESTS` gate is **removed**
-      entirely (all 173 golden cases pass ungated in ~20 s; each render costs
-      ~0.05 s — the gate predated the vendored-FreeType default). The two strict
-      text cases now always run their strict check (`strictMplRefIDs`); the
-      `test-optional-visual` Just target and env var are gone; AGENTS.md updated.
-- [x] Tolerance cleanup — the `MinPSNR 10 / MaxMeanAbs 95` overrides on big gallery
-      cases never bind (the always-present `MaxRMSE` binds first); remove the redundant
-      "theater" thresholds so the catalog reflects the gate that actually applies.
-      _Third-audit expansion (2026-07-01):_ `widgets_gallery` and `animation_gallery`
-      run with `MinPSNR 10 / MaxMeanAbs 95` — effectively **disabled** gates, not just
-      redundant ones. The mechanical removal of the theater thresholds happens here;
-      the actual re-tightening of these two plus the ~23 loose cases is owned by
-      Phase 21 (visual QA sweep), which does the final ratchet.
-      _Shipped 2026-07-01:_ cross-referenced every per-case `MinPSNR`/`MaxMeanAbs`
-      against actual golden-vs-ref metrics: **103 override components were theater
-      and every one passes the harness defaults (44 dB / 2.50)**, so all were
-      removed (rule: drop `MinPSNR ≤ 44` and `MaxMeanAbs ≥ 2.5`); the 50 rows with
-      genuinely stricter components keep them (e.g. `units_categories`
-      `MaxMeanAbs 0.05` stays while its loose `MinPSNR 43` went). Net effect:
-      defaults now bind on 103 rows — a tightening, zero failures. Phase 21's
-      PSNR/MeanAbs loose-case queue is therefore **empty**; Phase 21 still owns
-      the `MaxRMSE` ratchet (incl. `widgets_gallery` 5.0 / `animation_gallery` 1.5).
-
-**Third-audit additions (2026-07-01, REVIEW.md third review §4):**
-
-- [ ] **Zero-fixture public APIs** — these ship with no parity case or example,
-      so a regression is invisible to the harness. Add catalog fixtures (matplotlib
-      reference + golden) for: `PSD`, `Specgram`, `Cohere`, `CSD` (HIGH — real
-      Welch-segmentation/detrend/window numerics behind them);
-      `LogLog`/`SemilogX`/`SemilogY`, `SecondaryYAxis`, `TwinY` (MED);
-      `AxLineSlope`, single-series `BoxPlot` (LOW). HIGH group first.
+- [x] Made reference comparisons assert the live render against its golden and
+      emit a rendered-vs-golden diff on failure.
+- [x] Removed optional-visual gating; all 173 golden cases and strict text
+      checks now run by default.
+- [x] Removed 103 ineffective PSNR/MeanAbs overrides while retaining genuinely
+      stricter gates; Phase 21 owns the remaining RMSE ratchet.
+- [x] Added direct Go/Matplotlib parity fixtures for the eleven previously
+      uncovered signal, scale, secondary-axis, axline, and boxplot APIs.
+- [x] Corrected the exposed Welch numerics, spectrum presentation, spectrogram
+      extents, single-series box width, and side-by-side harness registry.
 
 ---
 

@@ -63,6 +63,26 @@ var referenceConsistencyClassifications = []ReferenceConsistencyClassification{
 		Rationale:      "Signal helper variants are public API, but a dedicated signal/spectrum showcase has not been added yet.",
 	},
 	{
+		CaseID:         "psd_welch",
+		Classification: "signal-parity-fixture",
+		Rationale:      "Focused numerical and rendering coverage for the public Welch PSD helper; a dedicated signal showcase remains future demo work.",
+	},
+	{
+		CaseID:         "specgram_psd",
+		Classification: "signal-parity-fixture",
+		Rationale:      "Focused numerical and rendering coverage for the public spectrogram helper; a dedicated signal showcase remains future demo work.",
+	},
+	{
+		CaseID:         "cohere_welch",
+		Classification: "signal-parity-fixture",
+		Rationale:      "Focused numerical and rendering coverage for the public coherence helper; a dedicated signal showcase remains future demo work.",
+	},
+	{
+		CaseID:         "csd_welch",
+		Classification: "signal-parity-fixture",
+		Rationale:      "Focused numerical and rendering coverage for the public Welch CSD helper; a dedicated signal showcase remains future demo work.",
+	},
+	{
 		CaseID:         "specialty_depth",
 		Classification: "compound-statistics-fixture",
 		Rationale:      "Compound statistical and specialty residual fixture; public statistics coverage is represented by stat_variants and specialty_artists.",
