@@ -75,7 +75,7 @@ func TestModeCapabilitiesExposesCPUGPUSplit(t *testing.T) {
 	}
 }
 
-func TestNativePathRequirementsDocumentDeferredExternalABI(t *testing.T) {
+func TestNativePathRequirementsDocumentExternalABI(t *testing.T) {
 	requirements := NativePathRequirements()
 	if len(requirements) == 0 {
 		t.Fatal("NativePathRequirements returned no native paths")

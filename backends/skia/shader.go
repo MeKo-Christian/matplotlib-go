@@ -45,11 +45,10 @@ func newCPUSurfaceBridge(width, height int, mode RenderMode) surfaceBridge {
 func (b *cpuSurfaceBridge) Info() BridgeInfo {
 	description := "CPU Skia bridge boundary with local deterministic shader fallback"
 	if b.mode == ModeGPU {
-		// GPU-mode scaffold: the render mode is reported as GPU so the strategy and
-		// capability surface can distinguish configurations, but rasterization still
-		// runs through the deterministic CPU readback bridge (NativeSurface stays
-		// false) until a native SkSurface::MakeRenderTarget path lands.
-		description = "GPU Skia bridge scaffold; deterministic CPU readback (no native GPU surface yet)"
+		// Pure-Go GPU mode keeps the selected mode visible while truthfully
+		// reporting renderer-neutral CPU fallback (NativeSurface and Accelerated
+		// remain false).
+		description = "Skia GPU mode selected without skiacgo; deterministic CPU fallback"
 	}
 	return BridgeInfo{
 		Binding:         BindingExternalCAPI,

@@ -251,6 +251,13 @@ func TestSkiaTaggedBackendComparisonReportLabelsCPUMode(t *testing.T) {
 	if !strings.Contains(report, "skia/cpu") {
 		t.Fatalf("BackendComparisonReport did not label Skia CPU mode:\n%s", report)
 	}
+	r, err := New(backends.TestDefaultConfig(32, 24))
+	if err != nil {
+		t.Fatalf("New CPU renderer: %v", err)
+	}
+	if status := backends.RendererCapabilityStatus(backends.Skia, r, backends.GPUAccel); status != backends.CapabilityUnsupported {
+		t.Fatalf("CPU gpuaccel status = %q, want %q", status, backends.CapabilityUnsupported)
+	}
 }
 
 func TestSkiaTaggedPathEffectFilterUsesOffscreenSurface(t *testing.T) {
