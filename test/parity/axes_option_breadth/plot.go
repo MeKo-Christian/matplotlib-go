@@ -77,7 +77,7 @@ func Plot() *core.Figure {
 	fillAx.SetYLim(-1.4, 1.4)
 	step := core.FillStepPost
 	fillAlpha := 0.55
-	fillAx.FillBetween(
+	_, _ = fillAx.FillBetween(
 		[]float64{0, 1, 2, 3, 4, 5},
 		[]float64{-0.6, 0.8, 0.2, 1.0, -0.2, 0.7},
 		[]float64{0.4, -0.4, 0.6, -0.3, 0.5, -0.5},

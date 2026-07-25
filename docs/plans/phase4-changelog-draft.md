@@ -33,6 +33,10 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
   and their pyplot wrappers now accept unit-capable slice values and return
   `(*Bar2D, error)` with transactional rejection while preserving categorical
   position-axis locators.
+- Folded `Axes.FillBetweenUnits` into `Axes.FillBetween`. The primary method
+  and `pyplot.FillBetween` now accept unit-capable slice values and return
+  `(*Fill2D, error)`; all three inputs are validated before any axis-unit state
+  is committed.
 
 ## Added
 

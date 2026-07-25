@@ -182,6 +182,29 @@ func TestBarAcceptsUnitCapableValuesAndPropagatesErrors(t *testing.T) {
 	}
 }
 
+func TestFillBetweenAcceptsUnitCapableValuesAndPropagatesErrors(t *testing.T) {
+	resetForTests()
+
+	timestamps := []time.Time{
+		time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.February, 5, 0, 0, 0, 0, time.UTC),
+	}
+	fill, err := FillBetween(timestamps, []float64{6, 7}, []float64{10, 15})
+	if err != nil {
+		t.Fatalf("FillBetween() returned error: %v", err)
+	}
+	if fill == nil {
+		t.Fatal("FillBetween() returned nil artist")
+	}
+	if _, ok := GCA().XAxis.Locator.(dates.DateLocator); !ok {
+		t.Fatalf("x-axis locator = %T, want dates.DateLocator", GCA().XAxis.Locator)
+	}
+
+	if rejected, err := FillBetween([]float64{0, 1}, []float64{1, 2}, []float64{3}); err == nil || rejected != nil {
+		t.Fatalf("mismatched FillBetween() = (%v, %v), want nil artist and error", rejected, err)
+	}
+}
+
 func TestTextAndAnnotateDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 

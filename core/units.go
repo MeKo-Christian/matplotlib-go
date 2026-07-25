@@ -304,24 +304,6 @@ func applyAutoLocatorIfDefault(axis *Axis) {
 	}
 }
 
-// FillBetweenUnits converts x/y inputs using the axis units machinery and then
-// draws a fill-between artist.
-func (a *Axes) FillBetweenUnits(xVals, y1Vals, y2Vals any, opts ...FillOptions) (*Fill2D, error) {
-	x, err := a.convertValues(xVals, true)
-	if err != nil {
-		return nil, err
-	}
-	y1, err := a.convertValues(y1Vals, false)
-	if err != nil {
-		return nil, err
-	}
-	y2, err := a.convertValues(y2Vals, false)
-	if err != nil {
-		return nil, err
-	}
-	return a.FillBetweenPlot(x, y1, y2, opts...), nil
-}
-
 func (a *Axes) convertValues(values any, isX bool) ([]float64, error) {
 	slice, elemType, err := sliceValue(values)
 	if err != nil {

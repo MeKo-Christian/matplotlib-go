@@ -112,7 +112,10 @@ func TestPatchProducingMethodsHonorRCAndExplicitZeroWidth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Bar() returned error: %v", err)
 	}
-	fill := ax.FillBetween([]float64{0, 1}, []float64{0, 0}, []float64{1, 1})
+	fill, err := ax.FillBetween([]float64{0, 1}, []float64{0, 0}, []float64{1, 1})
+	if err != nil {
+		t.Fatalf("FillBetween() returned error: %v", err)
+	}
 	hist := ax.Hist([]float64{0, 1})
 	span := ax.AxHSpan(0, 1)
 	if bar.EdgeWidth != 3 || bar.EdgeColor != fig.RC.Patch.EdgeColor ||
@@ -138,10 +141,13 @@ func TestPatchProducingMethodsHonorRCAndExplicitZeroWidth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Bar() returned error: %v", err)
 	}
-	fill = ax.FillBetween(
+	fill, err = ax.FillBetween(
 		[]float64{0, 1}, []float64{0, 0}, []float64{1, 1},
 		FillOptions{EdgeWidth: &zero},
 	)
+	if err != nil {
+		t.Fatalf("FillBetween() returned error: %v", err)
+	}
 	hist = ax.Hist([]float64{0, 1}, HistOptions{EdgeWidth: &zero})
 	span = ax.AxHSpan(0, 1, HSpanOptions{EdgeWidth: &zero})
 	if bar.EdgeWidth != 0 || fill.EdgeWidth != 0 || hist.EdgeWidth != 0 || span.EdgeWidth != 0 {

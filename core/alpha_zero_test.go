@@ -94,17 +94,23 @@ func TestFillBetweenHonorsExplicitZeroAlpha(t *testing.T) {
 
 	zero := 0.0
 	transparent := &recordingRenderer{}
-	newAlphaTestAxes().
-		FillBetween([]float64{0, 1, 2}, []float64{0, 0, 0}, []float64{1, 2, 1}, FillOptions{Color: &red, Alpha: &zero}).
-		Draw(transparent, ctx)
+	transparentFill, err := newAlphaTestAxes().
+		FillBetween([]float64{0, 1, 2}, []float64{0, 0, 0}, []float64{1, 2, 1}, FillOptions{Color: &red, Alpha: &zero})
+	if err != nil {
+		t.Fatalf("FillBetween() returned error: %v", err)
+	}
+	transparentFill.Draw(transparent, ctx)
 	if got := maxFillAlpha(transparent); got != 0 {
 		t.Fatalf("FillBetween alpha=0 should draw no opaque fill, got max fill alpha %v", got)
 	}
 
 	opaque := &recordingRenderer{}
-	newAlphaTestAxes().
-		FillBetween([]float64{0, 1, 2}, []float64{0, 0, 0}, []float64{1, 2, 1}, FillOptions{Color: &red}).
-		Draw(opaque, ctx)
+	opaqueFill, err := newAlphaTestAxes().
+		FillBetween([]float64{0, 1, 2}, []float64{0, 0, 0}, []float64{1, 2, 1}, FillOptions{Color: &red})
+	if err != nil {
+		t.Fatalf("FillBetween() returned error: %v", err)
+	}
+	opaqueFill.Draw(opaque, ctx)
 	if maxFillAlpha(opaque) == 0 {
 		t.Fatal("control opaque fill drew nothing — harness problem")
 	}

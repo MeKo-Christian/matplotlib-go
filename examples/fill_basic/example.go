@@ -32,7 +32,7 @@ func Plot() *core.Figure {
 	faceColor := render.Color{R: 0.3, G: 0.7, B: 0.9, A: 0.7}
 	edgeColor := render.Color{R: 0.1, G: 0.3, B: 0.5, A: 1.0}
 	edgeWidth := 2.0
-	ax.FillBetween(x, zeros, y, core.FillOptions{
+	_, _ = ax.FillBetween(x, zeros, y, core.FillOptions{
 		Color:     &faceColor,
 		EdgeColor: &edgeColor,
 		EdgeWidth: &edgeWidth,

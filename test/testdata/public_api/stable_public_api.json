@@ -4673,15 +4673,11 @@
         },
         {
           "id": "method Axes.FillBetween",
-          "declaration": "func (Axes) FillBetween(x, y1, y2 []float64, opts ...FillOptions) *Fill2D"
+          "declaration": "func (Axes) FillBetween(xVals, y1Vals, y2Vals any, opts ...FillOptions) (*Fill2D, error)"
         },
         {
           "id": "method Axes.FillBetweenPlot",
           "declaration": "func (Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) *Fill2D"
-        },
-        {
-          "id": "method Axes.FillBetweenUnits",
-          "declaration": "func (Axes) FillBetweenUnits(xVals, y1Vals, y2Vals any, opts ...FillOptions) (*Fill2D, error)"
         },
         {
           "id": "method Axes.FillBetweenX",
@@ -8735,7 +8731,7 @@
         },
         {
           "id": "func FillBetween",
-          "declaration": "func FillBetween(x, y1, y2 []float64, opts ...core.FillOptions) *core.Fill2D"
+          "declaration": "func FillBetween(x, y1, y2 any, opts ...core.FillOptions) (*core.Fill2D, error)"
         },
         {
           "id": "func FillBetweenX",

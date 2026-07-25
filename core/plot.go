@@ -1169,9 +1169,68 @@ func (a *Axes) BarH(yVals, widthVals any, opts ...BarOptions) (*Bar2D, error) {
 	return a.barWithOrientation(yVals, widthVals, &orientation, opts...)
 }
 
-// FillBetween is a convenience alias for FillBetweenPlot.
-func (a *Axes) FillBetween(x, y1, y2 []float64, opts ...FillOptions) *Fill2D {
-	return a.FillBetweenPlot(x, y1, y2, opts...)
+// FillBetween converts x, y1, and y2 through the axes units machinery and fills
+// the area between the two dependent curves.
+//
+// Rejected input leaves the axes, its unit configuration, and its property
+// cycle unchanged.
+func (a *Axes) FillBetween(xVals, y1Vals, y2Vals any, opts ...FillOptions) (*Fill2D, error) {
+	if a == nil {
+		return nil, fmt.Errorf("fill between axes cannot be nil")
+	}
+	if len(opts) > 1 {
+		return nil, fmt.Errorf("fill between accepts at most one FillOptions value")
+	}
+
+	var opt FillOptions
+	if len(opts) == 1 {
+		opt = opts[0]
+	}
+
+	// Convert every input before touching the artist list or the property
+	// cycle: a rejected y2 must not leave x-axis units configured.
+	tx := a.beginUnitConversion()
+	x, err := a.convertValues(xVals, true)
+	if err != nil {
+		tx.rollback()
+		return nil, fmt.Errorf("fill between x values: %w", err)
+	}
+	y1, err := a.convertValues(y1Vals, false)
+	if err != nil {
+		tx.rollback()
+		return nil, fmt.Errorf("fill between y1 values: %w", err)
+	}
+	y2, err := a.convertValues(y2Vals, false)
+	if err != nil {
+		tx.rollback()
+		return nil, fmt.Errorf("fill between y2 values: %w", err)
+	}
+	if err := validateFillBetweenInput(x, y1, y2, &opt); err != nil {
+		tx.rollback()
+		return nil, err
+	}
+
+	fill := a.fillBetween(x, y1, y2, &opt)
+	tx.commit()
+	return fill, nil
+}
+
+func validateFillBetweenInput(x, y1, y2 []float64, opt *FillOptions) error {
+	if len(x) == 0 || len(y1) == 0 || len(y2) == 0 {
+		return fmt.Errorf("fill between x, y1, and y2 values cannot be empty")
+	}
+	if len(x) != len(y1) || len(x) != len(y2) {
+		return fmt.Errorf(
+			"fill between x, y1, and y2 must have the same length (got %d, %d, and %d)",
+			len(x),
+			len(y1),
+			len(y2),
+		)
+	}
+	if len(opt.Where) > 0 && len(opt.Where) != len(x) {
+		return fmt.Errorf("fill between Where must have length %d (got %d)", len(x), len(opt.Where))
+	}
+	return nil
 }
 
 // Fill creates an arbitrary closed polygon fill using data-space coordinates.
@@ -1254,7 +1313,7 @@ func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) *Fill2D {
 		opt = opts[0]
 	}
 	if len(opt.Where) > 0 && len(opt.Where) != len(y) {
-		diag.Warnf("FillBetween: where length %d must match y length %d; skipping", len(opt.Where), len(y))
+		diag.Warnf("FillBetweenX: where length %d must match y length %d; skipping", len(opt.Where), len(y))
 		return nil
 	}
 
@@ -1325,7 +1384,9 @@ func patchAntialiasMode(rc *style.PatchRC, explicit *bool) render.AntialiasMode 
 	return render.AntialiasOff
 }
 
-// FillBetweenPlot creates a fill between two curves with automatic color cycling.
+// FillBetweenPlot creates a fill between two curves with automatic color
+// cycling. It is the numeric-only entry point; FillBetween additionally
+// converts unit-carrying values and reports rejected input as an error.
 func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) *Fill2D {
 	if len(x) == 0 || len(y1) == 0 || len(y2) == 0 {
 		return nil
@@ -1337,10 +1398,14 @@ func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) *Fill2D
 		opt = opts[0]
 	}
 	if len(opt.Where) > 0 && len(opt.Where) != len(x) {
-		diag.Warnf("FillBetweenX: where length %d must match x length %d; skipping", len(opt.Where), len(x))
+		diag.Warnf("FillBetween: where length %d must match x length %d; skipping", len(opt.Where), len(x))
 		return nil
 	}
 
+	return a.fillBetween(x, y1, y2, &opt)
+}
+
+func (a *Axes) fillBetween(x, y1, y2 []float64, opt *FillOptions) *Fill2D {
 	// Get color (automatic cycling if not specified)
 	color := a.NextColor()
 	if opt.Color != nil {

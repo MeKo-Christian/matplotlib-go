@@ -102,6 +102,28 @@ property cycle, or retain partial unit/locator/formatter changes. Successful
 categorical bars preserve the fixed category locator on the position axis and
 the automatic numeric locator on the value axis.
 
+`Axes.FillBetweenUnits` was folded into `Axes.FillBetween`. Replace:
+
+```go
+fill, err := ax.FillBetweenUnits(x, y1, y2, options)
+```
+
+with:
+
+```go
+fill, err := ax.FillBetween(x, y1, y2, options)
+```
+
+`Axes.FillBetween` and `pyplot.FillBetween` now accept unit-capable slice
+values and return `(*core.Fill2D, error)`. They reject nil axes, empty or
+mismatched inputs, unsupported value types, a `Where` mask whose length differs
+from the independent values, and more than one `FillOptions` value. All three
+inputs are converted before anything is committed, so a rejected `y2` leaves no
+partial x-axis unit configuration; rejection also does not add an artist or
+advance the property cycle. The numeric-only `Axes.FillBetweenPlot`,
+`Axes.FillBetweenX`, and `pyplot.FillBetweenX` keep their previous
+warn-and-skip behavior.
+
 The same getter pass removed the remaining exported `GetX` spellings:
 
 | Before                                      | After                                     |

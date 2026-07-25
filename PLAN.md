@@ -86,7 +86,7 @@ update the coupled API/doc tests in the same commit.
         and extra-option errors without mutating axes or advancing the cycle.
   - [x] Fold `BarUnits` into `Bar`/`BarH`; preserve categorical-axis locator
         behavior and make vertical/horizontal rejection transactional.
-  - [ ] Fold `FillBetweenUnits` into `FillBetween`; validate all three converted
+  - [x] Fold `FillBetweenUnits` into `FillBetween`; validate all three converted
         inputs before constructing polygons or committing axis-unit state.
   - [ ] Inventory the remaining warn-and-skip plotting entry points, convert
         rejected input to errors, and retain warnings only where an artist is
@@ -138,8 +138,8 @@ goldens remain byte-identical to the pre-break baseline.
 `widgets` moves, figure output, getter naming, concurrency documentation,
 registry synchronization, example migration, API/parity remapping, migration
 notes, and the changelog draft are complete. No golden/reference fixture
-changed. Remaining Phase 2 work is the unified rejected-input error convention
-and the `FillBetweenUnits` fold, the
+changed. All four `*Units` folds are done. Remaining Phase 2 work is the
+warn-and-skip inventory for the remaining plotting entry points, the
 options/raw-enum conversion, mutable-field cleanup, and the remaining
 option/scalar-map consolidation paths. `Axes.PlotUnits` is now folded into the
 transactional, unit-capable `Axes.Plot` method, which returns `(*Line2D, error)`
@@ -150,7 +150,12 @@ validation happen before the scatter cycle advances, and `pyplot.Scatter`
 propagates errors. `Axes.BarUnits` is now folded into transactional,
 unit-capable `Axes.Bar`/`BarH`; shape, orientation, per-bar, and error-bar
 validation happen before the property cycle advances, categorical position
-locators remain intact, and the pyplot wrappers propagate errors. Core and
+locators remain intact, and the pyplot wrappers propagate errors.
+`Axes.FillBetweenUnits` is folded into the transactional, unit-capable
+`Axes.FillBetween`, which converts and validates x, y1, y2, and the `Where`
+mask before committing axis units or adding a polygon; the numeric-only
+`FillBetweenPlot`/`FillBetweenX` paths keep their warn-and-skip behavior for
+the later inventory pass. Core and
 plot3d alpha multiplier paths share
 `render.Color.WithAlphaMultiplier`, and 3D scalar maps derive their
 configuration through

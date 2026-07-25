@@ -26,7 +26,7 @@ func BarLabel(bar *core.Bar2D, labels []string, opts ...core.BarLabelOptions) []
 }
 
 // FillBetween delegates to the current axes.
-func FillBetween(x, y1, y2 []float64, opts ...core.FillOptions) *core.Fill2D {
+func FillBetween(x, y1, y2 any, opts ...core.FillOptions) (*core.Fill2D, error) {
 	return GCA().FillBetween(x, y1, y2, opts...)
 }
 

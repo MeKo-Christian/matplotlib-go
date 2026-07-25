@@ -319,12 +319,15 @@ func TestFillPlotExplicitAlphaOverridesColorAlpha(t *testing.T) {
 
 	fillColor := render.Color{R: 0.3, G: 0.7, B: 0.9, A: 0.7}
 	alpha := 0.4
-	fill := ax.FillBetween(
+	fill, err := ax.FillBetween(
 		[]float64{0, 1, 2},
 		[]float64{1, 2, 1},
 		[]float64{0, 1, 0},
 		FillOptions{Color: &fillColor, Alpha: &alpha},
 	)
+	if err != nil {
+		t.Fatalf("FillBetween() returned error: %v", err)
+	}
 	if fill == nil {
 		t.Fatal("expected fill artist")
 	}
@@ -399,11 +402,13 @@ func TestFillBetweenAutoScalesYAndPreservesManualX(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 	ax.SetXLim(0, 10)
 
-	ax.FillBetween(
+	if _, err := ax.FillBetween(
 		[]float64{-100, 100},
 		[]float64{-50, 50},
 		[]float64{0, 0},
-	)
+	); err != nil {
+		t.Fatalf("FillBetween() returned error: %v", err)
+	}
 
 	xMin, xMax := ax.XScale.Domain()
 	yMin, yMax := ax.YScale.Domain()
@@ -417,12 +422,15 @@ func TestFillBetweenAutoScalesYAndPreservesManualX(t *testing.T) {
 
 func TestFillBetweenWhereSplitsContiguousRegions(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(unitRect())
-	fill := ax.FillBetween(
+	fill, err := ax.FillBetween(
 		[]float64{0, 1, 2, 3, 4},
 		[]float64{1, 2, 3, 4, 5},
 		[]float64{0, 0, 0, 0, 0},
 		FillOptions{Where: []bool{true, true, false, true, true}},
 	)
+	if err != nil {
+		t.Fatalf("FillBetween() returned error: %v", err)
+	}
 	if fill == nil {
 		t.Fatal("FillBetween returned nil")
 	}
@@ -498,7 +506,7 @@ func TestFill2DMultiRegionUsesMatplotlibGenericCollectionPlacement(t *testing.T)
 
 func TestFillBetweenWhereInterpolatesCrossingBoundary(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(unitRect())
-	fill := ax.FillBetween(
+	fill, err := ax.FillBetween(
 		[]float64{0, 1, 2},
 		[]float64{-1, 1, 1},
 		[]float64{0, 0, 0},
@@ -507,6 +515,9 @@ func TestFillBetweenWhereInterpolatesCrossingBoundary(t *testing.T) {
 			Interpolate: true,
 		},
 	)
+	if err != nil {
+		t.Fatalf("FillBetween() returned error: %v", err)
+	}
 	if fill == nil {
 		t.Fatal("FillBetween returned nil")
 	}

@@ -400,6 +400,124 @@ func TestAxesBar_RejectedInputIsTransactional(t *testing.T) {
 	}
 }
 
+func TestAxesFillBetween_ConfiguresDateAxis(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+
+	timestamps := []time.Time{
+		time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.February, 5, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.February, 9, 0, 0, 0, 0, time.UTC),
+	}
+
+	fill, err := ax.FillBetween(timestamps, []float64{6, 7, 5}, []float64{10, 15, 13})
+	if err != nil {
+		t.Fatalf("FillBetween returned error: %v", err)
+	}
+	if fill == nil {
+		t.Fatal("FillBetween returned nil fill")
+	}
+	if got := fill.X[1]; got != dates.Date2Num(timestamps[1]) {
+		t.Fatalf("converted x[1] = %v, want %v", got, dates.Date2Num(timestamps[1]))
+	}
+	if _, ok := ax.XAxis.Locator.(dates.DateLocator); !ok {
+		t.Fatalf("x-axis locator = %T, want dates.DateLocator", ax.XAxis.Locator)
+	}
+}
+
+func TestAxesFillBetween_RejectedInputIsTransactional(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	originalXLocator := ax.XAxis.Locator
+	originalXFormatter := ax.XAxis.Formatter
+	originalCycle := ax.ColorCycle
+	originalCycleIndex := originalCycle.Index()
+
+	timestamps := []time.Time{
+		time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, time.February, 5, 0, 0, 0, 0, time.UTC),
+	}
+	unsupported := []struct{ value int }{{1}, {2}}
+
+	assertUnchanged := func(context string) {
+		t.Helper()
+		if ax.xUnits != nil || ax.yUnits != nil {
+			t.Fatalf("%s configured units: x=%v y=%v", context, ax.xUnits, ax.yUnits)
+		}
+		if !reflect.DeepEqual(ax.XAxis.Locator, originalXLocator) ||
+			!reflect.DeepEqual(ax.XAxis.Formatter, originalXFormatter) {
+			t.Fatalf("%s changed x-axis locator/formatter to %T/%T", context, ax.XAxis.Locator, ax.XAxis.Formatter)
+		}
+		if len(ax.Artists) != 0 {
+			t.Fatalf("%s added %d artists", context, len(ax.Artists))
+		}
+		if ax.ColorCycle != originalCycle || ax.ColorCycle.Index() != originalCycleIndex {
+			t.Fatalf("%s replaced or advanced the property cycle", context)
+		}
+	}
+
+	rejections := []struct {
+		name string
+		call func() (*Fill2D, error)
+	}{
+		{
+			name: "x conversion",
+			call: func() (*Fill2D, error) {
+				return ax.FillBetween(unsupported, []float64{6, 7}, []float64{10, 15})
+			},
+		},
+		{
+			name: "y1 conversion",
+			call: func() (*Fill2D, error) {
+				return ax.FillBetween(timestamps, unsupported, []float64{10, 15})
+			},
+		},
+		{
+			// The x-axis date units configured before y2 fails must roll back.
+			name: "y2 conversion",
+			call: func() (*Fill2D, error) {
+				return ax.FillBetween(timestamps, []float64{6, 7}, unsupported)
+			},
+		},
+		{
+			name: "empty input",
+			call: func() (*Fill2D, error) {
+				return ax.FillBetween([]float64{}, []float64{}, []float64{})
+			},
+		},
+		{
+			name: "mismatched shape",
+			call: func() (*Fill2D, error) {
+				return ax.FillBetween(timestamps, []float64{6, 7}, []float64{10})
+			},
+		},
+		{
+			name: "where shape",
+			call: func() (*Fill2D, error) {
+				return ax.FillBetween(
+					timestamps,
+					[]float64{6, 7},
+					[]float64{10, 15},
+					FillOptions{Where: []bool{true, false, true}},
+				)
+			},
+		},
+		{
+			name: "multiple options",
+			call: func() (*Fill2D, error) {
+				return ax.FillBetween(timestamps, []float64{6, 7}, []float64{10, 15}, FillOptions{}, FillOptions{})
+			},
+		},
+	}
+	for _, rejection := range rejections {
+		fill, err := rejection.call()
+		if err == nil || fill != nil {
+			t.Fatalf("%s FillBetween() = (%v, %v), want nil artist and error", rejection.name, fill, err)
+		}
+		assertUnchanged(rejection.name)
+	}
+}
+
 func TestAxesCategoryUnitsPreserveExplicitAxisInfoAfterRefresh(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
