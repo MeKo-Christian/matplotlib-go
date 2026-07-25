@@ -6,15 +6,10 @@ finish. The roadmap is cross-checked against the local upstream Matplotlib
 snapshot in `third_party/matplotlib` so uncovered areas stay explicit instead of
 sliding into a vague "future work" bucket.
 
-Phases are ordered **closed first, open last**: Phases 1–9 are complete; the
-remaining open work — Skia GPU (10), the v1.0 release stretch (11), two deferred
-infrastructure phases (12–13), the second-review closure phases (14–18, from
-the 2026-06-30 [`REVIEW.md`](REVIEW.md)), and the third-audit closure phases
-(19–21, from the 2026-07-01 review appended to the same file) — is collected at
-the end under **Remaining Work**, **Second Fidelity-Review Closure**, and
-**Third-Audit Closure & Pre-v1.0 Break**. Phase 11 (v1.0 release) executes
-**last**: Phases 19–21 include a breaking API rework and tolerance re-freeze
-that the release must postdate.
+Phases are ordered **closed first, open last**: Phases 1–17 are complete.
+Phase 18 finishes Skia GPU mode, Phase 20 performs the pre-v1.0 API/package
+rework, Phase 21 closes visual QA, and Phase 19 executes **last** to freeze and
+tag the v1.0 release.
 
 ---
 
@@ -58,8 +53,7 @@ tested, and stable:
   `TestReferenceCompare` with per-case tolerances; public-surface inventory and
   classification map; catalog-backed CLI and browser galleries.
 
-_Former Phases 1–6, 8A, 9–19 are complete; see git history for the detailed
-per-phase implementation logs._
+_Phases 1–17 are complete; see git history for detailed implementation logs._
 
 ---
 
@@ -77,13 +71,24 @@ All are complete; detailed implementation logs remain available in git history.
 - **Phase 8 — Backends/style:** metrics, effects, vectors, rcParams, cyclers done.
 - **Phase 9 — Infrastructure:** geometry, triangulation, transforms, lifecycle done.
 
+# Phases 10–17: Completed Fidelity & Infrastructure Follow-up ✅
+
+All are complete; detailed implementation logs remain available in git history.
+
+- **Phase 10 — Delaunay:** extracted the Qhull-faithful engine to `qhull-go`.
+- **Phase 11 — Render paths:** cached non-affine projections and added animated redraws.
+- **Phase 12 — Failure honesty:** surfaced silent degradations and fixed text picking.
+- **Phase 13 — Backends:** verified capability claims and explicit degradation paths.
+- **Phase 14 — rcParams:** audited dead keys and honored targeted style defaults.
+- **Phase 15 — Correctness:** closed artist, transform, layout, and algorithm gaps.
+- **Phase 16 — Harness:** gated live renders, removed weak tolerances, and added fixtures.
+- **Phase 17 — Defaults:** aligned plotting defaults with Matplotlib 3.10.9.
+
 # Remaining Work (Open Phases)
 
 The phases below still carry open to-do items and are ordered after the closed
-phases. **Phase 10** finishes Skia GPU mode; **Phase 11** is the v1.0 release
-stretch (docs and performance are done, only release mechanics remain).
-**Phases 12 and 13 are complete**; their compact records stay below for
-provenance.
+phases. **Phase 18** finishes Skia GPU mode; **Phase 19** is the final v1.0
+release stretch; Phases 20–21 complete the pre-release API and visual-QA work.
 
 ## Parity Follow-up: Sketch figure-patch fill-coverage (done) ✅
 
@@ -127,7 +132,7 @@ coordinates — see `backends/agg/figure_patch_sketch_test.go`).
    (RGBA==NRGBA), so `GetImage()` was left unchanged (244 callers, incl. the Skia
    native bridge, rely on its `*image.RGBA` layout).
 
-## Phase 10: Backend Deepening (Skia Native + GPU)
+## Phase 18: Backend Deepening (Skia Native + GPU)
 
 **Goal:** finish the backend-specific Skia work. The historical blocker (no Skia
 C-ABI binding) is **resolved**: a real Skia library is built locally and a narrow
@@ -179,7 +184,7 @@ parity diagnostics (`TestNonTextResidualDiagnostics`) are in place.
 
 ---
 
-## Phase 11: Documentation, Performance, and v1.0 Release (LAST — after Phases 16–21)
+## Phase 19: Documentation, Performance, and v1.0 Release (LAST — after Phases 18, 20–21)
 
 **Goal:** make the project consumable by users who have not followed the
 development thread, establish performance baselines, and tag a stable v1.0.
@@ -187,17 +192,17 @@ development thread, establish performance baselines, and tag a stable v1.0.
 > **Ordering (2026-07-01):** this phase executes **last**. Phase 20 is a
 > deliberate pre-v1.0 breaking rework of the public API, so the "Public API
 > stability audit ✅" checkbox below froze the _pre-break_ surface — Phase 20.4
-> re-freezes it. The final golden/tolerance freeze must postdate Phases 19 and
+> re-freezes it. The final golden/tolerance freeze must postdate Phases 17 and
 > 21, and the changelog must include Phase 20's breaking section.
 
-### 11.1 API Documentation ✅
+### 19.1 API Documentation ✅
 
 Package-level GoDoc with worked examples for every stable public package;
 guarded by `TestStablePublicPackagesHaveGoDocAndExamples`. Hosted docs at
 pkg.go.dev; WASM gallery landing page links to README, examples, backend
 selection, migration notes, and parity status.
 
-### 11.2 Performance Pass ✅
+### 19.2 Performance Pass ✅
 
 Benchmarking harness (`benchmarks/`, `just bench-render`, `just profile-render`),
 CI benchmark report (`.github/workflows/benchmark-report.yml`), and profiles
@@ -220,7 +225,7 @@ User-facing memory targets and tuning guide documented.
   - [x] Define v1.0 memory targets for typical catalog plots, 100k scatter, and repeated-redraw and scalar-mapping scenarios.
   - [x] Document practical tuning advice: renderer reuse, avoiding unnecessary `GetImage` copies, marker batching, and backend selection.
 
-### 11.3 Release Readiness
+### 19.3 Release Readiness
 
 - [ ] Semantic-version policy decision and `CHANGELOG.md` baseline.
 - [ ] Final golden / reference regeneration pass with per-case tolerances frozen
@@ -246,292 +251,6 @@ User-facing memory targets and tuning guide documented.
 
 ---
 
-## Phase 12: Cocircular Qhull-Faithful Delaunay ✅ (shipped & extracted)
-
-**Completed 2026-06-27.** The Qhull-faithful Delaunay engine now reproduces general and cocircular construction order and lives in `github.com/cwbudde/qhull-go` v0.1.0; `tri` consumes it, and further work is tracked in that repository.
-
----
-
-## Phase 13: Cached Transformed Paths in the Render Path ✅
-
-**Goal:** make artists (`Line2D`, patches, collections) draw through a
-persistent `transform.TransformedPath` so a redraw that changes only the trailing
-affine (axes resize/pan/zoom) reuses the cached non-affine projection instead of
-re-running it per vertex — and an unchanged redraw skips the per-vertex transform
-entirely. This realizes, in the renderer, the affine/non-affine cache split that
-Phase 9 already built into `TransformedPath`.
-
-**Status:** **complete** (2026-07-24). The Line2D pilot, leg-change detection,
-patch/collection rollout, and the interactive animation redraw loop are shipped.
-WebAgg's animation path now captures a static background once and repeatedly
-drives `DrawFigureWithOptions(..., AnimatedFilterOnlyAnimated)` into the existing
-renderer before blitting. Unsupported canvases use a correct repeated full-draw
-fallback. This gives end users the persistent redraw loop the cache mechanism
-previously exercised only in tests. What landed across the four passes:
-
-1. `refreshDataTransform` fires the stage matching the leg, the axes invalidation
-   nodes are on `DrawContext`, and `Line2D` draws data-coordinate paths through a
-   persistent `transform.TransformedPath` (the pilot).
-2. **Leg-change detection:** `refreshDataTransform` now compares the non-affine
-   leg structurally (`reflect.DeepEqual`) against the previous draw and fires
-   `InvalidNonAffine` only on an actual change, so an unchanged leg reuses the
-   projection through a full figure draw — a resize that only moves the axes bbox
-   refreshes the trailing affine alone. End-to-end reuse is proven by
-   `TestLine2DDisplayPathReusesProjectionThroughRefresh`.
-3. **Patch/collection rollout:** the shared `buildArtistDisplayPath` routes
-   data-coordinate draws through a centralized `displayPathCache`. Single-shape
-   patches inherit one cache via an interface method promoted from the embedded
-   `Patch`; the three collections keep one cache per element (`Collection`
-   grows a `[]displayPathCache`). Sources are rebuilt fresh each draw (collections
-   per element), so change detection is value-based (`pathsEqualValue`).
-4. **Redraw loop:** animation blitting now restores the captured background,
-   redraws only animated artists through `canvas.AnimatedDrawCanvas`, and presents
-   the damaged region. WebAgg implements the overlay draw against its persistent
-   renderer; non-blitting canvases repeat full draws without losing
-   animation-managed artists.
-
-Parity is held at RMSE 0 by gating the cache to **genuine non-affine legs only**
-(linear axes keep the direct path — see the ULP note below) and by applying the
-trailing affine **per axis** so a vertex outside the data domain (NaN under a log
-scale) keeps NaN local to one coordinate, exactly like the direct separable chain.
-
-### What's already done (foundation, in-tree)
-
-- **`transform.splitAffine`** (`transform/transform.go`) decomposes any `T` into
-  its maximal trailing affine + non-affine remainder
-  (`t.Apply(p) == trailing.Apply(nonAffine.Apply(p))`), reusing `Frozen`/
-  `AsAffine`. Validated against every transform type incl. `Chain`/`OffsetT`
-  nesting and third-party `AffineProvider`.
-- **`transform.TransformedPath`** caches the non-affine vertex pass and re-applies
-  the trailing affine separately (`TransformedPointsAndAffine()`/`Affine()`;
-  `Transformed()` unchanged). `InvalidAffine` (e.g. `Bbox.Set`) refreshes only the
-  affine; `InvalidNonAffine`/`InvalidAll` re-runs the projection. Covered by
-  `TestSplitAffine` + `TestTransformedPathAffineNonAffineSplit`.
-- The persistent per-axes transform graph from Phase 9 (`axesBbox`/`transAxes`/
-  `transData` with `dataNode`) drives cache invalidation across redraws.
-
-### Key insights (why it's more than a drop-in)
-
-- **`refreshDataTransform` fired the wrong stage** (✅ fixed). It used to
-  invalidate `dataNode` with `InvalidAffine` for every change, including the
-  non-affine-leg branch (log/symlog, polar/geo/3D), so a split-aware consumer
-  would reuse a **stale projection** on a log-domain/limits change. Now fires
-  `InvalidNonAffine` for non-affine legs and `InvalidAffine` only for the
-  affine-leg/bbox case (`TestRefreshDataTransformInvalidationStage`).
-- **Artists hold no axes/node reference** (✅ addressed). Artists get
-  their transform only from the per-draw `DrawContext`; the invalidation nodes are
-  now plumbed through `ctx.dataTransformDeps()` (`axesBbox.Node()` + `dataNode`),
-  which `Line2D` and the shared patch/collection display-path cache wire their
-  `TransformedPath` instances to.
-- **Segmentation must stay on final points** (✅ done). `Line2D.displayPath`
-  interleaved NaN-segmentation with the per-vertex transform; the cached path
-  applies the trailing affine to the cached non-affine points, then runs the
-  existing finiteness/segmentation loop on the final points (`segmentFinitePath`).
-  Byte-identical: a single finiteness check on the final point matches the direct
-  pre+post checks, validated by `TestLine2DDisplayPathCacheParity`.
-- **Fully-affine collapse must not be cached** (parity gate). For linear axes the
-  trailing affine collapses scale+bbox into one matrix and `M.Apply(v)` diverges
-  from the direct `bbox.Apply(scale.Apply(v))` by a ULP (and there is no
-  projection to cache). `cachedDisplayPoints` therefore engages only when
-  `transform.AsAffine` reports a non-affine remainder; linear axes keep the direct
-  path. For a genuine non-affine leg the trailing affine is the single bbox matrix,
-  which matches the direct chain exactly.
-- **Log/polar resize win via leg-change detection** (✅ done). `refreshDataTransform`
-  compares the rebuilt non-affine leg structurally against the previous draw
-  (`reflect.DeepEqual`, since legs are value transforms rebuilt fresh each draw)
-  and fires `InvalidNonAffine` only on a real change. `Log`/`Linear` encode the
-  view limits, so a limit change alters the leg (re-project) while a pure resize
-  leaves it untouched (reuse the projection, refresh only the bbox affine).
-  Func-based scales compare unequal and conservatively re-project.
-- **NaN must stay axis-local in the trailing affine** (parity gate, patch
-  rollout). The cached path applies the trailing affine; doing so via a full 2×3
-  matrix lets the zero cross-term poison a finite axis when the other is NaN
-  (`0*NaN == NaN`), so a log-domain-outside vertex `{10, NaN}` (direct, per-axis)
-  became `{NaN, NaN}`. `Line2D` never saw this (it culls non-finite points during
-  segmentation) but patches keep every vertex. Fix: `applyTrailingAffinePath`
-  applies a shear-free affine (the separable bbox) **per axis**, byte-identical to
-  the direct separable chain for finite coords and NaN-correct otherwise.
-
-### Completed work
-
-- [x] Refine `refreshDataTransform` to fire `InvalidNonAffine` for non-affine data
-      legs (and `InvalidAffine` otherwise). `core/axes_transform_test.go` stays
-      green; `TestRefreshDataTransformInvalidationStage` asserts a log leg fires
-      non-affine and an affine leg fires affine.
-- [x] Expose the axes invalidation nodes (`axesBbox`/`dataNode`) on `DrawContext`
-      (`ctx.dataTransformDeps()`).
-- [x] Pilot on `Line2D`: persistent `transformedPath` field, `SetPath` on data
-      change, dependency-wire to the nodes, draw via `TransformedPointsAndAffine` +
-      the unchanged segmentation loop. Golden/reference RMSE 0 (cache gated to
-      non-affine legs). Reuse proven by `TestLine2DDisplayPathReusesNonAffineProjection`.
-- [x] Extend the same pattern through `buildArtistDisplayPath` to patches and
-      collections (centralized `displayPathCache`; one slot per `Patch`, one per
-      collection element). Parity gate re-run: `TestBuildArtistDisplayPathCacheParity`
-      (incl. log-domain NaN vertices), `TestCollectionPerElementCacheReuse`.
-- [x] Non-affine-leg change detection so log/polar resizes also reuse the
-      projection and the reuse fires through a full figure draw, not just a direct
-      `displayPath` call (`reflect.DeepEqual` leg compare in `refreshDataTransform`;
-      `TestRefreshDataTransformInvalidationStage`,
-      `TestLine2DDisplayPathReusesProjectionThroughRefresh`).
-- [x] Add the repeated redraw loop: `canvas.AnimatedDrawCanvas` plus WebAgg's
-      persistent-renderer implementation restore one captured background, draw
-      only animated artists, and blit each frame. Unsupported canvases fall back
-      to full draws that temporarily include animation-managed artists.
-
-**Out of scope:** passing the affine _separately_ to the agg backend so it
-composes with the device y-flip and does zero per-vertex affine work
-(matplotlib's deepest win) — needs a `render.Renderer` capability/signature
-change.
-
-**Exit criterion:**
-
-- [x] Mechanism and redraw loop complete. Reuse fires through a **full figure
-      draw**: with leg-change detection the every-draw
-      `refreshDataTransform` no longer re-projects an unchanged non-affine leg, so a
-      resize that only moves the bbox reuses the cached projection for `Line2D`,
-      patches, and collections (`TestLine2DDisplayPathReusesProjectionThroughRefresh`,
-      `TestBuildArtistDisplayPathReusesProjection`, `TestCollectionPerElementCacheReuse`).
-      The WebAgg animation loop now issues repeated overlay-only figure draws against
-      a persistent renderer, with full-redraw fallback for other canvases. Golden and
-      reference output remain unchanged.
-
----
-
-# Phases 14–18: Second Fidelity-Review Closure (2026-06-30)
-
-These phases are derived from the second independent fidelity review in
-[`REVIEW.md`](REVIEW.md) (2026-06-30), an adversarial subagent audit run after the
-Phase 4–9 breadth work. Its verdict: matplotlib-go is **a faithful port with a
-scaffolding fringe, not a facade** — the numerical cores, the mathtext engine, the
-Qhull triangulation, and the parity harness (which compares against _real_
-matplotlib output and gates CI) are genuinely faithful. The remaining problems are
-**concentrated and locatable**: a handful of silent-degradation footguns that
-survived Phase 4, the secondary backends and the capability layer that advertises
-more than it delivers, ~52 parsed-but-ignored rcParams, a few concrete algorithmic
-bugs, and two holes in the parity harness. Phases 14–18 close those.
-
-> **Note on overlap with Phase 4/8:** Phase 4 claimed the silent-failure class was
-> closed, but the 2026-06-30 audit found several paths still silent (unknown
-> colormap still falls back to viridis with only a debug warn; `Setp` still
-> swallows unknown keys). Phase 8's vector-`MeasureText` fix is **confirmed real**.
-> These phases pick up the genuine residuals, not the parts already done.
-
-## Phase 14: Silent-Failure Hardening, Round 2 ✅
-
-**Completed 2026-07-24.** Silent degradations now fail or warn honestly, text
-picking uses real metrics, and animation blitting performs true overlay redraws.
-Focused tests cover every item; parity remained green.
-
-- [x] Added strict colormap lookup (`GetColormapStrict`,
-      `ErrUnknownColormap`) while retaining the warned viridis fallback. Canonical
-      case-sensitive map names remain deferred to Phase 17.
-- [x] Added one-shot diagnostics for invalid `Setp` values, unsupported PDF/PS
-      gradient collections, and renderer fallbacks that ignore image rotation.
-- [x] Replaced `Text.Contains`' rune-count estimate with shaped multiline glyph
-      metrics.
-- [x] Implemented real WebAgg blitting: capture the static background, restore
-      it, draw only animated artists, then blit; unsupported canvases use a
-      correct full-redraw fallback.
-
-## Phase 15: Backend Honesty & Capability Verification ✅
-
-**Completed 2026-07-01.** Backend claims are behaviorally verified, secondary
-backends report their real implementation tier, and known degradations are
-explicit. All nine audit findings closed with zero golden regressions.
-
-- [x] Capability verification rejects unprobeable non-intrinsic claims; Skia
-      reports bridged CPU features accurately and advertises GPU acceleration
-      only when `BridgeInfo.Accelerated` is true.
-- [x] GoBasic gained real round/bevel joins, lossless `Paint` carry-forward, and
-      warnings for unsupported gradient/pattern/composite fills.
-- [x] Added cached cmap-based `render.GlyphIDToRune`; AGG, GoBasic, SVG, PDF,
-      PS, and PGF no longer cast glyph IDs directly to runes.
-- [x] WebAgg emits rubberband and history-button events; stale Gio documentation
-      was removed.
-- [x] SVG shadows use `feDropShadow`; PGF documents its intentional
-      LaTeX-controlled font-selection limitation.
-
-## Phase 16: rcParams Honesty & Coverage ✅
-
-**Completed 2026-07-25:** audited 51 dead keys; warned on unsupported non-default
-values; classified intentional non-goals; and honored the targeted rcParams with
-explicit-option precedence and zero golden churn. Audit registries and rationales
-live in `style/{unhonored,unparsed}.go`.
-
-- [x] Honored tick, legend, axes label/title, scalar formatter, and spine
-      defaults.
-- [x] Honored line and marker styles across lines, errorbars, collections, and
-      contours.
-- [x] Applied figure and layout defaults; documented GUI-only controls as
-      headless non-goals.
-- [x] Applied patch defaults across standalone patches and plot-generated
-      patches.
-- [x] Preserved font properties and ordered generic-family fallback lists
-      through renderer selection.
-- [x] Applied contour defaults across structured and triangular contour paths.
-- [x] **MathText and exit gate:** all nine settings are honored; audit guards,
-      focused tests, API audit, and pinned-FreeType parity suites pass.
-
-## Phase 17: Artist Breadth & Algorithmic Correctness ✅
-
-**Completed 2026-07-25.** Corrected log tick selection, contour saddle splitting,
-`TwoSlopeNorm`/log clipping, quiver scaling, transformed-space autoscaling, and
-zero-bound handling.
-
-- [x] Added 2D bar errorbars and logarithmic histograms with parity cases.
-- [x] Ported CM/STIX MathText fontsets and the complete accent set.
-- [x] Added outward/axes-relative spine positioning.
-- [x] Fixed radius-independent pie framing.
-- [x] Verified the daily date interval tables already match Matplotlib 3.10.9.
-- [x] Added scaled translations, replaceable transform wrappers, and immutable
-      affine rotation/skew builders.
-- [x] Verified spanning/nested constrained-layout invariants, added explicit
-      outside figure-legend reservations, and documented shared-solver limits.
-- [x] Aligned 3D contour documentation with its projected-contour
-      implementation.
-
-## Phase 18: Parity-Harness Rigor ✅
-
-**Completed 2026-07-25.** Closed the live-render and optional-visual gaps,
-removed ineffective tolerances, and added direct parity coverage for every
-previously fixtureless public API identified by the third audit.
-
-- [x] Made reference comparisons assert the live render against its golden and
-      emit a rendered-vs-golden diff on failure.
-- [x] Removed optional-visual gating; all 173 golden cases and strict text
-      checks now run by default.
-- [x] Removed 103 ineffective PSNR/MeanAbs overrides while retaining genuinely
-      stricter gates; Phase 21 owns the remaining RMSE ratchet.
-- [x] Added direct Go/Matplotlib parity fixtures for the eleven previously
-      uncovered signal, scale, secondary-axis, axline, and boxplot APIs.
-- [x] Corrected the exposed Welch numerics, spectrum presentation, spectrogram
-      extents, single-series box width, and side-by-side harness registry.
-
----
-
-# Phases 19–21: Third-Audit Closure & Pre-v1.0 Break (2026-07-01)
-
-Derived from the third audit (2026-07-01, appended to [`REVIEW.md`](REVIEW.md)):
-three parallel subagent audits over defaults, algorithms, and API/organization,
-excluding everything Phases 14–18 already track. Maintainer decisions: (1) the
-**breaking** Go-idiomatic API rework happens **before v1.0** and the API JSON is
-re-frozen afterwards; (2) the `core/` god-package is **split** before the
-freeze; (3) a **Claude-driven visual QA sweep** closes the loose-tolerance
-cases. Fold-ins from the same audit extend Phases 16, 17, and 18.
-
-**Ordering:** Phase 18's harness holes first (so regens are honestly gated) →
-the image-affecting fidelity phases 16/17/19 (each regenerates its own goldens;
-19 last of the three — it owns the broadest regen sweep) → Phase 20 (whose
-regression gate is _goldens byte-identical throughout_, hence after all image
-churn) → Phase 21 (QA fixes change pixels; also inspects the renderer in its
-final pre-v1.0 state) → Phase 11 (release, LAST). Phase 10 (Skia) is parallel —
-it never touches AGG goldens or the core API — and must simply land or be
-descoped before the tag.
-
-## Phase 19: Default-Value Fidelity & Golden Regeneration ✅
-
-**Completed 2026-07-02.** Matplotlib 3.10.9 defaults now govern line width, histogram bins, scatter size, minor ticks, and DPI fallback; typed line styles also landed. Focused tests pin the values, while all 173 goldens and reference comparisons remained unchanged and green.
-
 ## Phase 20: Go-Idiomatic API Rework & `core/` Split (BREAKING, pre-v1.0)
 
 **Goal:** one coordinated breaking pass — the only one before v1.0 — that makes
@@ -539,7 +258,7 @@ the API Go-idiomatic, splits the `core/` god-package (60,369 lines, 173 files,
 1,529 exported symbols = 51% of the 3,019-symbol public surface), and
 re-freezes the API afterwards. **Rendering behavior is untouched: goldens stay
 byte-identical throughout — that invariant is the phase's regression gate**
-(which is why Phase 19's golden churn must land first).
+(which is why Phase 17's golden churn must land first).
 
 Regen workflow (after every stage, final freeze at the end):
 `UPDATE_PUBLIC_API_AUDIT=1` regenerates
@@ -552,7 +271,7 @@ remapped and `docs/matplotlib-parity-status.md` regenerated
 `TestStablePublicPackagesHaveGoDocAndExamples`) updated in the same commit as
 each move.
 
-### 20.0 Ship-first, non-breaking (can land immediately, even before Phase 19)
+### 20.0 Ship-first, non-breaking (can land immediately, even before Phase 17)
 
 - [x] **DATA RACE:** `color/colormap.go:388` `RegisterColormap` mutated the
       package-global `colormaps` map with no mutex while draws read it.
@@ -620,30 +339,30 @@ format)` / `Figure.Image()`; delete the hand-rolled 8-line agg dance from
 - [ ] Final `UPDATE_PUBLIC_API_AUDIT=1` regen + classification remap + parity
       status doc regen; migration notes for every break in
       `docs/matplotlib-migration-notes.md`; CHANGELOG "breaking" section drafted
-      for Phase 11.
+      for Phase 19.
 
 **Size:** XL (largest remaining phase; 20.2 and each 20.3 bullet are
 independently executable sessions once 20.1's doc exists).
-**Depends on:** Phase 19 (goldens must be stable so byte-identical is the gate).
+**Depends on:** Phase 17 (goldens must be stable so byte-identical is the gate).
 
 **Exit criteria:**
 
 - [ ] `core/` no longer contains plot3d/ticker/widgets; every plot method
       returns `(T, error)`; no raw-string enum fields in options; `Figure.Save`
       exists and examples use it; `stable_public_api.json` re-frozen and the CI
-      audit green; goldens byte-identical to the Phase 19 baseline.
+      audit green; goldens byte-identical to the Phase 17 baseline.
 
 ## Phase 21: Claude-Driven Visual QA Sweep (loose-tolerance closure)
 
 **Goal:** visual inspection of every case whose gate is loose enough to hide a
 real divergence — including the "RMSE passes but the output doesn't look right"
 class — ending in a per-case disposition and a final tolerance ratchet that
-Phase 11 freezes. Runs after 16/17/19 (which change images) and after 20 (whose
+Phase 19 freezes. Runs after 14/15/17 (which change images) and after 20 (whose
 golden-stability gate must not be disturbed).
 
 - [ ] **Re-arm the disabled gates:** `widgets_gallery` and `animation_gallery`
       (`MinPSNR 10 / MaxMeanAbs 95`) get real, binding thresholds after visual
-      review (the mechanical removal of the theater thresholds is Phase 18's).
+      review (the mechanical removal of the theater thresholds is Phase 16's).
 - [ ] **MaxRMSE ≥ 4 queue (~23 cases):** side-by-side vs the matplotlib
       reference, classify the residual (real divergence → fix; acceptable
       rasterization/text difference → documented exception; "the Python original
@@ -665,14 +384,14 @@ golden-stability gate must not be disturbed).
       reviewed case's tolerance ratcheted to actual + small headroom.
 
 **Size:** L (breadth-heavy, low per-case depth; parallelizable by gallery).
-**Depends on:** Phases 16, 17, 19 (image-affecting) and 20 (freeze stability).
-**Feeds:** Phase 11's "final golden/reference regeneration pass with per-case
+**Depends on:** Phases 14, 15, 17 (image-affecting) and 20 (freeze stability).
+**Feeds:** Phase 19's "final golden/reference regeneration pass with per-case
 tolerances frozen for v1.0".
 
 **Exit criterion:**
 
 - [ ] No catalog case has an effectively-disabled gate; every case with
-      MaxRMSE ≥ 4 has a written disposition; the tolerance set handed to Phase 11
+      MaxRMSE ≥ 4 has a written disposition; the tolerance set handed to Phase 19
       is the ratcheted one.
 
 ---
@@ -728,18 +447,10 @@ tolerances frozen for v1.0".
 ---
 
 This roadmap reflects the work remaining to bring matplotlib-go to a stable,
-documented v1.0 release. **Phases 1–9** are **closed**: the visual/code parity
-closure (1–3) and the parity-breadth closure derived from [`REVIEW.md`](REVIEW.md)
-(4–9, covering silent-failure hardening, formatter/layout/date fidelity,
-mathtext/text completeness, plot/colormap/norm breadth, backend/renderer/styling
-completion, and deferred infrastructure depth). The remaining open work is
-collected at the end: **Phase 10** finalizes GPU acceleration for the Skia backend
-(CPU native primitives are done); **Phases 12 and 13** record the completed
-cocircular Qhull and renderer-wired transformed-path work; **Phases 14–18** close
-the second fidelity review (2026-06-30); and
-**Phases 19–21** close the third audit (2026-07-01) — default-value fidelity,
-the one coordinated pre-v1.0 breaking pass (Go-idiomatic API rework + `core/`
-split + re-freeze), and the visual QA sweep. **Phase 11** is the final v1.0
-stretch and executes **last**: documentation and performance work is done, but
-the release mechanics (changelog, CI gate, final freeze, v1.0 tag) must postdate
-the Phase 20 re-freeze and the Phase 21 tolerance ratchet.
+documented v1.0 release. **Phases 1–17 are closed**; their compact records and
+detailed git history cover the parity foundation, extracted Delaunay engine,
+render-path caching, fidelity reviews, harness hardening, and default alignment.
+**Phase 18** finalizes Skia GPU acceleration, **Phase 20** performs the coordinated
+pre-v1.0 API/package rework, and **Phase 21** completes visual QA. **Phase 19**
+executes **last**: documentation and performance work is done, but the changelog,
+CI gate, final freeze, and v1.0 tag must postdate Phases 18, 20, and 21.
