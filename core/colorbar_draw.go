@@ -183,7 +183,7 @@ func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 		for i := 0; i < gradientHeight; i++ {
 			t := (float64(i) + 0.5) / float64(gradientHeight)
 			col := cmap.AtValue(t)
-			col.A *= alpha
+			col = col.WithAlphaMultiplier(alpha)
 
 			path := snappedFillRectPath(colorbarCellRect(ctx.Clip, i, gradientHeight, orientation))
 			if len(path.C) == 0 {
@@ -271,7 +271,7 @@ func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 				t = 2
 			}
 			col = cmap.AtValue(t)
-			col.A *= alpha
+			col = col.WithAlphaMultiplier(alpha)
 		}
 		r.Path(ext.Path, &render.Paint{
 			Fill:      col,

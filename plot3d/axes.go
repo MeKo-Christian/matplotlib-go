@@ -512,7 +512,7 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *core.StemCont
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 		alpha = *opt.Alpha
 	}
-	color.A *= alpha
+	color = color.WithAlphaMultiplier(alpha)
 
 	lineWidth := 1.5 // points; converted at the collection/line Paint sink
 	if opt.LineWidth != nil {
@@ -529,7 +529,7 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *core.StemCont
 	markerEdgeColor := color
 	if opt.MarkerEdgeColor != nil {
 		markerEdgeColor = *opt.MarkerEdgeColor
-		markerEdgeColor.A *= alpha
+		markerEdgeColor = markerEdgeColor.WithAlphaMultiplier(alpha)
 	}
 	markerEdgeWidth := 1.0 // points; converted at the collection Paint sink
 	if opt.MarkerEdgeWidth != nil {
@@ -538,9 +538,9 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *core.StemCont
 	baselineColor := colorCycleAt(a.Axes, 3)
 	if opt.BaselineColor != nil {
 		baselineColor = *opt.BaselineColor
-		baselineColor.A *= alpha
+		baselineColor = baselineColor.WithAlphaMultiplier(alpha)
 	} else {
-		baselineColor.A *= alpha
+		baselineColor = baselineColor.WithAlphaMultiplier(alpha)
 	}
 	baselineWidth := lineWidth
 	if opt.BaselineWidth != nil {
@@ -638,11 +638,11 @@ func (a *Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBet
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 		alpha = *opt.Alpha
 	}
-	color.A *= alpha
+	color = color.WithAlphaMultiplier(alpha)
 	edgeColor := render.Color{}
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
-		edgeColor.A *= alpha
+		edgeColor = edgeColor.WithAlphaMultiplier(alpha)
 	}
 	edgeWidth := 0.0
 	if opt.EdgeWidth != nil {
@@ -725,7 +725,7 @@ func (a *Axes3D) Quiver(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *co
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 		alpha = *opt.Alpha
 	}
-	color.A *= alpha
+	color = color.WithAlphaMultiplier(alpha)
 	lineWidth := 1.5 // points; converted at the collection Paint sink
 	if opt.LineWidth != nil {
 		lineWidth = *opt.LineWidth
@@ -787,7 +787,7 @@ func (a *Axes3D) ErrorBar3D(x, y, z, xErr, yErr, zErr []float64, opts ...ErrorBa
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 		alpha = *opt.Alpha
 	}
-	color.A *= alpha
+	color = color.WithAlphaMultiplier(alpha)
 	lineWidth := 1.0
 	if opt.LineWidth != nil {
 		lineWidth = *opt.LineWidth

@@ -288,7 +288,7 @@ func (a *Axes3D) projectedContourFillData(x, y []float64, z [][]float64, alpha f
 		color := mapping.Color(bandLevel, alpha)
 		if opt.Color != nil {
 			color = *opt.Color
-			color.A *= alpha
+			color = color.WithAlphaMultiplier(alpha)
 		}
 		paths = append(paths, path)
 		colors = append(colors, color)
@@ -362,7 +362,7 @@ func (a *Axes3D) projectedTriContourFillData(tri core.Triangulation, z []float64
 		color := mapping.Color(bandLevel, alpha)
 		if opt.Color != nil {
 			color = *opt.Color
-			color.A *= alpha
+			color = color.WithAlphaMultiplier(alpha)
 		}
 		paths = append(paths, path)
 		colors = append(colors, color)

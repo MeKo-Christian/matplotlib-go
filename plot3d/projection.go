@@ -199,8 +199,7 @@ func depthShadedScatterColors(colors []render.Color, points []projectedScatterPo
 		if i < len(colors) {
 			shaded = colors[i]
 		}
-		shaded.A *= saturation
-		shadedColors[i] = shaded
+		shadedColors[i] = shaded.WithAlphaMultiplier(saturation)
 	}
 	return shadedColors
 }

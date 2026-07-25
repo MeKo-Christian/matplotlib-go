@@ -151,7 +151,7 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 			Y: math.Sin(mid*math.Pi/180) * cfg.Radius * explode,
 		}
 		color := colorAt(a.NextColor(), cfg.Colors, i)
-		color.A *= clampOneToOne(cfg.Alpha)
+		color = color.WithAlphaMultiplier(clampOneToOne(cfg.Alpha))
 		hatchColor := cfg.HatchColor
 		if hatchColor == (render.Color{}) {
 			hatchColor = edgeColor

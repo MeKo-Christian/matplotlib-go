@@ -77,7 +77,7 @@ func (a *Axes) Eventplot(positions [][]float64, opts ...EventPlotOptions) *Event
 		length := math.Abs(floatAt(lengths, i, 0.8))
 		half := length / 2
 		col := colorAt(a.NextColor(), cfg.Colors, i)
-		col.A *= clampOneToOne(cfg.Alpha)
+		col = col.WithAlphaMultiplier(clampOneToOne(cfg.Alpha))
 		for _, value := range group {
 			if !isFinite(value) {
 				continue

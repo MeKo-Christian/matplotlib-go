@@ -61,20 +61,17 @@ func (a *Axes) resolveStructuredContourOptions(opt *ContourOptions) (string, boo
 func contourLineColor(level float64, levels []float64, opt ContourOptions, mapping ScalarMapInfo, alpha float64, fallback render.Color) render.Color {
 	if opt.Color != nil {
 		color := *opt.Color
-		color.A *= alpha
-		return color
+		return color.WithAlphaMultiplier(alpha)
 	}
 	if len(opt.Colors) > 0 {
 		idx := indexOfLevel(levels, level)
 		color := opt.Colors[idx%len(opt.Colors)]
-		color.A *= alpha
-		return color
+		return color.WithAlphaMultiplier(alpha)
 	}
 	if opt.Colormap != nil {
 		return mapping.Color(level, alpha)
 	}
-	fallback.A *= alpha
-	return fallback
+	return fallback.WithAlphaMultiplier(alpha)
 }
 
 func containsPoint(points []geom.Pt, point geom.Pt) bool {

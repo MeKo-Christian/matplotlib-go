@@ -70,7 +70,7 @@ func (e *ErrorBar) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 
 	color := e.Color
-	color.A *= alpha
+	color = color.WithAlphaMultiplier(alpha)
 	if color.A <= 0 {
 		return
 	}

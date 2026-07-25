@@ -148,7 +148,7 @@ func (a *ArtistRasterization) EffectiveAlpha(local float64) float64 {
 // alpha override when one is set.
 func (a *ArtistRasterization) ApplyArtistAlpha(color render.Color) render.Color {
 	if a != nil && a.alphaSet {
-		color.A *= a.alpha
+		color = color.WithAlphaMultiplier(a.alpha)
 	}
 	color.A = clampOneToOne(color.A)
 	return color

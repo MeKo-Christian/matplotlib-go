@@ -84,7 +84,7 @@ func (c *Collection) alphaColor(color render.Color) render.Color {
 	}
 	color = patchAlphaColor(color, alpha)
 	if artistAlpha, ok := c.ArtistAlpha(); ok {
-		color.A *= artistAlpha
+		color = color.WithAlphaMultiplier(artistAlpha)
 	}
 	color.A = clampOneToOne(color.A)
 	return color

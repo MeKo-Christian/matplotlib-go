@@ -441,13 +441,11 @@ func clipContourPolygon(polygon []contourVertex, inside func(float64) bool, thre
 func contourBandColor(low, high float64, idx int, opt ContourOptions, mapping ScalarMapInfo, alpha float64) render.Color {
 	if len(opt.Colors) > 0 {
 		color := opt.Colors[idx%len(opt.Colors)]
-		color.A *= alpha
-		return color
+		return color.WithAlphaMultiplier(alpha)
 	}
 	if opt.Color != nil {
 		color := *opt.Color
-		color.A *= alpha
-		return color
+		return color.WithAlphaMultiplier(alpha)
 	}
 	return mapping.Color((low+high)*0.5, alpha)
 }

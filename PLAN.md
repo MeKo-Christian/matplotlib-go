@@ -115,7 +115,9 @@ registry synchronization, example migration, API/parity remapping, migration
 notes, and the changelog draft are complete. No golden/reference fixture
 changed. Remaining Phase 2 work is the unified rejected-input error convention
 and `*Units` fold, the options/raw-enum conversion, mutable-field cleanup, and
-the duplicated alpha/option/scalar-map paths. `just test` reaches only the
+the remaining option/scalar-map consolidation paths. Core and plot3d alpha
+multiplier paths now share `render.Color.WithAlphaMultiplier`, with no golden
+fixture changes. `just test` reaches only the
 pre-existing `mathtext_basic`, `mathtext_fractions`, and `mathtext_integrals`
 golden/reference failures (plus the existing `mathtext_basic` SVG
 font-family mismatch); all other packages pass.

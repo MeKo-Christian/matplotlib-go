@@ -177,8 +177,8 @@ func (b *Bar2D) Rectangles() []*Rectangle {
 		if alpha <= 0 {
 			alpha = 1
 		}
-		fill.A *= alpha
-		edge.A *= alpha
+		fill = fill.WithAlphaMultiplier(alpha)
+		edge = edge.WithAlphaMultiplier(alpha)
 
 		x := b.X[i]
 		height := b.Heights[i]
@@ -282,7 +282,7 @@ func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 		alpha = *opt.Alpha
 	}
-	color.A *= alpha
+	color = color.WithAlphaMultiplier(alpha)
 
 	lineWidth := 1.5 // points; converted at the collection Paint sink
 	if opt.LineWidth != nil {
@@ -300,7 +300,7 @@ func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
 	markerEdgeColor := color
 	if opt.MarkerEdgeColor != nil {
 		markerEdgeColor = *opt.MarkerEdgeColor
-		markerEdgeColor.A *= alpha
+		markerEdgeColor = markerEdgeColor.WithAlphaMultiplier(alpha)
 	}
 	markerEdgeWidth := 1.0 // points; converted at the collection Paint sink
 	if opt.MarkerEdgeWidth != nil {
@@ -314,9 +314,9 @@ func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
 	baselineColor := a.colorCycleAt(3)
 	if opt.BaselineColor != nil {
 		baselineColor = *opt.BaselineColor
-		baselineColor.A *= alpha
+		baselineColor = baselineColor.WithAlphaMultiplier(alpha)
 	} else {
-		baselineColor.A *= alpha
+		baselineColor = baselineColor.WithAlphaMultiplier(alpha)
 	}
 	baselineWidth := lineWidth
 	if opt.BaselineWidth != nil {

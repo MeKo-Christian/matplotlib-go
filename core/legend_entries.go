@@ -457,8 +457,8 @@ func (s *Scatter2D) legendEntry() (legendEntry, bool) {
 	if alpha <= 0 {
 		alpha = 1
 	}
-	fill.A *= alpha
-	edge.A *= alpha
+	fill = fill.WithAlphaMultiplier(alpha)
+	edge = edge.WithAlphaMultiplier(alpha)
 	if markerLineOnly(s.resolvedMarkerStyle()) {
 		if edge.A <= 0 {
 			edge = fill
@@ -530,8 +530,8 @@ func (b *Bar2D) legendEntry() (legendEntry, bool) {
 	if alpha <= 0 {
 		alpha = 1
 	}
-	fill.A *= alpha
-	edge.A *= alpha
+	fill = fill.WithAlphaMultiplier(alpha)
+	edge = edge.WithAlphaMultiplier(alpha)
 	return legendEntryFromPatchStyle(b.Label, fill, edge, b.EdgeWidth, "", render.Color{}, 0), true
 }
 
@@ -542,8 +542,8 @@ func (f *Fill2D) legendEntry() (legendEntry, bool) {
 	fill := f.Color
 	edge := f.EdgeColor
 	if f.Alpha > 0 && f.Alpha <= 1 {
-		fill.A *= f.Alpha
-		edge.A *= f.Alpha
+		fill = fill.WithAlphaMultiplier(f.Alpha)
+		edge = edge.WithAlphaMultiplier(f.Alpha)
 	}
 	return legendEntryFromPatchStyle(f.Label, fill, edge, f.EdgeWidth, "", render.Color{}, 0), true
 }
@@ -589,7 +589,7 @@ func (e *ErrorBar) legendEntry() (legendEntry, bool) {
 	if alpha > 1 {
 		alpha = 1
 	}
-	color.A *= alpha
+	color = color.WithAlphaMultiplier(alpha)
 	entry := legendEntryFromLine(e.Label, color, e.LineWidth, nil)
 	entry.kind = legendEntryErrorBar
 	entry.errorbarX = errorbarHasX(e)

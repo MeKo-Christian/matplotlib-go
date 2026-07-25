@@ -53,7 +53,7 @@ func (a *Axes) TriPlot(tri Triangulation, opts ...TriPlotOptions) *LineCollectio
 		color = *opt.Color
 	}
 	alpha := meshAlpha(opt.Alpha)
-	color.A *= alpha
+	color = color.WithAlphaMultiplier(alpha)
 
 	width := 1.0
 	if opt.LineWidth != nil {

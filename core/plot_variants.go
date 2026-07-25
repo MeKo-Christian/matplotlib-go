@@ -611,8 +611,8 @@ func (s *Stairs2D) resolvedColors() (render.Color, render.Color) {
 		strokeColor = s.EdgeColor
 	}
 	if s.Alpha > 0 && s.Alpha <= 1 {
-		fillColor.A *= s.Alpha
-		strokeColor.A *= s.Alpha
+		fillColor = fillColor.WithAlphaMultiplier(s.Alpha)
+		strokeColor = strokeColor.WithAlphaMultiplier(s.Alpha)
 	}
 	return fillColor, strokeColor
 }
@@ -772,19 +772,19 @@ func (a *Axes) newSpan(start, end geom.Pt, coords CoordinateSpec, opt SpanOption
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 		alpha = *opt.Alpha
 	}
-	color.A *= alpha
+	color = color.WithAlphaMultiplier(alpha)
 	edgeColor := render.Color{}
 	if opt.Color != nil {
 		// Matplotlib's Patch color= alias sets both facecolor and edgecolor.
 		edgeColor = *opt.Color
-		edgeColor.A *= alpha
+		edgeColor = edgeColor.WithAlphaMultiplier(alpha)
 	} else if rc.Patch.ForceEdgeColor {
 		edgeColor = rc.Patch.EdgeColor
 	}
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
 		if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-			edgeColor.A *= *opt.Alpha
+			edgeColor = edgeColor.WithAlphaMultiplier(*opt.Alpha)
 		}
 	}
 	edgeWidth := rc.Patch.LineWidth // points; converted at the Span2D Paint sink
@@ -814,7 +814,7 @@ func (a *Axes) referenceLineStyle(opt ReferenceLineOptions) (render.Color, float
 		color.A = 1
 	}
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		color.A *= *opt.Alpha
+		color = color.WithAlphaMultiplier(*opt.Alpha)
 	}
 	width := rc.AxisLineWidth
 	if width <= 0 {

@@ -813,8 +813,7 @@ func applyAlpha(c render.Color, alpha float64) render.Color {
 	if alpha > 1 {
 		alpha = 1
 	}
-	c.A *= alpha
-	return c
+	return c.WithAlphaMultiplier(alpha)
 }
 
 func linePath(ctx *DrawContext, p1, p2 geom.Pt) geom.Path {

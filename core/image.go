@@ -273,7 +273,7 @@ func (i *Image2D) rasterizeTransformed(ctx *DrawContext, anchor geom.Pt, angle f
 				continue
 			}
 			c := mapping.Color(v, 1)
-			c.A *= clampOneToOne(i.Alpha)
+			c = c.WithAlphaMultiplier(clampOneToOne(i.Alpha))
 			img.Set(x, y, toRGBAColor(c))
 		}
 	}

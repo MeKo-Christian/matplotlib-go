@@ -85,8 +85,8 @@ func (b *Bar2D) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 
 		// Apply alpha to colors
-		fillColor.A *= alpha
-		edgeColor.A *= alpha
+		fillColor = fillColor.WithAlphaMultiplier(alpha)
+		edgeColor = edgeColor.WithAlphaMultiplier(alpha)
 
 		// Create rectangle path based on orientation.
 		var path geom.Path

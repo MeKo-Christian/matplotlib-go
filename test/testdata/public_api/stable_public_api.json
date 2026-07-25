@@ -9608,6 +9608,10 @@
           "declaration": "func (Color) ToPremultipliedRGBA() (uint8, uint8, uint8, uint8)"
         },
         {
+          "id": "method Color.WithAlphaMultiplier",
+          "declaration": "func (Color) WithAlphaMultiplier(alpha float64) Color"
+        },
+        {
           "id": "method FontManager.AddFontDir",
           "declaration": "func (FontManager) AddFontDir(dir string)"
         },

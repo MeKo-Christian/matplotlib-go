@@ -80,6 +80,18 @@ func TestColorPremultiply(t *testing.T) {
 	}
 }
 
+func TestColorWithAlphaMultiplier(t *testing.T) {
+	color := Color{R: 0.2, G: 0.4, B: 0.6, A: 0.8}
+	got := color.WithAlphaMultiplier(0.25)
+	want := Color{R: 0.2, G: 0.4, B: 0.6, A: 0.2}
+	if got != want {
+		t.Fatalf("WithAlphaMultiplier() = %+v, want %+v", got, want)
+	}
+	if color.A != 0.8 {
+		t.Fatalf("WithAlphaMultiplier mutated receiver alpha to %v", color.A)
+	}
+}
+
 func TestColorToPremultipliedRGBA(t *testing.T) {
 	c := Color{R: 0.3, G: 0.7, B: 0.9, A: 0.6}
 

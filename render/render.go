@@ -307,6 +307,17 @@ const (
 // otherwise.
 type Color struct{ R, G, B, A float64 }
 
+// WithAlphaMultiplier returns c with its existing alpha multiplied by alpha.
+//
+// It deliberately does not clamp either input or result: a few callers use
+// this low-level operation before applying their own validation or clamping.
+// Keeping that policy at the call site makes composition of artist, collection,
+// and renderer alpha explicit while avoiding repeated channel mutation.
+func (c Color) WithAlphaMultiplier(alpha float64) Color {
+	c.A *= alpha
+	return c
+}
+
 // Premultiply returns a color with RGB components premultiplied by alpha.
 //
 // The operation is applied to the stored channel values as-is. It does not

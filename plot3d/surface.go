@@ -41,9 +41,9 @@ func (a *Axes3D) Surface(x, y []float64, z [][]float64, opts ...core.PlotOptions
 		label = opt.Label
 	}
 	for i := range faceColors {
-		faceColors[i].A *= alpha
+		faceColors[i] = faceColors[i].WithAlphaMultiplier(alpha)
 	}
-	edgeColor.A *= alpha
+	edgeColor = edgeColor.WithAlphaMultiplier(alpha)
 	edgeColors := surfaceEdgeColors(faceColors, firstPlotOptions(opts))
 
 	collection := &core.PolyCollection{
@@ -74,7 +74,7 @@ func (a *Axes3D) Surface(x, y []float64, z [][]float64, opts ...core.PlotOptions
 		if collection != nil {
 			polygons, faceColors, scalarValues, zorder, mapping := a.projectSurfacePolygons(x, y, z, opts...)
 			for i := range faceColors {
-				faceColors[i].A *= alpha
+				faceColors[i] = faceColors[i].WithAlphaMultiplier(alpha)
 			}
 			collection.Polygons = polygons
 			collection.FaceColors = faceColors
@@ -320,7 +320,7 @@ func (a *Axes3D) Trisurf(tri core.Triangulation, z []float64, opts ...core.PlotO
 		}
 		if opt.EdgeColor != nil {
 			edgeColor = *opt.EdgeColor
-			edgeColor.A *= alpha
+			edgeColor = edgeColor.WithAlphaMultiplier(alpha)
 		}
 		if opt.Antialiased != nil && !*opt.Antialiased {
 			antialias = render.AntialiasOff
@@ -329,7 +329,7 @@ func (a *Axes3D) Trisurf(tri core.Triangulation, z []float64, opts ...core.PlotO
 	}
 
 	faceColor := color
-	faceColor.A *= alpha
+	faceColor = faceColor.WithAlphaMultiplier(alpha)
 	faces, faceColors, scalarValues, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, firstPlotOptions(opts))
 	if len(faces) == 0 {
 		return nil

@@ -29,6 +29,8 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
 - Added `Figure.Save`, `Figure.WriteTo`, and `Figure.Image` as the common
   figure-output surface. Import `backends/all` or a specific output backend to
   register the desired formats.
+- Added `render.Color.WithAlphaMultiplier` as the shared non-mutating color
+  alpha composition primitive used by core and 3D artists.
 - Added an explicit concurrency contract for rc state, registries, pyplot
   state, figures, axes, artists, and renderers.
 - Added synchronized backend, desktop-constructor, and color-sequence

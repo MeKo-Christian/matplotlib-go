@@ -63,11 +63,11 @@ func (a *Axes3D) Bar(x, heights []float64, opts ...Bar3DPlaneOptions) *core.Poly
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 		alpha = *opt.Alpha
 	}
-	color.A *= alpha
+	color = color.WithAlphaMultiplier(alpha)
 	edgeColor := render.Color{}
 	if opt.EdgeColor != nil {
 		edgeColor = *opt.EdgeColor
-		edgeColor.A *= alpha
+		edgeColor = edgeColor.WithAlphaMultiplier(alpha)
 	}
 	edgeWidth := 0.0
 	if opt.EdgeWidth != nil {
@@ -157,7 +157,7 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *cor
 
 	faceColor := color
 	if len(opts) > 0 && opts[0].Alpha != nil {
-		faceColor.A *= alpha
+		faceColor = faceColor.WithAlphaMultiplier(alpha)
 	}
 	faceBaseColors := bar3DFaceBaseColors(faceColor, opt.Colors, alpha, n)
 	faces, faceColors := a.projectBar3DShadedFaces(x, y, z, dx, dy, dz, faceBaseColors, opt.AxLimClip)
@@ -224,8 +224,7 @@ func bar3DFaceBaseColors(defaultColor render.Color, colors []render.Color, alpha
 		return nil
 	}
 	applyAlpha := func(color render.Color) render.Color {
-		color.A *= alpha
-		return color
+		return color.WithAlphaMultiplier(alpha)
 	}
 	resolved := make([]render.Color, totalFaces)
 	if len(colors) == 0 {
@@ -429,11 +428,11 @@ func (a *Axes3D) projectVoxelCollections(filled [][][]bool, opt VoxelOptions, al
 	if opt.FaceColor != nil {
 		defaultFaceColor = *opt.FaceColor
 	}
-	defaultFaceColor.A *= alpha
+	defaultFaceColor = defaultFaceColor.WithAlphaMultiplier(alpha)
 	defaultEdgeColor := render.Color{}
 	if opt.EdgeColor != nil {
 		defaultEdgeColor = *opt.EdgeColor
-		defaultEdgeColor.A *= alpha
+		defaultEdgeColor = defaultEdgeColor.WithAlphaMultiplier(alpha)
 	}
 	shade := true
 	if opt.Shade != nil {
@@ -456,12 +455,12 @@ func (a *Axes3D) projectVoxelCollections(filled [][][]bool, opt VoxelOptions, al
 				faceColor := defaultFaceColor
 				if color, ok := opt.FaceColors[coord]; ok {
 					faceColor = color
-					faceColor.A *= alpha
+					faceColor = faceColor.WithAlphaMultiplier(alpha)
 				}
 				edgeColor := defaultEdgeColor
 				if color, ok := opt.EdgeColors[coord]; ok {
 					edgeColor = color
-					edgeColor.A *= alpha
+					edgeColor = edgeColor.WithAlphaMultiplier(alpha)
 				}
 
 				faces := make([]voxelFace, 0, 6)

@@ -75,8 +75,7 @@ func (m ScalarMapInfo) Normalize(v float64) float64 {
 func (m ScalarMapInfo) Color(v, alpha float64) render.Color {
 	m = m.Resolved()
 	color := m.resolvedColormap.AtValue(m.normalizeRaw(v))
-	color.A *= clampOneToOne(alpha)
-	return color
+	return color.WithAlphaMultiplier(clampOneToOne(alpha))
 }
 
 func (m ScalarMapInfo) normalizeRaw(v float64) float64 {

@@ -217,7 +217,7 @@ func (p *Patch) resolvedHatchSpacing() float64 {
 
 func patchAlphaColor(color render.Color, alpha float64) render.Color {
 	if alpha > 0 && alpha <= 1 {
-		color.A *= alpha
+		color = color.WithAlphaMultiplier(alpha)
 	}
 	if color.A < 0 {
 		color.A = 0
