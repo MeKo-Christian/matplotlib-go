@@ -224,6 +224,21 @@ func TestMathTextMeasurementKeyIncludesEveryRCValue(t *testing.T) {
 	}
 }
 
+func TestDefaultMathTextOnlyProfilesVirtualAlphabets(t *testing.T) {
+	var renderer textRecordingRenderer
+	if opts := mathTextOptions(&renderer, "DejaVu Sans", `\frac{a}{b}`); opts.GlyphResolver != nil {
+		t.Fatal("default fraction unexpectedly enabled a glyph profile")
+	}
+	if opts := mathTextOptions(&renderer, "DejaVu Sans", `\mathbb{R}`); opts.GlyphResolver == nil {
+		t.Fatal("default virtual alphabet did not enable a glyph profile")
+	}
+	withMathTextParams(t, style.Params{"mathtext.fontset": "cm"}, func() {
+		if opts := mathTextOptions(&renderer, "DejaVu Sans", "x"); opts.GlyphResolver == nil {
+			t.Fatal("non-default mathtext fontset did not enable a glyph profile")
+		}
+	})
+}
+
 func TestMathTextLayoutCacheSeparatesSameTypeRendererInstances(t *testing.T) {
 	narrow := &mathTextVariableMetricsRenderer{width: 7}
 	wide := &mathTextVariableMetricsRenderer{width: 29}
@@ -239,7 +254,7 @@ func TestMathTextLayoutCacheSeparatesSameTypeRendererInstances(t *testing.T) {
 		t.Fatalf("same-type renderer metrics collided in layout cache: narrow=%v wide=%v",
 			narrowLayout.Width, wideLayout.Width)
 	}
-	if narrowKey, wideKey := mathTextOptions(narrow, "").MeasurementKey, mathTextOptions(wide, "").MeasurementKey; narrowKey == wideKey {
+	if narrowKey, wideKey := mathTextOptions(narrow, "", "").MeasurementKey, mathTextOptions(wide, "", "").MeasurementKey; narrowKey == wideKey {
 		t.Fatalf("same-type renderer instances share measurement key %q", narrowKey)
 	}
 }

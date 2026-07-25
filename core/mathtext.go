@@ -360,14 +360,27 @@ func mathFontFamilyFallbacks(family string) []string {
 	}
 }
 
-func mathTextOptions(r render.Renderer, fontKey string) mt.Options {
+func mathTextOptions(r render.Renderer, fontKey, text string) mt.Options {
 	rc := style.CurrentDefaults().Mathtext
+	useProfile := rc != style.Default.Mathtext || defaultMathTextNeedsGlyphProfile(text)
 	if explicit := strings.TrimSpace(render.ParseFontProperties(fontKey).MathFontFamily); explicit != "" {
 		switch mt.MathFontSet(explicit) {
 		case mt.MathFontSetDejaVuSans, mt.MathFontSetDejaVuSerif, mt.MathFontSetCM,
 			mt.MathFontSetSTIX, mt.MathFontSetSTIXSans, mt.MathFontSetCustom:
+			useProfile = useProfile || rc.Fontset != explicit
 			rc.Fontset = explicit
 		}
+	}
+	opts := mt.Options{
+		FontResolver:   mathTextFontResolver{rc: rc},
+		Cache:          mt.DefaultCache(),
+		MeasurementKey: mathTextRendererMeasurementKey(r, rc),
+	}
+	// The original resolver is pixel-exact for Matplotlib's unchanged default
+	// DejaVu Sans profile. The semantic profile is required only once an rc
+	// setting (or an explicit math-font family) opts into alternate font maps.
+	if !useProfile {
+		return opts
 	}
 	profile := mt.NewMathFontProfile(mt.MathFontSet(rc.Fontset))
 	profile.Fallback = mt.MathFontSet(rc.Fallback)
@@ -380,13 +393,22 @@ func mathTextOptions(r render.Renderer, fontKey string) mt.Options {
 		mt.FontClassSans:         rc.SF,
 		mt.FontClassTypewriter:   rc.TT,
 	}
-	return mt.Options{
-		FontResolver:     mathTextFontResolver{rc: rc},
-		GlyphResolver:    mathTextProfileResolver{profile: profile},
-		DefaultFontClass: mt.FontClass(rc.Default),
-		Cache:            mt.DefaultCache(),
-		MeasurementKey:   mathTextRendererMeasurementKey(r, rc),
+	opts.GlyphResolver = mathTextProfileResolver{profile: profile}
+	opts.DefaultFontClass = mt.FontClass(rc.Default)
+	return opts
+}
+
+// defaultMathTextNeedsGlyphProfile identifies the virtual alphabets that need
+// the fontset's glyph substitution table. Plain default DejaVu MathText is
+// laid out through FontResolver alone: that long-standing path is pixel-exact
+// with Matplotlib's DejaVu Sans output, including fractions and sized radicals.
+func defaultMathTextNeedsGlyphProfile(text string) bool {
+	for _, command := range [...]string{`\mathbb`, `\mathcal`, `\mathfrak`, `\mathscr`} {
+		if strings.Contains(text, command) {
+			return true
+		}
 	}
+	return false
 }
 
 func mathTextRendererMeasurementKey(r render.Renderer, rc style.MathtextRC) string {
@@ -431,11 +453,11 @@ func displayTextForMathParsing(text string, parseMath bool) string {
 // LayoutMathText parses and lays out one MathText expression without requiring
 // dollar delimiters.
 func LayoutMathText(r render.Renderer, expr string, size float64, fontKey string) (MathTextLayout, bool) {
-	return mt.LayoutMathText(mathTextMeasurer{r: r}, expr, size, fontKey, mathTextOptions(r, fontKey))
+	return mt.LayoutMathText(mathTextMeasurer{r: r}, expr, size, fontKey, mathTextOptions(r, fontKey, expr))
 }
 
 func layoutDisplayText(r render.Renderer, text string, size float64, fontKey string) (MathTextLayout, bool) {
-	return mt.LayoutDisplay(mathTextMeasurer{r: r}, text, size, fontKey, mathTextOptions(r, fontKey))
+	return mt.LayoutDisplay(mathTextMeasurer{r: r}, text, size, fontKey, mathTextOptions(r, fontKey, text))
 }
 
 func drawDisplayText(textRen render.TextDrawer, text string, origin geom.Pt, size float64, textColor render.Color, fontKey string, useTeX ...bool) {
