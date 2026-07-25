@@ -58,6 +58,24 @@ type PlotOptions struct {
 	AxLimClip       bool
 }
 
+// ScalarMapConfig returns the scalar-map portion of PlotOptions.
+//
+// PlotOptions is shared by the core and plot3d plotting surfaces. Keeping this
+// conversion beside the option definition ensures both surfaces pass the same
+// colormap, normalizer, and explicit limits to ResolveScalarMapValues.
+func (o PlotOptions) ScalarMapConfig() ScalarMapConfig {
+	colormap := ""
+	if o.Colormap != nil {
+		colormap = *o.Colormap
+	}
+	return ScalarMapConfig{
+		Colormap: colormap,
+		Norm:     o.Norm,
+		VMin:     o.VMin,
+		VMax:     o.VMax,
+	}
+}
+
 // Plot creates a line plot with automatic color cycling if no color is specified.
 func (a *Axes) Plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	if len(x) == 0 || len(y) == 0 {

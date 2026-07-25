@@ -6316,6 +6316,10 @@
           "declaration": "func (PathPatch) Draw(ren render.Renderer, ctx *DrawContext)"
         },
         {
+          "id": "method PlotOptions.ScalarMapConfig",
+          "declaration": "func (PlotOptions) ScalarMapConfig() ScalarMapConfig"
+        },
+        {
           "id": "method PolyCollection.Bounds",
           "declaration": "func (PolyCollection) Bounds(ctx *DrawContext) geom.Rect"
         },

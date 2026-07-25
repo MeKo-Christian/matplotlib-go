@@ -579,18 +579,10 @@ func trisurfShadeEnabled(opt core.PlotOptions, useMapping bool) bool {
 
 //nolint:gocritic // Scalar-map resolution reads a value-semantic PlotOptions snapshot.
 func resolvePlotScalarMap(values []float64, opt core.PlotOptions) core.ScalarMapInfo {
-	cmap := ""
-	if opt.Colormap != nil {
-		cmap = *opt.Colormap
-	}
-	mapping, err := core.ResolveScalarMapValues(values, core.ScalarMapConfig{
-		Colormap: cmap,
-		Norm:     opt.Norm,
-		VMin:     opt.VMin,
-		VMax:     opt.VMax,
-	})
+	cfg := opt.ScalarMapConfig()
+	mapping, err := core.ResolveScalarMapValues(values, cfg)
 	if err != nil {
-		return core.ScalarMapInfo{Colormap: cmap}.Resolved()
+		return core.ScalarMapInfo{Colormap: cfg.Colormap}.Resolved()
 	}
 	return mapping
 }

@@ -31,6 +31,8 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
   register the desired formats.
 - Added `render.Color.WithAlphaMultiplier` as the shared non-mutating color
   alpha composition primitive used by core and 3D artists.
+- Added `core.PlotOptions.ScalarMapConfig` so core and 3D plotting paths use
+  one typed scalar-map configuration conversion.
 - Added an explicit concurrency contract for rc state, registries, pyplot
   state, figures, axes, artists, and renderers.
 - Added synchronized backend, desktop-constructor, and color-sequence

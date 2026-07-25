@@ -132,22 +132,6 @@ func resolveScalarMapRange(minValue, maxValue float64, cfg ScalarMapConfig) (Sca
 	}.Resolved(), nil
 }
 
-func resolveScalarMapGrid(data [][]float64, cmap string, vmin, vmax *float64) ScalarMapInfo {
-	mapping, err := ResolveScalarMapGrid(data, ScalarMapConfig{Colormap: cmap, VMin: vmin, VMax: vmax})
-	if err != nil {
-		return ScalarMapInfo{Colormap: resolvedColormapName(cmap)}.Resolved()
-	}
-	return mapping
-}
-
-func resolveScalarMapValues(values []float64, cmap string, vmin, vmax *float64) ScalarMapInfo {
-	mapping, err := ResolveScalarMapValues(values, ScalarMapConfig{Colormap: cmap, VMin: vmin, VMax: vmax})
-	if err != nil {
-		return ScalarMapInfo{Colormap: resolvedColormapName(cmap)}.Resolved()
-	}
-	return mapping
-}
-
 func resolvedColormapName(name string) string {
 	if name == "" {
 		return "viridis"

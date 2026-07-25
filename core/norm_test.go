@@ -307,6 +307,26 @@ func TestResolveScalarMapRejectsNormWithVMinVMax(t *testing.T) {
 	}
 }
 
+func TestPlotOptionsScalarMapConfig(t *testing.T) {
+	name := "plasma"
+	vmin, vmax := -2.0, 5.0
+	norm := PowerNorm{Gamma: 2, VMin: vmin, VMax: vmax}
+	options := PlotOptions{
+		Colormap: &name,
+		Norm:     norm,
+		VMin:     &vmin,
+		VMax:     &vmax,
+	}
+
+	got := options.ScalarMapConfig()
+	if got.Colormap != name || got.VMin != &vmin || got.VMax != &vmax {
+		t.Fatalf("ScalarMapConfig() = %+v, want colormap and limit pointers from PlotOptions", got)
+	}
+	if gotNorm, ok := got.Norm.(PowerNorm); !ok || gotNorm != norm {
+		t.Fatalf("ScalarMapConfig().Norm = %#v, want %#v", got.Norm, norm)
+	}
+}
+
 func TestScalarMapInfoRoutesBadUnderAndOverColorsThroughColormap(t *testing.T) {
 	cmapName := "scalar-map-test-bounds"
 	bad := render.Color{R: 1, A: 1}
