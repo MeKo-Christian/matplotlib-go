@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -101,8 +102,7 @@ func (a *Axes) MatShow(data [][]float64, opts ...MatShowOptions) *Image2D {
 	cfg := MatShowOptions{
 		Aspect: "equal",
 	}
-	if len(opts) > 0 {
-		opt := opts[0]
+	if opt, ok := optarg.Optional("matshow", opts); ok {
 		if opt.Colormap != nil {
 			cfg.Colormap = opt.Colormap
 		}
@@ -182,8 +182,7 @@ func (a *Axes) ImShow(data [][]float64, opts ...ImShowOptions) *Image2D {
 		Origin:        imageOriginFromRC(&rc),
 		Interpolation: &defaultInterpolation,
 	}
-	if len(opts) > 0 {
-		opt := opts[0]
+	if opt, ok := optarg.Optional("imshow", opts); ok {
 		if opt.Colormap != nil {
 			cfg.Colormap = opt.Colormap
 		}
@@ -295,7 +294,9 @@ type ImShowRGBOptions struct {
 	Label         string
 }
 
-func (a *Axes) resolveImShowRGBOptions(opts []ImShowRGBOptions) ImShowRGBOptions {
+// resolveImShowRGBOptions merges a caller's options over the rc-derived
+// defaults. supplied distinguishes an omitted option set from a zero one.
+func (a *Axes) resolveImShowRGBOptions(opt ImShowRGBOptions, supplied bool) ImShowRGBOptions {
 	rc := a.resolvedRC()
 	defaultInterpolation := "antialiased"
 	cfg := ImShowRGBOptions{
@@ -303,10 +304,9 @@ func (a *Axes) resolveImShowRGBOptions(opts []ImShowRGBOptions) ImShowRGBOptions
 		Origin:        imageOriginFromRC(&rc),
 		Interpolation: &defaultInterpolation,
 	}
-	if len(opts) == 0 {
+	if !supplied {
 		return cfg
 	}
-	opt := opts[0]
 	if opt.Alpha != nil {
 		cfg.Alpha = opt.Alpha
 	}
@@ -337,10 +337,11 @@ func (a *Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) (*Image2D
 	if a == nil {
 		return nil, fmt.Errorf("imshow rgb axes cannot be nil")
 	}
-	if len(opts) > 1 {
-		return nil, fmt.Errorf("imshow rgb accepts at most one ImShowRGBOptions value")
+	opt, err := optarg.Only("imshow rgb", opts)
+	if err != nil {
+		return nil, err
 	}
-	cfg := a.resolveImShowRGBOptions(opts)
+	cfg := a.resolveImShowRGBOptions(opt, len(opts) == 1)
 
 	rgba, kind, err := normalizeRGBArray(data)
 	if err != nil {
@@ -374,7 +375,8 @@ func (a *Axes) ImShowImage(img image.Image, opts ...ImShowRGBOptions) *Image2D {
 	if rgba == nil || rgba.Bounds().Dx() == 0 || rgba.Bounds().Dy() == 0 {
 		return nil
 	}
-	return a.imshowRGBA(rgba, a.resolveImShowRGBOptions(opts))
+	opt, supplied := optarg.Optional("imshow image", opts)
+	return a.imshowRGBA(rgba, a.resolveImShowRGBOptions(opt, supplied))
 }
 
 // imshowRGBA is the shared tail for ImShowRGB/ImShowImage: it sets the extent,
@@ -440,8 +442,7 @@ func (a *Axes) Spy(data [][]float64, opts ...SpyOptions) *SpyResult {
 	cfg := SpyOptions{
 		Aspect: "equal",
 	}
-	if len(opts) > 0 {
-		opt := opts[0]
+	if opt, ok := optarg.Optional("spy", opts); ok {
 		cfg.Precision = opt.Precision
 		cfg.UseImage = opt.UseImage
 		cfg.Marker = opt.Marker
@@ -575,8 +576,8 @@ func (a *Axes) AnnotatedHeatmap(data [][]float64, opts ...AnnotatedHeatmapOption
 		TextColor:     render.Color{R: 0.1, G: 0.1, B: 0.1, A: 1},
 		TextColorHigh: render.Color{R: 1, G: 1, B: 1, A: 1},
 	}
-	if len(opts) > 0 {
-		cfg = opts[0]
+	if supplied, ok := optarg.Optional("annotated heatmap", opts); ok {
+		cfg = supplied
 		if cfg.Aspect == "" {
 			cfg.Aspect = "equal"
 		}

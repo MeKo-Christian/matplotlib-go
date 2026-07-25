@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/style"
 )
 
@@ -154,10 +155,7 @@ func (a *Axes) Image(data [][]float64, opts ...ImageOptions) *Image2D {
 		return nil
 	}
 
-	var opt ImageOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("image", opts)
 
 	rows := len(data)
 	cols := 0

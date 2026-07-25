@@ -3,6 +3,7 @@ package widgets
 import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -62,8 +63,8 @@ func NewMultiCursorWithOptions(a *core.Axes, opts []MultiCursorOptions, axes ...
 		HorizOn:    boolPtr(true),
 		VerticalOn: boolPtr(true),
 	}
-	if len(opts) > 0 {
-		config = mergeMultiCursorOptions(config, opts[0])
+	if opt, ok := optarg.Optional("multicursor", opts); ok {
+		config = mergeMultiCursorOptions(config, opt)
 	}
 	mc := &MultiCursor{
 		Axes:       dedupeAxes(append([]*core.Axes{a}, axes...)),

@@ -3,6 +3,7 @@ package widgets
 import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -46,8 +47,8 @@ func NewButton(a *core.Axes, label string, opts ...ButtonOptions) *Button {
 		EdgeColor: defaults.ButtonEdge,
 		TextColor: defaults.ButtonText,
 	}
-	if len(opts) > 0 {
-		mergeButtonOptions(&cfg, &opts[0])
+	if opt, ok := optarg.Optional("button", opts); ok {
+		mergeButtonOptions(&cfg, &opt)
 	}
 	prepareWidgetAxes(a)
 	enabled := true

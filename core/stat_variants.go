@@ -4,6 +4,7 @@ import (
 	"math"
 	"sort"
 
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -76,10 +77,7 @@ func (a *Axes) StackPlot(x []float64, ys [][]float64, opts ...StackPlotOptions) 
 		return nil
 	}
 
-	var opt StackPlotOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("stackplot", opts)
 
 	xs := append([]float64(nil), x[:n]...)
 	m := len(ys)
@@ -203,10 +201,7 @@ func (a *Axes) ECDF(data []float64, opts ...ECDFOptions) *Line2D {
 		return nil
 	}
 
-	var opt ECDFOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("ecdf", opts)
 	total := len(samples)
 	values := samples
 	probabilities := make([]float64, 0, total)
@@ -260,10 +255,7 @@ func (a *Axes) HistMulti(data [][]float64, opts ...MultiHistOptions) []*Hist2D {
 		return nil
 	}
 
-	var opt MultiHistOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("hist multi", opts)
 
 	edges := append([]float64(nil), opt.BinEdges...)
 	if len(edges) < 2 {

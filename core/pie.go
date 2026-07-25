@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -82,8 +83,8 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 		Alpha:         1,
 		Coords:        Coords(CoordData),
 	}
-	if len(opts) > 0 {
-		cfg = opts[0]
+	if supplied, ok := optarg.Optional("pie", opts); ok {
+		cfg = supplied
 		if cfg.Radius <= 0 {
 			cfg.Radius = 1
 		}
@@ -276,8 +277,8 @@ func (a *Axes) PieLabel(container *PieContainer, labels []string, opts ...PieLab
 		Alignment: "auto",
 		Coords:    Coords(CoordData),
 	}
-	if len(opts) > 0 {
-		cfg = opts[0]
+	if supplied, ok := optarg.Optional("pie label", opts); ok {
+		cfg = supplied
 		if cfg.Distance <= 0 {
 			cfg.Distance = 0.6
 		}

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -70,8 +71,8 @@ func (a *Axes) Table(opts ...TableOptions) *Table {
 		RowLoc:          "left",
 		ColLoc:          "center",
 	}
-	if len(opts) > 0 {
-		cfg = opts[0]
+	if supplied, ok := optarg.Optional("table", opts); ok {
+		cfg = supplied
 		if cfg.BBox == (geom.Rect{}) {
 			cfg.BBox = geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}}
 		}

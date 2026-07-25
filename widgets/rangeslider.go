@@ -7,6 +7,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -52,8 +53,8 @@ func NewRangeSlider(a *core.Axes, label string, minValue, maxValue, low, high fl
 		HandleColor: defaults.Handle,
 		TextColor:   defaults.Text,
 	}
-	if len(opts) > 0 {
-		mergeSliderOptions(&cfg, &opts[0])
+	if opt, ok := optarg.Optional("rangeslider", opts); ok {
+		mergeSliderOptions(&cfg, &opt)
 	}
 	step := (maxValue - minValue) / 100
 	if cfg.ValueStep != nil && *cfg.ValueStep > 0 {

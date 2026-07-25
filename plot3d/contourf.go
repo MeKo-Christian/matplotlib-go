@@ -5,12 +5,13 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 // Contourf projects a structured z grid and emits filled contour bands.
 func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.PolyCollection {
-	opt := firstPlotOptions(opts)
+	opt := optarg.One("contourf3d", opts)
 	colorOverride := opt.Color != nil
 	// matplotlib Axes3D.contourf forwards kwargs to Axes.contourf unchanged:
 	// filled bands are opaque unless the caller passes alpha.
@@ -104,7 +105,7 @@ func (a *Axes3D) TriContourf(tri core.Triangulation, z []float64, opts ...core.P
 		return nil
 	}
 
-	opt := firstPlotOptions(opts)
+	opt := optarg.One("tricontourf3d", opts)
 	colorOverride := opt.Color != nil
 	// matplotlib Axes3D.tricontourf forwards kwargs to Axes.tricontourf
 	// unchanged: filled bands are opaque unless the caller passes alpha.

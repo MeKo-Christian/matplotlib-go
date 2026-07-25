@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -13,14 +14,10 @@ func (a *Axes) Quiver(x, y, u, v []float64, opts ...QuiverOptions) *Quiver {
 	if a == nil {
 		return nil
 	}
-	anchors, uu, vv, scalars, ok := flattenVectorSamples(x, y, u, v, vectorScalarOptions(opts))
+	opt, supplied := optarg.Optional("quiver", opts)
+	anchors, uu, vv, scalars, ok := flattenVectorSamples(x, y, u, v, vectorScalarOptions(opt, supplied))
 	if !ok || len(anchors) == 0 {
 		return nil
-	}
-
-	var opt QuiverOptions
-	if len(opts) > 0 {
-		opt = opts[0]
 	}
 
 	color := a.NextColor()
@@ -84,13 +81,14 @@ func (a *Axes) QuiverGrid(x, y []float64, u, v [][]float64, opts ...QuiverOption
 	if a == nil {
 		return nil
 	}
-	anchors, uu, vv, scalars, ok := flattenVectorGrid(x, y, u, v, vectorScalarOptions(opts))
-	if !ok {
+	supplied, ok := optarg.Optional("quiver grid", opts)
+	anchors, uu, vv, scalars, valid := flattenVectorGrid(x, y, u, v, vectorScalarOptions(supplied, ok))
+	if !valid {
 		return nil
 	}
 	var opt QuiverOptions
-	if len(opts) > 0 {
-		opt = opts[0]
+	if ok {
+		opt = supplied
 		opt.C = scalars
 		opt.CGrid = nil
 	}
@@ -157,8 +155,8 @@ func (a *Axes) QuiverKey(q *Quiver, x, y, u float64, label string, opts ...Quive
 		LabelPos: "N",
 		LabelSep: 10,
 	}
-	if len(opts) > 0 {
-		opt = opts[0]
+	if supplied, ok := optarg.Optional("quiverkey", opts); ok {
+		opt = supplied
 		if opt.LabelPos == "" {
 			opt.LabelPos = "N"
 		}

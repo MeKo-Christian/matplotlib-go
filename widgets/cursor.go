@@ -3,6 +3,7 @@ package widgets
 import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -39,8 +40,8 @@ func NewCursor(a *core.Axes, opts ...CursorOptions) *Cursor {
 		HorizOn:    boolPtr(true),
 		VerticalOn: boolPtr(true),
 	}
-	if len(opts) > 0 {
-		config = mergeCursorOptions(config, opts[0])
+	if opt, ok := optarg.Optional("cursor", opts); ok {
+		config = mergeCursorOptions(config, opt)
 	}
 	c := &Cursor{
 		axis:       a,

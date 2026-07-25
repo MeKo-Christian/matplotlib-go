@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -85,8 +86,8 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 		Alpha:     0.3,
 		Points:    100,
 	}
-	if len(opts) > 0 {
-		cfg = opts[0]
+	if supplied, ok := optarg.Optional("violinplot", opts); ok {
+		cfg = supplied
 		if cfg.EdgeWidth <= 0 {
 			cfg.EdgeWidth = 1
 		}
@@ -144,10 +145,7 @@ func (a *Axes) Violin(stats []ViolinStat, opts ...ViolinStatsOptions) *ViolinCon
 	if a == nil || len(stats) == 0 {
 		return nil
 	}
-	var cfg ViolinStatsOptions
-	if len(opts) > 0 {
-		cfg = opts[0]
-	}
+	cfg := optarg.One("violin", opts)
 	if cfg.EdgeWidth <= 0 {
 		cfg.EdgeWidth = 1
 	}

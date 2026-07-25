@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -156,10 +157,7 @@ type InfiniteLine2D struct {
 
 // Step draws a step-connected line through the provided samples.
 func (a *Axes) Step(x, y []float64, opts ...StepOptions) *Line2D {
-	var opt StepOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("step", opts)
 
 	where := StepWherePre
 	if opt.Where != nil {
@@ -183,10 +181,7 @@ func (a *Axes) Stairs(values, edges []float64, opts ...StairsOptions) *Stairs2D 
 		return nil
 	}
 
-	var opt StairsOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("stairs", opts)
 
 	lineWidth := 1.5
 	if opt.LineWidth != nil {
@@ -235,10 +230,7 @@ func (a *Axes) Stairs(values, edges []float64, opts ...StairsOptions) *Stairs2D 
 
 // AxHLine draws a horizontal reference line using axes-fraction x coordinates and a data-space y value.
 func (a *Axes) AxHLine(y float64, opts ...HLineOptions) *Segment2D {
-	var opt HLineOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("axhline", opts)
 	xMin := 0.0
 	xMax := 1.0
 	if opt.XMin != nil {
@@ -259,10 +251,7 @@ func (a *Axes) AxHLine(y float64, opts ...HLineOptions) *Segment2D {
 
 // AxVLine draws a vertical reference line using a data-space x value and axes-fraction y coordinates.
 func (a *Axes) AxVLine(x float64, opts ...VLineOptions) *Segment2D {
-	var opt VLineOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("axvline", opts)
 	yMin := 0.0
 	yMax := 1.0
 	if opt.YMin != nil {
@@ -283,10 +272,7 @@ func (a *Axes) AxVLine(x float64, opts ...VLineOptions) *Segment2D {
 
 // AxLine draws an infinite data-space line through two points, clipped to the current axes view.
 func (a *Axes) AxLine(p1, p2 geom.Pt, opts ...ReferenceLineOptions) *InfiniteLine2D {
-	var opt ReferenceLineOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("axline", opts)
 	dir := geom.Pt{X: p2.X - p1.X, Y: p2.Y - p1.Y}
 	line := a.newInfiniteLine(p1, dir, opt)
 	a.Add(line)
@@ -295,10 +281,7 @@ func (a *Axes) AxLine(p1, p2 geom.Pt, opts ...ReferenceLineOptions) *InfiniteLin
 
 // AxLineSlope draws an infinite data-space line through a point with the provided slope.
 func (a *Axes) AxLineSlope(point geom.Pt, slope float64, opts ...ReferenceLineOptions) *InfiniteLine2D {
-	var opt ReferenceLineOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("axline slope", opts)
 	line := a.newInfiniteLine(point, geom.Pt{X: 1, Y: slope}, opt)
 	a.Add(line)
 	return line
@@ -306,10 +289,7 @@ func (a *Axes) AxLineSlope(point geom.Pt, slope float64, opts ...ReferenceLineOp
 
 // AxHSpan draws a horizontal span using axes-fraction x coordinates and data-space y values.
 func (a *Axes) AxHSpan(yMin, yMax float64, opts ...HSpanOptions) *Span2D {
-	var opt HSpanOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("axhspan", opts)
 	xMin := 0.0
 	xMax := 1.0
 	if opt.XMin != nil {
@@ -330,10 +310,7 @@ func (a *Axes) AxHSpan(yMin, yMax float64, opts ...HSpanOptions) *Span2D {
 
 // AxVSpan draws a vertical span using data-space x values and axes-fraction y coordinates.
 func (a *Axes) AxVSpan(xMin, xMax float64, opts ...VSpanOptions) *Span2D {
-	var opt VSpanOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("axvspan", opts)
 	yMin := 0.0
 	yMax := 1.0
 	if opt.YMin != nil {
@@ -368,10 +345,7 @@ func (a *Axes) BrokenBarH(xRanges [][2]float64, yRange [2]float64, opts ...BarOp
 		widths[i] = xr[1]
 	}
 
-	var opt BarOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("broken barh", opts)
 	orientation := BarHorizontal
 	opt.Orientation = &orientation
 	opt.Width = float64Ptr(yRange[1])
@@ -386,10 +360,7 @@ func (a *Axes) BarLabel(bar *Bar2D, labels []string, opts ...BarLabelOptions) []
 		return nil
 	}
 
-	var opt BarLabelOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("bar label", opts)
 
 	position := strings.ToLower(strings.TrimSpace(opt.Position))
 	if position == "" {

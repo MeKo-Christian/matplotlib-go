@@ -3,6 +3,7 @@ package core
 import (
 	"math"
 
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -61,7 +62,7 @@ type Hist2DResult struct {
 
 // PColor renders a scalar matrix as a rectilinear quad mesh.
 func (a *Axes) PColor(data [][]float64, opts ...MeshOptions) *QuadMesh {
-	return a.pcolorMesh(data, render.SnapOff, render.AntialiasDefault, opts...)
+	return a.pcolorMesh(data, render.SnapOff, render.AntialiasDefault, optarg.One("pcolor", opts))
 }
 
 // PColorFast renders a scalar matrix through the rectilinear quad mesh path.
@@ -71,18 +72,14 @@ func (a *Axes) PColorFast(data [][]float64, opts ...MeshOptions) *QuadMesh {
 
 // PColorMesh renders a scalar matrix as a rectilinear quad mesh.
 func (a *Axes) PColorMesh(data [][]float64, opts ...MeshOptions) *QuadMesh {
-	return a.pcolorMesh(data, render.SnapOn, render.AntialiasOff, opts...)
+	return a.pcolorMesh(data, render.SnapOn, render.AntialiasOff, optarg.One("pcolormesh", opts))
 }
 
-func (a *Axes) pcolorMesh(data [][]float64, snap render.SnapMode, antialias render.AntialiasMode, opts ...MeshOptions) *QuadMesh {
+//nolint:gocritic // MeshOptions is an immutable snapshot of the caller's options.
+func (a *Axes) pcolorMesh(data [][]float64, snap render.SnapMode, antialias render.AntialiasMode, opt MeshOptions) *QuadMesh {
 	rows, cols, ok := finiteMatrixSize(data)
 	if !ok {
 		return nil
-	}
-
-	var opt MeshOptions
-	if len(opts) > 0 {
-		opt = opts[0]
 	}
 
 	xEdges, yEdges, shading, ok := resolvedMeshGeometry(rows, cols, opt)
@@ -322,10 +319,7 @@ func (a *Axes) Hist2D(x, y []float64, opts ...Hist2DOptions) *Hist2DResult {
 		return nil
 	}
 
-	var opt Hist2DOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("hist2d", opts)
 
 	n := len(x)
 	if len(y) < n {

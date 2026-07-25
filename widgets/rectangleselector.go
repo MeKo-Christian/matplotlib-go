@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -41,8 +42,8 @@ func NewRectangleSelector(a *core.Axes, opts ...RectangleSelectorOptions) *Recta
 		FillColor: render.Color{R: 0.16, G: 0.42, B: 0.76, A: 0.18},
 		LineWidth: 1.2,
 	}
-	if len(opts) > 0 {
-		config = mergeRectangleSelectorOptions(config, opts[0])
+	if opt, ok := optarg.Optional("rectangleselector", opts); ok {
+		config = mergeRectangleSelectorOptions(config, opt)
 	}
 	sel := &RectangleSelector{
 		EdgeColor: config.EdgeColor,

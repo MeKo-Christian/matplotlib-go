@@ -46,6 +46,12 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
   rejected, and `Axes.ErrorBar` validates before the property cycle advances.
   `diag.Warnf` is reserved for artists accepted with a documented degradation;
   the audit is in `docs/plans/phase2-warn-and-skip-inventory.md`.
+- Rejected extra option values across the whole variadic plotting surface. A
+  call that supplies two or more option structs used to keep the first and
+  discard the rest. Entry points that return an error now report a
+  `*optarg.TooManyError`; the rest panic, because the extra value can only come
+  from a literal at the call site. No signature changed, and calls that pass
+  zero or one option value behave exactly as before.
 
 ## Added
 

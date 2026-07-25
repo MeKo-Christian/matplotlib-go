@@ -343,24 +343,26 @@ func flattenVectorGrid(x, y []float64, u, v [][]float64, scalars []float64) ([]g
 	return anchors, uu, vv, outScalars, true
 }
 
-func vectorScalarOptions(opts []QuiverOptions) []float64 {
-	if len(opts) == 0 {
+//nolint:gocritic // QuiverOptions is read-only here and the result is copied out.
+func vectorScalarOptions(opt QuiverOptions, supplied bool) []float64 {
+	if !supplied {
 		return nil
 	}
-	if len(opts[0].CGrid) > 0 {
-		return flattenScalarGrid(opts[0].CGrid)
+	if len(opt.CGrid) > 0 {
+		return flattenScalarGrid(opt.CGrid)
 	}
-	return append([]float64(nil), opts[0].C...)
+	return append([]float64(nil), opt.C...)
 }
 
-func barbsScalarOptions(opts []BarbsOptions) []float64 {
-	if len(opts) == 0 {
+//nolint:gocritic // BarbsOptions is read-only here and the result is copied out.
+func barbsScalarOptions(opt BarbsOptions, supplied bool) []float64 {
+	if !supplied {
 		return nil
 	}
-	if len(opts[0].CGrid) > 0 {
-		return flattenScalarGrid(opts[0].CGrid)
+	if len(opt.CGrid) > 0 {
+		return flattenScalarGrid(opt.CGrid)
 	}
-	return append([]float64(nil), opts[0].C...)
+	return append([]float64(nil), opt.C...)
 }
 
 func flattenScalarGrid(grid [][]float64) []float64 {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -22,8 +23,7 @@ func (a *Axes3D) Surface(x, y []float64, z [][]float64, opts ...core.PlotOptions
 	edgeWidth := 1.0
 	edgeColor := render.Color{A: 0}
 	antialias := render.AntialiasDefault
-	if len(opts) > 0 {
-		opt := opts[0]
+	if opt, ok := optarg.Optional("surface", opts); ok {
 		if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 			alpha = *opt.Alpha
 		}
@@ -44,7 +44,7 @@ func (a *Axes3D) Surface(x, y []float64, z [][]float64, opts ...core.PlotOptions
 		faceColors[i] = faceColors[i].WithAlphaMultiplier(alpha)
 	}
 	edgeColor = edgeColor.WithAlphaMultiplier(alpha)
-	edgeColors := surfaceEdgeColors(faceColors, firstPlotOptions(opts))
+	edgeColors := surfaceEdgeColors(faceColors, optarg.One("surface", opts))
 
 	collection := &core.PolyCollection{
 		Polygons: polygons,
@@ -78,7 +78,7 @@ func (a *Axes3D) Surface(x, y []float64, z [][]float64, opts ...core.PlotOptions
 			}
 			collection.Polygons = polygons
 			collection.FaceColors = faceColors
-			collection.EdgeColors = surfaceEdgeColors(faceColors, firstPlotOptions(opts))
+			collection.EdgeColors = surfaceEdgeColors(faceColors, optarg.One("surface", opts))
 			collection.Colormap = mapping.Colormap
 			collection.Norm = mapping.Norm
 			collection.VMin = mapping.VMin
@@ -113,7 +113,7 @@ func (a *Axes3D) projectSurfacePolygons(x, y []float64, z [][]float64, opts ...c
 		}
 	}
 
-	opt := firstPlotOptions(opts)
+	opt := optarg.One("surface", opts)
 	faces := make([]surfaceFace, 0, (rows-1)*(cols-1))
 	values := make([]float64, 0, (rows-1)*(cols-1))
 	collectionDepth := math.Inf(1)
@@ -305,8 +305,7 @@ func (a *Axes3D) Trisurf(tri core.Triangulation, z []float64, opts ...core.PlotO
 	label := ""
 	edgeColor := render.Color{A: 0}
 	antialias := render.AntialiasDefault
-	if len(opts) > 0 {
-		opt := opts[0]
+	if opt, ok := optarg.Optional("trisurf", opts); ok {
 		if opt.Color != nil {
 			color = *opt.Color
 		}
@@ -330,7 +329,7 @@ func (a *Axes3D) Trisurf(tri core.Triangulation, z []float64, opts ...core.PlotO
 
 	faceColor := color
 	faceColor = faceColor.WithAlphaMultiplier(alpha)
-	faces, faceColors, scalarValues, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, firstPlotOptions(opts))
+	faces, faceColors, scalarValues, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, optarg.One("trisurf", opts))
 	if len(faces) == 0 {
 		return nil
 	}
@@ -359,7 +358,7 @@ func (a *Axes3D) Trisurf(tri core.Triangulation, z []float64, opts ...core.PlotO
 	a.Add(collection)
 	a.add3DReprojector(func() {
 		if collection != nil {
-			faces, faceColors, scalarValues, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, firstPlotOptions(opts))
+			faces, faceColors, scalarValues, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, optarg.One("trisurf", opts))
 			collection.Polygons = faces
 			collection.FaceColors = faceColors
 			collection.Colormap = mapping.Colormap

@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -41,8 +42,8 @@ func NewEllipseSelector(a *core.Axes, opts ...EllipseSelectorOptions) *EllipseSe
 		FillColor: render.Color{R: 0.16, G: 0.42, B: 0.76, A: 0.18},
 		LineWidth: 1.2,
 	}
-	if len(opts) > 0 {
-		config = mergeEllipseSelectorOptions(config, opts[0])
+	if opt, ok := optarg.Optional("ellipseselector", opts); ok {
+		config = mergeEllipseSelectorOptions(config, opt)
 	}
 	sel := &EllipseSelector{
 		EdgeColor: config.EdgeColor,

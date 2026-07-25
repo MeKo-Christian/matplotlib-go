@@ -3,6 +3,7 @@ package pyplot
 import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 )
 
 // Bar delegates to the current axes.
@@ -78,8 +79,8 @@ func Arrow(x, y, dx, dy float64, opts ...core.Arrow) *core.Arrow {
 		DY:     dy,
 		Coords: core.Coords(core.CoordData),
 	}
-	if len(opts) > 0 {
-		arrow = opts[0]
+	if supplied, ok := optarg.Optional("arrow", opts); ok {
+		arrow = supplied
 		arrow.XY = geom.Pt{X: x, Y: y}
 		arrow.DX = dx
 		arrow.DY = dy

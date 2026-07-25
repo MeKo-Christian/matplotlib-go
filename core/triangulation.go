@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/tri"
 )
@@ -43,10 +44,7 @@ func (a *Axes) TriPlot(tri Triangulation, opts ...TriPlotOptions) *LineCollectio
 		return nil
 	}
 
-	var opt TriPlotOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("triplot", opts)
 
 	color := a.NextColor()
 	if opt.Color != nil {
@@ -90,10 +88,7 @@ func (a *Axes) TriColor(tri Triangulation, values []float64, opts ...TriColorOpt
 		return nil
 	}
 
-	var opt TriColorOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("tripcolor", opts)
 
 	triangleValues, ok := triColorValues(tri, values)
 	if !ok {

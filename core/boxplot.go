@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -124,10 +125,7 @@ func (a *Axes) Bxp(stats []BxpStat, opts ...BxpOptions) *BxpContainer {
 	if a == nil || len(stats) == 0 {
 		return nil
 	}
-	var opt BxpOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("bxp", opts)
 	rc := a.resolvedRC()
 	n := len(stats)
 	if !validOptionalList(opt.Positions, n) || !validOptionalScalarList(opt.Widths, n) || !validOptionalScalarList(opt.CapWidths, n) {

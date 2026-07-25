@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -12,14 +13,10 @@ func (a *Axes) Barbs(x, y, u, v []float64, opts ...BarbsOptions) *Barbs {
 	if a == nil {
 		return nil
 	}
-	anchors, uu, vv, scalars, ok := flattenVectorSamples(x, y, u, v, barbsScalarOptions(opts))
+	opt, supplied := optarg.Optional("barbs", opts)
+	anchors, uu, vv, scalars, ok := flattenVectorSamples(x, y, u, v, barbsScalarOptions(opt, supplied))
 	if !ok || len(anchors) == 0 {
 		return nil
-	}
-
-	var opt BarbsOptions
-	if len(opts) > 0 {
-		opt = opts[0]
 	}
 
 	color := a.NextColor()
@@ -79,14 +76,15 @@ func (a *Axes) BarbsGrid(x, y []float64, u, v [][]float64, opts ...BarbsOptions)
 	if a == nil {
 		return nil
 	}
-	anchors, uu, vv, scalars, ok := flattenVectorGrid(x, y, u, v, barbsScalarOptions(opts))
-	if !ok {
+	supplied, ok := optarg.Optional("barbs grid", opts)
+	anchors, uu, vv, scalars, valid := flattenVectorGrid(x, y, u, v, barbsScalarOptions(supplied, ok))
+	if !valid {
 		return nil
 	}
 
 	var opt BarbsOptions
-	if len(opts) > 0 {
-		opt = opts[0]
+	if ok {
+		opt = supplied
 		opt.C = scalars
 		opt.CGrid = nil
 	}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -69,8 +70,8 @@ func (a *Axes) Hexbin(x, y []float64, opts ...HexbinOptions) *HexbinCollection {
 		Alpha:     1,
 		LineWidth: 1.0, // points; converted at the collection Paint sink
 	}
-	if len(opts) > 0 {
-		cfg = opts[0]
+	if supplied, ok := optarg.Optional("hexbin", opts); ok {
+		cfg = supplied
 		if cfg.GridSizeX <= 0 {
 			cfg.GridSizeX = 18
 		}

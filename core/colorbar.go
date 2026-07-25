@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -63,10 +64,7 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 		return nil
 	}
 
-	cfg := ColorbarOptions{}
-	if len(opts) > 0 {
-		cfg = opts[0]
-	}
+	cfg := optarg.One("colorbar", opts)
 	cfg.Aspect = resolvedColorbarAspect(cfg.Aspect)
 	location := normalizeColorbarLocation(cfg.Location, cfg.Orientation)
 	extend := normalizeColorbarExtend(cfg.Extend)

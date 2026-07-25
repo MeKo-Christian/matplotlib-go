@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -239,7 +240,7 @@ func (e *ErrorBar) Container() *ErrorbarContainer {
 
 // BarContainer creates bars and returns the corresponding result container.
 func (a *Axes) BarContainer(x, heights []float64, opts ...BarOptions) *BarContainer {
-	bar := a.bar(x, heights, opts...)
+	bar := a.bar(x, heights, optarg.One("bar container", opts))
 	if bar == nil {
 		return nil
 	}
@@ -270,10 +271,7 @@ func (a *Axes) Stem(x, y []float64, opts ...StemOptions) *StemContainer {
 		return nil
 	}
 
-	var opt StemOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("stem", opts)
 
 	color := a.NextColor()
 	if opt.Color != nil {

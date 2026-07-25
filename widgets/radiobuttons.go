@@ -3,6 +3,7 @@ package widgets
 import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -48,8 +49,8 @@ func NewRadioButtons(a *core.Axes, labels []string, active int, opts ...RadioBut
 		TextColor: defaults.Text,
 		DotColor:  defaults.RadioDot,
 	}
-	if len(opts) > 0 {
-		mergeRadioButtonsOptions(&cfg, &opts[0])
+	if opt, ok := optarg.Optional("radiobuttons", opts); ok {
+		mergeRadioButtonsOptions(&cfg, &opt)
 	}
 	prepareWidgetAxes(a)
 	enabled := true

@@ -5,6 +5,7 @@ import (
 	"math/cmplx"
 
 	algofft "github.com/cwbudde/algo-fft"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
@@ -96,10 +97,7 @@ type CorrelationResult struct {
 
 // Specgram computes a simple spectrogram and renders it as an image.
 func (a *Axes) Specgram(samples []float64, opts ...SpecgramOptions) *SpecgramResult {
-	cfg := SpecgramOptions{}
-	if len(opts) > 0 {
-		cfg = opts[0]
-	}
+	cfg := optarg.One("specgram", opts)
 
 	samples = finiteSeries(samples)
 	fs, nfft, noverlap, padTo, ok := resolveSignalParams(len(samples), cfg.Fs, cfg.NFFT, cfg.NOverlap, cfg.PadTo)
@@ -154,10 +152,7 @@ func (a *Axes) Specgram(samples []float64, opts ...SpecgramOptions) *SpecgramRes
 
 // PSD computes a Welch power spectral density estimate and plots it.
 func (a *Axes) PSD(samples []float64, opts ...SignalSpectrumOptions) *SpectrumResult {
-	cfg := SignalSpectrumOptions{}
-	if len(opts) > 0 {
-		cfg = opts[0]
-	}
+	cfg := optarg.One("psd", opts)
 	samples = finiteSeries(samples)
 	freqs, psd := computePSD(samples, cfg)
 	offsetFrequencies(freqs, cfg.Fc)
@@ -170,10 +165,7 @@ func (a *Axes) PSD(samples []float64, opts ...SignalSpectrumOptions) *SpectrumRe
 
 // MagnitudeSpectrum computes a one-sided FFT magnitude spectrum and plots it.
 func (a *Axes) MagnitudeSpectrum(samples []float64, opts ...SignalSpectrumOptions) *SpectrumResult {
-	cfg := SignalSpectrumOptions{}
-	if len(opts) > 0 {
-		cfg = opts[0]
-	}
+	cfg := optarg.One("magnitude spectrum", opts)
 	samples = finiteSeries(samples)
 	freqs, values := computeMagnitudeSpectrum(samples, cfg)
 	a.SetXLabel("Frequency")
@@ -194,10 +186,7 @@ func (a *Axes) MagnitudeSpectrum(samples []float64, opts ...SignalSpectrumOption
 
 // AngleSpectrum computes a one-sided FFT phase angle spectrum in radians.
 func (a *Axes) AngleSpectrum(samples []float64, opts ...SignalSpectrumOptions) *SpectrumResult {
-	cfg := SignalSpectrumOptions{}
-	if len(opts) > 0 {
-		cfg = opts[0]
-	}
+	cfg := optarg.One("angle spectrum", opts)
 	samples = finiteSeries(samples)
 	freqs, values := computeAngleSpectrum(samples, cfg)
 	a.SetXLabel("Frequency")
@@ -207,10 +196,7 @@ func (a *Axes) AngleSpectrum(samples []float64, opts ...SignalSpectrumOptions) *
 
 // PhaseSpectrum computes a one-sided unwrapped FFT phase spectrum in radians.
 func (a *Axes) PhaseSpectrum(samples []float64, opts ...SignalSpectrumOptions) *SpectrumResult {
-	cfg := SignalSpectrumOptions{}
-	if len(opts) > 0 {
-		cfg = opts[0]
-	}
+	cfg := optarg.One("phase spectrum", opts)
 	samples = finiteSeries(samples)
 	freqs, values := computePhaseSpectrum(samples, cfg)
 	a.SetXLabel("Frequency")
@@ -220,10 +206,7 @@ func (a *Axes) PhaseSpectrum(samples []float64, opts ...SignalSpectrumOptions) *
 
 // CSD computes the magnitude of the cross spectral density estimate and plots it.
 func (a *Axes) CSD(x, y []float64, opts ...SignalSpectrumOptions) *SpectrumResult {
-	cfg := SignalSpectrumOptions{}
-	if len(opts) > 0 {
-		cfg = opts[0]
-	}
+	cfg := optarg.One("csd", opts)
 	x, y = finitePairs(x, y)
 	freqs, values := computeCSDMagnitude(x, y, cfg)
 	offsetFrequencies(freqs, cfg.Fc)
@@ -236,10 +219,7 @@ func (a *Axes) CSD(x, y []float64, opts ...SignalSpectrumOptions) *SpectrumResul
 
 // Cohere computes magnitude-squared coherence and plots it.
 func (a *Axes) Cohere(x, y []float64, opts ...SignalSpectrumOptions) *SpectrumResult {
-	cfg := SignalSpectrumOptions{}
-	if len(opts) > 0 {
-		cfg = opts[0]
-	}
+	cfg := optarg.One("cohere", opts)
 	x, y = finitePairs(x, y)
 	freqs, values := computeCoherence(x, y, cfg)
 	offsetFrequencies(freqs, cfg.Fc)
@@ -252,10 +232,7 @@ func (a *Axes) Cohere(x, y []float64, opts ...SignalSpectrumOptions) *SpectrumRe
 
 // XCorr computes the cross-correlation sequence and plots it.
 func (a *Axes) XCorr(x, y []float64, opts ...CorrelationOptions) *CorrelationResult {
-	cfg := CorrelationOptions{}
-	if len(opts) > 0 {
-		cfg = opts[0]
-	}
+	cfg := optarg.One("xcorr", opts)
 	x, y = finitePairs(x, y)
 	lags, values := computeCorrelation(x, y, cfg)
 	return plotCorrelationResult(a, lags, values, cfg.PlotOptions)
@@ -263,10 +240,7 @@ func (a *Axes) XCorr(x, y []float64, opts ...CorrelationOptions) *CorrelationRes
 
 // ACorr computes the auto-correlation sequence and plots it.
 func (a *Axes) ACorr(x []float64, opts ...CorrelationOptions) *CorrelationResult {
-	cfg := CorrelationOptions{}
-	if len(opts) > 0 {
-		cfg = opts[0]
-	}
+	cfg := optarg.One("acorr", opts)
 	x = finiteSeries(x)
 	lags, values := computeCorrelation(x, x, cfg)
 	return plotCorrelationResult(a, lags, values, cfg.PlotOptions)

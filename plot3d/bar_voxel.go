@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -36,10 +37,7 @@ func (a *Axes3D) Bar(x, heights []float64, opts ...Bar3DPlaneOptions) *core.Poly
 		return nil
 	}
 
-	var opt Bar3DPlaneOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("bar3d plane", opts)
 	width := 0.8
 	if opt.Width != nil {
 		width = *opt.Width
@@ -136,8 +134,8 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *cor
 	edgeAlpha := 0.0
 	label := ""
 	opt := Bar3DOptions{}
-	if len(opts) > 0 {
-		opt = opts[0]
+	if supplied, ok := optarg.Optional("bar3d", opts); ok {
+		opt = supplied
 		o := opt
 		if o.Color != nil {
 			color = *o.Color
@@ -156,7 +154,7 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *cor
 	}
 
 	faceColor := color
-	if len(opts) > 0 && opts[0].Alpha != nil {
+	if supplied, ok := optarg.Optional("bar3d", opts); ok && supplied.Alpha != nil {
 		faceColor = faceColor.WithAlphaMultiplier(alpha)
 	}
 	faceBaseColors := bar3DFaceBaseColors(faceColor, opt.Colors, alpha, n)
@@ -273,10 +271,7 @@ func (a *Axes3D) Voxels(filled [][][]bool, opts ...VoxelOptions) map[[3]int]*cor
 		return nil
 	}
 
-	var opt VoxelOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("voxels", opts)
 	alpha := 1.0
 	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
 		alpha = *opt.Alpha
@@ -350,11 +345,11 @@ func (a *Axes3D) Voxel(x, y, z, dx, dy, dz []float64, opts ...core.PlotOptions) 
 		a.voxelWarned = true
 		diag.Warnf("Axes3D.Voxel draws wireframe prisms, not filled cubes; use Axes3D.Voxels(grid) for filled voxels")
 	}
-	if len(opts) == 0 {
+	o, supplied := optarg.Optional("voxel", opts)
+	if !supplied {
 		return a.Bar3D(x, y, z, dx, dy, dz)
 	}
 
-	o := opts[0]
 	voxelOpts := make([]Bar3DOptions, 1)
 	if o.Color != nil {
 		voxelOpts[0].Color = o.Color

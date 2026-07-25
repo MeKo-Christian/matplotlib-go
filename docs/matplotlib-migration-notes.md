@@ -157,6 +157,33 @@ previously returned a bare nil.
 clipping, unknown mathtext commands, and unresolvable text bbox styles. See
 `docs/plans/phase2-warn-and-skip-inventory.md` for the full audit.
 
+### Extra option values are rejected
+
+Plotting entry points take their options as a variadic tail so callers can omit
+them: `ax.ImShow(data)` and `ax.ImShow(data, opts)` are both valid. The tail
+stands in for one optional argument, so anything past the first value was
+silently discarded. It is now rejected everywhere:
+
+```go
+ax.ImShow(data, first, second) // previously used first and dropped second
+```
+
+How the rejection is delivered depends on the entry point's signature:
+
+- Calls that already return an error report it there, as a
+  `*optarg.TooManyError` wrapped in the usual `(T, error)` result. This covers
+  `Axes.Plot`, `Scatter`, `Bar`, `BarH`, `FillBetween`, `FillBetweenX`,
+  `FillBetweenPlot`, `Hist`, `ErrorBar`, `ErrorBarContainer`, `ImShowRGB`,
+  `pyplot.Grid`, and the matching pyplot wrappers.
+- Every other entry point panics. Passing two option values cannot come from
+  plot data — it requires two option literals written at the call site — so it
+  is a bug in the caller rather than bad input, and the final options model will
+  make it a compile-time error.
+
+No signature changed, so code that passes zero or one option value is
+unaffected. Code that passed two or more was already losing every value after
+the first; keep the last one and merge the rest by hand.
+
 The same getter pass removed the remaining exported `GetX` spellings:
 
 | Before                                      | After                                     |

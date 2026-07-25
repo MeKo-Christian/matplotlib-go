@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -24,8 +25,8 @@ func (a *Axes) Streamplot(x, y []float64, u, v [][]float64, opts ...StreamplotOp
 		Density:              1,
 		IntegrationDirection: streamDirectionBoth,
 	}
-	if len(opts) > 0 {
-		opt = opts[0]
+	if supplied, ok := optarg.Optional("streamplot", opts); ok {
+		opt = supplied
 	}
 	densityX, densityY := resolvedStreamDensity(opt)
 	if densityX <= 0 || densityY <= 0 {

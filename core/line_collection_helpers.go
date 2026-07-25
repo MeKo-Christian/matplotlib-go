@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -18,7 +19,8 @@ func (a *Axes) HLines(y, xMin, xMax []float64, opts ...LineCollection) *LineColl
 			{X: lineCollectionValueAt(xMax, i), Y: y[i]},
 		}
 	}
-	return a.lineCollectionFromSegments(segments, opts...)
+	opt, supplied := optarg.Optional("hlines", opts)
+	return a.lineCollectionFromSegments(segments, opt, supplied)
 }
 
 // VLines adds vertical data-space line segments, broadcasting single-value
@@ -34,10 +36,12 @@ func (a *Axes) VLines(x, yMin, yMax []float64, opts ...LineCollection) *LineColl
 			{X: x[i], Y: lineCollectionValueAt(yMax, i)},
 		}
 	}
-	return a.lineCollectionFromSegments(segments, opts...)
+	opt, supplied := optarg.Optional("vlines", opts)
+	return a.lineCollectionFromSegments(segments, opt, supplied)
 }
 
-func (a *Axes) lineCollectionFromSegments(segments [][]geom.Pt, opts ...LineCollection) *LineCollection {
+//nolint:gocritic // the caller's LineCollection is copied on purpose: the helper fills in Segments and defaults without touching it.
+func (a *Axes) lineCollectionFromSegments(segments [][]geom.Pt, opt LineCollection, supplied bool) *LineCollection {
 	collection := LineCollection{
 		Collection: Collection{
 			Coords: Coords(CoordData),
@@ -48,8 +52,8 @@ func (a *Axes) lineCollectionFromSegments(segments [][]geom.Pt, opts ...LineColl
 		LineWidth: 1,
 		LineCap:   render.CapButt,
 	}
-	if len(opts) > 0 {
-		collection = opts[0]
+	if supplied {
+		collection = opt
 		collection.Segments = segments
 		if collection.Coords == (CoordinateSpec{}) {
 			collection.Coords = Coords(CoordData)

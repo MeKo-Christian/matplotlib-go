@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -56,8 +57,8 @@ func NewTextBox(a *core.Axes, label, value string, opts ...TextBoxOptions) *Text
 		EdgeColor: defaults.TextBoxEdge,
 		TextColor: defaults.Text,
 	}
-	if len(opts) > 0 {
-		mergeTextBoxOptions(&cfg, &opts[0])
+	if opt, ok := optarg.Optional("textbox", opts); ok {
+		mergeTextBoxOptions(&cfg, &opt)
 	}
 	prepareWidgetAxes(a)
 	w := &TextBox{

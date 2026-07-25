@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -97,8 +98,7 @@ func (a *Axes) AnnotationBbox(text string, x, y float64, opts ...AnnotationBboxO
 	cfg.ArrowWidth = 1.0 // points; converted at the arrow patch sink
 	cfg.ArrowHeadSize = 8
 
-	if len(opts) > 0 {
-		opt := opts[0]
+	if opt, ok := optarg.Optional("annotation bbox", opts); ok {
 		cfg.XYCoords = opt.XYCoords
 		cfg.BoxCoords = opt.BoxCoords
 		cfg.BoxPosition = clonePoint(opt.BoxPosition)

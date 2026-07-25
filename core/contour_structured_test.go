@@ -420,7 +420,7 @@ func TestContourfUsesStructuredGridBandPolygons(t *testing.T) {
 	if filled == nil || filled.Fills == nil {
 		t.Fatal("expected structured contourf fills")
 	}
-	x, y, values, ok := contourGridCoordsValues(data, []ContourOptions{{Levels: levels}})
+	x, y, values, ok := contourGridCoordsValues(data, ContourOptions{Levels: levels})
 	if !ok {
 		t.Fatal("expected valid grid contour coordinates")
 	}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -51,8 +52,8 @@ func NewCheckButtons(a *core.Axes, labels []string, active []bool, opts ...Check
 		TextColor:  defaults.Text,
 		CheckColor: defaults.Check,
 	}
-	if len(opts) > 0 {
-		mergeCheckButtonsOptions(&cfg, &opts[0])
+	if opt, ok := optarg.Optional("checkbuttons", opts); ok {
+		mergeCheckButtonsOptions(&cfg, &opt)
 	}
 	prepareWidgetAxes(a)
 	enabled := true

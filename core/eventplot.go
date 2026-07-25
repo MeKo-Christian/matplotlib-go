@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -45,8 +46,8 @@ func (a *Axes) Eventplot(positions [][]float64, opts ...EventPlotOptions) *Event
 		LineWidth:   1.5,
 		Alpha:       1,
 	}
-	if len(opts) > 0 {
-		cfg = opts[0]
+	if supplied, ok := optarg.Optional("eventplot", opts); ok {
+		cfg = supplied
 		if cfg.LineWidth <= 0 {
 			cfg.LineWidth = 1.5
 		}

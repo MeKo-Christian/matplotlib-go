@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -128,10 +129,7 @@ func (c *ContourSet) Clabel(opts ...ClabelOptions) []ContourLabel {
 	if c == nil || c.Lines == nil || len(c.Lines.Segments) == 0 {
 		return nil
 	}
-	var opt ClabelOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("clabel", opts)
 	indices, ok := c.clabelLineIndices(opt.Levels)
 	if !ok || len(indices) == 0 {
 		return nil
@@ -163,15 +161,12 @@ func (c *ContourSet) Clabel(opts ...ClabelOptions) []ContourLabel {
 
 // Contour draws isolines over a rectilinear scalar grid.
 func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
-	xCoords, yCoords, values, ok := contourGridCoordsValues(data, opts)
+	opt := optarg.One("contour", opts)
+	xCoords, yCoords, values, ok := contourGridCoordsValues(data, opt)
 	if !ok {
 		return nil
 	}
 
-	var opt ContourOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
 	algorithm, cornerMask, ok := a.resolveStructuredContourOptions(&opt)
 	if !ok {
 		return nil
@@ -244,13 +239,10 @@ func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
 
 // Contourf draws filled contour bands over a rectilinear scalar grid.
 func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet {
-	xCoords, yCoords, values, ok := contourGridCoordsValues(data, opts)
+	opt := optarg.One("contourf", opts)
+	xCoords, yCoords, values, ok := contourGridCoordsValues(data, opt)
 	if !ok {
 		return nil
-	}
-	var opt ContourOptions
-	if len(opts) > 0 {
-		opt = opts[0]
 	}
 	algorithm, cornerMask, ok := a.resolveStructuredContourOptions(&opt)
 	if !ok {
@@ -338,7 +330,7 @@ func (a *Axes) TriContour(tri Triangulation, values []float64, opts ...ContourOp
 	if err := tri.Validate(); err != nil || len(values) != len(tri.X) {
 		return nil
 	}
-	return a.buildContourSet(tri, values, false, opts...)
+	return a.buildContourSet(tri, values, false, optarg.One("tricontour", opts))
 }
 
 // TriContourf draws filled contour bands over an explicit triangulation.
@@ -346,7 +338,7 @@ func (a *Axes) TriContourf(tri Triangulation, values []float64, opts ...ContourO
 	if err := tri.Validate(); err != nil || len(values) != len(tri.X) {
 		return nil
 	}
-	return a.buildContourSet(tri, values, true, opts...)
+	return a.buildContourSet(tri, values, true, optarg.One("tricontourf", opts))
 }
 
 // Draw renders the contour set's filled bands and/or line collection.
@@ -484,15 +476,12 @@ func (c *ContourSet) legendEntry() (legendEntry, bool) {
 	return legendEntry{}, false
 }
 
-func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool, opts ...ContourOptions) *ContourSet {
+//nolint:gocritic // Triangulation and ContourOptions are value snapshots; buildContourSet resolves defaults into its own copy.
+func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool, opt ContourOptions) *ContourSet {
 	if err := tri.Validate(); err != nil || len(values) != len(tri.X) {
 		return nil
 	}
 
-	var opt ContourOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
 	a.resolveContourLineDefaults(&opt)
 
 	levels := contourLevels(values, opt.Levels, opt.LevelCount, filled)

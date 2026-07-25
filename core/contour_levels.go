@@ -7,57 +7,11 @@ import (
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
-func contourGridTriangulation(data [][]float64, opts []ContourOptions) (Triangulation, []float64, bool) {
-	xCoords, yCoords, values, ok := contourGridCoordsValues(data, opts)
-	if !ok {
-		return Triangulation{}, nil, false
-	}
-	rows := len(data)
-	cols := len(data[0])
-
-	xPoints := make([]float64, 0, rows*cols)
-	yPoints := make([]float64, 0, rows*cols)
-	for yi := 0; yi < rows; yi++ {
-		for xi := 0; xi < cols; xi++ {
-			xPoints = append(xPoints, xCoords[xi])
-			yPoints = append(yPoints, yCoords[yi])
-		}
-	}
-
-	triangles := make([][3]int, 0, (rows-1)*(cols-1)*2)
-	mask := make([]bool, 0, (rows-1)*(cols-1)*2)
-	index := func(row, col int) int { return row*cols + col }
-	for yi := 0; yi+1 < rows; yi++ {
-		for xi := 0; xi+1 < cols; xi++ {
-			p00 := index(yi, xi)
-			p10 := index(yi, xi+1)
-			p01 := index(yi+1, xi)
-			p11 := index(yi+1, xi+1)
-
-			triangles = append(triangles, [3]int{p00, p10, p11})
-			mask = append(mask, !triangleFinite(values, [3]int{p00, p10, p11}))
-			triangles = append(triangles, [3]int{p00, p11, p01})
-			mask = append(mask, !triangleFinite(values, [3]int{p00, p11, p01}))
-		}
-	}
-
-	return Triangulation{
-		X:         xPoints,
-		Y:         yPoints,
-		Triangles: triangles,
-		Mask:      mask,
-	}, values, true
-}
-
-func contourGridCoordsValues(data [][]float64, opts []ContourOptions) ([]float64, []float64, []float64, bool) {
+//nolint:gocritic // ContourOptions is an immutable snapshot of the caller's options.
+func contourGridCoordsValues(data [][]float64, opt ContourOptions) ([]float64, []float64, []float64, bool) {
 	rows, cols, ok := finiteMatrixSize(data)
 	if !ok || rows < 2 || cols < 2 {
 		return nil, nil, nil, false
-	}
-
-	var opt ContourOptions
-	if len(opts) > 0 {
-		opt = opts[0]
 	}
 
 	xCoords := resolvedContourCoords(cols, opt.X, opt.XEdges)

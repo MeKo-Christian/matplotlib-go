@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 )
 
 // Plot delegates to the current axes.
@@ -194,8 +195,8 @@ func addLineCollection(segments [][]geom.Pt, opts ...core.LineCollection) *core.
 		Color:     ax.NextColor(),
 		LineWidth: 1,
 	}
-	if len(opts) > 0 {
-		collection = opts[0]
+	if opt, ok := optarg.Optional("line collection", opts); ok {
+		collection = opt
 		collection.Segments = segments
 		if collection.Coords == (core.CoordinateSpec{}) {
 			collection.Coords = core.Coords(core.CoordData)

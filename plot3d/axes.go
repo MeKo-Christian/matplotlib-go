@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -312,7 +313,7 @@ func NewAxes(ax *core.Axes) *Axes3D {
 // Plot3D projects x/y/z values and draws a line through projected points.
 func (a *Axes3D) Plot3D(x, y, z []float64, opts ...core.PlotOptions) *core.Line2D {
 	limitsChanged := a.observe3DData(x, y, z)
-	opt := firstPlotOptions(opts)
+	opt, supplied := optarg.Optional("plot3d", opts)
 	projected := a.projectedData(x, y, z, opt.AxLimClip)
 	if len(projected) == 0 {
 		return nil
@@ -324,7 +325,7 @@ func (a *Axes3D) Plot3D(x, y, z []float64, opts ...core.PlotOptions) *core.Line2
 		y2[i] = p.Y
 	}
 
-	if len(opts) > 0 {
+	if supplied {
 		line, err := a.Plot(x2, y2, opt)
 		if err != nil {
 			return nil
@@ -350,10 +351,7 @@ func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...core.ScatterOptions) *core
 	if a.ensure3DZMargin(0.05) {
 		limitsChanged = true
 	}
-	opt := core.ScatterOptions{}
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt, supplied := optarg.Optional("scatter3d", opts)
 	if opt.Size == nil {
 		size := default3DScatterSize
 		opt.Size = &size
@@ -370,7 +368,7 @@ func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...core.ScatterOptions) *core
 	}
 	projectedOpt := scatterOptionsForProjected(opt, projected)
 
-	if len(opts) > 0 {
+	if supplied {
 		scatter, err := a.Scatter(x2, y2, projectedOpt)
 		if err != nil {
 			return nil
@@ -505,10 +503,7 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *core.StemCont
 		return nil
 	}
 
-	var opt Stem3DOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("stem3d", opts)
 	orientation := normalized3DDir(opt.Orientation)
 	bottom := 0.0
 	if opt.Bottom != nil {
@@ -633,10 +628,7 @@ func (a *Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBet
 		return nil
 	}
 
-	var opt FillBetween3DOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("fill between 3d", opts)
 	limitsChanged := a.observe3DData(x1[:n], y1[:n], z1[:n])
 	if a.observe3DData(x2[:n], y2[:n], z2[:n]) {
 		limitsChanged = true
@@ -724,10 +716,7 @@ func (a *Axes3D) Quiver(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *co
 		return nil
 	}
 
-	var opt Quiver3DOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("quiver3d", opts)
 	limitsChanged := a.observeQuiver3DData(x[:n], y[:n], z[:n], u[:n], v[:n], w[:n], opt)
 	color := a.NextColor()
 	if opt.Color != nil {
@@ -779,10 +768,7 @@ func (a *Axes3D) ErrorBar3D(x, y, z, xErr, yErr, zErr []float64, opts ...ErrorBa
 	if n <= 0 {
 		return nil
 	}
-	var opt ErrorBar3DOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("errorbar3d", opts)
 	if !validErrorValues(xErr, n) || !validErrorValues(yErr, n) || !validErrorValues(zErr, n) ||
 		!validErrorValues(opt.XErrLower, n) || !validErrorValues(opt.XErrUpper, n) ||
 		!validErrorValues(opt.YErrLower, n) || !validErrorValues(opt.YErrUpper, n) ||
@@ -849,8 +835,7 @@ func (a *Axes3D) Wireframe(x, y []float64, z [][]float64, opts ...core.PlotOptio
 	lineWidth := 1.5 // points (matplotlib lines.linewidth default); converted at the collection Paint sink
 	alpha := 1.0
 	label := ""
-	if len(opts) > 0 {
-		opt := opts[0]
+	if opt, ok := optarg.Optional("wireframe", opts); ok {
 		if opt.Color != nil {
 			color = *opt.Color
 		}

@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -97,10 +98,7 @@ func (s *Sankey) Add(flows []float64, opts ...SankeyAddOptions) *SankeyDiagram {
 		return nil
 	}
 
-	cfg := SankeyAddOptions{}
-	if len(opts) > 0 {
-		cfg = opts[0]
-	}
+	cfg := optarg.One("sankey add", opts)
 
 	scale := s.opts.Scale
 	if scale <= 0 {
@@ -763,8 +761,8 @@ func NewSankey(ax *Axes, opts ...SankeyOptions) *Sankey {
 		TextColor:   ax.resolvedRC().DefaultTextColor(),
 		FontSize:    ax.resolvedRC().FontSize,
 	}
-	if len(opts) > 0 {
-		cfg = opts[0]
+	if supplied, ok := optarg.Optional("sankey", opts); ok {
+		cfg = supplied
 		if cfg.Scale <= 0 {
 			cfg.Scale = 1
 		}

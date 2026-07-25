@@ -7,6 +7,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -546,8 +547,8 @@ func (a *Axes3D) projectWireframeSegments(x, y []float64, z [][]float64, opts ..
 		}
 	}
 
-	rowIndices, colIndices := wireframeSampleIndices(rows, cols, firstPlotOptions(opts))
-	opt := firstPlotOptions(opts)
+	opt := optarg.One("wireframe", opts)
+	rowIndices, colIndices := wireframeSampleIndices(rows, cols, opt)
 	segments := make([][]geom.Pt, 0, len(rowIndices)+len(colIndices))
 	for _, row := range rowIndices {
 		line3D := make([]vec3, 0, cols)
@@ -574,13 +575,6 @@ func (a *Axes3D) projectWireframeSegments(x, y []float64, z [][]float64, opts ..
 		}
 	}
 	return segments
-}
-
-func firstPlotOptions(opts []core.PlotOptions) core.PlotOptions {
-	if len(opts) == 0 {
-		return core.PlotOptions{}
-	}
-	return opts[0]
 }
 
 //nolint:gocritic // Sampling reads an immutable PlotOptions snapshot.

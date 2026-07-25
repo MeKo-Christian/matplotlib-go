@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -84,8 +85,7 @@ func newAnchoredTextBox(text string, rc style.RC, opts ...AnchoredTextOptions) *
 		TextColor:       rc.LegendTextColor,
 		BorderWidth:     1,
 	}
-	if len(opts) > 0 {
-		opt := opts[0]
+	if opt, ok := optarg.Optional("anchored text", opts); ok {
 		cfg.Location = opt.Location
 		cfg.Locator = opt.Locator
 		if opt.Padding > 0 {

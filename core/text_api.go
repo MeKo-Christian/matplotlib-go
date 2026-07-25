@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -227,8 +228,8 @@ func (a *Axes) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		HAlign: TextAlignLeft,
 		VAlign: TextVAlignBaseline,
 	}
-	if len(opts) > 0 {
-		opt = opts[0]
+	if supplied, ok := optarg.Optional("text", opts); ok {
+		opt = supplied
 	}
 	clipOn := false
 	if opt.ClipOn != nil {
@@ -273,8 +274,8 @@ func (f *Figure) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		VAlign: TextVAlignBaseline,
 		Coords: Coords(CoordFigure),
 	}
-	if len(opts) > 0 {
-		opt = opts[0]
+	if supplied, ok := optarg.Optional("figure text", opts); ok {
+		opt = supplied
 		opt.Coords = Coords(CoordFigure)
 	}
 	clipOn := true
@@ -322,8 +323,8 @@ func (a *Axes) Annotate(text string, x, y float64, opts ...AnnotationOptions) *A
 	defaultArrowStyle, _ := ArrowStyleFromString("-|>")
 	defaultArrowStyle.HeadWidth = 0.36
 	defaultConnectionStyle, _ := ConnectionStyleFromString("arc3")
-	if len(opts) > 0 {
-		opt = opts[0]
+	if supplied, ok := optarg.Optional("annotate", opts); ok {
+		opt = supplied
 		if opt.OffsetX == 0 && opt.OffsetY == 0 {
 			opt.OffsetX = 28
 			opt.OffsetY = -20

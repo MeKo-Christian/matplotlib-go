@@ -75,7 +75,7 @@ func TestContourAPISplitIsTracked(t *testing.T) {
 		"func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet",
 		"func (a *Axes) TriContour(tri Triangulation, values []float64, opts ...ContourOptions) *ContourSet",
 		"func (a *Axes) TriContourf(tri Triangulation, values []float64, opts ...ContourOptions) *ContourSet",
-		"func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool, opts ...ContourOptions) *ContourSet",
+		"func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool, opt ContourOptions) *ContourSet",
 	} {
 		if !strings.Contains(api, want) {
 			t.Fatalf("contour_api.go missing %q", want)
@@ -97,8 +97,7 @@ func TestContourAPISplitIsTracked(t *testing.T) {
 func TestContourLevelsSplitIsTracked(t *testing.T) {
 	levels := readTextFile(t, "core/contour_levels.go")
 	for _, want := range []string{
-		"func contourGridTriangulation(data [][]float64, opts []ContourOptions) (Triangulation, []float64, bool)",
-		"func contourGridCoordsValues(data [][]float64, opts []ContourOptions) ([]float64, []float64, []float64, bool)",
+		"func contourGridCoordsValues(data [][]float64, opt ContourOptions) ([]float64, []float64, []float64, bool)",
 		"func triangleFinite(values []float64, tri [3]int) bool",
 		"func resolvedContourCoords(size int, coords, edges []float64) []float64",
 		"func contourLevels(values, explicit []float64, levelCount int, filled bool) []float64",
@@ -112,7 +111,6 @@ func TestContourLevelsSplitIsTracked(t *testing.T) {
 
 	contour := readTextFile(t, "core/contour.go")
 	for _, moved := range []string{
-		"func contourGridTriangulation(",
 		"func contourGridCoordsValues(",
 		"func contourLevels(",
 		"func contourLocatorLevels(",

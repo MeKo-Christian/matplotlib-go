@@ -7,6 +7,7 @@ import (
 
 	mplcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/ticker"
@@ -85,8 +86,9 @@ func (a *Axes) Plot(xVals, yVals any, opts ...PlotOptions) (*Line2D, error) {
 	if a == nil {
 		return nil, fmt.Errorf("plot axes cannot be nil")
 	}
-	if len(opts) > 1 {
-		return nil, fmt.Errorf("plot accepts at most one PlotOptions value")
+	opt, err := optarg.Only("plot", opts)
+	if err != nil {
+		return nil, err
 	}
 
 	tx := a.beginUnitConversion()
@@ -109,12 +111,17 @@ func (a *Axes) Plot(xVals, yVals any, opts ...PlotOptions) (*Line2D, error) {
 		return nil, fmt.Errorf("plot x and y must have the same length (got %d and %d)", len(x), len(y))
 	}
 
-	line := a.plot(x, y, opts...)
+	line := a.plot(x, y, opt)
 	tx.commit()
 	return line, nil
 }
 
-func (a *Axes) plot(x, y []float64, opts ...PlotOptions) *Line2D {
+// plot draws an already validated and unit-converted line. It takes its options
+// as a single value so the "at most one" rule is settled by the exported entry
+// point that called it.
+//
+//nolint:gocritic // PlotOptions is an immutable snapshot retained by the line artist.
+func (a *Axes) plot(x, y []float64, opt PlotOptions) *Line2D {
 	if len(x) == 0 || len(y) == 0 {
 		return nil
 	}
@@ -127,12 +134,6 @@ func (a *Axes) plot(x, y []float64, opts ...PlotOptions) *Line2D {
 	points := make([]geom.Pt, n)
 	for i := 0; i < n; i++ {
 		points[i] = geom.Pt{X: x[i], Y: y[i]}
-	}
-
-	// Default options
-	var opt PlotOptions
-	if len(opts) > 0 {
-		opt = opts[0]
 	}
 
 	// Pull one step from the property cycle (color plus any
@@ -381,7 +382,7 @@ func applyLineRCDefaults(line *Line2D, rc *style.RC) {
 // SemilogX is a convenience wrapper for creating a line plot on a logarithmic
 // x-axis.
 func (a *Axes) SemilogX(x, y []float64, opts ...PlotOptions) *Line2D {
-	line := a.plot(x, y, opts...)
+	line := a.plot(x, y, optarg.One("semilogx", opts))
 	if line == nil {
 		return nil
 	}
@@ -392,7 +393,7 @@ func (a *Axes) SemilogX(x, y []float64, opts ...PlotOptions) *Line2D {
 // SemilogY is a convenience wrapper for creating a line plot on a logarithmic
 // y-axis.
 func (a *Axes) SemilogY(x, y []float64, opts ...PlotOptions) *Line2D {
-	line := a.plot(x, y, opts...)
+	line := a.plot(x, y, optarg.One("semilogy", opts))
 	if line == nil {
 		return nil
 	}
@@ -403,7 +404,7 @@ func (a *Axes) SemilogY(x, y []float64, opts ...PlotOptions) *Line2D {
 // LogLog is a convenience wrapper for creating a line plot on logarithmic x/y
 // axes.
 func (a *Axes) LogLog(x, y []float64, opts ...PlotOptions) *Line2D {
-	line := a.plot(x, y, opts...)
+	line := a.plot(x, y, optarg.One("loglog", opts))
 	if line == nil {
 		return nil
 	}
@@ -468,8 +469,9 @@ func (a *Axes) Scatter(xVals, yVals any, opts ...ScatterOptions) (*Scatter2D, er
 	if a == nil {
 		return nil, fmt.Errorf("scatter axes cannot be nil")
 	}
-	if len(opts) > 1 {
-		return nil, fmt.Errorf("scatter accepts at most one ScatterOptions value")
+	opt, err := optarg.Only("scatter", opts)
+	if err != nil {
+		return nil, err
 	}
 
 	tx := a.beginUnitConversion()
@@ -483,17 +485,18 @@ func (a *Axes) Scatter(xVals, yVals any, opts ...ScatterOptions) (*Scatter2D, er
 		tx.rollback()
 		return nil, fmt.Errorf("scatter y values: %w", err)
 	}
-	if err := validateScatterInput(x, y, opts); err != nil {
+	if err := validateScatterInput(x, y, opt); err != nil {
 		tx.rollback()
 		return nil, err
 	}
 
-	scatter := a.scatter(x, y, opts...)
+	scatter := a.scatter(x, y, opt)
 	tx.commit()
 	return scatter, nil
 }
 
-func validateScatterInput(x, y []float64, opts []ScatterOptions) error {
+//nolint:gocritic // ScatterOptions is read-only here; a copy keeps validation free of caller side effects.
+func validateScatterInput(x, y []float64, opt ScatterOptions) error {
 	if len(x) == 0 || len(y) == 0 {
 		return fmt.Errorf("scatter x and y values cannot be empty")
 	}
@@ -501,10 +504,6 @@ func validateScatterInput(x, y []float64, opts []ScatterOptions) error {
 		return fmt.Errorf("scatter x and y must have the same length (got %d and %d)", len(x), len(y))
 	}
 
-	var opt ScatterOptions
-	if len(opts) == 1 {
-		opt = opts[0]
-	}
 	n := len(x)
 	optionLengths := []struct {
 		name   string
@@ -533,18 +532,16 @@ func validateScatterInput(x, y []float64, opts []ScatterOptions) error {
 	return nil
 }
 
-func (a *Axes) scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
+// scatter draws already validated and unit-converted points. Like plot, it
+// takes a single options value rather than a variadic tail.
+//
+//nolint:gocritic // ScatterOptions is an immutable snapshot retained by the scatter artist.
+func (a *Axes) scatter(x, y []float64, opt ScatterOptions) *Scatter2D {
 	// Create points
 	n := len(x)
 	points := make([]geom.Pt, n)
 	for i := 0; i < n; i++ {
 		points[i] = geom.Pt{X: x[i], Y: y[i]}
-	}
-
-	// Default options
-	var opt ScatterOptions
-	if len(opts) > 0 {
-		opt = opts[0]
 	}
 
 	// Get color (automatic shape/fill cycling if not specified)
@@ -840,13 +837,9 @@ func (a *Axes) barWithOrientation(
 	if a == nil {
 		return nil, fmt.Errorf("bar axes cannot be nil")
 	}
-	if len(opts) > 1 {
-		return nil, fmt.Errorf("bar accepts at most one BarOptions value")
-	}
-
-	var opt BarOptions
-	if len(opts) == 1 {
-		opt = opts[0]
+	opt, err := optarg.Only("bar", opts)
+	if err != nil {
+		return nil, err
 	}
 	if forcedOrientation != nil {
 		orientation := *forcedOrientation
@@ -938,15 +931,13 @@ func validateBarInput(positions, heights []float64, opt *BarOptions) error {
 	return nil
 }
 
-func (a *Axes) bar(x, heights []float64, opts ...BarOptions) *Bar2D {
+// bar draws already validated and unit-converted bars. Like plot and scatter,
+// it takes a single options value rather than a variadic tail.
+//
+//nolint:gocritic // BarOptions is an immutable snapshot retained by the bar artist.
+func (a *Axes) bar(x, heights []float64, opt BarOptions) *Bar2D {
 	if len(x) == 0 || len(heights) == 0 {
 		return nil
-	}
-
-	// Default options
-	var opt BarOptions
-	if len(opts) > 0 {
-		opt = opts[0]
 	}
 
 	// Get color (automatic cycling if not specified)
@@ -1180,13 +1171,9 @@ func (a *Axes) FillBetween(xVals, y1Vals, y2Vals any, opts ...FillOptions) (*Fil
 	if a == nil {
 		return nil, fmt.Errorf("fill between axes cannot be nil")
 	}
-	if len(opts) > 1 {
-		return nil, fmt.Errorf("fill between accepts at most one FillOptions value")
-	}
-
-	var opt FillOptions
-	if len(opts) == 1 {
-		opt = opts[0]
+	opt, err := optarg.Only("fill between", opts)
+	if err != nil {
+		return nil, err
 	}
 
 	// Convert every input before touching the artist list or the property
@@ -1266,10 +1253,7 @@ func (a *Axes) Fill(x, y []float64, opts ...FillOptions) *PolyCollection {
 		return nil
 	}
 
-	var opt FillOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("fill", opts)
 
 	points := make([]geom.Pt, n)
 	for i := 0; i < n; i++ {
@@ -1332,13 +1316,9 @@ func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) (*Fill2D, 
 	if a == nil {
 		return nil, fmt.Errorf("fill between x axes cannot be nil")
 	}
-	if len(opts) > 1 {
-		return nil, fmt.Errorf("fill between x accepts at most one FillOptions value")
-	}
-
-	var opt FillOptions
-	if len(opts) == 1 {
-		opt = opts[0]
+	opt, err := optarg.Only("fill between x", opts)
+	if err != nil {
+		return nil, err
 	}
 	if err := fillBetweenXNames.validate(y, x1, x2, &opt); err != nil {
 		return nil, err
@@ -1420,13 +1400,9 @@ func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) (*Fill2
 	if a == nil {
 		return nil, fmt.Errorf("fill between axes cannot be nil")
 	}
-	if len(opts) > 1 {
-		return nil, fmt.Errorf("fill between accepts at most one FillOptions value")
-	}
-
-	var opt FillOptions
-	if len(opts) == 1 {
-		opt = opts[0]
+	opt, err := optarg.Only("fill between", opts)
+	if err != nil {
+		return nil, err
 	}
 	if err := fillBetweenNames.validate(x, y1, y2, &opt); err != nil {
 		return nil, err
@@ -1510,13 +1486,9 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) (*Hist2D, error) {
 	if a == nil {
 		return nil, fmt.Errorf("hist axes cannot be nil")
 	}
-	if len(opts) > 1 {
-		return nil, fmt.Errorf("hist accepts at most one HistOptions value")
-	}
-
-	var opt HistOptions
-	if len(opts) == 1 {
-		opt = opts[0]
+	opt, err := optarg.Only("hist", opts)
+	if err != nil {
+		return nil, err
 	}
 	if len(data) == 0 {
 		return nil, fmt.Errorf("hist data cannot be empty")
@@ -1631,13 +1603,9 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) (*E
 	if a == nil {
 		return nil, fmt.Errorf("errorbar axes cannot be nil")
 	}
-	if len(opts) > 1 {
-		return nil, fmt.Errorf("errorbar accepts at most one ErrorBarOptions value")
-	}
-
-	var opt ErrorBarOptions
-	if len(opts) == 1 {
-		opt = opts[0]
+	opt, err := optarg.Only("errorbar", opts)
+	if err != nil {
+		return nil, err
 	}
 
 	// Validate before the property cycle advances so a rejected call leaves the
@@ -1847,10 +1815,7 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		return nil
 	}
 
-	var opt BoxPlotOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("boxplot", opts)
 
 	rc := a.resolvedRC()
 
@@ -2052,10 +2017,7 @@ func (a *Axes) BoxPlots(datasets [][]float64, opts ...BoxPlotsOptions) []*BoxPlo
 		return nil
 	}
 
-	var opt BoxPlotsOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("boxplots", opts)
 
 	width := opt.Width
 	if width == nil {
@@ -2203,10 +2165,7 @@ func (a *Axes) FillToBaselinePlot(x, y []float64, opts ...FillOptions) *Fill2D {
 	}
 
 	// Default options
-	var opt FillOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
+	opt := optarg.One("fill to baseline", opts)
 
 	// Get color (automatic cycling if not specified)
 	color := a.NextColor()

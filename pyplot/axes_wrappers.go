@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
@@ -81,8 +82,12 @@ func Grid(visible bool, params ...core.TickParams) ([]*core.Grid, error) {
 		Axis:  "both",
 		Which: "major",
 	}
-	if len(params) > 0 {
-		tickParams = params[0]
+	supplied, err := optarg.Only("grid", params)
+	if err != nil {
+		return nil, err
+	}
+	if len(params) == 1 {
+		tickParams = supplied
 		if tickParams.Axis == "" {
 			tickParams.Axis = "both"
 		}
@@ -220,11 +225,12 @@ func FigLegend() *core.Legend {
 func Colorbar(mappable core.ScalarMappable, opts ...core.ColorbarOptions) *core.Axes {
 	ax := GCA()
 	fig := GCF()
-	if cb := fig.AddColorbar(ax, mappable, opts...); cb != nil {
+	opt := optarg.One("colorbar", opts)
+	if cb := fig.AddColorbar(ax, mappable, opt); cb != nil {
 		return cb
 	}
-	makeColorbarRoom(ax, opts...)
-	return fig.AddColorbar(ax, mappable, opts...)
+	makeColorbarRoom(ax, opt)
+	return fig.AddColorbar(ax, mappable, opt)
 }
 
 func ensureGridArtists(ax *core.Axes, axisSpec string) ([]*core.Grid, error) {
@@ -334,20 +340,19 @@ func setFixedTicks(axis *core.Axis, name string, ticks []float64, labels ...[]st
 	return nil
 }
 
-func makeColorbarRoom(ax *core.Axes, opts ...core.ColorbarOptions) {
+//nolint:gocritic // ColorbarOptions is read-only here; only Width and Padding are consulted.
+func makeColorbarRoom(ax *core.Axes, opt core.ColorbarOptions) {
 	if ax == nil {
 		return
 	}
 
 	width := 0.035
 	padding := 0.02
-	if len(opts) > 0 {
-		if opts[0].Width > 0 {
-			width = opts[0].Width
-		}
-		if opts[0].Padding > 0 {
-			padding = opts[0].Padding
-		}
+	if opt.Width > 0 {
+		width = opt.Width
+	}
+	if opt.Padding > 0 {
+		padding = opt.Padding
 	}
 
 	maxRight := 1 - padding - width

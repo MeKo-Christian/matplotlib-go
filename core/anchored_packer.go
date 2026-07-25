@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -122,8 +123,7 @@ func newAnchoredPacker(orientation PackOrientation, rc style.RC, opts ...Anchore
 	}
 	frameOn := true
 	cfg.FrameOn = &frameOn
-	if len(opts) > 0 {
-		opt := opts[0]
+	if opt, ok := optarg.Optional("anchored packer", opts); ok {
 		cfg.Location = opt.Location
 		cfg.Locator = opt.Locator
 		if opt.Padding >= 0 {
@@ -196,8 +196,7 @@ func (a *AnchoredPacker) AddText(text string, opts ...PackedTextOptions) *Anchor
 		return nil
 	}
 	child := &packedText{Content: text}
-	if len(opts) > 0 {
-		opt := opts[0]
+	if opt, ok := optarg.Optional("packed text", opts); ok {
 		child.TextColor = opt.TextColor
 		child.FontSize = opt.FontSize
 		child.FontKey = opt.FontKey

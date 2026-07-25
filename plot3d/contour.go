@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -12,7 +13,7 @@ import (
 // the current 3D view.
 func (a *Axes3D) Contour(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.LineCollection {
 	limitsChanged := a.observe3DGrid(x, y, z)
-	opt := firstPlotOptions(opts)
+	opt := optarg.One("contour3d", opts)
 	segments, segmentLevels, levels, values, zorder := a.projectedContourLineData(x, y, z, opt)
 	if len(segments) == 0 {
 		return nil
@@ -115,7 +116,7 @@ func (a *Axes3D) TriContour(tri core.Triangulation, z []float64, opts ...core.Pl
 		return nil
 	}
 
-	opt := firstPlotOptions(opts)
+	opt := optarg.One("tricontour3d", opts)
 	limitsChanged := a.observe3DTriangulation(tri, z)
 	segments, segmentLevels, levels, values, zorder := a.projectedTriContourLineData(tri, z, opt)
 	if len(segments) == 0 {

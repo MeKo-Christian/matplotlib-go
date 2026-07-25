@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -94,8 +95,7 @@ func newAnchoredSizeBar(size float64, label string, rc style.RC, opts ...Anchore
 	}
 	frameOn := true
 	cfg.FrameOn = &frameOn
-	if len(opts) > 0 {
-		opt := opts[0]
+	if opt, ok := optarg.Optional("anchored size bar", opts); ok {
 		cfg.Location = opt.Location
 		cfg.Locator = opt.Locator
 		if opt.Coords != (CoordinateSpec{}) {

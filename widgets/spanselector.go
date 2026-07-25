@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -47,8 +48,8 @@ func NewSpanSelector(a *core.Axes, orientation string, opts ...SpanSelectorOptio
 		FillColor:   render.Color{R: 0.16, G: 0.42, B: 0.76, A: 0.18},
 		LineWidth:   1.2,
 	}
-	if len(opts) > 0 {
-		mergeSpanSelectorOptions(&config, &opts[0])
+	if opt, ok := optarg.Optional("spanselector", opts); ok {
+		mergeSpanSelectorOptions(&config, &opt)
 	}
 	sel := &SpanSelector{
 		Orientation: normalizeSpanOrientation(config.Orientation),

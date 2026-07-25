@@ -94,7 +94,7 @@ update the coupled API/doc tests in the same commit.
 - [ ] Replace the 83 variadic option structs and 408 pointer-to-primitive
       fields with one consistent options model; extra option sets must be
       impossible or rejected. Replace raw-string enums with typed constants.
-  - [ ] Reject extra option values across the existing variadic surface as an
+  - [x] Reject extra option values across the existing variadic surface as an
         intermediate safety step.
   - [ ] Choose and document the final options representation, then migrate one
         representative line, collection, image, and annotation API.
@@ -117,7 +117,8 @@ update the coupled API/doc tests in the same commit.
   - [x] Share alpha multiplication through `render.Color.WithAlphaMultiplier`.
   - [x] Share plot/plot3d scalar-map configuration through
         `PlotOptions.ScalarMapConfig`.
-  - [ ] Centralize single-option unpacking/extra-option rejection.
+  - [x] Centralize single-option unpacking/extra-option rejection through
+        `internal/optarg`.
   - [ ] Route remaining scalar-mappable artists through the shared resolver.
 
 ### 2.4 Re-freeze
@@ -159,7 +160,16 @@ inventory then converted the last five rejecting entry points — `FillBetweenX`
 `ErrorBarContainer` and the matching pyplot wrappers — to `(T, error)`, leaving
 `diag.Warnf` only for artists accepted with a documented degradation; the audit
 and the retained-warning rationale are in
-`docs/plans/phase2-warn-and-skip-inventory.md`. Core and
+`docs/plans/phase2-warn-and-skip-inventory.md`. The options rework then began
+with its intermediate safety step: `internal/optarg` is now the single place the
+"at most one option value" rule lives, and every variadic option tail routes
+through it. Entry points that already return an error report a
+`*optarg.TooManyError`; the rest panic, because an extra option value can only
+come from a literal at the call site. Internal helpers that received an
+already-unpacked option set lost their variadic tails outright, so the frozen
+public API is unchanged by that pass; the rationale, the enforcement table, and
+the variadic parameters deliberately left alone are in
+`docs/plans/phase2-extra-option-rejection.md`. Core and
 plot3d alpha multiplier paths share
 `render.Color.WithAlphaMultiplier`, and 3D scalar maps derive their
 configuration through
