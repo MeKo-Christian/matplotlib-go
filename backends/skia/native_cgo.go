@@ -20,6 +20,7 @@ import "C"
 import (
 	"image"
 	"image/color"
+	"runtime"
 	"sort"
 	"strings"
 	"unsafe"
@@ -38,15 +39,26 @@ var (
 // tag. The CPU bridge is retained inside it as the fallback for paths the
 // native wrapper does not yet handle (transformed/pattern fills).
 func selectSurfaceBridge(width, height int, mode RenderMode) surfaceBridge {
+	return selectSurfaceBridgeWithSamples(width, height, mode, 1)
+}
+
+func selectSurfaceBridgeWithSamples(width, height int, mode RenderMode, sampleCount int) surfaceBridge {
 	if mode == "" {
 		mode = ModeCPU
 	}
-	return &nativeSurfaceBridge{
+	bridge := &nativeSurfaceBridge{
 		width:  width,
 		height: height,
 		mode:   mode,
 		cpu:    newCPUSurfaceBridge(width, height, mode),
 	}
+	if mode == ModeGPU {
+		bridge.gpu = newNativeGPUSurface(width, height, sampleCount)
+		if bridge.gpu != nil {
+			runtime.SetFinalizer(bridge, (*nativeSurfaceBridge).finalize)
+		}
+	}
+	return bridge
 }
 
 // nativeSkiaVersion returns the linked Skia milestone string. Exposed for the
@@ -60,19 +72,60 @@ type nativeSurfaceBridge struct {
 	height int
 	mode   RenderMode
 	cpu    surfaceBridge
+	gpu    *nativeSurface
 }
 
 func (b *nativeSurfaceBridge) Info() BridgeInfo {
+	accelerated := b != nil && b.gpu != nil && b.gpu.isGPU()
+	description := "native Skia raster surface via cgo C-ABI wrapper"
+	if b != nil && b.mode == ModeGPU {
+		if accelerated {
+			description = "native Skia Ganesh GPU surface via EGL/OpenGL with deterministic CPU readback"
+		} else {
+			description = "Skia GPU mode unavailable at runtime; native CPU raster fallback"
+		}
+	}
 	return BridgeInfo{
 		Binding:         BindingExternalCAPI,
 		Mode:            b.mode,
 		NativeSurface:   true,
+		Accelerated:     accelerated,
 		SupportsShaders: true,
-		Description:     "native Skia raster surface via cgo C-ABI wrapper",
+		Description:     description,
 	}
 }
 
 func (b *nativeSurfaceBridge) SupportsShaders() bool { return true }
+
+func (b *nativeSurfaceBridge) FlushGPU() bool {
+	return b != nil && b.gpu != nil && b.gpu.flushGPU()
+}
+
+func (b *nativeSurfaceBridge) finalize() {
+	if b == nil || b.gpu == nil {
+		return
+	}
+	b.gpu.delete()
+	b.gpu = nil
+}
+
+func (b *nativeSurfaceBridge) acquireSurface(w, h int) (*nativeSurface, func()) {
+	if b != nil && b.gpu != nil && b.gpu.w == w && b.gpu.h == h {
+		b.gpu.clear()
+		return b.gpu, func() {}
+	}
+	if b != nil && b.mode == ModeGPU {
+		if surf := newNativeGPUSurface(w, h, 1); surf != nil {
+			surf.clear()
+			return surf, surf.delete
+		}
+	}
+	surf := newNativeSurface(w, h)
+	if surf == nil {
+		return nil, func() {}
+	}
+	return surf, surf.delete
+}
 
 // DrawPathFill rasterizes gradient fills through a native Skia surface and
 // composites the result over dst. Pattern fills and transformed gradients are
@@ -94,11 +147,11 @@ func (b *nativeSurfaceBridge) DrawPathFill(dst *image.RGBA, path geom.Path, pain
 	}
 	w, h := dst.Bounds().Dx(), dst.Bounds().Dy()
 
-	surf := newNativeSurface(w, h)
+	surf, release := b.acquireSurface(w, h)
 	if surf == nil {
 		return b.cpu.DrawPathFill(dst, path, paint, state)
 	}
-	defer surf.delete()
+	defer release()
 
 	verbs, coords := pathToVerbsCoords(path)
 	cp, freePaint := newGradientCPaint(grad, float64(h))
@@ -158,11 +211,11 @@ func (b *nativeSurfaceBridge) drawMarkersNative(dst *image.RGBA, batch render.Ma
 		clipRect:  flipRectPtrY(state.clipRect, height),
 		clipPaths: flipPathsY(state.clipPaths, height),
 	}
-	surf := newNativeSurface(w, h)
+	surf, release := b.acquireSurface(w, h)
 	if surf == nil {
 		return false
 	}
-	defer surf.delete()
+	defer release()
 
 	verbs, coords := pathToVerbsCoords(batch.Marker)
 	C.mgsk_draw_markers(
@@ -211,11 +264,11 @@ func (b *nativeSurfaceBridge) drawPathCollectionNative(dst *image.RGBA, batch re
 		clipRect:  flipRectPtrY(state.clipRect, height),
 		clipPaths: flipPathsY(state.clipPaths, height),
 	}
-	surf := newNativeSurface(w, h)
+	surf, release := b.acquireSurface(w, h)
 	if surf == nil {
 		return false
 	}
-	defer surf.delete()
+	defer release()
 
 	drew := false
 	for i := range batch.Items {
@@ -290,11 +343,11 @@ func (b *nativeSurfaceBridge) drawQuadMeshNative(dst *image.RGBA, batch render.Q
 		clipRect:  flipRectPtrY(state.clipRect, height),
 		clipPaths: flipPathsY(state.clipPaths, height),
 	}
-	surf := newNativeSurface(w, h)
+	surf, release := b.acquireSurface(w, h)
 	if surf == nil {
 		return false
 	}
-	defer surf.delete()
+	defer release()
 
 	C.mgsk_draw_vertices(
 		surf.ptr,
@@ -347,11 +400,11 @@ func (b *nativeSurfaceBridge) drawImageTransformedNative(dst *image.RGBA, img re
 		return true
 	}
 
-	surf := newNativeSurface(w, h)
+	surf, release := b.acquireSurface(w, h)
 	if surf == nil {
 		return false
 	}
-	defer surf.delete()
+	defer release()
 
 	pixOffset := src.PixOffset(srcBounds.Min.X, srcBounds.Min.Y)
 	if pixOffset < 0 || pixOffset >= len(src.Pix) {
@@ -405,11 +458,11 @@ func (b *nativeSurfaceBridge) drawHatchPathNative(dst *image.RGBA, path geom.Pat
 
 	w, h := dst.Bounds().Dx(), dst.Bounds().Dy()
 	height := float64(h)
-	surf := newNativeSurface(w, h)
+	surf, release := b.acquireSurface(w, h)
 	if surf == nil {
 		return false
 	}
-	defer surf.delete()
+	defer release()
 
 	flippedPath := flipPathY(path, height)
 	verbs, coords := pathToVerbsCoords(flippedPath)
@@ -457,11 +510,11 @@ func (b *nativeSurfaceBridge) drawGouraudNative(dst *image.RGBA, batch render.Go
 	}
 
 	w, h := dst.Bounds().Dx(), dst.Bounds().Dy()
-	surf := newNativeSurface(w, h)
+	surf, release := b.acquireSurface(w, h)
 	if surf == nil {
 		return false
 	}
-	defer surf.delete()
+	defer release()
 
 	C.mgsk_draw_vertices(
 		surf.ptr,
@@ -500,11 +553,40 @@ func newNativeSurface(w, h int) *nativeSurface {
 	return &nativeSurface{ptr: ptr, w: w, h: h}
 }
 
+func newNativeGPUSurface(w, h, sampleCount int) *nativeSurface {
+	if w <= 0 || h <= 0 {
+		return nil
+	}
+	if sampleCount < 0 {
+		sampleCount = 0
+	}
+	ptr := C.mgsk_surface_new_gpu(C.int(w), C.int(h), C.int(sampleCount))
+	if ptr == nil {
+		return nil
+	}
+	return &nativeSurface{ptr: ptr, w: w, h: h}
+}
+
 func (s *nativeSurface) delete() {
 	if s != nil && s.ptr != nil {
 		C.mgsk_surface_delete(s.ptr)
 		s.ptr = nil
 	}
+}
+
+func (s *nativeSurface) clear() {
+	if s == nil || s.ptr == nil {
+		return
+	}
+	C.mgsk_surface_clear(s.ptr, 0, 0, 0, 0)
+}
+
+func (s *nativeSurface) flushGPU() bool {
+	return s != nil && s.ptr != nil && C.mgsk_surface_flush_gpu(s.ptr) != 0
+}
+
+func (s *nativeSurface) isGPU() bool {
+	return s != nil && s.ptr != nil && C.mgsk_surface_is_gpu(s.ptr) != 0
 }
 
 func (s *nativeSurface) readImage() *image.RGBA {

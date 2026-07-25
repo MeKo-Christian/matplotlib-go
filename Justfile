@@ -138,6 +138,18 @@ test-skia-native:
       CGO_LDFLAGS="{{skia_cgo_ldflags}}" \
       go test -tags "skia skiacgo" ./backends/skia/... -v
 
+build-skia-gpu-native:
+    CGO_ENABLED=1 \
+      CGO_CXXFLAGS="{{skia_cgo_cxxflags}}" \
+      CGO_LDFLAGS="{{skia_cgo_ldflags}}" \
+      go build -tags "skia skiagpu skiacgo" ./backends/skia/...
+
+test-skia-gpu-native:
+    CGO_ENABLED=1 \
+      CGO_CXXFLAGS="{{skia_cgo_cxxflags}}" \
+      CGO_LDFLAGS="{{skia_cgo_ldflags}}" \
+      go test -tags "skia skiagpu skiacgo" ./backends/skia/... -v
+
 golden-update TEST="": freetype261-build
     if [ -n "{{TEST}}" ]; then \
       CGO_ENABLED=1 go test -tags freetype -count=1 -run "{{TEST}}" ./test -update-golden; \

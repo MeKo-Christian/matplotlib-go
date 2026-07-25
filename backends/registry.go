@@ -542,6 +542,13 @@ func (r *Registry) RendererCapabilityStatus(backend Backend, renderer render.Ren
 	if !ok || renderer == nil {
 		return CapabilityUnsupported
 	}
+	if reporter, ok := renderer.(interface {
+		RuntimeCapabilityStatus(Capability) (CapabilityStatus, bool)
+	}); ok {
+		if status, handled := reporter.RuntimeCapabilityStatus(capability); handled {
+			return status
+		}
+	}
 	if r.SupportsRendererCapability(backend, renderer, capability) {
 		if reporter, ok := renderer.(render.CapabilityBridgeReporter); ok && reporter.IsCapabilityBridged(string(capability)) {
 			return CapabilityBridged

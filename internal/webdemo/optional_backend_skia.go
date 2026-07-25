@@ -15,7 +15,7 @@ func optionalBackendDescriptors() []BackendDescriptor {
 		{
 			ID:          "skia",
 			Name:        "Skia",
-			Description: "Skia-tagged CPU compatibility raster backend for parity comparisons.",
+			Description: "Skia-tagged raster backend for native CPU parity comparisons.",
 		},
 	}
 }

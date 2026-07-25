@@ -73,7 +73,7 @@ var cases = []Case{
 	{ID: "lines_markers_gallery", Topic: "lines", Title: "Line and Marker Style Gallery", Description: "A combined gallery of dash arrays, line joins and caps, a built-in marker grid with open-fill markers, and a multi-series legend.", WebDemoID: "lines", Showcase: true, Width: 840, Height: 620, MinPSNR: 50.0, MaxMeanAbs: 1.0, MaxRMSE: 2.8},
 	{ID: "line2d_semantics", Topic: "lines", Title: "Line2D Semantics", FixtureOnly: true, MaxRMSE: 2.6},
 	// MaxRMSE 3.3: MeanAbs 0.14 / PSNR ~52 dB; residual is sub-pixel marker-edge antialiasing under the 3.10.9 reference set.
-	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, MaxRMSE: 3.3},
+	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, SkiaParityFamily: "markers", MaxRMSE: 3.3},
 	{ID: "path_effects", Topic: "effects", Title: "Path Effects", FixtureOnly: true, MaxRMSE: 0.3, SkiaParityFamily: "effects"},
 	{ID: "pattern_gradient_effects", Topic: "effects", Title: "Pattern and Gradient Effects", FixtureOnly: true, MaxMeanAbs: 1.0, MaxRMSE: 3.0, SkiaParityFamily: "effects"},
 	// PSNR ~64 dB / MeanAbs ~0.01 / RMSE ~0.5: the sketch wiggle is RNG-, phase-
@@ -264,7 +264,7 @@ var cases = []Case{
 	{ID: "axes_grid1_showcase", Topic: "axes_grid1", Title: "Axes Grid1 Showcase", Description: "Axes divider, image-grid, inset, and anchored layout helpers in one composition.", Optional: true, WebDemoID: "axes_grid1", Showcase: true, GoBasicSmokeFamily: "axes_grid1", MinPSNR: 52.0, MaxMeanAbs: 0.16, MaxRMSE: 2.0},
 	{ID: "pcolor_flat", Topic: "mesh", Title: "PColor Flat", FixtureOnly: true, MaxRMSE: 0.7},
 	{ID: "pcolormesh_nearest", Topic: "mesh", Title: "PColorMesh Nearest", FixtureOnly: true, MaxRMSE: 0.8},
-	{ID: "pcolormesh_gouraud", Topic: "mesh", Title: "PColorMesh Gouraud", FixtureOnly: true, MaxRMSE: 1.0},
+	{ID: "pcolormesh_gouraud", Topic: "mesh", Title: "PColorMesh Gouraud", FixtureOnly: true, SkiaParityFamily: "gouraud", MaxRMSE: 1.0},
 	{ID: "pcolormesh_masked", Topic: "mesh", Title: "PColorMesh Masked", FixtureOnly: true, MaxRMSE: 0.7},
 	{ID: "hist2d_weighted_density", Topic: "mesh", Title: "Hist2D Weighted Density", FixtureOnly: true, MaxRMSE: 0.9},
 	{ID: "asinh_norm_image", Topic: "colorbar", Title: "AsinhNorm Image", FixtureOnly: true, MaxRMSE: 2.1},
@@ -281,7 +281,7 @@ var cases = []Case{
 	{ID: "mixed_collection", Topic: "raster", Title: "Mixed Path Collection", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, SVGGoldenFamily: "collection", GoBasicSmokeFamily: "collection", MinPSNR: 55.0, MaxMeanAbs: 0.5, MaxRMSE: 1.7},
 	{ID: "mixed_raster_vector", Topic: "raster", Title: "Mixed Raster Vector Output", Description: "A polar mixed-output example with rasterized dense scatter points and vector-preserved line, text, axes, legend, SVG, and PDF artifacts.", Showcase: true, Width: 640, Height: 640, SVGGoldenFamily: "mixed_raster", MaxRMSE: 3.4},
 	{ID: "quad_mesh", Topic: "raster", Title: "Quad Mesh Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"quadmeshbatch"}, MinPSNR: 48.0, MaxMeanAbs: 1.0, MaxRMSE: 1.6},
-	{ID: "gouraud_triangles", Topic: "raster", Title: "Gouraud Triangles", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"gouraudtrianglebatch"}, MinPSNR: 50.0, MaxMeanAbs: 1.0, MaxRMSE: 0.6},
+	{ID: "gouraud_triangles", Topic: "raster", Title: "Gouraud Triangles", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"gouraudtrianglebatch"}, SkiaParityFamily: "gouraud", MinPSNR: 50.0, MaxMeanAbs: 1.0, MaxRMSE: 0.6},
 	{ID: "clip_path_batch", Topic: "raster", Title: "Clip Path Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathclip", "quadmeshbatch"}, MinPSNR: 45.0, MaxMeanAbs: 1.0, MaxRMSE: 3.0},
 }
 

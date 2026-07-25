@@ -46,7 +46,7 @@ type Strategy struct {
 	RequiredLibraries []string
 }
 
-// NativePathRequirement records one deferred Skia-native integration point.
+// NativePathRequirement records one tracked Skia-native integration point.
 // It is strategy metadata, not a runtime capability declaration.
 type NativePathRequirement struct {
 	Primitive           string
@@ -63,11 +63,10 @@ type BridgeInfo struct {
 	Mode          RenderMode
 	NativeSurface bool
 	// Accelerated reports whether rasterization runs on a real GPU render
-	// target (SkSurface::MakeRenderTarget). It is false for every bridge that
-	// exists today — the CPU readback scaffold and the cgo raster SkSurface are
-	// both CPU-side — and gates Renderer.GPU() so that method stays truthful
-	// until a native GPU surface path lands. Mode may still be ModeGPU while
-	// this is false (GPU mode requested/selected, but not hardware-accelerated).
+	// target (SkSurfaces::RenderTarget). It gates Renderer.GPU so requested GPU
+	// mode remains distinguishable from successful hardware acceleration. Mode
+	// may be ModeGPU while this is false when EGL/OpenGL is unavailable and the
+	// renderer has selected its deterministic CPU fallback.
 	Accelerated     bool
 	SupportsShaders bool
 	Description     string
@@ -76,16 +75,19 @@ type BridgeInfo struct {
 // BackendStrategy returns the documented Skia integration strategy. It is kept
 // as code so tests and docs can agree on the same build/dependency contract.
 //
-// The reported render mode and GPU status depend on the skiagpu build tag: with
-// the tag the GPU render mode is selectable and reported as StatusPlanned (the
-// CPU-readback scaffold is in place but native GPU rendering is not); without it
-// GPU stays StatusDeferred and the default mode is CPU.
+// The reported render mode and GPU status depend on the selected build tier:
+// skiagpu makes GPU mode selectable, while skiagpu+skiacgo compiles the native
+// Ganesh/EGL implementation. Runtime context availability remains visible
+// through Renderer.GPU and BackendComparisonReport.
 func BackendStrategy() Strategy {
 	defaultMode := ModeCPU
 	gpuStatus := StatusDeferred
 	if gpuBuildEnabled {
 		defaultMode = ModeGPU
 		gpuStatus = StatusPlanned
+	}
+	if gpuNativeBuildEnabled {
+		gpuStatus = StatusImplemented
 	}
 	return Strategy{
 		BuildTag:    "skia",
@@ -96,15 +98,15 @@ func BackendStrategy() Strategy {
 		CIDefault:   CIDefaultStub,
 		RequiredLibraries: []string{
 			"none for the skia-tagged CPU compatibility renderer",
-			"Skia shared library for future native paths",
-			"C ABI wrapper library for future native paths",
-			"CGO_ENABLED=1 for future native paths",
+			"Skia shared library for skiacgo native paths",
+			"EGL and OpenGL for skiagpu+skiacgo Ganesh surfaces",
+			"CGO_ENABLED=1 for native paths",
 		},
 	}
 }
 
 // NativePathRequirements returns the explicit external Skia primitives tracked
-// for promotion from CPU compatibility paths to truly native backend paths.
+// for native backend coverage.
 func NativePathRequirements() []NativePathRequirement {
 	const externalABIBlocker = "external Skia C-ABI wrapper and linked Skia library"
 	return []NativePathRequirement{
@@ -147,9 +149,8 @@ func NativePathRequirements() []NativePathRequirement {
 			Primitive:           "SkSurface::MakeRenderTarget",
 			Modes:               []RenderMode{ModeGPU},
 			Capabilities:        []backends.Capability{backends.GPUAccel},
-			ExternalEntrypoints: []string{"SkSurface::MakeRenderTarget", "SkSurface::readPixels"},
-			Status:              StatusDeferred,
-			BlockedBy:           "external Skia GPU library, platform GPU context, and deterministic CPU readback",
+			ExternalEntrypoints: []string{"mgsk_surface_new_gpu", "SkSurfaces::RenderTarget", "GrDirectContext::flushAndSubmit", "SkSurface::readPixels"},
+			Status:              StatusImplemented,
 		},
 	}
 }
@@ -159,10 +160,9 @@ func NativePathRequirements() []NativePathRequirement {
 // comparison report and tests can reason about per-mode support before a second
 // (GPU) registry entry becomes meaningful.
 //
-// Today the CPU and GPU sets are identical because the GPU mode is a
-// deterministic CPU-readback scaffold; the helper exists so that as native GPU
-// paths land (e.g. drawAtlas/SkVertices promoted from bridged to native) the
-// divergence is expressed in one place rather than scattered through reporting.
+// GPU mode adds GPUAccel. Its concrete runtime status is native when a Ganesh
+// render target was created, fallback when GPU mode was requested but EGL/GL is
+// unavailable, and unsupported in CPU mode.
 func ModeCapabilities(mode RenderMode) []backends.Capability {
 	base := []backends.Capability{
 		backends.AntiAliasing,
@@ -187,8 +187,9 @@ func ModeCapabilities(mode RenderMode) []backends.Capability {
 	}
 	switch mode {
 	case ModeGPU:
-		gpu := make([]backends.Capability, len(base))
+		gpu := make([]backends.Capability, len(base), len(base)+1)
 		copy(gpu, base)
+		gpu = append(gpu, backends.GPUAccel)
 		return gpu
 	default:
 		return base

@@ -60,10 +60,25 @@ typedef struct {
 /* Create / destroy an offscreen raster surface sized width x height. Returns
  * NULL on failure (non-positive dimensions or allocation failure). */
 MgSkSurface *mgsk_surface_new(int width, int height);
+
+/* Create an offscreen Ganesh render target backed by an EGL OpenGL context.
+ * This entrypoint is available in skiagpu+skiacgo builds and returns NULL when
+ * the platform cannot provide a usable GPU context or render target. The
+ * resulting surface supports the same deterministic RGBA readback contract as
+ * a raster surface. */
+MgSkSurface *mgsk_surface_new_gpu(int width, int height, int sample_count);
+
 void         mgsk_surface_delete(MgSkSurface *s);
 
 /* Clear the whole surface to a straight-alpha RGBA color. */
 void mgsk_surface_clear(MgSkSurface *s, float r, float g, float b, float a);
+
+/* Flush queued Ganesh work. Returns nonzero only for a GPU-backed surface whose
+ * context was made current and submitted successfully. */
+int mgsk_surface_flush_gpu(MgSkSurface *s);
+
+/* Returns nonzero when the surface owns a real Ganesh GPU render target. */
+int mgsk_surface_is_gpu(const MgSkSurface *s);
 
 /* Draw one path described by parallel verb/coord arrays. `verbs` holds nverbs
  * MGSK_VERB_* codes; `coords` holds ncoords floats consumed as (x,y) pairs in

@@ -21,17 +21,22 @@ The native C-ABI bridge and CPU primitives already exist under
 Native recipes must omit the `freetype` tag unless Skia was built with
 `skia_use_freetype=false`; otherwise duplicate FreeType symbols crash at runtime.
 
-- [ ] Add real GPU surfaces behind `skiagpu` + `skiacgo`: expose
+- [x] Add real GPU surfaces behind `skiagpu` + `skiacgo`: expose
       `mgsk_surface_new_gpu`, create a Ganesh `GrDirectContext` over GL or
       Vulkan, wire `FlushGPU`, and retain deterministic CPU readback for
       goldens. Reuse `gpu_scaffold_test.go`.
-- [ ] Split `ModeCapabilities` so CPU and GPU modes report distinct
+- [x] Split `ModeCapabilities` so CPU and GPU modes report distinct
       native/fallback/unavailable capabilities through
       `BackendComparisonReport`.
-- [ ] Add `skiacgo` parity tests against AGG goldens, beginning with markers,
+- [x] Add `skiacgo` parity tests against AGG goldens, beginning with markers,
       gradients, and Gouraud triangles; promote each verified
       `NativePathRequirements` row from `StatusDeferred` to
       `StatusImplemented`.
+
+Completed 2026-07-25: the GPU tier uses a headless EGL/OpenGL Ganesh render
+target with synchronized RGBA readback and native CPU fallback when a context is
+unavailable. `just test-skia-native` and `just test-skia-gpu-native` cover the
+native primitive/parity matrix and runtime capability split.
 
 **Done when:** native batch primitives and real GPU acceleration are available
 under `skiacgo`/`skiagpu`, output is parity-checked, and per-mode capability

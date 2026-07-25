@@ -12,10 +12,10 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-// TestGPUScaffoldRendersThroughCPUReadback verifies the skiagpu build tag wires a
-// GPU-mode renderer that reports the GPU render mode while still rasterizing
-// deterministically through the CPU readback bridge (no native GPU surface yet).
-func TestGPUScaffoldRendersThroughCPUReadback(t *testing.T) {
+// TestGPUModeRendersThroughDeterministicReadback verifies that GPU mode always
+// retains a CPU-readable output buffer. The native build may accelerate its
+// Skia paths; the pure-Go tier reports a truthful CPU fallback.
+func TestGPUModeRendersThroughDeterministicReadback(t *testing.T) {
 	r, err := New(backends.Config{
 		Width:      64,
 		Height:     64,
@@ -25,11 +25,6 @@ func TestGPUScaffoldRendersThroughCPUReadback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(UseGPU:true) under skiagpu = %v, want success", err)
 	}
-	// GPU() must stay false: the surface is the CPU readback scaffold, not a
-	// hardware-accelerated GPU render target. Only the render *mode* is GPU.
-	if r.GPU() {
-		t.Fatal("GPU() = true, want false (CPU readback scaffold has no GPU surface)")
-	}
 	if !r.GPUModeRequested() {
 		t.Fatal("GPUModeRequested() = false, want true under skiagpu build tag")
 	}
@@ -38,15 +33,16 @@ func TestGPUScaffoldRendersThroughCPUReadback(t *testing.T) {
 	if info.Mode != ModeGPU {
 		t.Fatalf("BridgeInfo().Mode = %q, want %q", info.Mode, ModeGPU)
 	}
-	if info.NativeSurface {
-		t.Fatal("BridgeInfo().NativeSurface = true, want false (CPU readback scaffold)")
-	}
-	if info.Accelerated {
-		t.Fatal("BridgeInfo().Accelerated = true, want false (no native GPU render target yet)")
+	if r.GPU() != info.Accelerated {
+		t.Fatalf("GPU() = %v, BridgeInfo().Accelerated = %v; want matching runtime state", r.GPU(), info.Accelerated)
 	}
 
-	if got := BackendStrategy().GPUStatus; got != StatusPlanned {
-		t.Fatalf("BackendStrategy().GPUStatus = %q, want %q under skiagpu", got, StatusPlanned)
+	wantStatus := StatusPlanned
+	if gpuNativeBuildEnabled {
+		wantStatus = StatusImplemented
+	}
+	if got := BackendStrategy().GPUStatus; got != wantStatus {
+		t.Fatalf("BackendStrategy().GPUStatus = %q, want %q", got, wantStatus)
 	}
 
 	// Deterministic CPU readback: a filled path must produce non-background pixels.
@@ -68,7 +64,7 @@ func TestGPUScaffoldRendersThroughCPUReadback(t *testing.T) {
 		t.Fatal("GetImage() = nil, want a CPU readback buffer")
 	}
 	if !hasNonBackgroundPixel(img) {
-		t.Fatal("GPU scaffold produced an empty image; CPU readback did not render the path")
+		t.Fatal("GPU mode produced an empty deterministic readback")
 	}
 }
 
@@ -82,6 +78,63 @@ func TestGPUScaffoldBackendComparisonReportLabelsGPUMode(t *testing.T) {
 	if !strings.Contains(report, "skia/gpu") {
 		t.Fatalf("BackendComparisonReport did not label Skia GPU mode:\n%s", report)
 	}
+	r := mustNewGPURenderer(t)
+	wantStatus := backends.CapabilityFallback
+	if r.GPU() {
+		wantStatus = backends.CapabilityNative
+	}
+	status := backends.RendererCapabilityStatus(backends.Skia, r, backends.GPUAccel)
+	if status != wantStatus {
+		t.Fatalf("RendererCapabilityStatus(gpuaccel) = %q, want %q", status, wantStatus)
+	}
+	wantMarker := capabilityStatusMarker(wantStatus)
+	if !strings.Contains(gpuCapabilityCell(report), wantMarker) {
+		t.Fatalf("BackendComparisonReport gpuaccel cell does not contain %q:\n%s", wantMarker, report)
+	}
+}
+
+func mustNewGPURenderer(t *testing.T) *Renderer {
+	t.Helper()
+	r, err := New(backends.Config{
+		Width:   32,
+		Height:  24,
+		Options: backends.SkiaConfig{UseGPU: true, SampleCount: 1, ColorType: "RGBA8888"},
+	})
+	if err != nil {
+		t.Fatalf("New GPU renderer: %v", err)
+	}
+	return r
+}
+
+func capabilityStatusMarker(status backends.CapabilityStatus) string {
+	switch status {
+	case backends.CapabilityNative:
+		return "✓"
+	case backends.CapabilityFallback:
+		return "~"
+	default:
+		return "·"
+	}
+}
+
+func gpuCapabilityCell(report string) string {
+	lines := strings.Split(report, "\n")
+	if len(lines) < 3 {
+		return ""
+	}
+	header := strings.Fields(lines[0])
+	for _, line := range lines[2:] {
+		row := strings.Fields(line)
+		if len(row) == 0 || row[0] != "skia/gpu" {
+			continue
+		}
+		for i, name := range header {
+			if name == string(backends.GPUAccel) && i < len(row) {
+				return row[i]
+			}
+		}
+	}
+	return ""
 }
 
 func hasNonBackgroundPixel(img *image.RGBA) bool {

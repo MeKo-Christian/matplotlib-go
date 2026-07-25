@@ -101,10 +101,9 @@ func New(config backends.Config) (*Renderer, error) {
 	if config.DPI > 0 {
 		resolution = uint(config.DPI)
 	}
-	// Under the skiagpu build tag a GPU-mode request selects the GPU render mode,
-	// but the surface remains the deterministic CPU readback bridge until a native
-	// SkSurface::MakeRenderTarget path exists. This keeps golden tests reproducible
-	// while the GPU plumbing is scaffolded.
+	// Under skiagpu a GPU-mode request selects the GPU render mode. The skiacgo
+	// bridge then attempts a native Ganesh surface and otherwise retains its
+	// deterministic CPU fallback.
 	useGPU := skiaConfig.UseGPU && gpuBuildEnabled
 	mode := ModeCPU
 	if useGPU {
@@ -116,7 +115,7 @@ func New(config backends.Config) (*Renderer, error) {
 		height:      config.Height,
 		resolution:  resolution,
 		background:  config.Background,
-		bridge:      selectSurfaceBridge(config.Width, config.Height, mode),
+		bridge:      selectSurfaceBridgeWithSamples(config.Width, config.Height, mode, skiaConfig.SampleCount),
 		useGPU:      useGPU,
 		sampleCount: skiaConfig.SampleCount,
 		colorType:   skiaConfig.ColorType,
@@ -376,6 +375,22 @@ func (r *Renderer) RendererModeLabel() string {
 	return string(info.Mode)
 }
 
+// RuntimeCapabilityStatus supplies mode-specific capability state to the
+// backend comparison report. GPU acceleration cannot be declared statically on
+// the single Skia registry entry because CPU and GPU configurations share it.
+func (r *Renderer) RuntimeCapabilityStatus(capability backends.Capability) (backends.CapabilityStatus, bool) {
+	if capability != backends.GPUAccel {
+		return "", false
+	}
+	if r == nil || !r.useGPU {
+		return backends.CapabilityUnsupported, true
+	}
+	if r.GPU() {
+		return backends.CapabilityNative, true
+	}
+	return backends.CapabilityFallback, true
+}
+
 // GetSurface returns the underlying Skia surface for advanced operations.
 func (r *Renderer) GetSurface() interface{} {
 	// No Skia-native surface exists until the external C ABI lands.
@@ -395,17 +410,17 @@ func (r *Renderer) FlushGPU() {
 	if !r.useGPU {
 		return
 	}
-	// TODO: Call GrDirectContext::flushAndSubmit()
+	if flusher, ok := r.bridge.(interface{ FlushGPU() bool }); ok {
+		flusher.FlushGPU()
+	}
 }
 
 // GPU reports whether rendering is actually hardware-accelerated through a
-// native Skia GPU render target. This is currently always false: even under the
-// skiagpu build the surface is the deterministic CPU readback scaffold (the cgo
-// build adds a native *raster* SkSurface, still CPU-side), and
-// SkSurface::MakeRenderTarget is StatusDeferred — see strategy.go. The flag is
-// driven by BridgeInfo().Accelerated so GPU() becomes truthful automatically
-// once a real GPU surface path lands. To query the *requested/selected* render
-// mode, use RendererModeLabel or BridgeInfo().Mode instead.
+// native Skia GPU render target. A skiagpu+skiacgo renderer reports true only
+// after it has created a Ganesh render target over an EGL/OpenGL context.
+// Environments without a usable GPU context retain deterministic native CPU
+// raster fallback and report false. To query the requested render mode, use
+// RendererModeLabel or BridgeInfo().Mode instead.
 func (r *Renderer) GPU() bool {
 	if r == nil || r.bridge == nil {
 		return false
@@ -413,10 +428,9 @@ func (r *Renderer) GPU() bool {
 	return r.bridge.Info().Accelerated
 }
 
-// GPUModeRequested reports whether the renderer was configured for the GPU
-// render-mode scaffold (skiagpu build + SkiaConfig.UseGPU). Rendering still runs
-// through the CPU readback bridge; this only reflects the selected mode, not
-// hardware acceleration. Use GPU() for the truthful acceleration state.
+// GPUModeRequested reports whether the renderer was configured for GPU mode
+// (skiagpu build + SkiaConfig.UseGPU). It reflects selection, not successful
+// hardware acceleration; use GPU for the runtime acceleration state.
 func (r *Renderer) GPUModeRequested() bool {
 	return r != nil && r.useGPU
 }

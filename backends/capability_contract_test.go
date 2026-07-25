@@ -56,6 +56,18 @@ type capabilityRendererWithBatches struct {
 	capabilityRendererWithPNG
 }
 
+type capabilityRendererWithRuntimeStatus struct {
+	capabilityRendererBase
+	status CapabilityStatus
+}
+
+func (r *capabilityRendererWithRuntimeStatus) RuntimeCapabilityStatus(capability Capability) (CapabilityStatus, bool) {
+	if capability != GPUAccel {
+		return "", false
+	}
+	return r.status, true
+}
+
 func (r *capabilityRendererWithBatches) SaveSVG(_ string) error {
 	return nil
 }
@@ -220,6 +232,28 @@ func TestRendererCapabilityStatusDistinguishesFallback(t *testing.T) {
 	}
 	if got := RendererCapabilityStatus(Backend("native"), &capabilityRendererBase{}, MarkerBatch); got != CapabilityUnsupported {
 		t.Fatalf("unsupported status = %s, want %s", got, CapabilityUnsupported)
+	}
+}
+
+func TestRendererCapabilityStatusUsesRuntimeModeOverride(t *testing.T) {
+	reg := NewRegistry()
+	reg.Register(Backend("mode-aware"), &BackendInfo{
+		Name:      "Mode Aware Backend",
+		Available: true,
+		Factory: func(Config) (render.Renderer, error) {
+			return &capabilityRendererWithRuntimeStatus{status: CapabilityNative}, nil
+		},
+	})
+
+	for _, status := range []CapabilityStatus{
+		CapabilityNative,
+		CapabilityFallback,
+		CapabilityUnsupported,
+	} {
+		renderer := &capabilityRendererWithRuntimeStatus{status: status}
+		if got := reg.RendererCapabilityStatus(Backend("mode-aware"), renderer, GPUAccel); got != status {
+			t.Fatalf("runtime mode status = %s, want %s", got, status)
+		}
 	}
 }
 

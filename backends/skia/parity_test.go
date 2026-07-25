@@ -1,4 +1,4 @@
-//go:build skia
+//go:build skia && skiacgo
 
 // This test lives in the external skia_test package on purpose: it imports
 // test/parity, which transitively pulls in backends/all (→ backends/skia). An
@@ -21,18 +21,16 @@ import (
 	"github.com/cwbudde/matplotlib-go/test/parity"
 )
 
-// Default tolerances when a catalog case does not override them. The Skia CPU
-// compatibility renderer wraps the GoBasic surface, so most catalog cases will
-// not pixel-match AGG exactly. These defaults are intentionally generous to
-// document that Skia parity is a regression guard against the CPU bridge
-// silently drifting, not an exact-match contract.
+// Default tolerances when a catalog case does not override them. The native
+// Skia renderer still uses renderer-neutral fallbacks for text and some artist
+// features, so complete figures do not necessarily pixel-match AGG exactly.
 const (
 	defaultSkiaParityMinPSNR    = 22.0
 	defaultSkiaParityMaxMeanAbs = 22.0
 )
 
 // TestSkiaParityAgainstAGGGoldens iterates every catalog case opted into a
-// SkiaParityFamily and compares the Skia CPU renderer output against the
+// SkiaParityFamily and compares the skiacgo native CPU output against the
 // committed AGG golden under testdata/golden/. Per-case MinPSNR / MaxMeanAbs
 // overrides on the catalog row take precedence over the package defaults; this
 // matches the AGENTS.md convention that the catalog is the single source of
@@ -115,9 +113,8 @@ func renderSkiaFigure(t *testing.T, fig *core.Figure) image.Image {
 // skiaParityMaxMeanAbsOverride relaxes the per-case MeanAbs ceiling for cases
 // whose catalog tolerance is tuned for AGG-vs-matplotlib_ref parity
 // (TestReferenceCompare) but whose skia-CPU-vs-AGG comparison carries
-// irreducible CPU-bridge differences. The skia CPU bridge wraps GoBasic, so it
-// inherits GoBasic's path-effect shadow placement and native-hatch density and
-// adds golang.org/x/image edge anti-aliasing that differs from AGG's rasterizer.
+// irreducible cross-rasterizer differences. Skia inherits renderer-neutral
+// path-effect placement while native Skia edges differ from AGG antialiasing.
 // pattern_gradient_effects: shader fills (gradient/radial/pattern) match AGG at
 // PSNR ~44.5 after the device y-flip fix; the residual MeanAbs ~2.2 is the
 // drop-shadow path-effect orientation, hatch line density, and edge AA — none of
@@ -125,7 +122,12 @@ func renderSkiaFigure(t *testing.T, fig *core.Figure) image.Image {
 // re-introduced fill y-flip blows well past it) without demanding AGG-exact
 // path-effect/hatch parity the CPU bridge does not promise.
 var skiaParityMaxMeanAbsOverride = map[string]float64{
+	"errorbar_basic":           0.5,
 	"pattern_gradient_effects": 3.0,
+}
+
+var skiaParityMinPSNROverride = map[string]float64{
+	"errorbar_basic": 50.0,
 }
 
 func skiaParityTolerances(c examplecatalog.Case) (minPSNR, maxMeanAbs float64) {
@@ -139,6 +141,9 @@ func skiaParityTolerances(c examplecatalog.Case) (minPSNR, maxMeanAbs float64) {
 	}
 	if override, ok := skiaParityMaxMeanAbsOverride[c.ID]; ok {
 		maxMeanAbs = override
+	}
+	if override, ok := skiaParityMinPSNROverride[c.ID]; ok {
+		minPSNR = override
 	}
 	return minPSNR, maxMeanAbs
 }

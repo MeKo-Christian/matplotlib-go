@@ -16,8 +16,8 @@ func init() {
 		// satisfied through the embedded gobasic CPU surface, so they report as
 		// CapabilityBridged (not native Skia) via RendererCapabilityStatus; only
 		// the skiacgo build flips them to native. GPU acceleration is
-		// deliberately absent here — see GPU() honesty in skia.go and the
-		// StatusDeferred GPU requirement in strategy.go.
+		// mode- and runtime-specific, so RuntimeCapabilityStatus reports it
+		// instead of placing it on this shared registry declaration.
 		capabilities = []backends.Capability{
 			backends.AntiAliasing,
 			backends.PatternFill,
@@ -47,7 +47,7 @@ func init() {
 	// Register Skia backend with the global registry
 	backends.Register(backends.Skia, &backends.BackendInfo{
 		Name:                 "Skia",
-		Description:          "Opt-in Skia-tagged CPU raster backend; GPU and Skia-native optional paths are deferred",
+		Description:          "Opt-in Skia raster backend with native skiacgo CPU primitives and optional Ganesh GPU surfaces",
 		Capabilities:         capabilities,
 		FallbackCapabilities: fallbackCapabilities,
 		SaveFormats:          saveFormats,

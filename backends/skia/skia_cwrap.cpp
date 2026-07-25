@@ -15,6 +15,12 @@
 #include <cstring>
 #include <vector>
 
+#ifdef MGSK_ENABLE_GPU
+#include <dlfcn.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#endif
+
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
 #include "include/core/SkImage.h"
@@ -35,6 +41,13 @@
 #include "include/core/SkTypes.h"
 #include "include/core/SkMilestone.h"
 
+#ifdef MGSK_ENABLE_GPU
+#include "include/gpu/ganesh/GrDirectContext.h"
+#include "include/gpu/ganesh/SkSurfaceGanesh.h"
+#include "include/gpu/ganesh/gl/GrGLAssembleInterface.h"
+#include "include/gpu/ganesh/gl/GrGLDirectContext.h"
+#endif
+
 #define MGSK_STR2(x) #x
 #define MGSK_STR(x) MGSK_STR2(x)
 #ifndef SK_MILESTONE
@@ -46,9 +59,116 @@ struct MgSkSurface {
     SkCanvas *canvas = nullptr;
     int width = 0;
     int height = 0;
+#ifdef MGSK_ENABLE_GPU
+    sk_sp<GrDirectContext> direct_context;
+    EGLDisplay egl_display = EGL_NO_DISPLAY;
+    EGLSurface egl_surface = EGL_NO_SURFACE;
+    EGLContext egl_context = EGL_NO_CONTEXT;
+#endif
 };
 
 namespace {
+
+#ifdef MGSK_ENABLE_GPU
+
+class ScopedEGLContext {
+public:
+    explicit ScopedEGLContext(MgSkSurface *surface) : surface_(surface) {
+        if (surface_ == nullptr || surface_->direct_context == nullptr) {
+            ok_ = true;
+            return;
+        }
+        ok_ = eglMakeCurrent(surface_->egl_display,
+                             surface_->egl_surface,
+                             surface_->egl_surface,
+                             surface_->egl_context) == EGL_TRUE;
+    }
+
+    ~ScopedEGLContext() {
+        if (ok_ && surface_ != nullptr && surface_->direct_context != nullptr) {
+            eglMakeCurrent(surface_->egl_display,
+                           EGL_NO_SURFACE,
+                           EGL_NO_SURFACE,
+                           EGL_NO_CONTEXT);
+        }
+    }
+
+    bool ok() const { return ok_; }
+
+private:
+    MgSkSurface *surface_ = nullptr;
+    bool ok_ = false;
+};
+
+GrGLFuncPtr eglGetGLProc(void *, const char name[]) {
+    GrGLFuncPtr proc = reinterpret_cast<GrGLFuncPtr>(eglGetProcAddress(name));
+    if (proc == nullptr) {
+        proc = reinterpret_cast<GrGLFuncPtr>(dlsym(RTLD_DEFAULT, name));
+    }
+    return proc;
+}
+
+EGLDisplay makeEGLDisplay() {
+    auto getPlatformDisplay = reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
+        eglGetProcAddress("eglGetPlatformDisplayEXT"));
+    if (getPlatformDisplay != nullptr) {
+        EGLDisplay display = getPlatformDisplay(
+            EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY, nullptr);
+        if (display != EGL_NO_DISPLAY) {
+            return display;
+        }
+    }
+    return eglGetDisplay(EGL_DEFAULT_DISPLAY);
+}
+
+void destroyGPUResources(MgSkSurface *surface) {
+    if (surface == nullptr) {
+        return;
+    }
+    if (surface->direct_context != nullptr) {
+        if (eglMakeCurrent(surface->egl_display,
+                           surface->egl_surface,
+                           surface->egl_surface,
+                           surface->egl_context) == EGL_TRUE) {
+            if (surface->surface != nullptr) {
+                surface->direct_context->flushAndSubmit(surface->surface.get(), GrSyncCpu::kYes);
+            }
+            surface->surface.reset();
+            surface->canvas = nullptr;
+            surface->direct_context.reset();
+            eglMakeCurrent(surface->egl_display,
+                           EGL_NO_SURFACE,
+                           EGL_NO_SURFACE,
+                           EGL_NO_CONTEXT);
+        } else {
+            surface->surface.reset();
+            surface->canvas = nullptr;
+            surface->direct_context.reset();
+        }
+    }
+    if (surface->egl_surface != EGL_NO_SURFACE) {
+        eglDestroySurface(surface->egl_display, surface->egl_surface);
+        surface->egl_surface = EGL_NO_SURFACE;
+    }
+    if (surface->egl_context != EGL_NO_CONTEXT) {
+        eglDestroyContext(surface->egl_display, surface->egl_context);
+        surface->egl_context = EGL_NO_CONTEXT;
+    }
+    if (surface->egl_display != EGL_NO_DISPLAY) {
+        eglTerminate(surface->egl_display);
+        surface->egl_display = EGL_NO_DISPLAY;
+    }
+}
+
+#else
+
+class ScopedEGLContext {
+public:
+    explicit ScopedEGLContext(MgSkSurface *) {}
+    bool ok() const { return true; }
+};
+
+#endif
 
 inline uint8_t toByte(float v) {
     if (v <= 0.0f) return 0;
@@ -349,7 +469,101 @@ MgSkSurface *mgsk_surface_new(int width, int height) {
     return s;
 }
 
+MgSkSurface *mgsk_surface_new_gpu(int width, int height, int sample_count) {
+#ifdef MGSK_ENABLE_GPU
+    if (width <= 0 || height <= 0) {
+        return nullptr;
+    }
+    MgSkSurface *s = new MgSkSurface();
+    s->width = width;
+    s->height = height;
+    s->egl_display = makeEGLDisplay();
+    if (s->egl_display == EGL_NO_DISPLAY ||
+        eglInitialize(s->egl_display, nullptr, nullptr) != EGL_TRUE ||
+        eglBindAPI(EGL_OPENGL_API) != EGL_TRUE) {
+        destroyGPUResources(s);
+        delete s;
+        return nullptr;
+    }
+
+    const EGLint configAttributes[] = {
+        EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+        EGL_RED_SIZE, 8,
+        EGL_GREEN_SIZE, 8,
+        EGL_BLUE_SIZE, 8,
+        EGL_ALPHA_SIZE, 8,
+        EGL_NONE,
+    };
+    EGLConfig config = nullptr;
+    EGLint configCount = 0;
+    if (eglChooseConfig(s->egl_display,
+                        configAttributes,
+                        &config,
+                        1,
+                        &configCount) != EGL_TRUE ||
+        configCount == 0) {
+        destroyGPUResources(s);
+        delete s;
+        return nullptr;
+    }
+
+    const EGLint pbufferAttributes[] = {
+        EGL_WIDTH, 1,
+        EGL_HEIGHT, 1,
+        EGL_NONE,
+    };
+    s->egl_surface = eglCreatePbufferSurface(s->egl_display, config, pbufferAttributes);
+    s->egl_context = eglCreateContext(s->egl_display, config, EGL_NO_CONTEXT, nullptr);
+    if (s->egl_surface == EGL_NO_SURFACE || s->egl_context == EGL_NO_CONTEXT ||
+        eglMakeCurrent(s->egl_display,
+                       s->egl_surface,
+                       s->egl_surface,
+                       s->egl_context) != EGL_TRUE) {
+        destroyGPUResources(s);
+        delete s;
+        return nullptr;
+    }
+
+    sk_sp<const GrGLInterface> gl = GrGLMakeAssembledGLInterface(nullptr, eglGetGLProc);
+    if (gl != nullptr) {
+        s->direct_context = GrDirectContexts::MakeGL(gl);
+    }
+    if (s->direct_context != nullptr) {
+        SkImageInfo info = SkImageInfo::Make(
+            width, height, kRGBA_8888_SkColorType, kPremul_SkAlphaType);
+        s->surface = SkSurfaces::RenderTarget(
+            s->direct_context.get(),
+            skgpu::Budgeted::kYes,
+            info,
+            std::max(0, sample_count),
+            kTopLeft_GrSurfaceOrigin,
+            nullptr);
+    }
+    if (s->surface != nullptr) {
+        s->canvas = s->surface->getCanvas();
+        s->canvas->clear(SK_ColorTRANSPARENT);
+    }
+    eglMakeCurrent(s->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+    if (s->surface == nullptr || s->canvas == nullptr || s->direct_context == nullptr) {
+        destroyGPUResources(s);
+        delete s;
+        return nullptr;
+    }
+    return s;
+#else
+    (void)width;
+    (void)height;
+    (void)sample_count;
+    return nullptr;
+#endif
+}
+
 void mgsk_surface_delete(MgSkSurface *s) {
+#ifdef MGSK_ENABLE_GPU
+    destroyGPUResources(s);
+#endif
     delete s;
 }
 
@@ -357,7 +571,37 @@ void mgsk_surface_clear(MgSkSurface *s, float r, float g, float b, float a) {
     if (s == nullptr || s->canvas == nullptr) {
         return;
     }
+    ScopedEGLContext current(s);
+    if (!current.ok()) {
+        return;
+    }
     s->canvas->clear(colorFromFloat(r, g, b, a));
+}
+
+int mgsk_surface_flush_gpu(MgSkSurface *s) {
+#ifdef MGSK_ENABLE_GPU
+    if (s == nullptr || s->direct_context == nullptr || s->surface == nullptr) {
+        return 0;
+    }
+    ScopedEGLContext current(s);
+    if (!current.ok()) {
+        return 0;
+    }
+    s->direct_context->flushAndSubmit(s->surface.get(), GrSyncCpu::kYes);
+    return 1;
+#else
+    (void)s;
+    return 0;
+#endif
+}
+
+int mgsk_surface_is_gpu(const MgSkSurface *s) {
+#ifdef MGSK_ENABLE_GPU
+    return s != nullptr && s->direct_context != nullptr && s->surface != nullptr;
+#else
+    (void)s;
+    return 0;
+#endif
 }
 
 void mgsk_draw_path(MgSkSurface *s,
@@ -365,6 +609,10 @@ void mgsk_draw_path(MgSkSurface *s,
                     const float *coords, int ncoords,
                     const MgSkPaint *paint) {
     if (s == nullptr || s->canvas == nullptr || paint == nullptr || nverbs <= 0) {
+        return;
+    }
+    ScopedEGLContext current(s);
+    if (!current.ok()) {
         return;
     }
     SkPath path = buildPath(verbs, nverbs, coords, ncoords);
@@ -383,6 +631,10 @@ void mgsk_draw_markers(MgSkSurface *s,
                        int count) {
     if (s == nullptr || s->canvas == nullptr || nverbs <= 0 || count <= 0 ||
         matrices == nullptr || fill_colors == nullptr) {
+        return;
+    }
+    ScopedEGLContext current(s);
+    if (!current.ok()) {
         return;
     }
     SkPath base = buildPath(verbs, nverbs, coords, ncoords);
@@ -427,6 +679,10 @@ void mgsk_draw_vertices(MgSkSurface *s,
         colors == nullptr || triangle_count <= 0) {
         return;
     }
+    ScopedEGLContext current(s);
+    if (!current.ok()) {
+        return;
+    }
     const int vertexCount = triangle_count * 3;
     std::vector<SkPoint> pts(vertexCount);
     std::vector<SkColor> cols(vertexCount);
@@ -458,6 +714,10 @@ void mgsk_draw_image(MgSkSurface *s,
                      int sampling) {
     if (s == nullptr || s->canvas == nullptr || pixels == nullptr || matrix == nullptr ||
         width <= 0 || height <= 0 || stride < width * 4 || alpha <= 0.0f) {
+        return;
+    }
+    ScopedEGLContext current(s);
+    if (!current.ok()) {
         return;
     }
     SkImageInfo info = SkImageInfo::Make(width, height, kRGBA_8888_SkColorType,
@@ -503,6 +763,10 @@ void mgsk_draw_hatch_path(MgSkSurface *s,
         hatch == nullptr || hatch_len <= 0 || a <= 0.0f) {
         return;
     }
+    ScopedEGLContext current(s);
+    if (!current.ok()) {
+        return;
+    }
     SkPath path = buildPath(verbs, nverbs, coords, ncoords);
     sk_sp<SkShader> shader = makeHatchShader(
         hatch, hatch_len, colorFromFloat(r, g, b, a), line_width, spacing, antialias);
@@ -520,6 +784,15 @@ void mgsk_surface_read_pixels(MgSkSurface *s, uint8_t *dst, int stride) {
     if (s == nullptr || s->surface == nullptr || dst == nullptr || stride <= 0) {
         return;
     }
+    ScopedEGLContext current(s);
+    if (!current.ok()) {
+        return;
+    }
+#ifdef MGSK_ENABLE_GPU
+    if (s->direct_context != nullptr) {
+        s->direct_context->flushAndSubmit(s->surface.get(), GrSyncCpu::kYes);
+    }
+#endif
     SkImageInfo info = SkImageInfo::Make(s->width, s->height, kRGBA_8888_SkColorType,
                                          kUnpremul_SkAlphaType);
     s->surface->readPixels(info, dst, static_cast<size_t>(stride), 0, 0);

@@ -15,14 +15,16 @@ func TestBackendStrategyDocumentsBuildAndDependencyPolicy(t *testing.T) {
 	if strategy.Binding != BindingExternalCAPI {
 		t.Fatalf("Binding = %q, want %q", strategy.Binding, BindingExternalCAPI)
 	}
-	// The render mode and GPU status track the skiagpu build tag: with the tag the
-	// GPU scaffold is selectable (StatusPlanned), without it GPU stays deferred and
-	// the default mode is CPU.
+	// GPU mode becomes selectable under skiagpu and implemented when the native
+	// skiacgo bridge is compiled as well.
 	wantMode := ModeCPU
 	wantGPU := StatusDeferred
 	if gpuBuildEnabled {
 		wantMode = ModeGPU
 		wantGPU = StatusPlanned
+	}
+	if gpuNativeBuildEnabled {
+		wantGPU = StatusImplemented
 	}
 	if strategy.DefaultMode != wantMode {
 		t.Fatalf("DefaultMode = %q, want %q", strategy.DefaultMode, wantMode)
@@ -50,8 +52,6 @@ func TestModeCapabilitiesExposesCPUGPUSplit(t *testing.T) {
 	if len(gpu) == 0 {
 		t.Fatal("GPU mode should advertise optional capabilities")
 	}
-	// The GPU set is currently a CPU-readback scaffold, so it must at least cover
-	// every CPU capability; the helper exists so the sets can diverge later.
 	gpuSet := make(map[backends.Capability]bool, len(gpu))
 	for _, c := range gpu {
 		gpuSet[c] = true
@@ -59,6 +59,14 @@ func TestModeCapabilitiesExposesCPUGPUSplit(t *testing.T) {
 	for _, c := range cpu {
 		if !gpuSet[c] {
 			t.Fatalf("GPU mode is missing CPU capability %q", c)
+		}
+	}
+	if gpuSet[backends.GPUAccel] == false {
+		t.Fatal("GPU mode should advertise gpuaccel")
+	}
+	for _, c := range cpu {
+		if c == backends.GPUAccel {
+			t.Fatal("CPU mode should not advertise gpuaccel")
 		}
 	}
 	// An unknown mode falls back to the CPU set rather than returning nil.
@@ -121,7 +129,7 @@ func TestNativePathRequirementsDocumentDeferredExternalABI(t *testing.T) {
 	assertRequirementHasCapability(t, byPrimitive["tiled SkShader"], backends.NativeHatcher)
 	assertRequirementStatus(t, byPrimitive["tiled SkShader"], StatusImplemented)
 	assertRequirementHasCapability(t, byPrimitive["SkSurface::MakeRenderTarget"], backends.GPUAccel)
-	assertRequirementStatus(t, byPrimitive["SkSurface::MakeRenderTarget"], StatusDeferred)
+	assertRequirementStatus(t, byPrimitive["SkSurface::MakeRenderTarget"], StatusImplemented)
 }
 
 func assertRequirementHasCapability(t *testing.T, req NativePathRequirement, capability backends.Capability) {
