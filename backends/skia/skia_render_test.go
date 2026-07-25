@@ -251,7 +251,7 @@ func TestSkiaTaggedBackendComparisonReportLabelsCPUMode(t *testing.T) {
 	if !strings.Contains(report, "skia/cpu") {
 		t.Fatalf("BackendComparisonReport did not label Skia CPU mode:\n%s", report)
 	}
-	r, err := New(backends.TestDefaultConfig(32, 24))
+	r, err := skia.New(backends.TestDefaultConfig(32, 24))
 	if err != nil {
 		t.Fatalf("New CPU renderer: %v", err)
 	}

@@ -47,10 +47,11 @@ func selectSurfaceBridgeWithSamples(width, height int, mode RenderMode, sampleCo
 		mode = ModeCPU
 	}
 	bridge := &nativeSurfaceBridge{
-		width:  width,
-		height: height,
-		mode:   mode,
-		cpu:    newCPUSurfaceBridge(width, height, mode),
+		width:       width,
+		height:      height,
+		mode:        mode,
+		sampleCount: sampleCount,
+		cpu:         newCPUSurfaceBridge(width, height, mode),
 	}
 	if mode == ModeGPU {
 		bridge.gpu = newNativeGPUSurface(width, height, sampleCount)
@@ -73,6 +74,8 @@ type nativeSurfaceBridge struct {
 	mode   RenderMode
 	cpu    surfaceBridge
 	gpu    *nativeSurface
+
+	sampleCount int
 }
 
 func (b *nativeSurfaceBridge) Info() BridgeInfo {
@@ -115,7 +118,7 @@ func (b *nativeSurfaceBridge) acquireSurface(w, h int) (*nativeSurface, func()) 
 		return b.gpu, func() {}
 	}
 	if b != nil && b.mode == ModeGPU {
-		if surf := newNativeGPUSurface(w, h, 1); surf != nil {
+		if surf := newNativeGPUSurface(w, h, b.sampleCount); surf != nil {
 			surf.clear()
 			return surf, surf.delete
 		}

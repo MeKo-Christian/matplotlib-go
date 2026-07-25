@@ -15,7 +15,7 @@ func TestNativeGPUSurfaceGradientAndReadback(t *testing.T) {
 		Width:      64,
 		Height:     48,
 		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
-		Options:    backends.SkiaConfig{UseGPU: true, SampleCount: 1, ColorType: "RGBA8888"},
+		Options:    backends.SkiaConfig{UseGPU: true, SampleCount: 4, ColorType: "RGBA8888"},
 	})
 	if err != nil {
 		t.Fatalf("New GPU renderer: %v", err)
@@ -25,6 +25,9 @@ func TestNativeGPUSurfaceGradientAndReadback(t *testing.T) {
 	}
 	if got := r.BridgeInfo(); !got.NativeSurface || !got.Accelerated || got.Mode != ModeGPU {
 		t.Fatalf("BridgeInfo() = %+v, want accelerated native GPU mode", got)
+	}
+	if got := r.SampleCount(); got != 4 {
+		t.Fatalf("SampleCount() = %d, want 4", got)
 	}
 
 	viewport := geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 64, Y: 48}}

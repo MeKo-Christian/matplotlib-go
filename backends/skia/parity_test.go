@@ -120,7 +120,10 @@ func renderSkiaFigure(t *testing.T, fig *core.Figure) image.Image {
 // drop-shadow path-effect orientation, hatch line density, and edge AA — none of
 // which are shader fills. 3.0 keeps the case a tight regression guard (a
 // re-introduced fill y-flip blows well past it) without demanding AGG-exact
-// path-effect/hatch parity the CPU bridge does not promise.
+// path-effect/hatch parity from the native Skia rasterizer.
+// errorbar_basic: its catalog threshold is intentionally strict for
+// AGG-vs-Matplotlib, while native Skia marker/cap antialiasing measures
+// PSNR ~52.6 / MeanAbs ~0.34 against the AGG golden.
 var skiaParityMaxMeanAbsOverride = map[string]float64{
 	"errorbar_basic":           0.5,
 	"pattern_gradient_effects": 3.0,
