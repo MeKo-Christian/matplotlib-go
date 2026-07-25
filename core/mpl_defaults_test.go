@@ -596,7 +596,7 @@ func TestMPLStyleScatterDefaultsReachScatter(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	sc := ax.Scatter([]float64{0, 1}, []float64{0, 1})
+	sc, _ := ax.Scatter([]float64{0, 1}, []float64{0, 1})
 	if sc == nil {
 		t.Fatal("Scatter returned nil")
 	}
@@ -615,7 +615,7 @@ func TestMPLStyleScatterDefaultsReachScatter(t *testing.T) {
 	marker := MarkerCircle
 	edge := render.Color{R: 1, A: 1}
 	size := 25.0
-	sc2 := ax.Scatter([]float64{0, 1}, []float64{1, 0}, ScatterOptions{
+	sc2, _ := ax.Scatter([]float64{0, 1}, []float64{1, 0}, ScatterOptions{
 		Marker: &marker, EdgeColor: &edge, Size: &size,
 	})
 	if sc2.Marker != MarkerCircle || sc2.EdgeColor != edge || sc2.Size != 25 {

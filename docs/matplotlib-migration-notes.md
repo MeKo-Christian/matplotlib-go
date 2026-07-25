@@ -55,6 +55,25 @@ advance the property cycle, or retain partial unit/locator/formatter changes.
 `PlotDate`, `pyplot.Plot`, and `pyplot.PlotDate` return the same error rather
 than suppressing it.
 
+`Axes.ScatterUnits` was likewise folded into `Axes.Scatter`. Replace:
+
+```go
+scatter, err := ax.ScatterUnits(x, y, options)
+```
+
+with:
+
+```go
+scatter, err := ax.Scatter(x, y, options)
+```
+
+`Axes.Scatter` and `pyplot.Scatter` now accept unit-capable slice values and
+return `(*core.Scatter2D, error)`. They reject nil axes, empty or mismatched
+inputs, unsupported value types, invalid per-point option lengths, invalid
+scalar-map combinations, and more than one `ScatterOptions` value. Rejection
+does not add an artist, advance the scatter color cycle, or retain partial
+unit/locator/formatter changes.
+
 The same getter pass removed the remaining exported `GetX` spellings:
 
 | Before                                      | After                                     |

@@ -81,19 +81,44 @@ update the coupled API/doc tests in the same commit.
 - [ ] Adopt one error convention: rejected plot input returns `(T, error)`;
       `diag.Warnf` remains only for accepted degradations. Fold redundant
       `*Units` variants into primary methods.
+  - [x] Fold `PlotUnits` into a transactional, unit-capable `Plot`.
+  - [x] Fold `ScatterUnits` into `Scatter`; reject conversion, shape, scalar-map,
+        and extra-option errors without mutating axes or advancing the cycle.
+  - [ ] Fold `BarUnits` into `Bar`/`BarH`; preserve categorical-axis locator
+        behavior and make vertical/horizontal rejection transactional.
+  - [ ] Fold `FillBetweenUnits` into `FillBetween`; validate all three converted
+        inputs before constructing polygons or committing axis-unit state.
+  - [ ] Inventory the remaining warn-and-skip plotting entry points, convert
+        rejected input to errors, and retain warnings only where an artist is
+        accepted with a documented degradation.
 - [ ] Replace the 83 variadic option structs and 408 pointer-to-primitive
       fields with one consistent options model; extra option sets must be
       impossible or rejected. Replace raw-string enums with typed constants.
+  - [ ] Reject extra option values across the existing variadic surface as an
+        intermediate safety step.
+  - [ ] Choose and document the final options representation, then migrate one
+        representative line, collection, image, and annotation API.
+  - [ ] Migrate the remaining option families and replace option raw strings
+        with typed constants.
 - [x] Add `Figure.Save(path)`, `Figure.WriteTo(w, format)`, and
       `Figure.Image()`; replace the repeated backend-specific save boilerplate
       in examples.
 - [x] Rename `GetX()` getters to `X()` (or an explicit `LookupX()` spelling
       where the noun conflicts with an exported type).
 - [ ] Resolve exported mutable fields versus setter duplication consistently.
+  - [ ] Classify exported mutable fields by immutable configuration, observable
+        state, and internal cache; record the intended ownership per family.
+  - [ ] Encapsulate fields that duplicate setters and update callers/tests.
+  - [ ] Re-run the API/doc freeze and add migration notes for every removal.
 - [x] Document the concurrency contract for global rc state, registries, and
       figures; stop discarding pyplot errors.
 - [ ] Consolidate duplicated alpha baking, option unpacking, and scalar-map
       resolution paths.
+  - [x] Share alpha multiplication through `render.Color.WithAlphaMultiplier`.
+  - [x] Share plot/plot3d scalar-map configuration through
+        `PlotOptions.ScalarMapConfig`.
+  - [ ] Centralize single-option unpacking/extra-option rejection.
+  - [ ] Route remaining scalar-mappable artists through the shared resolver.
 
 ### 2.4 Re-freeze
 
@@ -114,12 +139,15 @@ goldens remain byte-identical to the pre-break baseline.
 registry synchronization, example migration, API/parity remapping, migration
 notes, and the changelog draft are complete. No golden/reference fixture
 changed. Remaining Phase 2 work is the unified rejected-input error convention
-and the `ScatterUnits`/`BarUnits`/`FillBetweenUnits` folds, the
+and the `BarUnits`/`FillBetweenUnits` folds, the
 options/raw-enum conversion, mutable-field cleanup, and the remaining
 option/scalar-map consolidation paths. `Axes.PlotUnits` is now folded into the
 transactional, unit-capable `Axes.Plot` method, which returns `(*Line2D, error)`
 and rejects extra option values; `PlotDate` and the corresponding pyplot
-wrappers propagate that error. Core and plot3d alpha multiplier paths share
+wrappers propagate that error. `Axes.ScatterUnits` is likewise folded into the
+transactional, unit-capable `Axes.Scatter`; scalar-map and per-point shape
+validation happen before the scatter cycle advances, and `pyplot.Scatter`
+propagates errors. Core and plot3d alpha multiplier paths share
 `render.Color.WithAlphaMultiplier`, and 3D scalar maps derive their
 configuration through
 `core.PlotOptions.ScalarMapConfig`, with no golden fixture changes. `just test`

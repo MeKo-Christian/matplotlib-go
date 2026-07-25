@@ -16,20 +16,17 @@ func captureWarnings() (*[]string, func()) {
 }
 
 // Matplotlib raises "x and y must be the same size" when scatter inputs differ.
-// The Go port drops the artist (returns nil); it must at least say why.
-func TestScatterLengthMismatchWarns(t *testing.T) {
+// Rejected Go plot input returns an error rather than warning and skipping.
+func TestScatterLengthMismatchReturnsError(t *testing.T) {
 	got, restore := captureWarnings()
 	defer restore()
 
 	ax := newAlphaTestAxes()
-	if s := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1}); s != nil {
-		t.Fatal("expected nil scatter for mismatched lengths")
+	if s, err := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1}); err == nil || s != nil {
+		t.Fatalf("Scatter() = (%v, %v), want nil artist and length error", s, err)
 	}
-	if len(*got) == 0 {
-		t.Fatal("Scatter length mismatch produced no diagnostic")
-	}
-	if !strings.Contains(strings.ToLower((*got)[0]), "scatter") {
-		t.Fatalf("warning %q should name the Scatter call", (*got)[0])
+	if len(*got) != 0 {
+		t.Fatalf("rejected Scatter should return an error, not warn: %v", *got)
 	}
 }
 
@@ -38,8 +35,8 @@ func TestScatterValidInputDoesNotWarn(t *testing.T) {
 	defer restore()
 
 	ax := newAlphaTestAxes()
-	if s := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1, 2}); s == nil {
-		t.Fatal("expected non-nil scatter for valid input")
+	if s, err := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1, 2}); err != nil || s == nil {
+		t.Fatalf("Scatter() = (%v, %v), want non-nil artist and nil error", s, err)
 	}
 	if len(*got) != 0 {
 		t.Fatalf("valid Scatter should not warn, got %v", *got)

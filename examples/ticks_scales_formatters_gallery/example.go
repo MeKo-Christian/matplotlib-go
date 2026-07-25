@@ -170,7 +170,7 @@ func addCustomUnitPanel(fig *core.Figure, rect geom.Rect) {
 	if _, err := ax.Plot(distances, pace, core.PlotOptions{Color: &blue, LineWidth: ptr(2.0)}); err != nil {
 		panic(err)
 	}
-	if _, err := ax.ScatterUnits(distances, pace, core.ScatterOptions{Color: &green, EdgeColor: &blue, Size: ptr(core.ScatterAreaFromRadius(5.0, DPI))}); err != nil {
+	if _, err := ax.Scatter(distances, pace, core.ScatterOptions{Color: &green, EdgeColor: &blue, Size: ptr(core.ScatterAreaFromRadius(5.0, DPI))}); err != nil {
 		panic(err)
 	}
 	ax.SetXLim(3, 44)

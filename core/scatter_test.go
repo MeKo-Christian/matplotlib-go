@@ -62,7 +62,7 @@ func TestScatterUsesIndependentShapeColorCycle(t *testing.T) {
 	palette := fig.RC.Palette()
 
 	firstLine, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
-	scatter := ax.Scatter([]float64{0.5}, []float64{0.5})
+	scatter, _ := ax.Scatter([]float64{0.5}, []float64{0.5})
 	secondLine, _ := ax.Plot([]float64{0, 1}, []float64{1, 0})
 
 	if got, want := firstLine.Col, palette[0]; got != want {
@@ -80,7 +80,7 @@ func TestScatterDefaultsUseMatplotlibFaceEdges(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 
-	scatter := ax.Scatter([]float64{0.5}, []float64{0.5})
+	scatter, _ := ax.Scatter([]float64{0.5}, []float64{0.5})
 	if scatter == nil {
 		t.Fatal("Scatter returned nil")
 	}
@@ -648,8 +648,8 @@ func TestAxesScatterRejectsMismatchedXYLikeMatplotlib(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 
-	if got := ax.Scatter([]float64{0, 1}, []float64{0}); got != nil {
-		t.Fatalf("Scatter with mismatched x/y lengths returned %#v, want nil", got)
+	if got, err := ax.Scatter([]float64{0, 1}, []float64{0}); err == nil || got != nil {
+		t.Fatalf("Scatter with mismatched x/y lengths returned (%#v, %v), want nil and error", got, err)
 	}
 	if got := len(ax.Artists); got != 0 {
 		t.Fatalf("mismatched scatter registered %d artists, want 0", got)
@@ -671,7 +671,7 @@ func TestAxesScatterAppliesPerPointSizeAndColors(t *testing.T) {
 		{B: 0.2, A: 1},
 	}
 
-	scatter := ax.Scatter(
+	scatter, _ := ax.Scatter(
 		[]float64{0, 1, 2},
 		[]float64{2, 1, 0},
 		ScatterOptions{Sizes: sizes, Colors: colors, EdgeColors: edgeColors},
@@ -705,7 +705,7 @@ func TestAxesScatterScalarValuesMapFacesAndDefaultEdges(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 	values := []float64{0, 1}
 
-	scatter := ax.Scatter(
+	scatter, _ := ax.Scatter(
 		[]float64{0, 1},
 		[]float64{1, 0},
 		ScatterOptions{ScalarValues: values, Colormap: "viridis"},
@@ -891,7 +891,7 @@ func TestScatter2D_LargeDataset(t *testing.T) {
 func TestScatterMasksNonfinitePositionByDefault(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	s := ax.Scatter([]float64{0, math.NaN(), 2}, []float64{0, 1, 2})
+	s, _ := ax.Scatter([]float64{0, math.NaN(), 2}, []float64{0, 1, 2})
 	if s == nil {
 		t.Fatal("Scatter returned nil")
 	}
@@ -903,7 +903,7 @@ func TestScatterMasksNonfinitePositionByDefault(t *testing.T) {
 func TestScatterMasksNonfiniteScalarByDefault(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	s := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1, 2},
+	s, _ := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1, 2},
 		ScatterOptions{ScalarValues: []float64{0.1, math.NaN(), 0.3}})
 	if got := len(s.XY); got != 2 {
 		t.Fatalf("scatter kept %d points, want 2 (NaN scalar dropped)", got)
@@ -916,7 +916,7 @@ func TestScatterMasksNonfiniteScalarByDefault(t *testing.T) {
 func TestScatterPlotNonfiniteKeepsNonfiniteScalar(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	s := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1, 2},
+	s, _ := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1, 2},
 		ScatterOptions{ScalarValues: []float64{0.1, math.NaN(), 0.3}, PlotNonfinite: true})
 	if got := len(s.XY); got != 3 {
 		t.Fatalf("scatter kept %d points, want 3 (nonfinite scalar kept for bad color)", got)
@@ -929,7 +929,7 @@ func TestScatterPlotNonfiniteKeepsNonfiniteScalar(t *testing.T) {
 func TestScatterPlotNonfiniteStillDropsNonfinitePosition(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	s := ax.Scatter([]float64{0, math.Inf(1), 2}, []float64{0, 1, 2},
+	s, _ := ax.Scatter([]float64{0, math.Inf(1), 2}, []float64{0, 1, 2},
 		ScatterOptions{PlotNonfinite: true})
 	if got := len(s.XY); got != 2 {
 		t.Fatalf("scatter kept %d points, want 2 (inf x dropped even with PlotNonfinite)", got)

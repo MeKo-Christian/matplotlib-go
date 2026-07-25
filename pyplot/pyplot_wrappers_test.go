@@ -144,6 +144,25 @@ func TestPlotAcceptsUnitCapableValues(t *testing.T) {
 	}
 }
 
+func TestScatterAcceptsUnitCapableValuesAndPropagatesErrors(t *testing.T) {
+	resetForTests()
+
+	scatter, err := Scatter([]string{"draft", "review"}, []float64{0.3, 0.8})
+	if err != nil {
+		t.Fatalf("Scatter() returned error: %v", err)
+	}
+	if scatter == nil {
+		t.Fatal("Scatter() returned nil artist")
+	}
+	if _, ok := GCA().XAxis.Locator.(ticker.FixedLocator); !ok {
+		t.Fatalf("x-axis locator = %T, want ticker.FixedLocator", GCA().XAxis.Locator)
+	}
+
+	if rejected, err := Scatter([]float64{0, 1}, []float64{1}); err == nil || rejected != nil {
+		t.Fatalf("mismatched Scatter() = (%v, %v), want nil artist and error", rejected, err)
+	}
+}
+
 func TestTextAndAnnotateDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 

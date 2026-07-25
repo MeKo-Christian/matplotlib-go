@@ -41,7 +41,7 @@ func Plot() *core.Figure {
 
 	scatterAx := panel(fig, 0.06, 0.08, 0.47, 0.47)
 	size := 560.0
-	scatter := scatterAx.Scatter(
+	scatter, _ := scatterAx.Scatter(
 		[]float64{0.22, 0.50, 0.78, 0.68},
 		[]float64{0.68, 0.34, 0.70, 0.30},
 		core.ScatterOptions{

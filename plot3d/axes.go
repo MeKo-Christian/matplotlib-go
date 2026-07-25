@@ -371,7 +371,10 @@ func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...core.ScatterOptions) *core
 	projectedOpt := scatterOptionsForProjected(opt, projected)
 
 	if len(opts) > 0 {
-		scatter := a.Scatter(x2, y2, projectedOpt)
+		scatter, err := a.Scatter(x2, y2, projectedOpt)
+		if err != nil {
+			return nil
+		}
 		reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip), opt)
 		scatter.SetZ(a.points3DCollectionZ(x, y, z))
 		a.add3DReprojector(func() {
@@ -380,7 +383,10 @@ func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...core.ScatterOptions) *core
 		}, limitsChanged)
 		return scatter
 	}
-	scatter := a.Scatter(x2, y2, projectedOpt)
+	scatter, err := a.Scatter(x2, y2, projectedOpt)
+	if err != nil {
+		return nil
+	}
 	reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip), opt)
 	scatter.SetZ(a.points3DCollectionZ(x, y, z))
 	a.add3DReprojector(func() {

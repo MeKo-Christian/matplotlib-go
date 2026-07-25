@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	fig, _ := example.Plot()
+	fig := example.Plot()
 	if err := fig.Save("mplot3d_terrain.png"); err != nil {
 		log.Fatalf("save: %v", err)
 	}

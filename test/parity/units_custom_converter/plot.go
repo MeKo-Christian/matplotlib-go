@@ -34,7 +34,7 @@ func Plot() *core.Figure {
 	if _, err := ax.Plot(distances, pace, core.PlotOptions{Color: &brown, LineWidth: &lineWidth}); err != nil {
 		panic(err)
 	}
-	if _, err := ax.ScatterUnits(distances, pace, core.ScatterOptions{Color: &green, EdgeColor: &edge, Size: &markerSize}); err != nil {
+	if _, err := ax.Scatter(distances, pace, core.ScatterOptions{Color: &green, EdgeColor: &edge, Size: &markerSize}); err != nil {
 		panic(err)
 	}
 	ax.AutoScale(0.08)

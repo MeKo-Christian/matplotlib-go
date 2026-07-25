@@ -4921,11 +4921,7 @@
         },
         {
           "id": "method Axes.Scatter",
-          "declaration": "func (Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D"
-        },
-        {
-          "id": "method Axes.ScatterUnits",
-          "declaration": "func (Axes) ScatterUnits(xVals, yVals any, opts ...ScatterOptions) (*Scatter2D, error)"
+          "declaration": "func (Axes) Scatter(xVals, yVals any, opts ...ScatterOptions) (*Scatter2D, error)"
         },
         {
           "id": "method Axes.SecondaryXAxis",
@@ -8951,7 +8947,7 @@
         },
         {
           "id": "func Scatter",
-          "declaration": "func Scatter(x, y []float64, opts ...core.ScatterOptions) *core.Scatter2D"
+          "declaration": "func Scatter(x, y any, opts ...core.ScatterOptions) (*core.Scatter2D, error)"
         },
         {
           "id": "func Scatter3D",

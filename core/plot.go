@@ -459,16 +459,82 @@ type ScatterOptions struct {
 	PlotNonfinite bool
 }
 
-// Scatter creates a scatter plot with automatic shape/fill color cycling if no color is specified.
-func (a *Axes) Scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
-	if len(x) == 0 || len(y) == 0 {
-		return nil
+// Scatter converts x and y through the axes units machinery and creates a
+// scatter plot with automatic shape/fill color cycling if no color is
+// specified.
+//
+// Rejected input leaves the axes, its unit configuration, and its property
+// cycle unchanged.
+func (a *Axes) Scatter(xVals, yVals any, opts ...ScatterOptions) (*Scatter2D, error) {
+	if a == nil {
+		return nil, fmt.Errorf("scatter axes cannot be nil")
 	}
-	if len(x) != len(y) {
-		diag.Warnf("Scatter: x and y must be the same size (got %d and %d); skipping", len(x), len(y))
-		return nil
+	if len(opts) > 1 {
+		return nil, fmt.Errorf("scatter accepts at most one ScatterOptions value")
 	}
 
+	tx := a.beginUnitConversion()
+	x, err := a.convertValues(xVals, true)
+	if err != nil {
+		tx.rollback()
+		return nil, fmt.Errorf("scatter x values: %w", err)
+	}
+	y, err := a.convertValues(yVals, false)
+	if err != nil {
+		tx.rollback()
+		return nil, fmt.Errorf("scatter y values: %w", err)
+	}
+	if err := validateScatterInput(x, y, opts); err != nil {
+		tx.rollback()
+		return nil, err
+	}
+
+	scatter := a.scatter(x, y, opts...)
+	tx.commit()
+	return scatter, nil
+}
+
+func validateScatterInput(x, y []float64, opts []ScatterOptions) error {
+	if len(x) == 0 || len(y) == 0 {
+		return fmt.Errorf("scatter x and y values cannot be empty")
+	}
+	if len(x) != len(y) {
+		return fmt.Errorf("scatter x and y must have the same length (got %d and %d)", len(x), len(y))
+	}
+
+	var opt ScatterOptions
+	if len(opts) == 1 {
+		opt = opts[0]
+	}
+	n := len(x)
+	optionLengths := []struct {
+		name   string
+		length int
+	}{
+		{name: "Sizes", length: len(opt.Sizes)},
+		{name: "Colors", length: len(opt.Colors)},
+		{name: "ScalarValues", length: len(opt.ScalarValues)},
+		{name: "EdgeColors", length: len(opt.EdgeColors)},
+	}
+	for _, option := range optionLengths {
+		if option.length > 0 && !validScatterOptionLength(option.length, n) {
+			return fmt.Errorf("scatter %s must have length 1 or %d (got %d)", option.name, n, option.length)
+		}
+	}
+	if len(opt.ScalarValues) > 0 {
+		if _, err := ResolveScalarMapValues(opt.ScalarValues, ScalarMapConfig{
+			Colormap: opt.Colormap,
+			Norm:     opt.Norm,
+			VMin:     opt.VMin,
+			VMax:     opt.VMax,
+		}); err != nil {
+			return fmt.Errorf("scatter scalar values: %w", err)
+		}
+	}
+	return nil
+}
+
+func (a *Axes) scatter(x, y []float64, opts ...ScatterOptions) *Scatter2D {
 	// Create points
 	n := len(x)
 	points := make([]geom.Pt, n)

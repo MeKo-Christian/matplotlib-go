@@ -43,7 +43,7 @@ func Stairs(values, edges []float64, opts ...core.StairsOptions) *core.Stairs2D 
 }
 
 // Scatter delegates to the current axes.
-func Scatter(x, y []float64, opts ...core.ScatterOptions) *core.Scatter2D {
+func Scatter(x, y any, opts ...core.ScatterOptions) (*core.Scatter2D, error) {
 	return GCA().Scatter(x, y, opts...)
 }
 

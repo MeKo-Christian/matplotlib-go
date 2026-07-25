@@ -88,6 +88,83 @@ func TestAxesPlot_RejectedInputIsTransactional(t *testing.T) {
 	}
 }
 
+func TestAxesScatter_ConfiguresCategoricalAxis(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+
+	scatter, err := ax.Scatter([]string{"draft", "review", "ship"}, []float64{0.3, 0.8, 0.5})
+	if err != nil {
+		t.Fatalf("Scatter returned error: %v", err)
+	}
+	if scatter == nil {
+		t.Fatal("Scatter returned nil artist")
+	}
+	if got := scatter.XY[2].X; got != 2 {
+		t.Fatalf("converted categorical x[2] = %v, want 2", got)
+	}
+	if _, ok := ax.XAxis.Locator.(ticker.FixedLocator); !ok {
+		t.Fatalf("x-axis locator = %T, want ticker.FixedLocator", ax.XAxis.Locator)
+	}
+}
+
+func TestAxesScatter_RejectedInputIsTransactional(t *testing.T) {
+	fig := NewFigure(800, 600)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
+	originalLocator := ax.XAxis.Locator
+	originalFormatter := ax.XAxis.Formatter
+	originalCycle := ax.PatchColorCycle
+	originalCycleIndex := originalCycle.Index()
+
+	assertUnchanged := func(context string) {
+		t.Helper()
+		if ax.xUnits != nil || ax.yUnits != nil {
+			t.Fatalf("%s configured units: x=%v y=%v", context, ax.xUnits, ax.yUnits)
+		}
+		if !reflect.DeepEqual(ax.XAxis.Locator, originalLocator) || !reflect.DeepEqual(ax.XAxis.Formatter, originalFormatter) {
+			t.Fatalf("%s changed x-axis locator/formatter to %T/%T", context, ax.XAxis.Locator, ax.XAxis.Formatter)
+		}
+		if len(ax.Artists) != 0 {
+			t.Fatalf("%s added %d artists", context, len(ax.Artists))
+		}
+		if ax.PatchColorCycle != originalCycle || ax.PatchColorCycle.Index() != originalCycleIndex {
+			t.Fatalf("%s replaced or advanced the patch property cycle", context)
+		}
+	}
+
+	if scatter, err := ax.Scatter(
+		[]string{"draft", "review"},
+		[]float64{0.3, 0.8},
+		ScatterOptions{Sizes: []float64{4, 9, 16}},
+	); err == nil || scatter != nil {
+		t.Fatalf("shape-invalid Scatter() = (%v, %v), want nil artist and error", scatter, err)
+	}
+	assertUnchanged("shape-invalid Scatter")
+
+	vmin := 0.0
+	if scatter, err := ax.Scatter(
+		[]string{"draft", "review"},
+		[]float64{0.3, 0.8},
+		ScatterOptions{
+			ScalarValues: []float64{0.3, 0.8},
+			Norm:         Normalize{VMin: 0, VMax: 1},
+			VMin:         &vmin,
+		},
+	); err == nil || scatter != nil {
+		t.Fatalf("scalar-map-invalid Scatter() = (%v, %v), want nil artist and error", scatter, err)
+	}
+	assertUnchanged("scalar-map-invalid Scatter")
+
+	if scatter, err := ax.Scatter(
+		[]float64{0, 1},
+		[]float64{1, 2},
+		ScatterOptions{},
+		ScatterOptions{},
+	); err == nil || scatter != nil {
+		t.Fatalf("multi-option Scatter() = (%v, %v), want nil artist and error", scatter, err)
+	}
+	assertUnchanged("multi-option Scatter")
+}
+
 func TestAxesPlotDate_ConfiguresDateAxis(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})

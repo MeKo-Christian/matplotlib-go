@@ -273,20 +273,6 @@ func cloneAxisUnitsState(state *axisUnitsState) *axisUnitsState {
 	return &cloned
 }
 
-// ScatterUnits converts non-float slice data using the axis units machinery
-// and then draws a standard scatter artist.
-func (a *Axes) ScatterUnits(xVals, yVals any, opts ...ScatterOptions) (*Scatter2D, error) {
-	x, err := a.convertValues(xVals, true)
-	if err != nil {
-		return nil, err
-	}
-	y, err := a.convertValues(yVals, false)
-	if err != nil {
-		return nil, err
-	}
-	return a.Scatter(x, y, opts...), nil
-}
-
 // BarUnits converts bar positions using the axis units machinery. For
 // horizontal bars the first slice configures the y-axis instead of the x-axis.
 func (a *Axes) BarUnits(posVals, heights any, opts ...BarOptions) (*Bar2D, error) {

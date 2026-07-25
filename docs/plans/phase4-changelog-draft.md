@@ -26,6 +26,9 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
 - Folded `Axes.PlotUnits` into `Axes.Plot`. The primary method now accepts
   unit-capable slice values and returns `(*Line2D, error)` for rejected input;
   `PlotDate`, `pyplot.Plot`, and `pyplot.PlotDate` propagate the same error.
+- Folded `Axes.ScatterUnits` into `Axes.Scatter`. The primary method and
+  `pyplot.Scatter` now accept unit-capable slice values and return
+  `(*Scatter2D, error)` with transactional rejection.
 
 ## Added
 

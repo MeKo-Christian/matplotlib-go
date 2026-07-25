@@ -39,7 +39,7 @@ import (
 )
 
 func main() {
-	fig, _ := basic_line.Plot()
+	fig := basic_line.Plot()
 
 	b, err := desktop.New(desktop.Options{
 		Figure:     fig,

@@ -134,7 +134,7 @@ func addScatterFrame(ax *core.Axes, frame int) *core.Scatter2D {
 	cmap := "viridis"
 	vmin, vmax := 0.30, 0.95
 	edgeWidth := 1.2
-	return ax.Scatter(x, y, core.ScatterOptions{
+	scatter, err := ax.Scatter(x, y, core.ScatterOptions{
 		ScalarValues: scalars,
 		Colormap:     cmap,
 		VMin:         &vmin,
@@ -143,6 +143,10 @@ func addScatterFrame(ax *core.Axes, frame int) *core.Scatter2D {
 		EdgeColor:    &scatterEdge,
 		EdgeWidth:    &edgeWidth,
 	})
+	if err != nil {
+		return nil
+	}
+	return scatter
 }
 
 // addImshowFrame attaches the frame-N heatmap to ax.

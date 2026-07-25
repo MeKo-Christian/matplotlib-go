@@ -78,7 +78,7 @@ func Plot() *core.Figure {
 	unitAx.SetXLabel("Distance")
 	unitAx.SetYLabel("Pace")
 	common.AddReferenceXYGrid(unitAx)
-	_, err = unitAx.ScatterUnits(
+	_, err = unitAx.Scatter(
 		[]common.TestDistanceKM{5, 10, 21.1, 42.2},
 		[]float64{6.4, 5.8, 5.2, 5.5},
 		core.ScatterOptions{
