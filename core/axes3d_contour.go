@@ -7,7 +7,8 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-// Contour projects a structured z grid and emits a placeholder wireframe contour.
+// Contour computes contour lines for a structured z grid and projects them into
+// the current 3D view.
 func (a *Axes3D) Contour(x, y []float64, z [][]float64, opts ...PlotOptions) *LineCollection {
 	limitsChanged := a.observe3DGrid(x, y, z)
 	opt := firstPlotOptions(opts)

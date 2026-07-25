@@ -25,6 +25,19 @@ const (
 	LegendBest
 )
 
+// LegendOutsideLocation selects the figure edge that constrained layout
+// reserves for a figure legend. The legend's Location still controls alignment
+// along that edge. Axes legends ignore this setting.
+type LegendOutsideLocation uint8
+
+const (
+	LegendOutsideNone LegendOutsideLocation = iota
+	LegendOutsideRight
+	LegendOutsideLeft
+	LegendOutsideUpper
+	LegendOutsideLower
+)
+
 // Legend renders a styled legend box inside an axes.
 // If no explicit internal entries are present, labeled artists on the owning axes are collected automatically.
 type Legend struct {
@@ -35,6 +48,7 @@ type Legend struct {
 	handlers []legendHandlerOverride
 
 	Location        LegendLocation
+	Outside         LegendOutsideLocation
 	Locator         AnchoredBoxLocator
 	Padding         float64
 	Inset           float64

@@ -379,6 +379,137 @@ func TestDrawFigure_ConstrainedLayoutRespondsToNeighboringDecorations(t *testing
 	}
 }
 
+func TestConstrainedLayoutSpanningMosaicMatchesSubmergedMargins(t *testing.T) {
+	fig := NewFigure(800, 400)
+	fig.ConstrainedLayout()
+	fig.RC.Figure.Constrained.WPad = 0
+	fig.RC.Figure.Constrained.HPad = 0
+	fig.RC.Figure.Constrained.WSpace = 0
+	fig.RC.Figure.Constrained.HSpace = 0
+
+	axes, err := fig.SubplotMosaic([][]string{
+		{"A", "A", "A", "B"},
+		{"C", "C", "D", "D"},
+	})
+	if err != nil {
+		t.Fatalf("SubplotMosaic: %v", err)
+	}
+	for _, ax := range axes {
+		ax.XAxis.ShowLabels = false
+		ax.YAxis.ShowLabels = false
+		ax.XAxis.ShowTicks = false
+		ax.YAxis.ShowTicks = false
+	}
+	axes["B"].SetYLabel("wide")
+	axes["D"].SetYLabel("wide")
+
+	r := &figureLayoutRecordingRenderer{
+		bounds: map[string]render.TextBounds{
+			"wide": {X: 0, Y: -10, W: 80, H: 20},
+		},
+	}
+	DrawFigure(fig, r)
+
+	if got, want := axes["C"].RectFraction.W(), axes["D"].RectFraction.W(); !floatApprox(got, want, 1e-12) {
+		t.Fatalf("submerged mosaic widths differ: C=%v D=%v", got, want)
+	}
+	if axes["A"].RectFraction.Max.X >= axes["B"].RectFraction.Min.X {
+		t.Fatalf("top-row mosaic axes overlap: A=%+v B=%+v", axes["A"].RectFraction, axes["B"].RectFraction)
+	}
+}
+
+func TestConstrainedLayoutReservesOnlyExplicitOutsideFigureLegends(t *testing.T) {
+	newFigure := func(addLegend bool, outside LegendOutsideLocation) (*Figure, *Axes) {
+		fig := NewFigure(600, 400)
+		fig.ConstrainedLayout()
+		ax := fig.AddSubplot(1, 1, 1)
+		ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+		if addLegend {
+			legend := fig.AddLegend()
+			legend.Location = LegendCenterRight
+			legend.Outside = outside
+		}
+		return fig, ax
+	}
+
+	baseline, baselineAxes := newFigure(false, LegendOutsideNone)
+	DrawFigure(baseline, &figureLayoutRecordingRenderer{})
+
+	ordinary, ordinaryAxes := newFigure(true, LegendOutsideNone)
+	DrawFigure(ordinary, &figureLayoutRecordingRenderer{})
+	if ordinaryAxes.RectFraction != baselineAxes.RectFraction {
+		t.Fatalf(
+			"ordinary figure legend unexpectedly reserved space: baseline=%+v ordinary=%+v",
+			baselineAxes.RectFraction,
+			ordinaryAxes.RectFraction,
+		)
+	}
+
+	outside, outsideAxes := newFigure(true, LegendOutsideRight)
+	DrawFigure(outside, &figureLayoutRecordingRenderer{})
+
+	if outsideAxes.RectFraction.Max.X >= ordinaryAxes.RectFraction.Max.X {
+		t.Fatalf(
+			"outside-right legend did not reserve figure space: ordinary=%+v outside=%+v",
+			ordinaryAxes.RectFraction,
+			outsideAxes.RectFraction,
+		)
+	}
+
+	upper, upperAxes := newFigure(true, LegendOutsideUpper)
+	DrawFigure(upper, &figureLayoutRecordingRenderer{})
+	if upperAxes.RectFraction.Max.Y >= ordinaryAxes.RectFraction.Max.Y {
+		t.Fatalf(
+			"outside-upper legend did not reserve figure space: ordinary=%+v outside=%+v",
+			ordinaryAxes.RectFraction,
+			upperAxes.RectFraction,
+		)
+	}
+	if !floatApprox(upperAxes.RectFraction.Max.X, ordinaryAxes.RectFraction.Max.X, 1e-12) {
+		t.Fatalf("outside-upper legend unexpectedly changed right edge: ordinary=%+v outside=%+v", ordinaryAxes.RectFraction, upperAxes.RectFraction)
+	}
+}
+
+func TestConstrainedLayoutNestedGridReservesColorbarAndOutsideLegend(t *testing.T) {
+	fig := NewFigure(600, 400)
+	fig.ConstrainedLayout()
+
+	outer := fig.GridSpec(1, 2)
+	left := outer.Cell(0, 0).AddAxes()
+	left.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
+
+	inner := outer.Cell(0, 1).GridSpec(2, 1)
+	top := inner.Cell(0, 0).AddAxes()
+	bottom := inner.Cell(1, 0).AddAxes()
+	image := top.Image([][]float64{{0, 1}, {2, 3}})
+	colorbar := fig.AddColorbar(top, image)
+	if colorbar == nil {
+		t.Fatal("expected nested colorbar")
+	}
+
+	legend := fig.AddLegend()
+	legend.Location = LegendUpperRight
+	legend.Outside = LegendOutsideRight
+
+	r := &figureLayoutRecordingRenderer{}
+	DrawFigure(fig, r)
+
+	if !floatApprox(top.RectFraction.Min.X, bottom.RectFraction.Min.X, 1e-12) ||
+		!floatApprox(top.RectFraction.W(), bottom.RectFraction.W(), 1e-12) {
+		t.Fatalf("nested axes are not column-aligned: top=%+v bottom=%+v", top.RectFraction, bottom.RectFraction)
+	}
+	if colorbar.RectFraction.Min.X <= top.RectFraction.Max.X {
+		t.Fatalf("nested colorbar overlaps parent axes: axes=%+v colorbar=%+v", top.RectFraction, colorbar.RectFraction)
+	}
+	legendRect, ok := legend.boxRect(r, newFigureDrawContext(fig, fig.DisplayRect()))
+	if !ok {
+		t.Fatal("expected measurable outside legend")
+	}
+	if colorbar.RectFraction.Max.X*fig.SizePx.X >= legendRect.Min.X {
+		t.Fatalf("nested colorbar overlaps outside legend: colorbar=%+v legend=%+v", colorbar.RectFraction, legendRect)
+	}
+}
+
 func TestConstrainedLayoutKeepsNestedYAxisTickDensityReadable(t *testing.T) {
 	fig := NewFigure(960, 640)
 	fig.ConstrainedLayout()

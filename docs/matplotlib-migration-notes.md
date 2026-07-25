@@ -967,6 +967,28 @@ shape. That keeps visual clipping correct for current fixtures, but clipped
 scalar-stage resampling can still differ from upstream when only a subregion of
 a large image is visible.
 
+## Phase 17 Constrained-Layout Nesting and Outside Reservations
+
+Nested `SubplotSpec.GridSpec` layouts participate in the existing two-pass,
+parent-first constrained-layout recursion. The canonical spanning mosaic
+`AAAB/CCDD` keeps equal lower-row widths even with asymmetric decorations
+because the direct solver projects interior decoration requirements onto a
+uniform maximum gap. A nested grid with a right colorbar and an outside-right
+figure legend is also regression-tested for column alignment and non-overlap.
+
+Figure legends reserve constrained-layout space only when `Legend.Outside` is
+set; `Legend.Location` independently controls alignment along that edge. This
+matches Matplotlib's separation between `_outside_loc` and ordinary legend
+location and avoids shrinking axes for ordinary edge-anchored figure legends.
+
+The Go solver intentionally retains its compact `GridSpecOptions` projection
+instead of Matplotlib's shared kiwi constraint tree. Consequently it cannot
+represent distinct solved margins at every internal boundary or propagate
+global submerged-margin maxima across unrelated nested grids. The supported
+single-parent colorbar path remains exact for the tested nested reservation;
+multi-parent colorbars and aggregate parent spans remain outside the current
+typed API as documented below.
+
 ## Phase 17.6.5 Colorbar Placement Audit
 
 Parent and Layout Modes and Size and Anchor Options are the placement audit

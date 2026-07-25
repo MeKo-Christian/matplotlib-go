@@ -443,13 +443,9 @@ func addColorbarMarginsToGrid(g *layoutGrid, fig *Figure, r render.Renderer, vp 
 // figureLegendMarginsPx reserves figure margins for figure-level legends placed
 // outside the Axes, mirroring the figure-legend branch of make_layout_margins.
 //
-// Limitation: Matplotlib only reserves space for legends whose location is an
-// "outside" location (e.g. "outside right upper"). The Go Legend type does not
-// yet model an explicit outside flag, so we approximate this by reserving space
-// for figure legends anchored to an edge-centered location (the Right/CenterLeft
-// and upper/lower-center variants), which are the placements that would
-// otherwise overlap the Axes. Inset/corner figure legends are not reserved,
-// matching Matplotlib's behavior of only handling _outside_loc legends here.
+// Matplotlib reserves space only for figure legends with an explicit outside
+// location. Outside and ordinary anchor location are independent: for example,
+// OutsideRight plus LegendUpperRight mirrors "outside right upper".
 func figureLegendMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engine LayoutEngine) figureMargin {
 	margins := figureMargin{}
 	if fig == nil || r == nil {
@@ -470,19 +466,15 @@ func figureLegendMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engine 
 		if !ok || box.W() <= 0 || box.H() <= 0 {
 			continue
 		}
-		switch leg.Location {
-		case LegendRight, LegendCenterRight:
+		switch leg.Outside {
+		case LegendOutsideRight:
 			margins.right = math.Max(margins.right, box.W()+2*wPad)
-		case LegendCenterLeft:
+		case LegendOutsideLeft:
 			margins.left = math.Max(margins.left, box.W()+2*wPad)
-		case LegendUpperCenter:
+		case LegendOutsideUpper:
 			margins.top = math.Max(margins.top, box.H()+2*hPad)
-		case LegendLowerCenter:
+		case LegendOutsideLower:
 			margins.bottom = math.Max(margins.bottom, box.H()+2*hPad)
-		default:
-			// Corner / inset / "best" figure legends overlap the Axes the same
-			// way they do in Matplotlib without constrained_layout; no
-			// reservation (matches _outside_loc being None).
 		}
 	}
 	return margins

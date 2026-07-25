@@ -3204,6 +3204,26 @@
           "declaration": "const LegendLowerRight"
         },
         {
+          "id": "const LegendOutsideLeft",
+          "declaration": "const LegendOutsideLeft"
+        },
+        {
+          "id": "const LegendOutsideLower",
+          "declaration": "const LegendOutsideLower"
+        },
+        {
+          "id": "const LegendOutsideNone",
+          "declaration": "const LegendOutsideNone LegendOutsideLocation = iota"
+        },
+        {
+          "id": "const LegendOutsideRight",
+          "declaration": "const LegendOutsideRight"
+        },
+        {
+          "id": "const LegendOutsideUpper",
+          "declaration": "const LegendOutsideUpper"
+        },
+        {
           "id": "const LegendRight",
           "declaration": "const LegendRight"
         },
@@ -8329,7 +8349,7 @@
         },
         {
           "id": "type Legend",
-          "declaration": "type Legend struct{ Axes *Axes; Figure *Figure; Location LegendLocation; Locator AnchoredBoxLocator; Padding float64; Inset float64; RowGap float64; SampleWidth float64; SampleTextGap float64; ColumnSpacing float64; NumColumns int; NumPoints int; MarkerScale float64; ScatterPoints int; HandleHeight float64; Title string; TitleFontSize float64; FrameOn bool; Shadow bool; CornerRadius float64; BackgroundColor render.Color; BorderColor render.Color; TextColor render.Color; BorderWidth float64; FontSize float64 }"
+          "declaration": "type Legend struct{ Axes *Axes; Figure *Figure; Location LegendLocation; Outside LegendOutsideLocation; Locator AnchoredBoxLocator; Padding float64; Inset float64; RowGap float64; SampleWidth float64; SampleTextGap float64; ColumnSpacing float64; NumColumns int; NumPoints int; MarkerScale float64; ScatterPoints int; HandleHeight float64; Title string; TitleFontSize float64; FrameOn bool; Shadow bool; CornerRadius float64; BackgroundColor render.Color; BorderColor render.Color; TextColor render.Color; BorderWidth float64; FontSize float64 }"
         },
         {
           "id": "type LegendEntryOptions",
@@ -8338,6 +8358,10 @@
         {
           "id": "type LegendLocation",
           "declaration": "type LegendLocation uint8"
+        },
+        {
+          "id": "type LegendOutsideLocation",
+          "declaration": "type LegendOutsideLocation uint8"
         },
         {
           "id": "type LegendSample",

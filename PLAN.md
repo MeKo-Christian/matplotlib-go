@@ -472,12 +472,9 @@ live in `style/{unhonored,unparsed}.go`.
 - [x] **MathText and exit gate:** all nine settings are honored; audit guards,
       focused tests, API audit, and pinned-FreeType parity suites pass.
 
-## Phase 17: Artist Breadth & Algorithmic Correctness ⚪
+## Phase 17: Artist Breadth & Algorithmic Correctness ✅
 
-**Goal:** fix the concrete divergences the audit pinned down and fill the narrow
-artist gaps that have no workaround.
-
-**Completed:** corrected log tick selection, contour saddle splitting,
+**Completed 2026-07-25.** Corrected log tick selection, contour saddle splitting,
 `TwoSlopeNorm`/log clipping, quiver scaling, transformed-space autoscaling, and
 zero-bound handling.
 
@@ -488,15 +485,10 @@ zero-bound handling.
 - [x] Verified the daily date interval tables already match Matplotlib 3.10.9.
 - [x] Added scaled translations, replaceable transform wrappers, and immutable
       affine rotation/skew builders.
-
-### Remaining work
-
-- [ ] `core/layoutgrid.go:239` / `:448` — nested-mosaic constrained_layout is
-      not modeled and outside legend/colorbar space is approximated. **Triage:**
-      scope the shared-margin modeling cost; if not justified by a parity case,
-      close as a documented limitation in `docs/matplotlib-parity-status.md`.
-- [ ] `core/axes3d_contour.go:10` — stale "placeholder wireframe contour"
-      comment over a real projected-contour implementation; fix the doc.
+- [x] Verified spanning/nested constrained-layout invariants, added explicit
+      outside figure-legend reservations, and documented shared-solver limits.
+- [x] Aligned 3D contour documentation with its projected-contour
+      implementation.
 
 ## Phase 18: Parity-Harness Rigor ⚪
 
