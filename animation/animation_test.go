@@ -11,6 +11,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
 // fakeCanvas is a deterministic FigureCanvas used by the animation tests.
@@ -217,7 +218,7 @@ func TestFuncAnimationDoesNotStealWidgetPickLayer(t *testing.T) {
 	cnv := newFakeCanvas()
 	cnv.fig = core.NewFigure(120, 80)
 	ax := cnv.fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
-	button := ax.Button("Run")
+	button := widgets.NewButton(ax, "Run")
 	art := &pickableFakeArtist{fakeArtist: fakeArtist{zOrder: 10000}}
 	ax.Add(art)
 

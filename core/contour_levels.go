@@ -3,6 +3,8 @@ package core
 import (
 	"math"
 	"sort"
+
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func contourGridTriangulation(data [][]float64, opts []ContourOptions) (Triangulation, []float64, bool) {
@@ -146,7 +148,7 @@ func contourLocatorLevels(minValue, maxValue float64, levelCount int, filled boo
 	// Match matplotlib's _ensure_locator_exists: MaxNLocator(N + 1, min_n_ticks=1).
 	// For levels=N the locator is asked for N+1 intervals so the resulting "nice" step
 	// is roughly (zmax-zmin)/(N+1) — matching ContourSet._autolev's tick layout.
-	levels := (MaxNLocator{
+	levels := (ticker.MaxNLocator{
 		N:     levelCount + 1,
 		Steps: []float64{1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10},
 	}).Ticks(minValue, maxValue, 0)

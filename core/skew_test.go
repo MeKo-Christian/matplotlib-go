@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestAddSkewXAxesConfiguresProjection(t *testing.T) {
@@ -148,7 +149,7 @@ func TestSkewXYGridSpansAxesWithoutSkew(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddSkewXAxes: %v", err)
 	}
-	ax.YAxis.Locator = FixedLocator{TicksList: []float64{300}}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{300}}
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 
 	grid := NewGrid(AxisLeft)
@@ -201,8 +202,8 @@ func TestSkewXYTickLabelsStayOnLeftSpine(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddSkewXAxes: %v", err)
 	}
-	ax.YAxis.Locator = FixedLocator{TicksList: []float64{200, 1000}}
-	ax.YAxis.Formatter = ScalarFormatter{Prec: 0}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{200, 1000}}
+	ax.YAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
 	ax.YAxis.MinorLocator = nil
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 

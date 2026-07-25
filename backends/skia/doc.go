@@ -37,7 +37,7 @@
 // backed by a native SkSurface: gradient path fills (SkShaders gradients),
 // transformed RGBA images (SkImage), tiled-shader hatches (SkShader), marker
 // batches and path collections (SkCanvas/SkPath), quad meshes, and Gouraud
-// triangles (SkVertices) render natively, so IsCapabilityBridged reports
+// triangles (SkVertices) render natively, so RuntimeCapabilityStatus reports
 // ImageTransform, NativeHatcher, MarkerBatch, PathCollectionBatch, and
 // QuadMeshBatch as native.
 //

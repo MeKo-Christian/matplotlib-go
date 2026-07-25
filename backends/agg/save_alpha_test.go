@@ -58,11 +58,11 @@ func TestAggSavePNGSemiTransparentOverTransparent(t *testing.T) {
 	}
 
 	// The codebase's round-trip invariant must also hold for alpha<255:
-	// decoded straight pixel equals the (straight) in-memory GetImage pixel.
-	mem := r.GetImage().RGBAAt(1, 1)
+	// decoded straight pixel equals the (straight) in-memory Image pixel.
+	mem := r.Image().RGBAAt(1, 1)
 	if absDiff8(got.R, mem.R) > tol || absDiff8(got.G, mem.G) > tol ||
 		absDiff8(got.B, mem.B) > tol || absDiff8(got.A, mem.A) > tol {
-		t.Fatalf("decoded PNG %+v != in-memory GetImage %+v", got, mem)
+		t.Fatalf("decoded PNG %+v != in-memory Image %+v", got, mem)
 	}
 }
 
@@ -86,7 +86,7 @@ func TestAggFillOverWhiteTransparentClear(t *testing.T) {
 		if err := r.End(); err != nil {
 			t.Fatalf("End: %v", err)
 		}
-		c := r.GetImage().RGBAAt(1, 1)
+		c := r.Image().RGBAAt(1, 1)
 		// A fully transparent clear (alpha 0) must not matte its RGB into the
 		// fill, regardless of the clear's RGB. Pure straight target (200,120,40,128).
 		want := color.NRGBA{R: 200, G: 120, B: 40, A: 128}
@@ -117,7 +117,7 @@ func TestAggClippedFillOverWhiteTransparent(t *testing.T) {
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)
 	}
-	c := r.GetImage().RGBAAt(2, 2)
+	c := r.Image().RGBAAt(2, 2)
 	t.Logf("clipped fill over white-transparent = %+v (pure target {200,120,40,128})", c)
 	want := color.NRGBA{R: 200, G: 120, B: 40, A: 128}
 	const tol = 2
@@ -151,7 +151,7 @@ func TestAggPartialFillOverWhiteTransparent(t *testing.T) {
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)
 	}
-	c := r.GetImage().RGBAAt(250, 175)
+	c := r.Image().RGBAAt(250, 175)
 	want := color.NRGBA{R: 233, G: 30, B: 99, A: 204}
 	const tol = 2
 	if absDiff8(c.R, want.R) > tol || absDiff8(c.G, want.G) > tol ||

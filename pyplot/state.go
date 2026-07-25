@@ -167,8 +167,8 @@ func closeCachedManagersAndSetFactory(factory ManagerFactory) {
 	}
 }
 
-// GetCurrentFigManager returns the cached or newly-created manager for the current figure.
-func GetCurrentFigManager() (canvas.FigureManager, error) {
+// CurrentFigManager returns the cached or newly-created manager for the current figure.
+func CurrentFigManager() (canvas.FigureManager, error) {
 	return ensureManager(GCF())
 }
 

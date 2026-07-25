@@ -9,7 +9,7 @@ import (
 // Example looks up a Matplotlib-compatible colormap by name and samples it at
 // the midpoint of its normalized [0,1] range.
 func Example() {
-	cmap := color.GetColormap("viridis")
+	cmap := color.LookupColormap("viridis")
 	mid := cmap.At(0.5)
 
 	fmt.Printf("%s midpoint: R=%.3f G=%.3f B=%.3f\n",

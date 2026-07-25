@@ -514,15 +514,15 @@ func (c *gioCanvas) ensureImage() (*image.RGBA, error) {
 // this adapter stays toolkit-clean.
 func extractRGBA(r render.Renderer, w, h int) (*image.RGBA, error) {
 	type rgbaExporter interface {
-		GetImage() *image.RGBA
+		Image() *image.RGBA
 	}
 	if ex, ok := r.(rgbaExporter); ok {
-		img := ex.GetImage()
+		img := ex.Image()
 		if img != nil {
 			return img, nil
 		}
 	}
-	// Fallback for renderers without GetImage: return an empty bitmap
+	// Fallback for renderers without Image: return an empty bitmap
 	// sized to the window. Callers see a blank canvas instead of a crash.
 	return image.NewRGBA(image.Rect(0, 0, w, h)), nil
 }

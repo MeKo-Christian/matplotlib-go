@@ -61,20 +61,13 @@ func TestStablePublicAPIDoesNotExposeInternalGeometry(t *testing.T) {
 	root := repoRootForAPIAudit(t)
 	for _, dir := range stablePublicPackageDirs() {
 		pkgDir := filepath.Join(root, filepath.FromSlash(dir))
-		buildPkg, err := build.ImportDir(pkgDir, 0)
+		_, err := build.ImportDir(pkgDir, build.FindOnly)
 		if err != nil {
 			t.Fatalf("load package %s: %v", dir, err)
 		}
 
 		fset := token.NewFileSet()
-		files := make([]string, 0, len(buildPkg.GoFiles)+len(buildPkg.CgoFiles))
-		files = append(files, buildPkg.GoFiles...)
-		files = append(files, buildPkg.CgoFiles...)
-		sort.Strings(files)
-		for _, name := range files {
-			if strings.HasSuffix(name, "_test.go") {
-				continue
-			}
+		for _, name := range allNonTestGoFiles(t, pkgDir) {
 			file, err := parser.ParseFile(fset, filepath.Join(pkgDir, name), nil, parser.ParseComments)
 			if err != nil {
 				t.Fatalf("parse %s/%s: %v", dir, name, err)
@@ -112,27 +105,41 @@ func collectStablePackageAPI(t *testing.T, root, dir string) stableAPIPackage {
 	t.Helper()
 
 	pkgDir := filepath.Join(root, filepath.FromSlash(dir))
-	buildPkg, err := build.ImportDir(pkgDir, 0)
+	buildPkg, err := build.ImportDir(pkgDir, build.FindOnly)
 	if err != nil {
 		t.Fatalf("load package %s: %v", dir, err)
 	}
 
 	fset := token.NewFileSet()
-	files := make([]string, 0, len(buildPkg.GoFiles)+len(buildPkg.CgoFiles))
-	files = append(files, buildPkg.GoFiles...)
-	files = append(files, buildPkg.CgoFiles...)
-	sort.Strings(files)
-
-	symbols := make([]stableAPISymbol, 0)
-	for _, name := range files {
-		if strings.HasSuffix(name, "_test.go") {
-			continue
-		}
+	symbolsByID := make(map[string]stableAPISymbol)
+	for _, name := range allNonTestGoFiles(t, pkgDir) {
 		file, err := parser.ParseFile(fset, filepath.Join(pkgDir, name), nil, parser.ParseComments)
 		if err != nil {
 			t.Fatalf("parse %s/%s: %v", dir, name, err)
 		}
-		symbols = append(symbols, exportedDeclsForFile(fset, file)...)
+		for _, symbol := range exportedDeclsForFile(fset, file) {
+			if previous, ok := symbolsByID[symbol.ID]; ok {
+				if stableDeclarationSignature(previous.Declaration) != stableDeclarationSignature(symbol.Declaration) {
+					if merged, ok := mergeEmptyBuildStub(previous, symbol); ok {
+						symbolsByID[symbol.ID] = merged
+						continue
+					}
+					t.Fatalf(
+						"%s has build-variant declarations for %s: %q and %q",
+						dir,
+						symbol.ID,
+						previous.Declaration,
+						symbol.Declaration,
+					)
+				}
+				continue
+			}
+			symbolsByID[symbol.ID] = symbol
+		}
+	}
+	symbols := make([]stableAPISymbol, 0, len(symbolsByID))
+	for _, symbol := range symbolsByID {
+		symbols = append(symbols, symbol)
 	}
 	sort.Slice(symbols, func(i, j int) bool { return symbols[i].ID < symbols[j].ID })
 
@@ -140,6 +147,78 @@ func collectStablePackageAPI(t *testing.T, root, dir string) stableAPIPackage {
 		ImportPath: buildPkg.ImportPath,
 		Dir:        filepath.ToSlash(dir),
 		Symbols:    symbols,
+	}
+}
+
+func allNonTestGoFiles(t *testing.T, dir string) []string {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("read package directory %s: %v", dir, err)
+	}
+	files := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		files = append(files, name)
+	}
+	sort.Strings(files)
+	return files
+}
+
+func stableDeclarationSignature(declaration string) string {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "declaration.go", "package audit\n"+declaration, 0)
+	if err != nil || len(file.Decls) != 1 {
+		return declaration
+	}
+	fn, ok := file.Decls[0].(*ast.FuncDecl)
+	if !ok {
+		return declaration
+	}
+	return strings.Join([]string{
+		"func",
+		fieldListTypeSignature(fset, fn.Recv),
+		fn.Name.Name,
+		fieldListTypeSignature(fset, fn.Type.TypeParams),
+		fieldListTypeSignature(fset, fn.Type.Params),
+		fieldListTypeSignature(fset, fn.Type.Results),
+	}, "\x00")
+}
+
+func fieldListTypeSignature(fset *token.FileSet, fields *ast.FieldList) string {
+	if fields == nil {
+		return ""
+	}
+	types := make([]string, 0, len(fields.List))
+	for _, field := range fields.List {
+		var out bytes.Buffer
+		if err := printer.Fprint(&out, fset, field.Type); err != nil {
+			return ""
+		}
+		count := len(field.Names)
+		if count == 0 {
+			count = 1
+		}
+		for range count {
+			types = append(types, out.String())
+		}
+	}
+	return strings.Join(types, ",")
+}
+
+func mergeEmptyBuildStub(left, right stableAPISymbol) (stableAPISymbol, bool) {
+	leftEmpty := strings.HasSuffix(left.Declaration, " struct{}")
+	rightEmpty := strings.HasSuffix(right.Declaration, " struct{}")
+	switch {
+	case leftEmpty && !rightEmpty:
+		return right, true
+	case rightEmpty && !leftEmpty:
+		return left, true
+	default:
+		return stableAPISymbol{}, false
 	}
 }
 

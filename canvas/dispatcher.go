@@ -65,6 +65,8 @@ func (d *Dispatcher) Disconnect(id ConnectionID) {
 }
 
 // Emit dispatches an event to all handlers registered for its type.
+//
+//nolint:gocritic // Event dispatch snapshots the caller's value by design.
 func (d *Dispatcher) Emit(event Event) error {
 	d.mu.RLock()
 	handlers := make([]Handler, 0, len(d.handlers[event.Type]))

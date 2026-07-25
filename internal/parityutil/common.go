@@ -10,9 +10,12 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/dates"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 type TestDistanceKM float64
@@ -31,7 +34,7 @@ func (testDistanceConverter) Convert(value any) (float64, error) {
 
 func (testDistanceConverter) AxisInfo([]float64) core.AxisInfo {
 	return core.AxisInfo{
-		Formatter: core.FormatStrFormatter{Pattern: "%.0f km"},
+		Formatter: ticker.FormatStrFormatter{Pattern: "%.0f km"},
 	}
 }
 
@@ -44,9 +47,9 @@ func RegisterTestDistanceUnits() {
 }
 
 func ReferenceDateNumber(t time.Time) float64 {
-	// Mirror core's date convention (days since the epoch) so fixtures that set
+	// Mirror the dates package convention (days since the epoch) so fixtures that set
 	// axis limits agree with PlotUnits-converted data.
-	return core.Date2Num(t)
+	return dates.Date2Num(t)
 }
 
 func ReferencePointsToPixels(Points float64) float64 {
@@ -162,9 +165,9 @@ func ConfigureCompositionAxes(ax *core.Axes, title string, x, y []float64, c ren
 }
 
 func ConfigureCompositionTicks(ax *core.Axes, xTicks, yTicks []float64, yFormat string) {
-	ax.XAxis.Locator = core.FixedLocator{TicksList: xTicks}
-	ax.YAxis.Locator = core.FixedLocator{TicksList: yTicks}
-	ax.YAxis.Formatter = core.FormatStrFormatter{Pattern: yFormat}
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: xTicks}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: yTicks}
+	ax.YAxis.Formatter = ticker.FormatStrFormatter{Pattern: yFormat}
 }
 
 func AddReferenceYGrid(ax *core.Axes) {
@@ -211,8 +214,8 @@ func PlotGeoProjectionAxes(projection, title string, lonMin, lonMax float64) *co
 	ax.SetTitle(title)
 	ax.SetXLabel("longitude")
 	ax.SetYLabel("latitude")
-	ax.XAxis.Formatter = core.FuncFormatter(PlainDegreeFormat)
-	ax.YAxis.Formatter = core.FuncFormatter(PlainDegreeFormat)
+	ax.XAxis.Formatter = ticker.FuncFormatter(PlainDegreeFormat)
+	ax.YAxis.Formatter = ticker.FuncFormatter(PlainDegreeFormat)
 
 	gridColor := render.Color{R: 0.78, G: 0.80, B: 0.84, A: 1}
 	lonGrid := ax.AddGrid(core.AxisBottom)
@@ -289,7 +292,7 @@ func SinusoidalTerrain(xCount, yCount int) ([]float64, []float64, [][]float64) {
 	return x, y, z
 }
 
-func DisableMplot3DTickLabels(ax *core.Axes3D) {
+func DisableMplot3DTickLabels(ax *plot3d.Axes3D) {
 	if ax == nil {
 		return
 	}
@@ -441,7 +444,7 @@ func RenderImageFixture(fig *core.Figure, width, height int) image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }
 
 func WaveImageData(rows, cols int) [][]float64 {
@@ -521,7 +524,7 @@ func RenderFixtureFigure(fig *core.Figure, w, h int) image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }
 
 func FixtureRectPath(x, y, w, h float64) geom.Path {

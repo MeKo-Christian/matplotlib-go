@@ -1,6 +1,10 @@
 package color
 
-import "github.com/cwbudde/matplotlib-go/render"
+import (
+	"sync"
+
+	"github.com/cwbudde/matplotlib-go/render"
+)
 
 // Petroff10 is Matplotlib's "petroff10" color sequence: ten colorblind-friendly
 // hues from Petroff (2021), "Accessible Color Sequences for Data
@@ -22,16 +26,23 @@ var Petroff10 = Palette{
 // distinct from the colormap registry: a named, ordered list of discrete colors
 // suitable for an axes property cycle. Matplotlib registers petroff10 (and the
 // qualitative tab/Set families) here without making them gradient colormaps.
-var colorSequences = map[string]Palette{
-	"petroff10": Petroff10,
-	"tab10":     Tab10,
+var colorSequenceRegistry = struct {
+	sync.RWMutex
+	sequences map[string]Palette
+}{
+	sequences: map[string]Palette{
+		"petroff10": Petroff10,
+		"tab10":     Tab10,
+	},
 }
 
 // ColorSequence returns the named color sequence and whether it is registered.
 // Names match Matplotlib's color_sequences registry (e.g. "petroff10",
 // "tab10"). The returned palette is a copy and is safe to mutate.
 func ColorSequence(name string) (Palette, bool) {
-	seq, ok := colorSequences[name]
+	colorSequenceRegistry.RLock()
+	defer colorSequenceRegistry.RUnlock()
+	seq, ok := colorSequenceRegistry.sequences[name]
 	if !ok {
 		return nil, false
 	}
@@ -39,16 +50,22 @@ func ColorSequence(name string) (Palette, bool) {
 }
 
 // RegisterColorSequence adds or replaces a named color sequence, mirroring
-// Matplotlib's color_sequences.register.
+// Matplotlib's color_sequences.register. It is safe for concurrent use with
+// ColorSequence and ColorSequenceNames.
 func RegisterColorSequence(name string, palette Palette) {
-	colorSequences[name] = append(Palette(nil), palette...)
+	seq := append(Palette(nil), palette...)
+	colorSequenceRegistry.Lock()
+	colorSequenceRegistry.sequences[name] = seq
+	colorSequenceRegistry.Unlock()
 }
 
 // ColorSequenceNames returns the registered color-sequence names in no
 // particular order.
 func ColorSequenceNames() []string {
-	names := make([]string, 0, len(colorSequences))
-	for name := range colorSequences {
+	colorSequenceRegistry.RLock()
+	defer colorSequenceRegistry.RUnlock()
+	names := make([]string, 0, len(colorSequenceRegistry.sequences))
+	for name := range colorSequenceRegistry.sequences {
 		names = append(names, name)
 	}
 	return names
@@ -56,7 +73,7 @@ func ColorSequenceNames() []string {
 
 func init() {
 	// Also expose petroff10 through the colormap registry as a ListedColormap so
-	// GetColormap("petroff10") and colorbar/swatch paths can resolve it. This is
+	// LookupColormap("petroff10") and colorbar/swatch paths can resolve it. This is
 	// additive and intentionally kept out of matplotlibListedColormapNames, which
 	// mirrors only the upstream gradient/colormap catalog (petroff10 is a color
 	// sequence upstream, not a registered colormap).

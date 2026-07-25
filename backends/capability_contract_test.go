@@ -38,7 +38,7 @@ func (r *capabilityRendererWithPNG) SavePNG(_ string) error {
 
 func (r *capabilityRendererWithPNG) ImageTransformed(_ render.Image, _ geom.Rect, _ geom.Affine) {}
 
-func (r *capabilityRendererWithPNG) GetImage() *image.RGBA {
+func (r *capabilityRendererWithPNG) Image() *image.RGBA {
 	return nil
 }
 
@@ -180,7 +180,7 @@ func TestSupportsRendererCapability(t *testing.T) {
 		t.Fatal("expected ImageTransform capability to be unsupported without ImageTransformed")
 	}
 	if SupportsRendererCapability(Backend("contract"), &capabilityRendererBase{}, RGBABuffer) {
-		t.Fatal("expected RGBABuffer capability to be unsupported without GetImage")
+		t.Fatal("expected RGBABuffer capability to be unsupported without Image")
 	}
 	if SupportsRendererCapability(Backend("contract"), &capabilityRendererBase{}, BufferRegion) {
 		t.Fatal("expected BufferRegion capability to be unsupported without copy/restore methods")

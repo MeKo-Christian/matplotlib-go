@@ -58,7 +58,7 @@ func TestDrawMarkersBatchDrawsVisibleMarkers(t *testing.T) {
 		t.Fatalf("End failed: %v", err)
 	}
 
-	img := r.GetImage()
+	img := r.Image()
 	if got := img.RGBAAt(10, 10); got.R < 200 {
 		t.Fatalf("first marker center = %+v, want red", got)
 	}
@@ -139,7 +139,7 @@ func TestDrawQuadMeshBatchDrawsCells(t *testing.T) {
 		t.Fatalf("End failed: %v", err)
 	}
 
-	if got := r.GetImage().RGBAAt(10, 10); got.G < 200 {
+	if got := r.Image().RGBAAt(10, 10); got.G < 200 {
 		t.Fatalf("quad mesh cell center = %+v, want green", got)
 	}
 }
@@ -169,7 +169,7 @@ func TestDrawQuadMeshSnapsFractionalRectilinearEdges(t *testing.T) {
 		t.Fatalf("End failed: %v", err)
 	}
 
-	if got := r.GetImage().RGBAAt(10, 15); got.R > 16 {
+	if got := r.Image().RGBAAt(10, 15); got.R > 16 {
 		t.Fatalf("snapped quad mesh edge pixel = %+v, want nearly black", got)
 	}
 }
@@ -202,7 +202,7 @@ func TestDrawGouraudTrianglesInterpolatesVertexColors(t *testing.T) {
 
 	// Display space is y-up: the triangle's red vertex at display (5,5) maps to
 	// device (5,55), so sample near it in device space (display (10,10)).
-	got := r.GetImage().RGBAAt(10, 50)
+	got := r.Image().RGBAAt(10, 50)
 	if got == (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
 		t.Fatal("triangle sample remained background white")
 	}
@@ -244,8 +244,8 @@ func renderGouraudTriangleFlag(t *testing.T, antialiased bool) *image.RGBA {
 		t.Fatalf("End failed: %v", err)
 	}
 	out := image.NewRGBA(image.Rect(0, 0, 60, 60))
-	copy(out.Pix, r.GetImage().Pix)
-	out.Stride = r.GetImage().Stride
+	copy(out.Pix, r.Image().Pix)
+	out.Stride = r.Image().Stride
 	return out
 }
 

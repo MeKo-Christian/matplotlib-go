@@ -22,7 +22,7 @@ func savePNGTight(r render.Renderer, eff *Figure, resolved *resolvedSaveFigure, 
 	if !ok {
 		return errors.New("savefig: bbox=tight is only supported for raster (PNG) output")
 	}
-	img := provider.GetImage()
+	img := provider.Image()
 	if img == nil {
 		return errors.New("savefig: renderer returned no image for tight bbox")
 	}

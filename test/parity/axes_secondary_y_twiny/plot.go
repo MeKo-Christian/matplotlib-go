@@ -5,8 +5,9 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -36,8 +37,8 @@ func Plot() *core.Figure {
 	)
 	host.SetXLim(0, 4)
 	host.SetYLim(0, 4)
-	host.XAxis.Locator = core.FixedLocator{TicksList: []float64{0, 2, 4}}
-	host.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 2, 4}}
+	host.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 2, 4}}
+	host.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 2, 4}}
 	common.AddReferenceYGrid(host)
 
 	twin := host.TwinY()
@@ -50,7 +51,7 @@ func Plot() *core.Figure {
 		core.PlotOptions{Color: &orange, LineWidth: &lineWidth},
 	)
 	twin.SetXLim(10, 50)
-	twin.XAxisTop.Locator = core.FixedLocator{TicksList: []float64{10, 30, 50}}
+	twin.XAxisTop.Locator = ticker.FixedLocator{TicksList: []float64{10, 30, 50}}
 	twin.SetXLabel("top x")
 	if err := twin.SetXLabelPosition("top"); err != nil {
 		panic(err)
@@ -70,8 +71,8 @@ func Plot() *core.Figure {
 	)
 	primary.SetXLim(0, 4)
 	primary.SetYLim(0, 100)
-	primary.XAxis.Locator = core.FixedLocator{TicksList: []float64{0, 2, 4}}
-	primary.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 50, 100}}
+	primary.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 2, 4}}
+	primary.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 50, 100}}
 	common.AddReferenceYGrid(primary)
 
 	secondary, err := primary.SecondaryYAxis(
@@ -82,7 +83,7 @@ func Plot() *core.Figure {
 	if err != nil {
 		panic(err)
 	}
-	secondary.YAxisRight.Locator = core.FixedLocator{TicksList: []float64{32, 122, 212}}
+	secondary.YAxisRight.Locator = ticker.FixedLocator{TicksList: []float64{32, 122, 212}}
 	secondary.SetYLabel("Fahrenheit")
 	if err := secondary.SetYLabelPosition("right"); err != nil {
 		panic(err)

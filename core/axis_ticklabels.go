@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 // DrawTickLabels draws tick labels outside the clip region (call after r.Restore()).
@@ -37,7 +38,7 @@ func (a *Axis) DrawTickLabels(r render.Renderer, ctx *DrawContext) {
 		a.drawTickOffsetText(r, ctx, ticks, a.Formatter, a.MajorLabelStyle, a.TickSize, a.tickLabelColor(), isXAxis)
 	}
 	if a.ShowMinorLabels && a.MinorLocator != nil && a.MinorFormatter != nil {
-		minorLoc := locatorWithMajorContext(a.MinorLocator, a.Locator)
+		minorLoc := ticker.WithMajorContext(a.MinorLocator, a.Locator)
 		ticks := visibleTicks(minorLoc.Ticks(domainMin, domainMax, a.minorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
 		a.drawTickLabels(r, ctx, ticks, a.MinorFormatter, a.MinorLabelStyle, a.minorTickSize(), a.minorTickLabelColor(), isXAxis)
 	}
@@ -51,7 +52,7 @@ func (a *Axis) DrawTickLabels(r render.Renderer, ctx *DrawContext) {
 }
 
 // drawTickLabels draws text labels for a single tick level if the renderer supports text.
-func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64, labelColor render.Color, isXAxis bool) {
+func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float64, formatter ticker.Formatter, style TickLabelStyle, tickSize float64, labelColor render.Color, isXAxis bool) {
 	textRen, ok := r.(render.TextDrawer)
 	if !ok || formatter == nil {
 		return
@@ -62,11 +63,7 @@ func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float
 	fontKey := tickLabelFontKey(style, ctx)
 	labelPadPx := tickLabelPadForAxisSize(a, tickSize, style, ctx)
 
-	scalarFormatter, hasScalar := formatter.(ScalarFormatter)
-	var scalarCtx scalarTickContext
-	if hasScalar {
-		scalarCtx = newScalarTickContext(scalarFormatter, ticks)
-	}
+	format := ticker.LabelFormatter(formatter, ticks)
 
 	var rotRen render.RotatedTextDrawer
 	if drawer, ok := r.(render.RotatedTextDrawer); ok {
@@ -74,10 +71,7 @@ func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float
 	}
 
 	for i, tickValue := range ticks {
-		label := formatTickLabel(formatter, tickValue, i, ticks)
-		if hasScalar {
-			label = formatScalarTickLabelCtx(scalarFormatter, tickValue, scalarCtx)
-		}
+		label := format(tickValue, i)
 		if label == "" {
 			continue
 		}
@@ -100,12 +94,12 @@ func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float
 	}
 }
 
-func (a *Axis) drawTickOffsetText(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64, labelColor render.Color, isXAxis bool) {
+func (a *Axis) drawTickOffsetText(r render.Renderer, ctx *DrawContext, ticks []float64, formatter ticker.Formatter, style TickLabelStyle, tickSize float64, labelColor render.Color, isXAxis bool) {
 	textRen, ok := r.(render.TextDrawer)
 	if !ok || formatter == nil {
 		return
 	}
-	offsetter, ok := formatter.(OffsetFormatter)
+	offsetter, ok := formatter.(ticker.OffsetFormatter)
 	if !ok {
 		return
 	}
@@ -330,7 +324,7 @@ func axisTickLabelBounds(a *Axis, r render.Renderer, ctx *DrawContext) (geom.Rec
 
 	type labelLevel struct {
 		ticks     []float64
-		formatter Formatter
+		formatter ticker.Formatter
 		style     TickLabelStyle
 		tickSize  float64
 	}
@@ -345,7 +339,7 @@ func axisTickLabelBounds(a *Axis, r render.Renderer, ctx *DrawContext) (geom.Rec
 		})
 	}
 	if a.ShowMinorLabels && a.MinorLocator != nil && a.MinorFormatter != nil {
-		minorLoc := locatorWithMajorContext(a.MinorLocator, a.Locator)
+		minorLoc := ticker.WithMajorContext(a.MinorLocator, a.Locator)
 		levels = append(levels, labelLevel{
 			ticks:     visibleTicks(minorLoc.Ticks(domainMin, domainMax, a.minorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax),
 			formatter: a.MinorFormatter,
@@ -398,7 +392,7 @@ func styleOrCurrentRC(ctx *DrawContext) style.RC {
 	return style.CurrentDefaults()
 }
 
-func tickLabelBoundsForLevel(a *Axis, r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64, isXAxis bool) (geom.Rect, bool) {
+func tickLabelBoundsForLevel(a *Axis, r render.Renderer, ctx *DrawContext, ticks []float64, formatter ticker.Formatter, style TickLabelStyle, tickSize float64, isXAxis bool) (geom.Rect, bool) {
 	if len(ticks) == 0 || formatter == nil {
 		return geom.Rect{}, false
 	}
@@ -413,17 +407,10 @@ func tickLabelBoundsForLevel(a *Axis, r render.Renderer, ctx *DrawContext, ticks
 		have  bool
 	)
 
-	scalarFormatter, hasScalar := formatter.(ScalarFormatter)
-	var scalarCtx scalarTickContext
-	if hasScalar {
-		scalarCtx = newScalarTickContext(scalarFormatter, ticks)
-	}
+	format := ticker.LabelFormatter(formatter, ticks)
 
 	for i, tickValue := range ticks {
-		label := formatTickLabel(formatter, tickValue, i, ticks)
-		if hasScalar {
-			label = formatScalarTickLabelCtx(scalarFormatter, tickValue, scalarCtx)
-		}
+		label := format(tickValue, i)
 		if label == "" {
 			continue
 		}

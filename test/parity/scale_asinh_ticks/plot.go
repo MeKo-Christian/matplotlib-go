@@ -5,8 +5,9 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -38,7 +39,7 @@ func Plot() *core.Figure {
 		transform.WithScaleBase(10),
 		transform.WithScaleLinearWidth(1),
 	)
-	ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
 	return fig
 }
 

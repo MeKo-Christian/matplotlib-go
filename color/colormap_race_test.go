@@ -11,7 +11,7 @@ import (
 // TestColormapRegistryConcurrentAccess guards the registry against the data
 // race found in the 2026-07-01 audit (REVIEW.md third review §6):
 // RegisterColormap wrote the package-global colormaps map with no mutex while
-// draw paths read it via GetColormap/GetColormapStrict/ColormapNames. Run with
+// draw paths read it via LookupColormap/LookupColormapStrict/ColormapNames. Run with
 // -race; without the registry lock the race detector fails this test.
 func TestColormapRegistryConcurrentAccess(t *testing.T) {
 	const iterations = 100
@@ -32,15 +32,15 @@ func TestColormapRegistryConcurrentAccess(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for range iterations {
-			GetColormap("viridis")
-			GetColormap("no-such-colormap") // exercises the fallback read
+			LookupColormap("viridis")
+			LookupColormap("no-such-colormap") // exercises the fallback read
 		}
 	}()
 	go func() {
 		defer wg.Done()
 		for range iterations {
-			if _, err := GetColormapStrict("blues_r"); err != nil { // exercises the _r suffix read
-				t.Errorf("GetColormapStrict(blues_r): %v", err)
+			if _, err := LookupColormapStrict("blues_r"); err != nil { // exercises the _r suffix read
+				t.Errorf("LookupColormapStrict(blues_r): %v", err)
 				return
 			}
 		}
@@ -53,7 +53,7 @@ func TestColormapRegistryConcurrentAccess(t *testing.T) {
 	}()
 	wg.Wait()
 
-	if _, err := GetColormapStrict("race-probe-0"); err != nil {
+	if _, err := LookupColormapStrict("race-probe-0"); err != nil {
 		t.Fatalf("registered colormap not retrievable: %v", err)
 	}
 }

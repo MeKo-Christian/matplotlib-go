@@ -13,6 +13,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -39,8 +40,8 @@ func addVerticalLabeledPanel(ax *core.Axes) {
 	ax.SetTitle("Vertical + Tick Labels")
 	ax.SetXLim(0.4, 5.6)
 	ax.SetYLim(0, 10)
-	ax.XAxis.Locator = core.FixedLocator{TicksList: []float64{1, 2, 3, 4, 5}}
-	ax.XAxis.Formatter = core.FixedFormatter{Labels: []string{"alpha", "beta", "gamma", "delta", "eps"}}
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{1, 2, 3, 4, 5}}
+	ax.XAxis.Formatter = ticker.FixedFormatter{Labels: []string{"alpha", "beta", "gamma", "delta", "eps"}}
 
 	color := render.Color{R: 0.20, G: 0.60, B: 0.80, A: 1}
 	width := 0.6
@@ -132,5 +133,5 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }

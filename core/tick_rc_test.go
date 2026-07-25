@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestAxesApplyRCTickGeometryAndVisibility(t *testing.T) {
@@ -76,7 +77,7 @@ func TestAxesApplyRCTickGeometryAndVisibility(t *testing.T) {
 		ax.XAxis.MajorLabelStyle.VAlign != TextVAlignTop {
 		t.Fatalf("bottom x alignment = %+v", ax.XAxis.MajorLabelStyle)
 	}
-	auto, ok := ax.XAxis.MinorLocator.(AutoMinorLocator)
+	auto, ok := ax.XAxis.MinorLocator.(ticker.AutoMinorLocator)
 	if !ok || auto.N != 3 {
 		t.Fatalf("bottom minor locator = %#v, want AutoMinorLocator N=3", ax.XAxis.MinorLocator)
 	}

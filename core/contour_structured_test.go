@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestAxesContourAndContourf(t *testing.T) {
@@ -291,7 +292,7 @@ func TestContourInlineLabelsMatchMatplotlibArraysShowcaseLevel06(t *testing.T) {
 		X:          []float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 		Y:          []float64{0, 1, 2, 3, 4, 5, 6, 7},
 		LabelLines: true,
-		LabelFormatter: FormatStrFormatter{
+		LabelFormatter: ticker.FormatStrFormatter{
 			Pattern: "%.3g",
 		},
 	})

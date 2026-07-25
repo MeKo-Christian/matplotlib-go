@@ -189,7 +189,7 @@ func maskedMeshMask() [][]bool {
 
 func registerMaskedMeshColormap() {
 	bad := render.Color{R: 0.62, G: 0.62, B: 0.62, A: 0.78}
-	matcolor.RegisterColormap(maskedMeshCmap, matcolor.GetColormap("viridis").WithBad(bad))
+	matcolor.RegisterColormap(maskedMeshCmap, matcolor.LookupColormap("viridis").WithBad(bad))
 }
 
 func ptr[T any](v T) *T {
@@ -202,5 +202,5 @@ func renderFixtureFigure(fig *core.Figure, width, height int) image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }

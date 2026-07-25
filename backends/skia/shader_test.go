@@ -317,7 +317,7 @@ func rectPath(x0, y0, x1, y1 float64) geom.Path {
 
 func skiaPixelAt(t *testing.T, r *Renderer, x, y int) (uint8, uint8, uint8, uint8) {
 	t.Helper()
-	img := r.GetImage()
+	img := r.Image()
 	if img == nil {
 		t.Fatal("nil image")
 	}

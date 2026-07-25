@@ -156,10 +156,10 @@ import (
 )
 
 // Auto-select the best available backend (falls back to GoBasic).
-backend, err := backends.GetBestBackend(nil)
+backend, err := backends.BestBackend(nil)
 
 // Require capabilities; selection fails if nothing satisfies them.
-backend, err = backends.GetBestBackend([]backends.Capability{
+backend, err = backends.BestBackend([]backends.Capability{
     backends.TextShaping,
     backends.FontHinting,
 })
@@ -190,7 +190,7 @@ import (
 Create a renderer from a selected backend:
 
 ```go
-backend, err := backends.GetBestBackend(nil)
+backend, err := backends.BestBackend(nil)
 if err != nil {
     return err
 }
@@ -242,4 +242,4 @@ backends useful without adding routing branches across core plotting code.
 5. **Self-contained print document?** PDF (EPS only for legacy: PS).
 6. **Figure embedded in a LaTeX document?** PGF.
 7. **Working on Skia parity / GPU future?** Build with `-tags skia`.
-8. **Unsure?** Pass `nil` to `GetBestBackend` and move on.
+8. **Unsure?** Pass `nil` to `BestBackend` and move on.

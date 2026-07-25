@@ -90,7 +90,7 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(Plot(), r)
-	return r.GetImage()
+	return r.Image()
 }
 
 func boolPtr(v bool) *bool { return &v }

@@ -103,7 +103,7 @@ func renderSkiaFigure(t *testing.T, fig *core.Figure) image.Image {
 		t.Fatalf("create Skia renderer: %v", err)
 	}
 	core.DrawFigure(fig, r)
-	img := r.GetImage()
+	img := r.Image()
 	if img == nil {
 		t.Fatal("Skia renderer returned nil image")
 	}

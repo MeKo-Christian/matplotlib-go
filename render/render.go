@@ -487,7 +487,7 @@ type Renderer interface {
 
 	// Drawing
 	Path(p geom.Path, paint *Paint)
-	Image(img Image, dst geom.Rect)
+	DrawImage(img Image, dst geom.Rect)
 	GlyphRun(run GlyphRun, color Color)
 	MeasureText(text string, size float64, fontKey string) TextMetrics
 }
@@ -540,8 +540,8 @@ func (n *NullRenderer) ClipPath(_ geom.Path) { n.cstack++ }
 // Path draws a path using the provided paint; no-op here.
 func (n *NullRenderer) Path(_ geom.Path, _ *Paint) {}
 
-// Image draws an image in the destination rectangle; no-op here.
-func (n *NullRenderer) Image(_ Image, _ geom.Rect) {}
+// DrawImage draws an image in the destination rectangle; no-op here.
+func (n *NullRenderer) DrawImage(_ Image, _ geom.Rect) {}
 
 // GlyphRun draws a run of glyphs with the given color; no-op here.
 func (n *NullRenderer) GlyphRun(_ GlyphRun, _ Color) {}

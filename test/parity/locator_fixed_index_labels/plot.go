@@ -5,8 +5,9 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -34,8 +35,8 @@ func Plot() *core.Figure {
 	)
 	top.SetXLim(-6, 6)
 	top.SetYLim(0, 1)
-	top.XAxis.Locator = core.FixedLocator{TicksList: []float64{-6, -4, -2, 0, 2, 4, 6}, Nbins: 4}
-	top.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
+	top.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{-6, -4, -2, 0, 2, 4, 6}, Nbins: 4}
+	top.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
 
 	bottom.SetTitle("IndexLocator Base + Offset")
 	bottom.SetXLabel("index")
@@ -48,8 +49,8 @@ func Plot() *core.Figure {
 	)
 	bottom.SetXLim(0, 8)
 	bottom.SetYLim(0, 1)
-	bottom.XAxis.Locator = core.IndexLocator{Base: 2, Offset: 1}
-	bottom.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
+	bottom.XAxis.Locator = ticker.IndexLocator{Base: 2, Offset: 1}
+	bottom.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
 	return fig
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
 type selectorDragKind uint8
@@ -14,11 +15,11 @@ type selectorDragState struct {
 	kind selectorDragKind
 
 	axes    *Axes
-	span    *core.SpanSelector
-	rect    *core.RectangleSelector
-	ellipse *core.EllipseSelector
-	polygon *core.PolygonSelector
-	lasso   *core.LassoSelector
+	span    *widgets.SpanSelector
+	rect    *widgets.RectangleSelector
+	ellipse *widgets.EllipseSelector
+	polygon *widgets.PolygonSelector
+	lasso   *widgets.LassoSelector
 
 	pressData geom.Pt
 
@@ -45,23 +46,23 @@ func (w *WidgetInteraction) findInactiveSelector(axes *Axes) any {
 	artists := axesInteractionArtists(axes)
 	for i := len(artists) - 1; i >= 0; i-- {
 		switch sel := artists[i].(type) {
-		case *core.SpanSelector:
+		case *widgets.SpanSelector:
 			if !sel.Active {
 				return sel
 			}
-		case *core.RectangleSelector:
+		case *widgets.RectangleSelector:
 			if !sel.Active {
 				return sel
 			}
-		case *core.EllipseSelector:
+		case *widgets.EllipseSelector:
 			if !sel.Active {
 				return sel
 			}
-		case *core.PolygonSelector:
+		case *widgets.PolygonSelector:
 			if !sel.Active {
 				return sel
 			}
-		case *core.LassoSelector:
+		case *widgets.LassoSelector:
 			if !sel.Active {
 				return sel
 			}
@@ -79,7 +80,7 @@ func (w *WidgetInteraction) clearSelectorDragLocked() {
 	w.draggingSelector = selectorDragState{}
 }
 
-func (w *WidgetInteraction) updateDraggingSelectorFromMouseLocked(mouse MouseEvent) bool {
+func (w *WidgetInteraction) updateDraggingSelectorFromMouseLocked(mouse *MouseEvent) bool {
 	state := w.draggingSelector
 	data, ok := w.pixelToDataLocked(mouse, state.axes)
 	if !ok {
@@ -115,15 +116,15 @@ func (w *WidgetInteraction) updateDraggingSelectorFromMouseLocked(mouse MouseEve
 			Y: data.Y - state.pressData.Y,
 		}
 		if state.rectMove {
-			min := state.rectStartMin
-			max := state.rectStartMax
-			min = geom.Pt{X: min.X + delta.X, Y: min.Y + delta.Y}
-			max = geom.Pt{X: max.X + delta.X, Y: max.Y + delta.Y}
-			changed = state.rect.SetBounds(min, max)
+			minPoint := state.rectStartMin
+			maxPoint := state.rectStartMax
+			minPoint = geom.Pt{X: minPoint.X + delta.X, Y: minPoint.Y + delta.Y}
+			maxPoint = geom.Pt{X: maxPoint.X + delta.X, Y: maxPoint.Y + delta.Y}
+			changed = state.rect.SetBounds(minPoint, maxPoint)
 			break
 		} else {
-			min, max := selectorBoundsFromDrag(state.pressData, data, state.square, state.center)
-			changed = state.rect.SetBounds(min, max)
+			minPoint, maxPoint := selectorBoundsFromDrag(state.pressData, data, state.square, state.center)
+			changed = state.rect.SetBounds(minPoint, maxPoint)
 		}
 	case selectorDragEllipse:
 		if state.ellipse == nil {
@@ -134,15 +135,15 @@ func (w *WidgetInteraction) updateDraggingSelectorFromMouseLocked(mouse MouseEve
 			Y: data.Y - state.pressData.Y,
 		}
 		if state.rectMove {
-			min := state.rectStartMin
-			max := state.rectStartMax
-			min = geom.Pt{X: min.X + delta.X, Y: min.Y + delta.Y}
-			max = geom.Pt{X: max.X + delta.X, Y: max.Y + delta.Y}
-			changed = state.ellipse.SetBounds(min, max)
+			minPoint := state.rectStartMin
+			maxPoint := state.rectStartMax
+			minPoint = geom.Pt{X: minPoint.X + delta.X, Y: minPoint.Y + delta.Y}
+			maxPoint = geom.Pt{X: maxPoint.X + delta.X, Y: maxPoint.Y + delta.Y}
+			changed = state.ellipse.SetBounds(minPoint, maxPoint)
 			break
 		} else {
-			min, max := selectorBoundsFromDrag(state.pressData, data, state.square, state.center)
-			changed = state.ellipse.SetBounds(min, max)
+			minPoint, maxPoint := selectorBoundsFromDrag(state.pressData, data, state.square, state.center)
+			changed = state.ellipse.SetBounds(minPoint, maxPoint)
 		}
 	case selectorDragPolygonDrawing:
 		if state.polygon == nil {
@@ -214,29 +215,29 @@ func (w *WidgetInteraction) finalizeDraggingSelectorLocked() bool {
 	return changed
 }
 
-func (w *WidgetInteraction) handleSelectorKey(ev KeyEvent, key string) bool {
+func (w *WidgetInteraction) handleSelectorKey(modifiers Modifier, key string) bool {
 	if w.focusedSelector == nil {
 		return false
 	}
 	axes := w.axesForSelectorLocked(w.focusedSelector)
 	command := strings.ToLower(key)
 	switch keyState := w.focusedSelector.(type) {
-	case *core.SpanSelector:
-		return w.handleSpanSelectorKey(ev, command, keyState, axes)
-	case *core.RectangleSelector:
-		return w.handleRectangleSelectorKey(ev, command, keyState, axes)
-	case *core.EllipseSelector:
-		return w.handleEllipseSelectorKey(ev, command, keyState, axes)
-	case *core.PolygonSelector:
-		return w.handlePolygonSelectorKey(ev, command, keyState, axes)
-	case *core.LassoSelector:
-		return w.handleLassoSelectorKey(ev, command, keyState)
+	case *widgets.SpanSelector:
+		return w.handleSpanSelectorKey(modifiers, command, keyState, axes)
+	case *widgets.RectangleSelector:
+		return w.handleRectangleSelectorKey(modifiers, command, keyState, axes)
+	case *widgets.EllipseSelector:
+		return w.handleEllipseSelectorKey(modifiers, command, keyState, axes)
+	case *widgets.PolygonSelector:
+		return w.handlePolygonSelectorKey(modifiers, command, keyState, axes)
+	case *widgets.LassoSelector:
+		return w.handleLassoSelectorKey(command, keyState)
 	default:
 		return false
 	}
 }
 
-func (w *WidgetInteraction) handleSpanSelectorKey(ev KeyEvent, key string, selector *core.SpanSelector, axes *Axes) bool {
+func (w *WidgetInteraction) handleSpanSelectorKey(modifiers Modifier, key string, selector *widgets.SpanSelector, axes *Axes) bool {
 	if selector == nil || !selector.Active {
 		return false
 	}
@@ -276,7 +277,7 @@ func (w *WidgetInteraction) handleSpanSelectorKey(ev KeyEvent, key string, selec
 	if selector.Orientation == "vertical" {
 		delta = -delta
 	}
-	if ev.Modifiers&ModifierControl != 0 {
+	if modifiers&ModifierControl != 0 {
 		delta *= 10
 	}
 	changed := selector.Move(delta)
@@ -286,7 +287,7 @@ func (w *WidgetInteraction) handleSpanSelectorKey(ev KeyEvent, key string, selec
 	return changed
 }
 
-func (w *WidgetInteraction) handleRectangleSelectorKey(ev KeyEvent, key string, selector *core.RectangleSelector, axes *Axes) bool {
+func (w *WidgetInteraction) handleRectangleSelectorKey(modifiers Modifier, key string, selector *widgets.RectangleSelector, axes *Axes) bool {
 	if selector == nil {
 		return false
 	}
@@ -296,7 +297,7 @@ func (w *WidgetInteraction) handleRectangleSelectorKey(ev KeyEvent, key string, 
 	if !selector.Active {
 		return false
 	}
-	delta, ok := w.selectorMoveDeltaForKey(ev, key, axes)
+	delta, ok := w.selectorMoveDeltaForKey(modifiers, key, axes)
 	if !ok {
 		return false
 	}
@@ -307,7 +308,7 @@ func (w *WidgetInteraction) handleRectangleSelectorKey(ev KeyEvent, key string, 
 	return changed
 }
 
-func (w *WidgetInteraction) handleEllipseSelectorKey(ev KeyEvent, key string, selector *core.EllipseSelector, axes *Axes) bool {
+func (w *WidgetInteraction) handleEllipseSelectorKey(modifiers Modifier, key string, selector *widgets.EllipseSelector, axes *Axes) bool {
 	if selector == nil {
 		return false
 	}
@@ -317,7 +318,7 @@ func (w *WidgetInteraction) handleEllipseSelectorKey(ev KeyEvent, key string, se
 	if !selector.Active {
 		return false
 	}
-	delta, ok := w.selectorMoveDeltaForKey(ev, key, axes)
+	delta, ok := w.selectorMoveDeltaForKey(modifiers, key, axes)
 	if !ok {
 		return false
 	}
@@ -328,7 +329,7 @@ func (w *WidgetInteraction) handleEllipseSelectorKey(ev KeyEvent, key string, se
 	return changed
 }
 
-func (w *WidgetInteraction) selectorMoveDeltaForKey(ev KeyEvent, key string, axes *Axes) (geom.Pt, bool) {
+func (w *WidgetInteraction) selectorMoveDeltaForKey(modifiers Modifier, key string, axes *Axes) (geom.Pt, bool) {
 	if axes == nil || w.figure == nil {
 		return geom.Pt{}, false
 	}
@@ -366,14 +367,14 @@ func (w *WidgetInteraction) selectorMoveDeltaForKey(ev KeyEvent, key string, axe
 		delta.X = 0
 		delta.Y = -delta.Y
 	}
-	if ev.Modifiers&ModifierControl != 0 {
+	if modifiers&ModifierControl != 0 {
 		delta.X *= 10
 		delta.Y *= 10
 	}
 	return delta, true
 }
 
-func (w *WidgetInteraction) handlePolygonSelectorKey(ev KeyEvent, key string, selector *core.PolygonSelector, axes *Axes) bool {
+func (w *WidgetInteraction) handlePolygonSelectorKey(modifiers Modifier, key string, selector *widgets.PolygonSelector, axes *Axes) bool {
 	if selector == nil {
 		return false
 	}
@@ -406,7 +407,7 @@ func (w *WidgetInteraction) handlePolygonSelectorKey(ev KeyEvent, key string, se
 	default:
 		return false
 	}
-	if ev.Modifiers&ModifierControl != 0 {
+	if modifiers&ModifierControl != 0 {
 		delta.X *= 10
 		delta.Y *= 10
 	}
@@ -422,7 +423,7 @@ func (w *WidgetInteraction) handlePolygonSelectorKey(ev KeyEvent, key string, se
 	return changed
 }
 
-func (w *WidgetInteraction) handleLassoSelectorKey(_ KeyEvent, key string, selector *core.LassoSelector) bool {
+func (w *WidgetInteraction) handleLassoSelectorKey(key string, selector *widgets.LassoSelector) bool {
 	if selector == nil {
 		return false
 	}
@@ -458,15 +459,15 @@ func selectorBoundsFromDrag(
 	square bool,
 	center bool,
 ) (geom.Pt, geom.Pt) {
-	min := press
-	max := current
+	minPoint := press
+	maxPoint := current
 	if center {
 		delta := geom.Pt{
 			X: current.X - press.X,
 			Y: current.Y - press.Y,
 		}
-		min = geom.Pt{X: press.X - delta.X, Y: press.Y - delta.Y}
-		max = geom.Pt{X: press.X + delta.X, Y: press.Y + delta.Y}
+		minPoint = geom.Pt{X: press.X - delta.X, Y: press.Y - delta.Y}
+		maxPoint = geom.Pt{X: press.X + delta.X, Y: press.Y + delta.Y}
 	}
 	if square {
 		sideX := current.X - press.X
@@ -496,23 +497,23 @@ func selectorBoundsFromDrag(
 		} else {
 			sy = -side
 		}
-		max = geom.Pt{
+		maxPoint = geom.Pt{
 			X: press.X + sx,
 			Y: press.Y + sy,
 		}
 		if center {
-			min = geom.Pt{
+			minPoint = geom.Pt{
 				X: press.X - sx,
 				Y: press.Y - sy,
 			}
 		}
 	}
-	return normalizedMinMax(min, max)
+	return normalizedMinMax(minPoint, maxPoint)
 }
 
-func normalizedMinMax(min, max geom.Pt) (geom.Pt, geom.Pt) {
-	if min.X <= max.X && min.Y <= max.Y {
-		return min, max
+func normalizedMinMax(minPoint, maxPoint geom.Pt) (geom.Pt, geom.Pt) {
+	if minPoint.X <= maxPoint.X && minPoint.Y <= maxPoint.Y {
+		return minPoint, maxPoint
 	}
-	return geom.Pt{X: math.Min(min.X, max.X), Y: math.Min(min.Y, max.Y)}, geom.Pt{X: math.Max(min.X, max.X), Y: math.Max(min.Y, max.Y)}
+	return geom.Pt{X: math.Min(minPoint.X, maxPoint.X), Y: math.Min(minPoint.Y, maxPoint.Y)}, geom.Pt{X: math.Max(minPoint.X, maxPoint.X), Y: math.Max(minPoint.Y, maxPoint.Y)}
 }

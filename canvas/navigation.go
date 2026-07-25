@@ -150,18 +150,18 @@ func (n *Navigation) Attach(dispatcher *Dispatcher) {
 	n.connects = append(
 		n.connects,
 		dispatcher.Connect(EventMousePress, func(ev Event) error {
-			n.handlePress(MouseEvent{Event: ev})
+			n.handlePress(&MouseEvent{Event: ev})
 			return nil
 		}),
 		dispatcher.Connect(EventMouseMove, func(ev Event) error {
-			n.handleMove(MouseEvent{Event: ev})
+			n.handleMove(&MouseEvent{Event: ev})
 			return nil
 		}),
 		dispatcher.Connect(EventMouseRelease, func(ev Event) error {
-			return n.handleRelease(MouseEvent{Event: ev})
+			return n.handleRelease(&MouseEvent{Event: ev})
 		}),
 		dispatcher.Connect(EventScroll, func(ev Event) error {
-			return n.handleScroll(MouseEvent{Event: ev})
+			return n.handleScroll(&MouseEvent{Event: ev})
 		}),
 	)
 	n.mu.Unlock()
@@ -186,7 +186,7 @@ func (n *Navigation) Detach() {
 	}
 }
 
-func (n *Navigation) handlePress(mouse MouseEvent) {
+func (n *Navigation) handlePress(mouse *MouseEvent) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	if n.mode == NavNone {
@@ -208,7 +208,7 @@ func (n *Navigation) handlePress(mouse MouseEvent) {
 	n.hasRect = n.mode == NavZoom
 }
 
-func (n *Navigation) handleMove(mouse MouseEvent) {
+func (n *Navigation) handleMove(mouse *MouseEvent) {
 	n.mu.Lock()
 	if !n.dragging || n.dragAxes == nil {
 		n.mu.Unlock()
@@ -237,7 +237,7 @@ func (n *Navigation) handleMove(mouse MouseEvent) {
 	n.mu.Unlock()
 }
 
-func (n *Navigation) handleRelease(mouse MouseEvent) error {
+func (n *Navigation) handleRelease(mouse *MouseEvent) error {
 	n.mu.Lock()
 	if !n.dragging {
 		n.mu.Unlock()
@@ -272,7 +272,7 @@ func (n *Navigation) handleRelease(mouse MouseEvent) error {
 	return nil
 }
 
-func (n *Navigation) handleScroll(mouse MouseEvent) error {
+func (n *Navigation) handleScroll(mouse *MouseEvent) error {
 	n.mu.Lock()
 	scrollK := n.scrollK
 	n.mu.Unlock()

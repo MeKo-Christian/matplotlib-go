@@ -32,7 +32,7 @@ func TestImageEmitsPostScriptColorImage(t *testing.T) {
 	img.SetRGBA(0, 0, color.RGBA{R: 0xff, A: 0xff})
 	img.SetRGBA(1, 0, color.RGBA{G: 0xff, A: 0xff})
 
-	r.Image(render.NewImageData(img), geom.Rect{
+	r.DrawImage(render.NewImageData(img), geom.Rect{
 		Min: geom.Pt{X: 10, Y: 20},
 		Max: geom.Pt{X: 50, Y: 40},
 	})
@@ -159,8 +159,8 @@ func TestRepeatedImagesReusePostScriptProcedure(t *testing.T) {
 	img.SetRGBA(1, 0, color.RGBA{G: 0xff, A: 0xff})
 	data := render.NewImageData(img)
 
-	r.Image(data, geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 50, Y: 40}})
-	r.Image(data, geom.Rect{Min: geom.Pt{X: 60, Y: 20}, Max: geom.Pt{X: 100, Y: 40}})
+	r.DrawImage(data, geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 50, Y: 40}})
+	r.DrawImage(data, geom.Rect{Min: geom.Pt{X: 60, Y: 20}, Max: geom.Pt{X: 100, Y: 40}})
 
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)

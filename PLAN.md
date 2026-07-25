@@ -56,7 +56,7 @@ update the coupled API/doc tests in the same commit.
 
 ### 2.1 Surface Tiering
 
-- [ ] Classify all 3,019 frozen symbols as keep, demote, or delete in a design
+- [x] Classify all 3,102 frozen symbols as keep, demote, or delete in a design
       document. Explicitly decide the fate of:
   - Python-style introspection (`Setp`, `Getp`, `GetpAll`, `Findobj`,
     `FindobjType`);
@@ -65,11 +65,11 @@ update the coupled API/doc tests in the same commit.
 
 ### 2.2 Package Split
 
-- [ ] Move `core/axes3d*.go` and 3D projection files into `plot3d`
+- [x] Move `core/axes3d*.go` and 3D projection files into `plot3d`
       (approximately 98 exported symbols and 7k lines).
-- [ ] Move tick locators, formatters, and date ticks into `ticker`, preserving
+- [x] Move tick locators, formatters, and date ticks into `ticker`, preserving
       Matplotlib's natural `ticker`/dates boundary where useful.
-- [ ] Move widget and selector implementations into `widgets`, beside the
+- [x] Move widget and selector implementations into `widgets`, beside the
       canvas/event layer.
 - [ ] After each move, keep `go build ./...` and `just test` green, verify
       goldens are byte-identical, run the full API regeneration workflow,
@@ -84,26 +84,41 @@ update the coupled API/doc tests in the same commit.
 - [ ] Replace the 83 variadic option structs and 408 pointer-to-primitive
       fields with one consistent options model; extra option sets must be
       impossible or rejected. Replace raw-string enums with typed constants.
-- [ ] Add `Figure.Save(path)`, `Figure.WriteTo(w, format)`, and
+- [x] Add `Figure.Save(path)`, `Figure.WriteTo(w, format)`, and
       `Figure.Image()`; replace the repeated backend-specific save boilerplate
       in examples.
-- [ ] Rename `GetX()` getters to `X()` and resolve exported mutable fields
-      versus setter duplication consistently.
-- [ ] Document the concurrency contract for global rc state, registries, and
+- [x] Rename `GetX()` getters to `X()` (or an explicit `LookupX()` spelling
+      where the noun conflicts with an exported type).
+- [ ] Resolve exported mutable fields versus setter duplication consistently.
+- [x] Document the concurrency contract for global rc state, registries, and
       figures; stop discarding pyplot errors.
 - [ ] Consolidate duplicated alpha baking, option unpacking, and scalar-map
       resolution paths.
 
 ### 2.4 Re-freeze
 
-- [ ] Regenerate `stable_public_api.json`, remap public-surface
-      classifications, regenerate the parity-status document, add migration
-      notes for every break, and draft the Phase 4 changelog section.
+- [x] Create the post-split checkpoint: regenerate `stable_public_api.json`,
+      remap public-surface classifications, regenerate the parity-status
+      document, add migration notes for every completed break, and draft the
+      Phase 4 changelog section.
+- [ ] Repeat the freeze after the remaining error/options/mutable-field work
+      and treat that artifact as the final Phase 2 surface.
 
 **Done when:** `core/` no longer owns plot3d/ticker/widgets; plot methods use
 the chosen error and options conventions; no raw-string option enums remain;
 the new figure save surface is used by examples; the API is re-frozen; and all
 goldens remain byte-identical to the pre-break baseline.
+
+**2026-07-25 checkpoint:** surface tiering, the `plot3d`/`ticker`/`dates`/
+`widgets` moves, figure output, getter naming, concurrency documentation,
+registry synchronization, example migration, API/parity remapping, migration
+notes, and the changelog draft are complete. No golden/reference fixture
+changed. Remaining Phase 2 work is the unified rejected-input error convention
+and `*Units` fold, the options/raw-enum conversion, mutable-field cleanup, and
+the duplicated alpha/option/scalar-map paths. `just test` reaches only the
+pre-existing `mathtext_basic`, `mathtext_fractions`, and `mathtext_integrals`
+golden/reference failures (plus the existing `mathtext_basic` SVG
+font-family mismatch); all other packages pass.
 
 ## Phase 3: Visual QA and Tolerance Closure
 

@@ -101,7 +101,7 @@ func TestAuditRendererSurface(t *testing.T) {
 	t.Run("Image", func(t *testing.T) {
 		content := renderSVGDocument(t, func(r *Renderer) {
 			img := image.NewRGBA(image.Rect(0, 0, 2, 2))
-			r.Image(render.NewImageData(img), geom.Rect{
+			r.DrawImage(render.NewImageData(img), geom.Rect{
 				Min: geom.Pt{X: 1, Y: 1},
 				Max: geom.Pt{X: 5, Y: 5},
 			})

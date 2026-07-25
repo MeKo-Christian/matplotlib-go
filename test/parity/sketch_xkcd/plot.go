@@ -65,8 +65,8 @@ func Render() image.Image {
 	// antialiased figure patch over a transparent canvas, so the sketch wiggle
 	// perforates the border with fully-transparent notch pixels. Return the
 	// buffer as straight-alpha NRGBA so those transparent pixels round-trip and
-	// compare correctly (GetImage would mislabel them as premultiplied RGBA).
-	return r.GetImageNRGBA()
+	// compare correctly (Image would mislabel them as premultiplied RGBA).
+	return r.ImageNRGBA()
 }
 
 func colorPtr(c render.Color) *render.Color { return &c }

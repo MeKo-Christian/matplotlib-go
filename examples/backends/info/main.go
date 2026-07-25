@@ -33,7 +33,7 @@ func main() {
 
 	useCases := []string{"basic", "publication", "interactive", "scientific"}
 	for _, useCase := range useCases {
-		backend, err := backends.GetRecommendedBackend(useCase)
+		backend, err := backends.RecommendedBackend(useCase)
 		if err != nil {
 			fmt.Printf("  %s: No suitable backend found\n", useCase)
 		} else {

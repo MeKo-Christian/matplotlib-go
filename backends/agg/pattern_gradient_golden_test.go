@@ -80,7 +80,7 @@ func renderPatternGradientFixture(t *testing.T, draw func(*Renderer)) image.Imag
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)
 	}
-	return r.GetImage()
+	return r.Image()
 }
 
 func drawGradientFillBars(r *Renderer) {

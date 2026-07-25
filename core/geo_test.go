@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestAddMollweideAxesConfiguresProjection(t *testing.T) {
@@ -73,11 +74,11 @@ func TestMollweideFrameAndGridUseSampledCurves(t *testing.T) {
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 
 	longitudeGrid := NewGrid(AxisBottom)
-	longitudeGrid.Locator = FixedLocator{TicksList: []float64{0}}
+	longitudeGrid.Locator = ticker.FixedLocator{TicksList: []float64{0}}
 	longitudeGrid.Minor = false
 
 	latitudeGrid := NewGrid(AxisLeft)
-	latitudeGrid.Locator = FixedLocator{TicksList: []float64{math.Pi / 6}}
+	latitudeGrid.Locator = ticker.FixedLocator{TicksList: []float64{math.Pi / 6}}
 	latitudeGrid.Minor = false
 
 	r := &recordingRenderer{}
@@ -160,10 +161,10 @@ func TestMollweideDefaultsUseMatplotlibGeoTickLabels(t *testing.T) {
 	}
 	// The default geo formatter is matplotlib's ThetaFormatter: degrees with a
 	// trailing degree sign (projections/geo.py).
-	if got := formatTickLabel(ax.XAxis.Formatter, xTicks[0], 0, xTicks); got != "-150°" {
+	if got := ticker.FormatTick(ax.XAxis.Formatter, xTicks[0], 0, xTicks); got != "-150°" {
 		t.Fatalf("first longitude label = %q, want -150°", got)
 	}
-	if got := formatTickLabel(ax.YAxis.Formatter, yTicks[len(yTicks)-1], len(yTicks)-1, yTicks); got != "75°" {
+	if got := ticker.FormatTick(ax.YAxis.Formatter, yTicks[len(yTicks)-1], len(yTicks)-1, yTicks); got != "75°" {
 		t.Fatalf("last latitude label = %q, want 75°", got)
 	}
 }
@@ -174,7 +175,7 @@ func TestMollweideXAxisTickLabelsUseGeoTextTransform(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddAxesProjection(mollweide): %v", err)
 	}
-	ax.XAxis.Locator = FixedLocator{TicksList: []float64{0}}
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{0}}
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 	r := &axisLabelRecordingRenderer{}
 
@@ -234,8 +235,8 @@ func TestGeoYAxisTickLabelBoundsUseLineBox(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddAxesProjection(mollweide): %v", err)
 	}
-	ax.YAxis.Locator = FixedLocator{TicksList: []float64{0}}
-	ax.YAxis.Formatter = FuncFormatter(func(float64) string { return "latitude" })
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0}}
+	ax.YAxis.Formatter = ticker.FuncFormatter(func(float64) string { return "latitude" })
 
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 	r := &shortInkBoundsRenderer{}
@@ -302,7 +303,7 @@ func TestMollweideGridPreservesConfiguredRGBA(t *testing.T) {
 	}
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 	grid := NewGrid(AxisBottom)
-	grid.Locator = FixedLocator{TicksList: []float64{0}}
+	grid.Locator = ticker.FixedLocator{TicksList: []float64{0}}
 	grid.Color = render.Color{R: 0.78, G: 0.80, B: 0.84, A: 0.55}
 	grid.LineWidth = 0.8
 

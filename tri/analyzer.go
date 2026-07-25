@@ -76,12 +76,12 @@ func (a *TriAnalyzer) CircleRatios(rescale bool) []float64 {
 	return out
 }
 
-// GetFlatTriMask returns a mask that removes excessively flat border triangles
+// FlatTriMask returns a mask that removes excessively flat border triangles
 // (circle ratio < minCircleRatio) from the triangulation. Triangles are masked
 // iteratively, only when they touch the current mesh border, so no interior
 // holes are created. Initially masked triangles remain masked. Mirrors
 // matplotlib's TriAnalyzer.get_flat_tri_mask.
-func (a *TriAnalyzer) GetFlatTriMask(minCircleRatio float64, rescale bool) []bool {
+func (a *TriAnalyzer) FlatTriMask(minCircleRatio float64, rescale bool) []bool {
 	ntri := len(a.tri.Triangles)
 	ratios := a.CircleRatios(rescale)
 	maskBad := make([]bool, ntri)

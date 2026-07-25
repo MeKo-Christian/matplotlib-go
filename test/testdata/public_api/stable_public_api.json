@@ -15,12 +15,24 @@
           "declaration": "const DefaultInterval = 200 * time.Millisecond"
         },
         {
+          "id": "func FFmpegAvailable",
+          "declaration": "func FFmpegAvailable() bool"
+        },
+        {
           "id": "func NewAPNGWriter",
           "declaration": "func NewAPNGWriter(fps int) *APNGWriter"
         },
         {
           "id": "func NewArtistAnimation",
           "declaration": "func NewArtistAnimation(cfg Config, frames [][]core.Artist) (*Animation, error)"
+        },
+        {
+          "id": "func NewFFmpegWebMWriter",
+          "declaration": "func NewFFmpegWebMWriter(fps int) *FFmpegWriter"
+        },
+        {
+          "id": "func NewFFmpegWriter",
+          "declaration": "func NewFFmpegWriter(fps int) *FFmpegWriter"
         },
         {
           "id": "func NewFuncAnimation",
@@ -119,6 +131,22 @@
           "declaration": "func (Animation) TotalFramesDrawn() int"
         },
         {
+          "id": "method FFmpegWriter.Finish",
+          "declaration": "func (FFmpegWriter) Finish() error"
+        },
+        {
+          "id": "method FFmpegWriter.FrameSize",
+          "declaration": "func (FFmpegWriter) FrameSize() (width, height int)"
+        },
+        {
+          "id": "method FFmpegWriter.GrabFrame",
+          "declaration": "func (FFmpegWriter) GrabFrame() error"
+        },
+        {
+          "id": "method FFmpegWriter.Setup",
+          "declaration": "func (FFmpegWriter) Setup(c canvas.FigureCanvas, outfile string, dpi float64) error"
+        },
+        {
           "id": "method GifWriter.Finish",
           "declaration": "func (GifWriter) Finish() (err error)"
         },
@@ -161,6 +189,10 @@
         {
           "id": "type Config",
           "declaration": "type Config struct{ Canvas canvas.FigureCanvas; Frames int; Interval time.Duration; Repeat bool; RepeatDelay time.Duration; Blit bool; EventLoop canvas.EventLoop }"
+        },
+        {
+          "id": "type FFmpegWriter",
+          "declaration": "type FFmpegWriter struct{ FPS int; Format string }"
         },
         {
           "id": "type GifWriter",
@@ -449,6 +481,10 @@
           "declaration": "func BackendsForExtension(ext string) []Backend"
         },
         {
+          "id": "func BestBackend",
+          "declaration": "func BestBackend(required []Capability) (Backend, error)"
+        },
+        {
           "id": "func CapabilityMatrix",
           "declaration": "func CapabilityMatrix() string"
         },
@@ -459,14 +495,6 @@
         {
           "id": "func DefaultBackend",
           "declaration": "func DefaultBackend() Backend"
-        },
-        {
-          "id": "func GetBestBackend",
-          "declaration": "func GetBestBackend(required []Capability) (Backend, error)"
-        },
-        {
-          "id": "func GetRecommendedBackend",
-          "declaration": "func GetRecommendedBackend(useCase string) (Backend, error)"
         },
         {
           "id": "func HasCapability",
@@ -503,6 +531,10 @@
         {
           "id": "func NewTestSuite",
           "declaration": "func NewTestSuite(backend Backend, config Config) *BackendTestSuite"
+        },
+        {
+          "id": "func RecommendedBackend",
+          "declaration": "func RecommendedBackend(useCase string) (Backend, error)"
         },
         {
           "id": "func Register",
@@ -677,6 +709,10 @@
           "declaration": "type Registry struct{}"
         },
         {
+          "id": "type RendererModeReporter",
+          "declaration": "type RendererModeReporter interface{ RendererModeLabel func() string }"
+        },
+        {
           "id": "type SaveHandler",
           "declaration": "type SaveHandler func(render.Renderer, string, ...render.SaveOption) error"
         },
@@ -747,6 +783,10 @@
           "declaration": "func (Renderer) DrawGouraudTriangles(batch render.GouraudTriangleBatch) bool"
         },
         {
+          "id": "method Renderer.DrawImage",
+          "declaration": "func (Renderer) DrawImage(img render.Image, dst geom.Rect)"
+        },
+        {
           "id": "method Renderer.DrawMarkers",
           "declaration": "func (Renderer) DrawMarkers(batch render.MarkerBatch) bool"
         },
@@ -811,20 +851,16 @@
           "declaration": "func (Renderer) End() error"
         },
         {
-          "id": "method Renderer.GetImage",
-          "declaration": "func (Renderer) GetImage() *image.RGBA"
-        },
-        {
-          "id": "method Renderer.GetImageNRGBA",
-          "declaration": "func (Renderer) GetImageNRGBA() *image.NRGBA"
-        },
-        {
           "id": "method Renderer.GlyphRun",
           "declaration": "func (Renderer) GlyphRun(run render.GlyphRun, textColor render.Color)"
         },
         {
           "id": "method Renderer.Image",
-          "declaration": "func (Renderer) Image(img render.Image, dst geom.Rect)"
+          "declaration": "func (Renderer) Image() *image.RGBA"
+        },
+        {
+          "id": "method Renderer.ImageNRGBA",
+          "declaration": "func (Renderer) ImageNRGBA() *image.NRGBA"
         },
         {
           "id": "method Renderer.ImageTransformed",
@@ -1046,6 +1082,10 @@
           "declaration": "func (Renderer) ClipRect(rect geom.Rect)"
         },
         {
+          "id": "method Renderer.DrawImage",
+          "declaration": "func (Renderer) DrawImage(img render.Image, dst geom.Rect)"
+        },
+        {
           "id": "method Renderer.DrawPathWithEffects",
           "declaration": "func (Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool"
         },
@@ -1066,16 +1106,12 @@
           "declaration": "func (Renderer) End() error"
         },
         {
-          "id": "method Renderer.GetImage",
-          "declaration": "func (Renderer) GetImage() *image.RGBA"
-        },
-        {
           "id": "method Renderer.GlyphRun",
           "declaration": "func (Renderer) GlyphRun(run render.GlyphRun, textColor render.Color)"
         },
         {
           "id": "method Renderer.Image",
-          "declaration": "func (Renderer) Image(img render.Image, dst geom.Rect)"
+          "declaration": "func (Renderer) Image() *image.RGBA"
         },
         {
           "id": "method Renderer.ImageTransformed",
@@ -1144,6 +1180,10 @@
           "declaration": "func (Renderer) ClipRect(rect geom.Rect)"
         },
         {
+          "id": "method Renderer.DrawImage",
+          "declaration": "func (Renderer) DrawImage(img render.Image, dst geom.Rect)"
+        },
+        {
           "id": "method Renderer.DrawMarkers",
           "declaration": "func (Renderer) DrawMarkers(batch render.MarkerBatch) bool"
         },
@@ -1202,10 +1242,6 @@
         {
           "id": "method Renderer.GlyphRun",
           "declaration": "func (Renderer) GlyphRun(run render.GlyphRun, textColor render.Color)"
-        },
-        {
-          "id": "method Renderer.Image",
-          "declaration": "func (Renderer) Image(img render.Image, dst geom.Rect)"
         },
         {
           "id": "method Renderer.ImageTransformed",
@@ -1334,6 +1370,10 @@
           "declaration": "func (Renderer) ClipRect(rect geom.Rect)"
         },
         {
+          "id": "method Renderer.DrawImage",
+          "declaration": "func (Renderer) DrawImage(img render.Image, dst geom.Rect)"
+        },
+        {
           "id": "method Renderer.DrawMarkers",
           "declaration": "func (Renderer) DrawMarkers(batch render.MarkerBatch) bool"
         },
@@ -1376,10 +1416,6 @@
         {
           "id": "method Renderer.GlyphRun",
           "declaration": "func (Renderer) GlyphRun(run render.GlyphRun, textColor render.Color)"
-        },
-        {
-          "id": "method Renderer.Image",
-          "declaration": "func (Renderer) Image(img render.Image, dst geom.Rect)"
         },
         {
           "id": "method Renderer.ImageTransformed",
@@ -1476,6 +1512,10 @@
           "declaration": "func (Renderer) ClipRect(rect geom.Rect)"
         },
         {
+          "id": "method Renderer.DrawImage",
+          "declaration": "func (Renderer) DrawImage(img render.Image, dst geom.Rect)"
+        },
+        {
           "id": "method Renderer.DrawMarkers",
           "declaration": "func (Renderer) DrawMarkers(batch render.MarkerBatch) bool"
         },
@@ -1518,10 +1558,6 @@
         {
           "id": "method Renderer.GlyphRun",
           "declaration": "func (Renderer) GlyphRun(run render.GlyphRun, textColor render.Color)"
-        },
-        {
-          "id": "method Renderer.Image",
-          "declaration": "func (Renderer) Image(img render.Image, dst geom.Rect)"
         },
         {
           "id": "method Renderer.ImageTransformed",
@@ -1647,23 +1683,63 @@
         },
         {
           "id": "method Renderer.Begin",
-          "declaration": "func (Renderer) Begin(_ geom.Rect) error"
+          "declaration": "func (Renderer) Begin(viewport geom.Rect) error"
+        },
+        {
+          "id": "method Renderer.BridgeInfo",
+          "declaration": "func (Renderer) BridgeInfo() BridgeInfo"
         },
         {
           "id": "method Renderer.ClipPath",
-          "declaration": "func (Renderer) ClipPath(_ geom.Path)"
+          "declaration": "func (Renderer) ClipPath(p geom.Path)"
         },
         {
           "id": "method Renderer.ClipRect",
-          "declaration": "func (Renderer) ClipRect(_ geom.Rect)"
+          "declaration": "func (Renderer) ClipRect(rect geom.Rect)"
+        },
+        {
+          "id": "method Renderer.ColorType",
+          "declaration": "func (Renderer) ColorType() string"
+        },
+        {
+          "id": "method Renderer.DrawGouraudTriangles",
+          "declaration": "func (Renderer) DrawGouraudTriangles(batch render.GouraudTriangleBatch) bool"
+        },
+        {
+          "id": "method Renderer.DrawImage",
+          "declaration": "func (Renderer) DrawImage(_ render.Image, _ geom.Rect)"
+        },
+        {
+          "id": "method Renderer.DrawMarkers",
+          "declaration": "func (Renderer) DrawMarkers(batch render.MarkerBatch) bool"
+        },
+        {
+          "id": "method Renderer.DrawPathCollection",
+          "declaration": "func (Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool"
         },
         {
           "id": "method Renderer.DrawPathWithEffects",
-          "declaration": "func (Renderer) DrawPathWithEffects(_ geom.Path, _ *render.Paint) bool"
+          "declaration": "func (Renderer) DrawPathWithEffects(p geom.Path, paint *render.Paint) bool"
+        },
+        {
+          "id": "method Renderer.DrawQuadMesh",
+          "declaration": "func (Renderer) DrawQuadMesh(batch render.QuadMeshBatch) bool"
         },
         {
           "id": "method Renderer.End",
           "declaration": "func (Renderer) End() error"
+        },
+        {
+          "id": "method Renderer.FlushGPU",
+          "declaration": "func (Renderer) FlushGPU()"
+        },
+        {
+          "id": "method Renderer.GPU",
+          "declaration": "func (Renderer) GPU() bool"
+        },
+        {
+          "id": "method Renderer.GPUModeRequested",
+          "declaration": "func (Renderer) GPUModeRequested() bool"
         },
         {
           "id": "method Renderer.GlyphRun",
@@ -1671,7 +1747,11 @@
         },
         {
           "id": "method Renderer.Image",
-          "declaration": "func (Renderer) Image(_ render.Image, _ geom.Rect)"
+          "declaration": "func (Renderer) Image() *image.RGBA"
+        },
+        {
+          "id": "method Renderer.ImageTransformed",
+          "declaration": "func (Renderer) ImageTransformed(img render.Image, dst geom.Rect, transform geom.Affine)"
         },
         {
           "id": "method Renderer.MeasureText",
@@ -1679,11 +1759,23 @@
         },
         {
           "id": "method Renderer.Path",
-          "declaration": "func (Renderer) Path(_ geom.Path, _ *render.Paint)"
+          "declaration": "func (Renderer) Path(p geom.Path, paint *render.Paint)"
+        },
+        {
+          "id": "method Renderer.RendererModeLabel",
+          "declaration": "func (Renderer) RendererModeLabel() string"
         },
         {
           "id": "method Renderer.Restore",
           "declaration": "func (Renderer) Restore()"
+        },
+        {
+          "id": "method Renderer.RuntimeCapabilityStatus",
+          "declaration": "func (Renderer) RuntimeCapabilityStatus(capability backends.Capability) (backends.CapabilityStatus, bool)"
+        },
+        {
+          "id": "method Renderer.SampleCount",
+          "declaration": "func (Renderer) SampleCount() int"
         },
         {
           "id": "method Renderer.Save",
@@ -1692,6 +1784,38 @@
         {
           "id": "method Renderer.SavePNG",
           "declaration": "func (Renderer) SavePNG(_ string) error"
+        },
+        {
+          "id": "method Renderer.SetDefaultSketch",
+          "declaration": "func (Renderer) SetDefaultSketch(params render.SketchParams)"
+        },
+        {
+          "id": "method Renderer.SetResolution",
+          "declaration": "func (Renderer) SetResolution(dpi uint)"
+        },
+        {
+          "id": "method Renderer.StartFilter",
+          "declaration": "func (Renderer) StartFilter()"
+        },
+        {
+          "id": "method Renderer.StopFilter",
+          "declaration": "func (Renderer) StopFilter(postProcess func(*image.RGBA, float64) (*image.RGBA, geom.Pt))"
+        },
+        {
+          "id": "method Renderer.SupportsGradientFill",
+          "declaration": "func (Renderer) SupportsGradientFill() bool"
+        },
+        {
+          "id": "method Renderer.SupportsNativeHatch",
+          "declaration": "func (Renderer) SupportsNativeHatch() bool"
+        },
+        {
+          "id": "method Renderer.SupportsPatternFill",
+          "declaration": "func (Renderer) SupportsPatternFill() bool"
+        },
+        {
+          "id": "method Renderer.Surface",
+          "declaration": "func (Renderer) Surface() interface{}"
         },
         {
           "id": "type BindingStrategy",
@@ -1719,7 +1843,7 @@
         },
         {
           "id": "type Renderer",
-          "declaration": "type Renderer struct{}"
+          "declaration": "type Renderer struct{ *gobasic.Renderer }"
         },
         {
           "id": "type Strategy",
@@ -1750,6 +1874,10 @@
         {
           "id": "method Renderer.ClipRect",
           "declaration": "func (Renderer) ClipRect(rect geom.Rect)"
+        },
+        {
+          "id": "method Renderer.DrawImage",
+          "declaration": "func (Renderer) DrawImage(img render.Image, dst geom.Rect)"
         },
         {
           "id": "method Renderer.DrawMarkers",
@@ -1798,10 +1926,6 @@
         {
           "id": "method Renderer.GlyphRun",
           "declaration": "func (Renderer) GlyphRun(run render.GlyphRun, textColor render.Color)"
-        },
-        {
-          "id": "method Renderer.Image",
-          "declaration": "func (Renderer) Image(img render.Image, dst geom.Rect)"
         },
         {
           "id": "method Renderer.ImageTransformed",
@@ -2139,7 +2263,7 @@
         },
         {
           "id": "type RasterRenderer",
-          "declaration": "type RasterRenderer interface{ render.Renderer; GetImage func() *image.RGBA }"
+          "declaration": "type RasterRenderer interface{ render.Renderer; Image func() *image.RGBA }"
         },
         {
           "id": "type RendererFactory",
@@ -2706,12 +2830,12 @@
           "declaration": "func DefaultColormap() Colormap"
         },
         {
-          "id": "func GetColormap",
-          "declaration": "func GetColormap(name string) Colormap"
+          "id": "func LookupColormap",
+          "declaration": "func LookupColormap(name string) Colormap"
         },
         {
-          "id": "func GetColormapStrict",
-          "declaration": "func GetColormapStrict(name string) (Colormap, error)"
+          "id": "func LookupColormapStrict",
+          "declaration": "func LookupColormapStrict(name string) (Colormap, error)"
         },
         {
           "id": "func NamedColors",
@@ -3070,18 +3194,6 @@
         {
           "id": "const EventOrientationVertical",
           "declaration": "const EventOrientationVertical EventOrientation = iota"
-        },
-        {
-          "id": "const FillBetween3DModeAuto",
-          "declaration": "const FillBetween3DModeAuto FillBetween3DMode = \"auto\""
-        },
-        {
-          "id": "const FillBetween3DModePolygon",
-          "declaration": "const FillBetween3DModePolygon FillBetween3DMode = \"polygon\""
-        },
-        {
-          "id": "const FillBetween3DModeQuad",
-          "declaration": "const FillBetween3DModeQuad FillBetween3DMode = \"quad\""
         },
         {
           "id": "const FillHorizontal",
@@ -3720,8 +3832,12 @@
           "declaration": "func Coords(space CoordinateSpace) CoordinateSpec"
         },
         {
-          "id": "func Date2Num",
-          "declaration": "func Date2Num(t time.Time) float64"
+          "id": "func DrawAlignedText",
+          "declaration": "func DrawAlignedText(r render.Renderer, ctx *DrawContext, anchor geom.Pt, text string, size float64, color render.Color, hAlign TextAlign, vAlign TextVerticalAlign)"
+        },
+        {
+          "id": "func DrawAlignedTextWithFont",
+          "declaration": "func DrawAlignedTextWithFont(r render.Renderer, ctx *DrawContext, anchor geom.Pt, text string, size float64, color render.Color, hAlign TextAlign, vAlign TextVerticalAlign, fontKey string)"
         },
         {
           "id": "func DrawFigure",
@@ -3764,24 +3880,8 @@
           "declaration": "func FillToBaselineX(y, x []float64, baseline float64, color render.Color) *Fill2D"
         },
         {
-          "id": "func Findobj",
-          "declaration": "func Findobj(root any, match func(Artist) bool) []Artist"
-        },
-        {
-          "id": "func FindobjType",
-          "declaration": "func FindobjType[T any](root any) []T"
-        },
-        {
-          "id": "func GetEpoch",
-          "declaration": "func GetEpoch() time.Time"
-        },
-        {
-          "id": "func Getp",
-          "declaration": "func Getp(art Artist, name string) (any, bool)"
-        },
-        {
-          "id": "func GetpAll",
-          "declaration": "func GetpAll(art Artist) map[string]any"
+          "id": "func FontKeyWithWeight",
+          "declaration": "func FontKeyWithWeight(fontKey string, weight int) string"
         },
         {
           "id": "func ImRead",
@@ -3810,10 +3910,6 @@
         {
           "id": "func NewAnchoredOffsetLocator",
           "declaration": "func NewAnchoredOffsetLocator(location LegendLocation, inset, dx, dy float64) AnchoredBoxLocator"
-        },
-        {
-          "id": "func NewAxes3D",
-          "declaration": "func NewAxes3D(ax *Axes) *Axes3D"
         },
         {
           "id": "func NewFigure",
@@ -3876,12 +3972,12 @@
           "declaration": "func NoMarkerColor() MarkerColorSpec"
         },
         {
-          "id": "func Num2Date",
-          "declaration": "func Num2Date(v float64, loc *time.Location) time.Time"
-        },
-        {
           "id": "func RadarAngles",
           "declaration": "func RadarAngles(n int) []float64"
+        },
+        {
+          "id": "func RegisterFigureOutputRenderer",
+          "declaration": "func RegisterFigureOutputRenderer(format string, factory FigureOutputRendererFactory)"
         },
         {
           "id": "func RegisterProjection",
@@ -3934,14 +4030,6 @@
         {
           "id": "func SetArtistLabel",
           "declaration": "func SetArtistLabel(art Artist, label string)"
-        },
-        {
-          "id": "func SetEpoch",
-          "declaration": "func SetEpoch(t time.Time) error"
-        },
-        {
-          "id": "func Setp",
-          "declaration": "func Setp(art Artist, props map[string]any)"
         },
         {
           "id": "func SliceMarkers",
@@ -4284,14 +4372,6 @@
           "declaration": "func (ArtistRasterization) InLayout() bool"
         },
         {
-          "id": "method ArtistRasterization.Property",
-          "declaration": "func (ArtistRasterization) Property(name string) (any, bool)"
-        },
-        {
-          "id": "method ArtistRasterization.PropertyNames",
-          "declaration": "func (ArtistRasterization) PropertyNames() []string"
-        },
-        {
           "id": "method ArtistRasterization.Rasterization",
           "declaration": "func (ArtistRasterization) Rasterization() render.Rasterization"
         },
@@ -4330,10 +4410,6 @@
         {
           "id": "method ArtistRasterization.SetInLayout",
           "declaration": "func (ArtistRasterization) SetInLayout(inLayout bool)"
-        },
-        {
-          "id": "method ArtistRasterization.SetProperty",
-          "declaration": "func (ArtistRasterization) SetProperty(name string, v any) bool"
         },
         {
           "id": "method ArtistRasterization.SetRasterization",
@@ -4376,10 +4452,6 @@
           "declaration": "func (ArtistRasterization) Visible() bool"
         },
         {
-          "id": "method AsinhLocator.Ticks",
-          "declaration": "func (AsinhLocator) Ticks(minVal, maxVal float64, _ int) []float64"
-        },
-        {
           "id": "method AsinhNorm.Autoscale",
           "declaration": "func (AsinhNorm) Autoscale(values []float64) ScalarNormalizer"
         },
@@ -4402,18 +4474,6 @@
         {
           "id": "method AsinhNorm.Validate",
           "declaration": "func (AsinhNorm) Validate() error"
-        },
-        {
-          "id": "method AutoDateFormatter.Format",
-          "declaration": "func (AutoDateFormatter) Format(x float64) string"
-        },
-        {
-          "id": "method AutoLocator.Ticks",
-          "declaration": "func (AutoLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
-        },
-        {
-          "id": "method AutoMinorLocator.Ticks",
-          "declaration": "func (AutoMinorLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
         },
         {
           "id": "method Axes.ACorr",
@@ -4454,10 +4514,6 @@
         {
           "id": "method Axes.AddPatch",
           "declaration": "func (Axes) AddPatch(art Artist)"
-        },
-        {
-          "id": "method Axes.AddWidget",
-          "declaration": "func (Axes) AddWidget(art Artist)"
         },
         {
           "id": "method Axes.AddXGrid",
@@ -4556,20 +4612,12 @@
           "declaration": "func (Axes) BrokenBarH(xRanges [][2]float64, yRange [2]float64, opts ...BarOptions) *Bar2D"
         },
         {
-          "id": "method Axes.Button",
-          "declaration": "func (Axes) Button(label string, opts ...ButtonOptions) *Button"
-        },
-        {
           "id": "method Axes.Bxp",
           "declaration": "func (Axes) Bxp(stats []BxpStat, opts ...BxpOptions) *BxpContainer"
         },
         {
           "id": "method Axes.CSD",
           "declaration": "func (Axes) CSD(x, y []float64, opts ...SignalSpectrumOptions) *SpectrumResult"
-        },
-        {
-          "id": "method Axes.CheckButtons",
-          "declaration": "func (Axes) CheckButtons(labels []string, active []bool, opts ...CheckButtonsOptions) *CheckButtons"
         },
         {
           "id": "method Axes.Cla",
@@ -4604,20 +4652,12 @@
           "declaration": "func (Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet"
         },
         {
-          "id": "method Axes.Cursor",
-          "declaration": "func (Axes) Cursor(opts ...CursorOptions) *Cursor"
-        },
-        {
           "id": "method Axes.DisplayRect",
           "declaration": "func (Axes) DisplayRect() geom.Rect"
         },
         {
           "id": "method Axes.ECDF",
           "declaration": "func (Axes) ECDF(data []float64, opts ...ECDFOptions) *Line2D"
-        },
-        {
-          "id": "method Axes.EllipseSelector",
-          "declaration": "func (Axes) EllipseSelector(opts ...EllipseSelectorOptions) *EllipseSelector"
         },
         {
           "id": "method Axes.ErrorBar",
@@ -4658,10 +4698,6 @@
         {
           "id": "method Axes.FillToBaselinePlot",
           "declaration": "func (Axes) FillToBaselinePlot(x, y []float64, opts ...FillOptions) *Fill2D"
-        },
-        {
-          "id": "method Axes.Findobj",
-          "declaration": "func (Axes) Findobj(match func(Artist) bool) []Artist"
         },
         {
           "id": "method Axes.FloatingXAxis",
@@ -4724,6 +4760,10 @@
           "declaration": "func (Axes) InsetAxes(bounds geom.Rect, opts ...InsetAxesOption) *Axes"
         },
         {
+          "id": "method Axes.InvalidateArtistOrder",
+          "declaration": "func (Axes) InvalidateArtistOrder()"
+        },
+        {
           "id": "method Axes.InvertX",
           "declaration": "func (Axes) InvertX()"
         },
@@ -4734,10 +4774,6 @@
         {
           "id": "method Axes.LabelOuter",
           "declaration": "func (Axes) LabelOuter()"
-        },
-        {
-          "id": "method Axes.LassoSelector",
-          "declaration": "func (Axes) LassoSelector(opts ...LassoSelectorOptions) *LassoSelector"
         },
         {
           "id": "method Axes.LocatorParams",
@@ -4782,14 +4818,6 @@
         {
           "id": "method Axes.MoveYAxisToRight",
           "declaration": "func (Axes) MoveYAxisToRight() error"
-        },
-        {
-          "id": "method Axes.MultiCursor",
-          "declaration": "func (Axes) MultiCursor(axes ...*Axes) *MultiCursor"
-        },
-        {
-          "id": "method Axes.MultiCursorWithOptions",
-          "declaration": "func (Axes) MultiCursorWithOptions(opts []MultiCursorOptions, axes ...*Axes) *MultiCursor"
         },
         {
           "id": "method Axes.NewAxisArtist",
@@ -4864,10 +4892,6 @@
           "declaration": "func (Axes) PlotUnits(xVals, yVals any, opts ...PlotOptions) (*Line2D, error)"
         },
         {
-          "id": "method Axes.PolygonSelector",
-          "declaration": "func (Axes) PolygonSelector(opts ...PolygonSelectorOptions) *PolygonSelector"
-        },
-        {
           "id": "method Axes.ProjectionName",
           "declaration": "func (Axes) ProjectionName() string"
         },
@@ -4884,24 +4908,16 @@
           "declaration": "func (Axes) QuiverKey(q *Quiver, x, y, u float64, label string, opts ...QuiverKeyOptions) *QuiverKey"
         },
         {
-          "id": "method Axes.RadioButtons",
-          "declaration": "func (Axes) RadioButtons(labels []string, active int, opts ...RadioButtonsOptions) *RadioButtons"
-        },
-        {
-          "id": "method Axes.RangeSlider",
-          "declaration": "func (Axes) RangeSlider(label string, min, max, low, high float64, opts ...RangeSliderOptions) *RangeSlider"
-        },
-        {
-          "id": "method Axes.RectangleSelector",
-          "declaration": "func (Axes) RectangleSelector(opts ...RectangleSelectorOptions) *RectangleSelector"
-        },
-        {
           "id": "method Axes.Remove",
           "declaration": "func (Axes) Remove()"
         },
         {
           "id": "method Axes.ResetColorCycle",
           "declaration": "func (Axes) ResetColorCycle()"
+        },
+        {
+          "id": "method Axes.ResolvedRC",
+          "declaration": "func (Axes) ResolvedRC() style.RC"
         },
         {
           "id": "method Axes.RightAxis",
@@ -5108,14 +5124,6 @@
           "declaration": "func (Axes) SetYTickLabelPosition(position string) error"
         },
         {
-          "id": "method Axes.Slider",
-          "declaration": "func (Axes) Slider(label string, min, max, value float64, opts ...SliderOptions) *Slider"
-        },
-        {
-          "id": "method Axes.SpanSelector",
-          "declaration": "func (Axes) SpanSelector(orientation string, opts ...SpanSelectorOptions) *SpanSelector"
-        },
-        {
           "id": "method Axes.Specgram",
           "declaration": "func (Axes) Specgram(samples []float64, opts ...SpecgramOptions) *SpecgramResult"
         },
@@ -5150,10 +5158,6 @@
         {
           "id": "method Axes.Text",
           "declaration": "func (Axes) Text(x, y float64, text string, opts ...TextOptions) *Text"
-        },
-        {
-          "id": "method Axes.TextBox",
-          "declaration": "func (Axes) TextBox(label, value string, opts ...TextBoxOptions) *TextBox"
         },
         {
           "id": "method Axes.TickParams",
@@ -5208,176 +5212,28 @@
           "declaration": "func (Axes) XInverted() bool"
         },
         {
+          "id": "method Axes.XLabelFontKey",
+          "declaration": "func (Axes) XLabelFontKey(ctx *DrawContext) string"
+        },
+        {
+          "id": "method Axes.XLabelPad",
+          "declaration": "func (Axes) XLabelPad() float64"
+        },
+        {
           "id": "method Axes.YInverted",
           "declaration": "func (Axes) YInverted() bool"
         },
         {
+          "id": "method Axes.YLabelFontKey",
+          "declaration": "func (Axes) YLabelFontKey(ctx *DrawContext) string"
+        },
+        {
+          "id": "method Axes.YLabelPad",
+          "declaration": "func (Axes) YLabelPad() float64"
+        },
+        {
           "id": "method Axes.ZoomedInset",
           "declaration": "func (Axes) ZoomedInset(bounds geom.Rect, xlim, ylim [2]float64, opts ...InsetAxesOption) (*Axes, *InsetIndicator)"
-        },
-        {
-          "id": "method Axes3D.Bar",
-          "declaration": "func (Axes3D) Bar(x, heights []float64, opts ...Bar3DPlaneOptions) *PolyCollection"
-        },
-        {
-          "id": "method Axes3D.Bar3D",
-          "declaration": "func (Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *LineCollection"
-        },
-        {
-          "id": "method Axes3D.Contour",
-          "declaration": "func (Axes3D) Contour(x, y []float64, z [][]float64, opts ...PlotOptions) *LineCollection"
-        },
-        {
-          "id": "method Axes3D.Contourf",
-          "declaration": "func (Axes3D) Contourf(x, y []float64, z [][]float64, opts ...PlotOptions) *PolyCollection"
-        },
-        {
-          "id": "method Axes3D.ErrorBar",
-          "declaration": "func (Axes3D) ErrorBar(x, y, z, xErr, yErr, zErr []float64, opts ...ErrorBar3DOptions) *LineCollection"
-        },
-        {
-          "id": "method Axes3D.ErrorBar3D",
-          "declaration": "func (Axes3D) ErrorBar3D(x, y, z, xErr, yErr, zErr []float64, opts ...ErrorBar3DOptions) *LineCollection"
-        },
-        {
-          "id": "method Axes3D.FillBetween",
-          "declaration": "func (Axes3D) FillBetween(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBetween3DOptions) *PolyCollection"
-        },
-        {
-          "id": "method Axes3D.FillBetween3D",
-          "declaration": "func (Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBetween3DOptions) *PolyCollection"
-        },
-        {
-          "id": "method Axes3D.GetZLabel",
-          "declaration": "func (Axes3D) GetZLabel() string"
-        },
-        {
-          "id": "method Axes3D.Plot3D",
-          "declaration": "func (Axes3D) Plot3D(x, y, z []float64, opts ...PlotOptions) *Line2D"
-        },
-        {
-          "id": "method Axes3D.PlotSurface",
-          "declaration": "func (Axes3D) PlotSurface(x, y, z []float64, opts ...PlotOptions) *Line2D"
-        },
-        {
-          "id": "method Axes3D.PlotSurfaceGrid",
-          "declaration": "func (Axes3D) PlotSurfaceGrid(x, y []float64, z [][]float64, opts ...PlotOptions) *PolyCollection"
-        },
-        {
-          "id": "method Axes3D.ProjectPoint",
-          "declaration": "func (Axes3D) ProjectPoint(x, y, z float64) geom.Pt"
-        },
-        {
-          "id": "method Axes3D.ProjectionType",
-          "declaration": "func (Axes3D) ProjectionType() string"
-        },
-        {
-          "id": "method Axes3D.Quiver",
-          "declaration": "func (Axes3D) Quiver(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *LineCollection"
-        },
-        {
-          "id": "method Axes3D.Quiver3D",
-          "declaration": "func (Axes3D) Quiver3D(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *LineCollection"
-        },
-        {
-          "id": "method Axes3D.Scatter3D",
-          "declaration": "func (Axes3D) Scatter3D(x, y, z []float64, opts ...ScatterOptions) *Scatter2D"
-        },
-        {
-          "id": "method Axes3D.SetBoxAspect3D",
-          "declaration": "func (Axes3D) SetBoxAspect3D(aspect [3]float64, zoom ...float64) error"
-        },
-        {
-          "id": "method Axes3D.SetDefaults",
-          "declaration": "func (Axes3D) SetDefaults()"
-        },
-        {
-          "id": "method Axes3D.SetDistance",
-          "declaration": "func (Axes3D) SetDistance(distance float64)"
-        },
-        {
-          "id": "method Axes3D.SetProjectionType",
-          "declaration": "func (Axes3D) SetProjectionType(projType string, focalLength ...float64) error"
-        },
-        {
-          "id": "method Axes3D.SetShowXTickLabels",
-          "declaration": "func (Axes3D) SetShowXTickLabels(show bool)"
-        },
-        {
-          "id": "method Axes3D.SetShowYTickLabels",
-          "declaration": "func (Axes3D) SetShowYTickLabels(show bool)"
-        },
-        {
-          "id": "method Axes3D.SetShowZTickLabels",
-          "declaration": "func (Axes3D) SetShowZTickLabels(show bool)"
-        },
-        {
-          "id": "method Axes3D.SetView",
-          "declaration": "func (Axes3D) SetView(elevationDeg, azimuthDeg float64)"
-        },
-        {
-          "id": "method Axes3D.SetViewInit",
-          "declaration": "func (Axes3D) SetViewInit(elevationDeg, azimuthDeg, rollDeg float64, verticalAxis string) error"
-        },
-        {
-          "id": "method Axes3D.SetXLim",
-          "declaration": "func (Axes3D) SetXLim(minVal, maxVal float64)"
-        },
-        {
-          "id": "method Axes3D.SetYLim",
-          "declaration": "func (Axes3D) SetYLim(minVal, maxVal float64)"
-        },
-        {
-          "id": "method Axes3D.SetZLabel",
-          "declaration": "func (Axes3D) SetZLabel(label string)"
-        },
-        {
-          "id": "method Axes3D.SetZLim",
-          "declaration": "func (Axes3D) SetZLim(minVal, maxVal float64)"
-        },
-        {
-          "id": "method Axes3D.Stem",
-          "declaration": "func (Axes3D) Stem(x, y, z []float64, opts ...Stem3DOptions) *StemContainer"
-        },
-        {
-          "id": "method Axes3D.Stem3D",
-          "declaration": "func (Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *StemContainer"
-        },
-        {
-          "id": "method Axes3D.Surface",
-          "declaration": "func (Axes3D) Surface(x, y []float64, z [][]float64, opts ...PlotOptions) *PolyCollection"
-        },
-        {
-          "id": "method Axes3D.Text3D",
-          "declaration": "func (Axes3D) Text3D(x, y, z float64, text string, opts ...TextOptions) *Text"
-        },
-        {
-          "id": "method Axes3D.TriContour",
-          "declaration": "func (Axes3D) TriContour(tri Triangulation, z []float64, opts ...PlotOptions) *LineCollection"
-        },
-        {
-          "id": "method Axes3D.TriContourf",
-          "declaration": "func (Axes3D) TriContourf(tri Triangulation, z []float64, opts ...PlotOptions) *PolyCollection"
-        },
-        {
-          "id": "method Axes3D.Trisurf",
-          "declaration": "func (Axes3D) Trisurf(tri Triangulation, z []float64, opts ...PlotOptions) *PolyCollection"
-        },
-        {
-          "id": "method Axes3D.View",
-          "declaration": "func (Axes3D) View() (elevationDeg, azimuthDeg, distance float64)"
-        },
-        {
-          "id": "method Axes3D.Voxel",
-          "declaration": "func (Axes3D) Voxel(x, y, z, dx, dy, dz []float64, opts ...PlotOptions) *LineCollection"
-        },
-        {
-          "id": "method Axes3D.Voxels",
-          "declaration": "func (Axes3D) Voxels(filled [][][]bool, opts ...VoxelOptions) map[[3]int]*PolyCollection"
-        },
-        {
-          "id": "method Axes3D.Wireframe",
-          "declaration": "func (Axes3D) Wireframe(x, y []float64, z [][]float64, opts ...PlotOptions) *LineCollection"
         },
         {
           "id": "method AxesDivider.AddAxes",
@@ -5576,38 +5432,6 @@
           "declaration": "func (BoxPlot2D) Z() float64"
         },
         {
-          "id": "method Button.Bounds",
-          "declaration": "func (Button) Bounds(ctx *DrawContext) geom.Rect"
-        },
-        {
-          "id": "method Button.Click",
-          "declaration": "func (Button) Click()"
-        },
-        {
-          "id": "method Button.Contains",
-          "declaration": "func (Button) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo)"
-        },
-        {
-          "id": "method Button.Draw",
-          "declaration": "func (Button) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method Button.OnClicked",
-          "declaration": "func (Button) OnClicked(cb ButtonCallback) WidgetCallbackID"
-        },
-        {
-          "id": "method Button.RemoveOnClicked",
-          "declaration": "func (Button) RemoveOnClicked(id WidgetCallbackID)"
-        },
-        {
-          "id": "method Button.WidgetLayer",
-          "declaration": "func (Button) WidgetLayer()"
-        },
-        {
-          "id": "method Button.Z",
-          "declaration": "func (Button) Z() float64"
-        },
-        {
           "id": "method CenteredNorm.Autoscale",
           "declaration": "func (CenteredNorm) Autoscale(values []float64) ScalarNormalizer"
         },
@@ -5632,42 +5456,6 @@
           "declaration": "func (CenteredNorm) Validate() error"
         },
         {
-          "id": "method CheckButtons.Bounds",
-          "declaration": "func (CheckButtons) Bounds(ctx *DrawContext) geom.Rect"
-        },
-        {
-          "id": "method CheckButtons.Contains",
-          "declaration": "func (CheckButtons) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo)"
-        },
-        {
-          "id": "method CheckButtons.Draw",
-          "declaration": "func (CheckButtons) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method CheckButtons.OnChanged",
-          "declaration": "func (CheckButtons) OnChanged(cb CheckButtonsCallback) WidgetCallbackID"
-        },
-        {
-          "id": "method CheckButtons.RemoveOnChanged",
-          "declaration": "func (CheckButtons) RemoveOnChanged(id WidgetCallbackID)"
-        },
-        {
-          "id": "method CheckButtons.SetValue",
-          "declaration": "func (CheckButtons) SetValue(index int, checked bool)"
-        },
-        {
-          "id": "method CheckButtons.Toggle",
-          "declaration": "func (CheckButtons) Toggle(index int)"
-        },
-        {
-          "id": "method CheckButtons.WidgetLayer",
-          "declaration": "func (CheckButtons) WidgetLayer()"
-        },
-        {
-          "id": "method CheckButtons.Z",
-          "declaration": "func (CheckButtons) Z() float64"
-        },
-        {
           "id": "method Circle.Bounds",
           "declaration": "func (Circle) Bounds(*DrawContext) geom.Rect"
         },
@@ -5688,12 +5476,12 @@
           "declaration": "func (CirclePolygon) Draw(ren render.Renderer, ctx *DrawContext)"
         },
         {
-          "id": "method Collection.ArtistLabel",
-          "declaration": "func (Collection) ArtistLabel() string"
+          "id": "method Collection.Array",
+          "declaration": "func (Collection) Array() []float64"
         },
         {
-          "id": "method Collection.GetArray",
-          "declaration": "func (Collection) GetArray() []float64"
+          "id": "method Collection.ArtistLabel",
+          "declaration": "func (Collection) ArtistLabel() string"
         },
         {
           "id": "method Collection.ScalarMap",
@@ -5702,6 +5490,10 @@
         {
           "id": "method Collection.SetArtistLabel",
           "declaration": "func (Collection) SetArtistLabel(label string)"
+        },
+        {
+          "id": "method Collection.SetZ",
+          "declaration": "func (Collection) SetZ(z float64)"
         },
         {
           "id": "method Collection.Z",
@@ -5722,18 +5514,6 @@
         {
           "id": "method Colorbar.Z",
           "declaration": "func (Colorbar) Z() float64"
-        },
-        {
-          "id": "method ConciseDateFormatter.Format",
-          "declaration": "func (ConciseDateFormatter) Format(x float64) string"
-        },
-        {
-          "id": "method ConciseDateFormatter.FormatTick",
-          "declaration": "func (ConciseDateFormatter) FormatTick(x float64, index int, ticks []float64) string"
-        },
-        {
-          "id": "method ConciseDateFormatter.OffsetText",
-          "declaration": "func (ConciseDateFormatter) OffsetText(ticks []float64) string"
         },
         {
           "id": "method ConnectionPatch.Bounds",
@@ -5766,50 +5546,6 @@
         {
           "id": "method ContourSet.Z",
           "declaration": "func (ContourSet) Z() float64"
-        },
-        {
-          "id": "method Cursor.Bounds",
-          "declaration": "func (Cursor) Bounds(ctx *DrawContext) geom.Rect"
-        },
-        {
-          "id": "method Cursor.Contains",
-          "declaration": "func (Cursor) Contains(geom.Pt, *DrawContext) (bool, PickInfo)"
-        },
-        {
-          "id": "method Cursor.Draw",
-          "declaration": "func (Cursor) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method Cursor.Hide",
-          "declaration": "func (Cursor) Hide() bool"
-        },
-        {
-          "id": "method Cursor.Position",
-          "declaration": "func (Cursor) Position() (float64, float64, bool)"
-        },
-        {
-          "id": "method Cursor.SetData",
-          "declaration": "func (Cursor) SetData(x, y float64) bool"
-        },
-        {
-          "id": "method Cursor.WidgetLayer",
-          "declaration": "func (Cursor) WidgetLayer()"
-        },
-        {
-          "id": "method Cursor.Z",
-          "declaration": "func (Cursor) Z() float64"
-        },
-        {
-          "id": "method DateFormatter.Format",
-          "declaration": "func (DateFormatter) Format(x float64) string"
-        },
-        {
-          "id": "method DateLocator.Ticks",
-          "declaration": "func (DateLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
-        },
-        {
-          "id": "method DayLocator.Ticks",
-          "declaration": "func (DayLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
         },
         {
           "id": "method DrawContext.AffineTransformFor",
@@ -5846,58 +5582,6 @@
         {
           "id": "method Ellipse.Draw",
           "declaration": "func (Ellipse) Draw(ren render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method EllipseSelector.Bounds",
-          "declaration": "func (EllipseSelector) Bounds(ctx *DrawContext) geom.Rect"
-        },
-        {
-          "id": "method EllipseSelector.Clear",
-          "declaration": "func (EllipseSelector) Clear() bool"
-        },
-        {
-          "id": "method EllipseSelector.Contains",
-          "declaration": "func (EllipseSelector) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo)"
-        },
-        {
-          "id": "method EllipseSelector.Draw",
-          "declaration": "func (EllipseSelector) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method EllipseSelector.MoveBy",
-          "declaration": "func (EllipseSelector) MoveBy(delta geom.Pt) bool"
-        },
-        {
-          "id": "method EllipseSelector.OnSelect",
-          "declaration": "func (EllipseSelector) OnSelect(cb EllipseSelectorCallback) WidgetCallbackID"
-        },
-        {
-          "id": "method EllipseSelector.RemoveOnSelect",
-          "declaration": "func (EllipseSelector) RemoveOnSelect(id WidgetCallbackID)"
-        },
-        {
-          "id": "method EllipseSelector.SetBounds",
-          "declaration": "func (EllipseSelector) SetBounds(minV, maxV geom.Pt) bool"
-        },
-        {
-          "id": "method EllipseSelector.TriggerOnSelect",
-          "declaration": "func (EllipseSelector) TriggerOnSelect()"
-        },
-        {
-          "id": "method EllipseSelector.WidgetLayer",
-          "declaration": "func (EllipseSelector) WidgetLayer()"
-        },
-        {
-          "id": "method EllipseSelector.Z",
-          "declaration": "func (EllipseSelector) Z() float64"
-        },
-        {
-          "id": "method EngFormatter.Format",
-          "declaration": "func (EngFormatter) Format(x float64) string"
-        },
-        {
-          "id": "method EngFormatter.FormatEng",
-          "declaration": "func (EngFormatter) FormatEng(x float64) string"
         },
         {
           "id": "method ErrorBar.ArtistLabel",
@@ -5976,10 +5660,6 @@
           "declaration": "func (Figure) AddAxes(r geom.Rect, opts ...style.Option) *Axes"
         },
         {
-          "id": "method Figure.AddAxes3D",
-          "declaration": "func (Figure) AddAxes3D(r geom.Rect, opts ...style.Option) (*Axes3D, error)"
-        },
-        {
           "id": "method Figure.AddAxesProjection",
           "declaration": "func (Figure) AddAxesProjection(r geom.Rect, projection string, opts ...style.Option) (*Axes, error)"
         },
@@ -6020,10 +5700,6 @@
           "declaration": "func (Figure) AddSubplotSpec(spec SubplotSpec, opts ...SubplotAxesOption) *Axes"
         },
         {
-          "id": "method Figure.AddWidgetAxes",
-          "declaration": "func (Figure) AddWidgetAxes(r geom.Rect, opts ...style.Option) *Axes"
-        },
-        {
           "id": "method Figure.Clear",
           "declaration": "func (Figure) Clear()"
         },
@@ -6044,12 +5720,12 @@
           "declaration": "func (Figure) DisplayRect() geom.Rect"
         },
         {
-          "id": "method Figure.Findobj",
-          "declaration": "func (Figure) Findobj(match func(Artist) bool) []Artist"
-        },
-        {
           "id": "method Figure.GridSpec",
           "declaration": "func (Figure) GridSpec(nRows, nCols int, opts ...GridSpecOption) *GridSpec"
+        },
+        {
+          "id": "method Figure.Image",
+          "declaration": "func (Figure) Image() (*image.RGBA, error)"
         },
         {
           "id": "method Figure.LayoutEngine",
@@ -6070,6 +5746,10 @@
         {
           "id": "method Figure.NewRGBAxes",
           "declaration": "func (Figure) NewRGBAxes(rect geom.Rect, dividerOpts ...AxesDividerOption) *RGBAxes"
+        },
+        {
+          "id": "method Figure.Save",
+          "declaration": "func (Figure) Save(path string, opts ...render.SaveOption) error"
         },
         {
           "id": "method Figure.SetLayoutEngine",
@@ -6124,6 +5804,10 @@
           "declaration": "func (Figure) TightLayout()"
         },
         {
+          "id": "method Figure.WriteTo",
+          "declaration": "func (Figure) WriteTo(w io.Writer, format string, opts ...render.SaveOption) error"
+        },
+        {
           "id": "method Fill2D.ArtistLabel",
           "declaration": "func (Fill2D) ArtistLabel() string"
         },
@@ -6150,26 +5834,6 @@
         {
           "id": "method FillBetweenPolyCollection.Draw",
           "declaration": "func (FillBetweenPolyCollection) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method FixedFormatter.Format",
-          "declaration": "func (FixedFormatter) Format(float64) string"
-        },
-        {
-          "id": "method FixedFormatter.FormatTick",
-          "declaration": "func (FixedFormatter) FormatTick(_ float64, index int, _ []float64) string"
-        },
-        {
-          "id": "method FixedLocator.Ticks",
-          "declaration": "func (FixedLocator) Ticks(minVal, maxVal float64, _ int) []float64"
-        },
-        {
-          "id": "method FormatStrFormatter.Format",
-          "declaration": "func (FormatStrFormatter) Format(x float64) string"
-        },
-        {
-          "id": "method FuncFormatter.Format",
-          "declaration": "func (FuncFormatter) Format(x float64) string"
         },
         {
           "id": "method FuncNorm.Autoscale",
@@ -6244,10 +5908,6 @@
           "declaration": "func (Hist2D) Z() float64"
         },
         {
-          "id": "method HourLocator.Ticks",
-          "declaration": "func (HourLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
-        },
-        {
           "id": "method Image2D.ArtistLabel",
           "declaration": "func (Image2D) ArtistLabel() string"
         },
@@ -6280,10 +5940,6 @@
           "declaration": "func (ImageGrid) At(row, col int) *Axes"
         },
         {
-          "id": "method IndexLocator.Ticks",
-          "declaration": "func (IndexLocator) Ticks(minVal, maxVal float64, _ int) []float64"
-        },
-        {
           "id": "method InfiniteLine2D.Bounds",
           "declaration": "func (InfiniteLine2D) Bounds(*DrawContext) geom.Rect"
         },
@@ -6310,50 +5966,6 @@
         {
           "id": "method InsetIndicator.Z",
           "declaration": "func (InsetIndicator) Z() float64"
-        },
-        {
-          "id": "method LassoSelector.AddPoint",
-          "declaration": "func (LassoSelector) AddPoint(point geom.Pt) bool"
-        },
-        {
-          "id": "method LassoSelector.Begin",
-          "declaration": "func (LassoSelector) Begin(point geom.Pt) bool"
-        },
-        {
-          "id": "method LassoSelector.Bounds",
-          "declaration": "func (LassoSelector) Bounds(ctx *DrawContext) geom.Rect"
-        },
-        {
-          "id": "method LassoSelector.Clear",
-          "declaration": "func (LassoSelector) Clear() bool"
-        },
-        {
-          "id": "method LassoSelector.Contains",
-          "declaration": "func (LassoSelector) Contains(point geom.Pt, ctx *DrawContext) (bool, PickInfo)"
-        },
-        {
-          "id": "method LassoSelector.Draw",
-          "declaration": "func (LassoSelector) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method LassoSelector.Finish",
-          "declaration": "func (LassoSelector) Finish() bool"
-        },
-        {
-          "id": "method LassoSelector.OnSelect",
-          "declaration": "func (LassoSelector) OnSelect(cb LassoSelectorCallback) WidgetCallbackID"
-        },
-        {
-          "id": "method LassoSelector.RemoveOnSelect",
-          "declaration": "func (LassoSelector) RemoveOnSelect(id WidgetCallbackID)"
-        },
-        {
-          "id": "method LassoSelector.WidgetLayer",
-          "declaration": "func (LassoSelector) WidgetLayer()"
-        },
-        {
-          "id": "method LassoSelector.Z",
-          "declaration": "func (LassoSelector) Z() float64"
         },
         {
           "id": "method Legend.AddEntry",
@@ -6416,14 +6028,6 @@
           "declaration": "func (Line2D) PickRadius() float64"
         },
         {
-          "id": "method Line2D.Property",
-          "declaration": "func (Line2D) Property(name string) (any, bool)"
-        },
-        {
-          "id": "method Line2D.PropertyNames",
-          "declaration": "func (Line2D) PropertyNames() []string"
-        },
-        {
           "id": "method Line2D.SetArtistLabel",
           "declaration": "func (Line2D) SetArtistLabel(label string)"
         },
@@ -6480,16 +6084,16 @@
           "declaration": "func (Line2D) SetPickRadius(r float64)"
         },
         {
-          "id": "method Line2D.SetProperty",
-          "declaration": "func (Line2D) SetProperty(name string, v any) bool"
-        },
-        {
           "id": "method Line2D.SetXData",
           "declaration": "func (Line2D) SetXData(x []float64)"
         },
         {
           "id": "method Line2D.SetYData",
           "declaration": "func (Line2D) SetYData(y []float64)"
+        },
+        {
+          "id": "method Line2D.SetZ",
+          "declaration": "func (Line2D) SetZ(z float64)"
         },
         {
           "id": "method Line2D.Z",
@@ -6520,38 +6124,6 @@
           "declaration": "func (LineCollection) SetNorm(norm ScalarNormalizer) error"
         },
         {
-          "id": "method LinearLocator.Ticks",
-          "declaration": "func (LinearLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
-        },
-        {
-          "id": "method LogFormatter.Format",
-          "declaration": "func (LogFormatter) Format(x float64) string"
-        },
-        {
-          "id": "method LogFormatter.FormatTick",
-          "declaration": "func (LogFormatter) FormatTick(x float64, _ int, ticks []float64) string"
-        },
-        {
-          "id": "method LogFormatterExponent.Format",
-          "declaration": "func (LogFormatterExponent) Format(x float64) string"
-        },
-        {
-          "id": "method LogFormatterExponent.FormatTick",
-          "declaration": "func (LogFormatterExponent) FormatTick(x float64, _ int, ticks []float64) string"
-        },
-        {
-          "id": "method LogFormatterMathText.Format",
-          "declaration": "func (LogFormatterMathText) Format(x float64) string"
-        },
-        {
-          "id": "method LogFormatterMathText.FormatTick",
-          "declaration": "func (LogFormatterMathText) FormatTick(x float64, _ int, ticks []float64) string"
-        },
-        {
-          "id": "method LogLocator.Ticks",
-          "declaration": "func (LogLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
-        },
-        {
           "id": "method LogNorm.Autoscale",
           "declaration": "func (LogNorm) Autoscale(values []float64) ScalarNormalizer"
         },
@@ -6574,70 +6146,6 @@
         {
           "id": "method LogNorm.Validate",
           "declaration": "func (LogNorm) Validate() error"
-        },
-        {
-          "id": "method LogitFormatter.Format",
-          "declaration": "func (LogitFormatter) Format(x float64) string"
-        },
-        {
-          "id": "method LogitLocator.Ticks",
-          "declaration": "func (LogitLocator) Ticks(minVal, maxVal float64, _ int) []float64"
-        },
-        {
-          "id": "method MaxNLocator.Ticks",
-          "declaration": "func (MaxNLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
-        },
-        {
-          "id": "method MicrosecondLocator.Ticks",
-          "declaration": "func (MicrosecondLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
-        },
-        {
-          "id": "method MinorLinearLocator.Ticks",
-          "declaration": "func (MinorLinearLocator) Ticks(minVal, maxVal float64, _ int) []float64"
-        },
-        {
-          "id": "method MinuteLocator.Ticks",
-          "declaration": "func (MinuteLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
-        },
-        {
-          "id": "method MonthLocator.Ticks",
-          "declaration": "func (MonthLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
-        },
-        {
-          "id": "method MultiCursor.Bounds",
-          "declaration": "func (MultiCursor) Bounds(ctx *DrawContext) geom.Rect"
-        },
-        {
-          "id": "method MultiCursor.Contains",
-          "declaration": "func (MultiCursor) Contains(geom.Pt, *DrawContext) (bool, PickInfo)"
-        },
-        {
-          "id": "method MultiCursor.Draw",
-          "declaration": "func (MultiCursor) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method MultiCursor.Hide",
-          "declaration": "func (MultiCursor) Hide() bool"
-        },
-        {
-          "id": "method MultiCursor.Position",
-          "declaration": "func (MultiCursor) Position() (float64, float64, bool)"
-        },
-        {
-          "id": "method MultiCursor.SetFigurePoint",
-          "declaration": "func (MultiCursor) SetFigurePoint(point geom.Pt) bool"
-        },
-        {
-          "id": "method MultiCursor.WidgetLayer",
-          "declaration": "func (MultiCursor) WidgetLayer()"
-        },
-        {
-          "id": "method MultiCursor.Z",
-          "declaration": "func (MultiCursor) Z() float64"
-        },
-        {
-          "id": "method MultipleLocator.Ticks",
-          "declaration": "func (MultipleLocator) Ticks(minVal, maxVal float64, _ int) []float64"
         },
         {
           "id": "method NoNorm.Autoscale",
@@ -6686,14 +6194,6 @@
         {
           "id": "method Normalize.Validate",
           "declaration": "func (Normalize) Validate() error"
-        },
-        {
-          "id": "method NullFormatter.Format",
-          "declaration": "func (NullFormatter) Format(float64) string"
-        },
-        {
-          "id": "method NullLocator.Ticks",
-          "declaration": "func (NullLocator) Ticks(float64, float64, int) []float64"
         },
         {
           "id": "method PackedDrawingArea.AddPath",
@@ -6816,10 +6316,6 @@
           "declaration": "func (PathPatch) Draw(ren render.Renderer, ctx *DrawContext)"
         },
         {
-          "id": "method PercentFormatter.Format",
-          "declaration": "func (PercentFormatter) Format(x float64) string"
-        },
-        {
           "id": "method PolyCollection.Bounds",
           "declaration": "func (PolyCollection) Bounds(ctx *DrawContext) geom.Rect"
         },
@@ -6838,62 +6334,6 @@
         {
           "id": "method Polygon.Draw",
           "declaration": "func (Polygon) Draw(ren render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method PolygonSelector.AppendPoint",
-          "declaration": "func (PolygonSelector) AppendPoint(point geom.Pt) bool"
-        },
-        {
-          "id": "method PolygonSelector.Bounds",
-          "declaration": "func (PolygonSelector) Bounds(ctx *DrawContext) geom.Rect"
-        },
-        {
-          "id": "method PolygonSelector.Clear",
-          "declaration": "func (PolygonSelector) Clear() bool"
-        },
-        {
-          "id": "method PolygonSelector.Close",
-          "declaration": "func (PolygonSelector) Close() bool"
-        },
-        {
-          "id": "method PolygonSelector.Contains",
-          "declaration": "func (PolygonSelector) Contains(point geom.Pt, ctx *DrawContext) (bool, PickInfo)"
-        },
-        {
-          "id": "method PolygonSelector.Draw",
-          "declaration": "func (PolygonSelector) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method PolygonSelector.MoveBy",
-          "declaration": "func (PolygonSelector) MoveBy(delta geom.Pt) bool"
-        },
-        {
-          "id": "method PolygonSelector.MovePointBy",
-          "declaration": "func (PolygonSelector) MovePointBy(index int, delta geom.Pt) bool"
-        },
-        {
-          "id": "method PolygonSelector.OnSelect",
-          "declaration": "func (PolygonSelector) OnSelect(cb PolygonSelectorCallback) WidgetCallbackID"
-        },
-        {
-          "id": "method PolygonSelector.RemoveOnSelect",
-          "declaration": "func (PolygonSelector) RemoveOnSelect(id WidgetCallbackID)"
-        },
-        {
-          "id": "method PolygonSelector.SetPoint",
-          "declaration": "func (PolygonSelector) SetPoint(index int, point geom.Pt) bool"
-        },
-        {
-          "id": "method PolygonSelector.TriggerOnSelect",
-          "declaration": "func (PolygonSelector) TriggerOnSelect()"
-        },
-        {
-          "id": "method PolygonSelector.WidgetLayer",
-          "declaration": "func (PolygonSelector) WidgetLayer()"
-        },
-        {
-          "id": "method PolygonSelector.Z",
-          "declaration": "func (PolygonSelector) Z() float64"
         },
         {
           "id": "method PowerNorm.Autoscale",
@@ -6988,86 +6428,6 @@
           "declaration": "func (QuiverKey) Z() float64"
         },
         {
-          "id": "method RadioButtons.Bounds",
-          "declaration": "func (RadioButtons) Bounds(ctx *DrawContext) geom.Rect"
-        },
-        {
-          "id": "method RadioButtons.Contains",
-          "declaration": "func (RadioButtons) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo)"
-        },
-        {
-          "id": "method RadioButtons.Draw",
-          "declaration": "func (RadioButtons) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method RadioButtons.Next",
-          "declaration": "func (RadioButtons) Next(delta int)"
-        },
-        {
-          "id": "method RadioButtons.OnChanged",
-          "declaration": "func (RadioButtons) OnChanged(cb RadioButtonsCallback) WidgetCallbackID"
-        },
-        {
-          "id": "method RadioButtons.RemoveOnChanged",
-          "declaration": "func (RadioButtons) RemoveOnChanged(id WidgetCallbackID)"
-        },
-        {
-          "id": "method RadioButtons.SetActive",
-          "declaration": "func (RadioButtons) SetActive(index int)"
-        },
-        {
-          "id": "method RadioButtons.WidgetLayer",
-          "declaration": "func (RadioButtons) WidgetLayer()"
-        },
-        {
-          "id": "method RadioButtons.Z",
-          "declaration": "func (RadioButtons) Z() float64"
-        },
-        {
-          "id": "method RangeSlider.Bounds",
-          "declaration": "func (RangeSlider) Bounds(ctx *DrawContext) geom.Rect"
-        },
-        {
-          "id": "method RangeSlider.Contains",
-          "declaration": "func (RangeSlider) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo)"
-        },
-        {
-          "id": "method RangeSlider.Draw",
-          "declaration": "func (RangeSlider) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method RangeSlider.OnChanged",
-          "declaration": "func (RangeSlider) OnChanged(cb RangeSliderCallback) WidgetCallbackID"
-        },
-        {
-          "id": "method RangeSlider.RemoveOnChanged",
-          "declaration": "func (RangeSlider) RemoveOnChanged(id WidgetCallbackID)"
-        },
-        {
-          "id": "method RangeSlider.SetHigh",
-          "declaration": "func (RangeSlider) SetHigh(high float64)"
-        },
-        {
-          "id": "method RangeSlider.SetLow",
-          "declaration": "func (RangeSlider) SetLow(low float64)"
-        },
-        {
-          "id": "method RangeSlider.SetRange",
-          "declaration": "func (RangeSlider) SetRange(low, high float64)"
-        },
-        {
-          "id": "method RangeSlider.ValueForPoint",
-          "declaration": "func (RangeSlider) ValueForPoint(p geom.Pt, ctx *DrawContext) (float64, bool)"
-        },
-        {
-          "id": "method RangeSlider.WidgetLayer",
-          "declaration": "func (RangeSlider) WidgetLayer()"
-        },
-        {
-          "id": "method RangeSlider.Z",
-          "declaration": "func (RangeSlider) Z() float64"
-        },
-        {
           "id": "method Rectangle.Bounds",
           "declaration": "func (Rectangle) Bounds(*DrawContext) geom.Rect"
         },
@@ -7078,54 +6438,6 @@
         {
           "id": "method Rectangle.Draw",
           "declaration": "func (Rectangle) Draw(ren render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method RectangleSelector.Bounds",
-          "declaration": "func (RectangleSelector) Bounds(ctx *DrawContext) geom.Rect"
-        },
-        {
-          "id": "method RectangleSelector.BoundsRect",
-          "declaration": "func (RectangleSelector) BoundsRect() geom.Rect"
-        },
-        {
-          "id": "method RectangleSelector.Clear",
-          "declaration": "func (RectangleSelector) Clear() bool"
-        },
-        {
-          "id": "method RectangleSelector.Contains",
-          "declaration": "func (RectangleSelector) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo)"
-        },
-        {
-          "id": "method RectangleSelector.Draw",
-          "declaration": "func (RectangleSelector) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method RectangleSelector.MoveBy",
-          "declaration": "func (RectangleSelector) MoveBy(delta geom.Pt) bool"
-        },
-        {
-          "id": "method RectangleSelector.OnSelect",
-          "declaration": "func (RectangleSelector) OnSelect(cb RectangleSelectorCallback) WidgetCallbackID"
-        },
-        {
-          "id": "method RectangleSelector.RemoveOnSelect",
-          "declaration": "func (RectangleSelector) RemoveOnSelect(id WidgetCallbackID)"
-        },
-        {
-          "id": "method RectangleSelector.SetBounds",
-          "declaration": "func (RectangleSelector) SetBounds(minV, maxV geom.Pt) bool"
-        },
-        {
-          "id": "method RectangleSelector.TriggerOnSelect",
-          "declaration": "func (RectangleSelector) TriggerOnSelect()"
-        },
-        {
-          "id": "method RectangleSelector.WidgetLayer",
-          "declaration": "func (RectangleSelector) WidgetLayer()"
-        },
-        {
-          "id": "method RectangleSelector.Z",
-          "declaration": "func (RectangleSelector) Z() float64"
         },
         {
           "id": "method RegularPolygon.Bounds",
@@ -7148,14 +6460,6 @@
           "declaration": "func (Sankey) Finish() []*SankeyDiagram"
         },
         {
-          "id": "method ScalarFormatter.Format",
-          "declaration": "func (ScalarFormatter) Format(x float64) string"
-        },
-        {
-          "id": "method ScalarFormatter.OffsetText",
-          "declaration": "func (ScalarFormatter) OffsetText(ticks []float64) string"
-        },
-        {
           "id": "method ScalarMapInfo.Color",
           "declaration": "func (ScalarMapInfo) Color(v, alpha float64) render.Color"
         },
@@ -7166,6 +6470,10 @@
         {
           "id": "method ScalarMapInfo.Resolved",
           "declaration": "func (ScalarMapInfo) Resolved() ScalarMapInfo"
+        },
+        {
+          "id": "method Scatter2D.Array",
+          "declaration": "func (Scatter2D) Array() []float64"
         },
         {
           "id": "method Scatter2D.ArtistLabel",
@@ -7180,8 +6488,8 @@
           "declaration": "func (Scatter2D) Draw(r render.Renderer, ctx *DrawContext)"
         },
         {
-          "id": "method Scatter2D.GetArray",
-          "declaration": "func (Scatter2D) GetArray() []float64"
+          "id": "method Scatter2D.PrototypePath",
+          "declaration": "func (Scatter2D) PrototypePath() geom.Path"
         },
         {
           "id": "method Scatter2D.ScalarMap",
@@ -7192,12 +6500,12 @@
           "declaration": "func (Scatter2D) SetArtistLabel(label string)"
         },
         {
-          "id": "method Scatter2D.Z",
-          "declaration": "func (Scatter2D) Z() float64"
+          "id": "method Scatter2D.SetZ",
+          "declaration": "func (Scatter2D) SetZ(z float64)"
         },
         {
-          "id": "method SecondLocator.Ticks",
-          "declaration": "func (SecondLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+          "id": "method Scatter2D.Z",
+          "declaration": "func (Scatter2D) Z() float64"
         },
         {
           "id": "method Segment2D.Bounds",
@@ -7220,42 +6528,6 @@
           "declaration": "func (Shadow) Draw(ren render.Renderer, ctx *DrawContext)"
         },
         {
-          "id": "method Slider.Bounds",
-          "declaration": "func (Slider) Bounds(ctx *DrawContext) geom.Rect"
-        },
-        {
-          "id": "method Slider.Contains",
-          "declaration": "func (Slider) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo)"
-        },
-        {
-          "id": "method Slider.Draw",
-          "declaration": "func (Slider) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method Slider.OnChanged",
-          "declaration": "func (Slider) OnChanged(cb SliderCallback) WidgetCallbackID"
-        },
-        {
-          "id": "method Slider.RemoveOnChanged",
-          "declaration": "func (Slider) RemoveOnChanged(id WidgetCallbackID)"
-        },
-        {
-          "id": "method Slider.SetValue",
-          "declaration": "func (Slider) SetValue(value float64)"
-        },
-        {
-          "id": "method Slider.ValueForPoint",
-          "declaration": "func (Slider) ValueForPoint(p geom.Pt, ctx *DrawContext) (float64, bool)"
-        },
-        {
-          "id": "method Slider.WidgetLayer",
-          "declaration": "func (Slider) WidgetLayer()"
-        },
-        {
-          "id": "method Slider.Z",
-          "declaration": "func (Slider) Z() float64"
-        },
-        {
           "id": "method Span2D.Bounds",
           "declaration": "func (Span2D) Bounds(*DrawContext) geom.Rect"
         },
@@ -7266,50 +6538,6 @@
         {
           "id": "method Span2D.Z",
           "declaration": "func (Span2D) Z() float64"
-        },
-        {
-          "id": "method SpanSelector.Bounds",
-          "declaration": "func (SpanSelector) Bounds(ctx *DrawContext) geom.Rect"
-        },
-        {
-          "id": "method SpanSelector.Clear",
-          "declaration": "func (SpanSelector) Clear() bool"
-        },
-        {
-          "id": "method SpanSelector.Contains",
-          "declaration": "func (SpanSelector) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo)"
-        },
-        {
-          "id": "method SpanSelector.Draw",
-          "declaration": "func (SpanSelector) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method SpanSelector.Move",
-          "declaration": "func (SpanSelector) Move(delta float64) bool"
-        },
-        {
-          "id": "method SpanSelector.OnSelect",
-          "declaration": "func (SpanSelector) OnSelect(cb SpanSelectorCallback) WidgetCallbackID"
-        },
-        {
-          "id": "method SpanSelector.RemoveOnSelect",
-          "declaration": "func (SpanSelector) RemoveOnSelect(id WidgetCallbackID)"
-        },
-        {
-          "id": "method SpanSelector.SetSpan",
-          "declaration": "func (SpanSelector) SetSpan(minV, maxV float64) bool"
-        },
-        {
-          "id": "method SpanSelector.TriggerOnSelect",
-          "declaration": "func (SpanSelector) TriggerOnSelect()"
-        },
-        {
-          "id": "method SpanSelector.WidgetLayer",
-          "declaration": "func (SpanSelector) WidgetLayer()"
-        },
-        {
-          "id": "method SpanSelector.Z",
-          "declaration": "func (SpanSelector) Z() float64"
         },
         {
           "id": "method Stairs2D.ArtistLabel",
@@ -7346,10 +6574,6 @@
         {
           "id": "method StepPatch.Draw",
           "declaration": "func (StepPatch) Draw(ren render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method StrMethodFormatter.Format",
-          "declaration": "func (StrMethodFormatter) Format(x float64) string"
         },
         {
           "id": "method StreamplotSet.ArtistLabel",
@@ -7392,10 +6616,6 @@
           "declaration": "func (SubFigure) AddSubplotSpec(spec SubplotSpec, opts ...SubplotAxesOption) *Axes"
         },
         {
-          "id": "method SubFigure.AddWidgetAxes",
-          "declaration": "func (SubFigure) AddWidgetAxes(r geom.Rect, opts ...style.Option) *Axes"
-        },
-        {
           "id": "method SubFigure.GridSpec",
           "declaration": "func (SubFigure) GridSpec(nRows, nCols int, opts ...GridSpecOption) *GridSpec"
         },
@@ -7406,10 +6626,6 @@
         {
           "id": "method SubplotSpec.AddAxes",
           "declaration": "func (SubplotSpec) AddAxes(opts ...SubplotAxesOption) *Axes"
-        },
-        {
-          "id": "method SubplotSpec.AddWidgetAxes",
-          "declaration": "func (SubplotSpec) AddWidgetAxes(opts ...SubplotAxesOption) *Axes"
         },
         {
           "id": "method SubplotSpec.GridSpec",
@@ -7438,10 +6654,6 @@
         {
           "id": "method SubplotSpec.SubFigure",
           "declaration": "func (SubplotSpec) SubFigure() *SubFigure"
-        },
-        {
-          "id": "method SymLogLocator.Ticks",
-          "declaration": "func (SymLogLocator) Ticks(minVal, maxVal float64, _ int) []float64"
         },
         {
           "id": "method SymLogNorm.Autoscale",
@@ -7504,122 +6716,6 @@
           "declaration": "func (Text) Z() float64"
         },
         {
-          "id": "method TextBox.Activate",
-          "declaration": "func (TextBox) Activate(active bool)"
-        },
-        {
-          "id": "method TextBox.Backspace",
-          "declaration": "func (TextBox) Backspace()"
-        },
-        {
-          "id": "method TextBox.Bounds",
-          "declaration": "func (TextBox) Bounds(ctx *DrawContext) geom.Rect"
-        },
-        {
-          "id": "method TextBox.Cancel",
-          "declaration": "func (TextBox) Cancel()"
-        },
-        {
-          "id": "method TextBox.Caret",
-          "declaration": "func (TextBox) Caret() int"
-        },
-        {
-          "id": "method TextBox.CaretForPoint",
-          "declaration": "func (TextBox) CaretForPoint(p geom.Pt, ctx *DrawContext) int"
-        },
-        {
-          "id": "method TextBox.Contains",
-          "declaration": "func (TextBox) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo)"
-        },
-        {
-          "id": "method TextBox.Delete",
-          "declaration": "func (TextBox) Delete()"
-        },
-        {
-          "id": "method TextBox.Draw",
-          "declaration": "func (TextBox) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method TextBox.InsertText",
-          "declaration": "func (TextBox) InsertText(value string)"
-        },
-        {
-          "id": "method TextBox.MoveCaretLeft",
-          "declaration": "func (TextBox) MoveCaretLeft(word, extend bool)"
-        },
-        {
-          "id": "method TextBox.MoveCaretRight",
-          "declaration": "func (TextBox) MoveCaretRight(word, extend bool)"
-        },
-        {
-          "id": "method TextBox.MoveCaretToEnd",
-          "declaration": "func (TextBox) MoveCaretToEnd(extend bool)"
-        },
-        {
-          "id": "method TextBox.MoveCaretToStart",
-          "declaration": "func (TextBox) MoveCaretToStart(extend bool)"
-        },
-        {
-          "id": "method TextBox.OnCancel",
-          "declaration": "func (TextBox) OnCancel(cb TextBoxSubmitCallback) WidgetCallbackID"
-        },
-        {
-          "id": "method TextBox.OnChange",
-          "declaration": "func (TextBox) OnChange(cb TextBoxChangeCallback) WidgetCallbackID"
-        },
-        {
-          "id": "method TextBox.OnSubmit",
-          "declaration": "func (TextBox) OnSubmit(cb TextBoxSubmitCallback) WidgetCallbackID"
-        },
-        {
-          "id": "method TextBox.RemoveOnCancel",
-          "declaration": "func (TextBox) RemoveOnCancel(id WidgetCallbackID)"
-        },
-        {
-          "id": "method TextBox.RemoveOnChange",
-          "declaration": "func (TextBox) RemoveOnChange(id WidgetCallbackID)"
-        },
-        {
-          "id": "method TextBox.RemoveOnSubmit",
-          "declaration": "func (TextBox) RemoveOnSubmit(id WidgetCallbackID)"
-        },
-        {
-          "id": "method TextBox.SelectAll",
-          "declaration": "func (TextBox) SelectAll()"
-        },
-        {
-          "id": "method TextBox.SelectedText",
-          "declaration": "func (TextBox) SelectedText() string"
-        },
-        {
-          "id": "method TextBox.Selection",
-          "declaration": "func (TextBox) Selection() (int, int)"
-        },
-        {
-          "id": "method TextBox.SetCaret",
-          "declaration": "func (TextBox) SetCaret(index int)"
-        },
-        {
-          "id": "method TextBox.SetSelection",
-          "declaration": "func (TextBox) SetSelection(start, end int)"
-        },
-        {
-          "id": "method TextBox.SetValue",
-          "declaration": "func (TextBox) SetValue(value string)"
-        },
-        {
-          "id": "method TextBox.Submit",
-          "declaration": "func (TextBox) Submit()"
-        },
-        {
-          "id": "method TextBox.WidgetLayer",
-          "declaration": "func (TextBox) WidgetLayer()"
-        },
-        {
-          "id": "method TextBox.Z",
-          "declaration": "func (TextBox) Z() float64"
-        },
-        {
           "id": "method Transform2D.Apply",
           "declaration": "func (Transform2D) Apply(p geom.Pt) geom.Pt"
         },
@@ -7666,14 +6762,6 @@
         {
           "id": "method Wedge.Draw",
           "declaration": "func (Wedge) Draw(ren render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method WeekdayLocator.Ticks",
-          "declaration": "func (WeekdayLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
-        },
-        {
-          "id": "method YearLocator.Ticks",
-          "declaration": "func (YearLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
         },
         {
           "id": "type AnchoredBoxLocator",
@@ -7808,32 +6896,12 @@
           "declaration": "type ArtistTransform struct{ Transform transform.T; HasTransform bool; Coords CoordinateSpec; HasCoords bool }"
         },
         {
-          "id": "type AsinhLocator",
-          "declaration": "type AsinhLocator struct{ LinearWidth float64; NumTicks int; SymThresh float64; Base float64; Subs []float64 }"
-        },
-        {
           "id": "type AsinhNorm",
           "declaration": "type AsinhNorm struct{ LinearWidth float64; VMin float64; VMax float64; Clip bool }"
         },
         {
-          "id": "type AutoDateFormatter",
-          "declaration": "type AutoDateFormatter struct{ Min float64; Max float64; Location *time.Location }"
-        },
-        {
-          "id": "type AutoLocator",
-          "declaration": "type AutoLocator struct{ MaxNLocator }"
-        },
-        {
-          "id": "type AutoMinorLocator",
-          "declaration": "type AutoMinorLocator struct{ N int; Major Locator }"
-        },
-        {
           "id": "type Axes",
           "declaration": "type Axes struct{ RectFraction geom.Rect; RC *style.RC; XScale transform.Scale; YScale transform.Scale; Artists []Artist; WidgetArtists []Artist; XAxis *Axis; YAxis *Axis; XAxisTop *Axis; YAxisRight *Axis; ExtraAxes []*Axis; ShowFrame bool; PatchVisible bool; Title string; XLabel string; YLabel string; ColorCycle *color.ColorCycle; PatchColorCycle *color.ColorCycle }"
-        },
-        {
-          "id": "type Axes3D",
-          "declaration": "type Axes3D struct{ *Axes }"
         },
         {
           "id": "type AxesDivider",
@@ -7853,7 +6921,7 @@
         },
         {
           "id": "type Axis",
-          "declaration": "type Axis struct{ Side AxisSide; Locator Locator; MinorLocator Locator; Formatter Formatter; MinorFormatter Formatter; Color render.Color; TickColor *render.Color; TickLabelColor *render.Color; MinorTickColor *render.Color; MinorTickLabelColor *render.Color; LineWidth float64; LineCap render.LineCap; LineJoin render.LineJoin; TickLineCap render.LineCap; TickLineJoin render.LineJoin; TickLineWidth float64; MinorTickLineWidth float64; Dashes []float64; TickSize float64; MinorTickSize float64; MajorTickCount int; MinorTickCount int; TickDirection TickDirection; SpinePositionMode AxisSpinePositionMode; SpinePosition float64; ShowSpine bool; ShowTicks bool; ShowMinorTicks bool; ShowLabels bool; ShowMinorLabels bool; MajorLabelStyle TickLabelStyle; MinorLabelStyle TickLabelStyle; ExtraTickLevels []TickLevel }"
+          "declaration": "type Axis struct{ Side AxisSide; Locator ticker.Locator; MinorLocator ticker.Locator; Formatter ticker.Formatter; MinorFormatter ticker.Formatter; Color render.Color; TickColor *render.Color; TickLabelColor *render.Color; MinorTickColor *render.Color; MinorTickLabelColor *render.Color; LineWidth float64; LineCap render.LineCap; LineJoin render.LineJoin; TickLineCap render.LineCap; TickLineJoin render.LineJoin; TickLineWidth float64; MinorTickLineWidth float64; Dashes []float64; TickSize float64; MinorTickSize float64; MajorTickCount int; MinorTickCount int; TickDirection TickDirection; SpinePositionMode AxisSpinePositionMode; SpinePosition float64; ShowSpine bool; ShowTicks bool; ShowMinorTicks bool; ShowLabels bool; ShowMinorLabels bool; MajorLabelStyle TickLabelStyle; MinorLabelStyle TickLabelStyle; ExtraTickLevels []TickLevel }"
         },
         {
           "id": "type AxisArtist",
@@ -7861,7 +6929,7 @@
         },
         {
           "id": "type AxisInfo",
-          "declaration": "type AxisInfo struct{ Locator Locator; Formatter Formatter; MinorLocator Locator; MinorFormatter Formatter }"
+          "declaration": "type AxisInfo struct{ Locator ticker.Locator; Formatter ticker.Formatter; MinorLocator ticker.Locator; MinorFormatter ticker.Formatter }"
         },
         {
           "id": "type AxisSide",
@@ -7878,14 +6946,6 @@
         {
           "id": "type Bar2D",
           "declaration": "type Bar2D struct{ ArtistRasterization; X []float64; Heights []float64; Widths []float64; Baselines []float64; Colors []render.Color; EdgeColors []render.Color; Width float64; Color render.Color; EdgeColor render.Color; EdgeWidth float64; Antialias render.AntialiasMode; Alpha float64; Baseline float64; Orientation BarOrientation; Label string }"
-        },
-        {
-          "id": "type Bar3DOptions",
-          "declaration": "type Bar3DOptions struct{ Color *render.Color; Colors []render.Color; LineWidth *float64; Alpha *float64; Label string; AxLimClip bool }"
-        },
-        {
-          "id": "type Bar3DPlaneOptions",
-          "declaration": "type Bar3DPlaneOptions struct{ Color *render.Color; Width *float64; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Baseline *float64; Baselines []float64; Z *float64; Zs []float64; ZDir string; Label string }"
         },
         {
           "id": "type BarAlign",
@@ -7956,18 +7016,6 @@
           "declaration": "type BoxVerticalAlign uint8"
         },
         {
-          "id": "type Button",
-          "declaration": "type Button struct{ Label string; FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; Pressed bool; Enabled bool; FontSize float64; Hovered bool }"
-        },
-        {
-          "id": "type ButtonCallback",
-          "declaration": "type ButtonCallback func(*Button)"
-        },
-        {
-          "id": "type ButtonOptions",
-          "declaration": "type ButtonOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; Pressed *bool; Disabled *bool; FontSize float64 }"
-        },
-        {
           "id": "type BxpContainer",
           "declaration": "type BxpContainer struct{ Whiskers []*Line2D; Caps []*Line2D; Boxes []*Line2D; Medians []*Line2D; Fliers []*Line2D; Means []*Line2D }"
         },
@@ -7988,18 +7036,6 @@
           "declaration": "type CenteredNorm struct{ VCenter float64; HalfRange float64; Clip bool }"
         },
         {
-          "id": "type CheckButtons",
-          "declaration": "type CheckButtons struct{ Labels []string; Values []bool; Enabled bool; FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; CheckColor render.Color; FontSize float64 }"
-        },
-        {
-          "id": "type CheckButtonsCallback",
-          "declaration": "type CheckButtonsCallback func(*CheckButtons, int, bool)"
-        },
-        {
-          "id": "type CheckButtonsOptions",
-          "declaration": "type CheckButtonsOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; CheckColor render.Color; FontSize float64; Disabled *bool }"
-        },
-        {
           "id": "type Circle",
           "declaration": "type Circle struct{ Patch; Center geom.Pt; Radius float64; Coords CoordinateSpec }"
         },
@@ -8009,7 +7045,7 @@
         },
         {
           "id": "type ClabelOptions",
-          "declaration": "type ClabelOptions struct{ Levels []float64; Formatter Formatter; FontSize *float64; Color *render.Color; Colors []render.Color; Inline *bool; InlineSpacing float64; ManualPositions []geom.Pt; FormatString string; FormatDict map[float64]string; RightSideUp *bool }"
+          "declaration": "type ClabelOptions struct{ Levels []float64; Formatter ticker.Formatter; FontSize *float64; Color *render.Color; Colors []render.Color; Inline *bool; InlineSpacing float64; ManualPositions []geom.Pt; FormatString string; FormatDict map[float64]string; RightSideUp *bool }"
         },
         {
           "id": "type Collection",
@@ -8022,10 +7058,6 @@
         {
           "id": "type ColorbarOptions",
           "declaration": "type ColorbarOptions struct{ Width float64; Padding float64; Aspect float64; Shrink float64; Anchor *geom.Pt; Label string; Colormap *string; VMin *float64; VMax *float64; Extend string; Location string; Orientation string; Ticks []float64; Boundaries []float64; Values []float64; Spacing string; DrawEdges bool; ExtendRect bool; ExtendFrac []float64; ExtendFracAuto bool; MinorTicks bool }"
-        },
-        {
-          "id": "type ConciseDateFormatter",
-          "declaration": "type ConciseDateFormatter struct{ Location *time.Location; Formats []string; ZeroFormats []string }"
         },
         {
           "id": "type ConnectionPatch",
@@ -8041,11 +7073,11 @@
         },
         {
           "id": "type ContourOptions",
-          "declaration": "type ContourOptions struct{ X []float64; Y []float64; XEdges []float64; YEdges []float64; Levels []float64; LevelCount int; Colormap *string; Norm ScalarNormalizer; Colors []render.Color; Color *render.Color; LineWidth *float64; Alpha *float64; LabelLines bool; LabelFormatter Formatter; LabelFontSize *float64; LabelColor *render.Color; Label string; Algorithm string; CornerMask *bool; LineStyles []string; NegativeLineStyles *string; Extend string; Hatches []string }"
+          "declaration": "type ContourOptions struct{ X []float64; Y []float64; XEdges []float64; YEdges []float64; Levels []float64; LevelCount int; Colormap *string; Norm ScalarNormalizer; Colors []render.Color; Color *render.Color; LineWidth *float64; Alpha *float64; LabelLines bool; LabelFormatter ticker.Formatter; LabelFontSize *float64; LabelColor *render.Color; Label string; Algorithm string; CornerMask *bool; LineStyles []string; NegativeLineStyles *string; Extend string; Hatches []string }"
         },
         {
           "id": "type ContourSet",
-          "declaration": "type ContourSet struct{ ArtistRasterization; Levels []float64; Algorithm string; CornerMask bool; Lines *LineCollection; Fills *PolyCollection; LabelFormatter Formatter; LabelFontSize float64; LabelColor render.Color }"
+          "declaration": "type ContourSet struct{ ArtistRasterization; Levels []float64; Algorithm string; CornerMask bool; Lines *LineCollection; Fills *PolyCollection; LabelFormatter ticker.Formatter; LabelFontSize float64; LabelColor render.Color }"
         },
         {
           "id": "type CoordFormatter",
@@ -8068,28 +7100,8 @@
           "declaration": "type CorrelationResult struct{ Line *Line2D; Lags []float64; Values []float64 }"
         },
         {
-          "id": "type Cursor",
-          "declaration": "type Cursor struct{ X float64; Y float64; Color render.Color; LineWidth float64; Horizontal bool; Vertical bool }"
-        },
-        {
-          "id": "type CursorOptions",
-          "declaration": "type CursorOptions struct{ Color render.Color; LineWidth float64; HorizOn *bool; VerticalOn *bool }"
-        },
-        {
           "id": "type DashUnits",
           "declaration": "type DashUnits uint8"
-        },
-        {
-          "id": "type DateFormatter",
-          "declaration": "type DateFormatter struct{ Layout string; Location *time.Location }"
-        },
-        {
-          "id": "type DateLocator",
-          "declaration": "type DateLocator struct{ Location *time.Location; IntervalMultiples *bool }"
-        },
-        {
-          "id": "type DayLocator",
-          "declaration": "type DayLocator struct{ ByMonthDay []int; Interval int; Location *time.Location }"
         },
         {
           "id": "type DrawContext",
@@ -8108,28 +7120,8 @@
           "declaration": "type Ellipse struct{ Patch; Center geom.Pt; Width float64; Height float64; Angle float64; Coords CoordinateSpec }"
         },
         {
-          "id": "type EllipseSelector",
-          "declaration": "type EllipseSelector struct{ Min geom.Pt; Max geom.Pt; EdgeColor render.Color; FillColor render.Color; LineWidth float64; Active bool }"
-        },
-        {
-          "id": "type EllipseSelectorCallback",
-          "declaration": "type EllipseSelectorCallback func(*EllipseSelector, geom.Rect)"
-        },
-        {
-          "id": "type EllipseSelectorOptions",
-          "declaration": "type EllipseSelectorOptions struct{ EdgeColor render.Color; FillColor render.Color; LineWidth float64 }"
-        },
-        {
-          "id": "type EngFormatter",
-          "declaration": "type EngFormatter struct{ Unit string; Places int; PlacesSet bool; Sep string; SepSet bool; UseUnicodeMicro bool; UseMathText bool }"
-        },
-        {
           "id": "type ErrorBar",
           "declaration": "type ErrorBar struct{ XY []geom.Pt; XErr []float64; YErr []float64; XErrLower []float64; XErrUpper []float64; YErrLower []float64; YErrUpper []float64; LoLimits []bool; UpLimits []bool; XLoLimits []bool; XUpLimits []bool; Color render.Color; LineWidth float64; CapSize float64; CapThick float64; Marker MarkerType; MarkerSet bool; MarkerSize float64; Alpha float64; Label string; NoDataLine bool; ErrorEvery int; ErrorEveryStart int }"
-        },
-        {
-          "id": "type ErrorBar3DOptions",
-          "declaration": "type ErrorBar3DOptions struct{ Color *render.Color; LineWidth *float64; CapSize *float64; Alpha *float64; Label string; AxLimClip bool; XErrLower []float64; XErrUpper []float64; YErrLower []float64; YErrUpper []float64; ZErrLower []float64; ZErrUpper []float64 }"
         },
         {
           "id": "type ErrorBarOptions",
@@ -8168,16 +7160,12 @@
           "declaration": "type Figure struct{ SizePx geom.Pt; RC style.RC; Children []*Axes; Artists []Artist; SupTitle string; SupXLabel string; SupYLabel string }"
         },
         {
+          "id": "type FigureOutputRendererFactory",
+          "declaration": "type FigureOutputRendererFactory func(width, height int, background render.Color) (render.Renderer, error)"
+        },
+        {
           "id": "type Fill2D",
           "declaration": "type Fill2D struct{ ArtistRasterization; X []float64; Y1 []float64; Y2 []float64; Where []bool; Interpolate bool; Step FillStep; Baseline float64; Orientation FillOrientation; Color render.Color; EdgeColor render.Color; EdgeWidth float64; Antialias render.AntialiasMode; Alpha float64; Label string }"
-        },
-        {
-          "id": "type FillBetween3DMode",
-          "declaration": "type FillBetween3DMode string"
-        },
-        {
-          "id": "type FillBetween3DOptions",
-          "declaration": "type FillBetween3DOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Label string; Mode FillBetween3DMode; Shade *bool; AxLimClip bool }"
         },
         {
           "id": "type FillBetweenPolyCollection",
@@ -8196,32 +7184,12 @@
           "declaration": "type FillStep uint8"
         },
         {
-          "id": "type FixedFormatter",
-          "declaration": "type FixedFormatter struct{ Labels []string }"
-        },
-        {
-          "id": "type FixedLocator",
-          "declaration": "type FixedLocator struct{ TicksList []float64; Nbins int }"
-        },
-        {
-          "id": "type FormatStrFormatter",
-          "declaration": "type FormatStrFormatter struct{ Pattern string }"
-        },
-        {
-          "id": "type Formatter",
-          "declaration": "type Formatter interface{ Format func(x float64) string }"
-        },
-        {
-          "id": "type FuncFormatter",
-          "declaration": "type FuncFormatter func(float64) string"
-        },
-        {
           "id": "type FuncNorm",
           "declaration": "type FuncNorm struct{ Forward func(float64) float64; Reverse func(float64) float64; VMin float64; VMax float64; Clip bool }"
         },
         {
           "id": "type Grid",
-          "declaration": "type Grid struct{ Axis AxisSide; Color render.Color; LineWidth float64; Dashes []float64; Alpha float64; Major bool; Minor bool; MinorColor render.Color; MinorLineWidth float64; MinorDashes []float64; Locator Locator; MinorLocator Locator }"
+          "declaration": "type Grid struct{ Axis AxisSide; Color render.Color; LineWidth float64; Dashes []float64; Alpha float64; Major bool; Minor bool; MinorColor render.Color; MinorLineWidth float64; MinorDashes []float64; Locator ticker.Locator; MinorLocator ticker.Locator }"
         },
         {
           "id": "type GridSpec",
@@ -8280,10 +7248,6 @@
           "declaration": "type HistType uint8"
         },
         {
-          "id": "type HourLocator",
-          "declaration": "type HourLocator struct{ ByHour []int; Interval int; Location *time.Location }"
-        },
-        {
           "id": "type ImShowOptions",
           "declaration": "type ImShowOptions struct{ Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Alpha *float64; Aspect string; Origin ImageOrigin; Label string; Extent *[4]float64; Interpolation *string }"
         },
@@ -8312,14 +7276,6 @@
           "declaration": "type ImageOrigin int"
         },
         {
-          "id": "type IndexLocator",
-          "declaration": "type IndexLocator struct{ Base float64; Offset float64 }"
-        },
-        {
-          "id": "type IndexedFormatter",
-          "declaration": "type IndexedFormatter interface{ FormatTick func(x float64, index int, ticks []float64) string }"
-        },
-        {
           "id": "type InfiniteLine2D",
           "declaration": "type InfiniteLine2D struct{ Point geom.Pt; Direction geom.Pt; Color render.Color; LineWidth float64; Dashes []float64 }"
         },
@@ -8330,18 +7286,6 @@
         {
           "id": "type InsetIndicator",
           "declaration": "type InsetIndicator struct{ Inset *Axes; XLim [2]float64; YLim [2]float64; Color render.Color; LineWidth float64 }"
-        },
-        {
-          "id": "type LassoSelector",
-          "declaration": "type LassoSelector struct{ Points []geom.Pt; LineColor render.Color; LineWidth float64; Active bool; Tracking bool }"
-        },
-        {
-          "id": "type LassoSelectorCallback",
-          "declaration": "type LassoSelectorCallback func(*LassoSelector, []geom.Pt)"
-        },
-        {
-          "id": "type LassoSelectorOptions",
-          "declaration": "type LassoSelectorOptions struct{ LineColor render.Color; LineWidth float64 }"
         },
         {
           "id": "type LayoutEngine",
@@ -8388,44 +7332,12 @@
           "declaration": "type LineStyle string"
         },
         {
-          "id": "type LinearLocator",
-          "declaration": "type LinearLocator struct{ NumTicks int; Presets map[[2]float64][]float64 }"
-        },
-        {
-          "id": "type Locator",
-          "declaration": "type Locator interface{ Ticks func(minVal, maxVal float64, targetCount int) []float64 }"
-        },
-        {
           "id": "type LocatorParams",
           "declaration": "type LocatorParams struct{ Axis string; MajorCount int; MinorCount int }"
         },
         {
-          "id": "type LogFormatter",
-          "declaration": "type LogFormatter struct{ Base float64; LabelOnlyBase bool; MinorThresholds [2]float64; UseMinorThreshold bool }"
-        },
-        {
-          "id": "type LogFormatterExponent",
-          "declaration": "type LogFormatterExponent struct{ Base float64; LabelOnlyBase bool; MinorThresholds [2]float64; UseMinorThreshold bool }"
-        },
-        {
-          "id": "type LogFormatterMathText",
-          "declaration": "type LogFormatterMathText struct{ Base float64; SciNotation bool; MinExponent int; LabelOnlyBase bool; MinorThresholds [2]float64; UseMinorThreshold bool }"
-        },
-        {
-          "id": "type LogLocator",
-          "declaration": "type LogLocator struct{ Base float64; Minor bool; Subs []float64; SubsMode string; NumTicks int }"
-        },
-        {
           "id": "type LogNorm",
           "declaration": "type LogNorm struct{ VMin float64; VMax float64; Clip bool }"
-        },
-        {
-          "id": "type LogitFormatter",
-          "declaration": "type LogitFormatter struct{ OneHalf string; UseOverline bool; Minor bool }"
-        },
-        {
-          "id": "type LogitLocator",
-          "declaration": "type LogitLocator struct{ Minor bool; Nbins int }"
         },
         {
           "id": "type MarkEveryMode",
@@ -8480,10 +7392,6 @@
           "declaration": "type MathTextLayoutRun = mt.MathTextLayoutRun"
         },
         {
-          "id": "type MaxNLocator",
-          "declaration": "type MaxNLocator struct{ N int; Integer bool; Steps []float64; Symmetric bool; Prune string; MinTicks int; NbinsAuto bool; RawStepScale float64 }"
-        },
-        {
           "id": "type MeshOptions",
           "declaration": "type MeshOptions struct{ XEdges []float64; YEdges []float64; Mask [][]bool; Shading MeshShading; Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Alpha *float64; EdgeColor *render.Color; EdgeWidth *float64; Antialias *bool; Label string }"
         },
@@ -8492,36 +7400,8 @@
           "declaration": "type MeshShading string"
         },
         {
-          "id": "type MicrosecondLocator",
-          "declaration": "type MicrosecondLocator struct{ Interval int; Location *time.Location }"
-        },
-        {
-          "id": "type MinorLinearLocator",
-          "declaration": "type MinorLinearLocator struct{ N int }"
-        },
-        {
-          "id": "type MinuteLocator",
-          "declaration": "type MinuteLocator struct{ ByMinute []int; Interval int; Location *time.Location }"
-        },
-        {
-          "id": "type MonthLocator",
-          "declaration": "type MonthLocator struct{ ByMonth []time.Month; ByMonthDay int; Interval int; Location *time.Location }"
-        },
-        {
-          "id": "type MultiCursor",
-          "declaration": "type MultiCursor struct{ Axes []*Axes; Color render.Color; LineWidth float64; Horizontal bool; Vertical bool; FigureX float64; FigureY float64 }"
-        },
-        {
-          "id": "type MultiCursorOptions",
-          "declaration": "type MultiCursorOptions struct{ Color render.Color; LineWidth float64; HorizOn *bool; VerticalOn *bool }"
-        },
-        {
           "id": "type MultiHistOptions",
           "declaration": "type MultiHistOptions struct{ Bins int; BinEdges []float64; BinStrat BinStrategy; Norm HistNorm; Cumulative bool; HistType HistType; Stacked bool; Colors []render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Labels []string }"
-        },
-        {
-          "id": "type MultipleLocator",
-          "declaration": "type MultipleLocator struct{ Base float64; Offset float64 }"
         },
         {
           "id": "type NoNorm",
@@ -8530,18 +7410,6 @@
         {
           "id": "type Normalize",
           "declaration": "type Normalize struct{ VMin float64; VMax float64; Clip bool }"
-        },
-        {
-          "id": "type NullFormatter",
-          "declaration": "type NullFormatter struct{}"
-        },
-        {
-          "id": "type NullLocator",
-          "declaration": "type NullLocator struct{}"
-        },
-        {
-          "id": "type OffsetFormatter",
-          "declaration": "type OffsetFormatter interface{ OffsetText func(ticks []float64) string }"
         },
         {
           "id": "type OverlayArtist",
@@ -8588,10 +7456,6 @@
           "declaration": "type PathPatch struct{ Patch; Path geom.Path; Coords CoordinateSpec }"
         },
         {
-          "id": "type PercentFormatter",
-          "declaration": "type PercentFormatter struct{ XMax float64; Decimals int; DecimalsSet bool; DisplayRange float64; Symbol string; NoSymbol bool; UseTeX bool; IsLaTeX bool }"
-        },
-        {
           "id": "type PickInfo",
           "declaration": "type PickInfo struct{ Index int; Distance float64; Extra any }"
         },
@@ -8624,18 +7488,6 @@
           "declaration": "type Polygon struct{ Patch; XY []geom.Pt; Open bool; Coords CoordinateSpec }"
         },
         {
-          "id": "type PolygonSelector",
-          "declaration": "type PolygonSelector struct{ Points []geom.Pt; EdgeColor render.Color; FillColor render.Color; LineWidth float64; Closed bool; Active bool }"
-        },
-        {
-          "id": "type PolygonSelectorCallback",
-          "declaration": "type PolygonSelectorCallback func(*PolygonSelector, []geom.Pt)"
-        },
-        {
-          "id": "type PolygonSelectorOptions",
-          "declaration": "type PolygonSelectorOptions struct{ EdgeColor render.Color; FillColor render.Color; LineWidth float64 }"
-        },
-        {
           "id": "type PowerNorm",
           "declaration": "type PowerNorm struct{ Gamma float64; VMin float64; VMax float64; Clip bool }"
         },
@@ -8652,10 +7504,6 @@
           "declaration": "type ProjectionFactory func() Projection"
         },
         {
-          "id": "type PropertyBag",
-          "declaration": "type PropertyBag interface{ Property func(name string) (any, bool); SetProperty func(name string, v any) bool; PropertyNames func() []string }"
-        },
-        {
           "id": "type Pt",
           "declaration": "type Pt = geom.Pt"
         },
@@ -8666,10 +7514,6 @@
         {
           "id": "type Quiver",
           "declaration": "type Quiver struct{ Anchors []geom.Pt; U []float64; V []float64; Colors []render.Color; Color render.Color; ScalarColors []float64; EdgeColor render.Color; EdgeWidth float64; Alpha float64; Pivot string; Angles string; AngleValues []float64; Scale float64; ScaleSet bool; ScaleUnits string; Units string; Width float64; HeadWidth float64; HeadLength float64; HeadAxisLength float64; MinShaft float64; MinLength float64; Label string; Colormap string; Norm ScalarNormalizer; VMin float64; VMax float64 }"
-        },
-        {
-          "id": "type Quiver3DOptions",
-          "declaration": "type Quiver3DOptions struct{ Color *render.Color; LineWidth *float64; Alpha *float64; Label string; Length *float64; ArrowLengthRatio *float64; Pivot string; Normalize bool; AxLimClip bool }"
         },
         {
           "id": "type QuiverKey",
@@ -8688,48 +7532,12 @@
           "declaration": "type RGBAxes struct{ Red *Axes; Green *Axes; Blue *Axes }"
         },
         {
-          "id": "type RadioButtons",
-          "declaration": "type RadioButtons struct{ Labels []string; Active int; Enabled bool; FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; DotColor render.Color; FontSize float64 }"
-        },
-        {
-          "id": "type RadioButtonsCallback",
-          "declaration": "type RadioButtonsCallback func(*RadioButtons, int)"
-        },
-        {
-          "id": "type RadioButtonsOptions",
-          "declaration": "type RadioButtonsOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; DotColor render.Color; FontSize float64; Disabled *bool }"
-        },
-        {
-          "id": "type RangeSlider",
-          "declaration": "type RangeSlider struct{ Label string; Min float64; Max float64; Enabled bool; Low float64; High float64; FaceColor render.Color; TrackColor render.Color; FillColor render.Color; HandleColor render.Color; TextColor render.Color; Step float64; ValueFormat string; FontSize float64; Dragging bool }"
-        },
-        {
-          "id": "type RangeSliderCallback",
-          "declaration": "type RangeSliderCallback func(*RangeSlider, float64, float64)"
-        },
-        {
-          "id": "type RangeSliderOptions",
-          "declaration": "type RangeSliderOptions = SliderOptions"
-        },
-        {
           "id": "type Rect",
           "declaration": "type Rect = geom.Rect"
         },
         {
           "id": "type Rectangle",
           "declaration": "type Rectangle struct{ Patch; XY geom.Pt; Width float64; Height float64; Angle float64; Coords CoordinateSpec }"
-        },
-        {
-          "id": "type RectangleSelector",
-          "declaration": "type RectangleSelector struct{ Min geom.Pt; Max geom.Pt; EdgeColor render.Color; FillColor render.Color; LineWidth float64; Active bool }"
-        },
-        {
-          "id": "type RectangleSelectorCallback",
-          "declaration": "type RectangleSelectorCallback func(*RectangleSelector, geom.Rect)"
-        },
-        {
-          "id": "type RectangleSelectorOptions",
-          "declaration": "type RectangleSelectorOptions struct{ EdgeColor render.Color; FillColor render.Color; LineWidth float64 }"
         },
         {
           "id": "type ReferenceLineOptions",
@@ -8760,10 +7568,6 @@
           "declaration": "type SankeyOptions struct{ Center geom.Pt; Coords CoordinateSpec; Scale float64; TrunkWidth float64; TrunkLength float64; PathLength float64; Gap float64; Radius float64; Shoulder float64; Offset float64; HeadAngle float64; Margin float64; Tolerance float64; Alpha float64; TextColor render.Color; FontSize float64; EdgeColor *render.Color; FaceColor *render.Color }"
         },
         {
-          "id": "type ScalarFormatter",
-          "declaration": "type ScalarFormatter struct{ Prec int; PowerLimits [2]int; UsePowerLimits bool; DisableScientific bool; UseMathText bool; UseLocale bool; DisableOffset bool; OffsetThreshold int }"
-        },
-        {
           "id": "type ScalarMapConfig",
           "declaration": "type ScalarMapConfig struct{ Colormap string; Norm ScalarNormalizer; VMin *float64; VMax *float64 }"
         },
@@ -8786,10 +7590,6 @@
         {
           "id": "type ScatterOptions",
           "declaration": "type ScatterOptions struct{ Color *render.Color; Colors []render.Color; ScalarValues []float64; Colormap string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Size *float64; Sizes []float64; Marker *MarkerType; MarkerStyle *MarkerStyle; MarkerPath *geom.Path; EdgeColor *render.Color; EdgeColors []render.Color; EdgeWidth *float64; Alpha *float64; Label string; AxLimClip bool; PlotNonfinite bool }"
-        },
-        {
-          "id": "type SecondLocator",
-          "declaration": "type SecondLocator struct{ BySecond []int; Interval int; Location *time.Location }"
         },
         {
           "id": "type Segment2D",
@@ -8820,36 +7620,12 @@
           "declaration": "type SignalSpectrumSides string"
         },
         {
-          "id": "type Slider",
-          "declaration": "type Slider struct{ Label string; Min float64; Max float64; Enabled bool; Value float64; Initial float64; FaceColor render.Color; TrackColor render.Color; FillColor render.Color; HandleColor render.Color; TextColor render.Color; Step float64; ValueFormat string; FontSize float64; Dragging bool }"
-        },
-        {
-          "id": "type SliderCallback",
-          "declaration": "type SliderCallback func(*Slider, float64)"
-        },
-        {
-          "id": "type SliderOptions",
-          "declaration": "type SliderOptions struct{ FaceColor render.Color; TrackColor render.Color; FillColor render.Color; HandleColor render.Color; TextColor render.Color; ValueStep *float64; ValueFormat *string; FontSize float64 }"
-        },
-        {
           "id": "type Span2D",
           "declaration": "type Span2D struct{ Start geom.Pt; End geom.Pt; Coords CoordinateSpec; Color render.Color; EdgeColor render.Color; EdgeWidth float64; Antialias render.AntialiasMode }"
         },
         {
           "id": "type SpanOptions",
           "declaration": "type SpanOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Antialiased *bool }"
-        },
-        {
-          "id": "type SpanSelector",
-          "declaration": "type SpanSelector struct{ Orientation string; Start float64; End float64; Color render.Color; FillColor render.Color; LineWidth float64; Active bool }"
-        },
-        {
-          "id": "type SpanSelectorCallback",
-          "declaration": "type SpanSelectorCallback func(*SpanSelector, float64, float64)"
-        },
-        {
-          "id": "type SpanSelectorOptions",
-          "declaration": "type SpanSelectorOptions struct{ Orientation string; Color render.Color; FillColor render.Color; LineWidth float64; Min *float64; Max *float64 }"
         },
         {
           "id": "type SpecgramOptions",
@@ -8892,10 +7668,6 @@
           "declaration": "type StaleArtist interface{ Stale func() bool; ClearStale func(); MarkStale func() }"
         },
         {
-          "id": "type Stem3DOptions",
-          "declaration": "type Stem3DOptions struct{ Color *render.Color; LineWidth *float64; Marker *MarkerType; MarkerPath *geom.Path; MarkerSize *float64; Bottom *float64; Orientation string; BaselineColor *render.Color; BaselineWidth *float64; MarkerEdgeColor *render.Color; MarkerEdgeWidth *float64; Label string; Alpha *float64; AxLimClip bool }"
-        },
-        {
           "id": "type StemContainer",
           "declaration": "type StemContainer struct{ MarkerCollection *PathCollection; StemLines *LineCollection; Baseline *Line2D; Label string }"
         },
@@ -8918,10 +7690,6 @@
         {
           "id": "type StickyEdgeArtist",
           "declaration": "type StickyEdgeArtist interface{ StickyEdges func() (x []float64, y []float64) }"
-        },
-        {
-          "id": "type StrMethodFormatter",
-          "declaration": "type StrMethodFormatter struct{ Template string }"
         },
         {
           "id": "type StreamplotOptions",
@@ -8956,10 +7724,6 @@
           "declaration": "type SubplotSpec struct{}"
         },
         {
-          "id": "type SymLogLocator",
-          "declaration": "type SymLogLocator struct{ Base float64; LinThresh float64; Subs []float64; NumTicks int }"
-        },
-        {
           "id": "type SymLogNorm",
           "declaration": "type SymLogNorm struct{ VMin float64; VMax float64; LinThresh float64; LinScale float64; Base float64; Clip bool }"
         },
@@ -8984,22 +7748,6 @@
           "declaration": "type TextBBoxOptions struct{ FaceColor render.Color; EdgeColor render.Color; LineWidth float64; Padding float64; CornerRadius float64; Style string; BoxStyle BoxStyle; RoundingSize float64; ToothSize float64; ArrowHeadWidth float64; ArrowHeadAngle float64 }"
         },
         {
-          "id": "type TextBox",
-          "declaration": "type TextBox struct{ Label string; Value string; Placeholder string; FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; FontSize float64; Active bool }"
-        },
-        {
-          "id": "type TextBoxChangeCallback",
-          "declaration": "type TextBoxChangeCallback func(*TextBox, string)"
-        },
-        {
-          "id": "type TextBoxOptions",
-          "declaration": "type TextBoxOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; Placeholder string; FontSize float64; Active *bool }"
-        },
-        {
-          "id": "type TextBoxSubmitCallback",
-          "declaration": "type TextBoxSubmitCallback func(*TextBox, string)"
-        },
-        {
           "id": "type TextOptions",
           "declaration": "type TextOptions struct{ FontSize float64; Color render.Color; HAlign TextAlign; VAlign TextVerticalAlign; Angle float64; RotationMode TextRotationMode; Coords CoordinateSpec; OffsetX float64; OffsetY float64; WrapWidth float64; Wrap bool; MultiAlignment *TextAlign; Linespacing float64; ClipOn *bool; BBox *TextBBoxOptions; FontKey string; FontProperties *render.FontProperties; ParseMath *bool; PathEffects []render.PathEffect }"
         },
@@ -9021,7 +7769,7 @@
         },
         {
           "id": "type TickLevel",
-          "declaration": "type TickLevel struct{ Locator Locator; Formatter Formatter; Size float64; ShowTicks bool; ShowLabels bool; LabelStyle TickLabelStyle }"
+          "declaration": "type TickLevel struct{ Locator ticker.Locator; Formatter ticker.Formatter; Size float64; ShowTicks bool; ShowLabels bool; LabelStyle TickLabelStyle }"
         },
         {
           "id": "type TickParams",
@@ -9084,28 +7832,8 @@
           "declaration": "type ViolinStatsOptions struct{ Positions []float64; Widths []float64; Colors []render.Color; EdgeColor *render.Color; EdgeWidth float64; Alpha float64; Orientation string; Side string; LineColor *render.Color; ShowMeans *bool; ShowMedians *bool; ShowExtrema *bool; Label string }"
         },
         {
-          "id": "type VoxelOptions",
-          "declaration": "type VoxelOptions struct{ FaceColor *render.Color; FaceColors map[[3]int]render.Color; EdgeColor *render.Color; EdgeColors map[[3]int]render.Color; Alpha *float64; Shade *bool; Label string; AxLimClip bool }"
-        },
-        {
           "id": "type Wedge",
           "declaration": "type Wedge struct{ Patch; Center geom.Pt; Radius float64; Width float64; Theta1 float64; Theta2 float64; Coords CoordinateSpec }"
-        },
-        {
-          "id": "type WeekdayLocator",
-          "declaration": "type WeekdayLocator struct{ ByWeekday []time.Weekday; Interval int; Location *time.Location }"
-        },
-        {
-          "id": "type WidgetArtist",
-          "declaration": "type WidgetArtist interface{ Artist; WidgetLayer func() }"
-        },
-        {
-          "id": "type WidgetCallbackID",
-          "declaration": "type WidgetCallbackID int64"
-        },
-        {
-          "id": "type YearLocator",
-          "declaration": "type YearLocator struct{ Base int; Month time.Month; Day int; Location *time.Location }"
         },
         {
           "id": "var DefaultUnitsRegistry",
@@ -9114,6 +7842,132 @@
         {
           "id": "var ErrImageIOUnsupported",
           "declaration": "var ErrImageIOUnsupported = errors.New(\"core: image IO unsupported\")"
+        }
+      ]
+    },
+    {
+      "import_path": ".",
+      "dir": "dates",
+      "symbols": [
+        {
+          "id": "func Date2Num",
+          "declaration": "func Date2Num(t time.Time) float64"
+        },
+        {
+          "id": "func Epoch",
+          "declaration": "func Epoch() time.Time"
+        },
+        {
+          "id": "func Num2Date",
+          "declaration": "func Num2Date(v float64, loc *time.Location) time.Time"
+        },
+        {
+          "id": "func SetEpoch",
+          "declaration": "func SetEpoch(t time.Time) error"
+        },
+        {
+          "id": "method AutoDateFormatter.Format",
+          "declaration": "func (AutoDateFormatter) Format(x float64) string"
+        },
+        {
+          "id": "method ConciseDateFormatter.Format",
+          "declaration": "func (ConciseDateFormatter) Format(x float64) string"
+        },
+        {
+          "id": "method ConciseDateFormatter.FormatTick",
+          "declaration": "func (ConciseDateFormatter) FormatTick(x float64, index int, ticks []float64) string"
+        },
+        {
+          "id": "method ConciseDateFormatter.OffsetText",
+          "declaration": "func (ConciseDateFormatter) OffsetText(ticks []float64) string"
+        },
+        {
+          "id": "method DateFormatter.Format",
+          "declaration": "func (DateFormatter) Format(x float64) string"
+        },
+        {
+          "id": "method DateLocator.Ticks",
+          "declaration": "func (DateLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method DayLocator.Ticks",
+          "declaration": "func (DayLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method HourLocator.Ticks",
+          "declaration": "func (HourLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method MicrosecondLocator.Ticks",
+          "declaration": "func (MicrosecondLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method MinuteLocator.Ticks",
+          "declaration": "func (MinuteLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method MonthLocator.Ticks",
+          "declaration": "func (MonthLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method SecondLocator.Ticks",
+          "declaration": "func (SecondLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method WeekdayLocator.Ticks",
+          "declaration": "func (WeekdayLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method YearLocator.Ticks",
+          "declaration": "func (YearLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "type AutoDateFormatter",
+          "declaration": "type AutoDateFormatter struct{ Min float64; Max float64; Location *time.Location }"
+        },
+        {
+          "id": "type ConciseDateFormatter",
+          "declaration": "type ConciseDateFormatter struct{ Location *time.Location; Formats []string; ZeroFormats []string }"
+        },
+        {
+          "id": "type DateFormatter",
+          "declaration": "type DateFormatter struct{ Layout string; Location *time.Location }"
+        },
+        {
+          "id": "type DateLocator",
+          "declaration": "type DateLocator struct{ Location *time.Location; IntervalMultiples *bool }"
+        },
+        {
+          "id": "type DayLocator",
+          "declaration": "type DayLocator struct{ ByMonthDay []int; Interval int; Location *time.Location }"
+        },
+        {
+          "id": "type HourLocator",
+          "declaration": "type HourLocator struct{ ByHour []int; Interval int; Location *time.Location }"
+        },
+        {
+          "id": "type MicrosecondLocator",
+          "declaration": "type MicrosecondLocator struct{ Interval int; Location *time.Location }"
+        },
+        {
+          "id": "type MinuteLocator",
+          "declaration": "type MinuteLocator struct{ ByMinute []int; Interval int; Location *time.Location }"
+        },
+        {
+          "id": "type MonthLocator",
+          "declaration": "type MonthLocator struct{ ByMonth []time.Month; ByMonthDay int; Interval int; Location *time.Location }"
+        },
+        {
+          "id": "type SecondLocator",
+          "declaration": "type SecondLocator struct{ BySecond []int; Interval int; Location *time.Location }"
+        },
+        {
+          "id": "type WeekdayLocator",
+          "declaration": "type WeekdayLocator struct{ ByWeekday []time.Weekday; Interval int; Location *time.Location }"
+        },
+        {
+          "id": "type YearLocator",
+          "declaration": "type YearLocator struct{ Base int; Month time.Month; Day int; Location *time.Location }"
         }
       ]
     },
@@ -9168,6 +8022,10 @@
           "declaration": "func Circle(center Pt, radius float64) Path"
         },
         {
+          "id": "func CosSin",
+          "declaration": "func CosSin(p0, p1 Pt) (cos, sin float64)"
+        },
+        {
           "id": "func EllipseBezier",
           "declaration": "func EllipseBezier(center Pt, rx, ry float64) Path"
         },
@@ -9180,28 +8038,16 @@
           "declaration": "func FindControlPoints(c1, mm, c2 Pt) [3]Pt"
         },
         {
-          "id": "func GetCosSin",
-          "declaration": "func GetCosSin(p0, p1 Pt) (cos, sin float64)"
-        },
-        {
-          "id": "func GetIntersection",
-          "declaration": "func GetIntersection(c1 Pt, cosT1, sinT1 float64, c2 Pt, cosT2, sinT2 float64) (Pt, bool)"
-        },
-        {
-          "id": "func GetNormalPoints",
-          "declaration": "func GetNormalPoints(c Pt, cosT, sinT, length float64) (left, right Pt)"
-        },
-        {
-          "id": "func GetParallels",
-          "declaration": "func GetParallels(bezier2 [3]Pt, width float64) (left, right [3]Pt)"
-        },
-        {
           "id": "func Identity",
           "declaration": "func Identity() Affine"
         },
         {
           "id": "func InsideCircle",
           "declaration": "func InsideCircle(cx, cy, r float64) func(Pt) bool"
+        },
+        {
+          "id": "func Intersection",
+          "declaration": "func Intersection(c1 Pt, cosT1, sinT1 float64, c2 Pt, cosT2, sinT2 float64) (Pt, bool)"
         },
         {
           "id": "func MakeWedgedBezier2",
@@ -9212,8 +8058,16 @@
           "declaration": "func NewBezierSegment(points ...Pt) BezierSegment"
         },
         {
+          "id": "func NormalPoints",
+          "declaration": "func NormalPoints(c Pt, cosT, sinT, length float64) (left, right Pt)"
+        },
+        {
           "id": "func NullRect",
           "declaration": "func NullRect() Rect"
+        },
+        {
+          "id": "func Parallels",
+          "declaration": "func Parallels(bezier2 [3]Pt, width float64) (left, right [3]Pt)"
         },
         {
           "id": "func RectFromPoints",
@@ -9443,6 +8297,232 @@
     },
     {
       "import_path": ".",
+      "dir": "plot3d",
+      "symbols": [
+        {
+          "id": "const FillBetween3DModeAuto",
+          "declaration": "const FillBetween3DModeAuto FillBetween3DMode = \"auto\""
+        },
+        {
+          "id": "const FillBetween3DModePolygon",
+          "declaration": "const FillBetween3DModePolygon FillBetween3DMode = \"polygon\""
+        },
+        {
+          "id": "const FillBetween3DModeQuad",
+          "declaration": "const FillBetween3DModeQuad FillBetween3DMode = \"quad\""
+        },
+        {
+          "id": "func AddAxes",
+          "declaration": "func AddAxes(fig *core.Figure, rect geom.Rect, opts ...style.Option) (*Axes3D, error)"
+        },
+        {
+          "id": "func NewAxes",
+          "declaration": "func NewAxes(ax *core.Axes) *Axes3D"
+        },
+        {
+          "id": "method Axes3D.Bar",
+          "declaration": "func (Axes3D) Bar(x, heights []float64, opts ...Bar3DPlaneOptions) *core.PolyCollection"
+        },
+        {
+          "id": "method Axes3D.Bar3D",
+          "declaration": "func (Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *core.LineCollection"
+        },
+        {
+          "id": "method Axes3D.Contour",
+          "declaration": "func (Axes3D) Contour(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.LineCollection"
+        },
+        {
+          "id": "method Axes3D.Contourf",
+          "declaration": "func (Axes3D) Contourf(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.PolyCollection"
+        },
+        {
+          "id": "method Axes3D.ErrorBar",
+          "declaration": "func (Axes3D) ErrorBar(x, y, z, xErr, yErr, zErr []float64, opts ...ErrorBar3DOptions) *core.LineCollection"
+        },
+        {
+          "id": "method Axes3D.ErrorBar3D",
+          "declaration": "func (Axes3D) ErrorBar3D(x, y, z, xErr, yErr, zErr []float64, opts ...ErrorBar3DOptions) *core.LineCollection"
+        },
+        {
+          "id": "method Axes3D.FillBetween",
+          "declaration": "func (Axes3D) FillBetween(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBetween3DOptions) *core.PolyCollection"
+        },
+        {
+          "id": "method Axes3D.FillBetween3D",
+          "declaration": "func (Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBetween3DOptions) *core.PolyCollection"
+        },
+        {
+          "id": "method Axes3D.Plot3D",
+          "declaration": "func (Axes3D) Plot3D(x, y, z []float64, opts ...core.PlotOptions) *core.Line2D"
+        },
+        {
+          "id": "method Axes3D.PlotSurface",
+          "declaration": "func (Axes3D) PlotSurface(x, y, z []float64, opts ...core.PlotOptions) *core.Line2D"
+        },
+        {
+          "id": "method Axes3D.PlotSurfaceGrid",
+          "declaration": "func (Axes3D) PlotSurfaceGrid(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.PolyCollection"
+        },
+        {
+          "id": "method Axes3D.ProjectPoint",
+          "declaration": "func (Axes3D) ProjectPoint(x, y, z float64) geom.Pt"
+        },
+        {
+          "id": "method Axes3D.ProjectionType",
+          "declaration": "func (Axes3D) ProjectionType() string"
+        },
+        {
+          "id": "method Axes3D.Quiver",
+          "declaration": "func (Axes3D) Quiver(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *core.LineCollection"
+        },
+        {
+          "id": "method Axes3D.Quiver3D",
+          "declaration": "func (Axes3D) Quiver3D(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *core.LineCollection"
+        },
+        {
+          "id": "method Axes3D.Scatter3D",
+          "declaration": "func (Axes3D) Scatter3D(x, y, z []float64, opts ...core.ScatterOptions) *core.Scatter2D"
+        },
+        {
+          "id": "method Axes3D.SetBoxAspect3D",
+          "declaration": "func (Axes3D) SetBoxAspect3D(aspect [3]float64, zoom ...float64) error"
+        },
+        {
+          "id": "method Axes3D.SetDefaults",
+          "declaration": "func (Axes3D) SetDefaults()"
+        },
+        {
+          "id": "method Axes3D.SetDistance",
+          "declaration": "func (Axes3D) SetDistance(distance float64)"
+        },
+        {
+          "id": "method Axes3D.SetProjectionType",
+          "declaration": "func (Axes3D) SetProjectionType(projType string, focalLength ...float64) error"
+        },
+        {
+          "id": "method Axes3D.SetShowXTickLabels",
+          "declaration": "func (Axes3D) SetShowXTickLabels(show bool)"
+        },
+        {
+          "id": "method Axes3D.SetShowYTickLabels",
+          "declaration": "func (Axes3D) SetShowYTickLabels(show bool)"
+        },
+        {
+          "id": "method Axes3D.SetShowZTickLabels",
+          "declaration": "func (Axes3D) SetShowZTickLabels(show bool)"
+        },
+        {
+          "id": "method Axes3D.SetView",
+          "declaration": "func (Axes3D) SetView(elevationDeg, azimuthDeg float64)"
+        },
+        {
+          "id": "method Axes3D.SetViewInit",
+          "declaration": "func (Axes3D) SetViewInit(elevationDeg, azimuthDeg, rollDeg float64, verticalAxis string) error"
+        },
+        {
+          "id": "method Axes3D.SetXLim",
+          "declaration": "func (Axes3D) SetXLim(minVal, maxVal float64)"
+        },
+        {
+          "id": "method Axes3D.SetYLim",
+          "declaration": "func (Axes3D) SetYLim(minVal, maxVal float64)"
+        },
+        {
+          "id": "method Axes3D.SetZLabel",
+          "declaration": "func (Axes3D) SetZLabel(label string)"
+        },
+        {
+          "id": "method Axes3D.SetZLim",
+          "declaration": "func (Axes3D) SetZLim(minVal, maxVal float64)"
+        },
+        {
+          "id": "method Axes3D.Stem",
+          "declaration": "func (Axes3D) Stem(x, y, z []float64, opts ...Stem3DOptions) *core.StemContainer"
+        },
+        {
+          "id": "method Axes3D.Stem3D",
+          "declaration": "func (Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *core.StemContainer"
+        },
+        {
+          "id": "method Axes3D.Surface",
+          "declaration": "func (Axes3D) Surface(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.PolyCollection"
+        },
+        {
+          "id": "method Axes3D.Text3D",
+          "declaration": "func (Axes3D) Text3D(x, y, z float64, text string, opts ...core.TextOptions) *core.Text"
+        },
+        {
+          "id": "method Axes3D.TriContour",
+          "declaration": "func (Axes3D) TriContour(tri core.Triangulation, z []float64, opts ...core.PlotOptions) *core.LineCollection"
+        },
+        {
+          "id": "method Axes3D.TriContourf",
+          "declaration": "func (Axes3D) TriContourf(tri core.Triangulation, z []float64, opts ...core.PlotOptions) *core.PolyCollection"
+        },
+        {
+          "id": "method Axes3D.Trisurf",
+          "declaration": "func (Axes3D) Trisurf(tri core.Triangulation, z []float64, opts ...core.PlotOptions) *core.PolyCollection"
+        },
+        {
+          "id": "method Axes3D.View",
+          "declaration": "func (Axes3D) View() (elevationDeg, azimuthDeg, distance float64)"
+        },
+        {
+          "id": "method Axes3D.Voxel",
+          "declaration": "func (Axes3D) Voxel(x, y, z, dx, dy, dz []float64, opts ...core.PlotOptions) *core.LineCollection"
+        },
+        {
+          "id": "method Axes3D.Voxels",
+          "declaration": "func (Axes3D) Voxels(filled [][][]bool, opts ...VoxelOptions) map[[3]int]*core.PolyCollection"
+        },
+        {
+          "id": "method Axes3D.Wireframe",
+          "declaration": "func (Axes3D) Wireframe(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.LineCollection"
+        },
+        {
+          "id": "method Axes3D.ZLabel",
+          "declaration": "func (Axes3D) ZLabel() string"
+        },
+        {
+          "id": "type Axes3D",
+          "declaration": "type Axes3D struct{ *core.Axes }"
+        },
+        {
+          "id": "type Bar3DOptions",
+          "declaration": "type Bar3DOptions struct{ Color *render.Color; Colors []render.Color; LineWidth *float64; Alpha *float64; Label string; AxLimClip bool }"
+        },
+        {
+          "id": "type Bar3DPlaneOptions",
+          "declaration": "type Bar3DPlaneOptions struct{ Color *render.Color; Width *float64; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Baseline *float64; Baselines []float64; Z *float64; Zs []float64; ZDir string; Label string }"
+        },
+        {
+          "id": "type ErrorBar3DOptions",
+          "declaration": "type ErrorBar3DOptions struct{ Color *render.Color; LineWidth *float64; CapSize *float64; Alpha *float64; Label string; AxLimClip bool; XErrLower []float64; XErrUpper []float64; YErrLower []float64; YErrUpper []float64; ZErrLower []float64; ZErrUpper []float64 }"
+        },
+        {
+          "id": "type FillBetween3DMode",
+          "declaration": "type FillBetween3DMode string"
+        },
+        {
+          "id": "type FillBetween3DOptions",
+          "declaration": "type FillBetween3DOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Label string; Mode FillBetween3DMode; Shade *bool; AxLimClip bool }"
+        },
+        {
+          "id": "type Quiver3DOptions",
+          "declaration": "type Quiver3DOptions struct{ Color *render.Color; LineWidth *float64; Alpha *float64; Label string; Length *float64; ArrowLengthRatio *float64; Pivot string; Normalize bool; AxLimClip bool }"
+        },
+        {
+          "id": "type Stem3DOptions",
+          "declaration": "type Stem3DOptions struct{ Color *render.Color; LineWidth *float64; Marker *core.MarkerType; MarkerPath *geom.Path; MarkerSize *float64; Bottom *float64; Orientation string; BaselineColor *render.Color; BaselineWidth *float64; MarkerEdgeColor *render.Color; MarkerEdgeWidth *float64; Label string; Alpha *float64; AxLimClip bool }"
+        },
+        {
+          "id": "type VoxelOptions",
+          "declaration": "type VoxelOptions struct{ FaceColor *render.Color; FaceColors map[[3]int]render.Color; EdgeColor *render.Color; EdgeColors map[[3]int]render.Color; Alpha *float64; Shade *bool; Label string; AxLimClip bool }"
+        }
+      ]
+    },
+    {
+      "import_path": ".",
       "dir": "pyplot",
       "symbols": [
         {
@@ -9459,7 +8539,7 @@
         },
         {
           "id": "func AddAxes3D",
-          "declaration": "func AddAxes3D(r geom.Rect, opts ...style.Option) *core.Axes3D"
+          "declaration": "func AddAxes3D(r geom.Rect, opts ...style.Option) *plot3d.Axes3D"
         },
         {
           "id": "func AddAxesDivider",
@@ -9562,6 +8642,10 @@
           "declaration": "func CLF()"
         },
         {
+          "id": "func CMap",
+          "declaration": "func CMap(name string) matcolor.Colormap"
+        },
+        {
           "id": "func CSD",
           "declaration": "func CSD(x, y []float64, opts ...core.SignalSpectrumOptions) *core.SpectrumResult"
         },
@@ -9604,6 +8688,10 @@
         {
           "id": "func Contourf3D",
           "declaration": "func Contourf3D(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.PolyCollection"
+        },
+        {
+          "id": "func CurrentFigManager",
+          "declaration": "func CurrentFigManager() (canvas.FigureManager, error)"
         },
         {
           "id": "func DelAxes",
@@ -9675,19 +8763,11 @@
         },
         {
           "id": "func GCA3D",
-          "declaration": "func GCA3D() *core.Axes3D"
+          "declaration": "func GCA3D() *plot3d.Axes3D"
         },
         {
           "id": "func GCF",
           "declaration": "func GCF() *core.Figure"
-        },
-        {
-          "id": "func GetCMap",
-          "declaration": "func GetCMap(name string) matcolor.Colormap"
-        },
-        {
-          "id": "func GetCurrentFigManager",
-          "declaration": "func GetCurrentFigManager() (canvas.FigureManager, error)"
         },
         {
           "id": "func Grid",
@@ -10660,16 +9740,16 @@
           "declaration": "func (NullRenderer) ClipRect(_ geom.Rect)"
         },
         {
+          "id": "method NullRenderer.DrawImage",
+          "declaration": "func (NullRenderer) DrawImage(_ Image, _ geom.Rect)"
+        },
+        {
           "id": "method NullRenderer.End",
           "declaration": "func (NullRenderer) End() error"
         },
         {
           "id": "method NullRenderer.GlyphRun",
           "declaration": "func (NullRenderer) GlyphRun(_ GlyphRun, _ Color)"
-        },
-        {
-          "id": "method NullRenderer.Image",
-          "declaration": "func (NullRenderer) Image(_ Image, _ geom.Rect)"
         },
         {
           "id": "method NullRenderer.MeasureText",
@@ -10730,10 +9810,6 @@
         {
           "id": "type BufferRegioner",
           "declaration": "type BufferRegioner interface{ CopyFromBBox func(bbox geom.Rect) *BufferRegion; RestoreRegion func(region *BufferRegion, bbox *geom.Rect, offset geom.Pt) }"
-        },
-        {
-          "id": "type CapabilityBridgeReporter",
-          "declaration": "type CapabilityBridgeReporter interface{ IsCapabilityBridged func(name string) bool }"
         },
         {
           "id": "type ClipPathTransformer",
@@ -11041,7 +10117,7 @@
         },
         {
           "id": "type RGBAExporter",
-          "declaration": "type RGBAExporter interface{ GetImage func() *image.RGBA }"
+          "declaration": "type RGBAExporter interface{ Image func() *image.RGBA }"
         },
         {
           "id": "type RGBAImage",
@@ -11061,11 +10137,7 @@
         },
         {
           "id": "type Renderer",
-          "declaration": "type Renderer interface{ Begin func(viewport geom.Rect) error; End func() error; Save func(); Restore func(); ClipRect func(r geom.Rect); ClipPath func(p geom.Path); Path func(p geom.Path, paint *Paint); Image func(img Image, dst geom.Rect); GlyphRun func(run GlyphRun, color Color); MeasureText func(text string, size float64, fontKey string) TextMetrics }"
-        },
-        {
-          "id": "type RendererModeReporter",
-          "declaration": "type RendererModeReporter interface{ RendererModeLabel func() string }"
+          "declaration": "type Renderer interface{ Begin func(viewport geom.Rect) error; End func() error; Save func(); Restore func(); ClipRect func(r geom.Rect); ClipPath func(p geom.Path); Path func(p geom.Path, paint *Paint); DrawImage func(img Image, dst geom.Rect); GlyphRun func(run GlyphRun, color Color); MeasureText func(text string, size float64, fontKey string) TextMetrics }"
         },
         {
           "id": "type Resizer",
@@ -11298,10 +10370,6 @@
           "declaration": "func DiscoverStyleLibrary(paths ...string) (map[string]Theme, StyleLibraryReport, error)"
         },
         {
-          "id": "func GetTheme",
-          "declaration": "func GetTheme(name string) (Theme, bool)"
-        },
-        {
           "id": "func LoadDefaultRCFile",
           "declaration": "func LoadDefaultRCFile() (string, MPLStyleReport, error)"
         },
@@ -11316,6 +10384,10 @@
         {
           "id": "func LoadStyleLibrary",
           "declaration": "func LoadStyleLibrary(paths ...string) (StyleLibraryReport, error)"
+        },
+        {
+          "id": "func LookupTheme",
+          "declaration": "func LookupTheme(name string) (Theme, bool)"
         },
         {
           "id": "func MustTheme",
@@ -11664,6 +10736,276 @@
         {
           "id": "var ThemePublication",
           "declaration": "var ThemePublication = NewTheme( \"publication\", WithDPI(144), WithFont(\"DejaVu Sans\", 11), WithTextColor(0.12, 0.12, 0.12, 1), WithLineColor(0.12, 0.12, 0.12, 1), WithBackground(1, 1, 1, 1), WithAxesBackground(render.Color{R: 1, G: 1, B: 1, A: 1}), WithAxesEdgeColor(render.Color{R: 0.16, G: 0.16, B: 0.16, A: 1}), WithAxisLineWidth(1.0), WithGridColors( render.Color{R: 0.86, G: 0.86, B: 0.86, A: 1}, render.Color{R: 0.92, G: 0.92, B: 0.92, A: 1}, ), WithGridLineWidths(0.8, 0.5), WithColorCycle(color.Palette{ {R: 0.247, G: 0.565, B: 0.855, A: 1}, {R: 0.922, G: 0.557, B: 0.118, A: 1}, {R: 0.463, G: 0.667, B: 0.192, A: 1}, {R: 0.781, G: 0.282, B: 0.314, A: 1}, {R: 0.580, G: 0.353, B: 0.706, A: 1}, {R: 0.167, G: 0.631, B: 0.596, A: 1}, }), WithLegendColors( render.Color{R: 1, G: 1, B: 1, A: 0.96}, render.Color{R: 0.25, G: 0.25, B: 0.25, A: 0.2}, render.Color{R: 0.12, G: 0.12, B: 0.12, A: 1}, ), )"
+        }
+      ]
+    },
+    {
+      "import_path": ".",
+      "dir": "ticker",
+      "symbols": [
+        {
+          "id": "func FormatTick",
+          "declaration": "func FormatTick(formatter Formatter, x float64, index int, ticks []float64) string"
+        },
+        {
+          "id": "func LabelFormatter",
+          "declaration": "func LabelFormatter(formatter Formatter, ticks []float64) func(tick float64, index int) string"
+        },
+        {
+          "id": "func WithMajorContext",
+          "declaration": "func WithMajorContext(locator, major Locator) Locator"
+        },
+        {
+          "id": "method AsinhLocator.Ticks",
+          "declaration": "func (AsinhLocator) Ticks(minVal, maxVal float64, _ int) []float64"
+        },
+        {
+          "id": "method AutoLocator.Ticks",
+          "declaration": "func (AutoLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method AutoMinorLocator.Ticks",
+          "declaration": "func (AutoMinorLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method EngFormatter.Format",
+          "declaration": "func (EngFormatter) Format(x float64) string"
+        },
+        {
+          "id": "method EngFormatter.FormatEng",
+          "declaration": "func (EngFormatter) FormatEng(x float64) string"
+        },
+        {
+          "id": "method FixedFormatter.Format",
+          "declaration": "func (FixedFormatter) Format(float64) string"
+        },
+        {
+          "id": "method FixedFormatter.FormatTick",
+          "declaration": "func (FixedFormatter) FormatTick(_ float64, index int, _ []float64) string"
+        },
+        {
+          "id": "method FixedLocator.Ticks",
+          "declaration": "func (FixedLocator) Ticks(minVal, maxVal float64, _ int) []float64"
+        },
+        {
+          "id": "method FormatStrFormatter.Format",
+          "declaration": "func (FormatStrFormatter) Format(x float64) string"
+        },
+        {
+          "id": "method FuncFormatter.Format",
+          "declaration": "func (FuncFormatter) Format(x float64) string"
+        },
+        {
+          "id": "method IndexLocator.Ticks",
+          "declaration": "func (IndexLocator) Ticks(minVal, maxVal float64, _ int) []float64"
+        },
+        {
+          "id": "method LinearLocator.Ticks",
+          "declaration": "func (LinearLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method LogFormatter.Format",
+          "declaration": "func (LogFormatter) Format(x float64) string"
+        },
+        {
+          "id": "method LogFormatter.FormatTick",
+          "declaration": "func (LogFormatter) FormatTick(x float64, _ int, ticks []float64) string"
+        },
+        {
+          "id": "method LogFormatterExponent.Format",
+          "declaration": "func (LogFormatterExponent) Format(x float64) string"
+        },
+        {
+          "id": "method LogFormatterExponent.FormatTick",
+          "declaration": "func (LogFormatterExponent) FormatTick(x float64, _ int, ticks []float64) string"
+        },
+        {
+          "id": "method LogFormatterMathText.Format",
+          "declaration": "func (LogFormatterMathText) Format(x float64) string"
+        },
+        {
+          "id": "method LogFormatterMathText.FormatTick",
+          "declaration": "func (LogFormatterMathText) FormatTick(x float64, _ int, ticks []float64) string"
+        },
+        {
+          "id": "method LogLocator.Ticks",
+          "declaration": "func (LogLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method LogitFormatter.Format",
+          "declaration": "func (LogitFormatter) Format(x float64) string"
+        },
+        {
+          "id": "method LogitLocator.Ticks",
+          "declaration": "func (LogitLocator) Ticks(minVal, maxVal float64, _ int) []float64"
+        },
+        {
+          "id": "method MaxNLocator.Ticks",
+          "declaration": "func (MaxNLocator) Ticks(minVal, maxVal float64, targetCount int) []float64"
+        },
+        {
+          "id": "method MinorLinearLocator.Ticks",
+          "declaration": "func (MinorLinearLocator) Ticks(minVal, maxVal float64, _ int) []float64"
+        },
+        {
+          "id": "method MultipleLocator.Ticks",
+          "declaration": "func (MultipleLocator) Ticks(minVal, maxVal float64, _ int) []float64"
+        },
+        {
+          "id": "method NullFormatter.Format",
+          "declaration": "func (NullFormatter) Format(float64) string"
+        },
+        {
+          "id": "method NullLocator.Ticks",
+          "declaration": "func (NullLocator) Ticks(float64, float64, int) []float64"
+        },
+        {
+          "id": "method PercentFormatter.Format",
+          "declaration": "func (PercentFormatter) Format(x float64) string"
+        },
+        {
+          "id": "method ScalarFormatter.Format",
+          "declaration": "func (ScalarFormatter) Format(x float64) string"
+        },
+        {
+          "id": "method ScalarFormatter.FormatData",
+          "declaration": "func (ScalarFormatter) FormatData(value float64) string"
+        },
+        {
+          "id": "method ScalarFormatter.FormatStep",
+          "declaration": "func (ScalarFormatter) FormatStep(x, step float64) string"
+        },
+        {
+          "id": "method ScalarFormatter.OffsetText",
+          "declaration": "func (ScalarFormatter) OffsetText(ticks []float64) string"
+        },
+        {
+          "id": "method ScalarFormatter.WithOffsetThreshold",
+          "declaration": "func (ScalarFormatter) WithOffsetThreshold(threshold int) ScalarFormatter"
+        },
+        {
+          "id": "method StrMethodFormatter.Format",
+          "declaration": "func (StrMethodFormatter) Format(x float64) string"
+        },
+        {
+          "id": "method SymLogLocator.Ticks",
+          "declaration": "func (SymLogLocator) Ticks(minVal, maxVal float64, _ int) []float64"
+        },
+        {
+          "id": "type AsinhLocator",
+          "declaration": "type AsinhLocator struct{ LinearWidth float64; NumTicks int; SymThresh float64; Base float64; Subs []float64 }"
+        },
+        {
+          "id": "type AutoLocator",
+          "declaration": "type AutoLocator struct{ MaxNLocator }"
+        },
+        {
+          "id": "type AutoMinorLocator",
+          "declaration": "type AutoMinorLocator struct{ N int; Major Locator }"
+        },
+        {
+          "id": "type EngFormatter",
+          "declaration": "type EngFormatter struct{ Unit string; Places int; PlacesSet bool; Sep string; SepSet bool; UseUnicodeMicro bool; UseMathText bool }"
+        },
+        {
+          "id": "type FixedFormatter",
+          "declaration": "type FixedFormatter struct{ Labels []string }"
+        },
+        {
+          "id": "type FixedLocator",
+          "declaration": "type FixedLocator struct{ TicksList []float64; Nbins int }"
+        },
+        {
+          "id": "type FormatStrFormatter",
+          "declaration": "type FormatStrFormatter struct{ Pattern string }"
+        },
+        {
+          "id": "type Formatter",
+          "declaration": "type Formatter interface{ Format func(x float64) string }"
+        },
+        {
+          "id": "type FuncFormatter",
+          "declaration": "type FuncFormatter func(float64) string"
+        },
+        {
+          "id": "type IndexLocator",
+          "declaration": "type IndexLocator struct{ Base float64; Offset float64 }"
+        },
+        {
+          "id": "type IndexedFormatter",
+          "declaration": "type IndexedFormatter interface{ FormatTick func(x float64, index int, ticks []float64) string }"
+        },
+        {
+          "id": "type LinearLocator",
+          "declaration": "type LinearLocator struct{ NumTicks int; Presets map[[2]float64][]float64 }"
+        },
+        {
+          "id": "type Locator",
+          "declaration": "type Locator interface{ Ticks func(minVal, maxVal float64, targetCount int) []float64 }"
+        },
+        {
+          "id": "type LogFormatter",
+          "declaration": "type LogFormatter struct{ Base float64; LabelOnlyBase bool; MinorThresholds [2]float64; UseMinorThreshold bool }"
+        },
+        {
+          "id": "type LogFormatterExponent",
+          "declaration": "type LogFormatterExponent struct{ Base float64; LabelOnlyBase bool; MinorThresholds [2]float64; UseMinorThreshold bool }"
+        },
+        {
+          "id": "type LogFormatterMathText",
+          "declaration": "type LogFormatterMathText struct{ Base float64; SciNotation bool; MinExponent int; LabelOnlyBase bool; MinorThresholds [2]float64; UseMinorThreshold bool }"
+        },
+        {
+          "id": "type LogLocator",
+          "declaration": "type LogLocator struct{ Base float64; Minor bool; Subs []float64; SubsMode string; NumTicks int }"
+        },
+        {
+          "id": "type LogitFormatter",
+          "declaration": "type LogitFormatter struct{ OneHalf string; UseOverline bool; Minor bool }"
+        },
+        {
+          "id": "type LogitLocator",
+          "declaration": "type LogitLocator struct{ Minor bool; Nbins int }"
+        },
+        {
+          "id": "type MaxNLocator",
+          "declaration": "type MaxNLocator struct{ N int; Integer bool; Steps []float64; Symmetric bool; Prune string; MinTicks int; NbinsAuto bool; RawStepScale float64 }"
+        },
+        {
+          "id": "type MinorLinearLocator",
+          "declaration": "type MinorLinearLocator struct{ N int }"
+        },
+        {
+          "id": "type MultipleLocator",
+          "declaration": "type MultipleLocator struct{ Base float64; Offset float64 }"
+        },
+        {
+          "id": "type NullFormatter",
+          "declaration": "type NullFormatter struct{}"
+        },
+        {
+          "id": "type NullLocator",
+          "declaration": "type NullLocator struct{}"
+        },
+        {
+          "id": "type OffsetFormatter",
+          "declaration": "type OffsetFormatter interface{ OffsetText func(ticks []float64) string }"
+        },
+        {
+          "id": "type PercentFormatter",
+          "declaration": "type PercentFormatter struct{ XMax float64; Decimals int; DecimalsSet bool; DisplayRange float64; Symbol string; NoSymbol bool; UseTeX bool; IsLaTeX bool }"
+        },
+        {
+          "id": "type ScalarFormatter",
+          "declaration": "type ScalarFormatter struct{ Prec int; PowerLimits [2]int; UsePowerLimits bool; DisableScientific bool; UseMathText bool; UseLocale bool; DisableOffset bool; OffsetThreshold int }"
+        },
+        {
+          "id": "type StrMethodFormatter",
+          "declaration": "type StrMethodFormatter struct{ Template string }"
+        },
+        {
+          "id": "type SymLogLocator",
+          "declaration": "type SymLogLocator struct{ Base float64; LinThresh float64; Subs []float64; NumTicks int }"
         }
       ]
     },
@@ -12462,8 +11804,8 @@
           "declaration": "func (TriAnalyzer) CircleRatios(rescale bool) []float64"
         },
         {
-          "id": "method TriAnalyzer.GetFlatTriMask",
-          "declaration": "func (TriAnalyzer) GetFlatTriMask(minCircleRatio float64, rescale bool) []bool"
+          "id": "method TriAnalyzer.FlatTriMask",
+          "declaration": "func (TriAnalyzer) FlatTriMask(minCircleRatio float64, rescale bool) []bool"
         },
         {
           "id": "method TriAnalyzer.ScaleFactors",
@@ -12548,6 +11890,836 @@
         {
           "id": "type UniformTriRefiner",
           "declaration": "type UniformTriRefiner struct{}"
+        }
+      ]
+    },
+    {
+      "import_path": ".",
+      "dir": "widgets",
+      "symbols": [
+        {
+          "id": "func NewAxes",
+          "declaration": "func NewAxes(f *core.Figure, r geom.Rect, opts ...style.Option) *core.Axes"
+        },
+        {
+          "id": "func NewButton",
+          "declaration": "func NewButton(a *core.Axes, label string, opts ...ButtonOptions) *Button"
+        },
+        {
+          "id": "func NewCheckButtons",
+          "declaration": "func NewCheckButtons(a *core.Axes, labels []string, active []bool, opts ...CheckButtonsOptions) *CheckButtons"
+        },
+        {
+          "id": "func NewCursor",
+          "declaration": "func NewCursor(a *core.Axes, opts ...CursorOptions) *Cursor"
+        },
+        {
+          "id": "func NewEllipseSelector",
+          "declaration": "func NewEllipseSelector(a *core.Axes, opts ...EllipseSelectorOptions) *EllipseSelector"
+        },
+        {
+          "id": "func NewLassoSelector",
+          "declaration": "func NewLassoSelector(a *core.Axes, opts ...LassoSelectorOptions) *LassoSelector"
+        },
+        {
+          "id": "func NewMultiCursor",
+          "declaration": "func NewMultiCursor(a *core.Axes, axes ...*core.Axes) *MultiCursor"
+        },
+        {
+          "id": "func NewMultiCursorWithOptions",
+          "declaration": "func NewMultiCursorWithOptions(a *core.Axes, opts []MultiCursorOptions, axes ...*core.Axes) *MultiCursor"
+        },
+        {
+          "id": "func NewPolygonSelector",
+          "declaration": "func NewPolygonSelector(a *core.Axes, opts ...PolygonSelectorOptions) *PolygonSelector"
+        },
+        {
+          "id": "func NewRadioButtons",
+          "declaration": "func NewRadioButtons(a *core.Axes, labels []string, active int, opts ...RadioButtonsOptions) *RadioButtons"
+        },
+        {
+          "id": "func NewRangeSlider",
+          "declaration": "func NewRangeSlider(a *core.Axes, label string, minValue, maxValue, low, high float64, opts ...RangeSliderOptions) *RangeSlider"
+        },
+        {
+          "id": "func NewRectangleSelector",
+          "declaration": "func NewRectangleSelector(a *core.Axes, opts ...RectangleSelectorOptions) *RectangleSelector"
+        },
+        {
+          "id": "func NewSlider",
+          "declaration": "func NewSlider(a *core.Axes, label string, minValue, maxValue, value float64, opts ...SliderOptions) *Slider"
+        },
+        {
+          "id": "func NewSpanSelector",
+          "declaration": "func NewSpanSelector(a *core.Axes, orientation string, opts ...SpanSelectorOptions) *SpanSelector"
+        },
+        {
+          "id": "func NewSubFigureAxes",
+          "declaration": "func NewSubFigureAxes(sf *core.SubFigure, r geom.Rect, opts ...style.Option) *core.Axes"
+        },
+        {
+          "id": "func NewSubplotAxes",
+          "declaration": "func NewSubplotAxes(spec core.SubplotSpec, opts ...core.SubplotAxesOption) *core.Axes"
+        },
+        {
+          "id": "func NewTextBox",
+          "declaration": "func NewTextBox(a *core.Axes, label, value string, opts ...TextBoxOptions) *TextBox"
+        },
+        {
+          "id": "method Button.Bounds",
+          "declaration": "func (Button) Bounds(ctx *core.DrawContext) geom.Rect"
+        },
+        {
+          "id": "method Button.Click",
+          "declaration": "func (Button) Click()"
+        },
+        {
+          "id": "method Button.Contains",
+          "declaration": "func (Button) Contains(p geom.Pt, ctx *core.DrawContext) (bool, core.PickInfo)"
+        },
+        {
+          "id": "method Button.Draw",
+          "declaration": "func (Button) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method Button.OnClicked",
+          "declaration": "func (Button) OnClicked(cb ButtonCallback) WidgetCallbackID"
+        },
+        {
+          "id": "method Button.RemoveOnClicked",
+          "declaration": "func (Button) RemoveOnClicked(id WidgetCallbackID)"
+        },
+        {
+          "id": "method Button.WidgetLayer",
+          "declaration": "func (Button) WidgetLayer()"
+        },
+        {
+          "id": "method Button.Z",
+          "declaration": "func (Button) Z() float64"
+        },
+        {
+          "id": "method CheckButtons.Bounds",
+          "declaration": "func (CheckButtons) Bounds(ctx *core.DrawContext) geom.Rect"
+        },
+        {
+          "id": "method CheckButtons.Contains",
+          "declaration": "func (CheckButtons) Contains(p geom.Pt, ctx *core.DrawContext) (bool, core.PickInfo)"
+        },
+        {
+          "id": "method CheckButtons.Draw",
+          "declaration": "func (CheckButtons) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method CheckButtons.OnChanged",
+          "declaration": "func (CheckButtons) OnChanged(cb CheckButtonsCallback) WidgetCallbackID"
+        },
+        {
+          "id": "method CheckButtons.RemoveOnChanged",
+          "declaration": "func (CheckButtons) RemoveOnChanged(id WidgetCallbackID)"
+        },
+        {
+          "id": "method CheckButtons.SetValue",
+          "declaration": "func (CheckButtons) SetValue(index int, checked bool)"
+        },
+        {
+          "id": "method CheckButtons.Toggle",
+          "declaration": "func (CheckButtons) Toggle(index int)"
+        },
+        {
+          "id": "method CheckButtons.WidgetLayer",
+          "declaration": "func (CheckButtons) WidgetLayer()"
+        },
+        {
+          "id": "method CheckButtons.Z",
+          "declaration": "func (CheckButtons) Z() float64"
+        },
+        {
+          "id": "method Cursor.Bounds",
+          "declaration": "func (Cursor) Bounds(ctx *core.DrawContext) geom.Rect"
+        },
+        {
+          "id": "method Cursor.Contains",
+          "declaration": "func (Cursor) Contains(geom.Pt, *core.DrawContext) (bool, core.PickInfo)"
+        },
+        {
+          "id": "method Cursor.Draw",
+          "declaration": "func (Cursor) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method Cursor.Hide",
+          "declaration": "func (Cursor) Hide() bool"
+        },
+        {
+          "id": "method Cursor.Position",
+          "declaration": "func (Cursor) Position() (float64, float64, bool)"
+        },
+        {
+          "id": "method Cursor.SetData",
+          "declaration": "func (Cursor) SetData(x, y float64) bool"
+        },
+        {
+          "id": "method Cursor.WidgetLayer",
+          "declaration": "func (Cursor) WidgetLayer()"
+        },
+        {
+          "id": "method Cursor.Z",
+          "declaration": "func (Cursor) Z() float64"
+        },
+        {
+          "id": "method EllipseSelector.Bounds",
+          "declaration": "func (EllipseSelector) Bounds(ctx *core.DrawContext) geom.Rect"
+        },
+        {
+          "id": "method EllipseSelector.Clear",
+          "declaration": "func (EllipseSelector) Clear() bool"
+        },
+        {
+          "id": "method EllipseSelector.Contains",
+          "declaration": "func (EllipseSelector) Contains(p geom.Pt, ctx *core.DrawContext) (bool, core.PickInfo)"
+        },
+        {
+          "id": "method EllipseSelector.Draw",
+          "declaration": "func (EllipseSelector) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method EllipseSelector.MoveBy",
+          "declaration": "func (EllipseSelector) MoveBy(delta geom.Pt) bool"
+        },
+        {
+          "id": "method EllipseSelector.OnSelect",
+          "declaration": "func (EllipseSelector) OnSelect(cb EllipseSelectorCallback) WidgetCallbackID"
+        },
+        {
+          "id": "method EllipseSelector.RemoveOnSelect",
+          "declaration": "func (EllipseSelector) RemoveOnSelect(id WidgetCallbackID)"
+        },
+        {
+          "id": "method EllipseSelector.SetBounds",
+          "declaration": "func (EllipseSelector) SetBounds(minV, maxV geom.Pt) bool"
+        },
+        {
+          "id": "method EllipseSelector.TriggerOnSelect",
+          "declaration": "func (EllipseSelector) TriggerOnSelect()"
+        },
+        {
+          "id": "method EllipseSelector.WidgetLayer",
+          "declaration": "func (EllipseSelector) WidgetLayer()"
+        },
+        {
+          "id": "method EllipseSelector.Z",
+          "declaration": "func (EllipseSelector) Z() float64"
+        },
+        {
+          "id": "method LassoSelector.AddPoint",
+          "declaration": "func (LassoSelector) AddPoint(point geom.Pt) bool"
+        },
+        {
+          "id": "method LassoSelector.Begin",
+          "declaration": "func (LassoSelector) Begin(point geom.Pt) bool"
+        },
+        {
+          "id": "method LassoSelector.Bounds",
+          "declaration": "func (LassoSelector) Bounds(ctx *core.DrawContext) geom.Rect"
+        },
+        {
+          "id": "method LassoSelector.Clear",
+          "declaration": "func (LassoSelector) Clear() bool"
+        },
+        {
+          "id": "method LassoSelector.Contains",
+          "declaration": "func (LassoSelector) Contains(point geom.Pt, ctx *core.DrawContext) (bool, core.PickInfo)"
+        },
+        {
+          "id": "method LassoSelector.Draw",
+          "declaration": "func (LassoSelector) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method LassoSelector.Finish",
+          "declaration": "func (LassoSelector) Finish() bool"
+        },
+        {
+          "id": "method LassoSelector.OnSelect",
+          "declaration": "func (LassoSelector) OnSelect(cb LassoSelectorCallback) WidgetCallbackID"
+        },
+        {
+          "id": "method LassoSelector.RemoveOnSelect",
+          "declaration": "func (LassoSelector) RemoveOnSelect(id WidgetCallbackID)"
+        },
+        {
+          "id": "method LassoSelector.WidgetLayer",
+          "declaration": "func (LassoSelector) WidgetLayer()"
+        },
+        {
+          "id": "method LassoSelector.Z",
+          "declaration": "func (LassoSelector) Z() float64"
+        },
+        {
+          "id": "method MultiCursor.Bounds",
+          "declaration": "func (MultiCursor) Bounds(ctx *core.DrawContext) geom.Rect"
+        },
+        {
+          "id": "method MultiCursor.Contains",
+          "declaration": "func (MultiCursor) Contains(geom.Pt, *core.DrawContext) (bool, core.PickInfo)"
+        },
+        {
+          "id": "method MultiCursor.Draw",
+          "declaration": "func (MultiCursor) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method MultiCursor.Hide",
+          "declaration": "func (MultiCursor) Hide() bool"
+        },
+        {
+          "id": "method MultiCursor.Position",
+          "declaration": "func (MultiCursor) Position() (float64, float64, bool)"
+        },
+        {
+          "id": "method MultiCursor.SetFigurePoint",
+          "declaration": "func (MultiCursor) SetFigurePoint(point geom.Pt) bool"
+        },
+        {
+          "id": "method MultiCursor.WidgetLayer",
+          "declaration": "func (MultiCursor) WidgetLayer()"
+        },
+        {
+          "id": "method MultiCursor.Z",
+          "declaration": "func (MultiCursor) Z() float64"
+        },
+        {
+          "id": "method PolygonSelector.AppendPoint",
+          "declaration": "func (PolygonSelector) AppendPoint(point geom.Pt) bool"
+        },
+        {
+          "id": "method PolygonSelector.Bounds",
+          "declaration": "func (PolygonSelector) Bounds(ctx *core.DrawContext) geom.Rect"
+        },
+        {
+          "id": "method PolygonSelector.Clear",
+          "declaration": "func (PolygonSelector) Clear() bool"
+        },
+        {
+          "id": "method PolygonSelector.Close",
+          "declaration": "func (PolygonSelector) Close() bool"
+        },
+        {
+          "id": "method PolygonSelector.Contains",
+          "declaration": "func (PolygonSelector) Contains(point geom.Pt, ctx *core.DrawContext) (bool, core.PickInfo)"
+        },
+        {
+          "id": "method PolygonSelector.Draw",
+          "declaration": "func (PolygonSelector) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method PolygonSelector.MoveBy",
+          "declaration": "func (PolygonSelector) MoveBy(delta geom.Pt) bool"
+        },
+        {
+          "id": "method PolygonSelector.MovePointBy",
+          "declaration": "func (PolygonSelector) MovePointBy(index int, delta geom.Pt) bool"
+        },
+        {
+          "id": "method PolygonSelector.OnSelect",
+          "declaration": "func (PolygonSelector) OnSelect(cb PolygonSelectorCallback) WidgetCallbackID"
+        },
+        {
+          "id": "method PolygonSelector.RemoveOnSelect",
+          "declaration": "func (PolygonSelector) RemoveOnSelect(id WidgetCallbackID)"
+        },
+        {
+          "id": "method PolygonSelector.SetPoint",
+          "declaration": "func (PolygonSelector) SetPoint(index int, point geom.Pt) bool"
+        },
+        {
+          "id": "method PolygonSelector.TriggerOnSelect",
+          "declaration": "func (PolygonSelector) TriggerOnSelect()"
+        },
+        {
+          "id": "method PolygonSelector.WidgetLayer",
+          "declaration": "func (PolygonSelector) WidgetLayer()"
+        },
+        {
+          "id": "method PolygonSelector.Z",
+          "declaration": "func (PolygonSelector) Z() float64"
+        },
+        {
+          "id": "method RadioButtons.Bounds",
+          "declaration": "func (RadioButtons) Bounds(ctx *core.DrawContext) geom.Rect"
+        },
+        {
+          "id": "method RadioButtons.Contains",
+          "declaration": "func (RadioButtons) Contains(p geom.Pt, ctx *core.DrawContext) (bool, core.PickInfo)"
+        },
+        {
+          "id": "method RadioButtons.Draw",
+          "declaration": "func (RadioButtons) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method RadioButtons.Next",
+          "declaration": "func (RadioButtons) Next(delta int)"
+        },
+        {
+          "id": "method RadioButtons.OnChanged",
+          "declaration": "func (RadioButtons) OnChanged(cb RadioButtonsCallback) WidgetCallbackID"
+        },
+        {
+          "id": "method RadioButtons.RemoveOnChanged",
+          "declaration": "func (RadioButtons) RemoveOnChanged(id WidgetCallbackID)"
+        },
+        {
+          "id": "method RadioButtons.SetActive",
+          "declaration": "func (RadioButtons) SetActive(index int)"
+        },
+        {
+          "id": "method RadioButtons.WidgetLayer",
+          "declaration": "func (RadioButtons) WidgetLayer()"
+        },
+        {
+          "id": "method RadioButtons.Z",
+          "declaration": "func (RadioButtons) Z() float64"
+        },
+        {
+          "id": "method RangeSlider.Bounds",
+          "declaration": "func (RangeSlider) Bounds(ctx *core.DrawContext) geom.Rect"
+        },
+        {
+          "id": "method RangeSlider.Contains",
+          "declaration": "func (RangeSlider) Contains(p geom.Pt, ctx *core.DrawContext) (bool, core.PickInfo)"
+        },
+        {
+          "id": "method RangeSlider.Draw",
+          "declaration": "func (RangeSlider) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method RangeSlider.OnChanged",
+          "declaration": "func (RangeSlider) OnChanged(cb RangeSliderCallback) WidgetCallbackID"
+        },
+        {
+          "id": "method RangeSlider.RemoveOnChanged",
+          "declaration": "func (RangeSlider) RemoveOnChanged(id WidgetCallbackID)"
+        },
+        {
+          "id": "method RangeSlider.SetHigh",
+          "declaration": "func (RangeSlider) SetHigh(high float64)"
+        },
+        {
+          "id": "method RangeSlider.SetLow",
+          "declaration": "func (RangeSlider) SetLow(low float64)"
+        },
+        {
+          "id": "method RangeSlider.SetRange",
+          "declaration": "func (RangeSlider) SetRange(low, high float64)"
+        },
+        {
+          "id": "method RangeSlider.ValueForPoint",
+          "declaration": "func (RangeSlider) ValueForPoint(p geom.Pt, ctx *core.DrawContext) (float64, bool)"
+        },
+        {
+          "id": "method RangeSlider.WidgetLayer",
+          "declaration": "func (RangeSlider) WidgetLayer()"
+        },
+        {
+          "id": "method RangeSlider.Z",
+          "declaration": "func (RangeSlider) Z() float64"
+        },
+        {
+          "id": "method RectangleSelector.Bounds",
+          "declaration": "func (RectangleSelector) Bounds(ctx *core.DrawContext) geom.Rect"
+        },
+        {
+          "id": "method RectangleSelector.BoundsRect",
+          "declaration": "func (RectangleSelector) BoundsRect() geom.Rect"
+        },
+        {
+          "id": "method RectangleSelector.Clear",
+          "declaration": "func (RectangleSelector) Clear() bool"
+        },
+        {
+          "id": "method RectangleSelector.Contains",
+          "declaration": "func (RectangleSelector) Contains(p geom.Pt, ctx *core.DrawContext) (bool, core.PickInfo)"
+        },
+        {
+          "id": "method RectangleSelector.Draw",
+          "declaration": "func (RectangleSelector) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method RectangleSelector.MoveBy",
+          "declaration": "func (RectangleSelector) MoveBy(delta geom.Pt) bool"
+        },
+        {
+          "id": "method RectangleSelector.OnSelect",
+          "declaration": "func (RectangleSelector) OnSelect(cb RectangleSelectorCallback) WidgetCallbackID"
+        },
+        {
+          "id": "method RectangleSelector.RemoveOnSelect",
+          "declaration": "func (RectangleSelector) RemoveOnSelect(id WidgetCallbackID)"
+        },
+        {
+          "id": "method RectangleSelector.SetBounds",
+          "declaration": "func (RectangleSelector) SetBounds(minV, maxV geom.Pt) bool"
+        },
+        {
+          "id": "method RectangleSelector.TriggerOnSelect",
+          "declaration": "func (RectangleSelector) TriggerOnSelect()"
+        },
+        {
+          "id": "method RectangleSelector.WidgetLayer",
+          "declaration": "func (RectangleSelector) WidgetLayer()"
+        },
+        {
+          "id": "method RectangleSelector.Z",
+          "declaration": "func (RectangleSelector) Z() float64"
+        },
+        {
+          "id": "method Slider.Bounds",
+          "declaration": "func (Slider) Bounds(ctx *core.DrawContext) geom.Rect"
+        },
+        {
+          "id": "method Slider.Contains",
+          "declaration": "func (Slider) Contains(p geom.Pt, ctx *core.DrawContext) (bool, core.PickInfo)"
+        },
+        {
+          "id": "method Slider.Draw",
+          "declaration": "func (Slider) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method Slider.OnChanged",
+          "declaration": "func (Slider) OnChanged(cb SliderCallback) WidgetCallbackID"
+        },
+        {
+          "id": "method Slider.RemoveOnChanged",
+          "declaration": "func (Slider) RemoveOnChanged(id WidgetCallbackID)"
+        },
+        {
+          "id": "method Slider.SetValue",
+          "declaration": "func (Slider) SetValue(value float64)"
+        },
+        {
+          "id": "method Slider.ValueForPoint",
+          "declaration": "func (Slider) ValueForPoint(p geom.Pt, ctx *core.DrawContext) (float64, bool)"
+        },
+        {
+          "id": "method Slider.WidgetLayer",
+          "declaration": "func (Slider) WidgetLayer()"
+        },
+        {
+          "id": "method Slider.Z",
+          "declaration": "func (Slider) Z() float64"
+        },
+        {
+          "id": "method SpanSelector.Bounds",
+          "declaration": "func (SpanSelector) Bounds(ctx *core.DrawContext) geom.Rect"
+        },
+        {
+          "id": "method SpanSelector.Clear",
+          "declaration": "func (SpanSelector) Clear() bool"
+        },
+        {
+          "id": "method SpanSelector.Contains",
+          "declaration": "func (SpanSelector) Contains(p geom.Pt, ctx *core.DrawContext) (bool, core.PickInfo)"
+        },
+        {
+          "id": "method SpanSelector.Draw",
+          "declaration": "func (SpanSelector) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method SpanSelector.Move",
+          "declaration": "func (SpanSelector) Move(delta float64) bool"
+        },
+        {
+          "id": "method SpanSelector.OnSelect",
+          "declaration": "func (SpanSelector) OnSelect(cb SpanSelectorCallback) WidgetCallbackID"
+        },
+        {
+          "id": "method SpanSelector.RemoveOnSelect",
+          "declaration": "func (SpanSelector) RemoveOnSelect(id WidgetCallbackID)"
+        },
+        {
+          "id": "method SpanSelector.SetSpan",
+          "declaration": "func (SpanSelector) SetSpan(minV, maxV float64) bool"
+        },
+        {
+          "id": "method SpanSelector.TriggerOnSelect",
+          "declaration": "func (SpanSelector) TriggerOnSelect()"
+        },
+        {
+          "id": "method SpanSelector.WidgetLayer",
+          "declaration": "func (SpanSelector) WidgetLayer()"
+        },
+        {
+          "id": "method SpanSelector.Z",
+          "declaration": "func (SpanSelector) Z() float64"
+        },
+        {
+          "id": "method TextBox.Activate",
+          "declaration": "func (TextBox) Activate(active bool)"
+        },
+        {
+          "id": "method TextBox.Backspace",
+          "declaration": "func (TextBox) Backspace()"
+        },
+        {
+          "id": "method TextBox.Bounds",
+          "declaration": "func (TextBox) Bounds(ctx *core.DrawContext) geom.Rect"
+        },
+        {
+          "id": "method TextBox.Cancel",
+          "declaration": "func (TextBox) Cancel()"
+        },
+        {
+          "id": "method TextBox.Caret",
+          "declaration": "func (TextBox) Caret() int"
+        },
+        {
+          "id": "method TextBox.CaretForPoint",
+          "declaration": "func (TextBox) CaretForPoint(p geom.Pt, ctx *core.DrawContext) int"
+        },
+        {
+          "id": "method TextBox.Contains",
+          "declaration": "func (TextBox) Contains(p geom.Pt, ctx *core.DrawContext) (bool, core.PickInfo)"
+        },
+        {
+          "id": "method TextBox.Delete",
+          "declaration": "func (TextBox) Delete()"
+        },
+        {
+          "id": "method TextBox.Draw",
+          "declaration": "func (TextBox) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method TextBox.InsertText",
+          "declaration": "func (TextBox) InsertText(value string)"
+        },
+        {
+          "id": "method TextBox.MoveCaretLeft",
+          "declaration": "func (TextBox) MoveCaretLeft(word, extend bool)"
+        },
+        {
+          "id": "method TextBox.MoveCaretRight",
+          "declaration": "func (TextBox) MoveCaretRight(word, extend bool)"
+        },
+        {
+          "id": "method TextBox.MoveCaretToEnd",
+          "declaration": "func (TextBox) MoveCaretToEnd(extend bool)"
+        },
+        {
+          "id": "method TextBox.MoveCaretToStart",
+          "declaration": "func (TextBox) MoveCaretToStart(extend bool)"
+        },
+        {
+          "id": "method TextBox.OnCancel",
+          "declaration": "func (TextBox) OnCancel(cb TextBoxSubmitCallback) WidgetCallbackID"
+        },
+        {
+          "id": "method TextBox.OnChange",
+          "declaration": "func (TextBox) OnChange(cb TextBoxChangeCallback) WidgetCallbackID"
+        },
+        {
+          "id": "method TextBox.OnSubmit",
+          "declaration": "func (TextBox) OnSubmit(cb TextBoxSubmitCallback) WidgetCallbackID"
+        },
+        {
+          "id": "method TextBox.RemoveOnCancel",
+          "declaration": "func (TextBox) RemoveOnCancel(id WidgetCallbackID)"
+        },
+        {
+          "id": "method TextBox.RemoveOnChange",
+          "declaration": "func (TextBox) RemoveOnChange(id WidgetCallbackID)"
+        },
+        {
+          "id": "method TextBox.RemoveOnSubmit",
+          "declaration": "func (TextBox) RemoveOnSubmit(id WidgetCallbackID)"
+        },
+        {
+          "id": "method TextBox.SelectAll",
+          "declaration": "func (TextBox) SelectAll()"
+        },
+        {
+          "id": "method TextBox.SelectedText",
+          "declaration": "func (TextBox) SelectedText() string"
+        },
+        {
+          "id": "method TextBox.Selection",
+          "declaration": "func (TextBox) Selection() (int, int)"
+        },
+        {
+          "id": "method TextBox.SetCaret",
+          "declaration": "func (TextBox) SetCaret(index int)"
+        },
+        {
+          "id": "method TextBox.SetSelection",
+          "declaration": "func (TextBox) SetSelection(start, end int)"
+        },
+        {
+          "id": "method TextBox.SetValue",
+          "declaration": "func (TextBox) SetValue(value string)"
+        },
+        {
+          "id": "method TextBox.Submit",
+          "declaration": "func (TextBox) Submit()"
+        },
+        {
+          "id": "method TextBox.WidgetLayer",
+          "declaration": "func (TextBox) WidgetLayer()"
+        },
+        {
+          "id": "method TextBox.Z",
+          "declaration": "func (TextBox) Z() float64"
+        },
+        {
+          "id": "type Button",
+          "declaration": "type Button struct{ Label string; FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; Pressed bool; Enabled bool; FontSize float64; Hovered bool }"
+        },
+        {
+          "id": "type ButtonCallback",
+          "declaration": "type ButtonCallback func(*Button)"
+        },
+        {
+          "id": "type ButtonOptions",
+          "declaration": "type ButtonOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; Pressed *bool; Disabled *bool; FontSize float64 }"
+        },
+        {
+          "id": "type CheckButtons",
+          "declaration": "type CheckButtons struct{ Labels []string; Values []bool; Enabled bool; FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; CheckColor render.Color; FontSize float64 }"
+        },
+        {
+          "id": "type CheckButtonsCallback",
+          "declaration": "type CheckButtonsCallback func(*CheckButtons, int, bool)"
+        },
+        {
+          "id": "type CheckButtonsOptions",
+          "declaration": "type CheckButtonsOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; CheckColor render.Color; FontSize float64; Disabled *bool }"
+        },
+        {
+          "id": "type Cursor",
+          "declaration": "type Cursor struct{ X float64; Y float64; Color render.Color; LineWidth float64; Horizontal bool; Vertical bool }"
+        },
+        {
+          "id": "type CursorOptions",
+          "declaration": "type CursorOptions struct{ Color render.Color; LineWidth float64; HorizOn *bool; VerticalOn *bool }"
+        },
+        {
+          "id": "type EllipseSelector",
+          "declaration": "type EllipseSelector struct{ Min geom.Pt; Max geom.Pt; EdgeColor render.Color; FillColor render.Color; LineWidth float64; Active bool }"
+        },
+        {
+          "id": "type EllipseSelectorCallback",
+          "declaration": "type EllipseSelectorCallback func(*EllipseSelector, geom.Rect)"
+        },
+        {
+          "id": "type EllipseSelectorOptions",
+          "declaration": "type EllipseSelectorOptions struct{ EdgeColor render.Color; FillColor render.Color; LineWidth float64 }"
+        },
+        {
+          "id": "type LassoSelector",
+          "declaration": "type LassoSelector struct{ Points []geom.Pt; LineColor render.Color; LineWidth float64; Active bool; Tracking bool }"
+        },
+        {
+          "id": "type LassoSelectorCallback",
+          "declaration": "type LassoSelectorCallback func(*LassoSelector, []geom.Pt)"
+        },
+        {
+          "id": "type LassoSelectorOptions",
+          "declaration": "type LassoSelectorOptions struct{ LineColor render.Color; LineWidth float64 }"
+        },
+        {
+          "id": "type MultiCursor",
+          "declaration": "type MultiCursor struct{ Axes []*core.Axes; Color render.Color; LineWidth float64; Horizontal bool; Vertical bool; FigureX float64; FigureY float64 }"
+        },
+        {
+          "id": "type MultiCursorOptions",
+          "declaration": "type MultiCursorOptions struct{ Color render.Color; LineWidth float64; HorizOn *bool; VerticalOn *bool }"
+        },
+        {
+          "id": "type PolygonSelector",
+          "declaration": "type PolygonSelector struct{ Points []geom.Pt; EdgeColor render.Color; FillColor render.Color; LineWidth float64; Closed bool; Active bool }"
+        },
+        {
+          "id": "type PolygonSelectorCallback",
+          "declaration": "type PolygonSelectorCallback func(*PolygonSelector, []geom.Pt)"
+        },
+        {
+          "id": "type PolygonSelectorOptions",
+          "declaration": "type PolygonSelectorOptions struct{ EdgeColor render.Color; FillColor render.Color; LineWidth float64 }"
+        },
+        {
+          "id": "type RadioButtons",
+          "declaration": "type RadioButtons struct{ Labels []string; Active int; Enabled bool; FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; DotColor render.Color; FontSize float64 }"
+        },
+        {
+          "id": "type RadioButtonsCallback",
+          "declaration": "type RadioButtonsCallback func(*RadioButtons, int)"
+        },
+        {
+          "id": "type RadioButtonsOptions",
+          "declaration": "type RadioButtonsOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; DotColor render.Color; FontSize float64; Disabled *bool }"
+        },
+        {
+          "id": "type RangeSlider",
+          "declaration": "type RangeSlider struct{ Label string; Min float64; Max float64; Enabled bool; Low float64; High float64; FaceColor render.Color; TrackColor render.Color; FillColor render.Color; HandleColor render.Color; TextColor render.Color; Step float64; ValueFormat string; FontSize float64; Dragging bool }"
+        },
+        {
+          "id": "type RangeSliderCallback",
+          "declaration": "type RangeSliderCallback func(*RangeSlider, float64, float64)"
+        },
+        {
+          "id": "type RangeSliderOptions",
+          "declaration": "type RangeSliderOptions = SliderOptions"
+        },
+        {
+          "id": "type RectangleSelector",
+          "declaration": "type RectangleSelector struct{ Min geom.Pt; Max geom.Pt; EdgeColor render.Color; FillColor render.Color; LineWidth float64; Active bool }"
+        },
+        {
+          "id": "type RectangleSelectorCallback",
+          "declaration": "type RectangleSelectorCallback func(*RectangleSelector, geom.Rect)"
+        },
+        {
+          "id": "type RectangleSelectorOptions",
+          "declaration": "type RectangleSelectorOptions struct{ EdgeColor render.Color; FillColor render.Color; LineWidth float64 }"
+        },
+        {
+          "id": "type Slider",
+          "declaration": "type Slider struct{ Label string; Min float64; Max float64; Enabled bool; Value float64; Initial float64; FaceColor render.Color; TrackColor render.Color; FillColor render.Color; HandleColor render.Color; TextColor render.Color; Step float64; ValueFormat string; FontSize float64; Dragging bool }"
+        },
+        {
+          "id": "type SliderCallback",
+          "declaration": "type SliderCallback func(*Slider, float64)"
+        },
+        {
+          "id": "type SliderOptions",
+          "declaration": "type SliderOptions struct{ FaceColor render.Color; TrackColor render.Color; FillColor render.Color; HandleColor render.Color; TextColor render.Color; ValueStep *float64; ValueFormat *string; FontSize float64 }"
+        },
+        {
+          "id": "type SpanSelector",
+          "declaration": "type SpanSelector struct{ Orientation string; Start float64; End float64; Color render.Color; FillColor render.Color; LineWidth float64; Active bool }"
+        },
+        {
+          "id": "type SpanSelectorCallback",
+          "declaration": "type SpanSelectorCallback func(*SpanSelector, float64, float64)"
+        },
+        {
+          "id": "type SpanSelectorOptions",
+          "declaration": "type SpanSelectorOptions struct{ Orientation string; Color render.Color; FillColor render.Color; LineWidth float64; Min *float64; Max *float64 }"
+        },
+        {
+          "id": "type TextBox",
+          "declaration": "type TextBox struct{ Label string; Value string; Placeholder string; FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; FontSize float64; Active bool }"
+        },
+        {
+          "id": "type TextBoxChangeCallback",
+          "declaration": "type TextBoxChangeCallback func(*TextBox, string)"
+        },
+        {
+          "id": "type TextBoxOptions",
+          "declaration": "type TextBoxOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; Placeholder string; FontSize float64; Active *bool }"
+        },
+        {
+          "id": "type TextBoxSubmitCallback",
+          "declaration": "type TextBoxSubmitCallback func(*TextBox, string)"
+        },
+        {
+          "id": "type WidgetCallbackID",
+          "declaration": "type WidgetCallbackID int64"
         }
       ]
     }

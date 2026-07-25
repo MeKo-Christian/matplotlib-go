@@ -153,7 +153,7 @@ func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 
 	mapping := c.currentMapping()
 	c.Mapping = mapping
-	cmap := matcolor.GetColormap(mapping.Colormap)
+	cmap := matcolor.LookupColormap(mapping.Colormap)
 	alpha := c.Alpha
 	if alpha <= 0 {
 		alpha = 1
@@ -253,7 +253,7 @@ func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 
 	mapping := c.currentMapping()
 	c.Mapping = mapping
-	cmap := matcolor.GetColormap(mapping.Colormap)
+	cmap := matcolor.LookupColormap(mapping.Colormap)
 	alpha := c.Alpha
 	if alpha <= 0 {
 		alpha = 1

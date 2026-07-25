@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/style"
 )
 
@@ -19,9 +20,9 @@ func Axes(r geom.Rect, opts ...style.Option) *core.Axes {
 }
 
 // AddAxes3D appends an Axes3D to the current figure and marks it current.
-func AddAxes3D(r geom.Rect, opts ...style.Option) *core.Axes3D {
+func AddAxes3D(r geom.Rect, opts ...style.Option) *plot3d.Axes3D {
 	fig := GCF()
-	ax, err := fig.AddAxes3D(r, opts...)
+	ax, err := plot3d.AddAxes(fig, r, opts...)
 	if err != nil {
 		return nil
 	}
@@ -95,7 +96,7 @@ func FloatingYAxis(x float64) *core.AxisArtist {
 
 // GCA3D returns the current 3D axes wrapper when the current axes uses a 3D
 // projection, or nil otherwise.
-func GCA3D() *core.Axes3D {
+func GCA3D() *plot3d.Axes3D {
 	ax := GCA()
 	if ax == nil {
 		return nil
@@ -103,7 +104,7 @@ func GCA3D() *core.Axes3D {
 	if name := ax.ProjectionName(); name != "3d" && name != "axes3d" {
 		return nil
 	}
-	return core.NewAxes3D(ax)
+	return plot3d.NewAxes(ax)
 }
 
 // Subplot returns the requested subplot axes in the current figure.

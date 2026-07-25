@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -508,7 +509,7 @@ func TestDrawAxesLabels_YLabelUsesTickBoundsAndLabelPad(t *testing.T) {
 		YLabel: "Value",
 	}
 	ax.YAxis.Locator = staticLocator{4}
-	ax.YAxis.Formatter = ScalarFormatter{Prec: 0}
+	ax.YAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	ctx := createTestDrawContext()
 	ctx.RC.DPI = 72
@@ -557,7 +558,7 @@ func TestDrawAxesLabels_XLabelUsesTickBoundsAndLabelPad(t *testing.T) {
 		XLabel: "Group",
 	}
 	ax.XAxis.Locator = staticLocator{2}
-	ax.XAxis.Formatter = ScalarFormatter{Prec: 0}
+	ax.XAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	ctx := createTestDrawContext()
 	ctx.RC.DPI = 72
@@ -611,7 +612,7 @@ func TestDrawAxesLabels_XLabelUsesTickExtentWhenLabelsAreOnTop(t *testing.T) {
 	ax.XAxis.ShowTicks = true
 	ax.XAxis.ShowLabels = false
 	ax.XAxis.Locator = staticLocator{2}
-	ax.XAxis.Formatter = NullFormatter{}
+	ax.XAxis.Formatter = ticker.NullFormatter{}
 
 	ctx := createTestDrawContext()
 	ctx.RC.DPI = 72
@@ -657,7 +658,7 @@ func TestDrawAxesLabels_YLabelRightUsesRightTickBounds(t *testing.T) {
 	}
 	ax.YAxisRight.Side = AxisRight
 	ax.YAxisRight.Locator = staticLocator{4}
-	ax.YAxisRight.Formatter = ScalarFormatter{Prec: 0}
+	ax.YAxisRight.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	ctx := createTestDrawContext()
 	ctx.RC.DPI = 72
@@ -706,7 +707,7 @@ func TestDrawAxesLabels_YLabelUsesTickPaddingWhenFormatterSuppressesLabels(t *te
 		YLabel: "Value",
 	}
 	ax.YAxis.Locator = staticLocator{0.5}
-	ax.YAxis.Formatter = NullFormatter{}
+	ax.YAxis.Formatter = ticker.NullFormatter{}
 
 	ctx := createTestDrawContext()
 	ctx.RC.DPI = 72
@@ -747,7 +748,7 @@ func TestDrawAxesLabels_TopXLabelUsesTopTickBoundsAndLabelPad(t *testing.T) {
 	}
 	ax.XAxisTop.Side = AxisTop
 	ax.XAxisTop.Locator = staticLocator{2}
-	ax.XAxisTop.Formatter = ScalarFormatter{Prec: 0}
+	ax.XAxisTop.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	ctx := createTestDrawContext()
 	ctx.RC.DPI = 72
@@ -803,7 +804,7 @@ func TestDrawAxesLabels_TitleClearsTopXLabel(t *testing.T) {
 	}
 	ax.XAxisTop.Side = AxisTop
 	ax.XAxisTop.Locator = staticLocator{2}
-	ax.XAxisTop.Formatter = ScalarFormatter{Prec: 0}
+	ax.XAxisTop.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	ctx := createTestDrawContext()
 	ctx.RC.DPI = 72
@@ -855,7 +856,7 @@ func TestDrawAxesLabels_TitleAboveTopXLabelUsesMatplotlibPadOnly(t *testing.T) {
 	}
 	ax.XAxisTop.Side = AxisTop
 	ax.XAxisTop.Locator = staticLocator{2}
-	ax.XAxisTop.Formatter = ScalarFormatter{Prec: 0}
+	ax.XAxisTop.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	ctx := createTestDrawContext()
 	ctx.RC.DPI = 100
@@ -908,9 +909,9 @@ func TestDrawAxesLabels_UsesSameFontSizeForXAndYLabels(t *testing.T) {
 		YLabel: "Value",
 	}
 	ax.XAxis.Locator = staticLocator{2}
-	ax.XAxis.Formatter = ScalarFormatter{Prec: 0}
+	ax.XAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
 	ax.YAxis.Locator = staticLocator{4}
-	ax.YAxis.Formatter = ScalarFormatter{Prec: 0}
+	ax.YAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	ctx := createTestDrawContext()
 	r := &axesLabelRecordingRenderer{

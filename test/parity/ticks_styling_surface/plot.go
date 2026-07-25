@@ -5,8 +5,9 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -35,14 +36,14 @@ func Plot() *core.Figure {
 	right := ax.RightAxis()
 	majorX := []float64{0, 2, 4, 6}
 	majorY := []float64{0, 4, 8, 12}
-	ax.XAxis.Locator = core.FixedLocator{TicksList: majorX}
-	top.Locator = core.FixedLocator{TicksList: majorX}
-	ax.YAxis.Locator = core.FixedLocator{TicksList: majorY}
-	right.Locator = core.FixedLocator{TicksList: majorY}
-	ax.XAxis.MinorLocator = core.MultipleLocator{Base: 1}
-	top.MinorLocator = core.MultipleLocator{Base: 1}
-	ax.YAxis.MinorLocator = core.MultipleLocator{Base: 2}
-	right.MinorLocator = core.MultipleLocator{Base: 2}
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: majorX}
+	top.Locator = ticker.FixedLocator{TicksList: majorX}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: majorY}
+	right.Locator = ticker.FixedLocator{TicksList: majorY}
+	ax.XAxis.MinorLocator = ticker.MultipleLocator{Base: 1}
+	top.MinorLocator = ticker.MultipleLocator{Base: 1}
+	ax.YAxis.MinorLocator = ticker.MultipleLocator{Base: 2}
+	right.MinorLocator = ticker.MultipleLocator{Base: 2}
 
 	xGrid := ax.AddXGrid()
 	yGrid := ax.AddYGrid()

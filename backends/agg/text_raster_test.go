@@ -107,5 +107,5 @@ func renderRasterTextPixels(t *testing.T, text string, face render.FontFace) []b
 	if !r.drawRasterText(text, face, geom.Pt{X: 20, Y: 80}, 48, render.Color{R: 0, G: 0, B: 0, A: 1}) {
 		t.Fatalf("drawRasterText(%q) failed", text)
 	}
-	return append([]byte(nil), r.GetImage().Pix...)
+	return append([]byte(nil), r.Image().Pix...)
 }

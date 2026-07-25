@@ -223,7 +223,7 @@ type ClipPathTransformer interface {
 // RGBAExporter is implemented by raster renderers that expose direct RGBA
 // buffer access in display pixel order.
 type RGBAExporter interface {
-	GetImage() *image.RGBA
+	Image() *image.RGBA
 }
 
 // BufferRegion holds copied pixels and their destination rectangle in renderer
@@ -380,28 +380,6 @@ type GouraudTriangleBatch struct {
 // triangle shading.
 type GouraudTriangleDrawer interface {
 	DrawGouraudTriangles(batch GouraudTriangleBatch) bool
-}
-
-// CapabilityBridgeReporter is implemented by renderers whose optional
-// capability interfaces are satisfied through a documented intermediate
-// bridge (for example, the CPU Skia surface bridge that stands in for the
-// future external Skia C ABI). The capability check still passes — the
-// interface is implemented and the call produces correct output — but the
-// underlying implementation is not the backend's truly-native code path.
-//
-// Name is the string form of the registered backends.Capability (for example
-// "MarkerBatch", "PathCollectionBatch", "NativeHatcher", "QuadMeshBatch").
-// Renderers that do not bridge any capability do not need to implement this
-// interface.
-type CapabilityBridgeReporter interface {
-	IsCapabilityBridged(name string) bool
-}
-
-// RendererModeReporter is implemented by renderers that have multiple concrete
-// modes behind one backend registration, such as Skia's CPU and GPU-scaffold
-// modes. Backend comparison reports append this label to the backend row name.
-type RendererModeReporter interface {
-	RendererModeLabel() string
 }
 
 // PNGExporter is implemented by renderers that can export their output to PNG.

@@ -8,16 +8,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cwbudde/matplotlib-go/dates"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 var timeType = reflect.TypeOf(time.Time{})
 
 type AxisInfo struct {
-	Locator        Locator
-	Formatter      Formatter
-	MinorLocator   Locator
-	MinorFormatter Formatter
+	Locator        ticker.Locator
+	Formatter      ticker.Formatter
+	MinorLocator   ticker.Locator
+	MinorFormatter ticker.Formatter
 }
 
 type UnitsConverter interface {
@@ -151,8 +153,8 @@ func (s *categoryAxisState) axisInfo() AxisInfo {
 		ticks[i] = float64(i)
 	}
 	return AxisInfo{
-		Locator:      FixedLocator{TicksList: ticks},
-		Formatter:    FixedFormatter{Labels: copyLabels},
+		Locator:      ticker.FixedLocator{TicksList: ticks},
+		Formatter:    ticker.FixedFormatter{Labels: copyLabels},
 		MinorLocator: nil,
 	}
 }
@@ -247,8 +249,8 @@ func applyAutoLocatorIfDefault(axis *Axis) {
 	if axis == nil {
 		return
 	}
-	if _, ok := axis.Locator.(LinearLocator); ok {
-		axis.Locator = AutoLocator{}
+	if _, ok := axis.Locator.(ticker.LinearLocator); ok {
+		axis.Locator = ticker.AutoLocator{}
 	}
 }
 
@@ -353,7 +355,7 @@ func (a *Axes) convertDateValues(slice reflect.Value, isX bool) ([]float64, erro
 		if state.location == nil {
 			state.location = timestamp.Location()
 		}
-		out[i] = timeToDateNumber(timestamp)
+		out[i] = dates.Date2Num(timestamp)
 	}
 	root.refreshUnitAxis(isX)
 	return out, nil
@@ -434,12 +436,12 @@ func (s *axisUnitsState) axisInfo(minVal, maxVal float64) AxisInfo {
 		// The date.converter rcParam switches the default formatter family,
 		// mirroring matplotlib's _SwitchableDateConverter which consults the
 		// rc value on every axisinfo call.
-		var formatter Formatter = AutoDateFormatter{Min: minVal, Max: maxVal, Location: s.location}
+		var formatter ticker.Formatter = dates.AutoDateFormatter{Min: minVal, Max: maxVal, Location: s.location}
 		if strings.EqualFold(strings.TrimSpace(style.CurrentDefaults().Date.Converter), "concise") {
-			formatter = ConciseDateFormatter{Location: s.location}
+			formatter = dates.ConciseDateFormatter{Location: s.location}
 		}
 		return AxisInfo{
-			Locator:        DateLocator{Location: s.location},
+			Locator:        dates.DateLocator{Location: s.location},
 			Formatter:      formatter,
 			MinorLocator:   nil,
 			MinorFormatter: nil,
@@ -498,29 +500,29 @@ func canApplyUnitAxisInfo[T any](current, previous T, hadPrevious bool, isDefaul
 	return isDefault(current)
 }
 
-func isDefaultMajorLocator(locator Locator) bool {
+func isDefaultMajorLocator(locator ticker.Locator) bool {
 	switch locator.(type) {
-	case nil, AutoLocator, LinearLocator:
+	case nil, ticker.AutoLocator, ticker.LinearLocator:
 		return true
 	default:
 		return false
 	}
 }
 
-func isDefaultMajorFormatter(formatter Formatter) bool {
+func isDefaultMajorFormatter(formatter ticker.Formatter) bool {
 	switch formatter.(type) {
-	case nil, ScalarFormatter:
+	case nil, ticker.ScalarFormatter:
 		return true
 	default:
 		return false
 	}
 }
 
-func isDefaultMinorLocator(locator Locator) bool {
+func isDefaultMinorLocator(locator ticker.Locator) bool {
 	return locator == nil
 }
 
-func isDefaultMinorFormatter(formatter Formatter) bool {
+func isDefaultMinorFormatter(formatter ticker.Formatter) bool {
 	return formatter == nil
 }
 

@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/render"
 )
 
 func main() {
@@ -49,18 +47,7 @@ func main() {
 		FontSize: 11,
 	})
 
-	r, _, err := backends.NewRendererFromEnv(backends.Config{
-		Width:      900,
-		Height:     540,
-		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
-		DPI:        96,
-	}, backends.TextCapabilities)
-	if err != nil {
-		fmt.Printf("error creating renderer: %v\n", err)
-		return
-	}
-
-	if err := core.SavePNG(fig, r, "mathtext_basic.png"); err != nil {
+	if err := fig.Save("mathtext_basic.png"); err != nil {
 		fmt.Printf("error saving PNG: %v\n", err)
 		return
 	}

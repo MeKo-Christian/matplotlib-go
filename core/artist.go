@@ -11,7 +11,7 @@ type Artist interface {
 	Bounds(ctx *DrawContext) geom.Rect
 }
 
-type WidgetArtist interface {
+type widgetArtist interface {
 	Artist
 	WidgetLayer()
 }

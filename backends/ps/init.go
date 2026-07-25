@@ -2,10 +2,16 @@ package ps
 
 import (
 	"github.com/cwbudde/matplotlib-go/backends"
+	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 func init() {
+	factory := func(width, height int, background render.Color) (render.Renderer, error) {
+		return New(width, height, background)
+	}
+	core.RegisterFigureOutputRenderer(".ps", factory)
+	core.RegisterFigureOutputRenderer(".eps", factory)
 	backends.Register(backends.PS, &backends.BackendInfo{
 		Name:        "PostScript",
 		Description: "Pure Go Level-2 PostScript/EPS backend with deterministic serialization",

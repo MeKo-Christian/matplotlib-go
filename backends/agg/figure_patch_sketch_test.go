@@ -44,7 +44,7 @@ func TestSketchedFigurePatchBorderNotches(t *testing.T) {
 	if err := r.End(); err != nil {
 		t.Fatal(err)
 	}
-	img := r.GetImage()
+	img := r.Image()
 
 	// Matplotlib reference notch pixels (testdata/matplotlib_ref/sketch_xkcd.png),
 	// all (255,255,255,0). Verified byte-exact during the parity work.

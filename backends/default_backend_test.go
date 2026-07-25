@@ -9,9 +9,9 @@ import (
 )
 
 func TestDefaultBackendPreference(t *testing.T) {
-	backend, err := backends.GetBestBackend(nil)
+	backend, err := backends.BestBackend(nil)
 	if err != nil {
-		t.Fatalf("GetBestBackend failed: %v", err)
+		t.Fatalf("BestBackend failed: %v", err)
 	}
 	if backend != backends.GoBasic {
 		t.Fatalf("expected default backend %s, got %s", backends.GoBasic, backend)

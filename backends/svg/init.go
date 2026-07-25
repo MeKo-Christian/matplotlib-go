@@ -2,10 +2,14 @@ package svg
 
 import (
 	"github.com/cwbudde/matplotlib-go/backends"
+	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 func init() {
+	core.RegisterFigureOutputRenderer(".svg", func(width, height int, background render.Color) (render.Renderer, error) {
+		return New(width, height, background)
+	})
 	backends.Register(backends.SVG, &backends.BackendInfo{
 		Name:        "SVG",
 		Description: "Pure Go SVG backend with path recording and native text output",

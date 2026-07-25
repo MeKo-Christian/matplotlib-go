@@ -54,19 +54,18 @@ type filterState struct {
 }
 
 var (
-	_ render.Renderer                 = (*Renderer)(nil)
-	_ render.DPIAware                 = (*Renderer)(nil)
-	_ render.FilterRenderer           = (*Renderer)(nil)
-	_ render.TextDrawer               = (*Renderer)(nil)
-	_ render.TextPather               = (*Renderer)(nil)
-	_ render.RotatedTextDrawer        = (*Renderer)(nil)
-	_ render.VerticalTextDrawer       = (*Renderer)(nil)
-	_ render.RGBAExporter             = (*Renderer)(nil)
-	_ render.PNGExporter              = (*Renderer)(nil)
-	_ render.PatternFiller            = (*Renderer)(nil)
-	_ render.GradientFiller           = (*Renderer)(nil)
-	_ render.CapabilityBridgeReporter = (*Renderer)(nil)
-	_ render.RendererModeReporter     = (*Renderer)(nil)
+	_ render.Renderer               = (*Renderer)(nil)
+	_ render.DPIAware               = (*Renderer)(nil)
+	_ render.FilterRenderer         = (*Renderer)(nil)
+	_ render.TextDrawer             = (*Renderer)(nil)
+	_ render.TextPather             = (*Renderer)(nil)
+	_ render.RotatedTextDrawer      = (*Renderer)(nil)
+	_ render.VerticalTextDrawer     = (*Renderer)(nil)
+	_ render.RGBAExporter           = (*Renderer)(nil)
+	_ render.PNGExporter            = (*Renderer)(nil)
+	_ render.PatternFiller          = (*Renderer)(nil)
+	_ render.GradientFiller         = (*Renderer)(nil)
+	_ backends.RendererModeReporter = (*Renderer)(nil)
 )
 
 // New creates a new Skia renderer with the given configuration.
@@ -296,7 +295,7 @@ func (r *Renderer) StopFilter(postProcess func(*image.RGBA, float64) (*image.RGB
 	if r == nil || r.Renderer == nil || len(r.filterStack) == 0 {
 		return
 	}
-	filtered := r.Renderer.GetImage()
+	filtered := r.Renderer.Image()
 	_ = r.Renderer.End()
 	state := r.filterStack[len(r.filterStack)-1]
 	r.filterStack = r.filterStack[:len(r.filterStack)-1]
@@ -318,7 +317,7 @@ func (r *Renderer) StopFilter(postProcess func(*image.RGBA, float64) (*image.RGB
 		Stride: filtered.Stride,
 		Rect:   filtered.Rect,
 	}
-	r.Renderer.Image(render.NewImageData(draw), geom.Rect{
+	r.Renderer.DrawImage(render.NewImageData(draw), geom.Rect{
 		Min: offset,
 		Max: geom.Pt{
 			X: offset.X + float64(filtered.Bounds().Dx()),
@@ -345,27 +344,6 @@ func (r *Renderer) BridgeInfo() BridgeInfo {
 	return r.bridge.Info()
 }
 
-// IsCapabilityBridged reports whether the named backends.Capability is
-// satisfied through the CPU surface bridge rather than a truly batch-native
-// Skia code path.
-//
-// With the pure-Go CPU bridge the optional batch interfaces and transformed
-// images are satisfied by compatibility loops or the embedded CPU renderer, and
-// hatch metadata is expanded by the renderer-neutral DrawHatchFallback helper,
-// so those report as bridged. When a native Skia surface bridge is active (the
-// skiacgo build links a real Skia library), markers, path collections, quad
-// meshes, transformed RGBA images, and hatch fills route through native Skia
-// rasterization.
-func (r *Renderer) IsCapabilityBridged(name string) bool {
-	native := r != nil && r.bridge != nil && r.bridge.Info().NativeSurface
-	switch name {
-	case "imagetransform", "markerbatch", "nativehatcher", "pathcollectionbatch", "quadmeshbatch":
-		return !native
-	default:
-		return false
-	}
-}
-
 // RendererModeLabel reports the active Skia render mode for capability reports.
 func (r *Renderer) RendererModeLabel() string {
 	info := r.BridgeInfo()
@@ -379,30 +357,38 @@ func (r *Renderer) RendererModeLabel() string {
 // backend comparison report. GPU acceleration cannot be declared statically on
 // the single Skia registry entry because CPU and GPU configurations share it.
 func (r *Renderer) RuntimeCapabilityStatus(capability backends.Capability) (backends.CapabilityStatus, bool) {
-	if capability != backends.GPUAccel {
+	switch capability {
+	case backends.ImageTransform, backends.MarkerBatch, backends.NativeHatcher, backends.PathCollectionBatch, backends.QuadMeshBatch:
+		native := r != nil && r.bridge != nil && r.bridge.Info().NativeSurface
+		if native {
+			return backends.CapabilityNative, true
+		}
+		return backends.CapabilityBridged, true
+	case backends.GPUAccel:
+		if r == nil || !r.useGPU {
+			return backends.CapabilityUnsupported, true
+		}
+		if r.GPU() {
+			return backends.CapabilityNative, true
+		}
+		return backends.CapabilityFallback, true
+	default:
 		return "", false
 	}
-	if r == nil || !r.useGPU {
-		return backends.CapabilityUnsupported, true
-	}
-	if r.GPU() {
-		return backends.CapabilityNative, true
-	}
-	return backends.CapabilityFallback, true
 }
 
-// GetSurface returns the underlying Skia surface for advanced operations.
-func (r *Renderer) GetSurface() interface{} {
+// Surface returns the underlying Skia surface for advanced operations.
+func (r *Renderer) Surface() interface{} {
 	// No Skia-native surface exists until the external C ABI lands.
 	return nil
 }
 
-// GetImage returns the CPU raster output buffer.
-func (r *Renderer) GetImage() *image.RGBA {
+// Image returns the CPU raster output buffer.
+func (r *Renderer) Image() *image.RGBA {
 	if r == nil || r.Renderer == nil {
 		return nil
 	}
-	return r.Renderer.GetImage()
+	return r.Renderer.Image()
 }
 
 // FlushGPU flushes pending GPU operations (if using GPU backend).

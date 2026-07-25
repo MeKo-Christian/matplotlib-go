@@ -715,11 +715,11 @@ func TestAxesScatterScalarValuesMapFacesAndDefaultEdges(t *testing.T) {
 		t.Fatal("Scatter returned nil")
 	}
 	pc := scatter.toPathCollection(&render.NullRenderer{}, createTestDrawContext())
-	if got, want := pc.GetArray(), values; len(got) != len(want) {
+	if got, want := pc.Array(), values; len(got) != len(want) {
 		t.Fatalf("scalar array = %v, want %v", got, want)
 	}
 	for i, want := range values {
-		if got := pc.GetArray()[i]; got != want {
+		if got := pc.Array()[i]; got != want {
 			t.Fatalf("scalar array %d = %v, want %v", i, got, want)
 		}
 	}

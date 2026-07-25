@@ -10,9 +10,9 @@ import (
 
 func TestGetImage(t *testing.T) {
 	r := mustNew(t, 200, 150)
-	img := r.GetImage()
+	img := r.Image()
 	if img == nil {
-		t.Fatal("GetImage returned nil")
+		t.Fatal("Image returned nil")
 	}
 	bounds := img.Bounds()
 	if bounds.Dx() != 200 || bounds.Dy() != 150 {
@@ -31,7 +31,7 @@ func TestImageViewSharesBackingWhileGetImageCopies(t *testing.T) {
 	}
 
 	view := r.ImageView()
-	copyImg := r.GetImage()
+	copyImg := r.Image()
 	if view == nil {
 		t.Fatal("ImageView returned nil")
 	}
@@ -42,7 +42,7 @@ func TestImageViewSharesBackingWhileGetImageCopies(t *testing.T) {
 		t.Fatal("ImageView does not share AGG backing storage")
 	}
 	if &copyImg.Pix[0] == &r.ctx.image.Data[0] {
-		t.Fatal("GetImage returned shared storage; want owned copy")
+		t.Fatal("Image returned shared storage; want owned copy")
 	}
 
 	view.Pix[0] = 123
@@ -50,7 +50,7 @@ func TestImageViewSharesBackingWhileGetImageCopies(t *testing.T) {
 		t.Fatalf("ImageView mutation did not touch renderer storage, got %d", got)
 	}
 	if copyImg.Pix[0] == 123 {
-		t.Fatal("GetImage copy changed after mutating ImageView")
+		t.Fatal("Image copy changed after mutating ImageView")
 	}
 }
 
@@ -65,12 +65,12 @@ func TestClearResetsPixelsAndClipForRendererReuse(t *testing.T) {
 	if err := r.End(); err != nil {
 		t.Fatalf("End failed: %v", err)
 	}
-	if got := r.GetImage().RGBAAt(10, 10); got != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
+	if got := r.Image().RGBAAt(10, 10); got != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
 		t.Fatalf("initial clipped draw touched unclipped pixel: %+v", got)
 	}
 
 	r.Clear(render.Color{G: 1, A: 1})
-	if got := r.GetImage().RGBAAt(0, 0); got != (color.RGBA{G: 255, A: 255}) {
+	if got := r.Image().RGBAAt(0, 0); got != (color.RGBA{G: 255, A: 255}) {
 		t.Fatalf("Clear pixel = %+v, want green", got)
 	}
 
@@ -81,7 +81,7 @@ func TestClearResetsPixelsAndClipForRendererReuse(t *testing.T) {
 	if err := r.End(); err != nil {
 		t.Fatalf("second End failed: %v", err)
 	}
-	if got := r.GetImage().RGBAAt(10, 10); got != (color.RGBA{B: 255, A: 255}) {
+	if got := r.Image().RGBAAt(10, 10); got != (color.RGBA{B: 255, A: 255}) {
 		t.Fatalf("reuse draw pixel = %+v, want blue after clip reset", got)
 	}
 }

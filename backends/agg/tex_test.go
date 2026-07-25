@@ -139,7 +139,7 @@ cp "$FAKE_TEX_PNG" "$out"
 	}
 	// Display space is y-up: baseline display y=10 maps to device y=H-10=14, so
 	// the 2x2 image ascends into device rows 12-13.
-	got := r.GetImage().RGBAAt(8, 12)
+	got := r.Image().RGBAAt(8, 12)
 	if got.R < 200 || got.G != 0 || got.B != 0 || got.A < 200 {
 		t.Fatalf("DrawTeX pixel = %+v, want opaque red text image", got)
 	}
@@ -186,11 +186,11 @@ cp "$FAKE_TEX_PNG" "$out"
 	if !r.DrawTeX(`x`, geom.Pt{X: 8, Y: 12}, 12, render.Color{G: 1, A: 0.5}, "DejaVu Sans") {
 		t.Fatal("DrawTeX returned false")
 	}
-	inside := r.GetImage().RGBAAt(8, 8)
+	inside := r.Image().RGBAAt(8, 8)
 	if inside.G < 120 || inside.A < 120 || inside.A > 136 || inside.R != 0 || inside.B != 0 {
 		t.Fatalf("clipped alpha TeX pixel = %+v, want half-alpha green", inside)
 	}
-	outside := r.GetImage().RGBAAt(11, 8)
+	outside := r.Image().RGBAAt(11, 8)
 	if outside != (color.RGBA{}) {
 		t.Fatalf("TeX draw escaped clip: outside pixel = %+v", outside)
 	}
@@ -232,7 +232,7 @@ cp "$FAKE_TEX_PNG" "$out"
 	if !r.DrawTeXRotated(`x`, geom.Pt{X: 16, Y: 16}, 12, 0.4, render.Color{B: 1, A: 1}, "DejaVu Sans") {
 		t.Fatal("DrawTeXRotated returned false")
 	}
-	if got := nonZeroPixelCount(r.GetImage()); got == 0 {
+	if got := nonZeroPixelCount(r.Image()); got == 0 {
 		t.Fatal("DrawTeXRotated produced a blank image")
 	}
 }

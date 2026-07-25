@@ -19,7 +19,7 @@ import (
 
 type rasterRenderer interface {
 	render.Renderer
-	GetImage() *image.RGBA
+	Image() *image.RGBA
 }
 
 type rasterRendererFactory func(w, h int, bg render.Color) (rasterRenderer, error)
@@ -262,7 +262,7 @@ func (c *figureCanvas) Draw() error {
 	}
 	core.DrawFigure(c.figure, newScaledRenderer(renderer, pixelRatio))
 
-	img := renderer.GetImage()
+	img := renderer.Image()
 	pixels := js.Global().Get("Uint8ClampedArray").New(len(img.Pix))
 	js.CopyBytesToJS(pixels, img.Pix)
 	imageData := js.Global().Get("ImageData").New(pixels, backingWidth, backingHeight)

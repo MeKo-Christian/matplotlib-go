@@ -60,15 +60,15 @@ func TestSkiaTaggedRendererImplementsCPUBaseContract(t *testing.T) {
 	img.SetRGBA(1, 0, color.RGBA{G: 255, A: 255})
 	img.SetRGBA(0, 1, color.RGBA{B: 255, A: 255})
 	img.SetRGBA(1, 1, color.RGBA{R: 255, G: 255, A: 255})
-	r.Image(render.NewImageData(img), geom.Rect{Min: geom.Pt{X: 12, Y: 8}, Max: geom.Pt{X: 20, Y: 16}})
+	r.DrawImage(render.NewImageData(img), geom.Rect{Min: geom.Pt{X: 12, Y: 8}, Max: geom.Pt{X: 20, Y: 16}})
 
 	if err := r.End(); err != nil {
 		t.Fatalf("End() error = %v", err)
 	}
 
-	out := r.GetImage()
+	out := r.Image()
 	if out == nil {
-		t.Fatal("GetImage() returned nil")
+		t.Fatal("Image() returned nil")
 	}
 	if got := out.RGBAAt(1, 1); got != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
 		t.Fatalf("pixel outside clip = %#v, want unchanged white", got)
@@ -116,7 +116,7 @@ func TestSkiaTaggedRendererDrawsMathText(t *testing.T) {
 		t.Fatalf("New() error = %v", err)
 	}
 	core.DrawFigure(fig, r)
-	if got := nonWhitePixels(r.GetImage()); got == 0 {
+	if got := nonWhitePixels(r.Image()); got == 0 {
 		t.Fatal("MathText rendered through Skia-tagged backend produced a blank image")
 	}
 }
@@ -145,7 +145,7 @@ func TestSkiaTaggedRendererMatchesMathTextGoldens(t *testing.T) {
 				t.Fatalf("New() error = %v", err)
 			}
 			core.DrawFigure(fig, r)
-			got := r.GetImage()
+			got := r.Image()
 			if got == nil {
 				t.Fatal("Skia renderer returned nil image")
 			}
@@ -281,7 +281,7 @@ func TestSkiaTaggedPathEffectFilterUsesOffscreenSurface(t *testing.T) {
 	if err := renderer.End(); err != nil {
 		t.Fatalf("End: %v", err)
 	}
-	img := renderer.GetImage()
+	img := renderer.Image()
 	if got := img.RGBAAt(23, 30); got.R <= got.G {
 		t.Fatalf("expected blurred red filter pass outside normal green fill, got %+v", got)
 	}

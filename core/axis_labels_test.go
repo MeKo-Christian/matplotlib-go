@@ -6,8 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cwbudde/matplotlib-go/dates"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -140,7 +142,7 @@ func TestAxes_SecondaryAxesUseLinkedScale(t *testing.T) {
 
 func TestAxis_DrawTickLabels_UsesStepPrecisionForScalarFormatter(t *testing.T) {
 	axis := NewYAxis()
-	axis.Locator = LinearLocator{}
+	axis.Locator = ticker.LinearLocator{}
 	axis.MajorTickCount = 6
 	ctx := createTestDrawContext()
 	ctx.DataToPixel.YScale = transform.NewLinear(0, 0.196)
@@ -194,13 +196,13 @@ func TestAxis_DrawTickLabels_DrawsConciseDateOffsetText(t *testing.T) {
 	axis := NewXAxis()
 	start := time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC)
 	ticks := []float64{
-		timeToDateNumber(start),
-		timeToDateNumber(start.Add(6 * time.Hour)),
-		timeToDateNumber(start.Add(12 * time.Hour)),
-		timeToDateNumber(start.Add(18 * time.Hour)),
+		dates.Date2Num(start),
+		dates.Date2Num(start.Add(6 * time.Hour)),
+		dates.Date2Num(start.Add(12 * time.Hour)),
+		dates.Date2Num(start.Add(18 * time.Hour)),
 	}
-	axis.Locator = FixedLocator{TicksList: ticks}
-	axis.Formatter = ConciseDateFormatter{Location: time.UTC}
+	axis.Locator = ticker.FixedLocator{TicksList: ticks}
+	axis.Formatter = dates.ConciseDateFormatter{Location: time.UTC}
 
 	ctx := createTestDrawContext()
 	ctx.DataToPixel.XScale = transform.NewLinear(ticks[0], ticks[len(ticks)-1])
@@ -275,7 +277,7 @@ func TestAxis_DrawTickLabels_PositionsOffsetTextFromTickLabelBounds(t *testing.T
 func TestTickLabelPositionUsesBoundsForBottomXAxis(t *testing.T) {
 	axis := NewXAxis()
 	axis.Locator = staticLocator{2}
-	axis.Formatter = ScalarFormatter{Prec: 0}
+	axis.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	var r axisLabelRecordingRenderer
 	r.useBounds = true
@@ -338,7 +340,7 @@ func TestTickLabelPadMatchesMatplotlibOutsideTickPadding(t *testing.T) {
 func TestTickLabelPositionUsesBoundsForLeftYAxis(t *testing.T) {
 	axis := NewYAxis()
 	axis.Locator = staticLocator{4}
-	axis.Formatter = ScalarFormatter{Prec: 0}
+	axis.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	var r axisLabelRecordingRenderer
 	r.useBounds = true
@@ -379,7 +381,7 @@ func TestTickLabelPositionUsesBoundsForLeftYAxis(t *testing.T) {
 func TestTickLabelPositionUsesFontHeightMetricsForBottomXAxis(t *testing.T) {
 	axis := NewXAxis()
 	axis.Locator = staticLocator{2}
-	axis.Formatter = ScalarFormatter{Prec: 0}
+	axis.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	var r axisLabelRecordingRenderer
 	r.useFontHeights = true
@@ -417,7 +419,7 @@ func TestTickLabelPositionUsesBottomAlignmentForTopXAxis(t *testing.T) {
 	axis := NewXAxis()
 	axis.Side = AxisTop
 	axis.Locator = staticLocator{2}
-	axis.Formatter = ScalarFormatter{Prec: 0}
+	axis.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	var r axisLabelRecordingRenderer
 	r.useBounds = true
@@ -459,7 +461,7 @@ func TestTickLabelPositionUsesCenterBaselineForRightYAxis(t *testing.T) {
 	axis := NewYAxis()
 	axis.Side = AxisRight
 	axis.Locator = staticLocator{4}
-	axis.Formatter = ScalarFormatter{Prec: 0}
+	axis.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	var r axisLabelRecordingRenderer
 	r.useBounds = true
@@ -499,7 +501,7 @@ func TestTickLabelPositionUsesCenterBaselineForRightYAxis(t *testing.T) {
 func TestAxis_DrawTickLabels_UsesRotatedDrawerWhenRequested(t *testing.T) {
 	axis := NewXAxis()
 	axis.Locator = staticLocator{2}
-	axis.Formatter = ScalarFormatter{Prec: 0}
+	axis.Formatter = ticker.ScalarFormatter{Prec: 0}
 	axis.MajorLabelStyle = TickLabelStyle{Rotation: 45, AutoAlign: true}
 
 	var r axisLabelRecordingRenderer
@@ -543,7 +545,7 @@ func TestAxis_DrawTickLabels_UsesRotatedDrawerWhenRequested(t *testing.T) {
 func TestAxis_TickLabelBoundsIncludeRotatedLayout(t *testing.T) {
 	axis := NewXAxis()
 	axis.Locator = staticLocator{2}
-	axis.Formatter = FixedFormatter{Labels: []string{"rotated-label"}}
+	axis.Formatter = ticker.FixedFormatter{Labels: []string{"rotated-label"}}
 
 	var r axisLabelRecordingRenderer
 	r.useBounds = true
@@ -586,7 +588,7 @@ func TestAxis_TickLabelBoundsIncludeRotatedLayout(t *testing.T) {
 func TestAxis_DrawTickLabels_RendersFullMathAsPathsWhenRotated(t *testing.T) {
 	axis := NewXAxis()
 	axis.Locator = staticLocator{2}
-	axis.Formatter = FixedFormatter{Labels: []string{`$\\frac{1}{2}$`}}
+	axis.Formatter = ticker.FixedFormatter{Labels: []string{`$\\frac{1}{2}$`}}
 	axis.MajorLabelStyle = TickLabelStyle{Rotation: 45, AutoAlign: true}
 
 	var r axisLabelRecordingRenderer
@@ -618,11 +620,11 @@ func TestAxis_DrawTickLabels_RendersFullMathAsPathsWhenRotated(t *testing.T) {
 func TestAxis_ExtraTickLevelsDrawAdditionalLabels(t *testing.T) {
 	axis := NewXAxis()
 	axis.Locator = staticLocator{2}
-	axis.Formatter = FixedFormatter{Labels: []string{"major"}}
+	axis.Formatter = ticker.FixedFormatter{Labels: []string{"major"}}
 	axis.ClearTickLevels()
 	axis.AddTickLevel(TickLevel{
 		Locator:    staticLocator{2},
-		Formatter:  FixedFormatter{Labels: []string{"minor row"}},
+		Formatter:  ticker.FixedFormatter{Labels: []string{"minor row"}},
 		ShowLabels: true,
 		LabelStyle: TickLabelStyle{Pad: 14, AutoAlign: true},
 	})

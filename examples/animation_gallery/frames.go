@@ -232,7 +232,7 @@ func renderFrameFigure(fig *core.Figure) image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }
 
 // NewScatterAnimationDemo returns a deterministic orbiting-scatter animation.

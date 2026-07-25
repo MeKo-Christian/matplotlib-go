@@ -12,8 +12,8 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-// ErrUnknownColormap is returned by GetColormapStrict for a name that is not
-// registered. The lenient GetColormap warns and falls back to the default
+// ErrUnknownColormap is returned by LookupColormapStrict for a name that is not
+// registered. The lenient LookupColormap warns and falls back to the default
 // colormap instead of returning this error.
 var ErrUnknownColormap = errors.New("unknown colormap")
 
@@ -405,12 +405,12 @@ func RegisterColormap(name string, cmap Colormap) {
 	colormapMu.Unlock()
 }
 
-// GetColormap returns a colormap by name. Unknown names warn (via internal/diag)
+// LookupColormap returns a colormap by name. Unknown names warn (via internal/diag)
 // and fall back to the default `viridis` colormap, so a typo renders a
 // plausible-but-wrong plot rather than failing. Callers that want Matplotlib's
-// strict behavior (a hard error on an unknown name) should use GetColormapStrict.
-func GetColormap(name string) Colormap {
-	if cmap, err := GetColormapStrict(name); err == nil {
+// strict behavior (a hard error on an unknown name) should use LookupColormapStrict.
+func LookupColormap(name string) Colormap {
+	if cmap, err := LookupColormapStrict(name); err == nil {
 		return cmap
 	}
 	diag.Warnf("unknown colormap %q; falling back to %q", name, defaultColormapName)
@@ -420,8 +420,8 @@ func GetColormap(name string) Colormap {
 	return cmap
 }
 
-// GetColormapStrict returns the colormap registered under name, or a wrapped
-// ErrUnknownColormap if none is registered. Unlike GetColormap it never falls
+// LookupColormapStrict returns the colormap registered under name, or a wrapped
+// ErrUnknownColormap if none is registered. Unlike LookupColormap it never falls
 // back to a default, mirroring Matplotlib's `matplotlib.colormaps[name]`
 // KeyError.
 //
@@ -430,7 +430,7 @@ func GetColormap(name string) Colormap {
 // "blues"). Honoring case sensitivity requires re-registering the builtin
 // colormaps under their canonical mixed-case names and is tracked as Phase 17
 // work in PLAN.md.
-func GetColormapStrict(name string) (Colormap, error) {
+func LookupColormapStrict(name string) (Colormap, error) {
 	key := normalizeColormapName(name)
 	colormapMu.RLock()
 	defer colormapMu.RUnlock()
@@ -447,7 +447,7 @@ func GetColormapStrict(name string) (Colormap, error) {
 
 // DefaultColormap returns the configured default colormap.
 func DefaultColormap() Colormap {
-	return GetColormap(defaultColormapName)
+	return LookupColormap(defaultColormapName)
 }
 
 // ColormapNames returns the registered base colormap names in sorted order.

@@ -94,7 +94,7 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }
 
 func panel(fig *core.Figure, x0, y0, x1, y1 float64) *core.Axes {

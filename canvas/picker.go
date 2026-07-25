@@ -85,6 +85,8 @@ func pickArtist(art core.Artist, p geom.Pt, ctx *core.DrawContext) (core.Artist,
 
 // EmitPick performs a [Pick] and dispatches the topmost hit, if any, as a
 // [PickEvent] through dispatcher.
+//
+//nolint:gocritic // Public picking snapshots the caller's mouse event by design.
 func EmitPick(dispatcher *Dispatcher, fig *Figure, mouse MouseEvent) (PickResult, bool) {
 	if dispatcher == nil {
 		return PickResult{}, false

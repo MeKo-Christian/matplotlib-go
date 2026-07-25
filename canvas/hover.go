@@ -22,6 +22,8 @@ func NewAxesHoverTracker(fig *Figure, dispatcher *Dispatcher) *AxesHoverTracker 
 
 // Update observes a mouse lifecycle event and emits axes enter / leave events
 // when the resolved axes under the cursor changes.
+//
+//nolint:gocritic // Public event handling intentionally preserves value semantics.
 func (t *AxesHoverTracker) Update(event Event) {
 	if t == nil || t.dispatcher == nil {
 		return

@@ -96,7 +96,7 @@ Practical tuning advice:
 - Reuse renderers for long-running views. Keep one `agg.Renderer` per stable
   canvas size, call `agg.Renderer.Clear(fig.RC.FigureBackground())`, then draw
   the next frame into the same surface.
-- Avoid `GetImage` when ownership is unnecessary. Prefer
+- Avoid `Image` when ownership is unnecessary. Prefer
   `agg.Renderer.ImageView` for PNG encoding, UI upload, or benchmark inspection
   where the caller consumes the frame before the next `Clear`.
 - Batch markers through collection paths instead of many independent artists.
@@ -150,12 +150,12 @@ Catalog allocation profile:
 
 - `image.NewRGBA`: 300.97 MB flat.
 - `agg.newAggSurface`: 277.52 MB cumulative.
-- `agg.GetImage` / `agg_go.Image.ToGoImage`: 278.02 MB cumulative.
+- `agg.Image` / `agg_go.Image.ToGoImage`: 278.02 MB cumulative.
 
 Interpretation: each render allocates a fresh AGG surface and then copies it to
 a Go image for benchmark parity. This is expected for one-shot exports, but
 interactive and repeated rendering should reuse renderer/surface storage where
-possible and avoid `GetImage` copies when the caller only needs to draw or save.
+possible and avoid `Image` copies when the caller only needs to draw or save.
 
 ### 4. 100k scatter path-collection rendering
 
@@ -187,7 +187,7 @@ or reusing scratch buffers.
 Catalog CPU profile:
 
 - `core.ScalarMapInfo.Color`: 4.39% cumulative.
-- `color.GetColormap`: 1.87% cumulative.
+- `color.LookupColormap`: 1.87% cumulative.
 
 Interpretation: scalar-mapped image/collection paths repeatedly resolve
 colormap metadata. Caching the resolved colormap and normalization state in
@@ -239,7 +239,7 @@ Implemented on 2026-06-14:
   fresh renderer.
 - `agg.Renderer.ImageView` exposes a non-owning view over the AGG buffer for
   callers that only need to encode, copy to a UI surface, or benchmark the
-  result. `GetImage` remains the owned-copy API.
+  result. `Image` remains the owned-copy API.
 - `SavePNG` and the render benchmark harness now use the zero-copy view where an
   owned Go image is unnecessary. The reused renderer benchmark is
   `BenchmarkLargeScatter100KRedrawReuseRenderer`.
@@ -253,7 +253,7 @@ Implemented on 2026-06-14:
 
 - `ScalarMapInfo.Resolved` now caches the resolved colormap alongside the
   resolved colormap name and normalizer/range state. Per-value `Color` calls on
-  a resolved mapping no longer call `color.GetColormap`, which avoids repeated
+  a resolved mapping no longer call `color.LookupColormap`, which avoids repeated
   name normalization and reversed-colormap reconstruction in image, scatter, and
   mesh mapping loops.
 - Focused benchmarks now cover scalar-mapped image grids, scatter arrays, and

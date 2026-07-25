@@ -8,14 +8,14 @@ import (
 )
 
 func TestGetColormap_UnknownFallsBackToViridis(t *testing.T) {
-	c := GetColormap("does-not-exist")
+	c := LookupColormap("does-not-exist")
 	if c.Name() != "viridis" {
 		t.Fatalf("expected fallback colormap viridis, got %q", c.Name())
 	}
 }
 
 func TestGetColormap_PlasmaRegistered(t *testing.T) {
-	c := GetColormap("plasma")
+	c := LookupColormap("plasma")
 	if c.Name() != "plasma" {
 		t.Fatalf("expected plasma colormap, got %q", c.Name())
 	}
@@ -28,7 +28,7 @@ func TestGetColormap_PlasmaRegistered(t *testing.T) {
 }
 
 func TestListedColormapMatchesMatplotlibViridisBytes(t *testing.T) {
-	c := GetColormap("viridis")
+	c := LookupColormap("viridis")
 	tests := []struct {
 		t          float64
 		r, g, b, a uint8
@@ -71,7 +71,7 @@ func TestListedColormapRepresentativeBytes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := colorBytes(GetColormap(tt.name).At(tt.t))
+		got := colorBytes(LookupColormap(tt.name).At(tt.t))
 		if got != tt.want {
 			t.Fatalf("%s.At(%v) bytes = %v, want %v", tt.name, tt.t, got, tt.want)
 		}
@@ -102,16 +102,16 @@ func TestMatplotlibPublicColormapCatalogRegistered(t *testing.T) {
 		if matplotlibListedColormapNames[i] != name {
 			t.Fatalf("Matplotlib colormap catalog[%d] = %q, want %q", i, matplotlibListedColormapNames[i], name)
 		}
-		cmap := GetColormap(name)
+		cmap := LookupColormap(name)
 		if cmap.Name() != normalizeColormapName(name) {
-			t.Fatalf("GetColormap(%q).Name() = %q, want %q", name, cmap.Name(), normalizeColormapName(name))
+			t.Fatalf("LookupColormap(%q).Name() = %q, want %q", name, cmap.Name(), normalizeColormapName(name))
 		}
 	}
 }
 
 func TestGetColormap_ReversedVariantGeneratedFromBase(t *testing.T) {
-	base := GetColormap("RdBu")
-	reversed := GetColormap("RdBu_r")
+	base := LookupColormap("RdBu")
+	reversed := LookupColormap("RdBu_r")
 	if reversed.Name() != "rdbu_r" {
 		t.Fatalf("reversed colormap name = %q, want rdbu_r", reversed.Name())
 	}
@@ -124,7 +124,7 @@ func TestGetColormap_ReversedVariantGeneratedFromBase(t *testing.T) {
 }
 
 func TestColormapResampledCreatesListedLookup(t *testing.T) {
-	base := GetColormap("viridis")
+	base := LookupColormap("viridis")
 	resampled := base.Resampled(3)
 	tests := []struct {
 		t    float64
@@ -167,7 +167,7 @@ func TestListedAndLinearSegmentedConstructors(t *testing.T) {
 }
 
 func TestBinaryColormapMatchesMatplotlibSpyDefaults(t *testing.T) {
-	cmap := GetColormap("binary")
+	cmap := LookupColormap("binary")
 
 	if got := cmap.At(0); got != (render.Color{R: 1, G: 1, B: 1, A: 1}) {
 		t.Fatalf("binary at 0 = %+v, want white", got)
@@ -187,9 +187,9 @@ func TestGetColormap_ChannelMapsRegistered(t *testing.T) {
 		{name: "blue channel", want: "blue channel"},
 	}
 	for _, tt := range tests {
-		c := GetColormap(tt.name)
+		c := LookupColormap(tt.name)
 		if c.Name() != tt.want {
-			t.Fatalf("GetColormap(%q).Name() = %q, want %q", tt.name, c.Name(), tt.want)
+			t.Fatalf("LookupColormap(%q).Name() = %q, want %q", tt.name, c.Name(), tt.want)
 		}
 	}
 }
@@ -201,7 +201,7 @@ func TestRegisterColormap_NormalizesNameAndClampsStops(t *testing.T) {
 		{Pos: 1.4, Color: render.Color{R: 0, G: 0, B: 1, A: 1}},
 	}))
 
-	c := GetColormap("  CuStOm tEsT  ")
+	c := LookupColormap("  CuStOm tEsT  ")
 	if c.Name() != "custom test" {
 		t.Fatalf("expected normalized colormap name %q, got %q", "custom test", c.Name())
 	}
@@ -359,7 +359,7 @@ func TestRegisterColormap_IgnoreEmptyName(t *testing.T) {
 	// Preserve the fallback behavior when name normalization would become empty.
 	defaultBefore := DefaultColormap()
 	RegisterColormap("   ", NewColormap("ignored", []ColorStop{}))
-	got := GetColormap("ignored")
+	got := LookupColormap("ignored")
 	if got.Name() != defaultBefore.Name() {
 		t.Fatalf("empty name registration should be ignored, expected %q got %q", defaultBefore.Name(), got.Name())
 	}

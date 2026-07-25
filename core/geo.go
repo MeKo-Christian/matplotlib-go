@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -67,21 +68,21 @@ func (p *geoProjection) ConfigureAxes(ax *Axes) {
 	longitudeTicks := []float64{-5 * math.Pi / 6, -2 * math.Pi / 3, -math.Pi / 2, -math.Pi / 3, -math.Pi / 6, 0, math.Pi / 6, math.Pi / 3, math.Pi / 2, 2 * math.Pi / 3, 5 * math.Pi / 6}
 	latitudeTicks := []float64{-5 * math.Pi / 12, -math.Pi / 3, -math.Pi / 4, -math.Pi / 6, -math.Pi / 12, 0, math.Pi / 12, math.Pi / 6, math.Pi / 4, math.Pi / 3, 5 * math.Pi / 12}
 
-	ax.XAxis.Locator = FixedLocator{TicksList: longitudeTicks}
-	ax.XAxis.MinorLocator = NullLocator{}
-	ax.XAxis.Formatter = FuncFormatter(geoThetaFormat(30))
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: longitudeTicks}
+	ax.XAxis.MinorLocator = ticker.NullLocator{}
+	ax.XAxis.Formatter = ticker.FuncFormatter(geoThetaFormat(30))
 	ax.XAxis.ShowSpine = true
 	ax.XAxis.ShowTicks = false
 	ax.XAxis.ShowLabels = true
 
-	ax.YAxis.Locator = FixedLocator{TicksList: latitudeTicks}
-	ax.YAxis.MinorLocator = NullLocator{}
-	ax.YAxis.Formatter = FuncFormatter(geoThetaFormat(15))
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: latitudeTicks}
+	ax.YAxis.MinorLocator = ticker.NullLocator{}
+	ax.YAxis.Formatter = ticker.FuncFormatter(geoThetaFormat(15))
 	ax.YAxis.ShowSpine = false
 	ax.YAxis.ShowTicks = false
 	ax.YAxis.ShowLabels = true
 	if p.Name() == "lambert" {
-		ax.YAxis.Formatter = NullFormatter{}
+		ax.YAxis.Formatter = ticker.NullFormatter{}
 	}
 }
 
@@ -231,7 +232,7 @@ func (a *Axis) drawGeoTickLabels(r render.Renderer, ctx *DrawContext) {
 	ticks := visibleTicks(a.Locator.Ticks(domainMin, domainMax, a.majorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
 	fontSize := tickLabelFontSize(a, ctx)
 	for i, tick := range ticks {
-		label := formatTickLabel(a.Formatter, tick, i, ticks)
+		label := ticker.FormatTick(a.Formatter, tick, i, ticks)
 		if label == "" {
 			continue
 		}
@@ -258,7 +259,7 @@ func (a *Axis) geoTickLabelBounds(r render.Renderer, ctx *DrawContext) (geom.Rec
 	var union geom.Rect
 	var have bool
 	for i, tick := range ticks {
-		label := formatTickLabel(a.Formatter, tick, i, ticks)
+		label := ticker.FormatTick(a.Formatter, tick, i, ticks)
 		if label == "" {
 			continue
 		}

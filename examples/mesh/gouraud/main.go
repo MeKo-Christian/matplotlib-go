@@ -5,17 +5,14 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/render"
 )
 
 const (
 	width  = 760
 	height = 460
-	dpi    = 100
 )
 
 func main() {
@@ -55,22 +52,7 @@ func main() {
 	ax.AddYGrid()
 	fig.AddColorbar(ax, mesh, core.ColorbarOptions{Label: "value"})
 
-	r, _, err := backends.NewRendererFromEnv(backends.Config{
-		Width:      width,
-		Height:     height,
-		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
-		DPI:        dpi,
-	}, []backends.Capability{
-		backends.TextShaping,
-		backends.FontHinting,
-		backends.GouraudTriangleBatch,
-	})
-	if err != nil {
-		fmt.Printf("error creating renderer: %v\n", err)
-		return
-	}
-
-	if err := core.SavePNG(fig, r, *output); err != nil {
+	if err := fig.Save(*output); err != nil {
 		fmt.Printf("error saving PNG: %v\n", err)
 		return
 	}

@@ -123,7 +123,7 @@ func TestGetFlatTriMaskRemovesSlivers(t *testing.T) {
 		},
 	}
 	a := NewTriAnalyzer(tr)
-	mask := a.GetFlatTriMask(0.1, true)
+	mask := a.FlatTriMask(0.1, true)
 	if len(mask) != len(tr.Triangles) {
 		t.Fatalf("mask length = %d, want %d", len(mask), len(tr.Triangles))
 	}

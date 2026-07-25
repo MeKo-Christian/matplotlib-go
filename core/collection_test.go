@@ -404,8 +404,8 @@ func TestPathCollectionSetArrayRefreshesMappedFacesAndFaceEdges(t *testing.T) {
 		t.Fatalf("SetArray: %v", err)
 	}
 
-	if got := pc.GetArray(); len(got) != 2 || got[0] != 0 || got[1] != 10 {
-		t.Fatalf("GetArray = %v, want copied scalar values", got)
+	if got := pc.Array(); len(got) != 2 || got[0] != 0 || got[1] != 10 {
+		t.Fatalf("Array = %v, want copied scalar values", got)
 	}
 	if got, want := pc.FaceColors[0], low; got != want {
 		t.Fatalf("first mapped face = %+v, want %+v", got, want)
@@ -684,8 +684,8 @@ func TestLineCollectionSetArrayRefreshesStrokeColors(t *testing.T) {
 	if err := lines.SetArray([]float64{0, 10}); err != nil {
 		t.Fatalf("SetArray: %v", err)
 	}
-	if got := lines.GetArray(); len(got) != 2 || got[0] != 0 || got[1] != 10 {
-		t.Fatalf("GetArray = %v, want copied scalar values", got)
+	if got := lines.Array(); len(got) != 2 || got[0] != 0 || got[1] != 10 {
+		t.Fatalf("Array = %v, want copied scalar values", got)
 	}
 	if got, want := lines.Colors[0], low; got != want {
 		t.Fatalf("first line color = %+v, want %+v", got, want)
@@ -874,8 +874,8 @@ func TestQuadMeshSetArrayRefreshesFlatColorsAndFaceEdges(t *testing.T) {
 	if err := mesh.SetArray([]float64{0, 10, 5, 15}); err != nil {
 		t.Fatalf("SetArray: %v", err)
 	}
-	if got := mesh.GetArray(); len(got) != 4 || got[0] != 0 || got[3] != 15 {
-		t.Fatalf("GetArray = %v, want copied flattened mesh values", got)
+	if got := mesh.Array(); len(got) != 4 || got[0] != 0 || got[3] != 15 {
+		t.Fatalf("Array = %v, want copied flattened mesh values", got)
 	}
 	if got, want := mesh.FaceColors[0], low; got != want {
 		t.Fatalf("first flat face = %+v, want %+v", got, want)

@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/dates"
 	"github.com/cwbudde/matplotlib-go/geom"
-	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -61,7 +63,7 @@ func configureAxes(ax *core.Axes, title, xlabel, ylabel string) {
 	ax.SetXLabel(xlabel)
 	ax.SetYLabel(ylabel)
 	common.AddReferenceYGrid(ax)
-	ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
 }
 
 func addLocatorPanel(fig *core.Figure, rect geom.Rect) {
@@ -74,8 +76,8 @@ func addLocatorPanel(fig *core.Figure, rect geom.Rect) {
 	)
 	ax.SetXLim(0, 6)
 	ax.SetYLim(0, 1)
-	ax.XAxis.Locator = core.MultipleLocator{Base: 1.5}
-	ax.XAxis.MinorLocator = core.AutoMinorLocator{N: 3}
+	ax.XAxis.Locator = ticker.MultipleLocator{Base: 1.5}
+	ax.XAxis.MinorLocator = ticker.AutoMinorLocator{N: 3}
 	xGrid := ax.AddXGrid()
 	xGrid.Minor = true
 	xGrid.MinorLineWidth = 0.35
@@ -94,8 +96,8 @@ func addLogPanel(fig *core.Figure, rect geom.Rect) {
 	_ = ax.SetXScale("log", transform.WithScaleBase(10))
 	ax.SetXLim(1, 1000)
 	ax.SetYLim(0, 1)
-	ax.XAxis.MinorLocator = core.LogLocator{Base: 10, SubsMode: "auto"}
-	ax.XAxis.Formatter = core.LogFormatterMathText{Base: 10}
+	ax.XAxis.MinorLocator = ticker.LogLocator{Base: 10, SubsMode: "auto"}
+	ax.XAxis.Formatter = ticker.LogFormatterMathText{Base: 10}
 	xGrid := ax.AddXGrid()
 	xGrid.Minor = true
 	xGrid.MinorLineWidth = 0.35
@@ -121,10 +123,10 @@ func addFormatterPanel(fig *core.Figure, rect geom.Rect) {
 	ax.Plot(x, []float64{0.15, 0.32, 0.48, 0.66, 0.86}, core.PlotOptions{Color: &purple, LineWidth: ptr(2.0)})
 	ax.SetXLim(0, 4)
 	ax.SetYLim(0, 1)
-	ax.XAxis.Locator = core.FixedLocator{TicksList: x}
-	ax.XAxis.Formatter = core.FixedFormatter{Labels: []string{"0", "1 kHz", "25%", "1.2e3", "custom"}}
-	ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{0.15, 0.50, 0.85}}
-	ax.YAxis.Formatter = core.FuncFormatter(func(v float64) string {
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: x}
+	ax.XAxis.Formatter = ticker.FixedFormatter{Labels: []string{"0", "1 kHz", "25%", "1.2e3", "custom"}}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0.15, 0.50, 0.85}}
+	ax.YAxis.Formatter = ticker.FuncFormatter(func(v float64) string {
 		return fmt.Sprintf("y=%0.2f", v)
 	})
 }
@@ -132,18 +134,18 @@ func addFormatterPanel(fig *core.Figure, rect geom.Rect) {
 func addDateCategoryPanel(fig *core.Figure, rect geom.Rect) {
 	ax := fig.AddAxes(rect)
 	configureAxes(ax, "Date and Category Formatters", "date axis with category labels", "requests")
-	dates := []time.Time{
+	dateValues := []time.Time{
 		time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, 2, 5, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, 2, 9, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, 2, 14, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, 2, 20, 0, 0, 0, 0, time.UTC),
 	}
-	if _, err := ax.PlotUnits(dates, []float64{0.08, 0.38, 0.30, 0.48, 0.42}, core.PlotOptions{Color: &brown, LineWidth: ptr(2.0)}); err != nil {
+	if _, err := ax.PlotUnits(dateValues, []float64{0.08, 0.38, 0.30, 0.48, 0.42}, core.PlotOptions{Color: &brown, LineWidth: ptr(2.0)}); err != nil {
 		panic(err)
 	}
-	ax.XAxis.Locator = core.DayLocator{ByMonthDay: []int{1, 7, 14, 21}, Location: time.UTC}
-	ax.XAxis.Formatter = core.DateFormatter{Layout: "02 Jan", Location: time.UTC}
+	ax.XAxis.Locator = dates.DayLocator{ByMonthDay: []int{1, 7, 14, 21}, Location: time.UTC}
+	ax.XAxis.Formatter = dates.DateFormatter{Layout: "02 Jan", Location: time.UTC}
 	ax.SetYLim(0, 1)
 	ax.AutoScale(0.04)
 
@@ -173,10 +175,10 @@ func addCustomUnitPanel(fig *core.Figure, rect geom.Rect) {
 	}
 	ax.SetXLim(3, 44)
 	ax.SetYLim(0, 1)
-	ax.XAxis.Formatter = core.FuncFormatter(func(v float64) string {
+	ax.XAxis.Formatter = ticker.FuncFormatter(func(v float64) string {
 		return fmt.Sprintf("%g km", v)
 	})
-	ax.YAxis.Formatter = core.PercentFormatter{XMax: 1, DisplayRange: 1}
+	ax.YAxis.Formatter = ticker.PercentFormatter{XMax: 1, DisplayRange: 1}
 }
 
 func ptr(v float64) *float64 { return &v }

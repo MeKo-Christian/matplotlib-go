@@ -68,15 +68,16 @@ profile-render: freetype261-build
     set -o pipefail; CGO_ENABLED=1 go test ./benchmarks -bench 'BenchmarkLargeScatter100KDraw$$' -benchtime="${SCATTER_BENCHTIME:-5x}" -run '^$$' -count=1 -benchmem -cpuprofile testdata/_artifacts/perf/scatter100k_cpu.pprof -memprofile testdata/_artifacts/perf/scatter100k_mem.pprof | tee testdata/_artifacts/perf/scatter100k-bench.txt
 
 large-file-audit:
-    @echo "Large tracked Go files (>= 1000 lines)"
-    @while IFS= read -r f; do wc -l "$f"; done < <(git ls-files '*.go') | awk '$1 >= 1000 {printf "%7d %s\n", $1, $2}' | sort -nr
+    @echo "Large tracked or untracked Go files (>= 1000 lines)"
+    @while IFS= read -r f; do [ ! -f "$f" ] || wc -l "$f"; done < <(git ls-files --cached --others --exclude-standard '*.go') | awk '$1 >= 1000 {printf "%7d %s\n", $1, $2}' | sort -nr
     @echo
-    @echo "Large tracked non-Go artifacts (>= 256 KiB)"
+    @echo "Large tracked or untracked non-Go artifacts (>= 256 KiB)"
     @while IFS= read -r f; do \
+      [ -f "$f" ] || continue; \
       case "$f" in *.go) continue;; esac; \
       size=$(du -k "$f" | cut -f1); \
       if [ "$size" -ge 256 ]; then printf "%7dK %s\n" "$size" "$f"; fi; \
-    done < <(git ls-files) | sort -nr
+    done < <(git ls-files --cached --others --exclude-standard) | sort -nr
 
 # --- FreeType 2.6.1 (matplotlib's pinned version) ---------------------------
 # matplotlib generates every reference image with FreeType 2.6.1. The AGG

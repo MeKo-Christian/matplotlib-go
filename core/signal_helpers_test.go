@@ -3,6 +3,8 @@ package core
 import (
 	"math"
 	"testing"
+
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestAxesSpecgramFindsDominantFrequency(t *testing.T) {
@@ -142,7 +144,7 @@ func TestAxesPowerSpectrumDisplayMatchesMatplotlib(t *testing.T) {
 			if ax.XLabel != "Frequency" {
 				t.Fatalf("%s x label = %q, want Frequency", name, ax.XLabel)
 			}
-			if _, ok := ax.YAxis.Locator.(FixedLocator); !ok {
+			if _, ok := ax.YAxis.Locator.(ticker.FixedLocator); !ok {
 				t.Fatalf("%s y locator = %T, want Matplotlib power-spectrum FixedLocator", name, ax.YAxis.Locator)
 			}
 		})

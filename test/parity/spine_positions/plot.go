@@ -5,8 +5,9 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -46,8 +47,8 @@ func configureAxes(ax *core.Axes, title string) {
 	ax.SetXLim(-2, 2)
 	ax.SetYLim(-2, 2)
 	ticks := []float64{-2, -1, 0, 1, 2}
-	ax.XAxis.Locator = core.FixedLocator{TicksList: ticks}
-	ax.YAxis.Locator = core.FixedLocator{TicksList: ticks}
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: ticks}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: ticks}
 
 	color := render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}
 	width := 2.0

@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -22,7 +23,7 @@ const (
 // take a per-bar color array.
 func Plot() *core.Figure {
 	fig := core.NewFigure(720, 560)
-	ax, err := fig.AddAxes3D(geom.Rect{
+	ax, err := plot3d.AddAxes(fig, geom.Rect{
 		Min: geom.Pt{X: 0.12, Y: 0.16},
 		Max: geom.Pt{X: 0.88, Y: 0.88},
 	})
@@ -49,7 +50,7 @@ func Plot() *core.Figure {
 	for i, z := range planes {
 		zc := z
 		c := colors[i]
-		ax.Bar(xs, heights[i], core.Bar3DPlaneOptions{
+		ax.Bar(xs, heights[i], plot3d.Bar3DPlaneOptions{
 			Color: &c,
 			Z:     &zc,
 			ZDir:  "y",
@@ -71,5 +72,5 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }

@@ -5,8 +5,9 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -36,7 +37,7 @@ func Plot() *core.Figure {
 	)
 	semilogX.SetXLim(1, 1000)
 	semilogX.SetYLim(0, 5)
-	semilogX.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 2.5, 5}}
+	semilogX.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 2.5, 5}}
 	common.AddReferenceXYGrid(semilogX)
 
 	semilogY := fig.AddAxes(geom.Rect{
@@ -53,7 +54,7 @@ func Plot() *core.Figure {
 	)
 	semilogY.SetXLim(0, 6)
 	semilogY.SetYLim(1, 1000)
-	semilogY.XAxis.Locator = core.FixedLocator{TicksList: []float64{0, 3, 6}}
+	semilogY.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 3, 6}}
 	common.AddReferenceXYGrid(semilogY)
 
 	logLog := fig.AddAxes(geom.Rect{

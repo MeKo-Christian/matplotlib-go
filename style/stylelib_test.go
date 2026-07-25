@@ -17,7 +17,7 @@ func TestBundledStylesRegistered(t *testing.T) {
 		"tableau-colorblind10": "006BA4",
 	}
 	for name, wantHex := range cases {
-		theme, ok := GetTheme(name)
+		theme, ok := LookupTheme(name)
 		if !ok {
 			t.Errorf("theme %q not registered", name)
 			continue

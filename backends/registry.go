@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/cwbudde/matplotlib-go/canvas"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -93,6 +94,15 @@ const (
 	CapabilityBridged     CapabilityStatus = "bridged"
 	CapabilityNative      CapabilityStatus = "native"
 )
+
+// RendererModeReporter supplies registry/report metadata for a renderer that
+// has multiple runtime modes behind one backend registration.
+//
+// This interface lives with its consumer because mode labels describe backend
+// selection and reporting, not drawing behavior.
+type RendererModeReporter interface {
+	RendererModeLabel() string
+}
 
 // intrinsicCapabilities are satisfied by the base render.Renderer contract
 // (every renderer clips) or are rendering-quality hints with no dedicated
@@ -431,6 +441,7 @@ func SaveSVG(renderer render.Renderer, path string, opts ...render.SaveOption) e
 
 // Registry manages available rendering backends.
 type Registry struct {
+	mu       sync.RWMutex
 	backends map[Backend]*BackendInfo
 }
 
@@ -443,17 +454,23 @@ func NewRegistry() *Registry {
 
 // Register adds a backend to the registry.
 func (r *Registry) Register(backend Backend, info *BackendInfo) {
-	r.backends[backend] = info
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.backends[backend] = cloneBackendInfo(info)
 }
 
 // Get retrieves backend info.
 func (r *Registry) Get(backend Backend) (*BackendInfo, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	info, ok := r.backends[backend]
-	return info, ok
+	return cloneBackendInfo(info), ok
 }
 
 // Available returns all available backends.
 func (r *Registry) Available() []Backend {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	var available []Backend
 	for backend, info := range r.backends {
 		if info.Available {
@@ -468,7 +485,7 @@ func (r *Registry) Available() []Backend {
 
 // Create instantiates a renderer using the specified backend.
 func (r *Registry) Create(backend Backend, config Config) (render.Renderer, error) {
-	info, ok := r.backends[backend]
+	info, ok := r.Get(backend)
 	if !ok {
 		return nil, fmt.Errorf("unknown backend: %s", backend)
 	}
@@ -482,12 +499,28 @@ func (r *Registry) Create(backend Backend, config Config) (render.Renderer, erro
 
 // HasCapability checks if a backend supports a capability.
 func (r *Registry) HasCapability(backend Backend, capability Capability) bool {
-	info, ok := r.backends[backend]
+	info, ok := r.Get(backend)
 	if !ok {
 		return false
 	}
 
 	return info.hasCapability(capability)
+}
+
+func cloneBackendInfo(info *BackendInfo) *BackendInfo {
+	if info == nil {
+		return nil
+	}
+	out := *info
+	out.Capabilities = append([]Capability(nil), info.Capabilities...)
+	out.FallbackCapabilities = append([]Capability(nil), info.FallbackCapabilities...)
+	if info.SaveFormats != nil {
+		out.SaveFormats = make(map[string]SaveHandler, len(info.SaveFormats))
+		for format, handler := range info.SaveFormats {
+			out.SaveFormats[format] = handler
+		}
+	}
+	return &out
 }
 
 func (i *BackendInfo) hasCapability(capability Capability) bool {
@@ -532,11 +565,8 @@ func (r *Registry) SupportsRendererCapability(backend Backend, renderer render.R
 }
 
 // RendererCapabilityStatus reports unsupported/fallback/bridged/native support
-// for a capability on a concrete renderer. A capability is reported as bridged
-// when the renderer satisfies the interface but also implements
-// render.CapabilityBridgeReporter and marks the capability as routed through
-// an intermediate bridge (for example, the Skia CPU surface bridge that stands
-// in for the future external Skia C ABI).
+// for a capability on a concrete renderer. Runtime-aware renderers can refine
+// the registry's static declaration through RuntimeCapabilityStatus.
 func (r *Registry) RendererCapabilityStatus(backend Backend, renderer render.Renderer, capability Capability) CapabilityStatus {
 	info, ok := r.Get(backend)
 	if !ok || renderer == nil {
@@ -550,9 +580,6 @@ func (r *Registry) RendererCapabilityStatus(backend Backend, renderer render.Ren
 		}
 	}
 	if r.SupportsRendererCapability(backend, renderer, capability) {
-		if reporter, ok := renderer.(render.CapabilityBridgeReporter); ok && reporter.IsCapabilityBridged(string(capability)) {
-			return CapabilityBridged
-		}
 		return CapabilityNative
 	}
 	if info.hasFallbackCapability(capability) {
@@ -667,8 +694,8 @@ func VerifyRendererCapabilities(backend Backend, renderer render.Renderer) error
 	return DefaultRegistry.VerifyRendererCapabilities(backend, renderer)
 }
 
-// GetBestBackend selects the best available backend for given requirements.
-func GetBestBackend(required []Capability) (Backend, error) {
+// BestBackend selects the best available backend for given requirements.
+func BestBackend(required []Capability) (Backend, error) {
 	available := Available()
 	if len(available) == 0 {
 		return "", errors.New("no backends available")

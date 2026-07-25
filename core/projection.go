@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -40,8 +41,6 @@ func init() {
 	mustRegisterProjection("aitoff", func() Projection { return newAitoffProjection() })
 	mustRegisterProjection("lambert", func() Projection { return newLambertProjection() })
 	mustRegisterProjection("skewx", func() Projection { return newSkewXProjection() })
-	mustRegisterProjection("3d", func() Projection { return newAxes3DProjection() })
-	mustRegisterProjection("axes3d", func() Projection { return newAxes3DProjection() })
 }
 
 // RegisterProjection installs a named axes projection.
@@ -213,16 +212,16 @@ func (p *polarProjection) ConfigureAxes(ax *Axes) {
 	ax.YAxisRight = nil
 	ax.ShowFrame = false
 
-	ax.XAxis.Locator = MultipleLocator{Base: math.Pi / 4}
+	ax.XAxis.Locator = ticker.MultipleLocator{Base: math.Pi / 4}
 	ax.XAxis.MinorLocator = nil
-	ax.XAxis.Formatter = FuncFormatter(formatPolarThetaLabel)
+	ax.XAxis.Formatter = ticker.FuncFormatter(formatPolarThetaLabel)
 	ax.XAxis.ShowSpine = true
 	ax.XAxis.ShowTicks = false
 	ax.XAxis.ShowLabels = true
 
-	ax.YAxis.Locator = LinearLocator{}
+	ax.YAxis.Locator = ticker.LinearLocator{}
 	ax.YAxis.MinorLocator = nil
-	ax.YAxis.Formatter = ScalarFormatter{Prec: 3}
+	ax.YAxis.Formatter = ticker.ScalarFormatter{Prec: 3}
 	ax.YAxis.ShowSpine = false
 	ax.YAxis.ShowTicks = false
 	ax.YAxis.ShowLabels = true
@@ -280,12 +279,12 @@ func configureRadarThetaAxis(ax *Axes, p *polarProjection) {
 		return
 	}
 	count := p.radarVariableCount()
-	ax.XAxis.Locator = FixedLocator{TicksList: RadarAngles(count)}
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: RadarAngles(count)}
 	ax.XAxis.MinorLocator = nil
 	ax.XAxis.Formatter = radarThetaFormatter(p.radarLabels, count)
 }
 
-func radarThetaFormatter(labels []string, count int) Formatter {
+func radarThetaFormatter(labels []string, count int) ticker.Formatter {
 	copied := append([]string(nil), labels...)
 	if count < 3 {
 		count = len(copied)
@@ -293,7 +292,7 @@ func radarThetaFormatter(labels []string, count int) Formatter {
 	if count < 3 {
 		count = defaultRadarVariables
 	}
-	return FuncFormatter(func(theta float64) string {
+	return ticker.FuncFormatter(func(theta float64) string {
 		fraction := normalizePolarFraction(theta / (2 * math.Pi))
 		idx := int(math.Round(fraction*float64(count))) % count
 		if idx >= 0 && idx < len(copied) && copied[idx] != "" {

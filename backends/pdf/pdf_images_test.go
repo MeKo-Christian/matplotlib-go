@@ -92,7 +92,7 @@ func TestImageEmitsXObjectResourceAndDrawOperator(t *testing.T) {
 	img.SetRGBA(0, 0, color.RGBA{R: 255, A: 255})
 	img.SetRGBA(1, 0, color.RGBA{B: 255, A: 255})
 
-	r.Image(render.NewImageData(img), geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 50, Y: 40}})
+	r.DrawImage(render.NewImageData(img), geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 50, Y: 40}})
 
 	raw := r.content.String()
 	if !strings.Contains(raw, "/Im1 Do") {
@@ -119,7 +119,7 @@ func TestFlateImageEmitsPNGDecodeParms(t *testing.T) {
 	img.SetRGBA(0, 0, color.RGBA{R: 255, A: 255})
 	img.SetRGBA(1, 0, color.RGBA{G: 255, A: 255})
 
-	r.Image(render.NewImageData(img), geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 50, Y: 40}})
+	r.DrawImage(render.NewImageData(img), geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 50, Y: 40}})
 
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)
@@ -145,7 +145,7 @@ func TestJPEGImageEmitsDCTDecodeXObject(t *testing.T) {
 		data: []byte{0xff, 0xd8, 0xff, 0xd9},
 	}
 
-	r.Image(img, geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 50, Y: 40}})
+	r.DrawImage(img, geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 50, Y: 40}})
 
 	if !strings.Contains(r.content.String(), "/Im1 Do") {
 		t.Fatalf("expected JPEG image draw operator, got %q", r.content.String())
@@ -172,8 +172,8 @@ func TestImageReusesXObjectForRepeatedImageData(t *testing.T) {
 	img.SetRGBA(1, 0, color.RGBA{G: 255, A: 255})
 	data := render.NewImageData(img)
 
-	r.Image(data, geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 30, Y: 40}})
-	r.Image(data, geom.Rect{Min: geom.Pt{X: 40, Y: 20}, Max: geom.Pt{X: 60, Y: 40}})
+	r.DrawImage(data, geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 30, Y: 40}})
+	r.DrawImage(data, geom.Rect{Min: geom.Pt{X: 40, Y: 20}, Max: geom.Pt{X: 60, Y: 40}})
 
 	if got := strings.Count(r.content.String(), "/Im1 Do"); got != 2 {
 		t.Fatalf("expected both draws to invoke reused Im1 XObject, got %d in %q", got, r.content.String())
@@ -196,7 +196,7 @@ func TestImageWithAlphaEmitsSoftMask(t *testing.T) {
 	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	img.SetRGBA(0, 0, color.RGBA{R: 20, G: 40, B: 60, A: 128})
 
-	r.Image(render.NewImageData(img), geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 30, Y: 40}})
+	r.DrawImage(render.NewImageData(img), geom.Rect{Min: geom.Pt{X: 10, Y: 20}, Max: geom.Pt{X: 30, Y: 40}})
 
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)

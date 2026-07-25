@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -160,10 +161,10 @@ func applyColorbarNormScale(ax *Axes, ops colorbarAxisOps, mapping *ScalarMapInf
 		inside := colorbarInteriorBoundaries(boundaries, extend)
 		ops.setLim(inside[0], inside[len(inside)-1])
 		if target != nil {
-			target.Locator = FixedLocator{TicksList: cloneFloat64s(boundaries)}
-			target.Formatter = ScalarFormatter{Prec: 6}
+			target.Locator = ticker.FixedLocator{TicksList: cloneFloat64s(boundaries)}
+			target.Formatter = ticker.ScalarFormatter{Prec: 6}
 			if ax.colorbarMinorTicks {
-				target.MinorLocator = FixedLocator{TicksList: cloneFloat64s(boundaries)}
+				target.MinorLocator = ticker.FixedLocator{TicksList: cloneFloat64s(boundaries)}
 			}
 		}
 		applyExplicitColorbarTicks(ax, location, ticks)
@@ -180,8 +181,8 @@ func applyColorbarNormScale(ax *Axes, ops colorbarAxisOps, mapping *ScalarMapInf
 			ops.setLim(vmin, vmax)
 		}
 		if target != nil {
-			target.Locator = LogLocator{Base: base}
-			target.Formatter = LogFormatterMathText{Base: base, SciNotation: true}
+			target.Locator = ticker.LogLocator{Base: base}
+			target.Formatter = ticker.LogFormatterMathText{Base: base, SciNotation: true}
 		}
 	case SymLogNorm:
 		if isFinite(vmin) && isFinite(vmax) && vmin != vmax {
@@ -223,10 +224,10 @@ func applyColorbarNormScale(ax *Axes, ops colorbarAxisOps, mapping *ScalarMapInf
 	case BoundaryNorm:
 		ops.setLim(vmin, vmax)
 		if target != nil {
-			target.Locator = FixedLocator{TicksList: append([]float64(nil), norm.Boundaries...)}
-			target.Formatter = ScalarFormatter{Prec: 6}
+			target.Locator = ticker.FixedLocator{TicksList: append([]float64(nil), norm.Boundaries...)}
+			target.Formatter = ticker.ScalarFormatter{Prec: 6}
 			if ax.colorbarMinorTicks {
-				target.MinorLocator = FixedLocator{TicksList: append([]float64(nil), norm.Boundaries...)}
+				target.MinorLocator = ticker.FixedLocator{TicksList: append([]float64(nil), norm.Boundaries...)}
 			}
 		}
 	case NoNorm:
@@ -236,8 +237,8 @@ func applyColorbarNormScale(ax *Axes, ops colorbarAxisOps, mapping *ScalarMapInf
 			if base < 1 {
 				base = 1
 			}
-			target.Locator = IndexLocator{Base: base, Offset: 0.5}
-			target.Formatter = ScalarFormatter{Prec: 6}
+			target.Locator = ticker.IndexLocator{Base: base, Offset: 0.5}
+			target.Formatter = ticker.ScalarFormatter{Prec: 6}
 		}
 	case PowerNorm, TwoSlopeNorm, CenteredNorm:
 		if isFinite(vmin) && isFinite(vmax) && vmin != vmax {
@@ -248,8 +249,8 @@ func applyColorbarNormScale(ax *Axes, ops colorbarAxisOps, mapping *ScalarMapInf
 			// matplotlib's function-scale default major locator is AutoLocator
 			// (nice 1/2/2.5/5 ticks in data space), not LinearLocator.
 			if target != nil {
-				target.Locator = AutoLocator{}
-				target.Formatter = ScalarFormatter{Prec: 6}
+				target.Locator = ticker.AutoLocator{}
+				target.Formatter = ticker.ScalarFormatter{Prec: 6}
 			}
 		} else {
 			ops.setLim(vmin, vmax)
@@ -293,7 +294,7 @@ func finalizeColorbarMinorTicks(ax *Axes, ops colorbarAxisOps) {
 		return
 	}
 	if ops.target.MinorLocator == nil {
-		ops.target.MinorLocator = AutoMinorLocator{}
+		ops.target.MinorLocator = ticker.AutoMinorLocator{}
 	}
 }
 
@@ -311,8 +312,8 @@ func applyExplicitColorbarTicks(ax *Axes, location string, ticks []float64) {
 	if ax == nil || len(ticks) == 0 {
 		return
 	}
-	locator := FixedLocator{TicksList: cloneFloat64s(ticks)}
-	formatter := ScalarFormatter{Prec: 6}
+	locator := ticker.FixedLocator{TicksList: cloneFloat64s(ticks)}
+	formatter := ticker.ScalarFormatter{Prec: 6}
 	switch location {
 	case "left":
 		if ax.YAxis != nil {

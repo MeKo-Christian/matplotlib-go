@@ -11,6 +11,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/canvas"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
 func TestSavefigWritesPNGAndSVG(t *testing.T) {
@@ -116,8 +117,8 @@ func TestSwitchBackendClearsCachedManagersAndUsesNamedBackend(t *testing.T) {
 			tools:   canvas.NewToolManager(),
 		}, nil
 	})
-	if _, err := GetCurrentFigManager(); err != nil {
-		t.Fatalf("GetCurrentFigManager before switch: %v", err)
+	if _, err := CurrentFigManager(); err != nil {
+		t.Fatalf("CurrentFigManager before switch: %v", err)
 	}
 
 	newManagerCalls := 0
@@ -146,8 +147,8 @@ func TestSwitchBackendClearsCachedManagersAndUsesNamedBackend(t *testing.T) {
 	if oldCloseCalls != 1 {
 		t.Fatalf("old manager close calls = %d, want 1", oldCloseCalls)
 	}
-	if _, err := GetCurrentFigManager(); err != nil {
-		t.Fatalf("GetCurrentFigManager after switch: %v", err)
+	if _, err := CurrentFigManager(); err != nil {
+		t.Fatalf("CurrentFigManager after switch: %v", err)
 	}
 	if newManagerCalls != 1 {
 		t.Fatalf("new backend manager calls = %d, want 1", newManagerCalls)
@@ -172,12 +173,12 @@ func TestManagerEventWrappersUseCurrentFigureManager(t *testing.T) {
 		return manager, nil
 	})
 
-	gotManager, err := GetCurrentFigManager()
+	gotManager, err := CurrentFigManager()
 	if err != nil {
-		t.Fatalf("GetCurrentFigManager() error = %v", err)
+		t.Fatalf("CurrentFigManager() error = %v", err)
 	}
 	if gotManager != manager {
-		t.Fatalf("GetCurrentFigManager() = %p, want %p", gotManager, manager)
+		t.Fatalf("CurrentFigManager() = %p, want %p", gotManager, manager)
 	}
 
 	received := 0
@@ -353,7 +354,7 @@ func TestCLAClearsCurrentAxesButKeepsItCurrent(t *testing.T) {
 
 	ax := GCA()
 	Plot([]float64{0, 1}, []float64{0, 1})
-	button := ax.Button("Run")
+	button := widgets.NewButton(ax, "Run")
 	if button == nil {
 		t.Fatal("button constructor returned nil")
 	}

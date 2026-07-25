@@ -282,7 +282,7 @@ func (r *Renderer) drawShaderFill(path geom.Path, paint *render.Paint) bool {
 	// hatch/stroke fallbacks below keep the original display-space path because
 	// r.Renderer.Path (gobasic) owns its own device flip.
 	height := float64(r.height)
-	if !r.bridge.DrawPathFill(r.GetImage(), flipPathY(path, height), shaderPaint, bridgeDrawState{
+	if !r.bridge.DrawPathFill(r.Image(), flipPathY(path, height), shaderPaint, bridgeDrawState{
 		clipRect:  flipRectPtrY(r.clipRect, height),
 		clipPaths: flipPathsY(r.clipPaths, height),
 	}) {

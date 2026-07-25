@@ -35,13 +35,13 @@ func (r *stubRenderer) Restore()                               {}
 func (r *stubRenderer) ClipRect(geom.Rect)                     {}
 func (r *stubRenderer) ClipPath(geom.Path)                     {}
 func (r *stubRenderer) Path(geom.Path, *render.Paint)          {}
-func (r *stubRenderer) Image(render.Image, geom.Rect)          {}
+func (r *stubRenderer) DrawImage(render.Image, geom.Rect)      {}
 func (r *stubRenderer) GlyphRun(render.GlyphRun, render.Color) {}
 func (r *stubRenderer) MeasureText(string, float64, string) render.TextMetrics {
 	return render.TextMetrics{}
 }
 
-func (r *stubRenderer) GetImage() *image.RGBA { return r.img }
+func (r *stubRenderer) Image() *image.RGBA { return r.img }
 
 func newTestOptions() desktop.Options {
 	fig := core.NewFigure(320, 240)

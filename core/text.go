@@ -221,6 +221,36 @@ func resolvedFontSize(size float64, ctx *DrawContext) float64 {
 	return 12
 }
 
+// DrawAlignedText draws a single line of text aligned around an anchor point.
+// It applies the font, math-text, TeX, and color settings from ctx.
+func DrawAlignedText(r render.Renderer, ctx *DrawContext, anchor geom.Pt, text string, size float64, color render.Color, hAlign TextAlign, vAlign TextVerticalAlign) {
+	DrawAlignedTextWithFont(r, ctx, anchor, text, size, color, hAlign, vAlign, "")
+}
+
+// DrawAlignedTextWithFont draws aligned single-line text with an explicit font
+// key. An empty font key inherits the draw context font.
+func DrawAlignedTextWithFont(r render.Renderer, ctx *DrawContext, anchor geom.Pt, text string, size float64, color render.Color, hAlign TextAlign, vAlign TextVerticalAlign, fontKey string) {
+	if r == nil || ctx == nil || displayTextIsEmpty(text) {
+		return
+	}
+	textRen, ok := r.(render.TextDrawer)
+	if !ok {
+		return
+	}
+	fontSize := resolvedFontSize(size, ctx)
+	if fontKey == "" {
+		fontKey = ctx.RC.FontKey
+	}
+	layout := measureSingleLineTextLayout(r, text, fontSize, fontKey, ctx.RC.UseTeX)
+	origin := alignedSingleLineOrigin(anchor, layout, hAlign, layoutVerticalAlign(vAlign, false))
+	drawDisplayText(textRen, text, origin, fontSize, resolvedTextColor(color, ctx), fontKey, ctx.RC.UseTeX)
+}
+
+// FontKeyWithWeight returns fontKey with the requested numeric weight.
+func FontKeyWithWeight(fontKey string, weight int) string {
+	return fontKeyWithWeight(fontKey, weight)
+}
+
 func resolvedTextFontKey(fontKey string, props *render.FontProperties, ctx *DrawContext) string {
 	fontKey = strings.TrimSpace(fontKey)
 	if fontKey != "" {

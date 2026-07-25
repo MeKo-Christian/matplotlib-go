@@ -9,6 +9,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -53,7 +54,7 @@ func Plot() *core.Figure {
 	for tick := 0; tick <= rows; tick += 20 {
 		yTicks = append(yTicks, float64(tick))
 	}
-	ax.YAxis.Locator = core.FixedLocator{TicksList: yTicks}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: yTicks}
 
 	gridColor := render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1}
 	for _, grid := range []*core.Grid{ax.AddXGrid(), ax.AddYGrid()} {
@@ -75,5 +76,5 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }

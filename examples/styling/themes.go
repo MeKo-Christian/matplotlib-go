@@ -2,13 +2,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"math"
 	"os"
 	"path/filepath"
 
-	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
@@ -86,20 +84,7 @@ func renderThemeExample(example themedExample) error {
 	legend.Location = core.LegendUpperLeft
 	_ = yGrid
 
-	renderer, _, err := backends.NewRendererFromEnv(backends.Config{
-		Width:      900,
-		Height:     520,
-		Background: fig.RC.FigureBackground(),
-		DPI:        fig.RC.DPI,
-	}, backends.TextCapabilities)
-	if err != nil {
-		return err
-	}
-
-	if err := core.SavePNG(fig, renderer, example.file); err != nil {
-		return fmt.Errorf("save png: %w", err)
-	}
-	return nil
+	return fig.Save(example.file)
 }
 
 func linspace(start, end float64, n int) []float64 {

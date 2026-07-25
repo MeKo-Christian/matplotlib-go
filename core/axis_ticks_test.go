@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestAxes_TickParamsLocatorParamsAndMinorTicks(t *testing.T) {
@@ -294,7 +295,7 @@ func TestAxes_TickParamsResetRestoresAxisOwnedDefaults(t *testing.T) {
 func TestAxes_TickParamsColorsTicksAndLabelsNotSpine(t *testing.T) {
 	axis := NewXAxis()
 	axis.Locator = staticLocator{5}
-	axis.Formatter = ScalarFormatter{Prec: 0}
+	axis.Formatter = ticker.ScalarFormatter{Prec: 0}
 	axes := &Axes{XAxis: axis}
 
 	tickColor := render.Color{R: 0.18, G: 0.42, B: 0.55, A: 1}

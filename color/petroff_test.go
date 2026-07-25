@@ -2,6 +2,7 @@ package color
 
 import (
 	"math"
+	"sync"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/render"
@@ -59,10 +60,43 @@ func TestColorSequenceRegistry(t *testing.T) {
 	}
 }
 
+func TestColorSequenceRegistryConcurrentAccess(t *testing.T) {
+	const name = "test-concurrent-sequence"
+	palettes := []Palette{
+		{{R: 1, A: 1}},
+		{{G: 1, A: 1}},
+	}
+	RegisterColorSequence(name, palettes[0])
+
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for worker := 0; worker < 8; worker++ {
+		wg.Add(1)
+		go func(worker int) {
+			defer wg.Done()
+			<-start
+			for i := 0; i < 500; i++ {
+				if worker%2 == 0 {
+					RegisterColorSequence(name, palettes[i%len(palettes)])
+					continue
+				}
+				seq, ok := ColorSequence(name)
+				if !ok || len(seq) != 1 {
+					t.Errorf("ColorSequence(%q) = %v, %v; want one color", name, seq, ok)
+					return
+				}
+				_ = ColorSequenceNames()
+			}
+		}(worker)
+	}
+	close(start)
+	wg.Wait()
+}
+
 func TestPetroff10ResolvableAsColormap(t *testing.T) {
-	cmap := GetColormap("petroff10")
+	cmap := LookupColormap("petroff10")
 	if cmap.Name() != "petroff10" {
-		t.Fatalf("GetColormap(\"petroff10\").Name() = %q, want \"petroff10\"", cmap.Name())
+		t.Fatalf("LookupColormap(\"petroff10\").Name() = %q, want \"petroff10\"", cmap.Name())
 	}
 	// First listed color should match the first sequence entry.
 	c := cmap.At(0)

@@ -52,7 +52,7 @@ func main() {
 
 	if *backendFlag == "" {
 		// Auto-select based on the same use-case names listed by backends/info.
-		backend, err = backends.GetRecommendedBackend(*useCaseFlag)
+		backend, err = backends.RecommendedBackend(*useCaseFlag)
 		if err != nil {
 			fmt.Printf("Error selecting backend for use case '%s': %v\n", *useCaseFlag, err)
 			fmt.Println("Available backends:")

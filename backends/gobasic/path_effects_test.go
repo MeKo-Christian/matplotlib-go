@@ -107,7 +107,7 @@ func TestGoBasicArtistPathEffectsRouteThroughRendererNeutralPipeline(t *testing.
 			PathEffects: render.WithStrokePathEffects(render.Color{R: 1, G: 0, B: 0, A: 1}, 11, geom.Pt{X: 0, Y: 12}),
 		}
 		line.Draw(r, &core.DrawContext{})
-		if got := r.GetImage().RGBAAt(50, 47); got.R < 180 || got.G > 90 || got.B > 90 {
+		if got := r.Image().RGBAAt(50, 47); got.R < 180 || got.G > 90 || got.B > 90 {
 			t.Fatalf("line path effect did not draw red offset stroke, got %+v", got)
 		}
 	})
@@ -129,7 +129,7 @@ func TestGoBasicArtistPathEffectsRouteThroughRendererNeutralPipeline(t *testing.
 			Height: 25,
 		}
 		patch.Draw(r, &core.DrawContext{})
-		if got := r.GetImage().RGBAAt(55, 30); got.G < 180 || got.R > 90 || got.B > 90 {
+		if got := r.Image().RGBAAt(55, 30); got.G < 180 || got.R > 90 || got.B > 90 {
 			t.Fatalf("patch path effect did not draw green offset fill, got %+v", got)
 		}
 	})
@@ -153,7 +153,7 @@ func TestGoBasicArtistPathEffectsRouteThroughRendererNeutralPipeline(t *testing.
 			FaceColor: render.Color{R: 0, G: 0, B: 0, A: 1},
 		}
 		coll.Draw(r, &core.DrawContext{})
-		if got := r.GetImage().RGBAAt(55, 35); got.B < 180 || got.R > 90 || got.G > 90 {
+		if got := r.Image().RGBAAt(55, 35); got.B < 180 || got.R > 90 || got.G > 90 {
 			t.Fatalf("path collection path effect did not draw blue offset fill, got %+v", got)
 		}
 	})
@@ -174,7 +174,7 @@ func TestGoBasicArtistPathEffectsRouteThroughRendererNeutralPipeline(t *testing.
 			},
 		}
 		text.Draw(r, &core.DrawContext{})
-		if !imageHasNonBackgroundPixel(r.GetImage(), semanticWhite) {
+		if !imageHasNonBackgroundPixel(r.Image(), semanticWhite) {
 			t.Fatal("text path effects rendered a blank image")
 		}
 	})
@@ -188,7 +188,7 @@ func renderPathEffects(effects []render.PathEffect) *image.RGBA {
 		PathEffects: effects,
 	})
 	_ = r.End()
-	return r.GetImage()
+	return r.Image()
 }
 
 func renderLinePathEffects(effects []render.PathEffect) *image.RGBA {
@@ -204,5 +204,5 @@ func renderLinePathEffects(effects []render.PathEffect) *image.RGBA {
 		PathEffects: effects,
 	})
 	_ = r.End()
-	return r.GetImage()
+	return r.Image()
 }

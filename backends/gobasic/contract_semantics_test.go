@@ -20,7 +20,7 @@ func TestPathPaintStateSemantics(t *testing.T) {
 			Antialias: render.AntialiasOff,
 		})
 
-		got := r.GetImage().RGBAAt(30, 25)
+		got := r.Image().RGBAAt(30, 25)
 		if got.R < 240 || got.G < 105 || got.G > 155 || got.B < 105 || got.B > 155 {
 			t.Fatalf("expected semi-transparent red over white at center, got %+v", got)
 		}
@@ -41,10 +41,10 @@ func TestPathPaintStateSemantics(t *testing.T) {
 			Dashes:    []float64{10, 10},
 		})
 
-		if !isDark(r.GetImage().RGBAAt(15, 25)) {
-			t.Fatalf("expected dash segment near x=15 to be dark, got %+v", r.GetImage().RGBAAt(15, 25))
+		if !isDark(r.Image().RGBAAt(15, 25)) {
+			t.Fatalf("expected dash segment near x=15 to be dark, got %+v", r.Image().RGBAAt(15, 25))
 		}
-		if got := r.GetImage().RGBAAt(25, 25); got != semanticWhite {
+		if got := r.Image().RGBAAt(25, 25); got != semanticWhite {
 			t.Fatalf("expected dash gap near x=25 to remain white, got %+v", got)
 		}
 	})
@@ -100,7 +100,7 @@ func TestClipRectStackIntersectsAndRestoresSemantically(t *testing.T) {
 		Fill: render.Color{R: 0, G: 1, B: 0, A: 1},
 	})
 
-	img := r.GetImage()
+	img := r.Image()
 	if got := img.RGBAAt(20, 30); got.B <= 200 || got.R >= 80 {
 		t.Fatalf("outer clip should be restored after nested clip, got %+v", got)
 	}
@@ -158,7 +158,7 @@ func TestRotatedImageUsesGoBasicImageTransform(t *testing.T) {
 	}
 	img.Draw(r, &core.DrawContext{})
 
-	if !imageHasNonBackgroundPixel(r.GetImage(), semanticWhite) {
+	if !imageHasNonBackgroundPixel(r.Image(), semanticWhite) {
 		t.Fatal("rotated image transform should draw pixels")
 	}
 }
@@ -196,7 +196,7 @@ func TestCollectionFallbackRoutingRendersWithGoBasic(t *testing.T) {
 		}
 		coll.Draw(r, &core.DrawContext{})
 
-		if !imageHasNonBackgroundPixel(r.GetImage(), semanticWhite) {
+		if !imageHasNonBackgroundPixel(r.Image(), semanticWhite) {
 			t.Fatal("marker fallback rendered a blank image")
 		}
 	})
@@ -214,7 +214,7 @@ func TestCollectionFallbackRoutingRendersWithGoBasic(t *testing.T) {
 		}
 		coll.Draw(r, &core.DrawContext{})
 
-		if !imageHasNonBackgroundPixel(r.GetImage(), semanticWhite) {
+		if !imageHasNonBackgroundPixel(r.Image(), semanticWhite) {
 			t.Fatal("hatched patch fallback rendered a blank image")
 		}
 	})
@@ -236,7 +236,7 @@ func TestCollectionFallbackRoutingRendersWithGoBasic(t *testing.T) {
 			if err := r.End(); err != nil {
 				t.Fatalf("End failed for shading %s: %v", shading, err)
 			}
-			if !imageHasNonBackgroundPixel(r.GetImage(), semanticWhite) {
+			if !imageHasNonBackgroundPixel(r.Image(), semanticWhite) {
 				t.Fatalf("%s quad mesh fallback rendered a blank image", shading)
 			}
 		}
@@ -266,7 +266,7 @@ func renderLineCap(cap render.LineCap) *image.RGBA {
 		LineCap:   cap,
 	})
 	_ = r.End()
-	return r.GetImage()
+	return r.Image()
 }
 
 func renderLineJoin(join render.LineJoin) *image.RGBA {
@@ -284,7 +284,7 @@ func renderLineJoin(join render.LineJoin) *image.RGBA {
 		MiterLimit: 10,
 	})
 	_ = r.End()
-	return r.GetImage()
+	return r.Image()
 }
 
 func rectPath(x, y, w, h float64) geom.Path {

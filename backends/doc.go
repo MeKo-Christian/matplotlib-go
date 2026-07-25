@@ -7,7 +7,7 @@
 // [Capability] values it supports. Importing the convenience package
 // backends/all registers every built-in backend for side effects.
 //
-// Callers normally do not name a backend directly. [GetBestBackend] picks the
+// Callers normally do not name a backend directly. [BestBackend] picks the
 // best available backend that satisfies a list of required capabilities, and
 // [NewRendererFromEnv] honors the MATPLOTLIB_BACKEND environment variable
 // while falling back to that selection. [Create] builds a renderer from an

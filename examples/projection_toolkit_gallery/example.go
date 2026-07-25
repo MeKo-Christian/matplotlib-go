@@ -8,8 +8,9 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -76,8 +77,8 @@ func addPolarPanel(fig *core.Figure, rect geom.Rect) {
 		panic(err)
 	}
 	ax.SetYLim(0, 1.15)
-	ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{0.25, 0.5, 0.75, 1.0}}
-	ax.YAxis.Formatter = core.PercentFormatter{XMax: 1, Decimals: 0, DecimalsSet: true}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0.25, 0.5, 0.75, 1.0}}
+	ax.YAxis.Formatter = ticker.PercentFormatter{XMax: 1, Decimals: 0, DecimalsSet: true}
 	styleGrid(ax.AddGrid(core.AxisBottom), grid, 0.8)
 	styleGrid(ax.AddGrid(core.AxisLeft), grid, 0.8)
 
@@ -104,7 +105,7 @@ func addGeoPanel(fig *core.Figure, rect geom.Rect, projection, title string, lon
 	ax.SetXLabel("lon")
 	ax.SetYLabel("lat")
 	if projection == "lambert" {
-		ax.XAxis.Locator = core.FixedLocator{TicksList: common.LambertLongitudeTicks()}
+		ax.XAxis.Locator = ticker.FixedLocator{TicksList: common.LambertLongitudeTicks()}
 	}
 	styleGrid(ax.AddGrid(core.AxisBottom), grid, 0.7)
 	styleGrid(ax.AddGrid(core.AxisLeft), grid, 0.7)
@@ -130,9 +131,9 @@ func addRadarPanel(fig *core.Figure, rect geom.Rect) {
 	ax.SetTitle("Radar")
 	ax.SetThetaZeroLocation("N")
 	ax.YScale = transform.NewLinear(0, 1)
-	ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{0.25, 0.5, 0.75, 1.0}}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0.25, 0.5, 0.75, 1.0}}
 	ax.YAxis.MinorLocator = nil
-	ax.YAxis.Formatter = core.PercentFormatter{XMax: 1, Decimals: 0, DecimalsSet: true}
+	ax.YAxis.Formatter = ticker.PercentFormatter{XMax: 1, Decimals: 0, DecimalsSet: true}
 	styleGrid(ax.AddGrid(core.AxisBottom), render.Color{R: 0.78, G: 0.80, B: 0.84, A: 1}, 0.75)
 	styleGrid(ax.AddGrid(core.AxisLeft), render.Color{R: 0.80, G: 0.83, B: 0.88, A: 1}, 0.75)
 
@@ -159,14 +160,14 @@ func addSkewTPanel(fig *core.Figure, rect geom.Rect) {
 	}
 	ax.SetXLim(-70, 35)
 	ax.SetYLim(1050, 180)
-	ax.XAxis.Locator = core.MultipleLocator{Base: 20}
-	ax.XAxis.MinorLocator = core.MultipleLocator{Base: 10}
+	ax.XAxis.Locator = ticker.MultipleLocator{Base: 20}
+	ax.XAxis.MinorLocator = ticker.MultipleLocator{Base: 10}
 	if ax.XAxisTop != nil {
 		ax.XAxisTop.Locator = ax.XAxis.Locator
 		ax.XAxisTop.MinorLocator = ax.XAxis.MinorLocator
 	}
-	ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{200, 300, 500, 700, 850, 1000}}
-	ax.YAxis.MinorFormatter = core.NullFormatter{}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{200, 300, 500, 700, 850, 1000}}
+	ax.YAxis.MinorFormatter = ticker.NullFormatter{}
 	styleGrid(ax.AddGrid(core.AxisBottom), grid, 0.75)
 	styleGrid(ax.AddGrid(core.AxisLeft), grid, 0.75)
 
@@ -227,8 +228,8 @@ func addAxisArtistPanel(fig *core.Figure, rect geom.Rect) {
 func addAxesGridPanel(fig *core.Figure, rect geom.Rect) {
 	outer := fig.AddAxes(rect)
 	outer.SetTitle("axes_grid1")
-	outer.XAxis.Locator = core.FixedLocator{}
-	outer.YAxis.Locator = core.FixedLocator{}
+	outer.XAxis.Locator = ticker.FixedLocator{}
+	outer.YAxis.Locator = ticker.FixedLocator{}
 	outer.SetFrameOn(false)
 
 	gridRect := geom.Rect{
@@ -243,8 +244,8 @@ func addAxesGridPanel(fig *core.Figure, rect geom.Rect) {
 		for col := range 2 {
 			ax := imageGrid.At(row, col)
 			ax.SetTitle("Tile")
-			ax.XAxis.Locator = core.FixedLocator{TicksList: []float64{0, 12, 23}}
-			ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 12, 23}}
+			ax.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 12, 23}}
+			ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 12, 23}}
 			ax.ImShow(surface(24, 24, float64(row*2+col)))
 		}
 	}

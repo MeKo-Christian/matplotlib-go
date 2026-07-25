@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func Render() image.Image {
@@ -16,8 +17,8 @@ func Render() image.Image {
 	ax.SetTitle("RendererAgg clip path batch")
 	ax.SetXLim(0, 6)
 	ax.SetYLim(0, 5.4)
-	ax.XAxis.Locator = core.MultipleLocator{Base: 1}
-	ax.YAxis.Locator = core.MultipleLocator{Base: 1}
+	ax.XAxis.Locator = ticker.MultipleLocator{Base: 1}
+	ax.YAxis.Locator = ticker.MultipleLocator{Base: 1}
 	ax.AddYGrid()
 
 	xEdges := []float64{0, 0.75, 1.5, 2.35, 3.1, 4.0, 4.85, 5.45, 6.0}

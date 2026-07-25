@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 type polarTextRenderer struct {
@@ -156,11 +157,11 @@ func TestPolarGridAndTicksUseCurvedGeometry(t *testing.T) {
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 
 	radialGrid := NewGrid(AxisLeft)
-	radialGrid.Locator = FixedLocator{TicksList: []float64{0.5}}
+	radialGrid.Locator = ticker.FixedLocator{TicksList: []float64{0.5}}
 	radialGrid.Minor = false
 
 	thetaGrid := NewGrid(AxisBottom)
-	thetaGrid.Locator = FixedLocator{TicksList: []float64{math.Pi / 2}}
+	thetaGrid.Locator = ticker.FixedLocator{TicksList: []float64{math.Pi / 2}}
 	thetaGrid.Minor = false
 
 	r := &recordingRenderer{}
@@ -207,9 +208,9 @@ func TestPolarGridAndTicksUseCurvedGeometry(t *testing.T) {
 func TestPolarTickLabelsUseAngularFormatting(t *testing.T) {
 	fig := NewFigure(400, 400)
 	ax := fig.AddPolarAxes(unitRect())
-	ax.XAxis.Locator = FixedLocator{TicksList: []float64{0, math.Pi / 2}}
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, math.Pi / 2}}
 	ax.XAxis.MinorLocator = nil
-	ax.YAxis.Locator = FixedLocator{TicksList: []float64{0.5}}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0.5}}
 	ax.YAxis.MinorLocator = nil
 
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
@@ -234,7 +235,7 @@ func TestPolarRadialTickLabelsUseScalarStepPrecision(t *testing.T) {
 	ax := fig.AddPolarAxes(unitRect())
 	ax.SetYLim(0, 1.1)
 	ax.XAxis.Locator = nil
-	ax.YAxis.Locator = FixedLocator{TicksList: []float64{0.8, 1.0}}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0.8, 1.0}}
 	ax.YAxis.MinorLocator = nil
 
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
@@ -294,9 +295,9 @@ func TestPolarRadialLabelPositionAffectsTicksAndLabels(t *testing.T) {
 	if err := ax.SetRadialLabelPosition(180); err != nil {
 		t.Fatalf("SetRadialLabelPosition(180): %v", err)
 	}
-	ax.YAxis.Locator = FixedLocator{TicksList: []float64{0.5}}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0.5}}
 	ax.YAxis.MinorLocator = nil
-	ax.YAxis.Formatter = FuncFormatter(func(float64) string { return "radial" })
+	ax.YAxis.Formatter = ticker.FuncFormatter(func(float64) string { return "radial" })
 
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 	center, outerRadius := polarCenterAndRadius(ax.adjustedLayout(fig))
@@ -332,7 +333,7 @@ func TestPolarXLabelAnchorUsesThetaTickTextWindowExtent(t *testing.T) {
 		Max: geom.Pt{X: 0.88, Y: 0.88},
 	})
 	ax.SetYLim(0, 1.1)
-	ax.XAxis.Formatter = FuncFormatter(func(float64) string { return "270°" })
+	ax.XAxis.Formatter = ticker.FuncFormatter(func(float64) string { return "270°" })
 
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 	r := &polarBoundedTextRenderer{}

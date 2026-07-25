@@ -111,7 +111,7 @@ func TestPrecedence_SimulatedFigureAxes(t *testing.T) {
 }
 
 func TestThemeLookupAndApply(t *testing.T) {
-	theme, ok := GetTheme("publication")
+	theme, ok := LookupTheme("publication")
 	if !ok {
 		t.Fatalf("expected publication theme to be registered")
 	}

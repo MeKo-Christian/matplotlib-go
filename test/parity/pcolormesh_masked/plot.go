@@ -12,7 +12,7 @@ import (
 func Render() image.Image {
 	bad := render.Color{R: 0.62, G: 0.62, B: 0.62, A: 0.78}
 	cmapName := "mesh fixture mask"
-	matcolor.RegisterColormap(cmapName, matcolor.GetColormap("viridis").WithBad(bad))
+	matcolor.RegisterColormap(cmapName, matcolor.LookupColormap("viridis").WithBad(bad))
 
 	fig, ax := common.MeshFixtureFigure("masked mesh")
 	edge := render.Color{R: 0.98, G: 0.98, B: 0.98, A: 1}

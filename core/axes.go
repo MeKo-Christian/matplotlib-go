@@ -140,15 +140,22 @@ func (a *Axes) Add(art Artist) {
 		rc := a.resolvedRC()
 		applyLineRCDefaults(line, &rc)
 	}
-	if _, ok := art.(WidgetArtist); ok {
-		a.AddWidget(art)
+	if _, ok := art.(widgetArtist); ok {
+		a.addWidget(art)
 		return
 	}
 	a.Artists = append(a.Artists, art)
 	a.zsorted = false
 }
 
-func (a *Axes) AddWidget(art Artist) {
+// InvalidateArtistOrder marks the axes artist ordering for recomputation.
+func (a *Axes) InvalidateArtistOrder() {
+	if a != nil {
+		a.zsorted = false
+	}
+}
+
+func (a *Axes) addWidget(art Artist) {
 	if a == nil {
 		return
 	}
@@ -432,7 +439,10 @@ func (a *Axes) applyRCSpineDefaults(rc *style.RC) {
 		return
 	}
 	switch a.projection.(type) {
-	case *polarProjection, *geoProjection, *axes3DProjection:
+	case *polarProjection, *geoProjection:
+		return
+	}
+	if owner, ok := a.projection.(interface{ OwnsSpines() bool }); ok && owner.OwnsSpines() {
 		return
 	}
 	if a.XAxis != nil {
@@ -542,6 +552,11 @@ func (a *Axes) resolvedRC() style.RC {
 		return style.CurrentDefaults()
 	}
 	return a.effectiveRC(a.figure)
+}
+
+// ResolvedRC returns the effective style configuration inherited by the axes.
+func (a *Axes) ResolvedRC() style.RC {
+	return a.resolvedRC()
 }
 
 func (a *Axes) applyStyleDefaults(rc style.RC) {

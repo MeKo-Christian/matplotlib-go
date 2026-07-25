@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -21,9 +22,9 @@ type Grid struct {
 	MinorColor     render.Color // minor grid line color (zero value uses Color with lower alpha)
 	MinorLineWidth float64      // width of minor grid lines (0 uses LineWidth*0.5)
 	MinorDashes    []float64    // dash pattern for minor grid (nil = solid)
-	Locator        Locator      // major tick locator (nil = owning axis locator, then LinearLocator)
-	MinorLocator   Locator      // minor tick locator (nil = owning axis minor locator, then MinorLinearLocator{N:5})
-	z              float64      // z-order
+	Locator        ticker.Locator
+	MinorLocator   ticker.Locator
+	z              float64 // z-order
 }
 
 // NewGrid creates a new grid for the specified axis.
@@ -84,10 +85,10 @@ func (g *Grid) Draw(r render.Renderer, ctx *DrawContext) {
 			minorLoc = axis.MinorLocator
 		}
 		if minorLoc == nil {
-			minorLoc = MinorLinearLocator{N: 5}
+			minorLoc = ticker.MinorLinearLocator{N: 5}
 		}
 		if axis != nil {
-			minorLoc = locatorWithMajorContext(minorLoc, axis.Locator)
+			minorLoc = ticker.WithMajorContext(minorLoc, axis.Locator)
 		}
 		minorTicks := visibleTicks(minorLoc.Ticks(domainMin, domainMax, g.cartesianTargetTickCount(axis, true, ctx, isXAxis)), domainMin, domainMax)
 
@@ -113,7 +114,7 @@ func (g *Grid) Draw(r render.Renderer, ctx *DrawContext) {
 			loc = axis.Locator
 		}
 		if loc == nil {
-			loc = LinearLocator{}
+			loc = ticker.LinearLocator{}
 		}
 		ticks := visibleTicks(loc.Ticks(domainMin, domainMax, g.cartesianTargetTickCount(axis, false, ctx, isXAxis)), domainMin, domainMax)
 
@@ -140,7 +141,7 @@ func (g *Grid) drawGeo(r render.Renderer, ctx *DrawContext) {
 	if g.Minor {
 		minorLoc := g.MinorLocator
 		if minorLoc == nil {
-			minorLoc = MinorLinearLocator{N: 2}
+			minorLoc = ticker.MinorLinearLocator{N: 2}
 		}
 		minorColor := g.MinorColor
 		if minorColor == (render.Color{}) {
@@ -296,7 +297,7 @@ func axisForPolarGrid(ctx *DrawContext, isTheta bool) *Axis {
 	return ctx.Axes.effectiveYAxis()
 }
 
-func (g *Grid) polarLocator(axis *Axis, minor bool) Locator {
+func (g *Grid) polarLocator(axis *Axis, minor bool) ticker.Locator {
 	if minor {
 		if g.MinorLocator != nil {
 			return g.MinorLocator
@@ -360,18 +361,18 @@ func (g *Grid) axisForContext(ctx *DrawContext) *Axis {
 	}
 }
 
-func (g *Grid) curvelinearLocator(axis *Axis, minor bool) Locator {
+func (g *Grid) curvelinearLocator(axis *Axis, minor bool) ticker.Locator {
 	if minor {
-		var loc Locator
+		var loc ticker.Locator
 		if g.MinorLocator != nil {
 			loc = g.MinorLocator
 		} else if axis != nil && axis.MinorLocator != nil {
 			loc = axis.MinorLocator
 		} else {
-			loc = MinorLinearLocator{N: 5}
+			loc = ticker.MinorLinearLocator{N: 5}
 		}
 		if axis != nil {
-			loc = locatorWithMajorContext(loc, axis.Locator)
+			loc = ticker.WithMajorContext(loc, axis.Locator)
 		}
 		return loc
 	}
@@ -381,7 +382,7 @@ func (g *Grid) curvelinearLocator(axis *Axis, minor bool) Locator {
 	if axis != nil && axis.Locator != nil {
 		return axis.Locator
 	}
-	return LinearLocator{}
+	return ticker.LinearLocator{}
 }
 
 func (g *Grid) curvelinearTargetTickCount(axis *Axis, minor bool) int {

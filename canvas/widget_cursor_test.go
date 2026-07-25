@@ -5,14 +5,15 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
 func TestWidgetInteractionCursorHover(t *testing.T) {
 	fig := core.NewFigure(200, 100)
 	left := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 0.5, Y: 1}})
 	right := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.5, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-	leftCursor := left.Cursor()
-	multiCursor := left.MultiCursor(right)
+	leftCursor := widgets.NewCursor(left)
+	multiCursor := widgets.NewMultiCursor(left, right)
 
 	var dispatcher Dispatcher
 	wi := NewWidgetInteraction(fig, func() error { return nil })

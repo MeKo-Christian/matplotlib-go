@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func (a *Axis) drawPolarSpine(r render.Renderer, ctx *DrawContext) {
@@ -109,7 +110,7 @@ func (a *Axis) drawPolarTickLabels(r render.Renderer, ctx *DrawContext) {
 	}
 }
 
-func (a *Axis) drawPolarThetaTickLabels(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64) {
+func (a *Axis) drawPolarThetaTickLabels(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, ticks []float64, formatter ticker.Formatter, style TickLabelStyle, tickSize float64) {
 	if formatter == nil || len(ticks) == 0 {
 		return
 	}
@@ -120,7 +121,7 @@ func (a *Axis) drawPolarThetaTickLabels(textRen render.TextDrawer, r render.Rend
 	fontKey := tickLabelFontKey(style, ctx)
 	labelPadPx := polarThetaTickLabelPadPx(a, tickSize, style, ctx)
 
-	format := tickLabelFormatter(formatter, ticks)
+	format := ticker.LabelFormatter(formatter, ticks)
 	for i, tick := range ticks {
 		label := format(tick, i)
 		if label == "" {
@@ -142,7 +143,7 @@ func polarThetaTickLabelPadPx(a *Axis, tickSize float64, style TickLabelStyle, c
 	return padPx + pointsToPixels(rc, 7)
 }
 
-func (a *Axis) drawPolarRadialTickLabels(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64) {
+func (a *Axis) drawPolarRadialTickLabels(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, ticks []float64, formatter ticker.Formatter, style TickLabelStyle, tickSize float64) {
 	if formatter == nil || len(ticks) == 0 {
 		return
 	}
@@ -158,7 +159,7 @@ func (a *Axis) drawPolarRadialTickLabels(textRen render.TextDrawer, r render.Ren
 	}
 	labelAngle := polarRadialLabelAngleForProjection(ctx.Projection)
 
-	format := tickLabelFormatter(formatter, ticks)
+	format := ticker.LabelFormatter(formatter, ticks)
 	for i, tick := range ticks {
 		label := format(tick, i)
 		if label == "" {
@@ -179,7 +180,7 @@ func (a *Axis) polarTickLabelBounds(r render.Renderer, ctx *DrawContext) (geom.R
 
 	type polarLabel struct {
 		ticks    []float64
-		format   Formatter
+		format   ticker.Formatter
 		style    TickLabelStyle
 		tickSize float64
 	}
@@ -239,7 +240,7 @@ func (a *Axis) polarTickLabelBounds(r render.Renderer, ctx *DrawContext) (geom.R
 	return union, have
 }
 
-func (a *Axis) polarTickLabelBoundsForLevel(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64) (geom.Rect, bool) {
+func (a *Axis) polarTickLabelBoundsForLevel(r render.Renderer, ctx *DrawContext, ticks []float64, formatter ticker.Formatter, style TickLabelStyle, tickSize float64) (geom.Rect, bool) {
 	center, outerRadius := polarCenterAndRadius(ctx.Clip)
 	style = normalizeTickLabelStyle(style)
 	fontSize := tickLabelFontSizeForStyle(a, style, ctx)
@@ -252,7 +253,7 @@ func (a *Axis) polarTickLabelBoundsForLevel(r render.Renderer, ctx *DrawContext,
 		have  bool
 	)
 
-	format := tickLabelFormatter(formatter, ticks)
+	format := ticker.LabelFormatter(formatter, ticks)
 	for i, tick := range ticks {
 		label := format(tick, i)
 		if label == "" {
@@ -307,7 +308,7 @@ func (a *Axis) polarThetaTickLabelWindowBounds(r render.Renderer, ctx *DrawConte
 
 	type polarLabel struct {
 		ticks    []float64
-		format   Formatter
+		format   ticker.Formatter
 		style    TickLabelStyle
 		tickSize float64
 	}
@@ -352,7 +353,7 @@ func (a *Axis) polarThetaTickLabelWindowBounds(r render.Renderer, ctx *DrawConte
 	return union, have
 }
 
-func (a *Axis) polarThetaTickLabelWindowBoundsForLevel(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64) (geom.Rect, bool) {
+func (a *Axis) polarThetaTickLabelWindowBoundsForLevel(r render.Renderer, ctx *DrawContext, ticks []float64, formatter ticker.Formatter, style TickLabelStyle, tickSize float64) (geom.Rect, bool) {
 	if formatter == nil || len(ticks) == 0 {
 		return geom.Rect{}, false
 	}
@@ -367,7 +368,7 @@ func (a *Axis) polarThetaTickLabelWindowBoundsForLevel(r render.Renderer, ctx *D
 		union geom.Rect
 		have  bool
 	)
-	format := tickLabelFormatter(formatter, ticks)
+	format := ticker.LabelFormatter(formatter, ticks)
 	for i, tick := range ticks {
 		label := format(tick, i)
 		if label == "" {

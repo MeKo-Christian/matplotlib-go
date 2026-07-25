@@ -182,7 +182,7 @@ func (r *Registry) BackendComparisonReport(config Config) string {
 
 func backendReportLabel(backend Backend, renderer render.Renderer) string {
 	label := string(backend)
-	if reporter, ok := renderer.(render.RendererModeReporter); ok {
+	if reporter, ok := renderer.(RendererModeReporter); ok {
 		if mode := strings.TrimSpace(reporter.RendererModeLabel()); mode != "" {
 			label += "/" + mode
 		}
@@ -261,14 +261,14 @@ var RequiredCapabilities = map[string][]Capability{
 	},
 }
 
-// GetRecommendedBackend returns the best backend for a specific use case.
-func GetRecommendedBackend(useCase string) (Backend, error) {
+// RecommendedBackend returns the best backend for a specific use case.
+func RecommendedBackend(useCase string) (Backend, error) {
 	required, ok := RequiredCapabilities[useCase]
 	if !ok {
 		return "", fmt.Errorf("unknown use case: %s", useCase)
 	}
 
-	return GetBestBackend(required)
+	return BestBackend(required)
 }
 
 // BackendsForExtension lists every available backend whose registered

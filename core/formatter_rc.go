@@ -1,8 +1,11 @@
 package core
 
-import "github.com/cwbudde/matplotlib-go/style"
+import (
+	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/ticker"
+)
 
-func scalarFormatterWithRC(formatter ScalarFormatter, rc *style.RC) ScalarFormatter {
+func scalarFormatterWithRC(formatter ticker.ScalarFormatter, rc *style.RC) ticker.ScalarFormatter {
 	if rc == nil {
 		return formatter
 	}
@@ -10,8 +13,7 @@ func scalarFormatterWithRC(formatter ScalarFormatter, rc *style.RC) ScalarFormat
 	formatter.PowerLimits = cfg.Limits
 	formatter.UsePowerLimits = true
 	formatter.DisableOffset = !cfg.UseOffset
-	formatter.OffsetThreshold = cfg.OffsetThreshold
-	formatter.offsetThresholdSet = true
+	formatter = formatter.WithOffsetThreshold(cfg.OffsetThreshold)
 	formatter.UseLocale = cfg.UseLocale
 	formatter.UseMathText = cfg.UseMathText
 	return formatter
@@ -25,11 +27,11 @@ func applyRCFormatterDefaultsToAxis(axis *Axis, rc *style.RC) {
 	axis.MinorFormatter = formatterWithRC(axis.MinorFormatter, rc)
 }
 
-func formatterWithRC(formatter Formatter, rc *style.RC) Formatter {
+func formatterWithRC(formatter ticker.Formatter, rc *style.RC) ticker.Formatter {
 	switch current := formatter.(type) {
-	case ScalarFormatter:
+	case ticker.ScalarFormatter:
 		return scalarFormatterWithRC(current, rc)
-	case LogFormatterMathText:
+	case ticker.LogFormatterMathText:
 		current.MinExponent = rc.Axes.Formatter.MinExponent
 		return current
 	default:

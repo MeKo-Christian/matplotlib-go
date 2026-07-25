@@ -709,34 +709,34 @@ func (r *Renderer) withTemporaryFontKey(draw func()) {
 	draw()
 }
 
-// GetImage returns the rendered image as a standard Go image.RGBA.
+// Image returns the rendered image as a standard Go image.RGBA.
 //
 // NOTE: the AGG buffer holds straight (non-premultiplied) alpha, but image.RGBA's
 // Go contract is premultiplied. For fully-opaque output the two coincide, so most
 // callers are unaffected; consumers that need correct semantics on
 // semi/fully-transparent pixels (e.g. parity comparison of a figure rendered over
-// a transparent canvas) should use GetImageNRGBA, which labels the same bytes as
+// a transparent canvas) should use ImageNRGBA, which labels the same bytes as
 // straight NRGBA.
-func (r *Renderer) GetImage() *image.RGBA {
+func (r *Renderer) Image() *image.RGBA {
 	return r.ctx.GetImage().ToGoImage()
 }
 
-// GetImageNRGBA returns the rendered image as an image.NRGBA whose straight
+// ImageNRGBA returns the rendered image as an image.NRGBA whose straight
 // (non-premultiplied) alpha bytes match the AGG buffer verbatim. This is the
 // correctly-labeled view of the buffer: image.NRGBA's Go contract is straight
 // alpha, so At() premultiplies consistently with a straight-alpha PNG loaded via
 // image/png (which decodes to NRGBA). Use it when transparency must round-trip
-// and compare correctly — GetImage mislabels straight bytes as premultiplied
+// and compare correctly — Image mislabels straight bytes as premultiplied
 // RGBA, corrupting semi/fully-transparent pixels through premultiplied At() and
 // png.Encode. The returned image owns its pixels (a copy of the buffer).
-func (r *Renderer) GetImageNRGBA() *image.NRGBA {
-	src := r.GetImage()
+func (r *Renderer) ImageNRGBA() *image.NRGBA {
+	src := r.Image()
 	return &image.NRGBA{Pix: src.Pix, Stride: src.Stride, Rect: src.Rect}
 }
 
 // ImageView returns a non-owning RGBA view over the renderer's AGG buffer.
 // Mutating the returned image mutates the renderer, and a later Clear or draw
-// call may overwrite its pixels. Use GetImage when an owned snapshot is needed.
+// call may overwrite its pixels. Use Image when an owned snapshot is needed.
 func (r *Renderer) ImageView() *image.RGBA {
 	if r == nil || r.ctx == nil || r.ctx.image == nil {
 		return nil
@@ -754,7 +754,7 @@ func (r *Renderer) ImageView() *image.RGBA {
 
 // SavePNG saves the rendered image to a PNG file.
 //
-// The AGG render buffer holds straight (non-premultiplied) alpha, so GetImage
+// The AGG render buffer holds straight (non-premultiplied) alpha, so Image
 // returns straight RGBA bytes in an image.RGBA (whose channels are
 // premultiplied by Go's contract). Encoding that directly makes png.Encode
 // apply an unclamped premultiplied->straight conversion that overflows for any

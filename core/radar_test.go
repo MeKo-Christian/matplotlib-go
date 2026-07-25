@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestAddRadarAxesConfiguresProjection(t *testing.T) {
@@ -56,7 +57,7 @@ func TestRadarFrameAndGridUsePolygonGeometry(t *testing.T) {
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 
 	grid := NewGrid(AxisLeft)
-	grid.Locator = FixedLocator{TicksList: []float64{0.5}}
+	grid.Locator = ticker.FixedLocator{TicksList: []float64{0.5}}
 	grid.Minor = false
 
 	r := &recordingRenderer{}
@@ -84,9 +85,9 @@ func TestRadarRadialLabelsUseMatplotlibDefaultOffsetFromNorth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddRadarAxes: %v", err)
 	}
-	ax.YAxis.Locator = FixedLocator{TicksList: []float64{0.5}}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0.5}}
 	ax.YAxis.MinorLocator = nil
-	ax.YAxis.Formatter = FuncFormatter(func(float64) string { return "radial" })
+	ax.YAxis.Formatter = ticker.FuncFormatter(func(float64) string { return "radial" })
 
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 	center, outerRadius := polarCenterAndRadius(ax.adjustedLayout(fig))
@@ -155,7 +156,7 @@ func TestRadarHidesRadialSpineAndTicks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddRadarAxes: %v", err)
 	}
-	ax.YAxis.Locator = FixedLocator{TicksList: []float64{0.5}}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0.5}}
 	ax.YAxis.MinorLocator = nil
 
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))

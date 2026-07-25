@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
 func TestWidgetInteractionCheckRadioAndTextBoxAcrossVisualStyles(t *testing.T) {
@@ -45,7 +46,7 @@ func TestWidgetInteractionCheckRadioAndTextBoxAcrossVisualStyles(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fig := core.NewFigure(120, 80, tt.opt)
 			axChecks := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-			checks := axChecks.CheckButtons([]string{"A", "B", "C"}, []bool{false, false, false})
+			checks := widgets.NewCheckButtons(axChecks, []string{"A", "B", "C"}, []bool{false, false, false})
 
 			var dispatcherChecks Dispatcher
 			wiChecks := NewWidgetInteraction(fig, func() error { return nil })
@@ -62,7 +63,7 @@ func TestWidgetInteractionCheckRadioAndTextBoxAcrossVisualStyles(t *testing.T) {
 
 			figRadio := core.NewFigure(120, 80, tt.opt)
 			axRadio := figRadio.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-			radios := axRadio.RadioButtons([]string{"x", "y", "z"}, 0)
+			radios := widgets.NewRadioButtons(axRadio, []string{"x", "y", "z"}, 0)
 
 			var dispatcherRadio Dispatcher
 			wiRadio := NewWidgetInteraction(figRadio, func() error { return nil })
@@ -79,7 +80,7 @@ func TestWidgetInteractionCheckRadioAndTextBoxAcrossVisualStyles(t *testing.T) {
 
 			figText := core.NewFigure(120, 80, tt.opt)
 			axText := figText.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-			text := axText.TextBox("Query", "abcd")
+			text := widgets.NewTextBox(axText, "Query", "abcd")
 
 			var dispatcherText Dispatcher
 			wiText := NewWidgetInteraction(figText, func() error { return nil })
@@ -108,19 +109,19 @@ func TestWidgetInteractionCheckAndRadioKeyboardNavigation(t *testing.T) {
 	axChecks := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 0.45}})
 	axRadio := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0.55}, Max: geom.Pt{X: 1, Y: 1}})
 
-	checks := axChecks.CheckButtons([]string{"A", "B", "C"}, []bool{false, false, false})
-	radios := axRadio.RadioButtons([]string{"x", "y", "z"}, 0)
+	checks := widgets.NewCheckButtons(axChecks, []string{"A", "B", "C"}, []bool{false, false, false})
+	radios := widgets.NewRadioButtons(axRadio, []string{"x", "y", "z"}, 0)
 	var checkEvents []string
 	var radioEvents []int
 
-	checks.OnChanged(func(_ *core.CheckButtons, index int, checked bool) {
+	checks.OnChanged(func(_ *widgets.CheckButtons, index int, checked bool) {
 		if checked {
 			checkEvents = append(checkEvents, "on")
 		} else {
 			checkEvents = append(checkEvents, "off")
 		}
 	})
-	radios.OnChanged(func(_ *core.RadioButtons, active int) {
+	radios.OnChanged(func(_ *widgets.RadioButtons, active int) {
 		radioEvents = append(radioEvents, active)
 	})
 
@@ -183,15 +184,15 @@ func TestWidgetInteractionDisabledCheckAndRadioIgnoreInput(t *testing.T) {
 	axRadio := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0.55}, Max: geom.Pt{X: 1, Y: 1}})
 
 	disabled := true
-	checks := axChecks.CheckButtons([]string{"A", "B"}, []bool{false, false}, core.CheckButtonsOptions{Disabled: &disabled})
-	radios := axRadio.RadioButtons([]string{"x", "y"}, 0, core.RadioButtonsOptions{Disabled: &disabled})
+	checks := widgets.NewCheckButtons(axChecks, []string{"A", "B"}, []bool{false, false}, widgets.CheckButtonsOptions{Disabled: &disabled})
+	radios := widgets.NewRadioButtons(axRadio, []string{"x", "y"}, 0, widgets.RadioButtonsOptions{Disabled: &disabled})
 
 	var checkEvents int
 	var radioEvents int
-	checks.OnChanged(func(*core.CheckButtons, int, bool) {
+	checks.OnChanged(func(*widgets.CheckButtons, int, bool) {
 		checkEvents++
 	})
-	radios.OnChanged(func(*core.RadioButtons, int) {
+	radios.OnChanged(func(*widgets.RadioButtons, int) {
 		radioEvents++
 	})
 
@@ -244,14 +245,14 @@ func TestWidgetInteractionTextBoxEditing(t *testing.T) {
 	setClipboard("")
 	fig := core.NewFigure(120, 80)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-	tb := ax.TextBox("Query", "hello")
+	tb := widgets.NewTextBox(ax, "Query", "hello")
 
 	var submitCalls []string
 	var cancelCalls []string
-	tb.OnSubmit(func(_ *core.TextBox, value string) {
+	tb.OnSubmit(func(_ *widgets.TextBox, value string) {
 		submitCalls = append(submitCalls, value)
 	})
-	tb.OnCancel(func(_ *core.TextBox, value string) {
+	tb.OnCancel(func(_ *widgets.TextBox, value string) {
 		cancelCalls = append(cancelCalls, value)
 	})
 
@@ -317,7 +318,7 @@ func TestWidgetInteractionTextBoxEditing(t *testing.T) {
 func TestWidgetInteractionNonWidgetEventsContinueToUsers(t *testing.T) {
 	fig := core.NewFigure(120, 80)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 0.5, Y: 1}})
-	_ = ax.Button("Run")
+	_ = widgets.NewButton(ax, "Run")
 
 	var received int
 	var dispatcher Dispatcher

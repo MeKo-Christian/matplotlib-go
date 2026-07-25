@@ -45,13 +45,17 @@ func stablePublicPackageDirs() []string {
 		"canvas",
 		"color",
 		"core",
+		"dates",
 		"diag",
 		"geom",
+		"plot3d",
 		"pyplot",
 		"render",
 		"style",
+		"ticker",
 		"transform",
 		"tri",
+		"widgets",
 	}
 }
 

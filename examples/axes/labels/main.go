@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -29,8 +28,8 @@ func main() {
 	ax.SetYLabel("Amplitude")
 
 	// Minor ticks mirror Matplotlib's minorticks_on() call.
-	ax.XAxis.MinorLocator = core.MinorLinearLocator{N: 5}
-	ax.YAxis.MinorLocator = core.MinorLinearLocator{N: 4}
+	ax.XAxis.MinorLocator = ticker.MinorLinearLocator{N: 5}
+	ax.YAxis.MinorLocator = ticker.MinorLinearLocator{N: 4}
 
 	ax.AddXGrid()
 	ax.AddYGrid()
@@ -46,18 +45,7 @@ func main() {
 
 	ax.Plot(x, y, core.PlotOptions{Label: "sin(x)"})
 
-	r, _, err := backends.NewRendererFromEnv(backends.Config{
-		Width:      800,
-		Height:     500,
-		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
-		DPI:        72.0,
-	}, backends.TextCapabilities)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
-
-	if err := core.SavePNG(fig, r, "labels.png"); err != nil {
+	if err := fig.Save("labels.png"); err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}

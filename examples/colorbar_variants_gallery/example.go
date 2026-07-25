@@ -104,7 +104,7 @@ func addExtensionsPanel(fig *core.Figure) {
 func registerExtensionColormap() {
 	under := render.Color{R: 0.08, G: 0.16, B: 0.72, A: 1}
 	over := render.Color{R: 0.78, G: 0.12, B: 0.08, A: 1}
-	matcolor.RegisterColormap("phase18 extension", matcolor.GetColormap("viridis").Copy("phase18 extension").WithUnder(under).WithOver(over))
+	matcolor.RegisterColormap("phase18 extension", matcolor.LookupColormap("viridis").Copy("phase18 extension").WithUnder(under).WithOver(over))
 }
 
 func logData(rows, cols int) [][]float64 {
@@ -139,5 +139,5 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }

@@ -5,8 +5,9 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -35,8 +36,8 @@ func Plot() *core.Figure {
 	top.SetYLim(0, 1)
 	_ = top.SetXScale("log", transform.WithScaleBase(10))
 	top.SetXLim(1, 1000)
-	top.XAxis.MinorLocator = core.LogLocator{Base: 10, SubsMode: "auto"}
-	top.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
+	top.XAxis.MinorLocator = ticker.LogLocator{Base: 10, SubsMode: "auto"}
+	top.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
 	xGrid := top.AddXGrid()
 	xGrid.Minor = true
 	xGrid.MinorLineWidth = 0.35
@@ -57,7 +58,7 @@ func Plot() *core.Figure {
 	bottom.SetYLim(0, 1)
 	_ = bottom.SetXScale("log", transform.WithScaleBase(2))
 	bottom.SetXLim(1, 64)
-	bottom.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
+	bottom.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
 	common.AddReferenceYGrid(bottom)
 	return fig
 }

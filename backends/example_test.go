@@ -11,7 +11,7 @@ import (
 // Example selects the best available backend and creates a renderer from it
 // without naming a specific backend.
 func Example() {
-	backend, err := backends.GetBestBackend(nil)
+	backend, err := backends.BestBackend(nil)
 	if err != nil {
 		fmt.Println("no backend available:", err)
 		return
@@ -34,7 +34,7 @@ func Example_requireCapabilities() {
 		backends.FontHinting,
 	}
 
-	backend, err := backends.GetBestBackend(required)
+	backend, err := backends.BestBackend(required)
 	if err != nil {
 		fmt.Println("no capable backend:", err)
 		return

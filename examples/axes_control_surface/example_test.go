@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestPlotKeepsTopLabelReadableAndLeftMinorTicksSparse(t *testing.T) {
@@ -19,9 +20,9 @@ func TestPlotKeepsTopLabelReadableAndLeftMinorTicksSparse(t *testing.T) {
 
 	assertMinorStep := func(name string, axis *core.Axis) {
 		t.Helper()
-		loc, ok := axis.MinorLocator.(core.MultipleLocator)
+		loc, ok := axis.MinorLocator.(ticker.MultipleLocator)
 		if !ok {
-			t.Fatalf("%s minor locator = %T, want core.MultipleLocator", name, axis.MinorLocator)
+			t.Fatalf("%s minor locator = %T, want ticker.MultipleLocator", name, axis.MinorLocator)
 		}
 		if got, want := loc.Base, 0.2; got != want {
 			t.Fatalf("%s minor tick step = %v, want %v", name, got, want)

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestAxesMatShowConfiguresMatrixView(t *testing.T) {
@@ -36,13 +37,13 @@ func TestAxesMatShowConfiguresMatrixView(t *testing.T) {
 	if ax.xLabelSide != AxisBottom {
 		t.Fatalf("x label side = %v, want AxisBottom", ax.xLabelSide)
 	}
-	if _, ok := ax.XAxis.Locator.(MaxNLocator); !ok {
+	if _, ok := ax.XAxis.Locator.(ticker.MaxNLocator); !ok {
 		t.Fatalf("x locator = %T, want MaxNLocator", ax.XAxis.Locator)
 	}
-	if _, ok := ax.XAxisTop.Locator.(MaxNLocator); !ok {
+	if _, ok := ax.XAxisTop.Locator.(ticker.MaxNLocator); !ok {
 		t.Fatalf("top x locator = %T, want MaxNLocator", ax.XAxisTop.Locator)
 	}
-	if _, ok := ax.YAxis.Locator.(MaxNLocator); !ok {
+	if _, ok := ax.YAxis.Locator.(ticker.MaxNLocator); !ok {
 		t.Fatalf("y locator = %T, want MaxNLocator", ax.YAxis.Locator)
 	}
 }

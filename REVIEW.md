@@ -45,8 +45,8 @@ These were verified by reading the Go and the matplotlib source side by side.
 - **usetex** is a working `latex`+`dvipng` pipeline (`internal/tex/manager.go:133,170`), wired into agg/svg/pdf.
 - **Triangulation** (`tri/`): a 21-line shim into the external `qhull-go` module — a genuine exact-predicate engine (`orient2d`/`inCircle` over `math/big.Rat`) that re-ports Qhull 8.0.2's incremental-hull vertex order. `TrapezoidMapTriFinder` and the HCT `CubicTriInterpolator` matrices are byte-identical to `_triinterpolate.py:600`.
 - **Color norms** (`core/norm.go`): Normalize, LogNorm, SymLogNorm, PowerNorm, BoundaryNorm faithful forward+inverse; 87 colormaps stored as real 256-entry LUTs (`color/colormap.go:93`). `ToRGBA` faithfully mirrors `to_rgba` incl. `#hex`, tuples, `Cn` cycle refs, grayscale strings; named tables exact (css4=148, xkcd=949).
-- **ScalarFormatter** (`core/tick_formatters.go:154`): full additive-offset + ×10ⁿ scientific notation — `_compute_offset`, `_set_order_of_magnitude`, banker's rounding, `get_offset`. **Not a stub.**
-- **MaxNLocator** (`core/tick_locators.go`): near line-by-line — `scale_range`, `_Edge_integer`, `_raw_ticks`, `nonsingular`.
+- **ScalarFormatter** (`ticker/formatters.go:154`): full additive-offset + ×10ⁿ scientific notation — `_compute_offset`, `_set_order_of_magnitude`, banker's rounding, `get_offset`. **Not a stub.**
+- **MaxNLocator** (`ticker/locators.go`): near line-by-line — `scale_range`, `_Edge_integer`, `_raw_ticks`, `nonsingular`.
 - **Bezier toolkit** (`geom/bezier.go`) and **path simplifier** (`backends/agg/agg_path_simplify.go`, a real `PathSimplifier` port gated ≥128 verts) are faithful.
 - **Cycler** (`cycler/cycler.go`): full multi-key composition (`New`/`Concat`/`Multiply`/`ByKey`), not color-only.
 - **Style sheets**: 28 real `.mplstyle` ports in `style/stylelib/` (vs mpl's 29), copied near-verbatim.
@@ -62,7 +62,7 @@ Severity key: **CRITICAL** = advertises/pretends to work but doesn't · **SILENT
 ### 3.1 Secondary backends (the densest cluster)
 
 - **CRITICAL — `backends/skia/`**: The default (untagged) Skia backend is a pure stub — `New` returns an error and `MeasureText` returns `{}` (`skia_stub.go:16,65`). Under `-tags skia` it registers the **full native capability set** while running every method on an embedded `*gobasic.Renderer`. Real native Skia exists only under `-tags "skia skiacgo"`, and even then it is CPU raster.
-- **CRITICAL — Skia "GPU" is scaffolding.** `GPU()` returns `r.useGPU` (true under `-tags skiagpu`) but the surface is always the CPU readback bridge; `gpu_enabled.go` says so explicitly, and `SkSurface::MakeRenderTarget` is `StatusDeferred` (`backends/skia/strategy.go:142`). `FlushGPU` is a no-op TODO (`skia.go:393`); `GetSurface()` always returns `nil` (`skia.go:380`).
+- **CRITICAL — Skia "GPU" is scaffolding.** `GPU()` returns `r.useGPU` (true under `-tags skiagpu`) but the surface is always the CPU readback bridge; `gpu_enabled.go` says so explicitly, and `SkSurface::MakeRenderTarget` is `StatusDeferred` (`backends/skia/strategy.go:142`). `FlushGPU` is a no-op TODO (`skia.go:393`); `Surface()` always returns `nil` (`skia.go:380`).
 - **CRITICAL — `backends/registry.go:98`**: `capabilityRuntimeChecks` / `VerifyRendererCapabilities` test _interface presence_ (type assertion), not behavior — so the matrix reports "✓ native" for all the fakes above. The advertising layer cannot catch any of these.
 - **CRITICAL — `backends/gobasic/stroke.go:316,340`**: `JoinRound` draws no arc (reuses the miter point); `JoinBevel` is an empty case. The default pure-Go renderer mis-strokes joins.
 - **SILENT — `backends/gobasic`**: `pathDevice` copies ~7 of ~27 `Paint` fields, dropping `CompositeMode`, `Alpha`, `FillPattern`, `FillGradient`, `Antialias`, `Snap`. No gradients (capability not declared); images always nearest-neighbor.
@@ -78,7 +78,7 @@ Severity key: **CRITICAL** = advertises/pretends to work but doesn't · **SILENT
 
 ### 3.2 Silent degradations in `core/`
 
-- **SILENT — `color/colormap.go:390`**: `GetColormap` returns **viridis** (with only a `diag.Warnf`) for any unknown name, and folds names case-insensitively (`"Blues"=="blues"`), where matplotlib raises and is case-sensitive. A typo renders a plausible-but-wrong plot.
+- **SILENT — `color/colormap.go:390`**: `LookupColormap` returns **viridis** (with only a `diag.Warnf`) for any unknown name, and folds names case-insensitively (`"Blues"=="blues"`), where matplotlib raises and is case-sensitive. A typo renders a plausible-but-wrong plot.
 - **SILENT — `core/introspection.go:75`**: `Setp` silently drops unknown property keys; matplotlib raises `AttributeError`.
 - **SILENT — `core/picker_contains.go:271`**: `Text.Contains` fakes the glyph bbox from `FontSize × rune-count`; interactive picks on rotated/proportional text are wrong.
 - **SILENT — `core/image.go:48`**: a final fallback ignores rotation entirely on backends implementing neither `rasterizeTransformed` nor `ImageTransformer` (benign on AGG, which implements both).
@@ -87,13 +87,13 @@ Severity key: **CRITICAL** = advertises/pretends to work but doesn't · **SILENT
 
 ### 3.3 Concrete correctness bugs (divergent, not fake)
 
-- **BUG — `core/tick_locators.go:683`**: `LogLocator` default stride uses `ceil(numDecades/numTicks)` instead of mpl's `numdec//numticks + 1` — these disagree (e.g. 18 decades / 9 ticks: mpl→3, Go→2), so dense log axes get a different decade stride.
+- **BUG — `ticker/locators.go:683`**: `LogLocator` default stride uses `ceil(numDecades/numTicks)` instead of mpl's `numdec//numticks + 1` — these disagree (e.g. 18 decades / 9 ticks: mpl→3, Go→2), so dense log axes get a different decade stride.
 - **BUG/weak — `core/contour_lines.go:215`**: saddle disambiguation keys off `above[0]` with fixed corner order, never computes the cell-center mean that mpl2014 uses, and emits all four crossings as one connected polyline. The least-faithful part of the contour port.
 - **APPROXIMATE — TwoSlopeNorm** maps out-of-range to finite extrapolation instead of mpl's ±inf (`core/norm.go`); log/logit clip semantics and date nice-snapping (14-day→`[1,15]`) also diverge.
 
 ### 3.4 Honest, documented limitations (to be fair)
 
-- `core/axes3d.go:391` `PlotSurface` draws a line strip and emits a one-shot `diag.Warnf` pointing at the real `Surface()`; same for `Voxel` vs `Voxels`. The whole 3D family is documented (`axes3d.go:31`) as a 2D artist model with pre-projected coordinates — there is no depth-buffered painter pipeline (`mplot3d_gallery` ≈ 22 RMSE).
+- `plot3d/axes.go:391` `PlotSurface` draws a line strip and emits a one-shot `diag.Warnf` pointing at the real `Surface()`; same for `Voxel` vs `Voxels`. The whole 3D family is documented (`plot3d/axes.go:31`) as a 2D artist model with pre-projected coordinates — there is no depth-buffered painter pipeline (`mplot3d_gallery` ≈ 22 RMSE).
 - `render/render.go:495` `NullRenderer` and the ~50 capability interfaces in `render/extensions.go` are honest contracts, not pretend-fakes.
 - Throughout `core/` and `pyplot/`, unknown-mode `switch default` cases return explicit `unsupported …` errors rather than swallowing input (e.g. `pyplot/axes_wrappers.go:71`).
 
@@ -113,7 +113,7 @@ Setting one of these gives **false confidence that it took effect**. To the proj
 
 Verified absent (not papered over by examples):
 
-- **2D `bar(yerr=/xerr=)`** — `BarOptions` (`core/plot.go:508`) has no error field; only 3D `ErrorBar3D` (`core/axes3d.go:479`) has asymmetric error.
+- **2D `bar(yerr=/xerr=)`** — `BarOptions` (`core/plot.go:508`) has no error field; only 3D `ErrorBar3D` (`plot3d/axes.go:479`) has asymmetric error.
 - **`hist(log=)`** — no `Log` field in `HistOptions`.
 - **mathtext `cm`/`stix` fontsets** — `core/mathtext.go:208` only remaps the font _family_ over the single DejaVu Unicode table; matplotlib's `BakomaFonts`/`StixFonts` per-fontset glyph maps are not ported, so only the DejaVu default (what every parity reference uses) is parity-exact.
 - **~3 accents** missing vs matplotlib's 20-entry `_accent_map`.
@@ -138,7 +138,7 @@ The gate is genuine but has two holes worth closing:
 
 1. `color/colormap.go:390` — raise on unknown colormap name; make lookup case-sensitive.
 2. `core/introspection.go:75` — make `Setp` error on unknown keys.
-3. `core/tick_locators.go:683` — fix the `LogLocator` stride to `numdec//numticks + 1`.
+3. `ticker/locators.go:683` — fix the `LogLocator` stride to `numdec//numticks + 1`.
 4. Vector backends — error (or visibly warn) when dropping gradient-filled collection items rather than `continue`-ing silently.
 
 **Stop advertising what isn't there:** 5. `backends/registry.go:98` — make capability verification behavioral, not interface-presence, OR have stub renderers (default Skia) decline the native capabilities. 6. Relabel the Skia "GPU" mode honestly (it is CPU readback) and gate `GPU()`/`FlushGPU` accordingly. 7. Fix the `backends/desktop/gio/doc.go` doc that states the opposite of reality.
@@ -168,7 +168,7 @@ This is a serious, high-fidelity port, not a facade. The numerically hard cores 
 - **MED — scatter default size renders invisible.** `Scatter2D.Size` zero-value is 0 and `scatterAreaScale` returns 0 for `area<=0` (`core/scatter.go:802-810`); matplotlib defaults `s = lines.markersize² = 36` pt².
 - **LOW — minor ticks.** Size `3.5×0.6 = 2.1` vs mpl `xtick.minor.size: 2` (`core/axis_ticks.go:73`); minor pad not distinguished from major (both 3.5 vs mpl 3.4/3.5, `core/axis_types.go:23`); tick-label pad DPI fallback uses 96 instead of 100 (`core/axis_ticklabels.go:203`).
 - **MED gap — `plot()` has no linestyle field.** `PlotOptions` exposes only `Dashes []float64` (`core/plot.go:21`); `lineStyleToDashes` is reachable only via the prop cycle, so the most common mpl idiom (`linestyle="--"`) has no direct spelling.
-- **Verified correct (regression documentation):** DPI 100, figsize 6.4×4.8, font.size 10/title 12, major tick geometry (3.5/0.8/0.6/pad 3.5/direction out), grid `#b0b0b0` lw 0.8, `axes.axisbelow="line"` z=1.5, legend framealpha 0.8/frameon/edgecolor 0.8, `errorbar.capsize 0`, `axes.unicode_minus` (U+2212 conversion at `core/tick_formatters.go:447`), and the full dash-pattern/cap/join set — dashed `[3.7,1.6]`, dashdot `[6.4,1.6,1,1.6]`, dotted `[1,1.65]`, width-scaled, solid cap projecting / dashed cap butt, join round (`core/contour_styles.go:26`, `core/line.go:339`).
+- **Verified correct (regression documentation):** DPI 100, figsize 6.4×4.8, font.size 10/title 12, major tick geometry (3.5/0.8/0.6/pad 3.5/direction out), grid `#b0b0b0` lw 0.8, `axes.axisbelow="line"` z=1.5, legend framealpha 0.8/frameon/edgecolor 0.8, `errorbar.capsize 0`, `axes.unicode_minus` (U+2212 conversion at `ticker/formatters.go:447`), and the full dash-pattern/cap/join set — dashed `[3.7,1.6]`, dashdot `[6.4,1.6,1,1.6]`, dotted `[1,1.65]`, width-scaled, solid cap projecting / dashed cap butt, join round (`core/contour_styles.go:26`, `core/line.go:339`).
 
 ## 2. New algorithmic divergences (Phase 17 fold-in)
 
@@ -176,11 +176,11 @@ This is a serious, high-fidelity port, not a facade. The numerically hard cores 
 - **BUG — autoscale margins in data space.** `core/axes_autoscale.go:92-93` pads `span·margin` in data coordinates; matplotlib pads in transform space and inverse-maps (`axes/_base.py:3064-3070`) — wrong padding on every log/symlog axis. Also: non-positive limits are not dropped before log autoscale (`_base.py:3017`), and zero-span expansion uses `span=1` + linear margin instead of `nonsingular(expander=0.05·|v|)`.
 - **BUG — zero-bbox artists dropped from autoscale.** `core/axes_autoscale.go:51` skips artists whose bounds are exactly `{0,0,0,0}` — a single point at the origin is ignored. matplotlib has no such exclusion; the sentinel needs an explicit has-data flag.
 - **MISSING — spine positions.** Only boundary + data modes exist (`core/axis_types.go:57-62`); matplotlib's `set_position(('outward', pts))` and `(('axes', frac))` (`spines.py`) — the standard detached/centered-spine idioms — are absent.
-- **BUG — AutoDateLocator DAILY table.** `{1,2,4,7,14}` (`core/date_tick.go:648`) vs matplotlib `{1,2,3,7,14,21}`; the broader rrule alignment stays a simplified `align()` (documented divergence).
+- **BUG — AutoDateLocator DAILY table.** `{1,2,4,7,14}` (`dates/date_tick.go:648`) vs matplotlib `{1,2,3,7,14,21}`; the broader rrule alignment stays a simplified `align()` (documented divergence).
 - **BUG — pie framing.** Axis window is radius-scaled (`padding := Radius*1.25`, `core/pie.go:245`); matplotlib fixes it at `±1.25 + center` regardless of radius.
 - **Hist internals (with the Phase 19 default fix):** 'auto' should be numpy's `min(fd, sturges)` bin width, not an n<1000 Sturges/Scott switch (`core/histogram.go:285-289`); FD IQR uses nearest-rank instead of interpolated percentiles (`:375`); Scott uses ddof=1 instead of numpy's ddof=0 (`:352-367`).
 - **APPROXIMATE — constrained_layout edges.** Nested-mosaic grids are not modeled (`core/layoutgrid.go:239`) and outside legend/colorbar space is reserved approximately (`:448`).
-- **Doc rot:** `core/axes3d_contour.go:10` still claims a "placeholder wireframe contour"; the code beneath runs a real projected contour.
+- **Doc rot:** `plot3d/contour.go:10` still claims a "placeholder wireframe contour"; the code beneath runs a real projected contour.
 - **Verified faithful (no action):** legend `loc="best"` (full `_find_best_position` candidate loop + 4-term badness), violin KDE (Scott/Silverman exact), imshow (all 18 AGG filters + the `antialiased` auto-select), `ArrowStyle`/`ConnectionStyle` registries (complete), the ~40-marker table + fillstyles (geometric-clip mechanism, equivalent output), pie defaults, hexbin (gridsize/extent/mincnt/marginals/reduce_C).
 
 ## 3. rcParams not parsed at all (Phase 16 fold-in)

@@ -3,8 +3,8 @@ package canvas
 import (
 	"sync"
 
-	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
 type WidgetInteraction struct {
@@ -16,26 +16,26 @@ type WidgetInteraction struct {
 	dispatch *Dispatcher
 	connects []ConnectionID
 
-	hoveredButton *core.Button
-	pressedButton *core.Button
-	focusedButton *core.Button
+	hoveredButton *widgets.Button
+	pressedButton *widgets.Button
+	focusedButton *widgets.Button
 
-	draggingSlider            *core.Slider
+	draggingSlider            *widgets.Slider
 	draggingSliderAxes        *Axes
-	draggingRangeSlider       *core.RangeSlider
+	draggingRangeSlider       *widgets.RangeSlider
 	draggingRangeSliderAxes   *Axes
 	draggingRangeSliderHandle int
 
 	draggingSelector selectorDragState
 	focusedSelector  any
 
-	focusedText              *core.TextBox
-	focusedSlider            *core.Slider
-	focusedRangeSlider       *core.RangeSlider
+	focusedText              *widgets.TextBox
+	focusedSlider            *widgets.Slider
+	focusedRangeSlider       *widgets.RangeSlider
 	focusedRangeSliderHandle int
-	focusedCheck             *core.CheckButtons
+	focusedCheck             *widgets.CheckButtons
 	focusedCheckIndex        int
-	focusedRadio             *core.RadioButtons
+	focusedRadio             *widgets.RadioButtons
 	focusedRadioIndex        int
 }
 
@@ -68,19 +68,19 @@ func (w *WidgetInteraction) Attach(dispatcher *Dispatcher) {
 	w.connects = append(
 		w.connects,
 		dispatcher.Connect(EventMousePress, func(ev Event) error {
-			return w.handleMousePress(MouseEvent{Event: ev})
+			return w.handleMousePress(&MouseEvent{Event: ev})
 		}),
 		dispatcher.Connect(EventMouseMove, func(ev Event) error {
-			return w.handleMouseMove(MouseEvent{Event: ev})
+			return w.handleMouseMove(&MouseEvent{Event: ev})
 		}),
 		dispatcher.Connect(EventMouseRelease, func(ev Event) error {
-			return w.handleMouseRelease(MouseEvent{Event: ev})
+			return w.handleMouseRelease(&MouseEvent{Event: ev})
 		}),
 		dispatcher.Connect(EventFigureLeave, func(ev Event) error {
-			return w.handleMouseLeave(MouseEvent{Event: ev})
+			return w.handleMouseLeave(&MouseEvent{Event: ev})
 		}),
 		dispatcher.Connect(EventKeyPress, func(ev Event) error {
-			return w.handleKeyPress(KeyEvent{Event: ev})
+			return w.handleKeyPress(&KeyEvent{Event: ev})
 		}),
 	)
 	w.mu.Unlock()
@@ -102,11 +102,11 @@ func (w *WidgetInteraction) Detach() {
 	}
 }
 
-func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
+func (w *WidgetInteraction) handleMousePress(mouse *MouseEvent) error {
 	if w == nil {
 		return nil
 	}
-	hit := w.pickWidget(mouse.Event)
+	hit := w.pickWidget(&mouse.Event)
 	axes := w.resolveAxesForEvent(mouse)
 	if axes == nil {
 		axes = hit.axes
@@ -180,7 +180,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 	w.focusedSelector = nil
 
 	switch widget := hit.widget.(type) {
-	case *core.Button:
+	case *widgets.Button:
 		w.focusedButton = widget
 		if widget.Enabled {
 			w.pressedButton = widget
@@ -191,7 +191,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 		if w.blurFocusedTextLocked() {
 			changed = true
 		}
-	case *core.Slider:
+	case *widgets.Slider:
 		w.focusedSlider = widget
 		if widget.Enabled {
 			w.draggingSlider = widget
@@ -206,7 +206,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 		if w.blurFocusedTextLocked() {
 			changed = true
 		}
-	case *core.RangeSlider:
+	case *widgets.RangeSlider:
 		w.focusedRangeSlider = widget
 		w.focusedRangeSliderHandle = clampInt(hit.info.Index, 0, 1)
 		if widget.Enabled {
@@ -223,7 +223,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 		if w.blurFocusedTextLocked() {
 			changed = true
 		}
-	case *core.CheckButtons:
+	case *widgets.CheckButtons:
 		w.focusedCheck = widget
 		w.focusedCheckIndex = clampInt(hit.info.Index, 0, len(widget.Labels)-1)
 		if w.focusedCheckIndex < 0 {
@@ -242,7 +242,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 		if w.blurFocusedTextLocked() {
 			changed = true
 		}
-	case *core.RadioButtons:
+	case *widgets.RadioButtons:
 		w.focusedRadio = widget
 		w.focusedRadioIndex = clampInt(hit.info.Index, 0, len(widget.Labels)-1)
 		if w.focusedRadioIndex < 0 {
@@ -260,7 +260,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 		if w.blurFocusedTextLocked() {
 			changed = true
 		}
-	case *core.TextBox:
+	case *widgets.TextBox:
 		w.focusedText = widget
 		if !widget.Active {
 			w.blurFocusedTextLocked()
@@ -275,7 +275,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 				changed = true
 			}
 		}
-	case *core.SpanSelector:
+	case *widgets.SpanSelector:
 		w.focusedSelector = widget
 		if data, ok := w.pixelToDataLocked(mouse, axes); ok {
 			selectorData := data.X
@@ -299,7 +299,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 			}
 			changed = true
 		}
-	case *core.RectangleSelector:
+	case *widgets.RectangleSelector:
 		w.focusedSelector = widget
 		if data, ok := w.pixelToDataLocked(mouse, axes); ok {
 			w.draggingSelector = selectorDragState{
@@ -318,7 +318,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 			}
 			changed = true
 		}
-	case *core.EllipseSelector:
+	case *widgets.EllipseSelector:
 		w.focusedSelector = widget
 		if data, ok := w.pixelToDataLocked(mouse, axes); ok {
 			w.draggingSelector = selectorDragState{
@@ -337,7 +337,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 			}
 			changed = true
 		}
-	case *core.PolygonSelector:
+	case *widgets.PolygonSelector:
 		w.focusedSelector = widget
 		if data, ok := w.pixelToDataLocked(mouse, axes); ok {
 			shift := mouse.Modifiers&ModifierShift != 0
@@ -395,7 +395,7 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 				changed = true
 			}
 		}
-	case *core.LassoSelector:
+	case *widgets.LassoSelector:
 		w.focusedSelector = widget
 		if data, ok := w.pixelToDataLocked(mouse, axes); ok {
 			w.draggingSelector = selectorDragState{
@@ -421,11 +421,11 @@ func (w *WidgetInteraction) handleMousePress(mouse MouseEvent) error {
 	return nil
 }
 
-func (w *WidgetInteraction) handleMouseMove(mouse MouseEvent) error {
+func (w *WidgetInteraction) handleMouseMove(mouse *MouseEvent) error {
 	if w == nil {
 		return nil
 	}
-	hit := w.pickWidget(mouse.Event)
+	hit := w.pickWidget(&mouse.Event)
 	axes := w.resolveAxesForEvent(mouse)
 	if axes == nil {
 		axes = hit.axes
@@ -475,11 +475,11 @@ func (w *WidgetInteraction) handleMouseMove(mouse MouseEvent) error {
 	return nil
 }
 
-func (w *WidgetInteraction) handleMouseRelease(mouse MouseEvent) error {
+func (w *WidgetInteraction) handleMouseRelease(mouse *MouseEvent) error {
 	if w == nil {
 		return nil
 	}
-	hit := w.pickWidget(mouse.Event)
+	hit := w.pickWidget(&mouse.Event)
 	axes := w.resolveAxesForEvent(mouse)
 	if axes == nil {
 		axes = hit.axes
@@ -487,7 +487,7 @@ func (w *WidgetInteraction) handleMouseRelease(mouse MouseEvent) error {
 
 	w.mu.Lock()
 	changed := false
-	clickButton := (*core.Button)(nil)
+	clickButton := (*widgets.Button)(nil)
 	nextHovered := widgetButton(hit.widget)
 
 	if w.pressedButton != nil {
@@ -542,7 +542,7 @@ func (w *WidgetInteraction) handleMouseRelease(mouse MouseEvent) error {
 	return nil
 }
 
-func (w *WidgetInteraction) handleKeyPress(ev KeyEvent) error {
+func (w *WidgetInteraction) handleKeyPress(ev *KeyEvent) error {
 	if w == nil {
 		return nil
 	}
@@ -587,7 +587,7 @@ func (w *WidgetInteraction) handleKeyPress(ev KeyEvent) error {
 	}
 	if w.focusedCheck != nil {
 		w.mu.Unlock()
-		draw := w.handleCheckKey(w.focusedCheck, w.focusedCheckIndex, ev, key)
+		draw := w.handleCheckKey(w.focusedCheck, w.focusedCheckIndex, key)
 		if draw {
 			return w.callDraw()
 		}
@@ -602,7 +602,7 @@ func (w *WidgetInteraction) handleKeyPress(ev KeyEvent) error {
 		return nil
 	}
 	if w.focusedSelector != nil {
-		draw := w.handleSelectorKey(ev, key)
+		draw := w.handleSelectorKey(ev.Modifiers, key)
 		w.mu.Unlock()
 		if draw {
 			return w.callDraw()
@@ -613,7 +613,7 @@ func (w *WidgetInteraction) handleKeyPress(ev KeyEvent) error {
 	return nil
 }
 
-func (w *WidgetInteraction) handleMouseLeave(mouse MouseEvent) error {
+func (w *WidgetInteraction) handleMouseLeave(mouse *MouseEvent) error {
 	if w == nil {
 		return nil
 	}
@@ -663,7 +663,7 @@ func (w *WidgetInteraction) handleMouseLeave(mouse MouseEvent) error {
 	return nil
 }
 
-func (w *WidgetInteraction) resolveAxesForEvent(mouse MouseEvent) *Axes {
+func (w *WidgetInteraction) resolveAxesForEvent(mouse *MouseEvent) *Axes {
 	axes := mouse.Axes
 	if axes != nil {
 		return axes
@@ -682,7 +682,7 @@ func (w *WidgetInteraction) resolveAxesForEvent(mouse MouseEvent) *Axes {
 	return resolved
 }
 
-func (w *WidgetInteraction) pixelToDataLocked(mouse MouseEvent, axes *Axes) (geom.Pt, bool) {
+func (w *WidgetInteraction) pixelToDataLocked(mouse *MouseEvent, axes *Axes) (geom.Pt, bool) {
 	if axes == nil {
 		axes = w.resolveAxesForEvent(mouse)
 	}
@@ -695,7 +695,7 @@ func (w *WidgetInteraction) pixelToDataLocked(mouse MouseEvent, axes *Axes) (geo
 	return axes.PixelToData(mouse.Position)
 }
 
-func (w *WidgetInteraction) updateCursorFromMouseLocked(mouse MouseEvent, axes *Axes) bool {
+func (w *WidgetInteraction) updateCursorFromMouseLocked(mouse *MouseEvent, axes *Axes) bool {
 	if w.figure == nil && mouse.Figure == nil {
 		return false
 	}
@@ -708,14 +708,14 @@ func (w *WidgetInteraction) updateCursorFromMouseLocked(mouse MouseEvent, axes *
 	}
 
 	changed := false
-	seenMulti := map[*core.MultiCursor]bool{}
+	seenMulti := map[*widgets.MultiCursor]bool{}
 	for _, axis := range fig.Children {
 		if axis == nil {
 			continue
 		}
 		for _, art := range axesInteractionArtists(axis) {
 			switch selector := art.(type) {
-			case *core.Cursor:
+			case *widgets.Cursor:
 				if axes == axis {
 					data, ok := w.pixelToDataLocked(mouse, axis)
 					if !ok {
@@ -728,7 +728,7 @@ func (w *WidgetInteraction) updateCursorFromMouseLocked(mouse MouseEvent, axes *
 				} else if selector.Hide() {
 					changed = true
 				}
-			case *core.MultiCursor:
+			case *widgets.MultiCursor:
 				if seenMulti[selector] {
 					continue
 				}

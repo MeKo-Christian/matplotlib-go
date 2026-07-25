@@ -10,4 +10,9 @@
 // callers can validate that open figures draw successfully. Hosts that want a
 // real window or browser integration can install a custom handler with
 // SetShowHandler.
+//
+// Registry bookkeeping is synchronized, but pyplot's current figure and axes
+// are process-wide mutable state. Concurrent callers can interfere logically,
+// and returned core objects require their own ownership or synchronization.
+// See docs/concurrency.md.
 package pyplot

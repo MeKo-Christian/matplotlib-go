@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func Render() image.Image {
@@ -14,8 +15,8 @@ func Render() image.Image {
 	ax.SetTitle("RendererAgg Gouraud triangles")
 	ax.SetXLim(0, 4)
 	ax.SetYLim(0, 3.2)
-	ax.XAxis.Locator = core.MultipleLocator{Base: 0.5}
-	ax.YAxis.Locator = core.MultipleLocator{Base: 0.5}
+	ax.XAxis.Locator = ticker.MultipleLocator{Base: 0.5}
+	ax.YAxis.Locator = ticker.MultipleLocator{Base: 0.5}
 
 	ax.Add(&common.GouraudFixtureArtist{
 		Points: []geom.Pt{

@@ -1,5 +1,10 @@
 // Package core contains the Artist tree (Figure, Axes, Artist) and traversal.
 //
+// Figures, axes, artists, and renderers are mutable and are not safe for
+// concurrent mutation or for mutation concurrent with drawing. Applications
+// must use single-goroutine ownership or external synchronization. The complete
+// contract is documented in docs/concurrency.md.
+//
 // Core types:
 //   - Artist: Interface for drawable elements with z-order and bounds
 //   - Figure: Root container with pixel dimensions and styling

@@ -214,9 +214,9 @@ func (s *Scatter2D) ScalarMap() ScalarMapInfo {
 	}
 }
 
-// GetArray returns a copy of the scatter scalar array, matching Matplotlib's
+// Array returns a copy of the scatter scalar array, matching Matplotlib's
 // scalar-mappable PathCollection surface.
-func (s *Scatter2D) GetArray() []float64 {
+func (s *Scatter2D) Array() []float64 {
 	if s == nil || len(s.ScalarValues) == 0 {
 		return nil
 	}
@@ -1193,6 +1193,21 @@ func (s *Scatter2D) createCrossPath(center geom.Pt, radius float64) geom.Path {
 // Z returns the z-order for sorting.
 func (s *Scatter2D) Z() float64 {
 	return zOrDefault(s.z, defaultPatchZ)
+}
+
+// SetZ sets the scatter z-order.
+func (s *Scatter2D) SetZ(z float64) {
+	if s != nil {
+		s.z = z
+	}
+}
+
+// PrototypePath returns the normalized path used for this scatter's marker.
+func (s *Scatter2D) PrototypePath() geom.Path {
+	if s == nil {
+		return geom.Path{}
+	}
+	return s.markerPrototypePath()
 }
 
 // Bounds returns the data-space bounding box of all marker centers.

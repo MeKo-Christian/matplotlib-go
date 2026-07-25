@@ -67,7 +67,7 @@ func registerBundledStyles() {
 		if err != nil {
 			continue
 		}
-		if _, exists := GetTheme(theme.Name); exists {
+		if _, exists := LookupTheme(theme.Name); exists {
 			continue
 		}
 		RegisterTheme(theme)

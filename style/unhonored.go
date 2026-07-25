@@ -51,7 +51,7 @@ var unhonoredRCParams = map[string]unhonoredRCParam{
 	// core/mathtext.go.
 
 	// date.* — all consumed: autoformatter.* + interval_multiples + converter
-	// in core/date_tick.go & core/units.go, epoch lazily via core.GetEpoch.
+	// in dates/date_tick.go and core/units.go, epoch lazily via dates.Epoch.
 
 	// pdf.* — the PDF backend uses render.Config.PDF, not RC.PDF; none consumed.
 	"pdf.fonttype":       {differs: func(rc, def *RC) bool { return rc.PDF.FontType != def.PDF.FontType }},

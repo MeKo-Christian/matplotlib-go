@@ -94,7 +94,7 @@ func TestSplitDeCasteljauQuadratic(t *testing.T) {
 }
 
 func TestGetParallels(t *testing.T) {
-	left, right := GetParallels([3]Pt{{0, 0}, {2, 4}, {6, 0}}, 0.5)
+	left, right := Parallels([3]Pt{{0, 0}, {2, 4}, {6, 0}}, 0.5)
 	wantPts(t, "left", left[:], []Pt{
 		{0.4472135954999579, -0.22360679774997896},
 		{2.136975735854449, 3.155917482959003},
@@ -123,7 +123,7 @@ func TestMakeWedgedBezier2(t *testing.T) {
 
 func TestGetIntersection(t *testing.T) {
 	// horizontal line through origin, vertical line through (0,2) -> (0,0)
-	p, ok := GetIntersection(Pt{0, 0}, math.Cos(0), math.Sin(0), Pt{0, 2}, math.Cos(math.Pi/2), math.Sin(math.Pi/2))
+	p, ok := Intersection(Pt{0, 0}, math.Cos(0), math.Sin(0), Pt{0, 2}, math.Cos(math.Pi/2), math.Sin(math.Pi/2))
 	if !ok {
 		t.Fatal("expected intersection")
 	}
@@ -131,13 +131,13 @@ func TestGetIntersection(t *testing.T) {
 		t.Fatalf("intersection = %v, want (0,0)", p)
 	}
 	// parallel lines do not intersect
-	if _, ok := GetIntersection(Pt{0, 0}, 1, 0, Pt{0, 1}, 1, 0); ok {
+	if _, ok := Intersection(Pt{0, 0}, 1, 0, Pt{0, 1}, 1, 0); ok {
 		t.Fatal("parallel lines should not intersect")
 	}
 }
 
 func TestGetNormalPoints(t *testing.T) {
-	left, right := GetNormalPoints(Pt{1, 1}, math.Cos(math.Pi/4), math.Sin(math.Pi/4), 2.0)
+	left, right := NormalPoints(Pt{1, 1}, math.Cos(math.Pi/4), math.Sin(math.Pi/4), 2.0)
 	if !approxPtEq(left, Pt{2.414213562373095, -0.41421356237309515}) {
 		t.Fatalf("left = %v", left)
 	}
@@ -145,19 +145,19 @@ func TestGetNormalPoints(t *testing.T) {
 		t.Fatalf("right = %v", right)
 	}
 	// zero length returns the center twice.
-	l0, r0 := GetNormalPoints(Pt{3, 4}, 1, 0, 0)
+	l0, r0 := NormalPoints(Pt{3, 4}, 1, 0, 0)
 	if l0 != (Pt{3, 4}) || r0 != (Pt{3, 4}) {
 		t.Fatalf("zero length = %v,%v", l0, r0)
 	}
 }
 
 func TestGetCosSin(t *testing.T) {
-	cos, sin := GetCosSin(Pt{0, 0}, Pt{3, 4})
+	cos, sin := CosSin(Pt{0, 0}, Pt{3, 4})
 	if !approxF(cos, 0.6) || !approxF(sin, 0.8) {
 		t.Fatalf("cos,sin = %g,%g want 0.6,0.8", cos, sin)
 	}
 	// coincident points return 0,0.
-	if c, s := GetCosSin(Pt{1, 1}, Pt{1, 1}); c != 0 || s != 0 {
+	if c, s := CosSin(Pt{1, 1}, Pt{1, 1}); c != 0 || s != 0 {
 		t.Fatalf("coincident = %g,%g", c, s)
 	}
 }

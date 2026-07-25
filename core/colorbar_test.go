@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -367,10 +368,10 @@ func TestFigureAddColorbarUsesLogNormTicks(t *testing.T) {
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
-	if _, ok := cbAx.YAxisRight.Locator.(LogLocator); !ok {
+	if _, ok := cbAx.YAxisRight.Locator.(ticker.LogLocator); !ok {
 		t.Fatalf("right colorbar locator = %T, want LogLocator", cbAx.YAxisRight.Locator)
 	}
-	formatter, ok := cbAx.YAxisRight.Formatter.(LogFormatterMathText)
+	formatter, ok := cbAx.YAxisRight.Formatter.(ticker.LogFormatterMathText)
 	if !ok || !formatter.SciNotation {
 		t.Fatalf("right colorbar formatter = %#v, want scientific LogFormatterMathText", cbAx.YAxisRight.Formatter)
 	}
@@ -401,14 +402,14 @@ func TestFigureAddColorbarUsesAsinhNormScale(t *testing.T) {
 	if _, ok := cbAx.YScale.(transform.Asinh); !ok {
 		t.Fatalf("colorbar y scale = %T, want transform.Asinh", cbAx.YScale)
 	}
-	loc, ok := cbAx.YAxisRight.Locator.(AsinhLocator)
+	loc, ok := cbAx.YAxisRight.Locator.(ticker.AsinhLocator)
 	if !ok {
 		t.Fatalf("right colorbar locator = %T, want AsinhLocator", cbAx.YAxisRight.Locator)
 	}
 	if loc.LinearWidth != 2 {
 		t.Fatalf("right colorbar AsinhLocator LinearWidth = %v, want 2", loc.LinearWidth)
 	}
-	formatter, ok := cbAx.YAxisRight.Formatter.(LogFormatterMathText)
+	formatter, ok := cbAx.YAxisRight.Formatter.(ticker.LogFormatterMathText)
 	if !ok || !formatter.SciNotation {
 		t.Fatalf("right colorbar formatter = %#v, want scientific LogFormatterMathText", cbAx.YAxisRight.Formatter)
 	}
@@ -432,7 +433,7 @@ func TestFigureAddColorbarUsesBoundaryNormTicks(t *testing.T) {
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
-	loc, ok := cbAx.YAxisRight.Locator.(FixedLocator)
+	loc, ok := cbAx.YAxisRight.Locator.(ticker.FixedLocator)
 	if !ok {
 		t.Fatalf("right colorbar locator = %T, want FixedLocator", cbAx.YAxisRight.Locator)
 	}
@@ -459,7 +460,7 @@ func TestFigureAddColorbarUsesExplicitBoundariesAsTicks(t *testing.T) {
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
-	loc, ok := cbAx.YAxisRight.Locator.(FixedLocator)
+	loc, ok := cbAx.YAxisRight.Locator.(ticker.FixedLocator)
 	if !ok {
 		t.Fatalf("right colorbar locator = %T, want FixedLocator", cbAx.YAxisRight.Locator)
 	}
@@ -524,7 +525,7 @@ func TestFigureAddLeftColorbarUsesLeftBoundaryTicks(t *testing.T) {
 	if cbAx.YAxisRight != nil && (cbAx.YAxisRight.ShowTicks || cbAx.YAxisRight.ShowLabels) {
 		t.Fatalf("expected hidden right y-axis for left colorbar, got %+v", cbAx.YAxisRight)
 	}
-	loc, ok := cbAx.YAxis.Locator.(FixedLocator)
+	loc, ok := cbAx.YAxis.Locator.(ticker.FixedLocator)
 	if !ok {
 		t.Fatalf("left colorbar locator = %T, want FixedLocator", cbAx.YAxis.Locator)
 	}
@@ -554,7 +555,7 @@ func TestFigureAddColorbarUsesExplicitTicks(t *testing.T) {
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
-	loc, ok := cbAx.YAxisRight.Locator.(FixedLocator)
+	loc, ok := cbAx.YAxisRight.Locator.(ticker.FixedLocator)
 	if !ok {
 		t.Fatalf("right colorbar locator = %T, want FixedLocator", cbAx.YAxisRight.Locator)
 	}
@@ -581,7 +582,7 @@ func TestHorizontalColorbarUsesExplicitTicks(t *testing.T) {
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
-	loc, ok := cbAx.XAxis.Locator.(FixedLocator)
+	loc, ok := cbAx.XAxis.Locator.(ticker.FixedLocator)
 	if !ok {
 		t.Fatalf("bottom colorbar locator = %T, want FixedLocator", cbAx.XAxis.Locator)
 	}
@@ -614,7 +615,7 @@ func TestFigureAddColorbarUsesFunctionScaleForTwoSlopeNorm(t *testing.T) {
 	if _, ok := cbAx.YScale.(transform.FuncScale); !ok {
 		t.Fatalf("colorbar y scale = %T, want transform.FuncScale for TwoSlopeNorm", cbAx.YScale)
 	}
-	if _, ok := cbAx.YAxisRight.Locator.(AutoLocator); !ok {
+	if _, ok := cbAx.YAxisRight.Locator.(ticker.AutoLocator); !ok {
 		t.Fatalf("right colorbar locator = %T, want AutoLocator for TwoSlopeNorm", cbAx.YAxisRight.Locator)
 	}
 	if got := cbAx.YScale.Fwd(0); got < 0.49 || got > 0.51 {
@@ -1093,7 +1094,7 @@ type colorbarRecordingRenderer struct {
 	antialiasModes []render.AntialiasMode
 }
 
-func (r *colorbarRecordingRenderer) Image(_ render.Image, dst geom.Rect) {
+func (r *colorbarRecordingRenderer) DrawImage(_ render.Image, dst geom.Rect) {
 	r.imageCount++
 	r.imageRects = append(r.imageRects, dst)
 }
@@ -1183,14 +1184,14 @@ func TestFigureAddColorbarUsesSymLogNormScale(t *testing.T) {
 	if _, ok := cbAx.YScale.(transform.SymLog); !ok {
 		t.Fatalf("colorbar y scale = %T, want transform.SymLog for SymLogNorm", cbAx.YScale)
 	}
-	loc, ok := cbAx.YAxisRight.Locator.(SymLogLocator)
+	loc, ok := cbAx.YAxisRight.Locator.(ticker.SymLogLocator)
 	if !ok {
 		t.Fatalf("right colorbar locator = %T, want SymLogLocator", cbAx.YAxisRight.Locator)
 	}
 	if loc.LinThresh != 1 {
 		t.Fatalf("SymLogLocator LinThresh = %v, want 1", loc.LinThresh)
 	}
-	if formatter, ok := cbAx.YAxisRight.Formatter.(LogFormatterMathText); !ok || !formatter.SciNotation {
+	if formatter, ok := cbAx.YAxisRight.Formatter.(ticker.LogFormatterMathText); !ok || !formatter.SciNotation {
 		t.Fatalf("right colorbar formatter = %#v, want scientific LogFormatterMathText", cbAx.YAxisRight.Formatter)
 	}
 }
@@ -1213,7 +1214,7 @@ func TestFigureAddColorbarUsesAutoLocatorForPowerNorm(t *testing.T) {
 	if _, ok := cbAx.YScale.(transform.FuncScale); !ok {
 		t.Fatalf("colorbar y scale = %T, want transform.FuncScale for PowerNorm", cbAx.YScale)
 	}
-	if _, ok := cbAx.YAxisRight.Locator.(AutoLocator); !ok {
+	if _, ok := cbAx.YAxisRight.Locator.(ticker.AutoLocator); !ok {
 		t.Fatalf("right colorbar locator = %T, want AutoLocator", cbAx.YAxisRight.Locator)
 	}
 }
@@ -1233,7 +1234,7 @@ func TestFigureAddColorbarUsesIndexLocatorForNoNorm(t *testing.T) {
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
-	loc, ok := cbAx.YAxisRight.Locator.(IndexLocator)
+	loc, ok := cbAx.YAxisRight.Locator.(ticker.IndexLocator)
 	if !ok {
 		t.Fatalf("right colorbar locator = %T, want IndexLocator for NoNorm", cbAx.YAxisRight.Locator)
 	}
@@ -1337,7 +1338,7 @@ func TestColorbarSymLogMinorTicksOnByDefault(t *testing.T) {
 		t.Fatal("expected colorbar axes")
 	}
 	// The symlog scale supplies a minor locator that matplotlib shows by default.
-	if _, ok := cbAx.YAxisRight.MinorLocator.(SymLogLocator); !ok {
+	if _, ok := cbAx.YAxisRight.MinorLocator.(ticker.SymLogLocator); !ok {
 		t.Fatalf("default symlog colorbar minor locator = %T, want SymLogLocator", cbAx.YAxisRight.MinorLocator)
 	}
 }
@@ -1357,7 +1358,7 @@ func TestColorbarMinorTicksEnabledInstallsLinearLocator(t *testing.T) {
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
-	if _, ok := cbAx.YAxisRight.MinorLocator.(AutoMinorLocator); !ok {
+	if _, ok := cbAx.YAxisRight.MinorLocator.(ticker.AutoMinorLocator); !ok {
 		t.Fatalf("enabled linear colorbar minor locator = %T, want AutoMinorLocator", cbAx.YAxisRight.MinorLocator)
 	}
 }
@@ -1377,7 +1378,7 @@ func TestColorbarMinorTicksEnabledUsesBoundaryLocator(t *testing.T) {
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
-	if _, ok := cbAx.YAxisRight.MinorLocator.(FixedLocator); !ok {
+	if _, ok := cbAx.YAxisRight.MinorLocator.(ticker.FixedLocator); !ok {
 		t.Fatalf("enabled boundary colorbar minor locator = %T, want FixedLocator", cbAx.YAxisRight.MinorLocator)
 	}
 }

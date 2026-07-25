@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
@@ -35,19 +34,7 @@ func main() {
 
 	ax.Add(line)
 
-	r, _, createErr := backends.NewRendererFromEnv(backends.Config{
-		Width:      640,
-		Height:     360,
-		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
-		DPI:        100,
-	}, backends.TextCapabilities)
-	if createErr != nil {
-		fmt.Printf("Error creating renderer: %v\n", createErr)
-		return
-	}
-
-	err := core.SaveFig(fig, r, "output.png")
-	if err != nil {
+	if err := fig.Save("output.png"); err != nil {
 		fmt.Printf("PNG save failed: %v\n", err)
 	} else {
 		fmt.Println("saved output.png")

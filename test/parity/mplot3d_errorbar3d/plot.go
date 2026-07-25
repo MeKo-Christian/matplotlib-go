@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -18,7 +19,7 @@ const (
 // Plot builds the showcase figure (backend-agnostic).
 func Plot() *core.Figure {
 	fig := core.NewFigure(720, 560)
-	ax, err := fig.AddAxes3D(geom.Rect{
+	ax, err := plot3d.AddAxes(fig, geom.Rect{
 		Min: geom.Pt{X: 0.12, Y: 0.16},
 		Max: geom.Pt{X: 0.88, Y: 0.88},
 	})
@@ -33,7 +34,7 @@ func Plot() *core.Figure {
 	yerr := []float64{0.10, 0.14, 0.09, 0.13}
 	zerr := []float64{0.18, 0.12, 0.16, 0.10}
 	color := render.Color{R: 0.12156862745098039, G: 0.4666666666666667, B: 0.7058823529411765, A: 1}
-	ax.ErrorBar3D(x, y, z, xerr, yerr, zerr, core.ErrorBar3DOptions{Color: &color})
+	ax.ErrorBar3D(x, y, z, xerr, yerr, zerr, plot3d.ErrorBar3DOptions{Color: &color})
 	return fig
 }
 
@@ -45,5 +46,5 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }

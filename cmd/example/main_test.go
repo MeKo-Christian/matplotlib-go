@@ -62,7 +62,7 @@ func TestShowcaseRegistryRendersWithGoBasic(t *testing.T) {
 			if !ok {
 				t.Fatal("GoBasic renderer should expose RGBA output")
 			}
-			if !hasNonBackgroundPixel(exporter.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
+			if !hasNonBackgroundPixel(exporter.Image(), color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
 				t.Fatal("GoBasic showcase output is blank")
 			}
 		})

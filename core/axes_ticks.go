@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 type TickParams struct {
@@ -656,7 +657,7 @@ func configureAxisFromTickRC(axis *Axis, rc *style.RC, cfg *style.TickAxisRC, is
 
 	if cfg.Minor.Visible {
 		enableMinorTicks(axis)
-		if auto, ok := axis.MinorLocator.(AutoMinorLocator); ok {
+		if auto, ok := axis.MinorLocator.(ticker.AutoMinorLocator); ok {
 			auto.N = cfg.Minor.NDivs
 			axis.MinorLocator = auto
 		}
@@ -858,15 +859,15 @@ func enableMinorTicks(axis *Axis) {
 		return
 	}
 	switch loc := axis.Locator.(type) {
-	case LogLocator:
-		axis.MinorLocator = LogLocator{Base: loc.Base, Minor: true, Subs: loc.Subs}
-	case AutoLocator:
-		axis.MinorLocator = AutoMinorLocator{Major: loc}
-	case MaxNLocator:
-		axis.MinorLocator = AutoMinorLocator{Major: loc}
-	case MultipleLocator:
-		axis.MinorLocator = AutoMinorLocator{Major: loc}
+	case ticker.LogLocator:
+		axis.MinorLocator = ticker.LogLocator{Base: loc.Base, Minor: true, Subs: loc.Subs}
+	case ticker.AutoLocator:
+		axis.MinorLocator = ticker.AutoMinorLocator{Major: loc}
+	case ticker.MaxNLocator:
+		axis.MinorLocator = ticker.AutoMinorLocator{Major: loc}
+	case ticker.MultipleLocator:
+		axis.MinorLocator = ticker.AutoMinorLocator{Major: loc}
 	default:
-		axis.MinorLocator = MinorLinearLocator{}
+		axis.MinorLocator = ticker.MinorLinearLocator{}
 	}
 }

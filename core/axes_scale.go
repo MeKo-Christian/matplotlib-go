@@ -5,6 +5,7 @@ import (
 	"math"
 	"strings"
 
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -207,38 +208,38 @@ func configureScaleAxis(axis *Axis, scaleName string, cfg transform.ScaleOptions
 
 	switch strings.ToLower(scaleName) {
 	case "log", "functionlog":
-		axis.Locator = LogLocator{Base: cfg.Base, Minor: false}
-		axis.Formatter = LogFormatterMathText{
+		axis.Locator = ticker.LogLocator{Base: cfg.Base, Minor: false}
+		axis.Formatter = ticker.LogFormatterMathText{
 			Base:              cfg.Base,
 			SciNotation:       true,
 			UseMinorThreshold: true,
 			MinorThresholds:   [2]float64{1, 0.4},
 		}
 		if len(cfg.Subs) > 0 {
-			axis.MinorLocator = LogLocator{Base: cfg.Base, Minor: true, Subs: cfg.Subs}
+			axis.MinorLocator = ticker.LogLocator{Base: cfg.Base, Minor: true, Subs: cfg.Subs}
 		} else {
-			axis.MinorLocator = LogLocator{Base: cfg.Base, Minor: true, SubsMode: "auto"}
+			axis.MinorLocator = ticker.LogLocator{Base: cfg.Base, Minor: true, SubsMode: "auto"}
 		}
 	case "symlog":
-		axis.Locator = SymLogLocator{Base: cfg.Base, LinThresh: cfg.LinThresh}
-		axis.Formatter = LogFormatterMathText{Base: cfg.Base, SciNotation: true}
-		axis.MinorLocator = SymLogLocator{Base: cfg.Base, LinThresh: cfg.LinThresh, Subs: cfg.Subs}
+		axis.Locator = ticker.SymLogLocator{Base: cfg.Base, LinThresh: cfg.LinThresh}
+		axis.Formatter = ticker.LogFormatterMathText{Base: cfg.Base, SciNotation: true}
+		axis.MinorLocator = ticker.SymLogLocator{Base: cfg.Base, LinThresh: cfg.LinThresh, Subs: cfg.Subs}
 	case "asinh":
-		axis.Locator = AsinhLocator{LinearWidth: cfg.LinearWidth, Base: cfg.Base}
+		axis.Locator = ticker.AsinhLocator{LinearWidth: cfg.LinearWidth, Base: cfg.Base}
 		if cfg.Base > 1 {
-			axis.Formatter = LogFormatterMathText{Base: cfg.Base, SciNotation: true}
+			axis.Formatter = ticker.LogFormatterMathText{Base: cfg.Base, SciNotation: true}
 		} else {
-			axis.Formatter = StrMethodFormatter{Template: "{x:.3g}"}
+			axis.Formatter = ticker.StrMethodFormatter{Template: "{x:.3g}"}
 		}
-		axis.MinorLocator = AsinhLocator{LinearWidth: cfg.LinearWidth, Base: cfg.Base, Subs: cfg.Subs}
+		axis.MinorLocator = ticker.AsinhLocator{LinearWidth: cfg.LinearWidth, Base: cfg.Base, Subs: cfg.Subs}
 	case "logit":
-		axis.Locator = LogitLocator{}
-		axis.Formatter = LogitFormatter{}
-		axis.MinorLocator = LogitLocator{Minor: true}
-		axis.MinorFormatter = LogitFormatter{Minor: true}
+		axis.Locator = ticker.LogitLocator{}
+		axis.Formatter = ticker.LogitFormatter{}
+		axis.MinorLocator = ticker.LogitLocator{Minor: true}
+		axis.MinorFormatter = ticker.LogitFormatter{Minor: true}
 	default:
-		axis.Locator = LinearLocator{}
-		axis.Formatter = ScalarFormatter{Prec: 3}
+		axis.Locator = ticker.LinearLocator{}
+		axis.Formatter = ticker.ScalarFormatter{Prec: 3}
 		axis.MinorLocator = nil
 	}
 }

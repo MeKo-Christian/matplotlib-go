@@ -44,7 +44,7 @@ func (m ScalarMapInfo) Resolved() ScalarMapInfo {
 		m.Colormap = "viridis"
 	}
 	if m.resolvedColormapName != m.Colormap || m.resolvedColormap.Name() == "" {
-		m.resolvedColormap = matcolor.GetColormap(m.Colormap)
+		m.resolvedColormap = matcolor.LookupColormap(m.Colormap)
 		m.resolvedColormapName = m.Colormap
 	}
 	if m.Norm != nil {

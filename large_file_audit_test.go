@@ -9,9 +9,9 @@ func TestLargeFileAuditPlumbingIsDocumented(t *testing.T) {
 	justfile := readTextFile(t, "Justfile")
 	for _, want := range []string{
 		"large-file-audit:",
-		"git ls-files '*.go'",
-		"Large tracked Go files (>= 1000 lines)",
-		"Large tracked non-Go artifacts (>= 256 KiB)",
+		"git ls-files --cached --others --exclude-standard '*.go'",
+		"Large tracked or untracked Go files (>= 1000 lines)",
+		"Large tracked or untracked non-Go artifacts (>= 256 KiB)",
 	} {
 		if !strings.Contains(justfile, want) {
 			t.Fatalf("Justfile missing %q", want)
@@ -23,7 +23,7 @@ func TestLargeFileAuditPlumbingIsDocumented(t *testing.T) {
 		"# Large File Decomposition",
 		"`just large-file-audit`",
 		"## Baseline Inventory",
-		"core/axes3d_test.go",
+		"plot3d/wire_surface_test.go",
 		"core/contour.go",
 		"docs/matplotlib-parity-status.md",
 		"testdata/svg_golden/mathtext_basic.svg",
@@ -208,7 +208,7 @@ func TestContourFilledSplitIsTracked(t *testing.T) {
 func TestContourLabelsSplitIsTracked(t *testing.T) {
 	labels := readTextFile(t, "core/contour_labels.go")
 	for _, want := range []string{
-		"func contourLabels(polylines [][]geom.Pt, levels []float64, colors []render.Color, formatter Formatter, rightSideUp bool) []contourLabel",
+		"func contourLabels(polylines [][]geom.Pt, levels []float64, colors []render.Color, formatter ticker.Formatter, rightSideUp bool) []contourLabel",
 		"func (c *ContourSet) clabelLineIndices(levels []float64) ([]int, bool)",
 		"func (c *ContourSet) clabelPlaceAutomatic(indices []int, opt ClabelOptions) []contourLabel",
 		"func (c *ContourSet) clabelPlaceManual(indices []int, opt ClabelOptions) []contourLabel",
@@ -216,13 +216,13 @@ func TestContourLabelsSplitIsTracked(t *testing.T) {
 		"func (c *ContourSet) clabelColor(segmentIndex int, level float64, labelIndex int, opt ClabelOptions) render.Color",
 		"func publicContourLabels(labels []contourLabel) []ContourLabel",
 		"func uniqueLevelsForIndices(levels []float64, indices []int) []float64",
-		"func contourInlineLabelSegmentsForLevels(lines *LineCollection, levels, selectedLevels []float64, formatter Formatter, fontSize, inlineSpacing float64, rightSideUp bool, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, [][]float64, []contourLabel)",
+		"func contourInlineLabelSegmentsForLevels(lines *LineCollection, levels, selectedLevels []float64, formatter ticker.Formatter, fontSize, inlineSpacing float64, rightSideUp bool, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, [][]float64, []contourLabel)",
 		"func contourLabelWidth(text string, fontSize float64, r render.Renderer, ctx *DrawContext) float64",
 		"func contourLocateLabel(line []geom.Pt, labelWidth float64, placed []geom.Pt) (geom.Pt, int)",
 		"func splitContourPolylineForLabel(data, screen []geom.Pt, labelIdx int, labelWidth, spacing float64, rightSideUp bool) (float64, [][]geom.Pt)",
 		"func splitClosedContourPolylineForLabel(data, screen []geom.Pt, cpls []float64, labelIdx int, labelWidth, spacing float64, rightSideUp bool) (float64, [][]geom.Pt)",
 		"func contourRotatedTextAnchor(center geom.Pt, layout singleLineTextLayout, angle float64) geom.Pt",
-		"func contourFormatter(formatter Formatter) Formatter",
+		"func contourFormatter(formatter ticker.Formatter) ticker.Formatter",
 		"func polylineLabelPlacement(polyline []geom.Pt) (geom.Pt, float64)",
 		"func normalizeLabelAngle(angle float64) float64",
 	} {
@@ -392,14 +392,14 @@ func TestAxisTickLabelsSplitIsTracked(t *testing.T) {
 	labels := readTextFile(t, "core/axis_ticklabels.go")
 	for _, want := range []string{
 		"func (a *Axis) DrawTickLabels(r render.Renderer, ctx *DrawContext)",
-		"func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64, labelColor render.Color, isXAxis bool)",
-		"func (a *Axis) drawTickOffsetText(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64, labelColor render.Color, isXAxis bool)",
+		"func (a *Axis) drawTickLabels(r render.Renderer, ctx *DrawContext, ticks []float64, formatter ticker.Formatter, style TickLabelStyle, tickSize float64, labelColor render.Color, isXAxis bool)",
+		"func (a *Axis) drawTickOffsetText(r render.Renderer, ctx *DrawContext, ticks []float64, formatter ticker.Formatter, style TickLabelStyle, tickSize float64, labelColor render.Color, isXAxis bool)",
 		"func tickLabelFontSize(a *Axis, ctx *DrawContext) float64",
 		"func tickLabelPadForAxisSize(a *Axis, tickSize float64, style TickLabelStyle, ctx *DrawContext) float64",
 		"func tickLabelOrigin(a *Axis, ctx *DrawContext, tickValue float64, layout singleLineTextLayout, labelPadPx float64, style TickLabelStyle, isXAxis bool) (geom.Pt, bool)",
 		"func textInkRect(origin geom.Pt, layout singleLineTextLayout) (geom.Rect, bool)",
 		"func axisTickLabelBounds(a *Axis, r render.Renderer, ctx *DrawContext) (geom.Rect, bool)",
-		"func tickLabelBoundsForLevel(a *Axis, r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64, isXAxis bool) (geom.Rect, bool)",
+		"func tickLabelBoundsForLevel(a *Axis, r render.Renderer, ctx *DrawContext, ticks []float64, formatter ticker.Formatter, style TickLabelStyle, tickSize float64, isXAxis bool) (geom.Rect, bool)",
 		"func tickLabelDisplayRect(side AxisSide, style TickLabelStyle, isXAxis bool, origin geom.Pt, layout singleLineTextLayout, lineHeight float64) (geom.Rect, bool)",
 		"func alignedTextLayoutRect(anchor geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, lineHeight float64) (geom.Rect, bool)",
 		"func tickLabelDrawOriginFromP(p geom.Pt, layout singleLineTextLayout, hAlign TextAlign, vAlign textLayoutVerticalAlign, angle float64, anchorMode bool) geom.Pt",
@@ -448,11 +448,11 @@ func TestAxisPolarSplitIsTracked(t *testing.T) {
 		"func (a *Axis) drawPolarThetaTicks(r render.Renderer, ctx *DrawContext, ticks []float64, tickSize, lineWidth float64)",
 		"func (a *Axis) drawPolarRadialTicks(r render.Renderer, ctx *DrawContext, ticks []float64, tickSize, lineWidth float64)",
 		"func (a *Axis) drawPolarTickLabels(r render.Renderer, ctx *DrawContext)",
-		"func (a *Axis) drawPolarThetaTickLabels(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64)",
+		"func (a *Axis) drawPolarThetaTickLabels(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, ticks []float64, formatter ticker.Formatter, style TickLabelStyle, tickSize float64)",
 		"func polarThetaTickLabelPadPx(a *Axis, tickSize float64, style TickLabelStyle, ctx *DrawContext) float64",
-		"func (a *Axis) drawPolarRadialTickLabels(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64)",
+		"func (a *Axis) drawPolarRadialTickLabels(textRen render.TextDrawer, r render.Renderer, ctx *DrawContext, ticks []float64, formatter ticker.Formatter, style TickLabelStyle, tickSize float64)",
 		"func (a *Axis) polarTickLabelBounds(r render.Renderer, ctx *DrawContext) (geom.Rect, bool)",
-		"func (a *Axis) polarTickLabelBoundsForLevel(r render.Renderer, ctx *DrawContext, ticks []float64, formatter Formatter, style TickLabelStyle, tickSize float64) (geom.Rect, bool)",
+		"func (a *Axis) polarTickLabelBoundsForLevel(r render.Renderer, ctx *DrawContext, ticks []float64, formatter ticker.Formatter, style TickLabelStyle, tickSize float64) (geom.Rect, bool)",
 	} {
 		if !strings.Contains(polar, want) {
 			t.Fatalf("axis_polar.go missing %q", want)

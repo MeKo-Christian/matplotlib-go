@@ -34,7 +34,7 @@ func renderUpscaledImage(t *testing.T, interp string, dstW, dstH int) []byte {
 	if err := r.Begin(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 64, Y: 64}}); err != nil {
 		t.Fatalf("Begin: %v", err)
 	}
-	r.Image(raster, geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: float64(dstW), Y: float64(dstH)}})
+	r.DrawImage(raster, geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: float64(dstW), Y: float64(dstH)}})
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)
 	}
@@ -119,12 +119,12 @@ func TestAggImageNearestNonIntegerUpscalePreservesSourcePalette(t *testing.T) {
 	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 64, Y: 64}}); err != nil {
 		t.Fatalf("Begin: %v", err)
 	}
-	r.Image(raster, geom.Rect{Min: geom.Pt{X: 10, Y: 10}, Max: geom.Pt{X: 50, Y: 43.333333333333336}})
+	r.DrawImage(raster, geom.Rect{Min: geom.Pt{X: 10, Y: 10}, Max: geom.Pt{X: 50, Y: 43.333333333333336}})
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)
 	}
 
-	got := r.GetImage()
+	got := r.Image()
 	allowed := map[color.RGBA]bool{
 		dark:                             true,
 		light:                            true,
@@ -165,7 +165,7 @@ func TestAggImageNearestNonIntegerUpscaleAlignsTopEdgeLikeMatplotlib(t *testing.
 	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 640, Y: 360}}); err != nil {
 		t.Fatalf("Begin: %v", err)
 	}
-	r.Image(raster, geom.Rect{
+	r.DrawImage(raster, geom.Rect{
 		Min: geom.Pt{X: 183.2, Y: 50.4},
 		Max: geom.Pt{X: 456.8, Y: 324.0},
 	})
@@ -173,7 +173,7 @@ func TestAggImageNearestNonIntegerUpscaleAlignsTopEdgeLikeMatplotlib(t *testing.
 		t.Fatalf("End: %v", err)
 	}
 
-	got := r.GetImage()
+	got := r.Image()
 	bounds, _, ok := inkBounds(got, color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	if !ok {
 		t.Fatal("expected rendered black image pixels")
@@ -206,7 +206,7 @@ func TestAggImageNearestHalfPixelAxesImageTopMatchesMatplotlib(t *testing.T) {
 	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 1100, Y: 720}}); err != nil {
 		t.Fatalf("Begin: %v", err)
 	}
-	r.Image(raster, geom.Rect{
+	r.DrawImage(raster, geom.Rect{
 		Min: geom.Pt{X: 726, Y: 274.5},
 		Max: geom.Pt{X: 825, Y: 373.5},
 	})
@@ -214,7 +214,7 @@ func TestAggImageNearestHalfPixelAxesImageTopMatchesMatplotlib(t *testing.T) {
 		t.Fatalf("End: %v", err)
 	}
 
-	got := r.GetImage()
+	got := r.Image()
 	bounds, _, ok := inkBounds(got, color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	if !ok {
 		t.Fatal("expected rendered black image pixels")
@@ -243,7 +243,7 @@ func TestAggClipRectUsesMatplotlibHalfUpQuantizationForImages(t *testing.T) {
 		Min: geom.Pt{X: 76.8, Y: 57.6},
 		Max: geom.Pt{X: 588.8, Y: 316.8},
 	})
-	r.Image(render.NewImageData(src), geom.Rect{
+	r.DrawImage(render.NewImageData(src), geom.Rect{
 		Min: geom.Pt{X: -179.2, Y: 57.6},
 		Max: geom.Pt{X: 844.8, Y: 316.8},
 	})
@@ -251,7 +251,7 @@ func TestAggClipRectUsesMatplotlibHalfUpQuantizationForImages(t *testing.T) {
 		t.Fatalf("End: %v", err)
 	}
 
-	got := r.GetImage()
+	got := r.Image()
 	if px := got.RGBAAt(76, 100); px != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
 		t.Fatalf("clip column before rounded edge = %+v, want background", px)
 	}
@@ -287,7 +287,7 @@ func TestAggBboxImageNearestNonIntegerUpscaleUsesMatplotlibBboxPlacement(t *test
 		t.Fatalf("End: %v", err)
 	}
 
-	got := r.GetImage()
+	got := r.Image()
 	bounds, _, ok := inkBounds(got, color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	if !ok {
 		t.Fatal("expected rendered black image pixels")
@@ -351,12 +351,12 @@ func TestAggImageExactSizeDrawPreservesBottomAndRightEdges(t *testing.T) {
 	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 12, Y: 12}}); err != nil {
 		t.Fatalf("Begin: %v", err)
 	}
-	r.Image(data, geom.Rect{Min: geom.Pt{X: 4, Y: 4}, Max: geom.Pt{X: 8, Y: 8}})
+	r.DrawImage(data, geom.Rect{Min: geom.Pt{X: 4, Y: 4}, Max: geom.Pt{X: 8, Y: 8}})
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)
 	}
 
-	img := r.GetImage()
+	img := r.Image()
 	if got := img.RGBAAt(5, 7); got != black {
 		t.Fatalf("bottom edge pixel = %+v, want %+v", got, black)
 	}
@@ -420,7 +420,7 @@ func TestAggImageRespectsImageAlphaState(t *testing.T) {
 	if err := r.Begin(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 10, Y: 10}}); err != nil {
 		t.Fatalf("Begin: %v", err)
 	}
-	r.Image(data, geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 10, Y: 10}})
+	r.DrawImage(data, geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 10, Y: 10}})
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)
 	}
@@ -430,7 +430,7 @@ func TestAggImageRespectsImageAlphaState(t *testing.T) {
 		t.Fatalf("expected *agg.Renderer, got %T", r)
 	}
 
-	got := aggR.GetImage().RGBAAt(0, 0)
+	got := aggR.Image().RGBAAt(0, 0)
 	if got.A != 255 {
 		t.Fatalf("composited alpha = %d, want 255", got.A)
 	}
@@ -452,7 +452,7 @@ func TestAggImageAlphaPremultipliesSourceRGB(t *testing.T) {
 	if err := r.Begin(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 4, Y: 4}}); err != nil {
 		t.Fatalf("Begin: %v", err)
 	}
-	r.Image(data, geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 4, Y: 4}})
+	r.DrawImage(data, geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 4, Y: 4}})
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)
 	}
@@ -461,7 +461,7 @@ func TestAggImageAlphaPremultipliesSourceRGB(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected *agg.Renderer, got %T", r)
 	}
-	got := aggR.GetImage().RGBAAt(0, 0)
+	got := aggR.Image().RGBAAt(0, 0)
 	if math.Abs(float64(got.R)-168) > 2 || math.Abs(float64(got.G)-188) > 2 || math.Abs(float64(got.B)-228) > 2 {
 		t.Fatalf("alpha-composited color = %+v, want approx {168 188 228 255}", got)
 	}
@@ -501,7 +501,7 @@ func TestAggGetImageBufferIsRGBANotARGB(t *testing.T) {
 		t.Fatalf("New: %v", err)
 	}
 
-	got := r.GetImage()
+	got := r.Image()
 	want := []uint8{0x12, 0x34, 0x56, 0xff}
 	if !bytes.Equal(got.Pix[:4], want) {
 		t.Fatalf("buffer bytes = %#v, want RGBA %#v", got.Pix[:4], want)
@@ -513,7 +513,7 @@ func TestAggTransparentBackgroundRemainsTransparent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
-	img := r.GetImage()
+	img := r.Image()
 	for y := 0; y < img.Bounds().Dy(); y++ {
 		for x := 0; x < img.Bounds().Dx(); x++ {
 			if got := img.RGBAAt(x, y); got != (color.RGBA{}) {
@@ -537,7 +537,7 @@ func TestAggSavePNGRoundTripsGetImageRGBA(t *testing.T) {
 	if err := r.Begin(geom.Rect{Max: geom.Pt{X: 2, Y: 2}}); err != nil {
 		t.Fatalf("Begin: %v", err)
 	}
-	r.Image(render.NewImageData(src), geom.Rect{Max: geom.Pt{X: 2, Y: 2}})
+	r.DrawImage(render.NewImageData(src), geom.Rect{Max: geom.Pt{X: 2, Y: 2}})
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)
 	}
@@ -556,7 +556,7 @@ func TestAggSavePNGRoundTripsGetImageRGBA(t *testing.T) {
 		t.Fatalf("Decode saved PNG: %v", err)
 	}
 
-	got := r.GetImage()
+	got := r.Image()
 	for y := 0; y < got.Bounds().Dy(); y++ {
 		for x := 0; x < got.Bounds().Dx(); x++ {
 			if decoded.At(x, y) != got.At(x, y) {
@@ -593,7 +593,7 @@ func TestAggTransformedImagePreservesSourceOrientation(t *testing.T) {
 		t.Fatalf("End: %v", err)
 	}
 
-	img := r.GetImage()
+	img := r.Image()
 	samples := []struct {
 		name string
 		x, y int
@@ -643,7 +643,7 @@ func TestAggTransformedImageRespectsClipPathAndAlpha(t *testing.T) {
 		t.Fatalf("End: %v", err)
 	}
 
-	img := r.GetImage()
+	img := r.Image()
 	// Display space is y-up: the clip triangle (0,0)->(20,0)->(0,20) device-flips
 	// to (0,20),(20,20),(0,0), so the kept region is y>=x. Sample inside (y>x) and
 	// outside (y<x) accordingly.

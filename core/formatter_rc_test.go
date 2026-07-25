@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestAxesScalarFormatterConsumesRCDefaults(t *testing.T) {
@@ -18,14 +19,14 @@ func TestAxesScalarFormatterConsumesRCDefaults(t *testing.T) {
 
 	ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
 	for _, axis := range []*Axis{ax.XAxis, ax.YAxis} {
-		formatter, ok := axis.Formatter.(ScalarFormatter)
+		formatter, ok := axis.Formatter.(ticker.ScalarFormatter)
 		if !ok {
 			t.Fatalf("default formatter = %T, want ScalarFormatter", axis.Formatter)
 		}
 		if formatter.PowerLimits != [2]int{-3, 7} || !formatter.UsePowerLimits {
 			t.Fatalf("formatter power limits = %+v (enabled=%v), want [-3 7]", formatter.PowerLimits, formatter.UsePowerLimits)
 		}
-		if formatter.OffsetThreshold != 6 || !formatter.offsetThresholdSet || !formatter.DisableOffset {
+		if formatter.OffsetThreshold != 6 || !formatter.DisableOffset {
 			t.Fatalf("formatter offset defaults not consumed: %+v", formatter)
 		}
 		if !formatter.UseLocale || !formatter.UseMathText {
@@ -34,10 +35,10 @@ func TestAxesScalarFormatterConsumesRCDefaults(t *testing.T) {
 		if got, want := formatter.Format(1234.5), "1.234,5"; got != want {
 			t.Fatalf("localized scalar label = %q, want %q", got, want)
 		}
-		if got, want := formatScalarTickLabel(formatter, 1234.5, 0.5), `$\mathdefault{1.234{,}5}$`; got != want {
+		if got, want := formatter.FormatStep(1234.5, 0.5), `$\mathdefault{1.234{,}5}$`; got != want {
 			t.Fatalf("localized MathText label = %q, want %q", got, want)
 		}
-		if got, want := scalarFormatData(formatter, 1.2e6), `1{,}2 \times 10^{6}`; got != want {
+		if got, want := formatter.FormatData(1.2e6), `1{,}2 \times 10^{6}`; got != want {
 			t.Fatalf("localized MathText offset component = %q, want %q", got, want)
 		}
 		if got := formatter.OffsetText([]float64{1_000_100, 1_000_200, 1_000_300}); got != "" {
@@ -53,14 +54,14 @@ func TestAxesFormatterExplicitReplacementWinsUntilClear(t *testing.T) {
 	fig.RC.Axes.Formatter.UseOffset = false
 	ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
 
-	explicit := ScalarFormatter{Prec: 1, DisableScientific: true}
+	explicit := ticker.ScalarFormatter{Prec: 1, DisableScientific: true}
 	ax.XAxis.Formatter = explicit
 	if got := ax.XAxis.Formatter; got != explicit {
 		t.Fatalf("explicit formatter changed unexpectedly: %#v", got)
 	}
 
 	ax.Clear()
-	formatter, ok := ax.XAxis.Formatter.(ScalarFormatter)
+	formatter, ok := ax.XAxis.Formatter.(ticker.ScalarFormatter)
 	if !ok {
 		t.Fatalf("formatter after Clear = %T, want ScalarFormatter", ax.XAxis.Formatter)
 	}
@@ -77,7 +78,7 @@ func TestAxesFormatterMinExponentReachesNewLogFormatter(t *testing.T) {
 	if err := ax.SetXScale("log"); err != nil {
 		t.Fatalf("SetXScale(log): %v", err)
 	}
-	formatter, ok := ax.XAxis.Formatter.(LogFormatterMathText)
+	formatter, ok := ax.XAxis.Formatter.(ticker.LogFormatterMathText)
 	if !ok {
 		t.Fatalf("log formatter = %T, want LogFormatterMathText", ax.XAxis.Formatter)
 	}

@@ -4,7 +4,7 @@
 // A [Colormap] maps a normalized position in [0,1] to a [render.Color] via
 // [Colormap.At], and maps an arbitrary data value through a normalization via
 // [Colormap.AtValue]. The Matplotlib-compatible colormaps (viridis, plasma,
-// coolwarm, and others) are available by name through [GetColormap];
+// coolwarm, and others) are available by name through [LookupColormap];
 // [DefaultColormap] returns viridis. Custom colormaps are built with
 // [NewColormap] and made available globally with [RegisterColormap].
 // [Colormap.Reversed] produces the reversed variant, and [Colormap.WithBad],
@@ -13,4 +13,8 @@
 //
 // A [ColorCycle] supplies the sequence of colors assigned to successive plot
 // series; [NewDefaultColorCycle] returns the Matplotlib tab10 cycle.
+//
+// The named colormap and color-sequence registry operations are safe for
+// concurrent registration and lookup. See docs/concurrency.md for the broader
+// mutable-object ownership contract.
 package color

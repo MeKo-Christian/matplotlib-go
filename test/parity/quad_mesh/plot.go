@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -23,8 +24,8 @@ func Plot() *core.Figure {
 	ax.SetTitle("RendererAgg quad mesh")
 	ax.SetXLim(0, 9)
 	ax.SetYLim(0, 6)
-	ax.XAxis.Locator = core.MultipleLocator{Base: 1}
-	ax.YAxis.Locator = core.MultipleLocator{Base: 1}
+	ax.XAxis.Locator = ticker.MultipleLocator{Base: 1}
+	ax.YAxis.Locator = ticker.MultipleLocator{Base: 1}
 
 	data := make([][]float64, 6)
 	for y := range data {

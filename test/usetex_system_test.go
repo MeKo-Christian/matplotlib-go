@@ -81,7 +81,7 @@ func renderUseTeXFigure(t *testing.T) *image.RGBA {
 		t.Fatalf("agg.New: %v", err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }
 
 func requireSystemTeXCommand(t *testing.T, name string) {

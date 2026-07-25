@@ -6,6 +6,7 @@ import (
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestAxesStackPlot_CumulativeLayers(t *testing.T) {
@@ -193,12 +194,12 @@ func TestAxesBxpCreatesComponentArtistsAndTicks(t *testing.T) {
 		t.Fatalf("registered artists = %d, want 14 component Line2D artists", len(ax.Artists))
 	}
 
-	loc, ok := ax.XAxis.Locator.(FixedLocator)
+	loc, ok := ax.XAxis.Locator.(ticker.FixedLocator)
 	if !ok {
 		t.Fatalf("x-axis locator = %T, want FixedLocator", ax.XAxis.Locator)
 	}
 	assertFloatSlices(t, "bxp ticks", loc.TicksList, []float64{1, 2})
-	formatter, ok := ax.XAxis.Formatter.(FixedFormatter)
+	formatter, ok := ax.XAxis.Formatter.(ticker.FixedFormatter)
 	if !ok {
 		t.Fatalf("x-axis formatter = %T, want FixedFormatter", ax.XAxis.Formatter)
 	}
@@ -228,14 +229,14 @@ func TestAxesBxpValidatesOptionLengthsAndHorizontalTicks(t *testing.T) {
 	if got := container.Medians[0].XY; len(got) != 2 || got[0] != (geom.Pt{X: 2, Y: 1.3}) || got[1] != (geom.Pt{X: 2, Y: 1.7}) {
 		t.Fatalf("horizontal median data = %+v, want x fixed at median and y spanning box width", got)
 	}
-	if _, ok := ax.YAxis.Locator.(FixedLocator); !ok {
+	if _, ok := ax.YAxis.Locator.(ticker.FixedLocator); !ok {
 		t.Fatalf("y-axis locator = %T, want FixedLocator for horizontal Bxp", ax.YAxis.Locator)
 	}
 }
 
 func TestAxesBoxPlotsManageTicksFalsePreservesLocator(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
-	ax.XAxis.Locator = AutoLocator{}
+	ax.XAxis.Locator = ticker.AutoLocator{}
 	manageTicks := false
 
 	ax.BoxPlots(
@@ -246,7 +247,7 @@ func TestAxesBoxPlotsManageTicksFalsePreservesLocator(t *testing.T) {
 		BoxPlotsOptions{ManageTicks: &manageTicks},
 	)
 
-	if _, ok := ax.XAxis.Locator.(AutoLocator); !ok {
+	if _, ok := ax.XAxis.Locator.(ticker.AutoLocator); !ok {
 		t.Fatalf("x-axis locator = %T, want preserved AutoLocator when manage_ticks=False", ax.XAxis.Locator)
 	}
 }
@@ -262,7 +263,7 @@ func TestAxesBoxPlotsManageTicksDefaultMatchesMatplotlib(t *testing.T) {
 		BoxPlotsOptions{Positions: []float64{1.5, 2.5}},
 	)
 
-	loc, ok := ax.XAxis.Locator.(FixedLocator)
+	loc, ok := ax.XAxis.Locator.(ticker.FixedLocator)
 	if !ok {
 		t.Fatalf("x-axis locator = %T, want FixedLocator by default", ax.XAxis.Locator)
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -148,7 +149,7 @@ func polarThetaTicks(axis *Axis, scale transform.Scale, minor bool) []float64 {
 	}
 	domainMin, domainMax := scale.Domain()
 
-	var locator Locator
+	var locator ticker.Locator
 	if minor {
 		locator = axis.MinorLocator
 	} else {
@@ -183,7 +184,7 @@ func polarRadialTicks(axis *Axis, scale transform.Scale, minor bool) []float64 {
 	}
 	domainMin, domainMax := scale.Domain()
 
-	var locator Locator
+	var locator ticker.Locator
 	if minor {
 		locator = axis.MinorLocator
 	} else {

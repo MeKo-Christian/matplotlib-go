@@ -2,10 +2,14 @@ package pdf
 
 import (
 	"github.com/cwbudde/matplotlib-go/backends"
+	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 func init() {
+	core.RegisterFigureOutputRenderer(".pdf", func(width, height int, background render.Color) (render.Renderer, error) {
+		return New(width, height, background)
+	})
 	backends.Register(backends.PDF, &backends.BackendInfo{
 		Name:        "PDF",
 		Description: "Pure Go PDF backend with deterministic serialization and embedded-font text output",

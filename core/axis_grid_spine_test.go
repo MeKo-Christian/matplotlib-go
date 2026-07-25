@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -223,7 +224,7 @@ func TestGrid_UsesOwningAxisMajorLocator(t *testing.T) {
 		XAxis: NewXAxis(),
 		YAxis: NewYAxis(),
 	}
-	ctx.Axes.YAxis.Locator = FixedLocator{TicksList: []float64{0, 20, 40, 60, 80}}
+	ctx.Axes.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 20, 40, 60, 80}}
 
 	renderer := &gridRecordingRenderer{}
 	_ = renderer.Begin(geom.Rect{})
@@ -245,8 +246,8 @@ func TestGrid_AutoMinorLocatorUsesOwningAxisMajorLocator(t *testing.T) {
 		XAxis: NewXAxis(),
 		YAxis: NewYAxis(),
 	}
-	ctx.Axes.XAxis.Locator = MultipleLocator{Base: 1.5}
-	ctx.Axes.XAxis.MinorLocator = AutoMinorLocator{N: 3}
+	ctx.Axes.XAxis.Locator = ticker.MultipleLocator{Base: 1.5}
+	ctx.Axes.XAxis.MinorLocator = ticker.AutoMinorLocator{N: 3}
 
 	renderer := &gridRecordingRenderer{}
 	_ = renderer.Begin(geom.Rect{})
@@ -326,7 +327,7 @@ func TestGrid_MinorOnlyDraw(t *testing.T) {
 
 func TestGrid_CustomLocator(t *testing.T) {
 	grid := NewGrid(AxisBottom)
-	grid.Locator = LogLocator{Base: 10}
+	grid.Locator = ticker.LogLocator{Base: 10}
 
 	renderer := &render.NullRenderer{}
 	ctx := createTestDrawContext()

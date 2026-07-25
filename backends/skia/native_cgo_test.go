@@ -42,20 +42,17 @@ func TestNativeBridgeReportsNativeSurface(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
-	if r.IsCapabilityBridged("markerbatch") {
-		t.Error("markerbatch should report native under the skiacgo build")
-	}
-	if r.IsCapabilityBridged("pathcollectionbatch") {
-		t.Error("pathcollectionbatch should report native under the skiacgo build")
-	}
-	if r.IsCapabilityBridged("quadmeshbatch") {
-		t.Error("quadmeshbatch should report native under the skiacgo build")
-	}
-	if r.IsCapabilityBridged("imagetransform") {
-		t.Error("imagetransform should report native under the skiacgo build")
-	}
-	if r.IsCapabilityBridged("nativehatcher") {
-		t.Error("nativehatcher should report native under the skiacgo build")
+	for _, capability := range []backends.Capability{
+		backends.MarkerBatch,
+		backends.PathCollectionBatch,
+		backends.QuadMeshBatch,
+		backends.ImageTransform,
+		backends.NativeHatcher,
+	} {
+		status, handled := r.RuntimeCapabilityStatus(capability)
+		if !handled || status != backends.CapabilityNative {
+			t.Errorf("%s status = %q, %v; want native, true", capability, status, handled)
+		}
 	}
 }
 

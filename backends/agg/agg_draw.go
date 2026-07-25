@@ -200,7 +200,7 @@ func (r *Renderer) buildPath(p geom.Path) {
 	}
 }
 
-func (r *Renderer) Image(img render.Image, dst geom.Rect) {
+func (r *Renderer) DrawImage(img render.Image, dst geom.Rect) {
 	// dst arrives in y-up display space; flip to the y-down device buffer.
 	// drawImageDirect places image row 0 at dst.Min.Y (device top), keeping the
 	// image upright.

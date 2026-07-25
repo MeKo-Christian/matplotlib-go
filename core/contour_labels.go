@@ -6,9 +6,10 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
-func contourLabels(polylines [][]geom.Pt, levels []float64, colors []render.Color, formatter Formatter, rightSideUp bool) []contourLabel {
+func contourLabels(polylines [][]geom.Pt, levels []float64, colors []render.Color, formatter ticker.Formatter, rightSideUp bool) []contourLabel {
 	type candidate struct {
 		polyline []geom.Pt
 		color    render.Color
@@ -187,12 +188,12 @@ func projectPointToSegment(point, a, b geom.Pt) (geom.Pt, float64) {
 	return projection, pointDistanceSquared(point, projection)
 }
 
-func contourInlineLabelSegments(lines *LineCollection, levels []float64, formatter Formatter, fontSize float64, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, []contourLabel) {
+func contourInlineLabelSegments(lines *LineCollection, levels []float64, formatter ticker.Formatter, fontSize float64, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, []contourLabel) {
 	segments, colors, widths, _, labels := contourInlineLabelSegmentsForLevels(lines, levels, nil, formatter, fontSize, 5, true, r, ctx)
 	return segments, colors, widths, labels
 }
 
-func contourInlineLabelSegmentsForLevels(lines *LineCollection, levels, selectedLevels []float64, formatter Formatter, fontSize, inlineSpacing float64, rightSideUp bool, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, [][]float64, []contourLabel) {
+func contourInlineLabelSegmentsForLevels(lines *LineCollection, levels, selectedLevels []float64, formatter ticker.Formatter, fontSize, inlineSpacing float64, rightSideUp bool, r render.Renderer, ctx *DrawContext) ([][]geom.Pt, []render.Color, []float64, [][]float64, []contourLabel) {
 	segments := make([][]geom.Pt, 0, len(lines.Segments))
 	colors := make([]render.Color, 0, len(lines.Segments))
 	widths := make([]float64, 0, len(lines.Segments))
@@ -584,11 +585,11 @@ func appendContourPoint(points []geom.Pt, point geom.Pt) []geom.Pt {
 	return append(points, point)
 }
 
-func contourFormatter(formatter Formatter) Formatter {
+func contourFormatter(formatter ticker.Formatter) ticker.Formatter {
 	if formatter != nil {
 		return formatter
 	}
-	return ScalarFormatter{Prec: 3}
+	return ticker.ScalarFormatter{Prec: 3}
 }
 
 func polylineLength(polyline []geom.Pt) float64 {

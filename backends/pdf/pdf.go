@@ -359,7 +359,7 @@ func (r *Renderer) StopRasterized() bool {
 	if !ok {
 		return false
 	}
-	r.Image(img, rect)
+	r.DrawImage(img, rect)
 	return true
 }
 
@@ -588,7 +588,7 @@ func (r *Renderer) drawBlurredPathEffectFilter(path geom.Path, paint render.Pain
 	if filtered == nil {
 		return false
 	}
-	r.Image(render.NewImageData(filtered), rect)
+	r.DrawImage(render.NewImageData(filtered), rect)
 	return true
 }
 
@@ -863,11 +863,11 @@ func (r *Renderer) capturePathEffectFormContent(path geom.Path, paint *render.Pa
 	return content, len(content) > 0
 }
 
-// Image draws a raster image into the destination rectangle as a PDF image
+// DrawImage draws a raster image into the destination rectangle as a PDF image
 // XObject. RGBA images with alpha get a grayscale soft mask.
-func (r *Renderer) Image(img render.Image, dst geom.Rect) {
+func (r *Renderer) DrawImage(img render.Image, dst geom.Rect) {
 	if rr := r.activeRaster(); rr != nil {
-		rr.Image(img, dst)
+		rr.DrawImage(img, dst)
 		return
 	}
 	if !r.began || img == nil || dst.W() <= 0 || dst.H() <= 0 {

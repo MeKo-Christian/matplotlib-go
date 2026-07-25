@@ -157,7 +157,7 @@ func (c *headlessCanvas) FrameRGBA() *image.RGBA {
 	if !ok {
 		return nil
 	}
-	return exporter.GetImage()
+	return exporter.Image()
 }
 
 func (c *headlessCanvas) Resize(width, height int) error {

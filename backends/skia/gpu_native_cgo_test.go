@@ -52,9 +52,9 @@ func TestNativeGPUSurfaceGradientAndReadback(t *testing.T) {
 		t.Fatalf("End: %v", err)
 	}
 
-	img := r.GetImage()
+	img := r.Image()
 	if img == nil {
-		t.Fatal("GetImage() = nil after GPU readback")
+		t.Fatal("Image() = nil after GPU readback")
 	}
 	left := img.RGBAAt(12, 24)
 	right := img.RGBAAt(52, 24)

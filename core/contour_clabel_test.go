@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestContourLabelsDrawOverlay(t *testing.T) {
@@ -56,7 +57,7 @@ func TestAxesClabelDelegatesToContourSetAndFiltersLevels(t *testing.T) {
 	color := render.Color{R: 0.8, G: 0.1, B: 0.2, A: 1}
 	labels := ax.Clabel(contours, ClabelOptions{
 		Levels:    []float64{2},
-		Formatter: FuncFormatter(func(float64) string { return "L2" }),
+		Formatter: ticker.FuncFormatter(func(float64) string { return "L2" }),
 		FontSize:  &fontSize,
 		Color:     &color,
 	})
@@ -196,7 +197,7 @@ func TestContourInlineLabelsCoverDenseSparseAndShortContours(t *testing.T) {
 	segments, colors, widths, labels := contourInlineLabelSegments(
 		lines,
 		[]float64{1, 2, 3},
-		ScalarFormatter{Prec: 0},
+		ticker.ScalarFormatter{Prec: 0},
 		fontSize,
 		renderer,
 		ctx,

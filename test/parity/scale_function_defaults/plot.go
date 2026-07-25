@@ -6,8 +6,9 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -41,7 +42,7 @@ func Plot() *core.Figure {
 			func(v float64) (float64, bool) { return v * v, true },
 		),
 	)
-	top.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
+	top.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
 
 	bottom.SetTitle("Functionlog Scale Defaults")
 	bottom.SetXLabel("sqrt-scaled log x")
@@ -60,7 +61,7 @@ func Plot() *core.Figure {
 			func(v float64) (float64, bool) { return v * v, true },
 		),
 	)
-	bottom.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
+	bottom.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
 
 	return fig
 }

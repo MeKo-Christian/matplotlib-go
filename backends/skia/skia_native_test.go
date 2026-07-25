@@ -140,14 +140,14 @@ func TestSkiaNativeHatchDrawsWithinPathClip(t *testing.T) {
 	if got := countMostlyGreenPixels(r); got == 0 {
 		t.Fatal("native hatch did not draw visible green pixels")
 	}
-	if got := r.GetImage().RGBAAt(0, 0); got != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
+	if got := r.Image().RGBAAt(0, 0); got != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
 		t.Fatalf("hatch drew outside path clip at (0,0): %#v", got)
 	}
 }
 
 func assertPixelMostly(t *testing.T, r *Renderer, x, y int, want color.RGBA) {
 	t.Helper()
-	got := r.GetImage().RGBAAt(x, y)
+	got := r.Image().RGBAAt(x, y)
 	if want.R > 0 && got.R < 200 {
 		t.Fatalf("pixel (%d,%d) red = %d, want mostly red", x, y, got.R)
 	}
@@ -163,7 +163,7 @@ func assertPixelMostly(t *testing.T, r *Renderer, x, y int, want color.RGBA) {
 }
 
 func countMostlyGreenPixels(r *Renderer) int {
-	img := r.GetImage()
+	img := r.Image()
 	if img == nil {
 		return 0
 	}

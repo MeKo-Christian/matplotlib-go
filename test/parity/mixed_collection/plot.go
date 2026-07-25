@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -22,8 +23,8 @@ func Plot() *core.Figure {
 	ax.SetTitle("RendererAgg mixed path collection")
 	ax.SetXLim(0, 10)
 	ax.SetYLim(0, 6)
-	ax.XAxis.Locator = core.MultipleLocator{Base: 2}
-	ax.YAxis.Locator = core.MultipleLocator{Base: 1}
+	ax.XAxis.Locator = ticker.MultipleLocator{Base: 2}
+	ax.YAxis.Locator = ticker.MultipleLocator{Base: 1}
 
 	paths := []geom.Path{
 		common.FixtureRectPath(0.8, 0.7, 1.4, 1.2),

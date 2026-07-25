@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 // Phase 19 default-value fidelity: an unstyled plot must use matplotlib
@@ -340,14 +341,14 @@ func TestMPLStyleAutolimitModeReachesAxes(t *testing.T) {
 func TestMPLStyleUnicodeMinusReachesTickLabels(t *testing.T) {
 	t.Cleanup(style.ResetDefaults)
 
-	if got := formatScalarTickLabel(ScalarFormatter{}, -1, 1); got != "−1" {
+	if got := (ticker.ScalarFormatter{}).FormatStep(-1, 1); got != "−1" {
 		t.Fatalf("default negative tick label = %q, want unicode minus", got)
 	}
 
 	if _, err := style.UpdateParams(style.Params{"axes.unicode_minus": "False"}); err != nil {
 		t.Fatalf("UpdateParams: %v", err)
 	}
-	if got := formatScalarTickLabel(ScalarFormatter{}, -1, 1); got != "-1" {
+	if got := (ticker.ScalarFormatter{}).FormatStep(-1, 1); got != "-1" {
 		t.Fatalf("negative tick label = %q, want ASCII hyphen with axes.unicode_minus: False", got)
 	}
 }

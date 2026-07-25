@@ -10,6 +10,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -89,8 +90,8 @@ func Plot() *core.Figure {
 	}
 	for idx, channel := range channels {
 		channel.ax.SetTitle(channel.title)
-		channel.ax.XAxis.Locator = core.FixedLocator{TicksList: []float64{0, 10, 20}}
-		channel.ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 10, 20}}
+		channel.ax.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 10, 20}}
+		channel.ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 10, 20}}
 		cmap := channel.cmap
 		channel.ax.ImShow(channelSurface(28, 28, idx), core.ImShowOptions{
 			Colormap: &cmap,
@@ -122,7 +123,7 @@ func Render() image.Image {
 	}
 	r.SetResolution(DPI)
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }
 
 func fontPad(fontSize, fraction, dpi float64) float64 {

@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/dates"
 	"github.com/cwbudde/matplotlib-go/geom"
-	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -40,9 +42,9 @@ func Plot() *core.Figure {
 	}
 	ax.SetXLim(common.ReferenceDateNumber(times[0]), common.ReferenceDateNumber(times[len(times)-1]))
 	ax.SetYLim(0, 16)
-	ax.XAxis.Locator = core.HourLocator{ByHour: []int{0, 6, 12, 18}, Location: time.UTC}
-	ax.XAxis.Formatter = core.ConciseDateFormatter{Location: time.UTC}
-	ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 8, 16}}
+	ax.XAxis.Locator = dates.HourLocator{ByHour: []int{0, 6, 12, 18}, Location: time.UTC}
+	ax.XAxis.Formatter = dates.ConciseDateFormatter{Location: time.UTC}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 8, 16}}
 	return fig
 }
 

@@ -18,7 +18,7 @@ const (
 
 // Plot builds a stateful pyplot figure using common migration wrappers.
 func Plot() *core.Figure {
-	_ = pyplot.CloseAll()
+	must(pyplot.CloseAll())
 	pyplot.RCDefaults()
 
 	fig, axes := pyplot.Subplots(2, 2)
@@ -32,33 +32,39 @@ func Plot() *core.Figure {
 		y[i] = math.Sin(v)
 	}
 
-	_ = pyplot.SCA(axes[0][0])
+	must(pyplot.SCA(axes[0][0]))
 	pyplot.Plot(x, y, core.PlotOptions{Label: "sin(x)"})
 	pyplot.XLabel("x")
 	pyplot.YLabel("signal")
 	pyplot.Title("line")
 	pyplot.Legend()
 
-	_ = pyplot.SCA(axes[0][1])
+	must(pyplot.SCA(axes[0][1]))
 	pyplot.Scatter([]float64{0, 1, 2, 3, 4}, []float64{0.1, 1.3, 0.8, 1.9, 1.4}, core.ScatterOptions{Label: "samples"})
 	pyplot.Annotate("peak", 3, 1.9)
 	pyplot.Title("scatter")
 	pyplot.Legend()
 
-	_ = pyplot.SCA(axes[1][0])
+	must(pyplot.SCA(axes[1][0]))
 	pyplot.Bar([]float64{0, 1, 2}, []float64{2.2, 3.0, 1.7}, core.BarOptions{Label: "counts"})
 	pyplot.XLabel("group")
 	pyplot.YLabel("count")
 	pyplot.Title("bar")
 	pyplot.Legend()
 
-	_ = pyplot.SCA(axes[1][1])
+	must(pyplot.SCA(axes[1][1]))
 	interp := "bilinear"
 	img := pyplot.ImShow(heatmap(), core.ImShowOptions{Interpolation: &interp})
 	pyplot.Title("imshow")
 	pyplot.Colorbar(img)
 
 	return fig
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Render returns an AGG-rendered preview image for tests and docs.
@@ -69,7 +75,7 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }
 
 func linspace(start, stop float64, n int) []float64 {

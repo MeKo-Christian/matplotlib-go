@@ -11,6 +11,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -119,13 +120,13 @@ func setMatrixTicks(ax *core.Axes, rows, cols int) {
 	yTicks := arange(rows)
 	for _, axis := range []*core.Axis{ax.XAxis, ax.XAxisTop} {
 		if axis != nil {
-			axis.Locator = core.FixedLocator{TicksList: xTicks}
-			axis.Formatter = core.ScalarFormatter{Prec: 0}
+			axis.Locator = ticker.FixedLocator{TicksList: xTicks}
+			axis.Formatter = ticker.ScalarFormatter{Prec: 0}
 		}
 	}
 	if ax.YAxis != nil {
-		ax.YAxis.Locator = core.FixedLocator{TicksList: yTicks}
-		ax.YAxis.Formatter = core.ScalarFormatter{Prec: 0}
+		ax.YAxis.Locator = ticker.FixedLocator{TicksList: yTicks}
+		ax.YAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
 	}
 }
 
@@ -196,7 +197,7 @@ func drawMeshAndContour(fig *core.Figure) {
 		X:              arange(cols),
 		Y:              arange(rows),
 		LabelLines:     true,
-		LabelFormatter: core.FormatStrFormatter{Pattern: "%.3g"},
+		LabelFormatter: ticker.FormatStrFormatter{Pattern: "%.3g"},
 		LabelColor:     contourColor,
 		LabelFontSize:  ptr(10.0),
 	})
@@ -247,5 +248,5 @@ func Render() image.Image {
 	}
 	r.SetResolution(DPI)
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }

@@ -1,11 +1,46 @@
 package backends
 
 import (
+	"fmt"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/render"
 )
+
+func TestRegistryConcurrentRegistrationAndLookup(t *testing.T) {
+	reg := NewRegistry()
+	var wg sync.WaitGroup
+	for worker := 0; worker < 8; worker++ {
+		worker := worker
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 100; i++ {
+				backend := Backend(fmt.Sprintf("concurrent-%d-%d", worker, i))
+				reg.Register(backend, &BackendInfo{
+					Name:         string(backend),
+					Capabilities: []Capability{AntiAliasing},
+					Available:    true,
+				})
+				if _, ok := reg.Get(backend); !ok {
+					t.Errorf("registered backend %q not found", backend)
+					return
+				}
+				if !reg.HasCapability(backend, AntiAliasing) {
+					t.Errorf("registered backend %q lost its capability", backend)
+					return
+				}
+				_ = reg.Available()
+			}
+		}()
+	}
+	wg.Wait()
+	if got, want := len(reg.Available()), 800; got != want {
+		t.Fatalf("available backends = %d, want %d", got, want)
+	}
+}
 
 func TestRegistry(t *testing.T) {
 	// Test basic registry operations
@@ -95,19 +130,19 @@ func TestRecommendedBackends(t *testing.T) {
 	useCases := []string{"basic", "publication", "interactive", "scientific"}
 
 	for _, useCase := range useCases {
-		backend, err := GetRecommendedBackend(useCase)
+		backend, err := RecommendedBackend(useCase)
 		if err != nil {
 			// It's OK if no backend satisfies requirements
 			continue
 		}
 
 		if backend == "" {
-			t.Errorf("GetRecommendedBackend should return non-empty backend for %s", useCase)
+			t.Errorf("RecommendedBackend should return non-empty backend for %s", useCase)
 		}
 	}
 
 	// Test unknown use case
-	_, err := GetRecommendedBackend("unknown")
+	_, err := RecommendedBackend("unknown")
 	if err == nil {
 		t.Error("Should return error for unknown use case")
 	}

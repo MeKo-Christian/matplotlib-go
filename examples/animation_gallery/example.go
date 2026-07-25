@@ -149,7 +149,7 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }
 
 func newAnimationCanvas(fig *core.Figure) (canvas.FigureCanvas, error) {

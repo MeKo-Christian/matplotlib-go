@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
 func TestPlotUsesMatplotlibWidgetVisualStyle(t *testing.T) {
@@ -16,7 +17,7 @@ func TestPlotUsesMatplotlibWidgetVisualStyle(t *testing.T) {
 		t.Fatalf("widget visual style = %q, want %q", fig.RC.WidgetVisualStyle, style.WidgetVisualMatplotlib)
 	}
 
-	button := findWidget[*core.Button](fig)
+	button := findWidget[*widgets.Button](fig)
 	if button == nil {
 		t.Fatal("parity widgets gallery should include a button")
 	}

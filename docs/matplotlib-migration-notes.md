@@ -4,6 +4,98 @@ This project keeps Matplotlib's plotting model and visual behavior where it can,
 but the Go API uses typed option structs instead of Python's dynamic keyword
 and property-dict conventions.
 
+## Phase 2 Pre-v1 API Migration
+
+Phase 2 is the coordinated pre-v1 breaking pass. Code using the former
+all-in-one `core` surface must import the package that now owns each feature:
+
+| Before (`core`)                                 | After              |
+| ----------------------------------------------- | ------------------ |
+| `Axes3D`, 3D options, and projection helpers    | `plot3d`           |
+| locators, numeric formatters, and tick contexts | `ticker`           |
+| date conversion, locators, and formatters       | `dates`            |
+| buttons, sliders, cursors, and selectors        | `widgets`          |
+| 2D figures, axes, artists, and plot options     | `core` (unchanged) |
+
+The 3D constructors changed with the package split. Replace
+`fig.AddAxes3D(rect, ...)` with `plot3d.AddAxes(fig, rect, ...)`, and replace
+`core.NewAxes3D(ax)` with `plot3d.NewAxes(ax)`. Importing `plot3d` also
+registers the `"3d"` and `"axes3d"` projections. Ticker and date values keep
+their typed construction style under the new package, for example
+`ticker.MaxNLocator{...}`, `ticker.ScalarFormatter{...}`,
+`dates.DateLocator{...}`, and `dates.DateFormatter{...}`. Widget constructor
+names are unchanged apart from the package qualifier: use
+`widgets.NewButton`, `widgets.NewSlider`, `widgets.NewRangeSlider`,
+`widgets.NewCheckButtons`, `widgets.NewRadioButtons`, `widgets.NewTextBox`,
+`widgets.NewCursor`, `widgets.NewMultiCursor`, and the `widgets.New*Selector`
+family.
+
+Date conversion moved with the date tick API:
+`core.Date2Num`/`Num2Date`/`SetEpoch` are now
+`dates.Date2Num`/`Num2Date`/`SetEpoch`. The getter was made idiomatic during
+the move: replace `core.GetEpoch()` with `dates.Epoch()`.
+
+The same getter pass removed the remaining exported `GetX` spellings:
+
+| Before                                      | After                                     |
+| ------------------------------------------- | ----------------------------------------- |
+| `backends.GetBestBackend`                   | `backends.BestBackend`                    |
+| `backends.GetRecommendedBackend`            | `backends.RecommendedBackend`             |
+| `color.GetColormap`                         | `color.LookupColormap`                    |
+| `color.GetColormapStrict`                   | `color.LookupColormapStrict`              |
+| `Collection.GetArray`, `Scatter2D.GetArray` | `Collection.Array`, `Scatter2D.Array`     |
+| `Axes3D.GetZLabel`                          | `Axes3D.ZLabel`                           |
+| `geom.GetCosSin`                            | `geom.CosSin`                             |
+| `geom.GetIntersection`                      | `geom.Intersection`                       |
+| `geom.GetNormalPoints`                      | `geom.NormalPoints`                       |
+| `geom.GetParallels`                         | `geom.Parallels`                          |
+| `pyplot.GetCMap`                            | `pyplot.CMap`                             |
+| `pyplot.GetCurrentFigManager`               | `pyplot.CurrentFigManager`                |
+| `style.GetTheme`                            | `style.LookupTheme`                       |
+| `TriAnalyzer.GetFlatTriMask`                | `TriAnalyzer.FlatTriMask`                 |
+| raster renderer `GetImage`                  | raster renderer `Image`                   |
+| `agg.Renderer.GetImageNRGBA`                | `agg.Renderer.ImageNRGBA`                 |
+| `skia.Renderer.GetSurface`                  | `skia.Renderer.Surface`                   |
+
+The renderer draw verb changed from
+`render.Renderer.Image(image, destination)` to
+`render.Renderer.DrawImage(image, destination)`. This leaves the noun
+`Image() *image.RGBA` available to the `render.RGBAExporter` contract without
+an impossible Go method overload.
+
+Python-style dynamic introspection was deleted rather than carried into the
+pre-v1 surface. There are no replacements for `core.PropertyBag`,
+`core.Getp`, `core.GetpAll`, `core.Setp`, `core.Findobj`,
+`core.FindobjType`, `Figure.Findobj`, `Axes.Findobj`, or the former
+`Property`, `SetProperty`, and `PropertyNames` methods. Use the concrete
+artist's typed fields and methods, and traverse figures or axes explicitly
+when application code needs discovery.
+
+Renderer reporting now lives with the backend registry that consumes it.
+Implement `backends.RendererModeReporter` instead of
+`render.RendererModeReporter`. `render.CapabilityBridgeReporter` and
+`IsCapabilityBridged` were deleted; a mode-sensitive backend can report
+individual states through
+`RuntimeCapabilityStatus(backends.Capability) (backends.CapabilityStatus,
+bool)`.
+
+Figures now provide backend-neutral output methods:
+
+- `fig.Save(path, opts...)` selects a registered renderer from the requested
+  save format or the path extension.
+- `fig.WriteTo(w, format, opts...)` writes encoded PNG, SVG, PDF, PS/EPS, or
+  PGF output to an `io.Writer`.
+- `fig.Image()` renders through the registered PNG backend and returns a
+  detached `*image.RGBA`.
+
+These methods require renderer registration. Most applications should add the
+side-effect import
+`_ "github.com/cwbudde/matplotlib-go/backends/all"`; applications that need a
+smaller dependency set may side-effect import only the desired backend package,
+such as `backends/agg` for PNG or `backends/svg` for SVG. Without a matching
+registration, `Save`, `WriteTo`, and `Image` return an error instead of choosing
+a backend implicitly.
+
 ## Phase 17.6.2 Axes Helpers
 
 The 17.6.2 helpers cover common Matplotlib migration calls with intentionally
@@ -188,18 +280,18 @@ Current scalar-mappable normalization is exposed through the typed
 class hierarchy. The Phase 17.6.5 inventory maps the upstream `colors.py`
 norm surface to Go as follows:
 
-| Matplotlib norm | Go surface                                     | Related axis scale                              | Colorbar route                                                    |
-| --------------- | ---------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------- |
-| `Normalize`     | `core.Normalize`                               | `linear`                                        | default linear scalar-map axis                                    |
-| `LogNorm`       | `core.LogNorm`                                 | `log`                                           | log colorbar scale and log ticks                                  |
-| `SymLogNorm`    | `core.SymLogNorm`                              | `symlog`                                        | function colorbar scale through the norm inverse                  |
-| `AsinhNorm`     | `core.AsinhNorm`                               | `asinh`                                         | asinh colorbar scale with linear-width metadata                   |
-| `PowerNorm`     | `core.PowerNorm`                               | none                                            | function colorbar scale through the norm inverse                  |
-| `TwoSlopeNorm`  | `core.TwoSlopeNorm`                            | none                                            | function colorbar scale through the norm inverse                  |
-| `CenteredNorm`  | `core.CenteredNorm`                            | none                                            | function colorbar scale through the norm inverse                  |
-| `BoundaryNorm`  | `core.BoundaryNorm`                            | none                                            | boundary ticks, boundaries, values, and extensions                |
-| `NoNorm`        | `core.NoNorm`                                  | none                                            | index-style scalar map on a linear colorbar axis                  |
-| `FuncNorm`      | `core.FuncNorm`                                | `function`, `functionlog` scales exist for axes | function colorbar scale through the norm inverse                  |
+| Matplotlib norm | Go surface          | Related axis scale                              | Colorbar route                                     |
+| --------------- | ------------------- | ----------------------------------------------- | -------------------------------------------------- |
+| `Normalize`     | `core.Normalize`    | `linear`                                        | default linear scalar-map axis                     |
+| `LogNorm`       | `core.LogNorm`      | `log`                                           | log colorbar scale and log ticks                   |
+| `SymLogNorm`    | `core.SymLogNorm`   | `symlog`                                        | function colorbar scale through the norm inverse   |
+| `AsinhNorm`     | `core.AsinhNorm`    | `asinh`                                         | asinh colorbar scale with linear-width metadata    |
+| `PowerNorm`     | `core.PowerNorm`    | none                                            | function colorbar scale through the norm inverse   |
+| `TwoSlopeNorm`  | `core.TwoSlopeNorm` | none                                            | function colorbar scale through the norm inverse   |
+| `CenteredNorm`  | `core.CenteredNorm` | none                                            | function colorbar scale through the norm inverse   |
+| `BoundaryNorm`  | `core.BoundaryNorm` | none                                            | boundary ticks, boundaries, values, and extensions |
+| `NoNorm`        | `core.NoNorm`       | none                                            | index-style scalar map on a linear colorbar axis   |
+| `FuncNorm`      | `core.FuncNorm`     | `function`, `functionlog` scales exist for axes | function colorbar scale through the norm inverse   |
 
 This keeps axes scales and color normalization deliberately separate: axis
 `function`/`functionlog` scales do not automatically become color norms, and
@@ -715,14 +807,14 @@ and draws the already-rasterized image axis-aligned. Non-rotated images always
 use `Renderer.Image`. Scalar image data is rasterized in core first, preserving
 `ImageData.Interpolation()` unless core performs a scalar-stage resample.
 
-| Backend      | Transform surface                                                                                                         | Interpolation / resampling state                                                                                                                                                                                                                     | Notes                                                                                          |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `AGG`        | Native `render.ImageTransformer` through `Renderer.ImageTransformed`.                                                     | AGG consumes `Interpolation()` for direct and transformed image draws, including `nearest`, `bilinear`, `bicubic`, `auto` / `antialiased`, and Matplotlib-name aliases. It also has nearest-specific placement helpers for non-integer direct draws. | Treat as the raster reference backend for later image-resampling alignment.                    |
-| `GoBasic`    | Native `render.ImageTransformer` through `Renderer.ImageTransformed`.                                                     | Uses deterministic nearest-style bitmap scaling and affine sampling; it does not consume interpolation names.                                                                                                                                        | Correctness fallback for pure-Go builds, not a pixel-parity backend for interpolation kernels. |
-| `SVG`        | Native `render.ImageTransformer` by emitting transformed `<image>` nodes.                                                 | Embeds source RGBA pixels as PNG data and leaves resampling to SVG viewers; interpolation names are not mapped to renderer-specific filters.                                                                                                         | Clip paths and affine matrices are preserved structurally.                                     |
-| `PDF`        | Native `render.ImageTransformer` by emitting image XObjects with affine matrices.                                         | Embeds transformed raster image XObjects; interpolation names are not mapped to PDF interpolation dictionaries.                                                                                                                                      | Mixed-raster vector groups forward transformed images to the active raster renderer.           |
-| `PS` / `PGF` | Native `render.ImageTransformer` by emitting transformed raster/image pixel scopes.                                       | Vector-generator fallback; exact viewer-side resampling is backend/output-consumer dependent.                                                                                                                                                        | Included in the vector-backend follow-up, but lower priority than SVG/PDF.                     |
-| `Skia`       | Optional `-tags skia` CPU renderer advertises `render.ImageTransformer`; `skiacgo` routes RGBA transforms through native SkImage drawing. The default untagged stub is unavailable. | `skiacgo` uses native Skia sampling; `skiagpu+skiacgo` draws through a Ganesh EGL/OpenGL render target and performs deterministic RGBA readback. Pure `skia` builds retain the GoBasic-compatible fallback. | Treat as optional raster coverage; use the native just recipes for CPU/GPU parity checks. |
+| Backend      | Transform surface                                                                                                                                                                   | Interpolation / resampling state                                                                                                                                                                                                                     | Notes                                                                                          |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `AGG`        | Native `render.ImageTransformer` through `Renderer.ImageTransformed`.                                                                                                               | AGG consumes `Interpolation()` for direct and transformed image draws, including `nearest`, `bilinear`, `bicubic`, `auto` / `antialiased`, and Matplotlib-name aliases. It also has nearest-specific placement helpers for non-integer direct draws. | Treat as the raster reference backend for later image-resampling alignment.                    |
+| `GoBasic`    | Native `render.ImageTransformer` through `Renderer.ImageTransformed`.                                                                                                               | Uses deterministic nearest-style bitmap scaling and affine sampling; it does not consume interpolation names.                                                                                                                                        | Correctness fallback for pure-Go builds, not a pixel-parity backend for interpolation kernels. |
+| `SVG`        | Native `render.ImageTransformer` by emitting transformed `<image>` nodes.                                                                                                           | Embeds source RGBA pixels as PNG data and leaves resampling to SVG viewers; interpolation names are not mapped to renderer-specific filters.                                                                                                         | Clip paths and affine matrices are preserved structurally.                                     |
+| `PDF`        | Native `render.ImageTransformer` by emitting image XObjects with affine matrices.                                                                                                   | Embeds transformed raster image XObjects; interpolation names are not mapped to PDF interpolation dictionaries.                                                                                                                                      | Mixed-raster vector groups forward transformed images to the active raster renderer.           |
+| `PS` / `PGF` | Native `render.ImageTransformer` by emitting transformed raster/image pixel scopes.                                                                                                 | Vector-generator fallback; exact viewer-side resampling is backend/output-consumer dependent.                                                                                                                                                        | Included in the vector-backend follow-up, but lower priority than SVG/PDF.                     |
+| `Skia`       | Optional `-tags skia` CPU renderer advertises `render.ImageTransformer`; `skiacgo` routes RGBA transforms through native SkImage drawing. The default untagged stub is unavailable. | `skiacgo` uses native Skia sampling; `skiagpu+skiacgo` draws through a Ganesh EGL/OpenGL render target and performs deterministic RGBA readback. Pure `skia` builds retain the GoBasic-compatible fallback.                                          | Treat as optional raster coverage; use the native just recipes for CPU/GPU parity checks.      |
 
 The matrix means the next image-resampling work should compare AGG first,
 document GoBasic's nearest-style fallback separately. SVG/PDF embed
@@ -1273,22 +1365,22 @@ The Go colorbar path intentionally uses a narrower typed contract:
 `Figure.AddColorbar` accepts `ScalarMappable`, reads `ScalarMap()` for colormap,
 norm, and clim, and keeps the mappable handle so `syncColorbarMapping` can
 refresh mutable clim/colormap changes. Shared collections additionally expose
-`GetArray()` as a Matplotlib-style audit surface for scalar values, but
-`GetArray()` is not required by `AddColorbar` itself. Therefore the 3D colorbar
+`Array()` as a Matplotlib-style audit surface for scalar values, but
+`Array()` is not required by `AddColorbar` itself. Therefore the 3D colorbar
 integration audit treats collection-backed helpers as compatible when they
 return a `ScalarMappable` with matching `ScalarMap()` metadata and, where the
-underlying Matplotlib collection calls `set_array`, a matching `GetArray()`
+underlying Matplotlib collection calls `set_array`, a matching `Array()`
 shape for the colorbar-driving scalar values.
 
 The helper-level audit currently classifies the Go 3D helpers this way:
 
 | Helper group                                                                                  | Colorbar-compatible state | Notes                                                                                                                                                                          |
 | --------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Surface` / `PlotSurfaceGrid`                                                                 | yes                       | Returned `PolyCollection` exposes average-z `GetArray()`, cmap, norm, and clim metadata when `Colormap` is set.                                                                |
-| `Trisurf`                                                                                     | yes                       | Returned `PolyCollection` exposes per-triangle average-z `GetArray()`, cmap, norm, and clim metadata when `Colormap` is set.                                                   |
+| `Surface` / `PlotSurfaceGrid`                                                                 | yes                       | Returned `PolyCollection` exposes average-z `Array()`, cmap, norm, and clim metadata when `Colormap` is set.                                                                |
+| `Trisurf`                                                                                     | yes                       | Returned `PolyCollection` exposes per-triangle average-z `Array()`, cmap, norm, and clim metadata when `Colormap` is set.                                                   |
 | `Contour` / `TriContour`                                                                      | yes                       | Returned `LineCollection` exposes level arrays and scalar-map metadata unless explicit colors disable the scalar map.                                                          |
 | `Contourf` / `TriContourf`                                                                    | yes                       | Returned `PolyCollection` exposes filled-band layer arrays and scalar-map metadata unless explicit colors disable the scalar map.                                              |
-| `Scatter3D`                                                                                   | yes                       | Returned `Scatter2D` exposes `ScalarMap()` and `GetArray()` directly, while projected `PathCollection` draw state keeps the depth-shaded mapped colors.                        |
+| `Scatter3D`                                                                                   | yes                       | Returned `Scatter2D` exposes `ScalarMap()` and `Array()` directly, while projected `PathCollection` draw state keeps the depth-shaded mapped colors.                        |
 | `Voxels`, `Bar3D`, `FillBetween3D`, `Quiver3D`, `Wireframe`, `ErrorBar3D`, `Stem3D`, `Plot3D` | no by default             | These helpers follow Matplotlib's common explicit-color collection or line surfaces and are not scalar-array colorbar sources unless a future typed scalar-array API is added. |
 
 Some explicit-color helpers return collection types that satisfy Go's generic

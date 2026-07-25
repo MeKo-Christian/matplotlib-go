@@ -8,6 +8,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 // TestMollweideGridRowProbe is a temporary diagnostic (env-gated): it prints
@@ -54,7 +55,7 @@ func TestLambertTransformProbe(t *testing.T) {
 	ax.SetTitle("Lambert Projection")
 	ax.SetXLabel("longitude")
 	ax.SetYLabel("latitude")
-	ax.XAxis.Locator = FixedLocator{TicksList: []float64{
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{
 		-120 * math.Pi / 180,
 		-90 * math.Pi / 180,
 		-60 * math.Pi / 180,
@@ -65,7 +66,7 @@ func TestLambertTransformProbe(t *testing.T) {
 		90 * math.Pi / 180,
 		120 * math.Pi / 180,
 	}}
-	ax.XAxis.Formatter = FuncFormatter(func(x float64) string {
+	ax.XAxis.Formatter = ticker.FuncFormatter(func(x float64) string {
 		return fmt.Sprintf("%.0f", math.Round(x*180/math.Pi))
 	})
 

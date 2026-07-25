@@ -11,10 +11,15 @@
 // follow-up commit in PLAN.md §4.2; this file scaffolds the types so
 // callers can be written and unit-tested against the contract before
 // any GUI dependency lands in go.mod.
+//
+// The default-constructor registry is safe for concurrent registration and
+// lookup. Backend instances retain their documented event-loop ownership rules;
+// see docs/concurrency.md for the shared figure and renderer contract.
 package desktop
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/cwbudde/matplotlib-go/canvas"
 	"github.com/cwbudde/matplotlib-go/core"
@@ -114,17 +119,29 @@ var ErrNotImplemented = errors.New("desktop: interactive backend not yet impleme
 // Gio adapter — is resolved by New.
 type Constructor func(Options) (Backend, error)
 
-var defaultConstructor Constructor
+var defaultConstructor = struct {
+	sync.RWMutex
+	constructor Constructor
+}{}
 
 // Register installs the default Backend constructor. Toolkit adapters
 // call this from an init function. Registering twice replaces the
 // previous constructor; the last init wins, which lets a test or example
-// swap in a mock.
-func Register(c Constructor) { defaultConstructor = c }
+// swap in a mock. Register is safe for concurrent use with New and
+// DefaultConstructor.
+func Register(c Constructor) {
+	defaultConstructor.Lock()
+	defaultConstructor.constructor = c
+	defaultConstructor.Unlock()
+}
 
 // DefaultConstructor returns the currently-registered constructor, or
 // nil if none has been registered yet.
-func DefaultConstructor() Constructor { return defaultConstructor }
+func DefaultConstructor() Constructor {
+	defaultConstructor.RLock()
+	defer defaultConstructor.RUnlock()
+	return defaultConstructor.constructor
+}
 
 // New constructs a desktop backend using the registered default
 // constructor. Returns ErrNotImplemented when no adapter has been linked
@@ -134,10 +151,11 @@ func New(opts Options) (Backend, error) {
 	if opts.Figure == nil {
 		return nil, ErrNoFigure
 	}
-	if defaultConstructor == nil {
+	constructor := DefaultConstructor()
+	if constructor == nil {
 		return nil, ErrNotImplemented
 	}
-	return defaultConstructor(opts.withDefaults())
+	return constructor(opts.withDefaults())
 }
 
 // withDefaults returns a copy of opts with zero fields replaced by

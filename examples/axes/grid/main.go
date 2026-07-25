@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -46,8 +46,8 @@ func main() {
 	yGrid.MinorDashes = []float64{2, 3}
 	yGrid.MinorColor = render.Color{R: 0.85, G: 0.85, B: 0.85, A: 0.6}
 
-	ax.XAxis.MinorLocator = core.MinorLinearLocator{N: 5}
-	ax.YAxis.MinorLocator = core.MinorLinearLocator{N: 5}
+	ax.XAxis.MinorLocator = ticker.MinorLinearLocator{N: 5}
+	ax.YAxis.MinorLocator = ticker.MinorLinearLocator{N: 5}
 
 	// Plot the two waves after the grid setup so the example reads like the
 	// Python reference: configure axes, then draw data.
@@ -64,18 +64,7 @@ func main() {
 	ax.Plot(x, y1, core.PlotOptions{Label: "sin(x)"})
 	ax.Plot(x, y2, core.PlotOptions{Label: "0.7·sin(2x+0.5)"})
 
-	r, _, err := backends.NewRendererFromEnv(backends.Config{
-		Width:      800,
-		Height:     500,
-		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
-		DPI:        72.0,
-	}, backends.TextCapabilities)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
-
-	if err := core.SavePNG(fig, r, "grid.png"); err != nil {
+	if err := fig.Save("grid.png"); err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}

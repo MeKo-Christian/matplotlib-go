@@ -16,9 +16,9 @@ func ImSave(path string, img render.Image) error {
 	return core.ImSave(path, img)
 }
 
-// GetCMap returns a registered colormap by name.
-func GetCMap(name string) matcolor.Colormap {
-	return matcolor.GetColormap(name)
+// CMap returns a registered colormap by name.
+func CMap(name string) matcolor.Colormap {
+	return matcolor.LookupColormap(name)
 }
 
 // Image delegates to the current axes.

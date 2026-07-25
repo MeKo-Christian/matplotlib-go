@@ -7,12 +7,12 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-// Image draws an RGBA raster image as deterministic pure-PGF pixel rectangles.
+// DrawImage draws an RGBA raster image as deterministic pure-PGF pixel rectangles.
 // This keeps .pgf output self-contained at the cost of large output for dense
 // images; callers that need compact publication files should prefer PDF/SVG.
-func (r *Renderer) Image(img render.Image, dst geom.Rect) {
+func (r *Renderer) DrawImage(img render.Image, dst geom.Rect) {
 	if rr := r.activeRaster(); rr != nil {
-		rr.Image(img, dst)
+		rr.DrawImage(img, dst)
 		return
 	}
 	if !r.began || img == nil || dst.W() <= 0 || dst.H() <= 0 {

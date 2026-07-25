@@ -5,7 +5,8 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -18,7 +19,7 @@ const (
 // Plot builds the showcase figure (backend-agnostic).
 func Plot() *core.Figure {
 	fig := core.NewFigure(900, 640)
-	ax, err := fig.AddAxes3D(geom.Rect{Min: geom.Pt{X: 0.08, Y: 0.08}, Max: geom.Pt{X: 0.92, Y: 0.88}})
+	ax, err := plot3d.AddAxes(fig, geom.Rect{Min: geom.Pt{X: 0.08, Y: 0.08}, Max: geom.Pt{X: 0.92, Y: 0.88}})
 	if err != nil {
 		panic(err)
 	}

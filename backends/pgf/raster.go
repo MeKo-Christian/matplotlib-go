@@ -29,7 +29,7 @@ func (r *Renderer) StopRasterized() bool {
 	if !ok {
 		return false
 	}
-	r.Image(img, rect)
+	r.DrawImage(img, rect)
 	return true
 }
 

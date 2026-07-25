@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/canvas"
@@ -16,9 +17,9 @@ func TestNewRequiresFigure(t *testing.T) {
 }
 
 func TestNewWithoutConstructorReturnsNotImplemented(t *testing.T) {
-	saved := defaultConstructor
-	defaultConstructor = nil
-	t.Cleanup(func() { defaultConstructor = saved })
+	saved := DefaultConstructor()
+	Register(nil)
+	t.Cleanup(func() { Register(saved) })
 
 	fig := &core.Figure{}
 	_, err := New(Options{Figure: fig})
@@ -28,8 +29,8 @@ func TestNewWithoutConstructorReturnsNotImplemented(t *testing.T) {
 }
 
 func TestRegisterAndNew(t *testing.T) {
-	saved := defaultConstructor
-	t.Cleanup(func() { defaultConstructor = saved })
+	saved := DefaultConstructor()
+	t.Cleanup(func() { Register(saved) })
 
 	got := Options{}
 	Register(func(o Options) (Backend, error) {
@@ -54,6 +55,44 @@ func TestRegisterAndNew(t *testing.T) {
 	if got.Renderer == nil {
 		t.Fatal("default renderer factory not installed")
 	}
+}
+
+func TestConstructorRegistryConcurrentAccess(t *testing.T) {
+	saved := DefaultConstructor()
+	t.Cleanup(func() { Register(saved) })
+
+	constructors := []Constructor{
+		func(Options) (Backend, error) { return mockBackend{}, nil },
+		func(Options) (Backend, error) { return mockBackend{}, nil },
+	}
+	Register(constructors[0])
+
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for worker := 0; worker < 8; worker++ {
+		wg.Add(1)
+		go func(worker int) {
+			defer wg.Done()
+			<-start
+			for i := 0; i < 500; i++ {
+				if worker%2 == 0 {
+					Register(constructors[i%len(constructors)])
+					continue
+				}
+				if DefaultConstructor() == nil {
+					t.Error("DefaultConstructor returned nil during registered access")
+					return
+				}
+				backend, err := New(Options{Figure: &core.Figure{}})
+				if err != nil || backend == nil {
+					t.Errorf("New() = %v, %v; want a backend", backend, err)
+					return
+				}
+			}
+		}(worker)
+	}
+	close(start)
+	wg.Wait()
 }
 
 func TestWithDefaultsPreservesNonZero(t *testing.T) {

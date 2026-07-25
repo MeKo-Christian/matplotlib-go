@@ -49,7 +49,7 @@ func TestPathFill(t *testing.T) {
 	_ = r.End()
 
 	// Verify something was drawn (pixel at center should be red)
-	img := r.GetImage()
+	img := r.Image()
 	c := img.RGBAAt(50, 50)
 	if c.R < 200 {
 		t.Errorf("center pixel should be red, got R=%d", c.R)
@@ -66,7 +66,7 @@ func TestPathFillUsesStraightAlphaColor(t *testing.T) {
 	})
 	_ = r.End()
 
-	got := r.GetImage().RGBAAt(50, 50)
+	got := r.Image().RGBAAt(50, 50)
 	want := color.RGBA{R: 222, G: 233, B: 251, A: 255}
 	if got != want {
 		t.Fatalf("straight-alpha fill pixel = %+v, want %+v", got, want)
@@ -179,7 +179,7 @@ func TestDrawPathCollectionSingleUnsnappedPathUsesMarkerCachePlacement(t *testin
 		t.Fatal("DrawPathCollection returned false")
 	}
 
-	got := r.GetImage().RGBAAt(320, 253)
+	got := r.Image().RGBAAt(320, 253)
 	if got == (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
 		t.Fatalf("collection baseline edge pixel at y=253 stayed white; want Matplotlib draw_markers half-pixel coverage")
 	}
@@ -299,7 +299,7 @@ func TestPathForcedAlphaOverridesPaintAlpha(t *testing.T) {
 	})
 	_ = r.End()
 
-	if got := r.GetImage().RGBAAt(10, 10); got != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
+	if got := r.Image().RGBAAt(10, 10); got != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
 		t.Fatalf("forced transparent alpha should leave background unchanged, got %+v", got)
 	}
 }
@@ -322,7 +322,7 @@ func TestNativeHatchDrawsWithinPathClip(t *testing.T) {
 	})
 	_ = r.End()
 
-	bounds, pixels, ok := inkBounds(r.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	bounds, pixels, ok := inkBounds(r.Image(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	if !ok || pixels == 0 {
 		t.Fatal("expected hatch pixels to be drawn")
 	}
@@ -348,7 +348,7 @@ func TestNativeDiagonalHatchUsesDeviceSpaceOrientation(t *testing.T) {
 	})
 	_ = r.End()
 
-	slope, ok := darkPixelSlope(r.GetImage(), image.Rect(24, 24, 116, 76))
+	slope, ok := darkPixelSlope(r.Image(), image.Rect(24, 24, 116, 76))
 	if !ok {
 		t.Fatal("expected diagonal hatch pixels")
 	}
@@ -374,7 +374,7 @@ func TestNativeDiagonalHatchDensityMatchesMatplotlibReference(t *testing.T) {
 	})
 	_ = r.End()
 
-	runs := darkRunsOnScanline(r.GetImage(), 50, 25, 115)
+	runs := darkRunsOnScanline(r.Image(), 50, 25, 115)
 	if runs < 9 || runs > 13 {
 		t.Fatalf("/// hatch drew %d dark runs across tile scanline, want Matplotlib-like density around 11", runs)
 	}
@@ -400,7 +400,7 @@ func TestNativeHatchDrawsShapePatterns(t *testing.T) {
 			})
 			_ = r.End()
 
-			bounds, pixels, ok := inkBounds(r.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
+			bounds, pixels, ok := inkBounds(r.Image(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
 			if !ok || pixels == 0 {
 				t.Fatalf("expected native hatch %q pixels to be drawn", hatch)
 			}
@@ -428,7 +428,7 @@ func TestNativeShapeHatchUsesTilePhaseAtClipBoundary(t *testing.T) {
 	})
 	_ = r.End()
 
-	bounds, pixels, ok := inkBounds(r.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	bounds, pixels, ok := inkBounds(r.Image(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	if !ok || pixels == 0 {
 		t.Fatal("expected native shape hatch pixels")
 	}
@@ -507,7 +507,7 @@ func TestNativeHatchResidualAgainstFallbackDiagnostic(t *testing.T) {
 	}
 	_ = fallback.End()
 
-	diffPixels, maxChannelDiff := hatchImageResidual(native.GetImage(), fallback.GetImage())
+	diffPixels, maxChannelDiff := hatchImageResidual(native.Image(), fallback.Image())
 	t.Logf("native hatch vs fallback residual: diffPixels=%d maxChannelDiff=%d", diffPixels, maxChannelDiff)
 	if diffPixels > 1600 || maxChannelDiff > 240 {
 		t.Fatalf("native hatch residual too large: diffPixels=%d maxChannelDiff=%d", diffPixels, maxChannelDiff)

@@ -90,7 +90,7 @@ func TestPerformanceP2MemoryTargetsAndTuningGuideIsDocumented(t *testing.T) {
 		"`BenchmarkLargeScatter100KDraw`",
 		"`BenchmarkLargeScatter100KRedrawReuseRenderer`",
 		"Repeated redraw",
-		"Avoid `GetImage`",
+		"Avoid `Image`",
 		"Batch markers",
 		"Text-heavy tick labels",
 		"Backend selection",

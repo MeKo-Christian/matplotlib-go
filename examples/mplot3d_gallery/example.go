@@ -9,7 +9,8 @@ import (
 	mplcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -24,7 +25,7 @@ func Plot() *core.Figure {
 	fig := core.NewFigure(Width, Height)
 	panels := []struct {
 		title string
-		draw  func(*core.Axes3D)
+		draw  func(*plot3d.Axes3D)
 	}{
 		{title: "3D line", draw: drawLine3D},
 		{title: "3D scatter", draw: drawScatter3D},
@@ -73,18 +74,18 @@ func Render() image.Image {
 	}
 	r.SetResolution(DPI)
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }
 
-func mustAxes3D(fig *core.Figure, rect geom.Rect) *core.Axes3D {
-	ax, err := fig.AddAxes3D(rect)
+func mustAxes3D(fig *core.Figure, rect geom.Rect) *plot3d.Axes3D {
+	ax, err := plot3d.AddAxes(fig, rect)
 	if err != nil {
 		panic(err)
 	}
 	return ax
 }
 
-func drawLine3D(ax *core.Axes3D) {
+func drawLine3D(ax *plot3d.Axes3D) {
 	const n = 72
 	x := make([]float64, n)
 	y := make([]float64, n)
@@ -99,7 +100,7 @@ func drawLine3D(ax *core.Axes3D) {
 	ax.Plot3D(x, y, z, core.PlotOptions{LineWidth: &width})
 }
 
-func drawScatter3D(ax *core.Axes3D) {
+func drawScatter3D(ax *plot3d.Axes3D) {
 	rng := rand.New(rand.NewPCG(19680801, 0))
 	const n = 55
 	x := make([]float64, n)
@@ -113,7 +114,7 @@ func drawScatter3D(ax *core.Axes3D) {
 	ax.Scatter3D(x, y, z)
 }
 
-func drawSurface(ax *core.Axes3D) {
+func drawSurface(ax *plot3d.Axes3D) {
 	x, y, z := radialSurface(28, -4, 4)
 	cmap := "Blues"
 	vmin := 2 * common.MinInGrid(z)
@@ -125,21 +126,21 @@ func drawSurface(ax *core.Axes3D) {
 	})
 }
 
-func drawWireframe(ax *core.Axes3D) {
+func drawWireframe(ax *plot3d.Axes3D) {
 	x, y, z := common.Get3DWireframeTestData(0.12)
 	rStride := 4
 	cStride := 4
 	ax.Wireframe(x, y, z, core.PlotOptions{RStride: &rStride, CStride: &cStride})
 }
 
-func drawTrisurf(ax *core.Axes3D) {
+func drawTrisurf(ax *plot3d.Axes3D) {
 	tri, z := fanMesh(7, 20)
 	cmap := "viridis"
 	vmin := 2 * common.MinInSlice(z)
 	ax.Trisurf(tri, z, core.PlotOptions{Colormap: &cmap, VMin: &vmin})
 }
 
-func drawBar3D(ax *core.Axes3D) {
+func drawBar3D(ax *plot3d.Axes3D) {
 	x := []float64{1, 1, 2, 2}
 	y := []float64{1, 2, 1, 2}
 	z := []float64{0, 0, 0, 0}
@@ -149,7 +150,7 @@ func drawBar3D(ax *core.Axes3D) {
 	ax.Bar3D(x, y, z, dx, dy, dz)
 }
 
-func drawVoxels(ax *core.Axes3D) {
+func drawVoxels(ax *plot3d.Axes3D) {
 	const n = 6
 	filled := make([][][]bool, n)
 	for i := 0; i < n; i++ {
@@ -162,10 +163,10 @@ func drawVoxels(ax *core.Axes3D) {
 		}
 	}
 	edgeColor := render.Color{R: 0, G: 0, B: 0, A: 1}
-	ax.Voxels(filled, core.VoxelOptions{EdgeColor: &edgeColor})
+	ax.Voxels(filled, plot3d.VoxelOptions{EdgeColor: &edgeColor})
 }
 
-func drawQuiver3D(ax *core.Axes3D) {
+func drawQuiver3D(ax *plot3d.Axes3D) {
 	const n = 3
 	step := 2.0 / float64(n-1)
 	x := make([]float64, 0, n*n*n)
@@ -192,7 +193,7 @@ func drawQuiver3D(ax *core.Axes3D) {
 	ax.Quiver(x, y, z, u, v, w)
 }
 
-func drawStem3D(ax *core.Axes3D) {
+func drawStem3D(ax *plot3d.Axes3D) {
 	const n = 16
 	x := make([]float64, n)
 	y := make([]float64, n)
@@ -206,7 +207,7 @@ func drawStem3D(ax *core.Axes3D) {
 	ax.Stem(x, y, z)
 }
 
-func drawFillBetween3D(ax *core.Axes3D) {
+func drawFillBetween3D(ax *plot3d.Axes3D) {
 	const n = 38
 	x1 := make([]float64, n)
 	y1 := make([]float64, n)
@@ -228,7 +229,7 @@ func drawFillBetween3D(ax *core.Axes3D) {
 	ax.Plot3D(x1, y1, z1, core.PlotOptions{LineWidth: &width, Color: &blue})
 	ax.Plot3D(x2, y2, z2, core.PlotOptions{LineWidth: &width, Color: &blue})
 	alpha := 0.5
-	ax.FillBetween(x1, y1, z1, x2, y2, z2, core.FillBetween3DOptions{Alpha: &alpha})
+	ax.FillBetween(x1, y1, z1, x2, y2, z2, plot3d.FillBetween3DOptions{Alpha: &alpha})
 }
 
 func radialSurface(count int, minVal, maxVal float64) ([]float64, []float64, [][]float64) {

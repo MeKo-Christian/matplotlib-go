@@ -13,9 +13,9 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-func (r *Renderer) Image(img render.Image, dst geom.Rect) {
+func (r *Renderer) DrawImage(img render.Image, dst geom.Rect) {
 	if rr := r.activeRaster(); rr != nil {
-		rr.Image(img, dst)
+		rr.DrawImage(img, dst)
 		return
 	}
 	rgba := asRGBAImage(img)
@@ -37,7 +37,7 @@ func (r *Renderer) ImageTransformed(img render.Image, dst geom.Rect, transform g
 		if tr, ok := rr.(render.ImageTransformer); ok {
 			tr.ImageTransformed(img, dst, transform)
 		} else {
-			rr.Image(img, dst)
+			rr.DrawImage(img, dst)
 		}
 		return
 	}

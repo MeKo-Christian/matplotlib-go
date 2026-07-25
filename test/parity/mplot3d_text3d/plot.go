@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -25,7 +26,7 @@ type label struct {
 // same 0..10 view volume as the upstream 3D text/pathpatch gallery pattern.
 func Plot() *core.Figure {
 	fig := core.NewFigure(720, 560)
-	ax, err := fig.AddAxes3D(geom.Rect{
+	ax, err := plot3d.AddAxes(fig, geom.Rect{
 		Min: geom.Pt{X: 0.12, Y: 0.16},
 		Max: geom.Pt{X: 0.88, Y: 0.88},
 	})
@@ -63,5 +64,5 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }

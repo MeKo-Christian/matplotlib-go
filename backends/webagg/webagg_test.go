@@ -145,12 +145,12 @@ func (*blitTestRenderer) Restore()                               {}
 func (*blitTestRenderer) ClipRect(geom.Rect)                     {}
 func (*blitTestRenderer) ClipPath(geom.Path)                     {}
 func (*blitTestRenderer) Path(geom.Path, *render.Paint)          {}
-func (*blitTestRenderer) Image(render.Image, geom.Rect)          {}
+func (*blitTestRenderer) DrawImage(render.Image, geom.Rect)      {}
 func (*blitTestRenderer) GlyphRun(render.GlyphRun, render.Color) {}
 func (*blitTestRenderer) MeasureText(string, float64, string) render.TextMetrics {
 	return render.TextMetrics{}
 }
-func (r *blitTestRenderer) GetImage() *image.RGBA { return r.img }
+func (r *blitTestRenderer) Image() *image.RGBA { return r.img }
 func (r *blitTestRenderer) CopyFromBBox(bbox geom.Rect) *render.BufferRegion {
 	minX, minY := int(bbox.Min.X), int(bbox.Min.Y)
 	maxX, maxY := int(bbox.Max.X), int(bbox.Max.Y)

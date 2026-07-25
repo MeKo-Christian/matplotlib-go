@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -30,16 +31,16 @@ func Plot() *core.Figure {
 	}
 	ax.SetXLim(-70, 35)
 	ax.SetYLim(1050, 180)
-	ax.XAxis.Locator = core.MultipleLocator{Base: 10}
-	ax.XAxis.MinorLocator = core.MultipleLocator{Base: 5}
+	ax.XAxis.Locator = ticker.MultipleLocator{Base: 10}
+	ax.XAxis.MinorLocator = ticker.MultipleLocator{Base: 5}
 	if ax.XAxisTop != nil {
 		ax.XAxisTop.Locator = ax.XAxis.Locator
 		ax.XAxisTop.MinorLocator = ax.XAxis.MinorLocator
 	}
-	ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{100, 200, 300, 500, 700, 850, 1000}}
-	ax.YAxis.MinorLocator = core.LogLocator{Base: 10, Minor: true, Subs: []float64{2, 3, 4, 5, 6, 7, 8, 9}}
-	ax.YAxis.Formatter = core.ScalarFormatter{Prec: 0}
-	ax.YAxis.MinorFormatter = core.NullFormatter{}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{100, 200, 300, 500, 700, 850, 1000}}
+	ax.YAxis.MinorLocator = ticker.LogLocator{Base: 10, Minor: true, Subs: []float64{2, 3, 4, 5, 6, 7, 8, 9}}
+	ax.YAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
+	ax.YAxis.MinorFormatter = ticker.NullFormatter{}
 	gridColor := render.Color{R: 0.82, G: 0.84, B: 0.88, A: 1}
 	xGrid := ax.AddGrid(core.AxisBottom)
 	xGrid.Color = gridColor

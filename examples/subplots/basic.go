@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
-	"github.com/cwbudde/matplotlib-go/render"
 )
 
 func main() {
@@ -52,18 +50,7 @@ func main() {
 	grid[0][0].SetXLim(0, 10)
 	grid[0][0].SetYLim(-1.2, 1.2)
 
-	r, _, createErr := backends.NewRendererFromEnv(backends.Config{
-		Width:      1200,
-		Height:     800,
-		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
-		DPI:        96,
-	}, backends.TextCapabilities)
-	if createErr != nil {
-		fmt.Printf("error creating renderer: %v\n", createErr)
-		return
-	}
-
-	if err := core.SavePNG(fig, r, "subplots_basic.png"); err != nil {
+	if err := fig.Save("subplots_basic.png"); err != nil {
 		fmt.Printf("error saving PNG: %v\n", err)
 		return
 	}

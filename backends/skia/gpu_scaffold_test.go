@@ -59,9 +59,9 @@ func TestGPUModeRendersThroughDeterministicReadback(t *testing.T) {
 		t.Fatalf("End = %v", err)
 	}
 
-	img := r.GetImage()
+	img := r.Image()
 	if img == nil {
-		t.Fatal("GetImage() = nil, want a CPU readback buffer")
+		t.Fatal("Image() = nil, want a CPU readback buffer")
 	}
 	if !hasNonBackgroundPixel(img) {
 		t.Fatal("GPU mode produced an empty deterministic readback")

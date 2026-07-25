@@ -16,7 +16,7 @@
 // - Image drawing and affine image drawing
 // - Text raster and path rendering, text measurement, font metrics
 // - PNG export
-// - Direct RGBA buffer access through GetImage
+// - Direct RGBA buffer access through Image
 // - `copy_from_bbox` / `restore_region` equivalent (`CopyFromBBox` / `RestoreRegion`)
 // - `start_filter` / `stop_filter` equivalent (`StartFilter` / `StopFilter`)
 //

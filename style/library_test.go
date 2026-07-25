@@ -28,7 +28,7 @@ func TestLoadStyleLibraryRegistersDiscoveredThemes(t *testing.T) {
 		t.Fatalf("applied count = %d, want 2", len(report.Loaded[0].Report.Applied))
 	}
 
-	theme, ok := GetTheme("paper")
+	theme, ok := LookupTheme("paper")
 	if !ok {
 		t.Fatal("expected discovered theme to be registered")
 	}
@@ -87,7 +87,7 @@ func TestLoadStyleLibraryAllowsExplicitFileAndLastThemeWins(t *testing.T) {
 	if len(report.Loaded) != 2 {
 		t.Fatalf("loaded count = %d, want 2", len(report.Loaded))
 	}
-	theme, ok := GetTheme("shared")
+	theme, ok := LookupTheme("shared")
 	if !ok {
 		t.Fatal("expected shared theme to be registered")
 	}

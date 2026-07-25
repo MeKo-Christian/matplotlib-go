@@ -442,7 +442,7 @@ func renderAggTextBaseline(t *testing.T, fontPath string, tc aggTextBaselineCase
 	if err := r.End(); err != nil {
 		t.Fatalf("End failed: %v", err)
 	}
-	return r.GetImage()
+	return r.Image()
 }
 
 func renderNativeFreetypeTextBaseline(t *testing.T, fontPath string, tc aggTextBaselineCase) *image.RGBA {
@@ -467,7 +467,7 @@ func renderNativeFreetypeTextBaseline(t *testing.T, fontPath string, tc aggTextB
 	if !ok {
 		t.Fatalf("native FreeType diagnostic render failed for %q", tc.Text)
 	}
-	return r.GetImage()
+	return r.Image()
 }
 
 func renderNativeFreetypeRunTextBaseline(t *testing.T, fontPath string, tc aggTextBaselineCase, hintingFactor int) *image.RGBA {
@@ -493,7 +493,7 @@ func renderNativeFreetypeRunTextBaseline(t *testing.T, fontPath string, tc aggTe
 	if !ok {
 		t.Fatalf("native FreeType run diagnostic render failed for %q", tc.Text)
 	}
-	return r.GetImage()
+	return r.Image()
 }
 
 func runMatplotlibTextBaseline(t *testing.T, fontPath string, tc aggTextBaselineCase, hinting string, hintingFactor int) (*image.RGBA, mplTextMetric, string, int) {
@@ -810,7 +810,7 @@ func TestTrailingSpaceDoesNotRenderDuplicateGlyph(t *testing.T) {
 		if err := r.End(); err != nil {
 			t.Fatalf("End failed: %v", err)
 		}
-		return r.GetImage()
+		return r.Image()
 	}
 
 	withoutTrailingSpace := renderText("x")
@@ -841,7 +841,7 @@ func TestInternalSpaceDoesNotReplayPreviousGlyph(t *testing.T) {
 		if err := r.End(); err != nil {
 			t.Fatalf("End failed: %v", err)
 		}
-		return r.GetImage().Pix
+		return r.Image().Pix
 	}
 
 	withSingleSpace := append([]byte(nil), renderText("Histogram Strategies")...)

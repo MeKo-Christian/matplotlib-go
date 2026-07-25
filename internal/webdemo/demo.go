@@ -101,7 +101,7 @@ var showcaseBuilders = map[string]func() *core.Figure{
 
 type rasterRenderer interface {
 	render.Renderer
-	GetImage() *image.RGBA
+	Image() *image.RGBA
 }
 
 func webDescriptorsFromCatalog() []Descriptor {
@@ -183,7 +183,7 @@ func RenderWithBackend(id, backendID string, width, height int) (*image.RGBA, De
 	}
 
 	core.DrawFigure(fig, r)
-	return r.GetImage(), descriptor, nil
+	return r.Image(), descriptor, nil
 }
 
 func RenderPNG(id string, width, height int) ([]byte, Descriptor, error) {

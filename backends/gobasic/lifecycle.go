@@ -124,8 +124,8 @@ func (r *Renderer) SetResolution(dpi uint) {
 	}
 }
 
-// GetImage returns the underlying image.RGBA for PNG export.
-func (r *Renderer) GetImage() *image.RGBA {
+// Image returns the underlying image.RGBA for PNG export.
+func (r *Renderer) Image() *image.RGBA {
 	return r.dst
 }
 

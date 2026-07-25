@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -325,7 +326,7 @@ func (a *Axes) effectiveMargin(isX bool, fallback float64) float64 {
 // axis locator, mirroring Matplotlib's autolimit_mode='round_numbers'
 // (Locator.view_limits returns the first and last raw tick).
 func (a *Axes) roundNumberLimits(isX bool, minVal, maxVal float64) (float64, float64) {
-	var loc Locator
+	var loc ticker.Locator
 	if isX {
 		if a.XAxis != nil {
 			loc = a.XAxis.Locator

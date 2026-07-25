@@ -3,10 +3,10 @@ package canvas
 import (
 	"strings"
 
-	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
-func (w *WidgetInteraction) handleCheckKey(checks *core.CheckButtons, focusedIndex int, ev KeyEvent, key string) bool {
+func (w *WidgetInteraction) handleCheckKey(checks *widgets.CheckButtons, focusedIndex int, key string) bool {
 	if checks == nil || len(checks.Labels) == 0 {
 		return false
 	}
@@ -33,7 +33,6 @@ func (w *WidgetInteraction) handleCheckKey(checks *core.CheckButtons, focusedInd
 		w.focusedCheckIndex = focusedIndex
 		return true
 	case "space", "enter":
-		_ = ev
 		if focusedIndex < 0 {
 			focusedIndex = 0
 		}
@@ -45,7 +44,7 @@ func (w *WidgetInteraction) handleCheckKey(checks *core.CheckButtons, focusedInd
 	return false
 }
 
-func (w *WidgetInteraction) handleRadioKey(radios *core.RadioButtons, focusedIndex int, key string) bool {
+func (w *WidgetInteraction) handleRadioKey(radios *widgets.RadioButtons, focusedIndex int, key string) bool {
 	if radios == nil || len(radios.Labels) == 0 {
 		return false
 	}

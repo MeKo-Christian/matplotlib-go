@@ -4,7 +4,7 @@ import (
 	"log"
 	"math"
 
-	"github.com/cwbudde/matplotlib-go/backends/agg"
+	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -44,12 +44,7 @@ func main() {
 	inset.AddGrid(core.AxisBottom)
 	inset.AddGrid(core.AxisLeft)
 
-	r, err := agg.New(720, 420, render.Color{R: 1, G: 1, B: 1, A: 1})
-	if err != nil {
-		log.Fatal(err)
-	}
-	core.DrawFigure(fig, r)
-	if err := r.SavePNG("inset.png"); err != nil {
+	if err := fig.Save("inset.png"); err != nil {
 		log.Fatal(err)
 	}
 }

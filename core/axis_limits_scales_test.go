@@ -6,8 +6,33 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
+
+func TestDefaultLogScaleFormatterUsesMatplotlibMinorThresholds(t *testing.T) {
+	axis := &Axis{}
+	configureScaleAxis(axis, "log", transform.ScaleOptions{Base: 10})
+
+	formatter, ok := axis.Formatter.(ticker.LogFormatterMathText)
+	if !ok {
+		t.Fatalf("log scale formatter = %T, want LogFormatterMathText", axis.Formatter)
+	}
+	ticks := []float64{200, 300, 500, 700, 850, 1000}
+	want := []string{
+		`$\mathdefault{2\times10^{2}}$`,
+		`$\mathdefault{3\times10^{2}}$`,
+		"",
+		"",
+		"",
+		`$\mathdefault{10^{3}}$`,
+	}
+	for i, tick := range ticks {
+		if got := formatter.FormatTick(tick, i, ticks); got != want[i] {
+			t.Fatalf("default log formatter tick %v = %q, want %q", tick, got, want[i])
+		}
+	}
+}
 
 func TestAxis_Draw(t *testing.T) {
 	// Test drawing a basic X axis
@@ -55,8 +80,8 @@ func TestAxis_CustomSettings(t *testing.T) {
 	// Test axis with custom settings
 	axis := &Axis{
 		Side:       AxisTop,
-		Locator:    LinearLocator{},
-		Formatter:  ScalarFormatter{Prec: 2},
+		Locator:    ticker.LinearLocator{},
+		Formatter:  ticker.ScalarFormatter{Prec: 2},
 		Color:      render.Color{R: 1, G: 0, B: 0, A: 1}, // red
 		LineWidth:  2.0,
 		TickSize:   10.0,
@@ -139,18 +164,18 @@ func TestAxes_SetLimits(t *testing.T) {
 	}
 
 	// Check that locator was updated to logarithmic
-	if logLoc, ok := axes.XAxis.Locator.(LogLocator); !ok || logLoc.Base != 10 {
+	if logLoc, ok := axes.XAxis.Locator.(ticker.LogLocator); !ok || logLoc.Base != 10 {
 		t.Errorf("SetXLimLog should update locator to LogLocator with base 10")
 	}
-	if logLoc, ok := axes.XAxisTop.Locator.(LogLocator); !ok || logLoc.Base != 10 {
+	if logLoc, ok := axes.XAxisTop.Locator.(ticker.LogLocator); !ok || logLoc.Base != 10 {
 		t.Errorf("SetXLimLog should update top axis locator to LogLocator with base 10")
 	}
 
 	axes.SetYLimLog(1, 100, 10)
-	if logLoc, ok := axes.YAxis.Locator.(LogLocator); !ok || logLoc.Base != 10 {
+	if logLoc, ok := axes.YAxis.Locator.(ticker.LogLocator); !ok || logLoc.Base != 10 {
 		t.Errorf("SetYLimLog should update locator to LogLocator with base 10")
 	}
-	if logLoc, ok := axes.YAxisRight.Locator.(LogLocator); !ok || logLoc.Base != 10 {
+	if logLoc, ok := axes.YAxisRight.Locator.(ticker.LogLocator); !ok || logLoc.Base != 10 {
 		t.Errorf("SetYLimLog should update right axis locator to LogLocator with base 10")
 	}
 }
@@ -180,15 +205,15 @@ func TestAxes_SetScalePreservesDomainAndConfiguresLogDefaults(t *testing.T) {
 		t.Fatalf("x scale domain = (%v, %v), want (1, 1000)", xMin, xMax)
 	}
 
-	loc, ok := axes.XAxis.Locator.(LogLocator)
+	loc, ok := axes.XAxis.Locator.(ticker.LogLocator)
 	if !ok || loc.Base != 10 {
 		t.Fatalf("bottom locator = %#v, want log locator base 10", axes.XAxis.Locator)
 	}
-	minor, ok := axes.XAxis.MinorLocator.(LogLocator)
+	minor, ok := axes.XAxis.MinorLocator.(ticker.LogLocator)
 	if !ok || len(minor.Subs) != 3 {
 		t.Fatalf("bottom minor locator = %#v, want log minor locator with subs", axes.XAxis.MinorLocator)
 	}
-	topLoc, ok := axes.XAxisTop.Locator.(LogLocator)
+	topLoc, ok := axes.XAxisTop.Locator.(ticker.LogLocator)
 	if !ok || topLoc.Base != 10 {
 		t.Fatalf("top locator = %#v, want log locator base 10", axes.XAxisTop.Locator)
 	}
@@ -248,17 +273,17 @@ func TestAxes_SetScaleUpdatesSharedRoot(t *testing.T) {
 	if _, ok := root.XScale.(transform.SymLog); !ok {
 		t.Fatalf("shared root x scale type = %T, want transform.SymLog", root.XScale)
 	}
-	locator, ok := root.XAxis.Locator.(SymLogLocator)
+	locator, ok := root.XAxis.Locator.(ticker.SymLogLocator)
 	if !ok {
 		t.Fatalf("shared root x locator = %T, want SymLogLocator", root.XAxis.Locator)
 	}
 	if locator.Base != 10 || locator.LinThresh != 2 {
 		t.Fatalf("shared root x locator = %+v, want base=10 linthresh=2", locator)
 	}
-	if _, ok := root.XAxis.MinorLocator.(SymLogLocator); !ok {
+	if _, ok := root.XAxis.MinorLocator.(ticker.SymLogLocator); !ok {
 		t.Fatalf("shared root x minor locator = %T, want SymLogLocator", root.XAxis.MinorLocator)
 	}
-	if formatter, ok := root.XAxis.Formatter.(LogFormatterMathText); !ok || !formatter.SciNotation {
+	if formatter, ok := root.XAxis.Formatter.(ticker.LogFormatterMathText); !ok || !formatter.SciNotation {
 		t.Fatalf("shared root x formatter = %#v, want scientific LogFormatterMathText", root.XAxis.Formatter)
 	}
 	xMin, xMax := root.XScale.Domain()
@@ -284,16 +309,16 @@ func TestAxes_SetScaleUpdatesOverlayAxisDefaults(t *testing.T) {
 		t.Fatalf("SetXScale(log): %v", err)
 	}
 
-	if loc, ok := twinX.XAxis.Locator.(LogLocator); !ok || loc.Base != 10 {
+	if loc, ok := twinX.XAxis.Locator.(ticker.LogLocator); !ok || loc.Base != 10 {
 		t.Fatalf("twin x locator = %#v, want log base 10", twinX.XAxis.Locator)
 	}
-	if loc, ok := secondaryX.XAxisTop.Locator.(LogLocator); !ok || loc.Base != 10 {
+	if loc, ok := secondaryX.XAxisTop.Locator.(ticker.LogLocator); !ok || loc.Base != 10 {
 		t.Fatalf("secondary x top locator = %#v, want log base 10", secondaryX.XAxisTop.Locator)
 	}
-	if minor, ok := secondaryX.XAxisTop.MinorLocator.(LogLocator); !ok || len(minor.Subs) != 2 {
+	if minor, ok := secondaryX.XAxisTop.MinorLocator.(ticker.LogLocator); !ok || len(minor.Subs) != 2 {
 		t.Fatalf("secondary x top minor locator = %#v, want log minor subs", secondaryX.XAxisTop.MinorLocator)
 	}
-	if formatter, ok := secondaryX.XAxisTop.Formatter.(LogFormatterMathText); !ok || !formatter.SciNotation {
+	if formatter, ok := secondaryX.XAxisTop.Formatter.(ticker.LogFormatterMathText); !ok || !formatter.SciNotation {
 		t.Fatalf("secondary x top formatter = %#v, want scientific LogFormatterMathText", secondaryX.XAxisTop.Formatter)
 	}
 
@@ -311,13 +336,13 @@ func TestAxes_SetScaleUpdatesOverlayAxisDefaults(t *testing.T) {
 		t.Fatalf("SetYScale(logit): %v", err)
 	}
 
-	if _, ok := twinY.YAxis.Locator.(LogitLocator); !ok {
+	if _, ok := twinY.YAxis.Locator.(ticker.LogitLocator); !ok {
 		t.Fatalf("twin y locator = %T, want LogitLocator", twinY.YAxis.Locator)
 	}
-	if _, ok := secondaryY.YAxisRight.Locator.(LogitLocator); !ok {
+	if _, ok := secondaryY.YAxisRight.Locator.(ticker.LogitLocator); !ok {
 		t.Fatalf("secondary y right locator = %T, want LogitLocator", secondaryY.YAxisRight.Locator)
 	}
-	if formatter, ok := secondaryY.YAxisRight.MinorFormatter.(LogitFormatter); !ok || !formatter.Minor {
+	if formatter, ok := secondaryY.YAxisRight.MinorFormatter.(ticker.LogitFormatter); !ok || !formatter.Minor {
 		t.Fatalf("secondary y right minor formatter = %#v, want minor LogitFormatter", secondaryY.YAxisRight.MinorFormatter)
 	}
 }
@@ -338,21 +363,21 @@ func TestAxes_SetScaleInstallsAsinhLocatorDefaults(t *testing.T) {
 		t.Fatalf("SetXScale(asinh): %v", err)
 	}
 
-	locator, ok := axes.XAxis.Locator.(AsinhLocator)
+	locator, ok := axes.XAxis.Locator.(ticker.AsinhLocator)
 	if !ok {
 		t.Fatalf("x locator = %T, want AsinhLocator", axes.XAxis.Locator)
 	}
 	if locator.Base != 10 || locator.LinearWidth != 2 {
 		t.Fatalf("x locator = %+v, want base=10 linear_width=2", locator)
 	}
-	minor, ok := axes.XAxis.MinorLocator.(AsinhLocator)
+	minor, ok := axes.XAxis.MinorLocator.(ticker.AsinhLocator)
 	if !ok {
 		t.Fatalf("x minor locator = %T, want AsinhLocator", axes.XAxis.MinorLocator)
 	}
 	if len(minor.Subs) != 2 || minor.Subs[0] != 2 || minor.Subs[1] != 5 {
 		t.Fatalf("x minor locator subs = %v, want [2 5]", minor.Subs)
 	}
-	if formatter, ok := axes.XAxis.Formatter.(LogFormatterMathText); !ok || !formatter.SciNotation {
+	if formatter, ok := axes.XAxis.Formatter.(ticker.LogFormatterMathText); !ok || !formatter.SciNotation {
 		t.Fatalf("x formatter = %#v, want scientific LogFormatterMathText", axes.XAxis.Formatter)
 	}
 }
@@ -367,20 +392,20 @@ func TestAxes_SetScaleInstallsLogitLocatorDefaults(t *testing.T) {
 		t.Fatalf("SetXScale(logit): %v", err)
 	}
 
-	if _, ok := axes.XAxis.Locator.(LogitLocator); !ok {
+	if _, ok := axes.XAxis.Locator.(ticker.LogitLocator); !ok {
 		t.Fatalf("x locator = %T, want LogitLocator", axes.XAxis.Locator)
 	}
-	if _, ok := axes.XAxis.Formatter.(LogitFormatter); !ok {
+	if _, ok := axes.XAxis.Formatter.(ticker.LogitFormatter); !ok {
 		t.Fatalf("x formatter = %T, want LogitFormatter", axes.XAxis.Formatter)
 	}
-	minor, ok := axes.XAxis.MinorLocator.(LogitLocator)
+	minor, ok := axes.XAxis.MinorLocator.(ticker.LogitLocator)
 	if !ok {
 		t.Fatalf("x minor locator = %T, want LogitLocator", axes.XAxis.MinorLocator)
 	}
 	if !minor.Minor {
 		t.Fatalf("x minor locator = %+v, want minor=true", minor)
 	}
-	if _, ok := axes.XAxis.MinorFormatter.(LogitFormatter); !ok {
+	if _, ok := axes.XAxis.MinorFormatter.(ticker.LogitFormatter); !ok {
 		t.Fatalf("x minor formatter = %T, want LogitFormatter", axes.XAxis.MinorFormatter)
 	}
 }
@@ -403,17 +428,17 @@ func TestAxes_SetScaleInstallsFunctionLogLocatorDefaults(t *testing.T) {
 		t.Fatalf("SetXScale(functionlog): %v", err)
 	}
 
-	locator, ok := axes.XAxis.Locator.(LogLocator)
+	locator, ok := axes.XAxis.Locator.(ticker.LogLocator)
 	if !ok {
 		t.Fatalf("x locator = %T, want LogLocator", axes.XAxis.Locator)
 	}
 	if locator.Base != 10 {
 		t.Fatalf("x locator base = %v, want 10", locator.Base)
 	}
-	if formatter, ok := axes.XAxis.Formatter.(LogFormatterMathText); !ok || !formatter.SciNotation {
+	if formatter, ok := axes.XAxis.Formatter.(ticker.LogFormatterMathText); !ok || !formatter.SciNotation {
 		t.Fatalf("x formatter = %#v, want scientific LogFormatterMathText", axes.XAxis.Formatter)
 	}
-	minor, ok := axes.XAxis.MinorLocator.(LogLocator)
+	minor, ok := axes.XAxis.MinorLocator.(ticker.LogLocator)
 	if !ok {
 		t.Fatalf("x minor locator = %T, want LogLocator", axes.XAxis.MinorLocator)
 	}

@@ -80,7 +80,7 @@ func (s *Session) Stop() (*render.ImageData, geom.Rect, bool) {
 		return nil, geom.Rect{}, false
 	}
 	_ = s.renderer.End()
-	return render.NewImageData(s.backing.GetImage()), s.rect, true
+	return render.NewImageData(s.backing.Image()), s.rect, true
 }
 
 type scaledRenderer struct {
@@ -116,8 +116,8 @@ func (r *scaledRenderer) Path(path geom.Path, paint *render.Paint) {
 	r.inner.Path(r.scalePath(path), scalePaint(paint, r.scale))
 }
 
-func (r *scaledRenderer) Image(img render.Image, dst geom.Rect) {
-	r.inner.Image(img, r.scaleRect(dst))
+func (r *scaledRenderer) DrawImage(img render.Image, dst geom.Rect) {
+	r.inner.DrawImage(img, r.scaleRect(dst))
 }
 
 func (r *scaledRenderer) ImageTransformed(img render.Image, dst geom.Rect, transform geom.Affine) {

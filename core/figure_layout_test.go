@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestDrawFigure_RendersFigureLevelLabels(t *testing.T) {
@@ -156,9 +157,9 @@ func TestDrawFigure_AlignsYLabelsAcrossColumn(t *testing.T) {
 	top.SetYLabel("Top Y")
 	bottom.SetYLabel("Bot Y")
 	top.YAxis.Locator = staticLocator{1000}
-	top.YAxis.Formatter = ScalarFormatter{Prec: 0}
+	top.YAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
 	bottom.YAxis.Locator = staticLocator{1}
-	bottom.YAxis.Formatter = ScalarFormatter{Prec: 0}
+	bottom.YAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	r := figureLayoutRecordingRenderer{
 		bounds: map[string]render.TextBounds{
@@ -192,9 +193,9 @@ func TestDrawFigure_DoesNotAlignManualAxesYLabelsWithoutLayoutEngine(t *testing.
 	top.SetYLabel("Top Y")
 	bottom.SetYLabel("Bottom Y")
 	top.YAxis.Locator = staticLocator{1000}
-	top.YAxis.Formatter = ScalarFormatter{Prec: 0}
+	top.YAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
 	bottom.YAxis.Locator = staticLocator{1}
-	bottom.YAxis.Formatter = ScalarFormatter{Prec: 0}
+	bottom.YAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	r := figureLayoutRecordingRenderer{
 		bounds: map[string]render.TextBounds{
@@ -224,9 +225,9 @@ func TestDrawFigure_AlignsXLabelsAcrossRow(t *testing.T) {
 	left.SetXLabel("Left X")
 	right.SetXLabel("Right X")
 	left.XAxis.Locator = staticLocator{1000}
-	left.XAxis.Formatter = ScalarFormatter{Prec: 0}
+	left.XAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
 	right.XAxis.Locator = staticLocator{1}
-	right.XAxis.Formatter = ScalarFormatter{Prec: 0}
+	right.XAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	r := figureLayoutRecordingRenderer{
 		bounds: map[string]render.TextBounds{
@@ -266,9 +267,9 @@ func TestDrawFigure_AddAxesTitlesAreNotAlignedByDefault(t *testing.T) {
 		t.Fatalf("right SetXTickLabelPosition(top): %v", err)
 	}
 	left.TopAxis().Locator = staticLocator{1000}
-	left.TopAxis().Formatter = ScalarFormatter{Prec: 0}
+	left.TopAxis().Formatter = ticker.ScalarFormatter{Prec: 0}
 	right.TopAxis().Locator = staticLocator{1}
-	right.TopAxis().Formatter = ScalarFormatter{Prec: 0}
+	right.TopAxis().Formatter = ticker.ScalarFormatter{Prec: 0}
 
 	r := figureLayoutRecordingRenderer{
 		bounds: map[string]render.TextBounds{
@@ -308,7 +309,7 @@ func TestDrawFigure_TitleClearsSecondaryXAxisTickLabels(t *testing.T) {
 	}
 	if axis := sec.TopAxis(); axis != nil {
 		axis.Locator = staticLocator{100}
-		axis.Formatter = ScalarFormatter{Prec: 0}
+		axis.Formatter = ticker.ScalarFormatter{Prec: 0}
 	}
 
 	r := figureLayoutRecordingRenderer{
@@ -642,9 +643,9 @@ func newTightLayoutProbeFigure() *Figure {
 	ax.SetXLabel("time")
 	ax.SetYLabel("value")
 	ax.XAxis.Locator = staticLocator{1}
-	ax.XAxis.Formatter = FixedFormatter{Labels: []string{"edge"}}
+	ax.XAxis.Formatter = ticker.FixedFormatter{Labels: []string{"edge"}}
 	ax.YAxis.Locator = staticLocator{1}
-	ax.YAxis.Formatter = FixedFormatter{Labels: []string{"edge"}}
+	ax.YAxis.Formatter = ticker.FixedFormatter{Labels: []string{"edge"}}
 	return fig
 }
 
@@ -652,9 +653,9 @@ func newConstrainedLayoutProbeFigure() *Figure {
 	fig := NewFigure(800, 600)
 	grid := fig.Subplots(1, 2)
 	grid[0][0].RightAxis().Locator = staticLocator{1}
-	grid[0][0].RightAxis().Formatter = FixedFormatter{Labels: []string{"edge"}}
+	grid[0][0].RightAxis().Formatter = ticker.FixedFormatter{Labels: []string{"edge"}}
 	grid[0][1].YAxis.Locator = staticLocator{1}
-	grid[0][1].YAxis.Formatter = FixedFormatter{Labels: []string{"edge"}}
+	grid[0][1].YAxis.Formatter = ticker.FixedFormatter{Labels: []string{"edge"}}
 	return fig
 }
 

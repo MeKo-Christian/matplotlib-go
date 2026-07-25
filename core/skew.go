@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -51,9 +52,9 @@ func (p *skewXProjection) ConfigureAxes(ax *Axes) {
 	ax.YAxisRight = nil
 	ax.ShowFrame = true
 
-	ax.XAxis.Locator = MultipleLocator{Base: 10}
-	ax.XAxis.MinorLocator = MultipleLocator{Base: 5}
-	ax.XAxis.Formatter = ScalarFormatter{Prec: 0}
+	ax.XAxis.Locator = ticker.MultipleLocator{Base: 10}
+	ax.XAxis.MinorLocator = ticker.MultipleLocator{Base: 5}
+	ax.XAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
 	ax.XAxisTop.Locator = ax.XAxis.Locator
 	ax.XAxisTop.MinorLocator = ax.XAxis.MinorLocator
 	ax.XAxisTop.Formatter = ax.XAxis.Formatter
@@ -61,9 +62,9 @@ func (p *skewXProjection) ConfigureAxes(ax *Axes) {
 	ax.XAxisTop.ShowLabels = false
 
 	pressureTicks := []float64{100, 200, 300, 500, 700, 850, 1000}
-	ax.YAxis.Locator = FixedLocator{TicksList: pressureTicks}
-	ax.YAxis.MinorLocator = LogLocator{Base: 10, Minor: true, Subs: []float64{2, 3, 4, 5, 6, 7, 8, 9}}
-	ax.YAxis.Formatter = FuncFormatter(func(v float64) string {
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: pressureTicks}
+	ax.YAxis.MinorLocator = ticker.LogLocator{Base: 10, Minor: true, Subs: []float64{2, 3, 4, 5, 6, 7, 8, 9}}
+	ax.YAxis.Formatter = ticker.FuncFormatter(func(v float64) string {
 		return fmt.Sprintf("%.0f", v)
 	})
 }

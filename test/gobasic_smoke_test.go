@@ -22,7 +22,7 @@ func TestGoBasicSmokeCasesRenderNonBlank(t *testing.T) {
 			}
 			r := gobasic.New(int(fig.SizePx.X), int(fig.SizePx.Y), render.Color{R: 1, G: 1, B: 1, A: 1})
 			core.DrawFigure(fig, r)
-			if !hasNonWhitePixel(r.GetImage()) {
+			if !hasNonWhitePixel(r.Image()) {
 				t.Fatal("GoBasic smoke render is blank")
 			}
 		})

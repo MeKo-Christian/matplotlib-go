@@ -3,9 +3,10 @@ package canvas
 import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
-func (w *WidgetInteraction) handleSliderKey(slider *core.Slider, ev KeyEvent, key string) bool {
+func (w *WidgetInteraction) handleSliderKey(slider *widgets.Slider, ev *KeyEvent, key string) bool {
 	if slider == nil || !slider.Enabled {
 		return false
 	}
@@ -30,7 +31,7 @@ func (w *WidgetInteraction) handleSliderKey(slider *core.Slider, ev KeyEvent, ke
 	return slider.Value != before
 }
 
-func (w *WidgetInteraction) handleRangeSliderKey(slider *core.RangeSlider, handle int, ev KeyEvent, key string) bool {
+func (w *WidgetInteraction) handleRangeSliderKey(slider *widgets.RangeSlider, handle int, ev *KeyEvent, key string) bool {
 	if slider == nil || !slider.Enabled {
 		return false
 	}
@@ -59,7 +60,7 @@ func (w *WidgetInteraction) handleRangeSliderKey(slider *core.RangeSlider, handl
 	return slider.Low != beforeLow || slider.High != beforeHigh
 }
 
-func (w *WidgetInteraction) setSliderValueFromPointLocked(slider *core.Slider, ax *Axes, position geom.Pt) {
+func (w *WidgetInteraction) setSliderValueFromPointLocked(slider *widgets.Slider, ax *Axes, position geom.Pt) {
 	if slider == nil || ax == nil {
 		return
 	}
@@ -74,7 +75,7 @@ func (w *WidgetInteraction) setSliderValueFromPointLocked(slider *core.Slider, a
 	slider.SetValue(v)
 }
 
-func (w *WidgetInteraction) setRangeSliderValueFromPointLocked(slider *core.RangeSlider, ax *Axes, position geom.Pt, handle int) {
+func (w *WidgetInteraction) setRangeSliderValueFromPointLocked(slider *widgets.RangeSlider, ax *Axes, position geom.Pt, handle int) {
 	if slider == nil || ax == nil {
 		return
 	}

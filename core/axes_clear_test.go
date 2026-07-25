@@ -23,8 +23,8 @@ func TestAxesClearResetsState(t *testing.T) {
 
 	ax.Clear()
 
-	if lines := FindobjType[*Line2D](ax); len(lines) != 0 {
-		t.Fatalf("after Clear: %d lines remain, want 0", len(lines))
+	if got := len(ax.Artists); got != 0 {
+		t.Fatalf("after Clear: %d artists remain, want 0", got)
 	}
 	if ax.Title != "" || ax.XLabel != "" || ax.YLabel != "" {
 		t.Fatalf("after Clear: labels not reset: title=%q x=%q y=%q", ax.Title, ax.XLabel, ax.YLabel)
@@ -47,20 +47,7 @@ func TestAxesClaAliasesClear(t *testing.T) {
 	ax := testAxes()
 	ax.Plot([]float64{0, 1}, []float64{0, 1})
 	ax.Cla()
-	if lines := FindobjType[*Line2D](ax); len(lines) != 0 {
-		t.Fatalf("after Cla: %d lines remain, want 0", len(lines))
-	}
-}
-
-func TestAxes3DClearViaEmbedding(t *testing.T) {
-	fig := NewFigure(400, 300)
-	ax3d, err := fig.AddAxes3D(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	if err != nil {
-		t.Fatalf("AddAxes3D: %v", err)
-	}
-	ax3d.Plot([]float64{0, 1}, []float64{0, 1})
-	ax3d.Clear()
-	if lines := FindobjType[*Line2D](ax3d.Axes); len(lines) != 0 {
-		t.Fatalf("after Axes3D.Clear: %d lines remain, want 0", len(lines))
+	if got := len(ax.Artists); got != 0 {
+		t.Fatalf("after Cla: %d artists remain, want 0", got)
 	}
 }

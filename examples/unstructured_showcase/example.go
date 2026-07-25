@@ -160,5 +160,5 @@ func Render() image.Image {
 	}
 	r.SetResolution(DPI)
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }

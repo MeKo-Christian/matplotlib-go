@@ -261,7 +261,7 @@ func (r *Renderer) DrawTeX(text string, origin geom.Pt, size float64, textColor 
 	}
 	metrics := r.texMetricsToPoints(result.Metrics)
 	topLeft := geom.Pt{X: origin.X, Y: origin.Y - metrics.Ascent}
-	r.Image(render.NewImageData(img), geom.Rect{
+	r.DrawImage(render.NewImageData(img), geom.Rect{
 		Min: topLeft,
 		Max: geom.Pt{X: topLeft.X + metrics.W, Y: topLeft.Y + metrics.H},
 	})

@@ -5,6 +5,7 @@ import (
 	"math/cmplx"
 
 	algofft "github.com/cwbudde/algo-fft"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 // SpecgramOptions configures Axes.Specgram.
@@ -698,7 +699,7 @@ func setPowerSpectrumTicks(a *Axes) {
 	for tick := start; tick <= stop; tick += step {
 		ticks = append(ticks, tick)
 	}
-	a.YAxis.Locator = FixedLocator{TicksList: ticks}
+	a.YAxis.Locator = ticker.FixedLocator{TicksList: ticks}
 	// Matplotlib's set_yticks expands the view interval just enough to keep all
 	// explicit ticks visible. Preserve the autoscaled side when it already
 	// encloses the outer tick.

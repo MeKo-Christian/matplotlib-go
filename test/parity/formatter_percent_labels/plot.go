@@ -5,8 +5,9 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -32,9 +33,9 @@ func Plot() *core.Figure {
 
 	ax.SetXLim(-0.5, 1.0)
 	ax.SetYLim(0, 1.0)
-	ax.XAxis.Locator = core.FixedLocator{TicksList: x}
-	ax.XAxis.Formatter = core.PercentFormatter{XMax: 1, DisplayRange: 1.5}
-	ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: x}
+	ax.XAxis.Formatter = ticker.PercentFormatter{XMax: 1, DisplayRange: 1.5}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}
 	return fig
 }
 

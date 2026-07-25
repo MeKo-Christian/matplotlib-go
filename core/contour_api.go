@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 // ContourOptions configures contour, contourf, and tricontour rendering.
@@ -20,7 +21,7 @@ type ContourOptions struct {
 	LineWidth      *float64
 	Alpha          *float64
 	LabelLines     bool
-	LabelFormatter Formatter
+	LabelFormatter ticker.Formatter
 	LabelFontSize  *float64
 	LabelColor     *render.Color
 	Label          string
@@ -64,7 +65,7 @@ type contourLabel struct {
 // ContourSet.Clabel.
 type ClabelOptions struct {
 	Levels          []float64
-	Formatter       Formatter
+	Formatter       ticker.Formatter
 	FontSize        *float64
 	Color           *render.Color
 	Colors          []render.Color
@@ -100,7 +101,7 @@ type ContourSet struct {
 	CornerMask     bool
 	Lines          *LineCollection
 	Fills          *PolyCollection
-	LabelFormatter Formatter
+	LabelFormatter ticker.Formatter
 	LabelFontSize  float64
 	LabelColor     render.Color
 	labels         []contourLabel
@@ -136,7 +137,7 @@ func (c *ContourSet) Clabel(opts ...ClabelOptions) []ContourLabel {
 		return nil
 	}
 
-	c.LabelFormatter = newContourLabelFormatter(opt, c.LabelFormatter)
+	c.LabelFormatter = newContourLabelFormatter(&opt, c.LabelFormatter)
 	c.rightSideUp = specialtyBool(opt.RightSideUp, true)
 	if opt.FontSize != nil && *opt.FontSize > 0 {
 		c.LabelFontSize = *opt.FontSize

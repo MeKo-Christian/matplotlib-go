@@ -113,7 +113,7 @@ func renderPathEffectFigure(t *testing.T, fig *core.Figure) image.Image {
 	t.Helper()
 	r := mustNew(t, int(fig.SizePx.X), int(fig.SizePx.Y))
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }
 
 func renderPathEffectCanvas(t *testing.T, draw func(*Renderer)) image.Image {
@@ -129,7 +129,7 @@ func renderPathEffectCanvas(t *testing.T, draw func(*Renderer)) image.Image {
 	if err := r.End(); err != nil {
 		t.Fatalf("End: %v", err)
 	}
-	return r.GetImage()
+	return r.Image()
 }
 
 func drawLineHalo(r *Renderer) {

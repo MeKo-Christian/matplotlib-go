@@ -8,12 +8,12 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-// Image draws an RGBA raster image into the destination rectangle using a
+// DrawImage draws an RGBA raster image into the destination rectangle using a
 // Level-2 colorimage operator. PostScript has no native alpha channel, so
 // translucent image pixels are pre-composited over white for this first slice.
-func (r *Renderer) Image(img render.Image, dst geom.Rect) {
+func (r *Renderer) DrawImage(img render.Image, dst geom.Rect) {
 	if rr := r.activeRaster(); rr != nil {
-		rr.Image(img, dst)
+		rr.DrawImage(img, dst)
 		return
 	}
 	if !r.began || img == nil || dst.W() <= 0 || dst.H() <= 0 {

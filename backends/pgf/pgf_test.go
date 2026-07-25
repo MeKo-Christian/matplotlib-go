@@ -170,7 +170,7 @@ func TestImageEmitsSelfContainedPixelRectangles(t *testing.T) {
 		data := render.NewImageData(img)
 		data.SetAlpha(0.5)
 
-		r.Image(data, geom.Rect{
+		r.DrawImage(data, geom.Rect{
 			Min: geom.Pt{X: 10, Y: 20},
 			Max: geom.Pt{X: 14, Y: 22},
 		})

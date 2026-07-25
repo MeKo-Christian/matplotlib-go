@@ -4,7 +4,6 @@ package main
 import (
 	"log"
 
-	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
@@ -27,18 +26,7 @@ func main() {
 	// Bottom row: same horizontal path with different cap styles.
 	createCapDemo(ax)
 
-	r, _, createErr := backends.NewRendererFromEnv(backends.Config{
-		Width:      800,
-		Height:     600,
-		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
-		DPI:        100,
-	}, backends.TextCapabilities)
-	if createErr != nil {
-		log.Fatal(createErr)
-	}
-
-	err := core.SavePNG(fig, r, "examples/lines/styles.png")
-	if err != nil {
+	if err := fig.Save("examples/lines/styles.png"); err != nil {
 		log.Fatalf("Failed to save PNG: %v", err)
 	}
 

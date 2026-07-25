@@ -67,7 +67,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CoverageID:      "axis-ticker-scale",
 		Title:           "Locator and formatter catalog breadth",
 		UpstreamModules: []string{"axis.py", "ticker.py", "scale.py", "dates.py", "category.py"},
-		GoFiles:         []string{"core/axis.go", "core/tick.go", "core/date_tick.go", "core/units.go", "transform/scale_registry.go"},
+		GoFiles:         []string{"core/axis.go", "ticker/ticker.go", "dates/date_tick.go", "core/units.go", "transform/scale_registry.go"},
 		CurrentEquivalent: "Go has Axis, fixed / auto / log-family / symlog / asinh / logit / date / " +
 			"category locators, formatter families for scalar, fixed, function, printf, str-method, " +
 			"engineering, percent, log math text, logit, dates, categories, unit conversion hooks, " +
@@ -86,7 +86,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		CoverageID:      "axis-ticker-scale",
 		Title:           "Explicit tick artist behavior",
 		UpstreamModules: []string{"axis.py", "ticker.py"},
-		GoFiles:         []string{"core/axis.go", "core/tick.go", "core/grid.go"},
+		GoFiles:         []string{"core/axis.go", "ticker/ticker.go", "core/grid.go"},
 		CurrentEquivalent: "Go draws ticks, minor ticks, grid lines, mirrored axes, and tick labels " +
 			"from Axis state, with TickParams covering major/minor/both selection, axis selection, " +
 			"length, width, colors, label size/color/rotation/pad/alignment, side visibility, " +
@@ -364,14 +364,14 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Title:           "Widget and selector interaction scope",
 		UpstreamModules: []string{"widgets.py"},
 		GoFiles: []string{
-			"core/widget_button.go",
-			"core/widget_slider.go",
-			"core/widget_rangeslider.go",
-			"core/widget_checkbuttons.go",
-			"core/widget_radiobuttons.go",
-			"core/widget_textbox.go",
-			"core/selectors_common.go",
-			"core/widgets_common.go",
+			"widgets/button.go",
+			"widgets/slider.go",
+			"widgets/rangeslider.go",
+			"widgets/checkbuttons.go",
+			"widgets/radiobuttons.go",
+			"widgets/textbox.go",
+			"widgets/selectors_common.go",
+			"widgets/widgets_common.go",
 			"canvas/widget_interaction.go",
 			"canvas/dispatcher.go",
 		},

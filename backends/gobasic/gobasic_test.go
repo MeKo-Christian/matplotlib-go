@@ -17,9 +17,9 @@ func TestNew(t *testing.T) {
 		t.Fatal("New returned nil")
 	}
 
-	img := r.GetImage()
+	img := r.Image()
 	if img == nil {
-		t.Fatal("GetImage returned nil")
+		t.Fatal("Image returned nil")
 	}
 
 	bounds := img.Bounds()
@@ -46,14 +46,14 @@ func TestImageScalingIntegerUpscalePreservesSourceRuns(t *testing.T) {
 	src.SetRGBA(1, 0, green)
 	src.SetRGBA(2, 0, blue)
 
-	r.Image(render.NewImageData(src), geom.Rect{
+	r.DrawImage(render.NewImageData(src), geom.Rect{
 		Min: geom.Pt{X: 0, Y: 0},
 		Max: geom.Pt{X: 6, Y: 1},
 	})
 
 	want := []color.RGBA{red, red, green, green, blue, blue}
 	for x, expected := range want {
-		if got := r.GetImage().RGBAAt(x, 0); got != expected {
+		if got := r.Image().RGBAAt(x, 0); got != expected {
 			t.Fatalf("pixel %d = %#v, want %#v", x, got, expected)
 		}
 	}
@@ -69,14 +69,14 @@ func TestImageScalingNearestUsesPixelCentersForNonIntegerUpscale(t *testing.T) {
 
 	img := render.NewImageData(src)
 	img.SetInterpolation("nearest")
-	r.Image(img, geom.Rect{
+	r.DrawImage(img, geom.Rect{
 		Min: geom.Pt{X: 0, Y: 0},
 		Max: geom.Pt{X: 3, Y: 1},
 	})
 
 	want := []color.RGBA{red, green, green}
 	for x, expected := range want {
-		if got := r.GetImage().RGBAAt(x, 0); got != expected {
+		if got := r.Image().RGBAAt(x, 0); got != expected {
 			t.Fatalf("pixel %d = %#v, want %#v", x, got, expected)
 		}
 	}
@@ -89,12 +89,12 @@ func TestImageAppliesImageAlpha(t *testing.T) {
 
 	img := render.NewImageData(src)
 	img.SetAlpha(0.25)
-	r.Image(img, geom.Rect{
+	r.DrawImage(img, geom.Rect{
 		Min: geom.Pt{X: 0, Y: 0},
 		Max: geom.Pt{X: 1, Y: 1},
 	})
 
-	got := r.GetImage().RGBAAt(0, 0)
+	got := r.Image().RGBAAt(0, 0)
 	if got.G < 180 || got.B < 180 {
 		t.Fatalf("image alpha was not applied before blending; got %+v", got)
 	}
@@ -123,11 +123,11 @@ func TestImageTransformedAppliesAffineAndAlpha(t *testing.T) {
 	// Display space is y-up: the backend composes a device y-flip into the
 	// affine, so src row 0 (red) lands at the bottom of the placed image
 	// (device y in {6,7}) rather than the top.
-	got := r.GetImage().RGBAAt(3, 7)
+	got := r.Image().RGBAAt(3, 7)
 	if got.A < 120 || got.A > 130 || got.R < 200 || got.G != 0 || got.B != 0 {
 		t.Fatalf("transformed alpha image pixel = %+v, want half-alpha red", got)
 	}
-	if c := r.GetImage().RGBAAt(2, 7); c.A != 0 {
+	if c := r.Image().RGBAAt(2, 7); c.A != 0 {
 		t.Fatalf("pixel outside transformed image = %+v, want transparent", c)
 	}
 }
@@ -210,7 +210,7 @@ func TestPathFill(t *testing.T) {
 	r.Path(path, &paint)
 
 	// Check that some pixels changed from white background
-	img := r.GetImage()
+	img := r.Image()
 	whiteColor := color.RGBA{R: 255, G: 255, B: 255, A: 255}
 	changed := false
 
@@ -247,10 +247,10 @@ func TestClipPathMasksPathDrawing(t *testing.T) {
 	// Display space is y-up, so the clip triangle (display verts (0,0),(70,0),
 	// (0,70)) flips to the device buffer's lower-left; the clipped-in sample is
 	// therefore near device (10,90) and the clipped-out corner stays at (90,90).
-	if got := r.GetImage().RGBAAt(10, 90); got.R <= 200 || got.G >= 80 || got.B >= 80 {
+	if got := r.Image().RGBAAt(10, 90); got.R <= 200 || got.G >= 80 || got.B >= 80 {
 		t.Fatalf("expected clipped-in pixel to be red, got %+v", got)
 	}
-	if got := r.GetImage().RGBAAt(90, 90); got != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
+	if got := r.Image().RGBAAt(90, 90); got != (color.RGBA{R: 255, G: 255, B: 255, A: 255}) {
 		t.Fatalf("expected clipped-out pixel to remain white, got %+v", got)
 	}
 	if len(r.clipMaskMap) != 1 {
@@ -275,7 +275,7 @@ func TestClipPathRestoreStopsMasking(t *testing.T) {
 	r.Path(fullRectPath(100, 100), &render.Paint{
 		Fill: render.Color{R: 0, G: 0, B: 1, A: 1},
 	})
-	if got := r.GetImage().RGBAAt(90, 90); got.B <= 200 || got.R >= 80 || got.G >= 80 {
+	if got := r.Image().RGBAAt(90, 90); got.B <= 200 || got.R >= 80 || got.G >= 80 {
 		t.Fatalf("expected restore to remove path clipping, got %+v", got)
 	}
 }
@@ -304,7 +304,7 @@ func TestPathStroke(t *testing.T) {
 	r.Path(path, &paint)
 
 	// Check that some pixels changed from white background
-	img := r.GetImage()
+	img := r.Image()
 	whiteColor := color.RGBA{R: 255, G: 255, B: 255, A: 255}
 	changed := false
 
@@ -359,7 +359,7 @@ func TestClipRectAllowsPathDrawingAcrossIndependentRegions(t *testing.T) {
 		r.Restore()
 	}
 
-	img := r.GetImage()
+	img := r.Image()
 	white := color.RGBA{R: 255, G: 255, B: 255, A: 255}
 	for i, clip := range quadrants {
 		center := image.Point{
@@ -427,7 +427,7 @@ func TestDrawTextRenders(t *testing.T) {
 	r.DrawText("Hello, World!", origin, 13, textColor)
 
 	// Verify that the image has changed from the white background.
-	img := r.GetImage()
+	img := r.Image()
 	whiteColor := color.RGBA{R: 255, G: 255, B: 255, A: 255}
 	changed := false
 
@@ -460,7 +460,7 @@ func TestDrawTextRotatedRenders(t *testing.T) {
 	textColor := render.Color{R: 0, G: 0, B: 0, A: 1}
 	r.DrawTextRotated("Hello", geom.Pt{X: 100, Y: 50}, 13, math.Pi/4, textColor)
 
-	img := r.GetImage()
+	img := r.Image()
 	whiteColor := color.RGBA{R: 255, G: 255, B: 255, A: 255}
 	changed := false
 
@@ -502,7 +502,7 @@ func TestGlyphRun(t *testing.T) {
 	// Should render a glyph when the ID maps to a visible rune.
 	r.GlyphRun(glyphRun, textColor)
 
-	img := r.GetImage()
+	img := r.Image()
 	whiteColor := color.RGBA{R: 255, G: 255, B: 255, A: 255}
 	changed := false
 	for y := 0; y < img.Bounds().Dy(); y++ {

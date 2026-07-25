@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/dates"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -338,29 +340,29 @@ func TestTickLocationWrappersDelegateToCurrentAxes(t *testing.T) {
 	}
 
 	ax := GCA()
-	xLoc, ok := ax.XAxis.Locator.(core.FixedLocator)
+	xLoc, ok := ax.XAxis.Locator.(ticker.FixedLocator)
 	if !ok {
-		t.Fatalf("x locator = %T, want core.FixedLocator", ax.XAxis.Locator)
+		t.Fatalf("x locator = %T, want ticker.FixedLocator", ax.XAxis.Locator)
 	}
 	if got := xLoc.TicksList; len(got) != 3 || got[0] != 3 || got[1] != 1 || got[2] != 2 {
 		t.Fatalf("x ticks = %v, want [3 1 2]", got)
 	}
-	xFmt, ok := ax.XAxis.Formatter.(core.FixedFormatter)
+	xFmt, ok := ax.XAxis.Formatter.(ticker.FixedFormatter)
 	if !ok {
-		t.Fatalf("x formatter = %T, want core.FixedFormatter", ax.XAxis.Formatter)
+		t.Fatalf("x formatter = %T, want ticker.FixedFormatter", ax.XAxis.Formatter)
 	}
 	if got := xFmt.Labels; len(got) != 3 || got[0] != "three" || got[1] != "one" || got[2] != "two" {
 		t.Fatalf("x labels = %v, want [three one two]", got)
 	}
 
-	yLoc, ok := ax.YAxis.Locator.(core.FixedLocator)
+	yLoc, ok := ax.YAxis.Locator.(ticker.FixedLocator)
 	if !ok {
-		t.Fatalf("y locator = %T, want core.FixedLocator", ax.YAxis.Locator)
+		t.Fatalf("y locator = %T, want ticker.FixedLocator", ax.YAxis.Locator)
 	}
 	if got := yLoc.TicksList; len(got) != 2 || got[0] != -1 || got[1] != 1 {
 		t.Fatalf("y ticks = %v, want [-1 1]", got)
 	}
-	if _, ok := ax.YAxis.Formatter.(core.FixedFormatter); ok {
+	if _, ok := ax.YAxis.Formatter.(ticker.FixedFormatter); ok {
 		t.Fatal("YTicks without labels unexpectedly installed FixedFormatter")
 	}
 
@@ -376,9 +378,9 @@ func TestTickLabelFormatUpdatesCurrentScalarFormatters(t *testing.T) {
 	resetForTests()
 
 	ax := GCA()
-	yBefore, ok := ax.YAxis.Formatter.(core.ScalarFormatter)
+	yBefore, ok := ax.YAxis.Formatter.(ticker.ScalarFormatter)
 	if !ok {
-		t.Fatalf("initial y formatter = %T, want core.ScalarFormatter", ax.YAxis.Formatter)
+		t.Fatalf("initial y formatter = %T, want ticker.ScalarFormatter", ax.YAxis.Formatter)
 	}
 	useMathText := true
 	sciLimits := [2]int{-2, 3}
@@ -391,17 +393,17 @@ func TestTickLabelFormatUpdatesCurrentScalarFormatters(t *testing.T) {
 		t.Fatalf("TickLabelFormat(x/plain) error = %v", err)
 	}
 
-	xFmt, ok := ax.XAxis.Formatter.(core.ScalarFormatter)
+	xFmt, ok := ax.XAxis.Formatter.(ticker.ScalarFormatter)
 	if !ok {
-		t.Fatalf("x formatter = %T, want core.ScalarFormatter", ax.XAxis.Formatter)
+		t.Fatalf("x formatter = %T, want ticker.ScalarFormatter", ax.XAxis.Formatter)
 	}
 	if !xFmt.DisableScientific || !xFmt.UseMathText || !xFmt.UsePowerLimits || xFmt.PowerLimits != sciLimits {
 		t.Fatalf("x scalar formatter = %+v, want plain mathtext with limits %+v", xFmt, sciLimits)
 	}
 
-	yFmt, ok := ax.YAxis.Formatter.(core.ScalarFormatter)
+	yFmt, ok := ax.YAxis.Formatter.(ticker.ScalarFormatter)
 	if !ok {
-		t.Fatalf("y formatter = %T, want core.ScalarFormatter", ax.YAxis.Formatter)
+		t.Fatalf("y formatter = %T, want ticker.ScalarFormatter", ax.YAxis.Formatter)
 	}
 	if yFmt != yBefore {
 		t.Fatalf("TickLabelFormat(x) changed y scalar formatter: got %+v, want %+v", yFmt, yBefore)
@@ -410,8 +412,8 @@ func TestTickLabelFormatUpdatesCurrentScalarFormatters(t *testing.T) {
 	if err := TickLabelFormat(TickLabelFormatOptions{Axis: "both", Style: "scientific"}); err != nil {
 		t.Fatalf("TickLabelFormat(both/scientific) error = %v", err)
 	}
-	xFmt = ax.XAxis.Formatter.(core.ScalarFormatter)
-	yFmt = ax.YAxis.Formatter.(core.ScalarFormatter)
+	xFmt = ax.XAxis.Formatter.(ticker.ScalarFormatter)
+	yFmt = ax.YAxis.Formatter.(ticker.ScalarFormatter)
 	if xFmt.DisableScientific || yFmt.DisableScientific {
 		t.Fatalf("scientific style did not re-enable scientific formatting: x=%+v y=%+v", xFmt, yFmt)
 	}
@@ -420,7 +422,7 @@ func TestTickLabelFormatUpdatesCurrentScalarFormatters(t *testing.T) {
 		t.Fatal("TickLabelFormat(z) returned nil error")
 	}
 
-	ax.XAxis.Formatter = core.FixedFormatter{Labels: []string{"fixed"}}
+	ax.XAxis.Formatter = ticker.FixedFormatter{Labels: []string{"fixed"}}
 	if err := TickLabelFormat(TickLabelFormatOptions{Axis: "x", Style: "plain"}); err == nil {
 		t.Fatal("TickLabelFormat on FixedFormatter returned nil error")
 	}
@@ -429,14 +431,14 @@ func TestTickLabelFormatUpdatesCurrentScalarFormatters(t *testing.T) {
 func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 
-	dates := []time.Time{
+	dateValues := []time.Time{
 		time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC),
 	}
-	if line := PlotDate(dates, []float64{1, 2}); line == nil {
+	if line := PlotDate(dateValues, []float64{1, 2}); line == nil {
 		t.Fatal("PlotDate() returned nil")
 	}
-	if _, ok := GCA().XAxis.Locator.(core.DateLocator); !ok {
+	if _, ok := GCA().XAxis.Locator.(dates.DateLocator); !ok {
 		t.Fatalf("PlotDate x-axis locator = %T, want DateLocator", GCA().XAxis.Locator)
 	}
 
@@ -599,11 +601,11 @@ func TestImageIOWrappersDelegateToCoreHelpers(t *testing.T) {
 }
 
 func TestGetCMapDelegatesToColorRegistry(t *testing.T) {
-	if got := GetCMap("plasma").Name(); got != "plasma" {
-		t.Fatalf("GetCMap(plasma).Name() = %q, want plasma", got)
+	if got := CMap("plasma").Name(); got != "plasma" {
+		t.Fatalf("CMap(plasma).Name() = %q, want plasma", got)
 	}
-	if got := GetCMap("does-not-exist").Name(); got != "viridis" {
-		t.Fatalf("GetCMap(unknown).Name() = %q, want viridis fallback", got)
+	if got := CMap("does-not-exist").Name(); got != "viridis" {
+		t.Fatalf("CMap(unknown).Name() = %q, want viridis fallback", got)
 	}
 }
 

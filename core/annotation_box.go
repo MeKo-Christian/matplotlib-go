@@ -222,7 +222,7 @@ func (a *AnnotationBbox) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 		if drawer, ok := r.(render.BboxImageDrawer); ok && drawer.DrawBboxImage(img, contentBox) {
 			return
 		}
-		r.Image(img, contentBox)
+		r.DrawImage(img, contentBox)
 		return
 	}
 	textRen := r.(render.TextDrawer)

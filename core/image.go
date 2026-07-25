@@ -35,13 +35,13 @@ func (i *Image2D) Draw(r render.Renderer, ctx *DrawContext) {
 
 	angleRad := i.AngleDeg * math.Pi / 180
 	if angleRad == 0 {
-		r.Image(raster, drawDst)
+		r.DrawImage(raster, drawDst)
 		return
 	}
 
 	anchor := i.rotationAnchor(ctx, dst)
 	if transformed, transformedDst, ok := i.rasterizeTransformed(ctx, anchor, angleRad); ok {
-		r.Image(transformed, transformedDst)
+		r.DrawImage(transformed, transformedDst)
 		return
 	}
 
@@ -58,7 +58,7 @@ func (i *Image2D) Draw(r render.Renderer, ctx *DrawContext) {
 	rotatedImageFallbackWarnOnce.Do(func() {
 		diag.Warnf("image rotation (%.3g deg) not supported by renderer %T; drawing axis-aligned", i.AngleDeg, r)
 	})
-	r.Image(raster, drawDst)
+	r.DrawImage(raster, drawDst)
 }
 
 func matplotlibImageDrawRect(dst geom.Rect) geom.Rect {

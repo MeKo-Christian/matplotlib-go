@@ -97,10 +97,10 @@ func TestCopyFromBBoxAndRestoreRegion(t *testing.T) {
 
 	// Display space is y-up: the red rect at display (10,10)-(40,40) occupies
 	// device rows 40-70 (H-y), and the captured region restores there.
-	if got := r.GetImage().RGBAAt(20, 55); got != (color.RGBA{R: 255, G: 0, B: 0, A: 255}) {
+	if got := r.Image().RGBAAt(20, 55); got != (color.RGBA{R: 255, G: 0, B: 0, A: 255}) {
 		t.Fatalf("expected restored center pixel to be red, got %+v", got)
 	}
-	if got := r.GetImage().RGBAAt(5, 5); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
+	if got := r.Image().RGBAAt(5, 5); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
 		t.Fatalf("expected untouched pixel outside region to stay blue, got %+v", got)
 	}
 }
@@ -138,15 +138,15 @@ func TestRestoreRegionWithBBoxAndOffset(t *testing.T) {
 	// selected display sub-rect (10,20)-(20,30) is the region's device top-left
 	// 10x10 (rows 60-70, cols 10-20). A y-up offset of (20,20) moves it right by
 	// 20 (cols 30-40) and up by 20 (device rows decrease to 40-50).
-	if got := r.GetImage().RGBAAt(35, 45); got != (color.RGBA{R: 255, G: 0, B: 0, A: 255}) {
+	if got := r.Image().RGBAAt(35, 45); got != (color.RGBA{R: 255, G: 0, B: 0, A: 255}) {
 		t.Fatalf("expected partial restored pixel to be red, got %+v", got)
 	}
 	// The original captured location (device rows 60-70) was overwritten by the
 	// blue fill and not restored in place, so it stays blue.
-	if got := r.GetImage().RGBAAt(15, 65); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
+	if got := r.Image().RGBAAt(15, 65); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
 		t.Fatalf("expected original region location to remain blue, got %+v", got)
 	}
-	if got := r.GetImage().RGBAAt(5, 5); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
+	if got := r.Image().RGBAAt(5, 5); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
 		t.Fatalf("expected non-restored pixel to remain blue, got %+v", got)
 	}
 }
@@ -182,10 +182,10 @@ func TestFilterStackStartStop(t *testing.T) {
 	// Display space is y-up: the filtered rect at display (0,0)-(30,30) occupies
 	// device rows 30-60, composited back at device offset (5,5) -> cols 5-35,
 	// rows 35-60.
-	if got := r.GetImage().RGBAAt(15, 45); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
+	if got := r.Image().RGBAAt(15, 45); got != (color.RGBA{R: 0, G: 0, B: 255, A: 255}) {
 		t.Fatalf("expected filtered-stop pixel to be blue, got %+v", got)
 	}
-	if got := r.GetImage().RGBAAt(2, 2); got != (color.RGBA{R: 0, G: 255, B: 0, A: 255}) {
+	if got := r.Image().RGBAAt(2, 2); got != (color.RGBA{R: 0, G: 255, B: 0, A: 255}) {
 		t.Fatalf("expected base green pixel to remain, got %+v", got)
 	}
 }
@@ -208,10 +208,10 @@ func TestPathEffectFilterUsesOffscreenSurface(t *testing.T) {
 	})
 	_ = r.End()
 
-	if got := r.GetImage().RGBAAt(30, 30); got.R == 0 {
+	if got := r.Image().RGBAAt(30, 30); got.R == 0 {
 		t.Fatalf("expected filtered path center to contain red, got %+v", got)
 	}
-	if got := r.GetImage().RGBAAt(19, 30); got.R == 0 || got.G == 255 {
+	if got := r.Image().RGBAAt(19, 30); got.R == 0 || got.G == 255 {
 		t.Fatalf("expected blurred red edge over green background, got %+v", got)
 	}
 }
@@ -227,7 +227,7 @@ func TestClipPathMasksPathDrawing(t *testing.T) {
 	})
 	_ = r.End()
 
-	img := r.GetImage()
+	img := r.Image()
 	if got := img.RGBAAt(10, 10); got.R < 200 {
 		t.Fatalf("expected clipped-in pixel to be red, got %+v", got)
 	}
@@ -250,7 +250,7 @@ func TestClipPathPreservesStraightAlphaFillColor(t *testing.T) {
 	})
 	_ = r.End()
 
-	got := r.GetImage().RGBAAt(50, 50)
+	got := r.Image().RGBAAt(50, 50)
 	want := color.RGBA{R: 222, G: 233, B: 251, A: 255}
 	if got != want {
 		t.Fatalf("clipped straight-alpha fill pixel = %+v, want %+v", got, want)
@@ -273,7 +273,7 @@ func TestClipPathRestoreStopsMasking(t *testing.T) {
 	})
 	_ = r.End()
 
-	if got := r.GetImage().RGBAAt(90, 90); got.B < 200 {
+	if got := r.Image().RGBAAt(90, 90); got.B < 200 {
 		t.Fatalf("expected restored clip state to allow blue fill, got %+v", got)
 	}
 }
@@ -291,10 +291,10 @@ func TestClipPathMasksImageDrawing(t *testing.T) {
 	}
 
 	r.ClipPath(upperLeftTriangleClip())
-	r.Image(render.NewImageData(src), geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 100, Y: 100}})
+	r.DrawImage(render.NewImageData(src), geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 100, Y: 100}})
 	_ = r.End()
 
-	img := r.GetImage()
+	img := r.Image()
 	if got := img.RGBAAt(10, 10); got.G < 200 {
 		t.Fatalf("expected clipped-in image pixel to be green, got %+v", got)
 	}

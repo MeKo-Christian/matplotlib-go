@@ -3,6 +3,8 @@ package core
 import (
 	"fmt"
 	"math"
+
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 // contourLabelFmtFormatter resolves a contour label's text from the typed
@@ -13,7 +15,7 @@ import (
 type contourLabelFmtFormatter struct {
 	dict     map[float64]string
 	format   string
-	fallback Formatter
+	fallback ticker.Formatter
 }
 
 // Format implements the Formatter interface.
@@ -30,13 +32,19 @@ func (f contourLabelFmtFormatter) Format(x float64) string {
 	if f.fallback != nil {
 		return f.fallback.Format(x)
 	}
-	return ScalarFormatter{Prec: 3}.Format(x)
+	return ticker.ScalarFormatter{Prec: 3}.Format(x)
 }
 
 // newContourLabelFormatter selects the label formatter for a clabel call,
 // honoring (in order) FormatDict, FormatString, an explicit Formatter, the
 // contour set's existing formatter, and finally a default ScalarFormatter.
-func newContourLabelFormatter(opt ClabelOptions, fallback Formatter) Formatter {
+func newContourLabelFormatter(opt *ClabelOptions, fallback ticker.Formatter) ticker.Formatter {
+	if opt == nil {
+		if fallback != nil {
+			return fallback
+		}
+		return ticker.ScalarFormatter{Prec: 3}
+	}
 	if len(opt.FormatDict) > 0 {
 		return contourLabelFmtFormatter{dict: opt.FormatDict, fallback: fallback}
 	}
@@ -49,7 +57,7 @@ func newContourLabelFormatter(opt ClabelOptions, fallback Formatter) Formatter {
 	if fallback != nil {
 		return fallback
 	}
-	return ScalarFormatter{Prec: 3}
+	return ticker.ScalarFormatter{Prec: 3}
 }
 
 // lookupLevelString finds the dict entry for a level using a tolerant match so

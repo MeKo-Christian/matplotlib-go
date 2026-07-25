@@ -120,6 +120,8 @@ func NewKeyEvent(eventType EventType, fig *Figure, key string, modifiers Modifie
 }
 
 // NewPickEvent creates a normalized pick event payload.
+//
+//nolint:gocritic // Public event constructors intentionally preserve value semantics.
 func NewPickEvent(fig *Figure, artist core.Artist, mouse MouseEvent) PickEvent {
 	event := mouse.Event
 	event.Type = EventPick

@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -29,8 +30,8 @@ func Plot() *core.Figure {
 	ax.SetTitle("Lambert Projection")
 	ax.SetXLabel("longitude")
 	ax.SetYLabel("latitude")
-	ax.XAxis.Locator = core.FixedLocator{TicksList: common.LambertLongitudeTicks()}
-	ax.XAxis.Formatter = core.FuncFormatter(common.PlainDegreeFormat)
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: common.LambertLongitudeTicks()}
+	ax.XAxis.Formatter = ticker.FuncFormatter(common.PlainDegreeFormat)
 
 	gridColor := render.Color{R: 0.78, G: 0.80, B: 0.84, A: 1}
 	lonGrid := ax.AddGrid(core.AxisBottom)

@@ -11,6 +11,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
 const (
@@ -96,12 +97,12 @@ func Plot() *core.Figure {
 	auxAx.AxVLine(4.45, core.VLineOptions{Color: &refColor, LineWidth: &refWidth, Alpha: &refAlpha})
 	auxAx.AxHLine(0.0, core.HLineOptions{Color: &refColor, LineWidth: &refWidth, Alpha: &refAlpha})
 
-	fig.AddWidgetAxes(axesRect(0.06, 0.23, 0.16, 0.07)).Button("Apply")
-	fig.AddWidgetAxes(axesRect(0.28, 0.23, 0.26, 0.07)).Slider("gain", 0, 1, 0.68)
-	fig.AddWidgetAxes(axesRect(0.59, 0.23, 0.23, 0.07)).RangeSlider("window", 0, 1, 0.22, 0.78)
-	fig.AddWidgetAxes(axesRect(0.86, 0.23, 0.10, 0.07)).TextBox("label", "phase scan")
-	fig.AddWidgetAxes(axesRect(0.06, 0.07, 0.36, 0.12)).CheckButtons([]string{"signal", "modulation", "grid"}, []bool{true, true, false})
-	fig.AddWidgetAxes(axesRect(0.55, 0.07, 0.28, 0.12)).RadioButtons([]string{"blue", "amber", "mono"}, 1)
+	widgets.NewButton(widgets.NewAxes(fig, axesRect(0.06, 0.23, 0.16, 0.07)), "Apply")
+	widgets.NewSlider(widgets.NewAxes(fig, axesRect(0.28, 0.23, 0.26, 0.07)), "gain", 0, 1, 0.68)
+	widgets.NewRangeSlider(widgets.NewAxes(fig, axesRect(0.59, 0.23, 0.23, 0.07)), "window", 0, 1, 0.22, 0.78)
+	widgets.NewTextBox(widgets.NewAxes(fig, axesRect(0.86, 0.23, 0.10, 0.07)), "label", "phase scan")
+	widgets.NewCheckButtons(widgets.NewAxes(fig, axesRect(0.06, 0.07, 0.36, 0.12)), []string{"signal", "modulation", "grid"}, []bool{true, true, false})
+	widgets.NewRadioButtons(widgets.NewAxes(fig, axesRect(0.55, 0.07, 0.28, 0.12)), []string{"blue", "amber", "mono"}, 1)
 
 	return fig
 }
@@ -114,7 +115,7 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }
 
 func axesRect(left, bottom, width, height float64) geom.Rect {

@@ -326,9 +326,9 @@ func (r *countingRenderer) Path(p geom.Path, paint *render.Paint) {
 	r.inner.Path(p, paint)
 }
 
-func (r *countingRenderer) Image(img render.Image, dst geom.Rect) {
+func (r *countingRenderer) DrawImage(img render.Image, dst geom.Rect) {
 	r.counts.image++
-	r.inner.Image(img, dst)
+	r.inner.DrawImage(img, dst)
 }
 
 func (r *countingRenderer) GlyphRun(run render.GlyphRun, c render.Color) {

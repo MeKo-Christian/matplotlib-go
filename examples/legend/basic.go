@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/render"
 )
 
 func main() {
@@ -53,18 +51,7 @@ func main() {
 	legend := ax.AddLegend()
 	legend.Location = core.LegendUpperLeft
 
-	r, _, createErr := backends.NewRendererFromEnv(backends.Config{
-		Width:      1000,
-		Height:     700,
-		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
-		DPI:        96,
-	}, backends.TextCapabilities)
-	if createErr != nil {
-		fmt.Printf("error creating renderer: %v\n", createErr)
-		return
-	}
-
-	if err := core.SavePNG(fig, r, "legend_basic.png"); err != nil {
+	if err := fig.Save("legend_basic.png"); err != nil {
 		fmt.Printf("error saving PNG: %v\n", err)
 		return
 	}

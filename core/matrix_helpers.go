@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 // MatShowOptions configures Axes.MatShow.
@@ -650,22 +651,22 @@ func applyMatrixTicks(a *Axes, rows, cols int) {
 			continue
 		}
 		axis.Locator = xLocator
-		axis.Formatter = ScalarFormatter{Prec: 0}
+		axis.Formatter = ticker.ScalarFormatter{Prec: 0}
 	}
 	for _, axis := range []*Axis{a.YAxis, a.YAxisRight} {
 		if axis == nil {
 			continue
 		}
 		axis.Locator = yLocator
-		axis.Formatter = ScalarFormatter{Prec: 0}
+		axis.Formatter = ticker.ScalarFormatter{Prec: 0}
 	}
 }
 
-func integerMatrixLocator(count int) Locator {
+func integerMatrixLocator(count int) ticker.Locator {
 	if count <= 0 {
-		return NullLocator{}
+		return ticker.NullLocator{}
 	}
-	return MaxNLocator{N: 9, Steps: []float64{1, 2, 5, 10}, Integer: true}
+	return ticker.MaxNLocator{N: 9, Steps: []float64{1, 2, 5, 10}, Integer: true}
 }
 
 func formatAnnotatedHeatmapValue(value float64, pattern, nanText string) string {
@@ -676,9 +677,9 @@ func formatAnnotatedHeatmapValue(value float64, pattern, nanText string) string 
 		return "NaN"
 	}
 	if pattern == "" {
-		return ScalarFormatter{Prec: 3}.Format(value)
+		return ticker.ScalarFormatter{Prec: 3}.Format(value)
 	}
-	return FormatStrFormatter{Pattern: pattern}.Format(value)
+	return ticker.FormatStrFormatter{Pattern: pattern}.Format(value)
 }
 
 func boolValue(value *bool, fallback bool) bool {

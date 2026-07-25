@@ -14,30 +14,30 @@ type textLayoutRenderer struct {
 	haveHeights bool
 }
 
-func (r textLayoutRenderer) Begin(geom.Rect) error    { return nil }
-func (r textLayoutRenderer) End() error               { return nil }
-func (r textLayoutRenderer) Save()                    {}
-func (r textLayoutRenderer) Restore()                 {}
-func (r textLayoutRenderer) ClipRect(geom.Rect)       {}
-func (r textLayoutRenderer) ClipPath(geom.Path)       {}
-func (r textLayoutRenderer) Path(geom.Path, *Paint)   {}
-func (r textLayoutRenderer) Image(Image, geom.Rect)   {}
-func (r textLayoutRenderer) GlyphRun(GlyphRun, Color) {}
+func (r *textLayoutRenderer) Begin(geom.Rect) error      { return nil }
+func (r *textLayoutRenderer) End() error                 { return nil }
+func (r *textLayoutRenderer) Save()                      {}
+func (r *textLayoutRenderer) Restore()                   {}
+func (r *textLayoutRenderer) ClipRect(geom.Rect)         {}
+func (r *textLayoutRenderer) ClipPath(geom.Path)         {}
+func (r *textLayoutRenderer) Path(geom.Path, *Paint)     {}
+func (r *textLayoutRenderer) DrawImage(Image, geom.Rect) {}
+func (r *textLayoutRenderer) GlyphRun(GlyphRun, Color)   {}
 
-func (r textLayoutRenderer) MeasureText(string, float64, string) TextMetrics {
+func (r *textLayoutRenderer) MeasureText(string, float64, string) TextMetrics {
 	return r.metrics
 }
 
-func (r textLayoutRenderer) MeasureTextBounds(string, float64, string) (TextBounds, bool) {
+func (r *textLayoutRenderer) MeasureTextBounds(string, float64, string) (TextBounds, bool) {
 	return r.bounds, r.haveBounds
 }
 
-func (r textLayoutRenderer) MeasureFontHeights(float64, string) (FontHeightMetrics, bool) {
+func (r *textLayoutRenderer) MeasureFontHeights(float64, string) (FontHeightMetrics, bool) {
 	return r.fontHeights, r.haveHeights
 }
 
 func TestMeasureTextLineLayoutCombinesInkAndFontMetrics(t *testing.T) {
-	layout := MeasureTextLineLayout(textLayoutRenderer{
+	layout := MeasureTextLineLayout(&textLayoutRenderer{
 		metrics:     TextMetrics{W: 30, H: 9, Ascent: 7, Descent: 2},
 		bounds:      TextBounds{X: -1, Y: -6, W: 29, H: 8},
 		haveBounds:  true,
@@ -57,7 +57,7 @@ func TestMeasureTextLineLayoutCombinesInkAndFontMetrics(t *testing.T) {
 }
 
 func TestMeasureTextLineLayoutFallsBackToMetrics(t *testing.T) {
-	layout := MeasureTextLineLayout(textLayoutRenderer{
+	layout := MeasureTextLineLayout(&textLayoutRenderer{
 		metrics: TextMetrics{W: 24, H: 10, Ascent: 8, Descent: 2},
 	}, "text", 12, "")
 

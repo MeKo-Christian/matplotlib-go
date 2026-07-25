@@ -8,6 +8,7 @@ import (
 	mplcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -20,7 +21,7 @@ const (
 // Plot builds the showcase figure (backend-agnostic).
 func Plot() *core.Figure {
 	fig := core.NewFigure(720, 560)
-	ax, err := fig.AddAxes3D(geom.Rect{
+	ax, err := plot3d.AddAxes(fig, geom.Rect{
 		Min: geom.Pt{X: 0.12, Y: 0.16},
 		Max: geom.Pt{X: 0.88, Y: 0.88},
 	})
@@ -53,7 +54,7 @@ func Plot() *core.Figure {
 	ax.Plot3D(x2, y2, z2, core.PlotOptions{LineWidth: &width, Color: &blue})
 
 	alpha := 0.5
-	ax.FillBetween(x1, y1, z1, x2, y2, z2, core.FillBetween3DOptions{
+	ax.FillBetween(x1, y1, z1, x2, y2, z2, plot3d.FillBetween3DOptions{
 		Alpha: &alpha,
 	})
 	return fig
@@ -67,5 +68,5 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }

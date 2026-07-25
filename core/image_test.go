@@ -606,7 +606,7 @@ func (r *imageSpyRenderer) ClipPath(geom.Path)    {}
 func (r *imageSpyRenderer) Path(geom.Path, *render.Paint) {
 }
 
-func (r *imageSpyRenderer) Image(img render.Image, dst geom.Rect) {
+func (r *imageSpyRenderer) DrawImage(img render.Image, dst geom.Rect) {
 	r.imageCalls++
 	r.lastDst = dst
 	if img != nil {
@@ -642,7 +642,10 @@ func (r *imageSpyNoTransformRenderer) ClipPath(geom.Path)    {}
 func (r *imageSpyNoTransformRenderer) Path(geom.Path, *render.Paint) {
 }
 
-func (r *imageSpyNoTransformRenderer) Image(_ render.Image, dst geom.Rect) { r.imageCalls++; _ = dst }
+func (r *imageSpyNoTransformRenderer) DrawImage(_ render.Image, dst geom.Rect) {
+	r.imageCalls++
+	_ = dst
+}
 
 func (r *imageSpyNoTransformRenderer) GlyphRun(render.GlyphRun, render.Color) {
 }

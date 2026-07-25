@@ -2,10 +2,14 @@ package pgf
 
 import (
 	"github.com/cwbudde/matplotlib-go/backends"
+	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 func init() {
+	core.RegisterFigureOutputRenderer(".pgf", func(width, height int, background render.Color) (render.Renderer, error) {
+		return New(width, height, background)
+	})
 	backends.Register(backends.PGF, &backends.BackendInfo{
 		Name:        "PGF",
 		Description: "Generator-only PGF/TikZ backend for LaTeX inclusion",

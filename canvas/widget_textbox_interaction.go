@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
 var (
@@ -13,7 +14,7 @@ var (
 	clipboardText string
 )
 
-func (w *WidgetInteraction) handleTextKey(tb *core.TextBox, ev KeyEvent, key string) bool {
+func (w *WidgetInteraction) handleTextKey(tb *widgets.TextBox, ev *KeyEvent, key string) bool {
 	if tb == nil {
 		return false
 	}
@@ -108,7 +109,7 @@ func (w *WidgetInteraction) blurFocusedTextLocked() bool {
 	return true
 }
 
-func cursorIndexFromTextPoint(tb *core.TextBox, axes *Axes, fig *Figure, point geom.Pt) int {
+func cursorIndexFromTextPoint(tb *widgets.TextBox, axes *Axes, fig *Figure, point geom.Pt) int {
 	if tb == nil || axes == nil || fig == nil {
 		return 0
 	}

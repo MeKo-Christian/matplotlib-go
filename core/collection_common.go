@@ -62,6 +62,13 @@ func (c *Collection) Z() float64 {
 	return zOrDefault(c.z, defaultPatchZ)
 }
 
+// SetZ sets the collection z-order.
+func (c *Collection) SetZ(z float64) {
+	if c != nil {
+		c.z = z
+	}
+}
+
 func (c *Collection) alphaValue() float64 {
 	alpha := 1.0
 	if c != nil && c.Alpha > 0 && c.Alpha <= 1 {
@@ -105,9 +112,9 @@ func (c Collection) ScalarMap() ScalarMapInfo {
 	}
 }
 
-// GetArray returns a copy of the scalar array mapped through the collection's
+// Array returns a copy of the scalar array mapped through the collection's
 // colormap, matching Matplotlib's scalar-mappable collection concept.
-func (c *Collection) GetArray() []float64 {
+func (c *Collection) Array() []float64 {
 	if c == nil || len(c.ScalarValues) == 0 {
 		return nil
 	}

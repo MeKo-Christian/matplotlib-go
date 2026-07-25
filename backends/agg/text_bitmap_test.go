@@ -20,7 +20,7 @@ func TestBlendAlphaMaskAppliesTextAlphaAndClips(t *testing.T) {
 		t.Fatal("blendAlphaMask returned false")
 	}
 
-	img := r.GetImage()
+	img := r.Image()
 	if got := img.RGBAAt(0, 0); got.R != 255 || got.G < 188 || got.G > 193 || got.B < 188 || got.B > 193 || got.A != 255 {
 		t.Fatalf("half-covered clipped text pixel = %+v, want red over white with alpha-scaled coverage", got)
 	}

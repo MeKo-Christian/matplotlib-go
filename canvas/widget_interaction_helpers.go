@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
 func axesInteractionArtists(axes *core.Axes) []core.Artist {
@@ -25,7 +26,7 @@ type widgetPick struct {
 	info   core.PickInfo
 }
 
-func (w *WidgetInteraction) pickWidget(ev Event) widgetPick {
+func (w *WidgetInteraction) pickWidget(ev *Event) widgetPick {
 	fig := ev.Figure
 	if fig == nil {
 		fig = w.figure
@@ -36,9 +37,9 @@ func (w *WidgetInteraction) pickWidget(ev Event) widgetPick {
 	hits := Pick(fig, ev.Position)
 	for _, hit := range hits {
 		switch hit.Artist.(type) {
-		case *core.Button, *core.Slider, *core.RangeSlider, *core.CheckButtons, *core.RadioButtons, *core.TextBox,
-			*core.SpanSelector, *core.RectangleSelector, *core.EllipseSelector, *core.PolygonSelector, *core.LassoSelector,
-			*core.Cursor, *core.MultiCursor:
+		case *widgets.Button, *widgets.Slider, *widgets.RangeSlider, *widgets.CheckButtons, *widgets.RadioButtons, *widgets.TextBox,
+			*widgets.SpanSelector, *widgets.RectangleSelector, *widgets.EllipseSelector, *widgets.PolygonSelector, *widgets.LassoSelector,
+			*widgets.Cursor, *widgets.MultiCursor:
 			return widgetPick{
 				axes:   hit.Axes,
 				widget: hit.Artist,
@@ -58,8 +59,8 @@ func axesInAxesList(axesList []*Axes, axes *Axes) bool {
 	return false
 }
 
-func widgetButton(v any) *core.Button {
-	widget, ok := v.(*core.Button)
+func widgetButton(v any) *widgets.Button {
+	widget, ok := v.(*widgets.Button)
 	if ok && widget.Enabled {
 		return widget
 	}

@@ -161,7 +161,7 @@ func (r *textRecordingRenderer) Path(p geom.Path, paint *render.Paint) {
 	r.pathCalls = append(r.pathCalls, call)
 }
 
-func (r *textRecordingRenderer) Image(_ render.Image, dst geom.Rect) {
+func (r *textRecordingRenderer) DrawImage(_ render.Image, dst geom.Rect) {
 	r.imageDsts = append(r.imageDsts, dst)
 }
 
@@ -190,7 +190,7 @@ type inlineMathLineMetricRenderer struct {
 	render.NullRenderer
 }
 
-func (inlineMathLineMetricRenderer) GetImage() *image.RGBA {
+func (inlineMathLineMetricRenderer) Image() *image.RGBA {
 	return image.NewRGBA(image.Rect(0, 0, 1, 1))
 }
 
@@ -220,7 +220,7 @@ func (inlineMathLineMetricRenderer) MeasureMathGlyphRun(text string, _ float64, 
 	}}, true
 }
 
-func (mathRasterMetricRenderer) GetImage() *image.RGBA {
+func (mathRasterMetricRenderer) Image() *image.RGBA {
 	return image.NewRGBA(image.Rect(0, 0, 1, 1))
 }
 
@@ -250,7 +250,7 @@ func (mathRasterMetricRenderer) MeasureMathGlyphRun(text string, size float64, _
 	return []render.MathGlyphMetric{metric}, true
 }
 
-func (mathRasterLogitWidthRenderer) GetImage() *image.RGBA {
+func (mathRasterLogitWidthRenderer) Image() *image.RGBA {
 	return image.NewRGBA(image.Rect(0, 0, 1, 1))
 }
 

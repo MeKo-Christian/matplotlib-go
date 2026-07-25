@@ -30,7 +30,7 @@ func ResolveBackend(choice string, required []Capability) (Backend, error) {
 	normalized := strings.ToLower(strings.TrimSpace(choice))
 	switch normalized {
 	case "", string(AutoBackend), "default":
-		return GetBestBackend(required)
+		return BestBackend(required)
 	}
 
 	backend := Backend(normalized)

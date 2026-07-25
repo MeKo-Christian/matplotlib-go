@@ -446,6 +446,13 @@ func (l *Line2D) Z() float64 {
 	return zOrDefault(l.z, defaultLineZ)
 }
 
+// SetZ sets the line z-order.
+func (l *Line2D) SetZ(z float64) {
+	if l != nil {
+		l.z = z
+	}
+}
+
 // Bounds returns the bounding box of all points in data space.
 func (l *Line2D) Bounds(*DrawContext) geom.Rect {
 	return l.autoscaleBounds(nil).bounds

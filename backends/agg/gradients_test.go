@@ -413,7 +413,7 @@ func TestHatchTakesPrecedenceOverPatternFill(t *testing.T) {
 
 func pixelAt(t *testing.T, r *Renderer, x, y int) (uint8, uint8, uint8, uint8) {
 	t.Helper()
-	rgba := r.GetImage()
+	rgba := r.Image()
 	if rgba == nil {
 		t.Fatal("nil image")
 	}

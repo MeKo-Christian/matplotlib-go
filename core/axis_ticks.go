@@ -7,6 +7,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 // DrawTicks renders tick marks pointing outward from the plot area.
@@ -35,7 +36,7 @@ func (a *Axis) DrawTicks(r render.Renderer, ctx *DrawContext) {
 		showMinorTicks = a.ShowTicks
 	}
 	if showMinorTicks && a.MinorLocator != nil {
-		minorLoc := locatorWithMajorContext(a.MinorLocator, a.Locator)
+		minorLoc := ticker.WithMajorContext(a.MinorLocator, a.Locator)
 		minorTicks := visibleTicks(minorLoc.Ticks(domainMin, domainMax, a.minorTickTargetCountForContext(ctx, isXAxis)), domainMin, domainMax)
 		if len(minorTicks) > 0 {
 			a.drawMinorTicks(r, ctx, minorTicks, isXAxis)

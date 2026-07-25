@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -59,10 +60,10 @@ func Plot() *core.Figure {
 	}); err != nil {
 		panic(err)
 	}
-	left.XAxis.MinorLocator = core.MultipleLocator{Base: 0.2}
-	left.XAxisTop.MinorLocator = core.MultipleLocator{Base: 0.2}
-	left.YAxis.MinorLocator = core.MultipleLocator{Base: 0.2}
-	left.YAxisRight.MinorLocator = core.MultipleLocator{Base: 0.2}
+	left.XAxis.MinorLocator = ticker.MultipleLocator{Base: 0.2}
+	left.XAxisTop.MinorLocator = ticker.MultipleLocator{Base: 0.2}
+	left.YAxis.MinorLocator = ticker.MultipleLocator{Base: 0.2}
+	left.YAxisRight.MinorLocator = ticker.MultipleLocator{Base: 0.2}
 	majorLen := 7.0
 	minorLen := 4.0
 	majorWidth := 1.2
@@ -174,5 +175,5 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(fig, r)
-	return r.GetImage()
+	return r.Image()
 }

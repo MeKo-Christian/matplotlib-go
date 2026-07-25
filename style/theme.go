@@ -140,8 +140,8 @@ func RegisterTheme(theme Theme) {
 	themeRegistry[normalized] = theme
 }
 
-// GetTheme returns a named theme and whether it was found.
-func GetTheme(name string) (Theme, bool) {
+// LookupTheme returns a named theme and whether it was found.
+func LookupTheme(name string) (Theme, bool) {
 	themeRegistryMu.RLock()
 	defer themeRegistryMu.RUnlock()
 	theme, ok := themeRegistry[normalizeThemeName(name)]
@@ -153,7 +153,7 @@ func GetTheme(name string) (Theme, bool) {
 
 // MustTheme returns the named theme or the default theme when it is missing.
 func MustTheme(name string) Theme {
-	theme, ok := GetTheme(name)
+	theme, ok := LookupTheme(name)
 	if !ok {
 		return ThemeDefault
 	}

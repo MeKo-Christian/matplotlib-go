@@ -82,7 +82,7 @@ func (r *Renderer) drawTeXImage(result tex.RenderResult, topLeft geom.Pt, textCo
 	if img == nil {
 		return
 	}
-	r.Image(render.NewImageData(img), geom.Rect{
+	r.DrawImage(render.NewImageData(img), geom.Rect{
 		Min: topLeft,
 		Max: geom.Pt{X: topLeft.X + float64(img.Bounds().Dx()), Y: topLeft.Y + float64(img.Bounds().Dy())},
 	})

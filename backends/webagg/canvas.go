@@ -20,7 +20,7 @@ import (
 // pixel-by-pixel against the prior frame.
 type RasterRenderer interface {
 	render.Renderer
-	GetImage() *image.RGBA
+	Image() *image.RGBA
 }
 
 // RendererFactory builds a fresh RasterRenderer at the given pixel size
@@ -436,7 +436,7 @@ func (m *Manager) renderFrame() (imageMode, []byte, error) {
 
 	core.DrawFigure(m.figure, m.renderer)
 	clearStaleArtists(m.figure)
-	img := m.renderer.GetImage()
+	img := m.renderer.Image()
 	if img == nil {
 		return imageModeFull, nil, errors.New("webagg: renderer returned no image")
 	}
@@ -455,7 +455,7 @@ func (m *Manager) renderCurrentFrame(damage *geom.Rect) (imageMode, []byte, erro
 	if m.renderer == nil {
 		return imageModeFull, nil, errors.New("webagg: no renderer to blit")
 	}
-	img := m.renderer.GetImage()
+	img := m.renderer.Image()
 	if img == nil {
 		return imageModeFull, nil, errors.New("webagg: renderer returned no image")
 	}

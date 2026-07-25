@@ -51,8 +51,8 @@ func (r *scaledRenderer) Path(path geom.Path, paint *render.Paint) {
 	r.base.Path(scalePath(path, r.scale), scalePaint(paint, r.scale))
 }
 
-func (r *scaledRenderer) Image(img render.Image, dst geom.Rect) {
-	r.base.Image(img, scaleRect(dst, r.scale))
+func (r *scaledRenderer) DrawImage(img render.Image, dst geom.Rect) {
+	r.base.DrawImage(img, scaleRect(dst, r.scale))
 }
 
 func (r *scaledRenderer) GlyphRun(run render.GlyphRun, color render.Color) {

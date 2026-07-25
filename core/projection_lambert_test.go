@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestLambertForward_AtCenter_IsOrigin(t *testing.T) {
@@ -58,7 +59,7 @@ func TestLambertDefaultsHideLatitudeTickLabels(t *testing.T) {
 		t.Fatalf("AddAxesProjection(lambert): %v", err)
 	}
 
-	if _, ok := ax.YAxis.Formatter.(NullFormatter); !ok {
+	if _, ok := ax.YAxis.Formatter.(ticker.NullFormatter); !ok {
 		t.Fatalf("lambert y-axis formatter = %T, want NullFormatter", ax.YAxis.Formatter)
 	}
 }

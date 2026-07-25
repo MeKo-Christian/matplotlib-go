@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 const (
@@ -57,9 +58,9 @@ func Plot() *core.Figure {
 		EdgeColor: &edgeColor,
 		EdgeWidth: &edgeWidth,
 	})
-	ax.XAxis.Locator = core.FixedLocator{TicksList: x}
-	ax.XAxis.Formatter = core.FixedFormatter{Labels: labels}
-	ax.YAxis.Locator = core.FixedLocator{TicksList: []float64{0, 2, 4, 6, 8}}
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: x}
+	ax.XAxis.Formatter = ticker.FixedFormatter{Labels: labels}
+	ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 2, 4, 6, 8}}
 	return fig
 }
 
@@ -70,5 +71,5 @@ func Render() image.Image {
 		panic(err)
 	}
 	core.DrawFigure(Plot(), r)
-	return r.GetImage()
+	return r.Image()
 }

@@ -245,8 +245,8 @@ func TestLightSourceImagePathIntegrationOmissionIsDocumented(t *testing.T) {
 }
 
 func TestLightSourceSurfacePathIntegrationDecisionIsDocumented(t *testing.T) {
-	for _, name := range []string{"axes3d_contour_surface.go", "axes3d_bar_voxel.go", "axes3d_projection.go"} {
-		path := filepath.Join("..", "core", name)
+	for _, name := range []string{"contour_surface.go", "bar_voxel.go", "projection.go"} {
+		path := filepath.Join("..", "plot3d", name)
 		data, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatalf("read %s: %v", path, err)

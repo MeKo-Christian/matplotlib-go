@@ -13,7 +13,7 @@ func Render() image.Image {
 	under := render.Color{R: 0.08, G: 0.16, B: 0.72, A: 1}
 	over := render.Color{R: 0.78, G: 0.12, B: 0.08, A: 1}
 	cmapName := "extendfrac fixture"
-	matcolor.RegisterColormap(cmapName, matcolor.GetColormap("viridis").Copy(cmapName).WithUnder(under).WithOver(over))
+	matcolor.RegisterColormap(cmapName, matcolor.LookupColormap("viridis").Copy(cmapName).WithUnder(under).WithOver(over))
 
 	fig, ax := common.ColorNormFixtureFigure("Colorbar ExtendFrac")
 	vmin, vmax := 0.0, 1.0

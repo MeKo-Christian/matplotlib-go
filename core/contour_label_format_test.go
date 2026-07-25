@@ -3,17 +3,19 @@ package core
 import (
 	"math"
 	"testing"
+
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestContourLabelFormatString(t *testing.T) {
-	f := newContourLabelFormatter(ClabelOptions{FormatString: "%1.2f"}, nil)
+	f := newContourLabelFormatter(&ClabelOptions{FormatString: "%1.2f"}, nil)
 	if got := f.Format(1.5); got != "1.50" {
 		t.Fatalf("format string label = %q, want %q", got, "1.50")
 	}
 }
 
 func TestContourLabelFormatDict(t *testing.T) {
-	f := newContourLabelFormatter(ClabelOptions{FormatDict: map[float64]string{1: "low", 2: "high"}}, nil)
+	f := newContourLabelFormatter(&ClabelOptions{FormatDict: map[float64]string{1: "low", 2: "high"}}, nil)
 	if got := f.Format(1); got != "low" {
 		t.Fatalf("dict label = %q, want low", got)
 	}
@@ -27,8 +29,8 @@ func TestContourLabelFormatDict(t *testing.T) {
 }
 
 func TestContourLabelFormatterCallable(t *testing.T) {
-	f := newContourLabelFormatter(ClabelOptions{Formatter: FuncFormatter(func(x float64) string {
-		return "v=" + ScalarFormatter{Prec: 0}.Format(x)
+	f := newContourLabelFormatter(&ClabelOptions{Formatter: ticker.FuncFormatter(func(x float64) string {
+		return "v=" + ticker.ScalarFormatter{Prec: 0}.Format(x)
 	})}, nil)
 	if got := f.Format(4); got != "v=4" {
 		t.Fatalf("callable label = %q, want v=4", got)

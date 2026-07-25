@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -137,11 +138,11 @@ func TickLabelFormat(opts TickLabelFormatOptions) error {
 	if err != nil {
 		return err
 	}
-	formatters := make([]core.ScalarFormatter, len(axes))
+	formatters := make([]ticker.ScalarFormatter, len(axes))
 	for i, target := range axes {
-		formatter, ok := target.axis.Formatter.(core.ScalarFormatter)
+		formatter, ok := target.axis.Formatter.(ticker.ScalarFormatter)
 		if !ok {
-			return fmt.Errorf("pyplot: %s-axis formatter is %T, want core.ScalarFormatter", target.name, target.axis.Formatter)
+			return fmt.Errorf("pyplot: %s-axis formatter is %T, want ticker.ScalarFormatter", target.name, target.axis.Formatter)
 		}
 		formatter, err = applyTickLabelFormat(formatter, opts)
 		if err != nil {
@@ -294,7 +295,7 @@ func tickLabelFormatAxes(ax *core.Axes, axisSpec string) ([]tickLabelFormatTarge
 	}
 }
 
-func applyTickLabelFormat(formatter core.ScalarFormatter, opts TickLabelFormatOptions) (core.ScalarFormatter, error) {
+func applyTickLabelFormat(formatter ticker.ScalarFormatter, opts TickLabelFormatOptions) (ticker.ScalarFormatter, error) {
 	switch strings.ToLower(strings.TrimSpace(opts.Style)) {
 	case "":
 	case "sci", "scientific":
@@ -322,14 +323,14 @@ func setFixedTicks(axis *core.Axis, name string, ticks []float64, labels ...[]st
 		return fmt.Errorf("pyplot: %sticks accepts at most one label set", name)
 	}
 	copiedTicks := append([]float64(nil), ticks...)
-	axis.Locator = core.FixedLocator{TicksList: copiedTicks}
+	axis.Locator = ticker.FixedLocator{TicksList: copiedTicks}
 	if len(labels) == 0 {
 		return nil
 	}
 	if len(labels[0]) != len(ticks) {
 		return fmt.Errorf("pyplot: %sticks label count %d does not match tick count %d", name, len(labels[0]), len(ticks))
 	}
-	axis.Formatter = core.FixedFormatter{Labels: append([]string(nil), labels[0]...)}
+	axis.Formatter = ticker.FixedFormatter{Labels: append([]string(nil), labels[0]...)}
 	return nil
 }
 

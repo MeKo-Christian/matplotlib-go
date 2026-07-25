@@ -76,7 +76,7 @@ func TestImageSerializesEmbeddedPNGAndNormalizesDestinationRect(t *testing.T) {
 	content := renderSVGDocument(t, func(r *Renderer) {
 		img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 		img.SetRGBA(0, 0, color.RGBA{R: 200, G: 100, B: 50, A: 255})
-		r.Image(render.NewImageData(img), geom.Rect{
+		r.DrawImage(render.NewImageData(img), geom.Rect{
 			Min: geom.Pt{X: 30, Y: 40},
 			Max: geom.Pt{X: 10, Y: 20},
 		})
@@ -96,11 +96,11 @@ func TestImageSerializesEmbeddedPNGAndNormalizesDestinationRect(t *testing.T) {
 
 func TestImageSkipsUnsupportedImageAndDegenerateRect(t *testing.T) {
 	content := renderSVGDocument(t, func(r *Renderer) {
-		r.Image(sizeOnlyImage{w: 10, h: 10}, geom.Rect{
+		r.DrawImage(sizeOnlyImage{w: 10, h: 10}, geom.Rect{
 			Min: geom.Pt{X: 0, Y: 0},
 			Max: geom.Pt{X: 10, Y: 10},
 		})
-		r.Image(render.NewImageData(image.NewRGBA(image.Rect(0, 0, 1, 1))), geom.Rect{
+		r.DrawImage(render.NewImageData(image.NewRGBA(image.Rect(0, 0, 1, 1))), geom.Rect{
 			Min: geom.Pt{X: 10, Y: 10},
 			Max: geom.Pt{X: 10, Y: 20},
 		})

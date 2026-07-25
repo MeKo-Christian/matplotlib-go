@@ -23,7 +23,7 @@ func TestGSVTextFallbackIsDisabledByDefault(t *testing.T) {
 		t.Fatalf("End failed: %v", err)
 	}
 
-	_, pixels, ok := inkBounds(r.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	_, pixels, ok := inkBounds(r.Image(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	if ok || pixels != 0 {
 		t.Fatalf("default text path should not draw GSV fallback pixels, got %d", pixels)
 	}
@@ -46,7 +46,7 @@ func TestGSVTextFallbackRequiresExplicitEmergencyOptIn(t *testing.T) {
 		t.Fatalf("End failed: %v", err)
 	}
 
-	_, pixels, ok := inkBounds(r.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	_, pixels, ok := inkBounds(r.Image(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	if !ok || pixels == 0 {
 		t.Fatal("explicit emergency text fallback should draw GSV pixels")
 	}

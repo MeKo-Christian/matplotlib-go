@@ -1,6 +1,9 @@
 package core
 
-import "github.com/cwbudde/matplotlib-go/render"
+import (
+	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
+)
 
 // AxisSide specifies which side of the plot area an axis is on.
 type AxisSide uint8
@@ -45,8 +48,8 @@ type TickLabelStyle struct {
 
 // TickLevel adds an optional additional tick/label row to an axis.
 type TickLevel struct {
-	Locator    Locator
-	Formatter  Formatter
+	Locator    ticker.Locator
+	Formatter  ticker.Formatter
 	Size       float64
 	ShowTicks  bool
 	ShowLabels bool
@@ -74,11 +77,11 @@ const (
 
 // Axis renders axis spines, ticks, and labels for a single dimension.
 type Axis struct {
-	Side                   AxisSide     // which side of the plot
-	Locator                Locator      // major tick position calculator
-	MinorLocator           Locator      // minor tick position calculator (nil = no minor ticks)
-	Formatter              Formatter    // major tick label formatter
-	MinorFormatter         Formatter    // optional minor tick label formatter
+	Side                   AxisSide       // which side of the plot
+	Locator                ticker.Locator // major tick position calculator
+	MinorLocator           ticker.Locator // minor tick position calculator (nil = no minor ticks)
+	Formatter              ticker.Formatter
+	MinorFormatter         ticker.Formatter
 	Color                  render.Color // axis spine color, and tick/label color unless overridden
 	TickColor              *render.Color
 	TickLabelColor         *render.Color
@@ -119,8 +122,8 @@ type Axis struct {
 func NewXAxis() *Axis {
 	return &Axis{
 		Side:               AxisBottom,
-		Locator:            AutoLocator{},
-		Formatter:          ScalarFormatter{Prec: 3},
+		Locator:            ticker.AutoLocator{},
+		Formatter:          ticker.ScalarFormatter{Prec: 3},
 		Color:              render.Color{R: 0, G: 0, B: 0, A: 1}, // black
 		LineWidth:          defaultAxisLineWidth,
 		LineCap:            render.CapSquare,
@@ -146,8 +149,8 @@ func NewXAxis() *Axis {
 func NewYAxis() *Axis {
 	return &Axis{
 		Side:               AxisLeft,
-		Locator:            AutoLocator{},
-		Formatter:          ScalarFormatter{Prec: 3},
+		Locator:            ticker.AutoLocator{},
+		Formatter:          ticker.ScalarFormatter{Prec: 3},
 		Color:              render.Color{R: 0, G: 0, B: 0, A: 1}, // black
 		LineWidth:          defaultAxisLineWidth,
 		LineCap:            render.CapSquare,

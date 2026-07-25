@@ -9,6 +9,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/internal/diag"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
 
@@ -1775,10 +1776,10 @@ func (a *Axes) BoxPlots(datasets [][]float64, opts ...BoxPlotsOptions) []*BoxPlo
 		horizontal := opt.Orientation != nil && normalizeViolinOrientation(*opt.Orientation) == "horizontal"
 		if horizontal {
 			if a.YAxis != nil {
-				a.YAxis.Locator = FixedLocator{TicksList: positions}
+				a.YAxis.Locator = ticker.FixedLocator{TicksList: positions}
 			}
 		} else if a.XAxis != nil {
-			a.XAxis.Locator = FixedLocator{TicksList: positions}
+			a.XAxis.Locator = ticker.FixedLocator{TicksList: positions}
 		}
 	}
 	return boxes

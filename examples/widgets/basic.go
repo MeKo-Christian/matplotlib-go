@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/cwbudde/matplotlib-go/backends"
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
 func main() {
@@ -53,48 +53,38 @@ func main() {
 	})
 	pressed := true
 	// The widgets are rendered as static controls; they do not install event callbacks here.
-	buttonAx.Button("Apply", core.ButtonOptions{Pressed: &pressed})
+	widgets.NewButton(buttonAx, "Apply", widgets.ButtonOptions{Pressed: &pressed})
 
 	sliderAx := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.26, Y: 0.28},
 		Max: geom.Pt{X: 0.62, Y: 0.38},
 	})
-	sliderAx.Slider("gain", 0, 1, 0.68)
+	widgets.NewSlider(sliderAx, "gain", 0, 1, 0.68)
 
 	checkAx := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.66, Y: 0.18},
 		Max: geom.Pt{X: 0.80, Y: 0.38},
 	})
-	checkAx.CheckButtons([]string{"signal", "mod", "grid"}, []bool{true, true, false})
+	widgets.NewCheckButtons(checkAx, []string{"signal", "mod", "grid"}, []bool{true, true, false})
 
 	radioAx := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.82, Y: 0.18},
 		Max: geom.Pt{X: 0.94, Y: 0.38},
 	})
-	radioAx.RadioButtons([]string{"blue", "amber", "mono"}, 1)
+	widgets.NewRadioButtons(radioAx, []string{"blue", "amber", "mono"}, 1)
 
 	textAx := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.08, Y: 0.14},
 		Max: geom.Pt{X: 0.62, Y: 0.24},
 	})
 	active := true
-	textAx.TextBox("label", "phase scan", core.TextBoxOptions{Active: &active})
+	widgets.NewTextBox(textAx, "label", "phase scan", widgets.TextBoxOptions{Active: &active})
 
 	fig.AddAnchoredText("widgets: Button, Slider, CheckButtons, RadioButtons, TextBox", core.AnchoredTextOptions{
 		Location: core.LegendLowerRight,
 	})
 
-	r, _, err := backends.NewRendererFromEnv(backends.Config{
-		Width:      1080,
-		Height:     720,
-		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
-		DPI:        100,
-	}, backends.TextCapabilities)
-	if err != nil {
-		fmt.Printf("error creating renderer: %v\n", err)
-		return
-	}
-	if err := core.SavePNG(fig, r, "widgets_basic.png"); err != nil {
+	if err := fig.Save("widgets_basic.png"); err != nil {
 		fmt.Printf("error saving PNG: %v\n", err)
 		return
 	}

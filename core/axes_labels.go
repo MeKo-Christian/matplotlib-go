@@ -129,6 +129,34 @@ func (a *Axes) SetYLabelWeight(weight int) {
 	}
 }
 
+// XLabelPad returns the resolved x-axis label padding in points.
+func (a *Axes) XLabelPad() float64 {
+	if a == nil {
+		return style.CurrentDefaults().Axes.LabelPad
+	}
+	a.ensureRCTextDefaults()
+	return a.xLabelPadPt
+}
+
+// YLabelPad returns the resolved y-axis label padding in points.
+func (a *Axes) YLabelPad() float64 {
+	if a == nil {
+		return style.CurrentDefaults().Axes.LabelPad
+	}
+	a.ensureRCTextDefaults()
+	return a.yLabelPadPt
+}
+
+// XLabelFontKey returns the resolved font key for x-axis labels.
+func (a *Axes) XLabelFontKey(ctx *DrawContext) string {
+	return xAxisLabelFontKey(a, ctx)
+}
+
+// YLabelFontKey returns the resolved font key for y-axis labels.
+func (a *Axes) YLabelFontKey(ctx *DrawContext) string {
+	return yAxisLabelFontKey(a, ctx)
+}
+
 func (a *Axes) SetXLabelPosition(position string) error {
 	if a == nil {
 		return nil

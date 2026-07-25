@@ -8,6 +8,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 // BoxPlot2D renders a single statistical box plot for one dataset.
@@ -263,11 +264,11 @@ func (a *Axes) Bxp(stats []BxpStat, opts ...BxpOptions) *BxpContainer {
 	}
 	if manageTicks {
 		if orientation == "horizontal" {
-			a.YAxis.Locator = FixedLocator{TicksList: positions}
-			a.YAxis.Formatter = FixedFormatter{Labels: tickLabels}
+			a.YAxis.Locator = ticker.FixedLocator{TicksList: positions}
+			a.YAxis.Formatter = ticker.FixedFormatter{Labels: tickLabels}
 		} else {
-			a.XAxis.Locator = FixedLocator{TicksList: positions}
-			a.XAxis.Formatter = FixedFormatter{Labels: tickLabels}
+			a.XAxis.Locator = ticker.FixedLocator{TicksList: positions}
+			a.XAxis.Formatter = ticker.FixedFormatter{Labels: tickLabels}
 		}
 	}
 	return container

@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/widgets"
 )
 
 func TestWidgetInteractionSpanSelectorMouseAndKeyboard(t *testing.T) {
@@ -13,10 +14,10 @@ func TestWidgetInteractionSpanSelectorMouseAndKeyboard(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
 	ax.SetXLim(0, 100)
 	ax.SetYLim(0, 100)
-	span := ax.SpanSelector("horizontal")
+	span := widgets.NewSpanSelector(ax, "horizontal")
 
 	var got [][2]float64
-	span.OnSelect(func(_ *core.SpanSelector, min, max float64) {
+	span.OnSelect(func(_ *widgets.SpanSelector, min, max float64) {
 		got = append(got, [2]float64{min, max})
 	})
 
@@ -67,10 +68,10 @@ func TestWidgetInteractionRectangleSelectorMouseAndKeyboard(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
 	ax.SetXLim(0, 100)
 	ax.SetYLim(0, 100)
-	rect := ax.RectangleSelector()
+	rect := widgets.NewRectangleSelector(ax)
 
 	var rectBounds [][2]float64
-	rect.OnSelect(func(_ *core.RectangleSelector, bounds geom.Rect) {
+	rect.OnSelect(func(_ *widgets.RectangleSelector, bounds geom.Rect) {
 		rectBounds = append(rectBounds, [2]float64{
 			bounds.W(),
 			bounds.H(),
@@ -121,7 +122,7 @@ func TestWidgetInteractionRectangleSelectorModifierMouseCreate(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
 	ax.SetXLim(0, 200)
 	ax.SetYLim(0, 120)
-	rect := ax.RectangleSelector()
+	rect := widgets.NewRectangleSelector(ax)
 
 	var dispatcher Dispatcher
 	wi := NewWidgetInteraction(fig, func() error { return nil })
@@ -224,10 +225,10 @@ func TestWidgetInteractionPolygonSelectorEdit(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
 	ax.SetXLim(0, 100)
 	ax.SetYLim(0, 100)
-	polygon := ax.PolygonSelector()
+	polygon := widgets.NewPolygonSelector(ax)
 
 	var onSelectCount int
-	polygon.OnSelect(func(*core.PolygonSelector, []geom.Pt) {
+	polygon.OnSelect(func(*widgets.PolygonSelector, []geom.Pt) {
 		onSelectCount++
 	})
 
@@ -305,7 +306,7 @@ func TestWidgetInteractionPolygonSelectorPreCompleteMoveModes(t *testing.T) {
 	wi.Attach(&dispatcher)
 	defer wi.Detach()
 
-	poly := ax.PolygonSelector()
+	poly := widgets.NewPolygonSelector(ax)
 	p1ShiftPx := geom.Pt{X: 50, Y: 70}
 	p2ShiftPx := geom.Pt{X: 150, Y: 70}
 	p1ShiftData, ok := ax.PixelToData(p1ShiftPx)
@@ -353,7 +354,7 @@ func TestWidgetInteractionPolygonSelectorPreCompleteMoveModes(t *testing.T) {
 	assertCloseEnough(t, poly.Points[1].Y-p2ShiftData.Y-shiftDelta.Y, 0)
 
 	// Move a vertex before completion (control).
-	poly2 := ax.PolygonSelector()
+	poly2 := widgets.NewPolygonSelector(ax)
 	ctrlV0 := geom.Pt{X: 20, Y: 20}
 	ctrlV1 := geom.Pt{X: 120, Y: 20}
 	ctrlV0Data, ok := ax.PixelToData(ctrlV0)
@@ -403,11 +404,11 @@ func TestWidgetInteractionEllipseSelectorMouse(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
 	ax.SetXLim(0, 100)
 	ax.SetYLim(0, 100)
-	ellipse := ax.EllipseSelector()
+	ellipse := widgets.NewEllipseSelector(ax)
 
 	var got float64
 	var selected bool
-	ellipse.OnSelect(func(_ *core.EllipseSelector, bounds geom.Rect) {
+	ellipse.OnSelect(func(_ *widgets.EllipseSelector, bounds geom.Rect) {
 		got = bounds.W()
 		selected = true
 	})
@@ -441,10 +442,10 @@ func TestWidgetInteractionEllipseSelectorKeyboard(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
 	ax.SetXLim(0, 100)
 	ax.SetYLim(0, 100)
-	ellipse := ax.EllipseSelector()
+	ellipse := widgets.NewEllipseSelector(ax)
 
 	var selected int
-	ellipse.OnSelect(func(_ *core.EllipseSelector, got geom.Rect) {
+	ellipse.OnSelect(func(_ *widgets.EllipseSelector, got geom.Rect) {
 		selected++
 		if got.Min.X == 0 && got.Min.Y == 0 && got.Max.X == 0 && got.Max.Y == 0 {
 			t.Fatalf("ellipse callback reported empty bounds")
@@ -506,7 +507,7 @@ func TestWidgetInteractionPolygonSelectorKeyboard(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
 	ax.SetXLim(0, 200)
 	ax.SetYLim(0, 120)
-	poly := ax.PolygonSelector()
+	poly := widgets.NewPolygonSelector(ax)
 
 	before := []geom.Pt{
 		{X: 30, Y: 30},
@@ -533,7 +534,7 @@ func TestWidgetInteractionPolygonSelectorKeyboard(t *testing.T) {
 	}
 
 	var callbacks int
-	poly.OnSelect(func(*core.PolygonSelector, []geom.Pt) {
+	poly.OnSelect(func(*widgets.PolygonSelector, []geom.Pt) {
 		callbacks++
 	})
 
@@ -580,10 +581,10 @@ func TestWidgetInteractionLassoSelectorMouse(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
 	ax.SetXLim(0, 100)
 	ax.SetYLim(0, 100)
-	lasso := ax.LassoSelector()
+	lasso := widgets.NewLassoSelector(ax)
 
 	var got int
-	lasso.OnSelect(func(_ *core.LassoSelector, points []geom.Pt) {
+	lasso.OnSelect(func(_ *widgets.LassoSelector, points []geom.Pt) {
 		got = len(points)
 	})
 
@@ -617,7 +618,7 @@ func TestWidgetInteractionLassoSelectorKeyboardEscape(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
 	ax.SetXLim(0, 100)
 	ax.SetYLim(0, 100)
-	lasso := ax.LassoSelector()
+	lasso := widgets.NewLassoSelector(ax)
 
 	var dispatcher Dispatcher
 	wi := NewWidgetInteraction(fig, func() error { return nil })

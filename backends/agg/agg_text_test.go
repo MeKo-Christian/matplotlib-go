@@ -80,7 +80,7 @@ func TestGlyphRunRendersShapedGlyphs(t *testing.T) {
 		t.Fatalf("End failed: %v", err)
 	}
 
-	if _, _, ok := inkBounds(r.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255}); !ok {
+	if _, _, ok := inkBounds(r.Image(), color.RGBA{R: 255, G: 255, B: 255, A: 255}); !ok {
 		t.Fatal("GlyphRun should draw visible text from shaped glyph IDs")
 	}
 }
@@ -120,7 +120,7 @@ func TestDrawTextRotatedMaintainsReadableFootprint(t *testing.T) {
 		t.Fatalf("End failed: %v", err)
 	}
 
-	bounds, pixels, ok := inkBounds(r.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	bounds, pixels, ok := inkBounds(r.Image(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	if !ok {
 		t.Fatal("expected rotated text to draw visible ink")
 	}
@@ -146,7 +146,7 @@ func TestDrawTextRotatedMatchesMatplotlibRightYLabelInkBounds(t *testing.T) {
 		t.Fatalf("End failed: %v", err)
 	}
 
-	bounds, pixels, ok := inkBounds(r.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	bounds, pixels, ok := inkBounds(r.Image(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	if !ok || pixels == 0 {
 		t.Fatal("expected rotated label ink")
 	}
@@ -167,7 +167,7 @@ func TestDrawTextUsesMatplotlibRoundHalfEvenForBitmapOrigin(t *testing.T) {
 		t.Fatalf("End failed: %v", err)
 	}
 
-	bounds, _, ok := inkBounds(r.GetImage(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	bounds, _, ok := inkBounds(r.Image(), color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	if !ok {
 		t.Fatal("expected visible text ink")
 	}

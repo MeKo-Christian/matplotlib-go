@@ -54,7 +54,7 @@ func (r *Renderer) ImageTransformed(img render.Image, dst geom.Rect, transform g
 		return
 	}
 	if nb, ok := r.bridge.(nativeImageBridge); ok {
-		if nb.drawImageTransformedNative(r.GetImage(), img, transform, r.bridgeClipState()) {
+		if nb.drawImageTransformedNative(r.Image(), img, transform, r.bridgeClipState()) {
 			return
 		}
 	}
@@ -69,7 +69,7 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 		return false
 	}
 	if nb, ok := r.bridge.(nativeBatchBridge); ok {
-		if nb.drawMarkersNative(r.GetImage(), batch, r.bridgeClipState(), float64(r.height)) {
+		if nb.drawMarkersNative(r.Image(), batch, r.bridgeClipState(), float64(r.height)) {
 			return true
 		}
 	}
@@ -100,7 +100,7 @@ func (r *Renderer) DrawPathCollection(batch render.PathCollectionBatch) bool {
 	// path below when a default is active.
 	if !render.SketchActive(r.defaultSketch) {
 		if nb, ok := r.bridge.(nativeBatchBridge); ok {
-			if nb.drawPathCollectionNative(r.GetImage(), batch, r.bridgeClipState()) {
+			if nb.drawPathCollectionNative(r.Image(), batch, r.bridgeClipState()) {
 				return true
 			}
 		}
@@ -133,7 +133,7 @@ func (r *Renderer) DrawQuadMesh(batch render.QuadMeshBatch) bool {
 		return false
 	}
 	if nb, ok := r.bridge.(nativeBatchBridge); ok {
-		if nb.drawQuadMeshNative(r.GetImage(), batch, r.bridgeClipState()) {
+		if nb.drawQuadMeshNative(r.Image(), batch, r.bridgeClipState()) {
 			return true
 		}
 	}
@@ -180,11 +180,11 @@ func (r *Renderer) DrawQuadMesh(batch render.QuadMeshBatch) bool {
 // output surface. This mirrors the renderer contract that future SkVertices
 // integration will satisfy through the external Skia bridge.
 func (r *Renderer) DrawGouraudTriangles(batch render.GouraudTriangleBatch) bool {
-	if r == nil || len(batch.Triangles) == 0 || r.GetImage() == nil {
+	if r == nil || len(batch.Triangles) == 0 || r.Image() == nil {
 		return false
 	}
 	if nb, ok := r.bridge.(nativeBatchBridge); ok {
-		if nb.drawGouraudNative(r.GetImage(), batch, r.bridgeClipState()) {
+		if nb.drawGouraudNative(r.Image(), batch, r.bridgeClipState()) {
 			return true
 		}
 	}
@@ -223,7 +223,7 @@ func (r *Renderer) drawNativeHatchPath(path geom.Path, paint *render.Paint) bool
 	hatchOnlyPaint.FillGradient = render.GradientFill{}
 	hatchOnlyPaint.FillPattern = render.PatternFill{}
 	if nb, ok := r.bridge.(nativeHatchBridge); ok {
-		if nb.drawHatchPathNative(r.GetImage(), path, hatchOnlyPaint, r.bridgeClipState()) {
+		if nb.drawHatchPathNative(r.Image(), path, hatchOnlyPaint, r.bridgeClipState()) {
 			if hatchPaint.Stroke.A > 0 && hatchPaint.LineWidth > 0 {
 				strokePaint := hatchPaint
 				strokePaint.Fill = render.Color{}
@@ -270,7 +270,7 @@ func (r *Renderer) drawGouraudTriangle(tri *render.GouraudTriangle) {
 	if tri == nil {
 		return
 	}
-	img := r.GetImage()
+	img := r.Image()
 	if img == nil {
 		return
 	}

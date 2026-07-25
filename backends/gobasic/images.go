@@ -9,8 +9,8 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-// Image draws an image within the destination rectangle.
-func (r *Renderer) Image(img render.Image, dst geom.Rect) {
+// DrawImage draws an image within the destination rectangle.
+func (r *Renderer) DrawImage(img render.Image, dst geom.Rect) {
 	if img == nil {
 		return
 	}

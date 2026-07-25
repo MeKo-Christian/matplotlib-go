@@ -144,9 +144,9 @@ func SplitDeCasteljau(beta []Pt, t float64) (left, right []Pt) {
 	return left, right
 }
 
-// GetCosSin returns the cosine and sine of the angle of the line from p0 to p1.
+// CosSin returns the cosine and sine of the angle of the line from p0 to p1.
 // Coincident points return (0, 0). Ports get_cos_sin.
-func GetCosSin(p0, p1 Pt) (cos, sin float64) {
+func CosSin(p0, p1 Pt) (cos, sin float64) {
 	dx, dy := p1.X-p0.X, p1.Y-p0.Y
 	d := math.Hypot(dx, dy)
 	if d == 0 {
@@ -155,10 +155,10 @@ func GetCosSin(p0, p1 Pt) (cos, sin float64) {
 	return dx / d, dy / d
 }
 
-// GetNormalPoints returns the two points a perpendicular distance length from
+// NormalPoints returns the two points a perpendicular distance length from
 // (c) along the line through c at angle t (given by its cosine/sine). The first
 // return is the "left" point, the second the "right". Ports get_normal_points.
-func GetNormalPoints(c Pt, cosT, sinT, length float64) (left, right Pt) {
+func NormalPoints(c Pt, cosT, sinT, length float64) (left, right Pt) {
 	if length == 0 {
 		return c, c
 	}
@@ -167,11 +167,11 @@ func GetNormalPoints(c Pt, cosT, sinT, length float64) (left, right Pt) {
 	return left, right
 }
 
-// GetIntersection returns the intersection of the line through c1 at angle t1
+// Intersection returns the intersection of the line through c1 at angle t1
 // and the line through c2 at angle t2 (each angle given by its cosine/sine).
 // The boolean is false when the lines are (near-)parallel and do not intersect.
 // Ports get_intersection (which raises ValueError in that case).
-func GetIntersection(c1 Pt, cosT1, sinT1 float64, c2 Pt, cosT2, sinT2 float64) (Pt, bool) {
+func Intersection(c1 Pt, cosT1, sinT1 float64, c2 Pt, cosT2, sinT2 float64) (Pt, bool) {
 	line1RHS := sinT1*c1.X - cosT1*c1.Y
 	line2RHS := sinT2*c2.X - cosT2*c2.Y
 
@@ -226,10 +226,10 @@ func FindControlPoints(c1, mm, c2 Pt) [3]Pt {
 // test inside get_parallels.
 const parallelTolerance = 1e-5
 
-// GetParallels returns the control points of two quadratic Bézier curves
+// Parallels returns the control points of two quadratic Bézier curves
 // roughly parallel to the given quadratic (bezier2), offset by width on either
 // side. Ports get_parallels.
-func GetParallels(bezier2 [3]Pt, width float64) (left, right [3]Pt) {
+func Parallels(bezier2 [3]Pt, width float64) (left, right [3]Pt) {
 	c1, cm, c2 := bezier2[0], bezier2[1], bezier2[2]
 
 	parallel := CheckIfParallel(
@@ -241,18 +241,18 @@ func GetParallels(bezier2 [3]Pt, width float64) (left, right [3]Pt) {
 	var cosT1, sinT1, cosT2, sinT2 float64
 	if parallel == -1 {
 		// Lines do not intersect; fall back to a straight line.
-		cosT1, sinT1 = GetCosSin(c1, c2)
+		cosT1, sinT1 = CosSin(c1, c2)
 		cosT2, sinT2 = cosT1, sinT1
 	} else {
-		cosT1, sinT1 = GetCosSin(c1, cm)
-		cosT2, sinT2 = GetCosSin(cm, c2)
+		cosT1, sinT1 = CosSin(c1, cm)
+		cosT2, sinT2 = CosSin(cm, c2)
 	}
 
-	c1Left, c1Right := GetNormalPoints(c1, cosT1, sinT1, width)
-	c2Left, c2Right := GetNormalPoints(c2, cosT2, sinT2, width)
+	c1Left, c1Right := NormalPoints(c1, cosT1, sinT1, width)
+	c2Left, c2Right := NormalPoints(c2, cosT2, sinT2, width)
 
-	cmLeft, okL := GetIntersection(c1Left, cosT1, sinT1, c2Left, cosT2, sinT2)
-	cmRight, okR := GetIntersection(c1Right, cosT1, sinT1, c2Right, cosT2, sinT2)
+	cmLeft, okL := Intersection(c1Left, cosT1, sinT1, c2Left, cosT2, sinT2)
+	cmRight, okR := Intersection(c1Right, cosT1, sinT1, c2Right, cosT2, sinT2)
 	if !okL || !okR {
 		// Near-straight line: use midpoints (matplotlib's except branch).
 		cmLeft = midpoint(c1Left, c2Left)
@@ -264,24 +264,24 @@ func GetParallels(bezier2 [3]Pt, width float64) (left, right [3]Pt) {
 	return left, right
 }
 
-// MakeWedgedBezier2 is like GetParallels but produces a wedge: the offset width
+// MakeWedgedBezier2 is like Parallels but produces a wedge: the offset width
 // is scaled by w1, wm, w2 at the start, middle, and end. Ports
 // make_wedged_bezier2.
 func MakeWedgedBezier2(bezier2 [3]Pt, width, w1, wm, w2 float64) (left, right [3]Pt) {
 	c1, cm, c3 := bezier2[0], bezier2[1], bezier2[2]
 
-	cosT1, sinT1 := GetCosSin(c1, cm)
-	cosT2, sinT2 := GetCosSin(cm, c3)
+	cosT1, sinT1 := CosSin(c1, cm)
+	cosT2, sinT2 := CosSin(cm, c3)
 
-	c1Left, c1Right := GetNormalPoints(c1, cosT1, sinT1, width*w1)
-	c3Left, c3Right := GetNormalPoints(c3, cosT2, sinT2, width*w2)
+	c1Left, c1Right := NormalPoints(c1, cosT1, sinT1, width*w1)
+	c3Left, c3Right := NormalPoints(c3, cosT2, sinT2, width*w2)
 
 	c12 := midpoint(c1, cm)
 	c23 := midpoint(cm, c3)
 	c123 := midpoint(c12, c23)
 
-	cosT123, sinT123 := GetCosSin(c12, c23)
-	c123Left, c123Right := GetNormalPoints(c123, cosT123, sinT123, width*wm)
+	cosT123, sinT123 := CosSin(c12, c23)
+	c123Left, c123Right := NormalPoints(c123, cosT123, sinT123, width*wm)
 
 	left = FindControlPoints(c1Left, c123Left, c3Left)
 	right = FindControlPoints(c1Right, c123Right, c3Right)

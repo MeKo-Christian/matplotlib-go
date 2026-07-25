@@ -5,83 +5,104 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cwbudde/matplotlib-go/dates"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
 func TestAxesPlotUnits_ConfiguresDateAxis(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	dates := []time.Time{
+	timestamps := []time.Time{
 		time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
 		time.Date(2024, time.January, 4, 0, 0, 0, 0, time.UTC),
 	}
 
-	line, err := ax.PlotUnits(dates, []float64{2, 3, 5})
+	line, err := ax.PlotUnits(timestamps, []float64{2, 3, 5})
 	if err != nil {
 		t.Fatalf("PlotUnits returned error: %v", err)
 	}
 	if line == nil {
 		t.Fatal("PlotUnits returned nil line")
 	}
-	if got := line.XY[1].X; got != timeToDateNumber(dates[1]) {
-		t.Fatalf("converted x[1] = %v, want %v", got, timeToDateNumber(dates[1]))
+	if got := line.XY[1].X; got != dates.Date2Num(timestamps[1]) {
+		t.Fatalf("converted x[1] = %v, want %v", got, dates.Date2Num(timestamps[1]))
 	}
-	if _, ok := ax.XAxis.Locator.(DateLocator); !ok {
-		t.Fatalf("x-axis locator = %T, want DateLocator", ax.XAxis.Locator)
+	if _, ok := ax.XAxis.Locator.(dates.DateLocator); !ok {
+		t.Fatalf("x-axis locator = %T, want dates.DateLocator", ax.XAxis.Locator)
 	}
-	if _, ok := ax.XAxis.Formatter.(AutoDateFormatter); !ok {
-		t.Fatalf("x-axis formatter = %T, want AutoDateFormatter", ax.XAxis.Formatter)
+	if _, ok := ax.XAxis.Formatter.(dates.AutoDateFormatter); !ok {
+		t.Fatalf("x-axis formatter = %T, want dates.AutoDateFormatter", ax.XAxis.Formatter)
 	}
 
-	ax.SetXLim(timeToDateNumber(dates[0]), timeToDateNumber(dates[len(dates)-1]))
-	if _, ok := ax.XAxis.Formatter.(AutoDateFormatter); !ok {
-		t.Fatalf("x-axis formatter after SetXLim = %T, want AutoDateFormatter", ax.XAxis.Formatter)
+	ax.SetXLim(dates.Date2Num(timestamps[0]), dates.Date2Num(timestamps[len(timestamps)-1]))
+	if _, ok := ax.XAxis.Formatter.(dates.AutoDateFormatter); !ok {
+		t.Fatalf("x-axis formatter after SetXLim = %T, want dates.AutoDateFormatter", ax.XAxis.Formatter)
 	}
 }
 
 func TestAxesPlotDate_ConfiguresDateAxis(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	dates := []time.Time{
+	timestamps := []time.Time{
 		time.Date(2024, time.March, 1, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, time.March, 2, 0, 0, 0, 0, time.UTC),
 	}
 
-	line := ax.PlotDate(dates, []float64{1, 4})
+	line := ax.PlotDate(timestamps, []float64{1, 4})
 	if line == nil {
 		t.Fatal("PlotDate() returned nil")
 	}
-	if got := line.XY[0].X; got != timeToDateNumber(dates[0]) {
-		t.Fatalf("PlotDate converted x[0] = %v, want %v", got, timeToDateNumber(dates[0]))
+	if got := line.XY[0].X; got != dates.Date2Num(timestamps[0]) {
+		t.Fatalf("PlotDate converted x[0] = %v, want %v", got, dates.Date2Num(timestamps[0]))
 	}
-	if _, ok := ax.XAxis.Locator.(DateLocator); !ok {
-		t.Fatalf("x-axis locator = %T, want DateLocator", ax.XAxis.Locator)
+	if _, ok := ax.XAxis.Locator.(dates.DateLocator); !ok {
+		t.Fatalf("x-axis locator = %T, want dates.DateLocator", ax.XAxis.Locator)
 	}
 }
 
 func TestAxesDateUnitsPreserveExplicitAxisInfoAfterAutoscale(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	dates := []time.Time{
+	timestamps := []time.Time{
 		time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, time.February, 10, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, time.February, 20, 0, 0, 0, 0, time.UTC),
 	}
-	if _, err := ax.PlotUnits(dates, []float64{1, 3, 2}); err != nil {
+	if _, err := ax.PlotUnits(timestamps, []float64{1, 3, 2}); err != nil {
 		t.Fatalf("PlotUnits returned error: %v", err)
 	}
 
-	ax.XAxis.Locator = DayLocator{ByMonthDay: []int{5, 12, 19}, Location: time.UTC}
-	ax.XAxis.Formatter = DateFormatter{Layout: "02 Jan", Location: time.UTC}
+	ax.XAxis.Locator = dates.DayLocator{ByMonthDay: []int{5, 12, 19}, Location: time.UTC}
+	ax.XAxis.Formatter = dates.DateFormatter{Layout: "02 Jan", Location: time.UTC}
 	ax.AutoScale(0.06)
 
-	if _, ok := ax.XAxis.Locator.(DayLocator); !ok {
-		t.Fatalf("x-axis locator after AutoScale = %T, want DayLocator", ax.XAxis.Locator)
+	if _, ok := ax.XAxis.Locator.(dates.DayLocator); !ok {
+		t.Fatalf("x-axis locator after AutoScale = %T, want dates.DayLocator", ax.XAxis.Locator)
 	}
-	if _, ok := ax.XAxis.Formatter.(DateFormatter); !ok {
-		t.Fatalf("x-axis formatter after AutoScale = %T, want DateFormatter", ax.XAxis.Formatter)
+	if _, ok := ax.XAxis.Formatter.(dates.DateFormatter); !ok {
+		t.Fatalf("x-axis formatter after AutoScale = %T, want dates.DateFormatter", ax.XAxis.Formatter)
+	}
+}
+
+func TestDateConverterRCSwitchesDefaultFormatter(t *testing.T) {
+	t.Cleanup(style.ResetDefaults)
+
+	state := &axisUnitsState{kind: unitAxisDate}
+	info := state.axisInfo(0, 30)
+	if _, ok := info.Formatter.(dates.AutoDateFormatter); !ok {
+		t.Fatalf("default date formatter = %T, want dates.AutoDateFormatter", info.Formatter)
+	}
+
+	if _, err := style.UpdateParams(style.Params{"date.converter": "concise"}); err != nil {
+		t.Fatalf("UpdateParams: %v", err)
+	}
+	info = state.axisInfo(0, 30)
+	if _, ok := info.Formatter.(dates.ConciseDateFormatter); !ok {
+		t.Fatalf("date.converter: concise formatter = %T, want dates.ConciseDateFormatter", info.Formatter)
 	}
 }
 
@@ -104,7 +125,7 @@ func TestAxesBarUnits_ConfiguresCategoricalXAxis(t *testing.T) {
 		}
 	}
 
-	loc, ok := ax.XAxis.Locator.(FixedLocator)
+	loc, ok := ax.XAxis.Locator.(ticker.FixedLocator)
 	if !ok {
 		t.Fatalf("x-axis locator = %T, want FixedLocator", ax.XAxis.Locator)
 	}
@@ -112,7 +133,7 @@ func TestAxesBarUnits_ConfiguresCategoricalXAxis(t *testing.T) {
 		t.Fatalf("categorical ticks = %v, want [0 1 2]", loc.TicksList)
 	}
 
-	formatter, ok := ax.XAxis.Formatter.(FixedFormatter)
+	formatter, ok := ax.XAxis.Formatter.(ticker.FixedFormatter)
 	if !ok {
 		t.Fatalf("x-axis formatter = %T, want FixedFormatter", ax.XAxis.Formatter)
 	}
@@ -138,7 +159,7 @@ func TestAxesBarUnits_HorizontalConfiguresCategoricalYAxis(t *testing.T) {
 	if got := bar.X[1]; got != 1 {
 		t.Fatalf("horizontal categorical bar position = %v, want 1", got)
 	}
-	if _, ok := ax.YAxis.Locator.(FixedLocator); !ok {
+	if _, ok := ax.YAxis.Locator.(ticker.FixedLocator); !ok {
 		t.Fatalf("y-axis locator = %T, want FixedLocator", ax.YAxis.Locator)
 	}
 }
@@ -150,20 +171,20 @@ func TestAxesCategoryUnitsPreserveExplicitAxisInfoAfterRefresh(t *testing.T) {
 		t.Fatalf("BarUnits returned error: %v", err)
 	}
 
-	ax.XAxis.Locator = FixedLocator{TicksList: []float64{10, 20}}
-	ax.XAxis.Formatter = FormatStrFormatter{Pattern: "manual %.0f"}
+	ax.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{10, 20}}
+	ax.XAxis.Formatter = ticker.FormatStrFormatter{Pattern: "manual %.0f"}
 	if _, err := ax.BarUnits([]string{"alpha", "beta", "gamma"}, []float64{1, 2, 3}); err != nil {
 		t.Fatalf("second BarUnits returned error: %v", err)
 	}
 
-	loc, ok := ax.XAxis.Locator.(FixedLocator)
+	loc, ok := ax.XAxis.Locator.(ticker.FixedLocator)
 	if !ok {
 		t.Fatalf("x-axis locator after category refresh = %T, want FixedLocator", ax.XAxis.Locator)
 	}
 	if fmt.Sprint(loc.TicksList) != "[10 20]" {
 		t.Fatalf("x-axis locator ticks after category refresh = %v, want [10 20]", loc.TicksList)
 	}
-	if _, ok := ax.XAxis.Formatter.(FormatStrFormatter); !ok {
+	if _, ok := ax.XAxis.Formatter.(ticker.FormatStrFormatter); !ok {
 		t.Fatalf("x-axis formatter after category refresh = %T, want FormatStrFormatter", ax.XAxis.Formatter)
 	}
 	if got := ax.XAxis.Formatter.Format(10); got != "manual 10" {
@@ -185,7 +206,7 @@ func (tripDistanceConverter) Convert(value any) (float64, error) {
 
 func (tripDistanceConverter) AxisInfo([]float64) AxisInfo {
 	return AxisInfo{
-		Formatter: FormatStrFormatter{Pattern: "%.1f km"},
+		Formatter: ticker.FormatStrFormatter{Pattern: "%.1f km"},
 	}
 }
 
@@ -213,32 +234,32 @@ func TestAxesPlotUnits_UsesRegisteredConverter(t *testing.T) {
 }
 
 func TestDateLocatorAndFormatter(t *testing.T) {
-	loc := DateLocator{Location: time.UTC}
-	minVal := timeToDateNumber(time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC))
-	maxVal := timeToDateNumber(time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC))
+	loc := dates.DateLocator{Location: time.UTC}
+	minVal := dates.Date2Num(time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC))
+	maxVal := dates.Date2Num(time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC))
 
 	ticks := loc.Ticks(minVal, maxVal, 4)
 	if len(ticks) < 3 {
 		t.Fatalf("date tick count = %d, want at least 3", len(ticks))
 	}
 
-	formatter := AutoDateFormatter{Min: minVal, Max: maxVal, Location: time.UTC}
+	formatter := dates.AutoDateFormatter{Min: minVal, Max: maxVal, Location: time.UTC}
 	if got := formatter.Format(ticks[0]); got == "" {
 		t.Fatal("formatted date tick should not be empty")
 	}
 }
 
 func TestDateLocatorUsesDailyTicksForCompactDateRange(t *testing.T) {
-	loc := DateLocator{Location: time.UTC}
-	minVal := timeToDateNumber(time.Date(2023, time.December, 31, 13, 12, 0, 0, time.UTC))
-	maxVal := timeToDateNumber(time.Date(2024, time.January, 10, 10, 48, 0, 0, time.UTC))
+	loc := dates.DateLocator{Location: time.UTC}
+	minVal := dates.Date2Num(time.Date(2023, time.December, 31, 13, 12, 0, 0, time.UTC))
+	maxVal := dates.Date2Num(time.Date(2024, time.January, 10, 10, 48, 0, 0, time.UTC))
 
 	ticks := loc.Ticks(minVal, maxVal, 5)
 	if len(ticks) != 10 {
 		t.Fatalf("date tick count = %d, want 10: %v", len(ticks), ticks)
 	}
 	for i, tick := range ticks {
-		got := dateNumberToTime(tick, time.UTC)
+		got := dates.Num2Date(tick, time.UTC)
 		want := time.Date(2024, time.January, i+1, 0, 0, 0, 0, time.UTC)
 		if !got.Equal(want) {
 			t.Fatalf("tick %d = %s, want %s", i, got, want)
@@ -247,9 +268,9 @@ func TestDateLocatorUsesDailyTicksForCompactDateRange(t *testing.T) {
 }
 
 func TestDayLocatorUsesRequestedMonthDays(t *testing.T) {
-	loc := DayLocator{ByMonthDay: []int{5, 12, 19}, Location: time.UTC}
-	minVal := timeToDateNumber(time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC))
-	maxVal := timeToDateNumber(time.Date(2024, time.February, 20, 0, 0, 0, 0, time.UTC))
+	loc := dates.DayLocator{ByMonthDay: []int{5, 12, 19}, Location: time.UTC}
+	minVal := dates.Date2Num(time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC))
+	maxVal := dates.Date2Num(time.Date(2024, time.February, 20, 0, 0, 0, 0, time.UTC))
 
 	ticks := loc.Ticks(minVal, maxVal, 6)
 	want := []time.Time{
@@ -261,7 +282,7 @@ func TestDayLocatorUsesRequestedMonthDays(t *testing.T) {
 		t.Fatalf("tick count = %d, want %d: %v", len(ticks), len(want), ticks)
 	}
 	for i, tick := range ticks {
-		got := dateNumberToTime(tick, time.UTC)
+		got := dates.Num2Date(tick, time.UTC)
 		if !got.Equal(want[i]) {
 			t.Fatalf("tick %d = %s, want %s", i, got, want[i])
 		}
@@ -269,9 +290,9 @@ func TestDayLocatorUsesRequestedMonthDays(t *testing.T) {
 }
 
 func TestYearLocatorUsesBaseMonthAndDay(t *testing.T) {
-	loc := YearLocator{Base: 2, Month: time.July, Day: 4, Location: time.UTC}
-	minVal := timeToDateNumber(time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC))
-	maxVal := timeToDateNumber(time.Date(2026, time.December, 31, 0, 0, 0, 0, time.UTC))
+	loc := dates.YearLocator{Base: 2, Month: time.July, Day: 4, Location: time.UTC}
+	minVal := dates.Date2Num(time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC))
+	maxVal := dates.Date2Num(time.Date(2026, time.December, 31, 0, 0, 0, 0, time.UTC))
 
 	ticks := loc.Ticks(minVal, maxVal, 4)
 	want := []time.Time{
@@ -284,9 +305,9 @@ func TestYearLocatorUsesBaseMonthAndDay(t *testing.T) {
 }
 
 func TestMonthLocatorUsesRequestedMonths(t *testing.T) {
-	loc := MonthLocator{ByMonth: []time.Month{time.January, time.April, time.July, time.October}, ByMonthDay: 15, Location: time.UTC}
-	minVal := timeToDateNumber(time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC))
-	maxVal := timeToDateNumber(time.Date(2024, time.December, 31, 0, 0, 0, 0, time.UTC))
+	loc := dates.MonthLocator{ByMonth: []time.Month{time.January, time.April, time.July, time.October}, ByMonthDay: 15, Location: time.UTC}
+	minVal := dates.Date2Num(time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC))
+	maxVal := dates.Date2Num(time.Date(2024, time.December, 31, 0, 0, 0, 0, time.UTC))
 
 	ticks := loc.Ticks(minVal, maxVal, 6)
 	want := []time.Time{
@@ -299,9 +320,9 @@ func TestMonthLocatorUsesRequestedMonths(t *testing.T) {
 }
 
 func TestWeekdayLocatorUsesRequestedWeekdays(t *testing.T) {
-	loc := WeekdayLocator{ByWeekday: []time.Weekday{time.Monday, time.Wednesday}, Location: time.UTC}
-	minVal := timeToDateNumber(time.Date(2024, time.January, 1, 12, 0, 0, 0, time.UTC))
-	maxVal := timeToDateNumber(time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC))
+	loc := dates.WeekdayLocator{ByWeekday: []time.Weekday{time.Monday, time.Wednesday}, Location: time.UTC}
+	minVal := dates.Date2Num(time.Date(2024, time.January, 1, 12, 0, 0, 0, time.UTC))
+	maxVal := dates.Date2Num(time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC))
 
 	ticks := loc.Ticks(minVal, maxVal, 6)
 	want := []time.Time{
@@ -313,33 +334,33 @@ func TestWeekdayLocatorUsesRequestedWeekdays(t *testing.T) {
 }
 
 func TestClockLocatorsUseRequestedFields(t *testing.T) {
-	minVal := timeToDateNumber(time.Date(2024, time.January, 1, 1, 15, 30, 0, time.UTC))
-	maxVal := timeToDateNumber(time.Date(2024, time.January, 1, 6, 45, 30, 0, time.UTC))
+	minVal := dates.Date2Num(time.Date(2024, time.January, 1, 1, 15, 30, 0, time.UTC))
+	maxVal := dates.Date2Num(time.Date(2024, time.January, 1, 6, 45, 30, 0, time.UTC))
 
-	hours := (HourLocator{ByHour: []int{2, 4, 6}, Location: time.UTC}).Ticks(minVal, maxVal, 6)
+	hours := (dates.HourLocator{ByHour: []int{2, 4, 6}, Location: time.UTC}).Ticks(minVal, maxVal, 6)
 	assertDateTicks(t, hours, []time.Time{
 		time.Date(2024, time.January, 1, 2, 0, 0, 0, time.UTC),
 		time.Date(2024, time.January, 1, 4, 0, 0, 0, time.UTC),
 		time.Date(2024, time.January, 1, 6, 0, 0, 0, time.UTC),
 	})
 
-	minutes := (MinuteLocator{ByMinute: []int{20, 40}, Location: time.UTC}).Ticks(minVal, maxVal, 6)
+	minutes := (dates.MinuteLocator{ByMinute: []int{20, 40}, Location: time.UTC}).Ticks(minVal, maxVal, 6)
 	if len(minutes) == 0 {
-		t.Fatal("MinuteLocator should produce ticks")
+		t.Fatal("dates.MinuteLocator should produce ticks")
 	}
 	for _, tick := range minutes {
-		minute := dateNumberToTime(tick, time.UTC).Minute()
+		minute := dates.Num2Date(tick, time.UTC).Minute()
 		if minute != 20 && minute != 40 {
 			t.Fatalf("minute tick = %d, want 20 or 40", minute)
 		}
 	}
 
-	seconds := (SecondLocator{BySecond: []int{0, 30}, Interval: 30, Location: time.UTC}).Ticks(minVal, maxVal, 6)
+	seconds := (dates.SecondLocator{BySecond: []int{0, 30}, Interval: 30, Location: time.UTC}).Ticks(minVal, maxVal, 6)
 	if len(seconds) == 0 {
-		t.Fatal("SecondLocator should produce ticks")
+		t.Fatal("dates.SecondLocator should produce ticks")
 	}
 	for _, tick := range seconds[:min(4, len(seconds))] {
-		second := dateNumberToTime(tick, time.UTC).Second()
+		second := dates.Num2Date(tick, time.UTC).Second()
 		if second != 0 && second != 30 {
 			t.Fatalf("second tick = %d, want 0 or 30", second)
 		}
@@ -347,9 +368,9 @@ func TestClockLocatorsUseRequestedFields(t *testing.T) {
 }
 
 func TestMicrosecondLocatorUsesRequestedInterval(t *testing.T) {
-	loc := MicrosecondLocator{Interval: 500}
-	minVal := timeToDateNumber(time.Unix(0, 100*time.Microsecond.Nanoseconds()).UTC())
-	maxVal := timeToDateNumber(time.Unix(0, 1400*time.Microsecond.Nanoseconds()).UTC())
+	loc := dates.MicrosecondLocator{Interval: 500}
+	minVal := dates.Date2Num(time.Unix(0, 100*time.Microsecond.Nanoseconds()).UTC())
+	maxVal := dates.Date2Num(time.Unix(0, 1400*time.Microsecond.Nanoseconds()).UTC())
 
 	ticks := loc.Ticks(minVal, maxVal, 6)
 	assertDateTicks(t, ticks, []time.Time{
@@ -359,9 +380,9 @@ func TestMicrosecondLocatorUsesRequestedInterval(t *testing.T) {
 }
 
 func TestDateLocatorUsesMicrosecondTicksForSubsecondRange(t *testing.T) {
-	loc := DateLocator{Location: time.UTC}
-	minVal := timeToDateNumber(time.Unix(0, 0).UTC())
-	maxVal := timeToDateNumber(time.Unix(0, 2500*time.Microsecond.Nanoseconds()).UTC())
+	loc := dates.DateLocator{Location: time.UTC}
+	minVal := dates.Date2Num(time.Unix(0, 0).UTC())
+	maxVal := dates.Date2Num(time.Unix(0, 2500*time.Microsecond.Nanoseconds()).UTC())
 
 	ticks := loc.Ticks(minVal, maxVal, 4)
 	assertDateTicks(t, ticks, []time.Time{
@@ -376,9 +397,9 @@ func TestDateLocatorUsesMicrosecondTicksForSubsecondRange(t *testing.T) {
 
 func TestDateLocatorsUseNonUTCLocation(t *testing.T) {
 	loc := time.FixedZone("UTC+2", 2*60*60)
-	dayLoc := DayLocator{Location: loc}
-	minVal := timeToDateNumber(time.Date(2024, time.January, 1, 21, 30, 0, 0, time.UTC))
-	maxVal := timeToDateNumber(time.Date(2024, time.January, 2, 23, 30, 0, 0, time.UTC))
+	dayLoc := dates.DayLocator{Location: loc}
+	minVal := dates.Date2Num(time.Date(2024, time.January, 1, 21, 30, 0, 0, time.UTC))
+	maxVal := dates.Date2Num(time.Date(2024, time.January, 2, 23, 30, 0, 0, time.UTC))
 
 	ticks := dayLoc.Ticks(minVal, maxVal, 4)
 	assertDateTicks(t, ticks, []time.Time{
@@ -388,30 +409,30 @@ func TestDateLocatorsUseNonUTCLocation(t *testing.T) {
 }
 
 func TestConciseDateFormatterUsesSharedTickLevel(t *testing.T) {
-	formatter := ConciseDateFormatter{Location: time.UTC}
+	formatter := dates.ConciseDateFormatter{Location: time.UTC}
 
 	daily := []float64{
-		timeToDateNumber(time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)),
-		timeToDateNumber(time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC)),
-		timeToDateNumber(time.Date(2024, time.January, 3, 0, 0, 0, 0, time.UTC)),
+		dates.Date2Num(time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)),
+		dates.Date2Num(time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC)),
+		dates.Date2Num(time.Date(2024, time.January, 3, 0, 0, 0, 0, time.UTC)),
 	}
 	if got := labelsForTicks(formatter, daily); fmt.Sprint(got) != "[Jan 02 03]" {
 		t.Fatalf("daily concise labels = %v, want [Jan 02 03]", got)
 	}
 
 	monthly := []float64{
-		timeToDateNumber(time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)),
-		timeToDateNumber(time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)),
-		timeToDateNumber(time.Date(2024, time.March, 1, 0, 0, 0, 0, time.UTC)),
+		dates.Date2Num(time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)),
+		dates.Date2Num(time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)),
+		dates.Date2Num(time.Date(2024, time.March, 1, 0, 0, 0, 0, time.UTC)),
 	}
 	if got := labelsForTicks(formatter, monthly); fmt.Sprint(got) != "[2024 Feb Mar]" {
 		t.Fatalf("monthly concise labels = %v, want [2024 Feb Mar]", got)
 	}
 
 	subsecond := []float64{
-		timeToDateNumber(time.Date(2024, time.January, 1, 12, 0, 0, 0, time.UTC)),
-		timeToDateNumber(time.Date(2024, time.January, 1, 12, 0, 0, int(500*time.Millisecond), time.UTC)),
-		timeToDateNumber(time.Date(2024, time.January, 1, 12, 0, 1, 0, time.UTC)),
+		dates.Date2Num(time.Date(2024, time.January, 1, 12, 0, 0, 0, time.UTC)),
+		dates.Date2Num(time.Date(2024, time.January, 1, 12, 0, 0, int(500*time.Millisecond), time.UTC)),
+		dates.Date2Num(time.Date(2024, time.January, 1, 12, 0, 1, 0, time.UTC)),
 	}
 	if got := labelsForTicks(formatter, subsecond); fmt.Sprint(got) != "[12:00 00.5 01]" {
 		t.Fatalf("subsecond concise labels = %v, want [12:00 00.5 01]", got)
@@ -419,16 +440,16 @@ func TestConciseDateFormatterUsesSharedTickLevel(t *testing.T) {
 }
 
 func TestConciseDateFormatterOffsetTextUsesSharedDateContext(t *testing.T) {
-	formatter := ConciseDateFormatter{Location: time.UTC}
+	formatter := dates.ConciseDateFormatter{Location: time.UTC}
 	ticks := []float64{
-		timeToDateNumber(time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC)),
-		timeToDateNumber(time.Date(2024, time.January, 2, 6, 0, 0, 0, time.UTC)),
-		timeToDateNumber(time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC)),
-		timeToDateNumber(time.Date(2024, time.January, 2, 18, 0, 0, 0, time.UTC)),
+		dates.Date2Num(time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC)),
+		dates.Date2Num(time.Date(2024, time.January, 2, 6, 0, 0, 0, time.UTC)),
+		dates.Date2Num(time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC)),
+		dates.Date2Num(time.Date(2024, time.January, 2, 18, 0, 0, 0, time.UTC)),
 	}
-	offsetter, ok := any(formatter).(OffsetFormatter)
+	offsetter, ok := any(formatter).(ticker.OffsetFormatter)
 	if !ok {
-		t.Fatal("ConciseDateFormatter should provide axis offset text")
+		t.Fatal("dates.ConciseDateFormatter should provide axis offset text")
 	}
 	if got := offsetter.OffsetText(ticks); got != "2024-Jan-02" {
 		t.Fatalf("concise offset text = %q, want %q", got, "2024-Jan-02")
@@ -441,17 +462,17 @@ func assertDateTicks(t *testing.T, ticks []float64, want []time.Time) {
 		t.Fatalf("tick count = %d, want %d: %v", len(ticks), len(want), ticks)
 	}
 	for i, tick := range ticks {
-		got := dateNumberToTime(tick, want[i].Location())
+		got := dates.Num2Date(tick, want[i].Location())
 		if !got.Equal(want[i]) {
 			t.Fatalf("tick %d = %s, want %s", i, got, want[i])
 		}
 	}
 }
 
-func labelsForTicks(formatter Formatter, ticks []float64) []string {
+func labelsForTicks(formatter ticker.Formatter, ticks []float64) []string {
 	labels := make([]string, len(ticks))
 	for i, tick := range ticks {
-		labels[i] = formatTickLabel(formatter, tick, i, ticks)
+		labels[i] = ticker.FormatTick(formatter, tick, i, ticks)
 	}
 	return labels
 }
