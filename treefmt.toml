@@ -29,6 +29,10 @@ excludes = [
   # prettier's table-column alignment fights the generator output and
   # breaks TestMatplotlibParityStatusDocIsCurrent.
   "docs/matplotlib-parity-status.md",
+  # Generated from docs/plans/generate_phase3_tolerance_audit.py; the generator
+  # is the source of truth, so prettier must not reflow it out of sync.
+  "docs/plans/phase3-tolerance-audit.md",
+  "docs/plans/phase3-tolerance-audit.json",
 ]
 
 ### Go
