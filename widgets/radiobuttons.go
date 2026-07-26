@@ -22,8 +22,10 @@ type RadioButtonsOptions struct {
 
 // RadioButtons draws a static radio-button control.
 type RadioButtons struct {
-	Labels    []string
-	Active    int
+	Labels []string
+	// active is setter-owned: SetActive clamps to the label range and fires
+	// the on-changed callback.
+	active    int
 	Enabled   bool
 	FaceColor render.Color
 	EdgeColor render.Color
@@ -59,7 +61,7 @@ func NewRadioButtons(a *core.Axes, labels []string, active int, opt RadioButtons
 	}
 	w := &RadioButtons{
 		Labels:    append([]string(nil), labels...),
-		Active:    clampInt(active, 0, len(labels)-1),
+		active:    clampInt(active, 0, len(labels)-1),
 		Enabled:   enabled,
 		FaceColor: cfg.FaceColor,
 		EdgeColor: cfg.EdgeColor,
@@ -104,10 +106,10 @@ func (r *RadioButtons) SetActive(index int) {
 		return
 	}
 	index = clampInt(index, 0, len(r.Labels)-1)
-	if r.Active == index {
+	if r.active == index {
 		return
 	}
-	r.Active = index
+	r.active = index
 	r.triggerOnChanged(index)
 }
 
@@ -120,7 +122,7 @@ func (r *RadioButtons) Next(delta int) {
 	if delta == 0 {
 		return
 	}
-	r.SetActive(r.Active + delta)
+	r.SetActive(r.active + delta)
 }
 
 func (rdo *RadioButtons) Contains(p geom.Pt, ctx *core.DrawContext) (bool, core.PickInfo) {
@@ -178,7 +180,7 @@ func (rdo *RadioButtons) Draw(r render.Renderer, ctx *core.DrawContext) {
 		outer := ellipsePath(defaults.RadioOuterSize, defaults.RadioOuterSize)
 		outerPath := applyAffinePath(outer, patchAffine(center, 0))
 		markerFace := defaults.RadioInactiveFace
-		active := i == clampInt(rdo.Active, 0, len(rdo.Labels)-1)
+		active := i == clampInt(rdo.active, 0, len(rdo.Labels)-1)
 		if active && defaults.RadioActiveOuter {
 			markerFace = dotColor
 		}
@@ -231,4 +233,12 @@ func mergeRadioButtonsOptions(base, override *RadioButtonsOptions) {
 	if override.Disabled.IsSet() {
 		base.Disabled = override.Disabled
 	}
+}
+
+// Active reports the index of the selected radio button.
+func (r *RadioButtons) Active() int {
+	if r == nil {
+		return 0
+	}
+	return r.active
 }

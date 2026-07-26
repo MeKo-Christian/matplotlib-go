@@ -5,15 +5,16 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 func TestFancyArrowBoundsAndClosedPath(t *testing.T) {
 	arrow := &FancyArrow{
 		Patch: Patch{
-			FaceColor: render.Color{R: 0.9, G: 0.3, B: 0.2, A: 1},
-			EdgeColor: render.Color{R: 0.2, G: 0.1, B: 0.1, A: 1},
-			EdgeWidth: 1,
+			FaceColor: optional.Of(render.Color{R: 0.9, G: 0.3, B: 0.2, A: 1}),
+			EdgeColor: optional.Of(render.Color{R: 0.2, G: 0.1, B: 0.1, A: 1}),
+			EdgeWidth: optional.Of(1.0),
 		},
 		XY:                 geom.Pt{X: 1, Y: 1},
 		DX:                 4,
@@ -76,9 +77,9 @@ func TestFancyArrowPatchDrawsConnectionAndArrowHead(t *testing.T) {
 	}
 	patch := &FancyArrowPatch{
 		Patch: Patch{
-			FaceColor: render.Color{R: 0.8, G: 0.2, B: 0.1, A: 1},
-			EdgeColor: render.Color{R: 0.1, G: 0.1, B: 0.1, A: 1},
-			EdgeWidth: 2,
+			FaceColor: optional.Of(render.Color{R: 0.8, G: 0.2, B: 0.1, A: 1}),
+			EdgeColor: optional.Of(render.Color{R: 0.1, G: 0.1, B: 0.1, A: 1}),
+			EdgeWidth: optional.Of(2.0),
 		},
 		PosA:            geom.Pt{X: 1, Y: 1},
 		PosB:            geom.Pt{X: 4, Y: 3},
@@ -109,8 +110,8 @@ func TestFancyArrowPatchDefaultCapAndJoinMatchMatplotlib(t *testing.T) {
 	}
 	patch := &FancyArrowPatch{
 		Patch: Patch{
-			EdgeColor: render.Color{A: 1},
-			EdgeWidth: 1,
+			EdgeColor: optional.Of(render.Color{A: 1}),
+			EdgeWidth: optional.Of(1.0),
 		},
 		PosA:       geom.Pt{X: 1, Y: 1},
 		PosB:       geom.Pt{X: 4, Y: 3},
@@ -219,7 +220,7 @@ func TestFancyArrowPatchStyleMatrixCurveArrowMatchesMatplotlib(t *testing.T) {
 		ConnectionStyle: connectionStyle,
 		MutationScale:   15,
 		Coords:          Coords(CoordData),
-		Patch:           Patch{EdgeWidth: 1.25},
+		Patch:           Patch{EdgeWidth: optional.Of(1.25)},
 	}
 	ctx := styleMatrixTestContext()
 
@@ -256,7 +257,7 @@ func TestFancyArrowPatchStyleMatrixBarAndWedgeMatchMatplotlib(t *testing.T) {
 		ConnectionStyle: barConnection,
 		MutationScale:   15,
 		Coords:          Coords(CoordData),
-		Patch:           Patch{EdgeWidth: 1.25},
+		Patch:           Patch{EdgeWidth: optional.Of(1.25)},
 	}
 	barParts := bar.displayParts(ctx, bar.displayPath(ctx))
 	if len(barParts) != 3 {
@@ -284,7 +285,7 @@ func TestFancyArrowPatchStyleMatrixBarAndWedgeMatchMatplotlib(t *testing.T) {
 		ConnectionStyle: wedgeConnection,
 		MutationScale:   15,
 		Coords:          Coords(CoordData),
-		Patch:           Patch{EdgeWidth: 1.25},
+		Patch:           Patch{EdgeWidth: optional.Of(1.25)},
 	}
 	wedgeParts := wedge.displayParts(ctx, wedge.displayPath(ctx))
 	if len(wedgeParts) != 1 {

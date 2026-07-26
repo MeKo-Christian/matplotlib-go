@@ -76,8 +76,8 @@ func linearGradient(ax *core.Axes) {
 		Width:  163,
 		Height: 100,
 		Patch: core.Patch{
-			EdgeColor: render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1},
-			EdgeWidth: 1.8,
+			EdgeColor: optional.Of(render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1}),
+			EdgeWidth: optional.Of(1.8),
 		},
 	}
 	frame.SetFaceColor(render.Color{})
@@ -113,8 +113,8 @@ func radialGradient(ax *core.Axes) {
 		Width:  163,
 		Height: 100,
 		Patch: core.Patch{
-			EdgeColor: render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1},
-			EdgeWidth: 1.8,
+			EdgeColor: optional.Of(render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1}),
+			EdgeWidth: optional.Of(1.8),
 		},
 	}
 	frame.SetFaceColor(render.Color{})
@@ -130,9 +130,9 @@ func pattern(ax *core.Axes) {
 			{X: 430, Y: 128},
 		},
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.93, G: 0.94, B: 0.98, A: 1},
-			EdgeColor: render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1},
-			EdgeWidth: 1.8,
+			FaceColor: optional.Of(render.Color{R: 0.93, G: 0.94, B: 0.98, A: 1}),
+			EdgeColor: optional.Of(render.Color{R: 0.06, G: 0.08, B: 0.10, A: 1}),
+			EdgeWidth: optional.Of(1.8),
 			Hatch:     "///",
 		},
 	})
@@ -144,9 +144,9 @@ func patchEffects(ax *core.Axes) {
 		Width:  142,
 		Height: 88,
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.12, G: 0.56, B: 0.40, A: 1},
-			EdgeColor: render.Color{R: 0.02, G: 0.09, B: 0.16, A: 1},
-			EdgeWidth: 2.2,
+			FaceColor: optional.Of(render.Color{R: 0.12, G: 0.56, B: 0.40, A: 1}),
+			EdgeColor: optional.Of(render.Color{R: 0.02, G: 0.09, B: 0.16, A: 1}),
+			EdgeWidth: optional.Of(2.2),
 			LineJoin:  render.JoinRound,
 			PathEffects: []render.PathEffect{
 				render.StrokePathEffect(render.Color{R: 1, G: 0.92, B: 0.58, A: 0.95}, 9, geom.Pt{X: 4, Y: 4}),
@@ -160,7 +160,7 @@ func patchEffects(ax *core.Axes) {
 		Width:  144,
 		Height: 88,
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.10, G: 0.28, B: 0.74, A: 1},
+			FaceColor: optional.Of(render.Color{R: 0.10, G: 0.28, B: 0.74, A: 1}),
 			PathEffects: []render.PathEffect{
 				render.SimplePatchShadowPathEffect(geom.Pt{X: 8, Y: -8}, render.Color{R: 0.08, G: 0.12, B: 0.24, A: 0.45}, 0.45, 0.35),
 				render.NormalPathEffect(),

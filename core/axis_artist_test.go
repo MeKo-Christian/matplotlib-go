@@ -31,8 +31,12 @@ func TestAxisSetTickDirectionControlsTickSegment(t *testing.T) {
 	}
 
 	r.pathCalls = nil
-	if err := axis.SetTickDirection("in"); err != nil {
-		t.Fatalf("SetTickDirection(in): %v", err)
+	if direction, err := ParseTickDirection("in"); err != nil {
+		t.Fatalf("ParseTickDirection(in): %v", err)
+	} else if direction != TickDirectionIn {
+		t.Fatalf("ParseTickDirection(in) = %v", direction)
+	} else {
+		axis.TickDirection = direction
 	}
 	axis.DrawTicks(&r, ctx)
 	inward := r.pathCalls[0].path.V
@@ -41,8 +45,12 @@ func TestAxisSetTickDirectionControlsTickSegment(t *testing.T) {
 	}
 
 	r.pathCalls = nil
-	if err := axis.SetTickDirection("inout"); err != nil {
-		t.Fatalf("SetTickDirection(inout): %v", err)
+	if direction, err := ParseTickDirection("inout"); err != nil {
+		t.Fatalf("ParseTickDirection(inout): %v", err)
+	} else if direction != TickDirectionInOut {
+		t.Fatalf("ParseTickDirection(inout) = %v", direction)
+	} else {
+		axis.TickDirection = direction
 	}
 	axis.DrawTicks(&r, ctx)
 	inout := r.pathCalls[0].path.V

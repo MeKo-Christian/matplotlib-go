@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
@@ -157,9 +158,9 @@ func (a *Annotation) drawArrowPath(r render.Renderer, ctx *DrawContext, path geo
 	color := a.ApplyArtistAlpha(resolvedArrowColor(a.ArrowColor, a.Color, ctx))
 	patch := &FancyArrowPatch{
 		Patch: Patch{
-			FaceColor: color,
-			EdgeColor: color,
-			EdgeWidth: a.ArrowWidth,
+			FaceColor: optional.Of(color),
+			EdgeColor: optional.Of(color),
+			EdgeWidth: optional.Of(a.ArrowWidth),
 			LineJoin:  render.JoinRound,
 			LineCap:   render.CapRound,
 		},

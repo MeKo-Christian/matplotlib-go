@@ -26,9 +26,9 @@ func (w *WidgetInteraction) handleSliderKey(slider *widgets.Slider, ev *KeyEvent
 	if ev.Modifiers&ModifierControl != 0 {
 		delta *= 10
 	}
-	before := slider.Value
-	slider.SetValue(slider.Value + delta)
-	return slider.Value != before
+	before := slider.Value()
+	slider.SetValue(slider.Value() + delta)
+	return slider.Value() != before
 }
 
 func (w *WidgetInteraction) handleRangeSliderKey(slider *widgets.RangeSlider, handle int, ev *KeyEvent, key string) bool {
@@ -51,13 +51,13 @@ func (w *WidgetInteraction) handleRangeSliderKey(slider *widgets.RangeSlider, ha
 	if ev.Modifiers&ModifierControl != 0 {
 		delta *= 10
 	}
-	beforeLow, beforeHigh := slider.Low, slider.High
+	beforeLow, beforeHigh := slider.Low(), slider.High()
 	if handle <= 0 {
-		slider.SetLow(slider.Low + delta)
+		slider.SetLow(slider.Low() + delta)
 	} else {
-		slider.SetHigh(slider.High + delta)
+		slider.SetHigh(slider.High() + delta)
 	}
-	return slider.Low != beforeLow || slider.High != beforeHigh
+	return slider.Low() != beforeLow || slider.High() != beforeHigh
 }
 
 func (w *WidgetInteraction) setSliderValueFromPointLocked(slider *widgets.Slider, ax *Axes, position geom.Pt) {

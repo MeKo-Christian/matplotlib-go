@@ -28,7 +28,7 @@ func (w *WidgetInteraction) handleTextKey(tb *widgets.TextBox, ev *KeyEvent, key
 	shift := ev.Modifiers&ModifierShift != 0
 	ctrlOrMeta := ev.Modifiers&(ModifierControl|ModifierMeta) != 0
 	word := ev.Modifiers&(ModifierControl|ModifierMeta) != 0
-	before := tb.Value
+	before := tb.Value()
 	beforeSelStart, beforeSelEnd := tb.Selection()
 
 	switch command {
@@ -84,7 +84,7 @@ func (w *WidgetInteraction) handleTextKey(tb *widgets.TextBox, ev *KeyEvent, key
 			break
 		}
 		tb.InsertText(getClipboard())
-		return tb.Value != before
+		return tb.Value() != before
 	case " ":
 		tb.InsertText(" ")
 	default:
@@ -93,11 +93,11 @@ func (w *WidgetInteraction) handleTextKey(tb *widgets.TextBox, ev *KeyEvent, key
 		}
 		if len(raw) == 1 {
 			tb.InsertText(raw)
-			return tb.Value != before
+			return tb.Value() != before
 		}
 		return false
 	}
-	return tb.Value != before
+	return tb.Value() != before
 }
 
 func (w *WidgetInteraction) blurFocusedTextLocked() bool {

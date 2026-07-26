@@ -23,7 +23,7 @@ func Plot() *core.Figure {
 	fig := core.NewFigure(1100, 720)
 	fig.ConstrainedLayout()
 	grid := fig.Subplots(2, 2)
-	fig.SetSuptitle("Shared-Axis Figure Labels")
+	fig.SetSupTitle("Shared-Axis Figure Labels")
 	fig.SetSupXLabel("time [s]")
 	fig.SetSupYLabel("amplitude")
 
@@ -71,11 +71,11 @@ func Plot() *core.Figure {
 		BBox:   optional.Of(textBox),
 	})
 	legend := fig.AddLegend()
-	legend.SetLocator(core.BBoxToAnchorLocator{
+	legend.Locator = core.BBoxToAnchorLocator{
 		X:        0.99,
 		Y:        0.90,
 		Location: core.LegendUpperRight,
-	})
+	}
 	return fig
 }
 

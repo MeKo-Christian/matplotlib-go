@@ -38,10 +38,12 @@ type Axes struct {
 	frameRightSpineVisible  bool
 	frameSpineVisibilitySet bool
 
-	// Text labels
-	Title  string // title above the plot
-	XLabel string // x-axis label below ticks
-	YLabel string // y-axis label left of ticks
+	// Text labels. These are setter-owned like the rest of the title/label
+	// family (titleLocation, titlePadPt, xLabelPadPt, ...) so that every write
+	// goes through ensureRCTextDefaults.
+	title  string // title above the plot
+	xLabel string // x-axis label below ticks
+	yLabel string // y-axis label left of ticks
 
 	// Color cycling for multiple series. Matplotlib keeps separate cycles for
 	// line artists and shape/fill artists, so scatter markers do not advance
@@ -397,7 +399,7 @@ func (a *Axes) resetToDefaults() {
 	a.ShowFrame, a.PatchVisible = true, true
 	a.frameTopSpineVisible, a.frameRightSpineVisible = true, true
 	a.frameSpineVisibilitySet = true
-	a.Title, a.XLabel, a.YLabel = "", "", ""
+	a.title, a.xLabel, a.yLabel = "", "", ""
 	a.aspectMode, a.aspectValue, a.boxAspect = "auto", 1, 0
 	a.adjustable, a.anchor = "", ""
 	a.axisBelowSet, a.axisBelowZ = false, 0

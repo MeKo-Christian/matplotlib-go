@@ -49,9 +49,9 @@ func TestFigureClearEmptiesEverything(t *testing.T) {
 	ax := fig.AddAxes(unitRect())
 	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	fig.Add(&Line2D{})
-	fig.SupTitle = "super"
-	fig.SupXLabel = "sx"
-	fig.SupYLabel = "sy"
+	fig.supTitle = "super"
+	fig.supXLabel = "sx"
+	fig.supYLabel = "sy"
 
 	fig.Clear()
 
@@ -61,7 +61,7 @@ func TestFigureClearEmptiesEverything(t *testing.T) {
 	if len(fig.Artists) != 0 {
 		t.Fatalf("Clear left %d figure artists", len(fig.Artists))
 	}
-	if fig.SupTitle != "" || fig.SupXLabel != "" || fig.SupYLabel != "" {
+	if fig.supTitle != "" || fig.supXLabel != "" || fig.supYLabel != "" {
 		t.Fatalf("Clear did not reset sup-labels")
 	}
 }

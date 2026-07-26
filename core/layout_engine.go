@@ -286,33 +286,33 @@ func measureAxesDecorationPadding(ax *Axes, fig *Figure, r render.Renderer, vp g
 }
 
 func titleBounds(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, alignment figureTextAlignment) (geom.Rect, bool) {
-	if ax == nil || ax.Title == "" {
+	if ax == nil || ax.title == "" {
 		return geom.Rect{}, false
 	}
 	fontKey := axesTitleFontKey(ax, ctx)
-	layout := measureSingleLineTextLayout(r, ax.Title, titleFontSize(ctx), fontKey, ctx.RC.UseTeX)
+	layout := measureSingleLineTextLayout(r, ax.title, titleFontSize(ctx), fontKey, ctx.RC.UseTeX)
 	return textInkRect(alignedSingleLineOrigin(titleAnchorPoint(ax, r, ctx, px, alignment), layout, axesTitleAlignment(ax), textLayoutVAlignBaseline), layout)
 }
 
 func xLabelBounds(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, alignment figureTextAlignment) (geom.Rect, bool) {
-	if ax == nil || ax.XLabel == "" {
+	if ax == nil || ax.xLabel == "" {
 		return geom.Rect{}, false
 	}
 	side := ax.effectiveXLabelSide()
 	size := axisLabelFontSize(ctx)
-	layout := measureSingleLineTextLayout(r, ax.XLabel, size, xAxisLabelFontKey(ax, ctx), ctx.RC.UseTeX)
+	layout := measureSingleLineTextLayout(r, ax.xLabel, size, xAxisLabelFontKey(ax, ctx), ctx.RC.UseTeX)
 	anchor, vAlign := xLabelAnchorPoint(ax, r, ctx, px, side, alignment)
 	lineHeight := math.Max(layout.Height, pointsToPixels(ctx.RC, size))
 	return alignedTextLayoutRect(anchor, layout, TextAlignCenter, vAlign, lineHeight)
 }
 
 func yLabelBounds(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect, alignment figureTextAlignment) (geom.Rect, bool) {
-	if ax == nil || ax.YLabel == "" {
+	if ax == nil || ax.yLabel == "" {
 		return geom.Rect{}, false
 	}
 	side := ax.effectiveYLabelSide()
 	size := axisLabelFontSize(ctx)
-	layout := measureSingleLineTextLayout(r, ax.YLabel, size, yAxisLabelFontKey(ax, ctx), ctx.RC.UseTeX)
+	layout := measureSingleLineTextLayout(r, ax.yLabel, size, yAxisLabelFontKey(ax, ctx), ctx.RC.UseTeX)
 	lineHeight := math.Max(layout.Height, pointsToPixels(ctx.RC, size))
 	anchor := yLabelAnchorPoint(ax, r, ctx, px, side, alignment)
 	centerY := px.Min.Y + px.H()/2
@@ -336,14 +336,14 @@ func figureLabelMarginsPx(fig *Figure, r render.Renderer, vp geom.Rect, engine L
 	margins := figureMargin{}
 
 	ctx := newFigureDrawContext(fig, vp)
-	if fig.SupTitle != "" {
-		margins.top += figureLabelTightHeight(r, fig.SupTitle, figureTitleFontSize(ctx), fontKeyWithWeight(fig.RC.FontKey, fig.RC.Figure.TitleWeight), fig.RC.UseTeX) + 2*pad
+	if fig.supTitle != "" {
+		margins.top += figureLabelTightHeight(r, fig.supTitle, figureTitleFontSize(ctx), fontKeyWithWeight(fig.RC.FontKey, fig.RC.Figure.TitleWeight), fig.RC.UseTeX) + 2*pad
 	}
-	if fig.SupXLabel != "" {
-		margins.bottom += figureLabelTightHeight(r, fig.SupXLabel, figureLabelFontSize(ctx), fontKeyWithWeight(fig.RC.FontKey, fig.RC.Figure.LabelWeight), fig.RC.UseTeX) + 2*pad
+	if fig.supXLabel != "" {
+		margins.bottom += figureLabelTightHeight(r, fig.supXLabel, figureLabelFontSize(ctx), fontKeyWithWeight(fig.RC.FontKey, fig.RC.Figure.LabelWeight), fig.RC.UseTeX) + 2*pad
 	}
-	if fig.SupYLabel != "" {
-		margins.left += figureLabelTightHeight(r, fig.SupYLabel, figureLabelFontSize(ctx), fontKeyWithWeight(fig.RC.FontKey, fig.RC.Figure.LabelWeight), fig.RC.UseTeX) + 2*pad
+	if fig.supYLabel != "" {
+		margins.left += figureLabelTightHeight(r, fig.supYLabel, figureLabelFontSize(ctx), fontKeyWithWeight(fig.RC.FontKey, fig.RC.Figure.LabelWeight), fig.RC.UseTeX) + 2*pad
 	}
 	return margins
 }

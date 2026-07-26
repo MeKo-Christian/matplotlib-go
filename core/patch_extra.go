@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -83,22 +84,33 @@ func (s *Shadow) Draw(ren render.Renderer, ctx *DrawContext) {
 	}
 	shadow := s.Patch
 	src := sourcePatchStyle(s.Source)
-	if shadow.FaceColor == (render.Color{}) && src != nil {
-		shadow.FaceColor = shadowColor(src.resolvedFaceColor(), s.Shade)
+	// The darkening below works on plain colors and writes back only when it
+	// produced something visible, so a shadow left fully unstyled still falls
+	// through to the patch.* rcParams exactly as it did before.
+	face := shadow.FaceColor.OrZero()
+	if face == (render.Color{}) && src != nil {
+		face = shadowColor(src.resolvedFaceColor(), s.Shade)
 	}
-	if shadow.EdgeColor == (render.Color{}) {
-		shadow.EdgeColor = shadow.FaceColor
+	edge := shadow.EdgeColor.OrZero()
+	if edge == (render.Color{}) {
+		edge = face
 	}
 	if shadow.Alpha <= 0 {
 		shadow.Alpha = 1
 	}
-	if shadow.FaceColor.A <= 0 && shadow.FaceColor != (render.Color{}) {
-		shadow.FaceColor.A = 0.5
+	if face.A <= 0 && face != (render.Color{}) {
+		face.A = 0.5
 	}
-	if shadow.EdgeColor.A <= 0 && shadow.EdgeColor != (render.Color{}) {
-		shadow.EdgeColor.A = shadow.FaceColor.A
+	if edge.A <= 0 && edge != (render.Color{}) {
+		edge.A = face.A
 	}
-	if shadow.EdgeWidth <= 0 && src != nil {
+	if face != (render.Color{}) {
+		shadow.FaceColor = optional.Of(face)
+	}
+	if edge != (render.Color{}) {
+		shadow.EdgeColor = optional.Of(edge)
+	}
+	if shadow.EdgeWidth.OrZero() <= 0 && src != nil {
 		shadow.EdgeWidth = src.EdgeWidth
 	}
 	shadow.drawStyledPath(ren, &ctx.RC, path, geom.Path{})

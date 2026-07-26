@@ -47,14 +47,14 @@ func TestWidgetConstructorsPrepareAxesAndStoreState(t *testing.T) {
 	if disabledRadios.Enabled {
 		t.Fatal("radio buttons should honor Disabled option")
 	}
-	if slider.Value != 10 {
-		t.Fatalf("slider value = %v, want clamped max 10", slider.Value)
+	if slider.Value() != 10 {
+		t.Fatalf("slider value = %v, want clamped max 10", slider.Value())
 	}
-	if rangeSlider.Low != 2 || rangeSlider.High != 8 {
-		t.Fatalf("range slider range = [%v, %v], want sorted [2, 8]", rangeSlider.Low, rangeSlider.High)
+	if rangeSlider.Low() != 2 || rangeSlider.High() != 8 {
+		t.Fatalf("range slider range = [%v, %v], want sorted [2, 8]", rangeSlider.Low(), rangeSlider.High())
 	}
-	if radios.Active != 2 {
-		t.Fatalf("radio active index = %d, want 2", radios.Active)
+	if radios.Active() != 2 {
+		t.Fatalf("radio active index = %d, want 2", radios.Active())
 	}
 	if text.Placeholder != "type..." || !text.Active {
 		t.Fatal("text box should store placeholder and active state")
@@ -73,13 +73,13 @@ func TestSliderConstructorsSnapInitialValuesToStep(t *testing.T) {
 
 	step := 0.5
 	slider := NewSlider(axSlider, "gain", 0, 10, 5.26, SliderOptions{ValueStep: optional.Of(step)})
-	if slider.Value != 5.5 {
-		t.Fatalf("slider initial value = %v, want snapped 5.5", slider.Value)
+	if slider.Value() != 5.5 {
+		t.Fatalf("slider initial value = %v, want snapped 5.5", slider.Value())
 	}
 
 	rangeSlider := NewRangeSlider(axRange, "window", 0, 10, 7.76, 2.24, RangeSliderOptions{ValueStep: optional.Of(step)})
-	if rangeSlider.Low != 2 || rangeSlider.High != 8 {
-		t.Fatalf("range slider initial range = [%v, %v], want snapped [2, 8]", rangeSlider.Low, rangeSlider.High)
+	if rangeSlider.Low() != 2 || rangeSlider.High() != 8 {
+		t.Fatalf("range slider initial range = [%v, %v], want snapped [2, 8]", rangeSlider.Low(), rangeSlider.High())
 	}
 }
 
@@ -271,7 +271,7 @@ func TestMatplotlibSliderTrackUsesRectangularPatch(t *testing.T) {
 		Label:       "gain",
 		Min:         0,
 		Max:         1,
-		Value:       0.5,
+		value:       0.5,
 		Enabled:     true,
 		FaceColor:   render.Color{R: 1, G: 1, B: 1, A: 1},
 		TrackColor:  render.Color{R: 211.0 / 255.0, G: 211.0 / 255.0, B: 211.0 / 255.0, A: 1},
@@ -355,7 +355,7 @@ func TestMatplotlibRadioButtonsUseSourceFractionLayout(t *testing.T) {
 	}
 	radios := &RadioButtons{
 		Labels:    []string{"blue", "amber", "mono"},
-		Active:    1,
+		active:    1,
 		Enabled:   true,
 		FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
 		EdgeColor: render.Color{A: 1},
@@ -390,7 +390,7 @@ func TestMatplotlibSliderTextAnchorsMatchAxesLayout(t *testing.T) {
 		Label:       "gain",
 		Min:         0,
 		Max:         1,
-		Value:       0.5,
+		value:       0.5,
 		Enabled:     true,
 		FaceColor:   render.Color{R: 1, G: 1, B: 1, A: 1},
 		TrackColor:  render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1},
@@ -426,7 +426,7 @@ func TestGoSliderTextAnchorsStayInsidePanel(t *testing.T) {
 		Label:       "gain",
 		Min:         0,
 		Max:         1,
-		Value:       0.5,
+		value:       0.5,
 		Enabled:     true,
 		FaceColor:   render.Color{R: 1, G: 1, B: 1, A: 1},
 		TrackColor:  render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1},
@@ -454,7 +454,7 @@ func TestMatplotlibTextBoxTextAnchorsMatchAxesLayout(t *testing.T) {
 	}
 	textBox := &TextBox{
 		Label:     "label",
-		Value:     "phase",
+		value:     "phase",
 		Active:    true,
 		FaceColor: render.Color{R: 0.95, G: 0.95, B: 0.95, A: 1},
 		EdgeColor: render.Color{A: 1},
@@ -529,7 +529,7 @@ func TestMatplotlibCheckAndRadioUseFilledActiveMarkers(t *testing.T) {
 
 	radios := &RadioButtons{
 		Labels:    []string{"blue", "amber"},
-		Active:    1,
+		active:    1,
 		Enabled:   true,
 		FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
 		EdgeColor: render.Color{A: 1},

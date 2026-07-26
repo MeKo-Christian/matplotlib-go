@@ -28,11 +28,13 @@ type SliderOptions struct {
 
 // Slider draws a static slider control inside its owning axes.
 type Slider struct {
-	Label       string
-	Min         float64
-	Max         float64
-	Enabled     bool
-	Value       float64
+	Label   string
+	Min     float64
+	Max     float64
+	Enabled bool
+	// value is setter-owned: SetValue normalizes against Min/Max/Step and
+	// fires the on-changed callback, neither of which a direct write would do.
+	value       float64
 	Initial     float64
 	FaceColor   render.Color
 	TrackColor  render.Color
@@ -82,7 +84,7 @@ func NewSlider(a *core.Axes, label string, minValue, maxValue, value float64, op
 		Min:         minValue,
 		Max:         maxValue,
 		Enabled:     true,
-		Value:       normalizeSliderValue(minValue, maxValue, math.Abs(step), value),
+		value:       normalizeSliderValue(minValue, maxValue, math.Abs(step), value),
 		FaceColor:   cfg.FaceColor,
 		TrackColor:  cfg.TrackColor,
 		FillColor:   cfg.FillColor,
@@ -93,7 +95,7 @@ func NewSlider(a *core.Axes, label string, minValue, maxValue, value float64, op
 		FontSize:    cfg.FontSize,
 		z:           1200,
 	}
-	w.Initial = w.Value
+	w.Initial = w.value
 	a.Add(w)
 	return w
 }
@@ -116,7 +118,7 @@ func (s *Slider) triggerOnChanged() {
 	if s == nil {
 		return
 	}
-	s.onChanged.each(func(cb SliderCallback) { cb(s, s.Value) })
+	s.onChanged.each(func(cb SliderCallback) { cb(s, s.value) })
 }
 
 // SetValue updates the slider value and emits an on-changed event when the
@@ -126,10 +128,10 @@ func (s *Slider) SetValue(value float64) {
 		return
 	}
 	clamped := normalizeSliderValue(s.Min, s.Max, s.Step, value)
-	if clamped == s.Value {
+	if clamped == s.value {
 		return
 	}
-	s.Value = clamped
+	s.value = clamped
 	s.triggerOnChanged()
 }
 
@@ -156,7 +158,7 @@ func (s *Slider) Draw(r render.Renderer, ctx *core.DrawContext) {
 	track := widgetStyledSliderTrack(panel, &defaults)
 	trackRadius := widgetSliderTrackRadius(track, &defaults)
 	drawWidgetPanel(r, track, s.TrackColor, render.Color{A: 0}, 0, trackRadius)
-	fraction := sliderFraction(s.Min, s.Max, s.Value)
+	fraction := sliderFraction(s.Min, s.Max, s.value)
 	fill := track
 	fill.Max.X = fill.Min.X + track.W()*fraction
 	drawWidgetPanel(r, fill, s.FillColor, render.Color{A: 0}, 0, trackRadius)
@@ -247,7 +249,7 @@ func sliderDisplayValue(s *Slider) string {
 		return fmt.Sprintf(format, s.Value)
 	}()
 	if strings.HasPrefix(formatted, "%!") {
-		return fmt.Sprintf("%.2f", s.Value)
+		return fmt.Sprintf("%.2f", s.Value())
 	}
 	return formatted
 }
@@ -300,4 +302,12 @@ func mergeSliderOptions(base, override *SliderOptions) {
 	if override.ValueFormat.IsSet() {
 		base.ValueFormat = override.ValueFormat
 	}
+}
+
+// Value reports the current slider value.
+func (s *Slider) Value() float64 {
+	if s == nil {
+		return 0
+	}
+	return s.value
 }

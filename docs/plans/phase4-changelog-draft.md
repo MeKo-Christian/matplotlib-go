@@ -81,6 +81,32 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
 - Removed `core.ScalarMapConfig`'s `*float64` limits in favour of
   `optional.Value[float64]`. `PlotOptions.ScalarMapConfig` no longer hands out
   pointers that alias the caller's variables.
+- Gave every artist field exactly one public writer. Twenty-nine exported fields
+  were shadowed by a `Set<Field>` method that did more than assign, so the field
+  write silently skipped part of the work. Where the setter was compensating for
+  a hand-rolled optional, the field widened instead: `Patch.FaceColor`,
+  `Patch.EdgeColor`, `Patch.EdgeWidth`, `Line2D.GapColor`, and
+  `PathCollection.OffsetCoords` are now `optional.Value[T]`, and the companion
+  `faceColorSet`/`edgeColorSet`/`edgeWidthSet`/`GapColorSet`/`offsetCoordsSet`
+  flags are gone. These fields stay exported, so struct literals keep working —
+  wrap the value in `optional.Of`.
+- Encapsulated the artist fields whose setters clamp, normalize, or notify.
+  `Axes.Title`, `XLabel`, `YLabel`, `Figure.SupTitle`, `SupXLabel`, `SupYLabel`,
+  `Slider.Value`, `TextBox.Value`, `RadioButtons.Active`, `RangeSlider.Low`, and
+  `RangeSlider.High` are unexported; a reader of the same name replaces each
+  (`ax.Title()`), and the setter is the only writer. Direct writes used to skip
+  `ensureRCTextDefaults` on the axes side and the clamping, caret repositioning,
+  and on-change callback on the widget side.
+- Removed the duplicate `Figure.SetSuptitle`, `SetSupxlabel`, and `SetSupylabel`
+  spellings; the Go-cased `SetSupTitle`/`SetSupXLabel`/`SetSupYLabel` remain.
+- Removed `Legend.SetLocator` and `AnchoredTextBox.SetLocator`, which were pure
+  aliases for the exported `Locator` field. Assign the field.
+- Replaced `Axis.SetTickDirection(string) error` with
+  `core.ParseTickDirection(string) (TickDirection, error)`; assign the result to
+  the already-typed `Axis.TickDirection`. This closes a raw-string enum the
+  typed-constant pass missed. `AxisArtist.SetTickDirection` is unchanged.
+- Renamed `Line2D.SetMarkEvery` to `SetMarkEverySpec`, matching the
+  `MarkEverySpec` field it actually writes; it never touched `MarkEvery`.
 
 ## Added
 

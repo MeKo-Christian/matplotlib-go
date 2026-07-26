@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -57,9 +58,9 @@ func Plot() *core.Figure {
 		row := i / 5
 		ax.AddPatch(&core.FancyBboxPatch{
 			Patch: core.Patch{
-				FaceColor: colors[col],
-				EdgeColor: render.Color{R: 0.13, G: 0.15, B: 0.18, A: 1},
-				EdgeWidth: 1.0,
+				FaceColor: optional.Of(colors[col]),
+				EdgeColor: optional.Of(render.Color{R: 0.13, G: 0.15, B: 0.18, A: 1}),
+				EdgeWidth: optional.Of(1.0),
 			},
 			XY:           geom.Pt{X: 0.65 + float64(col)*2.25, Y: 6.55 - float64(row)*1.15},
 			Width:        1.35,
@@ -75,9 +76,9 @@ func Plot() *core.Figure {
 	for i, hatch := range []string{"/", "//", "o", "oo", ".", "..", "*", "**"} {
 		ax.AddPatch(&core.Rectangle{
 			Patch: core.Patch{
-				FaceColor: render.Color{R: 0.92, G: 0.91, B: 0.84, A: 1},
-				EdgeColor: render.Color{R: 0.18, G: 0.22, B: 0.25, A: 1},
-				EdgeWidth: 0.85,
+				FaceColor: optional.Of(render.Color{R: 0.92, G: 0.91, B: 0.84, A: 1}),
+				EdgeColor: optional.Of(render.Color{R: 0.18, G: 0.22, B: 0.25, A: 1}),
+				EdgeWidth: optional.Of(0.85),
 				Hatch:     hatch,
 			},
 			XY:     geom.Pt{X: 0.75 + float64(i)*1.38, Y: 3.58},
@@ -129,9 +130,9 @@ func Plot() *core.Figure {
 	for _, item := range arrows {
 		ax.AddPatch(&core.FancyArrowPatch{
 			Patch: core.Patch{
-				FaceColor: item.face,
-				EdgeColor: item.edge,
-				EdgeWidth: 1.25,
+				FaceColor: optional.Of(item.face),
+				EdgeColor: optional.Of(item.edge),
+				EdgeWidth: optional.Of(1.25),
 			},
 			PosA:            item.a,
 			PosB:            item.b,

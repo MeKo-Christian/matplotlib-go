@@ -176,7 +176,7 @@ func FigText(x, y float64, text string, opt core.TextOptions) *core.Text {
 
 // Suptitle sets the current figure-level title.
 func Suptitle(label string) {
-	GCF().SetSuptitle(label)
+	GCF().SetSupTitle(label)
 }
 
 // SupXLabel sets the current figure-level x label.

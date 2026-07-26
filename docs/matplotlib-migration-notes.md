@@ -251,6 +251,66 @@ and `Origin: optional.Of(core.ImageOriginUpper)` against an rc of
 See `docs/plans/phase2-options-model.md` for the model, the two merge shapes it
 collapsed, and what was deliberately left as a plain `string`.
 
+### Artist state has one writer, not two
+
+Twenty-nine exported artist fields were shadowed by a `Set<Field>` method that
+did more than assign, so the field write silently skipped part of the work.
+Which spelling survived depends on what the setter was compensating for.
+
+**Where the companion was a hand-rolled optional, the field widened and the flag
+went away.** `Patch` carried `FaceColor render.Color` plus an unexported
+`faceColorSet bool` purely to tell "inherit `patch.facecolor`" from
+"deliberately transparent" — which is what `optional.Value[T]` already means:
+
+```go
+core.Patch{FaceColor: c, EdgeWidth: 1.1}                              // before
+core.Patch{FaceColor: optional.Of(c), EdgeWidth: optional.Of(1.1)}    // after
+```
+
+`Patch.FaceColor`, `EdgeColor`, `EdgeWidth`, `Line2D.GapColor`, and
+`PathCollection.OffsetCoords` changed this way; `faceColorSet`, `edgeColorSet`,
+`edgeWidthSet`, `GapColorSet`, and `offsetCoordsSet` are gone. The fields stay
+exported, so struct literals still work, and the setters remain as convenience
+wrappers.
+
+**Where the setter clamped, normalized, or fired a callback, the field became
+unexported and gained a reader of the same name:**
+
+| Before                | After                                        |
+| --------------------- | -------------------------------------------- |
+| `ax.Title`            | `ax.Title()` / `ax.SetTitle(s)`              |
+| `ax.XLabel`           | `ax.XLabel()` / `ax.SetXLabel(s)`            |
+| `ax.YLabel`           | `ax.YLabel()` / `ax.SetYLabel(s)`            |
+| `fig.SupTitle`        | `fig.SupTitle()` / `fig.SetSupTitle(s)`      |
+| `fig.SupXLabel`       | `fig.SupXLabel()` / `fig.SetSupXLabel(s)`    |
+| `fig.SupYLabel`       | `fig.SupYLabel()` / `fig.SetSupYLabel(s)`    |
+| `slider.Value`        | `slider.Value()` / `slider.SetValue(v)`      |
+| `textBox.Value`       | `textBox.Value()` / `textBox.SetValue(s)`    |
+| `radioButtons.Active` | `radioButtons.Active()` / `SetActive(i)`     |
+| `rangeSlider.Low`     | `rangeSlider.Low()` / `rangeSlider.SetLow(v)`   |
+| `rangeSlider.High`    | `rangeSlider.High()` / `rangeSlider.SetHigh(v)` |
+
+Writing these fields directly used to skip `ensureRCTextDefaults` on the axes
+side, and the clamping, caret repositioning, and on-change callback on the widget
+side.
+
+Four spellings were removed outright:
+
+- `Figure.SetSuptitle`, `SetSupxlabel`, and `SetSupylabel` were duplicates of the
+  Go-cased `SetSupTitle`/`SetSupXLabel`/`SetSupYLabel`. Only the Go-cased
+  spelling remains.
+- `Legend.SetLocator` and `AnchoredTextBox.SetLocator` were pure aliases for the
+  exported `Locator` field. Assign the field instead.
+- `Axis.SetTickDirection(string) error` is replaced by
+  `core.ParseTickDirection(string) (TickDirection, error)`; assign the result to
+  the already-typed `Axis.TickDirection` field. This closes a raw-string enum the
+  typed-constant pass missed. `AxisArtist.SetTickDirection` is unchanged.
+- `Line2D.SetMarkEvery` is renamed `SetMarkEverySpec`, because it writes
+  `MarkEverySpec` and never touched the `MarkEvery` stride its old name named.
+
+See `docs/plans/phase2-mutable-fields.md` for the classification, why the two
+kinds of companion want opposite fixes, and the families deliberately left alone.
+
 The same getter pass removed the remaining exported `GetX` spellings:
 
 | Before                                      | After                                     |

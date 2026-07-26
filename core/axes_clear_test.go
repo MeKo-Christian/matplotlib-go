@@ -15,8 +15,8 @@ func TestAxesClearResetsState(t *testing.T) {
 	ax := testAxes()
 	_, _ = ax.Plot([]float64{0, 1, 2}, []float64{0, 1, 4}, PlotOptions{})
 	ax.SetTitle("hello")
-	ax.XLabel = "x"
-	ax.YLabel = "y"
+	ax.xLabel = "x"
+	ax.yLabel = "y"
 	ax.XAxisTop = NewXAxis()
 	ax.YAxisRight = NewYAxis()
 	ax.SetXLim(-5, 5)
@@ -26,8 +26,8 @@ func TestAxesClearResetsState(t *testing.T) {
 	if got := len(ax.Artists); got != 0 {
 		t.Fatalf("after Clear: %d artists remain, want 0", got)
 	}
-	if ax.Title != "" || ax.XLabel != "" || ax.YLabel != "" {
-		t.Fatalf("after Clear: labels not reset: title=%q x=%q y=%q", ax.Title, ax.XLabel, ax.YLabel)
+	if ax.title != "" || ax.xLabel != "" || ax.yLabel != "" {
+		t.Fatalf("after Clear: labels not reset: title=%q x=%q y=%q", ax.Title(), ax.XLabel(), ax.YLabel())
 	}
 	if ax.XAxisTop != nil || ax.YAxisRight != nil {
 		t.Fatalf("after Clear: secondary axes not cleared")

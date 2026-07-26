@@ -506,7 +506,7 @@ func (r *axesLabelRecordingRenderer) DrawTextRotated(text string, anchor geom.Pt
 func TestDrawAxesLabels_YLabelUsesTickBoundsAndLabelPad(t *testing.T) {
 	ax := &Axes{
 		YAxis:  NewYAxis(),
-		YLabel: "Value",
+		yLabel: "Value",
 	}
 	ax.YAxis.Locator = staticLocator{4}
 	ax.YAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
@@ -555,7 +555,7 @@ func TestDrawAxesLabels_YLabelUsesTickBoundsAndLabelPad(t *testing.T) {
 func TestDrawAxesLabels_XLabelUsesTickBoundsAndLabelPad(t *testing.T) {
 	ax := &Axes{
 		XAxis:  NewXAxis(),
-		XLabel: "Group",
+		xLabel: "Group",
 	}
 	ax.XAxis.Locator = staticLocator{2}
 	ax.XAxis.Formatter = ticker.ScalarFormatter{Prec: 0}
@@ -607,7 +607,7 @@ func TestDrawAxesLabels_XLabelUsesTickBoundsAndLabelPad(t *testing.T) {
 func TestDrawAxesLabels_XLabelUsesTickExtentWhenLabelsAreOnTop(t *testing.T) {
 	ax := &Axes{
 		XAxis:  NewXAxis(),
-		XLabel: "Group",
+		xLabel: "Group",
 	}
 	ax.XAxis.ShowTicks = true
 	ax.XAxis.ShowLabels = false
@@ -653,7 +653,7 @@ func TestDrawAxesLabels_YLabelRightUsesRightTickBounds(t *testing.T) {
 	ax := &Axes{
 		YAxis:      NewYAxis(),
 		YAxisRight: NewYAxis(),
-		YLabel:     "Value",
+		yLabel:     "Value",
 		yLabelSide: AxisRight,
 	}
 	ax.YAxisRight.Side = AxisRight
@@ -704,7 +704,7 @@ func TestDrawAxesLabels_YLabelRightUsesRightTickBounds(t *testing.T) {
 func TestDrawAxesLabels_YLabelUsesTickPaddingWhenFormatterSuppressesLabels(t *testing.T) {
 	ax := &Axes{
 		YAxis:  NewYAxis(),
-		YLabel: "Value",
+		yLabel: "Value",
 	}
 	ax.YAxis.Locator = staticLocator{0.5}
 	ax.YAxis.Formatter = ticker.NullFormatter{}
@@ -743,7 +743,7 @@ func TestDrawAxesLabels_TopXLabelUsesTopTickBoundsAndLabelPad(t *testing.T) {
 	ax := &Axes{
 		XAxis:      NewXAxis(),
 		XAxisTop:   NewXAxis(),
-		XLabel:     "Group",
+		xLabel:     "Group",
 		xLabelSide: AxisTop,
 	}
 	ax.XAxisTop.Side = AxisTop
@@ -798,8 +798,8 @@ func TestDrawAxesLabels_TitleClearsTopXLabel(t *testing.T) {
 	ax := &Axes{
 		XAxis:      NewXAxis(),
 		XAxisTop:   NewXAxis(),
-		Title:      "Title",
-		XLabel:     "Group",
+		title:      "Title",
+		xLabel:     "Group",
 		xLabelSide: AxisTop,
 	}
 	ax.XAxisTop.Side = AxisTop
@@ -850,8 +850,8 @@ func TestDrawAxesLabels_TitleAboveTopXLabelUsesMatplotlibPadOnly(t *testing.T) {
 	ax := &Axes{
 		XAxis:      NewXAxis(),
 		XAxisTop:   NewXAxis(),
-		Title:      "Title",
-		XLabel:     "Group",
+		title:      "Title",
+		xLabel:     "Group",
 		xLabelSide: AxisTop,
 	}
 	ax.XAxisTop.Side = AxisTop
@@ -905,8 +905,8 @@ func TestDrawAxesLabels_UsesSameFontSizeForXAndYLabels(t *testing.T) {
 	ax := &Axes{
 		XAxis:  NewXAxis(),
 		YAxis:  NewYAxis(),
-		XLabel: "Group",
-		YLabel: "Value",
+		xLabel: "Group",
+		yLabel: "Value",
 	}
 	ax.XAxis.Locator = staticLocator{2}
 	ax.XAxis.Formatter = ticker.ScalarFormatter{Prec: 0}

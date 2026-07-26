@@ -78,24 +78,24 @@ func TestWidgetInteractionAcrossVisualStyles(t *testing.T) {
 			if sliderChanges == 0 {
 				t.Fatal("slider press should fire OnChanged")
 			}
-			base := slider.Value
+			base := slider.Value()
 			if err := dispatcherS.Emit(Event{Type: EventKeyPress, Figure: figS, Axes: axS, Key: "right"}); err != nil {
 				t.Fatalf("slider right: %v", err)
 			}
-			assertCloseEnough(t, slider.Value-base, 0.1)
-			afterStep := slider.Value
+			assertCloseEnough(t, slider.Value()-base, 0.1)
+			afterStep := slider.Value()
 			if err := dispatcherS.Emit(Event{Type: EventKeyPress, Figure: figS, Axes: axS, Key: "right", Modifiers: ModifierControl}); err != nil {
 				t.Fatalf("slider ctrl+right: %v", err)
 			}
-			assertCloseEnough(t, slider.Value-afterStep, 1.0)
+			assertCloseEnough(t, slider.Value()-afterStep, 1.0)
 
 			// Disabled state ignores keyboard nudges.
 			slider.Enabled = false
-			frozen := slider.Value
+			frozen := slider.Value()
 			if err := dispatcherS.Emit(Event{Type: EventKeyPress, Figure: figS, Axes: axS, Key: "right"}); err != nil {
 				t.Fatalf("disabled slider right: %v", err)
 			}
-			assertCloseEnough(t, slider.Value-frozen, 0)
+			assertCloseEnough(t, slider.Value()-frozen, 0)
 
 			// Handle/modifier geometry: a shift-constrained rectangle drag must
 			// produce a square selection in both styles (data-space, geometry
@@ -167,7 +167,7 @@ func TestWidgetInteractionSliderDragUsesVisualStyleGeometry(t *testing.T) {
 			if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: tt.press, Button: MouseButtonLeft}); err != nil {
 				t.Fatalf("slider press: %v", err)
 			}
-			assertCloseEnough(t, slider.Value, tt.wantValue)
+			assertCloseEnough(t, slider.Value(), tt.wantValue)
 		})
 	}
 }
@@ -210,8 +210,8 @@ func TestWidgetInteractionRangeSliderHandleSelectionUsesVisualStyleGeometry(t *t
 			if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: tt.press, Button: MouseButtonLeft}); err != nil {
 				t.Fatalf("range slider press: %v", err)
 			}
-			assertCloseEnough(t, slider.Low, tt.wantLow)
-			assertCloseEnough(t, slider.High, tt.wantHigh)
+			assertCloseEnough(t, slider.Low(), tt.wantLow)
+			assertCloseEnough(t, slider.High(), tt.wantHigh)
 		})
 	}
 }
@@ -383,14 +383,14 @@ func TestWidgetInteractionSliderDragAndNudge(t *testing.T) {
 	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: pressPoint, Button: MouseButtonLeft}); err != nil {
 		t.Fatalf("slider press: %v", err)
 	}
-	if slider.Value != 8.6 {
-		t.Fatalf("slider value after press = %v, want 8.6", slider.Value)
+	if slider.Value() != 8.6 {
+		t.Fatalf("slider value after press = %v, want 8.6", slider.Value())
 	}
 	if err := dispatcher.Emit(Event{Type: EventMouseMove, Figure: fig, Axes: ax, Position: movePoint, Button: MouseButtonLeft}); err != nil {
 		t.Fatalf("slider drag: %v", err)
 	}
-	if slider.Value != 0 {
-		t.Fatalf("slider value after drag = %v, want 0", slider.Value)
+	if slider.Value() != 0 {
+		t.Fatalf("slider value after drag = %v, want 0", slider.Value())
 	}
 	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: movePoint, Button: MouseButtonLeft}); err != nil {
 		t.Fatalf("slider release: %v", err)
@@ -409,14 +409,14 @@ func TestWidgetInteractionSliderDragAndNudge(t *testing.T) {
 	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: ax, Key: "right"}); err != nil {
 		t.Fatalf("slider right key: %v", err)
 	}
-	if slider.Value != 0.1 {
-		t.Fatalf("slider value after right = %v, want 0.1", slider.Value)
+	if slider.Value() != 0.1 {
+		t.Fatalf("slider value after right = %v, want 0.1", slider.Value())
 	}
 	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: ax, Key: "right", Modifiers: ModifierControl}); err != nil {
 		t.Fatalf("slider ctrl+right key: %v", err)
 	}
-	if slider.Value != 1.1 {
-		t.Fatalf("slider value after ctrl+right = %v, want 1.1", slider.Value)
+	if slider.Value() != 1.1 {
+		t.Fatalf("slider value after ctrl+right = %v, want 1.1", slider.Value())
 	}
 	if draws == 0 {
 		t.Fatal("slider interactions should request draws")
@@ -451,15 +451,15 @@ func TestWidgetInteractionRangeSliderDragAndNudge(t *testing.T) {
 	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: geom.Pt{X: 110, Y: 60}, Button: MouseButtonLeft}); err != nil {
 		t.Fatalf("range slider high release: %v", err)
 	}
-	if slider.High != 10 {
-		t.Fatalf("range slider high = %v, want 10", slider.High)
+	if slider.High() != 10 {
+		t.Fatalf("range slider high = %v, want 10", slider.High())
 	}
 
 	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: ax, Key: "left"}); err != nil {
 		t.Fatalf("range slider left key: %v", err)
 	}
-	if slider.High != 9.9 {
-		t.Fatalf("range slider high after left = %v, want 9.9", slider.High)
+	if slider.High() != 9.9 {
+		t.Fatalf("range slider high after left = %v, want 9.9", slider.High())
 	}
 	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: ax, Position: geom.Pt{X: 25, Y: 60}, Button: MouseButtonLeft}); err != nil {
 		t.Fatalf("range slider low press: %v", err)
@@ -470,8 +470,8 @@ func TestWidgetInteractionRangeSliderDragAndNudge(t *testing.T) {
 	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: ax, Position: geom.Pt{X: 14, Y: 60}, Button: MouseButtonLeft}); err != nil {
 		t.Fatalf("range slider low release: %v", err)
 	}
-	if slider.Low != 0 {
-		t.Fatalf("range slider low = %v, want 0", slider.Low)
+	if slider.Low() != 0 {
+		t.Fatalf("range slider low = %v, want 0", slider.Low())
 	}
 	if len(ranges) == 0 {
 		t.Fatal("expected range slider callbacks")
@@ -518,8 +518,8 @@ func TestWidgetInteractionDisabledSlidersIgnoreKeyboardNudges(t *testing.T) {
 	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: axSlider, Key: "right"}); err != nil {
 		t.Fatalf("disabled slider right key: %v", err)
 	}
-	if slider.Value != 5 {
-		t.Fatalf("disabled slider value = %v, want unchanged 5", slider.Value)
+	if slider.Value() != 5 {
+		t.Fatalf("disabled slider value = %v, want unchanged 5", slider.Value())
 	}
 
 	if err := dispatcher.Emit(Event{Type: EventMousePress, Figure: fig, Axes: axRange, Position: geom.Pt{X: 85, Y: 60}, Button: MouseButtonLeft}); err != nil {
@@ -531,8 +531,8 @@ func TestWidgetInteractionDisabledSlidersIgnoreKeyboardNudges(t *testing.T) {
 	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: axRange, Key: "left"}); err != nil {
 		t.Fatalf("disabled range slider left key: %v", err)
 	}
-	if rangeSlider.Low != 2 || rangeSlider.High != 8 {
-		t.Fatalf("disabled range slider = [%v, %v], want unchanged [2, 8]", rangeSlider.Low, rangeSlider.High)
+	if rangeSlider.Low() != 2 || rangeSlider.High() != 8 {
+		t.Fatalf("disabled range slider = [%v, %v], want unchanged [2, 8]", rangeSlider.Low(), rangeSlider.High())
 	}
 	if sliderEvents != 0 || rangeEvents != 0 {
 		t.Fatalf("disabled slider callbacks = %d/%d, want 0/0", sliderEvents, rangeEvents)

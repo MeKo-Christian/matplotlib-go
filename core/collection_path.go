@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
@@ -10,33 +11,35 @@ import (
 // styling, forming the basis for scatter-like artists.
 type PathCollection struct {
 	Collection
-	Path            geom.Path
-	Paths           []geom.Path
-	Offsets         []geom.Pt
-	OffsetCoords    CoordinateSpec
-	Sizes           []float64
-	Size            float64
-	PathInDisplay   bool
-	FaceColors      []render.Color
-	FaceColor       render.Color
-	EdgeColors      []render.Color
-	EdgeColor       render.Color
-	EdgeWidths      []float64
-	EdgeWidth       float64
-	Hatches         []string
-	Hatch           string
-	HatchColors     []render.Color
-	HatchColor      render.Color
-	HatchWidths     []float64
-	HatchWidth      float64
-	LineJoin        render.LineJoin
-	LineJoinSet     bool
-	LineCap         render.LineCap
-	LineCapSet      bool
-	LineOnly        bool
-	Snap            render.SnapMode
-	SnapSet         bool
-	offsetCoordsSet bool
+	Path    geom.Path
+	Paths   []geom.Path
+	Offsets []geom.Pt
+	// OffsetCoords selects the coordinate system for Offsets. Absent means the
+	// collection's own transform applies; the tri-state lives on the field, so a
+	// direct write cannot leave a companion flag behind.
+	OffsetCoords  optional.Value[CoordinateSpec]
+	Sizes         []float64
+	Size          float64
+	PathInDisplay bool
+	FaceColors    []render.Color
+	FaceColor     render.Color
+	EdgeColors    []render.Color
+	EdgeColor     render.Color
+	EdgeWidths    []float64
+	EdgeWidth     float64
+	Hatches       []string
+	Hatch         string
+	HatchColors   []render.Color
+	HatchColor    render.Color
+	HatchWidths   []float64
+	HatchWidth    float64
+	LineJoin      render.LineJoin
+	LineJoinSet   bool
+	LineCap       render.LineCap
+	LineCapSet    bool
+	LineOnly      bool
+	Snap          render.SnapMode
+	SnapSet       bool
 }
 
 // Draw renders the path collection.
@@ -129,8 +132,7 @@ func (c *PathCollection) SetOffsetCoords(spec CoordinateSpec) {
 	if c == nil {
 		return
 	}
-	c.OffsetCoords = spec
-	c.offsetCoordsSet = true
+	c.OffsetCoords = optional.Of(spec)
 	c.SetStale(true)
 }
 
@@ -139,8 +141,7 @@ func (c *PathCollection) ClearOffsetCoords() {
 	if c == nil {
 		return
 	}
-	c.OffsetCoords = CoordinateSpec{}
-	c.offsetCoordsSet = false
+	c.OffsetCoords = optional.Value[CoordinateSpec]{}
 	c.SetStale(true)
 }
 
@@ -471,8 +472,8 @@ func (c *PathCollection) usesDataOffsets() bool {
 	if c == nil {
 		return false
 	}
-	if c.offsetCoordsSet {
-		return isDataCoords(c.OffsetCoords)
+	if spec, ok := c.OffsetCoords.Get(); ok {
+		return isDataCoords(spec)
 	}
 	return artistUsesDataCoords(c, c.Coords)
 }
@@ -481,8 +482,8 @@ func (c *PathCollection) offsetTransformFor(ctx *DrawContext) transform.T {
 	if c == nil || ctx == nil {
 		return nil
 	}
-	if c.offsetCoordsSet {
-		return ctx.TransformFor(c.OffsetCoords)
+	if spec, ok := c.OffsetCoords.Get(); ok {
+		return ctx.TransformFor(spec)
 	}
 	return artistTransformFor(ctx, c, c.Coords)
 }

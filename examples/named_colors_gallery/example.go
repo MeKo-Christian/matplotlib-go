@@ -9,6 +9,7 @@ import (
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -59,9 +60,9 @@ func Plot() *core.Figure {
 		y := float64(2 - i/4)
 		ax.AddPatch(&core.Rectangle{
 			Patch: core.Patch{
-				FaceColor: col,
-				EdgeColor: render.Color{R: 0.15, G: 0.15, B: 0.15, A: 1},
-				EdgeWidth: 0.8,
+				FaceColor: optional.Of(col),
+				EdgeColor: optional.Of(render.Color{R: 0.15, G: 0.15, B: 0.15, A: 1}),
+				EdgeWidth: optional.Of(0.8),
 			},
 			XY:     geom.Pt{X: x + 0.12, Y: y + 0.28},
 			Width:  0.76,

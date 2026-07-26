@@ -165,11 +165,11 @@ func (a *Axes) Pie(values []float64, opt PieOptions) *PieContainer {
 			}
 			shadow := &Wedge{
 				Patch: Patch{
-					FaceColor: shadowColor,
+					FaceColor: optional.Of(shadowColor),
 					// Matplotlib patches.Shadow updates both facecolor and
 					// edgecolor to the darkened patch color.
-					EdgeColor: shadowColor,
-					EdgeWidth: cfg.LineWidth,
+					EdgeColor: optional.Of(shadowColor),
+					EdgeWidth: optional.Of(cfg.LineWidth),
 					Antialias: patchAntialiasMode(&rc.Patch, cfg.Antialiased),
 					Alpha:     1,
 					Label:     "_nolegend_",
@@ -187,9 +187,9 @@ func (a *Axes) Pie(values []float64, opt PieOptions) *PieContainer {
 		}
 		wedge := &Wedge{
 			Patch: Patch{
-				FaceColor:  color,
-				EdgeColor:  edgeColor,
-				EdgeWidth:  cfg.LineWidth,
+				FaceColor:  optional.Of(color),
+				EdgeColor:  optional.Of(edgeColor),
+				EdgeWidth:  optional.Of(cfg.LineWidth),
 				Antialias:  patchAntialiasMode(&rc.Patch, cfg.Antialiased),
 				Alpha:      1,
 				Label:      stringAt("", cfg.Labels, i),

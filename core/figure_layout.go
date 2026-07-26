@@ -103,7 +103,7 @@ func computeFigureTextAlignment(fig *Figure, r render.Renderer, figureRect geom.
 		px := ax.adjustedLayout(fig)
 		ctx := newAxesDrawContext(ax, fig, figureRect, px)
 
-		if ax.XLabel != "" {
+		if ax.xLabel != "" {
 			side := ax.effectiveXLabelSide()
 			key := alignmentKey(side, xLabelSpinePixelY(side, px))
 			extent := xLabelExtent(ax, r, ctx, px, side)
@@ -116,7 +116,7 @@ func computeFigureTextAlignment(fig *Figure, r render.Renderer, figureRect geom.
 			}
 		}
 
-		if ax.YLabel != "" {
+		if ax.yLabel != "" {
 			side := ax.effectiveYLabelSide()
 			key := alignmentKey(side, spinePixelX(side, px))
 			extent := yLabelExtent(ax, r, ctx, px, side)
@@ -173,8 +173,8 @@ func titleTopExtentForAxes(ax *Axes, r render.Renderer, ctx *DrawContext, px geo
 			extent = math.Max(extent, tickBounds.Max.Y)
 		}
 	}
-	if ax.XLabel != "" && !ax.hideXLabel && ax.effectiveXLabelSide() == AxisTop {
-		layout := measureSingleLineTextLayout(r, ax.XLabel, axisLabelFontSize(ctx), xAxisLabelFontKey(ax, ctx), ctx.RC.UseTeX)
+	if ax.xLabel != "" && !ax.hideXLabel && ax.effectiveXLabelSide() == AxisTop {
+		layout := measureSingleLineTextLayout(r, ax.xLabel, axisLabelFontSize(ctx), xAxisLabelFontKey(ax, ctx), ctx.RC.UseTeX)
 		anchor, vAlign := xLabelAnchorPoint(ax, r, ctx, px, AxisTop, figureTextAlignment{})
 		origin := alignedSingleLineOrigin(anchor, layout, TextAlignCenter, vAlign)
 		if layout.Ascent > 0 {
@@ -270,13 +270,13 @@ func initialFigureArtistStackOffsets(fig *Figure, r render.Renderer, ctx *DrawCo
 	if fig == nil || ctx == nil {
 		return offsets
 	}
-	if fig.SupTitle != "" {
-		offset := figureLabelTightHeight(r, fig.SupTitle, figureTitleFontSize(ctx), fontKeyWithWeight(ctx.RC.FontKey, ctx.RC.Figure.TitleWeight), ctx.RC.UseTeX) + figureLabelTopInsetPx(fig, ctx)
+	if fig.supTitle != "" {
+		offset := figureLabelTightHeight(r, fig.supTitle, figureTitleFontSize(ctx), fontKeyWithWeight(ctx.RC.FontKey, ctx.RC.Figure.TitleWeight), ctx.RC.UseTeX) + figureLabelTopInsetPx(fig, ctx)
 		offsets[LegendUpperLeft] = offset
 		offsets[LegendUpperRight] = offset
 	}
-	if fig.SupXLabel != "" {
-		offset := figureLabelTightHeight(r, fig.SupXLabel, figureLabelFontSize(ctx), fontKeyWithWeight(ctx.RC.FontKey, ctx.RC.Figure.LabelWeight), ctx.RC.UseTeX) + figureLabelBottomInsetPx(fig, ctx)
+	if fig.supXLabel != "" {
+		offset := figureLabelTightHeight(r, fig.supXLabel, figureLabelFontSize(ctx), fontKeyWithWeight(ctx.RC.FontKey, ctx.RC.Figure.LabelWeight), ctx.RC.UseTeX) + figureLabelBottomInsetPx(fig, ctx)
 		offsets[LegendLowerLeft] = offset
 		offsets[LegendLowerRight] = offset
 	}
@@ -346,8 +346,8 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 	centerX := figureRect.Min.X + figureRect.W()/2
 	centerY := figureRect.Min.Y + figureRect.H()/2
 
-	if fig.SupTitle != "" {
-		layout := measureSingleLineTextLayout(r, fig.SupTitle, titleSize, titleFontKey, fig.RC.UseTeX)
+	if fig.supTitle != "" {
+		layout := measureSingleLineTextLayout(r, fig.supTitle, titleSize, titleFontKey, fig.RC.UseTeX)
 		y := figureRect.Max.Y - figureLabelTopInsetPx(fig, ctx)
 		anchor := geom.Pt{
 			X: centerX,
@@ -355,7 +355,7 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 		}
 		drawDisplayText(
 			textRen,
-			fig.SupTitle,
+			fig.supTitle,
 			alignedSingleLineOrigin(anchor, layout, TextAlignCenter, textLayoutVAlignTop),
 			titleSize,
 			titleColor,
@@ -364,8 +364,8 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 		)
 	}
 
-	if fig.SupXLabel != "" {
-		layout := measureSingleLineTextLayout(r, fig.SupXLabel, labelSize, labelFontKey, fig.RC.UseTeX)
+	if fig.supXLabel != "" {
+		layout := measureSingleLineTextLayout(r, fig.supXLabel, labelSize, labelFontKey, fig.RC.UseTeX)
 		y := figureRect.Min.Y + figureLabelBottomInsetPx(fig, ctx)
 		anchor := geom.Pt{
 			X: centerX,
@@ -373,7 +373,7 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 		}
 		drawDisplayText(
 			textRen,
-			fig.SupXLabel,
+			fig.supXLabel,
 			alignedSingleLineOrigin(anchor, layout, TextAlignCenter, textLayoutVAlignBottom),
 			labelSize,
 			labelColor,
@@ -382,8 +382,8 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 		)
 	}
 
-	if fig.SupYLabel != "" {
-		layout := measureSingleLineTextLayout(r, fig.SupYLabel, labelSize, labelFontKey, fig.RC.UseTeX)
+	if fig.supYLabel != "" {
+		layout := measureSingleLineTextLayout(r, fig.supYLabel, labelSize, labelFontKey, fig.RC.UseTeX)
 		leftPad := figureLabelLeftInsetPx(fig, ctx)
 		p := geom.Pt{
 			X: figureRect.Min.X + leftPad,
@@ -392,13 +392,13 @@ func drawFigureLabels(fig *Figure, r render.Renderer, figureRect geom.Rect) {
 		switch ren := r.(type) {
 		case render.RotatedTextDrawer:
 			anchor := rotatedTextBackendAnchorFromP(p, layout, TextAlignLeft, textLayoutVAlignCenter, math.Pi/2, false)
-			drawDisplayTextRotated(ren, fig.SupYLabel, anchor, labelSize, math.Pi/2, labelColor, labelFontKey, fig.RC.UseTeX)
+			drawDisplayTextRotated(ren, fig.supYLabel, anchor, labelSize, math.Pi/2, labelColor, labelFontKey, fig.RC.UseTeX)
 		case render.VerticalTextDrawer:
-			drawDisplayTextVertical(ren, fig.SupYLabel, p, labelSize, labelColor, labelFontKey)
+			drawDisplayTextVertical(ren, fig.supYLabel, p, labelSize, labelColor, labelFontKey)
 		default:
 			drawDisplayText(
 				textRen,
-				fig.SupYLabel,
+				fig.supYLabel,
 				alignedSingleLineOrigin(p, layout, TextAlignLeft, textLayoutVAlignCenter),
 				labelSize,
 				labelColor,

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -84,8 +85,8 @@ func TestConnectionPatchResolvesIndependentCoordinateSpaces(t *testing.T) {
 	patch := &ConnectionPatch{
 		FancyArrowPatch: FancyArrowPatch{
 			Patch: Patch{
-				EdgeColor: render.Color{R: 0, G: 0, B: 0, A: 1},
-				EdgeWidth: 1,
+				EdgeColor: optional.Of(render.Color{R: 0, G: 0, B: 0, A: 1}),
+				EdgeWidth: optional.Of(1.0),
 			},
 			ArrowStyle:      ArrowStyle{Name: "-", HeadLength: 0.2, HeadWidth: 0.1},
 			ConnectionStyle: ConnectionStyle{Name: "arc3"},

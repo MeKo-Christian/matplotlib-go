@@ -74,8 +74,8 @@ func TestFigureAddColorbarConfiguresAxes(t *testing.T) {
 	if cbAx.effectiveYLabelSide() != AxisRight {
 		t.Fatalf("expected colorbar label on right side")
 	}
-	if cbAx.YLabel != "Intensity" {
-		t.Fatalf("unexpected colorbar label %q", cbAx.YLabel)
+	if cbAx.yLabel != "Intensity" {
+		t.Fatalf("unexpected colorbar label %q", cbAx.YLabel())
 	}
 
 	yMin, yMax := cbAx.YScale.Domain()
@@ -134,8 +134,8 @@ func TestFigureAddHorizontalColorbarConfiguresBottomAxes(t *testing.T) {
 	if cbAx.effectiveXLabelSide() != AxisBottom {
 		t.Fatalf("expected horizontal colorbar label on bottom side")
 	}
-	if cbAx.XLabel != "Intensity" {
-		t.Fatalf("unexpected colorbar x label %q", cbAx.XLabel)
+	if cbAx.xLabel != "Intensity" {
+		t.Fatalf("unexpected colorbar x label %q", cbAx.XLabel())
 	}
 	xMin, xMax := cbAx.XScale.Domain()
 	if xMin != 0 || xMax != 3 {

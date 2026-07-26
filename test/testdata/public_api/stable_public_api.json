@@ -4044,6 +4044,10 @@
           "declaration": "func NoMarkerColor() MarkerColorSpec"
         },
         {
+          "id": "func ParseTickDirection",
+          "declaration": "func ParseTickDirection(direction string) (TickDirection, error)"
+        },
+        {
           "id": "func RadarAngles",
           "declaration": "func RadarAngles(n int) []float64"
         },
@@ -4290,10 +4294,6 @@
         {
           "id": "method AnchoredTextBox.Draw",
           "declaration": "func (AnchoredTextBox) Draw(r render.Renderer, ctx *DrawContext)"
-        },
-        {
-          "id": "method AnchoredTextBox.SetLocator",
-          "declaration": "func (AnchoredTextBox) SetLocator(locator AnchoredBoxLocator)"
         },
         {
           "id": "method AnchoredTextBox.Z",
@@ -5220,6 +5220,10 @@
           "declaration": "func (Axes) TickParams(params TickParams) error"
         },
         {
+          "id": "method Axes.Title",
+          "declaration": "func (Axes) Title() string"
+        },
+        {
           "id": "method Axes.TopAxis",
           "declaration": "func (Axes) TopAxis() *Axis"
         },
@@ -5268,6 +5272,10 @@
           "declaration": "func (Axes) XInverted() bool"
         },
         {
+          "id": "method Axes.XLabel",
+          "declaration": "func (Axes) XLabel() string"
+        },
+        {
           "id": "method Axes.XLabelFontKey",
           "declaration": "func (Axes) XLabelFontKey(ctx *DrawContext) string"
         },
@@ -5278,6 +5286,10 @@
         {
           "id": "method Axes.YInverted",
           "declaration": "func (Axes) YInverted() bool"
+        },
+        {
+          "id": "method Axes.YLabel",
+          "declaration": "func (Axes) YLabel() string"
         },
         {
           "id": "method Axes.YLabelFontKey",
@@ -5346,10 +5358,6 @@
         {
           "id": "method Axis.SetSpinePositionOutward",
           "declaration": "func (Axis) SetSpinePositionOutward(points float64)"
-        },
-        {
-          "id": "method Axis.SetTickDirection",
-          "declaration": "func (Axis) SetTickDirection(direction string) error"
         },
         {
           "id": "method Axis.Z",
@@ -5824,18 +5832,6 @@
           "declaration": "func (Figure) SetSupYLabel(label string)"
         },
         {
-          "id": "method Figure.SetSuptitle",
-          "declaration": "func (Figure) SetSuptitle(title string)"
-        },
-        {
-          "id": "method Figure.SetSupxlabel",
-          "declaration": "func (Figure) SetSupxlabel(label string)"
-        },
-        {
-          "id": "method Figure.SetSupylabel",
-          "declaration": "func (Figure) SetSupylabel(label string)"
-        },
-        {
           "id": "method Figure.Subplot2Grid",
           "declaration": "func (Figure) Subplot2Grid(shape [2]int, loc [2]int, rowSpan, colSpan int, opts ...SubplotAxesOption) *Axes"
         },
@@ -5850,6 +5846,18 @@
         {
           "id": "method Figure.SubplotsAdjust",
           "declaration": "func (Figure) SubplotsAdjust(cfg SubplotAdjust)"
+        },
+        {
+          "id": "method Figure.SupTitle",
+          "declaration": "func (Figure) SupTitle() string"
+        },
+        {
+          "id": "method Figure.SupXLabel",
+          "declaration": "func (Figure) SupXLabel() string"
+        },
+        {
+          "id": "method Figure.SupYLabel",
+          "declaration": "func (Figure) SupYLabel() string"
         },
         {
           "id": "method Figure.Text",
@@ -6048,10 +6056,6 @@
           "declaration": "func (Legend) SetHandler(art Artist, opts LegendEntryOptions) *Legend"
         },
         {
-          "id": "method Legend.SetLocator",
-          "declaration": "func (Legend) SetLocator(locator AnchoredBoxLocator)"
-        },
-        {
           "id": "method Legend.Z",
           "declaration": "func (Legend) Z() float64"
         },
@@ -6100,8 +6104,8 @@
           "declaration": "func (Line2D) SetGapColor(color render.Color)"
         },
         {
-          "id": "method Line2D.SetMarkEvery",
-          "declaration": "func (Line2D) SetMarkEvery(spec MarkEverySpec)"
+          "id": "method Line2D.SetMarkEverySpec",
+          "declaration": "func (Line2D) SetMarkEverySpec(spec MarkEverySpec)"
         },
         {
           "id": "method Line2D.SetMarkerEdgeColor",
@@ -6961,7 +6965,7 @@
         },
         {
           "id": "type Axes",
-          "declaration": "type Axes struct{ RectFraction geom.Rect; RC *style.RC; XScale transform.Scale; YScale transform.Scale; Artists []Artist; WidgetArtists []Artist; XAxis *Axis; YAxis *Axis; XAxisTop *Axis; YAxisRight *Axis; ExtraAxes []*Axis; ShowFrame bool; PatchVisible bool; Title string; XLabel string; YLabel string; ColorCycle *color.ColorCycle; PatchColorCycle *color.ColorCycle }"
+          "declaration": "type Axes struct{ RectFraction geom.Rect; RC *style.RC; XScale transform.Scale; YScale transform.Scale; Artists []Artist; WidgetArtists []Artist; XAxis *Axis; YAxis *Axis; XAxisTop *Axis; YAxisRight *Axis; ExtraAxes []*Axis; ShowFrame bool; PatchVisible bool; ColorCycle *color.ColorCycle; PatchColorCycle *color.ColorCycle }"
         },
         {
           "id": "type AxesDivider",
@@ -7225,7 +7229,7 @@
         },
         {
           "id": "type Figure",
-          "declaration": "type Figure struct{ SizePx geom.Pt; RC style.RC; Children []*Axes; Artists []Artist; SupTitle string; SupXLabel string; SupYLabel string }"
+          "declaration": "type Figure struct{ SizePx geom.Pt; RC style.RC; Children []*Axes; Artists []Artist }"
         },
         {
           "id": "type FigureOutputRendererFactory",
@@ -7385,7 +7389,7 @@
         },
         {
           "id": "type Line2D",
-          "declaration": "type Line2D struct{ ArtistRasterization; XY []geom.Pt; W float64; Col render.Color; Dashes []float64; DashUnits DashUnits; LineCap render.LineCap; LineCapSet bool; LineJoin render.LineJoin; LineJoinSet bool; DashCap render.LineCap; DashJoin render.LineJoin; SolidCap render.LineCap; SolidJoin render.LineJoin; RCStrokeStylesSet bool; Antialiased bool; AntialiasedSet bool; GapColor render.Color; GapColorSet bool; PathEffects []render.PathEffect; DrawStyle LineDrawStyle; Marker MarkerType; MarkerSet bool; MarkerStyle MarkerStyle; MarkerPath geom.Path; MarkerSize float64; MarkerFaceColor render.Color; MarkerEdgeColor render.Color; MarkerEdgeWidth float64; MarkerFaceSpec MarkerColorSpec; MarkerEdgeSpec MarkerColorSpec; MarkerFaceAlt MarkerColorSpec; MarkEvery int; MarkEverySpec MarkEverySpec; Label string; Sketch render.SketchParams }"
+          "declaration": "type Line2D struct{ ArtistRasterization; XY []geom.Pt; W float64; Col render.Color; Dashes []float64; DashUnits DashUnits; LineCap render.LineCap; LineCapSet bool; LineJoin render.LineJoin; LineJoinSet bool; DashCap render.LineCap; DashJoin render.LineJoin; SolidCap render.LineCap; SolidJoin render.LineJoin; RCStrokeStylesSet bool; Antialiased bool; AntialiasedSet bool; GapColor optional.Value[render.Color]; PathEffects []render.PathEffect; DrawStyle LineDrawStyle; Marker MarkerType; MarkerSet bool; MarkerStyle MarkerStyle; MarkerPath geom.Path; MarkerSize float64; MarkerFaceColor render.Color; MarkerEdgeColor render.Color; MarkerEdgeWidth float64; MarkerFaceSpec MarkerColorSpec; MarkerEdgeSpec MarkerColorSpec; MarkerFaceAlt MarkerColorSpec; MarkEvery int; MarkEverySpec MarkEverySpec; Label string; Sketch render.SketchParams }"
         },
         {
           "id": "type LineCollection",
@@ -7517,7 +7521,7 @@
         },
         {
           "id": "type Patch",
-          "declaration": "type Patch struct{ ArtistRasterization; FaceColor render.Color; EdgeColor render.Color; EdgeWidth float64; Alpha float64; Dashes []float64; DashUnits DashUnits; Label string; Hatch string; HatchColor render.Color; HatchWidth float64; HatchSpacing float64; PathEffects []render.PathEffect; LineJoin render.LineJoin; LineCap render.LineCap; Antialias render.AntialiasMode; Sketch render.SketchParams }"
+          "declaration": "type Patch struct{ ArtistRasterization; FaceColor optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Alpha float64; Dashes []float64; DashUnits DashUnits; Label string; Hatch string; HatchColor render.Color; HatchWidth float64; HatchSpacing float64; PathEffects []render.PathEffect; LineJoin render.LineJoin; LineCap render.LineCap; Antialias render.AntialiasMode; Sketch render.SketchParams }"
         },
         {
           "id": "type PatchCollection",
@@ -7525,7 +7529,7 @@
         },
         {
           "id": "type PathCollection",
-          "declaration": "type PathCollection struct{ Collection; Path geom.Path; Paths []geom.Path; Offsets []geom.Pt; OffsetCoords CoordinateSpec; Sizes []float64; Size float64; PathInDisplay bool; FaceColors []render.Color; FaceColor render.Color; EdgeColors []render.Color; EdgeColor render.Color; EdgeWidths []float64; EdgeWidth float64; Hatches []string; Hatch string; HatchColors []render.Color; HatchColor render.Color; HatchWidths []float64; HatchWidth float64; LineJoin render.LineJoin; LineJoinSet bool; LineCap render.LineCap; LineCapSet bool; LineOnly bool; Snap render.SnapMode; SnapSet bool }"
+          "declaration": "type PathCollection struct{ Collection; Path geom.Path; Paths []geom.Path; Offsets []geom.Pt; OffsetCoords optional.Value[CoordinateSpec]; Sizes []float64; Size float64; PathInDisplay bool; FaceColors []render.Color; FaceColor render.Color; EdgeColors []render.Color; EdgeColor render.Color; EdgeWidths []float64; EdgeWidth float64; Hatches []string; Hatch string; HatchColors []render.Color; HatchColor render.Color; HatchWidths []float64; HatchWidth float64; LineJoin render.LineJoin; LineJoinSet bool; LineCap render.LineCap; LineCapSet bool; LineOnly bool; Snap render.SnapMode; SnapSet bool }"
         },
         {
           "id": "type PathPatch",
@@ -12356,6 +12360,10 @@
           "declaration": "func (PolygonSelector) Z() float64"
         },
         {
+          "id": "method RadioButtons.Active",
+          "declaration": "func (RadioButtons) Active() int"
+        },
+        {
           "id": "method RadioButtons.Bounds",
           "declaration": "func (RadioButtons) Bounds(ctx *core.DrawContext) geom.Rect"
         },
@@ -12402,6 +12410,14 @@
         {
           "id": "method RangeSlider.Draw",
           "declaration": "func (RangeSlider) Draw(r render.Renderer, ctx *core.DrawContext)"
+        },
+        {
+          "id": "method RangeSlider.High",
+          "declaration": "func (RangeSlider) High() float64"
+        },
+        {
+          "id": "method RangeSlider.Low",
+          "declaration": "func (RangeSlider) Low() float64"
         },
         {
           "id": "method RangeSlider.OnChanged",
@@ -12506,6 +12522,10 @@
         {
           "id": "method Slider.SetValue",
           "declaration": "func (Slider) SetValue(value float64)"
+        },
+        {
+          "id": "method Slider.Value",
+          "declaration": "func (Slider) Value() float64"
         },
         {
           "id": "method Slider.ValueForPoint",
@@ -12672,6 +12692,10 @@
           "declaration": "func (TextBox) Submit()"
         },
         {
+          "id": "method TextBox.Value",
+          "declaration": "func (TextBox) Value() string"
+        },
+        {
           "id": "method TextBox.WidgetLayer",
           "declaration": "func (TextBox) WidgetLayer()"
         },
@@ -12757,7 +12781,7 @@
         },
         {
           "id": "type RadioButtons",
-          "declaration": "type RadioButtons struct{ Labels []string; Active int; Enabled bool; FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; DotColor render.Color; FontSize float64 }"
+          "declaration": "type RadioButtons struct{ Labels []string; Enabled bool; FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; DotColor render.Color; FontSize float64 }"
         },
         {
           "id": "type RadioButtonsCallback",
@@ -12769,7 +12793,7 @@
         },
         {
           "id": "type RangeSlider",
-          "declaration": "type RangeSlider struct{ Label string; Min float64; Max float64; Enabled bool; Low float64; High float64; FaceColor render.Color; TrackColor render.Color; FillColor render.Color; HandleColor render.Color; TextColor render.Color; Step float64; ValueFormat string; FontSize float64; Dragging bool }"
+          "declaration": "type RangeSlider struct{ Label string; Min float64; Max float64; Enabled bool; FaceColor render.Color; TrackColor render.Color; FillColor render.Color; HandleColor render.Color; TextColor render.Color; Step float64; ValueFormat string; FontSize float64; Dragging bool }"
         },
         {
           "id": "type RangeSliderCallback",
@@ -12793,7 +12817,7 @@
         },
         {
           "id": "type Slider",
-          "declaration": "type Slider struct{ Label string; Min float64; Max float64; Enabled bool; Value float64; Initial float64; FaceColor render.Color; TrackColor render.Color; FillColor render.Color; HandleColor render.Color; TextColor render.Color; Step float64; ValueFormat string; FontSize float64; Dragging bool }"
+          "declaration": "type Slider struct{ Label string; Min float64; Max float64; Enabled bool; Initial float64; FaceColor render.Color; TrackColor render.Color; FillColor render.Color; HandleColor render.Color; TextColor render.Color; Step float64; ValueFormat string; FontSize float64; Dragging bool }"
         },
         {
           "id": "type SliderCallback",
@@ -12817,7 +12841,7 @@
         },
         {
           "id": "type TextBox",
-          "declaration": "type TextBox struct{ Label string; Value string; Placeholder string; FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; FontSize float64; Active bool }"
+          "declaration": "type TextBox struct{ Label string; Placeholder string; FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; FontSize float64; Active bool }"
         },
         {
           "id": "type TextBoxChangeCallback",

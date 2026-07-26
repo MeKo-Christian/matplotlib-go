@@ -252,7 +252,7 @@ func (a *FancyArrowPatch) displayParts(ctx *DrawContext, path geom.Path) []arrow
 	if ctx != nil {
 		scale = pointsToPixels(ctx.RC, scale)
 	}
-	lineWidth := a.EdgeWidth
+	lineWidth := a.EdgeWidth.OrZero()
 	if lineWidth <= 0 {
 		lineWidth = 1
 	}

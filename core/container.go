@@ -228,9 +228,9 @@ func (b *Bar2D) Rectangles() []*Rectangle {
 
 		rectangles = append(rectangles, &Rectangle{
 			Patch: Patch{
-				FaceColor: fill,
-				EdgeColor: edge,
-				EdgeWidth: b.EdgeWidth,
+				FaceColor: optional.Of(fill),
+				EdgeColor: optional.Of(edge),
+				EdgeWidth: optional.Of(b.EdgeWidth),
 				Label:     b.Label,
 				z:         b.z,
 			},

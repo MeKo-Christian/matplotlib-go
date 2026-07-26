@@ -66,7 +66,12 @@ func (a *AxisArtist) SetTickDirection(direction string) error {
 	if a == nil || a.Axis == nil {
 		return nil
 	}
-	return a.Axis.SetTickDirection(direction)
+	parsed, err := ParseTickDirection(direction)
+	if err != nil {
+		return err
+	}
+	a.Axis.TickDirection = parsed
+	return nil
 }
 
 // SetSpinePositionData forwards data-position updates to the underlying auxiliary axis.

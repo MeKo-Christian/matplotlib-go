@@ -266,8 +266,8 @@ func (s *Sankey) Add(flows []float64, opt SankeyAddOptions) *SankeyDiagram {
 	trunkHeight := math.Max(gain, -loss)
 	trunk := &Rectangle{
 		Patch: Patch{
-			EdgeColor: edgeColor,
-			EdgeWidth: 0,
+			EdgeColor: optional.Of(edgeColor),
+			EdgeWidth: optional.Of(0.0),
 			z:         2,
 		},
 		XY:     geom.Pt{X: center.X - trunkLength/2, Y: center.Y - trunkHeight/2},
@@ -291,9 +291,9 @@ func (s *Sankey) Add(flows []float64, opt SankeyAddOptions) *SankeyDiagram {
 
 	bodyPatch := &PathPatch{
 		Patch: Patch{
-			FaceColor: patchAlphaColor(defaultFace, alpha),
-			EdgeColor: edgeColor,
-			EdgeWidth: 1,
+			FaceColor: optional.Of(patchAlphaColor(defaultFace, alpha)),
+			EdgeColor: optional.Of(edgeColor),
+			EdgeWidth: optional.Of(1.0),
 			Alpha:     1,
 			z:         2.2,
 		},

@@ -38,11 +38,11 @@ func TestStatefulHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 
 	ax := GCA()
-	if ax.Title != "Demo" {
-		t.Fatalf("ax.Title = %q, want %q", ax.Title, "Demo")
+	if ax.Title() != "Demo" {
+		t.Fatalf("ax.Title() = %q, want %q", ax.Title(), "Demo")
 	}
-	if ax.XLabel != "time" || ax.YLabel != "value" {
-		t.Fatalf("axis labels = (%q, %q), want (%q, %q)", ax.XLabel, ax.YLabel, "time", "value")
+	if ax.XLabel() != "time" || ax.YLabel() != "value" {
+		t.Fatalf("axis labels = (%q, %q), want (%q, %q)", ax.XLabel(), ax.YLabel(), "time", "value")
 	}
 	Box(false)
 	if ax.ShowFrame {
@@ -53,8 +53,8 @@ func TestStatefulHelpersDelegateToCurrentAxes(t *testing.T) {
 		t.Fatal("Box(true) did not show the current axes frame")
 	}
 	fig := GCF()
-	if fig.SupTitle != "Figure Demo" || fig.SupXLabel != "shared time" || fig.SupYLabel != "shared value" {
-		t.Fatalf("figure labels = (%q, %q, %q)", fig.SupTitle, fig.SupXLabel, fig.SupYLabel)
+	if fig.SupTitle() != "Figure Demo" || fig.SupXLabel() != "shared time" || fig.SupYLabel() != "shared value" {
+		t.Fatalf("figure labels = (%q, %q, %q)", fig.SupTitle(), fig.SupXLabel(), fig.SupYLabel())
 	}
 	if figLegend.Figure != fig || figLegend.Axes != nil {
 		t.Fatalf("figure legend ownership = figure %p axes %p, want figure %p axes nil", figLegend.Figure, figLegend.Axes, fig)
@@ -110,18 +110,18 @@ func TestPyplotWrappersShareCoreAxesPath(t *testing.T) {
 	// State mutators must target the same GCA() fields as their OO counterparts.
 	resetForTests()
 	Title("via pyplot")
-	if got := GCA().Title; got != "via pyplot" {
+	if got := GCA().Title(); got != "via pyplot" {
 		t.Fatalf("pyplot.Title delegated to %q, want %q", got, "via pyplot")
 	}
 	GCA().SetTitle("via axes")
-	if got := GCA().Title; got != "via axes" {
+	if got := GCA().Title(); got != "via axes" {
 		t.Fatalf("GCA().SetTitle set %q, want %q; wrappers must share the same field", got, "via axes")
 	}
 
 	// Figure-level wrappers must target the current figure that GCF() returns.
 	resetForTests()
 	Suptitle("shared")
-	if got := GCF().SupTitle; got != "shared" {
+	if got := GCF().SupTitle(); got != "shared" {
 		t.Fatalf("pyplot.Suptitle delegated to %q, want %q", got, "shared")
 	}
 }

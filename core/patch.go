@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -35,18 +36,17 @@ const (
 // rather than a directly-instantiable drawable type.
 type Patch struct {
 	ArtistRasterization
-	FaceColor render.Color
-	EdgeColor render.Color
-	EdgeWidth float64
-	// The Set flags distinguish explicit transparent/zero values from omitted
-	// values that inherit patch.* rcParams.
-	faceColorSet bool
-	edgeColorSet bool
-	edgeWidthSet bool
-	Alpha        float64
-	Dashes       []float64
-	DashUnits    DashUnits
-	Label        string
+	// An absent face/edge value inherits the corresponding patch.* rcParam; a
+	// present one is honored even when it is transparent or zero. The tri-state
+	// is carried by the field itself rather than by a companion "was it set?"
+	// flag, so a direct write cannot leave the two out of sync.
+	FaceColor optional.Value[render.Color]
+	EdgeColor optional.Value[render.Color]
+	EdgeWidth optional.Value[float64]
+	Alpha     float64
+	Dashes    []float64
+	DashUnits DashUnits
+	Label     string
 
 	Hatch        string
 	HatchColor   render.Color
@@ -76,8 +76,7 @@ func (p *Patch) SetFaceColor(color render.Color) {
 	if p == nil {
 		return
 	}
-	p.FaceColor = color
-	p.faceColorSet = true
+	p.FaceColor = optional.Of(color)
 }
 
 // SetEdgeColor explicitly sets the patch edge. A transparent color suppresses
@@ -86,8 +85,7 @@ func (p *Patch) SetEdgeColor(color render.Color) {
 	if p == nil {
 		return
 	}
-	p.EdgeColor = color
-	p.edgeColorSet = true
+	p.EdgeColor = optional.Of(color)
 }
 
 // SetEdgeWidth explicitly sets the patch edge width. Zero suppresses the edge
@@ -96,8 +94,7 @@ func (p *Patch) SetEdgeWidth(width float64) {
 	if p == nil {
 		return
 	}
-	p.EdgeWidth = width
-	p.edgeWidthSet = true
+	p.EdgeWidth = optional.Of(width)
 }
 
 func (p *Patch) patchBase() *Patch { return p }
@@ -154,12 +151,12 @@ func (p *Patch) resolvedFaceColor() render.Color {
 	if p == nil {
 		return render.Color{}
 	}
-	return patchAlphaColor(p.FaceColor, p.Alpha)
+	return patchAlphaColor(p.FaceColor.OrZero(), p.Alpha)
 }
 
 func (p *Patch) resolvedFaceColorForRC(rc *style.RC) render.Color {
 	color := p.resolvedFaceColor()
-	if p != nil && !p.faceColorSet && p.FaceColor == (render.Color{}) && rc != nil {
+	if p != nil && !p.FaceColor.IsSet() && rc != nil {
 		color = patchAlphaColor(rc.DefaultPatchFaceColor(), p.Alpha)
 	}
 	return color
@@ -169,13 +166,12 @@ func (p *Patch) resolvedEdgeColor() render.Color {
 	if p == nil {
 		return render.Color{}
 	}
-	return patchAlphaColor(p.EdgeColor, p.Alpha)
+	return patchAlphaColor(p.EdgeColor.OrZero(), p.Alpha)
 }
 
 func (p *Patch) resolvedEdgeColorForRC(rc *style.RC) render.Color {
 	color := p.resolvedEdgeColor()
-	if p != nil && !p.edgeColorSet && p.EdgeColor == (render.Color{}) &&
-		rc != nil && rc.Patch.ForceEdgeColor {
+	if p != nil && !p.EdgeColor.IsSet() && rc != nil && rc.Patch.ForceEdgeColor {
 		color = patchAlphaColor(rc.Patch.EdgeColor, p.Alpha)
 	}
 	return color
@@ -188,10 +184,10 @@ func (p *Patch) resolvedHatchColor() render.Color {
 
 	color := p.HatchColor
 	if color.A <= 0 {
-		color = p.EdgeColor
+		color = p.EdgeColor.OrZero()
 	}
 	if color.A <= 0 {
-		color = p.FaceColor
+		color = p.FaceColor.OrZero()
 	}
 	if color.A <= 0 {
 		color = render.Color{R: 0, G: 0, B: 0, A: 1}
@@ -239,8 +235,8 @@ func (p *Patch) resolvedAntialias(rc *style.RC) render.AntialiasMode {
 }
 
 func (p *Patch) resolvedEdgeWidth(rc *style.RC) float64 {
-	if p != nil && (p.edgeWidthSet || p.EdgeWidth > 0) {
-		return p.EdgeWidth
+	if p != nil && p.EdgeWidth.IsSet() {
+		return p.EdgeWidth.OrZero()
 	}
 	if rc != nil {
 		return rc.Patch.LineWidth

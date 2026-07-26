@@ -577,17 +577,17 @@ func TestLine2DMarkEverySpecForms(t *testing.T) {
 		},
 	}
 
-	line.SetMarkEvery(StartStepMarkers(1, 2))
+	line.SetMarkEverySpec(StartStepMarkers(1, 2))
 	if got := line.markerPoints(); len(got) != 3 || got[0].X != 1 || got[1].X != 3 || got[2].X != 5 {
 		t.Fatalf("start/step markers = %v", got)
 	}
 
-	line.SetMarkEvery(IndexedMarkers(0, -1, 99))
+	line.SetMarkEverySpec(IndexedMarkers(0, -1, 99))
 	if got := line.markerPoints(); len(got) != 2 || got[0].X != 0 || got[1].X != 5 {
 		t.Fatalf("indexed markers = %v", got)
 	}
 
-	line.SetMarkEvery(SliceMarkers(2, 5, 2))
+	line.SetMarkEverySpec(SliceMarkers(2, 5, 2))
 	if got := line.markerPoints(); len(got) != 2 || got[0].X != 2 || got[1].X != 4 {
 		t.Fatalf("slice markers = %v", got)
 	}

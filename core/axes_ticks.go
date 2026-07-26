@@ -307,9 +307,11 @@ func (a *Axes) TickParams(params TickParams) error {
 			}
 		}
 		if params.Direction != nil {
-			if err := axis.SetTickDirection(*params.Direction); err != nil {
+			direction, err := ParseTickDirection(*params.Direction)
+			if err != nil {
 				return err
 			}
+			axis.TickDirection = direction
 		}
 		if params.ShowLabels != nil {
 			switch which {
@@ -652,7 +654,9 @@ func configureAxisFromTickRC(axis *Axis, rc *style.RC, cfg *style.TickAxisRC, is
 	axis.minorTickVisibilitySet = majorTicks != minorTicks
 	axis.ShowLabels = majorLabels
 	axis.ShowMinorLabels = minorLabels
-	_ = axis.SetTickDirection(cfg.Direction)
+	if direction, err := ParseTickDirection(cfg.Direction); err == nil {
+		axis.TickDirection = direction
+	}
 	applyRCTickAlignment(axis, cfg.Alignment, isX)
 
 	if cfg.Minor.Visible {

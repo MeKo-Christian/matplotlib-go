@@ -75,8 +75,8 @@ func TestWidgetInteractionCheckRadioAndTextBoxAcrossVisualStyles(t *testing.T) {
 			if err := dispatcherRadio.Emit(Event{Type: EventMousePress, Figure: figRadio, Axes: axRadio, Position: radioPoint, Button: MouseButtonLeft}); err != nil {
 				t.Fatalf("radio press: %v", err)
 			}
-			if radios.Active != tt.wantRadioRow {
-				t.Fatalf("radio active = %d, want %d", radios.Active, tt.wantRadioRow)
+			if radios.Active() != tt.wantRadioRow {
+				t.Fatalf("radio active = %d, want %d", radios.Active(), tt.wantRadioRow)
 			}
 
 			figText := core.NewFigure(120, 80, tt.opt)
@@ -98,8 +98,8 @@ func TestWidgetInteractionCheckRadioAndTextBoxAcrossVisualStyles(t *testing.T) {
 			if err := dispatcherText.Emit(Event{Type: EventKeyPress, Figure: figText, Axes: axText, Key: "Z"}); err != nil {
 				t.Fatalf("text insert: %v", err)
 			}
-			if text.Value != tt.wantText {
-				t.Fatalf("text value = %q, want %q", text.Value, tt.wantText)
+			if text.Value() != tt.wantText {
+				t.Fatalf("text value = %q, want %q", text.Value(), tt.wantText)
 			}
 		})
 	}
@@ -162,14 +162,14 @@ func TestWidgetInteractionCheckAndRadioKeyboardNavigation(t *testing.T) {
 	if err := dispatcher.Emit(Event{Type: EventMouseRelease, Figure: fig, Axes: axRadio, Position: radioRow0, Button: MouseButtonLeft}); err != nil {
 		t.Fatalf("radio release: %v", err)
 	}
-	if radios.Active != 0 {
-		t.Fatalf("radio should activate row 0 on press, got %d", radios.Active)
+	if radios.Active() != 0 {
+		t.Fatalf("radio should activate row 0 on press, got %d", radios.Active())
 	}
 	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: axRadio, Key: "right"}); err != nil {
 		t.Fatalf("radio right key: %v", err)
 	}
-	if radios.Active != 1 {
-		t.Fatalf("radio should navigate right to row 1, got %d", radios.Active)
+	if radios.Active() != 1 {
+		t.Fatalf("radio should navigate right to row 1, got %d", radios.Active())
 	}
 	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: axRadio, Key: "enter"}); err != nil {
 		t.Fatalf("radio enter key: %v", err)
@@ -231,8 +231,8 @@ func TestWidgetInteractionDisabledCheckAndRadioIgnoreInput(t *testing.T) {
 	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Axes: axRadio, Key: "right"}); err != nil {
 		t.Fatalf("disabled radio right: %v", err)
 	}
-	if radios.Active != 0 {
-		t.Fatalf("disabled radio active = %d, want 0", radios.Active)
+	if radios.Active() != 0 {
+		t.Fatalf("disabled radio active = %d, want 0", radios.Active())
 	}
 	if checkEvents != 0 || radioEvents != 0 {
 		t.Fatalf("disabled widget callbacks = %d/%d, want 0/0", checkEvents, radioEvents)
@@ -276,8 +276,8 @@ func TestWidgetInteractionTextBoxEditing(t *testing.T) {
 	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Key: "A"}); err != nil {
 		t.Fatalf("insert uppercase A: %v", err)
 	}
-	if tb.Value != "helloA" {
-		t.Fatalf("text value = %q, want helloA", tb.Value)
+	if tb.Value() != "helloA" {
+		t.Fatalf("text value = %q, want helloA", tb.Value())
 	}
 
 	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Key: "a", Modifiers: ModifierControl}); err != nil {
@@ -292,14 +292,14 @@ func TestWidgetInteractionTextBoxEditing(t *testing.T) {
 	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Key: "x", Modifiers: ModifierControl}); err != nil {
 		t.Fatalf("ctrl+x: %v", err)
 	}
-	if tb.Value != "" {
-		t.Fatalf("text value after cut = %q, want empty", tb.Value)
+	if tb.Value() != "" {
+		t.Fatalf("text value after cut = %q, want empty", tb.Value())
 	}
 	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Key: "v", Modifiers: ModifierControl}); err != nil {
 		t.Fatalf("ctrl+v: %v", err)
 	}
-	if tb.Value != "helloA" {
-		t.Fatalf("text value after paste = %q, want helloA", tb.Value)
+	if tb.Value() != "helloA" {
+		t.Fatalf("text value after paste = %q, want helloA", tb.Value())
 	}
 
 	if err := dispatcher.Emit(Event{Type: EventKeyPress, Figure: fig, Key: "enter"}); err != nil {

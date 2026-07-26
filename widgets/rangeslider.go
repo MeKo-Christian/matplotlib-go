@@ -18,12 +18,14 @@ type RangeSliderOptions = SliderOptions
 
 // RangeSlider draws a two-handle slider control inside its owning axes.
 type RangeSlider struct {
-	Label       string
-	Min         float64
-	Max         float64
-	Enabled     bool
-	Low         float64
-	High        float64
+	Label   string
+	Min     float64
+	Max     float64
+	Enabled bool
+	// low and high are setter-owned: the setters keep the endpoints ordered
+	// and route through SetRange so the on-changed callback fires once.
+	low         float64
+	high        float64
 	FaceColor   render.Color
 	TrackColor  render.Color
 	FillColor   render.Color
@@ -77,8 +79,8 @@ func NewRangeSlider(a *core.Axes, label string, minValue, maxValue, low, high fl
 		Min:         minValue,
 		Max:         maxValue,
 		Enabled:     true,
-		Low:         low,
-		High:        high,
+		low:         low,
+		high:        high,
 		FaceColor:   cfg.FaceColor,
 		TrackColor:  cfg.TrackColor,
 		FillColor:   cfg.FillColor,
@@ -111,7 +113,7 @@ func (s *RangeSlider) triggerOnChanged() {
 	if s == nil {
 		return
 	}
-	s.onChanged.each(func(cb RangeSliderCallback) { cb(s, s.Low, s.High) })
+	s.onChanged.each(func(cb RangeSliderCallback) { cb(s, s.low, s.high) })
 }
 
 // SetRange updates the selected interval and emits an on-changed event when
@@ -125,11 +127,11 @@ func (s *RangeSlider) SetRange(low, high float64) {
 	if low > high {
 		low, high = high, low
 	}
-	if low == s.Low && high == s.High {
+	if low == s.low && high == s.high {
 		return
 	}
-	s.Low = low
-	s.High = high
+	s.low = low
+	s.high = high
 	s.triggerOnChanged()
 }
 
@@ -138,8 +140,8 @@ func (s *RangeSlider) SetLow(low float64) {
 	if s == nil {
 		return
 	}
-	low = math.Min(low, s.High)
-	s.SetRange(low, s.High)
+	low = math.Min(low, s.high)
+	s.SetRange(low, s.high)
 }
 
 // SetHigh updates the upper range endpoint without crossing the low endpoint.
@@ -147,8 +149,8 @@ func (s *RangeSlider) SetHigh(high float64) {
 	if s == nil {
 		return
 	}
-	high = math.Max(high, s.Low)
-	s.SetRange(s.Low, high)
+	high = math.Max(high, s.low)
+	s.SetRange(s.low, high)
 }
 
 func (s *RangeSlider) Draw(r render.Renderer, ctx *core.DrawContext) {
@@ -174,8 +176,8 @@ func (s *RangeSlider) Draw(r render.Renderer, ctx *core.DrawContext) {
 	track := widgetStyledSliderTrack(panel, &defaults)
 	trackRadius := widgetSliderTrackRadius(track, &defaults)
 	drawWidgetPanel(r, track, s.TrackColor, render.Color{A: 0}, 0, trackRadius)
-	lowFraction := sliderFraction(s.Min, s.Max, s.Low)
-	highFraction := sliderFraction(s.Min, s.Max, s.High)
+	lowFraction := sliderFraction(s.Min, s.Max, s.low)
+	highFraction := sliderFraction(s.Min, s.Max, s.high)
 	fill := track
 	fill.Min.X = track.Min.X + track.W()*lowFraction
 	fill.Max.X = track.Min.X + track.W()*highFraction
@@ -222,8 +224,8 @@ func (s *RangeSlider) Contains(p geom.Pt, ctx *core.DrawContext) (bool, core.Pic
 	if track.W() <= 0 {
 		return true, core.PickInfo{}
 	}
-	lowX := track.Min.X + track.W()*sliderFraction(s.Min, s.Max, s.Low)
-	highX := track.Min.X + track.W()*sliderFraction(s.Min, s.Max, s.High)
+	lowX := track.Min.X + track.W()*sliderFraction(s.Min, s.Max, s.low)
+	highX := track.Min.X + track.W()*sliderFraction(s.Min, s.Max, s.high)
 	if math.Abs(p.X-lowX) <= math.Abs(p.X-highX) {
 		return true, core.PickInfo{Index: 0}
 	}
@@ -268,7 +270,23 @@ func rangeSliderDisplayValue(s *RangeSlider, defaults *widgetVisualDefaults) str
 		return out
 	}
 	if defaults.RangeTupleText {
-		return "(" + formatOne(s.Low) + ", " + formatOne(s.High) + ")"
+		return "(" + formatOne(s.low) + ", " + formatOne(s.high) + ")"
 	}
-	return formatOne(s.Low) + " - " + formatOne(s.High)
+	return formatOne(s.low) + " - " + formatOne(s.high)
+}
+
+// Low reports the lower range endpoint.
+func (s *RangeSlider) Low() float64 {
+	if s == nil {
+		return 0
+	}
+	return s.low
+}
+
+// High reports the upper range endpoint.
+func (s *RangeSlider) High() float64 {
+	if s == nil {
+		return 0
+	}
+	return s.high
 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/transform"
@@ -156,27 +157,29 @@ type Line2D struct {
 	RCStrokeStylesSet bool
 	Antialiased       bool
 	AntialiasedSet    bool
-	GapColor          render.Color // optional dashed-line gap color
-	GapColorSet       bool
-	PathEffects       []render.PathEffect
-	DrawStyle         LineDrawStyle // optional step-style connection mode
-	Marker            MarkerType    // optional data marker
-	MarkerSet         bool          // true when Marker should be drawn
-	MarkerStyle       MarkerStyle   // optional rich marker style
-	MarkerPath        geom.Path     // optional custom marker path in normalized marker space
-	MarkerSize        float64       // marker size in points, 0 uses Matplotlib's 6 pt default
-	MarkerFaceColor   render.Color  // marker fill, 0 alpha falls back to line color
-	MarkerEdgeColor   render.Color  // marker edge, 0 alpha falls back to line color
-	MarkerEdgeWidth   float64       // marker edge width in points, 0 uses Matplotlib's 1 pt default
-	MarkerFaceSpec    MarkerColorSpec
-	MarkerEdgeSpec    MarkerColorSpec
-	MarkerFaceAlt     MarkerColorSpec
-	MarkEvery         int                 // optional every-N marker subset; <=1 draws every point
-	MarkEverySpec     MarkEverySpec       // optional richer marker subset; overrides MarkEvery when set
-	Label             string              // series label for legend
-	Sketch            render.SketchParams // per-artist sketch/xkcd override; zero inherits the figure default
-	z                 float64             // z-order
-	pickRadius        float64             // pick tolerance in pixels (0 = default)
+	// GapColor paints dashed-line gaps. Absent leaves the gaps unpainted; the
+	// tri-state lives on the field, so there is no companion flag to fall out of
+	// sync with a direct write.
+	GapColor        optional.Value[render.Color]
+	PathEffects     []render.PathEffect
+	DrawStyle       LineDrawStyle // optional step-style connection mode
+	Marker          MarkerType    // optional data marker
+	MarkerSet       bool          // true when Marker should be drawn
+	MarkerStyle     MarkerStyle   // optional rich marker style
+	MarkerPath      geom.Path     // optional custom marker path in normalized marker space
+	MarkerSize      float64       // marker size in points, 0 uses Matplotlib's 6 pt default
+	MarkerFaceColor render.Color  // marker fill, 0 alpha falls back to line color
+	MarkerEdgeColor render.Color  // marker edge, 0 alpha falls back to line color
+	MarkerEdgeWidth float64       // marker edge width in points, 0 uses Matplotlib's 1 pt default
+	MarkerFaceSpec  MarkerColorSpec
+	MarkerEdgeSpec  MarkerColorSpec
+	MarkerFaceAlt   MarkerColorSpec
+	MarkEvery       int                 // optional every-N marker subset; <=1 draws every point
+	MarkEverySpec   MarkEverySpec       // optional richer marker subset; overrides MarkEvery when set
+	Label           string              // series label for legend
+	Sketch          render.SketchParams // per-artist sketch/xkcd override; zero inherits the figure default
+	z               float64             // z-order
+	pickRadius      float64             // pick tolerance in pixels (0 = default)
 
 	// Persistent affine/non-affine cache for the data-coordinate draw path
 	// (Phase 13). transformedPath caches the non-affine projection of the source
@@ -261,8 +264,7 @@ func (l *Line2D) SetGapColor(color render.Color) {
 	if l == nil {
 		return
 	}
-	l.GapColor = color
-	l.GapColorSet = true
+	l.GapColor = optional.Of(color)
 	l.SetStale(true)
 }
 
@@ -346,13 +348,12 @@ func (l *Line2D) ClearGapColor() {
 	if l == nil {
 		return
 	}
-	l.GapColor = render.Color{}
-	l.GapColorSet = false
+	l.GapColor = optional.Value[render.Color]{}
 	l.SetStale(true)
 }
 
 // SetMarkEvery sets a rich marker subsampling spec.
-func (l *Line2D) SetMarkEvery(spec MarkEverySpec) {
+func (l *Line2D) SetMarkEverySpec(spec MarkEverySpec) {
 	if l == nil {
 		return
 	}
@@ -416,10 +417,10 @@ func (l *Line2D) Draw(r render.Renderer, ctx *DrawContext) {
 		paint.MaxChunkVertices = ctx.RC.AggPathChunkSize
 	}
 	paint.Sketch = l.Sketch
-	if l.GapColorSet && l.GapColor.A > 0 && l.W > 0 && len(dashes) >= 2 {
+	if gap, ok := l.GapColor.Get(); ok && gap.A > 0 && l.W > 0 && len(dashes) >= 2 {
 		if gapPath := dashGapPath(p, dashes); len(gapPath.C) > 0 {
 			gapPaint := paint
-			gapPaint.Stroke = l.ApplyArtistAlpha(l.GapColor)
+			gapPaint.Stroke = l.ApplyArtistAlpha(gap)
 			gapPaint.Dashes = nil
 			r.Path(gapPath, &gapPaint)
 		}

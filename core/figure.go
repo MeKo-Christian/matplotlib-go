@@ -13,9 +13,9 @@ type Figure struct {
 	Children  []*Axes
 	Artists   []Artist
 	zsorted   bool
-	SupTitle  string
-	SupXLabel string
-	SupYLabel string
+	supTitle  string
+	supXLabel string
+	supYLabel string
 
 	layoutEngine LayoutEngine
 }
@@ -33,9 +33,6 @@ func NewFigure(w, h int, opts ...style.Option) *Figure {
 		RC:           rc,
 		Children:     nil,
 		Artists:      nil,
-		SupTitle:     "",
-		SupXLabel:    "",
-		SupYLabel:    "",
 		layoutEngine: engine,
 	}
 }
@@ -150,9 +147,9 @@ func (f *Figure) Clear() {
 	}
 	f.Artists = nil
 	f.zsorted = false
-	f.SupTitle = ""
-	f.SupXLabel = ""
-	f.SupYLabel = ""
+	f.supTitle = ""
+	f.supXLabel = ""
+	f.supYLabel = ""
 }
 
 // Clf is a synonym for Clear, matching Matplotlib's Figure.clf.

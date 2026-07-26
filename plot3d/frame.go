@@ -386,15 +386,15 @@ func (a *Axes3D) draw3DAxisLabels(textRen render.TextDrawer, r render.Renderer, 
 		labelDeltas[i] = (labelPads[i] + 21) * deltas[i]
 	}
 	axisLines := a.axisLineEdgePointPairs(mins, maxs, projMins, projMaxs)
-	if a.XLabel != "" {
+	if a.XLabel() != "" {
 		pos := midpoint3D(axisLines[0][0], axisLines[0][1])
 		anchor := a.project3DLabelAnchor(ctx, move3DLabelFromCenter(pos, centers, labelDeltas, 0), projMins, projMaxs)
-		draw3DTextAtAnchor(textRen, r, ctx, a.XLabel, anchor, fontSize, textColor, a.XLabelFontKey(ctx))
+		draw3DTextAtAnchor(textRen, r, ctx, a.XLabel(), anchor, fontSize, textColor, a.XLabelFontKey(ctx))
 	}
-	if a.YLabel != "" {
+	if a.YLabel() != "" {
 		pos := midpoint3D(axisLines[1][0], axisLines[1][1])
 		anchor := a.project3DLabelAnchor(ctx, move3DLabelFromCenter(pos, centers, labelDeltas, 1), projMins, projMaxs)
-		draw3DTextAtAnchor(textRen, r, ctx, a.YLabel, anchor, fontSize, textColor, a.YLabelFontKey(ctx))
+		draw3DTextAtAnchor(textRen, r, ctx, a.YLabel(), anchor, fontSize, textColor, a.YLabelFontKey(ctx))
 	}
 	if a.zLabel != "" {
 		pos := midpoint3D(axisLines[2][0], axisLines[2][1])

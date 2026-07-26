@@ -377,14 +377,6 @@ func (l *Legend) Bounds(*DrawContext) geom.Rect {
 	return geom.Rect{}
 }
 
-// SetLocator overrides the anchored-box placement strategy for this legend.
-func (l *Legend) SetLocator(locator AnchoredBoxLocator) {
-	if l == nil {
-		return
-	}
-	l.Locator = locator
-}
-
 func (l *Legend) boxRect(r render.Renderer, ctx *DrawContext) (geom.Rect, bool) {
 	if l == nil || r == nil || ctx == nil {
 		return geom.Rect{}, false

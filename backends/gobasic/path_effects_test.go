@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -118,7 +119,7 @@ func TestGoBasicArtistPathEffectsRouteThroughRendererNeutralPipeline(t *testing.
 
 		patch := &core.Rectangle{
 			Patch: core.Patch{
-				FaceColor: render.Color{R: 0, G: 0, B: 0, A: 1},
+				FaceColor: optional.Of(render.Color{R: 0, G: 0, B: 0, A: 1}),
 				PathEffects: []render.PathEffect{
 					render.PathPatchPathEffect(render.Color{G: 1, A: 1}, render.Color{}, 0, geom.Pt{X: 20, Y: 0}),
 					render.NormalPathEffect(),

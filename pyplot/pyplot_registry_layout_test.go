@@ -260,7 +260,7 @@ func TestColorbarUsesCurrentAxesAndFigure(t *testing.T) {
 	if len(fig.Children) != 2 {
 		t.Fatalf("len(fig.Children) = %d, want 2", len(fig.Children))
 	}
-	if cb.YLabel != "Intensity" {
-		t.Fatalf("colorbar label = %q, want %q", cb.YLabel, "Intensity")
+	if cb.YLabel() != "Intensity" {
+		t.Fatalf("colorbar label = %q, want %q", cb.YLabel(), "Intensity")
 	}
 }

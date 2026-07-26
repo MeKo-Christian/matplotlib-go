@@ -10,7 +10,22 @@ import (
 	"github.com/cwbudde/matplotlib-go/style"
 )
 
-func (a *Axes) SetTitle(title string) { a.Title = title }
+// Title reports the axes title drawn above the plot.
+func (a *Axes) Title() string {
+	if a == nil {
+		return ""
+	}
+	return a.title
+}
+
+// SetTitle sets the axes title drawn above the plot.
+func (a *Axes) SetTitle(title string) {
+	if a == nil {
+		return
+	}
+	a.ensureRCTextDefaults()
+	a.title = title
+}
 
 // SetTitleLocation aligns the axes title to the left, center, or right axes
 // edge. It overrides the axes.titlelocation value captured at axes creation.
@@ -69,33 +84,84 @@ func (a *Axes) SetTitleWeight(weight int) {
 	}
 }
 
-func (f *Figure) SetSuptitle(title string) {
+// SupTitle reports the figure-level title drawn above every axes.
+func (f *Figure) SupTitle() string {
+	if f == nil {
+		return ""
+	}
+	return f.supTitle
+}
+
+// SetSupTitle sets the figure-level title drawn above every axes.
+func (f *Figure) SetSupTitle(title string) {
 	if f != nil {
-		f.SupTitle = title
+		f.supTitle = title
 	}
 }
 
-func (f *Figure) SetSupTitle(title string) { f.SetSuptitle(title) }
+// SupXLabel reports the figure-level x-axis label.
+func (f *Figure) SupXLabel() string {
+	if f == nil {
+		return ""
+	}
+	return f.supXLabel
+}
 
-func (f *Figure) SetSupxlabel(label string) {
+// SetSupXLabel sets the figure-level x-axis label.
+func (f *Figure) SetSupXLabel(label string) {
 	if f != nil {
-		f.SupXLabel = label
+		f.supXLabel = label
 	}
 }
 
-func (f *Figure) SetSupXLabel(label string) { f.SetSupxlabel(label) }
+// SupYLabel reports the figure-level y-axis label.
+func (f *Figure) SupYLabel() string {
+	if f == nil {
+		return ""
+	}
+	return f.supYLabel
+}
 
-func (f *Figure) SetSupylabel(label string) {
+// SetSupYLabel sets the figure-level y-axis label.
+func (f *Figure) SetSupYLabel(label string) {
 	if f != nil {
-		f.SupYLabel = label
+		f.supYLabel = label
 	}
 }
 
-func (f *Figure) SetSupYLabel(label string) { f.SetSupylabel(label) }
+// XLabel reports the x-axis label drawn below the ticks.
+func (a *Axes) XLabel() string {
+	if a == nil {
+		return ""
+	}
+	return a.xLabel
+}
 
-func (a *Axes) SetXLabel(label string) { a.XLabel = label }
+// SetXLabel sets the x-axis label drawn below the ticks.
+func (a *Axes) SetXLabel(label string) {
+	if a == nil {
+		return
+	}
+	a.ensureRCTextDefaults()
+	a.xLabel = label
+}
 
-func (a *Axes) SetYLabel(label string) { a.YLabel = label }
+// YLabel reports the y-axis label drawn left of the ticks.
+func (a *Axes) YLabel() string {
+	if a == nil {
+		return ""
+	}
+	return a.yLabel
+}
+
+// SetYLabel sets the y-axis label drawn left of the ticks.
+func (a *Axes) SetYLabel(label string) {
+	if a == nil {
+		return
+	}
+	a.ensureRCTextDefaults()
+	a.yLabel = label
+}
 
 // SetXLabelPad sets the x-axis label padding in points.
 func (a *Axes) SetXLabelPad(pad float64) {
@@ -200,13 +266,13 @@ func drawAxesLabels(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect,
 
 	// Title: aligned at the configured axes edge and either automatically
 	// lifted above top decorations or fixed at an axes-relative y coordinate.
-	if ax.Title != "" {
+	if ax.title != "" {
 		fontKey := axesTitleFontKey(ax, ctx)
 		hAlign := axesTitleAlignment(ax)
-		layout := measureSingleLineTextLayout(r, ax.Title, titleSize, fontKey, ctx.RC.UseTeX)
+		layout := measureSingleLineTextLayout(r, ax.title, titleSize, fontKey, ctx.RC.UseTeX)
 		drawDisplayText(
 			textRen,
-			ax.Title,
+			ax.title,
 			alignedSingleLineOrigin(titleAnchorPoint(ax, r, ctx, px, alignment), layout, hAlign, textLayoutVAlignBaseline),
 			titleSize,
 			titleColor,
@@ -218,14 +284,14 @@ func drawAxesLabels(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect,
 	// XLabel: centered relative to the selected axis side and padded from the
 	// union of the spine and visible tick-label bounds, matching Matplotlib's
 	// default label placement model.
-	if ax.XLabel != "" && !ax.hideXLabel && ax.ProjectionName() != "3d" {
+	if ax.xLabel != "" && !ax.hideXLabel && ax.ProjectionName() != "3d" {
 		side := ax.effectiveXLabelSide()
 		fontKey := xAxisLabelFontKey(ax, ctx)
-		layout := measureSingleLineTextLayout(r, ax.XLabel, labelSize, fontKey, ctx.RC.UseTeX)
+		layout := measureSingleLineTextLayout(r, ax.xLabel, labelSize, fontKey, ctx.RC.UseTeX)
 		anchor, vAlign := xLabelAnchorPoint(ax, r, ctx, px, side, alignment)
 		drawDisplayText(
 			textRen,
-			ax.XLabel,
+			ax.xLabel,
 			alignedSingleLineOrigin(anchor, layout, TextAlignCenter, vAlign),
 			labelSize,
 			labelColor,
@@ -235,7 +301,7 @@ func drawAxesLabels(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect,
 	}
 
 	// YLabel: vertical text if supported, else horizontal fallback
-	if ax.YLabel != "" && !ax.hideYLabel && ax.ProjectionName() != "3d" {
+	if ax.yLabel != "" && !ax.hideYLabel && ax.ProjectionName() != "3d" {
 		side := ax.effectiveYLabelSide()
 		fontKey := yAxisLabelFontKey(ax, ctx)
 		anchor := yLabelAnchorPoint(ax, r, ctx, px, side, alignment)
@@ -250,19 +316,19 @@ func drawAxesLabels(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect,
 			// ha="center", and va="bottom" (left) / va="top" (right). The left
 			// label is NOT mirrored — both sides share the +90° orientation.
 			labelAngle := math.Pi / 2
-			yLabelLayout := measureSingleLineTextLayout(r, ax.YLabel, labelSize, fontKey, ctx.RC.UseTeX)
+			yLabelLayout := measureSingleLineTextLayout(r, ax.yLabel, labelSize, fontKey, ctx.RC.UseTeX)
 			yLabelVAlign := textLayoutVAlignBottom
 			if side == AxisRight {
 				yLabelVAlign = textLayoutVAlignTop
 			}
 			backendAnchor := rotatedTextBackendAnchorFromP(anchor, yLabelLayout, TextAlignCenter, yLabelVAlign, labelAngle, true)
-			drawDisplayTextRotated(ren, ax.YLabel, backendAnchor, labelSize, labelAngle, labelColor, fontKey, ctx.RC.UseTeX)
+			drawDisplayTextRotated(ren, ax.yLabel, backendAnchor, labelSize, labelAngle, labelColor, fontKey, ctx.RC.UseTeX)
 		case render.VerticalTextDrawer:
 			if angle < 0 {
-				layout := measureSingleLineTextLayout(r, ax.YLabel, labelSize, fontKey, ctx.RC.UseTeX)
+				layout := measureSingleLineTextLayout(r, ax.yLabel, labelSize, fontKey, ctx.RC.UseTeX)
 				drawDisplayText(
 					textRen,
-					ax.YLabel,
+					ax.yLabel,
 					alignedSingleLineOrigin(geom.Pt{X: anchor.X, Y: px.Min.Y + px.H()/2}, layout, TextAlignCenter, textLayoutVAlignCenter),
 					labelSize,
 					labelColor,
@@ -270,13 +336,13 @@ func drawAxesLabels(ax *Axes, r render.Renderer, ctx *DrawContext, px geom.Rect,
 					ctx.RC.UseTeX,
 				)
 			} else {
-				drawDisplayTextVertical(ren, ax.YLabel, geom.Pt{X: anchor.X, Y: anchor.Y}, labelSize, labelColor, fontKey)
+				drawDisplayTextVertical(ren, ax.yLabel, geom.Pt{X: anchor.X, Y: anchor.Y}, labelSize, labelColor, fontKey)
 			}
 		default:
-			layout := measureSingleLineTextLayout(r, ax.YLabel, labelSize, fontKey, ctx.RC.UseTeX)
+			layout := measureSingleLineTextLayout(r, ax.yLabel, labelSize, fontKey, ctx.RC.UseTeX)
 			drawDisplayText(
 				textRen,
-				ax.YLabel,
+				ax.yLabel,
 				alignedSingleLineOrigin(geom.Pt{X: anchor.X, Y: px.Min.Y + px.H()/2}, layout, TextAlignCenter, textLayoutVAlignCenter),
 				labelSize,
 				labelColor,

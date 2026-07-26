@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -33,9 +34,9 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, rc *style.RC, entry
 			patchRect.Max.Y = center.Y + handleHeight/2
 		}
 		patch := Patch{
-			FaceColor:  entry.patchFill,
-			EdgeColor:  entry.patchEdge,
-			EdgeWidth:  entry.patchEdgeWidth,
+			FaceColor:  optional.Of(entry.patchFill),
+			EdgeColor:  optional.Of(entry.patchEdge),
+			EdgeWidth:  optional.Of(entry.patchEdgeWidth),
 			Hatch:      entry.patchHatch,
 			HatchColor: entry.patchHatchColor,
 			HatchWidth: entry.patchHatchWidth,

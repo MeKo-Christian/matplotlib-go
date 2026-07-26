@@ -378,8 +378,8 @@ func TestCLAClearsCurrentAxesButKeepsItCurrent(t *testing.T) {
 	if len(ax.Artists) != 0 || len(ax.WidgetArtists) != 0 {
 		t.Fatalf("axes after CLA = %d artists, %d widgets; want empty", len(ax.Artists), len(ax.WidgetArtists))
 	}
-	if ax.Title != "" || ax.XLabel != "" || ax.YLabel != "" {
-		t.Fatalf("labels after CLA = %q/%q/%q, want empty", ax.Title, ax.XLabel, ax.YLabel)
+	if ax.Title() != "" || ax.XLabel() != "" || ax.YLabel() != "" {
+		t.Fatalf("labels after CLA = %q/%q/%q, want empty", ax.Title(), ax.XLabel(), ax.YLabel())
 	}
 	x0, x1 := ax.XScale.Domain()
 	y0, y1 := ax.YScale.Domain()

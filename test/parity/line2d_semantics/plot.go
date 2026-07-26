@@ -77,7 +77,7 @@ func Plot() *core.Figure {
 		Marker:     optional.Of(markerA),
 		MarkerSize: optional.Of(8.0),
 	})
-	lineA.SetMarkEvery(core.StartStepMarkers(1, 3))
+	lineA.SetMarkEverySpec(core.StartStepMarkers(1, 3))
 
 	y2 := []float64{0.55, 0.85, 0.65, 0.95, 0.75, 1.05, 0.85, 1.15, 0.95, 1.25, 1.05, 1.35}
 	markerB := core.MarkerSquare
@@ -87,7 +87,7 @@ func Plot() *core.Figure {
 		Marker:     optional.Of(markerB),
 		MarkerSize: optional.Of(7.0),
 	})
-	lineB.SetMarkEvery(core.IndexedMarkers(0, 4, 8, 11))
+	lineB.SetMarkEverySpec(core.IndexedMarkers(0, 4, 8, 11))
 
 	return fig
 }

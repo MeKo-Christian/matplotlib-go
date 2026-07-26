@@ -324,22 +324,20 @@ func axisTickSegment(axis *Axis, spine geom.Pt, tickSize float64, isXAxis bool) 
 	}
 }
 
-// SetTickDirection configures whether ticks point outward, inward, or in both directions.
-func (a *Axis) SetTickDirection(direction string) error {
-	if a == nil {
-		return nil
-	}
+// ParseTickDirection maps a matplotlib xtick.direction / ytick.direction string
+// onto the typed constant. Assign the result to Axis.TickDirection directly;
+// the field is the writer, so there is no setter to go out of sync with it.
+func ParseTickDirection(direction string) (TickDirection, error) {
 	switch strings.ToLower(strings.TrimSpace(direction)) {
 	case "", "out", "outward":
-		a.TickDirection = TickDirectionOut
+		return TickDirectionOut, nil
 	case "in", "inward":
-		a.TickDirection = TickDirectionIn
+		return TickDirectionIn, nil
 	case "inout", "both":
-		a.TickDirection = TickDirectionInOut
+		return TickDirectionInOut, nil
 	default:
-		return fmt.Errorf("unsupported tick direction %q", direction)
+		return TickDirectionOut, fmt.Errorf("unsupported tick direction %q", direction)
 	}
-	return nil
 }
 
 func axisStrokePaint(a *Axis, ctx *DrawContext, forTicks bool) render.Paint {

@@ -213,14 +213,6 @@ func (a *AnchoredTextBox) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
 // Z returns the anchored text box z-order.
 func (a *AnchoredTextBox) Z() float64 { return a.z }
 
-// SetLocator overrides the anchored-box placement strategy for this text box.
-func (a *AnchoredTextBox) SetLocator(locator AnchoredBoxLocator) {
-	if a == nil {
-		return
-	}
-	a.Locator = locator
-}
-
 func (a *AnchoredTextBox) boxRect(r render.Renderer, ctx *DrawContext) (geom.Rect, bool) {
 	if a == nil || r == nil || ctx == nil {
 		return geom.Rect{}, false

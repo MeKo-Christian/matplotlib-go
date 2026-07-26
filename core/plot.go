@@ -257,7 +257,7 @@ func (a *Axes) plot(x, y []float64, opt PlotOptions) *Line2D {
 		line.MarkerEdgeWidth = rcLines.MarkerEdgeWidth
 	}
 	line.MarkEvery = opt.MarkEvery
-	line.SetMarkEvery(opt.MarkEverySpec)
+	line.SetMarkEverySpec(opt.MarkEverySpec)
 
 	// Apply alpha if specified. An alpha outside [0, 1] is ignored rather than
 	// clamped, matching the pointer-model behavior this replaced.

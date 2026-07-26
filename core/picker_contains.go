@@ -148,7 +148,7 @@ func (r *Rectangle) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 		return false, PickInfo{}
 	}
 	local := rectanglePath(r.Width, r.Height)
-	if containsPath(local, patchAffine(r.XY, r.Angle), r.Coords, p, ctx, r.EdgeWidth) {
+	if containsPath(local, patchAffine(r.XY, r.Angle), r.Coords, p, ctx, r.EdgeWidth.OrZero()) {
 		return true, PickInfo{}
 	}
 	return false, PickInfo{}
@@ -160,7 +160,7 @@ func (c *Circle) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 		return false, PickInfo{}
 	}
 	local := ellipsePath(c.Radius*2, c.Radius*2)
-	if containsPath(local, translateAffine(c.Center), c.Coords, p, ctx, c.EdgeWidth) {
+	if containsPath(local, translateAffine(c.Center), c.Coords, p, ctx, c.EdgeWidth.OrZero()) {
 		return true, PickInfo{}
 	}
 	return false, PickInfo{}
@@ -172,7 +172,7 @@ func (e *Ellipse) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 		return false, PickInfo{}
 	}
 	local := ellipsePath(e.Width, e.Height)
-	if containsPath(local, patchAffine(e.Center, e.Angle), e.Coords, p, ctx, e.EdgeWidth) {
+	if containsPath(local, patchAffine(e.Center, e.Angle), e.Coords, p, ctx, e.EdgeWidth.OrZero()) {
 		return true, PickInfo{}
 	}
 	return false, PickInfo{}
@@ -186,14 +186,14 @@ func (poly *Polygon) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	}
 	if !poly.Open {
 		local := polygonPath(poly.XY, true)
-		if containsPath(local, geom.Identity(), poly.Coords, p, ctx, poly.EdgeWidth) {
+		if containsPath(local, geom.Identity(), poly.Coords, p, ctx, poly.EdgeWidth.OrZero()) {
 			return true, PickInfo{}
 		}
 		return false, PickInfo{}
 	}
 	tr := transformForPick(ctx, poly.Coords)
 	pxPoints := transformPath(polygonPath(poly.XY, false), tr)
-	tol := math.Max(DefaultPickRadius, poly.EdgeWidth/2)
+	tol := math.Max(DefaultPickRadius, poly.EdgeWidth.OrZero()/2)
 	for i := 1; i < len(pxPoints); i++ {
 		if distancePointToSegment(pxPoints[i-1], pxPoints[i], p) <= tol {
 			return true, PickInfo{Index: i - 1}
@@ -207,7 +207,7 @@ func (pp *PathPatch) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	if pp == nil || len(pp.Path.C) == 0 {
 		return false, PickInfo{}
 	}
-	if containsPath(pp.Path, geom.Identity(), pp.Coords, p, ctx, pp.EdgeWidth) {
+	if containsPath(pp.Path, geom.Identity(), pp.Coords, p, ctx, pp.EdgeWidth.OrZero()) {
 		return true, PickInfo{}
 	}
 	return false, PickInfo{}
@@ -218,7 +218,7 @@ func (b *FancyBboxPatch) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) 
 	if b == nil {
 		return false, PickInfo{}
 	}
-	if containsPath(b.localPath(), translateAffine(b.XY), b.Coords, p, ctx, b.EdgeWidth) {
+	if containsPath(b.localPath(), translateAffine(b.XY), b.Coords, p, ctx, b.EdgeWidth.OrZero()) {
 		return true, PickInfo{}
 	}
 	return false, PickInfo{}
@@ -234,7 +234,7 @@ func (a *FancyArrow) Contains(p geom.Pt, ctx *DrawContext) (bool, PickInfo) {
 	if len(local.C) == 0 {
 		return false, PickInfo{}
 	}
-	if containsPath(local, geom.Identity(), a.Coords, p, ctx, a.EdgeWidth) {
+	if containsPath(local, geom.Identity(), a.Coords, p, ctx, a.EdgeWidth.OrZero()) {
 		return true, PickInfo{}
 	}
 	return false, PickInfo{}

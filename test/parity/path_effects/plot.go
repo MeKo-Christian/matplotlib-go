@@ -66,9 +66,9 @@ func Plot() *core.Figure {
 	polygonAx := panel(fig, 0.53, 0.08, 0.94, 0.47)
 	polygonAx.AddPatch(&core.Polygon{
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.94, G: 0.77, B: 0.28, A: 1},
-			EdgeColor: render.Color{R: 0.07, G: 0.20, B: 0.38, A: 1},
-			EdgeWidth: 2.2,
+			FaceColor: optional.Of(render.Color{R: 0.94, G: 0.77, B: 0.28, A: 1}),
+			EdgeColor: optional.Of(render.Color{R: 0.07, G: 0.20, B: 0.38, A: 1}),
+			EdgeWidth: optional.Of(2.2),
 			LineJoin:  render.JoinRound,
 			PathEffects: []render.PathEffect{
 				render.SimplePatchShadowPathEffect(geom.Pt{X: 5, Y: -6}, render.Color{R: 0.02, G: 0.03, B: 0.04, A: 0.70}, 0.45, 0.35),

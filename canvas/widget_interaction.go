@@ -197,9 +197,9 @@ func (w *WidgetInteraction) handleMousePress(mouse *MouseEvent) error {
 			w.draggingSlider = widget
 			w.draggingSliderAxes = axes
 			widget.Dragging = true
-			before := widget.Value
+			before := widget.Value()
 			w.setSliderValueFromPointLocked(widget, axes, mouse.Position)
-			if widget.Value != before {
+			if widget.Value() != before {
 				changed = true
 			}
 		}
@@ -214,9 +214,9 @@ func (w *WidgetInteraction) handleMousePress(mouse *MouseEvent) error {
 			w.draggingRangeSliderAxes = axes
 			w.draggingRangeSliderHandle = w.focusedRangeSliderHandle
 			widget.Dragging = true
-			beforeLow, beforeHigh := widget.Low, widget.High
+			beforeLow, beforeHigh := widget.Low(), widget.High()
 			w.setRangeSliderValueFromPointLocked(widget, axes, mouse.Position, w.draggingRangeSliderHandle)
-			if widget.Low != beforeLow || widget.High != beforeHigh {
+			if widget.Low() != beforeLow || widget.High() != beforeHigh {
 				changed = true
 			}
 		}
@@ -253,7 +253,7 @@ func (w *WidgetInteraction) handleMousePress(mouse *MouseEvent) error {
 		if len(widget.Labels) == 0 {
 			break
 		}
-		if before := widget.Active; before != w.focusedRadioIndex {
+		if before := widget.Active(); before != w.focusedRadioIndex {
 			widget.SetActive(w.focusedRadioIndex)
 			changed = true
 		}
@@ -446,16 +446,16 @@ func (w *WidgetInteraction) handleMouseMove(mouse *MouseEvent) error {
 	}
 
 	if w.draggingSlider != nil {
-		before := w.draggingSlider.Value
+		before := w.draggingSlider.Value()
 		w.setSliderValueFromPointLocked(w.draggingSlider, w.draggingSliderAxes, mouse.Position)
-		if w.draggingSlider.Value != before {
+		if w.draggingSlider.Value() != before {
 			changed = true
 		}
 	}
 	if w.draggingRangeSlider != nil {
-		beforeLow, beforeHigh := w.draggingRangeSlider.Low, w.draggingRangeSlider.High
+		beforeLow, beforeHigh := w.draggingRangeSlider.Low(), w.draggingRangeSlider.High()
 		w.setRangeSliderValueFromPointLocked(w.draggingRangeSlider, w.draggingRangeSliderAxes, mouse.Position, w.draggingRangeSliderHandle)
-		if w.draggingRangeSlider.Low != beforeLow || w.draggingRangeSlider.High != beforeHigh {
+		if w.draggingRangeSlider.Low() != beforeLow || w.draggingRangeSlider.High() != beforeHigh {
 			changed = true
 		}
 	}

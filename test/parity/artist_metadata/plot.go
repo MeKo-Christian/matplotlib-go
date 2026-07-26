@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -31,9 +32,9 @@ func Plot() *core.Figure {
 
 	background := &core.PathPatch{
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.16, G: 0.68, B: 0.43, A: 0.65},
-			EdgeColor: render.Color{R: 0.02, G: 0.25, B: 0.14, A: 1},
-			EdgeWidth: 1,
+			FaceColor: optional.Of(render.Color{R: 0.16, G: 0.68, B: 0.43, A: 0.65}),
+			EdgeColor: optional.Of(render.Color{R: 0.02, G: 0.25, B: 0.14, A: 1}),
+			EdgeWidth: optional.Of(1.0),
 		},
 		Path:   rectPath(0.08, 0.12, 0.84, 0.76),
 		Coords: core.Coords(core.CoordData),

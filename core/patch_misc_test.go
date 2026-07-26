@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -12,13 +13,13 @@ func TestPatchAutoScaleIgnoresNonDataCoords(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
 	ax.AddPatch(&Rectangle{
-		Patch:  Patch{FaceColor: render.Color{R: 0.8, G: 0.4, B: 0.2, A: 1}},
+		Patch:  Patch{FaceColor: optional.Of(render.Color{R: 0.8, G: 0.4, B: 0.2, A: 1})},
 		XY:     geom.Pt{X: 2, Y: 3},
 		Width:  2,
 		Height: 3,
 	})
 	ax.AddPatch(&Circle{
-		Patch:  Patch{FaceColor: render.Color{R: 0.2, G: 0.4, B: 0.8, A: 1}},
+		Patch:  Patch{FaceColor: optional.Of(render.Color{R: 0.2, G: 0.4, B: 0.8, A: 1})},
 		Center: geom.Pt{X: 0.5, Y: 0.5},
 		Radius: 0.35,
 		Coords: Coords(CoordAxes),
@@ -42,9 +43,9 @@ func TestPathPatchLegendEntryIncludesHatch(t *testing.T) {
 
 	ax.AddPatch(&PathPatch{
 		Patch: Patch{
-			FaceColor:  render.Color{R: 0.7, G: 0.7, B: 0.2, A: 1},
-			EdgeColor:  render.Color{R: 0.2, G: 0.2, B: 0.1, A: 1},
-			EdgeWidth:  1,
+			FaceColor:  optional.Of(render.Color{R: 0.7, G: 0.7, B: 0.2, A: 1}),
+			EdgeColor:  optional.Of(render.Color{R: 0.2, G: 0.2, B: 0.1, A: 1}),
+			EdgeWidth:  optional.Of(1.0),
 			Hatch:      "x",
 			HatchColor: render.Color{R: 0, G: 0, B: 0, A: 1},
 			Label:      "region",
@@ -71,19 +72,19 @@ func TestAdditionalPatchClassesDrawExpectedPaths(t *testing.T) {
 	ctx := createTestDrawContext()
 	patches := []Artist{
 		&RegularPolygon{
-			Patch:       Patch{FaceColor: render.Color{A: 1}},
+			Patch:       Patch{FaceColor: optional.Of(render.Color{A: 1})},
 			Center:      geom.Pt{X: 2, Y: 2},
 			NumVertices: 5,
 			Radius:      1,
 		},
 		&CirclePolygon{
-			Patch:      Patch{FaceColor: render.Color{A: 1}},
+			Patch:      Patch{FaceColor: optional.Of(render.Color{A: 1})},
 			Center:     geom.Pt{X: 2, Y: 2},
 			Radius:     1,
 			Resolution: 12,
 		},
 		&Arc{
-			Patch:    Patch{EdgeColor: render.Color{A: 1}, EdgeWidth: 1},
+			Patch:    Patch{EdgeColor: optional.Of(render.Color{A: 1}), EdgeWidth: optional.Of(1.0)},
 			Center:   geom.Pt{X: 2, Y: 2},
 			Width:    2,
 			Height:   1,
@@ -92,7 +93,7 @@ func TestAdditionalPatchClassesDrawExpectedPaths(t *testing.T) {
 			EdgeOnly: true,
 		},
 		&Annulus{
-			Patch:   Patch{FaceColor: render.Color{A: 1}},
+			Patch:   Patch{FaceColor: optional.Of(render.Color{A: 1})},
 			Center:  geom.Pt{X: 2, Y: 2},
 			RadiusA: 1.5,
 			RadiusB: 1.0,
@@ -100,7 +101,7 @@ func TestAdditionalPatchClassesDrawExpectedPaths(t *testing.T) {
 			Angle:   15,
 		},
 		&StepPatch{
-			Patch:    Patch{FaceColor: render.Color{A: 1}, EdgeColor: render.Color{A: 1}, EdgeWidth: 1},
+			Patch:    Patch{FaceColor: optional.Of(render.Color{A: 1}), EdgeColor: optional.Of(render.Color{A: 1}), EdgeWidth: optional.Of(1.0)},
 			Values:   []float64{1, 2, 1.5},
 			Edges:    []float64{0, 1, 2, 3},
 			Baseline: float64Ptr(0),
@@ -119,9 +120,9 @@ func TestAdditionalPatchClassesDrawExpectedPaths(t *testing.T) {
 func TestShadowOffsetsAndDarkensSourcePatch(t *testing.T) {
 	source := &Rectangle{
 		Patch: Patch{
-			FaceColor: render.Color{R: 0.8, G: 0.4, B: 0.2, A: 1},
-			EdgeColor: render.Color{R: 0.2, G: 0.1, B: 0.1, A: 1},
-			EdgeWidth: 1,
+			FaceColor: optional.Of(render.Color{R: 0.8, G: 0.4, B: 0.2, A: 1}),
+			EdgeColor: optional.Of(render.Color{R: 0.2, G: 0.1, B: 0.1, A: 1}),
+			EdgeWidth: optional.Of(1.0),
 		},
 		XY:     geom.Pt{X: 1, Y: 2},
 		Width:  2,
@@ -139,7 +140,7 @@ func TestShadowOffsetsAndDarkensSourcePatch(t *testing.T) {
 	if paint.Fill.A != 0.5 {
 		t.Fatalf("shadow alpha = %v, want 0.5", paint.Fill.A)
 	}
-	if paint.Fill.R >= source.FaceColor.R {
+	if paint.Fill.R >= source.FaceColor.OrZero().R {
 		t.Fatalf("shadow face color was not darkened: got %+v source %+v", paint.Fill, source.FaceColor)
 	}
 }

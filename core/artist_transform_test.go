@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
@@ -82,7 +83,7 @@ func TestPathPatchUsesExplicitArtistTransform(t *testing.T) {
 	path.LineTo(geom.Pt{X: 3, Y: 4})
 	patch := &PathPatch{
 		Patch: Patch{
-			FaceColor: render.Color{A: 1},
+			FaceColor: optional.Of(render.Color{A: 1}),
 		},
 		Path:   path,
 		Coords: Coords(CoordData),

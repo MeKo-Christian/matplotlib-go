@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -39,9 +40,9 @@ func (c *PatchCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		}
 		path = buildCachedDisplayPath(ctx, c.pathCacheSlot(i), c, c.Coords, path, geom.Identity())
 		patch := Patch{
-			FaceColor:   c.alphaColor(colorAt(c.FaceColor, c.FaceColors, i)),
-			EdgeColor:   c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, i)),
-			EdgeWidth:   widthAt(c.EdgeWidth, c.EdgeWidths, i),
+			FaceColor:   optional.Of(c.alphaColor(colorAt(c.FaceColor, c.FaceColors, i))),
+			EdgeColor:   optional.Of(c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, i))),
+			EdgeWidth:   optional.Of(widthAt(c.EdgeWidth, c.EdgeWidths, i)),
 			Hatch:       stringAt(c.Hatch, c.Hatches, i),
 			HatchColor:  c.alphaColor(colorAt(c.HatchColor, c.HatchColors, i)),
 			HatchWidth:  widthAt(c.HatchWidth, c.HatchWidths, i),

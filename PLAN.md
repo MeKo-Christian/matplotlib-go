@@ -106,10 +106,15 @@ update the coupled API/doc tests in the same commit.
 - [x] Rename `GetX()` getters to `X()` (or an explicit `LookupX()` spelling
       where the noun conflicts with an exported type).
 - [ ] Resolve exported mutable fields versus setter duplication consistently.
-  - [ ] Classify exported mutable fields by immutable configuration, observable
+  - [x] Classify exported mutable fields by immutable configuration, observable
         state, and internal cache; record the intended ownership per family.
-  - [ ] Encapsulate fields that duplicate setters and update callers/tests.
-  - [ ] Re-run the API/doc freeze and add migration notes for every removal.
+  - [x] Encapsulate fields that duplicate setters and update callers/tests.
+  - [x] Re-run the API/doc freeze and add migration notes for every removal.
+  - [ ] Close the two deferred families: move `PathCollection`'s
+        `EdgeColorsFace` mirroring to read time, and fold
+        `Line2D.MarkerFaceColor`/`MarkerEdgeColor` into their `*Spec` siblings
+        and `Dashes`/`DashUnits` into one value type (see
+        `docs/plans/phase2-mutable-fields.md`).
 - [x] Document the concurrency contract for global rc state, registries, and
       figures; stop discarding pyplot errors.
 - [ ] Consolidate duplicated alpha baking, option unpacking, and scalar-map
@@ -189,7 +194,23 @@ types with named constants (`PlotOrientation`, `ColorbarExtend`,
 prepared-defaults literal that was immediately overwritten, and the `supplied`
 flag that guarded a no-op block — made the pass a net deletion; the four
 pointer-cloning helpers went with it. Goldens and references are byte-identical
-throughout. Core and
+throughout. The mutable-field cleanup then gave every artist field exactly one
+public writer. Auditing all 1750 exported non-option fields found 29 shadowed by
+a `Set<Field>` that did more than assign, and the fix splits by what the setter
+was compensating for. Where the companion was a hand-rolled optional — a
+`faceColorSet`-style flag — the field widened to `optional.Value[T]` and the
+flag was deleted (`Patch.FaceColor`/`EdgeColor`/`EdgeWidth`, `Line2D.GapColor`,
+`PathCollection.OffsetCoords`), so the field stays exported and struct literals
+keep working. Where the setter clamps, normalizes, or fires a callback, the
+field was unexported behind a same-named reader (`Axes.Title`/`XLabel`/`YLabel`,
+`Figure.SupTitle`/`SupXLabel`/`SupYLabel`, `Slider.Value`, `TextBox.Value`,
+`RadioButtons.Active`, `RangeSlider.Low`/`High`). Four redundant spellings went:
+the duplicate `SetSuptitle`/`SetSupxlabel`/`SetSupylabel` casings, the alias
+`SetLocator` pair, `Axis.SetTickDirection` (replaced by `ParseTickDirection`,
+closing a raw-string enum the typed-constant pass missed), and the misnamed
+`SetMarkEvery` (now `SetMarkEverySpec`). `PathCollection`'s slice setters and
+the `Line2D` dash/marker-spec pairs are deliberately deferred with reasons in
+`docs/plans/phase2-mutable-fields.md`. Goldens stayed byte-identical. Core and
 plot3d alpha multiplier paths share
 `render.Color.WithAlphaMultiplier`, and 3D scalar maps derive their
 configuration through

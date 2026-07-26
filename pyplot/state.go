@@ -246,9 +246,9 @@ func CLF() {
 
 	fig.Children = nil
 	fig.Artists = nil
-	fig.SupTitle = ""
-	fig.SupXLabel = ""
-	fig.SupYLabel = ""
+	fig.SetSupTitle("")
+	fig.SetSupXLabel("")
+	fig.SetSupYLabel("")
 
 	registry.mu.Lock()
 	delete(registry.currentAxes, fig)
@@ -268,9 +268,9 @@ func clearAxes(ax *core.Axes) {
 	}
 	ax.Artists = nil
 	ax.WidgetArtists = nil
-	ax.Title = ""
-	ax.XLabel = ""
-	ax.YLabel = ""
+	ax.SetTitle("")
+	ax.SetXLabel("")
+	ax.SetYLabel("")
 	ax.XScale = transform.NewLinear(0, 1)
 	ax.YScale = transform.NewLinear(0, 1)
 	ax.XAxis = core.NewXAxis()

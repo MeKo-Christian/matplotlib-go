@@ -57,8 +57,8 @@ func Render() image.Image {
 
 	outline := &core.PathPatch{
 		Patch: core.Patch{
-			EdgeColor: render.Color{R: 0.05, G: 0.08, B: 0.12, A: 1},
-			EdgeWidth: 2.0,
+			EdgeColor: optional.Of(render.Color{R: 0.05, G: 0.08, B: 0.12, A: 1}),
+			EdgeWidth: optional.Of(2.0),
 			LineJoin:  render.JoinMiter,
 		},
 		Path:   clipPath,

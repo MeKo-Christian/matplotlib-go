@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -25,9 +26,9 @@ func Plot() *core.Figure {
 	left.SetYLim(0, 4)
 	left.AddPatch(&core.Rectangle{
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.95, G: 0.70, B: 0.23, A: 0.86},
-			EdgeColor: render.Color{R: 0.48, G: 0.27, B: 0.08, A: 1},
-			EdgeWidth: 1.1,
+			FaceColor: optional.Of(render.Color{R: 0.95, G: 0.70, B: 0.23, A: 0.86}),
+			EdgeColor: optional.Of(render.Color{R: 0.48, G: 0.27, B: 0.08, A: 1}),
+			EdgeWidth: optional.Of(1.1),
 			Hatch:     "/",
 		},
 		XY:     geom.Pt{X: 0.6, Y: 0.7},
@@ -36,18 +37,18 @@ func Plot() *core.Figure {
 	})
 	left.AddPatch(&core.Circle{
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.22, G: 0.57, B: 0.82, A: 0.82},
-			EdgeColor: render.Color{R: 0.11, G: 0.29, B: 0.44, A: 1},
-			EdgeWidth: 1.0,
+			FaceColor: optional.Of(render.Color{R: 0.22, G: 0.57, B: 0.82, A: 0.82}),
+			EdgeColor: optional.Of(render.Color{R: 0.11, G: 0.29, B: 0.44, A: 1}),
+			EdgeWidth: optional.Of(1.0),
 		},
 		Center: geom.Pt{X: 3.0, Y: 1.25},
 		Radius: 0.56,
 	})
 	left.AddPatch(&core.Ellipse{
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.23, G: 0.72, B: 0.51, A: 0.80},
-			EdgeColor: render.Color{R: 0.10, G: 0.36, B: 0.24, A: 1},
-			EdgeWidth: 1.0,
+			FaceColor: optional.Of(render.Color{R: 0.23, G: 0.72, B: 0.51, A: 0.80}),
+			EdgeColor: optional.Of(render.Color{R: 0.10, G: 0.36, B: 0.24, A: 1}),
+			EdgeWidth: optional.Of(1.0),
 		},
 		Center: geom.Pt{X: 4.8, Y: 2.75},
 		Width:  1.55,
@@ -56,9 +57,9 @@ func Plot() *core.Figure {
 	})
 	left.AddPatch(&core.Polygon{
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.84, G: 0.34, B: 0.34, A: 0.82},
-			EdgeColor: render.Color{R: 0.48, G: 0.14, B: 0.14, A: 1},
-			EdgeWidth: 1.0,
+			FaceColor: optional.Of(render.Color{R: 0.84, G: 0.34, B: 0.34, A: 0.82}),
+			EdgeColor: optional.Of(render.Color{R: 0.48, G: 0.14, B: 0.14, A: 1}),
+			EdgeWidth: optional.Of(1.0),
 		},
 		XY: []geom.Pt{
 			{X: 2.15, Y: 3.2},
@@ -73,9 +74,9 @@ func Plot() *core.Figure {
 	middle.SetYLim(0, 4)
 	middle.AddPatch(&core.FancyArrow{
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.91, G: 0.42, B: 0.22, A: 0.88},
-			EdgeColor: render.Color{R: 0.58, G: 0.22, B: 0.10, A: 1},
-			EdgeWidth: 1.0,
+			FaceColor: optional.Of(render.Color{R: 0.91, G: 0.42, B: 0.22, A: 0.88}),
+			EdgeColor: optional.Of(render.Color{R: 0.58, G: 0.22, B: 0.10, A: 1}),
+			EdgeWidth: optional.Of(1.0),
 		},
 		XY:                 geom.Pt{X: 0.9, Y: 3.2},
 		DX:                 2.2,
@@ -99,9 +100,9 @@ func Plot() *core.Figure {
 	star.Close()
 	middle.AddPatch(&core.PathPatch{
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.76, G: 0.76, B: 0.86, A: 0.72},
-			EdgeColor: render.Color{R: 0.29, G: 0.29, B: 0.45, A: 1},
-			EdgeWidth: 1.0,
+			FaceColor: optional.Of(render.Color{R: 0.76, G: 0.76, B: 0.86, A: 0.72}),
+			EdgeColor: optional.Of(render.Color{R: 0.29, G: 0.29, B: 0.45, A: 1}),
+			EdgeWidth: optional.Of(1.0),
 			Hatch:     "x",
 		},
 		Path: star,
@@ -113,9 +114,9 @@ func Plot() *core.Figure {
 	right.SetYLim(0, 4)
 	right.AddPatch(&core.FancyBboxPatch{
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.29, G: 0.67, B: 0.78, A: 0.28},
-			EdgeColor: render.Color{R: 0.10, G: 0.37, B: 0.45, A: 1},
-			EdgeWidth: 1.0,
+			FaceColor: optional.Of(render.Color{R: 0.29, G: 0.67, B: 0.78, A: 0.28}),
+			EdgeColor: optional.Of(render.Color{R: 0.10, G: 0.37, B: 0.45, A: 1}),
+			EdgeWidth: optional.Of(1.0),
 			Hatch:     "/",
 		},
 		XY:           geom.Pt{X: 0.9, Y: 0.8},
@@ -127,9 +128,9 @@ func Plot() *core.Figure {
 	})
 	right.AddPatch(&core.FancyBboxPatch{
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.96, G: 0.87, B: 0.60, A: 0.82},
-			EdgeColor: render.Color{R: 0.50, G: 0.39, B: 0.12, A: 1},
-			EdgeWidth: 1.0,
+			FaceColor: optional.Of(render.Color{R: 0.96, G: 0.87, B: 0.60, A: 0.82}),
+			EdgeColor: optional.Of(render.Color{R: 0.50, G: 0.39, B: 0.12, A: 1}),
+			EdgeWidth: optional.Of(1.0),
 		},
 		XY:       geom.Pt{X: 3.35, Y: 1.55},
 		Width:    1.65,

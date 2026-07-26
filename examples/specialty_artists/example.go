@@ -159,9 +159,9 @@ func Plot() *core.Figure {
 	sankeyAx.SetYLim(0, 1)
 	sankeyAx.AddPatch(&core.Rectangle{
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.12, G: 0.47, B: 0.71, A: 0.75},
-			EdgeColor: render.Color{R: 0.10, G: 0.10, B: 0.10, A: 1},
-			EdgeWidth: 1,
+			FaceColor: optional.Of(render.Color{R: 0.12, G: 0.47, B: 0.71, A: 0.75}),
+			EdgeColor: optional.Of(render.Color{R: 0.10, G: 0.10, B: 0.10, A: 1}),
+			EdgeWidth: optional.Of(1.0),
 		},
 		XY:     geom.Pt{X: 0.18, Y: 0.47},
 		Width:  0.18,
@@ -192,9 +192,9 @@ func Plot() *core.Figure {
 		path.Close()
 		sankeyAx.AddPatch(&core.PathPatch{
 			Patch: core.Patch{
-				FaceColor: flow.color,
-				EdgeColor: render.Color{R: 0.10, G: 0.10, B: 0.10, A: 1},
-				EdgeWidth: 1,
+				FaceColor: optional.Of(flow.color),
+				EdgeColor: optional.Of(render.Color{R: 0.10, G: 0.10, B: 0.10, A: 1}),
+				EdgeWidth: optional.Of(1.0),
 			},
 			Path:   path,
 			Coords: core.Coords(core.CoordAxes),

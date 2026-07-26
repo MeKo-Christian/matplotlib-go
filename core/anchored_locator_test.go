@@ -654,12 +654,12 @@ func TestLegendBoxRectUsesLocator(t *testing.T) {
 	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
 
 	legend := ax.AddLegend()
-	legend.SetLocator(RelativeAnchoredBoxLocator{
+	legend.Locator = RelativeAnchoredBoxLocator{
 		X:      0.5,
 		Y:      0.5,
 		HAlign: BoxAlignCenter,
 		VAlign: BoxAlignMiddle,
-	})
+	}
 
 	var r legendRecordingRenderer
 	ctx := newAxesDrawContext(ax, fig, fig.DisplayRect(), ax.adjustedLayout(fig))

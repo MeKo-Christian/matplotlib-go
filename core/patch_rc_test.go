@@ -35,9 +35,9 @@ func TestStandalonePatchUsesRCDefaultsAndExplicitPaintWins(t *testing.T) {
 	explicitFace := render.Color{G: 1, A: 1}
 	explicitEdge := render.Color{R: 1, G: 1, A: 1}
 	rect.Patch = Patch{
-		FaceColor: explicitFace,
-		EdgeColor: explicitEdge,
-		EdgeWidth: 4,
+		FaceColor: optional.Of(explicitFace),
+		EdgeColor: optional.Of(explicitEdge),
+		EdgeWidth: optional.Of(4.0),
 		Antialias: render.AntialiasOn,
 	}
 	rec.pathCalls = nil

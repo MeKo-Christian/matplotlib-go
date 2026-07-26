@@ -55,16 +55,16 @@ func Plot() *core.Figure {
 	spanAlpha := 0.18
 	mainAx.AxVSpan(0.7, 1.35, core.VSpanOptions{Color: optional.Of(blue), Alpha: optional.Of(spanAlpha)})
 	mainAx.AddPatch(&core.Rectangle{
-		Patch: core.Patch{FaceColor: colorWithAlpha(blue, 0.20), EdgeColor: colorWithAlpha(blue, 0.20), EdgeWidth: 1},
+		Patch: core.Patch{FaceColor: optional.Of(colorWithAlpha(blue, 0.20)), EdgeColor: optional.Of(colorWithAlpha(blue, 0.20)), EdgeWidth: optional.Of(1.0)},
 		XY:    geom.Pt{X: 2.25, Y: -0.95}, Width: 0.8, Height: 0.7,
 	})
 	mainAx.AddPatch(&core.Ellipse{
-		Patch:  core.Patch{FaceColor: colorWithAlpha(orange, 0.22), EdgeColor: colorWithAlpha(orange, 0.22), EdgeWidth: 1},
+		Patch:  core.Patch{FaceColor: optional.Of(colorWithAlpha(orange, 0.22)), EdgeColor: optional.Of(colorWithAlpha(orange, 0.22)), EdgeWidth: optional.Of(1.0)},
 		Center: geom.Pt{X: 4.0, Y: 0.625}, Width: 0.9, Height: 0.75,
 	})
 	green := render.Color{R: 0.17, G: 0.63, B: 0.17, A: 1}
 	mainAx.AddPatch(&core.Polygon{
-		Patch: core.Patch{FaceColor: colorWithAlpha(green, 0.22), EdgeColor: green, EdgeWidth: 1},
+		Patch: core.Patch{FaceColor: optional.Of(colorWithAlpha(green, 0.22)), EdgeColor: optional.Of(green), EdgeWidth: optional.Of(1.0)},
 		XY: []geom.Pt{
 			{X: 4.95, Y: -0.9},
 			{X: 5.75, Y: -0.75},

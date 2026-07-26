@@ -11,7 +11,7 @@ import (
 
 func TestDrawFigure_RendersFigureLevelLabels(t *testing.T) {
 	fig := NewFigure(800, 600)
-	fig.SetSuptitle("Overview")
+	fig.SetSupTitle("Overview")
 	fig.SetSupXLabel("time")
 	fig.SetSupYLabel("value")
 
@@ -107,7 +107,7 @@ func TestFigureLegendStacksBelowSuptitle(t *testing.T) {
 		Max: geom.Pt{X: 0.90, Y: 0.85},
 	})
 	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "signal"})
-	fig.SetSuptitle("Figure Title")
+	fig.SetSupTitle("Figure Title")
 	fig.AddLegend()
 
 	var r figureLayoutRecordingRenderer

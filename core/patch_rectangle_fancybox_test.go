@@ -5,15 +5,16 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 func TestRectangleDrawAndBounds(t *testing.T) {
 	rect := &Rectangle{
 		Patch: Patch{
-			FaceColor: render.Color{R: 0.8, G: 0.2, B: 0.2, A: 1},
-			EdgeColor: render.Color{R: 0, G: 0, B: 0, A: 1},
-			EdgeWidth: 2,
+			FaceColor: optional.Of(render.Color{R: 0.8, G: 0.2, B: 0.2, A: 1}),
+			EdgeColor: optional.Of(render.Color{R: 0, G: 0, B: 0, A: 1}),
+			EdgeWidth: optional.Of(2.0),
 		},
 		XY:     geom.Pt{X: 1, Y: 2},
 		Width:  3,
@@ -46,9 +47,9 @@ func TestRectangleDrawAndBounds(t *testing.T) {
 func TestPatchDrawUsesMatplotlibSnapAuto(t *testing.T) {
 	rect := &Rectangle{
 		Patch: Patch{
-			FaceColor: render.Color{R: 0.8, G: 0.2, B: 0.2, A: 1},
-			EdgeColor: render.Color{A: 1},
-			EdgeWidth: 1,
+			FaceColor: optional.Of(render.Color{R: 0.8, G: 0.2, B: 0.2, A: 1}),
+			EdgeColor: optional.Of(render.Color{A: 1}),
+			EdgeWidth: optional.Of(1.0),
 		},
 		XY:     geom.Pt{X: 1, Y: 2},
 		Width:  3,
@@ -69,9 +70,9 @@ func TestPatchDrawUsesMatplotlibSnapAuto(t *testing.T) {
 func TestPatchDashesCanUseMatplotlibLineWidthScaling(t *testing.T) {
 	rect := &Rectangle{
 		Patch: Patch{
-			FaceColor: render.Color{A: 0},
-			EdgeColor: render.Color{A: 1},
-			EdgeWidth: 2.5,
+			FaceColor: optional.Of(render.Color{A: 0}),
+			EdgeColor: optional.Of(render.Color{A: 1}),
+			EdgeWidth: optional.Of(2.5),
 			Dashes:    []float64{4, 2},
 			DashUnits: DashUnitsMatplotlib,
 		},
@@ -95,9 +96,9 @@ func TestPatchDashesCanUseMatplotlibLineWidthScaling(t *testing.T) {
 func TestPatchDashesDefaultToRendererUnits(t *testing.T) {
 	rect := &Rectangle{
 		Patch: Patch{
-			FaceColor: render.Color{A: 0},
-			EdgeColor: render.Color{A: 1},
-			EdgeWidth: 2.5,
+			FaceColor: optional.Of(render.Color{A: 0}),
+			EdgeColor: optional.Of(render.Color{A: 1}),
+			EdgeWidth: optional.Of(2.5),
 			Dashes:    []float64{4, 2},
 		},
 		Width:  1,
@@ -120,9 +121,9 @@ func TestPatchDashesDefaultToRendererUnits(t *testing.T) {
 func TestFancyBboxPatchRoundUsesQuadraticCornersAndHatch(t *testing.T) {
 	box := &FancyBboxPatch{
 		Patch: Patch{
-			FaceColor:    render.Color{R: 0.3, G: 0.6, B: 0.9, A: 0.7},
-			EdgeColor:    render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1},
-			EdgeWidth:    1.5,
+			FaceColor:    optional.Of(render.Color{R: 0.3, G: 0.6, B: 0.9, A: 0.7}),
+			EdgeColor:    optional.Of(render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1}),
+			EdgeWidth:    optional.Of(1.5),
 			Hatch:        "/",
 			HatchColor:   render.Color{R: 0.2, G: 0.2, B: 0.2, A: 1},
 			HatchSpacing: 6,

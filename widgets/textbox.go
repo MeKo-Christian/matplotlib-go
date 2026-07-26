@@ -28,8 +28,10 @@ type TextBoxOptions struct {
 
 // TextBox draws a static text-entry control.
 type TextBox struct {
-	Label       string
-	Value       string
+	Label string
+	// value is setter-owned: SetValue also repositions the caret and selection
+	// and fires the change callback.
+	value       string
 	Placeholder string
 	FaceColor   render.Color
 	EdgeColor   render.Color
@@ -63,7 +65,7 @@ func NewTextBox(a *core.Axes, label, value string, opt TextBoxOptions) *TextBox 
 	prepareWidgetAxes(a)
 	w := &TextBox{
 		Label:       label,
-		Value:       value,
+		value:       value,
 		Placeholder: cfg.Placeholder,
 		FaceColor:   cfg.FaceColor,
 		EdgeColor:   cfg.EdgeColor,
@@ -128,21 +130,21 @@ func (t *TextBox) triggerSubmit() {
 	if t == nil {
 		return
 	}
-	t.onSubmit.each(func(cb TextBoxSubmitCallback) { cb(t, t.Value) })
+	t.onSubmit.each(func(cb TextBoxSubmitCallback) { cb(t, t.value) })
 }
 
 func (t *TextBox) triggerCancel() {
 	if t == nil {
 		return
 	}
-	t.onCancel.each(func(cb TextBoxSubmitCallback) { cb(t, t.Value) })
+	t.onCancel.each(func(cb TextBoxSubmitCallback) { cb(t, t.value) })
 }
 
 func (t *TextBox) triggerChange() {
 	if t == nil {
 		return
 	}
-	t.onChange.each(func(cb TextBoxChangeCallback) { cb(t, t.Value) })
+	t.onChange.each(func(cb TextBoxChangeCallback) { cb(t, t.value) })
 }
 
 // Submit emits submit callbacks with the current text.
@@ -174,10 +176,10 @@ func (t *TextBox) SetValue(value string) {
 	if t == nil {
 		return
 	}
-	if t.Value == value {
+	if t.value == value {
 		return
 	}
-	t.Value = value
+	t.value = value
 	count := runeCount(value)
 	t.caret = count
 	t.selection = [2]int{count, count}
@@ -189,7 +191,7 @@ func (t *TextBox) SetCaret(index int) {
 	if t == nil {
 		return
 	}
-	index = clampTextIndex(t.Value, index)
+	index = clampTextIndex(t.value, index)
 	t.caret = index
 	t.selection = [2]int{index, index}
 }
@@ -200,8 +202,8 @@ func (t *TextBox) SetSelection(start, end int) {
 	if t == nil {
 		return
 	}
-	start = clampTextIndex(t.Value, start)
-	end = clampTextIndex(t.Value, end)
+	start = clampTextIndex(t.value, start)
+	end = clampTextIndex(t.value, end)
 	if start > end {
 		start, end = end, start
 	}
@@ -214,7 +216,7 @@ func (t *TextBox) SelectAll() {
 	if t == nil {
 		return
 	}
-	count := runeCount(t.Value)
+	count := runeCount(t.value)
 	t.selection = [2]int{0, count}
 	t.caret = count
 }
@@ -228,13 +230,13 @@ func (t *TextBox) MoveCaretLeft(word, extend bool) {
 	if !extend {
 		anchor = -1
 	}
-	n := runeCount(t.Value)
+	n := runeCount(t.value)
 	if n == 0 {
 		return
 	}
 	next := t.caret
 	if word {
-		next = moveTextCaretWordLeft([]rune(t.Value), t.caret)
+		next = moveTextCaretWordLeft([]rune(t.value), t.caret)
 	} else if next > 0 {
 		next--
 	}
@@ -260,10 +262,10 @@ func (t *TextBox) MoveCaretRight(word, extend bool) {
 	if !extend {
 		anchor = -1
 	}
-	n := runeCount(t.Value)
+	n := runeCount(t.value)
 	next := t.caret
 	if word {
-		next = moveTextCaretWordRight([]rune(t.Value), t.caret)
+		next = moveTextCaretWordRight([]rune(t.value), t.caret)
 	} else if next < n {
 		next++
 	}
@@ -303,7 +305,7 @@ func (t *TextBox) MoveCaretToEnd(extend bool) {
 	if t == nil {
 		return
 	}
-	count := runeCount(t.Value)
+	count := runeCount(t.value)
 	anchor := t.caret
 	if !extend {
 		anchor = count
@@ -325,7 +327,7 @@ func (t *TextBox) InsertText(value string) {
 	if value == "" {
 		return
 	}
-	text := []rune(t.Value)
+	text := []rune(t.value)
 	insert := []rune(value)
 	start, end := t.selection[0], t.selection[1]
 	if start > end {
@@ -335,7 +337,7 @@ func (t *TextBox) InsertText(value string) {
 	next = append(next, text[:start]...)
 	next = append(next, insert...)
 	next = append(next, text[end:]...)
-	t.Value = string(next)
+	t.value = string(next)
 	n := start + len(insert)
 	t.caret = n
 	t.selection = [2]int{n, n}
@@ -351,10 +353,10 @@ func (t *TextBox) Backspace() {
 	if start > end {
 		start, end = end, start
 	}
-	text := []rune(t.Value)
+	text := []rune(t.value)
 	if start != end {
 		text = append(text[:start], text[end:]...)
-		t.Value = string(text)
+		t.value = string(text)
 		t.caret = start
 		t.selection = [2]int{start, start}
 		t.triggerChange()
@@ -364,7 +366,7 @@ func (t *TextBox) Backspace() {
 		return
 	}
 	text = append(text[:t.caret-1], text[t.caret:]...)
-	t.Value = string(text)
+	t.value = string(text)
 	t.caret--
 	t.selection = [2]int{t.caret, t.caret}
 	t.triggerChange()
@@ -379,10 +381,10 @@ func (t *TextBox) Delete() {
 	if start > end {
 		start, end = end, start
 	}
-	text := []rune(t.Value)
+	text := []rune(t.value)
 	if start != end {
 		text = append(text[:start], text[end:]...)
-		t.Value = string(text)
+		t.value = string(text)
 		t.caret = start
 		t.selection = [2]int{start, start}
 		t.triggerChange()
@@ -392,7 +394,7 @@ func (t *TextBox) Delete() {
 		return
 	}
 	text = append(text[:t.caret], text[t.caret+1:]...)
-	t.Value = string(text)
+	t.value = string(text)
 	t.selection = [2]int{t.caret, t.caret}
 	t.triggerChange()
 }
@@ -406,7 +408,7 @@ func (t *TextBox) SelectedText() string {
 	if start > end {
 		start, end = end, start
 	}
-	text := []rune(t.Value)
+	text := []rune(t.value)
 	if start < 0 || end < 0 || start >= len(text) || end > len(text) || start >= end {
 		return ""
 	}
@@ -455,7 +457,7 @@ func (t *TextBox) Draw(r render.Renderer, ctx *core.DrawContext) {
 	}
 	drawWidgetPanel(r, input, t.FaceColor, edge, defaults.TextBoxLineWidth, defaults.TextBoxRadius)
 
-	display := t.Value
+	display := t.value
 	displayColor := t.TextColor
 	if display == "" {
 		display = t.Placeholder
@@ -464,7 +466,7 @@ func (t *TextBox) Draw(r render.Renderer, ctx *core.DrawContext) {
 	textAnchor := widgetTextBoxTextAnchor(input, &defaults)
 	drawWidgetText(r, ctx, textAnchor, display, fontSize, displayColor, defaults.TextBoxTextAlign, defaults.TextBoxTextVAlign)
 	if t.Active {
-		caretIndex := clampInt(t.caret, 0, len([]rune(t.Value)))
+		caretIndex := clampInt(t.caret, 0, len([]rune(t.value)))
 		caretX := textAnchor.X + fontSize*0.42*float64(caretIndex)
 		if caretX > input.Max.X {
 			caretX = input.Max.X
@@ -511,7 +513,7 @@ func (t *TextBox) CaretForPoint(p geom.Pt, ctx *core.DrawContext) int {
 	}
 	textAnchor := widgetTextBoxTextAnchor(input, &defaults)
 	index := int(math.Round((p.X - textAnchor.X) / cell))
-	return clampTextIndex(t.Value, index)
+	return clampTextIndex(t.value, index)
 }
 
 func (t *TextBox) Z() float64   { return t.z }
@@ -580,4 +582,12 @@ func mergeTextBoxOptions(base, override *TextBoxOptions) {
 	if override.Active.IsSet() {
 		base.Active = override.Active
 	}
+}
+
+// Value reports the current text content.
+func (t *TextBox) Value() string {
+	if t == nil {
+		return ""
+	}
+	return t.value
 }

@@ -141,8 +141,8 @@ func TestAxesPowerSpectrumDisplayMatchesMatplotlib(t *testing.T) {
 			if got, want := result.Line.XY[0].Y, 10*math.Log10(result.Values[0]); math.Abs(got-want) > 1e-12 {
 				t.Fatalf("%s plotted value = %v, want 10*log10(raw) = %v", name, got, want)
 			}
-			if ax.XLabel != "Frequency" {
-				t.Fatalf("%s x label = %q, want Frequency", name, ax.XLabel)
+			if ax.XLabel() != "Frequency" {
+				t.Fatalf("%s x label = %q, want Frequency", name, ax.XLabel())
 			}
 			if _, ok := ax.YAxis.Locator.(ticker.FixedLocator); !ok {
 				t.Fatalf("%s y locator = %T, want Matplotlib power-spectrum FixedLocator", name, ax.YAxis.Locator)

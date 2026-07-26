@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -35,9 +36,9 @@ func Plot() *core.Figure {
 
 	fig.Add(&core.Rectangle{
 		Patch: core.Patch{
-			FaceColor: render.Color{R: 0.95, G: 0.74, B: 0.20, A: 0.08},
-			EdgeColor: render.Color{R: 0.42, G: 0.34, B: 0.12, A: 1},
-			EdgeWidth: 1.4,
+			FaceColor: optional.Of(render.Color{R: 0.95, G: 0.74, B: 0.20, A: 0.08}),
+			EdgeColor: optional.Of(render.Color{R: 0.42, G: 0.34, B: 0.12, A: 1}),
+			EdgeWidth: optional.Of(1.4),
 			Dashes:    []float64{6, 4},
 			DashUnits: core.DashUnitsMatplotlib,
 		},
