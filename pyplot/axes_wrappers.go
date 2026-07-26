@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/core"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
@@ -12,12 +13,12 @@ import (
 // TickLabelFormatOptions configures ScalarFormatter behavior on the current axes.
 //
 // Axis accepts "", "both", "x", or "y". Style accepts "", "sci",
-// "scientific", or "plain". SciLimits and UseMathText only apply when non-nil.
+// "scientific", or "plain". SciLimits and UseMathText only apply when set.
 type TickLabelFormatOptions struct {
 	Axis        string
 	Style       string
-	SciLimits   *[2]int
-	UseMathText *bool
+	SciLimits   optional.Value[[2]int]
+	UseMathText optional.Value[bool]
 }
 
 // XLim sets the current axes x-axis limits.
@@ -304,12 +305,12 @@ func applyTickLabelFormat(formatter ticker.ScalarFormatter, opts TickLabelFormat
 	default:
 		return formatter, fmt.Errorf("pyplot: unsupported ticklabel_format style %q", opts.Style)
 	}
-	if opts.SciLimits != nil {
+	if limits, ok := opts.SciLimits.Get(); ok {
 		formatter.UsePowerLimits = true
-		formatter.PowerLimits = *opts.SciLimits
+		formatter.PowerLimits = limits
 	}
-	if opts.UseMathText != nil {
-		formatter.UseMathText = *opts.UseMathText
+	if useMathText, ok := opts.UseMathText.Get(); ok {
+		formatter.UseMathText = useMathText
 	}
 	return formatter, nil
 }

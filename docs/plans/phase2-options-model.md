@@ -156,11 +156,77 @@ change meaning: an `AnnotationOptions` literal that set only one of `OffsetX`
 or `OffsetY` used to get 0 for the other; now the unset one falls back to the
 Matplotlib default. Call sites in this repository were migrated accordingly.
 
+## The full migration
+
+The pilot's model was applied to every remaining option family in one pass. The
+end state:
+
+| Measure                        | Before | After |
+| ------------------------------ | ------ | ----- |
+| variadic `...FooOptions` tails | 205    | 0     |
+| pointer-to-primitive fields    | 408    | 0     |
+| `*Options` structs             | 97     | 101   |
+
+The eight pointers left in an `Options` struct are references to live objects
+(`*core.Figure`, `*canvas.Navigation`, `*log.Logger`, …), not optional
+primitives, so they stay pointers.
+
+Two shapes recurred often enough to be worth naming, because collapsing them is
+what made the migration a net deletion rather than a net rewrite:
+
+- **The prepared-defaults literal.** `Axes.Table`, `Axes.Pie`, `Axes.Hexbin`,
+  `Axes.EventPlot`, `Axes.Violinplot`, `Sankey`, `MatShow`, `Spy`,
+  `AnnotatedHeatmap`, and the widget constructors all built a fully populated
+  defaults value, overwrote it wholesale with the caller's options, and then
+  re-applied every default through a magic-zero guard. Once the options arrive
+  as a single value the prepared literal is dead code: `cfg := opt` plus the
+  guards is exactly equivalent.
+- **The `supplied` flag.** `optarg.Optional` handed back "was anything passed?"
+  so a merge block could be skipped. Every one of those blocks was a no-op
+  against a zero options value, and `Axes3D.Plot3D`/`Axes3D.Scatter3D` had two
+  textually identical branches selected by the flag. `optional.Value` carries
+  the same information per field, so the flag and the branches both went away.
+
+The four `clone*` helpers (`cloneBool`, `cloneTextAlign`,
+`cloneTextBBoxOptions`, `clonePoint`) existed only to stop a caller and an
+artist sharing a pointer. `optional.Value` copies by value, so they are gone;
+`cloneFontProperties` survives as `cloneFontPropertiesValue` because it also
+deep-copies the slices inside `render.FontProperties`.
+
+`internal/optarg` and the run-time rejection it implemented are deleted: with
+no variadic tails left there is nothing to reject.
+
+## Typed constants
+
+The raw-string option enums are now defined string types in
+[`core/option_enums.go`](../../core/option_enums.go): `PlotOrientation`,
+`ColorbarExtend`, `ColorbarLocation`, `ImageAspect`, `VectorPivot`, and
+`ViolinSide`. They join the types that already followed this convention
+(`LineStyle`, `MeshShading`, `SignalDetrend`, `SignalSpectrumScale`,
+`SignalSpectrumSides`, `TextRotationMode`, `FillBetween3DMode`).
+
+A defined string type still accepts an untyped string constant, so
+`Orientation: "horizontal"` keeps compiling; what changes is that the value can
+no longer be produced by a plain `string` variable without an explicit
+conversion, and the constants document the accepted set. Call sites in this
+repository were moved to the constants (`Aspect: core.AspectAuto`).
+
+Fields that look like enums but are not were deliberately left as `string`:
+`TextBBoxOptions.Style` is a Matplotlib boxstyle _spec_ ("round,pad=0.3"),
+`BarLabelOptions.Format` and `AnnotatedHeatmapOptions.Format` are printf
+formats, and `Colormap`/`FontKey`/`Label` are open-ended names.
+
 ## Follow-on work
 
-The remaining option families migrate under the next Phase 2.3 sub-bullet.
-`PlotOptions` is the largest and is deliberately not in the pilot: it is shared
-by 30 entry points across the line, contour, surface, and 3D families, so
-migrating it migrates four families at once and would not be a pilot. Once the
-variadic tails are gone repo-wide, `internal/optarg` and the run-time rejection
-it implements disappear with them.
+Two refinements are out of scope here and remain for later Phase 2 work:
+
+- **Magic-zero plain fields.** A handful of non-optional fields still spell
+  "use the default" as their zero value where the default is non-zero —
+  `TableOptions.FontSize`, `TableOptions.CellLoc`, `EventPlotOptions.LineWidth`.
+  These are expressiveness gaps of the same kind the pointer fields had, but
+  the phase bullet enumerates variadic tails, pointer fields, and raw-string
+  enums, and all three are now closed.
+- **Artist fields.** Several artists still expose optional state as pointers
+  (`Text.ParseMath`, `Text.BBox`, `ErrorBar.CapSize`). Those are exported
+  mutable artist fields, which the next Phase 2.3 bullet covers; the option
+  structs bridge to them with `Value.Ptr()`.

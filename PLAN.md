@@ -91,14 +91,14 @@ update the coupled API/doc tests in the same commit.
   - [x] Inventory the remaining warn-and-skip plotting entry points, convert
         rejected input to errors, and retain warnings only where an artist is
         accepted with a documented degradation.
-- [ ] Replace the 83 variadic option structs and 408 pointer-to-primitive
+- [x] Replace the 83 variadic option structs and 408 pointer-to-primitive
       fields with one consistent options model; extra option sets must be
       impossible or rejected. Replace raw-string enums with typed constants.
   - [x] Reject extra option values across the existing variadic surface as an
         intermediate safety step.
   - [x] Choose and document the final options representation, then migrate one
         representative line, collection, image, and annotation API.
-  - [ ] Migrate the remaining option families and replace option raw strings
+  - [x] Migrate the remaining option families and replace option raw strings
         with typed constants.
 - [x] Add `Figure.Save(path)`, `Figure.WriteTo(w, format)`, and
       `Figure.Image()`; replace the repeated backend-specific save boilerplate
@@ -178,9 +178,18 @@ zero values. One API per artist family is migrated end to end — `Axes.Stem`
 (line), `Axes.HLines`/`Axes.VLines` (collection, via the new
 `LineCollectionOptions` that stops using the `LineCollection` artist as its own
 options), `Axes.ImShow` (image), and `Axes.Annotate` (annotation) — together
-with their pyplot wrappers, with no golden fixture changes. `PlotOptions` is
-deliberately held back for the bulk migration because it is shared by 30 entry
-points across four families. Core and
+with their pyplot wrappers, with no golden fixture changes. The bulk migration
+then closed the rest: all 205 variadic option tails and all 408
+pointer-to-primitive option fields are gone across `core`, `pyplot`, `plot3d`,
+and `widgets`, so an extra option set is a compile error everywhere and
+`internal/optarg` is deleted. The raw-string option enums became defined string
+types with named constants (`PlotOrientation`, `ColorbarExtend`,
+`ColorbarLocation`, `ImageAspect`, `VectorPivot`, `ViolinSide` in
+`core/option_enums.go`). Collapsing the two recurring merge shapes — the
+prepared-defaults literal that was immediately overwritten, and the `supplied`
+flag that guarded a no-op block — made the pass a net deletion; the four
+pointer-cloning helpers went with it. Goldens and references are byte-identical
+throughout. Core and
 plot3d alpha multiplier paths share
 `render.Color.WithAlphaMultiplier`, and 3D scalar maps derive their
 configuration through

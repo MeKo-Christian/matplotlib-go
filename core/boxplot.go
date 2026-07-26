@@ -301,6 +301,7 @@ func (a *Axes) addBxpMarkers(points []geom.Pt, marker MarkerType, face, edge ren
 	return line
 }
 
+//nolint:gocritic // The value is an immutable snapshot read by the callee.
 func bxpBoxPoints(stat BxpStat, pos, left, right float64, notched bool, orientation PlotOrientation) []geom.Pt {
 	if !notched {
 		return []geom.Pt{

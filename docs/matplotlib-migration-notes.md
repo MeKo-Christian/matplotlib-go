@@ -186,10 +186,10 @@ the first; keep the last one and merge the rest by hand.
 
 ### Options take exactly one value, and optional fields are `optional.Value[T]`
 
-`Axes.ImShow`, `Axes.Stem`, `Axes.Annotate`, `Axes.HLines`, `Axes.VLines`, and
-their `pyplot` wrappers no longer take a variadic option tail. They take exactly
-one options value, so a second one is a compile error rather than a run-time
-rejection. Calls that omitted the options pass the zero struct instead:
+**Every** plotting entry point — in `core`, `pyplot`, `plot3d`, and `widgets` —
+now takes exactly one options value instead of a variadic tail, so a second one
+is a compile error rather than a run-time rejection. Calls that omitted the
+options pass the zero struct instead:
 
 ```go
 ax.ImShow(data)                       // before
@@ -212,9 +212,22 @@ reading side, `Get()`, `Or(fallback)`, `OrZero()`, `IsSet()`, and `Ptr()` are
 available.
 
 Fields whose zero value already _was_ the default became plain values rather
-than optionals: `StemOptions.Baseline` is now a `float64`, not a `*float64`.
+than optionals: `StemOptions.Baseline` is now a `float64`, not a `*float64`, and
+`PlotOptions.DrawStyle`, `PlotOptions.MarkerFaceAlt`, `PlotOptions.MarkEverySpec`,
+`StairsOptions.Fill`, and `StepOptions.Where` shed their pointers the same way.
 
-Two changes are worth checking in existing code:
+The raw-string option enums are now defined string types in `core`:
+`PlotOrientation`, `ColorbarExtend`, `ColorbarLocation`, `ImageAspect`,
+`VectorPivot`, and `ViolinSide`. A string literal still compiles
+(`Orientation: "horizontal"`), but a plain `string` variable now needs an
+explicit conversion, and the named constants spell the accepted set:
+
+```go
+ax.MatShow(grid, core.MatShowOptions{Aspect: core.AspectAuto})
+cb.Extend = core.ExtendBoth
+```
+
+Three changes are worth checking in existing code:
 
 - `Axes.HLines` and `Axes.VLines` took a `core.LineCollection` — the artist —
   as their options. They now take `core.LineCollectionOptions`, which drops
@@ -225,14 +238,18 @@ Two changes are worth checking in existing code:
 - An `AnnotationOptions` literal that set only one of `OffsetX`/`OffsetY` used
   to get 0 for the other. The unset one now falls back to Matplotlib's default
   offset, so set both explicitly if you relied on that.
+- `internal/optarg` is gone, and with it the `*optarg.TooManyError` that the
+  error-returning entry points used to produce for a second option value. Code
+  that matched on that error can delete the branch: the case it covered no
+  longer compiles.
 
 In exchange, values that the old spellings could not express now work:
 `Alpha: optional.Of(0.0)`, an annotation offset of `(0, 0)`, a zero-width arrow,
 and `Origin: optional.Of(core.ImageOriginUpper)` against an rc of
 `image.origin: lower`.
 
-See `docs/plans/phase2-options-model.md` for the model and which option families
-migrate next.
+See `docs/plans/phase2-options-model.md` for the model, the two merge shapes it
+collapsed, and what was deliberately left as a plain `string`.
 
 The same getter pass removed the remaining exported `GetX` spellings:
 

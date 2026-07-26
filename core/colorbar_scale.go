@@ -66,7 +66,7 @@ func colorbarInteriorBoundaries(boundaries []float64, extend ColorbarExtend) []f
 	return out
 }
 
-func colorbarInteriorValues(values []float64, boundaries []float64, extend ColorbarExtend) []float64 {
+func colorbarInteriorValues(values, boundaries []float64, extend ColorbarExtend) []float64 {
 	out := cloneFloat64s(values)
 	if len(out) != len(boundaries)-1 {
 		return out
@@ -109,6 +109,7 @@ type colorbarAxisOps struct {
 	target    *Axis
 }
 
+//nolint:gocritic // The value is an immutable snapshot read by the callee.
 func configureColorbarScale(ax *Axes, mapping ScalarMapInfo, location ColorbarLocation, ticks, boundaries []float64, extend ColorbarExtend) {
 	if ax == nil {
 		return

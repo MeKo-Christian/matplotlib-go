@@ -62,6 +62,25 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
   `Axes.HLines`/`Axes.VLines` take the new `core.LineCollectionOptions` rather
   than the `LineCollection` artist. See
   `docs/plans/phase2-options-model.md`.
+- Completed the options migration across every remaining family. All 205
+  variadic `...FooOptions` tails are gone: `core`, `pyplot`, `plot3d`, and
+  `widgets` entry points each take exactly one options value, so a second one is
+  a compile error everywhere. All 408 pointer-to-primitive option fields are now
+  `optional.Value[T]`; the only pointers left in an options struct are
+  references to live objects such as `*core.Figure` and `*log.Logger`. Fields
+  whose zero value already was the default were demoted to plain values
+  (`PlotOptions.DrawStyle`, `PlotOptions.MarkerFaceAlt`,
+  `PlotOptions.MarkEverySpec`, `StairsOptions.Fill`, `StepOptions.Where`).
+- Replaced the raw-string option enums with defined string types in `core`:
+  `PlotOrientation`, `ColorbarExtend`, `ColorbarLocation`, `ImageAspect`,
+  `VectorPivot`, and `ViolinSide`, each with named constants. String literals
+  still compile; a plain `string` variable now needs an explicit conversion.
+- Removed `internal/optarg` and the `*optarg.TooManyError` it produced. With no
+  variadic tails left there is no extra option set to reject at run time, so
+  code that matched on that error can drop the branch.
+- Removed `core.ScalarMapConfig`'s `*float64` limits in favour of
+  `optional.Value[float64]`. `PlotOptions.ScalarMapConfig` no longer hands out
+  pointers that alias the caller's variables.
 
 ## Added
 

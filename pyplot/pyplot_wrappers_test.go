@@ -505,8 +505,8 @@ func TestTickLabelFormatUpdatesCurrentScalarFormatters(t *testing.T) {
 	if err := TickLabelFormat(TickLabelFormatOptions{
 		Axis:        "x",
 		Style:       "plain",
-		SciLimits:   &sciLimits,
-		UseMathText: &useMathText,
+		SciLimits:   optional.Of(sciLimits),
+		UseMathText: optional.Of(useMathText),
 	}); err != nil {
 		t.Fatalf("TickLabelFormat(x/plain) error = %v", err)
 	}

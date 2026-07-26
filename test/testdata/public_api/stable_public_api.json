@@ -9277,7 +9277,7 @@
         },
         {
           "id": "type TickLabelFormatOptions",
-          "declaration": "type TickLabelFormatOptions struct{ Axis string; Style string; SciLimits *[2]int; UseMathText *bool }"
+          "declaration": "type TickLabelFormatOptions struct{ Axis string; Style string; SciLimits optional.Value[[2]int]; UseMathText optional.Value[bool] }"
         }
       ]
     },
