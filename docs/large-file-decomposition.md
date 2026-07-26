@@ -96,9 +96,9 @@ they are exceptions to the 1k-line source target:
 
 ## Phase 2 Verification Snapshot
 
-Refreshed after the Phase 2 package moves. The working-tree inventory includes
-the new `plot3d`, `ticker`, `dates`, and `widgets` files that become tracked
-with the coordinated split. The remaining large files are either
+Refreshed at the close of Phase 2, after the package moves (`plot3d`, `ticker`,
+`dates`, `widgets`), the error/options conventions, the mutable-field cleanup,
+and the scalar-map consolidation. The remaining large files are either
 catalog/fixture data covered above or behavior families whose extra split would
 currently add more cross-file coupling than review clarity.
 
@@ -108,28 +108,28 @@ just large-file-audit
 Large tracked or untracked Go files (>= 1000 lines)
    3039 internal/examplecatalog/public_surface_parity.go
    2848 style/mplstyle.go
-   1903 core/plot.go
-   1757 plot3d/wire_surface_test.go
+   2169 core/plot.go
+   1761 plot3d/wire_surface_test.go
+   1385 core/colorbar_test.go
    1385 core/arrow_patch.go
-   1384 core/colorbar_test.go
    1319 style/style.go
-   1223 core/scatter.go
+   1219 core/scatter.go
    1140 ticker/locators.go
-   1131 core/collection_test.go
+   1136 core/collection_test.go
    1129 color/named_colors_data.go
-   1088 core/line.go
+   1103 core/line.go
    1083 ticker/formatters.go
    1067 dates/date_tick.go
    1052 render/extensions.go
-   1045 core/signal_helpers.go
    1044 backends/webagg/webagg_test.go
+   1037 core/signal_helpers.go
    1032 ticker/ticker_test.go
-   1008 core/line_test.go
+   1009 core/line_test.go
 
 Large tracked or untracked non-Go artifacts (>= 256 KiB)
    2148K docs/matplotlib-parity-status.md
    1832K testdata/svg_golden/mathtext_basic.svg
-    500K test/testdata/public_api/stable_public_api.json
+    512K test/testdata/public_api/stable_public_api.json
     496K docs/plans/phase2-prebreak-public-api.json
     344K testdata/matplotlib_ref/mplot3d_gallery.png
     336K testdata/matplotlib_ref/projection_toolkit_gallery.png
@@ -140,6 +140,13 @@ Large tracked or untracked non-Go artifacts (>= 256 KiB)
     272K testdata/svg_golden/mixed_raster_vector.svg
     264K testdata/golden/imshow_interpolation_matrix.png
 ```
+
+The file set is unchanged from the mid-Phase-2 snapshot; only line counts
+moved. `core/plot.go` grew the most (1903 → 2169) because the options migration
+moved every plot-family option struct from variadic pointer fields to a single
+`optional.Value[T]` options value declared beside its entry point, and the
+`stable_public_api.json` growth (500 KiB → 512 KiB) is the re-frozen surface
+described in `docs/plans/phase2-mutable-fields.md`.
 
 ### Remaining Large Go Source Decisions
 
@@ -191,3 +198,32 @@ Large tracked or untracked non-Go artifacts (>= 256 KiB)
   from the key/value conversion tables would make review harder unless a future
   style-system refactor introduces a generated table or schema. Drift guard:
   `go test ./style`.
+- `style/style.go`: keep-large configuration family. The bulk of the file is the
+  `RC` struct itself plus its defaults and the `With*` option constructors that
+  write single `RC` fields. Splitting the options away from the struct they
+  mutate would force every field addition into two files without isolating any
+  logic. Drift guard: `go test ./style`.
+- `core/line.go`: keep-large artist family. `Line2D` now owns the value types
+  the mutable-field pass folded into it — `DashPattern`, `MarkerColorSpec`, and
+  `MarkEverySpec` — alongside the artist's accessors. Those types exist to give
+  the artist's fields one writer each, so they stay next to the fields they
+  describe. Drift guard: `go test ./core -run 'TestLine2D'`.
+- `core/line_test.go`: keep-large test family. The file pairs with `core/line.go`
+  and shares one `recordingRenderer` fixture across the dash, marker, gap-color,
+  and bounds cases; splitting it would duplicate that fixture. Drift guard: the
+  file is its own guard.
+- `core/signal_helpers.go`: keep-large algorithm family. The spectral entry
+  points (`Specgram`, `PSD`, `CSD`, `Cohere`, `XCorr`, `ACorr`) are thin wrappers
+  over a shared FFT windowing, detrending, and segment-averaging core. The
+  helpers are only correct as a set, and Matplotlib keeps the same grouping in
+  `mlab.py`. Drift guard: `go test ./core -run 'Test(Specgram|PSD|CSD|Cohere|Corr)'`.
+- `render/extensions.go`: keep-large contract file. This is the optional
+  renderer-capability surface: the save-option value types, their per-format
+  validation, and the backend-specific `SVGOption`/`PDFOption`/`PSOption`/
+  `PGFOption` families. Backends type-assert against these interfaces, so keeping
+  the contract in one file is what makes the capability set reviewable. Drift
+  guard: `go test ./render ./backends/...`.
+- `backends/webagg/webagg_test.go`: keep-large test family. Roughly the first
+  150 lines are stub implementations of the event loop, timer, artist, and
+  renderer interfaces that every case in the file needs; the cases themselves
+  exercise one `Manager` lifecycle. Drift guard: the file is its own guard.

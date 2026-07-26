@@ -71,7 +71,7 @@ update the coupled API/doc tests in the same commit.
       Matplotlib's natural `ticker`/dates boundary where useful.
 - [x] Move widget and selector implementations into `widgets`, beside the
       canvas/event layer.
-- [ ] After each move, keep `go build ./...` and `just test` green, verify
+- [x] After each move, keep `go build ./...` and `just test` green, verify
       goldens are byte-identical, run the full API regeneration workflow,
       refresh `docs/large-file-decomposition.md`, and run
       `just large-file-audit`.
@@ -132,7 +132,7 @@ update the coupled API/doc tests in the same commit.
       remap public-surface classifications, regenerate the parity-status
       document, add migration notes for every completed break, and draft the
       Phase 4 changelog section.
-- [ ] Repeat the freeze after the remaining error/options/mutable-field work
+- [x] Repeat the freeze after the remaining error/options/mutable-field work
       and treat that artifact as the final Phase 2 surface.
 
 **Done when:** `core/` no longer owns plot3d/ticker/widgets; plot methods use
@@ -226,6 +226,36 @@ plot3d alpha multiplier paths share
 configuration through
 `core.PlotOptions.ScalarMapConfig`, with no golden fixture changes. `just test`
 passes all packages, including the golden and Matplotlib-reference checks.
+
+**2026-07-26 Phase 2 closure:** the remaining scalar-mappable artists now route
+through the shared resolver. Every artist already called
+`ResolveScalarMapValues`/`ResolveScalarMapGrid`, but each rebuilt the config by
+hand, so the shared resolver had eleven divergent front doors; an unexported
+`core.scalarMapConfig` builder is now the single one. The three contour resolve
+sites share `resolveContourScalarMap`, which folds in the "pin the mapping to
+the outer level span when no normalizer was supplied" rule that filled contours
+and tricontourf had each copied, and the duplicated "explicit contour colors
+suppress the mapping" blocks became `contourFillScalarMap`. `plot3d`'s
+`scatterScalarColors` stopped rebuilding `ScalarMapInfo` field by field and
+calls the artist's own `ScalarMap()`. `plot3d/contourf.go` deliberately keeps
+its local color-override block: sharing it would require exporting the core
+helper, and plot3d's `contourScalarMap` guards on
+`!opt.VMin.IsSet() && !opt.VMax.IsSet()` where core guards on `opt.Norm == nil`,
+so unifying them would move plot3d's colorbar range — a behavior change, which
+Phase 3 owns. The post-move verification and the final re-freeze then closed the
+phase: `go build ./...` and `just test` are green across all 67 packages,
+goldens and Matplotlib references are byte-identical, and regenerating
+`stable_public_api.json` (`UPDATE_PUBLIC_API_AUDIT=1`), the public-surface
+classifications, and `docs/matplotlib-parity-status.md` produced no diff — the
+committed artifacts already matched the code. That 3,176-symbol,
+29-package artifact is the final Phase 2 surface; the changelog draft records it
+and no longer defers the error/options work. `docs/large-file-decomposition.md`
+carries a refreshed audit snapshot plus keep-large decisions for the six large
+files that previously had none (`style/style.go`, `core/line.go`,
+`core/line_test.go`, `core/signal_helpers.go`, `render/extensions.go`,
+`backends/webagg/webagg_test.go`). The file set is unchanged from the
+mid-phase snapshot; only line counts moved, `core/plot.go` most (1903 → 2169)
+from the options migration.
 
 ## Phase 3: Visual QA and Tolerance Closure
 

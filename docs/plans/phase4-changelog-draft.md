@@ -1,8 +1,10 @@
 # Phase 4 Changelog Draft
 
-This fragment records the coordinated pre-v1 API breaks completed so far
-during Phase 2. It must be extended with the remaining error/options work
-before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
+This fragment records the coordinated pre-v1 API breaks made during Phase 2.
+Phase 2 is closed, so the break list below is complete: it covers the package
+split, the error convention, the options model, and the mutable-field cleanup.
+It still needs release framing and a version heading before it seeds the v1.0
+`CHANGELOG.md`; it is not a release announcement.
 
 ## Breaking changes
 
@@ -150,3 +152,9 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
 - Re-froze the public API after the package moves and intentional deletions.
 - Remapped parity-catalog source ownership to the new packages without changing
   render behavior or golden images.
+- Took the final Phase 2 freeze after the error, options, and mutable-field
+  work: `test/testdata/public_api/stable_public_api.json` now holds 3,176
+  symbols across 29 packages, and that artifact is the surface Phase 3 and
+  Phase 4 are measured against. Regenerating it, the parity-status document,
+  and the public-surface classifications produced no diff, so the committed
+  artifacts already matched the code when Phase 2 closed.
